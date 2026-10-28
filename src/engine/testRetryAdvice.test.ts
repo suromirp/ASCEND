@@ -251,7 +251,9 @@ describe('TEST-RETRY: herstel na de review', () => {
   it('raakt een beendag van vandaag niet aan waar de kaart Benen voor spreekt', () => {
     const today = [...standard().filter((x) => x.id !== 'upA' && x.id !== 'legs'), planned('todayLegs', 'tpl_lower_a', '2026-10-28', '2026-10-26')];
     const checkIns = [{ date: '2026-10-28', legs: 'spierpijn' as const, energy: 'gewoon' as const, sleep: 'goed' as const }];
-    expect(retryOf({ plannedSessions: today })?.proposal?.changes.some((c) => c.plannedSessionId === 'todayLegs')).toBe(true);
+    // De dag na een harde test heeft een eigen voorstel (HARD-THEN-SPACE); dat telt hier niet mee.
+    const own = new Set(['hard:log-test']);
+    expect(retryOf({ plannedSessions: today, respondedIds: own })?.proposal?.changes.some((c) => c.plannedSessionId === 'todayLegs')).toBe(true);
     expect(retryOf({ plannedSessions: today, checkIns, legEase: 'voorstel' })?.proposal?.changes.some((c) => c.plannedSessionId === 'todayLegs')).toBeFalsy();
   });
 

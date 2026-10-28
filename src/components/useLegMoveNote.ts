@@ -10,8 +10,11 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 // De stille regel bij het verplaatsen van een zware beendag of harde training (engine/legDayEase.ts#moveLegNote):
 // hoe vermoeid je benen op de nieuwe dag ongeveer zijn. Alleen een regel, zonder knop en zonder iets te
 // blokkeren. De instelling "Lichter bij vermoeide benen" op Uit zet hem uit.
-export function useLegMoveNotes(moves: { sessionId?: string; toDate?: string }[]): { line: string; explain: string }[] {
-  const { sessionLogs, plannedSessions, templates, program, settings, injuryNotes } = useAppData();
+// `endState` is de planning met alle items van het voorstel toegepast: de regel rekent op wat je na Akkoord hebt,
+// niet op de planning van nu (een voorstel dat zelf een beendag laat vervallen of de test zelf regelt).
+export function useLegMoveNotes(moves: { sessionId?: string; toDate?: string }[], endState?: PlannedSession[]): { line: string; explain: string }[] {
+  const { sessionLogs, plannedSessions: storedSessions, templates, program, settings, injuryNotes } = useAppData();
+  const plannedSessions = endState ?? storedSessions;
   const mode = resolveLegEase(settings);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   const key = moves.map((m) => `${m.sessionId}:${m.toDate}`).join('|');

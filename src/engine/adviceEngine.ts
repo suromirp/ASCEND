@@ -1194,7 +1194,7 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
     })
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id));
 
-  const plans = hardRuns.map((s) => retryPlanFor(s, inputs, templateById, test, levelOf, ctx)).filter((p): p is RetryPlan => !!p);
+  const plans = hardRuns.flatMap((s) => retryPlansFor(s, inputs, templateById, test, levelOf, ctx));
   // The smallest change wins; with equal cost the earlier day.
   const ranked = plans.sort((a, b) => a.cost - b.cost || a.found.scheduledDate.localeCompare(b.found.scheduledDate)).slice(0, MAX_OPTIONS);
   if (ranked.length === 0) return [];
@@ -1203,7 +1203,7 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
     ? `Je testloop van ${shortDate(last.date)} had ${(last.stoppedSec ?? 0) > 60 ? `${stoppedTime(last.stoppedSec ?? 0)} stilstand` : `${last.stops} keer stilstand`}, dus hij is iets te gunstig.`
     : `Je testloop van ${shortDate(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
   const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
-  const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. ASCEND zoekt de dag die het minst verandert. Staat er een zware beendag of de lange duurloop in de weg, dan schuift die mee naar een dag waar hij past, in hetzelfde voorstel. Wat jij zelf vastzette, schuift ASCEND niet: dat noemt het alleen. Alleen jij beslist: dit is een voorstel.';
+  const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. ASCEND zoekt de dag die het minst verandert. Staat er een zware beendag of de lange duurloop in de weg, dan schuift die mee naar een dag waar hij past, in hetzelfde voorstel. Wat jij zelf vastzette, schuift of laat ASCEND alleen gaan met jouw Akkoord, met de naam erbij. Alleen jij beslist: dit is een voorstel.';
   const nameOf = (x: PlannedSession) => templateById.get(x.templateId)?.name ?? 'Training';
   const isStrength = (x: PlannedSession) => templateById.get(x.templateId)?.type === 'strength';
   const build = (plan: RetryPlan) => {
@@ -1214,7 +1214,9 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
     const lines = [
       ...plan.moves.map((m) => m.rest
         ? `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)} doe je op ${shortDate(m.to)} in plaats van je rustdag${short(m)}. De ${lower(nameOf(m.rest))} van die dag vervalt.`
-        : `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)} gaat naar ${shortDate(m.to)}${isStrength(m.session) ? ', na de test' : ''}${short(m)}.`),
+        : levelOf(m.session) === 1
+          ? `${nameOf(m.session)}, die je zelf vastzette, gaat naar ${shortDate(m.to)}${short(m)}.`
+          : `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)} gaat naar ${shortDate(m.to)}${isStrength(m.session) ? ', na de test' : ''}${short(m)}.`),
       ...plan.dropped.map((l) => `${nameOf(l)} van ${shortDate(l.scheduledDate)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
     ];
     const extra = lines.length > 0 ? ` ${lines.join(' ')}` : '';
@@ -1248,8 +1250,7 @@ interface RetryPlan {
   found: PlannedSession;
   cost: number;
   moves: { session: PlannedSession; to: string; minutes?: number; rest?: PlannedSession }[];
-  // Heavy leg strength that goes in this proposal (with Akkoord) so the legs are fresh on the test day.
-  // Only when the leg index on that day stays above the test line without it.
+  // Heavy leg strength that goes in this proposal (with Akkoord) when it cannot move to after the test.
   dropped: PlannedSession[];
 }
 
@@ -1261,15 +1262,18 @@ interface RetryContext {
 }
 
 // The test replaces `found` on its own day. Whatever the spacing rules (the same as TEST-MAKE-ROOM)
-// find in the way moves in the same proposal: leg strength to after the test, a long run or another
-// hard run of the day after to the next day where it fits (short when that week has a long run of
-// its own, as in a catch-up). A session you locked, a logged one or a race is never moved: anything
-// else of yours that stands in the way makes this day no candidate. The end state is judged by the
-// leg index on the test day against the same line as TEST-FRESH (the week check) and TEST-MAKE-ROOM
-// (FATIGUE_THRESHOLDS.test.fresh), so the proposal and the rules never contradict. When only
-// leaving heavy leg strength out gets the legs fresh, that is the proposal, named with its date;
-// a day where even that does not help is no candidate.
-function retryPlanFor(found: PlannedSession, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, test: SessionTemplate, levelOf: (s: PlannedSession) => number, ctx: RetryContext): RetryPlan | undefined {
+// find in the way moves in the same proposal: a long run or another hard run of the day after to the
+// next day where it fits (short when that week has a long run of its own, as in a catch-up), and
+// heavy leg strength to after the test (0 to 3 days after it), processed last so a day that frees up
+// counts. A session you locked, a logged one or a race is never moved by itself: a leg day you
+// locked is offered a move to after the test with your Akkoord (the proposal names it), with
+// letting it go as the second option; anything else of yours in the way makes this day no candidate.
+// The end state is judged by the leg index on the test day against the same line as TEST-FRESH (the
+// week check) and TEST-MAKE-ROOM (FATIGUE_THRESHOLDS.test.fresh), so the proposal and the rules never
+// contradict. Heavy leg strength that adds to the index moves first and only goes when it cannot
+// move; a day where even that does not help is no candidate. Letting go weighs more than moving, and
+// anything of yours weighs more than the system's own.
+function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, test: SessionTemplate, levelOf: (s: PlannedSession) => number, ctx: RetryContext): RetryPlan[] {
   const today = inputs.asOf;
   const date = found.scheduledDate;
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
@@ -1281,87 +1285,104 @@ function retryPlanFor(found: PlannedSession, inputs: AdviceInputs, templateById:
   const toMove: PlannedSession[] = [];
   for (const b of findHeavyConflicts(found.id, test, date, base, templateById, inputs.logs)) {
     const t = templateById.get(b.templateId);
-    if (!t) return undefined;
+    if (!t) return [];
     const level = levelOf(b);
     if (level === 3) toMove.push(b);
     else if (level === 1 && legStrength(t) && b.scheduledDate < date) stuck.push(b);
-    else return undefined;
+    else return [];
   }
+  // Long runs and hard runs first, leg strength last.
+  toMove.sort((a, b) => Number(legStrength(templateById.get(a.templateId)!)) - Number(legStrength(templateById.get(b.templateId)!)));
   const restDates = new Set(base.filter((o) => templateById.get(o.templateId)?.type === 'recovery' && !loggedIds.has(o.id)).map((o) => o.scheduledDate));
-  let state: PlannedSession[] = [...base, testAt];
-  const moves: RetryPlan['moves'] = [];
-  const weekOf = (d: string, without: string) => state.filter((o) => o.id !== without && mondayOfWeek(o.scheduledDate) === mondayOfWeek(d));
-  for (const s of toMove) {
-    const t = templateById.get(s.templateId)!;
-    const strength = t.type === 'strength';
-    const targets = strength ? (isLegHeavyTemplate(t) ? [0, 1, 2, 3] : [1, -1, 2, -2, 3]) : [2, 3, 4, 5, 6, 7];
-    const others = state.filter((o) => o.id !== s.id);
-    let chosen: { to: string; rest?: PlannedSession; minutes?: number } | undefined;
-    for (const off of targets) {
-      const d = addDays(date, off);
-      if (d <= today || d === s.scheduledDate || (strength && restDates.has(d)) || isIllnessDay(d, inputs.illnessEpisodes, today) || ctx.blocked(d, isHeavyFor(t))) continue;
-      if (!respectsHeavySpacing(d, t, others, templateById, inputs.logs, s.id) || !leavesNextHardFresh(inputs, templateById, d, s, others)) continue;
-      const week = weekOf(d, s.id);
-      // The day budget counts the length the session will have there (short in a week with a long training of its own).
-      const minutes = strength ? undefined : catchUpMinutes(s, t, d, inputs, templateById);
-      const candidate = minutes ? { ...t, durationVariants: { ...t.durationVariants, full: minutes } } : t;
-      if (dayHasRoomFor(d, candidate, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) { chosen = { to: d, minutes }; break; }
-      if (strength) continue;
-      // A recovery walk on that day gives way when nothing else stands on the day before.
-      const there = others.filter((o) => o.scheduledDate === d);
-      const rest = there.length === 1 && templateById.get(there[0].templateId)?.type === 'recovery' && levelOf(there[0]) === 3 ? there[0] : undefined;
-      const dayBefore = addDays(d, -1);
-      const dayBeforeEmpty = !others.some((o) => o.scheduledDate === dayBefore && templateById.get(o.templateId)?.type !== 'recovery') && !inputs.logs.some((l) => l.completedDate === dayBefore);
-      if (rest && dayBeforeEmpty && dayHasRoomFor(d, candidate, week.filter((o) => o.id !== rest.id), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) { chosen = { to: d, rest, minutes }; break; }
-    }
-    if (!chosen) {
-      // Leg strength before the test with no place after it: it can only go (with Akkoord).
-      if (legStrength(t) && s.scheduledDate < date) { stuck.push(s); continue; }
+  const limit = FATIGUE_THRESHOLDS.test.fresh;
+
+  const attempt = (lockedMode: 'move' | 'remove'): RetryPlan | undefined => {
+    let state: PlannedSession[] = [...base, testAt];
+    const moves: RetryPlan['moves'] = [];
+    const dropped: PlannedSession[] = [];
+    const weekOf = (d: string, without: string) => state.filter((o) => o.id !== without && mondayOfWeek(o.scheduledDate) === mondayOfWeek(d));
+    const drop = (s: PlannedSession) => { dropped.push(s); state = state.filter((o) => o.id !== s.id); };
+    // The first day after the test (0 to 3 for leg strength) where the session fits, the same building blocks as TEST-MAKE-ROOM.
+    const tryMove = (s: PlannedSession): boolean => {
+      const t = templateById.get(s.templateId)!;
+      const strength = t.type === 'strength';
+      const targets = strength ? (isLegHeavyTemplate(t) ? [0, 1, 2, 3] : [1, -1, 2, -2, 3]) : [2, 3, 4, 5, 6, 7];
+      const others = state.filter((o) => o.id !== s.id);
+      for (const off of targets) {
+        const d = addDays(date, off);
+        if (d <= today || d === s.scheduledDate || (strength && restDates.has(d)) || isIllnessDay(d, inputs.illnessEpisodes, today) || ctx.blocked(d, isHeavyFor(t))) continue;
+        if (!respectsHeavySpacing(d, t, others, templateById, inputs.logs, s.id) || !leavesNextHardFresh(inputs, templateById, d, s, others)) continue;
+        const week = weekOf(d, s.id);
+        // The day budget counts the length the session will have there (short in a week with a long training of its own).
+        const minutes = strength ? undefined : catchUpMinutes(s, t, d, inputs, templateById);
+        const candidate = minutes ? { ...t, durationVariants: { ...t.durationVariants, full: minutes } } : t;
+        let rest: PlannedSession | undefined;
+        if (!dayHasRoomFor(d, candidate, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) {
+          if (strength) continue;
+          // A recovery walk on that day gives way when nothing else stands on the day before.
+          const there = others.filter((o) => o.scheduledDate === d);
+          rest = there.length === 1 && templateById.get(there[0].templateId)?.type === 'recovery' && levelOf(there[0]) === 3 ? there[0] : undefined;
+          const dayBefore = addDays(d, -1);
+          const dayBeforeEmpty = !others.some((o) => o.scheduledDate === dayBefore && templateById.get(o.templateId)?.type !== 'recovery') && !inputs.logs.some((l) => l.completedDate === dayBefore);
+          if (!rest || !dayBeforeEmpty || !dayHasRoomFor(d, candidate, week.filter((o) => o.id !== rest?.id), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
+        }
+        moves.push({ session: s, to: d, minutes, rest });
+        state = [...others.filter((o) => o.id !== rest?.id), { ...s, scheduledDate: d, weekStartDate: mondayOfWeek(d), ...(minutes ? { plannedMinutes: minutes } : {}) }];
+        return true;
+      }
+      return false;
+    };
+
+    for (const s of toMove) {
+      if (tryMove(s)) continue;
+      // Leg strength before the test with no place after it can only go (with Akkoord).
+      if (legStrength(templateById.get(s.templateId)!) && s.scheduledDate < date) { drop(s); continue; }
       return undefined;
     }
-    moves.push({ session: s, to: chosen.to, minutes: chosen.minutes, rest: chosen.rest });
-    state = [...others.filter((o) => o.id !== chosen?.rest?.id), { ...s, scheduledDate: chosen.to, weekStartDate: mondayOfWeek(chosen.to), ...(chosen.minutes ? { plannedMinutes: chosen.minutes } : {}) }];
-  }
-  // The end state without the test row itself, minus what leaves.
-  const endWithout = (gone: Set<string>) => state.filter((o) => o.id !== found.id && !gone.has(o.id));
-  const limit = FATIGUE_THRESHOLDS.test.fresh;
-  const judge = (gone: Set<string>) => {
-    const sessions = endWithout(gone);
-    return {
-      conflicts: findHeavyConflicts(found.id, test, date, sessions, templateById, inputs.logs),
-      index: freshnessAt(date, sessions, templateById, inputs.logs),
-      room: dayHasRoomFor(date, test, sessions.filter((o) => mondayOfWeek(o.scheduledDate) === mondayOfWeek(date)), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference),
+    // What you locked and stands in the way of the spacing: moved with your Akkoord, or let go as the second option.
+    for (const s of stuck) {
+      if (lockedMode === 'move' && tryMove(s)) continue;
+      drop(s);
+    }
+
+    // The end state without the test row itself.
+    const judge = () => {
+      const sessions = state.filter((o) => o.id !== found.id);
+      return {
+        conflicts: findHeavyConflicts(found.id, test, date, sessions, templateById, inputs.logs),
+        index: freshnessAt(date, sessions, templateById, inputs.logs),
+        room: dayHasRoomFor(date, test, sessions.filter((o) => mondayOfWeek(o.scheduledDate) === mondayOfWeek(date)), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference),
+      };
     };
+    // Heavy leg strength that adds most to the index moves to after the test first; it only goes when it cannot.
+    let now = judge();
+    for (const c of now.index.contributions) {
+      if (now.index.index <= limit) break;
+      if (c.logged) continue;
+      const s = state.find((o) => o.id === c.id);
+      const t = s && templateById.get(s.templateId);
+      if (!s || !t || !legStrength(t) || s.scheduledDate < today || loggedIds.has(s.id) || s.scheduledDate >= date) continue;
+      const level = levelOf(s);
+      if (level !== 3 && level !== 1) continue;
+      if (!(level === 3 || lockedMode === 'move') || !tryMove(s)) drop(s);
+      now = judge();
+    }
+    if (!now.room || now.index.index > limit || now.conflicts.length > 0) return undefined;
+    const touched = [found.id, ...moves.flatMap((m) => [m.session.id, ...(m.rest ? [m.rest.id] : [])]), ...dropped.map((d) => d.id)];
+    if (!touched.every((id) => !ctx.usedIds.has(id) && id !== ctx.easeId)) return undefined;
+    const own = (s: PlannedSession) => levelOf(s) === 1;
+    const cost = moves.reduce((n, m) => n + (own(m.session) ? 3 : 2) + (m.rest ? 1 : 0), 0) + dropped.reduce((n, d) => n + (own(d) ? 8 : 5), 0);
+    return { found, moves, dropped, cost };
   };
-  const touched = (plan: { moves: RetryPlan['moves']; dropped: PlannedSession[] }) =>
-    [found.id, ...plan.moves.flatMap((m) => [m.session.id, ...(m.rest ? [m.rest.id] : [])]), ...plan.dropped.map((d) => d.id)];
-  const allowed = (plan: { moves: RetryPlan['moves']; dropped: PlannedSession[] }) => touched(plan).every((id) => !ctx.usedIds.has(id) && id !== ctx.easeId);
-  const lockedIds = new Set(stuck.map((l) => l.id));
-  const cost = (dropped: PlannedSession[]) => 2 * moves.length + moves.filter((m) => m.rest).length + 4 * dropped.length;
 
-  // 1. Nothing of yours has to go: the legs are fresh enough as they are.
-  const as = judge(new Set());
-  if (as.room && as.index.index <= limit && as.conflicts.every((c) => lockedIds.has(c.id))) {
-    return allowed({ moves, dropped: [] }) ? { found, moves, dropped: [], cost: cost([]) } : undefined;
+  const first = attempt('move');
+  const plans = first ? [first] : [];
+  // A leg day you locked that moved also gets the plan where it goes instead, as the second option.
+  if (!first || first.moves.some((m) => levelOf(m.session) === 1)) {
+    const second = attempt('remove');
+    if (second) plans.push(second);
   }
-
-  // 2. Heavy leg strength leaves, with Akkoord: first what stands in the way of the spacing rules, then
-  // what adds most to the index, until the legs are fresh. Logged and past sessions are never touched.
-  const dropped: PlannedSession[] = [...stuck];
-  const gone = () => new Set(dropped.map((d) => d.id));
-  let now = judge(gone());
-  for (const c of now.index.contributions) {
-    if (now.index.index <= limit) break;
-    if (c.logged || dropped.some((d) => d.id === c.id)) continue;
-    const s = state.find((o) => o.id === c.id);
-    const t = s && templateById.get(s.templateId);
-    if (!s || !t || !legStrength(t) || s.scheduledDate < today || loggedIds.has(s.id) || s.scheduledDate >= date) continue;
-    dropped.push(s);
-    now = judge(gone());
-  }
-  if (dropped.length === 0 || !now.room || now.index.index > limit || now.conflicts.length > 0) return undefined;
-  const plan = { moves, dropped };
-  return allowed(plan) ? { found, moves, dropped, cost: cost(dropped) } : undefined;
+  return plans;
 }
 
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
@@ -1372,23 +1393,41 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const skippedKey = skippedKeyAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
   for (const id of skippedKey.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId) ?? [])) if (id) usedIds.add(id);
   const testRoom = testRunAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
+  const fresh = (list: Advice[]) => list.filter((a) => !inputs.respondedIds.has(a.id));
+  const restSwap = restSwapAdvice(inputs, templateById, usedIds);
+  const restPull = restPullAdvice(inputs, templateById, usedIds);
+  const tooHard = tooHardAdvice(inputs, templateById);
+  const tooLight = tooLightAdvice(inputs, templateById);
+  const injury = injuryAdvice(inputs, templateById);
+  const strength = strengthAdvice(inputs, templateById);
+  const spacing = spacingAdvice(inputs, templateById);
+  const extraSession = extraSessionAdvice(inputs, templateById);
+  const restWeekSkip = restWeekSkipAdvice(inputs);
+  const repeatWeek = repeatWeekAdvice(inputs);
+  const tentPack = tentPackAdvice(inputs);
+  const targetTime = targetTimeAdvice(inputs);
+  // TEST-RETRY touches no session that already stands in another proposal.
+  const retryUsed = new Set(usedIds);
+  for (const a of fresh([...restSwap, ...restPull, ...tooHard, ...tooLight, ...injury, ...strength, ...spacing, ...extraSession, ...restWeekSkip, ...repeatWeek, ...tentPack, ...targetTime])) {
+    for (const p of [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])]) for (const c of p?.changes ?? []) if (c.plannedSessionId) retryUsed.add(c.plannedSessionId);
+  }
   return [
     ...missed,
     ...skippedKey,
     ...testRoom,
-    ...restSwapAdvice(inputs, templateById, usedIds),
-    ...restPullAdvice(inputs, templateById, usedIds),
-    ...tooHardAdvice(inputs, templateById),
-    ...tooLightAdvice(inputs, templateById),
-    ...injuryAdvice(inputs, templateById),
-    ...strengthAdvice(inputs, templateById),
-    ...spacingAdvice(inputs, templateById),
-    ...extraSessionAdvice(inputs, templateById),
-    ...restWeekSkipAdvice(inputs),
-    ...repeatWeekAdvice(inputs),
-    ...tentPackAdvice(inputs),
-    ...targetTimeAdvice(inputs),
-    ...testRetryAdvice(inputs, templateById, usedIds, testRoom),
+    ...restSwap,
+    ...restPull,
+    ...tooHard,
+    ...tooLight,
+    ...injury,
+    ...strength,
+    ...spacing,
+    ...extraSession,
+    ...restWeekSkip,
+    ...repeatWeek,
+    ...tentPack,
+    ...targetTime,
+    ...testRetryAdvice(inputs, templateById, retryUsed, testRoom),
     ...weatherAdvice(inputs, templateById),
     ...morningAdvice(inputs, templateById),
   ]

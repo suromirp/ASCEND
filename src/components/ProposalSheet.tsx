@@ -99,7 +99,9 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
   }, [chosen, plannedSessions, templates, fatigueInputs, planPreviewPass]);
 
   // Stil, zonder knop: hoe vermoeid je benen ongeveer zijn op de dag waar een zware beendag of harde training heen gaat.
-  const legNotes = useLegMoveNotes((chosen?.changes ?? []).filter((c) => c.action === 'move').map((c) => ({ sessionId: c.plannedSessionId, toDate: c.toDate })));
+  // Gerekend op de eindstand van het voorstel (alle items toegepast), niet op de planning van nu.
+  const endState = useMemo(() => (chosen ? planPreviewPass(applyPlanChangeItems(chosen.changes.filter((c) => c.action !== 'replace'), plannedSessions, previewIds(), { by: 'proposal', at: 'preview' }).sessions) : undefined), [chosen, plannedSessions, planPreviewPass]);
+  const legNotes = useLegMoveNotes((chosen?.changes ?? []).filter((c) => c.action === 'move').map((c) => ({ sessionId: c.plannedSessionId, toDate: c.toDate })), endState);
 
   const minutes = (e: PreviewEntry, date: string) => {
     if (e.type === 'recovery') return undefined;
