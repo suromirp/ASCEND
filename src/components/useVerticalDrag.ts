@@ -13,11 +13,15 @@ const EDGE_STEP = 10;
 
 // Hoeveel pixels de pagina per beeld scrolt: omhoog binnen 90 px van de bovenkant van de pagina,
 // omlaag binnen 130 px van de onderkant van het scherm, anders niet.
-export function edgeScroll(y: number, top: number, height: number): number {
-  if (y < top + EDGE_TOP) return -EDGE_STEP;
-  if (y > height - EDGE_BOTTOM) return EDGE_STEP;
+// In een eigen bak (een blad) tellen de randen van de bak en zijn ze smaller: `edges`.
+export function edgeScroll(y: number, top: number, height: number, edges: { top: number; bottom: number } = { top: EDGE_TOP, bottom: EDGE_BOTTOM }): number {
+  if (y < top + edges.top) return -EDGE_STEP;
+  if (y > height - edges.bottom) return EDGE_STEP;
   return 0;
 }
+
+// De rand van een eigen bak waarin gescrold wordt.
+export const BOX_EDGES = { top: 40, bottom: 40 };
 
 export interface VerticalDragHandlers<T> {
   // Welk doel hoort bij deze hoogte op het scherm.
@@ -34,6 +38,9 @@ export interface VerticalDragHandlers<T> {
   onPickUp?: () => void;
   // Losgelaten zonder dat de drempel is gehaald.
   onTap?: () => void;
+  // De bak waarin gescrold wordt, als element of als selector. Standaard de pagina (#app-scroll).
+  // Een blad is zijn eigen bak: dan scrolt de randscroll daarin en tellen de randen van de bak.
+  scroller?: HTMLElement | string | null;
 }
 
 interface StartEvent { button?: number; clientY: number; preventDefault: () => void }
@@ -49,7 +56,8 @@ export function useVerticalDrag() {
     // Een nieuw slepen terwijl er nog een loopt (een tweede vinger): het oude wordt netjes afgebroken,
     // zodat er geen zwevende rij blijft staan.
     abort.current?.();
-    const scroller = document.getElementById('app-scroll');
+    const custom = h.scroller !== undefined;
+    const scroller = typeof h.scroller === 'string' ? document.querySelector<HTMLElement>(h.scroller) : custom ? h.scroller : document.getElementById('app-scroll');
     const startY = e.clientY;
     const startScroll = scroller?.scrollTop ?? 0;
     const threshold = h.threshold ?? 0;
@@ -62,7 +70,8 @@ export function useVerticalDrag() {
     };
     const loop = () => {
       if (scroller) {
-        scroller.scrollTop += edgeScroll(lastY, scroller.getBoundingClientRect().top, window.innerHeight);
+        const box = scroller.getBoundingClientRect();
+        scroller.scrollTop += custom ? edgeScroll(lastY, box.top, box.bottom, BOX_EDGES) : edgeScroll(lastY, box.top, window.innerHeight);
         update();
       }
       raf = requestAnimationFrame(loop);
