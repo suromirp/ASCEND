@@ -10,12 +10,13 @@
 //
 // Pure: no React, no IndexedDB.
 
-import type { SessionLog } from '../models/training';
+import type { BestEffort, SessionLog } from '../models/training';
 import type { TestJudgment, TestVerdict } from '../models/testJudgment';
 import { formatPaceRange, racePaces, type RacePaces } from './racePaces';
-import { MANY_STOPS_SENTENCE, EFFORT_VERSION, manyStops, stopsPhrase, effortFingerprint, isStaleEffort, isUsableBestEffort } from './bestEffort';
+import { MANY_STOPS_SENTENCE, EFFORT_VERSION, manyStops, stopsSentence, effortTried, isStaleEffort, isUsableBestEffort } from './bestEffort';
 import { countedTests, formatRaceTime, TEST_DISTANCE_KM, testTotals, type CountedTests, type TestJudgmentOptions, type TestResult } from './racePrediction';
 import { TEST_TEMPLATE_ID } from './raceBlock';
+import { daysBetween } from '../utils/dates';
 
 export const MAX_TEST_JUDGMENTS = 60;
 
@@ -71,8 +72,8 @@ export function mergeTestJudgments(incoming: TestJudgment[] | undefined, current
 // "Beste 5 km uit je run: 27:40" or "Hele run: 6,03 km in 36:00".
 export function testBasisLine(t: TestResult): string {
   if (t.basis === 'effort') {
-    const stops = stopsPhrase(t);
-    return `Beste ${String(TEST_DISTANCE_KM).replace('.', ',')} km uit je run: ${formatRaceTime(t.minutes)}${stops ? `, ${stops}` : ''}`;
+    const stops = stopsSentence(t);
+    return `Beste ${String(TEST_DISTANCE_KM).replace('.', ',')} km uit je run: ${formatRaceTime(t.minutes)}${stops ? `. ${stops}` : ''}`;
   }
   return `Hele run: ${String(Math.round(t.km * 100) / 100).replace('.', ',')} km in ${formatRaceTime(t.minutes)}`;
 }
@@ -110,35 +111,85 @@ export function testState(logs: SessionLog[], options: TestJudgmentOptions, logI
 
 // --- the best stretch of a test: when it may count ---------------------------------
 
-// The best effort a log carries but that does not count yet (not accepted), read for the totals
-// the log has now. Undefined when there is none, or when it is stale or the log was cut.
-export function effortOffer(log: SessionLog): { km: number; minutes: number; stops?: number; stoppedSec?: number } | undefined {
-  const b = log.bestEffort;
-  if (log.templateId !== TEST_TEMPLATE_ID || log.trim || !isUsableBestEffort(b) || b.accepted === true) return undefined;
-  const { km, minutes } = testTotals(log);
-  if (b.km > km + 0.05 || isStaleEffort(b, km, minutes)) return undefined;
-  return { km: b.km, minutes: b.minutes, stops: b.stops, stoppedSec: b.stoppedSec };
+// The best effort a log carries but that does not count yet, read for the totals the log has now:
+// a new reading of one that counts (`bestEffortReread`, the old one keeps counting until Akkoord), or
+// one that waits (not accepted). Undefined when there is none, or when it is stale or the log was cut.
+export interface EffortOffer {
+  km: number;
+  minutes: number;
+  stops?: number;
+  stoppedSec?: number;
+  // A new reading next to one that counts; `prevMinutes` is the time of the earlier reading.
+  reread?: boolean;
+  prevMinutes?: number;
 }
 
+export function effortOffer(log: SessionLog): EffortOffer | undefined {
+  if (log.templateId !== TEST_TEMPLATE_ID || log.trim) return undefined;
+  const { km, minutes } = testTotals(log);
+  const r = log.bestEffortReread;
+  if (isUsableBestEffort(r) && r.accepted !== true && !(r.km > km + 0.05) && !isStaleEffort(r, km, minutes)) {
+    return { km: r.km, minutes: r.minutes, stops: r.stops, stoppedSec: r.stoppedSec, reread: true, prevMinutes: r.prevMinutes ?? log.bestEffort?.minutes };
+  }
+  const b = log.bestEffort;
+  if (!isUsableBestEffort(b) || b.accepted === true) return undefined;
+  if (b.km > km + 0.05 || isStaleEffort(b, km, minutes)) return undefined;
+  return { km: b.km, minutes: b.minutes, stops: b.stops, stoppedSec: b.stoppedSec, prevMinutes: b.prevMinutes };
+}
+
+// Does a waiting offer differ in time from the reading before it ("Opnieuw gelezen zonder stilstaan.")?
+export function offerReread(o: Pick<EffortOffer, 'minutes' | 'prevMinutes'>): boolean {
+  return o.prevMinutes !== undefined && Math.abs(o.prevMinutes - o.minutes) >= 0.01;
+}
+
+export const REREAD_SENTENCE = 'Opnieuw gelezen zonder stilstaan.';
+
+// How many days back an accepted best effort of an older reading is read once more.
+export const REREAD_DAYS = 60;
+
 // Does this test log still want its best stretch read from the series? Not when it has a usable
-// one read for the totals it has now, nor when the series was already tried for these totals and
-// gave none (a treadmill, holes, a distance that does not match), nor when it was cut.
-export function wantsBestEffort(log: SessionLog): boolean {
+// one read for the totals it has now, nor when the series was already tried for these totals (and
+// this reading version) and gave none (a treadmill, holes, a distance that does not match), nor when
+// it was cut. An accepted one of an older reading is read once more into a candidate, only for a test
+// of the last 60 days (`today` given), and only once (docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop-aanvulling.md).
+export function wantsBestEffort(log: SessionLog, today?: string): boolean {
   if (log.templateId !== TEST_TEMPLATE_ID || log.trim) return false;
   const { km, minutes } = testTotals(log);
   if (!(km >= 3 && minutes > 0)) return false;
   const b = log.bestEffort;
   if (isUsableBestEffort(b) && !isStaleEffort(b, km, minutes)) {
-    // One that counts stays as it was. One that waits and was read before stops were told apart is
-    // read once more (docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop.md).
-    if (b.accepted === true || (b.v ?? 1) >= EFFORT_VERSION) return false;
+    if ((b.v ?? 1) >= EFFORT_VERSION) return false;
+    if (b.accepted === true) {
+      // Counts: it stays; a candidate is read next to it, once.
+      if (!today) return false;
+      const age = daysBetween(log.completedDate, today);
+      if (age < 0 || age > REREAD_DAYS) return false;
+      const r = log.bestEffortReread;
+      if (isUsableBestEffort(r) && !isStaleEffort(r, km, minutes)) return false;
+    }
   }
-  return log.bestEffortTried !== effortFingerprint(km, minutes);
+  return log.bestEffortTried !== effortTried(km, minutes);
+}
+
+// Is this a stretch that may count at once for a test that has just come in? Not when it has stops and
+// is faster per kilometre than the whole run would give: then it goes through the same check as an older
+// test (counts at once only when no pace changes, else Akkoord in the log sheet).
+export function effortFreshAllowed(effort: Pick<BestEffort, 'km' | 'minutes' | 'stops'>, fresh: boolean, wholeKm: number, wholeMinutes: number): boolean {
+  if (!fresh) return false;
+  if ((effort.stops ?? 0) > 0 && wholeKm > 0 && effort.minutes / effort.km < wholeMinutes / wholeKm) return false;
+  return true;
 }
 
 // The logs as they would be once this log's best effort counts.
 export function withEffortAccepted(logs: SessionLog[], logId: string): SessionLog[] {
-  return logs.map((l) => (l.id === logId && l.bestEffort ? { ...l, bestEffort: { ...l.bestEffort, accepted: true } } : l));
+  return logs.map((l) => {
+    if (l.id !== logId) return l;
+    if (l.bestEffortReread) {
+      const { bestEffortReread, ...rest } = l;
+      return { ...rest, bestEffort: { ...bestEffortReread, accepted: true } };
+    }
+    return l.bestEffort ? { ...l, bestEffort: { ...l.bestEffort, accepted: true } } : l;
+  });
 }
 
 // Which paces change when this best stretch starts to count: the same rows as for a verdict.

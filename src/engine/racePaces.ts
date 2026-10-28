@@ -19,7 +19,7 @@
 // Pure: no React, no IndexedDB.
 
 import { daysBetween, formatDateNL } from '../utils/dates';
-import { MANY_STOPS_SENTENCE, manyStops, stopsPhrase } from './bestEffort';
+import { MANY_STOPS_SENTENCE, manyStops, stopsSentence } from './bestEffort';
 import { formatRaceTime, isSlowerTest, predictionRange, riegel, RIEGEL_MAX_KM, type TestResult } from './racePrediction';
 
 // --- VDOT (Daniels and Gilbert, 1979) --------------------------------------
@@ -170,8 +170,8 @@ export function testMeaning(paces: RacePaces): TestMeaning {
   const { test, race } = paces;
   const km = String(test.km).replace('.', ',');
   const from = test.basis === 'effort' && test.wholeKm ? ` (uit een run van ${String(Math.round(test.wholeKm * 100) / 100).replace('.', ',')} km)` : '';
-  const stops = test.basis === 'effort' ? stopsPhrase(test) : undefined;
-  const stopsText = stops ? ` ${stops.charAt(0).toUpperCase()}${stops.slice(1)}.${manyStops(test) ? ` ${MANY_STOPS_SENTENCE}` : ''}` : '';
+  const stops = test.basis === 'effort' ? stopsSentence(test) : undefined;
+  const stopsText = stops ? ` ${stops}${manyStops(test) ? ` ${MANY_STOPS_SENTENCE}` : ''}` : '';
   const prediction = race ? ` Dat past bij een ${race.km} km in ongeveer ${Math.round(race.minutes)} minuten, ergens tussen ${Math.round(race.low)} en ${Math.round(race.high)} minuten.` : '';
   const headline = test.basis === 'effort'
     ? `Je snelste ${km} km duurde ${formatRaceTime(test.minutes)}${from}.${stopsText}${prediction}`

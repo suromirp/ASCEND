@@ -21,9 +21,9 @@ import type { ActivityDetail } from '../models/activityDetail';
 import type { BestEffort, SessionLog } from '../models/training';
 import type { RunDetail } from '../models/runDetail';
 import type { StoredLap } from '../models/activityStreams';
-import { bestEffortFromStream, resolveTestStops, EFFORT_VERSION, effortFingerprint, isStaleEffort, isUsableBestEffort } from '../engine/bestEffort';
+import { bestEffortFromStream, resolveTestStops, EFFORT_VERSION, effortTried, isStaleEffort, isUsableBestEffort } from '../engine/bestEffort';
 import { TEST_DISTANCE_KM, testTotals } from '../engine/racePrediction';
-import { mayAcceptAtOnce, wantsBestEffort } from '../engine/testJudgment';
+import { effortFreshAllowed, mayAcceptAtOnce, wantsBestEffort } from '../engine/testJudgment';
 import { getConnection, getWatchState } from './externalActivities';
 import type { ExternalActivity, ExternalActivityKind } from '../engine/activityImport';
 import { buildActivityDetail } from '../engine/activityDetail';
@@ -86,7 +86,7 @@ export interface DetailNeeds {
   streams: boolean;
 }
 
-export function needsOf(log: SessionLog, opts: { keepStreams: boolean; streamsFresh: boolean; retry: boolean }): DetailNeeds {
+export function needsOf(log: SessionLog, opts: { keepStreams: boolean; streamsFresh: boolean; retry: boolean; today?: string }): DetailNeeds {
   const { km, minutes } = testTotals(log);
   const rd = log.runDetail;
   // Series that gave nothing for these totals (runDetailTried) are not fetched again for the
@@ -94,7 +94,7 @@ export function needsOf(log: SessionLog, opts: { keepStreams: boolean; streamsFr
   const gaveNothing = log.runDetailTried === runDetailFingerprint(km, minutes);
   return {
     detail: !log.detail && !gaveNothing,
-    effort: wantsBestEffort(log) && opts.retry,
+    effort: wantsBestEffort(log, opts.today) && opts.retry,
     runDetail: opts.retry && (!isUsableRunDetail(rd) || isStaleRunDetail(rd, km, minutes)) && !gaveNothing,
     // A set that gave nothing (or could not be packed) for these totals is not asked for again.
     streams: opts.retry && opts.keepStreams && !opts.streamsFresh && !gaveNothing,
@@ -118,7 +118,7 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
   // A log that was cut has the profile of what is kept (or none): never of the whole.
   if (!log || log.trim) return 'skipped';
   const settings = await SettingsRepo.get();
-  const needs = needsOf(log, { keepStreams: settings.keepStreams !== false, streamsFresh: await streamsAreFresh(log), retry: !failedThisSession.has(log.id) });
+  const needs = needsOf(log, { keepStreams: settings.keepStreams !== false, streamsFresh: await streamsAreFresh(log), retry: !failedThisSession.has(log.id), today: options.today ?? todayISO() });
   if (!anyNeed(needs)) return 'skipped';
   const connection = await getConnection();
   if (!connection) return 'skipped';
@@ -137,7 +137,7 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
       // failure: the fingerprint does the work, so a second opening says "no-series".
       await attachDerivedToStoredLog(log.id, {
         runTried: runDetailFingerprint(logKm, logMinutes),
-        tried: needs.effort ? effortFingerprint(logKm, logMinutes) : undefined,
+        tried: needs.effort ? effortTried(logKm, logMinutes) : undefined,
       });
       return 'skipped';
     }
@@ -153,14 +153,35 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
 
     let bestEffort: BestEffort | undefined;
     let tried: string | undefined;
+    let reread: BestEffort | undefined;
+    let supersede = false;
     if (needs.effort) {
       bestEffort = bestEffortFromStream(streams, TEST_DISTANCE_KM, logKm, logMinutes, resolveTestStops(settings.testStops));
       if (bestEffort) {
-        const logs = (await SessionLogsRepo.getAll()).map((l) => (l.id === log.id ? { ...l, bestEffort } : l));
-        // A new test counts at once; an older one only when no pace changes, else it waits for Akkoord.
-        if (mayAcceptAtOnce(logs, settings, log.id, options.fresh === true)) bestEffort = { ...bestEffort, accepted: true };
+        const cur = log.bestEffort;
+        const countsOld = isUsableBestEffort(cur) && cur.accepted === true && (cur.v ?? 1) < EFFORT_VERSION && !isStaleEffort(cur, logKm, logMinutes);
+        if (countsOld) {
+          // The one that counts stays. The new reading is a candidate: it takes over at once only when
+          // that changes no pace, otherwise it waits for Akkoord in the log sheet.
+          const cand: BestEffort = { ...bestEffort, prevMinutes: cur.minutes };
+          const logs = (await SessionLogsRepo.getAll()).map((l) => (l.id === log.id ? { ...l, bestEffortReread: cand } : l));
+          if (mayAcceptAtOnce(logs, settings, log.id, false)) {
+            bestEffort = { ...bestEffort, accepted: true };
+            supersede = true;
+          } else {
+            bestEffort = undefined;
+            reread = cand;
+          }
+        } else {
+          if (isUsableBestEffort(cur) && cur.accepted !== true) bestEffort = { ...bestEffort, prevMinutes: cur.minutes };
+          const logs = (await SessionLogsRepo.getAll()).map((l) => (l.id === log.id ? { ...l, bestEffort } : l));
+          // A new test counts at once (not when it has stops and runs faster than the whole run, and
+          // changes a pace); an older one only when no pace changes, else it waits for Akkoord.
+          const fresh = effortFreshAllowed(bestEffort, options.fresh === true, logKm, logMinutes);
+          if (mayAcceptAtOnce(logs, settings, log.id, fresh)) bestEffort = { ...bestEffort, accepted: true };
+        }
       } else {
-        tried = effortFingerprint(logKm, logMinutes);
+        tried = effortTried(logKm, logMinutes);
       }
     }
 
@@ -230,11 +251,11 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
       }
     }
 
-    if (!detail && !bestEffort && !tried && !runDetail && !runTried) return streamsKept ? 'attached' : 'skipped';
+    if (!detail && !bestEffort && !reread && !tried && !runDetail && !runTried) return streamsKept ? 'attached' : 'skipped';
     // Read and write in one transaction: the log may have changed while the
     // series were on their way (your feeling, a putting back), and this only
     // adds the derived fields, never writes back an older copy of the rest.
-    const added = await attachDerivedToStoredLog(log.id, { detail, bestEffort, tried, runDetail, runTried });
+    const added = await attachDerivedToStoredLog(log.id, { detail, bestEffort, reread, supersede, tried, runDetail, runTried });
     return added || streamsKept ? 'attached' : 'skipped';
   } catch {
     failedThisSession.add(log.id);
@@ -247,7 +268,7 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
 // log does not have yet. Nothing measured is touched. Returns whether anything was added.
 export async function attachDerivedToStoredLog(
   logId: string,
-  derived: { detail?: ActivityDetail; bestEffort?: BestEffort; tried?: string; runDetail?: RunDetail; runTried?: string },
+  derived: { detail?: ActivityDetail; bestEffort?: BestEffort; reread?: BestEffort; supersede?: boolean; tried?: string; runDetail?: RunDetail; runTried?: string },
 ): Promise<boolean> {
   const db = await getDB();
   const tx = db.transaction('sessionLogs', 'readwrite');
@@ -257,17 +278,28 @@ export async function attachDerivedToStoredLog(
     return false;
   }
   const add: Partial<SessionLog> = {};
+  let dropReread = false;
   if (derived.detail && !current.detail) add.detail = derived.detail;
   if (derived.bestEffort) {
     // Added when there is none, or when the one there was read for other totals (a correction at
     // the source). One that is still good is never written over.
     const { km, minutes } = testTotals(current);
     const cur = current.bestEffort;
-    // One that waits and was read before stops were told apart is read once more; one that counts is never written over.
-    const reread = isUsableBestEffort(cur) && cur.accepted !== true && (cur.v ?? 1) < EFFORT_VERSION;
-    if (!isUsableBestEffort(cur) || isStaleEffort(cur, km, minutes) || reread) add.bestEffort = derived.bestEffort;
+    // One that waits and was read before stops were told apart is read once more; one that counts is
+    // never written over, except by a new reading that changes no pace (`supersede`).
+    const again = isUsableBestEffort(cur) && (cur.v ?? 1) < EFFORT_VERSION && (cur.accepted !== true || derived.supersede === true);
+    if (!isUsableBestEffort(cur) || isStaleEffort(cur, km, minutes) || again) {
+      add.bestEffort = derived.bestEffort;
+      dropReread = true;
+    }
   }
-  if (derived.tried && !derived.bestEffort && current.bestEffortTried !== derived.tried) add.bestEffortTried = derived.tried;
+  if (derived.reread) {
+    // A candidate next to the one that counts; written when none is there for these totals yet.
+    const { km, minutes } = testTotals(current);
+    const old = current.bestEffortReread;
+    if (!isUsableBestEffort(old) || isStaleEffort(old, km, minutes)) add.bestEffortReread = derived.reread;
+  }
+  if (derived.tried && !derived.bestEffort && !derived.reread && current.bestEffortTried !== derived.tried) add.bestEffortTried = derived.tried;
   if (derived.runDetail) {
     // Added when there is none, or when the one there was read for other totals. One that is
     // still good is never written over.
@@ -279,7 +311,9 @@ export async function attachDerivedToStoredLog(
     await tx.done;
     return false;
   }
-  await tx.store.put({ ...current, ...add });
+  const next: SessionLog = { ...current, ...add };
+  if (dropReread && !add.bestEffortReread) delete next.bestEffortReread;
+  await tx.store.put(next);
   await tx.done;
   return true;
 }
@@ -290,6 +324,20 @@ export async function acceptBestEffort(logId: string): Promise<boolean> {
   const db = await getDB();
   const tx = db.transaction('sessionLogs', 'readwrite');
   const current = await tx.store.get(logId);
+  if (current && !current.trim && current.bestEffortReread) {
+    // A new reading next to the one that counts: it takes over, the candidate is cleaned up.
+    const r = current.bestEffortReread;
+    const t = testTotals(current);
+    if (isUsableBestEffort(r) && !isStaleEffort(r, t.km, t.minutes)) {
+      const { bestEffortReread: _gone, ...rest } = current;
+      void _gone;
+      const { prevMinutes: _p, ...taken } = r;
+      void _p;
+      await tx.store.put({ ...rest, bestEffort: { ...taken, accepted: true } });
+      await tx.done;
+      return true;
+    }
+  }
   const b = current?.bestEffort;
   if (!current || current.trim || !isUsableBestEffort(b) || b.accepted === true) {
     await tx.done;
@@ -310,7 +358,7 @@ export async function acceptBestEffort(logId: string): Promise<boolean> {
 export async function ensureBestEffort(logId: string, options: AttachOptions = {}): Promise<AttachResult> {
   try {
     const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
-    if (!log || !log.externalId || !wantsBestEffort(log)) return 'skipped';
+    if (!log || !log.externalId || !wantsBestEffort(log, options.today ?? todayISO())) return 'skipped';
     const state = await getWatchState();
     // What is known of the activity from the last fetches (the new ones, then the older ones); an
     // activity that fell out of both gets the minimal one ensureRunDetail makes, so a test from a
@@ -344,7 +392,7 @@ export async function ensureRecentTestEfforts(options: AttachOptions & { today?:
   try {
     const today = options.today ?? todayISO();
     const logs = (await SessionLogsRepo.getAll())
-      .filter((l) => l.externalId && wantsBestEffort(l) && daysBetween(l.completedDate, today) <= RECENT_TEST_DAYS && daysBetween(l.completedDate, today) >= 0)
+      .filter((l) => l.externalId && wantsBestEffort(l, today) && daysBetween(l.completedDate, today) <= RECENT_TEST_DAYS && daysBetween(l.completedDate, today) >= 0)
       .sort((a, b) => b.completedDate.localeCompare(a.completedDate));
     for (const log of logs) {
       let timer: ReturnType<typeof setTimeout> | undefined;
@@ -427,7 +475,7 @@ export async function ensureRunDetail(logId: string, options: AttachOptions = {}
     const state = await getWatchState();
     if (!detailsWanted(state.use)) return 'off';
     const settings = await SettingsRepo.get();
-    const needs = needsOf(log, { keepStreams: settings.keepStreams !== false, streamsFresh: await streamsAreFresh(log), retry: !failedThisSession.has(log.id) });
+    const needs = needsOf(log, { keepStreams: settings.keepStreams !== false, streamsFresh: await streamsAreFresh(log), retry: !failedThisSession.has(log.id), today: options.today ?? todayISO() });
     // The best 5 km of a test and the profile have their own routes; here it is about the new parts.
     if (!needs.runDetail && !needs.streams) {
       const { km, minutes } = testTotals(log);

@@ -506,6 +506,11 @@ export interface SessionLog {
   // that does not match): the totals it was tried for, so the series is not fetched again
   // for the same numbers (engine/bestEffort.ts#effortFingerprint). Derived, optional.
   bestEffortTried?: string;
+  // A new reading of an accepted best effort that was read before stops were told apart
+  // (`bestEffort.v` below 2). The old one keeps counting; this one is only a candidate, v 2 and never
+  // accepted, until your Akkoord or until counting it changes no pace (engine/testJudgment.ts#effortOffer,
+  // docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop-aanvulling.md). Derived, optional.
+  bestEffortReread?: BestEffort;
   // The kilometres and laps of a run or tocht, worked out from its full series
   // (models/runDetail.ts, engine/runDetail.ts). Derived and append-only like `detail` and
   // `bestEffort`: added once, tied to the totals it was read for, never a change to a
@@ -538,6 +543,8 @@ export interface BestEffort {
   // (docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop.md).
   stops?: number;
   stoppedSec?: number;
+  // The minutes of the reading this one replaced or is a candidate for, so a changed time can be said.
+  prevMinutes?: number;
 }
 
 export interface WorkoutDetails {
