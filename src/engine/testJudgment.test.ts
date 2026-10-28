@@ -378,6 +378,14 @@ describe('a new reading of a best 5 km that already counts', () => {
     expect(testResults([after])[0].minutes).toBe(27);
   });
 
+  it('does not put a stale candidate in place of the reading that counts', () => {
+    // The candidate was read for other totals than the log has now.
+    const log = withReread({ wholeKm: 7, wholeMinutes: 40 });
+    const after = withEffortAccepted([log], 'r')[0];
+    expect(after.bestEffort).toMatchObject({ minutes: 28, accepted: true });
+    expect(after.bestEffortReread).toEqual(log.bestEffortReread);
+  });
+
   it('lets a candidate that changes no pace count at once, and asks when it does', () => {
     const near = withReread({ minutes: 28.0 });
     expect(mayAcceptAtOnce([near], undefined, 'r', false)).toBe(true);

@@ -236,6 +236,15 @@ describe('stops in the fastest stretch', () => {
     expect(w.startM >= 3064 || w.endM <= 3010).toBe(true);
   });
 
+  it('does not read the warm-up into the window of a fast runner who stopped once', () => {
+    // 1200 s warm-up at 2,6 m/s, 3 km at 5 m/s, 30 s stop, 2 km at 5 m/s, 800 s cool-down at 2,6 m/s.
+    const s = run([[1200, 2.6], [600, 5], [30, 0], [400, 5], [800, 2.6]]);
+    const w = fastestWindow(s, 5000)!;
+    expect(w.seconds).toBeGreaterThanOrEqual(1000 - 1);
+    expect(w.seconds).toBeLessThan(1010);
+    expect(w.stops).toBe(1);
+  });
+
   it('counts the drift around one stop as one stop', () => {
     const drift: [number, number][] = [];
     for (let k = 0; k < 15; k++) drift.push([4, 0.3], [4, 1.2]);

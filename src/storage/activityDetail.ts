@@ -36,6 +36,7 @@ import { packStreams, unpackStreams } from '../engine/streamPack';
 import { isWalkOrTripLog, logSport } from '../engine/sports';
 import type { DetailConditions } from '../models/activityDetail';
 import { daysBetween, todayISO } from '../utils/dates';
+import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
 export type AttachResult = 'attached' | 'skipped' | 'failed';
 
@@ -266,7 +267,7 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
 // Adds what is derived from the series (the profile, the best effort of a test, the
 // kilometres) to the log as it is stored now, in one readwrite transaction, and only what the
 // log does not have yet. Nothing measured is touched. Returns whether anything was added.
-export async function attachDerivedToStoredLog(
+async function attachDerivedToStoredLog(
   logId: string,
   derived: { detail?: ActivityDetail; bestEffort?: BestEffort; reread?: BestEffort; supersede?: boolean; tried?: string; runDetail?: RunDetail; runTried?: string },
 ): Promise<boolean> {
@@ -395,19 +396,11 @@ export async function ensureRecentTestEfforts(options: AttachOptions & { today?:
       .filter((l) => l.externalId && wantsBestEffort(l, today) && daysBetween(l.completedDate, today) <= RECENT_TEST_DAYS && daysBetween(l.completedDate, today) >= 0)
       .sort((a, b) => b.completedDate.localeCompare(a.completedDate));
     for (const log of logs) {
-      let timer: ReturnType<typeof setTimeout> | undefined;
       try {
-        const result = await Promise.race([
-          ensureBestEffort(log.id, options),
-          new Promise<AttachResult>((resolve) => {
-            timer = setTimeout(() => resolve('failed'), RECENT_TEST_TIMEOUT_MS);
-          }),
-        ]);
+        const result = await withTimeout(ensureBestEffort(log.id, options), RECENT_TEST_TIMEOUT_MS);
         if (result === 'attached') added = true;
       } catch {
-        // Next one.
-      } finally {
-        if (timer) clearTimeout(timer);
+        // Next one (a timeout too).
       }
     }
   } catch {
@@ -500,18 +493,10 @@ export async function ensureRunDetail(logId: string, options: AttachOptions = {}
     if (result === 'attached') return 'added';
     return after?.runDetail ? 'ready' : 'no-series';
   };
-  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    return await Promise.race([
-      work(),
-      new Promise<EnsureOutcome>((resolve) => {
-        timer = setTimeout(() => resolve('timeout'), options.timeoutMs ?? ENSURE_TIMEOUT_MS);
-      }),
-    ]);
-  } catch {
-    return 'failed';
-  } finally {
-    if (timer) clearTimeout(timer);
+    return await withTimeout(work(), options.timeoutMs ?? ENSURE_TIMEOUT_MS);
+  } catch (err) {
+    return err instanceof TimeoutError ? 'timeout' : 'failed';
   }
 }
 

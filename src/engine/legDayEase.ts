@@ -164,7 +164,7 @@ export interface SignalDeps {
   checkIns: MorningCheckIn[];
 }
 
-export function fatigueInputsFor(deps: SignalDeps, plannedSessions = deps.plannedSessions): LegFatigueInputs {
+function fatigueInputsFor(deps: SignalDeps, plannedSessions = deps.plannedSessions): LegFatigueInputs {
   return {
     logs: deps.logs, plannedSessions, templates: deps.templates, today: deps.today, bodyKg: deps.bodyKg, program: deps.program, minutesOf: deps.minutesOf,
     soreness: legSorenessList(deps.checkIns, deps.injuries),
@@ -181,7 +181,7 @@ export function legDaySignals(date: string, deps: SignalDeps, excludeId?: string
 
 // Pijn is iets anders dan spierpijn: een open melding "pijn" op een beenplek, van de laatste 14 dagen.
 // Dan is Lichter niet het instrument en werkt de pijnrem (INJURY-LEGS).
-export function legPainOpen(injuries: InjuryNote[], date: string): boolean {
+function legPainOpen(injuries: InjuryNote[], date: string): boolean {
   return injuries.some((n) => kindOf(n) === 'pijn' && isLegSpot(n.bodyPart) && isOpenOn(n, date) && n.date <= date && n.date >= addDays(date, -14));
 }
 
@@ -274,11 +274,6 @@ export function shouldOfferEase(
   if (signals.reasons.length === 0 || signals.pain) return NONE;
   if (mode === 'regel') return { state: 'line', kind, canEase: false, canMove: false };
   return { state: 'offer', kind, canEase: kind === 'beendag', canMove: true };
-}
-
-// Wat Forge mag doen met de keuze van vandaag: Lichter is gekozen voor deze training.
-export function easeChosen(decisions: LegEaseDay[] | undefined, date: string, plannedSessionId: string | undefined): boolean {
-  return !!plannedSessionId && decisionFor(decisions, date, plannedSessionId)?.choice === 'lichter';
 }
 
 // Logs waarvan je zelf koos voor Lichter: een bewust lichtere beenoefening telt niet mee voor "raak"
@@ -496,6 +491,12 @@ export function easeBecause(reasons: readonly LegEaseReason[]): string {
 
 export function moveLabel(toDate: string): string {
   return `Naar ${weekdayLongNL(toDate)}`;
+}
+
+// De reden die het voorstel "een dag later" noemt: spierpijn, een harde loop eerder vandaag of de beenindex.
+export function moveReason(signals: Pick<LegDaySignals, 'sore' | 'earlier'>): string {
+  if (signals.sore) return signals.sore === 'flink' ? 'Flinke spierpijn' : 'Spierpijn';
+  return signals.earlier.points > 0 ? 'Een harde loop eerder vandaag' : 'Vermoeide benen';
 }
 
 // --- de stille regel bij het verplaatsen --------------------------------------------------------
