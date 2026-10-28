@@ -1482,12 +1482,18 @@ function endStateOf(plan: RetryPlan, inputs: AdviceInputs, test: SessionTemplate
 // touches a session the proposal touches (undefined when there is nothing new). Akkoord must not be followed by a
 // second proposal about the same sessions (docs/beslissingen/2026-10-28-voorstel-eindstand.md). Only what is new
 // counts, so a concern that was already there before the proposal does not block it.
+const adviceBeforeCache = new WeakMap<AdviceInputs, Set<string>>();
 function newConcernIds(plan: RetryPlan, inputs: AdviceInputs, test: SessionTemplate): Set<string> | undefined {
   const touched = new Set([plan.found.id, ...plan.moves.flatMap((m) => [m.session.id, m.rest?.id, m.lightDrop?.id]), ...plan.dropped.map((d) => d.id)].filter((id): id is string => !!id));
   const end = endStateOf(plan, inputs, test);
   const hit = new Set<string>();
   const idsOf = (a: Advice) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])].flatMap((p) => p?.changes.map((c) => c.plannedSessionId).filter((id): id is string => !!id) ?? []);
-  const before = new Set(computeAdvice({ ...inputs, noRetry: true }).map((a) => a.id));
+  // The advice on the plan as it is now is the same for every candidate of this run: worked out once.
+  let before = adviceBeforeCache.get(inputs);
+  if (!before) {
+    before = new Set(computeAdvice({ ...inputs, noRetry: true }).map((a) => a.id));
+    adviceBeforeCache.set(inputs, before);
+  }
   for (const a of computeAdvice({ ...inputs, plannedSessions: end, noRetry: true })) {
     const ids = idsOf(a);
     if (!before.has(a.id) && ids.some((id) => touched.has(id))) for (const id of ids) hit.add(id);

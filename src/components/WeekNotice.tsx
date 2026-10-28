@@ -44,7 +44,8 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
   const shown = concerns.slice(0, SHOWN);
   const rest = concerns.length - shown.length;
   const sheetAdvice = withFix.find((a) => a.id === proposalId);
-  const noFix = current.outcome === 'ready' && withFix.length === 0 && covered.length === 0;
+  // Na het rekenen: heeft geen enkele open melding een voorstel, dan geen knop maar de zin dat er geen betere dag is.
+  const noFix = current.outcome === 'ready' && askable.every((c) => !fixes[c.key]);
 
   // Rekent het voorstel uit nadat de week getekend is en opent het blad; lukt het niet, dan staat er een zin.
   const ask = () => {
@@ -66,7 +67,7 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
         console.error('Het weekvoorstel kon niet worden berekend:', err);
         setWork({ for: notice, outcome: 'failed' });
       }
-    }, 50);
+    }, 50); // Even wachten zodat "Even rekenen…" eerst getekend wordt; het rekenen zelf blokkeert de pagina.
   };
   const busy = current.outcome === 'busy';
 
@@ -90,7 +91,7 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
         </div>
       )}
       {stillOpen && (
-        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{`Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} met een voorstel.`}</p>
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{`Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} open.`}</p>
       )}
       {proposalsOn && !noFix && askable.length > 0 && !quiet && <PrimaryButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</PrimaryButton>}
       {proposalsOn && !noFix && quiet && <TextButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Toch een voorstel'}</TextButton>}
