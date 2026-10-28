@@ -1,4 +1,5 @@
-import { drawingUrl, parseDrawing, type ExerciseDrawing } from '../engine/exerciseArtData';
+import { artOrder } from '../data/exerciseArt';
+import { drawingUrl, orderedDrawing, parseDrawing, type ExerciseDrawing } from '../engine/exerciseArtData';
 
 // De tekeningen laden, één keer per tekening per sessie. Geen database: de service worker bewaart
 // de bestanden (vite.config.ts, cache "exercise-art"), dit geheugen voorkomt alleen dubbel ophalen.
@@ -21,7 +22,8 @@ export function loadDrawing(slug: string): Promise<ExerciseDrawing | null> {
     try {
       const response = await fetch(drawingUrl(import.meta.env.BASE_URL, slug), { signal: controller.signal });
       if (!response.ok) return null;
-      const drawing = parseDrawing(await response.json());
+      const parsed = parseDrawing(await response.json());
+      const drawing = parsed && orderedDrawing(parsed, artOrder(slug));
       if (drawing) ready.set(slug, drawing);
       return drawing;
     } catch {
@@ -38,12 +40,21 @@ export function loadDrawing(slug: string): Promise<ExerciseDrawing | null> {
   return promise;
 }
 
-// Op de achtergrond, een voor een en met rust ertussen, zodat het niets van de rest afpakt.
-export async function prefetchDrawings(slugs: string[], shouldStop: () => boolean = () => false, gapMs = 150): Promise<void> {
+// Op de achtergrond, een voor een en met rust ertussen, zodat het niets van de rest afpakt. Elke ronde
+// kijkt of er nog verbinding is, en na de eerste mislukking stopt het: geen reeks fouten zonder netwerk.
+const isOnline = () => typeof navigator === 'undefined' || navigator.onLine !== false;
+
+export async function prefetchDrawings(
+  slugs: string[],
+  shouldStop: () => boolean = () => false,
+  gapMs = 150,
+  online: () => boolean = isOnline,
+): Promise<void> {
   for (const slug of slugs) {
-    if (shouldStop()) return;
+    if (shouldStop() || !online()) return;
     if (ready.has(slug)) continue;
-    await loadDrawing(slug);
+    const drawing = await loadDrawing(slug);
+    if (!drawing) return;
     await new Promise((resolve) => setTimeout(resolve, gapMs));
   }
 }

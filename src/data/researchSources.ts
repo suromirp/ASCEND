@@ -1883,4 +1883,12 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
     meta: 'CC BY-SA 4.0 · oorspronkelijk werk waar Workout Guide op voortbouwt',
     usedIn: ['Tekeningen in het blad van een oefening'],
   },
+  {
+    title: 'Licentie CC BY-SA 4.0: wat je met de tekeningen mag doen',
+    publisher: 'Creative Commons',
+    url: 'https://creativecommons.org/licenses/by-sa/4.0/deed.nl',
+    category: 'afbeeldingen',
+    meta: 'Je mag de tekeningen delen en aanpassen met naamsvermelding, onder dezelfde licentie',
+    usedIn: ['Tekeningen in het blad van een oefening'],
+  },
 ];

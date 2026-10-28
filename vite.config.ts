@@ -106,7 +106,7 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'exercise-art',
-              expiration: { maxEntries: 120 },
+              expiration: { maxEntries: 120, purgeOnQuotaError: true },
               cacheableResponse: { statuses: [200] },
             },
           },

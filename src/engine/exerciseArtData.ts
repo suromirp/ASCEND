@@ -26,7 +26,34 @@ export function parseDrawing(raw: unknown): ExerciseDrawing | null {
   return { viewBox: v as [number, number, number, number], frames: d as [string, string, string] };
 }
 
-export const drawingUrl = (base: string, slug: string) => `${base.replace(/\/?$/, '/')}exercise-art/${slug}.json`;
+// Een nieuwe versie van de tekeningen (andere volgorde, andere regels) krijgt een nieuw nummer, zodat de
+// service worker niet bij de oude blijft hangen. Hoog het op als een bestand in public/exercise-art verandert.
+export const DRAWING_VERSION = 1;
+
+export const drawingUrl = (base: string, slug: string) => `${base.replace(/\/?$/, '/')}exercise-art/${slug}.json?v=${DRAWING_VERSION}`;
+
+// Zet de drie beelden in de volgorde van de beweging: stap 1 de beginhouding, 2 het midden, 3 de eindstand.
+// Een order die geen rangschikking van 0, 1 en 2 is, laat de volgorde van het bestand staan.
+export function isArtOrder(order: readonly number[]): boolean {
+  return order.length === 3 && [0, 1, 2].every((i) => order.includes(i));
+}
+
+export function orderedDrawing(drawing: ExerciseDrawing, order: readonly number[]): ExerciseDrawing {
+  if (!isArtOrder(order)) return drawing;
+  const [a, b, c] = order;
+  return { viewBox: drawing.viewBox, frames: [drawing.frames[a], drawing.frames[b], drawing.frames[c]] };
+}
+
+// Wat het blad in het grote vlak laat zien: de tekening, een leeg kader dat nog even wacht, of (zonder
+// tekening, of als het laden te lang duurt) de spierkaart. Komt de tekening later alsnog, dan wint zij.
+export type ArtPhase = 'drawing' | 'waiting' | 'none';
+export const SLOW_LOAD_MS = 1500;
+export function artPhase(wantsDrawing: boolean, drawing: ExerciseDrawing | null | undefined, slow: boolean): ArtPhase {
+  if (!wantsDrawing) return 'none';
+  if (drawing) return 'drawing';
+  if (drawing === undefined && !slow) return 'waiting';
+  return 'none';
+}
 
 // De tekeningen die bij de oefeningen van je eigen trainingen horen, zonder dubbelen, in volgorde.
 export function artSlugsForNames(names: string[]): string[] {

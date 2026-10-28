@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { EXERCISE_ART } from '../data/exerciseArt';
+import { ART_ORDER, EXERCISE_ART, artOrder } from '../data/exerciseArt';
 import { EXERCISES } from '../data/exercises';
-import { artSlugForId, artSlugsForNames, drawingUrl, parseDrawing, splitCues } from './exerciseArtData';
+import { DRAWING_VERSION, artPhase, artSlugForId, artSlugsForNames, drawingUrl, isArtOrder, orderedDrawing, parseDrawing, splitCues } from './exerciseArtData';
+import { RESEARCH_SOURCES } from '../data/researchSources';
 
 // De bestanden als tekst, zonder Node-types (zoals components/sheetDrag.scan.test.ts).
 const JSONS = import.meta.glob<string>('../../public/exercise-art/*.json', { query: '?raw', import: 'default', eager: true });
@@ -19,11 +20,38 @@ describe('de koppeling van oefeningen aan tekeningen', () => {
     }
   });
 
-  it('telt 85 exacte, 28 varianten en 7 oefeningen zonder tekening', () => {
+  it('telt 76 exacte, 32 varianten en 12 oefeningen zonder tekening', () => {
     const links = Object.values(EXERCISE_ART);
-    expect(links.filter((l) => l.match === 'zeker')).toHaveLength(85);
-    expect(links.filter((l) => l.match === 'variant')).toHaveLength(28);
-    expect(EXERCISES.filter((e) => !EXERCISE_ART[e.id])).toHaveLength(7);
+    expect(links.filter((l) => l.match === 'zeker')).toHaveLength(76);
+    expect(links.filter((l) => l.match === 'variant')).toHaveLength(32);
+    expect(EXERCISES.filter((e) => !EXERCISE_ART[e.id])).toHaveLength(12);
+    expect(new Set(links.map((l) => l.slug)).size).toBe(89);
+  });
+
+  it('laat weg wat een verkeerd of vaag plaatje geeft', () => {
+    for (const id of ['pallof-press', 'hack-squat', 'ab-wheel-rollout', 'barbell-rollout', 'cable-high-row']) {
+      expect(EXERCISE_ART[id], id).toBeUndefined();
+    }
+  });
+
+  it('noemt bij een afwijkende tekening wat er anders is', () => {
+    expect(EXERCISE_ART['lat-pulldown']).toMatchObject({ match: 'variant', note: 'een bovenhandse greep' });
+    expect(EXERCISE_ART['barbell-row']).toMatchObject({ match: 'variant', note: 'een brede greep, bovenhands' });
+    expect(EXERCISE_ART['dumbbell-bench-press']?.match).toBe('variant');
+    expect(EXERCISE_ART['low-incline-dumbbell-fly']?.note).toBe('een steilere bank');
+    expect(EXERCISE_ART['low-to-high-cable-fly']?.note).toMatch(/schuine bank/);
+    expect(EXERCISE_ART['bodyweight-calf-raise']?.match).toBe('variant');
+  });
+
+  it('geeft elke slug een order die een rangschikking van 0, 1 en 2 is, en alleen voor bestaande tekeningen', () => {
+    const slugs = new Set(Object.values(EXERCISE_ART).map((l) => l.slug));
+    for (const [slug, order] of Object.entries(ART_ORDER)) {
+      expect(slugs.has(slug), slug).toBe(true);
+      expect(isArtOrder(order), slug).toBe(true);
+    }
+    for (const slug of slugs) expect(isArtOrder(artOrder(slug)), slug).toBe(true);
+    expect(artOrder('squat')).toEqual([0, 1, 2]);
+    expect(artOrder('pull-up')).toEqual([2, 1, 0]);
   });
 
   it('heeft voor elke slug een bestand met drie bruikbare paden en een zinnige viewBox', () => {
@@ -52,6 +80,13 @@ describe('de koppeling van oefeningen aan tekeningen', () => {
     expect(attribution).toMatch(/Everkinetic/);
     expect(attribution).toMatch(/Bryl Lim/);
     expect(attribution).toMatch(/CC BY-SA 4\.0/);
+    expect(attribution).toMatch(/drie standen van de beweging, in de volgorde begin, midden, eind/);
+  });
+
+  it('heeft de licentie als bron bij Afbeeldingen, met de pagina in het Nederlands', () => {
+    const licence = RESEARCH_SOURCES.find((x) => x.url === 'https://creativecommons.org/licenses/by-sa/4.0/deed.nl');
+    expect(licence?.category).toBe('afbeeldingen');
+    expect(licence?.title).toMatch(/Licentie CC BY-SA 4\.0/);
   });
 });
 
@@ -89,9 +124,43 @@ describe('artSlugsForNames', () => {
 });
 
 describe('drawingUrl', () => {
-  it('zet het pad achter het basispad, met of zonder schuine streep', () => {
-    expect(drawingUrl('/ascend/', 'squat')).toBe('/ascend/exercise-art/squat.json');
-    expect(drawingUrl('/ascend', 'squat')).toBe('/ascend/exercise-art/squat.json');
+  it('zet het pad achter het basispad, met of zonder schuine streep, en het versienummer erachter', () => {
+    expect(drawingUrl('/ascend/', 'squat')).toBe(`/ascend/exercise-art/squat.json?v=${DRAWING_VERSION}`);
+    expect(drawingUrl('/ascend', 'squat')).toBe('/ascend/exercise-art/squat.json?v=1');
+  });
+});
+
+describe('orderedDrawing', () => {
+  const drawing = { viewBox: [0, 0, 100, 100] as [number, number, number, number], frames: ['a', 'b', 'c'] as [string, string, string] };
+  it('zet de beelden in de volgorde van de beweging', () => {
+    expect(orderedDrawing(drawing, [2, 1, 0]).frames).toEqual(['c', 'b', 'a']);
+    expect(orderedDrawing(drawing, [1, 2, 0]).frames).toEqual(['b', 'c', 'a']);
+    expect(orderedDrawing(drawing, [0, 1, 2]).frames).toEqual(['a', 'b', 'c']);
+  });
+  it('laat de volgorde van het bestand staan bij een order die niet klopt', () => {
+    expect(orderedDrawing(drawing, [0, 0, 1])).toBe(drawing);
+    expect(orderedDrawing(drawing, [0, 1])).toBe(drawing);
+    expect(orderedDrawing(drawing, [0, 1, 3])).toBe(drawing);
+  });
+  it('herkent een rangschikking', () => {
+    expect(isArtOrder([1, 0, 2])).toBe(true);
+    expect(isArtOrder([1, 1, 2])).toBe(false);
+  });
+});
+
+describe('artPhase', () => {
+  const drawing = { viewBox: [0, 0, 100, 100] as [number, number, number, number], frames: ['a', 'b', 'c'] as [string, string, string] };
+  it('wacht tot anderhalve seconde en laat dan de spierkaart zien', () => {
+    expect(artPhase(true, undefined, false)).toBe('waiting');
+    expect(artPhase(true, undefined, true)).toBe('none');
+  });
+  it('laat de tekening winnen als hij alsnog komt, ook na het wachten', () => {
+    expect(artPhase(true, drawing, true)).toBe('drawing');
+    expect(artPhase(true, drawing, false)).toBe('drawing');
+  });
+  it('toont zonder tekening of bij een mislukte tekening de spierkaart', () => {
+    expect(artPhase(false, undefined, false)).toBe('none');
+    expect(artPhase(true, null, false)).toBe('none');
   });
 });
 

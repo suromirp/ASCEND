@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { exerciseArt } from '../data/exerciseArt';
 import { exerciseById } from '../data/exercises';
 import { MUSCLE_LABEL, PATTERN_LABEL } from '../models/exercise';
 import { cropFor, muscleMarks, muscleNames, sidesOf } from '../engine/muscleMap';
 import { resolveExerciseArt, showsDrawing } from '../engine/exerciseArtSettings';
-import { splitCues, type ExerciseDrawing } from '../engine/exerciseArtData';
+import { SLOW_LOAD_MS, artPhase, splitCues, type ExerciseDrawing } from '../engine/exerciseArtData';
 import { mayTap, openingMs, stepBy, swipeDelta, type Step } from '../engine/exerciseSteps';
 import { resolveFigure } from '../engine/figureSettings';
 import { loadDrawing, loadedDrawing } from '../utils/exerciseArtLoader';
@@ -14,7 +13,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { useAppData } from '../state/AppDataContext';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
-import { TextButton } from './TextButton';
+import { TextLink } from './TextButton';
 import { Card, Eyebrow, SheetGrip } from './ui';
 import { MuscleFigure } from './MuscleFigure';
 import { useMotionMode } from './motion';
@@ -97,7 +96,6 @@ function Movement({ drawing, name, note }: { drawing: ExerciseDrawing; name: str
 
 export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; onClose: () => void }) {
   const { settings } = useAppData();
-  const navigate = useNavigate();
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const exercise = exerciseById(exerciseId);
   const link = exerciseArt(exerciseId);
@@ -113,11 +111,21 @@ export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; 
     return () => { live = false; };
   }, [wantsDrawing, link, drawing]);
 
+  // Duurt het laden langer dan anderhalve seconde, dan staat de spierkaart in het vlak; komt de tekening
+  // daarna alsnog, dan neemt zij het over.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!wantsDrawing || drawing !== undefined) return;
+    const t = setTimeout(() => setSlow(true), SLOW_LOAD_MS);
+    return () => clearTimeout(t);
+  }, [wantsDrawing, drawing]);
+
   if (!exercise) return null;
   const marks = muscleMarks(exercise);
   const sides = sidesOf(marks);
-  const hasDrawing = !!drawing;
-  const loading = wantsDrawing && drawing === undefined;
+  const phase = artPhase(wantsDrawing, drawing, slow);
+  const hasDrawing = phase === 'drawing';
+  const loading = phase === 'waiting';
   const crop = cropFor(marks, { minW: 100, minH: 90, margin: 18 });
   const big = !hasDrawing && !loading;
   const maxW = big ? 150 : sides.length > 1 ? 92 : 130;
@@ -143,7 +151,7 @@ export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; 
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-8">
             <SheetHeader eyebrow={PATTERN_LABEL[exercise.pattern]} title={exercise.name} onClose={requestClose} />
 
-            {hasDrawing && link && <Movement drawing={drawing} name={exercise.name} note={link.match === 'variant' ? link.note : undefined} />}
+            {hasDrawing && link && drawing && <Movement drawing={drawing} name={exercise.name} note={link.match === 'variant' ? link.note : undefined} />}
             {loading && <div className="ea-vlak" aria-hidden="true" />}
 
             <div className="ea-licht rounded-2xl border p-3.5" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }} role="group" aria-label="Werkt op">
@@ -191,7 +199,7 @@ export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; 
             {hasDrawing && (
               <div className="flex flex-col items-start">
                 <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Tekening: Everkinetic en Bryl Lim, CC BY-SA 4.0, aangepast.</p>
-                <TextButton tone="dim" size="xs" icon="verder" onClick={() => { onClose(); navigate('/bronnen?soort=afbeeldingen'); }}>Bronnen en licentie</TextButton>
+                <TextLink tone="dim" size="xs" href="https://creativecommons.org/licenses/by-sa/4.0/deed.nl">Licentie CC BY-SA 4.0</TextLink>
               </div>
             )}
           </Card>

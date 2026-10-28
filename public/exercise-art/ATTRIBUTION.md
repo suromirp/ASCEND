@@ -9,6 +9,8 @@ Wat er voor ASCEND veranderd is:
 
 - Per oefening staan de drie beelden (begin, midden, eind) samen in één bestand `<naam>.json`,
   met één viewBox die om de drie beelden past, zodat ze op dezelfde schaal en plek staan.
+- Het zijn drie standen van de beweging, in de volgorde begin, midden, eind. De bron bewaart ze niet altijd
+  in die volgorde; ASCEND zet ze per tekening goed (`src/data/exerciseArt.ts`, `ART_ORDER`).
 - Alleen de vorm van het silhouet is bewaard; de witte vulling is weggelaten, zodat de app de kleur
   zelf bepaalt uit haar eigen tekenkleuren.
 - De getallen in de paden zijn afgerond op een tiende, wat op het formaat van de tekening niet te zien is.
