@@ -171,3 +171,14 @@ describe('Akkoord sets the target time and nothing else', () => {
     expect(goal.requirements[1].target?.amount).toBe(45); // the original is untouched
   });
 });
+
+describe('Akkoord op een nieuwe doeltijd', () => {
+  it('verandert ook de ingevulde gegevens, die voor de eis gaan', async () => {
+    const { withTargetMinutes } = await import('./goals');
+    const { goalDetailsOf } = await import('./goalLabels');
+    const g = { id: 'r', name: '10 km', kind: 'run_race', details: { distanceKm: 10, targetMinutes: 45 }, requirements: [{ id: 'q', kind: 'targetTime', scope: 'SINGLE_EVENT', target: { amount: 45, unit: 'min' } }] } as unknown as Parameters<typeof withTargetMinutes>[0];
+    const next = withTargetMinutes(g, 50, '2026-10-28T12:00:00Z');
+    expect(goalDetailsOf(next).targetMinutes).toBe(50);
+    expect(next.requirements[0].target?.amount).toBe(50);
+  });
+});

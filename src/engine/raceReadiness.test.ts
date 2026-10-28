@@ -115,7 +115,7 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
     const r = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 54 }), [accepted, ...exampleTraining], TODAY, { naming })!;
     expect(Math.round(r.meters.find((m) => m.key === 'verwachteTijd')!.share * 100)).toBe(64);
     expect(r.percent).toBe(67);
-    expect(r.race?.bandLine).toMatch(/minuten\. Je doeltijd past daarbinnen\.$/);
+    expect(r.race?.bandLine).toMatch(/minuten\. Je doeltijd past daarbinnen(: nog ongeveer \d+ weken? werk, en er zijn er \d+)?\.$/);
   });
 
   it('een doeltijd van 56:00 is snelheid 100%, getal 88% en het meeste te winnen is weekvolume', () => {
@@ -159,9 +159,9 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
 
   it('zegt de haalbaarheid als droog feit: binnen en boven de band', () => {
     const inside = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 50 }), [accepted, ...training], TODAY, { naming })!;
-    expect(inside.race?.bandLine).toMatch(/minuten\. Je doeltijd past daarbinnen\.$/);
+    expect(inside.race?.bandLine).toMatch(/minuten\. Je doeltijd past daarbinnen(: nog ongeveer \d+ weken? werk, en er zijn er \d+)?\.$/);
     const above = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 70 }), [accepted, ...training], TODAY, { naming })!;
-    expect(above.race?.bandLine).toMatch(/minuten\. Je doeltijd past daarbinnen\.$/);
+    expect(above.race?.bandLine).toMatch(/minuten\. Je doeltijd past daarbinnen(: nog ongeveer \d+ weken? werk, en er zijn er \d+)?\.$/);
   });
 
   it('voorzichtige groei: meer weken werk, een lagere meter, en de regel noemt het', () => {
@@ -176,7 +176,7 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
     const before = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
     const suggested = Number(/ongeveer (\d+) minuten/.exec(before.race!.bandLine!)![1]);
     const after = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: suggested }), [accepted, ...training], TODAY, { naming })!;
-    expect(after.race!.bandLine).toContain('Je doeltijd past daarbinnen.');
+    expect(after.race!.bandLine).toContain('Je doeltijd past daarbinnen');
     expect(after.race!.bandLine).toContain(`ongeveer ${suggested} minuten`);
   });
 

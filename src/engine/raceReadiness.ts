@@ -128,7 +128,13 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
       const outlook = raceOutlook(expected, target, left, options.growth);
       const day = formatDateNL(goal.targetDate).replace(/ \d{4}$/, '');
       const head = `Bij ${options.growth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei rond ${day}: ongeveer ${outlookMinutes(outlook)} minuten`;
-      if (outlook.fits) bandLine = `${head}. Je doeltijd past daarbinnen.`;
+      if (outlook.fits) {
+        // Het getal zegt waar je nu staat, deze zin waar je bij gemiddelde groei uitkomt: noem het werk erbij.
+        const said = outlookWeeksSaid(outlook);
+        bandLine = said.need > 0
+          ? `${head}. Je doeltijd past daarbinnen: nog ongeveer ${said.need} ${said.need === 1 ? 'week' : 'weken'} werk, en er zijn er ${said.left}.`
+          : `${head}. Je doeltijd past daarbinnen.`;
+      }
       else {
         const said = outlookWeeksSaid(outlook);
         bandLine = `${head}. ${clock(target)} vraagt ongeveer ${said.need} weken; tot ${day} zijn het er ${said.left}.`;

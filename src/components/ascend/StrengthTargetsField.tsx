@@ -40,9 +40,10 @@ export function StrengthTargetsField({ value, onChange }: { value: StrengthTarge
       {value.length > 0 && (
         <ul className="flex flex-col" aria-label="Je krachtdoelen">
           {value.map((t) => (
-            <li key={t.exercise} className="flex items-center justify-between gap-3 border-b py-1 last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
+            <li key={t.exercise} className="flex items-center justify-between gap-3 border-b py-1 pr-1 last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
               <span className="min-w-0 text-base tabular-nums" style={{ color: 'var(--color-ink)' }}>{strengthTargetLine(t)}</span>
               <TextButton
+                className="shrink-0"
                 tone="dim"
                 aria-label={`${t.exercise} weghalen`}
                 onClick={() => {
