@@ -11,12 +11,12 @@ import { DescentCard } from '../components/stand/DescentCard';
 import { RunTrendsCard } from '../components/stand/RunTrendsCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
+import { ForgeEntryCard } from '../components/stand/ForgeEntryCard';
 import { StrengthProgressionCard } from '../components/stand/StrengthProgressionCard';
 import { TrainingSplitRow } from '../components/stand/TrainingSplitRow';
 import { IndexCheckCard } from '../components/stand/IndexCheckCard';
 import { indexChecks } from '../engine/learning';
 import { AdventureCard } from '../components/AdventureCard';
-import { strengthModelOn } from '../engine/strengthSettings';
 import { LessonCard } from '../components/LessonCard';
 import { resolveIntensityCounting } from '../engine/intensitySettings';
 import { freshnessCurve, intensityMix, legCalendar, weeklyDescent, weeklyLoad } from '../engine/standing';
@@ -28,7 +28,6 @@ import { computeGoalProgress } from '../engine/progression';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
-import { Icon } from '../components/icons';
 import { SkyBand, SkyPanel } from '../components/SkyBand';
 import { InfluenceCard } from '../components/influence/InfluenceCard';
 import { mainGoal } from '../engine/mainGoal';
@@ -146,15 +145,10 @@ export function StandingPage() {
         <WeeklyLoadChart weeks={weeks} />
         <IntensityMixCard mix={mix} />
         <DescentCard weeks={descent} routeDayDescent={routeDescent} />
-        {strengthModelOn(settings.strengthModel) && (
-          <button onClick={() => navigate('/forge')} className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-2xl border p-4 text-left" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
-            <span>
-              <Eyebrow as="span">Forge</Eyebrow>
-              <span className="mt-1 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.</span>
-            </span>
-            <span className="shrink-0 text-sm" style={{ color: 'var(--color-progress)' }}><Icon name="verder" size={16} /></span>
-          </button>
-        )}
+      </section>
+
+      <section className="flex flex-col gap-5" aria-label="Kracht">
+        <ForgeEntryCard />
         <StrengthProgressionCard logs={sessionLogs} />
         <TrainingSplitRow />
       </section>
