@@ -184,7 +184,8 @@ export function effortFreshAllowed(effort: Pick<BestEffort, 'km' | 'minutes' | '
 export function withEffortAccepted(logs: SessionLog[], logId: string): SessionLog[] {
   return logs.map((l) => {
     if (l.id !== logId) return l;
-    if (l.bestEffortReread) {
+    const { km, minutes } = testTotals(l);
+    if (isUsableBestEffort(l.bestEffortReread) && !isStaleEffort(l.bestEffortReread, km, minutes)) {
       const { bestEffortReread, ...rest } = l;
       return { ...rest, bestEffort: { ...bestEffortReread, accepted: true } };
     }

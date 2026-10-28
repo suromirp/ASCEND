@@ -50,6 +50,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   const modality = activity?.modality ? getModality(log.templateId, activity.modality) : undefined;
   const garminType = activity?.garminSuggestedType;
   // A test run linked before the best 5 km existed: read it once from the watch's series.
+  // A counting v1 is left alone here on purpose; ensureRecentTestEfforts reads it again at the opening.
   useEffect(() => {
     if (log.externalId && wantsBestEffort(log)) {
       void ensureBestEffort(log.id).then((r) => (r === 'attached' ? refresh() : undefined));

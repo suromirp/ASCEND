@@ -70,9 +70,11 @@ export const EFFORT_VERSION = 2;
 export const MERGE_STOP_SEC = 10;
 export const MERGE_STOP_M = 20;
 // After a stop, this many seconds are looked at for a catch-up jump: more than this factor times
-// the median pace of the run is a hole.
+// the median pace of the CATCH_UP_BEFORE_SEC before the stop, or more than CATCH_UP_MAX_MS, is a hole.
 export const CATCH_UP_SEC = 10;
+export const CATCH_UP_BEFORE_SEC = 60;
 export const CATCH_UP_FACTOR = 1.5;
+export const CATCH_UP_MAX_MS = 6.5;
 export const MANY_STOPPED_SEC = 60;
 export const MANY_STOPS = 3;
 
@@ -124,16 +126,27 @@ export function fastestWindow(stream: StreamSet, distanceM: number, mode: StopMo
       k = e + 1;
     }
     // A catch-up jump after a stop (a watch that stood still and then made up the distance) is a
-    // hole, not a stop: the 10 seconds after it cover more than 1.5 times the median pace.
+    // hole, not a stop: the 10 seconds after it cover more than 1.5 times the pace just before
+    // the stop (the median of the 60 seconds before it when that is above the median of the whole run, so
+    // a warm-up and cool-down do not weigh in), or more than CATCH_UP_MAX_MS, which no runner reaches.
     const speeds: number[] = [];
     for (let k = 1; k < n; k++) {
       const dt = p[k].t - p[k - 1].t;
       if (!stop[k] && dt > 0 && dt <= MAX_GAP_SEC) speeds.push((p[k].d - p[k - 1].d) / dt);
     }
-    speeds.sort((x, y) => x - y);
-    const median = speeds.length ? speeds[Math.floor(speeds.length / 2)] : 0;
+    const medianOf = (v: number[]) => {
+      v.sort((x, y) => x - y);
+      return v.length ? v[Math.floor(v.length / 2)] : 0;
+    };
+    const wholeMedian = medianOf(speeds);
     for (let k = 1; k < n; k++) {
       if (!stop[k] || (k + 1 < n && stop[k + 1]) || k + 1 >= n) continue;
+      const before: number[] = [];
+      for (let r = k - 1; r >= 1 && p[k - 1].t - p[r - 1].t <= CATCH_UP_BEFORE_SEC; r--) {
+        const dt = p[r].t - p[r - 1].t;
+        if (!stop[r] && dt > 0 && dt <= MAX_GAP_SEC) before.push((p[r].d - p[r - 1].d) / dt);
+      }
+      const reference = Math.max(wholeMedian, medianOf(before));
       let q = k + 1;
       let sec = 0;
       let dist = 0;
@@ -142,7 +155,7 @@ export function fastestWindow(stream: StreamSet, distanceM: number, mode: StopMo
         dist += p[q].d - p[q - 1].d;
         q++;
       }
-      if (sec > 0 && dist > CATCH_UP_FACTOR * median * sec) for (let r = k + 1; r < q; r++) hole[r] = true;
+      if (sec > 0 && (dist > CATCH_UP_FACTOR * reference * sec || dist > CATCH_UP_MAX_MS * sec)) for (let r = k + 1; r < q; r++) hole[r] = true;
     }
   }
   // bad[k]: holes up to pair k. m[k] and md[k]: moving seconds and moving metres up to point k;
