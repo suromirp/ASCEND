@@ -149,14 +149,14 @@ export function NotFitLink({ plain = false, outlined = false }: { plain?: boolea
 }
 
 function IllnessSheet({ onPick, onClose }: { onPick: (kind: IllnessKind) => void; onClose: () => void }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>
       <div
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-6">
             <Eyebrow>Niet fit?</Eyebrow>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>

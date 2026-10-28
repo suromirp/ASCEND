@@ -1,10 +1,61 @@
 import { describe, it, expect } from 'vitest';
 import type { TrainingGoal } from '../models/goals';
-import { ADD_TILES, applyGoalEdit, buildGoalDraft, defaultDetails, detailsFromGoal, draftProblems, paceText, questionsFor, suggestPriority, tileOfGoal, RACE_KM } from './goalDraft';
+import { ADD_TILES, applyGoalEdit, buildGoalDraft, defaultDetails, detailsFromGoal, draftProblems, limitText, paceText, questionsFor, suggestPriority, tileOfGoal, RACE_KM } from './goalDraft';
 import { isRaceGoal } from './goalLabels';
 
 const NOW = '2026-10-26T10:00:00.000Z';
 const existing = (id: string, date: string, priority: TrainingGoal['priority']): TrainingGoal => ({ id, name: id, status: 'active', targetDate: date, priority, requirements: [], createdAt: NOW, updatedAt: NOW }) as TrainingGoal;
+
+describe('tijdslimiet en cutoff in het formulier', () => {
+  it('een dagtocht vraagt een tijdslimiet, een trail een cutoff alleen bij een ultra', () => {
+    expect(questionsFor('day_hike').map((q) => q.key)).toContain('timeLimitMinutes');
+    const cutoff = questionsFor('trail').find((q) => q.key === 'cutoffMinutes')!;
+    expect(cutoff.required).toBe(false);
+    expect(cutoff.showIf?.({ variant: 'ultra' })).toBe(true);
+    expect(cutoff.showIf?.({ variant: 'kort' })).toBe(false);
+    expect(questionsFor('day_hike').length).toBeLessThanOrEqual(6);
+    expect(questionsFor('trail').length).toBeLessThanOrEqual(6);
+  });
+
+  it('een korte trail houdt geen cutoff over', () => {
+    const g = buildGoalDraft({ id: 'x', now: '2026-10-28T10:00:00Z', tile: 'trail', details: { variant: 'kort', distanceKm: 20, gainM: 800, expectedMinutes: 200, cutoffMinutes: 300 }, date: '2027-05-01', name: '', priority: 'top', order: 0 });
+    expect(g.details?.cutoffMinutes).toBeUndefined();
+    const u = buildGoalDraft({ id: 'y', now: '2026-10-28T10:00:00Z', tile: 'trail', details: { variant: 'ultra', distanceKm: 50, gainM: 2500, expectedMinutes: 600, cutoffMinutes: 660 }, date: '2027-05-01', name: '', priority: 'top', order: 0 });
+    expect(u.details?.cutoffMinutes).toBe(660);
+  });
+
+  it('een ultra die naar kort gaat laat de cutoff los, ook als het formulier hem nog had', () => {
+    const ultra = buildGoalDraft({ id: 'y', now: '2026-10-28T10:00:00Z', tile: 'trail', details: { variant: 'ultra', distanceKm: 50, gainM: 2500, expectedMinutes: 600, cutoffMinutes: 660 }, date: '2027-05-01', name: '', priority: 'top', order: 0 });
+    expect(ultra.details?.cutoffMinutes).toBe(660);
+    const short = applyGoalEdit(ultra, { details: { ...detailsFromGoal(ultra), variant: 'kort' }, date: '2027-05-01', name: '', now: '2026-10-29T10:00:00Z' });
+    expect(short.details?.variant).toBe('kort');
+    expect(short.details?.cutoffMinutes).toBeUndefined();
+    // En de ultra houdt hem.
+    const still = applyGoalEdit(ultra, { details: { ...detailsFromGoal(ultra), cutoffMinutes: 700 }, date: '2027-05-01', name: '', now: '2026-10-29T10:00:00Z' });
+    expect(still.details?.cutoffMinutes).toBe(700);
+  });
+
+  it('zegt de limiet in uren', () => {
+    expect(limitText(660)).toBe('Dat is 11:00 uur.');
+    expect(limitText(undefined)).toBeUndefined();
+  });
+});
+
+describe('krachtdoelen per oefening in het formulier van Sterker worden', () => {
+  const targets = [{ exercise: 'Barbell Back Squat', kg: 100, reps: 5 }];
+  it('worden bewaard bij een nieuw doel, aangepast en weer weggehaald', () => {
+    const g = buildGoalDraft({ id: 's', now: '2026-10-28T10:00:00Z', tile: 'stronger', details: { strengthTargets: targets }, date: undefined, name: '', priority: 'verkenning', order: 0 });
+    expect(g.details?.strengthTargets).toEqual(targets);
+    const more = [...targets, { exercise: 'Front Squat', kg: 80, reps: 5 }];
+    const edited = applyGoalEdit(g, { details: { ...detailsFromGoal(g), strengthTargets: more }, date: undefined, name: '', now: '2026-10-29T10:00:00Z' });
+    expect(edited.details?.strengthTargets).toEqual(more);
+    const none = applyGoalEdit(edited, { details: { ...detailsFromGoal(edited), strengthTargets: undefined }, date: undefined, name: '', now: '2026-10-30T10:00:00Z' });
+    expect(none.details?.strengthTargets).toBeUndefined();
+  });
+  it('een doel zonder krachtdoelen kan door, het veld is vrijwillig', () => {
+    expect(draftProblems('stronger', {}, undefined, '2026-10-28')).toEqual([]);
+  });
+});
 
 describe('de soorten in het toevoegblad', () => {
   it('een leeg veld met een vraag als label leest als gewone zin', () => {
@@ -28,7 +79,7 @@ describe('de soorten in het toevoegblad', () => {
     expect(own.showIf?.({ variant: 'eigen' })).toBe(true);
     expect(questionsFor('run_race')[0].choices?.map((c) => c.value)).toEqual(['5k', '10k', 'half', 'marathon', 'eigen']);
     expect(questionsFor('fit').map((q) => q.key)).toEqual(['weeklyMinutes', 'strengthDays']);
-    expect(questionsFor('stronger')).toEqual([]);
+    expect(questionsFor('stronger').map((q) => [q.key, q.required])).toEqual([['strengthTargets', false]]);
   });
 });
 

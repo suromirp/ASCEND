@@ -29,6 +29,7 @@ import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { resolveMotion } from './motionSettings';
 import { resolveReadinessWeighting } from './raceReadiness';
+import { resolveGrowthChoice, resolveLimitMargin } from '../data/goalGrowth';
 import { resolveBodyCheck } from './bodyCheckSettings';
 import { resolveLegEase, resolveLegEaseHow } from './legEaseSettings';
 import { resolveSky } from './skySettings';
@@ -523,6 +524,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     }
     case 'klaar-weging':
       return { value: choiceShort('klaarWeging', resolveReadinessWeighting(s.readinessWeighting)) };
+    case 'klaar-groei':
+      return { value: choiceShort('klaarGroei', resolveGrowthChoice(s.goalGrowth)) };
+    case 'klaar-marge':
+      return { value: choiceShort('klaarMarge', resolveLimitMargin(s.limitMargin)) };
     case 'doeltijd-voorstel':
       return { checked: s.proposeTargetTime !== false };
     case 'test-stilstaan':
@@ -531,6 +536,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.askDoubtTest !== false };
     case 'nieuwe-test':
       return { checked: s.newTestOnStops !== false };
+    case 'trillen':
+      return { checked: s.haptics !== false };
     case 'weekvoorstel':
       return { checked: s.weekFixProposal !== false };
     case 'slepen-week':

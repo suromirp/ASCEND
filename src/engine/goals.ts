@@ -7,6 +7,8 @@ export function withTargetMinutes(goal: TrainingGoal, minutes: number, now: stri
   return {
     ...goal,
     requirements: goal.requirements.map((r) => (r.kind === 'targetTime' && r.target?.unit === 'min' ? { ...r, target: { ...r.target, amount: minutes } } : r)),
+    // De ingevulde gegevens gaan voor de eis (goalDetailsOf), dus die veranderen mee.
+    ...(goal.details?.targetMinutes !== undefined ? { details: { ...goal.details, targetMinutes: minutes } } : {}),
     updatedAt: now,
   };
 }

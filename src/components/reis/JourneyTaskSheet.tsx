@@ -18,7 +18,7 @@ function windowLine(row: TimelineTask): string {
 
 // One task of the reisplanner: why, a link, and the tick box.
 export function JourneyTaskSheet({ row, onTick, onUntick, onClose, extra }: { row: TimelineTask; onTick: () => void; onUntick: () => void; onClose: () => void; extra?: ReactNode }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const navigate = useNavigate();
   const { task } = row;
   const done = row.status === 'done';
@@ -26,7 +26,7 @@ export function JourneyTaskSheet({ row, onTick, onUntick, onClose, extra }: { ro
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div role="dialog" aria-label={task.title} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} role="dialog" aria-label={task.title} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-8">
             <Eyebrow>{row.isThisWeek ? 'Deze week' : 'Taak'}</Eyebrow>
             <h3 className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{task.title}</h3>

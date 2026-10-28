@@ -86,6 +86,13 @@ describe('soort, gegevens en belangrijkheid van een doel', () => {
     expect(readGoalDetails(null)).toBeUndefined();
     expect(readGoalDetails([1, 2])).toBeUndefined();
     expect(readGoalDetails({ distanceKm: -3, gainM: 'veel', packKg: 12, shelter: 'kasteel', variant: 'half', extra: 1 })).toEqual({ variant: 'half', packKg: 12 });
+    // De velden voor een tijdslimiet en een cutoff: een back-up zonder ze leest als voorheen, een onzin-waarde valt weg.
+    expect(readGoalDetails({ distanceKm: 20, timeLimitMinutes: 420, cutoffMinutes: 660 })).toEqual({ distanceKm: 20, timeLimitMinutes: 420, cutoffMinutes: 660 });
+    expect(readGoalDetails({ distanceKm: 20 })).toEqual({ distanceKm: 20 });
+    expect(readGoalDetails({ timeLimitMinutes: -5, cutoffMinutes: 'laat' })).toBeUndefined();
+    // Een cutoff hoort bij een ultra: bij een korte trail valt hij weg.
+    expect(readGoalDetails({ variant: 'kort', distanceKm: 20, cutoffMinutes: 300 })).toEqual({ variant: 'kort', distanceKm: 20 });
+    expect(readGoalDetails({ variant: 'ultra', distanceKm: 50, cutoffMinutes: 660 })).toEqual({ variant: 'ultra', distanceKm: 50, cutoffMinutes: 660 });
     expect(readGoalDetails({ strengthTargets: [{ exercise: 'Squat', kg: 100, reps: 5 }, { exercise: 7 }, null] })).toEqual({ strengthTargets: [{ exercise: 'Squat', kg: 100, reps: 5 }] });
     const broken = migrateTrainingGoal({ ...trekGoal, kind: 'kapot' as never, details: 'x' as never, priority: 'nu' as never }, { isMain: true, tent: false });
     // Een onbekende soort of belangrijkheid kan uit een nieuwere versie komen: die blijft staan.

@@ -1033,7 +1033,7 @@ export function migrateInfluences(raw: unknown): { list: InfluenceEntry[] | unde
 // - Een hardloopdoel wordt run_race, met priority uit planRole.
 // - "Alleen volgen" (planRole 'track') bestaat niet meer: het wordt priority 'verkenning'.
 
-const DETAIL_NUMBERS = ['distanceKm', 'gainM', 'lossM', 'days', 'packKg', 'highestPointM', 'sleepingPointM', 'expectedMinutes', 'targetMinutes', 'baggageKg', 'homeDaysInRow', 'weeklyMinutes', 'strengthDays'] as const;
+const DETAIL_NUMBERS = ['distanceKm', 'gainM', 'lossM', 'days', 'packKg', 'highestPointM', 'sleepingPointM', 'expectedMinutes', 'targetMinutes', 'baggageKg', 'homeDaysInRow', 'weeklyMinutes', 'strengthDays', 'timeLimitMinutes', 'cutoffMinutes'] as const;
 
 // Leest de ingevulde gegevens. Een veld dat geen getal boven nul is, of een tekst die niet
 // bij het veld hoort, valt weg; de rest blijft.
@@ -1048,12 +1048,19 @@ export function readGoalDetails(raw: unknown): GoalDetails | undefined {
     const x = r[key];
     if (typeof x === 'number' && Number.isFinite(x) && x > 0) out[key] = x;
   }
+  // Een cutoff bestaat alleen bij een trail (ultra); de soort staat hier niet, maar alleen een trail kent
+  // de varianten kort en ultra, dus bij elke andere variant valt een cutoff weg.
+  if (out.variant !== undefined && out.variant !== 'ultra') delete out.cutoffMinutes;
   if (Array.isArray(r.strengthTargets)) {
     const list = r.strengthTargets.flatMap((t) => {
       if (!t || typeof t !== 'object') return [];
       const { exercise, kg, reps } = t as Record<string, unknown>;
-      return typeof exercise === 'string' && typeof kg === 'number' && kg > 0 && typeof reps === 'number' && reps > 0 ? [{ exercise, kg, reps }] : [];
-    });
+      // Een naam van gewone lengte, een eindig gewicht en hele herhalingen; wat anders is valt weg.
+      return typeof exercise === 'string' && exercise.trim().length > 0 && exercise.length <= 80
+        && typeof kg === 'number' && Number.isFinite(kg) && kg > 0 && kg <= 500
+        && typeof reps === 'number' && Number.isInteger(reps) && reps > 0 && reps <= 30
+        ? [{ exercise, kg, reps }] : [];
+    }).slice(0, 8);
     if (list.length > 0) out.strengthTargets = list;
   }
   return Object.keys(out).length > 0 ? out : undefined;

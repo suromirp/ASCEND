@@ -10,12 +10,28 @@ function vibrate(pattern: number | number[]) {
   }
 }
 
+// De duur van de korte tik, op één plek te verstellen. Veel Android-motoren laten
+// een stoot onder ongeveer 70 ms weg (engine/restVibration.ts); 15 ms is het begin.
+export const TAP_MS = 15;
+
+// De instelling "Trillen" (engine/hapticsSettings.ts). Standaard aan, ook zolang de
+// instellingen nog laden. Alleen tap en success kijken ernaar; alarm en pattern zijn
+// het rustsignaal van Forge, dat zijn eigen keuze heeft.
+let enabled = true;
+export function setHapticsEnabled(on: boolean) {
+  enabled = on;
+}
+
 export const haptics = {
   // A quick toggle/switch flip — barely-there, just confirms the tap landed.
-  tap: () => vibrate(10),
+  tap: () => {
+    if (enabled) vibrate(TAP_MS);
+  },
   // A session logged or a milestone cleared — two short pulses read as more
   // deliberate than a single buzz, without tipping into "game achievement".
-  success: () => vibrate([12, 50, 18]),
+  success: () => {
+    if (enabled) vibrate([12, 50, 18]);
+  },
   // A countdown timer or the rest reaching zero: three clear buzzes, long
   // enough to feel through a pocket (very short pulses are dropped by many
   // Android motors).

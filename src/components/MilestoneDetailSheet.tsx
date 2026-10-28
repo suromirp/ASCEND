@@ -14,7 +14,7 @@ export function MilestoneDetailSheet({
   detail: MilestoneDetail;
   onClose: () => void;
 }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
 
   return (
     <Portal>
@@ -23,6 +23,7 @@ export function MilestoneDetailSheet({
         onClick={requestClose}
       >
         <div
+          ref={sheetRef}
           className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >

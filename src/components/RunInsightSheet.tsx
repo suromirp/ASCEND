@@ -22,14 +22,14 @@ function formatter(format: InsightLine['seriesFormat']): (v: number) => string {
 }
 
 export function RunInsightSheet({ model, notCompared = [], onClose }: { model: SheetModel; notCompared?: string[]; onClose: () => void }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const [open, setOpen] = useState(false);
   const { figures, series } = model;
   const background = RUN_INSIGHT_BACKGROUND[model.topic];
   return (
     <Portal>
       <div className={`fixed inset-0 z-[70] flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Waarom: ${model.title}`}>
+        <div ref={sheetRef} className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Waarom: ${model.title}`}>
           <Card className="rounded-b-none border-b-0 pb-8">
             <Eyebrow>{model.title}</Eyebrow>
             <p className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{model.word}</p>

@@ -56,7 +56,7 @@ export function TrainingGuideSheet({
 }) {
   const navigate = useNavigate();
   const { program, templates, settings, sessionLogs } = useAppData();
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const plan = template ? buildWorkoutPlan(template, dateIso, program) : undefined;
   // Tempo run and intervals: your pace, from your latest test run.
   const myPace = template ? paceLine(template.id, pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces) : undefined;
@@ -78,6 +78,7 @@ export function TrainingGuideSheet({
         onClick={requestClose}
       >
         <div
+          ref={sheetRef}
           className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >

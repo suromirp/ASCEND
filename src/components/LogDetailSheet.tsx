@@ -108,7 +108,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     rows.push({ label: 'Pijn', value: pains.map((p) => `${p.area}${p.side ? ` ${p.side}` : ''}${log.painReports ? ` ${p.score}/10` : ''}${p.worseDuring ? ', erger' : ''}${p.onBone ? ', op het bot' : ''}`).join('; ') });
   }
 
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   // "Wat speelde er": with a heart rate that stands out the block sits on top; otherwise a quiet row lower down.
   const deviation = useDeviation(log);
   const showDeviation = !!deviation && settings.influenceSign !== false;
@@ -189,7 +189,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div
+        <div ref={sheetRef}
           className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >

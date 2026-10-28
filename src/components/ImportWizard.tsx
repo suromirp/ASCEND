@@ -66,7 +66,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
   // Asked once, when the wizard opens: an empty app has nothing that can disappear.
   const [deviceEmpty] = useState(() => isEmptyStart({ programs: program ? 1 : 0, plannedSessions: plannedSessions.length, sessionLogs: sessionLogs.length, trainingGoals: trainingGoals.length }));
   const [step, setStep] = useState<Step>({ kind: 'picking' });
-  const { closing, requestClose } = useSheetClose(onClose, 200, () => step.kind !== 'applying' && step.kind !== 'undoing');
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, () => step.kind !== 'applying' && step.kind !== 'undoing');
 
   // Runs exactly once on mount — the wizard only ever opens because the
   // user just asked to import, so going straight to the file picker (rather
@@ -147,6 +147,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
         onClick={step.kind === 'applying' || step.kind === 'undoing' ? undefined : requestClose}
       >
         <div
+          ref={sheetRef}
           className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >

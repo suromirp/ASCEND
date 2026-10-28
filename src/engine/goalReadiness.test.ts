@@ -201,6 +201,16 @@ describe('de andere soorten', () => {
     expect(r.percent).toBeLessThan(100);
   });
 
+  it('een meter zonder gewicht die open blijft is geen "meeste te winnen" en houdt het getal niet onder 100', () => {
+    const logs = ['2026-09-26', '2026-09-28', '2026-09-30', '2026-10-03', '2026-10-05', '2026-10-07', '2026-10-10', '2026-10-12', '2026-10-14', '2026-10-17', '2026-10-19', '2026-10-20'].map((d) => run(d, 60, 10));
+    const external = (id: string) => (id === 'volhouden' ? { share: 0.5, text: '50%' } : id === 'verwachteTijd' ? { share: 1, text: '51 min' } : undefined);
+    const r = computeGoalReadiness({ kind: 'run_race', details: { distanceKm: 10 } }, logs, TODAY, { external, weights: { verwachteTijd: 0.6, langsteLoop: 0.2, weekvolume: 0.2, volhouden: 0 } });
+    expect(r.meters.filter((m) => m.key !== 'volhouden').every((m) => m.share >= 1)).toBe(true);
+    expect(r.percent).toBe(100);
+    expect(r.weakest).toBeUndefined();
+    expect(r.weakestSentence).toBeUndefined();
+  });
+
   it('een marathon voorspelt geen tijd: die meter valt weg, de rest blijft', () => {
     const r = computeGoalReadiness({ kind: 'run_race', details: { distanceKm: 42.2 } }, [], TODAY, { external: () => ({ share: 1, text: 'x' }) });
     expect(r.meters.map((m) => m.key)).toEqual(['langsteLoop', 'weekvolume', 'volhouden']);

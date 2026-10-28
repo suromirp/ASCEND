@@ -148,7 +148,7 @@ function Choice({ on, onClick, title, hint }: { on: boolean; onClick: () => void
 }
 
 function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; onSubmit: (period: LeavePeriod) => void; onClose: () => void }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const today = todayISO();
   const [d, setD] = useState<TrekDraft>(() => (existing && periodToTrekDraft(existing)) || {
     name: '', startDate: addDays(today, 14), days: 1, terrain: 'uneven_trail', packKg: undefined, tent: false, importance: 'training',
@@ -163,7 +163,7 @@ function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; on
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div className={`flex max-h-[92vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`flex max-h-[92vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex min-h-0 flex-col rounded-b-none border-b-0 p-0!">
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3 pt-5">
               <Eyebrow>{existing ? 'Tocht wijzigen' : 'Tocht toevoegen'}</Eyebrow>

@@ -80,6 +80,8 @@ export interface GoalDetails {
   sleepingPointM?: number;
   expectedMinutes?: number; // verwachte tijd van de doeldag of de wedstrijd
   targetMinutes?: number; // doeltijd (hardlopen)
+  timeLimitMinutes?: number; // tijdslimiet van een dagtocht (laatste lift, laatste bus), een voorwaarde
+  cutoffMinutes?: number; // cutoff van een trailrun, een voorwaarde
   baggageKg?: number; // bagage op de fiets
   homeDaysInRow?: number; // hoeveel dagen achter elkaar je thuis oefent (overschrijft de soort)
   strengthTargets?: { exercise: string; kg: number; reps: number }[];

@@ -87,6 +87,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Uiterlijk">
         <SummaryRow id="lucht" title="Lucht bovenaan" facts={facts} info="lucht" onClick={() => setSheet('lucht')} />
         <SummaryRow id="beweging" title="Beweging" facts={facts} info="beweging" onClick={() => setSheet('beweging')} />
+        <SummaryRow id="trillen" title="Trillen" facts={facts} info="trillen" onChange={(on) => void updateSettings({ haptics: on })} />
       </SettingsSection>
 
       <SettingsSection

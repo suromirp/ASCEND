@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBackToClose } from './useBackToClose';
+import { attachSheetDrag } from './sheetDragDom';
 
 // Every bottom sheet/modal in the app is conditionally rendered by its
 // parent ({selected && <Sheet onClose={...} />}) rather than staying
@@ -13,6 +14,11 @@ import { useBackToClose } from './useBackToClose';
 // The Android back button closes the sheet the same way (useBackToClose):
 // it is one step in the history while the sheet is open. `canClose` lets a
 // sheet that is busy (an import that is running) stay open on back.
+//
+// `sheetRef` goes on the panel (`ref={sheetRef}`): the sheet then follows your
+// finger when you drag it down, and closes through requestClose when you let go
+// far or fast enough (utils/sheetDragDom.ts). A sheet that must not close by
+// dragging leaves it off and says so in components/sheetDrag.scan.test.ts.
 export function useSheetClose(onClose: () => void, durationMs = 200, canClose?: () => boolean) {
   const [closing, setClosing] = useState(false);
   // A tap and the back button in the same frame must not close it twice.
@@ -27,5 +33,22 @@ export function useSheetClose(onClose: () => void, durationMs = 200, canClose?: 
 
   useBackToClose(true, requestClose, canClose);
 
-  return { closing, requestClose };
+  // The gesture always reads the latest close, flag and busy-check.
+  const latest = useRef({ requestClose, canClose });
+  useEffect(() => {
+    latest.current = { requestClose, canClose };
+  });
+  const detach = useRef<(() => void) | null>(null);
+  const sheetRef = useCallback((node: HTMLElement | null) => {
+    detach.current?.();
+    detach.current = node
+      ? attachSheetDrag(node, {
+          requestClose: () => latest.current.requestClose(),
+          canClose: () => latest.current.canClose?.() ?? true,
+          isClosing: () => closingRef.current,
+        })
+      : null;
+  }, []);
+
+  return { closing, requestClose, sheetRef };
 }

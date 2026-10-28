@@ -30,12 +30,41 @@ describe('TARGET-TIME', () => {
     expect(a.goalTargetTime!.minutes).toBeLessThanOrEqual(55);
     expect(a.relatedLogId).toBe('t1');
     expect(a.proposal).toBeUndefined(); // no session changes: the goal only
-    expect(a.title).toContain('45 minuten');
+    expect(a.title).toContain('45:00');
     expect(a.effect).toContain('Liever niet');
     expect(a.effect).toContain('in ongeveer 61 minuten');
-    expect(a.effect).toMatch(/\d+ tot \d+ minuten realistisch/);
+    expect(a.effect).toMatch(/Bij gemiddelde groei is dat rond .* ongeveer \d+ minuten, en 45:00 vraagt ongeveer \d+ weken; tot .* zijn het er \d+\./);
+    expect(a.effect).not.toContain('realistisch');
     // Plain words, no long dashes (the owner's rule for new copy).
     expect(`${a.title}${a.effect}${a.why}`).not.toMatch(/[–—]/);
+  });
+
+  it('names the goal time on the same clock as the card (47:45, not 48 minutes) and keeps the id on the whole minute', () => {
+    const [a] = targetTime(inputs({ logs, raceGoals: [race(47.75)] }));
+    expect(a.id).toBe('goaltime:race:48');
+    expect(a.title).toContain('47:45');
+    expect(a.title).not.toContain('48 minuten');
+    expect(a.effect).toContain('en 47:45 vraagt ongeveer');
+    expect(a.effect).toContain('Met Liever niet blijft 47:45 staan');
+  });
+
+  it('the why does not pin the growth on one study, and says it is the middle of a band', () => {
+    const [a] = targetTime(inputs({ logs }));
+    expect(a.why).toContain('het midden van een band van 0,3 tot 0,8%');
+    expect(a.why).toContain('niet uit één studie');
+  });
+
+  it('after Akkoord the proposed time fits: the same goal with that time is no longer asked about', () => {
+    const [a] = targetTime(inputs({ logs }));
+    const minutes = a.goalTargetTime!.minutes;
+    expect(targetTime(inputs({ logs, raceGoals: [race(minutes)] }))).toEqual([]);
+  });
+
+  it('careful growth is said in the text and gives a slower proposal', () => {
+    const [avg] = targetTime(inputs({ logs }));
+    const [careful] = targetTime(inputs({ logs, goalGrowth: 'careful' }));
+    expect(careful.effect).toContain('Bij voorzichtige groei is dat rond');
+    expect(careful.goalTargetTime!.minutes).toBeGreaterThanOrEqual(avg.goalTargetTime!.minutes);
   });
 
   it('says nothing without a test, with a goal time inside the band, or without a goal time', () => {
@@ -140,5 +169,16 @@ describe('Akkoord sets the target time and nothing else', () => {
     expect(next.targetDate).toBe('2027-03-20');
     expect(next.updatedAt).toBe('b');
     expect(goal.requirements[1].target?.amount).toBe(45); // the original is untouched
+  });
+});
+
+describe('Akkoord op een nieuwe doeltijd', () => {
+  it('verandert ook de ingevulde gegevens, die voor de eis gaan', async () => {
+    const { withTargetMinutes } = await import('./goals');
+    const { goalDetailsOf } = await import('./goalLabels');
+    const g = { id: 'r', name: '10 km', kind: 'run_race', details: { distanceKm: 10, targetMinutes: 45 }, requirements: [{ id: 'q', kind: 'targetTime', scope: 'SINGLE_EVENT', target: { amount: 45, unit: 'min' } }] } as unknown as Parameters<typeof withTargetMinutes>[0];
+    const next = withTargetMinutes(g, 50, '2026-10-28T12:00:00Z');
+    expect(goalDetailsOf(next).targetMinutes).toBe(50);
+    expect(next.requirements[0].target?.amount).toBe(50);
   });
 });

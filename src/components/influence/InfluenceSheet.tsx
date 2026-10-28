@@ -35,7 +35,7 @@ export function InfluenceSheet({
   onClose: () => void;
 }) {
   const { settings, removeInfluence } = useAppData();
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const entry = target.logId ? entryForLog(settings.influences, target.logId) : entryForDay(settings.influences, target.date);
   const mode = target.logId ? 'log' : 'day';
   const facts = useKnownFacts(log ? { kind: 'log', log } : mode === 'day' ? { kind: 'day', date: target.date } : undefined);
@@ -63,6 +63,7 @@ export function InfluenceSheet({
         onClick={requestClose}
       >
         <div
+          ref={sheetRef}
           role="dialog"
           aria-modal="true"
           aria-label={title}

@@ -382,7 +382,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.bootBreakInReminder;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'weekFixProposal', 'dragWeek', 'proposeTargetTime', 'keepStreams', 'streamsInBackup'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'weekFixProposal', 'dragWeek', 'haptics', 'proposeTargetTime', 'keepStreams', 'streamsInBackup'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -390,6 +390,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   }
   if ('readinessWeighting' in s && s.readinessWeighting !== 'speed' && s.readinessWeighting !== 'equal') {
     delete s.readinessWeighting;
+    skipped.n++;
+  }
+  if ('goalGrowth' in s && s.goalGrowth !== 'average' && s.goalGrowth !== 'careful') {
+    delete s.goalGrowth;
+    skipped.n++;
+  }
+  if ('limitMargin' in s && s.limitMargin !== 'ten' && s.limitMargin !== 'five' && s.limitMargin !== 'none') {
+    delete s.limitMargin;
     skipped.n++;
   }
   if ('testStops' in s && s.testStops !== 'skip' && s.testStops !== 'count') {

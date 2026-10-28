@@ -82,6 +82,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'alles staat meteen op zijn plek. Heeft je telefoon beperkte beweging aan, dan geldt dit altijd.' },
     ],
   },
+  trillen: {
+    title: 'Trillen',
+    lead: 'Een korte tik in je hand als je iets doet: een schakelaar, een set afvinken, een training oppakken, Akkoord geven.',
+    points: [
+      { head: 'Wat', text: 'schakelaars en keuzes, een afgevinkte set, een training oppakken in Week, Akkoord op een voorstel, en twee stootjes bij een opgeslagen training of een behaalde mijlpaal.' },
+      { head: 'Timers', text: 'het signaal als de rust in Forge of een rektimer om is, staat hier los van. Dat van Forge stel je in onder Signaal.' },
+      { head: 'iPhone', text: 'op een iPhone bestaat trillen in de browser niet. Dan doet deze schakelaar niets.' },
+    ],
+  },
   wijzigingen: {
     title: 'Wijzigingen',
     lead: 'Na een training, een gemiste sessie of een nieuwe instelling kan je planning schuiven.',
@@ -650,9 +659,28 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Weging bij een doeltijd',
     lead: 'Bij een wedstrijd met een doeltijd gaat het vooral over snelheid. Dit bepaalt hoe zwaar die meetelt in je percentage.',
     points: [
-      { head: 'Snelheid weegt het zwaarst', text: 'je doeltijd gedeeld door je verwachte tijd telt voor 60% mee, je langste loop en je weekvolume voor 20% elk.' },
+      { head: 'Snelheid weegt het zwaarst', text: 'het gat tussen je verwachte tijd en je doeltijd, uitgedrukt in weken werk bij de groei uit je instelling, telt voor 60% mee. Je langste loop en je weekvolume tellen voor 20% elk.' },
       { head: 'Gelijk', text: 'alle meters tellen even zwaar, zoals voor een doel zonder doeltijd.' },
+      { head: 'Sterker worden', text: 'volgt dezelfde keuze: de krachtmeter telt voor 60% mee en je harde sets voor 40%, of bij Gelijk allebei even zwaar.' },
       { head: 'Je verwachte tijd', text: 'komt uit je testloop die meetelt. Zonder testloop, of zolang je snelste 5 km op je Akkoord wacht, telt snelheid niet mee.' },
+    ],
+  },
+  klaarGroei: {
+    title: 'Groei bij het rekenen',
+    lead: 'Hoe snel je beter wordt, verschilt sterk tussen mensen. ASCEND rekent het gat naar je doel om in weken werk met één groeigetal.',
+    points: [
+      { head: 'Gemiddeld', text: 'het midden van de band, bij hardlopen 0,55% per week. Dat midden is afgeleid uit meerdere onderzoeken en komt niet uit één studie.' },
+      { head: 'Voorzichtig', text: 'de onderkant van de band, bij hardlopen 0,3% per week. Je doel vraagt dan meer weken en de meters staan lager.' },
+      { head: 'Overal hetzelfde', text: 'het getal, de meters, de regel onder het getal en een voorstel voor je doeltijd gebruiken dezelfde groei.' },
+    ],
+  },
+  klaarMarge: {
+    title: 'Marge bij een tijdslimiet',
+    lead: 'Bij een dagtocht met een tijdslimiet of een trailrun met een cutoff telt ASCEND een marge onder die tijd. Je wilt er niet precies op de minuut zijn.',
+    points: [
+      { head: '10%', text: 'het advies: ruimte voor eten, pauzes en een tragere dag. Bij een limiet van 8 uur ligt de grens op 7:12.' },
+      { head: '5% of geen', text: 'krapper. Kies dit alleen als je je dag goed kent.' },
+      { head: 'Alleen de meter', text: 'je planning en je doel veranderen er niet door.' },
     ],
   },
   doeltijdVoorstel: {

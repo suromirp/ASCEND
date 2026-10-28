@@ -25,13 +25,20 @@ const training = [
   run('2026-10-20', 60, 8.6), run('2026-10-13', 40, 6), run('2026-10-06', 45, 7), run('2026-09-30', 60, 8.6), run('2026-09-28', 40, 6), run('2026-10-16', 70, 14.2),
 ];
 const accepted = test('2026-10-10', 26 + 42 / 60, 5);
+// Het uitgerekende voorbeeld: langste loop 8,6 van 10 km en 12,6 van 22,5 km per week (de testloop telt mee in het volume).
+const exampleTraining = [
+  run('2026-10-20', 60, 8.6), run('2026-10-13', 60, 8.6), run('2026-10-06', 60, 8.6), run('2026-09-30', 60, 8.6), run('2026-09-28', 60, 8.6), run('2026-10-16', 20, 2.4),
+];
 
 describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
-  it('rekent snelheid als doeltijd gedeeld door verwachte tijd, begrensd op 100%', () => {
+  it('rekent snelheid als het gat in weken werk, niet als een tijdsverhouding', () => {
     const r = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
     const speed = r.meters.find((m) => m.key === 'verwachteTijd')!;
     expect(speed.label).toBe('Snelheid');
-    expect(speed.share).toBeCloseTo(45 / (26.7 * Math.pow(2, 1.06)), 3);
+    const expectedMin = 26.7 * Math.pow(2, 1.06);
+    const weeks = Math.log(expectedMin / 45) / -Math.log(1 - 0.0055);
+    expect(speed.share).toBeCloseTo(10 / (10 + weeks), 3);
+    expect(speed.share).toBeCloseTo(0.21, 2);
     expect(speed.text).toBe('55:40, doel 45:00');
     const fast = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 70 }), [accepted, ...training], TODAY, { naming })!;
     expect(fast.meters.find((m) => m.key === 'verwachteTijd')!.share).toBe(1);
@@ -82,18 +89,68 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
     expect(r.percent).toBe(Math.round(mean * 100));
   });
 
-  it('noemt de laagste meter bij "Hier is het meeste te winnen"', () => {
+  it('noemt de meter met het grootste gewogen gat bij "Hier is het meeste te winnen"', () => {
     const r = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
-    const lowest = [...r.meters].sort((a, b) => a.share - b.share)[0];
-    expect(r.weakest?.key).toBe(lowest.key);
-    expect(r.weakestSentence).toContain(lowest.label.toLowerCase());
+    const gap = (m: { key: string; share: number }) => (RACE_SPEED_WEIGHTS[m.key] ?? 0.2) * (1 - m.share);
+    const biggest = [...r.meters].sort((a, b) => gap(b) - gap(a))[0];
+    expect(r.weakest?.key).toBe(biggest.key);
+    expect(r.weakest?.key).toBe('verwachteTijd');
+    expect(r.weakestSentence).toBe('Hier is nog het meeste te winnen: snelheid.');
+  });
+
+  it('het voorbeeld: 41% met snelheid 21%, langste loop 86% en weekvolume 56%', () => {
+    const r = computeRaceReadiness(goal(), [accepted, ...exampleTraining], TODAY, { naming })!;
+    const by = Object.fromEntries(r.meters.map((m) => [m.key, Math.round(m.share * 100)]));
+    expect(by).toMatchObject({ verwachteTijd: 21, langsteLoop: 86, weekvolume: 56 });
+    expect(r.percent).toBe(41);
+    expect(r.race?.weeksOfWork).toBeCloseTo(38.6, 0);
+  });
+
+  it('met Gelijk komt hetzelfde voorbeeld op 54%', () => {
+    const r = computeRaceReadiness(goal(), [accepted, ...exampleTraining], TODAY, { naming, weighting: 'equal' })!;
+    expect(r.percent).toBe(54);
+  });
+
+  it('een doeltijd van 54:00 past binnen de weken: 64%, 67% en "je doel valt erbinnen"', () => {
+    const r = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 54 }), [accepted, ...exampleTraining], TODAY, { naming })!;
+    expect(Math.round(r.meters.find((m) => m.key === 'verwachteTijd')!.share * 100)).toBe(64);
+    expect(r.percent).toBe(67);
+    expect(r.race?.bandLine).toMatch(/minuten\. Je doeltijd past daarbinnen(: nog ongeveer \d+ weken? werk, en er zijn er \d+)?\.$/);
+  });
+
+  it('een doeltijd van 56:00 is snelheid 100%, getal 88% en het meeste te winnen is weekvolume', () => {
+    const r = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 56 }), [accepted, ...exampleTraining], TODAY, { naming })!;
+    expect(r.meters.find((m) => m.key === 'verwachteTijd')!.share).toBe(1);
+    expect(r.percent).toBe(88);
+    expect(r.weakest?.key).toBe('weekvolume');
+  });
+
+  it('een doeltijd die meer vraagt dan gemiddelde groei noemt de weken, ook als hij in de band valt', () => {
+    const r = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 47.75 }), [accepted, ...exampleTraining], TODAY, { naming })!;
+    expect(r.race?.bandLine).toMatch(/^Bij gemiddelde groei rond 20 maart: ongeveer 5\d minuten\. 47:45 vraagt ongeveer 28 weken; tot 20 maart zijn het er 21\.$/);
+  });
+
+  it('getal, meter en regel zeggen hetzelfde: past het niet, dan staat snelheid onder de helft', () => {
+    for (const target of [40, 44, 45, 47, 47.75, 49, 50, 52, 54, 55, 56]) {
+      const r = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: target }), [accepted, ...training], TODAY, { naming })!;
+      const share = r.meters.find((m) => m.key === 'verwachteTijd')!.share;
+      const work = r.race?.weeksOfWork ?? 0;
+      expect(share).toBeCloseTo(10 / (10 + work), 6);
+      if (/vraagt ongeveer/.test(r.race?.bandLine ?? '')) {
+        const [, need, left] = r.race!.bandLine!.match(/ongeveer (\d+) weken; tot .* zijn het er (\d+)/)!;
+        expect(Number(need)).toBeGreaterThan(Number(left));
+      } else if (r.race?.bandLine?.includes('daarbinnen')) {
+        expect(work).toBeLessThanOrEqual(21.2);
+      }
+    }
   });
 
   it('toont de afstand tot het doel als werk en de band als feit, zonder oordeel', () => {
     const r = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
     expect(r.race?.status).toBe('counted');
     expect(r.race?.nowLine).toBe('Verwacht nu 55:40. Doel 45:00: nog 10:40, ongeveer 1:04 per km.');
-    expect(r.race?.bandLine).toMatch(/^Bij gemiddelde groei rond 20 maart: \d+ tot \d+ minuten, dus 45:00 vraagt meer dan gemiddelde groei\.$/);
+    expect(r.race?.bandLine).toBe('Bij gemiddelde groei rond 20 maart: ongeveer 50 minuten. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21.');
+    expect(r.race?.bandLine).toMatch(/^Bij gemiddelde groei rond 20 maart: ongeveer 5\d minuten\. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21\.$/);
     expect(r.race?.basisLine).toContain('hele run van 5 km');
     const all = `${r.race?.nowLine} ${r.race?.bandLine} ${r.sentence}`.toLowerCase();
     for (const word of ['ambitieus', 'onrealistisch', 'haalbaar', 'realistisch']) expect(all).not.toContain(word);
@@ -102,9 +159,25 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
 
   it('zegt de haalbaarheid als droog feit: binnen en boven de band', () => {
     const inside = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 50 }), [accepted, ...training], TODAY, { naming })!;
-    expect(inside.race?.bandLine).toMatch(/minuten, je doel valt erbinnen\.$/);
+    expect(inside.race?.bandLine).toMatch(/minuten\. Je doeltijd past daarbinnen(: nog ongeveer \d+ weken? werk, en er zijn er \d+)?\.$/);
     const above = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 70 }), [accepted, ...training], TODAY, { naming })!;
-    expect(above.race?.bandLine).toMatch(/minuten, je doel ligt erboven\.$/);
+    expect(above.race?.bandLine).toMatch(/minuten\. Je doeltijd past daarbinnen(: nog ongeveer \d+ weken? werk, en er zijn er \d+)?\.$/);
+  });
+
+  it('voorzichtige groei: meer weken werk, een lagere meter, en de regel noemt het', () => {
+    const avg = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
+    const careful = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming, growth: 'careful' })!;
+    expect(careful.race!.weeksOfWork!).toBeGreaterThan(avg.race!.weeksOfWork!);
+    expect(careful.meters.find((m) => m.key === 'verwachteTijd')!.share).toBeLessThan(avg.meters.find((m) => m.key === 'verwachteTijd')!.share);
+    expect(careful.race!.bandLine).toMatch(/^Bij voorzichtige groei rond 20 maart/);
+  });
+
+  it('de doeltijd uit het voorstel past op de kaart: de regel zegt dat hij daarbinnen past', () => {
+    const before = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
+    const suggested = Number(/ongeveer (\d+) minuten/.exec(before.race!.bandLine!)![1]);
+    const after = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: suggested }), [accepted, ...training], TODAY, { naming })!;
+    expect(after.race!.bandLine).toContain('Je doeltijd past daarbinnen');
+    expect(after.race!.bandLine).toContain(`ongeveer ${suggested} minuten`);
   });
 
   it('zegt bij de laagste meter niet het getal erbij', () => {

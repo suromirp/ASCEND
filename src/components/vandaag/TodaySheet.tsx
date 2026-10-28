@@ -17,11 +17,12 @@ export function TodaySheet({
   onClose: () => void;
   children: ReactNode | ((close: () => void) => ReactNode);
 }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div
+          ref={sheetRef}
           className={`flex max-h-[90vh] w-full max-w-md flex-col rounded-t-2xl border border-b-0 ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
           onClick={(e) => e.stopPropagation()}

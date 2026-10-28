@@ -128,7 +128,7 @@ export function LeavePeriodsCard() {
 const inputStyle = { borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' };
 
 function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeriod[]; onSubmit: (period: LeavePeriod) => void; onClose: () => void }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const today = todayISO();
   const [kind, setKind] = useState<LeaveKind>('no_training');
   const [startDate, setStartDate] = useState(today);
@@ -143,7 +143,7 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div className={`flex max-h-[92vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`flex max-h-[92vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex min-h-0 flex-col rounded-b-none border-b-0 p-0!">
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3 pt-5">
               <Eyebrow>Periode toevoegen</Eyebrow>

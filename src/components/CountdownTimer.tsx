@@ -19,7 +19,7 @@ export function CountdownTimer({
   onClose: () => void;
 }) {
   const { settings } = useAppData();
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
 
   const [totalSeconds, setTotalSeconds] = useState(Math.max(0, initialSeconds));
   const [remaining, setRemaining] = useState(Math.max(0, initialSeconds));
@@ -74,7 +74,7 @@ export function CountdownTimer({
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-5 rounded-b-none border-b-0 pb-6">
             <SheetHeader eyebrow="Timer" title={label} onClose={requestClose} />
 

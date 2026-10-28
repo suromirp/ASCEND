@@ -655,6 +655,10 @@ html[data-motion='off'] .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mounta
   animation: ascend-sheet-out 0.2s ease-in both;
 }
 
+.sheet-snap {
+  transition: translate 0.2s ease-out;
+}
+
 /* Every bottom sheet fits on the screen you see (production feedback: "ik zie
    de bovenkant van het scherm niet"). A sheet taller than the screen used to
    push its title and its cross above the top, out of reach. Now it stops 16 px

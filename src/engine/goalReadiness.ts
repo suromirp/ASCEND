@@ -26,6 +26,7 @@
 // Puur: geen React, geen opslag. Voor een meerdaagse tocht geeft dit exact dezelfde
 // uitkomst als de oude gr5Readiness (de test bewaakt dat met bevroren uitkomsten).
 
+import { weightedGapWeakest } from './goalGap';
 import type { GoalDetails, GoalKindId, GoalRequirement, TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import { GOAL_KINDS, variantOf, type EvidenceLabel, type GoalKindDefinition, type MeterSpec, type MeterType, type NeedRule } from '../data/goalKinds';
@@ -475,10 +476,14 @@ function compute(input: GoalReadinessInput, logs: SessionLog[], today: string, o
   const weightOf = (m: GoalMeter) => options.weights ? options.weights[m.key] ?? DEFAULT_METER_WEIGHT : 1;
   const totalWeight = meters.reduce((n, m) => n + weightOf(m), 0);
   const mean = meters.reduce((n, m) => n + m.share * weightOf(m), 0) / totalWeight;
-  const full = meters.every((m) => m.share >= 1);
+  // Een meter zonder gewicht telt in het getal niet mee, dus ook niet voor "vol".
+  const full = meters.every((m) => m.share >= 1 || weightOf(m) <= 0);
   const percent = full ? 100 : Math.min(99, Math.round(mean * 100));
-  const open = meters.filter((m) => m.share < 1);
-  const weakest = open.length > 0 ? open.reduce((a, b) => (b.share < a.share ? b : a)) : undefined;
+  // Het meeste te winnen = het grootste gewogen gat (gewicht maal 1 min vulling). Zonder weging is dat de
+  // laagste meter, dus voor de GR5 verandert er niets. Een meter zonder gewicht (Volhouden bij een
+  // doeltijd) telt in het getal niet mee en kan dus ook niet "het meeste" opleveren.
+  // Zonder meter met gewicht en een gat is er niets te winnen: dan is er ook geen "meeste", en het getal is 100%.
+  const weakest = weightedGapWeakest(meters, weightOf);
   const usesShare = def.dayShare && meters.some((m) => m.evidence === 'afgeleid');
 
   return {

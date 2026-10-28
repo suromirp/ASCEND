@@ -6,6 +6,7 @@ import { ImpactSheet } from '../../ImpactSheet';
 import { afterMainGoalChange } from '../../../engine/programLayout';
 import { bootGoalKm } from '../../../engine/bootBreakIn';
 import { resolveReadinessWeighting } from '../../../engine/raceReadiness';
+import { resolveGrowthChoice, resolveLimitMargin } from '../../../data/goalGrowth';
 import { todayISO } from '../../../utils/dates';
 import { SettingsSection } from '../SettingsList';
 import { BundleSheet } from './BundleSheet';
@@ -53,6 +54,8 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="lange-zondag" title="De lange zondag" facts={facts} onClick={() => setSheet('lange-zondag')} />
         <SummaryRow id="na-hoofddoel" title="Na je hoofddoel" facts={facts} onClick={() => setSheet('na-hoofddoel')} />
         <SummaryRow id="klaar-weging" title="Weging bij een doeltijd" facts={facts} info="klaarWeging" onClick={() => setSheet('klaar-weging')} />
+        <SummaryRow id="klaar-groei" title="Groei bij het rekenen" facts={facts} info="klaarGroei" onClick={() => setSheet('klaar-groei')} />
+        <SummaryRow id="klaar-marge" title="Marge bij een tijdslimiet" facts={facts} info="klaarMarge" onClick={() => setSheet('klaar-marge')} />
         <SummaryRow id="doeltijd-voorstel" title="Doeltijd aanpassen voorstellen" facts={facts} info="doeltijdVoorstel" onChange={(on) => void updateSettings({ proposeTargetTime: on })} />
         <SummaryRow id="seizoensstrook" title="Seizoensstrook tonen" facts={facts} info="seizoensstrook" onChange={(on) => void updateSettings({ showSeasonStrip: on })} />
       </SettingsSection>
@@ -79,6 +82,12 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {sheet === 'klaar-weging' && (
         <ChoiceFromDef def={CHOICES.klaarWeging} value={resolveReadinessWeighting(settings.readinessWeighting)} onPick={(v) => void updateSettings({ readinessWeighting: v })} onClose={close} />
+      )}
+      {sheet === 'klaar-groei' && (
+        <ChoiceFromDef def={CHOICES.klaarGroei} value={resolveGrowthChoice(settings.goalGrowth)} onPick={(v) => void updateSettings({ goalGrowth: v })} onClose={close} />
+      )}
+      {sheet === 'klaar-marge' && (
+        <ChoiceFromDef def={CHOICES.klaarMarge} value={resolveLimitMargin(settings.limitMargin)} onPick={(v) => void updateSettings({ limitMargin: v })} onClose={close} />
       )}
       {sheet === 'na-hoofddoel' && (
         <ChoiceFromDef def={CHOICES.naHoofddoel} value={settings.afterMainGoal ?? 'stop'} onPick={chooseAfterGoal} onClose={close} />
