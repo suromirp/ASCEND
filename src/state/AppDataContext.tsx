@@ -54,6 +54,7 @@ import { sortPeriods } from '../engine/leave';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
 import { applyRestDayInOrder, planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
+import { dayVerdicts, newConcernLines, type DayVerdict } from '../engine/weekDrag';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
@@ -401,6 +402,10 @@ interface AppData {
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   // One-tap move: the best few days for this session (engine/moveSuggestions.ts).
   suggestMoves: (sessionId: string) => MoveSuggestion[];
+  // Slepen in Week (engine/weekDrag.ts): what each day of the week says about this training, and
+  // the new week concerns a move to a day would cause (skipRules: those the day already says itself).
+  dragVerdicts: (sessionId: string, weekStart: string) => DayVerdict[];
+  previewDrop: (sessionId: string, date: string, skipRules?: string[]) => string[];
   applyProposal: (proposal: ScheduleProposal) => Promise<void>;
   // Phase 5: folded into the same proposal-confirm pattern moveSession
   // already uses (Technical Architecture v0.3.1 REVISED,
@@ -1644,6 +1649,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones],
   );
 
+  const dragVerdicts = useCallback(
+    (sessionId: string, weekStart: string): DayVerdict[] => {
+      const today = todayISO();
+      const monday = mondayOfWeek(weekStart);
+      const nearby = [-7, 0, 7].flatMap((offset) => sessionsForWeek(addDays(monday, offset)));
+      return dayVerdicts({
+        sessions: nearby, templates, logs: sessionLogs, program,
+        dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference, asOf: today,
+        move: { leave: settings.leavePeriods, restDay: settings.restDay ?? 1, goalDay: planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal), illness: settings.illnessEpisodes },
+      }, sessionId, monday);
+    },
+    [sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones],
+  );
+
   // A same-date change (toDate === fromDate) is how proposeSkipEngine
   // represents a skip — applied as a skip, never as a no-op "move" to the
   // date the session already occupied (mirrors applyNoTimeToday's existing
@@ -2498,6 +2517,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return result;
   }, [weekNoticeState, weekCheckInput, advice, settings.weekFixProposal]);
 
+  // The new concerns of the week check when a training lands on a day, for the line while dragging.
+  // Never throws: a failure leaves the line with only what the day itself says.
+  const previewDrop = useCallback((sessionId: string, date: string, skipRules: string[] = []): string[] => {
+    try {
+      return newConcernLines(weekCheckInput(), mondayOfWeek(date), sessionId, date, skipRules);
+    } catch (err) {
+      console.error('De weekmelding bij het slepen kon niet worden berekend:', err);
+      return [];
+    }
+  }, [weekCheckInput]);
+
   // The proposal to move a test after what you noted about the evening before. Its own memo
   // so the coach advice above stays as it was; the answer is kept like any advice response.
   const influenceMoveNow = useMemo(() => {
@@ -2559,6 +2589,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     planWeekLoadChange,
     moveSession,
     suggestMoves,
+    dragVerdicts,
+    previewDrop,
     applyProposal,
     proposeSkip,
     proposeBackOnPlan,
