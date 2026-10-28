@@ -6,7 +6,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveStrengthSettings, type StrengthSettings } from '../../../engine/strengthSettings';
 import { SettingsEmpty, SettingsSection } from '../SettingsList';
-import { GymProfileSheet, MachineListSheet } from './ToestelSheets';
+import { AddOnSheet, GymProfileSheet, MachineListSheet } from './ToestelSheets';
 import { BarsSheet, CheckFromSheet, DurationSheet, PlatesSheet, ProgramSheet, RackSheet, StackSheet } from './ForgeSheets';
 import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -137,6 +137,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-dumbbells" title="Dumbbells in je log" facts={facts} info="forgeDumbbells" onClick={() => setInner('forge-dumbbells')} />
           <SummaryRow id="kabels" title="Kabels en toestellen" facts={facts} onClick={() => setInner('kabels')} />
           <SummaryRow id="toestelgewichten" title="Gewichten per toestel" facts={facts} info="toestelgewichten" onClick={() => setInner('toestelgewichten')} />
+          <SummaryRow id="tussengewichten" title="Tussengewichten" facts={facts} info="tussengewichten" onClick={() => setInner('tussengewichten')} />
         </BundleSheet>
       )}
 
@@ -172,6 +173,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {inner === 'kabels' && <StackSheet onClose={closeInner} />}
       {inner === 'gym-profiel' && <GymProfileSheet onClose={closeInner} />}
       {inner === 'toestelgewichten' && <MachineListSheet onClose={closeInner} />}
+      {inner === 'tussengewichten' && <AddOnSheet onClose={closeInner} />}
     </>
   );
 }

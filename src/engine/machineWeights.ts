@@ -7,10 +7,13 @@
 // ASCEND over dat toestel leert of schat (`candidatesFor`).
 
 import type { Exercise } from '../models/exercise';
-import { DEFAULT_PROFILE, resolveStrengthSettings, withProfile, type GymProfile, type StrengthSettings } from './strengthSettings';
+import { ADD_ON_LIMITS, DEFAULT_PROFILE, cleanAddOnOverride, cleanAddOns, resolveStrengthSettings, withProfile, type GymProfile, type StrengthSettings } from './strengthSettings';
+
+export { ADD_ON_LIMITS, cleanAddOnOverride, cleanAddOns };
 
 export const MACHINE_LIST_LIMITS = { minKg: 0.25, maxKg: 500, maxCount: 40, maxExercises: 100 };
 export const MAX_GYM_PROFILES = 5;
+// Een los tussengewicht (plaatje, magneet) dat je bij elk gewicht van het blok optelt.
 const PROFILE_NAME_MAX = 40;
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -109,8 +112,9 @@ export function withNewProfile(raw: StrengthSettings | undefined, name: string):
   const base = resolveStrengthSettings(raw).profile ?? DEFAULT_PROFILE;
   let n = profiles.length + 1;
   while (profiles.some((p) => p.id === `gym-${n}`)) n++;
-  const { exerciseWeightsKg: _own, id: _id, ...rest } = base;
+  const { exerciseWeightsKg: _own, exerciseAddOnKg: _ownAdd, id: _id, ...rest } = base;
   void _own;
+  void _ownAdd;
   void _id;
   const created: GymProfile = { ...rest, id: `gym-${n}`, name: name.trim().slice(0, PROFILE_NAME_MAX) };
   return { ...raw, profiles: [...profiles, created], activeProfileId: created.id };
@@ -137,3 +141,133 @@ export function profileIdFromWorkoutName(workoutName: string, profiles: GymProfi
 // zonder sportschool (van voor dit veld) telt voor elke: we weten niet waar hij was, en
 // weglaten zou het geleerde van alle toestellen in één keer wissen.
 export const countsForProfile = (sessionProfileId: string | undefined, activeId: string): boolean => sessionProfileId === undefined || sessionProfileId === activeId;
+
+// --- losse tussengewichten ---------------------------------------------------------------------
+// Besluit: docs/beslissingen/2026-10-28-tussengewichten.md. Een plaatje of magneet van 2,3 kg dat je
+// bij elk gewicht van het blok optelt. Elk tussengewicht hoogstens een keer, alle combinaties.
+
+// Waar het tussengewicht van dit toestel vandaan komt.
+export type AddOnSource = 'gym' | 'own' | 'none-own';
+
+// De tussengewichten die voor dit toestel gelden: de eigen keuze van het toestel, anders die van de
+// sportschool. Alleen een kabel of toestel met een gewichtstapel heeft ze.
+export function addOnsFor(profile: GymProfile, exercise: Exercise | undefined): number[] {
+  if (!exercise || !hasStack(exercise)) return [];
+  const own = cleanAddOnOverride(profile.exerciseAddOnKg?.[exercise.id]);
+  return own ?? cleanAddOns(profile.addOnKg) ?? [];
+}
+
+export function addOnSource(profile: GymProfile, exercise: Exercise | undefined): AddOnSource {
+  if (!exercise || !hasStack(exercise)) return 'gym';
+  const own = cleanAddOnOverride(profile.exerciseAddOnKg?.[exercise.id]);
+  if (!own) return 'gym';
+  return own.length === 0 ? 'none-own' : 'own';
+}
+
+// Alle sommen van tussengewichten (elk hoogstens een keer), zonder de lege som, met de gewichten
+// waaruit ze bestaan. Eerst de kortste combinatie, dan de lichtste.
+export function addOnCombos(addOns: number[]): { sumKg: number; parts: number[] }[] {
+  const list = cleanAddOns(addOns) ?? [];
+  const out: { sumKg: number; parts: number[] }[] = [];
+  for (let mask = 1; mask < 1 << list.length; mask++) {
+    const parts = list.filter((_, i) => mask & (1 << i));
+    out.push({ sumKg: r2(parts.reduce((a, b) => a + b, 0)), parts });
+  }
+  return out.sort((a, b) => a.parts.length - b.parts.length || a.sumKg - b.sumKg);
+}
+
+const MAX_WITH_ADD_ON_KG = 500;
+
+// De gewichten van het blok met elk ervan plus elke combinatie van tussengewichten, oplopend en
+// zonder dubbele. Zonder tussengewichten blijft de lijst zoals hij was.
+export function withAddOnWeights(base: number[], addOns: number[]): number[] {
+  const combos = addOnCombos(addOns);
+  if (combos.length === 0) return base;
+  const all = new Set<number>(base);
+  for (const w of base) for (const c of combos) if (r2(w + c.sumKg) <= MAX_WITH_ADD_ON_KG) all.add(r2(w + c.sumKg));
+  return [...all].sort((a, b) => a - b);
+}
+
+// Een gewicht uit blok en tussengewichten uit elkaar: het blokgewicht (volgens `isBase`) en de
+// tussengewichten die erbij kwamen. Undefined als het gewicht zelf een blokgewicht is, of als het
+// nergens op past.
+export function splitAddOn(weightKg: number, addOns: number[], isBase: (kg: number) => boolean): { baseKg: number; addOnKg: number[] } | undefined {
+  if (isBase(r2(weightKg))) return undefined;
+  for (const c of addOnCombos(addOns)) {
+    const base = r2(weightKg - c.sumKg);
+    if (base > 0 && isBase(base)) return { baseKg: base, addOnKg: c.parts };
+  }
+  return undefined;
+}
+
+// Is dit een gewicht van het blok zelf? Met een eigen lijst: staat erin; anders een veelvoud van de stap.
+export function blockPredicate(profile: GymProfile, exercise: Exercise | undefined, stepKg: number): (kg: number) => boolean {
+  const own = ownWeightsFor(profile, exercise);
+  if (own) return (kg) => own.includes(kg);
+  return (kg) => kg > 0 && Math.abs(kg / stepKg - Math.round(kg / stepKg)) < 1e-6;
+}
+
+// "70 + 2,3" voor een gewicht dat met tussengewicht gemaakt is, anders niets.
+export function addOnText(profile: GymProfile, exercise: Exercise | undefined, weightKg: number | undefined, stepKg: number): string | undefined {
+  if (weightKg === undefined) return undefined;
+  const addOns = addOnsFor(profile, exercise);
+  if (addOns.length === 0) return undefined;
+  const split = splitAddOn(weightKg, addOns, blockPredicate(profile, exercise, stepKg));
+  if (!split) return undefined;
+  return [split.baseKg, ...split.addOnKg].map((n) => String(n).replace('.', ',')).join(' + ');
+}
+
+// De waarde in de rij: "2,3 kg", "1,25 en 2,5 kg" of "Geen".
+export function formatAddOns(list: number[] | undefined): string {
+  if (!list || list.length === 0) return 'Geen';
+  const f = list.map((n) => String(n).replace('.', ','));
+  return `${f.length > 1 ? `${f.slice(0, -1).join(', ')} en ${f[f.length - 1]}` : f[0]} kg`;
+}
+
+// Tekst van het veld ("2,3" of "1,25 2,5") naar een lijst. Leeg mag: dat is "geen".
+export function parseAddOns(text: string): ParsedList {
+  if (text.trim() === '') return { ok: true, list: [] };
+  const parsed = parseMachineWeights(text);
+  if (!parsed.ok) return { ok: false, reason: 'Gebruik alleen getallen, met een spatie ertussen, bijvoorbeeld 2,3.' };
+  const { minKg, maxKg, maxCount } = ADD_ON_LIMITS;
+  if (parsed.list.some((n) => n < minKg || n > maxKg)) return { ok: false, reason: `Een tussengewicht ligt tussen ${String(minKg).replace('.', ',')} en ${maxKg} kg.` };
+  const tokens = text.split(/[;\s]+/).filter((t) => t.replace(/,/g, '') !== '').length;
+  if (parsed.list.length > maxCount || tokens > maxCount) return { ok: false, reason: `Hoogstens ${maxCount} tussengewichten.` };
+  return { ok: true, list: parsed.list };
+}
+
+// De sportschool-brede lijst gezet of gewist (een lege lijst wist), in het actieve profiel.
+export function withGymAddOns(raw: StrengthSettings | undefined, list: number[] | undefined): StrengthSettings {
+  const clean = cleanAddOns(list);
+  const out = withProfile(raw, { addOnKg: clean });
+  const id = resolveStrengthSettings(raw).profile.id;
+  out.profiles = out.profiles?.map((p) => {
+    if (p.id !== id || p.addOnKg) return p;
+    const { addOnKg: _gone, ...rest } = p;
+    void _gone;
+    return rest;
+  });
+  return out;
+}
+
+// De keuze van een toestel gezet: een lijst, een lege lijst voor "geen", of undefined voor "zoals de sportschool".
+export function withExerciseAddOns(raw: StrengthSettings | undefined, exerciseId: string, list: number[] | undefined): StrengthSettings {
+  const profile = resolveStrengthSettings(raw).profile;
+  const next = { ...(profile.exerciseAddOnKg ?? {}) };
+  const clean = list === undefined ? undefined : cleanAddOnOverride(list);
+  if (clean) next[exerciseId] = clean;
+  else delete next[exerciseId];
+  const out = withProfile(raw, { exerciseAddOnKg: Object.keys(next).length > 0 ? next : undefined });
+  if (Object.keys(next).length === 0) {
+    out.profiles = out.profiles?.map((p) => {
+      if (p.id !== profile.id) return p;
+      const { exerciseAddOnKg: _gone, ...rest } = p;
+      void _gone;
+      return rest;
+    });
+  }
+  return out;
+}
+
+// Voor hoeveel toestellen dit profiel een eigen keuze heeft.
+export const exerciseAddOnCount = (profile: GymProfile): number => Object.values(profile.exerciseAddOnKg ?? {}).filter((l) => cleanAddOnOverride(l)).length;

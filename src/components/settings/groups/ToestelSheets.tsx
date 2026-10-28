@@ -5,7 +5,10 @@
 import { useId, useState } from 'react';
 import { EXERCISES } from '../../../data/exercises';
 import {
+  addOnSource,
+  addOnsFor,
   allProfiles,
+  formatAddOns,
   formatMachineWeights,
   hasStack,
   MAX_GYM_PROFILES,
@@ -16,6 +19,7 @@ import {
 } from '../../../engine/machineWeights';
 import { normalizeStrengthSettings, resolveStrengthSettings, withProfile } from '../../../engine/strengthSettings';
 import { useAppData } from '../../../state/AppDataContext';
+import { ExerciseAddOnSheet, GymAddOnForm } from '../../forge/AddOnWeights';
 import { MachineWeightsSheet } from '../../forge/MachineWeights';
 import { Icon } from '../../icons';
 import { PrimaryButton, SecondaryButton } from '../../ui';
@@ -63,6 +67,55 @@ export function MachineListSheet({ onClose }: { onClose: () => void }) {
         />
       )}
       {editing && <MachineWeightsSheet exerciseId={editing} onClose={() => setEditing(null)} />}
+    </>
+  );
+}
+
+// Tussengewichten: een los plaatje of magneet voor de hele sportschool, en de toestellen die er
+// iets anders mee doen (een eigen keuze of geen).
+export function AddOnSheet({ onClose }: { onClose: () => void }) {
+  const { settings } = useAppData();
+  const profile = resolveStrengthSettings(settings.strengthModel).profile;
+  const [editing, setEditing] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const own = STACK_EXERCISES.filter((e) => addOnSource(profile, e) !== 'gym');
+  const rest = STACK_EXERCISES.filter((e) => addOnSource(profile, e) === 'gym');
+  return (
+    <>
+      <Sheet eyebrow="Je sportschool" title="Tussengewichten" line={`Voor ${profile.name}.`} onClose={onClose}>
+        {(close) => (
+          <>
+            <GymAddOnForm onDone={close} />
+            <p className="st-hint" style={{ marginLeft: 0, marginTop: 16 }}>
+              {own.length > 0 ? 'Toestellen die het anders doen:' : 'Geen toestel doet het anders dan de sportschool.'}
+            </p>
+            {own.length > 0 && (
+              <div className="st-list">
+                {own.map((e) => (
+                  <SettingsRow key={e.id} id={`ta-${e.id}`} title={e.name} value={formatAddOns(addOnsFor(profile, e))} onClick={() => setEditing(e.id)} />
+                ))}
+              </div>
+            )}
+            <div className="st-list" style={{ marginTop: 12 }}>
+              <button type="button" className="st-more" onClick={() => setAdding(true)}>
+                <span>Toestel toevoegen</span>
+                <Icon name="verder" size={16} />
+              </button>
+            </div>
+          </>
+        )}
+      </Sheet>
+      {adding && (
+        <ChoiceSheet<string>
+          eyebrow="Tussengewichten"
+          title="Welk toestel?"
+          options={rest.map((e) => ({ value: e.id, label: e.name }))}
+          value=""
+          onPick={(id) => setEditing(id)}
+          onClose={() => setAdding(false)}
+        />
+      )}
+      {editing && <ExerciseAddOnSheet exerciseId={editing} onClose={() => setEditing(null)} />}
     </>
   );
 }

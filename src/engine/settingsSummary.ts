@@ -19,7 +19,7 @@ import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { isMyLocation } from './weatherLocation';
 import { resolveStrengthSettings } from './strengthSettings';
-import { allProfiles, machineListCount } from './machineWeights';
+import { allProfiles, exerciseAddOnCount, formatAddOns, machineListCount } from './machineWeights';
 import { checkLines, type CheckSummary } from './prescriptionCheck';
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, SPORT_LIST, parseWeekShape, type Sport } from './sports';
 import { readClothingAdjust } from './clothingFeedback';
@@ -463,6 +463,12 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const n = machineListCount(forge.profile);
       const gyms = allProfiles(s.strengthModel).length;
       return { value: n > 0 ? plural(n, 'toestel', 'toestellen') : 'Geen', ...(n === 0 ? { dim: true } : {}), ...(gyms > 1 ? { sub: `Voor ${forge.profile.name}` } : {}) };
+    }
+
+    case 'tussengewichten': {
+      const own = exerciseAddOnCount(forge.profile);
+      const list = forge.profile.addOnKg;
+      return { value: formatAddOns(list), ...(!list || list.length === 0 ? { dim: true } : {}), ...(own > 0 ? { sub: `${plural(own, 'toestel', 'toestellen')} anders` } : {}) };
     }
 
     // Lichaam

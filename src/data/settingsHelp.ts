@@ -230,6 +230,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Aanpassen of wissen', text: 'een lijst kun je altijd veranderen. Wis je hem, dan leert en schat ASCEND weer zoals je bij Gewichten van toestellen koos.' },
     ],
   },
+  tussengewichten: {
+    title: 'Tussengewichten',
+    lead: 'Heb je een los plaatje of een magneet dat je bij het blok van een toestel legt, vul het dan een keer in. ASCEND telt het bij elk gewicht van het blok op.',
+    points: [
+      { head: 'Voorbeeld', text: 'het blok gaat in stappen van 5 kg en je hebt een los gewicht van 2,3 kg. Dan kan het toestel 65, 67,3, 70, 72,3 en zo verder. Forge laat zien waar zo\'n gewicht uit bestaat, bijvoorbeeld 70 + 2,3.' },
+      { head: 'Hele sportschool', text: 'wat je hier invult geldt voor alle kabels en toestellen met een gewichtstapel in deze sportschool.' },
+      { head: 'Per toestel', text: 'een toestel kan een eigen tussengewicht hebben, of geen terwijl de sportschool er wel een heeft. Dat kies je bij het toestel, ook in het menu van de oefening in een training.' },
+      { head: 'Meer dan één', text: 'je kunt er hoogstens drie invullen, bijvoorbeeld 1,25 en 2,5. ASCEND gebruikt ze alleen of samen, elk hoogstens één keer.' },
+    ],
+  },
   gymProfiel: {
     title: 'Sportschool',
     lead: 'Train je in twee sportscholen, kies dan hier waar je nu bent.',

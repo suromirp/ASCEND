@@ -71,6 +71,11 @@ export interface GymProfile {
   // you. The list goes before everything ASCEND learns or estimates there
   // (engine/machineWeights.ts, engine/strengthWeights.ts#candidatesFor).
   exerciseWeightsKg?: Record<string, number[]>;
+  // Loose add-on weights (a plate or magnet) that you add to any weight of the block, for every
+  // cable and stack machine in this gym. At most 3 (engine/machineWeights.ts#cleanAddOns).
+  addOnKg?: number[];
+  // Own choice per machine, over the gym's: a list replaces it, an empty list means none.
+  exerciseAddOnKg?: Record<string, number[]>;
 }
 
 export interface StrengthSettings {
@@ -218,6 +223,24 @@ function normalizeRack(raw: unknown): DumbbellRack {
   return { startKg, stepKg, upToKg, thenStepKg, maxKg };
 }
 
+// Limits of a loose add-on weight (a plate or magnet added to the block).
+export const ADD_ON_LIMITS = { minKg: 0.25, maxKg: 25, maxCount: 3 };
+
+// Tussengewichten die opgeslagen mogen worden: binnen de grenzen, zonder dubbele, oplopend, hoogstens
+// drie (de lichtste). Undefined als er niets bruikbaars staat.
+export function cleanAddOns(raw: unknown): number[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const { minKg, maxKg, maxCount } = ADD_ON_LIMITS;
+  const list = [...new Set(raw.filter((n): n is number => typeof n === 'number' && Number.isFinite(n) && n >= minKg && n <= maxKg).map((n) => Math.round(n * 100) / 100))].sort((a, b) => a - b);
+  return list.length > 0 ? list.slice(0, maxCount) : undefined;
+}
+
+// De keuze van een toestel: een lege lijst is "geen tussengewicht"; undefined is "zoals de sportschool".
+export function cleanAddOnOverride(raw: unknown): number[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  return raw.length === 0 ? [] : cleanAddOns(raw);
+}
+
 // A profile that can be stored, or nothing.
 export function normalizeProfile(raw: unknown): GymProfile | undefined {
   if (!isRecord(raw) || typeof raw.id !== 'string' || raw.id.trim() === '' || raw.id.length > 40) return undefined;
@@ -237,6 +260,16 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
       .slice(0, 100);
     if (entries.length > 0) exerciseWeightsKg = Object.fromEntries(entries);
   }
+  const addOnKg = cleanAddOns(raw.addOnKg);
+  let exerciseAddOnKg: Record<string, number[]> | undefined;
+  if (isRecord(raw.exerciseAddOnKg)) {
+    const entries = Object.entries(raw.exerciseAddOnKg)
+      .filter(([id]) => id.length > 0 && id.length <= 60)
+      .map(([id, list]): [string, number[] | undefined] => [id, cleanAddOnOverride(list)])
+      .filter((e): e is [string, number[]] => !!e[1])
+      .slice(0, 100);
+    if (entries.length > 0) exerciseAddOnKg = Object.fromEntries(entries);
+  }
   return {
     id: raw.id,
     name: typeof raw.name === 'string' && raw.name.trim() !== '' ? raw.name.trim().slice(0, 40) : DEFAULT_PROFILE.name,
@@ -246,6 +279,8 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
     stackStepKg: stepValue(raw.stackStepKg, DEFAULT_PROFILE.stackStepKg),
     ...(exerciseStepKg ? { exerciseStepKg } : {}),
     ...(exerciseWeightsKg ? { exerciseWeightsKg } : {}),
+    ...(addOnKg ? { addOnKg } : {}),
+    ...(exerciseAddOnKg ? { exerciseAddOnKg } : {}),
   };
 }
 

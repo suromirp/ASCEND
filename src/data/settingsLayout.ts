@@ -127,7 +127,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Doel en tochten
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
-  ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten'),
+  ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'tussengewichten'),
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst'),
   ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid'),
   ...inSheet('bundel-rekenmodel', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),
