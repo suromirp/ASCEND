@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeAdvice, legacyTargetTimeAnswers, type AdviceInputs } from './adviceEngine';
+import { carryTargetTimeAnswers, computeAdvice, type AdviceInputs } from './adviceEngine';
 import { withTargetMinutes } from './goals';
 import type { RaceBlock } from './raceBlock';
 import type { SessionLog, SessionTemplate } from '../models/training';
@@ -59,15 +59,16 @@ describe('TARGET-TIME', () => {
     expect(a.id).toBe('goaltime:race:46');
   });
 
-  it('an old Liever niet (id with the test date) still holds until the goal time changes', () => {
-    const answers = legacyTargetTimeAnswers({ 'goaltime:race:2026-10-29': { at: '2026-10-30T08:00:00Z' } });
-    expect(answers).toEqual({ race: '2026-10-30T08:00:00Z' });
-    const base = { logs, goalUpdatedAt: { race: '2026-10-01T00:00:00Z' }, legacyTargetTimeAnswers: answers };
-    expect(targetTime(inputs(base))).toEqual([]);
-    // The goal time changed after the answer: new, may ask once.
-    expect(targetTime(inputs({ ...base, goalUpdatedAt: { race: '2026-11-01T00:00:00Z' } })).map((a) => a.id)).toEqual(['goaltime:race:45']);
-    // Another goal's old answer does not count.
-    expect(targetTime(inputs({ ...base, legacyTargetTimeAnswers: { other: '2026-10-30T08:00:00Z' } })).length).toBe(1);
+  it('an old Liever niet (id with the test date) carries over once to the id with the goal time', () => {
+    const old = { 'goaltime:race:2026-10-29': { at: '2026-10-30T08:00:00Z' } };
+    const carried = carryTargetTimeAnswers(old, [{ id: 'race', updatedAt: '2026-10-01T00:00:00Z', targetMinutes: 45 }]);
+    expect(Object.keys(carried ?? {})).toEqual(['goaltime:race:2026-10-29', 'goaltime:race:45']);
+    expect(targetTime(inputs({ logs, respondedIds: new Set(Object.keys(carried ?? {})) }))).toEqual([]);
+    // The goal changed after the answer: nothing carried, it may ask once.
+    expect(carryTargetTimeAnswers(old, [{ id: 'race', updatedAt: '2026-11-01T00:00:00Z', targetMinutes: 45 }])).toBeUndefined();
+    // Another goal, or already carried: nothing to do.
+    expect(carryTargetTimeAnswers(old, [{ id: 'other', targetMinutes: 45 }])).toBeUndefined();
+    expect(carryTargetTimeAnswers(carried ?? {}, [{ id: 'race', updatedAt: '2026-10-01T00:00:00Z', targetMinutes: 45 }])).toBeUndefined();
   });
 
   it('says nothing when "Doeltijd aanpassen voorstellen" is off', () => {

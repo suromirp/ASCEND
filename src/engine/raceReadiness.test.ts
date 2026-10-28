@@ -166,3 +166,17 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
     expect(resolveReadinessWeighting('equal')).toBe('equal');
   });
 });
+
+describe('de weging in de instellingen', () => {
+  it('noemt dezelfde getallen als RACE_SPEED_WEIGHTS', async () => {
+    const { settingsHelp } = await import('../data/settingsHelp');
+    const { CHOICES } = await import('../data/settingsChoices');
+    const pct = (k: string) => `${Math.round(RACE_SPEED_WEIGHTS[k] * 100)}%`;
+    const help = JSON.stringify(settingsHelp('klaarWeging'));
+    const note = JSON.stringify(CHOICES.klaarWeging);
+    for (const text of [help, note]) {
+      expect(text).toContain(pct('verwachteTijd'));
+      expect(text).toContain(pct('langsteLoop'));
+    }
+  });
+});

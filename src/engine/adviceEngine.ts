@@ -138,11 +138,6 @@ export interface AdviceInputs {
   // The races that are a tussendoel (engine/raceBlock.ts), with their target
   // time: the goal time is held against the test (rule TARGET-TIME).
   raceGoals?: RaceBlock[];
-  // Voor TARGET-TIME: per doel wanneer het voor het laatst is aangepast (ISO), en wanneer een antwoord met het
-  // oude id `goaltime:<doel>:<datum>` is gegeven. Zo blijft een oude Liever niet gelden zolang de doeltijd
-  // sindsdien niet veranderde.
-  goalUpdatedAt?: Record<string, string>;
-  legacyTargetTimeAnswers?: Record<string, string>;
   // The forecast for your place and the moment it is read at (engine/weather.ts,
   // rule WEATHER-SWAP). Absent without a place or before the first fetch.
   weather?: { forecast: WeatherForecast; now: Date; leave?: LeavePeriod[] };
@@ -1120,16 +1115,21 @@ function tentPackAdvice(inputs: AdviceInputs): Advice[] {
 // Changed 28 October (decision 2026-10-28-klaar-voor-je-doel-snelheid.md): the goal stays the goal. The id
 // now carries the target time instead of the test date, so one Liever niet is enough for every later test
 // until the target time itself changes. The setting "Doeltijd aanpassen voorstellen" can switch the rule off.
-// Antwoorden met het oude id `goaltime:<doel>:JJJJ-MM-DD`, per doel het laatste moment van antwoorden.
-export function legacyTargetTimeAnswers(responses: Record<string, { at?: string }>): Record<string, string> {
-  const out: Record<string, string> = {};
+// Antwoorden met het oude id `goaltime:<doel>:JJJJ-MM-DD` gaan eenmalig over op het nieuwe id met de doeltijd,
+// zolang het doel na het antwoord niet meer veranderde. Daarna telt alleen nog een andere doeltijd als nieuw;
+// een andere volgorde, datum of label vraagt niet opnieuw. Geeft undefined als er niets over te zetten is.
+export function carryTargetTimeAnswers<R extends { at?: string }>(responses: Record<string, R>, goals: { id: string; updatedAt?: string; targetMinutes?: number }[]): Record<string, R> | undefined {
+  const byGoal = new Map(goals.map((g) => [g.id, g]));
+  const added: Record<string, R> = {};
   for (const [id, r] of Object.entries(responses)) {
     const m = /^goaltime:(.+):\d{4}-\d{2}-\d{2}$/.exec(id);
-    if (!m) continue;
-    const at = r.at ?? '9999';
-    if (out[m[1]] === undefined || at > out[m[1]]) out[m[1]] = at;
+    const goal = m ? byGoal.get(m[1]) : undefined;
+    if (!goal?.targetMinutes) continue;
+    if ((r.at ?? '9999') < (goal.updatedAt ?? '')) continue;
+    const next = `goaltime:${goal.id}:${Math.round(goal.targetMinutes)}`;
+    if (!responses[next] && !added[next]) added[next] = r;
   }
-  return out;
+  return Object.keys(added).length > 0 ? { ...responses, ...added } : undefined;
 }
 
 function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
@@ -1141,9 +1141,6 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
     if (!race.targetMinutes || race.raceDate < inputs.asOf) continue;
     // Without a distance there is nothing honest to compare the test with.
     if (!race.distanceKm) continue;
-    // Een Liever niet van voor 28 oktober (id met de datum van de test) blijft gelden tot de doeltijd verandert.
-    const oldAnswer = inputs.legacyTargetTimeAnswers?.[race.goalId];
-    if (oldAnswer !== undefined && oldAnswer >= (inputs.goalUpdatedAt?.[race.goalId] ?? '')) continue;
     const km = race.distanceKm;
     const paces = racePaces(tests, km);
     if (!paces) continue;
@@ -1158,14 +1155,16 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
       ? `snelste ${formatNumberNL(paces.test.km, paces.test.km % 1 === 0 ? 0 : 1)} km in ${formatRaceTime(paces.test.minutes)}${stopsShort(paces.test) ? `, ${stopsShort(paces.test)}` : ''}`
       : `hele run: ${formatNumberNL(paces.test.km, paces.test.km % 1 === 0 ? 0 : 1)} km in ${formatRaceTime(paces.test.minutes)}`;
     const now = `${Math.round(check.predictedMinutes)} minuten`;
+    // Vanaf vandaag geteld, zoals de doelkaart; de band zelf rekent vanaf de test.
+    const weeksLeft = Math.max(0, Math.round(daysBetween(inputs.asOf, race.raceDate) / 7));
     const ambitious = check.verdict === 'ambitious';
     const title = ambitious
       ? `Doeltijd ${distance} km: ${target} minuten past nog niet bij je test`
       : `Doeltijd ${distance} km: ${target} minuten is ruim langzamer dan je test`;
     const lead = `Je testloop van ${shortDate(paces.test.date)} (${test}) past bij een ${distance} km in ongeveer ${now}.${testStopsRemark(paces.test) ? ` ${testStopsRemark(paces.test)}` : ''}`;
     const effect = ambitious
-      ? `${lead} Met nog ${check.band.weeks} weken tot ${shortDate(race.raceDate)} is ${check.band.low} tot ${check.band.high} minuten realistisch, dus ${target} minuten vraagt meer dan gemiddelde groei. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`
-      : `${lead} Met nog ${check.band.weeks} weken tot ${shortDate(race.raceDate)} is ${check.band.low} tot ${check.band.high} minuten realistisch, dus ${target} minuten laat veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`;
+      ? `${lead} Met nog ${weeksLeft} weken tot ${shortDate(race.raceDate)} is ${check.band.low} tot ${check.band.high} minuten realistisch, dus ${target} minuten vraagt meer dan gemiddelde groei. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`
+      : `${lead} Met nog ${weeksLeft} weken tot ${shortDate(race.raceDate)} is ${check.band.low} tot ${check.band.high} minuten realistisch, dus ${target} minuten laat veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`;
     const why = 'De testloop is het eerlijkste meetpunt dat ASCEND heeft. Uit de tijd rekent ASCEND je tempo op andere afstanden uit. Recreatieve lopers die trainen worden in 10 tot 15 weken 3 tot 6% sneller (Muñoz e.a. 2014, Nuuttila e.a. 2022); wie nog vroeg in zijn looploopbaan zit, kan tot ongeveer 0,8% per week winnen. Dat is doorgerekend tot je wedstrijd, met ruimte voor een test die op een warme of vermoeide dag viel. Je doeltijd verandert alleen als je Akkoord geeft. Wil je jouw tijd houden, kies dan Liever niet: dan blijft alles staan. Met Liever niet vraagt ASCEND hier niet meer naar, tot je de doeltijd zelf verandert.';
     out.push({
       id: `goaltime:${race.goalId}:${target}`, trigger: 'plan_update', ruleId: 'TARGET-TIME', title, effect, why, priority: 3,

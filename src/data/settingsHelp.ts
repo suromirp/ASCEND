@@ -637,7 +637,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     ],
   },
   klaarWeging: {
-    title: 'Klaar voor je doel bij een doeltijd',
+    title: 'Weging bij een doeltijd',
     lead: 'Bij een wedstrijd met een doeltijd gaat het vooral over snelheid. Dit bepaalt hoe zwaar die meetelt in je percentage.',
     points: [
       { head: 'Snelheid weegt het zwaarst', text: 'je doeltijd gedeeld door je verwachte tijd telt voor 60% mee, je langste loop en je weekvolume voor 20% elk.' },

@@ -5,7 +5,7 @@ import { GOAL_KINDS } from '../../data/goalKinds';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION } from '../../data/gr5Details';
 import { changeLabel } from '../../engine/goalReadiness';
 import { raceWeightSentence } from '../../engine/raceReadiness';
-import { goalKindOf, PRIORITY_NAME } from '../../engine/goalLabels';
+import { goalKindOf } from '../../engine/goalLabels';
 import { computeGoalProgress } from '../../engine/progression';
 import { labelLine, type NextKeySession } from '../../engine/goalList';
 import { formatDateNL } from '../../utils/dates';
@@ -61,7 +61,7 @@ export function GoalSheet({
 
   return (
     <>
-      <Sheet eyebrow={`${kind ? GOAL_KINDS[kind].label : 'Doel'} · ${PRIORITY_NAME[item.priority]}`} title={goal.name || 'Naamloos doel'} line={line} action={(
+      <Sheet eyebrow={kind && GOAL_KINDS[kind].label !== goal.name ? GOAL_KINDS[kind].label : 'Doel'} title={goal.name || 'Naamloos doel'} line={line} action={(
         <button type="button" onClick={onMenu} aria-label="Meer voor dit doel" className="flex h-11 w-11 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
           <Icon name="meer" size={24} />
         </button>

@@ -52,7 +52,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setSheet('weekbudget')} />
         <SummaryRow id="lange-zondag" title="De lange zondag" facts={facts} onClick={() => setSheet('lange-zondag')} />
         <SummaryRow id="na-hoofddoel" title="Na je hoofddoel" facts={facts} onClick={() => setSheet('na-hoofddoel')} />
-        <SummaryRow id="klaar-weging" title="Klaar voor je doel bij een doeltijd" facts={facts} info="klaarWeging" onClick={() => setSheet('klaar-weging')} />
+        <SummaryRow id="klaar-weging" title="Weging bij een doeltijd" facts={facts} info="klaarWeging" onClick={() => setSheet('klaar-weging')} />
         <SummaryRow id="doeltijd-voorstel" title="Doeltijd aanpassen voorstellen" facts={facts} info="doeltijdVoorstel" onChange={(on) => void updateSettings({ proposeTargetTime: on })} />
         <SummaryRow id="seizoensstrook" title="Seizoensstrook tonen" facts={facts} info="seizoensstrook" onChange={(on) => void updateSettings({ showSeasonStrip: on })} />
       </SettingsSection>

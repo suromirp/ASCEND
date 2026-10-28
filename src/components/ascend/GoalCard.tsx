@@ -63,6 +63,8 @@ export const GoalCard = forwardRef<HTMLDivElement, {
   const percent = readiness?.percent;
   // Een wedstrijd met een doeltijd: de kaart is in één oogopslag te lezen, de rest staat in het blad.
   const raceCard = !!readiness?.race && readiness.race.status !== 'no-target';
+  // Een wedstrijd met een gemeten doeltijd: feiten en meters staan altijd open, er valt niets uit te klappen.
+  const raceOpen = raceCard && readiness?.race?.status === 'counted';
   const change = readiness ? changeLabel(readiness.change) : undefined;
   const sentence = readiness?.sentence ?? (kind
     ? 'Nog niets te meten. Dat komt met trainingen die meetellen.'
@@ -127,7 +129,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
           {change && <span className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{change}</span>}
         </div>
         {readiness?.race && <RaceFactsBlock race={readiness.race} />}
-        {!(raceCard && readiness?.race?.status === 'counted') && (
+        {!raceOpen && (
           <p className={`text-sm leading-relaxed ${open ? '' : 'line-clamp-2'}`} style={{ color: 'var(--color-ink)' }}>{sentence}</p>
         )}
       </div>
@@ -158,7 +160,8 @@ export const GoalCard = forwardRef<HTMLDivElement, {
 
       <div className="-mb-2 flex items-center justify-between">
         <TextButton onClick={onDetails} icon="verder">Meer over dit doel</TextButton>
-        <TextButton tone="dim" onClick={onToggle} icon="omlaag" flipped={open} aria-expanded={open}>{open ? 'Inklappen' : 'Uitklappen'}</TextButton>
+        {/* Een wedstrijd met een gemeten doeltijd toont alles al: dan klapt er niets. */}
+        {!raceOpen && <TextButton tone="dim" onClick={onToggle} icon="omlaag" flipped={open} aria-expanded={open}>{open ? 'Inklappen' : 'Uitklappen'}</TextButton>}
       </div>
       {timing.state === 'underway' && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Tijdens het doel plant ASCEND geen training. Het doel is je training.</p>

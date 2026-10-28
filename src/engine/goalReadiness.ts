@@ -509,7 +509,8 @@ export function computeGoalReadiness(input: GoalReadinessInput, logs: SessionLog
   const existed = options.since === undefined || (options.since <= addDays(today, -VERGELIJK_DAGEN) && (before.percent ?? 0) > 0);
   // Alleen vergelijken als beide momenten dezelfde meters hebben (met dezelfde weging): een meter die er
   // vier weken terug nog niet was (een testloop erbij) maakt het verschil schijn.
-  const sameBasis = now.meters.length === before.meters.length && now.meters.every((m, i) => before.meters[i].key === m.key);
+  // Alleen met een eigen weging (een wedstrijd met doeltijd); de GR5 en andere doelen blijven zoals ze waren.
+  const sameBasis = options.weights === undefined || (now.meters.length === before.meters.length && now.meters.every((m, i) => before.meters[i].key === m.key));
   const change = existed && sameBasis && before.percent !== undefined && (before.percent > 0 || now.percent > 0) ? now.percent - before.percent : undefined;
   return { ...now, change };
 }

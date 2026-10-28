@@ -37,7 +37,7 @@ describe('weekNoticeConcerns', () => {
     expect(quick.covered).toEqual([]);
   });
 
-  it('kost een fractie van het voorstel, zodat het tekenen niet wacht', () => {
+  it('blijft onder 50 ms, zodat het tekenen niet wacht', () => {
     // Een vaste grens: twee losse tijden vergelijken wisselt met de drukte op de machine.
     weekNoticeConcerns(input, MONDAY);
     const t0 = performance.now();

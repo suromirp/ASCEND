@@ -298,7 +298,7 @@ export const CHOICES = {
   }),
   klaarWeging: def({
     group: 'Doel en tochten',
-    title: 'Klaar voor je doel bij een doeltijd',
+    title: 'Weging bij een doeltijd',
     line: 'Hoe zwaar snelheid meetelt bij een wedstrijd met een doeltijd.',
     advice: 'speed' as 'speed' | 'equal',
     help: 'klaarWeging',
