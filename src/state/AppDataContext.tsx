@@ -2428,6 +2428,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         legEase: resolveLegEase({ legEase: settings.legEase }),
         testJudgments: settings.testJudgments,
         askDoubtTest: settings.askDoubtTest !== false,
+        newTestOnStops: settings.newTestOnStops !== false,
+        leave: settings.leavePeriods,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         extraSession: extraSessionContext,
         tentPack: tentPackProposal(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))),
@@ -2435,7 +2437,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.newTestOnStops, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
   );
 
   // The proposal to move a test after what you noted about the evening before. Its own memo

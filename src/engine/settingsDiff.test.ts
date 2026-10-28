@@ -49,6 +49,7 @@ const everything: AppSettings = {
   },
   askShortNight: false,
   askDoubtTest: false,
+  newTestOnStops: false,
   testStops: 'count',
   weekBudget: { minutes: 105, strength: 3, doubleHard: false },
   introSoundEnabled: false,
