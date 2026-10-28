@@ -11,6 +11,7 @@
 // row and a sheet of the settings design: title left, at most one line under
 // it, a sheet title in Marcellus, the cross at the top right.
 
+import type { AllowedPair } from '../engine/allowedPair';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import type { Program } from '../models/program';
@@ -84,6 +85,7 @@ function SheetFrame({ closing, sheetRef, onClose, label, scrollKey, head, childr
 export function SessionActionSheet({
   session,
   template,
+  allowedPair,
   program,
   quickComplete = false,
   completedLog,
@@ -102,6 +104,8 @@ export function SessionActionSheet({
 }: {
   session: PlannedSession;
   template: SessionTemplate;
+  // De tweede van een toegestaan paar (rustige loop en beenkracht na elkaar): het feit en de reden.
+  allowedPair?: AllowedPair;
   program: Program | null;
   quickComplete?: boolean;
   completedLog?: SessionLog;
@@ -312,6 +316,12 @@ export function SessionActionSheet({
           program={program}
           onClose={() => setShowPreview(false)}
         />
+      )}
+      {allowedPair && !skipped && (
+        <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+          {allowedPair.sheetText}
+          <span className="mt-1 block text-xs">{allowedPair.source}</span>
+        </p>
       )}
       {bikeOption && !skipped && (
         <p className="mt-1 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>Kan ook op de fiets, buiten of binnen.</p>

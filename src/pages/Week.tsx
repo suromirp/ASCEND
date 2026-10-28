@@ -17,6 +17,7 @@ import { WeekPlanner } from '../components/WeekPlanner';
 import { useWeekDrag } from '../components/useWeekDrag';
 import { WeekNotice } from '../components/WeekNotice';
 import { rowNotes } from '../engine/weekConcerns';
+import { allowedPairs } from '../engine/allowedPair';
 import { ChangeLogCard } from '../components/ChangeLogCard';
 import { LeavePeriodsCard } from '../components/LeavePeriods';
 import { adjustedSessionReasons } from '../engine/changeLog';
@@ -65,6 +66,9 @@ export function WeekPage() {
   // What is wrong in this week, for the card and the lines in the rows (engine/weekFixProposal.ts).
   const notice = useMemo(() => weekNoticeFor(weekStart), [weekNoticeFor, weekStart]);
   const concernNotes = useMemo(() => rowNotes(notice.concerns), [notice]);
+  // Een rustige loop en beenkracht op twee dagen achter elkaar is bewust toegestaan: een stille tekst, geen melding.
+  const pairs = useMemo(() => allowedPairs(plannedSessions, templates, sessionLogs), [plannedSessions, templates, sessionLogs]);
+  const pairNotes = useMemo(() => new Map([...pairs].map(([id, p]) => [id, p.rowNote])), [pairs]);
 
   // A rest day ASCEND gave up for a catch-up is simply gone, not "skipped".
   // Rest-day proposals show up right where you just moved a training.
@@ -281,6 +285,7 @@ export function WeekPage() {
             looseLogs={looseLogs}
             onSelectLog={setOpenLog}
             concernNotes={concernNotes}
+            pairNotes={pairNotes}
             weekDrag={weekDrag}
             dragEnabled={dragOn}
           />
@@ -327,6 +332,7 @@ export function WeekPage() {
           session={selected}
           startStep={openOnMove ? 'move' : undefined}
           template={templateById.get(selected.templateId)!}
+          allowedPair={pairs.get(selected.id)}
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
           completedLog={selectedLog}
