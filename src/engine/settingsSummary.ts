@@ -533,6 +533,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.newTestOnStops !== false };
     case 'weekvoorstel':
       return { checked: s.weekFixProposal !== false };
+    case 'slepen-week':
+      return { checked: s.dragWeek !== false };
     case 'korte-nacht':
       return { checked: s.askShortNight !== false };
     case 'ochtend-vanaf':

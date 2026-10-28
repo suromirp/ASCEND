@@ -97,6 +97,7 @@ export function SessionActionSheet({
   onDoneAsPlanned,
   onBackOnPlan,
   onOpenLog,
+  startStep,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -121,12 +122,14 @@ export function SessionActionSheet({
   onBackOnPlan?: () => void;
   // A done training: the sheet with its numbers and "Wat speelde er?" (components/LogDetailSheet.tsx).
   onOpenLog?: () => void;
+  // Een tik op de greep in Week opent het blad direct op Verplaatsen.
+  startStep?: 'move';
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   // "Hoe je het doet" for a day still to come: the training screen of that day, to read only.
   const [showPreview, setShowPreview] = useState(false);
-  const [step, setStep] = useState<'main' | 'done' | 'move'>('main');
+  const [step, setStep] = useState<'main' | 'done' | 'move'>(startStep ?? 'main');
   // The "Gedaan" step for a training of a later day, done today.
   const [doneToday, setDoneToday] = useState(false);
   const variants = availableVariants(template);

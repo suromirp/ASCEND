@@ -14,6 +14,7 @@ import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/da
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
+import { useWeekDrag } from '../components/useWeekDrag';
 import { WeekNotice } from '../components/WeekNotice';
 import { rowNotes } from '../engine/weekConcerns';
 import { ChangeLogCard } from '../components/ChangeLogCard';
@@ -50,6 +51,8 @@ export function WeekPage() {
   // The back button leaves the year overview first, then the page.
   useBackToClose(monthView, () => { setMonthView(false); scrollMainToTop(); });
   const [selected, setSelected] = useState<PlannedSession | null>(null);
+  // Een tik op de greep opent het actieblad direct op de stap Verplaatsen.
+  const [openOnMove, setOpenOnMove] = useState(false);
   // A training done without a plan (a loose one), opened from its row: the same log sheet as the Logboek.
   const [openLog, setOpenLog] = useState<SessionLog | null>(null);
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant; atForm?: boolean } | null>(null);
@@ -99,6 +102,7 @@ export function WeekPage() {
   // A completed session is still selectable — SessionActionSheet shows an
   // "ongedaan maken" (undo) view for it instead of the start/move/skip one.
   function selectSession(session: PlannedSession) {
+    setOpenOnMove(false);
     setSelected(session);
   }
 
@@ -131,12 +135,24 @@ export function WeekPage() {
   // De ene weg voor een verplaatsing, voor het actieblad en voor slepen (engine/weekDrag.ts#decideMove):
   // een schone verplaatsing gaat meteen (Ongedaan maken staat in de melding), een cascade, een botsing,
   // een rustdag of een test vraagt eerst om Akkoord.
-  function moveTo(sessionId: string, date: string, opts?: DecideOptions): MoveDecision['action'] {
+  async function moveTo(sessionId: string, date: string, opts?: DecideOptions): Promise<MoveDecision['action']> {
     const decision = decideMove(moveSession(sessionId, date), opts);
-    if (decision.action === 'apply') void applyProposal(decision.proposal);
+    if (decision.action === 'apply') await applyProposal(decision.proposal);
     else if (decision.action === 'ask') setPendingProposal(decision.proposal);
     return decision.action;
   }
+
+  // Slepen (components/useWeekDrag.ts): niet in het jaaroverzicht en niet terwijl er een blad of scherm open is.
+  const dragOn = settings.dragWeek !== false && !monthView && !selected && !openLog && !logging && !pendingProposal && !adHocOpen && !adHocTemplate && !reviewOpen;
+  const weekDrag = useWeekDrag({
+    weekStart,
+    enabled: dragOn,
+    moveTo,
+    onOpenMove: (id) => {
+      const session = sessions.find((s) => s.id === id);
+      if (session) { setOpenOnMove(true); setSelected(session); }
+    },
+  });
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-6">
@@ -265,6 +281,8 @@ export function WeekPage() {
             looseLogs={looseLogs}
             onSelectLog={setOpenLog}
             concernNotes={concernNotes}
+            weekDrag={weekDrag}
+            dragEnabled={dragOn}
           />
         </>
       )}
@@ -307,6 +325,7 @@ export function WeekPage() {
       {selected && templateById.get(selected.templateId) && (
         <SessionActionSheet
           session={selected}
+          startStep={openOnMove ? 'move' : undefined}
           template={templateById.get(selected.templateId)!}
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
@@ -327,7 +346,7 @@ export function WeekPage() {
             setSelected(null);
           }}
           onMove={(date) => {
-            moveTo(selected.id, date);
+            void moveTo(selected.id, date);
             setSelected(null);
           }}
           suggestions={suggestMoves(selected.id)}
@@ -350,7 +369,7 @@ export function WeekPage() {
             if (selectedLog) undoLog(selectedLog.id);
             setSelected(null);
           }}
-          onClose={() => setSelected(null)}
+          onClose={() => { setSelected(null); setOpenOnMove(false); }}
         />
       )}
 

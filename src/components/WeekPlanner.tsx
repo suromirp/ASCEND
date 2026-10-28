@@ -16,13 +16,18 @@ import { zoneOfTemplate } from './vandaag/zone';
 import { Icon } from './icons';
 import { useWatchStatuses } from './useWatchStatus';
 import type { WatchStatusKind } from '../engine/watchStatus';
-import { addDays, weekDates, weekdayShortNL, todayISO } from '../utils/dates';
+import { addDays, weekDates, weekdayShortNL, weekdayLongNL, todayISO } from '../utils/dates';
 import { Eyebrow, StatusPill } from './ui';
 import { EFFORT_COLOR } from './effortColor';
 import { HeartSign } from './influence/HeartSign';
 import { useDeviations } from './influence/useInfluence';
 import { entryForLog, signState, type SignState } from '../engine/influence';
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
+import { dragEligibility } from '../engine/weekDrag';
+import { WeekDragGhost } from './WeekDragGhost';
+import { WeekDragNote } from './WeekDragNote';
+import { useMotionMode } from './motion';
+import { DRAG_FAILED, type useWeekDrag, type WeekHandle } from './useWeekDrag';
 
 // De week als compacte lijst op één scherm: per dag een regel met status,
 // dag, sport, naam en duur. Een tik opent de actiesheet van die training
@@ -42,7 +47,7 @@ const todayStyle = {
 const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, transparent)' };
 
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, handle, placeholder, ghost, rise,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -59,6 +64,12 @@ function SessionRow({
   sign?: SignState;
   // Wat de weekcontrole bij deze training vindt, kort (engine/weekConcerns.ts), in amber.
   concern?: string;
+  // De greep om de training naar een andere dag te slepen (alleen als dat mag), de plaatshouder
+  // terwijl hij wordt vastgehouden, de zwevende kopie en het kort verschijnen na het verplaatsen.
+  handle?: WeekHandle;
+  placeholder?: boolean;
+  ghost?: boolean;
+  rise?: boolean;
 }) {
   const restMode = useAppData().settings.restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
@@ -70,13 +81,9 @@ function SessionRow({
   const legs = !isRest && isLegHeavyTemplate(template);
   const doneNow = status === 'completed';
   const showToday = isToday && !doneNow && status !== 'skipped';
-  return (
-    <button
-      type="button"
-      onClick={onTap}
-      className="flex min-h-[64px] w-full items-center gap-3 border-t px-3 py-2 text-left transition-colors active:opacity-75 first:border-t-0"
-      style={{ borderColor: 'var(--color-card-border)', opacity: dim ? 0.55 : 1, ...(isToday ? todayStyle : isRest ? restStyle : {}) }}
-    >
+  const rowStyle = { borderColor: 'var(--color-card-border)', opacity: dim ? 0.55 : 1, ...(isToday ? todayStyle : isRest ? restStyle : {}) };
+  const body = (
+    <>
       <SportDisc template={template} size={44} />
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
@@ -120,14 +127,64 @@ function SessionRow({
         ) : isRest ? (
           <StatusPill tone="status">{status === 'skipped' ? 'Overgeslagen' : 'Herstel'}</StatusPill>
         ) : status === 'planned' || status === 'moved' ? (
-          <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-control-border)' }}>
-            <span className="sr-only">Gepland</span>
-          </span>
+          handle || ghost ? null : (
+            <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-control-border)' }}>
+              <span className="sr-only">Gepland</span>
+            </span>
+          )
         ) : (
           <WeekStatusIcon status={status} />
         )}
       </span>
-    </button>
+    </>
+  );
+  if (ghost) {
+    return (
+      <div className="flex min-h-[64px] w-full items-center gap-3 px-3 py-2">
+        {body}
+        <span className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-action)' }}><Icon name="greep" size={22} /></span>
+      </div>
+    );
+  }
+  // Terwijl de rij wordt vastgehouden blijft hij op zijn plek staan als stille plaatshouder: de inhoud
+  // is onzichtbaar (de hoogte en de greep blijven, zodat de lijst niet verspringt) en een gestippelde
+  // cirkel zegt waar hij vandaan komt.
+  const hidden = placeholder ? { opacity: 0 } : undefined;
+  return (
+    <div
+      data-session-row={session.id}
+      className={`relative flex min-h-[64px] w-full items-center gap-3 border-t px-3 first:border-t-0 ${rise ? 'animate-rise-in' : ''}`}
+      style={rowStyle}
+    >
+      <button
+        type="button"
+        onClick={onTap}
+        className="flex min-h-[64px] min-w-0 flex-1 items-center gap-3 py-2 text-left transition-colors active:opacity-75"
+        style={hidden}
+        tabIndex={placeholder ? -1 : undefined}
+      >
+        {body}
+      </button>
+      {handle && (
+        <button
+          type="button"
+          data-drag-handle={session.id}
+          aria-label={`Verplaats ${isRest ? REST_DAY_COPY[restMode].title : template.name}, nu op ${weekdayLongNL(date)}${note ? `, ${note}` : ''}. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.`}
+          aria-pressed={handle.active}
+          onPointerDown={handle.onPointerDown}
+          onKeyDown={handle.onKeyDown}
+          onClick={handle.onClick}
+          onBlur={handle.onBlur}
+          className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg"
+          style={{ touchAction: 'none', color: handle.active ? 'var(--color-action)' : 'var(--color-ink-dim)', cursor: 'grab', ...hidden }}
+        >
+          <Icon name="greep" size={22} />
+        </button>
+      )}
+      {placeholder && (
+        <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-11 w-11 -translate-y-1/2 rounded-full" style={{ border: '1.5px dashed var(--color-control-border)' }} />
+      )}
+    </div>
   );
 }
 
@@ -182,6 +239,8 @@ export function WeekPlanner({
   looseLogs = [],
   onSelectLog,
   concernNotes,
+  weekDrag,
+  dragEnabled = false,
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
@@ -200,7 +259,11 @@ export function WeekPlanner({
   onSelectLog?: (log: SessionLog) => void;
   // Per training de korte tekst van een melding (engine/weekConcerns.ts#rowNotes).
   concernNotes?: Map<string, string>;
+  // Slepen naar een andere dag (components/useWeekDrag.ts). `dragEnabled`: de instelling staat aan en er is geen blad open.
+  weekDrag?: ReturnType<typeof useWeekDrag>;
+  dragEnabled?: boolean;
 }) {
+  const motion = useMotionMode();
   const days = weekDates(weekStartDate);
   const today = todayISO();
   const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
@@ -218,7 +281,40 @@ export function WeekPlanner({
 
   if (days.length === 0) return <Eyebrow>Geen gegevens</Eyebrow>;
 
+  const dragging = weekDrag?.drag ?? null;
+  const view = weekDrag?.view ?? null;
+  const pickedUp = dragging?.mode === 'pointer' ? dragging.id : null;
+  // Alleen wat gelogd of voorbij is, een overgeslagen training, een rustdag, een wedstrijd en wat een
+  // vakantie neerzette heeft geen greep (engine/weekDrag.ts#dragEligibility).
+  const rowFor = (s: PlannedSession, template: SessionTemplate, date: string, extra: { ghost?: boolean } = {}): ReactNode => {
+    const eligibility = dragEnabled && weekDrag ? dragEligibility(s, template, { logged: loggedIds.has(s.id), today }) : undefined;
+    return (
+      <SessionRow
+        key={s.id}
+        session={s}
+        template={template}
+        date={date}
+        templates={templates}
+        logs={logs}
+        program={program}
+        onTap={() => onSelectSession(s)}
+        adjusted={!!adjustedIds?.has(s.id)}
+        isToday={date === today}
+        watch={showWatch ? statusOf(s, template).kind : undefined}
+        sign={signOf(logs.find((l) => l.plannedSessionId === s.id))}
+        concern={concernNotes?.get(s.id)}
+        handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : undefined}
+        placeholder={pickedUp === s.id}
+        ghost={extra.ghost}
+        rise={weekDrag?.movedId === s.id && motion === 'full'}
+      />
+    );
+  };
+  const ghostSession = dragging?.ghost ? sessions.find((x) => x.id === dragging.id) : undefined;
+  const ghostTemplate = ghostSession ? templateById.get(ghostSession.templateId) : undefined;
+
   return (
+    <>
     <div className="mx-stagger overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
       {days.map((date) => {
         const advice = dayOrder(sessions.filter((s) => s.scheduledDate === date && !loggedIds.has(s.id)), sessions.filter((s) => s.scheduledDate === addDays(date, 1)), templateById);
@@ -233,7 +329,13 @@ export function WeekPlanner({
         const loose = looseLogs.filter((l) => l.completedDate === date);
         const showEmpty = rows.length === 0 && !leaveLabel && loose.length === 0;
         return (
-          <div key={date} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
+          <div
+            key={date}
+            data-week-day={date}
+            className="relative border-t first:border-t-0"
+            style={{ borderColor: 'var(--color-card-border)', opacity: dragging && dragging.verdicts.some((v) => v.date === date && !v.droppable) ? 0.45 : 1 }}
+          >
+            {dragging && view?.target === date && <DropTarget tone={view.tone} chip={view.chip} />}
             {leaveLabel && (
               <div className="flex items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
                 <WeekStatusIcon status="rest" />
@@ -241,23 +343,7 @@ export function WeekPlanner({
                 <div className="min-w-0 flex-1"><LeaveBand label={leaveLabel} /></div>
               </div>
             )}
-            {rows.map(({ s, template }) => (
-              <SessionRow
-                key={s.id}
-                session={s}
-                template={template}
-                date={date}
-                templates={templates}
-                logs={logs}
-                program={program}
-                onTap={() => onSelectSession(s)}
-                adjusted={!!adjustedIds?.has(s.id)}
-                isToday={isToday}
-                watch={showWatch ? statusOf(s, template).kind : undefined}
-                sign={signOf(logs.find((l) => l.plannedSessionId === s.id))}
-                concern={concernNotes?.get(s.id)}
-              />
-            ))}
+            {rows.map(({ s, template }) => rowFor(s, template, date))}
             {loose.map((l) => (
               <LooseRow key={l.id} log={l} template={templateById.get(l.templateId)} isToday={isToday} onTap={() => onSelectLog?.(l)} sign={signOf(l)} />
             ))}
@@ -284,6 +370,45 @@ export function WeekPlanner({
           </div>
         );
       })}
+    </div>
+    {dragging?.ghost && ghostSession && ghostTemplate && (
+      <WeekDragGhost left={dragging.ghost.left} width={dragging.ghost.width} top={dragging.ghost.top}>
+        {rowFor(ghostSession, ghostTemplate, ghostSession.scheduledDate, { ghost: true })}
+      </WeekDragGhost>
+    )}
+    {weekDrag && (
+      <WeekDragNote
+        text={view?.text ?? (weekDrag.failed ? DRAG_FAILED : undefined)}
+        tone={view ? view.tone : weekDrag.failed ? 'warn' : undefined}
+        position={view?.position}
+        live={weekDrag.announce}
+      />
+    )}
+    </>
+  );
+}
+
+// Het doelvak: de dag onder je vinger, nooit meer dan een. Mint als de dag past, amber als er iets
+// niet klopt maar het jouw keuze is of er een voorstel volgt, gedempt gestippeld als de dag niet kan.
+// Het label legt niets over de rij heen en verschuift niets; kleur is nooit het enige signaal.
+function DropTarget({ tone, chip }: { tone: 'ok' | 'warn' | 'none'; chip?: string }) {
+  const color = tone === 'ok' ? 'var(--color-action)' : tone === 'warn' ? 'var(--color-warning)' : 'var(--color-control-border)';
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-10"
+      style={tone === 'none'
+        ? { border: `2px dashed ${color}` }
+        : {
+          boxShadow: `inset 0 0 0 2px ${color}`,
+          background: tone === 'ok' ? 'color-mix(in srgb, var(--color-action-muted) 45%, transparent)' : 'color-mix(in srgb, var(--color-warning) 12%, transparent)',
+        }}
+    >
+      {chip && (
+        <span className="absolute right-2 top-0.5 rounded-full border px-2 text-xs leading-5" style={{ background: 'var(--color-raised)', color: 'var(--color-ink)', borderColor: color }}>
+          {chip}
+        </span>
+      )}
     </div>
   );
 }

@@ -516,6 +516,16 @@ card, quieter, with "Toch een voorstel"; the problem is never hidden. Setting "V
 (`weekFixProposal`, absent = on): off keeps the card and the row texts and drops only the button. Not built yet: the sentence in
 the action sheet of a training, the link with TEST-MAKE-ROOM (no second proposal for one training), the other rules.
 
+**Dragging a training in Week** (`engine/weekDrag.ts`, `components/useWeekDrag.ts`, `components/useVerticalDrag.ts`, decision
+`docs/beslissingen/2026-10-28-slepen-in-week.md`, design `docs/visie/Slepen in Week.md`): the handle in the row (only the handle, no long
+press) moves a training to another day of the shown week, never to another week. It is a faster hand, not a new rule: letting go goes
+through `Week.tsx#moveTo` and `decideMove`, the same road as "Verplaatsen" in the action sheet (same lock, `movedFromDate` and
+`ChangeNotice` with Ongedaan maken). Clean is applied at once; a cascade, an unresolvable clash, your rest day, a day the time does not
+fit and any test open `RescheduleDialog` with Akkoord. Logged, past, skipped, rest, race and holiday or trek trainings have no handle
+(`dragEligibility`); the verdict per day (`dayVerdicts`, built on `keptDayReason` from `moveSuggestions.ts`) is mint when it fits, amber
+when it asks, muted when it cannot. The pointer mechanics are shared with the goals on Ascend (`useVerticalDrag`, `edgeScroll`); a change
+there changes both. Setting "Trainingen slepen in Week" (`dragWeek`, absent = on).
+
 **A heavy leg day on tired legs** (`engine/legDayEase.ts`, `engine/legSoreness.ts`, decision
 `docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`, design `docs/visie/Spierpijn en een zware beendag.md`):
 a heavy leg day of today with a reason (soreness you reported, in the morning check or as a "spierpijn" note on a leg spot

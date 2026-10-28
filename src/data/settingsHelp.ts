@@ -545,6 +545,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'dan blijven de melding en de teksten in de rijen, maar komt er geen knop met een voorstel.' },
     ],
   },
+  slepenWeek: {
+    title: 'Trainingen slepen in Week',
+    lead: 'Sleep een training met het greepje naar een andere dag. Het gaat zoals Verplaatsen in het actieblad. Uit haalt de grepen weg.',
+    points: [
+      { head: 'Een botsing', text: 'liggen er dan twee zware beendagen binnen 48 uur, of is het je rustdag, dan zie je dat al tijdens het slepen en krijg je bij het loslaten een voorstel met Akkoord. Liever niet laat alles staan.' },
+      { head: 'Een test', text: 'een testloop verplaats je altijd met Akkoord.' },
+      { head: 'Een wedstrijd', text: 'hoort er niet bij. Die verplaats je via je doel op de Ascend-tab.' },
+      { head: 'Ongedaan maken', text: 'een gewone verplaatsing gaat meteen, met Ongedaan maken in de melding.' },
+    ],
+  },
   testStilstaan: {
     title: 'Stilstaan bij een testloop',
     lead: 'Staat je horloge niet stil als jij voor een stoplicht wacht, dan loopt de klok door in je snelste 5 km.',

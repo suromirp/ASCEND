@@ -98,5 +98,8 @@ export function useVerticalDrag() {
     if (threshold === 0) pick();
   }, []);
 
-  return { start };
+  // Stopt een lopend slepen zonder iets te doen (een andere week, een blad dat opent).
+  const cancel = useCallback(() => { cleanup.current?.(); }, []);
+
+  return { start, cancel };
 }
