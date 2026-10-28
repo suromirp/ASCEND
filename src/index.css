@@ -825,6 +825,25 @@ button.w-full:not(.mx-primary):not(:disabled):not([role='switch']):active {
   overflow: hidden;
 }
 
+/* Snelknoppen onder een oefening (docs/beslissingen/2026-10-29-snelknoppen-in-forge.md): de rij
+   vervaagt en klapt in zoals een oefening die inklapt. Geen lus. Rustig en Uit: meteen de eindstand. */
+.mx-quick {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease-out;
+}
+.mx-quick[data-shown='false'] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+.mx-quick > div {
+  min-height: 0;
+  overflow: hidden;
+}
+html[data-motion='calm'] .mx-quick {
+  transition: none;
+}
+
 /* The set that is up next: a soft marker, not a frame. */
 .forge-row {
   position: relative;
@@ -1159,6 +1178,10 @@ html[data-motion='off'] { --ea: 0; }
   mask-image: linear-gradient(to bottom, transparent 0, black 10%, black 78%, transparent 100%);
 }
 .ea-mini svg { display: block; }
+/* Het kaartje van een oefening wisselt van spierkaart naar tekening met een korte fade; Rustig en Uit: meteen. */
+@keyframes mx-thumb-in { from { opacity: 0; } }
+.ea-thumb-draw { display: block; animation: mx-thumb-in 0.2s ease-out; }
+html[data-motion='calm'] .ea-thumb-draw { animation: none; }
 .ea-m { opacity: var(--o); }
 
 .ea-play .ea-fr,

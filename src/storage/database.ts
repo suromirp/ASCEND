@@ -711,6 +711,8 @@ export interface AppSettings {
   weekFixProposal?: boolean;
   // Trainingen slepen in Week (components/useWeekDrag.ts). Afwezig is aan; uit haalt de grepen weg.
   dragWeek?: boolean;
+  // Snelknoppen onder de naam van een oefening in Forge (engine/forgeQuickActions.ts). Afwezig is aan.
+  forgeQuickButtons?: boolean;
   // De volgorde van de blokken op Je stand, per pagina (engine/cardOrder.ts). Absent = de standaard.
   // Gelezen door resolveCardOrder; onbekende en dubbele id's vallen weg. Optional and additive.
   cardOrder?: { stand?: string[] };

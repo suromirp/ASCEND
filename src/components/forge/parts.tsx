@@ -210,7 +210,8 @@ export function ForgeSheet({ title, sub, onClose, children }: { title: string; s
 }
 
 // Een regel in een blad: een keuze met een pictogram, de hele regel is te tikken.
-export function MenuRow({ icon, title, sub, onClick, danger = false, right }: { icon?: Parameters<typeof Icon>[0]['name']; title: string; sub?: string; onClick?: () => void; danger?: boolean; right?: ReactNode }) {
+// `lead` is een eigen knop links (het kaartje van een oefening); die staat naast de rij, niet erin.
+export function MenuRow({ icon, title, sub, onClick, danger = false, right, lead }: { icon?: Parameters<typeof Icon>[0]['name']; title: string; sub?: string; onClick?: () => void; danger?: boolean; right?: ReactNode; lead?: ReactNode }) {
   const body = (
     <>
       {icon && <span className="shrink-0" style={{ color: danger ? 'var(--color-danger-text)' : 'var(--color-ink-dim)' }}><Icon name={icon} size={20} /></span>}
@@ -222,6 +223,16 @@ export function MenuRow({ icon, title, sub, onClick, danger = false, right }: { 
     </>
   );
   const cls = `flex w-full items-center gap-3 border-t py-2 text-left first:border-t-0 ${sub ? 'min-h-[60px]' : 'min-h-[52px]'}`;
+  if (lead && onClick) {
+    return (
+      <div className={`flex items-center gap-3 border-t first:border-t-0 ${sub ? 'min-h-[60px]' : 'min-h-[52px]'}`} style={{ borderColor: 'var(--color-card-border)' }}>
+        {lead}
+        <button type="button" onClick={onClick} className="flex min-h-[52px] min-w-0 flex-1 items-center gap-3 py-2 text-left active:opacity-70">
+          {body}
+        </button>
+      </div>
+    );
+  }
   if (!onClick) return <div className={cls} style={{ borderColor: 'var(--color-card-border)' }}>{body}</div>;
   return (
     <button type="button" onClick={onClick} className={`${cls} active:opacity-70`} style={{ borderColor: 'var(--color-card-border)' }}>

@@ -12,6 +12,9 @@
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { ExerciseArtButton } from '../ExerciseArtButton';
+import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, type DroppedRow } from '../../engine/forgeRows';
+import { SwipeRow } from './SwipeRow';
+import { QUICK_LABEL, quickActionsFor, quickButtonsOn, type QuickAction } from '../../engine/forgeQuickActions';
 import { previewDayLine } from '../../engine/sessionActions';
 import { restAlertChannels, restVibrationPattern } from '../../engine/restVibration';
 import { MUSCLE_LABEL } from '../../models/exercise';
@@ -31,7 +34,6 @@ import {
   plateShortText,
   nextField,
   plateSideText,
-  removeRow,
   repsBounds,
   stepNumber,
   takeTarget,
@@ -96,13 +98,13 @@ import { PainReportFields } from '../PainReportFields';
 import { Portal } from '../Portal';
 import { TrainingGuideSheet } from '../TrainingGuideSheet';
 import { TextButton } from '../TextButton';
-import { PrimaryButton, SecondaryButton } from '../ui';
+import { PrimaryButton, SecondaryButton, Toggle } from '../ui';
 import { useGuardedSave, useLegEase } from '../useLegEase';
 import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_KEPT_LINE, EASE_STARTED_LINE } from '../../engine/legDayEase';
 import { resolveLegEaseHow } from '../../engine/legEaseSettings';
 import { adjustText, applyLighter, fitStillOpen, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { addOnText, addOnsFor, formatAddOns, hasStack, ownWeightsFor } from '../../engine/machineWeights';
-import { appendEvents, cleanForgeLog, deriveChanges, noFitEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
+import { appendEvents, cleanForgeLog, deriveChanges, noFitEvent, setCountEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
 import { SPOTTER_EXPLAIN, SPOTTER_HOW, SPOTTER_SIGN } from '../../engine/spotter';
 import { makeId } from '../../utils/id';
 import { ExerciseAddOnForgeSheet } from './AddOnWeights';
@@ -444,6 +446,44 @@ export function ForgeWorkout({
     setWorkout((w) => w.map((e) => (e.slot === slot ? update(e) : e)));
   }
 
+  // Een set die jij toevoegt of weghaalt: in het verloop, en met een korte melding om het terug te draaien.
+  const [undo, setUndo] = useState<{ slot: string; removed: DroppedRow; label: string; eventId: string } | null>(null);
+  useEffect(() => {
+    if (!undo) return;
+    const t = window.setTimeout(() => setUndo(null), 10000);
+    return () => window.clearTimeout(t);
+  }, [undo]);
+
+  function addSetLogged(slot: string, kind: 'work' | 'warmup') {
+    const ex = workout.find((e) => e.slot === slot);
+    if (!ex) return;
+    setUndo(null);
+    const next = addRow(ex, kind);
+    const made = next.rows.find((r) => !ex.rows.some((o) => o.id === r.id));
+    setExercise(slot, () => next);
+    if (made && !readOnly) setForgeLog((l) => appendEvents(l, [setCountEvent('toegevoegd', ex, made, rowLabel(next, made.id), Date.now(), makeId('fe'))]));
+  }
+
+  function removeSetLogged(slot: string, rowId: string) {
+    const ex = workout.find((e) => e.slot === slot);
+    if (!ex || !canRemoveRow(ex, rowId)) return;
+    const r = removeSet(ex, rowId);
+    if (!r.removed) return;
+    haptics.tap();
+    const eventId = makeId('fe');
+    setExercise(slot, () => r.ex);
+    if (!readOnly) setForgeLog((l) => appendEvents(l, [setCountEvent('weggehaald', ex, r.removed!.row, r.label, Date.now(), eventId)]));
+    setUndo({ slot, removed: r.removed, label: r.label, eventId });
+  }
+
+  function undoRemove() {
+    if (!undo) return;
+    const { slot, removed, eventId } = undo;
+    setExercise(slot, (e) => reinsertRow(e, removed));
+    setForgeLog((l) => l.filter((ev) => ev.id !== eventId));
+    setUndo(null);
+  }
+
   function tick(slot: string, rowId: string) {
     haptics.tap();
     primeAudio();
@@ -623,9 +663,9 @@ export function ForgeWorkout({
     setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot)));
   }
 
-  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter });
+  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter, addSetLogged, removeSetLogged, undoRemove });
   useEffect(() => {
-    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter };
+    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, addSetLogged, removeSetLogged, undoRemove };
   });
   const actions = useMemo<BlockActions>(
     () => ({
@@ -638,12 +678,20 @@ export function ForgeWorkout({
       take: (slot, rowId) => latest.current.take(slot, rowId),
       rowMenu: (slot, rowId) => setRowMenu({ slot, rowId }),
       rir: (slot, rowId) => setRirFor({ slot, rowId }),
-      add: (slot) => latest.current.setExercise(slot, (e) => addRow(e, 'work')),
+      add: (slot) => latest.current.addSetLogged(slot, 'work'),
+      remove: (slot, rowId) => latest.current.removeSetLogged(slot, rowId),
+      restore: (slot) => latest.current.setExercise(slot, restoreDropped),
+      undo: () => latest.current.undoRemove(),
       lighter: (slot) => latest.current.takeLighter(slot),
       keep: (slot) => setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
       fill: (slot) => setFillFor(slot),
       keepFit: (slot) => setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
       spotter: () => setSpotterInfo(true),
+      quick: (slot, action) => {
+        if (action === 'ruilen') setSwapFor(slot);
+        else if (action === 'notitie') setNoteFor(slot);
+        else latest.current.addSetLogged(slot, action === 'opwarmset' ? 'warmup' : 'work');
+      },
     }),
     [],
   );
@@ -747,6 +795,8 @@ export function ForgeWorkout({
               noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, noFit[ex.slot]) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
               heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, heavyTip[ex.slot]) ? heavyTip[ex.slot].text : undefined}
               rirAsValue={strength.rirPrefill === 'target'}
+              quickOn={quickButtonsOn(settings)}
+              undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
               act={actions}
             />
           ))}
@@ -801,7 +851,7 @@ export function ForgeWorkout({
             <div className="flex flex-col">
               {!rowMenuRow.done && <MenuRow icon="vinkje" title="Voorschrift overnemen" sub="Kilo's en herhalingen zoals het voorschrift ze vraagt." onClick={() => { take(rowMenuEx.slot, rowMenuRow.id); close(); }} />}
               <MenuRow icon="plus" title="Set kopiëren" sub="Een kopie van deze set eronder." onClick={() => { setExercise(rowMenuEx.slot, (e) => copyRow(e, rowMenuRow.id)); close(); }} />
-              {!rowMenuRow.done && rowMenuEx.rows.length > 1 && <MenuRow icon="min" title="Set weghalen" danger onClick={() => { setExercise(rowMenuEx.slot, (e) => removeRow(e, rowMenuRow.id)); close(); }} />}
+              {canRemoveRow(rowMenuEx, rowMenuRow.id) && <MenuRow icon="min" title="Set weghalen" danger onClick={() => { removeSetLogged(rowMenuEx.slot, rowMenuRow.id); close(); }} />}
             </div>
           )}
         </ForgeSheet>
@@ -828,8 +878,8 @@ export function ForgeWorkout({
               )}
               {!readOnly && !menuEx.timed && (
                 <>
-                  <MenuRow icon="plus" title="Set toevoegen" onClick={() => { setExercise(menuEx.slot, (e) => addRow(e, 'work')); close(); }} />
-                  <MenuRow icon="plus" title="Opwarmset toevoegen" onClick={() => { setExercise(menuEx.slot, (e) => addRow(e, 'warmup')); close(); }} />
+                  <MenuRow icon="plus" title="Set toevoegen" onClick={() => { addSetLogged(menuEx.slot, 'work'); close(); }} />
+                  <MenuRow icon="plus" title="Opwarmset toevoegen" onClick={() => { addSetLogged(menuEx.slot, 'warmup'); close(); }} />
                 </>
               )}
               {!readOnly && menuEx.rows.some((r) => !r.done) && menuEx.rows.length > 1 && (
@@ -886,7 +936,7 @@ export function ForgeWorkout({
             return (
               <div className="flex flex-col">
                 {options.map((o) => (
-                  <MenuRow key={o.id} title={o.name} sub={o.primary.map((m) => MUSCLE_LABEL[m]).join(', ')} onClick={() => { swap(swapEx.slot, o.id); close(); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />
+                  <MenuRow key={o.id} lead={<ExerciseArtButton exerciseId={o.id} name={o.name} />} title={o.name} sub={o.primary.map((m) => MUSCLE_LABEL[m]).join(', ')} onClick={() => { swap(swapEx.slot, o.id); close(); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />
                 ))}
               </div>
             );
@@ -960,6 +1010,13 @@ export function ForgeWorkout({
         <ForgeSheet title={template.name} onClose={() => { setWorkoutMenu(false); setConfirmDiscard(false); }}>
           {(close) => (
             <div className="flex flex-col">
+              {!readOnly && (
+                <MenuRow
+                  title="Snelknoppen tonen"
+                  sub="Ruilen, Opwarmset, Set erbij en Notitie onder elke oefening."
+                  right={<Toggle checked={quickButtonsOn(settings)} onChange={(on) => void updateSettings({ forgeQuickButtons: on })} label="Snelknoppen tonen" />}
+                />
+              )}
               {guide && <MenuRow title="Uitleg bij deze training" onClick={() => { close(); setShowGuide(true); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />}
               {!readOnly && !confirmDiscard && (
                 <MenuRow icon="sluiten" title="Training weggooien" sub="Wat je invulde gaat verloren; de training blijft gepland." danger onClick={() => setConfirmDiscard(true)} />
@@ -1087,7 +1144,16 @@ interface BlockActions {
   keepFit: (slot: string) => void;
   // Uitleg bij "1 over, zonder spotter".
   spotter: () => void;
+  // De snelknoppen onder de naam (engine/forgeQuickActions.ts): dezelfde handelingen als het menu.
+  quick: (slot: string, action: QuickAction) => void;
+  // Een set weghalen (vegen of het setmenu), terugzetten wat je van het programma weghaalde, de melding terugdraaien.
+  remove: (slot: string, rowId: string) => void;
+  restore: (slot: string) => void;
+  undo: () => void;
 }
+
+// Een uitleg onder de kop langer dan dit klapt in tot één regel met "Meer".
+const REASON_SHORT = 60;
 
 const ExerciseBlock = memo(function ExerciseBlock({
   ex,
@@ -1105,6 +1171,8 @@ const ExerciseBlock = memo(function ExerciseBlock({
   noFitText,
   heavyTip,
   rirAsValue,
+  quickOn,
+  undoText,
   act,
 }: {
   ex: WorkoutExercise;
@@ -1127,8 +1195,15 @@ const ExerciseBlock = memo(function ExerciseBlock({
   heavyTip?: string;
   // "RIR vooraf invullen: Met het doel": het doel staat er als waarde, niet als hint.
   rirAsValue: boolean;
+  // De instelling "Snelknoppen tonen".
+  quickOn: boolean;
+  // "Set 3 verwijderd" zolang je het nog ongedaan kunt maken.
+  undoText?: string;
   act: BlockActions;
 }) {
+  const [reasonOpen, setReasonOpen] = useState(false);
+  const reasonText = reasonWithOwnCount(ex) ?? '';
+  const quick = quickActionsFor({ readOnly, preview: false, timed: !!ex.timed });
   const plates = useMemo(() => (usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined), [ex, profile]);
   const exercise = exerciseOf(ex);
   const assisted = exercise?.resistance === 'assisted_bodyweight';
@@ -1183,6 +1258,26 @@ const ExerciseBlock = memo(function ExerciseBlock({
       </div>
       <div className="forge-fold" data-folded={folded} inert={folded}>
         <div>
+          {quick.length > 0 && (
+            <div className="mx-quick" data-shown={quickOn} inert={!quickOn}>
+              <div>
+                <div className="-mx-1 mt-1 flex gap-2 overflow-x-auto px-1 py-0.5" role="group" aria-label={`Snel bij ${ex.name}`} data-no-sheet-drag>
+                  {quick.map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => act.quick(ex.slot, a)}
+                      className="flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm active:opacity-70"
+                      style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink-dim)' }}
+                    >
+                      <Icon name={a === 'ruilen' ? 'ruilen' : a === 'notitie' ? 'notitie' : 'plus'} size={16} />
+                      {QUICK_LABEL[a]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           {note && (
             <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>
               <span className="mt-px shrink-0" style={{ color: 'var(--color-action)' }}><Icon name="notitie" size={14} /></span>
@@ -1190,7 +1285,20 @@ const ExerciseBlock = memo(function ExerciseBlock({
             </p>
           )}
           {ex.reason && (
-            <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-sage)', color: 'var(--color-ink-dim)' }}>{ex.reason}</p>
+            <div className="mt-1.5 flex items-start gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-sage)' }}>
+              <p className={`min-w-0 flex-1 text-xs leading-snug ${reasonOpen || reasonText.length <= REASON_SHORT ? '' : 'truncate'}`} style={{ color: 'var(--color-ink-dim)' }}>{reasonText}</p>
+              {reasonText.length > REASON_SHORT && (
+                <button
+                  type="button"
+                  onClick={() => setReasonOpen((o) => !o)}
+                  aria-expanded={reasonOpen}
+                  className="relative shrink-0 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']"
+                  style={{ color: 'var(--color-action)' }}
+                >
+                  {reasonOpen ? 'Minder' : 'Meer'}
+                </button>
+              )}
+            </div>
           )}
 
           {lighterText && !readOnly && (
@@ -1245,9 +1353,11 @@ const ExerciseBlock = memo(function ExerciseBlock({
               const prev = previousText(previousFor(ex, row), exerciseOf(ex));
               const step = plates?.[i];
               const isActive = !readOnly && active === row.id;
+              const own = isOwnRow(row);
               const fieldOn = (name: FieldName) => field?.slot === ex.slot && field.rowId === row.id && field.field === name;
               return (
                 <div key={row.id} data-row-id={row.id}>
+                  <SwipeRow label={label} enabled={!readOnly && canRemoveRow(ex, row.id)} onDelete={() => act.remove(ex.slot, row.id)}>
                   <LongPressRow
                     onLong={() => act.rowMenu(ex.slot, row.id)}
                     disabled={readOnly}
@@ -1262,7 +1372,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
                     <span role="cell" className="flex justify-center">
                       <span
                         className="flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums"
-                        style={{ background: row.done ? 'var(--color-progress)' : 'var(--color-surface)', color: row.done ? 'var(--color-on-action)' : row.kind === 'warmup' ? 'var(--color-ink-dim)' : 'var(--color-ink)', transition: 'background-color 0.3s ease' }}
+                        style={{ background: row.done ? 'var(--color-progress)' : own ? 'transparent' : 'var(--color-surface)', boxShadow: own && !row.done ? 'inset 0 0 0 1.5px var(--color-control-border)' : undefined, color: row.done ? 'var(--color-on-action)' : row.kind === 'warmup' ? 'var(--color-ink-dim)' : 'var(--color-ink)', transition: 'background-color 0.3s ease' }}
                       >
                         {label}
                       </span>
@@ -1270,10 +1380,12 @@ const ExerciseBlock = memo(function ExerciseBlock({
                     <span role="cell" className="min-w-0 font-sans text-xs leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
                       {showPrevious ? (
                         <span>{prev ?? ''}</span>
+                      ) : own ? (
+                        <span className="flex min-h-[44px] items-center text-sm">eigen set</span>
                       ) : readOnly ? (
                         <PrescriptionText row={row} ex={ex} />
                       ) : (
-                        <button type="button" onClick={() => act.take(ex.slot, row.id)} disabled={row.done} aria-label={`Voorschrift overnemen, set ${label}`} className="flex min-h-[44px] w-full flex-col justify-center text-left">
+                        <button type="button" data-swipe-ok onClick={() => act.take(ex.slot, row.id)} disabled={row.done} aria-label={`Voorschrift overnemen, set ${label}`} className="flex min-h-[44px] w-full flex-col justify-center text-left">
                           <PrescriptionText row={row} ex={ex} />
                         </button>
                       )}
@@ -1312,6 +1424,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
                       {!readOnly && <TickBox done={row.done} onClick={() => act.tick(ex.slot, row.id)} label={`Set ${label} gedaan`} />}
                     </span>
                   </LongPressRow>
+                  </SwipeRow>
                   {!readOnly && row.kind === 'work' && addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg) && (
                     <p className="ml-9 h-5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg)} kg</p>
                   )}
@@ -1330,6 +1443,18 @@ const ExerciseBlock = memo(function ExerciseBlock({
               );
             })}
           </div>
+          {!readOnly && undoText && (
+            <p role="status" className="mt-1 flex min-h-[44px] items-center gap-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              <span>{undoText}</span>
+              <TextButton onClick={act.undo}>Ongedaan maken</TextButton>
+            </p>
+          )}
+          {!readOnly && !undoText && droppedCount(ex) > 0 && (
+            <p className="mt-1 flex min-h-[44px] items-center gap-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              <span>{droppedLine(droppedCount(ex))}</span>
+              <TextButton onClick={() => act.restore(ex.slot)}>Terugzetten</TextButton>
+            </p>
+          )}
           {!readOnly && !ex.timed && (
             <button type="button" onClick={() => act.add(ex.slot)} className="mt-1 flex min-h-[44px] items-center gap-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               <Icon name="plus" size={16} /> Set toevoegen

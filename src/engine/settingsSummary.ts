@@ -46,6 +46,7 @@ import { adviceDifferences } from './settingsDiff';
 import { settingBudget } from './weekBudget';
 import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
+import { quickButtonsOn } from './forgeQuickActions';
 import { formatNumberNL } from '../utils/number';
 import { formatDateNL, localDateOf } from '../utils/dates';
 
@@ -554,6 +555,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.weekFixProposal !== false };
     case 'volgorde-stand':
       return { value: isDefaultOrder('stand', resolveCardOrder('stand', s.cardOrder)) ? 'Standaard' : 'Eigen volgorde' };
+    case 'forge-snelknoppen':
+      return { checked: quickButtonsOn(s) };
     case 'slepen-week':
       return { checked: s.dragWeek !== false };
     case 'korte-nacht':
