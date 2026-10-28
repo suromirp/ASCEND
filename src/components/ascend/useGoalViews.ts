@@ -4,6 +4,7 @@ import type { GoalKindId } from '../../models/goals';
 import { computeGoalReadiness, readinessInputOf } from '../../engine/goalReadiness';
 import { computeRaceReadiness, resolveReadinessWeighting, type RaceReadiness } from '../../engine/raceReadiness';
 import { computeMainGoalReadiness } from '../../engine/gr5Readiness';
+import { computeStrengthReadiness } from '../../engine/strengthReadiness';
 import { goalTiming, type GoalTiming } from '../../engine/goalRoute';
 import { nextKeySession, type ListedGoal, type NextKeySession } from '../../engine/goalList';
 import { resolveVariantDuration } from '../../engine/substitutions';
@@ -43,6 +44,10 @@ export function useGoalViews(listed: ListedGoal[]): { views: GoalView[]; next: N
             naming: { the: naming, your: naming }, judgments: settings.testJudgments, ask: settings.askDoubtTest !== false, weighting: resolveReadinessWeighting(settings.readinessWeighting),
           });
           if (race) return { item, timing, readiness: race };
+        }
+        if (input.kind === 'stronger') {
+          const strength = computeStrengthReadiness(g, sessionLogs, today, { naming: { the: naming, your: naming } });
+          if (strength) return { item, timing, readiness: strength };
         }
         return { item, timing, readiness: computeGoalReadiness(input, sessionLogs, today, { naming: { the: naming, your: naming } }) };
       }),

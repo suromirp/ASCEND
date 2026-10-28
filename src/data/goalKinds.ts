@@ -688,8 +688,8 @@ const STRONGER: GoalKindDefinition = {
       id: 'krachttrend', label: 'Krachttrend', type: 'volume_of_trend', metric: 'extern', unit: 'aandeel', sports: ['strength'], windowDays: s(28, 'matig', B('10 (4) meter 1, KR-2')),
       need: s({ from: 'external' }, 'matig', B('10 (4) meter 1: gewicht maal herhalingen, geschat maximum (KR-1)')),
       measure: 'Je beste set van de laatste 4 weken per hoofdoefening, omgerekend naar een geschat maximum.',
-      full: 'Het doel dat je invulde als gewicht maal herhalingen.',
-      why: 'Het toont "nog 7 kg voor 5 herhalingen", nooit "je max is".',
+      full: 'Het gat tussen je geschatte maximum en dat van je doel (gewicht maal herhalingen), in weken werk bij gemiddelde groei. Bij tien weken staat de meter op 50%.',
+      why: 'Het toont "nog 7 kg voor 5 herhalingen", nooit "je max is". Het tempo hangt af van hoe lang je deze oefening al logt; het blad zegt welk niveau ASCEND neemt.',
     },
     {
       id: 'hardeSets', label: 'Harde sets per spiergroep', type: 'volume_of_trend', metric: 'extern', unit: 'aandeel', sports: ['strength'], windowDays: s(28, 'matig', B('10 (4) meter 2')),
