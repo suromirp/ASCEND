@@ -103,6 +103,7 @@ export function SessionActionSheet({
   onBackOnPlan,
   onOpenLog,
   startStep,
+  catchUp = false,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -131,6 +132,8 @@ export function SessionActionSheet({
   onOpenLog?: () => void;
   // Een tik op de greep in Week opent het blad direct op Verplaatsen.
   startStep?: 'move';
+  // Een gemiste training die je inhaalt (engine/catchUp.ts): dezelfde dagkeuze, onder de naam Inhalen.
+  catchUp?: boolean;
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -253,7 +256,7 @@ export function SessionActionSheet({
 
   if (step === 'move') {
     return (
-      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={`${template.name} verplaatsen`} scrollKey="move" head={<SheetHeader eyebrow="Verplaatsen" title={template.name} facts={`Staat op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
+      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={`${template.name} ${catchUp ? 'inhalen' : 'verplaatsen'}`} scrollKey="move" head={<SheetHeader eyebrow={catchUp ? 'Inhalen' : 'Verplaatsen'} title={template.name} facts={`${catchUp ? 'Stond' : 'Staat'} op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
         <div className="mt-6">
           <MoveSuggestions
             sessionDate={session.scheduledDate}
@@ -262,6 +265,7 @@ export function SessionActionSheet({
             onPick={(sug) => onPickSuggestion?.(sug)}
             onPickDate={onMove}
             onSameDay={canComeBack ? onBackOnPlan : undefined}
+            catchUp={catchUp}
           />
         </div>
       </SheetFrame>
@@ -295,7 +299,7 @@ export function SessionActionSheet({
     // hier opent het alleen de uitleg en opbouw, naast Gedaan.
     start: template.type === 'strength' ? 'Training starten' : 'Hoe je het doet',
     preview: 'Hoe je het doet',
-    move: 'Verplaatsen',
+    move: catchUp ? 'Inhalen' : 'Verplaatsen',
     skip: 'Overslaan',
     backOnPlan: 'Toch doen',
     doToday: 'Vandaag al doen',

@@ -32,6 +32,7 @@ import { LogDetailSheet } from '../components/LogDetailSheet';
 import { formatNumberNL } from '../utils/number';
 import { WeekLoadCards } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
+import { catchUpEligibility, caughtUpMap } from '../engine/catchUp';
 import { decideMove, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
@@ -77,6 +78,7 @@ export function WeekPage() {
   // What a holiday or a trek let go of is explained by the band on those days: not listed, not counted.
   const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped')));
   const position = program ? resolveProgramWeek(program, weekStart) : null;
+  const caughtUp = useMemo(() => caughtUpMap(plannedSessions), [plannedSessions]);
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
 
   // The time this week: what was done (the same sum as the weekly review, a loose
@@ -331,6 +333,7 @@ export function WeekPage() {
         <SessionActionSheet
           session={selected}
           startStep={openOnMove ? 'move' : undefined}
+          catchUp={!selectedLog && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id) }).ok}
           template={templateById.get(selected.templateId)!}
           allowedPair={pairs.get(selected.id)}
           program={program}

@@ -49,6 +49,8 @@ import { buildMarathonGoal } from '../engine/goalMigration';
 import { orderForRestored, PRIORITY_RULE } from '../engine/goalList';
 import { goalDetailsOf } from '../engine/goalLabels';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
+import { writeCatchUp } from '../storage/catchUpApply';
 import { planIllnessChange, type IllnessChange, type IllnessPlan } from '../engine/illness';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
@@ -1691,10 +1693,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // Your own move or skip is yours: the automatic planning leaves it.
       // Back on its own day it is the plan's again.
       const lock = { by: 'user' as const, at: new Date().toISOString() };
+      // Inhalen: een gemiste training die naar vandaag of later gaat. De rij van toen blijft op zijn dag,
+      // overgeslagen, en er komt een nieuwe rij op de gekozen dag (engine/catchUp.ts).
+      const catchUpTemplates = new Map((await SessionTemplatesRepo.getAll()).map((t) => [t.id, t]));
+      const loggedIds = new Set((await SessionLogsRepo.getAll()).map((l) => l.plannedSessionId));
+      const caughtUp = caughtUpMap(stored);
+      const addedIds: string[] = [];
+      let caughtUpCount = 0;
       for (const change of proposal.changes) {
         const session = stored.find((s) => s.id === change.sessionId);
         if (!session) continue;
         before.push(session);
+        const template = catchUpTemplates.get(session.templateId);
+        if (template && qualifiesForCatchUp(session, template, change, { logged: loggedIds.has(session.id), today: todayISO(), caughtUp: caughtUp.has(session.id) })) {
+          const added = await writeCatchUp(session, change.toDate, lock, makeId('planned'));
+          addedIds.push(added.id);
+          caughtUpCount++;
+          lines.push(`${change.templateName} van ${day(change.fromDate)} ingehaald op ${day(change.toDate)}`);
+          continue;
+        }
         if (change.restore) {
           // "Toch doen": your own choice, so it stays yours against the automatic planning.
           await PlannedSessionsRepo.put({ ...session, scheduledDate: change.toDate, status: change.toDate === (session.movedFromDate ?? change.toDate) ? 'planned' : 'moved', lock });
@@ -1718,16 +1735,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
       if (before.length > 0) {
         const restored = proposal.changes[0]?.restore === true;
-        const skipped = !restored && proposal.changes.every((c) => c.toDate === c.fromDate);
+        const skipped = !restored && caughtUpCount === 0 && proposal.changes.every((c) => c.toDate === c.fromDate);
         const first = proposal.changes[0]?.templateName ?? 'Sessie';
         setRecentChange({
           id: makeId('usermove'),
           trigger: skipped ? 'session_skipped' : 'session_moved',
-          title: restored ? `${first} staat weer op de planning` : skipped ? `${first} overgeslagen` : proposal.changes.length === 1 ? `${first} verplaatst` : 'Sessies verplaatst',
+          title: restored ? `${first} staat weer op de planning` : caughtUpCount > 0 ? `${first} ingehaald` : skipped ? `${first} overgeslagen` : proposal.changes.length === 1 ? `${first} verplaatst` : 'Sessies verplaatst',
           lines,
           why: proposal.changes.length > 1 ? proposal.reason : '',
           before,
-          addedIds: [],
+          addedIds,
           createdAt: new Date().toISOString(),
         });
       }

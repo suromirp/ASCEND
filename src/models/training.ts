@@ -205,6 +205,9 @@ export interface PlannedSession {
   // easy run: the template it had and the date of the goal. When that recovery is gone or has moved,
   // the check puts the template back. Optional, additive.
   afterGoal?: { templateId: string; date: string };
+  // Dit is een gemiste training die je hebt ingehaald: de rij van toen (nu overgeslagen) en zijn dag.
+  // Alleen een verwijzing, de rij van toen blijft staan (engine/catchUp.ts). Optional, additive.
+  catchUp?: { fromId: string; fromDate: string };
 }
 
 export interface PlanLock {
