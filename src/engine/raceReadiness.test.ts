@@ -127,7 +127,7 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
 
   it('een doeltijd die meer vraagt dan gemiddelde groei noemt de weken, ook als hij in de band valt', () => {
     const r = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 47.75 }), [accepted, ...exampleTraining], TODAY, { naming })!;
-    expect(r.race?.bandLine).toMatch(/^Bij gemiddelde groei rond 20 maart: \d+ tot \d+ minuten\. 47:45 vraagt ongeveer 28 weken; tot 20 maart zijn het er 21\.$/);
+    expect(r.race?.bandLine).toMatch(/^Bij gemiddelde groei rond 20 maart: ongeveer 5\d minuten\. 47:45 vraagt ongeveer 28 weken; tot 20 maart zijn het er 21\.$/);
   });
 
   it('getal, meter en regel zeggen hetzelfde: past het niet, dan staat snelheid onder de helft', () => {
@@ -149,7 +149,8 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
     const r = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
     expect(r.race?.status).toBe('counted');
     expect(r.race?.nowLine).toBe('Verwacht nu 55:40. Doel 45:00: nog 10:40, ongeveer 1:04 per km.');
-    expect(r.race?.bandLine).toMatch(/^Bij gemiddelde groei rond 20 maart: \d+ tot \d+ minuten\. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21\.$/);
+    expect(r.race?.bandLine).toBe('Bij gemiddelde groei rond 20 maart: ongeveer 50 minuten. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21.');
+    expect(r.race?.bandLine).toMatch(/^Bij gemiddelde groei rond 20 maart: ongeveer 5\d minuten\. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21\.$/);
     expect(r.race?.basisLine).toContain('hele run van 5 km');
     const all = `${r.race?.nowLine} ${r.race?.bandLine} ${r.sentence}`.toLowerCase();
     for (const word of ['ambitieus', 'onrealistisch', 'haalbaar', 'realistisch']) expect(all).not.toContain(word);
@@ -160,7 +161,7 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
     const inside = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 50 }), [accepted, ...training], TODAY, { naming })!;
     expect(inside.race?.bandLine).toMatch(/minuten, je doel valt erbinnen\.$/);
     const above = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 70 }), [accepted, ...training], TODAY, { naming })!;
-    expect(above.race?.bandLine).toMatch(/minuten, je doel ligt erboven\.$/);
+    expect(above.race?.bandLine).toMatch(/minuten, je doel valt erbinnen\.$/);
   });
 
   it('zegt bij de laagste meter niet het getal erbij', () => {

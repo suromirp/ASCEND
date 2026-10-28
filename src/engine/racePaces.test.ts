@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkTargetTime, formatPace, paceLine, testMeaning, formatPaceRange, minutesAtVdot, paceForTemplate, racePaces, raceDayBand, vdotOf, MAX_GAIN } from './racePaces';
+import { checkTargetTime, formatPace, paceLine, testMeaning, formatPaceRange, minutesAtVdot, paceForTemplate, racePaces, raceOutlook, outlookMinutes, outlookWeeksSaid, vdotOf } from './racePaces';
 import type { TestResult } from './racePrediction';
 
 // Made-up results. 29:05 for 5 km is the 5 km time of VDOT 32.
@@ -119,28 +119,31 @@ describe('what the test means', () => {
   });
 });
 
-describe('the band for race day', () => {
-  it('is the prediction itself, widened by its own spread, with no weeks left', () => {
-    const b = raceDayBand(60, 0);
-    expect(b.low).toBe(59); // 58.5 rounded up
-    expect(b.high).toBe(62); // 61.5 rounded up
+describe('race day from one calculation', () => {
+  it('is the prediction itself with no weeks left', () => {
+    const o = raceOutlook(60, 59, 0);
+    expect(o.atRaceDay).toBe(60);
+    expect(o.fits).toBe(false);
   });
 
-  it('21 weeks out from 60 minutes: about 50 to 57 minutes, middle 53 or 54', () => {
-    const b = raceDayBand(60, 21);
-    expect(b.low).toBeGreaterThanOrEqual(49);
-    expect(b.low).toBeLessThanOrEqual(51);
-    expect(b.high).toBeGreaterThanOrEqual(56);
-    expect(b.high).toBeLessThanOrEqual(58);
-    expect(b.suggested).toBeGreaterThanOrEqual(53);
-    expect(b.suggested).toBeLessThanOrEqual(54);
-    expect(b.weeks).toBe(21);
+  it('21 weeks out from 55:40 at 0,55% per week: about 50 minutes, 45:00 asks about 39 weeks', () => {
+    const o = raceOutlook(55 + 40 / 60, 45, 21);
+    expect(outlookMinutes(o)).toBe(50);
+    expect(o.work).toBeCloseTo(38.6, 1);
+    expect(o.fits).toBe(false);
+    expect(outlookWeeksSaid(o)).toEqual({ need: 39, left: 21 });
   });
 
-  it('never promises more than 15% faster, however many weeks', () => {
-    const b = raceDayBand(60, 200);
-    expect(b.low).toBeGreaterThanOrEqual(Math.floor(60 * (1 - MAX_GAIN) * 0.975));
-    expect(b.suggested).toBeGreaterThanOrEqual(Math.round(60 * (1 - MAX_GAIN)));
+  it('a goal inside the average growth fits, and a goal slower than now needs no weeks', () => {
+    expect(raceOutlook(55.67, 52, 21).fits).toBe(true);
+    expect(raceOutlook(55.67, 60, 21).work).toBe(0);
+  });
+
+  it('never says "about 21 weeks; there are 21" when it just does not fit', () => {
+    const o = raceOutlook(60, 60 * Math.pow(1 - 0.0055, 21.3), 21);
+    expect(o.fits).toBe(false);
+    const said = outlookWeeksSaid(o);
+    expect(said.need).toBeGreaterThan(said.left);
   });
 });
 
@@ -149,25 +152,30 @@ describe('a goal time against the test', () => {
   const paces = racePaces([t('2026-10-29', 29 + 5 / 60)])!;
   const raceDate = '2027-03-20';
 
-  it('45 minutes is out of reach: ambitious, and the proposal lands inside the band', () => {
+  it('45 minutes is out of reach: ambitious, and the proposal is the time at average growth', () => {
     const c = checkTargetTime(paces, 45, raceDate)!;
     expect(c.verdict).toBe('ambitious');
-    expect(c.suggested).toBeGreaterThan(c.band.low - 1);
-    expect(c.suggested).toBeLessThanOrEqual(c.band.high);
+    expect(c.outlook.fits).toBe(false);
+    expect(c.suggested).toBe(outlookMinutes(c.outlook));
     expect(c.suggested).toBeGreaterThanOrEqual(53);
     expect(c.suggested).toBeLessThanOrEqual(55);
   });
 
-  it('a goal inside the band is left alone, also at its edges', () => {
-    const band = checkTargetTime(paces, 45, raceDate)!.band;
-    expect(checkTargetTime(paces, 53, raceDate)).toBeUndefined();
-    expect(checkTargetTime(paces, band.low, raceDate)).toBeUndefined();
-    expect(checkTargetTime(paces, band.high, raceDate)).toBeUndefined();
-    expect(checkTargetTime(paces, band.low - 1, raceDate)?.verdict).toBe('ambitious');
+  it('a goal that fits average growth is left alone, and so is one within the spread of the outlook', () => {
+    expect(checkTargetTime(paces, 55, raceDate)).toBeUndefined();
+    const c = checkTargetTime(paces, 45, raceDate)!;
+    expect(checkTargetTime(paces, c.suggested - 1, raceDate)).toBeUndefined();
+    expect(checkTargetTime(paces, c.suggested * 0.9, raceDate)?.verdict).toBe('ambitious');
   });
 
-  it('a goal far slower than the band is called easy', () => {
+  it('a goal slower than the test now is called easy', () => {
     expect(checkTargetTime(paces, 75, raceDate)?.verdict).toBe('easy');
+  });
+
+  it('counts the weeks from the day you give, not from the test', () => {
+    const early = checkTargetTime(paces, 50, raceDate, '2026-10-29')!;
+    expect(early.verdict).toBe('ambitious');
+    expect(checkTargetTime(paces, 50, raceDate, '2026-12-01')!.outlook.weeksLeft).toBeLessThan(early.outlook.weeksLeft);
   });
 
   it('says nothing when the test is doubtful, the race is past, or no race time exists', () => {
@@ -177,10 +185,10 @@ describe('a goal time against the test', () => {
     expect(checkTargetTime(racePaces([t('2026-10-29', 29)], 42.2)!, 200, raceDate)).toBeUndefined();
   });
 
-  it('closer to the race the band narrows, so the same goal turns from fine into ambitious', () => {
+  it('closer to the race the same goal turns from fine into ambitious', () => {
     const late = racePaces([t('2027-02-18', 29 + 5 / 60)])!;
-    expect(checkTargetTime(paces, 52, raceDate)).toBeUndefined();
-    expect(checkTargetTime(late, 52, raceDate)?.verdict).toBe('ambitious');
+    expect(checkTargetTime(paces, 54, raceDate)).toBeUndefined();
+    expect(checkTargetTime(late, 54, raceDate)?.verdict).toBe('ambitious');
   });
 });
 

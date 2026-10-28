@@ -38,7 +38,7 @@ import { makeId } from '../utils/id';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
 import { PACK_WEIGHT_EXPLANATION, type TentPackProposal } from './gr5Profile';
-import { checkTargetTime, racePaces } from './racePaces';
+import { checkTargetTime, outlookWeeksSaid, racePaces } from './racePaces';
 import { countedTests, formatRaceTime } from './racePrediction';
 import { RACE_TEMPLATE_ID, type RaceBlock } from './raceBlock';
 import { formatNumberNL } from '../utils/number';
@@ -1146,7 +1146,7 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
     if (!paces) continue;
     // A best 5 km of this test waits for Akkoord and will change the number: no advice on it yet.
     if (awaitsEffort(inputs.logs, paces.test.logId)) continue;
-    const check = checkTargetTime(paces, race.targetMinutes, race.raceDate);
+    const check = checkTargetTime(paces, race.targetMinutes, race.raceDate, inputs.asOf);
     if (!check) continue;
     const target = Math.round(race.targetMinutes);
     const distance = formatNumberNL(km, km % 1 === 0 ? 0 : 1);
@@ -1155,17 +1155,19 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
       ? `snelste ${formatNumberNL(paces.test.km, paces.test.km % 1 === 0 ? 0 : 1)} km in ${formatRaceTime(paces.test.minutes)}${stopsShort(paces.test) ? `, ${stopsShort(paces.test)}` : ''}`
       : `hele run: ${formatNumberNL(paces.test.km, paces.test.km % 1 === 0 ? 0 : 1)} km in ${formatRaceTime(paces.test.minutes)}`;
     const now = `${Math.round(check.predictedMinutes)} minuten`;
-    // Vanaf vandaag geteld, zoals de doelkaart; de band zelf rekent vanaf de test.
-    const weeksLeft = Math.max(0, Math.round(daysBetween(inputs.asOf, race.raceDate) / 7));
+    // Dezelfde rekening als de doelkaart: gemiddelde groei, geteld vanaf vandaag.
+    const said = outlookWeeksSaid(check.outlook);
+    const raceDay = shortDate(race.raceDate);
+    const outlookText = `Bij gemiddelde groei is dat rond ${raceDay} ongeveer ${check.suggested} minuten`;
     const ambitious = check.verdict === 'ambitious';
     const title = ambitious
       ? `Doeltijd ${distance} km: ${target} minuten past nog niet bij je test`
       : `Doeltijd ${distance} km: ${target} minuten is ruim langzamer dan je test`;
     const lead = `Je testloop van ${shortDate(paces.test.date)} (${test}) past bij een ${distance} km in ongeveer ${now}.${testStopsRemark(paces.test) ? ` ${testStopsRemark(paces.test)}` : ''}`;
     const effect = ambitious
-      ? `${lead} Met nog ${weeksLeft} weken tot ${shortDate(race.raceDate)} is ${check.band.low} tot ${check.band.high} minuten realistisch, dus ${target} minuten vraagt meer dan gemiddelde groei. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`
-      : `${lead} Met nog ${weeksLeft} weken tot ${shortDate(race.raceDate)} is ${check.band.low} tot ${check.band.high} minuten realistisch, dus ${target} minuten laat veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`;
-    const why = 'De testloop is het eerlijkste meetpunt dat ASCEND heeft. Uit de tijd rekent ASCEND je tempo op andere afstanden uit. Recreatieve lopers die trainen worden in 10 tot 15 weken 3 tot 6% sneller (Muñoz e.a. 2014, Nuuttila e.a. 2022); wie nog vroeg in zijn looploopbaan zit, kan tot ongeveer 0,8% per week winnen. Dat is doorgerekend tot je wedstrijd, met ruimte voor een test die op een warme of vermoeide dag viel. Je doeltijd verandert alleen als je Akkoord geeft. Wil je jouw tijd houden, kies dan Liever niet: dan blijft alles staan. Met Liever niet vraagt ASCEND hier niet meer naar, tot je de doeltijd zelf verandert.';
+      ? `${lead} ${outlookText}, en ${target} minuten vraagt ongeveer ${said.need} weken; tot ${raceDay} zijn het er ${said.left}. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`
+      : `${lead} ${outlookText}, dus ${target} minuten laat veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`;
+    const why = 'De testloop is het eerlijkste meetpunt dat ASCEND heeft. Uit de tijd rekent ASCEND je tempo op andere afstanden uit. Recreatieve lopers die trainen worden gemiddeld ongeveer een half procent per week sneller (Muñoz e.a. 2014, Nuuttila e.a. 2022). Dat is doorgerekend tot je wedstrijd, met dezelfde rekening als de meter Snelheid op je doelkaart, met ruimte voor een test die op een warme of vermoeide dag viel. Je doeltijd verandert alleen als je Akkoord geeft. Wil je jouw tijd houden, kies dan Liever niet: dan blijft alles staan. Met Liever niet vraagt ASCEND hier niet meer naar, tot je de doeltijd zelf verandert.';
     out.push({
       id: `goaltime:${race.goalId}:${target}`, trigger: 'plan_update', ruleId: 'TARGET-TIME', title, effect, why, priority: 3,
       relatedLogId: paces.test.logId, goalTargetTime: { goalId: race.goalId, minutes: check.suggested },

@@ -33,7 +33,8 @@ describe('TARGET-TIME', () => {
     expect(a.title).toContain('45 minuten');
     expect(a.effect).toContain('Liever niet');
     expect(a.effect).toContain('in ongeveer 61 minuten');
-    expect(a.effect).toMatch(/\d+ tot \d+ minuten realistisch/);
+    expect(a.effect).toMatch(/Bij gemiddelde groei is dat rond .* ongeveer \d+ minuten, en 45 minuten vraagt ongeveer \d+ weken; tot .* zijn het er \d+\./);
+    expect(a.effect).not.toContain('realistisch');
     // Plain words, no long dashes (the owner's rule for new copy).
     expect(`${a.title}${a.effect}${a.why}`).not.toMatch(/[–—]/);
   });

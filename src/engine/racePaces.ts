@@ -20,7 +20,9 @@
 
 import { daysBetween, formatDateNL } from '../utils/dates';
 import { MANY_STOPS_SENTENCE, manyStops, stopsSentence } from './bestEffort';
-import { formatRaceTime, isSlowerTest, predictionRange, riegel, RIEGEL_MAX_KM, type TestResult } from './racePrediction';
+import { formatRaceTime, isSlowerTest, predictionRange, PREDICTION_SPREAD, riegel, RIEGEL_MAX_KM, type TestResult } from './racePrediction';
+import { GOAL_GROWTH } from '../data/goalGrowth';
+import { weeksOfWork } from './goalGap';
 
 // --- VDOT (Daniels and Gilbert, 1979) --------------------------------------
 
@@ -189,58 +191,59 @@ export function testMeaning(paces: RacePaces): TestMeaning {
   return { headline, rows, note };
 }
 
-// --- the band for race day --------------------------------------------------
+// --- race day, from one calculation -------------------------------------------
 
-// What a recreational runner in a plan gains per week on a 10 km: 0.3% is the
-// 3 to 6% in 10 to 15 weeks the studies found (Munoz 2014, Nuuttila 2022);
-// 0.8% is for someone early in a running career (docs/visie/
-// Trainingswetenschap.md, knelpunt 1). Derived, not measured.
-export const WEEKLY_GAIN_SLOW = 0.003;
-export const WEEKLY_GAIN_FAST = 0.008;
-// Nobody gains more than this by race day, however many weeks there are.
-export const MAX_GAIN = 0.15;
-
-export interface TimeBand {
-  // Whole minutes: the band as it is said and as a goal time is judged.
-  low: number;
-  high: number;
-  // The middle, in whole minutes: what a proposal suggests.
-  suggested: number;
-  weeks: number;
+// Everything the card, the sheet and the proposal say about race day comes from one calculation: the
+// same average growth per week as the speed meter (data/goalGrowth.ts, engine/goalGap.ts), counted from
+// today. No band from other growth figures, so the lines never contradict the meter
+// (decision 2026-10-28-klaar-voor-je-doel-logisch.md).
+export interface RaceOutlook {
+  // What the predicted time becomes on race day at average growth, in minutes (not rounded).
+  atRaceDay: number;
+  // Weeks of work from the predicted time to the goal time (0 when you are already there).
+  work: number;
+  // Weeks from today to race day.
+  weeksLeft: number;
+  // The goal asks no more than the weeks there are.
+  fits: boolean;
 }
 
-// The band a finish time can realistically end up in on race day, from the
-// predicted time now and the weeks left. It carries the prediction's own
-// spread at both ends, so a goal within a couple of percent of your current
-// level is never called unrealistic.
-export function raceDayBand(predictedMinutes: number, weeks: number): TimeBand {
-  const w = Math.max(0, weeks);
-  const gainFast = Math.min(MAX_GAIN, 1 - Math.pow(1 - WEEKLY_GAIN_FAST, w));
-  const gainSlow = Math.min(MAX_GAIN, 1 - Math.pow(1 - WEEKLY_GAIN_SLOW, w));
-  const fast = predictedMinutes * (1 - gainFast);
-  const slow = predictedMinutes * (1 - gainSlow);
-  const [lowEdge] = predictionRange(fast);
-  const [, highEdge] = predictionRange(slow);
-  return { low: Math.ceil(lowEdge), high: Math.ceil(highEdge), suggested: Math.round((fast + slow) / 2), weeks: Math.round(w) };
+export function raceOutlook(predictedMinutes: number, targetMinutes: number, weeksLeft: number): RaceOutlook {
+  const left = Math.max(0, weeksLeft);
+  const g = GOAL_GROWTH.run.weekly;
+  const work = weeksOfWork({ now: predictedMinutes, need: targetMinutes, lowerIsBetter: true, weeklyGain: g });
+  return { atRaceDay: predictedMinutes * Math.pow(1 - g, left), work, weeksLeft: left, fits: work <= left };
+}
+
+// "ongeveer 50 minuten" (whole minutes, as a person says it).
+export const outlookMinutes = (o: RaceOutlook): number => Math.round(o.atRaceDay);
+
+// How many weeks the goal asks, as said next to the weeks there are: never "about 21 weeks; there are 21"
+// when it just does not fit.
+export function outlookWeeksSaid(o: RaceOutlook): { need: number; left: number } {
+  const left = Math.round(o.weeksLeft);
+  return { need: o.fits ? Math.round(o.work) : Math.max(Math.round(o.work), left + 1), left };
 }
 
 export interface TargetTimeCheck {
   verdict: 'ambitious' | 'easy';
-  band: TimeBand;
+  outlook: RaceOutlook;
   predictedMinutes: number;
-  // The goal time a proposal would set.
+  // The goal time a proposal would set: the time at race day at average growth, in whole minutes.
   suggested: number;
 }
 
-// Is a goal time outside what the test says is realistic? Undefined when it
-// is inside (or the test cannot say: past Riegel's reach, a doubtful test,
-// no weeks left).
-export function checkTargetTime(paces: RacePaces, targetMinutes: number, raceDate: string): TargetTimeCheck | undefined {
+// Is a goal time clearly outside what the test says average growth gives? Undefined when it is close
+// enough (within the prediction's own spread), or when the test cannot say: past Riegel's reach, a
+// doubtful test, no weeks left. Ambitious only when the goal asks more weeks than there are, so the card
+// has said the same; easy when the goal is slower than where the test puts you now.
+export function checkTargetTime(paces: RacePaces, targetMinutes: number, raceDate: string, asOf?: string): TargetTimeCheck | undefined {
   if (!paces.race || paces.doubtful) return undefined;
-  const weeks = daysBetween(paces.test.date, raceDate) / 7;
+  const weeks = daysBetween(asOf ?? paces.test.date, raceDate) / 7;
   if (weeks <= 0) return undefined;
-  const band = raceDayBand(paces.race.minutes, weeks);
-  if (targetMinutes < band.low) return { verdict: 'ambitious', band, predictedMinutes: paces.race.minutes, suggested: band.suggested };
-  if (targetMinutes > band.high) return { verdict: 'easy', band, predictedMinutes: paces.race.minutes, suggested: band.suggested };
+  const outlook = raceOutlook(paces.race.minutes, targetMinutes, weeks);
+  const base = { outlook, predictedMinutes: paces.race.minutes, suggested: outlookMinutes(outlook) };
+  if (!outlook.fits && targetMinutes < outlook.atRaceDay * (1 - PREDICTION_SPREAD)) return { verdict: 'ambitious', ...base };
+  if (targetMinutes > paces.race.minutes * (1 + PREDICTION_SPREAD)) return { verdict: 'easy', ...base };
   return undefined;
 }

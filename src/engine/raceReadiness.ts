@@ -23,7 +23,7 @@ import { computeGoalReadiness, readinessInputOf, type GoalReadiness, type Missin
 import { goalDetailsOf } from './goalLabels';
 import { GOAL_GROWTH } from '../data/goalGrowth';
 import { fillFromWeeks, weeksOfWork } from './goalGap';
-import { raceDayBand, racePaces } from './racePaces';
+import { outlookMinutes, outlookWeeksSaid, raceOutlook, racePaces } from './racePaces';
 import { countedTests, formatRaceTime, type TestResult } from './racePrediction';
 import { awaitsEffort } from './testJudgment';
 
@@ -55,8 +55,8 @@ export interface RaceFacts {
   expectedMinutes?: number;
   // "Verwacht nu 55:40. Doel 45:00: nog 10:40, ongeveer 1:04 per km."
   nowLine?: string;
-  // Haalbaarheid als droog feit, uit dezelfde weken als de meter: "Bij gemiddelde groei rond 20 maart: 47 tot
-  // 54 minuten. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21." De gebruiker oordeelt zelf.
+  // Haalbaarheid als droog feit, uit dezelfde weken als de meter: "Bij gemiddelde groei rond 20 maart: ongeveer
+  // 50 minuten. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21." De gebruiker oordeelt zelf.
   bandLine?: string;
   // Weken werk bij gemiddelde groei van de verwachte tijd naar de doeltijd (0 als je er al onder zit).
   weeksOfWork?: number;
@@ -118,19 +118,19 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
     ? `${nowBase} Doel ${clock(target)}: nog ${clock(gap)}, ongeveer ${perKmText} per km.`
     : `${nowBase} Doel ${clock(target)}: je zit er nu al onder.`;
 
-  const weeks = goal.status === 'active' ? daysBetween(paces.test.date, goal.targetDate) / 7 : 0;
-  const band = weeks > 0 && !paces.doubtful ? raceDayBand(expected, weeks) : undefined;
+  // Eén rekening voor alles op de kaart: dezelfde gemiddelde groei en dezelfde weken als de meter, geteld vanaf vandaag.
   let bandLine: string | undefined;
-  if (band && goal.status === 'active') {
-    const day = formatDateNL(goal.targetDate).replace(/ \d{4}$/, '');
-    const head = `Bij gemiddelde groei rond ${day}: ${band.low} tot ${band.high} minuten`;
-    const left = Math.max(0, daysBetween(date, goal.targetDate) / 7);
-    if (target > band.high) bandLine = `${head}, je doel ligt erboven.`;
-    else if (work <= left) bandLine = `${head}, je doel valt erbinnen.`;
-    else {
-      // Nooit "ongeveer 21 weken; er zijn er 21" als het net niet past.
-      const need = Math.max(Math.round(work), Math.round(left) + 1);
-      bandLine = `${head}. ${clock(target)} vraagt ongeveer ${need} weken; tot ${day} zijn het er ${Math.round(left)}.`;
+  if (goal.status === 'active' && !paces.doubtful) {
+    const left = daysBetween(date, goal.targetDate) / 7;
+    if (left > 0) {
+      const outlook = raceOutlook(expected, target, left);
+      const day = formatDateNL(goal.targetDate).replace(/ \d{4}$/, '');
+      const head = `Bij gemiddelde groei rond ${day}: ongeveer ${outlookMinutes(outlook)} minuten`;
+      if (outlook.fits) bandLine = `${head}, je doel valt erbinnen.`;
+      else {
+        const said = outlookWeeksSaid(outlook);
+        bandLine = `${head}. ${clock(target)} vraagt ongeveer ${said.need} weken; tot ${day} zijn het er ${said.left}.`;
+      }
     }
   }
 
