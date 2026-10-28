@@ -175,6 +175,15 @@ blad met `animate-sheet-in` zonder `ref={sheetRef}` laat `sheetDrag.scan.test.ts
 met reden in de uitzonderingen staat. Volgen is 1 op 1 in elke stand, het terugveren staat in Uit
 meteen op de eindstand.
 
+Uit een rij groeien en naar een dag schuiven (`docs/beslissingen/2026-10-28-vloeiende-overgangen-uitgroei.md`), alleen in
+Normaal: een rij of kaart met `data-sheet-from` onthoudt bij een tik waar je tikte (`utils/sheetGrowDom.ts#installSheetOrigin`),
+en het blad dat opent groeit eruit via `sheetRef` van `useSheetClose` (een stil vlak, `data-grow` op het paneel, rekensom in
+`components/growPlan.ts`); sluiten via `requestClose` krimpt terug, een blad dat de pagina zelf sluit na Gedaan of Verplaatsen niet.
+Een verplaatste training schuift in Week naar zijn dag: `armFlip()` (`utils/flipDom.ts`, aangeroepen door `applyProposal`,
+`commitPlanChange` en `undoRecentChange`) meet de rijen, `useFlipList` in `WeekPlanner` speelt het af (rekensom in
+`components/flip.ts`), wachtend tot een voorstelblad weg is, vanaf de plek van de zwevende rij na slepen. Rustig laat de verplaatste
+rij alleen kort verschijnen, Uit doet niets. Een nieuwe rij die een blad opent krijgt `data-sheet-from`; Vandaag schuift nog niet.
+
 De lucht bovenaan heeft een donkere variant (`data-sky="day|night"` op `<html>`, instelling
 "Lucht bovenaan", `engine/skySettings.ts`; `docs/beslissingen/2026-10-24-nachtlucht.md`).
 Een component gebruikt alleen de tokens en `.on-light`; wat licht lijkt wordt 's avonds vanzelf donker.
@@ -408,8 +417,10 @@ at start without a proposal. Changing the week shape later is not built yet.
 sort key, `goalLabels.ts#sortedForList`, read by the list and by `goalConflicts.ts`; every move writes the order of
 the whole visible list), the first one open, a goal sheet per goal, and a season strip on the sky (switch "Seizoensstrook
 tonen"). A new label, a goal added or changed, "In hutten" or "Met tent", and an order that shifts a conflict
-(`goalList.ts#moveOutcome`) are always a proposal with Akkoord, never silent. "Klaar voor je doel" of the main goal is
-`gr5Readiness.ts#computeMainGoalReadiness`, the same as on Je stand. `/ascend/doelen` redirects to the tab. Krachtprogressie
+(`goalList.ts#moveOutcome`) are always a proposal with Akkoord, never silent. "Klaar voor je doel" of the main goal: only for
+`trek_hut`, `trek_tent` or no kind (`goalReadinessFor.ts#usesMilestoneReadiness`) it is
+`gr5Readiness.ts#computeMainGoalReadiness`, the same as on Je stand; every other kind goes through
+`goalReadinessFor.ts#goalReadinessFor`. `/ascend/doelen` redirects to the tab. Krachtprogressie
 and Trainingsverdeling live on Je stand.
 
 **Forge and the order of Je stand** (`engine/forgeEntry.ts`, `engine/cardOrder.ts`, `components/stand/ForgeEntryCard.tsx`,
@@ -515,7 +526,7 @@ The finish (`2026-10-28-klaar-voor-je-doel-logisch-afwerking.md`): which calcula
 the smallest whole minute that fits the weeks there are (`raceOutlook().wholeMinutes`, the same number the card calls "ongeveer"), so
 after Akkoord the card says it fits; a meter without weight never makes "het meeste te winnen" and does not keep the number under 100.
 Two settings: "Groei bij het rekenen" (`goalGrowth`: gemiddeld = the middle of the band, voorzichtig = the bottom, `data/goalGrowth.ts#growthPer`)
-and "Marge bij een tijdslimiet" (`limitMargin`: 10%, 5%, geen); Sterker worden follows "Weging bij een doeltijd" too. The 0,55% is the middle
+and "Marge bij een tijdslimiet" (`limitMargin`: 10%, 5%, geen); Sterker worden follows "Weging bij een doeltijd" too. The follow-up (`2026-10-28-klaar-voor-je-doel-vervolg.md`): the main goal only gets the milestones calculation when it is a tocht (`trek_hut`, `trek_tent`) or has no kind (`goalReadinessFor.ts#usesMilestoneReadiness`), any other main goal gets the calculation of its own kind, and Je stand reads `goalReadinessFor` too, so both show the same number; a goal time within the spread of the prediction (`PREDICTION_SPREAD`) of the time on race day counts as "past" (`RaceOutlook.holds`, the same line as TARGET-TIME; `fits` stays strict and sets the whole minute of the proposal), so the card never contradicts an Akkoord a day later; up to and including 10 km the expected time on race day is a clock ("ongeveer 20:05"), above that whole minutes (`racePaces.ts#outlookSaid`); the form of Sterker worden takes a fully filled exercise with Volgende (`strengthTargetsDraft.ts#finishStrengthTargets`, a half filled one blocks with one sentence) and the strength meter knows an exercise by name, id or alias. The 0,55% is the middle
 of 0,3 to 0,8% derived from several sources, never attributed to one study. The form of Sterker worden takes the strength targets per exercise
 (`StrengthTargetsField`, `engine/strengthTargetsDraft.ts`); a cutoff only belongs to an ultra, also when editing.
 
@@ -613,6 +624,24 @@ The weights of a machine can be typed in per gym (`GymProfile.exerciseWeightsKg`
 `engine/machineWeights.ts`); a strength log knows its gym (`SessionLog.gymProfileId`, only on new
 logs) so the weights learned from use stay per gym, and Forge asks to fill them in when no weight
 fits (`docs/beslissingen/2026-10-26-gewichten-per-toestel.md`). A loose add-on weight (a plate or magnet, at most 3, each at most once, every combination) is added to every weight of the block of a cable or stack machine: `GymProfile.addOnKg` for the whole gym, `GymProfile.exerciseAddOnKg` per machine over it (an empty list is none), laid over the block in `strengthWeights.ts#externalWeights` so every candidate follows, and Forge shows "70 + 2,3 kg" under such a set (`engine/machineWeights.ts`, `docs/beslissingen/2026-10-28-tussengewichten.md`).
+
+**The course of a training in Forge** (`engine/forgeLog.ts`, `models/forgeLog.ts`, `components/forge/ForgeLogSheet.tsx`, decision
+`docs/beslissingen/2026-10-28-forge-logboek.md`, design `docs/visie/Forge logboek en spotter.md`): like the Event Log of MacroFactor, per moment
+which set went from what to what and why (bijgestuurd, doorgevoerd, eigen, onder, past-niet, spotter). It is derived: after every change of the
+rows `deriveChanges` compares before and after, the action only says why (`ForgeCause`); ticking, a new plan and a swap are no event, typing is one
+event per minute and set. It lives next to the draft (`WorkoutDraft.log`, `seen`) and goes onto the log only when it is made
+(`SessionLog.forgeLog`, optional, read defensively by `cleanForgeLog`/`migrateLogForgeLog`, in the backup, no schema bump); an existing log is never
+written to. A quiet button in the line with the clock opens the sheet, with a dot only for what Forge did or saw and has not been opened yet, never
+for your own edits or a solved message. A message goes away when solved or names the set that still does not fit (`forgeAdjust.ts#fitStillOpen`,
+`NoFit.setNo`). In the log sheet "Verloop van de training" opens the same sheet.
+
+**Without a spotter** (`engine/spotter.ts`, decision `docs/beslissingen/2026-10-28-zonder-spotter.md`): on a barbell exercise where failure is
+dangerous (`Exercise.failureRisk`: benches and squats with a bar; never machines, cables or dumbbells) Forge prescribes at least 1 rep in reserve,
+in the target and the hint (`spotterSlot` in `planExercise`, so also after a swap), unless the gym has safety arms (`GymProfile.spotterRack`, row
+"Veiligheidsarmen" under Je sportschool) or the setting "Zonder spotter" is off (`strengthModel.noSpotter`, absent = on). One quiet sign per exercise
+("1 over, zonder spotter", a shield, explanation behind a tap), never a pop-up, never a block: typing 0 is always possible and is stored as typed.
+Raak judges ASCEND's proposal against its own raised target and your own sets against what the plan asked (`comparisonRows`), so a deliberate 1 where
+MacroFactor said 0 is no miss; `noSpotter` is part of `checkModelKey`.
 
 **A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
 average once there are 7 days) becomes a question in the morning check instead of a

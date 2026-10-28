@@ -69,7 +69,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     advanced: [],
   },
   forge: {
-    rows: ['forge', 'kracht', 'forge-programma', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-weergave', 'bundel-rusttimer', 'forge-scherm', 'forge-bijsturen', 'bundel-sportschool'],
+    rows: ['forge', 'kracht', 'forge-programma', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-weergave', 'bundel-rusttimer', 'forge-scherm', 'forge-bijsturen', 'forge-spotter', 'bundel-sportschool'],
     advanced: ['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets'],
   },
   lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'intensiteit'], advanced: [] },
@@ -127,7 +127,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Doel en tochten
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
-  ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'tussengewichten'),
+  ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'tussengewichten', 'spotterrek'),
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst'),
   ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid'),
   ...inSheet('bundel-rekenmodel', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),
@@ -245,7 +245,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.forge], 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-rekenmodel', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren', 'bundel-weergave', 'forge-1rm', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-dumbbells'),
   ...rule([B.forge, B.oneRm], 'forge-weergave'),
   ...rule([B.forge, B.oneRm, B.mf], 'forge-1rm-macrofactor'),
-  ...rule([B.forge, B.inApp], 'forge-bijsturen'),
+  ...rule([B.forge, B.inApp], 'forge-bijsturen', 'forge-spotter', 'spotterrek'),
   ...rule([B.inApp], 'bundel-invullen', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven', 'bundel-rusttimer', 'forge-rust'),
   ...rule([B.inApp, B.restAuto], 'forge-signaal'),
   ...rule([B.inApp, B.restAuto, B.restAlert], 'forge-geluid'),

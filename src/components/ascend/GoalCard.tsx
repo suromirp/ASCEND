@@ -84,7 +84,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
       }}
     >
       <div className="flex items-start gap-3">
-        <button type="button" onClick={onDetails} className="shrink-0 text-left" aria-label={`${goal.name || 'Doel'}, alles over dit doel`}>
+        <button type="button" onClick={onDetails} data-sheet-from className="shrink-0 text-left" aria-label={`${goal.name || 'Doel'}, alles over dit doel`}>
           <Ring value={percent === undefined ? 0 : percent / 100} label={percent === undefined ? 'Nog niet te meten' : `Klaar voor je doel: ${percent}%`} size={first ? 72 : 60} stroke={first ? 7 : 6}>
             {percent === undefined ? (
               <span className="font-sans text-base tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>-</span>
@@ -159,7 +159,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
       {open && kind && isTrekGoal(kind) && <JourneyRows compact onNavigate={navigate} />}
 
       <div className="-mb-2 flex items-center justify-between">
-        <TextButton onClick={onDetails} icon="verder">Meer over dit doel</TextButton>
+        <TextButton onClick={onDetails} data-sheet-from icon="verder">Meer over dit doel</TextButton>
         {/* Een wedstrijd met een gemeten doeltijd toont alles al: dan klapt er niets. */}
         {!raceOpen && <TextButton tone="dim" onClick={onToggle} icon="omlaag" flipped={open} aria-expanded={open}>{open ? 'Inklappen' : 'Uitklappen'}</TextButton>}
       </div>

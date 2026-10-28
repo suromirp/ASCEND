@@ -18,6 +18,7 @@ import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
 import type { PlannedLeaveMark } from './leave';
 import type { ActivityDetail, RunDynamics } from './activityDetail';
+import type { ForgeEvent } from './forgeLog';
 import type { RunDetail } from './runDetail';
 
 export type MetricSource = 'manual' | 'garmin' | 'health-connect' | 'macrofactor' | 'import';
@@ -473,6 +474,11 @@ export interface SessionLog {
   // on (" @ <name>"). Absent on older logs and where the gym is not known. Optional, additive;
   // never written onto a log that exists (docs/beslissingen/2026-10-26-gewichten-per-toestel.md).
   gymProfileId?: string;
+  // Het verloop van een krachttraining in Forge: per moment welke set van wat naar wat ging en
+  // waardoor (engine/forgeLog.ts). Alleen toegevoegd bij het maken van het log, nooit op een log dat
+  // al bestaat. Optional, additive; the backup schema number does not move
+  // (docs/beslissingen/2026-10-28-forge-logboek.md).
+  forgeLog?: ForgeEvent[];
   // A hard run or test: how your legs felt at the warm-up, held against the
   // leg index (engine/learning.ts). Optional, additive.
   legsAtStart?: 'fris' | 'normaal' | 'zwaar';

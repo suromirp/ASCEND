@@ -206,6 +206,11 @@ export interface RaceOutlook {
   weeksLeft: number;
   // The goal asks no more than the weeks there are.
   fits: boolean;
+  // What the card calls "past": the goal fits the weeks, or lies within the spread of the prediction
+  // (PREDICTION_SPREAD) of the time on race day. The proposal sets the smallest whole minute that fits, and a
+  // day later that minute may just miss; within the spread the card never contradicts an Akkoord. The same
+  // line decides TARGET-TIME (checkTargetTime), so the card and the proposal go quiet together.
+  holds: boolean;
   // The smallest whole minute that fits: the number the card calls "ongeveer" and the proposal sets.
   wholeMinutes: number;
 }
@@ -219,11 +224,19 @@ export function raceOutlook(predictedMinutes: number, targetMinutes: number, wee
   // Not Math.round: a rounded-down minute does not fit, and the proposal must fit after Akkoord.
   let whole = Math.max(1, Math.ceil(atRaceDay) - 1);
   while (!fitsAt(whole)) whole += 1;
-  return { atRaceDay, work, weeksLeft: left, fits: work <= left, wholeMinutes: whole };
+  const fits = work <= left;
+  return { atRaceDay, work, weeksLeft: left, fits, holds: fits || targetMinutes >= atRaceDay * (1 - PREDICTION_SPREAD), wholeMinutes: whole };
 }
 
 // "ongeveer 50 minuten": the smallest whole minute that fits, the same number the proposal sets.
 export const outlookMinutes = (o: RaceOutlook): number => o.wholeMinutes;
+
+// Up to and including 10 km the time on race day is said as a clock (20:05), because "about 21 minutes" is
+// too coarse for a 5 km; above that whole minutes. The card, the sheet and TARGET-TIME all say it this way.
+export const CLOCK_UP_TO_KM = 10;
+export function outlookSaid(o: RaceOutlook, km: number): string {
+  return km <= CLOCK_UP_TO_KM ? `ongeveer ${formatRaceTime(o.atRaceDay)}` : `ongeveer ${o.wholeMinutes} minuten`;
+}
 
 // How many weeks the goal asks, as said next to the weeks there are: never "about 21 weeks; there are 21"
 // when it just does not fit.
@@ -251,7 +264,7 @@ export function checkTargetTime(paces: RacePaces, targetMinutes: number, raceDat
   if (weeks <= 0) return undefined;
   const outlook = raceOutlook(paces.race.minutes, targetMinutes, weeks, growth);
   const base = { outlook, predictedMinutes: paces.race.minutes, suggested: outlookMinutes(outlook) };
-  if (!outlook.fits && targetMinutes < outlook.atRaceDay * (1 - PREDICTION_SPREAD)) return { verdict: 'ambitious', ...base };
+  if (!outlook.holds) return { verdict: 'ambitious', ...base };
   if (targetMinutes > paces.race.minutes * (1 + PREDICTION_SPREAD)) return { verdict: 'easy', ...base };
   return undefined;
 }

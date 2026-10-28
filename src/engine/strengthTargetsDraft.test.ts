@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addStrengthTarget, removeStrengthTarget, strengthTargetChoices, strengthTargetLine, strengthTargetProblem } from './strengthTargetsDraft';
+import { addStrengthTarget, finishStrengthTargets, removeStrengthTarget, strengthTargetChoices, strengthTargetLine, strengthTargetProblem } from './strengthTargetsDraft';
 import { readGoalDetails } from '../storage/migrations';
 
 describe('krachtdoelen per oefening in het formulier', () => {
@@ -48,5 +48,20 @@ describe('krachtdoelen per oefening in het formulier', () => {
     expect(readGoalDetails({ strengthTargets: [{ exercise: '  ', kg: 80, reps: 5 }, { exercise: 'x'.repeat(200), kg: 80, reps: 5 }, { exercise: 'Front Squat', kg: 80, reps: 5.5 }] })?.strengthTargets).toBeUndefined();
     const many = Array.from({ length: 20 }, (_, i) => ({ exercise: `Oefening ${i}`, kg: 50, reps: 5 }));
     expect(readGoalDetails({ strengthTargets: many })?.strengthTargets).toHaveLength(8);
+  });
+
+  it('bij Opslaan gaat een volledig ingevulde invoer mee, een lege niet, en een halve geeft een heldere zin', () => {
+    const list = [{ exercise: 'Front Squat', kg: 80, reps: 5 }];
+    expect(finishStrengthTargets(list, { exercise: '', kg: undefined, reps: undefined })).toEqual({ list });
+    const full = finishStrengthTargets(list, { exercise: 'Barbell Back Squat', kg: 100, reps: 5 });
+    expect(full.problem).toBeUndefined();
+    expect(full.list).toEqual([...list, { exercise: 'Barbell Back Squat', kg: 100, reps: 5 }]);
+    const half = finishStrengthTargets(list, { exercise: 'Barbell Back Squat', kg: undefined, reps: 5 });
+    expect(half.list).toEqual(list);
+    expect(half.problem).toBe('Je krachtdoel is nog niet af. Vul het gewicht in. Of maak de velden leeg.');
+    const many = Array.from({ length: 8 }, (_, i) => ({ exercise: `Oefening ${i}`, kg: 50, reps: 5 }));
+    expect(finishStrengthTargets(many, { exercise: 'Barbell Back Squat', kg: 100, reps: 5 }).problem).toContain('tot 8 doelen');
+    // Dezelfde oefening vervangt, ook bij een volle lijst.
+    expect(finishStrengthTargets([{ exercise: 'Barbell Back Squat', kg: 90, reps: 5 }], { exercise: 'Barbell Back Squat', kg: 100, reps: 5 }).list).toEqual([{ exercise: 'Barbell Back Squat', kg: 100, reps: 5 }]);
   });
 });

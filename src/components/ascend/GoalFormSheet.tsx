@@ -15,6 +15,7 @@ import { TextButton } from '../TextButton';
 import { Sheet } from '../settings/Sheet';
 import { LabelBars } from './GoalLabel';
 import { StrengthTargetsField } from './StrengthTargetsField';
+import { finishStrengthTargets, type StrengthTargetInput } from '../../engine/strengthTargetsDraft';
 
 // Het blad om een doel toe te voegen (drie stappen: de soort, een paar vragen, en dan het voorstel
 // met Akkoord) en om een doel aan te passen (alleen de vragen, met wat er al staat ingevuld). Beide
@@ -47,12 +48,20 @@ export function GoalFormSheet({
   const [details, setDetails] = useState<GoalDetails>(() => (goal ? { ...(startTile ? defaultDetails(startTile) : {}), ...detailsFromGoal(goal) } : { ...(initialTile ? defaultDetails(initialTile) : {}), ...(initialDetails ?? {}) }));
   const [date, setDate] = useState(goal?.targetDate ?? '');
   const [name, setName] = useState(goal?.name ?? '');
+  const [strengthDraft, setStrengthDraft] = useState<StrengthTargetInput>({ exercise: '', kg: undefined, reps: undefined });
   const [picked, setPicked] = useState<GoalPriority | undefined>(undefined);
   const live = existing.filter((g) => g.status !== 'archived');
   const tile = ADD_TILES.find((t) => t.id === tileId);
   const dateValue = date || undefined;
   const priority = picked ?? suggestPriority(live, dateValue, mainGoalId);
-  const problems = tileId ? draftProblems(tileId, details, dateValue, today, goal?.targetDate, goal && tileId === startTile ? detailsFromGoal(goal) : undefined) : [];
+  // Wat in de velden van de krachtdoelen staat zonder "Doel toevoegen" gaat mee bij Volgende, of er komt een zin.
+  const strengthOn = !!tileId && questionsFor(tileId).some((q) => q.key === 'strengthTargets');
+  const finished = strengthOn ? finishStrengthTargets(details.strengthTargets ?? [], strengthDraft) : undefined;
+  const finalDetails: GoalDetails = finished && finished.list.length > 0 ? { ...details, strengthTargets: finished.list } : details;
+  const problems = [
+    ...(tileId ? draftProblems(tileId, finalDetails, dateValue, today, goal?.targetDate, goal && tileId === startTile ? detailsFromGoal(goal) : undefined) : []),
+    ...(finished?.problem ? [finished.problem] : []),
+  ];
   const nextOrder = live.reduce((m, g, i) => Math.max(m, (g.order ?? i) + 1), 0);
   const questions = useMemo(() => (tileId ? questionsFor(tileId).filter((q) => !q.showIf || q.showIf(details)) : []), [tileId, details]);
 
@@ -101,8 +110,8 @@ export function GoalFormSheet({
   const count = questions.length;
   const submit = (close: () => void) => {
     const now = new Date().toISOString();
-    if (goal) onSubmit(applyGoalEdit(goal, { tile: tileId, details, date: dateValue, name, now }), close);
-    else onSubmit(buildGoalDraft({ id: makeId('goal'), now, tile: tileId, details, date: dateValue, name, priority, order: nextOrder }), close);
+    if (goal) onSubmit(applyGoalEdit(goal, { tile: tileId, details: finalDetails, date: dateValue, name, now }), close);
+    else onSubmit(buildGoalDraft({ id: makeId('goal'), now, tile: tileId, details: finalDetails, date: dateValue, name, priority, order: nextOrder }), close);
   };
 
   return (
@@ -117,7 +126,7 @@ export function GoalFormSheet({
           {questions.map((q) => (
             <div key={q.key} className="flex flex-col gap-2">
               {q.key === 'strengthTargets' ? (
-                <StrengthTargetsField value={details.strengthTargets ?? []} onChange={(next) => set('strengthTargets', next)} />
+                <StrengthTargetsField value={details.strengthTargets ?? []} onChange={(next) => set('strengthTargets', next)} onDraft={setStrengthDraft} />
               ) : q.choices ? (
                 <>
                   <span className="text-base" style={{ color: 'var(--color-ink)' }}>{q.label}{!q.required && <span style={{ color: 'var(--color-ink-dim)' }}> (mag leeg)</span>}</span>

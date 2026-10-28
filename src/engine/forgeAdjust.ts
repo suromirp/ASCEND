@@ -105,6 +105,11 @@ export interface NoFit {
   // verwachting haalt bij de eerste set die het bereik niet haalt.
   lightestKg: number;
   expectedReps: number;
+  // De eerste open set die niet past: welke het is (rij, nummer van de werkset) en met welk gewicht,
+  // zodat de regel zegt welke set het is en verdwijnt zodra je die set zelf aanpaste.
+  rowId?: string;
+  setNo?: number;
+  weightKg?: number;
 }
 
 // Past er op dit toestel geen enkel gewicht meer? Alleen bij een kabel of toestel met een
@@ -134,7 +139,7 @@ export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: Adjus
     const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - fatigue) ** distance;
     const rir = r.target.rir ?? DEFAULT_RIR;
     const reps = expectedReps(strength, lightest, rir);
-    if (reps < r.target.repsLow) return { fromRowId: rowId, repsLow: r.target.repsLow, repsHigh: r.target.repsHigh, lightestKg, expectedReps: Math.max(0, reps) };
+    if (reps < r.target.repsLow) return { fromRowId: rowId, repsLow: r.target.repsLow, repsHigh: r.target.repsHigh, lightestKg, expectedReps: Math.max(0, reps), rowId: r.id, setNo: workIds.indexOf(r.id) + 1, weightKg: r.weightKg };
   }
   return undefined;
 }
@@ -142,15 +147,30 @@ export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: Adjus
 // De regel bij de oefening als geen gewicht past.
 export function noFitText(fit: NoFit, hasList = false): string {
   const reps = fit.repsLow === fit.repsHigh ? `${fit.repsLow}` : `${fit.repsLow} tot ${fit.repsHigh}`;
-  return `Geen gewicht van dit toestel past bij ${reps} herhalingen. Gewichten van dit toestel ${hasList ? 'aanpassen' : 'invullen'}?`;
+  const tail = `${hasList ? 'aanpassen' : 'invullen'}?`;
+  if (fit.setNo !== undefined) return `Set ${fit.setNo}: geen gewicht van dit toestel past bij ${reps} herhalingen. Gewichten van dit toestel ${tail}`;
+  return `Geen gewicht van dit toestel past bij ${reps} herhalingen. Gewichten van dit toestel ${tail}`;
+}
+
+// Past de set nog steeds niet? Zodra je die set zelf aanpaste, afvinkte of weghaalde is de melding
+// opgelost en verdwijnt hij. Een melding zonder set (uit een oud concept) blijft staan tot de oefening klaar is.
+export function fitStillOpen(ex: WorkoutExercise, fit: { rowId?: string; weightKg?: number }): boolean {
+  if (fit.rowId === undefined) return true;
+  const r = ex.rows.find((x) => x.id === fit.rowId);
+  return !!r && !r.done && !r.edited && (fit.weightKg === undefined || r.weightKg === fit.weightKg);
+}
+
+// Een regel met de set erbij: "Set 3: ook 35 kg is nog te zwaar."
+function withSet(text: string, setNo: number | undefined): string {
+  return setNo === undefined ? text : `Set ${setNo}: ${text.charAt(0).toLowerCase()}${text.slice(1)}`;
 }
 
 // Na het invullen van de gewichten: past er nog steeds niets, dan alleen een korte, stille
 // tip onder de oefening, zonder knoppen ("Ook 35 kg is nog te zwaar, naar verwachting 8 herhalingen.").
 export function stillHeavyTip(fit: NoFit): string {
   const kg = formatNumberNL(fit.lightestKg, 2);
-  if (fit.expectedReps <= 0) return `Ook ${kg} kg is nog te zwaar voor deze set.`;
-  return `Ook ${kg} kg is nog te zwaar, naar verwachting ${fit.expectedReps} ${fit.expectedReps === 1 ? 'herhaling' : 'herhalingen'}.`;
+  if (fit.expectedReps <= 0) return withSet(`Ook ${kg} kg is nog te zwaar voor deze set.`, fit.setNo);
+  return withSet(`Ook ${kg} kg is nog te zwaar, naar verwachting ${fit.expectedReps} ${fit.expectedReps === 1 ? 'herhaling' : 'herhalingen'}.`, fit.setNo);
 }
 
 export interface TooBigStep {
@@ -160,6 +180,10 @@ export interface TooBigStep {
   // verwachting haalt: ver boven het bereik.
   stepKg: number;
   expectedReps: number;
+  // De open set waar het om gaat (zie NoFit).
+  rowId?: string;
+  setNo?: number;
+  weightKg?: number;
 }
 
 // Na het invullen van de gewichten: `suggestLighter` zwijgt omdat het eerstvolgende lichtere
@@ -198,7 +222,7 @@ export function suggestTooBigStep(ex: WorkoutExercise, rowId: string, ctx: Adjus
     const c = candidates[pick];
     if (c.loadKg >= now - 1e-9) continue;
     const reps = expectedReps(strength, c.loadKg, rir);
-    if (reps > r.target.repsHigh + REPS_ROOM) return { fromRowId: rowId, stepKg: c.externalKg, expectedReps: reps };
+    if (reps > r.target.repsHigh + REPS_ROOM) return { fromRowId: rowId, stepKg: c.externalKg, expectedReps: reps, rowId: r.id, setNo: workIds.indexOf(r.id) + 1, weightKg: r.weightKg };
   }
   return undefined;
 }
@@ -207,8 +231,8 @@ export function suggestTooBigStep(ex: WorkoutExercise, rowId: string, ctx: Adjus
 export function tooBigStepTip(step: TooBigStep): string {
   const kg = formatNumberNL(step.stepKg, 2);
   // Een getal ver boven elk bereik (de omrekening is daar ook het minst zeker) zegt niets meer.
-  if (step.expectedReps > 30) return `${kg} kg is een te grote stap: veel te veel herhalingen.`;
-  return `${kg} kg is een te grote stap: naar verwachting ${step.expectedReps} ${step.expectedReps === 1 ? 'herhaling' : 'herhalingen'}.`;
+  if (step.expectedReps > 30) return withSet(`${kg} kg is een te grote stap: veel te veel herhalingen.`, step.setNo);
+  return withSet(`${kg} kg is een te grote stap: naar verwachting ${step.expectedReps} ${step.expectedReps === 1 ? 'herhaling' : 'herhalingen'}.`, step.setNo);
 }
 
 // De regel bij de oefening: "Die set was zwaarder dan bedoeld. Volgende sets 62,5 kg?"

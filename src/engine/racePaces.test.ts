@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { checkTargetTime, formatPace, paceLine, testMeaning, formatPaceRange, minutesAtVdot, paceForTemplate, racePaces, raceOutlook, outlookMinutes, outlookWeeksSaid, vdotOf } from './racePaces';
+import { formatRaceTime } from './racePrediction';
+import { checkTargetTime, formatPace, paceLine, testMeaning, formatPaceRange, minutesAtVdot, paceForTemplate, racePaces, raceOutlook, outlookSaid, outlookMinutes, outlookWeeksSaid, vdotOf } from './racePaces';
 import type { TestResult } from './racePrediction';
 
 // Made-up results. 29:05 for 5 km is the 5 km time of VDOT 32.
@@ -174,6 +175,36 @@ describe('the proposal always fits after Akkoord', () => {
         expect(checkTargetTime(paces, c.suggested, raceDate)).toBeUndefined();
       }
     }
+  });
+
+  it('the day after Akkoord the card still says it fits: within the spread of the prediction counts as fits', () => {
+    for (const growth of ['average', 'careful'] as const) {
+      for (let predicted = 17.3; predicted < 130; predicted += 3.37) {
+        for (let weeks = 1; weeks < 60; weeks += 2.9) {
+          const m = outlookMinutes(raceOutlook(predicted, predicted * 0.7, weeks, growth));
+          // One day later, and a week later: the card never contradicts the proposal.
+          expect(raceOutlook(predicted, m, weeks - 1 / 7, growth).holds).toBe(true);
+          expect(raceOutlook(predicted, m, weeks - 1, growth).holds).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('a goal well beyond the spread does not hold, so TARGET-TIME and the card go quiet together', () => {
+    const o = raceOutlook(60, 45, 10);
+    expect(o.fits).toBe(false);
+    expect(o.holds).toBe(false);
+    expect(raceOutlook(60, o.atRaceDay * 0.99, 10).holds).toBe(true);
+    expect(raceOutlook(60, o.atRaceDay * 0.99, 10).fits).toBe(false);
+  });
+
+  it('says the time on race day as a clock up to 10 km, and as whole minutes above', () => {
+    const o = raceOutlook(21.5, 19, 10);
+    expect(outlookSaid(o, 5)).toBe(`ongeveer ${formatRaceTime(o.atRaceDay)}`);
+    expect(outlookSaid(o, 5)).toMatch(/^ongeveer 20:\d{2}$/);
+    expect(outlookSaid(o, 10)).toMatch(/^ongeveer \d+:\d{2}$/);
+    expect(outlookSaid(o, 21.1)).toBe(`ongeveer ${o.wholeMinutes} minuten`);
+    expect(outlookSaid(o, 42.2)).toMatch(/minuten$/);
   });
 
   it('careful growth gives a slower time on race day than average growth', () => {

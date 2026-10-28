@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adjustText, applyLighter, noFitText, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type AdjustContext } from './forgeAdjust';
+import { adjustText, applyLighter, fitStillOpen, noFitText, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type AdjustContext } from './forgeAdjust';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import { DEFAULT_PROFILE } from './strengthSettings';
 
@@ -155,8 +155,24 @@ describe('suggestOwnWeights: geen gewicht past', () => {
     const fit = suggestOwnWeights(ex, 'r0', ctx({ profile: heavyOnly }))!;
     expect(fit).toMatchObject({ fromRowId: 'r0', repsLow: 9, repsHigh: 11, lightestKg: 40 });
     expect(fit.expectedReps).toBeLessThan(9);
-    expect(noFitText(fit)).toBe('Geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel invullen?');
-    expect(noFitText(fit, true)).toBe('Geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel aanpassen?');
+    // De regel zegt welke set het is.
+    expect(fit).toMatchObject({ rowId: 'r1', setNo: 2, weightKg: 40 });
+    expect(noFitText(fit)).toBe('Set 2: geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel invullen?');
+    expect(noFitText(fit, true)).toBe('Set 2: geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel aanpassen?');
+    expect(noFitText({ ...fit, setNo: undefined })).toBe('Geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel invullen?');
+  });
+  it('de melding verdwijnt zodra die set is opgelost', () => {
+    const ex = exercise('cable-fly', sets());
+    const fit = suggestOwnWeights(ex, 'r0', ctx({ profile: heavyOnly }))!;
+    expect(fitStillOpen(ex, fit)).toBe(true);
+    const edited = { ...ex, rows: ex.rows.map((r) => (r.id === 'r1' ? { ...r, edited: true } : r)) };
+    expect(fitStillOpen(edited, fit)).toBe(false);
+    const changed = { ...ex, rows: ex.rows.map((r) => (r.id === 'r1' ? { ...r, weightKg: 35 } : r)) };
+    expect(fitStillOpen(changed, fit)).toBe(false);
+    const done = { ...ex, rows: ex.rows.map((r) => (r.id === 'r1' ? { ...r, done: true } : r)) };
+    expect(fitStillOpen(done, fit)).toBe(false);
+    expect(fitStillOpen({ ...ex, rows: ex.rows.filter((r) => r.id !== 'r1') }, fit)).toBe(false);
+    expect(fitStillOpen(ex, { rowId: undefined })).toBe(true);
   });
   it('zegt één getal als het bereik één getal is', () => {
     expect(noFitText({ fromRowId: 'r0', repsLow: 10, repsHigh: 10, lightestKg: 40, expectedReps: 6 })).toContain('bij 10 herhalingen');
@@ -215,7 +231,8 @@ describe('suggestTooBigStep: het lichtere gewicht is een te grote stap', () => {
     const step = suggestTooBigStep(ex, 'r0', ctx({ profile: gap }))!;
     expect(step).toMatchObject({ fromRowId: 'r0', stepKg: 10 });
     expect(step.expectedReps).toBeGreaterThan(11);
-    expect(tooBigStepTip(step)).toBe(step.expectedReps > 30 ? '10 kg is een te grote stap: veel te veel herhalingen.' : `10 kg is een te grote stap: naar verwachting ${step.expectedReps} herhalingen.`);
+    expect(step).toMatchObject({ rowId: 'r1', setNo: 2 });
+    expect(tooBigStepTip(step)).toBe(step.expectedReps > 30 ? 'Set 2: 10 kg is een te grote stap: veel te veel herhalingen.' : `Set 2: 10 kg is een te grote stap: naar verwachting ${step.expectedReps} herhalingen.`);
   });
   it('rekent met dezelfde vermoeidheid per set als het bijsturen', () => {
     const ex = exercise('cable-fly', sets());

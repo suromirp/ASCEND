@@ -43,6 +43,7 @@ export function DayRow({
   chevron = true,
   icon,
   template,
+  sheetFrom = false,
 }: {
   // De regel onder de titel ("Training", "Gedaan", "Morgen").
   label: string;
@@ -57,12 +58,14 @@ export function DayRow({
   icon?: IconName | 'maan';
   // Een training: de schijf met het pictogram van zijn sport (stijl C), met een vinkje als hij gedaan is.
   template?: SessionTemplate;
+  // Het blad dat deze rij opent groeit eruit (utils/sheetGrowDom.ts).
+  sheetFrom?: boolean;
 }) {
   const shown = icon ?? ICON_BY_LABEL[label] ?? 'gepland';
   const tone = state === 'now' ? 'status' : state === 'done' ? 'progress' : 'neutral';
   return (
     <li className="flex min-h-[56px] items-center border-t first:border-t-0" data-state={state} style={{ borderColor: 'var(--color-card-border)', opacity: state === 'skipped' ? 0.6 : 1 }}>
-      <button onClick={onClick} className="flex min-h-[56px] min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left">
+      <button onClick={onClick} data-sheet-from={sheetFrom ? '' : undefined} className="flex min-h-[56px] min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left">
         {template ? <SportDisc template={template} size={40} done={state === 'done'} /> : <IconDisc icon={state === 'done' && shown === 'gepland' ? 'vinkje' : shown} tone={tone} />}
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] leading-snug" style={{ color: state === 'done' || state === 'skipped' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{children}</span>

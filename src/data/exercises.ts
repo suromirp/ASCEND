@@ -30,6 +30,19 @@ const ONE_DUMBBELL = new Set([
   'decline-weighted-sit-up',
 ]);
 
+// Oefeningen waar een stang op je borst of schouders ligt: tot het uiterste gaan zonder spotter
+// of veiligheidsarmen is gevaarlijk (engine/spotter.ts).
+const FAILURE_RISK = new Set([
+  'bench-press',
+  'incline-bench-press',
+  'low-incline-barbell-press',
+  'wide-grip-bench-press',
+  'close-grip-bench-press',
+  'back-squat',
+  'front-squat',
+  'pause-back-squat',
+]);
+
 function ex(
   id: string,
   name: string,
@@ -42,7 +55,7 @@ function ex(
   cues: string[],
   bodyweightFraction?: number,
 ): Exercise {
-  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}) };
+  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}) };
 }
 
 export const EXERCISES: Exercise[] = [

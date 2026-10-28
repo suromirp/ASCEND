@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { goalReadinessFor } from './goalReadinessFor';
+import { goalReadinessFor, usesMilestoneReadiness } from './goalReadinessFor';
 import { computeMainGoalReadiness } from './gr5Readiness';
 import { estimatedHikingMinutes } from './goalRoute';
 import type { GoalDetails, GoalKindId, TrainingGoal } from '../models/goals';
@@ -58,6 +58,29 @@ describe('welke berekening bij welk doel hoort', () => {
     const r = goalReadinessFor(g, [], TODAY, {}, { isMain: true });
     expect(r === undefined).toBe(direct.percent === undefined);
     if (r) expect(r.percent).toBe(direct.percent);
+  });
+
+  it('een hoofddoel dat een wedstrijd is krijgt de wedstrijdrekening, een tocht of een doel zonder soort de mijlpalenrekening', () => {
+    const race = goal('run_race', { variant: '10k', distanceKm: 10, targetMinutes: 50 });
+    expect(goalReadinessFor(race, [], TODAY, {}, { isMain: true })?.race?.status).toBe('none');
+    const strong = goal('stronger', { strengthTargets: [{ exercise: 'Squat', kg: 100, reps: 5 }] });
+    const sr = goalReadinessFor(strong, [lift('2026-10-20', 90)], TODAY, {}, { isMain: true })!;
+    expect(sr.meters.some((m) => m.key === 'krachttrend')).toBe(true);
+    expect(usesMilestoneReadiness(goal('trek_hut', {}))).toBe(true);
+    expect(usesMilestoneReadiness(goal('trek_tent', {}))).toBe(true);
+    expect(usesMilestoneReadiness({ ...goal('trek_hut', {}), kind: undefined } as TrainingGoal)).toBe(true);
+    expect(usesMilestoneReadiness(race)).toBe(false);
+    expect(usesMilestoneReadiness(day())).toBe(false);
+  });
+
+  it('voor een tocht is het getal van Je stand (computeMainGoalReadiness) gelijk aan dat van de Ascend-kaart', () => {
+    const reqs = [{ id: 'r', kind: 'distance', target: { amount: 20, unit: 'km' } }] as unknown as TrainingGoal['requirements'];
+    const g = { ...goal('trek_hut', {}), requirements: reqs } as TrainingGoal;
+    const logs = hikesAt(['2026-10-20', '2026-10-13']);
+    const card = goalReadinessFor(g, logs, TODAY, {}, { isMain: true });
+    const stand = computeMainGoalReadiness(g.requirements, logs, TODAY);
+    expect(card?.percent).toBe(stand?.percent);
+    expect(card?.sentence).toBe(stand?.sentence);
   });
 
   it('een doel zonder eigen berekening krijgt de gewone', () => {

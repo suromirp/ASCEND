@@ -23,7 +23,7 @@ import { computeGoalReadiness, readinessInputOf, type GoalReadiness, type Missin
 import { goalDetailsOf } from './goalLabels';
 import { GOAL_GROWTH, growthPer, type GrowthChoice } from '../data/goalGrowth';
 import { fillFromWeeks, weeksOfWork } from './goalGap';
-import { outlookMinutes, outlookWeeksSaid, raceOutlook, racePaces } from './racePaces';
+import { outlookSaid, outlookWeeksSaid, raceOutlook, racePaces } from './racePaces';
 import { countedTests, formatRaceTime, type TestResult } from './racePrediction';
 import { awaitsEffort } from './testJudgment';
 
@@ -127,8 +127,12 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
     if (left > 0) {
       const outlook = raceOutlook(expected, target, left, options.growth);
       const day = formatDateNL(goal.targetDate).replace(/ \d{4}$/, '');
-      const head = `Bij ${options.growth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei rond ${day}: ongeveer ${outlookMinutes(outlook)} minuten`;
-      if (outlook.fits) {
+      const head = `Bij ${options.growth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei rond ${day}: ${outlookSaid(outlook, km)}`;
+      if (outlook.holds && !outlook.fits) {
+        // Binnen de spreiding van de verwachting: de kaart zegt "past", ook de dag na een Akkoord op het voorstel.
+        bandLine = `${head}. Je doeltijd ligt binnen de spreiding van die verwachting.`;
+      }
+      else if (outlook.fits) {
         // Het getal zegt waar je nu staat, deze zin waar je bij gemiddelde groei uitkomt: noem het werk erbij.
         const said = outlookWeeksSaid(outlook);
         bandLine = said.need > 0

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { changeLabel, metersLinkLabel, type Gr5Readiness } from '../engine/gr5Readiness';
+import { changeLabel, metersLinkLabel, type ShownReadiness } from '../engine/gr5Readiness';
 import { Gr5ReadinessSheet } from './Gr5ReadinessSheet';
 import { CountUp } from './CountUp';
 import { Icon } from './icons';
@@ -10,7 +10,7 @@ import { Card, Meter, StatusPill } from './ui';
 // per meter de uitleg. Op Je stand en op Ascend is het dezelfde gewone marine
 // kaart onder de bergen; beide tonen hetzelfde getal en dezelfde zin.
 
-export function Gr5ReadinessCard({ readiness }: { readiness: Gr5Readiness }) {
+export function Gr5ReadinessCard({ readiness, title = 'Klaar voor de GR5', milestone = true }: { readiness: ShownReadiness; title?: string; milestone?: boolean }) {
   const [open, setOpen] = useState(false);
   const change = changeLabel(readiness.change);
   return (
@@ -18,7 +18,7 @@ export function Gr5ReadinessCard({ readiness }: { readiness: Gr5Readiness }) {
       <button onClick={() => setOpen(true)} className="block w-full text-left">
         <Card className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Klaar voor de GR5</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{title}</span>
             <span aria-hidden="true" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
           </div>
           <div className="flex items-center gap-3">
@@ -45,7 +45,7 @@ export function Gr5ReadinessCard({ readiness }: { readiness: Gr5Readiness }) {
           <span className="sr-only">{metersLinkLabel(readiness.meters.length)}.</span>
         </Card>
       </button>
-      {open && <Gr5ReadinessSheet readiness={readiness} onClose={() => setOpen(false)} />}
+      {open && <Gr5ReadinessSheet readiness={readiness} title={title} milestone={milestone} onClose={() => setOpen(false)} />}
     </>
   );
 }

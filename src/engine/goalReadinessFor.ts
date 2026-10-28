@@ -2,7 +2,8 @@
 // blad van het doel en wat er verder het getal van een doel toont lezen deze functie, zodat twee schermen
 // nooit twee verschillende getallen voor hetzelfde doel geven.
 //
-//   het doel met de mijlpalen   computeMainGoalReadiness (zoals Je stand)
+//   het hoofddoel dat een tocht is (trek_hut, trek_tent) of geen soort heeft   computeMainGoalReadiness
+//     (zoals Je stand); een hoofddoel van een andere soort krijgt hieronder de rekening van zijn soort
 //   hardlopen met een afstand   computeRaceReadiness (met een doeltijd: snelheid als weken werk)
 //   sterker worden              computeStrengthReadiness (krachttrend als weken werk)
 //   dagtocht en trailrun        computeLimitReadiness (de voorwaarde tijdslimiet of cutoff)
@@ -20,6 +21,7 @@ import type { SessionLog } from '../models/training';
 import type { TestJudgment } from '../models/testJudgment';
 import { resolveGrowthChoice, resolveLimitMargin } from '../data/goalGrowth';
 import { computeGoalReadiness, readinessInputOf } from './goalReadiness';
+import { goalKindOf } from './goalLabels';
 import { computeMainGoalReadiness } from './gr5Readiness';
 import { computeLimitReadiness } from './limitReadiness';
 import { computeRaceReadiness, resolveReadinessWeighting, type RaceReadiness } from './raceReadiness';
@@ -41,12 +43,19 @@ export interface ReadinessSettings {
 }
 
 export interface ReadinessForOptions {
-  // Het doel met de mijlpalen: rekent precies zoals Je stand.
+  // Het hoofddoel (het doel met de mijlpalen). Is het een tocht met hutten of tent, of een doel zonder
+  // soort, dan rekent het zoals Je stand; een ander soort hoofddoel krijgt de rekening van zijn eigen soort.
   isMain?: boolean;
 }
 
+// De mijlpalenrekening (GR5) is er alleen voor een tocht met hutten of tent en voor een doel zonder soort.
+export function usesMilestoneReadiness(goal: TrainingGoal): boolean {
+  const kind = goalKindOf(goal);
+  return kind === undefined || kind === 'trek_hut' || kind === 'trek_tent';
+}
+
 export function goalReadinessFor(goal: TrainingGoal, logs: SessionLog[], today: string, settings: ReadinessSettings, options: ReadinessForOptions = {}): RaceReadiness | undefined {
-  if (options.isMain) {
+  if (options.isMain && usesMilestoneReadiness(goal)) {
     const readiness = computeMainGoalReadiness(goal.requirements, logs, today);
     return readiness.percent === undefined ? undefined : readiness;
   }

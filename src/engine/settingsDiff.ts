@@ -177,6 +177,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthChoice('forge-geluid', 'Geluid na de rust', 'restSound', 'rustgeluid'),
   strengthFlag('forge-scherm', 'Scherm aan tijdens je training', 'keepScreenOn'),
   strengthFlag('forge-bijsturen', 'Bijsturen in de training', 'adjustLive'),
+  strengthFlag('forge-spotter', 'Zonder spotter', 'noSpotter'),
   strengthChoice('forge-rir-vooraf', 'RIR vooraf invullen', 'rirPrefill', 'rirVooraf'),
   strengthChoice('forge-doorvoeren', 'Wijzigingen doorvoeren', 'carryMode', 'doorvoeren', ['carryWeights']),
   strengthFlag('forge-schijven', 'Schijven bij de set tonen', 'showPlates'),

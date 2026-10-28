@@ -17,6 +17,8 @@
 import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import { STRENGTH_GROWTH, growthPer, type GrowthChoice, type StrengthLevel } from '../data/goalGrowth';
+import { EXERCISES } from '../data/exercises';
+import { matchExercise } from './exerciseMatch';
 import { addDays, daysBetween } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { computeGoalReadiness, readinessInputOf, type ExternalValue, type GoalReadiness, type ReadinessOptions } from './goalReadiness';
@@ -35,6 +37,14 @@ export function strengthLevelFor(historyDays: number): StrengthLevel {
 }
 
 const norm = (s: string) => s.trim().toLowerCase();
+
+// Een oefening herkend aan haar id in de lijst, aan haar naam of aan een alias (engine/exerciseMatch.ts), zodat een
+// log onder een andere naam ("Barbell Back Squat") toch bij het doel "Kniebuiging" telt. Een oude opgeslagen naam
+// die de lijst niet kent blijft op de gewone naamvergelijking werken.
+function listId(name: string): string | undefined {
+  const byId = EXERCISES.find((e) => e.id === name.trim());
+  return byId?.id ?? matchExercise(name);
+}
 const epley = (kg: number, reps: number) => kg * (1 + reps / EPLEY_DIVISOR);
 
 interface ExerciseRead {
@@ -48,13 +58,16 @@ interface ExerciseRead {
 
 function readExercise(target: { exercise: string; kg: number; reps: number }, logs: SessionLog[], date: string, growth: GrowthChoice): ExerciseRead | undefined {
   const name = norm(target.exercise);
+  const targetId = listId(target.exercise);
   const from = addDays(date, -STRENGTH_WINDOW_DAYS);
   let best: number | undefined;
   let first: string | undefined;
   for (const log of logs) {
     if (log.completedDate > date || !log.strengthData) continue;
     for (const ex of log.strengthData) {
-      if (norm(ex.exerciseName) !== name && norm(ex.exerciseId) !== name) continue;
+      const same = norm(ex.exerciseName) === name || norm(ex.exerciseId) === name
+        || (targetId !== undefined && (listId(ex.exerciseId) === targetId || listId(ex.exerciseName) === targetId));
+      if (!same) continue;
       if (!first || log.completedDate < first) first = log.completedDate;
       if (log.completedDate < from) continue;
       for (const set of ex.sets) {

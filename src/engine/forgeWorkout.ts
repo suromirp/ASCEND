@@ -33,6 +33,7 @@ import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, ty
 import { setsText } from './macrofactorProgram';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
 import { barFor, candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
+import { spotterApplies, spotterSlot } from './spotter';
 import { isWorkSet } from './workSets';
 
 // --- the shapes ---------------------------------------------------------------------------
@@ -46,6 +47,9 @@ export interface RowTarget {
   timedSec?: number;
   // A set to failure from repsLow ("9+").
   failure?: boolean;
+  // De reserve is door Forge opgehoogd naar minstens 1, omdat falen zonder spotter gevaarlijk is
+  // (engine/spotter.ts). Alleen voor het teken bij de set; leeft in het concept, niet in het log.
+  spotter?: boolean;
 }
 
 export interface WorkoutRow {
@@ -208,9 +212,13 @@ function lastSession(history: ExerciseHistory | undefined, date: string) {
 }
 
 // One exercise of the training. `swapTo` puts another exercise in the slot.
-export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state: PlanState, swapTo?: Exercise): WorkoutExercise {
-  const found = swapTo ? { key: swapTo.id, exercise: swapTo } : exerciseKey(slot.id, slot.exerciseName);
+export function planExercise(planned: ExercisePrescription, ctx: PlanContext, state: PlanState, swapTo?: Exercise): WorkoutExercise {
+  const found = swapTo ? { key: swapTo.id, exercise: swapTo } : exerciseKey(planned.id, planned.exerciseName);
   const exercise = found.exercise;
+  // Zonder spotter: bij een oefening waar falen gevaarlijk is vraagt het voorschrift minstens 1 over
+  // (engine/spotter.ts). Daarna rekent alles gewoon door met dat voorschrift.
+  const spot = spotterApplies(exercise, ctx.settings) ? spotterSlot(planned) : undefined;
+  const slot = spot?.slot ?? planned;
   const exerciseId = exercise?.id ?? slot.id;
   const name = exercise?.name ?? cleanExerciseName(slot.exerciseName);
   const parsed = parseReps(slot.reps);
@@ -312,6 +320,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
         reps = Math.min(reps, Math.max(t.repsLow, expectedReps(strength, load, t.rir)));
       }
     }
+    if (spot?.raised[i]) target = { ...target, spotter: true };
     rows.push({ id: `${slot.id}:s${i}`, kind: 'work', target, ...(target.weightKg !== undefined ? { weightKg: target.weightKg } : {}), reps, ...(target.rir !== undefined && ctx.settings.rirPrefill === 'target' ? { rir: target.rir, rirAssumed: true } : {}), done: false });
   }
   const repsHigh = rows.find((r) => r.kind === 'work')?.target.repsHigh;

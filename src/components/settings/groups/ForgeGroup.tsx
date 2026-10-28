@@ -4,7 +4,7 @@ import { haptics } from '../../../utils/haptics';
 import { restAlertChannels, restVibrationPattern } from '../../../engine/restVibration';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
-import { resolveStrengthSettings, type StrengthSettings } from '../../../engine/strengthSettings';
+import { resolveStrengthSettings, withProfile, type StrengthSettings } from '../../../engine/strengthSettings';
 import { SettingsEmpty, SettingsSection } from '../SettingsList';
 import { AddOnSheet, GymProfileSheet, MachineListSheet } from './ToestelSheets';
 import { BarsSheet, CheckFromSheet, DurationSheet, PlatesSheet, ProgramSheet, RackSheet, StackSheet } from './ForgeSheets';
@@ -70,6 +70,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="bundel-rusttimer" title="Rusttimer" facts={facts} onClick={() => setSheet('bundel-rusttimer')} />
         <SummaryRow id="forge-scherm" title="Scherm aan tijdens je training" facts={facts} onChange={(on) => save({ keepScreenOn: on })} />
         <SummaryRow id="forge-bijsturen" title="Bijsturen in de training" facts={facts} info="forgeBijsturen" onChange={(on) => save({ adjustLive: on })} />
+        <SummaryRow id="forge-spotter" title="Zonder spotter" facts={facts} info="forgeSpotter" onChange={(on) => save({ noSpotter: on })} />
         <SummaryRow id="bundel-sportschool" title="Je sportschool" facts={facts} onClick={() => setSheet('bundel-sportschool')} />
       </SettingsSection>
 
@@ -131,6 +132,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'bundel-sportschool' && (
         <BundleSheet eyebrow="Forge" title="Je sportschool" line="Wat er in je sportschool ligt. Forge stelt alleen gewichten voor die kunnen." onClose={close}>
           <SummaryRow id="gym-profiel" title="Sportschool" facts={facts} info="gymProfiel" onClick={() => setInner('gym-profiel')} />
+          <SummaryRow id="spotterrek" title="Veiligheidsarmen" facts={facts} info="spotterrek" onChange={(on) => void updateSettings({ strengthModel: withProfile(settings.strengthModel, { spotterRack: on ? true : undefined }) })} />
           <SummaryRow id="stangen" title="Stangen" facts={facts} onClick={() => setInner('stangen')} />
           <SummaryRow id="schijven" title="Schijven" facts={facts} onClick={() => setInner('schijven')} />
           <SummaryRow id="dumbbells" title="Dumbbells" facts={facts} onClick={() => setInner('dumbbells')} />

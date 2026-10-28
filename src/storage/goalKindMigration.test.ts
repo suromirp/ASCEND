@@ -5,7 +5,7 @@ import { migrateGoalKinds } from './goalMigration';
 import { normalizeBackupToCurrentModel } from './backup';
 import { migrateTrainingGoal, migrateTrainingGoals, priorityFromPlanRole, readGoalDetails, readGoalKind, readGoalPriority, routePlanUsesTent } from './migrations';
 import type { GoalMilestone, GoalRequirement, TrainingGoal } from '../models/goals';
-import { computeGr5Readiness } from '../engine/gr5Readiness';
+import { computeMainGoalReadiness } from '../engine/gr5Readiness';
 import { computeGoalReadiness } from '../engine/goalReadiness';
 
 // Nagemaakte doelen.
@@ -112,10 +112,10 @@ describe('soort, gegevens en belangrijkheid van een doel', () => {
       outdoorData: { durationMinutes: 300, elevationGainM: 800, elevationLossM: 800, backpackWeightKg: 9, source: 'manual' },
     }] as never;
     const migrated = migrateTrainingGoal(trekGoal, { isMain: true, tent: true });
-    const before = computeGr5Readiness(trekGoal.requirements, logs, '2026-10-21');
+    const before = computeMainGoalReadiness(trekGoal.requirements, logs, '2026-10-21');
     const after = computeGoalReadiness({ kind: migrated.kind!, details: migrated.details, requirements: migrated.requirements }, logs, '2026-10-21', { naming: { the: 'de GR5', your: 'je GR5' } });
-    expect(after.percent).toBe(before!.percent);
-    expect(after.sentence).toBe(before!.sentence);
+    expect(after.percent).toBe(before.percent);
+    expect(after.sentence).toBe(before.sentence);
   });
 });
 

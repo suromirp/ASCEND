@@ -128,6 +128,9 @@ export const isNear = (proposedLoadKg: number, doneLoadKg: number): boolean => d
 export interface RowCheck {
   origin: CheckOrigin;
   target: RepTarget;
+  // Het doel waaraan jouw kant is getoetst, alleen als dat een ander is dan `target` (zonder spotter:
+  // de planning vroeg 0 over, ASCEND schreef 1 voor). Afwezig: allebei hetzelfde doel.
+  didTarget?: RepTarget;
   // What you did.
   did: SideCheck;
   // The proposal of ASCEND. `measured`: what happened in Forge itself, not an estimate.

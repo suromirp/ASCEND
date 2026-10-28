@@ -655,6 +655,17 @@ html[data-motion='off'] .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mounta
   animation: ascend-sheet-out 0.2s ease-in both;
 }
 
+/* Een blad dat uit een rij groeit (utils/sheetGrowDom.ts, data-grow op het paneel): het schuift niet
+   in, het verschijnt met een fade nadat het stille vlak er bijna is, en gaat bij sluiten snel weg
+   terwijl het vlak naar de rij krimpt. Alleen opacity. Het attribuut komt er alleen in Normaal. */
+.animate-sheet-in[data-grow] {
+  animation: ascend-fade-in 0.18s ease-out 0.1s both;
+}
+
+.animate-sheet-out[data-grow] {
+  animation: ascend-fade-in 0.12s ease-in both reverse;
+}
+
 .sheet-snap {
   transition: translate 0.2s ease-out;
 }

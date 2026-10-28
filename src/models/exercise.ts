@@ -136,6 +136,11 @@ export interface Exercise {
   // Done with one dumbbell (goblet squat, single arm row): a logged weight is never
   // the total of two dumbbells.
   oneDumbbell?: boolean;
+  // Tot het uiterste gaan kan hier misgaan zonder spotter of veiligheidsarmen: een stang op je
+  // borst of schouders. Forge schrijft er dan minstens 1 herhaling in reserve voor
+  // (engine/spotter.ts, docs/beslissingen/2026-10-28-zonder-spotter.md). Toestellen, kabels en
+  // dumbbells hebben het niet.
+  failureRisk?: boolean;
   // Three to five short points: what you do, what to watch, the most made mistake.
   cues: string[];
   videoUrl?: string;

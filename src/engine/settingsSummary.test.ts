@@ -224,6 +224,17 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-rir-vooraf', withForge({ rirPrefill: 'rommel' })).value).toBe('Als hint');
   });
 
+  it('Zonder spotter staat aan, en de veiligheidsarmen horen bij de sportschool', () => {
+    const withForge = (strengthModel: object) => facts({ strengthExternal: false, settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('forge-spotter', withForge({}))).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('forge-spotter', withForge({ noSpotter: false })).checked).toBe(false);
+    expect(rowSummary('forge-spotter', withForge({ enabled: false })).hidden).toBe(true);
+    expect(rowSummary('forge-spotter', facts({ strengthExternal: true })).hidden).toBe(true);
+    expect(rowSummary('spotterrek', withForge({})).checked).toBe(false);
+    const rack = { activeProfileId: 'a', profiles: [{ id: 'a', name: 'Sportschool A', barsKg: [20], platesKg: [5], dumbbells: { startKg: 2, stepKg: 2, upToKg: 10, thenStepKg: 2.5, maxKg: 50 }, stackStepKg: 5, spotterRack: true }] };
+    expect(rowSummary('spotterrek', withForge(rack)).checked).toBe(true);
+  });
+
   it('Toestellen leren staat aan met het label auto, en ASCEND naast MacroFactor staat uit en toont de stand', () => {
     const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
     expect(rowSummary('forge-leren', facts())).toEqual({ value: 'Geleerd', hidden: false });

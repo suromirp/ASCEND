@@ -238,7 +238,7 @@ export function HistoryPage() {
               const garminType = log.outdoorData?.garminSuggestedType ?? log.cardioData?.garminSuggestedType;
               const look = SPORT_LOOK[sportKeyOfLog(log)];
               return (
-                <button key={log.id} onClick={() => setSelectedLog(log)} className="min-h-[52px] text-left">
+                <button key={log.id} onClick={() => setSelectedLog(log)} data-sheet-from className="min-h-[52px] text-left">
                   <div className="flex items-center gap-3 rounded-xl border px-3 py-3" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
                     <span className="h-8 w-1 shrink-0 rounded-full" style={{ background: look.color }} aria-hidden />
                     <span className="w-[56px] shrink-0 whitespace-nowrap text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(log.completedDate)}</span>

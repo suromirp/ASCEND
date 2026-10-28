@@ -236,6 +236,17 @@ const PATHS = {
       <circle cx="12" cy="12" r="2" />
     </>
   ),
+  // Het verloop van een training (een tijdlijn met drie momenten) en het teken van zonder spotter (een schild).
+  verloop: (
+    <>
+      <path d="M6.5 4.5v15" />
+      <circle cx="6.5" cy="6.5" r="1.4" />
+      <circle cx="6.5" cy="12" r="1.4" />
+      <circle cx="6.5" cy="17.5" r="1.4" />
+      <path d="M11 6.5h8M11 12h6M11 17.5h8" />
+    </>
+  ),
+  schild: <path d="M12 3.5l7 2.5v5.5c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6z" />,
   ruilen: <path d="M5 8.5h13M14.5 5l3.5 3.5L14.5 12M19 15.5H6M9.5 12L6 15.5 9.5 19" />,
   notitie: <path d="M9 3.5h6M10 3.5v5.5l-3 3.5h10l-3-3.5V3.5M12 12.5V20.5" />,
   // Het teken bij een training met een hartslag die afwijkt (Wat speelde er): een hartslaglijn.

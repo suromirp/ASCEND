@@ -64,6 +64,7 @@ import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
 import { applyScheduleAnomalyFixNow } from '../storage/scheduleAnomalyFix';
+import { armFlip } from '../utils/flipDom';
 import { undoPlanChangeNow } from '../storage/undoPlanChange';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type HorizonApplyStatus, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
 import { SHOW_SPLASH } from '../utils/updateFlag';
@@ -635,6 +636,8 @@ export interface LogSessionInput {
   workout?: SessionLog['workout'];
   strengthRir?: SessionLog['strengthRir'];
   gymProfileId?: SessionLog['gymProfileId'];
+  // Het verloop van de training in Forge; alleen bij het maken van het log (engine/forgeLog.ts).
+  forgeLog?: SessionLog['forgeLog'];
   legsAtStart?: SessionLog['legsAtStart'];
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
@@ -794,6 +797,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore, afterWrites?: () => Promise<void>): Promise<boolean> => {
     const real = proposal.changes.filter((c) => c.action !== 'keep');
     if (real.length === 0) return false;
+    armFlip();
     await planSettled();
     const [planned, tpls] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll()]);
     // What you agreed to stays as you saw it: the moved, added and shown
@@ -871,6 +875,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const undoRecentChange = useCallback(async () => {
     if (!recentChange) return;
+    armFlip();
     await planSettled();
     // Numbers of the watch taken over by typed-in trainings: the hand-made ones
     // come back first. When that was all the change did, that is the undo.
@@ -1380,6 +1385,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           workout: input.workout,
           strengthRir: input.strengthRir,
           ...(input.gymProfileId ? { gymProfileId: input.gymProfileId } : {}),
+          ...(input.forgeLog && input.forgeLog.length > 0 ? { forgeLog: input.forgeLog } : {}),
           legsAtStart: input.legsAtStart,
           externalId: input.externalId,
           sourceSync: input.sourceSync,
@@ -1676,6 +1682,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // again instead of "verplaatst".
   const applyProposal = useCallback(
     async (proposal: ScheduleProposal) => {
+      armFlip();
       await planSettled();
       const stored = await PlannedSessionsRepo.getAll();
       const before: PlannedSession[] = [];
