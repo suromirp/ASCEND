@@ -39,7 +39,7 @@ import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
 import { PACK_WEIGHT_EXPLANATION, type TentPackProposal } from './gr5Profile';
 import type { GrowthChoice } from '../data/goalGrowth';
-import { checkTargetTime, outlookWeeksSaid, racePaces } from './racePaces';
+import { checkTargetTime, outlookSaid, outlookWeeksSaid, racePaces } from './racePaces';
 import { countedTests, formatRaceTime } from './racePrediction';
 import { RACE_TEMPLATE_ID, type RaceBlock } from './raceBlock';
 import { formatNumberNL } from '../utils/number';
@@ -1166,7 +1166,7 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
     // Dezelfde rekening als de doelkaart: gemiddelde groei, geteld vanaf vandaag.
     const said = outlookWeeksSaid(check.outlook);
     const raceDay = shortDate(race.raceDate);
-    const outlookText = `Bij ${inputs.goalGrowth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei is dat rond ${raceDay} ongeveer ${check.suggested} minuten`;
+    const outlookText = `Bij ${inputs.goalGrowth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei is dat rond ${raceDay} ${outlookSaid(check.outlook, km)}`;
     const ambitious = check.verdict === 'ambitious';
     const title = ambitious
       ? `Doeltijd ${distance} km: ${clockTarget} past nog niet bij je test`

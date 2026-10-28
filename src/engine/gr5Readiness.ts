@@ -39,6 +39,16 @@ export interface Gr5Readiness {
   change?: number;
 }
 
+// Wat de kaart op Je stand toont: de vorm van Gr5Readiness, maar met meters van elke soort doel.
+export interface ShownReadiness {
+  percent: number;
+  meters: { key: string; label: string; parts: MeterPart[]; share: number; text: string; why: string }[];
+  weakest?: { key: string; label: string };
+  sentence: string;
+  weakestSentence?: string;
+  change?: number;
+}
+
 const GR5_NAMING = { the: 'de GR5', your: 'je GR5' };
 
 function plain(m: GoalMeter): Gr5Meter {

@@ -62,3 +62,21 @@ export function removeStrengthTarget(list: readonly StrengthTarget[], exercise: 
 export function strengthTargetLine(t: StrengthTarget): string {
   return `${t.exercise}: ${formatNumberNL(t.kg, Number.isInteger(t.kg) ? 0 : 1)} kg voor ${t.reps} ${t.reps === 1 ? 'herhaling' : 'herhalingen'}`;
 }
+
+// Wat er in de velden staat maar nog niet met "Doel toevoegen" is toegevoegd. Leeg is geen invoer; half ingevuld
+// is een vraag aan de gebruiker, geen stille keuze.
+export function isBlankInput(t: StrengthTargetInput): boolean {
+  return !t.exercise.trim() && t.kg === undefined && t.reps === undefined;
+}
+
+// De lijst bij Opslaan: een volledig ingevulde invoer gaat mee. Staat er iets half in, of is de lijst vol, dan
+// blijft de lijst zoals hij was en komt er één heldere zin terug, zodat er niets stil verloren gaat.
+export function finishStrengthTargets(list: readonly StrengthTarget[], input: StrengthTargetInput): { list: StrengthTarget[]; problem?: string } {
+  if (isBlankInput(input)) return { list: [...list] };
+  const why = strengthTargetProblem(input);
+  if (why) return { list: [...list], problem: `Je krachtdoel is nog niet af. ${why} Of maak de velden leeg.` };
+  const next = addStrengthTarget(list, input);
+  const added = next.some((t) => norm(t.exercise) === norm(input.exercise) && t.kg === input.kg && t.reps === input.reps);
+  if (!added) return { list: [...list], problem: `Je kunt tot ${MAX_STRENGTH_TARGETS} doelen toevoegen. Haal er eerst een weg of maak de velden leeg.` };
+  return { list: next };
+}

@@ -22,7 +22,8 @@ import { AdventureCard } from '../components/AdventureCard';
 import { LessonCard } from '../components/LessonCard';
 import { resolveIntensityCounting } from '../engine/intensitySettings';
 import { freshnessCurve, intensityMix, legCalendar, weeklyDescent, weeklyLoad } from '../engine/standing';
-import { computeGr5Readiness } from '../engine/gr5Readiness';
+import { goalReadinessFor, usesMilestoneReadiness } from '../engine/goalReadinessFor';
+import type { ShownReadiness } from '../engine/gr5Readiness';
 import { adherenceSummary, recentAdherence } from '../engine/onCourse';
 import { restWeekState } from '../engine/restWeek';
 import { computeCurrentStreak } from '../engine/streak';
@@ -65,7 +66,13 @@ export function StandingPage() {
   // Not an archived goal, as on Ascend (pages/Ascend.tsx).
   const primaryGoal = mainGoal(trainingGoals, goalMilestones, 'live');
   // The same number and sentence as on Ascend (engine/gr5Readiness.ts).
-  const gr5 = useMemo(() => (primaryGoal ? computeGr5Readiness(primaryGoal.requirements, sessionLogs, today) : undefined), [primaryGoal, sessionLogs, today]);
+  // Dezelfde functie als de Ascend-kaart (engine/goalReadinessFor.ts), dus altijd hetzelfde getal.
+  const { testJudgments, askDoubtTest, readinessWeighting, goalGrowth, limitMargin } = settings;
+  const gr5 = useMemo((): ShownReadiness | undefined => {
+    if (!primaryGoal) return undefined;
+    const r = goalReadinessFor(primaryGoal, sessionLogs, today, { testJudgments, askDoubtTest, readinessWeighting, goalGrowth, limitMargin }, { isMain: true });
+    return r && r.percent !== undefined ? { percent: r.percent, meters: r.meters, weakest: r.weakest, sentence: r.sentence, weakestSentence: r.weakestSentence, change: r.change } : undefined;
+  }, [primaryGoal, sessionLogs, today, testJudgments, askDoubtTest, readinessWeighting, goalGrowth, limitMargin]);
   const routeDescent = primaryGoal ? typicalDayValue(primaryGoal.requirements, 'elevationLoss')?.value.amount : undefined;
   const milestones = useMemo(() => goalMilestones.filter((m) => m.goalId === primaryGoal?.id), [goalMilestones, primaryGoal?.id]);
   const progress = useMemo(
@@ -198,7 +205,7 @@ export function StandingPage() {
       {/* Het ene voortgangsgetal staat als gewone marine kaart onder de bergen, niet als
           groot wit vlak op de lucht: de lucht houdt dezelfde licht-donkerverhouding als
           op de andere tabs. */}
-      {gr5 && <Gr5ReadinessCard readiness={gr5} />}
+      {gr5 && <Gr5ReadinessCard readiness={gr5} title={primaryGoal && !usesMilestoneReadiness(primaryGoal) ? 'Klaar voor je doel' : 'Klaar voor de GR5'} />}
 
       {order.map((id) => (
         <Fragment key={id}>{blocks[id]}</Fragment>

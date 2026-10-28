@@ -92,6 +92,17 @@ describe('Sterker worden met een doelgewicht', () => {
     expect(r.missing.some((m) => m.key === 'krachttrend')).toBe(true);
   });
 
+  it('telt een log onder een alias of onder het id van de oefening mee', () => {
+    const g = goal([{ exercise: 'Barbell Back Squat', kg: 100, reps: 5 }]);
+    const viaAlias = computeStrengthReadiness(g, [lift('2026-10-20', [{ reps: 5, weightKg: 90 }], 'Back Squat')], TODAY, { naming })!;
+    expect(viaAlias.meters.find((x) => x.key === 'krachttrend')?.text).toBe('Barbell Back Squat nog 10 kg voor 5 herhalingen');
+    const viaId = computeStrengthReadiness(g, [lift('2026-10-20', [{ reps: 5, weightKg: 90 }], 'back-squat')], TODAY, { naming })!;
+    expect(viaId.meters.some((x) => x.key === 'krachttrend')).toBe(true);
+    // Een oud opgeslagen doel met een id telt ook mee voor een log met de naam.
+    const stored = goal([{ exercise: 'back-squat', kg: 100, reps: 5 }]);
+    expect(computeStrengthReadiness(stored, [lift('2026-10-20', [{ reps: 5, weightKg: 90 }], 'Barbell Back Squat')], TODAY, { naming })!.meters.some((x) => x.key === 'krachttrend')).toBe(true);
+  });
+
   it('middelt meerdere oefeningen en noemt er een per stuk', () => {
     const g = goal([{ exercise: 'Squat', kg: 100, reps: 5 }, { exercise: 'Bankdrukken', kg: 80, reps: 5 }]);
     const logs = [lift('2026-10-20', [{ reps: 5, weightKg: 90 }]), lift('2026-10-21', [{ reps: 5, weightKg: 80 }], 'Bankdrukken')];

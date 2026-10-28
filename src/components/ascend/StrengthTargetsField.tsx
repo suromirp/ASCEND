@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  addStrengthTarget, MAX_STRENGTH_TARGETS, removeStrengthTarget, strengthTargetChoices, strengthTargetLine, strengthTargetProblem, type StrengthTarget,
+  addStrengthTarget, MAX_STRENGTH_TARGETS, removeStrengthTarget, strengthTargetChoices, strengthTargetLine, strengthTargetProblem, type StrengthTarget, type StrengthTargetInput,
 } from '../../engine/strengthTargetsDraft';
 import { NumberField } from '../NumberField';
 import { SecondaryButton } from '../ui';
@@ -11,11 +11,19 @@ import { TextButton } from '../TextButton';
 // bestand toont alleen. De lijst is vrijwillig: zonder doelgewichten meet de kaart de kracht nog niet.
 const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' };
 
-export function StrengthTargetsField({ value, onChange }: { value: StrengthTarget[]; onChange: (next: StrengthTarget[] | undefined) => void }) {
+export function StrengthTargetsField({ value, onChange, onDraft }: {
+  value: StrengthTarget[];
+  onChange: (next: StrengthTarget[] | undefined) => void;
+  // Wat er in de velden staat maar nog niet is toegevoegd; het formulier neemt het bij Opslaan mee.
+  onDraft?: (draft: StrengthTargetInput) => void;
+}) {
   const [exercise, setExercise] = useState('');
   const [kg, setKg] = useState<number | undefined>(undefined);
   const [reps, setReps] = useState<number | undefined>(undefined);
   const [tried, setTried] = useState(false);
+  useEffect(() => {
+    onDraft?.({ exercise, kg, reps });
+  }, [exercise, kg, reps, onDraft]);
   const choices = strengthTargetChoices();
   const problem = strengthTargetProblem({ exercise, kg, reps });
   const full = value.length >= MAX_STRENGTH_TARGETS && !value.some((t) => t.exercise.toLowerCase() === exercise.toLowerCase());
