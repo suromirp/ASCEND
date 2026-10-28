@@ -87,7 +87,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Een korte tik in je hand als je iets doet: een schakelaar, een set afvinken, een training oppakken, Akkoord geven.',
     points: [
       { head: 'Wat', text: 'schakelaars en keuzes, een afgevinkte set, een training oppakken in Week, Akkoord op een voorstel, en twee stootjes bij een opgeslagen training of een behaalde mijlpaal.' },
-      { head: 'Rusttimer', text: 'het signaal als de rust om is staat apart in Forge onder Signaal. Deze schakelaar gaat daar niet over.' },
+      { head: 'Timers', text: 'het signaal als de rust in Forge of een rektimer om is, staat hier los van. Dat van Forge stel je in onder Signaal.' },
       { head: 'iPhone', text: 'op een iPhone bestaat trillen in de browser niet. Dan doet deze schakelaar niets.' },
     ],
   },
@@ -659,7 +659,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Weging bij een doeltijd',
     lead: 'Bij een wedstrijd met een doeltijd gaat het vooral over snelheid. Dit bepaalt hoe zwaar die meetelt in je percentage.',
     points: [
-      { head: 'Snelheid weegt het zwaarst', text: 'het gat tussen je verwachte tijd en je doeltijd, uitgedrukt in weken werk bij gemiddelde groei, telt voor 60% mee. Je langste loop en je weekvolume tellen voor 20% elk.' },
+      { head: 'Snelheid weegt het zwaarst', text: 'het gat tussen je verwachte tijd en je doeltijd, uitgedrukt in weken werk bij de groei uit je instelling, telt voor 60% mee. Je langste loop en je weekvolume tellen voor 20% elk.' },
       { head: 'Gelijk', text: 'alle meters tellen even zwaar, zoals voor een doel zonder doeltijd.' },
       { head: 'Sterker worden', text: 'volgt dezelfde keuze: de krachtmeter telt voor 60% mee en je harde sets voor 40%, of bij Gelijk allebei even zwaar.' },
       { head: 'Je verwachte tijd', text: 'komt uit je testloop die meetelt. Zonder testloop, of zolang je snelste 5 km op je Akkoord wacht, telt snelheid niet mee.' },

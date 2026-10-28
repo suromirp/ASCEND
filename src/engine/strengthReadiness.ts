@@ -106,7 +106,7 @@ function noteOf(reads: ExerciseRead[], growth: GrowthChoice): string | undefined
       : `Voor het tempo rekent ASCEND met gevorderd (${pct}% per week) voor ${list.map((r) => r.exercise).join(' en ')}: je geschiedenis daarop is korter dan twee jaar, en ASCEND gaat dan niet uit van beginnerswinst. Begin je net, dan gaat het sneller.`);
   }
   const weeks = reads.filter((r) => r.weeks > 0).map((r) => `${r.exercise} ${weeksWorkSaid(r.weeks)}`);
-  if (weeks.length > 0) parts.push(`Bij gemiddelde groei: ${weeks.join(', ')}. Een gemiddelde, geen voorspelling.`);
+  if (weeks.length > 0) parts.push(`Bij ${growth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei: ${weeks.join(', ')}. Een schatting, geen voorspelling.`);
   return parts.join(' ');
 }
 

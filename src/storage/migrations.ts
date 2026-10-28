@@ -1048,7 +1048,8 @@ export function readGoalDetails(raw: unknown): GoalDetails | undefined {
     const x = r[key];
     if (typeof x === 'number' && Number.isFinite(x) && x > 0) out[key] = x;
   }
-  // Een cutoff hoort bij een ultra: bij een andere keuze van kort of ultra valt hij weg.
+  // Een cutoff bestaat alleen bij een trail (ultra); de soort staat hier niet, maar alleen een trail kent
+  // de varianten kort en ultra, dus bij elke andere variant valt een cutoff weg.
   if (out.variant !== undefined && out.variant !== 'ultra') delete out.cutoffMinutes;
   if (Array.isArray(r.strengthTargets)) {
     const list = r.strengthTargets.flatMap((t) => {

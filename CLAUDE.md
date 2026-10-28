@@ -166,7 +166,7 @@ Een nieuwe animatie moet in Rustig en Uit dus ook netjes op de eindstand staan.
 Vloeiende overgangen (`docs/beslissingen/2026-10-28-vloeiende-overgangen.md`, ontwerp
 `docs/visie/Vloeiende overgangen.md`): de tik van `utils/haptics.ts` (`TAP_MS`, 15 ms) heeft een
 poort, de instelling Trillen (`AppSettings.haptics`, absent = aan, `engine/hapticsSettings.ts`);
-alleen `tap` en `success` kijken ernaar, het rustsignaal van Forge (`alarm`, `pattern`) niet.
+alleen `tap` en `success` kijken ernaar, de signalen van timers (`alarm`, `pattern`: de rust van Forge en de rektimer) niet; slepen om te sluiten is een gebaar en krijgt geen eigen schakelaar.
 Akkoord in `ProposalSheet` en `RescheduleDialog` geeft een tik. Elk blad volgt je vinger omlaag
 (`useSheetClose` geeft `sheetRef`, op het paneel; gebaar in `utils/sheetDragDom.ts`, rekensom in
 `components/sheetDrag.ts`): alleen als de inhoud bovenaan staat, nooit op invoer, sliders of
