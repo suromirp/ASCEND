@@ -175,6 +175,15 @@ blad met `animate-sheet-in` zonder `ref={sheetRef}` laat `sheetDrag.scan.test.ts
 met reden in de uitzonderingen staat. Volgen is 1 op 1 in elke stand, het terugveren staat in Uit
 meteen op de eindstand.
 
+Uit een rij groeien en naar een dag schuiven (`docs/beslissingen/2026-10-28-vloeiende-overgangen-uitgroei.md`), alleen in
+Normaal: een rij of kaart met `data-sheet-from` onthoudt bij een tik waar je tikte (`utils/sheetGrowDom.ts#installSheetOrigin`),
+en het blad dat opent groeit eruit via `sheetRef` van `useSheetClose` (een stil vlak, `data-grow` op het paneel, rekensom in
+`components/growPlan.ts`); sluiten via `requestClose` krimpt terug, een blad dat de pagina zelf sluit na Gedaan of Verplaatsen niet.
+Een verplaatste training schuift in Week naar zijn dag: `armFlip()` (`utils/flipDom.ts`, aangeroepen door `applyProposal`,
+`commitPlanChange` en `undoRecentChange`) meet de rijen, `useFlipList` in `WeekPlanner` speelt het af (rekensom in
+`components/flip.ts`), wachtend tot een voorstelblad weg is, vanaf de plek van de zwevende rij na slepen. Rustig laat de verplaatste
+rij alleen kort verschijnen, Uit doet niets. Een nieuwe rij die een blad opent krijgt `data-sheet-from`; Vandaag schuift nog niet.
+
 De lucht bovenaan heeft een donkere variant (`data-sky="day|night"` op `<html>`, instelling
 "Lucht bovenaan", `engine/skySettings.ts`; `docs/beslissingen/2026-10-24-nachtlucht.md`).
 Een component gebruikt alleen de tokens en `.on-light`; wat licht lijkt wordt 's avonds vanzelf donker.

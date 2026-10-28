@@ -5,6 +5,7 @@ import { dayAtY, nextDroppable, type DayVerdict, type DecideOptions, type MoveDe
 import { haptics } from '../utils/haptics';
 import { useVerticalDrag } from './useVerticalDrag';
 import { useLegMoveNotes } from './useLegMoveNote';
+import { setFlipOrigin } from '../utils/flipDom';
 
 // Een training slepen in Week (docs/visie/Slepen in Week.md): de toestand van het slepen en de
 // handelingen van de greep. Wat een dag zegt en wat loslaten doet komt uit engine/weekDrag.ts; de
@@ -131,7 +132,8 @@ export function useWeekDrag({ weekStart, enabled, moveTo, onOpenMove }: {
           id, mode: 'pointer', target, verdicts, askAlways, fingerY: fingerY.current,
           ghost: { left: rect.left, width: rect.width, height: rect.height, top: fingerY.current - grab },
         }),
-        onDrop: (target) => void finish(id, target, askAlways, verdicts),
+        // De rij schuift naar zijn dag vanaf waar je hem losliet (utils/flipDom.ts).
+        onDrop: (target) => { setFlipOrigin(id, fingerY.current - grab); void finish(id, target, askAlways, verdicts); },
         onCancel: () => { setDrag(null); setAnnounce('Niet verplaatst'); },
       });
     };

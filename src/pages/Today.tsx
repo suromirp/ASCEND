@@ -397,6 +397,7 @@ function TodayContent() {
               template={t}
               state={trainingRowState(status, s.id === primary?.id)}
               onClick={() => setActionSheetSession(s)}
+              sheetFrom
               trailing={rest ? REST_DAY_COPY[restMode].badge : `${resolveEffectiveFullDuration(t, s.scheduledDate, program)} min`}
             >
               {rest ? REST_DAY_COPY[restMode].title : t.name}

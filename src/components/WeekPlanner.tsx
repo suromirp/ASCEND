@@ -26,7 +26,7 @@ import { useMemo, type ReactNode } from 'react';
 import { dragEligibility } from '../engine/weekDrag';
 import { WeekDragGhost } from './WeekDragGhost';
 import { WeekDragNote } from './WeekDragNote';
-import { useMotionMode } from './motion';
+import { useFlipList } from './useFlipList';
 import { DRAG_FAILED, type useWeekDrag, type WeekHandle } from './useWeekDrag';
 
 // De week als compacte lijst op één scherm: per dag een regel met status,
@@ -47,7 +47,7 @@ const todayStyle = {
 const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, transparent)' };
 
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, rise,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -71,7 +71,6 @@ function SessionRow({
   handle?: WeekHandle;
   placeholder?: boolean;
   ghost?: boolean;
-  rise?: boolean;
 }) {
   const restMode = useAppData().settings.restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
@@ -156,12 +155,13 @@ function SessionRow({
   return (
     <div
       data-session-row={session.id}
-      className={`relative flex min-h-[64px] w-full items-center gap-3 border-t px-3 first:border-t-0 ${rise ? 'animate-rise-in' : ''}`}
+      className="relative flex min-h-[64px] w-full items-center gap-3 border-t px-3 first:border-t-0"
       style={rowStyle}
     >
       <button
         type="button"
         onClick={onTap}
+        data-sheet-from
         className="flex min-h-[64px] min-w-0 flex-1 items-center gap-3 py-2 text-left transition-colors active:opacity-75"
         style={hidden}
         tabIndex={placeholder ? -1 : undefined}
@@ -200,6 +200,7 @@ function LooseRow({ log, template, isToday, onTap, sign }: { log: SessionLog; te
     <button
       type="button"
       onClick={onTap}
+      data-sheet-from
       className="flex min-h-[64px] w-full items-center gap-3 border-t px-3 py-2 text-left transition-colors active:opacity-75 first:border-t-0"
       style={{ borderColor: 'var(--color-card-border)', ...(isToday ? todayStyle : {}) }}
     >
@@ -269,7 +270,7 @@ export function WeekPlanner({
   weekDrag?: ReturnType<typeof useWeekDrag>;
   dragEnabled?: boolean;
 }) {
-  const motion = useMotionMode();
+  useFlipList();
   const days = weekDates(weekStartDate);
   const today = todayISO();
   const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
@@ -313,7 +314,6 @@ export function WeekPlanner({
         handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : undefined}
         placeholder={pickedUp === s.id}
         ghost={extra.ghost}
-        rise={weekDrag?.movedId === s.id && motion === 'full'}
       />
     );
   };

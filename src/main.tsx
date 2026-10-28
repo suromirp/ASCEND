@@ -11,6 +11,7 @@ import './index.css'
 import App from './App.tsx'
 import { startServiceWorkerUpdates } from './utils/swUpdate'
 import { installBackLayers } from './utils/backLayers'
+import { installSheetOrigin } from './utils/sheetGrowDom'
 import { installStorageLifecycle } from './storage/lifecycle'
 
 // Before anything touches IndexedDB: out of view or frozen, this window starts
@@ -24,6 +25,9 @@ startServiceWorkerUpdates()
 // The back button closes sheets before it leaves a page. Listens before the
 // router does, so it has to be installed before the first render.
 installBackLayers()
+
+// A sheet opened from a row remembers which row, so it can grow out of it (utils/sheetGrowDom.ts).
+installSheetOrigin()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

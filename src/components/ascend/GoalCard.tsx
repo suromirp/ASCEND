@@ -74,6 +74,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
     <div
       ref={ref}
       data-goal-id={goal.id}
+      data-sheet-from
       className="relative flex flex-col gap-3 rounded-2xl border p-4"
       style={{
         background: 'var(--color-card)',
