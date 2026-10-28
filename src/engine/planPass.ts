@@ -93,6 +93,15 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
   return { sessions: current, repairs, remaining, beforeCheck: beforeCheck ?? all };
 }
 
+// The pass as a proposal's preview runs it. The sync (storage/database.ts#syncProgramHorizon) does
+// nothing without a program (a fresh install plans nothing until you ask), so neither does the
+// preview: what "Zo ziet je week eruit" shows is what the sync leaves after Akkoord, never a
+// repair the sync would not do (docs/beslissingen/2026-10-28-voorstel-eindstand.md).
+export function previewPlanPass(all: PlannedSession[], ctx: PlanPassContext): PlannedSession[] {
+  if (!ctx.program) return all;
+  return planPass(all, ctx).sessions;
+}
+
 // The weekday of each pattern session for a rest day; the phase variants
 // (mountain hike, first hike day) on the day of the session they replace.
 export function patternDays(templates: SessionTemplate[], settings: PatternSettings, restDay: number): Map<string, number> {

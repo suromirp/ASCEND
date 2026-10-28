@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { TAKEN_LINE, type WeekNotice as WeekNoticeData } from '../engine/weekFixProposal';
+import { useEffect, useRef, useState } from 'react';
+import { TAKEN_LINE, weekFixId, type WeekNotice as WeekNoticeData } from '../engine/weekFixProposal';
 import { noticeHeadline } from '../engine/weekConcerns';
 import { useAppData } from '../state/AppDataContext';
 import { ProposalSheet } from './ProposalSheet';
@@ -14,24 +14,61 @@ import { Card, Eyebrow, PrimaryButton } from './ui';
 // en de melding blijft, rustiger, met "Toch een voorstel". Niets verandert zonder Akkoord.
 const SHOWN = 3;
 
-export function WeekNotice({ notice }: { notice: WeekNoticeData }) {
-  const { answeredAdviceIds, settings } = useAppData();
+// Het voorstel wordt pas uitgerekend als je erom vraagt (een paar honderd milliseconden): het tekenen van de week
+// wacht er nooit op. De knop toont dan kort "Even rekenen…"; lukt het niet, dan staat dat er in woorden.
+type Outcome = 'idle' | 'busy' | 'ready' | 'failed';
+
+export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; weekStart: string }) {
+  const { answeredAdviceIds, settings, weekFixesFor, plannedSessions } = useAppData();
   const [proposalId, setProposalId] = useState<string | null>(null);
   const [allOpen, setAllOpen] = useState(false);
-  const { concerns, fixes, covered } = notice;
+  const [work, setWork] = useState<{ for: WeekNoticeData; outcome: Outcome; full?: WeekNoticeData }>({ for: notice, outcome: 'idle' });
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  // Een andere week of een gewijzigde planning: het uitgerekende voorstel hoort er niet meer bij.
+  const current = work.for === notice ? work : { for: notice, outcome: 'idle' as Outcome };
+  const full = current.outcome === 'ready' ? current.full : undefined;
+  const { concerns, covered } = full ?? notice;
+  const fixes = full?.fixes ?? {};
   if (concerns.length === 0) return null;
 
-  const withFix = concerns.map((c) => fixes[c.key]).filter((a): a is NonNullable<typeof a> => !!a);
-  const open = withFix.find((a) => !answeredAdviceIds.has(a.id));
-  const declined = withFix.find((a) => answeredAdviceIds.has(a.id));
   const proposalsOn = settings.weekFixProposal !== false;
+  const withFix = concerns.map((c) => fixes[c.key]).filter((a): a is NonNullable<typeof a> => !!a);
+  // Zonder de berekening weten we uit het id al of je Liever niet zei.
+  const idOf = (c: (typeof concerns)[number]) => fixes[c.key]?.id ?? weekFixId(c, plannedSessions);
+  const askable = concerns.filter((c) => !covered.includes(c.key));
+  const answeredCount = askable.filter((c) => answeredAdviceIds.has(idOf(c))).length;
+  const quiet = askable.length > 0 && answeredCount === askable.length;
+  const openCount = askable.length - answeredCount;
+  const stillOpen = answeredCount > 0 && openCount > 0;
   const shown = concerns.slice(0, SHOWN);
   const rest = concerns.length - shown.length;
-  const quiet = !open && !!declined;
-  const openCount = withFix.filter((a) => !answeredAdviceIds.has(a.id)).length;
-  // Na een Liever niet op het eerste voorstel zie je wat er nog openstaat.
-  const stillOpen = !!declined && openCount > 0;
   const sheetAdvice = withFix.find((a) => a.id === proposalId);
+  const noFix = current.outcome === 'ready' && withFix.length === 0 && covered.length === 0;
+
+  // Rekent het voorstel uit nadat de week getekend is en opent het blad; lukt het niet, dan staat er een zin.
+  const ask = () => {
+    if (full) {
+      const pick = withFix.find((a) => !answeredAdviceIds.has(a.id)) ?? withFix[0];
+      if (pick) setProposalId(pick.id);
+      return;
+    }
+    setWork({ for: notice, outcome: 'busy' });
+    setTimeout(() => {
+      if (!mounted.current) return;
+      try {
+        const result = weekFixesFor(weekStart);
+        setWork({ for: notice, outcome: 'ready', full: result });
+        const list = result.concerns.map((c) => result.fixes[c.key]).filter((a): a is NonNullable<typeof a> => !!a);
+        const pick = list.find((a) => !answeredAdviceIds.has(a.id)) ?? list[0];
+        if (pick) setProposalId(pick.id);
+      } catch (err) {
+        console.error('Het weekvoorstel kon niet worden berekend:', err);
+        setWork({ for: notice, outcome: 'failed' });
+      }
+    }, 50);
+  };
+  const busy = current.outcome === 'busy';
 
   return (
     <Card className="flex flex-col gap-3">
@@ -55,12 +92,15 @@ export function WeekNotice({ notice }: { notice: WeekNoticeData }) {
       {stillOpen && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{`Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} met een voorstel.`}</p>
       )}
-      {open && <PrimaryButton onClick={() => setProposalId(open.id)}>Bekijk voorstel</PrimaryButton>}
-      {quiet && <TextButton onClick={() => setProposalId(declined!.id)}>Toch een voorstel</TextButton>}
+      {proposalsOn && !noFix && askable.length > 0 && !quiet && <PrimaryButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</PrimaryButton>}
+      {proposalsOn && !noFix && quiet && <TextButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Toch een voorstel'}</TextButton>}
+      {current.outcome === 'failed' && (
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Het voorstel lukte nu niet. Probeer het straks nog eens.</p>
+      )}
       {covered.length > 0 && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{TAKEN_LINE}</p>
       )}
-      {proposalsOn && withFix.length === 0 && covered.length === 0 && (
+      {proposalsOn && noFix && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>ASCEND vond deze week geen dag die beter past.</p>
       )}
 

@@ -31,6 +31,14 @@ interface Change { id: string; from: string; to?: string; removed?: boolean; min
 
 const capital = (s: string) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
 
+// The id of the proposal for a concern, known without working the proposal out: Week can tell from it whether
+// you already said Liever niet, without waiting for the calculation (docs/beslissingen/2026-10-28-voorstel-eindstand.md).
+export function weekFixId(concern: WeekConcern, sessions: PlannedSession[]): string {
+  const ids = [...concern.finding.sessionIds].sort();
+  const dates = ids.map((id) => sessions.find((s) => s.id === id)?.scheduledDate ?? '').join(',');
+  return `weekfix:${concern.rule}:${ids.join(',')}:${dates}`;
+}
+
 export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: string): Advice | null {
   const monday = mondayOfWeek(weekStart);
   const byTemplate = new Map(input.templates.map((t) => [t.id, t]));
@@ -205,10 +213,8 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
   });
   const options: AdviceOption[] = unique.map((c) => ({ label: labelOf(c), effect: sentence(c), proposal: proposalOf(c) }));
 
-  const ids = [...concern.finding.sessionIds].sort();
-  const dates = ids.map((id) => sessionById(id)?.scheduledDate ?? '').join(',');
   return {
-    id: `weekfix:${concern.rule}:${ids.join(',')}:${dates}`,
+    id: weekFixId(concern, input.sessions),
     trigger: 'plan_update',
     ruleId: 'WEEK-CHECK',
     title: concern.title,
@@ -240,6 +246,14 @@ export function adviceSessionIds(advice: Advice[]): Set<string> {
     }
   }
   return ids;
+}
+
+// The cheap half of `weekNotice`: the concerns (about 10 ms) with what a proposal of Vandaag already covers, and
+// no proposals. Week draws this at once; the proposals follow when you ask for them.
+export function weekNoticeConcerns(input: CheckInput, weekStart: string, taken: Set<string> = new Set()): WeekNotice {
+  const concerns = weekConcerns(input, weekStart);
+  const covered = concerns.filter((c) => [...c.finding.sessionIds, c.finding.subjectId].some((id) => taken.has(id))).map((c) => c.key);
+  return { concerns, fixes: {}, covered };
 }
 
 export const TAKEN_LINE = 'Hier staat al een voorstel voor op Vandaag.';

@@ -176,7 +176,7 @@ export function WeekPage() {
         </header>
       </SkyBand>
 
-      {!monthView && <WeekNotice notice={notice} />}
+      {!monthView && <WeekNotice notice={notice} weekStart={weekStart} />}
 
       {!monthView && (
         <Card className="flex flex-col gap-4">

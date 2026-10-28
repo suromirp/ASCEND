@@ -48,7 +48,9 @@ import { awaitsEffort, testStopsRemark } from './testJudgment';
 import { manyStops, stopsShort } from './bestEffort';
 import { hasRole, idIsTestOrRace } from './templateRoles';
 import { leaveDays, lightDays } from './leave';
-import { freeDaysOfWeek, lockLevel } from './weekValidator';
+import { freeDaysOfWeek, lockLevel, validateWeeks, type CheckInput, type Finding } from './weekValidator';
+import { CONCERN_RULES } from './weekConcerns';
+import { applyPlanChangeItems } from './proposalEngine';
 import type { LeavePeriod } from '../models/leave';
 import { weatherAdvice } from './weatherSwap';
 import { LEG_BODY_PARTS } from './legSpots';
@@ -137,6 +139,8 @@ export interface AdviceInputs {
   // The forecast for your place and the moment it is read at (engine/weather.ts,
   // rule WEATHER-SWAP). Absent without a place or before the first fetch.
   weather?: { forecast: WeatherForecast; now: Date; leave?: LeavePeriod[] };
+  // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
+  noRetry?: boolean;
 }
 
 const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
@@ -1316,7 +1320,8 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
   const restDates = new Set(base.filter((o) => templateById.get(o.templateId)?.type === 'recovery' && !loggedIds.has(o.id)).map((o) => o.scheduledDate));
   const limit = FATIGUE_THRESHOLDS.test.fresh;
 
-  const attempt = (lockedMode: 'move' | 'remove'): RetryPlan | undefined => {
+  // `ban`: session@day pairs the end-state check found to give a new concern; the search takes another day.
+  const attempt = (lockedMode: 'move' | 'remove', ban: Set<string>): RetryPlan | undefined => {
     let state: PlannedSession[] = [...base, testAt];
     const moves: RetryPlan['moves'] = [];
     const dropped: PlannedSession[] = [];
@@ -1355,7 +1360,7 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
       // First a day that keeps the rest day of its week; only then one that costs it, with the lightest training let go.
       for (const letGo of [false, true]) for (const off of targets) {
         const d = addDays(date, off);
-        if (d <= today || d === s.scheduledDate || (strength && restDates.has(d)) || isIllnessDay(d, inputs.illnessEpisodes, today) || ctx.blocked(d, isHeavyFor(t))) continue;
+        if (d <= today || d === s.scheduledDate || ban.has(`${s.id}@${d}`) || (strength && restDates.has(d)) || isIllnessDay(d, inputs.illnessEpisodes, today) || ctx.blocked(d, isHeavyFor(t))) continue;
         if (!respectsHeavySpacing(d, t, others, templateById, inputs.logs, s.id) || !leavesNextHardFresh(inputs, templateById, d, s, others)) continue;
         const week = weekOf(d, s.id);
         // The day budget counts the length the session will have there (short in a week with a long training of its own).
@@ -1432,14 +1437,72 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
     return { found, moves, dropped, cost, restLoss: [...restLoss] };
   };
 
-  const first = attempt('move');
+  // The proposal tests its own end state with the rules of the rest of the app. A plan that gives a new
+  // concern about a session it moved is tried again with another day for that session; nothing left, no plan.
+  const checked = (mode: 'move' | 'remove'): RetryPlan | undefined => {
+    const ban = new Set<string>();
+    for (let round = 0; round < 6; round++) {
+      const plan = attempt(mode, ban);
+      if (!plan) return undefined;
+      const hit = newConcernIds(plan, inputs, test);
+      if (!hit) return plan;
+      const culprits = plan.moves.filter((m) => hit.has(m.session.id));
+      const bans = culprits.length > 0 ? culprits : plan.moves;
+      if (bans.length === 0) return undefined;
+      for (const m of bans) ban.add(`${m.session.id}@${m.to}`);
+    }
+    return undefined;
+  };
+  const first = checked('move');
   const plans = first ? [first] : [];
   // A leg day you locked that moved also gets the plan where it goes instead, as the second option.
   if (!first || first.moves.some((m) => levelOf(m.session) === 1)) {
-    const second = attempt('remove');
+    const second = checked('remove');
     if (second) plans.push(second);
   }
   return plans;
+}
+
+// The plan as Akkoord leaves it: the same items the proposal carries, applied the way commitPlanChange does.
+function endStateOf(plan: RetryPlan, inputs: AdviceInputs, test: SessionTemplate): PlannedSession[] {
+  const items: PlanChangeItem[] = [
+    ...plan.moves.flatMap((m): PlanChangeItem[] => [
+      { plannedSessionId: m.session.id, action: 'move', fromDate: m.session.scheduledDate, toDate: m.to, plannedMinutes: m.minutes, reason: '', generatedBy: [] },
+      ...(m.rest ? [{ plannedSessionId: m.rest.id, action: 'remove' as const, reason: '', generatedBy: [] }] : []),
+      ...(m.lightDrop ? [{ plannedSessionId: m.lightDrop.id, action: 'remove' as const, reason: '', generatedBy: [] }] : []),
+    ]),
+    ...plan.dropped.map((d): PlanChangeItem => ({ plannedSessionId: d.id, action: 'remove', reason: '', generatedBy: [] })),
+    { plannedSessionId: plan.found.id, action: 'move', fromDate: plan.found.scheduledDate, toDate: plan.found.scheduledDate, templateId: TEST_RUN_ID, plannedMinutes: test.durationVariants.full, reason: '', generatedBy: [] },
+  ];
+  let n = 0;
+  return applyPlanChangeItems(items, inputs.plannedSessions, () => `end-state-${n++}`, { by: 'proposal', at: `${inputs.asOf}T00:00:00.000Z` }).sessions;
+}
+
+// The sessions a new advice or a new finding of the week check is about, on the end state of the plan, when it
+// touches a session the proposal touches (undefined when there is nothing new). Akkoord must not be followed by a
+// second proposal about the same sessions (docs/beslissingen/2026-10-28-voorstel-eindstand.md). Only what is new
+// counts, so a concern that was already there before the proposal does not block it.
+function newConcernIds(plan: RetryPlan, inputs: AdviceInputs, test: SessionTemplate): Set<string> | undefined {
+  const touched = new Set([plan.found.id, ...plan.moves.flatMap((m) => [m.session.id, m.rest?.id, m.lightDrop?.id]), ...plan.dropped.map((d) => d.id)].filter((id): id is string => !!id));
+  const end = endStateOf(plan, inputs, test);
+  const hit = new Set<string>();
+  const idsOf = (a: Advice) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])].flatMap((p) => p?.changes.map((c) => c.plannedSessionId).filter((id): id is string => !!id) ?? []);
+  const before = new Set(computeAdvice({ ...inputs, noRetry: true }).map((a) => a.id));
+  for (const a of computeAdvice({ ...inputs, plannedSessions: end, noRetry: true })) {
+    const ids = idsOf(a);
+    if (!before.has(a.id) && ids.some((id) => touched.has(id))) for (const id of ids) hit.add(id);
+  }
+  const check = (sessions: PlannedSession[]): CheckInput => ({
+    sessions, logs: inputs.logs, templates: inputs.templates, today: inputs.asOf, restDay: inputs.extraSession?.restDay, program: inputs.program,
+    dailyTimeBudget: inputs.dailyTimeBudget, sameDayPairingPreference: inputs.sameDayPairingPreference, leave: inputs.leave, reportYours: true,
+  });
+  const weeks = new Set(end.filter((s) => touched.has(s.id)).map((s) => mondayOfWeek(s.scheduledDate)));
+  const keyOf = (f: Finding) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
+  const known = new Set(validateWeeks(check(inputs.plannedSessions), weeks).map(keyOf));
+  for (const f of validateWeeks(check(end), weeks)) {
+    if (CONCERN_RULES.includes(f.rule) && f.sessionIds.some((id) => touched.has(id)) && !known.has(keyOf(f))) for (const id of f.sessionIds) hit.add(id);
+  }
+  return hit.size > 0 ? hit : undefined;
 }
 
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
@@ -1486,7 +1549,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...repeatWeek,
     ...tentPack,
     ...targetTime,
-    ...testRetryAdvice(inputs, templateById, retryUsed, testRoom),
+    ...(inputs.noRetry ? [] : testRetryAdvice(inputs, templateById, retryUsed, testRoom)),
     ...weather,
     ...morning,
   ]
