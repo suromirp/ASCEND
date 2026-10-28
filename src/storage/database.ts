@@ -709,6 +709,8 @@ export interface AppSettings {
   // ASCEND itself (a training you or an accepted proposal fixed) gets a proposal with Akkoord.
   // Off keeps the notice and the lines in the rows, only the proposal is gone. Absent = on.
   weekFixProposal?: boolean;
+  // Trainingen slepen in Week (components/useWeekDrag.ts). Afwezig is aan; uit haalt de grepen weg.
+  dragWeek?: boolean;
   // "Doeltijd aanpassen voorstellen": a test that says your goal time is out of reach (or far too easy)
   // gets a proposal to change it (rule TARGET-TIME). Absent = on. One Liever niet holds for every later
   // test until the goal time itself changes. Optional and additive.

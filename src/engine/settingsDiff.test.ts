@@ -51,6 +51,7 @@ const everything: AppSettings = {
   askDoubtTest: false,
   newTestOnStops: false,
   weekFixProposal: false,
+  dragWeek: false,
   testStops: 'count',
   readinessWeighting: 'equal',
   proposeTargetTime: false,

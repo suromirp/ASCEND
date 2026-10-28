@@ -61,7 +61,7 @@ export interface PageRows {
 
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
-    rows: ['bundel-dagen', 'meerdere', ...SPORT_IDS.map((id) => `sport-${id}`), 'wijzigingen', 'ambitie', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'weekvoorstel'],
+    rows: ['bundel-dagen', 'meerdere', ...SPORT_IDS.map((id) => `sport-${id}`), 'wijzigingen', 'ambitie', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'weekvoorstel', 'slepen-week'],
     advanced: [],
   },
   doel: {

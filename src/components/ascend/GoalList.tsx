@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { PRIORITY_NAME } from '../../engine/goalLabels';
 import { landingIndex, moveGoal, type MoveResult, type NextKeySession } from '../../engine/goalList';
+import { useVerticalDrag } from '../useVerticalDrag';
 import { GoalCard } from './GoalCard';
 import type { GoalView } from './useGoalViews';
 
@@ -36,8 +37,7 @@ export function GoalList({
   const live = useRef({ views, onMove, drag });
   const onBlockedRef = useRef(onBlocked);
   useEffect(() => { live.current = { views, onMove, drag }; onBlockedRef.current = onBlocked; });
-  const cleanup = useRef<(() => void) | null>(null);
-  useEffect(() => () => cleanup.current?.(), []);
+  const dragger = useVerticalDrag();
 
   const listed = views.map((v) => v.item);
   // Alleen de plek die bij loslaten echt komt: het hoofddoel kan niet onder een doel dat geen Top is.
@@ -61,50 +61,19 @@ export function GoalList({
   }
 
   function startPointer(id: string, e: PointerEvent<HTMLButtonElement>) {
-    if (e.button !== undefined && e.button > 0) return;
-    e.preventDefault();
-    const scroller = document.getElementById('app-scroll');
-    const startY = e.clientY;
-    const startScroll = scroller?.scrollTop ?? 0;
-    let lastY = startY;
-    let raf = 0;
-    const update = () => {
-      const dy = lastY - startY + ((scroller?.scrollTop ?? 0) - startScroll);
-      setDrag({ id, mode: 'pointer', target: landingIndex(live.current.views.map((v) => v.item), id, targetAt(id, lastY)), dy });
-    };
-    const loop = () => {
-      if (scroller) {
-        const top = scroller.getBoundingClientRect().top;
-        if (lastY < top + 90) scroller.scrollTop -= 10;
-        else if (lastY > window.innerHeight - 130) scroller.scrollTop += 10;
-        update();
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    const move = (ev: globalThis.PointerEvent) => { lastY = ev.clientY; update(); };
-    const stop = () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      window.removeEventListener('pointercancel', cancel);
-      cleanup.current = null;
-    };
-    const up = () => {
-      stop();
-      const items = live.current.views.map((v) => v.item);
-      const wanted = targetAt(id, lastY);
-      setDrag(null);
-      const result = moveGoal(items, id, wanted);
-      if (result.changed) live.current.onMove(id, result);
-      else if (landingIndex(items, id, wanted) !== wanted) onBlockedRef.current(id);
-    };
-    const cancel = () => { stop(); setDrag(null); };
-    cleanup.current = stop;
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-    window.addEventListener('pointercancel', cancel);
-    raf = requestAnimationFrame(loop);
-    update();
+    // Het oppakken, scrollen aan de randen en opruimen zit in de gedeelde hook; hier alleen wat een plek is.
+    dragger.start<number>(e, {
+      locate: (y) => targetAt(id, y),
+      onChange: (wanted, dy) => setDrag({ id, mode: 'pointer', target: landingIndex(live.current.views.map((v) => v.item), id, wanted), dy }),
+      onDrop: (wanted) => {
+        const items = live.current.views.map((v) => v.item);
+        setDrag(null);
+        const result = moveGoal(items, id, wanted);
+        if (result.changed) live.current.onMove(id, result);
+        else if (landingIndex(items, id, wanted) !== wanted) onBlockedRef.current(id);
+      },
+      onCancel: () => setDrag(null),
+    });
   }
 
   function keyDown(id: string, index: number, e: KeyboardEvent<HTMLButtonElement>) {

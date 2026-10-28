@@ -49,6 +49,22 @@ export interface MoveContext {
   illness?: IllnessEpisode[];
 }
 
+// Why the planning keeps a day free for this training, or nothing when it may land there. One
+// source for the one-tap suggestions and for dragging in Week (engine/weekDrag.ts).
+export type KeptReason = 'off' | 'trek' | 'light' | 'rest' | 'goal' | 'ill';
+
+export function keptDayReason(context: MoveContext, template: SessionTemplate, date: string, asOf: string): KeptReason | undefined {
+  const offDays = leaveDays(context.leave);
+  const leave = offDays.get(date)?.kind;
+  if (leave === 'off') return 'off';
+  if (leave === 'trek') return 'trek';
+  if (isHeavySession(template) && lightDays(context.leave, offDays).has(date)) return 'light';
+  if (context.restDay && isoWeekday(date) === context.restDay) return 'rest';
+  if (context.goalDay && date >= context.goalDay) return 'goal';
+  if (activeIllness(context.illness) && date <= addDays(asOf, 1)) return 'ill';
+  return undefined;
+}
+
 export function suggestMoveDates(
   sessions: PlannedSession[], // the session's week and the weeks around it
   templates: SessionTemplate[],
@@ -88,19 +104,7 @@ export function suggestMoveDates(
     && !dailyTimeBudget?.[weekdayOf(date)]
     && minutesOn(date) + ownMinutes(date) <= UNSET_DAY_PAIRING_CAP_MINUTES;
 
-  const offDays = leaveDays(context.leave);
-  const light = lightDays(context.leave, offDays);
-  const heavy = isHeavySession(template);
-  const ill = activeIllness(context.illness);
-  const kept = (date: string) => {
-    const leave = offDays.get(date)?.kind;
-    if (leave === 'off' || leave === 'trek') return true;
-    if (heavy && light.has(date)) return true;
-    if (context.restDay && isoWeekday(date) === context.restDay) return true;
-    if (context.goalDay && date >= context.goalDay) return true;
-    if (ill && date <= addDays(asOf, 1)) return true;
-    return false;
-  };
+  const kept = (date: string) => keptDayReason(context, template, date, asOf) !== undefined;
 
   const candidates: { date: string; score: number }[] = [];
   for (let date = firstDay; date <= lastDay; date = addDays(date, 1)) {
