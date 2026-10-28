@@ -507,7 +507,10 @@ export function computeGoalReadiness(input: GoalReadinessInput, logs: SessionLog
   // Een verschil zegt pas iets als er vier weken terug of nu iets te meten was. Met `since` (een doel
   // van na het eerste meetpunt) moet er vier weken terug al een waarde zijn geweest.
   const existed = options.since === undefined || (options.since <= addDays(today, -VERGELIJK_DAGEN) && (before.percent ?? 0) > 0);
-  const change = existed && before.percent !== undefined && (before.percent > 0 || now.percent > 0) ? now.percent - before.percent : undefined;
+  // Alleen vergelijken als beide momenten dezelfde meters hebben (met dezelfde weging): een meter die er
+  // vier weken terug nog niet was (een testloop erbij) maakt het verschil schijn.
+  const sameBasis = now.meters.length === before.meters.length && now.meters.every((m, i) => before.meters[i].key === m.key);
+  const change = existed && sameBasis && before.percent !== undefined && (before.percent > 0 || now.percent > 0) ? now.percent - before.percent : undefined;
   return { ...now, change };
 }
 

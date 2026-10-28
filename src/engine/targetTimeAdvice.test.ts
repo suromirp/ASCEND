@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeAdvice, type AdviceInputs } from './adviceEngine';
+import { computeAdvice, legacyTargetTimeAnswers, type AdviceInputs } from './adviceEngine';
 import { withTargetMinutes } from './goals';
 import type { RaceBlock } from './raceBlock';
 import type { SessionLog, SessionTemplate } from '../models/training';
@@ -57,6 +57,17 @@ describe('TARGET-TIME', () => {
   it('a changed goal time is new: it may ask once more', () => {
     const [a] = targetTime(inputs({ logs, raceGoals: [race(46)], respondedIds: new Set(['goaltime:race:45']) }));
     expect(a.id).toBe('goaltime:race:46');
+  });
+
+  it('an old Liever niet (id with the test date) still holds until the goal time changes', () => {
+    const answers = legacyTargetTimeAnswers({ 'goaltime:race:2026-10-29': { at: '2026-10-30T08:00:00Z' } });
+    expect(answers).toEqual({ race: '2026-10-30T08:00:00Z' });
+    const base = { logs, goalUpdatedAt: { race: '2026-10-01T00:00:00Z' }, legacyTargetTimeAnswers: answers };
+    expect(targetTime(inputs(base))).toEqual([]);
+    // The goal time changed after the answer: new, may ask once.
+    expect(targetTime(inputs({ ...base, goalUpdatedAt: { race: '2026-11-01T00:00:00Z' } })).map((a) => a.id)).toEqual(['goaltime:race:45']);
+    // Another goal's old answer does not count.
+    expect(targetTime(inputs({ ...base, legacyTargetTimeAnswers: { other: '2026-10-30T08:00:00Z' } })).length).toBe(1);
   });
 
   it('says nothing when "Doeltijd aanpassen voorstellen" is off', () => {

@@ -65,7 +65,7 @@ import { undoPlanChangeNow } from '../storage/undoPlanChange';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type HorizonApplyStatus, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { resolveMotion, splashMinimumMs } from '../engine/motionSettings';
-import { computeAdvice, type Advice } from '../engine/adviceEngine';
+import { computeAdvice, legacyTargetTimeAnswers, type Advice } from '../engine/adviceEngine';
 import { resolveLegEase } from '../engine/legEaseSettings';
 import { influenceMove, influenceMoveCause, type InfluenceMove } from '../engine/influenceProposal';
 import { useWeatherForecast, type WeatherView } from './useWeather';
@@ -2440,6 +2440,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         extraSession: extraSessionContext,
         tentPack: tentPackProposal(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))),
         raceGoals: extraSessionContext.races,
+        goalUpdatedAt: Object.fromEntries(trainingGoals.map((g) => [g.id, g.updatedAt])),
+        legacyTargetTimeAnswers: legacyTargetTimeAnswers(adviceResponses),
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),

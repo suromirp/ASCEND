@@ -4,9 +4,10 @@ import { useAppData } from '../../state/AppDataContext';
 import { GOAL_KINDS } from '../../data/goalKinds';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION } from '../../data/gr5Details';
 import { changeLabel } from '../../engine/goalReadiness';
+import { raceWeightSentence } from '../../engine/raceReadiness';
 import { goalKindOf, PRIORITY_NAME } from '../../engine/goalLabels';
 import { computeGoalProgress } from '../../engine/progression';
-import type { NextKeySession } from '../../engine/goalList';
+import { labelLine, type NextKeySession } from '../../engine/goalList';
 import { formatDateNL } from '../../utils/dates';
 import { AscentLadder } from '../AscentLadder';
 import { Icon } from '../icons';
@@ -85,7 +86,7 @@ export function GoalSheet({
                 {change && <p className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{change}</p>}
                 <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
                   {readiness?.race?.weighted
-                    ? 'Snelheid telt voor 60% mee, je langste loop en je weekvolume voor 20% elk. Elke meter stopt bij 100%.'
+                    ? raceWeightSentence()
                     : readiness && percent !== undefined
                     ? `Het gemiddelde van ${readiness.meters.length === 1 ? 'deze meter' : `deze ${readiness.meters.length} meters`}. Elke meter stopt bij 100%, dus een zware rugzak redt een korte dag niet.`
                     : 'Nog niets te meten. Dat komt met trainingen die meetellen.'}
@@ -93,7 +94,10 @@ export function GoalSheet({
               </div>
             </div>
 
-            {readiness?.race && <RaceFactsBlock race={readiness.race} />}
+            {readiness?.race && <RaceFactsBlock race={readiness.race} withBasis />}
+            {readiness?.race && readiness.race.status !== 'no-target' && kind && (
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{labelLine(goal, item.priority)}</p>
+            )}
 
             {readiness && readiness.meters.length > 0 && (
               <div className="st-list">

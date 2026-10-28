@@ -16,8 +16,10 @@ import { isTrekGoal, whenText } from './goalText';
 import type { RaceFacts } from '../../engine/raceReadiness';
 
 // Wat een hardloopwedstrijd met een doeltijd bovenaan zegt: eerst het droge feit (verwacht nu, doel,
-// de afstand ertussen), dan wat de groei kan geven en waarop het rust. Zonder test één regel.
-export function RaceFactsBlock({ race }: { race: RaceFacts }) {
+// de afstand ertussen), dan de haalbaarheid als droog feit. Zonder test één regel. De basis ("Uit je
+// snelste 5 km van ...") staat alleen in het blad (`withBasis`). Besluit:
+// docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid-aanvulling.md.
+export function RaceFactsBlock({ race, withBasis = false }: { race: RaceFacts; withBasis?: boolean }) {
   const dim = { color: 'var(--color-ink-dim)' };
   if (race.status === 'no-target') return null;
   if (!race.nowLine) return race.statusLine ? <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{race.statusLine}</p> : null;
@@ -25,7 +27,7 @@ export function RaceFactsBlock({ race }: { race: RaceFacts }) {
     <div className="flex flex-col gap-1 tabular-nums">
       <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{race.nowLine}</p>
       {race.bandLine && <p className="text-sm leading-snug" style={dim}>{race.bandLine}</p>}
-      {race.basisLine && <p className="text-xs leading-snug" style={dim}>{race.basisLine}</p>}
+      {withBasis && race.basisLine && <p className="text-xs leading-snug" style={dim}>{race.basisLine}</p>}
     </div>
   );
 }
@@ -59,6 +61,8 @@ export const GoalCard = forwardRef<HTMLDivElement, {
   const when = whenText(view);
   const kindName = kind ? GOAL_KINDS[kind].label : undefined;
   const percent = readiness?.percent;
+  // Een wedstrijd met een doeltijd: de kaart is in één oogopslag te lezen, de rest staat in het blad.
+  const raceCard = !!readiness?.race && readiness.race.status !== 'no-target';
   const change = readiness ? changeLabel(readiness.change) : undefined;
   const sentence = readiness?.sentence ?? (kind
     ? 'Nog niets te meten. Dat komt met trainingen die meetellen.'
@@ -115,7 +119,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
         </button>
       </div>
 
-      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{kind ? labelLine(goal, item.priority) : 'Kies een soort, dan telt dit doel mee.'}</p>
+      {!raceCard && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{kind ? labelLine(goal, item.priority) : 'Kies een soort, dan telt dit doel mee.'}</p>}
 
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline justify-between gap-3">
@@ -123,10 +127,12 @@ export const GoalCard = forwardRef<HTMLDivElement, {
           {change && <span className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{change}</span>}
         </div>
         {readiness?.race && <RaceFactsBlock race={readiness.race} />}
-        <p className={`text-sm leading-relaxed ${open ? '' : 'line-clamp-2'}`} style={{ color: 'var(--color-ink)' }}>{sentence}</p>
+        {!(raceCard && readiness?.race?.status === 'counted') && (
+          <p className={`text-sm leading-relaxed ${open ? '' : 'line-clamp-2'}`} style={{ color: 'var(--color-ink)' }}>{sentence}</p>
+        )}
       </div>
 
-      {open && (
+      {(open || raceCard) && (
         <div className="animate-rise-in flex flex-col gap-3">
           {readiness && readiness.meters.length > 0 && (
             <div className="flex flex-col gap-3">

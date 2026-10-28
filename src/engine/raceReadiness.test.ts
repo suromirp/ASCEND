@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeRaceReadiness, resolveReadinessWeighting, RACE_SPEED_WEIGHTS, NO_TEST_LINE, WAITING_LINE } from './raceReadiness';
+import { computeRaceReadiness, resolveReadinessWeighting, raceWeightSentence, RACE_SPEED_WEIGHTS, NO_TEST_LINE, WAITING_LINE } from './raceReadiness';
 import { computeGoalReadiness, readinessInputOf } from './goalReadiness';
 import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
@@ -38,12 +38,42 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
   });
 
   it('weegt snelheid 60% en de twee andere meters 20%', () => {
-    expect(RACE_SPEED_WEIGHTS).toEqual({ verwachteTijd: 0.6, langsteLoop: 0.2, weekvolume: 0.2 });
+    expect(RACE_SPEED_WEIGHTS).toEqual({ verwachteTijd: 0.6, langsteLoop: 0.2, weekvolume: 0.2, volhouden: 0 });
     const r = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
     const by = Object.fromEntries(r.meters.map((m) => [m.key, m.share]));
     const expected = Math.round((0.6 * by.verwachteTijd + 0.2 * by.langsteLoop + 0.2 * by.weekvolume) * 100);
     expect(r.percent).toBe(expected);
     expect(r.sentence).toContain('Snelheid telt voor 60% mee');
+  });
+
+  it('laat snelheid op 60% staan ook met vier gemeten meters (Volhouden weegt 0)', () => {
+    const four = computeGoalReadiness(readinessInputOf(goal())!, [accepted, ...training], TODAY, {
+      naming,
+      external: (id) => (id === 'verwachteTijd' ? { share: 0.5, text: 'x' } : id === 'volhouden' ? { share: 0.1, text: 'y' } : undefined),
+      weights: RACE_SPEED_WEIGHTS,
+    });
+    expect(four.meters.map((m) => m.key)).toEqual(expect.arrayContaining(['verwachteTijd', 'langsteLoop', 'weekvolume', 'volhouden']));
+    const by = Object.fromEntries(four.meters.map((m) => [m.key, m.share]));
+    expect(four.percent).toBe(Math.round((0.6 * by.verwachteTijd + 0.2 * by.langsteLoop + 0.2 * by.weekvolume) * 100));
+    expect(raceWeightSentence()).toBe('Snelheid telt voor 60% mee, je langste loop en je weekvolume voor 20% elk. Elke meter stopt bij 100%.');
+  });
+
+  it('noemt Volhouden niet als het ontbreekt', () => {
+    const r = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
+    expect(r.missingSentence).toBeUndefined();
+  });
+
+  it('zegt de afstand tot het doel in hele seconden, nooit 0:60', () => {
+    // Verwacht ruim boven het doel met een verschil dat per km net op een hele minuut afrondt.
+    for (const target of [44.99, 45, 45.01, 30, 30.008]) {
+      const r = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: target }), [accepted, ...training], TODAY, { naming })!;
+      expect(r.race?.nowLine).not.toMatch(/:60/);
+    }
+  });
+
+  it('zegt dat je er al onder zit', () => {
+    const r = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 70 }), [accepted, ...training], TODAY, { naming })!;
+    expect(r.race?.nowLine).toBe('Verwacht nu 55:40. Doel 1:10:00: je zit er nu al onder.');
   });
 
   it('weegt alles gelijk als je dat kiest', () => {
@@ -62,12 +92,24 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
   it('toont de afstand tot het doel als werk en de band als feit, zonder oordeel', () => {
     const r = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
     expect(r.race?.status).toBe('counted');
-    expect(r.race?.nowLine).toBe('Verwacht nu ongeveer 55:40. Doel 45:00: nog 10:40, ongeveer 1:04 per km sneller.');
-    expect(r.race?.bandLine).toMatch(/^Bij deze groei rond 20 maart: \d+ tot \d+ minuten\.$/);
+    expect(r.race?.nowLine).toBe('Verwacht nu 55:40. Doel 45:00: nog 10:40, ongeveer 1:04 per km.');
+    expect(r.race?.bandLine).toMatch(/^Bij gemiddelde groei rond 20 maart: \d+ tot \d+ minuten, dus 45:00 vraagt meer dan gemiddelde groei\.$/);
     expect(r.race?.basisLine).toContain('hele run van 5 km');
     const all = `${r.race?.nowLine} ${r.race?.bandLine} ${r.sentence}`.toLowerCase();
     for (const word of ['ambitieus', 'onrealistisch', 'haalbaar', 'realistisch']) expect(all).not.toContain(word);
     expect(all).not.toMatch(/[–—]/);
+  });
+
+  it('zegt de haalbaarheid als droog feit: binnen en boven de band', () => {
+    const inside = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 50 }), [accepted, ...training], TODAY, { naming })!;
+    expect(inside.race?.bandLine).toMatch(/minuten, je doel valt erbinnen\.$/);
+    const above = computeRaceReadiness(goal({ distanceKm: 10, targetMinutes: 70 }), [accepted, ...training], TODAY, { naming })!;
+    expect(above.race?.bandLine).toMatch(/minuten, je doel ligt erboven\.$/);
+  });
+
+  it('zegt bij de laagste meter niet het getal erbij', () => {
+    const r = computeRaceReadiness(goal(), [accepted, ...training], TODAY, { naming })!;
+    expect(r.weakestSentence).toMatch(/^Hier is nog het meeste te winnen: [a-z ]+\.$/);
   });
 
   it('zegt de basis als de snelste 5 km meetelt', () => {
@@ -108,10 +150,14 @@ describe('Klaar voor je doel bij een wedstrijd met een doeltijd', () => {
     // Doel van maanden terug, maar vier weken terug nog niets gelopen: geen sprong van 0.
     const empty = computeRaceReadiness(goal(), [run('2026-10-20', 60, 8.6)], TODAY, { naming })!;
     expect(empty.change).toBeUndefined();
-    // Een waarde vier weken terug: wel een verschil.
+    // Een testloop tussen toen en nu: toen zonder snelheid, nu met. Dat is schijn, dus geen verandering.
     const old = [run('2026-09-10', 60, 8.6), run('2026-09-12', 40, 6), ...training];
-    const r = computeRaceReadiness(goal(), [accepted, ...old], TODAY, { naming })!;
-    expect(r.change).toBeTypeOf('number');
+    const between = computeRaceReadiness(goal(), [accepted, ...old], TODAY, { naming })!;
+    expect(between.change).toBeUndefined();
+    // Een testloop van voor het beginpunt: dezelfde meters, dus wel een verschil.
+    const before = test('2026-09-08', 27, 5);
+    const same = computeRaceReadiness(goal(), [before, ...old, accepted], TODAY, { naming })!;
+    expect(same.change).toBeTypeOf('number');
   });
 
   it('lost de instelling op: afwezig of onbekend is snelheid', () => {
