@@ -228,8 +228,13 @@ export function formatAddOns(list: number[] | undefined): string {
 export function parseAddOns(text: string): ParsedList {
   if (text.trim() === '') return { ok: true, list: [] };
   const parsed = parseMachineWeights(text);
-  if (!parsed.ok) return { ok: false, reason: 'Gebruik alleen getallen, met een spatie ertussen, bijvoorbeeld 2,3.' };
   const { minKg, maxKg, maxCount } = ADD_ON_LIMITS;
+  if (!parsed.ok) {
+    // Wel getallen, maar buiten het bereik van een toestel: zeg het bereik van een tussengewicht.
+    const numbers = text.split(/[;\s]+/).filter((t) => t !== '').map((t) => Number(t.replace(',', '.')));
+    const outside = numbers.length > 0 && numbers.every((n) => Number.isFinite(n));
+    return { ok: false, reason: outside ? `Een tussengewicht ligt tussen ${String(minKg).replace('.', ',')} en ${maxKg} kg.` : 'Gebruik alleen getallen, met een spatie ertussen, bijvoorbeeld 2,3.' };
+  }
   if (parsed.list.some((n) => n < minKg || n > maxKg)) return { ok: false, reason: `Een tussengewicht ligt tussen ${String(minKg).replace('.', ',')} en ${maxKg} kg.` };
   const tokens = text.split(/[;\s]+/).filter((t) => t.replace(/,/g, '') !== '').length;
   if (parsed.list.length > maxCount || tokens > maxCount) return { ok: false, reason: `Hoogstens ${maxCount} tussengewichten.` };

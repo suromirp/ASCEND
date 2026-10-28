@@ -255,3 +255,12 @@ describe('tussengewichten', () => {
     expect(p.exerciseAddOnKg).toBeUndefined();
   });
 });
+
+describe('parseAddOns buiten het bereik', () => {
+  it('noemt het bereik, ook voor waarden die een toestel niet kent', async () => {
+    const { parseAddOns } = await import('./machineWeights');
+    expect(parseAddOns('0,1')).toEqual({ ok: false, reason: 'Een tussengewicht ligt tussen 0,25 en 25 kg.' });
+    expect(parseAddOns('1000')).toEqual({ ok: false, reason: 'Een tussengewicht ligt tussen 0,25 en 25 kg.' });
+    expect(parseAddOns('abc').ok).toBe(false);
+  });
+});
