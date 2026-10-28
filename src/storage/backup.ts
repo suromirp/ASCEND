@@ -382,11 +382,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.bootBreakInReminder;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'weekFixProposal', 'keepStreams', 'streamsInBackup'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'weekFixProposal', 'proposeTargetTime', 'keepStreams', 'streamsInBackup'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
     }
+  }
+  if ('readinessWeighting' in s && s.readinessWeighting !== 'speed' && s.readinessWeighting !== 'equal') {
+    delete s.readinessWeighting;
+    skipped.n++;
   }
   if ('testStops' in s && s.testStops !== 'skip' && s.testStops !== 'count') {
     delete s.testStops;

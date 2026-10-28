@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import type { GoalKindId } from '../../models/goals';
-import { computeGoalReadiness, readinessInputOf, type GoalReadiness } from '../../engine/goalReadiness';
+import { computeGoalReadiness, readinessInputOf } from '../../engine/goalReadiness';
+import { computeRaceReadiness, resolveReadinessWeighting, type RaceReadiness } from '../../engine/raceReadiness';
 import { computeMainGoalReadiness } from '../../engine/gr5Readiness';
 import { goalTiming, type GoalTiming } from '../../engine/goalRoute';
 import { nextKeySession, type ListedGoal, type NextKeySession } from '../../engine/goalList';
@@ -16,14 +17,14 @@ const NAMING: Record<GoalKindId, string> = {
 
 export interface GoalView {
   item: ListedGoal;
-  readiness?: GoalReadiness;
+  readiness?: RaceReadiness;
   timing: GoalTiming;
 }
 
 // De uitkomst van "Klaar voor je doel" per doel. Het doel met de mijlpalen rekent precies zoals
 // Je stand (computeGr5Readiness): tocht met hutten, twee dagen achter elkaar.
 export function useGoalViews(listed: ListedGoal[]): { views: GoalView[]; next: NextKeySession | undefined } {
-  const { sessionLogs, plannedSessions, templates, program } = useAppData();
+  const { sessionLogs, plannedSessions, templates, program, settings } = useAppData();
   const today = todayISO();
   const views = useMemo(
     () =>
@@ -37,9 +38,15 @@ export function useGoalViews(listed: ListedGoal[]): { views: GoalView[]; next: N
         const input = readinessInputOf(g);
         if (!input) return { item, timing };
         const naming = NAMING[input.kind];
+        if (input.kind === 'run_race') {
+          const race = computeRaceReadiness(g, sessionLogs, today, {
+            naming: { the: naming, your: naming }, judgments: settings.testJudgments, ask: settings.askDoubtTest !== false, weighting: resolveReadinessWeighting(settings.readinessWeighting),
+          });
+          if (race) return { item, timing, readiness: race };
+        }
         return { item, timing, readiness: computeGoalReadiness(input, sessionLogs, today, { naming: { the: naming, your: naming } }) };
       }),
-    [listed, sessionLogs, today],
+    [listed, sessionLogs, today, settings.testJudgments, settings.askDoubtTest, settings.readinessWeighting],
   );
   const next = useMemo(
     () => nextKeySession(plannedSessions, templates, sessionLogs, today, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program)),

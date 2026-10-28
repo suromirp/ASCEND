@@ -5,6 +5,7 @@ import { CHOICES } from '../../../data/settingsChoices';
 import { ImpactSheet } from '../../ImpactSheet';
 import { afterMainGoalChange } from '../../../engine/programLayout';
 import { bootGoalKm } from '../../../engine/bootBreakIn';
+import { resolveReadinessWeighting } from '../../../engine/raceReadiness';
 import { todayISO } from '../../../utils/dates';
 import { SettingsSection } from '../SettingsList';
 import { BundleSheet } from './BundleSheet';
@@ -51,6 +52,8 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setSheet('weekbudget')} />
         <SummaryRow id="lange-zondag" title="De lange zondag" facts={facts} onClick={() => setSheet('lange-zondag')} />
         <SummaryRow id="na-hoofddoel" title="Na je hoofddoel" facts={facts} onClick={() => setSheet('na-hoofddoel')} />
+        <SummaryRow id="klaar-weging" title="Weging bij een doeltijd" facts={facts} info="klaarWeging" onClick={() => setSheet('klaar-weging')} />
+        <SummaryRow id="doeltijd-voorstel" title="Doeltijd aanpassen voorstellen" facts={facts} info="doeltijdVoorstel" onChange={(on) => void updateSettings({ proposeTargetTime: on })} />
         <SummaryRow id="seizoensstrook" title="Seizoensstrook tonen" facts={facts} info="seizoensstrook" onChange={(on) => void updateSettings({ showSeasonStrip: on })} />
       </SettingsSection>
 
@@ -73,6 +76,9 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'weekbudget' && <WeekBudgetSheet onClose={close} />}
       {sheet === 'lange-zondag' && (
         <ChoiceFromDef def={CHOICES.langeZondag} value={settings.longSundaySession ?? 'hike'} onPick={(v) => { if (v !== (settings.longSundaySession ?? 'hike')) { setNote(null); void plan.changeSetting(`De lange zondag: ${choiceShort('langeZondag', v)}`, { longSundaySession: v }, 'Volgt je keuze voor de lange zondag.'); } }} onClose={close} />
+      )}
+      {sheet === 'klaar-weging' && (
+        <ChoiceFromDef def={CHOICES.klaarWeging} value={resolveReadinessWeighting(settings.readinessWeighting)} onPick={(v) => void updateSettings({ readinessWeighting: v })} onClose={close} />
       )}
       {sheet === 'na-hoofddoel' && (
         <ChoiceFromDef def={CHOICES.naHoofddoel} value={settings.afterMainGoal ?? 'stop'} onPick={chooseAfterGoal} onClose={close} />

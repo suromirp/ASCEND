@@ -37,15 +37,11 @@ describe('weekNoticeConcerns', () => {
     expect(quick.covered).toEqual([]);
   });
 
-  it('kost een fractie van het voorstel, zodat het tekenen niet wacht', () => {
+  it('blijft onder 50 ms, zodat het tekenen niet wacht', () => {
+    // Een vaste grens: twee losse tijden vergelijken wisselt met de drukte op de machine.
     weekNoticeConcerns(input, MONDAY);
     const t0 = performance.now();
     weekNoticeConcerns(input, MONDAY);
-    const quick = performance.now() - t0;
-    const t1 = performance.now();
-    weekNotice(input, MONDAY, true);
-    const full = performance.now() - t1;
-    expect(quick).toBeLessThan(50);
-    expect(quick).toBeLessThan(full);
+    expect(performance.now() - t0).toBeLessThan(50);
   });
 });

@@ -636,6 +636,24 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Pas zichtbaar', text: 'nadat je in de Reisplanner hebt vastgelegd sinds wanneer je ze draagt.' },
     ],
   },
+  klaarWeging: {
+    title: 'Weging bij een doeltijd',
+    lead: 'Bij een wedstrijd met een doeltijd gaat het vooral over snelheid. Dit bepaalt hoe zwaar die meetelt in je percentage.',
+    points: [
+      { head: 'Snelheid weegt het zwaarst', text: 'je doeltijd gedeeld door je verwachte tijd telt voor 60% mee, je langste loop en je weekvolume voor 20% elk.' },
+      { head: 'Gelijk', text: 'alle meters tellen even zwaar, zoals voor een doel zonder doeltijd.' },
+      { head: 'Je verwachte tijd', text: 'komt uit je testloop die meetelt. Zonder testloop, of zolang je snelste 5 km op je Akkoord wacht, telt snelheid niet mee.' },
+    ],
+  },
+  doeltijdVoorstel: {
+    title: 'Doeltijd aanpassen voorstellen',
+    lead: 'Je doel blijft je doel. Met deze keuze aan mag ASCEND na een testloop één keer voorstellen om je doeltijd aan te passen.',
+    points: [
+      { head: 'Liever niet', text: 'dan vraagt ASCEND er voor dit doel niet meer naar, ook niet na een volgende testloop, tot je de doeltijd zelf verandert.' },
+      { head: 'Uit', text: 'dan komt er nooit een voorstel voor je doeltijd. De kaart blijft laten zien hoeveel er nog te winnen is.' },
+      { head: 'Akkoord', text: 'verandert alleen je doeltijd, niets anders in je planning.' },
+    ],
+  },
   rustNaTocht: {
     title: 'Rust na een bergtocht',
     lead: 'Hoe snel een zware beendag mag volgen op een bergtocht.',

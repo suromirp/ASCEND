@@ -46,6 +46,7 @@ import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { orderForRestored, PRIORITY_RULE } from '../engine/goalList';
+import { goalDetailsOf } from '../engine/goalLabels';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { planIllnessChange, type IllnessChange, type IllnessPlan } from '../engine/illness';
 import type { LeavePeriod } from '../models/leave';
@@ -65,7 +66,7 @@ import { undoPlanChangeNow } from '../storage/undoPlanChange';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type HorizonApplyStatus, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { resolveMotion, splashMinimumMs } from '../engine/motionSettings';
-import { computeAdvice, type Advice } from '../engine/adviceEngine';
+import { carryTargetTimeAnswers, computeAdvice, type Advice } from '../engine/adviceEngine';
 import { resolveLegEase } from '../engine/legEaseSettings';
 import { influenceMove, influenceMoveCause, type InfluenceMove } from '../engine/influenceProposal';
 import { useWeatherForecast, type WeatherView } from './useWeather';
@@ -722,7 +723,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const logs = withPlausibleDurations(storedLogs, tpls);
     setProgram(programs[0] ?? null);
     setPlanChangeLog(proposals);
-    setAdviceResponses(responses ?? {});
+    // Een Liever niet op TARGET-TIME met het oude id gaat eenmalig over op het id met de doeltijd.
+    const carried = carryTargetTimeAnswers(responses ?? {}, goals.map((g) => ({ id: g.id, updatedAt: g.updatedAt, targetMinutes: goalDetailsOf(g).targetMinutes })));
+    if (carried) await MetaRepo.set('adviceResponses', carried);
+    setAdviceResponses(carried ?? responses ?? {});
     setTemplates(tpls);
     setPlannedSessions(planned);
     setSessionLogs(logs);
@@ -2433,6 +2437,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         legEase: resolveLegEase({ legEase: settings.legEase }),
         testJudgments: settings.testJudgments,
         askDoubtTest: settings.askDoubtTest !== false,
+        proposeTargetTime: settings.proposeTargetTime !== false,
         newTestOnStops: settings.newTestOnStops !== false,
         leave: settings.leavePeriods,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
@@ -2442,7 +2447,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.newTestOnStops, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.newTestOnStops, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).

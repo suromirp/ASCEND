@@ -4,9 +4,10 @@ import { useAppData } from '../../state/AppDataContext';
 import { GOAL_KINDS } from '../../data/goalKinds';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION } from '../../data/gr5Details';
 import { changeLabel } from '../../engine/goalReadiness';
-import { goalKindOf, PRIORITY_NAME } from '../../engine/goalLabels';
+import { raceWeightSentence } from '../../engine/raceReadiness';
+import { goalKindOf } from '../../engine/goalLabels';
 import { computeGoalProgress } from '../../engine/progression';
-import type { NextKeySession } from '../../engine/goalList';
+import { labelLine, type NextKeySession } from '../../engine/goalList';
 import { formatDateNL } from '../../utils/dates';
 import { AscentLadder } from '../AscentLadder';
 import { Icon } from '../icons';
@@ -20,6 +21,7 @@ import { isTrekGoal, whenText } from './goalText';
 import { LabelPill } from './GoalLabel';
 import { JourneyRows } from './JourneyRows';
 import type { GoalView } from './useGoalViews';
+import { RaceFactsBlock } from './GoalCard';
 
 // Het blad van één doel: de meters achter het percentage, de volgende stap, de coach, bij een
 // tocht de tochtmodule en de mijlpalen, en onderaan "Dit doel": label, plek in de lijst (Hoger en
@@ -59,7 +61,7 @@ export function GoalSheet({
 
   return (
     <>
-      <Sheet eyebrow={`${kind ? GOAL_KINDS[kind].label : 'Doel'} · ${PRIORITY_NAME[item.priority]}`} title={goal.name || 'Naamloos doel'} line={line} action={(
+      <Sheet eyebrow={kind && GOAL_KINDS[kind].label !== goal.name ? GOAL_KINDS[kind].label : 'Doel'} title={goal.name || 'Naamloos doel'} line={line} action={(
         <button type="button" onClick={onMenu} aria-label="Meer voor dit doel" className="flex h-11 w-11 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
           <Icon name="meer" size={24} />
         </button>
@@ -83,12 +85,19 @@ export function GoalSheet({
                 <Eyebrow>Klaar voor je doel</Eyebrow>
                 {change && <p className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{change}</p>}
                 <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-                  {readiness && percent !== undefined
+                  {readiness?.race?.weighted
+                    ? raceWeightSentence()
+                    : readiness && percent !== undefined
                     ? `Het gemiddelde van ${readiness.meters.length === 1 ? 'deze meter' : `deze ${readiness.meters.length} meters`}. Elke meter stopt bij 100%, dus een zware rugzak redt een korte dag niet.`
                     : 'Nog niets te meten. Dat komt met trainingen die meetellen.'}
                 </p>
               </div>
             </div>
+
+            {readiness?.race && <RaceFactsBlock race={readiness.race} withBasis />}
+            {readiness?.race && readiness.race.status !== 'no-target' && kind && (
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{labelLine(goal, item.priority)}</p>
+            )}
 
             {readiness && readiness.meters.length > 0 && (
               <div className="st-list">

@@ -52,6 +52,8 @@ const everything: AppSettings = {
   newTestOnStops: false,
   weekFixProposal: false,
   testStops: 'count',
+  readinessWeighting: 'equal',
+  proposeTargetTime: false,
   weekBudget: { minutes: 105, strength: 3, doubleHard: false },
   introSoundEnabled: false,
   motion: 'off',

@@ -13,6 +13,24 @@ import { LabelPill } from './GoalLabel';
 import type { GoalView } from './useGoalViews';
 import { JourneyRows } from './JourneyRows';
 import { isTrekGoal, whenText } from './goalText';
+import type { RaceFacts } from '../../engine/raceReadiness';
+
+// Wat een hardloopwedstrijd met een doeltijd bovenaan zegt: eerst het droge feit (verwacht nu, doel,
+// de afstand ertussen), dan de haalbaarheid als droog feit. Zonder test één regel. De basis ("Uit je
+// snelste 5 km van ...") staat alleen in het blad (`withBasis`). Besluit:
+// docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid-aanvulling.md.
+export function RaceFactsBlock({ race, withBasis = false }: { race: RaceFacts; withBasis?: boolean }) {
+  const dim = { color: 'var(--color-ink-dim)' };
+  if (race.status === 'no-target') return null;
+  if (!race.nowLine) return race.statusLine ? <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{race.statusLine}</p> : null;
+  return (
+    <div className="flex flex-col gap-1 tabular-nums">
+      <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{race.nowLine}</p>
+      {race.bandLine && <p className="text-sm leading-snug" style={dim}>{race.bandLine}</p>}
+      {withBasis && race.basisLine && <p className="text-xs leading-snug" style={dim}>{race.basisLine}</p>}
+    </div>
+  );
+}
 
 // Eén doel in de lijst. Het eerste doel staat open: de ring met "Klaar voor je doel", de zin
 // waaruit het bestaat, de meters, de volgende stap en bij een tocht de tochtmodule. De andere zijn
@@ -43,6 +61,10 @@ export const GoalCard = forwardRef<HTMLDivElement, {
   const when = whenText(view);
   const kindName = kind ? GOAL_KINDS[kind].label : undefined;
   const percent = readiness?.percent;
+  // Een wedstrijd met een doeltijd: de kaart is in één oogopslag te lezen, de rest staat in het blad.
+  const raceCard = !!readiness?.race && readiness.race.status !== 'no-target';
+  // Een wedstrijd met een gemeten doeltijd: feiten en meters staan altijd open, er valt niets uit te klappen.
+  const raceOpen = raceCard && readiness?.race?.status === 'counted';
   const change = readiness ? changeLabel(readiness.change) : undefined;
   const sentence = readiness?.sentence ?? (kind
     ? 'Nog niets te meten. Dat komt met trainingen die meetellen.'
@@ -79,7 +101,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
             <span className="mt-0.5 block text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
               {goal.targetDate && <>{formatDateNL(goal.targetDate)} · </>}
               <span className={`font-semibold ${timing.state === 'ahead' ? 'whitespace-nowrap' : ''}`} style={{ color: when.tone === 'status' ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{when.text}</span>
-              {kindName && <span className="block text-xs">{kindName}</span>}
+              {kindName && kindName !== goal.name && <span className="block text-xs">{kindName}</span>}
             </span>
           </button>
           <div className="mt-1 flex">
@@ -99,17 +121,20 @@ export const GoalCard = forwardRef<HTMLDivElement, {
         </button>
       </div>
 
-      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{kind ? labelLine(goal, item.priority) : 'Kies een soort, dan telt dit doel mee.'}</p>
+      {!raceCard && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{kind ? labelLine(goal, item.priority) : 'Kies een soort, dan telt dit doel mee.'}</p>}
 
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline justify-between gap-3">
           <Eyebrow as="span">Klaar voor je doel</Eyebrow>
           {change && <span className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{change}</span>}
         </div>
-        <p className={`text-sm leading-relaxed ${open ? '' : 'line-clamp-2'}`} style={{ color: 'var(--color-ink)' }}>{sentence}</p>
+        {readiness?.race && <RaceFactsBlock race={readiness.race} />}
+        {!raceOpen && (
+          <p className={`text-sm leading-relaxed ${open ? '' : 'line-clamp-2'}`} style={{ color: 'var(--color-ink)' }}>{sentence}</p>
+        )}
       </div>
 
-      {open && (
+      {(open || raceCard) && (
         <div className="animate-rise-in flex flex-col gap-3">
           {readiness && readiness.meters.length > 0 && (
             <div className="flex flex-col gap-3">
@@ -135,7 +160,8 @@ export const GoalCard = forwardRef<HTMLDivElement, {
 
       <div className="-mb-2 flex items-center justify-between">
         <TextButton onClick={onDetails} icon="verder">Meer over dit doel</TextButton>
-        <TextButton tone="dim" onClick={onToggle} icon="omlaag" flipped={open} aria-expanded={open}>{open ? 'Inklappen' : 'Uitklappen'}</TextButton>
+        {/* Een wedstrijd met een gemeten doeltijd toont alles al: dan klapt er niets. */}
+        {!raceOpen && <TextButton tone="dim" onClick={onToggle} icon="omlaag" flipped={open} aria-expanded={open}>{open ? 'Inklappen' : 'Uitklappen'}</TextButton>}
       </div>
       {timing.state === 'underway' && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Tijdens het doel plant ASCEND geen training. Het doel is je training.</p>
