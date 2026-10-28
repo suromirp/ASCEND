@@ -12,6 +12,7 @@
 // frequentie, hartslagwaarden, de sportschool, de plaats van het weer) en wat buiten
 // AppSettings staat (de schakelaars van het horloge, tweemaal Garmin en MacroFactor).
 
+import { isDefaultOrder, resolveCardOrder } from './cardOrder';
 import type { AppSettings } from '../storage/database';
 import { choiceShort, type ChoiceId } from '../data/settingsChoices';
 import type { SettingsPageId } from '../data/settingsLayout';
@@ -217,6 +218,12 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('nieuwe-test', 'Nieuwe test voorstellen bij stilstand', 'planning', 'newTestOnStops'),
   flag('trillen', 'Trillen', 'vandaag', 'haptics'),
   flag('weekvoorstel', 'Voorstel bij een probleem in de week', 'planning', 'weekFixProposal'),
+  {
+    id: 'volgorde-stand', title: 'Volgorde van Je stand', page: 'planning',
+    differs: (s) => !isDefaultOrder('stand', resolveCardOrder('stand', s.cardOrder)),
+    value: () => 'Eigen volgorde',
+    reset: () => ({ cardOrder: undefined }),
+  },
   flag('slepen-week', 'Trainingen slepen in Week', 'planning', 'dragWeek'),
   choice('klaar-weging', 'Weging bij een doeltijd', 'doel', 'readinessWeighting', 'speed', 'klaarWeging'),
   choice('klaar-groei', 'Groei bij het rekenen', 'doel', 'goalGrowth', 'average', 'klaarGroei'),

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { OrderSheet } from '../../stand/OrderSheet';
 import { useAppData } from '../../../state/AppDataContext';
 import { ProposalSheet } from '../../ProposalSheet';
 import type { RestDayPlan } from '../../../engine/restDayProposal';
@@ -63,7 +64,18 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         ))}
       </SettingsSection>
 
-      <SettingsSection title="Hoe ASCEND plant">
+      <SettingsSection
+        title="Hoe ASCEND plant"
+        advancedIds={['slepen-week', 'volgorde-stand']}
+        advancedTitles="Trainingen slepen in Week, Volgorde van Je stand"
+        storageKey="planning-geavanceerd"
+        advanced={
+          <>
+            <SummaryRow id="slepen-week" title="Trainingen slepen in Week" facts={facts} info="slepenWeek" onChange={(on) => void updateSettings({ dragWeek: on })} />
+            <SummaryRow id="volgorde-stand" title="Volgorde van Je stand" facts={facts} info="volgordeStand" onClick={() => setSheet('volgorde-stand')} />
+          </>
+        }
+      >
         <SummaryRow id="meerdere" title="Twee trainingen per dag" facts={facts} onClick={() => setSheet('meerdere')} />
         <SummaryRow id="wijzigingen" title="Wijzigingen" facts={facts} info="wijzigingen" onClick={() => setSheet('wijzigingen')} />
         <SummaryRow id="ambitie" title="Ambitie" facts={facts} info="ambitie" onClick={() => setSheet('ambitie')} />
@@ -71,7 +83,6 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="test-stilstaan" title="Stilstaan bij een testloop" facts={facts} info="testStilstaan" onClick={() => setSheet('test-stilstaan')} />
         <SummaryRow id="nieuwe-test" title="Nieuwe test voorstellen bij stilstand" facts={facts} info="nieuweTest" onChange={(on) => void updateSettings({ newTestOnStops: on })} />
         <SummaryRow id="weekvoorstel" title="Voorstel bij een probleem in de week" facts={facts} info="weekVoorstel" onChange={(on) => void updateSettings({ weekFixProposal: on })} />
-        <SummaryRow id="slepen-week" title="Trainingen slepen in Week" facts={facts} info="slepenWeek" onChange={(on) => void updateSettings({ dragWeek: on })} />
       </SettingsSection>
 
       {sheet === 'bundel-dagen' && (
@@ -121,6 +132,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'wijzigingen' && (
         <ChoiceFromDef def={CHOICES.wijzigingen} value={plan.applyMode} onPick={(v) => void updateSettings({ changeApplyMode: v })} onClose={close} />
       )}
+      {sheet === 'volgorde-stand' && <OrderSheet onClose={close} />}
       {sheet === 'test-stilstaan' && (
         <ChoiceFromDef def={CHOICES.testStilstaan} value={resolveTestStops(settings.testStops)} onPick={(v) => void updateSettings({ testStops: v })} onClose={close} />
       )}

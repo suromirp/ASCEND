@@ -412,6 +412,17 @@ tonen"). A new label, a goal added or changed, "In hutten" or "Met tent", and an
 `gr5Readiness.ts#computeMainGoalReadiness`, the same as on Je stand. `/ascend/doelen` redirects to the tab. Krachtprogressie
 and Trainingsverdeling live on Je stand.
 
+**Forge and the order of Je stand** (`engine/forgeEntry.ts`, `engine/cardOrder.ts`, `components/stand/ForgeEntryCard.tsx`,
+`components/stand/OrderSheet.tsx`, decision `docs/beslissingen/2026-10-28-forge-en-volgorde.md`): Forge is the entry card at
+the top of the block Kracht on Je stand (with Krachtprogressie and Trainingsverdeling), with one line of your own numbers
+and the fixed explanation as fallback; with Kracht meerekenen off the card stays, with "Aanzetten". Je stand is seven blocks
+(benen, belasting, kracht, vier-regels, lopen, invloed, doel) after the fixed first card "Klaar voor het doel"; the order is
+a preference in `AppSettings.cardOrder` (optional, read defensively by `resolveCardOrder`, in the backup through
+`cleanCardOrder`, no migration), changed in the sheet "Volgorde aanpassen" (handle with `useVerticalDrag` and its optional
+`scroller`, Hoger and Lager per row) and the row "Volgorde van Je stand" in Planning under Geavanceerd. The sky block
+"Je stand in vier regels" is never first. No dragging on Vandaag, Logboek, settings or in Forge itself; Ascend and Week
+dragging are untouched. A block that is off through its own setting keeps its place.
+
 **Ziek melden and "weer beter"** (`engine/illness.ts#planIllnessChange`, `components/IllnessCard.tsx`, decision
 `docs/beslissingen/2026-10-27-ziek-als-voorstel.md`) are a proposal with Akkoord when the planning changes: the
 period is stored only on Akkoord, with Liever niet nothing is stored and nothing changes; when the planning does

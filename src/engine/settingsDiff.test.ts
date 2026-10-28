@@ -11,6 +11,7 @@ const apply = (s: AppSettings, patch: Partial<AppSettings>): AppSettings => ({ .
 // Een telefoon waar bijna alles anders staat dan het advies.
 const everything: AppSettings = {
   ...base,
+  cardOrder: { stand: ['doel', 'lopen', 'invloed', 'kracht', 'benen', 'belasting', 'vier-regels'] },
   changeApplyMode: 'always_ask',
   ambition: 'stevig',
   restDayMode: 'active',
@@ -96,6 +97,13 @@ describe('adviceDifferences', () => {
   it('een waarde die gelijk is aan het advies telt niet, ook als hij erbij staat', () => {
     const s = apply(base, { ambition: 'standaard', overviews: { weekReview: true }, strengthModel: { restSound: 'chime', progression: 'weight_first' } });
     expect(adviceDifferences(s)).toEqual([]);
+  });
+
+  it('een eigen volgorde van Je stand telt, de standaard en een beschadigde niet', () => {
+    const own = apply(base, { cardOrder: { stand: ['kracht', 'benen', 'belasting', 'vier-regels', 'lopen', 'invloed', 'doel'] } });
+    expect(adviceDifferences(own).map((d) => d.id)).toEqual(['volgorde-stand']);
+    expect(adviceDifferences(apply(base, { cardOrder: { stand: ['benen', 'belasting', 'kracht', 'vier-regels', 'lopen', 'invloed', 'doel'] } }))).toEqual([]);
+    expect(adviceDifferences({ ...base, cardOrder: 'rommel' } as unknown as AppSettings)).toEqual([]);
   });
 
   it('een beschadigde waarde telt als het advies', () => {
