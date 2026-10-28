@@ -303,7 +303,7 @@ export const CHOICES = {
     advice: 'speed' as 'speed' | 'equal',
     help: 'klaarWeging',
     options: [
-      { value: 'speed', label: 'Snelheid weegt het zwaarst', note: 'Snelheid 60%, langste loop en weekvolume 20% elk', short: 'Snelheid zwaarst' },
+      { value: 'speed', label: 'Snelheid weegt het zwaarst', note: 'Snelheid 60%, langste loop en weekvolume 20% elk', short: 'Snelheid' },
       { value: 'equal', label: 'Gelijk', note: 'Elke meter telt even zwaar mee', short: 'Gelijk' },
     ],
   }),
