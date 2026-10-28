@@ -11,7 +11,7 @@ import { formatDateNL, formatShortDayNL, todayISO, weekdayShortNL } from '../uti
 import { useSheetClose } from '../utils/useSheetClose';
 import { haptics } from '../utils/haptics';
 import { Portal } from './Portal';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import { fatigueStatus, legFatigueOn } from '../engine/legFatigue';
@@ -139,13 +139,11 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={busy ? undefined : requestClose}>
-        <div ref={sheetRef} className={`flex max-h-[88vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative flex max-h-[88vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex min-h-0 flex-col rounded-b-none border-b-0 p-0!">
-            <div className="flex justify-center pt-2.5" aria-hidden>
-              <span className="h-1 w-10 rounded-full" style={{ background: 'var(--color-card-border)' }} />
-            </div>
+            <SheetGrip />
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-3">
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-6">
               <Eyebrow>{eyebrow}</Eyebrow>
               <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</h3>
               {summary && <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{summary}</p>}

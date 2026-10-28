@@ -5,7 +5,7 @@ import { SEVERITY_CHOICES } from '../../data/bodyCare';
 import { closedOn, spotForComplaint } from '../../engine/bodyMap';
 import { formatDateNL } from '../../utils/dates';
 import { useSheetClose } from '../../utils/useSheetClose';
-import { Card, PrimaryButton, SecondaryButton } from '../ui';
+import { Card, PrimaryButton, SecondaryButton, SheetGrip } from '../ui';
 import { TextButton } from '../TextButton';
 import { Portal } from '../Portal';
 import { SheetHeader } from '../SheetHeader';
@@ -25,7 +25,8 @@ function DeleteComplaintSheet({ note, onConfirm, onClose }: { note: InjuryNote; 
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Klacht verwijderen">
+        <div ref={sheetRef} className={`relative w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Klacht verwijderen">
+          <SheetGrip />
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <SheetHeader eyebrow="Klacht" title="Verwijderen?" onClose={requestClose} />
             <p className="text-base leading-snug" style={{ color: 'var(--color-ink)' }}>

@@ -17,7 +17,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, Eyebrow, Num, SecondaryButton, Toggle } from './ui';
+import { Card, Eyebrow, Num, SecondaryButton, Toggle, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
 
 function countLabel(n: number): ReactNode {
@@ -70,7 +70,8 @@ function TakenSheet({ taken, templates, onClose }: { taken: SessionLog[]; templa
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <Eyebrow>MacroFactor is leidend voor kracht</Eyebrow>
             <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>

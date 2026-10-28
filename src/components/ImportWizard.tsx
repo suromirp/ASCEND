@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, SheetGrip } from './ui';
 import { Portal } from './Portal';
 import { useSheetClose } from '../utils/useSheetClose';
 import { formatDateNL, localDateOf } from '../utils/dates';
@@ -148,9 +148,10 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
       >
         <div
           ref={sheetRef}
-          className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-6">
             <Eyebrow>Gegevens importeren</Eyebrow>
 

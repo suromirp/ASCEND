@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Portal } from '../components/Portal';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton, PageHeader } from '../components/ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, PageHeader, SheetGrip } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useTripPlan } from '../state/useTripPlan';
 import { buildItinerary, itineraryTotals } from '../engine/routePlan';
@@ -212,7 +212,8 @@ function LetterSheet({ letter, onCopy, onShare, feedback, onClose }: { letter: s
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} role="dialog" aria-modal="true" aria-label="Vertrekbrief" className={`max-h-[88vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} role="dialog" aria-modal="true" aria-label="Vertrekbrief" className={`relative max-h-[88vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <Eyebrow>Vertrekbrief</Eyebrow>
             <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{letter}</div>

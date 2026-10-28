@@ -15,7 +15,7 @@ import { Portal } from '../Portal';
 import { SheetClose } from '../SheetHeader';
 import { StretchItems } from '../StretchList';
 import { TextButton } from '../TextButton';
-import { Card, Eyebrow, PrimaryButton, Segmented } from '../ui';
+import { Card, Eyebrow, PrimaryButton, Segmented, SheetGrip } from '../ui';
 import { BodyFigure, SpotThumb } from './BodyFigure';
 import { REPORT_TIMEOUT_MS } from './reportConfig';
 
@@ -92,11 +92,12 @@ export function BodyCheckSheet({
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={() => !busy && requestClose()}>
         <div ref={sheetRef}
-          className={`max-h-[92vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[92vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-label="Hoe voelt je lijf?"
         >
+          <SheetGrip />
           <Card className="flex flex-col gap-4 rounded-b-none border-b-0 pb-6">
             {step === 'pick' && (
               <>

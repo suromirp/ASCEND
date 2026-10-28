@@ -16,7 +16,7 @@ import type { StrengthProgramStrategy, StrengthProgramSource } from '../models/s
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
 import { MUSCLE_GROUP_OPTIONS } from '../data/bodyAreas';
 import { addDays, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, SheetGrip } from './ui';
 import { Portal } from './Portal';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Icon } from './icons';
@@ -77,9 +77,10 @@ export function StrengthProgramWizard({
       >
         <div
           ref={sheetRef}
-          className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-6">
             <Eyebrow>{mode === 'create' ? 'Nieuw krachtblok' : 'Krachtblok aanpassen'}</Eyebrow>
 

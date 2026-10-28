@@ -15,7 +15,7 @@ import { templateSport } from '../engine/sports';
 import { useSheetClose } from '../utils/useSheetClose';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { Portal } from './Portal';
-import { Card, Eyebrow } from './ui';
+import { Card, Eyebrow, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
 
 // `compact`: on the mission card only the first line shows, so the button
@@ -58,7 +58,8 @@ function ClothingSheet({ lines, onClose }: { lines: string[]; onClose: () => voi
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Kledingadvies">
+        <div ref={sheetRef} className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Kledingadvies">
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <Eyebrow>Wat trek je aan</Eyebrow>
             <div className="mt-3 flex flex-col gap-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>

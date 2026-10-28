@@ -21,7 +21,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import { addDays, formatDateNL, todayISO } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, Eyebrow, Num, SecondaryButton } from './ui';
+import { Card, Eyebrow, Num, SecondaryButton, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
 
 // Waits for the plan to settle at boot, like the tick-off does.
@@ -99,7 +99,8 @@ function SheetFrame({ title, onClose, children }: { title: ReactNode; onClose: (
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <Eyebrow>Gelijktrekken met je horloge</Eyebrow>
             <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>{title}</p>

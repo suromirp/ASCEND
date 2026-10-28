@@ -12,7 +12,7 @@ import { extractEvidenceFromLogs, keyId } from '../engine/capability';
 import { capabilityKeyLabel } from '../data/baselineQuestions';
 import { formatCapabilityValue } from '../models/units';
 import { Portal } from './Portal';
-import { Card, Eyebrow, PrimaryButton } from './ui';
+import { Card, Eyebrow, PrimaryButton, SheetGrip } from './ui';
 import { AdviceItem } from './CoachCard';
 import { useSheetClose } from '../utils/useSheetClose';
 
@@ -48,7 +48,8 @@ function Sheet({ name, counted, logAdvice, strengthExternal, meaning, testLogId,
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex flex-col gap-5 rounded-b-none border-b-0 pb-6">
             <div>
               <Eyebrow>Terugblik</Eyebrow>

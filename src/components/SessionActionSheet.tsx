@@ -11,6 +11,7 @@
 // row and a sheet of the settings design: title left, at most one line under
 // it, a sheet title in Marcellus, the cross at the top right.
 
+import type { AllowedPair } from '../engine/allowedPair';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import type { Program } from '../models/program';
@@ -20,7 +21,7 @@ import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { ExerciseLogger } from './ExerciseLogger';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { PrimaryButton, SecondaryButton, InfoButton } from './ui';
+import { PrimaryButton, SecondaryButton, InfoButton, SheetGrip } from './ui';
 import { Icon } from './icons';
 import { SheetHeader } from './SheetHeader';
 import { useAppData } from '../state/AppDataContext';
@@ -68,12 +69,12 @@ function SheetFrame({ closing, sheetRef, onClose, label, scrollKey, head, childr
           role="dialog"
           aria-modal="true"
           aria-label={label}
-          className={`flex w-full max-w-md flex-col rounded-t-[20px] border border-b-0 ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative flex w-full max-w-md flex-col rounded-t-[20px] border border-b-0 ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div aria-hidden className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full" style={{ background: 'var(--color-card-border)' }} />
-          <div className="shrink-0 px-4 pb-1">{head}</div>
+          <SheetGrip />
+          <div className="shrink-0 px-4 pb-1 pt-3">{head}</div>
           <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">{children}</div>
         </div>
       </div>
@@ -84,6 +85,7 @@ function SheetFrame({ closing, sheetRef, onClose, label, scrollKey, head, childr
 export function SessionActionSheet({
   session,
   template,
+  allowedPair,
   program,
   quickComplete = false,
   completedLog,
@@ -102,6 +104,8 @@ export function SessionActionSheet({
 }: {
   session: PlannedSession;
   template: SessionTemplate;
+  // De tweede van een toegestaan paar (rustige loop en beenkracht na elkaar): het feit en de reden.
+  allowedPair?: AllowedPair;
   program: Program | null;
   quickComplete?: boolean;
   completedLog?: SessionLog;
@@ -312,6 +316,12 @@ export function SessionActionSheet({
           program={program}
           onClose={() => setShowPreview(false)}
         />
+      )}
+      {allowedPair && !skipped && (
+        <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+          {allowedPair.sheetText}
+          <span className="mt-1 block text-xs">{allowedPair.source}</span>
+        </p>
       )}
       {bikeOption && !skipped && (
         <p className="mt-1 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>Kan ook op de fiets, buiten of binnen.</p>

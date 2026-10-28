@@ -25,7 +25,7 @@ import { useSheetClose } from '../../utils/useSheetClose';
 import { Portal } from '../Portal';
 import { SheetHeader } from '../SheetHeader';
 import { TextButton } from '../TextButton';
-import { Card, Eyebrow, Num } from '../ui';
+import { Card, Eyebrow, Num, SheetGrip } from '../ui';
 import { InfluenceStrip } from './InfluenceStrip';
 
 // Het blad bij één reden op Je stand: bovenaan de hoeveelheid (alleen bij alcohol) als strook,
@@ -51,7 +51,8 @@ export function InfluenceEffectSheet({ groupKey, entries, own, effects, onClose 
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Wat doet dit met je: ${isAlcohol ? 'Alcohol' : group?.name ?? ''}`}>
+        <div ref={sheetRef} className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Wat doet dit met je: ${isAlcohol ? 'Alcohol' : group?.name ?? ''}`}>
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <SheetHeader eyebrow="Wat doet dit met je?" title={isAlcohol ? 'Alcohol' : group?.name} onClose={requestClose} />
 

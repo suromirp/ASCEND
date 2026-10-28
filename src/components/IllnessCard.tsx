@@ -12,7 +12,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { ProposalSheet } from './ProposalSheet';
 import type { Advice } from '../engine/adviceEngine';
-import { Card, Eyebrow, PrimaryButton } from './ui';
+import { Card, Eyebrow, PrimaryButton, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
 import { withTimeout } from '../utils/withTimeout';
 
@@ -156,7 +156,8 @@ function IllnessSheet({ onPick, onClose }: { onPick: (kind: IllnessKind) => void
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div ref={sheetRef} className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-6">
             <Eyebrow>Niet fit?</Eyebrow>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>

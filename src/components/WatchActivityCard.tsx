@@ -37,7 +37,7 @@ import type { SessionTemplate } from '../models/training';
 import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 
 function dayLabel(iso: string): string {
   return iso === todayISO() ? 'vandaag' : `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
@@ -276,7 +276,8 @@ function ChooseSheet({
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <Eyebrow>Wat was dit?</Eyebrow>
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{describeActivity(activity)}</p>

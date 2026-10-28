@@ -3,7 +3,7 @@ import { PACK_GROUPS, PACK_GROUP_LABEL, type PackGroup, type PackItem } from '..
 import { useSheetClose } from '../../utils/useSheetClose';
 import { NumberField } from '../NumberField';
 import { Portal } from '../Portal';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton } from '../ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from '../ui';
 import { TextButton } from '../TextButton';
 
 const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
@@ -33,7 +33,8 @@ export function PackItemSheet({
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} role="dialog" aria-label={item ? 'Onderdeel aanpassen' : 'Onderdeel toevoegen'} className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} role="dialog" aria-label={item ? 'Onderdeel aanpassen' : 'Onderdeel toevoegen'} className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex flex-col gap-4 rounded-b-none border-b-0 pb-8">
             <Eyebrow>{item ? 'Onderdeel aanpassen' : 'Onderdeel toevoegen'}</Eyebrow>
             <div>

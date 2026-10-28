@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { TimelineTask } from '../../engine/journey';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Portal } from '../Portal';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton } from '../ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from '../ui';
 import { shortDateNL } from './format';
 import { Icon } from '../icons';
 import { TextButton } from '../TextButton';
@@ -26,7 +26,8 @@ export function JourneyTaskSheet({ row, onTick, onUntick, onClose, extra }: { ro
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} role="dialog" aria-label={task.title} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} role="dialog" aria-label={task.title} className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-8">
             <Eyebrow>{row.isThisWeek ? 'Deze week' : 'Taak'}</Eyebrow>
             <h3 className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{task.title}</h3>

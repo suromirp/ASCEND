@@ -2,7 +2,7 @@ import { STRETCH_GENERAL_ADVICE, STRETCH_SOURCE_NOTE } from '../../data/stretche
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Portal } from '../Portal';
 import { SheetHeader } from '../SheetHeader';
-import { Card, Eyebrow } from '../ui';
+import { Card, Eyebrow, SheetGrip } from '../ui';
 
 // Het algemene advies bij rekken en de bron, achter de InfoButton bij "Rekken en losmaken".
 // De tekst staat in data/stretches.ts, inclusief de twee correcties (IT-band, nekrollen).
@@ -12,11 +12,12 @@ export function StretchInfoSheet({ onClose }: { onClose: () => void }) {
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div ref={sheetRef}
-          className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-label="Over rekken en losmaken"
         >
+          <SheetGrip />
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <SheetHeader eyebrow="Rekken en losmaken" title="Zo rek je goed" onClose={requestClose} />
             <ul className="flex flex-col gap-2">

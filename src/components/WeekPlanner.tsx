@@ -47,7 +47,7 @@ const todayStyle = {
 const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, transparent)' };
 
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, handle, placeholder, ghost, rise,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, rise,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -64,6 +64,8 @@ function SessionRow({
   sign?: SignState;
   // Wat de weekcontrole bij deze training vindt, kort (engine/weekConcerns.ts), in amber.
   concern?: string;
+  // Een toegestaan paar (engine/allowedPair.ts): stil, zoals "zware benen".
+  pairNote?: string;
   // De greep om de training naar een andere dag te slepen (alleen als dat mag), de plaatshouder
   // terwijl hij wordt vastgehouden, de zwevende kopie en het kort verschijnen na het verplaatsen.
   handle?: WeekHandle;
@@ -107,6 +109,7 @@ function SessionRow({
               )}
               <span>{duration} min</span>
               {legs && <span>· zware benen</span>}
+              {pairNote && <span>· {pairNote}</span>}
               {concern && <span style={{ color: 'var(--color-warning)' }}>· {concern}</span>}
             </>
           )}
@@ -239,6 +242,7 @@ export function WeekPlanner({
   looseLogs = [],
   onSelectLog,
   concernNotes,
+  pairNotes,
   weekDrag,
   dragEnabled = false,
 }: {
@@ -259,6 +263,8 @@ export function WeekPlanner({
   onSelectLog?: (log: SessionLog) => void;
   // Per training de korte tekst van een melding (engine/weekConcerns.ts#rowNotes).
   concernNotes?: Map<string, string>;
+  // Per training de stille tekst van een toegestaan paar (engine/allowedPair.ts).
+  pairNotes?: Map<string, string>;
   // Slepen naar een andere dag (components/useWeekDrag.ts). `dragEnabled`: de instelling staat aan en er is geen blad open.
   weekDrag?: ReturnType<typeof useWeekDrag>;
   dragEnabled?: boolean;
@@ -303,6 +309,7 @@ export function WeekPlanner({
         watch={showWatch ? statusOf(s, template).kind : undefined}
         sign={signOf(logs.find((l) => l.plannedSessionId === s.id))}
         concern={concernNotes?.get(s.id)}
+        pairNote={pairNotes?.get(s.id)}
         handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : undefined}
         placeholder={pickedUp === s.id}
         ghost={extra.ghost}
