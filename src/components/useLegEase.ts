@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { legEaseMoveAdvice, type Advice } from '../engine/adviceEngine';
 import { currentBodyKg } from '../engine/bodyWeight';
-import { EASE_SAVE_FAILED, easeTarget, easeTargetOf, legDaySignals, makeDecision, morningRestDay, recordDecision, removeDecision, shouldOfferEase, type EaseOffer, type EaseTarget, type LegDaySignals, type SignalDeps } from '../engine/legDayEase';
+import { EASE_SAVE_FAILED, easeTarget, easeTargetOf, legDaySignals, makeDecision, morningRestDay, moveReason, recordDecision, removeDecision, shouldOfferEase, type EaseOffer, type EaseTarget, type LegDaySignals, type SignalDeps } from '../engine/legDayEase';
 import { resolveLegEase, resolveLegEaseHow, type LegEaseHow, type LegEaseMode } from '../engine/legEaseSettings';
 import type { LegEaseChoice } from '../models/legEase';
 import { resolveVariantDuration } from '../engine/substitutions';
@@ -59,13 +59,12 @@ export function useLegEase(sessionId?: string | null): LegEaseApi {
       if (offer.state === 'none') return undefined;
       let move: Advice | undefined;
       if (offer.canMove && !sessionId) {
-        const reason = signals.sore ? (signals.sore === 'flink' ? 'Flinke spierpijn' : 'Spierpijn') : signals.earlier.points > 0 ? 'Een harde loop eerder vandaag' : 'Vermoeide benen';
         const found = legEaseMoveAdvice({
           logs: sessionLogs, plannedSessions, templates, injuries: injuryNotes, program,
           dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
           sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
           enabledSports: settings.enabledSports, respondedIds: answeredAdviceIds, asOf: today, illnessEpisodes: settings.illnessEpisodes,
-        }, target.session.id, reason, signals.sore ? 2 : 1);
+        }, target.session.id, moveReason(signals), signals.sore ? 2 : 1);
         move = found && !answeredAdviceIds.has(found.id) ? found : undefined;
       }
       return { target, signals, offer, move };

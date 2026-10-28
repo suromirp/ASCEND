@@ -247,7 +247,7 @@ const LAP_SOURCE_KEYS: (keyof StoredLapSource)[] = [
 // Laps as they come out of a file: the same clean-up as when they come from the source
 // (integrations/intervalsIcu.ts#mapIntervalsLaps): the label up to 60 characters, the kind only
 // work or recovery, the source only finite numbers, at most 200 laps, in order of start.
-export function cleanStoredLaps(raw: unknown): StoredLap[] {
+function cleanStoredLaps(raw: unknown): StoredLap[] {
   if (!Array.isArray(raw)) return [];
   const out: StoredLap[] = [];
   for (const item of raw) {

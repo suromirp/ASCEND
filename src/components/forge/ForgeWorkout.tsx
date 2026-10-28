@@ -87,6 +87,7 @@ import { clearDraft, draftKey, loadDraft, saveDraft } from '../../utils/loggerDr
 import { formatNumberNL } from '../../utils/number';
 import { playRestSound, primeAudio } from '../../utils/sound';
 import { useBackToClose } from '../../utils/useBackToClose';
+import { TimeoutError, withTimeout } from '../../utils/withTimeout';
 import { Icon } from '../icons';
 import { NumberField } from '../NumberField';
 import { PainReportFields } from '../PainReportFields';
@@ -1459,13 +1460,12 @@ function FinishSheet({
     busy.current = true;
     setSaving(true);
     setOutcome(null);
-    const timeout = new Promise<'slow'>((r) => window.setTimeout(() => r('slow'), SAVE_LIMIT_MS));
     try {
-      const ok = await Promise.race([onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn }), timeout]);
+      const ok = await withTimeout(onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn }), SAVE_LIMIT_MS);
       if (ok === true) return;
-      setOutcome(ok === 'slow' ? 'Opslaan duurt langer dan normaal. Je sets blijven bewaard; probeer het zo nog eens.' : 'Deze training staat al in je logboek. Er is niets dubbel opgeslagen.');
-    } catch {
-      setOutcome('Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.');
+      setOutcome('Deze training staat al in je logboek. Er is niets dubbel opgeslagen.');
+    } catch (err) {
+      setOutcome(err instanceof TimeoutError ? 'Opslaan duurt langer dan normaal. Je sets blijven bewaard; probeer het zo nog eens.' : 'Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.');
     }
     busy.current = false;
     setSaving(false);

@@ -70,7 +70,7 @@ export const EFFORT_VERSION = 2;
 export const MERGE_STOP_SEC = 10;
 export const MERGE_STOP_M = 20;
 // After a stop, this many seconds are looked at for a catch-up jump: more than this factor times
-// the median pace of the CATCH_UP_BEFORE_SEC before the stop, or more than CATCH_UP_MAX_MS, is a hole.
+// the median pace of the CATCH_UP_BEFORE_SEC before the stop (or of the whole run when that is higher), or more than CATCH_UP_MAX_MS, is a hole.
 export const CATCH_UP_SEC = 10;
 export const CATCH_UP_BEFORE_SEC = 60;
 export const CATCH_UP_FACTOR = 1.5;
