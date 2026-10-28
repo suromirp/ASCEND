@@ -433,7 +433,7 @@ const RUN_RACE: GoalKindDefinition = {
       appliesWhen: { variant: ['5k', '10k', 'half'] },
       measure: 'De wedstrijdtijd uit je laatste testloop of wedstrijd (Riegel), naast je doeltijd.',
       full: 'Je doeltijd gedeeld door je verwachte tijd, begrensd op 100%: gelijk aan of sneller dan je doeltijd is vol.',
-      why: 'Voor de marathon voorspelt ASCEND geen tijd, want de formule onderschat daar sterk.',
+      why: 'Bij een doeltijd is snelheid wat je wedstrijd beslist; je testloop laat zien waar je nu staat.',
     },
     {
       id: 'langsteLoop', label: 'Langste loop', type: 'beste_dag', metric: 'langsteKm', unit: 'km', sports: ['running'], windowDays: WINDOW_42,
@@ -447,7 +447,7 @@ const RUN_RACE: GoalKindDefinition = {
       need: s({ from: 'fixed', value: 22.5, byVariant: { '5k': 15, '10k': 22.5, half: 30, marathon: 30 } }, 'expert', D('3.4 meter 3; de 30 km voor de marathon is matig (Rasmussen 2013)')),
       measure: 'Het gemiddelde loopvolume per week over de laatste 4 weken.',
       full: 'Een vaste streefwaarde per afstand; 30 km per week is de ondergrens voor een marathon.',
-      why: 'Onder 30 km per week gaf een marathon ongeveer twee keer zoveel blessures.',
+      why: 'Genoeg kilometers per week maken je sneller en sterker, en houden je blessurevrij.',
     },
     volhouden('Het zegt het meest over uitvoering en het minst over aanpassing.'),
   ],
