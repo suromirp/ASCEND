@@ -564,6 +564,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'dan blijven de melding en de teksten in de rijen, maar komt er geen knop met een voorstel.' },
     ],
   },
+  volgordeStand: {
+    title: 'Volgorde van Je stand',
+    lead: 'Kies zelf in welke volgorde de blokken op Je stand staan. Het verandert niets aan je planning of je cijfers.',
+    points: [
+      { head: 'Blokken', text: 'je sleept hele blokken, zoals Benen, Belasting en Kracht, niet losse kaarten. Binnen een blok blijft de volgorde vast.' },
+      { head: 'Bovenaan', text: 'Klaar voor het doel blijft altijd eerst. Het vlak "Je stand in vier regels" staat nooit als eerste blok.' },
+      { head: 'Zonder slepen', text: 'in het blad kun je per blok ook Hoger of Lager kiezen.' },
+      { head: 'Terug naar standaard', text: 'zet alles weer zoals de app het bedacht. Een blok dat in de instellingen uit staat, houdt zijn plek.' },
+    ],
+  },
   slepenWeek: {
     title: 'Trainingen slepen in Week',
     lead: 'Sleep een training met het greepje naar een andere dag. Het gaat zoals Verplaatsen in het actieblad. Uit haalt de grepen weg.',

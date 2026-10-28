@@ -43,6 +43,8 @@ export function useOverlayA11y(): void {
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      // Een onderdeel dat Escape zelf afhandelt (een lopend slepen annuleren) zegt dat met preventDefault.
+      if (e.defaultPrevented) return;
       const top = overlays().at(-1);
       if (!top) return;
       e.preventDefault();

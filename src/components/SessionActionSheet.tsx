@@ -13,6 +13,8 @@
 
 import type { AllowedPair } from '../engine/allowedPair';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { TextButton } from './TextButton';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import type { Program } from '../models/program';
 import { availableVariants, resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
@@ -152,6 +154,7 @@ export function SessionActionSheet({
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
   const guide = getTrainingGuide(template.id);
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  const navigate = useNavigate();
   const today = todayISO();
   const skipped = session.status === 'skipped';
   const canComeBack = skipped && !!onBackOnPlan && session.scheduledDate >= today;
@@ -352,6 +355,11 @@ export function SessionActionSheet({
           <SheetRows label="Andere keuzes">
             {actions.rows.map((a) => <SheetRow key={a} title={label[a]} onClick={run(a)} />)}
           </SheetRows>
+        )}
+        {template.type === 'strength' && (
+          <div className="flex justify-center">
+            <TextButton tone="dim" icon="verder" onClick={() => { requestClose(); window.setTimeout(() => navigate('/forge'), 280); }}>Forge</TextButton>
+          </div>
         )}
       </div>
     </SheetFrame>

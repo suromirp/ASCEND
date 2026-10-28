@@ -7,6 +7,7 @@
 // regel (`sub`): een feit of een bron, nooit uitleg. Een test bewaakt dat een regel
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
+import { isDefaultOrder, resolveCardOrder } from './cardOrder';
 import { resolveTestStops } from './bestEffort';
 import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
@@ -546,6 +547,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.haptics !== false };
     case 'weekvoorstel':
       return { checked: s.weekFixProposal !== false };
+    case 'volgorde-stand':
+      return { value: isDefaultOrder('stand', resolveCardOrder('stand', s.cardOrder)) ? 'Standaard' : 'Eigen volgorde' };
     case 'slepen-week':
       return { checked: s.dragWeek !== false };
     case 'korte-nacht':
