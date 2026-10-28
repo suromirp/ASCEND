@@ -49,7 +49,7 @@ export function heavyAxes(template: SessionTemplate): HeavyAxis[] {
   return (['upperBodyLoad', 'lowerBodyLoad'] as HeavyAxis[]).filter((axis) => profile[axis] === 'heavy');
 }
 
-function sharedHeavyAxes(a: SessionTemplate, b: SessionTemplate): HeavyAxis[] {
+export function sharedHeavyAxes(a: SessionTemplate, b: SessionTemplate): HeavyAxis[] {
   const bAxes = heavyAxes(b);
   return heavyAxes(a).filter((axis) => bAxes.includes(axis));
 }

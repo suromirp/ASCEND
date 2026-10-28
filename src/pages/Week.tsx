@@ -30,6 +30,7 @@ import { LogDetailSheet } from '../components/LogDetailSheet';
 import { formatNumberNL } from '../utils/number';
 import { WeekLoadCards } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
+import { decideMove, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
 import { SkyBand } from '../components/SkyBand';
@@ -125,6 +126,16 @@ export function WeekPage() {
     } else {
       setLogging({ session, variant });
     }
+  }
+
+  // De ene weg voor een verplaatsing, voor het actieblad en voor slepen (engine/weekDrag.ts#decideMove):
+  // een schone verplaatsing gaat meteen (Ongedaan maken staat in de melding), een cascade, een botsing,
+  // een rustdag of een test vraagt eerst om Akkoord.
+  function moveTo(sessionId: string, date: string, opts?: DecideOptions): MoveDecision['action'] {
+    const decision = decideMove(moveSession(sessionId, date), opts);
+    if (decision.action === 'apply') void applyProposal(decision.proposal);
+    else if (decision.action === 'ask') setPendingProposal(decision.proposal);
+    return decision.action;
   }
 
   return (
@@ -316,10 +327,7 @@ export function WeekPage() {
             setSelected(null);
           }}
           onMove={(date) => {
-            // Clean move: apply at once (undo in the notice); a cascade asks first.
-            const proposal = moveSession(selected.id, date);
-            if (proposal.resolved && proposal.changes.length === 1) void applyProposal(proposal);
-            else setPendingProposal(proposal);
+            moveTo(selected.id, date);
             setSelected(null);
           }}
           suggestions={suggestMoves(selected.id)}
