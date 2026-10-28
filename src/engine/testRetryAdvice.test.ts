@@ -143,7 +143,7 @@ describe('TEST-RETRY: ruimte maken in een gewone week', () => {
     expect(long.plannedMinutes).toBeGreaterThan(0);
     expect(a.effect).toContain('Lange duurloop van zo 1 november doe je op ma 2 november in plaats van je rustdag, korter (45 minuten). De herstelwandeling van die dag vervalt.');
     expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'walk')).toMatchObject({ action: 'remove' });
-    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober laat je deze week gaan, zodat je benen zaterdag fris zijn.');
+    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober, die je zelf vastzette, laat je deze week gaan, zodat je benen zaterdag fris zijn.');
     expect(a.effect).toContain('Kies een route zonder stoplichten en zet auto-pauze uit.');
     expect(`${a.title}${a.effect}${a.why}`).not.toMatch(/[\u2013\u2014]/);
     // De zelf vastgezette beendag vervalt alleen met Akkoord en staat er met naam in.
@@ -217,7 +217,7 @@ describe('TEST-RETRY: herstel na de review', () => {
 
   it('noemt in de standaardweek de beendag die met Akkoord vervalt', () => {
     const a = retryOf()!;
-    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober laat je deze week gaan, zodat je benen zaterdag fris zijn.');
+    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober, die je zelf vastzette, laat je deze week gaan, zodat je benen zaterdag fris zijn.');
     expect(a.effect).toContain('De herstelwandeling van die dag vervalt.');
   });
 
@@ -275,5 +275,17 @@ describe('TEST-RETRY: herstel na de review', () => {
     const renamed = templates.map((t) => (t.id === 'tpl_race' ? { ...t, id: 'tpl_eigen_wedstrijd' } : t));
     const withRace = [...standard(), planned('race', 'tpl_eigen_wedstrijd', '2026-11-07', '2026-11-02')];
     expect(retryOf({ plannedSessions: withRace, templates: renamed })).toBeUndefined();
+  });
+});
+
+describe('TEST-RETRY next to the morning check', () => {
+  it('does not turn a hard run into a test when the morning check already moves it', () => {
+    // Test on the 25th, the hill intervals tomorrow (the 29th), soreness this morning: MORNING-CHECK moves them.
+    const hillsTomorrow = [planned('hills', 'tpl_hill_intervals', '2026-10-29', '2026-10-26'), planned('upper', 'tpl_upper_b', '2026-10-30', '2026-10-26')];
+    const sore = [{ date: '2026-10-28', legs: 'spierpijn' as const, energy: 'gewoon' as const, sleep: 'goed' as const }];
+    const all = computeAdvice(inputs({ logs: [testLog({}, '2026-10-25')], plannedSessions: hillsTomorrow, checkIns: sore }));
+    const touches = (rule: string) => all.filter((a) => a.ruleId === rule).flatMap((a) => [a.proposal, ...(a.options ?? []).map((o) => o.proposal)]).flatMap((p) => p?.changes ?? []).map((c) => c.plannedSessionId);
+    expect(touches('MORNING-CHECK')).toContain('hills');
+    expect(touches('TEST-RETRY')).not.toContain('hills');
   });
 });

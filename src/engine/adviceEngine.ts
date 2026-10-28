@@ -1206,6 +1206,8 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. ASCEND zoekt de dag die het minst verandert. Staat er een zware beendag of de lange duurloop in de weg, dan schuift die mee naar een dag waar hij past, in hetzelfde voorstel. Wat jij zelf vastzette, schuift of laat ASCEND alleen gaan met jouw Akkoord, met de naam erbij. Alleen jij beslist: dit is een voorstel.';
   const nameOf = (x: PlannedSession) => templateById.get(x.templateId)?.name ?? 'Training';
   const isStrength = (x: PlannedSession) => templateById.get(x.templateId)?.type === 'strength';
+  // A session you locked is named as yours; one an earlier proposal moved is said as such.
+  const whose = (x: PlannedSession) => (levelOf(x) !== 1 ? '' : x.lock?.by === 'proposal' ? ', die al eerder verschoof,' : ', die je zelf vastzette,');
   const build = (plan: RetryPlan) => {
     const when = shortDate(plan.found.scheduledDate);
     const title = `Nieuwe testpoging op ${when}`;
@@ -1214,10 +1216,8 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
     const lines = [
       ...plan.moves.map((m) => m.rest
         ? `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)} doe je op ${shortDate(m.to)} in plaats van je rustdag${short(m)}. De ${lower(nameOf(m.rest))} van die dag vervalt.`
-        : levelOf(m.session) === 1
-          ? `${nameOf(m.session)}, die je zelf vastzette, gaat naar ${shortDate(m.to)}${short(m)}.`
-          : `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)} gaat naar ${shortDate(m.to)}${isStrength(m.session) ? ', na de test' : ''}${short(m)}.`),
-      ...plan.dropped.map((l) => `${nameOf(l)} van ${shortDate(l.scheduledDate)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
+        : `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)}${whose(m.session)} gaat naar ${shortDate(m.to)}${isStrength(m.session) ? ', na de test' : ''}${short(m)}.`),
+      ...plan.dropped.map((l) => `${nameOf(l)} van ${shortDate(l.scheduledDate)}${whose(l)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
     ];
     const extra = lines.length > 0 ? ` ${lines.join(' ')}` : '';
     const effect = `${was} Met Akkoord wordt ${nameOf(plan.found)} op ${when} een testloop van 5 km.${extra} ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.`;
@@ -1406,9 +1406,11 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const repeatWeek = repeatWeekAdvice(inputs);
   const tentPack = tentPackAdvice(inputs);
   const targetTime = targetTimeAdvice(inputs);
+  const weather = weatherAdvice(inputs, templateById);
+  const morning = morningAdvice(inputs, templateById);
   // TEST-RETRY touches no session that already stands in another proposal.
   const retryUsed = new Set(usedIds);
-  for (const a of fresh([...restSwap, ...restPull, ...tooHard, ...tooLight, ...injury, ...strength, ...spacing, ...extraSession, ...restWeekSkip, ...repeatWeek, ...tentPack, ...targetTime])) {
+  for (const a of fresh([...restSwap, ...restPull, ...tooHard, ...tooLight, ...injury, ...strength, ...spacing, ...extraSession, ...restWeekSkip, ...repeatWeek, ...tentPack, ...targetTime, ...weather, ...morning])) {
     for (const p of [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])]) for (const c of p?.changes ?? []) if (c.plannedSessionId) retryUsed.add(c.plannedSessionId);
   }
   return [
@@ -1428,8 +1430,8 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...tentPack,
     ...targetTime,
     ...testRetryAdvice(inputs, templateById, retryUsed, testRoom),
-    ...weatherAdvice(inputs, templateById),
-    ...morningAdvice(inputs, templateById),
+    ...weather,
+    ...morning,
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));

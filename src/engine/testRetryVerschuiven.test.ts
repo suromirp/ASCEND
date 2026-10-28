@@ -61,11 +61,11 @@ describe('TEST-RETRY: eerst verschuiven, dan pas laten vervallen', () => {
   it('biedt een door jou vastgezette beendag eerst een verschuiving aan, met naam, en laten vervallen als tweede optie', () => {
     const a = retryOf(sundayFree(lockUser))!;
     expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')).toMatchObject({ action: 'move', toDate: '2026-11-01' });
-    expect(a.effect).toContain('Benen A (zwaar), die je zelf vastzette, gaat naar zo 1 november.');
+    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober, die je zelf vastzette, gaat naar zo 1 november, na de test.');
     expect(a.options).toHaveLength(2);
     expect(a.options![0].proposal.changes.find((c) => c.plannedSessionId === 'legs')!.action).toBe('move');
     expect(a.options![1].proposal.changes.find((c) => c.plannedSessionId === 'legs')!.action).toBe('remove');
-    expect(a.options![1].effect).toContain('Benen A (zwaar) van do 29 oktober laat je deze week gaan, zodat je benen zaterdag fris zijn.');
+    expect(a.options![1].effect).toContain('Benen A (zwaar) van do 29 oktober, die je zelf vastzette, laat je deze week gaan, zodat je benen zaterdag fris zijn.');
     expect(`${a.effect}${a.options![1].effect}`).not.toMatch(/[\u2013\u2014]/);
   });
 
