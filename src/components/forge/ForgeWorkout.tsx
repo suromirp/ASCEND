@@ -116,6 +116,8 @@ const DRAFT_VERSION = 1;
 const DRAFT_MAX_AGE_MS = 36 * 60 * 60 * 1000;
 // Na afloop blijft de balk nog even staan, dan verdwijnt hij.
 const REST_DONE_LINGER_MS = 8000;
+// Een reden die ouder is dan dit hoort niet meer bij de volgende verandering van de rijen.
+const CAUSE_MAX_AGE_MS = 2000;
 
 interface Rest {
   endsAt: number;
@@ -232,7 +234,10 @@ export function ForgeWorkout({
   const [logOpen, setLogOpen] = useState(false);
   const [spotterInfo, setSpotterInfo] = useState(false);
   // Waardoor de volgende verandering van de rijen kwam; zonder opgave is het geen gebeurtenis.
-  const cause = useRef<ForgeCause>({ kind: 'negeer' });
+  // Met een tijdstempel: een handeling die niets veranderde (dezelfde rijen) laat geen reden achter voor
+  // een latere, onafhankelijke verandering.
+  const cause = useRef<{ why: ForgeCause; at: number }>({ why: { kind: 'negeer' }, at: 0 });
+  const markCause = (why: ForgeCause) => { cause.current = { why, at: Date.now() }; };
   const prevWorkout = useRef(workout);
   const [workoutMenu, setWorkoutMenu] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -317,8 +322,9 @@ export function ForgeWorkout({
   useEffect(() => {
     const before = prevWorkout.current;
     prevWorkout.current = workout;
-    const why = cause.current;
-    cause.current = { kind: 'negeer' };
+    const { why: given, at } = cause.current;
+    cause.current = { why: { kind: 'negeer' }, at: 0 };
+    const why: ForgeCause = Date.now() - at <= CAUSE_MAX_AGE_MS ? given : { kind: 'negeer' };
     if (readOnly || before === workout) return;
     const events = deriveChanges(before, workout, why, Date.now(), () => makeId('fe'));
     if (events.length > 0) setForgeLog((l) => appendEvents(l, events));
@@ -377,7 +383,7 @@ export function ForgeWorkout({
     const because = easeBecause(legEase.state?.signals.reasons ?? easeReasons);
     const next = planWorkout(slots, { ...baseCtx, ...(on ? { ease: { how: easeHow, because } } : {}) });
     setEaseOn(on);
-    cause.current = { kind: 'negeer' };
+    markCause({ kind: 'negeer' });
     setWorkout(next);
     if (!readOnly) setForgeLog(spotterEvents(next, Date.now(), () => makeId('fe')));
     setLighter({});
@@ -546,7 +552,7 @@ export function ForgeWorkout({
     const d = dock;
     if (!d) return;
     const key = `${d.slot}:${d.rowId}:${d.field}`;
-    cause.current = { kind: 'eigen', edited: { slot: d.slot, rowId: d.rowId } };
+    markCause({ kind: 'eigen', edited: { slot: d.slot, rowId: d.rowId } });
     setWorkout((w) =>
       w.map((e) => {
         if (e.slot !== d.slot) return e;
@@ -599,7 +605,7 @@ export function ForgeWorkout({
 
   function take(slot: string, rowId: string) {
     haptics.tap();
-    cause.current = { kind: 'eigen', edited: { slot, rowId } };
+    markCause({ kind: 'eigen', edited: { slot, rowId } });
     setExercise(slot, (e) => takeTarget(e, rowId));
     setActiveRef({ slot, rowId });
   }
@@ -610,7 +616,7 @@ export function ForgeWorkout({
     const adj = lighter[slot];
     haptics.tap();
     if (adj) {
-      cause.current = { kind: 'bijgestuurd' };
+      markCause({ kind: 'bijgestuurd' });
       setExercise(slot, (e) => applyLighter(e, adj));
     }
     setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot)));
@@ -702,7 +708,7 @@ export function ForgeWorkout({
                 <span className="font-sans">{done} van {total} sets</span>
                 <button type="button" onClick={() => { setLogOpen(true); setSeenAt(Date.now()); }} aria-label={news > 0 ? 'Verloop van de training, er is iets nieuws' : 'Verloop van de training'} className="relative -my-2 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                   <Icon name="verloop" size={20} />
-                  {news > 0 && <span aria-hidden="true" className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full" style={{ background: 'var(--color-action)' }} />}
+                  {news > 0 && <span aria-hidden="true" className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full" style={{ background: 'var(--color-status)' }} />}
                 </button>
               </div>
             )}
@@ -937,7 +943,7 @@ export function ForgeWorkout({
                   type="button"
                   role="radio"
                   aria-checked={!rirRow.rirAssumed && rirRow.rir === n}
-                  onClick={() => { cause.current = { kind: 'eigen', edited: { slot: rirFor.slot, rowId: rirFor.rowId } }; setExercise(rirFor.slot, (e) => updateRow(e, rirFor.rowId, { rir: n })); close(); }}
+                  onClick={() => { markCause({ kind: 'eigen', edited: { slot: rirFor.slot, rowId: rirFor.rowId } }); setExercise(rirFor.slot, (e) => updateRow(e, rirFor.rowId, { rir: n })); close(); }}
                   className="flex min-h-[48px] items-center justify-center rounded-xl border"
                   style={{ borderColor: !rirRow.rirAssumed && rirRow.rir === n ? 'var(--color-ink)' : 'var(--color-card-border)' }}
                 >

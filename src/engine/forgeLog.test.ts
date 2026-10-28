@@ -123,6 +123,11 @@ describe('meldingen en hun oplossing', () => {
 });
 
 describe('zonder spotter in het verloop', () => {
+  it('het spotterteken staat al bij de set en telt niet mee voor de stip', () => {
+    const ex = exercise([row(0, { target: { repsLow: 8, repsHigh: 10, rir: 1, spotter: true } })]);
+    expect(unseenCount(spotterEvents([ex], T0 + 5, id), T0, [ex])).toBe(0);
+  });
+
   it('één gebeurtenis per oefening met de sets waar de reserve omhoog ging', () => {
     const ex = exercise([row(0, { target: { repsLow: 8, repsHigh: 10, rir: 1, spotter: true } }), row(1, { target: { repsLow: 8, repsHigh: 10, rir: 1, spotter: true } }), row(2, { target: { repsLow: 8, repsHigh: 10, rir: 2 } })]);
     const out = spotterEvents([ex], T0, id);

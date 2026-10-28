@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { checkProposal } from './prescriptionCheck';
+import { SPOTTER_SINCE } from './spotter';
 import { comparisonRows, exerciseHistories } from './strengthHistory';
-import { resolveStrengthSettings } from './strengthSettings';
+import { DEFAULT_PROFILE, resolveStrengthSettings } from './strengthSettings';
 
 // Raak en de bewuste 1 zonder spotter: MacroFactor schrijft 0 over voor, Forge 1.
 describe('raak met een bewuste 1 zonder spotter', () => {
@@ -21,10 +22,17 @@ describe('raak met een bewuste 1 zonder spotter', () => {
     variant: 'custom', durationMinutes: 50, source: 'macrofactor', externalId: id,
     strengthData: [{ exerciseId: 'bench-press', exerciseName: 'Bench Press (Barbell)', sets: sets(rows) }],
   });
-  const earlier = [0, 1, 2].map((i) => log(`e${i}`, `2026-09-0${1 + i * 2}`, [[8, 60, 1], [8, 60, 1], [8, 60, 1]]));
-  const rowFor = (spotter: boolean, done: [number, number, number][]) => {
-    const settings = { ...resolveStrengthSettings(undefined), noSpotter: spotter };
-    const logs = [...earlier, log('last', '2026-09-20', done)];
+  const earlier = [0, 1, 2].map((i) => log(`e${i}`, `2026-10-${20 + i * 2}`, [[8, 60, 1], [8, 60, 1], [8, 60, 1]]));
+  const rowFor = (spotter: boolean, done: [number, number, number][], opts: { date?: string; gym?: string; active?: string } = {}) => {
+    const settings = {
+      ...resolveStrengthSettings({
+        activeProfileId: opts.active ?? 'gym-a',
+        profiles: [{ ...DEFAULT_PROFILE, id: 'gym-a', name: 'Thuis' }, { ...DEFAULT_PROFILE, id: 'gym-b', name: 'Club', spotterRack: true }],
+      }),
+      noSpotter: spotter,
+    };
+    const last = { ...log('last', opts.date ?? '2026-11-02', done), ...(opts.gym ? { gymProfileId: opts.gym } : {}) };
+    const logs = [...earlier, last];
     const h = exerciseHistories(logs, [tpl], { logs, templates: [tpl], program: base.program, bodyKg });
     return comparisonRows(h, settings, bodyKg, [tpl]).find((r) => r.logId === 'last')!;
   };
@@ -49,5 +57,37 @@ describe('raak met een bewuste 1 zonder spotter', () => {
 
   it('het voorstel met 1 over is niet zwaarder dan het voorstel met 0 over', () => {
     expect(rowFor(true, [[9, 60, 1]]).prescribedKg).toBeLessThanOrEqual(rowFor(false, [[9, 60, 1]]).prescribedKg);
+  });
+
+  const miss: [number, number, number][] = [[9, 60, 1], [9, 60, 1]];
+
+  it('een log uit een sportschool met veiligheidsarmen kreeg geen 1, ook als de actieve sportschool er geen heeft', () => {
+    const row = rowFor(true, miss, { gym: 'gym-b', active: 'gym-a' });
+    expect(row.check!.target.rir).toBe(0);
+    expect(row.check!.didTarget).toBeUndefined();
+  });
+
+  it('een log uit de sportschool zonder armen krijgt de 1, ook als de actieve sportschool armen heeft', () => {
+    const row = rowFor(true, miss, { gym: 'gym-a', active: 'gym-b' });
+    expect(row.check!.target.rir).toBe(1);
+    expect(row.check!.didTarget?.rir).toBe(0);
+  });
+
+  it('een log zonder sportschool volgt de actieve', () => {
+    expect(rowFor(true, miss, { active: 'gym-b' }).check!.target.rir).toBe(0);
+    expect(rowFor(true, miss, { active: 'gym-a' }).check!.target.rir).toBe(1);
+  });
+
+  it('een oud log, van voor de dag dat Zonder spotter bestaat, telt zoals toen', () => {
+    const row = rowFor(true, miss, { date: '2026-10-27' });
+    expect(row.check!.target.rir).toBe(0);
+    expect(row.check!.didTarget).toBeUndefined();
+    expect(rowFor(true, miss, { date: SPOTTER_SINCE }).check!.target.rir).toBe(1);
+  });
+
+  it('jouw kant staat per kant in de controle: eigen doel voor ASCEND, het gevraagde voor jou', () => {
+    const row = rowFor(true, miss);
+    expect(row.check!.target.rir).toBe(1);
+    expect(row.check!.didTarget).toEqual({ ...row.check!.target, rir: 0 });
   });
 });

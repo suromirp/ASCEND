@@ -10,7 +10,7 @@ import { Card, Meter, StatusPill } from './ui';
 // per meter de uitleg. Op Je stand en op Ascend is het dezelfde gewone marine
 // kaart onder de bergen; beide tonen hetzelfde getal en dezelfde zin.
 
-export function Gr5ReadinessCard({ readiness, title = 'Klaar voor de GR5' }: { readiness: ShownReadiness; title?: string }) {
+export function Gr5ReadinessCard({ readiness, title = 'Klaar voor de GR5', milestone = true }: { readiness: ShownReadiness; title?: string; milestone?: boolean }) {
   const [open, setOpen] = useState(false);
   const change = changeLabel(readiness.change);
   return (
@@ -45,7 +45,7 @@ export function Gr5ReadinessCard({ readiness, title = 'Klaar voor de GR5' }: { r
           <span className="sr-only">{metersLinkLabel(readiness.meters.length)}.</span>
         </Card>
       </button>
-      {open && <Gr5ReadinessSheet readiness={readiness} title={title} onClose={() => setOpen(false)} />}
+      {open && <Gr5ReadinessSheet readiness={readiness} title={title} milestone={milestone} onClose={() => setOpen(false)} />}
     </>
   );
 }

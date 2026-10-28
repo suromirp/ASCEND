@@ -8,6 +8,7 @@ import type { WorkoutExercise } from '../../engine/forgeWorkout';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Portal } from '../Portal';
 import { SheetHeader } from '../SheetHeader';
+import { Icon } from '../icons';
 import { Card, SheetGrip } from '../ui';
 import { RirBubble } from './parts';
 
@@ -44,7 +45,7 @@ export function ForgeLogList({ events, workout }: { events: ForgeEvent[]; workou
                   {ev.from && ev.kind !== 'spotter' && (
                     <>
                       <span style={{ color: 'var(--color-ink-dim)' }}><State s={ev.from} label={`was, set ${ev.set}`} /></span>
-                      <span aria-label="werd" style={{ color: 'var(--color-ink-dim)' }}>→</span>
+                      <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="pijlrechts" size={14} label="werd" /></span>
                     </>
                   )}
                   {ev.kind === 'spotter' ? <span>0 over wordt 1 over</span> : <State s={ev.to} label={`set ${ev.set}`} />}
@@ -66,7 +67,7 @@ export function ForgeLogSheet({ events, workout, eyebrow = 'Forge', title = 'Ver
   return (
     <Portal>
       <div className={`fixed inset-0 z-[60] flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`relative max-h-[85dvh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} role="dialog" aria-modal="true" aria-label={title} className={`relative max-h-[85dvh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow={eyebrow} title={title} onClose={requestClose} /></div>

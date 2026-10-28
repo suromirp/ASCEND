@@ -417,8 +417,10 @@ at start without a proposal. Changing the week shape later is not built yet.
 sort key, `goalLabels.ts#sortedForList`, read by the list and by `goalConflicts.ts`; every move writes the order of
 the whole visible list), the first one open, a goal sheet per goal, and a season strip on the sky (switch "Seizoensstrook
 tonen"). A new label, a goal added or changed, "In hutten" or "Met tent", and an order that shifts a conflict
-(`goalList.ts#moveOutcome`) are always a proposal with Akkoord, never silent. "Klaar voor je doel" of the main goal is
-`gr5Readiness.ts#computeMainGoalReadiness`, the same as on Je stand. `/ascend/doelen` redirects to the tab. Krachtprogressie
+(`goalList.ts#moveOutcome`) are always a proposal with Akkoord, never silent. "Klaar voor je doel" of the main goal: only for
+`trek_hut`, `trek_tent` or no kind (`goalReadinessFor.ts#usesMilestoneReadiness`) it is
+`gr5Readiness.ts#computeMainGoalReadiness`, the same as on Je stand; every other kind goes through
+`goalReadinessFor.ts#goalReadinessFor`. `/ascend/doelen` redirects to the tab. Krachtprogressie
 and Trainingsverdeling live on Je stand.
 
 **Forge and the order of Je stand** (`engine/forgeEntry.ts`, `engine/cardOrder.ts`, `components/stand/ForgeEntryCard.tsx`,

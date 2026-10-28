@@ -18,6 +18,23 @@ export function spotterApplies(exercise: Exercise | undefined, s: Pick<ResolvedS
   return !!exercise?.failureRisk && s.noSpotter && !s.profile.spotterRack;
 }
 
+// De datum waarop "Zonder spotter" bestaat. Oudere trainingen zijn zonder dit voorschrift gedaan en
+// worden bij raak niet met terugwerkende kracht anders geteld.
+export const SPOTTER_SINCE = '2026-10-28';
+
+// Gold het voorschrift op de dag van dit log? Met de sportschool van het log (de actieve als
+// terugval, ook als die sportschool niet meer bestaat) en alleen vanaf SPOTTER_SINCE.
+export function spotterAppliesOnLog(
+  exercise: Exercise | undefined,
+  s: Pick<ResolvedStrengthSettings, 'noSpotter' | 'profile' | 'profiles'>,
+  logDate: string,
+  gymProfileId?: string,
+): boolean {
+  if (logDate < SPOTTER_SINCE) return false;
+  const gym = (gymProfileId ? s.profiles.find((p) => p.id === gymProfileId) : undefined) ?? s.profile;
+  return spotterApplies(exercise, { noSpotter: s.noSpotter, profile: gym });
+}
+
 export interface SpotterSlot {
   slot: ExercisePrescription;
   // Per werkset (in volgorde) of het voorschrift omhoog ging.

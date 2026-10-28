@@ -1,10 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { computeComboReadiness, computeGoalReadiness, dayShareOf, readinessInputOf, requirementsFromDetails } from './goalReadiness';
-import { computeGr5Readiness } from './gr5Readiness';
+import { computeMainGoalReadiness } from './gr5Readiness';
 import { GR5_GOLDEN } from './gr5Readiness.golden';
 import { estimatedHikingMinutes } from './goalRoute';
 import type { GoalRequirement } from '../models/goals';
 import type { SessionLog } from '../models/training';
+
+// De uitkomst in de vorm van voor het generaliseren (ronde 2a): alleen het percentage en de meters, of niets
+// zonder eisen om mee te vergelijken.
+function oudeVorm(requirements: GoalRequirement[], logs: SessionLog[], today: string) {
+  const r = computeMainGoalReadiness(requirements, logs, today);
+  if (r.percent === undefined) return undefined;
+  const plain = (m: (typeof r.meters)[number]) => ({ key: m.key, label: m.label, parts: m.parts, share: m.share, text: m.text, why: m.why });
+  return { percent: r.percent, meters: r.meters.map(plain), weakest: r.weakest ? plain(r.weakest) : undefined, sentence: r.sentence, weakestSentence: r.weakestSentence, change: r.change };
+}
+
 
 // Nagemaakte gegevens, dezelfde als waarmee de bevroren uitkomsten zijn gemaakt.
 const TODAY = '2026-10-21';
@@ -49,13 +59,13 @@ const SCENARIOS: Record<string, { reqs: GoalRequirement[]; logs: SessionLog[] }>
 describe('Klaar voor je doel, meerdaagse tocht: exact gelijk aan de oude GR5-uitkomst', () => {
   for (const [name, { reqs, logs }] of Object.entries(SCENARIOS)) {
     it(`${name}: de wrapper geeft hetzelfde als vóór het generaliseren`, () => {
-      const now = computeGr5Readiness(reqs, logs, TODAY);
+      const now = oudeVorm(reqs, logs, TODAY);
       expect(JSON.parse(JSON.stringify(now))).toEqual(GR5_GOLDEN[name as keyof typeof GR5_GOLDEN]);
     });
   }
 
   it('geen eisen: niets om mee te vergelijken, zoals voorheen', () => {
-    expect(computeGr5Readiness([], [], TODAY)).toBeUndefined();
+    expect(oudeVorm([], [], TODAY)).toBeUndefined();
     expect(GR5_GOLDEN.none).toBeNull();
   });
 

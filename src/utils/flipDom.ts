@@ -1,4 +1,4 @@
-import { applyOverride, flipDeltas, flipDuration, isArmed, FLIP_FADE_MS, FLIP_WAIT_MS, type FlipDelta, type FlipStyle, type Rect } from '../components/flip';
+import { applyOverride, flipDeltas, flipDuration, isArmed, waitForClear, FLIP_FADE_MS, type FlipDelta, type FlipStyle, type Rect } from '../components/flip';
 
 // Een verplaatste training schuift naar zijn nieuwe dag, het DOM-deel
 // (docs/beslissingen/2026-10-28-vloeiende-overgangen-uitgroei.md). De rekensom staat in components/flip.ts.
@@ -22,6 +22,10 @@ interface Armed {
 let armed: Armed | null = null;
 let origin: { id: string; pageTop: number; at: number } | null = null;
 let running: Animation[] = [];
+// Het volgnummer van de afspeelronde: een oude poll die nog op een blad wacht doet niets meer zodra
+// er een nieuwe ronde begint, en ruimt zijn rijen op voordat de nieuwe ze opnieuw voorbereidt.
+let round = 0;
+let abandonPending: (() => void) | null = null;
 
 const ROW = '[data-session-row]';
 const EASING = 'cubic-bezier(0.16, 1, 0.3, 1)';
@@ -91,6 +95,9 @@ export function playFlip(style: FlipStyle): void {
   }
   try {
     stopRunning();
+    abandonPending?.();
+    abandonPending = null;
+    const mine = ++round;
     const after = measure();
     const startRects = origin && isArmed(origin.at, now) ? applyOverride(armed.rects, origin.id, origin.pageTop) : armed.rects;
     const deltas = flipDeltas(startRects, after.rects);
@@ -150,13 +157,15 @@ export function playFlip(style: FlipStyle): void {
       play();
       return;
     }
-    const started = performance.now();
-    const poll = () => {
-      if (!sheetOpen()) play();
-      else if (performance.now() - started >= FLIP_WAIT_MS) clear();
-      else window.setTimeout(poll, 40);
-    };
-    window.setTimeout(poll, 40);
+    abandonPending = clear;
+    waitForClear({
+      busy: sheetOpen,
+      play: () => { abandonPending = null; play(); },
+      giveUp: () => { abandonPending = null; clear(); },
+      current: () => mine === round,
+      now: () => performance.now(),
+      later: (fn, ms) => { window.setTimeout(fn, ms); },
+    });
   } catch {
     armed = null;
   }

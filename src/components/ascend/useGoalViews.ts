@@ -14,7 +14,7 @@ export interface GoalView {
 }
 
 // De uitkomst van "Klaar voor je doel" per doel. Het doel met de mijlpalen rekent precies zoals
-// Je stand (computeGr5Readiness): tocht met hutten, twee dagen achter elkaar.
+// Je stand (computeMainGoalReadiness): tocht met hutten, twee dagen achter elkaar.
 export function useGoalViews(listed: ListedGoal[]): { views: GoalView[]; next: NextKeySession | undefined } {
   const { sessionLogs, plannedSessions, templates, program, settings } = useAppData();
   const today = todayISO();

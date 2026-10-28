@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyOverride, flipDeltas, flipDuration, flipStyle, isArmed, FLIP_ARM_MS, FLIP_MAX_MS, FLIP_MIN_MS, type Rect } from './flip';
+import { applyOverride, flipDeltas, flipDuration, flipStyle, isArmed, waitForClear, FLIP_WAIT_MS, FLIP_ARM_MS, FLIP_MAX_MS, FLIP_MIN_MS, type Rect } from './flip';
 import flipSource from './flip.ts?raw';
 
 const rect = (top: number, left = 0): Rect => ({ left, top, width: 358, height: 64 });
@@ -97,6 +97,61 @@ describe('isArmed', () => {
     expect(isArmed(null, 100)).toBe(false);
     expect(isArmed(1000, 1000 + FLIP_ARM_MS)).toBe(true);
     expect(isArmed(1000, 1000 + FLIP_ARM_MS + 1)).toBe(false);
+  });
+});
+
+describe('waitForClear', () => {
+  function clock() {
+    let t = 0;
+    const queue: { at: number; fn: () => void }[] = [];
+    return {
+      now: () => t,
+      later: (fn: () => void, ms: number) => { queue.push({ at: t + ms, fn }); },
+      run: (until: number) => {
+        while (queue.length > 0) {
+          queue.sort((a, b) => a.at - b.at);
+          const next = queue[0];
+          if (next.at > until) break;
+          queue.shift();
+          t = next.at;
+          next.fn();
+        }
+        t = until;
+      },
+    };
+  }
+
+  it('speelt af zodra het blad weg is', () => {
+    const c = clock();
+    let busy = true;
+    const calls: string[] = [];
+    waitForClear({ busy: () => busy, play: () => calls.push('play'), giveUp: () => calls.push('giveUp'), current: () => true, now: c.now, later: c.later });
+    c.run(100);
+    busy = false;
+    c.run(200);
+    expect(calls).toEqual(['play']);
+  });
+
+  it('geeft op na de grens', () => {
+    const c = clock();
+    const calls: string[] = [];
+    waitForClear({ busy: () => true, play: () => calls.push('play'), giveUp: () => calls.push('giveUp'), current: () => true, now: c.now, later: c.later });
+    c.run(FLIP_WAIT_MS + 200);
+    expect(calls).toEqual(['giveUp']);
+  });
+
+  it('een oude ronde doet niets meer als er een nieuwe is begonnen', () => {
+    const c = clock();
+    let round = 1;
+    let busy = true;
+    const calls: string[] = [];
+    const mine = round;
+    waitForClear({ busy: () => busy, play: () => calls.push('oud'), giveUp: () => calls.push('oud-op'), current: () => mine === round, now: c.now, later: c.later });
+    c.run(80);
+    round = 2;
+    busy = false;
+    c.run(FLIP_WAIT_MS + 200);
+    expect(calls).toEqual([]);
   });
 });
 

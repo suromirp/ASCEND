@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { goalReadinessFor, usesMilestoneReadiness } from './goalReadinessFor';
-import { computeGr5Readiness, computeMainGoalReadiness } from './gr5Readiness';
+import { computeMainGoalReadiness } from './gr5Readiness';
 import { estimatedHikingMinutes } from './goalRoute';
 import type { GoalDetails, GoalKindId, TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
@@ -73,12 +73,12 @@ describe('welke berekening bij welk doel hoort', () => {
     expect(usesMilestoneReadiness(day())).toBe(false);
   });
 
-  it('voor een tocht is het getal van Je stand (computeGr5Readiness) gelijk aan dat van de Ascend-kaart', () => {
+  it('voor een tocht is het getal van Je stand (computeMainGoalReadiness) gelijk aan dat van de Ascend-kaart', () => {
     const reqs = [{ id: 'r', kind: 'distance', target: { amount: 20, unit: 'km' } }] as unknown as TrainingGoal['requirements'];
     const g = { ...goal('trek_hut', {}), requirements: reqs } as TrainingGoal;
     const logs = hikesAt(['2026-10-20', '2026-10-13']);
     const card = goalReadinessFor(g, logs, TODAY, {}, { isMain: true });
-    const stand = computeGr5Readiness(g.requirements, logs, TODAY);
+    const stand = computeMainGoalReadiness(g.requirements, logs, TODAY);
     expect(card?.percent).toBe(stand?.percent);
     expect(card?.sentence).toBe(stand?.sentence);
   });

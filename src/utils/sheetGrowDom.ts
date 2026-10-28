@@ -136,6 +136,9 @@ export function startSheetGrow(panel: HTMLElement): SheetGrow | null {
         return 0;
       }
     },
-    dispose: removeVeil,
+    dispose: () => {
+      removeVeil();
+      panel.removeAttribute('data-grow');
+    },
   };
 }

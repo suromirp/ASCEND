@@ -67,3 +67,18 @@ export function flipStyle(mode: MotionMode): FlipStyle {
 export function isArmed(armedAt: number | null, now: number): boolean {
   return armedAt !== null && now >= armedAt && now - armedAt <= FLIP_ARM_MS;
 }
+
+// Wachten tot een voorstelblad weg is en dan afspelen; na de grens gewoon op de eindplek. Elke afspeelronde
+// heeft een volgnummer: is er intussen een nieuwe ronde begonnen (`current` is niet meer waar), dan doet de
+// oude poll niets meer, ook niet opruimen, want dat doet de nieuwe ronde met haar eigen rijen.
+export function waitForClear(o: { busy: () => boolean; play: () => void; giveUp: () => void; current: () => boolean; now: () => number; later: (fn: () => void, ms: number) => void; stepMs?: number }): void {
+  const step = o.stepMs ?? 40;
+  const started = o.now();
+  const poll = () => {
+    if (!o.current()) return;
+    if (!o.busy()) o.play();
+    else if (o.now() - started >= FLIP_WAIT_MS) o.giveUp();
+    else o.later(poll, step);
+  };
+  o.later(poll, step);
+}

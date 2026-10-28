@@ -170,7 +170,9 @@ export function isOpen(ev: ForgeEvent, workout: WorkoutExercise[]): boolean {
 }
 
 // Soorten die een stip verdienen: wat Forge deed of zag. Wat je zelf aanpaste weet je al.
-const NOTABLE: ForgeEventKind[] = ['bijgestuurd', 'doorgevoerd', 'onder', 'past-niet', 'spotter'];
+// Het spotterteken staat al bij de set zelf, dus het telt niet mee voor de stip.
+
+const NOTABLE: ForgeEventKind[] = ['bijgestuurd', 'doorgevoerd', 'onder', 'past-niet'];
 
 // Het aantal nieuwe gebeurtenissen sinds je het verloop voor het laatst opende. Een opgeloste melding telt niet.
 export function unseenCount(log: ForgeEvent[], seenAt: number, workout: WorkoutExercise[]): number {

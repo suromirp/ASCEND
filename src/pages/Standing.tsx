@@ -205,7 +205,7 @@ export function StandingPage() {
       {/* Het ene voortgangsgetal staat als gewone marine kaart onder de bergen, niet als
           groot wit vlak op de lucht: de lucht houdt dezelfde licht-donkerverhouding als
           op de andere tabs. */}
-      {gr5 && <Gr5ReadinessCard readiness={gr5} title={primaryGoal && !usesMilestoneReadiness(primaryGoal) ? 'Klaar voor je doel' : 'Klaar voor de GR5'} />}
+      {gr5 && <Gr5ReadinessCard readiness={gr5} milestone={!primaryGoal || usesMilestoneReadiness(primaryGoal)} title={primaryGoal && !usesMilestoneReadiness(primaryGoal) ? 'Klaar voor je doel' : 'Klaar voor de GR5'} />}
 
       {order.map((id) => (
         <Fragment key={id}>{blocks[id]}</Fragment>

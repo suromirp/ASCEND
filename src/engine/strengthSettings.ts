@@ -165,6 +165,8 @@ export interface ResolvedStrengthSettings {
   widenRange: boolean;
   estimateUpTo: number;
   profile: GymProfile;
+  // Alle sportscholen, om bij een log die van zijn eigen training te vinden.
+  profiles: GymProfile[];
   restAuto: boolean;
   restAlert: RestAlert;
   restSound: RestSound;
@@ -417,6 +419,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     widenRange: s.widenRange ?? true,
     estimateUpTo: s.estimateUpTo ?? 20,
     profile,
+    profiles: s.profiles ?? [profile],
     restAuto: s.restAuto ?? true,
     restAlert: s.restAlert ?? 'sound_vibrate',
     restSound: s.restSound ?? 'chime',
