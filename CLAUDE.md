@@ -482,7 +482,11 @@ speed or equal). It is still one percentage. Without a test, or while the fastes
 line says so; without a goal time nothing changes. The card never judges the goal time ("het doel blijft het doel"): it shows the
 distance to the goal as work and one dry line whether the goal time fits average growth by race day (the decision's `-aanvulling.md`), read from the same weeks as the meter: "45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21". "Hier is nog het meeste te winnen" is the meter with the biggest weighted gap (`weightedGapWeakest`), so number, meters and lines never contradict; you judge for yourself. The change "+x in 4 weeks" shows only when the goal already had a value
 four weeks ago (`ReadinessOptions.since`). TARGET-TIME carries the goal time in its id, so one Liever niet holds for every later test
-until the goal time changes; setting "Doeltijd aanpassen voorstellen" (`proposeTargetTime`) switches it off.
+until the goal time changes; setting "Doeltijd aanpassen voorstellen" (`proposeTargetTime`) switches it off. TARGET-TIME,
+the card and the sheet all use the one calculation `racePaces.ts#raceOutlook` (average growth from today); there is no second band.
+The same weeks-of-work language carries the Krachttrend of "Sterker worden" (`engine/strengthReadiness.ts`, level from the length of
+your own history on that exercise, never beginner) and the condition meter Tempo for a day hike with `GoalDetails.timeLimitMinutes` or an
+ultra with `cutoffMinutes` (`engine/limitReadiness.ts`, 10% margin; decision `2026-10-28-klaar-voor-je-doel-logisch-voorwaarden.md`).
 
 **Lichaam** (`/lichaam`, `/lichaam/:plek`, decision
 `docs/beslissingen/2026-10-24-lichaam-als-figuur.md`) is the one place for

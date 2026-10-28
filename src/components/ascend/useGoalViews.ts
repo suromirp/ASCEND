@@ -5,6 +5,7 @@ import { computeGoalReadiness, readinessInputOf } from '../../engine/goalReadine
 import { computeRaceReadiness, resolveReadinessWeighting, type RaceReadiness } from '../../engine/raceReadiness';
 import { computeMainGoalReadiness } from '../../engine/gr5Readiness';
 import { computeStrengthReadiness } from '../../engine/strengthReadiness';
+import { computeLimitReadiness } from '../../engine/limitReadiness';
 import { goalTiming, type GoalTiming } from '../../engine/goalRoute';
 import { nextKeySession, type ListedGoal, type NextKeySession } from '../../engine/goalList';
 import { resolveVariantDuration } from '../../engine/substitutions';
@@ -48,6 +49,10 @@ export function useGoalViews(listed: ListedGoal[]): { views: GoalView[]; next: N
         if (input.kind === 'stronger') {
           const strength = computeStrengthReadiness(g, sessionLogs, today, { naming: { the: naming, your: naming } });
           if (strength) return { item, timing, readiness: strength };
+        }
+        if (input.kind === 'trail' || input.kind === 'day_hike') {
+          const limit = computeLimitReadiness(g, sessionLogs, today, { naming: { the: naming, your: naming } });
+          if (limit) return { item, timing, readiness: limit };
         }
         return { item, timing, readiness: computeGoalReadiness(input, sessionLogs, today, { naming: { the: naming, your: naming } }) };
       }),

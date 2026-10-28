@@ -19,12 +19,15 @@ export interface GrowthRate {
 }
 
 // De sporten waarvoor nu een prestatiemeter bestaat. Nieuwe sporten komen hier bij.
-export const GOAL_GROWTH: Record<'run', GrowthRate> = {
+export const GOAL_GROWTH: Record<'run' | 'walk' | 'trail', GrowthRate> = {
   run: {
     weekly: 0.0055,
     evidence: 'afgeleid',
     source: 'Munoz e.a. 2014 (0,35 tot 0,5% per week bij recreatieve lopers), Nuuttila e.a. 2022, Daniels (een VDOT-punt per vier tot zes weken)',
   },
+  // Tempo bij een tijdslimiet of cutoff: geen trainingsstudie gevonden, dezelfde schatting als fietsvermogen.
+  walk: { weekly: 0.005, evidence: 'zwak', source: 'afgeleid, geen studie over het tempo van recreatieve wandelaars' },
+  trail: { weekly: 0.0055, evidence: 'zwak', source: 'het hardlooptempo, doorgetrokken naar inspanningskilometers; de groei op een ultra is niet onderzocht' },
 };
 
 // Het aantal weken werk waarbij een meter op de helft staat: vulling = HALF_WEEKS / (HALF_WEEKS + weken).

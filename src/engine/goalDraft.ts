@@ -75,6 +75,11 @@ export function questionsFor(id: AddTileId): Question[] {
     // De duur van een tocht volgt uit het aantal dagen: geen aparte keuze.
     if (id === 'trek' && spec.key === 'variant') continue;
     if (spec.key === 'expectedMinutes' && !spec.required) continue;
+    // Een cutoff hoort bij een ultra; een tijdslimiet bij een dagtocht (de soort vraagt hem al).
+    if (spec.key === 'cutoffMinutes') {
+      out.push({ ...spec, showIf: (d) => d.variant === 'ultra' });
+      continue;
+    }
     if (spec.key === 'variant') {
       const choices = def.variants.map((v) => ({ value: v.id, label: v.label }));
       out.push({ ...spec, choices: id === 'run_race' ? [...choices, { value: 'eigen', label: 'Eigen afstand' }] : choices });
@@ -166,6 +171,8 @@ export function buildGoalDraft(input: DraftInput): TrainingGoal {
   if (kind === 'run_race' && details.variant && RACE_KM[details.variant] !== undefined) details.distanceKm = RACE_KM[details.variant];
   // Een eigen afstand heeft geen keuze: de soort leidt hem af uit de afstand.
   if (details.variant === 'eigen') delete details.variant;
+  // Een cutoff hoort bij een ultra: bij een korte trail valt hij weg.
+  if (kind === 'trail' && details.variant !== 'ultra') delete details.cutoffMinutes;
   if (kind === 'trek_hut' || kind === 'trek_tent') details.shelter = kind === 'trek_tent' ? 'tent' : 'hut';
   let requirements: GoalRequirement[] = requirementsFromDetails(kind, details).map((r) => ({ ...r, ...(DISCIPLINE[kind] ? { discipline: DISCIPLINE[kind] } : {}) }));
   if (kind === 'run_race') {
@@ -184,6 +191,13 @@ export function buildGoalDraft(input: DraftInput): TrainingGoal {
     ...(kind === 'trek_hut' || kind === 'trek_tent' ? { execution: 'stages' as const } : {}),
   };
   return input.date ? { ...base, status: 'active', targetDate: input.date } : { ...base, status: 'paused' };
+}
+
+// "Dat is 7:00 uur." onder een tijdslimiet of cutoff in minuten. Zonder getal niets.
+export function limitText(minutes: number | undefined): string | undefined {
+  if (!minutes || minutes <= 0) return undefined;
+  const total = Math.round(minutes);
+  return `Dat is ${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')} uur.`;
 }
 
 // --- het tempo onder de doeltijd ---------------------------------------------------------------

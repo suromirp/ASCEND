@@ -275,7 +275,7 @@ const DAY_HIKE: GoalKindDefinition = {
   variants: [{ id: 'gewoon', label: 'Tot 6 uur en 800 m omhoog' }, { id: 'zwaar', label: 'Zwaarder, tot 10 uur' }],
   inputs: [
     input('distanceKm', 'Afstand', 'km', true), input('gainM', 'Omhoog (D+)', 'm', true), input('lossM', 'Omlaag (D-)', 'm', true),
-    input('packKg', 'Dagrugzak', 'kg'), input('highestPointM', 'Hoogste punt', 'm'), input('expectedMinutes', 'Verwachte tijd', 'min'),
+    input('packKg', 'Dagrugzak', 'kg'), input('highestPointM', 'Hoogste punt', 'm'), input('expectedMinutes', 'Verwachte tijd', 'min'), input('timeLimitMinutes', 'Tijdslimiet, bijvoorbeeld de laatste lift', 'min'),
   ],
   needsDate: true,
   dayShare: true,
@@ -322,6 +322,14 @@ const DAY_HIKE: GoalKindDefinition = {
       measure: 'Dagen sinds je laatste afdaling van minstens 100 m.',
       full: '100% bij een afdaling in de laatste 14 dagen, lineair omlaag naar 0% bij 63 dagen.',
       why: 'De bescherming van een afdaling is na zes tot negen weken weg.',
+    },
+    {
+      id: 'tempo', label: 'Tempo', type: 'beste_dag', metric: 'extern', unit: 'aandeel', sports: ['hiking'], windowDays: WINDOW_56,
+      need: s({ from: 'external' }, 'zwak', D('Klaar voor je doel logisch, voorwaarde: de DIN-tijd van de dag keer jouw eigen factor, naast je tijdslimiet min 10% marge')),
+      appliesWhen: { key: 'timeLimitMinutes', atLeast: 1 },
+      measure: 'De DIN-tijd van de dag keer de factor van jouw wandelingen van minstens anderhalf uur in de laatste acht weken (minstens drie).',
+      full: 'Binnen je tijdslimiet min 10% marge is de meter vol. Anders het gat in weken werk bij gemiddelde groei; bij tien weken staat hij op 50%.',
+      why: 'Je mag de tocht pas volbrengen als je binnen de tijd blijft; de marge is voor eten, pauzes en een tragere dag.',
     },
   ],
 };
@@ -459,7 +467,7 @@ const TRAIL: GoalKindDefinition = {
   group: 'duur',
   summary: 'Hardlopen in heuvels en bergen, kort of ultra.',
   variants: [{ id: 'kort', label: 'Kort, ongeveer 10 tot 30 km' }, { id: 'ultra', label: 'Ultra, vanaf ongeveer 50 km' }],
-  inputs: [input('variant', 'Kort of ultra', 'keuze', true), input('distanceKm', 'Afstand', 'km', true), input('gainM', 'Omhoog (D+)', 'm', true), input('lossM', 'Omlaag (D-)', 'm'), input('expectedMinutes', 'Verwachte tijd', 'min', true)],
+  inputs: [input('variant', 'Kort of ultra', 'keuze', true), input('distanceKm', 'Afstand', 'km', true), input('gainM', 'Omhoog (D+)', 'm', true), input('lossM', 'Omlaag (D-)', 'm'), input('expectedMinutes', 'Verwachte tijd', 'min', true), input('cutoffMinutes', 'Cutoff', 'min')],
   needsDate: true,
   dayShare: false,
   buildWeeks: {
@@ -518,6 +526,14 @@ const TRAIL: GoalKindDefinition = {
       measure: 'Je langste reeks dagen van minstens anderhalf uur lopen in de laatste 12 weken.',
       full: 'Drie dagen.',
       why: 'In de ultrawereld gangbaar, maar er is geen studie die laat zien dat het werkt.',
+    },
+    {
+      id: 'tempo', label: 'Tempo', type: 'beste_dag', metric: 'extern', unit: 'aandeel', sports: ['running', 'hiking'], windowDays: WINDOW_56,
+      need: s({ from: 'external' }, 'zwak', D('Klaar voor je doel logisch, voorwaarde: inspanningskilometers (ITRA, een vuistregel) uit je beste lange loop, naast je cutoff min 10% marge')),
+      appliesWhen: { key: 'cutoffMinutes', atLeast: 1 },
+      measure: 'Je tempo per inspanningskilometer (kilometers plus het stijgen gedeeld door 100) in je beste loop of bergwandeling van minstens anderhalf uur in de laatste acht weken, doorgetrokken naar de wedstrijd.',
+      full: 'Binnen je cutoff min 10% marge is de meter vol. Anders het gat in weken werk bij gemiddelde groei; bij tien weken staat hij op 50%.',
+      why: 'Wie de cutoff mist, mag niet verder; de schatting uit je eigen lange lopen is minder zeker dan een testloop.',
     },
     { ...volhouden(), appliesWhen: { variant: ['kort'] } },
   ],

@@ -4,7 +4,7 @@ import { GOAL_PRIORITIES } from '../../models/goals';
 import { PRIORITY_NAME } from '../../engine/goalLabels';
 import { labelLine, weeksWord } from '../../engine/goalList';
 import {
-  ADD_TILES, applyGoalEdit, buildGoalDraft, defaultDetails, detailsFromGoal, draftProblems, kindOfTile, paceText, questionsFor, RACE_KM, suggestPriority, tileOfGoal, type AddTileId,
+  ADD_TILES, applyGoalEdit, buildGoalDraft, defaultDetails, detailsFromGoal, draftProblems, kindOfTile, limitText, paceText, questionsFor, RACE_KM, suggestPriority, tileOfGoal, type AddTileId,
 } from '../../engine/goalDraft';
 import { daysBetween, todayISO, weekdayLongNL } from '../../utils/dates';
 import { makeId } from '../../utils/id';
@@ -131,7 +131,7 @@ export function GoalFormSheet({
                   decimals={q.unit === 'km' || q.unit === 'kg' ? 1 : 0}
                   value={typeof details[q.key] === 'number' ? (details[q.key] as number) : undefined}
                   onChange={(v) => set(q.key, v)}
-                  helper={q.key === 'targetMinutes' ? paceText(km, details.targetMinutes) : undefined}
+                  helper={q.key === 'targetMinutes' ? paceText(km, details.targetMinutes) : q.key === 'timeLimitMinutes' || q.key === 'cutoffMinutes' ? limitText(details[q.key]) : undefined}
                   tall
                 />
               )}

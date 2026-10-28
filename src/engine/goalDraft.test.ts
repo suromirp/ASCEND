@@ -1,10 +1,34 @@
 import { describe, it, expect } from 'vitest';
 import type { TrainingGoal } from '../models/goals';
-import { ADD_TILES, applyGoalEdit, buildGoalDraft, defaultDetails, detailsFromGoal, draftProblems, paceText, questionsFor, suggestPriority, tileOfGoal, RACE_KM } from './goalDraft';
+import { ADD_TILES, applyGoalEdit, buildGoalDraft, defaultDetails, detailsFromGoal, draftProblems, limitText, paceText, questionsFor, suggestPriority, tileOfGoal, RACE_KM } from './goalDraft';
 import { isRaceGoal } from './goalLabels';
 
 const NOW = '2026-10-26T10:00:00.000Z';
 const existing = (id: string, date: string, priority: TrainingGoal['priority']): TrainingGoal => ({ id, name: id, status: 'active', targetDate: date, priority, requirements: [], createdAt: NOW, updatedAt: NOW }) as TrainingGoal;
+
+describe('tijdslimiet en cutoff in het formulier', () => {
+  it('een dagtocht vraagt een tijdslimiet, een trail een cutoff alleen bij een ultra', () => {
+    expect(questionsFor('day_hike').map((q) => q.key)).toContain('timeLimitMinutes');
+    const cutoff = questionsFor('trail').find((q) => q.key === 'cutoffMinutes')!;
+    expect(cutoff.required).toBe(false);
+    expect(cutoff.showIf?.({ variant: 'ultra' })).toBe(true);
+    expect(cutoff.showIf?.({ variant: 'kort' })).toBe(false);
+    expect(questionsFor('day_hike').length).toBeLessThanOrEqual(6);
+    expect(questionsFor('trail').length).toBeLessThanOrEqual(6);
+  });
+
+  it('een korte trail houdt geen cutoff over', () => {
+    const g = buildGoalDraft({ id: 'x', now: '2026-10-28T10:00:00Z', tile: 'trail', details: { variant: 'kort', distanceKm: 20, gainM: 800, expectedMinutes: 200, cutoffMinutes: 300 }, date: '2027-05-01', name: '', priority: 'top', order: 0 });
+    expect(g.details?.cutoffMinutes).toBeUndefined();
+    const u = buildGoalDraft({ id: 'y', now: '2026-10-28T10:00:00Z', tile: 'trail', details: { variant: 'ultra', distanceKm: 50, gainM: 2500, expectedMinutes: 600, cutoffMinutes: 660 }, date: '2027-05-01', name: '', priority: 'top', order: 0 });
+    expect(u.details?.cutoffMinutes).toBe(660);
+  });
+
+  it('zegt de limiet in uren', () => {
+    expect(limitText(660)).toBe('Dat is 11:00 uur.');
+    expect(limitText(undefined)).toBeUndefined();
+  });
+});
 
 describe('de soorten in het toevoegblad', () => {
   it('een leeg veld met een vraag als label leest als gewone zin', () => {

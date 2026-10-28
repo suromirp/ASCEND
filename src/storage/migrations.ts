@@ -1033,7 +1033,7 @@ export function migrateInfluences(raw: unknown): { list: InfluenceEntry[] | unde
 // - Een hardloopdoel wordt run_race, met priority uit planRole.
 // - "Alleen volgen" (planRole 'track') bestaat niet meer: het wordt priority 'verkenning'.
 
-const DETAIL_NUMBERS = ['distanceKm', 'gainM', 'lossM', 'days', 'packKg', 'highestPointM', 'sleepingPointM', 'expectedMinutes', 'targetMinutes', 'baggageKg', 'homeDaysInRow', 'weeklyMinutes', 'strengthDays'] as const;
+const DETAIL_NUMBERS = ['distanceKm', 'gainM', 'lossM', 'days', 'packKg', 'highestPointM', 'sleepingPointM', 'expectedMinutes', 'targetMinutes', 'baggageKg', 'homeDaysInRow', 'weeklyMinutes', 'strengthDays', 'timeLimitMinutes', 'cutoffMinutes'] as const;
 
 // Leest de ingevulde gegevens. Een veld dat geen getal boven nul is, of een tekst die niet
 // bij het veld hoort, valt weg; de rest blijft.
