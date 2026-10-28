@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import { formatNumberNL } from '../../utils/number';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../icons';
+import { ExerciseArtButton } from '../ExerciseArtButton';
 import { Eyebrow } from '../ui';
 import { ExerciseChart } from './ExerciseChart';
 import { TrendSpark } from './TrendSpark';
@@ -71,11 +72,13 @@ export function ExerciseRow({
 
   return (
     <div className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
+      <div className="flex items-center gap-2">
+      {exercise && <ExerciseArtButton exerciseId={exercise.id} name={history.name} />}
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex min-h-[60px] w-full items-center gap-3 py-2 text-left"
+        className="flex min-h-[60px] min-w-0 flex-1 items-center gap-3 py-2 text-left"
       >
         <span className="min-w-0 flex-1">
           <span className="block font-display text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{history.name}</span>
@@ -104,6 +107,7 @@ export function ExerciseRow({
           <Icon name="omlaag" size={20} />
         </span>
       </button>
+      </div>
       {open && (
         <>
           {showTrendLines && (

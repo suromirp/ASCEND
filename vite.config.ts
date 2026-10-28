@@ -96,7 +96,21 @@ export default defineConfig({
         // sync (public/morning-notice-sw.js). They are not precached: the
         // browser stores imported scripts with the service worker itself.
         importScripts: ['share-target-sw.js', 'morning-notice-sw.js'],
-        globIgnores: ['share-target-sw.js', 'morning-notice-sw.js'],
+        // De tekeningen bij oefeningen (public/exercise-art, ruim 5 MB) staan bewust niet in de precache:
+        // ze worden geladen als je een oefening opent en op de achtergrond vooraf voor je eigen
+        // trainingen, en bewaard in een eigen cache (docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen.md).
+        globIgnores: ['share-target-sw.js', 'morning-notice-sw.js', 'exercise-art/**'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/exercise-art/') && url.pathname.endsWith('.json'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'exercise-art',
+              expiration: { maxEntries: 120 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
       },
     }),
   ],

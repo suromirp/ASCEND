@@ -827,6 +827,10 @@ export interface AppSettings {
   // (engine/legEaseSettings.ts), so no migration step is needed.
   legEase?: 'voorstel' | 'regel' | 'uit';
   legEaseHow?: 'standaard' | 'alleen-gewicht' | 'extra';
+  // "Plaatjes bij oefeningen" (engine/exerciseArtSettings.ts): het spierkaartje en de tekening bij een oefening in
+  // Forge ('beide', het advies), alleen het spierkaartje, of niets. Optional and additive; read defensively, so no
+  // migration step is needed.
+  exerciseArt?: 'beide' | 'spierkaart' | 'uit';
   // Wat je koos op een dag met vermoeide benen, per datum en training (models/legEase.ts). Een lijst naast de
   // logs; de laatste 60. Optional and additive; read defensively on import
   // (storage/migrations.ts#migrateLegEaseDays) and merged per date and session.

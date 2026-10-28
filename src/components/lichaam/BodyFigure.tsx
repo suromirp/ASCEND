@@ -11,7 +11,7 @@ import type { Figure } from '../../engine/figureSettings';
 const LINE = { fill: 'none', stroke: 'var(--color-ink-dim)', strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
 // Silhouet en spierlijnen, zonder plekken. Gedeeld door het hele figuur en het kleine plaatje.
-function Body({ view, figure }: { view: BodyView; figure: Figure }) {
+export function Body({ view, figure }: { view: BodyView; figure: Figure }) {
   const half = SILHOUETTE[figure];
   const lines = figureLines(view, figure);
   const mirror = `translate(${FIGURE_WIDTH} 0) scale(-1 1)`;

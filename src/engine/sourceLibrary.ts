@@ -15,7 +15,7 @@ import { RESEARCH_SOURCES } from '../data/researchSources';
 import { TRAINING_SPOTS } from '../data/trainingSpots';
 import type { PublicationType } from '../models/evidence';
 
-export type SourceCategory = 'wetenschap' | 'garmin' | 'macrofactor' | 'bergsport' | 'training';
+export type SourceCategory = 'wetenschap' | 'garmin' | 'macrofactor' | 'bergsport' | 'training' | 'afbeeldingen';
 
 export const CATEGORY_LABEL: Record<SourceCategory, string> = {
   wetenschap: 'Wetenschap',
@@ -23,6 +23,7 @@ export const CATEGORY_LABEL: Record<SourceCategory, string> = {
   bergsport: 'Bergsport en route',
   garmin: 'Garmin',
   macrofactor: 'MacroFactor',
+  afbeeldingen: 'Afbeeldingen',
 };
 
 export interface LibrarySource {

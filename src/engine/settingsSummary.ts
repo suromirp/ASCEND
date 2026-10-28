@@ -32,6 +32,7 @@ import { resolveMotion } from './motionSettings';
 import { resolveReadinessWeighting } from './raceReadiness';
 import { resolveGrowthChoice, resolveLimitMargin } from '../data/goalGrowth';
 import { resolveBodyCheck } from './bodyCheckSettings';
+import { resolveExerciseArt } from './exerciseArtSettings';
 import { resolveLegEase, resolveLegEaseHow } from './legEaseSettings';
 import { resolveSky } from './skySettings';
 import { resolveLongRunGrowth } from './runGrowth';
@@ -574,6 +575,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.weekReview };
     case 'weekterugblik-dag':
       return { value: choiceShort('terugblikDag', o.weekReviewDay) };
+    case 'forge-plaatjes':
+      return { value: choiceShort('plaatjes', resolveExerciseArt(s)) };
     case 'lijfvraag':
       return { value: choiceShort('lijfvraag', resolveBodyCheck(s)) };
     case 'lichterbenen':

@@ -248,6 +248,12 @@ zo'n bestand terug in en vervangt de huidige data.
 `migrateV1toV2`-stap, zodat een export van vandaag over jaren nog steeds
 importeert.
 
+## Tekeningen bij oefeningen
+
+De tekeningen in `public/exercise-art/` komen uit Workout Guide van Bryl Lim, gebaseerd op de poses
+van Everkinetic, onder de licentie CC BY-SA 4.0 (zie `public/exercise-art/LICENSE.md` en
+`ATTRIBUTION.md`). Alleen die map valt onder die licentie; de rest van de repository niet.
+
 ## Toekomstige integraties
 
 **Nog niet geïmplementeerd — de architectuur ligt klaar:**

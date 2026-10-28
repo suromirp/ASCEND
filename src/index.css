@@ -1084,3 +1084,105 @@ html[data-motion='off'] *::after {
     opacity: 0.6;
   }
 }
+
+/* Plaatjes bij oefeningen (docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen.md).
+   Eén grote tekening met drie stappen eronder. Bij openen speelt de beweging één keer, 1, 2, 3 in
+   900 ms ease-out, en blijft stil op 3; daarna lichten de spieren op. Rustig is half zo lang (--ea),
+   Uit en beperkte beweging staan meteen op de eindstand (de regels hierboven kappen elke animatie af).
+   Geen lus. De stappen die al geweest zijn blijven op 10 procent staan, als spoor van de beweging. */
+:root { --ea: 1; }
+html[data-motion='calm'] { --ea: 0.5; }
+html[data-motion='off'] { --ea: 0; }
+
+.ea-vlak {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 196px;
+  overflow: hidden;
+  touch-action: pan-y;
+  border-radius: 16px;
+  border: 1px solid var(--color-card-border);
+  background: var(--color-surface);
+  color: var(--color-ink-dim);
+}
+.ea-fr {
+  position: absolute;
+  inset: 14px 10px;
+  opacity: 0;
+  transition: opacity calc(180ms * var(--ea)) ease-out;
+}
+.ea-fr svg { display: block; width: 100%; height: 100%; }
+.ea-fr path { fill: currentColor; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+.ea-beweging[data-stap='1'] .ea-fr[data-i='1'],
+.ea-beweging[data-stap='2'] .ea-fr[data-i='2'],
+.ea-beweging[data-stap='3'] .ea-fr[data-i='3'] { opacity: 1; }
+.ea-beweging[data-stap='2'] .ea-fr[data-i='1'],
+.ea-beweging[data-stap='3'] .ea-fr[data-i='1'],
+.ea-beweging[data-stap='3'] .ea-fr[data-i='2'] { opacity: 0.1; }
+
+.ea-stappen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.ea-stap {
+  position: relative;
+  display: block;
+  height: 64px;
+  min-height: 44px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--color-card-border);
+  background: var(--color-surface);
+  color: var(--color-ink-dim);
+}
+.ea-stap svg { position: absolute; inset: 6px 4px; width: calc(100% - 8px); height: calc(100% - 12px); display: block; }
+.ea-stap svg path { fill: currentColor; stroke: currentColor; stroke-width: 2.4; stroke-linejoin: round; }
+.ea-nr { position: absolute; left: 8px; top: 5px; font-size: 12px; font-weight: 600; color: var(--color-ink-dim); }
+.ea-ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-action);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity calc(180ms * var(--ea)) ease-out;
+}
+.ea-beweging[data-stap='1'] .ea-stap[data-i='1'] .ea-ring,
+.ea-beweging[data-stap='2'] .ea-stap[data-i='2'] .ea-ring,
+.ea-beweging[data-stap='3'] .ea-stap[data-i='3'] .ea-ring { opacity: 1; }
+.ea-beweging[data-stap='1'] .ea-stap[data-i='1'] .ea-nr,
+.ea-beweging[data-stap='2'] .ea-stap[data-i='2'] .ea-nr,
+.ea-beweging[data-stap='3'] .ea-stap[data-i='3'] .ea-nr { color: var(--color-ink); }
+
+.ea-fig svg {
+  display: block;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 78%, transparent 100%);
+}
+.ea-mini svg { display: block; }
+.ea-m { opacity: var(--o); }
+
+.ea-play .ea-fr,
+.ea-play .ea-ring { animation-duration: calc(900ms * var(--ea)); animation-timing-function: ease-out; animation-fill-mode: both; }
+.ea-play .ea-fr[data-i='1'] { animation-name: ea-o1; }
+.ea-play .ea-fr[data-i='2'] { animation-name: ea-o2; }
+.ea-play .ea-fr[data-i='3'] { animation-name: ea-o3; }
+.ea-play .ea-stap[data-i='1'] .ea-ring { animation-name: ea-r1; }
+.ea-play .ea-stap[data-i='2'] .ea-ring { animation-name: ea-r2; }
+.ea-play .ea-stap[data-i='3'] .ea-ring { animation-name: ea-r3; }
+@keyframes ea-o1 { 0%, 22% { opacity: 1; } 49%, 100% { opacity: 0.1; } }
+@keyframes ea-o2 { 0%, 22% { opacity: 0; } 49%, 67% { opacity: 1; } 93%, 100% { opacity: 0.1; } }
+@keyframes ea-o3 { 0%, 67% { opacity: 0; } 93%, 100% { opacity: 1; } }
+@keyframes ea-r1 { 0%, 22% { opacity: 1; } 49%, 100% { opacity: 0; } }
+@keyframes ea-r2 { 0%, 22% { opacity: 0; } 49%, 67% { opacity: 1; } 93%, 100% { opacity: 0; } }
+@keyframes ea-r3 { 0%, 67% { opacity: 0; } 93%, 100% { opacity: 1; } }
+/* de spieren lichten op: eerst de hoofdspier, 200 ms later wie meehelpt */
+.ea-licht .ea-m { animation: ea-licht calc(360ms * var(--ea)) ease-out both; animation-delay: calc(var(--d) * var(--ea)); }
+@keyframes ea-licht { from { opacity: 0; } }
+html[data-motion='off'] .ea-play .ea-fr,
+html[data-motion='off'] .ea-play .ea-ring,
+html[data-motion='off'] .ea-licht .ea-m { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ea-play .ea-fr,
+  .ea-play .ea-ring,
+  .ea-licht .ea-m { animation: none; }
+}
