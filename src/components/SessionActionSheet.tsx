@@ -104,6 +104,7 @@ export function SessionActionSheet({
   onOpenLog,
   startStep,
   catchUp = false,
+  caughtUpOn,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -134,6 +135,9 @@ export function SessionActionSheet({
   startStep?: 'move';
   // Een gemiste training die je inhaalt (engine/catchUp.ts): dezelfde dagkeuze, onder de naam Inhalen.
   catchUp?: boolean;
+  // De oude rij van een inhaal ("ingehaald op za 31"): alleen dat feit, geen acties, zodat je hem niet
+  // dubbel plant of logt.
+  caughtUpOn?: string;
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -349,6 +353,11 @@ export function SessionActionSheet({
             <span style={{ color: 'var(--color-success-text)' }}><Icon name="kracht" size={20} /></span>{macroFactorLine(waiting)}
           </p>
         )}
+        {caughtUpOn ? (
+          <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+            Deze training is {caughtUpOn}. Daar staat hij nu in je week.
+          </p>
+        ) : (<>
         <div>
           <PrimaryButton onClick={run(actions.main)} disabled={saving}>{label[actions.main]}</PrimaryButton>
           {kind === 'quick' && actions.main === 'done' && (
@@ -360,6 +369,7 @@ export function SessionActionSheet({
             {actions.rows.map((a) => <SheetRow key={a} title={label[a]} onClick={run(a)} />)}
           </SheetRows>
         )}
+        </>)}
         {template.type === 'strength' && (
           <div className="flex justify-center">
             <TextButton tone="dim" icon="verder" onClick={() => { requestClose(); window.setTimeout(() => navigate('/forge'), 280); }}>Forge</TextButton>

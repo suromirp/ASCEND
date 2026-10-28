@@ -3,7 +3,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import { proposeMove } from './scheduler';
 import { decideMove, dayVerdicts, type DragContext } from './weekDrag';
-import { catchUpEligibility, catchUpNoteFor, caughtUpNoteFor, catchUpRows, qualifiesForCatchUp, caughtUpMap } from './catchUp';
+import { catchUpEligibility, catchUpNoteFor, caughtUpNoteFor, catchUpRows, qualifiesForCatchUp, caughtUpMap, validCatchUp } from './catchUp';
 
 const { templates } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -111,5 +111,17 @@ describe('teksten en verwijzingen', () => {
   it('welke rijen zijn ingehaald: niet als de nieuwe rij zelf is overgeslagen', () => {
     const gone = s('m', 'tpl_easy_run', '2026-10-02', { catchUp: { fromId: 'old2', fromDate: '2026-09-27' }, status: 'skipped' });
     expect([...caughtUpMap([added, gone]).keys()]).toEqual(['old']);
+  });
+});
+
+describe('validCatchUp', () => {
+  it('laat een met de hand bewerkte inhaal weg in plaats van te crashen', () => {
+    expect(validCatchUp({ fromId: 'a', fromDate: '2026-10-27' })).toBe(true);
+    expect(validCatchUp({})).toBe(false);
+    expect(validCatchUp('wo 28')).toBe(false);
+    expect(validCatchUp({ fromId: 'a', fromDate: 'gisteren' })).toBe(false);
+    const broken = { id: 'n', templateId: 't', scheduledDate: '2026-10-29', weekStartDate: '2026-10-26', status: 'planned', catchUp: {} } as unknown as PlannedSession;
+    expect(caughtUpMap([broken]).size).toBe(0);
+    expect(catchUpNoteFor(broken)).toBeUndefined();
   });
 });

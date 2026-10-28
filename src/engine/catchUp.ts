@@ -52,11 +52,19 @@ export function catchUpRows(session: PlannedSession, toDate: string, lock: PlanL
   return { skipped, added };
 }
 
+// Een inhaal die gelezen mag worden: twee teksten, de dag een datum. Een met de hand bewerkt
+// bestand kan iets anders bevatten; dat wordt genegeerd (en bij importeren weggelaten).
+export function validCatchUp(v: unknown): v is { fromId: string; fromDate: string } {
+  if (typeof v !== 'object' || v === null) return false;
+  const c = v as Record<string, unknown>;
+  return typeof c.fromId === 'string' && c.fromId.length > 0 && typeof c.fromDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(c.fromDate);
+}
+
 // De rijen die al zijn ingehaald: id van de oude rij, de nieuwe rij. Een nieuwe rij die zelf is
 // overgeslagen telt niet meer.
 export function caughtUpMap(sessions: readonly PlannedSession[]): Map<string, PlannedSession> {
   const map = new Map<string, PlannedSession>();
-  for (const s of sessions) if (s.catchUp && s.status !== 'skipped') map.set(s.catchUp.fromId, s);
+  for (const s of sessions) if (validCatchUp(s.catchUp) && s.status !== 'skipped') map.set(s.catchUp.fromId, s);
   return map;
 }
 
@@ -64,7 +72,7 @@ const dayShort = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number
 
 // Op de nieuwe rij: "ingehaald van wo 28".
 export function catchUpNoteFor(session: PlannedSession): string | undefined {
-  return session.catchUp ? `ingehaald van ${dayShort(session.catchUp.fromDate)}` : undefined;
+  return validCatchUp(session.catchUp) ? `ingehaald van ${dayShort(session.catchUp.fromDate)}` : undefined;
 }
 
 // Op de oude rij, gegeven de nieuwe: "ingehaald op do 29".

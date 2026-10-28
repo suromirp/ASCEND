@@ -119,6 +119,7 @@ function migrateLegacyObjectives(
 
 export { BackupMessageError, backupErrorText } from './backupMessage';
 import { BackupMessageError } from './backupMessage';
+import { validCatchUp } from '../engine/catchUp';
 
 export interface BuildEnvelopeOptions {
   // Whether the full series travel along. Left out: the setting "Reeksen in back-up" decides
@@ -218,6 +219,13 @@ const isDate = (v: unknown): boolean => typeof v === 'string' && DATE_RE.test(v)
 const isTemplate = (v: unknown) => hasId(v) && typeof v.name === 'string' && typeof v.type === 'string';
 const isPlanned = (v: unknown) => hasId(v) && typeof v.templateId === 'string' && isDate(v.scheduledDate) && isDate(v.weekStartDate) && typeof v.status === 'string';
 const isLog = (v: unknown) => hasId(v) && typeof v.templateId === 'string' && isDate(v.completedDate) && typeof v.completedAt === 'string';
+
+// Een inhaal (PlannedSession.catchUp) die niet klopt, valt weg; de rij blijft.
+function cleanPlannedCatchUp(s: PlannedSession): PlannedSession {
+  if (s.catchUp === undefined || validCatchUp(s.catchUp)) return s;
+  const { catchUp: _drop, ...rest } = s;
+  return rest;
+}
 
 interface Counter { n: number }
 
@@ -529,7 +537,7 @@ interface RawSource {
 function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoals, hasCapability, hasV4Extras, hasV5Extras }: RawSource): NormalizedBackupData {
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
-  const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped);
+  const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped)?.map(cleanPlannedCatchUp);
   const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail);
   const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped)?.map(migrateInjuryNote);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;

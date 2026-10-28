@@ -32,7 +32,7 @@ import { LogDetailSheet } from '../components/LogDetailSheet';
 import { formatNumberNL } from '../utils/number';
 import { WeekLoadCards } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
-import { catchUpEligibility, caughtUpMap } from '../engine/catchUp';
+import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { decideMove, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
@@ -333,6 +333,7 @@ export function WeekPage() {
         <SessionActionSheet
           session={selected}
           startStep={openOnMove ? 'move' : undefined}
+          caughtUpOn={!selectedLog && caughtUp.has(selected.id) ? caughtUpNoteFor(caughtUp.get(selected.id)!) : undefined}
           catchUp={!selectedLog && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id) }).ok}
           template={templateById.get(selected.templateId)!}
           allowedPair={pairs.get(selected.id)}
