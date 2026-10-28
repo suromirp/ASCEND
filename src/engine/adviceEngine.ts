@@ -47,6 +47,7 @@ import type { TestJudgment } from '../models/testJudgment';
 import { awaitsEffort, testStopsRemark } from './testJudgment';
 import { manyStops, stopsShort } from './bestEffort';
 import { hasRole } from './templateRoles';
+import { lockLevel } from './weekValidator';
 import type { LeavePeriod } from '../models/leave';
 import { weatherAdvice } from './weatherSwap';
 import { LEG_BODY_PARTS } from './legSpots';
@@ -327,6 +328,17 @@ function isKeySession(template: SessionTemplate): boolean {
   return ['tpl_long_run', 'tpl_mountain_hike', 'tpl_hike_day_one'].includes(template.id) || /lange duurloop|bergtocht/i.test(template.name);
 }
 
+// Moved leg strength must not leave the next hard session in the two days after it too heavy
+// (index 12 at most), shared by TEST-MAKE-ROOM and TEST-RETRY.
+function leavesNextHardFresh(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, d: string, s: PlannedSession, others: PlannedSession[]): boolean {
+  const t = templateById.get(s.templateId);
+  if (!t || !isLegHeavyTemplate(t)) return true;
+  const hard = others.find((o) => { const ot = templateById.get(o.templateId); return !!ot && ot.type !== 'strength' && ot.type !== 'recovery' && (isHardRun(ot) || isLegHeavyTemplate(ot)) && daysBetween(d, o.scheduledDate) >= 0 && daysBetween(d, o.scheduledDate) <= 2; });
+  if (!hard) return true;
+  if (hard.scheduledDate === d) return false; // the same day as a hard session: never
+  return freshnessAt(hard.scheduledDate, others.filter((o) => o.id !== hard.id), templateById, inputs.logs, { id: s.id, templateId: s.templateId, date: d, plannedMinutes: s.plannedMinutes }).index <= FATIGUE_THRESHOLDS.hard.fresh;
+}
+
 // --- Rule TEST-MAKE-ROOM -----------------------------------------------------
 // Trigger: the 5 km test run was missed or skipped (no time). The test is
 // what sets your race pace, so it is worth more than most trainings around
@@ -419,14 +431,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   // Moved leg strength must not leave the next hard session (hills, intervals,
   // tempo, a long run) in the two days after it too heavy: index 12 at most
   // (docs/onderzoek/Spierbelasting en beenvermoeidheid.md, "Drempels").
-  function nextHardStaysFresh(d: string, s: PlannedSession, others: PlannedSession[]): boolean {
-    const t = templateById.get(s.templateId);
-    if (!t || !isLegHeavyTemplate(t)) return true;
-    const hard = others.find((o) => { const ot = templateById.get(o.templateId); return !!ot && ot.type !== 'strength' && ot.type !== 'recovery' && (isHardRun(ot) || isLegHeavyTemplate(ot)) && daysBetween(d, o.scheduledDate) >= 0 && daysBetween(d, o.scheduledDate) <= 2; });
-    if (!hard) return true;
-    if (hard.scheduledDate === d) return false; // the same day as a hard session: never
-    return freshnessAt(hard.scheduledDate, others.filter((o) => o.id !== hard.id), templateById, inputs.logs, { id: s.id, templateId: s.templateId, date: d, plannedMinutes: s.plannedMinutes }).index <= FATIGUE_THRESHOLDS.hard.fresh;
-  }
+  const nextHardStaysFresh = (d: string, s: PlannedSession, others: PlannedSession[]) => leavesNextHardFresh(inputs, templateById, d, s, others);
 
   function moveStrengthFor(date: string): Advice[] | undefined {
     if (!test || !lost) return undefined;
@@ -1136,8 +1141,11 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
 // the app already calls "iets te gunstig" (engine/bestEffort.ts#manyStops), or it waits for your
 // answer as a doubtful, slower test, and no other test is planned in the next 14 days.
 // Rule: the first hard run (role hard_run) that falls at least 3 days after that test, within 10
-// days from today, and where a test fits by the usual spacing (no heavy legs or tocht within 48
-// hours before), becomes a 5 km test on the same day. Without such a day: no advice.
+// days from today, becomes a 5 km test on the same day. Without a day where that works: no advice.
+// What stands in the way moves in the same proposal (decision 2026-10-28-nieuwe-testpoging-ruimte.md):
+// leg strength to after the test, a long run or hard run of the day after to the next day where it
+// fits (short when that week has a long run of its own), the smallest change first, up to three
+// options. What you locked is never moved, only named.
 // Always a proposal; Liever niet is not asked again for the same test (the id carries its date).
 const RETRY_WINDOW_DAYS = 21;
 const RETRY_AHEAD_DAYS = 10;
@@ -1166,35 +1174,126 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   const afterTest = addDays(last.date, RETRY_MIN_GAP_DAYS);
   const earliest = afterTest > addDays(today, 1) ? afterTest : addDays(today, 1);
   const latest = addDays(today, RETRY_AHEAD_DAYS);
-  const found = inputs.plannedSessions
+  const hardRuns = inputs.plannedSessions
     .filter((s) => {
       const t = templateById.get(s.templateId);
       return !!t && hasRole(t, 'hard_run') && open(s) && s.scheduledDate >= earliest && s.scheduledDate <= latest && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, today);
     })
-    .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id))
-    .find((s) => {
-      const others = inputs.plannedSessions.filter((o) => o.id !== s.id && o.status !== 'skipped' && (o.scheduledDate >= today || loggedIds.has(o.id)));
-      return respectsHeavySpacing(s.scheduledDate, test, others, templateById, inputs.logs, s.id);
-    });
-  if (!found) return [];
+    .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id));
 
-  const replaced = templateById.get(found.templateId)!;
-  const when = shortDate(found.scheduledDate);
-  const title = `Nieuwe testpoging op ${when}`;
+  const levelOf = (s: PlannedSession) => lockLevel(s, loggedIds, today);
+  const plans = hardRuns.map((s) => retryPlanFor(s, inputs, templateById, test, levelOf)).filter((p): p is RetryPlan => !!p);
+  // The smallest change wins; with equal cost the earlier day.
+  const ranked = plans.sort((a, b) => a.cost - b.cost || a.found.scheduledDate.localeCompare(b.found.scheduledDate)).slice(0, MAX_OPTIONS);
+  if (ranked.length === 0) return [];
+
   const was = stops
     ? `Je testloop van ${shortDate(last.date)} had ${(last.stoppedSec ?? 0) > 60 ? `${stoppedTime(last.stoppedSec ?? 0)} stilstand` : `${last.stops} keer stilstand`}, dus hij is iets te gunstig.`
     : `Je testloop van ${shortDate(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
   const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
-  const effect = `${was} Met Akkoord wordt ${replaced.name} op ${when} een testloop van 5 km. ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.`;
-  const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. ASCEND zoekt een dag zonder zware beendag of tocht in de 48 uur ervoor. Alleen jij beslist: dit is een voorstel.';
-  const item: PlanChangeItem = {
-    plannedSessionId: found.id, action: 'move', fromDate: found.scheduledDate, toDate: found.scheduledDate, templateId: TEST_RUN_ID, plannedMinutes: test.durationVariants.full,
-    reason: stops ? 'Nieuwe testpoging: de vorige had veel stilstand.' : 'Nieuwe testpoging: de vorige telde nog niet.', generatedBy: ['engine/adviceEngine.ts', 'TEST-RETRY'],
+  const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. ASCEND zoekt de dag die het minst verandert. Staat er een zware beendag of de lange duurloop in de weg, dan schuift die mee naar een dag waar hij past, in hetzelfde voorstel. Wat jij zelf vastzette, schuift ASCEND niet: dat noemt het alleen. Alleen jij beslist: dit is een voorstel.';
+  const nameOf = (x: PlannedSession) => templateById.get(x.templateId)?.name ?? 'Training';
+  const isStrength = (x: PlannedSession) => templateById.get(x.templateId)?.type === 'strength';
+  const build = (plan: RetryPlan) => {
+    const when = shortDate(plan.found.scheduledDate);
+    const title = `Nieuwe testpoging op ${when}`;
+    const lines = [
+      ...plan.moves.map((m) => `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)} gaat naar ${shortDate(m.to)}${isStrength(m.session) ? ', na de test' : ''}${m.minutes ? `, korter (${m.minutes} minuten)` : ''}.`),
+      ...plan.moves.filter((m) => m.rest).map((m) => `${nameOf(m.rest!)} van ${shortDate(m.to)} vervalt, want de dag ervoor staat dan niets meer.`),
+      ...plan.locked.map((l) => `${nameOf(l)} van ${shortDate(l.scheduledDate)} maakt de test minder fris; laat hem gaan of doe hem Lichter.`),
+    ];
+    const extra = lines.length > 0 ? ` ${lines.join(' ')}` : '';
+    const effect = `${was} Met Akkoord wordt ${nameOf(plan.found)} op ${when} een testloop van 5 km.${extra} ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.`;
+    const by = ['engine/adviceEngine.ts', 'TEST-RETRY'];
+    const items: PlanChangeItem[] = [
+      ...plan.moves.flatMap((m): PlanChangeItem[] => [
+        { plannedSessionId: m.session.id, action: 'move', fromDate: m.session.scheduledDate, toDate: m.to, plannedMinutes: m.minutes, reason: isStrength(m.session) ? 'Na de testpoging, zodat je benen fris zijn voor de testloop.' : 'De dag na een testloop blijft rustig.', generatedBy: by },
+        ...(m.rest ? [{ plannedSessionId: m.rest.id, action: 'remove' as const, reason: 'Rustdag niet nodig: de dag ervoor staat dan geen training meer.', generatedBy: by }] : []),
+      ]),
+      {
+        plannedSessionId: plan.found.id, action: 'move', fromDate: plan.found.scheduledDate, toDate: plan.found.scheduledDate, templateId: TEST_RUN_ID, plannedMinutes: test.durationVariants.full,
+        reason: stops ? 'Nieuwe testpoging: de vorige had veel stilstand.' : 'Nieuwe testpoging: de vorige telde nog niet.', generatedBy: by,
+      },
+    ];
+    const label = `Testloop ${when}${plan.moves.length > 0 ? `, ${plan.moves.map((m) => `${nameOf(m.session)} naar ${shortDate(m.to)}`).join(', ')}` : ''}`;
+    return { title, effect, label, proposal: proposal(title, items, `${nameOf(plan.found)} op ${when} wordt een testloop van 5 km.${extra}`, why) };
   };
+  const built = ranked.map(build);
+  const [first] = built;
   return [{
-    id: `retest:${last.date}`, trigger: 'plan_update', ruleId: 'TEST-RETRY', title, effect, why, priority: 2, relatedLogId: last.logId,
-    proposal: proposal(title, [item], `${replaced.name} op ${when} wordt een testloop van 5 km.`, why),
+    id: `retest:${last.date}`, trigger: 'plan_update', ruleId: 'TEST-RETRY', title: first.title, effect: first.effect, why, priority: 2, relatedLogId: last.logId,
+    proposal: first.proposal,
+    options: built.length > 1 ? built.map((b) => ({ label: b.label, effect: b.effect, proposal: b.proposal })) : undefined,
   }];
+}
+
+// One way to make a hard run the new test: what has to give way for it, and what that costs.
+interface RetryPlan {
+  found: PlannedSession;
+  cost: number;
+  moves: { session: PlannedSession; to: string; minutes?: number; rest?: PlannedSession }[];
+  // Heavy leg strength that makes the test less fresh and stays (locked by you, or no place after the test): named, not moved.
+  locked: PlannedSession[];
+}
+
+// The test replaces `found` on its own day. Whatever the spacing rules (the same as TEST-MAKE-ROOM)
+// find in the way moves in the same proposal: leg strength to after the test, a long run or another
+// hard run of the day after to the next day where it fits (short when that week has a long run of
+// its own, as in a catch-up). A session you locked, a logged one or a race is never moved: leg
+// strength of yours (or that has no place after the test) is named in the text, anything else makes
+// this day no candidate.
+function retryPlanFor(found: PlannedSession, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, test: SessionTemplate, levelOf: (s: PlannedSession) => number): RetryPlan | undefined {
+  const today = inputs.asOf;
+  const date = found.scheduledDate;
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const base = inputs.plannedSessions.filter((o) => o.id !== found.id && o.status !== 'skipped' && (o.scheduledDate >= today || loggedIds.has(o.id)));
+  const testAt: PlannedSession = { ...found, templateId: TEST_RUN_ID, status: 'planned' };
+  const locked: PlannedSession[] = [];
+  const toMove: PlannedSession[] = [];
+  for (const b of findHeavyConflicts(found.id, test, date, base, templateById, inputs.logs)) {
+    const t = templateById.get(b.templateId);
+    if (!t) return undefined;
+    const level = levelOf(b);
+    if (level === 3) toMove.push(b);
+    else if (level === 1 && t.type === 'strength' && isLegHeavyTemplate(t) && b.scheduledDate < date) locked.push(b);
+    else return undefined;
+  }
+  const restDates = new Set(base.filter((o) => templateById.get(o.templateId)?.type === 'recovery' && !loggedIds.has(o.id)).map((o) => o.scheduledDate));
+  let state: PlannedSession[] = [...base, testAt];
+  const moves: RetryPlan['moves'] = [];
+  const weekOf = (d: string, without: string) => state.filter((o) => o.id !== without && mondayOfWeek(o.scheduledDate) === mondayOfWeek(d));
+  for (const s of toMove) {
+    const t = templateById.get(s.templateId)!;
+    const strength = t.type === 'strength';
+    const targets = strength ? (isLegHeavyTemplate(t) ? [0, 1, 2, 3] : [1, -1, 2, -2, 3]) : [2, 3, 4, 5, 6, 7];
+    const others = state.filter((o) => o.id !== s.id);
+    let chosen: { to: string; rest?: PlannedSession } | undefined;
+    for (const off of targets) {
+      const d = addDays(date, off);
+      if (d <= today || d === s.scheduledDate || (strength && restDates.has(d)) || isIllnessDay(d, inputs.illnessEpisodes, today)) continue;
+      if (!respectsHeavySpacing(d, t, others, templateById, inputs.logs, s.id) || !leavesNextHardFresh(inputs, templateById, d, s, others)) continue;
+      const week = weekOf(d, s.id);
+      if (dayHasRoomFor(d, t, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) { chosen = { to: d }; break; }
+      if (strength) continue;
+      // A recovery walk on that day gives way when nothing else stands on the day before.
+      const there = others.filter((o) => o.scheduledDate === d);
+      const rest = there.length === 1 && templateById.get(there[0].templateId)?.type === 'recovery' && levelOf(there[0]) === 3 ? there[0] : undefined;
+      const dayBefore = addDays(d, -1);
+      const dayBeforeEmpty = !others.some((o) => o.scheduledDate === dayBefore && templateById.get(o.templateId)?.type !== 'recovery') && !inputs.logs.some((l) => l.completedDate === dayBefore);
+      if (rest && dayBeforeEmpty && dayHasRoomFor(d, t, week.filter((o) => o.id !== rest.id), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) { chosen = { to: d, rest }; break; }
+    }
+    if (!chosen) {
+      // Leg strength before the test with no place after it: said honestly, not moved.
+      if (strength && isLegHeavyTemplate(t) && s.scheduledDate < date) { locked.push(s); continue; }
+      return undefined;
+    }
+    const minutes = strength ? undefined : catchUpMinutes(s, t, chosen.to, inputs, templateById);
+    moves.push({ session: s, to: chosen.to, minutes, rest: chosen.rest });
+    state = [...others.filter((o) => o.id !== chosen?.rest?.id), { ...s, scheduledDate: chosen.to, weekStartDate: mondayOfWeek(chosen.to) }];
+  }
+  const lockedIds = new Set(locked.map((l) => l.id));
+  if (!findHeavyConflicts(found.id, test, date, state.filter((o) => o.id !== found.id), templateById, inputs.logs).every((c) => lockedIds.has(c.id))) return undefined;
+  return { found, moves, locked, cost: 2 * moves.length + moves.filter((m) => m.rest).length + 3 * locked.length };
 }
 
 export function computeAdvice(inputs: AdviceInputs): Advice[] {

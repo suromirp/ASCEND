@@ -108,3 +108,78 @@ describe('TEST-RETRY: a new attempt after a test with a lot of standing still', 
     expect(retry({ plannedSessions: skipped })!.proposal!.changes[0].plannedSessionId).toBe('tempo');
   });
 });
+
+describe('TEST-RETRY: ruimte maken in een gewone week', () => {
+  const lockUser = { by: 'user' as const, at: '2026-10-20T08:00:00Z' };
+  // Nagemaakte standaardweek: harde loop op za, lange duurloop op zo, zware beendag op do (door jou vastgezet).
+  const normalWeek = (legsLock?: typeof lockUser): PlannedSession[] => [
+    planned('upA', 'tpl_upper_a', '2026-10-28', '2026-10-26'),
+    { ...planned('legs', 'tpl_lower_a', '2026-10-29', '2026-10-26'), lock: legsLock },
+    planned('upB', 'tpl_upper_b', '2026-10-30', '2026-10-26'),
+    planned('hills', 'tpl_hill_intervals', '2026-10-31', '2026-10-26'),
+    planned('long', 'tpl_long_run', '2026-11-01', '2026-10-26'),
+    planned('walk', 'tpl_herstel', '2026-11-02', '2026-11-02'),
+    planned('upA2', 'tpl_upper_a', '2026-11-03', '2026-11-02'),
+    planned('legs2', 'tpl_lower_a', '2026-11-04', '2026-11-02'),
+    planned('easy', 'tpl_easy_run', '2026-11-05', '2026-11-02'),
+    planned('upB2', 'tpl_upper_b', '2026-11-06', '2026-11-02'),
+    planned('sprints', 'tpl_hills_descent', '2026-11-07', '2026-11-02'),
+    planned('long2', 'tpl_long_run', '2026-11-08', '2026-11-02'),
+  ];
+  const week = (legsLock?: typeof lockUser, drop: string[] = []) => normalWeek(legsLock).filter((s) => !drop.includes(s.id));
+
+  it('geeft in een gewone week een voorstel voor za: de lange duurloop schuift en Benen A van do wordt genoemd', () => {
+    const a = retry({ plannedSessions: week(lockUser) })!;
+    expect(a).toBeDefined();
+    expect(a.title).toBe('Nieuwe testpoging op za 31 oktober');
+    const ids = a.proposal!.changes.map((c) => c.plannedSessionId);
+    expect(ids).toContain('hills');
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'hills')).toMatchObject({ templateId: 'tpl_test_run' });
+    const long = a.proposal!.changes.find((c) => c.plannedSessionId === 'long')!;
+    expect(long).toMatchObject({ action: 'move', fromDate: '2026-11-01' });
+    expect(long.toDate).toBe('2026-11-02');
+    expect(long.plannedMinutes).toBeGreaterThan(0);
+    expect(a.effect).toContain('Herstelwandeling van ma 2 november vervalt');
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'walk')).toMatchObject({ action: 'remove' });
+    expect(a.effect).toContain('Lange duurloop van zo 1 november gaat naar');
+    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober maakt de test minder fris; laat hem gaan of doe hem Lichter.');
+    expect(a.effect).toContain('Kies een route zonder stoplichten en zet auto-pauze uit.');
+    expect(`${a.title}${a.effect}${a.why}`).not.toMatch(/[\u2013\u2014]/);
+    // De zelf vastgezette beendag staat niet als item in het voorstel.
+    expect(ids).not.toContain('legs');
+  });
+
+  it('past toe: de lange duurloop staat op de nieuwe dag, Benen A van do blijft staan', () => {
+    const a = retry({ plannedSessions: week(lockUser) })!;
+    const { sessions } = applyPlanChangeItems(a.proposal!.changes, week(lockUser), undefined, { by: 'proposal' as const, at: 'x' });
+    expect(sessions.find((s) => s.id === 'legs')).toMatchObject({ scheduledDate: '2026-10-29', templateId: 'tpl_lower_a' });
+    expect(sessions.find((s) => s.id === 'hills')).toMatchObject({ templateId: 'tpl_test_run', scheduledDate: '2026-10-31' });
+    expect(sessions.find((s) => s.id === 'long')!.scheduledDate).not.toBe('2026-11-01');
+  });
+
+  it('verschuift een beendag die niet vastgezet is naar na de test, in hetzelfde voorstel', () => {
+    const a = retry({ plannedSessions: week(undefined, ['upA2', 'legs2']) })!;
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')).toMatchObject({ action: 'move', fromDate: '2026-10-29' });
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')!.toDate! >= '2026-10-31').toBe(true);
+    expect(a.effect).toContain('na de test');
+  });
+
+  it('blijft bij één item als het zonder extra veranderingen past', () => {
+    const a = retry({ plannedSessions: week(undefined, ['legs', 'long']) })!;
+    expect(a.proposal!.changes).toHaveLength(1);
+  });
+
+  it('beweegt een gelogde sessie nooit', () => {
+    const doneLegs: SessionLog = { ...testLog(), id: 'log-legs', templateId: 'tpl_lower_a', plannedSessionId: 'legs', type: 'strength', completedDate: '2026-10-29', completedAt: '2026-10-29T10:00:00Z', bestEffort: undefined } as SessionLog;
+    const a = retry({ plannedSessions: week(undefined), logs: [testLog(), doneLegs] });
+    const ids = a?.proposal!.changes.map((c) => c.plannedSessionId) ?? [];
+    expect(ids).not.toContain('legs');
+  });
+
+  it('zet een eigen vastgezette lange duurloop nooit stil op een andere dag', () => {
+    const locked = week(undefined, ['legs']).map((s) => (s.id === 'long' ? { ...s, lock: lockUser } : s));
+    const a = retry({ plannedSessions: locked });
+    expect(a?.proposal!.changes.map((c) => c.plannedSessionId) ?? []).not.toContain('long');
+    expect(a?.proposal!.changes.find((c) => c.plannedSessionId === 'hills')).toBeUndefined();
+  });
+});
