@@ -525,6 +525,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'dan telt de laatste test altijd, zoals vroeger.' },
     ],
   },
+  nieuweTest: {
+    title: 'Nieuwe test voorstellen bij stilstand',
+    lead: 'Stond je veel stil tijdens je testloop, dan stelt ASCEND een nieuwe poging voor.',
+    points: [
+      { head: 'Wanneer', text: 'meer dan een minuut stilstand of meer dan 3 keer stilstaan in je snelste 5 km, of een test die nog op je antwoord wacht.' },
+      { head: 'Wat er gebeurt', text: 'je eerstvolgende harde loop, minstens 3 dagen later, wordt die dag een testloop van 5 km. Er komt geen training bij.' },
+      { head: 'Alleen met Akkoord', text: 'je ziet eerst wat er verandert. Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.' },
+      { head: 'Geen goede dag', text: 'is er binnen 10 dagen geen dag zonder zware beendag of tocht ervoor, of staat er al een test gepland, dan zegt ASCEND niets.' },
+    ],
+  },
   testStilstaan: {
     title: 'Stilstaan bij een testloop',
     lead: 'Staat je horloge niet stil als jij voor een stoplicht wacht, dan loopt de klok door in je snelste 5 km.',

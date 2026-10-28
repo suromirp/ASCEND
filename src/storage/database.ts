@@ -703,6 +703,10 @@ export interface AppSettings {
   // "Twijfeltest eerst vragen": a test run that came out clearly slower than the one before
   // waits for your answer before it changes your paces. Absent = on. Optional and additive.
   askDoubtTest?: boolean;
+  // "Nieuwe test voorstellen bij stilstand": a test run with a lot of standing still (or one that
+  // waits for your answer) gets a proposal for a new attempt in place of the next hard run.
+  // Absent = on. Optional and additive.
+  newTestOnStops?: boolean;
   // "Stilstaan bij een testloop": 'skip' (advice, absent = skip) leaves the time of a stop at a
   // traffic light out of the fastest 5 km, 'count' keeps the clock as it ran. Read when the series is
   // read; what is stored stays as it was. Optional and additive.

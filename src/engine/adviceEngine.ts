@@ -45,7 +45,8 @@ import { formatNumberNL } from '../utils/number';
 import type { WeatherForecast } from '../models/weather';
 import type { TestJudgment } from '../models/testJudgment';
 import { awaitsEffort, testStopsRemark } from './testJudgment';
-import { stopsShort } from './bestEffort';
+import { manyStops, stopsShort } from './bestEffort';
+import { hasRole } from './templateRoles';
 import type { LeavePeriod } from '../models/leave';
 import { weatherAdvice } from './weatherSwap';
 import { LEG_BODY_PARTS } from './legSpots';
@@ -113,6 +114,8 @@ export interface AdviceInputs {
   // Your verdicts on test runs and the setting that asks first (engine/testJudgment.ts).
   testJudgments?: TestJudgment[];
   askDoubtTest?: boolean;
+  // "Nieuwe test voorstellen bij stilstand" (rule TEST-RETRY). Absent = on.
+  newTestOnStops?: boolean;
   // The extra training of the week (engine/extraRun.ts, rule EXTRA-SESSION).
   extraSession?: Pick<ExtraAdviceInputs, 'gaps' | 'races' | 'ambition' | 'anchor' | 'restDay' | 'planChangeLog' | 'leave'>;
   // The main goal still carries the old hut default of 12 kg (rule
@@ -1128,6 +1131,72 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
   return out;
 }
 
+// --- Rule TEST-RETRY ---------------------------------------------------------
+// Trigger: the last test run (the last 21 days) has a fastest 5 km with more standing still than
+// the app already calls "iets te gunstig" (engine/bestEffort.ts#manyStops), or it waits for your
+// answer as a doubtful, slower test, and no other test is planned in the next 14 days.
+// Rule: the first hard run (role hard_run) that falls at least 3 days after that test, within 10
+// days from today, and where a test fits by the usual spacing (no heavy legs or tocht within 48
+// hours before), becomes a 5 km test on the same day. Without such a day: no advice.
+// Always a proposal; Liever niet is not asked again for the same test (the id carries its date).
+const RETRY_WINDOW_DAYS = 21;
+const RETRY_AHEAD_DAYS = 10;
+const RETRY_MIN_GAP_DAYS = 3;
+
+const stoppedTime = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec) % 60).padStart(2, '0')}`;
+
+function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  if (inputs.newTestOnStops === false) return [];
+  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  const test = templateById.get(TEST_RUN_ID);
+  if (!test) return [];
+  const today = inputs.asOf;
+  const counted = countedTests(inputs.logs, { judgments: inputs.testJudgments, ask: inputs.askDoubtTest });
+  const last = [...counted.tests, ...counted.waiting, ...counted.ignored].sort((a, b) => a.date.localeCompare(b.date)).at(-1);
+  if (!last || counted.ignored.includes(last) || daysBetween(last.date, today) > RETRY_WINDOW_DAYS || daysBetween(last.date, today) < 0) return [];
+  const stops = last.basis === 'effort' && manyStops(last);
+  const doubt = counted.waiting.includes(last);
+  if (!stops && !doubt) return [];
+
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const open = (s: PlannedSession) => s.status !== 'skipped' && !loggedIds.has(s.id);
+  // Another test already waiting in the next two weeks, or a race close by (that is the taper).
+  if (inputs.plannedSessions.some((s) => open(s) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14 && (s.templateId === TEST_RUN_ID || s.templateId === 'tpl_race'))) return [];
+
+  const afterTest = addDays(last.date, RETRY_MIN_GAP_DAYS);
+  const earliest = afterTest > addDays(today, 1) ? afterTest : addDays(today, 1);
+  const latest = addDays(today, RETRY_AHEAD_DAYS);
+  const found = inputs.plannedSessions
+    .filter((s) => {
+      const t = templateById.get(s.templateId);
+      return !!t && hasRole(t, 'hard_run') && open(s) && s.scheduledDate >= earliest && s.scheduledDate <= latest && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, today);
+    })
+    .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id))
+    .find((s) => {
+      const others = inputs.plannedSessions.filter((o) => o.id !== s.id && o.status !== 'skipped' && (o.scheduledDate >= today || loggedIds.has(o.id)));
+      return respectsHeavySpacing(s.scheduledDate, test, others, templateById, inputs.logs, s.id);
+    });
+  if (!found) return [];
+
+  const replaced = templateById.get(found.templateId)!;
+  const when = shortDate(found.scheduledDate);
+  const title = `Nieuwe testpoging op ${when}`;
+  const was = stops
+    ? `Je testloop van ${shortDate(last.date)} had ${(last.stoppedSec ?? 0) > 60 ? `${stoppedTime(last.stoppedSec ?? 0)} stilstand` : `${last.stops} keer stilstand`}, dus hij is iets te gunstig.`
+    : `Je testloop van ${shortDate(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
+  const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
+  const effect = `${was} Met Akkoord wordt ${replaced.name} op ${when} een testloop van 5 km. ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.`;
+  const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. ASCEND zoekt een dag zonder zware beendag of tocht in de 48 uur ervoor. Alleen jij beslist: dit is een voorstel.';
+  const item: PlanChangeItem = {
+    plannedSessionId: found.id, action: 'move', fromDate: found.scheduledDate, toDate: found.scheduledDate, templateId: TEST_RUN_ID, plannedMinutes: test.durationVariants.full,
+    reason: stops ? 'Nieuwe testpoging: de vorige had veel stilstand.' : 'Nieuwe testpoging: de vorige telde nog niet.', generatedBy: ['engine/adviceEngine.ts', 'TEST-RETRY'],
+  };
+  return [{
+    id: `retest:${last.date}`, trigger: 'plan_update', ruleId: 'TEST-RETRY', title, effect, why, priority: 2, relatedLogId: last.logId,
+    proposal: proposal(title, [item], `${replaced.name} op ${when} wordt een testloop van 5 km.`, why),
+  }];
+}
+
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   // A catch-up you declined leaves the rest day free for the swap.
@@ -1152,6 +1221,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...repeatWeekAdvice(inputs),
     ...tentPackAdvice(inputs),
     ...targetTimeAdvice(inputs),
+    ...testRetryAdvice(inputs, templateById),
     ...weatherAdvice(inputs, templateById),
     ...morningAdvice(inputs, templateById),
   ]

@@ -524,6 +524,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('testStilstaan', resolveTestStops(s.testStops)) };
     case 'twijfeltest':
       return { checked: s.askDoubtTest !== false };
+    case 'nieuwe-test':
+      return { checked: s.newTestOnStops !== false };
     case 'korte-nacht':
       return { checked: s.askShortNight !== false };
     case 'ochtend-vanaf':
