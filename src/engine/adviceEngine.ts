@@ -1217,7 +1217,10 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
       ...plan.moves.map((m) => m.rest
         ? `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)} doe je op ${shortDate(m.to)} in plaats van je rustdag${short(m)}. De ${lower(nameOf(m.rest))} van die dag vervalt.`
         : `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)}${whose(m.session)} gaat naar ${shortDate(m.to)}${isStrength(m.session) ? ', na de test' : ''}${short(m)}.`),
-      ...plan.dropped.map((l) => `${nameOf(l)} van ${shortDate(l.scheduledDate)}${whose(l)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
+      ...plan.moves.filter((m) => m.lightDrop).map((m) => `${nameOf(m.lightDrop!)} van ${shortDate(m.lightDrop!.scheduledDate)} vervalt: dat wordt je rustdag.`),
+      ...plan.dropped.map((l) => plan.restLoss.includes(l.id)
+        ? `${nameOf(l)} van ${shortDate(l.scheduledDate)} vervalt deze keer: zo houd je die week een rustdag.`
+        : `${nameOf(l)} van ${shortDate(l.scheduledDate)}${whose(l)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
     ];
     const extra = lines.length > 0 ? ` ${lines.join(' ')}` : '';
     const effect = `${was} Met Akkoord wordt ${nameOf(plan.found)} op ${when} een testloop van 5 km.${extra} ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.`;
@@ -1226,14 +1229,15 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
       ...plan.moves.flatMap((m): PlanChangeItem[] => [
         { plannedSessionId: m.session.id, action: 'move', fromDate: m.session.scheduledDate, toDate: m.to, plannedMinutes: m.minutes, reason: isStrength(m.session) ? 'Na de testpoging, zodat je benen fris zijn voor de testloop.' : 'De dag na een testloop blijft rustig.', generatedBy: by },
         ...(m.rest ? [{ plannedSessionId: m.rest.id, action: 'remove' as const, reason: 'Rustdag niet nodig: de dag ervoor staat dan geen training meer.', generatedBy: by }] : []),
+        ...(m.lightDrop ? [{ plannedSessionId: m.lightDrop.id, action: 'remove' as const, reason: 'Zodat die week een rustdag houdt.', generatedBy: by }] : []),
       ]),
-      ...plan.dropped.map((d): PlanChangeItem => ({ plannedSessionId: d.id, action: 'remove', reason: 'Zodat je benen fris zijn voor de testloop.', generatedBy: by })),
+      ...plan.dropped.map((d): PlanChangeItem => ({ plannedSessionId: d.id, action: 'remove', reason: plan.restLoss.includes(d.id) ? 'Zodat die week een rustdag houdt.' : 'Zodat je benen fris zijn voor de testloop.', generatedBy: by })),
       {
         plannedSessionId: plan.found.id, action: 'move', fromDate: plan.found.scheduledDate, toDate: plan.found.scheduledDate, templateId: TEST_RUN_ID, plannedMinutes: test.durationVariants.full,
         reason: stops ? 'Nieuwe testpoging: de vorige had veel stilstand.' : 'Nieuwe testpoging: de vorige telde nog niet.', generatedBy: by,
       },
     ];
-    const label = `Testloop ${when}${plan.moves.length + plan.dropped.length > 0 ? `, ${[...plan.moves.map((m) => `${nameOf(m.session)} naar ${shortDate(m.to)}`), ...plan.dropped.map((d) => `${nameOf(d)} vervalt`)].join(', ')}` : ''}`;
+    const label = `Testloop ${when}${plan.moves.length + plan.dropped.length > 0 ? `, ${[...plan.moves.map((m) => `${nameOf(m.session)} naar ${shortDate(m.to)}`), ...plan.moves.filter((m) => m.lightDrop).map((m) => `${nameOf(m.lightDrop!)} vervalt`), ...plan.dropped.map((d) => `${nameOf(d)} vervalt`)].join(', ')}` : ''}`;
     return { title, effect, label, proposal: proposal(title, items, `${nameOf(plan.found)} op ${when} wordt een testloop van 5 km.${extra}`, why) };
   };
   const built = ranked.map(build);
@@ -1249,9 +1253,12 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
 interface RetryPlan {
   found: PlannedSession;
   cost: number;
-  moves: { session: PlannedSession; to: string; minutes?: number; rest?: PlannedSession }[];
+  // `lightDrop`: the lightest training of that week, let go so the week keeps a rest day.
+  moves: { session: PlannedSession; to: string; minutes?: number; rest?: PlannedSession; lightDrop?: PlannedSession }[];
   // Heavy leg strength that goes in this proposal (with Akkoord) when it cannot move to after the test.
   dropped: PlannedSession[];
+  // Ids in `dropped` that go because moving them would cost the week its last rest day.
+  restLoss: string[];
 }
 
 interface RetryContext {
@@ -1300,15 +1307,42 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
     let state: PlannedSession[] = [...base, testAt];
     const moves: RetryPlan['moves'] = [];
     const dropped: PlannedSession[] = [];
+    const restLoss = new Set<string>();
+    let restBlocked = false;
     const weekOf = (d: string, without: string) => state.filter((o) => o.id !== without && mondayOfWeek(o.scheduledDate) === mondayOfWeek(d));
     const drop = (s: PlannedSession) => { dropped.push(s); state = state.filter((o) => o.id !== s.id); };
     // The first day after the test (0 to 3 for leg strength) where the session fits, the same building blocks as TEST-MAKE-ROOM.
+    // A rest day is a day of the week without training (a recovery walk counts as rest), the same notion as
+    // the REST-DAY rule and the rest day swap. A move may take the last rest day of a week only when the
+    // same proposal lets the lightest training of that week go (decision 2026-10-28-nieuwe-testpoging-rustdag.md).
+    const hasRest = (list: PlannedSession[], anyDay: string) => {
+      const monday = mondayOfWeek(anyDay);
+      return Array.from({ length: 7 }, (_, i) => addDays(monday, i)).some((day) =>
+        !list.some((o) => o.scheduledDate === day && templateById.get(o.templateId)?.type !== 'recovery')
+        && !inputs.logs.some((l) => l.completedDate === day && templateById.get(l.templateId)?.type !== 'recovery'));
+    };
+    const lightestToDrop = (list: PlannedSession[], anyDay: string, except: string[]): PlannedSession | undefined => {
+      const rank = (o: PlannedSession) => {
+        const t = templateById.get(o.templateId);
+        if (!t || t.type === 'recovery' || levelOf(o) !== 3 || o.scheduledDate <= today || loggedIds.has(o.id)) return undefined;
+        if (except.includes(o.id) || ctx.usedIds.has(o.id) || o.id === ctx.easeId) return undefined;
+        if (hasRole(t, 'long') || hasRole(t, 'key') || hasRole(t, 'hard_run') || hasRole(t, 'hard_load') || hasRole(t, 'ask_legs') || hasRole(t, 'test') || hasRole(t, 'race') || isLegHeavyTemplate(t)) return undefined;
+        // Only a training that stands alone on its day gives that day back as a rest day.
+        if (list.some((x) => x.id !== o.id && x.scheduledDate === o.scheduledDate && templateById.get(x.templateId)?.type !== 'recovery')) return undefined;
+        return hasRole(t, 'easy_pace') ? 0 : 1;
+      };
+      return list
+        .filter((o) => mondayOfWeek(o.scheduledDate) === mondayOfWeek(anyDay) && rank(o) !== undefined)
+        .sort((a, b) => rank(a)! - rank(b)! || (templateById.get(a.templateId)?.durationVariants.full ?? 0) - (templateById.get(b.templateId)?.durationVariants.full ?? 0) || a.scheduledDate.localeCompare(b.scheduledDate))[0];
+    };
     const tryMove = (s: PlannedSession): boolean => {
+      restBlocked = false;
       const t = templateById.get(s.templateId)!;
       const strength = t.type === 'strength';
       const targets = strength ? (isLegHeavyTemplate(t) ? [0, 1, 2, 3] : [1, -1, 2, -2, 3]) : [2, 3, 4, 5, 6, 7];
       const others = state.filter((o) => o.id !== s.id);
-      for (const off of targets) {
+      // First a day that keeps the rest day of its week; only then one that costs it, with the lightest training let go.
+      for (const letGo of [false, true]) for (const off of targets) {
         const d = addDays(date, off);
         if (d <= today || d === s.scheduledDate || (strength && restDates.has(d)) || isIllnessDay(d, inputs.illnessEpisodes, today) || ctx.blocked(d, isHeavyFor(t))) continue;
         if (!respectsHeavySpacing(d, t, others, templateById, inputs.logs, s.id) || !leavesNextHardFresh(inputs, templateById, d, s, others)) continue;
@@ -1326,8 +1360,18 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
           const dayBeforeEmpty = !others.some((o) => o.scheduledDate === dayBefore && templateById.get(o.templateId)?.type !== 'recovery') && !inputs.logs.some((l) => l.completedDate === dayBefore);
           if (!rest || !dayBeforeEmpty || !dayHasRoomFor(d, candidate, week.filter((o) => o.id !== rest?.id), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
         }
-        moves.push({ session: s, to: d, minutes, rest });
-        state = [...others.filter((o) => o.id !== rest?.id), { ...s, scheduledDate: d, weekStartDate: mondayOfWeek(d), ...(minutes ? { plannedMinutes: minutes } : {}) }];
+        const movedTo: PlannedSession = { ...s, scheduledDate: d, weekStartDate: mondayOfWeek(d), ...(minutes ? { plannedMinutes: minutes } : {}) };
+        let next = [...others.filter((o) => o.id !== rest?.id), movedTo];
+        let lightDrop: PlannedSession | undefined;
+        if (hasRest(others, d) && !hasRest(next, d)) {
+          restBlocked = true;
+          if (!letGo) continue;
+          lightDrop = lightestToDrop(next, d, [found.id, s.id]);
+          if (!lightDrop) continue;
+          next = next.filter((o) => o.id !== lightDrop?.id);
+        } else if (letGo) continue;
+        moves.push({ session: s, to: d, minutes, rest, lightDrop });
+        state = next;
         return true;
       }
       return false;
@@ -1337,6 +1381,8 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
       if (tryMove(s)) continue;
       // Leg strength before the test with no place after it can only go (with Akkoord).
       if (legStrength(templateById.get(s.templateId)!) && s.scheduledDate < date) { drop(s); continue; }
+      // No day without costing the week its rest day: this time it goes, rather than the rest day.
+      if (restBlocked && levelOf(s) === 3) { drop(s); restLoss.add(s.id); continue; }
       return undefined;
     }
     // What you locked and stands in the way of the spacing: moved with your Akkoord, or let go as the second option.
@@ -1368,11 +1414,11 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
       now = judge();
     }
     if (!now.room || now.index.index > limit || now.conflicts.length > 0) return undefined;
-    const touched = [found.id, ...moves.flatMap((m) => [m.session.id, ...(m.rest ? [m.rest.id] : [])]), ...dropped.map((d) => d.id)];
+    const touched = [found.id, ...moves.flatMap((m) => [m.session.id, ...(m.rest ? [m.rest.id] : []), ...(m.lightDrop ? [m.lightDrop.id] : [])]), ...dropped.map((d) => d.id)];
     if (!touched.every((id) => !ctx.usedIds.has(id) && id !== ctx.easeId)) return undefined;
     const own = (s: PlannedSession) => levelOf(s) === 1;
-    const cost = moves.reduce((n, m) => n + (own(m.session) ? 3 : 2) + (m.rest ? 1 : 0), 0) + dropped.reduce((n, d) => n + (own(d) ? 8 : 5), 0);
-    return { found, moves, dropped, cost };
+    const cost = moves.reduce((n, m) => n + (own(m.session) ? 3 : 2) + (m.rest ? 1 : 0) + (m.lightDrop ? 2 : 0), 0) + dropped.reduce((n, d) => n + (own(d) ? 8 : 5), 0);
+    return { found, moves, dropped, cost, restLoss: [...restLoss] };
   };
 
   const first = attempt('move');
