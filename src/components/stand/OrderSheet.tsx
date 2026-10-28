@@ -167,6 +167,7 @@ export function OrderSheet({ onClose }: { onClose: () => void }) {
                         type="button"
                         aria-label={handleLabel(PAGE, order, id)}
                         aria-pressed={isDrag}
+                        data-no-sheet-drag
                         onPointerDown={(e) => startPointer(id, e)}
                         onKeyDown={(e) => keyDown(id, index, e)}
                         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg"
