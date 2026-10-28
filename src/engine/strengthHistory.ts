@@ -34,6 +34,7 @@ import {
 } from './strengthModel';
 import type { ResolvedStrengthSettings } from './strengthSettings';
 import { loadFromExternal } from './strengthWeights';
+import { SPOTTER_MIN_RIR, spotterApplies } from './spotter';
 import { isWorkSet } from './workSets';
 
 // --- tired legs --------------------------------------------------------------------------
@@ -258,11 +259,18 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
   const strengthDates = histories.flatMap((x) => x.sessions.map((s) => s.date));
   for (const h of histories) {
     const dumbbellTotal = historyDumbbellTotal(h, settings);
+    const spotter = spotterApplies(h.exercise, settings);
     const ctx = { exercise: h.exercise, bodyKg, maxToFailure: settings.estimateUpTo, dumbbellTotal };
     for (let i = 1; i < h.sessions.length; i++) {
       const s = h.sessions[i];
       const slot = slotFor(templates, s.templateId, h.key);
-      const plan = targetOfSlot(slot);
+      const plan0 = targetOfSlot(slot);
+      // Zonder spotter schrijft Forge minstens 1 over voor (engine/spotter.ts). Een voorstel van ASCEND met
+      // die bewuste 1 waar de planning 0 vroeg wordt aan zijn eigen doel getoetst en telt niet als misser;
+      // wat je zelf deed blijft getoetst aan wat de planning vroeg
+      // (docs/beslissingen/2026-10-28-zonder-spotter.md).
+      const raisedFromPlan = spotter && plan0?.rir !== undefined && plan0.rir < SPOTTER_MIN_RIR;
+      const plan = raisedFromPlan && plan0 ? { ...plan0, rir: SPOTTER_MIN_RIR } : plan0;
       const planned = plan && plan.low !== undefined && plan.high !== undefined ? { plan } : {};
       const lastStrengthDate = lastDateBefore(strengthDates, s.date);
       const rx = prescribe({ exercise: h.exercise, sessions: h.sessions.slice(0, i), date: s.date, bodyKg, settings, tired: s.tired, ...planned, ...(lastStrengthDate ? { lastStrengthDate } : {}) });
@@ -295,7 +303,8 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
         if (strengthKg !== undefined && doneLoad !== undefined) {
           // A hand-made log counts as measured only when it followed the proposal.
           const measured = s.origin === 'forge' && withinOneStep;
-          const doneSide = measured ? checkDone(done, target) : checkProposal(strengthKg, doneLoad, target);
+          const didTarget: RepTarget = raisedFromPlan && plan0?.rir !== undefined ? { ...target, rir: plan0.rir } : target;
+          const doneSide = measured ? checkDone(done, target) : checkProposal(strengthKg, doneLoad, didTarget);
           const proposalSide = proposedLoad !== undefined ? checkProposal(strengthKg, proposedLoad, target) : undefined;
           check = checkRow(s.origin, target, doneSide, proposalSide, measured, proposedLoad !== undefined && isNear(proposedLoad, doneLoad));
         }

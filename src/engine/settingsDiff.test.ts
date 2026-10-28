@@ -31,7 +31,7 @@ const everything: AppSettings = {
     estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'gong', keepScreenOn: false, carryMode: 'off', showPlates: false,
     showOneRm: false, oneRmView: 'work_weight', showMacroFactorOneRm: false, compareWeeks: '2_4', listSort: 'name', showExtras: false,
     showTrendLines: false, stackWeights: 'used_only', lighterAfterBreak: false, dumbbellLog: 'total', fatigue: 'fixed', showComparison: true,
-    adjustLive: false, rirPrefill: 'target',
+    adjustLive: false, noSpotter: false, rirPrefill: 'target',
   },
   showBodyFat: false,
   figure: 'vrouw',

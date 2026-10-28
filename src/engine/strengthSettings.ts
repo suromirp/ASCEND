@@ -76,6 +76,9 @@ export interface GymProfile {
   addOnKg?: number[];
   // Own choice per machine, over the gym's: a list replaces it, an empty list means none.
   exerciseAddOnKg?: Record<string, number[]>;
+  // Er zijn veiligheidsarmen of een rek met vangers: tot het uiterste gaan mag dan, ook met een stang
+  // op je borst of schouders (engine/spotter.ts). Absent: er zijn er geen.
+  spotterRack?: boolean;
 }
 
 export interface StrengthSettings {
@@ -142,6 +145,10 @@ export interface StrengthSettings {
   // Forge stelt tijdens de training een lichter gewicht voor na een set die te
   // zwaar was (default on). Always a proposal, never by itself.
   adjustLive?: boolean;
+  // Zonder spotter: Forge schrijft bij een stangoefening waar falen gevaarlijk is minstens 1 herhaling
+  // in reserve voor, tenzij de sportschool veiligheidsarmen heeft (default on). Nooit een blokkade:
+  // 0 invullen kan altijd (engine/spotter.ts).
+  noSpotter?: boolean;
   // The RIR field of a working set: empty with the aim as a hint (default), or the aim as value.
   rirPrefill?: RirPrefill;
   // The strength program read in from MacroFactor, after Akkoord: it fills the
@@ -182,6 +189,7 @@ export interface ResolvedStrengthSettings {
   showComparison: boolean;
   checkFrom: string;
   adjustLive: boolean;
+  noSpotter: boolean;
   rirPrefill: RirPrefill;
 }
 
@@ -281,6 +289,7 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
     ...(exerciseWeightsKg ? { exerciseWeightsKg } : {}),
     ...(addOnKg ? { addOnKg } : {}),
     ...(exerciseAddOnKg ? { exerciseAddOnKg } : {}),
+    ...(raw.spotterRack === true ? { spotterRack: true } : {}),
   };
 }
 
@@ -378,6 +387,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   const fatigue = FATIGUE_MODES.find((v) => v === raw.fatigue);
   if (fatigue) out.fatigue = fatigue;
   if (typeof raw.adjustLive === 'boolean') out.adjustLive = raw.adjustLive;
+  if (typeof raw.noSpotter === 'boolean') out.noSpotter = raw.noSpotter;
   const rirPrefill = RIR_PREFILLS.find((v) => v === raw.rirPrefill);
   if (rirPrefill) out.rirPrefill = rirPrefill;
   if (typeof raw.showComparison === 'boolean') out.showComparison = raw.showComparison;
@@ -430,6 +440,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     showComparison: s.showComparison ?? false,
     checkFrom: s.checkFrom ?? DEFAULT_CHECK_FROM,
     adjustLive: s.adjustLive ?? true,
+    noSpotter: s.noSpotter ?? true,
     rirPrefill: s.rirPrefill ?? 'hint',
   };
 }
@@ -485,6 +496,7 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
   delete copy.showComparison;
   delete copy.checkFrom;
   delete copy.adjustLive;
+  delete copy.noSpotter;
   delete copy.carryMode;
   delete copy.carryWeights;
   delete copy.rirPrefill;
@@ -496,6 +508,6 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
 // them on a settings page does not recount the whole strength history.
 export function checkModelKey(raw: StrengthSettings | undefined): string {
   const r = normalizeStrengthSettings(raw) ?? {};
-  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, stackWeights: r.stackWeights, lighterAfterBreak: r.lighterAfterBreak, dumbbellLog: r.dumbbellLog, fatigue: r.fatigue, program: r.program, checkFrom: r.checkFrom };
+  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, stackWeights: r.stackWeights, lighterAfterBreak: r.lighterAfterBreak, dumbbellLog: r.dumbbellLog, fatigue: r.fatigue, noSpotter: r.noSpotter, program: r.program, checkFrom: r.checkFrom };
   return JSON.stringify(keep);
 }

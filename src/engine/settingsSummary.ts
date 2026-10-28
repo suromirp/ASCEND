@@ -412,6 +412,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.keepScreenOn };
     case 'forge-bijsturen':
       return { checked: forge.adjustLive };
+    case 'forge-spotter':
+      return { checked: forge.noSpotter };
+    case 'spotterrek':
+      return { checked: !!forge.profile.spotterRack };
     case 'forge-rir-vooraf':
       return { value: choiceShort('rirVooraf', forge.rirPrefill) };
     case 'forge-doorvoeren':
