@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { Eyebrow } from '../components/ui';
@@ -31,6 +31,7 @@ import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { SkyBand, SkyPanel } from '../components/SkyBand';
 import { InfluenceCard } from '../components/influence/InfluenceCard';
 import { mainGoal } from '../engine/mainGoal';
+import { resolveCardOrder } from '../engine/cardOrder';
 
 // Je stand: where you are, apart from what to do today. Today stays the
 // mission; here are the numbers behind it, each on its own card, no
@@ -119,40 +120,32 @@ export function StandingPage() {
     },
   ].filter((r) => r.label !== 'Fase' || !position || r.text);
 
-  return (
-    <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
-      <SkyBand>
-        <div>
-          {position && <Eyebrow>Week {position.weekInPhase} van {position.phase.weekCount}, {position.phase.name.toLowerCase()}</Eyebrow>}
-          <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe je ervoor staat, naast wat je vandaag doet.</p>
-        </div>
-      </SkyBand>
-
-      {/* Het ene voortgangsgetal staat als gewone marine kaart onder de bergen, niet als
-          groot wit vlak op de lucht: de lucht houdt dezelfde licht-donkerverhouding als
-          op de andere tabs. */}
-      {gr5 && <Gr5ReadinessCard readiness={gr5} />}
-
+  // De volgorde van de blokken is jouw voorkeur (engine/cardOrder.ts); de eerste kaart, Klaar voor het doel, blijft vast bovenaan.
+  const order = resolveCardOrder('stand', settings.cardOrder);
+  const blocks: Record<string, ReactNode> = {
+    'benen': (
       <section className="flex flex-col gap-5" aria-label="Benen">
         <LegFatigueCard />
         <FreshnessChart points={curve} today={today} />
         <LegCalendar days={calendar} today={today} />
         <IndexCheckCard checks={checks} />
       </section>
-
+    ),
+    'belasting': (
       <section className="flex flex-col gap-5" aria-label="Belasting">
         <WeeklyLoadChart weeks={weeks} />
         <IntensityMixCard mix={mix} />
         <DescentCard weeks={descent} routeDayDescent={routeDescent} />
       </section>
-
+    ),
+    'kracht': (
       <section className="flex flex-col gap-5" aria-label="Kracht">
         <ForgeEntryCard />
         <StrengthProgressionCard logs={sessionLogs} />
         <TrainingSplitRow />
       </section>
-
+    ),
+    'vier-regels': (
       <SkyPanel className="flex flex-col" label="Je stand in vier regels">
         {rows.map((r, i) => (
           <div key={r.label} className={`flex flex-col gap-1 py-3 ${i === 0 ? 'pt-0' : 'border-t'} ${i === rows.length - 1 ? 'pb-0' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
@@ -171,18 +164,42 @@ export function StandingPage() {
           </div>
         ))}
       </SkyPanel>
-
+    ),
+    'lopen': (
       <section className="flex flex-col gap-5" aria-label="Lopen">
         <RunTrendsCard />
         <AerobicTrendCard />
       </section>
-
+    ),
+    'invloed': (
       <InfluenceCard />
-
+    ),
+    'doel': (
       <section className="flex flex-col gap-5" aria-label="Doel">
         {progress && <AdventureCard progress={progress} onOpenLadder={() => navigate('/ascend')} />}
         <LessonCard />
       </section>
+    ),
+  };
+
+  return (
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
+      <SkyBand>
+        <div>
+          {position && <Eyebrow>Week {position.weekInPhase} van {position.phase.weekCount}, {position.phase.name.toLowerCase()}</Eyebrow>}
+          <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe je ervoor staat, naast wat je vandaag doet.</p>
+        </div>
+      </SkyBand>
+
+      {/* Het ene voortgangsgetal staat als gewone marine kaart onder de bergen, niet als
+          groot wit vlak op de lucht: de lucht houdt dezelfde licht-donkerverhouding als
+          op de andere tabs. */}
+      {gr5 && <Gr5ReadinessCard readiness={gr5} />}
+
+      {order.map((id) => (
+        <Fragment key={id}>{blocks[id]}</Fragment>
+      ))}
     </div>
   );
 }

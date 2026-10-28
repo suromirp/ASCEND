@@ -16,6 +16,7 @@
 // transaction — so a bad import can always be undone by re-importing that
 // snapshot's own envelope.
 
+import { cleanCardOrder } from '../engine/cardOrder';
 import { localDateOf } from '../utils/dates';
 import { isEmptyStart } from '../engine/freshStart';
 import type { Program } from '../models/program';
@@ -450,6 +451,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   if ('overviews' in s && !isRecord(s.overviews)) {
     delete s.overviews;
     skipped.n++;
+  }
+  // De volgorde van de blokken op Je stand: een record van lijsten tekst, anders weg.
+  if ('cardOrder' in s) {
+    const clean = cleanCardOrder(s.cardOrder);
+    if (clean) s.cardOrder = clean;
+    else {
+      delete s.cardOrder;
+      skipped.n++;
+    }
   }
   // Forge (Kracht meerekenen): only valid values stay; rubbish is dropped.
   if ('strengthModel' in s) {

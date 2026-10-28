@@ -711,6 +711,9 @@ export interface AppSettings {
   weekFixProposal?: boolean;
   // Trainingen slepen in Week (components/useWeekDrag.ts). Afwezig is aan; uit haalt de grepen weg.
   dragWeek?: boolean;
+  // De volgorde van de blokken op Je stand, per pagina (engine/cardOrder.ts). Absent = de standaard.
+  // Gelezen door resolveCardOrder; onbekende en dubbele id's vallen weg. Optional and additive.
+  cardOrder?: { stand?: string[] };
   // "Trillen": een korte tik in je hand bij een schakelaar, een afgevinkte set, een training
   // oppakken en Akkoord. Absent = aan. Het rustsignaal van Forge staat hier los van.
   haptics?: boolean;

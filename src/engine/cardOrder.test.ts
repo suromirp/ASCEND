@@ -5,6 +5,9 @@ const STD = defaultOrder('stand');
 const allOnce = (order: string[]) => expect([...order].sort()).toEqual([...STD].sort());
 
 describe('resolveCardOrder', () => {
+  it('zonder instelling is de volgorde zoals de pagina altijd stond', () => {
+    expect(resolveCardOrder('stand', undefined)).toEqual(['benen', 'belasting', 'kracht', 'vier-regels', 'lopen', 'invloed', 'doel']);
+  });
   it('geeft de standaard bij niets', () => {
     for (const raw of [undefined, null, {}, [], 'x', 5]) expect(resolveCardOrder('stand', raw)).toEqual(STD);
   });
