@@ -14,6 +14,8 @@ import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/da
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
+import { WeekNotice } from '../components/WeekNotice';
+import { rowNotes } from '../engine/weekConcerns';
 import { ChangeLogCard } from '../components/ChangeLogCard';
 import { LeavePeriodsCard } from '../components/LeavePeriods';
 import { adjustedSessionReasons } from '../engine/changeLog';
@@ -37,7 +39,7 @@ import { hoursMinutes } from '../utils/hoursMinutes';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
+  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
@@ -55,6 +57,10 @@ export function WeekPage() {
   // De plus op een vrije dag van vandaag: dezelfde "Losse training" als op Vandaag.
   const [adHocOpen, setAdHocOpen] = useState(false);
   const [adHocTemplate, setAdHocTemplate] = useState<SessionTemplate | null>(null);
+
+  // What is wrong in this week, for the card and the lines in the rows (engine/weekFixProposal.ts).
+  const notice = useMemo(() => weekNoticeFor(weekStart), [weekNoticeFor, weekStart]);
+  const concernNotes = useMemo(() => rowNotes(notice.concerns), [notice]);
 
   // A rest day ASCEND gave up for a catch-up is simply gone, not "skipped".
   // Rest-day proposals show up right where you just moved a training.
@@ -170,6 +176,8 @@ export function WeekPage() {
         </header>
       </SkyBand>
 
+      {!monthView && <WeekNotice notice={notice} />}
+
       {!monthView && (
         <Card className="flex flex-col gap-4">
           <div className="flex items-center gap-4">
@@ -245,6 +253,7 @@ export function WeekPage() {
             onAddFree={() => setAdHocOpen(true)}
             looseLogs={looseLogs}
             onSelectLog={setOpenLog}
+            concernNotes={concernNotes}
           />
         </>
       )}

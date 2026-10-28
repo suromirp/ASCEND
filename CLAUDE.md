@@ -492,6 +492,20 @@ to the same `InjuryNote` list as Lichaam (`kind`, `side`); spierpijn and stijf n
 injury and close after 7 days when read (`engine/injuryKind.ts`). "Wat terugkomt" on Lichaam is
 derived, never stored (`engine/bodyRecurrence.ts`).
 
+**Warnings in Week** (`engine/weekConcerns.ts`, `engine/weekFixProposal.ts`, `components/WeekNotice.tsx`, decision
+`docs/beslissingen/2026-10-28-waarschuwingen-in-week.md`, design `docs/visie/Waarschuwingen in Week.md`): amber in Week means
+only "something is wrong here"; a heavy leg day is the muted text "zware benen" in the row, no icon (the `LegMark` is gone, the
+ridge legend is muted). The week check reads the shown week with `CheckInput.reportYours` (REST-DAY then also reports a
+training with your lock, level 1; off by default so the planning and `planGolden.test.ts` do not move) and gives the card
+"Let op" under the sky (`weekConcerns`: headline, fact, row text for REST-DAY, LEG-SPACING, TWO-HARD-RUNS, AFTER-TEST,
+ONE-LONG, TEST-FRESH). What the check may not repair itself because it is yours becomes a proposal with Akkoord
+(`planWeekFix`: `repairWeeks` with `CheckInput.mayMove` on exactly that session, or in a full week the lightest training goes,
+never a long run, hard run, leg day, test, race or tocht), as `Advice` `WEEK-CHECK` through `ProposalSheet`, only when the week
+is demonstrably better, with the id `weekfix:<rule>:<ids>:<dates>`. It is not in `advice` and not on Vandaag. Liever niet keeps the
+card, quieter, with "Toch een voorstel"; the problem is never hidden. Setting "Voorstel bij een probleem in de week"
+(`weekFixProposal`, absent = on): off keeps the card and the row texts and drops only the button. Not built yet: the sentence in
+the action sheet of a training, the link with TEST-MAKE-ROOM (no second proposal for one training), the other rules.
+
 **A heavy leg day on tired legs** (`engine/legDayEase.ts`, `engine/legSoreness.ts`, decision
 `docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`, design `docs/visie/Spierpijn en een zware beendag.md`):
 a heavy leg day of today with a reason (soreness you reported, in the morning check or as a "spierpijn" note on a leg spot

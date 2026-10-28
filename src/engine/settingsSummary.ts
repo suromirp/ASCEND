@@ -526,6 +526,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.askDoubtTest !== false };
     case 'nieuwe-test':
       return { checked: s.newTestOnStops !== false };
+    case 'weekvoorstel':
+      return { checked: s.weekFixProposal !== false };
     case 'korte-nacht':
       return { checked: s.askShortNight !== false };
     case 'ochtend-vanaf':

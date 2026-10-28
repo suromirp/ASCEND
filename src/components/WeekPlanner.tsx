@@ -9,7 +9,7 @@ import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import { useAppData } from '../state/AppDataContext';
 import { LeaveBand } from './LeaveBand';
-import { LegMark, WeekStatusIcon } from './WeekIcons';
+import { WeekStatusIcon } from './WeekIcons';
 import { LogDisc, SportDisc } from './SportDisc';
 import { SPORT_LOOK, sportKeyOfLog } from './logbook/sportLook';
 import { zoneOfTemplate } from './vandaag/zone';
@@ -42,7 +42,7 @@ const todayStyle = {
 const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, transparent)' };
 
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -57,6 +57,8 @@ function SessionRow({
   watch?: WatchStatusKind;
   // Het hartslagteken van "Wat speelde er", naast de naam van een gedane training.
   sign?: SignState;
+  // Wat de weekcontrole bij deze training vindt, kort (engine/weekConcerns.ts), in amber.
+  concern?: string;
 }) {
   const restMode = useAppData().settings.restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
@@ -81,7 +83,6 @@ function SessionRow({
           <span className="min-w-0 break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>
             {isRest ? REST_DAY_COPY[restMode].title : template.name}
           </span>
-          {legs && <LegMark />}
           {sign && <HeartSign state={sign} />}
         </span>
         <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
@@ -98,6 +99,8 @@ function SessionRow({
                 </>
               )}
               <span>{duration} min</span>
+              {legs && <span>· zware benen</span>}
+              {concern && <span style={{ color: 'var(--color-warning)' }}>· {concern}</span>}
             </>
           )}
           {note && <span style={{ color: 'var(--color-status)' }}>· {note}</span>}
@@ -178,6 +181,7 @@ export function WeekPlanner({
   onAddFree,
   looseLogs = [],
   onSelectLog,
+  concernNotes,
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
@@ -194,6 +198,8 @@ export function WeekPlanner({
   // shown on their day as a done row; a tap opens the log (onSelectLog).
   looseLogs?: SessionLog[];
   onSelectLog?: (log: SessionLog) => void;
+  // Per training de korte tekst van een melding (engine/weekConcerns.ts#rowNotes).
+  concernNotes?: Map<string, string>;
 }) {
   const days = weekDates(weekStartDate);
   const today = todayISO();
@@ -249,6 +255,7 @@ export function WeekPlanner({
                 isToday={isToday}
                 watch={showWatch ? statusOf(s, template).kind : undefined}
                 sign={signOf(logs.find((l) => l.plannedSessionId === s.id))}
+                concern={concernNotes?.get(s.id)}
               />
             ))}
             {loose.map((l) => (

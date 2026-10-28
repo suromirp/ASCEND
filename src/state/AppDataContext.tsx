@@ -308,6 +308,7 @@ import { coachReaction } from '../engine/coach';
 import { requestPersistentStorage } from '../storage/persistence';
 import { durationScopeFor } from '../engine/durationScope';
 import { patternDays, planPass } from '../engine/planPass';
+import { weekNotice, type WeekNotice } from '../engine/weekFixProposal';
 import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine/learning';
 import { onDatabaseBlocked, syncProgramHorizon, type ProgramHorizonResult } from '../storage/database';
 import { planEndDay, programAnchorDate } from '../engine/programLayout';
@@ -556,6 +557,8 @@ interface AppData {
   // The rest of the planning run over a proposed week, for its preview. With
   // `leave`: as if those were your periods (a period you have not agreed to yet).
   planPreviewPass: (sessions: PlannedSession[], leave?: LeavePeriod[], restDay?: number) => PlannedSession[];
+  // What is wrong in a week and the proposal for it (engine/weekFixProposal.ts), for the card on Week.
+  weekNoticeFor: (weekStart: string) => WeekNotice;
   // Rustdag: changing it is a proposal (engine/restDayProposal.ts); applyRestDay
   // stores the rest day and the planning together, only on Akkoord.
   planRestDay: (restDay: number) => RestDayPlan;
@@ -2309,6 +2312,30 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }).sessions;
   }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
 
+  // The week check over the week you look at, with what is yours reported too and a proposal
+  // with Akkoord for it (rule WEEK-CHECK). Never throws: a failure leaves Week with its plain list.
+  const weekNoticeFor = useCallback((weekStart: string): WeekNotice => {
+    try {
+      const today = todayISO();
+      const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
+      const ladder = new Set(goalMilestones.map((m) => m.goalId));
+      const mainGoalId = mainGoal(trainingGoals, ladder)?.id;
+      const restDay = settings.restDay ?? 1;
+      const blocks = raceBlocks(trainingGoals, mainGoalId, anchor, today);
+      return weekNotice({
+        sessions: plannedSessions, logs: sessionLogs, templates, today, restDay, goalDay: anchor,
+        raceDays: blocks.map((b) => b.raceDate), afterGoals: afterGoalWindows(trainingGoals, mainGoalId, anchor, today), program,
+        dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+        slotDays: patternDays(templates, settings, restDay),
+        minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
+        leave: settings.leavePeriods, trekRest: settings.trekLegRest,
+      }, weekStart, settings.weekFixProposal !== false);
+    } catch (err) {
+      console.error('De weekmelding kon niet worden berekend:', err);
+      return { concerns: [], fixes: {} };
+    }
+  }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
+
   // Vrije dagen, vakanties en tochten: the proposal for adding or removing a
   // period (engine/leaveProposal.ts), computed with the same planning run as
   // the sync. Nothing is stored until Akkoord (applyLeave).
@@ -2589,6 +2616,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     influenceMove: influenceMoveNow,
     answeredAdviceIds,
     planPreviewPass,
+    weekNoticeFor,
     leavePeriods,
     planLeave,
     applyLeave,

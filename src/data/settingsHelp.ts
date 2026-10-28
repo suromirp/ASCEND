@@ -535,6 +535,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geen goede dag', text: 'zijn je benen op geen enkele dag binnen 10 dagen fris genoeg te krijgen, valt de dag in een vakantie of tocht, of staat er al een test gepland, dan zegt ASCEND niets.' },
     ],
   },
+  weekVoorstel: {
+    title: 'Voorstel bij een probleem in de week',
+    lead: 'Staat er in je week iets wat niet klopt en mag ASCEND het niet zelf herstellen, omdat jij of een eerder voorstel de training vastzette, dan krijg je een voorstel met Akkoord.',
+    points: [
+      { head: 'Wat telt als probleem', text: 'geen rustdag, zware beendagen te dicht op elkaar, twee harde loopjes op een dag, een zware training na een test, twee volle lange trainingen, benen niet fris voor een test.' },
+      { head: 'Liever niet', text: 'dan blijft je week zoals hij is. De melding blijft rustig staan, zodat je het probleem wel ziet.' },
+      { head: 'Nooit stil', text: 'ASCEND verschuift niets zonder jouw Akkoord. In een volle week kan het voorstel de lichtste training laten vervallen, nooit een lange duurloop, harde loop, test, wedstrijd of tocht.' },
+      { head: 'Uit', text: 'dan blijven de melding en de teksten in de rijen, maar komt er geen knop met een voorstel.' },
+    ],
+  },
   testStilstaan: {
     title: 'Stilstaan bij een testloop',
     lead: 'Staat je horloge niet stil als jij voor een stoplicht wacht, dan loopt de klok door in je snelste 5 km.',
