@@ -1,15 +1,18 @@
 // ASCEND, "Klaar voor je doel" voor een hardloopwedstrijd met een doeltijd.
 //
 // Een wedstrijd met een doeltijd gaat vooral over snelheid. Daarom is snelheid hier de hoofdmeter:
-// je doeltijd gedeeld door je verwachte tijd nu, begrensd op 100%. De verwachte tijd komt uit de
-// testloop die telt (countedTests, racePaces), dezelfde bron als de regel TARGET-TIME. Het getal
-// blijft één percentage naast de andere meters, alleen met een andere verdeling (RACE_SPEED_WEIGHTS).
+// het gat tussen je verwachte tijd nu en je doeltijd, omgerekend in weken werk bij gemiddelde groei
+// (engine/goalGap.ts) en daaruit gevuld: 50% bij tien weken. De verwachte tijd komt uit de testloop die
+// telt (countedTests, racePaces), dezelfde bron als de regel TARGET-TIME. Het getal blijft één
+// percentage naast de andere meters, alleen met een andere verdeling (RACE_SPEED_WEIGHTS).
+// De meter, de haalbaarheidsregel en "het meeste te winnen" lezen dezelfde weken.
 // Zonder doeltijd, zonder afstand of voor andere doelen verandert er niets.
 //
 // Het doel blijft het doel: niets hier oordeelt over de doeltijd. De kaart toont de afstand tot het
 // doel als werk, en wat de groei tot de wedstrijddag kan geven als feit.
 //
-// Puur: geen React, geen opslag. Besluit: docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid.md.
+// Puur: geen React, geen opslag. Besluiten: docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid.md en
+// 2026-10-28-klaar-voor-je-doel-logisch.md (snelheid als gat in weken in plaats van een tijdsverhouding).
 
 import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
@@ -18,6 +21,8 @@ import { daysBetween, formatDateNL, formatShortDateNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { computeGoalReadiness, readinessInputOf, type GoalReadiness, type MissingMeter, type ReadinessOptions } from './goalReadiness';
 import { goalDetailsOf } from './goalLabels';
+import { GOAL_GROWTH } from '../data/goalGrowth';
+import { fillFromWeeks, weeksOfWork } from './goalGap';
 import { raceDayBand, racePaces } from './racePaces';
 import { countedTests, formatRaceTime, type TestResult } from './racePrediction';
 import { awaitsEffort } from './testJudgment';
@@ -50,9 +55,11 @@ export interface RaceFacts {
   expectedMinutes?: number;
   // "Verwacht nu 55:40. Doel 45:00: nog 10:40, ongeveer 1:04 per km."
   nowLine?: string;
-  // Haalbaarheid als droog feit: "Bij gemiddelde groei rond 20 maart: 47 tot 54 minuten, dus 45:00 vraagt
-  // meer dan gemiddelde groei." De gebruiker oordeelt zelf of hij ermee doorgaat.
+  // Haalbaarheid als droog feit, uit dezelfde weken als de meter: "Bij gemiddelde groei rond 20 maart: 47 tot
+  // 54 minuten. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21." De gebruiker oordeelt zelf.
   bandLine?: string;
+  // Weken werk bij gemiddelde groei van de verwachte tijd naar de doeltijd (0 als je er al onder zit).
+  weeksOfWork?: number;
   // "Uit je snelste 5 km van 12 okt (26:42)." of "Uit je hele run van 5 km op 12 okt (26:42)."
   basisLine?: string;
   // Eén regel als er geen tijd te geven is: de test wacht op Akkoord, of er is geen test.
@@ -100,7 +107,8 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
   const expected = paces?.race?.minutes;
   if (!paces || expected === undefined) return { facts: { status: 'none', targetMinutes: target, statusLine: NO_TEST_LINE } };
 
-  const share = Math.max(0, Math.min(1, target / expected));
+  const work = weeksOfWork({ now: expected, need: target, lowerIsBetter: true, weeklyGain: GOAL_GROWTH.run.weekly });
+  const share = fillFromWeeks(work);
   const gap = expected - target;
   // Eerst afronden op hele seconden, dan splitsen: nooit "0:60".
   const perKmSeconds = Math.round((Math.abs(gap) * 60) / km);
@@ -112,12 +120,19 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
 
   const weeks = goal.status === 'active' ? daysBetween(paces.test.date, goal.targetDate) / 7 : 0;
   const band = weeks > 0 && !paces.doubtful ? raceDayBand(expected, weeks) : undefined;
-  const verdict = band
-    ? (target < band.low ? `dus ${clock(target)} vraagt meer dan gemiddelde groei.` : target > band.high ? 'je doel ligt erboven.' : 'je doel valt erbinnen.')
-    : undefined;
-  const bandLine = band && verdict && goal.status === 'active'
-    ? `Bij gemiddelde groei rond ${formatDateNL(goal.targetDate).replace(/ \d{4}$/, '')}: ${band.low} tot ${band.high} minuten, ${verdict}`
-    : undefined;
+  let bandLine: string | undefined;
+  if (band && goal.status === 'active') {
+    const day = formatDateNL(goal.targetDate).replace(/ \d{4}$/, '');
+    const head = `Bij gemiddelde groei rond ${day}: ${band.low} tot ${band.high} minuten`;
+    const left = Math.max(0, daysBetween(date, goal.targetDate) / 7);
+    if (target > band.high) bandLine = `${head}, je doel ligt erboven.`;
+    else if (work <= left) bandLine = `${head}, je doel valt erbinnen.`;
+    else {
+      // Nooit "ongeveer 21 weken; er zijn er 21" als het net niet past.
+      const need = Math.max(Math.round(work), Math.round(left) + 1);
+      bandLine = `${head}. ${clock(target)} vraagt ongeveer ${need} weken; tot ${day} zijn het er ${Math.round(left)}.`;
+    }
+  }
 
   const kmText = formatNumberNL(paces.test.km, Number.isInteger(paces.test.km) ? 0 : 1);
   const basisLine = paces.test.basis === 'effort'
@@ -125,7 +140,7 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
     : `Uit je hele run van ${kmText} km op ${formatShortDateNL(paces.test.date)} (${clock(paces.test.minutes)}).`;
 
   return {
-    facts: { status: 'counted', targetMinutes: target, expectedMinutes: expected, nowLine, bandLine, basisLine },
+    facts: { status: 'counted', targetMinutes: target, expectedMinutes: expected, nowLine, bandLine, basisLine, weeksOfWork: work },
     share,
     text: `${clock(expected)}, doel ${clock(target)}`,
     test: paces.test,

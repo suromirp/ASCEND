@@ -650,7 +650,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Weging bij een doeltijd',
     lead: 'Bij een wedstrijd met een doeltijd gaat het vooral over snelheid. Dit bepaalt hoe zwaar die meetelt in je percentage.',
     points: [
-      { head: 'Snelheid weegt het zwaarst', text: 'je doeltijd gedeeld door je verwachte tijd telt voor 60% mee, je langste loop en je weekvolume voor 20% elk.' },
+      { head: 'Snelheid weegt het zwaarst', text: 'het gat tussen je verwachte tijd en je doeltijd, uitgedrukt in weken werk bij gemiddelde groei, telt voor 60% mee. Je langste loop en je weekvolume tellen voor 20% elk.' },
       { head: 'Gelijk', text: 'alle meters tellen even zwaar, zoals voor een doel zonder doeltijd.' },
       { head: 'Je verwachte tijd', text: 'komt uit je testloop die meetelt. Zonder testloop, of zolang je snelste 5 km op je Akkoord wacht, telt snelheid niet mee.' },
     ],

@@ -473,12 +473,14 @@ coach (Ascend) and "Volgehouden" (Je stand) count with the same function,
 "x van y" for goal progress next to these; extend the engine function instead.
 
 **A race with a goal time** (`engine/raceReadiness.ts`, decision `docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid.md`):
-"Klaar voor je doel" of a running race with a goal time and a distance up to the half marathon makes speed the main meter (goal time
-divided by the expected time from the test that counts, `countedTests`/`racePaces`, the same source as TARGET-TIME, capped at 100%) and
+"Klaar voor je doel" of a running race with a goal time and a distance up to the half marathon makes speed the main meter (the gap between the
+expected time from the test that counts, `countedTests`/`racePaces`, the same source as TARGET-TIME, and the goal time, worked out as weeks of
+work at the average growth of `data/goalGrowth.ts` by `engine/goalGap.ts`: fill = 10 / (10 + weeks), 50% at ten weeks; decision
+`2026-10-28-klaar-voor-je-doel-logisch.md`) and
 weighs it most (`RACE_SPEED_WEIGHTS`: speed 60%, longest run 20%, weekly volume 20%; setting "Klaar voor je doel bij een doeltijd",
 speed or equal). It is still one percentage. Without a test, or while the fastest 5 km waits for Akkoord, speed does not count and one
 line says so; without a goal time nothing changes. The card never judges the goal time ("het doel blijft het doel"): it shows the
-distance to the goal as work and one dry line whether the goal time fits average growth by race day (the decision's `-aanvulling.md`); you judge for yourself. The change "+x in 4 weeks" shows only when the goal already had a value
+distance to the goal as work and one dry line whether the goal time fits average growth by race day (the decision's `-aanvulling.md`), read from the same weeks as the meter: "45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21". "Hier is nog het meeste te winnen" is the meter with the biggest weighted gap (`weightedGapWeakest`), so number, meters and lines never contradict; you judge for yourself. The change "+x in 4 weeks" shows only when the goal already had a value
 four weeks ago (`ReadinessOptions.since`). TARGET-TIME carries the goal time in its id, so one Liever niet holds for every later test
 until the goal time changes; setting "Doeltijd aanpassen voorstellen" (`proposeTargetTime`) switches it off.
 

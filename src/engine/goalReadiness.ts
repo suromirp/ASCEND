@@ -26,6 +26,7 @@
 // Puur: geen React, geen opslag. Voor een meerdaagse tocht geeft dit exact dezelfde
 // uitkomst als de oude gr5Readiness (de test bewaakt dat met bevroren uitkomsten).
 
+import { weightedGapWeakest } from './goalGap';
 import type { GoalDetails, GoalKindId, GoalRequirement, TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import { GOAL_KINDS, variantOf, type EvidenceLabel, type GoalKindDefinition, type MeterSpec, type MeterType, type NeedRule } from '../data/goalKinds';
@@ -477,8 +478,11 @@ function compute(input: GoalReadinessInput, logs: SessionLog[], today: string, o
   const mean = meters.reduce((n, m) => n + m.share * weightOf(m), 0) / totalWeight;
   const full = meters.every((m) => m.share >= 1);
   const percent = full ? 100 : Math.min(99, Math.round(mean * 100));
+  // Het meeste te winnen = het grootste gewogen gat (gewicht maal 1 min vulling). Zonder weging is dat de
+  // laagste meter, dus voor de GR5 verandert er niets. Een meter zonder gewicht (Volhouden bij een
+  // doeltijd) telt in het getal niet mee en kan dus ook niet "het meeste" opleveren.
   const open = meters.filter((m) => m.share < 1);
-  const weakest = open.length > 0 ? open.reduce((a, b) => (b.share < a.share ? b : a)) : undefined;
+  const weakest = open.length > 0 ? weightedGapWeakest(meters, weightOf) ?? open.reduce((a, b) => (b.share < a.share ? b : a)) : undefined;
   const usesShare = def.dayShare && meters.some((m) => m.evidence === 'afgeleid');
 
   return {

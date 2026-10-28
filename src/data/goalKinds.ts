@@ -432,8 +432,8 @@ const RUN_RACE: GoalKindDefinition = {
       need: s({ from: 'external' }, 'matig', D('3.4 meter 1, Riegel tot en met de halve marathon (Vickers en Vertosick 2016)')),
       appliesWhen: { variant: ['5k', '10k', 'half'] },
       measure: 'De wedstrijdtijd uit je laatste testloop of wedstrijd (Riegel), naast je doeltijd.',
-      full: 'Je doeltijd gedeeld door je verwachte tijd, begrensd op 100%: gelijk aan of sneller dan je doeltijd is vol.',
-      why: 'Bij een doeltijd is snelheid wat je wedstrijd beslist; je testloop laat zien waar je nu staat.',
+      full: 'Het gat tussen je verwachte tijd en je doeltijd, in weken werk bij gemiddelde groei: bij tien weken staat de meter op 50%. Gelijk aan of sneller dan je doeltijd is vol.',
+      why: 'Bij een doeltijd is snelheid wat je wedstrijd beslist; je testloop laat zien waar je nu staat. Snelheid groeit langzaam, dus een groot gat in tijd betekent veel weken werk en een lage meter.',
     },
     {
       id: 'langsteLoop', label: 'Langste loop', type: 'beste_dag', metric: 'langsteKm', unit: 'km', sports: ['running'], windowDays: WINDOW_42,
