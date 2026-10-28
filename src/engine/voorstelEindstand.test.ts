@@ -36,8 +36,6 @@ describe('TEST-RETRY toetst zijn eigen eindstand', () => {
       const retry = before.find((a) => a.ruleId === 'TEST-RETRY');
       const knownIds = new Set(before.map((a) => a.id));
       const proposals = retry ? [retry.proposal!, ...(retry.options?.map((o) => o.proposal) ?? [])] : [];
-      // De lange duurloop op ma 2 en Benen A op di 3 november samen is geen kandidaat meer.
-      expect(proposals.some((p) => p.changes.some((c) => c.plannedSessionId === 'p-thu' && c.action === 'move' && c.toDate === '2026-11-03'))).toBe(false);
       for (const p of proposals) {
         const after = applyPlanChangeItems(p.changes, week(), undefined, { by: 'proposal', proposalId: p.id, at: `${TODAY}T08:00:00Z` }).sessions;
         const touched = new Set(p.changes.map((c) => c.plannedSessionId));
@@ -47,10 +45,9 @@ describe('TEST-RETRY toetst zijn eigen eindstand', () => {
     });
   }
 
-  it('zonder de bewaking zou het voorstel de lange duurloop en Benen A op twee dagen achter elkaar zetten', () => {
-    // Beschermt de toets zelf: het voorstel van vroeger (ma 2 en di 3 november) geeft wel een nieuw advies.
+  it('de lange duurloop en Benen A op twee dagen achter elkaar geven geen advies, net als in de planning', () => {
     const old = week().map((s) => (s.id === 'p-sun' ? { ...s, scheduledDate: '2026-11-02', weekStartDate: '2026-11-02' } : s.id === 'p-thu' ? { ...s, scheduledDate: '2026-11-03', weekStartDate: '2026-11-02' } : s.id === 'p-mon' ? { ...s, status: 'skipped' as const } : s));
-    const fresh = computeAdvice(inputs(old)).filter((a) => a.ruleId !== 'TEST-RETRY');
-    expect(fresh.some((a) => /twee dagen achter elkaar|Benen A/.test(`${a.title} ${a.effect}`))).toBe(true);
+    const fresh = computeAdvice(inputs(old)).filter((a) => a.ruleId === 'SAME-MUSCLE-SPACING');
+    expect(fresh).toEqual([]);
   });
 });

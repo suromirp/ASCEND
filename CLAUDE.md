@@ -601,7 +601,7 @@ for proposals within 5% of what was done (`docs/beslissingen/2026-10-26-doorvoer
 The weights of a machine can be typed in per gym (`GymProfile.exerciseWeightsKg`,
 `engine/machineWeights.ts`); a strength log knows its gym (`SessionLog.gymProfileId`, only on new
 logs) so the weights learned from use stay per gym, and Forge asks to fill them in when no weight
-fits (`docs/beslissingen/2026-10-26-gewichten-per-toestel.md`).
+fits (`docs/beslissingen/2026-10-26-gewichten-per-toestel.md`). A loose add-on weight (a plate or magnet, at most 3, each at most once, every combination) is added to every weight of the block of a cable or stack machine: `GymProfile.addOnKg` for the whole gym, `GymProfile.exerciseAddOnKg` per machine over it (an empty list is none), laid over the block in `strengthWeights.ts#externalWeights` so every candidate follows, and Forge shows "70 + 2,3 kg" under such a set (`engine/machineWeights.ts`, `docs/beslissingen/2026-10-28-tussengewichten.md`).
 
 **A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
 average once there are 7 days) becomes a question in the morning check instead of a

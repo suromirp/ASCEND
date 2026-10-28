@@ -276,6 +276,9 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('toestelgewichten', withForge({ profiles: [gym], activeProfileId: 'a' }))).toEqual({ value: '1 toestel' });
     const two = withForge({ profiles: [gym, { ...gym, id: 'b', name: 'Sportschool B', exerciseWeightsKg: undefined }], activeProfileId: 'a' });
     expect(rowSummary('toestelgewichten', two)).toEqual({ value: '1 toestel', sub: 'Voor Sportschool A' });
+    const gymAdd = { ...gym, addOnKg: [2.3], exerciseAddOnKg: { 'kelso-shrug': [] } };
+    expect(rowSummary('tussengewichten', facts())).toEqual({ value: 'Geen', dim: true });
+    expect(rowSummary('tussengewichten', withForge({ profiles: [gymAdd], activeProfileId: 'a' }))).toEqual({ value: '2,3 kg', sub: '1 toestel anders' });
     expect(rowSummary('gym-profiel', two).value).toBe('Sportschool A');
   });
 

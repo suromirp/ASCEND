@@ -173,6 +173,13 @@ describe('SAME-MUSCLE-SPACING', () => {
     expect(Math.abs(daysBetween('2026-10-01', move!.toDate!))).toBeGreaterThanOrEqual(2);
   });
 
+  it('zegt niets over een rustige lange loop de dag na beenkracht, net als de planning', async () => {
+    const { buildDefaultProgramData } = await import('../data/defaultProgram');
+    const all = buildDefaultProgramData().templates;
+    const planned = [ps('legs', 'tpl_lower_a', '2026-10-04'), ps('long', 'tpl_long_run', '2026-10-05')];
+    expect(computeAdvice(inputs({ templates: all, plannedSessions: planned, asOf: '2026-10-01' })).some((x) => x.ruleId === 'SAME-MUSCLE-SPACING')).toBe(false);
+  });
+
   it('leaves the intentional hill-intervals + long-run weekend alone and ignores light sessions', () => {
     const planned = [ps('a', 'run', '2026-10-01'), ps('b', 'upper', '2026-10-02')];
     expect(computeAdvice(inputs({ plannedSessions: planned })).some((x) => x.ruleId === 'SAME-MUSCLE-SPACING')).toBe(false);

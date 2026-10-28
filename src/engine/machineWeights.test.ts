@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import {
+  addOnSource,
+  addOnText,
+  addOnsFor,
   allProfiles,
+  cleanAddOnOverride,
+  cleanAddOns,
+  formatAddOns,
+  parseAddOns,
+  withExerciseAddOns,
+  withGymAddOns,
   cleanMachineList,
   countsForProfile,
   formatMachineWeights,
@@ -157,5 +166,101 @@ describe('countsForProfile', () => {
     expect(countsForProfile(undefined, 'a')).toBe(true);
     expect(countsForProfile('a', 'a')).toBe(true);
     expect(countsForProfile('b', 'a')).toBe(false);
+  });
+});
+
+describe('tussengewichten', () => {
+  const kelso = exerciseById('kelso-shrug');
+  const base: GymProfile = { ...DEFAULT_PROFILE, id: 'k', name: 'Sportschool K', stackStepKg: 5 };
+  const ext = (p: GymProfile, ctx = {}) => candidatesFor(kelso, p, { bodyKg: 80, ...ctx })!.map((c) => c.externalKg);
+
+  it('telt het tussengewicht bij elk gewicht van het blok op (Kelso shrug)', () => {
+    const w = ext({ ...base, addOnKg: [2.3] });
+    expect(w).toEqual(expect.arrayContaining([65, 67.3, 70, 72.3, 75, 77.3]));
+    expect(w).not.toContain(2.3);
+  });
+  it('geldt voor de hele sportschool, en niet voor een stang', () => {
+    const gym = { ...base, addOnKg: [2.3] };
+    expect(ext(gym)).toContain(72.3);
+    expect(candidatesFor(bench, gym, { bodyKg: 80 })!.some((c) => Math.abs(c.externalKg % 1 - 0.3) < 1e-6)).toBe(false);
+  });
+  it('laat een toestel zonder tussengewicht terwijl de sportschool er een heeft', () => {
+    const w = ext({ ...base, addOnKg: [2.3], exerciseAddOnKg: { 'kelso-shrug': [] } });
+    expect(w).not.toContain(67.3);
+    expect(w).toContain(70);
+  });
+  it('laat een toestel een eigen lijst hebben die die van de sportschool vervangt', () => {
+    const w = ext({ ...base, addOnKg: [2.3], exerciseAddOnKg: { 'kelso-shrug': [1.25] } });
+    expect(w).toContain(66.25);
+    expect(w).not.toContain(67.3);
+  });
+  it('maakt van twee tussengewichten elke afzonderlijke en gezamenlijke som', () => {
+    const w = ext({ ...base, addOnKg: [1.25, 2.5] });
+    expect(w).toEqual(expect.arrayContaining([65, 66.25, 67.5, 68.75, 70]));
+  });
+  it('werkt ook met een eigen lijst van het blok', () => {
+    const w = ext({ ...base, exerciseWeightsKg: { 'kelso-shrug': [10, 20] }, addOnKg: [2.3] });
+    expect(w).toEqual([10, 12.3, 20, 22.3]);
+  });
+  it('maakt van een gebruikt gewicht met tussengewicht geen dubbele som', () => {
+    const w = ext({ ...base, addOnKg: [2.3] }, { usedKg: [70, 72.3, 75], stackWeights: 'used_only' });
+    expect(w).toEqual([70, 72.3, 75, 77.3]);
+  });
+  it('geeft de dubbele waarden en de grenzen op', () => {
+    expect(cleanAddOns([2.3, 2.3, 'x', 0, 100, 5, 1, 3])).toEqual([1, 2.3, 3]);
+    expect(cleanAddOns([])).toBeUndefined();
+    expect(cleanAddOnOverride([])).toEqual([]);
+    expect(cleanAddOnOverride('x')).toBeUndefined();
+    expect(cleanAddOnOverride([0])).toBeUndefined();
+  });
+  it('splitst een gewicht in blok en tussengewicht', () => {
+    const gym = { ...base, addOnKg: [1.25, 2.5] };
+    expect(addOnText({ ...base, addOnKg: [2.3] }, kelso, 72.3, 5)).toBe('70 + 2,3');
+    expect(addOnText(gym, kelso, 73.75, 5)).toBe('70 + 1,25 + 2,5');
+    expect(addOnText(gym, kelso, 75, 5)).toBeUndefined();
+    expect(addOnText(gym, bench, 72.5, 5)).toBeUndefined();
+  });
+  it('zegt de waarde en leest het veld', () => {
+    expect(formatAddOns([2.3])).toBe('2,3 kg');
+    expect(formatAddOns([1.25, 2.5])).toBe('1,25 en 2,5 kg');
+    expect(formatAddOns([])).toBe('Geen');
+    expect(parseAddOns('')).toEqual({ ok: true, list: [] });
+    expect(parseAddOns('2,3')).toEqual({ ok: true, list: [2.3] });
+    expect(parseAddOns('1 2 3 4').ok).toBe(false);
+    expect(parseAddOns('99').ok).toBe(false);
+    expect(parseAddOns('x').ok).toBe(false);
+  });
+  it('zet en wist de keuzes in het actieve profiel', () => {
+    let s = withGymAddOns(undefined, [2.3]);
+    expect(resolveStrengthSettings(s).profile.addOnKg).toEqual([2.3]);
+    s = withExerciseAddOns(s, 'kelso-shrug', []);
+    expect(addOnsFor(resolveStrengthSettings(s).profile, kelso)).toEqual([]);
+    expect(addOnSource(resolveStrengthSettings(s).profile, kelso)).toBe('none-own');
+    s = withExerciseAddOns(s, 'kelso-shrug', undefined);
+    expect(addOnsFor(resolveStrengthSettings(s).profile, kelso)).toEqual([2.3]);
+    expect(resolveStrengthSettings(s).profile.exerciseAddOnKg).toBeUndefined();
+    s = withGymAddOns(s, undefined);
+    expect(resolveStrengthSettings(s).profile.addOnKg).toBeUndefined();
+  });
+  it('overleeft normaliseren, en een oude back-up zonder de velden werkt', () => {
+    const ok = normalizeStrengthSettings({ profiles: [{ id: 'x', name: 'X', addOnKg: [2.3, 'a'], exerciseAddOnKg: { 'kelso-shrug': [], 'cable-fly': 'veel', 'face-pull': [1.25] } }], activeProfileId: 'x' })!;
+    expect(ok.profiles![0].addOnKg).toEqual([2.3]);
+    expect(ok.profiles![0].exerciseAddOnKg).toEqual({ 'kelso-shrug': [], 'face-pull': [1.25] });
+    const old = normalizeStrengthSettings({ profiles: [{ id: 'x', name: 'X' }], activeProfileId: 'x' })!;
+    expect(old.profiles![0].addOnKg).toBeUndefined();
+  });
+  it('een nieuwe sportschool begint zonder eigen keuzes per toestel', () => {
+    const s = withExerciseAddOns(withGymAddOns(undefined, [2.3]), 'kelso-shrug', []);
+    const p = resolveStrengthSettings(withNewProfile(s, 'Sportschool Z')!).profile;
+    expect(p.exerciseAddOnKg).toBeUndefined();
+  });
+});
+
+describe('parseAddOns buiten het bereik', () => {
+  it('noemt het bereik, ook voor waarden die een toestel niet kent', async () => {
+    const { parseAddOns } = await import('./machineWeights');
+    expect(parseAddOns('0,1')).toEqual({ ok: false, reason: 'Een tussengewicht ligt tussen 0,25 en 25 kg.' });
+    expect(parseAddOns('1000')).toEqual({ ok: false, reason: 'Een tussengewicht ligt tussen 0,25 en 25 kg.' });
+    expect(parseAddOns('abc').ok).toBe(false);
   });
 });

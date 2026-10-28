@@ -389,7 +389,7 @@ export const EXERCISES: Exercise[] = [
   ]),
   ex('straight-arm-pulldown', 'Cable Rope Straight Arm Lat Pulldown', ['Cable Straight Arm Pulldown', 'Straight-Arm Pulldown', 'Pulldown met gestrekte armen', 'Straight Arm Pulldown', 'Cable Bar Straight Arm Lat Pulldown'], ['lats'], ['core'], 'cable', 'isolation_upper', false, [
     'Doen: met bijna gestrekte armen trek je de stang van boven naar je bovenbenen.',
-    'Let op: voel je brede rugspieren, niet je armen.',
+    'Let op: voel je lats, niet je armen.',
     'Vaak fout: de ellebogen buigen en er een triceps-oefening van maken.',
   ]),
   ex('barbell-row', 'Bent-Over Underhand Grip Barbell Row', ['Bent-Over Barbell Row', 'Bent Over Row', 'Barbell Row (Overhand)', 'Underhand Barbell Row', 'Roeien met stang', 'Barbell Row'], ['lats', 'upper_back'], ['biceps', 'rear_delts', 'lower_back', 'forearms', 'traps'], 'barbell', 'pull_horizontal', false, [

@@ -54,27 +54,27 @@ function pair(id: string, view: BodyView, label: string, cxRight: number, half: 
 
 const FRONT: BodySpot[] = [
   {
-    id: 'nek', view: 'front', name: 'Nek', muscle: 'Kopdraaiers en trapezius', where: 'Voorkant, de hals en de zijkant van de nek',
+    id: 'nek', view: 'front', name: 'Nek', muscle: 'Nekspieren en traps', where: 'Voorkant, de hals en de zijkant van de nek',
     cx: 100, cy: 56, rx: 9, ry: 7, middle: true, injuryParts: ['Nek'], stretchAreaIds: ['nek'], care: 'nek',
   },
   ...pair('schouder', 'front', 'schouder', 62, {
-    view: 'front', muscle: 'Deltaspier', where: 'Voorkant, rond het schoudergewricht',
+    view: 'front', muscle: 'Delts', where: 'Voorkant, rond het schoudergewricht',
     cy: 82, rx: 9, ry: 13, injuryParts: ['Schouder'], stretchAreaIds: ['schouders'], care: 'schouder',
   }),
   {
-    id: 'borst', view: 'front', name: 'Borst', muscle: 'Grote borstspier', where: 'Voorkant, de borstspier',
+    id: 'borst', view: 'front', name: 'Borst', muscle: 'Pecs', where: 'Voorkant, de borstspier',
     cx: 100, cy: 94, rx: 22, ry: 10, injuryParts: ['Borst'], stretchAreaIds: ['schouders'], extraStretches: ['Deurpost borststretch'], care: 'borst',
   },
   {
-    id: 'buik', view: 'front', name: 'Buik en romp', muscle: 'Rechte en schuine buikspieren', where: 'Voorkant, buik en zijkant van de romp',
+    id: 'buik', view: 'front', name: 'Buik en romp', muscle: 'Core: buik en zijkant', where: 'Voorkant, buik en zijkant van de romp',
     cx: 100, cy: 150, rx: 13, ry: 30, injuryParts: ['Buik'], stretchAreaIds: ['onderrug'], extraStretches: ['Staande zijwaartse rek (side-bend)'], care: 'buik',
   },
   ...pair('pols', 'front', 'pols en onderarm', 47, {
-    view: 'front', muscle: 'Onderarmbuigers en -strekkers', where: 'Voorkant, de onderarm tot de pols',
+    view: 'front', muscle: 'Onderarmen', where: 'Voorkant, de onderarm tot de pols',
     cy: 174, rx: 6, ry: 18, injuryParts: ['Pols', 'Onderarm'], stretchAreaIds: ['polsen'], care: 'onderarm',
   }),
   ...pair('heup', 'front', 'heup en lies', 80, {
-    view: 'front', muscle: 'Heupbuigers en liezen', where: 'Voorkant, de heup en de lies',
+    view: 'front', muscle: 'Heupbuigers en adductoren', where: 'Voorkant, de heup en de lies',
     cy: 212, rx: 10, ry: 8, injuryParts: ['Heup'], stretchAreaIds: ['heup'], extraStretches: ['Hip flexor-stretch (lunge-stretch)'], care: 'heup',
   }),
   ...pair('dij', 'front', 'dij', 83, {
@@ -86,7 +86,7 @@ const FRONT: BodySpot[] = [
     cy: 305, rx: 8, ry: 9, injuryParts: ['Knie'], stretchAreaIds: ['quadriceps', 'kuiten', 'heup'], care: 'knie',
   }),
   ...pair('scheen', 'front', 'scheen', 83, {
-    view: 'front', muscle: 'Voorste scheenbeenspier', where: 'Voorkant, het onderbeen langs het scheenbeen',
+    view: 'front', muscle: 'Tibialis', where: 'Voorkant, het onderbeen langs het scheenbeen',
     cy: 352, rx: 6, ry: 22, injuryParts: ['Scheen'], stretchAreaIds: ['kuiten'], care: 'scheen',
   }),
   ...pair('enkel', 'front', 'enkel en voet', 86, {
@@ -97,15 +97,15 @@ const FRONT: BodySpot[] = [
 
 const BACK: BodySpot[] = [
   {
-    id: 'nek-a', view: 'back', name: 'Nek', muscle: 'Trapezius en nekstrekkers', where: 'Achterkant, de nek',
+    id: 'nek-a', view: 'back', name: 'Nek', muscle: 'Traps en nekspieren', where: 'Achterkant, de nek',
     cx: 100, cy: 58, rx: 9, ry: 7, middle: true, injuryParts: ['Nek'], stretchAreaIds: ['nek'], care: 'nek',
   },
   {
-    id: 'bovenrug', view: 'back', name: 'Schouders en bovenrug', muscle: 'Trapezius en schouderbladen', where: 'Achterkant, tussen en boven de schouderbladen',
+    id: 'bovenrug', view: 'back', name: 'Schouders en bovenrug', muscle: 'Traps en schouderbladen', where: 'Achterkant, tussen en boven de schouderbladen',
     cx: 100, cy: 96, rx: 26, ry: 16, middle: true, injuryParts: ['Bovenrug', 'Schouder'], stretchAreaIds: ['schouders'], care: 'bovenrug',
   },
   {
-    id: 'onderrug', view: 'back', name: 'Onderrug', muscle: 'Rugstrekkers', where: 'Achterkant, onder de ribben tot het bekken',
+    id: 'onderrug', view: 'back', name: 'Onderrug', muscle: 'Onderrugspieren', where: 'Achterkant, onder de ribben tot het bekken',
     cx: 100, cy: 168, rx: 16, ry: 16, middle: true, injuryParts: ['Onderrug'], stretchAreaIds: ['onderrug'], care: 'onderrug',
   },
   ...pair('bil', 'back', 'bil', 84, {
@@ -117,7 +117,7 @@ const BACK: BodySpot[] = [
     cy: 268, rx: 10, ry: 24, injuryParts: ['Hamstring'], stretchAreaIds: ['hamstrings'], care: 'hamstring',
   }),
   ...pair('kuit', 'back', 'kuit', 84, {
-    view: 'back', muscle: 'Kuitspieren', where: 'Achterkant, het onderbeen',
+    view: 'back', muscle: 'Kuiten', where: 'Achterkant, het onderbeen',
     cy: 336, rx: 10, ry: 20, injuryParts: ['Kuit'], stretchAreaIds: ['kuiten'], care: 'kuit',
   }),
   ...pair('achilles', 'back', 'achillespees', 87, {

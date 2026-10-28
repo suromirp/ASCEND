@@ -182,6 +182,24 @@ describe('suggestOwnWeights: geen gewicht past', () => {
   });
 });
 
+describe('suggestLighter met een tussengewicht', () => {
+  const sets = (): WorkoutRow[] => [
+    row(0, { done: true, weightKg: 45, reps: 5, rir: 0 }, { weightKg: 45 }),
+    row(1, { weightKg: 45, reps: 9 }, { weightKg: 45 }),
+  ];
+  it('kiest een gewicht met tussengewicht als dat de kleinste verwachte misser geeft', () => {
+    const blockOnly = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [30, 45] } };
+    const withAddOn = { ...blockOnly, addOnKg: [2.5, 5] };
+    const ex = exercise('cable-fly', sets());
+    // Zonder tussengewicht is 30 kg een te grote stap, dus geen voorstel.
+    expect(suggestLighter(ex, 'r0', ctx({ profile: blockOnly }))).toBeUndefined();
+    const finer = suggestLighter(ex, 'r0', ctx({ profile: withAddOn }))!.items[0].weightKg!;
+    expect(finer).toBeGreaterThan(30);
+    expect(finer).toBeLessThan(45);
+    expect([32.5, 35, 37.5, 40, 42.5]).toContain(finer);
+  });
+});
+
 describe('suggestTooBigStep: het lichtere gewicht is een te grote stap', () => {
   // Een nagemaakte kabel met alleen 10 en 40: 10 kg geeft veel te veel herhalingen.
   const gap = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [10, 40, 45] } };

@@ -69,7 +69,8 @@ import {
   type WorkoutRow,
 } from '../../engine/forgeWorkout';
 import type { GymProfile } from '../../engine/strengthSettings';
-import { profileFor } from '../../engine/strengthWeights';
+import type { Exercise } from '../../models/exercise';
+import { profileFor, stepFor } from '../../engine/strengthWeights';
 import { programExercisesFor } from '../../engine/macrofactorProgram';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import { templateSport } from '../../engine/sports';
@@ -99,7 +100,8 @@ import { useGuardedSave, useLegEase } from '../useLegEase';
 import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_KEPT_LINE, EASE_STARTED_LINE } from '../../engine/legDayEase';
 import { resolveLegEaseHow } from '../../engine/legEaseSettings';
 import { adjustText, applyLighter, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
-import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
+import { addOnText, addOnsFor, formatAddOns, hasStack, ownWeightsFor } from '../../engine/machineWeights';
+import { ExerciseAddOnForgeSheet } from './AddOnWeights';
 import { MachineWeightsForgeSheet } from './MachineWeights';
 import { InputDock } from './InputDock';
 import { ForgeSheet, LongPressRow, MenuRow, RirBubble, TickBox, ValueCell } from './parts';
@@ -213,6 +215,7 @@ export function ForgeWorkout({
   // Geen gewicht van dit toestel past: de regel die vraagt of je de gewichten invult, per oefening.
   const [noFit, setNoFit] = useState<Record<string, NoFit>>({});
   const [fillFor, setFillFor] = useState<string | null>(null);
+  const [addOnFor, setAddOnFor] = useState<string | null>(null);
   // Een stille tip na het invullen van de gewichten, als er dan nog steeds niets past.
   const [heavyTip, setHeavyTip] = useState<Record<string, string>>({});
   const [workoutMenu, setWorkoutMenu] = useState(false);
@@ -607,6 +610,7 @@ export function ForgeWorkout({
   const swapEx = workout.find((e) => e.slot === swapFor);
   const noteEx = workout.find((e) => e.slot === noteFor);
   const fillEx = workout.find((e) => e.slot === fillFor);
+  const addOnEx = workout.find((e) => e.slot === addOnFor);
   const dockEx = dock ? workout.find((e) => e.slot === dock.slot) : undefined;
   const dockIndex = dockEx && dock ? dockEx.rows.findIndex((r) => r.id === dock.rowId) : -1;
   const dockRow = dockEx && dockIndex >= 0 ? dockEx.rows[dockIndex] : undefined;
@@ -741,6 +745,9 @@ export function ForgeWorkout({
               {!readOnly && !preview && hasStack(exerciseOf(menuEx)) && (
                 <MenuRow icon="plus" title="Gewichten van dit toestel" sub={ownWeightsFor(strength.profile, exerciseOf(menuEx)) ? `Je eigen lijst in ${strength.profile.name}.` : `Vul in wat er hangt in ${strength.profile.name}.`} onClick={() => { close(); setFillFor(menuEx.slot); }} />
               )}
+              {!readOnly && !preview && hasStack(exerciseOf(menuEx)) && (
+                <MenuRow icon="plus" title="Tussengewicht van dit toestel" sub={addOnMenuSub(strength.profile, exerciseOf(menuEx))} onClick={() => { close(); setAddOnFor(menuEx.slot); }} />
+              )}
               {!readOnly && !menuEx.timed && (
                 <>
                   <MenuRow icon="plus" title="Set toevoegen" onClick={() => { setExercise(menuEx.slot, (e) => addRow(e, 'work')); close(); }} />
@@ -846,6 +853,8 @@ export function ForgeWorkout({
           onClose={() => setFillFor(null)}
         />
       )}
+
+      {addOnEx && <ExerciseAddOnForgeSheet exerciseId={addOnEx.exerciseId} onClose={() => setAddOnFor(null)} />}
 
       {rirFor && rirRow && (
         <ForgeSheet title="Hoeveel had je nog over?" sub={rirRow.target.rir !== undefined ? `Het voorschrift is ${rirRow.target.rir} over.` : undefined} onClose={() => setRirFor(null)}>
@@ -1218,6 +1227,9 @@ const ExerciseBlock = memo(function ExerciseBlock({
                       {!readOnly && <TickBox done={row.done} onClick={() => act.tick(ex.slot, row.id)} label={`Set ${label} gedaan`} />}
                     </span>
                   </LongPressRow>
+                  {!readOnly && row.kind === 'work' && addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg) && (
+                    <p className="ml-9 h-5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg)} kg</p>
+                  )}
                   {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
                     <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
                   )}
@@ -1252,6 +1264,17 @@ function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise })
       {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && <span className="block text-xs">{row.target.rir} RIR</span>}
     </>
   );
+}
+
+// "70 + 2,3" onder een werkset van een toestel met een tussengewicht, als het gewicht daarmee gemaakt is.
+function addOnLine(profile: GymProfile, exercise: Exercise | undefined, weightKg: number | undefined): string | undefined {
+  return addOnText(profile, exercise, weightKg, stepFor(exercise, profile));
+}
+
+// De regel onder "Tussengewicht van dit toestel" in het menu van een oefening.
+function addOnMenuSub(profile: GymProfile, exercise: Exercise | undefined): string {
+  const list = addOnsFor(profile, exercise);
+  return list.length > 0 ? `${formatAddOns(list)} erbij, in ${profile.name}.` : `Geen los gewicht in ${profile.name}.`;
 }
 
 // De schijven bij een stang, klein onder een werkset: een tik opent het invoerpaneel.

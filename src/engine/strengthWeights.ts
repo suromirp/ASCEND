@@ -10,7 +10,7 @@
 
 import type { Exercise } from '../models/exercise';
 import { dumbbellWeights } from './gymProfileEdit';
-import { ownWeightsFor } from './machineWeights';
+import { addOnsFor, blockPredicate, hasStack, ownWeightsFor, splitAddOn, withAddOnWeights } from './machineWeights';
 import type { DumbbellLog, DumbbellRack, GymProfile, StackWeights } from './strengthSettings';
 
 export interface Candidate {
@@ -189,7 +189,18 @@ export function usedWeights(sets: { weightKg?: number }[]): number[] {
   return sets.map((s) => s.weightKg ?? 0).filter((w) => w > 0);
 }
 
+// The weights of the block, with the loose add-ons of this machine on top (every combination, each
+// at most once). The weights you used are first taken back to the block, so 72,3 used once does not
+// make 74,6 a candidate.
 function externalWeights(exercise: Exercise | undefined, profile: GymProfile, ctx: WeightContext): number[] {
+  const addOns = addOnsFor(profile, exercise);
+  if (addOns.length === 0 || !hasStack(exercise)) return blockWeights(exercise, profile, ctx);
+  const isBlock = blockPredicate(profile, exercise, stepFor(exercise, profile));
+  const usedKg = ctx.usedKg?.map((w) => splitAddOn(w, addOns, isBlock)?.baseKg ?? w);
+  return withAddOnWeights(blockWeights(exercise, profile, { ...ctx, usedKg }), addOns);
+}
+
+function blockWeights(exercise: Exercise | undefined, profile: GymProfile, ctx: WeightContext): number[] {
   const res = exercise?.resistance;
   // Weights you typed in for this machine in this gym go before everything else, in
   // every choice of "Gewichten van toestellen" (engine/machineWeights.ts).
