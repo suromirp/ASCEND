@@ -62,6 +62,12 @@ export interface Advice {
   title: string;
   effect: string;
   why: string;
+  // Eén korte feitregel voor het blad. Zonder lead is dat de eerste zin van `effect`.
+  lead?: string;
+  // Een korte regel voor de kaart op Vandaag (dag en feit). Zonder brief: het lead.
+  brief?: string;
+  // Een praktische tip onder de wijzigingen in het blad.
+  tip?: string;
   priority: number; // higher first
   proposal?: PlanChangeProposal;
   // More than one good way: the best first (the same as `proposal`), you
@@ -1202,6 +1208,11 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   const was = stops
     ? `Je testloop van ${shortDate(last.date)} had ${(last.stoppedSec ?? 0) > 60 ? `${stoppedTime(last.stoppedSec ?? 0)} stilstand` : `${last.stops} keer stilstand`}, dus hij is iets te gunstig.`
     : `Je testloop van ${shortDate(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
+  const longDay = weekdayLongNL(last.date);
+  const dayName = `${longDay.charAt(0).toUpperCase()}${longDay.slice(1)}`;
+  const brief = stops
+    ? `${dayName} ${(last.stoppedSec ?? 0) > 60 ? stoppedTime(last.stoppedSec ?? 0) : `${last.stops} keer`} stilgestaan`
+    : `${dayName} trager dan je vorige, wacht op je antwoord`;
   const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
   const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. ASCEND zoekt de dag die het minst verandert. Staat er een zware beendag of de lange duurloop in de weg, dan schuift die mee naar een dag waar hij past, in hetzelfde voorstel. Wat jij zelf vastzette, schuift of laat ASCEND alleen gaan met jouw Akkoord, met de naam erbij. Alleen jij beslist: dit is een voorstel.';
   const nameOf = (x: PlannedSession) => templateById.get(x.templateId)?.name ?? 'Training';
@@ -1243,7 +1254,7 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   const built = ranked.map(build);
   const [first] = built;
   return [{
-    id: `retest:${last.date}`, trigger: 'plan_update', ruleId: 'TEST-RETRY', title: first.title, effect: first.effect, why, priority: 2, relatedLogId: last.logId,
+    id: `retest:${last.date}`, trigger: 'plan_update', ruleId: 'TEST-RETRY', title: first.title, effect: first.effect, lead: was, brief, tip, why, priority: 2, relatedLogId: last.logId,
     proposal: first.proposal,
     options: built.length > 1 ? built.map((b) => ({ label: b.label, effect: b.effect, proposal: b.proposal })) : undefined,
   }];

@@ -4,12 +4,14 @@
 // "mag wat mooier, visueler"): an icon per kind of advice, the suggestion
 // up front, the why folded into a quiet panel, clear pill actions.
 
-import { ProposalSheet } from './ProposalSheet';
+import { ProposalChangeList, ProposalSheet } from './ProposalSheet';
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { Advice, AdviceTrigger } from '../engine/adviceEngine';
-import { Card, Eyebrow } from './ui';
-import { WhyPanel, WhyToggle } from './Why';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
+import { WhyPanel } from './Why';
+import { TextButton } from './TextButton';
+import { adviceBrief, adviceLead } from '../engine/adviceText';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { Icon } from './icons';
 import { useHorizonChange } from './useHorizonChange';
@@ -94,21 +96,21 @@ export function CoachCard() {
         <KindIcon trigger={first.trigger} />
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{first.title}</p>
-          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{first.effect}</p>
+          <p className="mt-1 line-clamp-2 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{adviceBrief(first)}</p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {plain && (
-          <Pill disabled={busy} onClick={() => { setBusy(true); void respondToAdvice(first, 'accepted').finally(() => setBusy(false)); }}>Begrepen</Pill>
+          <SecondaryButton disabled={busy} onClick={() => { setBusy(true); void respondToAdvice(first, 'accepted').finally(() => setBusy(false)); }}>Begrepen</SecondaryButton>
         )}
-        <Pill onClick={() => setOpen(true)}>{plain ? 'Uitleg' : 'Bekijk'}</Pill>
+        <SecondaryButton onClick={() => setOpen(true)}>{plain ? 'Uitleg' : 'Bekijk'}</SecondaryButton>
       </div>
       {open && (
         <TodaySheet eyebrow={advice.length === 1 ? 'Advies' : `${advice.length} adviezen`} onClose={() => setOpen(false)}>
           <div className="flex flex-col">
             {advice.map((a, i) => (
               <div key={a.id} className={i > 0 ? 'mt-4 border-t pt-4' : ''} style={{ borderColor: 'var(--color-card-border)' }}>
-                <AdviceItem advice={a} whyAlways />
+                <AdviceItem advice={a} primary={advice.length === 1} />
               </div>
             ))}
           </div>
@@ -118,8 +120,11 @@ export function CoachCard() {
   );
 }
 
-// `whyAlways`: the why stands under the advice instead of behind "waarom" (the sheet on Vandaag).
-export function AdviceItem({ advice, compact = false, whyAlways = false }: { advice: Advice; compact?: boolean; whyAlways?: boolean }) {
+// Het blad toont een advies in één oogopslag: de feitregel, de wijzigingen als lijst, hoogstens één tip,
+// dan de knoppen; het waarom zit achter "Waarom?". Alleen een advies met een eigen `lead` krijgt de lijst
+// in plaats van de alinea; de andere houden hun effect, zodat er niets verdwijnt.
+// `primary`: Akkoord is gevuld mint, omdat het de enige keuze in het blad is; anders omlijnd.
+export function AdviceItem({ advice, compact = false, primary = false }: { advice: Advice; compact?: boolean; primary?: boolean }) {
   const { respondToAdvice, planWeekLoadChange } = useAppData();
   // Training through a rest week and "Deze week nog een keer" change the
   // program: first their own proposal with what changes, Akkoord in there
@@ -130,6 +135,7 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
   const [showWeek, setShowWeek] = useState(false);
   const [busy, setBusy] = useState(false);
   const kind = KIND[advice.trigger];
+  const glance = !!advice.lead && !!advice.proposal;
 
   async function respond(response: 'accepted' | 'declined') {
     if (response === 'accepted' && weekLoad) {
@@ -148,17 +154,21 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
   }
 
   const actions = (
-    <div className="mt-3 flex flex-wrap items-center gap-2">
+    <div className="mt-3 flex items-center gap-3">
       {advice.proposal || advice.restWeekSkip || advice.repeatWeek || advice.goalChange || advice.goalTargetTime ? (
         <>
-          <Pill onClick={() => void respond('accepted')} disabled={busy || horizon.busy}>{weekLoad ? 'Bekijk' : 'Akkoord'}</Pill>
-          <Pill onClick={() => void respond('declined')} disabled={busy || horizon.busy}>Liever niet</Pill>
+          <SecondaryButton onClick={() => void respond('declined')} disabled={busy || horizon.busy} className={primary && !weekLoad ? 'min-h-[52px]' : ''}>Liever niet</SecondaryButton>
+          {primary && !weekLoad
+            ? <PrimaryButton onClick={() => void respond('accepted')} disabled={busy || horizon.busy} fullWidth={false}>Akkoord</PrimaryButton>
+            : <SecondaryButton onClick={() => void respond('accepted')} disabled={busy || horizon.busy}>{weekLoad ? 'Bekijk' : 'Akkoord'}</SecondaryButton>}
         </>
       ) : (
-        <Pill onClick={() => void respond('accepted')} disabled={busy}>Begrepen</Pill>
+        <SecondaryButton onClick={() => void respond('accepted')} disabled={busy}>Begrepen</SecondaryButton>
       )}
-      {!whyAlways && <WhyToggle open={open} onToggle={() => setOpen((v) => !v)} className="ml-auto" />}
     </div>
+  );
+  const whyToggle = (
+    <TextButton tone="dim" size="xs" icon="omlaag" flipped={open} onClick={() => setOpen((v) => !v)} aria-expanded={open} className="mt-1 self-start">Waarom?</TextButton>
   );
 
   // "Zo ziet je week eruit": its own row under the actions; it opens the
@@ -179,7 +189,7 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
   );
   const weekPreview = showWeek && advice.proposal && <ProposalSheet advice={advice} onClose={() => setShowWeek(false)} />;
 
-  const why = (open || whyAlways) && <WhyPanel accent={kind.color} className="mt-2.5">{advice.why}</WhyPanel>;
+  const why = open && <WhyPanel accent={kind.color} className="mt-1">{advice.why}</WhyPanel>;
   const weekLoadParts = weekLoad && (
     <>
       {horizon.note && <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>}
@@ -192,6 +202,7 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
       <div>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{advice.effect}</p>
         {actions}
+        <div className="flex flex-col">{whyToggle}</div>
         {why}
         {weekToggle}
         {weekPreview}
@@ -207,29 +218,21 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
         <div className="min-w-0 flex-1">
           <Eyebrow tone={kind.color}>{kind.label}</Eyebrow>
           <p className="mt-0.5 text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</p>
-          <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{advice.effect}</p>
-          {actions}
-          {why}
+          {glance ? (
+            <p className="mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{adviceLead(advice)}</p>
+          ) : (
+            <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{advice.effect}</p>
+          )}
         </div>
       </div>
+      {glance && advice.proposal && <div className="mt-3"><ProposalChangeList proposal={advice.proposal} /></div>}
+      {glance && advice.tip && <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{advice.tip}</p>}
+      {actions}
+      <div className="flex flex-col">{whyToggle}</div>
+      {why}
       {weekToggle}
       {weekPreview}
       {weekLoadParts}
     </div>
-  );
-}
-
-function Pill({ children, onClick, disabled, primary = false }: { children: ReactNode; onClick: () => void; disabled?: boolean; primary?: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className="min-h-[44px] whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all active:scale-[0.97] disabled:opacity-40"
-      style={primary
-        ? { background: 'var(--color-action-fill)', color: 'var(--color-bg)' }
-        : { boxShadow: 'inset 0 0 0 1px var(--color-control-border)', color: 'var(--color-ink-dim)' }}
-    >
-      {children}
-    </button>
   );
 }
