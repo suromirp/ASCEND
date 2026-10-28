@@ -53,7 +53,7 @@ export function StageSheet({
   onChoose: (stageId: string, patch: Partial<StageChoice>) => void;
   onClose: () => void;
 }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const index = stageIndex(stage.id);
   const choice = plan.choices[stage.id] ?? {};
   const section = GR5_SECTIONS.find((s) => s.id === stage.section);
@@ -74,7 +74,7 @@ export function StageSheet({
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div
+        <div ref={sheetRef}
           role="dialog"
           aria-modal="true"
           aria-label={`Etappe ${stage.overall}: ${stage.from} naar ${stage.to}`}

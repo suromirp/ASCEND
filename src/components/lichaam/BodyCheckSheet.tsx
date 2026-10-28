@@ -45,7 +45,7 @@ export function BodyCheckSheet({
   const navigate = useNavigate();
   const { settings, addInjury, updateSettings } = useAppData();
   const goto = useRef<string | null>(null);
-  const { closing, requestClose } = useSheetClose(() => {
+  const { closing, requestClose, sheetRef } = useSheetClose(() => {
     onClose();
     if (goto.current) navigate(goto.current);
   });
@@ -91,7 +91,7 @@ export function BodyCheckSheet({
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={() => !busy && requestClose()}>
-        <div
+        <div ref={sheetRef}
           className={`max-h-[92vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"

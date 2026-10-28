@@ -34,7 +34,7 @@ import { InfluenceStrip } from './InfluenceStrip';
 // Ontwerp: Invloeden ASCEND, bord 3b.
 
 export function InfluenceEffectSheet({ groupKey, entries, own, effects, onClose }: { groupKey: string; entries: InfluenceEntry[]; own: InfluenceEntry[]; effects: ReasonEffect[]; onClose: () => void }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const navigate = useNavigate();
   const [key, setKey] = useState(groupKey);
   const isAlcohol = groupKey.startsWith('alcohol');
@@ -51,7 +51,7 @@ export function InfluenceEffectSheet({ groupKey, entries, own, effects, onClose 
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Wat doet dit met je: ${isAlcohol ? 'Alcohol' : group?.name ?? ''}`}>
+        <div ref={sheetRef} className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Wat doet dit met je: ${isAlcohol ? 'Alcohol' : group?.name ?? ''}`}>
           <Card className="rounded-b-none border-b-0 pb-8">
             <SheetHeader eyebrow="Wat doet dit met je?" title={isAlcohol ? 'Alcohol' : group?.name} onClose={requestClose} />
 

@@ -95,11 +95,11 @@ function AlignList({ items, templates }: { items: AlignItem[]; templates: Sessio
 }
 
 function SheetFrame({ title, onClose, children }: { title: ReactNode; onClose: () => void; children: React.ReactNode }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <Eyebrow>Gelijktrekken met je horloge</Eyebrow>
             <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>{title}</p>

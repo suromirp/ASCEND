@@ -58,7 +58,7 @@ export function StrengthProgramWizard({
 }) {
   const { templates, plannedSessions, goalEngineConfig, goalOverviews, program, activateStrengthProgram } = useAppData();
   const [step, setStep] = useState<Step>({ kind: 'sessions', draft: initialStrategy });
-  const { closing, requestClose } = useSheetClose(onClose, 200, () => step.kind !== 'applying');
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, () => step.kind !== 'applying');
 
   const strengthTemplates = useMemo(() => templates.filter((t) => t.type === 'strength'), [templates]);
 
@@ -76,6 +76,7 @@ export function StrengthProgramWizard({
         onClick={step.kind === 'applying' ? undefined : requestClose}
       >
         <div
+          ref={sheetRef}
           className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >

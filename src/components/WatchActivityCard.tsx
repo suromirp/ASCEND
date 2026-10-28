@@ -270,13 +270,13 @@ function ChooseSheet({
   onClose: () => void;
 }) {
   const { plannedSessions, templates, sessionLogs } = useAppData();
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const planned = candidatePlanned(activity, plannedSessions, templates, sessionLogs, { anyKind: true, notAfter: todayISO() }).slice(0, 8);
   const loose = templatesForKind(activity.kind, templates);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <Eyebrow>Wat was dit?</Eyebrow>
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{describeActivity(activity)}</p>

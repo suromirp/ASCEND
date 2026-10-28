@@ -17,7 +17,7 @@ export function RescheduleDialog({
   onApply: () => void;
   onCancel: () => void;
 }) {
-  const { closing, requestClose } = useSheetClose(onCancel);
+  const { closing, requestClose, sheetRef } = useSheetClose(onCancel);
   // Stil, zonder knop: hoe vermoeid je benen op de nieuwe dag ongeveer zijn.
   const legNotes = useLegMoveNotes(proposal.changes.filter((c) => !c.restore && c.toDate !== c.fromDate).map((c) => ({ sessionId: c.sessionId, toDate: c.toDate })));
 
@@ -27,7 +27,7 @@ export function RescheduleDialog({
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-6">
             <div className="-mt-2"><SheetHeader eyebrow="Schema-aanpassing" onClose={requestClose} /></div>
             <div className="mt-3 flex flex-col gap-2">

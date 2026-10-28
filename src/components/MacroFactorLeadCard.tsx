@@ -54,7 +54,7 @@ export function MacroFactorLeadCard() {
 
 function TakenSheet({ taken, templates, onClose }: { taken: SessionLog[]; templates: SessionTemplate[]; onClose: () => void }) {
   const { restoreFromMacroFactor } = useAppData();
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const [busy, setBusy] = useState(false);
 
   async function restore(ids: string[]) {
@@ -70,7 +70,7 @@ function TakenSheet({ taken, templates, onClose }: { taken: SessionLog[]; templa
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <Eyebrow>MacroFactor is leidend voor kracht</Eyebrow>
             <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>

@@ -12,7 +12,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 const TYPE_ORDER: Record<string, number> = { cardio: 1, hiking: 2, strength: 3, adventure: 4, recovery: 5 };
 
 export function AdHocLogSheet({ templates, onPick, onClose }: { templates: SessionTemplate[]; onPick: (template: SessionTemplate) => void; onClose: () => void }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const sorted = [...templates].sort((a, b) => {
     const ca = templateSport(a) === 'cycling' ? 0 : TYPE_ORDER[a.type] ?? 9;
     const cb = templateSport(b) === 'cycling' ? 0 : TYPE_ORDER[b.type] ?? 9;
@@ -21,7 +21,7 @@ export function AdHocLogSheet({ templates, onPick, onClose }: { templates: Sessi
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <SheetHeader eyebrow="Loggen" title="Losse training" onClose={requestClose} />
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Iets gedaan dat niet op de planning stond? Kies wat het was.</p>

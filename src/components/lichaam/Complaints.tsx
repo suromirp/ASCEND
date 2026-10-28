@@ -21,11 +21,11 @@ const severityLabel = (s: InjurySeverity): string => SEVERITY_CHOICES.find((c) =
 // Verwijderen kan niet terug: eerst vragen, in een klein blad. De klacht blijft bestaan tot
 // je "Verwijderen" kiest; Annuleren, de achtergrond en de terugknop laten alles zoals het was.
 function DeleteComplaintSheet({ note, onConfirm, onClose }: { note: InjuryNote; onConfirm: (id: string) => void; onClose: () => void }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Klacht verwijderen">
+        <div ref={sheetRef} className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Klacht verwijderen">
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <SheetHeader eyebrow="Klacht" title="Verwijderen?" onClose={requestClose} />
             <p className="text-base leading-snug" style={{ color: 'var(--color-ink)' }}>

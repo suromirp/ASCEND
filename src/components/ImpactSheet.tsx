@@ -32,7 +32,7 @@ export function ImpactSheet({
   onClose: () => void;
   busy?: boolean;
 }) {
-  const { closing, requestClose } = useSheetClose(onClose, 200, () => !busy);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, () => !busy);
   const shown = lines.slice(0, 8);
   return (
     <Portal>
@@ -40,7 +40,7 @@ export function ImpactSheet({
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={busy ? undefined : requestClose}
       >
-        <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-4 rounded-b-none border-b-0 pb-6">
             <div>
               <Eyebrow>{eyebrow}</Eyebrow>

@@ -78,7 +78,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
   const [busy, setBusy] = useState(false);
   // While Akkoord runs, the back button and a tap beside the sheet wait for it
   // (Warden Planning punt 11); the wait itself has a limit (applyHorizonPlan).
-  const { closing, requestClose } = useSheetClose(onClose, 200, () => !busy);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, () => !busy);
   // With more than one option: the chosen one drives the week shown and Akkoord.
   const [choice, setChoice] = useState(0);
   const chosen = advice.options?.[choice]?.proposal ?? advice.proposal;
@@ -139,7 +139,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={busy ? undefined : requestClose}>
-        <div className={`flex max-h-[88vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`flex max-h-[88vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex min-h-0 flex-col rounded-b-none border-b-0 p-0!">
             <div className="flex justify-center pt-2.5" aria-hidden>
               <span className="h-1 w-10 rounded-full" style={{ background: 'var(--color-card-border)' }} />

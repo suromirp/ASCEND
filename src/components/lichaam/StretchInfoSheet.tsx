@@ -7,11 +7,11 @@ import { Card, Eyebrow } from '../ui';
 // Het algemene advies bij rekken en de bron, achter de InfoButton bij "Rekken en losmaken".
 // De tekst staat in data/stretches.ts, inclusief de twee correcties (IT-band, nekrollen).
 export function StretchInfoSheet({ onClose }: { onClose: () => void }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div
+        <div ref={sheetRef}
           className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"

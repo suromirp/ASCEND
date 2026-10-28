@@ -28,7 +28,7 @@ export function Sheet({
   action?: ReactNode;
   children: ReactNode | ((close: () => void) => ReactNode);
 }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>
       <div
@@ -36,6 +36,7 @@ export function Sheet({
         onClick={requestClose}
       >
         <div
+          ref={sheetRef}
           aria-label={title}
           className={`st-sheet ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}

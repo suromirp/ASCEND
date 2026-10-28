@@ -369,11 +369,11 @@ function Step({ n, children }: { n: number; children: ReactNode }) {
 
 // The technical part of a refusal: found sheets and columns, to pass on.
 function DetailsSheet({ text, onClose }: { text: string; onClose: () => void }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <Eyebrow>Details</Eyebrow>
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>

@@ -163,6 +163,18 @@ de missiekaart. De instelling Beweging (Normaal, Rustig, Uit; `engine/motionSett
 staat als `data-motion` op `<html>`; `prefers-reduced-motion: reduce` telt altijd als Uit.
 Een nieuwe animatie moet in Rustig en Uit dus ook netjes op de eindstand staan.
 
+Vloeiende overgangen (`docs/beslissingen/2026-10-28-vloeiende-overgangen.md`, ontwerp
+`docs/visie/Vloeiende overgangen.md`): de tik van `utils/haptics.ts` (`TAP_MS`, 15 ms) heeft een
+poort, de instelling Trillen (`AppSettings.haptics`, absent = aan, `engine/hapticsSettings.ts`);
+alleen `tap` en `success` kijken ernaar, het rustsignaal van Forge (`alarm`, `pattern`) niet.
+Akkoord in `ProposalSheet` en `RescheduleDialog` geeft een tik. Elk blad volgt je vinger omlaag
+(`useSheetClose` geeft `sheetRef`, op het paneel; gebaar in `utils/sheetDragDom.ts`, rekensom in
+`components/sheetDrag.ts`): alleen als de inhoud bovenaan staat, nooit op invoer, sliders of
+`data-no-sheet-drag`, sluiten via `requestClose` zodat de terugknop en `canClose` gelden. Een nieuw
+blad met `animate-sheet-in` zonder `ref={sheetRef}` laat `sheetDrag.scan.test.ts` falen, tenzij het
+met reden in de uitzonderingen staat. Volgen is 1 op 1 in elke stand, het terugveren staat in Uit
+meteen op de eindstand.
+
 De lucht bovenaan heeft een donkere variant (`data-sky="day|night"` op `<html>`, instelling
 "Lucht bovenaan", `engine/skySettings.ts`; `docs/beslissingen/2026-10-24-nachtlucht.md`).
 Een component gebruikt alleen de tokens en `.on-light`; wat licht lijkt wordt 's avonds vanzelf donker.

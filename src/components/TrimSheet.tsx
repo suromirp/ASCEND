@@ -43,7 +43,7 @@ function startingRange(streams: StreamSet, suggestion: TrimSuggestion | undefine
 export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
   const { trimWatchActivity } = useAppData();
   const [saving, setSaving] = useState(false);
-  const { closing, requestClose } = useSheetClose(onClose, 200, () => !saving);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, () => !saving);
   const [loaded, setLoaded] = useState<Loaded>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [startMin, setStartMin] = useState(0);
@@ -124,6 +124,7 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
         onClick={requestClose}
       >
         <div
+          ref={sheetRef}
           className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"

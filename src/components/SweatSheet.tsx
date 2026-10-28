@@ -20,7 +20,7 @@ const SAVE_LIMIT_MS = 10_000;
 export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
   const { settings, saveSweat } = useAppData();
   const existing = settings.sweatEntries?.find((e) => e.logId === log.id);
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const pre = preWeightForLog(settings.sweatPre, settings.sweatEntries, log);
   const [before, setBefore] = useState(existing?.weightBeforeKg ?? pre);
   const [after, setAfter] = useState(existing?.weightAfterKg);
@@ -80,6 +80,7 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
         onClick={requestClose}
       >
         <div
+          ref={sheetRef}
           role="dialog"
           aria-modal="true"
           aria-label="Zweetverlies meten"

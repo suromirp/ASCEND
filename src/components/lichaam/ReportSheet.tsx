@@ -39,7 +39,7 @@ export function ReportDateField({ id, value, onChange }: { id: string; value: st
 export function ReportSheet({ onClose }: { onClose: () => void }) {
   const { addInjury } = useAppData();
   const [busy, setBusy] = useState(false);
-  const { closing, requestClose } = useSheetClose(onClose, 200, () => !busy);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, () => !busy);
   const options = offFigureParts();
   const [choice, setChoice] = useState<string>(options[0] ?? OTHER);
   const [custom, setCustom] = useState('');
@@ -70,7 +70,7 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={() => !busy && requestClose()}>
-        <div
+        <div ref={sheetRef}
           className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"

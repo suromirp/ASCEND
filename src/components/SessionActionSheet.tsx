@@ -53,7 +53,7 @@ function dayLabel(iso: string, today: string): string {
 
 // The head (day, title, cross) stays in view; only what is under it scrolls.
 // The height limit itself is shared by every sheet (.animate-sheet-in in index.css).
-function SheetFrame({ closing, onClose, label, scrollKey, head, children }: { closing: boolean; onClose: () => void; label: string; scrollKey?: string; head: ReactNode; children: ReactNode }) {
+function SheetFrame({ closing, sheetRef, onClose, label, scrollKey, head, children }: { closing: boolean; sheetRef: (node: HTMLElement | null) => void; onClose: () => void; label: string; scrollKey?: string; head: ReactNode; children: ReactNode }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   // A new step starts at its top.
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, [scrollKey]);
@@ -64,6 +64,7 @@ function SheetFrame({ closing, onClose, label, scrollKey, head, children }: { cl
         onClick={onClose}
       >
         <div
+          ref={sheetRef}
           role="dialog"
           aria-modal="true"
           aria-label={label}
@@ -146,7 +147,7 @@ export function SessionActionSheet({
   const bikeOption = isSportEnabled('cycling', settings.enabledSports) && templateSport(template) !== 'cycling'
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
   const guide = getTrainingGuide(template.id);
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const today = todayISO();
   const skipped = session.status === 'skipped';
   const canComeBack = skipped && !!onBackOnPlan && session.scheduledDate >= today;
@@ -177,7 +178,7 @@ export function SessionActionSheet({
 
   if (completedLog) {
     return (
-      <SheetFrame closing={closing} onClose={requestClose} label={template.name} head={<SheetHeader
+      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={template.name} head={<SheetHeader
           eyebrow={eyebrow}
           title={template.name}
           info={info}
@@ -214,7 +215,7 @@ export function SessionActionSheet({
   // Week sheet still offered "START VOLLEDIGE SESSIE" and moving it).
   if (template.type === 'recovery') {
     return (
-      <SheetFrame closing={closing} onClose={requestClose} label={REST_DAY_COPY[restMode].title} head={<SheetHeader eyebrow={eyebrow} title={REST_DAY_COPY[restMode].title} onClose={requestClose} />}>
+      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={REST_DAY_COPY[restMode].title} head={<SheetHeader eyebrow={eyebrow} title={REST_DAY_COPY[restMode].title} onClose={requestClose} />}>
         <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{REST_DAY_COPY[restMode].detail}</p>
         <div className="mt-6 flex flex-col gap-4">
           {restMode === 'active' && onDoneAsPlanned && <PrimaryButton onClick={onDoneAsPlanned}>Gedaan</PrimaryButton>}
@@ -228,7 +229,7 @@ export function SessionActionSheet({
 
   if (step === 'done') {
     return (
-      <SheetFrame closing={closing} onClose={requestClose} label={`${template.name}, gedaan`} scrollKey="done" head={<SheetHeader eyebrow={doneToday ? 'Vandaag gedaan' : 'Gedaan'} title={template.name} onBack={() => { setStep('main'); setDoneToday(false); }} onClose={requestClose} />}>
+      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={`${template.name}, gedaan`} scrollKey="done" head={<SheetHeader eyebrow={doneToday ? 'Vandaag gedaan' : 'Gedaan'} title={template.name} onBack={() => { setStep('main'); setDoneToday(false); }} onClose={requestClose} />}>
         <div className="mt-6">
           <StrengthDoneElsewhere
             key={duration.source}
@@ -245,7 +246,7 @@ export function SessionActionSheet({
 
   if (step === 'move') {
     return (
-      <SheetFrame closing={closing} onClose={requestClose} label={`${template.name} verplaatsen`} scrollKey="move" head={<SheetHeader eyebrow="Verplaatsen" title={template.name} facts={`Staat op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
+      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={`${template.name} verplaatsen`} scrollKey="move" head={<SheetHeader eyebrow="Verplaatsen" title={template.name} facts={`Staat op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
         <div className="mt-6">
           <MoveSuggestions
             sessionDate={session.scheduledDate}
@@ -300,7 +301,7 @@ export function SessionActionSheet({
   const showVariants = due && !skipped && kind !== 'quick' && variants.length > 1;
 
   return (
-    <SheetFrame closing={closing} onClose={requestClose} label={template.name} scrollKey="main" head={<SheetHeader eyebrow={eyebrow} title={template.name} info={info} facts={facts} onClose={requestClose} />}>
+    <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={template.name} scrollKey="main" head={<SheetHeader eyebrow={eyebrow} title={template.name} info={info} facts={facts} onClose={requestClose} />}>
       {guideSheet}
       {showPreview && (
         <ExerciseLogger
