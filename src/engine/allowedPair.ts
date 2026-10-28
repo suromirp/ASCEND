@@ -27,7 +27,7 @@ export interface AllowedPair {
   source: string;
 }
 
-const MORNING = "Voel je 's ochtends spierpijn, dan stelt ASCEND voor om een dag later te gaan.";
+const MORNING = "Voel je 's ochtends spierpijn, sleep hem dan gewoon naar een dag later.";
 
 const TEXT: Record<AllowedPairKind, Pick<AllowedPair, 'rowNote' | 'sheetText' | 'source'>> = {
   'run-after-strength': {
