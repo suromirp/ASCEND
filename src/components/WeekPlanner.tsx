@@ -24,6 +24,7 @@ import { useDeviations } from './influence/useInfluence';
 import { entryForLog, signState, type SignState } from '../engine/influence';
 import { useMemo, type ReactNode } from 'react';
 import { dragEligibility } from '../engine/weekDrag';
+import { catchUpEligibility, catchUpNoteFor, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { WeekDragGhost } from './WeekDragGhost';
 import { WeekDragNote } from './WeekDragNote';
 import { useFlipList } from './useFlipList';
@@ -47,7 +48,7 @@ const todayStyle = {
 const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, transparent)' };
 
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -71,13 +72,15 @@ function SessionRow({
   handle?: WeekHandle;
   placeholder?: boolean;
   ghost?: boolean;
+  // Een ingehaalde training: "ingehaald van wo 28" op de nieuwe rij, "ingehaald op do 29" op de oude.
+  catchNote?: string;
 }) {
   const restMode = useAppData().settings.restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
   const { status, wasMoved } = deriveSessionStatus(session, logs, isRest);
   const duration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
   const dim = status === 'skipped' || status === 'missed';
-  const note = status === 'completed' ? undefined : adjusted ? 'aangepast' : wasMoved ? 'verplaatst' : undefined;
+  const note = status === 'completed' ? undefined : catchNote ?? (adjusted ? 'aangepast' : wasMoved ? 'verplaatst' : undefined);
   const zone = isRest ? undefined : zoneOfTemplate(template, session.scheduledDate, program, templates);
   const legs = !isRest && isLegHeavyTemplate(template);
   const doneNow = status === 'completed';
@@ -275,7 +278,8 @@ export function WeekPlanner({
   const today = todayISO();
   const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
   const { statusOf } = useWatchStatuses();
-  const { settings } = useAppData();
+  const { settings, plannedSessions } = useAppData();
+  const caughtUp = useMemo(() => caughtUpMap(plannedSessions), [plannedSessions]);
   const showWatch = settings.showWatchStatusOnWeek !== false;
   // "Wat speelde er": the sign by a done run with a heart rate that stands out.
   const weekLogs = useMemo(() => {
@@ -295,6 +299,12 @@ export function WeekPlanner({
   // vakantie neerzette heeft geen greep (engine/weekDrag.ts#dragEligibility).
   const rowFor = (s: PlannedSession, template: SessionTemplate, date: string, extra: { ghost?: boolean } = {}): ReactNode => {
     const eligibility = dragEnabled && weekDrag ? dragEligibility(s, template, { logged: loggedIds.has(s.id), today }) : undefined;
+    // Een gemiste training heeft ook een greep, als er in deze week nog een dag is om naartoe te slepen
+    // (vandaag of later): loslaten haalt hem in (engine/catchUp.ts). Een andere week gaat via het blad.
+    const catchable = eligibility && !eligibility.ok && eligibility.reason === 'history' && days.some((d) => d >= today)
+      && catchUpEligibility(s, template, { logged: loggedIds.has(s.id), today, caughtUp: caughtUp.has(s.id) }).ok;
+    const ingehaald = caughtUp.get(s.id);
+    const catchNote = catchUpNoteFor(s) ?? (ingehaald && s.status === 'skipped' ? caughtUpNoteFor(ingehaald) : undefined);
     return (
       <SessionRow
         key={s.id}
@@ -311,7 +321,8 @@ export function WeekPlanner({
         sign={signOf(logs.find((l) => l.plannedSessionId === s.id))}
         concern={concernNotes?.get(s.id)}
         pairNote={pairNotes?.get(s.id)}
-        handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : undefined}
+        handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : catchable ? weekDrag!.handleFor(s, false) : undefined}
+        catchNote={catchNote}
         placeholder={pickedUp === s.id}
         ghost={extra.ghost}
       />

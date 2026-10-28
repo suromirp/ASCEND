@@ -27,6 +27,7 @@ export function MoveSuggestions({
   onPickDate,
   onSkip,
   onSameDay,
+  catchUp = false,
 }: {
   sessionDate: string;
   // Where a moved session came from: offered first, as "terug naar".
@@ -40,12 +41,18 @@ export function MoveSuggestions({
   // The day it already stands on was picked. A skipped training comes back
   // there ("Toch doen"); otherwise there is nothing to move, and you are told so.
   onSameDay?: () => void;
+  // Een gemiste training inhalen: vandaag en de dagen erna, en de zin erboven zegt dat.
+  catchUp?: boolean;
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [sameDayNote, setSameDayNote] = useState(false);
+  const [pastNote, setPastNote] = useState(false);
   const dateRef = useRef<HTMLInputElement>(null);
   const today = todayISO();
   const pickDate = (date: string) => {
+    // Een dag in het verleden kan niet: inhalen is vandaag of later.
+    if (catchUp && date < today) { setPastNote(true); setSameDayNote(false); return; }
+    setPastNote(false);
     if (date !== sessionDate) { setSameDayNote(false); onPickDate(date); return; }
     if (onSameDay) onSameDay();
     else setSameDayNote(true);
@@ -63,6 +70,11 @@ export function MoveSuggestions({
         : `Terug naar ${weekdayLongNL(originalDate!)} ${formatDateNL(originalDate!)}`;
   return (
     <div className="flex flex-col gap-3">
+      {catchUp && (
+        <p className="text-[13px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          Deze stond op {weekdayShortNL(sessionDate)} {formatDateNL(sessionDate)}. Kies vandaag of een dag erna, dan komt hij daar opnieuw te staan.
+        </p>
+      )}
       {originalDate && originalDate < today && originalDate !== sessionDate && (
         <p className="text-[13px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           Eerst gepland op {weekdayShortNL(originalDate)} {formatDateNL(originalDate)}, die dag is voorbij.
@@ -96,6 +108,11 @@ export function MoveSuggestions({
             style={{ borderColor: 'var(--color-control-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}
             onChange={(e) => e.target.value && pickDate(e.target.value)}
           />
+          {pastNote && (
+            <p className="mt-2 text-[13px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              Die dag is al voorbij. Kies vandaag of een dag erna.
+            </p>
+          )}
           {sameDayNote && (
             <p className="mt-2 text-[13px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               Hij staat al op {weekdayLongNL(sessionDate)} {formatDateNL(sessionDate)}. Kies een andere dag.

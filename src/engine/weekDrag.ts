@@ -98,6 +98,8 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
   return weekDates(mondayOfWeek(weekStart)).map((date): DayVerdict => {
     const day = dayTitle(date);
     if (date === session.scheduledDate) {
+      // Een gemiste training die je inhaalt (de dag is voorbij): hij stond hier, hij staat er niet meer.
+      if (date < ctx.asOf) return { date, kind: 'origin', droppable: true, tone: 'ok', chip: 'Hier stond hij', line: `${day}. Hier stond hij. Sleep naar vandaag of later om hem in te halen.`, ask: false };
       return { date, kind: 'origin', droppable: true, tone: 'ok', chip: 'Hier staat hij nu', line: `${day}. Hier staat hij nu.`, ask: false };
     }
     if (date < ctx.asOf) {

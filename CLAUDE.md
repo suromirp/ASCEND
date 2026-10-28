@@ -574,6 +574,13 @@ fit and any test open `RescheduleDialog` with Akkoord. Logged, past, skipped, re
 when it asks, muted when it cannot. The pointer mechanics are shared with the goals on Ascend (`useVerticalDrag`, `edgeScroll`); a change
 there changes both. Setting "Trainingen slepen in Week" (`dragWeek`, absent = on).
 
+**Inhalen** (`engine/catchUp.ts`, `storage/catchUpApply.ts`, decision `docs/beslissingen/2026-10-29-gemiste-training-inhalen.md`): a missed
+training (past, no log, not skipped, no test, race, rest walk or leave, this or last week) can be caught up through the same road as
+moving: "Inhalen" in the action sheet and the handle in Week (setting "Trainingen slepen in Week"), only to today or later. The old row is
+not moved: `applyProposal` skips it (your lock) and adds a new row with the same template and length on the chosen day (your lock,
+`PlannedSession.catchUp`); undo puts the old one back and removes the new one. A clash still asks Akkoord. Rows say "ingehaald van wo 28"
+and "ingehaald op do 29". The automatic planning does not touch this, `planGolden.test.ts` does not move.
+
 **A heavy leg day on tired legs** (`engine/legDayEase.ts`, `engine/legSoreness.ts`, decision
 `docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`, design `docs/visie/Spierpijn en een zware beendag.md`):
 a heavy leg day of today with a reason (soreness you reported, in the morning check or as a "spierpijn" note on a leg spot

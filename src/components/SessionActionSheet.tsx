@@ -103,6 +103,8 @@ export function SessionActionSheet({
   onBackOnPlan,
   onOpenLog,
   startStep,
+  catchUp = false,
+  caughtUpOn,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -131,6 +133,11 @@ export function SessionActionSheet({
   onOpenLog?: () => void;
   // Een tik op de greep in Week opent het blad direct op Verplaatsen.
   startStep?: 'move';
+  // Een gemiste training die je inhaalt (engine/catchUp.ts): dezelfde dagkeuze, onder de naam Inhalen.
+  catchUp?: boolean;
+  // De oude rij van een inhaal ("ingehaald op za 31"): alleen dat feit, geen acties, zodat je hem niet
+  // dubbel plant of logt.
+  caughtUpOn?: string;
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -253,7 +260,7 @@ export function SessionActionSheet({
 
   if (step === 'move') {
     return (
-      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={`${template.name} verplaatsen`} scrollKey="move" head={<SheetHeader eyebrow="Verplaatsen" title={template.name} facts={`Staat op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
+      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={`${template.name} ${catchUp ? 'inhalen' : 'verplaatsen'}`} scrollKey="move" head={<SheetHeader eyebrow={catchUp ? 'Inhalen' : 'Verplaatsen'} title={template.name} facts={`${catchUp ? 'Stond' : 'Staat'} op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
         <div className="mt-6">
           <MoveSuggestions
             sessionDate={session.scheduledDate}
@@ -262,6 +269,7 @@ export function SessionActionSheet({
             onPick={(sug) => onPickSuggestion?.(sug)}
             onPickDate={onMove}
             onSameDay={canComeBack ? onBackOnPlan : undefined}
+            catchUp={catchUp}
           />
         </div>
       </SheetFrame>
@@ -295,7 +303,7 @@ export function SessionActionSheet({
     // hier opent het alleen de uitleg en opbouw, naast Gedaan.
     start: template.type === 'strength' ? 'Training starten' : 'Hoe je het doet',
     preview: 'Hoe je het doet',
-    move: 'Verplaatsen',
+    move: catchUp ? 'Inhalen' : 'Verplaatsen',
     skip: 'Overslaan',
     backOnPlan: 'Toch doen',
     doToday: 'Vandaag al doen',
@@ -345,6 +353,11 @@ export function SessionActionSheet({
             <span style={{ color: 'var(--color-success-text)' }}><Icon name="kracht" size={20} /></span>{macroFactorLine(waiting)}
           </p>
         )}
+        {caughtUpOn ? (
+          <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+            Deze training is {caughtUpOn}. Daar staat hij nu in je week.
+          </p>
+        ) : (<>
         <div>
           <PrimaryButton onClick={run(actions.main)} disabled={saving}>{label[actions.main]}</PrimaryButton>
           {kind === 'quick' && actions.main === 'done' && (
@@ -356,6 +369,7 @@ export function SessionActionSheet({
             {actions.rows.map((a) => <SheetRow key={a} title={label[a]} onClick={run(a)} />)}
           </SheetRows>
         )}
+        </>)}
         {template.type === 'strength' && (
           <div className="flex justify-center">
             <TextButton tone="dim" icon="verder" onClick={() => { requestClose(); window.setTimeout(() => navigate('/forge'), 280); }}>Forge</TextButton>
