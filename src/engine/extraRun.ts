@@ -118,7 +118,7 @@ function isHard(t: SessionTemplate | undefined): boolean {
 }
 
 // The best day in the week for the extra run, or undefined when no day fits.
-export function extraRunDay(weekStart: string, weekSessions: PlannedSession[], byId: Map<string, SessionTemplate>, opts: { today: string; anchor?: string; restDay?: number; template?: SessionTemplate; leave?: LeavePeriod[] }): string | undefined {
+function extraRunDay(weekStart: string, weekSessions: PlannedSession[], byId: Map<string, SessionTemplate>, opts: { today: string; anchor?: string; restDay?: number; template?: SessionTemplate; leave?: LeavePeriod[] }): string | undefined {
   const active = weekSessions.filter((s) => s.status !== 'skipped');
   const on = (date: string) => active.filter((s) => s.scheduledDate === date).map((s) => byId.get(s.templateId));
   let best: { date: string; score: number } | undefined;

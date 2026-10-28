@@ -138,7 +138,7 @@ const DISCIPLINE: Partial<Record<GoalKindId, string>> = {
 
 const PRIORITY_ROLE: Record<GoalPriority, 'secondary' | 'track'> = { top: 'secondary', voortop: 'secondary', verkenning: 'track' };
 
-export function defaultGoalName(id: AddTileId, details: GoalDetails): string {
+function defaultGoalName(id: AddTileId, details: GoalDetails): string {
   if (id === 'run_race') {
     const v = details.variant;
     return v === '5k' ? '5 km wedstrijd' : v === '10k' ? '10 km wedstrijd' : v === 'half' ? 'Halve marathon' : v === 'marathon' ? 'Hele marathon' : 'Hardloopwedstrijd';

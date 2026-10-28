@@ -14,7 +14,7 @@ import type { SportTraits, TraitLevel } from '../data/sports';
 
 const LEVELS: LoadLevel[] = ['none', 'light', 'moderate', 'heavy'];
 
-export function traitToLoad(level: TraitLevel): LoadLevel {
+function traitToLoad(level: TraitLevel): LoadLevel {
   return LEVELS[level];
 }
 

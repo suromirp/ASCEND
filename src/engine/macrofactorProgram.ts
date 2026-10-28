@@ -261,7 +261,7 @@ export function programCycle(program: StoredStrengthProgram, date: string): numb
 
 // A stable slot id per exercise of the program: the same exercise keeps its
 // id from week to week, so a draft and the history line up.
-export function programSlotId(name: string): string {
+function programSlotId(name: string): string {
   return `mf-${normalizeExerciseName(name).replace(/\s+/g, '-').slice(0, 50)}`;
 }
 
@@ -321,9 +321,4 @@ export function setsText(sets: SetTarget[]): string {
     return `${count} van ${rangeText(sets[0])}, ${rirText}`;
   }
   return `${count}: ${sets.map((s) => (s.failure ? `${rangeText(s)} tot falen` : `${rangeText(s)} met ${s.rir} over`)).join(', ')}`;
-}
-
-export function restText(sets: SetTarget[]): string | undefined {
-  const rest = sets.find((s) => s.restSec !== undefined)?.restSec;
-  return rest !== undefined ? `rust ${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, '0')}` : undefined;
 }

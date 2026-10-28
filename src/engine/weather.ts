@@ -282,7 +282,7 @@ function windPhrase(w: SessionWeather): string | undefined {
 }
 
 // `short`: the clothing advice already says what to take along for the dark.
-export function daylightPhrase(d: Daylight, short = false): string {
+function daylightPhrase(d: Daylight, short = false): string {
   if (d.endsAfterSunset) return `donker vanaf ${clockNL(d.sunset)}${short ? '' : ', neem een lampje mee'}`;
   if (d.startsBeforeSunrise) return `donker tot ${clockNL(d.sunrise)}${short ? '' : ', neem een lampje mee'}`;
   return `licht tot ${clockNL(d.sunset)}`;

@@ -42,7 +42,7 @@ export const newWarmState = (): WarmState => ({ regions: new Set(), muscles: new
 
 export const isCompound = (exercise: Pick<Exercise, 'pattern'>): boolean => COMPOUND_PATTERNS.has(exercise.pattern);
 
-export const regionOf = (exercise: Pick<Exercise, 'loadsLegs'>): Region => (exercise.loadsLegs ? 'lower' : 'upper');
+const regionOf = (exercise: Pick<Exercise, 'loadsLegs'>): Region => (exercise.loadsLegs ? 'lower' : 'upper');
 
 // The average warmth of the main muscles of an exercise, 0 to 1.
 export function warmthOf(exercise: Pick<Exercise, 'primary'>, state: WarmState): number {

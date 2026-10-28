@@ -54,7 +54,7 @@ export interface YourWeek {
   adviceLine?: string;
 }
 
-export function countOptions(settings: YourWeekInputs['settings'], templates: YourWeekInputs['templates']): CountOptions {
+function countOptions(settings: YourWeekInputs['settings'], templates: YourWeekInputs['templates']): CountOptions {
   const byId = new Map(templates.map((t) => [t.id, t]));
   return {
     hr: settings.heartRate,

@@ -114,7 +114,7 @@ const DRUM_PATTERN: { offset: number; pitch: number; gain: number }[] = [
   { offset: 1.12, pitch: 54, gain: 1 },
 ];
 
-export function playIntroDrums(volume = 0.5) {
+function playIntroDrums(volume = 0.5) {
   const ctx = getAudioContext();
   if (!ctx) return;
   ensureRunning(ctx);

@@ -22,7 +22,7 @@
 // says so, with Opnieuw proberen and Toch openen: the next load then takes the
 // lock over (engine/bootWatch.ts#bootLockChoice,
 // docs/beslissingen/2026-10-22-toch-openen.md).
-export class BootLockBusy extends Error {
+class BootLockBusy extends Error {
   constructor() {
     super('boot lock busy');
     this.name = 'BootLockBusy';

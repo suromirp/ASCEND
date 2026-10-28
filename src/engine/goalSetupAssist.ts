@@ -15,7 +15,6 @@ import type { GoalRequirement } from '../models/goals';
 import type { CapabilityEvidence, CapabilityKey, Confidence, Criticality } from '../models/capability';
 import { computeDemand } from './demand';
 import type { MeasuredValue } from '../models/units';
-import { UNIT_COMPARISON_DIRECTION } from '../models/units';
 import { computeCapabilityEstimate, keyId } from './capability';
 
 export interface BaselineCapabilityStatus {
@@ -69,22 +68,6 @@ export function identifyKnownCapabilities(
 }
 
 // --- Capacity input helpers (goal-flow redesign, Fase 1) -------------------
-
-// The user's own best logged value for a capability — a reference point
-// drawn only from their real training history, never a preset example.
-// Manual entries are excluded on purpose: this is "what your logs show",
-// shown next to the question so an answer can be anchored in fact.
-export function ownHistoryAnchor(key: CapabilityKey, evidence: CapabilityEvidence[]): { measured: MeasuredValue; date: string } | undefined {
-  const id = keyId(key);
-  let best: CapabilityEvidence | undefined;
-  for (const e of evidence) {
-    if (e.source !== 'sessionLog' || keyId(e.key) !== id) continue;
-    if (!best) { best = e; continue; }
-    const higherIsMore = UNIT_COMPARISON_DIRECTION[e.measured.unit] === 'higher_is_more';
-    if (higherIsMore ? e.measured.amount > best.measured.amount : e.measured.amount < best.measured.amount) best = e;
-  }
-  return best ? { measured: best.measured, date: best.date } : undefined;
-}
 
 // One recent activity, described the way people remember it.
 export interface RecentActivityInput {

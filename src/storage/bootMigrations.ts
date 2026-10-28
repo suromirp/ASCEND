@@ -41,7 +41,7 @@ const STEPS: Record<string, () => Promise<unknown>> = {
   migrateGoalKinds,
 };
 
-export function currentBuild(): string {
+function currentBuild(): string {
   return typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev';
 }
 

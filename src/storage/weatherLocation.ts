@@ -16,7 +16,7 @@ const LOCATE_LIMIT_MS = 15_000;
 
 // Vraagt nooit zelf om toestemming: permissions.query toont geen venster.
 // Een browser zonder die functie telt als 'unknown', en dan blijft de plek staan.
-export async function readLocationPermission(): Promise<LocationPermission> {
+async function readLocationPermission(): Promise<LocationPermission> {
   try {
     const permissions = typeof navigator !== 'undefined' ? navigator.permissions : undefined;
     if (!permissions?.query) return 'unknown';

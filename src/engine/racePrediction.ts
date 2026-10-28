@@ -60,7 +60,7 @@ export function testTotals(l: SessionLog): { km: number; minutes: number } {
 
 // The best effort of a log as it may count: usable, accepted (see BestEffort.accepted), read for
 // the totals the log has now, and the log not cut. Undefined otherwise: the whole log counts.
-export function countingEffort(l: SessionLog): BestEffort | undefined {
+function countingEffort(l: SessionLog): BestEffort | undefined {
   const { km, minutes } = testTotals(l);
   const b = l.bestEffort;
   if (l.trim || !isUsableBestEffort(b) || b.accepted !== true || b.km > km + 0.05 || isStaleEffort(b, km, minutes)) return undefined;
@@ -86,13 +86,13 @@ export function testResults(logs: SessionLog[]): TestResult[] {
 }
 
 // Minutes per km over 5 km, the way two tests are compared.
-export function testPacePerKm(t: TestResult): number {
+function testPacePerKm(t: TestResult): number {
   return riegel(t.minutes, t.km, 5) / 5;
 }
 
 // Two tests are compared on the same basis: when one counts with its best stretch and the other
 // with the whole run, both are read as the whole run, so a different basis never makes a doubt.
-export function comparablePaces(a: TestResult, b: TestResult): [number, number] {
+function comparablePaces(a: TestResult, b: TestResult): [number, number] {
   if (a.basis === b.basis || !a.wholeKm || !a.wholeMinutes || !b.wholeKm || !b.wholeMinutes) return [testPacePerKm(a), testPacePerKm(b)];
   return [riegel(a.wholeMinutes, a.wholeKm, 5) / 5, riegel(b.wholeMinutes, b.wholeKm, 5) / 5];
 }

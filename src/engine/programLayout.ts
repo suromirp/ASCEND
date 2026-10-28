@@ -122,7 +122,7 @@ export function afterMainGoalChange(
 
 // Weeks from the program's first Monday up to (not including) the goal
 // date. A goal on a Wednesday still gets that week's Monday and Tuesday.
-export function weeksUntilGoal(startDate: string, goalDate: string): number {
+function weeksUntilGoal(startDate: string, goalDate: string): number {
   return Math.ceil(daysBetween(mondayOfWeek(startDate), goalDate) / 7);
 }
 
@@ -209,10 +209,10 @@ export function programEndDate(program: Program): string {
 // The week the load is read from. Normally the calendar's own week; in a
 // repeated week (and the weeks after it in the same wave) the week before
 // ("Deze week nog een keer", engine/repeatWeek.ts).
-export function loadWeekInPhase(position: ResolvedProgramPosition): number {
+function loadWeekInPhase(position: ResolvedProgramPosition): number {
   return position.weekInPhase - (position.loadShift ?? 0);
 }
-export function loadWeekInProgram(position: ResolvedProgramPosition): number {
+function loadWeekInProgram(position: ResolvedProgramPosition): number {
   return position.weekInProgram - (position.loadShift ?? 0);
 }
 
@@ -227,7 +227,7 @@ export function waveWeek(position: ResolvedProgramPosition): number {
 // Taper volume: first week about 70%, the last about 50% of a normal
 // build week, intensity unchanged (Bosquet 2007, docs/onderzoek rapport 1).
 // One taper week sits in between.
-export function taperFactor(position: ResolvedProgramPosition): number | undefined {
+function taperFactor(position: ResolvedProgramPosition): number | undefined {
   if (position.phase.id !== PHASE_TAPER) return undefined;
   if (position.phase.weekCount === 1) return 0.6;
   return position.weekInPhase === 1 ? 0.7 : 0.5;
@@ -241,7 +241,7 @@ export function taperFactor(position: ResolvedProgramPosition): number | undefin
 const CYCLE_GROWTH_PER_REPEAT = 0.08;
 const CYCLE_GROWTH_CAP = 1.3;
 
-export function cycleMultiplier(weekInProgram: number): number {
+function cycleMultiplier(weekInProgram: number): number {
   const cycleIndex = Math.floor((weekInProgram - 1) / WAVE_LENGTH);
   return Math.min(1 + CYCLE_GROWTH_PER_REPEAT * cycleIndex, CYCLE_GROWTH_CAP);
 }
@@ -280,7 +280,7 @@ function opbouwStartWeek(program: Program): { start: number; weeks: number } | u
 // Growing them with the general cycle made a 72-minute interval session.
 const FIXED_LENGTH = new Set(['tpl_tempo_run', 'tpl_intervals']);
 
-export function runBuildMultiplier(template: SessionTemplate, program: Program, position: ResolvedProgramPosition, heaviestStepMinutes: number): number {
+function runBuildMultiplier(template: SessionTemplate, program: Program, position: ResolvedProgramPosition, heaviestStepMinutes: number): number {
   if (FIXED_LENGTH.has(template.id)) return 1;
   const week = loadWeekInProgram(position);
   const basic = cycleMultiplier(week);
@@ -492,7 +492,7 @@ const PACK_LADDER_TEMPLATES = new Set(['tpl_mountain_hike', 'tpl_hike_day_one', 
 
 // The pack target a program is laid out for: the main goal's own setting,
 // else the default with a tent.
-export function programPackTargetKg(program: Program): number {
+function programPackTargetKg(program: Program): number {
   const kg = program.packTargetKg;
   return kg !== undefined && Number.isFinite(kg) && kg > 0 ? kg : TENT_PACK_KG;
 }

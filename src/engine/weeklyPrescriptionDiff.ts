@@ -34,7 +34,7 @@ export function stableJson(value: unknown): string {
   });
 }
 
-export function weeklyPrescriptionContent(wp: WeeklyPrescription): string {
+function weeklyPrescriptionContent(wp: WeeklyPrescription): string {
   return stableJson({
     ...wp,
     id: undefined,
@@ -44,7 +44,7 @@ export function weeklyPrescriptionContent(wp: WeeklyPrescription): string {
   });
 }
 
-export function trainingPrescriptionContent(p: TrainingPrescription): string {
+function trainingPrescriptionContent(p: TrainingPrescription): string {
   return stableJson({ ...p, id: undefined, createdAt: undefined });
 }
 

@@ -7,7 +7,7 @@ import { MOTION_KEY } from '../utils/updateFlag';
 // `prefers-reduced-motion: reduce` telt altijd als Uit. De CSS leest dezelfde stand uit
 // `data-motion` op <html>; deze hooks zijn voor wat alleen in code kan (optellen).
 
-export function prefersReducedMotion(): boolean {
+function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 

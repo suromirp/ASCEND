@@ -19,7 +19,7 @@
 import type { Program } from '../models/program';
 import type { TrainingGoal } from '../models/goals';
 import { effectivePriority, goalDetailsOf, isRaceGoal } from './goalLabels';
-import { addDays, daysBetween } from '../utils/dates';
+import { daysBetween } from '../utils/dates';
 
 // Hoe snel de lange loop groeit naar een hardloopwedstrijd (AppSettings.longRunGrowth).
 // - wave ("Heel rustig"): per blok van vier weken, het gedrag van voor ronde 2b (Program.runBuild met taperOnly, of alleen de markering zonder wedstrijd).
@@ -56,7 +56,7 @@ export function resolveLongRunGrowth(raw: unknown): LongRunGrowth {
 // 165 à 180 (28 tot 32 km). Het hoogste van het bereik; de bestaande piek van 120 blijft minimaal.
 const PEAK_BY_VARIANT: Record<string, number> = { '5k': 50, '10k': 75, half: 120, marathon: 180 };
 
-export function longRunPeakMinutes(variant: string | undefined): number {
+function longRunPeakMinutes(variant: string | undefined): number {
   return (variant && PEAK_BY_VARIANT[variant]) || 0;
 }
 
@@ -104,6 +104,3 @@ export function longRunCapAfterRace(race: RaceLogLike, date: string): number | u
   if (!(race.durationMinutes && race.durationMinutes > 0)) return undefined;
   return Math.max(15, Math.round((race.durationMinutes * 0.5 * EASY_PACE_SLOWER) / 5) * 5);
 }
-
-// De laatste dag waarop de lange loop nog door een wedstrijd begrensd wordt.
-export const lastCappedDay = (raceDate: string) => addDays(raceDate, FIRST_WEEK_DAYS);

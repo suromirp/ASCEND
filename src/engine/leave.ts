@@ -47,7 +47,7 @@ export const LEAVE_KIND_HINT: Record<LeaveKind, string> = {
 const MAX_DAYS = 90;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export function isLeaveKind(v: unknown): v is LeaveKind {
+function isLeaveKind(v: unknown): v is LeaveKind {
   return v === 'free_days' || v === 'no_training' || v === 'trek';
 }
 
@@ -87,7 +87,7 @@ export function dayCount(p: Pick<LeavePeriod, 'startDate' | 'endDate'>): number 
   return daysBetween(p.startDate, p.endDate) + 1;
 }
 
-export function periodDates(p: Pick<LeavePeriod, 'startDate' | 'endDate'>): string[] {
+function periodDates(p: Pick<LeavePeriod, 'startDate' | 'endDate'>): string[] {
   const n = Math.min(Math.max(dayCount(p), 0), MAX_DAYS * 2);
   return Array.from({ length: n }, (_, i) => addDays(p.startDate, i));
 }
@@ -152,7 +152,7 @@ export function lightDays(periods: LeavePeriod[] | undefined, days: Map<string, 
 
 // "De dag voor je tocht", "twee dagen voor je tocht": how far the light day is from the tocht.
 const COUNT_WORD = ['', 'één', 'twee', 'drie', 'vier', 'vijf'];
-export function lightDayTitle(side: 'before' | 'after', distance: number): string {
+function lightDayTitle(side: 'before' | 'after', distance: number): string {
   if (side === 'after') return 'Dag na je tocht';
   if (distance <= 1) return 'Dag voor je tocht';
   const word = COUNT_WORD[distance] ?? String(distance);

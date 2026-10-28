@@ -92,10 +92,6 @@ export function sportDefinition(id: SportId): SportDefinition {
   return SPORTS.find((s) => s.id === id) as SportDefinition;
 }
 
-export function isSportId(value: unknown): value is SportId {
-  return SPORT_IDS.some((id) => id === value);
-}
-
 // Het intervals.icu-type naar de sport, of undefined (kracht en al het andere).
 export function sportOfExternalType(type: string): SportId | undefined {
   return SPORTS.find((s) => (s.externalKinds as readonly string[]).includes(type))?.id;

@@ -30,7 +30,7 @@ function find(requirements: GoalRequirement[], kind: GoalRequirement['kind'], pe
   return requirements.find((r) => r.kind === kind && (r.scope === 'PER_DAY') === perDay && r.target !== undefined);
 }
 
-export function eventDaysRequirement(requirements: GoalRequirement[]): GoalRequirement | undefined {
+function eventDaysRequirement(requirements: GoalRequirement[]): GoalRequirement | undefined {
   return requirements.find((r) => r.kind === 'eventDays');
 }
 
@@ -103,7 +103,7 @@ export function averageDayValue(requirements: GoalRequirement[], kind: RouteKind
   return typicalDayValue(requirements.filter((r) => !(r.kind === kind && r.scope === 'PER_DAY')), kind);
 }
 
-export function trainingDayValue(requirements: GoalRequirement[], kind: RouteKind): MeasuredValue | undefined {
+function trainingDayValue(requirements: GoalRequirement[], kind: RouteKind): MeasuredValue | undefined {
   return find(requirements, kind, true)?.target;
 }
 
@@ -111,15 +111,9 @@ export function hasTrainingDay(requirements: GoalRequirement[]): boolean {
   return ROUTE_KINDS.some((k) => trainingDayValue(requirements, k) !== undefined);
 }
 
-export function routeDayWord(discipline: string): { singular: string; plural: string } {
-  if (discipline === 'cycling') return { singular: 'fietsdag', plural: 'fietsdagen' };
-  if (discipline === 'hiking') return { singular: 'loopdag', plural: 'loopdagen' };
-  return { singular: 'dag', plural: 'dagen' };
-}
-
 const ROUTE_DAY_SUFFIX: Record<RouteKind, string> = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D−' };
 
-export function formatRouteDayValue(kind: RouteKind, amount: number): string {
+function formatRouteDayValue(kind: RouteKind, amount: number): string {
   return `${formatNumberNL(amount, kind === 'distance' ? 1 : 0)} ${ROUTE_DAY_SUFFIX[kind]}`;
 }
 
@@ -138,16 +132,8 @@ export function routeDayParts(requirements: GoalRequirement[], which: 'average' 
   return parts;
 }
 
-export function routeTotal(requirements: GoalRequirement[], kind: RouteKind): MeasuredValue | undefined {
+function routeTotal(requirements: GoalRequirement[], kind: RouteKind): MeasuredValue | undefined {
   return find(requirements, kind, false)?.target;
-}
-
-// For a continuous trip the longest stretch of consecutive days IS the
-// whole trip — the wizard keeps consecutiveDays equal to eventDays then,
-// this is the read side of that same rule.
-export function longestStageDays(requirements: GoalRequirement[], execution: GoalExecution | undefined): number | undefined {
-  if (execution === 'continuous') return eventDaysRequirement(requirements)?.target?.amount;
-  return requirements.find((r) => r.kind === 'consecutiveDays')?.target?.amount;
 }
 
 // ASCEND_HEURISTIC(DIN-33466-WALKING-TIME): the standard German/Alpine-club
@@ -177,11 +163,6 @@ export function normalizeRouteRequirements(requirements: GoalRequirement[], exec
   if (!days) return others;
   const existing = requirements.find((r) => r.kind === 'consecutiveDays');
   return [...others, { id: existing?.id ?? makeId('req'), kind: 'consecutiveDays', scope: 'CONSECUTIVE_DAYS', target: { amount: days.amount, unit: 'days' } }];
-}
-
-// The sport a route goal is for — carried on its day-count requirement.
-export function routeDiscipline(goal: Pick<TrainingGoal, 'requirements' | 'execution'>): string {
-  return eventDaysRequirement(goal.requirements)?.discipline ?? goal.requirements.find((r) => r.discipline)?.discipline ?? 'hiking';
 }
 
 // A route goal can move on once the day count and distance are there and,

@@ -267,7 +267,7 @@ export const SessionTemplatesRepo = {
 // belongs to the Monday-week of the day it is on. Every write goes through
 // here, so a move to another week can't leave it counted in its old week
 // too (production bug: totals and "x / 7" doubled after a cross-week move).
-export function withDerivedWeek(s: PlannedSession): PlannedSession {
+function withDerivedWeek(s: PlannedSession): PlannedSession {
   const monday = mondayOfWeek(s.scheduledDate);
   return s.weekStartDate === monday ? s : { ...s, weekStartDate: monday };
 }
@@ -520,8 +520,6 @@ export const RecoveryMetricsRepo = {
   putAll: (metrics: RecoveryMetric[]) => putAll('recoveryMetrics', metrics),
   delete: (id: string) => del('recoveryMetrics', id),
 };
-export const BodyMetricsRepo = { getAll: () => getAll('bodyMetrics') as Promise<BodyMetric[]> };
-export const NutritionMetricsRepo = { getAll: () => getAll('nutritionMetrics') as Promise<NutritionMetric[]> };
 
 export const MetaRepo = {
   get: async <T,>(key: string): Promise<T | undefined> => {

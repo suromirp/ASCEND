@@ -95,7 +95,7 @@ export function workoutProfile(workouts: MacroFactorWorkout[]): Profile | undefi
   return profileOf(workouts.flatMap((w) => w.exercises.map((e) => ({ name: e.name, sets: Math.max(1, e.sets.length) }))));
 }
 
-export function templateProfile(template: SessionTemplate): Profile {
+function templateProfile(template: SessionTemplate): Profile {
   const own = profileOf((template.exercises ?? []).map((e) => ({ name: e.exerciseName, sets: Math.max(1, e.sets ?? 1) })));
   if (own) return own;
   const legs = isLegSession(template);

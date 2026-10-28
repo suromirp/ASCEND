@@ -133,7 +133,7 @@ export function expectedReps(strengthKg: number, loadKg: number, rir: number): n
 }
 
 // The load at which `reps` reps with `rir` left are what you can do.
-export function loadForReps(strengthKg: number, reps: number, rir: number): number {
+function loadForReps(strengthKg: number, reps: number, rir: number): number {
   return strengthKg / (1 + (reps + rir) / EPLEY_DIVISOR);
 }
 
@@ -438,7 +438,7 @@ export function isLightWeight(exercise: Exercise | undefined, weightKg: number, 
 // mostly your own body (pull-ups, dips; a row or a hinge with a small share of
 // the body, 8 to 40%, is a loaded lift and does), nor for the patterns that never
 // warm up (arms, shoulders, legs on a machine, calves, shins, core, hips).
-export function canWarmUp(settings: ResolvedStrengthSettings, exercise: Exercise | undefined, kind: WarmKind = 'full'): exercise is Exercise {
+function canWarmUp(settings: ResolvedStrengthSettings, exercise: Exercise | undefined, kind: WarmKind = 'full'): exercise is Exercise {
   if (settings.warmup === 'off' || !exercise || kind === 'none') return false;
   if (exercise.resistance === 'bodyweight' || exercise.resistance === 'assisted_bodyweight') return false;
   if (NO_WARMUP_PATTERNS.has(exercise.pattern)) return false;

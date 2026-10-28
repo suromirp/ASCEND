@@ -124,7 +124,7 @@ export function parseWeekShape(raw: unknown): WeekShape | undefined {
   return { days: clean, ...(allowed.length > 0 ? { allowed } : {}) };
 }
 
-export function applyWeekShape(pattern: SessionTemplate[], shape: WeekShape | undefined): SessionTemplate[] {
+function applyWeekShape(pattern: SessionTemplate[], shape: WeekShape | undefined): SessionTemplate[] {
   const read = parseWeekShape(shape);
   if (!read) return pattern;
   return pattern.filter((t) => read.days[t.id] !== undefined).map((t) => ({ ...t, defaultDayOfWeek: read.days[t.id] }));

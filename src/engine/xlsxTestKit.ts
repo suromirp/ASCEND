@@ -13,7 +13,7 @@ export interface KitSheet {
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export function colLetters(index: number): string {
+function colLetters(index: number): string {
   let n = index + 1;
   let out = '';
   while (n > 0) {

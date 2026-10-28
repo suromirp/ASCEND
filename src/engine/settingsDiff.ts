@@ -297,7 +297,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
 
 // ---- de functies -------------------------------------------------------------------------
 
-export function resetPatchOf(spec: AdviceSpec, s: AppSettings): Partial<AppSettings> {
+function resetPatchOf(spec: AdviceSpec, s: AppSettings): Partial<AppSettings> {
   return spec.reset(s);
 }
 

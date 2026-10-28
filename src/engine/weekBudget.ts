@@ -77,7 +77,7 @@ export function countedDetail(log: SessionLog, opts: CountOptions): CountedDetai
 }
 
 // Telt een krachttraining als één keer? Een minimale variant (alleen de kern) niet.
-export function countsAsStrength(log: SessionLog): boolean {
+function countsAsStrength(log: SessionLog): boolean {
   return log.type === 'strength' && log.variant !== 'minimum';
 }
 
@@ -93,7 +93,7 @@ export interface WeekItem {
 }
 
 // De trainingen van een week die tellen, op datum.
-export function weekItems(logs: readonly SessionLog[], weekStart: string, opts: CountOptions): WeekItem[] {
+function weekItems(logs: readonly SessionLog[], weekStart: string, opts: CountOptions): WeekItem[] {
   const end = addDays(weekStart, 7);
   return logs
     .filter((l) => l.completedDate >= weekStart && l.completedDate < end)

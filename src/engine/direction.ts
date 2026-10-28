@@ -3,7 +3,7 @@
 // richting; zonder doel geldt wat je koos in `AppSettings.direction`, en zonder keuze het
 // advies. Puur: geen React, geen IndexedDB.
 
-import { ADVICE_DIRECTION, DIRECTIONS, DIRECTION_IDS, IMPROVE_FLOOR, MINUTES_CEILING, type DirectionId, type DirectionSpec } from '../data/directions';
+import { ADVICE_DIRECTION, DIRECTIONS, DIRECTION_IDS, IMPROVE_FLOOR, MINUTES_CEILING, type DirectionId } from '../data/directions';
 import type { TrainingGoal } from '../models/goals';
 import { isoWeekday } from '../utils/dates';
 import { mainGoal, type Ladder } from './mainGoal';
@@ -43,10 +43,6 @@ export function activeDirection(
   }
   const chosen = parseDirection(settings.direction);
   return { kind: 'direction', id: chosen ?? ADVICE_DIRECTION, chosen: chosen !== undefined };
-}
-
-export function directionSpec(id: DirectionId): DirectionSpec {
-  return DIRECTIONS[id];
 }
 
 const ceil5 = (n: number) => Math.ceil(n / 5) * 5;

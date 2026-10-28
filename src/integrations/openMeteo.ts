@@ -48,7 +48,7 @@ export function roundCoordinate(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export function roundedPlace(place: WeatherPlace): WeatherPlace {
+function roundedPlace(place: WeatherPlace): WeatherPlace {
   return { name: place.name, lat: roundCoordinate(place.lat), lon: roundCoordinate(place.lon) };
 }
 
@@ -309,15 +309,4 @@ export async function fetchPastWeather(
   if (daysBack > MAX_PAST_DAYS) return undefined;
   const raw = await getJson(pastConditionsUrl(place, daysBack), options);
   return { conditions: mapPastConditions(raw, startLocal, durationSec), wind: mapPastWind(raw, startLocal, durationSec) };
-}
-
-export async function fetchPastConditions(
-  place: WeatherPlace,
-  startLocal: string,
-  durationSec: number,
-  daysBack: number,
-  options: FetchOptions = {},
-): Promise<DetailConditions | undefined> {
-  if (daysBack > MAX_PAST_DAYS) return undefined;
-  return mapPastConditions(await getJson(pastConditionsUrl(place, daysBack), options), startLocal, durationSec);
 }

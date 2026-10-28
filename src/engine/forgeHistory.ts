@@ -358,9 +358,9 @@ export function trainingFilters(templates: SessionTemplate[], views: ExerciseVie
 
 // De namen waarop een oefening gevonden wordt: de naam en de andere namen uit de lijst
 // ("Bankdrukken met stang" voor de Barbell Bench Press).
-export const searchNames = (view: ExerciseView): string[] => [view.history.name, ...(view.history.exercise?.aliases ?? [])];
+const searchNames = (view: ExerciseView): string[] => [view.history.name, ...(view.history.exercise?.aliases ?? [])];
 
-export const inTraining = (view: ExerciseView, trainingName: string): boolean => view.history.sessions.some((s) => s.trainingName === trainingName);
+const inTraining = (view: ExerciseView, trainingName: string): boolean => view.history.sessions.some((s) => s.trainingName === trainingName);
 
 const lastDate = (v: ExerciseView) => v.history.sessions.reduce((m, s) => (s.date > m ? s.date : m), '');
 

@@ -45,7 +45,7 @@ function noAltitude(log: SessionLog, block: Block): boolean {
 }
 
 // What the log says now of the numbers a cut can change.
-export function currentTrimNumbers(log: SessionLog): TrimCurrent | undefined {
+function currentTrimNumbers(log: SessionLog): TrimCurrent | undefined {
   const block = log[blockKeyOf(log)] as Block | undefined;
   if (!block) return undefined;
   const indoor = noAltitude(log, block);

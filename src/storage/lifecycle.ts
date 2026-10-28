@@ -53,7 +53,7 @@ export function whenStorageOpen(): Promise<void> {
 // comes back and runs again on a later opening. commit() would keep the writes,
 // but Chrome only accepts it while the transaction is active, which it never is
 // between two events (tried in Chromium: the lock stayed).
-export function releaseOpenTransactions(): number {
+function releaseOpenTransactions(): number {
   let n = 0;
   for (const tx of openTransactions) {
     try {
@@ -65,10 +65,6 @@ export function releaseOpenTransactions(): number {
   }
   openTransactions.clear();
   return n;
-}
-
-export function openTransactionCount(): number {
-  return openTransactions.size;
 }
 
 // Once per page, from main.tsx. No-op outside a browser (tests).

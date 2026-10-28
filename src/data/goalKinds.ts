@@ -758,7 +758,7 @@ export function isGoalKindId(x: unknown): x is GoalKindId {
 }
 
 // De waarde van een getal voor een variant; zonder (bekende) variant de basiswaarde.
-export function pickVaried<T>(varied: Varied<T>, variant?: string): Sourced<T> {
+function pickVaried<T>(varied: Varied<T>, variant?: string): Sourced<T> {
   return (variant ? varied.variants?.[variant] : undefined) ?? varied.base;
 }
 

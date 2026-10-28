@@ -32,7 +32,7 @@ export interface FactsCacheInput {
   judgments: readonly NightJudgment[] | undefined;
 }
 
-export function factsKey(input: FactsCacheInput): string {
+function factsKey(input: FactsCacheInput): string {
   const c = (l: SessionLog) => l.detail?.conditions;
   return JSON.stringify([
     hashOf(input.logs.flatMap((l) => [l.id, l.completedAt, l.templateId, c(l)?.feelsC, c(l)?.tempC, l.cardioData ? 1 : 0, l.outdoorData ? 1 : 0])),

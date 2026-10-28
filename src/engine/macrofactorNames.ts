@@ -54,7 +54,7 @@ export function workoutSide(workout: MacroFactorWorkout): Side | undefined {
   return legs > upper ? 'legs' : 'upper';
 }
 
-export const templateSide = (template: SessionTemplate): Side => (isLegSession(template) ? 'legs' : 'upper');
+const templateSide = (template: SessionTemplate): Side => (isLegSession(template) ? 'legs' : 'upper');
 
 // --- the suggestion ---------------------------------------------------------------------
 

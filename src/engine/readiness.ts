@@ -1,5 +1,4 @@
 import type { PlannedSession, SessionLog } from '../models/training';
-import type { PlanChangeProposal } from '../models/planChange';
 import { addDays, daysBetween, formatDateNL, todayISO } from '../utils/dates';
 
 // ASCEND — Readiness (sports-science review, September 2026, item B1).
@@ -96,16 +95,6 @@ export function computeReadiness(
 export interface ReadinessExtras {
   isRest?: (p: PlannedSession) => boolean;
   droppedAfterMissIds?: Set<string>;
-}
-
-// Sessions taken off the plan by accepting the coach's "missed, let it go"
-// advice: missed before they were dropped.
-export function droppedAfterMissIds(planChangeLog: PlanChangeProposal[]): Set<string> {
-  return new Set(
-    planChangeLog
-      .filter((p) => p.resolution === 'accepted')
-      .flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId && c.generatedBy?.includes('MISSED-CATCH-UP')).map((c) => c.plannedSessionId!)),
-  );
 }
 
 export interface TrendPoint {

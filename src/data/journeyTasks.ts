@@ -249,7 +249,3 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     window: [2, 1],
   },
 ];
-
-export function journeyTaskById(id: string): JourneyTask | undefined {
-  return JOURNEY_TASKS.find((t) => t.id === id);
-}

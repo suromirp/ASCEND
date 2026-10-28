@@ -24,7 +24,7 @@ export function normalizeJumpTarget(raw: string | undefined): { page: SettingsPa
   return placementOf(id);
 }
 
-export function jumpState(raw: unknown): SettingsJumpState {
+function jumpState(raw: unknown): SettingsJumpState {
   return raw && typeof raw === 'object' ? (raw as SettingsJumpState) : {};
 }
 
@@ -37,7 +37,7 @@ export function jumpRoute(page: SettingsPageId, state: SettingsJumpState = {}): 
   return { to: settingsPageRoute(page), state };
 }
 
-export function flashRow(rowId: string) {
+function flashRow(rowId: string) {
   const el = document.getElementById(`${ANCHOR_PREFIX}${rowId}`);
   if (!el) return;
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

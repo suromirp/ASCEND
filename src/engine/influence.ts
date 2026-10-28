@@ -68,7 +68,7 @@ export const entryForDay = (entries: readonly InfluenceEntry[] | undefined, date
 // Noted = you filled something in; a note that only remembers "seen" is not.
 export const isNoted = (entry: InfluenceEntry): boolean => entry.reasons.length > 0 || entry.excludeHeartRate === true;
 
-export function cleanLabel(text: string): string {
+function cleanLabel(text: string): string {
   return text.slice(0, MAX_LABEL_LENGTH);
 }
 
@@ -271,7 +271,7 @@ export interface FactIndex {
   weatherBySport: ReadonlyMap<string, readonly SessionLog[]>;
 }
 
-export function buildFactIndex(logs: readonly SessionLog[], templates: readonly SessionTemplate[], recovery: readonly RecoveryMetric[]): FactIndex {
+function buildFactIndex(logs: readonly SessionLog[], templates: readonly SessionTemplate[], recovery: readonly RecoveryMetric[]): FactIndex {
   const logsByDate = new Map<string, SessionLog[]>();
   for (const l of logs) {
     const list = logsByDate.get(l.completedDate);
