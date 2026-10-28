@@ -23,6 +23,7 @@ import { cleanDetails, detailForm, plannedDetails, workoutLine } from '../engine
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 import { TrimSheet } from './TrimSheet';
+import { ForgeLogSheet } from './forge/ForgeLogSheet';
 import { StravaTextButton } from './StravaTextButton';
 import { isTrimmable, trimOriginalLine, trimRangeLine } from '../engine/trimLog';
 import { canRestoreSourceUpdate, sourceOfferLine, sourceUpdateLine, sourceUpdatePreviousLine } from '../engine/sourceCorrection';
@@ -141,6 +142,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   }
   // "Inkorten": a watch activity cut at the end or the beginning, and the way back.
   const [trimming, setTrimming] = useState(false);
+  const [forgeLogOpen, setForgeLogOpen] = useState(false);
   const [undoingTrim, setUndoingTrim] = useState(false);
   const [trimNote, setTrimNote] = useState<string | null>(null);
   async function putTrimBack() {
@@ -226,6 +228,12 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
                   <TextButton aria-label={`Deze oefening in Forge: ${name}`} onClick={() => { requestClose(); window.setTimeout(() => navigate('/forge', { state: { zoek: name } }), 280); }}>In Forge</TextButton>
                 </div>
               ))}
+            </div>
+          )}
+
+          {log.forgeLog && log.forgeLog.length > 0 && (
+            <div className="mt-3 flex">
+              <TextButton onClick={() => setForgeLogOpen(true)}>Verloop van de training</TextButton>
             </div>
           )}
 
@@ -385,6 +393,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
       </div>
     </Portal>
     {/* Next to the sheet, not inside it: a tap in this one must not close that one. */}
+    {forgeLogOpen && log.forgeLog && <ForgeLogSheet events={log.forgeLog} eyebrow={formatDateNL(log.completedDate)} title={templateName} onClose={() => setForgeLogOpen(false)} />}
     {trimming && <TrimSheet log={log} templateName={templateName} onClose={() => setTrimming(false)} />}
     {sweatOpen && <SweatSheet log={log} templateName={templateName} onClose={() => setSweatOpen(false)} />}
     {influenceOpen && (

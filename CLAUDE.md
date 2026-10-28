@@ -623,6 +623,24 @@ The weights of a machine can be typed in per gym (`GymProfile.exerciseWeightsKg`
 logs) so the weights learned from use stay per gym, and Forge asks to fill them in when no weight
 fits (`docs/beslissingen/2026-10-26-gewichten-per-toestel.md`). A loose add-on weight (a plate or magnet, at most 3, each at most once, every combination) is added to every weight of the block of a cable or stack machine: `GymProfile.addOnKg` for the whole gym, `GymProfile.exerciseAddOnKg` per machine over it (an empty list is none), laid over the block in `strengthWeights.ts#externalWeights` so every candidate follows, and Forge shows "70 + 2,3 kg" under such a set (`engine/machineWeights.ts`, `docs/beslissingen/2026-10-28-tussengewichten.md`).
 
+**The course of a training in Forge** (`engine/forgeLog.ts`, `models/forgeLog.ts`, `components/forge/ForgeLogSheet.tsx`, decision
+`docs/beslissingen/2026-10-28-forge-logboek.md`, design `docs/visie/Forge logboek en spotter.md`): like the Event Log of MacroFactor, per moment
+which set went from what to what and why (bijgestuurd, doorgevoerd, eigen, onder, past-niet, spotter). It is derived: after every change of the
+rows `deriveChanges` compares before and after, the action only says why (`ForgeCause`); ticking, a new plan and a swap are no event, typing is one
+event per minute and set. It lives next to the draft (`WorkoutDraft.log`, `seen`) and goes onto the log only when it is made
+(`SessionLog.forgeLog`, optional, read defensively by `cleanForgeLog`/`migrateLogForgeLog`, in the backup, no schema bump); an existing log is never
+written to. A quiet button in the line with the clock opens the sheet, with a dot only for what Forge did or saw and has not been opened yet, never
+for your own edits or a solved message. A message goes away when solved or names the set that still does not fit (`forgeAdjust.ts#fitStillOpen`,
+`NoFit.setNo`). In the log sheet "Verloop van de training" opens the same sheet.
+
+**Without a spotter** (`engine/spotter.ts`, decision `docs/beslissingen/2026-10-28-zonder-spotter.md`): on a barbell exercise where failure is
+dangerous (`Exercise.failureRisk`: benches and squats with a bar; never machines, cables or dumbbells) Forge prescribes at least 1 rep in reserve,
+in the target and the hint (`spotterSlot` in `planExercise`, so also after a swap), unless the gym has safety arms (`GymProfile.spotterRack`, row
+"Veiligheidsarmen" under Je sportschool) or the setting "Zonder spotter" is off (`strengthModel.noSpotter`, absent = on). One quiet sign per exercise
+("1 over, zonder spotter", a shield, explanation behind a tap), never a pop-up, never a block: typing 0 is always possible and is stored as typed.
+Raak judges ASCEND's proposal against its own raised target and your own sets against what the plan asked (`comparisonRows`), so a deliberate 1 where
+MacroFactor said 0 is no miss; `noSpotter` is part of `checkModelKey`.
+
 **A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
 average once there are 7 days) becomes a question in the morning check instead of a
 warning (`engine/shortNight.ts`, decision `docs/beslissingen/2026-10-25-korte-nacht-vragen.md`).

@@ -99,9 +99,13 @@ import { PrimaryButton, SecondaryButton } from '../ui';
 import { useGuardedSave, useLegEase } from '../useLegEase';
 import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_KEPT_LINE, EASE_STARTED_LINE } from '../../engine/legDayEase';
 import { resolveLegEaseHow } from '../../engine/legEaseSettings';
-import { adjustText, applyLighter, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
+import { adjustText, applyLighter, fitStillOpen, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { addOnText, addOnsFor, formatAddOns, hasStack, ownWeightsFor } from '../../engine/machineWeights';
+import { appendEvents, cleanForgeLog, deriveChanges, noFitEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
+import { SPOTTER_EXPLAIN, SPOTTER_HOW, SPOTTER_SIGN } from '../../engine/spotter';
+import { makeId } from '../../utils/id';
 import { ExerciseAddOnForgeSheet } from './AddOnWeights';
+import { ForgeLogSheet } from './ForgeLogSheet';
 import { MachineWeightsForgeSheet } from './MachineWeights';
 import { InputDock } from './InputDock';
 import { ForgeSheet, LongPressRow, MenuRow, RirBubble, TickBox, ValueCell } from './parts';
@@ -128,6 +132,10 @@ interface WorkoutDraft {
   column: 'target' | 'previous';
   // Of de rijen met Lichter gepland zijn; een concept van voor deze keuze heeft het niet.
   eased?: boolean;
+  // Het verloop van de training (engine/forgeLog.ts) en het moment dat je het voor het laatst opende.
+  // Optioneel: een concept van voor het verloop heeft ze niet.
+  log?: ForgeEvent[];
+  seen?: number;
 }
 
 const clock = () => Date.now();
@@ -217,7 +225,15 @@ export function ForgeWorkout({
   const [fillFor, setFillFor] = useState<string | null>(null);
   const [addOnFor, setAddOnFor] = useState<string | null>(null);
   // Een stille tip na het invullen van de gewichten, als er dan nog steeds niets past.
-  const [heavyTip, setHeavyTip] = useState<Record<string, string>>({});
+  const [heavyTip, setHeavyTip] = useState<Record<string, { text: string; rowId?: string; weightKg?: number }>>({});
+  // Het verloop van de training: wat Forge bijstuurde, wat doorgevoerd werd en wat jij zelf aanpaste.
+  const [forgeLog, setForgeLog] = useState<ForgeEvent[]>(() => (restored ? (cleanForgeLog(restored.log) ?? []) : readOnly ? [] : spotterEvents(workout, Date.now(), () => makeId('fe'))));
+  const [seenAt, setSeenAt] = useState<number>(() => (restored && typeof restored.seen === 'number' ? restored.seen : 0));
+  const [logOpen, setLogOpen] = useState(false);
+  const [spotterInfo, setSpotterInfo] = useState(false);
+  // Waardoor de volgende verandering van de rijen kwam; zonder opgave is het geen gebeurtenis.
+  const cause = useRef<ForgeCause>({ kind: 'negeer' });
+  const prevWorkout = useRef(workout);
   const [workoutMenu, setWorkoutMenu] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [finishing, setFinishing] = useState(startAtForm && !preview);
@@ -292,9 +308,21 @@ export function ForgeWorkout({
   }, [key]);
   useEffect(() => {
     if (readOnly) return;
-    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column };
+    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column, ...(forgeLog.length > 0 ? { log: forgeLog } : {}), seen: seenAt };
     if (draftTimer.current === undefined) draftTimer.current = window.setTimeout(flushDraft, 300);
-  }, [readOnly, startedAt, workout, easeOn, rest, column, flushDraft]);
+  }, [readOnly, startedAt, workout, easeOn, rest, column, forgeLog, seenAt, flushDraft]);
+
+  // Het verloop volgt de rijen: elke verandering van kilo's, herhalingen of reserve wordt, met de reden die
+  // de handeling opgaf, een gebeurtenis. Afvinken, een nieuwe planning en ruilen zijn dat niet.
+  useEffect(() => {
+    const before = prevWorkout.current;
+    prevWorkout.current = workout;
+    const why = cause.current;
+    cause.current = { kind: 'negeer' };
+    if (readOnly || before === workout) return;
+    const events = deriveChanges(before, workout, why, Date.now(), () => makeId('fe'));
+    if (events.length > 0) setForgeLog((l) => appendEvents(l, events));
+  }, [workout, readOnly]);
   useEffect(() => {
     window.addEventListener('pagehide', flushDraft);
     document.addEventListener('visibilitychange', flushDraft);
@@ -349,7 +377,9 @@ export function ForgeWorkout({
     const because = easeBecause(legEase.state?.signals.reasons ?? easeReasons);
     const next = planWorkout(slots, { ...baseCtx, ...(on ? { ease: { how: easeHow, because } } : {}) });
     setEaseOn(on);
+    cause.current = { kind: 'negeer' };
     setWorkout(next);
+    if (!readOnly) setForgeLog(spotterEvents(next, Date.now(), () => makeId('fe')));
     setLighter({});
     setNoFit({});
     setHeavyTip({});
@@ -398,6 +428,8 @@ export function ForgeWorkout({
     </div>
   ) : null;
   const { done, total } = progress(workout);
+  // Iets nieuws in het verloop: wat Forge deed of zag sinds je het voor het laatst opende, zonder opgeloste meldingen.
+  const news = unseenCount(forgeLog, seenAt, workout);
   const guide = getTrainingGuide(template.id);
 
   function setExercise(slot: string, update: (ex: WorkoutExercise) => WorkoutExercise) {
@@ -428,6 +460,16 @@ export function ForgeWorkout({
       return proposal ? { ...others, [slot]: proposal } : others;
     });
     setHeavyTip((l) => (slot in l ? Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot)) : l));
+    // Het verloop: een set onder het bereik, en een set waarvoor geen gewicht van het toestel past.
+    if (ticked && tickedEx && !readOnly) {
+      const tickedRow = tickedEx.rows.find((r) => r.id === rowId);
+      const at = Date.now();
+      const found: ForgeEvent[] = [];
+      if (tickedRow && tooHeavy(tickedRow)) found.push(underRangeEvent(tickedEx, tickedRow, at, makeId('fe')));
+      const nf = fit ? noFitEvent(tickedEx, fit, at, makeId('fe')) : undefined;
+      if (nf) found.push(nf);
+      if (found.length > 0) setForgeLog((l) => appendEvents(l, found));
+    }
     setNoFit((l) => {
       if (!fit && !(slot in l)) return l;
       const { [slot]: _old, ...others } = l;
@@ -504,6 +546,7 @@ export function ForgeWorkout({
     const d = dock;
     if (!d) return;
     const key = `${d.slot}:${d.rowId}:${d.field}`;
+    cause.current = { kind: 'eigen', edited: { slot: d.slot, rowId: d.rowId } };
     setWorkout((w) =>
       w.map((e) => {
         if (e.slot !== d.slot) return e;
@@ -556,6 +599,7 @@ export function ForgeWorkout({
 
   function take(slot: string, rowId: string) {
     haptics.tap();
+    cause.current = { kind: 'eigen', edited: { slot, rowId } };
     setExercise(slot, (e) => takeTarget(e, rowId));
     setActiveRef({ slot, rowId });
   }
@@ -565,7 +609,10 @@ export function ForgeWorkout({
   function takeLighter(slot: string) {
     const adj = lighter[slot];
     haptics.tap();
-    if (adj) setExercise(slot, (e) => applyLighter(e, adj));
+    if (adj) {
+      cause.current = { kind: 'bijgestuurd' };
+      setExercise(slot, (e) => applyLighter(e, adj));
+    }
     setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot)));
   }
 
@@ -589,6 +636,7 @@ export function ForgeWorkout({
       keep: (slot) => setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
       fill: (slot) => setFillFor(slot),
       keepFit: (slot) => setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
+      spotter: () => setSpotterInfo(true),
     }),
     [],
   );
@@ -599,7 +647,12 @@ export function ForgeWorkout({
     const state = planStateBefore(ctx, workout, slot);
     const to = exerciseId ? exerciseById(exerciseId) : undefined;
     clearHints(slot);
-    setExercise(slot, () => planExercise(prescription, ctx, state, to));
+    const swapped = planExercise(prescription, ctx, state, to);
+    if (!readOnly) {
+      const found = spotterEvents([swapped], Date.now(), () => makeId('fe'));
+      if (found.length > 0) setForgeLog((l) => appendEvents(l, found));
+    }
+    setExercise(slot, () => swapped);
   }
 
   function saveStrength(next: typeof settings.strengthModel) {
@@ -647,6 +700,10 @@ export function ForgeWorkout({
                   <div className="h-1 rounded-full transition-[width] duration-300" style={{ width: `${total > 0 ? (done / total) * 100 : 0}%`, background: 'var(--color-progress)' }} />
                 </div>
                 <span className="font-sans">{done} van {total} sets</span>
+                <button type="button" onClick={() => { setLogOpen(true); setSeenAt(Date.now()); }} aria-label={news > 0 ? 'Verloop van de training, er is iets nieuws' : 'Verloop van de training'} className="relative -my-2 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+                  <Icon name="verloop" size={20} />
+                  {news > 0 && <span aria-hidden="true" className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full" style={{ background: 'var(--color-action)' }} />}
+                </button>
               </div>
             )}
           </header>
@@ -680,8 +737,8 @@ export function ForgeWorkout({
               profile={strength.profile}
               showPlates={strength.showPlates}
               lighterText={lighter[ex.slot] && stillOpen(ex, lighter[ex.slot]) ? adjustText(stillOpen(ex, lighter[ex.slot])!, exerciseOf(ex)) : undefined}
-              noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
-              heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) ? heavyTip[ex.slot] : undefined}
+              noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, noFit[ex.slot]) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
+              heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, heavyTip[ex.slot]) ? heavyTip[ex.slot].text : undefined}
               rirAsValue={strength.rirPrefill === 'target'}
               act={actions}
             />
@@ -715,6 +772,20 @@ export function ForgeWorkout({
           plateOn={platesOn}
           onTogglePlates={() => setPlatesOn((v) => !v)}
         />
+      )}
+
+      {logOpen && <ForgeLogSheet events={forgeLog} workout={workout} onClose={() => setLogOpen(false)} />}
+
+      {spotterInfo && (
+        <ForgeSheet title="Zonder spotter" sub={SPOTTER_SIGN} onClose={() => setSpotterInfo(false)}>
+          {(close) => (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{SPOTTER_EXPLAIN}</p>
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SPOTTER_HOW}</p>
+              <div className="flex"><SecondaryButton onClick={close}>Begrepen</SecondaryButton></div>
+            </div>
+          )}
+        </ForgeSheet>
       )}
 
       {rowMenu && rowMenuEx && rowMenuRow && (
@@ -843,12 +914,12 @@ export function ForgeWorkout({
             // Nog steeds te zwaar: geen nieuwe vraag, alleen een stille regel onder de oefening.
             const still = suggestOwnWeights(fillEx, fit.fromRowId, ctx);
             if (still) {
-              setHeavyTip((l) => ({ ...l, [fillEx.slot]: stillHeavyTip(still) }));
+              setHeavyTip((l) => ({ ...l, [fillEx.slot]: { text: stillHeavyTip(still), rowId: still.rowId, weightKg: still.weightKg } }));
               return;
             }
             // Het lichtere gewicht ligt er ver boven: ook dan een stille regel.
             const big = suggestTooBigStep(fillEx, fit.fromRowId, ctx);
-            if (big) setHeavyTip((l) => ({ ...l, [fillEx.slot]: tooBigStepTip(big) }));
+            if (big) setHeavyTip((l) => ({ ...l, [fillEx.slot]: { text: tooBigStepTip(big), rowId: big.rowId, weightKg: big.weightKg } }));
           }}
           onClose={() => setFillFor(null)}
         />
@@ -866,7 +937,7 @@ export function ForgeWorkout({
                   type="button"
                   role="radio"
                   aria-checked={!rirRow.rirAssumed && rirRow.rir === n}
-                  onClick={() => { setExercise(rirFor.slot, (e) => updateRow(e, rirFor.rowId, { rir: n })); close(); }}
+                  onClick={() => { cause.current = { kind: 'eigen', edited: { slot: rirFor.slot, rowId: rirFor.rowId } }; setExercise(rirFor.slot, (e) => updateRow(e, rirFor.rowId, { rir: n })); close(); }}
                   className="flex min-h-[48px] items-center justify-center rounded-xl border"
                   style={{ borderColor: !rirRow.rirAssumed && rirRow.rir === n ? 'var(--color-ink)' : 'var(--color-card-border)' }}
                 >
@@ -940,6 +1011,7 @@ export function ForgeWorkout({
               strengthData,
               ...(rir !== undefined ? { strengthRir: rir } : {}),
               ...(strengthData && strengthData.length > 0 ? { gymProfileId: strength.profile.id } : {}),
+              ...(!readOnly && forgeLog.length > 0 ? { forgeLog } : {}),
             });
             // Niet opgeslagen betekent: deze training staat al in je logboek. Het concept is dan klaar.
             dropDraft();
@@ -1006,6 +1078,8 @@ interface BlockActions {
   keep: (slot: string) => void;
   fill: (slot: string) => void;
   keepFit: (slot: string) => void;
+  // Uitleg bij "1 over, zonder spotter".
+  spotter: () => void;
 }
 
 const ExerciseBlock = memo(function ExerciseBlock({
@@ -1057,6 +1131,9 @@ const ExerciseBlock = memo(function ExerciseBlock({
   // Met MacroFactor als bron staan kg en herhalingen al in hun eigen kolom;
   // de tweede kolom zegt dan wat je vorige keer deed.
   const showPrevious = readOnly || column === 'previous';
+  // Zonder spotter: het teken staat hoogstens één keer bij de oefening, bij de eerste open set waar Forge
+  // de reserve ophoogde. Vul je zelf 0 in, dan verdwijnt het teken: jij besliste.
+  const spotterRowId = ex.rows.find((r) => r.kind === 'work' && r.target.spotter && !r.done && (r.rir ?? r.target.rir ?? 1) >= 1)?.id;
   let workNo = 0;
   const headText = (
     <>
@@ -1232,6 +1309,14 @@ const ExerciseBlock = memo(function ExerciseBlock({
                   )}
                   {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
                     <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
+                  )}
+                  {!readOnly && row.id === spotterRowId && (
+                    <div className="ml-9 h-5">
+                      <button type="button" onClick={act.spotter} aria-label={`${SPOTTER_SIGN}, set ${label}. Tik voor uitleg`} className="relative flex h-5 items-center gap-1.5 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
+                        <Icon name="schild" size={14} />
+                        {SPOTTER_SIGN}
+                      </button>
+                    </div>
                   )}
                 </div>
               );

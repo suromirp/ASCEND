@@ -27,6 +27,7 @@ import { MAX_LEG_EASE_DAYS, type LegEaseDay } from '../models/legEase';
 import type { TestJudgment } from '../models/testJudgment';
 import { isUsableBestEffort } from '../engine/bestEffort';
 import { isUsableRunDetail } from '../engine/runDetail';
+import { cleanForgeLog } from '../engine/forgeLog';
 import { deserializeStreams } from '../engine/streamPack';
 import type { ActivityStreams } from '../models/activityStreams';
 import { capTestJudgments } from '../engine/testJudgment';
@@ -358,6 +359,19 @@ export function migrateLogGymProfile(log: SessionLog): SessionLog {
   const { gymProfileId: _damaged, ...rest } = log;
   void _damaged;
   return rest;
+}
+
+// --- SessionLog.forgeLog ---------------------------------------------------------------------
+// Het verloop van een krachttraining in Forge (engine/forgeLog.ts, decision
+// 2026-10-28-forge-logboek.md). Optional and additive: a file from before it has none and imports as
+// it was. Read event by event: what is whole stays, what is damaged is dropped, and a log with
+// nothing left loses only the field, never the training.
+export function migrateLogForgeLog(log: SessionLog): SessionLog {
+  if (!('forgeLog' in log)) return log;
+  const clean = cleanForgeLog((log as { forgeLog?: unknown }).forgeLog);
+  const { forgeLog: _raw, ...rest } = log;
+  void _raw;
+  return clean ? { ...rest, forgeLog: clean } : rest;
 }
 
 // --- testloop lezen: SessionLog.bestEffort en settings.testJudgments ------------------------

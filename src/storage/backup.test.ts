@@ -193,6 +193,32 @@ describe('backup envelope round-trip', () => {
     expect(backup.sessionLogs.find((l) => l.id === 'ok')?.gymProfileId).toBe('b');
   });
 
+  it('the course of a Forge training travels in a backup; an older log stays as it was and a damaged event is dropped', async () => {
+    const event = { id: 'ev1', at: 1_700_000_000_000, exerciseId: 'bench-press', exercise: 'Bench Press', rowId: 'bench:s1', set: '2', kind: 'bijgestuurd', from: { kg: 62.5, reps: 8 }, to: { kg: 60, reps: 8 } };
+    await SessionLogsRepo.put({ ...log('with', '2026-09-01'), forgeLog: [event as never, { ...event, id: 'ev2', kind: 'raar' } as never] });
+    await SessionLogsRepo.put({ ...log('broken', '2026-09-02'), forgeLog: 'rommel' } as unknown as SessionLog);
+    await SessionLogsRepo.put(log('without', '2026-09-03'));
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    const backup = normalizeBackupToCurrentModel(envelope);
+    expect(backup.sessionLogs.find((l) => l.id === 'with')?.forgeLog).toEqual([event]);
+    expect('forgeLog' in backup.sessionLogs.find((l) => l.id === 'broken')!).toBe(false);
+    expect('forgeLog' in backup.sessionLogs.find((l) => l.id === 'without')!).toBe(false);
+    expect(backup.sessionLogs.find((l) => l.id === 'broken')?.id).toBe('broken');
+    await wipeAllData();
+    await importEnvelope(envelope);
+    expect((await SessionLogsRepo.getAll()).find((l) => l.id === 'with')?.forgeLog).toEqual([event]);
+  });
+
+  it('the setting Zonder spotter and the safety arms of a gym travel in a backup', async () => {
+    await SettingsRepo.set({ strengthModel: { noSpotter: false, activeProfileId: 'a', profiles: [{ id: 'a', name: 'Sportschool A', barsKg: [20], platesKg: [5], dumbbells: { startKg: 2, stepKg: 2, upToKg: 10, thenStepKg: 2.5, maxKg: 50 }, stackStepKg: 5, spotterRack: true }] } });
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    await wipeAllData();
+    await importEnvelope(envelope);
+    const model = (await SettingsRepo.get()).strengthModel;
+    expect(model?.noSpotter).toBe(false);
+    expect(model?.profiles?.[0].spotterRack).toBe(true);
+  });
+
   it('what you noticed and the side of a complaint travel in a backup; an older complaint stays as it was', async () => {
     await InjuryNotesRepo.put({ id: 'new', date: '2026-10-20', bodyPart: 'Onderrug rechts', severity: 'matig', kind: 'pijn', side: 'rechts' });
     await InjuryNotesRepo.put({ id: 'sore', date: '2026-10-21', bodyPart: 'Quadriceps', severity: 'licht', kind: 'spierpijn', side: 'beide' });

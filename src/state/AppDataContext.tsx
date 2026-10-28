@@ -636,6 +636,8 @@ export interface LogSessionInput {
   workout?: SessionLog['workout'];
   strengthRir?: SessionLog['strengthRir'];
   gymProfileId?: SessionLog['gymProfileId'];
+  // Het verloop van de training in Forge; alleen bij het maken van het log (engine/forgeLog.ts).
+  forgeLog?: SessionLog['forgeLog'];
   legsAtStart?: SessionLog['legsAtStart'];
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
@@ -1383,6 +1385,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           workout: input.workout,
           strengthRir: input.strengthRir,
           ...(input.gymProfileId ? { gymProfileId: input.gymProfileId } : {}),
+          ...(input.forgeLog && input.forgeLog.length > 0 ? { forgeLog: input.forgeLog } : {}),
           legsAtStart: input.legsAtStart,
           externalId: input.externalId,
           sourceSync: input.sourceSync,
