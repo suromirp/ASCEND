@@ -32,10 +32,20 @@ const EASING = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
 const scroller = () => document.getElementById('app-scroll');
 
-function measure(): { rects: Map<string, Rect>; days: Map<string, string> } {
+// Plekken ten opzichte van de lijst zelf, niet van de pagina: een blad dat opent zet de pagina soms vast en
+// verschuift dan de scrolhoogte, en dat mag niet als verschuiving van de rijen tellen.
+function base(): { top: number; left: number } {
+  const root = document.querySelector<HTMLElement>('[data-week-day]')?.parentElement;
+  const r = root?.getBoundingClientRect();
+  if (r) return { top: r.top, left: r.left };
   const sc = scroller();
-  const st = sc?.scrollTop ?? 0;
-  const sl = sc?.scrollLeft ?? 0;
+  return { top: -(sc?.scrollTop ?? 0), left: -(sc?.scrollLeft ?? 0) };
+}
+
+function measure(): { rects: Map<string, Rect>; days: Map<string, string> } {
+  const b = base();
+  const st = -b.top;
+  const sl = -b.left;
   const rects = new Map<string, Rect>();
   const days = new Map<string, string>();
   for (const el of document.querySelectorAll<HTMLElement>(ROW)) {
@@ -63,7 +73,7 @@ export function armFlip(): void {
 // Na het loslaten van een zwevende rij: de rij begint waar die rij was, niet op zijn oude plek.
 export function setFlipOrigin(id: string, viewportTop: number): void {
   if (typeof document === 'undefined') return;
-  origin = { id, pageTop: viewportTop + (scroller()?.scrollTop ?? 0), at: performance.now() };
+  origin = { id, pageTop: viewportTop - base().top, at: performance.now() };
 }
 
 export function flipIsArmed(): boolean {
@@ -102,6 +112,11 @@ export function playFlip(style: FlipStyle): void {
     const startRects = origin && isArmed(origin.at, now) ? applyOverride(armed.rects, origin.id, origin.pageTop) : armed.rects;
     const deltas = flipDeltas(startRects, after.rects);
     if (deltas.size === 0) return;
+    // Pas afspelen als er echt een training van dag wisselde. Een tussenrender met de oude gegevens (net
+    // na het loslaten, of terwijl het voorstel nog wordt weggeschreven) laat de voorbereiding staan, zodat
+    // de echte verplaatsing straks vanaf de goede plek schuift en niet eerst terug naar de oude.
+    const dayChanged = [...after.days].some(([id, day]) => armed!.days.has(id) && armed!.days.get(id) !== day);
+    if (!dayChanged) return;
     const before = armed;
     armed = null;
     origin = null;
