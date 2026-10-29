@@ -45,6 +45,17 @@ export function shouldAskCheckIn(today: string, checkIns: MorningCheckIn[] | und
   return trainingToday || heavyYesterday;
 }
 
+// Wat de ochtendcheck over je benen zegt. Spierpijn die alleen in je bovenlichaam zit
+// (`soreWhere: 'upper'`) is voor de benen geen spierpijn: dan zijn je benen gewoon, en
+// reageren de planning, de kaart Benen en de beenindex er niet op.
+export function upperOnly(checkIn: MorningCheckIn | undefined): boolean {
+  return !!checkIn && checkIn.soreWhere === 'upper' && (checkIn.legs === 'spierpijn' || checkIn.legs === 'flink');
+}
+
+export function legFeelingOf(checkIn: MorningCheckIn | undefined): MorningCheckIn['legs'] {
+  return upperOnly(checkIn) ? undefined : checkIn?.legs;
+}
+
 export interface MorningSignals {
   sore: 'none' | 'spierpijn' | 'flink';
   negatives: number; // energy moe 1, op 2; sleep slecht 1; flinke spierpijn 1
@@ -54,7 +65,8 @@ export interface MorningSignals {
 
 export function morningSignals(checkIn: MorningCheckIn | undefined, logs: SessionLog[]): MorningSignals {
   if (!checkIn || checkIn.allNormal) return { sore: 'none', negatives: 0, rest: false };
-  const sore = checkIn.legs === 'flink' ? 'flink' : checkIn.legs === 'spierpijn' ? 'spierpijn' : 'none';
+  const legs = legFeelingOf(checkIn);
+  const sore = legs === 'flink' ? 'flink' : legs === 'spierpijn' ? 'spierpijn' : 'none';
   const negatives = (checkIn.energy === 'op' ? 2 : checkIn.energy === 'moe' ? 1 : 0) + (checkIn.sleep === 'slecht' ? 1 : 0) + (sore === 'flink' ? 1 : 0);
   let spotWorse: MorningSignals['spotWorse'];
   if (checkIn.spot) {

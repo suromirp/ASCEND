@@ -428,6 +428,17 @@ describe('backup envelope round-trip', () => {
 
   // What you chose on days with tired legs (models/legEase.ts): additive in the settings, no schema step,
   // it travels in a backup, an old backup without it imports as before, and a restore merges per date and training.
+  describe('soreWhere (spierpijn alleen in het bovenlichaam)', () => {
+    it('blijft in een check-in bij export en herstel, en een check-in zonder het veld blijft zoals hij was', async () => {
+      const checkIns = [{ date: '2026-10-20', legs: 'spierpijn' as const, soreWhere: 'upper' as const, energy: 'gewoon' as const, sleep: 'goed' as const }, { date: '2026-10-21', legs: 'spierpijn' as const, energy: 'gewoon' as const, sleep: 'goed' as const }];
+      await SettingsRepo.set({ morningCheckIns: checkIns });
+      const envelope = await buildBackupEnvelope();
+      await wipeAllData();
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).morningCheckIns).toEqual(checkIns);
+    });
+  });
+
   describe('legEaseDays (lichter bij vermoeide benen)', () => {
     const day = (date: string, plannedSessionId: string, choice: 'lichter' | 'liever-niet' = 'lichter') => ({ date, plannedSessionId, choice, reasons: ['spierpijn' as const], index: 9.5, at: `${date}T07:00:00.000Z` });
     const kept = [day('2026-10-20', 's1'), day('2026-10-21', 's2', 'liever-niet')];

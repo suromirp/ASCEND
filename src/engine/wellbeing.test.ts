@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
+import type { MorningCheckIn } from '../models/checkIn';
 import { morningSignals, recentPainSpot, shouldAskCheckIn, tiredStreak } from './wellbeing';
 import { hasSignificantPain, isStopPain, painReports } from './pain';
 import { computeAdvice, describeMorningPreview, legEaseMoveAdvice, previewLegCard, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
-import { legEaseCardSession, morningRestDay } from './legDayEase';
+import { legDaySignals, legEaseCardSession, morningRestDay, soreFromNotes } from './legDayEase';
+import { legSorenessList } from './legSoreness';
+import { legsAnswerText } from './morningCard';
 
 const { templates } = buildDefaultProgramData();
 const log = (date: string, extra: Partial<SessionLog> = {}): SessionLog => ({ id: `l-${date}`, templateId: 'tpl_easy_run', type: 'cardio', completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: 40, source: 'manual', ...extra });
@@ -38,6 +41,17 @@ describe('the morning check-in', () => {
     expect(recentPainSpot('2026-11-03', logs)).toMatchObject({ area: 'Knie', lastScore: 3 });
     expect(morningSignals({ date: '2026-11-03', legs: 'fris', energy: 'fit', sleep: 'goed', spot: { area: 'Knie', score: 5 } }, logs).spotWorse).toMatchObject({ score: 5, lastScore: 3 });
     expect(morningSignals({ date: '2026-11-03', legs: 'fris', energy: 'fit', sleep: 'goed', spot: { area: 'Knie', score: 3 } }, logs).spotWorse).toBeUndefined();
+  });
+
+  it('spierpijn alleen in het bovenlichaam telt niet voor de benen', () => {
+    const base = { date: 'd', energy: 'gewoon' as const, sleep: 'goed' as const };
+    expect(morningSignals({ ...base, legs: 'spierpijn' }, [])).toMatchObject({ sore: 'spierpijn', negatives: 0 });
+    expect(morningSignals({ ...base, legs: 'spierpijn', soreWhere: 'upper' }, [])).toMatchObject({ sore: 'none', negatives: 0, rest: false });
+    expect(morningSignals({ ...base, legs: 'flink' }, [])).toMatchObject({ sore: 'flink', negatives: 1 });
+    expect(morningSignals({ ...base, legs: 'flink', soreWhere: 'upper' }, [])).toMatchObject({ sore: 'none', negatives: 0 });
+    // Bij "fris" doet het veld niets, en een vreemde waarde wordt genegeerd.
+    expect(morningSignals({ ...base, legs: 'fris', soreWhere: 'upper' }, []).sore).toBe('none');
+    expect(morningSignals({ ...base, legs: 'spierpijn', soreWhere: 'x' as 'upper' }, []).sore).toBe('spierpijn');
   });
 
   it('counts tired mornings in a row', () => {
@@ -84,11 +98,46 @@ describe('MORNING-CHECK: how the planning reacts', () => {
     expect(b.effect).toContain('een wandeling of rustig fietsen is genoeg');
   });
 
+  it('bij "alleen bovenlichaam" zwijgt MORNING-CHECK over een loop of beendag', () => {
+    const check = { date: '2026-11-03', legs: 'spierpijn' as const, energy: 'gewoon' as const, sleep: 'goed' as const };
+    expect(morning({ checkIns: [check] })).not.toEqual([]);
+    expect(morning({ checkIns: [{ ...check, soreWhere: 'upper' }] })).toEqual([]);
+    const today = [ps('easy', 'tpl_easy_run', '2026-11-03'), ps('legs', 'tpl_lower_a', '2026-11-04')];
+    expect(morning({ plannedSessions: today, checkIns: [{ ...check, legs: 'flink', soreWhere: 'upper' }] })).toEqual([]);
+    expect(previewLegCard(inputs({ checkIns: [{ ...check, soreWhere: 'upper' }] }))).toBeUndefined();
+  });
+
   it('a pain spot worse this morning: two to three days without running on it', () => {
     const logs = [log('2026-11-02', { painReports: [{ area: 'Achillespees', score: 2 }] })];
     const [a] = morning({ logs, checkIns: [{ date: '2026-11-03', legs: 'fris', energy: 'fit', sleep: 'goed', spot: { area: 'Achillespees', score: 4 } }] });
     expect(a.title).toContain('Achillespees vanochtend 4');
     expect(a.effect).toContain('2 tot 3 dagen');
+  });
+});
+
+describe('LEG-EASE bij spierpijn alleen in het bovenlichaam', () => {
+  const today = [ps('legs', 'tpl_lower_a', '2026-11-03')];
+  const inputs = (checkIns: AdviceInputs['checkIns']): AdviceInputs => ({ logs: [], plannedSessions: today, templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf: '2026-11-03', checkIns });
+  const check = { date: '2026-11-03', legs: 'spierpijn' as const, energy: 'gewoon' as const, sleep: 'goed' as const };
+  it('de kaart Benen en de beenindex reageren er niet op', () => {
+    expect(soreFromNotes([], [check], '2026-11-03')).toBe('spierpijn');
+    expect(soreFromNotes([], [{ ...check, soreWhere: 'upper' }], '2026-11-03')).toBeUndefined();
+    expect(legSorenessList([check], [])).toHaveLength(1);
+    expect(legSorenessList([{ ...check, soreWhere: 'upper' }], [])).toEqual([]);
+    const signals = (c: MorningCheckIn[]) => legDaySignals('2026-11-03', { logs: [], plannedSessions: today, templates, program: null, today: '2026-11-03', injuries: [], checkIns: c });
+    expect(signals([check]).reasons).toContain('spierpijn');
+    expect(signals([{ ...check, soreWhere: 'upper' }]).reasons).not.toContain('spierpijn');
+  });
+  it('de samenvatting zegt waar de spierpijn zit', () => {
+    expect(legsAnswerText(check)).toBe('Spierpijn');
+    expect(legsAnswerText({ legs: 'flink', soreWhere: 'upper' })).toBe('Flinke spierpijn in je bovenlichaam');
+    expect(legsAnswerText({ legs: 'fris', soreWhere: 'upper' })).toBe('Fris');
+  });
+  it('de tekst bij een test wijst naar de ochtendcheck', () => {
+    const days = Array.from({ length: 14 }, (_, i) => `2026-11-${String(3 + i).padStart(2, '0')}`);
+    const t = [ps('test', 'tpl_test_run', '2026-11-03'), ...days.slice(1).map((d, i) => ps(`h${i}`, 'tpl_lower_a', d))];
+    const a = computeAdvice({ ...inputs([check]), plannedSessions: t }).find((x) => x.ruleId === 'MORNING-CHECK');
+    expect(a?.effect).toContain('Zit het alleen in je bovenlichaam, tik dat aan in je ochtendcheck; dan vervalt dit advies.');
   });
 });
 

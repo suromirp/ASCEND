@@ -13,6 +13,9 @@ export interface MorningCheckIn {
   date: string; // ISO date of the morning
   allNormal?: boolean; // one tap: everything as usual
   legs?: LegFeeling;
+  // Alleen bij spierpijn of flinke spierpijn: 'upper' = de spierpijn zit alleen in je bovenlichaam.
+  // Afwezig = de benen, zoals altijd. Zie engine/wellbeing.ts#legSoreness.
+  soreWhere?: 'upper';
   energy?: EnergyFeeling;
   sleep?: SleepFeeling;
   // The sleep answer came from the proposal (watch or your own estimate of a night),

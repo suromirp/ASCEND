@@ -596,7 +596,7 @@ card too, only with "a day later" and no Lichter. MORNING-CHECK makes the same c
 card; without a card (setting not on voorstel, open pain on a leg spot) it speaks itself. The choices: "Lichter" (`easeSlots`: at least 3 reps in reserve, the last set off, extras gone, only exercises that
 load the legs) or a day later (`adviceEngine.ts#legEaseMoveAdvice`, rule LEG-EASE, a proposal with Akkoord), always with
 "Liever niet". The choice is kept per date and training in `AppSettings.legEaseDays` (last 60, `migrateLegEaseDays`) and
-never touches a template, the planning or a log. `legFatigueOn` and the planner stay as they were, so `planGolden.test.ts`
+never touches a template, the planning or a log. Soreness only in the upper body is an optional chip "Alleen bovenlichaam" under Spierpijn in the morning check (`MorningCheckIn.soreWhere: 'upper'`, absent = legs, `wellbeing.ts#upperOnly`): it counts as no leg soreness for MORNING-CHECK, the card, `legSoreness` and the leg index, and Vandaag says "in je bovenlichaam" (`docs/beslissingen/2026-10-29-spierpijn-waar.md`). `legFatigueOn` and the planner stay as they were, so `planGolden.test.ts`
 does not move; the week rule LEG-FRESH is not built. A log of a training you eased is left out of "raak" per row, only for exercises that load the legs and
 tied by the planned session with a day of room for the date (`strengthHistory.ts#comparisonRows`, `eased`). A soreness note of the
 same day does not make a logged training "tired" (it has no time), the morning check does (`legsTiredAt`). Moving a heavy leg day or hard run shows a quiet line with the leg index of

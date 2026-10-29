@@ -91,7 +91,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   const checkKey = checkModelKey(settings.strengthModel);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   // Spierpijn en een gekozen Lichter horen erbij: ze bepalen of een training telt (engine/legDayEase.ts).
-  const easeKey = JSON.stringify([settings.legEaseDays, settings.morningCheckIns?.filter((c) => c.legs).map((c) => [c.date, c.legs]), injuryNotes.filter((n) => n.kind === 'spierpijn').map((n) => [n.date, n.bodyPart, n.resolvedDate])]);
+  const easeKey = JSON.stringify([settings.legEaseDays, settings.morningCheckIns?.filter((c) => c.legs).map((c) => [c.date, c.legs, c.soreWhere]), injuryNotes.filter((n) => n.kind === 'spierpijn').map((n) => [n.date, n.bodyPart, n.resolvedDate])]);
   const dataKey = checkDataKey(sessionLogs, templates, program, bodyKg) + easeKey;
   const strengthCheck = useMemo(() => {
     const resolved = resolveStrengthSettings(JSON.parse(checkKey) as StrengthSettings);

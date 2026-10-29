@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import type { LegFeeling } from '../models/checkIn';
 import { checkInFor, recentPainSpot } from '../engine/wellbeing';
-import { LEGS, SOURCE_TEXT, morningCardView } from '../engine/morningCard';
+import { LEGS, SOURCE_TEXT, legsAnswerText, morningCardView } from '../engine/morningCard';
 import { NO_SLEEP_TEXT } from '../engine/wellnessCheck';
 import { wantsMorningLink, withoutShortcut } from '../engine/shortcutAction';
 import { todayISO } from '../utils/dates';
@@ -63,7 +63,8 @@ export function MorningCard() {
   // Net beantwoord: de kaart blijft klein staan, zodat je ziet wat je koos en het
   // kunt wijzigen of ongedaan maken. Later op de dag kan dat via Gevoel in Je dag.
   if (answered) {
-    const legsText = answered.allNormal ? 'Gaat goed' : `Benen ${(LEGS.find(([k]) => k === answered.legs)?.[1] ?? 'ingevuld').toLowerCase()}`;
+    const legsWord = (legsAnswerText(answered) ?? 'ingevuld').toLowerCase();
+    const legsText = answered.allNormal ? 'Gaat goed' : answered.soreWhere === 'upper' ? legsWord.charAt(0).toUpperCase() + legsWord.slice(1) : `Benen ${legsWord}`;
     return (
       <>
         <Card className="flex flex-col gap-3">
