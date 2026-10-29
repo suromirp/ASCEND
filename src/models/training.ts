@@ -496,6 +496,11 @@ export interface SessionLog {
   // A log made by hand that took over the watch's numbers: the hand-made ones
   // as they were. Optional, additive; present only on such a log.
   manualMeasured?: ManualMeasured;
+  // A new log from a MacroFactor workout whose duration in the file was too long
+  // (a clock left running) and was set by hand: the minutes the file said, kept
+  // so it can be seen again. Optional, additive; no migration
+  // (docs/beslissingen/2026-10-29-mf-training-te-lang.md).
+  fileDurationMinutes?: number;
   // A watch activity cut at the end and/or the beginning: the numbers it
   // replaced, as they were. Optional, additive; present only on such a log.
   trim?: SessionTrim;
