@@ -108,7 +108,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
               try {
                 await updateSettings({ afterMainGoal: v });
                 await refresh();
-                setNote(v === 'stop' ? 'Gelukt: na je hoofddoel plant ASCEND niets meer.' : 'Gelukt: ASCEND plant weer onderhoudsweken.');
+                setNote(v === 'stop' ? 'Opgeslagen. Na je hoofddoel plant ASCEND niets meer.' : 'Opgeslagen. ASCEND plant weer onderhoudsweken.');
               } finally {
                 setAfterGoalBusy(false);
                 setAfterGoalPlan(null);

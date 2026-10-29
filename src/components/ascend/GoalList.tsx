@@ -84,7 +84,11 @@ export function GoalList({
       setDrag(null);
       const result = moveGoal(listed, id, d.target);
       if (result.changed) onMove(id, result);
-      else { setAnnounce('Op dezelfde plek gelaten'); if (landingIndex(listed, id, d.target) !== d.target) onBlocked(id); }
+      else {
+        const blocked = landingIndex(listed, id, d.target) !== d.target;
+        setAnnounce(blocked ? 'Op dezelfde plek gelaten, het hoofddoel blijft bij de Top-doelen' : 'Op dezelfde plek gelaten');
+        if (blocked) onBlocked(id);
+      }
     } else if (d && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       e.preventDefault();
       const wanted = Math.max(0, Math.min(views.length - 1, d.target + (e.key === 'ArrowUp' ? -1 : 1)));
