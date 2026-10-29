@@ -56,6 +56,7 @@ const everything: AppSettings = {
   dragWeek: false,
   forgeQuickButtons: false,
   forgeLayout: 'lijst',
+  forgeLongBreak: 90,
   haptics: false,
   testStops: 'count',
   readinessWeighting: 'equal',

@@ -103,6 +103,7 @@ const PATHS = {
       <path d="M3 19.5h18" />
     </>
   ),
+  pauze: <path d="M9 6.5v11M15 6.5v11" />,
   kracht: <path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" />,
   wandelen: (
     <>

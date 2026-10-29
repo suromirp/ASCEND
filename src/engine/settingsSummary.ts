@@ -48,6 +48,7 @@ import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
 import { quickButtonsOn } from './forgeQuickActions';
 import { resolveForgeLayout } from './forgeLayout';
+import { resolveBreakAsk } from './forgeSession';
 import { formatNumberNL } from '../utils/number';
 import { formatDateNL, localDateOf } from '../utils/dates';
 
@@ -255,7 +256,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
-const BUNDLE_FILL = ['forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven'];
+const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
   return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
@@ -558,6 +559,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: isDefaultOrder('stand', resolveCardOrder('stand', s.cardOrder)) ? 'Standaard' : 'Eigen volgorde' };
     case 'forge-oefeningen':
       return { value: choiceShort('forgeOefeningen', resolveForgeLayout(s)) };
+    case 'forge-onderbreking':
+      return { value: choiceShort('forgeOnderbreking', resolveBreakAsk(s)), dim: resolveBreakAsk(s) === 0 };
     case 'forge-snelknoppen':
       return { checked: quickButtonsOn(s) };
     case 'slepen-week':

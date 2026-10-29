@@ -636,6 +636,21 @@ The weights of a machine can be typed in per gym (`GymProfile.exerciseWeightsKg`
 logs) so the weights learned from use stay per gym, and Forge asks to fill them in when no weight
 fits (`docs/beslissingen/2026-10-26-gewichten-per-toestel.md`). A loose add-on weight (a plate or magnet, at most 3, each at most once, every combination) is added to every weight of the block of a cable or stack machine: `GymProfile.addOnKg` for the whole gym, `GymProfile.exerciseAddOnKg` per machine over it (an empty list is none), laid over the block in `strengthWeights.ts#externalWeights` so every candidate follows, and Forge shows "70 + 2,3 kg" under such a set (`engine/machineWeights.ts`, `docs/beslissingen/2026-10-28-tussengewichten.md`). The weights of a machine can also be given as a range (`GymProfile.exerciseWeightRanges`: start, end, step, with `removedKg`, `machineWeights.ts#weightsFromRange`/`ownWeightsFor`): the union of the range(s) and the loose weights in `exerciseWeightsKg`, so the add-ons lie over it as over a list and ASCEND still learns from the weights you really use (`docs/beslissingen/2026-10-29-gewichten-als-bereik.md`).
 
+**A training in Forge is a session** (`engine/forgeSession.ts`, `utils/forgeSessionStore.ts`, `components/forge/SessionPill.tsx`,
+`ForgeSessionHost.tsx`, `useForgeSession.ts`, decision `docs/beslissingen/2026-10-29-forge-als-sessie.md`): a started strength training stays open until
+Afronden or Verwijderen; everything (rows, course, clock, pauses) is in the draft (`WorkoutDraft`: `startedAt`, `pauses: { from, to? }[]`, `lastActionAt`,
+all optional, an old draft works) and survives closing, reloading and the next day: no clock reset on reopening, no age limit on the draft. The clock is
+a sum, not a timer: active time = now minus start minus the pauses (`activeSeconds`, `pause`, `resume`, pure and tested). The menu of the training has
+Pauzeren/Verder, Kleiner maken (the back button on the left is the same, the session runs on), Afronden and Training verwijderen (a sheet with Annuleren and
+Verwijderen); in a pause the clock stands still and a quiet line says "Gepauzeerd" with Verder. Coming back after more than the threshold since your last
+action while the clock ran asks once "Je was 22 uur weg. Telt die tijd mee?" ("Nee, als pauze" is the advice); setting "Lange onderbreking vragen na"
+(`AppSettings.forgeLongBreak`: 0 = uit, 30, 45 = advice, 60, 90; `resolveBreakAsk`). Afronden logs the active time as the duration; an existing log is never
+written to. There is at most one session: a pointer `ascend.forge.sessie` in localStorage (draft key, template, day) lets the pill above the tab bar find it;
+starting another training while one runs asks "Naar de training" or "Annuleren" (the guard is the wrapper `ForgeWorkout`, the screen is `ForgeWorkoutInner`).
+The pill shows only while a session exists and the full screen of Forge is not open (`registerForgeOpen`), never on the splash; the page gets room under
+its content; the breathing dot runs only while the clock runs and the pill is in view, and not in Rustig, Uit or reduced motion (a deliberate, owner-requested
+second loop next to the mission card). A tap opens `ForgeSessionHost` through `requestOpenSession`.
+
 **The course of a training in Forge** (`engine/forgeLog.ts`, `models/forgeLog.ts`, `components/forge/ForgeLogSheet.tsx`, decision
 `docs/beslissingen/2026-10-28-forge-logboek.md`, design `docs/visie/Forge logboek en spotter.md`): like the Event Log of MacroFactor, per moment
 which set went from what to what and why (bijgestuurd, doorgevoerd, eigen, onder, past-niet, spotter). It is derived: after every change of the

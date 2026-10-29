@@ -397,6 +397,20 @@ export const CHOICES = {
       { value: 'lijst', label: 'Onder elkaar', note: 'Alle oefeningen op een pagina, naar beneden scrollen', short: 'Onder elkaar' },
     ],
   }),
+  forgeOnderbreking: def({
+    group: 'Forge',
+    title: 'Lange onderbreking vragen na',
+    line: 'Hoe lang je weg mag zijn voordat Forge vraagt of die tijd meetelt.',
+    advice: 45 as 0 | 30 | 45 | 60 | 90,
+    help: 'forgeOnderbreking',
+    options: [
+      { value: 0, label: 'Uit', note: 'Forge vraagt niets, de klok loopt door', short: 'Uit' },
+      { value: 30, label: 'Na 30 minuten', short: '30 minuten' },
+      { value: 45, label: 'Na 45 minuten', note: 'Het advies', short: '45 minuten' },
+      { value: 60, label: 'Na 60 minuten', short: '60 minuten' },
+      { value: 90, label: 'Na 90 minuten', short: '90 minuten' },
+    ],
+  }),
   plaatjes: def({
     group: 'Forge',
     title: 'Plaatjes bij oefeningen',

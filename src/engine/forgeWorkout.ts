@@ -67,6 +67,9 @@ export interface WorkoutRow {
   // SetLog as rirAssumed. Typing or choosing a RIR yourself clears it.
   rirAssumed?: boolean;
   done: boolean;
+  // When the row was ticked (epoch ms). Lives in the draft; it goes onto the log as SetLog.at.
+  // Unticking removes it.
+  doneAt?: number;
   // You changed kg or reps yourself, or took the prescription: a weight you
   // change on an earlier set no longer carries over to this one. Lives in the
   // draft only; it is never part of the log.
@@ -419,10 +422,11 @@ export interface TickResult {
 // A ticked row with what is still empty filled in from its target.
 // A working set ticked with no weight takes the weight of the set before it
 // (`carryKg`): a set of 7 reps with no weight would count for nothing.
-function fillTicked(row: WorkoutRow, carryKg?: number): WorkoutRow {
+function fillTicked(row: WorkoutRow, carryKg: number | undefined, now: number): WorkoutRow {
   return {
     ...row,
     done: true,
+    doneAt: now,
     ...(row.weightKg === undefined && row.target.weightKg !== undefined ? { weightKg: row.target.weightKg } : row.weightKg === undefined && row.kind === 'work' && carryKg !== undefined ? { weightKg: carryKg } : {}),
     ...(row.reps === undefined ? { reps: row.target.timedSec ?? midReps(row.target) } : {}),
     // A RIR left empty is filled with the aim and marked as not measured.
@@ -430,9 +434,16 @@ function fillTicked(row: WorkoutRow, carryKg?: number): WorkoutRow {
   };
 }
 
+// An unticked row loses its time as well.
+function unticked(row: WorkoutRow): WorkoutRow {
+  const { doneAt: _at, ...rest } = row;
+  void _at;
+  return { ...rest, done: false };
+}
+
 // The box above the column: every set of the exercise ticked at once, or all
 // unticked again when every set already was. Rest follows as after one set.
-export function tickAllRows(workout: WorkoutExercise[], slot: string): TickResult {
+export function tickAllRows(workout: WorkoutExercise[], slot: string, now: number = Date.now()): TickResult {
   const ex = workout.find((e) => e.slot === slot);
   if (!ex || ex.rows.length === 0) return { workout };
   const untick = ex.rows.every((r) => r.done);
@@ -442,7 +453,7 @@ export function tickAllRows(workout: WorkoutExercise[], slot: string): TickResul
       ? {
           ...e,
           rows: e.rows.map((r) => {
-            const out = untick ? { ...r, done: false } : r.done ? r : fillTicked(r, carry);
+            const out = untick ? unticked(r) : r.done ? r : fillTicked(r, carry, now);
             if (r.kind === 'work' && out.weightKg !== undefined) carry = out.weightKg;
             return out;
           }),
@@ -454,14 +465,14 @@ export function tickAllRows(workout: WorkoutExercise[], slot: string): TickResul
   return allDone ? { workout: next } : { workout: next, restSec: ex.restSec };
 }
 
-export function tickRow(workout: WorkoutExercise[], slot: string, rowId: string): TickResult {
+export function tickRow(workout: WorkoutExercise[], slot: string, rowId: string, now: number = Date.now()): TickResult {
   const ex = workout.find((e) => e.slot === slot);
   const row = ex?.rows.find((r) => r.id === rowId);
   if (!ex || !row) return { workout };
   const done = !row.done;
   const index = ex.rows.indexOf(row);
   const before = ex.rows.slice(0, index).reverse().find((r) => r.kind === 'work' && r.weightKg !== undefined)?.weightKg;
-  const filled: WorkoutRow = done ? fillTicked(row, before) : { ...row, done };
+  const filled: WorkoutRow = done ? fillTicked(row, before, now) : unticked(row);
   const next = workout.map((e) => (e.slot === slot ? { ...e, rows: e.rows.map((r) => (r.id === rowId ? filled : r)) } : e));
   if (!done) return { workout: next };
   const lastWarmup = row.kind === 'warmup' && !ex.rows.slice(index + 1).some((r) => r.kind === 'warmup');
@@ -518,6 +529,7 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
         ...(r.weightKg !== undefined ? { weightKg: r.weightKg } : {}),
         ...(r.kind === 'work' && r.rir !== undefined ? { rir: r.rir } : {}),
         kind: r.kind,
+        ...(typeof r.doneAt === 'number' && Number.isFinite(r.doneAt) ? { at: new Date(r.doneAt).toISOString() } : {}),
         ...(r.kind === 'work' && r.rir !== undefined && r.rirAssumed ? { rirAssumed: true } : {}),
       }));
     if (sets.length > 0) out.push({ exerciseId: ex.exerciseId, exerciseName: ex.name, sets });

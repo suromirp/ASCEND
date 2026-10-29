@@ -110,6 +110,8 @@ import { addOnText, addOnsFor, formatAddOns, hasStack, ownWeightsFor } from '../
 import { appendEvents, cleanForgeLog, deriveChanges, noFitEvent, setCountEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
 import { SPOTTER_EXPLAIN, SPOTTER_HOW, SPOTTER_SIGN } from '../../engine/spotter';
 import { makeId } from '../../utils/id';
+import { activeSeconds, breakAsPause, breakCounts, cleanPauses, formatAway, formatSessionClock, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
+import { clearSessionPointer, notifySession, readSession, registerForgeOpen, requestOpenSession, writeSessionPointer } from '../../utils/forgeSessionStore';
 import { ExerciseAddOnForgeSheet } from './AddOnWeights';
 import { ForgeLogSheet } from './ForgeLogSheet';
 import { MachineWeightsForgeSheet } from './MachineWeights';
@@ -118,8 +120,6 @@ import { ForgeSheet, LongPressRow, MenuRow, RirBubble, TickBox, ValueCell } from
 import { useWakeLock } from './useWakeLock';
 
 const DRAFT_VERSION = 1;
-// Een concept ouder dan anderhalve dag is een vergeten training, geen pauze.
-const DRAFT_MAX_AGE_MS = 36 * 60 * 60 * 1000;
 // Na afloop blijft de balk nog even staan, dan verdwijnt hij.
 const REST_DONE_LINGER_MS = 8000;
 // Een reden die ouder is dan dit hoort niet meer bij de volgende verandering van de rijen.
@@ -144,22 +144,24 @@ interface WorkoutDraft {
   // Optioneel: een concept van voor het verloop heeft ze niet.
   log?: ForgeEvent[];
   seen?: number;
+  // De sessie (engine/forgeSession.ts): de klok is nu min startedAt min de pauzes. Optioneel: een concept van
+  // voor de sessie heeft ze niet en werkt gewoon.
+  pauses?: Pause[];
+  lastActionAt?: number;
 }
 
 const clock = () => Date.now();
 
+// Het laatste moment van handelen in een concept: het bewaarde moment, of de laatst afgevinkte set, of het wegschrijven.
+function lastActionOfDraft(d: Partial<WorkoutDraft>, startedAt: number): number {
+  const ticks = (d.exercises ?? []).flatMap((e) => e.rows.map((r) => r.doneAt)).filter((t): t is number => typeof t === 'number' && Number.isFinite(t));
+  const saved = typeof d.lastActionAt === 'number' ? d.lastActionAt : typeof d.savedAt === 'number' ? d.savedAt : startedAt;
+  return Math.max(saved, ...ticks);
+}
+
 const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
 
-export function ForgeWorkout({
-  template,
-  plannedSessionId,
-  scheduledDate,
-  program,
-  initialVariant = 'full',
-  startAtForm = false,
-  preview = false,
-  onClose,
-}: {
+interface ForgeWorkoutProps {
   template: SessionTemplate;
   plannedSessionId?: string;
   scheduledDate?: string;
@@ -171,7 +173,57 @@ export function ForgeWorkout({
   // concept en zonder het scherm aan te houden. Bovenaan staat Sluiten.
   preview?: boolean;
   onClose: () => void;
-}) {
+}
+
+// Een sessie per keer: loopt er al een andere training, dan vraagt dit eerst wat je wilt
+// (docs/beslissingen/2026-10-29-forge-als-sessie.md). Zonder andere sessie is dit gewoon het scherm.
+export function ForgeWorkout(props: ForgeWorkoutProps) {
+  const { sessionLogs, strengthExternal } = useAppData();
+  const myKey = `${draftKey(props.template.id, props.plannedSessionId, props.scheduledDate)}:forge`;
+  const [other] = useState(() => {
+    if (props.preview || strengthExternal) return undefined;
+    const live = readSession();
+    if (!live || live.pointer.key === myKey) return undefined;
+    const done = !!live.pointer.plannedSessionId && sessionLogs.some((l) => l.plannedSessionId === live.pointer.plannedSessionId);
+    return done ? undefined : live;
+  });
+  if (other) return <OtherSessionRunning name={other.pointer.name} onClose={props.onClose} />;
+  return <ForgeWorkoutInner {...props} />;
+}
+
+function OtherSessionRunning({ name, onClose }: { name: string; onClose: () => void }) {
+  const goTo = useRef(false);
+  return (
+    <ForgeSheet
+      title="Er loopt nog een training"
+      onClose={() => {
+        onClose();
+        if (goTo.current) requestOpenSession();
+      }}
+    >
+      {(close) => (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Er loopt nog een training: {name}. Eerst afronden of verwijderen?</p>
+          <div className="flex flex-col gap-3">
+            <PrimaryButton onClick={() => { goTo.current = true; close(); }}>Naar de training</PrimaryButton>
+            <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
+          </div>
+        </div>
+      )}
+    </ForgeSheet>
+  );
+}
+
+function ForgeWorkoutInner({
+  template,
+  plannedSessionId,
+  scheduledDate,
+  program,
+  initialVariant = 'full',
+  startAtForm = false,
+  preview = false,
+  onClose,
+}: ForgeWorkoutProps) {
   const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs, injuryNotes } = useAppData();
   const today = todayISO();
   const date = scheduledDate ?? today;
@@ -189,9 +241,9 @@ export function ForgeWorkout({
     if (preview) return undefined;
     const d = loadDraft<WorkoutDraft>(key, 'local');
     if (!d || d.v !== DRAFT_VERSION || !Array.isArray(d.exercises) || typeof d.startedAt !== 'number') return undefined;
-    const expired = typeof d.savedAt === 'number' && Date.now() - d.savedAt > DRAFT_MAX_AGE_MS;
+    // Een sessie eindigt met Afronden of Verwijderen, niet met de tijd; alleen een training die al in je logboek staat is klaar.
     const logged = !!plannedSessionId && sessionLogs.some((l) => l.plannedSessionId === plannedSessionId);
-    if (expired || logged) {
+    if (logged) {
       clearDraft(key, 'local');
       return undefined;
     }
@@ -218,8 +270,15 @@ export function ForgeWorkout({
   const ctx = useMemo<PlanContext>(() => ({ ...baseCtx, ...(ease ? { ease } : {}) }), [baseCtx, ease]);
   const effSlots = useMemo(() => (easeOn ? easeSlots(slots, easeHow).slots : slots), [easeOn, slots, easeHow]);
   const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? resumeDraft(restored.exercises, restored.eased, easeOn, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
-  // De klok loopt vanaf je eerste afgevinkte set; een training die je opende maar nog niet begon, start opnieuw.
-  const [startedAt] = useState(() => (restored && restored.exercises.some((e) => e.rows.some((r) => r.done)) ? restored.startedAt : Date.now()));
+  // De sessie begint op het moment van starten en houdt dat, ook na sluiten, herladen en een volgende dag.
+  const [startedAt] = useState(() => (restored ? restored.startedAt : Date.now()));
+  const [pauses, setPauses] = useState<Pause[]>(() => cleanPauses(restored?.pauses));
+  // Het laatste moment dat jij iets deed: de lange onderbreking meet daarvandaan.
+  const lastAction = useRef<number>(restored ? lastActionOfDraft(restored, startedAt) : startedAt);
+  const paused = isPaused({ startedAt, pauses });
+  const breakAfter = resolveBreakAsk(settings);
+  // "Je was 22 uur weg. Telt die tijd mee?": één keer per terugkomst, alleen als de klok liep.
+  const [awayMs, setAwayMs] = useState<number | undefined>(() => (restored && !readOnly ? longBreakMs({ startedAt, pauses: cleanPauses(restored.pauses), lastActionAt: lastAction.current }, Date.now(), breakAfter) : undefined));
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
   const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -354,20 +413,67 @@ export function ForgeWorkout({
   const flushDraft = useCallback(() => {
     window.clearTimeout(draftTimer.current);
     draftTimer.current = undefined;
-    if (pendingDraft.current) saveDraft(key, pendingDraft.current, 'local');
+    if (pendingDraft.current) {
+      saveDraft(key, pendingDraft.current, 'local');
+      // De wijzer van de sessie: de pil boven de tabbalk vindt de training hiermee terug.
+      writeSessionPointer({ key, templateId: template.id, name: template.name, ...(plannedSessionId ? { plannedSessionId } : {}), ...(scheduledDate ? { scheduledDate } : {}), variant: initialVariant });
+    }
     pendingDraft.current = null;
-  }, [key]);
+  }, [key, template.id, template.name, plannedSessionId, scheduledDate, initialVariant]);
   const dropDraft = useCallback(() => {
     window.clearTimeout(draftTimer.current);
     draftTimer.current = undefined;
     pendingDraft.current = null;
     clearDraft(key, 'local');
+    clearSessionPointer(key);
+    notifySession();
   }, [key]);
+  // Jouw handelingen zetten het laatste moment van handelen: een set afvinken, typen, een oefening ruilen.
+  const firstWorkout = useRef(workout);
+  useEffect(() => {
+    if (workout !== firstWorkout.current) lastAction.current = Date.now();
+  }, [workout]);
   useEffect(() => {
     if (readOnly) return;
-    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column, ...(forgeLog.length > 0 ? { log: forgeLog } : {}), seen: seenAt };
+    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, pauses, lastActionAt: lastAction.current, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column, ...(forgeLog.length > 0 ? { log: forgeLog } : {}), seen: seenAt };
     if (draftTimer.current === undefined) draftTimer.current = window.setTimeout(flushDraft, 300);
-  }, [readOnly, startedAt, workout, easeOn, rest, column, forgeLog, seenAt, flushDraft]);
+  }, [readOnly, startedAt, pauses, workout, easeOn, rest, column, forgeLog, seenAt, flushDraft]);
+  // Zolang dit scherm open is, staat de pil er niet.
+  useEffect(() => {
+    if (readOnly) return;
+    return registerForgeOpen();
+  }, [readOnly]);
+
+  // Pauzeren en verder gaan staan meteen in het concept.
+  const togglePause = useCallback(() => {
+    const now = Date.now();
+    const next = isPaused({ startedAt, pauses }) ? resumeClock({ startedAt, pauses }, now) : pauseClock({ startedAt, pauses }, now);
+    if (next.lastActionAt !== undefined) lastAction.current = next.lastActionAt;
+    setPauses(next.pauses ?? []);
+    haptics.tap();
+  }, [startedAt, pauses]);
+  // Terug in de app terwijl dit scherm openstond: ook dan de vraag, als de klok liep.
+  const clockNow = useRef({ startedAt, pauses });
+  clockNow.current = { startedAt, pauses };
+  useEffect(() => {
+    if (readOnly) return;
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      const gap = longBreakMs({ ...clockNow.current, lastActionAt: lastAction.current }, Date.now(), breakAfter);
+      if (gap !== undefined) setAwayMs(gap);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [readOnly, breakAfter]);
+  const answerBreak = (counts: boolean) => {
+    const now = Date.now();
+    const before = { startedAt, pauses, lastActionAt: lastAction.current };
+    const next = counts ? breakCounts(before, now) : breakAsPause(before, now);
+    lastAction.current = now;
+    // Altijd een nieuwe lijst, ook bij "Ja": het concept moet het nieuwe moment van handelen meekrijgen.
+    setPauses([...(next.pauses ?? [])]);
+    setAwayMs(undefined);
+  };
 
   // Het verloop volgt de rijen: elke verandering van kilo's, herhalingen of reserve wordt, met de reden die
   // de handeling opgaf, een gebeurtenis. Afvinken, een nieuwe planning en ruilen zijn dat niet.
@@ -816,7 +922,7 @@ export function ForgeWorkout({
         <div className={paged ? 'mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col' : 'mx-auto max-w-md'} style={paged ? undefined : { paddingBottom: bottomPad }}>
           <header ref={headerEl} className="sticky top-0 z-20 border-b px-2" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-card-border)', paddingTop: 'env(safe-area-inset-top)' }}>
             <div className="flex items-center gap-1 pt-1">
-              <button type="button" onClick={onClose} aria-label="Terug, de training blijft staan" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+              <button type="button" onClick={onClose} aria-label={preview ? 'Sluiten' : 'Kleiner maken, de training loopt door'} className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="terug" size={22} />
               </button>
               <h1 className="min-w-0 flex-1 line-clamp-2 break-words font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
@@ -834,7 +940,7 @@ export function ForgeWorkout({
             </div>
             {!readOnly && (
               <div className="flex items-center gap-3 px-2 pb-2 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-                <ElapsedClock startedAt={startedAt} />
+                <ElapsedClock startedAt={startedAt} pauses={pauses} />
                 <div className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--color-card-border)' }} aria-hidden="true">
                   <div className="h-1 rounded-full transition-[width] duration-300" style={{ width: `${total > 0 ? (done / total) * 100 : 0}%`, background: 'var(--color-progress)' }} />
                 </div>
@@ -843,6 +949,13 @@ export function ForgeWorkout({
                   <Icon name="verloop" size={20} />
                   {news > 0 && <span aria-hidden="true" className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full" style={{ background: 'var(--color-status)' }} />}
                 </button>
+              </div>
+            )}
+            {!readOnly && paused && (
+              <div className="animate-fade-in flex items-center gap-2 px-2 pb-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                <Icon name="pauze" size={16} />
+                <span className="flex-1">Gepauzeerd</span>
+                <TextButton onClick={togglePause}>Verder</TextButton>
               </div>
             )}
             {paged && <ForgeStrip workout={workout} current={page} readOnly={readOnly} onJump={jumpTo} />}
@@ -1066,9 +1179,16 @@ export function ForgeWorkout({
       )}
 
       {workoutMenu && (
-        <ForgeSheet title={template.name} onClose={() => { setWorkoutMenu(false); setConfirmDiscard(false); }}>
+        <ForgeSheet title={template.name} onClose={() => setWorkoutMenu(false)}>
           {(close) => (
             <div className="flex flex-col">
+              {!readOnly && !preview && (
+                <>
+                  <MenuRow icon="pauze" title={paused ? 'Verder' : 'Pauzeren'} sub={paused ? 'De klok loopt weer.' : 'De klok staat stil tot je verder gaat.'} onClick={() => { togglePause(); close(); }} />
+                  <MenuRow icon="omlaag" title="Kleiner maken" sub="Het scherm sluit, de training loopt door." onClick={() => { close(); onClose(); }} />
+                  <MenuRow icon="vinkje" title="Afronden" onClick={() => { close(); setFinishing(true); }} />
+                </>
+              )}
               {!readOnly && (
                 <MenuRow
                   title="Snelknoppen tonen"
@@ -1082,25 +1202,44 @@ export function ForgeWorkout({
                 right={<Toggle checked={resolveForgeLayout(settings) === 'scherm'} onChange={(on) => void updateSettings({ forgeLayout: on ? 'scherm' : 'lijst' })} label="Een oefening per scherm" />}
               />
               {guide && <MenuRow title="Uitleg bij deze training" onClick={() => { close(); setShowGuide(true); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />}
-              {!readOnly && !confirmDiscard && (
-                <MenuRow icon="sluiten" title="Training weggooien" sub="Wat je invulde gaat verloren; de training blijft gepland." danger onClick={() => setConfirmDiscard(true)} />
+              {!readOnly && (
+                <MenuRow icon="sluiten" title="Training verwijderen" sub="De sets van deze training gaan weg; de training blijft gepland." danger onClick={() => { close(); later(() => setConfirmDiscard(true), 230); }} />
               )}
-              {confirmDiscard && (
-                <div className="flex flex-col gap-3 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-                  <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Weggooien? Wat je invulde gaat verloren.</p>
-                  <div className="flex gap-3">
-                    <SecondaryButton onClick={() => setConfirmDiscard(false)}>Annuleren</SecondaryButton>
-                    <button
-                      type="button"
-                      onClick={() => { dropDraft(); close(); onClose(); }}
-                      className="min-h-[44px] flex-1 rounded-xl border text-xs font-medium"
-                      style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger-text)' }}
-                    >
-                      Weggooien
-                    </button>
-                  </div>
-                </div>
-              )}
+            </div>
+          )}
+        </ForgeSheet>
+      )}
+
+      {confirmDiscard && (
+        <ForgeSheet title="Training verwijderen?" onClose={() => setConfirmDiscard(false)}>
+          {(close) => (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>De sets van deze training gaan weg. Je logboek verandert niet.</p>
+              <div className="flex gap-3">
+                <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
+                <button
+                  type="button"
+                  onClick={() => { dropDraft(); setConfirmDiscard(false); onClose(); }}
+                  className="min-h-[44px] flex-1 rounded-xl border text-sm font-medium"
+                  style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger-text)' }}
+                >
+                  Verwijderen
+                </button>
+              </div>
+            </div>
+          )}
+        </ForgeSheet>
+      )}
+
+      {awayMs !== undefined && !readOnly && (
+        <ForgeSheet title="Lange onderbreking" onClose={() => setAwayMs(undefined)}>
+          {(close) => (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Je was {formatAway(awayMs)} weg. Telt die tijd mee?</p>
+              <div className="flex flex-col gap-3">
+                <PrimaryButton onClick={() => { answerBreak(false); close(); }}>Nee, als pauze</PrimaryButton>
+                <SecondaryButton onClick={() => { answerBreak(true); close(); }}>Ja, telt mee</SecondaryButton>
+              </div>
             </div>
           )}
         </ForgeSheet>
@@ -1115,7 +1254,7 @@ export function ForgeWorkout({
           template={template}
           readOnly={readOnly}
           workout={workout}
-          elapsedMinutes={Math.max(1, Math.round((clock() - startedAt) / 60000))}
+          elapsedMinutes={Math.max(1, Math.round(activeSeconds({ startedAt, pauses }, clock()) / 60))}
           defaultMinutes={scheduledDate ? resolveVariantDuration(template, initialVariant, scheduledDate, program) : durationForVariant(template, initialVariant)}
           plannedSessionId={plannedSessionId}
           scheduledDate={scheduledDate}
@@ -1165,9 +1304,10 @@ function useNow(intervalMs: number): number {
   return now;
 }
 
-function ElapsedClock({ startedAt }: { startedAt: number }) {
+function ElapsedClock({ startedAt, pauses }: { startedAt: number; pauses: Pause[] }) {
+  const paused = isPaused({ startedAt, pauses });
   const now = useNow(1000);
-  return <span className="font-sans" aria-label="Verstreken tijd">{formatElapsed(Math.max(0, Math.floor((now - startedAt) / 1000)))}</span>;
+  return <span className="font-sans tabular-nums" aria-label="Verstreken tijd" style={paused ? { opacity: 0.7 } : undefined}>{formatSessionClock(activeSeconds({ startedAt, pauses }, now))}</span>;
 }
 
 const isAssisted = (ex: WorkoutExercise) => exerciseOf(ex)?.resistance === 'assisted_bodyweight';
@@ -1180,12 +1320,6 @@ function dockRowLabel(ex: WorkoutExercise, index: number): string {
   return String(ex.rows.slice(0, index + 1).filter((r) => r.kind === 'work').length);
 }
 
-function formatElapsed(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
 
 // --- één oefening ------------------------------------------------------------------------
 

@@ -918,6 +918,34 @@ html[data-motion='calm'] .mx-quick {
   transition: width 0.4s ease-out;
 }
 
+/* De pil van een lopende training (components/forge/SessionPill.tsx): schuift in, de stip erin ademt zacht
+   zolang de klok loopt. Rustig: wel inschuiven, geen adem. Uit en beperkte beweging: meteen de eindstand. */
+.mx-pill-in {
+  animation: ascend-rise-in 0.26s ease-out both;
+}
+
+@keyframes mx-pill-dot {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.mx-pill-dot {
+  animation: mx-pill-dot 3s ease-in-out infinite;
+}
+
+html[data-motion='calm'] .mx-pill-dot,
+html[data-motion='off'] .mx-pill-dot {
+  animation: none;
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mx-pill-dot {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+
 /* De missiekaart ademt: een zachte mint gloed langs de rand, 4 s per cyclus.
    Alleen opacity, dus het kost de browser bijna niets. */
 @keyframes mx-breathe {
