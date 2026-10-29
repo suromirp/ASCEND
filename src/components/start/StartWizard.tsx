@@ -110,7 +110,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                 <label className="flex flex-col gap-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
                   Datum
                   <input
-                    type="date"
+                    type="date" lang="nl"
                     value={answers.goalDate ?? ''}
                     min={addDays(today, 1)}
                     onChange={(e) => set({ goalDate: e.target.value || undefined })}

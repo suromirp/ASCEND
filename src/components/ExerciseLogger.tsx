@@ -503,7 +503,7 @@ function GeneralLogger({
               ))
             ) : (
               <input
-                type="date"
+                type="date" lang="nl"
                 value={doneOn}
                 max={today}
                 min={addDays(today, -60)}

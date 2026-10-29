@@ -102,7 +102,7 @@ export function MoveSuggestions({
           <input
             id="move-date"
             ref={dateRef}
-            type="date"
+            type="date" lang="nl"
             min={today}
             className="h-11 w-full rounded-xl border px-3 font-sans text-[15px] tabular-nums"
             style={{ borderColor: 'var(--color-control-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}

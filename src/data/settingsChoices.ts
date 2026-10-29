@@ -489,7 +489,7 @@ export const CHOICES = {
     advice: 'auto' as 'auto' | 'man' | 'vrouw',
     help: 'figuur',
     options: [
-      { value: 'auto', label: 'Automatisch', note: 'Van je koppeling, als die het weet. Anders Man', short: 'Automatisch' },
+      { value: 'auto', label: 'Automatisch', note: 'Van je koppeling, als die het weet. Anders de man', short: 'Automatisch' },
       { value: 'man', label: 'Man', short: 'Man' },
       { value: 'vrouw', label: 'Vrouw', short: 'Vrouw' },
     ],

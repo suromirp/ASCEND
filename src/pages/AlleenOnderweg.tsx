@@ -128,7 +128,7 @@ export function AlleenOnderwegPage() {
             <div>
               <label htmlFor="solo-who" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wie is je thuisfront?</label>
               <input id="solo-who" type="text" value={solo.who} maxLength={80} onChange={(e) => updateSolo({ who: e.target.value })} placeholder="Bijvoorbeeld een voornaam" className={inputClass} style={inputStyle} />
-              <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Met deze naam begint je brief. De naam blijft op deze telefoon.</p>
+              <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Deze naam staat bovenaan je brief. Hij blijft op deze telefoon.</p>
             </div>
             <div>
               <label htmlFor="solo-time" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe laat stuur je elke dag een bericht?</label>
@@ -162,7 +162,7 @@ export function AlleenOnderwegPage() {
                   );
                 })}
               </div>
-              <input type="text" value={solo.satelliteNote} maxLength={300} onChange={(e) => updateSolo({ satelliteNote: e.target.value })} aria-label="Welk toestel" placeholder="Welk toestel, of hoe thuis je dan bereikt" className={inputClass} style={inputStyle} />
+              <input type="text" value={solo.satelliteNote} maxLength={300} onChange={(e) => updateSolo({ satelliteNote: e.target.value })} aria-label="Welk toestel" placeholder="Toestel, of hoe thuis je bereikt" className={inputClass} style={inputStyle} />
             </div>
 
             <div>

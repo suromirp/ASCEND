@@ -133,7 +133,7 @@ export function BaselineEvidenceCard() {
             <div className="flex-1">
               <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Datum</label>
               <input
-                type="date"
+                type="date" lang="nl"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 max={todayISO()}
