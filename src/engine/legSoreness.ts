@@ -8,6 +8,7 @@
 
 import type { MorningCheckIn } from '../models/checkIn';
 import type { InjuryNote } from '../models/injury';
+import { upperOnly } from './wellbeing';
 import { daysBetween } from '../utils/dates';
 import { kindOf } from './injuryKind';
 import { isLegSpot } from './legSpots';
@@ -35,7 +36,8 @@ function countsOn(note: InjuryNote, date: string, sameDay: boolean): boolean {
 // meldingen van eerdere dagen tellen dan).
 export function soreFromNotes(notes: InjuryNote[], checkIns: MorningCheckIn[], date: string, sameDayNotes = true): Soreness | undefined {
   const today = checkIns.find((c) => c.date === date && !c.allNormal);
-  const answered = today?.legs;
+  // Alleen bovenlichaam: de benen zijn gewoon, dat is het laatste antwoord (een melding van gisteren telt niet meer).
+  const answered = upperOnly(today) ? 'fris' : today?.legs;
   if (answered === 'flink') return 'flink';
   if (answered === 'spierpijn') return 'spierpijn';
   // Fris of Wat stijf vandaag is het laatste antwoord: een melding van gisteren telt niet meer.
@@ -48,7 +50,7 @@ export function soreFromNotes(notes: InjuryNote[], checkIns: MorningCheckIn[], d
 // ondergrens voor een melding als voor "Spierpijn" in de ochtendcheck.
 export function legSorenessList(checkIns: MorningCheckIn[] | undefined, notes: InjuryNote[] | undefined): FatigueSoreness[] {
   const fromChecks = (checkIns ?? [])
-    .filter((c) => c.legs === 'spierpijn' || c.legs === 'flink')
+    .filter((c) => (c.legs === 'spierpijn' || c.legs === 'flink') && !upperOnly(c))
     .map((c) => ({ date: c.date, level: c.legs === 'flink' ? ('flink' as const) : ('spierpijn' as const) }));
   const fromNotes = (notes ?? [])
     .filter((n) => kindOf(n) === 'spierpijn' && isLegSpot(n.bodyPart) && !(n.resolvedDate && n.resolvedDate <= n.date))

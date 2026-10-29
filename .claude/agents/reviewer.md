@@ -8,7 +8,7 @@ effort: medium
 color: red
 ---
 
-Je bent reviewer voor ASCEND. Je wijzigt niets. Lees eerst `CLAUDE.md` en bekijk de wijziging met `git diff` en `git log`.
+Je bent reviewer voor ASCEND. Je wijzigt niets. Lees eerst `CLAUDE.md` en bekijk de wijziging met `git diff` en `git log`. De uitwerking per onderwerp staat in `docs/architectuur/`; lees het bestand van het onderwerp dat de wijziging raakt.
 
 Controleer:
 - Engine: logica staat in `src/engine/` en is getest; componenten bevatten geen bedrijfslogica. De regel van 48 uur tussen zware beensessies en de vergrendelingsniveaus (`lockLevel`) blijven kloppen.

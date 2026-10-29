@@ -971,7 +971,7 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
         // Een test of wedstrijd "rustig" doen is geen test meer: zeg wat je dan wel doet.
         const testLike = hasRole(t, 'test') || hasRole(t, 'race');
         const effect = testLike
-          ? `Op benen met spierpijn loop je trager dan je kunt, en deze week is er geen goede latere dag voor ${t.name}. Voel je ${when === 'vandaag' ? 'het bij het inlopen' : `${when} bij het opstaan`} nog spierpijn in je benen, loop dan rustig in plaats van te testen; de test komt dan terug in een volgende week. Zit de spierpijn alleen in je bovenlichaam, dan kun je gewoon testen.`
+          ? `Op benen met spierpijn loop je trager dan je kunt, en deze week is er geen goede latere dag voor ${t.name}. Voel je ${when === 'vandaag' ? 'het bij het inlopen' : `${when} bij het opstaan`} nog spierpijn in je benen, loop dan rustig in plaats van te testen; de test komt dan terug in een volgende week. Zit het alleen in je bovenlichaam, tik dat aan in je ochtendcheck; dan vervalt dit advies.`
           : t.type === 'strength'
             ? `Deze week is er geen goede latere dag voor ${t.name}. Doe ${when} de korte versie, met lichtere gewichten en ruim reserve (zeker 3 herhalingen over).`
             : `Deze week is er geen goede latere dag voor ${t.name}. Doe ${when} de korte versie, rustig (RPE 3 tot 4).`;

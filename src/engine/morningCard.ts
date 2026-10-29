@@ -61,6 +61,13 @@ export const SOURCE_TEXT: Record<SuggestionSource, string> = {
 
 // De keuzes van de ochtendvraag met hun woorden, voor de kaart, het blad en de samenvatting.
 export const LEGS: [LegFeeling, string][] = [['fris', 'Fris'], ['stijf', 'Wat stijf'], ['spierpijn', 'Spierpijn'], ['flink', 'Flinke spierpijn']];
+// Het antwoord over de benen in woorden; bij spierpijn alleen in het bovenlichaam zegt het dat.
+export function legsAnswerText(c: Pick<MorningCheckIn, 'legs' | 'soreWhere'>): string | undefined {
+  const base = LEGS.find(([k]) => k === c.legs)?.[1];
+  if (base && c.soreWhere === 'upper' && (c.legs === 'spierpijn' || c.legs === 'flink')) return `${base} in je bovenlichaam`;
+  return base;
+}
+
 export const ENERGY: [EnergyFeeling, string][] = [['fit', 'Fit'], ['gewoon', 'Gewoon'], ['moe', 'Moe'], ['op', 'Op']];
 export const SLEEP: [SleepFeeling, string][] = [['goed', 'Goed'], ['gewoon', 'Gewoon'], ['matig', 'Matig'], ['slecht', 'Slecht of kort']];
 

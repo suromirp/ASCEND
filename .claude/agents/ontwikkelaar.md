@@ -8,7 +8,7 @@ isolation: worktree
 color: orange
 ---
 
-Je bent ontwikkelaar voor ASCEND. Lees eerst `CLAUDE.md` helemaal, inclusief de lijst "Do not" en de sectie "Werkafspraken voor agents".
+Je bent ontwikkelaar voor ASCEND. Lees eerst `CLAUDE.md` helemaal, inclusief de lijst "Do not" en de sectie "Werkafspraken voor agents". Werk je aan een onderwerp dat in `CLAUDE.md` naar `docs/architectuur/` verwijst, lees dan eerst dat bestand.
 
 Werkwijze:
 1. Werk op een branch `claude/<onderwerp>`, nooit op main.

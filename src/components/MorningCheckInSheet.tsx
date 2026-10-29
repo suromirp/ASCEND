@@ -68,6 +68,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
   // Een slaapantwoord dat uit het voorstel kwam, volgt je oordeel over de nacht: het staat
   // niet vast in het concept maar wordt vers uit de opgeslagen ochtend gelezen.
   const sleep = draft.sleep ?? (existing?.sleepSuggested ? existing.sleep : suggest ? prefill.sleep?.value : undefined);
+  const upper = draft.soreWhere === 'upper' && (legs === 'spierpijn' || legs === 'flink');
   const legsFrom = suggest && !draft.legs ? prefill.legs?.from : undefined;
   const energyFrom = suggest && !draft.energy ? prefill.energy?.from : undefined;
   const sleepFrom = suggest && !draft.sleep ? prefill.sleep?.from : undefined;
@@ -83,7 +84,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
 
   // Wat Vandaag na opslaan zegt: hetzelfde advies, op je echte planning.
   const preview = () => {
-    const entry: MorningCheckIn = { ...draft, legs, energy, sleep, date: today, allNormal: undefined };
+    const entry: MorningCheckIn = { ...draft, legs, energy, sleep, soreWhere: upper ? 'upper' : undefined, date: today, allNormal: undefined };
     const inputs = {
       logs: sessionLogs, plannedSessions, templates, injuries: injuryNotes, program,
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
@@ -104,7 +105,12 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
         </button>}
         {wellness && <WellnessLines reading={wellness} />}
         {wellness?.night && <ShortNightAsk reading={wellness} today={today} />}
-        {!painOnly && <ChoiceRow label="Benen" from={legsFrom} options={LEGS} value={legs} set={(v) => setDraft({ ...draft, legs: v })} />}
+        {!painOnly && <ChoiceRow label="Benen" from={legsFrom} options={LEGS} value={legs} set={(v) => setDraft({ ...draft, legs: v, soreWhere: v === 'spierpijn' || v === 'flink' ? draft.soreWhere : undefined })} />}
+        {!painOnly && (legs === 'spierpijn' || legs === 'flink') && (
+          <button onClick={() => setDraft({ ...draft, soreWhere: upper ? undefined : 'upper' })} aria-pressed={upper} className="-mt-1 min-h-[44px] self-start rounded-full border px-3.5 text-xs" style={{ borderColor: upper ? 'var(--color-action)' : 'var(--color-control-border)', color: upper ? 'var(--color-action)' : 'var(--color-ink-dim)', background: upper ? 'color-mix(in srgb, currentColor 8%, transparent)' : 'transparent' }}>
+            Alleen bovenlichaam
+          </button>
+        )}
         {!painOnly && <ChoiceRow label={wellness ? 'Energie (mag leeg blijven)' : 'Energie'} from={energyFrom} options={ENERGY} value={energy} set={(v) => setDraft({ ...draft, energy: v })} />}
         {!painOnly && <ChoiceRow label="Slaap" from={sleepFrom} options={SLEEP} value={sleep} set={(v) => setDraft({ ...draft, sleep: v, sleepSuggested: undefined })} />}
         {spot && (
@@ -129,7 +135,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
         )}
         <div className="flex items-center justify-between gap-3">
           {painOnly ? <span /> : <NotFitLink />}
-          <PrimaryButton fullWidth={false} disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, sleepSuggested: sleepSuggested || undefined, date: today, allNormal: undefined })}>
+          <PrimaryButton fullWidth={false} disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, soreWhere: upper ? 'upper' : undefined, sleepSuggested: sleepSuggested || undefined, date: today, allNormal: undefined })}>
             Opslaan
           </PrimaryButton>
         </div>

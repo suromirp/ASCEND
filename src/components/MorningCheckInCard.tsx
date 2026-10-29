@@ -4,7 +4,7 @@ import { checkInFor, recentPainSpot, shouldAskCheckIn } from '../engine/wellbein
 import { todayISO } from '../utils/dates';
 import { morningFromHour } from '../engine/overviewSettings';
 import { DayRow } from './vandaag/DayRow';
-import { ENERGY, LEGS, SLEEP } from '../engine/morningCard';
+import { ENERGY, legsAnswerText, SLEEP } from '../engine/morningCard';
 import { MorningCheckInSheet } from './MorningCheckInSheet';
 
 // Vandaag → "Gevoel" as one line in "Je dag" (the form opens in a sheet,
@@ -40,7 +40,7 @@ export function MorningCheckInCard({ painOnly = false, hideTodo = false }: { pai
 
   const summary = existing
     ? (existing.allNormal ? ['gaat goed'] : [
-        LEGS.find(([k]) => k === existing.legs)?.[1], ENERGY.find(([k]) => k === existing.energy)?.[1], SLEEP.find(([k]) => k === existing.sleep)?.[1] && `slaap ${SLEEP.find(([k]) => k === existing.sleep)![1].toLowerCase()}`,
+        legsAnswerText(existing), ENERGY.find(([k]) => k === existing.energy)?.[1], SLEEP.find(([k]) => k === existing.sleep)?.[1] && `slaap ${SLEEP.find(([k]) => k === existing.sleep)![1].toLowerCase()}`,
         existing.spot && `${existing.spot.area.toLowerCase()} ${existing.spot.score}`,
       ].filter(Boolean).map((s) => String(s).toLowerCase())).join(', ')
     : '';
