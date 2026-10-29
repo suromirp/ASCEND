@@ -669,7 +669,7 @@ state) and `haptics.tap` only fires for a step you take yourself, with 140 ms be
 `docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen-kaartje.md`): the 44 by 44 card in the head of an exercise, in the rows of the
 list and in the swap sheet shows the middle image (step 2 after `ART_ORDER`) of the drawing in its own square viewBox, in `currentColor`,
 only with "Spierkaart en tekening" and only when the drawing is already there (in memory or in the service worker cache through
-`exerciseArtLoader#readCachedDrawing`; the card never fetches). Until then, with "Alleen spierkaart" and when loading fails it stays the
+`exerciseArtLoader#readCachedDrawing`; the card never fetches, but `useDrawingsFor` fetches what is in view: the exercises of an open training and the choices of the swap sheet, decision `2026-10-29-tekeningen-in-beeld.md`). Until then, with "Alleen spierkaart" and when loading fails it stays the
 muscle card (`MuscleThumb`); the switch is a 200 ms fade, straight to the end state in Rustig and Uit.
 
 **Snelknoppen en sets in Forge** (`engine/forgeQuickActions.ts`, `engine/forgeRows.ts`, `components/swipeRow.ts`,
