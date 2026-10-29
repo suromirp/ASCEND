@@ -118,7 +118,7 @@ export function StandingPage() {
     {
       // De kop zegt al "Week 2 van 4, basisfase"; deze regel komt alleen als er iets bij te zeggen is.
       label: 'Fase',
-      value: position ? (restWeek?.isRestWeek && !restWeek.skipped ? 'Rustweek' : 'Laatste week') : mainPast ? 'klaar' : mainState === 'underway' ? 'onderweg' : 'nog niet',
+      value: position ? (restWeek?.isRestWeek && !restWeek.skipped ? 'Rustweek' : position.weekInPhase === position.phase.weekCount ? 'Laatste week' : phaseName(position.phase.name)) : mainPast ? 'klaar' : mainState === 'underway' ? 'onderweg' : 'nog niet',
       text: position
         ? `${restWeek?.isRestWeek && !restWeek.skipped ? 'Deze week is een rustweek: minder, zodat de weken ervoor binnenkomen.' : ''}${position.weekInPhase === position.phase.weekCount && nextPhase ? `${restWeek?.isRestWeek && !restWeek.skipped ? ' ' : ''}Volgende week begint ${phaseName(nextPhase.name)}.` : ''}`
         : mainPast || mainState === 'underway' ? 'Het programma naar je hoofddoel is af.' : '',
