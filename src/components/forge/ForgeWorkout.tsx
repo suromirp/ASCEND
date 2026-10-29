@@ -278,9 +278,14 @@ export function ForgeWorkout({
   const [page, setPage] = useState(() => Math.max(0, workout.findIndex((e) => e.slot === activeRef?.slot)));
   const pageRef = useRef(page);
   // Bij het openen (en bij het aanzetten) meteen op de oefening die aan de beurt is, zonder te schuiven.
+  const activeIndex = Math.max(0, workout.findIndex((e) => e.slot === activeRef?.slot));
+  const activeIndexRef = useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
   useLayoutEffect(() => {
     const el = pagerEl.current;
     if (!paged || !el) return;
+    pageRef.current = activeIndexRef.current;
+    setPage(activeIndexRef.current);
     el.scrollLeft = pageRef.current * el.clientWidth;
   }, [paged]);
   const onPagerScroll = useCallback(() => {
@@ -785,6 +790,7 @@ export function ForgeWorkout({
               key={ex.slot}
               ex={ex}
               first={paged || i === 0}
+              paged={paged}
               readOnly={readOnly}
               column={column}
               note={strength.exerciseNotes[ex.exerciseId]}
@@ -1216,6 +1222,7 @@ const REASON_SHORT = 60;
 const ExerciseBlock = memo(function ExerciseBlock({
   ex,
   first,
+  paged = false,
   readOnly,
   column,
   note,
@@ -1235,6 +1242,8 @@ const ExerciseBlock = memo(function ExerciseBlock({
 }: {
   ex: WorkoutExercise;
   first: boolean;
+  // Een oefening per scherm: elke oefening is een kaart, niet alleen die aan de beurt.
+  paged?: boolean;
   readOnly: boolean;
   column: 'target' | 'previous';
   note?: string;
@@ -1292,10 +1301,11 @@ const ExerciseBlock = memo(function ExerciseBlock({
       </span>
     </>
   );
+  const card = paged || active !== undefined;
   return (
     <section
-      className={`pb-2 pt-4 ${active !== undefined ? 'mx-2 mt-2 rounded-2xl border px-3' : `px-4 ${first ? '' : 'mt-2 border-t'}`}`}
-      style={{ borderColor: 'var(--color-card-border)', background: active !== undefined ? 'var(--color-raised)' : undefined }}
+      className={`pb-2 pt-4 ${card ? 'mx-2 mt-2 rounded-2xl border px-3' : `px-4 ${first ? '' : 'mt-2 border-t'}`}`}
+      style={{ borderColor: 'var(--color-card-border)', background: card ? 'var(--color-raised)' : undefined }}
       aria-label={ex.name}
       data-slot={ex.slot}
     >

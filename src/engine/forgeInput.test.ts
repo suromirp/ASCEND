@@ -445,3 +445,11 @@ describe('dockFieldKey: een nieuwe tik begint opnieuw', () => {
     expect(dockFieldKey({ ...at, rowId: 'a2' }, 1)).not.toBe(dockFieldKey(at, 1));
   });
 });
+
+describe('mergeDraft met een gekozen RIR', () => {
+  it('houdt een RIR die je koos op een set die nog niet is afgevinkt', () => {
+    const draft = [ex('bench', [row('bench:s0', { rir: 3, rirAssumed: false })])];
+    const fresh = [ex('bench', [row('bench:s0')])];
+    expect(mergeDraft(draft, fresh)[0].rows[0].rir).toBe(3);
+  });
+});
