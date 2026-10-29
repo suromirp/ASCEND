@@ -18,3 +18,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-29, Review gewichten als bereik, Warden, opus (reviewer, opslag), 80k, 4 min, 0, vond vastlopen bij heel kleine stap
 - 2026-10-29, MacroFactor duur aanpassen, Sherpa, sonnet (ontwikkelaar), 131k, 10 min, 1, Zonder duur eruit na review
 - 2026-10-29, Review MF duur, Warden, opus (reviewer, opslag), 84k, 4 min, 0, vond belasting 0 bij Zonder duur
+- 2026-10-29, Forge als sessie, Sherpa, sonnet (ontwikkelaar), 224k, 28 min, 1, twee blokkerende punten na review
+- 2026-10-29, Review Forge als sessie, Warden, opus (reviewer, opslag), 102k, 5 min, 0, vond sessie na Alles verwijderen en sessie bij alleen openen
