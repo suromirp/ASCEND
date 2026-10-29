@@ -7,9 +7,10 @@
 // ASCEND over dat toestel leert of schat (`candidatesFor`).
 
 import type { Exercise } from '../models/exercise';
-import { ADD_ON_LIMITS, DEFAULT_PROFILE, cleanAddOnOverride, cleanAddOns, resolveStrengthSettings, withProfile, type GymProfile, type StrengthSettings } from './strengthSettings';
+import { ADD_ON_LIMITS, DEFAULT_PROFILE, cleanAddOnOverride, cleanAddOns, cleanWeightRanges, poundRangeFor, rangeProblem, resolveStrengthSettings, weightsFromRange, withProfile, type GymProfile, type StrengthSettings, type WeightRange } from './strengthSettings';
 
-export { ADD_ON_LIMITS, cleanAddOnOverride, cleanAddOns };
+export { ADD_ON_LIMITS, cleanAddOnOverride, cleanAddOns, cleanWeightRanges, poundRangeFor, rangeProblem, weightsFromRange };
+export type { WeightRange };
 
 export const MACHINE_LIST_LIMITS = { minKg: 0.25, maxKg: 500, maxCount: 40, maxExercises: 100 };
 export const MAX_GYM_PROFILES = 5;
@@ -30,14 +31,34 @@ export function cleanMachineList(raw: unknown): number[] | undefined {
   return list.length > 0 && list.length <= maxCount ? list : undefined;
 }
 
-// De lijst van dit toestel in dit profiel, als je hem invulde.
-export function ownWeightsFor(profile: GymProfile, exercise: Exercise | undefined): number[] | undefined {
-  if (!exercise || !hasStack(exercise)) return undefined;
-  return cleanMachineList(profile.exerciseWeightsKg?.[exercise.id]);
+// De gewichten van een bereik zonder wat je weghaalde.
+export function rangeWeights(range: WeightRange): number[] {
+  const removed = new Set(range.removedKg ?? []);
+  return weightsFromRange(range.startKg, range.endKg, range.stepKg, range.unit).filter((w) => !removed.has(w));
 }
 
-// Voor hoeveel toestellen er in dit profiel een lijst is.
-export const machineListCount = (profile: GymProfile): number => Object.values(profile.exerciseWeightsKg ?? {}).filter((l) => cleanMachineList(l)).length;
+// De bereiken van dit toestel in dit profiel, defensief gelezen.
+export const rangesFor = (profile: GymProfile, exercise: Exercise | undefined): WeightRange[] => (exercise && hasStack(exercise) ? (cleanWeightRanges(profile.exerciseWeightRanges?.[exercise.id]) ?? []) : []);
+
+// Wat je voor dit toestel invulde, als lijst: de losse gewichten en de bereiken samen, oplopend en
+// zonder dubbele. Undefined als er niets staat.
+function ownWeightsOf(profile: GymProfile, exerciseId: string): number[] | undefined {
+  const all = new Set<number>(cleanMachineList(profile.exerciseWeightsKg?.[exerciseId]) ?? []);
+  for (const r of cleanWeightRanges(profile.exerciseWeightRanges?.[exerciseId]) ?? []) for (const w of rangeWeights(r)) all.add(w);
+  return all.size > 0 ? [...all].sort((a, b) => a - b) : undefined;
+}
+
+// De gewichten van dit toestel in dit profiel, als je ze invulde (lijst, bereiken of allebei).
+export function ownWeightsFor(profile: GymProfile, exercise: Exercise | undefined): number[] | undefined {
+  if (!exercise || !hasStack(exercise)) return undefined;
+  return ownWeightsOf(profile, exercise.id);
+}
+
+// Voor hoeveel toestellen er in dit profiel iets is ingevuld.
+export const machineListCount = (profile: GymProfile): number =>
+  new Set([...Object.keys(profile.exerciseWeightsKg ?? {}), ...Object.keys(profile.exerciseWeightRanges ?? {})]).size === 0
+    ? 0
+    : [...new Set([...Object.keys(profile.exerciseWeightsKg ?? {}), ...Object.keys(profile.exerciseWeightRanges ?? {})])].filter((id) => ownWeightsOf(profile, id)).length;
 
 export type ParsedList = { ok: true; list: number[] } | { ok: false; reason: string };
 
@@ -62,24 +83,34 @@ export function parseMachineWeights(text: string): ParsedList {
 // De lijst zoals je hem typt: "4,5 9 13,5".
 export const formatMachineWeights = (list: number[]): string => list.map((n) => String(n).replace('.', ',')).join(' ');
 
-// De instellingen met de lijst van één toestel gezet of gewist (undefined wist hem),
-// in het profiel dat nu actief is.
+// De instellingen met losse gewichten en bereiken van één toestel gezet, in het actieve profiel.
+// Een lege lijst en geen bereiken wissen het toestel.
+export function withMachineSetup(raw: StrengthSettings | undefined, exerciseId: string, setup: { list?: number[]; ranges?: WeightRange[] }): StrengthSettings {
+  const profile = resolveStrengthSettings(raw).profile;
+  const lists = { ...(profile.exerciseWeightsKg ?? {}) };
+  const ranges = { ...(profile.exerciseWeightRanges ?? {}) };
+  const cleanList = cleanMachineList(setup.list);
+  const cleanRanges = cleanWeightRanges(setup.ranges);
+  if (cleanList) lists[exerciseId] = cleanList;
+  else delete lists[exerciseId];
+  if (cleanRanges) ranges[exerciseId] = cleanRanges;
+  else delete ranges[exerciseId];
+  const out = withProfile(raw, {
+    exerciseWeightsKg: Object.keys(lists).length > 0 ? lists : undefined,
+    exerciseWeightRanges: Object.keys(ranges).length > 0 ? ranges : undefined,
+  });
+  out.profiles = out.profiles?.map((p) => {
+    if (p.id !== profile.id) return p;
+    const { exerciseWeightsKg, exerciseWeightRanges, ...rest } = p;
+    return { ...rest, ...(exerciseWeightsKg ? { exerciseWeightsKg } : {}), ...(exerciseWeightRanges ? { exerciseWeightRanges } : {}) };
+  });
+  return out;
+}
+
+// De instellingen met de lijst van één toestel gezet of gewist (undefined wist hem). De bereiken blijven.
 export function withMachineWeights(raw: StrengthSettings | undefined, exerciseId: string, list: number[] | undefined): StrengthSettings {
   const profile = resolveStrengthSettings(raw).profile;
-  const next = { ...(profile.exerciseWeightsKg ?? {}) };
-  const clean = cleanMachineList(list);
-  if (clean) next[exerciseId] = clean;
-  else delete next[exerciseId];
-  const out = withProfile(raw, { exerciseWeightsKg: Object.keys(next).length > 0 ? next : undefined });
-  if (Object.keys(next).length === 0) {
-    out.profiles = out.profiles?.map((p) => {
-      if (p.id !== profile.id) return p;
-      const { exerciseWeightsKg: _gone, ...rest } = p;
-      void _gone;
-      return rest;
-    });
-  }
-  return out;
+  return withMachineSetup(raw, exerciseId, { list, ranges: profile.exerciseWeightRanges?.[exerciseId] });
 }
 
 // --- de sportscholen -------------------------------------------------------------------------
@@ -112,8 +143,9 @@ export function withNewProfile(raw: StrengthSettings | undefined, name: string):
   const base = resolveStrengthSettings(raw).profile ?? DEFAULT_PROFILE;
   let n = profiles.length + 1;
   while (profiles.some((p) => p.id === `gym-${n}`)) n++;
-  const { exerciseWeightsKg: _own, exerciseAddOnKg: _ownAdd, id: _id, ...rest } = base;
+  const { exerciseWeightsKg: _own, exerciseWeightRanges: _ownRanges, exerciseAddOnKg: _ownAdd, id: _id, ...rest } = base;
   void _own;
+  void _ownRanges;
   void _ownAdd;
   void _id;
   const created: GymProfile = { ...rest, id: `gym-${n}`, name: name.trim().slice(0, PROFILE_NAME_MAX) };
@@ -276,3 +308,9 @@ export function withExerciseAddOns(raw: StrengthSettings | undefined, exerciseId
 
 // Voor hoeveel toestellen dit profiel een eigen keuze heeft.
 export const exerciseAddOnCount = (profile: GymProfile): number => Object.values(profile.exerciseAddOnKg ?? {}).filter((l) => cleanAddOnOverride(l)).length;
+
+// De waarde in de rij van een toestel: een korte lijst zoals hij is, een lange als "4,5 tot 109,5 kg".
+export function machineSummary(list: number[]): string {
+  if (list.length <= 6) return formatMachineWeights(list);
+  return `${formatMachineWeights([list[0]])} tot ${formatMachineWeights([list[list.length - 1]])} kg`;
+}

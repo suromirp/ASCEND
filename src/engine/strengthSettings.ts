@@ -55,6 +55,83 @@ export interface DumbbellRack {
   maxKg: number;
 }
 
+export type RangeUnit = 'kg' | 'lb';
+
+// `startKg`, `endKg` and `stepKg` are in `unit` (absent = kg); the names stay as they were stored first.
+export interface WeightRange {
+  startKg: number;
+  endKg: number;
+  stepKg: number;
+  unit?: RangeUnit;
+  removedKg?: number[];
+}
+
+export const RANGE_LIMITS = { minKg: 0.25, maxKg: 500, maxCount: 200, maxRanges: 5 };
+export const KG_PER_LB = 0.45359237;
+const r2n = (n: number) => Math.round(n * 100) / 100;
+const r1n = (n: number) => Math.round(n * 10) / 10;
+
+// Begin, eind en stap als lijst in kg: begin, begin + stap, ... tot het hoogste gewicht niet boven het eind.
+// In kg afgerond op 0,01 tegen drijvende-kommafouten; in pond rekent het exact in pond en gaat pas daarna
+// naar kg, op 0,1 kg. Leeg bij een ongeldig bereik.
+export function weightsFromRange(start: number, end: number, step: number, unit: RangeUnit = 'kg'): number[] {
+  if (rangeProblem(start, end, step, unit)) return [];
+  const out = new Set<number>();
+  for (let i = 0; ; i++) {
+    const w = r2n(start + i * step);
+    if (w > end + 1e-9) break;
+    out.add(unit === 'lb' ? r1n(w * KG_PER_LB) : w);
+  }
+  return [...out];
+}
+
+// Waarom dit bereik niet kan, of undefined.
+export function rangeProblem(start: number, end: number, step: number, unit: RangeUnit = 'kg'): string | undefined {
+  const { minKg, maxKg, maxCount } = RANGE_LIMITS;
+  const f = unit === 'lb' ? KG_PER_LB : 1;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || !Number.isFinite(step)) return 'Vul begin, eind en stap in.';
+  if (step <= 0) return 'De stap moet groter zijn dan nul.';
+  if (start * f < minKg || end * f > maxKg) return `Een gewicht ligt tussen ${String(minKg).replace('.', ',')} en ${maxKg} kg.`;
+  if (end < start) return 'Het eind ligt onder het begin.';
+  if (Math.floor((end - start) / step + 1e-9) + 1 > maxCount) return `Hoogstens ${maxCount} gewichten.`;
+  return undefined;
+}
+
+// Een blok in kg dat niet op zijn stap eindigt maar in pond wel: 4,5 tot 113 per 7 kg is 10 tot 250 lb per 15.
+// Begin op een heel pond, een gangbare stap van 5, 10 of 15 lb (tot 8% ernaast), en een eind dat een
+// heel aantal stappen verder ligt (tot 0,6 kg ernaast, want je typt het vaak afgerond). Anders undefined.
+export function poundRangeFor(startKg: number, endKg: number, stepKg: number): { start: number; end: number; step: number } | undefined {
+  if (rangeProblem(startKg, endKg, stepKg)) return undefined;
+  const all = weightsFromRange(startKg, endKg, stepKg);
+  if (all[all.length - 1] === endKg) return undefined;
+  const startLb = Math.round(startKg / KG_PER_LB);
+  if (startLb < 1 || Math.abs(startLb * KG_PER_LB - startKg) > 0.1) return undefined;
+  const step = [5, 10, 15].map((lb) => ({ lb, off: Math.abs(stepKg - lb * KG_PER_LB) / (lb * KG_PER_LB) })).filter((c) => c.off <= 0.08).sort((a, b) => a.off - b.off)[0]?.lb;
+  if (!step) return undefined;
+  const n = Math.round((endKg / KG_PER_LB - startLb) / step);
+  const endLb = startLb + n * step;
+  if (n < 1 || Math.abs(endLb * KG_PER_LB - endKg) > 0.6) return undefined;
+  return { start: startLb, end: endLb, step };
+}
+
+// Een bereik dat opgeslagen mag worden, of undefined.
+export function cleanWeightRange(raw: unknown): WeightRange | undefined {
+  if (!isRecord(raw)) return undefined;
+  const { startKg, endKg, stepKg } = raw;
+  if (!isNum(startKg) || !isNum(endKg) || !isNum(stepKg)) return undefined;
+  const unit: RangeUnit = raw.unit === 'lb' ? 'lb' : 'kg';
+  const range = { startKg: r2n(startKg), endKg: r2n(endKg), stepKg: r2n(stepKg) };
+  if (rangeProblem(range.startKg, range.endKg, range.stepKg, unit)) return undefined;
+  const removed = Array.isArray(raw.removedKg) ? [...new Set(raw.removedKg.filter(isNum).map(r2n))].sort((a, b) => a - b).slice(0, RANGE_LIMITS.maxCount) : [];
+  return { ...range, ...(unit === 'lb' ? { unit } : {}), ...(removed.length > 0 ? { removedKg: removed } : {}) };
+}
+
+export function cleanWeightRanges(raw: unknown): WeightRange[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const list = raw.map(cleanWeightRange).filter((r): r is WeightRange => !!r).slice(0, RANGE_LIMITS.maxRanges);
+  return list.length > 0 ? list : undefined;
+}
+
 export interface GymProfile {
   id: string;
   name: string;
@@ -71,6 +148,10 @@ export interface GymProfile {
   // you. The list goes before everything ASCEND learns or estimates there
   // (engine/machineWeights.ts, engine/strengthWeights.ts#candidatesFor).
   exerciseWeightsKg?: Record<string, number[]>;
+  // The same machine as a range (start, end, step), like MacroFactor: more than one is fine, together
+  // with the loose weights above the union. `removedKg` are weights of the range that the block does
+  // not have (engine/machineWeights.ts#weightsFromRange).
+  exerciseWeightRanges?: Record<string, WeightRange[]>;
   // Loose add-on weights (a plate or magnet) that you add to any weight of the block, for every
   // cable and stack machine in this gym. At most 3 (engine/machineWeights.ts#cleanAddOns).
   addOnKg?: number[];
@@ -270,6 +351,15 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
       .slice(0, 100);
     if (entries.length > 0) exerciseWeightsKg = Object.fromEntries(entries);
   }
+  let exerciseWeightRanges: Record<string, WeightRange[]> | undefined;
+  if (isRecord(raw.exerciseWeightRanges)) {
+    const entries = Object.entries(raw.exerciseWeightRanges)
+      .filter(([id]) => id.length > 0 && id.length <= 60)
+      .map(([id, list]): [string, WeightRange[] | undefined] => [id, cleanWeightRanges(list)])
+      .filter((e): e is [string, WeightRange[]] => !!e[1])
+      .slice(0, 100);
+    if (entries.length > 0) exerciseWeightRanges = Object.fromEntries(entries);
+  }
   const addOnKg = cleanAddOns(raw.addOnKg);
   let exerciseAddOnKg: Record<string, number[]> | undefined;
   if (isRecord(raw.exerciseAddOnKg)) {
@@ -289,6 +379,7 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
     stackStepKg: stepValue(raw.stackStepKg, DEFAULT_PROFILE.stackStepKg),
     ...(exerciseStepKg ? { exerciseStepKg } : {}),
     ...(exerciseWeightsKg ? { exerciseWeightsKg } : {}),
+    ...(exerciseWeightRanges ? { exerciseWeightRanges } : {}),
     ...(addOnKg ? { addOnKg } : {}),
     ...(exerciseAddOnKg ? { exerciseAddOnKg } : {}),
     ...(raw.spotterRack === true ? { spotterRack: true } : {}),

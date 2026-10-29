@@ -171,7 +171,7 @@ describe('backup envelope round-trip', () => {
   it('the gym of a strength log and the weights per machine travel in a backup; an older log stays as it was', async () => {
     await SessionLogsRepo.put({ ...log('with', '2026-09-01'), gymProfileId: 'a' });
     await SessionLogsRepo.put(log('without', '2026-09-02'));
-    await SettingsRepo.set({ strengthModel: { activeProfileId: 'a', profiles: [{ id: 'a', name: 'Sportschool A', barsKg: [20], platesKg: [5], dumbbells: { startKg: 2, stepKg: 2, upToKg: 10, thenStepKg: 2.5, maxKg: 50 }, stackStepKg: 5, exerciseWeightsKg: { 'cable-fly': [4.5, 9, 13.5] }, addOnKg: [2.3], exerciseAddOnKg: { 'kelso-shrug': [] } }] } });
+    await SettingsRepo.set({ strengthModel: { activeProfileId: 'a', profiles: [{ id: 'a', name: 'Sportschool A', barsKg: [20], platesKg: [5], dumbbells: { startKg: 2, stepKg: 2, upToKg: 10, thenStepKg: 2.5, maxKg: 50 }, stackStepKg: 5, exerciseWeightsKg: { 'cable-fly': [4.5, 9, 13.5] }, exerciseWeightRanges: { 'cable-fly': [{ startKg: 4.5, endKg: 113, stepKg: 7, removedKg: [11.5] }] }, addOnKg: [2.3], exerciseAddOnKg: { 'kelso-shrug': [] } }] } });
     const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
     const backup = normalizeBackupToCurrentModel(envelope);
     expect(backup.sessionLogs.find((l) => l.id === 'with')?.gymProfileId).toBe('a');
@@ -179,6 +179,7 @@ describe('backup envelope round-trip', () => {
     await importEnvelope(envelope);
     expect((await SessionLogsRepo.getAll()).find((l) => l.id === 'with')?.gymProfileId).toBe('a');
     expect((await SettingsRepo.get()).strengthModel?.profiles?.[0].exerciseWeightsKg).toEqual({ 'cable-fly': [4.5, 9, 13.5] });
+    expect((await SettingsRepo.get()).strengthModel?.profiles?.[0].exerciseWeightRanges).toEqual({ 'cable-fly': [{ startKg: 4.5, endKg: 113, stepKg: 7, removedKg: [11.5] }] });
     expect((await SettingsRepo.get()).strengthModel?.profiles?.[0].addOnKg).toEqual([2.3]);
     expect((await SettingsRepo.get()).strengthModel?.profiles?.[0].exerciseAddOnKg).toEqual({ 'kelso-shrug': [] });
   });
