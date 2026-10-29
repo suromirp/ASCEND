@@ -87,7 +87,8 @@ function compute(): { snap: string; session?: SessionState } {
   const draftRaw = pointer ? read(pointer.key) : null;
   if (cache.raw === raw && cache.draftRaw === draftRaw) return cache;
   const session = pointer ? sessionFromDraftRaw(pointer, draftRaw) : undefined;
-  const snap = session ? `${raw}\u0001${session.startedAt}\u0001${JSON.stringify(session.pauses)}\u0001${session.lastActionAt ?? ''}` : `${raw}\u0001`;
+  // Zonder lastActionAt: die verandert bij elke tik, en de pil en het opruimen lezen hem niet.
+  const snap = session ? `${raw}\u0001${session.startedAt}\u0001${JSON.stringify(session.pauses)}` : `${raw}\u0001`;
   // Zelfde klok en wijzer, ander concept (een set getikt): niets te melden, de snapshot blijft dezelfde tekst.
   cache = { raw, draftRaw, snap, ...(session ? { session } : {}) };
   return cache;

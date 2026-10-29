@@ -10,15 +10,16 @@ import {
 
 // Wat er bestaat: de training, de geplande sessie en of die al gelogd is.
 export function useSessionWorld(): SessionWorld & { loading: boolean } {
-  const { loading, plannedSessions, sessionLogs, templates } = useAppData();
+  const { loading, bootError, plannedSessions, sessionLogs, templates } = useAppData();
   return useMemo(
     () => ({
-      loading,
+      // Een opstartfout of een lege lijst trainingen telt als laden: dan wordt er nooit iets opgeruimd.
+      loading: loading || !!bootError || templates.length === 0,
       plannedIds: new Set(plannedSessions.map((p) => p.id)),
       loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id)),
       templateIds: new Set(templates.map((t) => t.id)),
     }),
-    [loading, plannedSessions, sessionLogs, templates],
+    [loading, bootError, plannedSessions, sessionLogs, templates],
   );
 }
 

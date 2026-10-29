@@ -109,15 +109,20 @@ describe('opruimen', () => {
     expect(sessionIsDead({ templateId: 't1', plannedSessionId: 'p1' }, world)).toBe(false);
     expect(sessionIsDead({ templateId: 't1' }, world)).toBe(false);
     expect(sessionIsDead({ templateId: 'weg', plannedSessionId: 'p1' }, world)).toBe(true);
-    expect(sessionIsDead({ templateId: 't1', plannedSessionId: 'weg' }, world)).toBe(true);
+    expect(sessionIsDead({ templateId: 't1', plannedSessionId: 'weg' }, world)).toBe(false);
     expect(sessionIsDead({ templateId: 't1', plannedSessionId: 'p2' }, world)).toBe(true);
   });
   it('ruimt concepten van gelogde of verdwenen sessies op, behalve de lopende', () => {
     const k = (s: string) => `ascend.afvinkconcept.${s}:forge`;
-    const keys = [k('p1'), k('p2'), k('p3'), k('t1:2026-10-28'), k('t1:2026-10-29'), k('t1:los')];
-    expect(draftsToPrune(keys, world, '2026-10-29')).toEqual([k('p2'), k('p3'), k('t1:2026-10-28')]);
-    expect(draftsToPrune(keys, world, '2026-10-29', k('p3'))).toEqual([k('p2'), k('t1:2026-10-28')]);
+    const keys = [k('p1'), k('p2'), k('p3'), k('t1:2026-10-25'), k('t1:2026-10-28'), k('t1:2026-10-29'), k('t1:los')];
+    expect(draftsToPrune(keys, world, '2026-10-29')).toEqual([k('p2'), k('p3'), k('t1:2026-10-25')]);
+    expect(draftsToPrune(keys, world, '2026-10-29', k('p3'))).toEqual([k('p2'), k('t1:2026-10-25')]);
     expect(draftsToPrune(['ascend.afvinkconcept.p3', 'iets'], world, '2026-10-29')).toEqual([]);
+  });
+  it('haalt niets weg zolang de wereld leeg is (laden of een opstartfout)', () => {
+    const empty = { plannedIds: new Set<string>(), loggedIds: new Set<string>(), templateIds: new Set<string>() };
+    expect(sessionIsDead({ templateId: 't1', plannedSessionId: 'p1' }, empty)).toBe(false);
+    expect(draftsToPrune([`ascend.afvinkconcept.p1:forge`], empty, '2026-10-29')).toEqual([]);
   });
 });
 

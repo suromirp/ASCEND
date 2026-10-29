@@ -146,23 +146,36 @@ export interface SessionWorld {
 
 // Een sessie is dood als zijn training of geplande sessie er niet meer is, of al gelogd is: dan staat er
 // geen pil die andere trainingen blokkeert en schrijft Afronden nooit een log naar een sessie die niet bestaat.
+// Een lege wereld (de app laadt nog of startte niet goed op) is nooit een reden om iets weg te halen. Een
+// geplande sessie die verdween maakt de sessie niet dood: afronden maakt er dan een losse training van, je
+// sets blijven.
 export function sessionIsDead(s: { templateId: string; plannedSessionId?: string }, w: SessionWorld): boolean {
+  if (w.templateIds.size === 0) return false;
   if (!w.templateIds.has(s.templateId)) return true;
-  if (s.plannedSessionId && (!w.plannedIds.has(s.plannedSessionId) || w.loggedIds.has(s.plannedSessionId))) return true;
+  if (s.plannedSessionId && w.loggedIds.has(s.plannedSessionId)) return true;
   return false;
 }
 
 const DRAFT_PREFIX = 'ascend.afvinkconcept.';
+const LOOSE_KEEP_DAYS = 3;
+const shiftDay = (iso: string, days: number) => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
 const UNPLANNED = /:(\d{4}-\d{2}-\d{2}|los)$/;
 
 // Welke concepten van Forge bij het opstarten weg mogen: die van een geplande sessie die gelogd is of
 // verdwenen, en die van een losse training van een eerdere dag. Het concept van de lopende sessie blijft.
 export function draftsToPrune(keys: string[], w: SessionWorld, today: string, keepKey?: string): string[] {
+  if (w.templateIds.size === 0) return [];
+  // Een losse training mag een paar dagen blijven liggen voor hij weg mag.
+  const looseBefore = shiftDay(today, -LOOSE_KEEP_DAYS);
   return keys.filter((key) => {
     if (key === keepKey || !key.startsWith(DRAFT_PREFIX) || !key.endsWith(':forge')) return false;
     const subject = key.slice(DRAFT_PREFIX.length, -':forge'.length);
     const loose = UNPLANNED.exec(subject);
-    if (loose) return loose[1] !== 'los' && loose[1] < today;
+    if (loose) return loose[1] !== 'los' && loose[1] < looseBefore;
     return !w.plannedIds.has(subject) || w.loggedIds.has(subject);
   });
 }
