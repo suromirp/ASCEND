@@ -26,6 +26,7 @@ import {
   poundRangeFor,
   rangesFor,
   weightsFromRange,
+  rangeProblem,
   withMachineSetup,
 } from './machineWeights';
 import { DEFAULT_PROFILE, normalizeStrengthSettings, resolveStrengthSettings, type GymProfile, type StrengthSettings } from './strengthSettings';
@@ -360,5 +361,17 @@ describe('gewichten als bereik', () => {
   it('herkent geen pond als het blok in kg klopt of nergens op past', () => {
     expect(poundRangeFor(5, 20, 5)).toBeUndefined();
     expect(poundRangeFor(4, 100, 9)).toBeUndefined();
+  });
+});
+
+describe('weightsFromRange met een rare stap', () => {
+  it('bevriest niet bij een heel kleine stap en weigert hem', () => {
+    const t0 = performance.now();
+    expect(weightsFromRange(5, 5, 1e-12)).toEqual([]);
+    expect(rangeProblem(5, 5, 1e-12)).toBeDefined();
+    expect(performance.now() - t0).toBeLessThan(50);
+  });
+  it('rekent met de afgeronde stap, zoals hij bewaard wordt', () => {
+    expect(weightsFromRange(1, 2, 0.333)).toEqual([1, 1.33, 1.66, 1.99]);
   });
 });

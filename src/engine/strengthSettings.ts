@@ -75,9 +75,12 @@ const r1n = (n: number) => Math.round(n * 10) / 10;
 // In kg afgerond op 0,01 tegen drijvende-kommafouten; in pond rekent het exact in pond en gaat pas daarna
 // naar kg, op 0,1 kg. Leeg bij een ongeldig bereik.
 export function weightsFromRange(start: number, end: number, step: number, unit: RangeUnit = 'kg'): number[] {
+  // Dezelfde afronding als bij opslaan (cleanWeightRange), zodat wat je ziet is wat er bewaard wordt.
+  [start, end, step] = [r2n(start), r2n(end), r2n(step)];
   if (rangeProblem(start, end, step, unit)) return [];
   const out = new Set<number>();
-  for (let i = 0; ; i++) {
+  // Harde grens: een rare stap kan de lus nooit laten doordraaien.
+  for (let i = 0; i < RANGE_LIMITS.maxCount; i++) {
     const w = r2n(start + i * step);
     if (w > end + 1e-9) break;
     out.add(unit === 'lb' ? r1n(w * KG_PER_LB) : w);
@@ -90,7 +93,8 @@ export function rangeProblem(start: number, end: number, step: number, unit: Ran
   const { minKg, maxKg, maxCount } = RANGE_LIMITS;
   const f = unit === 'lb' ? KG_PER_LB : 1;
   if (!Number.isFinite(start) || !Number.isFinite(end) || !Number.isFinite(step)) return 'Vul begin, eind en stap in.';
-  if (step <= 0) return 'De stap moet groter zijn dan nul.';
+  [start, end, step] = [r2n(start), r2n(end), r2n(step)];
+  if (step < 0.01) return 'De stap is minstens 0,01.';
   if (start * f < minKg || end * f > maxKg) return `Een gewicht ligt tussen ${String(minKg).replace('.', ',')} en ${maxKg} kg.`;
   if (end < start) return 'Het eind ligt onder het begin.';
   if (Math.floor((end - start) / step + 1e-9) + 1 > maxCount) return `Hoogstens ${maxCount} gewichten.`;

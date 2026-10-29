@@ -40,9 +40,11 @@ const isBlank = (d: RangeDraft) => d.start.trim() === '' && d.end.trim() === '' 
 
 // Het bereik van een concept: de getallen en wat er mis mee is.
 function readDraft(d: RangeDraft): { range?: WeightRange; problem?: string; all: number[] } {
-  const startKg = toKg(d.start);
-  const endKg = toKg(d.end);
-  const stepKg = toKg(d.step);
+  // Op 0,01 afgerond, net als bij opslaan: wat je ziet is wat er bewaard wordt.
+  const round = (v: number | undefined) => (v === undefined ? undefined : Math.round(v * 100) / 100);
+  const startKg = round(toKg(d.start));
+  const endKg = round(toKg(d.end));
+  const stepKg = round(toKg(d.step));
   if (startKg === undefined || endKg === undefined || stepKg === undefined) return { problem: 'Vul begin, eind en stap in, met cijfers.', all: [] };
   const problem = rangeProblem(startKg, endKg, stepKg, d.unit);
   if (problem) return { problem, all: [] };
@@ -316,7 +318,7 @@ function MachineWeightsForm({
             onDone();
           }}
         >
-          Lijst wissen
+          Gewichten wissen
         </TextButton>
       )}
     </div>
