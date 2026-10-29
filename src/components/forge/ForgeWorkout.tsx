@@ -851,7 +851,7 @@ export function ForgeWorkout({
             <div className="flex flex-col">
               {!rowMenuRow.done && <MenuRow icon="vinkje" title="Voorschrift overnemen" sub="Kilo's en herhalingen zoals het voorschrift ze vraagt." onClick={() => { take(rowMenuEx.slot, rowMenuRow.id); close(); }} />}
               <MenuRow icon="plus" title="Set kopiëren" sub="Een kopie van deze set eronder." onClick={() => { setExercise(rowMenuEx.slot, (e) => copyRow(e, rowMenuRow.id)); close(); }} />
-              {canRemoveRow(rowMenuEx, rowMenuRow.id) && <MenuRow icon="min" title="Set weghalen" danger onClick={() => { removeSetLogged(rowMenuEx.slot, rowMenuRow.id); close(); }} />}
+              {canRemoveRow(rowMenuEx, rowMenuRow.id) && <MenuRow icon="min" title="Set verwijderen" danger onClick={() => { removeSetLogged(rowMenuEx.slot, rowMenuRow.id); close(); }} />}
             </div>
           )}
         </ForgeSheet>
@@ -883,7 +883,7 @@ export function ForgeWorkout({
                 </>
               )}
               {!readOnly && menuEx.rows.some((r) => !r.done) && menuEx.rows.length > 1 && (
-                <MenuRow icon="min" title="Laatste set weghalen" sub="Een set die je al afvinkte blijft staan." onClick={() => { setExercise(menuEx.slot, removeLastRow); close(); }} />
+                <MenuRow icon="min" title="Laatste set verwijderen" sub="Een set die je al afvinkte blijft staan." onClick={() => { setExercise(menuEx.slot, removeLastRow); close(); }} />
               )}
               {!readOnly && (
                 <MenuRow
@@ -1013,7 +1013,7 @@ export function ForgeWorkout({
               {!readOnly && (
                 <MenuRow
                   title="Snelknoppen tonen"
-                  sub="Ruilen, Opwarmset, Set erbij en Notitie onder elke oefening."
+                  sub="Ruilen, Opwarmset en Notitie onder elke oefening."
                   right={<Toggle checked={quickButtonsOn(settings)} onChange={(on) => void updateSettings({ forgeQuickButtons: on })} label="Snelknoppen tonen" />}
                 />
               )}
@@ -1242,7 +1242,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
       data-slot={ex.slot}
     >
       <div className="flex items-start gap-2">
-        {ex.known && <ExerciseArtButton exerciseId={ex.exerciseId} name={ex.name} />}
+        {ex.known && <ExerciseArtButton key={ex.exerciseId} exerciseId={ex.exerciseId} name={ex.name} />}
         {complete ? (
           <button type="button" onClick={() => act.fold(ex.slot)} aria-expanded={!folded} aria-label={`${ex.name}, ${folded ? 'uitklappen' : 'inklappen'}`} className="min-h-[44px] min-w-0 flex-1 py-1.5 text-left">
             {headText}
@@ -1261,16 +1261,16 @@ const ExerciseBlock = memo(function ExerciseBlock({
           {quick.length > 0 && (
             <div className="mx-quick" data-shown={quickOn} inert={!quickOn}>
               <div>
-                <div className="-mx-1 mt-1 flex gap-2 overflow-x-auto px-1 py-0.5" role="group" aria-label={`Snel bij ${ex.name}`} data-no-sheet-drag>
+                <div className="-mx-1 mt-1 flex gap-1.5 overflow-x-auto px-1 py-0.5" role="group" aria-label={`Snel bij ${ex.name}`} data-no-sheet-drag>
                   {quick.map((a) => (
                     <button
                       key={a}
                       type="button"
                       onClick={() => act.quick(ex.slot, a)}
-                      className="flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm active:opacity-70"
+                      className="flex min-h-[44px] shrink-0 items-center gap-1 rounded-full border px-3 text-sm active:opacity-70"
                       style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink-dim)' }}
                     >
-                      <Icon name={a === 'ruilen' ? 'ruilen' : a === 'notitie' ? 'notitie' : 'plus'} size={16} />
+                      <Icon name={a === 'ruilen' ? 'ruilen' : a === 'notitie' ? 'notitie' : 'plus'} size={14} />
                       {QUICK_LABEL[a]}
                     </button>
                   ))}

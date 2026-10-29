@@ -37,6 +37,13 @@ export interface RemoveResult {
   label: string;
 }
 
+// Wat er weggehaald is, alleen de stukken die kloppen: een concept kan oud of beschadigd zijn.
+type Drop = NonNullable<WorkoutExercise['dropped']>[number];
+export function dropsOf(ex: Pick<WorkoutExercise, 'dropped'>): Drop[] {
+  if (!Array.isArray(ex.dropped)) return [];
+  return ex.dropped.filter((d): d is Drop => typeof d === 'object' && d !== null && typeof d.index === 'number' && typeof d.row === 'object' && d.row !== null && typeof d.row.id === 'string' && typeof d.row.kind === 'string');
+}
+
 // Haalt een set weg. Een werkset uit het programma wordt onthouden in `dropped`.
 export function removeSet(ex: WorkoutExercise, rowId: string): RemoveResult {
   if (!canRemoveRow(ex, rowId)) return { ex, label: '' };
@@ -46,7 +53,7 @@ export function removeSet(ex: WorkoutExercise, rowId: string): RemoveResult {
   const rows = ex.rows.filter((r) => r.id !== rowId);
   const keep = row.kind === 'work' && !isOwnRow(row);
   return {
-    ex: { ...ex, rows, ...(keep ? { dropped: [...(ex.dropped ?? []), { row, index }] } : {}) },
+    ex: { ...ex, rows, ...(keep ? { dropped: [...dropsOf(ex), { row, index }] } : {}) },
     removed: { row, index },
     label,
   };
@@ -56,26 +63,27 @@ export function removeSet(ex: WorkoutExercise, rowId: string): RemoveResult {
 export function reinsertRow(ex: WorkoutExercise, removed: DroppedRow): WorkoutExercise {
   if (ex.rows.some((r) => r.id === removed.row.id)) return ex;
   const at = Math.max(0, Math.min(removed.index, ex.rows.length));
-  const dropped = (ex.dropped ?? []).filter((d) => d.row.id !== removed.row.id);
+  const dropped = dropsOf(ex).filter((d) => d.row.id !== removed.row.id);
   return { ...ex, rows: [...ex.rows.slice(0, at), removed.row, ...ex.rows.slice(at)], ...(dropped.length > 0 ? { dropped } : { dropped: undefined }) };
 }
 
 // "Terugzetten" onder de sets: alles wat je van het programma weghaalde komt terug.
 export function restoreDropped(ex: WorkoutExercise): WorkoutExercise {
   let out = ex;
-  for (const d of [...(ex.dropped ?? [])].sort((a, b) => a.index - b.index)) out = reinsertRow(out, d);
+  // In omgekeerde volgorde van weghalen: elke plek gold toen de sets erna er nog stonden.
+  for (const d of [...dropsOf(ex)].reverse()) out = reinsertRow(out, d);
   return out;
 }
 
-export const droppedCount = (ex: Pick<WorkoutExercise, 'dropped'>): number => (ex.dropped ?? []).length;
+export const droppedCount = (ex: Pick<WorkoutExercise, 'dropped'>): number => dropsOf(ex).length;
 
 export function droppedLine(n: number): string {
-  return n === 1 ? '1 set van je programma weggehaald' : `${n} sets van je programma weggehaald`;
+  return n === 1 ? '1 set van je programma verwijderd' : `${n} sets van je programma verwijderd`;
 }
 
 // Het aantal werksets dat het programma vroeg: wat nog staat uit het programma plus wat jij weghaalde.
 export function programmedWorkSets(ex: WorkoutExercise): number {
-  return ex.rows.filter((r) => r.kind === 'work' && !isOwnRow(r)).length + (ex.dropped ?? []).filter((d) => d.row.kind === 'work').length;
+  return ex.rows.filter((r) => r.kind === 'work' && !isOwnRow(r)).length + dropsOf(ex).filter((d) => d.row.kind === 'work').length;
 }
 
 // Klopt de tekst "Je programma vraagt nu 3 sets..." niet meer met wat jij doet, dan komt er één korte zin bij.

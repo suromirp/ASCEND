@@ -65,8 +65,8 @@ describe('terugzetten', () => {
 
 describe('de regel en de zin', () => {
   it('zegt hoeveel sets van het programma weg zijn', () => {
-    expect(droppedLine(1)).toBe('1 set van je programma weggehaald');
-    expect(droppedLine(2)).toBe('2 sets van je programma weggehaald');
+    expect(droppedLine(1)).toBe('1 set van je programma verwijderd');
+    expect(droppedLine(2)).toBe('2 sets van je programma verwijderd');
   });
   it('telt de sets die het programma vroeg', () => {
     const e = removeSet(program(), 'bench:s1').ex;
@@ -90,5 +90,14 @@ describe('de regel en de zin', () => {
     expect(rowLabel(program(), 'bench:w0')).toBe('W1');
     expect(rowLabel(program(), 'bench:s2')).toBe('3');
     expect(rowLabel(program(), 'nergens')).toBe('');
+  });
+});
+
+describe('restoreDropped na twee keer weghalen', () => {
+  it('zet de sets terug in hun eigen volgorde', () => {
+    const start = program();
+    const a = removeSet(start, 'bench:s1').ex;
+    const b = removeSet(a, 'bench:s2').ex;
+    expect(restoreDropped(b).rows.map((r) => r.id)).toEqual(start.rows.map((r) => r.id));
   });
 });

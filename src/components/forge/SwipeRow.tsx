@@ -29,7 +29,7 @@ export function SwipeRow({
   const front = useRef<HTMLDivElement>(null);
   const back = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const g = useRef({ id: -1, x: 0, y: 0, axis: 'undecided' as 'undecided' | 'horizontal' | 'vertical', start: 0, now: 0, width: 0, zone: 'closed' as Zone, lastX: 0, lastT: 0, vel: 0, wasOpen: false, swallow: false, live: false });
+  const g = useRef({ id: -1, x: 0, y: 0, axis: 'undecided' as 'undecided' | 'horizontal' | 'vertical', start: 0, now: 0, width: 0, reach: 0, zone: 'closed' as Zone, lastX: 0, lastT: 0, vel: 0, wasOpen: false, swallow: false, live: false });
   const isOpen = useRef(false);
   // Eén vaste verwijzing naar deze rij, zodat hij zich kan afmelden zonder zichzelf te lezen.
   const self = useRef<{ close: () => void }>({ close: () => {} });
@@ -102,7 +102,8 @@ export function SwipeRow({
     s.wasOpen = isOpen.current;
     s.start = isOpen.current ? -OPEN_PX : 0;
     s.width = wrap.current?.getBoundingClientRect().width ?? 320;
-    s.zone = zoneAt(s.start, s.width, s.wasOpen);
+    s.reach = e.clientX - s.start;
+    s.zone = zoneAt(s.start, s.width, s.wasOpen, s.reach);
     s.lastX = e.clientX;
     s.lastT = e.timeStamp;
     s.vel = 0;
@@ -133,7 +134,7 @@ export function SwipeRow({
     s.lastT = e.timeStamp;
     const x = followOffset(dx, s.start, s.width);
     s.now = x;
-    const zone = zoneAt(x, s.width, s.wasOpen);
+    const zone = zoneAt(x, s.width, s.wasOpen, s.reach);
     if (zone !== s.zone) {
       if (zone !== 'closed') haptics.tap();
       s.zone = zone;
@@ -154,7 +155,7 @@ export function SwipeRow({
       return;
     }
     if (s.axis !== 'horizontal') return;
-    const end = swipeEnd(s.now, s.width, s.vel, s.wasOpen);
+    const end = swipeEnd(s.now, s.width, s.vel, s.wasOpen, s.reach);
     if (end === 'delete') {
       s.now = restOffset('delete', s.width);
       place(s.now, true);

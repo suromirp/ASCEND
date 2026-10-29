@@ -674,13 +674,13 @@ muscle card (`MuscleThumb`); the switch is a 200 ms fade, straight to the end st
 
 **Snelknoppen en sets in Forge** (`engine/forgeQuickActions.ts`, `engine/forgeRows.ts`, `components/swipeRow.ts`,
 `components/forge/SwipeRow.tsx`, decision `docs/beslissingen/2026-10-29-snelknoppen-in-forge.md`): under the name of every exercise a row of
-outlined, muted chips (Ruilen, Opwarmset, Set erbij, Notitie; an exercise on time only Ruilen and Notitie, a read-only training none), the
-menu keeps everything. Setting "Snelknoppen tonen" (`AppSettings.forgeQuickButtons`, absent = on) also sits in the menu of the training;
+outlined, muted chips (Ruilen, Opwarmset, Notitie; an exercise on time only Ruilen and Notitie, a read-only training none; "Set toevoegen" stays under the sets), the
+menu keeps everything. Setting "Snelknoppen tonen" (`AppSettings.forgeQuickButtons`, absent = on; the one word for it is "verwijderen", decision `2026-10-29-snelknoppen-in-forge-aanvulling.md`) also sits in the menu of the training;
 the row fades in and out (`mx-quick`). A long reason under the head folds to one line with "Meer". A set swipes to the left: 1 to 1,
-direction decided after 8 px, past about 25% it stays open with a red 72 px button ("Set 3 verwijderen"), past 60% or fast it deletes at
+direction decided after 8 px, past 54 px it stays open with a red 72 px button ("Set 3 verwijderen"), past 60% of the width or 24 px before your finger reaches the screen edge (a swipe starts on the left of the row; never under 96 px) or fast it deletes at
 once, never started on kg, reps, RIR or the tick, one row open at a time. "Set 3 verwijderd" with "Ongedaan maken" stands under the sets for
 ten seconds. A set you added (`:a` or `:c` in its id, `isOwnRow`) has an outlined number and "eigen set" in the Voorschrift column; a work
-set of the program you removed is kept in `WorkoutExercise.dropped` and told in one line with "Terugzetten", and the reason gets "Jij doet er 4."
+set of the program you removed is kept in `WorkoutExercise.dropped` (read through `forgeRows.ts#dropsOf`) and told in one line with "Terugzetten", and the reason gets "Jij doet er 4."
 when the count differs. Adding and removing are events in the Forge log (`toegevoegd`, `weggehaald`, no dot on the button).
 
 **A doubtful short night** (watch off the wrist: under 4 hours, or under half your own

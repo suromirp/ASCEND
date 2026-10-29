@@ -34,8 +34,17 @@ describe('swipeEnd', () => {
   it('een korte veeg voorbij 25% laat de rij openstaan', () => {
     expect(swipeEnd(-90, width, 0, false)).toBe('open');
   });
-  it('minder dan 25% veert terug', () => {
-    expect(swipeEnd(-60, width, 0, false)).toBe('close');
+  it('minder dan 54 px veert terug, daarboven blijft hij open', () => {
+    expect(swipeEnd(-50, width, 0, false)).toBe('close');
+    expect(swipeEnd(-60, width, 0, false)).toBe('open');
+  });
+  it('verwijdert als je vinger bijna de rand haalt, ook voor 60% (een veeg begint links)', () => {
+    // Begonnen op x = 150: de rij kan 150 px, de lijn ligt 24 px voor de rand.
+    expect(swipeEnd(-130, 400, 0, false, 150)).toBe('delete');
+    expect(swipeEnd(-120, 400, 0, false, 150)).toBe('open');
+    // Nooit dichter dan de knop plus 24 px, zodat open en weg uit elkaar blijven.
+    expect(swipeEnd(-90, 400, 0, false, 60)).toBe('open');
+    expect(swipeEnd(-96, 400, 0, false, 60)).toBe('delete');
   });
   it('voorbij 60% verwijdert meteen', () => {
     expect(swipeEnd(-210, width, 0, false)).toBe('delete');

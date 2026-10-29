@@ -17,15 +17,15 @@ describe('quickButtonsOn', () => {
 });
 
 describe('quickActionsFor', () => {
-  it('geeft vier acties in vaste volgorde voor een gewone oefening', () => {
-    expect(quickActionsFor(ctx())).toEqual(['ruilen', 'opwarmset', 'set', 'notitie']);
+  it('geeft drie acties in vaste volgorde voor een gewone oefening', () => {
+    expect(quickActionsFor(ctx())).toEqual(['ruilen', 'opwarmset', 'notitie']);
     expect(quickActionsFor(ctx())).toEqual(QUICK_ACTION_ORDER);
   });
   it('laat sets weg bij een oefening op tijd', () => {
     expect(quickActionsFor(ctx({ timed: true }))).toEqual(['ruilen', 'notitie']);
   });
   it('schrijft geen notitie in het voorbeeld van een dag die nog komt', () => {
-    expect(quickActionsFor(ctx({ preview: true }))).toEqual(['ruilen', 'opwarmset', 'set']);
+    expect(quickActionsFor(ctx({ preview: true }))).toEqual(['ruilen', 'opwarmset']);
   });
   it('toont niets als de training alleen te lezen is', () => {
     expect(quickActionsFor(ctx({ readOnly: true }))).toEqual([]);

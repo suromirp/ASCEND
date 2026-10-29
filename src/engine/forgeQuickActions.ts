@@ -7,15 +7,16 @@
 // hier dus niet nog een keer in. Dezelfde voorwaarden als het menu, zodat een knop nooit iets kan wat het
 // menu niet mag.
 
+// "Set toevoegen" staat al onder de sets van elke oefening, dus die komt hier niet nog een keer.
 export type QuickAction = 'ruilen' | 'opwarmset' | 'set' | 'notitie';
 
 // De volgorde is ook de volgorde op het scherm: eerst wat je het meest voor de eerste set doet.
-export const QUICK_ACTION_ORDER: QuickAction[] = ['ruilen', 'opwarmset', 'set', 'notitie'];
+export const QUICK_ACTION_ORDER: QuickAction[] = ['ruilen', 'opwarmset', 'notitie'];
 
 export const QUICK_LABEL: Record<QuickAction, string> = {
   ruilen: 'Ruilen',
   opwarmset: 'Opwarmset',
-  set: 'Set erbij',
+  set: 'Set toevoegen',
   notitie: 'Notitie',
 };
 
