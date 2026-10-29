@@ -14,3 +14,5 @@ Datum, onderwerp, rol, model, tokens, duur, herstel, opmerking
 Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu als rol, volgens de tabel.
 - 2026-10-29, Kleine ronde (tekst en UI), Sherpa, sonnet (ontwikkelaar), 257k, 18 min, 0, eerste helper volgens de tabel; veel punten waren al opgelost of niet te herleiden zonder afdruk
 - 2026-10-29, Gewichten als bereik en pond, Sherpa, sonnet (ontwikkelaar), 133k, 19 min, 0, drie aanvullingen van de eigenaar tijdens het bouwen
+- 2026-10-29, Review kleine ronde, Warden, sonnet (reviewer), 57k, 2 min, 0, vond fout in regel Fase
+- 2026-10-29, Review gewichten als bereik, Warden, opus (reviewer, opslag), 80k, 4 min, 0, vond vastlopen bij heel kleine stap
