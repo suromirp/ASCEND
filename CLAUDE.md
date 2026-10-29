@@ -4,6 +4,8 @@ ASCEND is a mobile-first personal training and adventure application.
 
 Guidance for Claude Code (and any other agent) working in this repository.
 
+Werk je aan een onderwerp, lees dan eerst het bijbehorende bestand in `docs/architectuur/`.
+
 ## Core identity
 
 The experience combines:
@@ -99,50 +101,10 @@ fris en sportief op donker marine.
   sportkleur, waarvan de volle vorm het silhouet draagt, met kleur uit de tokens
   (`docs/beslissingen/2026-10-24-pictogrammen-in-stijl-c.md`). Geen losse tekens
   als ✓ of ↷ voor iets wat een icoon kan zijn.
-- Logo: "Ring en pad" (`docs/beslissingen/2026-10-25-logo-ring-en-pad.md`): een lichte
-  ring, een lichte kam met drie toppen die op de ring eindigt, een groenblauwe berg die
-  overloopt in marine, een S-pad en een stip in mint. Het app-icoon staat in `public/`
-  (`icon.svg`, `icon-maskable.svg`, `favicon.svg` en de PNG's), het kleine teken is
-  `AppMark` (alleen ring en kam, in `--color-on-light`), het openingsscherm is
-  `AscendSplashLogo` en `AscendAnimatedLogo` met alleen de tokens `--color-logo-*`. Het
-  openingsscherm bouwt zich op zoals het oude (gloed, ring, kam, berg, pad, vonk, woord)
-  en heeft daarna een rustige omgevingsbeweging die alleen draait zolang het scherm in
-  beeld is (`docs/beslissingen/2026-10-25-openingsscherm-terug.md`); in Rustig alleen kort
-  tekenen, in Uit en bij beperkte beweging meteen de eindstand.
-- Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in
-  `src/App.tsx`), volledig dekkend marine, labels in zinsletters, met de
-  actieve tab en het streepje erboven in de kleur van die tab. Meer is geen
-  tab maar het tandwiel rechtsboven (`SettingsGear`): alleen het pictogram,
-  zonder cirkel of rand, in `--color-on-light` op de lucht van `SkyBand`, een
-  tikdoel van 44 bij 44 px, op elke tab op precies dezelfde plek, schuift met
-  de pagina mee. Het opent
-  `/more` (instellingen, gegevens en back-up, koppelingen, gidsen en kennis);
-  oude links naar `/more` blijven werken. Wat een pagina zelf rechtsboven nodig
-  heeft (pijltjes van Week en Logboek, het lichaamknopje van Vandaag) gaat in
-  `SkyBand` `actions`: pictogrammen zonder cirkel, direct links van het
-  tandwiel, dezelfde hoogte en maat, dezelfde kleur
-  (`docs/beslissingen/2026-10-24-ontwerpadvies-kop-en-weekstrook.md`). Eén
-  uitzondering op de kleur, op verzoek van de eigenaar: het lichaamknopje is het
-  pictogram in mint, omdat de kleur van het tandwiel bij de instellingen hoort
-  (`docs/beslissingen/2026-10-24-pictogrammen-in-stijl-c.md`).
-- Lange donkere pagina's krijgen hoogstens één vlak lucht halverwege (`SkyPanel`
-  in `SkyBand.tsx`: verloop van de lucht, smalle bergrand, `.on-light`, volgt de
-  nachtlucht), op een kaart die iets samenvat of aanwijst, nooit de eerste kaart
-  (`docs/beslissingen/2026-10-24-lucht-halverwege.md`).
-- Instellingen (`/more`, `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`):
-  een overzicht met de stand en acht groepen (`/more/:groep`: Planning, Doel en
-  tochten, Forge, Lichaam, Vandaag en meldingen, Koppelingen, Gegevens en
-  back-up, Gidsen en kennis). Elke instelling is één `SettingsRow`
-  (`src/components/settings/SettingsList.tsx`): links de titel, rechts de waarde,
-  hoogstens één regel eronder (een feit of een bron, nooit uitleg), 52 of 68 px
-  hoog, de hele rij is het tikdoel. Uitleg staat achter de InfoButton
-  (`src/data/settingsHelp.ts`: één zin en korte punten), een keuze opent een
-  onderblad (`Sheet`, `ChoiceSheet`), aan of uit is een schakelaar in de rij, acties
-  staan in het blad en nooit op de pagina. Wat ASCEND zelf bijhoudt krijgt het label
-  "auto". Een schakelaar die aan staat is mint gedempt, niet gevuld mint: de
-  gevulde mint knop blijft het ene accent van het scherm. De waarde en de regel van een rij komen uit
-  `engine/settingsSummary.ts` (pure functies met tests), zodat de rij, het
-  zoekresultaat en het overzicht hetzelfde zeggen.
+- Logo "Ring en pad" (`docs/beslissingen/2026-10-25-logo-ring-en-pad.md`): app-icoon in `public/`, `AppMark`, `AscendSplashLogo`, `AscendAnimatedLogo`, alleen de tokens `--color-logo-*`. Details in `docs/architectuur/bediening-en-beweging.md`.
+- Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in `src/App.tsx`), dekkend marine, labels in zinsletters, actieve tab in de tabkleur. Meer is het tandwiel rechtsboven (`SettingsGear`, 44 bij 44 px, op elke tab op dezelfde plek, opent `/more`); wat een pagina zelf rechtsboven nodig heeft gaat in `SkyBand` `actions`. Details in `docs/architectuur/bediening-en-beweging.md`.
+- Lange donkere pagina's krijgen hoogstens één `SkyPanel`, nooit als eerste kaart (zie `docs/architectuur/bediening-en-beweging.md`).
+- Instellingen (`/more`, acht groepen): elke instelling is één `SettingsRow`, uitleg achter de InfoButton (`src/data/settingsHelp.ts`), waarde uit `engine/settingsSummary.ts`. Details in `docs/architectuur/bediening-en-beweging.md`.
 
 ### Stem
 
@@ -163,30 +125,7 @@ de missiekaart. De instelling Beweging (Normaal, Rustig, Uit; `engine/motionSett
 staat als `data-motion` op `<html>`; `prefers-reduced-motion: reduce` telt altijd als Uit.
 Een nieuwe animatie moet in Rustig en Uit dus ook netjes op de eindstand staan.
 
-Vloeiende overgangen (`docs/beslissingen/2026-10-28-vloeiende-overgangen.md`, ontwerp
-`docs/visie/Vloeiende overgangen.md`): de tik van `utils/haptics.ts` (`TAP_MS`, 15 ms) heeft een
-poort, de instelling Trillen (`AppSettings.haptics`, absent = aan, `engine/hapticsSettings.ts`);
-alleen `tap` en `success` kijken ernaar, de signalen van timers (`alarm`, `pattern`: de rust van Forge en de rektimer) niet; slepen om te sluiten is een gebaar en krijgt geen eigen schakelaar.
-Akkoord in `ProposalSheet` en `RescheduleDialog` geeft een tik. Elk blad volgt je vinger omlaag
-(`useSheetClose` geeft `sheetRef`, op het paneel; gebaar in `utils/sheetDragDom.ts`, rekensom in
-`components/sheetDrag.ts`): alleen als de inhoud bovenaan staat, nooit op invoer, sliders of
-`data-no-sheet-drag`, sluiten via `requestClose` zodat de terugknop en `canClose` gelden. Een nieuw
-blad met `animate-sheet-in` zonder `ref={sheetRef}` laat `sheetDrag.scan.test.ts` falen, tenzij het
-met reden in de uitzonderingen staat. Volgen is 1 op 1 in elke stand, het terugveren staat in Uit
-meteen op de eindstand.
-
-Uit een rij groeien en naar een dag schuiven (`docs/beslissingen/2026-10-28-vloeiende-overgangen-uitgroei.md`), alleen in
-Normaal: een rij of kaart met `data-sheet-from` onthoudt bij een tik waar je tikte (`utils/sheetGrowDom.ts#installSheetOrigin`),
-en het blad dat opent groeit eruit via `sheetRef` van `useSheetClose` (een stil vlak, `data-grow` op het paneel, rekensom in
-`components/growPlan.ts`); sluiten via `requestClose` krimpt terug, een blad dat de pagina zelf sluit na Gedaan of Verplaatsen niet.
-Een verplaatste training schuift in Week naar zijn dag: `armFlip()` (`utils/flipDom.ts`, aangeroepen door `applyProposal`,
-`commitPlanChange` en `undoRecentChange`) meet de rijen, `useFlipList` in `WeekPlanner` speelt het af (rekensom in
-`components/flip.ts`), wachtend tot een voorstelblad weg is, vanaf de plek van de zwevende rij na slepen. Rustig laat de verplaatste
-rij alleen kort verschijnen, Uit doet niets. Een nieuwe rij die een blad opent krijgt `data-sheet-from`; Vandaag schuift nog niet.
-
-De lucht bovenaan heeft een donkere variant (`data-sky="day|night"` op `<html>`, instelling
-"Lucht bovenaan", `engine/skySettings.ts`; `docs/beslissingen/2026-10-24-nachtlucht.md`).
-Een component gebruikt alleen de tokens en `.on-light`; wat licht lijkt wordt 's avonds vanzelf donker.
+Vloeiende overgangen en uitgroei (`utils/haptics.ts`, instelling Trillen, `useSheetClose` met `sheetRef` op elk blad, `sheetDrag.scan.test.ts`, `armFlip()`/`useFlipList`, de donkere lucht `data-sky`): lees eerst `docs/architectuur/bediening-en-beweging.md`. Een blad met `animate-sheet-in` zonder `ref={sheetRef}` laat `sheetDrag.scan.test.ts` falen. Een nieuwe rij die een blad opent krijgt `data-sheet-from`. Een component gebruikt alleen de tokens en `.on-light`.
 
 ### Design tokens in code
 
@@ -303,19 +242,6 @@ src/
   utils/         Date math, id generation
 ```
 
-The main goal is found in one place, `engine/mainGoal.ts#mainGoal` (scopes `active`, `live`,
-`activeFirst`); a rule that needs a kind of session asks for a role on the template
-(`SessionTemplate.roles`, `engine/templateRoles.ts#hasRole`, the built-in table in
-`data/templateRoles.ts`) instead of a list of template ids. Sports are data in
-`data/sports.ts` (label, colour, pictogram, five traits, intervals.icu types); lists of
-sports are derived from it. `src/storage/planGolden.test.ts` freezes a year of planning for
-three cases: a change to the planning only updates its snapshot with the reason in the commit
-(`docs/beslissingen/2026-10-26-kracht-en-berg-voor-iedereen.md`).
-
-Everything that counts sets (volume, top weights, set totals) goes through
-`engine/workSets.ts#isWorkSet`, so a warm-up set is stored but never counted
-(`docs/beslissingen/2026-10-22-kracht-per-set.md`).
-
 Training definitions, scheduled sessions, and completed session logs are
 separate entities:
 
@@ -325,509 +251,32 @@ separate entities:
 | `PlannedSession` | A template scheduled onto a date | Yes — movable/skippable |
 | `SessionLog` | What actually happened | **Never** — append-only |
 
-**Never rewrite historical logs when schedules change.** Completion is
-never stored as a flag — a session is "done" the moment a `SessionLog`
-exists that references the `PlannedSession` (`engine/sessionStatus.ts`).
-One deliberate exception, at the owner's explicit request: a log made by hand
-takes over the measured numbers of the watch and keeps its own in
-`SessionLog.manualMeasured`, so it can be put back
-(`docs/beslissingen/2026-10-22-garmin-is-leidend.md`). A second, of the same
-kind: an existing strength log takes over the duration, sets and reps in
-reserve of a MacroFactor workout, in the same field (its `strength` part) and
-put back with the same `restoreManual`
-(`docs/beslissingen/2026-10-22-macrofactor-leidend-voor-kracht.md`, which
-refers to the first and leaves it as it was). A new log from a MacroFactor workout
-whose file duration is too long (over 300 minutes) takes a duration the user sets in "Duur aanpassen"
-when it is made (never empty, so load and leg index keep counting it), and keeps the file's minutes in `SessionLog.fileDurationMinutes`;
-nothing existing is rewritten (`engine/macrofactorDuration.ts`,
-`docs/beslissingen/2026-10-29-mf-training-te-lang.md`). A third: a log from the watch
-can be cut at the beginning and the end (a drive home with the watch still on),
-which replaces its duration, distance, climb and heart rate and keeps the old
-ones in `SessionLog.trim`, put back by `engine/trimLog.ts#undoTrim`
-(`docs/beslissingen/2026-10-24-activiteit-inkorten.md`).
-A fourth: a log tied to an intervals.icu activity follows that activity when it is
-corrected there. Its measured numbers (duration, distance, climb and descent, heart
-rate, cadence) are replaced only when they differ from the fingerprint of the source
-kept at linking (`SessionLog.sourceSync.seen`, bound to the activity by `externalId`),
-so a change at the source is told apart from something ASCEND did itself. The numbers
-from before stay in `sourceSync.updated` and are put back by
-`engine/sourceCorrection.ts#restoreSourceUpdate`; a hand-made log keeps (and extends)
-its `manualMeasured`; a log cut here (`trim`) is never written over, the new numbers are
-only offered; a deleted activity changes nothing. Switch "Correcties uit intervals.icu
-overnemen" (`docs/beslissingen/2026-10-25-correcties-uit-intervals.md`).
-The same append-only pattern applies to `MilestoneProgress` (the record of
-when an Ascent Ladder milestone was actually cleared, vs. the static
-`Objective` / `MilestoneDefinition` ladder).
+### Logs en historie
 
-**Scheduling logic belongs in `/engine`.** The scheduler
-(`engine/scheduler.ts`) is deterministic — no AI, no guessing. It enforces
-one concrete rule: two "leg-heavy" sessions (Lower Body or a hike) must not
-land within 48 hours of each other. Moving a session into conflict produces
-a cascade proposal (shown via `RescheduleDialog`) rather than applying
-silently.
+**Never rewrite historical logs when schedules change.** Completion is never stored as a flag: a session is "done" when a `SessionLog` references the `PlannedSession` (`engine/sessionStatus.ts`). `MilestoneProgress` and derived additions (`detail`, `bestEffort`, `runDetail`, `forgeLog`) are append-only too. Four exceptions, each at the owner's request and each put back by its own function: hand-made log over watch numbers (`manualMeasured`, `restoreManual`), MacroFactor numbers into a strength log (same field), a watch log cut at both ends (`trim`, `undoTrim`), and a log that follows corrections in intervals.icu (`sourceSync`, `restoreSourceUpdate`). Full text: `docs/architectuur/historie-en-logs.md`.
 
-**Who may touch a planned session** (`engine/weekValidator.ts#lockLevel`):
-history (logged or past) never; yours (`PlannedSession.lock`, set by your
-own move/skip and by every other accepted proposal item, or legacy status
-`'moved'`) never by the automatic planning; a restored row and a putting back
-(a tocht changed back or removed, `PlanChangeItem.restore`) get no lock and no
-fixed length, because they return to how the system had them
-(`docs/beslissingen/2026-10-22-terugzetten-zonder-slot.md`); a test or race only through a proposal;
-everything else the system planned is free. Every planning run ends with
-the same pass (`engine/planPass.ts`): the race block, then the week check,
-which repairs only the system's own sessions and only when the week is
-demonstrably better, and announces it ("Planning bijgewerkt", with undo).
-A proposal's preview runs that same pass, so what it shows is what you get.
-The sync (`storage/database.ts#syncProgramHorizon`) runs whenever the
-stored plan changed (a fingerprint is part of its key), not once a day.
-Background jobs at boot run one after the other, never at once. Opening never
-waits for the sync: the app shows the stored data first and syncs in the
-background; whatever changes the plan waits for the queued syncs and then reads
-the stored plan (`docs/beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md`). Design and
-reasoning: `docs/onderzoek/Planning op een lijn.md`.
+### Onderwerpen
 
-**The planning reads the label of a goal** (Top, Voortop, Verkenning; `engine/goalLabels.ts`,
-`engine/goalConflicts.ts`, `engine/runGrowth.ts`, decision
-`docs/beslissingen/2026-10-26-planning-met-labels.md`). The label sets the taper of a race in the race
-block: Top the race week, Voortop the short taper of its kind (`taperDaysFor`), Verkenning none, but the
-race stands on its day as an anchor. The recovery after a race follows the kind and the distance
-(`recoveryDaysFor`), never the label: rule AFTER-GOAL in the week check moves or lightens only the system's
-own sessions and announces it. Goals that come too close (`goalConflicts`) are said in plain words in the
-proposal when a goal is added or moved, in a fixed order (shorten the taper, one label lower, say it
-honestly); "Toch allebei" is kept as `TrainingGoal.conflictAccepted` (the date of the other goal) and the
-safety limits between heavy leg days stay. With a running goal as Top or Voortop and no tocht as main goal,
-the long run grows every two weeks toward the race (`Program.runBuild`), under the 110% cap on your own
-logs, and the first week after a race it is at most half the race.
+Een regel per onderwerp: waar het zit, en wat je niet mag missen.
 
-**First ask, then plan** (`storage/database.ts#seedIfEmpty`, `engine/firstPlan.ts`,
-`engine/weekShape.ts`, decision `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`):
-a new install plans nothing. The app starts with `seedIfEmpty({ withProgram: false })`: only
-the templates, no program, goal or planning; "Alles verwijderen" ends the same way. Vandaag
-shows `StartWelcome` while there is no program and no planning
-(`engine/freshStart.ts#needsFirstPlan`, derived from the data, never a flag): "Nieuw beginnen"
-or "Back-up terugzetten". The questions (goal, date, days per week, which days, strength) become
-what the planning already reads (goal, rest day, `availability.allowedDays`, strength block) plus
-`AppSettings.weekShape` (which fixed sessions stay in the weekly pattern and on which day, read
-defensively through `engine/sports.ts#parseWeekShape` by `weeklyPatternTemplates` and
-`arrangeWeekForRestDay`). The plan is always a proposal with Akkoord through
-`computeHorizonPlan`/`applyHorizonPlanNow` with `firstPlan`; Liever niet leaves the app empty.
-Restoring a backup on an empty device counts only your own data as disappearing, never templates
-the backup lacks. `seedIfEmpty()` without options and `runBootMigrations({ seedProgram: true })`
-still fill the full default program, for the tests only. Nothing may create a program or planning
-at start without a proposal. Changing the week shape later is not built yet.
+- Planning, hoofddoel en rollen (`engine/mainGoal.ts`, `engine/templateRoles.ts`, `data/sports.ts`, `engine/workSets.ts#isWorkSet`, `engine/scheduler.ts`): `docs/architectuur/planning.md`. Een training wordt nooit uit een lijst van template-id's herkend maar via een rol; alles wat sets telt gaat door `isWorkSet`; `src/storage/planGolden.test.ts` mag alleen bewegen met de reden in de commit; twee beenzware sessies niet binnen 48 uur.
+- Wie een geplande sessie mag aanraken (`engine/weekValidator.ts#lockLevel`, `engine/planPass.ts`): `docs/architectuur/planning.md`. Historie nooit; wat de gebruiker zelf vastzette nooit door de automatische planning; een test of race alleen via een voorstel.
+- Labels van een doel, conflicten (`engine/goalLabels.ts`, `engine/goalConflicts.ts`, `engine/runGrowth.ts`): `docs/architectuur/planning.md`. Een nieuw label of een doel dat wijzigt is altijd een voorstel met Akkoord.
+- Eerst vragen, dan plannen (`storage/database.ts#seedIfEmpty`, `engine/firstPlan.ts`, `engine/weekShape.ts`, `engine/freshStart.ts`): `docs/architectuur/planning.md`. Niets maakt bij het starten een programma of planning zonder voorstel met Akkoord.
+- Ziek melden (`engine/illness.ts`), vrije dagen en vakanties (`engine/leave.ts`, `engine/leaveBlock.ts`, `engine/leaveProposal.ts`) en tochten (`engine/trek.ts`, `engine/trekTaper.ts`): `docs/architectuur/planning.md`. Altijd een voorstel met Akkoord; de periode wordt pas bij Akkoord opgeslagen.
+- Weken zijn afgeleid, nooit opgeslagen; de rugzakladder (`engine/packLadder.ts`, `engine/programLayout.ts`): `docs/architectuur/planning.md`.
+- Ascend-tab als doelen (`pages/Ascend.tsx`, `engine/goalList.ts`, `engine/goalReadinessFor.ts`): `docs/architectuur/doelen.md`. Wijzigingen in volgorde, label of onderkomen zijn altijd een voorstel met Akkoord.
+- Klaar voor je doel, GR5-voortgang, race met doeltijd (`engine/gr5Readiness.ts`, `engine/raceReadiness.ts`, `engine/goalReadinessFor.ts`, `engine/racePaces.ts`): `docs/architectuur/doelen.md`. Eén percentage; voeg geen tweede percentage of "x van y" toe, breid de engine-functie uit.
+- Terugknop, scrollen en hervatten (`utils/backLayers.ts`, `useSheetClose`, `useBackToClose`, `usePageState`): `docs/architectuur/bediening-en-beweging.md`. Elk blad, dialoog of overlay gaat door `useSheetClose`; schrijf het adres niet om terwijl een laag open is.
+- Week: waarschuwingen (`engine/weekConcerns.ts`, `engine/weekFixProposal.ts`), slepen (`engine/weekDrag.ts`, `components/useWeekDrag.ts`) en inhalen (`engine/catchUp.ts`): `docs/architectuur/week.md`. Een oplossing voor een probleem in de week is een voorstel met Akkoord; slepen loopt via `Week.tsx#moveTo` en `decideMove`; `planGolden.test.ts` beweegt niet.
+- Lichaam en hoe voelt je lijf (`engine/bodyMap.ts`, `engine/bodyCheck.ts`, `data/bodySpots.ts`), zware beendag op vermoeide benen (`engine/legDayEase.ts`, `engine/legSoreness.ts`), korte nacht (`engine/shortNight.ts`) en wat speelde er (`models/influence.ts`, `engine/influence.ts`): `docs/architectuur/lichaam-en-herstel.md`. Een melding verandert de planning pas via een voorstel met Akkoord; zorgteksten zeggen "kan helpen", nooit "voorkomt"; `legFatigueOn` en de planner blijven zoals ze waren.
+- Forge (`engine/forgeSession.ts`, `engine/forgeLog.ts`, `engine/forgeAdjust.ts`, `engine/forgeHistory.ts`, `engine/spotter.ts`, `engine/forgeLayout.ts`, `engine/forgeQuickActions.ts`, `engine/prescriptionCheck.ts`): `docs/architectuur/forge.md`. Een bestaand log wordt nooit beschreven; sets tellen via `isWorkSet`; er is hoogstens één Forge-sessie.
+- Je stand, volgorde en Forge-ingang (`engine/forgeEntry.ts`, `engine/cardOrder.ts`): `docs/architectuur/forge.md`.
+- Plaatjes bij oefeningen (`data/exerciseArt.ts`, `engine/muscleMap.ts`, `components/ExerciseArtButton.tsx`): `docs/architectuur/forge.md`. De tekeningen staan nooit in `globPatterns` van `vite.config.ts`; een gewijzigde tekening houdt `LICENSE.md` en `ATTRIBUTION.md` in die map waar.
+- Hartslag op het horloge (`engine/watchHeartRate.ts`), run in detail (`storage/activityDetail.ts`, `engine/runDetail.ts`) en de testloop met de tempo's (`engine/racePrediction.ts#countedTests`, `engine/bestEffort.ts`, `engine/testJudgment.ts`): `docs/architectuur/lopen-en-tests.md`. Tempo's, voorspelling en horloge lezen `pacesFromLogs`/`countedTests`, nooit `tests.at(-1)`; `bestEffort` en `runDetail` zijn afgeleid en append-only.
+- Lessen van Garmin (`engine/intensityMinutes.ts`, `engine/sweat.ts`, `engine/bootBreakIn.ts`) en Strava-tekst (`engine/activityText.ts`): `docs/architectuur/koppelingen-en-data.md`. ASCEND schrijft nooit naar Strava.
 
-**The Ascend tab is your goals** (`pages/Ascend.tsx`, `components/ascend/`, `engine/goalList.ts`, decision
-`docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md`): goals in the order you choose (`TrainingGoal.order`; one
-sort key, `goalLabels.ts#sortedForList`, read by the list and by `goalConflicts.ts`; every move writes the order of
-the whole visible list), the first one open, a goal sheet per goal, and a season strip on the sky (switch "Seizoensstrook
-tonen"). A new label, a goal added or changed, "In hutten" or "Met tent", and an order that shifts a conflict
-(`goalList.ts#moveOutcome`) are always a proposal with Akkoord, never silent. "Klaar voor je doel" of the main goal: only for
-`trek_hut`, `trek_tent` or no kind (`goalReadinessFor.ts#usesMilestoneReadiness`) it is
-`gr5Readiness.ts#computeMainGoalReadiness`, the same as on Je stand; every other kind goes through
-`goalReadinessFor.ts#goalReadinessFor`. `/ascend/doelen` redirects to the tab. Krachtprogressie
-and Trainingsverdeling live on Je stand.
-
-**Forge and the order of Je stand** (`engine/forgeEntry.ts`, `engine/cardOrder.ts`, `components/stand/ForgeEntryCard.tsx`,
-`components/stand/OrderSheet.tsx`, decision `docs/beslissingen/2026-10-28-forge-en-volgorde.md`): Forge is the entry card at
-the top of the block Kracht on Je stand (with Krachtprogressie and Trainingsverdeling), with one line of your own numbers
-and the fixed explanation as fallback; with Kracht meerekenen off the card stays, with "Aanzetten". Je stand is seven blocks
-(benen, belasting, kracht, vier-regels, lopen, invloed, doel) after the fixed first card "Klaar voor het doel"; the order is
-a preference in `AppSettings.cardOrder` (optional, read defensively by `resolveCardOrder`, in the backup through
-`cleanCardOrder`, no migration), changed in the sheet "Volgorde aanpassen" (handle with `useVerticalDrag` and its optional
-`scroller`, Hoger and Lager per row) and the row "Volgorde van Je stand" in Planning under Geavanceerd. The sky block
-"Je stand in vier regels" is never first. No dragging on Vandaag, Logboek, settings or in Forge itself; Ascend and Week
-dragging are untouched. A block that is off through its own setting keeps its place.
-
-**Ziek melden and "weer beter"** (`engine/illness.ts#planIllnessChange`, `components/IllnessCard.tsx`, decision
-`docs/beslissingen/2026-10-27-ziek-als-voorstel.md`) are a proposal with Akkoord when the planning changes: the
-period is stored only on Akkoord, with Liever niet nothing is stored and nothing changes; when the planning does
-not change the period is stored at once. Undo puts the periods back with the planning.
-
-**Free days, holidays and treks** (`engine/leave.ts`, `AppSettings.leavePeriods`,
-shown on Week as "Vrije dagen en vakanties"). Three kinds: `no_training` (no
-training on those days; what was there moves to an empty day of that week or is
-let go), `trek` (a mountain hike on every day, the day before and after light,
-rule LEAVE-LIGHT) and `free_days` (an easy backpack walk, or the week's long
-training when its own day is tight, only where the week check finds nothing
-new). They work through the same planning run as everything else:
-`engine/leaveBlock.ts` puts things in (between the race block and the week
-check in `planPass`), the week check takes things out (rules LEAVE-OFF and
-LEAVE-LIGHT in `weekValidator.ts`). Adding or removing a period is always a
-proposal with Akkoord (`engine/leaveProposal.ts` diffs the planning run against
-the stored plan; `ProposalSheet` previews it); the period is stored only on
-Akkoord, and undo puts the setting back. A session a period moved, let go of or
-placed carries `PlannedSession.leave` so removing the period can put it back.
-Logged and past sessions, what you locked yourself and a test or race are never
-moved by it; they come back as notes in the proposal. Backup schema 5 carries
-the periods; older files import as before (`storage/migrations.ts#migrateLeavePeriods`).
-
-**Tochten as goals of their own** (`LeavePeriod.trek`, `engine/trek.ts`, decision
-`docs/beslissingen/2026-10-22-tochten-als-doel.md`): a tocht is a trek period with
-its details on it, so it plans through the same run as any trek. Its importance
-sets the light days before it (`engine/trekTaper.ts`), its terrain the walk on
-each day (flat and hills an easy backpack walk, mountains and snow the mountain
-hike; the pack weight of a tocht is information only, sessions have no weight of
-their own). Changing a tocht keeps its id and passes `replaces` to
-`planLeaveChange`: the old work is put back first, a session it let go comes back
-on its own row (an `add` item that names the skipped row, mark gone), so a second
-change or the removal never duplicates anything. `AppSettings.showNextTrek` puts
-the next tocht on Vandaag. A heavy leg day right after a tocht keeps 72 hours
-after a mountain hike: it first looks for a day outside that, short or full, and
-with `AppSettings.trekLegRest` soft (the default) the short version may stand 48
-hours after the tocht; only then it is let go, with the reason in plain words
-(`docs/beslissingen/2026-10-22-zware-beendag-na-tocht.md`).
-
-**The back button, scroll and resuming** (`utils/backLayers.ts`, decision
-`docs/beslissingen/2026-10-22-terugknop-en-hervatten.md`): every sheet, dialog and
-full-screen overlay goes through `useSheetClose` (or `useBackToClose` for a menu
-or view that is not a sheet), which gives it one history step with the same URL
-and a marker in the state. The back button closes the top layer first; closing it
-yourself takes the step away again. A new overlay must use the hook, a sheet that
-cannot close while busy passes `canClose`, and nothing may rewrite the address
-(`navigate(..., { replace: true })`, `setSearchParams`) while a layer is open on
-that page. The page scrolls in `<main id="app-scroll">`, not in the window:
-`useScrollRestoration` gives every history step its own height (forward starts at
-the top, back restores it), and state that must survive a visit to another page
-(chosen week, search term, an open section) uses `usePageState` instead of
-`useState`. The tab bar follows `AppSettings.tabBack` (`utils/tabNav.ts`) and the
-app reopens where you were after `AppSettings.resumeMinutes` (`utils/launchRoute.ts`).
-
-Readiness percentages (`engine/readiness.ts` — strength, cardio,
-climbing/D+, endurance, recovery, consistency, pack capability) are
-intentionally simple, isolated formulas over the last 28 days of logs, each
-in its own commented section so a formula can be swapped later without
-touching the rest of the file. Those are not shown as progress toward the
-main goal any more.
-
-**One progress language toward the GR5** (`engine/gr5Readiness.ts`, decision
-`docs/beslissingen/2026-10-22-gr5-voortgang-een-percentage.md`): "Klaar voor de
-GR5" is a single percentage, the average of four meters (rugzak, langste dag,
-stijging en daling, dagen achter elkaar), each capped at 100%, always shown
-with the sentence it is made of (`Gr5ReadinessCard`, tap opens the four meters
-in `Gr5ReadinessSheet`). Ascend and Je stand read the same function. The
-milestones stay a ladder ("volgend kamp"), never a second progress number. The
-coach (Ascend) and "Volgehouden" (Je stand) count with the same function,
-`engine/onCourse.ts#recentAdherence`. Do not add another percentage or
-"x van y" for goal progress next to these; extend the engine function instead.
-
-**A race with a goal time** (`engine/raceReadiness.ts`, decision `docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid.md`):
-"Klaar voor je doel" of a running race with a goal time and a distance up to the half marathon makes speed the main meter (the gap between the
-expected time from the test that counts, `countedTests`/`racePaces`, the same source as TARGET-TIME, and the goal time, worked out as weeks of
-work at the average growth of `data/goalGrowth.ts` by `engine/goalGap.ts`: fill = 10 / (10 + weeks), 50% at ten weeks; decision
-`2026-10-28-klaar-voor-je-doel-logisch.md`) and
-weighs it most (`RACE_SPEED_WEIGHTS`: speed 60%, longest run 20%, weekly volume 20%; setting "Klaar voor je doel bij een doeltijd",
-speed or equal). It is still one percentage. Without a test, or while the fastest 5 km waits for Akkoord, speed does not count and one
-line says so; without a goal time nothing changes. The card never judges the goal time ("het doel blijft het doel"): it shows the
-distance to the goal as work and one dry line whether the goal time fits average growth by race day (the decision's `-aanvulling.md`), read from the same weeks as the meter: "45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21". "Hier is nog het meeste te winnen" is the meter with the biggest weighted gap (`weightedGapWeakest`), so number, meters and lines never contradict; you judge for yourself. The change "+x in 4 weeks" shows only when the goal already had a value
-four weeks ago (`ReadinessOptions.since`). TARGET-TIME carries the goal time in its id, so one Liever niet holds for every later test
-until the goal time changes; setting "Doeltijd aanpassen voorstellen" (`proposeTargetTime`) switches it off. TARGET-TIME,
-the card and the sheet all use the one calculation `racePaces.ts#raceOutlook` (average growth from today); there is no second band.
-The same weeks-of-work language carries the Krachttrend of "Sterker worden" (`engine/strengthReadiness.ts`, level from the length of
-your own history on that exercise, never beginner) and the condition meter Tempo for a day hike with `GoalDetails.timeLimitMinutes` or an
-ultra with `cutoffMinutes` (`engine/limitReadiness.ts`, 10% margin; decision `2026-10-28-klaar-voor-je-doel-logisch-voorwaarden.md`).
-The finish (`2026-10-28-klaar-voor-je-doel-logisch-afwerking.md`): which calculation belongs to which goal lives in one place,
-`engine/goalReadinessFor.ts#goalReadinessFor`, read by the Ascend card and the sheet (`useGoalViews`); the proposal of TARGET-TIME is
-the smallest whole minute that fits the weeks there are (`raceOutlook().wholeMinutes`, the same number the card calls "ongeveer"), so
-after Akkoord the card says it fits; a meter without weight never makes "het meeste te winnen" and does not keep the number under 100.
-Two settings: "Groei bij het rekenen" (`goalGrowth`: gemiddeld = the middle of the band, voorzichtig = the bottom, `data/goalGrowth.ts#growthPer`)
-and "Marge bij een tijdslimiet" (`limitMargin`: 10%, 5%, geen); Sterker worden follows "Weging bij een doeltijd" too. The follow-up (`2026-10-28-klaar-voor-je-doel-vervolg.md`): the main goal only gets the milestones calculation when it is a tocht (`trek_hut`, `trek_tent`) or has no kind (`goalReadinessFor.ts#usesMilestoneReadiness`), any other main goal gets the calculation of its own kind, and Je stand reads `goalReadinessFor` too, so both show the same number; a goal time within the spread of the prediction (`PREDICTION_SPREAD`) of the time on race day counts as "past" (`RaceOutlook.holds`, the same line as TARGET-TIME; `fits` stays strict and sets the whole minute of the proposal), so the card never contradicts an Akkoord a day later; up to and including 10 km the expected time on race day is a clock ("ongeveer 20:05"), above that whole minutes (`racePaces.ts#outlookSaid`); the form of Sterker worden takes a fully filled exercise with Volgende (`strengthTargetsDraft.ts#finishStrengthTargets`, a half filled one blocks with one sentence) and the strength meter knows an exercise by name, id or alias. The 0,55% is the middle
-of 0,3 to 0,8% derived from several sources, never attributed to one study. The form of Sterker worden takes the strength targets per exercise
-(`StrengthTargetsField`, `engine/strengthTargetsDraft.ts`); a cutoff only belongs to an ultra, also when editing.
-
-**Lichaam** (`/lichaam`, `/lichaam/:plek`, decision
-`docs/beslissingen/2026-10-24-lichaam-als-figuur.md`) is the one place for
-stretching and complaints; `/stretches` and `/blessures` only redirect. Spots,
-stretches, care and the injury name are data (`data/bodySpots.ts`,
-`data/bodyCare.ts`) read through pure functions in `engine/bodyMap.ts`, which also
-lays out the tap boxes (44 by 44 px, never overlapping, tested). A complaint is
-stored under the name from `data/bodyAreas.ts` with the side after it, so
-INJURY-LEGS recognises it; a new leg spot belongs in `LEG_BODY_PARTS`. Reporting
-does not change the planning; once it does, it goes through a proposal with
-Akkoord. Care texts say "kan helpen", never "voorkomt", with the strength of the
-evidence from `docs/onderzoek/`.
-
-**Hoe voelt je lijf?** (`engine/bodyCheck.ts`, decision
-`docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md`) replaces the weekly complaints question: a
-card on Vandaag only when there is a reason (setting `bodyCheck`), "Voel me fris" or tap a spot,
-then spierpijn, stijf or pijn and the side (nek, bovenrug and onderrug also `midden`). It writes
-to the same `InjuryNote` list as Lichaam (`kind`, `side`); spierpijn and stijf never count as an
-injury and close after 7 days when read (`engine/injuryKind.ts`). "Wat terugkomt" on Lichaam is
-derived, never stored (`engine/bodyRecurrence.ts`).
-
-**Warnings in Week** (`engine/weekConcerns.ts`, `engine/weekFixProposal.ts`, `components/WeekNotice.tsx`, decision
-`docs/beslissingen/2026-10-28-waarschuwingen-in-week.md`, design `docs/visie/Waarschuwingen in Week.md`): amber in Week means
-only "something is wrong here"; a heavy leg day is the muted text "zware benen" in the row, no icon (the `LegMark` is gone, the
-ridge legend is muted). The week check reads the shown week with `CheckInput.reportYours` (REST-DAY then also reports a
-training with your lock, level 1; off by default so the planning and `planGolden.test.ts` do not move) and gives the card
-"Let op" under the sky (`weekConcerns`: headline, fact, row text for REST-DAY, LEG-SPACING, TWO-HARD-RUNS, AFTER-TEST,
-ONE-LONG, TEST-FRESH). What the check may not repair itself because it is yours becomes a proposal with Akkoord
-(`planWeekFix`: `repairWeeks` with `CheckInput.mayMove` on exactly that session, or in a full week the lightest training goes,
-never a long run, hard run, leg day, test, race or tocht), as `Advice` `WEEK-CHECK` through `ProposalSheet`, only when the week
-is demonstrably better, with the id `weekfix:<rule>:<ids>:<dates>`. It is not in `advice` and not on Vandaag. Liever niet keeps the
-card, quieter, with "Toch een voorstel"; the problem is never hidden. Setting "Voorstel bij een probleem in de week"
-(`weekFixProposal`, absent = on): off keeps the card and the row texts and drops only the button. Not built yet: the sentence in
-the action sheet of a training, the link with TEST-MAKE-ROOM (no second proposal for one training), the other rules.
-
-**Dragging a training in Week** (`engine/weekDrag.ts`, `components/useWeekDrag.ts`, `components/useVerticalDrag.ts`, decision
-`docs/beslissingen/2026-10-28-slepen-in-week.md`, design `docs/visie/Slepen in Week.md`): the handle in the row (only the handle, no long
-press) moves a training to another day of the shown week, never to another week. It is a faster hand, not a new rule: letting go goes
-through `Week.tsx#moveTo` and `decideMove`, the same road as "Verplaatsen" in the action sheet (same lock, `movedFromDate` and
-`ChangeNotice` with Ongedaan maken). Clean is applied at once; a cascade, an unresolvable clash, your rest day, a day the time does not
-fit and any test open `RescheduleDialog` with Akkoord. Logged, past, skipped, rest, race and holiday or trek trainings have no handle
-(`dragEligibility`); the verdict per day (`dayVerdicts`, built on `keptDayReason` from `moveSuggestions.ts`) is mint when it fits, amber
-when it asks, muted when it cannot. The pointer mechanics are shared with the goals on Ascend (`useVerticalDrag`, `edgeScroll`); a change
-there changes both. Setting "Trainingen slepen in Week" (`dragWeek`, absent = on).
-
-**Inhalen** (`engine/catchUp.ts`, `storage/catchUpApply.ts`, decision `docs/beslissingen/2026-10-29-gemiste-training-inhalen.md`): a missed
-training (past, no log, not skipped, no test, race, rest walk or leave, this or last week) can be caught up through the same road as
-moving: "Inhalen" in the action sheet and the handle in Week (setting "Trainingen slepen in Week"), only to today or later. The old row is
-not moved: `applyProposal` skips it (your lock) and adds a new row with the same template and length on the chosen day (your lock,
-`PlannedSession.catchUp`); undo puts the old one back and removes the new one. A clash still asks Akkoord. Rows say "ingehaald van wo 28"
-and "ingehaald op do 29". The automatic planning does not touch this, `planGolden.test.ts` does not move.
-
-**A heavy leg day on tired legs** (`engine/legDayEase.ts`, `engine/legSoreness.ts`, decision
-`docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`, design `docs/visie/Spierpijn en een zware beendag.md`):
-a heavy leg day of today with a reason (soreness you reported, in the morning check or as a "spierpijn" note on a leg spot
-of today or yesterday, the last answer wins; a hard run earlier today, a test run too, through `earlierTodayPoints` with 6
-hours between when the time is unknown, said as "je loopt vandaag ook" when it is only planned; or a leg index above 12) gets
-one card on Vandaag (`LegEaseCard`) and the same question in Forge. A hard run of today (not a test or race) gets the same
-card too, only with "a day later" and no Lichter. MORNING-CHECK makes the same choice as the card
-(`legDayEase.ts#legEaseCardSession`, the training `easeTarget` picks) and skips that one training, so one soreness gives one
-card; without a card (setting not on voorstel, open pain on a leg spot) it speaks itself. The choices: "Lichter" (`easeSlots`: at least 3 reps in reserve, the last set off, extras gone, only exercises that
-load the legs) or a day later (`adviceEngine.ts#legEaseMoveAdvice`, rule LEG-EASE, a proposal with Akkoord), always with
-"Liever niet". The choice is kept per date and training in `AppSettings.legEaseDays` (last 60, `migrateLegEaseDays`) and
-never touches a template, the planning or a log. Soreness only in the upper body is an optional chip "Alleen bovenlichaam" under Spierpijn in the morning check (`MorningCheckIn.soreWhere: 'upper'`, absent = legs, `wellbeing.ts#upperOnly`): it counts as no leg soreness for MORNING-CHECK, the card, `legSoreness` and the leg index, and Vandaag says "in je bovenlichaam" (`docs/beslissingen/2026-10-29-spierpijn-waar.md`). `legFatigueOn` and the planner stay as they were, so `planGolden.test.ts`
-does not move; the week rule LEG-FRESH is not built. A log of a training you eased is left out of "raak" per row, only for exercises that load the legs and
-tied by the planned session with a day of room for the date (`strengthHistory.ts#comparisonRows`, `eased`). A soreness note of the
-same day does not make a logged training "tired" (it has no time), the morning check does (`legsTiredAt`). Moving a heavy leg day or hard run shows a quiet line with the leg index of
-the new day (`moveLegNote`). Settings "Lichter bij vermoeide benen" (`legEase`: voorstel, regel, uit; uit also silences the
-quiet line) and "Hoe licht" (`legEaseHow`).
-
-**Forge** compares each exercise now against 4 and 8 weeks back and the best ever
-(`engine/forgeHistory.ts`, decision
-`docs/beslissingen/2026-10-24-forge-vergelijken-en-zoeken.md`). A moment only counts
-when a training falls in its window; otherwise the row says so or compares with the
-previous training, with its date. Exercises on reps (bodyweight) show reps as the
-main number. Exercises not done since the furthest moment sit under "Eerder gedaan".
-ASCEND is tested quietly against MacroFactor with one measure, **raak**
-(`engine/prescriptionCheck.ts`, decision
-`docs/beslissingen/2026-10-24-kracht-stil-toetsen.md`): the same function and slack for
-both sides, on the same set of the same day, never agreement between the two. For
-ASCEND it is an estimate afterwards, except in Forge when the proposed weight was used.
-On cables and weight stacks ASCEND learns the weights you really used
-(`engine/strengthWeights.ts`, "Gewichten van toestellen": learned, only what you used, or the
-profile steps). The model's own rules (decision `docs/beslissingen/2026-10-25-kracht-eigen-regels.md`):
-KR-2 takes the best set of a training (the same measure as raak), KR-5 brakes the estimated
-strength and not the weight so a weekly wave in the rep range converts freely, after more than
-28 days without any strength training it starts 5% lighter, and dumbbells can be read as the
-total of two (`dumbbellLog`). In a training Forge proposes a lighter weight after a set below the
-range (`engine/forgeAdjust.ts`, "Lichter" or "Liever niet", never a weight that gives reps far
-above the range), and the RIR of a set starts empty with the target as a hint; a set ticked
-without touching it stores the target with `SetLog.rirAssumed`
-(`docs/beslissingen/2026-10-25-bijsturen-in-forge.md`). The drop in strength per working set is
-learned per exercise from your own sets, starting at 3% and never from a set with an assumed RIR
-(`strengthModel.ts#learnFatigue`, setting "Vermoeidheid per set"); with a coarse step the first set
-takes the weight with the smallest expected miss (decision
-`docs/beslissingen/2026-10-26-kracht-vermoeidheid-en-grove-stap.md`). "Wijzigingen doorvoeren"
-(`engine/forgeInput.ts#carryChange`, `carryMode`: equal sets, the same difference, or off) and raak
-for proposals within 5% of what was done (`docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md`).
-The weights of a machine can be typed in per gym (`GymProfile.exerciseWeightsKg`,
-`engine/machineWeights.ts`); a strength log knows its gym (`SessionLog.gymProfileId`, only on new
-logs) so the weights learned from use stay per gym, and Forge asks to fill them in when no weight
-fits (`docs/beslissingen/2026-10-26-gewichten-per-toestel.md`). A loose add-on weight (a plate or magnet, at most 3, each at most once, every combination) is added to every weight of the block of a cable or stack machine: `GymProfile.addOnKg` for the whole gym, `GymProfile.exerciseAddOnKg` per machine over it (an empty list is none), laid over the block in `strengthWeights.ts#externalWeights` so every candidate follows, and Forge shows "70 + 2,3 kg" under such a set (`engine/machineWeights.ts`, `docs/beslissingen/2026-10-28-tussengewichten.md`). The weights of a machine can also be given as a range (`GymProfile.exerciseWeightRanges`: start, end, step, with `removedKg`, `machineWeights.ts#weightsFromRange`/`ownWeightsFor`): the union of the range(s) and the loose weights in `exerciseWeightsKg`, so the add-ons lie over it as over a list and ASCEND still learns from the weights you really use (`docs/beslissingen/2026-10-29-gewichten-als-bereik.md`).
-
-**A training in Forge is a session** (`engine/forgeSession.ts`, `utils/forgeSessionStore.ts`, `components/forge/SessionPill.tsx`,
-`ForgeSessionHost.tsx`, `useForgeSession.ts`, decision `docs/beslissingen/2026-10-29-forge-als-sessie.md`): a started strength training stays open until
-Afronden or Verwijderen; everything (rows, course, clock, pauses) is in the draft (`WorkoutDraft`: `startedAt`, `pauses: { from, to? }[]`, `lastActionAt`,
-all optional, an old draft works) and survives closing, reloading and the next day: no clock reset on reopening, no age limit on the draft. The clock is
-a sum, not a timer: active time = now minus start minus the pauses (`activeSeconds`, `pause`, `resume`, pure and tested). The menu of the training has
-Pauzeren/Verder, Kleiner maken (the back button on the left is the same, the session runs on), Afronden and Training verwijderen (a sheet with Annuleren and
-Verwijderen); in a pause the clock stands still and a quiet line says "Gepauzeerd" with Verder. Coming back after more than the threshold since your last
-action while the clock ran asks once "Je was 22 uur weg. Telt die tijd mee?" ("Nee, als pauze" is the advice); setting "Lange onderbreking vragen na"
-(`AppSettings.forgeLongBreak`: 0 = uit, 30, 45 = advice, 60, 90; `resolveBreakAsk`). Afronden logs the active time as the duration; an existing log is never
-written to. There is at most one session: a pointer `ascend.forge.sessie` in localStorage (draft key, template, day) lets the pill above the tab bar find it;
-starting another training while one runs asks "Naar de training" or "Annuleren" (the guard is the wrapper `ForgeWorkout`, the screen is `ForgeWorkoutInner`).
-The pill shows only while a session exists and the full screen of Forge is not open (`registerForgeOpen`), never on the splash; the page gets room under
-its content; the breathing dot runs only while the clock runs and the pill is in view, and not in Rustig, Uit or reduced motion (a deliberate, owner-requested
-second loop next to the mission card). A tap opens `ForgeSessionHost` through `requestOpenSession`. A session starts at the first real action
-(tick, typing a value, adding or removing a set, Pauzeren), not at opening: until then no draft, pointer, pill or gate (the gate does not apply to
-`startAtForm` or preview). A pointer whose template or planned session is gone, or whose planned session is logged, is dead (`sessionIsDead`) and
-cleaned up (`useSessionHousekeeping`, once in App; at boot also `draftsToPrune`); "Alles verwijderen" and a restore that replaces the planning
-call `clearForgeSessions`. Afronden proposes the active time but above 240 minutes (`finishDuration`) the expected duration with an amber line.
-Each ticked row carries `doneAt`, on the log `SetLog.at` (`migrateLogSetTimes`, also in `manualMeasured.strength`).
-
-**The course of a training in Forge** (`engine/forgeLog.ts`, `models/forgeLog.ts`, `components/forge/ForgeLogSheet.tsx`, decision
-`docs/beslissingen/2026-10-28-forge-logboek.md`, design `docs/visie/Forge logboek en spotter.md`): like the Event Log of MacroFactor, per moment
-which set went from what to what and why (bijgestuurd, doorgevoerd, eigen, onder, past-niet, spotter). It is derived: after every change of the
-rows `deriveChanges` compares before and after, the action only says why (`ForgeCause`); ticking, a new plan and a swap are no event, typing is one
-event per minute and set. It lives next to the draft (`WorkoutDraft.log`, `seen`) and goes onto the log only when it is made
-(`SessionLog.forgeLog`, optional, read defensively by `cleanForgeLog`/`migrateLogForgeLog`, in the backup, no schema bump); an existing log is never
-written to. A quiet button in the line with the clock opens the sheet, with a dot only for what Forge did or saw and has not been opened yet, never
-for your own edits or a solved message. A message goes away when solved or names the set that still does not fit (`forgeAdjust.ts#fitStillOpen`,
-`NoFit.setNo`). In the log sheet "Verloop van de training" opens the same sheet.
-
-**Without a spotter** (`engine/spotter.ts`, decision `docs/beslissingen/2026-10-28-zonder-spotter.md`): on a barbell exercise where failure is
-dangerous (`Exercise.failureRisk`: benches and squats with a bar; never machines, cables or dumbbells) Forge prescribes at least 1 rep in reserve,
-in the target and the hint (`spotterSlot` in `planExercise`, so also after a swap), unless the gym has safety arms (`GymProfile.spotterRack`, row
-"Veiligheidsarmen" under Je sportschool) or the setting "Zonder spotter" is off (`strengthModel.noSpotter`, absent = on). One quiet sign per exercise
-("1 over, zonder spotter", a shield, explanation behind a tap), never a pop-up, never a block: typing 0 is always possible and is stored as typed.
-Raak judges ASCEND's proposal against its own raised target and your own sets against what the plan asked (`comparisonRows`), so a deliberate 1 where
-MacroFactor said 0 is no miss; `noSpotter` is part of `checkModelKey`.
-
-**Plaatjes bij oefeningen** (`data/exerciseArt.ts`, `data/muscleRegions.ts`, `engine/muscleMap.ts`, `engine/exerciseArtData.ts`,
-`components/ExerciseArtButton.tsx`, `components/ExerciseArtSheet.tsx`, decision
-`docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen.md`, research `docs/onderzoek/Afbeeldingen bij oefeningen.md`): in Forge (the
-exercise head in a training and the rows of the list) a card of 44 by 44 px opens the sheet of an exercise: the drawing in three steps
-(Workout Guide, CC BY-SA 4.0, one `public/exercise-art/<slug>.json` per drawing with a viewBox and three paths, no colour: it takes
-`currentColor`), the muscle card (the Lichaam figure with the 19 muscle groups drawn as soft arcs, lila `--color-sport-strength` only for
-muscle data, front and back where needed), Doen, Let op and Vaak fout from the cues, and the credit with a direct link to the licence
-(opens in a new tab, never takes you out of a training; the kind "Afbeeldingen" in Bronnen has it too). The three images of a file are put in the order of the movement by `ART_ORDER` (step 1 the start, 2 the middle, 3 the end; a permutation, tested), a drawing that shows something wrong or unclear is left out (decision `-aanvulling.md`), and the url carries `?v=` (`DRAWING_VERSION`, raise it when a file changes). The link exercise to drawing is data (`zeker` or `variant` with a note); an exercise without one shows the muscle card
-as the main picture, without an apology. The drawings are not in the precache (`globIgnores` in `vite.config.ts`): they load when a sheet
-opens, are kept by a runtime cache "exercise-art", and those of your own templates are fetched in the background
-(`components/useExerciseArtPrefetch.ts`). Never put them in `globPatterns`. A changed or added drawing keeps `LICENSE.md` and
-`ATTRIBUTION.md` in that folder true. The movement plays once on opening (900 ms, Rustig half, Uit and reduced motion straight to the end
-state) and `haptics.tap` only fires for a step you take yourself, with 140 ms between. Setting "Plaatjes bij oefeningen"
-(`exerciseArt`: beide, spierkaart, uit; `engine/exerciseArtSettings.ts`).
-
-**Het kaartje toont de tekening** (`components/ExerciseArtButton.tsx`, `engine/exerciseArtThumb.ts`, decision
-`docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen-kaartje.md`): the 44 by 44 card in the head of an exercise, in the rows of the
-list and in the swap sheet shows the middle image (step 2 after `ART_ORDER`) of the drawing in its own square viewBox, in `currentColor`,
-only with "Spierkaart en tekening" and only when the drawing is already there (in memory or in the service worker cache through
-`exerciseArtLoader#readCachedDrawing`; the card never fetches, but `useDrawingsFor` fetches what is in view: the exercises of an open training and the choices of the swap sheet, decision `2026-10-29-tekeningen-in-beeld.md`). Until then, with "Alleen spierkaart" and when loading fails it stays the
-muscle card (`MuscleThumb`); the switch is a 200 ms fade, straight to the end state in Rustig and Uit.
-
-**Snelknoppen en sets in Forge** (`engine/forgeQuickActions.ts`, `engine/forgeRows.ts`, `components/swipeRow.ts`,
-`components/forge/SwipeRow.tsx`, decision `docs/beslissingen/2026-10-29-snelknoppen-in-forge.md`): under the name of every exercise a row of
-outlined, muted chips (Ruilen, Opwarmset, Notitie; an exercise on time only Ruilen and Notitie, a read-only training none; "Set toevoegen" stays under the sets), the
-menu keeps everything. Setting "Snelknoppen tonen" (`AppSettings.forgeQuickButtons`, absent = on; the one word for it is "verwijderen", decision `2026-10-29-snelknoppen-in-forge-aanvulling.md`) also sits in the menu of the training;
-the row fades in and out (`mx-quick`). A long reason under the head folds to one line with "Meer". A set swipes to the left: 1 to 1,
-direction decided after 8 px, past 54 px it stays open with a red 72 px button ("Set 3 verwijderen"), past 60% of the width or 24 px before your finger reaches the screen edge (a swipe starts on the left of the row; never under 96 px) or fast it deletes at
-once, never started on kg, reps, RIR or the tick, one row open at a time. "Set 3 verwijderd" with "Ongedaan maken" stands under the sets for
-ten seconds. A set you added (`:a` or `:c` in its id, `isOwnRow`) has an outlined number and "eigen set" in the Voorschrift column; a work
-set of the program you removed is kept in `WorkoutExercise.dropped` (read through `forgeRows.ts#dropsOf`) and told in one line with "Terugzetten", and the reason gets "Jij doet er 4."
-when the count differs. Adding and removing are events in the Forge log (`toegevoegd`, `weggehaald`, no dot on the button).
-
-**Oefeningen opzij vegen** (`engine/forgeLayout.ts`, `components/forge/ForgeStrip.tsx`, `components/forge/SwipeRow.tsx`, decision
-`docs/beslissingen/2026-10-29-oefeningen-opzij-vegen.md`): with "Oefeningen in een training" on "Een per scherm" (`AppSettings.forgeLayout`,
-absent = scherm; "Onder elkaar" is the old list; also a switch in the menu of the training) a training is one exercise per screen in a
-CSS scroll-snap pager (`.forge-pager`, `.forge-page` with `data-forge-page`, `scroll-snap-stop: always`, no library), each page scrolls
-vertically on its own, and a strip of cards under the clock jumps (smooth, not in Uit) with the current one in mint and a tick on a
-finished one. Forge never pages by itself (`scrollToRow` only scrolls a row on the page in view). A set swipe starts only on a cell with
-`data-swipe-zone` (number and prescription; `touch-action: pan-y` there through `.swipe-front`), everywhere else a sideways swipe is the
-pager. The set swipe never sets React state or measures while moving: a transform through refs once per frame, the red panel beside the
-row moved by the same transform, `will-change` only while swiping, 200 ms ease-out on release (none in Uit). Measured with CDP touch
-events: no commits from the moves. An untouched exercise of a reopened draft always takes today's plan (`forgeInput.ts#touchedInDraft`),
-and Zonder spotter turns a set to failure into an open set with reserve (`SetTarget.open`, "7+ met 1 over").
-
-**A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
-average once there are 7 days) becomes a question in the morning check instead of a
-warning (`engine/shortNight.ts`, decision `docs/beslissingen/2026-10-25-korte-nacht-vragen.md`).
-Your verdict per date lives in `AppSettings.nightJudgments`, tied to the measured minutes
-(a later full night makes it lapse), read through `storage/migrations.ts#migrateNightJudgments`
-and merged per date on restore. "Niet goed gemeten" keeps sleep, sleep score and HRV of
-that night out of your own averages and the suggestion; resting heart rate still counts;
-the numbers at Garmin and intervals.icu are never changed. Switch "Vragen bij een korte
-nacht" (`AppSettings.askShortNight`).
-
-**Wat speelde er** (`models/influence.ts`, `AppSettings.influences`, decision
-`docs/beslissingen/2026-10-25-wat-speelde-er.md`): your own note about a training or a day
-(alcohol with its amount, wiet, ziek, kort geslapen, stress, an own word). Noted only in the
-Logboek: the sheet of a training and a tapped day in the calendar, never on the morning card.
-A note on a training touches the morning of that day, one on a calendar day the morning after
-(`engine/influence.ts#affectedMorning`, the one rule). It is a list next to the history, so a
-log is never changed; it travels in the backup (`storage/migrations.ts#migrateInfluences`,
-merged per id). An easy run with a heart rate outside 1.5 times the noise of the loopinzicht
-gets a sign in Logboek and Week; "Niet meetellen voor hartslag" keeps a run out of Tempo bij
-zone 2 and later comparisons, "Deze nacht niet meetellen" keeps a morning out of the resting
-heart rate and HRV averages; load, leg index and the GR5 meters always count. What ASCEND knows
-itself (a heavy leg day from the logbook, warmth from the weather, a short night from the watch,
-an illness) is shown as a plain line, never asked to confirm, and counts in the overview by
-itself (`engine/influence.ts#derivedFactEntries`, never stored; warmth only for heart rate at pace
-and effort; only your own notes leave the bands; decision
-`docs/beslissingen/2026-10-25-feiten-tellen-vanzelf.md`). ASCEND never names alcohol or wiet
-itself; "lijkt op" (`engine/influenceEffects.ts#looksLike`) only for your own notes, with 4 times
-on each side and bands that do not touch. Je stand shows "Wat doet dit met je?" from 3 times per reason against
-your own band; a test the same day after 3 or more glasses (or wiet that day) gets a proposal
-with Akkoord (`engine/influenceProposal.ts`). Morning numbers from intervals.icu are kept 400
-days for this (`engine/wellnessRange.ts`). A reason is never in a list, a notification or the
-Strava text. Setting "Voorbeelden bij naam noemen" (`AppSettings.influenceNames`, on by default) only
-decides whether the explanation and help name alcohol and wiet or say "wat je dronk of gebruikte";
-the chips stay (`data/settingsHelp.ts#settingsHelp`, decision `docs/beslissingen/2026-10-27-redenen-bij-naam.md`).
-
-**Heart rate on the watch** (`engine/watchHeartRate.ts`, `engine/heartRateZones.ts`, decision
-`docs/beslissingen/2026-10-25-hartslag-op-het-horloge.md`): ASCEND's zones follow Garmin's
-"Standaard" split on the threshold (66-81, 81-89, 89-96, 96-101%). With "Zones van ASCEND" (the
-advice) a workout sent to intervals.icu carries ASCEND's own beats as a percentage of the
-threshold intervals.icu uses (read from its sport settings), so the watch shows the same range
-the app judges by; a zone name is only the fallback. An easy step runs from the start of zone 1 to
-the end of its own zone ("Rustige loop: ruime grens"), intensity 4 up to the maximum.
-
-**Lessons from Garmin** (decisions `2026-10-25-intensiteit-gemeten.md`,
-`2026-10-25-zweet-en-water.md`, `2026-10-25-bergschoenen-inlopen.md`). The intensity card on Je
-stand counts real minutes per zone from the heart rate profile on a log
-(`engine/intensityMinutes.ts`, read by `engine/standing.ts#intensityMix`), and falls back to what a
-training was meant to be when there is no heart rate; switch "Intensiteit tellen". Sweat loss is
-your own weighing before and after a log (or the watch estimate you type in), kept in
-`AppSettings.sweatEntries` next to the logs (`storage/migrations.ts#migrateSweatEntries`); it
-gives your own sweat rate by temperature (`engine/sweat.ts`) and the water per GR5 stage
-(`engine/stageWater.ts`, "ongeveer", never medical advice). New mountain boots are counted from
-the date you started wearing them, walks and treks only (`engine/bootBreakIn.ts`,
-`JourneyState.boots`); the Reisplanner tasks for boots and sweat are done by the data
-(`engine/journey.ts#withDerivedDone`, `withBootsDone`), never a stored flag. Running shoe
-kilometres stay with Garmin.
-
-**Run in detail, the data** (`storage/activityDetail.ts`, `engine/streamPack.ts`, `engine/runDetail.ts`,
-`engine/runDetailRules.ts`, decision `docs/beslissingen/2026-10-27-run-in-detail-gegevens.md`): the full series of a
-run or tocht live in a store of their own, `activityStreams` (key `logId`, database version 9), packed as typed
-arrays at the moments the watch wrote them; the track is never kept, only the wind against you per kilometre worked
-out from it. The series DO go in the backup file by default (base64, setting "Reeksen in back-up", size in the row)
-because the source may stop handing Garmin data out and then a restore could not fetch them again; the copies taken
-before an import (`backupSnapshots`) never hold them. "Volledige reeks bewaren" decides whether they are kept at all.
-`SessionLog.runDetail` (kilometres, laps, a line of about 150 points, the place of the best 5 km) is derived and
-append-only like `detail` and `bestEffort`: added once, tied to the totals it was read for (`wholeKm`, `wholeMinutes`),
-`runDetailTried` the fingerprint of totals that gave nothing, never a change to a measured number, and a damaged one
-is dropped by `migrateLogRunDetail` without losing the log. Kilometres, laps and the verdicts (RD-1 to RD-8) are pure
-functions with tests; a test, tempo run or interval training gets one line about the spread of its pace
-(`RunInsight.pacing`), the two-line rule after a run stays.
-
-**Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
-need a server); it prepares a short text to copy. Planned numbers appear only when
-the log belongs to a planned session, and no minutes without a measured duration.
-
-**The test run and the paces** (`engine/racePrediction.ts#countedTests`, `engine/bestEffort.ts`,
-`engine/testJudgment.ts`, decisions `docs/beslissingen/2026-10-27-testloop-lezen.md` and
-`2026-10-27-testloop-lezen-aanvulling.md`): a test counts with the fastest unbroken 5 km of the watch's series
-(`SessionLog.bestEffort`) and with the whole log when there is none; the app says which. `bestEffort` is derived and
-append-only, like `detail`, not a new exception to "never rewrite logs": it is added once, tied to the totals it was
-read for (`wholeKm`, `wholeMinutes`; a source correction makes it stale and it is read again, `bestEffortTried` stops
-a series that gave nothing from being fetched again), and it counts only once `accepted` is set: at once for a test
-that has just come in or when counting it changes no pace, otherwise after Akkoord on the old and new paces in the log
-sheet, so paces never depend on whether a log was opened. Paces, prediction, target-time check and the watch all read
-`pacesFromLogs`/`countedTests` and never `tests.at(-1)` by themselves. A test clearly slower than the last one that
-counts waits for your answer ("Telt mee" or "Telt niet mee", `AppSettings.testJudgments`, per log, next to the logs,
-"Telt niet mee" never dropped by the cap of 60) and until then the old paces hold; a quiet line on Vandaag
-(`TestPendingLine`) says so, and an older waiting test keeps its question while a newer one waits too. Tests on
-different bases are compared on the whole run. "Telt niet mee" works on any test afterwards. Setting "Twijfeltest
-eerst vragen" (`askDoubtTest`); off means the latest test counts, as before. A test of the last 60 days that still has no best 5 km is read in the background at the opening (`activityDetail.ts#ensureRecentTestEfforts`); one that waits for Akkoord gets a quiet line on Vandaag after the doubt line, never two (`testJudgment.ts#effortOfferLine`), and TARGET-TIME names its basis and waits for that Akkoord (`docs/beslissingen/2026-10-27-snelste-5km-achteraf.md`). The fastest 5 km counts moving time and moving distance: a stop (a pause gap with almost no distance, or a creep under 1 m/s for 3 seconds or more) is not a hole and costs and gives nothing, stops less than 10 s or 20 m of movement apart are one stop, and a catch-up jump right after a stop (more than 1.5 times the median pace over 10 s) makes that stretch a hole; stops are counted in `BestEffort.stops` and `stoppedSec` and said ("Je stond 3 keer stil, samen 1:40; die tijd telt niet mee.", with one dry sentence above 60 seconds or 3 stops); a gap where the distance jumps stays a hole; `BestEffort.v` makes a waiting best effort without it be read once more, and an accepted one of the last 60 days is read once more into `SessionLog.bestEffortReread` (the old one keeps counting; it takes over at once only when no pace changes, else after Akkoord); `bestEffortTried` carries `|v2`; a new test with stops faster than the whole run that changes a pace asks Akkoord; setting "Stilstaan bij een testloop" (`testStops`, skip or count; `docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop.md` and `-aanvulling.md`). A last test with more standing still than "iets te gunstig" (or one waiting as a doubt), with no other test within 14 days, gets a proposal with Akkoord (TEST-RETRY, `adviceEngine.ts`, setting "Nieuwe test voorstellen bij stilstand", `newTestOnStops`): the first hard run (role `hard_run`) at least 3 days after it, within 10 days, becomes a 5 km test on the same day (a `move` with `templateId`), and what the usual spacing finds in the way moves in the same proposal: leg strength to after the test (as TEST-MAKE-ROOM), a long run or hard run of the day after to the next day where it fits (short when that week has a long run of its own, a recovery walk there may give way), the smallest change first with up to three `options`; a session you locked is never moved by itself, only with its name in the proposal, and a hard run you locked never becomes the test; the end state is judged by the leg index on the test day against the same line as TEST-FRESH and TEST-MAKE-ROOM (`FATIGUE_THRESHOLDS.test.fresh`), and a heavy leg day that makes the legs tired moves first, processed last after the runs, to 0 to 3 days after the test with the same building blocks as TEST-MAKE-ROOM; one you locked is offered that move with its name ("die je zelf vastzette, gaat naar ...") and a `remove` as the second option, and only a day that fits nowhere is a `remove` (named: "laat je deze week gaan"), weighing more when it was yours and more than a move, so accepting it leaves nothing for the week check or TEST-MAKE-ROOM to say; the quiet leg-index line in the proposal sheet is worked out on the end state of the proposal; holiday, trek and light days, ids already used by another proposal, the leg day the Benen card speaks for and a day without room (day budget, with the short length of a moved long run) are no candidates, and TEST-RETRY is silent while TEST-MAKE-ROOM speaks; no workable day, no advice; a move never takes the last rest day of a week (a day without training, a recovery walk counts as rest): it first looks for a target day that keeps one, otherwise the same proposal lets the lightest training of that week go (not a long run, hard run, test, race, leg day, your own lock or a logged one) and says so, and with none to let go the long run itself goes this time; Liever niet is kept per test date (`docs/beslissingen/2026-10-28-nieuwe-testpoging.md`, `-ruimte.md`, `-herstel.md`, `-verschuiven.md` and `-rustdag.md`).
-
-Weeks are derived, not stored: a week is just seven days starting on a
-Monday; which phase/week-number it belongs to is computed from
-`Program.startDate` + `Phase.weekCount` (`utils/dates.ts`), never persisted
-as its own entity. The phases themselves are counted back from the main
-goal's date (`engine/programLayout.ts`, applied by
-`storage/database.ts#syncProgramHorizon`): a taper right before the goal,
-nothing planned on or after it, and no empty weeks before it.
-
-The backpack of the rucksack walk, the mountain hike and the first hiking day
-is a ladder over the whole program (`engine/packLadder.ts`, read through
-`progressionTarget`): light in the winter, steps of 1 to 2 kg toward the main
-goal's rucksack target, up to 1 kg above it in the heaviest weeks, and never
-raised in a week the D+ is raised (the D+ and duration live in
-`data/hikeLadder.ts`). The target is not hardcoded: `syncProgramHorizon` copies
-it from the goal to `Program.packTargetKg`, the same way it lays out the phases,
-and also keeps milestone 11 (the full rucksack hike) at that weight. A milestone
-you reached under an earlier requirement stays reached
-(`engine/gr5Profile.ts#keepClearedMilestones`).
+**Scheduling logic belongs in `/engine`.** Domeinlogica staat in `engine/`, niet in componenten, en de scheduler is deterministisch, zonder AI. Alles wat de planning van de gebruiker inhoudelijk verandert is een voorstel met Akkoord, nooit stil.
 
 **External providers must use generic adapters — do not tightly couple
 domain fields to provider names.** Model `OutdoorMetric` / `RecoveryMetric`
