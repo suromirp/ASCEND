@@ -21,3 +21,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-29, Forge als sessie, Sherpa, sonnet (ontwikkelaar), 224k, 28 min, 1, twee blokkerende punten na review
 - 2026-10-29, Review Forge als sessie, Warden, opus (reviewer, opslag), 102k, 5 min, 0, vond sessie na Alles verwijderen en sessie bij alleen openen
 - 2026-10-29, Herkeuring Forge-sessie, Warden, opus (reviewer), 95k, 3 min, 0, vond wissen bij opstartfout; coördinator loste op
+- 2026-10-29, CLAUDE.md inkorten, Sherpa, sonnet (ontwikkelaar), 74k, 3 min, 0, 78 KB naar 25 KB
+- 2026-10-29, Spierpijn bovenlichaam, Sherpa, sonnet (ontwikkelaar), 110k, 9 min, 0
