@@ -5,6 +5,7 @@ import { useBackToClose } from '../utils/useBackToClose';
 import { scrollMainToTop } from '../utils/scrollMain';
 import { buildWeekReview } from '../engine/weekReview';
 import { dayLoads, weekProgress } from '../engine/weekProfile';
+import { plannedByIdOf } from '../engine/logDay';
 import { looseLogsOfWeek, weekLogsOf, weekTime } from '../engine/weekLogs';
 import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
@@ -84,7 +85,8 @@ export function WeekPage() {
   // The time this week: what was done (the same sum as the weekly review, a loose
   // training included) of that plus what is still open at its planned length. A
   // skipped training and a rest day count not at all (engine/weekLogs.ts#weekTime).
-  const { doneMinutes, totalMinutes: totalWeekMinutes } = weekTime(sessions, sessionLogs, templateById, weekStart, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program));
+  const plannedById = useMemo(() => plannedByIdOf(plannedSessions), [plannedSessions]);
+  const { doneMinutes, totalMinutes: totalWeekMinutes } = weekTime(sessions, sessionLogs, templateById, weekStart, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program), plannedById);
   // Done without a plan: a row on their day (WeekPlanner), not in the count of planned trainings.
   const looseLogs = useMemo(() => looseLogsOfWeek(sessionLogs, plannedSessions, weekStart), [sessionLogs, plannedSessions, weekStart]);
 
@@ -99,10 +101,10 @@ export function WeekPage() {
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
   const progress = weekProgress(sessions, sessionLogs, templateById);
   // Wat er deze week al gedaan is: kilometers en stijgen uit dezelfde logs als de tijd.
-  const weekLogs = weekLogsOf(sessionLogs, templateById, weekStart);
+  const weekLogs = weekLogsOf(sessionLogs, templateById, weekStart, plannedById);
   const weekKm = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.distanceKm ?? 0), 0);
   const weekGain = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.elevationGainM ?? 0), 0);
-  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks }) : null;
+  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks }) : null;
   const phaseName = position ? position.phase.name.replace(/fase$/i, '') || position.phase.name : '';
 
   // A completed session is still selectable — SessionActionSheet shows an

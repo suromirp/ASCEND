@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { SessionLog } from '../models/training';
-import { canAdjustDuration, chosenDurationLine, fileDurationSentence, isValidMinutes, suggestedDuration, withChosenDuration } from './macrofactorDuration';
+import { dayOptions, canAdjustDuration, chosenDurationLine, fileDurationSentence, isValidMinutes, suggestedDuration, withChosenDuration } from './macrofactorDuration';
 import { planMacroFactor } from './macrofactorLink';
 import { readMacroFactorCsv } from './macrofactorImport';
 
@@ -60,7 +60,7 @@ describe('the row and the log after the choice', () => {
   it('a chosen duration is the duration of the log and the file duration is kept', () => {
     const [p] = plan();
     if (!canAdjustDuration(p, '2026-10-29')) throw new Error('expected a new row');
-    const after = withChosenDuration(p, 50);
+    const after = withChosenDuration(p, { minutes: 50 });
     expect(after.doubt).toBeUndefined();
     expect(after.draft.durationMinutes).toBe(50);
     expect(after.draft.fileDurationMinutes).toBe(376);
@@ -72,6 +72,62 @@ describe('the row and the log after the choice', () => {
     expect(p.draft.durationMinutes).not.toBe(50);
   });
 
+});
+
+describe('welke dag', () => {
+  const planned = (date: string) => ({ id: 'ps1', templateId: 'tpl_upper_a', scheduledDate: date, status: 'planned', order: 0 }) as unknown as import('../models/training').PlannedSession;
+  const withPlanned = (date: string) => {
+    const [p] = plan();
+    if (!canAdjustDuration(p, '2026-10-29')) throw new Error('expected a new row');
+    return { ...p, planned: planned(date) };
+  };
+
+  it('biedt de geplande dag aan, als die anders is, en kiest die als standaard', () => {
+    const p = withPlanned('2026-10-29');
+    expect(dayOptions(p, '2026-10-29')).toEqual({ fileDay: '2026-10-28', plannedDay: '2026-10-29', defaultDay: '2026-10-29' });
+  });
+
+  it('biedt niets extra als de geplande dag gelijk is of er geen geplande training is', () => {
+    expect(dayOptions(withPlanned('2026-10-28'), '2026-10-29').plannedDay).toBeUndefined();
+    const [p] = plan();
+    if (!canAdjustDuration(p, '2026-10-29')) throw new Error('expected a new row');
+    expect(dayOptions({ ...p, planned: undefined }, '2026-10-29')).toEqual({ fileDay: '2026-10-28', plannedDay: undefined, defaultDay: '2026-10-28' });
+  });
+
+  it('biedt de geplande dag niet aan bij 3 dagen verschil, een dag eerder of een dag in de toekomst', () => {
+    expect(dayOptions(withPlanned('2026-10-31'), '2026-11-05').plannedDay).toBeUndefined();
+    expect(dayOptions(withPlanned('2026-10-27'), '2026-10-29').plannedDay).toBeUndefined();
+    expect(dayOptions(withPlanned('2026-10-29'), '2026-10-28').plannedDay).toBeUndefined();
+  });
+
+  it('houdt het eind van de training als dat op de gekozen dag valt, anders vroeg op die dag', () => {
+    const p = withPlanned('2026-10-29');
+    const late = { ...p, workout: { ...p.workout, start: '2026-10-28T23:30:00' } };
+    const endsNextDay = new Date(withChosenDuration(late, { minutes: 50, date: '2026-10-29' }).draft.completedAt);
+    expect(endsNextDay.getDate()).toBe(29);
+    expect(endsNextDay.getHours()).toBe(0);
+    expect(endsNextDay.getMinutes()).toBe(20);
+    const early = { ...p, workout: { ...p.workout, start: '2026-10-28T18:05:00' } };
+    const fallback = new Date(withChosenDuration(early, { minutes: 50, date: '2026-10-29' }).draft.completedAt);
+    expect(fallback.getDate()).toBe(29);
+    expect(fallback.getHours()).toBe(0);
+    expect(fallback.getMinutes()).toBe(15);
+  });
+
+  it('zet de gekozen dag als datum van de nieuwe log, met het tijdstip op die dag', () => {
+    const p = withPlanned('2026-10-29');
+    const after = withChosenDuration(p, { minutes: 50, date: '2026-10-29' });
+    expect(after.draft.completedDate).toBe('2026-10-29');
+    const at = new Date(after.draft.completedAt);
+    expect(at.getFullYear()).toBe(2026);
+    expect(at.getMonth()).toBe(9);
+    expect(at.getDate()).toBe(29);
+    expect(chosenDurationLine(after)).toContain('Telt op');
+    // De dag van het bestand blijft de datum van het bestand.
+    const same = withChosenDuration(p, { minutes: 50, date: '2026-10-28' });
+    expect(same.draft.completedDate).toBe('2026-10-28');
+    expect(chosenDurationLine(same)).not.toContain('Telt op');
+  });
 });
 
 describe('migrateLogFileDuration', () => {

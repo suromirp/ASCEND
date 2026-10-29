@@ -14,18 +14,21 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays } from '../utils/dates';
+import { logDay, type PlannedById } from './logDay';
 
 type TemplateTypes = Map<string, Pick<SessionTemplate, 'type'>>;
 
 // De logs van een week naar de dag waarop ze gedaan zijn, zonder rustdagen.
-export function weekLogsOf(logs: SessionLog[], templateById: TemplateTypes, weekStart: string): SessionLog[] {
+// Met `plannedById` telt een log op de dag van zijn geplande training (engine/logDay.ts), voor Week.
+export function weekLogsOf(logs: SessionLog[], templateById: TemplateTypes, weekStart: string, plannedById?: PlannedById): SessionLog[] {
   const weekEnd = addDays(weekStart, 6);
-  return logs.filter((l) => l.completedDate >= weekStart && l.completedDate <= weekEnd && templateById.get(l.templateId)?.type !== 'recovery');
+  const dayOf = (l: SessionLog) => (plannedById ? logDay(l, plannedById) : l.completedDate);
+  return logs.filter((l) => dayOf(l) >= weekStart && dayOf(l) <= weekEnd && templateById.get(l.templateId)?.type !== 'recovery');
 }
 
 // De minuten die een week gedaan is: de som van de weekterugblik.
-export function weekDoneMinutes(logs: SessionLog[], templateById: TemplateTypes, weekStart: string): number {
-  return weekLogsOf(logs, templateById, weekStart).reduce((n, l) => n + (l.durationMinutes || 0), 0);
+export function weekDoneMinutes(logs: SessionLog[], templateById: TemplateTypes, weekStart: string, plannedById?: PlannedById): number {
+  return weekLogsOf(logs, templateById, weekStart, plannedById).reduce((n, l) => n + (l.durationMinutes || 0), 0);
 }
 
 // De losse trainingen van een week, op volgorde van dag en tijd. Alles wat een
@@ -64,7 +67,8 @@ export function weekTime(
   templateById: Map<string, SessionTemplate>,
   weekStart: string,
   minutesOf: (s: PlannedSession, t: SessionTemplate) => number,
+  plannedById?: PlannedById,
 ): { doneMinutes: number; totalMinutes: number } {
-  const doneMinutes = weekDoneMinutes(logs, templateById, weekStart);
+  const doneMinutes = weekDoneMinutes(logs, templateById, weekStart, plannedById);
   return { doneMinutes, totalMinutes: doneMinutes + weekOpenMinutes(sessions, logs, templateById, minutesOf) };
 }

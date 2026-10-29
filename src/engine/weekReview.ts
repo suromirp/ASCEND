@@ -22,6 +22,7 @@ import { progressionTarget } from './programLayout';
 import { logSport, SPORT_LABEL, type Sport } from './sports';
 import { weekChanges } from './changeLog';
 import { durationLabel } from './sessionBrief';
+import type { PlannedById } from './logDay';
 import { weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { isIllnessDay } from './illness';
 import { EASY_RPE_TOP } from './coach';
@@ -50,6 +51,8 @@ export interface WeekReview {
 }
 
 interface ReviewInputs {
+  // Voor de weergave: een MacroFactor-log over middernacht telt op de dag van zijn geplande training (engine/logDay.ts), zoals in Week.
+  plannedById?: PlannedById;
   weekStart: string;
   plannedSessions: PlannedSession[];
   logs: SessionLog[];
@@ -105,10 +108,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   const trainings = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && countsAsTraining(s));
   // What was done that week, by the day it was done, with or without a plan: the same
   // logs and the same minutes as the top of Week (engine/weekLogs.ts).
-  const weekLogs = weekLogsOf(logs, byId, weekStart);
+  const weekLogs = weekLogsOf(logs, byId, weekStart, inputs.plannedById);
   const done = trainings.filter((s) => loggedIds.has(s.id)).length;
   const missedSessions = trainings.filter((s) => !loggedIds.has(s.id) && (s.scheduledDate < asOf || s.status === 'skipped')).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
-  const minutes = weekDoneMinutes(logs, byId, weekStart);
+  const minutes = weekDoneMinutes(logs, byId, weekStart, inputs.plannedById);
 
   // Per sport: kilometers and climbing, from what was logged.
   const sportTotals = new Map<Sport, { km: number; dplus: number }>();

@@ -37,6 +37,18 @@ describe('dayLoads', () => {
     expect(days[1].load).toBe(0);
   });
 
+  it('zet een log die een dag eerder in het bestand staat op de dag van zijn geplande training', () => {
+    const ps = planned('tpl_upper_a', '2026-10-22');
+    const l = log('tpl_upper_a', '2026-10-21', 50, { rpe: 7, plannedSessionId: ps.id, source: 'macrofactor' });
+    const days = dayLoads({ ...base, weekStart: WEEK, logs: [l], plannedSessions: [ps] });
+    expect(days[2].load).toBe(0);
+    expect(days[3].load).toBe(50 * 7);
+    expect(days[3].hasTraining).toBe(true);
+    // De log zelf is niet veranderd.
+    expect(l.completedDate).toBe('2026-10-21');
+    expect(ridgeSentence(days, TODAY)).toContain('Donderdag');
+  });
+
   it('is dezelfde belasting als de weektotalen op Stand', () => {
     const logs = [log('tpl_lower_a', '2026-10-19', 70, { rpe: 7 }), log('tpl_easy_run', '2026-10-20', 35)];
     const plannedSessions = [planned('tpl_long_run', '2026-10-25', { plannedMinutes: 60 }), planned('tpl_hill_intervals', '2026-10-24', { plannedMinutes: 35 })];

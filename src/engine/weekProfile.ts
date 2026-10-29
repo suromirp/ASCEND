@@ -21,6 +21,7 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, daysBetween, mondayOfWeek, weekDates, weekdayLongNL } from '../utils/dates';
+import { logDay, plannedByIdOf } from './logDay';
 import { isIntentionalBackToBack, isLegHeavyTemplate, legSpacingDays } from './scheduler';
 import { weeklyLoad, type LoadInputs } from './standing';
 
@@ -47,7 +48,14 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
   const current = mondayOfWeek(inputs.today);
   const offset = Math.round(daysBetween(current, monday) / 7);
   // weeklyLoad loopt van -weeksBack tot en met +weeksAhead rond de huidige week.
-  const weeks = weeklyLoad(inputs, Math.max(0, -offset), Math.max(0, offset));
+  // Voor de weergave telt een log op de dag van zijn geplande training (engine/logDay.ts);
+  // de log zelf blijft ongemoeid, dit zijn kopieen met een andere dag voor deze som.
+  const plannedById = plannedByIdOf(inputs.plannedSessions);
+  const shown = inputs.logs.map((l) => {
+    const day = logDay(l, plannedById);
+    return day === l.completedDate ? l : { ...l, completedDate: day };
+  });
+  const weeks = weeklyLoad({ ...inputs, logs: shown }, Math.max(0, -offset), Math.max(0, offset));
   const week = weeks.find((w) => w.weekStart === monday);
   const byId = new Map(inputs.templates.map((t) => [t.id, t]));
   const logged = new Set(inputs.logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -61,7 +69,7 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
     if (!t || t.type === 'recovery') return;
     templatesByDate.set(date, [...(templatesByDate.get(date) ?? []), t]);
   };
-  for (const l of inputs.logs) if (l.completedDate >= monday && l.completedDate < end) add(l.completedDate, byId.get(l.templateId));
+  for (const l of shown) if (l.completedDate >= monday && l.completedDate < end) add(l.completedDate, byId.get(l.templateId));
   for (const s of inputs.plannedSessions) {
     if (s.scheduledDate < monday || s.scheduledDate >= end || s.scheduledDate < inputs.today) continue;
     if (s.status === 'skipped' || logged.has(s.id)) continue;

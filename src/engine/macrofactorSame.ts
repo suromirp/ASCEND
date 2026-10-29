@@ -9,6 +9,7 @@
 // workout is simply treated as done (or as one that may be enriched).
 
 import type { SessionLog } from '../models/training';
+import { daysBetween } from '../utils/dates';
 import { cleanExerciseName } from './exerciseMatch';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isWorkSet } from './workSets';
@@ -45,14 +46,15 @@ export function setOverlap(a: string[], b: string[]): number {
   return shared / Math.max(a.length, b.length);
 }
 
-// The stored log of the same day whose working sets are (nearly) this workout's;
+// The stored log of the same day, or the day before or after (a log whose day was chosen in
+// "Duur aanpassen"), whose working sets are (nearly) this workout's;
 // the best one when there are more. `taken` holds log ids that another workout
 // of the same file already matched.
 export function findSameWorkoutLog(workout: MacroFactorWorkout, logs: SessionLog[], taken: ReadonlySet<string> = new Set()): SessionLog | undefined {
   const keys = workoutKeys(workout);
   let best: { log: SessionLog; overlap: number } | undefined;
   for (const log of logs) {
-    if (log.completedDate !== workout.date || taken.has(log.id) || !isMacroFactorLog(log)) continue;
+    if (Math.abs(daysBetween(log.completedDate, workout.date)) > 1 || taken.has(log.id) || !isMacroFactorLog(log)) continue;
     const overlap = setOverlap(keys, logKeys(log));
     if (overlap >= SAME_SETS_RATIO && (!best || overlap > best.overlap)) best = { log, overlap };
   }

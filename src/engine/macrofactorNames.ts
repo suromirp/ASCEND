@@ -17,7 +17,7 @@
 // user confirms with one button (components/MacroFactorLinkCard.tsx).
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import { formatDateNL } from '../utils/dates';
+import { daysBetween, formatDateNL } from '../utils/dates';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession } from './macrofactorSets';
 import type { NameMapping } from './macrofactorLink';
@@ -103,7 +103,7 @@ export function suggestMappings(
     const tallies = new Map<string, Tally>();
     for (const w of list) {
       const side = workoutSide(w);
-      const logged = new Set(logs.filter((l) => l.completedDate === w.date && strength.has(l.templateId) && !isOwnDerived(l)).map((l) => l.templateId));
+      const logged = new Set(logs.filter((l) => (l.completedDate === w.date || (l.source === 'macrofactor' && Math.abs(daysBetween(l.completedDate, w.date)) <= 1)) && strength.has(l.templateId) && !isOwnDerived(l)).map((l) => l.templateId));
       const plannedIds = new Set(planned.filter((s) => s.scheduledDate === w.date && s.status !== 'skipped' && strength.has(s.templateId)).map((s) => s.templateId));
       const basis = logged.size > 0 ? 'logged' : 'planned';
       for (const id of logged.size > 0 ? logged : plannedIds) {
