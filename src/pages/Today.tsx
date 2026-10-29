@@ -178,6 +178,8 @@ function TodayContent() {
     : undefined;
   const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
+  // Een stille dag zegt al dat er niets staat; "Morgen: Niets gepland" erachter herhaalt dat alleen.
+  const quietTomorrow = tomorrow.kind === 'none' ? undefined : tomorrowLine;
   const doneToday = sessionLogs.filter((l) => l.completedDate === today);
   const restMode = settings.restDayMode ?? 'rest';
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
@@ -307,7 +309,7 @@ function TodayContent() {
           onDone={() => { const t = templateById.get(restToday.templateId); if (t) void logSession(asPlannedLog(restToday, t, program, today)); }}
           linkLabel={restMode === 'active' ? 'Invullen wat je deed' : 'Toch gewandeld?'}
           onLink={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }}
-          tomorrow={tomorrowLine}
+          tomorrow={quietTomorrow}
         />
       ) : allTodayDone && anyDoneToday ? (
         <DoneTodayCard
@@ -329,7 +331,7 @@ function TodayContent() {
                 ? 'Je bent ziek gemeld. Rust uit; wat je nu mist, hoef je niet in te halen.'
                 : 'Je training van vandaag is van de planning gehaald. Rust is ook training.'
               : 'Vandaag staat er niets gepland.'}
-          tomorrow={tomorrowLine}
+          tomorrow={quietTomorrow}
         />
       )}
 

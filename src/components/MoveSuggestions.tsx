@@ -72,7 +72,7 @@ export function MoveSuggestions({
     <div className="flex flex-col gap-3">
       {catchUp && (
         <p className="text-[13px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Deze stond op {weekdayShortNL(sessionDate)} {formatDateNL(sessionDate)}. Kies vandaag of een dag erna, dan komt hij daar opnieuw te staan.
+          Kies vandaag of een dag erna. De oude rij blijft staan, als ingehaald.
         </p>
       )}
       {originalDate && originalDate < today && originalDate !== sessionDate && (
@@ -102,7 +102,7 @@ export function MoveSuggestions({
           <input
             id="move-date"
             ref={dateRef}
-            type="date"
+            type="date" lang="nl"
             min={today}
             className="h-11 w-full rounded-xl border px-3 font-sans text-[15px] tabular-nums"
             style={{ borderColor: 'var(--color-control-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}

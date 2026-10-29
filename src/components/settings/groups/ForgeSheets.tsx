@@ -138,7 +138,7 @@ export function CheckFromSheet({ onClose }: { onClose: () => void }) {
         <label htmlFor="forge-sinds-datum" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Vanaf</label>
         <input
           id="forge-sinds-datum"
-          type="date"
+          type="date" lang="nl"
           value={from}
           onChange={(e) => /^\d{4}-\d{2}-\d{2}$/.test(e.target.value) && save(e.target.value)}
           className="min-h-[44px] w-full rounded-lg border bg-transparent px-3 text-base"

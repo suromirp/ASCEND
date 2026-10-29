@@ -9,7 +9,7 @@ import {
   addOnsFor,
   allProfiles,
   formatAddOns,
-  formatMachineWeights,
+  machineSummary,
   hasStack,
   MAX_GYM_PROFILES,
   ownWeightsFor,
@@ -43,7 +43,7 @@ export function MachineListSheet({ onClose }: { onClose: () => void }) {
         {withList.length > 0 ? (
           <div className="st-list">
             {withList.map((e) => (
-              <SettingsRow key={e.id} id={`tg-${e.id}`} title={e.name} value={formatMachineWeights(ownWeightsFor(profile, e) ?? [])} onClick={() => setEditing(e.id)} />
+              <SettingsRow key={e.id} id={`tg-${e.id}`} title={e.name} value={machineSummary(ownWeightsFor(profile, e) ?? [])} onClick={() => setEditing(e.id)} />
             ))}
           </div>
         ) : (

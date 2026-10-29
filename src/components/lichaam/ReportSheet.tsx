@@ -22,7 +22,7 @@ export function ReportDateField({ id, value, onChange }: { id: string; value: st
       <label htmlFor={id} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sinds wanneer?</label>
       <input
         id={id}
-        type="date"
+        type="date" lang="nl"
         value={value}
         max={today}
         onChange={(e) => onChange(e.target.value)}

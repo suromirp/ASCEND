@@ -1,5 +1,6 @@
 import type { ScheduleProposal } from '../engine/scheduler';
-import { formatDateNL } from '../utils/dates';
+import { formatDateNL, todayISO } from '../utils/dates';
+import { isCatchUpProposal } from '../engine/catchUp';
 import { useSheetClose } from '../utils/useSheetClose';
 import { haptics } from '../utils/haptics';
 import { Portal } from './Portal';
@@ -18,6 +19,7 @@ export function RescheduleDialog({
   onCancel: () => void;
 }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onCancel);
+  const catchUp = isCatchUpProposal(proposal.changes, todayISO());
   // Stil, zonder knop: hoe vermoeid je benen op de nieuwe dag ongeveer zijn.
   const legNotes = useLegMoveNotes(proposal.changes.filter((c) => !c.restore && c.toDate !== c.fromDate).map((c) => ({ sessionId: c.sessionId, toDate: c.toDate })));
 
@@ -30,7 +32,7 @@ export function RescheduleDialog({
         <div ref={sheetRef} className={`relative w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-6">
-            <div className="-mt-2"><SheetHeader eyebrow="Schema-aanpassing" onClose={requestClose} /></div>
+            <div className="-mt-2"><SheetHeader eyebrow={catchUp ? 'Inhalen' : 'Schema-aanpassing'} onClose={requestClose} /></div>
             <div className="mt-3 flex flex-col gap-2">
               {proposal.changes.map((c) => (
                 <div key={c.sessionId} className="flex items-center justify-between text-sm">
@@ -69,7 +71,7 @@ export function RescheduleDialog({
             ) : (
               <div className="mt-5 flex flex-col gap-3">
                 <PrimaryButton onClick={requestClose}>Liever niet</PrimaryButton>
-                <SecondaryButton onClick={onApply}>{proposal.changes[0]?.restore ? 'Toch doen' : 'Toch verplaatsen'}</SecondaryButton>
+                <SecondaryButton onClick={onApply}>{proposal.changes[0]?.restore ? 'Toch doen' : catchUp ? 'Toch inhalen' : 'Toch verplaatsen'}</SecondaryButton>
               </div>
             )}
           </Card>

@@ -117,7 +117,7 @@ export function MorningCard() {
           )}
         </div>
         <div>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelen je benen? Eén tik is genoeg.</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelen je benen?</p>
           <div className="mt-2 grid grid-cols-4 gap-1.5">
             {LEGS.map(([k, text]) => {
               const isSuggestion = suggested?.value === k;

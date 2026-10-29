@@ -83,7 +83,7 @@ export function ChangeNotice() {
           <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="min-h-[44px] min-w-0 flex-1 py-1.5 text-left">
             <Eyebrow>Aangepast</Eyebrow>
             <p className="mt-0.5 line-clamp-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{recentChange.title}</p>
-            {!open && <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>{summary}{recentChange.why ? ' · waarom' : ''}</p>}
+            {!open && <p className="line-clamp-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{summary}{recentChange.why ? ' · waarom' : ''}</p>}
           </button>
           <TextButton onClick={handleUndo} disabled={undoing} className="shrink-0 px-2">
             {undoing ? 'Bezig…' : 'Ongedaan maken'}

@@ -183,7 +183,7 @@ function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; on
                 <label className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   Startdatum
                   <input
-                    type="date" value={d.startDate} min={today}
+                    type="date" lang="nl" value={d.startDate} min={today}
                     onChange={(e) => set({ startDate: e.target.value })}
                     className="mt-1 w-full rounded-lg border px-2.5 py-2 text-sm" style={inputStyle}
                   />

@@ -46,7 +46,7 @@ export const SEVERITY_CHOICES = [
 ] as const;
 
 const KNAPIK = 'Roeien en optrekken helpen bij rugzakdragen (Knapik e.a. 2012, bewijs: matig, in het onderzoek “Aanvullend onderzoek GR5 voorbereiding”).';
-const ROMP = 'Rompoefeningen staan in het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert).';
+const ROMP = 'Rompoefeningen horen bij de krachtoefeningen voor de GR5 in het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert).';
 const NIETS_APART = 'Voor deze plek staat in het onderzoek achter ASCEND niets apart. Dit is een rustige, algemene aanpak; krachttraining verlaagt over sporten heen het aantal blessures (Lauersen e.a. 2014, bewijs: matig tot sterk).';
 
 export const BODY_CARE: Record<string, BodyCare> = {
@@ -144,7 +144,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Step-up op een tree', dose: '3 × 8 per been', note: 'Later met een rugzak' },
         { name: 'Bilbrug', dose: '3 × 12', note: 'Boven even aanspannen' },
       ],
-      basis: 'Heupabductie en step-ups staan in het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert; heupkracht bij kniepijn voorin: bewijs matig, als behandeling). De bilbrug is afgeleid.',
+      basis: 'Heupabductie en step-ups horen bij de krachtoefeningen voor de GR5 in het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert; heupkracht bij kniepijn voorin: bewijs matig, als behandeling). De bilbrug is afgeleid.',
     },
   },
   dij: {
@@ -192,7 +192,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Eenbenige kuitheffing', dose: '3 × 12 per been', note: 'Langzaam omlaag' },
         { name: 'Korte-voetoefening', dose: '10 minuten, 2 tot 3 keer per week', note: 'Trek je voorvoet naar je hiel zonder je tenen te buigen' },
       ],
-      basis: 'Voetspiertraining maakte recreatieve lopers 2,4 keer minder vatbaar voor een loopblessure, in één onderzoek (Taddei e.a. 2020, bewijs: matig). De rest is afgeleid uit het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding”.',
+      basis: 'Voetspiertraining maakte recreatieve lopers 2,4 keer minder vatbaar voor een loopblessure, in één onderzoek (Taddei e.a. 2020, bewijs: matig). De rest is afgeleid uit de krachtoefeningen voor de GR5 in het onderzoek “Aanvullend onderzoek GR5 voorbereiding”.',
     },
   },
   enkel: {
@@ -257,7 +257,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Romeense deadlift met licht gewicht', dose: '3 × 8' },
         { name: 'Heup zijwaarts heffen', dose: '2 × 12 per kant' },
       ],
-      basis: 'Romeense deadlift en heupabductie staan in het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: matig en expert). De bilbrug is afgeleid.',
+      basis: 'Romeense deadlift en heupabductie horen bij de krachtoefeningen voor de GR5 in het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: matig en expert). De bilbrug is afgeleid.',
     },
   },
   hamstring: {
@@ -290,7 +290,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Kuitheffing met gebogen knie', dose: '3 × 10 per been', note: 'Voor de diepe kuitspier' },
         { name: 'Tenen omhoog (tibialis raise)', dose: '2 × 15' },
       ],
-      basis: 'Eenbenige kuitheffingen staan in het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert). Normen voor aantallen komen van coaches en zijn niet bewezen (bewijs: zwak).',
+      basis: 'Eenbenige kuitheffingen horen bij de krachtoefeningen voor de GR5 in het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert). Normen voor aantallen komen van coaches en zijn niet bewezen (bewijs: zwak).',
     },
   },
   achilles: {

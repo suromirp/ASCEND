@@ -499,7 +499,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       if (r.setting !== 'auto') return { value: choiceShort('figuur', r.setting) };
       return r.source === 'linked'
         ? { value: choiceShort('figuur', r.figure), auto: true, sub: 'Uit je koppeling' }
-        : { value: choiceShort('figuur', r.figure), auto: true, sub: `Nog niet gekozen, dus ${choiceShort('figuur', r.figure)}` };
+        : { value: choiceShort('figuur', r.figure), auto: true, sub: `Nog niet gekozen, dus je ziet de ${choiceShort('figuur', r.figure).toLowerCase()}` };
     }
 
     // Wat speelde er (engine/influence.ts): alles staat aan, de oorzaak met je patroon.

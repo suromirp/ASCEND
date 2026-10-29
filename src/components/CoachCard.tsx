@@ -216,8 +216,9 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
       <div className="flex gap-3">
         <KindIcon trigger={advice.trigger} />
         <div className="min-w-0 flex-1">
-          <Eyebrow tone={kind.color}>{kind.label}</Eyebrow>
-          <p className="mt-0.5 text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</p>
+          {/* In een blad met één advies staat "Advies" al erboven; dan hoeft de soort er niet nog een keer boven. */}
+          {!primary && <Eyebrow tone={kind.color}>{kind.label}</Eyebrow>}
+          <p className={`${primary ? '' : 'mt-0.5 '}text-sm font-medium leading-snug`} style={{ color: 'var(--color-ink)' }}>{advice.title}</p>
           {glance ? (
             <p className="mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{adviceLead(advice)}</p>
           ) : (

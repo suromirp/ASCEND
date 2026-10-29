@@ -260,7 +260,15 @@ export function AscendPage() {
           down={stepAvailability(listed, menuView.item.goal.id, 'down')}
           onEdit={() => setEditing(menuView.item.goal)}
           onLabel={() => setLabelId(menuView.item.goal.id)}
-          onStep={(dir) => handleMove(menuView.item.goal.id, moveGoal(listed, menuView.item.goal.id, dir))}
+          onStep={(dir) => {
+            const result = moveGoal(listed, menuView.item.goal.id, dir);
+            handleMove(menuView.item.goal.id, result);
+            // Een stap die niets verandert zegt dat, in plaats van stil te blijven.
+            if (!result.changed) {
+              const can = stepAvailability(listed, menuView.item.goal.id, dir);
+              setFlash(can.can ? 'De volgorde bleef zoals ze was.' : can.reason);
+            }
+          }}
           onArchive={() => setArchiving(menuView.item.goal)}
           onClose={() => setMenuId(null)}
         />

@@ -34,6 +34,12 @@ export function qualifiesForCatchUp(session: PlannedSession, template: SessionTe
   return catchUpEligibility(session, template, args).ok;
 }
 
+// Is dit voorstel een inhaal: elke verandering haalt een rij van een voorbije dag naar vandaag of later.
+// De Akkoord-bladen gebruiken het voor de woorden "Inhalen" en "Toch inhalen".
+export function isCatchUpProposal(changes: readonly ScheduleChange[], today: string): boolean {
+  return changes.length > 0 && changes.every((c) => !c.restore && c.fromDate < today && c.toDate >= today && c.toDate !== c.fromDate);
+}
+
 // De twee rijen die een inhaal schrijft. `session` zelf wordt niet aangepast.
 export function catchUpRows(session: PlannedSession, toDate: string, lock: PlanLock, newId: string): { skipped: PlannedSession; added: PlannedSession } {
   const skipped: PlannedSession = { ...session, status: 'skipped', lock };

@@ -12,3 +12,5 @@ Datum, onderwerp, rol, model, tokens, duur, herstel, opmerking
 - 2026-10-29, Opzij vegen controle, Lookout+Warden, opus (general-purpose), 201k, 15 min, 0
 
 Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu als rol, volgens de tabel.
+- 2026-10-29, Kleine ronde (tekst en UI), Sherpa, sonnet (ontwikkelaar), 257k, 18 min, 0, eerste helper volgens de tabel; veel punten waren al opgelost of niet te herleiden zonder afdruk
+- 2026-10-29, Gewichten als bereik en pond, Sherpa, sonnet (ontwikkelaar), 133k, 19 min, 0, drie aanvullingen van de eigenaar tijdens het bouwen

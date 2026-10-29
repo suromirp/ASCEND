@@ -152,7 +152,7 @@ export function GoalFormSheet({
 
           <div className="flex flex-col gap-2">
             <label htmlFor="goal-date" className="text-base" style={{ color: 'var(--color-ink)' }}>{needsDate ? 'Wanneer is het?' : <>Datum<span style={{ color: 'var(--color-ink-dim)' }}> (mag leeg)</span></>}</label>
-            <input id="goal-date" type="date" value={date} min={goal?.targetDate && goal.targetDate < today ? undefined : today} onChange={(e) => setDate(e.target.value)} className="min-h-[48px] w-full rounded-xl border px-3 text-base" style={fieldStyle} />
+            <input id="goal-date" type="date" lang="nl" value={date} min={goal?.targetDate && goal.targetDate < today ? undefined : today} onChange={(e) => setDate(e.target.value)} className="min-h-[48px] w-full rounded-xl border px-3 text-base" style={fieldStyle} />
             {date && weeks !== undefined && weeks > 0 && <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{weekdayLongNL(date)}, over {weeksWord(weeks)}</p>}
           </div>
 

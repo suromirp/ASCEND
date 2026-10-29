@@ -12,5 +12,8 @@ export default defineConfig({
     // IndexedDB (bootReplay, leaveSync, repeatWeek); 5 s is too tight when
     // the suite shares the machine with other runs.
     testTimeout: 30_000,
+    // De beforeEach van die tests start de hele app (migraties) en kreeg onder drukte de standaard 10 s te krap
+    // (horizonPlan.test.ts).
+    hookTimeout: 120_000,
   },
 });

@@ -29,7 +29,7 @@ export function BootBreakInPanel({ status, boots, onSave }: { status: BootBreakI
       {editing ? (
         <div className="flex flex-col gap-2">
           <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }} htmlFor="schoenen-datum">Eerste dag dat je ze draagt</label>
-          <input id="schoenen-datum" type="date" value={since} max={today} onChange={(e) => e.target.value && setSince(e.target.value)} className={field} style={fieldStyle} />
+          <input id="schoenen-datum" type="date" lang="nl" value={since} max={today} onChange={(e) => e.target.value && setSince(e.target.value)} className={field} style={fieldStyle} />
           <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }} htmlFor="schoenen-naam">Naam (mag leeg)</label>
           <input id="schoenen-naam" type="text" value={name} maxLength={40} placeholder={DEFAULT_BOOTS_NAME} onChange={(e) => setName(e.target.value)} className={field} style={fieldStyle} />
           <div className="flex gap-3">

@@ -178,7 +178,7 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
                 <label className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   Eerste dag
                   <input
-                    type="date"
+                    type="date" lang="nl"
                     value={startDate}
                     min={today}
                     onChange={(e) => {
@@ -193,7 +193,7 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
                 <label className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   Laatste dag
                   <input
-                    type="date"
+                    type="date" lang="nl"
                     value={endDate}
                     min={startDate || today}
                     onChange={(e) => setEndDate(e.target.value)}
