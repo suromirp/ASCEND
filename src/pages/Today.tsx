@@ -184,7 +184,7 @@ function TodayContent() {
   // Gedaan vandaag: een log die vandaag telt (engine/logDay.ts: een training uit MacroFactor die gisteren begon
   // en vandaag afliep draagt de datum van het bestand, maar telt op de dag van zijn geplande training).
   const plannedById = plannedByIdOf(plannedSessions);
-  const doneToday = sessionLogs.filter((l) => logDay(l, plannedById) === today);
+  const doneToday = sessionLogs.filter((l) => l.completedDate === today || logDay(l, plannedById) === today);
   const restMode = settings.restDayMode ?? 'rest';
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;

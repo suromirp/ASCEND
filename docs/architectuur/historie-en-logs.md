@@ -33,4 +33,4 @@ overnemen" (`docs/beslissingen/2026-10-25-correcties-uit-intervals.md`).
 The same append-only pattern applies to `MilestoneProgress` (the record of
 when an Ascent Ladder milestone was actually cleared, vs. the static
 `Objective` / `MilestoneDefinition` ladder).
-Which day a log is shown on (`engine/logDay.ts`) is read only: the day of its planned training when that is at most one day from `completedDate`, else `completedDate`; nothing is stored or rewritten, and everything that computes load, legs or planning keeps `completedDate` (`docs/beslissingen/2026-10-29-dag-van-een-training.md`).
+Which day a log is shown on (`engine/logDay.ts`) is read only: the day of its planned training for a MacroFactor log when that is exactly the day after `completedDate`, else `completedDate`; nothing is stored or rewritten, and everything that computes load, legs or planning keeps `completedDate` (`docs/beslissingen/2026-10-29-dag-van-een-training.md`).

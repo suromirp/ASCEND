@@ -14,6 +14,7 @@ import { doubtAbout, LONGEST_PLAUSIBLE_WORKOUT_MIN, type MacroFactorProposal } f
 import { minutesLabel } from './macrofactorSets';
 import type { MacroFactorWorkout } from './macrofactorImport';
 import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
+import { isNextDay } from './logDay';
 
 export type NewProposal = Extract<MacroFactorProposal, { kind: 'new' }>;
 
@@ -28,21 +29,20 @@ export interface DurationChoice {
 // The days "Welke dag?" offers: the day of the file and, when the row belongs to a planned
 // training on another day, that day. The planned day is the default
 // (docs/beslissingen/2026-10-29-dag-van-een-training.md). Only a new log gets a day here.
-export function dayOptions(p: NewProposal): { fileDay: string; plannedDay?: string; defaultDay: string } {
+export function dayOptions(p: NewProposal, today: string = todayISO()): { fileDay: string; plannedDay?: string; defaultDay: string } {
   const fileDay = p.workout.date;
-  const plannedDay = p.planned && p.planned.scheduledDate !== fileDay ? p.planned.scheduledDate : undefined;
+  // The same limit as logDay: the planned day is the day after the file, and not in the future.
+  const plannedDay = p.planned && isNextDay(fileDay, p.planned.scheduledDate) && p.planned.scheduledDate <= today ? p.planned.scheduledDate : undefined;
   return { fileDay, plannedDay, defaultDay: plannedDay ?? fileDay };
 }
 
-// The moment the log ends on the chosen day: the clock time of the workout (noon when the
-// file has none) plus the duration, kept inside that day.
+// The moment the log ends on the chosen day: the real end (start plus duration) when that falls
+// on the chosen day, else early on that day (00:15), since the work was done before midnight.
 function completedAtOn(date: string, start: string, minutes: number): string {
-  const time = /T(\d{2}):(\d{2})/.exec(start);
   const [y, m, d] = date.split('-').map(Number);
-  const at = new Date(y, m - 1, d, time ? Number(time[1]) : 12, time ? Number(time[2]) : 0);
-  at.setMinutes(at.getMinutes() + minutes);
-  const endOfDay = new Date(y, m - 1, d, 23, 59);
-  return (at > endOfDay ? endOfDay : at).toISOString();
+  const end = new Date(new Date(start).getTime() + minutes * 60_000);
+  const sameDay = end.getFullYear() === y && end.getMonth() === m - 1 && end.getDate() === d;
+  return (sameDay ? end : new Date(y, m - 1, d, 0, 15)).toISOString();
 }
 
 export const tooLong = (workout: MacroFactorWorkout): boolean => !!workout.durationSec && workout.durationSec / 60 > LONGEST_PLAUSIBLE_WORKOUT_MIN;

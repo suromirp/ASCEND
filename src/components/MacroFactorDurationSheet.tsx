@@ -13,7 +13,7 @@ import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { TextButton } from './TextButton';
 import { Card, PrimaryButton, Segmented, SheetGrip } from './ui';
-import { formatDateNL, weekdayShortNL } from '../utils/dates';
+import { formatDateNL, weekdayLongNL, weekdayShortNL } from '../utils/dates';
 
 export function MacroFactorDurationSheet({
   proposal,
@@ -71,7 +71,7 @@ export function MacroFactorDurationSheet({
                     { value: days.plannedDay, label: `${weekdayShortNL(days.plannedDay)} ${formatDateNL(days.plannedDay)}`, aria: `Dag van de geplande training, ${weekdayShortNL(days.plannedDay)} ${formatDateNL(days.plannedDay)}` },
                   ]}
                 />
-                <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je training hoort bij {weekdayShortNL(days.plannedDay)} {formatDateNL(days.plannedDay)}. Het bestand zegt {weekdayShortNL(days.fileDay)} {formatDateNL(days.fileDay)}.</p>
+                <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je training hoort bij {weekdayLongNL(days.plannedDay)} {formatDateNL(days.plannedDay)}. Het bestand zegt {weekdayLongNL(days.fileDay)} {formatDateNL(days.fileDay)}.</p>
               </div>
             )}
             <div className="mt-4">

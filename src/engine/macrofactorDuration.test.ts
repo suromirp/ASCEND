@@ -84,14 +84,34 @@ describe('welke dag', () => {
 
   it('biedt de geplande dag aan, als die anders is, en kiest die als standaard', () => {
     const p = withPlanned('2026-10-29');
-    expect(dayOptions(p)).toEqual({ fileDay: '2026-10-28', plannedDay: '2026-10-29', defaultDay: '2026-10-29' });
+    expect(dayOptions(p, '2026-10-29')).toEqual({ fileDay: '2026-10-28', plannedDay: '2026-10-29', defaultDay: '2026-10-29' });
   });
 
   it('biedt niets extra als de geplande dag gelijk is of er geen geplande training is', () => {
-    expect(dayOptions(withPlanned('2026-10-28')).plannedDay).toBeUndefined();
+    expect(dayOptions(withPlanned('2026-10-28'), '2026-10-29').plannedDay).toBeUndefined();
     const [p] = plan();
     if (!canAdjustDuration(p, '2026-10-29')) throw new Error('expected a new row');
-    expect(dayOptions({ ...p, planned: undefined })).toEqual({ fileDay: '2026-10-28', plannedDay: undefined, defaultDay: '2026-10-28' });
+    expect(dayOptions({ ...p, planned: undefined }, '2026-10-29')).toEqual({ fileDay: '2026-10-28', plannedDay: undefined, defaultDay: '2026-10-28' });
+  });
+
+  it('biedt de geplande dag niet aan bij 3 dagen verschil, een dag eerder of een dag in de toekomst', () => {
+    expect(dayOptions(withPlanned('2026-10-31'), '2026-11-05').plannedDay).toBeUndefined();
+    expect(dayOptions(withPlanned('2026-10-27'), '2026-10-29').plannedDay).toBeUndefined();
+    expect(dayOptions(withPlanned('2026-10-29'), '2026-10-28').plannedDay).toBeUndefined();
+  });
+
+  it('houdt het eind van de training als dat op de gekozen dag valt, anders vroeg op die dag', () => {
+    const p = withPlanned('2026-10-29');
+    const late = { ...p, workout: { ...p.workout, start: '2026-10-28T23:30:00' } };
+    const endsNextDay = new Date(withChosenDuration(late, { minutes: 50, date: '2026-10-29' }).draft.completedAt);
+    expect(endsNextDay.getDate()).toBe(29);
+    expect(endsNextDay.getHours()).toBe(0);
+    expect(endsNextDay.getMinutes()).toBe(20);
+    const early = { ...p, workout: { ...p.workout, start: '2026-10-28T18:05:00' } };
+    const fallback = new Date(withChosenDuration(early, { minutes: 50, date: '2026-10-29' }).draft.completedAt);
+    expect(fallback.getDate()).toBe(29);
+    expect(fallback.getHours()).toBe(0);
+    expect(fallback.getMinutes()).toBe(15);
   });
 
   it('zet de gekozen dag als datum van de nieuwe log, met het tijdstip op die dag', () => {

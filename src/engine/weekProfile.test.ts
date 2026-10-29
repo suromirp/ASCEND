@@ -39,7 +39,7 @@ describe('dayLoads', () => {
 
   it('zet een log die een dag eerder in het bestand staat op de dag van zijn geplande training', () => {
     const ps = planned('tpl_upper_a', '2026-10-22');
-    const l = log('tpl_upper_a', '2026-10-21', 50, { rpe: 7, plannedSessionId: ps.id });
+    const l = log('tpl_upper_a', '2026-10-21', 50, { rpe: 7, plannedSessionId: ps.id, source: 'macrofactor' });
     const days = dayLoads({ ...base, weekStart: WEEK, logs: [l], plannedSessions: [ps] });
     expect(days[2].load).toBe(0);
     expect(days[3].load).toBe(50 * 7);

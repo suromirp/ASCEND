@@ -48,6 +48,12 @@ describe('dezelfde workout onder een andere naam', () => {
     expect(findSameWorkoutLog(extra, [storedLog()])).toBeDefined();
   });
 
+  it('vindt een log waarvan de dag een dag na de dag van het bestand ligt (zelf gekozen dag)', () => {
+    expect(findSameWorkoutLog(renamed, [storedLog({ completedDate: '2026-10-15' })])).toBeDefined();
+    expect(findSameWorkoutLog(renamed, [storedLog({ completedDate: '2026-10-13' })])).toBeDefined();
+    expect(findSameWorkoutLog(renamed, [storedLog({ completedDate: '2026-10-17' })])).toBeUndefined();
+  });
+
   it('laat een andere training op dezelfde dag staan', () => {
     const other: MacroFactorWorkout = { ...renamed, exercises: [{ name: 'Bench Press', sets: [{ reps: 8, weightKg: 70 }, { reps: 8, weightKg: 70 }, { reps: 8, weightKg: 70 }], top: { reps: 8, weightKg: 70 } }], setCount: 3 };
     expect(findSameWorkoutLog(other, [storedLog()])).toBeUndefined();
@@ -56,7 +62,7 @@ describe('dezelfde workout onder een andere naam', () => {
   });
 
   it('laat een log van een andere dag of met de hand gemaakt buiten beschouwing', () => {
-    expect(findSameWorkoutLog(renamed, [storedLog({ completedDate: '2026-10-15' })])).toBeUndefined();
+    expect(findSameWorkoutLog(renamed, [storedLog({ completedDate: '2026-10-20' })])).toBeUndefined();
     expect(findSameWorkoutLog(renamed, [storedLog({ externalId: undefined, source: 'manual' })])).toBeUndefined();
   });
 
