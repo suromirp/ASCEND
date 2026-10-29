@@ -967,7 +967,16 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
           ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op de ochtend van ${shortDate(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'MORNING-CHECK'] }, laterDates, t.name, rule, morningEffect),
         });
       } else {
-        out.push({ id: `morning:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 3, title: `${reason}: houd ${t.name} rustig`, effect: t.type === 'strength' ? `Er is geen goede latere plek deze week. Kies de korte versie van ${t.name}, met lichtere gewichten en ruim reserve (zeker 3 herhalingen over).` : `Er is geen goede latere plek deze week. Kies de korte versie van ${t.name} en houd het rustig (RPE 3 tot 4).`, why: rule });
+        const when = next.scheduledDate === today ? 'vandaag' : next.scheduledDate === addDays(today, 1) ? 'morgen' : shortDate(next.scheduledDate);
+        // Een test of wedstrijd "rustig" doen is geen test meer: zeg wat je dan wel doet.
+        const testLike = hasRole(t, 'test') || hasRole(t, 'race');
+        const effect = testLike
+          ? `Op benen met spierpijn loop je trager dan je kunt, en deze week is er geen goede latere dag voor ${t.name}. Voel je ${when === 'vandaag' ? 'het bij het inlopen' : `${when} bij het opstaan`} nog spierpijn in je benen, loop dan rustig in plaats van te testen; de test komt dan terug in een volgende week. Zit de spierpijn alleen in je bovenlichaam, dan kun je gewoon testen.`
+          : t.type === 'strength'
+            ? `Deze week is er geen goede latere dag voor ${t.name}. Doe ${when} de korte versie, met lichtere gewichten en ruim reserve (zeker 3 herhalingen over).`
+            : `Deze week is er geen goede latere dag voor ${t.name}. Doe ${when} de korte versie, rustig (RPE 3 tot 4).`;
+        const title = testLike ? `${reason}: ${t.name} ${when}` : `${reason}: ${t.name} ${when} rustig`;
+        out.push({ id: `morning:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 3, title, effect, why: rule });
       }
     } else if (sig.rest) {
       // The mission card keeps today's easy session. Say so, instead of
