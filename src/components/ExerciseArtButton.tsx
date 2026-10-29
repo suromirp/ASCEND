@@ -17,9 +17,11 @@ import { MuscleThumb } from './MuscleFigure';
 // beeld ervan in plaats van de spieren; anders, bij "Alleen spierkaart" en als laden mislukt, blijft het
 // spierkaartje. Het kaartje haalt zelf nooit iets op (docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen-kaartje.md).
 // De naam staat ernaast, dus het kaartje is een knop met een eigen naam voor de schermlezer.
-export function ExerciseArtButton({ exerciseId, name }: { exerciseId: string; name: string }) {
+// Het beeld van het kaartje zelf: het middelste beeld van de tekening als die er al is, anders het
+// spierkaartje. Null als er geen kaartje hoort (onbekende oefening of de instelling op Uit). Ook voor
+// de strook bovenaan een training met een oefening per scherm.
+export function ExerciseArtThumb({ exerciseId, size = 42 }: { exerciseId: string; size?: number }) {
   const { settings } = useAppData();
-  const [open, setOpen] = useState(false);
   const exercise = exerciseById(exerciseId);
   const slug = exerciseArt(exerciseId)?.slug;
   const wantsDrawing = !!slug && showsDrawing(resolveExerciseArt(settings));
@@ -34,6 +36,20 @@ export function ExerciseArtButton({ exerciseId, name }: { exerciseId: string; na
   const frame = useMemo(() => (wantsDrawing && drawing ? thumbFrame(drawing) : null), [wantsDrawing, drawing]);
   if (!exercise || !showsExerciseArt(resolveExerciseArt(settings))) return null;
   const { figure } = resolveFigure(settings);
+  return frame ? (
+    <svg viewBox={frame.viewBox.join(' ')} width={size - 2} height={size - 2} className="ea-thumb-draw" fill="currentColor" style={{ color: 'var(--color-ink)' }} aria-hidden="true" data-testid="art-thumb-drawing">
+      <path fillRule="evenodd" d={frame.d} />
+    </svg>
+  ) : (
+    <MuscleThumb marks={muscleMarks(exercise)} size={size} figure={figure} />
+  );
+}
+
+export function ExerciseArtButton({ exerciseId, name }: { exerciseId: string; name: string }) {
+  const { settings } = useAppData();
+  const [open, setOpen] = useState(false);
+  const exercise = exerciseById(exerciseId);
+  if (!exercise || !showsExerciseArt(resolveExerciseArt(settings))) return null;
   return (
     <>
       <button
@@ -44,13 +60,7 @@ export function ExerciseArtButton({ exerciseId, name }: { exerciseId: string; na
         className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border"
         style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}
       >
-        {frame ? (
-          <svg viewBox={frame.viewBox.join(' ')} width={40} height={40} className="ea-thumb-draw" fill="currentColor" style={{ color: 'var(--color-ink)' }} aria-hidden="true" data-testid="art-thumb-drawing">
-            <path fillRule="evenodd" d={frame.d} />
-          </svg>
-        ) : (
-          <MuscleThumb marks={muscleMarks(exercise)} size={42} figure={figure} />
-        )}
+        <ExerciseArtThumb exerciseId={exerciseId} />
       </button>
       {open && <ExerciseArtSheet exerciseId={exerciseId} onClose={() => setOpen(false)} />}
     </>

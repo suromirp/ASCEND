@@ -9,12 +9,14 @@
 // dezelfde tabel zonder invulvelden: het voorschrift om in de sportschool mee
 // te kijken, en één knop om de training af te vinken.
 
-import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { ExerciseArtButton } from '../ExerciseArtButton';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, type DroppedRow } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
+import { ForgeStrip } from './ForgeStrip';
+import { pageAt, resolveForgeLayout } from '../../engine/forgeLayout';
 import { QUICK_LABEL, quickActionsFor, quickButtonsOn, type QuickAction } from '../../engine/forgeQuickActions';
 import { previewDayLine } from '../../engine/sessionActions';
 import { restAlertChannels, restVibrationPattern } from '../../engine/restVibration';
@@ -269,6 +271,34 @@ export function ForgeWorkout({
   const [folded, setFolded] = useState<Record<string, boolean>>(() => Object.fromEntries(workout.filter(exerciseComplete).map((e) => [e.slot, true])));
   const scrollEl = useRef<HTMLDivElement>(null);
   const headerEl = useRef<HTMLElement>(null);
+  // Een oefening per scherm (instelling "Oefeningen in een training", engine/forgeLayout.ts): opzij vegen met
+  // CSS scroll-snap. De pagina volgt de scrollpositie; alleen een andere pagina geeft een render.
+  const paged = resolveForgeLayout(settings) === 'scherm' && workout.length > 0;
+  const pagerEl = useRef<HTMLDivElement>(null);
+  const [page, setPage] = useState(() => Math.max(0, workout.findIndex((e) => e.slot === activeRef?.slot)));
+  const pageRef = useRef(page);
+  // Bij het openen (en bij het aanzetten) meteen op de oefening die aan de beurt is, zonder te schuiven.
+  useLayoutEffect(() => {
+    const el = pagerEl.current;
+    if (!paged || !el) return;
+    el.scrollLeft = pageRef.current * el.clientWidth;
+  }, [paged]);
+  const onPagerScroll = useCallback(() => {
+    const el = pagerEl.current;
+    if (!el) return;
+    const p = pageAt(el.scrollLeft, el.clientWidth, el.childElementCount);
+    if (p === pageRef.current) return;
+    pageRef.current = p;
+    setPage(p);
+  }, []);
+  // Een tik in de strook: naar die oefening, in Uit zonder te schuiven.
+  const jumpTo = useCallback((i: number) => {
+    const el = pagerEl.current;
+    if (!el) return;
+    haptics.tap();
+    const off = reducedMotion() || document.documentElement.dataset.motion === 'off';
+    el.scrollTo({ left: i * el.clientWidth, behavior: off ? 'auto' : 'smooth' });
+  }, []);
   const timers = useRef<number[]>([]);
   // De oefening zoals hij was toen je dit veld begon te bewerken (zie applyWeight).
   const baseRef = useRef<{ key: string; ex: WorkoutExercise } | null>(null);
@@ -291,11 +321,15 @@ export function ForgeWorkout({
   // Een set in beeld: net boven het paneel als dat openstaat, anders in het midden.
   // Alleen als hij niet al helemaal te zien is, zodat het scherm niet onnodig beweegt.
   function scrollToRow(rowId: string) {
-    const root = scrollEl.current;
-    const el = root?.querySelector(`[data-row-id="${CSS.escape(rowId)}"]`);
+    const el = scrollEl.current?.querySelector(`[data-row-id="${CSS.escape(rowId)}"]`);
+    // Met een oefening per scherm scrolt de pagina van die oefening, en alleen als die in beeld is:
+    // Forge schuift nooit zelf naar een andere oefening.
+    const pageEl = el?.closest<HTMLElement>('[data-forge-page]');
+    if (pageEl && Number(pageEl.dataset.forgePage) !== pageRef.current) return;
+    const root = pageEl ?? scrollEl.current;
     if (!root || !el) return;
     const r = el.getBoundingClientRect();
-    const top = (headerEl.current?.offsetHeight ?? 90) + 8;
+    const top = pageEl ? pageEl.getBoundingClientRect().top + 8 : (headerEl.current?.offsetHeight ?? 90) + 8;
     const bottom = window.innerHeight - layout.current.dockH - layout.current.restH - 8;
     if (r.top >= top && r.bottom <= bottom) return;
     const target = layout.current.dockH > 0 ? bottom - r.height : top + Math.max(0, (bottom - top - r.height) / 2);
@@ -736,10 +770,44 @@ export function ForgeWorkout({
   const rowMenuRow = rowMenuEx?.rows.find((r) => r.id === rowMenu?.rowId);
   const rirRow = rirFor ? workout.find((e) => e.slot === rirFor.slot)?.rows.find((r) => r.id === rirFor.rowId) : undefined;
 
+  const bottomPad = dockH > 0 ? dockH + (rest && !readOnly ? 70 : 0) + 16 : rest ? 120 : 48;
+  const intro = (legLine || readOnly) && (
+            <div className="flex flex-col gap-1 px-4 pt-3">
+              {preview && <p className="text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{previewDayLine(date, program)}</p>}
+              {preview ? (
+                <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo staat hij klaar. Afvinken kan op de dag zelf.</p>
+              ) : readOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je houdt kracht bij in MacroFactor. Dit is het voorschrift om mee te kijken; afvinken doe je hier als je klaar bent.</p>}
+              {legPanel ?? (legLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{legLine}</p>)}
+            </div>
+          );
+  const exerciseBlock = (ex: WorkoutExercise, i: number) => (
+    <ExerciseBlock
+              key={ex.slot}
+              ex={ex}
+              first={paged || i === 0}
+              readOnly={readOnly}
+              column={column}
+              note={strength.exerciseNotes[ex.exerciseId]}
+              active={activeRef?.slot === ex.slot ? activeRef.rowId : undefined}
+              field={dock?.slot === ex.slot ? dock : null}
+              selected={dock?.slot === ex.slot && selected}
+              folded={!paged && !!folded[ex.slot] && exerciseComplete(ex)}
+              profile={strength.profile}
+              showPlates={strength.showPlates}
+              lighterText={lighter[ex.slot] && stillOpen(ex, lighter[ex.slot]) ? adjustText(stillOpen(ex, lighter[ex.slot])!, exerciseOf(ex)) : undefined}
+              noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, noFit[ex.slot]) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
+              heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, heavyTip[ex.slot]) ? heavyTip[ex.slot].text : undefined}
+              rirAsValue={strength.rirPrefill === 'target'}
+              quickOn={quickButtonsOn(settings)}
+              undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
+              act={actions}
+            />
+  );
+
   return (
     <Portal>
-      <div ref={scrollEl} id="forge-scroll" className="fixed inset-0 z-50 overflow-y-auto animate-fade-in" style={{ background: 'var(--color-bg)' }}>
-        <div className="mx-auto max-w-md" style={{ paddingBottom: dockH > 0 ? dockH + (rest && !readOnly ? 70 : 0) + 16 : rest ? 120 : 48 }}>
+      <div ref={scrollEl} id="forge-scroll" className={`fixed inset-0 z-50 animate-fade-in ${paged ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'}`} style={{ background: 'var(--color-bg)' }}>
+        <div className={paged ? 'mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col' : 'mx-auto max-w-md'} style={paged ? undefined : { paddingBottom: bottomPad }}>
           <header ref={headerEl} className="sticky top-0 z-20 border-b px-2" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-card-border)', paddingTop: 'env(safe-area-inset-top)' }}>
             <div className="flex items-center gap-1 pt-1">
               <button type="button" onClick={onClose} aria-label="Terug, de training blijft staan" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
@@ -771,45 +839,25 @@ export function ForgeWorkout({
                 </button>
               </div>
             )}
+            {paged && <ForgeStrip workout={workout} current={page} readOnly={readOnly} onJump={jumpTo} />}
           </header>
-
-          {(legLine || readOnly) && (
-            <div className="flex flex-col gap-1 px-4 pt-3">
-              {preview && <p className="text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{previewDayLine(date, program)}</p>}
-              {preview ? (
-                <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo staat hij klaar. Afvinken kan op de dag zelf.</p>
-              ) : readOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je houdt kracht bij in MacroFactor. Dit is het voorschrift om mee te kijken; afvinken doe je hier als je klaar bent.</p>}
-              {legPanel ?? (legLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{legLine}</p>)}
-            </div>
-          )}
-
+          {!paged && intro}
           {workout.length === 0 && (
             <p className="px-4 pt-6 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Deze training heeft nog geen oefeningen.</p>
           )}
 
-          {workout.map((ex, i) => (
-            <ExerciseBlock
-              key={ex.slot}
-              ex={ex}
-              first={i === 0}
-              readOnly={readOnly}
-              column={column}
-              note={strength.exerciseNotes[ex.exerciseId]}
-              active={activeRef?.slot === ex.slot ? activeRef.rowId : undefined}
-              field={dock?.slot === ex.slot ? dock : null}
-              selected={dock?.slot === ex.slot && selected}
-              folded={!!folded[ex.slot] && exerciseComplete(ex)}
-              profile={strength.profile}
-              showPlates={strength.showPlates}
-              lighterText={lighter[ex.slot] && stillOpen(ex, lighter[ex.slot]) ? adjustText(stillOpen(ex, lighter[ex.slot])!, exerciseOf(ex)) : undefined}
-              noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, noFit[ex.slot]) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
-              heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, heavyTip[ex.slot]) ? heavyTip[ex.slot].text : undefined}
-              rirAsValue={strength.rirPrefill === 'target'}
-              quickOn={quickButtonsOn(settings)}
-              undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
-              act={actions}
-            />
-          ))}
+          {paged ? (
+            <div ref={pagerEl} className="forge-pager min-h-0 flex-1" onScroll={onPagerScroll} data-testid="forge-pager">
+              {workout.map((ex, i) => (
+                <div key={ex.slot} className="forge-page" data-forge-page={i} style={{ paddingBottom: bottomPad }}>
+                  {i === 0 && intro}
+                  {exerciseBlock(ex, i)}
+                </div>
+              ))}
+            </div>
+          ) : (
+            workout.map((ex, i) => exerciseBlock(ex, i))
+          )}
         </div>
 
         {rest && !readOnly && (
@@ -1022,6 +1070,11 @@ export function ForgeWorkout({
                   right={<Toggle checked={quickButtonsOn(settings)} onChange={(on) => void updateSettings({ forgeQuickButtons: on })} label="Snelknoppen tonen" />}
                 />
               )}
+              <MenuRow
+                title="Een oefening per scherm"
+                sub="Opzij vegen van oefening naar oefening. Uit zet ze onder elkaar."
+                right={<Toggle checked={resolveForgeLayout(settings) === 'scherm'} onChange={(on) => void updateSettings({ forgeLayout: on ? 'scherm' : 'lijst' })} label="Een oefening per scherm" />}
+              />
               {guide && <MenuRow title="Uitleg bij deze training" onClick={() => { close(); setShowGuide(true); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />}
               {!readOnly && !confirmDiscard && (
                 <MenuRow icon="sluiten" title="Training weggooien" sub="Wat je invulde gaat verloren; de training blijft gepland." danger onClick={() => setConfirmDiscard(true)} />
@@ -1374,7 +1427,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
                       transition: 'background-color 0.3s ease, opacity 0.3s ease',
                     }}
                   >
-                    <span role="cell" className="flex justify-center">
+                    <span role="cell" data-swipe-zone className="flex min-h-[44px] items-center justify-center">
                       <span
                         className="flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums"
                         style={{ background: row.done ? 'var(--color-progress)' : own ? 'transparent' : 'var(--color-surface)', boxShadow: own && !row.done ? 'inset 0 0 0 1.5px var(--color-control-border)' : undefined, color: row.done ? 'var(--color-on-action)' : row.kind === 'warmup' ? 'var(--color-ink-dim)' : 'var(--color-ink)', transition: 'background-color 0.3s ease' }}
@@ -1382,7 +1435,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
                         {label}
                       </span>
                     </span>
-                    <span role="cell" className="min-w-0 font-sans text-xs leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+                    <span role="cell" data-swipe-zone className="min-w-0 font-sans text-xs leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
                       {showPrevious ? (
                         <span>{prev ?? ''}</span>
                       ) : own ? (

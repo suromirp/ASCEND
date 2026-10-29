@@ -225,6 +225,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     value: () => 'Eigen volgorde',
     reset: () => ({ cardOrder: undefined }),
   },
+  choice('forge-oefeningen', 'Oefeningen in een training', 'forge', 'forgeLayout', 'scherm', 'forgeOefeningen'),
   flag('forge-snelknoppen', 'Snelknoppen tonen', 'forge', 'forgeQuickButtons'),
   flag('slepen-week', 'Trainingen slepen in Week', 'planning', 'dragWeek'),
   choice('klaar-weging', 'Weging bij een doeltijd', 'doel', 'readinessWeighting', 'speed', 'klaarWeging'),

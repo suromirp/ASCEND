@@ -5,6 +5,7 @@ import { restAlertChannels, restVibrationPattern } from '../../../engine/restVib
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveExerciseArt } from '../../../engine/exerciseArtSettings';
+import { resolveForgeLayout } from '../../../engine/forgeLayout';
 import { resolveStrengthSettings, withProfile, type StrengthSettings } from '../../../engine/strengthSettings';
 import { SettingsEmpty, SettingsSection } from '../SettingsList';
 import { AddOnSheet, GymProfileSheet, MachineListSheet } from './ToestelSheets';
@@ -120,6 +121,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {sheet === 'bundel-invullen' && (
         <BundleSheet eyebrow="Forge" title="Bij het invullen" line="Wat het workoutscherm voor je doet." onClose={close}>
+          <SummaryRow id="forge-oefeningen" title="Oefeningen in een training" facts={facts} info="forgeOefeningen" onClick={() => setInner('forge-oefeningen')} />
           <SummaryRow id="forge-snelknoppen" title="Snelknoppen tonen" facts={facts} info="forgeSnelknoppen" onChange={(on) => void updateSettings({ forgeQuickButtons: on })} />
           <SummaryRow id="forge-rir-vooraf" title="RIR vooraf invullen" facts={facts} info="forgeRirVooraf" onClick={() => setInner('forge-rir-vooraf')} />
           <SummaryRow id="forge-doorvoeren" title="Wijzigingen doorvoeren" facts={facts} info="forgeDoorvoeren" onClick={() => setInner('forge-doorvoeren')} />
@@ -157,6 +159,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'forge-opwarmbereik' && <ChoiceFromDef def={CHOICES.opwarmbereik} value={s.warmupScope} onPick={(v) => save({ warmupScope: v })} onClose={close} />}
 
       {/* Keuzes in een blad: een onderblad bovenop. */}
+      {inner === 'forge-oefeningen' && <ChoiceFromDef def={CHOICES.forgeOefeningen} value={resolveForgeLayout(settings)} onPick={(v) => void updateSettings({ forgeLayout: v })} onClose={closeInner} />}
       {inner === 'forge-plaatjes' && <ChoiceFromDef def={CHOICES.plaatjes} value={resolveExerciseArt(settings)} onPick={(v) => void updateSettings({ exerciseArt: v })} onClose={closeInner} />}
       {inner === 'forge-weergave' && <ChoiceFromDef def={CHOICES.forgeWeergave} value={s.oneRmView} onPick={(v) => save({ oneRmView: v })} onClose={closeInner} />}
       {inner === 'forge-vergelijken' && <ChoiceFromDef def={CHOICES.forgeVergelijken} value={s.compareWeeks} onPick={(v) => save({ compareWeeks: v })} onClose={closeInner} />}

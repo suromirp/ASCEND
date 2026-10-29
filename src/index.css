@@ -1209,3 +1209,36 @@ html[data-motion='off'] .ea-licht .ea-m { animation: none; }
   .ea-play .ea-ring,
   .ea-licht .ea-m { animation: none; }
 }
+
+/* Forge: een set vegen en een oefening per scherm (docs/beslissingen/2026-10-29-oefeningen-opzij-vegen.md).
+   Een veeg begint alleen op het nummer of het voorschrift van een set: daar laat de browser horizontaal aan
+   de rij en scrolt verticaal zelf. Elders scrolt de pagina opzij naar de volgende oefening. */
+.swipe-front [data-swipe-zone] {
+  touch-action: pan-y;
+}
+.forge-pager {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.forge-pager::-webkit-scrollbar,
+.forge-strip::-webkit-scrollbar {
+  display: none;
+}
+.forge-page {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+.forge-strip {
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}

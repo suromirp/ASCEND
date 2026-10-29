@@ -386,6 +386,17 @@ export const CHOICES = {
       { value: 'off', label: 'Uit', note: 'Alles staat meteen op zijn plek', short: 'Uit' },
     ],
   }),
+  forgeOefeningen: def({
+    group: 'Forge',
+    title: 'Oefeningen in een training',
+    line: 'Hoe de oefeningen in een training staan.',
+    advice: 'scherm' as 'scherm' | 'lijst',
+    help: 'forgeOefeningen',
+    options: [
+      { value: 'scherm', label: 'Een per scherm', note: 'Opzij vegen van oefening naar oefening, met kaartjes bovenaan', short: 'Een per scherm' },
+      { value: 'lijst', label: 'Onder elkaar', note: 'Alle oefeningen op een pagina, naar beneden scrollen', short: 'Onder elkaar' },
+    ],
+  }),
   plaatjes: def({
     group: 'Forge',
     title: 'Plaatjes bij oefeningen',

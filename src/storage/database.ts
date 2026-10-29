@@ -713,6 +713,9 @@ export interface AppSettings {
   dragWeek?: boolean;
   // Snelknoppen onder de naam van een oefening in Forge (engine/forgeQuickActions.ts). Afwezig is aan.
   forgeQuickButtons?: boolean;
+  // Oefeningen in een training (engine/forgeLayout.ts): 'scherm' een per scherm, opzij vegen (het advies) of 'lijst'
+  // onder elkaar. Afwezig is het advies. Optional and additive; read defensively, so no migration step is needed.
+  forgeLayout?: 'scherm' | 'lijst';
   // De volgorde van de blokken op Je stand, per pagina (engine/cardOrder.ts). Absent = de standaard.
   // Gelezen door resolveCardOrder; onbekende en dubbele id's vallen weg. Optional and additive.
   cardOrder?: { stand?: string[] };
