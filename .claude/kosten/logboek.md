@@ -23,3 +23,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-29, Herkeuring Forge-sessie, Warden, opus (reviewer), 95k, 3 min, 0, vond wissen bij opstartfout; coördinator loste op
 - 2026-10-29, CLAUDE.md inkorten, Sherpa, sonnet (ontwikkelaar), 74k, 3 min, 0, 78 KB naar 25 KB
 - 2026-10-29, Spierpijn bovenlichaam, Sherpa, sonnet (ontwikkelaar), 110k, 9 min, 0
+- 2026-10-29, Inventaris code, Scout, haiku (Explore), 135k, 7 min, 0
