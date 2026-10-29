@@ -54,6 +54,7 @@ const everything: AppSettings = {
   newTestOnStops: false,
   weekFixProposal: false,
   dragWeek: false,
+  forgeQuickButtons: false,
   haptics: false,
   testStops: 'count',
   readinessWeighting: 'equal',

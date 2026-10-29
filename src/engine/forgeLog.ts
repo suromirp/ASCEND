@@ -10,7 +10,8 @@
 // - eigen: jij paste een set zelf aan;
 // - onder: een set kwam onder het bereik van het voorschrift;
 // - past-niet: geen gewicht van het toestel past bij een set;
-// - spotter: minstens 1 over voorgeschreven omdat falen zonder spotter gevaarlijk is.
+// - spotter: minstens 1 over voorgeschreven omdat falen zonder spotter gevaarlijk is;
+// - toegevoegd en weggehaald: een set die jij erbij zette of weghaalde (eigen handelingen, geen punt op de knop).
 
 import { FORGE_EVENT_KINDS, type ForgeEvent, type ForgeEventKind, type ForgeSetState } from '../models/forgeLog';
 import { formatNumberNL } from '../utils/number';
@@ -116,6 +117,15 @@ export function noFitEvent(ex: WorkoutExercise, fit: { rowId?: string; setNo?: n
   };
 }
 
+// Een set die jij toevoegde of weghaalde. Het nummer is dat van het moment zelf.
+export function setCountEvent(kind: 'toegevoegd' | 'weggehaald', ex: Pick<WorkoutExercise, 'exerciseId' | 'name'>, row: WorkoutRow, label: string, at: number, id: string): ForgeEvent {
+  return {
+    id, at, exerciseId: ex.exerciseId, exercise: ex.name, rowId: row.id, set: label, kind,
+    ...(kind === 'toegevoegd' ? { to: stateOf(row) } : {}),
+    fact: kind === 'toegevoegd' ? 'Je voegde deze set zelf toe.' : 'Je haalde deze set zelf weg.',
+  };
+}
+
 // Bij het begin: de sets waar Forge minstens 1 over voorschreef omdat falen zonder spotter gevaarlijk is.
 export function spotterEvents(workout: WorkoutExercise[], at: number, newId: () => string): ForgeEvent[] {
   const out: ForgeEvent[] = [];
@@ -207,6 +217,8 @@ export function becauseText(ev: ForgeEvent): string {
     case 'onder':
     case 'past-niet':
     case 'spotter':
+    case 'toegevoegd':
+    case 'weggehaald':
       return ev.fact ?? '';
   }
 }

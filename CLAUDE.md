@@ -665,6 +665,24 @@ opens, are kept by a runtime cache "exercise-art", and those of your own templat
 state) and `haptics.tap` only fires for a step you take yourself, with 140 ms between. Setting "Plaatjes bij oefeningen"
 (`exerciseArt`: beide, spierkaart, uit; `engine/exerciseArtSettings.ts`).
 
+**Het kaartje toont de tekening** (`components/ExerciseArtButton.tsx`, `engine/exerciseArtThumb.ts`, decision
+`docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen-kaartje.md`): the 44 by 44 card in the head of an exercise, in the rows of the
+list and in the swap sheet shows the middle image (step 2 after `ART_ORDER`) of the drawing in its own square viewBox, in `currentColor`,
+only with "Spierkaart en tekening" and only when the drawing is already there (in memory or in the service worker cache through
+`exerciseArtLoader#readCachedDrawing`; the card never fetches). Until then, with "Alleen spierkaart" and when loading fails it stays the
+muscle card (`MuscleThumb`); the switch is a 200 ms fade, straight to the end state in Rustig and Uit.
+
+**Snelknoppen en sets in Forge** (`engine/forgeQuickActions.ts`, `engine/forgeRows.ts`, `components/swipeRow.ts`,
+`components/forge/SwipeRow.tsx`, decision `docs/beslissingen/2026-10-29-snelknoppen-in-forge.md`): under the name of every exercise a row of
+outlined, muted chips (Ruilen, Opwarmset, Notitie; an exercise on time only Ruilen and Notitie, a read-only training none; "Set toevoegen" stays under the sets), the
+menu keeps everything. Setting "Snelknoppen tonen" (`AppSettings.forgeQuickButtons`, absent = on; the one word for it is "verwijderen", decision `2026-10-29-snelknoppen-in-forge-aanvulling.md`) also sits in the menu of the training;
+the row fades in and out (`mx-quick`). A long reason under the head folds to one line with "Meer". A set swipes to the left: 1 to 1,
+direction decided after 8 px, past 54 px it stays open with a red 72 px button ("Set 3 verwijderen"), past 60% of the width or 24 px before your finger reaches the screen edge (a swipe starts on the left of the row; never under 96 px) or fast it deletes at
+once, never started on kg, reps, RIR or the tick, one row open at a time. "Set 3 verwijderd" with "Ongedaan maken" stands under the sets for
+ten seconds. A set you added (`:a` or `:c` in its id, `isOwnRow`) has an outlined number and "eigen set" in the Voorschrift column; a work
+set of the program you removed is kept in `WorkoutExercise.dropped` (read through `forgeRows.ts#dropsOf`) and told in one line with "Terugzetten", and the reason gets "Jij doet er 4."
+when the count differs. Adding and removing are events in the Forge log (`toegevoegd`, `weggehaald`, no dot on the button).
+
 **A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
 average once there are 7 days) becomes a question in the morning check instead of a
 warning (`engine/shortNight.ts`, decision `docs/beslissingen/2026-10-25-korte-nacht-vragen.md`).

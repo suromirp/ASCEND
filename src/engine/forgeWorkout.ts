@@ -99,6 +99,8 @@ export interface WorkoutExercise {
   // The share of strength each earlier working set costs the next, as the proposal
   // counted it (learned or 3%); the adjusting in the training reads it from here.
   fatiguePerSet?: number;
+  // Werksets van het programma die jij weghaalde, met hun plek, voor "Terugzetten" (engine/forgeRows.ts).
+  dropped?: { row: WorkoutRow; index: number }[];
 }
 
 // --- rep ranges ------------------------------------------------------------------------------

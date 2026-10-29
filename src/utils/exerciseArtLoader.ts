@@ -9,6 +9,18 @@ const LOAD_LIMIT_MS = 8000;
 const cache = new Map<string, Promise<ExerciseDrawing | null>>();
 const ready = new Map<string, ExerciseDrawing>();
 
+// Wie wil weten dat er een tekening bij is gekomen (het kleine kaartje), zonder zelf iets op te halen.
+const listeners = new Set<(slug: string) => void>();
+export function onDrawingReady(listener: (slug: string) => void): () => void {
+  listeners.add(listener);
+  return () => void listeners.delete(listener);
+}
+function markReady(slug: string, drawing: ExerciseDrawing) {
+  if (ready.has(slug)) return;
+  ready.set(slug, drawing);
+  listeners.forEach((l) => l(slug));
+}
+
 export function loadedDrawing(slug: string): ExerciseDrawing | undefined {
   return ready.get(slug);
 }
@@ -24,7 +36,7 @@ export function loadDrawing(slug: string): Promise<ExerciseDrawing | null> {
       if (!response.ok) return null;
       const parsed = parseDrawing(await response.json());
       const drawing = parsed && orderedDrawing(parsed, artOrder(slug));
-      if (drawing) ready.set(slug, drawing);
+      if (drawing) markReady(slug, drawing);
       return drawing;
     } catch {
       return null;
@@ -56,5 +68,24 @@ export async function prefetchDrawings(
     const drawing = await loadDrawing(slug);
     if (!drawing) return;
     await new Promise((resolve) => setTimeout(resolve, gapMs));
+  }
+}
+
+// Alleen wat de service worker al bewaarde (cache "exercise-art"), zonder netwerk: voor het kleine kaartje in
+// een lijst, dat nooit extra moet ophalen. Geen cache of geen treffer is gewoon null.
+export async function readCachedDrawing(slug: string): Promise<ExerciseDrawing | null> {
+  const known = ready.get(slug);
+  if (known) return known;
+  try {
+    if (typeof caches === 'undefined') return null;
+    const store = await caches.open('exercise-art');
+    const hit = await store.match(drawingUrl(import.meta.env.BASE_URL, slug));
+    if (!hit) return null;
+    const parsed = parseDrawing(await hit.json());
+    const drawing = parsed && orderedDrawing(parsed, artOrder(slug));
+    if (drawing) markReady(slug, drawing);
+    return drawing;
+  } catch {
+    return null;
   }
 }

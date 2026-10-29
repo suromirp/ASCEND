@@ -323,6 +323,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waarom', text: 'trainingen van voor het inlezen van je programma zijn met de huidige template en instellingen achteraf herberekend, en zeggen minder.' },
     ],
   },
+  forgeSnelknoppen: {
+    title: 'Snelknoppen tonen',
+    lead: 'Onder de naam van elke oefening staan de handelingen die je tijdens een training het vaakst nodig hebt. Het menu met de drie puntjes houdt alles.',
+    points: [
+      { head: 'De knoppen', text: 'Ruilen, Opwarmset en Notitie. Bij een oefening op tijd alleen Ruilen en Notitie. Een set toevoegen doe je met de knop onder de sets.' },
+      { head: 'Uitleg en vorige keer', text: 'die hebben al een plek: het kaartje links van de naam en de kolomkop Vorige.' },
+      { head: 'Uit', text: 'de rij verdwijnt, alles staat nog in het menu. Je kunt dit ook in het menu van de training zelf zetten.' },
+    ],
+  },
   forgeLijntjes: {
     title: 'Lijntjes in de lijst',
     lead: 'Een klein lijntje naast elke oefening laat in één oogopslag zien hoe het de laatste trainingen ging.',

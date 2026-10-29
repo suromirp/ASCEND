@@ -1,7 +1,7 @@
 // ASCEND: het verloop van een training in Forge, zoals het wordt bewaard. Geen React, geen opslag;
 // de regels staan in engine/forgeLog.ts. Besluit: docs/beslissingen/2026-10-28-forge-logboek.md.
 
-export const FORGE_EVENT_KINDS = ['bijgestuurd', 'doorgevoerd', 'eigen', 'onder', 'past-niet', 'spotter'] as const;
+export const FORGE_EVENT_KINDS = ['bijgestuurd', 'doorgevoerd', 'eigen', 'onder', 'past-niet', 'spotter', 'toegevoegd', 'weggehaald'] as const;
 export type ForgeEventKind = (typeof FORGE_EVENT_KINDS)[number];
 
 // De stand van een set: kilo's, herhalingen en reserve.

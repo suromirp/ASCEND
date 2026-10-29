@@ -204,6 +204,13 @@ const PATHS = {
   // Bij een stapper en een eigen waarde.
   plus: <path d="M12 5.5v13M5.5 12h13" />,
   min: <path d="M5.5 12h13" />,
+  // Een rondje met een min: een set weghalen (vegen in Forge).
+  minrond: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M8.5 12h7" />
+    </>
+  ),
   sluiten: <path d="M7 7l10 10M17 7L7 17" />,
   // Het workoutscherm van Forge (components/forge/).
   vinkje: <path d="M5.5 12.5l4.2 4L18.5 7.5" />,
