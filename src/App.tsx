@@ -31,6 +31,8 @@ import { SettingsOverview } from './pages/settings/SettingsOverview';
 import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
 import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
 import { StretchAreaRedirect } from './pages/StretchAreaRedirect';
+import { SessionPill } from './components/forge/SessionPill';
+import { useOpenRequest, useSessionHousekeeping, useSessionPill } from './components/forge/useForgeSession';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
 // they still work offline.
@@ -40,6 +42,7 @@ const GarminLinkPage = lazy(() => import('./pages/GarminLink').then((m) => ({ de
 const MacroFactorImportPage = lazy(() => import('./pages/MacroFactorImport').then((m) => ({ default: m.MacroFactorImportPage })));
 const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default: m.SourcesPage })));
 const WeatherPage = lazy(() => import('./pages/Weather').then((m) => ({ default: m.WeatherPage })));
+const ForgeSessionHost = lazy(() => import('./components/forge/ForgeSessionHost'));
 const ForgePage = lazy(() => import('./pages/Forge').then((m) => ({ default: m.ForgePage })));
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
 const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
@@ -261,6 +264,11 @@ function AppShell() {
 
   // Without the splash (later opens today, after an update, reduced
   // motion): a quiet empty frame for the few ms IndexedDB needs.
+  // De lopende training van Forge: de pil boven de tabbalk en het scherm dat hij opent.
+  useSessionHousekeeping();
+  const pill = useSessionPill();
+  const openSession = useOpenRequest();
+
   if (bootError) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
@@ -309,7 +317,7 @@ function AppShell() {
         id={SCROLLER_ID}
         ref={mainRef}
         className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
-        style={{ paddingBottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
+        style={{ paddingBottom: pill ? 'calc(8.25rem + max(env(safe-area-inset-bottom), 8px))' : 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
       >
         {/* De kop (merkteken en tandwiel) staat op elke tab in SkyBand, bovenaan
             de pagina zelf. data-tab geeft de pagina haar eigen kleur. */}
@@ -361,7 +369,13 @@ function AppShell() {
           <button onClick={() => setOfflineNotice(false)} aria-label="Melding sluiten" className="min-h-[44px] min-w-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}><Icon name="sluiten" size={20} /></button>
         </div>
       )}
+      {pill && <SessionPill session={pill} />}
       <BottomNav />
+      {openSession && (
+        <Suspense fallback={null}>
+          <ForgeSessionHost />
+        </Suspense>
+      )}
       <ChangeNotice />
       <DebriefSheet />
       <UpdatePrompt />

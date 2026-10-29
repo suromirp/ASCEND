@@ -239,6 +239,9 @@ export interface SetLog {
   // Absent means measured (or no `rir` at all), so every log from before this
   // field reads as it always did. Decision: docs/beslissingen/2026-10-25-bijsturen-in-forge.md.
   rirAssumed?: boolean;
+  // When the set was ticked, as an ISO time. Only on logs made after the session clock
+  // (docs/beslissingen/2026-10-29-forge-als-sessie.md); absent on older logs, which read as always.
+  at?: string;
 }
 
 export interface ExerciseSetLog {

@@ -207,6 +207,9 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-snelknoppen', facts({ settings: { ...facts().settings, forgeQuickButtons: false } })).checked).toBe(false);
     expect(rowSummary('forge-oefeningen', facts()).value).toBe('Een per scherm');
     expect(rowSummary('forge-oefeningen', facts({ settings: { ...facts().settings, forgeLayout: 'lijst' } })).value).toBe('Onder elkaar');
+    expect(rowSummary('forge-onderbreking', facts()).value).toBe('45 minuten');
+    expect(rowSummary('forge-onderbreking', facts({ settings: { ...facts().settings, forgeLongBreak: 0 } })).value).toBe('Uit');
+    expect(rowSummary('forge-onderbreking', facts({ settings: { ...facts().settings, forgeLongBreak: 90 } })).value).toBe('90 minuten');
     expect(rowSummary('forge-lijntjes', facts())).toEqual({ checked: true, hidden: false });
     expect(rowSummary('forge-lijntjes', withForge({ showTrendLines: false })).checked).toBe(false);
     expect(rowSummary('forge-volgorde-lijst', facts()).value).toBe('Meest getraind');

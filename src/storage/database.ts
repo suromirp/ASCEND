@@ -49,6 +49,7 @@ import type { PackListState } from '../engine/packList';
 import { mainGoal } from '../engine/mainGoal';
 import { programRunBuild } from '../engine/runGrowth';
 import { streamsBytes } from '../engine/streamPack';
+import { clearForgeSessions } from '../utils/forgeSessionStore';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
@@ -716,6 +717,10 @@ export interface AppSettings {
   // Oefeningen in een training (engine/forgeLayout.ts): 'scherm' een per scherm, opzij vegen (het advies) of 'lijst'
   // onder elkaar. Afwezig is het advies. Optional and additive; read defensively, so no migration step is needed.
   forgeLayout?: 'scherm' | 'lijst';
+  // "Lange onderbreking vragen na" (engine/forgeSession.ts): kom je terug in een lopende training en was je laatste
+  // handeling zo lang geleden terwijl de klok liep, dan vraagt Forge of die tijd meetelt. In minuten; 0 is uit.
+  // Afwezig is 45 (het advies). Optional and additive; read defensively, so no migration step is needed.
+  forgeLongBreak?: 0 | 30 | 45 | 60 | 90;
   // De volgorde van de blokken op Je stand, per pagina (engine/cardOrder.ts). Absent = de standaard.
   // Gelezen door resolveCardOrder; onbekende en dubbele id's vallen weg. Optional and additive.
   cardOrder?: { stand?: string[] };
@@ -1084,6 +1089,8 @@ export async function clearLegacyObjectiveStores(): Promise<void> {
 }
 
 export async function resetToDemoData(): Promise<void> {
+  // Een lopende training hoort bij de planning die nu weggaat: wijzer en concepten mee.
+  clearForgeSessions();
   await Promise.all([
     clearStore('programs'),
     clearStore('sessionTemplates'),

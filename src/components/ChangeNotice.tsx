@@ -12,6 +12,7 @@ import { useAppData } from '../state/AppDataContext';
 import { Eyebrow } from './ui';
 import { Icon } from './icons';
 import { TextButton } from './TextButton';
+import { useSessionPill } from './forge/useForgeSession';
 
 const SHOW_MS = 6_000;
 const CHIP_MS = 10 * 60_000;
@@ -41,6 +42,9 @@ export function ChangeNotice() {
     }
   }, [recentChange, changeKey, view, open, undoing]);
 
+  // Staat de pil van een lopende training er, dan schuift de melding erboven.
+  const pill = useSessionPill();
+
   if (!recentChange || view === 'gone') return null;
 
   const summary = recentChange.summary ?? (recentChange.lines.length === 1 ? recentChange.lines[0] : `${recentChange.lines.length} sessies aangepast`);
@@ -52,11 +56,12 @@ export function ChangeNotice() {
     setOpen(false);
   }
 
-  const anchor = 'pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 flex px-4';
+  const anchor = 'pointer-events-none fixed inset-x-0 z-40 flex px-4';
+  const anchorStyle = { bottom: `calc(${pill ? '8.25rem' : '4.5rem'} + env(safe-area-inset-bottom))` };
 
   if (view === 'chip') {
     return (
-      <div className={`${anchor} justify-end`}>
+      <div className={`${anchor} justify-end`} style={anchorStyle}>
         <button
           onClick={() => setState({ key: changeKey, view: 'full' })}
           aria-label={`Planning aangepast: ${recentChange.title}. Open om te lezen of ongedaan te maken.`}
@@ -73,7 +78,7 @@ export function ChangeNotice() {
   }
 
   return (
-    <div className={`${anchor} justify-center`}>
+    <div className={`${anchor} justify-center`} style={anchorStyle}>
       <div
         className="mx-notice-in pointer-events-auto w-full max-w-md rounded-2xl border pl-3 shadow-lg"
         style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}
