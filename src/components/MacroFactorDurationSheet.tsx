@@ -67,8 +67,8 @@ export function MacroFactorDurationSheet({
                   value={date}
                   onChange={setDate}
                   options={[
-                    { value: days.fileDay, label: `${weekdayShortNL(days.fileDay)} ${formatDateNL(days.fileDay)}`, aria: `Dag van het bestand, ${weekdayShortNL(days.fileDay)} ${formatDateNL(days.fileDay)}` },
-                    { value: days.plannedDay, label: `${weekdayShortNL(days.plannedDay)} ${formatDateNL(days.plannedDay)}`, aria: `Dag van de geplande training, ${weekdayShortNL(days.plannedDay)} ${formatDateNL(days.plannedDay)}` },
+                    { value: days.fileDay, label: `${weekdayShortNL(days.fileDay).toLowerCase()} ${formatDateNL(days.fileDay)}`, aria: `Dag van het bestand, ${weekdayShortNL(days.fileDay).toLowerCase()} ${formatDateNL(days.fileDay)}` },
+                    { value: days.plannedDay, label: `${weekdayShortNL(days.plannedDay).toLowerCase()} ${formatDateNL(days.plannedDay)}`, aria: `Dag van de geplande training, ${weekdayShortNL(days.plannedDay).toLowerCase()} ${formatDateNL(days.plannedDay)}` },
                   ]}
                 />
                 <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je training hoort bij {weekdayLongNL(days.plannedDay)} {formatDateNL(days.plannedDay)}. Het bestand zegt {weekdayLongNL(days.fileDay)} {formatDateNL(days.fileDay)}.</p>
