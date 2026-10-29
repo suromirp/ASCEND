@@ -65,7 +65,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   return (
     <>
       <SettingsSection title="Op Vandaag">
-        <SummaryRow id="kaarten" title="Kaarten op Vandaag" facts={facts} info="kaarten" onClick={() => setSheet('kaarten')} />
+        <SummaryRow id="kaarten" title="Kaarten" facts={facts} info="kaarten" onClick={() => setSheet('kaarten')} />
         <SummaryRow id="lichterbenen" title="Lichter bij vermoeide benen" facts={facts} info="lichterbenen" onClick={() => setSheet('lichterbenen')} />
       </SettingsSection>
 
