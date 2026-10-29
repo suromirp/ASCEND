@@ -266,7 +266,7 @@ function programSlotId(name: string): string {
 }
 
 function rangeText(s: SetTarget): string {
-  return s.failure ? `${s.repsLow}+` : s.repsLow === s.repsHigh ? `${s.repsLow}` : `${s.repsLow}-${s.repsHigh}`;
+  return s.failure || s.open ? `${s.repsLow}+` : s.repsLow === s.repsHigh ? `${s.repsLow}` : `${s.repsLow}-${s.repsHigh}`;
 }
 
 export function toPrescriptions(exercises: ProgramExercise[]): ExercisePrescription[] {

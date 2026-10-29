@@ -233,7 +233,14 @@ export function ForgeWorkout({
   // Een stille tip na het invullen van de gewichten, als er dan nog steeds niets past.
   const [heavyTip, setHeavyTip] = useState<Record<string, { text: string; rowId?: string; weightKg?: number }>>({});
   // Het verloop van de training: wat Forge bijstuurde, wat doorgevoerd werd en wat jij zelf aanpaste.
-  const [forgeLog, setForgeLog] = useState<ForgeEvent[]>(() => (restored ? (cleanForgeLog(restored.log) ?? []) : readOnly ? [] : spotterEvents(workout, Date.now(), () => makeId('fe'))));
+  const [forgeLog, setForgeLog] = useState<ForgeEvent[]>(() => {
+    if (readOnly) return restored ? (cleanForgeLog(restored.log) ?? []) : [];
+    const fresh = spotterEvents(workout, Date.now(), () => makeId('fe'));
+    if (!restored) return fresh;
+    // Een concept van voor Zonder spotter krijgt het plan van nu (mergeDraft); het teken komt dan ook in het verloop.
+    const kept = cleanForgeLog(restored.log) ?? [];
+    return [...kept, ...fresh.filter((f) => !kept.some((k) => k.kind === 'spotter' && k.exerciseId === f.exerciseId))];
+  });
   const [seenAt, setSeenAt] = useState<number>(() => (restored && typeof restored.seen === 'number' ? restored.seen : 0));
   const [logOpen, setLogOpen] = useState(false);
   const [spotterInfo, setSpotterInfo] = useState(false);

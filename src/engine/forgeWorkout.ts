@@ -47,6 +47,8 @@ export interface RowTarget {
   timedSec?: number;
   // A set to failure from repsLow ("9+").
   failure?: boolean;
+  // "7+ met 1 over": een set tot falen die Zonder spotter een open set met reserve werd (SetTarget.open).
+  open?: boolean;
   // De reserve is door Forge opgehoogd naar minstens 1, omdat falen zonder spotter gevaarlijk is
   // (engine/spotter.ts). Alleen voor het teken bij de set; leeft in het concept, niet in het log.
   spotter?: boolean;
@@ -305,7 +307,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     const t = targets?.[i];
     const weightKg = workWeights[i];
     if (t) {
-      target = { ...(weightKg !== undefined ? { weightKg } : {}), repsLow: t.repsLow, repsHigh: t.repsHigh, rir: t.rir, ...(t.failure ? { failure: true } : {}) };
+      target = { ...(weightKg !== undefined ? { weightKg } : {}), repsLow: t.repsLow, repsHigh: t.repsHigh, rir: t.rir, ...(t.failure ? { failure: true } : {}), ...(t.open ? { open: true } : {}) };
     } else if (rx) {
       const s = rx.sets[Math.min(i, rx.sets.length - 1)];
       target = { weightKg: s.weightKg, repsLow: s.repsLow, repsHigh: s.repsHigh, rir: s.rir };
@@ -535,9 +537,9 @@ export function hardestLegRir(workout: WorkoutExercise[]): number | undefined {
 
 const kgText = (n: number) => formatNumberNL(n, 2);
 
-// "11-13", "8", or "9+" for a set to failure.
+// "11-13", "8", or "9+" for a set to failure (and for an open set with reserve, "7+ met 1 over").
 export function repsText(t: RowTarget): string {
-  return t.failure ? `${t.repsLow}+` : t.repsLow === t.repsHigh ? `${t.repsLow}` : `${t.repsLow}-${t.repsHigh}`;
+  return t.failure || t.open ? `${t.repsLow}+` : t.repsLow === t.repsHigh ? `${t.repsLow}` : `${t.repsLow}-${t.repsHigh}`;
 }
 
 // "47,5 kg x 11-13" in the prescription column. A hold: "45 sec".

@@ -30,11 +30,11 @@ describe('spotterApplies', () => {
 });
 
 describe('spotterSlot', () => {
-  it('verhoogt 0 over naar 1 en haalt "tot het uiterste" weg', () => {
+  it('verhoogt 0 over naar 1 en maakt van "tot het uiterste" een open set met reserve', () => {
     const out = spotterSlot(slot({ setTargets: [{ repsLow: 7, repsHigh: 9, rir: 2 }, { repsLow: 11, repsHigh: 11, rir: 0, failure: true }] }));
     expect(out?.raised).toEqual([false, true]);
     expect(out?.slot.setTargets?.[0]).toEqual({ repsLow: 7, repsHigh: 9, rir: 2 });
-    expect(out?.slot.setTargets?.[1]).toEqual({ repsLow: 11, repsHigh: 11, rir: 1 });
+    expect(out?.slot.setTargets?.[1]).toEqual({ repsLow: 11, repsHigh: 11, rir: 1, open: true });
   });
   it('zet een RPE van 10 op 9', () => {
     const out = spotterSlot(slot({ rpe: 10 }));
