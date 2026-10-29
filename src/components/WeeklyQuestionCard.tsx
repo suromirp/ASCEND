@@ -47,7 +47,7 @@ export function WeeklyQuestionCard() {
   if (savedAnswer !== null) {
     return (
       <>
-        <DayRow label="Vraag van de week" icon="info" state="done" onClick={() => setOpen(true)}>Je plan staat erin</DayRow>
+        <DayRow label="Vraag" icon="info" state="done" onClick={() => setOpen(true)}>Je plan staat erin</DayRow>
         {open && (
           <TodaySheet eyebrow="Vraag van de week" title={question.vraag} onClose={() => setOpen(false)}>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Je plan staat erin: {savedAnswer}</p>
@@ -70,7 +70,7 @@ export function WeeklyQuestionCard() {
 
   return (
     <>
-      <DayRow label="Een zin is genoeg" icon="info" onClick={() => setOpen(true)}>Vraag van de week</DayRow>
+      <DayRow label="Vraag" icon="info" onClick={() => setOpen(true)}>Een zin is genoeg</DayRow>
       {open && (
         <TodaySheet eyebrow="Vraag van de week" title={question.vraag} onClose={() => setOpen(false)}>
           {(close) => (
