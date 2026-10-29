@@ -909,8 +909,10 @@ afspraken voor elke agent die in deze repo werkt.
   gedachtestreepjes (geen U+2013 en geen U+2014) in nieuwe tekst.
 - Afronding: elke taak eindigt met de uitslag van de controles en wat niet
   gecontroleerd kon worden.
-- Kosten zo laag mogelijk: Sonnet voor specialisten en routines, Opus alleen
-  voor review en lastig onderzoek, effort gemiddeld als standaard.
+- Kosten zo laag mogelijk: de coördinator kiest rol, model en denkwerk met de tabel in de skill
+  `werkverdeling` en start een helper altijd als zijn rol, nooit als `general-purpose` (die draait op het
+  model van de coördinator). Na elke helper een regel in `.claude/kosten/logboek.md`; elke maandag
+  wordt de tabel daarop bijgesteld. Lookout gebruikt de vaste kit van de skill `lookout`.
 - De rollen staan in `.claude/agents/`, de vaste werkinstructies in
   `.claude/skills/`.
 - Helpers hebben in berichten aan de eigenaar een vaste naam in de stijl van
