@@ -47,6 +47,10 @@ export interface SetTarget {
   rir: number;
   // A set to failure ("9+"): at least repsLow, nothing left.
   failure?: boolean;
+  // Zonder spotter wordt een set tot falen een open set met reserve: "7+ met 1 over", minstens
+  // repsLow en dan stoppen met `rir` over (engine/spotter.ts). Alleen voor de woorden; rekenen gaat
+  // als een gewone set van repsLow.
+  open?: boolean;
   restSec?: number;
 }
 

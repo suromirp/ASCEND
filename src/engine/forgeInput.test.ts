@@ -347,9 +347,13 @@ describe('een concept en de keuze Lichter', () => {
     expect(resumeDraft(draft(true), false, true, lighter)[0].rows[0].id).toBe('d1');
     expect(resumeDraft(draft(true), true, false, normal)[0].rows[0].done).toBe(true);
   });
-  it('gelijke keuze: het concept blijft zoals het is', () => {
-    expect(resumeDraft(draft(false), true, true, lighter)[0].rows[0].id).toBe('d1');
-    expect(resumeDraft(draft(false), undefined, false, normal)[0].rows[0].id).toBe('d1');
+  it('gelijke keuze: wat je aanraakte blijft zoals het is', () => {
+    const typed = [ex('a', [row('d1', { weightKg: 80, reps: 8, edited: true })], { name: 'Squat' })];
+    expect(resumeDraft(typed, true, true, lighter)[0].rows[0].id).toBe('d1');
+    expect(resumeDraft(typed, undefined, false, normal)[0].rows[0].id).toBe('d1');
+  });
+  it('gelijke keuze, niets aangeraakt: het plan van nu (een nieuwe regel geldt ook voor een geopend concept)', () => {
+    expect(resumeDraft(draft(false), undefined, false, normal)[0].rows[0].id).toBe('n2');
   });
 });
 
@@ -439,5 +443,13 @@ describe('dockFieldKey: een nieuwe tik begint opnieuw', () => {
   it('een ander veld geeft een andere sleutel', () => {
     expect(dockFieldKey({ ...at, field: 'reps' }, 1)).not.toBe(dockFieldKey(at, 1));
     expect(dockFieldKey({ ...at, rowId: 'a2' }, 1)).not.toBe(dockFieldKey(at, 1));
+  });
+});
+
+describe('mergeDraft met een gekozen RIR', () => {
+  it('houdt een RIR die je koos op een set die nog niet is afgevinkt', () => {
+    const draft = [ex('bench', [row('bench:s0', { rir: 3, rirAssumed: false })])];
+    const fresh = [ex('bench', [row('bench:s0')])];
+    expect(mergeDraft(draft, fresh)[0].rows[0].rir).toBe(3);
   });
 });

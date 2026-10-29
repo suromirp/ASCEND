@@ -409,6 +409,10 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.limitMargin;
     skipped.n++;
   }
+  if ('forgeLayout' in s && s.forgeLayout !== 'scherm' && s.forgeLayout !== 'lijst') {
+    delete s.forgeLayout;
+    skipped.n++;
+  }
   if ('exerciseArt' in s && s.exerciseArt !== 'beide' && s.exerciseArt !== 'spierkaart' && s.exerciseArt !== 'uit') {
     delete s.exerciseArt;
     skipped.n++;

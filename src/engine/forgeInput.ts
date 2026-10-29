@@ -24,6 +24,7 @@ import {
 import type { GymProfile } from './strengthSettings';
 import { isLightWeight } from './strengthModel';
 import { barFor, candidatesFor, nearestIndex, stepFor } from './strengthWeights';
+import { isOwnRow } from './forgeRows';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -356,16 +357,23 @@ export function plateChange(step: Pick<PlateStep, 'add' | 'remove'>): string | u
   return parts.length === 0 ? undefined : `${parts.join(', ')}.`;
 }
 
+// Iets van jou in een oefening van het concept: afgevinkt, getypt (kg of herhalingen), een gekozen RIR,
+// geruild, een set erbij of eraf. Een oefening zonder iets van jou krijgt altijd het plan van nu, ook als
+// de naam gelijk bleef: anders blijft een voorschrift van voor een nieuwe regel (Zonder spotter) staan in
+// een training die je opende maar nog niet begon (de klok begint dan opnieuw, het concept niet).
+export function touchedInDraft(e: WorkoutExercise, f: WorkoutExercise): boolean {
+  return !!e.swappedFrom || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || (r.rir !== undefined && r.rirAssumed === false) || isOwnRow(r));
+}
+
 // A training opened before its exercises changed (a renamed exercise, another
 // exercise in a slot, a program read in): what you already did or changed
 // stays, an untouched exercise gets today's plan, so it is recognised again
 // (weights, plates, swaps). An exercise you swapped yourself stays as well.
 export function mergeDraft(draft: WorkoutExercise[], fresh: WorkoutExercise[]): WorkoutExercise[] {
   const bySlot = new Map(draft.map((e) => [e.slot, e]));
-  const touched = (e: WorkoutExercise, f: WorkoutExercise) => !!e.swappedFrom || e.rows.length !== f.rows.length || e.rows.some((r) => r.done || r.edited);
   const merged = fresh.map((f) => {
     const d = bySlot.get(f.slot);
-    return d && (d.name === f.name || touched(d, f)) ? d : f;
+    return d && touchedInDraft(d, f) ? d : f;
   });
   const gone = draft.filter((d) => !fresh.some((f) => f.slot === d.slot) && d.rows.some((r) => r.done || r.edited));
   return [...merged, ...gone];

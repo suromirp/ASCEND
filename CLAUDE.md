@@ -683,6 +683,18 @@ ten seconds. A set you added (`:a` or `:c` in its id, `isOwnRow`) has an outline
 set of the program you removed is kept in `WorkoutExercise.dropped` (read through `forgeRows.ts#dropsOf`) and told in one line with "Terugzetten", and the reason gets "Jij doet er 4."
 when the count differs. Adding and removing are events in the Forge log (`toegevoegd`, `weggehaald`, no dot on the button).
 
+**Oefeningen opzij vegen** (`engine/forgeLayout.ts`, `components/forge/ForgeStrip.tsx`, `components/forge/SwipeRow.tsx`, decision
+`docs/beslissingen/2026-10-29-oefeningen-opzij-vegen.md`): with "Oefeningen in een training" on "Een per scherm" (`AppSettings.forgeLayout`,
+absent = scherm; "Onder elkaar" is the old list; also a switch in the menu of the training) a training is one exercise per screen in a
+CSS scroll-snap pager (`.forge-pager`, `.forge-page` with `data-forge-page`, `scroll-snap-stop: always`, no library), each page scrolls
+vertically on its own, and a strip of cards under the clock jumps (smooth, not in Uit) with the current one in mint and a tick on a
+finished one. Forge never pages by itself (`scrollToRow` only scrolls a row on the page in view). A set swipe starts only on a cell with
+`data-swipe-zone` (number and prescription; `touch-action: pan-y` there through `.swipe-front`), everywhere else a sideways swipe is the
+pager. The set swipe never sets React state or measures while moving: a transform through refs once per frame, the red panel beside the
+row moved by the same transform, `will-change` only while swiping, 200 ms ease-out on release (none in Uit). Measured with CDP touch
+events: no commits from the moves. An untouched exercise of a reopened draft always takes today's plan (`forgeInput.ts#touchedInDraft`),
+and Zonder spotter turns a set to failure into an open set with reserve (`SetTarget.open`, "7+ met 1 over").
+
 **A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
 average once there are 7 days) becomes a question in the morning check instead of a
 warning (`engine/shortNight.ts`, decision `docs/beslissingen/2026-10-25-korte-nacht-vragen.md`).

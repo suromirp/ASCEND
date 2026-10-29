@@ -323,6 +323,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waarom', text: 'trainingen van voor het inlezen van je programma zijn met de huidige template en instellingen achteraf herberekend, en zeggen minder.' },
     ],
   },
+  forgeOefeningen: {
+    title: 'Oefeningen in een training',
+    lead: 'Een oefening per scherm: je veegt opzij naar de volgende oefening, zoals in MacroFactor, en bovenaan staat een strook met een kaartje per oefening.',
+    points: [
+      { head: 'Een per scherm', text: 'het advies. Tik op een kaartje in de strook om naar die oefening te springen; een afgeronde oefening heeft een vinkje. Naar beneden scrollen kan binnen een oefening gewoon.' },
+      { head: 'Een set verwijderen', text: 'veeg op het nummer of het voorschrift van de set naar links, zoals altijd. Elders op het scherm wisselt vegen van oefening.' },
+      { head: 'Onder elkaar', text: 'alle oefeningen op een pagina, zoals eerst. Je kunt dit ook in het menu van de training zelf zetten.' },
+    ],
+  },
   forgeSnelknoppen: {
     title: 'Snelknoppen tonen',
     lead: 'Onder de naam van elke oefening staan de handelingen die je tijdens een training het vaakst nodig hebt. Het menu met de drie puntjes houdt alles.',

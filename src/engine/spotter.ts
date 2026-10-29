@@ -42,17 +42,16 @@ export interface SpotterSlot {
 }
 
 // Het voorschrift van een oefening met minstens 1 over. Undefined als er niets te verhogen valt
-// (het voorschrift vroeg al 1 of meer). Een set tot het uiterste ("9+" met 0 over) wordt een gewone
-// set met 1 over: het aantal herhalingen blijft de onderkant van het bereik.
+// (het voorschrift vroeg al 1 of meer). Een set tot het uiterste ("9+" met 0 over) wordt een open set
+// met 1 over ("9+ met 1 over", `open`): minstens de onderkant van het bereik, en stoppen met 1 over.
 export function spotterSlot(slot: ExercisePrescription): SpotterSlot | undefined {
   if (slot.setTargets && slot.setTargets.length > 0) {
     const raised = slot.setTargets.map((t) => t.rir < SPOTTER_MIN_RIR);
     if (!raised.some(Boolean)) return undefined;
     const setTargets = slot.setTargets.map((t, i) => {
       if (!raised[i]) return t;
-      const { failure: _failure, ...rest } = t;
-      void _failure;
-      return { ...rest, rir: SPOTTER_MIN_RIR };
+      const { failure, ...rest } = t;
+      return { ...rest, rir: SPOTTER_MIN_RIR, ...(failure ? { open: true } : {}) };
     });
     return { slot: { ...slot, setTargets }, raised };
   }
