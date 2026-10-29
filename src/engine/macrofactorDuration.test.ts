@@ -72,13 +72,14 @@ describe('the row and the log after the choice', () => {
     expect(p.draft.durationMinutes).not.toBe(50);
   });
 
-  it('"Zonder duur" leaves the duration empty but keeps the sets', () => {
-    const [p] = plan();
-    if (!canAdjustDuration(p, '2026-10-29')) throw new Error('expected a new row');
-    const after = withChosenDuration(p, null);
-    expect(after.draft.durationMinutes).toBe(0);
-    expect(after.draft.fileDurationMinutes).toBe(376);
-    expect(after.draft.strengthData?.length).toBeGreaterThan(0);
-    expect(chosenDurationLine(after)).toBe('Zonder duur (het bestand zegt 6 uur 16 min).');
+});
+
+describe('migrateLogFileDuration', () => {
+  it('houdt alleen een getal boven nul', async () => {
+    const { migrateLogFileDuration } = await import('../storage/migrations');
+    const base = { id: 'l', templateId: 't', completedDate: '2026-10-28', completedAt: '2026-10-28T10:00:00Z', durationMinutes: 60 } as unknown as SessionLog;
+    expect(migrateLogFileDuration({ ...base, fileDurationMinutes: 376 } as SessionLog).fileDurationMinutes).toBe(376);
+    expect('fileDurationMinutes' in migrateLogFileDuration({ ...base, fileDurationMinutes: 'zes uur' } as unknown as SessionLog)).toBe(false);
+    expect('fileDurationMinutes' in migrateLogFileDuration({ ...base, fileDurationMinutes: Number.NaN } as SessionLog)).toBe(false);
   });
 });

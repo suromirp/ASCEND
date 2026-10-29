@@ -5,7 +5,7 @@ Status: aangenomen
 
 ## Besluit
 
-Een nieuwe training uit het MacroFactor-bestand die alleen om de duur "te lang" staat (meer dan 300 minuten, `LONGEST_PLAUSIBLE_WORKOUT_MIN`) krijgt in zijn rij de rustige actie "Duur aanpassen". Het blad vraagt de duur in minuten, begint met wat ASCEND al verwacht voor die training (`engine/durationLearning.ts#predictDuration`: eigen mediaan, anders je schatting, anders die van het sjabloon) en zegt "Het bestand zegt 6 uur 16 min. Je klok liep waarschijnlijk door." Opslaan zet de rij bij de gewone rijen, aangevinkt. "Zonder duur" doet hetzelfde met een lege duur (0 minuten, zoals een log zonder duur elders al gelezen wordt): de training telt mee voor sets en volume.
+Een nieuwe training uit het MacroFactor-bestand die alleen om de duur "te lang" staat (meer dan 300 minuten, `LONGEST_PLAUSIBLE_WORKOUT_MIN`) krijgt in zijn rij de rustige actie "Duur aanpassen". Het blad vraagt de duur in minuten, begint met wat ASCEND al verwacht voor die training (`engine/durationLearning.ts#predictDuration`: eigen mediaan, anders je schatting, anders die van het sjabloon) en zegt "Het bestand zegt 6 uur 16 min. Je klok liep waarschijnlijk door." Opslaan zet de rij bij de gewone rijen, aangevinkt. Er is geen keuze "Zonder duur": een krachtlog zonder minuten valt weg uit de belasting en de beenindex (review van Warden), dus er staat altijd een duur.
 
 Bij "Alles verwerken" wordt de log gemaakt met de gekozen duur. De duur uit het bestand blijft bewaard op de log in `SessionLog.fileDurationMinutes`, een klein optioneel veld. De berekening zit in `engine/macrofactorDuration.ts` (puur, met tests); de kaart bewaart de keuze per training tot de knop wordt gebruikt en slaat zelf niets op.
 

@@ -46,7 +46,7 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
   // out of "Alles verwerken" until the user ticks them.
   const [opted, setOpted] = useState<string[]>([]);
   // A duration set by hand for a row whose duration in the file is too long,
-  // by workout id: minutes, or null for "Zonder duur". Kept until "Alles verwerken".
+  // by workout id: minutes. Kept until "Alles verwerken".
   const [durations, setDurations] = useState<Record<string, DurationChoice>>({});
   const [adjusting, setAdjusting] = useState<NewProposal | null>(null);
   // The outcome shows while this card is there; the next visit starts clean.

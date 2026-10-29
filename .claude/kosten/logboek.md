@@ -16,3 +16,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-29, Gewichten als bereik en pond, Sherpa, sonnet (ontwikkelaar), 133k, 19 min, 0, drie aanvullingen van de eigenaar tijdens het bouwen
 - 2026-10-29, Review kleine ronde, Warden, sonnet (reviewer), 57k, 2 min, 0, vond fout in regel Fase
 - 2026-10-29, Review gewichten als bereik, Warden, opus (reviewer, opslag), 80k, 4 min, 0, vond vastlopen bij heel kleine stap
+- 2026-10-29, MacroFactor duur aanpassen, Sherpa, sonnet (ontwikkelaar), 131k, 10 min, 1, Zonder duur eruit na review
+- 2026-10-29, Review MF duur, Warden, opus (reviewer, opslag), 84k, 4 min, 0, vond belasting 0 bij Zonder duur

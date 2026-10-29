@@ -17,8 +17,9 @@ import { todayISO } from '../utils/dates';
 
 export type NewProposal = Extract<MacroFactorProposal, { kind: 'new' }>;
 
-// The chosen duration: minutes, or null for "Zonder duur".
-export type DurationChoice = number | null;
+// The chosen duration in minutes. Never empty: a log without minutes would drop out of
+// the load and the leg index, so there is no "Zonder duur".
+export type DurationChoice = number;
 
 export const tooLong = (workout: MacroFactorWorkout): boolean => !!workout.durationSec && workout.durationSec / 60 > LONGEST_PLAUSIBLE_WORKOUT_MIN;
 
@@ -51,7 +52,7 @@ export function fileDurationSentence(workout: MacroFactorWorkout): string {
 // The row after the choice: the draft carries the chosen duration, the doubt is
 // gone, and the duration of the file is kept on the log.
 export function withChosenDuration(p: NewProposal, choice: DurationChoice): NewProposal {
-  const minutes = choice ?? 0;
+  const minutes = choice;
   const startMs = new Date(p.workout.start).getTime();
   const { doubt: _doubt, ...rest } = p;
   return {
@@ -69,5 +70,5 @@ export function withChosenDuration(p: NewProposal, choice: DurationChoice): NewP
 // The line under the row after the choice.
 export function chosenDurationLine(p: NewProposal): string {
   const file = minutesLabel(p.draft.fileDurationMinutes ?? 0);
-  return p.draft.durationMinutes > 0 ? `Duur ${minutesLabel(p.draft.durationMinutes)} (het bestand zegt ${file}).` : `Zonder duur (het bestand zegt ${file}).`;
+  return `Duur ${minutesLabel(p.draft.durationMinutes)} (het bestand zegt ${file}).`;
 }

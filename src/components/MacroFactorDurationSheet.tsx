@@ -1,6 +1,6 @@
 // ASCEND: "Duur aanpassen" on a row of the card "Uit MacroFactor" whose duration in
 // the file is too long. A minutes field, starting with the duration ASCEND already
-// expects for this training, or "Zonder duur". Nothing is stored here: the card
+// expects for this training. Nothing is stored here: the card
 // keeps the choice until "Alles verwerken"
 // (docs/beslissingen/2026-10-29-mf-training-te-lang.md).
 
@@ -12,7 +12,7 @@ import { NumberField } from './NumberField';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { TextButton } from './TextButton';
-import { Card, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
+import { Card, PrimaryButton, SheetGrip } from './ui';
 
 export function MacroFactorDurationSheet({
   proposal,
@@ -24,7 +24,7 @@ export function MacroFactorDurationSheet({
   proposal: NewProposal;
   // The duration ASCEND expects for this training.
   suggested: number;
-  // The choice made before, if any: minutes or null.
+  // The choice made before, if any: minutes.
   current?: DurationChoice;
   onChoose: (choice: DurationChoice) => void;
   onClose: () => void;
@@ -67,10 +67,6 @@ export function MacroFactorDurationSheet({
             </div>
             <div className="mt-4 flex flex-col gap-3">
               <PrimaryButton onClick={() => valid && choose(minutes)} disabled={!valid}>Opslaan</PrimaryButton>
-              <SecondaryButton onClick={() => choose(null)}>Zonder duur</SecondaryButton>
-              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                Zonder duur telt de training wel mee voor sets en volume. De duur blijft leeg.
-              </p>
               <TextButton tone="dim" className="self-start" onClick={requestClose}>Annuleren</TextButton>
             </div>
           </Card>
