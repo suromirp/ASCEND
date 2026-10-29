@@ -14,7 +14,7 @@ export interface MorningCheckIn {
   allNormal?: boolean; // one tap: everything as usual
   legs?: LegFeeling;
   // Alleen bij spierpijn of flinke spierpijn: 'upper' = de spierpijn zit alleen in je bovenlichaam.
-  // Afwezig = de benen, zoals altijd. Zie engine/wellbeing.ts#legSoreness.
+  // Afwezig = de benen, zoals altijd. Zie engine/wellbeing.ts#upperOnly.
   soreWhere?: 'upper';
   energy?: EnergyFeeling;
   sleep?: SleepFeeling;
