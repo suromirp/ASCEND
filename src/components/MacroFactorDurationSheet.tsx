@@ -5,14 +5,15 @@
 // (docs/beslissingen/2026-10-29-mf-training-te-lang.md).
 
 import { useState } from 'react';
-import { fileDurationSentence, isValidMinutes, type DurationChoice, type NewProposal } from '../engine/macrofactorDuration';
+import { dayOptions, fileDurationSentence, isValidMinutes, type DurationChoice, type NewProposal } from '../engine/macrofactorDuration';
 import { MAX_STRENGTH_MINUTES } from '../engine/logDuration';
 import { useSheetClose } from '../utils/useSheetClose';
 import { NumberField } from './NumberField';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { TextButton } from './TextButton';
-import { Card, PrimaryButton, SheetGrip } from './ui';
+import { Card, PrimaryButton, Segmented, SheetGrip } from './ui';
+import { formatDateNL, weekdayShortNL } from '../utils/dates';
 
 export function MacroFactorDurationSheet({
   proposal,
@@ -30,7 +31,9 @@ export function MacroFactorDurationSheet({
   onClose: () => void;
 }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200);
-  const [minutes, setMinutes] = useState<number | undefined>(current ?? suggested);
+  const [minutes, setMinutes] = useState<number | undefined>(current?.minutes ?? suggested);
+  const days = dayOptions(proposal);
+  const [date, setDate] = useState<string>(current?.date ?? days.defaultDay);
   const valid = isValidMinutes(minutes);
 
   function choose(choice: DurationChoice) {
@@ -55,6 +58,22 @@ export function MacroFactorDurationSheet({
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow={proposal.template.name} title="Duur aanpassen" onClose={requestClose} /></div>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{fileDurationSentence(proposal.workout)}</p>
+            {days.plannedDay && (
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Welke dag?</p>
+                <Segmented
+                  label="Welke dag?"
+                  tall
+                  value={date}
+                  onChange={setDate}
+                  options={[
+                    { value: days.fileDay, label: `${weekdayShortNL(days.fileDay)} ${formatDateNL(days.fileDay)}`, aria: `Dag van het bestand, ${weekdayShortNL(days.fileDay)} ${formatDateNL(days.fileDay)}` },
+                    { value: days.plannedDay, label: `${weekdayShortNL(days.plannedDay)} ${formatDateNL(days.plannedDay)}`, aria: `Dag van de geplande training, ${weekdayShortNL(days.plannedDay)} ${formatDateNL(days.plannedDay)}` },
+                  ]}
+                />
+                <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je training hoort bij {weekdayShortNL(days.plannedDay)} {formatDateNL(days.plannedDay)}. Het bestand zegt {weekdayShortNL(days.fileDay)} {formatDateNL(days.fileDay)}.</p>
+              </div>
+            )}
             <div className="mt-4">
               <NumberField
                 label="Hoe lang duurde je training?"
@@ -66,7 +85,7 @@ export function MacroFactorDurationSheet({
               />
             </div>
             <div className="mt-4 flex flex-col gap-3">
-              <PrimaryButton onClick={() => valid && choose(minutes)} disabled={!valid}>Opslaan</PrimaryButton>
+              <PrimaryButton onClick={() => valid && choose({ minutes, date })} disabled={!valid}>Opslaan</PrimaryButton>
               <TextButton tone="dim" className="self-start" onClick={requestClose}>Annuleren</TextButton>
             </div>
           </Card>

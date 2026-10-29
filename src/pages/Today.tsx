@@ -66,6 +66,7 @@ import { SkyBand } from '../components/SkyBand';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { WeekStrip } from '../components/vandaag/WeekStrip';
 import { zoneOfTemplate } from '../components/vandaag/zone';
+import { logDay, plannedByIdOf } from '../engine/logDay';
 import { mainGoal as findMainGoal } from '../engine/mainGoal';
 
 function TodayContent() {
@@ -180,10 +181,10 @@ function TodayContent() {
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
   // Een stille dag zegt al dat er niets staat; "Morgen: Niets gepland" erachter herhaalt dat alleen.
   const quietTomorrow = tomorrow.kind === 'none' ? undefined : tomorrowLine;
-  // Gedaan vandaag: een log van vandaag, of een log die bij een training van vandaag hoort (een training uit
-  // MacroFactor die gisteren begon en vandaag afliep draagt de datum van het bestand).
-  const todayPlannedIds = new Set(plannedSessions.filter((p) => p.scheduledDate === today).map((p) => p.id));
-  const doneToday = sessionLogs.filter((l) => l.completedDate === today || (!!l.plannedSessionId && todayPlannedIds.has(l.plannedSessionId)));
+  // Gedaan vandaag: een log die vandaag telt (engine/logDay.ts: een training uit MacroFactor die gisteren begon
+  // en vandaag afliep draagt de datum van het bestand, maar telt op de dag van zijn geplande training).
+  const plannedById = plannedByIdOf(plannedSessions);
+  const doneToday = sessionLogs.filter((l) => logDay(l, plannedById) === today);
   const restMode = settings.restDayMode ?? 'rest';
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;

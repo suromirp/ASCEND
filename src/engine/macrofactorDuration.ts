@@ -13,13 +13,37 @@ import { MAX_STRENGTH_MINUTES } from './logDuration';
 import { doubtAbout, LONGEST_PLAUSIBLE_WORKOUT_MIN, type MacroFactorProposal } from './macrofactorLink';
 import { minutesLabel } from './macrofactorSets';
 import type { MacroFactorWorkout } from './macrofactorImport';
-import { todayISO } from '../utils/dates';
+import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
 
 export type NewProposal = Extract<MacroFactorProposal, { kind: 'new' }>;
 
 // The chosen duration in minutes. Never empty: a log without minutes would drop out of
-// the load and the leg index, so there is no "Zonder duur".
-export type DurationChoice = number;
+// the load and the leg index, so there is no "Zonder duur". `date` is the day the new log
+// gets ("Welke dag?"); without it the day of the file.
+export interface DurationChoice {
+  minutes: number;
+  date?: string;
+}
+
+// The days "Welke dag?" offers: the day of the file and, when the row belongs to a planned
+// training on another day, that day. The planned day is the default
+// (docs/beslissingen/2026-10-29-dag-van-een-training.md). Only a new log gets a day here.
+export function dayOptions(p: NewProposal): { fileDay: string; plannedDay?: string; defaultDay: string } {
+  const fileDay = p.workout.date;
+  const plannedDay = p.planned && p.planned.scheduledDate !== fileDay ? p.planned.scheduledDate : undefined;
+  return { fileDay, plannedDay, defaultDay: plannedDay ?? fileDay };
+}
+
+// The moment the log ends on the chosen day: the clock time of the workout (noon when the
+// file has none) plus the duration, kept inside that day.
+function completedAtOn(date: string, start: string, minutes: number): string {
+  const time = /T(\d{2}):(\d{2})/.exec(start);
+  const [y, m, d] = date.split('-').map(Number);
+  const at = new Date(y, m - 1, d, time ? Number(time[1]) : 12, time ? Number(time[2]) : 0);
+  at.setMinutes(at.getMinutes() + minutes);
+  const endOfDay = new Date(y, m - 1, d, 23, 59);
+  return (at > endOfDay ? endOfDay : at).toISOString();
+}
 
 export const tooLong = (workout: MacroFactorWorkout): boolean => !!workout.durationSec && workout.durationSec / 60 > LONGEST_PLAUSIBLE_WORKOUT_MIN;
 
@@ -52,7 +76,8 @@ export function fileDurationSentence(workout: MacroFactorWorkout): string {
 // The row after the choice: the draft carries the chosen duration, the doubt is
 // gone, and the duration of the file is kept on the log.
 export function withChosenDuration(p: NewProposal, choice: DurationChoice): NewProposal {
-  const minutes = choice;
+  const { minutes } = choice;
+  const otherDay = choice.date !== undefined && choice.date !== p.workout.date;
   const startMs = new Date(p.workout.start).getTime();
   const { doubt: _doubt, ...rest } = p;
   return {
@@ -61,7 +86,9 @@ export function withChosenDuration(p: NewProposal, choice: DurationChoice): NewP
     draft: {
       ...p.draft,
       durationMinutes: minutes,
-      completedAt: new Date(startMs + minutes * 60_000).toISOString(),
+      ...(otherDay
+        ? { completedDate: choice.date!, completedAt: completedAtOn(choice.date!, p.workout.start, minutes) }
+        : { completedAt: new Date(startMs + minutes * 60_000).toISOString() }),
       fileDurationMinutes: Math.round((p.workout.durationSec ?? 0) / 60),
     },
   };
@@ -70,5 +97,6 @@ export function withChosenDuration(p: NewProposal, choice: DurationChoice): NewP
 // The line under the row after the choice.
 export function chosenDurationLine(p: NewProposal): string {
   const file = minutesLabel(p.draft.fileDurationMinutes ?? 0);
-  return `Duur ${minutesLabel(p.draft.durationMinutes)} (het bestand zegt ${file}).`;
+  const day = p.draft.completedDate !== p.workout.date ? ` Telt op ${weekdayLongNL(p.draft.completedDate)} ${formatDateNL(p.draft.completedDate)}.` : '';
+  return `Duur ${minutesLabel(p.draft.durationMinutes)} (het bestand zegt ${file}).${day}`;
 }

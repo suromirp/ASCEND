@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { logDay, plannedByIdOf } from '../engine/logDay';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { isoWeekday, monthBounds, parseISODate, todayISO, toISODate } from '../utils/dates';
 import { SPORT_LOOK, sportKeyOfLog, type SportKey } from './logbook/sportLook';
@@ -31,16 +32,18 @@ export function MonthCalendar({
   const { start, end } = monthBounds(anchor);
   const today = todayISO();
 
+  const plannedById = useMemo(() => plannedByIdOf(plannedSessions), [plannedSessions]);
   const sportsByDate = useMemo(() => {
     const map = new Map<string, SportKey[]>();
     for (const l of sessionLogs) {
-      if (l.completedDate < start || l.completedDate > end || l.type === 'recovery') continue;
-      const list = map.get(l.completedDate) ?? [];
+      const day = logDay(l, plannedById);
+      if (day < start || day > end || l.type === 'recovery') continue;
+      const list = map.get(day) ?? [];
       list.push(sportKeyOfLog(l));
-      map.set(l.completedDate, list);
+      map.set(day, list);
     }
     return map;
-  }, [sessionLogs, start, end]);
+  }, [sessionLogs, plannedById, start, end]);
 
   const restDates = useMemo(() => {
     const set = new Set<string>();

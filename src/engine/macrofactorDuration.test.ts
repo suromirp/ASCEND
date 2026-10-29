@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { SessionLog } from '../models/training';
-import { canAdjustDuration, chosenDurationLine, fileDurationSentence, isValidMinutes, suggestedDuration, withChosenDuration } from './macrofactorDuration';
+import { dayOptions, canAdjustDuration, chosenDurationLine, fileDurationSentence, isValidMinutes, suggestedDuration, withChosenDuration } from './macrofactorDuration';
 import { planMacroFactor } from './macrofactorLink';
 import { readMacroFactorCsv } from './macrofactorImport';
 
@@ -60,7 +60,7 @@ describe('the row and the log after the choice', () => {
   it('a chosen duration is the duration of the log and the file duration is kept', () => {
     const [p] = plan();
     if (!canAdjustDuration(p, '2026-10-29')) throw new Error('expected a new row');
-    const after = withChosenDuration(p, 50);
+    const after = withChosenDuration(p, { minutes: 50 });
     expect(after.doubt).toBeUndefined();
     expect(after.draft.durationMinutes).toBe(50);
     expect(after.draft.fileDurationMinutes).toBe(376);
@@ -72,6 +72,42 @@ describe('the row and the log after the choice', () => {
     expect(p.draft.durationMinutes).not.toBe(50);
   });
 
+});
+
+describe('welke dag', () => {
+  const planned = (date: string) => ({ id: 'ps1', templateId: 'tpl_upper_a', scheduledDate: date, status: 'planned', order: 0 }) as unknown as import('../models/training').PlannedSession;
+  const withPlanned = (date: string) => {
+    const [p] = plan();
+    if (!canAdjustDuration(p, '2026-10-29')) throw new Error('expected a new row');
+    return { ...p, planned: planned(date) };
+  };
+
+  it('biedt de geplande dag aan, als die anders is, en kiest die als standaard', () => {
+    const p = withPlanned('2026-10-29');
+    expect(dayOptions(p)).toEqual({ fileDay: '2026-10-28', plannedDay: '2026-10-29', defaultDay: '2026-10-29' });
+  });
+
+  it('biedt niets extra als de geplande dag gelijk is of er geen geplande training is', () => {
+    expect(dayOptions(withPlanned('2026-10-28')).plannedDay).toBeUndefined();
+    const [p] = plan();
+    if (!canAdjustDuration(p, '2026-10-29')) throw new Error('expected a new row');
+    expect(dayOptions({ ...p, planned: undefined })).toEqual({ fileDay: '2026-10-28', plannedDay: undefined, defaultDay: '2026-10-28' });
+  });
+
+  it('zet de gekozen dag als datum van de nieuwe log, met het tijdstip op die dag', () => {
+    const p = withPlanned('2026-10-29');
+    const after = withChosenDuration(p, { minutes: 50, date: '2026-10-29' });
+    expect(after.draft.completedDate).toBe('2026-10-29');
+    const at = new Date(after.draft.completedAt);
+    expect(at.getFullYear()).toBe(2026);
+    expect(at.getMonth()).toBe(9);
+    expect(at.getDate()).toBe(29);
+    expect(chosenDurationLine(after)).toContain('Telt op');
+    // De dag van het bestand blijft de datum van het bestand.
+    const same = withChosenDuration(p, { minutes: 50, date: '2026-10-28' });
+    expect(same.draft.completedDate).toBe('2026-10-28');
+    expect(chosenDurationLine(same)).not.toContain('Telt op');
+  });
 });
 
 describe('migrateLogFileDuration', () => {

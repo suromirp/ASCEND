@@ -30,3 +30,5 @@ moving: "Inhalen" in the action sheet and the handle in Week (setting "Traininge
 not moved: `applyProposal` skips it (your lock) and adds a new row with the same template and length on the chosen day (your lock,
 `PlannedSession.catchUp`); undo puts the old one back and removes the new one. A clash still asks Akkoord. Rows say "ingehaald van wo 28"
 and "ingehaald op do 29". The automatic planning does not touch this, `planGolden.test.ts` does not move.
+
+**De dag van een log in Week** (`engine/logDay.ts`, decision `docs/beslissingen/2026-10-29-dag-van-een-training.md`): to show, a log counts on the day of its planned training when that is at most one day from `completedDate` (a MacroFactor workout begun on one day and finished on the next), so the row and the chart "Belasting per dag" say the same; the log is never rewritten. Only display uses it (Week, Vandaag, the Logboek calendar); leg index, load over 7 and 28 days, readiness and planning stay on `completedDate`.
