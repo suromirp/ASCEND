@@ -1,0 +1,77 @@
+// ASCEND: "Duur aanpassen" on a row of the card "Uit MacroFactor" whose duration in
+// the file is too long. A minutes field, starting with the duration ASCEND already
+// expects for this training. Nothing is stored here: the card
+// keeps the choice until "Alles verwerken"
+// (docs/beslissingen/2026-10-29-mf-training-te-lang.md).
+
+import { useState } from 'react';
+import { fileDurationSentence, isValidMinutes, type DurationChoice, type NewProposal } from '../engine/macrofactorDuration';
+import { MAX_STRENGTH_MINUTES } from '../engine/logDuration';
+import { useSheetClose } from '../utils/useSheetClose';
+import { NumberField } from './NumberField';
+import { Portal } from './Portal';
+import { SheetHeader } from './SheetHeader';
+import { TextButton } from './TextButton';
+import { Card, PrimaryButton, SheetGrip } from './ui';
+
+export function MacroFactorDurationSheet({
+  proposal,
+  suggested,
+  current,
+  onChoose,
+  onClose,
+}: {
+  proposal: NewProposal;
+  // The duration ASCEND expects for this training.
+  suggested: number;
+  // The choice made before, if any: minutes.
+  current?: DurationChoice;
+  onChoose: (choice: DurationChoice) => void;
+  onClose: () => void;
+}) {
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200);
+  const [minutes, setMinutes] = useState<number | undefined>(current ?? suggested);
+  const valid = isValidMinutes(minutes);
+
+  function choose(choice: DurationChoice) {
+    onChoose(choice);
+    requestClose();
+  }
+
+  return (
+    <Portal>
+      <div
+        className={`fixed inset-0 z-[60] flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+        onClick={requestClose}
+      >
+        <div
+          ref={sheetRef}
+          className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-label="Duur aanpassen"
+        >
+          <SheetGrip />
+          <Card className="rounded-b-none border-b-0 pb-8">
+            <div className="-mt-2"><SheetHeader eyebrow={proposal.template.name} title="Duur aanpassen" onClose={requestClose} /></div>
+            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{fileDurationSentence(proposal.workout)}</p>
+            <div className="mt-4">
+              <NumberField
+                label="Hoe lang duurde je training?"
+                value={minutes}
+                onChange={setMinutes}
+                unit="min"
+                tall
+                helper={valid || minutes === undefined ? `ASCEND verwacht ${suggested} min voor deze training.` : `Kies een duur van 1 tot ${MAX_STRENGTH_MINUTES} minuten.`}
+              />
+            </div>
+            <div className="mt-4 flex flex-col gap-3">
+              <PrimaryButton onClick={() => valid && choose(minutes)} disabled={!valid}>Opslaan</PrimaryButton>
+              <TextButton tone="dim" className="self-start" onClick={requestClose}>Annuleren</TextButton>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </Portal>
+  );
+}

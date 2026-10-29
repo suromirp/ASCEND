@@ -23,9 +23,12 @@ import { clearRunMessage, getRunState, runMacroFactor, subscribeRun } from '../s
 import { describeEnrichment } from '../engine/macrofactorEnrich';
 import { describeStrengthChange } from '../engine/macrofactorLead';
 import { describeWorkout, minutesLabel } from '../engine/macrofactorLink';
+import { canAdjustDuration, chosenDurationLine, suggestedDuration, withChosenDuration, type DurationChoice, type NewProposal } from '../engine/macrofactorDuration';
 import { isReady, openProposals, RUN_SLOW_NOTE, runProgressLabel, type ReadyProposal } from '../engine/macrofactorRun';
 import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
 import { Icon } from './icons';
+import { MacroFactorDurationSheet } from './MacroFactorDurationSheet';
+import { TextButton } from './TextButton';
 import { Card, Eyebrow, Num, PrimaryButton, SecondaryButton } from './ui';
 
 function dayLabel(iso: string): string {
@@ -33,7 +36,7 @@ function dayLabel(iso: string): string {
 }
 
 export function MacroFactorCard({ onImportPage = false, primary = true }: { onImportPage?: boolean; primary?: boolean }) {
-  const { logSession, announceSaved, refresh, takeOverFromMacroFactor } = useAppData();
+  const { logSession, announceSaved, refresh, takeOverFromMacroFactor, sessionLogs, settings } = useAppData();
   const { plan, state } = useMacroFactor();
   const navigate = useNavigate();
   const run = useSyncExternalStore(subscribeRun, getRunState);
@@ -42,13 +45,20 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
   // Rows that do not look right (in the future, an impossible duration) stay
   // out of "Alles verwerken" until the user ticks them.
   const [opted, setOpted] = useState<string[]>([]);
+  // A duration set by hand for a row whose duration in the file is too long,
+  // by workout id: minutes. Kept until "Alles verwerken".
+  const [durations, setDurations] = useState<Record<string, DurationChoice>>({});
+  const [adjusting, setAdjusting] = useState<NewProposal | null>(null);
   // The outcome shows while this card is there; the next visit starts clean.
   useEffect(() => () => clearRunMessage(), []);
 
   const saving = run.status === 'running';
   const allReady = plan.proposals.filter(isReady);
   // What the run handled stays away, also before the app has read it back.
-  const ready = openProposals(allReady, run.handled);
+  const ready = openProposals(allReady, run.handled).map((p) => {
+    const choice = durations[p.workout.externalId];
+    return choice !== undefined && canAdjustDuration(p) ? withChosenDuration(p, choice) : p;
+  });
   const waiting = plan.proposals.length - allReady.length;
   // Never gone halfway: while it runs, and with its outcome, the card stays.
   if (ready.length === 0 && waiting === 0 && run.status === 'idle') return null;
@@ -59,6 +69,8 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
   const doubtful = ready.filter((p) => p.doubt);
   const flip = (list: string[], id: string) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
   const toggle = (p: ReadyProposal) => (p.doubt ? setOpted((o) => flip(o, p.workout.externalId)) : setSkipped((s) => flip(s, p.workout.externalId)));
+
+  const adjustable = (p: ReadyProposal) => (!saving && canAdjustDuration(p) ? () => setAdjusting(p) : undefined);
 
   function processAll() {
     if (saving || chosen.length === 0) return;
@@ -72,6 +84,7 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
     }).then(() => {
       setSkipped([]);
       setOpted([]);
+      setDurations({});
     });
   }
 
@@ -98,7 +111,7 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
       {regular.length > 0 && (
         <ul className="flex flex-col">
           {regular.map((p) => (
-            <Row key={p.workout.externalId} proposal={p} on={isOn(p)} disabled={saving} onToggle={() => toggle(p)} />
+            <Row key={p.workout.externalId} proposal={p} on={isOn(p)} disabled={saving} onToggle={() => toggle(p)} onAdjust={adjustable(p)} />
           ))}
         </ul>
       )}
@@ -110,7 +123,7 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
           </p>
           <ul className="flex flex-col">
             {doubtful.map((p) => (
-              <Row key={p.workout.externalId} proposal={p} on={isOn(p)} disabled={saving} onToggle={() => toggle(p)} />
+              <Row key={p.workout.externalId} proposal={p} on={isOn(p)} disabled={saving} onToggle={() => toggle(p)} onAdjust={adjustable(p)} />
             ))}
           </ul>
         </div>
@@ -140,12 +153,22 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
           {!onImportPage && <SecondaryButton onClick={() => navigate('/koppelen/macrofactor')}>Namen koppelen</SecondaryButton>}
         </div>
       )}
+      {adjusting && (
+        <MacroFactorDurationSheet
+          proposal={adjusting}
+          suggested={suggestedDuration(adjusting.template, sessionLogs, settings.sessionDurationEstimates?.[adjusting.template.id])}
+          current={durations[adjusting.workout.externalId]}
+          onChoose={(choice) => setDurations((d) => ({ ...d, [adjusting.workout.externalId]: choice }))}
+          onClose={() => setAdjusting(null)}
+        />
+      )}
     </Card>
   );
 }
 
-function Row({ proposal, on, disabled, onToggle }: { proposal: ReadyProposal; on: boolean; disabled: boolean; onToggle: () => void }) {
+function Row({ proposal, on, disabled, onToggle, onAdjust }: { proposal: ReadyProposal; on: boolean; disabled: boolean; onToggle: () => void; onAdjust?: () => void }) {
   const { workout, template } = proposal;
+  const chosen = proposal.kind === 'new' && proposal.durationChosen ? proposal : undefined;
   return (
     <li className="flex items-start gap-1 border-t py-1 first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
       <button
@@ -166,10 +189,14 @@ function Row({ proposal, on, disabled, onToggle }: { proposal: ReadyProposal; on
           <p className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{dayLabel(workout.date)}</p>
         </div>
         <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          {describeWorkout(workout)}. {what(proposal)}
+          {describeWorkout(chosen ? { ...workout, durationSec: undefined } : workout)}. {what(proposal)}
         </p>
+        {chosen && <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{chosenDurationLine(chosen)}</p>}
         {proposal.doubt && (
           <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{proposal.doubt}</p>
+        )}
+        {onAdjust && (
+          <TextButton tone="action" size="xs" className="-ml-1 px-1" onClick={onAdjust} disabled={disabled}>Duur aanpassen</TextButton>
         )}
       </div>
     </li>

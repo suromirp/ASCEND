@@ -336,7 +336,11 @@ kind: an existing strength log takes over the duration, sets and reps in
 reserve of a MacroFactor workout, in the same field (its `strength` part) and
 put back with the same `restoreManual`
 (`docs/beslissingen/2026-10-22-macrofactor-leidend-voor-kracht.md`, which
-refers to the first and leaves it as it was). A third: a log from the watch
+refers to the first and leaves it as it was). A new log from a MacroFactor workout
+whose file duration is too long (over 300 minutes) takes a duration the user sets in "Duur aanpassen"
+when it is made (never empty, so load and leg index keep counting it), and keeps the file's minutes in `SessionLog.fileDurationMinutes`;
+nothing existing is rewritten (`engine/macrofactorDuration.ts`,
+`docs/beslissingen/2026-10-29-mf-training-te-lang.md`). A third: a log from the watch
 can be cut at the beginning and the end (a drive home with the watch still on),
 which replaces its duration, distance, climb and heart rate and keeps the old
 ones in `SessionLog.trim`, put back by `engine/trimLog.ts#undoTrim`

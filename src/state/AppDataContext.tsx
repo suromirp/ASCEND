@@ -638,6 +638,7 @@ export interface LogSessionInput {
   workout?: SessionLog['workout'];
   strengthRir?: SessionLog['strengthRir'];
   gymProfileId?: SessionLog['gymProfileId'];
+  fileDurationMinutes?: SessionLog['fileDurationMinutes'];
   // Het verloop van de training in Forge; alleen bij het maken van het log (engine/forgeLog.ts).
   forgeLog?: SessionLog['forgeLog'];
   legsAtStart?: SessionLog['legsAtStart'];
@@ -1387,6 +1388,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           workout: input.workout,
           strengthRir: input.strengthRir,
           ...(input.gymProfileId ? { gymProfileId: input.gymProfileId } : {}),
+          ...(input.fileDurationMinutes ? { fileDurationMinutes: input.fileDurationMinutes } : {}),
           ...(input.forgeLog && input.forgeLog.length > 0 ? { forgeLog: input.forgeLog } : {}),
           legsAtStart: input.legsAtStart,
           externalId: input.externalId,

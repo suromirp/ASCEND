@@ -84,7 +84,7 @@ export function supplementPatch(log: SessionLog, workout: MacroFactorWorkout, te
 // --- the proposals --------------------------------------------------------------------
 
 export type MacroFactorProposal =
-  | { kind: 'new'; workout: MacroFactorWorkout; template: SessionTemplate; planned?: PlannedSession; draft: SessionLogDraft; doubt?: string }
+  | { kind: 'new'; workout: MacroFactorWorkout; template: SessionTemplate; planned?: PlannedSession; draft: SessionLogDraft; doubt?: string; durationChosen?: true }
   | { kind: 'supplement'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; patch: LogPatch; doubt?: string }
   // "MacroFactor is leidend voor kracht": the numbers of the file take over the
   // log's own duration, sets and reps in reserve; the old ones are kept on the
@@ -108,9 +108,9 @@ export const MOST_PLAUSIBLE_WEIGHT_KG = 1000;
 
 // Why a row is set apart on the card, in one short sentence; undefined when it
 // looks fine. Such a row is not part of "Alles verwerken" unless the user ticks it.
-export function doubtAbout(workout: MacroFactorWorkout, today: string = todayISO()): string | undefined {
+export function doubtAbout(workout: MacroFactorWorkout, today: string = todayISO(), skipDuration = false): string | undefined {
   if (workout.date > today) return `Deze training staat in de toekomst (${formatDateNL(workout.date)}).`;
-  if (workout.durationSec && workout.durationSec / 60 > LONGEST_PLAUSIBLE_WORKOUT_MIN) {
+  if (!skipDuration && workout.durationSec && workout.durationSec / 60 > LONGEST_PLAUSIBLE_WORKOUT_MIN) {
     return `De duur in het bestand is ${minutesLabel(Math.round(workout.durationSec / 60))}. Dat lijkt te lang.`;
   }
   const odd = workout.exercises.some((e) => e.sets.some((s) => s.reps > MOST_PLAUSIBLE_REPS || Math.abs(s.weightKg ?? 0) > MOST_PLAUSIBLE_WEIGHT_KG));

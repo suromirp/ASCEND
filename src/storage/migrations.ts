@@ -361,6 +361,18 @@ export function migrateLogGymProfile(log: SessionLog): SessionLog {
   return rest;
 }
 
+// --- SessionLog.fileDurationMinutes ---------------------------------------------------------
+// De duur die een MacroFactor-bestand gaf, als je hem zelf aanpaste (decision 2026-10-29-mf-training-te-lang.md).
+// Alleen een eindig getal boven nul blijft; iets anders uit een bewerkte back-up valt weg, de log blijft.
+export function migrateLogFileDuration(log: SessionLog): SessionLog {
+  if (!('fileDurationMinutes' in log)) return log;
+  const raw = (log as { fileDurationMinutes?: unknown }).fileDurationMinutes;
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return log;
+  const { fileDurationMinutes: _damaged, ...rest } = log;
+  void _damaged;
+  return rest;
+}
+
 // --- SessionLog.forgeLog ---------------------------------------------------------------------
 // Het verloop van een krachttraining in Forge (engine/forgeLog.ts, decision
 // 2026-10-28-forge-logboek.md). Optional and additive: a file from before it has none and imports as
