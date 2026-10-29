@@ -336,7 +336,8 @@ export function WeekPlanner({
     <div className="mx-stagger overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
       {days.map((date) => {
         const advice = dayOrder(sessions.filter((s) => s.scheduledDate === date && !loggedIds.has(s.id)), sessions.filter((s) => s.scheduledDate === addDays(date, 1)), templateById);
-        const daySessions = orderDay(sessions.filter((s) => s.scheduledDate === date), advice);
+        // Zonder advies houdt een dag zijn eigen volgorde (order), ook als een rij overgeslagen of ingehaald is.
+        const daySessions = orderDay(sessions.filter((s) => s.scheduledDate === date).sort((a, b) => a.order - b.order), advice);
         const isToday = date === today;
         const leaveLabel = leaveLabelOn(date, leave);
         const rows = daySessions.flatMap((s) => {

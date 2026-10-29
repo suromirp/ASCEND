@@ -33,7 +33,7 @@ export const ForgeStrip = memo(function ForgeStrip({
     el.scrollTo({ left: Math.max(0, left), behavior: off ? 'auto' : 'smooth' });
   }, [current]);
   return (
-    <div ref={strip} className="forge-strip flex gap-1.5 overflow-x-auto px-3 pb-1.5" role="tablist" aria-label="Oefeningen van deze training" data-no-sheet-drag>
+    <div ref={strip} className="forge-strip flex gap-1.5 overflow-x-auto px-3 pb-1.5" role="group" aria-label="Oefeningen van deze training" data-no-sheet-drag>
       {workout.map((ex, i) => {
         const on = i === current;
         const done = !readOnly && exerciseComplete(ex);
@@ -41,8 +41,7 @@ export const ForgeStrip = memo(function ForgeStrip({
           <button
             key={ex.slot}
             type="button"
-            role="tab"
-            aria-selected={on}
+            aria-current={on ? 'true' : undefined}
             aria-label={`${i + 1}. ${ex.name}${done ? ', klaar' : ''}`}
             onClick={() => onJump(i)}
             className="relative flex h-[52px] w-11 shrink-0 flex-col items-center justify-start pt-0.5"

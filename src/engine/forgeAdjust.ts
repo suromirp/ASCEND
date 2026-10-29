@@ -90,7 +90,7 @@ export function suggestLighter(ex: WorkoutExercise, rowId: string, ctx: AdjustCo
     const c = candidates[pick];
     // Alleen lichter, en alleen als de herhalingen binnen het bereik blijven.
     if (c.loadKg >= now - 1e-9) continue;
-    if (!r.target.failure && expectedReps(strength, c.loadKg, rir) > r.target.repsHigh + REPS_ROOM) continue;
+    if (!r.target.failure && !r.target.open && expectedReps(strength, c.loadKg, rir) > r.target.repsHigh + REPS_ROOM) continue;
     items.push({ rowId: r.id, weightKg: c.externalKg });
   }
   return items.length > 0 ? { fromRowId: rowId, items } : undefined;
@@ -254,7 +254,8 @@ export function applyLighter(ex: WorkoutExercise, adj: Adjustment): WorkoutExerc
     rows: ex.rows.map((r) => {
       const kg = byId.get(r.id);
       if (kg === undefined || r.done || r.edited) return r;
-      const reps = r.reps === undefined || r.target.failure ? r.reps : Math.min(MAX_ROW_REPS, Math.max(r.target.repsLow, Math.min(r.target.repsHigh, r.reps)));
+      // Een open set ("7+") heeft geen bovenkant: een getypt aantal erboven blijft staan.
+      const reps = r.reps === undefined || r.target.failure ? r.reps : r.target.open ? Math.min(MAX_ROW_REPS, Math.max(r.target.repsLow, r.reps)) : Math.min(MAX_ROW_REPS, Math.max(r.target.repsLow, Math.min(r.target.repsHigh, r.reps)));
       return { ...r, weightKg: kg, ...(reps !== undefined ? { reps } : {}) };
     }),
   };

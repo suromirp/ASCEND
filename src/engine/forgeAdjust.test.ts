@@ -83,6 +83,25 @@ describe('suggestLighter met een stang', () => {
     expect(ex.rows[1].weightKg).toBe(70);
   });
 
+  it('applyLighter laat een open set ("7+") boven de onderkant staan', () => {
+    const rows = sets().map((r) => ({ ...r, target: { ...r.target, repsLow: 7, repsHigh: 7, open: true } }));
+    rows[1] = { ...rows[1], reps: 12 };
+    rows[2] = { ...rows[2], reps: 5 };
+    const ex = exercise('bench-press', rows);
+    const adj = { fromRowId: 'r0', items: [{ rowId: 'r1', weightKg: 60 }, { rowId: 'r2', weightKg: 60 }] };
+    const next = applyLighter(ex, adj);
+    expect(next.rows[1].reps).toBe(12);
+    expect(next.rows[2].reps).toBe(7);
+  });
+
+  it('suggestLighter ziet de open bovenkant van een "7+" set: lichter mag meer herhalingen geven', () => {
+    const make = (open: boolean) => sets().map((r) => ({ ...r, target: { ...r.target, repsLow: 7, repsHigh: 7, ...(open ? { open: true } : {}) } }));
+    const closed = suggestLighter(exercise('bench-press', make(false)), 'r0', ctx());
+    const open = suggestLighter(exercise('bench-press', make(true)), 'r0', ctx());
+    expect(open).toBeDefined();
+    expect(open!.items.length).toBeGreaterThanOrEqual(closed?.items.length ?? 0);
+  });
+
   it('stillOpen laat gedane of aangepaste sets vallen', () => {
     const ex = exercise('bench-press', sets());
     const adj = suggestLighter(ex, 'r0', ctx())!;
