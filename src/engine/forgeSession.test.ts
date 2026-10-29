@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  activeMinutes, activeSeconds, breakAsPause, cleanPauses, formatAway, formatSessionClock, isPaused, longBreakMs, pause, pausedMs, resolveBreakAsk, resume,
+  activeMinutes, activeSeconds, draftsToPrune, finishDuration, sessionIsDead, breakAsPause, cleanPauses, formatAway, formatSessionClock, isPaused, longBreakMs, pause, pausedMs, resolveBreakAsk, resume,
 } from './forgeSession';
 
 const MIN = 60_000;
@@ -86,6 +86,38 @@ describe('lange onderbreking', () => {
     expect(resolveBreakAsk({ forgeLongBreak: 0 })).toBe(0);
     expect(resolveBreakAsk({ forgeLongBreak: 60 })).toBe(60);
     expect(resolveBreakAsk({ forgeLongBreak: 7 })).toBe(45);
+  });
+});
+
+describe('finishDuration', () => {
+  it('neemt de actieve tijd, minstens een minuut', () => {
+    expect(finishDuration(50 * 60, 45)).toEqual({ minutes: 50, clamped: false });
+    expect(finishDuration(10, 45).minutes).toBe(1);
+  });
+  it('houdt precies 240 minuten nog vast', () => {
+    expect(finishDuration(240 * 60, 45).clamped).toBe(false);
+  });
+  it('valt boven 240 minuten terug op de verwachte duur en zegt wat de klok zei', () => {
+    expect(finishDuration(1000 * 60, 45)).toEqual({ minutes: 45, clamped: true, clockSaid: '16 uur 40 min' });
+    expect(finishDuration(300 * 60, 50).clockSaid).toBe('5 uur');
+  });
+});
+
+describe('opruimen', () => {
+  const world = { plannedIds: new Set(['p1', 'p2']), loggedIds: new Set(['p2']), templateIds: new Set(['t1']) };
+  it('een sessie is dood zonder training, zonder geplande sessie of als hij al gelogd is', () => {
+    expect(sessionIsDead({ templateId: 't1', plannedSessionId: 'p1' }, world)).toBe(false);
+    expect(sessionIsDead({ templateId: 't1' }, world)).toBe(false);
+    expect(sessionIsDead({ templateId: 'weg', plannedSessionId: 'p1' }, world)).toBe(true);
+    expect(sessionIsDead({ templateId: 't1', plannedSessionId: 'weg' }, world)).toBe(true);
+    expect(sessionIsDead({ templateId: 't1', plannedSessionId: 'p2' }, world)).toBe(true);
+  });
+  it('ruimt concepten van gelogde of verdwenen sessies op, behalve de lopende', () => {
+    const k = (s: string) => `ascend.afvinkconcept.${s}:forge`;
+    const keys = [k('p1'), k('p2'), k('p3'), k('t1:2026-10-28'), k('t1:2026-10-29'), k('t1:los')];
+    expect(draftsToPrune(keys, world, '2026-10-29')).toEqual([k('p2'), k('p3'), k('t1:2026-10-28')]);
+    expect(draftsToPrune(keys, world, '2026-10-29', k('p3'))).toEqual([k('p2'), k('t1:2026-10-28')]);
+    expect(draftsToPrune(['ascend.afvinkconcept.p3', 'iets'], world, '2026-10-29')).toEqual([]);
   });
 });
 

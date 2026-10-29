@@ -649,7 +649,12 @@ written to. There is at most one session: a pointer `ascend.forge.sessie` in loc
 starting another training while one runs asks "Naar de training" or "Annuleren" (the guard is the wrapper `ForgeWorkout`, the screen is `ForgeWorkoutInner`).
 The pill shows only while a session exists and the full screen of Forge is not open (`registerForgeOpen`), never on the splash; the page gets room under
 its content; the breathing dot runs only while the clock runs and the pill is in view, and not in Rustig, Uit or reduced motion (a deliberate, owner-requested
-second loop next to the mission card). A tap opens `ForgeSessionHost` through `requestOpenSession`.
+second loop next to the mission card). A tap opens `ForgeSessionHost` through `requestOpenSession`. A session starts at the first real action
+(tick, typing a value, adding or removing a set, Pauzeren), not at opening: until then no draft, pointer, pill or gate (the gate does not apply to
+`startAtForm` or preview). A pointer whose template or planned session is gone, or whose planned session is logged, is dead (`sessionIsDead`) and
+cleaned up (`useSessionHousekeeping`, once in App; at boot also `draftsToPrune`); "Alles verwijderen" and a restore that replaces the planning
+call `clearForgeSessions`. Afronden proposes the active time but above 240 minutes (`finishDuration`) the expected duration with an amber line.
+Each ticked row carries `doneAt`, on the log `SetLog.at` (`migrateLogSetTimes`, also in `manualMeasured.strength`).
 
 **The course of a training in Forge** (`engine/forgeLog.ts`, `models/forgeLog.ts`, `components/forge/ForgeLogSheet.tsx`, decision
 `docs/beslissingen/2026-10-28-forge-logboek.md`, design `docs/visie/Forge logboek en spotter.md`): like the Event Log of MacroFactor, per moment

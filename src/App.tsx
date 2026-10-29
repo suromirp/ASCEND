@@ -32,7 +32,7 @@ import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
 import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
 import { StretchAreaRedirect } from './pages/StretchAreaRedirect';
 import { SessionPill } from './components/forge/SessionPill';
-import { useOpenRequest, useSessionPill } from './components/forge/useForgeSession';
+import { useOpenRequest, useSessionHousekeeping, useSessionPill } from './components/forge/useForgeSession';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
 // they still work offline.
@@ -265,6 +265,7 @@ function AppShell() {
   // Without the splash (later opens today, after an update, reduced
   // motion): a quiet empty frame for the few ms IndexedDB needs.
   // De lopende training van Forge: de pil boven de tabbalk en het scherm dat hij opent.
+  useSessionHousekeeping();
   const pill = useSessionPill();
   const openSession = useOpenRequest();
 

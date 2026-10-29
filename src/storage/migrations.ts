@@ -527,8 +527,20 @@ function migrateExerciseSets(data: ExerciseSetLog[] | null | undefined): Exercis
 // the set keeps its reps and weight.
 const ISO_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$/;
 export function migrateLogSetTimes(log: SessionLog): SessionLog {
-  const data = log.strengthData;
-  if (!Array.isArray(data)) return log;
+  let next = log;
+  const data = cleanSetTimes(log.strengthData);
+  if (data !== log.strengthData) next = { ...next, strengthData: data };
+  // Ook de sets die bewaard zijn om terug te zetten (manualMeasured.strength).
+  const kept = log.manualMeasured?.strength?.strengthData;
+  const keptNext = cleanSetTimes(kept);
+  if (keptNext !== kept && log.manualMeasured?.strength) {
+    next = { ...next, manualMeasured: { ...log.manualMeasured, strength: { ...log.manualMeasured.strength, strengthData: keptNext } } };
+  }
+  return next;
+}
+
+function cleanSetTimes<T extends ExerciseSetLog[] | null | undefined>(data: T): T {
+  if (!Array.isArray(data)) return data;
   let changed = false;
   const next = data.map((e) => {
     if (!e || !Array.isArray(e.sets)) return e;
@@ -543,7 +555,7 @@ export function migrateLogSetTimes(log: SessionLog): SessionLog {
     });
     return sets.every((s, i) => s === e.sets[i]) ? e : { ...e, sets };
   });
-  return changed ? { ...log, strengthData: next } : log;
+  return (changed ? next : data) as T;
 }
 
 // A log as it comes out of a file, with every set read by migrateSetLog (also

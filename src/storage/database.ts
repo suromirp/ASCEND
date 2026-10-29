@@ -49,6 +49,7 @@ import type { PackListState } from '../engine/packList';
 import { mainGoal } from '../engine/mainGoal';
 import { programRunBuild } from '../engine/runGrowth';
 import { streamsBytes } from '../engine/streamPack';
+import { clearForgeSessions } from '../utils/forgeSessionStore';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
@@ -1088,6 +1089,8 @@ export async function clearLegacyObjectiveStores(): Promise<void> {
 }
 
 export async function resetToDemoData(): Promise<void> {
+  // Een lopende training hoort bij de planning die nu weggaat: wijzer en concepten mee.
+  clearForgeSessions();
   await Promise.all([
     clearStore('programs'),
     clearStore('sessionTemplates'),

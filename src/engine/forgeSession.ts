@@ -115,6 +115,58 @@ export function formatAway(ms: number): string {
   return `${Math.round(minutes / 60)} uur`;
 }
 
+// De duur die Afronden voorstelt: de actieve tijd, tenzij de klok onwaarschijnlijk lang liep (een vergeten
+// sessie, een telefoon in een tas). Boven de grens valt het voorstel terug op de verwachte duur en zegt een
+// regel wat de klok zei. Jij kunt het getal altijd zelf aanpassen.
+export const MAX_CLOCK_MINUTES = 240;
+
+export interface FinishDuration {
+  minutes: number;
+  // De klok ging over de grens: het voorstel is de verwachte duur.
+  clamped: boolean;
+  // "16 uur 40 min", alleen als clamped.
+  clockSaid?: string;
+}
+
+export function finishDuration(activeSec: number, expectedMin: number): FinishDuration {
+  const minutes = Math.max(1, Math.round(activeSec / 60));
+  if (minutes <= MAX_CLOCK_MINUTES) return { minutes, clamped: false };
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return { minutes: Math.max(1, Math.round(expectedMin)), clamped: true, clockSaid: m === 0 ? `${h} uur` : `${h} uur ${m} min` };
+}
+
+// Wat er bestaat, voor het opruimen van een sessie die nergens meer bij hoort.
+export interface SessionWorld {
+  plannedIds: ReadonlySet<string>;
+  // De geplande sessies waar al een log van is.
+  loggedIds: ReadonlySet<string>;
+  templateIds: ReadonlySet<string>;
+}
+
+// Een sessie is dood als zijn training of geplande sessie er niet meer is, of al gelogd is: dan staat er
+// geen pil die andere trainingen blokkeert en schrijft Afronden nooit een log naar een sessie die niet bestaat.
+export function sessionIsDead(s: { templateId: string; plannedSessionId?: string }, w: SessionWorld): boolean {
+  if (!w.templateIds.has(s.templateId)) return true;
+  if (s.plannedSessionId && (!w.plannedIds.has(s.plannedSessionId) || w.loggedIds.has(s.plannedSessionId))) return true;
+  return false;
+}
+
+const DRAFT_PREFIX = 'ascend.afvinkconcept.';
+const UNPLANNED = /:(\d{4}-\d{2}-\d{2}|los)$/;
+
+// Welke concepten van Forge bij het opstarten weg mogen: die van een geplande sessie die gelogd is of
+// verdwenen, en die van een losse training van een eerdere dag. Het concept van de lopende sessie blijft.
+export function draftsToPrune(keys: string[], w: SessionWorld, today: string, keepKey?: string): string[] {
+  return keys.filter((key) => {
+    if (key === keepKey || !key.startsWith(DRAFT_PREFIX) || !key.endsWith(':forge')) return false;
+    const subject = key.slice(DRAFT_PREFIX.length, -':forge'.length);
+    const loose = UNPLANNED.exec(subject);
+    if (loose) return loose[1] !== 'los' && loose[1] < today;
+    return !w.plannedIds.has(subject) || w.loggedIds.has(subject);
+  });
+}
+
 // h:mm:ss, of m:ss onder het uur (de klok op de pil).
 export function formatSessionClock(seconds: number, withHours = true): string {
   const s = Math.max(0, Math.floor(seconds));

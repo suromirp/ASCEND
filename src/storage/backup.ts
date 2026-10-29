@@ -120,6 +120,8 @@ function migrateLegacyObjectives(
 export { BackupMessageError, backupErrorText } from './backupMessage';
 import { BackupMessageError } from './backupMessage';
 import { validCatchUp } from '../engine/catchUp';
+import { clearForgeSessions } from '../utils/forgeSessionStore';
+import { BREAK_ASK_OPTIONS } from '../engine/forgeSession';
 
 export interface BuildEnvelopeOptions {
   // Whether the full series travel along. Left out: the setting "Reeksen in back-up" decides
@@ -413,7 +415,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.forgeLayout;
     skipped.n++;
   }
-  if ('forgeLongBreak' in s && ![0, 30, 45, 60, 90].includes(s.forgeLongBreak as number)) {
+  if ('forgeLongBreak' in s && !(BREAK_ASK_OPTIONS as readonly number[]).includes(s.forgeLongBreak as number)) {
     delete s.forgeLongBreak;
     skipped.n++;
   }
@@ -1262,6 +1264,8 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
     const detail = err instanceof Error ? ` (${err.message})` : '';
     throw new Error(`Importeren is mislukt. Er is niets gewijzigd.${detail}`);
   }
+  // De geplande sessies zijn vervangen: een lopende training hoort bij de oude planning (wijzer en concepten mee).
+  if (touches(effective.planned_schedule) || touches(programAction)) clearForgeSessions();
 }
 
 export { ALL_CATEGORIES };

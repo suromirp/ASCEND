@@ -69,6 +69,14 @@ describe('migrateLogSetTimes', () => {
       expect(out.strengthData![0].sets[0]).toEqual({ reps: 8, weightKg: 40 });
     }
   });
+  it('leest ook de bewaarde sets van manualMeasured.strength', () => {
+    const l = {
+      id: 'l4',
+      manualMeasured: { strength: { strengthData: [{ exerciseId: 'x', exerciseName: 'X', sets: [{ reps: 8, at: 'nu' }, { reps: 8, at: '2026-10-29T10:30:00Z' }] }] } },
+    } as unknown as SessionLog;
+    const out = migrateLogSetTimes(l);
+    expect(out.manualMeasured!.strength!.strengthData![0].sets).toEqual([{ reps: 8 }, { reps: 8, at: '2026-10-29T10:30:00Z' }]);
+  });
   it('een oude log zonder at blijft zoals hij is', () => {
     const l = { id: 'l2', strengthData: [{ exerciseId: 'x', exerciseName: 'X', sets: [{ reps: 5 }] }] } as unknown as SessionLog;
     expect(migrateLogSetTimes(l)).toBe(l);

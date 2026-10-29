@@ -110,7 +110,8 @@ import { addOnText, addOnsFor, formatAddOns, hasStack, ownWeightsFor } from '../
 import { appendEvents, cleanForgeLog, deriveChanges, noFitEvent, setCountEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
 import { SPOTTER_EXPLAIN, SPOTTER_HOW, SPOTTER_SIGN } from '../../engine/spotter';
 import { makeId } from '../../utils/id';
-import { activeSeconds, breakAsPause, breakCounts, cleanPauses, formatAway, formatSessionClock, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
+import { activeSeconds, finishDuration, sessionIsDead, breakAsPause, breakCounts, cleanPauses, formatAway, formatSessionClock, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
+import { useSessionWorld } from './useForgeSession';
 import { clearSessionPointer, notifySession, readSession, registerForgeOpen, requestOpenSession, writeSessionPointer } from '../../utils/forgeSessionStore';
 import { ExerciseAddOnForgeSheet } from './AddOnWeights';
 import { ForgeLogSheet } from './ForgeLogSheet';
@@ -178,14 +179,15 @@ interface ForgeWorkoutProps {
 // Een sessie per keer: loopt er al een andere training, dan vraagt dit eerst wat je wilt
 // (docs/beslissingen/2026-10-29-forge-als-sessie.md). Zonder andere sessie is dit gewoon het scherm.
 export function ForgeWorkout(props: ForgeWorkoutProps) {
-  const { sessionLogs, strengthExternal } = useAppData();
+  const { strengthExternal } = useAppData();
+  const world = useSessionWorld();
   const myKey = `${draftKey(props.template.id, props.plannedSessionId, props.scheduledDate)}:forge`;
   const [other] = useState(() => {
-    if (props.preview || strengthExternal) return undefined;
+    // "Gedaan" vanuit Vandaag of Week (startAtForm) en alleen kijken horen niet bij een sessie.
+    if (props.preview || props.startAtForm || strengthExternal) return undefined;
     const live = readSession();
     if (!live || live.pointer.key === myKey) return undefined;
-    const done = !!live.pointer.plannedSessionId && sessionLogs.some((l) => l.plannedSessionId === live.pointer.plannedSessionId);
-    return done ? undefined : live;
+    return sessionIsDead(live.pointer, world) ? undefined : live;
   });
   if (other) return <OtherSessionRunning name={other.pointer.name} onClose={props.onClose} />;
   return <ForgeWorkoutInner {...props} />;
@@ -224,7 +226,7 @@ function ForgeWorkoutInner({
   preview = false,
   onClose,
 }: ForgeWorkoutProps) {
-  const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs, injuryNotes } = useAppData();
+  const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs, injuryNotes, plannedSessions } = useAppData();
   const today = todayISO();
   const date = scheduledDate ?? today;
   // Met MacroFactor als bron en bij alleen kijken is dit het voorschrift zonder invulvelden.
@@ -271,14 +273,25 @@ function ForgeWorkoutInner({
   const effSlots = useMemo(() => (easeOn ? easeSlots(slots, easeHow).slots : slots), [easeOn, slots, easeHow]);
   const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? resumeDraft(restored.exercises, restored.eased, easeOn, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
   // De sessie begint op het moment van starten en houdt dat, ook na sluiten, herladen en een volgende dag.
-  const [startedAt] = useState(() => (restored ? restored.startedAt : Date.now()));
+  // De sessie begint pas bij de eerste echte handeling (afvinken, typen, een set toevoegen of weghalen, Pauzeren);
+  // alleen openen is nog geen sessie: geen concept, geen wijzer, geen pil.
+  const [startedAt, setStartedAt] = useState<number | null>(() => (restored ? restored.startedAt : null));
+  const startedRef = useRef<number | null>(startedAt);
+  const begin = useCallback((): number => {
+    if (startedRef.current !== null) return startedRef.current;
+    const now = Date.now();
+    startedRef.current = now;
+    lastAction.current = now;
+    setStartedAt(now);
+    return now;
+  }, []);
   const [pauses, setPauses] = useState<Pause[]>(() => cleanPauses(restored?.pauses));
   // Het laatste moment dat jij iets deed: de lange onderbreking meet daarvandaan.
-  const lastAction = useRef<number>(restored ? lastActionOfDraft(restored, startedAt) : startedAt);
-  const paused = isPaused({ startedAt, pauses });
+  const lastAction = useRef<number>(restored ? lastActionOfDraft(restored, restored.startedAt as number) : 0);
+  const paused = startedAt !== null && isPaused({ startedAt, pauses });
   const breakAfter = resolveBreakAsk(settings);
   // "Je was 22 uur weg. Telt die tijd mee?": één keer per terugkomst, alleen als de klok liep.
-  const [awayMs, setAwayMs] = useState<number | undefined>(() => (restored && !readOnly ? longBreakMs({ startedAt, pauses: cleanPauses(restored.pauses), lastActionAt: lastAction.current }, Date.now(), breakAfter) : undefined));
+  const [awayMs, setAwayMs] = useState<number | undefined>(() => (restored && !readOnly ? longBreakMs({ startedAt: restored.startedAt as number, pauses: cleanPauses(restored.pauses), lastActionAt: lastAction.current }, Date.now(), breakAfter) : undefined));
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
   const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -434,7 +447,7 @@ function ForgeWorkoutInner({
     if (workout !== firstWorkout.current) lastAction.current = Date.now();
   }, [workout]);
   useEffect(() => {
-    if (readOnly) return;
+    if (readOnly || startedAt === null) return;
     pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, pauses, lastActionAt: lastAction.current, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column, ...(forgeLog.length > 0 ? { log: forgeLog } : {}), seen: seenAt };
     if (draftTimer.current === undefined) draftTimer.current = window.setTimeout(flushDraft, 300);
   }, [readOnly, startedAt, pauses, workout, easeOn, rest, column, forgeLog, seenAt, flushDraft]);
@@ -446,19 +459,21 @@ function ForgeWorkoutInner({
 
   // Pauzeren en verder gaan staan meteen in het concept.
   const togglePause = useCallback(() => {
+    const start = begin();
     const now = Date.now();
-    const next = isPaused({ startedAt, pauses }) ? resumeClock({ startedAt, pauses }, now) : pauseClock({ startedAt, pauses }, now);
+    const next = isPaused({ startedAt: start, pauses }) ? resumeClock({ startedAt: start, pauses }, now) : pauseClock({ startedAt: start, pauses }, now);
     if (next.lastActionAt !== undefined) lastAction.current = next.lastActionAt;
     setPauses(next.pauses ?? []);
     haptics.tap();
-  }, [startedAt, pauses]);
+  }, [begin, pauses]);
   // Terug in de app terwijl dit scherm openstond: ook dan de vraag, als de klok liep.
-  const clockNow = useRef({ startedAt, pauses });
-  clockNow.current = { startedAt, pauses };
+  const clockNow = useRef<{ startedAt: number; pauses: Pause[] } | null>(null);
+  clockNow.current = startedAt === null ? null : { startedAt, pauses };
   useEffect(() => {
     if (readOnly) return;
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return;
+      if (!clockNow.current) return;
       const gap = longBreakMs({ ...clockNow.current, lastActionAt: lastAction.current }, Date.now(), breakAfter);
       if (gap !== undefined) setAwayMs(gap);
     };
@@ -466,6 +481,7 @@ function ForgeWorkoutInner({
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [readOnly, breakAfter]);
   const answerBreak = (counts: boolean) => {
+    if (startedAt === null) return;
     const now = Date.now();
     const before = { startedAt, pauses, lastActionAt: lastAction.current };
     const next = counts ? breakCounts(before, now) : breakAsPause(before, now);
@@ -597,6 +613,7 @@ function ForgeWorkoutInner({
   const guide = getTrainingGuide(template.id);
 
   function setExercise(slot: string, update: (ex: WorkoutExercise) => WorkoutExercise) {
+    if (!readOnly) begin();
     baseRef.current = null;
     setWorkout((w) => w.map((e) => (e.slot === slot ? update(e) : e)));
   }
@@ -640,6 +657,7 @@ function ForgeWorkoutInner({
   }
 
   function tick(slot: string, rowId: string) {
+    if (!readOnly) begin();
     haptics.tap();
     primeAudio();
     baseRef.current = null;
@@ -711,6 +729,7 @@ function ForgeWorkoutInner({
   }
 
   function tickAll(slot: string) {
+    if (!readOnly) begin();
     haptics.tap();
     primeAudio();
     baseRef.current = null;
@@ -747,6 +766,7 @@ function ForgeWorkoutInner({
   function changeValue(v: number | undefined) {
     const d = dock;
     if (!d) return;
+    if (!readOnly) begin();
     const key = `${d.slot}:${d.rowId}:${d.field}`;
     markCause({ kind: 'eigen', edited: { slot: d.slot, rowId: d.rowId } });
     setWorkout((w) =>
@@ -1254,7 +1274,7 @@ function ForgeWorkoutInner({
           template={template}
           readOnly={readOnly}
           workout={workout}
-          elapsedMinutes={Math.max(1, Math.round(activeSeconds({ startedAt, pauses }, clock()) / 60))}
+          elapsedSeconds={startedAt === null ? 0 : activeSeconds({ startedAt, pauses }, clock())}
           defaultMinutes={scheduledDate ? resolveVariantDuration(template, initialVariant, scheduledDate, program) : durationForVariant(template, initialVariant)}
           plannedSessionId={plannedSessionId}
           scheduledDate={scheduledDate}
@@ -1262,8 +1282,10 @@ function ForgeWorkoutInner({
           onSave={async (extra) => {
             const strengthData = readOnly ? undefined : toStrengthData(workout);
             const rir = readOnly ? undefined : hardestLegRir(workout);
+            // Een geplande sessie die niet meer bestaat (planning vervangen): dan is het een losse training.
+            const plannedStill = !!plannedSessionId && plannedSessions.some((p) => p.id === plannedSessionId);
             const saved = await logSession({
-              plannedSessionId,
+              plannedSessionId: plannedStill ? plannedSessionId : undefined,
               completedDate: extra.doneOn,
               templateId: template.id,
               type: template.type,
@@ -1304,10 +1326,10 @@ function useNow(intervalMs: number): number {
   return now;
 }
 
-function ElapsedClock({ startedAt, pauses }: { startedAt: number; pauses: Pause[] }) {
-  const paused = isPaused({ startedAt, pauses });
+function ElapsedClock({ startedAt, pauses }: { startedAt: number | null; pauses: Pause[] }) {
+  const paused = startedAt !== null && isPaused({ startedAt, pauses });
   const now = useNow(1000);
-  return <span className="font-sans tabular-nums" aria-label="Verstreken tijd" style={paused ? { opacity: 0.7 } : undefined}>{formatSessionClock(activeSeconds({ startedAt, pauses }, now))}</span>;
+  return <span className="font-sans tabular-nums" aria-label="Verstreken tijd" style={paused ? { opacity: 0.7 } : undefined}>{formatSessionClock(startedAt === null ? 0 : activeSeconds({ startedAt, pauses }, now))}</span>;
 }
 
 const isAssisted = (ex: WorkoutExercise) => exerciseOf(ex)?.resistance === 'assisted_bodyweight';
@@ -1866,7 +1888,7 @@ function FinishSheet({
   template,
   readOnly,
   workout,
-  elapsedMinutes,
+  elapsedSeconds,
   defaultMinutes,
   plannedSessionId,
   scheduledDate,
@@ -1876,7 +1898,7 @@ function FinishSheet({
   template: SessionTemplate;
   readOnly: boolean;
   workout: WorkoutExercise[];
-  elapsedMinutes: number;
+  elapsedSeconds: number;
   defaultMinutes: number;
   plannedSessionId?: string;
   scheduledDate?: string;
@@ -1886,7 +1908,9 @@ function FinishSheet({
   const today = todayISO();
   const { done, total } = progress(workout);
   const anyTicked = workout.some((e) => e.rows.some((r) => r.done));
-  const [minutes, setMinutes] = useState<number | undefined>(readOnly || !anyTicked ? defaultMinutes : elapsedMinutes);
+  // Boven vier uur actieve tijd is de klok verdacht: dan staat hier je gewone duur en zegt een regel wat de klok zei.
+  const dur = finishDuration(elapsedSeconds, defaultMinutes);
+  const [minutes, setMinutes] = useState<number | undefined>(readOnly || !anyTicked ? defaultMinutes : dur.minutes);
   const [rpe, setRpe] = useState<number | undefined>();
   const [feel, setFeel] = useState<FinishExtra['feel']>();
   const [pain, setPain] = useState<PainReport[]>([]);
@@ -1924,6 +1948,9 @@ function FinishSheet({
         <div className="flex flex-col gap-4">
           {!readOnly && !anyTicked && (
             <p className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>Je hebt nog geen set afgevinkt. Dan wordt alleen de training afgevinkt, zonder sets.</p>
+          )}
+          {!readOnly && anyTicked && dur.clamped && (
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>De klok zegt {dur.clockSaid}. Klopt dat niet, dan staat hier je gewone duur.</p>
           )}
           {(plannedInPast || !plannedSessionId) && (
             <div className="flex flex-wrap items-center gap-2 text-xs">

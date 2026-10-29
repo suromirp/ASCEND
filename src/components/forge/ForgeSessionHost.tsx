@@ -8,13 +8,14 @@ import { ForgeWorkout } from './ForgeWorkout';
 // De training en de dag komen uit de wijzer van de sessie (utils/forgeSessionStore.ts), eenmaal gelezen
 // bij het openen: zolang dit scherm open is, verandert de sessie niet van training, ook niet na Afronden.
 export default function ForgeSessionHost() {
-  const { templates, program } = useAppData();
+  const { templates, program, loading } = useAppData();
   const [pointer] = useState(() => readSession()?.pointer);
   const template = pointer ? templates.find((t) => t.id === pointer.templateId) : undefined;
   useEffect(() => {
-    // Geen training meer om te openen: het verzoek vervalt.
+    // Geen training meer om te openen: het verzoek vervalt, maar niet zolang de gegevens nog laden.
+    if (loading) return;
     if (!pointer || !template) clearOpenRequest();
-  }, [pointer, template]);
+  }, [loading, pointer, template]);
   if (!pointer || !template) return null;
   return (
     <ForgeWorkout
