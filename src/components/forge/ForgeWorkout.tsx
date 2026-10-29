@@ -12,6 +12,7 @@
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { ExerciseArtButton } from '../ExerciseArtButton';
+import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, type DroppedRow } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
 import { QUICK_LABEL, quickActionsFor, quickButtonsOn, type QuickAction } from '../../engine/forgeQuickActions';
@@ -243,6 +244,8 @@ export function ForgeWorkout({
   const markCause = (why: ForgeCause) => { cause.current = { why, at: Date.now() }; };
   const prevWorkout = useRef(workout);
   const [workoutMenu, setWorkoutMenu] = useState(false);
+  // De tekeningen van de oefeningen van deze training, voor de kaartjes in de kop.
+  useDrawingsFor(useMemo(() => workout.map((e) => e.exerciseId), [workout]), !preview);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [finishing, setFinishing] = useState(startAtForm && !preview);
   const [showGuide, setShowGuide] = useState(false);
@@ -932,14 +935,9 @@ export function ForgeWorkout({
         <ForgeSheet title={`${swapEx.name} ruilen`} sub="Zelfde spieren, met wat je sportschool heeft. Je programma blijft zoals het is." onClose={() => setSwapFor(null)}>
           {(close) => {
             const options = swapOptions(exerciseOf(swapEx), strength.profile, workout.map((e) => e.exerciseId));
+            if (options.length > 0) return <SwapList options={options} onPick={(id) => { swap(swapEx.slot, id); close(); }} />;
             if (options.length === 0) return <p className="py-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze oefening niet goed genoeg om iets met dezelfde spieren voor te stellen.</p>;
-            return (
-              <div className="flex flex-col">
-                {options.map((o) => (
-                  <MenuRow key={o.id} lead={<ExerciseArtButton exerciseId={o.id} name={o.name} />} title={o.name} sub={o.primary.map((m) => MUSCLE_LABEL[m]).join(', ')} onClick={() => { swap(swapEx.slot, o.id); close(); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />
-                ))}
-              </div>
-            );
+            return null;
           }}
         </ForgeSheet>
       )}
@@ -1780,5 +1778,18 @@ function FinishSheet({
         </div>
       )}
     </ForgeSheet>
+  );
+}
+
+// De keuzes in het ruilblad, met links het kaartje. De tekeningen ervan worden opgehaald zodra het blad
+// opent, zodat de kaartjes de oefening laten zien en niet alleen de spieren.
+function SwapList({ options, onPick }: { options: ReturnType<typeof swapOptions>; onPick: (id: string) => void }) {
+  useDrawingsFor(useMemo(() => options.map((o) => o.id), [options]));
+  return (
+    <div className="flex flex-col">
+      {options.map((o) => (
+        <MenuRow key={o.id} lead={<ExerciseArtButton exerciseId={o.id} name={o.name} />} title={o.name} sub={o.primary.map((m) => MUSCLE_LABEL[m]).join(', ')} onClick={() => onPick(o.id)} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />
+      ))}
+    </div>
   );
 }
