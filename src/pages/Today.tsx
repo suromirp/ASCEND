@@ -180,7 +180,10 @@ function TodayContent() {
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
   // Een stille dag zegt al dat er niets staat; "Morgen: Niets gepland" erachter herhaalt dat alleen.
   const quietTomorrow = tomorrow.kind === 'none' ? undefined : tomorrowLine;
-  const doneToday = sessionLogs.filter((l) => l.completedDate === today);
+  // Gedaan vandaag: een log van vandaag, of een log die bij een training van vandaag hoort (een training uit
+  // MacroFactor die gisteren begon en vandaag afliep draagt de datum van het bestand).
+  const todayPlannedIds = new Set(plannedSessions.filter((p) => p.scheduledDate === today).map((p) => p.id));
+  const doneToday = sessionLogs.filter((l) => l.completedDate === today || (!!l.plannedSessionId && todayPlannedIds.has(l.plannedSessionId)));
   const restMode = settings.restDayMode ?? 'rest';
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
