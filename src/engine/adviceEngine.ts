@@ -994,7 +994,12 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const next = inputs.plannedSessions.find((s) => heavy(s, 0));
     if (next) {
       const t = templateById.get(next.templateId)!;
-      out.push({ id: `morning:${today}:one`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 2, title: `Moe of slecht geslapen: ${t.name} vandaag`, effect: `Doe hem liefst vroeg op de dag, of kies de korte versie. Voelt het inlopen zwaarder dan normaal, ruil hem dan voor een rustige training.`, why: 'Eén signaal is nog geen reden om iets te schuiven; slaap en vermoeidheid wegen het zwaarst bij een harde training later op de dag (Craven e.a. 2022).' });
+      // Een test of wedstrijd heeft geen korte versie.
+      const testLike = hasRole(t, 'test') || hasRole(t, 'race');
+      const effect = testLike
+        ? `Eén signaal is geen reden om ${t.name} te laten vallen. Loop hem liefst vroeg op de dag en neem ruim de tijd voor het inlopen. Voelt dat zwaarder dan normaal, loop dan rustig in plaats van te testen; de test komt dan terug in een volgende week.`
+        : `Doe hem liefst vroeg op de dag, of kies de korte versie. Voelt het inlopen zwaarder dan normaal, ruil hem dan voor een rustige training.`;
+      out.push({ id: `morning:${today}:one`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 2, title: `Moe of slecht geslapen: ${t.name} vandaag`, effect, why: 'Eén signaal is nog geen reden om iets te schuiven; slaap en vermoeidheid wegen het zwaarst bij een harde training later op de dag (Craven e.a. 2022).' });
     }
   }
 
