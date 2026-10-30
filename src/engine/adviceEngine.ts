@@ -547,9 +547,10 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     candidates.push({ cost: daysFrom(date) + 3 + (costs as number[]).reduce((a, b) => a + b, 0), date, label: `${shortDate(date)}, ${names.join(' en ')} ${verb}`, effect, proposal: proposal(title, items, `${names.join(' en ')} ${verb}; de testloop komt op ${shortDate(date)}.`, why) });
   }
 
-  // The best first; up to three different options to choose from.
+  // The best first; up to three different days to choose from (one way per day, so a
+  // "Liever niet" to tomorrow still leaves other days, also in the next week).
   for (const c of candidates) c.label = `Testloop ${c.label}`;
-  const ranked = candidates.sort((a, b) => a.cost - b.cost || a.date.localeCompare(b.date)).filter((c, n, all) => all.findIndex((o) => o.label === c.label) === n).slice(0, MAX_OPTIONS);
+  const ranked = candidates.sort((a, b) => a.cost - b.cost || a.date.localeCompare(b.date)).filter((c, n, all) => all.findIndex((o) => o.date === c.date) === n).slice(0, MAX_OPTIONS);
   const trigger = around ? 'plan_update' as const : 'session_missed' as const;
   if (ranked.length > 0) {
     const [first] = ranked;

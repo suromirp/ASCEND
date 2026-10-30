@@ -138,3 +138,19 @@ describe('TEST-MAKE-ROOM: the "waarom" does not repeat the advice', () => {
     }
   });
 });
+
+describe('TEST-MAKE-ROOM: one way per day', () => {
+  it('offers different days, so saying no to tomorrow still leaves a day in the next week', () => {
+    const p = (id: string, t: string, d: string, w: string, status: 'planned' | 'skipped' = 'planned'): PlannedSession => ({ id, templateId: t, scheduledDate: d, weekStartDate: w, status, order: 0 });
+    const week = ['tpl_herstel', 'tpl_upper_a', 'tpl_easy_run', 'tpl_easy_run', 'tpl_upper_b', 'tpl_hill_intervals', 'tpl_long_run'].map((t, d) => p(`n${d}`, t, addDays('2026-11-02', d), '2026-11-02'));
+    const plan = [
+      p('ma', 'tpl_herstel', '2026-10-26', '2026-10-26'), p('do', 'tpl_upper_a', '2026-10-29', '2026-10-26'),
+      p('vr', 'tpl_test_run', '2026-10-30', '2026-10-26', 'skipped'), p('za', 'tpl_upper_b', '2026-10-31', '2026-10-26'), p('zo', 'tpl_lower_a', '2026-11-01', '2026-10-26'),
+      ...week,
+    ];
+    const a = roomAdvice({ plannedSessions: plan, asOf: '2026-10-30' })!;
+    const dates = a.options!.map((o) => o.proposal.changes.find((c) => c.plannedSessionId === 'vr')!.toDate);
+    expect(new Set(dates).size).toBe(dates.length);
+    expect(dates.some((d) => d! >= '2026-11-02')).toBe(true);
+  });
+});
