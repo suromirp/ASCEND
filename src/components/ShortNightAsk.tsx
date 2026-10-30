@@ -109,7 +109,9 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
         <p className="text-xs leading-snug" style={dim}>
           {night.hours ? `Die nacht telt niet mee. Jij schat ongeveer ${night.hours} uur.` : 'Die nacht telt niet mee.'}
         </p>
-        {undo}
+        <TextButton className="shrink-0 whitespace-nowrap" disabled={busy} onClick={() => void store({ date: today, verdict: 'niet_goed', minutes: night.minutes })}>
+          Uren wijzigen
+        </TextButton>
       </div>
     );
   }
