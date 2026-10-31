@@ -29,3 +29,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-31, Data tussen schermen, Lookout, sonnet (tester), 54k, 3 min, 0, eigenaarsbackup bewust niet gebruikt
 - 2026-10-31, Data tussen schermen (audit), Warden, opus (reviewer), 126k, 9 min, 0, 11 bevindingen
 - 2026-10-31, Data tussen schermen (13 punten), Sherpa, sonnet (ontwikkelaar), 145k, 25 min, 0
+- 2026-10-31, App-kaart als tekst, Sherpa, sonnet (ontwikkelaar), 82k, 21 min, 0
