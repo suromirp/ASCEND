@@ -1276,3 +1276,22 @@ html[data-motion='off'] .ea-licht .ea-m { animation: none; }
   scrollbar-width: none;
   overscroll-behavior-x: contain;
 }
+
+/* Ochtendkaart: het gevolg vervangt de vraag en de ingeklapte stand vervangt het gevolg met een
+   korte fade, zonder verschuiving. Rustig houdt de fade; Uit en beperkte beweging zetten alles
+   meteen op de eindstand (de regel voor Uit staat hierboven). Het vinkje tekent alleen in Normaal. */
+@keyframes mx-swap {
+  from { opacity: 0; }
+}
+.mx-swap {
+  animation: mx-swap 0.15s ease-out backwards;
+}
+.mx-fold {
+  animation: mx-swap 0.25s ease-out backwards;
+}
+html[data-motion='calm'] .mx-fold {
+  animation-duration: 0.15s;
+}
+html[data-motion='calm'] .mx-check-draw path {
+  animation: none;
+}

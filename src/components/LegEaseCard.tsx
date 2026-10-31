@@ -30,7 +30,7 @@ export function LegEaseCard() {
   const title = easeTitle(target.template.name);
 
   return (
-    <Card className="flex flex-col gap-2">
+    <Card className="flex flex-col gap-2" data-advice-ids="kaart-benen">
       <Eyebrow>Benen</Eyebrow>
       {offer.state === 'eased' ? (
         <>

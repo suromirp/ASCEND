@@ -79,3 +79,20 @@ export function useCountUp(target: number, enabled: boolean, durationMs = 500) {
   }, [target, enabled, durationMs]);
   return ref;
 }
+
+// Brengt de pagina naar een voorstel of de kaart Benen op Vandaag ("Bekijk voorstel" op de
+// ochtendkaart). Zoekt het blok met `data-advice-ids` waar het id in staat. Niets gevonden:
+// niets doen. Beweging Normaal scrolt zacht en geeft het blok één puls; Rustig en Uit springen.
+export function useScrollToAdvice(): (id: string) => void {
+  const mode = useMotionMode();
+  return (id: string) => {
+    const el = Array.from(document.querySelectorAll<HTMLElement>('[data-advice-ids]')).find((e) => (e.dataset.adviceIds ?? '').split(' ').includes(id));
+    if (!el) return;
+    el.scrollIntoView({ behavior: mode === 'full' ? 'smooth' : 'auto', block: 'center' });
+    if (mode !== 'full') return;
+    el.classList.remove('mx-pulse-once');
+    void el.offsetWidth;
+    el.classList.add('mx-pulse-once');
+    window.setTimeout(() => el.classList.remove('mx-pulse-once'), 1800);
+  };
+}

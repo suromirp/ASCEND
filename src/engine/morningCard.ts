@@ -6,6 +6,8 @@
 // Puur: geen React, geen IndexedDB.
 
 import type { EnergyFeeling, LegFeeling, MorningCheckIn, SleepFeeling } from '../models/checkIn';
+import { previewLegCard, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
+import { adviceLead } from './adviceText';
 import { fatigueWord, type LegFatigueResult } from './legFatigue';
 import { suggestSleepFeeling, watchSummaryLine, type WellnessLine, type WellnessReading } from './wellnessCheck';
 
@@ -130,4 +132,77 @@ export function reviseCheckInSleep(checkIn: MorningCheckIn, judgment: { verdict:
   const sleep = judgment?.hours ? suggestSleepFeeling({ sleepMinutes: judgment.hours * 60 }) : undefined;
   const { sleep: _old, ...rest } = checkIn;
   return sleep ? { ...rest, sleep } : rest;
+}
+
+// --- wat je antwoord doet, in één regel -----------------------------------------------
+
+export const NOTHING_PLANNED_TEXT = 'Vandaag staat er niets gepland. Alles blijft zoals het is.';
+export const NO_CHANGE_TEXT = 'Niets verandert zonder jouw akkoord.';
+// Het id waarmee "Bekijk voorstel" naar de kaart Benen gaat (data-advice-ids op Vandaag).
+export const LEG_CARD_TARGET = 'kaart-benen';
+
+export interface MorningConsequence {
+  // Regel 1: wat je antwoordde, bijvoorbeeld "Fris genoteerd."
+  answer: string;
+  // Regel 2: wat het voor vandaag doet. Leeg als het gevolg niet te bepalen was.
+  line: string | undefined;
+  // Onder regel 2, alleen bij een voorstel.
+  detail: string | undefined;
+  // Het voorstel (of 'kaart-benen') waar "Bekijk voorstel" naartoe gaat.
+  adviceId: string | undefined;
+  // De ingeklapte stand in één zin, bijvoorbeeld "Benen fris. Testloop blijft staan."
+  summary: string;
+  kind: 'blijft' | 'rustdag' | 'voorstel' | 'kaart-benen';
+}
+
+// Het antwoord als korte woorden: "Benen fris", "Gaat goed", "Spierpijn in je bovenlichaam".
+export function legsShortText(c: Pick<MorningCheckIn, 'legs' | 'soreWhere' | 'allNormal'>): string {
+  if (c.allNormal) return 'Gaat goed';
+  const word = legsAnswerText(c);
+  if (!word) return 'Ingevuld';
+  if (c.soreWhere === 'upper' && (c.legs === 'spierpijn' || c.legs === 'flink')) return word;
+  return `Benen ${word.charAt(0).toLowerCase()}${word.slice(1)}`;
+}
+
+// De titel van een voorstel als korte zin: zonder de reden voor de dubbele punt
+// ("Spierpijn: Benen A later" wordt "Benen A later") en zonder slotleesteken.
+function noEnd(title: string): string {
+  const t = title.trim();
+  const colon = t.indexOf(': ');
+  return (colon > 0 ? t.slice(colon + 2) : t).replace(/[.?!:\s]+$/, '');
+}
+
+// Wat een ochtendantwoord voor vandaag doet, uit dezelfde regels als het blad en Vandaag
+// (previewMorningAdvice en previewLegCard). Puur en plant niets: het is alleen tekst, en
+// elke wijziging blijft een voorstel met Akkoord. `answeredAdviceIds`: voorstellen die je
+// al beantwoordde komen niet terug.
+export function morningConsequence(entry: MorningCheckIn, ctx: { inputs: AdviceInputs; answeredAdviceIds: ReadonlySet<string> }): MorningConsequence {
+  const short = legsShortText(entry);
+  const answer = entry.allNormal ? 'Gaat goed genoteerd.' : entry.legs ? `${legsAnswerText(entry)} genoteerd.` : 'Genoteerd.';
+  const make = (kind: MorningConsequence['kind'], line: string | undefined, extra: Partial<MorningConsequence> = {}): MorningConsequence => ({
+    answer, line, detail: undefined, adviceId: undefined, kind, summary: line ? `${short}. ${line}` : `${short}.`, ...extra,
+  });
+  try {
+    const { inputs } = ctx;
+    const withEntry: AdviceInputs = { ...inputs, checkIns: [...(inputs.checkIns ?? []).filter((c) => c.date !== entry.date), entry] };
+    const advice = previewMorningAdvice(withEntry).filter((a) => !ctx.answeredAdviceIds.has(a.id))[0];
+    if (advice) {
+      const detail = `${adviceLead(advice)} ${NO_CHANGE_TEXT}`;
+      return make('voorstel', `Voorstel: ${noEnd(advice.title)}.`, { detail, adviceId: advice.id });
+    }
+    const legCard = previewLegCard(withEntry);
+    if (legCard) return make('kaart-benen', `De kaart Benen staat klaar voor ${legCard}.`, { adviceId: LEG_CARD_TARGET });
+    const logged = new Set(inputs.logs.map((l) => l.plannedSessionId));
+    const today = inputs.plannedSessions
+      .filter((s) => s.scheduledDate === entry.date && s.status !== 'skipped' && !logged.has(s.id))
+      .map((s) => inputs.templates.find((t) => t.id === s.templateId))
+      .filter((t): t is NonNullable<typeof t> => !!t);
+    const training = today.find((t) => t.type !== 'recovery');
+    if (!training) return make('rustdag', today[0] ? `${today[0].name} blijft staan.` : NOTHING_PLANNED_TEXT);
+    const lighter = (entry.legs === 'stijf' || entry.legs === 'spierpijn' || entry.legs === 'flink') && entry.soreWhere !== 'upper';
+    return make('blijft', lighter ? `${training.name} blijft staan, warm rustig in.` : `${training.name} blijft staan.`);
+  } catch {
+    // Het gevolg bepalen mislukt: alleen het antwoord. Opslaan wordt hier nooit door tegengehouden.
+    return make('blijft', undefined);
+  }
 }
