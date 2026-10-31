@@ -179,6 +179,30 @@ export function weekProgress(logs: readonly SessionLog[], weekStart: string, bud
   };
 }
 
+// Wat er deze week nog gepland staat en meetelt, in tel-minuten: vanaf vandaag, niet gelogd, niet
+// overgeslagen, alleen duur (kracht en herstel tellen niet). `minutesOf` is de lengte zoals de
+// planning hem geeft (de factor van je richting, de sessiepiek); pittig telt dubbel als dat aan staat.
+export function plannedRestOfWeek(
+  sessions: readonly { id: string; templateId: string; scheduledDate: string; status: string }[],
+  templates: ReadonlyMap<string, { type: string; intendedRpe?: number }>,
+  minutesOf: (session: { id: string; templateId: string; scheduledDate: string }) => number,
+  today: string,
+  weekStart: string,
+  loggedIds: ReadonlySet<string>,
+  doubleHard: boolean,
+): number {
+  const end = addDays(weekStart, 6);
+  let total = 0;
+  for (const s of sessions) {
+    if (s.scheduledDate < today || s.scheduledDate > end || s.status === 'skipped' || loggedIds.has(s.id)) continue;
+    const t = templates.get(s.templateId);
+    if (!t || t.type === 'strength' || t.type === 'recovery') continue;
+    const hard = doubleHard && (t.intendedRpe ?? 0) >= HARD_RPE;
+    total += Math.max(0, minutesOf(s)) * (hard ? 2 : 1);
+  }
+  return Math.round(total);
+}
+
 // Het budget zoals de instelling het toont: de richting die je koos (of het advies) met je eigen
 // waarden erover, zonder golf en zonder geschiedenis. Voor de rij in Instellingen en haar blad.
 export function settingBudget(s: { direction?: unknown; weekBudget?: unknown }): { id: DirectionId; chosen: boolean; budget: WeekBudget; choice: WeekBudgetChoice } {

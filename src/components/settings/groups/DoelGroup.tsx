@@ -88,7 +88,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setInner('weekbudget')} />
         </BundleSheet>
       )}
-      {inner === 'weekbudget' && <WeekBudgetSheet onClose={closeInner} />}
+      {inner === 'weekbudget' && <WeekBudgetSheet onClose={closeInner} onPropose={(weekBudget) => { setNote(null); plan.clearNote(); void direction.proposeBudget(weekBudget); }} />}
       {inner === 'richting' && (
         <DirectionSheet
           current={parseDirection(settings.direction)}

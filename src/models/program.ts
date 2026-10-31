@@ -75,6 +75,9 @@ export type ProgramDirectionId = 'maintain' | 'improve' | 'stronger' | 'easy';
 
 export interface ProgramDirection {
   id: ProgramDirectionId;
+  // De factor per week van de golf (engine/directionPlan.ts): het weekbudget gedeeld door wat het
+  // weekpatroon gewoon telt. Elke duurtraining krijgt haar gewone lengte maal de factor van de week.
+  factors?: number[];
 }
 
 // For the days of `week` (a Monday) before `until`: whether the rest week was

@@ -11,8 +11,10 @@ import { activeDirection, parseDirectionStart } from './direction';
 import type { HeartRateSettings } from './heartRateZones';
 import type { Ladder } from './mainGoal';
 import { plannedEffort } from './standing';
+import type { Program } from '../models/program';
+import { resolveEffectiveFullDuration } from './substitutions';
 import {
-  belowGuideline, budgetFor, countedMinutesOfWeek, recentAverage, resolveWeekBudget, weekProgress,
+  belowGuideline, budgetFor, countedMinutesOfWeek, plannedRestOfWeek, recentAverage, resolveWeekBudget, weekProgress,
   type CountOptions, type WeekBudget, type WeekProgress,
 } from './weekBudget';
 import { waveWeek, type WaveWeek } from './waves';
@@ -26,6 +28,9 @@ export interface YourWeekInputs {
   templates: readonly Pick<SessionTemplate, 'id' | 'type' | 'baseStressProfile'>[];
   // De geplande sessies, zodat een log op de dag van zijn geplande training telt (engine/logDay.ts).
   plannedSessions?: readonly Pick<PlannedSession, 'id' | 'scheduledDate'>[];
+  // Wat er deze week nog gepland staat en meetelt (engine/weekBudget.ts#plannedRestOfWeek). Zonder:
+  // alleen wat er nog te gaan is.
+  plannedRest?: number;
   today: string;
 }
 
@@ -57,7 +62,8 @@ export interface YourWeek {
   adviceLine?: string;
 }
 
-function countOptions(settings: YourWeekInputs['settings'], templates: YourWeekInputs['templates'], plannedSessions: YourWeekInputs['plannedSessions']): CountOptions {
+// Hoe de minuten tellen, voor de kaart en voor de planning (engine/directionPlan.ts).
+export function countOptions(settings: YourWeekInputs['settings'], templates: YourWeekInputs['templates'], plannedSessions: YourWeekInputs['plannedSessions']): CountOptions {
   const byId = new Map(templates.map((t) => [t.id, t]));
   return {
     hr: settings.heartRate,
@@ -71,6 +77,25 @@ function countOptions(settings: YourWeekInputs['settings'], templates: YourWeekI
 }
 
 const times = (n: number) => `${n} keer`;
+
+// Wat er deze week nog gepland staat en meetelt, met de lengtes zoals de planning ze geeft.
+export function plannedRestFor(input: {
+  plannedSessions: readonly PlannedSession[];
+  templates: readonly SessionTemplate[];
+  logs: readonly SessionLog[];
+  program: Program | null | undefined;
+  settings: { weekBudget?: unknown };
+  today: string;
+}): number {
+  const byId = new Map(input.templates.map((t) => [t.id, t]));
+  const kinds = new Map(input.templates.map((t) => [t.id, { type: t.type, intendedRpe: plannedEffort(t) }]));
+  const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
+  return plannedRestOfWeek(
+    input.plannedSessions, kinds,
+    (s) => { const t = byId.get(s.templateId); return t ? resolveEffectiveFullDuration(t, s.scheduledDate, input.program) : 0; },
+    input.today, mondayOfWeek(input.today), logged, resolveWeekBudget(input.settings.weekBudget).doubleHard,
+  );
+}
 
 // Undefined zodra je een doel hebt: dan is er geen Je week en blijft alles zoals het is.
 export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
@@ -112,11 +137,17 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
         : `Week ${wave.week} van ${wave.length}. Deze week houd je het niveau vast.`
     : undefined;
 
+  // Lukt het met wat er nog staat niet meer, dan zegt de regel dat eerlijk, met wat het wel haalt.
+  // Een voorstel doet de app daarvoor niet: een extra wandeling is jouw keuze.
+  const reach = input.plannedRest !== undefined ? progress.minutes + input.plannedRest : undefined;
+  const short = reach !== undefined && reach < progress.target ? progress.target - reach : 0;
   const remainingLine = progress.minutes >= progress.target
     ? 'Je minuten voor deze week zijn gehaald.'
-    : progress.minutes === 0
-      ? 'Deze week nog niets. Elke training telt.'
-      : `Nog ${progress.remaining} ${progress.remaining === 1 ? 'minuut' : 'minuten'} te gaan.`;
+    : short > 0
+      ? `Met wat er nog staat kom je op ${reach}. Een extra wandeling van ${short} ${short === 1 ? 'minuut' : 'minuten'} brengt je op ${progress.target}.`
+      : progress.minutes === 0
+        ? 'Deze week nog niets. Elke training telt.'
+        : `Nog ${progress.remaining} ${progress.remaining === 1 ? 'minuut' : 'minuten'} te gaan.`;
 
   const explain = choice.doubleHard
     ? `Matige minuten tellen 1, pittige tellen 2. ${GUIDELINE_MINUTES} is de beweegrichtlijn.`

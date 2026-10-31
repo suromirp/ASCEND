@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import type { DirectionId } from '../../data/directions';
-import { parseDirectionStart } from '../../engine/direction';
+import { parseDirection, parseDirectionStart } from '../../engine/direction';
+import type { AppSettings } from '../../storage/database';
 import { directionChangeLines, directionChangeTitle } from '../../engine/directionChange';
 import { mondayOfWeek, todayISO } from '../../utils/dates';
 import { useHorizonChange } from '../useHorizonChange';
@@ -14,6 +15,8 @@ const KEEP = 'Prima, alles blijft zoals het was.';
 // installatie) is er niets te plannen en wordt alleen de keuze bewaard.
 export function useDirectionChange(): {
   choose: (id: DirectionId) => Promise<void>;
+  // Een ander weekbudget terwijl je plan een richting volgt: ook een voorstel.
+  proposeBudget: (weekBudget: AppSettings['weekBudget']) => Promise<void>;
   note: string | null;
   clearNote: () => void;
   sheet: ReactNode;
@@ -43,5 +46,24 @@ export function useDirectionChange(): {
     );
   }
 
-  return { choose, note: horizon.note, clearNote: horizon.clearNote, sheet: horizon.sheet, busy: horizon.busy };
+  async function proposeBudget(weekBudget: AppSettings['weekBudget']) {
+    const id = parseDirection(settings.direction);
+    if (!id || !program) {
+      await updateSettings({ weekBudget });
+      return;
+    }
+    await horizon.propose(
+      () => planHorizonChange({
+        title: 'Je weekbudget',
+        why: 'Volgt je weekbudget.',
+        explanation: 'Je plan volgt je richting, dus je weekbudget bepaalt hoe lang je trainingen zijn. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets.',
+        trigger: 'direction_changed',
+        settings: { weekBudget },
+        notes: directionChangeLines(id, { weekBudget }).slice(1, 2),
+      }),
+      { eyebrow: 'Je richting', ask: 'always', alwaysAsk: true, notesTitle: 'Je week', declined: 'Je weekbudget en je planning blijven zoals ze waren.' },
+    );
+  }
+
+  return { choose, proposeBudget, note: horizon.note, clearNote: horizon.clearNote, sheet: horizon.sheet, busy: horizon.busy };
 }

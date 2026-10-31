@@ -236,8 +236,20 @@ export function waveHeader(position: ResolvedProgramPosition | null | undefined)
 const PROGRAM_DIRECTIONS: ProgramDirectionId[] = ['maintain', 'improve', 'stronger', 'easy'];
 export function readProgramDirection(raw: unknown): ProgramDirection | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
-  const id = PROGRAM_DIRECTIONS.find((d) => d === (raw as { id?: unknown }).id);
-  return id ? { id } : undefined;
+  const r = raw as { id?: unknown; factors?: unknown };
+  const id = PROGRAM_DIRECTIONS.find((d) => d === r.id);
+  if (!id) return undefined;
+  const factors = Array.isArray(r.factors) && r.factors.length >= 1 && r.factors.length <= 8 && r.factors.every((f) => typeof f === 'number' && Number.isFinite(f) && f > 0 && f <= 3) ? (r.factors as number[]) : undefined;
+  return { id, ...(factors ? { factors } : {}) };
+}
+
+// De factor van het weekbudget voor deze week van de golf (Program.direction.factors), alleen voor
+// een duurtraining in een golf. Kracht en herstel houden hun lengte.
+function directionFactor(template: SessionTemplate, program: Program, position: ResolvedProgramPosition): number | undefined {
+  if (position.phase.id !== PHASE_GOLF || template.type === 'strength' || template.type === 'recovery') return undefined;
+  const factors = readProgramDirection(program.direction)?.factors;
+  if (!factors) return undefined;
+  return factors[(waveWeek(position) - 1) % factors.length];
 }
 
 // Welke week van het gewone schema een week in een golf leest, als de richting vlakke weken
@@ -510,14 +522,16 @@ function alternatePeak(template: SessionTemplate, program: Program, dateIso: str
 function genericTarget(template: SessionTemplate, program: Program, position: ResolvedProgramPosition, generic: WeeklyProgressionStep[]): { step: WeeklyProgressionStep; minutes: number; taper: boolean; peak?: number; usual?: number } | undefined {
   // A phase with steps of its own is not this path.
   if (template.weeklyProgression?.some((s) => s.phaseId === position.phase.id)) return undefined;
-  const flat = flatWaveWeek(program, position);
+  // Zonder doel met een richting: de gewone lengte (de opbouwweek) maal de factor van de week.
+  const factor = directionFactor(template, program, position);
+  const flat = factor !== undefined ? 2 : flatWaveWeek(program, position);
   const wave = flat ?? waveWeek(position);
   const taper = taperFactor(position);
   const step = generic.find((s) => s.weekInPhase === (taper ? 2 : wave));
   if (!step) return undefined;
   const heaviest = Math.max(...generic.map((s) => s.targetMinutes));
   // Vlakke weken groeien niet per golf: elke golf is dezelfde.
-  const scaled = step.targetMinutes * (flat ? 1 : runBuildMultiplier(template, program, position, heaviest));
+  const scaled = step.targetMinutes * (factor ?? (flat ? 1 : runBuildMultiplier(template, program, position, heaviest)));
   if (taper) {
     const minutes = Math.max(15, Math.round((scaled * taper) / 5) * 5);
     return { step: { ...step, note: position.weekInPhase === position.phase.weekCount ? 'Laatste week voor de start, kort en fris' : 'Minder volume, zelfde tempo' }, minutes, taper: true };

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionLog } from '../models/training';
 import { yourWeek, type YourWeekInputs } from './yourWeek';
+import { plannedRestOfWeek } from './weekBudget';
 
 const TODAY = '2026-10-28';
 
@@ -81,5 +82,30 @@ describe('yourWeek', () => {
     const w = yourWeek(base({ settings: { direction: 'easy', directionStart: '2026-10-26' } }))!;
     const all = [w.minutesLine, w.strengthLine, w.remainingLine, w.explain, w.belowLine, w.adviceLine, w.waveLine].join(' ');
     expect(all).not.toMatch(/[\u2013\u2014!]/);
+  });
+});
+
+describe('yourWeek: wat er nog staat', () => {
+  it('zegt eerlijk dat het met de planning niet meer lukt, met wat het wel haalt', () => {
+    const w = yourWeek(base({ logs: [log('a', '2026-10-27')], plannedRest: 90 }))!;
+    expect(w.remainingLine).toBe('Met wat er nog staat kom je op 130. Een extra wandeling van 20 minuten brengt je op 150.');
+  });
+
+  it('past het wel, dan wat er nog te gaan is', () => {
+    expect(yourWeek(base({ logs: [log('a', '2026-10-27')], plannedRest: 120 }))!.remainingLine).toBe('Nog 110 minuten te gaan.');
+  });
+});
+
+describe('plannedRestOfWeek', () => {
+  it('telt alleen duur die nog komt, pittig dubbel', () => {
+    const templates = new Map([
+      ['run', { type: 'cardio', intendedRpe: 4 }],
+      ['hill', { type: 'cardio', intendedRpe: 8 }],
+      ['gym', { type: 'strength', intendedRpe: 7 }],
+    ]);
+    const s = (id: string, templateId: string, scheduledDate: string, status = 'planned') => ({ id, templateId, scheduledDate, status });
+    const sessions = [s('a', 'run', '2026-10-27'), s('b', 'run', '2026-10-29'), s('c', 'hill', '2026-10-31'), s('d', 'gym', '2026-10-30'), s('e', 'run', '2026-11-01', 'skipped'), s('f', 'run', '2026-11-02')];
+    expect(plannedRestOfWeek(sessions, templates, () => 30, TODAY, '2026-10-26', new Set(), true)).toBe(90);
+    expect(plannedRestOfWeek(sessions, templates, () => 30, TODAY, '2026-10-26', new Set(['b']), false)).toBe(30);
   });
 });

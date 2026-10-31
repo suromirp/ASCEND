@@ -63,7 +63,7 @@ describe('een richting kiezen zonder doel', () => {
     expect(ids).not.toContain('tpl_hill_intervals');
     expect(ids).toContain('tpl_recovery_run');
     const program = (await ProgramsRepo.getAll())[0];
-    expect(program.direction).toEqual({ id: 'easy' });
+    expect(program.direction).toMatchObject({ id: 'easy' });
     const easy = (await SessionTemplatesRepo.getAll()).find((t) => t.id === 'tpl_easy_run')!;
     const weeks = [0, 1, 2, 3, 4, 5].map((w) => progressionTarget(easy, program, addDays(TODAY, 7 * w + 3))!.minutes);
     expect(new Set(weeks).size).toBe(1);
@@ -80,5 +80,30 @@ describe('een richting kiezen zonder doel', () => {
     expect(m[0]).toBe(m[1]);
     expect(m[1]).toBe(m[2]);
     expect(m[3]).toBeLessThan(m[2]);
+  });
+
+  it('Fitter worden bij Akkoord: drie weken met meer minuten, dan een lichtere week', async () => {
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('improve')))).status);
+    const program = (await ProgramsRepo.getAll())[0];
+    expect(program.direction?.factors).toHaveLength(4);
+    const long = (await SessionTemplatesRepo.getAll()).find((t) => t.id === 'tpl_long_run')!;
+    const m = [0, 1, 2, 3].map((w) => progressionTarget(long, program, addDays(TODAY, 7 * w + 6))!.minutes);
+    expect(m[1]).toBeGreaterThan(m[0]);
+    expect(m[2]).toBeGreaterThan(m[1]);
+    expect(m[3]).toBeLessThan(m[2]);
+  });
+
+  it('de minuten van een week volgen het weekbudget, kracht houdt zijn lengte', async () => {
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain')))).status);
+    const program = (await ProgramsRepo.getAll())[0];
+    const byId = new Map((await SessionTemplatesRepo.getAll()).map((t) => [t.id, t]));
+    const week = (await open()).filter((s) => s.scheduledDate >= '2026-11-02' && s.scheduledDate <= '2026-11-08');
+    let counted = 0;
+    for (const s of week) {
+      const t = byId.get(s.templateId)!;
+      if (t.type === 'strength' || t.type === 'recovery') continue;
+      counted += progressionTarget(t, program, s.scheduledDate)!.minutes * (s.templateId === 'tpl_hill_intervals' ? 2 : 1);
+    }
+    expect(Math.abs(counted - 150)).toBeLessThanOrEqual(5);
   });
 });

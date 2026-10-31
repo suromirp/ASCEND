@@ -24,7 +24,7 @@ import { EarlierGoalsSheet } from '../components/ascend/EarlierGoalsSheet';
 import { useGoalViews } from '../components/ascend/useGoalViews';
 import { goalsSentence, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, seasonStrip, stepAvailability, type MoveResult } from '../engine/goalList';
 import { needsFirstPlan } from '../engine/freshStart';
-import { yourWeek } from '../engine/yourWeek';
+import { plannedRestFor, yourWeek } from '../engine/yourWeek';
 import type { AddTileId } from '../engine/goalDraft';
 import { todayISO } from '../utils/dates';
 
@@ -158,9 +158,12 @@ export function AscendPage() {
   // installatie zonder plan houdt de lege kaart. Met een doel verandert er niets.
   const week = useMemo(
     () => (emptyList && !emptyInstall
-      ? yourWeek({ settings, goals: listed.map((l) => l.goal), milestones: ladder, logs: sessionLogs, templates, plannedSessions, today })
+      ? yourWeek({
+          settings, goals: listed.map((l) => l.goal), milestones: ladder, logs: sessionLogs, templates, plannedSessions, today,
+          plannedRest: plannedRestFor({ plannedSessions, templates, logs: sessionLogs, program, settings, today }),
+        })
       : undefined),
-    [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, plannedSessions, today],
+    [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, plannedSessions, today, program],
   );
   const plain = emptyList && !week;
   return (

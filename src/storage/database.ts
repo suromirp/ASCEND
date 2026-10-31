@@ -31,8 +31,10 @@ import type { StrengthSettings } from '../engine/strengthSettings';
 import type { ClothingAdjust } from '../engine/clothingFeedback';
 import type { RunInsightSettings } from '../engine/runInsightSettings';
 import type { MorningNoticeSettings } from '../engine/morningNotice';
-import { activeSwaps, directionSwaps, patternSlotOf, layoutPhases, patternForWeek, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
+import { activeSwaps, directionSwaps, patternSlotOf, layoutPhases, patternForWeek, PHASE_GOLF, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { planDirection } from '../engine/direction';
+import { programDirection } from '../engine/directionPlan';
+import { countOptions } from '../engine/yourWeek';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, parseWeekShape, weeklyPatternTemplates, type WeekShape } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { describeRepair, lockLevel, visibleRepair } from '../engine/weekValidator';
@@ -1351,17 +1353,27 @@ async function patternContext(
   // Zonder doel neutrale golven: geen bergtocht, geen wandeldag, geen rugzak (docs/visie/Zonder doel.md, 3.2).
   const plan = planDirection(settings, goals, new Set(milestones.map((m) => m.goalId)), todayISO(), anchor);
   const byId = new Map(templates.map((t) => [t.id, t]));
+  const freeSwaps = directionSwaps(plan.direction).filter((s) => { const to = byId.get(s.to); return !!to && isTemplatePlannable(to, enabledSports); });
+  // De minuten van je richting over de week verdeeld (engine/directionPlan.ts): het weekbudget en wat
+  // het patroon gewoon telt, met de wissels van de richting erin.
+  const direction = plan.direction
+    ? programDirection({
+        id: plan.direction.id, settings, logs: await SessionLogsRepo.getAll(), today: todayISO(),
+        pattern: patternForWeek(pattern, templates, freeSwaps, PHASE_GOLF).map((s) => s.template),
+        countOptions: countOptions(settings, templates, undefined),
+      })
+    : undefined;
   return {
     pattern,
     // A hike only replaces a session when the caller's pattern would plan
     // it too (hike templates have no weekday of their own, hence the probe).
     swaps: plan.free
-      ? directionSwaps(plan.direction).filter((s) => { const to = byId.get(s.to); return !!to && isTemplatePlannable(to, enabledSports); })
+      ? freeSwaps
       : activeSwaps(templates, settings, (t) => isTemplatePlannable(t, enabledSports) && (!selectPattern || selectPattern([{ ...t, defaultDayOfWeek: 7 }]).length > 0)),
     anchor,
     free: plan.free,
     waveStart: plan.waveStart,
-    direction: plan.direction,
+    direction,
     overrides: settings.programPhaseOverrides,
     packTarget: programPackTarget(goals, milestones),
     runBuild: programRunBuild(goals, mainGoal(goals, new Set(milestones.map((m) => m.goalId)))?.id, todayISO(), settings.longRunGrowth),
