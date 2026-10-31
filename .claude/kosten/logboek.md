@@ -27,3 +27,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-29, Dag van een training (2 rondes), Sherpa, sonnet (ontwikkelaar), 230k, 21 min, 1, Warden vond te brede regel
 - 2026-10-29, Review dag van een training, Warden, opus, 64k, 3 min, 0
 - 2026-10-31, Data tussen schermen, Lookout, sonnet (tester), 54k, 3 min, 0, eigenaarsbackup bewust niet gebruikt
+- 2026-10-31, Data tussen schermen (audit), Warden, opus (reviewer), 126k, 9 min, 0, 11 bevindingen
