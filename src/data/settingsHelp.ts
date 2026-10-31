@@ -341,6 +341,14 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'Forge vraagt niets en telt alles mee. Pauzeren kan altijd zelf in het menu van de training.' },
     ],
   },
+  forgeVegen: {
+    title: 'Vegen om te verwijderen',
+    lead: 'In een training haal je een set weg door de rij naar links te vegen. Uit, dan beweegt de rij niet meer mee met je vinger.',
+    points: [
+      { head: 'Uit', text: 'een set verwijderen kan nog altijd: houd de rij ingedrukt en kies Set verwijderen.' },
+      { head: 'Aan', text: 'een korte veeg laat een rode knop zien, een lange veeg verwijdert meteen. Je kunt het direct terugdraaien.' },
+    ],
+  },
   forgeSnelknoppen: {
     title: 'Snelknoppen tonen',
     lead: 'Onder de naam van elke oefening staan de handelingen die je tijdens een training het vaakst nodig hebt. Het menu met de drie puntjes houdt alles.',

@@ -12,6 +12,16 @@ describe('templateRoles', () => {
     expect(hasRole(templates.find((t) => t.id === 'tpl_race')!, 'race')).toBe(true);
   });
 
+  it('geeft heuvelintervallen de rol hills, ook voor een eigen heuveltraining', () => {
+    expect(templates.find((t) => t.id === 'tpl_hill_intervals')!.roles).toContain('hills');
+    // Een opgeslagen sjabloon zonder het veld krijgt de rol van zijn id.
+    expect(hasRole({ id: 'tpl_hill_intervals' }, 'hills')).toBe(true);
+    // Een eigen sjabloon draagt de rol zelf.
+    expect(hasRole({ id: 'tpl_eigen_heuvels', roles: ['hills'] }, 'hills')).toBe(true);
+    expect(hasRole({ id: 'tpl_eigen_heuvels' }, 'hills')).toBe(false);
+    expect(hasRole({ id: 'tpl_easy_run' }, 'hills')).toBe(false);
+  });
+
   it('valt terug op de rollen van het id voor een opgeslagen sjabloon zonder het veld', () => {
     expect(hasRole({ id: 'tpl_mountain_hike' }, 'long')).toBe(true);
     expect(hasRole({ id: 'tpl_easy_run' }, 'long')).toBe(false);
@@ -54,6 +64,7 @@ describe('rollen gelijk aan de oude id-lijsten', () => {
     before_race_out: ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals', 'tpl_lower_a', 'tpl_lower_b'],
     walked_down: ['tpl_hill_intervals'],
     blocks: ['tpl_tempo_run', 'tpl_intervals'],
+    hills: ['tpl_hill_intervals'],
     extra: ['tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_bergconditie', 'tpl_ruck_walk'],
   };
   const ids = [...new Set(Object.values(OLD).flat()), 'tpl_upper_a', 'tpl_bike', 'tpl_onbekend'];

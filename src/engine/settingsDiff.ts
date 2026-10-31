@@ -227,6 +227,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   },
   choice('forge-oefeningen', 'Oefeningen in een training', 'forge', 'forgeLayout', 'scherm', 'forgeOefeningen'),
   choice('forge-onderbreking', 'Lange onderbreking vragen na', 'forge', 'forgeLongBreak', 45, 'forgeOnderbreking'),
+  flag('forge-vegen', 'Vegen om te verwijderen', 'forge', 'forgeSwipeDelete'),
   flag('forge-snelknoppen', 'Snelknoppen tonen', 'forge', 'forgeQuickButtons'),
   flag('slepen-week', 'Trainingen slepen in Week', 'planning', 'dragWeek'),
   choice('klaar-weging', 'Weging bij een doeltijd', 'doel', 'readinessWeighting', 'speed', 'klaarWeging'),

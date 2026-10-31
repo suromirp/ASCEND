@@ -46,7 +46,7 @@ import { adviceDifferences } from './settingsDiff';
 import { settingBudget } from './weekBudget';
 import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
-import { quickButtonsOn } from './forgeQuickActions';
+import { quickButtonsOn, swipeDeleteOn } from './forgeQuickActions';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { formatNumberNL } from '../utils/number';
@@ -561,6 +561,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('forgeOefeningen', resolveForgeLayout(s)) };
     case 'forge-onderbreking':
       return { value: choiceShort('forgeOnderbreking', resolveBreakAsk(s)), dim: resolveBreakAsk(s) === 0 };
+    case 'forge-vegen':
+      return { checked: swipeDeleteOn(s) };
     case 'forge-snelknoppen':
       return { checked: quickButtonsOn(s) };
     case 'slepen-week':
