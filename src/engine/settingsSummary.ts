@@ -309,6 +309,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     }
     case 'bundel-weer':
       return { value: `${countOn([o.weatherLine, o.bestMoment, o.weatherSwap, o.clothingAdvice])} van 4 aan` };
+    case 'bundel-run-detail': {
+      const d = resolveRunInsight(s.runInsight).detail;
+      return d.show ? { value: 'Aan' } : { value: 'Uit', dim: true };
+    }
     case 'bundel-inzicht': {
       const r = resolveRunInsight(s.runInsight);
       return r.enabled ? { value: 'Aan', sub: `${countOn(Object.values(r.topics))} van 4 onderwerpen` } : { value: 'Uit', dim: true };
@@ -618,6 +622,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const c = clothingValue(f);
       return { value: c.value, auto: false, dim: c.value === 'Standaard' };
     }
+    case 'run-detail':
+      return { checked: resolveRunInsight(s.runInsight).detail.show };
     case 'loopinzicht':
       return { checked: resolveRunInsight(s.runInsight).enabled };
     case 'loop-efficientie':

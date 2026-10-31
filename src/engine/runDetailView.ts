@@ -13,6 +13,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import { formatPace } from './aerobicTrend';
 import { idHasRole, idIsTestOrRace } from './templateRoles';
 import { NOISE, isUnavailable } from './runMetrics';
+import { zoneBpm, type HeartRateSettings } from './heartRateZones';
 import {
   ADVICE_MIN_SEC,
   HILLY_M_PER_KM,
@@ -234,9 +235,9 @@ export interface HeadStat {
 
 function splitNote(h: Halves, inBest: boolean): string {
   const d = Math.round(h.diffSec);
-  const where = inBest ? ' binnen je beste 5 km' : '';
-  if (d === 0) return `je twee helften waren even snel${where}`;
-  return `de tweede helft was ${secs(Math.abs(d))} per km ${d > 0 ? 'trager' : 'sneller'} dan de eerste${where}`;
+  const where = inBest ? ' van je 5 km' : '';
+  if (d === 0) return `helften${where} even snel`;
+  return `tweede helft${where} per km ${d > 0 ? 'trager' : 'sneller'}`;
 }
 
 // Always three, never more: the pace (or the best 5 km of a test), the spread and the heart
@@ -246,9 +247,9 @@ export function headlineStats(rd: RunDetail, kind: RunKind): HeadStat[] {
   const pace = rd.totalM > 0 ? (rd.movingSec / rd.totalM) * 1000 : undefined;
   const test = kind === 'test' && rd.bestFive;
   if (test && rd.bestFive) {
-    out.push({ key: 'best', label: 'Beste 5 km', value: clock(rd.bestFive.sec), note: `${formatPace(rd.bestFive.sec / 5)} per km, het snelste aaneengesloten stuk van 5 km` });
+    out.push({ key: 'best', label: 'Beste 5 km', value: clock(rd.bestFive.sec), note: `${formatPace(rd.bestFive.sec / 5)} per km, aaneengesloten` });
   } else if (pace !== undefined) {
-    out.push({ key: 'pace', label: 'Tempo', value: formatPace(pace), unit: '/km', note: 'gemiddeld over de hele run, zonder stilstaan' });
+    out.push({ key: 'pace', label: 'Tempo', value: formatPace(pace), unit: '/km', note: 'gemiddeld, zonder stilstaan' });
   }
   const h = halvesOf(verdictKms(rd, kind));
   if (h) {
@@ -263,7 +264,7 @@ export function headlineStats(rd: RunDetail, kind: RunKind): HeadStat[] {
       label: 'Hartslag',
       value: String(Math.round(heart.mean)),
       unit: 'bpm',
-      note: d === 0 ? 'gemiddeld, in beide helften gelijk' : `gemiddeld, ${beats(Math.abs(d))} ${d > 0 ? 'hoger' : 'lager'} in de tweede helft`,
+      note: d === 0 ? 'gemiddeld, helften gelijk' : `gemiddeld, ${d > 0 ? '+' : '−'}${Math.abs(d)} in de tweede helft`,
     });
   }
   const gain = sum(rd.kms.map((k) => k.gainM ?? 0));
@@ -316,7 +317,7 @@ function barsOf(items: { index: number; paceSecKm: number; distanceM: number; pa
   const hi = speed(fastest);
   const h = (pace: number) => Math.max(0.06, Math.min(1, (speed(pace) - lo) / Math.max(1e-6, hi - lo)));
   const bars: PaceBar[] = items.map((it) => {
-    const off = !it.partial && it.distanceM >= PACING.fullKmM && Math.abs(pct(it.paceSecKm, meanPace)) >= PACING.sagPct ? (it.paceSecKm < meanPace ? 'fast' : 'slow') : undefined;
+    const off = it.counts && !it.partial && it.distanceM >= PACING.fullKmM && Math.abs(pct(it.paceSecKm, meanPace)) >= PACING.sagPct ? (it.paceSecKm < meanPace ? 'fast' : 'slow') : undefined;
     return {
       index: it.index,
       paceSecKm: it.paceSecKm,
@@ -350,7 +351,7 @@ export function paceBars(rd: RunDetail, kind: RunKind): PaceBars | undefined {
       return { index: k.index, paceSecKm: k.paceSecKm, distanceM: k.distanceM, partial: !!k.partial, counts: best ? mid >= best.startM && mid <= best.endM : true };
     }),
     'km',
-    meanPace,
+    best ? best.sec / 5 : meanPace,
   );
 }
 
@@ -884,8 +885,24 @@ export function sourceLine(coveragePct: number | undefined): string {
   return isNum(coveragePct) ? `${base} Hartslag over ${Math.round(coveragePct)} procent van de tijd gemeten.` : base;
 }
 
-// The line on the log sheet that opens the screen: "12 km in 5:48 per km".
+// The line on the log sheet that opens the screen: "12,00 km in 5:48 per km".
 export function runDetailRowLine(rd: RunDetail): string {
   const pace = rd.totalM > 0 ? (rd.movingSec / rd.totalM) * 1000 : 0;
-  return `${distanceLabel(rd.totalM)} in ${formatPace(pace)} per km, ${rd.kms.length} ${rd.kms.length === 1 ? 'kilometer' : 'kilometers'}`;
+  return `${distanceLabel(rd.totalM)} in ${formatPace(pace)} per km`;
+}
+
+// --- heart rate zones for the strip under the heart rate line (4.5) ---------------------------------
+
+// The zone of a heart rate on ASCEND's own split (engine/heartRateZones.ts): 1 to 4 are its
+// bands, above the top of 4 is 5. Undefined without a threshold or maximum to work from.
+export function hrZoneOf(bpm: number | null | undefined, hr: HeartRateSettings | undefined): 1 | 2 | 3 | 4 | 5 | undefined {
+  if (!isNum(bpm)) return undefined;
+  const bands = ([1, 2, 3, 4] as const).map((i) => zoneBpm(i, hr));
+  if (bands.some((b) => !b)) return undefined;
+  const b = bands as [number, number][];
+  if (bpm >= b[3][1]) return 5;
+  if (bpm >= b[3][0]) return 4;
+  if (bpm >= b[2][0]) return 3;
+  if (bpm >= b[1][0]) return 2;
+  return 1;
 }

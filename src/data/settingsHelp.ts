@@ -707,6 +707,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Reeksen', text: 'komen van je horloge, zet dat aan bij Koppelingen (Details van loopjes).' },
     ],
   },
+  runDetail: {
+    title: 'Run in detail',
+    lead: 'Vanuit het logblad van een run open je een scherm met je run kilometer na kilometer.',
+    points: [
+      { head: 'Wat erin staat', text: 'het oordeel en drie getallen, het tempo per kilometer, tempo, hartslag en hoogte over de afstand, en de lijst per kilometer en per ronde.' },
+      { head: 'Uit', text: 'de rij in het logblad verdwijnt. De kilometers blijven bewaard op je logs.' },
+      { head: 'Gegevens', text: 'komen van je horloge via intervals.icu, met Details van loopjes en tochten aan.' },
+    ],
+  },
   borstband: {
     title: 'Hartslag van de borstband',
     lead: 'Zonder borstband kan de hartslag van een andere bron komen, en dan vergelijkt ASCEND niet eerlijk.',

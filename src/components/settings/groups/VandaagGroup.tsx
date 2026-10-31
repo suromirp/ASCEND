@@ -7,7 +7,7 @@ import { resolveBodyCheck } from '../../../engine/bodyCheckSettings';
 import { resolveLegEase, resolveLegEaseHow } from '../../../engine/legEaseSettings';
 import { resolveMotion } from '../../../engine/motionSettings';
 import { resolveSky } from '../../../engine/skySettings';
-import { type InsightTopicSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
+import { type InsightTopicSwitch, type RunDetailScreenSettings, type RunInsightSettings } from '../../../engine/runInsightSettings';
 import { matchTodayProfile, todayProfilePatch, type TodayProfileChoice } from '../../../engine/settingsProfiles';
 import { Eyebrow } from '../../ui';
 import { SettingsList, SettingsSection } from '../SettingsList';
@@ -34,6 +34,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   const sky = resolveSky(settings);
   // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte betekent de standaard.
   const setInsight = (patch: Partial<RunInsightSettings>) => void updateSettings({ runInsight: { ...settings.runInsight, ...patch } });
+  const setDetail = (patch: Partial<RunDetailScreenSettings>) => setInsight({ detail: { ...settings.runInsight?.detail, ...patch } });
   const setTopic = (topic: InsightTopicSwitch, on: boolean) => setInsight({ topics: { ...settings.runInsight?.topics, [topic]: on } });
   const close = () => setSheet(null);
   // Een keuze in een blad opent haar onderblad bovenop dat blad.
@@ -82,6 +83,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Na een training">
         <SummaryRow id="zweet-vragen" title="Zweetverlies vragen" facts={facts} info="zweetVragen" onChange={(on) => void updateSettings({ askSweat: on })} />
         <SummaryRow id="bundel-inzicht" title="Inzicht na een training" facts={facts} info="loopinzicht" onClick={() => setSheet('bundel-inzicht')} />
+        <SummaryRow id="bundel-run-detail" title="Run in detail" facts={facts} info="runDetail" onClick={() => setSheet('bundel-run-detail')} />
       </SettingsSection>
 
       <SettingsSection title="Uiterlijk">
@@ -147,6 +149,11 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="loop-vorm" title="Pas en vorm" facts={facts} onChange={(on) => setTopic('form', on)} />
           <SummaryRow id="loopweer" title="Weer erbij zoeken" facts={facts} info="loopweer" onChange={(on) => setInsight({ weather: on })} />
           <SummaryRow id="borstband" title="Hartslag van de borstband" facts={facts} info="borstband" onChange={(on) => setInsight({ chestStrap: on })} />
+        </BundleSheet>
+      )}
+      {sheet === 'bundel-run-detail' && (
+        <BundleSheet eyebrow="Vandaag en meldingen" title="Run in detail" line="Je run kilometer na kilometer, vanuit het logblad." onClose={close}>
+          <SummaryRow id="run-detail" title="Run in detail tonen" facts={facts} info="runDetail" onChange={(on) => setDetail({ show: on })} />
         </BundleSheet>
       )}
       {sheet === 'lucht' && (

@@ -124,6 +124,12 @@ const insightFlag = (id: string, title: string, key: 'enabled' | 'weather' | 'ch
   value: (s) => onOff(resolveRunInsight(s.runInsight)[key]),
   reset: (s) => ({ runInsight: omit(s.runInsight, key) }),
 });
+const detailFlag = (id: string, title: string, key: 'show' | 'patterns' | 'advice'): AdviceSpec => ({
+  id, title, page: 'vandaag',
+  differs: (s) => resolveRunInsight(s.runInsight).detail[key] !== true,
+  value: (s) => onOff(resolveRunInsight(s.runInsight).detail[key]),
+  reset: (s) => ({ runInsight: { ...s.runInsight, detail: omit(s.runInsight?.detail, key) } }),
+});
 const insightTopic = (id: string, title: string, topic: InsightTopicSwitch): AdviceSpec => ({
   id, title, page: 'vandaag',
   differs: (s) => resolveRunInsight(s.runInsight).topics[topic] !== true,
@@ -274,6 +280,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   insightTopic('loop-langedagen', 'Lange dagen', 'longDays'),
   insightTopic('loop-berg', 'Bergop en bergaf', 'climbing'),
   insightTopic('loop-vorm', 'Pas en vorm', 'form'),
+  detailFlag('run-detail', 'Run in detail', 'show'),
   insightFlag('loopweer', 'Weer erbij zoeken', 'weather'),
   insightFlag('borstband', 'Hartslag van de borstband', 'chestStrap'),
   {

@@ -1086,6 +1086,11 @@ html[data-motion='calm'] .mx-lijf-glow {
   animation: none;
 }
 
+/* De grafieken van Run in detail komen een keer zacht op als ze verschijnen. */
+.mx-chart-in {
+  animation: ascend-fade-in 0.3s ease-out backwards;
+}
+
 /* Rustig: geen adem, geen puls, geen vullen. Tikfeedback, bladen, pagina's en
    lijsten blijven. Uit en beperkte beweging van het systeem: de adem staat stil
    op een zachte gloed, alles is meteen op de eindstand. */
@@ -1095,7 +1100,8 @@ html[data-motion='calm'] .mx-pulse-once,
 html[data-motion='calm'] .mx-pic-1,
 html[data-motion='calm'] .mx-pic-2,
 html[data-motion='calm'] .mx-pic-3,
-html[data-motion='calm'] .mx-attention {
+html[data-motion='calm'] .mx-attention,
+html[data-motion='calm'] .mx-chart-in {
   animation: none;
 }
 

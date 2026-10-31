@@ -14,6 +14,7 @@ import {
   headlineStats,
   heartNote,
   heartOf,
+  hrZoneOf,
   kmBetween,
   kmChips,
   movingSecBetween,
@@ -171,7 +172,7 @@ describe('the three numbers', () => {
     expect(s.map((x) => x.key)).toEqual(['best', 'split', 'heart']);
     expect(s[0].value).toBe(clock(322 + 338 + 358 + 362 + 345));
     expect(s[1].value.startsWith('+')).toBe(true);
-    expect(s[1].note).toContain('binnen je beste 5 km');
+    expect(s[1].note).toContain('van je 5 km');
   });
 
   it('fill the place of a missing heart rate with the climb or the distance', () => {
@@ -358,6 +359,19 @@ describe('notes and lines', () => {
   });
 
   it('writes the line of the row on the log sheet', () => {
-    expect(runDetailRowLine(even(6))).toBe('6,00 km in 5:30 per km, 6 kilometers');
+    expect(runDetailRowLine(even(6))).toBe('6,00 km in 5:30 per km');
+  });
+});
+
+describe('heart rate zones for the strip', () => {
+  it('follows the split on the threshold, with 5 above the top of 4', () => {
+    const hr = { lthr: 170 };
+    expect(hrZoneOf(100, hr)).toBe(1);
+    expect(hrZoneOf(140, hr)).toBe(2);
+    expect(hrZoneOf(155, hr)).toBe(3);
+    expect(hrZoneOf(165, hr)).toBe(4);
+    expect(hrZoneOf(175, hr)).toBe(5);
+    expect(hrZoneOf(150, undefined)).toBeUndefined();
+    expect(hrZoneOf(null, hr)).toBeUndefined();
   });
 });
