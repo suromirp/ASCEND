@@ -85,7 +85,8 @@ describe('sleep, resting heart rate and HRV', () => {
     expect(await getRecoveryMetrics()).toEqual([]);
   });
 
-  it('go when you unlink, except what was entered another way', async () => {
+  it('go when you unlink with "Ochtendgetallen in back-up" off, except what was entered another way', async () => {
+    await SettingsRepo.set({ ...(await SettingsRepo.get()), morningInBackup: false });
     await saveConnection({ athleteId: ATHLETE, apiKey: KEY });
     await syncWatchActivities({ fetchImpl: asFetch(intervalsFetch([tonight()])) });
     await RecoveryMetricsRepo.putAll([{ id: 'hand-1', date: addDays(todayISO(), -3), restingHeartRate: 50, source: 'manual' }]);
@@ -93,7 +94,33 @@ describe('sleep, resting heart rate and HRV', () => {
     expect((await getRecoveryMetrics()).map((m) => m.id)).toEqual(['hand-1']);
   });
 
-  it('days older than 400 are dropped on the next fetch, younger ones stay', async () => {
+  it('stay as an archive when you unlink while they go in the backup, with only the backup fields', async () => {
+    await saveConnection({ athleteId: ATHLETE, apiKey: KEY });
+    await syncWatchActivities({ fetchImpl: asFetch(intervalsFetch([nightBefore(), tonight()])) });
+    await RecoveryMetricsRepo.putAll([{ id: `intervals.icu:${addDays(todayISO(), -2)}`, date: addDays(todayISO(), -2), bodyBattery: 60, stress: 30, source: 'import' }]);
+    await clearConnection();
+    const left = await getRecoveryMetrics();
+    expect(left.map((m) => m.date).sort()).toEqual([addDays(todayISO(), -1), todayISO()]);
+    expect(left.find((m) => m.date === todayISO())).toEqual({
+      id: `intervals.icu:${todayISO()}`, date: todayISO(), source: 'import', restingHeartRate: 55, hrv: 44.3, sleepScore: 72, sleepMinutes: 340,
+    });
+    const backup = (await buildBackupEnvelope()) as unknown as { payload: { mornings?: { date: string }[] } };
+    expect(backup.payload.mornings?.map((m) => m.date)).toEqual([addDays(todayISO(), -1), todayISO()]);
+    expect(JSON.stringify(backup)).not.toContain(KEY);
+  });
+
+  it('days older than 400 stay with only the backup fields while they go in the backup', async () => {
+    const old = addDays(todayISO(), -450);
+    await RecoveryMetricsRepo.putAll([{ id: `intervals.icu:${old}`, date: old, restingHeartRate: 50, bodyBattery: 40, source: 'import' }]);
+    await RecoveryMetricsRepo.putAll([{ id: `intervals.icu:${addDays(old, -1)}`, date: addDays(old, -1), stress: 20, source: 'import' }]);
+    await syncWellness({ athleteId: ATHLETE, apiKey: KEY }, { fetchImpl: asFetch(intervalsFetch([tonight()])) });
+    const left = await getRecoveryMetrics();
+    expect(left.find((m) => m.date === old)).toEqual({ id: `intervals.icu:${old}`, date: old, restingHeartRate: 50, source: 'import' });
+    expect(left.some((m) => m.date === addDays(old, -1))).toBe(false);
+  });
+
+  it('days older than 400 are dropped on the next fetch with the backup switch off, younger ones stay', async () => {
+    await SettingsRepo.set({ ...(await SettingsRepo.get()), morningInBackup: false });
     const old = addDays(todayISO(), -450);
     const kept = addDays(todayISO(), -100);
     await RecoveryMetricsRepo.putAll([{ id: `intervals.icu:${kept}`, date: kept, restingHeartRate: 50, source: 'import' }]);

@@ -31,4 +31,5 @@ all on by default): early illness (`engine/illnessSigns.ts`, a question on Vanda
 weather of a run (`engine/heatPace.ts`; the forecast now has `dewPointC` and `humidityPct`), a weekday where trainings
 fall away (`engine/weekdayPattern.ts`, a line on Week), air quality for a hard training outside (`engine/airQuality.ts`,
 `storage/airQuality.ts`, a cache at air-quality-api.open-meteo.com, never in a backup) and the morning rule two of
-three (`engine/morningRule.ts`, engine only, for the morning card). None of them changes the planning.
+three (`engine/morningRule.ts`: on the morning card one word under each watch number, amber when it asks attention, and
+at two of three "Ben je moe?" with Ja or Nee, which becomes the energy of the morning check). None of them changes the planning.

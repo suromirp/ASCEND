@@ -8,10 +8,15 @@
 // storage/externalActivities.ts still never do. The records
 // carry the id "intervals.icu:<date>", which is how unlinking finds exactly
 // these and leaves anything entered another way alone.
+//
+// While that setting is on, a morning is an archive and not only a cache: unlinking and the
+// 400-day limit drop the rest of the record but keep the date and the four numbers that go in
+// the backup (`retire`), so a backup made later still has them.
 
 import { MetaRepo, RecoveryMetricsRepo, SettingsRepo } from './database';
 import { KEEP_DAYS, wellnessPlan, type DateSpan } from '../engine/wellnessRange';
 import { morningOf } from '../engine/influenceEffects';
+import { morningsForBackup, resolveMorningBackup } from '../engine/morningBackup';
 import { fetchIntervalsWellness, INTERVALS_ADAPTER_ID, intervalsErrorMessage, type FetchOptions, type IntervalsConnection } from '../integrations/intervalsIcu';
 import { DEFAULT_WATCH_USE, filterRecovery, wellnessWanted, type WatchUse } from '../engine/watchUse';
 import type { RecoveryMetric } from '../models/metrics';
@@ -31,6 +36,16 @@ export type WellnessSyncResult =
 
 export async function getRecoveryMetrics(): Promise<RecoveryMetric[]> {
   return RecoveryMetricsRepo.getAll();
+}
+
+// A fetched morning that leaves the cache: with "Ochtendgetallen in back-up" on only the backup
+// fields stay (engine/morningBackup.ts#morningsForBackup), otherwise it goes.
+async function retire(records: readonly RecoveryMetric[], keepMornings: boolean): Promise<void> {
+  if (records.length === 0) return;
+  const kept = keepMornings ? morningsForBackup(records) : [];
+  const keptIds = new Set(kept.map((m) => m.id));
+  for (const m of records) if (!keptIds.has(m.id)) await RecoveryMetricsRepo.delete(m.id);
+  if (kept.length > 0) await RecoveryMetricsRepo.putAll(kept);
 }
 
 // Never throws: wellness is a bonus on top of the activities, and a hiccup
@@ -54,9 +69,7 @@ export async function syncWellness(connection: IntervalsConnection, options: Fet
     const metrics = filterRecovery(await fetchIntervalsWellness(connection, plan.normal, { fetchImpl: options.fetchImpl }), use);
     const cutoff = addDays(today, -KEEP_DAYS);
     const existing = await RecoveryMetricsRepo.getAll();
-    for (const old of existing) {
-      if (old.id.startsWith(`${INTERVALS_ADAPTER_ID}:`) && old.date < cutoff) await RecoveryMetricsRepo.delete(old.id);
-    }
+    await retire(existing.filter((old) => old.id.startsWith(`${INTERVALS_ADAPTER_ID}:`) && old.date < cutoff), resolveMorningBackup(settings));
     if (metrics.length > 0) await RecoveryMetricsRepo.putAll(metrics);
     const covered = await MetaRepo.get<string>(COVERED_KEY);
     if (covered === undefined || covered > plan.normal.from) await MetaRepo.set(COVERED_KEY, plan.normal.from);
@@ -84,13 +97,13 @@ async function fetchLongStretch(connection: IntervalsConnection, parts: DateSpan
   }
 }
 
-// Unlinking: what came from intervals.icu goes, what you entered yourself stays.
+// Unlinking: what came from intervals.icu goes, what you entered yourself stays. With
+// "Ochtendgetallen in back-up" on the mornings stay as the backup keeps them (`retire`).
 export async function clearWellness(): Promise<void> {
   await MetaRepo.set(COVERED_KEY, undefined);
   await MetaRepo.set(TRIED_KEY, undefined);
-  for (const m of await RecoveryMetricsRepo.getAll()) {
-    if (m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`)) await RecoveryMetricsRepo.delete(m.id);
-  }
+  const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`));
+  await retire(ours, resolveMorningBackup(await SettingsRepo.get()));
 }
 
 // A kind was switched off: it leaves what is stored, so nothing keeps using it.

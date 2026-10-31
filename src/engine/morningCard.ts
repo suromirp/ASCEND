@@ -76,6 +76,8 @@ export const SLEEP: [SleepFeeling, string][] = [['goed', 'Goed'], ['gewoon', 'Ge
 // --- de getallen bovenaan de kaart ---------------------------------------------------
 
 export interface CardStat {
+  // Welk horlogegetal het is (voor het woord van engine/morningRule.ts#ruleWord).
+  key: WellnessLine['key'];
   label: string;
   value: string;
   unit?: string;
@@ -86,17 +88,17 @@ export interface CardStat {
 function statOf(l: WellnessLine): CardStat | undefined {
   if (l.key === 'restingHeartRate') {
     const n = /^(\d+)/.exec(l.value)?.[1];
-    return n ? { label: 'Rusthart', value: n, unit: 'bpm', from: 'horloge' } : undefined;
+    return n ? { key: l.key, label: 'Rusthart', value: n, unit: 'bpm', from: 'horloge' } : undefined;
   }
   if (l.key === 'hrv') {
     const n = /^(\d+)/.exec(l.value)?.[1];
-    return n ? { label: 'HRV', value: n, unit: 'ms', from: 'horloge' } : undefined;
+    return n ? { key: l.key, label: 'HRV', value: n, unit: 'ms', from: 'horloge' } : undefined;
   }
   const hm = /^(\d+) uur(?: (\d+))?$/.exec(l.value);
-  if (hm) return { label: 'Slaap', value: `${hm[1]}:${(hm[2] ?? '0').padStart(2, '0')}`, unit: 'u', from: 'horloge' };
+  if (hm) return { key: 'sleep', label: 'Slaap', value: `${hm[1]}:${(hm[2] ?? '0').padStart(2, '0')}`, unit: 'u', from: 'horloge' };
   const min = /^(\d+) min$/.exec(l.value);
-  if (min) return { label: 'Slaap', value: min[1], unit: 'min', from: 'horloge' };
-  return { label: 'Slaap', value: l.value, from: 'horloge' };
+  if (min) return { key: 'sleep', label: 'Slaap', value: min[1], unit: 'min', from: 'horloge' };
+  return { key: 'sleep', label: 'Slaap', value: l.value, from: 'horloge' };
 }
 
 export interface MorningCardView {
@@ -113,7 +115,7 @@ export interface MorningCardView {
 export function morningCardView(reading: WellnessReading | undefined, options: { sleepExpected?: boolean; linked?: boolean } = {}): MorningCardView {
   const ignored = reading?.night?.state === 'ignored' ? reading.night : undefined;
   const stats = (reading?.lines ?? []).flatMap((l): CardStat[] => {
-    if (l.key === 'sleep' && ignored) return ignored.hours ? [{ label: 'Slaap, zelf', value: `±${ignored.hours}`, unit: 'u', from: 'zelf' }] : [];
+    if (l.key === 'sleep' && ignored) return ignored.hours ? [{ key: 'sleep', label: 'Slaap, zelf', value: `±${ignored.hours}`, unit: 'u', from: 'zelf' }] : [];
     const stat = statOf(l);
     return stat ? [stat] : [];
   });

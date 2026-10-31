@@ -17,9 +17,12 @@
 // ochtenden is er geen oordeel. Het is een vraag: de planning verandert alleen via een voorstel met
 // Akkoord, en dat maakt deze functie niet.
 //
-// Puur: geen React, geen IndexedDB. De ochtendkaart toont hem (components/MorningCard.tsx, van
-// een andere bouwer); zie de instelling "Ochtendregel" (signalSettings.ts, `morningRule`).
+// Puur: geen React, geen IndexedDB. De ochtendkaart toont hem (components/MorningCard.tsx): onder
+// elk horlogegetal het woord uit `ruleWord`, en bij `askTired` de vraag met `TIRED_CHOICES`, waarvan
+// het antwoord de energie van de ochtendcheck wordt. Zie de instelling "Twee van drie"
+// (signalSettings.ts, `morningRule`).
 
+import type { EnergyFeeling } from '../models/checkIn';
 import type { RecoveryMetric } from '../models/metrics';
 import { baselineValues, dayRecord, MIN_BASELINE_DAYS, SHORT_NIGHT_MINUTES, sleepLabel } from './wellnessCheck';
 
@@ -59,6 +62,16 @@ export interface MorningRuleOptions {
 }
 
 export const MORNING_RULE_QUESTION = 'Twee van de drie wijken af. Ben je moe?';
+
+// De antwoorden op de vraag, als energie van de ochtendcheck: "Ja" is Moe, "Nee" is Gewoon.
+export const TIRED_CHOICES: [EnergyFeeling, string][] = [['moe', 'Ja'], ['gewoon', 'Nee']];
+
+// Het ene woord onder een getal op de ochtendkaart ("hoger", "normaal"), of niets als de regel er
+// niet is of dat getal niet beoordeelt.
+export function ruleWord(rule: MorningRule | undefined, key: MorningSignalKey): { word: MorningSignal['verdict']; off: boolean } | undefined {
+  const s = rule?.signals.find((x) => x.key === key);
+  return s ? { word: s.verdict, off: s.off } : undefined;
+}
 
 function mean(values: number[]): number {
   return values.reduce((a, b) => a + b, 0) / values.length;

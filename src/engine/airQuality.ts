@@ -48,7 +48,10 @@ export function airQualityNote(hours: readonly AirQualityHour[], date: string, s
   const pm = Math.max(0, ...window.map((h) => h.pm25 ?? 0));
   const when = date === today ? dayPart(startHour) : 'op dat uur';
   if (ozone >= OZONE_POOR) {
-    return { aqi, cause: 'ozon', text: `Veel ozon ${when}. Liever 's ochtends, of ${date === today ? 'vandaag' : 'die dag'} rustig.` };
+    const day = date === today ? 'vandaag' : 'die dag';
+    // Ozon piekt 's middags; een training die al voor 12 uur staat kan niet vroeger, dus dan alleen rustig.
+    if (startHour < 12) return { aqi, cause: 'ozon', text: `Veel ozon ${when}. Doe ${day} liever rustig.` };
+    return { aqi, cause: 'ozon', text: `Veel ozon ${when}. Liever 's ochtends, of ${day} rustig.` };
   }
   if (pm >= PM25_POOR) {
     return { aqi, cause: 'fijnstof', text: `Veel fijnstof in de lucht ${when}. Een rustige training of binnen kan helpen.` };

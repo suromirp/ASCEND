@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import type { LegFeeling, MorningCheckIn } from '../models/checkIn';
+import type { EnergyFeeling, LegFeeling, MorningCheckIn } from '../models/checkIn';
 import { recentPainSpot } from '../engine/wellbeing';
 import { describeMorningPreview, previewLegCard, previewMorningAdvice } from '../engine/adviceEngine';
 import { resolveLegEase } from '../engine/legEaseSettings';
@@ -50,12 +50,12 @@ function ChoiceRow<K extends string>({ label, from, options, value, set }: { lab
 // dagen. Dan alleen die vraag, niet benen, energie en slaap.
 // onSaved: de ochtendkaart meldt hiermee dat je via het blad hebt beantwoord, zodat
 // ze net als na één tik blijft staan met Wijzigen en Ongedaan maken.
-export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, onSaved }: { painOnly?: boolean; initialLegs?: LegFeeling; onClose: () => void; onSaved?: (entry: MorningCheckIn) => void }) {
+export function MorningCheckInSheet({ painOnly = false, initialLegs, initialEnergy, onClose, onSaved }: { painOnly?: boolean; initialLegs?: LegFeeling; initialEnergy?: EnergyFeeling; onClose: () => void; onSaved?: (entry: MorningCheckIn) => void }) {
   const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig, answeredAdviceIds, injuryNotes } = useAppData();
   const today = todayISO();
   const existing = settings.morningCheckIns?.find((c) => c.date === today);
   const spot = recentPainSpot(today, sessionLogs);
-  const [draft, setDraft] = useState<MorningCheckIn>(() => existing ? { ...existing, sleep: existing.sleepSuggested ? undefined : existing.sleep } : { date: today, legs: initialLegs, spot: spot ? { area: spot.area, score: spot.lastScore } : undefined });
+  const [draft, setDraft] = useState<MorningCheckIn>(() => existing ? { ...existing, sleep: existing.sleepSuggested ? undefined : existing.sleep } : { date: today, legs: initialLegs, energy: initialEnergy, spot: spot ? { area: spot.area, score: spot.lastScore } : undefined });
   const { prefill, reading } = useMorningPrefill(today);
   const wellness = painOnly ? undefined : reading;
 

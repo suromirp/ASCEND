@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { RecoveryMetricsRepo, SettingsRepo, wipeAllData } from './database';
+import { setWatchUse } from './externalActivities';
 import { applyImportPlan, buildBackupEnvelope, buildImportPreview, createImportPlan, createPreImportSnapshot, defaultActionsForMode, defaultPlanPolicyForMode, listSnapshots, normalizeBackupToCurrentModel } from './backup';
 import { migrateMornings } from './migrations';
 import type { RecoveryMetric } from '../models/metrics';
@@ -75,9 +76,39 @@ describe('ochtendgetallen in de back-up', () => {
       'rommel',
     ]);
     expect(read.skipped).toBe(3);
-    expect(read.list).toEqual([{ id: 'intervals.icu:2026-10-22', date: '2026-10-22', source: 'import', hrv: 55 }]);
+    expect(read.list).toEqual([{ id: 'import:2026-10-22', date: '2026-10-22', source: 'import', hrv: 55 }]);
     expect(migrateMornings(undefined)).toEqual({ list: undefined, skipped: 0 });
     expect(migrateMornings('lijst')).toEqual({ list: undefined, skipped: 1 });
+  });
+
+  it('een ochtend zonder id krijgt een id uit zijn eigen bron', () => {
+    const read = migrateMornings([
+      { date: '2026-10-22', restingHeartRate: 48, source: 'manual' },
+      { date: '2026-10-23', hrv: 58, source: 'health-connect' },
+      { id: 'intervals.icu:2026-10-24', date: '2026-10-24', hrv: 61, source: 'import' },
+    ]);
+    expect(read.list!.map((m) => m.id)).toEqual(['manual:2026-10-22', 'health-connect:2026-10-23', 'intervals.icu:2026-10-24']);
+  });
+
+  it('volgen bij terugzetten wat je van je horloge gebruikt: slaap uit komt niet terug', async () => {
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    await wipeAllData();
+    await setWatchUse({ sleep: false });
+    await importEnvelope(envelope);
+    const back = (await RecoveryMetricsRepo.getAll()).sort((a, b) => a.date.localeCompare(b.date));
+    expect(back.map((m) => m.date)).toEqual(['2026-10-20', '2026-10-21']);
+    expect(back.every((m) => m.sleepMinutes === undefined && m.sleepScore === undefined)).toBe(true);
+    expect(back[0].restingHeartRate).toBe(50);
+  });
+
+  it('een ochtend met alleen slaap komt met slaap uit helemaal niet terug', async () => {
+    await wipeAllData();
+    await RecoveryMetricsRepo.putAll([{ id: 'intervals.icu:2026-10-22', date: '2026-10-22', source: 'import', sleepMinutes: 400 }]);
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    await wipeAllData();
+    await setWatchUse({ sleep: false });
+    await importEnvelope(envelope);
+    expect(await RecoveryMetricsRepo.getAll()).toEqual([]);
   });
 
   it('een verkeerde waarde voor de schakelaar valt weg bij het importeren', () => {

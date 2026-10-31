@@ -908,8 +908,10 @@ export function migrateMornings(raw: unknown): { list: RecoveryMetric[] | undefi
       skipped++;
       continue;
     }
-    const id = typeof r.id === 'string' && r.id.length > 0 ? r.id : `intervals.icu:${r.date}`;
     const source = MORNING_SOURCES.includes(r.source as MetricSource) ? (r.source as MetricSource) : 'import';
+    // Zonder id een id uit de eigen bron, zodat een ochtend die je zelf invulde nooit voor een
+    // opgehaalde van intervals.icu doorgaat (die herken je aan "intervals.icu:").
+    const id = typeof r.id === 'string' && r.id.length > 0 ? r.id : `${source}:${r.date}`;
     const metric: RecoveryMetric = { id, date: r.date, source };
     for (const key of Object.keys(MORNING_LIMITS) as (keyof typeof MORNING_LIMITS)[]) {
       const v = r[key];

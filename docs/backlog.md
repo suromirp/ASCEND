@@ -24,7 +24,6 @@ Bijgewerkt op 31 oktober 2026.
 
 ## Ochtendkaart, later
 
-- Een woord oordeel bij de horlogegetallen ("rusthartslag 4 hoger dan normaal"), en bij twee van de drie afwijkend zelf vragen of je moe bent. De engine is er (`engine/morningRule.ts#morningRule`, instelling `morningRule`); de ochtendkaart moet hem nog tonen.
 - De kaart leert van jou: hoe ging de training na "moe" of "slecht geslapen", en het advies past zich daarop aan. Hoort bij Kansen (slaap tegenover prestatie).
 - Een melding op de telefoon met de vier keuzes, zodat je de app niet hoeft te openen. Na de Android-app.
 

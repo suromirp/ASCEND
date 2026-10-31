@@ -37,6 +37,7 @@ import {
   type WatchActivityState,
 } from '../storage/externalActivities';
 import { useAppData } from '../state/AppDataContext';
+import { resolveMorningBackup } from '../engine/morningBackup';
 import { AlignProposalCard, AlignedSheet } from '../components/WatchAlignCard';
 import { WatchSetupGuide } from '../components/WatchSetupGuide';
 import { useAlignActions, useWatchAlign } from '../components/useWatchAlign';
@@ -75,6 +76,9 @@ export function GarminLinkPage() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [confirmingUnlink, setConfirmingUnlink] = useState(false);
+  const { templates, settings, updateSettings } = useAppData();
+  // Ochtendgetallen in back-up: dan blijven ze bij ontkoppelen (storage/wellness.ts#clearWellness).
+  const keepMornings = resolveMorningBackup(settings);
 
   const load = useCallback(async () => {
     try {
@@ -196,7 +200,9 @@ export function GarminLinkPage() {
       await pauseWatchWorkouts();
       await clearConnection();
       setConfirmingUnlink(false);
-      setNotice({ tone: 'ok', text: 'Ontkoppeld. Je API-sleutel, de opgehaalde activiteiten en je slaap- en hartslaggegevens zijn van deze telefoon gewist.' });
+      setNotice({ tone: 'ok', text: keepMornings
+        ? 'Ontkoppeld. Je API-sleutel en de opgehaalde activiteiten zijn van deze telefoon gewist. Je ochtendgetallen blijven bewaard voor je back-up.'
+        : 'Ontkoppeld. Je API-sleutel, de opgehaalde activiteiten en je slaap- en hartslaggegevens zijn van deze telefoon gewist.' });
       await load();
     } finally {
       setBusy(false);
@@ -205,7 +211,6 @@ export function GarminLinkPage() {
 
   const connected = !!connection;
   const workouts = useWatchWorkoutControls();
-  const { templates, settings, updateSettings } = useAppData();
   const align = useWatchAlign();
   const alignActions = useAlignActions(align.items);
   const [showAligned, setShowAligned] = useState(false);
@@ -241,7 +246,11 @@ export function GarminLinkPage() {
           {notice && <NoticeLine notice={notice} />}
           {confirmingUnlink ? (
             <div className="flex flex-col gap-2">
-              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je sleutel, de opgehaalde activiteiten en je slaap- en hartslaggegevens worden van deze telefoon gewist. Wat je al hebt opgeslagen in je logboek blijft.</p>
+              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                {keepMornings
+                  ? 'Je sleutel en de opgehaalde activiteiten worden van deze telefoon gewist. Je ochtendgetallen (slaap, rusthartslag en HRV) blijven, omdat ze in je back-up gaan; dat zet je uit bij Ochtendgetallen in back-up. Wat je al hebt opgeslagen in je logboek blijft.'
+                  : 'Je sleutel, de opgehaalde activiteiten en je slaap- en hartslaggegevens worden van deze telefoon gewist. Wat je al hebt opgeslagen in je logboek blijft.'}
+              </p>
               <div className="flex gap-3">
                 <SecondaryButton onClick={() => setConfirmingUnlink(false)} disabled={busy}>Annuleren</SecondaryButton>
                 <PrimaryButton fullWidth={false} onClick={() => void unlink()} disabled={busy}>Ontkoppelen</PrimaryButton>

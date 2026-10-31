@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { morningRule, MORNING_RULE_QUESTION } from './morningRule';
+import { morningRule, MORNING_RULE_QUESTION, TIRED_CHOICES, ruleWord } from './morningRule';
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays } from '../utils/dates';
 
@@ -55,5 +55,24 @@ describe('de ochtendregel twee van drie', () => {
     expect(morningRule(today, month({}).slice(0, 28))).toBeUndefined();
     const few: RecoveryMetric[] = [{ id: 'a', date: today, source: 'import', restingHeartRate: 60, hrv: 40, sleepMinutes: 300 }];
     expect(morningRule(today, few)).toBeUndefined();
+  });
+});
+
+describe('de ochtendregel op de kaart', () => {
+  it('geeft per getal één woord, met afwijkend apart', () => {
+    const r = morningRule(today, month({ restingHeartRate: 56, hrv: 49, sleepMinutes: 440 }))!;
+    expect(ruleWord(r, 'restingHeartRate')).toEqual({ word: 'hoger', off: true });
+    expect(ruleWord(r, 'hrv')).toEqual({ word: 'lager', off: true });
+    expect(ruleWord(r, 'sleep')).toEqual({ word: 'normaal', off: false });
+  });
+
+  it('zonder regel of zonder oordeel over dat getal geen woord', () => {
+    expect(ruleWord(undefined, 'hrv')).toBeUndefined();
+    const r = morningRule(today, month({ restingHeartRate: 56, sleepMinutes: 440 }))!;
+    expect(ruleWord(r, 'hrv')).toBeUndefined();
+  });
+
+  it('het antwoord op de vraag gaat naar de energie van de ochtend', () => {
+    expect(TIRED_CHOICES).toEqual([['moe', 'Ja'], ['gewoon', 'Nee']]);
   });
 });
