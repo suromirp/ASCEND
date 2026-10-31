@@ -33,6 +33,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 ## Na het herstel van het abonnement (zondag 1 november)
 
+- Trainingen die niet doorgingen automatisch afhandelen. In de back-up van 31 oktober telden 22 van de 34 trainingen van de laatste 8 weken als gemist, veel nog op "gepland" zonder log. Idee: na een paar dagen zonder log vraagt de app één keer kort "Niet gedaan?" (of zet hem zelf op overgeslagen als je dat instelt), en een log van het horloge of MacroFactor op een andere dag koppelt hij als voorstel aan de geplande training. Nooit een log verzinnen; overslaan is een status, geen historie. Instelbaar, met besluit.
 - Spierindex stap 1 en 2: controle op je training en slimmer vervangen.
 - Grote bestanden opsplitsen: AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations.
 - Android-app (Capacitor).
