@@ -87,6 +87,7 @@ export type ReasonCode =
   | 'heartRateSource'
   | 'otherKind'
   | 'noMatch'
+  | 'otherDistance'
   | 'tooFew';
 
 export interface NotComparable {
@@ -340,6 +341,95 @@ export function comparableLogs(subject: SessionLog, topic: InsightTopic, ctx: Co
     reasons.push({ code: 'tooFew', count: chosen.length });
   }
   return { logs: chosen.map((c) => c.log), reasons, verdict, enough, referenceHr };
+}
+
+// --- runs like this one, for "Run in detail" ------------------------------------------------------------
+
+// A run is like this one with about the same distance and climb (own assumption: 15 percent
+// and 5 metres per kilometre), the same kind of training, outdoors, with kilometres stored.
+export const SIMILAR_DISTANCE_PCT = 15;
+export const SIMILAR_CLIMB_M_PER_KM = 5;
+
+const climbPerKm = (log: SessionLog) => {
+  const rd = log.runDetail;
+  if (!rd || rd.totalM <= 0) return undefined;
+  if (!rd.kms.some((k) => k.gainM !== undefined)) return undefined;
+  return rd.kms.reduce((n, k) => n + (k.gainM ?? 0), 0) / (rd.totalM / 1000);
+};
+
+// The earlier runs "Run in detail" compares with: the same template (so a test with tests,
+// a long run with long runs), not the leg or heart rate gate of an easy run, but the same
+// weather gate, rested legs and enough of them. The reasons use the same words.
+export function similarRuns(subject: SessionLog, ctx: ComparisonContext): Comparison {
+  const none = (reason: NotComparable): Comparison => ({ logs: [], reasons: [reason], verdict: 'unknown', enough: false });
+  const own = subject.runDetail;
+  if (!own) return none({ code: 'noDetail' });
+  if (logSport(subject) !== 'running') return none({ code: 'otherKind' });
+  const indoor = isIndoorLog(subject);
+  const own0 = conditionVerdict(subject.detail?.conditions, []);
+  if (!indoor && (own0 === 'windy' || own0 === 'rainy')) return { ...none({ code: own0 }), verdict: own0 };
+  const events = ctx.events ?? fatigueEvents(ctx.legs);
+  const rested = (log: SessionLog) => {
+    if (hardLegsBefore(log, ctx)) return false;
+    const r = legFatigueOn(log.completedDate, ctx.legs, events);
+    return r.index <= FATIGUE_THRESHOLDS.test.fresh && !r.painRecent;
+  };
+  const from = addDays(subject.completedDate, -WINDOW_DAYS * 2);
+  const ownClimb = climbPerKm(subject);
+  const ownFeels = feelsLike(subject.detail?.conditions);
+  const dropped = new Map<ReasonCode, { n: number; diffs: number[] }>();
+  const drop = (code: ReasonCode, diff?: number) => {
+    const cur = dropped.get(code) ?? { n: 0, diffs: [] as number[] };
+    cur.n += 1;
+    if (diff !== undefined) cur.diffs.push(diff);
+    dropped.set(code, cur);
+  };
+  const pool = ctx.logs
+    .filter((l) => l.id !== subject.id && !ctx.excludedLogIds?.has(l.id) && l.completedDate >= from && l.completedAt < subject.completedAt && l.templateId === subject.templateId && logSport(l) === 'running')
+    .sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+  const kept: Candidate[] = [];
+  for (const log of pool) {
+    const rd = log.runDetail;
+    // A run without kilometres is no candidate; it is not a reason worth telling either.
+    if (!rd || log.trim) continue;
+    if (isIndoorLog(log) !== indoor) {
+      drop('treadmill');
+      continue;
+    }
+    if ((Math.abs(rd.totalM - own.totalM) / own.totalM) * 100 > SIMILAR_DISTANCE_PCT) {
+      drop('otherDistance');
+      continue;
+    }
+    const theirClimb = climbPerKm(log);
+    if (!indoor && ownClimb !== undefined && theirClimb !== undefined && Math.abs(theirClimb - ownClimb) > SIMILAR_CLIMB_M_PER_KM) {
+      drop('otherDistance');
+      continue;
+    }
+    if (!ctx.chestStrap && !!log.detail?.quality.chestStrapSeen !== !!subject.detail?.quality.chestStrapSeen) {
+      drop('heartRateSource');
+      continue;
+    }
+    const theirFeels = feelsLike(log.detail?.conditions);
+    if (ownFeels !== undefined && theirFeels !== undefined && Math.abs(ownFeels - theirFeels) > TEMP_TOO_DIFFERENT_C) {
+      drop('temperature', ownFeels - theirFeels);
+      continue;
+    }
+    if (!rested(log)) {
+      drop('legsTired');
+      continue;
+    }
+    kept.push({ log, conditions: log.detail?.conditions });
+  }
+  const chosen = kept.slice(0, MAX_BASELINE);
+  const enough = chosen.length >= MIN_BASELINE;
+  const reasons: NotComparable[] = [];
+  if (!enough) {
+    for (const [code, v] of [...dropped.entries()].sort((a, b) => b[1].n - a[1].n)) {
+      reasons.push({ code, count: v.n, ...(v.diffs.length > 0 ? { diffC: Math.round(median(v.diffs)) } : {}) });
+    }
+    reasons.push({ code: 'tooFew', count: chosen.length });
+  }
+  return { logs: chosen.map((c) => c.log), reasons, verdict: conditionVerdict(subject.detail?.conditions, chosen.map((c) => c.conditions)), enough };
 }
 
 // The pace of a whole training, seconds per kilometre.

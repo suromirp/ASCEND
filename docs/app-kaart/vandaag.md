@@ -17,13 +17,14 @@ Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.
 [knop: Back-up maken]
 
 --- kaart 3 ---
-### Goedemorgen
+Goedemorgen
 Hoe voelen je benen?
-[knop: Fris]
+[knop: Klopt: fris]
+Voorstel volgens je beenindex
+Of kies zelf
 [knop: Wat stijf]
 [knop: Spierpijn]
 [knop: Flinke spierpijn]
-Voorstel volgens je beenindex: fris
 [knop: Energie, slaap of pijn invullen]
 
 --- kaart 4 ---

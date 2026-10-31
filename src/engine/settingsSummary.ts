@@ -38,7 +38,7 @@ import { resolveSky } from './skySettings';
 import { resolveLongRunGrowth } from './runGrowth';
 import { resolveIntensityCounting } from './intensitySettings';
 import { resolveFigure, type Figure } from './figureSettings';
-import { resolveRunInsight } from './runInsightSettings';
+import { formSwitchesLine, resolveRunInsight } from './runInsightSettings';
 import { zoneBpm } from './heartRateZones';
 import { bootGoalKm } from './bootBreakIn';
 import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
@@ -309,6 +309,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     }
     case 'bundel-weer':
       return { value: `${countOn([o.weatherLine, o.bestMoment, o.weatherSwap, o.clothingAdvice])} van 4 aan` };
+    case 'bundel-run-detail': {
+      const d = resolveRunInsight(s.runInsight).detail;
+      return d.show ? { value: 'Aan', sub: `Loopvorm: ${formSwitchesLine(d.form)}` } : { value: 'Uit', dim: true };
+    }
     case 'bundel-inzicht': {
       const r = resolveRunInsight(s.runInsight);
       return r.enabled ? { value: 'Aan', sub: `${countOn(Object.values(r.topics))} van 4 onderwerpen` } : { value: 'Uit', dim: true };
@@ -618,6 +622,22 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const c = clothingValue(f);
       return { value: c.value, auto: false, dim: c.value === 'Standaard' };
     }
+    case 'run-detail-patronen':
+      return { checked: resolveRunInsight(s.runInsight).detail.patterns };
+    case 'run-detail-advies':
+      return { checked: resolveRunInsight(s.runInsight).detail.advice };
+    case 'loopvorm-cadans':
+      return { checked: resolveRunInsight(s.runInsight).detail.form.cadence };
+    case 'loopvorm-grondcontact':
+      return { checked: resolveRunInsight(s.runInsight).detail.form.stanceTimeMs };
+    case 'loopvorm-staplengte':
+      return { checked: resolveRunInsight(s.runInsight).detail.form.stepLengthM };
+    case 'loopvorm-oscillatie':
+      return { checked: resolveRunInsight(s.runInsight).detail.form.oscillationMm };
+    case 'loopvorm-balans':
+      return { checked: resolveRunInsight(s.runInsight).detail.form.stanceBalanceLeftPct };
+    case 'run-detail':
+      return { checked: resolveRunInsight(s.runInsight).detail.show };
     case 'loopinzicht':
       return { checked: resolveRunInsight(s.runInsight).enabled };
     case 'loop-efficientie':

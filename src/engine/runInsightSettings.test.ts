@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { DEFAULT_RUN_INSIGHT, cleanRunInsight, resolveRunInsight } from './runInsightSettings';
+import { DEFAULT_RUN_INSIGHT, cleanRunInsight, formSwitchesLine, resolveRunInsight } from './runInsightSettings';
 import { DEFAULT_WATCH_USE, detailsWanted, filterActivityDetails, normalizeWatchUse } from './watchUse';
 import type { ExternalActivity } from './activityImport';
 import { syncWatchActivities, saveConnection, setWatchUse, getWatchState } from '../storage/externalActivities';
@@ -28,6 +28,35 @@ describe('the settings of the loopinzicht', () => {
     expect(cleanRunInsight({ enabled: false, topics: { form: false, rommel: true }, extra: 1 })).toEqual({ value: { enabled: false, topics: { form: false } }, dropped: 2 });
     expect(cleanRunInsight('x')).toEqual({ value: undefined, dropped: 1 });
     expect(cleanRunInsight({})).toEqual({ value: undefined, dropped: 0 });
+  });
+});
+
+describe('the settings of Run in detail', () => {
+  it('are all on with the balance off when nothing is stored, as in an old backup', () => {
+    const d = resolveRunInsight(undefined).detail;
+    expect(d).toEqual({ show: true, patterns: true, advice: true, form: { cadence: true, stanceTimeMs: true, stepLengthM: true, oscillationMm: true, stanceBalanceLeftPct: false } });
+    expect(resolveRunInsight({ enabled: false }).detail.show).toBe(true);
+    expect(resolveRunInsight({ detail: 'rommel' as never }).detail).toEqual(d);
+  });
+
+  it('take what you changed and nothing else', () => {
+    const d = resolveRunInsight({ detail: { advice: false, form: { stanceBalanceLeftPct: true, cadence: false } } }).detail;
+    expect(d.advice).toBe(false);
+    expect(d.patterns).toBe(true);
+    expect(d.form.stanceBalanceLeftPct).toBe(true);
+    expect(d.form.cadence).toBe(false);
+    expect(d.form.stepLengthM).toBe(true);
+  });
+
+  it('say in a few words what the card Loopvorm shows', () => {
+    expect(formSwitchesLine(resolveRunInsight(undefined).detail.form)).toBe('cadans en nog 3');
+    expect(formSwitchesLine({ cadence: false, stanceTimeMs: true, stepLengthM: false, oscillationMm: false, stanceBalanceLeftPct: false })).toBe('grondcontact');
+    expect(formSwitchesLine({ cadence: false, stanceTimeMs: false, stepLengthM: false, oscillationMm: false, stanceBalanceLeftPct: false })).toBe('niets');
+  });
+
+  it('survive a backup and lose only what is broken', () => {
+    expect(cleanRunInsight({ detail: { show: false, form: { cadence: false, voet: true }, patterns: 'ja' } })).toEqual({ value: { detail: { show: false, form: { cadence: false } } }, dropped: 2 });
+    expect(cleanRunInsight({ detail: 4 })).toEqual({ value: undefined, dropped: 1 });
   });
 });
 

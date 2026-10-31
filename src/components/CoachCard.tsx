@@ -83,7 +83,7 @@ export function CoachCard() {
   const plain = !(first.proposal || first.restWeekSkip || first.repeatWeek || first.goalChange || first.goalTargetTime);
   const more = advice.length - 1;
   return (
-    <Card className="flex flex-col gap-3">
+    <Card className="flex flex-col gap-3" data-advice-ids={advice.map((a) => a.id).join(' ')}>
       <div className="flex items-center justify-between">
         <Eyebrow>Advies, {kind.label.toLowerCase()}</Eyebrow>
         {more > 0 && (

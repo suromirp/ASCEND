@@ -74,7 +74,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'intensiteit'], advanced: [] },
   vandaag: {
-    rows: ['kaarten', 'lichterbenen', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'zweet-vragen'],
+    rows: ['kaarten', 'lichterbenen', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {
@@ -138,6 +138,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Vandaag en meldingen
   ...inSheet('kaarten', 'ochtendcheck', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'geluid'),
   ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
+  ...inSheet('bundel-run-detail', 'run-detail', 'run-detail-patronen', 'run-detail-advies', 'loopvorm-cadans', 'loopvorm-grondcontact', 'loopvorm-staplengte', 'loopvorm-oscillatie', 'loopvorm-balans'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),
   ...inSheet('lichterbenen', 'lichterbenen-hoe'),
@@ -223,6 +224,7 @@ const B = {
   review: { ok: (s) => resolveOverviews(s.overviews).weekReview, reason: 'Zichtbaar zodra de weekterugblik aan staat', parent: 'weekterugblik' },
   notice: { ok: (_s, c) => c.noticeAvailable, reason: 'Zichtbaar zodra je telefoon de ochtendmelding kan sturen', parent: 'ochtendmelding' },
   clothing: { ok: (s) => resolveOverviews(s.overviews).clothingAdvice, reason: 'Zichtbaar zodra het kledingadvies aan staat', parent: 'kledingadvies' },
+  runDetail: { ok: (s) => resolveRunInsight(s.runInsight).detail.show, reason: 'Zichtbaar zodra Run in detail tonen aan staat', parent: 'run-detail' },
   insight: { ok: (s) => resolveRunInsight(s.runInsight).enabled, reason: 'Zichtbaar zodra Inzicht na een training aan staat', parent: 'loopinzicht' },
   legEaseOffers: { ok: (s) => resolveLegEase(s) === 'voorstel', reason: 'Zichtbaar zodra Lichter bij vermoeide benen met een voorstel werkt', parent: 'lichterbenen' },
   skyAuto: { ok: (s) => resolveSky(s).sky === 'auto', reason: 'Zichtbaar zodra Lucht bovenaan op Automatisch staat', parent: 'lucht' },
@@ -258,6 +260,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.review], 'weekterugblik-dag'),
   ...rule([B.notice], 'ochtendmelding-tijd'),
   ...rule([B.clothing], 'kleding-voorkeur'),
+  ...rule([B.runDetail], 'run-detail-patronen', 'run-detail-advies', 'loopvorm-cadans', 'loopvorm-grondcontact', 'loopvorm-staplengte', 'loopvorm-oscillatie', 'loopvorm-balans'),
   ...rule([B.insight], 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm'),
   ...rule([B.skyAuto], 'lucht-vanaf'),
   ...rule([B.legEaseOffers], 'lichterbenen-hoe'),

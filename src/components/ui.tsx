@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 import { haptics } from '../utils/haptics';
 import { BackButton } from './BackButton';
 import { SkyBand } from './SkyBand';
@@ -10,9 +10,10 @@ import './sheets.css';
 
 // Een kaart: marine vlak, haarlijn, 16 px afronding en 16 px binnenruimte. Op de
 // lichte lucht (SkyBand) wordt dezelfde kaart vanzelf de bijna witte kaart.
-export function Card({ children, className = '', texture = false }: { children: ReactNode; className?: string; texture?: boolean }) {
+export function Card({ children, className = '', texture = false, ...rest }: { children: ReactNode; className?: string; texture?: boolean } & Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'className' | 'style'>) {
   return (
     <div
+      {...rest}
       className={`ui-card rounded-2xl border p-4 ${texture ? 'topo-texture' : ''} ${className}`}
       style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
     >

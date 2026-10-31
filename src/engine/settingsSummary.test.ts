@@ -815,6 +815,10 @@ describe('rowSummary: rijen met een blad', () => {
     expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('2 van 4 aan');
     expect(rowSummary('bundel-inzicht', facts())).toEqual({ value: 'Aan', sub: '4 van 4 onderwerpen' });
     expect(rowSummary('bundel-inzicht', withSettings({ runInsight: { enabled: false } }))).toEqual({ value: 'Uit', dim: true });
+    expect(rowSummary('bundel-run-detail', facts())).toEqual({ value: 'Aan', sub: 'Loopvorm: cadans en nog 3' });
+    expect(rowSummary('bundel-run-detail', withSettings({ runInsight: { detail: { show: false } } }))).toEqual({ value: 'Uit', dim: true });
+    expect(rowSummary('loopvorm-balans', facts()).checked).toBe(false);
+    expect(rowSummary('run-detail-advies', withSettings({ runInsight: { detail: { show: false } } })).hidden).toBe(true);
     expect(rowSummary('bundel-horloge-gebruik', facts())).toEqual({ value: '5 van 5 aan', hidden: false });
     expect(rowSummary('bundel-horloge-gebruik', facts({ watch: { ...facts().watch!, use: { ...DEFAULT_WATCH_USE, sleep: false, hrv: false } } })).value).toBe('3 van 5 aan');
     expect(rowSummary('bundel-horloge-gebruik', facts({ watch: { ...facts().watch!, linked: false } })).hidden).toBe(true);
@@ -832,7 +836,7 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('geen enkele regel onder een rij met een blad is langer dan een regel', () => {
-    for (const id of ['bundel-dagen', 'bundel-tochten', 'bundel-sportschool', 'bundel-weergave', 'bundel-rusttimer', 'bundel-toets', 'bundel-inzicht', 'lucht']) {
+    for (const id of ['bundel-dagen', 'bundel-tochten', 'bundel-sportschool', 'bundel-weergave', 'bundel-rusttimer', 'bundel-toets', 'bundel-inzicht', 'bundel-run-detail', 'lucht']) {
       expect((rowSummary(id, facts()).sub ?? '').length, id).toBeLessThanOrEqual(SUB_MAX_LENGTH);
     }
   });

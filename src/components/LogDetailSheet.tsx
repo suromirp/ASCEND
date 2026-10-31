@@ -35,6 +35,11 @@ import { useDeviation } from './influence/useInfluence';
 import { entryForLog, isNoted } from '../engine/influence';
 import { SweatSheet } from './SweatSheet';
 import { entryResultLine, isSweatLog } from '../engine/sweat';
+import { RunDetailScreen } from './runDetail/RunDetailScreen';
+import { runDetailRowLine, runTotalsOf } from '../engine/runDetailView';
+import { resolveRunInsight } from '../engine/runInsightSettings';
+import { logSport } from '../engine/sports';
+import { useDetailsOn } from './useRunInsight';
 
 // Putting the numbers back is local work; longer than this means it is stuck.
 const RESTORE_TIMEOUT_MS = 15_000;
@@ -76,6 +81,10 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [log.id, log.externalId, log.trim, hasRunDetail, refresh]);
   const compatibility = garminType ? getCompatibility(log.templateId, garminType) : undefined;
+  // "Run in detail": a run from the watch, with the switch on (docs/visie/Run in detail.md, 3).
+  const detailsOn = useDetailsOn();
+  const [detailOpen, setDetailOpen] = useState(false);
+  const showRunDetail = detailsOn && resolveRunInsight(settings.runInsight).detail.show && logSport(log) === 'running' && (!!log.runDetail || !!log.externalId);
 
   const rows: { label: string; value: string; icon?: 'horloge' | 'notitie' }[] = [];
   const done = workoutLine(log);
@@ -204,6 +213,14 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
           <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {logKindLabel(log)} · {log.durationMinutes} min
           </p>
+
+          {showRunDetail && (
+            <div className="mt-3">
+              <SheetRows label="Run in detail">
+                <SheetRow title="Run in detail" sub={log.runDetail ? runDetailRowLine(log.runDetail, runTotalsOf(log, log.runDetail)) : 'Kilometer na kilometer, van je horloge'} onClick={() => setDetailOpen(true)} />
+              </SheetRows>
+            </div>
+          )}
 
           {showDeviation && <LogInfluenceCard log={log} deviation={deviation} />}
 
@@ -394,6 +411,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     </Portal>
     {/* Next to the sheet, not inside it: a tap in this one must not close that one. */}
     {forgeLogOpen && log.forgeLog && <ForgeLogSheet events={log.forgeLog} eyebrow={formatDateNL(log.completedDate)} title={templateName} onClose={() => setForgeLogOpen(false)} />}
+    {detailOpen && <RunDetailScreen logId={log.id} templateName={templateName} onClose={() => setDetailOpen(false)} />}
     {trimming && <TrimSheet log={log} templateName={templateName} onClose={() => setTrimming(false)} />}
     {sweatOpen && <SweatSheet log={log} templateName={templateName} onClose={() => setSweatOpen(false)} />}
     {influenceOpen && (
