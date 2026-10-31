@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SettingsRepo, wipeAllData } from './database';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
-import { migrateDirection } from './migrations';
+import { migrateDirection, migrateWaveSettings } from './migrations';
 
 describe('migrateDirection', () => {
   it('houdt bekende waarden over', () => {
@@ -29,6 +29,14 @@ describe('migrateDirection', () => {
   });
 });
 
+describe('migrateWaveSettings', () => {
+  it('houdt alleen een bekende beginnersstart over', () => {
+    expect(migrateWaveSettings({ beginnerStart: 'ja' })).toEqual({ value: { beginnerStart: 'ja' }, skipped: 0 });
+    expect(migrateWaveSettings({ beginnerStart: 'soms' })).toEqual({ value: {}, skipped: 1 });
+    expect(migrateWaveSettings({})).toEqual({ value: {}, skipped: 0 });
+  });
+});
+
 describe('richting en weekbudget in de back-up', () => {
   beforeEach(async () => {
     await wipeAllData();
@@ -40,6 +48,14 @@ describe('richting en weekbudget in de back-up', () => {
     expect(back.settings?.direction).toBe('stronger');
     expect(back.settings?.directionStart).toBe('2026-10-26');
     expect(back.settings?.weekBudget).toEqual({ minutes: 105, strength: 3 });
+  });
+
+  it('de beginnersstart reist mee, een onzinnige waarde niet', async () => {
+    await SettingsRepo.set({ beginnerStart: 'nee' });
+    expect(normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope()))).settings?.beginnerStart).toBe('nee');
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    envelope.payload.settings = { ...envelope.payload.settings, beginnerStart: 'soms' };
+    expect(normalizeBackupToCurrentModel(envelope).settings?.beginnerStart).toBeUndefined();
   });
 
   it('een oudere back-up zonder deze velden importeert zoals eerst', async () => {

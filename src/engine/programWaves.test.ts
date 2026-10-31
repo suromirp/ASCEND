@@ -9,6 +9,7 @@ import {
   readProgramDirection,
   waveHeader,
   PHASE_GOLF,
+  PHASE_GOLF_START,
   PATTERN_SWAPS,
 } from './programLayout';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -109,6 +110,22 @@ describe('constante weken bij Fit blijven en Rustig aan', () => {
     // Buiten een golf raakt het een herstelloop niet.
     expect(templateForPhase('tpl_recovery_run', [], 'phase_1', 3)).toBe('tpl_recovery_run');
     expect(directionSwaps(undefined)).toEqual([]);
+  });
+});
+
+describe('beginnersstart', () => {
+  it('vier weken Rustig beginnen vanaf de start van je richting, daarna golven', () => {
+    const phases = layoutWaves(START, START, 12, START, 4);
+    expect(phases.map((p) => [p.id, p.weekCount])).toEqual([[PHASE_GOLF_START, 4], [PHASE_GOLF, 12]]);
+  });
+
+  it('in de start wordt de heuvelloop een herstelloop, daarna weer de heuvelloop', () => {
+    const swaps = directionSwaps({ id: 'maintain' }, true);
+    expect(templateForPhase('tpl_hill_intervals', swaps, PHASE_GOLF_START, 3)).toBe('tpl_recovery_run');
+    expect(templateForPhase('tpl_hill_intervals', swaps, PHASE_GOLF, 3)).toBe('tpl_hill_intervals');
+    expect(templateForPhase('tpl_recovery_run', swaps, PHASE_GOLF, 3)).toBe('tpl_hill_intervals');
+    // Een heuvelloop die jij vastzette blijft.
+    expect(templateForPhase('tpl_hill_intervals', swaps, PHASE_GOLF_START, 1)).toBe('tpl_hill_intervals');
   });
 });
 

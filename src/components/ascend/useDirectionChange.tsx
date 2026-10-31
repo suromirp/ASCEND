@@ -4,6 +4,7 @@ import type { DirectionId } from '../../data/directions';
 import { parseDirection, parseDirectionStart } from '../../engine/direction';
 import type { AppSettings } from '../../storage/database';
 import { directionChangeLines, directionChangeTitle } from '../../engine/directionChange';
+import { beginnerStartLine, isBeginnerStart } from '../../engine/beginnerStart';
 import { mondayOfWeek, todayISO } from '../../utils/dates';
 import { useHorizonChange } from '../useHorizonChange';
 
@@ -22,7 +23,7 @@ export function useDirectionChange(): {
   sheet: ReactNode;
   busy: boolean;
 } {
-  const { settings, updateSettings, planHorizonChange, program } = useAppData();
+  const { settings, updateSettings, planHorizonChange, program, sessionLogs } = useAppData();
   const horizon = useHorizonChange();
 
   async function choose(id: DirectionId) {
@@ -40,7 +41,10 @@ export function useDirectionChange(): {
         explanation: 'Je richting bepaalt hoe ASCEND je weken plant als je geen doel hebt. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
         trigger: 'direction_changed',
         settings: patch,
-        notes: directionChangeLines(id, settings),
+        notes: [
+          ...directionChangeLines(id, settings),
+          ...(id !== 'easy' && isBeginnerStart(settings.beginnerStart, sessionLogs, start) ? [beginnerStartLine(start, todayISO()) ?? ''].filter(Boolean) : []),
+        ],
       }),
       { eyebrow: 'Je richting', ask: 'always', alwaysAsk: true, notesTitle: 'Je richting', declined: KEEP },
     );

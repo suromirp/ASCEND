@@ -680,6 +680,20 @@ export function migrateDirection(raw: { direction?: unknown; directionStart?: un
   return { value, skipped };
 }
 
+// Zonder doel, de keuzes rond golven (docs/beslissingen/2026-10-31-zonder-doel-beginnersstart.md):
+// alleen bekende waarden blijven over; wat ontbreekt is het advies. Een oud bestand zonder deze velden
+// importeert zoals het was, dus het schemanummer blijft staan.
+export function migrateWaveSettings(raw: { beginnerStart?: unknown }): { value: { beginnerStart?: 'auto' | 'ja' | 'nee' }; skipped: number } {
+  const value: { beginnerStart?: 'auto' | 'ja' | 'nee' } = {};
+  let skipped = 0;
+  if (raw.beginnerStart !== undefined) {
+    const known = (['auto', 'ja', 'nee'] as const).find((c) => c === raw.beginnerStart);
+    if (known) value.beginnerStart = known;
+    else skipped++;
+  }
+  return { value, skipped };
+}
+
 // --- loopinzicht: SessionLog.detail ---------------------------------------------------
 // The compact profile of a run or tocht (models/activityDetail.ts). The field is
 // optional and additive, and every log travels whole, so the backup schema

@@ -34,6 +34,7 @@ import type { MorningNoticeSettings } from '../engine/morningNotice';
 import { activeSwaps, directionSwaps, patternSlotOf, layoutPhases, patternForWeek, PHASE_GOLF, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { planDirection } from '../engine/direction';
 import { programDirection } from '../engine/directionPlan';
+import { BEGINNER_WEEKS, isBeginnerStart } from '../engine/beginnerStart';
 import { countOptions } from '../engine/yourWeek';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, parseWeekShape, weeklyPatternTemplates, type WeekShape } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
@@ -702,6 +703,9 @@ export interface AppSettings {
   direction?: 'maintain' | 'improve' | 'stronger' | 'easy';
   directionStart?: string;
   weekBudget?: { minutes?: number; strength?: number; doubleHard?: boolean };
+  // De beginnersstart zonder doel (engine/beginnerStart.ts): 'auto' (advies, uit je logs), 'ja' of
+  // 'nee'. Absent = auto. Optional and additive; cleaned on import (migrations.ts#migrateWaveSettings).
+  beginnerStart?: 'auto' | 'ja' | 'nee';
   // "Twijfeltest eerst vragen": a test run that came out clearly slower than the one before
   // waits for your answer before it changes your paces. Absent = on. Optional and additive.
   askDoubtTest?: boolean;
@@ -1208,7 +1212,7 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
   const { templates } = buildDefaultProgramData();
   await putAll('sessionTemplates', templates);
   const ctx = await patternContext(templates, await defaultPatternSelector());
-  const next = withPackTarget({ ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO(), ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
+  const next = withPackTarget({ ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO(), ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart, beginnerWeeks: ctx.beginnerWeeks }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
   await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -1263,7 +1267,7 @@ export async function rebuildPlanningFromWeekOne(
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const cutoff = startFrom === 'this_week' ? todayISO() : newStart;
   const ctx = await patternContext(templates, selectPattern);
-  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
+  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart, beginnerWeeks: ctx.beginnerWeeks }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
   await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -1291,7 +1295,7 @@ export async function restartProgramAtWeekOne(startFrom: 'this_week' | 'next_wee
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const templates = await SessionTemplatesRepo.getAll();
   const ctx = await patternContext(templates);
-  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
+  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart, beginnerWeeks: ctx.beginnerWeeks }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
   await ProgramsRepo.put(next);
 
   const weeksWithSessions = new Set(existingSessions.map((s) => mondayOfWeek(s.scheduledDate)));
@@ -1313,6 +1317,7 @@ interface PatternContext {
   // Zonder doel: neutrale golven, en de richting als je er een koos (engine/direction.ts#planDirection).
   free: boolean;
   waveStart: string | undefined;
+  beginnerWeeks: number;
   direction: Program['direction'];
 }
 
@@ -1353,12 +1358,15 @@ async function patternContext(
   // Zonder doel neutrale golven: geen bergtocht, geen wandeldag, geen rugzak (docs/visie/Zonder doel.md, 3.2).
   const plan = planDirection(settings, goals, new Set(milestones.map((m) => m.goalId)), todayISO(), anchor);
   const byId = new Map(templates.map((t) => [t.id, t]));
-  const freeSwaps = directionSwaps(plan.direction).filter((s) => { const to = byId.get(s.to); return !!to && isTemplatePlannable(to, enabledSports); });
+  const logs = plan.direction ? await SessionLogsRepo.getAll() : [];
+  // De beginnersstart (engine/beginnerStart.ts): vier weken zonder harde training vanaf de start van je richting.
+  const beginner = !!plan.direction && isBeginnerStart(settings.beginnerStart, logs, plan.waveStart);
+  const freeSwaps = directionSwaps(plan.direction, beginner).filter((s) => { const to = byId.get(s.to); return !!to && isTemplatePlannable(to, enabledSports); });
   // De minuten van je richting over de week verdeeld (engine/directionPlan.ts): het weekbudget en wat
   // het patroon gewoon telt, met de wissels van de richting erin.
   const direction = plan.direction
     ? programDirection({
-        id: plan.direction.id, settings, logs: await SessionLogsRepo.getAll(), today: todayISO(),
+        id: plan.direction.id, settings, logs, today: todayISO(),
         pattern: patternForWeek(pattern, templates, freeSwaps, PHASE_GOLF).map((s) => s.template),
         countOptions: countOptions(settings, templates, undefined),
       })
@@ -1373,6 +1381,7 @@ async function patternContext(
     anchor,
     free: plan.free,
     waveStart: plan.waveStart,
+    beginnerWeeks: beginner ? BEGINNER_WEEKS : 0,
     direction,
     overrides: settings.programPhaseOverrides,
     packTarget: programPackTarget(goals, milestones),
@@ -1517,7 +1526,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const goals = [...storedGoals.map((g) => replaced.get(g.id) ?? g), ...[...replaced.values()].filter((g) => !storedGoals.some((s) => s.id === g.id))];
   const today = todayISO();
   const ctx = await patternContext(templates, undefined, { settings, goals, milestones });
-  const next: Program = withPackTarget({ ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
+  const next: Program = withPackTarget({ ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart, beginnerWeeks: ctx.beginnerWeeks }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
   const phasesChanged = JSON.stringify(program.phases) !== JSON.stringify(next.phases);
   // The pack target of the goal travels with the phases (the ladder of the
   // hikes reads it from the program).

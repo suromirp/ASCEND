@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runBootMigrations } from './bootMigrations';
-import { wipeAllData, seedIfEmpty, syncProgramHorizon, PlannedSessionsRepo, ProgramsRepo, SessionTemplatesRepo, SettingsRepo, TrainingGoalsRepo } from './database';
+import { wipeAllData, seedIfEmpty, syncProgramHorizon, PlannedSessionsRepo, ProgramsRepo, SessionTemplatesRepo, SettingsRepo, TrainingGoalsRepo, type AppSettings } from './database';
 import { applyHorizonPlanNow, computeHorizonPlan } from './horizonPlan';
 import { progressionTarget } from '../engine/programLayout';
 import { directionChangeLines } from '../engine/directionChange';
@@ -21,9 +21,9 @@ async function setUp() {
   await syncProgramHorizon();
 }
 
-const input = (id: DirectionId) => ({
+const input = (id: DirectionId, extra: Partial<AppSettings> = {}) => ({
   title: 'Richting', why: 'Test.', explanation: 'Test.', trigger: 'direction_changed' as const,
-  settings: { direction: id, directionStart: TODAY }, notes: directionChangeLines(id, {}),
+  settings: { direction: id, directionStart: TODAY, ...extra }, notes: directionChangeLines(id, {}),
 });
 
 async function open() {
@@ -94,7 +94,7 @@ describe('een richting kiezen zonder doel', () => {
   });
 
   it('de minuten van een week volgen het weekbudget, kracht houdt zijn lengte', async () => {
-    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain')))).status);
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain', { beginnerStart: 'nee' })))).status);
     const program = (await ProgramsRepo.getAll())[0];
     const byId = new Map((await SessionTemplatesRepo.getAll()).map((t) => [t.id, t]));
     const week = (await open()).filter((s) => s.scheduledDate >= '2026-11-02' && s.scheduledDate <= '2026-11-08');
@@ -105,5 +105,22 @@ describe('een richting kiezen zonder doel', () => {
       counted += progressionTarget(t, program, s.scheduledDate)!.minutes * (s.templateId === 'tpl_hill_intervals' ? 2 : 1);
     }
     expect(Math.abs(counted - 150)).toBeLessThanOrEqual(5);
+  });
+
+  it('beginnersstart: weinig gesport, dan vier weken geen heuvelloop, daarna wel', async () => {
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain')))).status).toBe('applied');
+    const program = (await ProgramsRepo.getAll())[0];
+    expect(program.phases.map((p) => p.id)).toEqual(['phase_golf_start', 'phase_golf']);
+    const sessions = await open();
+    const first = sessions.filter((s) => s.scheduledDate < addDays(TODAY, 28)).map((s) => s.templateId);
+    const later = sessions.filter((s) => s.scheduledDate >= addDays(TODAY, 28)).map((s) => s.templateId);
+    expect(first).not.toContain('tpl_hill_intervals');
+    expect(first).toContain('tpl_recovery_run');
+    expect(later).toContain('tpl_hill_intervals');
+  });
+
+  it('beginnersstart op Nee: de heuvelloop blijft', async () => {
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain', { beginnerStart: 'nee' })))).status);
+    expect((await open()).filter((s) => s.scheduledDate < addDays(TODAY, 28)).map((s) => s.templateId)).toContain('tpl_hill_intervals');
   });
 });

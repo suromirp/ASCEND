@@ -31,6 +31,10 @@ export const PHASE_ONDERHOUD = 'phase_onderhoud';
 // Zonder doel (docs/visie/Zonder doel.md, 3.2): neutrale golven van vier weken, drie weken
 // opbouwen en een lichte week. Geen bergcapaciteit, geen expeditieklaar, geen rugzak.
 export const PHASE_GOLF = 'phase_golf';
+// De beginnersstart (engine/beginnerStart.ts): de eerste vier weken van je richting, zonder harde training.
+export const PHASE_GOLF_START = 'phase_golf_start';
+// Een week in een golf, ook de start.
+export const isWavePhase = (id: string | undefined): boolean => id === PHASE_GOLF || id === PHASE_GOLF_START;
 
 // The training wave inside every phase (WAVE_LENGTH, models/program.ts):
 // wennen, opbouw, zwaarste week, deload (3:1, docs/onderzoek rapport 1).
@@ -55,6 +59,10 @@ const PHASE_TEXT: Record<string, { name: string; description: string }> = {
   [PHASE_TAPER]: {
     name: 'NAAR DE START',
     description: 'Minder volume, dezelfde intensiteit. Je komt fris aan de start. Geen nieuwe zware afdalingen meer.',
+  },
+  [PHASE_GOLF_START]: {
+    name: 'RUSTIG BEGINNEN',
+    description: 'De eerste vier weken van je richting alleen makkelijk: de heuvelloop is dan een herstelloop. Zo went je lichaam eerst aan het ritme. Daarna lopen je weken gewoon in golven.',
   },
   [PHASE_GOLF]: {
     name: 'GOLVEN',
@@ -208,27 +216,35 @@ export function layoutPhasesWithoutGoal(startDate: string, today: string, horizo
 // `waveStart`: de maandag waarop je richting begon (AppSettings.directionStart). De golven tellen
 // dan vanaf die maandag, zodat week 1 van de golf de week is waarin je koos, net als op de kaart
 // Je week; de weken ervoor zijn een eigen stuk.
-export function layoutWaves(startDate: string, today: string, horizonWeeks = 12, waveStart?: string): Phase[] {
+// `beginnerWeeks`: zoveel weken vanaf `waveStart` zijn de beginnersstart (een eigen fase, zonder
+// harde training). Ze tellen als de eerste golf, zodat de golven daarna gelijk blijven lopen.
+export function layoutWaves(startDate: string, today: string, horizonWeeks = 12, waveStart?: string, beginnerWeeks = 0): Phase[] {
   const first = mondayOfWeek(startDate);
   const neededWeeks = Math.max(1, Math.floor(daysBetween(first, mondayOfWeek(today)) / 7) + 1 + horizonWeeks);
-  const lead = waveStart ? Math.floor(daysBetween(first, mondayOfWeek(waveStart)) / 7) : 0;
-  if (lead <= 0 || lead >= neededWeeks) return [phase(PHASE_GOLF, 1, Math.ceil(neededWeeks / WAVE_LENGTH) * WAVE_LENGTH)];
-  return [phase(PHASE_GOLF, 1, lead), phase(PHASE_GOLF, 2, Math.ceil((neededWeeks - lead) / WAVE_LENGTH) * WAVE_LENGTH)];
+  const rawLead = waveStart ? Math.floor(daysBetween(first, mondayOfWeek(waveStart)) / 7) : 0;
+  const lead = rawLead > 0 && rawLead < neededWeeks ? rawLead : 0;
+  const out: Phase[] = [];
+  if (lead > 0) out.push(phase(PHASE_GOLF, out.length + 1, lead));
+  const begin = waveStart && rawLead >= 0 && rawLead < neededWeeks ? Math.max(0, beginnerWeeks) : 0;
+  if (begin > 0) out.push(phase(PHASE_GOLF_START, out.length + 1, begin));
+  const rest = Math.max(1, neededWeeks - lead - begin);
+  out.push(phase(PHASE_GOLF, out.length + 1, Math.ceil(rest / WAVE_LENGTH) * WAVE_LENGTH));
+  return out;
 }
 
 // `free`: er is geen doel (engine/direction.ts#activeDirection), dan de neutrale golven. Met een
 // doel zonder datum blijven de oude blokken staan, zodat een plan met een doel niet verandert.
-export function layoutPhases(startDate: string, goalDate: string | undefined, today: string, overrides?: PhaseLengthOverrides, opts: { free?: boolean; waveStart?: string } = {}): Phase[] {
+export function layoutPhases(startDate: string, goalDate: string | undefined, today: string, overrides?: PhaseLengthOverrides, opts: { free?: boolean; waveStart?: string; beginnerWeeks?: number } = {}): Phase[] {
   if (goalDate) {
     const toGoal = layoutPhasesForGoal(startDate, goalDate, overrides);
     if (toGoal) return toGoal;
   }
-  return opts.free ? layoutWaves(startDate, today, 12, opts.waveStart) : layoutPhasesWithoutGoal(startDate, today);
+  return opts.free ? layoutWaves(startDate, today, 12, opts.waveStart, opts.beginnerWeeks) : layoutPhasesWithoutGoal(startDate, today);
 }
 
 // De kop van Vandaag in een golf: "Week 2 van 4 van je golf". Buiten een golf niets.
 export function waveHeader(position: ResolvedProgramPosition | null | undefined): string | undefined {
-  if (!position || position.phase.id !== PHASE_GOLF) return undefined;
+  if (!position || !isWavePhase(position.phase.id)) return undefined;
   return `Week ${((position.weekInPhase - 1) % WAVE_LENGTH) + 1} van ${WAVE_LENGTH} van je golf`;
 }
 
@@ -246,7 +262,7 @@ export function readProgramDirection(raw: unknown): ProgramDirection | undefined
 // De factor van het weekbudget voor deze week van de golf (Program.direction.factors), alleen voor
 // een duurtraining in een golf. Kracht en herstel houden hun lengte.
 function directionFactor(template: SessionTemplate, program: Program, position: ResolvedProgramPosition): number | undefined {
-  if (position.phase.id !== PHASE_GOLF || template.type === 'strength' || template.type === 'recovery') return undefined;
+  if (!isWavePhase(position.phase.id) || template.type === 'strength' || template.type === 'recovery') return undefined;
   const factors = readProgramDirection(program.direction)?.factors;
   if (!factors) return undefined;
   return factors[(waveWeek(position) - 1) % factors.length];
@@ -256,7 +272,7 @@ function directionFactor(template: SessionTemplate, program: Program, position: 
 // vraagt (Fit blijven en Rustig aan): de gewone opbouwweek (week 2), en bij Fit blijven in de
 // vierde week de lichte week. Zonder richting, of buiten een golf, niets: dan de gewone golf.
 function flatWaveWeek(program: Program, position: ResolvedProgramPosition): number | undefined {
-  if (position.phase.id !== PHASE_GOLF) return undefined;
+  if (!isWavePhase(position.phase.id)) return undefined;
   const direction = readProgramDirection(program.direction);
   if (!direction) return undefined;
   if (direction.id === 'easy') return 2;
@@ -455,7 +471,7 @@ export function progressionTarget(template: SessionTemplate, program: Program | 
   const target = stepTarget(template, program, dateIso);
   if (!target || !program || !PACK_LADDER_TEMPLATES.has(template.id)) return target;
   // Zonder doel geen rugzakladder: die hoort bij een tocht.
-  if (resolveProgramWeek(program, dateIso)?.phase.id === PHASE_GOLF) return target;
+  if (isWavePhase(resolveProgramWeek(program, dateIso)?.phase.id)) return target;
   const kg = packKgOn(program, dateIso);
   return kg === undefined ? target : { ...target, step: { ...target.step, backpackKg: kg } };
 }
@@ -649,12 +665,17 @@ export const PATTERN_SWAPS: PatternSwap[] = [
 // Rustig aan (docs/visie/Zonder doel.md, 2.3): nooit een harde training. In een golf wordt de
 // heuvelloop van de zaterdag een herstelloop; kies je iets anders, dan wordt hij weer de heuvelloop.
 export const CALM_SWAPS: PatternSwap[] = [
-  { from: 'tpl_hill_intervals', to: 'tpl_recovery_run', phases: [PHASE_GOLF] },
+  { from: 'tpl_hill_intervals', to: 'tpl_recovery_run', phases: [PHASE_GOLF, PHASE_GOLF_START] },
+];
+// De beginnersstart: dezelfde wissel, alleen in de eerste vier weken (regel NO-HARD-YET in het ontwerp).
+export const BEGINNER_SWAPS: PatternSwap[] = [
+  { from: 'tpl_hill_intervals', to: 'tpl_recovery_run', phases: [PHASE_GOLF_START] },
 ];
 
 // De wissels die een richting zonder doel vraagt.
-export function directionSwaps(direction: ProgramDirection | undefined): PatternSwap[] {
-  return direction?.id === 'easy' ? CALM_SWAPS : [];
+export function directionSwaps(direction: ProgramDirection | undefined, beginner = false): PatternSwap[] {
+  if (direction?.id === 'easy') return CALM_SWAPS;
+  return beginner ? BEGINNER_SWAPS : [];
 }
 
 // The pattern session whose place in the week a session fills: a tempo run
@@ -721,7 +742,7 @@ export function templateForPhase(templateId: string, swaps: PatternSwap[], phase
   if (forward) return forward.to;
   // A hike in a week that no longer asks for one (goal moved, or the user
   // chose to keep the long run) goes back to the original session.
-  const back = PATTERN_SWAPS.find((s) => s.to === templateId) ?? (phaseId === PHASE_GOLF ? CALM_SWAPS.find((s) => s.to === templateId) : undefined);
+  const back = PATTERN_SWAPS.find((s) => s.to === templateId) ?? (isWavePhase(phaseId) ? CALM_SWAPS.find((s) => s.to === templateId) : undefined);
   if (back && !swaps.some((s) => s.to === templateId && s.phases.includes(phaseId))) return back.from;
   return templateId;
 }

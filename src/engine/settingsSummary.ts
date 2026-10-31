@@ -44,6 +44,7 @@ import { bootGoalKm } from './bootBreakIn';
 import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
 import { adviceDifferences } from './settingsDiff';
 import { settingBudget } from './weekBudget';
+import { parseBeginnerStart } from './beginnerStart';
 import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
 import { resolveStreamsBackup } from './streamsBackup';
@@ -550,6 +551,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const w = settingBudget(s);
       return { value: w.chosen ? DIRECTIONS[w.id].label : 'Nog geen richting', dim: !w.chosen, sub: w.id === 'improve' ? `Eigen weken, ${w.budget.strength}\u00d7 kracht` : `${w.budget.minutes} min, ${w.budget.strength}\u00d7 kracht` };
     }
+    case 'beginnersstart':
+      return { value: choiceShort('beginnersstart', parseBeginnerStart(s.beginnerStart)) };
     case 'richting': {
       const w = settingBudget(s);
       return w.chosen ? { value: DIRECTIONS[w.id].label } : { value: 'Nog niet gekozen', dim: true, sub: 'Advies: Fit blijven' };

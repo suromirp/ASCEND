@@ -18,6 +18,7 @@ import { WeekBudgetSheet } from './WeekBudgetSheet';
 import { DirectionSheet } from '../../ascend/YourWeek';
 import { useDirectionChange } from '../../ascend/useDirectionChange';
 import { parseDirection } from '../../../engine/direction';
+import { parseBeginnerStart } from '../../../engine/beginnerStart';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
 
@@ -86,9 +87,18 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <BundleSheet eyebrow="Doel en tochten" title="Zonder doel" line="Hoe ASCEND je weken plant en telt als je geen doel hebt." onClose={close}>
           <SummaryRow id="richting" title="Richting" facts={facts} info="richting" onClick={() => setInner('richting')} />
           <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setInner('weekbudget')} />
+          <SummaryRow id="beginnersstart" title="Beginnersstart" facts={facts} info="beginnersstart" onClick={() => setInner('beginnersstart')} />
         </BundleSheet>
       )}
       {inner === 'weekbudget' && <WeekBudgetSheet onClose={closeInner} onPropose={(weekBudget) => { setNote(null); plan.clearNote(); void direction.proposeBudget(weekBudget); }} />}
+      {inner === 'beginnersstart' && (
+        <ChoiceFromDef
+          def={CHOICES.beginnersstart}
+          value={parseBeginnerStart(settings.beginnerStart)}
+          onPick={(v) => { if (v !== parseBeginnerStart(settings.beginnerStart)) { setNote(null); void plan.changeSetting(`Beginnersstart: ${choiceShort('beginnersstart', v)}`, { beginnerStart: v }, 'Volgt je keuze voor de beginnersstart.'); } }}
+          onClose={closeInner}
+        />
+      )}
       {inner === 'richting' && (
         <DirectionSheet
           current={parseDirection(settings.direction)}

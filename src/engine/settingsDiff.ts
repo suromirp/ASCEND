@@ -160,6 +160,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     value: (s) => budgetText(settingBudget(s).budget),
     reset: () => ({ weekBudget: undefined }),
   },
+  choice('beginnersstart', 'Beginnersstart', 'doel', 'beginnerStart', 'auto', 'beginnersstart', true),
   choice('lange-zondag', 'De lange zondag', 'doel', 'longSundaySession', 'hike', 'langeZondag', true),
   choice('na-hoofddoel', 'Na je hoofddoel', 'doel', 'afterMainGoal', 'stop', 'naHoofddoel', true),
   flag('seizoensstrook', 'Seizoensstrook tonen', 'doel', 'showSeasonStrip'),

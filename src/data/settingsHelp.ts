@@ -679,6 +679,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Planning', text: 'koos je een richting, dan bepaalt het budget hoe lang je duurtrainingen zijn. Een ander budget is dan een voorstel met Akkoord. Zonder richting telt het alleen wat je deed.' },
     ],
   },
+  beginnersstart: {
+    title: 'Beginnersstart',
+    lead: 'Wie een tijd weinig sportte, begint zijn richting rustig. Dat loopt na vier weken vanzelf af.',
+    points: [
+      { head: 'Automatisch', text: 'het advies. Sportte je in de acht weken voor je richting gemiddeld minder dan twee keer per week, dan begin je rustig.' },
+      { head: 'Rustig beginnen', text: 'de eerste vier weken geen harde training: de heuvelloop is dan een herstelloop. Zo went je lichaam eerst aan het ritme.' },
+      { head: 'Wat jij vastzette', text: 'een training die je zelf verplaatste of vastzette blijft zoals hij is.' },
+      { head: 'Voorstel', text: 'een andere keuze verandert je planning, dus je ziet eerst wat er verandert.' },
+    ],
+  },
   richting: {
     title: 'Richting',
     lead: 'Zonder doel plant ASCEND je weken naar een richting, in golven van vier weken.',

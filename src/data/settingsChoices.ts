@@ -330,6 +330,18 @@ export const CHOICES = {
       { value: 'none', label: 'Geen', note: 'De limiet zelf is de grens', short: 'Geen' },
     ],
   }),
+  beginnersstart: def({
+    group: 'Doel en tochten',
+    title: 'Beginnersstart',
+    line: 'De eerste vier weken van je richting, als je een tijd weinig sportte.',
+    advice: 'auto' as 'auto' | 'ja' | 'nee',
+    help: 'beginnersstart',
+    options: [
+      { value: 'auto', label: 'Automatisch', note: 'Rustig beginnen als je de acht weken ervoor minder dan twee keer per week sportte', short: 'Automatisch' },
+      { value: 'ja', label: 'Ja', note: 'Vier weken alleen makkelijk, de heuvelloop is een herstelloop', short: 'Ja' },
+      { value: 'nee', label: 'Nee', note: 'Meteen het gewone ritme van je richting', short: 'Nee' },
+    ],
+  }),
   rustNaTocht: def({
     group: 'Doel en tochten',
     title: 'Rust na een bergtocht',
