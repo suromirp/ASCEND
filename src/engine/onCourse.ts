@@ -14,6 +14,7 @@ import type { Program } from '../models/program';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
+import { plannedByIdOf } from './logDay';
 import { buildWeekReview, type WeekReview } from './weekReview';
 
 export type CourseStatus = 'early' | 'on' | 'nearly' | 'behind';
@@ -76,7 +77,7 @@ export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const thisMonday = mondayOfWeek(today);
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes });
     if (review && review.planned > 0) reviews.push(review);
   }
   return {

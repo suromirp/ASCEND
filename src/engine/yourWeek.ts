@@ -4,7 +4,8 @@
 
 import { DIRECTIONS, GUIDELINE_MINUTES, GUIDELINE_STRENGTH, type DirectionId } from '../data/directions';
 import type { TrainingGoal } from '../models/goals';
-import type { SessionLog, SessionTemplate } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
+import { plannedByIdOf } from './logDay';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { activeDirection, parseDirectionStart } from './direction';
 import type { HeartRateSettings } from './heartRateZones';
@@ -23,6 +24,8 @@ export interface YourWeekInputs {
   milestones: Ladder;
   logs: readonly SessionLog[];
   templates: readonly Pick<SessionTemplate, 'id' | 'type' | 'baseStressProfile'>[];
+  // De geplande sessies, zodat een log op de dag van zijn geplande training telt (engine/logDay.ts).
+  plannedSessions?: readonly Pick<PlannedSession, 'id' | 'scheduledDate'>[];
   today: string;
 }
 
@@ -54,11 +57,12 @@ export interface YourWeek {
   adviceLine?: string;
 }
 
-function countOptions(settings: YourWeekInputs['settings'], templates: YourWeekInputs['templates']): CountOptions {
+function countOptions(settings: YourWeekInputs['settings'], templates: YourWeekInputs['templates'], plannedSessions: YourWeekInputs['plannedSessions']): CountOptions {
   const byId = new Map(templates.map((t) => [t.id, t]));
   return {
     hr: settings.heartRate,
     doubleHard: resolveWeekBudget(settings.weekBudget).doubleHard,
+    plannedById: plannedSessions ? plannedByIdOf(plannedSessions) : undefined,
     intendedRpe: (log) => {
       const t = byId.get(log.templateId);
       return t ? plannedEffort(t as SessionTemplate) : undefined;
@@ -75,7 +79,7 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
   const id = active.id;
   const spec = DIRECTIONS[id];
   const choice = resolveWeekBudget(input.settings.weekBudget);
-  const opts = countOptions(input.settings, input.templates);
+  const opts = countOptions(input.settings, input.templates, input.plannedSessions);
   const weekStart = mondayOfWeek(input.today);
   const shape = spec.wave.value;
   const start = active.chosen ? parseDirectionStart(input.settings.directionStart) : undefined;

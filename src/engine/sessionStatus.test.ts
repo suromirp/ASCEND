@@ -72,4 +72,10 @@ describe('deriveSessionStatus', () => {
     expect(deriveSessionStatus(session({ movedFromDate: yesterday, status: 'moved' }), []).wasMoved).toBe(true);
     expect(deriveSessionStatus(session({ movedFromDate: yesterday, lock: { by: 'proposal', proposalId: 'p', at: '' } }), []).wasMoved).toBe(true);
   });
+
+  it('does not call a swap of kind on the same day "verplaatst"', () => {
+    const lock = { by: 'proposal' as const, proposalId: 'p', at: '' };
+    expect(deriveSessionStatus(session({ movedFromDate: today, lock }), []).wasMoved).toBe(false);
+    expect(deriveSessionStatus(session({ movedFromDate: today, lock }), [log('s1')]).wasMoved).toBe(false);
+  });
 });

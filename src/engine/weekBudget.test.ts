@@ -53,6 +53,25 @@ describe('strengthCount', () => {
   });
 });
 
+describe('de dag van een log (engine/logDay.ts)', () => {
+  // Een training uit MacroFactor die zondagavond begon, hoort bij de geplande training van maandag.
+  const planned = new Map([['p1', { scheduledDate: '2026-11-02' }]]);
+  const late = log('late', '2026-11-01', { type: 'strength', source: 'macrofactor', plannedSessionId: 'p1' });
+
+  it('telt een log op de dag van zijn geplande training', () => {
+    expect(strengthCount([late], WEEK)).toBe(1);
+    expect(strengthCount([late], WEEK, planned)).toBe(0);
+    expect(strengthCount([late], '2026-11-02', planned)).toBe(1);
+  });
+
+  it('telt de minuten in dezelfde week als Week', () => {
+    const run = log('run', '2026-11-01', { source: 'macrofactor', plannedSessionId: 'p1' });
+    const budget = { minutes: 150, strength: 2 };
+    expect(weekProgress([run], WEEK, budget, { ...OPTS, plannedById: planned }).minutes).toBe(0);
+    expect(weekProgress([run], '2026-11-02', budget, { ...OPTS, plannedById: planned }).minutes).toBe(40);
+  });
+});
+
 describe('weekProgress', () => {
   it('telt minuten en kracht apart', () => {
     const logs = [

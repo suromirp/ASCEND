@@ -1,6 +1,7 @@
 import { WeekReviewList } from '../components/WeekReview';
 import { formatNumberNL } from '../utils/number';
 import { logKindLabel, logSport } from '../engine/sports';
+import { logsInRange, plannedByIdOf } from '../engine/logDay';
 import { logLineParts } from '../engine/logLine';
 import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
@@ -137,15 +138,23 @@ export function HistoryPage() {
     [sessionLogs, start, end],
   );
 
+  // De totalen en de tellingen per sport gaan op de dag van een training zoals de kalender hem toont
+  // (engine/logDay.ts); de lijst hieronder blijft op de datum van het bestand
+  // (docs/beslissingen/2026-10-29-dag-van-een-training.md).
+  const plannedById = useMemo(() => plannedByIdOf(plannedSessions), [plannedSessions]);
+  const totalsLogs = useMemo(
+    () => logsInRange(sessionLogs, plannedById, start, end),
+    [sessionLogs, plannedById, start, end],
+  );
   const prevMonthLogs = useMemo(
-    () => sessionLogs.filter((l) => l.completedDate >= prevStart && l.completedDate <= prevEnd),
-    [sessionLogs, prevStart, prevEnd],
+    () => logsInRange(sessionLogs, plannedById, prevStart, prevEnd),
+    [sessionLogs, plannedById, prevStart, prevEnd],
   );
 
   const missedCount = useMemo(() => countMissed(plannedSessions, sessionLogs, start, end, isRest, wasIll), [plannedSessions, sessionLogs, start, end, isRest, wasIll]);
   const prevMissedCount = useMemo(() => countMissed(plannedSessions, sessionLogs, prevStart, prevEnd, isRest, wasIll), [plannedSessions, sessionLogs, prevStart, prevEnd, isRest, wasIll]);
 
-  const summary = useMemo(() => computeMonthSummary(monthLogs), [monthLogs]);
+  const summary = useMemo(() => computeMonthSummary(totalsLogs), [totalsLogs]);
   const prevSummary = useMemo(() => computeMonthSummary(prevMonthLogs), [prevMonthLogs]);
 
   const [selectedLog, setSelectedLog] = useState<SessionLog | null>(null);
@@ -163,11 +172,11 @@ export function HistoryPage() {
     setAnchor(shiftMonthAnchor(anchor, delta));
   }
 
-  const trainingLogs = monthLogs.filter((l) => l.type !== 'recovery');
+  const trainingLogs = totalsLogs.filter((l) => l.type !== 'recovery');
   const prevTrainingCount = prevMonthLogs.filter((l) => l.type !== 'recovery').length;
   // "van": wat er die maand gepland stond, alleen als dat er is en niet minder dan wat je deed.
   const plannedCount = plannedSessions.filter((p) => p.scheduledDate >= start && p.scheduledDate <= end && p.status !== 'skipped' && !isRest(p) && !wasIll(p.scheduledDate)).length;
-  const sportRows = useMemo(() => groupBySport(monthLogs), [monthLogs]);
+  const sportRows = useMemo(() => groupBySport(totalsLogs), [totalsLogs]);
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">

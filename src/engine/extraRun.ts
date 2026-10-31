@@ -37,6 +37,7 @@ import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek } from '../utils/
 import type { CapabilityDimension, Criticality, GapStatus } from '../models/capability';
 import type { GoalOverview } from './goalOverview';
 import { PHASE_BERG, PHASE_OPBOUW, waveWeek } from './programLayout';
+import { plannedByIdOf } from './logDay';
 import { buildWeekReview } from './weekReview';
 import { plannedRpeTop } from './coach';
 import { isLegHeavyTemplate, respectsHeavySpacing } from './scheduler';
@@ -96,7 +97,7 @@ export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' |
   const firstLooked = weekStart > mondayOfWeek(today) ? mondayOfWeek(today) : weekStart;
   let done = 0, planned = 0, keyDone = 0, keyPlanned = 0, weeks = 0;
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes });
     if (!review || review.planned === 0) continue;
     weeks++;
     done += review.done; planned += review.planned; keyDone += review.keyDone; keyPlanned += review.keyPlanned;

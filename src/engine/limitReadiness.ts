@@ -21,7 +21,7 @@
 import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import { GOAL_GROWTH, LIMIT_MARGINS, growthPer, type GrowthChoice, type LimitMarginChoice } from '../data/goalGrowth';
-import { addDays } from '../utils/dates';
+import { addDays, localDateOf } from '../utils/dates';
 import { computeGoalReadiness, readinessInputOf, type ExternalValue, type GoalReadiness } from './goalReadiness';
 import { fillFromWeeks, weeksOfWork } from './goalGap';
 import { estimatedHikingMinutes } from './goalRoute';
@@ -165,7 +165,7 @@ export function computeLimitReadiness(goal: TrainingGoal, logs: SessionLog[], to
     const res = readLimit(goal, logs, date, options);
     return res && 'read' in res ? { share: res.read.share, text: res.read.text } : undefined;
   };
-  const r = computeGoalReadiness(input, logs, today, { naming: options.naming, since: options.since ?? goal.createdAt.slice(0, 10), external });
+  const r = computeGoalReadiness(input, logs, today, { naming: options.naming, since: options.since ?? localDateOf(goal.createdAt), external });
   const now = readLimit(goal, logs, today, options);
   if (!now) return r;
   const line = 'read' in now ? now.read.line : now.need;
