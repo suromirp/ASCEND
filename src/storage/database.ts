@@ -771,6 +771,9 @@ export interface AppSettings {
   // "Hitte bij je tempo" (engine/heatPace.ts): a line under the weather of a run when it is warm
   // or humid. Absent = on. Optional and additive.
   heatPace?: boolean;
+  // "Patronen per weekdag" (engine/weekdayPattern.ts): a quiet line on Week when a training falls
+  // away clearly more often on one weekday. Absent = on. Optional and additive.
+  weekdayPattern?: boolean;
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
   proposalTidyMonths?: 0 | 3 | 6 | 12;

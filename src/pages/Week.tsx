@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { WeekdayPatternLine } from '../components/WeekdayPatternLine';
 import { usePageState } from '../components/usePageState';
 import { validWeekStart } from '../utils/pageMemory';
 import { useBackToClose } from '../utils/useBackToClose';
@@ -212,6 +213,8 @@ export function WeekPage() {
       </SkyBand>
 
       {!monthView && <WeekNotice notice={notice} weekStart={weekStart} />}
+      {/* Valt je training op een weekdag duidelijk vaker weg: één rustige zin, geen wijziging. */}
+      {!monthView && <WeekdayPatternLine />}
 
       {!monthView && (
         <Card className="flex flex-col gap-4">

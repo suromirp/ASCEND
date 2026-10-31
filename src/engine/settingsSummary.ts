@@ -737,6 +737,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.illnessSigns !== false };
     case 'hitte-tempo':
       return { checked: s.heatPace !== false };
+    case 'weekdag-patroon':
+      return { checked: s.weekdayPattern !== false };
     case 'horloge-stil':
       return { checked: s.watchSilence !== false };
     case 'ochtend-backup':

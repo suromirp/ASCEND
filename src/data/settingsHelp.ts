@@ -501,6 +501,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Hoe zeker', text: 'het getal is een gemiddelde over veel lopers (bewijs matig). Wennen aan warmte gaat in een tot twee weken en kan helpen voor een zomerse tocht.' },
     ],
   },
+  weekdagPatroon: {
+    title: 'Patronen per weekdag',
+    lead: 'Past het plan bij je week? ASCEND kijkt acht weken terug en ziet of je training op een bepaalde dag vaker wegvalt dan op de andere.',
+    points: [
+      { head: 'Wanneer', text: 'als er minstens zes keer een training op die dag stond, hij minstens vier keer en de helft van de keren wegviel, en duidelijk vaker dan op je andere dagen.' },
+      { head: 'Wat telt', text: 'overgeslagen, gemist of door jou verschoven. Vrije dagen, vakanties, tochten en ziekte tellen niet mee.' },
+      { head: 'Wat het doet', text: 'één zin op Week. Je planning verandert er niet door; een andere dag kies je zelf.' },
+    ],
+  },
   horlogeStil: {
     title: 'Melden als je horloge stilvalt',
     lead: 'Garmin scherpte in oktober 2026 zijn voorwaarden aan. Als intervals.icu daardoor niets meer doorgeeft, zie je dat niet aan een foutmelding: het ophalen lukt, er komt alleen niets mee.',
