@@ -3,7 +3,7 @@ import { useAppData } from '../../state/AppDataContext';
 import { useHorizonChange } from '../useHorizonChange';
 import { ChoiceList, Sheet, SheetButtons } from '../settings/Sheet';
 import { TextButton } from '../TextButton';
-import { buildFirstPlan, defaultAnswers, kindOfExistingGoals, GOAL_OPTIONS, RACE_OPTIONS, startDateProblem, startSteps, WEEKDAY_NAMES, WEEKDAY_SHORT, type StartAnswers, type StartRace, type StartStep } from '../../engine/firstPlan';
+import { buildFirstPlan, defaultAnswers, isDirectionKind, kindOfExistingGoals, GOAL_OPTIONS, RACE_OPTIONS, STRONGER_ADVICE, STRONGER_SESSIONS, TARGET_OPTIONS, startDateProblem, startSteps, WEEKDAY_NAMES, WEEKDAY_SHORT, type StartAnswers, type StartRace, type StartStep } from '../../engine/firstPlan';
 import { adviceDays, maxDaysWithoutStrength, MAX_DAYS, MIN_DAYS, type StartGoalKind } from '../../engine/weekShape';
 import { addDays, todayISO } from '../../utils/dates';
 import { haptics } from '../../utils/haptics';
@@ -14,16 +14,17 @@ import { haptics } from '../../utils/haptics';
 // laat de app leeg met het welkom
 // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
 
-const EXPLANATION = 'Je doel, je dagen en je keuze voor krachttraining bepalen je weken. Je ziet eerst wat er komt; pas na jouw Akkoord gebeurt er iets.';
+const EXPLANATION = 'Je doel of richting, je dagen en je keuze voor krachttraining bepalen je weken. Je ziet eerst wat er komt; pas na jouw Akkoord gebeurt er iets.';
 
 const DAY_LABELS = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
 
 export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAnswers; onAnswers: (next: StartAnswers) => void; onClose: () => void }) {
-  const { templates, planHorizonChange, trainingGoals, goalMilestones } = useAppData();
+  const { templates, planHorizonChange, trainingGoals, goalMilestones, sessionLogs } = useAppData();
   const hasGoal = trainingGoals.some((g) => g.status !== 'archived');
   const existing = useMemo(() => (hasGoal ? { kind: kindOfExistingGoals(trainingGoals, goalMilestones) } : undefined), [hasGoal, trainingGoals, goalMilestones]);
   const horizon = useHorizonChange();
-  const steps = useMemo(() => startSteps(answers.goal, hasGoal), [answers.goal, hasGoal]);
+  // De beginnersvraag alleen als er nog geen geschiedenis is die het beantwoordt.
+  const steps = useMemo(() => startSteps(answers.goal, hasGoal, sessionLogs.length > 0), [answers.goal, hasGoal, sessionLogs.length]);
   const [step, setStep] = useState<StartStep>(steps[0]);
   const index = steps.indexOf(step);
   const today = todayISO();
@@ -50,21 +51,27 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
     );
   }
 
+  const last = index === steps.length - 1;
+  const stronger = answers.goal === 'stronger';
   const title: Record<StartStep, string> = {
-    goal: 'Waar werk je naartoe?',
+    goal: 'Wat wil je?',
+    target: 'Een tocht of een wedstrijd?',
+    beginner: 'Ben je de laatste tijd weinig aan het sporten geweest?',
     race: 'Welke afstand?',
     date: answers.goal === 'trek' ? 'Wanneer begint je tocht?' : 'Wanneer is je wedstrijd?',
     days: 'Hoeveel dagen per week wil je trainen?',
     which: 'Op welke dagen kun je?',
-    strength: 'Wil je ook krachttraining?',
+    strength: stronger ? 'Hoeveel keer kracht?' : 'Wil je ook krachttraining?',
   };
   const line: Record<StartStep, string> = {
     goal: 'Kies wat het best past. Je kunt het later nog veranderen.',
+    target: 'Met een datum reken ik terug vanaf die dag.',
+    beginner: 'Dan begin je rustig: de eerste weken alleen makkelijk.',
     race: 'Je kiest er één. Een andere afstand kun je later bij je doelen zetten.',
     date: 'Met een datum bouwt ASCEND naar die dag toe. Zonder datum plant ASCEND rustig door.',
     days: advice.reason,
     which: 'Tik de dagen aan waarop je kunt. Staan ze allemaal aan, dan kiest ASCEND zelf de beste.',
-    strength: 'Bovenlichaam en benen, ingepland tussen je andere trainingen.',
+    strength: stronger ? 'Kracht staat voorop. Tussen zware beendagen houd ik 48 uur rust.' : 'Bovenlichaam en benen, ingepland tussen je andere trainingen.',
   };
 
   const dateProblem = startDateProblem(answers, today);
@@ -81,10 +88,29 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                 <ChoiceList<StartGoalKind>
                   label={title.goal}
                   options={GOAL_OPTIONS.map((o) => ({ value: o.id, label: o.label, note: o.note }))}
-                  value={answers.goal}
-                  onPick={(goal) => onAnswers({ ...defaultAnswers(goal), race: answers.race, goalDate: goal === 'fit' ? undefined : answers.goalDate })}
+                  // Een wedstrijd hoort bij de tegel "Een tocht of wedstrijd".
+                  value={answers.goal === 'race' ? 'trek' : answers.goal}
+                  onPick={(goal) => {
+                    const keep = goal === 'trek' && answers.goal === 'race' ? 'race' : goal;
+                    onAnswers({ ...defaultAnswers(keep), race: answers.race, goalDate: isDirectionKind(keep) ? undefined : answers.goalDate });
+                  }}
                 />
                 <SheetButtons>
+                  <button type="button" className="st-btn gold" onClick={() => go(1)}>Volgende</button>
+                </SheetButtons>
+              </>
+            )}
+
+            {step === 'target' && (
+              <>
+                <ChoiceList<'trek' | 'race'>
+                  label={title.target}
+                  options={TARGET_OPTIONS.map((o) => ({ value: o.id, label: o.label, note: o.note }))}
+                  value={answers.goal === 'race' ? 'race' : 'trek'}
+                  onPick={(goal) => onAnswers({ ...defaultAnswers(goal), race: answers.race, goalDate: answers.goalDate })}
+                />
+                <SheetButtons>
+                  <button type="button" className="st-btn" onClick={() => go(-1)}>Terug</button>
                   <button type="button" className="st-btn gold" onClick={() => go(1)}>Volgende</button>
                 </SheetButtons>
               </>
@@ -193,6 +219,15 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
 
             {step === 'strength' && (
               <>
+                {stronger ? (
+                  <ChoiceList<number>
+                    label={title.strength}
+                    options={STRONGER_SESSIONS.map((n) => ({ value: n, label: `${n} keer per week` }))}
+                    value={answers.strengthSessions ?? STRONGER_ADVICE}
+                    advice={STRONGER_ADVICE}
+                    onPick={(n) => set({ strength: true, strengthSessions: n })}
+                  />
+                ) : (
                 <ChoiceList<'ja' | 'nee'>
                   label={title.strength}
                   options={[
@@ -203,10 +238,36 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                   advice="ja"
                   onPick={(v) => set({ strength: v === 'ja' })}
                 />
-                {horizon.note && <p className="st-hint warn" role="status" style={{ marginLeft: 0, marginRight: 0 }}>{horizon.note}</p>}
+                )}
+                {last && horizon.note && <p className="st-hint warn" role="status" style={{ marginLeft: 0, marginRight: 0 }}>{horizon.note}</p>}
                 <SheetButtons>
                   {index > 0 && <button type="button" className="st-btn" disabled={horizon.busy} onClick={() => go(-1)}>Terug</button>}
-                  <button type="button" className="st-btn gold" disabled={horizon.busy} onClick={() => void makePlan(close)}>
+                  {last ? (
+                    <button type="button" className="st-btn gold" disabled={horizon.busy} onClick={() => void makePlan(close)}>
+                      {horizon.busy ? 'Even rekenen…' : 'Bekijk je plan'}
+                    </button>
+                  ) : (
+                    <button type="button" className="st-btn gold" onClick={() => go(1)}>Volgende</button>
+                  )}
+                </SheetButtons>
+              </>
+            )}
+
+            {step === 'beginner' && (
+              <>
+                <ChoiceList<'ja' | 'nee'>
+                  label={title.beginner}
+                  options={[
+                    { value: 'ja', label: 'Ja, ik begin weer', note: 'De eerste weken alleen makkelijk, en hoogstens vier dagen per week' },
+                    { value: 'nee', label: 'Nee, ik sport geregeld', note: 'Meteen het gewone ritme van je richting' },
+                  ]}
+                  value={answers.beginner === undefined ? ('none' as 'ja') : answers.beginner ? 'ja' : 'nee'}
+                  onPick={(v) => set({ beginner: v === 'ja' })}
+                />
+                {horizon.note && <p className="st-hint warn" role="status" style={{ marginLeft: 0, marginRight: 0 }}>{horizon.note}</p>}
+                <SheetButtons>
+                  <button type="button" className="st-btn" disabled={horizon.busy} onClick={() => go(-1)}>Terug</button>
+                  <button type="button" className="st-btn gold" disabled={horizon.busy || answers.beginner === undefined} onClick={() => void makePlan(close)}>
                     {horizon.busy ? 'Even rekenen…' : 'Bekijk je plan'}
                   </button>
                 </SheetButtons>

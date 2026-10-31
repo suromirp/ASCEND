@@ -271,7 +271,9 @@ function directionFactor(template: SessionTemplate, program: Program, position: 
   if (!isWavePhase(position.phase.id) || template.type === 'strength' || template.type === 'recovery') return undefined;
   const factors = readProgramDirection(program.direction)?.factors;
   if (!factors) return undefined;
-  return factors[(waveWeek(position) - 1) % factors.length];
+  const factor = factors[(waveWeek(position) - 1) % factors.length];
+  // In de beginnersstart nooit langer dan de gewone lengte: eerst wennen, dan pas meer (afgeleid).
+  return position.phase.id === PHASE_GOLF_START ? Math.min(1, factor) : factor;
 }
 
 // Welke week van het gewone schema een week in een golf leest, als de richting vlakke weken

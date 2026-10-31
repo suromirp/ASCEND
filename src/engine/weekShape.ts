@@ -22,7 +22,9 @@ import { WEEK_SHAPE_CARDIO, WEEK_SHAPE_STRENGTH, type WeekShape } from './sports
 
 export type { WeekShape };
 
-export type StartGoalKind = 'trek' | 'race' | 'fit';
+// 'fit' is Fit blijven; 'improve', 'stronger' en 'easy' zijn de andere richtingen zonder doel
+// (docs/visie/Zonder doel.md, 2.1).
+export type StartGoalKind = 'trek' | 'race' | 'fit' | 'improve' | 'stronger' | 'easy';
 
 export interface WeekShapeInput {
   goal: StartGoalKind;
@@ -54,11 +56,18 @@ const CARDIO_ORDER: Record<StartGoalKind, string[]> = {
   trek: ['tpl_long_run', 'tpl_hill_intervals', 'tpl_easy_run'],
   race: ['tpl_long_run', 'tpl_easy_run', 'tpl_hill_intervals'],
   fit: ['tpl_long_run', 'tpl_easy_run', 'tpl_hill_intervals'],
+  improve: ['tpl_long_run', 'tpl_easy_run', 'tpl_hill_intervals'],
+  // Sterker worden en Rustig aan: eerst de rustige duur, de lange training pas bij genoeg dagen.
+  stronger: ['tpl_easy_run', 'tpl_long_run', 'tpl_hill_intervals'],
+  easy: ['tpl_easy_run', 'tpl_long_run', 'tpl_hill_intervals'],
 };
 const STRENGTH_ORDER: Record<StartGoalKind, string[]> = {
   trek: ['tpl_lower_a', 'tpl_upper_a', 'tpl_upper_b'],
   race: ['tpl_lower_a', 'tpl_upper_a', 'tpl_upper_b'],
   fit: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'],
+  improve: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'],
+  stronger: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'],
+  easy: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'],
 };
 
 export const MIN_DAYS = 2;
@@ -68,6 +77,9 @@ export const MAX_DAYS = 6;
 export function adviceDays(goal: StartGoalKind): { days: number; reason: string } {
   if (goal === 'trek') return { days: 5, reason: 'Een tocht met rugzak vraagt om vaak, rustig en lang lopen, naast wat kracht.' };
   if (goal === 'race') return { days: 4, reason: 'Vier dagen geeft je benen genoeg rust tussen de looptrainingen.' };
+  if (goal === 'improve') return { days: 4, reason: 'Vier dagen geeft ruimte om elke golf een stapje meer te doen, met rust ertussen.' };
+  if (goal === 'stronger') return { days: 4, reason: 'Vier dagen: drie keer kracht en een rustige duurtraining, met rust tussen de beendagen.' };
+  if (goal === 'easy') return { days: 3, reason: 'Drie korte dagen is genoeg. Liever iets dan niets.' };
   return { days: 3, reason: 'Drie dagen is genoeg om sterk en fit te blijven, en het blijft goed vol te houden.' };
 }
 

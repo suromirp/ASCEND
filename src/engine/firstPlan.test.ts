@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { buildFirstPlan, defaultAnswers, kindOfExistingGoals, startDateProblem, startSteps } from './firstPlan';
+import { buildFirstPlan, defaultAnswers, kindOfExistingGoals, startDateProblem, startSteps, GOAL_OPTIONS } from './firstPlan';
+import { adviceDays } from './weekShape';
 
 const templates = buildDefaultProgramData().templates;
 const TODAY = '2026-11-02';
@@ -73,6 +74,55 @@ describe('buildFirstPlan', () => {
   });
 });
 
+describe('de vijf keuzes van de eerste vraag (Zonder doel stap 8)', () => {
+  it('heeft vier richtingen en een tocht of wedstrijd, in vaste volgorde', () => {
+    expect(GOAL_OPTIONS.map((o) => o.label)).toEqual(['Fit blijven', 'Fitter worden', 'Sterker worden', 'Rustig aan', 'Een tocht of wedstrijd']);
+    expect(GOAL_OPTIONS.map((o) => o.note).join(' ')).not.toMatch(/[\u2013\u2014!]/);
+  });
+
+  it('het advies voor dagen per richting', () => {
+    expect([adviceDays('fit').days, adviceDays('improve').days, adviceDays('stronger').days, adviceDays('easy').days]).toEqual([3, 4, 4, 3]);
+  });
+
+  it('een richting: geen doel, wel de richting en de maandag waarop hij begint', () => {
+    const plan = buildFirstPlan({ ...defaultAnswers('improve'), beginner: false }, templates, TODAY, NOW);
+    expect(plan.goals).toEqual([]);
+    expect(plan.settings).toMatchObject({ direction: 'improve', directionStart: TODAY, beginnerStart: 'nee' });
+    expect(plan.lines).toContain('Richting: Fitter worden.');
+    expect(plan.lines.some((l) => l.startsWith('Je week: '))).toBe(true);
+    expect(plan.program.phases[0].id).toBe('phase_golf');
+  });
+
+  it('Fit blijven is de richting Fit blijven', () => {
+    expect(buildFirstPlan(defaultAnswers('fit'), templates, TODAY, NOW).settings.direction).toBe('maintain');
+  });
+
+  it('Sterker worden plant het gekozen aantal keer kracht', () => {
+    const three = buildFirstPlan(defaultAnswers('stronger'), templates, TODAY, NOW);
+    expect(three.strategy?.sessionsPerWeek).toBe(3);
+    const two = buildFirstPlan({ ...defaultAnswers('stronger'), strengthSessions: 2 }, templates, TODAY, NOW);
+    expect(two.strategy?.sessionsPerWeek).toBe(2);
+  });
+
+  it('Rustig aan: drie dagen en een keer kracht', () => {
+    const plan = buildFirstPlan(defaultAnswers('easy'), templates, TODAY, NOW);
+    expect(plan.count).toBe(3);
+    expect(plan.strategy?.sessionsPerWeek).toBe(1);
+  });
+
+  it('een beginner begint met hoogstens vier dagen, en het voorstel zegt het', () => {
+    const plan = buildFirstPlan({ ...defaultAnswers('fit'), daysPerWeek: 6, beginner: true }, templates, TODAY, NOW);
+    expect(plan.count).toBe(4);
+    expect(plan.settings.beginnerStart).toBe('ja');
+    expect(plan.lines).toContain('Je begint met hoogstens 4 dagen per week.');
+    expect(plan.lines.join(' ')).toMatch(/Je begint rustig/);
+  });
+
+  it('een tocht of wedstrijd zet geen richting', () => {
+    expect(buildFirstPlan({ ...defaultAnswers('race'), goalDate: '2027-04-11' }, templates, TODAY, NOW).settings.direction).toBeUndefined();
+  });
+});
+
 describe('startDateProblem', () => {
   it('accepts no date and a date ahead, refuses a past date, ignores fit', () => {
     expect(startDateProblem({ goal: 'trek', goalDate: undefined }, TODAY)).toBeUndefined();
@@ -85,9 +135,10 @@ describe('startDateProblem', () => {
 describe('goals that are already there', () => {
   it('makes no goal and asks only about the week', () => {
     expect(startSteps('trek', true)).toEqual(['days', 'which', 'strength']);
-    expect(startSteps('fit')).toEqual(['goal', 'days', 'which', 'strength']);
-    expect(startSteps('trek')).toEqual(['goal', 'date', 'days', 'which', 'strength']);
-    expect(startSteps('race')).toEqual(['goal', 'race', 'date', 'days', 'which', 'strength']);
+    expect(startSteps('fit')).toEqual(['goal', 'days', 'which', 'strength', 'beginner']);
+    expect(startSteps('fit', false, true)).toEqual(['goal', 'days', 'which', 'strength']);
+    expect(startSteps('trek')).toEqual(['goal', 'target', 'date', 'days', 'which', 'strength']);
+    expect(startSteps('race')).toEqual(['goal', 'target', 'race', 'date', 'days', 'which', 'strength']);
     const plan = buildFirstPlan(defaultAnswers('trek'), templates, TODAY, NOW, { kind: 'trek' });
     expect(plan.goals).toEqual([]);
     expect(plan.milestones).toEqual([]);
