@@ -37,3 +37,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-31, Ontwerp ochtendkaart, Cartographer, sonnet (ontwerper), 60k, 2 min, 0
 - 2026-10-31, Data op lange termijn, Sherpa, opus (ontwikkelaar), 207k, 37 min, 0
 - 2026-10-31, Review data lange termijn, Warden, opus (reviewer), 95k, 5 min, 0, groen
+- 2026-10-31, Run in detail (3 stappen), Sherpa, opus (ontwikkelaar), 356k, 62 min, 0
+- 2026-10-31, Ochtendkaart vernieuwd, Sherpa, sonnet (ontwikkelaar), 178k, 32 min, 0
