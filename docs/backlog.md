@@ -33,6 +33,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 ## Na het herstel van het abonnement (zondag 1 november)
 
+- Trainingen die niet doorgingen automatisch afhandelen. In de back-up van 31 oktober telden 22 van de 34 trainingen van de laatste 8 weken als gemist, veel nog op "gepland" zonder log. Idee: na een paar dagen zonder log vraagt de app één keer kort "Niet gedaan?" (of zet hem zelf op overgeslagen als je dat instelt), en een log van het horloge of MacroFactor op een andere dag koppelt hij als voorstel aan de geplande training. Nooit een log verzinnen; overslaan is een status, geen historie. Instelbaar, met besluit.
 - Spierindex stap 1 en 2: controle op je training en slimmer vervangen.
 - Grote bestanden opsplitsen: AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations.
 - Android-app (Capacitor).
@@ -45,6 +46,15 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 - Spierindex stap 3.
 
-## Werkwijze
+## Werkwijze, voor de coördinator
+
+- Veiligheidsnet: nagaan of `.github/workflows/deploy.yml` de tests draait voor de deploy naar GitHub Pages; zo niet, `npx tsc -p tsconfig.app.json --noEmit`, `npm run lint` en `npx vitest run` ervoor zetten, zodat er nooit iets rood live gaat.
+- Meer invarianten in `scripts/app-kaart/invarianten.mjs` uit de fouten van 31 oktober: de kop en de totaaltijd in Run in detail gelijk, geen testloopzin bij een training die geen test is, hoogstens één gevulde mint knop per scherm.
+- De tekstkaart uitbreiden: nagemaakte standen met horlogegegevens, een vakantie, zonder doel en ziek, en de schermen Gegevens, Lichaam, Run in detail en de ochtendkaart met horloge.
+- Een controle op echte data: een script dat een back-up van de eigenaar (alleen in de scratchpad, nooit in de repo) door de engine haalt en dezelfde invarianten toetst. Draaien zodra de eigenaar een back-up stuurt.
+- CLAUDE.md bijwerken met Zonder doel, Kansen, Run in detail, de ochtendkaart en de tekstkaart (alleen met akkoord van de eigenaar).
+- Afspraken die nu alleen in het gesprek staan: de eigenaar stuurt elke zondag een verse back-up, en start na 1 november elke paar dagen een nieuwe chat ("lees docs/backlog.md en ga verder").
+
+## Werkwijze, overig
 
 - Het wekelijkse onderhoud en de appscan op Sonnet laten draaien en na een paar weken kijken wat ze vinden en kosten.
