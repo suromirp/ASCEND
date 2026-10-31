@@ -52,7 +52,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Meer invarianten in `scripts/app-kaart/invarianten.mjs` uit de fouten van 31 oktober: de kop en de totaaltijd in Run in detail gelijk, geen testloopzin bij een training die geen test is, hoogstens één gevulde mint knop per scherm.
 - De tekstkaart uitbreiden: nagemaakte standen met horlogegegevens, een vakantie, zonder doel en ziek, en de schermen Gegevens, Lichaam, Run in detail en de ochtendkaart met horloge.
 - Een controle op echte data: een script dat een back-up van de eigenaar (alleen in de scratchpad, nooit in de repo) door de engine haalt en dezelfde invarianten toetst. Draaien zodra de eigenaar een back-up stuurt.
-- CLAUDE.md bijwerken met Zonder doel, Kansen, Run in detail, de ochtendkaart en de tekstkaart (alleen met akkoord van de eigenaar).
+- CLAUDE.md bijwerken met Zonder doel, Kansen, Run in detail, de ochtendkaart en de tekstkaart (de eigenaar gaf op 31 oktober akkoord).
 - Afspraken die nu alleen in het gesprek staan: de eigenaar stuurt elke zondag een verse back-up, en start na 1 november elke paar dagen een nieuwe chat ("lees docs/backlog.md en ga verder").
 
 ## Werkwijze, overig
