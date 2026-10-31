@@ -42,7 +42,6 @@ export function noGoalWavesLines(): string[] {
     'Je weken gaan in golven van een paar weken, met elke laatste week wat lichter.',
     'Je geplande bergtochten worden weer de lange loop en je wandeldagen weer de heuvelloop.',
     'Er komt geen rugzak meer in je planning, tot je een tocht als doel kiest.',
-    'Wat je deed, wat voorbij is en wat je zelf vastzette blijft staan.',
   ];
 }
 
