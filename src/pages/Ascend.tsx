@@ -34,7 +34,7 @@ import { todayISO } from '../utils/dates';
 // lucht je seizoen met een vlag per doel, daaronder de doelen in de volgorde die jij kiest, het
 // eerste open en de andere als compacte rij. Alles wat je planning inhoudelijk verandert (een label,
 // een nieuw doel, een volgorde die een botsing verschuift) gaat via een voorstel met Akkoord.
-// De enige gevulde mint knop is die van de lege staat ("Doel toevoegen"); met doelen op de tab is het
+// De enige gevulde mint knop is die van de lege staat ("Nieuw beginnen"); met doelen op de tab is het
 // de gevulde knop van het voorstel, en de tab zelf heeft er dan geen.
 
 const KEEP = 'Prima, alles blijft zoals het was.';
@@ -186,8 +186,9 @@ export function AscendPage() {
         {week && <YourWeekCard week={week} onOpen={() => setWeekSheet('week')} />}
         {plain && (
           <Card className="flex flex-col gap-3">
-            <p className="text-base" style={{ color: 'var(--color-ink)' }}>Hier staat nog niets. Zeg maar: wat wil je bereiken?</p>
-            <PrimaryButton onClick={() => startAdd()}>Doel toevoegen</PrimaryButton>
+            {/* Alleen een lege installatie: de vragen staan op Vandaag, met een richting of een doel. */}
+            <p className="text-base" style={{ color: 'var(--color-ink)' }}>Nog niets gepland. Vertel eerst wat je wilt, een richting of een doel, en je ziet je eerste week.</p>
+            <PrimaryButton onClick={() => startAdd()}>Nieuw beginnen</PrimaryButton>
           </Card>
         )}
       </SkyBand>
