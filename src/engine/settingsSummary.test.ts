@@ -965,7 +965,7 @@ describe('rowSummary: golven en beginnersstart', () => {
   it('heeft uitleg zonder gedachtestreepjes of uitroeptekens', () => {
     for (const key of ['golven', 'beginnersstart']) {
       const help = settingsHelp(key, true)!;
-      expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[–—!]/);
+      expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
     }
   });
 });
