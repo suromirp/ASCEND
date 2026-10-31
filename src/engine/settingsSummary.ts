@@ -717,7 +717,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const sub = f.streamsBytes === undefined || choice === 'none'
         ? undefined
         : f.streamsBytes > 0
-          ? `${choice === 'all' ? 'Maakt' : 'Maakt hoogstens'} de back-up ongeveer ${formatBytes(f.streamsBytes * 1.34)} groter`
+          ? `Maakt de back-up ${choice === 'all' ? '' : 'hoogstens '}ongeveer ${formatBytes(f.streamsBytes * 1.34)} groter`
           : 'Nog geen reeksen bewaard';
       return { value: choiceShort('reeksenBackup', choice), dim: choice === 'none', sub };
     }

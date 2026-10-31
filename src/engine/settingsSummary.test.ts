@@ -492,7 +492,7 @@ describe('rowSummary: gegevens en back-up', () => {
     // Zolang er niets geteld is staat er geen regel; daarna de ruimte in de rij, een derde groter als tekst.
     expect(rowSummary('reeksen-backup', facts()).sub).toBeUndefined();
     expect(rowSummary('reeksen-backup', facts({ streamsBytes: 0 })).sub).toBe('Nog geen reeksen bewaard');
-    expect(rowSummary('reeksen-backup', facts({ streamsBytes: 30_000_000 })).sub).toBe('Maakt hoogstens de back-up ongeveer 40 MB groter');
+    expect(rowSummary('reeksen-backup', facts({ streamsBytes: 30_000_000 })).sub).toBe('Maakt de back-up hoogstens ongeveer 40 MB groter');
     expect(rowSummary('reeksen-backup', facts({ streamsBytes: 30_000_000, settings: { streamsBackup: 'all' } as never })).sub).toBe('Maakt de back-up ongeveer 40 MB groter');
     expect(rowSummary('reeksen-backup', facts({ streamsBytes: 30_000_000, settings: { streamsBackup: 'none' } as never })).sub).toBeUndefined();
   });
