@@ -23,6 +23,7 @@ import { WeightReminder } from '../components/WeightCard';
 import { WatchActivityCard } from '../components/WatchActivityCard';
 import { WatchAlignCard } from '../components/WatchAlignCard';
 import { SourceSilenceLine } from '../components/SourceSilenceLine';
+import { IllnessSignCard } from '../components/IllnessSignCard';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { DailyStretchCard } from '../components/DailyStretchCard';
@@ -277,6 +278,8 @@ function TodayContent() {
 
       {/* De ochtendvraag staat boven de missie: wat je antwoordt kan de dag veranderen. */}
       {morningCardVisible && <MorningCard />}
+      {/* Rusthartslag en HRV wijken een paar ochtenden samen af: een vraag, geen waarschuwing. */}
+      <IllnessSignCard />
       <MorningDeepLink />
 
       {primary && primaryTemplate && mission ? (

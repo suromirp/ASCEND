@@ -482,6 +482,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je route', text: 'wordt nooit bewaard. Alleen de richting per kilometer telt, voor de wind, en die blijft als getal staan.' },
     ],
   },
+  vroegZiek: {
+    title: 'Vroeg ziek zien',
+    lead: 'Als je ziek wordt, stijgt je rusthartslag vaak al voor je iets merkt, en daalt je HRV. ASCEND let daarop, tegen jouw eigen gewone van de laatste vier weken.',
+    points: [
+      { head: 'Wanneer', text: 'alleen als allebei afwijken, twee ochtenden op rij: je rusthartslag minstens 6 slagen hoger en je HRV onder je gewone bereik.' },
+      { head: 'Wat je ziet', text: 'een vraag op Vandaag: Voel me goed, Word ziek of Niet nu. Word ziek opent de gewone ziekmelding, en je planning verandert pas met jouw Akkoord.' },
+      { head: 'Hoe zeker', text: 'het bewijs is zwak tot matig. Alcohol, een warme kamer of stress geven hetzelfde beeld; heb je bij Wat speelde er iets vastgelegd, dan vraagt ASCEND niets.' },
+      { head: 'Geen diagnose', text: 'bij hoge koorts, pijn op de borst of als je je echt slecht voelt: neem contact op met je huisarts.' },
+    ],
+  },
   horlogeStil: {
     title: 'Melden als je horloge stilvalt',
     lead: 'Garmin scherpte in oktober 2026 zijn voorwaarden aan. Als intervals.icu daardoor niets meer doorgeeft, zie je dat niet aan een foutmelding: het ophalen lukt, er komt alleen niets mee.',

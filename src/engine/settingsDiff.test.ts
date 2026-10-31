@@ -83,6 +83,7 @@ const everything: AppSettings = {
   keepStreams: false,
   morningInBackup: false,
   watchSilence: false,
+  illnessSigns: false,
   streamsInBackup: false,
   proposalTidyMonths: 12,
 };

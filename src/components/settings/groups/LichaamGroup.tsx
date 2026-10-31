@@ -32,6 +32,9 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
       <SettingsSection>
         <SummaryRow id="bundel-wat" title="Wat speelde er" facts={facts} onClick={() => setSheet('bundel-wat')} />
       </SettingsSection>
+      <SettingsSection>
+        <SummaryRow id="bundel-signalen" title="Signalen uit je gegevens" facts={facts} onClick={() => setSheet('bundel-signalen')} />
+      </SettingsSection>
       <SettingsSection title="Je stand">
         <SummaryRow id="intensiteit" title="Intensiteit tellen" facts={facts} info="intensiteit" onClick={() => setSheet('intensiteit')} />
       </SettingsSection>
@@ -47,6 +50,11 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="wat-test" title="Test verschuiven" facts={facts} info="wat-test" onChange={(on) => void updateSettings({ influenceTestMove: on })} />
           <SummaryRow id="wat-namen" title="Voorbeelden bij naam noemen" facts={facts} info="wat-namen" onChange={(on) => void updateSettings({ influenceNames: on })} />
           <SummaryRow id="wat-vastgelegd" title="Vastgelegd" facts={facts} onClick={() => setInner('wat-vastgelegd')} />
+        </BundleSheet>
+      )}
+      {sheet === 'bundel-signalen' && (
+        <BundleSheet eyebrow="Lichaam" title="Signalen uit je gegevens" line="Wat ASCEND opmerkt in je ochtenden, je trainingen en het weer. Het zegt het, de planning verandert alleen met jouw Akkoord." onClose={close}>
+          <SummaryRow id="vroeg-ziek" title="Vroeg ziek zien" facts={facts} info="vroegZiek" onChange={(on) => void updateSettings({ illnessSigns: on })} />
         </BundleSheet>
       )}
       {inner === 'wat-oorzaak' && <OorzaakSheet onClose={closeInner} />}

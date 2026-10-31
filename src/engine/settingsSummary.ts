@@ -47,6 +47,7 @@ import { settingBudget } from './weekBudget';
 import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
 import { resolveStreamsBackup } from './streamsBackup';
+import { SIGNAL_KEYS, signalsOnCount } from './signalSettings';
 import { resolveProposalTidyMonths } from './proposalTidy';
 import { storageUseText, type StorageEstimate } from './storageUse';
 import { quickButtonsOn, swipeDeleteOn } from './forgeQuickActions';
@@ -307,6 +308,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const n = (s.influences ?? []).filter((e) => e.reasons.length > 0 || e.excludeHeartRate === true).length;
       return n === 0 ? { value: 'Nog niets', dim: true } : { value: `${n} keer` };
     }
+    case 'bundel-signalen':
+      return { value: `${signalsOnCount(s)} van ${SIGNAL_KEYS.length} aan` };
     case 'bundel-weer':
       return { value: `${countOn([o.weatherLine, o.bestMoment, o.weatherSwap, o.clothingAdvice])} van 4 aan` };
     case 'bundel-run-detail': {
@@ -730,6 +733,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return f.storage === 'unsupported' ? { value: 'Niet mogelijk', dim: true } : {};
     case 'momentopnamen':
       return { value: String(f.snapshots), dim: f.snapshots === 0 };
+    case 'vroeg-ziek':
+      return { checked: s.illnessSigns !== false };
     case 'horloge-stil':
       return { checked: s.watchSilence !== false };
     case 'ochtend-backup':

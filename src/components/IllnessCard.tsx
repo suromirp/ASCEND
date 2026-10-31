@@ -12,7 +12,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { ProposalSheet } from './ProposalSheet';
 import type { Advice } from '../engine/adviceEngine';
-import { Card, Eyebrow, PrimaryButton, SheetGrip } from './ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
 import { withTimeout } from '../utils/withTimeout';
 
@@ -143,6 +143,20 @@ export function NotFitLink({ plain = false, outlined = false }: { plain?: boolea
         Niet fit?
       </button>
       {open && <IllnessSheet onPick={async (kind) => { setOpen(false); await request({ action: 'report', kind }); }} onClose={() => setOpen(false)} />}
+      {sheet}
+    </>
+  );
+}
+
+// Een knop die de gewone ziekmelding opent (dezelfde drie keuzes en hetzelfde voorstel), voor een
+// kaart die zelf vraagt hoe je je voelt (IllnessSignCard). `onDone`: na een keuze.
+export function IllnessReportButton({ label, onDone }: { label: string; onDone?: () => void }) {
+  const { request, sheet } = useIllnessProposal();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <SecondaryButton onClick={() => setOpen(true)}>{label}</SecondaryButton>
+      {open && <IllnessSheet onPick={async (kind) => { setOpen(false); await request({ action: 'report', kind }); onDone?.(); }} onClose={() => setOpen(false)} />}
       {sheet}
     </>
   );
