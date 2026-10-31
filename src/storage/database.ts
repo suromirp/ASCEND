@@ -774,6 +774,10 @@ export interface AppSettings {
   // "Patronen per weekdag" (engine/weekdayPattern.ts): a quiet line on Week when a training falls
   // away clearly more often on one weekday. Absent = on. Optional and additive.
   weekdayPattern?: boolean;
+  // "Luchtkwaliteit" (engine/airQuality.ts): a line under the weather of a hard training outside
+  // when the European air quality index is poor. Asks air-quality-api.open-meteo.com with the same
+  // rounded place as the forecast. Absent = on. Optional and additive.
+  airQuality?: boolean;
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
   proposalTidyMonths?: 0 | 3 | 6 | 12;

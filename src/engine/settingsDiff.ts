@@ -336,6 +336,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('vroeg-ziek', 'Vroeg ziek zien', 'lichaam', 'illnessSigns'),
   flag('hitte-tempo', 'Hitte bij je tempo', 'lichaam', 'heatPace'),
   flag('weekdag-patroon', 'Patronen per weekdag', 'lichaam', 'weekdayPattern'),
+  flag('luchtkwaliteit', 'Luchtkwaliteit', 'lichaam', 'airQuality'),
   flag('horloge-stil', 'Melden als je horloge stilvalt', 'koppelingen', 'watchSilence'),
   flag('ochtend-backup', 'Ochtendgetallen in back-up', 'gegevens', 'morningInBackup'),
   {

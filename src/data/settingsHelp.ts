@@ -510,6 +510,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Wat het doet', text: 'één zin op Week. Je planning verandert er niet door; een andere dag kies je zelf.' },
     ],
   },
+  luchtkwaliteit: {
+    title: 'Luchtkwaliteit',
+    lead: 'Hard trainen in vervuilde lucht laat je meer fijnstof inademen, en veel ozon kan je longen en je prestatie wat drukken.',
+    points: [
+      { head: 'Wanneer', text: 'alleen bij een harde training buiten (tempo, intervallen, een test) en als de Europese luchtkwaliteitsindex op slecht of erger staat. In Nederland zijn dat een paar zomerse dagen per jaar.' },
+      { head: 'Wat je ziet', text: 'een regel onder het weer, zoals: veel ozon vanmiddag, liever s ochtends of vandaag rustig. Je planning verandert er niet door.' },
+      { head: 'Waar het vandaan komt', text: 'Open-Meteo, met dezelfde afgeronde plek als het weer en zonder sleutel. Het raster is ongeveer 11 km; een drukke weg naast je route ziet het niet.' },
+    ],
+  },
   horlogeStil: {
     title: 'Melden als je horloge stilvalt',
     lead: 'Garmin scherpte in oktober 2026 zijn voorwaarden aan. Als intervals.icu daardoor niets meer doorgeeft, zie je dat niet aan een foutmelding: het ophalen lukt, er komt alleen niets mee.',

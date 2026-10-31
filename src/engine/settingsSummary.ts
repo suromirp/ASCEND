@@ -739,6 +739,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.heatPace !== false };
     case 'weekdag-patroon':
       return { checked: s.weekdayPattern !== false };
+    case 'luchtkwaliteit':
+      return { checked: s.airQuality !== false };
     case 'horloge-stil':
       return { checked: s.watchSilence !== false };
     case 'ochtend-backup':

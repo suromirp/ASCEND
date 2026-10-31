@@ -57,6 +57,7 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="vroeg-ziek" title="Vroeg ziek zien" facts={facts} info="vroegZiek" onChange={(on) => void updateSettings({ illnessSigns: on })} />
           <SummaryRow id="weekdag-patroon" title="Patronen per weekdag" facts={facts} info="weekdagPatroon" onChange={(on) => void updateSettings({ weekdayPattern: on })} />
           <SummaryRow id="hitte-tempo" title="Hitte bij je tempo" facts={facts} info="hitteTempo" onChange={(on) => void updateSettings({ heatPace: on })} />
+          <SummaryRow id="luchtkwaliteit" title="Luchtkwaliteit" facts={facts} info="luchtkwaliteit" onChange={(on) => void updateSettings({ airQuality: on })} />
         </BundleSheet>
       )}
       {inner === 'wat-oorzaak' && <OorzaakSheet onClose={closeInner} />}

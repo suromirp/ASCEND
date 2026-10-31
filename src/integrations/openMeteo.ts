@@ -314,3 +314,65 @@ export async function fetchPastWeather(
   const raw = await getJson(pastConditionsUrl(place, daysBack), options);
   return { conditions: mapPastConditions(raw, startLocal, durationSec), wind: mapPastWind(raw, startLocal, durationSec) };
 }
+
+// --- air quality (engine/airQuality.ts) ---------------------------------------------
+//
+//   GET https://air-quality-api.open-meteo.com/v1/air-quality?latitude=..&longitude=..
+//       &hourly=european_aqi,ozone,pm2_5&timezone=auto&forecast_days=4
+//
+// The same rounded place as the forecast, no key. Asked only on a day with a hard training
+// outside, and kept as a cache that never goes in a backup (storage/airQuality.ts).
+
+export const OPEN_METEO_AIR_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality';
+export const AIR_DAYS = 4;
+
+export interface AirQualityHour {
+  time: string; // 'YYYY-MM-DDTHH:00', local time of the place
+  aqi?: number; // European AQI
+  ozone?: number; // µg/m³
+  pm25?: number; // µg/m³
+}
+
+export interface AirQualityForecast {
+  fetchedAt: string;
+  place: WeatherPlace;
+  hours: AirQualityHour[];
+}
+
+export function airQualityUrl(place: WeatherPlace): string {
+  const query = new URLSearchParams({
+    latitude: String(roundCoordinate(place.lat)),
+    longitude: String(roundCoordinate(place.lon)),
+    hourly: 'european_aqi,ozone,pm2_5',
+    timezone: 'auto',
+    forecast_days: String(AIR_DAYS),
+  });
+  return `${OPEN_METEO_AIR_URL}?${query.toString().replace(/%2C/g, ',')}`;
+}
+
+export function mapAirQuality(raw: unknown, place: WeatherPlace, fetchedAt: string): AirQualityForecast {
+  const h = (raw as { hourly?: Record<string, unknown> } | null)?.hourly;
+  if (!h || !Array.isArray(h.time)) throw new OpenMeteoError('response', MESSAGES.response);
+  const col = (key: string): unknown[] => (Array.isArray(h[key]) ? (h[key] as unknown[]) : []);
+  const aqi = col('european_aqi');
+  const ozone = col('ozone');
+  const pm = col('pm2_5');
+  const hours: AirQualityHour[] = [];
+  (h.time as unknown[]).forEach((time, i) => {
+    if (!isLocalTime(time)) return;
+    const hour: AirQualityHour = { time };
+    const a = num(aqi[i]);
+    const o = num(ozone[i]);
+    const p = num(pm[i]);
+    if (a !== undefined && a >= 0) hour.aqi = a;
+    if (o !== undefined && o >= 0) hour.ozone = o;
+    if (p !== undefined && p >= 0) hour.pm25 = p;
+    if (Object.keys(hour).length > 1) hours.push(hour);
+  });
+  return { fetchedAt, place: roundedPlace(place), hours };
+}
+
+export async function fetchAirQuality(place: WeatherPlace, options: FetchOptions & { now?: Date } = {}): Promise<AirQualityForecast> {
+  const body = await getJson(airQualityUrl(place), options);
+  return mapAirQuality(body, place, (options.now ?? new Date()).toISOString());
+}

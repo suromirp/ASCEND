@@ -5,7 +5,7 @@
 
 import type { AppSettings } from '../storage/database';
 
-export const SIGNAL_KEYS = ['illnessSigns', 'heatPace', 'weekdayPattern'] as const satisfies readonly (keyof AppSettings)[];
+export const SIGNAL_KEYS = ['illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality'] as const satisfies readonly (keyof AppSettings)[];
 export type SignalKey = (typeof SIGNAL_KEYS)[number];
 
 export const signalOn = (s: Pick<AppSettings, SignalKey> | undefined, key: SignalKey): boolean => s?.[key] !== false;
