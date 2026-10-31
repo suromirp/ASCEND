@@ -5,6 +5,7 @@ import { resolveProgramWeek } from '../utils/dates';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { activeIllness, isHeavySession } from '../engine/illness';
+import { hasRole } from '../engine/templateRoles';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
 import { dayOrder, orderDay } from '../engine/dayOrder';
@@ -167,7 +168,7 @@ function TodayContent() {
   // the day it's actually actionable (Saturday, before you've decided how
   // hard to go into the hill session).
   const longRunDegrading = useMemo(() => hillIntervalsDegradingLongRun(sessionLogs), [sessionLogs]);
-  const showRecoveryWarning = longRunDegrading && primaryTemplate?.id === 'tpl_hill_intervals';
+  const showRecoveryWarning = longRunDegrading && !!primaryTemplate && hasRole(primaryTemplate, 'hills');
   // Sports-science review, item A2 — a soft, never-blocking suggestion when
   // today combines a strength session with a cardio/hiking one.
   // The order card has its own say; the old tip only for what it doesn't cover.

@@ -16,6 +16,7 @@ const IDS_BY_ROLE: Record<TemplateRole, string[]> = {
   before_race_out: ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals', 'tpl_lower_a', 'tpl_lower_b'],
   walked_down: ['tpl_hill_intervals'],
   blocks: ['tpl_tempo_run', 'tpl_intervals'],
+  hills: ['tpl_hill_intervals'],
   extra: ['tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_bergconditie', 'tpl_ruck_walk'],
 };
 
