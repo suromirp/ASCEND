@@ -36,7 +36,8 @@ const TASK_ROLES: readonly TemplateRole[] = ['long', 'key', 'hard_run', 'hard_lo
 interface Change { id: string; from: string; to?: string; removed?: boolean; minutes?: number; keeps?: string }
 
 const capital = (s: string) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
-const lower = (s: string) => `${s.charAt(0).toLowerCase()}${s.slice(1)}`;
+// A name like "GR5 duurloop" keeps its capitals; only an ordinary first word goes lower case.
+const lower = (s: string) => (s.charAt(1) && s.charAt(1) !== s.charAt(1).toLowerCase() ? s : `${s.charAt(0).toLowerCase()}${s.slice(1)}`);
 
 // The id of the proposal for a concern, known without working the proposal out: Week can tell from it whether
 // you already said Liever niet, without waiting for the calculation (docs/beslissingen/2026-10-28-voorstel-eindstand.md).
@@ -133,7 +134,8 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
     if (!t || isTestOrRace(t)) return undefined;
     const roles = templateRoles(t).filter((r) => TASK_ROLES.includes(r));
     return input.sessions
-      .filter((o) => o.id !== s.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === monday)
+      // The one that stays must still come, or be done: a missed one in the past is not kept.
+      .filter((o) => o.id !== s.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === monday && (o.scheduledDate >= input.today || input.logs.some((l) => l.plannedSessionId === o.id)))
       .filter((o) => {
         const ot = templateOf(o);
         return !!ot && !isTestOrRace(ot) && (ot.id === t.id || roles.some((r) => hasRole(ot, r)));

@@ -32,3 +32,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-31, App-kaart als tekst, Sherpa, sonnet (ontwikkelaar), 82k, 21 min, 0
 - 2026-10-31, Review datapunten, Warden, opus (reviewer), 100k, 7 min, 0, groen; 2 belangrijk als vervolg
 - 2026-10-31, Vervolg testdag en kaart, Sherpa, opus (ontwikkelaar), 138k, 23 min, 0
+- 2026-10-31, Review vervolg testdag, Warden, opus (reviewer), 45k, 1,5 min, 0, groen
