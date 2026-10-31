@@ -20,7 +20,7 @@ Is er UI veranderd, bekijk dan de schermen Vandaag, Week en Je stand op telefoon
 - Start `npx vite --port <poort tussen 5200 en 5299>` op de achtergrond en stop hem aan het eind.
 - Gebruik Playwright uit '/opt/node22/lib/node_modules/playwright/index.mjs'.
 - Zet schermafdrukken in de scratchpadmap van de sessie, niet in de repo.
-- Gebruik nooit een echte back-up van de gebruiker; seed met het demoprogramma of nagemaakte data.
+- Seed met het demoprogramma of nagemaakte data. Een echte back-up alleen als de opdracht het pad noemt, alleen lezen, en nooit iets ervan in de repo of commits.
 
 Controleer ook, met een korte zoekopdracht op de gewijzigde bestanden:
 - geen U+2013 of U+2014 in nieuwe tekst;
