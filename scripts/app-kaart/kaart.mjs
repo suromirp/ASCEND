@@ -73,6 +73,7 @@ export function normaliseer(t) {
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, '<id>')
     .replace(/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?\b/g, '<tijdstempel>')
     .replace(/\b\d{13}\b/g, '<tijdstempel>')
+    .replace(/Versie \d{1,2} \w+, \d{2}:\d{2}/g, 'Versie <bouwtijd>')
     .replace(/\n{3,}/g, '\n\n')
     .split('\n').map((l) => l.trimEnd()).join('\n').trim() + '\n';
 }

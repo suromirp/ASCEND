@@ -43,4 +43,4 @@ Nog nooit
 [knop: Gidsen en kennis]
 Gidsen en kennis
 Weer en kleding, kennisbank en bronnen
-Versie 31 okt, 12:40Train. Progress. Explore. Ascend.
+Versie <bouwtijd>Train. Progress. Explore. Ascend.
