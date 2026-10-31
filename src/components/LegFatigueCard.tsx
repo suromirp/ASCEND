@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
+import { nextTestOrRace } from '../engine/testRaceUpcoming';
 import { useAppData } from '../state/AppDataContext';
 import { fatigueBand, fatigueStatus, fatigueWord, FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueInputs } from '../engine/legFatigue';
 import { LegFatigueInfoSheet } from './LegFatigueInfoSheet';
 import { legSorenessList } from '../engine/legSoreness';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { currentBodyKg } from '../engine/bodyWeight';
-import { daysBetween, todayISO, weekdayShortNL } from '../utils/dates';
+import { todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { Card } from './ui';
 import { TextButton } from './TextButton';
@@ -39,7 +40,7 @@ export function useLegFatigueInputs(): LegFatigueInputs {
 }
 
 export function LegFatigueCard() {
-  const { plannedSessions, sessionLogs } = useAppData();
+  const { plannedSessions, sessionLogs, templates } = useAppData();
   const inputs = useLegFatigueInputs();
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState(false);
@@ -47,12 +48,10 @@ export function LegFatigueCard() {
   const now = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
 
   // The next test or race in the coming 2 weeks, as it is planned now.
-  const logged = new Set(sessionLogs.map((l) => l.plannedSessionId));
-  const next = plannedSessions
-    .filter((s) => (s.templateId === 'tpl_test_run' || s.templateId === 'tpl_race') && s.status !== 'skipped' && !logged.has(s.id) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14)
-    .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+  const upcoming = useMemo(() => nextTestOrRace(plannedSessions, sessionLogs, today, templates), [plannedSessions, sessionLogs, today, templates]);
+  const next = upcoming?.session;
   const nextResult = useMemo(() => (next ? legFatigueOn(next.scheduledDate, inputs) : undefined), [next, inputs]);
-  const purpose = next?.templateId === 'tpl_race' ? 'race' : 'test';
+  const purpose = upcoming?.kind ?? 'test';
   const nextStatus = nextResult ? fatigueStatus(nextResult, purpose) : undefined;
   const band = nextResult ? fatigueBand(nextResult.index, purpose) : undefined;
 
@@ -103,12 +102,12 @@ export function LegFatigueCard() {
 
       {next && nextResult && nextStatus && (
         <p className="rounded-xl border px-3 py-2 text-xs leading-relaxed" style={{ borderColor: nextStatus === 'fris' ? 'var(--color-card-border)' : 'color-mix(in srgb, var(--color-warning) 55%, var(--color-card-border))', color: 'var(--color-ink)' }}>
-          {next.templateId === 'tpl_race' ? 'Wedstrijd' : 'Testloop'} {short(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
+          {purpose === 'race' ? 'Wedstrijd' : 'Testloop'} {short(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
           {band && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(band.low, 0)} tot {formatNumberNL(band.high, 0)})</span>},{' '}
           <span style={{ color: nextStatus === 'fris' && !band?.nearLine ? 'var(--color-status)' : 'var(--color-warning)' }}>{band?.nearLine ? 'op de grens' : nextStatus}</span>
           {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Beslis bij het inlopen: voelen je benen zwaarder dan normaal, dan een dag later.</span>}
           {nextStatus !== 'fris' && nextResult.contributions[0] && (
-            <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {short(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '' : ': korter, of naar na de ' + (next.templateId === 'tpl_race' ? 'wedstrijd' : 'test')}.</span>
+            <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {short(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '' : ': korter, of naar na de ' + (purpose === 'race' ? 'wedstrijd' : 'test')}.</span>
           )}
           {nextResult.painRecent && <span style={{ color: 'var(--color-ink-dim)' }}> Je meldde pijn, dus dit telt nooit vanzelf als fris.</span>}
         </p>

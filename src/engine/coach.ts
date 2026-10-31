@@ -15,6 +15,7 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { INTENSITY } from '../data/workoutStructure';
 import { isLegHeavyTemplate } from './scheduler';
 import { addDays } from '../utils/dates';
+import { hasRole } from './templateRoles';
 
 // The top of the planned effort, e.g. 4 for "RPE 3-4".
 export function plannedRpeTop(template: SessionTemplate, date: string, program: Program | null | undefined): number | undefined {
@@ -49,6 +50,15 @@ export interface CoachLineInputs {
 export function coachLineForToday({ template, date, program, tomorrow, yesterdayLogs, templateById }: CoachLineInputs): string {
   const note = progressionTarget(template, program, date)?.step.note ?? '';
   const soreYesterday = yesterdayLogs.flatMap((l) => significantPain(l).map((r) => r.area));
+  // Een test of wedstrijd is geen training om in te korten: een "korte versie" bestaat niet.
+  // Na pijn of een zware dag zeg je dat het inlopen de maat is, niet de test.
+  if (hasRole(template, 'test') || hasRole(template, 'race')) {
+    const heavy = yesterdayLogs.some((l) => feltHeavy(l, templateById.get(l.templateId), program));
+    if (soreYesterday.length > 0 || heavy) {
+      return 'Voelt het inlopen zwaar, loop dan rustig in plaats van te testen. Dan is het geen goede meting en haal je er niets uit.';
+    }
+    return 'Warm goed in en loop de eerste kilometer niet te snel. Dan laat de test zien wat je kunt.';
+  }
   if (soreYesterday.length > 0) {
     return `Gisteren pijn aan je ${joinNL([...new Set(soreYesterday)].map((a) => a.toLowerCase()))}. Voelt het nog niet goed, neem dan de korte versie of verplaats de training.`;
   }

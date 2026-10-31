@@ -90,7 +90,7 @@ export function StandingPage() {
     () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes }),
     [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes],
   );
-  const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
+  const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes }), [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes]);
   // The main goal is behind you: nothing planned any more (engine/programLayout.ts#planEndDay).
   const mainState = primaryGoal?.status === 'active' ? goalTiming(primaryGoal, today).state : undefined;
   const mainPast = mainState === 'past' && settings.afterMainGoal !== 'maintain';

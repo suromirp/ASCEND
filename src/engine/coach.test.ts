@@ -25,6 +25,26 @@ describe('coachLineForToday', () => {
   });
 });
 
+describe('coachLineForToday bij een test of wedstrijd', () => {
+  const line = (id: string, yesterdayLogs: SessionLog[] = []) => coachLineForToday({ template: t(id), date: '2026-09-29', program, tomorrow: [], yesterdayLogs, templateById: byId });
+
+  it('geeft een eigen zin en nooit de korte versie', () => {
+    for (const id of ['tpl_test_run', 'tpl_race']) {
+      expect(line(id)).toContain('eerste kilometer');
+      expect(line(id)).not.toMatch(/korte versie|Rustig en gelijkmatig/);
+    }
+  });
+
+  it('zegt na pijn of een zware dag dat rustig inlopen beter is dan testen', () => {
+    const sore = [log('tpl_long_run', '2026-09-28', { painAreas: ['Achillespees'] })];
+    const heavy = [log('tpl_easy_run', '2026-09-28', { rpe: 9 })];
+    for (const y of [sore, heavy]) {
+      expect(line('tpl_test_run', y)).toContain('loop dan rustig in plaats van te testen');
+      expect(line('tpl_test_run', y)).not.toContain('korte versie');
+    }
+  });
+});
+
 describe('coachReaction', () => {
   it('reacts to what was filled in', () => {
     expect(coachReaction(log('tpl_easy_run', '2026-09-29', { rpe: 7, durationMinutes: 30 }), t('tpl_easy_run'), program)).toContain('Zwaarder dan gepland (zwaarte 7, gepland tot 4)');
