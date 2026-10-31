@@ -947,3 +947,25 @@ describe('rowSummary: richting en zonder doel', () => {
     expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
   });
 });
+
+describe('rowSummary: golven en beginnersstart', () => {
+  const withSettings = (extra: Partial<SettingsFacts['settings']>, noGoal = true) => facts({ noGoal, settings: { strengthTrackedExternally: false, introSoundEnabled: true, ...extra } });
+
+  it('golven: lengte en lichte week, met het advies als standaard', () => {
+    expect(rowSummary('golven', withSettings({}))).toMatchObject({ value: '4 weken', sub: 'Met een lichte week', hidden: false });
+    expect(rowSummary('golven', withSettings({ waves: { length: 6, lightWeek: false } }))).toMatchObject({ value: '6 weken', sub: 'Zonder lichte week' });
+    expect(rowSummary('golven', withSettings({}, false)).hidden).toBe(true);
+  });
+
+  it('beginnersstart: Automatisch als advies', () => {
+    expect(rowSummary('beginnersstart', withSettings({})).value).toBe('Automatisch');
+    expect(rowSummary('beginnersstart', withSettings({ beginnerStart: 'nee' })).value).toBe('Nee');
+  });
+
+  it('heeft uitleg zonder gedachtestreepjes of uitroeptekens', () => {
+    for (const key of ['golven', 'beginnersstart']) {
+      const help = settingsHelp(key, true)!;
+      expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[–—!]/);
+    }
+  });
+});

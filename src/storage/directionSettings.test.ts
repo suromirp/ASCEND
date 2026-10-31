@@ -35,6 +35,13 @@ describe('migrateWaveSettings', () => {
     expect(migrateWaveSettings({ beginnerStart: 'soms' })).toEqual({ value: {}, skipped: 1 });
     expect(migrateWaveSettings({})).toEqual({ value: {}, skipped: 0 });
   });
+
+  it('houdt alleen een bekende lengte en de lichte week over', () => {
+    expect(migrateWaveSettings({ waves: { length: 6, lightWeek: false } })).toEqual({ value: { waves: { length: 6, lightWeek: false } }, skipped: 0 });
+    expect(migrateWaveSettings({ waves: { length: 4 } })).toEqual({ value: {}, skipped: 0 });
+    expect(migrateWaveSettings({ waves: { length: 9, lightWeek: 'nee' } })).toEqual({ value: {}, skipped: 2 });
+    expect(migrateWaveSettings({ waves: 'lang' })).toEqual({ value: {}, skipped: 1 });
+  });
 });
 
 describe('richting en weekbudget in de back-up', () => {

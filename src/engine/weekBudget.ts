@@ -16,6 +16,7 @@ import { parseDirection, startMinutes } from './direction';
 import type { HeartRateSettings } from './heartRateZones';
 import { minutesByZone } from './intensityMinutes';
 import { waveMinutes, type WaveWeek } from './waves';
+import type { WaveShape } from '../data/directions';
 
 export const HARD_RPE = 7;
 
@@ -133,6 +134,8 @@ export interface BudgetContext {
   // Het gemiddelde van de vier weken voor de golf (voor Fitter worden).
   history?: number;
   wave?: Pick<WaveWeek, 'week' | 'light'>;
+  // De golf met jouw instelling Golven (engine/waves.ts#waveShapeFor). Zonder: die van de richting.
+  shape?: WaveShape | null;
 }
 
 // Het budget van een week voor een richting. Eigen waarden (`choice`) vervangen het advies als
@@ -141,7 +144,7 @@ export function budgetFor(id: DirectionId, ctx: BudgetContext = {}): WeekBudget 
   const spec = DIRECTIONS[id];
   const base = ctx.choice?.minutes ?? startMinutes(id, ctx.history);
   const strength = ctx.choice?.strength ?? spec.strength.value;
-  const shape = spec.wave.value;
+  const shape = ctx.shape === undefined ? spec.wave.value : ctx.shape;
   if (shape && ctx.wave) {
     return { minutes: Math.min(MINUTES_CEILING, waveMinutes(base, shape, ctx.wave.week)), strength, light: ctx.wave.light };
   }

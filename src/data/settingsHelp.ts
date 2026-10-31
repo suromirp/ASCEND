@@ -679,6 +679,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Planning', text: 'koos je een richting, dan bepaalt het budget hoe lang je duurtrainingen zijn. Een ander budget is dan een voorstel met Akkoord. Zonder richting telt het alleen wat je deed.' },
     ],
   },
+  golven: {
+    title: 'Golven',
+    lead: 'Zonder doel lopen je weken in golven: een paar weken opbouwen en dan een lichtere week.',
+    points: [
+      { head: 'Vier weken', text: 'het advies. Drie weken opbouwen, de vierde 35% lichter bij dezelfde intensiteit.' },
+      { head: 'Drie of zes weken', text: 'korter of langer opbouwen voor de lichte week. De lichte week blijft de laatste van de golf.' },
+      { head: 'Lichte week voorstellen', text: 'uit betekent dat elke week van de golf even zwaar is. Dat kan, maar rust is waar je sterker van wordt.' },
+      { head: 'Voorstel', text: 'een andere keuze verandert je planning, dus je ziet eerst wat er verandert.' },
+    ],
+  },
   beginnersstart: {
     title: 'Beginnersstart',
     lead: 'Wie een tijd weinig sportte, begint zijn richting rustig. Dat loopt na vier weken vanzelf af.',

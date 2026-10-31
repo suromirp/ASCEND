@@ -17,7 +17,8 @@
 import type { HeldWeekDays, Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, formatDateNL, mondayOfWeek, resolveProgramWeek, weekdayShortNL } from '../utils/dates';
-import { PHASE_TAPER, WAVE_LENGTH, progressionTarget } from './programLayout';
+import { progressionTarget } from './programLayout';
+import { isLightWeekOf } from '../models/program';
 import { lockLevel } from './weekValidator';
 
 // The minutes of a session with this program, as the screens show them.
@@ -93,7 +94,7 @@ export function currentChoices(program: Program): Program {
 
 export function isRestWeekAt(program: Program, monday: string): boolean {
   const position = resolveProgramWeek(currentChoices(program), monday);
-  return !!position && position.phase.id !== PHASE_TAPER && ((position.weekInPhase - 1) % WAVE_LENGTH) + 1 === WAVE_LENGTH;
+  return !!position && isLightWeekOf(position.phase, position.weekInPhase);
 }
 
 // Whole weeks until the next rest week that is not trained through.

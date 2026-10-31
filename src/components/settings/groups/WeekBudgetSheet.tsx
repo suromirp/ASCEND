@@ -70,7 +70,7 @@ export function WeekBudgetSheet({ onClose, onPropose }: { onClose: () => void; o
           display={<span className="font-sans tabular-nums">{budget.strength} keer</span>}
           decLabel="Minder keer kracht"
           incLabel="Meer keer kracht"
-          decDisabled={budget.strength <= 1}
+          decDisabled={budget.strength <= (id === 'stronger' ? 2 : 1)}
           incDisabled={budget.strength >= MAX_STRENGTH}
           onDec={() => save({ ...choice, minutes: budget.minutes, strength: budget.strength - 1 })}
           onInc={() => save({ ...choice, minutes: budget.minutes, strength: budget.strength + 1 })}
@@ -87,7 +87,7 @@ export function WeekBudgetSheet({ onClose, onPropose }: { onClose: () => void; o
       )}
       <p className="st-hint" style={{ marginLeft: 0 }}>
         {follows
-          ? 'Je plan volgt je richting, dus het budget bepaalt hoe lang je trainingen zijn. Het aantal krachttrainingen in je week verandert hier niet door.'
+          ? 'Je plan volgt je richting, dus het budget bepaalt hoe lang je duurtrainingen zijn. Het aantal krachttrainingen dat in je week staat verandert hier niet door; de teller op de kaart volgt wel je keuze.'
           : 'Het budget telt wat je deed. Zolang je geen richting koos, verandert je planning er niet van.'}
       </p>
       {changed && <TextButton onClick={() => save({ doubleHard: true })}>Terug naar het advies</TextButton>}

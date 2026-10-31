@@ -31,6 +31,8 @@ export interface WeekShapeInput {
   // Dagen waarop je kunt trainen, 1 tot 7.
   allowedDays: number[];
   strength: boolean;
+  // Hoeveel keer kracht (Sterker worden: 2 tot 4). Zonder: afgeleid uit het aantal dagen.
+  strengthSessions?: number;
 }
 
 export interface WeekShapeResult {
@@ -75,9 +77,11 @@ export function maxDaysWithoutStrength(): number {
 }
 
 // Hoeveel krachttrainingen bij dit aantal dagen (alleen als je kracht wilt).
-function strengthCount(total: number, available: number): number {
-  const wanted = total <= 3 ? 1 : 2;
+function strengthCount(total: number, available: number, asked?: number): number {
   const needed = Math.max(0, total - CARDIO.length);
+  // Gevraagd: zoveel als er sjablonen en dagen zijn, en minstens een duurtraining blijft over.
+  if (asked !== undefined && asked > 0) return Math.min(available, Math.max(asked, needed), Math.max(1, total - 1));
+  const wanted = total <= 3 ? 1 : 2;
   return Math.min(available, Math.max(wanted, needed), total);
 }
 
@@ -133,7 +137,7 @@ function* assignments(ids: string[], days: number[], used: number[] = []): Gener
 function keptFor(input: WeekShapeInput, count: number, has: (id: string) => boolean): string[] {
   const cardio = CARDIO_ORDER[input.goal].filter(has);
   const strength = input.strength ? STRENGTH_ORDER[input.goal].filter(has) : [];
-  const s = input.strength ? strengthCount(count, strength.length) : 0;
+  const s = input.strength ? strengthCount(count, strength.length, input.strengthSessions) : 0;
   const c = Math.min(cardio.length, count - s);
   return [...cardio.slice(0, c), ...strength.slice(0, s)];
 }

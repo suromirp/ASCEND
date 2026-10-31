@@ -14,7 +14,8 @@ import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { IllnessEpisode } from '../models/illness';
 import { addDays, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
-import { PHASE_BASIS, PHASE_TAPER, WAVE_LENGTH } from './programLayout';
+import { PHASE_BASIS, WAVE_LENGTH } from './programLayout';
+import { isLightWeekOf, phaseWaveLength } from '../models/program';
 import { logSport, templateSport } from './sports';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
@@ -30,11 +31,11 @@ export function restWeekState(program: Program, weekStart: string, logs: Session
   const monday = mondayOfWeek(weekStart);
   // The week as you chose it now, not the days held from before a change.
   const position = resolveProgramWeek(currentChoices(program), monday);
-  const isRestWeek = !!position && position.phase.id !== PHASE_TAPER && ((position.weekInPhase - 1) % WAVE_LENGTH) + 1 === WAVE_LENGTH;
+  const isRestWeek = !!position && isLightWeekOf(position.phase, position.weekInPhase);
   const skipped = isRestWeek && !!position?.restSkipped;
   if (!isRestWeek) return { isRestWeek, skipped, canSkip: false };
   if (monday < mondayOfWeek(today)) return { isRestWeek, skipped, canSkip: false, reason: 'Deze week is al voorbij.' };
-  if (program.skippedRestWeeks?.includes(addDays(monday, -7 * WAVE_LENGTH))) {
+  if (program.skippedRestWeeks?.includes(addDays(monday, -7 * (position ? phaseWaveLength(position.phase) : WAVE_LENGTH)))) {
     return { isRestWeek, skipped, canSkip: false, reason: 'Je sloeg de vorige rustweek al over. Twee keer achter elkaar doorgaan stapelt vermoeidheid op, juist dan komt de rust binnen.' };
   }
   const since = addDays(today, -14);

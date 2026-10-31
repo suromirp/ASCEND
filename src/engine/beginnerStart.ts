@@ -40,9 +40,18 @@ export function isBeginnerStart(choice: unknown, logs: readonly SessionLog[], st
   return trained / LOOKBACK_WEEKS < MIN_PER_WEEK;
 }
 
-// De zin voor het voorstel en de kaart, zolang de beginnersstart loopt.
-export function beginnerStartLine(start: string, today: string): string | undefined {
+// De start beslaat hele golven: bij golven van drie of zes weken zijn het er zes.
+export function beginnerWeeksFor(waveLength: number): number {
+  return Math.ceil(BEGINNER_WEEKS / waveLength) * waveLength;
+}
+
+const WEEKS_WORD: Record<number, string> = { 4: 'vier', 6: 'zes' };
+
+// De zin voor het voorstel, zolang de beginnersstart loopt.
+
+export function beginnerStartLine(start: string, today: string, waveLength = BEGINNER_WEEKS): string | undefined {
+  const weeks = beginnerWeeksFor(waveLength);
   const since = Math.floor(daysBetween(mondayOfWeek(start), mondayOfWeek(today)) / 7);
-  if (since < 0 || since >= BEGINNER_WEEKS) return undefined;
-  return 'Je begint rustig: de eerste vier weken alleen makkelijk, de eerste pittige training pas daarna. Zo went je lichaam eerst aan het ritme.';
+  if (since < 0 || since >= weeks) return undefined;
+  return `Je begint rustig: de eerste ${WEEKS_WORD[weeks] ?? weeks} weken alleen makkelijk, de eerste pittige training pas daarna. Zo went je lichaam eerst aan het ritme.`;
 }

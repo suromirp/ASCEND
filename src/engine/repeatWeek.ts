@@ -45,6 +45,7 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_TAPER, WAVE_LENGTH, progressionTarget } from './programLayout';
+import { phaseWaveLength } from '../models/program';
 import { activeIllness, recoveryRamp } from './illness';
 import { buildWeekReview } from './weekReview';
 import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
@@ -103,7 +104,7 @@ export function withWeekRepeated(program: Program, weekStart: string, repeat: bo
   return { ...program, repeatedWeeks: next.length ? next : undefined };
 }
 
-const waveOf = (weekInPhase: number) => ((weekInPhase - 1) % WAVE_LENGTH) + 1;
+const waveOf = (weekInPhase: number, length = WAVE_LENGTH) => ((weekInPhase - 1) % length) + 1;
 
 // Can `weekStart` repeat the week before it? Same phase, no taper, week 2 or
 // 3 of the wave, no repeat in this wave yet.
@@ -114,8 +115,9 @@ export function canRepeatWeek(program: Program, weekStart: string): boolean {
   const before = resolveProgramWeek(current, addDays(monday, -7));
   if (!here || !before || here.phase.id !== before.phase.id || here.phase.id === PHASE_TAPER) return false;
   if (here.loadShift || before.loadShift) return false;
-  const wave = waveOf(here.weekInPhase);
-  return wave >= 2 && wave <= WAVE_LENGTH - 1 && waveOf(before.weekInPhase) === wave - 1;
+  const len = phaseWaveLength(here.phase);
+  const wave = waveOf(here.weekInPhase, len);
+  return wave >= 2 && wave <= len - 1 && waveOf(before.weekInPhase, len) === wave - 1;
 }
 
 // What repeating this week, or taking the repeat back, does: only the
@@ -124,8 +126,9 @@ export function canRepeatWeek(program: Program, weekStart: string): boolean {
 export function repeatWeekChange(program: Program, weekStart: string, repeat: boolean, ctx: WeekLoadContext): LoadChange {
   const monday = mondayOfWeek(weekStart);
   const position = resolveProgramWeek(currentChoices(program), monday);
-  const wave = position ? waveOf(position.weekInPhase) : WAVE_LENGTH - 1;
-  const until = addDays(monday, 7 * Math.max(1, WAVE_LENGTH - wave) - 1);
+  const len = position ? phaseWaveLength(position.phase) : WAVE_LENGTH;
+  const wave = position ? waveOf(position.weekInPhase, len) : len - 1;
+  const until = addDays(monday, 7 * Math.max(1, len - wave) - 1);
   return loadChange(program, monday, until, (p) => withWeekRepeated(p, monday, repeat), ctx);
 }
 
@@ -167,8 +170,9 @@ function keyImpact(program: Program, weekStart: string, plannedSessions: Planned
   };
   const thisWeek = line(key.scheduledDate);
   if (!thisWeek) return undefined;
-  const peakDate = addDays(key.scheduledDate, 7 * (WAVE_LENGTH - 1 - waveOf(position.weekInPhase)));
-  const peak = waveOf(position.weekInPhase) < WAVE_LENGTH - 1 ? line(peakDate) : undefined;
+  const len = phaseWaveLength(position.phase);
+  const peakDate = addDays(key.scheduledDate, 7 * (len - 1 - waveOf(position.weekInPhase, len)));
+  const peak = waveOf(position.weekInPhase, len) < len - 1 ? line(peakDate) : undefined;
   return { name: template.name, thisWeek, ...(peak ? { peak } : {}) };
 }
 

@@ -15,6 +15,7 @@ import { usePlanSettingChange } from '../usePlanSettingChange';
 import { choiceShort } from '../../../data/settingsChoices';
 import { ProgramSheet, RestartSheet } from './DoelSheets';
 import { WeekBudgetSheet } from './WeekBudgetSheet';
+import { WavesSheet } from './WavesSheet';
 import { DirectionSheet } from '../../ascend/YourWeek';
 import { useDirectionChange } from '../../ascend/useDirectionChange';
 import { parseDirection } from '../../../engine/direction';
@@ -87,10 +88,14 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <BundleSheet eyebrow="Doel en tochten" title="Zonder doel" line="Hoe ASCEND je weken plant en telt als je geen doel hebt." onClose={close}>
           <SummaryRow id="richting" title="Richting" facts={facts} info="richting" onClick={() => setInner('richting')} />
           <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setInner('weekbudget')} />
+          <SummaryRow id="golven" title="Golven" facts={facts} info="golven" onClick={() => setInner('golven')} />
           <SummaryRow id="beginnersstart" title="Beginnersstart" facts={facts} info="beginnersstart" onClick={() => setInner('beginnersstart')} />
         </BundleSheet>
       )}
       {inner === 'weekbudget' && <WeekBudgetSheet onClose={closeInner} onPropose={(weekBudget) => { setNote(null); plan.clearNote(); void direction.proposeBudget(weekBudget); }} />}
+      {inner === 'golven' && (
+        <WavesSheet onChange={(waves, title) => { setNote(null); void plan.changeSetting(title, { waves }, 'Volgt je keuze voor de golven.'); }} onClose={closeInner} />
+      )}
       {inner === 'beginnersstart' && (
         <ChoiceFromDef
           def={CHOICES.beginnersstart}

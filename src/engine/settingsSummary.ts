@@ -45,6 +45,7 @@ import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, t
 import { adviceDifferences } from './settingsDiff';
 import { settingBudget } from './weekBudget';
 import { parseBeginnerStart } from './beginnerStart';
+import { resolveWaveSettings } from './waves';
 import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
 import { resolveStreamsBackup } from './streamsBackup';
@@ -550,6 +551,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bundel-zonder-doel': {
       const w = settingBudget(s);
       return { value: w.chosen ? DIRECTIONS[w.id].label : 'Nog geen richting', dim: !w.chosen, sub: w.id === 'improve' ? `Eigen weken, ${w.budget.strength}\u00d7 kracht` : `${w.budget.minutes} min, ${w.budget.strength}\u00d7 kracht` };
+    }
+    case 'golven': {
+      const w = resolveWaveSettings(s.waves);
+      return { value: `${w.length} weken`, sub: w.lightWeek ? 'Met een lichte week' : 'Zonder lichte week' };
     }
     case 'beginnersstart':
       return { value: choiceShort('beginnersstart', parseBeginnerStart(s.beginnerStart)) };

@@ -17,7 +17,7 @@ import {
   belowGuideline, budgetFor, countedMinutesOfWeek, plannedRestOfWeek, recentAverage, resolveWeekBudget, weekProgress,
   type CountOptions, type WeekBudget, type WeekProgress,
 } from './weekBudget';
-import { waveWeek, type WaveWeek } from './waves';
+import { waveShapeFor, waveWeek, type WaveWeek } from './waves';
 
 export interface YourWeekInputs {
   settings: { direction?: unknown; directionStart?: unknown; weekBudget?: unknown; heartRate?: HeartRateSettings };
@@ -106,13 +106,13 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
   const choice = resolveWeekBudget(input.settings.weekBudget);
   const opts = countOptions(input.settings, input.templates, input.plannedSessions);
   const weekStart = mondayOfWeek(input.today);
-  const shape = spec.wave.value;
+  const shape = waveShapeFor(id, (input.settings as { waves?: unknown }).waves);
   const start = active.chosen ? parseDirectionStart(input.settings.directionStart) : undefined;
   const wave = shape ? waveWeek(start, input.today, shape.weeks) : undefined;
   // De start van een golf blijft de hele golf gelijk: het gemiddelde van de vier weken ervoor.
   const history = id === 'improve' ? recentAverage(input.logs, wave?.startsOn ?? weekStart, opts) : undefined;
-  const budget = budgetFor(id, { choice, history, wave });
-  const base = budgetFor(id, { choice, history });
+  const budget = budgetFor(id, { choice, history, wave, shape });
+  const base = budgetFor(id, { choice, history, shape });
   const progress = weekProgress(input.logs, weekStart, budget, opts);
 
   const bars: WaveBar[] = wave && shape
@@ -121,7 +121,7 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
         const w = i + 1;
         return {
           week: w,
-          budget: budgetFor(id, { choice, history, wave: { week: w, light: w === shape.weeks } }).minutes,
+          budget: budgetFor(id, { choice, history, shape, wave: { week: w, light: w === shape.weeks } }).minutes,
           done: monday <= weekStart ? Math.round(countedMinutesOfWeek(input.logs, monday, opts)) : 0,
           current: w === wave.week,
           future: monday > weekStart,
@@ -130,7 +130,7 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
     : [];
 
   const waveLine = wave
-    ? wave.light
+    ? wave.light && shape && shape.lightCut > 0
       ? `Week ${wave.week} van ${wave.length}. Deze week is lichter.`
       : shape && shape.step > 0
         ? `Week ${wave.week} van ${wave.length}. Deze week bouw je op.`

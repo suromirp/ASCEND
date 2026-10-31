@@ -5,6 +5,7 @@ import { parseDirection, parseDirectionStart } from '../../engine/direction';
 import type { AppSettings } from '../../storage/database';
 import { directionChangeLines, directionChangeTitle } from '../../engine/directionChange';
 import { beginnerStartLine, isBeginnerStart } from '../../engine/beginnerStart';
+import { resolveWaveSettings } from '../../engine/waves';
 import { mondayOfWeek, todayISO } from '../../utils/dates';
 import { useHorizonChange } from '../useHorizonChange';
 
@@ -43,7 +44,7 @@ export function useDirectionChange(): {
         settings: patch,
         notes: [
           ...directionChangeLines(id, settings),
-          ...(id !== 'easy' && isBeginnerStart(settings.beginnerStart, sessionLogs, start) ? [beginnerStartLine(start, todayISO()) ?? ''].filter(Boolean) : []),
+          ...(id !== 'easy' && isBeginnerStart(settings.beginnerStart, sessionLogs, start) ? [beginnerStartLine(start, todayISO(), resolveWaveSettings(settings.waves).length) ?? ''].filter(Boolean) : []),
         ],
       }),
       { eyebrow: 'Je richting', ask: 'always', alwaysAsk: true, notesTitle: 'Je richting', declined: KEEP },

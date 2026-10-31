@@ -21,6 +21,23 @@ export interface Phase {
   order: number;
   weekCount: number;
   description?: string;
+  // Alleen in een golf zonder doel (engine/programLayout.ts#layoutWaves): de lengte van de golf
+  // (instelling Golven) en of de laatste week een lichte week is. Zonder dit veld golven van vier
+  // met een rustweek, zoals altijd. Afgeleid en bij elke planningsronde opnieuw gezet.
+  wave?: { length: number; light: boolean };
+}
+
+// De lengte van de golf in deze fase.
+export function phaseWaveLength(phase: Pick<Phase, 'wave'>): number {
+  const n = phase.wave?.length;
+  return typeof n === 'number' && Number.isInteger(n) && n >= 2 && n <= 8 ? n : WAVE_LENGTH;
+}
+
+// Is deze week van de fase de lichte week (de rustweek) van haar golf?
+export function isLightWeekOf(phase: Pick<Phase, 'id' | 'wave'>, weekInPhase: number): boolean {
+  if (phase.id === PHASE_TAPER || phase.wave?.light === false) return false;
+  const len = phaseWaveLength(phase);
+  return ((weekInPhase - 1) % len) + 1 === len;
 }
 
 export interface Program {

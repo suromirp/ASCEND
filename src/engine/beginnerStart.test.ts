@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beginnerStartLine, isBeginnerStart, parseBeginnerStart, BEGINNER_WEEKS } from './beginnerStart';
+import { beginnerStartLine, beginnerWeeksFor, isBeginnerStart, parseBeginnerStart, BEGINNER_WEEKS } from './beginnerStart';
 import type { SessionLog } from '../models/training';
 import { addDays } from '../utils/dates';
 
@@ -47,5 +47,9 @@ describe('beginnerStartLine', () => {
   it('zegt het in een zin en loopt vanzelf af', () => {
     expect(beginnerStartLine(START, START)).toBe('Je begint rustig: de eerste vier weken alleen makkelijk, de eerste pittige training pas daarna. Zo went je lichaam eerst aan het ritme.');
     expect(beginnerStartLine(START, addDays(START, 7 * BEGINNER_WEEKS))).toBeUndefined();
+    // Bij golven van drie of zes weken beslaat de start hele golven: zes weken.
+    expect(beginnerStartLine(START, START, 3)).toMatch(/de eerste zes weken/);
+    expect(beginnerWeeksFor(6)).toBe(6);
+    expect(beginnerWeeksFor(4)).toBe(4);
   });
 });

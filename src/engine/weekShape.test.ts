@@ -138,3 +138,19 @@ describe('another rest day after the first plan', () => {
     }
   });
 });
+
+describe('chooseWeekShape with a number of strength sessions (Sterker worden)', () => {
+  it('plans the asked number of strength sessions, as far as there are templates and days', () => {
+    const count = (n: number, days = 4) => chooseWeekShape(templates, { ...base, goal: 'fit', daysPerWeek: days, strengthSessions: n }).kept.filter(isStrengthTemplateId).length;
+    expect(count(3)).toBe(3);
+    expect(count(2)).toBe(2);
+    // Three strength templates in the pattern: four asks for three.
+    expect(count(4, 5)).toBe(3);
+    // At least one endurance session stays.
+    expect(count(3, 3)).toBe(2);
+  });
+
+  it('without it the number follows the days, as before', () => {
+    expect(chooseWeekShape(templates, { ...base, goal: 'fit', daysPerWeek: 4 }).kept.filter(isStrengthTemplateId)).toHaveLength(2);
+  });
+});

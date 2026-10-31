@@ -1,4 +1,4 @@
-import { PHASE_TAPER, WAVE_LENGTH, type HeldWeekDays, type Program, type ResolvedProgramPosition } from '../models/program';
+import { PHASE_TAPER, WAVE_LENGTH, phaseWaveLength, type HeldWeekDays, type Program, type ResolvedProgramPosition } from '../models/program';
 import type { Weekday } from '../models/goalEngineConfig';
 
 export function toISODate(d: Date): string {
@@ -140,11 +140,11 @@ export function shiftMonthAnchor(anchor: string, delta: number): string {
 // rest week: the wave loses its heaviest step and nothing else, so the rest
 // week and every later wave are back on the calendar and the goal date
 // does not move. One repeat counts per wave.
-function repeatShift(repeated: string[] | undefined, monday: string, weekInPhase: number, phaseId: string): { shift: 0 | 1; repeated: boolean } {
+function repeatShift(repeated: string[] | undefined, monday: string, weekInPhase: number, phaseId: string, length = WAVE_LENGTH): { shift: 0 | 1; repeated: boolean } {
   const none = { shift: 0 as const, repeated: false };
   if (!repeated?.length || phaseId === PHASE_TAPER) return none;
-  const wave = ((weekInPhase - 1) % WAVE_LENGTH) + 1;
-  if (wave < 2 || wave > WAVE_LENGTH - 1) return none;
+  const wave = ((weekInPhase - 1) % length) + 1;
+  if (wave < 2 || wave > length - 1) return none;
   for (let k = 2; k <= wave; k++) {
     if (repeated.includes(addDays(monday, -7 * (wave - k)))) return { shift: 1, repeated: k === wave && repeated.includes(monday) };
   }
@@ -185,7 +185,7 @@ export function resolveProgramWeek(program: Program, dateIso: string): ResolvedP
       const held = heldOn(program, targetMonday, dateIso);
       const repeatedList = held ? toggled(program.repeatedWeeks, targetMonday, !!held.repeated) : program.repeatedWeeks;
       const restSkipped = held ? !!held.restSkipped : !!program.skippedRestWeeks?.includes(targetMonday);
-      const repeat = repeatShift(repeatedList, targetMonday, remaining + 1, phase.id);
+      const repeat = repeatShift(repeatedList, targetMonday, remaining + 1, phase.id, phaseWaveLength(phase));
       return {
         phase,
         phaseIndex: i,

@@ -2,7 +2,7 @@
 // opbouwen en een lichte week. Een golf is afgeleid uit de startdatum van je richting en
 // nooit per week opgeslagen. Puur: geen React, geen IndexedDB.
 
-import type { WaveShape } from '../data/directions';
+import { DIRECTIONS, type DirectionId, type WaveShape } from '../data/directions';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 
 export interface WaveWeek {
@@ -26,6 +26,28 @@ export function waveWeek(start: string | undefined, date: string, length: number
   const week = (since % length) + 1;
   const wave = Math.floor(since / length) + 1;
   return { week, length, wave, startsOn: addDays(first, (wave - 1) * length * 7), light: week === length };
+}
+
+// De instelling Golven (AppSettings.waves): de lengte van een golf en of de laatste week lichter is.
+// Defensief gelezen; wat ontbreekt is het advies (4 weken, met een lichte week).
+export const WAVE_LENGTHS = [3, 4, 6] as const;
+export const ADVICE_WAVE_LENGTH = 4;
+export interface WaveSettings {
+  length: number;
+  lightWeek: boolean;
+}
+export function resolveWaveSettings(raw: unknown): WaveSettings {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const length = WAVE_LENGTHS.find((n) => n === r.length) ?? ADVICE_WAVE_LENGTH;
+  return { length, lightWeek: r.lightWeek !== false };
+}
+
+// De golf van een richting met jouw instelling erover: Rustig aan heeft geen golf.
+export function waveShapeFor(id: DirectionId, raw: unknown): WaveShape | null {
+  const shape = DIRECTIONS[id].wave.value;
+  if (!shape) return null;
+  const w = resolveWaveSettings(raw);
+  return { ...shape, weeks: w.length, lightCut: w.lightWeek ? shape.lightCut : 0 };
 }
 
 const ceil5 = (n: number) => Math.ceil(n / 5) * 5;

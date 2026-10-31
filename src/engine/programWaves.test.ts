@@ -14,7 +14,7 @@ import {
 } from './programLayout';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, resolveProgramWeek } from '../utils/dates';
-import type { Program } from '../models/program';
+import { isLightWeekOf, type Program } from '../models/program';
 
 // Zonder doel stap 4 (docs/visie/Zonder doel.md, 3.2 en 3.3): neutrale golven, geen bergtocht en
 // geen rugzak. Nagemaakte data.
@@ -126,6 +126,34 @@ describe('beginnersstart', () => {
     expect(templateForPhase('tpl_recovery_run', swaps, PHASE_GOLF, 3)).toBe('tpl_hill_intervals');
     // Een heuvelloop die jij vastzette blijft.
     expect(templateForPhase('tpl_hill_intervals', swaps, PHASE_GOLF_START, 1)).toBe('tpl_hill_intervals');
+  });
+});
+
+describe('de instelling Golven', () => {
+  it('golven van zes weken: hele golven, de zesde week is de lichte', () => {
+    const phases = layoutWaves(START, START, 12, START, 0, { length: 6, light: true });
+    expect(phases[0].weekCount % 6).toBe(0);
+    expect(phases[0].wave).toEqual({ length: 6, light: true });
+    expect(isLightWeekOf(phases[0], 6)).toBe(true);
+    expect(isLightWeekOf(phases[0], 4)).toBe(false);
+    const p: Program = { id: 'p', name: 'P', startDate: START, phases };
+    expect(waveHeader(resolveProgramWeek(p, addDays(START, 7 * 7)))).toBe('Week 2 van 6 van je golf');
+  });
+
+  it('zonder lichte week is geen week een rustweek, en zegt Vandaag: je vaste week', () => {
+    const phases = layoutWaves(START, START, 12, START, 0, { length: 4, light: false });
+    expect([1, 2, 3, 4].some((w) => isLightWeekOf(phases[0], w))).toBe(false);
+    const p: Program = { id: 'p', name: 'P', startDate: START, phases };
+    expect(waveHeader(resolveProgramWeek(p, START))).toBe('Je vaste week');
+  });
+
+  it('een fase zonder golf houdt de rustweek van altijd', () => {
+    expect(isLightWeekOf({ id: 'phase_1' }, 4)).toBe(true);
+    expect(isLightWeekOf({ id: 'phase_taper' }, 4)).toBe(false);
+  });
+
+  it('Sterker worden: rustige duur, de heuvelloop wordt een herstelloop', () => {
+    expect(templateForPhase('tpl_hill_intervals', directionSwaps({ id: 'stronger' }), PHASE_GOLF, 3)).toBe('tpl_recovery_run');
   });
 });
 

@@ -12,7 +12,7 @@
 // Pure: no React, no IndexedDB. storage/database.ts#syncProgramHorizon
 // applies the result to the stored program and planning.
 
-import { PHASE_TAPER, WAVE_LENGTH, type Phase, type Program, type ProgramDirection, type ProgramDirectionId, type ResolvedProgramPosition } from '../models/program';
+import { PHASE_TAPER, WAVE_LENGTH, isLightWeekOf, phaseWaveLength, type Phase, type Program, type ProgramDirection, type ProgramDirectionId, type ResolvedProgramPosition } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate, WeeklyProgressionStep } from '../models/training';
 import type { TrainingGoal, GoalMilestone } from '../models/goals';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
@@ -77,6 +77,7 @@ const PHASE_TEXT: Record<string, { name: string; description: string }> = {
 function phase(id: string, order: number, weekCount: number): Phase {
   return { id, order, weekCount, ...PHASE_TEXT[id] };
 }
+const basePhase = phase;
 
 // The goal the program is laid out toward: the main goal (the one with the
 // Ascent Ladder), when it is active and still ahead.
@@ -218,34 +219,39 @@ export function layoutPhasesWithoutGoal(startDate: string, today: string, horizo
 // Je week; de weken ervoor zijn een eigen stuk.
 // `beginnerWeeks`: zoveel weken vanaf `waveStart` zijn de beginnersstart (een eigen fase, zonder
 // harde training). Ze tellen als de eerste golf, zodat de golven daarna gelijk blijven lopen.
-export function layoutWaves(startDate: string, today: string, horizonWeeks = 12, waveStart?: string, beginnerWeeks = 0): Phase[] {
+export function layoutWaves(startDate: string, today: string, horizonWeeks = 12, waveStart?: string, beginnerWeeks = 0, wave?: { length: number; light: boolean }): Phase[] {
+  const len = wave ? phaseWaveLength({ wave }) : WAVE_LENGTH;
+  const phase = (id: string, order: number, weekCount: number): Phase => ({ ...basePhase(id, order, weekCount), ...(wave ? { wave: { length: len, light: wave.light } } : {}) });
   const first = mondayOfWeek(startDate);
   const neededWeeks = Math.max(1, Math.floor(daysBetween(first, mondayOfWeek(today)) / 7) + 1 + horizonWeeks);
   const rawLead = waveStart ? Math.floor(daysBetween(first, mondayOfWeek(waveStart)) / 7) : 0;
   const lead = rawLead > 0 && rawLead < neededWeeks ? rawLead : 0;
   const out: Phase[] = [];
   if (lead > 0) out.push(phase(PHASE_GOLF, out.length + 1, lead));
-  const begin = waveStart && rawLead >= 0 && rawLead < neededWeeks ? Math.max(0, beginnerWeeks) : 0;
+  // De start beslaat hele golven, zodat de golven daarna gelijk blijven lopen met je richting.
+  const begin = waveStart && rawLead >= 0 && rawLead < neededWeeks && beginnerWeeks > 0 ? Math.ceil(beginnerWeeks / len) * len : 0;
   if (begin > 0) out.push(phase(PHASE_GOLF_START, out.length + 1, begin));
   const rest = Math.max(1, neededWeeks - lead - begin);
-  out.push(phase(PHASE_GOLF, out.length + 1, Math.ceil(rest / WAVE_LENGTH) * WAVE_LENGTH));
+  out.push(phase(PHASE_GOLF, out.length + 1, Math.ceil(rest / len) * len));
   return out;
 }
 
 // `free`: er is geen doel (engine/direction.ts#activeDirection), dan de neutrale golven. Met een
 // doel zonder datum blijven de oude blokken staan, zodat een plan met een doel niet verandert.
-export function layoutPhases(startDate: string, goalDate: string | undefined, today: string, overrides?: PhaseLengthOverrides, opts: { free?: boolean; waveStart?: string; beginnerWeeks?: number } = {}): Phase[] {
+export function layoutPhases(startDate: string, goalDate: string | undefined, today: string, overrides?: PhaseLengthOverrides, opts: { free?: boolean; waveStart?: string; beginnerWeeks?: number; wave?: { length: number; light: boolean } } = {}): Phase[] {
   if (goalDate) {
     const toGoal = layoutPhasesForGoal(startDate, goalDate, overrides);
     if (toGoal) return toGoal;
   }
-  return opts.free ? layoutWaves(startDate, today, 12, opts.waveStart, opts.beginnerWeeks) : layoutPhasesWithoutGoal(startDate, today);
+  return opts.free ? layoutWaves(startDate, today, 12, opts.waveStart, opts.beginnerWeeks, opts.wave) : layoutPhasesWithoutGoal(startDate, today);
 }
 
 // De kop van Vandaag in een golf: "Week 2 van 4 van je golf". Buiten een golf niets.
 export function waveHeader(position: ResolvedProgramPosition | null | undefined): string | undefined {
   if (!position || !isWavePhase(position.phase.id)) return undefined;
-  return `Week ${((position.weekInPhase - 1) % WAVE_LENGTH) + 1} van ${WAVE_LENGTH} van je golf`;
+  if (position.phase.wave && !position.phase.wave.light && position.phase.id === PHASE_GOLF) return 'Je vaste week';
+  const len = phaseWaveLength(position.phase);
+  return `Week ${((position.weekInPhase - 1) % len) + 1} van ${len} van je golf`;
 }
 
 // Program.direction defensief gelezen: alleen een bekende richting.
@@ -276,7 +282,7 @@ function flatWaveWeek(program: Program, position: ResolvedProgramPosition): numb
   const direction = readProgramDirection(program.direction);
   if (!direction) return undefined;
   if (direction.id === 'easy') return 2;
-  if (direction.id === 'maintain') return waveWeek(position) === WAVE_LENGTH ? WAVE_LENGTH : 2;
+  if (direction.id === 'maintain') return isLightWeekOf(position.phase, position.weekInPhase) ? WAVE_LENGTH : 2;
   return undefined;
 }
 
@@ -301,8 +307,9 @@ function loadWeekInProgram(position: ResolvedProgramPosition): number {
 // A rest week you chose to train through counts as week 2 of the wave: a
 // normal build week, not a second heaviest week in a row.
 export function waveWeek(position: ResolvedProgramPosition): number {
-  const wave = ((loadWeekInPhase(position) - 1) % WAVE_LENGTH) + 1;
-  return wave === WAVE_LENGTH && position.restSkipped && position.phase.id !== PHASE_TAPER ? 2 : wave;
+  const len = phaseWaveLength(position.phase);
+  const wave = ((loadWeekInPhase(position) - 1) % len) + 1;
+  return wave === len && position.restSkipped && position.phase.id !== PHASE_TAPER ? 2 : wave;
 }
 
 // Taper volume: first week about 70%, the last about 50% of a normal
@@ -674,7 +681,8 @@ export const BEGINNER_SWAPS: PatternSwap[] = [
 
 // De wissels die een richting zonder doel vraagt.
 export function directionSwaps(direction: ProgramDirection | undefined, beginner = false): PatternSwap[] {
-  if (direction?.id === 'easy') return CALM_SWAPS;
+  // Rustig aan nooit hard, Sterker worden rustige duur: de benen fris voor de krachtdagen.
+  if (direction?.id === 'easy' || direction?.id === 'stronger') return CALM_SWAPS;
   return beginner ? BEGINNER_SWAPS : [];
 }
 

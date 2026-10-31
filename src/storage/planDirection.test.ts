@@ -119,6 +119,19 @@ describe('een richting kiezen zonder doel', () => {
     expect(later).toContain('tpl_hill_intervals');
   });
 
+  it('Sterker worden bij Akkoord: geen heuvelloop, rustige duur', async () => {
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(input('stronger', { beginnerStart: 'nee' })))).status).toBe('applied');
+    expect((await open()).map((s) => s.templateId)).not.toContain('tpl_hill_intervals');
+  });
+
+  it('golven van drie weken: een factor per week van de golf en hele golven in het plan', async () => {
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('improve', { beginnerStart: 'nee', waves: { length: 3 } })))).status);
+    const program = (await ProgramsRepo.getAll())[0];
+    expect(program.direction?.factors).toHaveLength(3);
+    expect(program.phases.at(-1)?.wave).toEqual({ length: 3, light: true });
+    expect(program.phases.at(-1)!.weekCount % 3).toBe(0);
+  });
+
   it('beginnersstart op Nee: de heuvelloop blijft', async () => {
     expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain', { beginnerStart: 'nee' })))).status);
     expect((await open()).filter((s) => s.scheduledDate < addDays(TODAY, 28)).map((s) => s.templateId)).toContain('tpl_hill_intervals');

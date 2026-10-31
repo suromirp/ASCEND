@@ -11,12 +11,12 @@
 // Puur: geen React, geen IndexedDB. storage/database.ts#syncProgramHorizon zet het resultaat op
 // Program.direction, zoals het rugzakdoel.
 
-import { DIRECTIONS, type DirectionId } from '../data/directions';
+import type { DirectionId } from '../data/directions';
 import type { ProgramDirection } from '../models/program';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { mondayOfWeek } from '../utils/dates';
 import { budgetFor, recentAverage, resolveWeekBudget, HARD_RPE, type CountOptions } from './weekBudget';
-import { waveWeek as waveOfDate } from './waves';
+import { waveShapeFor, waveWeek as waveOfDate } from './waves';
 import { plannedEffort } from './standing';
 
 // De week van het schema die als gewone lengte geldt: de opbouwweek.
@@ -51,7 +51,7 @@ export function patternCounted(pattern: readonly SessionTemplate[], doubleHard =
 
 export interface DirectionPlanInput {
   id: DirectionId;
-  settings: { weekBudget?: unknown; directionStart?: unknown };
+  settings: { weekBudget?: unknown; directionStart?: unknown; waves?: unknown };
   // De trainingen van een gewone week in een golf (na de wissels van de richting).
   pattern: readonly SessionTemplate[];
   logs: readonly SessionLog[];
@@ -62,14 +62,13 @@ export interface DirectionPlanInput {
 // Het budget van elke week van de golf waar je nu in zit. Fitter worden begint bij het gemiddelde
 // van de vier weken voor de golf, net als de kaart Je week.
 export function waveBudgets(input: Omit<DirectionPlanInput, 'pattern'>): number[] {
-  const spec = DIRECTIONS[input.id];
   const choice = resolveWeekBudget(input.settings.weekBudget);
-  const shape = spec.wave.value;
+  const shape = waveShapeFor(input.id, input.settings.waves);
   const start = typeof input.settings.directionStart === 'string' ? input.settings.directionStart : undefined;
   const wave = shape ? waveOfDate(start, input.today, shape.weeks) : undefined;
   const history = input.id === 'improve' ? recentAverage(input.logs, wave?.startsOn ?? mondayOfWeek(input.today), input.countOptions) : undefined;
-  if (!shape) return [budgetFor(input.id, { choice, history }).minutes];
-  return Array.from({ length: shape.weeks }, (_, i) => budgetFor(input.id, { choice, history, wave: { week: i + 1, light: i + 1 === shape.weeks } }).minutes);
+  if (!shape) return [budgetFor(input.id, { choice, history, shape }).minutes];
+  return Array.from({ length: shape.weeks }, (_, i) => budgetFor(input.id, { choice, history, shape, wave: { week: i + 1, light: i + 1 === shape.weeks } }).minutes);
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
