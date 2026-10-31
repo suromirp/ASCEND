@@ -6,10 +6,9 @@ Bijgewerkt op 31 oktober 2026.
 
 ## Loopt nu
 
-- Data op lange termijn: oude voorstellen opruimen, reeksen in de back-up als keuze, ruimte tonen.
-- Run in detail volgens `docs/visie/Run in detail.md`.
-- Zonder doel stap 4 tot 10 en Sporten die meetellen stap 1 tot 9.
-- Ochtendkaart vernieuwd volgens `docs/visie/Ochtendkaart vernieuwd.md` (gevolg van je antwoord, één tik bevestigen, ochtendlijk uiterlijk).
+- Onderhoud punt 2 en 3 (zie hieronder).
+
+Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10.
 
 ## Kan nu, na wat loopt
 
