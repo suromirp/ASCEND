@@ -39,6 +39,12 @@ export function quickActionsFor(c: QuickContext): QuickAction[] {
 
 // De instelling "Snelknoppen tonen" (AppSettings.forgeQuickButtons). Afwezig is aan; alleen een echte
 // false zet de rij uit. Optioneel en zonder migratie.
+// De instelling "Vegen om te verwijderen" (AppSettings.forgeSwipeDelete). Afwezig is aan; alleen een echte
+// false zet het vegen uit. Verwijderen kan dan nog via het setmenu (lang drukken, "Set verwijderen").
+export function swipeDeleteOn(s: { forgeSwipeDelete?: unknown } | undefined | null): boolean {
+  return s?.forgeSwipeDelete !== false;
+}
+
 export function quickButtonsOn(s: { forgeQuickButtons?: unknown } | undefined | null): boolean {
   return s?.forgeQuickButtons !== false;
 }

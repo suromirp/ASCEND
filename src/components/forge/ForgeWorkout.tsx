@@ -17,7 +17,7 @@ import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount, 
 import { SwipeRow } from './SwipeRow';
 import { ForgeStrip } from './ForgeStrip';
 import { pageAt, resolveForgeLayout } from '../../engine/forgeLayout';
-import { QUICK_LABEL, quickActionsFor, quickButtonsOn, type QuickAction } from '../../engine/forgeQuickActions';
+import { QUICK_LABEL, quickActionsFor, quickButtonsOn, swipeDeleteOn, type QuickAction } from '../../engine/forgeQuickActions';
 import { previewDayLine } from '../../engine/sessionActions';
 import { restAlertChannels, restVibrationPattern } from '../../engine/restVibration';
 import { MUSCLE_LABEL } from '../../models/exercise';
@@ -931,6 +931,7 @@ function ForgeWorkoutInner({
               heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, heavyTip[ex.slot]) ? heavyTip[ex.slot].text : undefined}
               rirAsValue={strength.rirPrefill === 'target'}
               quickOn={quickButtonsOn(settings)}
+              swipeOn={swipeDeleteOn(settings)}
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
               act={actions}
             />
@@ -1393,6 +1394,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
   heavyTip,
   rirAsValue,
   quickOn,
+  swipeOn,
   undoText,
   act,
 }: {
@@ -1420,6 +1422,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
   rirAsValue: boolean;
   // De instelling "Snelknoppen tonen".
   quickOn: boolean;
+  swipeOn: boolean;
   // "Set 3 verwijderd" zolang je het nog ongedaan kunt maken.
   undoText?: string;
   act: BlockActions;
@@ -1581,7 +1584,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
               const fieldOn = (name: FieldName) => field?.slot === ex.slot && field.rowId === row.id && field.field === name;
               return (
                 <div key={row.id} data-row-id={row.id}>
-                  <SwipeRow label={label} enabled={!readOnly && canRemoveRow(ex, row.id)} onDelete={() => act.remove(ex.slot, row.id)}>
+                  <SwipeRow label={label} enabled={!readOnly && swipeOn && canRemoveRow(ex, row.id)} onDelete={() => act.remove(ex.slot, row.id)}>
                   <LongPressRow
                     onLong={() => act.rowMenu(ex.slot, row.id)}
                     disabled={readOnly}

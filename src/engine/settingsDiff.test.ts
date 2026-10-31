@@ -55,6 +55,7 @@ const everything: AppSettings = {
   weekFixProposal: false,
   dragWeek: false,
   forgeQuickButtons: false,
+  forgeSwipeDelete: false,
   forgeLayout: 'lijst',
   forgeLongBreak: 90,
   haptics: false,

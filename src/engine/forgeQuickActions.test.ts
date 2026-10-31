@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { quickActionsFor, quickButtonsOn, QUICK_ACTION_ORDER, type QuickContext } from './forgeQuickActions';
+import { quickActionsFor, quickButtonsOn, swipeDeleteOn, QUICK_ACTION_ORDER, type QuickContext } from './forgeQuickActions';
 
 const ctx = (over: Partial<QuickContext> = {}): QuickContext => ({ readOnly: false, preview: false, timed: false, ...over });
 
@@ -13,6 +13,10 @@ describe('quickButtonsOn', () => {
     expect(quickButtonsOn({ forgeQuickButtons: false })).toBe(false);
     expect(quickButtonsOn({ forgeQuickButtons: true })).toBe(true);
     expect(quickButtonsOn({ forgeQuickButtons: 'nee' })).toBe(true);
+    expect(swipeDeleteOn({})).toBe(true);
+    expect(swipeDeleteOn(undefined)).toBe(true);
+    expect(swipeDeleteOn({ forgeSwipeDelete: false })).toBe(false);
+    expect(swipeDeleteOn({ forgeSwipeDelete: 'nee' })).toBe(true);
   });
 });
 
