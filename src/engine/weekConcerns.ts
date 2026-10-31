@@ -4,7 +4,7 @@
 // droog feit eronder en een korte tekst voor de rij van elke betrokken
 // training (docs/visie/Waarschuwingen in Week.md, hoofdstuk 4).
 //
-// Zes regels: REST-DAY, LEG-SPACING, TWO-HARD-RUNS, AFTER-TEST, ONE-LONG en
+// Zeven regels: REST-DAY, LEG-SPACING, TWO-HARD-RUNS, TEST-DAY, AFTER-TEST, ONE-LONG en
 // TEST-FRESH. De controle draait met `reportYours`, zodat ook een training op
 // je rustdag meetelt die jij of een geaccepteerd voorstel vastzette. Alleen
 // toekomstige dagen van de getoonde week; een verleden week meldt niets.
@@ -17,7 +17,7 @@ import { idHasRole } from './templateRoles';
 import { legSpacingDays } from './scheduler';
 import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
 
-export const CONCERN_RULES: readonly CheckRule[] = ['REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
+export const CONCERN_RULES: readonly CheckRule[] = ['REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
 
 export interface WeekConcern {
   // Dezelfde sleutel als de bevinding; verandert er iets in de week, dan verandert hij mee.
@@ -92,6 +92,18 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
           why: 'Twee harde loopjes op een dag zijn te veel voor je benen. Eén per dag laat ze herstellen.',
           notes: { [b]: 'tweede harde loop' },
         };
+      case 'TEST-DAY': {
+        // a is de andere training, b de test of wedstrijd (de volgorde van de bevinding).
+        const kind = idHasRole(byId.get(b)?.templateId ?? '', 'race', input.templates) ? 'wedstrijd' : 'testloop';
+        return {
+          ...base,
+          headline: `${nameOf(a)} staat op dezelfde dag als je ${kind}.`,
+          fact: `${nameOf(a)} en je ${kind} staan allebei op ${dayName(f.date)}.`,
+          title: `Niets zwaars op de dag van je ${kind}`,
+          why: `Op de dag van een ${kind} doe je niets anders zwaars, zodat de ${kind === 'wedstrijd' ? 'wedstrijd' : 'test'} laat zien wat je kunt.`,
+          notes: { [a]: `zelfde dag als je ${kind}` },
+        };
+      }
       case 'AFTER-TEST': {
         const kind = idHasRole(byId.get(b)?.templateId ?? '', 'race', input.templates) ? 'wedstrijd' : 'testloop';
         return {

@@ -27,6 +27,25 @@ describe('reportYours', () => {
   });
 });
 
+describe('weekConcerns, testloop en lange duurloop op een dag', () => {
+  // Dinsdag: testloop en lange duurloop, allebei door de gebruiker vastgezet. De rest van de week is vrij.
+  const userLock = { by: 'user' as const, at: '2026-10-20T10:00:00.000Z' };
+  const sessions: PlannedSession[] = [
+    { id: 't', templateId: 'tpl_test_run', scheduledDate: '2026-10-27', weekStartDate: MONDAY, status: 'planned', order: 0, lock: userLock },
+    { id: 'l', templateId: 'tpl_long_run', scheduledDate: '2026-10-27', weekStartDate: MONDAY, status: 'planned', order: 1, lock: userLock },
+  ];
+
+  it('meldt dat de lange duurloop op de dag van je testloop staat', () => {
+    const c = weekConcerns(input(sessions), MONDAY).find((x) => x.rule === 'TEST-DAY')!;
+    expect(c).toBeDefined();
+    expect(c.headline).toBe('Lange duurloop staat op dezelfde dag als je testloop.');
+    expect(c.fact).toBe('Lange duurloop en je testloop staan allebei op dinsdag 27.');
+    expect(c.why).toContain('niets anders zwaars');
+    expect(c.notes).toEqual({ l: 'zelfde dag als je testloop' });
+    expect(c.title).not.toMatch(/[\u2013\u2014]/);
+  });
+});
+
 describe('weekConcerns', () => {
   it('een week zonder rustdag: de kaartregel, het feit en de rijtekst', () => {
     const list = weekConcerns(input(fullWeek()), MONDAY);

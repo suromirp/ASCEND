@@ -49,6 +49,20 @@ Begin zo licht als de tabel zegt en schaal op zodra er een reden is, niet uit ge
 - Echte data alleen als het iets toevoegt (een melding van de eigenaar die met nagemaakte data niet
   te zien is); dan een goedkope controle eerst (een script met `python3 -I`) en pas daarna een helper.
 
+## Tekst of screenshot
+
+De kaart van de app (`npm run kaart`, `docs/app-kaart/`) is wat elke helper eerst leest in plaats
+van zelf door de app te klikken. Na een wijziging draait `npm run kaart:vergelijk`: die meldt welke
+schermen anders zijn en controleert de invarianten (getallen die overal gelijk moeten zijn).
+- Data, tellingen, teksten, datums: de tekstkaart is genoeg.
+- Iets visueels (opmaak, kleur, beweging, tikdoelen, overloop op 360 px): een screenshot of een
+  doorloop van Lookout.
+- Twijfel, of een verschil in de kaart dat visueel kan zijn: altijd een screenshot erbij
+  (`--foto <scherm>`), en de coördinator bekijkt hem zelf.
+- Elke inconsistentie die een helper of de eigenaar vindt, wordt een invariant, zodat hij de
+  volgende keer vanzelf wordt gevangen.
+- Meerdere helpers tegelijk mag, als hun bestanden elkaar niet raken; ieder in een eigen worktree.
+
 ## Wat in elke opdracht staat
 
 - Het doel en de controleerbare criteria, de bestanden als richtpunt, wat niet mag bewegen

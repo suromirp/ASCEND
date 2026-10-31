@@ -17,7 +17,7 @@
 import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import type { TestJudgment } from '../models/testJudgment';
-import { daysBetween, formatDateNL, formatShortDateNL } from '../utils/dates';
+import { daysBetween, formatDateNL, formatShortDateNL, localDateOf } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { computeGoalReadiness, readinessInputOf, type GoalReadiness, type MissingMeter, type ReadinessOptions } from './goalReadiness';
 import { goalDetailsOf } from './goalLabels';
@@ -167,7 +167,7 @@ export function computeRaceReadiness(goal: TrainingGoal, logs: SessionLog[], tod
   const input = readinessInputOf(goal);
   if (!input) return undefined;
   const weighting = options.weighting ?? 'speed';
-  const base: ReadinessOptions = { naming: options.naming, since: goal.createdAt.slice(0, 10) };
+  const base: ReadinessOptions = { naming: options.naming, since: localDateOf(goal.createdAt) };
   const now = speedAt(goal, logs, today, options);
   if (now.facts.status === 'no-target') return computeGoalReadiness(input, logs, today, base);
 

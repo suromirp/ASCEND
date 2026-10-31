@@ -115,3 +115,24 @@ describe('weekNotice naast de voorstellen van Vandaag', () => {
     expect(n.covered).toContain('REST-DAY:w-3');
   });
 });
+
+describe('planWeekFix, testloop en lange duurloop op een dag', () => {
+  const userLock = { by: 'user' as const, at: '2026-10-20T10:00:00.000Z' };
+  const sessions: PlannedSession[] = [
+    { id: 't', templateId: 'tpl_test_run', scheduledDate: '2026-10-27', weekStartDate: MONDAY, status: 'planned', order: 0, lock: userLock },
+    { id: 'l', templateId: 'tpl_long_run', scheduledDate: '2026-10-27', weekStartDate: MONDAY, status: 'planned', order: 1, lock: userLock },
+  ];
+
+  it('stelt de lange duurloop naar een andere dag voor, zonder iets stil te veranderen', () => {
+    const copy = JSON.stringify(sessions);
+    const concern = weekConcerns(input(sessions), MONDAY).find((c) => c.rule === 'TEST-DAY')!;
+    const advice = planWeekFix(input(sessions), concern, MONDAY);
+    expect(JSON.stringify(sessions)).toBe(copy);
+    expect(advice).not.toBeNull();
+    // Alleen de lange duurloop gaat mee, nooit de testloop, en pas na Akkoord.
+    expect(advice!.effect).toBe('Lange duurloop gaat van dinsdag 27 naar vrijdag 30.');
+    expect(advice!.proposal!.changes.every((c) => c.plannedSessionId === 'l')).toBe(true);
+    const after = applyPlanChangeItems(advice!.proposal!.changes, sessions, () => 'x', { by: 'proposal', at: 'nu' }).sessions;
+    expect(validateWeeks({ ...input(after), reportYours: true }).some((f) => f.rule === 'TEST-DAY')).toBe(false);
+  });
+});

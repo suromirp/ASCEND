@@ -28,7 +28,7 @@ export interface DisplaySessionState {
 // movedFromDate as a trace, but no screen calls it "verplaatst" as if you did
 // it (Warden Planning punt 8, docs/beslissingen/2026-10-23-planning-nooit-stil.md).
 function movedByYou(session: PlannedSession): boolean {
-  return !!session.movedFromDate && (session.status === 'moved' || !!session.lock);
+  return !!session.movedFromDate && session.movedFromDate !== session.scheduledDate && (session.status === 'moved' || !!session.lock);
 }
 
 export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[], isRest = false): DisplaySessionState {

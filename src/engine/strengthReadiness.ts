@@ -19,7 +19,7 @@ import type { SessionLog } from '../models/training';
 import { STRENGTH_GROWTH, growthPer, type GrowthChoice, type StrengthLevel } from '../data/goalGrowth';
 import { EXERCISES } from '../data/exercises';
 import { matchExercise } from './exerciseMatch';
-import { addDays, daysBetween } from '../utils/dates';
+import { addDays, daysBetween, localDateOf } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { computeGoalReadiness, readinessInputOf, type ExternalValue, type GoalReadiness, type ReadinessOptions } from './goalReadiness';
 import { fillFromWeeks, weeksOfWork } from './goalGap';
@@ -147,7 +147,7 @@ export function computeStrengthReadiness(goal: TrainingGoal, logs: SessionLog[],
     return { share: reads.reduce((s, r) => s + r.share, 0) / reads.length, text: reads.map((r) => r.text).join(', ') };
   };
   const r = computeGoalReadiness(input, logs, today, {
-    naming: options.naming, since: options.since ?? goal.createdAt.slice(0, 10), external, weights: options.weighting === 'equal' ? undefined : STRENGTH_WEIGHTS,
+    naming: options.naming, since: options.since ?? localDateOf(goal.createdAt), external, weights: options.weighting === 'equal' ? undefined : STRENGTH_WEIGHTS,
   });
   // Volhouden wordt op de Ascend-tab nooit gevuld, dus dat noemen we niet als ontbrekend (zoals bij een wedstrijd).
   const missing = r.missing.filter((m) => m.key !== 'volhouden');

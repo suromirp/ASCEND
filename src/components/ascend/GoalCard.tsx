@@ -175,7 +175,7 @@ export function NextStep({ next }: { next: NextKeySession }) {
     <div className="flex items-start gap-3 rounded-xl p-3" style={{ background: 'var(--color-surface)' }}>
       <span className="mt-0.5 shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="vlag" size={18} /></span>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-        <span className="font-semibold">Hierna · {formatShortDayNL(next.date)}.</span> {next.name}{next.minutes > 0 ? `, ${next.minutes} minuten` : ''}.
+        <span className="font-semibold">Volgende sleuteltraining · {formatShortDayNL(next.date)}.</span> {next.name}{next.minutes > 0 ? `, ${next.minutes} minuten` : ''}.
       </p>
     </div>
   );

@@ -156,9 +156,9 @@ export function AscendPage() {
   // installatie zonder plan houdt de lege kaart. Met een doel verandert er niets.
   const week = useMemo(
     () => (emptyList && !emptyInstall
-      ? yourWeek({ settings, goals: listed.map((l) => l.goal), milestones: ladder, logs: sessionLogs, templates, today })
+      ? yourWeek({ settings, goals: listed.map((l) => l.goal), milestones: ladder, logs: sessionLogs, templates, plannedSessions, today })
       : undefined),
-    [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, today],
+    [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, plannedSessions, today],
   );
   const plain = emptyList && !week;
   return (

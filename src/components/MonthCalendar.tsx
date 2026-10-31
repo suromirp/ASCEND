@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { logDay, plannedByIdOf } from '../engine/logDay';
+import { logDay, plannedByIdOf, withoutLog } from '../engine/logDay';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { isoWeekday, monthBounds, parseISODate, todayISO, toISODate } from '../utils/dates';
 import { SPORT_LOOK, sportKeyOfLog, type SportKey } from './logbook/sportLook';
@@ -55,14 +55,15 @@ export function MonthCalendar({
   }, [plannedSessions, start, end, isRest]);
 
   // Wat vandaag of later nog gepland staat en niet is gedaan: een mint ring.
+  // Een sessie met een log is gedaan en telt hier niet meer als gepland.
   const plannedDates = useMemo(() => {
     const set = new Set<string>();
-    for (const s of plannedSessions) {
+    for (const s of withoutLog(plannedSessions, sessionLogs)) {
       if (s.scheduledDate < today || s.scheduledDate < start || s.scheduledDate > end || s.status === 'skipped') continue;
       if (!isRest(s)) set.add(s.scheduledDate);
     }
     return set;
-  }, [plannedSessions, today, start, end, isRest]);
+  }, [plannedSessions, sessionLogs, today, start, end, isRest]);
 
   const cells = useMemo(() => {
     const firstWeekday = isoWeekday(start);

@@ -20,6 +20,7 @@ import { useLegMoveNotes } from './useLegMoveNote';
 import { formatNumberNL } from '../utils/number';
 import { Icon } from './icons';
 import { TextButton } from './TextButton';
+import { hasTestOrRaceThatDay, testOrRaceKind } from '../engine/testRaceUpcoming';
 import { idIsTestOrRace } from '../engine/templateRoles';
 
 // "Zo ziet je week eruit": a sheet from below, like a training in Week. On
@@ -94,7 +95,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
     if (!chosen) return undefined;
     const item = chosen.changes.find((c) => c.action === 'move' && c.plannedSessionId && idIsTestOrRace(plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId ?? '', templates));
     if (!item?.toDate) return undefined;
-    const kind = plannedSessions.find((s) => s.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' : 'test';
+    const kind = testOrRaceKind(plannedSessions.find((s) => s.id === item.plannedSessionId)!.templateId, templates);
     const after = planPreviewPass(applyPlanChangeItems(chosen.changes.filter((c) => c.action !== 'replace'), plannedSessions, previewIds(), { by: 'proposal', at: 'preview' }).sessions);
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { kind, date: item.toDate, index: at.index, status: fatigueStatus(at, kind) } as const;
@@ -116,7 +117,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
   const optionFreshness = useMemo(() => (advice.options ?? []).map((o) => {
     const item = o.proposal.changes.find((c) => c.action === 'move' && idIsTestOrRace(plannedSessions.find((x) => x.id === c.plannedSessionId)?.templateId ?? '', templates));
     if (!item?.toDate) return undefined;
-    const kind = plannedSessions.find((x) => x.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' as const : 'test' as const;
+    const kind = testOrRaceKind(plannedSessions.find((x) => x.id === item.plannedSessionId)!.templateId, templates);
     const after = planPreviewPass(applyPlanChangeItems(o.proposal.changes.filter((c) => c.action !== 'replace'), plannedSessions, previewIds(), { by: 'proposal', at: 'preview' }).sessions);
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { index: at.index, status: fatigueStatus(at, kind) };
@@ -242,7 +243,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                           ) : (
                             <div className="flex flex-col gap-2">
                               {d.entries.map((e, i) => {
-                                const testThatDay = d.entries.some((o) => (o.templateId === 'tpl_test_run' || o.templateId === 'tpl_race') && o.change !== 'weg' && o.change !== 'vervalt');
+                                const testThatDay = hasTestOrRaceThatDay(d.entries, templates);
                                 const afterTest = testThatDay && e.type === 'strength' && !!byId.get(e.templateId) && isLegHeavyTemplate(byId.get(e.templateId)!);
                                 return <EntryCard key={i} entry={e} minutes={minutes(e, d.date)} afterTest={afterTest} />;
                               })}

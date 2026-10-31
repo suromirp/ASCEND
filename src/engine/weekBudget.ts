@@ -10,6 +10,7 @@
 
 import { ADVICE_DIRECTION, DIRECTIONS, GUIDELINE_MINUTES, GUIDELINE_STRENGTH, MINUTES_CEILING, type DirectionId } from '../data/directions';
 import type { SessionLog } from '../models/training';
+import { logDay, type PlannedById } from './logDay';
 import { addDays } from '../utils/dates';
 import { parseDirection, startMinutes } from './direction';
 import type { HeartRateSettings } from './heartRateZones';
@@ -48,7 +49,11 @@ export interface CountOptions {
   doubleHard: boolean;
   // Hoe zwaar de training bedoeld was (1 tot 10), voor een log zonder hartslag en zonder RPE.
   intendedRpe?: (log: SessionLog) => number | undefined;
+  // Met de geplande sessies telt een log op de dag van zijn geplande training (engine/logDay.ts), zoals op Week.
+  plannedById?: PlannedById;
 }
+
+const dayOfLog = (log: SessionLog, plannedById?: PlannedById): string => (plannedById ? logDay(log, plannedById) : log.completedDate);
 
 export interface CountedDetail {
   // De duur zoals gelogd.
@@ -81,9 +86,9 @@ function countsAsStrength(log: SessionLog): boolean {
   return log.type === 'strength' && log.variant !== 'minimum';
 }
 
-export function strengthCount(logs: readonly SessionLog[], weekStart: string): number {
+export function strengthCount(logs: readonly SessionLog[], weekStart: string, plannedById?: PlannedById): number {
   const end = addDays(weekStart, 7);
-  return logs.filter((l) => l.completedDate >= weekStart && l.completedDate < end && countsAsStrength(l)).length;
+  return logs.filter((l) => dayOfLog(l, plannedById) >= weekStart && dayOfLog(l, plannedById) < end && countsAsStrength(l)).length;
 }
 
 export interface WeekItem {
@@ -96,8 +101,8 @@ export interface WeekItem {
 function weekItems(logs: readonly SessionLog[], weekStart: string, opts: CountOptions): WeekItem[] {
   const end = addDays(weekStart, 7);
   return logs
-    .filter((l) => l.completedDate >= weekStart && l.completedDate < end)
-    .sort((a, b) => a.completedDate.localeCompare(b.completedDate) || a.completedAt.localeCompare(b.completedAt))
+    .filter((l) => dayOfLog(l, opts.plannedById) >= weekStart && dayOfLog(l, opts.plannedById) < end)
+    .sort((a, b) => dayOfLog(a, opts.plannedById).localeCompare(dayOfLog(b, opts.plannedById)) || a.completedAt.localeCompare(b.completedAt))
     .flatMap((log): WeekItem[] => {
       if (countsAsStrength(log)) return [{ log, kind: 'strength', detail: NONE }];
       const detail = countedDetail(log, opts);

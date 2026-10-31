@@ -29,3 +29,17 @@ export function logDay(log: Pick<SessionLog, 'completedDate' | 'plannedSessionId
 export function plannedByIdOf(sessions: readonly Pick<PlannedSession, 'id' | 'scheduledDate'>[]): Map<string, Pick<PlannedSession, 'scheduledDate'>> {
   return new Map(sessions.map((s) => [s.id, s]));
 }
+
+// De logs die op een dag tussen `from` en `to` (inclusief) tellen, voor de maandtotalen op Logboek.
+export function logsInRange<L extends Pick<SessionLog, 'completedDate' | 'plannedSessionId' | 'source'>>(logs: readonly L[], plannedById: PlannedById, from: string, to: string): L[] {
+  return logs.filter((l) => {
+    const day = logDay(l, plannedById);
+    return day >= from && day <= to;
+  });
+}
+
+// Wat gepland staat en nog geen log heeft: een sessie met een log is gedaan, nooit een vlag.
+export function withoutLog<S extends Pick<PlannedSession, 'id'>>(sessions: readonly S[], logs: readonly Pick<SessionLog, 'plannedSessionId'>[]): S[] {
+  const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  return sessions.filter((s) => !logged.has(s.id));
+}
