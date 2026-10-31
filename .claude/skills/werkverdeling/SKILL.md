@@ -35,6 +35,35 @@ Tabellen staan hier omdat dit een werkinstructie is; in teksten voor de eigenaar
 - Een helper leest geen back-up van de eigenaar, tenzij de opdracht het pad noemt en zegt dat het
   alleen lezen is en nooit in de repo komt.
 
+## Opschalen en afschalen
+
+Begin zo licht als de tabel zegt en schaal op zodra er een reden is, niet uit gewoonte:
+- Opschalen naar opus: een bouwer of review op sonnet die een tweede herstelronde nodig heeft; een
+  wijziging die toch planning, opslag, migraties of historie raakt; een vermoeden van een fout die
+  de tests niet vangen (data die tussen schermen verschilt, een datum rond middernacht of een
+  weekgrens); een bevinding van een review die de bouwer niet begrijpt.
+- Afschalen: een review van een kleine engine-wijziging met een test erbij en zonder planning of
+  opslag mag op sonnet. Een tekst, label of één regel doet de coördinator zelf, zonder helper.
+- Geen helper als de coördinator het in een paar minuten zelf kan nagaan (een grep, een probe-test
+  die meteen weer weg is). Een helper starten kost zelf ook context.
+- Echte data alleen als het iets toevoegt (een melding van de eigenaar die met nagemaakte data niet
+  te zien is); dan een goedkope controle eerst (een script met `python3 -I`) en pas daarna een helper.
+
+## Wat in elke opdracht staat
+
+- Het doel en de controleerbare criteria, de bestanden als richtpunt, wat niet mag bewegen
+  (`planGolden.test.ts`, scheduler, historie).
+- Wat de helper oplevert: kort, Nederlands, per punt gedaan of waarom niet, de uitslag van de
+  controles en wat niet gecontroleerd is.
+- Tokens en duur weet een helper zelf niet: de coördinator haalt ze uit de melding na afloop
+  (`subagent_tokens`, `duration_ms`) voor het logboek.
+
+## Lange sessies
+
+Een sessie die lang loopt wordt bij elke beurt duurder. Begin na een groot onderwerp of na een
+paar dagen een nieuwe sessie; zet wat de volgende sessie moet weten in de takenlijst of in
+`docs/onderhoud/`, niet alleen in het gesprek.
+
 ## Het kostenlogboek
 
 Na elke afgeronde helper schrijft de coördinator één regel in `.claude/kosten/logboek.md`:
