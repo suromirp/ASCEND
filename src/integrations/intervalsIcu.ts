@@ -77,8 +77,24 @@ export function basicAuthHeader(apiKey: string): string {
   return `Basic ${btoa(`API_KEY:${apiKey}`)}`;
 }
 
-export function activitiesUrl(athleteId: string, range: DateRange): string {
+// Only the fields ASCEND reads (IntervalsActivity below), so the answer stays small on a weak
+// connection: without `fields` each activity comes with more than 180 fields. The parameter is
+// in the official OpenAPI description ("Comma separated list of field names to include in the
+// returned objects (default is all), also excludes null values", read on 31 October 2026).
+// `deleted` is not in that description but is read, so it is asked for too. If the server ever
+// refuses the list, fetchIntervalsActivities asks once more without it
+// (docs/beslissingen/2026-10-31-kansen-stap-0.md). A field read in mapIntervalsActivity belongs here.
+export const ACTIVITY_FIELDS = [
+  'id', 'start_date_local', 'type', 'name', 'source', 'device_name', 'moving_time', 'elapsed_time', 'distance',
+  'total_elevation_gain', 'total_elevation_loss', 'average_heartrate', 'max_heartrate', 'average_cadence', 'icu_rpe', 'feel',
+  'trainer', 'deleted', 'average_stance_time', 'average_stance_time_percent', 'average_stance_time_balance',
+  'average_vertical_oscillation', 'average_vertical_ratio', 'average_step_length', 'average_vertical_speed',
+  'average_leg_spring_stiffness', 'average_impact_loading_rate', 'stream_types',
+] as const satisfies readonly (keyof IntervalsActivity)[];
+
+export function activitiesUrl(athleteId: string, range: DateRange, options: { fields?: boolean } = {}): string {
   const query = new URLSearchParams({ oldest: range.from, newest: range.to });
+  if (options.fields !== false) query.set('fields', ACTIVITY_FIELDS.join(','));
   return `${INTERVALS_BASE_URL}/api/v1/athlete/${encodeURIComponent(athleteId)}/activities?${query.toString()}`;
 }
 
@@ -512,7 +528,14 @@ export async function fetchIntervalsActivities(
   range: DateRange,
   options: FetchOptions = {},
 ): Promise<ExternalActivity[]> {
-  return mapIntervalsActivities(await getJson(connection, (id) => activitiesUrl(id, range), options));
+  try {
+    return mapIntervalsActivities(await getJson(connection, (id) => activitiesUrl(id, range), options));
+  } catch (err) {
+    // An answer the app does not understand (a refused field list, a reply that is no list):
+    // once more the way it always asked, with every field. Other errors stay what they are.
+    if (!(err instanceof IntervalsError) || err.kind !== 'response') throw err;
+    return mapIntervalsActivities(await getJson(connection, (id) => activitiesUrl(id, range, { fields: false }), options));
+  }
 }
 
 export async function fetchIntervalsWellness(

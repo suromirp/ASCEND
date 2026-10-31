@@ -141,7 +141,7 @@ describe('fetching', () => {
     const result = await syncWatchActivities({ fetchImpl: fetchImpl as unknown as typeof fetch, now });
     expect(result).toEqual({ status: 'ok', count: 1, wellness: { days: 0, today: false } });
     const url = (fetchImpl.mock.calls[0] as unknown as [string])[0];
-    expect(url).toMatch(/oldest=\d{4}-\d{2}-\d{2}&newest=\d{4}-\d{2}-\d{2}$/);
+    expect(url).toMatch(/oldest=\d{4}-\d{2}-\d{2}&newest=\d{4}-\d{2}-\d{2}(&fields=|$)/);
     const state = await getWatchState();
     expect(state.fetchedAt).toBe(now.toISOString());
     expect(state.activities[0]).toMatchObject({ externalId: 'intervals.icu:i1', kind: 'run', source: 'garmin' });
