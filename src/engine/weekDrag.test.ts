@@ -3,7 +3,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import type { DailyTimeBudget, Weekday } from '../models/goalEngineConfig';
 import { proposeMove } from './scheduler';
-import { dayAtY, decideMove, dayVerdicts, dragEligibility, nextDroppable, TEST_ASK_REASON, newConcernLines, type DragContext } from './weekDrag';
+import { dayAtY, decideMove, dayVerdicts, dragEligibility, nextDroppable, TEST_ASK_REASON, LEAVE_ASK_REASON, newConcernLines, type DragContext } from './weekDrag';
 
 const { templates, program } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -47,7 +47,7 @@ describe('dragEligibility', () => {
   });
   it('een training die alleen opzij schoof voor een vakantie mag, met Akkoord', () => {
     const moved = s('a', 'tpl_hill_intervals', '2026-10-01', { leave: { periodId: 'p', role: 'moved' } });
-    expect(dragEligibility(moved, t('tpl_hill_intervals'), { logged: false, today })).toEqual({ ok: true, askAlways: true });
+    expect(dragEligibility(moved, t('tpl_hill_intervals'), { logged: false, today })).toEqual({ ok: true, askAlways: LEAVE_ASK_REASON });
   });
   it('een eigen verplaatste training mag opnieuw', () => {
     const own = s('a', 'tpl_easy_run', '2026-10-01', { status: 'moved', movedFromDate: '2026-09-30', lock });
@@ -186,6 +186,8 @@ describe('decideMove', () => {
     expect(d.action).toBe('ask');
     expect(d.proposal.resolved).toBe(true);
     expect(d.proposal.reason).toBe(TEST_ASK_REASON);
+    // Een training die opzij schoof voor je vakantie krijgt zijn eigen zin, geen testloop.
+    expect(decideMove(move('easy', '2026-10-02'), { askAlways: LEAVE_ASK_REASON }).proposal.reason).toBe(LEAVE_ASK_REASON);
   });
   it('het actieblad geeft niets mee en gedraagt zich zoals voorheen', () => {
     const p = move('easy', '2026-10-02');

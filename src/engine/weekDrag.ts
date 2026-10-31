@@ -18,7 +18,8 @@ import { addDays, mondayOfWeek, weekdayLongNL, weekdayOf, formatDateNL, weekDate
 
 // --- wie mag slepen ----------------------------------------------------------------
 export type DragRefusal = 'history' | 'skipped' | 'rest' | 'race' | 'leave';
-export type DragEligibility = { ok: true; askAlways: boolean } | { ok: false; reason: DragRefusal };
+// askAlways: true (a test, with its own sentence) or the sentence the Akkoord sheet shows.
+export type DragEligibility = { ok: true; askAlways: boolean | string } | { ok: false; reason: DragRefusal };
 
 // Nooit: wat gelogd of voorbij is (lockLevel 0), een overgeslagen training, een rustdag of
 // herstelwandeling, een wedstrijd (die gaat via het doel op Ascend) en wat een vakantie of tocht
@@ -32,7 +33,8 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
   // Wat een vakantie of tocht zelf neerzette blijft liggen; een training die alleen opzij schoof voor
   // je vakantie mag je weer slepen, altijd met Akkoord (het blad toont wat er gebeurt).
   if (session.leave && session.leave.role !== 'moved') return { ok: false, reason: 'leave' };
-  return { ok: true, askAlways: hasRole(template, 'test') || !!session.leave };
+  if (session.leave) return { ok: true, askAlways: LEAVE_ASK_REASON };
+  return { ok: true, askAlways: hasRole(template, 'test') };
 }
 
 // --- wat elke dag zegt -------------------------------------------------------------
@@ -196,12 +198,13 @@ export function dayAtY(rects: { date: string; top: number; bottom: number }[], y
 export type MoveDecision = { action: 'none' | 'apply' | 'ask'; proposal: ScheduleProposal };
 
 export const TEST_ASK_REASON = 'Een testloop verplaats je alleen met Akkoord.';
+export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Verplaats je hem, dan blijft hij op de nieuwe dag staan.';
 
 // Het ene besluit voor het slepen en het actieblad. Dezelfde dag: niets. Een schoon voorstel met één
 // wijziging gaat meteen (met Ongedaan maken in de melding). Een cascade of een botsing die niet op te
 // lossen is, een rustdag, een dag waar de tijd niet past en een test vragen het bestaande blad.
 // Het actieblad geeft geen verdict en geen askAlways mee en gedraagt zich dus zoals voorheen.
-export interface DecideOptions { askAlways?: boolean; verdict?: DayVerdict }
+export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict }
 
 export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {}): MoveDecision {
   const real = proposal.changes.filter((c) => c.toDate !== c.fromDate || c.restore);
@@ -216,7 +219,7 @@ export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {})
     reasons.push(opts.verdict.askReason);
     resolved = false;
   }
-  if (opts.askAlways) reasons.push(TEST_ASK_REASON);
+  if (opts.askAlways) reasons.push(typeof opts.askAlways === 'string' ? opts.askAlways : TEST_ASK_REASON);
   if (reasons.length === 0) return { action: clean ? 'apply' : 'ask', proposal };
   // Een cascade of botsing houdt zijn eigen reden, met de nieuwe er vooraan.
   const kept = clean ? [] : [proposal.reason];

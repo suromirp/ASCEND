@@ -18,7 +18,7 @@ export interface WeekDragState {
   // De dag onder de vinger of onder het toetsenbord; geen dag is annuleren.
   target?: string;
   verdicts: DayVerdict[];
-  askAlways: boolean;
+  askAlways: boolean | string;
   // De zwevende rij (alleen met de vinger): vast aan het scherm, alleen verticaal bewegend.
   ghost?: { left: number; width: number; height: number; top: number };
   fingerY: number;
@@ -89,7 +89,7 @@ export function useWeekDrag({ weekStart, enabled, moveTo, onOpenMove }: {
     }
   };
 
-  async function finish(id: string, target: string | undefined, askAlways: boolean, verdicts: DayVerdict[]) {
+  async function finish(id: string, target: string | undefined, askAlways: boolean | string, verdicts: DayVerdict[]) {
     blockClickUntil.current = Date.now() + 500;
     setDrag(null);
     const verdict = target ? verdicts.find((v) => v.date === target) : undefined;
@@ -113,7 +113,7 @@ export function useWeekDrag({ weekStart, enabled, moveTo, onOpenMove }: {
     }
   }
 
-  const handleFor = (session: PlannedSession, askAlways: boolean): WeekHandle => {
+  const handleFor = (session: PlannedSession, askAlways: boolean | string): WeekHandle => {
     const id = session.id;
     const active = drag?.id === id;
 

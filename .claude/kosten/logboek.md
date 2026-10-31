@@ -49,3 +49,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-31, Zonder doel golven na Akkoord, Sherpa, opus (ontwikkelaar), 227k, 40 min, 0
 - 2026-10-31, Review zonder doel, Warden, opus (reviewer), 117k, 6 min, 0, groen; 4 kleine punten door coördinator
 - 2026-10-31, Onderhoud punt 2 en 3, Sherpa, sonnet (ontwikkelaar), 61k, 10 min, 0, review door coördinator (opruimen, kaart gelijk)
+- 2026-10-31, Review slepen vakantie, Warden, opus (reviewer), 50k, 1,5 min, 0, 1 blokkerend (zin) door coördinator hersteld
