@@ -129,7 +129,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s2); align-items: end; height: 44px; }
 .st-bars span { display: block; width: 20px; justify-self: center; border-radius: 3px 3px 1px 1px; background: var(--color-action-muted); }
 .st-bars span.l3 { background: var(--color-action); }
-.st-bars span.rest { width: 12px; height: 2px !important; background: var(--color-stone); opacity: .6; }
+.st-bars span.rest { width: 12px; height: 2px !important; background: var(--color-ink-dim); opacity: .6; }
 .st-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s2); margin-top: var(--s2); }
 .st-days span { text-align: center; font-size: 12px; line-height: 16px; color: var(--color-ink-dim); }
 .st-days span.rest { color: var(--color-ink); }

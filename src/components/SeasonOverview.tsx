@@ -48,7 +48,7 @@ export function SeasonOverview({ onSelectWeek }: { onSelectWeek: (weekStart: str
         <ul className="flex flex-wrap gap-x-4 gap-y-1">
           {phases.map((p) => (
             <li key={p.id} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: PHASE_COLOR[p.id] ?? 'var(--color-stone)' }} aria-hidden="true" />
+              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: PHASE_COLOR[p.id] ?? 'var(--color-ink-dim)' }} aria-hidden="true" />
               {sentenceCase(p.name)}
             </li>
           ))}
@@ -105,7 +105,7 @@ function ClimbProfile({ phases, goalName, goalDate, onPick }: { phases: SeasonPh
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="group" aria-label={label}>
       {stretches.map(({ p, k, x0, x1 }) => {
-        const color = PHASE_COLOR[p.id] ?? 'var(--color-stone)';
+        const color = PHASE_COLOR[p.id] ?? 'var(--color-ink-dim)';
         const y0 = yAt(k, 0);
         const y1 = yAt(k, 1);
         return (
@@ -169,7 +169,7 @@ function changeIcon(c: string): IconName {
 }
 
 function PhaseCard({ phase, open, onToggle, onSelectWeek }: { phase: SeasonPhase; open: boolean; onToggle: () => void; onSelectWeek: (weekStart: string) => void }) {
-  const color = PHASE_COLOR[phase.id] ?? 'var(--color-stone)';
+  const color = PHASE_COLOR[phase.id] ?? 'var(--color-ink-dim)';
   const total = phase.weeks.length;
   const passed = phase.weeks.filter((w) => w.past).length;
   const past = passed === total;
