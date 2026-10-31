@@ -87,6 +87,7 @@ const everything: AppSettings = {
   heatPace: false,
   weekdayPattern: false,
   airQuality: false,
+  morningRule: false,
   streamsInBackup: false,
   proposalTidyMonths: 12,
 };

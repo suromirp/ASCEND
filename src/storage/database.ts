@@ -778,6 +778,9 @@ export interface AppSettings {
   // when the European air quality index is poor. Asks air-quality-api.open-meteo.com with the same
   // rounded place as the forecast. Absent = on. Optional and additive.
   airQuality?: boolean;
+  // "Ochtendregel" (engine/morningRule.ts): the three watch numbers with a word each on the morning
+  // card, and the question "Ben je moe?" when two of the three are off. Absent = on.
+  morningRule?: boolean;
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
   proposalTidyMonths?: 0 | 3 | 6 | 12;

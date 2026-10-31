@@ -491,6 +491,7 @@ describe('rowSummary: gegevens en back-up', () => {
     expect(rowSummary('hitte-tempo', facts({ settings: { heatPace: false } as never })).checked).toBe(false);
     expect(rowSummary('weekdag-patroon', facts({ settings: { weekdayPattern: false } as never })).checked).toBe(false);
     expect(rowSummary('luchtkwaliteit', facts({ settings: { airQuality: false } as never })).checked).toBe(false);
+    expect(rowSummary('ochtendregel', facts({ settings: { morningRule: false } as never })).checked).toBe(false);
     expect(rowSummary('horloge-stil', facts({ settings: { watchSilence: false } as never })).checked).toBe(false);
     expect(rowSummary('ochtend-backup', facts({ settings: { morningInBackup: false } as never })).checked).toBe(false);
     expect(rowSummary('reeksen-backup', facts()).value).toBe('2 jaar');

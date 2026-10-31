@@ -519,6 +519,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waar het vandaan komt', text: 'Open-Meteo, met dezelfde afgeronde plek als het weer en zonder sleutel. Het raster is ongeveer 11 km; een drukke weg naast je route ziet het niet.' },
     ],
   },
+  ochtendregel: {
+    title: 'Twee van drie',
+    lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',
+    points: [
+      { head: 'Wat je ziet', text: 'op de ochtendkaart elk getal met een woord, zoals rusthartslag 4 hoger dan normaal of slaap normaal.' },
+      { head: 'Twee van drie', text: 'wijken er twee af in de richting die aandacht vraagt, dan vraagt de ochtend of je moe bent. Je antwoord telt mee zoals altijd; je planning verandert alleen met jouw Akkoord.' },
+      { head: 'Hoe zeker', text: 'bijsturen op meerdere signalen samen kan helpen om slechte dagen wat te verzachten (bewijs matig). Twee van drie is een vuistregel, geen meting.' },
+    ],
+  },
   horlogeStil: {
     title: 'Melden als je horloge stilvalt',
     lead: 'Garmin scherpte in oktober 2026 zijn voorwaarden aan. Als intervals.icu daardoor niets meer doorgeeft, zie je dat niet aan een foutmelding: het ophalen lukt, er komt alleen niets mee.',
