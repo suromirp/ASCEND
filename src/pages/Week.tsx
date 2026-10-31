@@ -6,7 +6,7 @@ import { scrollMainToTop } from '../utils/scrollMain';
 import { buildWeekReview } from '../engine/weekReview';
 import { dayLoads, weekProgress } from '../engine/weekProfile';
 import { plannedByIdOf } from '../engine/logDay';
-import { looseLogsOfWeek, weekLogsOf, weekTime } from '../engine/weekLogs';
+import { leftOutOfCount, looseLogsOfWeek, weekLogsOf, weekTime } from '../engine/weekLogs';
 import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
@@ -99,7 +99,7 @@ export function WeekPage() {
       previous: dayLoads({ weekStart: addDays(weekStart, -7), plannedSessions, logs: sessionLogs, templates, today, minutesOf }),
     };
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
-  const progress = weekProgress(sessions, sessionLogs, templateById);
+  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today));
   // Wat er deze week al gedaan is: kilometers en stijgen uit dezelfde logs als de tijd.
   const weekLogs = weekLogsOf(sessionLogs, templateById, weekStart, plannedById);
   const weekKm = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.distanceKm ?? 0), 0);

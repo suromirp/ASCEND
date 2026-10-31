@@ -23,8 +23,7 @@ import { logSport, SPORT_LABEL, type Sport } from './sports';
 import { weekChanges } from './changeLog';
 import { durationLabel } from './sessionBrief';
 import type { PlannedById } from './logDay';
-import { weekDoneMinutes, weekLogsOf } from './weekLogs';
-import { isIllnessDay } from './illness';
+import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
 import { idHasRole } from './templateRoles';
@@ -94,17 +93,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // while two trainings were skipped). Not counted: sessions ASCEND itself
   // took out while rearranging the plan (a new strength block, the weekly
   // planning), and days you were ill.
-  const removedBy = new Map<string, string>();
-  for (const p of planChangeLog) {
-    if (p.resolution !== 'accepted') continue;
-    for (const c of p.changes) if (c.action === 'remove' && c.plannedSessionId) removedBy.set(c.plannedSessionId, p.trigger);
-  }
-  const countsAsTraining = (s: PlannedSession) => {
-    if (isRest(s) || (illnessEpisodes && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf))) return false;
-    if (s.status !== 'skipped') return true;
-    const trigger = removedBy.get(s.id);
-    return !trigger || trigger === 'session_skipped' || trigger === 'session_missed';
-  };
+  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf);
+  const countsAsTraining = (s: PlannedSession) => countsAsTrainingShared(s, byId.get(s.templateId), leftOut);
   const trainings = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && countsAsTraining(s));
   // What was done that week, by the day it was done, with or without a plan: the same
   // logs and the same minutes as the top of Week (engine/weekLogs.ts).

@@ -11,6 +11,7 @@ import { addDays, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_TAPER, progressionTarget, waveWeek } from './programLayout';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
+import { countsAsTraining } from './weekLogs';
 
 export interface SeasonWeekItem {
   label: string;
@@ -56,7 +57,7 @@ function range(values: number[], unit: string): string | undefined {
   return lo === hi ? `${lo} ${unit}` : `${lo} tot ${hi} ${unit}`;
 }
 
-export function buildSeasonPlan(program: Program, plannedSessions: PlannedSession[], logs: SessionLog[], templates: SessionTemplate[], today: string): SeasonPhase[] {
+export function buildSeasonPlan(program: Program, plannedSessions: PlannedSession[], logs: SessionLog[], templates: SessionTemplate[], today: string, leftOut?: (id: string) => boolean): SeasonPhase[] {
   const byId = new Map(templates.map((t) => [t.id, t]));
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const thisMonday = mondayOfWeek(today);
@@ -82,7 +83,7 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
       const wave = position ? waveWeek(position) : 1;
       const restWeek = phase.id !== PHASE_TAPER && wave === 4;
       const sessions = plannedSessions
-        .filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= addDays(weekStart, 6) && s.status !== 'skipped')
+        .filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= addDays(weekStart, 6))
         .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
       const items: SeasonWeekItem[] = [];
       let total = 0;
@@ -91,13 +92,18 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
 
       for (const s of sessions) {
         const t = byId.get(s.templateId);
-        if (!t || t.type === 'recovery') continue;
+        if (!t || !countsAsTraining(s, t, leftOut)) continue;
         const min = minutesOf(s, t);
-        total += min;
+        const skipped = s.status === 'skipped';
         counted++;
         if (logged.has(s.id)) done++;
+        // Overgeslagen telt als gepland en niet gedaan (zoals op Week), maar staat niet meer in de tijd of in de lijst.
+        if (skipped) continue;
+        total += min;
         // The range per training: normal weeks only, not a fixed length (a taper, a catch-up).
         if (!restWeek && s.plannedMinutes === undefined) minutes.set(t.id, [...(minutes.get(t.id) ?? []), min]);
+        // Wat in het verleden gemist is, staat niet meer als komend onder de fase (Week zegt "Gemist").
+        if (s.scheduledDate < today && !logged.has(s.id)) continue;
 
         if (hasRole(t, 'race')) {
           items.push({ label: `${t.name} op ${shortDate(s.scheduledDate)}`, kind: 'race' });

@@ -22,6 +22,7 @@
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, daysBetween, mondayOfWeek, weekDates, weekdayLongNL } from '../utils/dates';
 import { logDay, plannedByIdOf } from './logDay';
+import { countsAsTraining } from './weekLogs';
 import { isIntentionalBackToBack, isLegHeavyTemplate, legSpacingDays } from './scheduler';
 import { weeklyLoad, type LoadInputs } from './standing';
 
@@ -91,19 +92,18 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
   });
 }
 
-// "2 van 5 gedaan": wat gepland staat (zonder rustdagen en overgeslagen
-// trainingen) en wat daarvan een log heeft. Gedaan is nooit een vlag: een
-// training is gedaan als er een log naar verwijst.
-export function weekProgress(sessions: PlannedSession[], logs: SessionLog[], templateById: Map<string, SessionTemplate>): { done: number; total: number } {
+// "2 van 5 gedaan": wat gepland staat (zonder rustdagen; een overgeslagen
+// training telt mee als gepland en niet gedaan, zoals in de weekterugblik,
+// engine/weekLogs.ts#countsAsTraining) en wat daarvan een log heeft. Gedaan is
+// nooit een vlag: een training is gedaan als er een log naar verwijst.
+export function weekProgress(sessions: PlannedSession[], logs: SessionLog[], templateById: Map<string, SessionTemplate>, leftOut?: (id: string) => boolean): { done: number; total: number } {
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   let done = 0;
   let total = 0;
   for (const s of sessions) {
-    if (templateById.get(s.templateId)?.type === 'recovery') continue;
-    if (logged.has(s.id)) {
-      done++;
-      total++;
-    } else if (s.status !== 'skipped') total++;
+    if (!countsAsTraining(s, templateById.get(s.templateId), leftOut)) continue;
+    total++;
+    if (logged.has(s.id)) done++;
   }
   return { done, total };
 }

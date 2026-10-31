@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
+import { leftOutOfCount } from '../engine/weekLogs';
 import { buildSeasonPlan, type SeasonPhase, type SeasonWeek } from '../engine/seasonPlan';
 import { programAnchorDate } from '../engine/programLayout';
 import { PHASE_COLOR } from '../data/phaseColors';
@@ -20,11 +21,11 @@ function sentenceCase(name: string) {
 }
 
 export function SeasonOverview({ onSelectWeek }: { onSelectWeek: (weekStart: string) => void }) {
-  const { program, plannedSessions, sessionLogs, templates, trainingGoals, goalMilestones } = useAppData();
+  const { program, plannedSessions, sessionLogs, templates, trainingGoals, goalMilestones, planChangeLog, settings } = useAppData();
   const today = todayISO();
   const phases = useMemo(
-    () => (program ? buildSeasonPlan(program, plannedSessions, sessionLogs, templates, today) : []),
-    [program, plannedSessions, sessionLogs, templates, today],
+    () => (program ? buildSeasonPlan(program, plannedSessions, sessionLogs, templates, today, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today)) : []),
+    [program, plannedSessions, sessionLogs, templates, today, planChangeLog, settings.illnessEpisodes],
   );
   const [open, setOpen] = useState<string | undefined>(() => phases.find((p) => p.current)?.id);
   if (!program || phases.length === 0) return null;

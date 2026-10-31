@@ -83,14 +83,14 @@ describe('dayLoads', () => {
 });
 
 describe('weekProgress', () => {
-  it('telt gedaan op de aanwezigheid van een log, zonder rustdagen en overgeslagen trainingen', () => {
+  it('telt gedaan op de aanwezigheid van een log, zonder rustdagen, met overgeslagen trainingen als gepland', () => {
     const a = planned('tpl_lower_a', '2026-10-19');
     const b = planned('tpl_easy_run', '2026-10-20');
     const c = planned('tpl_upper_b', '2026-10-23');
     const skipped = planned('tpl_easy_run', '2026-10-24', { status: 'skipped' });
     const rest = planned('tpl_herstel', '2026-10-21');
     const logs = [log('tpl_lower_a', '2026-10-19', 70, { plannedSessionId: a.id })];
-    expect(weekProgress([a, b, c, skipped, rest], logs, byId)).toEqual({ done: 1, total: 3 });
+    expect(weekProgress([a, b, c, skipped, rest], logs, byId)).toEqual({ done: 1, total: 4 });
   });
 });
 
