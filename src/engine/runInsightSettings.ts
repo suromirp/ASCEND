@@ -105,6 +105,15 @@ export function resolveRunDetailScreen(raw: unknown): ResolvedRunDetailScreen {
   };
 }
 
+const FORM_NAMES: Record<RunFormSwitch, string> = { cadence: 'cadans', stanceTimeMs: 'grondcontact', stepLengthM: 'staplengte', oscillationMm: 'op en neer', stanceBalanceLeftPct: 'balans' };
+
+// "cadans en nog 3", "niets", "grondcontact": what the card Loopvorm shows, in a few words.
+export function formSwitchesLine(form: Record<RunFormSwitch, boolean>): string {
+  const on = FORM_SWITCHES.filter((k) => form[k]);
+  if (on.length === 0) return 'niets';
+  return on.length === 1 ? FORM_NAMES[on[0]] : `${FORM_NAMES[on[0]]} en nog ${on.length - 1}`;
+}
+
 function cleanDetail(raw: unknown): { value: RunDetailScreenSettings | undefined; dropped: number } {
   if (!isRecord(raw)) return { value: undefined, dropped: 1 };
   const out: RunDetailScreenSettings = {};

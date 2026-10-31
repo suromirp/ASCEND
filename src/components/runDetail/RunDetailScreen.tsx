@@ -17,7 +17,12 @@ import { isStaleRunDetail } from '../../engine/runDetail';
 import { judgmentOptions, testBasisLine, testState } from '../../engine/testJudgment';
 import {
   clock,
+  compareWithSimilar,
   distanceLabel,
+  formKeysOf,
+  recurringFastStart,
+  runAdvice,
+  runPatterns,
   headlineStats,
   heartNote,
   kmBetween,
@@ -38,6 +43,13 @@ import { TextButton } from '../TextButton';
 import { TestVerdictCard } from '../TestVerdictCard';
 import { Card, Eyebrow, InfoButton, Num, SecondaryButton, Segmented, Stat } from '../ui';
 import { DistanceCharts, PaceBarsChart } from './RunDetailCharts';
+import { AdviceCard, CompareCard, FormCard, PatternsCard } from './RunDetailExtras';
+import { useLegFatigueInputs } from '../LegFatigueCard';
+import { useExcludedLogIds } from '../influence/useExcludedLogIds';
+import { resolveRunInsight } from '../../engine/runInsightSettings';
+import { similarRuns } from '../../engine/runComparison';
+import { mainReason, reasonText } from '../../engine/runInsight';
+import { painReports } from '../../engine/pain';
 import { ExplainSheet, PieceSheet } from './RunDetailSheets';
 
 const dim = { color: 'var(--color-ink-dim)' };
@@ -103,7 +115,10 @@ type AppSettings = ReturnType<typeof useAppData>['settings'];
 type Templates = ReturnType<typeof useAppData>['templates'];
 
 function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog; templates: Templates; settings: AppSettings; refresh: () => Promise<void> | void; onClose: () => void }) {
-  const { sessionLogs } = useAppData();
+  const { sessionLogs, program } = useAppData();
+  const legs = useLegFatigueInputs();
+  const excluded = useExcludedLogIds();
+  const screen = resolveRunInsight(settings.runInsight);
   const rd = log.runDetail;
   const d = log.cardioData ?? log.outdoorData;
   const stale = !!rd && isStaleRunDetail(rd, d?.distanceKm ?? 0, d?.durationMinutes || log.durationMinutes);
@@ -119,6 +134,25 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   const bars = useMemo(() => (rd ? paceBars(rd, kind) : undefined), [rd, kind]);
   const layout = useMemo(() => (rd && isTest ? testLayout(rd) : undefined), [rd, isTest]);
   const laps = rd ? lapsForList(rd) : [];
+  // 4.7 to 4.10: only what the run has and what is switched on.
+  const formKeys = useMemo(() => (rd ? formKeysOf(rd, screen.detail.form) : []), [rd, screen.detail.form]);
+  const patterns = useMemo(() => {
+    if (!rd || !screen.detail.patterns) return undefined;
+    const recurring = kind === 'test' || kind === 'race' || kind === 'blocks' ? recurringFastStart(sessionLogs, templates, log) : undefined;
+    return runPatterns(rd, { kind, indoor, recurring, played: { conditions: log.detail?.conditions } });
+  }, [rd, screen.detail.patterns, kind, indoor, sessionLogs, templates, log]);
+  const compare = useMemo(() => {
+    if (!rd) return undefined;
+    const c = similarRuns(log, { logs: sessionLogs, templates, program, hr: settings.heartRate, legs, chestStrap: screen.chestStrap, excludedLogIds: excluded });
+    const others = c.logs.flatMap((l) => (l.runDetail ? [l.runDetail] : []));
+    const result = c.enough ? compareWithSimilar(rd, others) : undefined;
+    const reason = mainReason(c.reasons);
+    return { result, reason: reason ? reasonText(reason, 'runs') : undefined };
+  }, [rd, log, sessionLogs, templates, program, settings.heartRate, legs, screen.chestStrap, excluded]);
+  const advice = useMemo(
+    () => (rd && screen.detail.advice ? runAdvice(rd, kind, { pain: painReports(log).length > 0, feltWorse: log.subjectiveFeel === 'worse', indoor }) : undefined),
+    [rd, screen.detail.advice, kind, log, indoor],
+  );
   const meanPace = rd && rd.totalM > 0 ? (rd.movingSec / rd.totalM) * 1000 : 0;
 
   const [selected, setSelected] = useState<number | null>(null);
@@ -323,6 +357,12 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
           <div className="mt-1"><TextButton onClick={() => setShowAll(true)}>Alle {rd.kms.length} kilometer tonen</TextButton></div>
         )}
       </Card>
+
+      {/* 4.7 tot 4.10 */}
+      {formKeys.length > 0 && <FormCard rd={rd} keys={formKeys} />}
+      {patterns && <PatternsCard patterns={patterns} />}
+      {compare && <CompareCard rd={rd} comparison={compare.result} reason={compare.reason} />}
+      {advice && <AdviceCard advice={advice} />}
 
       {/* 6.3: geen open vraag, dan onderaan */}
       {!askTop && testCard}

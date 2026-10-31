@@ -247,7 +247,7 @@ describe('form (4.7)', () => {
   });
 
   it('says one fact: a steady cadence, or a change past the noise', () => {
-    expect(formFactLine(even(6), 'cadence')).toBe('Je cadans bleef binnen 1 stappen per minuut.');
+    expect(formFactLine(even(6), 'cadence')).toBe('Je cadans bleef vrijwel gelijk.');
     const kms = kmsOf([330, 330, 330, 330, 330, 330], [0, 1, 2, 3, 4, 5].map((i) => ({ stanceTimeMs: i < 2 ? 250 : i < 4 ? 255 : 265 })));
     expect(formFactLine(detailOf(kms), 'stanceTimeMs')).toBe('Je grondcontact werd in het laatste derde 15 ms langer dan in het eerste.');
     const tiny = kmsOf([330, 330, 330, 330, 330, 330], [0, 1, 2, 3, 4, 5].map((i) => ({ stanceTimeMs: i < 3 ? 250 : 252 })));
@@ -299,6 +299,12 @@ describe('advice (4.10, 6.5)', () => {
     expect(runAdvice(rd, 'test', { pain: true })).toBeUndefined();
     expect(runAdvice(rd, 'test', { feltWorse: true })).toBeUndefined();
     expect(runAdvice(even(6), 'other')).toBeUndefined();
+  });
+
+  it('gives an easy run no pace advice: it goes on feel or heart rate', () => {
+    const fast = detailOf(kmsOf([300, 340, 345, 350, 352, 355]));
+    expect(runAdvice(fast, 'other')?.lines[0]).toMatch(/^Begin de eerste kilometer/);
+    expect(runAdvice(fast, 'easy')).toBeUndefined();
   });
 });
 

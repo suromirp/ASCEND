@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { DEFAULT_RUN_INSIGHT, cleanRunInsight, resolveRunInsight } from './runInsightSettings';
+import { DEFAULT_RUN_INSIGHT, cleanRunInsight, formSwitchesLine, resolveRunInsight } from './runInsightSettings';
 import { DEFAULT_WATCH_USE, detailsWanted, filterActivityDetails, normalizeWatchUse } from './watchUse';
 import type { ExternalActivity } from './activityImport';
 import { syncWatchActivities, saveConnection, setWatchUse, getWatchState } from '../storage/externalActivities';
@@ -46,6 +46,12 @@ describe('the settings of Run in detail', () => {
     expect(d.form.stanceBalanceLeftPct).toBe(true);
     expect(d.form.cadence).toBe(false);
     expect(d.form.stepLengthM).toBe(true);
+  });
+
+  it('say in a few words what the card Loopvorm shows', () => {
+    expect(formSwitchesLine(resolveRunInsight(undefined).detail.form)).toBe('cadans en nog 3');
+    expect(formSwitchesLine({ cadence: false, stanceTimeMs: true, stepLengthM: false, oscillationMm: false, stanceBalanceLeftPct: false })).toBe('grondcontact');
+    expect(formSwitchesLine({ cadence: false, stanceTimeMs: false, stepLengthM: false, oscillationMm: false, stanceBalanceLeftPct: false })).toBe('niets');
   });
 
   it('survive a backup and lose only what is broken', () => {

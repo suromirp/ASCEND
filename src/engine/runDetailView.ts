@@ -466,7 +466,7 @@ export function formFactLine(rd: RunDetail, key: FormKey): string | undefined {
   }
   if (key === 'cadence') {
     const r = cadenceRange(rd);
-    if (r !== undefined) return r <= 4 ? `Je cadans bleef binnen ${Math.max(1, Math.round(r))} stappen per minuut.` : `Je cadans liep ${Math.round(r)} stappen per minuut uiteen over de kilometers.`;
+    if (r !== undefined) return r < 1.5 ? 'Je cadans bleef vrijwel gelijk.' : r <= 4 ? `Je cadans bleef binnen ${Math.round(r)} stappen per minuut.` : `Je cadans liep ${Math.round(r)} stappen per minuut uiteen over de kilometers.`;
   }
   const pts = formSeries(rd, key);
   if (pts.length < 2) return undefined;
@@ -732,7 +732,8 @@ export function runAdvice(rd: RunDetail, kind: RunKind, opts: { pain?: boolean; 
     const fade = blockFade(rd.laps);
     if (fade) lines.push('Begin het eerste blok iets rustiger, zodat het laatste even snel kan.');
   } else {
-    const p = pacingOf(rd.kms);
+    // An easy run goes on feel or heart rate: its pace is no advice (the research, hoofdstuk 3).
+    const p = kind === 'easy' ? undefined : pacingOf(rd.kms);
     if (p?.word === 'te snel begonnen') {
       const diff = Math.round(p.meanPace - p.firstPace);
       if (diff >= ADVICE_MIN_SEC) lines.push(`Begin de eerste kilometer ${secs(Math.round(diff / 5) * 5)} per kilometer rustiger; dan blijft er meer over voor het eind.`);

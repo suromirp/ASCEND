@@ -716,6 +716,31 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Gegevens', text: 'komen van je horloge via intervals.icu, met Details van loopjes en tochten aan.' },
     ],
   },
+  runDetailPatronen: {
+    title: 'Patronen in Run in detail',
+    lead: 'De kaart Wat opvalt noemt hoogstens drie dingen uit je run, de sterkste eerst.',
+    points: [
+      { head: 'Wat', text: 'een te snelle start, inzakken, een hartslag die oploopt, een klim of tegenwind, en bij een test wat er meespeelde.' },
+      { head: 'Waarom', text: 'elke regel heeft een blad met wat er vergeleken is en hoe sterk het is. Het zegt wat het kan betekenen, nooit een oorzaak.' },
+      { head: 'Uit', text: 'je ziet alleen de getallen en de grafieken.' },
+    ],
+  },
+  runDetailAdvies: {
+    title: 'Advies in Run in detail',
+    lead: 'Een of twee suggesties voor de volgende keer, uit de verdeling van je run of test.',
+    points: [
+      { head: 'Nooit', text: 'een tijd om te halen of een belofte. Na pijn of Slechter blijft het advies weg.' },
+      { head: 'Je planning', text: 'verandert er niet door. Een verandering gaat altijd via een voorstel met Akkoord.' },
+    ],
+  },
+  runDetailLoopvorm: {
+    title: 'Loopvorm in Run in detail',
+    lead: 'Welke grootheden de kaart Loopvorm laat zien, als je horloge ze meet.',
+    points: [
+      { head: 'Advies', text: 'cadans, grondcontact, staplengte en op en neer aan, de balans uit.' },
+      { head: 'Balans', text: 'zegt na één run niets; pas over meerdere runs is een verdeling buiten ongeveer 52 tegen 48 het bekijken waard.' },
+    ],
+  },
   borstband: {
     title: 'Hartslag van de borstband',
     lead: 'Zonder borstband kan de hartslag van een andere bron komen, en dan vergelijkt ASCEND niet eerlijk.',

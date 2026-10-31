@@ -7,7 +7,7 @@ import { resolveBodyCheck } from '../../../engine/bodyCheckSettings';
 import { resolveLegEase, resolveLegEaseHow } from '../../../engine/legEaseSettings';
 import { resolveMotion } from '../../../engine/motionSettings';
 import { resolveSky } from '../../../engine/skySettings';
-import { type InsightTopicSwitch, type RunDetailScreenSettings, type RunInsightSettings } from '../../../engine/runInsightSettings';
+import { type InsightTopicSwitch, type RunDetailScreenSettings, type RunFormSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
 import { matchTodayProfile, todayProfilePatch, type TodayProfileChoice } from '../../../engine/settingsProfiles';
 import { Eyebrow } from '../../ui';
 import { SettingsList, SettingsSection } from '../SettingsList';
@@ -35,6 +35,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte betekent de standaard.
   const setInsight = (patch: Partial<RunInsightSettings>) => void updateSettings({ runInsight: { ...settings.runInsight, ...patch } });
   const setDetail = (patch: Partial<RunDetailScreenSettings>) => setInsight({ detail: { ...settings.runInsight?.detail, ...patch } });
+  const setForm = (key: RunFormSwitch, on: boolean) => setDetail({ form: { ...settings.runInsight?.detail?.form, [key]: on } });
   const setTopic = (topic: InsightTopicSwitch, on: boolean) => setInsight({ topics: { ...settings.runInsight?.topics, [topic]: on } });
   const close = () => setSheet(null);
   // Een keuze in een blad opent haar onderblad bovenop dat blad.
@@ -154,6 +155,20 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {sheet === 'bundel-run-detail' && (
         <BundleSheet eyebrow="Vandaag en meldingen" title="Run in detail" line="Je run kilometer na kilometer, vanuit het logblad." onClose={close}>
           <SummaryRow id="run-detail" title="Run in detail tonen" facts={facts} info="runDetail" onChange={(on) => setDetail({ show: on })} />
+          <SummaryRow id="run-detail-patronen" title="Patronen tonen" facts={facts} info="runDetailPatronen" onChange={(on) => setDetail({ patterns: on })} />
+          <SummaryRow id="run-detail-advies" title="Advies tonen" facts={facts} info="runDetailAdvies" onChange={(on) => setDetail({ advice: on })} />
+          {rowShown('loopvorm-cadans', facts) && (
+            <div style={{ marginTop: 16 }}>
+              <Eyebrow>Loopvorm tonen</Eyebrow>
+              <SettingsList>
+                <SummaryRow id="loopvorm-cadans" title="Cadans" facts={facts} onChange={(on) => setForm('cadence', on)} />
+                <SummaryRow id="loopvorm-grondcontact" title="Grondcontact" facts={facts} onChange={(on) => setForm('stanceTimeMs', on)} />
+                <SummaryRow id="loopvorm-staplengte" title="Staplengte" facts={facts} onChange={(on) => setForm('stepLengthM', on)} />
+                <SummaryRow id="loopvorm-oscillatie" title="Op en neer" facts={facts} onChange={(on) => setForm('oscillationMm', on)} />
+                <SummaryRow id="loopvorm-balans" title="Balans" facts={facts} info="runDetailLoopvorm" onChange={(on) => setForm('stanceBalanceLeftPct', on)} />
+              </SettingsList>
+            </div>
+          )}
         </BundleSheet>
       )}
       {sheet === 'lucht' && (

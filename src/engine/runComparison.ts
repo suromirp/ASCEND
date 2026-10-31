@@ -390,10 +390,8 @@ export function similarRuns(subject: SessionLog, ctx: ComparisonContext): Compar
   const kept: Candidate[] = [];
   for (const log of pool) {
     const rd = log.runDetail;
-    if (!rd || log.trim) {
-      drop('noDetail');
-      continue;
-    }
+    // A run without kilometres is no candidate; it is not a reason worth telling either.
+    if (!rd || log.trim) continue;
     if (isIndoorLog(log) !== indoor) {
       drop('treadmill');
       continue;
