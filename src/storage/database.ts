@@ -754,6 +754,13 @@ export interface AppSettings {
   // because the source may stop giving them out; off makes a small backup. The copies taken
   // before an import never hold them. Optional and additive.
   streamsInBackup?: boolean;
+  // "Reeksen in back-up" as a choice (engine/streamsBackup.ts): 'twoYears' (advice, absent = twoYears,
+  // or 'none' when the old switch streamsInBackup is off), 'all' or 'none'. Picking one drops the old
+  // switch. Optional and additive; read on import by storage/migrations.ts#migrateStreamsBackup.
+  streamsBackup?: 'twoYears' | 'all' | 'none';
+  // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
+  // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
+  proposalTidyMonths?: 0 | 3 | 6 | 12;
   // Your own verdict per test run: "Telt mee" or "Telt niet mee" (models/testJudgment.ts,
   // engine/testJudgment.ts). The log is never changed. Optional and additive, so the backup
   // schema number does not move; read defensively on import

@@ -23,7 +23,9 @@ import type { PlanChangeProposal } from '../models/planChange';
 import { stableJson } from './weeklyPrescriptionDiff';
 
 function isAutomaticWeeklyLine(p: PlanChangeProposal, referenced: Set<string>): boolean {
-  return p.trigger === 'weekly_prescription_computed' && p.resolution === 'accepted' && !p.revertsProposalId && !referenced.has(p.id);
+  // Een samengevatte regel (engine/proposalTidy.ts) mist zijn details en lijkt daardoor op elkaar;
+  // die blijft altijd staan.
+  return p.trigger === 'weekly_prescription_computed' && p.resolution === 'accepted' && !p.revertsProposalId && !p.summarizedAt && !referenced.has(p.id);
 }
 
 // Inhoud van een regel zonder wat bij elke opening vers is.

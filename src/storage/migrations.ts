@@ -9,6 +9,9 @@
 // it is missing or not a list, so an older backup imports as before.
 
 import { isPlausibleFatPct } from '../engine/bodyFat';
+import { isStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
+import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/proposalTidy';
+import type { PlanChangeProposal } from '../models/planChange';
 import { BackupMessageError } from './backupMessage';
 import type { AppSettings } from './database';
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';
@@ -594,6 +597,45 @@ export function cleanNavigationSettings(raw: { tabBack?: unknown; resumeMinutes?
     else skipped++;
   }
   return { value, skipped };
+}
+
+// --- gegevens op lange termijn (2026-10-31) ------------------------------------------
+// `settings.streamsBackup` vervangt de schakelaar `streamsInBackup` door drie keuzes
+// (engine/streamsBackup.ts). Een back-up van daarvoor heeft alleen de schakelaar: uit wordt Geen
+// reeksen, aan of niets is het advies (de laatste 2 jaar). De schakelaar zelf blijft staan, zodat
+// een oudere versie van de app hetzelfde bestand nog leest. `settings.proposalTidyMonths` is
+// nieuw: alleen een bekende waarde blijft, de rest wordt weggelaten en geteld.
+export function migrateDataSettings(raw: { streamsBackup?: unknown; streamsInBackup?: unknown; proposalTidyMonths?: unknown }): {
+  value: { streamsBackup?: StreamsBackup; proposalTidyMonths?: ProposalTidyMonths };
+  skipped: number;
+} {
+  const value: { streamsBackup?: StreamsBackup; proposalTidyMonths?: ProposalTidyMonths } = {};
+  let skipped = 0;
+  if (raw.streamsBackup !== undefined) {
+    if (isStreamsBackup(raw.streamsBackup)) value.streamsBackup = raw.streamsBackup;
+    else skipped++;
+  }
+  if (value.streamsBackup === undefined && raw.streamsInBackup === false) value.streamsBackup = 'none';
+  if (raw.proposalTidyMonths !== undefined) {
+    if ((PROPOSAL_TIDY_OPTIONS as readonly unknown[]).includes(raw.proposalTidyMonths)) value.proposalTidyMonths = raw.proposalTidyMonths as ProposalTidyMonths;
+    else skipped++;
+  }
+  return { value, skipped };
+}
+
+// Een voorstel dat ASCEND samenvatte (engine/proposalTidy.ts) heeft `summarizedAt` en
+// `changeCount`. Een oudere back-up heeft ze niet en blijft zoals hij is. Staan ze er in een
+// vorm die niet klopt, dan vallen alleen die velden weg; het voorstel blijft. Zonder lijst met
+// wijzigingen of andere keuzes krijgt het een lege lijst, zodat elke lezer het kan lezen.
+export function migratePlanChangeProposal(p: PlanChangeProposal): PlanChangeProposal {
+  const okStamp = p.summarizedAt === undefined || typeof p.summarizedAt === 'string';
+  const okCount = p.changeCount === undefined || (typeof p.changeCount === 'number' && Number.isInteger(p.changeCount) && p.changeCount >= 0);
+  const okLists = Array.isArray(p.changes) && Array.isArray(p.alternatives);
+  if (okStamp && okCount && okLists) return p;
+  const next: PlanChangeProposal = { ...p, changes: Array.isArray(p.changes) ? p.changes : [], alternatives: Array.isArray(p.alternatives) ? p.alternatives : [] };
+  if (!okStamp) delete next.summarizedAt;
+  if (!okCount) delete next.changeCount;
+  return next;
 }
 
 // --- zonder doel: richting, start en weekbudget (optionele instellingen) ------------

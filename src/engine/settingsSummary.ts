@@ -46,6 +46,9 @@ import { adviceDifferences } from './settingsDiff';
 import { settingBudget } from './weekBudget';
 import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
+import { resolveStreamsBackup } from './streamsBackup';
+import { resolveProposalTidyMonths } from './proposalTidy';
+import { storageUseText, type StorageEstimate } from './storageUse';
 import { quickButtonsOn, swipeDeleteOn } from './forgeQuickActions';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
@@ -64,7 +67,8 @@ export interface RowSummary {
   auto?: boolean;
   // Niet ingesteld of uit: gedimd.
   dim?: boolean;
-  dot?: 'ok' | 'no';
+  // 'warn': let op, in amber (bijna vol).
+  dot?: 'ok' | 'no' | 'warn';
   // Een schakelaar: aan of uit.
   checked?: boolean;
   // De rij hoort er nu niet te staan (geen sterktetrainingen, geen browserondersteuning).
@@ -131,6 +135,9 @@ export interface SettingsFacts {
   // De ruimte die de volledige reeksen van loopjes en tochten innemen (bytes); weglaten zolang
   // dat nog niet is geteld.
   streamsBytes?: number;
+  // Hoeveel ruimte de app op dit toestel gebruikt (storage/storageEstimate.ts); weglaten zolang
+  // dat nog niet gemeten is.
+  storageUse?: StorageEstimate;
   snapshots: number;
   buildLabel: string;
   // Of de keuze voor de lange zondag er staat (niet bij een bergdoel).
@@ -705,8 +712,23 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: String(f.snapshots), dim: f.snapshots === 0 };
     case 'reeksen-bewaren':
       return { checked: s.keepStreams !== false };
-    case 'reeksen-backup':
-      return { checked: s.streamsInBackup !== false, sub: f.streamsBytes !== undefined ? (f.streamsBytes > 0 ? `Maakt de back-up ongeveer ${formatBytes(f.streamsBytes * 1.34)} groter` : 'Nog geen reeksen bewaard') : undefined };
+    case 'reeksen-backup': {
+      const choice = resolveStreamsBackup(s);
+      const sub = f.streamsBytes === undefined || choice === 'none'
+        ? undefined
+        : f.streamsBytes > 0
+          ? `${choice === 'all' ? 'Maakt' : 'Maakt hoogstens'} de back-up ongeveer ${formatBytes(f.streamsBytes * 1.34)} groter`
+          : 'Nog geen reeksen bewaard';
+      return { value: choiceShort('reeksenBackup', choice), dim: choice === 'none', sub };
+    }
+    case 'voorstellen-opruimen': {
+      const months = resolveProposalTidyMonths(s.proposalTidyMonths);
+      return { value: choiceShort('voorstellenOpruimen', months), dim: months === 0 };
+    }
+    case 'ruimte-app': {
+      const use = storageUseText(f.storageUse);
+      return use ? { value: use.value, sub: use.sub, dim: use.dim, dot: use.tight ? 'warn' : undefined } : {};
+    }
     case 'reeksen-ruimte':
       return f.streamsBytes === undefined ? {} : { value: formatBytes(f.streamsBytes), dim: f.streamsBytes === 0 };
     case 'aangepast': {

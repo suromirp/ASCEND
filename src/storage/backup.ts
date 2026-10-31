@@ -17,7 +17,8 @@
 // snapshot's own envelope.
 
 import { cleanCardOrder } from '../engine/cardOrder';
-import { localDateOf } from '../utils/dates';
+import { localDateOf, todayISO } from '../utils/dates';
+import { logIdsForBackup, resolveStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { isEmptyStart } from '../engine/freshStart';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
@@ -61,7 +62,7 @@ import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -128,6 +129,8 @@ export interface BuildEnvelopeOptions {
   // (on unless you turned it off). The copy taken before an import passes false: it only
   // has to undo that import, and the series would make every copy tens of megabytes.
   streams?: boolean;
+  // For the tests: the day "the last 2 years" counts back from.
+  today?: string;
 }
 
 export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): Promise<AscendBackupEnvelope> {
@@ -175,10 +178,14 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
   };
 
   // The full series of runs and tochten, as base64. They may not be fetchable again from the
-  // source, so they go along by default (docs/beslissingen/2026-10-27-run-in-detail-gegevens.md).
-  if (options.streams ?? settings.streamsInBackup !== false) {
+  // source, so they go along by default (docs/beslissingen/2026-10-27-run-in-detail-gegevens.md),
+  // those of the last 2 years unless you chose all or none
+  // (docs/beslissingen/2026-10-31-data-lange-termijn.md). The summary per run (runDetail,
+  // bestEffort) is on the log itself and always goes along.
+  const choice: StreamsBackup = options.streams === false ? 'none' : options.streams === true ? 'all' : resolveStreamsBackup(settings);
+  if (choice !== 'none') {
     // Only the series of a log that still exists: a leftover of a deleted log stays out.
-    const logIds = new Set(sessionLogs.map((l) => l.id));
+    const logIds = logIdsForBackup(sessionLogs, choice, options.today ?? todayISO());
     const streams = (await ActivityStreamsRepo.getAll()).filter((s) => logIds.has(s.logId));
     // In small steps, so a year of series does not hold the screen still in one long block.
     const serialized = [];
@@ -399,6 +406,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
       skipped.n++;
     }
   }
+  // Reeksen in back-up als keuze en het opruimen van oude voorstellen
+  // (storage/migrations.ts#migrateDataSettings).
+  {
+    const data = migrateDataSettings(s);
+    delete s.streamsBackup;
+    delete s.proposalTidyMonths;
+    Object.assign(s, data.value);
+    skipped.n += data.skipped;
+  }
   if ('readinessWeighting' in s && s.readinessWeighting !== 'speed' && s.readinessWeighting !== 'equal') {
     delete s.readinessWeighting;
     skipped.n++;
@@ -600,7 +616,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
     if (isRecord(raw.goalEngineConfig)) normalized.goalEngineConfig = raw.goalEngineConfig as NormalizedBackupData['goalEngineConfig'];
     normalized.strengthProgramStrategies = cleanList<StrengthProgramStrategy>(raw.strengthProgramStrategies, hasId, skipped);
     normalized.strengthProgramRecommendations = cleanList<StrengthProgramRecommendation>(raw.strengthProgramRecommendations, hasId, skipped);
-    normalized.planChangeProposals = cleanList<PlanChangeProposal>(raw.planChangeProposals, hasId, skipped);
+    normalized.planChangeProposals = cleanList<PlanChangeProposal>(raw.planChangeProposals, hasId, skipped)?.map(migratePlanChangeProposal);
     if (isRecord(raw.adviceResponses)) normalized.adviceResponses = raw.adviceResponses;
   }
 

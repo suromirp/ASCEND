@@ -103,7 +103,7 @@ export interface SettingsRowProps {
   auto?: boolean;
   // Niet ingesteld of uit: de waarde staat gedimd.
   dim?: boolean;
-  dot?: 'ok' | 'no' | 'gold';
+  dot?: 'ok' | 'no' | 'gold' | 'warn';
   // De sleutel van een uitleg in data/settingsHelp.ts.
   info?: string;
   onClick?: () => void;

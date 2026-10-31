@@ -22,6 +22,8 @@ import { getConnection, getWatchState, onWatchChange, type WatchActivityState } 
 import { getWatchWorkoutState } from '../../storage/watchWorkouts';
 import { getMacroFactorState, onMacroFactorChange, type MacroFactorState } from '../../storage/macrofactor';
 import { getPersistenceStatus, type PersistenceStatus } from '../../storage/persistence';
+import { estimateStorage } from '../../storage/storageEstimate';
+import type { StorageEstimate } from '../../engine/storageUse';
 import { listSnapshots } from '../../storage/backup';
 import { webBackupFileAdapter } from '../../storage/backupFileAdapter';
 import { buildLabel } from '../../utils/buildLabel';
@@ -44,6 +46,7 @@ interface Loaded {
   snapshots: number;
   folderChosen: boolean;
   streamsBytes?: number;
+  storageUse?: StorageEstimate;
   notice: SettingsFacts['notice'];
 }
 
@@ -58,7 +61,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize] = await Promise.all([
+      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize, storageUse] = await Promise.all([
         getConnection().catch(() => null),
         getWatchState().catch(() => null),
         getWatchWorkoutState().catch(() => null),
@@ -68,9 +71,11 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         webBackupFileAdapter.supportsPreferredDirectory() ? (webBackupFileAdapter.hasPreferredDirectory?.() ?? Promise.resolve(false)).catch(() => false) : Promise.resolve(false),
         readNoticeEnvironment().catch(() => undefined),
         ActivityStreamsRepo.totalBytes().catch(() => undefined),
+        // Met een eigen tijdsgrens (storage/storageEstimate.ts): wacht nooit langer dan een paar seconden.
+        estimateStorage(),
       ]);
       if (!alive) return;
-      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, notice: noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
+      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, notice: noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
     };
     void load();
     const offWatch = onWatchChange(() => void load());
@@ -148,6 +153,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       folderChosen: loaded.folderChosen,
       storage: loaded.storage,
       streamsBytes: loaded.streamsBytes,
+      storageUse: loaded.storageUse,
       snapshots: loaded.snapshots,
       buildLabel: buildLabel(),
       longSundayVisible: !mainIsTrek || settings.longSundaySession === 'run',

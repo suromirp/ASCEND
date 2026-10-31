@@ -603,6 +603,31 @@ export const CHOICES = {
       { value: 'monday', label: 'Maandag', note: 'Over de week die voorbij is', short: 'Maandag' },
     ],
   }),
+  reeksenBackup: def({
+    group: 'Gegevens en back-up',
+    title: 'Reeksen in back-up',
+    line: 'Welke volledige reeksen van je horloge mee gaan.',
+    advice: 'twoYears' as 'twoYears' | 'all' | 'none',
+    help: 'reeksenBackup',
+    options: [
+      { value: 'twoYears', label: 'De laatste 2 jaar', note: 'Ongeveer 15 tot 25 MB per jaar', short: 'Laatste 2 jaar' },
+      { value: 'all', label: 'Alle reeksen', note: 'De back-up groeit elk jaar mee', short: 'Alle' },
+      { value: 'none', label: 'Geen reeksen', note: 'Een kleine back-up, de kilometers gaan wel mee', short: 'Geen' },
+    ],
+  }),
+  voorstellenOpruimen: def({
+    group: 'Gegevens en back-up',
+    title: 'Oude voorstellen opruimen',
+    line: 'Besliste voorstellen worden na een tijd kort samengevat.',
+    advice: 3 as 0 | 3 | 6 | 12,
+    help: 'voorstellenOpruimen',
+    options: [
+      { value: 3, label: 'Na 3 maanden', short: 'Na 3 maanden' },
+      { value: 6, label: 'Na 6 maanden', short: 'Na 6 maanden' },
+      { value: 12, label: 'Na een jaar', short: 'Na een jaar' },
+      { value: 0, label: 'Nooit', note: 'Elk voorstel blijft met alle details staan', short: 'Nooit' },
+    ],
+  }),
 } as const;
 
 export type ChoiceId = keyof typeof CHOICES;
