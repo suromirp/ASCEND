@@ -23,6 +23,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 - Ochtenden in de back-up, klein (review 31 oktober): bij het uitzetten van "Ochtendgetallen in back-up" zonder koppeling de bewaarde ochtenden opruimen; `retire` slaat records over die al alleen de back-upvelden hebben; een kort besluit dat de cache een archief is dat ontkoppelen overleeft.
 - Sporten die meetellen stap 1 (pictogrammen, Cartographer) en stap 4 tot 9 (import, vraag op Vandaag, scherm Sporten, weekcheck, vaste dag, hoeveel per soort). Stap 2 en 3 zijn gebouwd.
+- Week: na het wissen van een vakantie houdt een training die je zelf verplaatste een `leave`-merk naar een periode die niet meer bestaat (vraagt dan blijvend om Akkoord). Merk wissen in `putBack` als `byYou`.
 - Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
 
 ## Ochtendkaart, later
