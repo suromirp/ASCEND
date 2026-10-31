@@ -260,6 +260,8 @@ async function horizonKey(): Promise<string> {
       settings.longRunGrowth,
       // Planning after the main goal (engine/programLayout.ts#planEndDay).
       settings.afterMainGoal,
+      // Je Akkoord op neutrale golven zonder doel (engine/noGoalWaves.ts).
+      settings.noGoalWaves,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too. The rucksack
@@ -319,6 +321,8 @@ import { adviceSessionIds, weekNotice, weekNoticeConcerns, type WeekNotice } fro
 import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine/learning';
 import { onDatabaseBlocked, syncProgramHorizon, type ProgramHorizonResult } from '../storage/database';
 import { planEndDay, programAnchorDate } from '../engine/programLayout';
+import { planDirection } from '../engine/direction';
+import { noGoalWavesAdvice } from '../engine/noGoalWaves';
 import { rankFocusGaps } from '../engine/extraRun';
 import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { raceBlocks, afterGoalWindows, isRaceGoal } from '../engine/raceBlock';
@@ -854,6 +858,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // the answer, and undo of that notice brings the advice back.
     if (response === 'accepted' && (item.restWeekSkip || item.repeatWeek)) {
       setRecentChange((prev) => (prev && prev.trigger === 'week_load_changed' ? { ...prev, adviceId: item.id } : prev));
+    }
+    // Neutrale golven zonder doel (engine/noGoalWaves.ts): hetzelfde, ongedaan maken brengt het voorstel terug.
+    if (response === 'accepted' && item.noGoalWaves) {
+      setRecentChange((prev) => (prev && prev.trigger === 'direction_changed' ? { ...prev, adviceId: item.id } : prev));
     }
     // A goal setting (rule GR5-PACK-TENT): only ever on Akkoord.
     if (response === 'accepted' && item.goalChange) {
@@ -2463,11 +2471,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const weather = useWeatherForecast(settings.homeLocation, !loading && needsWeather(settings.overviews));
   useFollowLocation(settings, updateSettings, !loading);
 
+  // Een bestaand plan zonder doel: neutrale golven pas na Akkoord (engine/noGoalWaves.ts).
+  const wavesOffer = useMemo(
+    () => noGoalWavesAdvice(planDirection(
+      { direction: settings.direction, directionStart: settings.directionStart, noGoalWaves: settings.noGoalWaves },
+      trainingGoals, new Set(goalMilestones.map((m) => m.goalId)), todayISO(),
+      planEndDay(trainingGoals, goalMilestones, todayISO(), settings.afterMainGoal), program,
+    )),
+    [settings.direction, settings.directionStart, settings.noGoalWaves, settings.afterMainGoal, trainingGoals, goalMilestones, program],
+  );
   const answeredAdviceIds = useMemo(() => new Set(Object.keys(adviceResponses)), [adviceResponses]);
   const advice = useMemo(
     // Proposals you kept turning down come last (engine/learning.ts).
     () => learnFromDeclines([
       ...(plannerAdvice && !adviceResponses[plannerAdvice.id] ? [plannerAdvice] : []),
+      // Een bestaand plan zonder doel: neutrale golven pas na Akkoord (engine/noGoalWaves.ts).
+      ...wavesOffer.filter((a) => !adviceResponses[a.id]),
       ...computeAdvice({
         logs: sessionLogs,
         plannedSessions,
@@ -2495,7 +2514,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
+    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).

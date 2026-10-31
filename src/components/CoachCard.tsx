@@ -15,6 +15,7 @@ import { adviceBrief, adviceLead } from '../engine/adviceText';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { Icon } from './icons';
 import { useHorizonChange } from './useHorizonChange';
+import { NO_GOAL_WAVES_TITLE, noGoalWavesLines, wavesConsentPatch } from '../engine/noGoalWaves';
 
 const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNode }> = {
   session_missed: {
@@ -80,7 +81,7 @@ export function CoachCard() {
   if (advice.length === 0) return null;
   const first = advice[0];
   const kind = KIND[first.trigger];
-  const plain = !(first.proposal || first.restWeekSkip || first.repeatWeek || first.goalChange || first.goalTargetTime);
+  const plain = !(first.proposal || first.restWeekSkip || first.repeatWeek || first.goalChange || first.goalTargetTime || first.noGoalWaves);
   const more = advice.length - 1;
   return (
     <Card className="flex flex-col gap-3" data-advice-ids={advice.map((a) => a.id).join(' ')}>
@@ -125,12 +126,14 @@ export function CoachCard() {
 // in plaats van de alinea; de andere houden hun effect, zodat er niets verdwijnt.
 // `primary`: Akkoord is gevuld mint, omdat het de enige keuze in het blad is; anders omlijnd.
 export function AdviceItem({ advice, compact = false, primary = false }: { advice: Advice; compact?: boolean; primary?: boolean }) {
-  const { respondToAdvice, planWeekLoadChange } = useAppData();
+  const { respondToAdvice, planWeekLoadChange, planHorizonChange } = useAppData();
   // Training through a rest week and "Deze week nog een keer" change the
   // program: first their own proposal with what changes, Akkoord in there
   // (storage/weekLoadPlan.ts). Only then the answer to the advice is recorded.
   const horizon = useHorizonChange();
   const weekLoad = advice.restWeekSkip ? { kind: 'rest' as const, week: advice.restWeekSkip } : advice.repeatWeek ? { kind: 'repeat' as const, week: advice.repeatWeek } : undefined;
+  // Neutrale golven zonder doel (engine/noGoalWaves.ts): ook eerst het eigen voorstel met de hele planningsronde.
+  const ownProposal = !!weekLoad || !!advice.noGoalWaves;
   const [open, setOpen] = useState(false);
   const [showWeek, setShowWeek] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -148,6 +151,28 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
       });
       return;
     }
+    if (response === 'accepted' && advice.noGoalWaves) {
+      await horizon.propose(
+        () => planHorizonChange({
+          title: NO_GOAL_WAVES_TITLE,
+          why: 'Je plant zonder doel in neutrale golven.',
+          explanation: 'Zonder doel plant ASCEND je weken in neutrale golven, zonder bergtocht en zonder rugzak. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
+          trigger: 'direction_changed',
+          settings: wavesConsentPatch,
+          notes: noGoalWavesLines(),
+        }),
+        {
+          eyebrow: 'Zonder doel',
+          ask: 'always',
+          alwaysAsk: true,
+          notesTitle: 'Wat er verandert',
+          declined: 'Prima, je plan blijft zoals het is. ASCEND vraagt er niet meer naar.',
+          onStored: () => void respondToAdvice(advice, 'accepted'),
+          onDeclined: () => void respondToAdvice(advice, 'declined'),
+        },
+      );
+      return;
+    }
     setBusy(true);
     await respondToAdvice(advice, response);
     setBusy(false);
@@ -155,12 +180,12 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
 
   const actions = (
     <div className="mt-3 flex items-center gap-3">
-      {advice.proposal || advice.restWeekSkip || advice.repeatWeek || advice.goalChange || advice.goalTargetTime ? (
+      {advice.proposal || advice.restWeekSkip || advice.repeatWeek || advice.goalChange || advice.goalTargetTime || advice.noGoalWaves ? (
         <>
-          <SecondaryButton onClick={() => void respond('declined')} disabled={busy || horizon.busy} className={primary && !weekLoad ? 'min-h-[52px]' : ''}>Liever niet</SecondaryButton>
-          {primary && !weekLoad
+          <SecondaryButton onClick={() => void respond('declined')} disabled={busy || horizon.busy} className={primary && !ownProposal ? 'min-h-[52px]' : ''}>Liever niet</SecondaryButton>
+          {primary && !ownProposal
             ? <PrimaryButton onClick={() => void respond('accepted')} disabled={busy || horizon.busy} fullWidth={false}>Akkoord</PrimaryButton>
-            : <SecondaryButton onClick={() => void respond('accepted')} disabled={busy || horizon.busy}>{weekLoad ? 'Bekijk' : 'Akkoord'}</SecondaryButton>}
+            : <SecondaryButton onClick={() => void respond('accepted')} disabled={busy || horizon.busy}>{ownProposal ? 'Bekijk' : 'Akkoord'}</SecondaryButton>}
         </>
       ) : (
         <SecondaryButton onClick={() => void respond('accepted')} disabled={busy}>Begrepen</SecondaryButton>
@@ -190,7 +215,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
   const weekPreview = showWeek && advice.proposal && <ProposalSheet advice={advice} onClose={() => setShowWeek(false)} />;
 
   const why = open && <WhyPanel accent={kind.color} className="mt-1">{advice.why}</WhyPanel>;
-  const weekLoadParts = weekLoad && (
+  const weekLoadParts = ownProposal && (
     <>
       {horizon.note && <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>}
       {horizon.sheet}

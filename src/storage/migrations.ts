@@ -8,6 +8,7 @@
 // additive, and engine/templateRoles.ts falls back to the roles of the id when
 // it is missing or not a list, so an older backup imports as before.
 
+import { parseSportHandling, type SportHandlingMap } from '../engine/sportRole';
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/proposalTidy';
@@ -678,6 +679,63 @@ export function migrateDirection(raw: { direction?: unknown; directionStart?: un
     if (Object.keys(kept).length > 0) value.weekBudget = kept;
   }
   return { value, skipped };
+}
+
+// Zonder doel, de keuzes rond golven (docs/beslissingen/2026-10-31-zonder-doel-beginnersstart.md):
+// alleen bekende waarden blijven over; wat ontbreekt is het advies. Een oud bestand zonder deze velden
+// importeert zoals het was, dus het schemanummer blijft staan.
+type WaveSettingsValue = { beginnerStart?: 'auto' | 'ja' | 'nee'; waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number }; waveReviewDone?: string; noGoalWaves?: 'agreed' };
+export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unknown; waveReviewDone?: unknown; noGoalWaves?: unknown }): { value: WaveSettingsValue; skipped: number } {
+  const value: WaveSettingsValue = {};
+  let skipped = 0;
+  if (raw.beginnerStart !== undefined) {
+    const known = (['auto', 'ja', 'nee'] as const).find((c) => c === raw.beginnerStart);
+    if (known) value.beginnerStart = known;
+    else skipped++;
+  }
+  if (raw.waves !== undefined) {
+    const w = raw.waves && typeof raw.waves === 'object' && !Array.isArray(raw.waves) ? (raw.waves as Record<string, unknown>) : undefined;
+    if (!w) skipped++;
+    else {
+      const length = ([3, 6] as const).find((n) => n === w.length);
+      if (w.length !== undefined && w.length !== 4 && !length) skipped++;
+      if (w.lightWeek !== undefined && w.lightWeek !== false && w.lightWeek !== true) skipped++;
+      if (w.review !== undefined && w.review !== false && w.review !== true) skipped++;
+      const step = typeof w.weeksForStep === 'number' && Number.isInteger(w.weeksForStep) && w.weeksForStep >= 1 && w.weeksForStep <= 6 ? w.weeksForStep : undefined;
+      if (w.weeksForStep !== undefined && step === undefined) skipped++;
+      const kept = {
+        ...(length ? { length } : {}), ...(w.lightWeek === false ? { lightWeek: false as const } : {}),
+        ...(w.review === false ? { review: false as const } : {}), ...(step !== undefined && step !== 3 ? { weeksForStep: step } : {}),
+      };
+      if (Object.keys(kept).length > 0) value.waves = kept;
+    }
+  }
+  if (raw.waveReviewDone !== undefined) {
+    const monday = typeof raw.waveReviewDone === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.waveReviewDone) ? raw.waveReviewDone : undefined;
+    if (monday) value.waveReviewDone = monday;
+    else skipped++;
+  }
+  // Het Akkoord op neutrale golven (engine/noGoalWaves.ts): alleen 'agreed' blijft. Een oud bestand
+  // zonder dit veld houdt bij import zijn plan zoals het is, tot je Akkoord geeft.
+  if (raw.noGoalWaves !== undefined) {
+    if (raw.noGoalWaves === 'agreed') value.noGoalWaves = 'agreed';
+    else skipped++;
+  }
+  return { value, skipped };
+}
+
+// Sporten die meetellen (engine/sportRole.ts): alleen bekende sporten met een rol die ze kennen en
+// echte vaste afspraken. Een oud bestand zonder dit veld importeert zoals het was.
+export function migrateSportHandling(raw: unknown): { value: SportHandlingMap | undefined; skipped: number } {
+  return parseSportHandling(raw);
+}
+
+// SessionLog.rpeAssumed: alleen `true` blijft, iets anders valt weg. Het log zelf verandert niet.
+export function migrateLogRpeAssumed(log: SessionLog): SessionLog {
+  if (!('rpeAssumed' in log) || (log as { rpeAssumed?: unknown }).rpeAssumed === true) return log;
+  const { rpeAssumed: _wrong, ...rest } = log as SessionLog & { rpeAssumed?: unknown };
+  void _wrong;
+  return rest as SessionLog;
 }
 
 // --- loopinzicht: SessionLog.detail ---------------------------------------------------

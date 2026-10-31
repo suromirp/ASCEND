@@ -18,12 +18,15 @@ import { GoalLabelSheet } from '../components/ascend/GoalLabelSheet';
 import { GoalSheet } from '../components/ascend/GoalSheet';
 import { GoalFormSheet } from '../components/ascend/GoalFormSheet';
 import { YourDirectionCard, YourWeekCard, YourWeekSheet, DirectionSheet } from '../components/ascend/YourWeek';
+import { useDirectionChange } from '../components/ascend/useDirectionChange';
 import { GoalMenuSheet } from '../components/ascend/GoalMenuSheet';
 import { EarlierGoalsSheet } from '../components/ascend/EarlierGoalsSheet';
 import { useGoalViews } from '../components/ascend/useGoalViews';
 import { goalsSentence, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, seasonStrip, stepAvailability, type MoveResult } from '../engine/goalList';
 import { needsFirstPlan } from '../engine/freshStart';
-import { yourWeek } from '../engine/yourWeek';
+import { countOptions, plannedRestFor, yourWeek } from '../engine/yourWeek';
+import { waveReviewCard } from '../engine/waveReviewCard';
+import { WaveReviewCard } from '../components/ascend/WaveReview';
 import type { AddTileId } from '../engine/goalDraft';
 import { todayISO } from '../utils/dates';
 
@@ -31,7 +34,7 @@ import { todayISO } from '../utils/dates';
 // lucht je seizoen met een vlag per doel, daaronder de doelen in de volgorde die jij kiest, het
 // eerste open en de andere als compacte rij. Alles wat je planning inhoudelijk verandert (een label,
 // een nieuw doel, een volgorde die een botsing verschuift) gaat via een voorstel met Akkoord.
-// De enige gevulde mint knop is die van de lege staat ("Doel toevoegen"); met doelen op de tab is het
+// De enige gevulde mint knop is die van de lege staat ("Nieuw beginnen"); met doelen op de tab is het
 // de gevulde knop van het voorstel, en de tab zelf heeft er dan geen.
 
 const KEEP = 'Prima, alles blijft zoals het was.';
@@ -65,6 +68,7 @@ export function AscendPage() {
   const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions, settings, sessionLogs, templates } = useAppData();
   const navigate = useNavigate();
   const horizon = useHorizonChange();
+  const direction = useDirectionChange();
   const today = todayISO();
   const ladder = useMemo(() => new Set(goalMilestones.map((m) => m.goalId)), [goalMilestones]);
   const listed = useMemo(() => listedGoals(trainingGoals, ladder, today), [trainingGoals, ladder, today]);
@@ -94,8 +98,8 @@ export function AscendPage() {
   const [flash, setFlash] = useState<string | null>(null);
   // Alleen de balk of de regel: na een voorstel dat is doorgevoerd laat de balk onderin zien wat er
   // veranderde, dus dan blijft de regel erboven weg.
-  const horizonNote = horizon.note === APPLIED_NOTE ? null : horizon.note;
-  const clearNotes = () => { horizon.clearNote(); setOrderNote(null); setFlash(null); };
+  const horizonNote = [horizon.note, direction.note].find((n) => n && n !== APPLIED_NOTE) ?? null;
+  const clearNotes = () => { horizon.clearNote(); direction.clearNote(); setOrderNote(null); setFlash(null); };
   const shownNote = horizonNote ?? flash ?? (orderNote ? 'Volgorde opgeslagen.' : null);
   useEffect(() => {
     if (!shownNote) return;
@@ -156,11 +160,19 @@ export function AscendPage() {
   // installatie zonder plan houdt de lege kaart. Met een doel verandert er niets.
   const week = useMemo(
     () => (emptyList && !emptyInstall
-      ? yourWeek({ settings, goals: listed.map((l) => l.goal), milestones: ladder, logs: sessionLogs, templates, plannedSessions, today })
+      ? yourWeek({
+          settings, goals: listed.map((l) => l.goal), milestones: ladder, logs: sessionLogs, templates, plannedSessions, today,
+          plannedRest: plannedRestFor({ plannedSessions, templates, logs: sessionLogs, program, settings, today }),
+        })
       : undefined),
-    [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, plannedSessions, today],
+    [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, plannedSessions, today, program],
   );
   const plain = emptyList && !week;
+  // De terugblik na een golf, alleen zonder doel en de eerste tien dagen van een nieuwe golf.
+  const review = useMemo(
+    () => (week ? waveReviewCard({ settings, logs: sessionLogs, today, noGoal: true, countOptions: countOptions(settings, templates, plannedSessions) }) : undefined),
+    [week, settings, sessionLogs, today, templates, plannedSessions],
+  );
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
       <SkyBand actions={plain ? undefined : <AscentTabPlusButton onClick={() => startAdd()} />}>
@@ -174,11 +186,23 @@ export function AscendPage() {
         {week && <YourWeekCard week={week} onOpen={() => setWeekSheet('week')} />}
         {plain && (
           <Card className="flex flex-col gap-3">
-            <p className="text-base" style={{ color: 'var(--color-ink)' }}>Hier staat nog niets. Zeg maar: wat wil je bereiken?</p>
-            <PrimaryButton onClick={() => startAdd()}>Doel toevoegen</PrimaryButton>
+            {/* Alleen een lege installatie: de vragen staan op Vandaag, met een richting of een doel. */}
+            <p className="text-base" style={{ color: 'var(--color-ink)' }}>Nog niets gepland. Vertel eerst wat je wilt, een richting of een doel, en je ziet je eerste week.</p>
+            <PrimaryButton onClick={() => startAdd()}>Nieuw beginnen</PrimaryButton>
           </Card>
         )}
       </SkyBand>
+
+      {review && (
+        <WaveReviewCard
+          review={review}
+          busy={direction.busy}
+          onChoose={(choice) => {
+            clearNotes();
+            void direction.reviewChoice(review, choice).then(() => { if (choice === 'goal') startAdd(); });
+          }}
+        />
+      )}
 
       {week && <YourDirectionCard week={week} onChoose={() => setWeekSheet('direction')} />}
 
@@ -238,7 +262,16 @@ export function AscendPage() {
       )}
 
       {week && weekSheet === 'week' && <YourWeekSheet week={week} onClose={() => setWeekSheet(null)} />}
-      {week && weekSheet === 'direction' && <DirectionSheet current={week.chosen ? week.directionId : undefined} onClose={() => setWeekSheet(null)} />}
+      {week && weekSheet === 'direction' && (
+        <DirectionSheet
+          current={week.chosen ? week.directionId : undefined}
+          hasPlan={!!program}
+          onChoose={(id) => { clearNotes(); void direction.choose(id); }}
+          onGoal={() => startAdd()}
+          onClose={() => setWeekSheet(null)}
+        />
+      )}
+      {direction.sheet}
 
       {detail && (
         <GoalSheet

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SettingsRepo, wipeAllData } from './database';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
-import { migrateDirection } from './migrations';
+import { migrateDirection, migrateWaveSettings } from './migrations';
 
 describe('migrateDirection', () => {
   it('houdt bekende waarden over', () => {
@@ -29,9 +29,43 @@ describe('migrateDirection', () => {
   });
 });
 
+describe('migrateWaveSettings', () => {
+  it('houdt alleen een bekende beginnersstart over', () => {
+    expect(migrateWaveSettings({ beginnerStart: 'ja' })).toEqual({ value: { beginnerStart: 'ja' }, skipped: 0 });
+    expect(migrateWaveSettings({ beginnerStart: 'soms' })).toEqual({ value: {}, skipped: 1 });
+    expect(migrateWaveSettings({})).toEqual({ value: {}, skipped: 0 });
+  });
+
+  it('houdt alleen een bekende lengte en de lichte week over', () => {
+    expect(migrateWaveSettings({ waves: { length: 6, lightWeek: false } })).toEqual({ value: { waves: { length: 6, lightWeek: false } }, skipped: 0 });
+    expect(migrateWaveSettings({ waves: { length: 4 } })).toEqual({ value: {}, skipped: 0 });
+    expect(migrateWaveSettings({ waves: { length: 9, lightWeek: 'nee' } })).toEqual({ value: {}, skipped: 2 });
+    expect(migrateWaveSettings({ waves: 'lang' })).toEqual({ value: {}, skipped: 1 });
+  });
+
+  it('houdt de terugblik en de stap omhoog over, en een antwoord als datum', () => {
+    expect(migrateWaveSettings({ waves: { review: false, weeksForStep: 2 }, waveReviewDone: '2026-11-23' })).toEqual({ value: { waves: { review: false, weeksForStep: 2 }, waveReviewDone: '2026-11-23' }, skipped: 0 });
+    expect(migrateWaveSettings({ waves: { review: 'nee', weeksForStep: 9 }, waveReviewDone: 7 })).toEqual({ value: {}, skipped: 3 });
+  });
+
+  it('houdt alleen een echt Akkoord op neutrale golven over', () => {
+    expect(migrateWaveSettings({ noGoalWaves: 'agreed' })).toEqual({ value: { noGoalWaves: 'agreed' }, skipped: 0 });
+    expect(migrateWaveSettings({ noGoalWaves: true })).toEqual({ value: {}, skipped: 1 });
+  });
+});
+
 describe('richting en weekbudget in de back-up', () => {
   beforeEach(async () => {
     await wipeAllData();
+  });
+
+  it('het Akkoord op neutrale golven reist mee, een oud bestand zonder blijft zonder', async () => {
+    await SettingsRepo.set({ noGoalWaves: 'agreed' });
+    const back = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    expect(back.settings?.noGoalWaves).toBe('agreed');
+    await SettingsRepo.set({ noGoalWaves: undefined });
+    const old = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    expect(old.settings?.noGoalWaves).toBeUndefined();
   });
 
   it('reizen mee in de instellingen', async () => {
@@ -40,6 +74,14 @@ describe('richting en weekbudget in de back-up', () => {
     expect(back.settings?.direction).toBe('stronger');
     expect(back.settings?.directionStart).toBe('2026-10-26');
     expect(back.settings?.weekBudget).toEqual({ minutes: 105, strength: 3 });
+  });
+
+  it('de beginnersstart reist mee, een onzinnige waarde niet', async () => {
+    await SettingsRepo.set({ beginnerStart: 'nee' });
+    expect(normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope()))).settings?.beginnerStart).toBe('nee');
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    envelope.payload.settings = { ...envelope.payload.settings, beginnerStart: 'soms' };
+    expect(normalizeBackupToCurrentModel(envelope).settings?.beginnerStart).toBeUndefined();
   });
 
   it('een oudere back-up zonder deze velden importeert zoals eerst', async () => {

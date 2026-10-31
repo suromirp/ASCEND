@@ -21,6 +21,23 @@ export interface Phase {
   order: number;
   weekCount: number;
   description?: string;
+  // Alleen in een golf zonder doel (engine/programLayout.ts#layoutWaves): de lengte van de golf
+  // (instelling Golven) en of de laatste week een lichte week is. Zonder dit veld golven van vier
+  // met een rustweek, zoals altijd. Afgeleid en bij elke planningsronde opnieuw gezet.
+  wave?: { length: number; light: boolean };
+}
+
+// De lengte van de golf in deze fase.
+export function phaseWaveLength(phase: Pick<Phase, 'wave'>): number {
+  const n = phase.wave?.length;
+  return typeof n === 'number' && Number.isInteger(n) && n >= 2 && n <= 8 ? n : WAVE_LENGTH;
+}
+
+// Is deze week van de fase de lichte week (de rustweek) van haar golf?
+export function isLightWeekOf(phase: Pick<Phase, 'id' | 'wave'>, weekInPhase: number): boolean {
+  if (phase.id === PHASE_TAPER || phase.wave?.light === false) return false;
+  const len = phaseWaveLength(phase);
+  return ((weekInPhase - 1) % len) + 1 === len;
 }
 
 export interface Program {
@@ -63,6 +80,21 @@ export interface Program {
     // Heel rustig: only the taper before the race, no gradual growth (engine/runGrowth.ts).
     taperOnly?: boolean;
   };
+  // Zonder doel: de richting die het plan volgt (docs/visie/Zonder doel.md, 3.3), door
+  // storage/database.ts#syncProgramHorizon gekopieerd uit AppSettings.direction zoals het
+  // rugzakdoel uit het doel. Alleen aanwezig als je geen doel hebt en een richting koos;
+  // engine/programLayout.ts leest het voor de minuten van een week. Afgeleid en elke ronde
+  // opnieuw gezet, dus een oud bestand zonder dit veld werkt zoals het was.
+  direction?: ProgramDirection;
+}
+
+export type ProgramDirectionId = 'maintain' | 'improve' | 'stronger' | 'easy';
+
+export interface ProgramDirection {
+  id: ProgramDirectionId;
+  // De factor per week van de golf (engine/directionPlan.ts): het weekbudget gedeeld door wat het
+  // weekpatroon gewoon telt. Elke duurtraining krijgt haar gewone lengte maal de factor van de week.
+  factors?: number[];
 }
 
 // For the days of `week` (a Monday) before `until`: whether the rest week was

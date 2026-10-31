@@ -84,6 +84,9 @@ export type EngineEvent =
   | 'session_completed' | 'session_skipped' | 'session_moved' | 'no_time_today'
   | 'injury_added' | 'injury_resolved'
   | 'availability_changed' | 'new_training_data'
+  // Zonder doel (docs/visie/Zonder doel.md, 3.5): een richting gekozen of gewijzigd, en de keuze
+  // na een golf.
+  | 'direction_changed' | 'wave_review'
   // Phase 8 — a StrengthProgramStrategy was started or changed, and the
   // forecast-range strength placement was reconciled against it
   // (engine/strengthScheduling.ts). Distinct from 'strategy_changed'

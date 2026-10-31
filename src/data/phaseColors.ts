@@ -7,4 +7,6 @@ export const PHASE_COLOR: Record<string, string> = {
   phase_4: 'var(--color-tab-logboek)',
   phase_taper: 'var(--color-tab-stand)',
   phase_onderhoud: 'var(--color-stone)',
+  phase_golf: 'var(--color-status)',
+  phase_golf_start: 'var(--color-sage)',
 };

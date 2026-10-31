@@ -22,6 +22,10 @@ Bijgewerkt op 31 oktober 2026.
 - Onderhoud punt 2 en 3 uit `docs/onderhoud/2026-10-29.md`: `--color-stone` vervangen, dubbele hulpfuncties samenvoegen, datumfuncties in UTC nalopen. Als laatste, omdat het veel bestanden raakt.
 - Vier tekstpunten uit eerdere Lookout-rondes die zonder screenshot niet terug te vinden waren. Wachten op een screenshot van de eigenaar.
 
+- Ochtenden in de back-up, klein (review 31 oktober): bij het uitzetten van "Ochtendgetallen in back-up" zonder koppeling de bewaarde ochtenden opruimen; `retire` slaat records over die al alleen de back-upvelden hebben; een kort besluit dat de cache een archief is dat ontkoppelen overleeft.
+- Sporten die meetellen stap 1 (pictogrammen, Cartographer) en stap 4 tot 9 (import, vraag op Vandaag, scherm Sporten, weekcheck, vaste dag, hoeveel per soort). Stap 2 en 3 zijn gebouwd.
+- Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
+
 ## Ochtendkaart, later
 
 - De kaart leert van jou: hoe ging de training na "moe" of "slecht geslapen", en het advies past zich daarop aan. Hoort bij Kansen (slaap tegenover prestatie).

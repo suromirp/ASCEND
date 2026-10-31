@@ -282,31 +282,18 @@ sessies=272
 2027-07-24 tpl_hill_intervals planned - - eff=25 kg=-"
 `;
 
-exports[`golden: de planning van vaste situaties > B: nieuwe gebruiker, fit zonder doel, 4 dagen, kracht aan > B: bergtochten en rugzak 1`] = `
-[
-  "2026-12-27 tpl_mountain_hike planned - - eff=120 kg=11",
-  "2027-01-03 tpl_mountain_hike planned - - eff=150 kg=11",
-  "2027-01-10 tpl_mountain_hike planned - - eff=165 kg=13",
-  "2027-01-17 tpl_mountain_hike planned - - eff=105 kg=11",
-  "2027-01-24 tpl_mountain_hike planned - - eff=240 kg=13",
-  "2027-01-31 tpl_mountain_hike planned - - eff=270 kg=15",
-  "2027-02-07 tpl_mountain_hike planned - - eff=300 kg=15",
-  "2027-02-14 tpl_mountain_hike planned - - eff=180 kg=13",
-]
-`;
+exports[`golden: de planning van vaste situaties > B: nieuwe gebruiker, fit zonder doel, 4 dagen, kracht aan > B: bergtochten en rugzak 1`] = `[]`;
 
 exports[`golden: de planning van vaste situaties > B: nieuwe gebruiker, fit zonder doel, 4 dagen, kracht aan 1`] = `
 "programma start=2026-10-26 packTargetKg=-
-1 phase_1 BASISFASE weken=4
-2 phase_2 OPBOUW weken=4
-3 phase_3 BERGCAPACITEIT weken=4
-4 phase_4 EXPEDITIEKLAAR weken=4
+1 phase_golf_start RUSTIG BEGINNEN weken=4
+2 phase_golf GOLVEN weken=12
 sessies=80
 2026-10-26 tpl_herstel planned - - eff=45 kg=-
 2026-10-27 tpl_upper_a planned - - eff=75 kg=-
 2026-10-28 tpl_lower_a planned - - eff=75 kg=-
-2026-10-29 tpl_easy_run planned - - eff=30 kg=-
-2026-11-01 tpl_long_run planned - - eff=50 kg=-
+2026-10-29 tpl_easy_run planned - - eff=35 kg=-
+2026-11-01 tpl_long_run planned - - eff=60 kg=-
 2026-11-02 tpl_herstel planned - - eff=45 kg=-
 2026-11-03 tpl_upper_a planned - - eff=75 kg=-
 2026-11-04 tpl_lower_a planned - - eff=75 kg=-
@@ -315,73 +302,73 @@ sessies=80
 2026-11-09 tpl_herstel planned - - eff=45 kg=-
 2026-11-10 tpl_upper_a planned - - eff=75 kg=-
 2026-11-11 tpl_lower_a planned - - eff=75 kg=-
-2026-11-12 tpl_easy_run planned - - eff=40 kg=-
-2026-11-15 tpl_long_run planned - - eff=70 kg=-
+2026-11-12 tpl_easy_run planned - - eff=35 kg=-
+2026-11-15 tpl_long_run planned - - eff=60 kg=-
 2026-11-16 tpl_herstel planned - - eff=45 kg=-
 2026-11-17 tpl_upper_a planned - - eff=75 kg=-
 2026-11-18 tpl_lower_a planned - - eff=75 kg=-
-2026-11-19 tpl_easy_run planned - - eff=27 kg=-
-2026-11-22 tpl_long_run planned - - eff=45 kg=-
+2026-11-19 tpl_easy_run planned - - eff=35 kg=-
+2026-11-22 tpl_long_run planned - - eff=60 kg=-
 2026-11-23 tpl_herstel planned - - eff=45 kg=-
 2026-11-24 tpl_upper_a planned - - eff=75 kg=-
 2026-11-25 tpl_lower_a planned - - eff=75 kg=-
-2026-11-26 tpl_easy_run planned - - eff=33 kg=-
-2026-11-29 tpl_long_run planned - - eff=55 kg=-
+2026-11-26 tpl_easy_run planned - - eff=55 kg=-
+2026-11-29 tpl_long_run planned - - eff=95 kg=-
 2026-11-30 tpl_herstel planned - - eff=45 kg=-
 2026-12-01 tpl_upper_a planned - - eff=75 kg=-
 2026-12-02 tpl_lower_a planned - - eff=75 kg=-
-2026-12-03 tpl_easy_run planned - - eff=39 kg=-
-2026-12-06 tpl_long_run planned - - eff=66 kg=-
+2026-12-03 tpl_easy_run planned - - eff=55 kg=-
+2026-12-06 tpl_long_run planned - - eff=95 kg=-
 2026-12-07 tpl_herstel planned - - eff=45 kg=-
 2026-12-08 tpl_upper_a planned - - eff=75 kg=-
 2026-12-09 tpl_lower_a planned - - eff=75 kg=-
-2026-12-10 tpl_easy_run planned - - eff=44 kg=-
-2026-12-13 tpl_long_run planned - - eff=77 kg=-
+2026-12-10 tpl_easy_run planned - - eff=55 kg=-
+2026-12-13 tpl_long_run planned - - eff=95 kg=-
 2026-12-14 tpl_herstel planned - - eff=45 kg=-
 2026-12-15 tpl_upper_a planned - - eff=75 kg=-
 2026-12-16 tpl_lower_a planned - - eff=75 kg=-
-2026-12-17 tpl_easy_run planned - - eff=30 kg=-
-2026-12-20 tpl_long_run planned - - eff=50 kg=-
+2026-12-17 tpl_easy_run planned - - eff=37 kg=-
+2026-12-20 tpl_long_run planned - - eff=63 kg=-
 2026-12-21 tpl_herstel planned - - eff=45 kg=-
 2026-12-22 tpl_upper_a planned - - eff=75 kg=-
 2026-12-23 tpl_lower_a planned - - eff=75 kg=-
-2026-12-24 tpl_easy_run planned - - eff=35 kg=-
-2026-12-27 tpl_mountain_hike planned - - eff=120 kg=11
+2026-12-24 tpl_easy_run planned - - eff=55 kg=-
+2026-12-27 tpl_long_run planned - - eff=95 kg=-
 2026-12-28 tpl_herstel planned - - eff=45 kg=-
 2026-12-29 tpl_upper_a planned - - eff=75 kg=-
 2026-12-30 tpl_lower_a planned - - eff=75 kg=-
-2026-12-31 tpl_easy_run planned - - eff=41 kg=-
-2027-01-03 tpl_mountain_hike planned - - eff=150 kg=11
+2026-12-31 tpl_easy_run planned - - eff=55 kg=-
+2027-01-03 tpl_long_run planned - - eff=95 kg=-
 2027-01-04 tpl_herstel planned - - eff=45 kg=-
 2027-01-05 tpl_upper_a planned - - eff=75 kg=-
 2027-01-06 tpl_lower_a planned - - eff=75 kg=-
-2027-01-07 tpl_easy_run planned - - eff=46 kg=-
-2027-01-10 tpl_mountain_hike planned - - eff=165 kg=13
+2027-01-07 tpl_easy_run planned - - eff=55 kg=-
+2027-01-10 tpl_long_run planned - - eff=95 kg=-
 2027-01-11 tpl_herstel planned - - eff=45 kg=-
 2027-01-12 tpl_upper_a planned - - eff=75 kg=-
 2027-01-13 tpl_lower_a planned - - eff=75 kg=-
-2027-01-14 tpl_easy_run planned - - eff=31 kg=-
-2027-01-17 tpl_mountain_hike planned - - eff=105 kg=11
+2027-01-14 tpl_easy_run planned - - eff=37 kg=-
+2027-01-17 tpl_long_run planned - - eff=63 kg=-
 2027-01-18 tpl_herstel planned - - eff=45 kg=-
 2027-01-19 tpl_upper_a planned - - eff=75 kg=-
 2027-01-20 tpl_lower_a planned - - eff=75 kg=-
-2027-01-21 tpl_easy_run planned - - eff=37 kg=-
-2027-01-24 tpl_mountain_hike planned - - eff=240 kg=13
+2027-01-21 tpl_easy_run planned - - eff=55 kg=-
+2027-01-24 tpl_long_run planned - - eff=95 kg=-
 2027-01-25 tpl_herstel planned - - eff=45 kg=-
 2027-01-26 tpl_upper_a planned - - eff=75 kg=-
 2027-01-27 tpl_lower_a planned - - eff=75 kg=-
-2027-01-28 tpl_easy_run planned - - eff=43 kg=-
-2027-01-31 tpl_mountain_hike planned - - eff=270 kg=15
+2027-01-28 tpl_easy_run planned - - eff=55 kg=-
+2027-01-31 tpl_long_run planned - - eff=95 kg=-
 2027-02-01 tpl_herstel planned - - eff=45 kg=-
 2027-02-02 tpl_upper_a planned - - eff=75 kg=-
 2027-02-03 tpl_lower_a planned - - eff=75 kg=-
-2027-02-04 tpl_easy_run planned - - eff=50 kg=-
-2027-02-07 tpl_mountain_hike planned - - eff=300 kg=15
+2027-02-04 tpl_easy_run planned - - eff=55 kg=-
+2027-02-07 tpl_long_run planned - - eff=95 kg=-
 2027-02-08 tpl_herstel planned - - eff=45 kg=-
 2027-02-09 tpl_upper_a planned - - eff=75 kg=-
 2027-02-10 tpl_lower_a planned - - eff=75 kg=-
-2027-02-11 tpl_easy_run planned - - eff=33 kg=-
-2027-02-14 tpl_mountain_hike planned - - eff=180 kg=13"
+2027-02-11 tpl_easy_run planned - - eff=37 kg=-
+2027-02-14 tpl_long_run planned - - eff=63 kg=-"
 `;
 
 exports[`golden: de planning van vaste situaties > C: nieuwe gebruiker, hardloopwedstrijd 10 km, 4 dagen, kracht aan 1`] = `
@@ -610,4 +597,124 @@ sessies=112
 2027-02-12 tpl_upper_b planned - - eff=75 kg=-
 2027-02-13 tpl_hike_day_one planned - - eff=90 kg=13
 2027-02-14 tpl_mountain_hike planned - - eff=180 kg=13"
+`;
+
+exports[`golden: de planning van vaste situaties > E: als D, na Akkoord op neutrale golven (engine/noGoalWaves.ts) > E: bergtochten en rugzak 1`] = `[]`;
+
+exports[`golden: de planning van vaste situaties > E: als D, na Akkoord op neutrale golven (engine/noGoalWaves.ts) 1`] = `
+"programma start=2026-10-26 packTargetKg=-
+1 phase_golf GOLVEN weken=16
+sessies=112
+2026-10-26 tpl_herstel planned - - eff=45 kg=-
+2026-10-27 tpl_upper_a planned - - eff=75 kg=-
+2026-10-28 tpl_lower_a planned - - eff=75 kg=-
+2026-10-29 tpl_easy_run planned - - eff=30 kg=-
+2026-10-30 tpl_upper_b planned - - eff=75 kg=-
+2026-10-31 tpl_hill_intervals planned - - eff=35 kg=-
+2026-11-01 tpl_long_run planned - - eff=50 kg=-
+2026-11-02 tpl_herstel planned - - eff=45 kg=-
+2026-11-03 tpl_upper_a planned - - eff=75 kg=-
+2026-11-04 tpl_lower_a planned - - eff=75 kg=-
+2026-11-05 tpl_easy_run planned - - eff=35 kg=-
+2026-11-06 tpl_upper_b planned - - eff=75 kg=-
+2026-11-07 tpl_hill_intervals planned - - eff=40 kg=-
+2026-11-08 tpl_long_run planned - - eff=60 kg=-
+2026-11-09 tpl_herstel planned - - eff=45 kg=-
+2026-11-10 tpl_upper_a planned - - eff=75 kg=-
+2026-11-11 tpl_lower_a planned - - eff=75 kg=-
+2026-11-12 tpl_easy_run planned - - eff=40 kg=-
+2026-11-13 tpl_upper_b planned - - eff=75 kg=-
+2026-11-14 tpl_hill_intervals planned - - eff=45 kg=-
+2026-11-15 tpl_long_run planned - - eff=70 kg=-
+2026-11-16 tpl_herstel planned - - eff=45 kg=-
+2026-11-17 tpl_upper_a planned - - eff=75 kg=-
+2026-11-18 tpl_lower_a planned - - eff=75 kg=-
+2026-11-19 tpl_easy_run planned - - eff=27 kg=-
+2026-11-20 tpl_upper_b planned - - eff=75 kg=-
+2026-11-21 tpl_hill_intervals planned - - eff=30 kg=-
+2026-11-22 tpl_long_run planned - - eff=45 kg=-
+2026-11-23 tpl_herstel planned - - eff=45 kg=-
+2026-11-24 tpl_upper_a planned - - eff=75 kg=-
+2026-11-25 tpl_lower_a planned - - eff=75 kg=-
+2026-11-26 tpl_easy_run planned - - eff=32 kg=-
+2026-11-27 tpl_upper_b planned - - eff=75 kg=-
+2026-11-28 tpl_hill_intervals planned - - eff=38 kg=-
+2026-11-29 tpl_long_run planned - - eff=54 kg=-
+2026-11-30 tpl_herstel planned - - eff=45 kg=-
+2026-12-01 tpl_upper_a planned - - eff=75 kg=-
+2026-12-02 tpl_lower_a planned - - eff=75 kg=-
+2026-12-03 tpl_easy_run planned - - eff=38 kg=-
+2026-12-04 tpl_upper_b planned - - eff=75 kg=-
+2026-12-05 tpl_hill_intervals planned - - eff=43 kg=-
+2026-12-06 tpl_long_run planned - - eff=65 kg=-
+2026-12-07 tpl_herstel planned - - eff=45 kg=-
+2026-12-08 tpl_upper_a planned - - eff=75 kg=-
+2026-12-09 tpl_lower_a planned - - eff=75 kg=-
+2026-12-10 tpl_easy_run planned - - eff=43 kg=-
+2026-12-11 tpl_upper_b planned - - eff=75 kg=-
+2026-12-12 tpl_hill_intervals planned - - eff=49 kg=-
+2026-12-13 tpl_long_run planned - - eff=76 kg=-
+2026-12-14 tpl_herstel planned - - eff=45 kg=-
+2026-12-15 tpl_upper_a planned - - eff=75 kg=-
+2026-12-16 tpl_lower_a planned - - eff=75 kg=-
+2026-12-17 tpl_easy_run planned - - eff=29 kg=-
+2026-12-18 tpl_upper_b planned - - eff=75 kg=-
+2026-12-19 tpl_hill_intervals planned - - eff=32 kg=-
+2026-12-20 tpl_long_run planned - - eff=49 kg=-
+2026-12-21 tpl_herstel planned - - eff=45 kg=-
+2026-12-22 tpl_upper_a planned - - eff=75 kg=-
+2026-12-23 tpl_lower_a planned - - eff=75 kg=-
+2026-12-24 tpl_easy_run planned - - eff=35 kg=-
+2026-12-25 tpl_upper_b planned - - eff=75 kg=-
+2026-12-26 tpl_hill_intervals planned - - eff=41 kg=-
+2026-12-27 tpl_long_run planned - - eff=58 kg=-
+2026-12-28 tpl_herstel planned - - eff=45 kg=-
+2026-12-29 tpl_upper_a planned - - eff=75 kg=-
+2026-12-30 tpl_lower_a planned - - eff=75 kg=-
+2026-12-31 tpl_easy_run planned - - eff=41 kg=-
+2027-01-01 tpl_upper_b planned - - eff=75 kg=-
+2027-01-02 tpl_hill_intervals planned - - eff=46 kg=-
+2027-01-03 tpl_long_run planned - - eff=70 kg=-
+2027-01-04 tpl_herstel planned - - eff=45 kg=-
+2027-01-05 tpl_upper_a planned - - eff=75 kg=-
+2027-01-06 tpl_lower_a planned - - eff=75 kg=-
+2027-01-07 tpl_easy_run planned - - eff=46 kg=-
+2027-01-08 tpl_upper_b planned - - eff=75 kg=-
+2027-01-09 tpl_hill_intervals planned - - eff=52 kg=-
+2027-01-10 tpl_long_run planned - - eff=81 kg=-
+2027-01-11 tpl_herstel planned - - eff=45 kg=-
+2027-01-12 tpl_upper_a planned - - eff=75 kg=-
+2027-01-13 tpl_lower_a planned - - eff=75 kg=-
+2027-01-14 tpl_easy_run planned - - eff=31 kg=-
+2027-01-15 tpl_upper_b planned - - eff=75 kg=-
+2027-01-16 tpl_hill_intervals planned - - eff=35 kg=-
+2027-01-17 tpl_long_run planned - - eff=52 kg=-
+2027-01-18 tpl_herstel planned - - eff=45 kg=-
+2027-01-19 tpl_upper_a planned - - eff=75 kg=-
+2027-01-20 tpl_lower_a planned - - eff=75 kg=-
+2027-01-21 tpl_easy_run planned - - eff=37 kg=-
+2027-01-22 tpl_upper_b planned - - eff=75 kg=-
+2027-01-23 tpl_hill_intervals planned - - eff=43 kg=-
+2027-01-24 tpl_long_run planned - - eff=62 kg=-
+2027-01-25 tpl_herstel planned - - eff=45 kg=-
+2027-01-26 tpl_upper_a planned - - eff=75 kg=-
+2027-01-27 tpl_lower_a planned - - eff=75 kg=-
+2027-01-28 tpl_easy_run planned - - eff=43 kg=-
+2027-01-29 tpl_upper_b planned - - eff=75 kg=-
+2027-01-30 tpl_hill_intervals planned - - eff=50 kg=-
+2027-01-31 tpl_long_run planned - - eff=74 kg=-
+2027-02-01 tpl_herstel planned - - eff=45 kg=-
+2027-02-02 tpl_upper_a planned - - eff=75 kg=-
+2027-02-03 tpl_lower_a planned - - eff=75 kg=-
+2027-02-04 tpl_easy_run planned - - eff=50 kg=-
+2027-02-05 tpl_upper_b planned - - eff=75 kg=-
+2027-02-06 tpl_hill_intervals planned - - eff=56 kg=-
+2027-02-07 tpl_long_run planned - - eff=87 kg=-
+2027-02-08 tpl_herstel planned - - eff=45 kg=-
+2027-02-09 tpl_upper_a planned - - eff=75 kg=-
+2027-02-10 tpl_lower_a planned - - eff=75 kg=-
+2027-02-11 tpl_easy_run planned - - eff=33 kg=-
+2027-02-12 tpl_upper_b planned - - eff=75 kg=-
+2027-02-13 tpl_hill_intervals planned - - eff=37 kg=-
+2027-02-14 tpl_long_run planned - - eff=56 kg=-"
 `;

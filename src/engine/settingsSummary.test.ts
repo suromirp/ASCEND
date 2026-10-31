@@ -923,3 +923,49 @@ describe('rowSummary: weekbudget', () => {
     expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
   });
 });
+
+describe('rowSummary: richting en zonder doel', () => {
+  const withSettings = (extra: Partial<SettingsFacts['settings']>, noGoal = true) => facts({ noGoal, settings: { strengthTrackedExternally: false, introSoundEnabled: true, ...extra } });
+
+  it('zonder keuze zegt het dat er nog geen richting is, met het advies', () => {
+    expect(rowSummary('richting', withSettings({}))).toMatchObject({ value: 'Nog niet gekozen', sub: 'Advies: Fit blijven', hidden: false });
+    expect(rowSummary('bundel-zonder-doel', withSettings({}))).toMatchObject({ value: 'Nog geen richting', sub: '150 min, 2× kracht' });
+  });
+
+  it('toont de gekozen richting', () => {
+    expect(rowSummary('richting', withSettings({ direction: 'easy' })).value).toBe('Rustig aan');
+    expect(rowSummary('bundel-zonder-doel', withSettings({ direction: 'easy' }))).toMatchObject({ value: 'Rustig aan', sub: '90 min, 1× kracht' });
+  });
+
+  it('staat er niet met een doel', () => {
+    expect(rowSummary('richting', withSettings({}, false)).hidden).toBe(true);
+    expect(rowSummary('bundel-zonder-doel', withSettings({}, false)).hidden).toBe(true);
+  });
+
+  it('heeft uitleg zonder gedachtestreepjes of uitroeptekens', () => {
+    const help = settingsHelp('richting', true)!;
+    expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
+  });
+});
+
+describe('rowSummary: golven en beginnersstart', () => {
+  const withSettings = (extra: Partial<SettingsFacts['settings']>, noGoal = true) => facts({ noGoal, settings: { strengthTrackedExternally: false, introSoundEnabled: true, ...extra } });
+
+  it('golven: lengte en lichte week, met het advies als standaard', () => {
+    expect(rowSummary('golven', withSettings({}))).toMatchObject({ value: '4 weken', sub: 'Met een lichte week', hidden: false });
+    expect(rowSummary('golven', withSettings({ waves: { length: 6, lightWeek: false } }))).toMatchObject({ value: '6 weken', sub: 'Zonder lichte week' });
+    expect(rowSummary('golven', withSettings({}, false)).hidden).toBe(true);
+  });
+
+  it('beginnersstart: Automatisch als advies', () => {
+    expect(rowSummary('beginnersstart', withSettings({})).value).toBe('Automatisch');
+    expect(rowSummary('beginnersstart', withSettings({ beginnerStart: 'nee' })).value).toBe('Nee');
+  });
+
+  it('heeft uitleg zonder gedachtestreepjes of uitroeptekens', () => {
+    for (const key of ['golven', 'beginnersstart']) {
+      const help = settingsHelp(key, true)!;
+      expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
+    }
+  });
+});

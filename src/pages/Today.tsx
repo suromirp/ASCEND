@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
+import { waveHeader } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { activeIllness, isHeavySession } from '../engine/illness';
@@ -255,7 +256,7 @@ function TodayContent() {
           <Eyebrow>{weekdayShortNL(today)} {formatDateNL(today)}</Eyebrow>
           {position && (
             <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              Week {position.weekInProgram} van de {position.phase.name.replace(/fase$/i, '').trim().toLowerCase() || position.phase.name.toLowerCase()}{restHeader ? ' · rustdag' : ''}
+              {waveHeader(position) ?? `Week ${position.weekInProgram} van de ${position.phase.name.replace(/fase$/i, '').trim().toLowerCase() || position.phase.name.toLowerCase()}`}{restHeader ? ' · rustdag' : ''}
             </p>
           )}
         </header>

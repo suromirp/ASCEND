@@ -22,7 +22,9 @@ import { WEEK_SHAPE_CARDIO, WEEK_SHAPE_STRENGTH, type WeekShape } from './sports
 
 export type { WeekShape };
 
-export type StartGoalKind = 'trek' | 'race' | 'fit';
+// 'fit' is Fit blijven; 'improve', 'stronger' en 'easy' zijn de andere richtingen zonder doel
+// (docs/visie/Zonder doel.md, 2.1).
+export type StartGoalKind = 'trek' | 'race' | 'fit' | 'improve' | 'stronger' | 'easy';
 
 export interface WeekShapeInput {
   goal: StartGoalKind;
@@ -31,6 +33,8 @@ export interface WeekShapeInput {
   // Dagen waarop je kunt trainen, 1 tot 7.
   allowedDays: number[];
   strength: boolean;
+  // Hoeveel keer kracht (Sterker worden: 2 tot 4). Zonder: afgeleid uit het aantal dagen.
+  strengthSessions?: number;
 }
 
 export interface WeekShapeResult {
@@ -52,11 +56,18 @@ const CARDIO_ORDER: Record<StartGoalKind, string[]> = {
   trek: ['tpl_long_run', 'tpl_hill_intervals', 'tpl_easy_run'],
   race: ['tpl_long_run', 'tpl_easy_run', 'tpl_hill_intervals'],
   fit: ['tpl_long_run', 'tpl_easy_run', 'tpl_hill_intervals'],
+  improve: ['tpl_long_run', 'tpl_easy_run', 'tpl_hill_intervals'],
+  // Sterker worden en Rustig aan: eerst de rustige duur, de lange training pas bij genoeg dagen.
+  stronger: ['tpl_easy_run', 'tpl_long_run', 'tpl_hill_intervals'],
+  easy: ['tpl_easy_run', 'tpl_long_run', 'tpl_hill_intervals'],
 };
 const STRENGTH_ORDER: Record<StartGoalKind, string[]> = {
   trek: ['tpl_lower_a', 'tpl_upper_a', 'tpl_upper_b'],
   race: ['tpl_lower_a', 'tpl_upper_a', 'tpl_upper_b'],
   fit: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'],
+  improve: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'],
+  stronger: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'],
+  easy: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'],
 };
 
 export const MIN_DAYS = 2;
@@ -66,6 +77,9 @@ export const MAX_DAYS = 6;
 export function adviceDays(goal: StartGoalKind): { days: number; reason: string } {
   if (goal === 'trek') return { days: 5, reason: 'Een tocht met rugzak vraagt om vaak, rustig en lang lopen, naast wat kracht.' };
   if (goal === 'race') return { days: 4, reason: 'Vier dagen geeft je benen genoeg rust tussen de looptrainingen.' };
+  if (goal === 'improve') return { days: 4, reason: 'Vier dagen geeft ruimte om elke golf een stapje meer te doen, met rust ertussen.' };
+  if (goal === 'stronger') return { days: 4, reason: 'Vier dagen: drie keer kracht en een rustige duurtraining, met rust tussen de beendagen.' };
+  if (goal === 'easy') return { days: 3, reason: 'Drie korte dagen is genoeg. Liever iets dan niets.' };
   return { days: 3, reason: 'Drie dagen is genoeg om sterk en fit te blijven, en het blijft goed vol te houden.' };
 }
 
@@ -75,9 +89,11 @@ export function maxDaysWithoutStrength(): number {
 }
 
 // Hoeveel krachttrainingen bij dit aantal dagen (alleen als je kracht wilt).
-function strengthCount(total: number, available: number): number {
-  const wanted = total <= 3 ? 1 : 2;
+function strengthCount(total: number, available: number, asked?: number): number {
   const needed = Math.max(0, total - CARDIO.length);
+  // Gevraagd: zoveel als er sjablonen en dagen zijn, en minstens een duurtraining blijft over.
+  if (asked !== undefined && asked > 0) return Math.min(available, Math.max(asked, needed), Math.max(1, total - 1));
+  const wanted = total <= 3 ? 1 : 2;
   return Math.min(available, Math.max(wanted, needed), total);
 }
 
@@ -133,7 +149,7 @@ function* assignments(ids: string[], days: number[], used: number[] = []): Gener
 function keptFor(input: WeekShapeInput, count: number, has: (id: string) => boolean): string[] {
   const cardio = CARDIO_ORDER[input.goal].filter(has);
   const strength = input.strength ? STRENGTH_ORDER[input.goal].filter(has) : [];
-  const s = input.strength ? strengthCount(count, strength.length) : 0;
+  const s = input.strength ? strengthCount(count, strength.length, input.strengthSessions) : 0;
   const c = Math.min(cardio.length, count - s);
   return [...cardio.slice(0, c), ...strength.slice(0, s)];
 }

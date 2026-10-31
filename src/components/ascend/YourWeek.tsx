@@ -1,18 +1,18 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../state/AppDataContext';
 import { DIRECTIONS, DIRECTION_IDS, type DirectionId } from '../../data/directions';
 import type { YourWeek } from '../../engine/yourWeek';
-import { parseDirectionStart } from '../../engine/direction';
-import { formatDateNL, mondayOfWeek, todayISO } from '../../utils/dates';
-import { Card, Eyebrow, Meter, Ring } from '../ui';
+import { formatDateNL } from '../../utils/dates';
+import { Card, Eyebrow, Meter, PrimaryButton, Ring } from '../ui';
 import { TextButton } from '../TextButton';
-import { ChoiceSheet, Sheet } from '../settings/Sheet';
+import { ChoiceList, Sheet, type ChoiceOption } from '../settings/Sheet';
 import { jumpRoute } from '../settings/jump';
 
 // "Je week" zonder doel (docs/beslissingen/2026-10-27-zonder-doel-stap-1.md): de kaart op de
-// lucht van Ascend, het blad met wat er telde en het richtingblad. Alleen lezen: een richting
-// kiezen bewaart hem en verandert de planning niet. Geen rekenwerk hier, het komt uit
-// engine/yourWeek.ts.
+// lucht van Ascend, het blad met wat er telde en het richtingblad. Een richting kiezen gaat via een
+// voorstel met Akkoord (useDirectionChange). Geen rekenwerk hier, het komt uit engine/yourWeek.ts
+// en engine/directionChange.ts.
 
 // Een blad sluit eerst (200 ms) voordat de volgende pagina opent, zodat de terugknop twee lagen niet door elkaar haalt.
 const AFTER_SHEET_MS = 280;
@@ -45,7 +45,6 @@ export function YourDirectionCard({ week, onChoose }: { week: YourWeek; onChoose
       <Eyebrow>Je richting</Eyebrow>
       <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{week.chosen ? week.label : 'Nog niet gekozen'}</p>
       <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.chosen ? week.line : week.adviceLine}</p>
-      {week.chosen && <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je plan volgt dit nog niet; dat komt in een volgende versie.</p>}
       <div className="-mb-3 mt-1">
         <TextButton onClick={onChoose}>{week.chosen ? 'Richting wijzigen' : 'Kies je richting'}</TextButton>
       </div>
@@ -130,23 +129,54 @@ export function YourWeekSheet({ week, onClose }: { week: YourWeek; onClose: () =
   );
 }
 
-// Het richtingblad: vier keuzes. Kiezen bewaart de richting en de maandag waarop hij begon, en
-// verandert de planning niet; het blad zegt dat eerlijk.
-export function DirectionSheet({ current, onClose }: { current: DirectionId | undefined; onClose: () => void }) {
-  const { settings, updateSettings } = useAppData();
-  function pick(id: DirectionId) {
-    const keep = settings.direction === id && parseDirectionStart(settings.directionStart);
-    void updateSettings({ direction: id, directionStart: keep || mondayOfWeek(todayISO()) });
-  }
+// Het richtingblad (docs/visie/Zonder doel.md, 2.3): vier richtingen en Naar een doel. Een keuze
+// maken is nog niets bewaren: met een plan opent "Bekijk wat er verandert" het voorstel met Akkoord
+// (useDirectionChange), zonder plan bewaart "Opslaan" alleen de keuze.
+const GOAL_ROW = 'goal';
+export function DirectionSheet({
+  current,
+  hasPlan,
+  onChoose,
+  onGoal,
+  onClose,
+}: {
+  current: DirectionId | undefined;
+  hasPlan: boolean;
+  onChoose: (id: DirectionId) => void;
+  onGoal?: () => void;
+  onClose: () => void;
+}) {
+  const [picked, setPicked] = useState<DirectionId | undefined>(current);
+  const options: ChoiceOption<string>[] = [
+    ...DIRECTION_IDS.map((id) => ({ value: id, label: DIRECTIONS[id].label, note: `${DIRECTIONS[id].line} ${DIRECTIONS[id].effect}` })),
+    ...(onGoal ? [{ value: GOAL_ROW, label: 'Naar een doel', note: 'Kies een tocht of wedstrijd.' }] : []),
+  ];
   return (
-    <ChoiceSheet<DirectionId>
-      eyebrow="Je richting"
-      title="Wat past nu bij jou?"
-      line="Je richting bepaalt wat ASCEND telt in je week. De planning volgt in een volgende versie, tot dan verandert je plan niet."
-      options={DIRECTION_IDS.map((id) => ({ value: id, label: DIRECTIONS[id].label, note: DIRECTIONS[id].effect }))}
-      value={(current ?? 'none') as DirectionId}
-      onPick={pick}
-      onClose={onClose}
-    />
+    <Sheet eyebrow="Je richting" title="Wat past nu bij jou?" line="Je richting bepaalt hoe ASCEND je weken plant zolang je geen doel hebt." onClose={onClose}>
+      {(close) => (
+        <div className="flex flex-col gap-4">
+          <ChoiceList<string>
+            label="Je richting"
+            options={options}
+            value={picked ?? 'none'}
+            onPick={(v) => {
+              if (v === GOAL_ROW) { close(); window.setTimeout(() => onGoal?.(), AFTER_SHEET_MS); return; }
+              setPicked(v as DirectionId);
+            }}
+          />
+          <PrimaryButton
+            disabled={!picked || (picked === current && !hasPlan)}
+            onClick={() => {
+              if (!picked) return;
+              const id = picked;
+              close();
+              window.setTimeout(() => onChoose(id), AFTER_SHEET_MS);
+            }}
+          >
+            {hasPlan ? 'Bekijk wat er verandert' : 'Opslaan'}
+          </PrimaryButton>
+        </div>
+      )}
+    </Sheet>
   );
 }

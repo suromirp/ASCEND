@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { activeDirection, parseDirection, parseDirectionStart, startMinutes } from './direction';
+import { activeDirection, parseDirection, parseDirectionStart, planDirection, startMinutes } from './direction';
+import type { TrainingGoal } from '../models/goals';
 import { DIRECTIONS, DIRECTION_IDS } from '../data/directions';
 
 const goal = (over: Record<string, unknown> = {}) => ({ id: 'g1', status: 'active' as const, ...over });
@@ -83,7 +84,7 @@ describe('de richtingen als gegevens', () => {
     expect([DIRECTIONS.stronger.minutes.value, DIRECTIONS.stronger.strength.value]).toEqual([120, 3]);
     expect(DIRECTIONS.improve.wave.value?.weeks).toBe(4);
     expect(DIRECTIONS.stronger.wave.value?.weeks).toBe(4);
-    expect(DIRECTIONS.maintain.wave.value).toBeNull();
+    expect(DIRECTIONS.maintain.wave.value).toEqual({ weeks: 4, step: 0, lightCut: 0.35 });
     expect(DIRECTIONS.easy.wave.value).toBeNull();
   });
 
@@ -91,5 +92,30 @@ describe('de richtingen als gegevens', () => {
     for (const id of DIRECTION_IDS) {
       expect(`${DIRECTIONS[id].label} ${DIRECTIONS[id].line} ${DIRECTIONS[id].effect}`).not.toMatch(/[\u2013\u2014!]/);
     }
+  });
+});
+
+describe('planDirection', () => {
+  const TODAY = '2026-10-26';
+  const full = (over: Record<string, unknown> = {}) => ({ id: 'g1', name: 'Doel', status: 'active', requirements: [], createdAt: '', updatedAt: '', ...over }) as unknown as TrainingGoal;
+
+  it('zonder doel plant het in golven, met de richting als je er een koos', () => {
+    expect(planDirection({}, [], new Set(), TODAY, undefined)).toEqual({ free: true });
+    expect(planDirection({ direction: 'easy' }, [], new Set(), TODAY, undefined)).toEqual({ free: true, direction: { id: 'easy' } });
+    expect(planDirection({ direction: 'easy', directionStart: '2026-11-02' }, [], new Set(), TODAY, undefined)).toEqual({ free: true, direction: { id: 'easy' }, waveStart: '2026-11-02' });
+  });
+
+  it('een gearchiveerd of voorbij doel telt niet als doel', () => {
+    expect(planDirection({}, [full({ status: 'archived', targetDate: '2027-07-25' })], new Set(), TODAY, undefined).free).toBe(true);
+    expect(planDirection({}, [full({ targetDate: '2026-01-10' })], new Set(), TODAY, undefined).free).toBe(true);
+  });
+
+  it('met een doel of een einddag van het plan niet', () => {
+    expect(planDirection({}, [full({ targetDate: '2027-03-13' })], new Set(), TODAY, undefined)).toEqual({ free: false });
+    expect(planDirection({ direction: 'easy' }, [], new Set(), TODAY, '2027-07-25')).toEqual({ free: false });
+  });
+
+  it('een doel Fit blijven is zelf de richting', () => {
+    expect(planDirection({}, [full({ kind: 'fit' })], new Set(), TODAY, undefined)).toEqual({ free: true, direction: { id: 'maintain' } });
   });
 });

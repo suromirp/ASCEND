@@ -677,7 +677,41 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Advies', text: '150 minuten en 2 keer kracht per week. Dat is de beweegrichtlijn. Met een gekozen richting past het budget zich aan: Rustig aan is 90 minuten en 1 keer kracht, Sterker worden 120 minuten en 3 keer kracht.' },
       { head: 'Wat telt', text: 'een matige minuut telt 1, een pittige minuut telt 2. Kracht telt niet in de minuten maar als aparte teller: een krachttraining is een keer.' },
       { head: 'Onder de richtlijn', text: 'minder dan 150 minuten of 2 keer kracht mag. Het is jouw keuze en ASCEND zegt het alleen rustig.' },
-      { head: 'Planning', text: 'het budget leest alleen wat je deed. Je planning verandert er niet van. Dat volgt in een volgende versie.' },
+      { head: 'Planning', text: 'koos je een richting, dan bepaalt het budget hoe lang je duurtrainingen zijn. Een ander budget is dan een voorstel met Akkoord. Zonder richting telt het alleen wat je deed.' },
+    ],
+  },
+  golven: {
+    title: 'Golven',
+    lead: 'Zonder doel lopen je weken in golven: een paar weken opbouwen en dan een lichtere week.',
+    points: [
+      { head: 'Vier weken', text: 'het advies. Drie weken opbouwen, de vierde 35% lichter bij dezelfde intensiteit.' },
+      { head: 'Drie of zes weken', text: 'korter of langer opbouwen voor de lichte week. De lichte week blijft de laatste van de golf.' },
+      { head: 'Lichte week voorstellen', text: 'uit betekent dat elke week van de golf even zwaar is. Dat kan, maar rust is waar je sterker van wordt.' },
+      { head: 'Terugblik na een golf', text: 'na elke golf een kaart op Ascend: hoeveel weken je je minuten haalde en wat nu. Uit betekent dat de golf doorloopt op hetzelfde niveau.' },
+      { head: 'Stap omhoog', text: 'haalde je minstens zoveel weken je minuten (advies 3 van 4), dan stelt Nog een golf een iets hoger budget voor.' },
+      { head: 'Voorstel', text: 'een andere keuze verandert je planning, dus je ziet eerst wat er verandert.' },
+    ],
+  },
+  beginnersstart: {
+    title: 'Beginnersstart',
+    lead: 'Wie een tijd weinig sportte, begint zijn richting rustig. Dat loopt na vier weken vanzelf af.',
+    points: [
+      { head: 'Automatisch', text: 'het advies. Sportte je in de acht weken voor je richting gemiddeld minder dan twee keer per week, dan begin je rustig.' },
+      { head: 'Rustig beginnen', text: 'de eerste vier weken geen harde training: de heuvelloop is dan een herstelloop. Zo went je lichaam eerst aan het ritme.' },
+      { head: 'Wat jij vastzette', text: 'een training die je zelf verplaatste of vastzette blijft zoals hij is.' },
+      { head: 'Voorstel', text: 'een andere keuze verandert je planning, dus je ziet eerst wat er verandert.' },
+    ],
+  },
+  richting: {
+    title: 'Richting',
+    lead: 'Zonder doel plant ASCEND je weken naar een richting, in golven van vier weken.',
+    points: [
+      { head: 'Fit blijven', text: 'het advies. 150 minuten en 2 keer kracht, elke week hetzelfde en elke vierde week wat lichter.' },
+      { head: 'Fitter worden', text: 'je begint bij wat je de laatste vier weken deed. Drie weken opbouwen, dan een lichtere week.' },
+      { head: 'Sterker worden', text: 'kracht staat voorop, de duur loopt rustig mee.' },
+      { head: 'Rustig aan', text: '90 minuten en 1 keer kracht, nooit een harde training. Minder dan de richtlijn, en dat is een keuze.' },
+      { head: 'Zonder tocht', text: 'geen bergtocht en geen rugzak in je plan. Die komen pas met een tocht als doel.' },
+      { head: 'Voorstel', text: 'een andere richting verandert je planning. Je ziet eerst wat er verandert, en pas na Akkoord gebeurt het.' },
     ],
   },
   twijfeltest: {

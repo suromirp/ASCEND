@@ -26,6 +26,7 @@ import { DEFAULT_RUN_DETAIL_SCREEN, resolveRunInsight, type InsightTopicSwitch, 
 import { resolveSky } from './skySettings';
 import { resolveStrengthSettings, type StrengthSettings } from './strengthSettings';
 import { budgetText, resolveWeekBudget, settingBudget } from './weekBudget';
+import { ADVICE_WAVE_LENGTH, resolveWaveSettings } from './waves';
 import { resolveCalmRun, resolveWatchHrMode } from './watchHeartRate';
 import { DEFAULT_STREAMS_BACKUP, resolveStreamsBackup } from './streamsBackup';
 import { DEFAULT_PROPOSAL_TIDY_MONTHS, resolveProposalTidyMonths } from './proposalTidy';
@@ -160,6 +161,13 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     value: (s) => budgetText(settingBudget(s).budget),
     reset: () => ({ weekBudget: undefined }),
   },
+  {
+    id: 'golven', title: 'Golven', page: 'doel', plan: true,
+    differs: (s) => { const w = resolveWaveSettings(s.waves); return w.length !== ADVICE_WAVE_LENGTH || !w.lightWeek; },
+    value: (s) => { const w = resolveWaveSettings(s.waves); return `${w.length} weken${w.lightWeek ? '' : ', zonder lichte week'}`; },
+    reset: () => ({ waves: undefined }),
+  },
+  choice('beginnersstart', 'Beginnersstart', 'doel', 'beginnerStart', 'auto', 'beginnersstart', true),
   choice('lange-zondag', 'De lange zondag', 'doel', 'longSundaySession', 'hike', 'langeZondag', true),
   choice('na-hoofddoel', 'Na je hoofddoel', 'doel', 'afterMainGoal', 'stop', 'naHoofddoel', true),
   flag('seizoensstrook', 'Seizoensstrook tonen', 'doel', 'showSeasonStrip'),

@@ -4,8 +4,10 @@
 // instellingen, de import, het logboek) zijn hiervan afgeleid.
 //
 // Dit bestand importeert niets uit engine/ of models/, zodat iedereen het kan lezen
-// zonder kringverwijzing. Een nieuwe sport komt hier bij (ronde 4); zwemmen, padel,
-// voetbal en yoga staan er bewust nog niet in, het model kan ze wel dragen.
+// zonder kringverwijzing. Een nieuwe sport komt hier bij (ronde 4). Zwemmen, padel en voetbal
+// staan in COUNTED_SPORTS (docs/visie/Sporten die meetellen.md, stap 2): sporten die ASCEND niet
+// plant maar die later mee kunnen tellen. Ze horen nog niet bij SPORT_IDS, zodat de instellingen,
+// de import en de planning er niets van merken tot er een keuze voor is. Yoga staat er bewust niet in.
 
 import type { PictogramName } from '../components/pictograms';
 
@@ -40,6 +42,21 @@ export interface SportDefinition {
   roles: readonly SportRole[];
   // Welke intervals.icu-types bij deze sport horen.
   externalKinds: readonly string[];
+  // Een eigen belastingsprofiel als de omrekening uit de kenmerken niet klopt
+  // (engine/sportStress.ts#stressProfileOf). Fietsen: de benen werken, zonder impact.
+  stressOverride?: Partial<SportStress>;
+}
+
+// Het belastingsprofiel zoals models/prescription.ts#SessionStressProfile het kent, hier zonder import
+// zodat dit bestand niets uit models/ leest.
+type Load = 'none' | 'light' | 'moderate' | 'heavy';
+export interface SportStress {
+  lowerBodyLoad: Load;
+  impact: Load;
+  eccentricLoad: Load;
+  intensity: 'low' | 'moderate' | 'high';
+  upperBodyLoad?: Load;
+  cardioLoad?: Load;
 }
 
 export const SPORTS = [
@@ -81,8 +98,73 @@ export const SPORTS = [
     plannable: true,
     roles: ['plan', 'fixed', 'count', 'off'],
     externalKinds: ['Ride', 'GravelRide', 'MountainBikeRide', 'EBikeRide', 'EMountainBikeRide', 'Cyclocross', 'TrackRide', 'VirtualRide', 'Velomobile'],
+    // Het profiel van de fietstocht (data/defaultProgram.ts, tpl_bike), zodat de beenindex voor wie nu fietst gelijk blijft.
+    stressOverride: { lowerBodyLoad: 'moderate', impact: 'none', eccentricLoad: 'none', upperBodyLoad: 'none' },
   },
 ] as const satisfies readonly SportDefinition[];
+
+// Sporten die meetellen maar die ASCEND niet plant (docs/visie/Sporten die meetellen.md, 3.2). De
+// kenmerken zijn AFGELEID uit het onderzoek en niet getoetst (impact, remmen, stop en start,
+// bovenlichaam, techniek): startwaarden, bij te stellen met je eigen logs. Nog geen pictogram in
+// stijl C: dan toont de app niets, nooit een emoji. De kleur is de rustige salie: geen eigen sportkleur zolang ze niet gepland worden. De typenamen van intervals.icu worden gecontroleerd
+// zodra het importeren aan gaat; Tennis hoort bewust niet bij padel.
+export const COUNTED_SPORTS = [
+  {
+    id: 'swimming',
+    label: 'Zwemmen',
+    verb: 'zwemmen',
+    disciplineLabel: 'Zwemmen',
+    pictogram: undefined,
+    colorToken: 'var(--color-sage)',
+    traits: { impact: 0, eccentric: 0, stopStart: 0, upperBody: 3, technique: 3 },
+    typicalIntensity: 'moderate',
+    plannable: false,
+    roles: ['fixed', 'count', 'off'],
+    externalKinds: ['Swim', 'OpenWaterSwim'],
+  },
+  {
+    id: 'padel',
+    label: 'Padel',
+    verb: 'padel spelen',
+    disciplineLabel: 'Padel',
+    pictogram: undefined,
+    colorToken: 'var(--color-sage)',
+    traits: { impact: 2, eccentric: 2, stopStart: 3, upperBody: 2, technique: 2 },
+    typicalIntensity: 'moderate',
+    plannable: false,
+    roles: ['fixed', 'count', 'off'],
+    externalKinds: ['Padel'],
+  },
+  {
+    id: 'football',
+    label: 'Voetbal',
+    verb: 'voetballen',
+    disciplineLabel: 'Voetbal',
+    pictogram: undefined,
+    colorToken: 'var(--color-sage)',
+    traits: { impact: 3, eccentric: 3, stopStart: 3, upperBody: 1, technique: 2 },
+    typicalIntensity: 'high',
+    plannable: false,
+    roles: ['fixed', 'count', 'off'],
+    externalKinds: ['Soccer'],
+  },
+] as const satisfies readonly SportDefinition[];
+
+export type CountedSportId = (typeof COUNTED_SPORTS)[number]['id'];
+// Elke sport die ASCEND kent: de drie die hij plant en de drie die alleen kunnen meetellen.
+export type AnySportId = SportId | CountedSportId;
+export const ALL_SPORTS: readonly SportDefinition[] = [...SPORTS, ...COUNTED_SPORTS];
+export const ALL_SPORT_IDS = ALL_SPORTS.map((s) => s.id) as AnySportId[];
+
+export function anySportDefinition(id: AnySportId): SportDefinition {
+  return ALL_SPORTS.find((s) => s.id === id) as SportDefinition;
+}
+
+// Het intervals.icu-type naar een sport die alleen kan meetellen, of undefined. Los van
+// sportOfExternalType, zodat het importeren van deze sporten pas aangaat als jij een keuze maakt.
+export function countedSportOfExternalType(type: string): CountedSportId | undefined {
+  return COUNTED_SPORTS.find((s) => (s.externalKinds as readonly string[]).includes(type))?.id;
+}
 
 export type SportId = (typeof SPORTS)[number]['id'];
 

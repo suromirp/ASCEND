@@ -2,8 +2,9 @@
 // opbouwen en een lichte week. Een golf is afgeleid uit de startdatum van je richting en
 // nooit per week opgeslagen. Puur: geen React, geen IndexedDB.
 
-import type { WaveShape } from '../data/directions';
+import { DIRECTIONS, type DirectionId, type WaveShape } from '../data/directions';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
+import type { AppSettings } from '../storage/database';
 
 export interface WaveWeek {
   // 1 tot en met het aantal weken van de golf.
@@ -26,6 +27,32 @@ export function waveWeek(start: string | undefined, date: string, length: number
   const week = (since % length) + 1;
   const wave = Math.floor(since / length) + 1;
   return { week, length, wave, startsOn: addDays(first, (wave - 1) * length * 7), light: week === length };
+}
+
+// De instelling Golven (AppSettings.waves): de lengte van een golf en of de laatste week lichter is.
+// Defensief gelezen; wat ontbreekt is het advies (4 weken, met een lichte week).
+export const WAVE_LENGTHS = [3, 4, 6] as const;
+export const ADVICE_WAVE_LENGTH = 4;
+export interface WaveSettings {
+  length: number;
+  lightWeek: boolean;
+  // De terugblik na een golf (aan) en hoeveel weken je moet halen voor een stap omhoog (3).
+  review: boolean;
+  weeksForStep: number;
+}
+export function resolveWaveSettings(raw: unknown): WaveSettings {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const length = WAVE_LENGTHS.find((n) => n === r.length) ?? ADVICE_WAVE_LENGTH;
+  const step = typeof r.weeksForStep === 'number' && Number.isInteger(r.weeksForStep) && r.weeksForStep >= 1 && r.weeksForStep <= 6 ? r.weeksForStep : DEFAULT_WEEKS_FOR_STEP;
+  return { length, lightWeek: r.lightWeek !== false, review: r.review !== false, weeksForStep: Math.min(step, length) };
+}
+
+// De golf van een richting met jouw instelling erover: Rustig aan heeft geen golf.
+export function waveShapeFor(id: DirectionId, raw: unknown): WaveShape | null {
+  const shape = DIRECTIONS[id].wave.value;
+  if (!shape) return null;
+  const w = resolveWaveSettings(raw);
+  return { ...shape, weeks: w.length, lightCut: w.lightWeek ? shape.lightCut : 0 };
 }
 
 const ceil5 = (n: number) => Math.ceil(n / 5) * 5;
@@ -78,3 +105,15 @@ export function nextWaveLevel(base: number, review: WaveReview, shape: WaveShape
   if (!review.stepUp) return Math.min(base, ceiling);
   return Math.min(ceil5(base * (1 + Math.max(shape.step, 0.05))), ceiling);
 }
+
+// The smallest patch against the advice: what equals the advice is left out.
+export function wavesPatch(next: WaveSettings): AppSettings['waves'] {
+  const kept: NonNullable<AppSettings['waves']> = {
+    ...(next.length !== ADVICE_WAVE_LENGTH ? { length: next.length as 3 | 6 } : {}),
+    ...(next.lightWeek ? {} : { lightWeek: false as const }),
+    ...(next.review ? {} : { review: false as const }),
+    ...(next.weeksForStep !== DEFAULT_WEEKS_FOR_STEP ? { weeksForStep: next.weeksForStep } : {}),
+  };
+  return Object.keys(kept).length > 0 ? kept : undefined;
+}
+

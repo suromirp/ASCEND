@@ -52,3 +52,12 @@ Two settings: "Groei bij het rekenen" (`goalGrowth`: gemiddeld = the middle of t
 and "Marge bij een tijdslimiet" (`limitMargin`: 10%, 5%, geen); Sterker worden follows "Weging bij een doeltijd" too. The follow-up (`2026-10-28-klaar-voor-je-doel-vervolg.md`): the main goal only gets the milestones calculation when it is a tocht (`trek_hut`, `trek_tent`) or has no kind (`goalReadinessFor.ts#usesMilestoneReadiness`), any other main goal gets the calculation of its own kind, and Je stand reads `goalReadinessFor` too, so both show the same number; a goal time within the spread of the prediction (`PREDICTION_SPREAD`) of the time on race day counts as "past" (`RaceOutlook.holds`, the same line as TARGET-TIME; `fits` stays strict and sets the whole minute of the proposal), so the card never contradicts an Akkoord a day later; up to and including 10 km the expected time on race day is a clock ("ongeveer 20:05"), above that whole minutes (`racePaces.ts#outlookSaid`); the form of Sterker worden takes a fully filled exercise with Volgende (`strengthTargetsDraft.ts#finishStrengthTargets`, a half filled one blocks with one sentence) and the strength meter knows an exercise by name, id or alias. The 0,55% is the middle
 of 0,3 to 0,8% derived from several sources, never attributed to one study. The form of Sterker worden takes the strength targets per exercise
 (`StrengthTargetsField`, `engine/strengthTargetsDraft.ts`); a cutoff only belongs to an ultra, also when editing.
+
+**Without a goal: Je week and your direction** (`engine/yourWeek.ts`, `engine/direction.ts`, `engine/weekBudget.ts`,
+`engine/waveReviewCard.ts`, `components/ascend/YourWeek.tsx`, decision `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`):
+with no goal on the Ascend tab and a plan, the tab shows Je week (one ring, minutes against the weekly budget, strength as a
+separate count) and Je richting instead of the goal list, and after each wave the card "Golf klaar". "Je week" is the only
+number then; with any goal (also a sub goal) it is not on the tab and "Klaar voor je doel" stays the one progress language.
+Do not show Je week next to a goal, and do not add a percentage to the wave review. Choosing a direction, another weekly
+budget while a direction is followed, and a choice after a wave that changes the plan are proposals with Akkoord
+(`components/ascend/useDirectionChange.tsx`); only the answer to a wave review is stored (`AppSettings.waveReviewDone`).

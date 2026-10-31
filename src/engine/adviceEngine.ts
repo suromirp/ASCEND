@@ -90,6 +90,9 @@ export interface Advice {
   // Rule TARGET-TIME: Akkoord sets the target time (minutes) of this goal.
   // A goal change, not a session change.
   goalTargetTime?: { goalId: string; minutes: number };
+  // Rule NO-GOAL-WAVES: Akkoord plant een bestaand plan zonder doel in neutrale golven
+  // (engine/noGoalWaves.ts). Een programmawijziging: eerst het eigen voorstel met wat er verandert.
+  noGoalWaves?: true;
 }
 
 export interface AdviceOption {
