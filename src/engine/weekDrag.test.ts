@@ -45,6 +45,10 @@ describe('dragEligibility', () => {
     const placed = s('a', 'tpl_mountain_hike', '2026-10-01', { leave: { periodId: 'p', role: 'placed' } });
     expect(dragEligibility(placed, t('tpl_mountain_hike'), { logged: false, today })).toEqual({ ok: false, reason: 'leave' });
   });
+  it('een training die alleen opzij schoof voor een vakantie mag, met Akkoord', () => {
+    const moved = s('a', 'tpl_hill_intervals', '2026-10-01', { leave: { periodId: 'p', role: 'moved' } });
+    expect(dragEligibility(moved, t('tpl_hill_intervals'), { logged: false, today })).toEqual({ ok: true, askAlways: true });
+  });
   it('een eigen verplaatste training mag opnieuw', () => {
     const own = s('a', 'tpl_easy_run', '2026-10-01', { status: 'moved', movedFromDate: '2026-09-30', lock });
     expect(dragEligibility(own, t('tpl_easy_run'), { logged: false, today })).toEqual({ ok: true, askAlways: false });

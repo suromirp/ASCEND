@@ -29,8 +29,10 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
   if (session.status === 'skipped') return { ok: false, reason: 'skipped' };
   if (template.type === 'recovery') return { ok: false, reason: 'rest' };
   if (hasRole(template, 'race')) return { ok: false, reason: 'race' };
-  if (session.leave) return { ok: false, reason: 'leave' };
-  return { ok: true, askAlways: hasRole(template, 'test') };
+  // Wat een vakantie of tocht zelf neerzette blijft liggen; een training die alleen opzij schoof voor
+  // je vakantie mag je weer slepen, altijd met Akkoord (het blad toont wat er gebeurt).
+  if (session.leave && session.leave.role !== 'moved') return { ok: false, reason: 'leave' };
+  return { ok: true, askAlways: hasRole(template, 'test') || !!session.leave };
 }
 
 // --- wat elke dag zegt -------------------------------------------------------------
