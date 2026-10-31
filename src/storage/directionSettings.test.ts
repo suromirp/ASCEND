@@ -47,11 +47,25 @@ describe('migrateWaveSettings', () => {
     expect(migrateWaveSettings({ waves: { review: false, weeksForStep: 2 }, waveReviewDone: '2026-11-23' })).toEqual({ value: { waves: { review: false, weeksForStep: 2 }, waveReviewDone: '2026-11-23' }, skipped: 0 });
     expect(migrateWaveSettings({ waves: { review: 'nee', weeksForStep: 9 }, waveReviewDone: 7 })).toEqual({ value: {}, skipped: 3 });
   });
+
+  it('houdt alleen een echt Akkoord op neutrale golven over', () => {
+    expect(migrateWaveSettings({ noGoalWaves: 'agreed' })).toEqual({ value: { noGoalWaves: 'agreed' }, skipped: 0 });
+    expect(migrateWaveSettings({ noGoalWaves: true })).toEqual({ value: {}, skipped: 1 });
+  });
 });
 
 describe('richting en weekbudget in de back-up', () => {
   beforeEach(async () => {
     await wipeAllData();
+  });
+
+  it('het Akkoord op neutrale golven reist mee, een oud bestand zonder blijft zonder', async () => {
+    await SettingsRepo.set({ noGoalWaves: 'agreed' });
+    const back = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    expect(back.settings?.noGoalWaves).toBe('agreed');
+    await SettingsRepo.set({ noGoalWaves: undefined });
+    const old = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    expect(old.settings?.noGoalWaves).toBeUndefined();
   });
 
   it('reizen mee in de instellingen', async () => {

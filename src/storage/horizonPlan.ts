@@ -40,6 +40,8 @@ import { makeId } from '../utils/id';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { resolveVariantDuration, withDurationScope, type DurationScope } from '../engine/substitutions';
 import { durationScopeFor } from '../engine/durationScope';
+import { withWavesConsent } from '../engine/noGoalWaves';
+import { isWavePhase } from '../engine/programLayout';
 
 export interface HorizonChangeInput {
   // The proposal's title ("Doeldatum naar 15 januari 2027").
@@ -217,13 +219,18 @@ export async function withResolvedConflicts(input: HorizonChangeInput, conflicts
   return { ...input, goals: goalsAfter(input.goals ?? [], all.filter((g) => touched.has(g.id))) };
 }
 
-export async function computeHorizonPlan(input: HorizonChangeInput, deps: HorizonDeps = {}): Promise<HorizonPlan> {
+export async function computeHorizonPlan(given: HorizonChangeInput, deps: HorizonDeps = {}): Promise<HorizonPlan> {
   const today = todayISO();
   if (deps.prime) await deps.prime();
   const [stored, templates, programs] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll(), ProgramsRepo.getAll()]);
   const minutesNow = upcomingMinutes(stored, templates, programs[0], today);
+  // Een voorstel over je doelen, je richting of je golf laat het plan zonder doel vooraf zien: zijn
+  // Akkoord is ook het Akkoord op neutrale golven (engine/noGoalWaves.ts). Loopt het plan daarna toch
+  // niet in golven, dan hoort het Akkoord er niet bij en gaat het er weer af; de uitkomst is dezelfde.
+  let input = withWavesConsent(given);
   const registers = await scopeFor(input);
   const done = await diffFor(input, registers);
+  if (input !== given && !done.run.program?.phases.some((p) => isWavePhase(p.id))) input = given;
   const diff = done.diff;
   // Synchronous, so the registers of the preview are back before anything
   // else reads them.

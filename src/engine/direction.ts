@@ -5,10 +5,11 @@
 
 import { ADVICE_DIRECTION, DIRECTIONS, DIRECTION_IDS, IMPROVE_FLOOR, MINUTES_CEILING, type DirectionId } from '../data/directions';
 import type { TrainingGoal } from '../models/goals';
-import type { ProgramDirection } from '../models/program';
+import type { Program, ProgramDirection } from '../models/program';
 import { isoWeekday } from '../utils/dates';
 import { listedGoals } from './goalList';
 import { mainGoal, type Ladder } from './mainGoal';
+import { wavesHeld } from './noGoalWaves';
 
 // Een richting uit een bestand of de instellingen: alleen een bekende waarde blijft over.
 export function parseDirection(raw: unknown): DirectionId | undefined {
@@ -62,16 +63,20 @@ export function startMinutes(id: DirectionId, recentAverage?: number): number {
 // neutrale golven, en met welke richting. Een einddag van het plan (`anchor`, het hoofddoel) gaat
 // altijd voor. "Zonder doel" betekent hetzelfde als op de Ascend-tab: geen doel in de lijst
 // (engine/goalList.ts#listedGoals), of alleen een doel van de soort Fit blijven of Sterker worden.
+// `current`: het plan zoals het nu staat. Loopt dat nog niet in golven en gaf je geen Akkoord
+// (engine/noGoalWaves.ts#wavesHeld), dan blijft het oude plan staan (`held`).
 export function planDirection(
-  settings: { direction?: unknown; directionStart?: unknown },
+  settings: { direction?: unknown; directionStart?: unknown; noGoalWaves?: unknown },
   goals: readonly TrainingGoal[],
   ladder: ReadonlySet<string>,
   today: string,
   anchor: string | undefined,
-): { free: boolean; direction?: ProgramDirection; waveStart?: string } {
+  current?: Pick<Program, 'phases'> | null,
+): { free: boolean; held?: true; direction?: ProgramDirection; waveStart?: string } {
   if (anchor) return { free: false };
   const active = activeDirection(settings, listedGoals(goals, ladder, today).map((l) => l.goal), ladder);
   if (active.kind !== 'direction') return { free: false };
+  if (wavesHeld(settings, current)) return { free: false, held: true };
   const start = active.chosen ? parseDirectionStart((settings as { directionStart?: unknown }).directionStart) : undefined;
   return { free: true, ...(active.chosen ? { direction: { id: active.id } } : {}), ...(start ? { waveStart: start } : {}) };
 }

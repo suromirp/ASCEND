@@ -131,8 +131,12 @@ you reached under an earlier requirement stays reached
 **Without a goal** (`engine/direction.ts#planDirection`, `engine/programLayout.ts#layoutWaves`, decision
 `docs/beslissingen/2026-10-31-zonder-doel-stap-4.md`): with no goal on the Ascend tab and no end day of the plan,
 the program is one phase "Golven" in waves of four weeks, counted from `AppSettings.directionStart`. No mountain
-hike, no first hiking day and no pack ladder: `PATTERN_SWAPS` only act in the phases of a plan with a goal, and the
-sync turns a planned hike of the system back into the long run (announced, with undo). The chosen direction travels
+hike, no first hiking day and no pack ladder: `PATTERN_SWAPS` only act in the phases of a plan with a goal. A plan
+that already existed and does not run in waves yet stays as it is until you give Akkoord on "Plannen zonder doel:
+neutrale golven" (advice on Vandaag, `engine/noGoalWaves.ts#wavesHeld`, `AppSettings.noGoalWaves`, decision
+`docs/beslissingen/2026-10-31-zonder-doel-golven-na-akkoord.md`); Liever niet keeps it and the proposal does not come
+back. A proposal about your goals, a direction or a wave review shows the waves beforehand and carries the Akkoord
+(`withWavesConsent` in `storage/horizonPlan.ts`). The sync never turns a hike into the long run by itself. The chosen direction travels
 as `Program.direction`, set by every sync like the pack target; Fit blijven gives three equal weeks and a lighter
 fourth, Rustig aan the same week every week with the hill session as a recovery run (`CALM_SWAPS`). Choosing a
 direction is a proposal with Akkoord (trigger `direction_changed`, `components/ascend/useDirectionChange.tsx`); a goal

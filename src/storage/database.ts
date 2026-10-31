@@ -719,6 +719,11 @@ export interface AppSettings {
   // De terugblik na een golf: de maandag waarop de golf begon waar je al een keuze voor maakte
   // (engine/waveReviewCard.ts). Een antwoord, geen vlag op een training. Optional and additive.
   waveReviewDone?: string;
+  // Je Akkoord op neutrale golven voor een plan dat er al was (engine/noGoalWaves.ts): zonder dit
+  // houdt de planningsronde een plan dat nog niet in golven loopt zoals het is. Een antwoord op een
+  // voorstel, geen vlag op een training. Optional and additive; cleaned on import
+  // (migrations.ts#migrateWaveSettings).
+  noGoalWaves?: 'agreed';
   // "Twijfeltest eerst vragen": a test run that came out clearly slower than the one before
   // waits for your answer before it changes your paces. Absent = on. Optional and additive.
   askDoubtTest?: boolean;
@@ -1128,7 +1133,7 @@ export async function syncTemplateAndScheduleDefinitions(): Promise<void> {
   const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff);
   await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
 
-  const ctx = await patternContext(templates, await defaultPatternSelector());
+  const ctx = await patternContext(templates, await defaultPatternSelector(), undefined, program);
   await putAll('plannedSessions', patternSessions(program, templates, ctx.pattern, ctx.swaps, { from: cutoff, until: ctx.anchor }));
 
   await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
@@ -1224,7 +1229,7 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
 
   const { templates } = buildDefaultProgramData();
   await putAll('sessionTemplates', templates);
-  const ctx = await patternContext(templates, await defaultPatternSelector());
+  const ctx = await patternContext(templates, await defaultPatternSelector(), undefined, program);
   const next = withPackTarget({ ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO(), ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart, beginnerWeeks: ctx.beginnerWeeks, wave: ctx.wave }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
   await ProgramsRepo.put(next);
 
@@ -1279,7 +1284,7 @@ export async function rebuildPlanningFromWeekOne(
   const thisMonday = mondayOfWeek(todayISO());
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const cutoff = startFrom === 'this_week' ? todayISO() : newStart;
-  const ctx = await patternContext(templates, selectPattern);
+  const ctx = await patternContext(templates, selectPattern, undefined, program);
   const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart, beginnerWeeks: ctx.beginnerWeeks, wave: ctx.wave }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
   await ProgramsRepo.put(next);
 
@@ -1307,7 +1312,7 @@ export async function restartProgramAtWeekOne(startFrom: 'this_week' | 'next_wee
   const thisMonday = mondayOfWeek(todayISO());
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const templates = await SessionTemplatesRepo.getAll();
-  const ctx = await patternContext(templates);
+  const ctx = await patternContext(templates, undefined, undefined, program);
   const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart, beginnerWeeks: ctx.beginnerWeeks, wave: ctx.wave }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
   await ProgramsRepo.put(next);
 
@@ -1363,6 +1368,9 @@ async function patternContext(
   templates: SessionTemplate[],
   selectPattern?: (templates: SessionTemplate[]) => SessionTemplate[],
   given?: { settings: AppSettings; goals: TrainingGoal[]; milestones: GoalMilestone[] },
+  // Het plan zoals het nu staat: een plan dat nog niet in golven loopt blijft zonder Akkoord zoals het is
+  // (engine/noGoalWaves.ts#wavesHeld).
+  current?: Pick<Program, 'phases'> | null,
 ): Promise<PatternContext> {
   const [settings, goals, milestones] = given ? [given.settings, given.goals, given.milestones] : await Promise.all([SettingsRepo.get(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
   const enabledSports = { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports };
@@ -1370,7 +1378,7 @@ async function patternContext(
   // The plan ends on the main goal's day, also during and after it.
   const anchor = planEndDay(goals, milestones, todayISO(), settings.afterMainGoal);
   // Zonder doel neutrale golven: geen bergtocht, geen wandeldag, geen rugzak (docs/visie/Zonder doel.md, 3.2).
-  const plan = planDirection(settings, goals, new Set(milestones.map((m) => m.goalId)), todayISO(), anchor);
+  const plan = planDirection(settings, goals, new Set(milestones.map((m) => m.goalId)), todayISO(), anchor, current);
   const byId = new Map(templates.map((t) => [t.id, t]));
   const logs = plan.direction ? await SessionLogsRepo.getAll() : [];
   // De beginnersstart (engine/beginnerStart.ts): vier weken zonder harde training vanaf de start van je richting.
@@ -1541,7 +1549,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const replaced = new Map((overrides.goals ?? []).map((g) => [g.id, g]));
   const goals = [...storedGoals.map((g) => replaced.get(g.id) ?? g), ...[...replaced.values()].filter((g) => !storedGoals.some((s) => s.id === g.id))];
   const today = todayISO();
-  const ctx = await patternContext(templates, undefined, { settings, goals, milestones });
+  const ctx = await patternContext(templates, undefined, { settings, goals, milestones }, program);
   const next: Program = withPackTarget({ ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart, beginnerWeeks: ctx.beginnerWeeks, wave: ctx.wave }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
   const phasesChanged = JSON.stringify(program.phases) !== JSON.stringify(next.phases);
   // The pack target of the goal travels with the phases (the ladder of the

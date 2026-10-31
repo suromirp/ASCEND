@@ -39,11 +39,19 @@ describe('een richting kiezen zonder doel', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it('zonder keuze staat er geen bergtocht en geen rugzak in het plan', async () => {
+  it('zonder keuze blijft het bestaande plan staan, met zijn bergtochten (engine/noGoalWaves.ts)', async () => {
+    const ids = (await open()).map((s) => s.templateId);
+    expect(ids).toContain('tpl_mountain_hike');
+    expect((await ProgramsRepo.getAll())[0].phases.some((p) => p.id === 'phase_golf')).toBe(false);
+  });
+
+  it('een richting kiezen is ook het Akkoord op golven: geen bergtocht en geen rugzak meer', async () => {
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain')))).status).toBe('applied');
+    expect((await SettingsRepo.get()).noGoalWaves).toBe('agreed');
     const ids = (await open()).map((s) => s.templateId);
     expect(ids).not.toContain('tpl_mountain_hike');
     expect(ids).not.toContain('tpl_hike_day_one');
-    expect((await ProgramsRepo.getAll())[0].phases.every((p) => p.id === 'phase_golf')).toBe(true);
+    expect((await ProgramsRepo.getAll())[0].phases.every((p) => p.id === 'phase_golf' || p.id === 'phase_golf_start')).toBe(true);
   });
 
   it('het voorstel verandert niets tot Akkoord', async () => {

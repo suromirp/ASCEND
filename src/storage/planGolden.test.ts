@@ -112,4 +112,20 @@ describe('golden: de planning van vaste situaties', () => {
     // Nulmeting voor "Zonder doel": krijgt een plan zonder doel nu een bergtocht en een rugzak?
     expect(out.split('\n').filter((l) => /tpl_mountain_hike|tpl_hike_day_one|tpl_ruck_walk/.test(l))).toMatchSnapshot('D: bergtochten en rugzak');
   });
+
+  it('E: als D, na Akkoord op neutrale golven (engine/noGoalWaves.ts)', async () => {
+    await seedIfEmpty();
+    await runBootMigrations({ build: 'test-golden', seedProgram: true });
+    for (const g of await TrainingGoalsRepo.getAll()) await TrainingGoalsRepo.put({ ...g, status: 'archived' } as TrainingGoal);
+    await SettingsRepo.set({ restDay: 1 });
+    await SessionLogsRepo.put(log('golden-e-strength', 3, { templateId: 'tpl_upper_a', type: 'strength', durationMinutes: 55 }));
+    await SessionLogsRepo.put(log('golden-e-run', 5, { durationMinutes: 40 }));
+    await syncProgramHorizon();
+    const input: HorizonChangeInput = { title: 'Golden.', why: 'Golden.', explanation: 'Golden.', trigger: 'direction_changed', settings: { noGoalWaves: 'agreed' } };
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(input))).status).toBe('applied');
+    await syncProgramHorizon();
+    const out = await capture();
+    expect(out).toMatchSnapshot();
+    expect(out.split('\n').filter((l) => /tpl_mountain_hike|tpl_hike_day_one|tpl_ruck_walk/.test(l))).toMatchSnapshot('E: bergtochten en rugzak');
+  });
 });

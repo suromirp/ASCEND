@@ -684,8 +684,8 @@ export function migrateDirection(raw: { direction?: unknown; directionStart?: un
 // Zonder doel, de keuzes rond golven (docs/beslissingen/2026-10-31-zonder-doel-beginnersstart.md):
 // alleen bekende waarden blijven over; wat ontbreekt is het advies. Een oud bestand zonder deze velden
 // importeert zoals het was, dus het schemanummer blijft staan.
-type WaveSettingsValue = { beginnerStart?: 'auto' | 'ja' | 'nee'; waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number }; waveReviewDone?: string };
-export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unknown; waveReviewDone?: unknown }): { value: WaveSettingsValue; skipped: number } {
+type WaveSettingsValue = { beginnerStart?: 'auto' | 'ja' | 'nee'; waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number }; waveReviewDone?: string; noGoalWaves?: 'agreed' };
+export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unknown; waveReviewDone?: unknown; noGoalWaves?: unknown }): { value: WaveSettingsValue; skipped: number } {
   const value: WaveSettingsValue = {};
   let skipped = 0;
   if (raw.beginnerStart !== undefined) {
@@ -713,6 +713,12 @@ export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unkn
   if (raw.waveReviewDone !== undefined) {
     const monday = typeof raw.waveReviewDone === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.waveReviewDone) ? raw.waveReviewDone : undefined;
     if (monday) value.waveReviewDone = monday;
+    else skipped++;
+  }
+  // Het Akkoord op neutrale golven (engine/noGoalWaves.ts): alleen 'agreed' blijft. Een oud bestand
+  // zonder dit veld houdt bij import zijn plan zoals het is, tot je Akkoord geeft.
+  if (raw.noGoalWaves !== undefined) {
+    if (raw.noGoalWaves === 'agreed') value.noGoalWaves = 'agreed';
     else skipped++;
   }
   return { value, skipped };
