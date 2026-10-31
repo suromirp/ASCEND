@@ -20,6 +20,8 @@ import { cleanCardOrder } from '../engine/cardOrder';
 import { localDateOf, todayISO } from '../utils/dates';
 import { logIdsForBackup, resolveStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { morningsForBackup, resolveMorningBackup } from '../engine/morningBackup';
+import { filterRecovery } from '../engine/watchUse';
+import { getWatchState } from './externalActivities';
 import { isEmptyStart } from '../engine/freshStart';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
@@ -1276,11 +1278,12 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   }
 
   // The mornings that came with the file: only those the device does not have yet, never over a
-  // morning the device fetched itself (its own is the newer reading).
+  // morning the device fetched itself (its own is the newer reading). What is switched off under
+  // "Wat ASCEND van je horloge gebruikt" stays out (engine/watchUse.ts#filterRecovery).
   let morningPuts: RecoveryMetric[] = [];
   if (touches(historyAction) && backup.mornings && backup.mornings.length > 0) {
     const have = new Set((await RecoveryMetricsRepo.getAll()).map((m) => m.id));
-    morningPuts = backup.mornings.filter((m) => !have.has(m.id));
+    morningPuts = filterRecovery(backup.mornings.filter((m) => !have.has(m.id)), (await getWatchState()).use);
   }
 
   try {

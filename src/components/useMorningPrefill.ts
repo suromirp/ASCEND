@@ -5,10 +5,11 @@ import { useMemo } from 'react';
 import { legFatigueOn } from '../engine/legFatigue';
 import { morningPrefill, type MorningPrefill } from '../engine/morningCard';
 import type { WellnessReading } from '../engine/wellnessCheck';
+import type { MorningRule } from '../engine/morningRule';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { useTodayWatch } from './useWellness';
 
-export function useMorningPrefill(today: string): { prefill: MorningPrefill; reading: WellnessReading | undefined; linked: boolean; sleepOn: boolean } {
+export function useMorningPrefill(today: string): { prefill: MorningPrefill; reading: WellnessReading | undefined; rule: MorningRule | undefined; linked: boolean; sleepOn: boolean } {
   const watch = useTodayWatch(today);
   const inputs = useLegFatigueInputs();
   const legIndex = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);

@@ -484,7 +484,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   vroegZiek: {
     title: 'Vroeg ziek zien',
-    lead: 'Als je ziek wordt, stijgt je rusthartslag vaak al voor je iets merkt, en daalt je HRV. ASCEND let daarop, tegen jouw eigen gewone van de laatste vier weken.',
+    lead: 'Als je ziek wordt, kan je rusthartslag al stijgen voor je iets merkt, en je HRV dalen. ASCEND let daarop, tegen jouw eigen gewone van de laatste vier weken.',
     points: [
       { head: 'Wanneer', text: 'alleen als allebei afwijken, twee ochtenden op rij: je rusthartslag minstens 6 slagen hoger en je HRV onder je gewone bereik.' },
       { head: 'Wat je ziet', text: 'een vraag op Vandaag: Voel me goed, Word ziek of Niet nu. Word ziek opent de gewone ziekmelding, en je planning verandert pas met jouw Akkoord.' },
@@ -523,8 +523,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Twee van drie',
     lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',
     points: [
-      { head: 'Wat je ziet', text: 'op de ochtendkaart elk getal met een woord, zoals rusthartslag 4 hoger dan normaal of slaap normaal.' },
-      { head: 'Twee van drie', text: 'wijken er twee af in de richting die aandacht vraagt, dan vraagt de ochtend of je moe bent. Je antwoord telt mee zoals altijd; je planning verandert alleen met jouw Akkoord.' },
+      { head: 'Wat je ziet', text: 'op de ochtendkaart onder elk getal van je horloge een woord: normaal, hoger, lager, korter of langer. Wat aandacht vraagt staat in amber.' },
+      { head: 'Twee van drie', text: 'wijken er twee af in de richting die aandacht vraagt, dan vraagt de ochtendkaart of je moe bent. Ja of Nee wordt je energie van die ochtend, zoals in de ochtendcheck; je planning verandert alleen met jouw Akkoord.' },
       { head: 'Hoe zeker', text: 'bijsturen op meerdere signalen samen kan helpen om slechte dagen wat te verzachten (bewijs matig). Twee van drie is een vuistregel, geen meting.' },
     ],
   },
@@ -543,6 +543,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Wat mee gaat', text: 'per ochtend alleen de datum, je rusthartslag, je HRV, hoe lang je sliep en je slaapscore. Niets anders van je horloge.' },
       { head: 'Let op', text: 'het back-upbestand bevat dan ook gezondheidsgegevens. Bewaar het waar alleen jij erbij kunt.' },
+      { head: 'Bewaren', text: 'zolang dit aan staat blijven die getallen op je telefoon, ook na 400 dagen en als je ontkoppelt. De rest van wat ASCEND van je horloge ophaalde gaat wel weg.' },
       { head: 'Terugzetten', text: 'een ochtend die al op je telefoon staat blijft zoals hij is. Alleen wat ontbreekt komt terug.' },
       { head: 'Uit', text: 'een back-up zonder ochtendgetallen. Na een herstel haalt ASCEND ze opnieuw op zolang intervals.icu dat kan.' },
     ],

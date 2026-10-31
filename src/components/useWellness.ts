@@ -6,6 +6,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { RecoveryMetric } from '../models/metrics';
 import { todayWellness, type WellnessReading } from '../engine/wellnessCheck';
+import { morningRule, type MorningRule } from '../engine/morningRule';
+import { ignoredNightDates } from '../engine/shortNight';
 import { filterRecovery } from '../engine/watchUse';
 import { excludedMornings as excludedMorningsOf } from '../engine/influence';
 import { getConnection, getWatchState, onWatchChange } from '../storage/externalActivities';
@@ -15,7 +17,9 @@ import { useAppData } from '../state/AppDataContext';
 // `linked`: a watch is linked; `sleepOn`: sleep is switched on for it. Together
 // they make "no sleep from your watch" true to say. Without a link the morning
 // card stays quiet about the watch.
-export function useTodayWatch(today: string): { reading: WellnessReading | undefined; linked: boolean; sleepOn: boolean } {
+// `rule`: de ochtendregel twee van drie (engine/morningRule.ts) uit dezelfde getallen; of de kaart
+// hem toont hangt aan de instelling "Twee van drie".
+export function useTodayWatch(today: string): { reading: WellnessReading | undefined; rule: MorningRule | undefined; linked: boolean; sleepOn: boolean } {
   const [metrics, setMetrics] = useState<RecoveryMetric[]>([]);
   const [linked, setLinked] = useState(false);
   const [sleepOn, setSleepOn] = useState(true);
@@ -46,5 +50,9 @@ export function useTodayWatch(today: string): { reading: WellnessReading | undef
   // "Deze nacht niet meetellen" (engine/influence.ts): out of your averages of resting heart rate and HRV.
   const excludedMornings = useMemo(() => excludedMorningsOf(settings.influences), [settings.influences]);
   const reading = useMemo(() => todayWellness(today, metrics, { ask, judgments, excludedMornings }), [today, metrics, ask, judgments, excludedMornings]);
-  return { reading, linked, sleepOn };
+  const rule = useMemo(
+    () => morningRule(today, metrics, { ignoredNights: ask ? ignoredNightDates(judgments, metrics) : undefined, excludedMornings }),
+    [today, metrics, ask, judgments, excludedMornings],
+  );
+  return { reading, rule, linked, sleepOn };
 }

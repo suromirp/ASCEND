@@ -239,6 +239,12 @@ describe('een genegeerde nacht op de kaart', () => {
     expect(v.heading).toBe('van je horloge');
     expect(v.stats[0]).toMatchObject({ label: 'Slaap', value: '7:00' });
   });
+
+  it('elk getal weet welk horlogegetal het is, voor het woord van de ochtendregel', () => {
+    const v = morningCardView(todayWellness(TODAY, [...ordinary(), day(0, { sleepMinutes: 420, restingHeartRate: 52, hrv: 60 })], { ask: true, judgments: [] }));
+    expect(v.stats.map((s) => s.key)).toEqual(['sleep', 'restingHeartRate', 'hrv']);
+    expect(morningCardView(ignored({ hours: 7 })).stats[0]).toMatchObject({ key: 'sleep', from: 'zelf' });
+  });
 });
 
 describe('het slaapantwoord volgt je oordeel zolang je het niet zelf koos', () => {

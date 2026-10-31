@@ -2,11 +2,13 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { syncWatchActivities } from '../storage/externalActivities';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import type { LegFeeling, MorningCheckIn } from '../models/checkIn';
+import type { EnergyFeeling, LegFeeling, MorningCheckIn } from '../models/checkIn';
 import { checkInFor, recentPainSpot } from '../engine/wellbeing';
 import { LEGS, SOURCE_TEXT, morningCardView, morningConsequence } from '../engine/morningCard';
 import { resolveLegEase } from '../engine/legEaseSettings';
 import { NO_SLEEP_TEXT } from '../engine/wellnessCheck';
+import { MORNING_RULE_QUESTION, TIRED_CHOICES, ruleWord } from '../engine/morningRule';
+import { signalOn } from '../engine/signalSettings';
 import { wantsMorningLink, withoutShortcut } from '../engine/shortcutAction';
 import { todayISO } from '../utils/dates';
 import { withTimeout } from '../utils/withTimeout';
@@ -28,6 +30,9 @@ import { useScrollToAdvice } from './motion';
 // Met een pijnplek van de laatste 14 dagen opent elke tik het blad, want die plek wil
 // een cijfer. De kaart blijft tot je hebt ingevuld, tot de middag of tot de eerste
 // training van vandaag is gelogd.
+// Met de instelling "Twee van drie" staat onder elk horlogegetal één woord van de ochtendregel
+// (engine/morningRule.ts), afwijkend in amber. Wijken er twee af, dan vraagt de kaart of je moe
+// bent, naast de keuzes; het antwoord wordt de energie van deze ochtend. Geen voorstel, geen planning.
 
 const SAVE_LIMIT_MS = 8000;
 const SAVE_FAILED = 'Opslaan lukte niet. Probeer het nog eens.';
@@ -47,15 +52,20 @@ function cardReducer(state: CardState, action: CardAction): CardState {
   return { answered: false, folded: false };
 }
 
-// Een keuze van je benen als pil van minstens 44 px, die nooit breekt.
-function MorningChoice({ children, onClick, disabled }: { children: string; onClick: () => void; disabled?: boolean }) {
+// Een keuze als pil van minstens 44 px, die nooit breekt. `selected` voor een gekozen antwoord.
+function MorningChoice({ children, onClick, disabled, selected }: { children: string; onClick: () => void; disabled?: boolean; selected?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="min-h-[44px] whitespace-nowrap rounded-full px-3.5 text-sm active:opacity-70 disabled:opacity-40"
-      style={{ border: '1px solid var(--color-control-border)', color: 'var(--color-ink)' }}
+      aria-pressed={selected}
+      className="min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-3.5 text-sm active:opacity-70 disabled:opacity-40"
+      style={{
+        border: `1px solid ${selected ? 'var(--color-action)' : 'var(--color-control-border)'}`,
+        color: selected ? 'var(--color-action)' : 'var(--color-ink)',
+        background: selected ? 'color-mix(in srgb, currentColor 8%, transparent)' : 'transparent',
+      }}
     >
       {children}
     </button>
@@ -65,7 +75,10 @@ function MorningChoice({ children, onClick, disabled }: { children: string; onCl
 export function MorningCard() {
   const today = todayISO();
   const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig, answeredAdviceIds, injuryNotes } = useAppData();
-  const { prefill, reading, linked, sleepOn } = useMorningPrefill(today);
+  const { prefill, reading, rule: watchRule, linked, sleepOn } = useMorningPrefill(today);
+  const rule = signalOn(settings, 'morningRule') ? watchRule : undefined;
+  // Je antwoord op "Ben je moe?" van de ochtendregel: de energie van deze ochtend.
+  const [tired, setTired] = useState<EnergyFeeling | undefined>(undefined);
   const [sheet, setSheet] = useState<{ legs?: LegFeeling } | null>(null);
   const [state, dispatch] = useReducer(cardReducer, { answered: false, folded: false });
   const [saving, setSaving] = useState(false);
@@ -87,7 +100,7 @@ export function MorningCard() {
     if (saving) return;
     if (spot) { setSheet({ legs }); return; }
     const others = (settings.morningCheckIns ?? []).filter((c) => c.date !== today);
-    const entry: MorningCheckIn = { date: today, legs, energy: prefill.energy?.value, sleep: prefill.sleep?.value, ...(prefill.sleep ? { sleepSuggested: true } : {}) };
+    const entry: MorningCheckIn = { date: today, legs, energy: tired ?? prefill.energy?.value, sleep: prefill.sleep?.value, ...(prefill.sleep ? { sleepSuggested: true } : {}) };
     setSaving(true);
     setSaveError(false);
     rememberHeight();
@@ -161,7 +174,7 @@ export function MorningCard() {
   }
   const fetchNote = fetching === 'busy' ? 'Even kijken bij intervals.icu...' : fetching === 'tried' ? 'Nog geen slaap bij intervals.icu' : fetching === 'failed' ? 'Ophalen lukte niet. Probeer het straks nog eens.' : fetching === 'slow' ? 'Dit duurt te lang. Probeer het straks nog eens.' : '';
   const suggestedText = suggested ? LEGS.find(([k]) => k === suggested.value)?.[1] : undefined;
-  const sheetEl = sheet && <MorningCheckInSheet initialLegs={sheet.legs} onClose={() => setSheet(null)} onSaved={onSheetSaved} />;
+  const sheetEl = sheet && <MorningCheckInSheet initialLegs={sheet.legs} initialEnergy={tired} onClose={() => setSheet(null)} onSaved={onSheetSaved} />;
 
   // Ingeklapt: één rij met wat je koos en wat het doet, Wijzigen en Ongedaan maken altijd binnen één tik.
   if (phase === 'klein' && answered && consequence) {
@@ -242,6 +255,7 @@ export function MorningCard() {
                   {stats.map((st, i) => (
                     <div key={st.label} className={`min-w-0 ${i > 0 ? 'pl-4' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
                       <Stat label={st.label} value={st.value} unit={st.unit} />
+                      {st.from === 'horloge' && <StatWord word={ruleWord(rule, st.key)} />}
                     </div>
                   ))}
                 </div>
@@ -256,6 +270,14 @@ export function MorningCard() {
               {stats.length > 0 && <span className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{NO_SLEEP_TEXT}</span>}
               <TextButton size="xs" disabled={fetching === 'busy'} onClick={() => void fetchAgain()}>Opnieuw ophalen</TextButton>
               {fetchNote && <span className="text-xs leading-snug" role="status" style={{ color: 'var(--color-ink-dim)' }}>{fetchNote}</span>}
+            </div>
+          )}
+          {rule?.askTired && (
+            <div className="flex items-center gap-2">
+              <p className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{MORNING_RULE_QUESTION}</p>
+              {TIRED_CHOICES.map(([k, text]) => (
+                <MorningChoice key={k} selected={tired === k} disabled={saving} onClick={() => setTired(tired === k ? undefined : k)}>{text}</MorningChoice>
+              ))}
             </div>
           )}
           {suggested && suggestedText && (
@@ -284,6 +306,16 @@ export function MorningCard() {
       </Card>
       {sheetEl}
     </>
+  );
+}
+
+// Het woord van de ochtendregel onder een getal: afwijkend in amber, anders gedimd.
+function StatWord({ word }: { word: { word: string; off: boolean } | undefined }) {
+  if (!word) return null;
+  return (
+    <span className="mt-0.5 block truncate text-xs leading-4" style={{ color: word.off ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>
+      {word.word}
+    </span>
   );
 }
 

@@ -20,8 +20,7 @@ Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.
 Goedemorgen
 Hoe voelen je benen?
 [knop: Klopt: fris]
-Voorstel volgens je beenindex
-Of kies zelf
+Voorstel volgens je beenindex. Of kies zelf:
 [knop: Wat stijf]
 [knop: Spierpijn]
 [knop: Flinke spierpijn]

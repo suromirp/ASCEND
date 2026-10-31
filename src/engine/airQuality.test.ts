@@ -17,6 +17,11 @@ describe('luchtkwaliteit bij een harde training', () => {
     expect(note.text).toBe("Veel ozon vanmiddag. Liever 's ochtends, of vandaag rustig.");
   });
 
+  it('bij een training in de ochtend geen raad om s ochtends te gaan, alleen rustig', () => {
+    expect(airQualityNote([hour(9, { aqi: 64, ozone: 140 })], today, 9, 60, today)?.text).toBe('Veel ozon vanochtend. Doe vandaag liever rustig.');
+    expect(airQualityNote([{ time: '2026-07-12T07:00', aqi: 64, ozone: 140 }], '2026-07-12', 7, 60, today)?.text).toBe('Veel ozon op dat uur. Doe die dag liever rustig.');
+  });
+
   it('fijnstof en andere slechte lucht zeggen kan helpen', () => {
     expect(airQualityNote([hour(19, { aqi: 65, ozone: 40, pm25: 38 })], today, 19, 45, today)?.text).toBe('Veel fijnstof in de lucht vanavond. Een rustige training of binnen kan helpen.');
     expect(airQualityNote([hour(8, { aqi: 61 })], '2026-07-11', 8, 45, today)).toBeUndefined();

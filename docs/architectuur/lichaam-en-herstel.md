@@ -68,7 +68,7 @@ itself; "lijkt op" (`engine/influenceEffects.ts#looksLike`) only for your own no
 on each side and bands that do not touch. Je stand shows "Wat doet dit met je?" from 3 times per reason against
 your own band; a test the same day after 3 or more glasses (or wiet that day) gets a proposal
 with Akkoord (`engine/influenceProposal.ts`). Morning numbers from intervals.icu are kept 400
-days for this (`engine/wellnessRange.ts`). A reason is never in a list, a notification or the
+days for this (`engine/wellnessRange.ts`); while "Ochtendgetallen in back-up" is on, the date and the four backup numbers stay after that and after unlinking (`storage/wellness.ts#retire`). A reason is never in a list, a notification or the
 Strava text. Setting "Voorbeelden bij naam noemen" (`AppSettings.influenceNames`, on by default) only
 decides whether the explanation and help name alcohol and wiet or say "wat je dronk of gebruikte";
 the chips stay (`data/settingsHelp.ts#settingsHelp`, decision `docs/beslissingen/2026-10-27-redenen-bij-naam.md`).
