@@ -45,11 +45,12 @@ export const DIRECTIONS: Readonly<Record<DirectionId, DirectionSpec>> = {
     id: 'maintain',
     label: 'Fit blijven',
     line: 'Een vaste week die je kunt volhouden. Geen opbouw, geen eindpunt.',
-    effect: '150 minuten en 2 keer kracht, elke week hetzelfde.',
+    effect: '150 minuten en 2 keer kracht. Elke vierde week is lichter.',
     minutes: sourced(150, 'sterk', 'deel 3, de ondergrens van fit'),
     strength: sourced(2, 'sterk', 'deel 3, de ondergrens van fit'),
     hardShare: sourced(0.2, 'expert', 'deel 3, een standaardschema'),
-    wave: sourced(null, 'expert', 'deel 3, opbouw zonder doel'),
+    // Geen opbouw, wel elke vierde week een lichtere (docs/visie/Zonder doel.md, 3.3).
+    wave: sourced(WAVE_OF_FOUR(0), 'expert', 'deel 3, opbouw zonder doel'),
   },
   improve: {
     id: 'improve',

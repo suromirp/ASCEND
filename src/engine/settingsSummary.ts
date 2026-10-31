@@ -546,6 +546,14 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.morningCard };
     case 'zweet-vragen':
       return { checked: s.askSweat !== false };
+    case 'bundel-zonder-doel': {
+      const w = settingBudget(s);
+      return { value: w.chosen ? DIRECTIONS[w.id].label : 'Nog geen richting', dim: !w.chosen, sub: w.id === 'improve' ? `Eigen weken, ${w.budget.strength}\u00d7 kracht` : `${w.budget.minutes} min, ${w.budget.strength}\u00d7 kracht` };
+    }
+    case 'richting': {
+      const w = settingBudget(s);
+      return w.chosen ? { value: DIRECTIONS[w.id].label } : { value: 'Nog niet gekozen', dim: true, sub: 'Advies: Fit blijven' };
+    }
     case 'weekbudget': {
       const w = settingBudget(s);
       // De waarde blijft kort (met de InfoButton past ze op 360 px); de kracht staat op de regel eronder.

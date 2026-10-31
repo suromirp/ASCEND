@@ -158,7 +158,8 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
   const base = buildProgram();
   const startDate = mondayOfWeek(today);
   const anchor = !existing && answers.goal === 'trek' && answers.goalDate && answers.goalDate > today ? answers.goalDate : undefined;
-  const program: Program = { ...base, startDate, phases: layoutPhases(startDate, anchor, today) };
+  // Zonder doel (fit, geen bestaand doel) de neutrale golven, zoals de planningsronde het daarna ook doet.
+  const program: Program = { ...base, startDate, phases: layoutPhases(startDate, anchor, today, undefined, { free: !existing && answers.goal === 'fit' }) };
 
   const strengthIds = week.kept.filter(isStrengthTemplateId);
   const strategy: StrengthProgramStrategy | null = answers.strength && strengthIds.length > 0

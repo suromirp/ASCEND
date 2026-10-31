@@ -18,6 +18,7 @@ import { GoalLabelSheet } from '../components/ascend/GoalLabelSheet';
 import { GoalSheet } from '../components/ascend/GoalSheet';
 import { GoalFormSheet } from '../components/ascend/GoalFormSheet';
 import { YourDirectionCard, YourWeekCard, YourWeekSheet, DirectionSheet } from '../components/ascend/YourWeek';
+import { useDirectionChange } from '../components/ascend/useDirectionChange';
 import { GoalMenuSheet } from '../components/ascend/GoalMenuSheet';
 import { EarlierGoalsSheet } from '../components/ascend/EarlierGoalsSheet';
 import { useGoalViews } from '../components/ascend/useGoalViews';
@@ -65,6 +66,7 @@ export function AscendPage() {
   const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions, settings, sessionLogs, templates } = useAppData();
   const navigate = useNavigate();
   const horizon = useHorizonChange();
+  const direction = useDirectionChange();
   const today = todayISO();
   const ladder = useMemo(() => new Set(goalMilestones.map((m) => m.goalId)), [goalMilestones]);
   const listed = useMemo(() => listedGoals(trainingGoals, ladder, today), [trainingGoals, ladder, today]);
@@ -94,8 +96,8 @@ export function AscendPage() {
   const [flash, setFlash] = useState<string | null>(null);
   // Alleen de balk of de regel: na een voorstel dat is doorgevoerd laat de balk onderin zien wat er
   // veranderde, dus dan blijft de regel erboven weg.
-  const horizonNote = horizon.note === APPLIED_NOTE ? null : horizon.note;
-  const clearNotes = () => { horizon.clearNote(); setOrderNote(null); setFlash(null); };
+  const horizonNote = [horizon.note, direction.note].find((n) => n && n !== APPLIED_NOTE) ?? null;
+  const clearNotes = () => { horizon.clearNote(); direction.clearNote(); setOrderNote(null); setFlash(null); };
   const shownNote = horizonNote ?? flash ?? (orderNote ? 'Volgorde opgeslagen.' : null);
   useEffect(() => {
     if (!shownNote) return;
@@ -238,7 +240,16 @@ export function AscendPage() {
       )}
 
       {week && weekSheet === 'week' && <YourWeekSheet week={week} onClose={() => setWeekSheet(null)} />}
-      {week && weekSheet === 'direction' && <DirectionSheet current={week.chosen ? week.directionId : undefined} onClose={() => setWeekSheet(null)} />}
+      {week && weekSheet === 'direction' && (
+        <DirectionSheet
+          current={week.chosen ? week.directionId : undefined}
+          hasPlan={!!program}
+          onChoose={(id) => { clearNotes(); void direction.choose(id); }}
+          onGoal={() => startAdd()}
+          onClose={() => setWeekSheet(null)}
+        />
+      )}
+      {direction.sheet}
 
       {detail && (
         <GoalSheet

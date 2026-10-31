@@ -19,6 +19,7 @@ const PHASE_COLOR_SOFT: Record<string, string> = {
   phase_4: 'var(--color-action)',
   phase_taper: 'var(--color-ink)',
   phase_onderhoud: 'var(--color-ink-dim)',
+  phase_golf: 'var(--color-status)',
 };
 
 const weeks = (n: number) => `${n} ${n === 1 ? 'week' : 'weken'}`;

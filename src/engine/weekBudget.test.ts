@@ -121,9 +121,10 @@ describe('budgetFor', () => {
     expect(weeks.map((w) => w.light)).toEqual([false, false, false, true]);
   });
 
-  it('laat Rustig aan en Fit blijven geen golf volgen', () => {
+  it('laat Rustig aan geen golf volgen, en Fit blijven alleen een lichtere vierde week', () => {
     expect(budgetFor('easy', { wave: { week: 4, light: true } }).minutes).toBe(90);
-    expect(budgetFor('maintain', { wave: { week: 4, light: true } }).minutes).toBe(150);
+    expect(budgetFor('maintain', { wave: { week: 4, light: true } }).minutes).toBe(100);
+    expect(budgetFor('maintain', { wave: { week: 3, light: false } }).minutes).toBe(150);
   });
 
   it('neemt je eigen waarden als basis', () => {

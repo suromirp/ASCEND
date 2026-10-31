@@ -923,3 +923,27 @@ describe('rowSummary: weekbudget', () => {
     expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
   });
 });
+
+describe('rowSummary: richting en zonder doel', () => {
+  const withSettings = (extra: Partial<SettingsFacts['settings']>, noGoal = true) => facts({ noGoal, settings: { strengthTrackedExternally: false, introSoundEnabled: true, ...extra } });
+
+  it('zonder keuze zegt het dat er nog geen richting is, met het advies', () => {
+    expect(rowSummary('richting', withSettings({}))).toMatchObject({ value: 'Nog niet gekozen', sub: 'Advies: Fit blijven', hidden: false });
+    expect(rowSummary('bundel-zonder-doel', withSettings({}))).toMatchObject({ value: 'Nog geen richting', sub: '150 min, 2× kracht' });
+  });
+
+  it('toont de gekozen richting', () => {
+    expect(rowSummary('richting', withSettings({ direction: 'easy' })).value).toBe('Rustig aan');
+    expect(rowSummary('bundel-zonder-doel', withSettings({ direction: 'easy' }))).toMatchObject({ value: 'Rustig aan', sub: '90 min, 1× kracht' });
+  });
+
+  it('staat er niet met een doel', () => {
+    expect(rowSummary('richting', withSettings({}, false)).hidden).toBe(true);
+    expect(rowSummary('bundel-zonder-doel', withSettings({}, false)).hidden).toBe(true);
+  });
+
+  it('heeft uitleg zonder gedachtestreepjes of uitroeptekens', () => {
+    const help = settingsHelp('richting', true)!;
+    expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
+  });
+});

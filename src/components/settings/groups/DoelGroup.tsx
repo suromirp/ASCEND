@@ -15,6 +15,9 @@ import { usePlanSettingChange } from '../usePlanSettingChange';
 import { choiceShort } from '../../../data/settingsChoices';
 import { ProgramSheet, RestartSheet } from './DoelSheets';
 import { WeekBudgetSheet } from './WeekBudgetSheet';
+import { DirectionSheet } from '../../ascend/YourWeek';
+import { useDirectionChange } from '../../ascend/useDirectionChange';
+import { parseDirection } from '../../../engine/direction';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
 
@@ -30,6 +33,9 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
   const [note, setNote] = useState<string | null>(null);
   // De lange zondag en Rust na een bergtocht laten de planningsronde anders lopen: eerst het voorstel.
   const plan = usePlanSettingChange();
+  // Een andere richting is een voorstel met Akkoord (docs/visie/Zonder doel.md, 3.5).
+  const direction = useDirectionChange();
+  const { program } = useAppData();
 
   function chooseAfterGoal(v: 'stop' | 'maintain') {
     const change = afterMainGoalChange(trainingGoals, goalMilestones, todayISO(), plannedSessions, sessionLogs, settings.afterMainGoal ?? 'stop', v);
@@ -46,11 +52,11 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
 
   return (
     <>
-      {(note || plan.note) && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{note ?? plan.note}</p>}
+      {(note || plan.note || direction.note) && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{note ?? plan.note ?? direction.note}</p>}
       <SettingsSection title="Doel">
         <SummaryRow id="doelen" title="Hoofddoel" facts={facts} onClick={() => navigate('/ascend/doelen')} />
         <SummaryRow id="programma" title="Programma" facts={facts} onClick={() => setSheet('programma')} />
-        <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setSheet('weekbudget')} />
+        <SummaryRow id="bundel-zonder-doel" title="Zonder doel" facts={facts} onClick={() => setSheet('bundel-zonder-doel')} />
         <SummaryRow id="lange-zondag" title="De lange zondag" facts={facts} onClick={() => setSheet('lange-zondag')} />
         <SummaryRow id="na-hoofddoel" title="Na je hoofddoel" facts={facts} onClick={() => setSheet('na-hoofddoel')} />
         <SummaryRow id="klaar-weging" title="Weging bij een doeltijd" facts={facts} info="klaarWeging" onClick={() => setSheet('klaar-weging')} />
@@ -76,7 +82,21 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {sheet === 'programma' && <ProgramSheet onClose={close} onRestart={() => setSheet('opnieuw')} />}
       {sheet === 'opnieuw' && <RestartSheet onClose={close} />}
-      {sheet === 'weekbudget' && <WeekBudgetSheet onClose={close} />}
+      {sheet === 'bundel-zonder-doel' && (
+        <BundleSheet eyebrow="Doel en tochten" title="Zonder doel" line="Hoe ASCEND je weken plant en telt als je geen doel hebt." onClose={close}>
+          <SummaryRow id="richting" title="Richting" facts={facts} info="richting" onClick={() => setInner('richting')} />
+          <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setInner('weekbudget')} />
+        </BundleSheet>
+      )}
+      {inner === 'weekbudget' && <WeekBudgetSheet onClose={closeInner} />}
+      {inner === 'richting' && (
+        <DirectionSheet
+          current={parseDirection(settings.direction)}
+          hasPlan={!!program}
+          onChoose={(id) => { setNote(null); plan.clearNote(); void direction.choose(id); }}
+          onClose={closeInner}
+        />
+      )}
       {sheet === 'lange-zondag' && (
         <ChoiceFromDef def={CHOICES.langeZondag} value={settings.longSundaySession ?? 'hike'} onPick={(v) => { if (v !== (settings.longSundaySession ?? 'hike')) { setNote(null); void plan.changeSetting(`De lange zondag: ${choiceShort('langeZondag', v)}`, { longSundaySession: v }, 'Volgt je keuze voor de lange zondag.'); } }} onClose={close} />
       )}
@@ -130,6 +150,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => { if (v !== (settings.trekLegRest ?? 'soft')) { setNote(null); void plan.changeSetting(`Rust na een bergtocht: ${choiceShort('rustNaTocht', v)}`, { trekLegRest: v }, 'Volgt je keuze voor rust na een bergtocht.'); } }} onClose={closeInner} />
       )}
       {plan.impact}
+      {direction.sheet}
     </>
   );
 }

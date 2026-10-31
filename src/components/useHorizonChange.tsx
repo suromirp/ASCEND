@@ -22,6 +22,7 @@ const FAILED_NOTE = 'Het lukte niet om je planning nu bij te werken. Er is niets
 const PENDING_NOTE = 'Je planning wordt nog bijgewerkt. Zodra het klaar is, zie je onderin wat er veranderde, met ongedaan maken.';
 const PARTIAL_NOTE = 'Dit lukte maar half. Onderin zie je wat er wel veranderde; met ongedaan maken zet je het terug.';
 export const APPLIED_NOTE = 'Gelukt, het staat in je planning. Onderin zie je wat er veranderde en kun je het ongedaan maken.';
+const LENGTHS_NOTE = 'Opgeslagen. Je trainingen blijven op hun dag en krijgen de lengte uit het voorstel.';
 const UNCHANGED_NOTE = 'Opgeslagen. Je planning kon gewoon blijven zoals ze was.';
 const NOTE_FOR: Record<HorizonApplyStatus, string> = {
   applied: APPLIED_NOTE, unchanged: UNCHANGED_NOTE, stale: STALE_NOTE, failed: FAILED_NOTE, pending: PENDING_NOTE, partial: PARTIAL_NOTE,
@@ -63,7 +64,8 @@ export function useHorizonChange(): {
     // Akkoord that finishes late: the advice is answered once it is stored.
     const status = await applyHorizonPlan(plan, { onLate: (late) => { if (stored(late)) options.onStored?.(); } }).catch((): HorizonApplyStatus => 'failed');
     if (stored(status)) options.onStored?.();
-    setNote(NOTE_FOR[status]);
+    // Nothing moved, but trainings got another length: say that, not that all stayed.
+    setNote(status === 'unchanged' && plan.lengths.length > 0 ? LENGTHS_NOTE : NOTE_FOR[status]);
   }
 
   async function propose(make: () => Promise<HorizonPlan | null>, options: HorizonProposeOptions) {

@@ -63,6 +63,18 @@ export interface Program {
     // Heel rustig: only the taper before the race, no gradual growth (engine/runGrowth.ts).
     taperOnly?: boolean;
   };
+  // Zonder doel: de richting die het plan volgt (docs/visie/Zonder doel.md, 3.3), door
+  // storage/database.ts#syncProgramHorizon gekopieerd uit AppSettings.direction zoals het
+  // rugzakdoel uit het doel. Alleen aanwezig als je geen doel hebt en een richting koos;
+  // engine/programLayout.ts leest het voor de minuten van een week. Afgeleid en elke ronde
+  // opnieuw gezet, dus een oud bestand zonder dit veld werkt zoals het was.
+  direction?: ProgramDirection;
+}
+
+export type ProgramDirectionId = 'maintain' | 'improve' | 'stronger' | 'easy';
+
+export interface ProgramDirection {
+  id: ProgramDirectionId;
 }
 
 // For the days of `week` (a Monday) before `until`: whether the rest week was

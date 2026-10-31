@@ -12,7 +12,7 @@
 // Pure: no React, no IndexedDB. storage/database.ts#syncProgramHorizon
 // applies the result to the stored program and planning.
 
-import { PHASE_TAPER, WAVE_LENGTH, type Phase, type Program, type ResolvedProgramPosition } from '../models/program';
+import { PHASE_TAPER, WAVE_LENGTH, type Phase, type Program, type ProgramDirection, type ProgramDirectionId, type ResolvedProgramPosition } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate, WeeklyProgressionStep } from '../models/training';
 import type { TrainingGoal, GoalMilestone } from '../models/goals';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
@@ -28,6 +28,9 @@ export const PHASE_BERG = 'phase_3';
 export const PHASE_EXPEDITIE = 'phase_4';
 export { PHASE_TAPER, WAVE_LENGTH };
 export const PHASE_ONDERHOUD = 'phase_onderhoud';
+// Zonder doel (docs/visie/Zonder doel.md, 3.2): neutrale golven van vier weken, drie weken
+// opbouwen en een lichte week. Geen bergcapaciteit, geen expeditieklaar, geen rugzak.
+export const PHASE_GOLF = 'phase_golf';
 
 // The training wave inside every phase (WAVE_LENGTH, models/program.ts):
 // wennen, opbouw, zwaarste week, deload (3:1, docs/onderzoek rapport 1).
@@ -52,6 +55,10 @@ const PHASE_TEXT: Record<string, { name: string; description: string }> = {
   [PHASE_TAPER]: {
     name: 'NAAR DE START',
     description: 'Minder volume, dezelfde intensiteit. Je komt fris aan de start. Geen nieuwe zware afdalingen meer.',
+  },
+  [PHASE_GOLF]: {
+    name: 'GOLVEN',
+    description: 'Je hebt geen doel met een datum. Je weken lopen in golven van vier: drie weken opbouwen, dan een lichtere week. Er komt geen bergtocht en geen rugzak in, tot je een tocht als doel kiest.',
   },
   [PHASE_ONDERHOUD]: {
     name: 'ONDERHOUD',
@@ -195,8 +202,54 @@ export function layoutPhasesWithoutGoal(startDate: string, today: string, horizo
   return [...blocks, phase(PHASE_ONDERHOUD, blocks.length + 1, Math.ceil(extra / WAVE_LENGTH) * WAVE_LENGTH)];
 }
 
-export function layoutPhases(startDate: string, goalDate: string | undefined, today: string, overrides?: PhaseLengthOverrides): Phase[] {
-  return (goalDate && layoutPhasesForGoal(startDate, goalDate, overrides)) || layoutPhasesWithoutGoal(startDate, today);
+// Zonder doel: één fase in golven, in hele golven zo lang dat er minstens `horizonWeeks` weken
+// voor vandaag liggen. Welke week van de golf het is volgt uit de kalender (waveWeek), nooit
+// uit iets wat per week is opgeslagen.
+// `waveStart`: de maandag waarop je richting begon (AppSettings.directionStart). De golven tellen
+// dan vanaf die maandag, zodat week 1 van de golf de week is waarin je koos, net als op de kaart
+// Je week; de weken ervoor zijn een eigen stuk.
+export function layoutWaves(startDate: string, today: string, horizonWeeks = 12, waveStart?: string): Phase[] {
+  const first = mondayOfWeek(startDate);
+  const neededWeeks = Math.max(1, Math.floor(daysBetween(first, mondayOfWeek(today)) / 7) + 1 + horizonWeeks);
+  const lead = waveStart ? Math.floor(daysBetween(first, mondayOfWeek(waveStart)) / 7) : 0;
+  if (lead <= 0 || lead >= neededWeeks) return [phase(PHASE_GOLF, 1, Math.ceil(neededWeeks / WAVE_LENGTH) * WAVE_LENGTH)];
+  return [phase(PHASE_GOLF, 1, lead), phase(PHASE_GOLF, 2, Math.ceil((neededWeeks - lead) / WAVE_LENGTH) * WAVE_LENGTH)];
+}
+
+// `free`: er is geen doel (engine/direction.ts#activeDirection), dan de neutrale golven. Met een
+// doel zonder datum blijven de oude blokken staan, zodat een plan met een doel niet verandert.
+export function layoutPhases(startDate: string, goalDate: string | undefined, today: string, overrides?: PhaseLengthOverrides, opts: { free?: boolean; waveStart?: string } = {}): Phase[] {
+  if (goalDate) {
+    const toGoal = layoutPhasesForGoal(startDate, goalDate, overrides);
+    if (toGoal) return toGoal;
+  }
+  return opts.free ? layoutWaves(startDate, today, 12, opts.waveStart) : layoutPhasesWithoutGoal(startDate, today);
+}
+
+// De kop van Vandaag in een golf: "Week 2 van 4 van je golf". Buiten een golf niets.
+export function waveHeader(position: ResolvedProgramPosition | null | undefined): string | undefined {
+  if (!position || position.phase.id !== PHASE_GOLF) return undefined;
+  return `Week ${((position.weekInPhase - 1) % WAVE_LENGTH) + 1} van ${WAVE_LENGTH} van je golf`;
+}
+
+// Program.direction defensief gelezen: alleen een bekende richting.
+const PROGRAM_DIRECTIONS: ProgramDirectionId[] = ['maintain', 'improve', 'stronger', 'easy'];
+export function readProgramDirection(raw: unknown): ProgramDirection | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const id = PROGRAM_DIRECTIONS.find((d) => d === (raw as { id?: unknown }).id);
+  return id ? { id } : undefined;
+}
+
+// Welke week van het gewone schema een week in een golf leest, als de richting vlakke weken
+// vraagt (Fit blijven en Rustig aan): de gewone opbouwweek (week 2), en bij Fit blijven in de
+// vierde week de lichte week. Zonder richting, of buiten een golf, niets: dan de gewone golf.
+function flatWaveWeek(program: Program, position: ResolvedProgramPosition): number | undefined {
+  if (position.phase.id !== PHASE_GOLF) return undefined;
+  const direction = readProgramDirection(program.direction);
+  if (!direction) return undefined;
+  if (direction.id === 'easy') return 2;
+  if (direction.id === 'maintain') return waveWeek(position) === WAVE_LENGTH ? WAVE_LENGTH : 2;
+  return undefined;
 }
 
 export function programEndDate(program: Program): string {
@@ -389,6 +442,8 @@ function ownStepFor(own: WeeklyProgressionStep[], position: ResolvedProgramPosit
 export function progressionTarget(template: SessionTemplate, program: Program | null | undefined, dateIso: string): ProgressionTarget | undefined {
   const target = stepTarget(template, program, dateIso);
   if (!target || !program || !PACK_LADDER_TEMPLATES.has(template.id)) return target;
+  // Zonder doel geen rugzakladder: die hoort bij een tocht.
+  if (resolveProgramWeek(program, dateIso)?.phase.id === PHASE_GOLF) return target;
   const kg = packKgOn(program, dateIso);
   return kg === undefined ? target : { ...target, step: { ...target.step, backpackKg: kg } };
 }
@@ -455,12 +510,14 @@ function alternatePeak(template: SessionTemplate, program: Program, dateIso: str
 function genericTarget(template: SessionTemplate, program: Program, position: ResolvedProgramPosition, generic: WeeklyProgressionStep[]): { step: WeeklyProgressionStep; minutes: number; taper: boolean; peak?: number; usual?: number } | undefined {
   // A phase with steps of its own is not this path.
   if (template.weeklyProgression?.some((s) => s.phaseId === position.phase.id)) return undefined;
-  const wave = waveWeek(position);
+  const flat = flatWaveWeek(program, position);
+  const wave = flat ?? waveWeek(position);
   const taper = taperFactor(position);
   const step = generic.find((s) => s.weekInPhase === (taper ? 2 : wave));
   if (!step) return undefined;
   const heaviest = Math.max(...generic.map((s) => s.targetMinutes));
-  const scaled = step.targetMinutes * runBuildMultiplier(template, program, position, heaviest);
+  // Vlakke weken groeien niet per golf: elke golf is dezelfde.
+  const scaled = step.targetMinutes * (flat ? 1 : runBuildMultiplier(template, program, position, heaviest));
   if (taper) {
     const minutes = Math.max(15, Math.round((scaled * taper) / 5) * 5);
     return { step: { ...step, note: position.weekInPhase === position.phase.weekCount ? 'Laatste week voor de start, kort en fris' : 'Minder volume, zelfde tempo' }, minutes, taper: true };
@@ -575,6 +632,17 @@ export const PATTERN_SWAPS: PatternSwap[] = [
   { from: 'tpl_hill_intervals', to: 'tpl_hike_day_one', phases: [PHASE_EXPEDITIE] },
 ];
 
+// Rustig aan (docs/visie/Zonder doel.md, 2.3): nooit een harde training. In een golf wordt de
+// heuvelloop van de zaterdag een herstelloop; kies je iets anders, dan wordt hij weer de heuvelloop.
+export const CALM_SWAPS: PatternSwap[] = [
+  { from: 'tpl_hill_intervals', to: 'tpl_recovery_run', phases: [PHASE_GOLF] },
+];
+
+// De wissels die een richting zonder doel vraagt.
+export function directionSwaps(direction: ProgramDirection | undefined): PatternSwap[] {
+  return direction?.id === 'easy' ? CALM_SWAPS : [];
+}
+
 // The pattern session whose place in the week a session fills: a tempo run
 // or test takes the easy run's day, the Saturday variants (intervals, hills
 // up and down, the first hike day) the hill session's, the mountain hike the
@@ -639,7 +707,7 @@ export function templateForPhase(templateId: string, swaps: PatternSwap[], phase
   if (forward) return forward.to;
   // A hike in a week that no longer asks for one (goal moved, or the user
   // chose to keep the long run) goes back to the original session.
-  const back = PATTERN_SWAPS.find((s) => s.to === templateId);
+  const back = PATTERN_SWAPS.find((s) => s.to === templateId) ?? (phaseId === PHASE_GOLF ? CALM_SWAPS.find((s) => s.to === templateId) : undefined);
   if (back && !swaps.some((s) => s.to === templateId && s.phases.includes(phaseId))) return back.from;
   return templateId;
 }

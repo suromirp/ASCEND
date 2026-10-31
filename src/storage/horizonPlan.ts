@@ -384,7 +384,8 @@ export async function applyHorizonPlanNow(plan: HorizonPlan, deps: HorizonDeps =
     }
     // The registers follow the stored settings again, now with the change.
     if (deps.prime) await deps.prime();
-    if (diff.items.length > 0 || input.startItems?.length || input.program) {
+    // A direction changes the program itself (Program.direction, the waves), also when no row moves.
+    if (diff.items.length > 0 || input.startItems?.length || input.program || input.trigger === 'direction_changed' || input.trigger === 'wave_review') {
       for (let i = 0; i < ROUNDS; i++) {
         const r = await sync({ releaseAnchors: true });
         if (r.added + r.swapped + r.removed === 0) break;

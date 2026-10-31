@@ -5,7 +5,9 @@
 
 import { ADVICE_DIRECTION, DIRECTIONS, DIRECTION_IDS, IMPROVE_FLOOR, MINUTES_CEILING, type DirectionId } from '../data/directions';
 import type { TrainingGoal } from '../models/goals';
+import type { ProgramDirection } from '../models/program';
 import { isoWeekday } from '../utils/dates';
+import { listedGoals } from './goalList';
 import { mainGoal, type Ladder } from './mainGoal';
 
 // Een richting uit een bestand of de instellingen: alleen een bekende waarde blijft over.
@@ -54,4 +56,22 @@ export function startMinutes(id: DirectionId, recentAverage?: number): number {
   const spec = DIRECTIONS[id];
   if (id !== 'improve' || recentAverage === undefined || !(recentAverage > 0)) return spec.minutes.value;
   return Math.min(MINUTES_CEILING, Math.max(IMPROVE_FLOOR, ceil5(recentAverage)));
+}
+
+// Wat de planningsronde leest (storage/database.ts#syncProgramHorizon): plant het zonder doel, in
+// neutrale golven, en met welke richting. Een einddag van het plan (`anchor`, het hoofddoel) gaat
+// altijd voor. "Zonder doel" betekent hetzelfde als op de Ascend-tab: geen doel in de lijst
+// (engine/goalList.ts#listedGoals), of alleen een doel van de soort Fit blijven of Sterker worden.
+export function planDirection(
+  settings: { direction?: unknown; directionStart?: unknown },
+  goals: readonly TrainingGoal[],
+  ladder: ReadonlySet<string>,
+  today: string,
+  anchor: string | undefined,
+): { free: boolean; direction?: ProgramDirection; waveStart?: string } {
+  if (anchor) return { free: false };
+  const active = activeDirection(settings, listedGoals(goals, ladder, today).map((l) => l.goal), ladder);
+  if (active.kind !== 'direction') return { free: false };
+  const start = active.chosen ? parseDirectionStart((settings as { directionStart?: unknown }).directionStart) : undefined;
+  return { free: true, ...(active.chosen ? { direction: { id: active.id } } : {}), ...(start ? { waveStart: start } : {}) };
 }
