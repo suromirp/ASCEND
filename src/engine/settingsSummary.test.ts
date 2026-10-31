@@ -486,6 +486,8 @@ describe('rowSummary: gegevens en back-up', () => {
   it('de reeksen van je horloge: aan als standaard, met de ruimte erbij', () => {
     expect(rowSummary('reeksen-bewaren', facts()).checked).toBe(true);
     expect(rowSummary('reeksen-bewaren', facts({ settings: { keepStreams: false } as never })).checked).toBe(false);
+    expect(rowSummary('ochtend-backup', facts()).checked).toBe(true);
+    expect(rowSummary('ochtend-backup', facts({ settings: { morningInBackup: false } as never })).checked).toBe(false);
     expect(rowSummary('reeksen-backup', facts()).value).toBe('2 jaar');
     expect(rowSummary('reeksen-backup', facts({ settings: { streamsInBackup: false } as never }))).toMatchObject({ value: 'Geen', dim: true });
     expect(rowSummary('reeksen-backup', facts({ settings: { streamsBackup: 'all' } as never })).value).toBe('Alle');

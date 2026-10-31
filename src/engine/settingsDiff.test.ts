@@ -81,6 +81,7 @@ const everything: AppSettings = {
   weightFromMacroFactor: false,
   stravaText: false,
   keepStreams: false,
+  morningInBackup: false,
   streamsInBackup: false,
   proposalTidyMonths: 12,
 };

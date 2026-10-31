@@ -758,6 +758,10 @@ export interface AppSettings {
   // or 'none' when the old switch streamsInBackup is off), 'all' or 'none'. Picking one drops the old
   // switch. Optional and additive; read on import by storage/migrations.ts#migrateDataSettings.
   streamsBackup?: 'twoYears' | 'all' | 'none';
+  // "Ochtendgetallen in back-up" (engine/morningBackup.ts): the date, resting heart rate, HRV,
+  // sleep duration and sleep score of each morning travel in the backup (payload.mornings).
+  // Absent = on. Optional and additive; checked on import like the other switches (storage/backup.ts).
+  morningInBackup?: boolean;
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
   proposalTidyMonths?: 0 | 3 | 6 | 12;
@@ -1648,6 +1652,8 @@ export interface BackupWriteSet {
   strengthProgramRecommendations?: BackupStoreWrite<StrengthProgramRecommendation>;
   // The full series that came with a backup (only those the device does not have yet).
   activityStreams?: BackupStoreWrite<ActivityStreams>;
+  // The mornings that came with a backup (only those the device does not have yet).
+  recoveryMetrics?: BackupStoreWrite<RecoveryMetric>;
   settings?: AppSettings;
   // Other meta keys (goalEngineConfig, adviceResponses), written as-is.
   meta?: Record<string, unknown>;
@@ -1668,7 +1674,7 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
 
-  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations', 'activityStreams'] as const) {
+  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations', 'activityStreams', 'recoveryMetrics'] as const) {
     const write = writes[key];
     if (!write) continue;
     const store = tx.objectStore(key);

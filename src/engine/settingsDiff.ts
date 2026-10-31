@@ -333,6 +333,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('macrofactor-gewicht', 'Gewicht gebruiken', 'koppelingen', 'weightFromMacroFactor'),
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
+  flag('ochtend-backup', 'Ochtendgetallen in back-up', 'gegevens', 'morningInBackup'),
   {
     id: 'reeksen-backup', title: 'Reeksen in back-up', page: 'gegevens',
     differs: (s) => resolveStreamsBackup(s) !== DEFAULT_STREAMS_BACKUP,

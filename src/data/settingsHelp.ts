@@ -482,6 +482,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je route', text: 'wordt nooit bewaard. Alleen de richting per kilometer telt, voor de wind, en die blijft als getal staan.' },
     ],
   },
+  ochtendBackup: {
+    title: 'Ochtendgetallen in back-up',
+    lead: 'Je slaap, rusthartslag en HRV komen van intervals.icu. Als die ze later niet meer geeft, is je telefoon het enige exemplaar. Daarom gaan ze standaard mee in je back-up.',
+    points: [
+      { head: 'Wat mee gaat', text: 'per ochtend alleen de datum, je rusthartslag, je HRV, hoe lang je sliep en je slaapscore. Niets anders van je horloge.' },
+      { head: 'Let op', text: 'het back-upbestand bevat dan ook gezondheidsgegevens. Bewaar het waar alleen jij erbij kunt.' },
+      { head: 'Terugzetten', text: 'een ochtend die al op je telefoon staat blijft zoals hij is. Alleen wat ontbreekt komt terug.' },
+      { head: 'Uit', text: 'een back-up zonder ochtendgetallen. Na een herstel haalt ASCEND ze opnieuw op zolang intervals.icu dat kan.' },
+    ],
+  },
   reeksenBackup: {
     title: 'Reeksen in back-up',
     lead: 'De reeksen van je horloge komen van intervals.icu, maar die kan ze later misschien niet meer geven. Daarom gaan die van de laatste 2 jaar standaard mee in je back-up.',

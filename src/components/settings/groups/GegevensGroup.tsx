@@ -31,10 +31,11 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <SummaryRow id="momentopnamen" title="Kopieën van voor een import" facts={facts} onClick={() => setSheet('momentopnamen')} />
       </SettingsSection>
 
-      <SettingsSection title="Reeksen van je horloge">
+      <SettingsSection title="Van je horloge">
         <SummaryRow id="reeksen-bewaren" title="Volledige reeks bewaren" facts={facts} info="reeksenBewaren" onChange={(on) => void updateSettings({ keepStreams: on })} />
         <SummaryRow id="reeksen-backup" title="Reeksen in back-up" facts={facts} info="reeksenBackup" onClick={() => setSheet('reeksen-backup')} />
         <SummaryRow id="reeksen-ruimte" title="Ruimte van reeksen" facts={facts} onClick={() => setSheet('reeksen')} />
+        <SummaryRow id="ochtend-backup" title="Ochtendgetallen in back-up" facts={facts} info="ochtendBackup" onChange={(on) => void updateSettings({ morningInBackup: on })} />
       </SettingsSection>
 
       <SettingsSection
