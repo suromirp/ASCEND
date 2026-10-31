@@ -132,6 +132,16 @@ describe('een richting kiezen zonder doel', () => {
     expect(program.phases.at(-1)!.weekCount % 3).toBe(0);
   });
 
+  it('na een golf: een stap hoger is een voorstel dat bij Akkoord het budget en de lengtes verhoogt', async () => {
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain', { beginnerStart: 'nee' })))).status);
+    const before = (await ProgramsRepo.getAll())[0].direction!.factors![0];
+    const plan = await computeHorizonPlan({ ...input('maintain'), trigger: 'wave_review', settings: { weekBudget: { minutes: 165 }, waveReviewDone: '2026-09-28' } });
+    expect((await SettingsRepo.get()).weekBudget).toBeUndefined();
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(plan)).status);
+    expect((await SettingsRepo.get()).waveReviewDone).toBe('2026-09-28');
+    expect((await ProgramsRepo.getAll())[0].direction!.factors![0]).toBeGreaterThan(before);
+  });
+
   it('beginnersstart op Nee: de heuvelloop blijft', async () => {
     expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain', { beginnerStart: 'nee' })))).status);
     expect((await open()).filter((s) => s.scheduledDate < addDays(TODAY, 28)).map((s) => s.templateId)).toContain('tpl_hill_intervals');

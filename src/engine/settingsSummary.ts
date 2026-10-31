@@ -556,6 +556,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const w = resolveWaveSettings(s.waves);
       return { value: `${w.length} weken`, sub: w.lightWeek ? 'Met een lichte week' : 'Zonder lichte week' };
     }
+    case 'golf-terugblik': {
+      const w = resolveWaveSettings(s.waves);
+      return w.review ? { value: 'Aan', sub: `Stap omhoog bij ${w.weeksForStep} van ${w.length} weken` } : { value: 'Uit', dim: true };
+    }
     case 'beginnersstart':
       return { value: choiceShort('beginnersstart', parseBeginnerStart(s.beginnerStart)) };
     case 'richting': {

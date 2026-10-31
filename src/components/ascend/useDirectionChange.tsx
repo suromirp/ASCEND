@@ -6,6 +6,7 @@ import type { AppSettings } from '../../storage/database';
 import { directionChangeLines, directionChangeTitle } from '../../engine/directionChange';
 import { beginnerStartLine, isBeginnerStart } from '../../engine/beginnerStart';
 import { resolveWaveSettings } from '../../engine/waves';
+import { waveReviewPatch, type WaveReviewCard, type WaveReviewChoice } from '../../engine/waveReviewCard';
 import { mondayOfWeek, todayISO } from '../../utils/dates';
 import { useHorizonChange } from '../useHorizonChange';
 
@@ -19,6 +20,8 @@ export function useDirectionChange(): {
   choose: (id: DirectionId) => Promise<void>;
   // Een ander weekbudget terwijl je plan een richting volgt: ook een voorstel.
   proposeBudget: (weekBudget: AppSettings['weekBudget']) => Promise<void>;
+  // Een keuze na een golf (engine/waveReviewCard.ts): wat de planning verandert is een voorstel.
+  reviewChoice: (card: WaveReviewCard, choice: WaveReviewChoice) => Promise<void>;
   note: string | null;
   clearNote: () => void;
   sheet: ReactNode;
@@ -70,5 +73,25 @@ export function useDirectionChange(): {
     );
   }
 
-  return { choose, proposeBudget, note: horizon.note, clearNote: horizon.clearNote, sheet: horizon.sheet, busy: horizon.busy };
+  async function reviewChoice(card: WaveReviewCard, choice: WaveReviewChoice) {
+    const { plan, patch } = waveReviewPatch(card, choice, settings);
+    if (!plan || !program) {
+      await updateSettings(patch);
+      return;
+    }
+    const id = patch.direction ?? card.directionId;
+    await horizon.propose(
+      () => planHorizonChange({
+        title: choice === 'easier' ? 'Rustiger aan na je golf' : 'Nog een golf, een stap hoger',
+        why: 'Volgt je keuze na je golf.',
+        explanation: 'Je koos wat er na je golf komt. Je ziet eerst wat er in je planning verandert; pas na jouw Akkoord gebeurt er iets.',
+        trigger: 'wave_review',
+        settings: patch,
+        notes: directionChangeLines(id, { weekBudget: patch.weekBudget }).slice(0, 2),
+      }),
+      { eyebrow: 'Na je golf', ask: 'always', alwaysAsk: true, notesTitle: 'Je volgende golf', declined: 'Prima, alles blijft zoals het was. De kaart blijft nog even staan.' },
+    );
+  }
+
+  return { choose, proposeBudget, reviewChoice, note: horizon.note, clearNote: horizon.clearNote, sheet: horizon.sheet, busy: horizon.busy };
 }

@@ -686,6 +686,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Vier weken', text: 'het advies. Drie weken opbouwen, de vierde 35% lichter bij dezelfde intensiteit.' },
       { head: 'Drie of zes weken', text: 'korter of langer opbouwen voor de lichte week. De lichte week blijft de laatste van de golf.' },
       { head: 'Lichte week voorstellen', text: 'uit betekent dat elke week van de golf even zwaar is. Dat kan, maar rust is waar je sterker van wordt.' },
+      { head: 'Terugblik na een golf', text: 'na elke golf een kaart op Ascend: hoeveel weken je je minuten haalde en wat nu. Uit betekent dat de golf doorloopt op hetzelfde niveau.' },
+      { head: 'Stap omhoog', text: 'haalde je minstens zoveel weken je minuten (advies 3 van 4), dan stelt Nog een golf een iets hoger budget voor.' },
       { head: 'Voorstel', text: 'een andere keuze verandert je planning, dus je ziet eerst wat er verandert.' },
     ],
   },

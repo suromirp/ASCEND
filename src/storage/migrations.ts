@@ -683,8 +683,8 @@ export function migrateDirection(raw: { direction?: unknown; directionStart?: un
 // Zonder doel, de keuzes rond golven (docs/beslissingen/2026-10-31-zonder-doel-beginnersstart.md):
 // alleen bekende waarden blijven over; wat ontbreekt is het advies. Een oud bestand zonder deze velden
 // importeert zoals het was, dus het schemanummer blijft staan.
-type WaveSettingsValue = { beginnerStart?: 'auto' | 'ja' | 'nee'; waves?: { length?: 3 | 6; lightWeek?: false } };
-export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unknown }): { value: WaveSettingsValue; skipped: number } {
+type WaveSettingsValue = { beginnerStart?: 'auto' | 'ja' | 'nee'; waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number }; waveReviewDone?: string };
+export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unknown; waveReviewDone?: unknown }): { value: WaveSettingsValue; skipped: number } {
   const value: WaveSettingsValue = {};
   let skipped = 0;
   if (raw.beginnerStart !== undefined) {
@@ -699,9 +699,20 @@ export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unkn
       const length = ([3, 6] as const).find((n) => n === w.length);
       if (w.length !== undefined && w.length !== 4 && !length) skipped++;
       if (w.lightWeek !== undefined && w.lightWeek !== false && w.lightWeek !== true) skipped++;
-      const kept = { ...(length ? { length } : {}), ...(w.lightWeek === false ? { lightWeek: false as const } : {}) };
+      if (w.review !== undefined && w.review !== false && w.review !== true) skipped++;
+      const step = typeof w.weeksForStep === 'number' && Number.isInteger(w.weeksForStep) && w.weeksForStep >= 1 && w.weeksForStep <= 6 ? w.weeksForStep : undefined;
+      if (w.weeksForStep !== undefined && step === undefined) skipped++;
+      const kept = {
+        ...(length ? { length } : {}), ...(w.lightWeek === false ? { lightWeek: false as const } : {}),
+        ...(w.review === false ? { review: false as const } : {}), ...(step !== undefined && step !== 3 ? { weeksForStep: step } : {}),
+      };
       if (Object.keys(kept).length > 0) value.waves = kept;
     }
+  }
+  if (raw.waveReviewDone !== undefined) {
+    const monday = typeof raw.waveReviewDone === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.waveReviewDone) ? raw.waveReviewDone : undefined;
+    if (monday) value.waveReviewDone = monday;
+    else skipped++;
   }
   return { value, skipped };
 }

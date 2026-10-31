@@ -125,7 +125,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('meerdere', 'zware-dingen'),
   ...inSheet('ambitie', 'lange-loop'),
   // Doel en tochten
-  ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'beginnersstart'),
+  ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'tussengewichten', 'spotterrek'),
@@ -240,7 +240,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.pairing], 'zware-dingen'),
   // Doel en tochten
   ...rule([B.goalOrProgram], 'programma'),
-  ...rule([B.noGoal], 'bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'beginnersstart'),
+  ...rule([B.noGoal], 'bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   ...rule([B.goal], 'na-hoofddoel'),
   ...rule([B.longSunday], 'lange-zondag'),
   ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),

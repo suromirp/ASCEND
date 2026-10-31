@@ -24,7 +24,9 @@ import { EarlierGoalsSheet } from '../components/ascend/EarlierGoalsSheet';
 import { useGoalViews } from '../components/ascend/useGoalViews';
 import { goalsSentence, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, seasonStrip, stepAvailability, type MoveResult } from '../engine/goalList';
 import { needsFirstPlan } from '../engine/freshStart';
-import { plannedRestFor, yourWeek } from '../engine/yourWeek';
+import { countOptions, plannedRestFor, yourWeek } from '../engine/yourWeek';
+import { waveReviewCard } from '../engine/waveReviewCard';
+import { WaveReviewCard } from '../components/ascend/WaveReview';
 import type { AddTileId } from '../engine/goalDraft';
 import { todayISO } from '../utils/dates';
 
@@ -166,6 +168,11 @@ export function AscendPage() {
     [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, plannedSessions, today, program],
   );
   const plain = emptyList && !week;
+  // De terugblik na een golf, alleen zonder doel en de eerste tien dagen van een nieuwe golf.
+  const review = useMemo(
+    () => (week ? waveReviewCard({ settings, logs: sessionLogs, today, noGoal: true, countOptions: countOptions(settings, templates, plannedSessions) }) : undefined),
+    [week, settings, sessionLogs, today, templates, plannedSessions],
+  );
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
       <SkyBand actions={plain ? undefined : <AscentTabPlusButton onClick={() => startAdd()} />}>
@@ -184,6 +191,17 @@ export function AscendPage() {
           </Card>
         )}
       </SkyBand>
+
+      {review && (
+        <WaveReviewCard
+          review={review}
+          busy={direction.busy}
+          onChoose={(choice) => {
+            clearNotes();
+            void direction.reviewChoice(review, choice).then(() => { if (choice === 'goal') startAdd(); });
+          }}
+        />
+      )}
 
       {week && <YourDirectionCard week={week} onChoose={() => setWeekSheet('direction')} />}
 

@@ -35,11 +35,15 @@ export const ADVICE_WAVE_LENGTH = 4;
 export interface WaveSettings {
   length: number;
   lightWeek: boolean;
+  // De terugblik na een golf (aan) en hoeveel weken je moet halen voor een stap omhoog (3).
+  review: boolean;
+  weeksForStep: number;
 }
 export function resolveWaveSettings(raw: unknown): WaveSettings {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const length = WAVE_LENGTHS.find((n) => n === r.length) ?? ADVICE_WAVE_LENGTH;
-  return { length, lightWeek: r.lightWeek !== false };
+  const step = typeof r.weeksForStep === 'number' && Number.isInteger(r.weeksForStep) && r.weeksForStep >= 1 && r.weeksForStep <= 6 ? r.weeksForStep : DEFAULT_WEEKS_FOR_STEP;
+  return { length, lightWeek: r.lightWeek !== false, review: r.review !== false, weeksForStep: Math.min(step, length) };
 }
 
 // De golf van een richting met jouw instelling erover: Rustig aan heeft geen golf.

@@ -94,7 +94,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {inner === 'weekbudget' && <WeekBudgetSheet onClose={closeInner} onPropose={(weekBudget) => { setNote(null); plan.clearNote(); void direction.proposeBudget(weekBudget); }} />}
       {inner === 'golven' && (
-        <WavesSheet onChange={(waves, title) => { setNote(null); void plan.changeSetting(title, { waves }, 'Volgt je keuze voor de golven.'); }} onClose={closeInner} />
+        <WavesSheet onPlanChange={(waves, title) => { setNote(null); void plan.changeSetting(title, { waves }, 'Volgt je keuze voor de golven.'); }} onClose={closeInner} />
       )}
       {inner === 'beginnersstart' && (
         <ChoiceFromDef

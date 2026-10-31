@@ -709,7 +709,10 @@ export interface AppSettings {
   beginnerStart?: 'auto' | 'ja' | 'nee';
   // De instelling Golven zonder doel (engine/waves.ts#resolveWaveSettings): de lengte (3, 4 of 6
   // weken; absent = 4) en of de laatste week lichter is (absent = ja). Optional and additive.
-  waves?: { length?: 3 | 6; lightWeek?: false };
+  waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number };
+  // De terugblik na een golf: de maandag waarop de golf begon waar je al een keuze voor maakte
+  // (engine/waveReviewCard.ts). Een antwoord, geen vlag op een training. Optional and additive.
+  waveReviewDone?: string;
   // "Twijfeltest eerst vragen": a test run that came out clearly slower than the one before
   // waits for your answer before it changes your paces. Absent = on. Optional and additive.
   askDoubtTest?: boolean;

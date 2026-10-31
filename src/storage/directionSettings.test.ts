@@ -42,6 +42,11 @@ describe('migrateWaveSettings', () => {
     expect(migrateWaveSettings({ waves: { length: 9, lightWeek: 'nee' } })).toEqual({ value: {}, skipped: 2 });
     expect(migrateWaveSettings({ waves: 'lang' })).toEqual({ value: {}, skipped: 1 });
   });
+
+  it('houdt de terugblik en de stap omhoog over, en een antwoord als datum', () => {
+    expect(migrateWaveSettings({ waves: { review: false, weeksForStep: 2 }, waveReviewDone: '2026-11-23' })).toEqual({ value: { waves: { review: false, weeksForStep: 2 }, waveReviewDone: '2026-11-23' }, skipped: 0 });
+    expect(migrateWaveSettings({ waves: { review: 'nee', weeksForStep: 9 }, waveReviewDone: 7 })).toEqual({ value: {}, skipped: 3 });
+  });
 });
 
 describe('richting en weekbudget in de back-up', () => {

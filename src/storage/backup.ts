@@ -497,10 +497,11 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     skipped.n += clean.skipped;
   }
   // Zonder doel: the choices around waves; known values stay.
-  if ('beginnerStart' in s || 'waves' in s) {
-    const clean = migrateWaveSettings({ beginnerStart: s.beginnerStart, waves: s.waves });
+  if ('beginnerStart' in s || 'waves' in s || 'waveReviewDone' in s) {
+    const clean = migrateWaveSettings({ beginnerStart: s.beginnerStart, waves: s.waves, waveReviewDone: s.waveReviewDone });
     delete s.beginnerStart;
     delete s.waves;
+    delete s.waveReviewDone;
     Object.assign(s, clean.value);
     skipped.n += clean.skipped;
   }
