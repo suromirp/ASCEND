@@ -38,7 +38,7 @@ import type { InjuryNote } from '../models/injury';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { AlcoholAmount, InfluenceEntry, InfluenceReason, InfluenceReasonNote } from '../models/influence';
 import { AMOUNTS, MAX_LABEL_LENGTH, REASON_LABEL } from '../data/influenceReasons';
-import type { ExternalOneRm, OneRmReading, WeightEntry } from '../models/metrics';
+import type { ExternalOneRm, OneRmReading, RecoveryMetric, WeightEntry } from '../models/metrics';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
 import type { BestEffort, ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
 
@@ -833,6 +833,44 @@ export function migrateActivityStreams(raw: unknown): { list: ActivityStreams[] 
     byLog.set(read.logId, read);
   }
   return { list: [...byLog.values()], skipped };
+}
+
+// --- ochtendgetallen in de back-up (2026-10-31) ----------------------------------------
+// `payload.mornings` is nieuw (engine/morningBackup.ts, docs/beslissingen/2026-10-31-kansen-stap-0.md):
+// per ochtend de datum, rusthartslag, HRV, slaapduur en slaapscore. Optioneel en additief, dus
+// het schemanummer blijft: een back-up van daarvoor heeft ze niet (undefined: "niet in deze
+// back-up", het toestel houdt de eigen). Een ochtend met een datum die niet klopt of zonder een
+// geldig getal valt weg en wordt geteld; een getal buiten wat een lichaam kan valt alleen zelf weg,
+// met dezelfde grenzen als bij het ophalen (integrations/intervalsIcu.ts#mapIntervalsWellnessRecord).
+const MORNING_SOURCES: readonly MetricSource[] = ['manual', 'garmin', 'health-connect', 'macrofactor', 'import'];
+const MORNING_LIMITS = { restingHeartRate: [25, 150], hrv: [1, 400], sleepMinutes: [10, 20 * 60], sleepScore: [0, 100] } as const;
+
+export function migrateMornings(raw: unknown): { list: RecoveryMetric[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const byId = new Map<string, RecoveryMetric>();
+  let skipped = 0;
+  for (const item of raw) {
+    const r = item as Record<string, unknown> | null;
+    if (!r || typeof r !== 'object' || typeof r.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(r.date)) {
+      skipped++;
+      continue;
+    }
+    const id = typeof r.id === 'string' && r.id.length > 0 ? r.id : `intervals.icu:${r.date}`;
+    const source = MORNING_SOURCES.includes(r.source as MetricSource) ? (r.source as MetricSource) : 'import';
+    const metric: RecoveryMetric = { id, date: r.date, source };
+    for (const key of Object.keys(MORNING_LIMITS) as (keyof typeof MORNING_LIMITS)[]) {
+      const v = r[key];
+      const [min, max] = MORNING_LIMITS[key];
+      if (typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max) metric[key] = v;
+    }
+    if (Object.keys(metric).length === 3) {
+      skipped++;
+      continue;
+    }
+    byId.set(id, metric);
+  }
+  return { list: [...byId.values()], skipped };
 }
 
 // --- activiteit inkorten: SessionLog.trim ---------------------------------------------

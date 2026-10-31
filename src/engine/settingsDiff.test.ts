@@ -81,6 +81,13 @@ const everything: AppSettings = {
   weightFromMacroFactor: false,
   stravaText: false,
   keepStreams: false,
+  morningInBackup: false,
+  watchSilence: false,
+  illnessSigns: false,
+  heatPace: false,
+  weekdayPattern: false,
+  airQuality: false,
+  morningRule: false,
   streamsInBackup: false,
   proposalTidyMonths: 12,
 };

@@ -29,6 +29,8 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import type { ActivityStreams, SerializedActivityStreams } from '../models/activityStreams';
+import type { RecoveryMetric } from '../models/metrics';
+import type { BackupMorning } from '../engine/morningBackup';
 import type { RoutePlan, SoloPlan } from '../models/routePlan';
 import type { AppSettings } from './database';
 
@@ -102,6 +104,11 @@ export interface AscendBackupPayloadV5 extends Omit<AscendBackupPayloadV4, 'vers
   // additive, so the version stays 5: a file without it imports as before, and a file made
   // with "Reeksen in back-up" off simply has none. Never in the copies taken before an import.
   activityStreams?: SerializedActivityStreams[];
+  // The mornings of the watch: date, resting heart rate, HRV, sleep duration and sleep score
+  // (engine/morningBackup.ts). Optional and additive, so the version stays 5: a file without it
+  // imports as before. Left out with "Ochtendgetallen in back-up" off and in the copies taken
+  // before an import (an import only adds mornings, it never removes one).
+  mornings?: BackupMorning[];
 }
 
 export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4 | AscendBackupPayloadV5;
@@ -154,6 +161,9 @@ export interface NormalizedBackupData {
   soloPlan?: SoloPlan;
   // The full series that came with the file; undefined means "not in this backup".
   activityStreams?: ActivityStreams[];
+  // The mornings that came with the file (storage/migrations.ts#migrateMornings); undefined
+  // means "not in this backup".
+  mornings?: RecoveryMetric[];
 }
 
 // --- Data categories ---------------------------------------------------------

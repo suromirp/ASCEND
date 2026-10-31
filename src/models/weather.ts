@@ -22,6 +22,10 @@ export interface WeatherHour {
   gustKmh: number;
   code: number; // WMO weather code
   uvIndex?: number; // UV index of that hour; absent in a forecast fetched before this field
+  // Dew point and relative humidity of that hour (engine/heatPace.ts); absent in a forecast
+  // fetched before these fields. The forecast is a cache, never in a backup.
+  dewPointC?: number;
+  humidityPct?: number;
 }
 
 // Sunrise and sunset of one day, local time: 'YYYY-MM-DDTHH:MM'.

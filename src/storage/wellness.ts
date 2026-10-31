@@ -1,9 +1,11 @@
 // ASCEND: sleep, resting heart rate and HRV from intervals.icu, kept on this
 // device as RecoveryMetric (the shape every source fills; no vendor fields).
 //
-// The values are a cache of someone else's data, re-fetched from intervals.icu
-// whenever the watch is synchronised, so (like the activities and the key in
-// storage/externalActivities.ts) they are not part of an export. The records
+// The values are re-fetched from intervals.icu whenever the watch is synchronised.
+// Because the source may stop giving them out, the date and the four numbers travel
+// in the backup unless "Ochtendgetallen in back-up" is off (engine/morningBackup.ts,
+// docs/beslissingen/2026-10-31-kansen-stap-0.md); the key and the activities in
+// storage/externalActivities.ts still never do. The records
 // carry the id "intervals.icu:<date>", which is how unlinking finds exactly
 // these and leaves anything entered another way alone.
 

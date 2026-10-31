@@ -72,16 +72,16 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     rows: ['forge', 'kracht', 'forge-programma', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-weergave', 'bundel-rusttimer', 'forge-scherm', 'forge-bijsturen', 'forge-spotter', 'bundel-sportschool'],
     advanced: ['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets'],
   },
-  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'intensiteit'], advanced: [] },
+  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit'], advanced: [] },
   vandaag: {
     rows: ['kaarten', 'lichterbenen', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {
-    rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'bundel-horloge-sturen', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
+    rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
     advanced: [],
   },
-  gegevens: { rows: ['backup', 'backupmap', 'opslag', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'herbouwen', 'aangepast', 'wissen'], advanced: ['voorstellen-opruimen', 'startniveau'], footer: ['versie'] },
+  gegevens: { rows: ['backup', 'backupmap', 'opslag', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'herbouwen', 'aangepast', 'wissen'], advanced: ['voorstellen-opruimen', 'startniveau'], footer: ['versie'] },
   gidsen: { rows: ['weer-gids', 'kennisbank', 'plekken', 'bronnen'], advanced: [] },
 };
 
@@ -134,6 +134,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-snelknoppen', 'forge-vegen', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven'),
   ...inSheet('bundel-toets', 'forge-naast', 'forge-sinds'),
   // Lichaam
+  ...inSheet('bundel-signalen', 'vroeg-ziek', 'ochtendregel', 'weekdag-patroon', 'hitte-tempo', 'luchtkwaliteit'),
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd'),
   // Vandaag en meldingen
   ...inSheet('kaarten', 'ochtendcheck', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'geluid'),
@@ -265,7 +266,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.skyAuto], 'lucht-vanaf'),
   ...rule([B.legEaseOffers], 'lichterbenen-hoe'),
   // Koppelingen
-  ...rule([B.garmin], 'bundel-horloge-gebruik', 'garmin-trainingen', 'slaap', 'rusthartslag', 'hrv', 'bundel-horloge-sturen', 'naar-horloge'),
+  ...rule([B.garmin], 'horloge-stil', 'bundel-horloge-gebruik', 'garmin-trainingen', 'slaap', 'rusthartslag', 'hrv', 'bundel-horloge-sturen', 'naar-horloge'),
   ...rule([B.garmin, B.activities], 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-details'),
   ...rule([B.garmin, B.send], 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
   ...rule([B.garmin, B.send, B.ascendHr], 'horloge-rustige-loop'),

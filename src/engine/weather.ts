@@ -118,6 +118,7 @@ export interface SessionWeather {
   windKmh: number; // highest
   gustKmh: number; // highest
   uvIndex?: number; // highest UV index in the window; absent when the forecast has none
+  dewPointC?: number; // highest dew point in the window; absent when the forecast has none
   verdict: WeatherVerdict;
   // Short words behind the verdict: 'onweer', 'harde wind', 'regen' ...
   reasons: string[];
@@ -178,6 +179,8 @@ export function sessionWeather({ forecast, date, startHour, durationMinutes, now
   const minFeels = Math.min(...hours.map((h) => h.feelsC));
   const uvs = hours.map((h) => h.uvIndex).filter((u): u is number => u !== undefined);
   const uvIndex = uvs.length ? Math.max(...uvs) : undefined;
+  const dews = hours.map((h) => h.dewPointC).filter((u): u is number => u !== undefined);
+  const dewPointC = dews.length ? Math.max(...dews) : undefined;
   const codes = hours.map((h) => h.code);
   const R = WEATHER_RULES;
 
@@ -218,7 +221,7 @@ export function sessionWeather({ forecast, date, startHour, durationMinutes, now
   }
 
   const result: SessionWeather = {
-    date, startHour: from, endHour: to, hours: hours.length, tempC, feelsC, precipMm, precipProb, windKmh, gustKmh, uvIndex,
+    date, startHour: from, endHour: to, hours: hours.length, tempC, feelsC, precipMm, precipProb, windKmh, gustKmh, uvIndex, ...(dewPointC !== undefined ? { dewPointC } : {}),
     verdict, reasons: [...bad, ...watch], watch, bad, daylight, line: '',
   };
   result.line = weatherLine(result);

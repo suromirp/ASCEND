@@ -109,13 +109,19 @@ describe('sleep, resting heart rate and HRV', () => {
     expect(result.status).toBe('error');
   });
 
-  it('are a cache and stay out of the export', async () => {
+  // Since 2026-10-31 they travel in the backup unless you turn it off
+  // (docs/beslissingen/2026-10-31-kansen-stap-0.md); the key never does.
+  it('go into the export by default, stay out when switched off, and the key never goes', async () => {
     await saveConnection({ athleteId: ATHLETE, apiKey: KEY });
     await syncWatchActivities({ fetchImpl: asFetch(intervalsFetch([tonight()])) });
-    const text = JSON.stringify(await buildBackupEnvelope());
-    expect(text).not.toContain('intervals.icu:');
-    expect(text).not.toContain('sleepMinutes');
-    expect(text).not.toContain('restingHeartRate');
+    const on = JSON.stringify(await buildBackupEnvelope());
+    expect(on).toContain('restingHeartRate');
+    expect(on).not.toContain(KEY);
+    await SettingsRepo.set({ ...(await SettingsRepo.get()), morningInBackup: false });
+    const off = JSON.stringify(await buildBackupEnvelope());
+    expect(off).not.toContain('intervals.icu:');
+    expect(off).not.toContain('sleepMinutes');
+    expect(off).not.toContain('restingHeartRate');
   });
 });
 

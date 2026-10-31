@@ -758,6 +758,29 @@ export interface AppSettings {
   // or 'none' when the old switch streamsInBackup is off), 'all' or 'none'. Picking one drops the old
   // switch. Optional and additive; read on import by storage/migrations.ts#migrateDataSettings.
   streamsBackup?: 'twoYears' | 'all' | 'none';
+  // "Ochtendgetallen in back-up" (engine/morningBackup.ts): the date, resting heart rate, HRV,
+  // sleep duration and sleep score of each morning travel in the backup (payload.mornings).
+  // Absent = on. Optional and additive; checked on import like the other switches (storage/backup.ts).
+  morningInBackup?: boolean;
+  // "Melden als je horloge stilvalt" (engine/sourceWatch.ts): one quiet line on Vandaag when
+  // nothing comes in from the watch for three days while the link works. Absent = on.
+  watchSilence?: boolean;
+  // "Vroeg ziek zien" (engine/illnessSigns.ts): a question on Vandaag when resting heart rate and
+  // HRV are off together for two mornings in a row. Absent = on. Optional and additive.
+  illnessSigns?: boolean;
+  // "Hitte bij je tempo" (engine/heatPace.ts): a line under the weather of a run when it is warm
+  // or humid. Absent = on. Optional and additive.
+  heatPace?: boolean;
+  // "Patronen per weekdag" (engine/weekdayPattern.ts): a quiet line on Week when a training falls
+  // away clearly more often on one weekday. Absent = on. Optional and additive.
+  weekdayPattern?: boolean;
+  // "Luchtkwaliteit" (engine/airQuality.ts): a line under the weather of a hard training outside
+  // when the European air quality index is poor. Asks air-quality-api.open-meteo.com with the same
+  // rounded place as the forecast. Absent = on. Optional and additive.
+  airQuality?: boolean;
+  // "Ochtendregel" (engine/morningRule.ts): the three watch numbers with a word each on the morning
+  // card, and the question "Ben je moe?" when two of the three are off. Absent = on.
+  morningRule?: boolean;
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
   proposalTidyMonths?: 0 | 3 | 6 | 12;
@@ -1648,6 +1671,8 @@ export interface BackupWriteSet {
   strengthProgramRecommendations?: BackupStoreWrite<StrengthProgramRecommendation>;
   // The full series that came with a backup (only those the device does not have yet).
   activityStreams?: BackupStoreWrite<ActivityStreams>;
+  // The mornings that came with a backup (only those the device does not have yet).
+  recoveryMetrics?: BackupStoreWrite<RecoveryMetric>;
   settings?: AppSettings;
   // Other meta keys (goalEngineConfig, adviceResponses), written as-is.
   meta?: Record<string, unknown>;
@@ -1668,7 +1693,7 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
 
-  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations', 'activityStreams'] as const) {
+  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations', 'activityStreams', 'recoveryMetrics'] as const) {
     const write = writes[key];
     if (!write) continue;
     const store = tx.objectStore(key);

@@ -19,6 +19,7 @@
 import { cleanCardOrder } from '../engine/cardOrder';
 import { localDateOf, todayISO } from '../utils/dates';
 import { logIdsForBackup, resolveStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
+import { morningsForBackup, resolveMorningBackup } from '../engine/morningBackup';
 import { isEmptyStart } from '../engine/freshStart';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
@@ -27,7 +28,7 @@ import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../mode
 import type { CapabilityEvidence } from '../models/capability';
 import type { InjuryNote } from '../models/injury';
 import type { WeeklyHealthCheck } from '../models/checkIn';
-import type { WeightEntry } from '../models/metrics';
+import type { RecoveryMetric, WeightEntry } from '../models/metrics';
 import type { ActivityStreams } from '../models/activityStreams';
 import {
   ProgramsRepo,
@@ -44,6 +45,7 @@ import {
   MetaRepo,
   PlanChangeProposalsRepo,
   ActivityStreamsRepo,
+  RecoveryMetricsRepo,
   StrengthProgramStrategiesRepo,
   StrengthProgramRecommendationsRepo,
   applyBackupWrites,
@@ -62,7 +64,7 @@ import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -131,6 +133,9 @@ export interface BuildEnvelopeOptions {
   streams?: boolean;
   // For the tests: the day "the last 2 years" counts back from.
   today?: string;
+  // Whether the mornings of the watch travel along. Left out: the setting "Ochtendgetallen in
+  // back-up" decides (on unless you turned it off). The copy taken before an import passes false.
+  mornings?: boolean;
 }
 
 export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): Promise<AscendBackupEnvelope> {
@@ -194,6 +199,13 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
       if (i % 25 === 24) await new Promise((resolve) => setTimeout(resolve, 0));
     }
     if (serialized.length > 0) payload.activityStreams = serialized;
+  }
+
+  // The mornings of the watch (date, resting heart rate, HRV, sleep), so they survive when the
+  // source stops giving them out (docs/beslissingen/2026-10-31-kansen-stap-0.md).
+  if (options.mornings ?? resolveMorningBackup(settings)) {
+    const mornings = morningsForBackup(await RecoveryMetricsRepo.getAll());
+    if (mornings.length > 0) payload.mornings = mornings;
   }
 
   return {
@@ -400,7 +412,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.bootBreakInReminder;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'weekFixProposal', 'dragWeek', 'forgeQuickButtons', 'forgeSwipeDelete', 'haptics', 'proposeTargetTime', 'keepStreams', 'streamsInBackup'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'weekFixProposal', 'dragWeek', 'forgeQuickButtons', 'forgeSwipeDelete', 'haptics', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -633,6 +645,12 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
     const streams = migrateActivityStreams(raw.activityStreams);
     if (streams.list) normalized.activityStreams = streams.list;
     skipped.n += streams.skipped;
+  }
+  // The mornings of the watch (storage/migrations.ts#migrateMornings): a file from before them has none.
+  {
+    const mornings = migrateMornings(raw.mornings);
+    if (mornings.list) normalized.mornings = mornings.list;
+    skipped.n += mornings.skipped;
   }
 
   // Soort, gegevens en belangrijkheid van elk doel (ronde 2a): een back-up van voor deze
@@ -1177,7 +1195,7 @@ export async function listSnapshots(): Promise<PreImportSnapshot[]> {
 }
 
 export async function createPreImportSnapshot(): Promise<PreImportSnapshot> {
-  const envelope = await buildBackupEnvelope({ streams: false });
+  const envelope = await buildBackupEnvelope({ streams: false, mornings: false });
   const snapshot: PreImportSnapshot = {
     id: makeId('snapshot'),
     createdAt: new Date().toISOString(),
@@ -1257,6 +1275,14 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
     streamPuts = backup.activityStreams.filter((s) => logIds.has(s.logId) && !have.has(s.logId));
   }
 
+  // The mornings that came with the file: only those the device does not have yet, never over a
+  // morning the device fetched itself (its own is the newer reading).
+  let morningPuts: RecoveryMetric[] = [];
+  if (touches(historyAction) && backup.mornings && backup.mornings.length > 0) {
+    const have = new Set((await RecoveryMetricsRepo.getAll()).map((m) => m.id));
+    morningPuts = backup.mornings.filter((m) => !have.has(m.id));
+  }
+
   try {
     await applyBackupWrites({
       programs: touches(programAction) && resolved.program ? { clear: true, puts: [resolved.program] } : undefined,
@@ -1268,6 +1294,7 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
       planChangeProposals: touches(historyAction) && resolved.planChangeProposals ? { clear: false, puts: resolved.planChangeProposals.final } : undefined,
       strengthProgramRecommendations: touches(historyAction) && resolved.strengthProgramRecommendations ? { clear: false, puts: resolved.strengthProgramRecommendations.final } : undefined,
       activityStreams: streamPuts.length > 0 ? { clear: false, puts: streamPuts } : undefined,
+      recoveryMetrics: morningPuts.length > 0 ? { clear: false, puts: morningPuts } : undefined,
       trainingGoals: listWrite(goalsAction, resolved.trainingGoals),
       goalMilestones: listWrite(goalsAction, resolved.goalMilestones),
       goalMilestoneProgress: touches(goalsAction) ? { clear: false, puts: resolved.goalMilestoneProgress.final } : undefined,

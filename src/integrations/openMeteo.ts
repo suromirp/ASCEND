@@ -56,7 +56,7 @@ export function forecastUrl(place: WeatherPlace): string {
   const query = new URLSearchParams({
     latitude: String(roundCoordinate(place.lat)),
     longitude: String(roundCoordinate(place.lon)),
-    hourly: 'temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code,uv_index',
+    hourly: 'temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code,uv_index,dew_point_2m,relative_humidity_2m',
     daily: 'sunrise,sunset',
     timezone: 'auto',
     forecast_days: String(FORECAST_DAYS),
@@ -90,6 +90,8 @@ export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string
   const gust = col('wind_gusts_10m');
   const code = col('weather_code');
   const uv = col('uv_index');
+  const dew = col('dew_point_2m');
+  const humidity = col('relative_humidity_2m');
 
   const hours: WeatherHour[] = [];
   const seen = new Set<string>();
@@ -111,6 +113,8 @@ export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string
       gustKmh: num(gust[i]) ?? windKmh,
       code: num(code[i]) ?? 0,
       uvIndex: (() => { const u = num(uv[i]); return u === undefined ? undefined : Math.max(0, u); })(),
+      ...(num(dew[i]) !== undefined ? { dewPointC: num(dew[i]) } : {}),
+      ...(num(humidity[i]) !== undefined ? { humidityPct: Math.min(100, Math.max(0, num(humidity[i])!)) } : {}),
     });
   });
   if (hours.length === 0) throw new OpenMeteoError('response', MESSAGES.response);
@@ -309,4 +313,66 @@ export async function fetchPastWeather(
   if (daysBack > MAX_PAST_DAYS) return undefined;
   const raw = await getJson(pastConditionsUrl(place, daysBack), options);
   return { conditions: mapPastConditions(raw, startLocal, durationSec), wind: mapPastWind(raw, startLocal, durationSec) };
+}
+
+// --- air quality (engine/airQuality.ts) ---------------------------------------------
+//
+//   GET https://air-quality-api.open-meteo.com/v1/air-quality?latitude=..&longitude=..
+//       &hourly=european_aqi,ozone,pm2_5&timezone=auto&forecast_days=4
+//
+// The same rounded place as the forecast, no key. Asked only on a day with a hard training
+// outside, and kept as a cache that never goes in a backup (storage/airQuality.ts).
+
+export const OPEN_METEO_AIR_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality';
+export const AIR_DAYS = 4;
+
+export interface AirQualityHour {
+  time: string; // 'YYYY-MM-DDTHH:00', local time of the place
+  aqi?: number; // European AQI
+  ozone?: number; // µg/m³
+  pm25?: number; // µg/m³
+}
+
+export interface AirQualityForecast {
+  fetchedAt: string;
+  place: WeatherPlace;
+  hours: AirQualityHour[];
+}
+
+export function airQualityUrl(place: WeatherPlace): string {
+  const query = new URLSearchParams({
+    latitude: String(roundCoordinate(place.lat)),
+    longitude: String(roundCoordinate(place.lon)),
+    hourly: 'european_aqi,ozone,pm2_5',
+    timezone: 'auto',
+    forecast_days: String(AIR_DAYS),
+  });
+  return `${OPEN_METEO_AIR_URL}?${query.toString().replace(/%2C/g, ',')}`;
+}
+
+export function mapAirQuality(raw: unknown, place: WeatherPlace, fetchedAt: string): AirQualityForecast {
+  const h = (raw as { hourly?: Record<string, unknown> } | null)?.hourly;
+  if (!h || !Array.isArray(h.time)) throw new OpenMeteoError('response', MESSAGES.response);
+  const col = (key: string): unknown[] => (Array.isArray(h[key]) ? (h[key] as unknown[]) : []);
+  const aqi = col('european_aqi');
+  const ozone = col('ozone');
+  const pm = col('pm2_5');
+  const hours: AirQualityHour[] = [];
+  (h.time as unknown[]).forEach((time, i) => {
+    if (!isLocalTime(time)) return;
+    const hour: AirQualityHour = { time };
+    const a = num(aqi[i]);
+    const o = num(ozone[i]);
+    const p = num(pm[i]);
+    if (a !== undefined && a >= 0) hour.aqi = a;
+    if (o !== undefined && o >= 0) hour.ozone = o;
+    if (p !== undefined && p >= 0) hour.pm25 = p;
+    if (Object.keys(hour).length > 1) hours.push(hour);
+  });
+  return { fetchedAt, place: roundedPlace(place), hours };
+}
+
+export async function fetchAirQuality(place: WeatherPlace, options: FetchOptions & { now?: Date } = {}): Promise<AirQualityForecast> {
+  const body = await getJson(airQualityUrl(place), options);
+  return mapAirQuality(body, place, (options.now ?? new Date()).toISOString());
 }

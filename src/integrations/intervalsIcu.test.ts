@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   IntervalsError,
   activitiesUrl,
+  ACTIVITY_FIELDS,
   basicAuthHeader,
   cadenceOf,
   createIntervalsIcuAdapter,
@@ -63,11 +64,35 @@ describe('request', () => {
     await fetchIntervalsActivities(CONNECTION, { from: '2026-10-14', to: '2026-10-22' }, { fetchImpl: fetchImpl as unknown as typeof fetch });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toBe('https://intervals.icu/api/v1/athlete/i12345/activities?oldest=2026-10-14&newest=2026-10-22');
+    expect(url).toBe(`https://intervals.icu/api/v1/athlete/i12345/activities?oldest=2026-10-14&newest=2026-10-22&fields=${encodeURIComponent(ACTIVITY_FIELDS.join(','))}`);
     expect(init.method).toBe('GET');
     const auth = (init.headers as Record<string, string>).Authorization;
     expect(auth).toBe(`Basic ${btoa('API_KEY:geheime-sleutel-0123')}`);
     expect(atob(auth.replace('Basic ', ''))).toBe('API_KEY:geheime-sleutel-0123');
+  });
+
+  it('asks only for the fields it reads, and the mapping needs nothing else', async () => {
+    const fetchImpl = okFetch(RESPONSE);
+    const full = await fetchIntervalsActivities(CONNECTION, { from: '2026-10-14', to: '2026-10-22' }, { fetchImpl: fetchImpl as unknown as typeof fetch });
+    const only = (RESPONSE as Record<string, unknown>[]).map((a) => Object.fromEntries(Object.entries(a).filter(([k]) => (ACTIVITY_FIELDS as readonly string[]).includes(k))));
+    const trimmed = await fetchIntervalsActivities(CONNECTION, { from: '2026-10-14', to: '2026-10-22' }, { fetchImpl: okFetch(only) as unknown as typeof fetch });
+    expect(trimmed).toEqual(full);
+    expect(activitiesUrl('i1', { from: '2026-01-01', to: '2026-01-08' }, { fields: false })).not.toContain('fields=');
+  });
+
+  it('asks once more without the field list when the answer is refused, and keeps other errors as they are', async () => {
+    const calls: string[] = [];
+    const refuseFields = vi.fn(async (url: string) => {
+      calls.push(url);
+      return url.includes('fields=') ? new Response('bad request', { status: 400 }) : new Response(JSON.stringify(RESPONSE), { status: 200 });
+    });
+    const activities = await fetchIntervalsActivities(CONNECTION, { from: '2026-10-14', to: '2026-10-22' }, { fetchImpl: refuseFields as unknown as typeof fetch });
+    expect(activities.length).toBeGreaterThan(0);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).not.toContain('fields=');
+    const auth = vi.fn(async () => new Response('', { status: 401 }));
+    await expect(fetchIntervalsActivities(CONNECTION, { from: '2026-10-14', to: '2026-10-22' }, { fetchImpl: auth as unknown as typeof fetch })).rejects.toMatchObject({ kind: 'auth' });
+    expect(auth).toHaveBeenCalledTimes(1);
   });
 
   it('builds the url and header in one place', () => {

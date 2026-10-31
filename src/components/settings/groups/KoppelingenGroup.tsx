@@ -87,6 +87,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
         <SummaryRow id="vanzelf-afvinken" title="Vanzelf afvinken" facts={facts} info="vanzelfAfvinken" onChange={(on) => void setAutoTick(on).finally(reload)} />
         <SummaryRow id="garmin-leidend" title="Garmin is leidend" facts={facts} info="garminLeidend" onChange={(on) => void setGarminLeads(on).finally(reload)} />
         <SummaryRow id="correcties-overnemen" title="Correcties uit intervals.icu overnemen" facts={facts} info="correctiesOvernemen" onChange={(on) => void setTakeCorrections(on).finally(reload)} />
+        <SummaryRow id="horloge-stil" title="Melden als je horloge stilvalt" facts={facts} info="horlogeStil" onChange={(on) => void updateSettings({ watchSilence: on })} />
         <SummaryRow id="bundel-horloge-sturen" title="Trainingen naar je horloge" facts={facts} onClick={() => setSheet('bundel-horloge-sturen')} />
       </SettingsSection>
 

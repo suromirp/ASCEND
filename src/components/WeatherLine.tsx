@@ -25,6 +25,9 @@ import { bestMomentForTraining } from '../engine/bestMoment';
 import { weatherLineForTraining } from '../engine/clothing';
 import { adjustFor } from '../engine/clothingFeedback';
 import { templateSport } from '../engine/sports';
+import { heatPace } from '../engine/heatPace';
+import { useAirQualityNote } from './useAirQualityNote';
+import { signalOn } from '../engine/signalSettings';
 import { Icon } from './icons';
 
 const TONE = { prima: 'var(--color-ink-dim)', let_op: 'var(--color-warning)', slecht: 'var(--color-danger-text)' } as const;
@@ -34,6 +37,8 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen }:
   const now = new Date();
   const durationMinutes = minutes ?? resolveEffectiveFullDuration(template, date, program);
   const w = weatherForTraining({ forecast: weather.forecast, template, logs: sessionLogs, date, durationMinutes, now });
+  // Slechte lucht bij een harde training buiten (engine/airQuality.ts); de hook vraagt zelf of het ertoe doet.
+  const air = useAirQualityNote({ template, date, startHour: w?.startHour, durationMinutes, settings });
 
   // Nog geen plaats: een buitentraining wijst de weg naar de pagina Weer.
   if (onOpen && !settings.homeLocation && isWeatherSensitive(template) && (showWeatherLine(settings.overviews) || showClothingAdvice(settings.overviews))) {
@@ -63,11 +68,15 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen }:
   const best = showBestMoment(settings.overviews)
     ? bestMomentForTraining({ forecast: weather.forecast, template, logs: sessionLogs, date, durationMinutes, now })
     : undefined;
+  // Warm of vochtig bij een loop: loop op hartslag, met een band voor het tempo (engine/heatPace.ts).
+  const heat = templateSport(template) === 'running' && signalOn(settings, 'heatPace') ? heatPace(w) : undefined;
   const text = (
     <>
       {lead}{line}
       {stale && <span style={{ color: 'var(--color-ink-dim)' }}> · {updatedLabel(weather.forecast.fetchedAt)}</span>}
       {best && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{best.text}</span>}
+      {heat && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{heat.text}</span>}
+      {air && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{air.text}</span>}
     </>
   );
   if (onOpen) {

@@ -482,6 +482,71 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je route', text: 'wordt nooit bewaard. Alleen de richting per kilometer telt, voor de wind, en die blijft als getal staan.' },
     ],
   },
+  vroegZiek: {
+    title: 'Vroeg ziek zien',
+    lead: 'Als je ziek wordt, stijgt je rusthartslag vaak al voor je iets merkt, en daalt je HRV. ASCEND let daarop, tegen jouw eigen gewone van de laatste vier weken.',
+    points: [
+      { head: 'Wanneer', text: 'alleen als allebei afwijken, twee ochtenden op rij: je rusthartslag minstens 6 slagen hoger en je HRV onder je gewone bereik.' },
+      { head: 'Wat je ziet', text: 'een vraag op Vandaag: Voel me goed, Word ziek of Niet nu. Word ziek opent de gewone ziekmelding, en je planning verandert pas met jouw Akkoord.' },
+      { head: 'Hoe zeker', text: 'het bewijs is zwak tot matig. Alcohol, een warme kamer of stress geven hetzelfde beeld; heb je bij Wat speelde er iets vastgelegd, dan vraagt ASCEND niets.' },
+      { head: 'Geen diagnose', text: 'bij hoge koorts, pijn op de borst of als je je echt slecht voelt: neem contact op met je huisarts.' },
+    ],
+  },
+  hitteTempo: {
+    title: 'Hitte bij je tempo',
+    lead: 'In de warmte en vooral als het vochtig is, loop je bij dezelfde moeite trager. Dat is geen slechte vorm maar je lichaam dat koelt.',
+    points: [
+      { head: 'Wanneer', text: 'bij een loop buiten als het voelt als 22 graden of meer, of als het dauwpunt 16 of hoger is.' },
+      { head: 'Wat je ziet', text: 'een regel onder het weer: loop op hartslag, met een band voor hoeveel trager, 10 tot 20 seconden per km, of 20 tot 40 als het heet of benauwd is.' },
+      { head: 'Hoe zeker', text: 'het getal is een gemiddelde over veel lopers (bewijs matig). Wennen aan warmte gaat in een tot twee weken en kan helpen voor een zomerse tocht.' },
+    ],
+  },
+  weekdagPatroon: {
+    title: 'Patronen per weekdag',
+    lead: 'Past het plan bij je week? ASCEND kijkt acht weken terug en ziet of je training op een bepaalde dag vaker wegvalt dan op de andere.',
+    points: [
+      { head: 'Wanneer', text: 'als er minstens zes keer een training op die dag stond, hij minstens vier keer en de helft van de keren wegviel, en duidelijk vaker dan op je andere dagen.' },
+      { head: 'Wat telt', text: 'overgeslagen, gemist of door jou verschoven. Vrije dagen, vakanties, tochten en ziekte tellen niet mee.' },
+      { head: 'Wat het doet', text: 'één zin op Week. Je planning verandert er niet door; een andere dag kies je zelf.' },
+    ],
+  },
+  luchtkwaliteit: {
+    title: 'Luchtkwaliteit',
+    lead: 'Hard trainen in vervuilde lucht laat je meer fijnstof inademen, en veel ozon kan je longen en je prestatie wat drukken.',
+    points: [
+      { head: 'Wanneer', text: 'alleen bij een harde training buiten (tempo, intervallen, een test) en als de Europese luchtkwaliteitsindex op slecht of erger staat. In Nederland zijn dat een paar zomerse dagen per jaar.' },
+      { head: 'Wat je ziet', text: 'een regel onder het weer, zoals: veel ozon vanmiddag, liever s ochtends of vandaag rustig. Je planning verandert er niet door.' },
+      { head: 'Waar het vandaan komt', text: 'Open-Meteo, met dezelfde afgeronde plek als het weer en zonder sleutel. Het raster is ongeveer 11 km; een drukke weg naast je route ziet het niet.' },
+    ],
+  },
+  ochtendregel: {
+    title: 'Twee van drie',
+    lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',
+    points: [
+      { head: 'Wat je ziet', text: 'op de ochtendkaart elk getal met een woord, zoals rusthartslag 4 hoger dan normaal of slaap normaal.' },
+      { head: 'Twee van drie', text: 'wijken er twee af in de richting die aandacht vraagt, dan vraagt de ochtend of je moe bent. Je antwoord telt mee zoals altijd; je planning verandert alleen met jouw Akkoord.' },
+      { head: 'Hoe zeker', text: 'bijsturen op meerdere signalen samen kan helpen om slechte dagen wat te verzachten (bewijs matig). Twee van drie is een vuistregel, geen meting.' },
+    ],
+  },
+  horlogeStil: {
+    title: 'Melden als je horloge stilvalt',
+    lead: 'Garmin scherpte in oktober 2026 zijn voorwaarden aan. Als intervals.icu daardoor niets meer doorgeeft, zie je dat niet aan een foutmelding: het ophalen lukt, er komt alleen niets mee.',
+    points: [
+      { head: 'Wanneer', text: 'als er drie dagen geen ochtendgetallen binnenkomen, of geen training terwijl je er wel een invulde, en de koppeling zelf werkt.' },
+      { head: 'Waar', text: 'één rustige zin op Vandaag. Een tik opent de koppeling, Begrepen verbergt hem tot het opnieuw gebeurt.' },
+      { head: 'Wat je kunt doen', text: 'kijk of je horloge nog synchroniseert met Garmin Connect, en of intervals.icu je activiteiten nog toont. Je back-up houdt wat er al is.' },
+    ],
+  },
+  ochtendBackup: {
+    title: 'Ochtendgetallen in back-up',
+    lead: 'Je slaap, rusthartslag en HRV komen van intervals.icu. Als die ze later niet meer geeft, is je telefoon het enige exemplaar. Daarom gaan ze standaard mee in je back-up.',
+    points: [
+      { head: 'Wat mee gaat', text: 'per ochtend alleen de datum, je rusthartslag, je HRV, hoe lang je sliep en je slaapscore. Niets anders van je horloge.' },
+      { head: 'Let op', text: 'het back-upbestand bevat dan ook gezondheidsgegevens. Bewaar het waar alleen jij erbij kunt.' },
+      { head: 'Terugzetten', text: 'een ochtend die al op je telefoon staat blijft zoals hij is. Alleen wat ontbreekt komt terug.' },
+      { head: 'Uit', text: 'een back-up zonder ochtendgetallen. Na een herstel haalt ASCEND ze opnieuw op zolang intervals.icu dat kan.' },
+    ],
+  },
   reeksenBackup: {
     title: 'Reeksen in back-up',
     lead: 'De reeksen van je horloge komen van intervals.icu, maar die kan ze later misschien niet meer geven. Daarom gaan die van de laatste 2 jaar standaard mee in je back-up.',
