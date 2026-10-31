@@ -27,6 +27,8 @@ import { resolveSky } from './skySettings';
 import { resolveStrengthSettings, type StrengthSettings } from './strengthSettings';
 import { budgetText, resolveWeekBudget, settingBudget } from './weekBudget';
 import { resolveCalmRun, resolveWatchHrMode } from './watchHeartRate';
+import { DEFAULT_STREAMS_BACKUP, resolveStreamsBackup } from './streamsBackup';
+import { DEFAULT_PROPOSAL_TIDY_MONTHS, resolveProposalTidyMonths } from './proposalTidy';
 
 export interface AdviceSpec {
   // Een id uit de index (settingsIndex.ts): zo vindt de kaart de plek van de instelling.
@@ -311,7 +313,18 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('macrofactor-gewicht', 'Gewicht gebruiken', 'koppelingen', 'weightFromMacroFactor'),
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
-  flag('reeksen-backup', 'Reeksen in back-up', 'gegevens', 'streamsInBackup'),
+  {
+    id: 'reeksen-backup', title: 'Reeksen in back-up', page: 'gegevens',
+    differs: (s) => resolveStreamsBackup(s) !== DEFAULT_STREAMS_BACKUP,
+    value: (s) => choiceShort('reeksenBackup', resolveStreamsBackup(s)),
+    reset: () => ({ streamsBackup: undefined, streamsInBackup: undefined }),
+  },
+  {
+    id: 'voorstellen-opruimen', title: 'Oude voorstellen opruimen', page: 'gegevens',
+    differs: (s) => resolveProposalTidyMonths(s.proposalTidyMonths) !== DEFAULT_PROPOSAL_TIDY_MONTHS,
+    value: (s) => choiceShort('voorstellenOpruimen', resolveProposalTidyMonths(s.proposalTidyMonths)),
+    reset: () => ({ proposalTidyMonths: undefined }),
+  },
 ];
 
 // ---- de functies -------------------------------------------------------------------------

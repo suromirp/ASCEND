@@ -378,6 +378,37 @@ describe('the series in the backup', () => {
     expect(backup.sessionLogs).toHaveLength(1);
   });
 
+  it('the choice "Reeksen in back-up": the last 2 years, all or none; the kilometres always go along', async () => {
+    const streamsOf = (e: Awaited<ReturnType<typeof buildBackupEnvelope>>) => (e.payload as { activityStreams?: unknown[] }).activityStreams;
+    const longAfter = addDays(day, 2 * 366);
+    // The advice: the run is older than 2 years seen from longAfter, so its series stays out.
+    expect(streamsOf(await buildBackupEnvelope())).toHaveLength(1);
+    const old = await buildBackupEnvelope({ today: longAfter });
+    expect(streamsOf(old)).toBeUndefined();
+    expect(isUsableRunDetail(old.payload.sessionLogs[0].runDetail)).toBe(true);
+    await SettingsRepo.set({ streamsBackup: 'all' });
+    expect(streamsOf(await buildBackupEnvelope({ today: longAfter }))).toHaveLength(1);
+    await SettingsRepo.set({ streamsBackup: 'none' });
+    const none = await buildBackupEnvelope();
+    expect(streamsOf(none)).toBeUndefined();
+    expect(isUsableRunDetail(none.payload.sessionLogs[0].runDetail)).toBe(true);
+  });
+
+  it('an older file with the switch off reads as "Geen reeksen", an unknown choice is dropped', async () => {
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    delete envelope.payload.settings.streamsBackup;
+    envelope.payload.settings.streamsInBackup = false;
+    expect(normalizeBackupToCurrentModel(envelope).settings.streamsBackup).toBe('none');
+    envelope.payload.settings.streamsInBackup = true;
+    expect(normalizeBackupToCurrentModel(envelope).settings.streamsBackup).toBeUndefined();
+    envelope.payload.settings.streamsBackup = 'soms';
+    envelope.payload.settings.proposalTidyMonths = 5;
+    const backup = normalizeBackupToCurrentModel(envelope);
+    expect(backup.settings.streamsBackup).toBeUndefined();
+    expect(backup.settings.proposalTidyMonths).toBeUndefined();
+    expect(backup.skippedInvalid).toBe(2);
+  });
+
   it('the two switches are yes or no in a file, nothing else', async () => {
     const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
     envelope.payload.settings.keepStreams = 'ja';

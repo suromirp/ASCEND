@@ -82,6 +82,7 @@ const everything: AppSettings = {
   stravaText: false,
   keepStreams: false,
   streamsInBackup: false,
+  proposalTidyMonths: 12,
 };
 
 describe('adviceDifferences', () => {

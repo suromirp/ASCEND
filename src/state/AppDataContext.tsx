@@ -37,6 +37,7 @@ import {
 } from '../storage/database';
 import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
 import { runBootMigrations } from '../storage/bootMigrations';
+import { tidyOldProposals } from '../storage/proposalTidy';
 import { withPlausibleDurations } from '../engine/logDuration';
 import { runBootUnderLock } from '../storage/bootLock';
 import { describeStorageError, describeWriteError } from '../storage/storageError';
@@ -2642,6 +2643,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     proposeNoTimeToday: proposeNoTimeTodayAction,
     applyNoTimeToday,
     exportData: async () => {
+      // Oude, besliste voorstellen eerst samenvatten (engine/proposalTidy.ts). Lukt dat niet, dan
+      // gaat de back-up gewoon door.
+      await tidyOldProposals().catch(() => 0);
       const envelope = await buildBackupEnvelope();
       const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
       const result = await webBackupFileAdapter.saveBackup(blob, backupFileName(envelope.createdAt));

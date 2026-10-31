@@ -142,6 +142,11 @@ export interface PlanChangeProposal {
   // period it is about. Older stored proposals do not have it; then the marks
   // on its items say it (engine/leaveStrays.ts).
   leavePeriodId?: string;
+  // Samengevat na een paar maanden (engine/proposalTidy.ts): het moment daarvan, en hoeveel
+  // wijzigingen het voorstel had. Een samengevat voorstel houdt id, soort, titel, datum en
+  // uitslag; van een aangenomen voorstel ook wat het uit de planning haalde. Optional, additive.
+  summarizedAt?: string;
+  changeCount?: number;
 }
 
 export interface GoalActivationPlan {

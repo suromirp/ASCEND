@@ -16,6 +16,7 @@ import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRoutePro
 import { syncGr5MilestoneDefinitions } from './goalMilestoneSync';
 import { mergeDuplicateWeeklyPrescriptionLines } from './planLogCleanup';
 import { releaseSystemMoves } from './systemMovesStep';
+import { tidyOldProposals } from './proposalTidy';
 import type { BootRunResult } from './bootLock';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, BOOT_STEP_LIMIT_MS, migrationsToRun, recordAfter, type BootMigrationRecord } from '../engine/bootWatch';
 
@@ -39,6 +40,8 @@ const STEPS: Record<string, () => Promise<unknown>> = {
   // Oude verplaatsingen door het systeem weer van het systeem (Warden Logica punt 4).
   releaseSystemMoves,
   migrateGoalKinds,
+  // Oude, besliste voorstellen samenvatten (instelling "Oude voorstellen opruimen").
+  tidyOldProposals: () => tidyOldProposals(),
 };
 
 function currentBuild(): string {

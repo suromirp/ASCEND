@@ -486,12 +486,24 @@ describe('rowSummary: gegevens en back-up', () => {
   it('de reeksen van je horloge: aan als standaard, met de ruimte erbij', () => {
     expect(rowSummary('reeksen-bewaren', facts()).checked).toBe(true);
     expect(rowSummary('reeksen-bewaren', facts({ settings: { keepStreams: false } as never })).checked).toBe(false);
-    expect(rowSummary('reeksen-backup', facts()).checked).toBe(true);
-    expect(rowSummary('reeksen-backup', facts({ settings: { streamsInBackup: false } as never })).checked).toBe(false);
+    expect(rowSummary('reeksen-backup', facts()).value).toBe('2 jaar');
+    expect(rowSummary('reeksen-backup', facts({ settings: { streamsInBackup: false } as never }))).toMatchObject({ value: 'Geen', dim: true });
+    expect(rowSummary('reeksen-backup', facts({ settings: { streamsBackup: 'all' } as never })).value).toBe('Alle');
     // Zolang er niets geteld is staat er geen regel; daarna de ruimte in de rij, een derde groter als tekst.
     expect(rowSummary('reeksen-backup', facts()).sub).toBeUndefined();
     expect(rowSummary('reeksen-backup', facts({ streamsBytes: 0 })).sub).toBe('Nog geen reeksen bewaard');
-    expect(rowSummary('reeksen-backup', facts({ streamsBytes: 30_000_000 })).sub).toBe('Maakt de back-up ongeveer 40 MB groter');
+    expect(rowSummary('reeksen-backup', facts({ streamsBytes: 30_000_000 })).sub).toBe('Maakt de back-up hoogstens ongeveer 40 MB groter');
+    expect(rowSummary('reeksen-backup', facts({ streamsBytes: 30_000_000, settings: { streamsBackup: 'all' } as never })).sub).toBe('Maakt de back-up ongeveer 40 MB groter');
+    expect(rowSummary('reeksen-backup', facts({ streamsBytes: 30_000_000, settings: { streamsBackup: 'none' } as never })).sub).toBeUndefined();
+  });
+
+  it('oude voorstellen opruimen en de ruimte op dit toestel', () => {
+    expect(rowSummary('voorstellen-opruimen', facts())).toEqual({ value: 'Na 3 maanden', dim: false });
+    expect(rowSummary('voorstellen-opruimen', facts({ settings: { proposalTidyMonths: 0 } as never }))).toEqual({ value: 'Nooit', dim: true });
+    expect(rowSummary('ruimte-app', facts())).toEqual({});
+    expect(rowSummary('ruimte-app', facts({ storageUse: { kind: 'measured', usage: 24_000_000, quota: 2_000_000_000 } }))).toMatchObject({ value: '24 MB', dot: undefined });
+    expect(rowSummary('ruimte-app', facts({ storageUse: { kind: 'measured', usage: 900, quota: 1000 } })).dot).toBe('warn');
+    expect(rowSummary('ruimte-app', facts({ storageUse: { kind: 'timeout' } }))).toMatchObject({ value: 'Niet te zien', dim: true });
     expect(rowSummary('reeksen-ruimte', facts())).toEqual({});
     expect(rowSummary('reeksen-ruimte', facts({ streamsBytes: 0 }))).toEqual({ value: '0 B', dim: true });
     expect(rowSummary('reeksen-ruimte', facts({ streamsBytes: 4_200_000 }))).toEqual({ value: '4,2 MB', dim: false });

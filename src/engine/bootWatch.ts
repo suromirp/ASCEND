@@ -91,6 +91,8 @@ export const BOOT_MIGRATIONS: readonly BootMigration[] = [
   { id: 'releaseSystemMoves', essential: false, version: 1 },
   // Soort, gegevens en belangrijkheid van de doelen (ronde 2a); verandert de planning niet.
   { id: 'migrateGoalKinds', essential: false, version: 1 },
+  // Oude, besliste voorstellen samenvatten (engine/proposalTidy.ts); verandert de planning niet.
+  { id: 'tidyOldProposals', essential: false, version: 1 },
 ];
 
 export const BOOT_STEP_LIMIT_MS = 8_000;

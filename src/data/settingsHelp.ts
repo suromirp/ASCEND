@@ -484,11 +484,29 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   reeksenBackup: {
     title: 'Reeksen in back-up',
-    lead: 'De reeksen van je horloge komen van intervals.icu, maar die kan ze later misschien niet meer geven. Daarom gaan ze standaard mee in je back-up.',
+    lead: 'De reeksen van je horloge komen van intervals.icu, maar die kan ze later misschien niet meer geven. Daarom gaan die van de laatste 2 jaar standaard mee in je back-up.',
     points: [
-      { head: 'Aan', text: 'je back-up wordt groter, ongeveer een derde meer dan de reeksen zelf. Na een herstel staat alles weer op je telefoon.' },
-      { head: 'Uit', text: 'een kleine back-up. Na een herstel haalt ASCEND de reeksen opnieuw op zolang dat kan, en anders blijven de samenvatting en de kilometers.' },
+      { head: 'De laatste 2 jaar', text: 'een reeks is ongeveer 100 KB per training, een jaar zo 15 tot 25 MB. Zo blijft de back-up te hanteren en heb je de recente runs heel.' },
+      { head: 'Alle of geen', text: 'alle reeksen geeft een back-up die elk jaar groeit. Geen reeksen geeft een kleine back-up; na een herstel haalt ASCEND ze opnieuw op zolang dat kan.' },
+      { head: 'Altijd mee', text: 'de samenvatting per loop: kilometers, rondes en je beste stukken. Die staan op de training zelf.' },
       { head: 'Kopieën van voor een import', text: 'bevatten de reeksen nooit. Die kopie is er alleen om een import ongedaan te maken.' },
+    ],
+  },
+  voorstellenOpruimen: {
+    title: 'Oude voorstellen opruimen',
+    lead: 'Elk voorstel dat je zag, bewaart ASCEND met alle details. Na een paar maanden leest niets die details nog, dus maakt ASCEND er een korte regel van.',
+    points: [
+      { head: 'Blijft staan', text: 'de datum, de titel, of je Akkoord of Liever niet koos, en wat het uit je planning haalde.' },
+      { head: 'Nooit', text: 'een voorstel dat nog open staat, een training die er nog aan vastzit, iets wat je ongedaan maakte, of een vrije periode die nog bestaat. Je trainingen zelf blijven altijd zoals ze waren.' },
+      { head: 'Wanneer', text: 'bij het openen van een nieuwe versie en vlak voor je een back-up maakt.' },
+    ],
+  },
+  ruimteApp: {
+    title: 'Ruimte op dit toestel',
+    lead: 'Je browser geeft ASCEND een deel van de ruimte op je telefoon. Hier zie je hoeveel daarvan in gebruik is.',
+    points: [
+      { head: 'Bijna vol', text: 'boven 80 % waarschuwt ASCEND. Maak dan een back-up en verwijder de reeksen onder Ruimte van reeksen; de kilometers blijven.' },
+      { head: 'Ongeveer', text: 'de browser geeft een schatting, geen exact getal.' },
     ],
   },
   stravaTekst: {
