@@ -8,6 +8,35 @@
 
 export type InsightTopicSwitch = 'efficiency' | 'longDays' | 'climbing' | 'form';
 
+// De grootheden van de kaart Loopvorm op "Run in detail" (engine/runDetailView.ts#FormKey).
+export type RunFormSwitch = 'cadence' | 'stanceTimeMs' | 'stepLengthM' | 'oscillationMm' | 'stanceBalanceLeftPct';
+
+// Wat het scherm "Run in detail" laat zien (docs/visie/Run in detail.md, hoofdstuk 9).
+// Ontbrekend = het advies: alles aan, de balans uit.
+export interface RunDetailScreenSettings {
+  show?: boolean;
+  patterns?: boolean;
+  advice?: boolean;
+  form?: Partial<Record<RunFormSwitch, boolean>>;
+}
+
+export interface ResolvedRunDetailScreen {
+  show: boolean;
+  patterns: boolean;
+  advice: boolean;
+  form: Record<RunFormSwitch, boolean>;
+}
+
+export const FORM_SWITCHES: RunFormSwitch[] = ['cadence', 'stanceTimeMs', 'stepLengthM', 'oscillationMm', 'stanceBalanceLeftPct'];
+
+// De balans staat uit: na één run zegt hij niets (docs/beslissingen/2026-10-22-loopinzicht.md).
+export const DEFAULT_RUN_DETAIL_SCREEN: ResolvedRunDetailScreen = {
+  show: true,
+  patterns: true,
+  advice: true,
+  form: { cadence: true, stanceTimeMs: true, stepLengthM: true, oscillationMm: true, stanceBalanceLeftPct: false },
+};
+
 export interface RunInsightSettings {
   // Na een loop of tocht hoogstens twee regels over wat beter ging en waar je
   // op moet letten.
@@ -19,6 +48,9 @@ export interface RunInsightSettings {
   // Mijn hartslag komt van de borstband. Zonder borstband vergelijkt ASCEND geen
   // loopjes waarbij de hartslagbron gewisseld kan zijn.
   chestStrap?: boolean;
+  // Het scherm "Run in detail". Los van `enabled`: het scherm staat ook als het
+  // inzicht na een training uit staat.
+  detail?: RunDetailScreenSettings;
 }
 
 export interface ResolvedRunInsight {
@@ -26,6 +58,7 @@ export interface ResolvedRunInsight {
   topics: Record<InsightTopicSwitch, boolean>;
   weather: boolean;
   chestStrap: boolean;
+  detail: ResolvedRunDetailScreen;
 }
 
 export const TOPIC_SWITCHES: InsightTopicSwitch[] = ['efficiency', 'longDays', 'climbing', 'form'];
@@ -35,6 +68,7 @@ export const DEFAULT_RUN_INSIGHT: ResolvedRunInsight = {
   topics: { efficiency: true, longDays: true, climbing: true, form: true },
   weather: true,
   chestStrap: true,
+  detail: DEFAULT_RUN_DETAIL_SCREEN,
 };
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -54,7 +88,41 @@ export function resolveRunInsight(raw: RunInsightSettings | undefined | null): R
     },
     weather: flag(r.weather, DEFAULT_RUN_INSIGHT.weather),
     chestStrap: flag(r.chestStrap, DEFAULT_RUN_INSIGHT.chestStrap),
+    detail: resolveRunDetailScreen(r.detail),
   };
+}
+
+export function resolveRunDetailScreen(raw: unknown): ResolvedRunDetailScreen {
+  const d = isRecord(raw) ? raw : {};
+  const formRaw = isRecord(d.form) ? d.form : {};
+  const flag = (v: unknown, fallback: boolean) => (typeof v === 'boolean' ? v : fallback);
+  const D = DEFAULT_RUN_DETAIL_SCREEN;
+  return {
+    show: flag(d.show, D.show),
+    patterns: flag(d.patterns, D.patterns),
+    advice: flag(d.advice, D.advice),
+    form: Object.fromEntries(FORM_SWITCHES.map((k) => [k, flag(formRaw[k], D.form[k])])) as Record<RunFormSwitch, boolean>,
+  };
+}
+
+function cleanDetail(raw: unknown): { value: RunDetailScreenSettings | undefined; dropped: number } {
+  if (!isRecord(raw)) return { value: undefined, dropped: 1 };
+  const out: RunDetailScreenSettings = {};
+  let dropped = 0;
+  for (const [k, v] of Object.entries(raw)) {
+    if (k === 'show' || k === 'patterns' || k === 'advice') {
+      if (typeof v === 'boolean') out[k] = v;
+      else dropped++;
+    } else if (k === 'form' && isRecord(v)) {
+      const form: Partial<Record<RunFormSwitch, boolean>> = {};
+      for (const [fk, fv] of Object.entries(v)) {
+        if ((FORM_SWITCHES as string[]).includes(fk) && typeof fv === 'boolean') form[fk as RunFormSwitch] = fv;
+        else dropped++;
+      }
+      if (Object.keys(form).length > 0) out.form = form;
+    } else dropped++;
+  }
+  return { value: Object.keys(out).length > 0 ? out : undefined, dropped };
 }
 
 // Alleen geldige sleutels blijven staan; de rest valt weg. `dropped` telt wat
@@ -78,6 +146,11 @@ export function cleanRunInsight(raw: unknown): { value: RunInsightSettings | und
       if (Object.keys(topics).length > 0) out.topics = topics;
     } else dropped++;
   }
-  for (const key of Object.keys(raw)) if (!['enabled', 'weather', 'chestStrap', 'topics'].includes(key)) dropped++;
+  if ('detail' in raw) {
+    const d = cleanDetail(raw.detail);
+    if (d.value) out.detail = d.value;
+    dropped += d.dropped;
+  }
+  for (const key of Object.keys(raw)) if (!['enabled', 'weather', 'chestStrap', 'topics', 'detail'].includes(key)) dropped++;
   return { value: Object.keys(out).length > 0 ? out : undefined, dropped };
 }

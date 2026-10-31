@@ -223,6 +223,8 @@ export function reasonText(reason: NotComparable, noun: string): string {
       return 'dit was een andere soort training';
     case 'noMatch':
       return 'er is geen eerdere klim op dezelfde helling en met hetzelfde rugzakgewicht';
+    case 'otherDistance':
+      return 'je eerdere runs van deze soort waren korter, langer of heuvelachtiger';
     case 'unavailableMetric':
       switch (reason.metric) {
         case 'noSteadyBlock':
@@ -247,7 +249,7 @@ export function reasonText(reason: NotComparable, noun: string): string {
   }
 }
 
-const PRIORITY: NotComparable['code'][] = ['windy', 'rainy', 'temperature', 'legsTired', 'heartRateSource', 'noMatch', 'unavailableMetric', 'treadmill', 'noDetail', 'otherKind'];
+const PRIORITY: NotComparable['code'][] = ['windy', 'rainy', 'temperature', 'legsTired', 'heartRateSource', 'noMatch', 'otherDistance', 'unavailableMetric', 'treadmill', 'noDetail', 'otherKind'];
 
 // The one reason worth telling: the one that took the most earlier trainings out,
 // and "too few" when it is just that there were not many.

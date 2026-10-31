@@ -31,6 +31,29 @@ describe('the settings of the loopinzicht', () => {
   });
 });
 
+describe('the settings of Run in detail', () => {
+  it('are all on with the balance off when nothing is stored, as in an old backup', () => {
+    const d = resolveRunInsight(undefined).detail;
+    expect(d).toEqual({ show: true, patterns: true, advice: true, form: { cadence: true, stanceTimeMs: true, stepLengthM: true, oscillationMm: true, stanceBalanceLeftPct: false } });
+    expect(resolveRunInsight({ enabled: false }).detail.show).toBe(true);
+    expect(resolveRunInsight({ detail: 'rommel' as never }).detail).toEqual(d);
+  });
+
+  it('take what you changed and nothing else', () => {
+    const d = resolveRunInsight({ detail: { advice: false, form: { stanceBalanceLeftPct: true, cadence: false } } }).detail;
+    expect(d.advice).toBe(false);
+    expect(d.patterns).toBe(true);
+    expect(d.form.stanceBalanceLeftPct).toBe(true);
+    expect(d.form.cadence).toBe(false);
+    expect(d.form.stepLengthM).toBe(true);
+  });
+
+  it('survive a backup and lose only what is broken', () => {
+    expect(cleanRunInsight({ detail: { show: false, form: { cadence: false, voet: true }, patterns: 'ja' } })).toEqual({ value: { detail: { show: false, form: { cadence: false } } }, dropped: 2 });
+    expect(cleanRunInsight({ detail: 4 })).toEqual({ value: undefined, dropped: 1 });
+  });
+});
+
 describe('the details switch', () => {
   const activity: ExternalActivity = {
     externalId: 'intervals.icu:i1',
