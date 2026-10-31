@@ -158,7 +158,7 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       break;
     }
     default: {
-      // TWO-HARD-RUNS and AFTER-TEST: the one the rule would change, then the other of yours.
+      // TWO-HARD-RUNS, TEST-DAY and AFTER-TEST: the one the rule would change, then the other of yours.
       const subject = sessionById(concern.finding.subjectId);
       if (subject && level(subject) === 1) push(viaCheck([subject.id]));
       for (const s of yours) if (s.id !== subject?.id) push(viaScan(s.id));
