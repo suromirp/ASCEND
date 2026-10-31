@@ -9,6 +9,7 @@ import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { isIllnessDay } from '../engine/illness';
+import { countsAsTraining, leftOutOfCount } from '../engine/weekLogs';
 import { getModality } from '../data/modalities';
 import { LogDetailSheet } from '../components/LogDetailSheet';
 import { Card, Eyebrow, LightCard, Stat, StatusPill } from '../components/ui';
@@ -125,7 +126,7 @@ function formatDelta(current: number, previous: number, opts?: { unit?: string; 
 }
 
 export function HistoryPage() {
-  const { sessionLogs, plannedSessions, templateById, settings, program } = useAppData();
+  const { sessionLogs, plannedSessions, templateById, settings, program, planChangeLog } = useAppData();
   const isRest = useCallback((p: PlannedSession) => templateById.get(p.templateId)?.type === 'recovery', [templateById]);
   // Days before week 1 (leftovers of an earlier schedule) never count.
   const wasIll = useCallback((date: string) => (program ? date < program.startDate : false) || isIllnessDay(date, settings.illnessEpisodes, todayISO()), [settings.illnessEpisodes, program]);
@@ -175,7 +176,10 @@ export function HistoryPage() {
   const trainingLogs = totalsLogs.filter((l) => l.type !== 'recovery');
   const prevTrainingCount = prevMonthLogs.filter((l) => l.type !== 'recovery').length;
   // "van": wat er die maand gepland stond, alleen als dat er is en niet minder dan wat je deed.
-  const plannedCount = plannedSessions.filter((p) => p.scheduledDate >= start && p.scheduledDate <= end && p.status !== 'skipped' && !isRest(p) && !wasIll(p.scheduledDate)).length;
+  // Dezelfde telling als Week en de weekterugblik (engine/weekLogs.ts#countsAsTraining): een overgeslagen training
+  // telt mee als gepland, wat ASCEND zelf weghaalde, een ziektedag en wat voor de start lag niet.
+  const leftOut = useMemo(() => leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, todayISO(), program?.startDate), [plannedSessions, planChangeLog, settings.illnessEpisodes, program?.startDate]);
+  const plannedCount = plannedSessions.filter((p) => p.scheduledDate >= start && p.scheduledDate <= end && countsAsTraining(p, templateById.get(p.templateId), leftOut)).length;
   const sportRows = useMemo(() => groupBySport(totalsLogs), [totalsLogs]);
 
   return (

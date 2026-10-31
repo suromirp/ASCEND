@@ -36,6 +36,18 @@ describe('x van y gedaan', () => {
     expect(seasonWeek.done).toEqual({ done: week.done, planned: week.total });
   });
 
+  it('telt sessies van voor de start van het programma niet, zoals de reeks', () => {
+    // Het programma begint woensdag: maandag en dinsdag zijn restjes van een eerdere planning.
+    const start = addDays(MONDAY, 2);
+    const leftOut = leftOutOfCount(sessions, [], undefined, TODAY, start);
+    expect(weekProgress(sessions, logs, byId, leftOut)).toEqual({ done: 1, total: 5 });
+    const later = { ...program, startDate: start };
+    const review = buildWeekReview({ weekStart: MONDAY, plannedSessions: sessions, logs, templates, program: later, planChangeLog: [], asOf: TODAY })!;
+    expect({ done: review.done, total: review.planned }).toEqual({ done: 1, total: 5 });
+    // Zonder programmastart telt alles zoals voorheen.
+    expect(weekProgress(sessions, logs, byId, leftOutOfCount(sessions, [], undefined, TODAY))).toEqual({ done: 2, total: 6 });
+  });
+
   it('laat een gemiste training in het verleden niet als komend onder de fase staan', () => {
     const plan = buildSeasonPlan(program, sessions, logs, templates, TODAY);
     const labels = plan.flatMap((p) => p.weeks).find((w) => w.weekStart === MONDAY)!.items.map((i) => i.label);

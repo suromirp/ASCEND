@@ -28,6 +28,9 @@ describe('coachLineForToday', () => {
 describe('coachLineForToday bij een test of wedstrijd', () => {
   const line = (id: string, yesterdayLogs: SessionLog[] = []) => coachLineForToday({ template: t(id), date: '2026-09-29', program, tomorrow: [], yesterdayLogs, templateById: byId });
 
+  const sore = [log('tpl_long_run', '2026-09-28', { painAreas: ['Achillespees'] })];
+  const heavy = [log('tpl_easy_run', '2026-09-28', { rpe: 9 })];
+
   it('geeft een eigen zin en nooit de korte versie', () => {
     for (const id of ['tpl_test_run', 'tpl_race']) {
       expect(line(id)).toContain('eerste kilometer');
@@ -35,13 +38,25 @@ describe('coachLineForToday bij een test of wedstrijd', () => {
     }
   });
 
-  it('zegt na pijn of een zware dag dat rustig inlopen beter is dan testen', () => {
-    const sore = [log('tpl_long_run', '2026-09-28', { painAreas: ['Achillespees'] })];
-    const heavy = [log('tpl_easy_run', '2026-09-28', { rpe: 9 })];
+  it('bij een test: de test laat zien wat je kunt, en op zware benen test je een andere dag', () => {
+    expect(line('tpl_test_run')).toBe('Warm goed in en loop de eerste kilometer niet te snel. Dan laat de test zien wat je kunt.');
     for (const y of [sore, heavy]) {
-      expect(line('tpl_test_run', y)).toContain('loop dan rustig in plaats van te testen');
-      expect(line('tpl_test_run', y)).not.toContain('korte versie');
+      expect(line('tpl_test_run', y)).toBe('Een test op zware benen is geen goede meting. Voelt het inlopen zwaar, loop dan rustig en test een andere dag.');
     }
+  });
+
+  it('bij een wedstrijd: nooit over testen of een korte versie, wel rustig starten en opbouwen', () => {
+    for (const y of [[], sore, heavy]) {
+      const text = line('tpl_race', y);
+      expect(text).not.toMatch(/test|korte versie/i);
+      expect(text).toMatch(/start rustig|Start rustiger/);
+      expect(text).toContain('bouw');
+    }
+    expect(line('tpl_race', heavy)).not.toBe(line('tpl_race'));
+  });
+
+  it('nieuwe zinnen zonder gedachtestreepjes', () => {
+    for (const id of ['tpl_test_run', 'tpl_race']) for (const y of [[], heavy]) expect(line(id, y)).not.toMatch(/[\u2013\u2014]/);
   });
 });
 

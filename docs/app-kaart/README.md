@@ -10,9 +10,11 @@ Schermen: vandaag, week, stand, ascend, logboek, instellingen (het overzicht op 
 
 `npm run kaart` bouwt de app, start een eigen preview op poort 5271 en schrijft deze map opnieuw. Een run duurt ongeveer een minuut. Staat er al een server op die poort (of op `KAART_PORT`), dan gebruikt het die.
 
-`npm run kaart:vergelijk` maakt de kaart in een tijdelijke map en toont per scherm alleen de gewijzigde regels (`-` was, `+` is). Alleen voor gewijzigde schermen komt er een screenshot in de map uit `LOOKOUT_SHOTS` (anders `./shots`). Exitcode 0 is geen verschil, 1 is verschil.
+`npm run kaart:vergelijk` maakt de kaart in een tijdelijke map en toont per scherm alleen de gewijzigde regels (`-` was, `+` is). Alleen voor gewijzigde schermen komt er een afdruk in de map uit `LOOKOUT_SHOTS` (anders `./shots`). Exitcode 0 is geen verschil, 1 is verschil.
 
-`node scripts/app-kaart/kaart.mjs --foto <scherm>` maakt op verzoek een screenshot van één scherm, voor als je twijfelt.
+Elke afdruk toont het hele scherm, ook wat onder de vouw staat: het venster groeit tijdelijk tot de scrollcontainer (de pagina of het open blad) zijn volle inhoud toont, met ruimte onder de laatste kaart voor de tabbalk en de meldingsbalk. Bij een verschil staat er een rand om de eerste gewijzigde regel.
+
+`node scripts/app-kaart/kaart.mjs --foto <scherm>` maakt op verzoek een afdruk van één scherm, voor als je twijfelt. Met `--markeer "<regel van de kaart>"` erbij, bijvoorbeeld `--markeer "[knop: Verplaatsen]"`, komt er een rand om dat element.
 
 ## Invarianten
 

@@ -27,6 +27,7 @@ import type { ShownReadiness } from '../engine/gr5Readiness';
 import { adherenceSummary, recentAdherence } from '../engine/onCourse';
 import { restWeekState } from '../engine/restWeek';
 import { computeCurrentStreak } from '../engine/streak';
+import { leftOutOfCount } from '../engine/weekLogs';
 import { computeGoalProgress } from '../engine/progression';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { goalTiming, typicalDayValue } from '../engine/goalRoute';
@@ -90,7 +91,10 @@ export function StandingPage() {
     () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes }),
     [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes],
   );
-  const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes }), [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes]);
+  const streak = useMemo(
+    () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate) }),
+    [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes, planChangeLog, today],
+  );
   // The main goal is behind you: nothing planned any more (engine/programLayout.ts#planEndDay).
   const mainState = primaryGoal?.status === 'active' ? goalTiming(primaryGoal, today).state : undefined;
   const mainPast = mainState === 'past' && settings.afterMainGoal !== 'maintain';

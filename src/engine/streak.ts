@@ -15,6 +15,9 @@ export interface StreakContext {
   templateById?: ReadonlyMap<string, Pick<SessionTemplate, 'type'>>;
   programStart?: string;
   illnessEpisodes?: IllnessEpisode[];
+  // Wat niet meetelt als training (engine/weekLogs.ts#leftOutOfCount): wat ASCEND
+  // zelf uit de planning haalde, zoals op Week.
+  leftOut?: (id: string) => boolean;
 }
 
 // Consecutive days of discipline, ending today (or yesterday, if today's
@@ -27,15 +30,17 @@ export interface StreakContext {
 //
 // Neutral too, like on Logboek (pages/History.tsx#countMissed): a rest day, a
 // day you were ill, a session that fell away because of a leave
-// (`leave.role === 'dropped'`) and days before the program started.
+// (`leave.role === 'dropped'`), a session ASCEND itself took out of the plan
+// (`leftOut`, as on Week) and days before the program started.
 export function computeCurrentStreak(plannedSessions: PlannedSession[], logs: SessionLog[], context: StreakContext = {}): number {
-  const { templateById, programStart, illnessEpisodes } = context;
+  const { templateById, programStart, illnessEpisodes, leftOut } = context;
   const today = todayISO();
   const isRest = (s: PlannedSession) => templateById?.get(s.templateId)?.type === 'recovery';
   const neutral = (s: PlannedSession) =>
     (programStart !== undefined && s.scheduledDate < programStart) ||
     (illnessEpisodes !== undefined && isIllnessDay(s.scheduledDate, illnessEpisodes, today)) ||
-    (s.status === 'skipped' && s.leave?.role === 'dropped');
+    (s.status === 'skipped' && s.leave?.role === 'dropped') ||
+    (leftOut?.(s.id) ?? false);
   const statusOf = (s: PlannedSession) => deriveSessionStatus(s, logs, isRest(s)).status;
 
   const byDate = new Map<string, PlannedSession[]>();

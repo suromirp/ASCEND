@@ -1,7 +1,10 @@
 // Tekstuele kaart van de app. Zie docs/app-kaart/README.md en docs/beslissingen/2026-10-31-app-kaart.md.
 //   node scripts/app-kaart/kaart.mjs                    maakt docs/app-kaart/ opnieuw
 //   node scripts/app-kaart/kaart.mjs --vergelijk        vergelijkt met docs/app-kaart/ (exit 0 gelijk, 1 verschil)
-//   node scripts/app-kaart/kaart.mjs --foto <scherm>    screenshot van een scherm
+//   node scripts/app-kaart/kaart.mjs --foto <scherm>    afdruk van een heel scherm
+//   node scripts/app-kaart/kaart.mjs --foto <scherm> --markeer "<tekst>"   idem, met een rand om die tekst
+// Een afdruk toont de hele pagina, ook wat onder de vouw staat (volleAfdruk). Bij --vergelijk krijgt
+// elk gewijzigd scherm een afdruk met een rand om de eerste gewijzigde regel.
 // Exitcode 2: een invariant is geschonden (zie invarianten.mjs).
 import { execFileSync, spawn } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, copyFileSync, readdirSync, rmSync } from 'node:fs';
@@ -17,6 +20,8 @@ const args = process.argv.slice(2);
 const vergelijk = args.includes('--vergelijk');
 const fotoAt = args.indexOf('--foto');
 const fotoScherm = fotoAt >= 0 ? args[fotoAt + 1] : null;
+const markeerAt = args.indexOf('--markeer');
+const markeerTekst = markeerAt >= 0 ? args[markeerAt + 1] : null;
 
 const PORT = Number(process.env.KAART_PORT ?? process.env.LOOKOUT_PORT ?? 5271);
 process.env.LOOKOUT_PORT = String(PORT);
@@ -109,7 +114,96 @@ const SCHERMEN = {
   'training-blad': { titel: 'Blad van een geplande training (Week)', pad: '#/week', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Lange duurloop")') },
 };
 
-async function maakScherm(id, uitMap, fotoMap) {
+// Van een regel van de kaart naar wat je op het scherm zoekt: de tekst van een knop, een kop, een kaart of gewone tekst.
+export function zoekterm(regel) {
+  const r = regel.trim();
+  if (!r) return null;
+  let m;
+  if ((m = /^--- kaart (\d+) ---$/.exec(r))) return { kaart: Number(m[1]) };
+  if ((m = /^\[(?:knop|link): (.*?)\](?: \(aria: (.*)\))?$/.exec(r))) return { tekst: m[1], aria: m[2] ?? m[1] };
+  if ((m = /^\[label: (.*)\]$/.exec(r))) return { aria: m[1] };
+  if ((m = /^\[veld: (.*?)(?: = .*)?\]$/.exec(r))) return { aria: m[1] };
+  if (r === '[melding]') return { melding: true };
+  if (/^\[(niet beschikbaar|console)/.test(r)) return null;
+  if ((m = /^#{1,5} (.*)$/.exec(r))) return { tekst: m[1] };
+  return { tekst: r };
+}
+
+// In de pagina: zet een rand om het kleinste element dat bij de zoekterm past en scrol ernaartoe.
+function markeerInPagina(term) {
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const kandidaten = [...document.querySelectorAll('body *')].filter((e) => !e.closest('nav') && e.getBoundingClientRect().height > 0);
+  let doel = null;
+  if (term.kaart) doel = [...document.querySelectorAll('.rounded-2xl')].filter((e) => !e.closest('button'))[term.kaart - 1] ?? null;
+  else if (term.melding) doel = document.querySelector('[role=status],[role=alert]');
+  else {
+    const passend = (needle) => kandidaten.filter((e) => norm(e.textContent).includes(needle)).sort((a, b) => norm(a.textContent).length - norm(b.textContent).length)[0] ?? null;
+    if (term.aria) doel = kandidaten.find((e) => norm(e.getAttribute('aria-label')) === term.aria) ?? null;
+    if (!doel && term.tekst) doel = passend(norm(term.tekst)) ?? passend(norm(term.tekst).slice(0, 40));
+  }
+  if (!doel) return false;
+  doel.style.outline = '3px solid var(--color-warning)';
+  // Binnen het element: een rij in een kaart met overflow-hidden knipt een rand erbuiten af.
+  doel.style.outlineOffset = '-3px';
+  doel.scrollIntoView({ block: 'center' });
+  return true;
+}
+
+// Een afdruk van de hele pagina. De app scrolt in een eigen container (main, of het blad), dus fullPage van
+// Playwright ziet alleen het zichtbare deel. Daarom groeit het venster tot elke scrollcontainer zijn volle
+// inhoud toont (een paar rondes, want een blad met een maximale hoogte in dvh groeit mee), dan de afdruk,
+// dan terug naar de oude maat.
+async function volleAfdruk(page, pad, markeer) {
+  let gemarkeerd = false;
+  if (markeer) gemarkeerd = await page.evaluate(markeerInPagina, markeer).catch(() => false);
+  const oud = page.viewportSize();
+  let hoogte = oud.height;
+  for (let i = 0; i < 8; i++) {
+    const extra = await page.evaluate(() => Math.max(0, ...[...document.querySelectorAll('*')].map((e) => {
+      const s = getComputedStyle(e);
+      if (!/(auto|scroll)/.test(s.overflowY) || e.clientHeight === 0) return 0;
+      return e.scrollHeight - e.clientHeight;
+    })));
+    if (extra <= 1 || hoogte >= 15000) break;
+    hoogte = Math.min(15000, Math.ceil(hoogte + extra));
+    await page.setViewportSize({ width: oud.width, height: hoogte });
+    await page.waitForTimeout(400);
+  }
+  // De tabbalk en een open meldingsbalk staan vast onderaan en kunnen over het einde van de inhoud liggen (de
+  // meldingsbalk klapt soms weer uit na het vergroten). Dan krijgt main een losse ruimte onderaan (geen padding:
+  // React zet die opnieuw) en groeit het venster even hard mee, tot de laatste kaart erboven staat.
+  for (let i = 0; i < 3; i++) {
+    const tekort = await page.evaluate(() => {
+      if ([...document.querySelectorAll('[role=dialog]')].some((d) => d.getBoundingClientRect().height > 0)) return 0;
+      const scroller = [...document.querySelectorAll('main')].find((e) => /(auto|scroll)/.test(getComputedStyle(e).overflowY));
+      if (!scroller) return 0;
+      const top = [...document.querySelectorAll('body *')]
+        .filter((e) => getComputedStyle(e).position === 'fixed' && !scroller.contains(e))
+        .map((e) => e.getBoundingClientRect())
+        .filter((r) => r.height > 0 && r.height < innerHeight / 2 && r.bottom > innerHeight - 300)
+        .reduce((t, r) => Math.min(t, r.top), innerHeight);
+      const inhoud = [...scroller.children].filter((c) => !c.hasAttribute('data-kaart-ruimte')).map((c) => c.getBoundingClientRect().bottom);
+      const onder = Math.max(0, ...inhoud);
+      const nodig = Math.ceil(onder - top + 16);
+      if (nodig <= 0) return 0;
+      const ruimte = document.createElement('div');
+      ruimte.setAttribute('data-kaart-ruimte', '');
+      ruimte.style.height = `${nodig}px`;
+      scroller.appendChild(ruimte);
+      return nodig;
+    });
+    if (tekort <= 0 || hoogte >= 15000) break;
+    hoogte = Math.min(15000, hoogte + tekort);
+    await page.setViewportSize({ width: oud.width, height: hoogte });
+    await page.waitForTimeout(400);
+  }
+  await page.evaluate(() => { for (const e of document.querySelectorAll('*')) if (e.scrollTop) e.scrollTop = 0; });
+  await page.screenshot({ path: pad, fullPage: true });
+  await page.setViewportSize(oud);
+  return gemarkeerd;
+}
+
+async function maakScherm(id, uitMap, fotoMap, markeer) {
   const s = SCHERMEN[id];
   const o = await open(390, { timezoneId: 'Europe/Amsterdam', locale: 'nl-NL', serviceWorkers: 'block' });
   try {
@@ -124,7 +218,8 @@ async function maakScherm(id, uitMap, fotoMap) {
     const fouten = o.errs.filter((e) => !/favicon|manifest|Service Worker/i.test(e)).map((e) => `[console: ${e.slice(0, 160)}]`);
     const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.\n\n${tekst}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
     writeFileSync(join(uitMap, id + '.md'), md);
-    if (fotoMap) await o.page.screenshot({ path: join(fotoMap, id + '.png'), fullPage: true });
+    if (fotoMap) return await volleAfdruk(o.page, join(fotoMap, id + '.png'), markeer);
+    return false;
   } finally { await o.browser.close(); }
 }
 
@@ -161,13 +256,13 @@ try {
   if (fotoScherm) {
     if (!SCHERMEN[fotoScherm]) { console.error(`Onbekend scherm. Kies uit: ${Object.keys(SCHERMEN).join(', ')}`); process.exit(3); }
     const tmp = mkdtempSync(join(tmpdir(), 'kaart-foto-'));
-    await maakScherm(fotoScherm, tmp, process.env.LOOKOUT_SHOTS);
-    console.log(`Foto: ${join(process.env.LOOKOUT_SHOTS, fotoScherm + '.png')}`);
+    const term = markeerTekst ? zoekterm(markeerTekst) : null;
+    const gemarkeerd = await maakScherm(fotoScherm, tmp, process.env.LOOKOUT_SHOTS, term);
+    console.log(`Foto: ${join(process.env.LOOKOUT_SHOTS, fotoScherm + '.png')}${term ? (gemarkeerd ? ' (gemarkeerd)' : ' (tekst niet gevonden)') : ''}`);
   } else {
     const uit = vergelijk ? mkdtempSync(join(tmpdir(), 'kaart-nieuw-')) : KAART;
-    const fotos = vergelijk ? mkdtempSync(join(tmpdir(), 'kaart-fotos-')) : null;
     mkdirSync(uit, { recursive: true });
-    for (const id of Object.keys(SCHERMEN)) await maakScherm(id, uit, fotos);
+    for (const id of Object.keys(SCHERMEN)) await maakScherm(id, uit, null);
     if (!vergelijk) {
       for (const f of readdirSync(KAART)) if (f.endsWith('.md') && f !== 'README.md' && !SCHERMEN[f.slice(0, -3)]) rmSync(join(KAART, f));
       for (const id of Object.keys(SCHERMEN)) console.log(`${id}: ${readFileSync(join(KAART, id + '.md'), 'utf8').split('\n').length} regels`);
@@ -180,9 +275,14 @@ try {
         const d = diff(oud, nieuw);
         if (d.length === 0) { console.log(`${id}: gelijk`); continue; }
         verschil++;
+        // Alleen een gewijzigd scherm krijgt een afdruk: opnieuw openen, met een rand om de eerste nieuwe regel.
+        const eerste = d.find((r) => r.startsWith('+ ') && zoekterm(r.slice(2)));
+        const term = eerste ? zoekterm(eerste.slice(2)) : null;
+        const fotos = mkdtempSync(join(tmpdir(), 'kaart-fotos-'));
+        const gemarkeerd = await maakScherm(id, mkdtempSync(join(tmpdir(), 'kaart-weg-')), fotos, term);
         const foto = join(process.env.LOOKOUT_SHOTS, `kaart-${id}.png`);
         copyFileSync(join(fotos, id + '.png'), foto);
-        console.log(`${id}: ${d.length} gewijzigde regels (foto: ${foto})`);
+        console.log(`${id}: ${d.length} gewijzigde regels (foto: ${foto}${gemarkeerd ? `, rand om "${eerste.slice(2, 62)}"` : ''})`);
         for (const r of d.slice(0, 60)) console.log('  ' + r);
         if (d.length > 60) console.log(`  ... en nog ${d.length - 60} regels`);
       }
