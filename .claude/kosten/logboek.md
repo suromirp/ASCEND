@@ -35,3 +35,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-31, Review vervolg testdag, Warden, opus (reviewer), 45k, 1,5 min, 0, groen
 - 2026-10-31, Vegen uit en rol heuvels (2 van 4, rest vervallen), Sherpa, sonnet (ontwikkelaar), 87k, 18 min, 0, review door coördinator (klein)
 - 2026-10-31, Ontwerp ochtendkaart, Cartographer, sonnet (ontwerper), 60k, 2 min, 0
+- 2026-10-31, Data op lange termijn, Sherpa, opus (ontwikkelaar), 207k, 37 min, 0
+- 2026-10-31, Review data lange termijn, Warden, opus (reviewer), 95k, 5 min, 0, groen

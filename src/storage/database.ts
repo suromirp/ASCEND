@@ -756,7 +756,7 @@ export interface AppSettings {
   streamsInBackup?: boolean;
   // "Reeksen in back-up" as a choice (engine/streamsBackup.ts): 'twoYears' (advice, absent = twoYears,
   // or 'none' when the old switch streamsInBackup is off), 'all' or 'none'. Picking one drops the old
-  // switch. Optional and additive; read on import by storage/migrations.ts#migrateStreamsBackup.
+  // switch. Optional and additive; read on import by storage/migrations.ts#migrateDataSettings.
   streamsBackup?: 'twoYears' | 'all' | 'none';
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.

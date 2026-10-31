@@ -486,7 +486,7 @@ describe('rowSummary: gegevens en back-up', () => {
   it('de reeksen van je horloge: aan als standaard, met de ruimte erbij', () => {
     expect(rowSummary('reeksen-bewaren', facts()).checked).toBe(true);
     expect(rowSummary('reeksen-bewaren', facts({ settings: { keepStreams: false } as never })).checked).toBe(false);
-    expect(rowSummary('reeksen-backup', facts()).value).toBe('Laatste 2 jaar');
+    expect(rowSummary('reeksen-backup', facts()).value).toBe('2 jaar');
     expect(rowSummary('reeksen-backup', facts({ settings: { streamsInBackup: false } as never }))).toMatchObject({ value: 'Geen', dim: true });
     expect(rowSummary('reeksen-backup', facts({ settings: { streamsBackup: 'all' } as never })).value).toBe('Alle');
     // Zolang er niets geteld is staat er geen regel; daarna de ruimte in de rij, een derde groter als tekst.

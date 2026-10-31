@@ -75,7 +75,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           def={CHOICES.reeksenBackup}
           value={resolveStreamsBackup(facts.settings)}
           // De oude schakelaar gaat weg zodra je zelf kiest (engine/streamsBackup.ts).
-          onPick={(v) => void updateSettings({ streamsBackup: v, streamsInBackup: undefined })}
+          onPick={(v) => void updateSettings({ streamsBackup: v, streamsInBackup: v !== 'none' })}
           onClose={close}
         />
       )}

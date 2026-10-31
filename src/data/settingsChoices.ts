@@ -610,7 +610,7 @@ export const CHOICES = {
     advice: 'twoYears' as 'twoYears' | 'all' | 'none',
     help: 'reeksenBackup',
     options: [
-      { value: 'twoYears', label: 'De laatste 2 jaar', note: 'Ongeveer 15 tot 25 MB per jaar', short: 'Laatste 2 jaar' },
+      { value: 'twoYears', label: 'De laatste 2 jaar', note: 'Ongeveer 15 tot 25 MB per jaar', short: '2 jaar' },
       { value: 'all', label: 'Alle reeksen', note: 'De back-up groeit elk jaar mee', short: 'Alle' },
       { value: 'none', label: 'Geen reeksen', note: 'Een kleine back-up, de kilometers gaan wel mee', short: 'Geen' },
     ],
