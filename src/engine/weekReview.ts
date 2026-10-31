@@ -92,8 +92,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // planned and not done (production feedback: "4 van 4, alles gedaan"
   // while two trainings were skipped). Not counted: sessions ASCEND itself
   // took out while rearranging the plan (a new strength block, the weekly
-  // planning), and days you were ill.
-  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf);
+  // planning), days you were ill and days before the program started.
+  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate);
   const countsAsTraining = (s: PlannedSession) => countsAsTrainingShared(s, byId.get(s.templateId), leftOut);
   const trainings = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && countsAsTraining(s));
   // What was done that week, by the day it was done, with or without a plan: the same

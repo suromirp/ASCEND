@@ -9,27 +9,34 @@
 // minder bevindingen en geen nieuwe, dezelfde maat als `judge` in de controle.
 // In een volle week kan de enige herstelling een training laten vervallen zijn,
 // de lichtste, nooit een lange duurloop, harde loop, test, wedstrijd of tocht.
+// Uitzondering bij TEST-DAY: staat er iets van jou op de dag van je test en lost
+// verplaatsen het niet op, dan is het weghalen ervan de laatste keuze, alleen als
+// de week nog een sessie met dezelfde rol heeft.
 // Wat de planning verandert gaat zo altijd langs ProposalSheet.
 //
 // Pure: no React, no IndexedDB.
 
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import type { PlannedSession, SessionTemplate } from '../models/training';
+import type { PlannedSession, SessionTemplate, TemplateRole } from '../models/training';
 import { addDays, isoWeekday, mondayOfWeek, weekdayLongNL, weekdayOf } from '../utils/dates';
 import { makeId } from '../utils/id';
 import type { Advice, AdviceOption } from './adviceEngine';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
-import { hasRole, isTestOrRace } from './templateRoles';
+import { hasRole, isTestOrRace, templateRoles } from './templateRoles';
 import { dayName, weekConcerns, type WeekConcern } from './weekConcerns';
 import { findingKey, lockLevel, repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 
 const SOURCE = ['engine/weekFixProposal.ts'];
 const MAX_OPTIONS = 3;
+// The roles that say what a session is for; the others are traits (easy pace, extra, asks the legs).
+const TASK_ROLES: readonly TemplateRole[] = ['long', 'key', 'hard_run', 'hard_load'];
 
 // Eén wijziging aan één training: een andere dag, korter, of laten vervallen.
-interface Change { id: string; from: string; to?: string; removed?: boolean; minutes?: number }
+// `keeps`: bij weghalen de sessie met dezelfde rol die in de week blijft staan.
+interface Change { id: string; from: string; to?: string; removed?: boolean; minutes?: number; keeps?: string }
 
 const capital = (s: string) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
+const lower = (s: string) => `${s.charAt(0).toLowerCase()}${s.slice(1)}`;
 
 // The id of the proposal for a concern, known without working the proposal out: Week can tell from it whether
 // you already said Liever niet, without waiting for the calculation (docs/beslissingen/2026-10-28-voorstel-eindstand.md).
@@ -118,6 +125,21 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
   const yours = sessions.filter((s) => level(s) === 1);
   const candidates: Change[][] = [];
   const push = (c: Change[]) => { if (c.length > 0 && improves(c)) candidates.push(c); };
+  let lastResort: Change[] | null = null;
+  // Another session of the same week, not skipped, with the same task: the same template, or a role that says
+  // what the session is for (a long run, a hard run). A shared trait such as an easy pace is not enough.
+  const sameRoleElsewhere = (s: PlannedSession): PlannedSession | undefined => {
+    const t = templateOf(s);
+    if (!t || isTestOrRace(t)) return undefined;
+    const roles = templateRoles(t).filter((r) => TASK_ROLES.includes(r));
+    return input.sessions
+      .filter((o) => o.id !== s.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === monday)
+      .filter((o) => {
+        const ot = templateOf(o);
+        return !!ot && !isTestOrRace(ot) && (ot.id === t.id || roles.some((r) => hasRole(ot, r)));
+      })
+      .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+  };
 
   switch (concern.rule) {
     case 'REST-DAY': {
@@ -162,9 +184,18 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       const subject = sessionById(concern.finding.subjectId);
       if (subject && level(subject) === 1) push(viaCheck([subject.id]));
       for (const s of yours) if (s.id !== subject?.id) push(viaScan(s.id));
+      // TEST-DAY in a full week: as the last choice the other session goes, only when it is yours and the week
+      // keeps another session with the same role. Never the test or race itself.
+      if (concern.rule === 'TEST-DAY' && subject && level(subject) === 1) {
+        const twin = sameRoleElsewhere(subject);
+        if (twin) {
+          const removal: Change[] = [{ id: subject.id, from: subject.scheduledDate, removed: true, keeps: twin.id }];
+          if (improves(removal)) lastResort = removal;
+        }
+      }
     }
   }
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0 && !lastResort) return null;
 
   // The same change twice is one option.
   const seen = new Set<string>();
@@ -173,7 +204,8 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
     if (seen.has(sig)) return false;
     seen.add(sig);
     return true;
-  }).slice(0, MAX_OPTIONS);
+  }).slice(0, lastResort ? MAX_OPTIONS - 1 : MAX_OPTIONS);
+  if (lastResort) unique.push(lastResort);
 
   const nameOf = (id: string) => templateOf(sessionById(id)!)?.name ?? 'Training';
   const sentence = (changes: Change[]) => {
@@ -182,7 +214,9 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
     const parts: string[] = [];
     for (const c of changes) {
       const free = freeNow(c.from) ? ` ${capital(weekdayLongNL(c.from))} is dan vrij.` : '';
-      if (c.removed) parts.push(`Laat ${nameOf(c.id)} op ${dayName(c.from)} gaan.${freeNow(c.from) ? ` Dan heb je ${weekdayLongNL(c.from)} vrij.` : ''}`);
+      const kept = c.keeps ? sessionById(c.keeps) : undefined;
+      const keep = kept ? ` Je houdt de ${lower(nameOf(kept.id))} op ${dayName(kept.scheduledDate)}.` : '';
+      if (c.removed) parts.push(`Laat ${nameOf(c.id)} op ${dayName(c.from)} gaan.${freeNow(c.from) ? ` Dan heb je ${weekdayLongNL(c.from)} vrij.` : ''}${keep}`);
       else if (c.to && c.to !== c.from) parts.push(`${nameOf(c.id)} gaat van ${dayName(c.from)} naar ${dayName(c.to)}.${free}`);
       else parts.push(`${nameOf(c.id)} op ${dayName(c.from)} wordt de korte versie, ${c.minutes} minuten.`);
     }
@@ -190,6 +224,7 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
   };
   const labelOf = (changes: Change[]) => {
     const lead = changes.find((c) => c.removed) ?? changes[0];
+    if (lead.removed && lead.keeps) return `${nameOf(lead.id)} op ${dayName(lead.from)} weghalen`;
     return lead.removed ? `${nameOf(lead.id)} laten vervallen` : lead.to && lead.to !== lead.from ? `${nameOf(lead.id)} verplaatsen` : `${nameOf(lead.id)} korter`;
   };
   const items = (changes: Change[]): PlanChangeItem[] => changes.map((c) => ({

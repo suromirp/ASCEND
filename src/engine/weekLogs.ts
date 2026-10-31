@@ -88,13 +88,16 @@ export function weekTime(
 
 // Wat niet meetelt als training, voor `countsAsTraining`: een dag waarop je ziek
 // was, en een training die ASCEND zelf uit de planning haalde bij een
-// herindeling (een nieuw krachtblok, de weekplanning). Wat jij overgeslagen
-// hebt, of liet vallen na het missen, telt wel mee.
+// herindeling (een nieuw krachtblok, de weekplanning). Met `programStart` ook
+// een sessie van voor de start van het programma (restjes van een eerdere
+// planning), zoals de reeks. Wat jij overgeslagen hebt, of liet vallen na het
+// missen, telt wel mee.
 export function leftOutOfCount(
   plannedSessions: readonly Pick<PlannedSession, 'id' | 'scheduledDate' | 'status'>[],
   planChangeLog: readonly PlanChangeProposal[],
   illnessEpisodes: IllnessEpisode[] | undefined,
   asOf: string,
+  programStart?: string,
 ): (id: string) => boolean {
   const removedBy = new Map<string, string>();
   for (const p of planChangeLog) {
@@ -105,6 +108,7 @@ export function leftOutOfCount(
   return (id) => {
     const s = byId.get(id);
     if (!s) return false;
+    if (programStart && s.scheduledDate < programStart) return true;
     if (illnessEpisodes && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
     if (s.status !== 'skipped') return false;
     const trigger = removedBy.get(id);

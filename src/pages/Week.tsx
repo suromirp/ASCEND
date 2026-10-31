@@ -99,7 +99,7 @@ export function WeekPage() {
       previous: dayLoads({ weekStart: addDays(weekStart, -7), plannedSessions, logs: sessionLogs, templates, today, minutesOf }),
     };
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
-  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today));
+  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate));
   // Wat er deze week al gedaan is: kilometers en stijgen uit dezelfde logs als de tijd.
   const weekLogs = weekLogsOf(sessionLogs, templateById, weekStart, plannedById);
   const weekKm = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.distanceKm ?? 0), 0);

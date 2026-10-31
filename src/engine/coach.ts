@@ -51,13 +51,18 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
   const note = progressionTarget(template, program, date)?.step.note ?? '';
   const soreYesterday = yesterdayLogs.flatMap((l) => significantPain(l).map((r) => r.area));
   // Een test of wedstrijd is geen training om in te korten: een "korte versie" bestaat niet.
-  // Na pijn of een zware dag zeg je dat het inlopen de maat is, niet de test.
+  // Na pijn of een zware dag: bij een test liever een andere dag, bij een wedstrijd rustiger starten.
   if (hasRole(template, 'test') || hasRole(template, 'race')) {
     const heavy = yesterdayLogs.some((l) => feltHeavy(l, templateById.get(l.templateId), program));
-    if (soreYesterday.length > 0 || heavy) {
-      return 'Voelt het inlopen zwaar, loop dan rustig in plaats van te testen. Dan is het geen goede meting en haal je er niets uit.';
+    const tired = soreYesterday.length > 0 || heavy;
+    if (hasRole(template, 'race')) {
+      return tired
+        ? 'Je benen zijn nog niet helemaal fris. Start rustiger dan je van plan was en bouw pas op als het lekker loopt.'
+        : 'Warm goed in en start rustig. Loop de eerste kilometer niet te snel en bouw daarna op.';
     }
-    return 'Warm goed in en loop de eerste kilometer niet te snel. Dan laat de test zien wat je kunt.';
+    return tired
+      ? 'Een test op zware benen is geen goede meting. Voelt het inlopen zwaar, loop dan rustig en test een andere dag.'
+      : 'Warm goed in en loop de eerste kilometer niet te snel. Dan laat de test zien wat je kunt.';
   }
   if (soreYesterday.length > 0) {
     return `Gisteren pijn aan je ${joinNL([...new Set(soreYesterday)].map((a) => a.toLowerCase()))}. Voelt het nog niet goed, neem dan de korte versie of verplaats de training.`;
