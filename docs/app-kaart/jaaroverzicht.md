@@ -23,8 +23,7 @@ Week 1 van 4
 Kracht, een rustige aerobe basis en het weekendblok met heuvels en een lange duurloop. Golven van vier weken: wennen, opbouw, zwaarste week, rustweek.
 Lange duurloop: 50 tot 70 min
 Rustige duurloop: 35 tot 40 min
-Testloop 5 km: 29 okt
-[knop: Week 1 · 26 oktoberNuWennen2 uur 20 minTestloop 5 km, 29 oktLange duurloop 50 min]
+[knop: Week 1 · 26 oktoberNuWennen2 uur 20 minLange duurloop 50 min]
 [knop: Week 2 · 2 novemberOpbouw3 uur 50 minLange duurloop 60 min]
 [knop: Week 3 · 9 novemberZwaarste week4 uur 5 minLange duurloop 70 min]
 [knop: Week 4 · 16 novemberRustweek3 uur 27 minLange duurloop 45 min]

@@ -39,7 +39,7 @@ Weekvolume
 12,9 van 22,5 km
 [label: Weekvolume]
 Hier is nog het meeste te winnen: snelheid.
-Hierna · wo 4 nov. Benen A (zwaar), 75 minuten.
+Volgende sleuteltraining · wo 4 nov. Benen A (zwaar), 75 minuten.
 [knop: Meer over dit doel]
 [knop: Doel toevoegen]
 
