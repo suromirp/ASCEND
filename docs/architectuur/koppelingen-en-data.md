@@ -17,3 +17,18 @@ kilometres stay with Garmin.
 **Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
 need a server); it prepares a short text to copy. Planned numbers appear only when
 the log belongs to a planned session, and no minutes without a measured duration.
+
+**Vangnet voor de bron** (decision `2026-10-31-kansen-stap-0.md`). `engine/sourceWatch.ts` says in one quiet line on
+Vandaag when nothing comes in from the watch for three days while the link works (`storage/sourceWatch.ts`,
+`components/SourceSilenceLine.tsx`, setting `watchSilence`). The mornings (date, resting heart rate, HRV, sleep
+duration and score only) travel in the backup as `payload.mornings` (`engine/morningBackup.ts`,
+`storage/migrations.ts#migrateMornings`, setting `morningInBackup`); a restore only adds mornings the device lacks.
+The activities request asks only the fields `mapIntervalsActivity` reads (`ACTIVITY_FIELDS`), and asks once more
+without the list when the answer is refused; a field read there belongs in that list.
+
+**Signals from your data** (same decision, sheet "Signalen uit je gegevens" on Lichaam, `engine/signalSettings.ts`,
+all on by default): early illness (`engine/illnessSigns.ts`, a question on Vandaag), heat and dew point under the
+weather of a run (`engine/heatPace.ts`; the forecast now has `dewPointC` and `humidityPct`), a weekday where trainings
+fall away (`engine/weekdayPattern.ts`, a line on Week), air quality for a hard training outside (`engine/airQuality.ts`,
+`storage/airQuality.ts`, a cache at air-quality-api.open-meteo.com, never in a backup) and the morning rule two of
+three (`engine/morningRule.ts`, engine only, for the morning card). None of them changes the planning.
