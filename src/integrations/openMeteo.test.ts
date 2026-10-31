@@ -27,7 +27,7 @@ describe('requests', () => {
     expect(url.origin + url.pathname).toBe('https://api.open-meteo.com/v1/forecast');
     expect(url.searchParams.get('latitude')).toBe('50.01');
     expect(url.searchParams.get('longitude')).toBe('4.01');
-    expect(url.searchParams.get('hourly')).toBe('temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code,uv_index');
+    expect(url.searchParams.get('hourly')).toBe('temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code,uv_index,dew_point_2m,relative_humidity_2m');
     expect(url.searchParams.get('daily')).toBe('sunrise,sunset');
     expect(url.searchParams.get('forecast_days')).toBe('7');
     expect(url.searchParams.get('timezone')).toBe('auto');

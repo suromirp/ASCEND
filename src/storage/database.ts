@@ -768,6 +768,9 @@ export interface AppSettings {
   // "Vroeg ziek zien" (engine/illnessSigns.ts): a question on Vandaag when resting heart rate and
   // HRV are off together for two mornings in a row. Absent = on. Optional and additive.
   illnessSigns?: boolean;
+  // "Hitte bij je tempo" (engine/heatPace.ts): a line under the weather of a run when it is warm
+  // or humid. Absent = on. Optional and additive.
+  heatPace?: boolean;
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
   proposalTidyMonths?: 0 | 3 | 6 | 12;

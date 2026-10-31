@@ -492,6 +492,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geen diagnose', text: 'bij hoge koorts, pijn op de borst of als je je echt slecht voelt: neem contact op met je huisarts.' },
     ],
   },
+  hitteTempo: {
+    title: 'Hitte bij je tempo',
+    lead: 'In de warmte en vooral als het vochtig is, loop je bij dezelfde moeite trager. Dat is geen slechte vorm maar je lichaam dat koelt.',
+    points: [
+      { head: 'Wanneer', text: 'bij een loop buiten als het voelt als 22 graden of meer, of als het dauwpunt 16 of hoger is.' },
+      { head: 'Wat je ziet', text: 'een regel onder het weer: loop op hartslag, met een band voor hoeveel trager, 10 tot 20 seconden per km, of 20 tot 40 als het heet of benauwd is.' },
+      { head: 'Hoe zeker', text: 'het getal is een gemiddelde over veel lopers (bewijs matig). Wennen aan warmte gaat in een tot twee weken en kan helpen voor een zomerse tocht.' },
+    ],
+  },
   horlogeStil: {
     title: 'Melden als je horloge stilvalt',
     lead: 'Garmin scherpte in oktober 2026 zijn voorwaarden aan. Als intervals.icu daardoor niets meer doorgeeft, zie je dat niet aan een foutmelding: het ophalen lukt, er komt alleen niets mee.',

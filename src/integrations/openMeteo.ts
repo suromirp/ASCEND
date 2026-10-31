@@ -56,7 +56,7 @@ export function forecastUrl(place: WeatherPlace): string {
   const query = new URLSearchParams({
     latitude: String(roundCoordinate(place.lat)),
     longitude: String(roundCoordinate(place.lon)),
-    hourly: 'temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code,uv_index',
+    hourly: 'temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code,uv_index,dew_point_2m,relative_humidity_2m',
     daily: 'sunrise,sunset',
     timezone: 'auto',
     forecast_days: String(FORECAST_DAYS),
@@ -90,6 +90,8 @@ export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string
   const gust = col('wind_gusts_10m');
   const code = col('weather_code');
   const uv = col('uv_index');
+  const dew = col('dew_point_2m');
+  const humidity = col('relative_humidity_2m');
 
   const hours: WeatherHour[] = [];
   const seen = new Set<string>();
@@ -111,6 +113,8 @@ export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string
       gustKmh: num(gust[i]) ?? windKmh,
       code: num(code[i]) ?? 0,
       uvIndex: (() => { const u = num(uv[i]); return u === undefined ? undefined : Math.max(0, u); })(),
+      ...(num(dew[i]) !== undefined ? { dewPointC: num(dew[i]) } : {}),
+      ...(num(humidity[i]) !== undefined ? { humidityPct: Math.min(100, Math.max(0, num(humidity[i])!)) } : {}),
     });
   });
   if (hours.length === 0) throw new OpenMeteoError('response', MESSAGES.response);

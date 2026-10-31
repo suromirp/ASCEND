@@ -735,6 +735,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: String(f.snapshots), dim: f.snapshots === 0 };
     case 'vroeg-ziek':
       return { checked: s.illnessSigns !== false };
+    case 'hitte-tempo':
+      return { checked: s.heatPace !== false };
     case 'horloge-stil':
       return { checked: s.watchSilence !== false };
     case 'ochtend-backup':

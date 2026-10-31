@@ -84,6 +84,7 @@ const everything: AppSettings = {
   morningInBackup: false,
   watchSilence: false,
   illnessSigns: false,
+  heatPace: false,
   streamsInBackup: false,
   proposalTidyMonths: 12,
 };

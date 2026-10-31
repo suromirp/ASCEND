@@ -334,6 +334,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
   flag('vroeg-ziek', 'Vroeg ziek zien', 'lichaam', 'illnessSigns'),
+  flag('hitte-tempo', 'Hitte bij je tempo', 'lichaam', 'heatPace'),
   flag('horloge-stil', 'Melden als je horloge stilvalt', 'koppelingen', 'watchSilence'),
   flag('ochtend-backup', 'Ochtendgetallen in back-up', 'gegevens', 'morningInBackup'),
   {

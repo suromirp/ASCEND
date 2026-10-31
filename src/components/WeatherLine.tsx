@@ -25,6 +25,8 @@ import { bestMomentForTraining } from '../engine/bestMoment';
 import { weatherLineForTraining } from '../engine/clothing';
 import { adjustFor } from '../engine/clothingFeedback';
 import { templateSport } from '../engine/sports';
+import { heatPace } from '../engine/heatPace';
+import { signalOn } from '../engine/signalSettings';
 import { Icon } from './icons';
 
 const TONE = { prima: 'var(--color-ink-dim)', let_op: 'var(--color-warning)', slecht: 'var(--color-danger-text)' } as const;
@@ -63,11 +65,14 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen }:
   const best = showBestMoment(settings.overviews)
     ? bestMomentForTraining({ forecast: weather.forecast, template, logs: sessionLogs, date, durationMinutes, now })
     : undefined;
+  // Warm of vochtig bij een loop: loop op hartslag, met een band voor het tempo (engine/heatPace.ts).
+  const heat = templateSport(template) === 'running' && signalOn(settings, 'heatPace') ? heatPace(w) : undefined;
   const text = (
     <>
       {lead}{line}
       {stale && <span style={{ color: 'var(--color-ink-dim)' }}> · {updatedLabel(weather.forecast.fetchedAt)}</span>}
       {best && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{best.text}</span>}
+      {heat && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{heat.text}</span>}
     </>
   );
   if (onOpen) {
