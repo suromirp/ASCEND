@@ -44,3 +44,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-31, Kansen stap 0 en klein werk, Sherpa, opus (ontwikkelaar), 328k, 79 min, 0
 - 2026-10-31, Review kansen, Warden, opus (reviewer), 97k, 3 min, 0, groen
 - 2026-10-31, Zonder doel stap 4 tot 10 en sporten 2 en 3, Sherpa, opus (ontwikkelaar), 507k, 153 min, 0, stille wissel gevonden
+- 2026-10-31, Kansen vervolg, Sherpa, opus (ontwikkelaar), 153k, 37 min, 0
