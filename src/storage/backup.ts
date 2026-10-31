@@ -64,7 +64,7 @@ import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateDirection, migrateWaveSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -496,6 +496,13 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     Object.assign(s, clean.value);
     skipped.n += clean.skipped;
   }
+  // Sporten die meetellen: known sports with a role they know, and real fixed appointments.
+  if ('sportHandling' in s) {
+    const clean = migrateSportHandling(s.sportHandling);
+    delete s.sportHandling;
+    if (clean.value) s.sportHandling = clean.value;
+    skipped.n += clean.skipped;
+  }
   // Zonder doel: the choices around waves; known values stay.
   if ('beginnerStart' in s || 'waves' in s || 'waveReviewDone' in s) {
     const clean = migrateWaveSettings({ beginnerStart: s.beginnerStart, waves: s.waves, waveReviewDone: s.waveReviewDone });
@@ -585,7 +592,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped)?.map(cleanPlannedCatchUp);
-  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail);
+  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogRpeAssumed);
   const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped)?.map(migrateInjuryNote);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;
   const settings = cleanSettings(raw.settings, skipped);

@@ -458,6 +458,10 @@ export interface SessionLog {
   variant: SessionVariant;
   durationMinutes: number;
   rpe?: number;
+  // De RPE is aangenomen, niet door jou gekozen (een voorgekozen waarde die je niet aanraakte), zoals
+  // SetLog.rirAssumed. Telt iets voorzichtiger mee (engine/sessionLoad.ts). Optioneel en aanvullend:
+  // een oud log zonder dit veld leest zoals altijd.
+  rpeAssumed?: true;
   notes?: string;
   strengthData?: ExerciseSetLog[];
   cardioData?: CardioMetric;

@@ -8,6 +8,7 @@
 // additive, and engine/templateRoles.ts falls back to the roles of the id when
 // it is missing or not a list, so an older backup imports as before.
 
+import { parseSportHandling, type SportHandlingMap } from '../engine/sportRole';
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/proposalTidy';
@@ -715,6 +716,20 @@ export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unkn
     else skipped++;
   }
   return { value, skipped };
+}
+
+// Sporten die meetellen (engine/sportRole.ts): alleen bekende sporten met een rol die ze kennen en
+// echte vaste afspraken. Een oud bestand zonder dit veld importeert zoals het was.
+export function migrateSportHandling(raw: unknown): { value: SportHandlingMap | undefined; skipped: number } {
+  return parseSportHandling(raw);
+}
+
+// SessionLog.rpeAssumed: alleen `true` blijft, iets anders valt weg. Het log zelf verandert niet.
+export function migrateLogRpeAssumed(log: SessionLog): SessionLog {
+  if (!('rpeAssumed' in log) || (log as { rpeAssumed?: unknown }).rpeAssumed === true) return log;
+  const { rpeAssumed: _wrong, ...rest } = log as SessionLog & { rpeAssumed?: unknown };
+  void _wrong;
+  return rest as SessionLog;
 }
 
 // --- loopinzicht: SessionLog.detail ---------------------------------------------------
