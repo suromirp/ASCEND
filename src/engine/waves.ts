@@ -4,6 +4,7 @@
 
 import { DIRECTIONS, type DirectionId, type WaveShape } from '../data/directions';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
+import type { AppSettings } from '../storage/database';
 
 export interface WaveWeek {
   // 1 tot en met het aantal weken van de golf.
@@ -104,3 +105,15 @@ export function nextWaveLevel(base: number, review: WaveReview, shape: WaveShape
   if (!review.stepUp) return Math.min(base, ceiling);
   return Math.min(ceil5(base * (1 + Math.max(shape.step, 0.05))), ceiling);
 }
+
+// The smallest patch against the advice: what equals the advice is left out.
+export function wavesPatch(next: WaveSettings): AppSettings['waves'] {
+  const kept: NonNullable<AppSettings['waves']> = {
+    ...(next.length !== ADVICE_WAVE_LENGTH ? { length: next.length as 3 | 6 } : {}),
+    ...(next.lightWeek ? {} : { lightWeek: false as const }),
+    ...(next.review ? {} : { review: false as const }),
+    ...(next.weeksForStep !== DEFAULT_WEEKS_FOR_STEP ? { weeksForStep: next.weeksForStep } : {}),
+  };
+  return Object.keys(kept).length > 0 ? kept : undefined;
+}
+

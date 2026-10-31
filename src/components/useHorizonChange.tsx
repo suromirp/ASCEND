@@ -4,6 +4,7 @@ import { ProposalSheet } from './ProposalSheet';
 import { withAcceptedConflicts, withResolvedConflicts, type HorizonApplyStatus, type HorizonPlan } from '../storage/horizonPlan';
 import { askBeforeApplying, needsConfirmation } from '../engine/changeImpact';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
+import { firstChangeDate } from '../engine/changeImpact';
 
 // Een doel of planningsinstelling die de planningsronde anders laat lopen
 // (storage/horizonPlan.ts): eerst uitrekenen, dan het voorstel met Akkoord of
@@ -133,7 +134,8 @@ export function useHorizonChange(): {
       extraLines={pending.plan.lengths}
       emptyText="Je planning verandert hier niet door."
       alternative={pending.both ? { label: 'Toch allebei', onClick: () => setPending({ plan: { ...pending.both!, notes: [BOTH_NOTE, ...pending.both!.notes] }, options: pending.options }) } : undefined}
-      listUntil={addDays(mondayOfWeek(todayISO()), 13)}
+      // Two weeks from the first change, not from today: a change far ahead still shows as real rows.
+      listUntil={addDays(mondayOfWeek(firstChangeDate(pending.plan.proposal.changes) ?? todayISO()), 13)}
       onRespond={async (response) => {
         if (response === 'accepted') await apply(pending.plan, pending.options);
         else {

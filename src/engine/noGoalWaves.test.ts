@@ -79,6 +79,6 @@ describe('noGoalWavesAdvice', () => {
     expect(lines.join(' ')).toMatch(/bergtocht/i);
     expect(lines.join(' ')).toMatch(/lange loop/);
     expect(a.effect).toMatch(/Liever niet/);
-    for (const text of [a.title, a.effect, a.why, a.brief ?? '', ...lines]) expect(text).not.toMatch(/[–—!]/);
+    for (const text of [a.title, a.effect, a.why, a.brief ?? '', ...lines]) expect(text).not.toMatch(/[\u2013\u2014!]/);
   });
 });

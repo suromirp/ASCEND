@@ -114,3 +114,9 @@ export function prescriptionSummary(items: PlanChangeItem[]): string {
   const text = parts.join(', ');
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+// The earliest day a proposal changes (moved from or to), skipping what it only keeps.
+export function firstChangeDate(changes: readonly { action: string; fromDate?: string; toDate?: string }[]): string | undefined {
+  const days = changes.filter((c) => c.action !== 'keep').flatMap((c) => [c.fromDate, c.toDate]).filter((d): d is string => !!d);
+  return days.length > 0 ? days.sort()[0] : undefined;
+}

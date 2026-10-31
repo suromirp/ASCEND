@@ -6,6 +6,7 @@ import type { AppSettings } from '../../storage/database';
 import { directionChangeLines, directionChangeTitle } from '../../engine/directionChange';
 import { beginnerStartLine, isBeginnerStart } from '../../engine/beginnerStart';
 import { resolveWaveSettings } from '../../engine/waves';
+import { noGoalWavesLines, wavesHeld } from '../../engine/noGoalWaves';
 import { waveReviewPatch, type WaveReviewCard, type WaveReviewChoice } from '../../engine/waveReviewCard';
 import { mondayOfWeek, todayISO } from '../../utils/dates';
 import { useHorizonChange } from '../useHorizonChange';
@@ -47,6 +48,7 @@ export function useDirectionChange(): {
         settings: patch,
         notes: [
           ...directionChangeLines(id, settings),
+          ...(wavesHeld(settings, program) ? noGoalWavesLines() : []),
           ...(id !== 'easy' && isBeginnerStart(settings.beginnerStart, sessionLogs, start) ? [beginnerStartLine(start, todayISO(), resolveWaveSettings(settings.waves).length) ?? ''].filter(Boolean) : []),
         ],
       }),
@@ -67,7 +69,7 @@ export function useDirectionChange(): {
         explanation: 'Je plan volgt je richting, dus je weekbudget bepaalt hoe lang je trainingen zijn. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets.',
         trigger: 'direction_changed',
         settings: { weekBudget },
-        notes: directionChangeLines(id, { weekBudget }).slice(1, 2),
+        notes: [...directionChangeLines(id, { weekBudget }).slice(1, 2), ...(wavesHeld(settings, program) ? noGoalWavesLines() : [])],
       }),
       { eyebrow: 'Je richting', ask: 'always', alwaysAsk: true, notesTitle: 'Je week', declined: 'Je weekbudget en je planning blijven zoals ze waren.' },
     );

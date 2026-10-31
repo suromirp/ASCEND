@@ -47,3 +47,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-31, Kansen vervolg, Sherpa, opus (ontwikkelaar), 153k, 37 min, 0
 - 2026-10-31, Review kansen vervolg, Warden, opus (reviewer), 52k, 4 min, 0, groen
 - 2026-10-31, Zonder doel golven na Akkoord, Sherpa, opus (ontwikkelaar), 227k, 40 min, 0
+- 2026-10-31, Review zonder doel, Warden, opus (reviewer), 117k, 6 min, 0, groen; 4 kleine punten door coördinator

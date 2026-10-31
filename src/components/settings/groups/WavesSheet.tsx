@@ -1,5 +1,5 @@
 import { useAppData } from '../../../state/AppDataContext';
-import { ADVICE_WAVE_LENGTH, DEFAULT_WEEKS_FOR_STEP, WAVE_LENGTHS, resolveWaveSettings, type WaveSettings } from '../../../engine/waves';
+import { ADVICE_WAVE_LENGTH, DEFAULT_WEEKS_FOR_STEP, WAVE_LENGTHS, resolveWaveSettings, wavesPatch } from '../../../engine/waves';
 import type { AppSettings } from '../../../storage/database';
 import { ChoiceList, Sheet } from '../Sheet';
 import { SettingsList, SettingsRow } from '../SettingsList';
@@ -10,16 +10,6 @@ import { Eyebrow } from '../../ui';
 // omhoog. Lengte en lichte week veranderen je planning: `onPlanChange` maakt er een voorstel van
 // (usePlanSettingChange). De terugblik en de stap omhoog veranderen niets aan je planning en worden
 // meteen bewaard. Wat gelijk is aan het advies wordt weggelaten.
-export function wavesPatch(next: WaveSettings): AppSettings['waves'] {
-  const kept: NonNullable<AppSettings['waves']> = {
-    ...(next.length !== ADVICE_WAVE_LENGTH ? { length: next.length as 3 | 6 } : {}),
-    ...(next.lightWeek ? {} : { lightWeek: false as const }),
-    ...(next.review ? {} : { review: false as const }),
-    ...(next.weeksForStep !== DEFAULT_WEEKS_FOR_STEP ? { weeksForStep: next.weeksForStep } : {}),
-  };
-  return Object.keys(kept).length > 0 ? kept : undefined;
-}
-
 export function WavesSheet({ onPlanChange, onClose }: { onPlanChange: (waves: AppSettings['waves'], title: string) => void; onClose: () => void }) {
   const { settings, updateSettings } = useAppData();
   const current = resolveWaveSettings(settings.waves);
