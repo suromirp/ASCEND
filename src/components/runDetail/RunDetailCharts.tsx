@@ -72,7 +72,7 @@ export function PaceBarsChart({ bars, selected, onSelect, label }: { bars: PaceB
         </div>
       </div>
       <p className="mt-2 font-sans text-xs tabular-nums leading-snug" style={dim}>
-        De balken beginnen bij {formatPace(bars.basePace)} per km, zodat verschillen te zien zijn. Hoger is sneller. De stippellijn is je gemiddelde, {formatPace(bars.meanPace)} per km.
+        De balken beginnen bij {formatPace(bars.basePace)} per km, zodat verschillen te zien zijn. Hoger is sneller. De stippellijn is het gemiddelde van je kilometers zonder stilstaan, {formatPace(bars.meanPace)} per km.
         {bars.bars.some((b) => b.off) ? ' Een amber stip: meer dan 5 procent van je gemiddelde af.' : ''}
       </p>
     </div>

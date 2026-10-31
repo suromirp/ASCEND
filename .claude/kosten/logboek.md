@@ -40,3 +40,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-31, Run in detail (3 stappen), Sherpa, opus (ontwikkelaar), 356k, 62 min, 0
 - 2026-10-31, Ochtendkaart vernieuwd, Sherpa, sonnet (ontwikkelaar), 178k, 32 min, 0
 - 2026-10-31, Review run in detail en ochtendkaart, Warden, opus (reviewer), 135k, 6 min, 0, 2 blokkerend
+- 2026-10-31, Herstel run en ochtend, Sherpa, sonnet (ontwikkelaar), 104k, 39 min, 1
