@@ -15,6 +15,7 @@ import type { DetailConditions } from '../models/activityDetail';
 import type { RunDetail, RunKm, RunLap } from '../models/runDetail';
 import { formatPace } from './aerobicTrend';
 import { LONG_RUN_SEC, NOISE, type NotAvailable } from './runMetrics';
+import { isNum } from '../utils/guards';
 
 // --- thresholds (the research, hoofdstuk 4 and 10) ------------------------------------------
 
@@ -54,7 +55,6 @@ export const HILLY_M_PER_KM = 10;
 export const WIND_MEAN_KMH = 25;
 export const WIND_GUST_KMH = 40;
 
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const pct = (a: number, b: number) => ((a - b) / b) * 100;
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 const secs = (n: number) => `${Math.round(n)} ${Math.round(n) === 1 ? 'seconde' : 'seconden'}`;

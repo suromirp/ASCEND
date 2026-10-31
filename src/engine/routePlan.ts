@@ -14,6 +14,7 @@ import { GR5_STAGES, HIGH_PASS_THRESHOLD_M, type Gr5Stage } from '../data/gr5Sta
 import { BIVOUAC_REGIMES, type BivouacRegime } from '../data/gr5Bivouac';
 import { addDays } from '../utils/dates';
 import { routeDayRows, type RouteDayRow } from './standing';
+import { isRecord } from '../utils/guards';
 
 // --- De dagen -----------------------------------------------------------------
 
@@ -233,7 +234,6 @@ export function sleepWarning(day: ItineraryDay, sleep: SleepKind | undefined): s
 
 // --- Opschonen (import en laden) ----------------------------------------------
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 // Een back-up kan met de hand bewerkt zijn of van een andere versie komen.
 // Alleen keuzes die bij een bestaande etappe horen en een bekende vorm

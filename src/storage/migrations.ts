@@ -42,6 +42,7 @@ import { AMOUNTS, MAX_LABEL_LENGTH, REASON_LABEL } from '../data/influenceReason
 import type { ExternalOneRm, OneRmReading, RecoveryMetric, WeightEntry } from '../models/metrics';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
 import type { BestEffort, ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
+import { isRecord } from '../utils/guards';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
 // activity). Nothing in a v1 file has to change for it.
@@ -97,7 +98,6 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
   // A tocht (`trek`, models/leave.ts) is optional and additive: a file from
   // before it has none. One whose details are damaged stays a plain trek
   // period (the walking days are still true); only the details are dropped.
-  const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
   const valid = raw.filter((p) => isLeavePeriod(p) || (isRecord(p) && isLeavePeriod({ ...p, trek: undefined })));
   // Damaged details are lost, so they are counted: you hear that they are gone.
   let lostDetails = 0;

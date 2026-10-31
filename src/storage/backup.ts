@@ -127,6 +127,7 @@ import { BackupMessageError } from './backupMessage';
 import { validCatchUp } from '../engine/catchUp';
 import { clearForgeSessions } from '../utils/forgeSessionStore';
 import { BREAK_ASK_OPTIONS } from '../engine/forgeSession';
+import { isRecord } from '../utils/guards';
 
 export interface BuildEnvelopeOptions {
   // Whether the full series travel along. Left out: the setting "Reeksen in back-up" decides
@@ -235,7 +236,6 @@ export function backupFileName(createdAt: string): string {
 // storage; anything incomplete is dropped and counted, never written —
 // one broken log used to crash the Today screen for good.
 const DATE_RE = /^\d{4}-\d{2}-\d{2}/;
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const hasId = (v: unknown): v is Record<string, unknown> & { id: string } => isRecord(v) && typeof v.id === 'string' && v.id.length > 0;
 const isDate = (v: unknown): boolean => typeof v === 'string' && DATE_RE.test(v);
 

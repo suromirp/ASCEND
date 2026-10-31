@@ -8,6 +8,7 @@
 
 import type { Exercise } from '../models/exercise';
 import { ADD_ON_LIMITS, DEFAULT_PROFILE, cleanAddOnOverride, cleanAddOns, cleanWeightRanges, poundRangeFor, rangeProblem, resolveStrengthSettings, weightsFromRange, withProfile, type GymProfile, type StrengthSettings, type WeightRange } from './strengthSettings';
+import { r2 } from '../utils/round';
 
 export { ADD_ON_LIMITS, cleanAddOnOverride, cleanAddOns, cleanWeightRanges, poundRangeFor, rangeProblem, weightsFromRange };
 export type { WeightRange };
@@ -17,7 +18,6 @@ export const MAX_GYM_PROFILES = 5;
 // Een los tussengewicht (plaatje, magneet) dat je bij elk gewicht van het blok optelt.
 const PROFILE_NAME_MAX = 40;
 
-const r2 = (n: number) => Math.round(n * 100) / 100;
 
 // Heeft dit een gewichtstapel of kabel waarvan je de gewichten kunt invullen?
 export const hasStack = (exercise: Exercise | undefined): boolean => exercise?.resistance === 'cable' || exercise?.resistance === 'machine_stack';

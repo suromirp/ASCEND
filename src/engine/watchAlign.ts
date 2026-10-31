@@ -28,6 +28,7 @@ import { isIndoorLog } from './sports';
 import { durationLabel, isHandLog, pairWithManualLogs, sourceNumbers, type ExternalActivity } from './activityImport';
 import { addDays } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
+import { round as roundTo } from '../utils/round';
 
 // How far back the one-time fetch for matching old trainings looks at most,
 // and how recent a log must be for the automatic route.
@@ -45,10 +46,6 @@ export const MEASURED_FIELDS: MeasuredField[] = ['durationMinutes', 'distanceKm'
 // they are, so a line never reads "6,9 km wordt 6,9 km".
 const DECIMALS: Partial<Record<MeasuredField, number>> = { distanceKm: 1 };
 
-const roundTo = (n: number, decimals: number) => {
-  const f = 10 ** decimals;
-  return Math.round(n * f) / f;
-};
 
 function sameAtShownPrecision(field: MeasuredField, a: number, b: number): boolean {
   const decimals = DECIMALS[field] ?? 0;

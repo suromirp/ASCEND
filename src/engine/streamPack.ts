@@ -24,6 +24,7 @@ import type {
   StoredSeries,
   StreamKindStored,
 } from '../models/activityStreams';
+import { isNum } from '../utils/guards';
 
 interface PackSpec {
   kind: StreamKindStored;
@@ -65,7 +66,6 @@ const GAP: Record<PackType, number> = { u8: U8_GAP, u16: U16_GAP, i16: I16_GAP, 
 const MAX_RAW: Record<PackType, number> = { u8: 254, u16: 65534, i16: 32767, u32: 0xfffffffe, f32: Number.POSITIVE_INFINITY };
 const MIN_RAW: Record<PackType, number> = { u8: 0, u16: 0, i16: -32767, u32: 0, f32: Number.NEGATIVE_INFINITY };
 
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 function arrayFor(type: PackType, length: number): Uint8Array | Uint16Array | Int16Array | Uint32Array | Float32Array {
   switch (type) {

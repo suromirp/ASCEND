@@ -32,8 +32,8 @@ import {
   type Pacing,
   type PlayedContext,
 } from './runDetailRules';
+import { isNum } from '../utils/guards';
 
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const pct = (a: number, b: number) => ((a - b) / b) * 100;
 const nl = (n: number, decimals = 1) => {

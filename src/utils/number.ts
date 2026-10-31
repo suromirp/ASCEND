@@ -7,6 +7,8 @@
 // thousands, a comma separates decimals. Exports/backups stay plain JSON
 // numbers — this file is only about what a person sees and types.
 
+import { round as roundTo } from './round';
+
 export interface ParsedNumber {
   value: number | undefined;
   // Set when the text was readable but not in the Dutch convention — e.g.
@@ -95,9 +97,4 @@ export function formatNumberNL(value: number, maxDecimals = 1): string {
 function groupThousands(digits: string): string {
   const trimmed = digits.replace(/^0+(?=\d)/, '');
   return trimmed.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
-
-function roundTo(value: number, decimals: number): number {
-  const f = 10 ** decimals;
-  return Math.round(value * f) / f;
 }

@@ -39,6 +39,7 @@ import { fromIntervals } from './logSource';
 import { isIndoorLog } from './sports';
 import { undoTrim } from './trimLog';
 import { blockKeyOf, MEASURED_FIELDS } from './watchAlign';
+import { round as roundTo } from '../utils/round';
 
 type Block = CardioMetric | OutdoorMetric;
 
@@ -48,10 +49,6 @@ const ELEVATION: SourceField[] = ['elevationGainM', 'elevationLossM'];
 
 // Equal at the precision the user sees: 6,9 and 6,93 km stay as they are.
 const DECIMALS: Partial<Record<SourceField, number>> = { distanceKm: 1 };
-const roundTo = (n: number, decimals: number) => {
-  const f = 10 ** decimals;
-  return Math.round(n * f) / f;
-};
 const same = (field: SourceField, a: number, b: number) => roundTo(a, DECIMALS[field] ?? 0) === roundTo(b, DECIMALS[field] ?? 0);
 
 function readField(log: SessionLog, field: SourceField): number | undefined {

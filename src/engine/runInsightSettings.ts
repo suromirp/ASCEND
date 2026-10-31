@@ -1,3 +1,4 @@
+import { isRecord } from '../utils/guards';
 // ASCEND: wat je zelf instelt bij "Loopinzicht" (Meer, Overzichten en vragen).
 //
 // Besluit: docs/beslissingen/2026-10-22-loopinzicht.md. Elke waarde is
@@ -71,7 +72,6 @@ export const DEFAULT_RUN_INSIGHT: ResolvedRunInsight = {
   detail: DEFAULT_RUN_DETAIL_SCREEN,
 };
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 // Leest defensief: een back-up kan van een oudere of beschadigde versie zijn.
 export function resolveRunInsight(raw: RunInsightSettings | undefined | null): ResolvedRunInsight {
