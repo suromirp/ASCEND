@@ -12,6 +12,7 @@ import type { Exercise } from '../models/exercise';
 import { dumbbellWeights } from './gymProfileEdit';
 import { addOnsFor, blockPredicate, hasStack, ownWeightsFor, splitAddOn, withAddOnWeights } from './machineWeights';
 import type { DumbbellLog, DumbbellRack, GymProfile, StackWeights } from './strengthSettings';
+import { r2, r1 } from '../utils/round';
 
 export interface Candidate {
   // The weight as it is logged: on the bar, in the hand, on the stack, the help
@@ -37,7 +38,6 @@ export interface WeightContext {
   dumbbellTotal?: boolean;
 }
 
-const r2 = (n: number) => Math.round(n * 100) / 100;
 
 // --- the sums of plates -------------------------------------------------------------
 
@@ -92,7 +92,6 @@ export function barFor(profile: GymProfile, lastExternalKg?: number): number {
 const LEARNED_CEILING_KG = 400;
 const KG_PER_POUND = 0.45359237;
 
-const r1 = (n: number) => Math.round(n * 10) / 10;
 const hasOneDecimalAtMost = (n: number) => Math.abs(n * 10 - Math.round(n * 10)) < 1e-6;
 
 // A weight that looks like pounds converted to kilos (90 lb is 40,82 kg): it is

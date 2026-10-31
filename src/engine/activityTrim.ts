@@ -21,14 +21,11 @@ import type { StreamSet } from '../models/activityDetail';
 import type { TrimField } from '../models/training';
 import { ALTITUDE_DEAD_BAND_M, HEART_RATE_GAP_SEC, PAUSE_JUMP_SEC, STILL_SPEED_MS, deadBand, fillGaps } from './activityDetail';
 import type { Sport } from './sports';
+import { isNum } from '../utils/guards';
+import { round } from '../utils/round';
 
 export type TrimSport = Sport;
 
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-const round = (n: number, decimals = 0) => {
-  const f = 10 ** decimals;
-  return Math.round(n * f) / f;
-};
 
 // --- thresholds of the suggestion (a number to adjust in one place) ----------------
 

@@ -7,6 +7,7 @@
 
 import { DEFAULT_PACK_ITEMS, PACK_GROUPS, type PackGroup, type PackItem } from '../data/packList';
 import { formatNumberNL } from '../utils/number';
+import { isRecord } from '../utils/guards';
 
 // What is stored (AppSettings.packList). Absent means: the example list.
 // `v` is the shape's own version, for a later migration.
@@ -96,7 +97,6 @@ export function removeItem(items: PackItem[], id: string): PackItem[] {
 
 // --- reading what is stored ---------------------------------------------------------
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 // A backup can be old, hand-edited or cut off. Keeps the items that have a
 // name and a sensible weight and counts the rest. An unknown group falls

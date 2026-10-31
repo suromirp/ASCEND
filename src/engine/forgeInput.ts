@@ -25,8 +25,8 @@ import type { GymProfile } from './strengthSettings';
 import { isLightWeight } from './strengthModel';
 import { barFor, candidatesFor, nearestIndex, stepFor } from './strengthWeights';
 import { isOwnRow } from './forgeRows';
+import { r2 } from '../utils/round';
 
-const r2 = (n: number) => Math.round(n * 100) / 100;
 
 // --- steps ---------------------------------------------------------------------------------
 

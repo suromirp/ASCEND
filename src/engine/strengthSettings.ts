@@ -11,6 +11,7 @@
 // come later without changing what is stored.
 
 import { normalizeStrengthProgram, type StoredStrengthProgram } from './strengthProgramStore';
+import { isRecord, isNum } from '../utils/guards';
 
 export type ProgressionFirst = 'weight_first' | 'reps_first';
 export type WorkSetsMode = 'descending' | 'equal';
@@ -294,8 +295,6 @@ export const DEFAULT_PROFILE: GymProfile = {
   stackStepKg: 5,
 };
 
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function weightList(raw: unknown, min: number, max: number, maxCount: number): number[] | undefined {
   if (!Array.isArray(raw)) return undefined;

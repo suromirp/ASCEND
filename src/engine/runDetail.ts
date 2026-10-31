@@ -19,8 +19,8 @@ import type { StoredLap } from '../models/activityStreams';
 import type { RunDetail, RunKm, RunLap, RunLine } from '../models/runDetail';
 import { deadBand, fillGaps, ALTITUDE_DEAD_BAND_M } from './activityDetail';
 import { MAX_GAP_SEC, effortFingerprint, fastestWindow } from './bestEffort';
+import { isNum } from '../utils/guards';
 
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const round = (n: number, decimals: number): number => {
   const f = 10 ** decimals;
   // + 0 turns a minus zero into a zero (it would not survive a file anyway).

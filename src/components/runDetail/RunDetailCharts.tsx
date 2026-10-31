@@ -12,9 +12,9 @@ import { hrZoneOf } from '../../engine/runDetailView';
 import { formatPace } from '../../engine/aerobicTrend';
 import { formatNumberNL } from '../../utils/number';
 import { EFFORT_COLOR } from '../effortColor';
+import { isNum } from '../../utils/guards';
 
 const W = 320;
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 // The place of a tap as a fraction of the width.
 function tapFraction(e: PointerEvent<HTMLElement>): number {

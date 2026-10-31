@@ -20,6 +20,7 @@ import type { MetricSource, PlannedSession, SessionLog, SessionTemplate, SourceN
 import { logSport, templateSport, type Sport } from './sports';
 import { formatNumberNL } from '../utils/number';
 import type { RunDynamics, StreamKind } from '../models/activityDetail';
+import { round } from '../utils/round';
 
 export type ExternalActivityKind = 'run' | 'hike' | 'ride' | 'strength' | 'other';
 
@@ -220,10 +221,6 @@ export function sourceNumbers(activity: ExternalActivity): SourceNumbers {
 // A SessionLog without its id: the app gives that out when it stores it.
 export type SessionLogDraft = Omit<SessionLog, 'id'>;
 
-const round = (n: number, decimals = 0) => {
-  const f = 10 ** decimals;
-  return Math.round(n * f) / f;
-};
 
 function clean<T extends object>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;

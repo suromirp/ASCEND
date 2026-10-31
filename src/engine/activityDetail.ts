@@ -21,6 +21,8 @@
 
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, StreamSet, TerrainStretch } from '../models/activityDetail';
 import type { MetricSource } from '../models/training';
+import { isNum } from '../utils/guards';
+import { round } from '../utils/round';
 
 export const SLICE_COUNT = 48;
 export const PAUSE_JUMP_SEC = 10;
@@ -45,11 +47,6 @@ export interface BuildOptions {
 
 type Series = (number | null)[] | undefined;
 
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-const round = (n: number, decimals = 0) => {
-  const f = 10 ** decimals;
-  return Math.round(n * f) / f;
-};
 
 // Fills the holes of a series that last at most `maxGapSec` by a straight line
 // between the readings on both sides; a longer hole stays null. A hole at the

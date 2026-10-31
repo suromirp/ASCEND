@@ -17,6 +17,7 @@ import type { SweatEntry } from '../models/sweat';
 import { weighedCount, weighedDate } from './sweat';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { normalizeBoots, type BootBreakInStatus, type BootsState } from './bootBreakIn';
+import { isRecord } from '../utils/guards';
 
 // What is stored (AppSettings.journey). `v` is the shape's own version, so
 // a later change can migrate it without touching the backup schema.
@@ -201,7 +202,6 @@ export function journeyProgress(tasks: JourneyTask[], state: JourneyState | unde
 // --- reading what is stored ------------------------------------------------------------
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 // A backup can be old, hand-edited or cut off. Keeps what is readable and
 // counts what is not. Unknown task ids are kept: a later version of the app

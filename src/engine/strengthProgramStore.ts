@@ -9,6 +9,7 @@
 // changes a log or the planning, and the gym name of the file is never kept.
 
 import type { SetTarget } from '../models/training';
+import { isRecord, isNum } from '../utils/guards';
 
 export interface ProgramExercise {
   name: string;
@@ -36,8 +37,6 @@ export interface StoredStrengthProgram {
 
 export const PROGRAM_LIMITS = { cycles: 26, days: 7, exercises: 15, sets: 10, name: 80, note: 200 };
 
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isIsoDate = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 const text = (v: unknown, max: number): string | undefined => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, max) : undefined);
 

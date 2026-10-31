@@ -6,8 +6,8 @@
 // always what gets stored.
 
 import type { DumbbellRack } from './strengthSettings';
+import { r2 } from '../utils/round';
 
-const r2 = (n: number) => Math.round(n * 100) / 100;
 
 export const COMMON_BARS_KG = [20, 15, 10, 7.5];
 export const COMMON_PLATES_KG = [0.5, 1.25, 2.5, 5, 10, 15, 20, 25];

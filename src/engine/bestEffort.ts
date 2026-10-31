@@ -10,6 +10,7 @@
 
 import type { StreamSet } from '../models/activityDetail';
 import type { BestEffort } from '../models/training';
+import { isNum } from '../utils/guards';
 
 // A hole in the series longer than this (seconds between two readings) cannot be
 // bridged: a window that contains one says nothing about the pace.
@@ -18,7 +19,6 @@ export const MAX_GAP_SEC = 20;
 // before it is not trusted (a treadmill, a wrong calibration).
 export const DISTANCE_AGREEMENT = 0.1;
 
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 interface Point {
   t: number;
