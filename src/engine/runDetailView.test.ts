@@ -22,6 +22,7 @@ import {
   recurringFastStart,
   runAdvice,
   runDetailRowLine,
+  runTotalsOf,
   runKindOf,
   runPatterns,
   runVerdict,
@@ -366,6 +367,30 @@ describe('notes and lines', () => {
 
   it('writes the line of the row on the log sheet', () => {
     expect(runDetailRowLine(even(6))).toBe('6,00 km in 5:30 per km');
+  });
+});
+
+describe('the totals of the log', () => {
+  // The detail says 6,00 km in 33:00 moving; the log says 6,03 km in 36 minutes.
+  const rd = even(6);
+  const log = { id: 'l1', durationMinutes: 36, cardioData: { durationMinutes: 36, distanceKm: 6.03 } } as unknown as SessionLog;
+
+  it('follow the log, not the moving time of the detail', () => {
+    const t = runTotalsOf(log, rd);
+    expect(t).toEqual({ km: 6.03, sec: 2160 });
+    expect(t.sec / t.km).toBeCloseTo(358.2, 1);
+  });
+
+  it('give a pace that matches time over distance in the header', () => {
+    const t = runTotalsOf(log, rd);
+    const pace = headlineStats(rd, 'other', t)[0];
+    expect(pace.value).toBe('5:58');
+    expect(runDetailRowLine(rd, t)).toBe('6,03 km in 5:58 per km');
+  });
+
+  it('fall back to the detail when the log has no distance', () => {
+    const bare = { id: 'l2', durationMinutes: 0 } as unknown as SessionLog;
+    expect(runTotalsOf(bare, rd)).toEqual({ km: 6, sec: rd.movingSec });
   });
 });
 

@@ -24,6 +24,7 @@ import {
   runAdvice,
   runPatterns,
   headlineStats,
+  runTotalsOf,
   heartNote,
   kmBetween,
   kmChips,
@@ -101,11 +102,12 @@ export function RunDetailScreen({ logId, templateName, onClose }: { logId: strin
 function HeaderLine({ log }: { log: SessionLog }) {
   const d = log.cardioData ?? log.outdoorData;
   const rd = log.runDetail;
-  const km = rd ? rd.totalM / 1000 : d?.distanceKm;
+  const totals = rd ? runTotalsOf(log, rd) : undefined;
+  const km = totals ? totals.km : d?.distanceKm;
   const parts = [
     formatDateNL(log.completedDate),
     km !== undefined ? `${formatNumberNL(km, 2)} km` : undefined,
-    rd ? clock(rd.movingSec) : `${log.durationMinutes} min`,
+    totals ? clock(totals.sec) : `${log.durationMinutes} min`,
     isIndoorLog(log) ? 'Loopband' : undefined,
   ].filter(Boolean);
   return <p className="mt-0.5 font-sans text-sm tabular-nums" style={dim}>{parts.join(' · ')}</p>;
@@ -130,7 +132,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   const askTop = tstate?.standing === 'pending' || tstate?.standing === 'held';
 
   const verdict = useMemo(() => (rd ? runVerdict(rd, kind) : undefined), [rd, kind]);
-  const stats = useMemo(() => (rd ? headlineStats(rd, kind) : []), [rd, kind]);
+  const stats = useMemo(() => (rd ? headlineStats(rd, kind, runTotalsOf(log, rd)) : []), [rd, kind, log]);
   const bars = useMemo(() => (rd ? paceBars(rd, kind) : undefined), [rd, kind]);
   const layout = useMemo(() => (rd && isTest ? testLayout(rd) : undefined), [rd, isTest]);
   const laps = rd ? lapsForList(rd) : [];

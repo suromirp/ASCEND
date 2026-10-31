@@ -31,6 +31,7 @@ import { useScrollToAdvice } from './motion';
 
 const SAVE_LIMIT_MS = 8000;
 const SAVE_FAILED = 'Opslaan lukte niet. Probeer het nog eens.';
+const UNDO_FAILED = 'Ongedaan maken lukte niet. Probeer het nog eens.';
 const FOLD_MS = 6000;
 const FOLD_PROPOSAL_MS = 12000;
 
@@ -69,6 +70,7 @@ export function MorningCard() {
   const [state, dispatch] = useReducer(cardReducer, { answered: false, folded: false });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [undoError, setUndoError] = useState(false);
   const [held, setHeld] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [bodyHeight, setBodyHeight] = useState(0);
@@ -104,9 +106,20 @@ export function MorningCard() {
     markMorningAnswered(today);
     dispatch({ type: 'answered' });
   };
-  const undo = () => {
-    dispatch({ type: 'reset' });
-    void updateSettings({ morningCheckIns: (settings.morningCheckIns ?? []).filter((c) => c.date !== today) });
+  // Ongedaan maken wacht op het opslaan, met dezelfde grens in tijd; mislukt het, dan blijft
+  // je antwoord staan en zegt de kaart het.
+  const undo = async () => {
+    if (saving) return;
+    setSaving(true);
+    setUndoError(false);
+    try {
+      await withTimeout(updateSettings({ morningCheckIns: (settings.morningCheckIns ?? []).filter((c) => c.date !== today) }), SAVE_LIMIT_MS, 'Ongedaan maken');
+      dispatch({ type: 'reset' });
+    } catch {
+      setUndoError(true);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Wat het antwoord voor vandaag doet: dezelfde regels als het blad en Vandaag.
@@ -154,16 +167,26 @@ export function MorningCard() {
   if (phase === 'klein' && answered && consequence) {
     return (
       <>
-        <Card className="mx-fold flex flex-wrap items-center gap-x-2 gap-y-0 py-2">
-          <div className="flex min-w-[10rem] flex-1 items-center gap-2" title={consequence.summary} aria-label={consequence.summary}>
+        <Card className="mx-fold flex flex-col gap-0 py-2">
+          <div className="flex items-center gap-2" title={consequence.summary} aria-label={consequence.summary}>
             <span className="shrink-0" style={{ color: 'var(--color-progress)' }}><Icon name="vinkje" size={20} /></span>
-            <p className="line-clamp-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{consequence.summary}</p>
+            {hasProposal ? (
+              <button
+                type="button"
+                onClick={() => consequence.adviceId && scrollToAdvice(consequence.adviceId)}
+                className="min-h-[44px] min-w-0 flex-1 text-left active:opacity-70"
+              >
+                <span className="line-clamp-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{consequence.summary}</span>
+              </button>
+            ) : (
+              <p className="line-clamp-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{consequence.summary}</p>
+            )}
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-x-3">
-            {hasProposal && <TextButton onClick={() => consequence.adviceId && scrollToAdvice(consequence.adviceId)}>Bekijk voorstel</TextButton>}
+          <div className="flex flex-nowrap items-center justify-end gap-x-3">
             <TextButton onClick={() => setSheet({})}>Wijzigen</TextButton>
-            <TextButton tone="dim" onClick={undo}>Ongedaan maken</TextButton>
+            <TextButton tone="dim" disabled={saving} onClick={() => void undo()}>Ongedaan maken</TextButton>
           </div>
+          {undoError && <p className="pb-1 text-xs leading-snug" role="alert" style={{ color: 'var(--color-warning)' }}>{UNDO_FAILED}</p>}
         </Card>
         {sheetEl}
       </>
@@ -179,6 +202,7 @@ export function MorningCard() {
           onPointerDown={() => setHeld(true)}
           onPointerUp={() => setHeld(false)}
           onPointerCancel={() => setHeld(false)}
+          onPointerLeave={() => setHeld(false)}
           onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) dispatch({ type: 'fold' }); }}
         >
           <div className="mx-swap flex flex-col gap-3" style={{ minHeight: bodyHeight > 0 ? Math.max(0, bodyHeight - 34) : undefined }} role="status">
@@ -195,8 +219,9 @@ export function MorningCard() {
               </div>
             )}
             <div className="mt-auto flex justify-end">
-              <TextButton tone="dim" onClick={undo}>Ongedaan maken</TextButton>
+              <TextButton tone="dim" disabled={saving} onClick={() => void undo()}>Ongedaan maken</TextButton>
             </div>
+            {undoError && <p className="text-xs leading-snug" role="alert" style={{ color: 'var(--color-warning)' }}>{UNDO_FAILED}</p>}
           </div>
         </Card>
         {sheetEl}
@@ -206,8 +231,8 @@ export function MorningCard() {
 
   return (
     <>
-      <Card className="flex flex-col gap-4">
-        <div ref={bodyRef} className="flex flex-col gap-4">
+      <Card className="flex flex-col gap-3">
+        <div ref={bodyRef} className="flex flex-col gap-3">
           <Header heading={heading} />
           <p className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>Hoe voelen je benen?</p>
           {(stats.length > 0 || line || linked) && (
@@ -239,13 +264,12 @@ export function MorningCard() {
                 <Icon name="vinkje" size={18} />
                 Klopt: {suggestedText.toLowerCase()}
               </SecondaryButton>
-              <p className="mt-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Voorstel {SOURCE_TEXT[suggested.from]}</p>
+              <p className="mt-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Voorstel {SOURCE_TEXT[suggested.from]}. Of kies zelf:</p>
               {spot && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Eerst nog één vraag over je {spot.area.toLowerCase()}.</p>}
             </div>
           )}
           <div>
-            {suggested && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Of kies zelf</p>}
-            <div className={`${suggested ? 'mt-1.5 ' : ''}flex flex-wrap gap-2`}>
+            <div className="flex flex-wrap gap-2">
               {LEGS.filter(([k]) => k !== suggested?.value).map(([k, text]) => (
                 <MorningChoice key={k} disabled={saving} onClick={() => void answer(k)}>{text}</MorningChoice>
               ))}

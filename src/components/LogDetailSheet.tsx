@@ -36,7 +36,7 @@ import { entryForLog, isNoted } from '../engine/influence';
 import { SweatSheet } from './SweatSheet';
 import { entryResultLine, isSweatLog } from '../engine/sweat';
 import { RunDetailScreen } from './runDetail/RunDetailScreen';
-import { runDetailRowLine } from '../engine/runDetailView';
+import { runDetailRowLine, runTotalsOf } from '../engine/runDetailView';
 import { resolveRunInsight } from '../engine/runInsightSettings';
 import { logSport } from '../engine/sports';
 import { useDetailsOn } from './useRunInsight';
@@ -217,7 +217,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
           {showRunDetail && (
             <div className="mt-3">
               <SheetRows label="Run in detail">
-                <SheetRow title="Run in detail" sub={log.runDetail ? runDetailRowLine(log.runDetail) : 'Kilometer na kilometer, van je horloge'} onClick={() => setDetailOpen(true)} />
+                <SheetRow title="Run in detail" sub={log.runDetail ? runDetailRowLine(log.runDetail, runTotalsOf(log, log.runDetail)) : 'Kilometer na kilometer, van je horloge'} onClick={() => setDetailOpen(true)} />
               </SheetRows>
             </div>
           )}

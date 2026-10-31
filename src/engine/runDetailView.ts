@@ -11,6 +11,7 @@
 import type { RunDetail, RunKm, RunLap } from '../models/runDetail';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { formatPace } from './aerobicTrend';
+import { testTotals } from './racePrediction';
 import { idHasRole, idIsTestOrRace } from './templateRoles';
 import { NOISE, isUnavailable } from './runMetrics';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
@@ -242,9 +243,10 @@ function splitNote(h: Halves, inBest: boolean): string {
 
 // Always three, never more: the pace (or the best 5 km of a test), the spread and the heart
 // rate; what is not there makes room for the next fact.
-export function headlineStats(rd: RunDetail, kind: RunKind): HeadStat[] {
+export function headlineStats(rd: RunDetail, kind: RunKind, totals?: RunTotals): HeadStat[] {
   const out: HeadStat[] = [];
-  const pace = rd.totalM > 0 ? (rd.movingSec / rd.totalM) * 1000 : undefined;
+  const t = totals ?? { km: rd.totalM / 1000, sec: rd.movingSec };
+  const pace = t.km > 0 ? t.sec / t.km : undefined;
   const test = kind === 'test' && rd.bestFive;
   if (test && rd.bestFive) {
     out.push({ key: 'best', label: 'Beste 5 km', value: clock(rd.bestFive.sec), note: `${formatPace(rd.bestFive.sec / 5)} per km, aaneengesloten` });
@@ -887,9 +889,20 @@ export function sourceLine(coveragePct: number | undefined): string {
 }
 
 // The line on the log sheet that opens the screen: "12,00 km in 5:48 per km".
-export function runDetailRowLine(rd: RunDetail): string {
-  const pace = rd.totalM > 0 ? (rd.movingSec / rd.totalM) * 1000 : 0;
-  return `${distanceLabel(rd.totalM)} in ${formatPace(pace)} per km`;
+export function runDetailRowLine(rd: RunDetail, totals?: RunTotals): string {
+  const t = totals ?? { km: rd.totalM / 1000, sec: rd.movingSec };
+  const pace = t.km > 0 ? t.sec / t.km : 0;
+  return `${distanceLabel(t.km * 1000)} in ${formatPace(pace)} per km`;
+}
+
+// Distance and time as the log has them (the same totals as the line "Hele run: ... in ..." of a
+// test), so the header, the pace and that line agree. Without a distance on the log the detail's
+// own distance and moving time stand in.
+export interface RunTotals { km: number; sec: number }
+export function runTotalsOf(log: SessionLog, rd: RunDetail): RunTotals {
+  const { km, minutes } = testTotals(log);
+  if (km > 0 && minutes > 0) return { km, sec: minutes * 60 };
+  return { km: rd.totalM / 1000, sec: rd.movingSec };
 }
 
 // --- heart rate zones for the strip under the heart rate line (4.5) ---------------------------------
