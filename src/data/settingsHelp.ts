@@ -482,6 +482,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je route', text: 'wordt nooit bewaard. Alleen de richting per kilometer telt, voor de wind, en die blijft als getal staan.' },
     ],
   },
+  horlogeStil: {
+    title: 'Melden als je horloge stilvalt',
+    lead: 'Garmin scherpte in oktober 2026 zijn voorwaarden aan. Als intervals.icu daardoor niets meer doorgeeft, zie je dat niet aan een foutmelding: het ophalen lukt, er komt alleen niets mee.',
+    points: [
+      { head: 'Wanneer', text: 'als er drie dagen geen ochtendgetallen binnenkomen, of geen training terwijl je er wel een invulde, en de koppeling zelf werkt.' },
+      { head: 'Waar', text: 'één rustige zin op Vandaag. Een tik opent de koppeling, Begrepen verbergt hem tot het opnieuw gebeurt.' },
+      { head: 'Wat je kunt doen', text: 'kijk of je horloge nog synchroniseert met Garmin Connect, en of intervals.icu je activiteiten nog toont. Je back-up houdt wat er al is.' },
+    ],
+  },
   ochtendBackup: {
     title: 'Ochtendgetallen in back-up',
     lead: 'Je slaap, rusthartslag en HRV komen van intervals.icu. Als die ze later niet meer geeft, is je telefoon het enige exemplaar. Daarom gaan ze standaard mee in je back-up.',

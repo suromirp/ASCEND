@@ -730,6 +730,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return f.storage === 'unsupported' ? { value: 'Niet mogelijk', dim: true } : {};
     case 'momentopnamen':
       return { value: String(f.snapshots), dim: f.snapshots === 0 };
+    case 'horloge-stil':
+      return { checked: s.watchSilence !== false };
     case 'ochtend-backup':
       return { checked: s.morningInBackup !== false, sub: s.morningInBackup !== false ? 'Ook je slaap en hartslag gaan mee' : undefined };
     case 'reeksen-bewaren':

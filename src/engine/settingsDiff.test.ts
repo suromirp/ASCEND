@@ -82,6 +82,7 @@ const everything: AppSettings = {
   stravaText: false,
   keepStreams: false,
   morningInBackup: false,
+  watchSilence: false,
   streamsInBackup: false,
   proposalTidyMonths: 12,
 };

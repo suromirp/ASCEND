@@ -22,6 +22,7 @@ import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
 import { WeightReminder } from '../components/WeightCard';
 import { WatchActivityCard } from '../components/WatchActivityCard';
 import { WatchAlignCard } from '../components/WatchAlignCard';
+import { SourceSilenceLine } from '../components/SourceSilenceLine';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { DailyStretchCard } from '../components/DailyStretchCard';
@@ -349,6 +350,8 @@ function TodayContent() {
       {/* Direct onder de missie: wat bevestigd moet worden. */}
       <WatchActivityCard />
       <WatchAlignCard />
+      {/* Komt er van je horloge niets meer binnen terwijl de koppeling werkt: één rustige zin. */}
+      <SourceSilenceLine />
 
       <NextTrekLine onlyWhenOn />
 

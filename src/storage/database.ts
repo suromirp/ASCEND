@@ -762,6 +762,9 @@ export interface AppSettings {
   // sleep duration and sleep score of each morning travel in the backup (payload.mornings).
   // Absent = on. Optional and additive; checked on import like the other switches (storage/backup.ts).
   morningInBackup?: boolean;
+  // "Melden als je horloge stilvalt" (engine/sourceWatch.ts): one quiet line on Vandaag when
+  // nothing comes in from the watch for three days while the link works. Absent = on.
+  watchSilence?: boolean;
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
   proposalTidyMonths?: 0 | 3 | 6 | 12;
