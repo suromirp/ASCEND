@@ -6,9 +6,9 @@ Bijgewerkt op 31 oktober 2026.
 
 ## Loopt nu
 
-- Onderhoud punt 2 en 3 (zie hieronder).
+- Niets. Alles uit "Kan nu" is af of staat hieronder als vervolg.
 
-Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10.
+Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10, onderhoud punt 2 en 3.
 
 ## Kan nu, na wat loopt
 
@@ -18,7 +18,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
   - voeding naast gewicht en kracht uit de Food Log van MacroFactor (kans E), eerst een besluit van de eigenaar;
   - een persoonlijke tempocurve tussen twee testen in (kans F), als controle naast de test.
 - Kansen, klein werk dat nog over is: de regel over wennen aan warmte in de laatste weken voor een zomertocht (tweede helft van kans D), bergweer op de hoogte van je tocht (kans I), en een voorstel met Akkoord bij een zware sessie op een ochtend waar twee van de drie afwijken (de rest van kans C, na de ochtendkaart). De bestandsroute voor FIT-bestanden als vangnet (stap 0c van het onderzoek) is later.
-- Onderhoud punt 2 en 3 uit `docs/onderhoud/2026-10-29.md`: `--color-stone` vervangen, dubbele hulpfuncties samenvoegen, datumfuncties in UTC nalopen. Als laatste, omdat het veel bestanden raakt.
+- Onderhoud, latere ronde: kg-opmaak, minuten- en uurlabels, korte datum en `pad` samenbrengen (`docs/onderhoud/2026-10-31.md`).
 - Vier tekstpunten uit eerdere Lookout-rondes die zonder screenshot niet terug te vinden waren. Wachten op een screenshot van de eigenaar.
 
 - Ochtenden in de back-up, klein (review 31 oktober): bij het uitzetten van "Ochtendgetallen in back-up" zonder koppeling de bewaarde ochtenden opruimen; `retire` slaat records over die al alleen de back-upvelden hebben; een kort besluit dat de cache een archief is dat ontkoppelen overleeft.
