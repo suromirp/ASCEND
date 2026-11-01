@@ -58,11 +58,14 @@ describe('REST-BACK: de rustdag komt terug als een voorstel hem weghaalde', () =
     const a = restBack({ plannedSessions: sessions, respondedIds: new Set(['retest:2026-10-27']) })!;
     expect(a).toBeDefined();
     expect(a.id).toBe('restback:walk');
-    expect(a.title).toBe('Je rustdag op maandag is weer vrij');
-    expect(a.lead).toBe('Zet hem terug? Dan staat hij weer op maandag 2 november.');
+    // Titel en item noemen dezelfde rij: de naam van wat terugkomt.
+    expect(a.title).toBe('Je herstelwandeling op maandag kan terug');
+    expect(a.lead).toBe('Maandag 2 november staat weer leeg. Zet je hem terug?');
     expect(a.effect.startsWith('Met Akkoord')).toBe(true);
-    expect(a.effect).not.toContain('Zet hem terug?');
-    expect(a.effect).toContain('Met Akkoord staat Herstel weer op maandag 2 november, zoals je week hem had.');
+    expect(a.effect).toContain('Met Akkoord staat de herstelwandeling weer op maandag 2 november, zoals je week hem had.');
+    expect(a.proposal!.issue).toBe(a.title);
+    expect(a.proposal!.changes[0].reason).toContain('herstelwandeling');
+    expect(`${a.title}${a.lead}${a.effect}${a.proposal!.consequences}${a.proposal!.changes[0].reason}`).not.toMatch(/rustdag/i);
     expect(a.effect).toContain('Liever niet');
     expect(`${a.title}${a.effect}${a.why}${a.brief}`).not.toMatch(/[\u2013\u2014]/);
     // Eén item: de overgeslagen rij zelf komt terug, geen tweede rij ernaast.
@@ -137,6 +140,84 @@ describe('REST-BACK: de rustdag komt terug als een voorstel hem weghaalde', () =
     const sessions = moveAway(afterRetry(), 'long', '2026-11-04');
     const logged: SessionLog = { ...testLog, id: 'log-h', templateId: 'tpl_herstel', type: 'recovery', plannedSessionId: 'walk', completedDate: '2026-11-02', completedAt: '2026-11-02T10:00:00Z', bestEffort: undefined } as SessionLog;
     expect(restDaysToBringBack({ plannedSessions: sessions, logs: [logged], templates, today: '2026-10-28', restDay: 1 })).toEqual([]);
+  });
+});
+
+// Nagemaakt, de vorm uit de melding van 1 november: twee gedane trainingen in de week, zaterdag en zondag
+// zelf overgeslagen (Benen A, de herhaalde testloop en Bovenlichaam B), maandag vrij na TEST-RETRY.
+describe('REST-BACK: geen rustdag terug na twee dagen rust', () => {
+  const done = (id: string, templateId: string, type: SessionLog['type'], date: string, plannedSessionId?: string): SessionLog => ({ ...testLog, id, templateId, type, plannedSessionId, completedDate: date, completedAt: `${date}T10:00:00Z`, bestEffort: undefined } as SessionLog);
+  const restWeekend = (): PlannedSession[] => [
+    planned('upA', 'tpl_upper_a', '2026-10-28', '2026-10-26'),
+    { ...planned('legs', 'tpl_lower_a', '2026-10-31', '2026-10-26'), status: 'skipped', lock: lockUser },
+    { ...planned('retest', 'tpl_test_run', '2026-11-01', '2026-10-26'), status: 'skipped', lock: lockUser, movedFromDate: '2026-10-31' },
+    { ...planned('upB', 'tpl_upper_b', '2026-11-01', '2026-10-26'), status: 'skipped', lock: lockUser },
+    { ...planned('walk', 'tpl_herstel', '2026-11-02', '2026-11-02'), status: 'skipped', lock: lockProposal },
+    planned('upA2', 'tpl_upper_a', '2026-11-03', '2026-11-02'),
+    planned('long', 'tpl_long_run', '2026-11-08', '2026-11-02'),
+  ];
+  const twoDone = [testLog, done('log-upA', 'tpl_upper_a', 'strength', '2026-10-28', 'upA')];
+  const at = (over: Partial<AdviceInputs> = {}) => computeAdvice(inputs({ plannedSessions: restWeekend(), logs: twoDone, asOf: '2026-11-01', respondedIds: new Set(['retest:2026-10-27']), ...over }));
+
+  it('geeft geen REST-BACK na een weekend zonder training', () => {
+    expect(at().find((a) => a.ruleId === REST_BACK_RULE)).toBeUndefined();
+    expect(restDaysToBringBack({ plannedSessions: restWeekend(), logs: twoDone, templates, today: '2026-11-01', restDay: 1 })).toEqual([]);
+  });
+
+  it('het inhaalvoorstel voor de overgeslagen testloop komt wel, op die maandag', () => {
+    const room = at().find((a) => a.ruleId === 'TEST-MAKE-ROOM')!;
+    expect(room).toBeDefined();
+    expect(room.proposal!.changes).toContainEqual(expect.objectContaining({ plannedSessionId: 'retest', action: 'move', toDate: '2026-11-02' }));
+  });
+
+  it('na een gewone trainingsdag komt REST-BACK, met een gemiste lange duurloop die op maandag past niet', () => {
+    // Zaterdag gelogd, zondag een gemiste lange duurloop die SKIPPED-KEY-TO-REST of MISSED-CATCH-UP naar maandag wil.
+    const sessions = restWeekend().filter((s) => s.id !== 'retest');
+    const logs = [...twoDone, done('log-run', 'tpl_easy_run', 'cardio', '2026-10-31')];
+    const advice = computeAdvice(inputs({ plannedSessions: sessions, logs, asOf: '2026-11-01', respondedIds: new Set(['retest:2026-10-27']) }));
+    expect(advice.find((a) => a.ruleId === REST_BACK_RULE)).toBeDefined();
+    const withLong = [...sessions, planned('long0', 'tpl_long_run', '2026-10-31', '2026-10-26')];
+    const advice2 = computeAdvice(inputs({ plannedSessions: withLong, logs: [...twoDone, done('log-run', 'tpl_easy_run', 'cardio', '2026-11-01')], asOf: '2026-11-01', respondedIds: new Set(['retest:2026-10-27']) }));
+    expect(advice2.find((a) => a.ruleId === REST_BACK_RULE)).toBeUndefined();
+  });
+
+  it('een gelogde training op een van die twee dagen telt wel als belasting', () => {
+    // Zaterdag toch iets gedaan, zonder plan: dan kan de rustdag terug, als er niets belangrijks in te halen is.
+    const noTest = restWeekend().filter((s) => s.id !== 'retest');
+    const logs = [...twoDone, done('log-run', 'tpl_easy_run', 'cardio', '2026-10-31')];
+    expect(restDaysToBringBack({ plannedSessions: noTest, logs, templates, today: '2026-11-01', restDay: 1 }).map((s) => s.id)).toEqual(['walk']);
+  });
+
+  it('een herstelwandeling of een overgeslagen training telt niet als belasting', () => {
+    const noTest = restWeekend().filter((s) => s.id !== 'retest');
+    const logs = [...twoDone, done('log-walk', 'tpl_herstel', 'recovery', '2026-10-31')];
+    expect(restDaysToBringBack({ plannedSessions: noTest, logs, templates, today: '2026-11-01', restDay: 1 })).toEqual([]);
+  });
+
+  it('een training die nog komt op de dag ervoor telt als belasting', () => {
+    const noTest = restWeekend().filter((s) => s.id !== 'retest').map((s) => (s.id === 'upB' ? { ...s, status: 'planned' as const, lock: undefined } : s));
+    expect(restDaysToBringBack({ plannedSessions: noTest, logs: twoDone, templates, today: '2026-11-01', restDay: 1 }).map((s) => s.id)).toEqual(['walk']);
+  });
+
+  it('een gemiste test of sleuteltraining die op de dag past gaat voor, ook na een gewone trainingsdag', () => {
+    // Zondag gewoon getraind, maar de testloop van zaterdag is overgeslagen: maandag blijft vrij om in te halen.
+    const sessions = restWeekend().map((s) => (s.id === 'upB' ? { ...s, status: 'planned' as const, lock: undefined } : s.id === 'retest' ? { ...s, scheduledDate: '2026-10-31' } : s));
+    const logs = [...twoDone, done('log-upB', 'tpl_upper_b', 'strength', '2026-11-01', 'upB')];
+    expect(restDaysToBringBack({ plannedSessions: sessions, logs, templates, today: '2026-11-01', restDay: 1 })).toEqual([]);
+    // Een test die een voorstel zelf liet vallen telt niet als gemist.
+    const byProposal = sessions.map((s) => (s.id === 'retest' ? { ...s, lock: lockProposal } : s));
+    expect(restDaysToBringBack({ plannedSessions: byProposal, logs, templates, today: '2026-11-01', restDay: 1 }).map((s) => s.id)).toEqual(['walk']);
+  });
+
+  it('een gemiste beendag die de 48 uur niet haalt, houdt de rustdag niet tegen', () => {
+    // Een gemiste bergtocht met Benen A zwaar op di 3 november ernaast past niet op maandag, dus de rustdag mag terug.
+    const sessions = [...restWeekend().filter((s) => s.id !== 'retest').map((s) => (s.id === 'upB' ? { ...s, status: 'planned' as const, lock: undefined } : s)), planned('legs2', 'tpl_lower_a', '2026-11-03', '2026-11-02')]
+      .map((s) => (s.id === 'legs' ? { ...s, templateId: 'tpl_mountain_hike' } : s));
+    const logs = [...twoDone, done('log-upB', 'tpl_upper_b', 'strength', '2026-11-01', 'upB')];
+    // De bergtocht van zaterdag past wel op maandag (geen beendag ernaast): hij gaat voor.
+    expect(restDaysToBringBack({ plannedSessions: sessions.filter((s) => s.id !== 'legs2'), logs, templates, today: '2026-11-01', restDay: 1 })).toEqual([]);
+    // Met Benen A zwaar op dinsdag past hij niet binnen 48 uur: dan komt de rustdag terug.
+    expect(restDaysToBringBack({ plannedSessions: sessions, logs, templates, today: '2026-11-01', restDay: 1 }).map((s) => s.id)).toEqual(['walk']);
   });
 });
 

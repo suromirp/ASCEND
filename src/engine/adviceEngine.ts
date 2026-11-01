@@ -1602,6 +1602,12 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   for (const a of fresh([...restSwap, ...restPull, ...tooHard, ...tooLight, ...injury, ...strength, ...spacing, ...extraSession, ...restWeekSkip, ...repeatWeek, ...tentPack, ...targetTime, ...weather, ...morning, ...restBack])) {
     for (const p of [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])]) for (const c of p?.changes ?? []) if (c.plannedSessionId) retryUsed.add(c.plannedSessionId);
   }
+  const retry = inputs.noRetry ? [] : testRetryAdvice(inputs, templateById, retryUsed, testRoom);
+  // Inhalen gaat voor (docs/beslissingen/2026-11-01-rustdag-na-rust.md): zet een inhaalvoorstel iets op de dag
+  // waar REST-BACK de rustdag terug wil, dan komt REST-BACK niet.
+  const catchUpDays = new Set(fresh([...missed, ...skippedKey, ...testRoom, ...retry]).flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])])
+    .flatMap((p) => p?.changes.filter((c) => c.action !== 'remove').map((c) => c.toDate ?? c.newSessionDraft?.scheduledDate) ?? []));
+  const restBackLeft = restBack.filter((a) => !a.proposal?.changes.some((c) => c.toDate && catchUpDays.has(c.toDate)));
   return [
     ...missed,
     ...skippedKey,
@@ -1618,10 +1624,10 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...repeatWeek,
     ...tentPack,
     ...targetTime,
-    ...(inputs.noRetry ? [] : testRetryAdvice(inputs, templateById, retryUsed, testRoom)),
+    ...retry,
     ...weather,
     ...morning,
-    ...restBack,
+    ...restBackLeft,
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
