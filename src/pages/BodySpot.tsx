@@ -116,13 +116,17 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
 }
 
 // "Wanneer laat je het nakijken?": ingeklapt en rustig, tenzij je zelf iets meldde dat erbij hoort
-// (`fysioSignal`): dan staat hij open en in amber. De inhoud is altijd dezelfde.
+// (`fysioSignal`): dan staat hij open en in amber. De inhoud is altijd dezelfde. De spoedtekst (`direct`)
+// staat altijd zichtbaar, buiten de inklap.
 function FysioFold({ care, signal }: { care: SpotCare; signal: boolean }) {
   const [chosen, setChosen] = useState<boolean | undefined>(undefined);
   const open = chosen ?? signal;
   const tone = signal ? 'var(--color-warning)' : 'var(--color-ink)';
   return (
-    <div className="flex flex-col border-t pt-1" style={{ borderColor: 'var(--color-card-border)' }}>
+    <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+      {care.direct && (
+        <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{care.direct}</p>
+      )}
       <button
         type="button"
         onClick={() => setChosen(!open)}
@@ -135,7 +139,7 @@ function FysioFold({ care, signal }: { care: SpotCare; signal: boolean }) {
           {signal && <Icon name="letOp" size={18} />}
           Wanneer laat je het nakijken?
         </span>
-        <span className="shrink-0 transition-transform duration-200 ease-out" style={{ transform: open ? 'rotate(180deg)' : undefined, color: 'var(--color-ink-dim)' }} aria-hidden="true"><Icon name="omlaag" size={18} /></span>
+        <span className="mx-unfold-arrow shrink-0" style={{ transform: open ? 'rotate(180deg)' : undefined, color: 'var(--color-ink-dim)' }} aria-hidden="true"><Icon name="omlaag" size={18} /></span>
       </button>
       <div id="fysio-regel" className="mx-unfold" data-shown={open} inert={!open}>
         <div>
@@ -146,9 +150,6 @@ function FysioFold({ care, signal }: { care: SpotCare; signal: boolean }) {
                 <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line.charAt(0).toUpperCase() + line.slice(1)}</li>
               ))}
             </ul>
-            {care.direct && (
-              <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{care.direct}</p>
-            )}
           </div>
         </div>
       </div>

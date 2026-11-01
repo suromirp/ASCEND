@@ -862,6 +862,12 @@ html[data-motion='calm'] .mx-quick {
 html[data-motion='calm'] .mx-unfold {
   transition: none;
 }
+.mx-unfold-arrow {
+  transition: transform 0.2s ease-out;
+}
+html[data-motion='calm'] .mx-unfold-arrow {
+  transition: none;
+}
 
 /* The set that is up next: a soft marker, not a frame. */
 .forge-row {
