@@ -23,6 +23,14 @@ bijgewerkt.
 - Meldingen naar de eigenaar alleen bij iets wat live staat en zichtbaar is, of bij een besluit dat echt van
   hem is. Kort, in het Nederlands, als punten.
 
+## Skills die meedoen
+
+- `code-review` op elk groot onderdeel naast Warden (een tweede blik op fouten), op het niveau medium;
+  `security-review` op de Android-app en Health Connect.
+- `simplify` in ronde 3 bij het opsplitsen en opruimen.
+- `dataviz` voor elke grafiek die gebouwd of herzien wordt (Run in detail, Stand, het ontwerprapport gegevens).
+- De eigen skills `werkverdeling`, `lookout` en `onderhoud` zoals altijd.
+
 ## Zelfstandig, ook als de eigenaar slaapt
 
 - Niets wacht op de eigenaar. Een keuze: de aanbevolen optie. Een besluit dat echt van hem is (zoals voeding): laten
