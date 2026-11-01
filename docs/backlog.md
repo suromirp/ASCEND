@@ -32,6 +32,17 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Ontwerprapport instellingen, de kleine delen: betere waarden en uitleg in de rijen, de bundel De ochtend, Weer en kleding. Ronde 2.
 - Ontwerprapporten gegevens en Forge, de grote herinrichting (Stand met Ritme, weekterugblik, Logboek, Forge zonder snelknoppen en met Alles in het blad Oefening). Ronde 3, na het opsplitsen.
 
+## Android en web, wens van de eigenaar (1 november)
+
+Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie werkt los en samen; in de browser een webweg of een nette stilte. De Android-app werkt zichzelf bij (live update) en gebruikt een vaste sleutel, zodat je gegevens bij een update blijven.
+- In de Android-opdracht zelf: de terugknop, scherm aan tijdens Forge (in de browser met Wake Lock), trillen, statusbalk en startscherm.
+- Automatische back-up naar een bestand op je telefoon, bijvoorbeeld elke zondag (Android: Filesystem in een gekozen map; web: een herinnering met de bestaande download). Ronde 2b.
+- Snelkoppelingen onder het app-icoon: Start training, Ochtendvraag (Android; in de web-app via `shortcuts` in het PWA-manifest). Ronde 2b.
+- Een widget op het startscherm met je missie van vandaag (Android, eigen native code; de web-app heeft geen widget). Ronde 2b, na de rest.
+- Health Connect als bron (al gepland). Ronde 2b.
+- Je locatie voor het weer bij je tocht, alleen als je het aanzet (uit als standaard), in de app en in de browser. Ronde 2b.
+- Niet: hartslagband via Bluetooth (eigenaar). Niet gebouwd tenzij de eigenaar het vraagt: camera en een gps-route van tochten (afgeraden om batterij en privacy).
+
 ## Voor de eigenaar
 
 - Beantwoord (1 november): de snelknoppen in Forge gaan weg; de kolom Alles gebruikt de eigenaar nooit en verhuist naar het blad Oefening. Bouwen met het Forge-ontwerprapport.
