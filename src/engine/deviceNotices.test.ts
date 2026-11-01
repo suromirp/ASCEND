@@ -214,9 +214,10 @@ describe('de welkomstreeks', () => {
     expect(shouldShowWelcome({ timed: false, seen: false })).toBe(false);
     expect(shouldShowWelcome({ timed: false, seen: true, forced: true })).toBe(true);
   });
-  it('slaat over wat al mag, en eindigt met Health Connect', () => {
-    expect(welcomeSteps({ ...ANDROID, notifications: 'prompt', exactAlarm: 'denied' })).toEqual(['meldingen', 'wekker', 'health']);
-    expect(welcomeSteps(ANDROID)).toEqual(['health']);
-    expect(welcomeSteps(ANDROID, true)).toEqual(['meldingen', 'wekker', 'health']);
+  it('slaat over wat al mag, en eindigt met Health Connect en je gegevens meenemen', () => {
+    expect(welcomeSteps({ ...ANDROID, notifications: 'prompt', exactAlarm: 'denied' })).toEqual(['meldingen', 'wekker', 'health', 'gegevens']);
+    expect(welcomeSteps(ANDROID)).toEqual(['health', 'gegevens']);
+    expect(welcomeSteps(ANDROID, true)).toEqual(['meldingen', 'wekker', 'health', 'gegevens']);
+    expect(welcomeSteps({ ...ANDROID, exactAlarm: 'unavailable', notifications: 'prompt' })).toEqual(['meldingen', 'health', 'gegevens']);
   });
 });

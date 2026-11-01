@@ -280,13 +280,16 @@ export function shouldShowWelcome(p: { timed: boolean; seen: boolean; forced?: b
   return p.forced === true || (p.timed && !p.seen);
 }
 
-// De schermen: wat nog niet mag, en altijd als laatste Health Connect (binnenkort). In de
-// testmodus allemaal.
-export function welcomeSteps(p: DevicePermissions, all = false): PermissionId[] {
-  const steps: PermissionId[] = [];
+// De schermen: wat nog niet mag, dan Health Connect (binnenkort) en als laatste "Je gegevens
+// meenemen": de app en de website hebben elk hun eigen opslag, dus wie de website al gebruikte
+// zet hier zijn back-up terug. In de testmodus allemaal.
+export type WelcomeStep = PermissionId | 'gegevens';
+
+export function welcomeSteps(p: DevicePermissions, all = false): WelcomeStep[] {
+  const steps: WelcomeStep[] = [];
   const open = (state: PermissionState) => state !== 'granted' && state !== 'unavailable';
   if (all || open(p.notifications)) steps.push('meldingen');
   if (all || open(p.exactAlarm)) steps.push('wekker');
-  steps.push('health');
+  steps.push('health', 'gegevens');
   return steps;
 }

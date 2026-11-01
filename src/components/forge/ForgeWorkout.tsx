@@ -119,6 +119,8 @@ import { MachineWeightsForgeSheet } from './MachineWeights';
 import { InputDock } from './InputDock';
 import { ForgeSheet, LongPressRow, MenuRow, RirBubble, TickBox, ValueCell } from './parts';
 import { useWakeLock } from './useWakeLock';
+import { useRestNotice } from './useRestNotice';
+import { resolveDeviceNotices } from '../../engine/deviceNotices';
 
 const DRAFT_VERSION = 1;
 // Na afloop blijft de balk nog even staan, dan verdwijnt hij.
@@ -549,6 +551,9 @@ function ForgeWorkoutInner({
       window.clearTimeout(drop);
     };
   }, [rest, strength.restAlert, strength.restSound]);
+
+  // Dezelfde eindtijd als melding van de telefoon, voor als het scherm uit is (useRestNotice.ts).
+  useRestNotice(readOnly ? undefined : rest, resolveDeviceNotices(settings).rest, strength.restAlert);
 
   // Terug laat de training staan (het concept blijft); weggooien gaat via het menu.
   useBackToClose(true, onClose);

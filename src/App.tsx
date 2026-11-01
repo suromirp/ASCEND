@@ -7,6 +7,9 @@ import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { BootScreen } from './components/BootScreen';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt, UpdatedNotice } from './components/UpdatePrompt';
+import { DeviceNoticesHost } from './components/DeviceNoticesHost';
+import { LiveUpdateHost } from './components/LiveUpdateHost';
+import { PermissionWelcome } from './components/welcome/PermissionWelcome';
 import { SHOW_SPLASH } from './utils/updateFlag';
 import { ChangeNotice } from './components/ChangeNotice';
 import { DebriefSheet } from './components/DebriefSheet';
@@ -380,6 +383,10 @@ function AppShell() {
       <DebriefSheet />
       <UpdatePrompt />
       <UpdatedNotice />
+      {/* De Android-app: meldingen op tijd, zelf bijwerken en de welkomstreeks. In de browser doen ze niets. */}
+      <DeviceNoticesHost />
+      <LiveUpdateHost ready={mainReady} />
+      <PermissionWelcome ready={mainReady} />
       <CompletionMoment event={celebration} onDismiss={dismissCelebration} />
     </>
   );
