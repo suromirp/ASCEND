@@ -532,9 +532,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Je klimtempo',
     lead: 'De wandelnorm rekent met 300 meter per uur omhoog. Jij klimt misschien sneller of trager, en met een rugzak anders dan zonder.',
     points: [
-      { head: 'Wat telt', text: 'de klimmen van minstens 50 meter in je wandelingen en bergtochten buiten van het laatste jaar, uit de details van je horloge. Hardlopen en de loopband tellen niet.' },
+      { head: 'Wat telt', text: 'de klimmen van minstens 100 meter en 8 procent in je wandelingen en bergtochten buiten van het laatste jaar, uit de details van je horloge. Hardlopen en de loopband tellen niet.' },
       { head: 'Wanneer je het ziet', text: 'na zes klimmen uit minstens drie tochten. Tot dan zegt Je stand hoeveel er al zijn; in Nederland duurt dat vaak tot de bergen.' },
-      { head: 'Wat je ziet', text: 'op Je stand je meters per uur omhoog en omlaag, met het rugzakgewicht als dat bij je tochten bekend is. Het verandert niets aan je planning.' },
+      { head: 'Wat je ziet', text: 'op Je stand je meters per uur omhoog en omlaag, met het rugzakgewicht als dat bij minstens driekwart van je klimmen bekend is. Een lange klim telt zwaarder dan een korte. Het verandert niets aan je planning.' },
     ],
   },
   etappetijdEigen: {

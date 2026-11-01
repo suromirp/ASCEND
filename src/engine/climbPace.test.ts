@@ -27,12 +27,13 @@ function hike(date: string, stretches: TerrainStretch[], extra: { packKg?: numbe
 
 const TODAY = '2026-10-30';
 
-// Drie tochten met elk twee klimmen en een daling: precies genoeg.
-function enoughHikes(packKg?: number): SessionLog[] {
+// Drie tochten met elk twee klimmen van minstens 100 meter en een daling: precies genoeg.
+function enoughHikes(packKg?: number | (number | undefined)[]): SessionLog[] {
+  const pack = (i: number) => (Array.isArray(packKg) ? packKg[i] : packKg);
   return [
-    hike('2026-09-05', [stretch('climb', 200, 400), stretch('climb', 120, 450), stretch('descent', 300, 700)], { packKg }),
-    hike('2026-09-20', [stretch('climb', 180, 500), stretch('climb', 90, 420), stretch('descent', 250, 800)], { packKg }),
-    hike('2026-10-11', [stretch('climb', 250, 480), stretch('climb', 60, 520), stretch('descent', 280, 750)], { packKg }),
+    hike('2026-09-05', [stretch('climb', 200, 400), stretch('climb', 120, 450), stretch('descent', 300, 700)], { packKg: pack(0) }),
+    hike('2026-09-20', [stretch('climb', 180, 500), stretch('climb', 110, 420), stretch('descent', 250, 800)], { packKg: pack(1) }),
+    hike('2026-10-11', [stretch('climb', 250, 480), stretch('climb', 100, 520), stretch('descent', 280, 750)], { packKg: pack(2) }),
   ];
 }
 
@@ -47,7 +48,7 @@ describe('climbPace: je eigen klimtempo uit je tochten', () => {
     // Zes klimmen, maar uit twee tochten: ook nog niet.
     const crowded = [
       hike('2026-09-05', [stretch('climb', 200, 400), stretch('climb', 120, 450), stretch('climb', 100, 470)]),
-      hike('2026-09-20', [stretch('climb', 180, 500), stretch('climb', 90, 420), stretch('climb', 80, 430)]),
+      hike('2026-09-20', [stretch('climb', 180, 500), stretch('climb', 110, 420), stretch('climb', 130, 430)]),
     ];
     expect(climbPace(crowded, TODAY)).toMatchObject({ state: 'notYet', climbs: 6, trips: 2 });
     expect(CLIMB_PACE_MIN).toEqual({ climbs: 6, trips: 3 });
@@ -57,8 +58,11 @@ describe('climbPace: je eigen klimtempo uit je tochten', () => {
     const r = climbPace(enoughHikes(), TODAY);
     expect(r?.state).toBe('enough');
     if (r?.state !== 'enough') return;
-    // 400, 420, 450, 480, 500, 520: de mediaan is 465, op tien meter 470.
-    expect(r.pace.upMph).toBe(470);
+    // Op volgorde 400 (200 m), 420 (110), 450 (120), 480 (250), 500 (180), 520 (100). Gewogen naar
+    // meters ligt de helft van de 960 meter bij 480; de gewone mediaan zou 465 zijn.
+    expect(r.pace.upMph).toBe(480);
+    expect(r.pace.upSlow).toBe(420);
+    expect(r.pace.upFast).toBe(500);
     expect(r.pace.upSlow).toBeLessThan(r.pace.upMph);
     expect(r.pace.upFast).toBeGreaterThan(r.pace.upMph);
     expect(r.pace.downMph).toBe(750);
@@ -66,9 +70,12 @@ describe('climbPace: je eigen klimtempo uit je tochten', () => {
     expect(r.pace.packKg).toBeUndefined();
   });
 
-  it('noemt het rugzakgewicht van de klimmen als dat bekend is', () => {
+  it('noemt het rugzakgewicht pas als het bij minstens driekwart van de klimmen bekend is', () => {
     const r = climbPace(enoughHikes(9), TODAY);
     expect(r?.state === 'enough' && r.pace.packKg).toBe(9);
+    // Bij vier van de zes klimmen bekend: te weinig, dan geen gewicht.
+    const some = climbPace(enoughHikes([9, 9, undefined]), TODAY);
+    expect(some?.state === 'enough' && some.pace.packKg).toBeUndefined();
   });
 
   it('laat hardlopen, de loopband, een onbetrouwbare hoogte, de toekomst en het oude jaar buiten', () => {
@@ -78,11 +85,21 @@ describe('climbPace: je eigen klimtempo uit je tochten', () => {
       hike('2026-09-03', [stretch('climb', 200, 900)], { gainAgreementPct: 200 }),
       hike('2026-11-02', [stretch('climb', 200, 900)]),
       hike('2025-09-01', [stretch('climb', 200, 900)]),
-      // Te klein: onder 50 meter telt niet.
-      hike('2026-09-04', [stretch('climb', 40, 900)]),
+      // Te klein of te vlak: onder 100 meter of onder 8 procent telt niet, omhoog en omlaag.
+      hike('2026-09-04', [stretch('climb', 90, 900), stretch('climb', 300, 900, 6), stretch('descent', 90, 2000), stretch('descent', 300, 2000, 5)]),
     ];
     const r = climbPace([...enoughHikes(), ...noise], TODAY);
-    expect(r?.state === 'enough' && r.pace.upMph).toBe(470);
+    expect(r?.state === 'enough' && r.pace).toMatchObject({ upMph: 480, climbs: 6, descents: 3, downMph: 750 });
+  });
+
+  it('weegt naar geklommen meters: een lange trage klim telt zwaarder dan korte snelle', () => {
+    const r = climbPace([
+      hike('2026-09-05', [stretch('climb', 800, 350), stretch('climb', 100, 600)]),
+      hike('2026-09-20', [stretch('climb', 100, 620), stretch('climb', 100, 610)]),
+      hike('2026-10-11', [stretch('climb', 100, 630), stretch('climb', 100, 640)]),
+    ], TODAY);
+    // Vijf van de zes klimmen zijn snel, maar 800 van de 1.300 meter ging met 350 per uur.
+    expect(r?.state === 'enough' && r.pace.upMph).toBe(350);
   });
 
   it('telt vandaag mee, morgen niet', () => {
@@ -118,6 +135,10 @@ describe('ownHikingBand en stageTimeEstimate: een etappe op je eigen tempo', () 
     const lighter = ownHikingBand(light.pace, { km: 20, up: 1100, down: 1100 }, { packKg: 2, bodyKg: 75 });
     expect(heavy.mid).toBeGreaterThan(same.mid);
     expect(lighter.mid).toBe(same.mid);
+    // Zonder bekend gewicht op de klimmen geen omrekening: onbekend telt niet als 0.
+    const unknown = climbPace(enoughHikes([5, 5, undefined]), TODAY);
+    if (unknown?.state !== 'enough') throw new Error('genoeg');
+    expect(ownHikingBand(unknown.pace, { km: 20, up: 1100, down: 1100 }, { packKg: 15, bodyKg: 75 }).mid).toBe(ownHikingBand(unknown.pace, { km: 20, up: 1100, down: 1100 }).mid);
     // Zonder lichaamsgewicht geen omrekening.
     expect(ownHikingBand(light.pace, { km: 20, up: 1100, down: 1100 }, { packKg: 15 }).mid).toBe(same.mid);
   });
@@ -155,6 +176,6 @@ describe('de woorden bij je klimtempo', () => {
     const none = climbPace(enoughHikes(), TODAY);
     if (none?.state !== 'enough') throw new Error('genoeg');
     expect(climbPaceBasisLine(none.pace)).toContain('zonder bekend rugzakgewicht');
-    expect(climbPaceWaitLine({ state: 'notYet', climbs: 1, trips: 1 })).toBe('Je eigen klimtempo zie je na 6 klimmen van minstens 50 meter uit 3 tochten. Nu zijn het er 1 uit 1 tocht.');
+    expect(climbPaceWaitLine({ state: 'notYet', climbs: 1, trips: 1 })).toBe('Je eigen klimtempo zie je na 6 klimmen van minstens 100 meter uit 3 tochten. Nu zijn het er 1 uit 1 tocht.');
   });
 });
