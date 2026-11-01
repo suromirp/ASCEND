@@ -62,7 +62,7 @@ export interface PageRows {
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
     rows: ['bundel-dagen', 'meerdere', ...SPORT_IDS.map((id) => `sport-${id}`), 'wijzigingen', 'ambitie', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'rustdag-terug', 'weekvoorstel'],
-    advanced: ['slepen-week', 'volgorde-stand'],
+    advanced: ['bundel-niet-doorgegaan', 'slepen-week', 'volgorde-stand'],
   },
   doel: {
     rows: ['doelen', 'programma', 'bundel-zonder-doel', 'lange-zondag', 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge', 'doeltijd-voorstel', 'seizoensstrook', 'bundel-tochten', 'vrije-dagen'],
@@ -124,6 +124,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-dagen', 'trainingstijd', 'rustdag', 'rustdag-doen'),
   ...inSheet('meerdere', 'zware-dingen'),
   ...inSheet('ambitie', 'lange-loop'),
+  ...inSheet('bundel-niet-doorgegaan', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'log-koppelen'),
   // Doel en tochten
   ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
@@ -214,6 +215,7 @@ const B = {
   activities: { ok: (_s, c) => c.activities, reason: 'Zichtbaar zodra Trainingen van je horloge aan staat', parent: 'garmin-trainingen' },
   send: { ok: (_s, c) => c.sendToWatch, reason: 'Zichtbaar zodra Trainingen naar je horloge aan staat', parent: 'naar-horloge' },
   ascendHr: { ok: (s) => resolveWatchHrMode({ mode: s.watchHeartRate }) !== 'intervals', reason: 'Zichtbaar zodra de hartslag van ASCEND naar je horloge gaat', parent: 'horloge-hartslag' },
+  missedOn: { ok: (s) => s.missedTraining !== 'off', reason: 'Zichtbaar zodra ASCEND iets doet met een training die niet doorging', parent: 'niet-doorgegaan' },
   goal: { ok: (_s, c) => c.goal, reason: 'Zichtbaar zodra je een hoofddoel hebt', parent: 'doelen' },
   noGoal: { ok: (_s, c) => c.noGoal, reason: 'Zichtbaar zodra je geen doel hebt', parent: 'doelen' },
   goalOrProgram: { ok: (_s, c) => c.goal || c.program, reason: 'Zichtbaar zodra je een hoofddoel of programma hebt', parent: 'doelen' },
@@ -238,6 +240,7 @@ const rule = (blockers: Blocker[], ...ids: string[]): [string, Blocker[]][] => i
 export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   // Planning
   ...rule([B.pairing], 'zware-dingen'),
+  ...rule([B.missedOn], 'niet-doorgegaan-dagen'),
   // Doel en tochten
   ...rule([B.goalOrProgram], 'programma'),
   ...rule([B.noGoal], 'bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),

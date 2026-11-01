@@ -23,6 +23,7 @@ import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
 import { WeightReminder } from '../components/WeightCard';
 import { WatchActivityCard } from '../components/WatchActivityCard';
 import { WatchAlignCard } from '../components/WatchAlignCard';
+import { MissedTrainingCard } from '../components/MissedTrainingCard';
 import { SourceSilenceLine } from '../components/SourceSilenceLine';
 import { IllnessSignCard } from '../components/IllnessSignCard';
 import { MacroFactorCard } from '../components/MacroFactorCard';
@@ -354,6 +355,8 @@ function TodayContent() {
       {/* Direct onder de missie: wat bevestigd moet worden. */}
       <WatchActivityCard />
       <WatchAlignCard />
+      {/* Een training die niet doorging: één vraag of een koppelvoorstel, de oudste eerst (engine/missedTraining.ts). */}
+      <MissedTrainingCard onLogNow={setActionSheetSession} />
       {/* Komt er van je horloge niets meer binnen terwijl de koppeling werkt: één rustige zin. */}
       <SourceSilenceLine />
 

@@ -198,5 +198,8 @@ export interface RecentPlanChange {
   // Typed-in trainings that took over the watch's numbers (engine/watchAlign.ts):
   // undo gives their hand-made numbers back. Not part of the plan itself.
   alignedLogIds?: string[];
+  // Logs die na Akkoord aan een geplande training werden gekoppeld (engine/missedTraining.ts):
+  // undo haalt alleen die verwijzing weer weg. Not part of the plan itself.
+  linkedLogIds?: string[];
   createdAt: string;
 }

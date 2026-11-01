@@ -736,6 +736,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geen goede dag', text: 'zijn je benen op geen enkele dag binnen 10 dagen fris genoeg te krijgen, valt de dag in een vakantie of tocht, of staat er al een test gepland, dan zegt ASCEND niets.' },
     ],
   },
+  nietDoorgegaan: {
+    title: 'Training die niet doorging',
+    lead: 'Wat ASCEND doet met een training die een paar dagen voorbij is zonder log.',
+    points: [
+      { head: 'Vragen', text: 'één korte vraag op Vandaag, de oudste eerst en nooit meer dan één tegelijk. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten.' },
+      { head: 'Zelf overslaan', text: 'ASCEND zet hem op overgeslagen en zegt het in de meldingsbalk, met Ongedaan maken. Een test, een wedstrijd en wat je zelf vastzette krijgen toch de vraag.' },
+      { head: 'Niets doen', text: 'hij blijft als gemist in je week staan, zoals eerst.' },
+      { head: 'Log op een andere dag', text: 'staat er een training van je horloge of MacroFactor van dezelfde soort binnen twee dagen ervoor of erna, dan vraagt ASCEND of die bij elkaar horen. Pas na Akkoord hangt de log aan je training, met Ongedaan maken.' },
+      { head: 'Nooit', text: 'een log verzinnen. Overslaan is geen training, en je historie blijft zoals hij was. Ouder dan twee weken vraagt ASCEND niet meer.' },
+    ],
+  },
   rustdagTerug: {
     title: 'Rustdag terugzetten voorstellen',
     lead: 'Liet een voorstel je rustdag vervallen om plek te maken en is die dag later weer leeg, dan stelt ASCEND voor hem terug te zetten.',

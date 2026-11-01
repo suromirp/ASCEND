@@ -44,6 +44,30 @@ export const CHOICES = {
       { value: 'count', label: 'Meetellen', note: 'De klok loopt door, zoals het was', short: 'Meetellen' },
     ],
   }),
+  nietDoorgegaan: def({
+    group: 'Planning',
+    title: 'Wat ASCEND doet',
+    line: 'Met een training die voorbij is zonder log.',
+    advice: 'ask' as 'ask' | 'auto' | 'off',
+    help: 'nietDoorgegaan',
+    options: [
+      { value: 'ask', label: 'Vragen', note: 'Eén korte vraag op Vandaag, jij kiest' },
+      { value: 'auto', label: 'Zelf overslaan', note: 'Op overgeslagen, met een melding en Ongedaan maken' },
+      { value: 'off', label: 'Niets doen', note: 'Hij blijft als gemist in je week staan' },
+    ],
+  }),
+  nietDoorgegaanDagen: def({
+    group: 'Planning',
+    title: 'Na hoeveel dagen',
+    line: 'Gerekend vanaf de dag dat hij gepland stond.',
+    advice: 2 as 1 | 2 | 3,
+    help: 'nietDoorgegaan',
+    options: [
+      { value: 1, label: '1 dag', short: '1 dag' },
+      { value: 2, label: '2 dagen', short: '2 dagen' },
+      { value: 3, label: '3 dagen', short: '3 dagen' },
+    ],
+  }),
   ambitie: def({
     group: 'Planning',
     title: 'Ambitie',

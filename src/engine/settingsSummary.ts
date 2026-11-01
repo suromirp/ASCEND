@@ -56,6 +56,7 @@ import { quickButtonsOn, swipeDeleteOn } from './forgeQuickActions';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { formatNumberNL } from '../utils/number';
+import { resolveMissedSettings } from './missedTraining';
 import { formatDateNL, localDateOf } from '../utils/dates';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
@@ -585,6 +586,18 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.askDoubtTest !== false };
     case 'nieuwe-test':
       return { checked: s.newTestOnStops !== false };
+    // Training die niet doorging (engine/missedTraining.ts): "Vragen na 2 dagen".
+    case 'bundel-niet-doorgegaan': {
+      const m = resolveMissedSettings(s);
+      if (m.choice === 'off') return { value: 'Niets doen', dim: true, ...(m.link ? { sub: 'Wel een log op een andere dag koppelen' } : {}) };
+      return { value: `${choiceShort('nietDoorgegaan', m.choice)} na ${choiceShort('nietDoorgegaanDagen', m.days)}`, ...(m.link ? {} : { sub: 'Geen log op een andere dag koppelen' }) };
+    }
+    case 'niet-doorgegaan':
+      return { value: choiceShort('nietDoorgegaan', resolveMissedSettings(s).choice) };
+    case 'niet-doorgegaan-dagen':
+      return { value: choiceShort('nietDoorgegaanDagen', resolveMissedSettings(s).days) };
+    case 'log-koppelen':
+      return { checked: resolveMissedSettings(s).link };
     case 'rustdag-terug':
       return { checked: s.restDayBack !== false };
     case 'trillen':

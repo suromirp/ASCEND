@@ -735,6 +735,14 @@ export interface AppSettings {
   // dan stelt ASCEND voor hem terug te zetten, met Akkoord (engine/restDayBack.ts). Absent = on.
   // Optional and additive.
   restDayBack?: boolean;
+  // "Training die niet doorging" (engine/missedTraining.ts, docs/beslissingen/2026-11-01-niet-doorgegaan.md):
+  // wat ASCEND doet met een training die voorbij is zonder log. 'ask' (absent) vraagt het één keer op
+  // Vandaag, 'auto' zet hem zelf op overgeslagen met een melding en Ongedaan maken, 'off' doet niets.
+  // `missedTrainingDays`: na hoeveel dagen (1, 2 of 3; absent = 2). `missedLink`: een log van het horloge
+  // of MacroFactor op een andere dag wordt een voorstel om hem te koppelen (absent = on). Optional and additive.
+  missedTraining?: 'ask' | 'auto' | 'off';
+  missedTrainingDays?: 1 | 2 | 3;
+  missedLink?: boolean;
   // "Voorstel bij een probleem in de week": what is wrong in a week and may not be repaired by
   // ASCEND itself (a training you or an accepted proposal fixed) gets a proposal with Akkoord.
   // Off keeps the notice and the lines in the rows, only the proposal is gone. Absent = on.

@@ -52,6 +52,8 @@ import { goalDetailsOf } from '../engine/goalLabels';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
 import { writeCatchUp } from '../storage/catchUpApply';
+import { linkLogNow, skipMissedNow, unlinkLogsNow } from '../storage/missedTraining';
+import { askLine, autoSkipNotice, resolveMissedSettings } from '../engine/missedTraining';
 import { planIllnessChange, type IllnessChange, type IllnessPlan } from '../engine/illness';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
@@ -384,6 +386,12 @@ interface AppData {
   // were changed. And the other way: the hand-made numbers back.
   alignWithWatch: (requests: AlignRequest[]) => Promise<number>;
   restoreFromWatch: (logIds: string[]) => Promise<number>;
+  // Training die niet doorging (engine/missedTraining.ts): op overgeslagen zetten, op je antwoord
+  // ("Niet gedaan") of vanzelf ("Zelf overslaan"), en een log van het horloge of MacroFactor na Akkoord
+  // aan een geplande training koppelen. Elk met een melding en Ongedaan maken; er komt nooit een log bij.
+  // Resolve to how many were skipped, and whether the link was written.
+  skipMissed: (sessionIds: string[], how: 'answer' | 'auto') => Promise<number>;
+  linkMissedLog: (logId: string, sessionId: string) => Promise<boolean>;
   // "Inkorten": a watch activity cut at the end and/or the beginning (the series
   // come from the sheet, in memory), and "Inkorten ongedaan maken". Both
   // resolve to whether anything was written; the week check and the counters
@@ -891,6 +899,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     await planSettled();
     // Numbers of the watch taken over by typed-in trainings: the hand-made ones
     // come back first. When that was all the change did, that is the undo.
+    // A log linked to a planned training afterwards: only the link goes (engine/missedTraining.ts).
+    if (recentChange.linkedLogIds?.length) {
+      await unlinkLogsNow(recentChange.linkedLogIds);
+      if (recentChange.before.length === 0 && recentChange.addedIds.length === 0) {
+        setRecentChange(null);
+        planRevision++;
+        await refresh();
+        return;
+      }
+    }
     if (recentChange.alignedLogIds?.length) {
       await restoreAlignments(recentChange.alignedLogIds);
       if (recentChange.before.length === 0 && recentChange.addedIds.length === 0) {
@@ -1506,6 +1524,67 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await refresh();
       void syncWatchWorkoutsAfterPlanChange();
       return n;
+    },
+    [refresh],
+  );
+
+  // "Niet gedaan" or "Zelf overslaan": only the status of the planned training changes, never a log.
+  const skipMissed = useCallback(
+    async (sessionIds: string[], how: 'answer' | 'auto'): Promise<number> => {
+      await planSettled();
+      const now = new Date().toISOString();
+      // Your answer is yours; what ASCEND skipped by itself carries no lock (a past row is history anyway).
+      const before = await skipMissedNow(sessionIds, how === 'answer' ? { by: 'user', at: now } : undefined);
+      if (before.length === 0) return 0;
+      const tpl = new Map((await SessionTemplatesRepo.getAll()).map((t) => [t.id, t]));
+      const items = before.map((session) => ({ session, template: tpl.get(session.templateId) })).filter((m): m is { session: PlannedSession; template: SessionTemplate } => !!m.template);
+      const days = resolveMissedSettings(settings).days;
+      const notice = how === 'auto'
+        ? autoSkipNotice(items, days)
+        : { title: `${items[0]?.template.name ?? 'Training'} overgeslagen`, lines: items.map((m) => `${askLine(m.session, m.template)} overgeslagen`), why: 'Je zei dat hij niet doorging. Hij staat nu op overgeslagen; er is geen training verzonnen en je historie blijft zoals hij was.' };
+      setRecentChange({
+        id: makeId('missed'),
+        trigger: 'session_skipped',
+        title: notice.title,
+        summary: notice.lines.length === 1 ? notice.lines[0] : undefined,
+        lines: notice.lines,
+        why: notice.why,
+        before,
+        addedIds: [],
+        createdAt: now,
+      });
+      planRevision++;
+      await refresh();
+      return before.length;
+    },
+    [refresh, settings],
+  );
+
+  // "Hoort die bij elkaar?" Akkoord: the loose log gets the reference to its planned training.
+  const linkMissedLog = useCallback(
+    async (logId: string, sessionId: string): Promise<boolean> => {
+      await planSettled();
+      const now = new Date().toISOString();
+      const ok = await linkLogNow(logId, sessionId, now);
+      if (!ok) return false;
+      const session = (await PlannedSessionsRepo.getAll()).find((s) => s.id === sessionId);
+      const template = session ? (await SessionTemplatesRepo.getAll()).find((t) => t.id === session.templateId) : undefined;
+      const line = session && template ? `${askLine(session, template)} gekoppeld` : 'Gekoppeld';
+      setRecentChange({
+        id: makeId('missedlink'),
+        trigger: 'session_completed',
+        title: template ? `${template.name} gekoppeld` : 'Training gekoppeld',
+        summary: line,
+        lines: [line],
+        why: 'Je gaf Akkoord: de training van je horloge of MacroFactor hoort bij deze geplande training. Alleen de koppeling is nieuw; de cijfers van de log blijven zoals ze waren. Met Ongedaan maken staat hij weer los.',
+        before: [],
+        addedIds: [],
+        linkedLogIds: [logId],
+        createdAt: now,
+      });
+      planRevision++;
+      await refresh();
+      return true;
     },
     [refresh],
   );
@@ -2629,6 +2708,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setLogFeedback,
     alignWithWatch,
     restoreFromWatch,
+    skipMissed,
+    linkMissedLog,
     trimWatchActivity,
     undoTrimWatchActivity,
     restoreSourceUpdate,
