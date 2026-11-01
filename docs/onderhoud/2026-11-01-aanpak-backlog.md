@@ -99,6 +99,14 @@ screenshots en, bij een animatie, ook de stand met Beweging Uit. Wat er kaal of 
 Ronde 1, tegelijk:
 1. Zelf: het veiligheidsnet (tests in `.github/workflows/deploy.yml` voor de deploy) en CLAUDE.md bijwerken
    (Zonder doel, Kansen, Run in detail, ochtendkaart, tekstkaart, backlog, werkverdeling).
+2d. Sherpa (sonnet): de ochtendkaart na je antwoord (screenshot van de eigenaar, 1 november). (a) De kaart houdt de
+   hoogte van de vraag vast, waardoor er na "Fris genoteerd." een groot leeg vlak staat met alleen onderaan
+   "Ongedaan maken"; laat de gevolgstand zijn eigen, korte hoogte hebben met een zachte overgang (geen
+   verspringing van de missiekaart eronder, wel geen lege ruimte), en Ongedaan maken direct onder de zin.
+   (b) Het gevolg noemt alleen "Bovenlichaam B blijft staan." terwijl vandaag eerst de Testloop 5 km staat
+   (gepaard: eerst de testloop, dan Bovenlichaam B). `morningConsequence` moet de belangrijkste training van
+   vandaag noemen (een test of race eerst, anders de eerste in de volgorde van de dag), of beide ("Testloop 5 km
+   en Bovenlichaam B blijven staan."). Met test op deze vorm en een screenshot op 360 en 390 px.
 2c. Sherpa (opus): de rustdag komt niet terug. Gevonden in de back-up van 1 november: een voorstel (TEST-RETRY,
    28 oktober) haalde de rij Herstel op maandag 2 november weg om plaats te maken; de test en de lange duurloop
    gingen daarna elders heen, maar de rustdag bleef weg (status skipped, lock van het voorstel). Week toont nu
