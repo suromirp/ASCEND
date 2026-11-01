@@ -17,7 +17,7 @@ Schrijf geen nieuwe hulpscripts. De kit in `.claude/skills/lookout/kit/` doet he
    `audit` en `rowIds` uit `kit/lib.mjs` importeert. Bewaar het in de scratchpad, niet in de repo.
 5. Rapporteer per stap groen of rood, met het volledige pad van elke afdruk.
 
-De stand `kit/state-kracht.json` is nagemaakt (het kracht-demoprogramma). Een back-up van de eigenaar
+De stand `kit/state-kracht.json` is nagemaakt (het kracht-demoprogramma) en start rustig: hij heeft één planningsronde op de vaste klok gehad, dus er komt geen melding "Weekplanning bijgewerkt" over je afdrukken. Er zijn ook `state-horloge.json` (ochtenden van het horloge, een run met detail), `state-vakantie.json`, `state-zonder-doel.json` en `state-ziek.json`: `open(390, { stand: 'horloge' })`. Ze komen uit `npm run kaart:standen`. Een back-up van de eigenaar
 gebruik je alleen als de opdracht van de coördinator het pad noemt (toestemming van de eigenaar,
 31 oktober 2026): dan alleen lezen, schermafdrukken alleen in de scratchpad, nooit iets ervan in de
 repo, tests of commits, en in je verslag geen notities of persoonsgegevens citeren.

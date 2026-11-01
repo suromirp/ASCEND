@@ -50,9 +50,3 @@ Testloop 5 km: 14 jan en 15 jan
 Bergtocht op zondag: 240 tot 300 min, 800 tot 1000 m omhoog, 13 tot 15 kg rugzak
 Rustige duurloop: 50 min
 Wedstrijdblok vanaf 18 jan: tempoloop en intervallen (met drie loopjes per week één van de twee)
-
---- kaart 10 ---
-[melding]
-[knop: AangepastWeekplanning bijgewerktDe inhoud van 25 trainingen in de komende weken bijgesteld · waarom]
-[knop: Ongedaan maken]
-[knop: Melding sluiten]
