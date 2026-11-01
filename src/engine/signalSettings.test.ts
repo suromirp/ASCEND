@@ -5,14 +5,14 @@ import { normalizeBackupToCurrentModel } from '../storage/backup';
 
 describe('signalen uit je gegevens', () => {
   it('staan allemaal aan tot je er een uitzet', () => {
-    expect(SIGNAL_KEYS).toEqual(['illnessSigns', 'morningRule', 'heatPace', 'weekdayPattern', 'airQuality']);
-    expect(signalsOnCount(undefined)).toBe(5);
+    expect(SIGNAL_KEYS).toEqual(['illnessSigns', 'morningRule', 'heatPace', 'weekdayPattern', 'airQuality', 'climbPace']);
+    expect(signalsOnCount(undefined)).toBe(SIGNAL_KEYS.length);
     expect(signalOn({ heatPace: false }, 'heatPace')).toBe(false);
-    expect(signalsOnCount({ heatPace: false, airQuality: false })).toBe(3);
+    expect(signalsOnCount({ heatPace: false, airQuality: false })).toBe(SIGNAL_KEYS.length - 2);
   });
 
   it('de rij van het blad telt wat aan staat', () => {
-    expect(rowSummary('bundel-signalen', { settings: { airQuality: false } } as never).value).toBe('4 van 5 aan');
+    expect(rowSummary('bundel-signalen', { settings: { airQuality: false } } as never).value).toBe(`${SIGNAL_KEYS.length - 1} van ${SIGNAL_KEYS.length} aan`);
   });
 
   it('een oude back-up heeft ze niet en importeert zoals hij was, een verkeerde waarde valt weg', () => {

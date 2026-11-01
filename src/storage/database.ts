@@ -848,6 +848,9 @@ export interface AppSettings {
   // "Ochtendregel" (engine/morningRule.ts): the three watch numbers with a word each on the morning
   // card, and the question "Ben je moe?" when two of the three are off. Absent = on.
   morningRule?: boolean;
+  // "Je klimtempo" (engine/climbPace.ts): your own metres per hour up and down from the climbs of your walks
+  // and tochten, on Je stand once there are six climbs from three tochten. Absent = on. Optional and additive.
+  climbPace?: boolean;
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
   proposalTidyMonths?: 0 | 3 | 6 | 12;

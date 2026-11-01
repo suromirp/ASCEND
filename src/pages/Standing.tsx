@@ -8,6 +8,7 @@ import { LegCalendar } from '../components/stand/LegCalendar';
 import { WeeklyLoadChart } from '../components/stand/WeeklyLoadChart';
 import { IntensityMixCard } from '../components/stand/IntensityMixCard';
 import { DescentCard } from '../components/stand/DescentCard';
+import { ClimbPaceCard } from '../components/stand/ClimbPaceCard';
 import { RunTrendsCard } from '../components/stand/RunTrendsCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
@@ -150,6 +151,7 @@ export function StandingPage() {
         <WeeklyLoadChart weeks={weeks} />
         <IntensityMixCard mix={mix} />
         <DescentCard weeks={descent} routeDayDescent={routeDescent} />
+        <ClimbPaceCard />
       </section>
     ),
     'kracht': (
