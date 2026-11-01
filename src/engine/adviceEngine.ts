@@ -56,7 +56,7 @@ import type { LeavePeriod } from '../models/leave';
 import { weatherAdvice } from './weatherSwap';
 import { LEG_BODY_PARTS } from './legSpots';
 import { restBackAdvice } from './restDayBack';
-import { linkCandidates } from './missedTraining';
+import { lastDeclinedOn, linkCandidates } from './missedTraining';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -156,7 +156,7 @@ export interface AdviceInputs {
   // "Log op een andere dag koppelen" (engine/missedTraining.ts) and the pairs you said Liever niet to.
   // A missed training a loose watch or MacroFactor log may belong to gets the link proposal first, never
   // a catch-up (rule MISSED-CATCH-UP). Absent = on, nothing declined.
-  missedLink?: { on: boolean; declined: readonly string[] };
+  missedLink?: { on: boolean; declined: readonly string[]; declinedOn?: Readonly<Record<string, string>> };
   // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
   noRetry?: boolean;
 }
@@ -285,8 +285,11 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   // First link, then catch up: a training a loose log may belong to gets the link proposal on Vandaag
   // (engine/missedTraining.ts), not a catch-up of something that was perhaps done.
   const linkable = inputs.missedLink?.on === false ? new Set<string>() : new Set(linkCandidates({ plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, today: inputs.asOf, declined: inputs.missedLink?.declined }).keys());
+  // The window of three days counts from the training, or from the day you said Liever niet to linking it:
+  // a catch-up never falls away for good because the link proposal came first.
+  const windowFrom = (s: PlannedSession) => [s.scheduledDate, lastDeclinedOn(s.id, inputs.missedLink?.declinedOn) ?? ''].sort().at(-1)!;
   const recentMissed = inputs.plannedSessions.filter(
-    (s) => s.templateId !== TEST_RUN_ID && s.status !== 'skipped' && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 3
+    (s) => s.templateId !== TEST_RUN_ID && s.status !== 'skipped' && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(windowFrom(s), inputs.asOf) <= 3
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !linkable.has(s.id),
   );
   // One advice for everything missed, not one each (production feedback:

@@ -2651,7 +2651,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         restDay: settings.restDay ?? 1,
         restDayBack: settings.restDayBack !== false,
         // Eerst koppelen, dan inhalen (engine/missedTraining.ts#linkCandidates).
-        missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [] },
+        missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn },
         leave: settings.leavePeriods,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         extraSession: extraSessionContext,

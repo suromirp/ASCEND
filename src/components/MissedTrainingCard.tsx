@@ -46,7 +46,7 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
         <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{linkLine(item.session, item.template, item.log, today)}</p>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Met Akkoord telt die training als gedaan. Alleen de koppeling is nieuw, de cijfers blijven zoals ze waren.</p>
         <div className="mt-3 flex gap-2">
-          <SecondaryButton disabled={busy} onClick={() => remember((m) => ({ ...m, declined: [...m.declined, declinedKey(item.log.id, item.session.id)] }))}>Liever niet</SecondaryButton>
+          <SecondaryButton disabled={busy} onClick={() => remember((m) => ({ ...m, declined: [...m.declined, declinedKey(item.log.id, item.session.id)], declinedOn: { ...m.declinedOn, [declinedKey(item.log.id, item.session.id)]: today } }))}>Liever niet</SecondaryButton>
           <SecondaryButton disabled={busy} onClick={() => run(() => linkMissedLog(item.log.id, item.session.id))}>{busy ? 'Bezig…' : 'Akkoord'}</SecondaryButton>
         </div>
         {note && <p className="mt-2 text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}

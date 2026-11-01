@@ -56,6 +56,9 @@ describe('instelling: Training die niet doorging', () => {
   it('het geheugen leest alleen lijsten met tekst en een datum', () => {
     expect(resolveMissedMemory({ notNow: ['a', 3], notNowOn: '2026-10-28', auto: 'x', declined: ['l|s'] })).toEqual({ notNow: ['a'], notNowOn: '2026-10-28', auto: [], declined: ['l|s'] });
     expect(resolveMissedMemory(null)).toEqual({ notNow: [], auto: [], declined: [] });
+    // De dag van Liever niet: alleen een datum blijft, een oud geheugen zonder blijft zonder.
+    expect(resolveMissedMemory({ declined: ['l|s', 'k|s'], declinedOn: { 'l|s': '2026-10-27', 'k|s': 'gisteren' } }).declinedOn).toEqual({ 'l|s': '2026-10-27' });
+    expect(resolveMissedMemory({ declined: ['l|s'], declinedOn: ['x'] }).declinedOn).toBeUndefined();
   });
 });
 

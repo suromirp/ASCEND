@@ -58,6 +58,10 @@ export interface MissedMemory {
   auto?: string[];
   // Paren `<logId>|<sessionId>` waarop je Liever niet zei.
   declined?: string[];
+  // De dag waarop je Liever niet zei, per paar. Het inhaaladvies telt zijn venster van drie dagen vanaf
+  // die dag, zodat inhalen niet voorgoed wegvalt omdat er eerst een koppelvoorstel stond. Optioneel: een
+  // oudere back-up heeft het niet, dan telt het venster vanaf de training zoals eerst.
+  declinedOn?: Record<string, string>;
 }
 
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
@@ -67,13 +71,22 @@ export type ResolvedMissedMemory = MissedMemory & { notNow: string[]; auto: stri
 export function resolveMissedMemory(raw: unknown): ResolvedMissedMemory {
   const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
   const notNowOn = typeof r.notNowOn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.notNowOn) ? r.notNowOn : undefined;
-  return { notNow: strings(r.notNow), ...(notNowOn ? { notNowOn } : {}), auto: strings(r.auto), declined: strings(r.declined) };
+  const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const on = typeof r.declinedOn === 'object' && r.declinedOn !== null && !Array.isArray(r.declinedOn)
+    ? Object.fromEntries(Object.entries(r.declinedOn as Record<string, unknown>).filter((e): e is [string, string] => isDay(e[1])))
+    : {};
+  return { notNow: strings(r.notNow), ...(notNowOn ? { notNowOn } : {}), auto: strings(r.auto), declined: strings(r.declined), ...(Object.keys(on).length > 0 ? { declinedOn: on } : {}) };
 }
 
 // De sleutel in de meta-opslag; gaat mee in de back-up zoals de antwoorden op adviezen.
 export const MISSED_MEMORY_KEY = 'missedTraining';
 
 export const declinedKey = (logId: string, sessionId: string) => `${logId}|${sessionId}`;
+
+// De laatste dag waarop je Liever niet zei op een koppeling met deze training, of niets.
+export function lastDeclinedOn(sessionId: string, declinedOn: Readonly<Record<string, string>> | undefined): string | undefined {
+  return Object.entries(declinedOn ?? {}).filter(([key]) => key.endsWith(`|${sessionId}`)).map(([, day]) => day).sort().at(-1);
+}
 
 export interface MissedInput {
   plannedSessions: readonly PlannedSession[];
