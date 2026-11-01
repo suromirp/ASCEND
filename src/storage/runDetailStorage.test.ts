@@ -17,13 +17,14 @@ import { addDays, todayISO } from '../utils/dates';
 // kilometres on the log, and travelling in a backup unless you turned that off.
 
 const asFetch = (f: unknown) => f as unknown as typeof fetch;
-const day = addDays(todayISO(), -2);
+// The day is set in beforeEach, so a run that crosses midnight still uses one date.
+let day = addDays(todayISO(), -2);
 const route = fastStartTest({ position: true });
 
-const ACTIVITY: ExternalActivity = {
+const activityOn = (d: string): ExternalActivity => ({
   externalId: 'intervals.icu:i4711',
   source: 'garmin',
-  start: `${day}T08:12:03`,
+  start: `${d}T08:12:03`,
   kind: 'run',
   durationSec: 2290,
   distanceM: 6600,
@@ -31,7 +32,8 @@ const ACTIVITY: ExternalActivity = {
   treadmill: false,
   streamsAvailable: ['time', 'distance', 'heartRate', 'speed', 'altitude', 'cadence', 'position', 'power', 'stepLength', 'respiration', 'temperature'],
   otherStreams: ['smo2'],
-};
+});
+let ACTIVITY = activityOn(day);
 
 function logFor(extra: Partial<SessionLog> = {}): SessionLog {
   return {
@@ -50,9 +52,9 @@ function logFor(extra: Partial<SessionLog> = {}): SessionLog {
   };
 }
 
-const WEATHER = {
+const weatherOn = (d: string) => ({
   hourly: {
-    time: [`${day}T07:00`, `${day}T08:00`, `${day}T09:00`, `${day}T10:00`],
+    time: [`${d}T07:00`, `${d}T08:00`, `${d}T09:00`, `${d}T10:00`],
     temperature_2m: [9, 10, 12, 13],
     apparent_temperature: [7, 8, 11, 12],
     relative_humidity_2m: [85, 85, 80, 78],
@@ -61,7 +63,8 @@ const WEATHER = {
     wind_gusts_10m: [40, 40, 44, 44],
     wind_direction_10m: [270, 270, 270, 270],
   },
-};
+});
+let WEATHER = weatherOn(day);
 
 const INTERVALS = {
   id: 'i4711',
@@ -95,6 +98,9 @@ async function importEnvelope(payload: unknown) {
 }
 
 beforeEach(async () => {
+  day = addDays(todayISO(), -2);
+  ACTIVITY = activityOn(day);
+  WEATHER = weatherOn(day);
   forgetFailures();
   await wipeAllData();
   await saveConnection({ athleteId: 'i12345', apiKey: 'geheime-sleutel-0123' });
@@ -271,10 +277,24 @@ describe('an older run: filling in when its sheet opens', () => {
     // New session semantics: a hanging request is cut off by the limit with a visible outcome.
     await SessionLogsRepo.put(logFor({ id: 'log_3', externalId: 'intervals.icu:i99' }));
     await state([{ ...ACTIVITY, externalId: 'intervals.icu:i99' }]);
-    const slow = vi.fn(() => new Promise<Response>((resolve) => setTimeout(() => resolve(new Response('{}', { status: 500 })), 300)));
-    expect(await ensureRunDetail('log_3', { fetchImpl: asFetch(slow), timeoutMs: 50 })).toBe('timeout');
-    // Let the slow request finish, so it does not hold up the next test.
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    // A request that only ends when the test says so, so no real time decides the outcome.
+    let finish: (r: Response) => void = () => undefined;
+    const hanging = new Promise<Response>((resolve) => {
+      finish = resolve;
+    });
+    const slow = vi.fn(() => hanging);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const outcome = ensureRunDetail('log_3', { fetchImpl: asFetch(slow), timeoutMs: 50 });
+      await vi.waitFor(() => expect(slow).toHaveBeenCalled());
+      await vi.advanceTimersByTimeAsync(50);
+      expect(await outcome).toBe('timeout');
+    } finally {
+      vi.useRealTimers();
+    }
+    // Let the hanging request end, so nothing of it runs into the next test.
+    finish(new Response('{}', { status: 500 }));
+    await hanging;
     expect(ensureOutcomeText('timeout')).toContain('te lang');
     expect(ensureOutcomeText('ready')).toBeUndefined();
   });
