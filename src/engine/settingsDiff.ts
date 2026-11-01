@@ -20,6 +20,7 @@ import { bootGoalKm } from './bootBreakIn';
 import { resolveFigureSetting } from './figureSettings';
 import { resolveIntensityCounting } from './intensitySettings';
 import { resolveMotion } from './motionSettings';
+import { resolveQuoteLanguage } from './quoteSettings';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { resolveOverviews, type OverviewSettings } from './overviewSettings';
 import { DEFAULT_RUN_DETAIL_SCREEN, resolveRunInsight, type InsightTopicSwitch, type RunFormSwitch } from './runInsightSettings';
@@ -271,6 +272,12 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('kledingadvies', 'Kledingadvies', 'clothingAdvice'),
   overviewFlag('citaten', 'Citaat', 'completionMoment'),
   flag('geluid', 'Geluid', 'vandaag', 'introSoundEnabled', { resetTo: true }),
+  {
+    id: 'dagcitaat', title: 'Citaat op Vandaag', page: 'vandaag',
+    differs: (s) => resolveQuoteLanguage(s) !== 'en',
+    value: (s) => choiceShort('dagcitaat', resolveQuoteLanguage(s)),
+    reset: () => ({ quoteLanguage: undefined }),
+  },
   {
     id: 'beweging', title: 'Beweging', page: 'vandaag',
     differs: (s) => resolveMotion(s) !== 'full',

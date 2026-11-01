@@ -69,6 +69,7 @@ const everything: AppSettings = {
   waves: { length: 6, lightWeek: false },
   introSoundEnabled: false,
   motion: 'off',
+  quoteLanguage: 'nl',
   sky: 'night',
   skyNightFrom: '22:00',
   runInsight: { enabled: false, weather: false, chestStrap: false, topics: { efficiency: false, longDays: false, climbing: false, form: false }, detail: { show: false, patterns: false, advice: false, form: { cadence: false, stanceTimeMs: false, stepLengthM: false, oscillationMm: false, stanceBalanceLeftPct: true } } },

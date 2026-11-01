@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { quoteSourceLabel } from './quotes';
+import { QUOTE_LIBRARY } from '../data/quoteLibrary';
+import { dailyQuote, isEnglishQuote, quoteSourceLabel } from './quotes';
 
 describe('quoteSourceLabel', () => {
   it('zet de Hávamál-bron in het Nederlands', () => {
@@ -12,5 +13,21 @@ describe('quoteSourceLabel', () => {
   });
   it('valt terug op Bron', () => {
     expect(quoteSourceLabel(undefined)).toBe('Bron');
+  });
+});
+
+describe('het citaat van de dag', () => {
+  it('is in het Engels als dat gekozen is, elke dag van het jaar', () => {
+    for (let d = 1; d <= 28; d++) {
+      for (const m of ['01', '04', '07', '10']) expect(isEnglishQuote(dailyQuote(`2026-${m}-${String(d).padStart(2, '0')}`, 'en'))).toBe(true);
+    }
+  });
+  it('houdt dezelfde keuze zonder taal als voorheen', () => {
+    expect(dailyQuote('2026-11-01')).toEqual(dailyQuote('2026-11-01'));
+  });
+  it('kent Latijn en Grieks als niet Engels', () => {
+    expect(isEnglishQuote(QUOTE_LIBRARY.find((q) => q.id === 'Q025')!)).toBe(false);
+    expect(isEnglishQuote(QUOTE_LIBRARY.find((q) => q.id === 'Q057')!)).toBe(false);
+    expect(isEnglishQuote(QUOTE_LIBRARY.find((q) => q.id === 'Q004')!)).toBe(true);
   });
 });

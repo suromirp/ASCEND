@@ -29,6 +29,7 @@ import { shortGoalName } from './settingsStatus';
 import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { resolveMotion } from './motionSettings';
+import { resolveQuoteLanguage } from './quoteSettings';
 import { resolveReadinessWeighting } from './raceReadiness';
 import { resolveGrowthChoice, resolveLimitMargin } from '../data/goalGrowth';
 import { resolveBodyCheck } from './bodyCheckSettings';
@@ -681,6 +682,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('lucht', resolveSky(s).sky), ...(resolveSky(s).sky === 'auto' ? { sub: `Donker vanaf ${lower(choiceShort('luchtVanaf', resolveSky(s).nightFrom))}` } : {}) };
     case 'lucht-vanaf':
       return { value: choiceShort('luchtVanaf', resolveSky(s).nightFrom) };
+    case 'dagcitaat':
+      return { value: choiceShort('dagcitaat', resolveQuoteLanguage(s)), dim: resolveQuoteLanguage(s) === 'off' };
     case 'beweging':
       return { value: choiceShort('beweging', resolveMotion(s)) };
     case 'terugknop':

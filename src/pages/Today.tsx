@@ -63,6 +63,7 @@ import { buildSessionBrief } from '../engine/sessionBrief';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { wantsLogShortcut, withoutShortcut } from '../engine/shortcutAction';
+import { resolveQuoteLanguage } from '../engine/quoteSettings';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { goalTiming } from '../engine/goalRoute';
@@ -144,7 +145,8 @@ function TodayContent() {
   const showExportReminder = !!reminderReference && daysBetween(reminderReference, today) >= 7;
   const logsSinceBackup = settings.lastExportedAt ? sessionLogs.filter((l) => l.completedAt > settings.lastExportedAt!).length : sessionLogs.length;
 
-  const quote = dailyQuote(today);
+  const quoteLanguage = resolveQuoteLanguage(settings);
+  const quote = dailyQuote(today, quoteLanguage === 'off' ? undefined : quoteLanguage);
   // On a holiday day (engine/leave.ts) the empty day says so.
   const onHoliday = leaveLabelOn(today, leavePeriods)?.kind === 'off';
   // During and after the main goal nothing is planned (engine/programLayout.ts#planEndDay): say why.
@@ -441,7 +443,7 @@ function TodayContent() {
         {!primary && <NotFitLink plain />}
       </div>
 
-      <QuoteCard quote={quote} />
+      {quoteLanguage !== 'off' && <QuoteCard quote={quote} language={quoteLanguage} />}
 
       {loggingSession && loggingTemplate && (
         <ExerciseLogger
