@@ -77,6 +77,13 @@ screenshots en, bij een animatie, ook de stand met Beweging Uit. Wat er kaal of 
 Ronde 1, tegelijk:
 1. Zelf: het veiligheidsnet (tests in `.github/workflows/deploy.yml` voor de deploy) en CLAUDE.md bijwerken
    (Zonder doel, Kansen, Run in detail, ochtendkaart, tekstkaart, backlog, werkverdeling).
+2c. Sherpa (opus): de rustdag komt niet terug. Gevonden in de back-up van 1 november: een voorstel (TEST-RETRY,
+   28 oktober) haalde de rij Herstel op maandag 2 november weg om plaats te maken; de test en de lange duurloop
+   gingen daarna elders heen, maar de rustdag bleef weg (status skipped, lock van het voorstel). Week toont nu
+   "Vrij · niets gepland" op de vaste rustdag. Twee delen: (a) een lege dag op de vaste rustdag heet in Week
+   Rustdag ("je vaste rustdag"), puur weergave; (b) haalde een voorstel de rustdag weg en is de dag weer leeg,
+   dan komt de rij Herstel terug via een klein voorstel met Akkoord (of de bestaande terugzetregel, zie
+   engine/restDayProposal.ts en de week-regel REST-DAY). Met test op deze vorm en besluit.
 2b. Sherpa (opus): een vakantie of vrije periode bijwerken in Week (data, soort, notitie), in plaats van alleen
    Verwijderen. Een wijziging die de planning raakt is één voorstel met Akkoord dat het verschil laat zien
    (engine/leaveProposal.ts), met een eigen tik op de rij en een blad in de ASCEND-stijl. Met test en besluit.
