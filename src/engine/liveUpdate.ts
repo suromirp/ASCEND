@@ -37,6 +37,19 @@ export function parseAppVersion(raw: unknown): AppVersion | null {
   return ok ? { version: r.version as string, builtAt: r.builtAt as string, minNative: r.minNative as number, bundle: r.bundle as string, sha256: r.sha256 as string } : null;
 }
 
+// Een versie uit de toekomst zou elke volgende versie blokkeren; meer dan een dag vooruit is fout.
+export const MAX_FUTURE_MS = 24 * 60 * 60 * 1000;
+
+// Alleen een adres op GitHub Pages, via https, mag de app een nieuwe versie geven.
+export function isTrustedUpdateUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' && u.hostname.endsWith('.github.io') && u.username === '' && u.password === '';
+  } catch {
+    return false;
+  }
+}
+
 export type UpdateDecision =
   | { kind: 'none' }
   // Ophalen en klaarzetten voor de volgende start.
@@ -58,9 +71,12 @@ export function updateDecision(p: {
   downloaded: string[];
   // De basis van de site, met een / aan het eind.
   baseUrl: string;
+  // Nu, in milliseconden: een bouwtijd verder dan een dag vooruit wordt niet geloofd.
+  now: number;
 }): UpdateDecision {
   const m = p.manifest;
   if (!p.enabled || m.builtAt <= p.currentBuiltAt || p.blocked.includes(m.version)) return { kind: 'none' };
+  if (Date.parse(m.builtAt) > p.now + MAX_FUTURE_MS) return { kind: 'none' };
   if (m.minNative > p.nativeLevel) return { kind: 'needs-app', version: m.version };
   if (p.downloaded.includes(m.version)) return { kind: 'ready', bundleId: m.version };
   return { kind: 'download', bundleId: m.version, url: new URL(m.bundle, p.baseUrl).toString(), checksum: m.sha256 };

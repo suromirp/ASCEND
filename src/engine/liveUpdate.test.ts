@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nativeLevelFromVersionName, parseAppVersion, readyOutcome, updateDecision, type AppVersion } from './liveUpdate';
+import { isTrustedUpdateUrl, nativeLevelFromVersionName, parseAppVersion, readyOutcome, updateDecision, type AppVersion } from './liveUpdate';
 
 // Een nagemaakt app-versie.json zoals de deploy-workflow het neerzet.
 const manifest: AppVersion = {
@@ -10,7 +10,7 @@ const manifest: AppVersion = {
   sha256: 'a'.repeat(64),
 };
 
-const base = { manifest, currentBuiltAt: '2026-10-30T08:00:00.000Z', nativeLevel: 1, enabled: true, blocked: [] as string[], downloaded: [] as string[], baseUrl: 'https://voorbeeld.test/ascend/' };
+const base = { manifest, currentBuiltAt: '2026-10-30T08:00:00.000Z', nativeLevel: 1, enabled: true, blocked: [] as string[], downloaded: [] as string[], baseUrl: 'https://voorbeeld.test/ascend/', now: Date.parse('2026-11-01T12:00:00.000Z') };
 
 describe('app-versie.json lezen', () => {
   it('neemt een geldig bestand over', () => {
@@ -65,5 +65,20 @@ describe('native deel te oud', () => {
     expect(nativeLevelFromVersionName('1.57')).toBe(1);
     expect(nativeLevelFromVersionName('3.2')).toBe(3);
     expect(nativeLevelFromVersionName('rommel')).toBe(0);
+  });
+});
+
+describe('waar een update vandaan mag komen', () => {
+  it('alleen https op github.io', () => {
+    expect(isTrustedUpdateUrl('https://voorbeeld.github.io/ascend/')).toBe(true);
+    expect(isTrustedUpdateUrl('http://voorbeeld.github.io/ascend/')).toBe(false);
+    expect(isTrustedUpdateUrl('https://voorbeeld.github.io.elders.test/')).toBe(false);
+    expect(isTrustedUpdateUrl('https://elders.test/ascend/')).toBe(false);
+    expect(isTrustedUpdateUrl('https://iemand:geheim@voorbeeld.github.io/')).toBe(false);
+    expect(isTrustedUpdateUrl('')).toBe(false);
+  });
+  it('een bouwtijd meer dan een dag vooruit wordt niet geloofd', () => {
+    expect(updateDecision({ ...base, manifest: { ...manifest, builtAt: '2026-11-03T12:00:00.000Z' } })).toEqual({ kind: 'none' });
+    expect(updateDecision({ ...base, manifest: { ...manifest, builtAt: '2026-11-02T11:00:00.000Z' } }).kind).toBe('download');
   });
 });

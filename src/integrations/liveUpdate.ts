@@ -7,7 +7,7 @@
 // service worker (utils/swUpdate.ts).
 
 import { Capacitor } from '@capacitor/core';
-import { nativeLevelFromVersionName, parseAppVersion, readyOutcome, updateDecision, type UpdateDecision } from '../engine/liveUpdate';
+import { isTrustedUpdateUrl, nativeLevelFromVersionName, parseAppVersion, readyOutcome, updateDecision, type UpdateDecision } from '../engine/liveUpdate';
 import { withTimeout } from '../utils/withTimeout';
 
 export interface LiveUpdatePort {
@@ -70,6 +70,7 @@ function androidPort(updateUrl: string, releasesUrl: string, builtAt: string): L
           blocked: blocked.bundleIds,
           downloaded: downloaded.bundleIds,
           baseUrl: base,
+          now: Date.now(),
         });
         if (decision.kind === 'download') {
           await withTimeout(p.downloadBundle({ bundleId: decision.bundleId, url: decision.url, checksum: decision.checksum, artifactType: 'zip' }), DOWNLOAD_MS);
@@ -92,7 +93,8 @@ export function liveUpdatePort(): LiveUpdatePort {
   const updateUrl = typeof __UPDATE_URL__ === 'string' ? __UPDATE_URL__ : '';
   const releasesUrl = typeof __RELEASES_URL__ === 'string' ? __RELEASES_URL__ : '';
   const builtAt = typeof __BUILD_TIME__ === 'string' ? __BUILD_TIME__ : '';
-  current = Capacitor.getPlatform() === 'android' && updateUrl && builtAt ? androidPort(updateUrl, releasesUrl, builtAt) : browserPort;
+  // Alleen https op GitHub Pages; een ander adres betekent: niet bijwerken.
+  current = Capacitor.getPlatform() === 'android' && isTrustedUpdateUrl(updateUrl) && builtAt ? androidPort(updateUrl, releasesUrl, builtAt) : browserPort;
   return current;
 }
 
