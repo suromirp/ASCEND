@@ -191,6 +191,12 @@ Ronde 1, tegelijk:
       ("De coach op Ascend telt hetzelfde", "Dagen zonder training tellen niet mee...") die bij elk bezoek
       herhaald worden; "0 trainingsdagen" groot in beeld werkt ontmoedigend; drie tellingen van bijna hetzelfde
       naast elkaar. Neem deze kaart als eerste voorbeeld in het rapport en geef een mooier, rustiger voorstel.
+      Tweede voorbeeld (1 november, screenshot Weekterugblik "Je week", week van 26 oktober): "mag ook beter". Wat
+      opvalt: een lange lijst kopjes onder elkaar (Advies, Blijven liggen, Wat ASCEND aanpaste, Je antwoord deze
+      week) met losse zinnen; "gem. zwaarte 9" is jargon; "Wat ASCEND aanpaste" toont oude verschuivingen met pijlen
+      die je niet meer helpen; de terugblik op zondag zegt al "2/5 gedaan" en "blijven liggen" terwijl er vandaag
+      nog twee trainingen staan. Voorstel gevraagd voor een korte, mooie terugblik: eerst het beeld van de week in
+      één oogopslag, dan hoogstens drie dingen die ertoe doen, en de rest achter een tik.
    b. Instellingen: alle acht groepen en de bladen eronder. Wat is logisch ingedeeld, wat zoek je en vind je niet,
       wat kan samen of weg, wat mist een goede uitleg.
    c. Forge, het trainingsscherm (wens van de eigenaar, 1 november, met screenshots): "heel veel opties, ik zoek
