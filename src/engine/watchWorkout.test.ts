@@ -1,12 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { addDays } from '../utils/dates';
+import { addDays, formatWeekdayDayMonthNL } from '../utils/dates';
 import { racePaces } from './racePaces';
 import type { PlannedSession, SessionLog } from '../models/training';
 import {
   buildWatchWorkout,
   externalIdFor,
-  shortDateNL,
   WATCH_NAME_PREFIXES,
   type WatchNamePrefix,
   formatStepDuration,
@@ -185,7 +184,7 @@ describe('the ASCEND prefix', () => {
     const w = build('tpl_tempo_run', true, {}, 'short')!;
     expect(w.name).toBe(`ASC ${tpl('tpl_tempo_run').name}`);
     expect(WATCH_NAME_PREFIXES.short).toBe('ASC ');
-    expect(w.description.split('\n')[0]).toBe(`Gepland door ASCEND voor ${shortDateNL(day)}`);
+    expect(w.description.split('\n')[0]).toBe(`Gepland door ASCEND voor ${formatWeekdayDayMonthNL(day)}`);
     expect(w.description.split('\n')[1]).toBe('');
     expect(w.description).not.toMatch(/[\u2013\u2014]/);
   });
@@ -216,8 +215,8 @@ describe('the ASCEND prefix', () => {
   });
 
   it('writes the date the same way everywhere', () => {
-    expect(shortDateNL('2026-10-24')).toBe('za 24 okt');
-    expect(shortDateNL('2027-03-01')).toBe('ma 1 mrt');
+    expect(formatWeekdayDayMonthNL('2026-10-24')).toBe('za 24 okt');
+    expect(formatWeekdayDayMonthNL('2027-03-01')).toBe('ma 1 mrt');
   });
 });
 

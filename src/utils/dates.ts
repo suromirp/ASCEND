@@ -99,11 +99,27 @@ export function formatDateNL(iso: string): string {
 // Kort, met de dag ervoor: "ma 8 feb", en het jaartal alleen als het niet dit
 // jaar is ("ma 8 feb 2027"), dezelfde regel als formatDateNL.
 const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-// "24 okt", en het jaartal alleen als het niet dit jaar is.
-export function formatShortDateNL(iso: string): string {
-  const d = parseISODate(iso);
-  const sameYear = d.getFullYear() === parseISODate(todayISO()).getFullYear();
-  return `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}${sameYear ? '' : ` ${d.getFullYear()}`}`;
+// "24 okt", en het jaartal alleen als het niet het jaar van `today` is
+// (standaard dit jaar).
+export function formatShortDateNL(iso: string, today: string = todayISO()): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d} ${SHORT_MONTHS[m - 1]}${String(y) === today.slice(0, 4) ? '' : ` ${y}`}`;
+}
+
+// "24 okt", nooit met jaartal: voor een tekst die elk jaar hetzelfde moet zijn
+// (een vingerafdruk, een as van een grafiek).
+export function formatDayMonthNL(iso: string): string {
+  return `${Number(iso.slice(8, 10))} ${SHORT_MONTHS[Number(iso.slice(5, 7)) - 1]}`;
+}
+
+// "za 24 okt", nooit met jaartal.
+export function formatWeekdayDayMonthNL(iso: string): string {
+  return `${weekdayShortNL(iso).toLowerCase()} ${formatDayMonthNL(iso)}`;
+}
+
+// "za 24 oktober", met het jaar erbij als het niet dit jaar is (zie formatDateNL).
+export function formatWeekdayDateNL(iso: string): string {
+  return `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
 }
 
 export function formatShortDayNL(iso: string): string {

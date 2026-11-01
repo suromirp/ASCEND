@@ -58,7 +58,7 @@ import { quickButtonsOn, swipeDeleteOn } from './forgeQuickActions';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { formatNumberNL } from '../utils/number';
-import { formatDateNL, localDateOf } from '../utils/dates';
+import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
 export const SUB_MAX_LENGTH = 40;
@@ -163,14 +163,12 @@ function noticeState(f: SettingsFacts): { on: boolean; support: NoticeSupport } 
 
 // ---- hulpjes -----------------------------------------------------------------
 
-const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
 const LONG_MONTHS = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
 const WEEKDAYS = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
 const WEEKDAYS_SHORT = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
 const dayOf = (iso: string) => Number(iso.slice(8, 10));
 const monthIndex = (iso: string) => Number(iso.slice(5, 7)) - 1;
-export const shortDate = (iso: string): string => `${dayOf(iso)} ${SHORT_MONTHS[monthIndex(iso)]}`;
 export const longDate = (iso: string): string => `${dayOf(iso)} ${LONG_MONTHS[monthIndex(iso)]}`;
 
 const num = (n: number, decimals = 2) => formatNumberNL(n, decimals);
@@ -216,7 +214,7 @@ function durationsValue(f: SettingsFacts): { value: string; auto: boolean } | un
 }
 
 function weightWords(w: NonNullable<SettingsFacts['weight']>): string {
-  return `${w.source === 'macrofactor' ? 'MacroFactor' : 'Zelf ingevuld'}, ${shortDate(w.date)}`;
+  return `${w.source === 'macrofactor' ? 'MacroFactor' : 'Zelf ingevuld'}, ${formatDayMonthNL(w.date)}`;
 }
 
 function clothingValue(f: SettingsFacts): { value: string; auto: boolean } {
@@ -369,7 +367,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
 
     // Doel en tochten
     case 'doelen':
-      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${shortDate(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' };
+      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${formatDayMonthNL(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' };
     case 'programma':
       return f.position
         ? { value: `Week ${f.position.weekInProgram} van ${f.position.totalWeeks}`, sub: f.goal ? `${capitalize(lower(f.position.phaseName))}, teruggerekend vanaf je doel` : capitalize(lower(f.position.phaseName)) }
@@ -738,7 +736,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showWatchStatus !== false && s.showWatchStatusOnWeek !== false };
     case 'macrofactor':
       return f.macroFactor?.readAt
-        ? { title: 'Laatste export', value: shortDate(localDateOf(f.macroFactor.readAt)) }
+        ? { title: 'Laatste export', value: formatDayMonthNL(localDateOf(f.macroFactor.readAt)) }
         : { title: 'Export inlezen', value: 'Nog niet', dim: true, sub: 'Kracht en gewicht uit MacroFactor' };
     case 'macrofactor-leidend':
       return { checked: f.macroFactor?.leads !== false };
@@ -868,7 +866,7 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
       if (!garmin && !mf) return { value: 'Geen', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' };
       const parts = [
         garmin ? `Garmin${f.watch?.syncedAt ? ` om ${clock(f.watch.syncedAt)}` : ''}` : null,
-        mf && f.macroFactor?.readAt ? `MacroFactor ${shortDate(localDateOf(f.macroFactor.readAt))}` : null,
+        mf && f.macroFactor?.readAt ? `MacroFactor ${formatDayMonthNL(localDateOf(f.macroFactor.readAt))}` : null,
       ].filter((p): p is string => p !== null);
       return garmin ? { value: 'Verbonden', dot: 'ok', sub: parts.join(', ') } : { value: 'MacroFactor', sub: parts.join(', ') };
     }

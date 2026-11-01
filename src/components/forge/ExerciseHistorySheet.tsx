@@ -3,11 +3,12 @@
 // met de datum, de zwaarste set, het volume en de 1RM van ASCEND en die van
 // MacroFactor als die er is. Het rekenwerk staat in engine/forgeHistory.ts.
 
+import { formatShortDateNL } from '../../utils/dates';
 import { useMemo } from 'react';
 import { ExerciseChart } from './ExerciseChart';
 import { Sheet } from '../settings/Sheet';
 import { historyRows, isRepsBased } from '../../engine/forgeHistory';
-import { repsLabel, shortDateNL, topSetText } from '../../engine/forgeText';
+import { repsLabel, topSetText } from '../../engine/forgeText';
 import type { ExerciseView } from '../../engine/strengthHistory';
 import type { OneRmView } from '../../engine/strengthSettings';
 import type { OneRmReading } from '../../models/metrics';
@@ -43,7 +44,7 @@ export function ExerciseHistorySheet({
     <Sheet
       eyebrow="Geschiedenis"
       title={history.name}
-      line={rows.length > 0 ? `${rows.length} ${rows.length === 1 ? 'training' : 'trainingen'}, van ${shortDateNL(oldest.date, today)} tot ${shortDateNL(newest.date, today)}.` : undefined}
+      line={rows.length > 0 ? `${rows.length} ${rows.length === 1 ? 'training' : 'trainingen'}, van ${formatShortDateNL(oldest.date, today)} tot ${formatShortDateNL(newest.date, today)}.` : undefined}
       onClose={onClose}
     >
       <div className="flex flex-col gap-4 pb-4">
@@ -56,7 +57,7 @@ export function ExerciseHistorySheet({
               <div key={r.logId} className="flex flex-col gap-1 border-t py-3" style={{ borderColor: 'var(--color-card-border)' }}>
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="min-w-0">
-                    <span className="block font-sans text-sm font-semibold tabular-nums" style={{ color: 'var(--color-ink)' }}>{shortDateNL(r.date, today)}</span>
+                    <span className="block font-sans text-sm font-semibold tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatShortDateNL(r.date, today)}</span>
                     <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{r.trainingName}</span>
                   </span>
                   {top && (

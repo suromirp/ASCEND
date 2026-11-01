@@ -75,10 +75,3 @@ export function deltaText(delta: number, kind: ValueKind, exercise: Exercise | u
   return signedKg(delta);
 }
 
-const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-
-// "12 okt", met het jaar erbij als het niet het jaar van `today` is ("12 okt 2025").
-export function shortDateNL(iso: string, today: string): string {
-  const [y, m, d] = iso.split('-').map(Number);
-  return `${d} ${SHORT_MONTHS[m - 1]}${String(y) === today.slice(0, 4) ? '' : ` ${y}`}`;
-}

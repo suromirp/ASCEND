@@ -7,7 +7,7 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
-import { addDays, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
+import { addDays, formatDayMonthNL, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_TAPER, progressionTarget, waveWeek } from './programLayout';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
@@ -44,11 +44,6 @@ export interface SeasonPhase {
 const WAVE_LABEL: Record<number, string> = { 1: 'Wennen', 2: 'Opbouw', 3: 'Zwaarste week', 4: 'Rustweek' };
 const SATURDAY = ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals', 'tpl_hike_day_one'];
 const QUALITY = ['tpl_tempo_run', 'tpl_intervals', 'tpl_hills_descent'];
-
-function shortDate(iso: string): string {
-  const months = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-  return `${Number(iso.slice(8, 10))} ${months[Number(iso.slice(5, 7)) - 1]}`;
-}
 
 function range(values: number[], unit: string): string | undefined {
   if (values.length === 0) return undefined;
@@ -106,11 +101,11 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
         if (s.scheduledDate < today && !logged.has(s.id)) continue;
 
         if (hasRole(t, 'race')) {
-          items.push({ label: `${t.name} op ${shortDate(s.scheduledDate)}`, kind: 'race' });
-          races.push(shortDate(s.scheduledDate));
+          items.push({ label: `${t.name} op ${formatDayMonthNL(s.scheduledDate)}`, kind: 'race' });
+          races.push(formatDayMonthNL(s.scheduledDate));
         } else if (hasRole(t, 'test')) {
-          items.push({ label: `Testloop 5 km, ${shortDate(s.scheduledDate)}`, kind: 'test' });
-          tests.push(shortDate(s.scheduledDate));
+          items.push({ label: `Testloop 5 km, ${formatDayMonthNL(s.scheduledDate)}`, kind: 'test' });
+          tests.push(formatDayMonthNL(s.scheduledDate));
         } else if (hasRole(t, 'long')) {
           const step = progressionTarget(t, program, s.scheduledDate)?.step;
           const extra = t.id === 'tpl_mountain_hike' && step ? `, ${step.elevationGainM ?? 0} m omhoog, ${step.backpackKg ?? 0} kg` : '';
@@ -125,7 +120,7 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
           items.push({ label: `Extra: ${t.name}`, kind: 'extra' });
         }
         if (SATURDAY.includes(t.id)) saturdayNames.set(t.name, (saturdayNames.get(t.name) ?? 0) + 1);
-        if (t.id === 'tpl_tempo_run' && !blockFrom) blockFrom = shortDate(weekStart);
+        if (t.id === 'tpl_tempo_run' && !blockFrom) blockFrom = formatDayMonthNL(weekStart);
       }
 
       weeks.push({

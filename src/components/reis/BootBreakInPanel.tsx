@@ -4,7 +4,7 @@ import { formatNumberNL } from '../../utils/number';
 import { todayISO } from '../../utils/dates';
 import { SecondaryButton, Eyebrow } from '../ui';
 import { TextButton } from '../TextButton';
-import { shortDateNL } from './format';
+import { formatDayMonthNL } from '../../utils/dates';
 
 // Bij de taak "schoenen": sinds wanneer je de nieuwe bergschoenen draagt, hoeveel
 // ASCEND er sindsdien telde en of dat op tijd is. De berekening staat in
@@ -23,7 +23,7 @@ export function BootBreakInPanel({ status, boots, onSave }: { status: BootBreakI
       <p className="text-sm leading-snug" style={{ color: status.kind === 'late' ? 'var(--color-warning)' : 'var(--color-ink)' }}>{status.line}</p>
       {boots && (
         <p className="text-xs leading-relaxed tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-          Sinds {shortDateNL(boots.since)}. {status.detail ? `${status.detail}. ` : ''}Stijging {formatNumberNL(Math.round(status.gainM), 0)} m. Alleen wandelingen en tochten tellen. Hardloopschoenen houdt Garmin bij.
+          Sinds {formatDayMonthNL(boots.since)}. {status.detail ? `${status.detail}. ` : ''}Stijging {formatNumberNL(Math.round(status.gainM), 0)} m. Alleen wandelingen en tochten tellen. Hardloopschoenen houdt Garmin bij.
         </p>
       )}
       {editing ? (

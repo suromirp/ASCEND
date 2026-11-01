@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { formatDateNL, formatHoursMinutesNL, formatShortDayNL } from './dates';
+import { formatDateNL, formatDayMonthNL, formatHoursMinutesNL, formatShortDateNL, formatShortDayNL, formatWeekdayDateNL, formatWeekdayDayMonthNL } from './dates';
 
 // Lookout punt 6: overal dezelfde regel voor het jaartal, alleen als het niet
 // dit jaar is.
@@ -27,5 +27,25 @@ describe('formatHoursMinutesNL', () => {
     expect(formatHoursMinutesNL(119.6)).toBe('2 uur');
     expect(formatHoursMinutesNL(0)).toBe('0 min');
     expect(formatHoursMinutesNL(-5)).toBe('0 min');
+  });
+});
+
+describe('korte datum', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('dag en maand, het jaar alleen als het een ander jaar is dan dat van today', () => {
+    expect(formatShortDateNL('2026-10-05', '2026-10-24')).toBe('5 okt');
+    expect(formatShortDateNL('2025-12-31', '2026-10-24')).toBe('31 dec 2025');
+  });
+  it('zonder jaartal, ook als het een ander jaar is', () => {
+    expect(formatDayMonthNL('2027-03-01')).toBe('1 mrt');
+    expect(formatWeekdayDayMonthNL('2026-10-24')).toBe('za 24 okt');
+    expect(formatWeekdayDayMonthNL('2027-03-01')).toBe('ma 1 mrt');
+  });
+  it('met weekdag en de maand voluit', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-24T12:00:00'));
+    expect(formatWeekdayDateNL('2026-11-03')).toBe('di 3 november');
+    expect(formatWeekdayDateNL('2027-02-08')).toBe('ma 8 februari 2027');
   });
 });

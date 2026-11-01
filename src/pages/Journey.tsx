@@ -10,7 +10,7 @@ import { BootBreakInPanel } from '../components/reis/BootBreakInPanel';
 import { JourneyTaskSheet } from '../components/reis/JourneyTaskSheet';
 import { useJourney } from '../components/reis/useJourney';
 import { usePackList } from '../components/reis/usePackList';
-import { shortDateNL } from '../components/reis/format';
+import { formatDayMonthNL } from '../utils/dates';
 import { JOURNEY_TASKS } from '../data/journeyTasks';
 import { journeyTimeline, journeyWeeksLeft, type TimelineTask } from '../engine/journey';
 import { baseWeightGrams, formatKg, packProgress } from '../engine/packList';
@@ -21,10 +21,10 @@ import { MIN_BREAKIN_WEEKS, type BootBreakInStatus } from '../engine/bootBreakIn
 function rowMeta(row: TimelineTask, boots?: BootBreakInStatus): string {
   if (row.task.id === 'schoenen' && boots && (boots.kind === 'busy' || boots.kind === 'late') && row.status !== 'done') return boots.kind === 'late' ? `te laat voor ${MIN_BREAKIN_WEEKS} weken` : boots.line;
   if (row.status === 'done' && row.derived) return row.derived.toLowerCase();
-  if (row.status === 'done') return row.doneOn ? `gedaan op ${shortDateNL(row.doneOn)}` : 'gedaan';
-  if (row.status === 'later') return `vanaf ${shortDateNL(row.opensOn)}`;
+  if (row.status === 'done') return row.doneOn ? `gedaan op ${formatDayMonthNL(row.doneOn)}` : 'gedaan';
+  if (row.status === 'later') return `vanaf ${formatDayMonthNL(row.opensOn)}`;
   if (row.status === 'lapsed') return 'nog open';
-  return `tot en met ${shortDateNL(row.closesOn)}`;
+  return `tot en met ${formatDayMonthNL(row.closesOn)}`;
 }
 
 export function JourneyPage() {

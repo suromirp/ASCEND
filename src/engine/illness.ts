@@ -19,7 +19,7 @@ import type { IllnessEpisode, IllnessKind } from '../models/illness';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import { heavyAxes } from './scheduler';
 import { resolveEffectiveStressProfile } from './stressProfile';
-import { addDays, daysBetween, formatDateNL, weekdayShortNL } from '../utils/dates';
+import { addDays, daysBetween, formatWeekdayDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 
 export const ILLNESS_LABEL: Record<IllnessKind, string> = {
@@ -94,10 +94,6 @@ export function recoveryDurationAdjustments(episodes: IllnessEpisode[] | undefin
     .map((e) => ({ from: e.endDate!, until: addDays(e.endDate!, rampDays(e, e.endDate!)), factor: RETURN_VOLUME_FACTOR }));
 }
 
-function shortDate(iso: string): string {
-  return `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
-}
-
 function proposal(trigger: PlanChangeProposal['trigger'], issue: string, changes: PlanChangeItem[], consequences: string, explanation: string): PlanChangeProposal {
   return { id: makeId('planchange'), trigger, issue, changes, alternatives: [], consequences, explanation, createdAt: new Date().toISOString() };
 }
@@ -126,8 +122,8 @@ export function planIllnessStart(
       plannedSessionId: s.id,
       action: 'remove' as const,
       reason: kind === 'above_neck'
-        ? `Verkouden: niets zwaars op ${shortDate(s.scheduledDate)}.`
-        : `Ziek: rust op ${shortDate(s.scheduledDate)}.`,
+        ? `Verkouden: niets zwaars op ${formatWeekdayDateNL(s.scheduledDate)}.`
+        : `Ziek: rust op ${formatWeekdayDateNL(s.scheduledDate)}.`,
       generatedBy: SOURCE,
     }));
   return proposal(
@@ -157,11 +153,11 @@ export function planIllnessEnd(
 
   const missedWhileIll = open
     .filter((s) => s.scheduledDate >= episode.startDate && s.scheduledDate < endDate)
-    .map((s): PlanChangeItem => ({ plannedSessionId: s.id, action: 'remove', reason: `Niet gedaan tijdens ziekte (${shortDate(s.scheduledDate)}), niet inhalen.`, generatedBy: SOURCE }));
+    .map((s): PlanChangeItem => ({ plannedSessionId: s.id, action: 'remove', reason: `Niet gedaan tijdens ziekte (${formatWeekdayDateNL(s.scheduledDate)}), niet inhalen.`, generatedBy: SOURCE }));
   const heavyInRamp = open
     .filter((s) => s.scheduledDate >= endDate && s.scheduledDate < ramp.heavyFrom)
     .filter((s) => { const t = templateById.get(s.templateId); return !!t && isHeavySession(t); })
-    .map((s): PlanChangeItem => ({ plannedSessionId: s.id, action: 'remove', reason: `Rustig opbouwen na ziekte: nog niets zwaars op ${shortDate(s.scheduledDate)}.`, generatedBy: SOURCE }));
+    .map((s): PlanChangeItem => ({ plannedSessionId: s.id, action: 'remove', reason: `Rustig opbouwen na ziekte: nog niets zwaars op ${formatWeekdayDateNL(s.scheduledDate)}.`, generatedBy: SOURCE }));
 
   return {
     ramp,
@@ -169,7 +165,7 @@ export function planIllnessEnd(
       'illness_resolved',
       'Weer beter: rustig opbouwen',
       [...missedWhileIll, ...heavyInRamp],
-      `Tot en met ${shortDate(ramp.until)} bouw je rustig op: je trainingen zijn ongeveer een kwart korter en rustiger, zware trainingen pas weer vanaf ${shortDate(ramp.heavyFrom)}. Daarna gaat je schema gewoon verder.`,
+      `Tot en met ${formatWeekdayDateNL(ramp.until)} bouw je rustig op: je trainingen zijn ongeveer een kwart korter en rustiger, zware trainingen pas weer vanaf ${formatWeekdayDateNL(ramp.heavyFrom)}. Daarna gaat je schema gewoon verder.`,
       'Na ziekte bouw je in ongeveer 1 tot 2 dagen per zieke dag weer op. Gemiste trainingen worden niet ingehaald.',
     ),
   };

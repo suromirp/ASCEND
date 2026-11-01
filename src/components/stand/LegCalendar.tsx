@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { LegDay } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow } from '../ui';
-import { dayShort } from './chartParts';
+import { formatWeekdayDayMonthNL } from '../../utils/dates';
 
 // Je stand → leg calendar: what each day's training puts into your legs,
 // four weeks back and the week ahead. Amber, the colour of leg days; brighter
@@ -37,7 +37,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
             <button
               key={d.date}
               onClick={() => setSelected(i)}
-              aria-label={`${dayShort(d.date)}: ${LEVEL_WORD[d.level]}${d.names.length ? `, ${d.names.join(', ')}` : ''}`}
+              aria-label={`${formatWeekdayDayMonthNL(d.date)}: ${LEVEL_WORD[d.level]}${d.names.length ? `, ${d.names.join(', ')}` : ''}`}
               aria-pressed={i === selected}
               className="relative h-11 min-w-0 rounded-md"
               style={{
@@ -72,7 +72,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
       {day && (
         <div className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }} aria-live="polite">
           <p>
-            <span className="font-medium">{day.date === today ? 'Vandaag' : dayShort(day.date)}: </span>
+            <span className="font-medium">{day.date === today ? 'Vandaag' : formatWeekdayDayMonthNL(day.date)}: </span>
             {day.names.length ? <>{LEVEL_WORD[day.level]}{day.planned ? ', gepland' : ''} <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>({formatNumberNL(day.points, 0)} beenpunten)</span></> : 'geen training'}
           </p>
           {day.names.length > 0 && <p style={{ color: 'var(--color-ink-dim)' }}>{day.names.join(' · ')}</p>}
