@@ -215,8 +215,29 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
     let nota = '';
     if (s.actie) { try { await s.actie(o.page); } catch (e) { nota = `[niet beschikbaar: ${e.message}]\n\n`; } }
     const tekst = nota + await stabiel(o.page);
+    // Breedte: past het scherm in het venster? Gemeten op 390 px en op de smalle telefoons 360 en 320 px. Alleen bij een
+    // overschrijding komt er een regel bij (de invariant "geen scherm breder dan het venster" in invarianten.mjs leest
+    // die), zodat een goed scherm niets verandert in de kaart.
+    const meetBreedte = () => o.page.evaluate(() => {
+      const w = innerWidth;
+      const scroller = document.getElementById('app-scroll');
+      const breedste = Math.max(document.documentElement.scrollWidth, scroller ? scroller.scrollWidth : 0);
+      if (breedste <= w + 1) return null;
+      const dader = [...document.querySelectorAll('body *')].filter((e) => !e.closest('nav') && e.getBoundingClientRect().width > 0 && e.getBoundingClientRect().right > w + 1)
+        .sort((a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right)[0];
+      return { breedste, w, dader: dader ? `${dader.tagName.toLowerCase()} "${(dader.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40)}" tot ${Math.round(dader.getBoundingClientRect().right)} px` : 'onbekend' };
+    });
+    let breedteRegel = '';
+    const hoogteNu = o.page.viewportSize().height;
+    for (const breedte of [390, 360, 320]) {
+      if (breedte !== 390) { await o.page.setViewportSize({ width: breedte, height: hoogteNu }); await o.page.waitForTimeout(500); }
+      const breed = await meetBreedte();
+      if (breed) breedteRegel += `\n[te breed: ${breed.breedste} px in een venster van ${breed.w} px, het verst: ${breed.dader}]\n`;
+    }
+    await o.page.setViewportSize({ width: 390, height: hoogteNu });
+    await o.page.waitForTimeout(300);
     const fouten = o.errs.filter((e) => !/favicon|manifest|Service Worker/i.test(e)).map((e) => `[console: ${e.slice(0, 160)}]`);
-    const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.\n\n${tekst}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
+    const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.\n\n${tekst}${breedteRegel}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
     writeFileSync(join(uitMap, id + '.md'), md);
     if (fotoMap) return await volleAfdruk(o.page, join(fotoMap, id + '.png'), markeer);
     return false;

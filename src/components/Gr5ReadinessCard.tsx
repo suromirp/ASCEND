@@ -21,7 +21,7 @@ export function Gr5ReadinessCard({ readiness, title = 'Klaar voor de GR5', miles
             <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{title}</span>
             <span aria-hidden="true" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="whitespace-nowrap font-sans text-[56px] font-semibold leading-none tracking-[-0.04em] tabular-nums" style={{ color: 'var(--color-ink)' }}>
               <CountUp value={readiness.percent} />
               <span className="ml-0.5 text-[28px] tracking-normal">%</span>
@@ -34,7 +34,7 @@ export function Gr5ReadinessCard({ readiness, title = 'Klaar voor de GR5', miles
               <div key={m.key} className="flex flex-col gap-1.5">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                   <span className="whitespace-nowrap text-sm" style={{ color: 'var(--color-ink)' }}>{m.label}</span>
-                  <span className="ml-auto whitespace-nowrap text-sm font-semibold tabular-nums" style={{ color: 'var(--color-ink)' }}>{m.text}</span>
+                  <span className="ml-auto min-w-0 text-right text-sm font-semibold tabular-nums" style={{ color: 'var(--color-ink)' }}>{m.text}</span>
                 </div>
                 <Meter value={m.share} label={m.label} />
               </div>
