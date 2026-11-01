@@ -216,7 +216,12 @@ Ronde 3, alleen:
 
 Ronde 2b, naast ronde 2:
 10. Android-app met Capacitor, een grote feature van deze ronde: de configuratie, lokale meldingen, en een
-    GitHub Actions-workflow die een APK als artefact bouwt (de cloudsessie heeft geen Android SDK). Daarop de
+    GitHub Actions-workflow die een APK als artefact bouwt (de cloudsessie heeft geen Android SDK).
+    Meldingen moeten werken met het scherm uit en de app op de achtergrond, met trillen (instelbaar, volgens de
+    instelling Trillen): eerst het einde van de rusttijd in Forge (de klok loopt door als het scherm uit is en
+    je telefoon trilt en geeft een melding als de rust voorbij is), daarna de ochtendvraag en de weekmelding.
+    Gebruik daarvoor de lokale meldingen van Capacitor met een exacte tijd, en vraag de toestemming voor meldingen
+    pas op het moment dat je ze voor het eerst nodig hebt. Daarop de
     korte weekmelding op zondagavond. Daarna Health Connect als bron via de adapter in `src/integrations/`
     (dezelfde vormen als intervals.icu, met `source: 'health-connect'`; geen veld met een merknaam), met een
     instelling en een besluit. Agenda-planning komt pas daarna.

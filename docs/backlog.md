@@ -42,6 +42,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Android-app (Capacitor), als een van de grote nieuwe features van deze ronde. Lokale meldingen komen daarmee (een PWA zonder server kan geen melding sturen als de app dicht is).
 - De rustdag komt niet terug nadat een voorstel hem weghaalde en de dag weer leeg werd; Week toont dan "Vrij" op de vaste rustdag (ronde 1).
 - Een vakantie of vrije periode bijwerken in Week (data, soort, notitie), als voorstel met Akkoord (ronde 1).
+- Android-meldingen met het scherm uit en trillen: het einde van de rust in Forge, de ochtendvraag en de weekmelding (ronde 2b, bij de Android-app).
 - Health Connect als bron in de Android-app, via de adapter in `src/integrations/` (ronde 2b).
 - Gegevens en instellingen overzichtelijker: een ontwerprapport per gebied (Stand, Logboek, Ascend, Run in detail, Lichaam, terugblikken; en de acht groepen instellingen), daarna bouwen; een complete herinrichting van een tab mag.
 - Het citaat onderaan Vandaag standaard in het Engels, instelbaar (Engels, Nederlands, uit).
