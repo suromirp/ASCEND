@@ -34,6 +34,10 @@ bijgewerkt.
 - `deep-research` als een onderdeel nieuw onderzoek vraagt (bijvoorbeeld bij Kansen of de spierindex), in plaats
   van een losse Scout.
 - De eigen skills `werkverdeling`, `lookout` en `onderhoud` zoals altijd.
+- Plug-ins van het account (als een sessie ze laadt; op 1 november zag deze sessie ze niet): `frontend-design` en
+  `Design` (kritiek, toegankelijkheid, UX-teksten) bij de ontwerprapporten en elk nieuw scherm, naast de
+  ontwerptaal van ASCEND, die altijd voorgaat; `Engineering` als extra blik bij architectuur en het opsplitsen;
+  `Data` bij grafieken; `Product Management` bij het samenvoegen van de gebruikerstest tot een lijst.
 
 ## Zelfstandig, ook als de eigenaar slaapt
 
