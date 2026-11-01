@@ -140,6 +140,14 @@ Ronde 1, tegelijk:
    de hand is; open en in amber alleen als de gebruiker zelf een van die signalen meldde (bijvoorbeeld pijn die
    erger werd, of een plek die hij niet kan belasten). De inhoud blijft gelijk (zorgteksten blijven "kan helpen"),
    alleen de plek en de toon veranderen. Met screenshot op 360 en 390 px.
+2f. Sherpa (sonnet), met voorrang: Stand schuift zijwaarts (screenshot van de eigenaar, 1 november). De hele pagina
+   staat een stuk naar links, met rechts een donkere strook: iets op Stand is breder dan het scherm, waardoor je
+   horizontaal kunt vegen. Vermoedelijk de kaart "Klaar voor de GR5" (de chip "gelijk aan 4 weken geleden" naast
+   het grote getal, of een rij als "1 uur 8 min van 7 uur 55 min") of een grafiek. Zoek de echte boosdoener met de
+   kit (meet scrollWidth tegen clientWidth per element op 360 en 390 px, met zijn echte gegevens: lange
+   getallen), maak dat element passend (afbreken, kleiner of onder elkaar), en zet als vangnet `overflow-x: clip`
+   op de pagina-inhoud zodat een pagina nooit meer zijwaarts kan schuiven. Voeg een invariant aan de tekstkaart
+   toe: geen enkel scherm is breder dan het venster.
 2c. Sherpa (opus): de rustdag komt niet terug. Gevonden in de back-up van 1 november: een voorstel (TEST-RETRY,
    28 oktober) haalde de rij Herstel op maandag 2 november weg om plaats te maken; de test en de lange duurloop
    gingen daarna elders heen, maar de rustdag bleef weg (status skipped, lock van het voorstel). Week toont nu
