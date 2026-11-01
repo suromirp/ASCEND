@@ -116,6 +116,25 @@ describe('morningConsequence', () => {
     expect(c.line).toContain('De kaart Benen staat klaar voor');
   });
 
+  it('noemt bij twee trainingen eerst de test, ook als die later in de dag staat', () => {
+    const planned = [{ ...ps('b', 'tpl_upper_b', day), order: 0 }, { ...ps('t', 'tpl_test_run', day), order: 1 }];
+    const c = morningConsequence(entry('fris'), ctx(planned));
+    expect(c.kind).toBe('blijft');
+    expect(c.line).toBe('Testloop 5 km en Bovenlichaam B blijven staan.');
+    expect(c.summary).toBe('Benen fris. Testloop 5 km en Bovenlichaam B blijven staan.');
+  });
+
+  it('noemt bij twee trainingen zonder test de volgorde van de dag', () => {
+    const planned = [{ ...ps('e', 'tpl_easy_run', day), order: 1 }, { ...ps('b', 'tpl_upper_b', day), order: 0 }];
+    const c = morningConsequence(entry('fris'), ctx(planned));
+    expect(c.line).toBe('Bovenlichaam B en Rustige duurloop blijven staan.');
+  });
+
+  it('een lichter gevolg klopt ook met twee trainingen', () => {
+    const planned = [ps('t', 'tpl_test_run', day), { ...ps('b', 'tpl_upper_b', day), order: 1 }];
+    expect(morningConsequence(entry('stijf'), ctx(planned)).line).toBe('Testloop 5 km en Bovenlichaam B blijven staan, warm rustig in.');
+  });
+
   it('een herstelwandeling is een rustdag', () => {
     const c = morningConsequence(entry('fris'), ctx([ps('r', 'tpl_herstel', day)]));
     expect(c.kind).toBe('rustdag');
