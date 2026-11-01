@@ -852,7 +852,7 @@ export interface AppSettings {
   // (morningRule) and a hard session is planned today, one proposal with Akkoord to do it later. Absent = on.
   morningProposal?: boolean;
   // "Bergweer op hoogte" (engine/mountainWeather.ts): on a day of a tocht in the mountains or the snow with a highest
-  // point, and the day before, the weather at that height on Vandaag. Asks Open-Meteo with the same rounded place as
+  // point, while the weather follows your location, the weather at that height on Vandaag. Asks Open-Meteo with the same rounded place as
   // the forecast, at most once an hour. Absent = on. Optional and additive.
   mountainWeather?: boolean;
   // "Wennen aan warmte" (engine/heatAcclimation.ts): one line in the reisplanner in the last three weeks before

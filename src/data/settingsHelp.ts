@@ -568,9 +568,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Bergweer op hoogte',
     lead: 'In de bergen is het op de pas anders dan in het dal. Geef je bij een tocht in de bergen of de sneeuw het hoogste punt op, dan laat Vandaag het weer op die hoogte zien.',
     points: [
-      { head: 'Wat je ziet', text: 'op de dag voor je tocht en tijdens je tocht een regel als: op 2.500 m tussen 2 en 8 graden, windstoten tot 50 km per uur, kans op onweer in de middag, met het vriespunt en een verwijzing naar het officiële bergweer.' },
+      { head: 'Wat je ziet', text: 'op een dag van je tocht een regel als: op 2.500 m vandaag tussen 2 en 8 graden, windstoten tot 50 km per uur, kans op onweer in de middag, met het vriespunt en een verwijzing naar het officiële bergweer.' },
       { head: 'Alleen informatie', text: 'ASCEND zegt niet of je moet gaan; dat is vakwerk. Je planning verandert er niet door.' },
-      { head: 'Waar het vandaan komt', text: 'Open-Meteo, dezelfde bron en dezelfde afgeronde plek als je gewone weer, hoogstens eens per uur. Zet je weerplek dus op de plek van je tocht, of laat het weer je locatie volgen. Een weermodel rekent een bergkam grof uit.' },
+      { head: 'Waar het vandaan komt', text: 'Open-Meteo, dezelfde bron en dezelfde afgeronde plek als je gewone weer, hoogstens eens per uur. Daarom alleen als het weer je locatie volgt: dan is de plek van het weer de plek waar je bent. Een weermodel rekent een bergkam grof uit.' },
     ],
   },
   ochtendVoorstel: {

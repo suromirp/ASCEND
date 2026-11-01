@@ -1,5 +1,5 @@
-// ASCEND: Vandaag, onder de volgende tocht: het bergweer op de hoogte van je tocht, vandaag als hij
-// bezig is en de dag ervoor voor morgen (engine/mountainWeather.ts). Alleen informatie en een vaste
+// ASCEND: Vandaag, onder de volgende tocht: het bergweer op de hoogte van je tocht, alleen op een dag
+// van de tocht zelf en als het weer je locatie volgt (engine/mountainWeather.ts). Alleen informatie en een vaste
 // verwijzing naar het officiële bergweer; geen oordeel en geen knop die iets aan je planning doet.
 // Ophalen gaat via storage/mountainWeather.ts, met de plek van het gewone weer.
 
@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { MOUNTAIN_WEATHER_LINK, mountainTrekDay, mountainUpdatedLabel, mountainWeatherLine, type MountainWeatherLine } from '../engine/mountainWeather';
 import { signalOn } from '../engine/signalSettings';
+import { followsLocation } from '../engine/overviewSettings';
 import { refreshMountainWeather } from '../storage/mountainWeather';
 import { todayISO } from '../utils/dates';
 import { Card, Eyebrow } from './ui';
@@ -16,24 +17,23 @@ export function MountainWeatherCard() {
   const { leavePeriods, settings } = useAppData();
   const today = todayISO();
   const place = settings.homeLocation;
-  const day = signalOn(settings, 'mountainWeather') && place ? mountainTrekDay(leavePeriods, today) : undefined;
+  const day = signalOn(settings, 'mountainWeather') && place ? mountainTrekDay(leavePeriods, today, followsLocation(settings.overviews)) : undefined;
   const [shown, setShown] = useState<MountainWeatherLine | undefined>();
   const lat = place?.lat;
   const lon = place?.lon;
   const name = place?.name ?? '';
   const date = day?.date;
-  const when = day?.when;
   const height = day?.highestM;
   useEffect(() => {
-    if (lat === undefined || lon === undefined || !date || !when || !height) return;
+    if (lat === undefined || lon === undefined || !date || !height) return;
     let alive = true;
     void refreshMountainWeather({ name, lat, lon }, height).then((f) => {
-      if (alive) setShown(f ? mountainWeatherLine(f, date, when) : undefined);
+      if (alive) setShown(f ? mountainWeatherLine(f, date) : undefined);
     });
     return () => {
       alive = false;
     };
-  }, [lat, lon, name, date, when, height]);
+  }, [lat, lon, name, date, height]);
   if (!day || !shown) return null;
   return (
     <Card className="flex flex-col gap-2">

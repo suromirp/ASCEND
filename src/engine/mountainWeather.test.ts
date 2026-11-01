@@ -26,16 +26,19 @@ describe('de vraag aan Open-Meteo', () => {
 });
 
 describe('mountainTrekDay: wanneer er bergweer is', () => {
-  it('alleen bij een tocht in de bergen of de sneeuw met een hoogste punt, vandaag of morgen', () => {
+  it('alleen op een dag van een tocht in de bergen of de sneeuw met een hoogste punt, nooit de dag ervoor', () => {
     const t = trek('2027-07-02', '2027-07-05', 'mountain', 2500);
-    expect(mountainTrekDay([t], '2027-06-30')).toBeUndefined();
-    expect(mountainTrekDay([t], '2027-07-01')).toMatchObject({ date: '2027-07-02', when: 'morgen', highestM: 2500 });
-    expect(mountainTrekDay([t], '2027-07-03')).toMatchObject({ date: '2027-07-03', when: 'vandaag' });
-    expect(mountainTrekDay([t], '2027-07-05')).toMatchObject({ date: '2027-07-05', when: 'vandaag' });
-    expect(mountainTrekDay([t], '2027-07-06')).toBeUndefined();
-    expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'uneven_trail', 600)], '2027-07-03')).toBeUndefined();
-    expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'snow')], '2027-07-03')).toBeUndefined();
-    expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'snow', 1800)], '2027-07-03')).toMatchObject({ highestM: 1800 });
+    expect(mountainTrekDay([t], '2027-07-01', true)).toBeUndefined();
+    expect(mountainTrekDay([t], '2027-07-02', true)).toMatchObject({ date: '2027-07-02', highestM: 2500 });
+    expect(mountainTrekDay([t], '2027-07-05', true)).toMatchObject({ date: '2027-07-05' });
+    expect(mountainTrekDay([t], '2027-07-06', true)).toBeUndefined();
+    expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'uneven_trail', 600)], '2027-07-03', true)).toBeUndefined();
+    expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'snow')], '2027-07-03', true)).toBeUndefined();
+    expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'snow', 1800)], '2027-07-03', true)).toMatchObject({ highestM: 1800 });
+  });
+
+  it('alleen als het weer je locatie volgt: een vaste plek is meestal thuis', () => {
+    expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'mountain', 2500)], '2027-07-03', false)).toBeUndefined();
   });
 });
 
@@ -47,18 +50,18 @@ const forecast = (hs: MountainHour[]): MountainForecast => ({ fetchedAt: '2027-0
 describe('mountainWeatherLine: alleen informatie, geen oordeel', () => {
   it('noemt de temperatuur op hoogte, de windstoten, onweer in de middag en het vriespunt', () => {
     const f = forecast(hours('2027-07-02', (h) => ({ tempC: h < 12 ? 2 : 8, gustKmh: h === 15 ? 52 : 20, capeJkg: h === 15 ? 1400 : 100, freezingM: 3100 })));
-    const r = mountainWeatherLine(f, '2027-07-02', 'morgen')!;
-    expect(r.line).toBe('Op 2.500 m morgen tussen 2 en 8 graden, windstoten tot 52 km per uur, kans op onweer in de middag. Het vriespunt ligt rond 3.100 m.');
+    const r = mountainWeatherLine(f, '2027-07-02')!;
+    expect(r.line).toBe('Op 2.500 m vandaag tussen 2 en 8 graden, windstoten tot 52 km per uur, kans op onweer in de middag. Het vriespunt ligt rond 3.100 m.');
     expect(r.line).not.toMatch(/ga niet|gevaarlijk|veilig/i);
   });
 
   it('zegt rond bij weinig verschil en noemt geen onweer als het er niet is', () => {
     const f = forecast(hours('2027-07-02', () => ({ tempC: 4, gustKmh: 25 })));
-    expect(mountainWeatherLine(f, '2027-07-02', 'vandaag')!.line).toBe('Op 2.500 m vandaag rond 4 graden, windstoten tot 25 km per uur.');
+    expect(mountainWeatherLine(f, '2027-07-02')!.line).toBe('Op 2.500 m vandaag rond 4 graden, windstoten tot 25 km per uur.');
   });
 
   it('zegt niets zonder uren voor die dag', () => {
-    expect(mountainWeatherLine(forecast(hours('2027-07-05', () => ({}))), '2027-07-02', 'morgen')).toBeUndefined();
+    expect(mountainWeatherLine(forecast(hours('2027-07-05', () => ({}))), '2027-07-02')).toBeUndefined();
   });
 
   it('heeft een vaste verwijzing naar het officiële bergweer', () => {

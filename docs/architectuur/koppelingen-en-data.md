@@ -46,6 +46,6 @@ a GR5 stage and a usual day of the main goal as a band of hours on that pace nex
 test (`engine/paceCurve.ts`, reads the test of `pacesFromLogs`, changes no pace), a line about getting used to heat
 before a summer departure (`engine/heatAcclimation.ts`), mountain weather at the highest point of a tocht
 (`engine/mountainWeather.ts`, `storage/mountainWeather.ts`, `TrekDetails.highestM`; the same rounded place and source
-as the forecast with `elevation`, at most once an hour and only around a tocht day, never in a backup) and a proposal
+as the forecast with `elevation`, at most once an hour, only on a day of the tocht itself and only while the weather follows your location, never in a backup) and a proposal
 with Akkoord to do a hard session later when two of the three morning numbers are off (`engine/morningProposal.ts`,
 rule MORNING-WATCH, moving through `adviceEngine.ts#laterMoveAdvice` like LEG-EASE).
