@@ -42,7 +42,8 @@ export function DeviceShellHost() {
 
   if (!hint) return null;
   return (
-    <div className="animate-rise-in pointer-events-none fixed inset-x-0 z-50 flex justify-center px-4" style={{ bottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px) + 0.75rem)' }}>
+    // Bovenaan, zodat hij nooit onder of over een melding onderaan valt (ChangeNotice, nieuwe versie).
+    <div className="animate-fade-in pointer-events-none fixed inset-x-0 z-50 flex justify-center px-4" style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }}>
       <p role="status" className="rounded-xl border px-4 py-3 text-sm shadow-lg" style={{ background: 'var(--color-raised)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>
         Druk nog een keer om ASCEND te sluiten.
       </p>

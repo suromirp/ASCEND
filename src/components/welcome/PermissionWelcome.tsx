@@ -131,7 +131,7 @@ function WelcomeScreens({ steps, index, onNext, onClose }: { steps: WelcomeStep[
               <div className="flex w-full flex-col gap-3">
                 {text.allow ? (
                   <>
-                    <PrimaryButton onClick={() => void allow()} disabled={busy}>{busy ? 'Even wachten' : text.allow}</PrimaryButton>
+                    <PrimaryButton onClick={() => void allow()} disabled={busy}>{busy ? 'Bezig…' : text.allow}</PrimaryButton>
                     <SecondaryButton onClick={onNext} disabled={busy}>Niet nu</SecondaryButton>
                   </>
                 ) : (

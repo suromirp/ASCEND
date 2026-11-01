@@ -57,7 +57,7 @@ function PermissionAskSheet({ row, onDone, onClose }: { row: PermissionRow; onDo
                     .finally(() => setBusy(false));
                 }}
               >
-                {busy ? 'Even wachten' : 'Toestemming geven'}
+                {busy ? 'Bezig…' : 'Toestemming geven'}
               </SecondaryButton>
             </div>
           )}
@@ -120,7 +120,7 @@ export function PermissionAskButton({ device, need, onDone }: { device: DevicePe
               });
           }}
         >
-          {busy ? 'Even wachten' : 'Toestemming geven'}
+          {busy ? 'Bezig…' : 'Toestemming geven'}
         </SecondaryButton>
       </div>
     </div>
