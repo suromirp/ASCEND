@@ -34,10 +34,16 @@ bijgewerkt.
 - `deep-research` als een onderdeel nieuw onderzoek vraagt (bijvoorbeeld bij Kansen of de spierindex), in plaats
   van een losse Scout.
 - De eigen skills `werkverdeling`, `lookout` en `onderhoud` zoals altijd.
-- Plug-ins van het account (als een sessie ze laadt; op 1 november zag deze sessie ze niet): `frontend-design` en
-  `Design` (kritiek, toegankelijkheid, UX-teksten) bij de ontwerprapporten en elk nieuw scherm, naast de
-  ontwerptaal van ASCEND, die altijd voorgaat; `Engineering` als extra blik bij architectuur en het opsplitsen;
-  `Data` bij grafieken; `Product Management` bij het samenvoegen van de gebruikerstest tot een lijst.
+- Plug-ins van het account. De coördinatorsessie van 1 november ziet ze wel (een eerdere sessie zag ze niet).
+  De ontwerptaal van ASCEND gaat altijd voor op wat een plug-in voorstelt.
+  - `Design` (kritiek, toegankelijkheid, UX-teksten) bij de ontwerprapporten en elk nieuw scherm.
+  - `frontend-design` alleen als tweede blik op een ontwerprapport, nooit als opdracht aan een bouwer.
+  - `Engineering` als extra blik bij architectuur en het opsplitsen.
+  - `Product Management` bij het samenvoegen van de gebruikerstest tot een lijst.
+  - `modern-web-guidance` bij de Android-app en bij de optimalisatie in ronde 3.
+  - `Data` doet niet mee: `dataviz` is genoeg voor grafieken, en twee methodes naast elkaar spreken elkaar tegen.
+  - Plug-ins die niets met ASCEND te maken hebben (Gmail, Agenda, Drive, Shopify, QuickBooks, Canva en dergelijke)
+    komen nooit in een opdracht aan een helper, ook niet als ze geladen zijn.
 
 ## Zelfstandig, ook als de eigenaar slaapt
 
