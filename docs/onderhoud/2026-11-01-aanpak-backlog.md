@@ -171,9 +171,9 @@ Ronde 1, tegelijk:
 2b. Sherpa (opus): een vakantie of vrije periode bijwerken in Week (data, soort, notitie), in plaats van alleen
    Verwijderen. Een wijziging die de planning raakt is één voorstel met Akkoord dat het verschil laat zien
    (engine/leaveProposal.ts), met een eigen tik op de rij en een blad in de ASCEND-stijl. Met test en besluit.
-   Neem mee wat de eerste echte vakantie liet zien (back-up van 1 november, 14 tot 18 november): Bovenlichaam A
-   van dinsdag 17 schoof naar zondag 22, naast de lange duurloop en twee dagen voor de volgende Bovenlichaam A
-   op dinsdag 24; zo staan er drie bovenlichaamtrainingen in vijf dagen. Een training die voor een vakantie
+   Neem mee wat een vakantie in een back-up liet zien: Bovenlichaam A van een dinsdag in de vakantie schoof naar
+   de zondag erna, naast de lange duurloop en twee dagen voor de volgende Bovenlichaam A; zo staan er drie
+   bovenlichaamtrainingen in vijf dagen. Een training die voor een vakantie
    opzij schuift mag niet vlak voor zijn eigen volgende keer belanden; dan liever laten vervallen.
 2. Sherpa (opus): trainingen die niet doorgingen automatisch afhandelen (zie backlog; nooit een log
    verzinnen, overslaan als status, koppelen als voorstel, instelbaar, besluit).

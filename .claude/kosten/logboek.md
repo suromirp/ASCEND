@@ -65,3 +65,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-01, Kleine punten (fysio, voorschriftregel, citaat), Sherpa, sonnet (ontwikkelaar), 166k, 49 min, 0
 - 2026-11-01, Vakantie bijwerken, Sherpa, opus (ontwikkelaar), 250k, 42 min, 0
 - 2026-11-01, Review kleine punten, Warden, sonnet (reviewer), 58k, 3 min, 0, rood: spoedtekst verstopt en tweede woord voor reserve; terug naar Sherpa
+- 2026-11-01, Review vakantie bijwerken, Warden, opus (reviewer), 122k, 5 min, 0, groen met vijf punten (een over privacy); terug naar Sherpa
