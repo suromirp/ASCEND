@@ -22,4 +22,8 @@ describe('InputDock in ForgeWorkout', () => {
     expect(parts).toContain('data-dock-keep');
     expect(dock).toContain('data-dock-keep');
   });
+
+  it('de strip met oefeningen is navigatie en laat het blok open', () => {
+    expect(read('ForgeStrip.tsx')).toContain('data-dock-keep');
+  });
 });

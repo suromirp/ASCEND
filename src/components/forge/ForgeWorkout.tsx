@@ -715,7 +715,7 @@ function ForgeWorkoutInner({
       setActiveRef(next);
       const after = result.workout.find((e) => e.slot === slot);
       if (after && exerciseComplete(after)) {
-        if (dock?.slot === slot) setDock(null);
+        if (dock?.slot === slot) { dockClosing.current = false; setDock(null); }
         const calm = reducedMotion();
         later(() => {
           setFolded((f) => ({ ...f, [slot]: true }));
@@ -752,7 +752,7 @@ function ForgeWorkoutInner({
     setWorkout(result.workout);
     const after = result.workout.find((e) => e.slot === slot);
     if (after && exerciseComplete(after)) {
-      if (dock?.slot === slot) setDock(null);
+      if (dock?.slot === slot) { dockClosing.current = false; setDock(null); }
       const next = activeRow(result.workout);
       setActiveRef(next);
       const calm = reducedMotion();
