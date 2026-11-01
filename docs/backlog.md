@@ -6,6 +6,8 @@ Bijgewerkt op 1 november 2026.
 
 ## Loopt nu
 
+- Met voorrang, melding van de eigenaar (1 november): REST-BACK stelde een rustdag voor na twee dagen zonder training, op een maandag die eerder vrijgemaakt was om in te halen. Rustdag niet terug na rust; inhalen gaat voor; titel en item zeggen hetzelfde (Sherpa, opus).
+
 Ronde 2 van `docs/onderhoud/2026-11-01-aanpak-backlog.md` (ronde 1 is af, terugblik in `docs/onderhoud/reflectie-2026-11-01.md`).
 
 Live op 1 november: Stand schuift niet meer zijwaarts, het cijferblok van Forge blijft open, de ochtendkaart na je antwoord, de rustdag die terugkomt, de rustiger fysioregel, de kortere voorschriftregel, het citaat in het Engels, een vakantie bijwerken, trainingen die niet doorgingen, ochtenden in de back-up veilig uitzetten, opmaak samengebracht, de tekstkaart met 21 schermen, drie ontwerprapporten in `docs/visie/`.
