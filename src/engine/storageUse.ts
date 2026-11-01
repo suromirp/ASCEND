@@ -34,7 +34,18 @@ export interface StorageUseText {
   tight?: boolean;
 }
 
-export function storageUseText(estimate: StorageEstimate | undefined): StorageUseText | undefined {
+// De back-up van Android slaat een app boven ongeveer 25 MB over; vanaf 20 MB zegt de app het
+// (alleen in de Android-app, docs/beslissingen/2026-11-01-android-app.md).
+export const ANDROID_BACKUP_WARN_BYTES = 20_000_000;
+export const ANDROID_BACKUP_WARN_TEXT = 'De back-up van Android kan te groot worden; je eigen back-up blijft werken.';
+
+export function storageUseText(estimate: StorageEstimate | undefined, androidBackup = false): StorageUseText | undefined {
+  const base = storageUseBase(estimate);
+  if (!base || base.tight || !androidBackup || estimate?.kind !== 'measured' || estimate.usage <= ANDROID_BACKUP_WARN_BYTES) return base;
+  return { ...base, tight: true, sub: ANDROID_BACKUP_WARN_TEXT };
+}
+
+function storageUseBase(estimate: StorageEstimate | undefined): StorageUseText | undefined {
   if (!estimate) return undefined;
   if (estimate.kind === 'unavailable') return { value: 'Niet te zien', dim: true, sub: 'Deze browser zegt niet hoeveel ruimte de app gebruikt' };
   if (estimate.kind === 'timeout') return { value: 'Niet te zien', dim: true, sub: 'De browser gaf niet op tijd antwoord. Probeer het later nog eens' };

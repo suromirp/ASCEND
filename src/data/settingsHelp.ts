@@ -861,7 +861,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Amber stip', text: 'een toestemming staat uit terwijl iets wat je aan hebt staan hem nodig heeft.' },
       { head: 'Exacte wekker', text: 'Android laat een melding anders tot een paar minuten te laat komen. Voor het einde van je rust is dat te laat.' },
       { head: 'Health Connect', text: 'komt later: dan leest ASCEND je gewicht, stappen en trappen.' },
-      { head: 'Back-up van Android', text: 'staat in de app uit. Zo gaan je gegevens niet ongemerkt naar Google; je eigen back-up bij Gegevens en back-up is de weg.' },
+      { head: 'Back-up van Android', text: 'Android zet een kopie van je ASCEND-gegevens in je Google-back-up, versleuteld met je schermvergrendeling. Je eigen back-up blijft de echte; boven ongeveer 25 MB slaat Android hem over.' },
     ],
   },
   autoBijwerken: {

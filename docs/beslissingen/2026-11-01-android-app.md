@@ -69,11 +69,19 @@ Per functie, in de app en in de browser:
   (`--color-sky-top`, 's avonds de donkere), het openingsscherm het marine van `--color-bg` met het
   logo. Browser: niets.
 
-- Back-up door Android: uit (`android:allowBackup="false"` in `android/app/src/main/AndroidManifest.xml`,
-  één regel om te wisselen). Zo gaan je gegevens, ook die over je gezondheid, niet ongemerkt naar
-  Google; de eigen back-up in Instellingen is de weg. Het nadeel: na een nieuwe telefoon komt de app
-  leeg terug tot je je back-up terugzet. De eigenaar beslist dit nog definitief. Toestemmingen zegt
-  het in de uitleg.
+- Back-up door Android: aan, als extra vangnet naast de eigen back-up. Dit is de keuze van de
+  eigenaar (2 november 2026). De beveiligingsreview (Warden Beveiliging) adviseerde hem uit te zetten,
+  zodat gezondheidsgegevens niet ongemerkt naar Google gaan en de eigen back-up de enige weg is; de
+  eigenaar weegt het vangnet bij een verloren of nieuwe telefoon zwaarder. In de app en in dit besluit
+  staat het eerlijk: "Android zet een kopie van je ASCEND-gegevens in je Google-back-up, versleuteld
+  met je schermvergrendeling. Je eigen back-up blijft de echte; boven ongeveer 25 MB slaat Android hem
+  over." (uitleg bij Toestemmingen). Alleen de opslag van de webview gaat mee (IndexedDB en
+  localStorage in `app_webview/`), zowel naar de cloud als bij overzetten naar een nieuwe telefoon;
+  caches en de bundels van de live update niet (`res/xml/backup_rules.xml` tot en met Android 11,
+  `res/xml/data_extraction_rules.xml` vanaf Android 12). Komt de opslag boven 20 MB, dan zegt de rij
+  Ruimte op dit toestel in de app in amber: "De back-up van Android kan te groot worden; je eigen
+  back-up blijft werken." Terug naar uit is één regel: `android:allowBackup="false"` in
+  `android/app/src/main/AndroidManifest.xml`.
 - Wat er bij het bijwerken naar buiten gaat: alleen het opvragen van `app-versie.json` en de zip bij
   GitHub Pages, op een adres dat met `https://` begint en op `.github.io` eindigt (een ander adres in
   de build betekent: niet bijwerken). De plugin stuurt bij het downloaden de kop

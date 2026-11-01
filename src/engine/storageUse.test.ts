@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatSize, storageUseText } from './storageUse';
+import { ANDROID_BACKUP_WARN_TEXT, formatSize, storageUseText } from './storageUse';
 
 describe('formatSize', () => {
   it('B, KB, MB en GB met een komma', () => {
@@ -37,5 +37,16 @@ describe('storageUseText', () => {
     expect(storageUseText({ kind: 'unavailable' })).toMatchObject({ value: 'Niet te zien', dim: true });
     expect(storageUseText({ kind: 'timeout' })).toMatchObject({ value: 'Niet te zien', dim: true });
     expect(storageUseText({ kind: 'timeout' })!.sub).toContain('niet op tijd');
+  });
+});
+
+describe('de back-up van Android', () => {
+  it('boven 20 MB in de app een regel in amber', () => {
+    const r = storageUseText({ kind: 'measured', usage: 21_000_000, quota: 1_000_000_000 }, true);
+    expect(r).toMatchObject({ value: '21 MB', tight: true, sub: ANDROID_BACKUP_WARN_TEXT });
+  });
+  it('niet in de browser en niet onder 20 MB', () => {
+    expect(storageUseText({ kind: 'measured', usage: 21_000_000, quota: 1_000_000_000 })?.tight).toBeUndefined();
+    expect(storageUseText({ kind: 'measured', usage: 19_000_000, quota: 1_000_000_000 }, true)?.tight).toBeUndefined();
   });
 });

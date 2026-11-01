@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Geen back-up door Android naar Google: je gegevens (ook gezondheidsgegevens) gaan niet
-         ongemerkt de deur uit; de eigen back-up in Instellingen is de weg. Eén regel om te wisselen
-         (docs/beslissingen/2026-11-01-android-app.md). -->
+    <!-- Back-up door Android aan, als extra vangnet naast de eigen back-up (keuze van de eigenaar,
+         2 november 2026; docs/beslissingen/2026-11-01-android-app.md). Alleen de opslag van de
+         webview gaat mee: res/xml/backup_rules.xml (Android 11 en ouder) en
+         res/xml/data_extraction_rules.xml (Android 12 en nieuwer). -->
     <application
-        android:allowBackup="false"
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

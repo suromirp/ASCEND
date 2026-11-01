@@ -835,7 +835,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('voorstellenOpruimen', months), dim: months === 0 };
     }
     case 'ruimte-app': {
-      const use = storageUseText(f.storageUse);
+      const use = storageUseText(f.storageUse, deviceOf(f)?.timed === true);
       return use ? { value: use.value, sub: use.sub, dim: use.dim, dot: use.tight ? 'warn' : undefined } : {};
     }
     case 'reeksen-ruimte':
