@@ -343,9 +343,11 @@ describe('oude back-ups en de opgeslagen vorm', () => {
     expect(migrateLeavePeriods(JSON.parse(JSON.stringify([p])))).toEqual({ periods: [p], skipped: 0 });
     const wrong = { ...p, trek: { ...p.trek!, highestM: 99999 } };
     expect(migrateLeavePeriods([wrong]).periods?.[0].trek).toEqual({ name: p.trek!.name, terrain: 'mountain', packKg: 9, tent: true, importance: 'goal' });
-    expect(migrateLeavePeriods([wrong]).skipped).toBe(0);
+    expect(migrateLeavePeriods([wrong]).skipped).toBe(1);
     const flat = { ...p, trek: { ...p.trek!, terrain: 'flat_trail' } };
     expect(migrateLeavePeriods([flat]).periods?.[0].trek).not.toHaveProperty('highestM');
+    expect(migrateLeavePeriods([flat]).skipped).toBe(1);
+    expect(migrateLeavePeriods([{ ...p, trek: { ...p.trek!, highestM: 'hoog' } }]).skipped).toBe(1);
   });
   it('het hoogste punt hoort bij bergen en sneeuw, binnen wat Open-Meteo kan rekenen', () => {
     expect(validateTrekDraft(draft({ terrain: 'mountain', highestM: 2500 }), TODAY)).toBeUndefined();

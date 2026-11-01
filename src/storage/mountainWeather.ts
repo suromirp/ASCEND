@@ -24,11 +24,15 @@ export async function getMountainWeather(): Promise<MountainForecast | undefined
   }
 }
 
-let inFlight: Promise<MountainForecast | undefined> | undefined;
+// Eén vraag tegelijk per plek en hoogte: een andere plek of hoogte wacht niet op een oud antwoord.
+let inFlight: { key: string; promise: Promise<MountainForecast | undefined> } | undefined;
+
+const keyOf = (place: WeatherPlace, elevationM: number) => `${roundCoordinate(place.lat)},${roundCoordinate(place.lon)}@${Math.round(elevationM)}`;
 
 export function refreshMountainWeather(place: WeatherPlace, elevationM: number, options: FetchOptions & { now?: Date } = {}): Promise<MountainForecast | undefined> {
-  if (inFlight) return inFlight;
-  inFlight = (async () => {
+  const key = keyOf(place, elevationM);
+  if (inFlight?.key === key) return inFlight.promise;
+  const promise = (async () => {
     const now = options.now ?? new Date();
     const have = await getMountainWeather();
     const fresh = have && same(have, place, elevationM) && now.getTime() - Date.parse(have.fetchedAt) < MIN_FETCH_INTERVAL_MINUTES * 60_000;
@@ -41,7 +45,8 @@ export function refreshMountainWeather(place: WeatherPlace, elevationM: number, 
       return have && same(have, place, elevationM) ? have : undefined;
     }
   })().finally(() => {
-    inFlight = undefined;
+    if (inFlight?.promise === promise) inFlight = undefined;
   });
-  return inFlight;
+  inFlight = { key, promise };
+  return promise;
 }

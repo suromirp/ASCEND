@@ -21,7 +21,7 @@ export function ClimbPaceCard({ goalDay, pack }: { goalDay?: HikeDay; pack?: Pac
     return (
       <Card className="flex flex-col gap-1">
         <Eyebrow>Klimtempo</Eyebrow>
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{climbPaceWaitLine(state)}</p>
+        <p className="text-sm leading-relaxed tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{climbPaceWaitLine(state)}</p>
       </Card>
     );
   }
@@ -33,9 +33,9 @@ export function ClimbPaceCard({ goalDay, pack }: { goalDay?: HikeDay; pack?: Pac
         <Stat label="Omhoog" value={formatNumberNL(pace.upMph, 0)} unit="m per uur" />
         {pace.downMph !== undefined && <Stat label="Omlaag" value={formatNumberNL(pace.downMph, 0)} unit="m per uur" />}
       </div>
-      {pace.downMph === undefined && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Voor omlaag zijn er nog te weinig dalingen; daar geldt de norm.</p>}
-      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{climbPaceBasisLine(pace)}</p>
-      {dayLine && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{dayLine}</p>}
+      {pace.downMph === undefined && <p className="text-xs leading-relaxed tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>Voor omlaag zijn er nog te weinig dalingen; daar geldt de norm.</p>}
+      <p className="text-sm leading-relaxed tabular-nums" style={{ color: 'var(--color-ink)' }}>{climbPaceBasisLine(pace)}</p>
+      {dayLine && <p className="text-sm leading-relaxed tabular-nums" style={{ color: 'var(--color-ink)' }}>{dayLine}</p>}
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         De wandelnorm rekent met <span className="tabular-nums">{NORM_UP_MPH}</span> meter per uur omhoog en <span className="tabular-nums">{NORM_DOWN_MPH}</span> omlaag. Dit is bewegend, zonder pauzes.
       </p>

@@ -106,6 +106,9 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
     const rec = p as LeavePeriod;
     const trek = isTrekDetails(rec.trek) ? rec.trek : undefined;
     if (rec.trek !== undefined && !trek) lostDetails++;
+    // Een kapot hoogste punt valt weg en telt mee; de tocht zelf blijft.
+    const height = trek?.highestM;
+    if (height !== undefined && !(isTrekHeight(height) && (trek?.terrain === 'mountain' || trek?.terrain === 'snow'))) lostDetails++;
     return {
       id: rec.id, kind: rec.kind, startDate: rec.startDate, endDate: rec.endDate,
       ...(rec.note ? { note: rec.note } : {}),

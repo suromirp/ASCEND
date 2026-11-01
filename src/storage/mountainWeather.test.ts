@@ -39,4 +39,19 @@ describe('bergweer in de opslag', () => {
     expect(backup).not.toContain('freezing');
     expect(backup).not.toContain('Bergdorp');
   });
+
+  it('deelt een lopende vraag alleen voor dezelfde plek en hoogte', async () => {
+    const f = ok();
+    const fetchImpl = f as unknown as typeof fetch;
+    const now = new Date('2027-07-01T18:00:00.000Z');
+    const [a, b, c] = await Promise.all([
+      refreshMountainWeather(place, 2500, { fetchImpl, now }),
+      refreshMountainWeather(place, 2500, { fetchImpl, now }),
+      refreshMountainWeather(place, 1800, { fetchImpl, now }),
+    ]);
+    expect(a?.elevationM).toBe(2500);
+    expect(b?.elevationM).toBe(2500);
+    expect(c?.elevationM).toBe(1800);
+    expect(f).toHaveBeenCalledTimes(2);
+  });
 });

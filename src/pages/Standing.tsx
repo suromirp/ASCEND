@@ -81,8 +81,10 @@ export function StandingPage() {
   // Een gewone dag van je hoofddoel, voor de band op je eigen klimtempo (engine/climbPace.ts).
   const goalDay = useMemo((): HikeDay | undefined => {
     const dist = primaryGoal ? typicalDayValue(primaryGoal.requirements, 'distance')?.value : undefined;
-    if (!primaryGoal || dist?.unit !== 'km') return undefined;
-    return { km: dist.amount, up: typicalDayValue(primaryGoal.requirements, 'elevationGain')?.value.amount ?? 0, down: routeDescent ?? 0 };
+    const up = primaryGoal ? typicalDayValue(primaryGoal.requirements, 'elevationGain')?.value.amount : undefined;
+    // Zonder omhoog en omlaag zegt een klimtempo niets over die dag.
+    if (!primaryGoal || dist?.unit !== 'km' || up === undefined || routeDescent === undefined) return undefined;
+    return { km: dist.amount, up, down: routeDescent };
   }, [primaryGoal, routeDescent]);
   const goalPack = primaryGoal?.requirements.find((r) => r.kind === 'packWeight')?.target?.amount;
   const milestones = useMemo(() => goalMilestones.filter((m) => m.goalId === primaryGoal?.id), [goalMilestones, primaryGoal?.id]);
