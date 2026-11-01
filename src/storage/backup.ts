@@ -20,6 +20,7 @@ import { cleanCardOrder } from '../engine/cardOrder';
 import { localDateOf, todayISO } from '../utils/dates';
 import { logIdsForBackup, resolveStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { morningsForBackup, resolveMorningBackup } from '../engine/morningBackup';
+import { MISSED_MEMORY_KEY, resolveMissedMemory } from '../engine/missedTraining';
 import { filterRecovery } from '../engine/watchUse';
 import { getWatchState } from './externalActivities';
 import { isEmptyStart } from '../engine/freshStart';
@@ -161,6 +162,7 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
     RoutePlanRepo.get(),
     SoloPlanRepo.get(),
   ]);
+  const missedMemory = await MetaRepo.get<unknown>(MISSED_MEMORY_KEY);
 
   const payload: AscendBackupPayloadV5 = {
     version: 5,
@@ -183,6 +185,8 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
     // doesn't overwrite a plan on another device with nothing.
     routePlan: routePlan.updatedAt ? routePlan : null,
     soloPlan: soloPlan.updatedAt ? soloPlan : null,
+    // Your answers on "Training die niet doorging", only when there are any (engine/missedTraining.ts).
+    ...(missedMemory !== undefined ? { missedTraining: resolveMissedMemory(missedMemory) } : {}),
   };
 
   // The full series of runs and tochten, as base64. They may not be fetchable again from the
@@ -674,6 +678,10 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
     if (streams.list) normalized.activityStreams = streams.list;
     skipped.n += streams.skipped;
   }
+  // Your answers on "Training die niet doorging": only what resolveMissedMemory can read; a file from
+  // before has none and the device keeps its own.
+  if (isRecord(raw.missedTraining)) normalized.missedTraining = resolveMissedMemory(raw.missedTraining);
+  else if (raw.missedTraining != null) skipped.n++;
   // The mornings of the watch (storage/migrations.ts#migrateMornings): a file from before them has none.
   {
     const mornings = migrateMornings(raw.mornings);
@@ -1131,6 +1139,7 @@ function computeDiff(
     }
     if (backup.goalEngineConfig) meta.goalEngineConfig = backup.goalEngineConfig;
     if (backup.adviceResponses) meta.adviceResponses = backup.adviceResponses;
+    if (backup.missedTraining) meta[MISSED_MEMORY_KEY] = backup.missedTraining;
     if (backup.routePlan) meta[ROUTE_PLAN_KEY] = backup.routePlan;
     if (backup.soloPlan) meta[SOLO_PLAN_KEY] = backup.soloPlan;
   }

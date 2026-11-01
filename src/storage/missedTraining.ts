@@ -5,14 +5,14 @@
 //   Ongedaan maken loopt via de melding (`before`, storage/undoPlanChange.ts).
 // - Koppelen zet alleen de verwijzing op een log die nergens aan hing, na je Akkoord. Ongedaan maken
 //   haalt precies die verwijzing weer weg (`unlinkLog`).
-// - Wat dit toestel van je antwoorden onthoudt staat in de meta-opslag, niet in je planning en niet in
-//   de back-up: zonder dat geheugen komt hoogstens een vraag terug.
+// - Wat dit toestel van je antwoorden onthoudt staat in de meta-opslag, niet in je planning. Het gaat mee
+//   in de back-up (`payload.missedTraining`, storage/backup.ts), zoals de antwoorden op adviezen.
 
 import type { PlanLock, PlannedSession } from '../models/training';
-import { linkLog, resolveMissedMemory, unlinkLog, type MissedMemory } from '../engine/missedTraining';
+import { linkLog, resolveMissedMemory, unlinkLog, MISSED_MEMORY_KEY, type MissedMemory } from '../engine/missedTraining';
 import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo } from './database';
 
-const MEMORY_KEY = 'missedTraining';
+const MEMORY_KEY = MISSED_MEMORY_KEY;
 
 export async function readMissedMemory(): Promise<ReturnType<typeof resolveMissedMemory>> {
   return resolveMissedMemory(await MetaRepo.get<unknown>(MEMORY_KEY));
@@ -39,12 +39,14 @@ export async function skipMissedNow(sessionIds: readonly string[], lock: PlanLoc
   return before;
 }
 
-// Koppel een log aan een geplande training. Niets gebeurt als de log intussen ergens aan hangt of de
-// training intussen een log heeft (een dubbele tik, een import ertussen).
+// Koppel een log aan een geplande training. Niets gebeurt als de log intussen ergens aan hangt, de
+// training intussen een log heeft, weg is of overgeslagen (een dubbele tik, een import ertussen), of als
+// het een log is die je zelf invulde (`linkLog`).
 export async function linkLogNow(logId: string, sessionId: string, at: string): Promise<boolean> {
-  const logs = await SessionLogsRepo.getAll();
+  const [logs, sessions] = await Promise.all([SessionLogsRepo.getAll(), PlannedSessionsRepo.getAll()]);
   const log = logs.find((l) => l.id === logId);
-  if (!log || logs.some((l) => l.plannedSessionId === sessionId)) return false;
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!log || !session || session.status === 'skipped' || logs.some((l) => l.plannedSessionId === sessionId)) return false;
   const linked = linkLog(log, sessionId, at);
   if (!linked) return false;
   await SessionLogsRepo.put(linked);
