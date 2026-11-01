@@ -21,6 +21,12 @@ function buildVersion(): string {
 // Using a custom domain or username.github.io root? Set this to '/'.
 const BASE_PATH = process.env.ASCEND_BASE_PATH || '/ascend/';
 
+// De Android-app (capacitor.config.ts) bundelt dezelfde build met basis "/" en zonder
+// service worker: de app heeft zijn bestanden al bij zich, en een service worker in de
+// webview zou een nieuwe APK achter een oude cache kunnen verstoppen
+// (docs/beslissingen/2026-11-01-android-app.md). `npm run android:sync` zet dit aan.
+const ANDROID = process.env.ASCEND_TARGET === 'android';
+
 export default defineConfig({
   base: BASE_PATH,
   define: {
@@ -31,6 +37,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      disable: ANDROID,
       // 'prompt': a new build waits; utils/swUpdate.ts activates it itself at
       // a quiet moment (cold start, or back after ~30 min away, never with a
       // sheet or form open), and BIJWERKEN (components/UpdatePrompt.tsx) is

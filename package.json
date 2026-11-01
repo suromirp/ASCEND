@@ -8,12 +8,16 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "android:sync": "ASCEND_BASE_PATH=/ ASCEND_TARGET=android npm run build && cap sync android",
     "test": "vitest run",
     "kaart": "node scripts/app-kaart/kaart.mjs",
     "kaart:vergelijk": "node scripts/app-kaart/kaart.mjs --vergelijk",
     "kaart:standen": "node scripts/app-kaart/maak-standen.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/local-notifications": "^8.3.1",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/marcellus": "^5.3.0",
     "fflate": "0.8.2",
@@ -23,6 +27,7 @@
     "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",

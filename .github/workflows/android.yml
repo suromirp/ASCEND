@@ -1,0 +1,76 @@
+name: Android-app
+
+# Bouwt de Android-app (Capacitor) als debug-APK en bewaart hem als artefact bij de run
+# (docs/beslissingen/2026-11-01-android-app.md). Los van de Pages-deploy (deploy.yml): die
+# blijft precies zoals hij was. Hier wordt niets gepubliceerd en niets ondertekend met een
+# geheime sleutel; de app blijft lokaal, zonder server.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HAS_KEYSTORE: ${{ secrets.ANDROID_DEBUG_KEYSTORE != '' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      # Capacitor 8 vraagt JDK 21 en de Android SDK met API 36; de runner krijgt ze hier.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+
+      # De webbuild met basis "/" en zonder service worker, gekopieerd naar android/.
+      - name: Webbuild in de app zetten
+        run: npm run android:sync
+
+      # Een vaste debug-sleutel (optioneel, als geheim ANDROID_DEBUG_KEYSTORE in base64): dan
+      # installeert elke nieuwe APK over de vorige heen en blijven je gegevens staan. Zonder
+      # dat geheim maakt elke run een eigen sleutel en moet je de oude app eerst verwijderen.
+      - name: Vaste debug-sleutel
+        if: ${{ env.HAS_KEYSTORE == 'true' }}
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_DEBUG_KEYSTORE }}
+        run: |
+          mkdir -p ~/.android
+          echo "$KEYSTORE" | base64 --decode > ~/.android/debug.keystore
+
+      - name: APK bouwen
+        working-directory: android
+        env:
+          ASCEND_VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ascend-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: error
