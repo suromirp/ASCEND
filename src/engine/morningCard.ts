@@ -9,6 +9,7 @@ import type { EnergyFeeling, LegFeeling, MorningCheckIn, SleepFeeling } from '..
 import { previewLegCard, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
 import { adviceLead } from './adviceText';
 import { fatigueWord, type LegFatigueResult } from './legFatigue';
+import { isTestOrRace } from './templateRoles';
 import { suggestSleepFeeling, watchSummaryLine, type WellnessLine, type WellnessReading } from './wellnessCheck';
 
 // De kaart staat er vanaf het begin van de ochtend (instelbaar, standaard 5 uur)
@@ -174,6 +175,13 @@ function noEnd(title: string): string {
   return (colon > 0 ? t.slice(colon + 2) : t).replace(/[.?!:\s]+$/, '');
 }
 
+// "Testloop 5 km blijft staan", "A en B blijven staan", bij meer dan twee "A, B en nog 1 andere blijven staan".
+function staan(names: string[]): string {
+  if (names.length === 1) return `${names[0]} blijft staan`;
+  if (names.length === 2) return `${names[0]} en ${names[1]} blijven staan`;
+  return `${names[0]}, ${names[1]} en nog ${names.length - 2} andere blijven staan`;
+}
+
 // Wat een ochtendantwoord voor vandaag doet, uit dezelfde regels als het blad en Vandaag
 // (previewMorningAdvice en previewLegCard). Puur en plant niets: het is alleen tekst, en
 // elke wijziging blijft een voorstel met Akkoord. `answeredAdviceIds`: voorstellen die je
@@ -197,12 +205,14 @@ export function morningConsequence(entry: MorningCheckIn, ctx: { inputs: AdviceI
     const logged = new Set(inputs.logs.map((l) => l.plannedSessionId));
     const today = inputs.plannedSessions
       .filter((s) => s.scheduledDate === entry.date && s.status !== 'skipped' && !logged.has(s.id))
+      .sort((a, b) => a.order - b.order)
       .map((s) => inputs.templates.find((t) => t.id === s.templateId))
       .filter((t): t is NonNullable<typeof t> => !!t);
-    const training = today.find((t) => t.type !== 'recovery');
-    if (!training) return make('rustdag', today[0] ? `${today[0].name} blijft staan.` : NOTHING_PLANNED_TEXT);
+    // De belangrijkste training eerst: een test of race, daarna de volgorde van de dag.
+    const trainings = [...today.filter((t) => t.type !== 'recovery')].sort((a, b) => Number(isTestOrRace(b)) - Number(isTestOrRace(a)));
+    if (trainings.length === 0) return make('rustdag', today.length ? `${staan(today.map((t) => t.name))}.` : NOTHING_PLANNED_TEXT);
     const lighter = (entry.legs === 'stijf' || entry.legs === 'spierpijn' || entry.legs === 'flink') && entry.soreWhere !== 'upper';
-    return make('blijft', lighter ? `${training.name} blijft staan, warm rustig in.` : `${training.name} blijft staan.`);
+    return make('blijft', `${staan(trainings.map((t) => t.name))}${lighter ? ', warm rustig in' : ''}.`);
   } catch {
     // Het gevolg bepalen mislukt: alleen het antwoord. Opslaan wordt hier nooit door tegengehouden.
     return make('blijft', undefined);

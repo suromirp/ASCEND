@@ -19,7 +19,7 @@ import { MorningCheckInSheet } from './MorningCheckInSheet';
 import { ShortNightAsk } from './ShortNightAsk';
 import { useMorningPrefill } from './useMorningPrefill';
 import { markMorningAnswered } from './useMorningCardVisible';
-import { useScrollToAdvice } from './motion';
+import { useHeightMorph, useScrollToAdvice } from './motion';
 
 // De ochtendvraag bovenaan Vandaag, boven de missiekaart (docs/beslissingen/2026-10-23-
 // ochtendkaart-en-melding.md, docs/visie/Ochtendkaart vernieuwd.md). Drie standen:
@@ -87,11 +87,17 @@ export function MorningCard() {
   const [held, setHeld] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [bodyHeight, setBodyHeight] = useState(0);
+  const gevolgRef = useRef<HTMLDivElement>(null);
+  const foldFrom = useRef(0);
   const scrollToAdvice = useScrollToAdvice();
   const { stats, heading, line } = morningCardView(reading, { sleepExpected: sleepOn, linked });
   const suggested = prefill.legs;
   const spot = recentPainSpot(today, sessionLogs);
   const answered = checkInFor(today, settings.morningCheckIns);
+  const fold = () => {
+    foldFrom.current = gevolgRef.current?.getBoundingClientRect().height ?? 0;
+    dispatch({ type: 'fold' });
+  };
   const rememberHeight = () => { setBodyHeight(bodyRef.current?.parentElement?.getBoundingClientRect().height ?? 0); };
 
   // Eén tik: je benen, met energie en slaap van het horloge als die er zijn. De tik wacht
@@ -155,8 +161,9 @@ export function MorningCard() {
   // en loopt dus in elke stand van Beweging.
   useEffect(() => {
     if (phase !== 'gevolg' || held) return;
-    const id = window.setTimeout(() => dispatch({ type: 'fold' }), hasProposal ? FOLD_PROPOSAL_MS : FOLD_MS);
+    const id = window.setTimeout(() => fold(), hasProposal ? FOLD_PROPOSAL_MS : FOLD_MS);
     return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, held, hasProposal]);
 
   // Wel iets van het horloge, geen slaap: die komt via Garmin Connect soms later bij intervals.icu.
@@ -180,7 +187,7 @@ export function MorningCard() {
   if (phase === 'klein' && answered && consequence) {
     return (
       <>
-        <Card className="mx-fold flex flex-col gap-0 py-2">
+        <HeightMorph key="klein" from={foldFrom.current}><Card className="mx-fold flex flex-col gap-0 py-2">
           <div className="flex items-center gap-2" title={consequence.summary} aria-label={consequence.summary}>
             <span className="shrink-0" style={{ color: 'var(--color-progress)' }}><Icon name="vinkje" size={20} /></span>
             {hasProposal ? (
@@ -200,7 +207,7 @@ export function MorningCard() {
             <TextButton tone="dim" disabled={saving} onClick={() => void undo()}>Ongedaan maken</TextButton>
           </div>
           {undoError && <p className="pb-1 text-xs leading-snug" role="alert" style={{ color: 'var(--color-warning)' }}>{UNDO_FAILED}</p>}
-        </Card>
+        </Card></HeightMorph>
         {sheetEl}
       </>
     );
@@ -210,15 +217,15 @@ export function MorningCard() {
   if (phase === 'gevolg' && consequence) {
     return (
       <>
-        <Card
+        <HeightMorph key="gevolg" from={bodyHeight} innerRef={gevolgRef}><Card
           className="flex flex-col gap-3"
           onPointerDown={() => setHeld(true)}
           onPointerUp={() => setHeld(false)}
           onPointerCancel={() => setHeld(false)}
           onPointerLeave={() => setHeld(false)}
-          onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) dispatch({ type: 'fold' }); }}
+          onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) fold(); }}
         >
-          <div className="mx-swap flex flex-col gap-3" style={{ minHeight: bodyHeight > 0 ? Math.max(0, bodyHeight - 34) : undefined }} role="status">
+          <div className="mx-swap flex flex-col gap-3" role="status">
             <Header heading={undefined} />
             <div className="flex items-start gap-2">
               <span className="mx-check-draw mt-0.5 shrink-0" style={{ color: 'var(--color-progress)' }}><Icon name="vinkje" size={20} /></span>
@@ -231,12 +238,12 @@ export function MorningCard() {
                 <SecondaryButton onClick={() => consequence.adviceId && scrollToAdvice(consequence.adviceId)}>Bekijk voorstel</SecondaryButton>
               </div>
             )}
-            <div className="mt-auto flex justify-end">
+            <div className="flex justify-end">
               <TextButton tone="dim" disabled={saving} onClick={() => void undo()}>Ongedaan maken</TextButton>
             </div>
             {undoError && <p className="text-xs leading-snug" role="alert" style={{ color: 'var(--color-warning)' }}>{UNDO_FAILED}</p>}
           </div>
-        </Card>
+        </Card></HeightMorph>
         {sheetEl}
       </>
     );
@@ -306,6 +313,16 @@ export function MorningCard() {
       </Card>
       {sheetEl}
     </>
+  );
+}
+
+// Laat de kaart vloeiend van de hoogte van de vorige stand naar zijn eigen hoogte lopen (useHeightMorph).
+function HeightMorph({ from, innerRef, children }: { from: number; innerRef?: React.RefObject<HTMLDivElement | null>; children: React.ReactNode }) {
+  const ref = useHeightMorph(from);
+  return (
+    <div ref={ref}>
+      <div ref={innerRef}>{children}</div>
+    </div>
   );
 }
 

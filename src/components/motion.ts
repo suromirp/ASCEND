@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { resolveMotion, type MotionMode } from '../engine/motionSettings';
 import { MOTION_KEY } from '../utils/updateFlag';
@@ -95,4 +95,34 @@ export function useScrollToAdvice(): (id: string) => void {
     el.classList.add('mx-pulse-once');
     window.setTimeout(() => el.classList.remove('mx-pulse-once'), 1800);
   };
+}
+
+// Laat een blok dat net verscheen vloeiend van de hoogte van wat er stond (`from`, in px) naar zijn
+// eigen hoogte lopen, zodat wat eronder staat niet verspringt. Eén keer bij het verschijnen. In Uit en
+// bij beperkte beweging staat het blok meteen op de eindstand; de duur (150 tot 250 ms, ease-out)
+// staat in `.mx-height` in index.css. Het blok zet `overflow: hidden` en `height` alleen zolang het loopt.
+export function useHeightMorph(from: number): RefObject<HTMLDivElement | null> {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || from <= 0) return;
+    if (prefersReducedMotion() || document.documentElement.dataset.motion === 'off') return;
+    const natural = el.getBoundingClientRect().height;
+    if (Math.abs(natural - from) < 1) return;
+    el.style.height = `${from}px`;
+    el.style.overflow = 'hidden';
+    void el.offsetHeight;
+    el.classList.add('mx-height');
+    el.style.height = `${natural}px`;
+    const done = () => {
+      el.classList.remove('mx-height');
+      el.style.height = '';
+      el.style.overflow = '';
+    };
+    const id = window.setTimeout(done, 300);
+    return () => { window.clearTimeout(id); done(); };
+    // Alleen bij het verschijnen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return ref;
 }
