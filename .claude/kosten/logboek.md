@@ -52,3 +52,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-10-31, Review slepen vakantie, Warden, opus (reviewer), 50k, 1,5 min, 0, 1 blokkerend (zin) door coördinator hersteld
 - 2026-11-01, Ontwerprapport Forge, Cartographer, opus (ontwerper), 136k, 5 min, 0
 - 2026-11-01, Ontwerprapport gegevens, Cartographer, opus (ontwerper), 158k, 6 min, 0
+- 2026-11-01, Ontwerprapport instellingen, Cartographer, opus (ontwerper), 209k, 9 min, 0
