@@ -2,11 +2,15 @@
 
 Wat nog op de lijst staat, zodat een nieuwe sessie het niet uit het gesprek hoeft te halen. De
 coördinator houdt dit bij: iets wat live staat gaat eruit, iets nieuws komt erbij met een regel uitleg.
-Bijgewerkt op 31 oktober 2026.
+Bijgewerkt op 1 november 2026.
 
 ## Loopt nu
 
-- Niets. Alles uit "Kan nu" is af of staat hieronder als vervolg.
+Ronde 1 van `docs/onderhoud/2026-11-01-aanpak-backlog.md`, gestart op 1 november om 19:00:
+- Stand schuift zijwaarts (Sherpa, sonnet).
+- Het cijferblok van Forge blijft open tussen velden (Sherpa, sonnet).
+- De rustdag komt terug nadat een voorstel hem weghaalde (Sherpa, opus).
+- Drie ontwerprapporten: gegevens, instellingen en Forge (Cartographer, opus).
 
 Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10, onderhoud punt 2 en 3.
 
@@ -64,11 +68,9 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 ## Werkwijze, voor de coördinator
 
-- Veiligheidsnet: nagaan of `.github/workflows/deploy.yml` de tests draait voor de deploy naar GitHub Pages; zo niet, `npx tsc -p tsconfig.app.json --noEmit`, `npm run lint` en `npx vitest run` ervoor zetten, zodat er nooit iets rood live gaat.
 - Meer invarianten in `scripts/app-kaart/invarianten.mjs` uit de fouten van 31 oktober: de kop en de totaaltijd in Run in detail gelijk, geen testloopzin bij een training die geen test is, hoogstens één gevulde mint knop per scherm.
 - De tekstkaart uitbreiden: nagemaakte standen met horlogegegevens, een vakantie, zonder doel en ziek, en de schermen Gegevens, Lichaam, Run in detail en de ochtendkaart met horloge.
 - Een controle op echte data: een script dat een back-up van de eigenaar (alleen in de scratchpad, nooit in de repo) door de engine haalt en dezelfde invarianten toetst. Draaien zodra de eigenaar een back-up stuurt.
-- CLAUDE.md bijwerken met Zonder doel, Kansen, Run in detail, de ochtendkaart en de tekstkaart (de eigenaar gaf op 31 oktober akkoord).
 - Afspraken die nu alleen in het gesprek staan: de eigenaar stuurt elke zondag een verse back-up, en start na 1 november elke paar dagen een nieuwe chat ("lees docs/backlog.md en ga verder").
 
 ## Werkwijze, overig
