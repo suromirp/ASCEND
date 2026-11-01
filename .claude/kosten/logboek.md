@@ -77,3 +77,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-01, Ochtenden herstel, Sherpa, opus (ontwikkelaar), hervat 30k, 19 min, 1
 - 2026-11-01, Onderhoud opmaak, Sherpa, sonnet (ontwikkelaar), 143k, 41 min, 0
 - 2026-11-01, Review onderhoud opmaak, Warden, sonnet (reviewer), 71k, 3 min, 0, groen
+- 2026-11-01, Pictogrammen zwemmen padel voetbal, Cartographer, sonnet (ontwerper), ontwerp met paden, 0; drie vragen gekozen met het advies (salie, zwemmer, gaten)
