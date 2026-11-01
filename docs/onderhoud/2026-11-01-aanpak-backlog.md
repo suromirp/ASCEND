@@ -55,6 +55,8 @@ bijgewerkt.
   en lukt het dan nog niet, het onderdeel parkeren met de reden in de backlog en verder met het volgende.
 - Een melding naar de eigenaar alleen bij iets wat live staat en de moeite waard is; 's nachts geen meldingen
   voor kleine dingen.
+- Vragen voor de eigenaar staan bij elke check-in op een rij, genummerd, met de aanbevolen optie erbij (wens
+  van de eigenaar, 1 november). Tussendoor geen losse vragen.
 
 ## Na elke ronde: terugkijken
 

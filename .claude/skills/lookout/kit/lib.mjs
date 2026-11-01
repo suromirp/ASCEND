@@ -3,7 +3,7 @@
 // Instellen met omgevingsvariabelen: LOOKOUT_PORT (standaard 4697), LOOKOUT_SHOTS (map voor afdrukken).
 // De stand hoort bij een origin met poort: een andere poort krijgt een omgezette kopie.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 
@@ -13,17 +13,20 @@ export const F = (process.env.LOOKOUT_SHOTS ?? join(process.cwd(), 'shots')) + '
 mkdirSync(F, { recursive: true });
 export const BASE = `http://localhost:${PORT}/ascend/`;
 
-function stateFor(port) {
-  const raw = readFileSync(join(HERE, 'state-kracht.json'), 'utf8');
-  if (port === 4697) return join(HERE, 'state-kracht.json');
-  const out = join(F, `state-${port}.json`);
+// `stand` is de naam na "state-" (standaard "kracht") of het pad van een los bestand; de andere nagemaakte
+// standen maakt scripts/app-kaart/maak-standen.mjs.
+function stateFor(port, stand = 'kracht') {
+  const bron = stand.includes('/') ? stand : join(HERE, `state-${stand}.json`);
+  if (port === 4697 && !stand.includes('/')) return bron;
+  const raw = readFileSync(bron, 'utf8');
+  const out = join(F, `${basename(bron, '.json')}-${port}.json`);
   writeFileSync(out, raw.replaceAll('localhost:4697', `localhost:${port}`));
   return out;
 }
 
-export async function open(w, opts = {}) {
+export async function open(w, { stand, ...opts } = {}) {
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: w, height: 800 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, storageState: stateFor(PORT), ...opts });
+  const ctx = await browser.newContext({ viewport: { width: w, height: 800 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, storageState: stateFor(PORT, stand), ...opts });
   const page = await ctx.newPage();
   const cdp = await ctx.newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });

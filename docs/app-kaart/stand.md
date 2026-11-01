@@ -149,9 +149,3 @@ Je rugzak pakken
 Weeg alles wat je meeneemt op een keukenweegschaal en tel het basisgewicht op. De tent, slaapzak en het matje bepalen samen de helft ervan.
 [knop: Lees en kijk]
 [knop: Volgorde aanpassen]
-
---- kaart 13 ---
-[melding]
-[knop: AangepastWeekplanning bijgewerktDe inhoud van 25 trainingen in de komende weken bijgesteld · waarom]
-[knop: Ongedaan maken]
-[knop: Melding sluiten]

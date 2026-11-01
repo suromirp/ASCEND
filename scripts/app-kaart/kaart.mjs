@@ -23,7 +23,10 @@ const fotoScherm = fotoAt >= 0 ? args[fotoAt + 1] : null;
 const markeerAt = args.indexOf('--markeer');
 const markeerTekst = markeerAt >= 0 ? args[markeerAt + 1] : null;
 
-const PORT = Number(process.env.KAART_PORT ?? process.env.LOOKOUT_PORT ?? 5271);
+// Zonder KAART_PORT bouwt de kaart altijd zelf en kiest een vrije poort, zodat hij nooit een verouderde build van
+// iemand anders vergelijkt. Alleen met KAART_PORT mag hij een draaiende server hergebruiken.
+const EXPLICIET = process.env.KAART_PORT !== undefined;
+const PORT = EXPLICIET ? Number(process.env.KAART_PORT) : await vrijePoort();
 process.env.LOOKOUT_PORT = String(PORT);
 process.env.LOOKOUT_SHOTS ??= join(ROOT, 'shots');
 const { open, BASE } = await import('../../.claude/skills/lookout/kit/lib.mjs');
@@ -78,6 +81,8 @@ export function normaliseer(t) {
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, '<id>')
     .replace(/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?\b/g, '<tijdstempel>')
     .replace(/\b\d{13}\b/g, '<tijdstempel>')
+    // Hoeveel ruimte de browser geeft en hoeveel de stand gebruikt hangt van de schijf van de machine af.
+    .replace(/(Van de )[\d.,]+ [KMGT]?B( die de browser geeft\n)[\d.,]+ [KMGT]?B/g, '$1<ruimte>$2<gebruikt>')
     .replace(/Versie \d{1,2} \w+, \d{2}:\d{2}/g, 'Versie <bouwtijd>')
     .replace(/\n{3,}/g, '\n\n')
     .split('\n').map((l) => l.trimEnd()).join('\n').trim() + '\n';
@@ -102,6 +107,14 @@ async function tik(page, sel) {
   await page.waitForTimeout(1200);
 }
 
+// Logboek, de rustige duurloop van 23 oktober (6 km, met detail uit het horloge), dan de rij "Run in detail".
+async function openRunInDetail(page) {
+  await tik(page, 'button:has-text("Alle trainingen van deze maand")');
+  await tik(page, 'button:has-text("Rustige duurloop"):has-text("23")');
+  await tik(page, 'button:has-text("Run in detail")');
+  await page.waitForTimeout(1500);
+}
+
 const SCHERMEN = {
   vandaag: { titel: 'Vandaag', pad: '#/' },
   week: { titel: 'Week', pad: '#/week' },
@@ -112,6 +125,20 @@ const SCHERMEN = {
   weekterugblik: { titel: 'Weekterugblik (blad in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Weekterugblik")') },
   jaaroverzicht: { titel: 'Jaaroverzicht (in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Jaaroverzicht")') },
   'training-blad': { titel: 'Blad van een geplande training (Week)', pad: '#/week', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Lange duurloop")') },
+  // De opslagrijen komen asynchroon uit de browser (storage.estimate); wacht tot ze er zijn.
+  gegevens: { titel: 'Instellingen: Gegevens en back-up', pad: '#/more/gegevens', actie: (p) => p.waitForFunction(() => /die de browser geeft/.test(document.body.innerText) && /Ruimte van reeksen, /.test(document.body.innerText), null, { timeout: 15000 }).catch(() => {}) },
+  lichaam: { titel: 'Lichaam', pad: '#/lichaam' },
+  'lichaam-plek': { titel: 'Lichaam: een plek (rechterknie)', pad: '#/lichaam/knie-r' },
+  // De standen met horlogegegevens, een vakantie, zonder doel en ziek gemeld (scripts/app-kaart/maak-standen.mjs).
+  'vandaag-horloge': { titel: 'Vandaag met horlogegegevens (ochtendkaart)', pad: '#/', stand: 'horloge' },
+  'run-in-detail': { titel: 'Run in detail (stand met horlogegegevens)', pad: '#/history', stand: 'horloge', actie: openRunInDetail },
+  'vandaag-vakantie': { titel: 'Vandaag met een vakantie in de komende twee weken', pad: '#/', stand: 'vakantie' },
+  'week-vakantie': { titel: 'Week met een vakantie', pad: '#/week', stand: 'vakantie' },
+  'vandaag-zonder-doel': { titel: 'Vandaag zonder doel (Fit blijven)', pad: '#/', stand: 'zonder-doel' },
+  'week-zonder-doel': { titel: 'Week zonder doel (Fit blijven)', pad: '#/week', stand: 'zonder-doel' },
+  'ascend-zonder-doel': { titel: 'Ascend zonder doel (Fit blijven)', pad: '#/ascend', stand: 'zonder-doel' },
+  'vandaag-ziek': { titel: 'Vandaag, ziek gemeld', pad: '#/', stand: 'ziek' },
+  'week-ziek': { titel: 'Week, ziek gemeld', pad: '#/week', stand: 'ziek' },
 };
 
 // Van een regel van de kaart naar wat je op het scherm zoekt: de tekst van een knop, een kop, een kaart of gewone tekst.
@@ -205,7 +232,7 @@ async function volleAfdruk(page, pad, markeer) {
 
 async function maakScherm(id, uitMap, fotoMap, markeer) {
   const s = SCHERMEN[id];
-  const o = await open(390, { timezoneId: 'Europe/Amsterdam', locale: 'nl-NL', serviceWorkers: 'block' });
+  const o = await open(390, { timezoneId: 'Europe/Amsterdam', locale: 'nl-NL', serviceWorkers: 'block', stand: s.stand });
   try {
     await o.page.clock.setFixedTime(new Date(KLOK));
     await o.page.goto(BASE + s.pad);
@@ -227,6 +254,22 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
         .sort((a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right)[0];
       return { breedste, w, dader: dader ? `${dader.tagName.toLowerCase()} "${(dader.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40)}" tot ${Math.round(dader.getBoundingClientRect().right)} px` : 'onbekend' };
     });
+    // Mint: hoogstens één gevulde mint knop (de PrimaryButton) per scherm. Alleen bij meer dan één komt er een regel bij
+    // (de invariant "hoogstens één gevulde mint knop per scherm" in invarianten.mjs leest die). Telt in het open blad
+    // als er een blad open staat, anders op de hele pagina. De vulling lezen we uit het token, geen vaste kleur.
+    const mint = await o.page.evaluate(() => {
+      const probe = document.createElement('span');
+      probe.style.background = 'var(--color-action-fill)';
+      document.body.appendChild(probe);
+      const vulling = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      const zicht = (e) => { const r = e.getBoundingClientRect(); const c = getComputedStyle(e); return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none'; };
+      const blad = [...document.querySelectorAll('[role=dialog]')].filter(zicht).pop();
+      return [...(blad || document.body).querySelectorAll('button')].filter((b) => zicht(b) && getComputedStyle(b).backgroundColor === vulling)
+        .map((b) => (b.textContent || b.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim().slice(0, 40));
+    });
+    if (process.env.KAART_MINT) console.log(`${id}: ${mint.length} gevulde mint knoppen ${JSON.stringify(mint)}`);
+    const mintRegel = mint.length > 1 ? `\n[gevulde mint knoppen: ${mint.length}, ${mint.map((m) => `"${m}"`).join(', ')}]\n` : '';
     let breedteRegel = '';
     const hoogteNu = o.page.viewportSize().height;
     for (const breedte of [390, 360, 320]) {
@@ -237,11 +280,20 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
     await o.page.setViewportSize({ width: 390, height: hoogteNu });
     await o.page.waitForTimeout(300);
     const fouten = o.errs.filter((e) => !/favicon|manifest|Service Worker/i.test(e)).map((e) => `[console: ${e.slice(0, 160)}]`);
-    const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.\n\n${tekst}${breedteRegel}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
+    const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.\n\n${tekst}${mintRegel}${breedteRegel}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
     writeFileSync(join(uitMap, id + '.md'), md);
     if (fotoMap) return await volleAfdruk(o.page, join(fotoMap, id + '.png'), markeer);
     return false;
   } finally { await o.browser.close(); }
+}
+
+// Een poort die het besturingssysteem vrij geeft.
+function vrijePoort() {
+  return new Promise((ok, fout) => {
+    const s = net.createServer();
+    s.on('error', fout);
+    s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => ok(port)); });
+  });
 }
 
 function poortOpen(p) {
@@ -249,7 +301,7 @@ function poortOpen(p) {
 }
 
 async function dienstStart() {
-  if (await poortOpen(PORT)) { console.log(`Gebruik de draaiende server op poort ${PORT}.`); return () => {}; }
+  if (EXPLICIET && (await poortOpen(PORT))) { console.log(`LET OP: KAART_PORT=${PORT} staat gezet en daar draait al een server. Die wordt gebruikt zoals hij is, zonder bouwen; staat daar een oude build, dan vergelijkt de kaart een oude app.`); return () => {}; }
   const dist = mkdtempSync(join(tmpdir(), 'kaart-dist-'));
   console.log('Bouwen...');
   execFileSync('npx', ['vite', 'build', '--outDir', dist, '--emptyOutDir'], { cwd: ROOT, stdio: 'ignore' });

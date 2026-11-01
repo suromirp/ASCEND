@@ -69,9 +69,59 @@ export const INVARIANTEN = [
       return Math.abs(v - a) > 1 ? [`Vandaag zegt "ongeveer ${v} minuten", Ascend zegt "Verwacht nu ${ascend[1]}" (${Math.abs(v - a).toFixed(1)} min verschil)`] : [];
     },
   },
+  {
+    // Run in detail: de kop ("23 oktober · 6 km · 39:00"), het tempo en (bij een test) de regel "Hele run: 6 km in 39:00"
+    // gaan over dezelfde afstand en tijd. Het tempo is die tijd door die afstand; de totaaltijd in de kop en in de
+    // regel is dezelfde.
+    naam: 'Run in detail: kop, tempo en totaaltijd gelijk',
+    controleer: (k) => {
+      const t = k('run-in-detail');
+      if (!t) return [];
+      const sec = (x) => x.split(':').map(Number).reduce((a, b) => a * 60 + b, 0);
+      const kop = t.match(/^\d{1,2} \w+ · ([\d,.]+) km · (\d+(?::\d{2}){1,2})$/m);
+      if (!kop) return ['de kop met afstand en totaaltijd ontbreekt'];
+      const km = Number(kop[1].replace(',', '.'));
+      const uit = [];
+      const tempo = t.match(/^Tempo\n(\d+:\d{2})\/km$/m);
+      if (tempo && km > 0) {
+        const verwacht = sec(kop[2]) / km;
+        // Het tempo telt zonder stilstaan; de afstand in de kop is op twee cijfers afgerond.
+        if (Math.abs(sec(tempo[1]) - verwacht) > Math.max(3, verwacht * 0.015)) uit.push(`tempo ${tempo[1]} per km past niet bij ${kop[1]} km in ${kop[2]} (${Math.round(verwacht)} s per km)`);
+      }
+      const hele = t.match(/Hele run: ([\d,.]+) km in (\d+(?::\d{2}){1,2})/);
+      if (hele && (sec(hele[2]) !== sec(kop[2]) || Math.abs(Number(hele[1].replace(',', '.')) - km) > 0.011)) uit.push(`kop zegt ${kop[1]} km in ${kop[2]}, "Hele run" zegt ${hele[1]} km in ${hele[2]}`);
+      return uit;
+    },
+  },
+  {
+    // De zinnen over een testloop ("Telt mee", de beste 5 km, de vraag over het tempo) horen bij een training die een
+    // test is. Op het scherm van een andere training (Run in detail en het blad van een geplande training) mogen ze
+    // niet staan. De naam van de training is de kop onder "Sluiten".
+    naam: 'Geen zin over een testloop bij een training die geen test is',
+    controleer: (k) => {
+      const uit = [];
+      for (const s of ['run-in-detail', 'training-blad']) {
+        const t = k(s);
+        const kop = t.match(/^#{2,3} (.+)$/m);
+        if (!kop || /\b(test|wedstrijd)/i.test(kop[1])) continue;
+        for (const m of alle(t, /^.*\b(testloop|telt (?:niet )?mee|beste 5 km|snelste 5 km)\b.*$/gim)) uit.push(`${s} (${kop[1]}): "${m[0].trim()}"`);
+      }
+      return uit;
+    },
+  },
+  {
+    // kaart.mjs telt op elk scherm (of in het open blad) de knoppen met de mint vulling van de hoofdknop en schrijft alleen
+    // bij meer dan één een regel "[gevulde mint knoppen: ...]". Eén accent per scherm (CLAUDE.md, Zee en berg).
+    naam: 'Hoogstens één gevulde mint knop per scherm',
+    controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^\[gevulde mint knoppen: .*\]$/gm).map((m) => `${s}: ${m[0]}`)),
+  },
 ];
 
-const SCHERMEN = ['vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad'];
+const SCHERMEN = [
+  'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad',
+  'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
+  'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'vandaag-ziek', 'week-ziek',
+];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {
   const cache = {};
