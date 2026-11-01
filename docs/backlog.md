@@ -7,10 +7,12 @@ Bijgewerkt op 1 november 2026.
 ## Loopt nu
 
 Ronde 1 van `docs/onderhoud/2026-11-01-aanpak-backlog.md`, gestart op 1 november om 19:00:
-- Stand schuift zijwaarts (Sherpa, sonnet).
-- Het cijferblok van Forge blijft open tussen velden (Sherpa, sonnet).
-- De rustdag komt terug nadat een voorstel hem weghaalde (Sherpa, opus).
-- Drie ontwerprapporten: gegevens, instellingen en Forge (Cartographer, opus).
+- De rustdag komt terug nadat een voorstel hem weghaalde (gebouwd en groen bij Warden, drie kleine punten).
+- De ochtendkaart na je antwoord (Sherpa, sonnet).
+- Fysio-tekst, voorschriftregel en het citaat in het Engels (Sherpa, sonnet).
+- Een vakantie bijwerken in Week, met het leave-merk na wissen (Sherpa, opus).
+
+Live op 1 november: Stand schuift niet meer zijwaarts, het cijferblok van Forge blijft open, drie ontwerprapporten in `docs/visie/`.
 
 Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10, onderhoud punt 2 en 3.
 
@@ -26,7 +28,6 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 - Ochtenden in de back-up, klein (review 31 oktober): bij het uitzetten van "Ochtendgetallen in back-up" zonder koppeling de bewaarde ochtenden opruimen; `retire` slaat records over die al alleen de back-upvelden hebben; een kort besluit dat de cache een archief is dat ontkoppelen overleeft.
 - Sporten die meetellen stap 1 (pictogrammen, Cartographer) en stap 4 tot 9 (import, vraag op Vandaag, scherm Sporten, weekcheck, vaste dag, hoeveel per soort). Stap 2 en 3 zijn gebouwd.
-- Week: na het wissen van een vakantie houdt een training die je zelf verplaatste een `leave`-merk naar een periode die niet meer bestaat (vraagt dan blijvend om Akkoord). Merk wissen in `putBack` als `byYou`.
 - Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
 
 ## Voor de eigenaar
@@ -54,12 +55,9 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Spierindex stap 1 en 2: controle op je training en slimmer vervangen.
 - Grote bestanden opsplitsen: AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations.
 - Android-app (Capacitor), als een van de grote nieuwe features van deze ronde. Lokale meldingen komen daarmee (een PWA zonder server kan geen melding sturen als de app dicht is).
-- De rustdag komt niet terug nadat een voorstel hem weghaalde en de dag weer leeg werd; Week toont dan "Vrij" op de vaste rustdag (ronde 1).
-- Een vakantie of vrije periode bijwerken in Week (data, soort, notitie), als voorstel met Akkoord (ronde 1).
 - Android-meldingen met het scherm uit en trillen: het einde van de rust in Forge, de ochtendvraag en de weekmelding (ronde 2b, bij de Android-app). Toestemmingen direct na de installatie, in een korte welkomstreeks met per toestemming één scherm en "Niet nu".
 - Health Connect als bron in de Android-app, via de adapter in `src/integrations/` (ronde 2b).
 - Gegevens en instellingen overzichtelijker: een ontwerprapport per gebied (Stand, Logboek, Ascend, Run in detail, Lichaam, terugblikken; en de acht groepen instellingen), daarna bouwen; een complete herinrichting van een tab mag.
-- Het citaat onderaan Vandaag standaard in het Engels, instelbaar (Engels, Nederlands, uit).
 - Korte weekmelding op zondagavond: wat er gebeurde, wat er komt, één tip. Als melding via de Android-app; in de PWA als kaart op Vandaag bij het openen.
 - "Waarom staat dit hier?" bij elke training in Week: één tik geeft de reden van de planning (welke regel, welk voorstel).
 - Snel aanpassen voor vandaag: één knop "Minder tijd vandaag" die de training inkort, via een voorstel met Akkoord.
