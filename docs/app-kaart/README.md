@@ -18,7 +18,7 @@ De standen zijn bestanden `state-<naam>.json` in `.claude/skills/lookout/kit/`. 
 
 ## Draaien
 
-`npm run kaart` bouwt de app, start een eigen preview op poort 5271 en schrijft deze map opnieuw. Een run duurt ongeveer een minuut. Staat er al een server op die poort (of op `KAART_PORT`), dan gebruikt het die.
+`npm run kaart` bouwt de app, start een eigen preview op een vrije poort en schrijft deze map opnieuw. Een run duurt een paar minuten. Het bouwt altijd zelf, zodat een oude build van iemand anders nooit wordt vergeleken. Alleen met `KAART_PORT` gezet hergebruikt het een draaiende server op die poort, zonder bouwen, en dat meldt het duidelijk (`maak-standen.mjs` doet hetzelfde).
 
 `npm run kaart:vergelijk` maakt de kaart in een tijdelijke map en toont per scherm alleen de gewijzigde regels (`-` was, `+` is). Alleen voor gewijzigde schermen komt er een afdruk in de map uit `LOOKOUT_SHOTS` (anders `./shots`). Exitcode 0 is geen verschil, 1 is verschil.
 

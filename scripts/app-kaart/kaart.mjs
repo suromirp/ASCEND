@@ -23,7 +23,10 @@ const fotoScherm = fotoAt >= 0 ? args[fotoAt + 1] : null;
 const markeerAt = args.indexOf('--markeer');
 const markeerTekst = markeerAt >= 0 ? args[markeerAt + 1] : null;
 
-const PORT = Number(process.env.KAART_PORT ?? process.env.LOOKOUT_PORT ?? 5271);
+// Zonder KAART_PORT bouwt de kaart altijd zelf en kiest een vrije poort, zodat hij nooit een verouderde build van
+// iemand anders vergelijkt. Alleen met KAART_PORT mag hij een draaiende server hergebruiken.
+const EXPLICIET = process.env.KAART_PORT !== undefined;
+const PORT = EXPLICIET ? Number(process.env.KAART_PORT) : await vrijePoort();
 process.env.LOOKOUT_PORT = String(PORT);
 process.env.LOOKOUT_SHOTS ??= join(ROOT, 'shots');
 const { open, BASE } = await import('../../.claude/skills/lookout/kit/lib.mjs');
@@ -78,6 +81,8 @@ export function normaliseer(t) {
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, '<id>')
     .replace(/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?\b/g, '<tijdstempel>')
     .replace(/\b\d{13}\b/g, '<tijdstempel>')
+    // Hoeveel ruimte de browser geeft en hoeveel de stand gebruikt hangt van de schijf van de machine af.
+    .replace(/(Van de )[\d.,]+ [KMGT]?B( die de browser geeft\n)[\d.,]+ [KMGT]?B/g, '$1<ruimte>$2<gebruikt>')
     .replace(/Versie \d{1,2} \w+, \d{2}:\d{2}/g, 'Versie <bouwtijd>')
     .replace(/\n{3,}/g, '\n\n')
     .split('\n').map((l) => l.trimEnd()).join('\n').trim() + '\n';
@@ -120,7 +125,8 @@ const SCHERMEN = {
   weekterugblik: { titel: 'Weekterugblik (blad in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Weekterugblik")') },
   jaaroverzicht: { titel: 'Jaaroverzicht (in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Jaaroverzicht")') },
   'training-blad': { titel: 'Blad van een geplande training (Week)', pad: '#/week', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Lange duurloop")') },
-  gegevens: { titel: 'Instellingen: Gegevens en back-up', pad: '#/more/gegevens' },
+  // De opslagrijen komen asynchroon uit de browser (storage.estimate); wacht tot ze er zijn.
+  gegevens: { titel: 'Instellingen: Gegevens en back-up', pad: '#/more/gegevens', actie: (p) => p.waitForFunction(() => /die de browser geeft/.test(document.body.innerText) && /Ruimte van reeksen, /.test(document.body.innerText), null, { timeout: 15000 }).catch(() => {}) },
   lichaam: { titel: 'Lichaam', pad: '#/lichaam' },
   'lichaam-plek': { titel: 'Lichaam: een plek (rechterknie)', pad: '#/lichaam/knie-r' },
   // De standen met horlogegegevens, een vakantie, zonder doel en ziek gemeld (scripts/app-kaart/maak-standen.mjs).
@@ -281,12 +287,21 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
   } finally { await o.browser.close(); }
 }
 
+// Een poort die het besturingssysteem vrij geeft.
+function vrijePoort() {
+  return new Promise((ok, fout) => {
+    const s = net.createServer();
+    s.on('error', fout);
+    s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => ok(port)); });
+  });
+}
+
 function poortOpen(p) {
   return new Promise((ok) => { const c = net.connect(p, '127.0.0.1'); c.on('connect', () => { c.destroy(); ok(true); }); c.on('error', () => ok(false)); });
 }
 
 async function dienstStart() {
-  if (await poortOpen(PORT)) { console.log(`Gebruik de draaiende server op poort ${PORT}.`); return () => {}; }
+  if (EXPLICIET && (await poortOpen(PORT))) { console.log(`LET OP: KAART_PORT=${PORT} staat gezet en daar draait al een server. Die wordt gebruikt zoals hij is, zonder bouwen; staat daar een oude build, dan vergelijkt de kaart een oude app.`); return () => {}; }
   const dist = mkdtempSync(join(tmpdir(), 'kaart-dist-'));
   console.log('Bouwen...');
   execFileSync('npx', ['vite', 'build', '--outDir', dist, '--emptyOutDir'], { cwd: ROOT, stdio: 'ignore' });

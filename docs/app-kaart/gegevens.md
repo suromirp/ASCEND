@@ -12,9 +12,13 @@ Nog nooit
 [knop: Vaste map, Niet gekozen]
 Vaste map
 Niet gekozen
+[knop: Opslag beschermd, Nee]
 Opslag beschermd
+Nee
 Ruimte op dit toestel
 [knop: Uitleg: Ruimte op dit toestel]
+Van de <ruimte> die de browser geeft
+<gebruikt>
 [knop: Kopieën van voor een import, 0]
 Kopieën van voor een import
 0
@@ -25,9 +29,11 @@ Volledige reeks bewaren
 [knop: Reeksen in back-up, 2 jaar]
 Reeksen in back-up
 [knop: Uitleg: Reeksen in back-up]
+Nog geen reeksen bewaard
 2 jaar
-[knop: Ruimte van reeksen]
+[knop: Ruimte van reeksen, 0 B]
 Ruimte van reeksen
+0 B
 [knop: Ochtendgetallen in back-up]
 Ochtendgetallen in back-up
 [knop: Uitleg: Ochtendgetallen in back-up]

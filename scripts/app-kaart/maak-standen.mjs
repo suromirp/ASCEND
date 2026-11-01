@@ -17,7 +17,8 @@ import net from 'node:net';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const KIT = join(ROOT, '.claude', 'skills', 'lookout', 'kit');
-const PORT = Number(process.env.KAART_PORT ?? process.env.LOOKOUT_PORT ?? 5271);
+const EXPLICIET = process.env.KAART_PORT !== undefined;
+const PORT = EXPLICIET ? Number(process.env.KAART_PORT) : await vrijePoort();
 process.env.LOOKOUT_PORT = String(PORT);
 process.env.LOOKOUT_SHOTS ??= join(ROOT, 'shots');
 const { open, BASE } = await import('../../.claude/skills/lookout/kit/lib.mjs');
@@ -35,12 +36,6 @@ const veld = (rec, naam) => {
   return o ? o.v : undefined;
 };
 const meta = (state, sleutel) => winkel(state, 'meta').records.find((r) => r.key === sleutel);
-const zetMeta = (state, sleutel, waarde) => {
-  const w = winkel(state, 'meta');
-  const bestaand = w.records.find((r) => r.key === sleutel);
-  if (bestaand) bestaand.value = waarde;
-  else w.records.push({ key: sleutel, value: waarde });
-};
 const verwijderPlanning = (state, welke) => {
   const w = winkel(state, 'plannedSessions');
   w.records = w.records.filter((r) => !welke(veld(r, 'scheduledDate')));
@@ -123,12 +118,21 @@ async function settle(bestand) {
   } finally { await o.browser.close(); }
 }
 
+// Een poort die het besturingssysteem vrij geeft.
+function vrijePoort() {
+  return new Promise((ok, fout) => {
+    const s = net.createServer();
+    s.on('error', fout);
+    s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => ok(port)); });
+  });
+}
+
 function poortOpen(p) {
   return new Promise((ok) => { const c = net.connect(p, '127.0.0.1'); c.on('connect', () => { c.destroy(); ok(true); }); c.on('error', () => ok(false)); });
 }
 
 async function dienstStart() {
-  if (await poortOpen(PORT)) return () => {};
+  if (EXPLICIET && (await poortOpen(PORT))) { console.log(`LET OP: KAART_PORT=${PORT}: de draaiende server wordt gebruikt zonder te bouwen.`); return () => {}; }
   const dist = mkdtempSync(join(tmpdir(), 'standen-dist-'));
   console.log('Bouwen...');
   execFileSync('npx', ['vite', 'build', '--outDir', dist, '--emptyOutDir'], { cwd: ROOT, stdio: 'ignore' });
