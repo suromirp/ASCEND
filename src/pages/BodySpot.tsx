@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { SEVERITY_CHOICES } from '../data/bodyCare';
-import { breakableSpotName, careForSpot, injuryNameFor, isValidReportDate, openComplaintsBySpot, spotById, stretchesForSpot, stretchMinutes, type BodySpot } from '../engine/bodyMap';
+import { breakableSpotName, careForSpot, fysioSignal, injuryNameFor, isValidReportDate, openComplaintsBySpot, spotById, stretchesForSpot, stretchMinutes, type BodySpot } from '../engine/bodyMap';
+import { checkWeekStart } from '../engine/bodyCheck';
 import { resolveFigure } from '../engine/figureSettings';
 import type { InjurySeverity } from '../models/injury';
 import { todayISO } from '../utils/dates';
+import type { SpotCare } from '../engine/bodyMap';
 import { withTimeout } from '../utils/withTimeout';
 import { Card, Eyebrow, InfoButton, PageHeader, PrimaryButton, SecondaryButton } from '../components/ui';
 import { ChoiceStrip } from '../components/ChoiceStrip';
@@ -46,8 +48,10 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
   const { figure } = resolveFigure(settings);
   const care = careForSpot(spot);
   const stretches = stretchesForSpot(spot);
-  const here = openComplaintsBySpot(injuryNotes, todayISO())[spot.id] ?? [];
+  const today = todayISO();
+  const here = openComplaintsBySpot(injuryNotes, today)[spot.id] ?? [];
   const [showStretchInfo, setShowStretchInfo] = useState(false);
+  const signal = fysioSignal(spot, injuryNotes, settings.weeklyHealthChecks, checkWeekStart(today), today);
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
@@ -64,20 +68,7 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
               </li>
             ))}
           </ul>
-          <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-            <p className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
-              <span style={{ color: 'var(--color-warning)' }}><Icon name="letOp" size={18} /></span>
-              Naar een fysio of je huisarts bij
-            </p>
-            <ul className="flex flex-col gap-1.5 pl-7">
-              {care.fysioAll.map((line) => (
-                <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line.charAt(0).toUpperCase() + line.slice(1)}</li>
-              ))}
-            </ul>
-            {care.direct && (
-              <p className="pl-7 text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{care.direct}</p>
-            )}
-          </div>
+          <FysioFold care={care} signal={signal} />
         </Card>
 
         <Card>
@@ -120,6 +111,47 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
 
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Algemene uitleg, geen diagnose. Twijfel je, vraag het een fysio of je huisarts.</p>
       {showStretchInfo && <StretchInfoSheet onClose={() => setShowStretchInfo(false)} />}
+    </div>
+  );
+}
+
+// "Wanneer laat je het nakijken?": ingeklapt en rustig, tenzij je zelf iets meldde dat erbij hoort
+// (`fysioSignal`): dan staat hij open en in amber. De inhoud is altijd dezelfde.
+function FysioFold({ care, signal }: { care: SpotCare; signal: boolean }) {
+  const [chosen, setChosen] = useState<boolean | undefined>(undefined);
+  const open = chosen ?? signal;
+  const tone = signal ? 'var(--color-warning)' : 'var(--color-ink)';
+  return (
+    <div className="flex flex-col border-t pt-1" style={{ borderColor: 'var(--color-card-border)' }}>
+      <button
+        type="button"
+        onClick={() => setChosen(!open)}
+        aria-expanded={open}
+        aria-controls="fysio-regel"
+        className="flex min-h-[44px] w-full items-center justify-between gap-3 text-left text-sm font-medium"
+        style={{ color: tone }}
+      >
+        <span className="flex items-center gap-2">
+          {signal && <Icon name="letOp" size={18} />}
+          Wanneer laat je het nakijken?
+        </span>
+        <span className="shrink-0 transition-transform duration-200 ease-out" style={{ transform: open ? 'rotate(180deg)' : undefined, color: 'var(--color-ink-dim)' }} aria-hidden="true"><Icon name="omlaag" size={18} /></span>
+      </button>
+      <div id="fysio-regel" className="mx-unfold" data-shown={open} inert={!open}>
+        <div>
+          <div className="flex flex-col gap-2 pb-1 pt-1">
+            <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Naar een fysio of je huisarts bij</p>
+            <ul className="flex flex-col gap-1.5 pl-4">
+              {care.fysioAll.map((line) => (
+                <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line.charAt(0).toUpperCase() + line.slice(1)}</li>
+              ))}
+            </ul>
+            {care.direct && (
+              <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{care.direct}</p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
