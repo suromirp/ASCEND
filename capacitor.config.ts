@@ -17,6 +17,21 @@ const config: CapacitorConfig = {
   },
   plugins: {
     // Het kleine teken in de statusbalk (android/app/src/main/res/drawable/ic_stat_ascend.xml).
+    // Kleuren uit het thema (src/index.css): het marine van --color-bg achter het openingsscherm,
+    // de lucht van --color-sky-top achter de statusbalk tot de app hem zelf zet
+    // (src/integrations/deviceShell.ts). Het openingsscherm gaat weg zodra de app er is, en
+    // anders na drie seconden vanzelf.
+    SplashScreen: {
+      backgroundColor: '#0b1733',
+      launchShowDuration: 3000,
+      launchAutoHide: true,
+      showSpinner: false,
+    },
+    StatusBar: {
+      overlaysWebView: false,
+      backgroundColor: '#dcebf8',
+      style: 'LIGHT',
+    },
     LocalNotifications: {
       smallIcon: 'ic_stat_ascend',
     },
