@@ -52,6 +52,12 @@ Bij elke fout, herstelronde of dure helper zoekt de reflectie de echte oorzaak, 
   repo hoort;
 - de poort: welke controle (test, invariant, Warden, screenshot) had het eerder kunnen vangen;
 - de coördinator zelf: verkeerde volgorde, te veel tegelijk, te weinig gelezen, te veel zelf gedaan.
+Even serieus kijkt de reflectie naar wat juist heel goed ging (een bouwer die in één keer groen en mooi was, een
+review die een echte fout ving, een goedkope helper die genoeg was, een opdracht die zonder vragen werkte): wat
+maakte het goed, en hoe wordt dat de standaard. Een opdracht die goed werkte wordt een sjabloon in de werkverdeling
+(`.claude/skills/werkverdeling/`), een helper die goedkoop genoeg was zet de tabel lager, en een werkwijze die
+loonde (bijvoorbeeld toetsen op de echte back-up) gaat in de poort.
+
 Per oorzaak één concrete aanpassing, en die gaat meteen in de werkverdeling, een skill, een agentbeschrijving,
 de tekstkaart of een test, zodat de volgende ronde hem al heeft. Aanpassingen aan `.claude/agents/` en
 `.claude/skills/` zijn met toestemming van de eigenaar (1 november).
