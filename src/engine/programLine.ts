@@ -2,7 +2,7 @@ import type { SetTarget } from '../models/training';
 
 // De korte regel boven de sets in Forge: wat je programma vraagt. Gelijke sets staan samen
 // ("4 sets van 9+ herhalingen tot falen"), verschillende kort na elkaar ("2 sets van 8 tot 10 met
-// 2 in reserve, dan 1 set van 9+ tot falen"). Alleen woorden; het gewicht rekent forgeWorkout.ts.
+// 2 over, dan 1 set van 9+ tot falen"). Alleen woorden; het gewicht rekent forgeWorkout.ts.
 
 const reps = (s: SetTarget) => (s.repsLow === s.repsHigh ? `${s.repsLow}` : `${s.repsLow} tot ${s.repsHigh}`);
 const plus = (s: SetTarget) => `${s.repsLow}+`;
@@ -12,16 +12,16 @@ const sameSet = (a: SetTarget, b: SetTarget) => sameKind(a, b) && (a.failure ? t
 
 function segment(n: number, s: SetTarget, alone: boolean): string {
   if (s.failure) return `${count(n)} van ${plus(s)}${alone ? ' herhalingen' : ''} tot falen`;
-  if (s.open) return `${count(n)} van ${plus(s)} met ${s.rir} in reserve`;
-  return `${count(n)} van ${reps(s)}${alone ? ',' : ' met'} ${s.rir} in reserve`;
+  if (s.open) return `${count(n)} van ${plus(s)} met ${s.rir} over`;
+  return `${count(n)} van ${reps(s)} met ${s.rir} over`;
 }
 
 export function programLine(sets: SetTarget[]): string {
   if (sets.length === 0) return '';
-  // Dezelfde sets, alleen de reserve loopt op of af: "in reserve 1, 2 en 3".
+  // Dezelfde sets, alleen de reserve loopt op of af: "met 1, 2 en 3 over".
   if (sets.length > 1 && sets.every((s) => sameKind(s, sets[0]) && !s.failure && !s.open) && sets.some((s) => s.rir !== sets[0].rir)) {
     const rirs = sets.map((s) => s.rir);
-    return `${count(sets.length)} van ${reps(sets[0])}, in reserve ${rirs.slice(0, -1).join(', ')} en ${rirs.at(-1)}`;
+    return `${count(sets.length)} van ${reps(sets[0])} met ${rirs.slice(0, -1).join(', ')} en ${rirs.at(-1)} over`;
   }
   const groups: { n: number; set: SetTarget }[] = [];
   for (const s of sets) {

@@ -172,7 +172,7 @@ describe('gebruiken', () => {
     expect(work.map((r) => [r.target.repsLow, r.target.repsHigh, r.target.rir])).toEqual([[4, 6, 1], [4, 6, 2], [4, 6, 3]]);
     // Zwaarder dan bij 7 tot 9 en lichter per set met meer over.
     expect(work[0].weightKg).toBeGreaterThan(work[2].weightKg!);
-    expect(bench.reason).toContain('Je programma vraagt nu 3 sets van 4 tot 6, in reserve 1, 2 en 3');
+    expect(bench.reason).toContain('Je programma vraagt nu 3 sets van 4 tot 6 met 1, 2 en 3 over');
     expect(bench.restSec).toBe(180);
     // Een set tot falen: "12+", vooringevuld met 12.
     expect(raise.rows[0].target.failure).toBe(true);
