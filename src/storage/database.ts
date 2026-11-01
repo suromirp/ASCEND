@@ -526,6 +526,32 @@ export const RecoveryMetricsRepo = {
   getAll: () => getAll('recoveryMetrics') as Promise<RecoveryMetric[]>,
   putAll: (metrics: RecoveryMetric[]) => putAll('recoveryMetrics', metrics),
   delete: (id: string) => del('recoveryMetrics', id),
+  // In één readwrite-transactie: alles of niets (storage/morningArchive.ts).
+  deleteMany: async (ids: readonly string[]) => {
+    if (ids.length === 0) return;
+    const db = await getDB();
+    const tx = db.transaction('recoveryMetrics', 'readwrite');
+    const done = tx.done;
+    done.catch(() => undefined);
+    const requests: Promise<unknown>[] = [];
+    try {
+      for (const id of ids) {
+        const request = tx.store.delete(id);
+        request.catch(() => undefined);
+        requests.push(request);
+      }
+      await Promise.all(requests);
+    } catch (err) {
+      // Een fout halverwege: de hele transactie terug, ook wat al gewist was.
+      try {
+        tx.abort();
+      } catch {
+        // Al afgebroken.
+      }
+      throw err;
+    }
+    await done;
+  },
 };
 
 export const MetaRepo = {

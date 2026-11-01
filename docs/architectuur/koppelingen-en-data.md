@@ -23,6 +23,11 @@ Vandaag when nothing comes in from the watch for three days while the link works
 `components/SourceSilenceLine.tsx`, setting `watchSilence`). The mornings (date, resting heart rate, HRV, sleep
 duration and score only) travel in the backup as `payload.mornings` (`engine/morningBackup.ts`,
 `storage/migrations.ts#migrateMornings`, setting `morningInBackup`); a restore only adds mornings the device lacks.
+Those mornings are an archive that survives unlinking while the setting is on. Switching the setting off asks first
+and offers Ongedaan maken: without a link it clears them all at once, in one transaction (`RecoveryMetricsRepo.deleteMany`);
+with a link (also with an expired key) the next fetch drops the part older than 400 days, and the sheet says so
+(`storage/morningArchive.ts`, `engine/morningBackup.ts#archiveToClear`; `#planRetire` skips a morning that already has
+only the backup fields; decision `2026-11-01-ochtenden-archief.md`).
 The activities request asks only the fields `mapIntervalsActivity` reads (`ACTIVITY_FIELDS`), and asks once more
 without the list when the answer is refused; a field read there belongs in that list.
 

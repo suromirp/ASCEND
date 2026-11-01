@@ -11,12 +11,13 @@
 //
 // While that setting is on, a morning is an archive and not only a cache: unlinking and the
 // 400-day limit drop the rest of the record but keep the date and the four numbers that go in
-// the backup (`retire`), so a backup made later still has them.
+// the backup (`retire`), so a backup made later still has them. Only switching that setting off
+// without a link clears them (storage/morningArchive.ts, docs/beslissingen/2026-11-01-ochtenden-archief.md).
 
 import { MetaRepo, RecoveryMetricsRepo, SettingsRepo } from './database';
 import { KEEP_DAYS, wellnessPlan, type DateSpan } from '../engine/wellnessRange';
 import { morningOf } from '../engine/influenceEffects';
-import { morningsForBackup, resolveMorningBackup } from '../engine/morningBackup';
+import { planRetire, resolveMorningBackup } from '../engine/morningBackup';
 import { fetchIntervalsWellness, INTERVALS_ADAPTER_ID, intervalsErrorMessage, type FetchOptions, type IntervalsConnection } from '../integrations/intervalsIcu';
 import { DEFAULT_WATCH_USE, filterRecovery, wellnessWanted, type WatchUse } from '../engine/watchUse';
 import type { RecoveryMetric } from '../models/metrics';
@@ -39,13 +40,13 @@ export async function getRecoveryMetrics(): Promise<RecoveryMetric[]> {
 }
 
 // A fetched morning that leaves the cache: with "Ochtendgetallen in back-up" on only the backup
-// fields stay (engine/morningBackup.ts#morningsForBackup), otherwise it goes.
+// fields stay (engine/morningBackup.ts#planRetire), otherwise it goes. A morning that already has
+// only those fields is skipped, so nothing is written twice or left half done.
 async function retire(records: readonly RecoveryMetric[], keepMornings: boolean): Promise<void> {
   if (records.length === 0) return;
-  const kept = keepMornings ? morningsForBackup(records) : [];
-  const keptIds = new Set(kept.map((m) => m.id));
-  for (const m of records) if (!keptIds.has(m.id)) await RecoveryMetricsRepo.delete(m.id);
-  if (kept.length > 0) await RecoveryMetricsRepo.putAll(kept);
+  const plan = planRetire(records, keepMornings);
+  for (const id of plan.remove) await RecoveryMetricsRepo.delete(id);
+  if (plan.put.length > 0) await RecoveryMetricsRepo.putAll(plan.put);
 }
 
 // Never throws: wellness is a bonus on top of the activities, and a hiccup
