@@ -8,12 +8,14 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // De workflow .github/workflows/android.yml geeft het runnummer mee, zodat elke nieuwe
-        // APK over de vorige heen te installeren is. Het native niveau (android/native-level.txt)
-        // staat vooraan in de versienaam: de app leest het daar om te weten of een nieuwe
-        // webversie bij deze APK past (src/engine/liveUpdate.ts).
+        // APK over de vorige heen te installeren is: versionCode = native niveau maal de vaste
+        // offset plus het runnummer (docs/android-sleutel.md). Het native niveau
+        // (android/native-level.txt) staat vooraan in de versienaam: de app leest het daar om te
+        // weten of een nieuwe webversie bij deze APK past (src/engine/liveUpdate.ts).
+        def versionOffset = 100000
         def nativeLevel = rootProject.file('native-level.txt').text.trim().toInteger()
         def run = (System.getenv("ASCEND_VERSION_CODE") ?: "0").toInteger()
-        versionCode nativeLevel * 100000 + run
+        versionCode nativeLevel * versionOffset + run
         versionName "${nativeLevel}.${run}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -22,26 +24,17 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    // De vaste sleutel komt alleen uit de omgeving (de workflow zet hem uit de secrets klaar; zie
-    // docs/android-sleutel.md). Nooit een sleutel of wachtwoord in de repo.
-    def keystoreFile = System.getenv("ASCEND_KEYSTORE_FILE")
-    signingConfigs {
-        if (keystoreFile) {
-            release {
-                storeFile file(keystoreFile)
-                storePassword System.getenv("ASCEND_KEYSTORE_PASSWORD")
-                keyAlias System.getenv("ASCEND_KEY_ALIAS")
-                keyPassword System.getenv("ASCEND_KEY_PASSWORD")
-            }
-        }
-    }
     buildTypes {
+        // Geen sleutel in Gradle: de workflow ondertekent de release-APK daarna in een eigen stap
+        // met zipalign en apksigner (docs/android-sleutel.md).
         release {
-            if (keystoreFile) {
-                signingConfig signingConfigs.release
-            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        // Een proefversie die naast de echte app staat, met een eigen naam
+        // (src/debug/res/values/strings.xml) en eigen gegevens.
+        debug {
+            applicationIdSuffix ".debug"
         }
     }
 }

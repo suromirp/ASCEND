@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- De proefversie (debug) heet anders, zodat je hem naast de echte app herkent. -->
+<resources>
+    <string name="app_name">ASCEND proef</string>
+    <string name="title_activity_main">ASCEND proef</string>
+</resources>

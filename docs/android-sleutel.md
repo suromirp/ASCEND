@@ -4,7 +4,7 @@ Android installeert een nieuwe versie van een app alleen over de oude heen als b
 
 ## 1. De sleutel maken
 
-Op een computer met Java (Android Studio heeft het al), in een map buiten de repo:
+Op een computer met Java (Android Studio heeft het al), in een map buiten de repo en buiten een cloudmap (dus niet in OneDrive, Google Drive, Dropbox of iCloud Drive, die kopiëren alles vanzelf naar een server):
 
 ```bash
 keytool -genkeypair -v -keystore ascend.keystore -alias ascend -keyalg RSA -keysize 4096 -validity 10000
@@ -22,7 +22,7 @@ base64 -w 0 ascend.keystore > ascend.keystore.txt
 
 (Op een Mac: `base64 -i ascend.keystore -o ascend.keystore.txt`.)
 
-Ga in GitHub naar de repo, Settings, Secrets and variables, Actions, New repository secret, en maak er vier:
+De sleutel staat niet bij de gewone secrets van de repo, maar in een environment, zodat alleen de stap die vanaf main ondertekent erbij kan. Ga in GitHub naar de repo, Settings, Environments, New environment, en noem hem `android-release`. Zet bij Deployment branches "Selected branches" en voeg `main` toe. Maak daar onder Environment secrets vier secrets:
 
 1. `ANDROID_KEYSTORE_BASE64`: de hele inhoud van `ascend.keystore.txt`.
 2. `ANDROID_KEYSTORE_PASSWORD`: het wachtwoord van het bestand.
@@ -31,8 +31,20 @@ Ga in GitHub naar de repo, Settings, Secrets and variables, Actions, New reposit
 
 Gooi `ascend.keystore.txt` daarna weg. Zet de sleutel en de wachtwoorden nooit in de repo.
 
-De volgende keer dat de workflow draait (bij een push naar main, of met de hand via Actions, Android-app, Run workflow) bouwt hij een ondertekende APK en zet hij die als release `apk-<nummer>` op GitHub. Zonder de vier secrets bouwt hij alleen een debug-APK als artefact, zonder release, en meldt hij dat in de run.
+De volgende keer dat de workflow vanaf main draait (bij een push naar main, of met de hand via Actions, Android-app, Run workflow) bouwt hij de APK zonder sleutel, ondertekent hij hem daarna in een aparte stap en zet hij hem als release `apk-<nummer>` op GitHub. Zonder de vier secrets bouwt hij alleen een proef-APK als artefact, zonder release, en meldt hij dat in de run.
+
+Het versienummer gaat vanzelf omhoog: het is het native niveau (`android/native-level.txt`) maal een vaste offset van 100000, plus het nummer van de run, zodat Android elke nieuwe APK als update ziet.
 
 ## 3. De sleutel bewaren
 
 Bewaar `ascend.keystore` en de wachtwoorden op twee veilige plekken, bijvoorbeeld in je wachtwoordbeheerder en op een usb-stick. Ben je de sleutel kwijt, dan kan geen enkele nieuwe APK nog over de geïnstalleerde app heen: je moet de app dan verwijderen en opnieuw installeren. Maak in dat geval eerst een back-up in de app (Instellingen, Gegevens en back-up) en zet die daarna terug.
+
+## 4. Als de sleutel is uitgelekt
+
+Denk je dat iemand anders de sleutel of de wachtwoorden heeft, dan kan die een APK maken die Android als update van jouw app accepteert. Doe dan dit:
+
+1. Verwijder de vier secrets uit de environment `android-release`, zodat er niets meer mee ondertekend wordt.
+2. Maak in de app een back-up (Instellingen, Gegevens en back-up) en bewaar hem op je telefoon of computer.
+3. Maak een nieuwe sleutel zoals bij stap 1 en zet de vier secrets opnieuw.
+4. Laat de workflow draaien, verwijder de oude app, installeer de nieuwe APK en zet je back-up terug.
+5. Installeer daarna nooit meer een APK van een andere plek dan de releases van je eigen repo.
