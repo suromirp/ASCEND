@@ -55,6 +55,7 @@ import { applyPlanChangeItems } from './proposalEngine';
 import type { LeavePeriod } from '../models/leave';
 import { weatherAdvice } from './weatherSwap';
 import { LEG_BODY_PARTS } from './legSpots';
+import { restBackAdvice } from './restDayBack';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -147,6 +148,10 @@ export interface AdviceInputs {
   // The forecast for your place and the moment it is read at (engine/weather.ts,
   // rule WEATHER-SWAP). Absent without a place or before the first fetch.
   weather?: { forecast: WeatherForecast; now: Date; leave?: LeavePeriod[] };
+  // Your rest day, 1 to 7 (rule REST-BACK). Absent: the rest day of the extra training, if any.
+  restDay?: number;
+  // "Rustdag terugzetten voorstellen" (rule REST-BACK, engine/restDayBack.ts). Absent = on.
+  restDayBack?: boolean;
   // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
   noRetry?: boolean;
 }
@@ -1590,9 +1595,15 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const targetTime = targetTimeAdvice(inputs);
   const weather = weatherAdvice(inputs, templateById);
   const morning = morningAdvice(inputs, templateById);
+  // Een rustdag die een voorstel liet vervallen en die weer leeg is: terug, met Akkoord (engine/restDayBack.ts).
+  const restBack = restBackAdvice({
+    plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, today: inputs.asOf,
+    restDay: inputs.restDay ?? inputs.extraSession?.restDay, anchor: inputs.extraSession?.anchor, leave: inputs.leave,
+    illnessEpisodes: inputs.illnessEpisodes, on: inputs.restDayBack,
+  });
   // TEST-RETRY touches no session that already stands in another proposal.
   const retryUsed = new Set(usedIds);
-  for (const a of fresh([...restSwap, ...restPull, ...tooHard, ...tooLight, ...injury, ...strength, ...spacing, ...extraSession, ...restWeekSkip, ...repeatWeek, ...tentPack, ...targetTime, ...weather, ...morning])) {
+  for (const a of fresh([...restSwap, ...restPull, ...tooHard, ...tooLight, ...injury, ...strength, ...spacing, ...extraSession, ...restWeekSkip, ...repeatWeek, ...tentPack, ...targetTime, ...weather, ...morning, ...restBack])) {
     for (const p of [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])]) for (const c of p?.changes ?? []) if (c.plannedSessionId) retryUsed.add(c.plannedSessionId);
   }
   return [
@@ -1614,6 +1625,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...(inputs.noRetry ? [] : testRetryAdvice(inputs, templateById, retryUsed, testRoom)),
     ...weather,
     ...morning,
+    ...restBack,
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
