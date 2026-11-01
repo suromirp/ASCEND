@@ -104,6 +104,18 @@ Ronde 2b, naast ronde 2:
 11. Sherpa (sonnet): "Waarom staat dit hier?" in Week, "Minder tijd vandaag" (voorstel), zones bijwerken na een
     test (voorstel), en Run in detail voor oudere runs.
 
+Ronde 4, aan het eind: de app gebruiken zoals een mens
+12. Drie tot vier testers (tester, sonnet; opschalen naar opus bij twijfel), elk met een eigen persoon en een
+    nagemaakte stand, die met de kit van Lookout en een verschuivende klok een paar weken in de app leven: elke
+    ochtend de ochtendkaart, trainen en loggen (ook via MacroFactor en het horloge), iets overslaan, slepen, een
+    voorstel aannemen of afwijzen, ziek worden, op vakantie gaan, een test lopen, instellingen zoeken.
+    Personen: een loper met een wedstrijd en een bergtocht als doel (zoals de eigenaar), een beginner zonder
+    doel, iemand die vooral krachttraint, en iemand die ziek wordt en een vakantie heeft.
+    Elk noteert wat goed werkt, wat misgaat, wat onlogisch of onduidelijk is en waar hij iets niet vond, met
+    screenshots. De coördinator voegt de lijsten samen, kiest met de aanbevolen opties en laat het herstellen
+    in een laatste ronde, met dezelfde poort.
+    Na ronde 2 eerst een korte proef met één persoon, zodat grote fouten niet tot het eind blijven liggen.
+
 ## Wat niet zonder de eigenaar kan
 
 - Voeding (kans E): bewust niet, de eigenaar laat het liggen.
