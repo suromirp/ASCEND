@@ -181,7 +181,7 @@ Ronde 1, tegelijk:
 4. Sherpa (sonnet): de kleine vervolgpunten in één ronde (ochtenden in de back-up, het leave-merk na het wissen
    van een vakantie, onderhoud latere ronde), plus: het citaat onderaan Vandaag standaard in het Engels in
    plaats van het Nederlands, instelbaar (Engels, Nederlands, uit) op de vijf plekken van een instelling.
-5. Twee Cartographers (opus, ontwerper), tegelijk, alleen een ontwerprapport, nog niets bouwen:
+5. Drie Cartographers (opus, ontwerper), tegelijk, alleen een ontwerprapport, nog niets bouwen:
    a. Gegevens: Stand, Logboek, Ascend, Run in detail, Lichaam, Weekterugblik en Jaaroverzicht. Welke gegevens
       staan waar, wat is dubbel, te veel of onduidelijk, wat vind je niet terug, wat is juist goed. Doel: alles
       inzichtelijker en beter georganiseerd; een complete herinrichting van een tab mag.
@@ -193,6 +193,15 @@ Ronde 1, tegelijk:
       naast elkaar. Neem deze kaart als eerste voorbeeld in het rapport en geef een mooier, rustiger voorstel.
    b. Instellingen: alle acht groepen en de bladen eronder. Wat is logisch ingedeeld, wat zoek je en vind je niet,
       wat kan samen of weg, wat mist een goede uitleg.
+   c. Forge, het trainingsscherm (wens van de eigenaar, 1 november, met screenshots): "heel veel opties, ik zoek
+      een logischere UI en UX, met behoud van de essentie". Wat opvalt: Ruilen, Opwarmset en Notitie staan zowel als
+      knoppen op de kaart als in het menu, en Set toevoegen ook twee keer; het menu heeft negen regels plus tips; de
+      kolom Voorschrift herhaalt wat in de vakken kg en Herh. al staat; RIR en Alles zijn kleine losse kolommen; de
+      voorschriftregel is lang. Doel: tijdens het trainen alleen wat je per set nodig hebt (gewicht, herhalingen,
+      afvinken, rust), de rest rustig en logisch gegroepeerd achter één plek (bijvoorbeeld Oefening: ruilen,
+      notitie, uitleg; Sets: toevoegen, opwarmset, verwijderen; Rust; Toestel: gewichten). Niets verdwijnt wat de
+      eigenaar gebruikt; wel minder dubbel en minder tekst. Lees eerst docs/architectuur/forge.md en de besluiten
+      over Forge en de snelknoppen.
    Elk levert een rapport in docs/visie/ met wat goed is, wat niet, en een voorstel per tab of groep, de beste
    eerst. Ze gebruiken de tekstkaart (docs/app-kaart/) en screenshots met de kit. De coördinator kiest daarna
    met de aanbevolen opties en laat het in ronde 2 of 3 bouwen; een grote herinrichting gaat na het opsplitsen.
