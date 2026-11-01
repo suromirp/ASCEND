@@ -114,7 +114,7 @@ Ronde 4, aan het eind: de app gebruiken zoals een mens
     Elk noteert wat goed werkt, wat misgaat, wat onlogisch of onduidelijk is en waar hij iets niet vond, met
     screenshots. De coördinator voegt de lijsten samen, kiest met de aanbevolen opties en laat het herstellen
     in een laatste ronde, met dezelfde poort.
-    Na ronde 2 eerst een korte proef met één persoon, zodat grote fouten niet tot het eind blijven liggen.
+    Alleen aan het eind, geen tussentijdse proef (keuze van de eigenaar, 1 november).
 
 ## Wat niet zonder de eigenaar kan
 
