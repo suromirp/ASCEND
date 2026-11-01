@@ -62,6 +62,7 @@ import { normalizeStrengthSettings } from '../engine/strengthSettings';
 import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
+import { cleanWeekNoticeTime } from '../engine/deviceNotices';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
@@ -418,7 +419,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.bootBreakInReminder;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'forgeQuickButtons', 'forgeSwipeDelete', 'haptics', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'forgeQuickButtons', 'forgeSwipeDelete', 'haptics', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -579,6 +580,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     skipped.n += cleaned.dropped;
     if (cleaned.value) s.morningNotice = cleaned.value;
     else delete s.morningNotice;
+  }
+  // De tijd van de weekmelding: alleen een van de vaste tijden blijft staan.
+  if ('weekNoticeTime' in s) {
+    const time = cleanWeekNoticeTime(s.weekNoticeTime);
+    if (time) s.weekNoticeTime = time;
+    else {
+      delete s.weekNoticeTime;
+      skipped.n++;
+    }
   }
   // Reisplanner and paklijst: kept readable or dropped, never stored half.
   if ('journey' in s) {

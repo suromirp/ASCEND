@@ -426,6 +426,31 @@ describe('backup envelope round-trip', () => {
     });
   });
 
+  // De meldingen van de Android-app (engine/deviceNotices.ts): erbij in de instellingen, zonder
+  // schemastap; ze gaan mee in een back-up en alleen geldige waarden blijven staan.
+  describe('meldingen van de app (rust en week)', () => {
+    it('gaan heen en terug door een back-up', async () => {
+      await SettingsRepo.set({ restNotice: false, weekNotice: true, weekNoticeTime: '20:00' });
+      const envelope = await buildBackupEnvelope();
+      await wipeAllData();
+      await importEnvelope(envelope);
+      const restored = await SettingsRepo.get();
+      expect(restored.restNotice).toBe(false);
+      expect(restored.weekNotice).toBe(true);
+      expect(restored.weekNoticeTime).toBe('20:00');
+    });
+
+    it('een kapotte waarde valt weg en telt mee', async () => {
+      const envelope = await buildBackupEnvelope();
+      const settings = { restNotice: 'ja', weekNoticeTime: '03:00', weekNotice: false };
+      const backup = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings } });
+      expect(backup.settings.restNotice).toBeUndefined();
+      expect(backup.settings.weekNoticeTime).toBeUndefined();
+      expect(backup.settings.weekNotice).toBe(false);
+      expect(backup.skippedInvalid).toBe(2);
+    });
+  });
+
   // What you chose on days with tired legs (models/legEase.ts): additive in the settings, no schema step,
   // it travels in a backup, an old backup without it imports as before, and a restore merges per date and training.
   describe('soreWhere (spierpijn alleen in het bovenlichaam)', () => {

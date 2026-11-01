@@ -15,6 +15,12 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
   },
+  plugins: {
+    // Het kleine teken in de statusbalk (android/app/src/main/res/drawable/ic_stat_ascend.xml).
+    LocalNotifications: {
+      smallIcon: 'ic_stat_ascend',
+    },
+  },
 };
 
 export default config;
