@@ -17,6 +17,7 @@ import {
   plateShortText,
   plateTone,
   pressKey,
+  tapClosesDock,
   textToNumber,
   type PadKey,
 } from '../../engine/forgeInput';
@@ -42,6 +43,8 @@ export interface DockProps {
   // Volgende veld; krijgt de sluitfunctie mee voor het einde van de training.
   onNext: (close: () => void) => void;
   onClose: () => void;
+  // Het blok begint te sluiten (de sluitanimatie loopt), zodat een tik op een veld in die tijd een vers blok geeft.
+  onClosing?: () => void;
   onHeight: (px: number) => void;
   // Alleen bij een stang of een toestel met schijven.
   plate?: PlateStep;
@@ -69,8 +72,11 @@ function Key({ children, onPress, label, className = '', style, disabled }: { ch
 }
 
 export function InputDock(props: DockProps) {
-  const { label, fieldKey, value, decimals, onChange, onStep, onSelected, onNext, onClose, onHeight, plate, plateOn, onTogglePlates } = props;
+  const { label, fieldKey, value, decimals, onChange, onStep, onSelected, onNext, onClose, onClosing, onHeight, plate, plateOn, onTogglePlates } = props;
   const { closing, requestClose } = useSheetClose(onClose, 200);
+  useEffect(() => {
+    if (closing) onClosing?.();
+  }, [closing, onClosing]);
   const plateShown = plate !== undefined && plateOn;
   const root = useRef<HTMLDivElement>(null);
   const [text, setText] = useState(() => numberToText(value, decimals));
@@ -142,6 +148,21 @@ export function InputDock(props: DockProps) {
     return () => window.removeEventListener('keydown', on);
   }, []);
 
+  // Een tik buiten het blok en buiten de velden sluit het blok (ook het afvinken van een set).
+  // Een veeg naar een andere oefening geeft geen tik, dus het blok blijft staan.
+  const closeRef = useRef(requestClose);
+  useEffect(() => {
+    closeRef.current = requestClose;
+  });
+  useEffect(() => {
+    const on = (e: MouseEvent) => {
+      const t = e.target instanceof Element ? e.target : null;
+      if (tapClosesDock(t)) closeRef.current();
+    };
+    document.addEventListener('click', on, true);
+    return () => document.removeEventListener('click', on, true);
+  }, []);
+
   const showPlates = plateShown;
   const change = plate ? plateChange(plate) : undefined;
   const sideKey = 'bg-[var(--color-surface)] active:bg-[var(--color-card-border)]';
@@ -150,6 +171,7 @@ export function InputDock(props: DockProps) {
       <div
         ref={root}
         role="group"
+        data-dock-keep=""
         aria-label={`Invoer: ${label}`}
         className={`fixed inset-x-0 bottom-0 z-[55] ${closing ? 'forge-down' : 'forge-up'}`}
         style={{ ['--forge-fill' as string]: 'var(--color-card)' }}

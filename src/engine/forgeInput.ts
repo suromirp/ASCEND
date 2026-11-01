@@ -110,6 +110,14 @@ export const numberToText = (value: number | undefined, decimals: number): strin
 // it, as with the first tap.
 export const dockFieldKey = (at: FieldRef, taps: number): string => `${at.slot}:${at.rowId}:${at.field}:${taps}`;
 
+// A tap closes the input dock unless it lands on the dock itself or on a field of a set
+// (`data-dock-keep`). Swiping to another exercise gives no tap, so the dock stays open there.
+export const DOCK_KEEP_SELECTOR = '[data-dock-keep]';
+export function tapClosesDock(target: { closest: (selector: string) => unknown } | null): boolean {
+  if (!target) return false;
+  return !target.closest(DOCK_KEEP_SELECTOR);
+}
+
 // --- which field is next ------------------------------------------------------------------
 
 export type FieldName = 'weightKg' | 'reps';

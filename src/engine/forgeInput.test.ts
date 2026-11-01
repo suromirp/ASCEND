@@ -9,6 +9,7 @@ import {
   carryChange,
   copyRow,
   dockFieldKey,
+  tapClosesDock,
   makeSnap,
   plateClosest,
   plateShortText,
@@ -451,5 +452,19 @@ describe('mergeDraft met een gekozen RIR', () => {
     const draft = [ex('bench', [row('bench:s0', { rir: 3, rirAssumed: false })])];
     const fresh = [ex('bench', [row('bench:s0')])];
     expect(mergeDraft(draft, fresh)[0].rows[0].rir).toBe(3);
+  });
+});
+
+describe('tapClosesDock: het cijferblok sluit alleen bij een tik buiten de velden', () => {
+  const inside = { closest: (sel: string) => (sel === '[data-dock-keep]' ? {} : null) };
+  const outside = { closest: () => null };
+  it('blijft open bij een tik op een veld of op het blok zelf', () => {
+    expect(tapClosesDock(inside)).toBe(false);
+  });
+  it('sluit bij een tik ergens anders', () => {
+    expect(tapClosesDock(outside)).toBe(true);
+  });
+  it('sluit niet zonder doel', () => {
+    expect(tapClosesDock(null)).toBe(false);
   });
 });

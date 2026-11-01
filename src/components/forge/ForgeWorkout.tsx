@@ -334,6 +334,20 @@ function ForgeWorkoutInner({
   const [dock, setDock] = useState<FieldRef | null>(null);
   // Telt de tikken op een veld: ook dezelfde plek opnieuw aantikken begint opnieuw (dockFieldKey).
   const [dockTaps, setDockTaps] = useState(0);
+  // Een blok dat al aan het sluiten is wordt bij een nieuwe tik op een veld vervangen (nieuwe epoch);
+  // het sluiten van het oude blok mag het nieuwe dan niet meer dichtdoen.
+  const [dockEpoch, setDockEpoch] = useState(0);
+  const dockClosing = useRef(false);
+  const epochRef = useRef(0);
+  epochRef.current = dockEpoch;
+  const onDockClosing = useCallback(() => {
+    dockClosing.current = true;
+  }, []);
+  const renewDockIfClosing = () => {
+    if (!dockClosing.current) return;
+    dockClosing.current = false;
+    setDockEpoch((n) => n + 1);
+  };
   const [selected, setSelected] = useState(true);
   const [dockH, setDockH] = useState(0);
   const [platesOn, setPlatesOn] = useState(true);
@@ -757,6 +771,7 @@ function ForgeWorkoutInner({
   function openField(slot: string, rowId: string, field: FieldName) {
     if (readOnly) return;
     baseRef.current = null;
+    renewDockIfClosing();
     setDockTaps((n) => n + 1);
     setDock({ slot, rowId, field });
     setSelected(true);
@@ -814,6 +829,7 @@ function ForgeWorkoutInner({
       return;
     }
     baseRef.current = null;
+    renewDockIfClosing();
     setDock(n);
     setSelected(true);
     setActiveRef({ slot: n.slot, rowId: n.rowId });
@@ -1012,7 +1028,8 @@ function ForgeWorkoutInner({
 
       {dock && !readOnly && dockEx && dockRow && (
         <InputDock
-          key={`${dock.slot}:${dock.rowId}:${dock.field}`}
+          // Geen key per veld: het blok blijft staan van veld naar veld (fieldKey zet de waarde opnieuw).
+          key={dockEpoch}
           label={`${dock.field === 'weightKg' ? (isAssisted(dockEx) ? 'Hulp' : 'Gewicht') : 'Herhalingen'}, set ${dockRowLabel(dockEx, dockIndex)}, ${dockEx.name}`}
           fieldKey={dockFieldKey(dock, dockTaps)}
           value={dock.field === 'weightKg' ? (isAssisted(dockEx) && dockRow.weightKg !== undefined ? Math.abs(dockRow.weightKg) : dockRow.weightKg) : dockRow.reps}
@@ -1021,7 +1038,13 @@ function ForgeWorkoutInner({
           onStep={stepDock}
           onSelected={setSelected}
           onNext={goNext}
-          onClose={() => setDock(null)}
+          onClose={() => {
+            if (epochRef.current === dockEpoch) {
+              dockClosing.current = false;
+              setDock(null);
+            }
+          }}
+          onClosing={onDockClosing}
           onHeight={onDockHeight}
           plate={dockPlates?.[dockIndex]}
           plateOn={platesOn}
