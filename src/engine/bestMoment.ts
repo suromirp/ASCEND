@@ -30,6 +30,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import type { WeatherForecast } from '../models/weather';
 import { daysBetween, toISODate } from '../utils/dates';
 import { VERDICT_RANK, sessionWeather, weatherForTraining, type SessionWeather, type WeatherVerdict } from './weather';
+import { pad } from '../utils/pad';
 
 export const BEST_MOMENT_RULES = {
   // BEST-HORIZON: a forecast further ahead than this changes too often to
@@ -63,8 +64,6 @@ export interface BestMomentInput {
   durationMinutes: number;
   now: Date;
 }
-
-const pad = (n: number) => String(n).padStart(2, '0');
 
 // 990 -> "16.30", 960 -> "16": a whole hour has no minutes, as people say it.
 export function hourNL(minutes: number): string {

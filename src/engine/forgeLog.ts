@@ -16,6 +16,7 @@
 import { FORGE_EVENT_KINDS, type ForgeEvent, type ForgeEventKind, type ForgeSetState } from '../models/forgeLog';
 import { formatNumberNL } from '../utils/number';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
+import { pad } from '../utils/pad';
 
 export { FORGE_EVENT_KINDS };
 export type { ForgeEvent, ForgeEventKind, ForgeSetState };
@@ -199,7 +200,6 @@ export const stateText = (s: ForgeSetState | undefined): string => {
   return kg || (reps ? `${reps} herh.` : '');
 };
 
-const pad = (n: number) => String(n).padStart(2, '0');
 export function clockText(at: number): string {
   const d = new Date(at);
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;

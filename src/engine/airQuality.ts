@@ -12,6 +12,7 @@
 // Puur: geen React, geen IndexedDB.
 
 import type { AirQualityHour } from '../integrations/openMeteo';
+import { pad } from '../utils/pad';
 
 export const AQI_POOR = 60;
 // Ozon vanaf hier is in de Europese index zelf "slecht" (µg/m³, uurwaarde).
@@ -23,8 +24,6 @@ export interface AirQualityNote {
   cause: 'ozon' | 'fijnstof' | 'lucht';
   text: string;
 }
-
-const pad = (n: number) => String(n).padStart(2, '0');
 
 function dayPart(hour: number): string {
   if (hour < 12) return 'vanochtend';
