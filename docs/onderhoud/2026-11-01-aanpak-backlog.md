@@ -23,6 +23,25 @@ bijgewerkt.
 - Meldingen naar de eigenaar alleen bij iets wat live staat en zichtbaar is, of bij een besluit dat echt van
   hem is. Kort, in het Nederlands, als punten.
 
+## Zelfstandig, ook als de eigenaar slaapt
+
+- Niets wacht op de eigenaar. Een keuze: de aanbevolen optie. Een besluit dat echt van hem is (zoals voeding): laten
+  liggen, noteren in de backlog en door met de rest.
+- Helpers draaien op de achtergrond; hun melding maakt de coördinator wakker. Als vangnet staat er steeds een
+  check-in over ongeveer een uur (send_later), zodat het werk doorgaat als er iets blijft hangen.
+- Gaat iets twee keer mis (een bouwer die niet groen wordt, een review die steeds blokkeert): opschalen naar opus,
+  en lukt het dan nog niet, het onderdeel parkeren met de reden in de backlog en verder met het volgende.
+- Een melding naar de eigenaar alleen bij iets wat live staat en de moeite waard is; 's nachts geen meldingen
+  voor kleine dingen.
+
+## Na elke ronde: terugkijken
+
+Na elke ronde schrijft de coördinator kort in `docs/onderhoud/reflectie-2026-11-01.md` (één bestand, een kopje per
+ronde): wat goed ging, wat misging, wat het kostte (uit het kostenlogboek), hoeveel herstelrondes en waarom, en wat
+de volgende ronde anders gaat. Wat blijvend beter werkt gaat in `.claude/skills/werkverdeling/SKILL.md` (eisen
+vooraf, model per soort taak, wat Warden of Lookout eerder had kunnen vangen) en, als het een fout is die terug kan
+komen, als invariant in de tekstkaart of als test. De volgende ronde begint pas na die reflectie.
+
 ## Volgorde
 
 Ronde 1, tegelijk:
