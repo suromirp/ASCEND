@@ -148,6 +148,13 @@ Ronde 1, tegelijk:
    getallen), maak dat element passend (afbreken, kleiner of onder elkaar), en zet als vangnet `overflow-x: clip`
    op de pagina-inhoud zodat een pagina nooit meer zijwaarts kan schuiven. Voeg een invariant aan de tekstkaart
    toe: geen enkel scherm is breder dan het venster.
+2g. Sherpa (sonnet), met voorrang: het cijferblok van Forge klapt steeds dicht en weer open (schermopname van de
+   eigenaar, 1 november, Bovenlichaam B, één oefening per scherm). Bij de overgang van het ene veld naar het
+   volgende (kg naar herhalingen, de pijl, een tik op een ander vak) en bij het vegen naar de volgende oefening
+   schuift het eigen cijferblok weg en komt het terug. Het blok hoort open te blijven zolang je van veld naar veld
+   gaat, ook naar een veld van de volgende oefening; het sluit alleen als je buiten de velden tikt, de set afrondt
+   of Forge verlaat. Kijk in ForgeWorkout en het cijferblok (focus en blur, de key van de kaart per oefening, de
+   paged-weergave). Met een test op het gedrag en een korte doorloop met de kit op 360 en 390 px (vertraagd).
 2c. Sherpa (opus): de rustdag komt niet terug. Gevonden in de back-up van 1 november: een voorstel (TEST-RETRY,
    28 oktober) haalde de rij Herstel op maandag 2 november weg om plaats te maken; de test en de lange duurloop
    gingen daarna elders heen, maar de rustdag bleef weg (status skipped, lock van het voorstel). Week toont nu
