@@ -6,7 +6,6 @@ Bijgewerkt op 1 november 2026.
 
 ## Loopt nu
 
-- Met voorrang, melding van de eigenaar (1 november): REST-BACK stelde een rustdag voor na twee dagen zonder training, op een maandag die eerder vrijgemaakt was om in te halen. Rustdag niet terug na rust; inhalen gaat voor; titel en item zeggen hetzelfde (Sherpa, opus).
 
 Ronde 2 van `docs/onderhoud/2026-11-01-aanpak-backlog.md` (ronde 1 is af, terugblik in `docs/onderhoud/reflectie-2026-11-01.md`).
 
@@ -25,6 +24,10 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 - Sporten die meetellen stap 1 (pictogrammen, Cartographer) en stap 4 tot 9 (import, vraag op Vandaag, scherm Sporten, weekcheck, vaste dag, hoeveel per soort). Stap 2 en 3 zijn gebouwd.
 - Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
+
+## Uit de review van rustdag na rust (voor de terugblik van ronde 2)
+
+- Een training die je zelf oversloeg of waarvan je het inhaalvoorstel afwees, houdt de rustdag tot zeven dagen tegen, ook als er nooit een inhaalvoorstel komt. Dan blijft de dag leeg. `catchUpFits` laat afgewezen inhaalvoorstellen negeren. En `trainedOn` telt een log op `completedDate`, `dayLoads` op de geplande dag (`logDay`); gelijktrekken.
 
 ## Uit de terugblik op ronde 1 (vijf nieuwe punten)
 
