@@ -554,7 +554,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Let op', text: 'het back-upbestand bevat dan ook gezondheidsgegevens. Bewaar het waar alleen jij erbij kunt.' },
       { head: 'Bewaren', text: 'zolang dit aan staat blijven die getallen op je telefoon, ook na 400 dagen en als je ontkoppelt. De rest van wat ASCEND van je horloge ophaalde gaat wel weg.' },
       { head: 'Terugzetten', text: 'een ochtend die al op je telefoon staat blijft zoals hij is. Alleen wat ontbreekt komt terug.' },
-      { head: 'Uit', text: 'een back-up zonder ochtendgetallen. Na een herstel haalt ASCEND ze opnieuw op zolang intervals.icu dat kan.' },
+      { head: 'Uit', text: 'een back-up zonder ochtendgetallen. Na een herstel haalt ASCEND ze opnieuw op zolang intervals.icu dat kan. Zet je dit uit zonder koppeling, dan vraagt ASCEND eerst, want de bewaarde ochtenden gaan dan van je telefoon.' },
     ],
   },
   reeksenBackup: {

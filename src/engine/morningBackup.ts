@@ -27,3 +27,49 @@ export function morningsForBackup(metrics: readonly RecoveryMetric[]): BackupMor
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 }
+
+// De velden die een ochtend in de back-up heeft. Een ochtend met niets anders is al opgeruimd.
+const BACKUP_KEYS: ReadonlySet<string> = new Set(['id', 'date', 'source', 'restingHeartRate', 'hrv', 'sleepMinutes', 'sleepScore']);
+
+export function isBackupOnly(r: RecoveryMetric): boolean {
+  return Object.entries(r).every(([key, value]) => value === undefined || BACKUP_KEYS.has(key));
+}
+
+export interface RetirePlan {
+  remove: string[];
+  put: BackupMorning[];
+}
+
+// Een opgehaalde ochtend die de cache verlaat (ontkoppelen, de grens van 400 dagen): met
+// "Ochtendgetallen in back-up" aan blijven alleen de back-upvelden, anders gaat hij weg. Een
+// ochtend die al alleen die velden heeft wordt overgeslagen, zodat niets dubbel of half
+// opgeruimd wordt (docs/beslissingen/2026-11-01-ochtenden-archief.md).
+export function planRetire(records: readonly RecoveryMetric[], keepMornings: boolean): RetirePlan {
+  if (!keepMornings) return { remove: records.map((r) => r.id), put: [] };
+  const remove: string[] = [];
+  const put: BackupMorning[] = [];
+  for (const r of records) {
+    if (isBackupOnly(r)) continue;
+    const [kept] = morningsForBackup([r]);
+    if (kept) put.push(kept);
+    else remove.push(r.id);
+  }
+  return { remove, put };
+}
+
+// "Ochtendgetallen in back-up" uitzetten: zonder koppeling bleven de opgehaalde ochtenden alleen
+// voor de back-up bewaard, en die gaan dan weg. Met een koppeling blijft alles, want de bron kan
+// ze opnieuw leveren. Wat je zelf invulde wordt nooit opgeruimd.
+export function archiveToClear(
+  records: readonly RecoveryMetric[],
+  { connected, fetchedPrefix }: { connected: boolean; fetchedPrefix: string },
+): RecoveryMetric[] {
+  if (connected) return [];
+  return records.filter((r) => r.id.startsWith(fetchedPrefix));
+}
+
+// Ongedaan maken: alleen terug wat er nu niet staat, nooit over een nieuwere ochtend heen.
+export function morningsToPutBack(removed: readonly RecoveryMetric[], current: readonly RecoveryMetric[]): RecoveryMetric[] {
+  const have = new Set(current.map((r) => r.id));
+  return removed.filter((r) => !have.has(r.id));
+}
