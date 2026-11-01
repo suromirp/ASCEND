@@ -8,6 +8,7 @@ import { resolveLegEase, resolveLegEaseHow } from '../../../engine/legEaseSettin
 import { resolveMotion } from '../../../engine/motionSettings';
 import { resolveQuoteLanguage } from '../../../engine/quoteSettings';
 import { resolveSky } from '../../../engine/skySettings';
+import { resolveAboveMission } from '../../../engine/todayCards';
 import { type InsightTopicSwitch, type RunDetailScreenSettings, type RunFormSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
 import { matchTodayProfile, todayProfilePatch, type TodayProfileChoice } from '../../../engine/settingsProfiles';
 import { Eyebrow } from '../../ui';
@@ -122,6 +123,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
             <div style={{ marginTop: 16 }}>
               <Eyebrow>Of kies zelf</Eyebrow>
               <SettingsList>
+                <SummaryRow id="boven-missie" title="Kaarten boven de missie" facts={facts} info="bovenMissie" onClick={() => setInner('boven-missie')} />
                 <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
                 <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
                 <SummaryRow id="lijfvraag" title="Hoe voelt je lijf?" facts={facts} info="lijfvraag" onClick={() => setInner('lijfvraag')} />
@@ -208,6 +210,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         />
       )}
       {inner === 'lichterbenen-hoe' && <ChoiceFromDef def={CHOICES.lichterbenenHoe} value={resolveLegEaseHow(settings)} onPick={(v) => void updateSettings({ legEaseHow: v })} onClose={closeInner} />}
+      {inner === 'boven-missie' && <ChoiceFromDef def={CHOICES.bovenMissie} value={resolveAboveMission(settings.cardsAboveMission)} onPick={(v) => void updateSettings({ cardsAboveMission: v })} onClose={closeInner} />}
       {inner === 'lijfvraag' && <ChoiceFromDef def={CHOICES.lijfvraag} value={resolveBodyCheck(settings)} onPick={(v) => void updateSettings({ bodyCheck: v })} onClose={closeInner} />}
       {inner === 'lucht-vanaf' && <ChoiceFromDef def={CHOICES.luchtVanaf} value={sky.nightFrom} onPick={(v) => void updateSettings({ skyNightFrom: v })} onClose={closeInner} />}
       {inner === 'dagcitaat' && <ChoiceFromDef def={CHOICES.dagcitaat} value={resolveQuoteLanguage(settings)} onPick={(v) => void updateSettings({ quoteLanguage: v })} onClose={closeInner} />}

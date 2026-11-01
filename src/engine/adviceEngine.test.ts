@@ -57,6 +57,43 @@ describe('MISSED-CATCH-UP', () => {
     expect(run[0].proposal?.changes[0].action).toBe('remove');
   });
 
+  // Eerst koppelen, dan inhalen: een losse horlogelog die bij de gemiste training kan horen geeft het
+  // koppelvoorstel op Vandaag (engine/missedTraining.ts), geen inhaalvoorstel voor iets wat misschien al gedaan is.
+  it('geen inhaalvoorstel voor een training waar een losse log bij kan horen', () => {
+    const watchHike = log('w1', 'hike', '2026-09-30', { templateId: 'tpl_watch_hike', externalId: 'intervals.icu:i-w1', source: 'garmin', type: 'hiking' });
+    const planned = [ps('m', 'hike', '2026-09-29')];
+    expect(computeAdvice(inputs({ plannedSessions: planned })).find((a) => a.ruleId === 'MISSED-CATCH-UP')).toBeDefined();
+    expect(computeAdvice(inputs({ plannedSessions: planned, logs: [watchHike] })).find((a) => a.ruleId === 'MISSED-CATCH-UP')).toBeUndefined();
+    // Liever niet op dat paar, of koppelen uit: dan komt het inhalen terug.
+    expect(computeAdvice(inputs({ plannedSessions: planned, logs: [watchHike], missedLink: { on: true, declined: ['w1|m'] } })).find((a) => a.ruleId === 'MISSED-CATCH-UP')?.proposal?.changes[0]).toMatchObject({ plannedSessionId: 'm', action: 'move' });
+    expect(computeAdvice(inputs({ plannedSessions: planned, logs: [watchHike], missedLink: { on: false, declined: [] } })).find((a) => a.ruleId === 'MISSED-CATCH-UP')).toBeDefined();
+  });
+
+  it('na Liever niet telt het venster van drie dagen vanaf die dag: op dag 4 komt het inhalen alsnog', () => {
+    // Maandag gemist, dinsdag een losse horlogelog: eerst het koppelvoorstel. Woensdag Liever niet; vandaag is donderdag, dag 4.
+    const watchHike = log('w1', 'hike', '2026-09-29', { templateId: 'tpl_watch_hike', externalId: 'intervals.icu:i-w1', source: 'garmin', type: 'hiking' });
+    const planned = [ps('m', 'hike', '2026-09-28')];
+    const day4 = { plannedSessions: planned, logs: [watchHike], asOf: '2026-10-02' };
+    // Zonder de dag van Liever niet (een ouder geheugen) telt het venster vanaf de training, zoals eerst.
+    expect(computeAdvice(inputs({ ...day4, missedLink: { on: true, declined: ['w1|m'] } })).find((a) => a.ruleId === 'MISSED-CATCH-UP')).toBeUndefined();
+    const advice = computeAdvice(inputs({ ...day4, missedLink: { on: true, declined: ['w1|m'], declinedOn: { 'w1|m': '2026-09-30' } } })).find((a) => a.ruleId === 'MISSED-CATCH-UP');
+    expect(advice?.proposal?.changes[0]).toMatchObject({ plannedSessionId: 'm', action: 'move', toDate: '2026-10-02' });
+    // Drie dagen na Liever niet is het venster voorbij.
+    expect(computeAdvice(inputs({ ...day4, asOf: '2026-10-04', missedLink: { on: true, declined: ['w1|m'], declinedOn: { 'w1|m': '2026-09-30' } } })).find((a) => a.ruleId === 'MISSED-CATCH-UP')).toBeUndefined();
+  });
+
+  it('een log die je zelf invulde koppelt ASCEND niet: dan blijft het inhalen', () => {
+    const handHike = log('h1', 'hike', '2026-09-30', { templateId: 'tpl_watch_hike', type: 'hiking' });
+    expect(computeAdvice(inputs({ plannedSessions: [ps('m', 'hike', '2026-09-29')], logs: [handHike] })).find((a) => a.ruleId === 'MISSED-CATCH-UP')).toBeDefined();
+  });
+
+  it('alleen de training met een log valt uit het inhaalvoorstel, de rest blijft erin', () => {
+    const watchHike = log('w1', 'hike', '2026-09-30', { templateId: 'tpl_watch_hike', externalId: 'intervals.icu:i-w1', source: 'garmin', type: 'hiking' });
+    const advice = computeAdvice(inputs({ plannedSessions: [ps('m', 'hike', '2026-09-29'), ps('u', 'upper', '2026-09-29')], logs: [watchHike] })).find((a) => a.ruleId === 'MISSED-CATCH-UP')!;
+    expect(advice.id).toBe('missed:u');
+    expect(advice.proposal?.changes.map((c) => c.plannedSessionId)).toEqual(['u']);
+  });
+
   it('bundles everything missed into one piece of advice', () => {
     const advice = computeAdvice(inputs({ plannedSessions: [ps('a', 'upper', '2026-09-28'), ps('b', 'run', '2026-09-29')] }));
     const missed = advice.filter((a) => a.ruleId === 'MISSED-CATCH-UP');

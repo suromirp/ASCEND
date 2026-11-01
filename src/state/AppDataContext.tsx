@@ -52,8 +52,8 @@ import { goalDetailsOf } from '../engine/goalLabels';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
 import { writeCatchUp } from '../storage/catchUpApply';
-import { linkLogNow, skipMissedNow, unlinkLogsNow } from '../storage/missedTraining';
-import { askLine, autoSkipNotice, resolveMissedSettings } from '../engine/missedTraining';
+import { linkLogNow, skipMissedNow, unlinkLogsNow, updateMissedMemory } from '../storage/missedTraining';
+import { askLine, autoSkipNotice, resolveMissedMemory, resolveMissedSettings, MISSED_MEMORY_KEY, type MissedMemory, type ResolvedMissedMemory } from '../engine/missedTraining';
 import { planIllnessChange, type IllnessChange, type IllnessPlan } from '../engine/illness';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
@@ -399,6 +399,10 @@ interface AppData {
   // Resolve to how many were skipped, and whether the link was written.
   skipMissed: (sessionIds: string[], how: 'answer' | 'auto') => Promise<number>;
   linkMissedLog: (logId: string, sessionId: string) => Promise<boolean>;
+  // Wat dit toestel onthoudt van je antwoorden op die kaart (Niet nu, Liever niet, wat ASCEND zelf
+  // oversloeg). Null tot het gelezen is. Het inhaaladvies leest hieruit welke koppelingen je afwees.
+  missedMemory: ResolvedMissedMemory | null;
+  rememberMissed: (change: (m: ResolvedMissedMemory) => MissedMemory) => void;
   // "Inkorten": a watch activity cut at the end and/or the beginning (the series
   // come from the sheet, in memory), and "Inkorten ongedaan maken". Both
   // resolve to whether anything was written; the week check and the counters
@@ -720,6 +724,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [recentChange, setRecentChange] = useState<RecentPlanChange | null>(null);
   const [planChangeLog, setPlanChangeLog] = useState<PlanChangeProposal[]>([]);
   const [adviceResponses, setAdviceResponses] = useState<Record<string, AdviceResponse>>({});
+  const [missedMemory, setMissedMemory] = useState<ResolvedMissedMemory | null>(null);
+  // Volgnummer van de laatste rememberMissed en hoeveel schrijfacties nog lopen: een lezing in loadState die
+  // begon voor een antwoord, of terwijl het nog geschreven wordt, mag dat antwoord niet overschrijven.
+  const missedSeq = useRef(0);
+  const missedWriting = useRef(0);
   const [debriefLogId, setDebriefLogId] = useState<string | null>(null);
   const [storageNotice, setStorageNotice] = useState<string | null>(null);
   // Planned sessions with a log being written right now: a second tap
@@ -737,7 +746,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // over a change made elsewhere.
   // Reads everything from storage and shows it. No planning sync here.
   const loadState = useCallback(async () => {
-    const [programs, tpls, planned, storedLogs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses] = await Promise.all([
+    const missedSeqAtRead = missedSeq.current;
+    const [programs, tpls, planned, storedLogs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses, missedRaw] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
@@ -754,6 +764,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       StrengthProgramRecommendationsRepo.getAll(),
       PlanChangeProposalsRepo.getAll(),
       MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses'),
+      MetaRepo.get<unknown>(MISSED_MEMORY_KEY).catch(() => undefined),
     ]);
     // A strength workout that stayed open for days reads as its estimate (engine/logDuration.ts).
     const logs = withPlausibleDurations(storedLogs, tpls);
@@ -763,6 +774,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const carried = carryTargetTimeAnswers(responses ?? {}, goals.map((g) => ({ id: g.id, updatedAt: g.updatedAt, targetMinutes: goalDetailsOf(g).targetMinutes })));
     if (carried) await MetaRepo.set('adviceResponses', carried);
     setAdviceResponses(carried ?? responses ?? {});
+    if (missedSeq.current === missedSeqAtRead && missedWriting.current === 0) setMissedMemory(resolveMissedMemory(missedRaw));
     setTemplates(tpls);
     setPlannedSessions(planned);
     setSessionLogs(logs);
@@ -1580,6 +1592,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     [refresh, settings],
   );
+
+  // Een antwoord op de kaart (Niet nu, Liever niet, wat ASCEND zelf oversloeg): meteen in beeld, dan op dit toestel.
+  const rememberMissed = useCallback((change: (m: ResolvedMissedMemory) => MissedMemory) => {
+    const seq = ++missedSeq.current;
+    missedWriting.current++;
+    setMissedMemory((m) => resolveMissedMemory(change(m ?? resolveMissedMemory(undefined))));
+    void updateMissedMemory(change)
+      .then((stored) => {
+        if (missedSeq.current === seq) setMissedMemory(stored);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        missedWriting.current--;
+      });
+  }, []);
 
   // "Hoort die bij elkaar?" Akkoord: the loose log gets the reference to its planned training.
   const linkMissedLog = useCallback(
@@ -2637,6 +2664,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         newTestOnStops: settings.newTestOnStops !== false,
         restDay: settings.restDay ?? 1,
         restDayBack: settings.restDayBack !== false,
+        // Eerst koppelen, dan inhalen (engine/missedTraining.ts#linkCandidates).
+        missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn },
         leave: settings.leavePeriods,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         extraSession: extraSessionContext,
@@ -2645,7 +2674,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
+    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.missedLink, missedMemory, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).
@@ -2760,6 +2789,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     restoreFromWatch,
     skipMissed,
     linkMissedLog,
+    missedMemory,
+    rememberMissed,
     trimWatchActivity,
     undoTrimWatchActivity,
     restoreSourceUpdate,

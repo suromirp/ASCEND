@@ -238,6 +238,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('ochtendcheck', 'Ochtendcheck', 'morningCheckIn'),
   overviewFlag('ochtendkaart', 'Ochtendkaart', 'morningCard'),
   overviewSpec('ochtend-vanaf', 'Ochtend begint om', 'morningCardFrom', (v: string) => choiceShort('ochtendVanaf', v)),
+  choice('boven-missie', 'Kaarten boven de missie', 'vandaag', 'cardsAboveMission', 1, 'bovenMissie'),
   flag('zweet-vragen', 'Zweetverlies vragen', 'vandaag', 'askSweat'),
   flag('twijfeltest', 'Twijfeltest eerst vragen', 'planning', 'askDoubtTest'),
   flag('nieuwe-test', 'Nieuwe test voorstellen bij stilstand', 'planning', 'newTestOnStops'),

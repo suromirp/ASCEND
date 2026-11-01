@@ -11,12 +11,6 @@ Week 1 van de basis
 --- kaart 1 ---
 
 --- kaart 2 ---
-Back-up
-Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.
-[knop: Niet nu]
-[knop: Back-up maken]
-
---- kaart 3 ---
 Goedemorgen
 Hoe voelen je benen?
 [knop: Klopt: fris]
@@ -26,18 +20,24 @@ Voorstel volgens je beenindex. Of kies zelf:
 [knop: Flinke spierpijn]
 [knop: Energie, slaap of pijn invullen]
 
---- kaart 4 ---
+--- kaart 3 ---
 Vandaag
 ### Rust of vrije dag
 Vandaag staat er niets gepland.
 Morgen: Lange duurloop, 50 min
 
---- kaart 5 ---
+--- kaart 4 ---
 Advies, gemist
 [knop: nog 2]
 Testloop van do 29 oktober gemist
 Doe hem di 3 november, en Bovenlichaam A naar vr 6 november.
 [knop: Bekijk]
+
+--- kaart 5 ---
+Back-up
+Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.
+[knop: Niet nu]
+[knop: Back-up maken]
 Je dag
 
 --- kaart 6 ---
