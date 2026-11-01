@@ -322,9 +322,10 @@ function TodayContent() {
 
   // De kaarten die met de missie om de plek bovenaan concurreren, en waar ze nu staan.
   const presentCards: TodayCardId[] = [
-    ...(illness || recoveryRamp(settings.illnessEpisodes, today) ? (['illness'] as const) : []),
+    ...(illness ? (['ill'] as const) : []),
     ...(illnessSignState.shown ? (['illnessSign'] as const) : []),
     ...(morningCardVisible ? (['morning'] as const) : []),
+    ...(!illness && recoveryRamp(settings.illnessEpisodes, today) ? (['ramp'] as const) : []),
     ...(advice.length > 0 ? (['advice'] as const) : []),
     ...(missed.item ? (['missed'] as const) : []),
     ...(freshStart.shown ? (['freshStart'] as const) : []),
@@ -332,7 +333,9 @@ function TodayContent() {
   ];
   const arrangement = arrangeToday(presentCards, resolveAboveMission(settings.cardsAboveMission));
   const aroundMission: Record<TodayCardId, ReactNode> = {
-    illness: <IllnessStatusCard />,
+    // Ziek gemeld, of weer opbouwen: dezelfde kaart, op een andere plek in de volgorde.
+    ill: <IllnessStatusCard />,
+    ramp: <IllnessStatusCard />,
     // Rusthartslag en HRV wijken een paar ochtenden samen af: een vraag, geen waarschuwing.
     illnessSign: <IllnessSignCard state={illnessSignState} />,
     // De ochtendvraag: wat je antwoordt kan de dag veranderen.
@@ -370,13 +373,11 @@ function TodayContent() {
       <MorningDeepLink />
 
       {/* Kaarten rond de missie in een vaste volgorde, hoogstens zoveel erboven als je koos (engine/todayCards.ts,
-          docs/beslissingen/2026-11-01-vandaag-volgorde.md). Eén lijst met vaste sleutels: een kaart die van boven
-          naar onder verhuist blijft dezelfde kaart en speelt geen animatie opnieuw. */}
-      {[
-        ...arrangement.above.map((id) => <Fragment key={id}>{aroundMission[id]}</Fragment>),
-        <Fragment key="mission">{missionCard}</Fragment>,
-        ...arrangement.below.map((id) => <Fragment key={id}>{aroundMission[id]}</Fragment>),
-      ]}
+          docs/beslissingen/2026-11-01-vandaag-volgorde.md). De missie staat op een vaste plek tussen twee lijsten:
+          verdwijnt er een kaart, dan verhuist de missie zelf niet. */}
+      {arrangement.above.map((id) => <Fragment key={id}>{aroundMission[id]}</Fragment>)}
+      {missionCard}
+      {arrangement.below.map((id) => <Fragment key={id}>{aroundMission[id]}</Fragment>)}
 
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />

@@ -1,29 +1,36 @@
 // ASCEND: de kaarten rond de missie op Vandaag (docs/beslissingen/2026-11-01-vandaag-volgorde.md).
 //
 // Elke kaart die boven de missie kan staan of ermee concurreert heeft een vaste plek in één rij:
-// eerst veiligheid en ziekte, dan de ochtendkaart, dan wat vandaag raakt, dan wat over gisteren gaat,
-// dan onderhoud zoals de back-up. Hoogstens zoveel als je koos (het advies: één) staat boven de missie;
-// de rest komt direct onder de missie, in dezelfde volgorde. Een advies over je planning en een vraag
+// eerst veiligheid (ziek gemeld, vroeg ziek zien), dan de ochtendkaart, dan weer opbouwen, dan wat vandaag
+// raakt, dan wat over gisteren gaat, dan onderhoud zoals de back-up. Hoogstens zoveel als je koos (het advies:
+// één) staat boven de missie; de rest komt direct onder de missie, in dezelfde volgorde. Een kaart voor je
+// veiligheid staat altijd boven, ook als dat het maximum overschrijdt; hij telt wel mee, zodat er daarna geen
+// plek meer is voor een gewone kaart. Weer opbouwen is een rustige kaart zonder vraag: hij staat na de kaarten
+// die een antwoord vragen en komt pas boven als er plek is. Een advies over je planning en een vraag
 // over een training die niet doorging komen nooit boven de missie: die beantwoord je in een blad, en
 // de missie is waar Vandaag over gaat. Puur: geen React, geen opslag.
 
-export type TodayCardId = 'illness' | 'illnessSign' | 'morning' | 'advice' | 'missed' | 'freshStart' | 'backup';
-export type TodayCardGroup = 'safety' | 'morning' | 'today' | 'yesterday' | 'upkeep';
+export type TodayCardId = 'ill' | 'illnessSign' | 'morning' | 'ramp' | 'advice' | 'missed' | 'freshStart' | 'backup';
+export type TodayCardGroup = 'safety' | 'morning' | 'recovery' | 'today' | 'yesterday' | 'upkeep';
 
 export interface TodayCardSpec {
   id: TodayCardId;
   group: TodayCardGroup;
   // Mag boven de missie staan.
   lead: boolean;
+  // Staat altijd boven de missie, ook boven het maximum (veiligheid).
+  always?: boolean;
 }
 
 // De vaste rangorde, de belangrijkste eerst.
 export const TODAY_CARD_RANK: readonly TodayCardSpec[] = [
-  // Ziek gemeld of weer opbouwen.
-  { id: 'illness', group: 'safety', lead: true },
+  // Ziek gemeld.
+  { id: 'ill', group: 'safety', lead: true, always: true },
   // Rusthartslag en HRV wijken een paar ochtenden samen af.
-  { id: 'illnessSign', group: 'safety', lead: true },
+  { id: 'illnessSign', group: 'safety', lead: true, always: true },
   { id: 'morning', group: 'morning', lead: true },
+  // Weer opbouwen na ziekte: alleen uitleg, geen vraag.
+  { id: 'ramp', group: 'recovery', lead: true },
   // Het belangrijkste advies (CoachCard), zoals de rustdag terug.
   { id: 'advice', group: 'today', lead: false },
   // Niet gedaan? of een log om te koppelen.
@@ -55,7 +62,7 @@ export function arrangeToday(present: Iterable<TodayCardId>, limit: AboveMission
   const below: TodayCardId[] = [];
   for (const card of TODAY_CARD_RANK) {
     if (!here.has(card.id)) continue;
-    if (card.lead && above.length < max) above.push(card.id);
+    if (card.always || (card.lead && above.length < max)) above.push(card.id);
     else below.push(card.id);
   }
   return { above, below };
