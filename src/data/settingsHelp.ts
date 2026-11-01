@@ -555,6 +555,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Wanneer', text: 'drie weken na je test en na drie loopjes buiten met details. Je loopt in training zelden voluit, dus dit is een ondergrens.' },
     ],
   },
+  wennenWarmte: {
+    title: 'Wennen aan warmte',
+    lead: 'Een tocht in de zomer is warm in de dalen. Je lichaam went in een week of twee aan warmte, als je er af en toe in traint.',
+    points: [
+      { head: 'Wat je ziet', text: 'in de reisplanner, in de laatste drie weken voor een vertrek van juni tot en met september, één regel over een paar trainingen in de warmte.' },
+      { head: 'Hoe zeker', text: 'wennen aan warmte in 1 tot 2 weken met trainingen van een uur tot anderhalf in de warmte is breed onderbouwd. Het kan helpen; het is geen garantie tegen een warme dag.' },
+      { head: 'Je planning', text: 'verandert er niet door. Wil je een training in de warmte doen, dan kies je zelf het moment.' },
+    ],
+  },
   ochtendregel: {
     title: 'Twee van drie',
     lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',

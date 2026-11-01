@@ -848,6 +848,9 @@ export interface AppSettings {
   // "Ochtendregel" (engine/morningRule.ts): the three watch numbers with a word each on the morning
   // card, and the question "Ben je moe?" when two of the three are off. Absent = on.
   morningRule?: boolean;
+  // "Wennen aan warmte" (engine/heatAcclimation.ts): one line in the reisplanner in the last three weeks before
+  // a departure from June to September. Absent = on. Optional and additive.
+  heatAcclimation?: boolean;
   // "Tempocurve tussen testen" (engine/paceCurve.ts): the fastest 5 km or 3 km of your usual runs since the last
   // test that counts, next to that test on Je stand, as a check. The test stays the source of the paces. Absent = on.
   paceCurve?: boolean;

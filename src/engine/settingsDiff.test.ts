@@ -96,6 +96,7 @@ const everything: AppSettings = {
   weekdayPattern: false,
   airQuality: false,
   morningRule: false,
+  heatAcclimation: false,
   paceCurve: false,
   stageOwnPace: false,
   climbPace: false,
