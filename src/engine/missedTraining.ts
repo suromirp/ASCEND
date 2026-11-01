@@ -196,7 +196,13 @@ export function askLine(session: PlannedSession, template: SessionTemplate): str
   return `${template.name} van ${fullDay(session.scheduledDate)}`;
 }
 
-const sourcePlace = (log: SessionLog) => (log.source === 'macrofactor' || log.externalId?.startsWith('macrofactor:') ? 'in MacroFactor' : 'in je horloge');
+const fromMacroFactor = (log: SessionLog) => log.source === 'macrofactor' || !!log.externalId?.startsWith('macrofactor:');
+const sourcePlace = (log: SessionLog) => (fromMacroFactor(log) ? 'in MacroFactor' : 'in je horloge');
+
+// Het kopje van de koppelkaart: waar de log vandaan komt.
+export function linkEyebrow(log: SessionLog): string {
+  return fromMacroFactor(log) ? 'Van MacroFactor' : 'Van je horloge';
+}
 
 // "Je rustige duurloop van dinsdag staat op woensdag in je horloge. Hoort die bij elkaar?"
 export function linkLine(session: PlannedSession, template: SessionTemplate, log: SessionLog, today: string): string {

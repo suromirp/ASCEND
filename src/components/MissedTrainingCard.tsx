@@ -9,7 +9,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { askLine, declinedKey, linkLine, planMissed, resolveMissedSettings, type MissedMemory } from '../engine/missedTraining';
+import { askLine, declinedKey, linkEyebrow, linkLine, planMissed, resolveMissedSettings, type MissedMemory } from '../engine/missedTraining';
 import { readMissedMemory, updateMissedMemory } from '../storage/missedTraining';
 import type { PlannedSession } from '../models/training';
 import { todayISO } from '../utils/dates';
@@ -51,17 +51,17 @@ export function MissedTrainingCard({ onLogNow }: { onLogNow: (session: PlannedSe
     [memory, plannedSessions, sessionLogs, templates, today, settings, busyIds],
   );
 
-  // Zelf overslaan: eerst onthouden dat ASCEND het deed (dan komt het na Ongedaan maken niet terug), dan de melding.
+  // Zelf overslaan: eerst overslaan, met de melding; pas als dat lukte onthouden dat ASCEND het deed (dan komt
+  // het na Ongedaan maken niet terug).
   const autoIds = plan?.autoSkip.map((m) => m.session.id).join(',') ?? '';
   useEffect(() => {
     if (!autoIds || autoRunning.current) return;
     const ids = autoIds.split(',');
     const timer = setTimeout(() => {
       autoRunning.current = true;
-      void updateMissedMemory((m) => ({ ...m, auto: [...(m.auto ?? []), ...ids] }))
-        .then((next) => {
-          setMemory(next);
-          return skipMissed(ids, 'auto');
+      void skipMissed(ids, 'auto')
+        .then(async (n) => {
+          if (n > 0) setMemory(await updateMissedMemory((m) => ({ ...m, auto: [...(m.auto ?? []), ...ids] })));
         })
         .catch(() => undefined)
         .finally(() => {
@@ -92,12 +92,12 @@ export function MissedTrainingCard({ onLogNow }: { onLogNow: (session: PlannedSe
   if (item.kind === 'link') {
     return (
       <Card data-missed={item.session.id}>
-        <Eyebrow>Hoort dit bij elkaar?</Eyebrow>
+        <Eyebrow>{linkEyebrow(item.log)}</Eyebrow>
         <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{linkLine(item.session, item.template, item.log, today)}</p>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Met Akkoord telt die training als gedaan. Alleen de koppeling is nieuw, de cijfers blijven zoals ze waren.</p>
         <div className="mt-3 flex gap-2">
-          <SecondaryButton disabled={busy} onClick={() => run(() => linkMissedLog(item.log.id, item.session.id))}>{busy ? 'Bezig…' : 'Akkoord'}</SecondaryButton>
           <SecondaryButton disabled={busy} onClick={() => remember((m) => ({ ...m, declined: [...(m.declined ?? []), declinedKey(item.log.id, item.session.id)] }))}>Liever niet</SecondaryButton>
+          <SecondaryButton disabled={busy} onClick={() => run(() => linkMissedLog(item.log.id, item.session.id))}>{busy ? 'Bezig…' : 'Akkoord'}</SecondaryButton>
         </div>
         {note && <p className="mt-2 text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
       </Card>
@@ -109,7 +109,7 @@ export function MissedTrainingCard({ onLogNow }: { onLogNow: (session: PlannedSe
       <Eyebrow>Nog open</Eyebrow>
       <p className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Niet gedaan?</p>
       <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{askLine(item.session, item.template)}</p>
-      <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Er staat nog geen training bij. Ging hij niet door, dan zet ASCEND hem op overgeslagen. Er verandert verder niets.</p>
+      <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je hebt hier nog niets voor gelogd. Ging hij niet door, dan zet ASCEND hem op overgeslagen; verder verandert er niets.</p>
       <div className="mt-3 flex gap-2">
         <SecondaryButton disabled={busy} onClick={() => run(() => skipMissed([item.session.id], 'answer'))}>{busy ? 'Bezig…' : 'Niet gedaan'}</SecondaryButton>
         <SecondaryButton disabled={busy} onClick={() => onLogNow(item.session)}>Toch gedaan</SecondaryButton>

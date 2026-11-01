@@ -897,8 +897,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (!recentChange) return;
     armFlip();
     await planSettled();
-    // Numbers of the watch taken over by typed-in trainings: the hand-made ones
-    // come back first. When that was all the change did, that is the undo.
     // A log linked to a planned training afterwards: only the link goes (engine/missedTraining.ts).
     if (recentChange.linkedLogIds?.length) {
       await unlinkLogsNow(recentChange.linkedLogIds);
@@ -909,6 +907,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         return;
       }
     }
+    // Numbers of the watch taken over by typed-in trainings: the hand-made ones
+    // come back first. When that was all the change did, that is the undo.
     if (recentChange.alignedLogIds?.length) {
       await restoreAlignments(recentChange.alignedLogIds);
       if (recentChange.before.length === 0 && recentChange.addedIds.length === 0) {

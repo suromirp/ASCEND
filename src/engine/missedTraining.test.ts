@@ -4,6 +4,7 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import {
   askLine,
   autoSkipNotice,
+  linkEyebrow,
   linkLine,
   linkLog,
   planMissed,
@@ -247,6 +248,8 @@ describe('een log op een andere dag koppelen', () => {
     const easy = templates.find((t) => t.id === 'tpl_easy_run')!;
     const up = templates.find((t) => t.id === 'tpl_upper_b')!;
     expect(linkLine(planned('easy', 'tpl_easy_run', '2026-10-27'), easy, watchRun('w1', '2026-10-28'), TODAY)).toBe('Je rustige duurloop van dinsdag staat op woensdag in je horloge. Hoort die bij elkaar?');
+    expect(linkEyebrow(watchRun('w1', '2026-10-28'))).toBe('Van je horloge');
+    expect(linkEyebrow(mfStrength('m1', '2026-10-13'))).toBe('Van MacroFactor');
     expect(linkLine(planned('up', 'tpl_upper_b', '2026-10-12'), up, mfStrength('m1', '2026-10-13'), TODAY)).toBe('Je bovenlichaam B van maandag 12 oktober staat op dinsdag 13 oktober in MacroFactor. Hoort die bij elkaar?');
   });
 });
