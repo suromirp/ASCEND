@@ -77,6 +77,9 @@ screenshots en, bij een animatie, ook de stand met Beweging Uit. Wat er kaal of 
 Ronde 1, tegelijk:
 1. Zelf: het veiligheidsnet (tests in `.github/workflows/deploy.yml` voor de deploy) en CLAUDE.md bijwerken
    (Zonder doel, Kansen, Run in detail, ochtendkaart, tekstkaart, backlog, werkverdeling).
+2b. Sherpa (opus): een vakantie of vrije periode bijwerken in Week (data, soort, notitie), in plaats van alleen
+   Verwijderen. Een wijziging die de planning raakt is één voorstel met Akkoord dat het verschil laat zien
+   (engine/leaveProposal.ts), met een eigen tik op de rij en een blad in de ASCEND-stijl. Met test en besluit.
 2. Sherpa (opus): trainingen die niet doorgingen automatisch afhandelen (zie backlog; nooit een log
    verzinnen, overslaan als status, koppelen als voorstel, instelbaar, besluit).
 3. Sherpa (sonnet): de tekstkaart uitbreiden met meer standen en schermen, en de nieuwe invarianten.
