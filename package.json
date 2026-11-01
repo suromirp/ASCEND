@@ -15,9 +15,14 @@
     "kaart:standen": "node scripts/app-kaart/maak-standen.mjs"
   },
   "dependencies": {
+    "@capacitor-community/keep-awake": "^8.0.1",
     "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.0",
+    "@capacitor/haptics": "^8.0.2",
     "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4",
     "@capawesome/capacitor-live-update": "^8.7.1",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/marcellus": "^5.3.0",
