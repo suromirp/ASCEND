@@ -62,6 +62,16 @@ Per oorzaak één concrete aanpassing, en die gaat meteen in de werkverdeling, e
 de tekstkaart of een test, zodat de volgende ronde hem al heeft. Aanpassingen aan `.claude/agents/` en
 `.claude/skills/` zijn met toestemming van de eigenaar (1 november).
 
+## Alles wat zichtbaar is krijgt de ASCEND-stijl
+
+Elke opdracht voor iets zichtbaars noemt de stijl als eis, niet als wens: de ontwerptaal uit CLAUDE.md (zee en berg,
+één mint accent, tokens, Eyebrow, Card, Marcellus alleen voor woorden, cijfers in Inter tabular, 12 px, 44 px,
+pictogrammen in stijl C) en de beweging uit `docs/architectuur/bediening-en-beweging.md` (150 tot 400 ms, ease-out,
+alleen bij verschijnen, `mx-*` en de hooks in `components/motion.ts`, bladen die de vinger volgen, Rustig en Uit
+op de eindstand). Een nieuw scherm of een nieuwe kaart krijgt een passende verschijning en overgang, net zo
+verzorgd als de bestaande. De poort kijkt hierop: Warden toetst de stijl en de beweging, de coördinator bekijkt de
+screenshots en, bij een animatie, ook de stand met Beweging Uit. Wat er kaal of anders uitziet gaat terug.
+
 ## Volgorde
 
 Ronde 1, tegelijk:
