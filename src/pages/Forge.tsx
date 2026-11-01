@@ -42,7 +42,7 @@ import { usePageState } from '../components/usePageState';
 import { TextButton } from '../components/TextButton';
 import { Sheet } from '../components/settings/Sheet';
 import { Icon } from '../components/icons';
-import { formatNumberNL } from '../utils/number';
+import { kgLabel } from '../utils/kg';
 
 const SHOWN_AT_FIRST = 12;
 
@@ -290,7 +290,6 @@ function ComparisonSheet({ rows, summary, onClose }: { rows: ComparisonRow[]; su
     if (!g) groups.push((g = { key: r.logId, date: r.date, name: r.trainingName, forge: r.check?.origin === 'forge', rows: [] }));
     g.rows.push(r);
   }
-  const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
   const parts: { title: string; totals: CheckSummary['all'] }[] = [{ title: 'Alles', totals: summary.all }, { title: `Sinds ${formatShortDateNL(summary.from)}`, totals: summary.since }];
   return (
     <Sheet eyebrow="Forge" title="Voorstel en wat je deed" line="Per oefening: was het voorstel raak voor die dag?" onClose={onClose}>
@@ -329,8 +328,8 @@ function ComparisonSheet({ rows, summary, onClose }: { rows: ComparisonRow[]; su
               <div key={r.exerciseKey} className="flex min-h-[44px] items-center gap-3 border-t py-1.5" style={{ borderColor: 'var(--color-card-border)' }}>
                 <p className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{r.exerciseName}</p>
                 <div className="flex shrink-0 flex-col gap-0.5 font-sans text-xs tabular-nums leading-snug">
-                  <HitLine label={`ASCEND ${kg(r.prescribedKg)}`} hit={r.check?.ascend.hit} />
-                  <HitLine label={`jij ${kg(r.actualKg)}`} hit={r.check?.did.hit} strong />
+                  <HitLine label={`ASCEND ${kgLabel(r.prescribedKg)}`} hit={r.check?.ascend.hit} />
+                  <HitLine label={`jij ${kgLabel(r.actualKg)}`} hit={r.check?.did.hit} strong />
                 </div>
               </div>
             ))}

@@ -22,6 +22,7 @@ import { logSport } from './sports';
 import { addDays, daysBetween, formatDateNL, formatHoursMinutesNL, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { mainGoal } from './mainGoal';
+import { kgLabel } from '../utils/kg';
 
 export interface CompletionLine {
   id: 'goal' | 'week' | 'legs';
@@ -124,7 +125,7 @@ export function logFacts(log: SessionLog): CompletionFacts {
   const loss = log.outdoorData?.elevationLossM ?? log.cardioData?.elevationLossM;
   if (loss !== undefined && loss >= 1) extra.push(`${formatNumberNL(loss, 0)} m omlaag`);
   const pack = log.outdoorData?.backpackWeightKg;
-  if (pack !== undefined && pack > 0) extra.push(`rugzak ${formatNumberNL(pack, 1)} kg`);
+  if (pack !== undefined && pack > 0) extra.push(`rugzak ${kgLabel(pack)}`);
   if (data?.avgHeartRate !== undefined) extra.push(`hartslag ${data.avgHeartRate} gemiddeld${data.maxHeartRate !== undefined ? `, ${data.maxHeartRate} hoogst` : ''}`);
 
   return { main, extra, fromWatch: isWatchLog(log) };

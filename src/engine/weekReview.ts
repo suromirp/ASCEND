@@ -27,6 +27,7 @@ import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMin
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
 import { idHasRole } from './templateRoles';
+import { kgLabel } from '../utils/kg';
 
 export interface WeekReview {
   weekStart: string;
@@ -156,7 +157,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
       note,
       minutes: nextMinutes,
       key: keyT && key
-        ? `${keyT.name}: ${durationLabel(resolveEffectiveFullDuration(keyT, key.scheduledDate, program))}${keyStep?.elevationGainM ? `, ${formatNumberNL(keyStep.elevationGainM, 0)} m omhoog` : ''}${keyStep?.backpackKg ? `, ${formatNumberNL(keyStep.backpackKg, 1)} kg rugzak` : ''}`
+        ? `${keyT.name}: ${durationLabel(resolveEffectiveFullDuration(keyT, key.scheduledDate, program))}${keyStep?.elevationGainM ? `, ${formatNumberNL(keyStep.elevationGainM, 0)} m omhoog` : ''}${keyStep?.backpackKg ? `, ${kgLabel(keyStep.backpackKg)} rugzak` : ''}`
         : undefined,
     };
   }

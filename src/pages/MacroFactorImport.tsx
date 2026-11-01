@@ -30,10 +30,10 @@ import { countNewReadings, mergeExternalOneRm } from '../engine/externalOneRm';
 import { applyWeightImport, planWeightImport, weightEntryFromDay, type MacroFactorWeightResult, type WeightConflict } from '../engine/macrofactorWeight';
 import { hasMacroFactorWeight, MACROFACTOR_FRESH_DAYS } from '../engine/bodyWeight';
 import type { WeightEntry } from '../models/metrics';
-import { formatNumberNL } from '../utils/number';
 import { forgetMapping, importMacroFactorWorkouts, takeSharedFile } from '../storage/macrofactor';
 import { daysBetween, formatDateNL, todayISO, localDateOf } from '../utils/dates';
 import { TextButton } from '../components/TextButton';
+import { kgLabel } from '../utils/kg';
 
 // 'ok' with lines is the calm summary of a file; the other forms are one line.
 type Notice = { tone: 'ok' | 'error'; text?: string; lines?: string[]; details?: string };
@@ -249,7 +249,7 @@ export function MacroFactorImportPage() {
           <ul className="flex flex-col gap-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {conflicts.slice(0, 4).map((c) => (
               <li key={c.own.date}>
-                {formatDateNL(c.own.date)}: jij <span className="font-sans tabular-nums">{formatNumberNL(c.own.kg, 1)} kg</span>, MacroFactor <span className="font-sans tabular-nums">{formatNumberNL(c.incoming.kg, 1)} kg</span>
+                {formatDateNL(c.own.date)}: jij <span className="font-sans tabular-nums">{kgLabel(c.own.kg)}</span>, MacroFactor <span className="font-sans tabular-nums">{kgLabel(c.incoming.kg)}</span>
               </li>
             ))}
           </ul>
@@ -337,7 +337,7 @@ function WeightSourceCard({ entries, on, onChange }: { entries: WeightEntry[]; o
         <div>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Gewicht uit MacroFactor gebruiken</p>
           <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Gewicht komt uit MacroFactor (bijgewerkt op {formatDateNL(last.date)}): <span className="font-sans tabular-nums">{formatNumberNL(last.kg, 1)} kg</span>, {last.basis === 'trend' ? 'je trendgewicht' : 'de weegschaal'}.
+            Gewicht komt uit MacroFactor (bijgewerkt op {formatDateNL(last.date)}): <span className="font-sans tabular-nums">{kgLabel(last.kg)}</span>, {last.basis === 'trend' ? 'je trendgewicht' : 'de weegschaal'}.
             {last.basis === 'trend' ? ' ASCEND rekent met het trendgewicht, omdat dat rustiger is dan één weging.' : ' In de export stond geen trendgewicht, dus ASCEND rekent met de weging zelf.'}
             {' '}Het telt voor rugzakgewicht als deel van je lichaamsgewicht en voor de beenindex. Uit betekent: ASCEND laat het staan maar rekent er niet mee, en vraagt weer om je gewicht.
           </p>

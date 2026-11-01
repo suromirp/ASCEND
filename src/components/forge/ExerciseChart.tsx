@@ -11,9 +11,8 @@ import type { ExerciseView } from '../../engine/strengthHistory';
 import { oneRmSeries } from '../../engine/strengthOneRm';
 import type { OneRmView } from '../../engine/strengthSettings';
 import type { OneRmReading } from '../../models/metrics';
-import { formatNumberNL } from '../../utils/number';
+import { kgLabel } from '../../utils/kg';
 
-const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
 
 export function ExerciseChart({
   view,
@@ -54,7 +53,7 @@ export function ExerciseChart({
   if (chart.points.length < 2) return <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>De lijn begint na de tweede training.</p>;
   return (
     <div className="font-sans tabular-nums">
-      <TrendLineChart points={chart.points} color={chart.color} height={height} formatValue={(v) => (repsLed ? `${Math.round(v)} herh.` : assisted && mode === 'work_weight' && !bodyKg ? `hulp ${kg(Math.abs(v))}` : kg(Math.abs(v)))} />
+      <TrendLineChart points={chart.points} color={chart.color} height={height} formatValue={(v) => (repsLed ? `${Math.round(v)} herh.` : assisted && mode === 'work_weight' && !bodyKg ? `hulp ${kgLabel(Math.abs(v))}` : kgLabel(Math.abs(v)))} />
       {chart.note && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{chart.note}</p>}
     </div>
   );

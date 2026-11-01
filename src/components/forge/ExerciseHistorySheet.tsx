@@ -11,9 +11,8 @@ import { repsLabel, shortDateNL, topSetText } from '../../engine/forgeText';
 import type { ExerciseView } from '../../engine/strengthHistory';
 import type { OneRmView } from '../../engine/strengthSettings';
 import type { OneRmReading } from '../../models/metrics';
-import { formatNumberNL } from '../../utils/number';
+import { kgLabel } from '../../utils/kg';
 
-const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
 
 export function ExerciseHistorySheet({
   view,
@@ -69,11 +68,11 @@ export function ExerciseHistorySheet({
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-0.5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
                   {r.totalReps !== undefined && <span>Totaal {repsLabel(r.totalReps)}</span>}
-                  {repsLed && r.topWeightKg !== undefined && <span>Met {formatNumberNL(r.topWeightKg, 1)} kg</span>}
-                  {r.volumeKg !== undefined && <span>Volume {formatNumberNL(r.volumeKg, 0)} kg</span>}
+                  {repsLed && r.topWeightKg !== undefined && <span>Met {kgLabel(r.topWeightKg)}</span>}
+                  {r.volumeKg !== undefined && <span>Volume {kgLabel(r.volumeKg, 0)}</span>}
                   <span>{r.workSetCount} {r.workSetCount === 1 ? 'werkset' : 'werksets'}</span>
-                  {r.ascendKg !== undefined && <span>1RM ASCEND {kg(r.ascendKg)}</span>}
-                  {r.macroFactorKg !== undefined && <span>1RM MacroFactor {kg(r.macroFactorKg)}</span>}
+                  {r.ascendKg !== undefined && <span>1RM ASCEND {kgLabel(r.ascendKg)}</span>}
+                  {r.macroFactorKg !== undefined && <span>1RM MacroFactor {kgLabel(r.macroFactorKg)}</span>}
                 </div>
               </div>
             );

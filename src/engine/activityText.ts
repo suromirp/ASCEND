@@ -22,6 +22,7 @@ import { buildWorkoutPlan, type PlanStep } from './workoutPlan';
 import { progressionTarget } from './programLayout';
 import { isWorkSet } from './workSets';
 import { logSport, SPORT_LABEL } from './sports';
+import { kgLabel } from '../utils/kg';
 
 export interface ActivityTextInput {
   log: SessionLog;
@@ -125,7 +126,7 @@ function describe(input: ActivityTextInput, name: string): Described {
     const kg = log.outdoorData?.backpackWeightKg
       ?? (template && planned_ ? progressionTarget(template, program ?? undefined, date)?.step.backpackKg : undefined)
       ?? (planned_ ? template?.outdoorTarget?.backpackWeightKg : undefined);
-    const withKg = kg ? ` met ${formatNumberNL(kg, 1)} kg` : '';
+    const withKg = kg ? ` met ${kgLabel(kg)}` : '';
     if (metric?.distanceKm && metric.distanceKm > 0) return { line: `${name}: ${kmText(metric.distanceKm)}${withKg}.`, used: { distance: true } };
     if (timed) return { line: `${name}: ${minutesText(minutes)}${withKg}.`, used: { duration: true } };
     return { line: `${name}${withKg}.`, used: none };

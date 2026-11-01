@@ -14,9 +14,9 @@
 // - toegevoegd en weggehaald: een set die jij erbij zette of weghaalde (eigen handelingen, geen punt op de knop).
 
 import { FORGE_EVENT_KINDS, type ForgeEvent, type ForgeEventKind, type ForgeSetState } from '../models/forgeLog';
-import { formatNumberNL } from '../utils/number';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import { pad } from '../utils/pad';
+import { kgLabel } from '../utils/kg';
 
 export { FORGE_EVENT_KINDS };
 export type { ForgeEvent, ForgeEventKind, ForgeSetState };
@@ -194,7 +194,7 @@ export function unseenCount(log: ForgeEvent[], seenAt: number, workout: WorkoutE
 
 export const stateText = (s: ForgeSetState | undefined): string => {
   if (!s) return '';
-  const kg = s.kg !== undefined ? `${formatNumberNL(s.kg, 2)} kg` : '';
+  const kg = s.kg !== undefined ? kgLabel(s.kg, 2) : '';
   const reps = s.reps !== undefined ? `${s.reps}` : '';
   if (kg && reps) return `${kg} × ${reps}`;
   return kg || (reps ? `${reps} herh.` : '');

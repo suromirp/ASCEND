@@ -20,6 +20,7 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { SPORT_LABEL, sessionKindLabel, templateSport, type Sport } from './sports';
 import { addDays, resolveProgramWeek } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
+import { kgLabel } from '../utils/kg';
 
 export interface BriefFact {
   value: string;
@@ -95,7 +96,7 @@ export function buildSessionBrief(
       case 'hike': {
         const d = step?.elevationGainM ?? template.outdoorTarget?.targetElevationM;
         const kg = step?.backpackKg ?? template.outdoorTarget?.backpackWeightKg;
-        return [total, { value: d ? `${formatNumberNL(d, 0)} m` : 'Heuvels', label: 'omhoog en omlaag' }, { value: kg ? `${formatNumberNL(kg, 1)} kg` : 'Licht', label: 'rugzak' }];
+        return [total, { value: d ? `${formatNumberNL(d, 0)} m` : 'Heuvels', label: 'omhoog en omlaag' }, { value: kg ? kgLabel(kg) : 'Licht', label: 'rugzak' }];
       }
       case 'tempo': {
         const work = plan?.items.find((it) => 'repeat' in it);
@@ -123,7 +124,7 @@ export function buildSessionBrief(
       case 'ruck': {
         // The pack of this week (engine/packLadder.ts), else the template's.
         const kg = step?.backpackKg ?? template.outdoorTarget?.backpackWeightKg;
-        return [total, { value: kg ? `${formatNumberNL(kg, 1)} kg` : 'Licht', label: 'rugzak' }, { value: 'Praten kan', label: 'hele zinnen' }];
+        return [total, { value: kg ? kgLabel(kg) : 'Licht', label: 'rugzak' }, { value: 'Praten kan', label: 'hele zinnen' }];
       }
       case 'test':
         return [{ value: '5 km', label: 'op tijd' }, { value: 'Gelijkmatig', label: 'niet te snel starten' }, { value: 'Vlak', label: 'route' }];
@@ -144,7 +145,7 @@ export function buildSessionBrief(
     const hike = options.templates.find((t) => t.id === 'tpl_mountain_hike');
     const next = hike ? progressionTarget(hike, program, addDays(dateIso, 1)) : undefined;
     if (next) {
-      const parts = [durationLabel(next.minutes), next.step.elevationGainM ? `${formatNumberNL(next.step.elevationGainM, 0)} m omhoog` : undefined, next.step.backpackKg ? `${formatNumberNL(next.step.backpackKg, 1)} kg rugzak` : undefined].filter(Boolean);
+      const parts = [durationLabel(next.minutes), next.step.elevationGainM ? `${formatNumberNL(next.step.elevationGainM, 0)} m omhoog` : undefined, next.step.backpackKg ? `${kgLabel(next.step.backpackKg)} rugzak` : undefined].filter(Boolean);
       tomorrow = `Morgen: bergtocht van ${parts.join(', ')}.`;
     }
   }

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { formatNumberNL } from '../utils/number';
 import { NumberField } from './NumberField';
 import { TextButton } from './TextButton';
 import { Eyebrow } from './ui';
 import type { SweatAfterState } from './useSweatAfter';
+import { kgLabel } from '../utils/kg';
 
 // De rij zelf. `showHeading` is uit als de omringende kaart het kopje al heeft.
 export function SweatAfterRow({ sweat, showHeading = true }: { sweat: SweatAfterState; showHeading?: boolean }) {
@@ -18,7 +18,7 @@ export function SweatAfterRow({ sweat, showHeading = true }: { sweat: SweatAfter
       {sweat.preKnown && !editBefore && (
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-            Gewicht voor: {sweat.before !== undefined ? `${formatNumberNL(sweat.before, 1)} kg` : ''}
+            Gewicht voor: {sweat.before !== undefined ? kgLabel(sweat.before) : ''}
           </p>
           <TextButton tone="dim" onClick={() => setEditBefore(true)}>Wijzig</TextButton>
         </div>

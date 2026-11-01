@@ -16,9 +16,9 @@ import type { GoalMilestone, GoalMilestoneProgress, GoalRequirement, TrainingGoa
 import type { MilestoneRequirement } from '../models/objectives';
 import type { SessionLog } from '../models/training';
 import { makeId } from '../utils/id';
-import { formatNumberNL } from '../utils/number';
 import { requirementAutoSatisfied } from './progression';
 import { mainGoal } from './mainGoal';
+import { kgLabel } from '../utils/kg';
 
 // --- Rugzakdoel ---------------------------------------------------------------
 
@@ -125,7 +125,7 @@ const PACK_MILESTONE_KM = 15;
 
 // Titel en eis van mijlpaal 11 bij een rugzakdoel van `kg`.
 export function packMilestone(kg: number): { title: string; requirement: MilestoneRequirement } {
-  return { title: `Volle rugzaktocht: ${formatNumberNL(kg, 1)} kg, ${PACK_MILESTONE_KM} km`, requirement: { kind: 'backpack', minWeightKg: kg, minKm: PACK_MILESTONE_KM } };
+  return { title: `Volle rugzaktocht: ${kgLabel(kg)}, ${PACK_MILESTONE_KM} km`, requirement: { kind: 'backpack', minWeightKg: kg, minKm: PACK_MILESTONE_KM } };
 }
 
 // Mijlpalen die je behaalde onder de eerdere eis blijven behaald. Een

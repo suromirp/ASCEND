@@ -8,6 +8,7 @@
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
 import { isDefaultOrder, resolveCardOrder } from './cardOrder';
+import { kgLabel } from '../utils/kg';
 import { resolveTestStops } from './bestEffort';
 import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
@@ -173,7 +174,6 @@ export const shortDate = (iso: string): string => `${dayOf(iso)} ${SHORT_MONTHS[
 export const longDate = (iso: string): string => `${dayOf(iso)} ${LONG_MONTHS[monthIndex(iso)]}`;
 
 const num = (n: number, decimals = 2) => formatNumberNL(n, decimals);
-const kg = (n: number) => `${num(n)} kg`;
 const capitalize = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 const lower = (text: string) => text.toLowerCase();
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -399,7 +399,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bergschoenen-herinnering':
       return { checked: s.bootBreakInReminder !== false };
     case 'paklijst':
-      return f.packKg === undefined ? {} : { value: kg(f.packKg) };
+      return f.packKg === undefined ? {} : { value: kgLabel(f.packKg, 2) };
 
     // Forge
     case 'forge':
@@ -480,11 +480,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'stangen':
       return { value: listWeights(forge.profile.barsKg) };
     case 'schijven':
-      return { value: `${num(Math.min(...forge.profile.platesKg))} tot ${kg(Math.max(...forge.profile.platesKg))}` };
+      return { value: `${num(Math.min(...forge.profile.platesKg))} tot ${kgLabel(Math.max(...forge.profile.platesKg), 2)}` };
     case 'dumbbells':
-      return { value: `${num(forge.profile.dumbbells.startKg)} tot ${kg(forge.profile.dumbbells.maxKg)}` };
+      return { value: `${num(forge.profile.dumbbells.startKg)} tot ${kgLabel(forge.profile.dumbbells.maxKg, 2)}` };
     case 'kabels':
-      return { value: `Per ${kg(forge.profile.stackStepKg)}` };
+      return { value: `Per ${kgLabel(forge.profile.stackStepKg, 2)}` };
     case 'gym-profiel':
       return { value: forge.profile.name };
     case 'toestelgewichten': {
@@ -502,7 +502,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Lichaam
     case 'lichaamsgewicht':
       return f.weight
-        ? { value: `${num(f.weight.kg, 1)} kg`, auto: f.weight.source === 'macrofactor', sub: weightWords(f.weight) }
+        ? { value: kgLabel(f.weight.kg, 1), auto: f.weight.source === 'macrofactor', sub: weightWords(f.weight) }
         : { value: 'Niet ingevuld', dim: true };
     case 'vetpercentage':
       return { checked: s.showBodyFat !== false };
@@ -850,7 +850,7 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
       const hrText = hr.lthr ? `Drempel ${hr.lthr} bpm` : hr.maxHr ? `Max ${hr.maxHr} bpm` : 'Hartslag niet ingevuld';
       const inj = f.activeInjuries > 0 ? plural(f.activeInjuries, 'blessure', 'blessures') : 'geen blessures';
       return {
-        value: f.weight ? `${num(f.weight.kg, 1)} kg` : 'Leeg',
+        value: f.weight ? kgLabel(f.weight.kg, 1) : 'Leeg',
         dim: !f.weight,
         sub: `${hrText}, ${inj}`,
       };

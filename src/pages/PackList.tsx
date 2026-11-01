@@ -12,9 +12,9 @@ import {
   addItem, baseWeightGrams, departureTable, formatGrams, formatKg, groupWeightGrams, packProgress, packVersusGoal, removeItem, updateItem,
   FOOD_KG_PER_DAY, WATER_LITER_OPTIONS,
 } from '../engine/packList';
-import { formatNumberNL } from '../utils/number';
 import { makeId } from '../utils/id';
 import { TextButton } from '../components/TextButton';
+import { kgLabel } from '../utils/kg';
 
 type Editing = { kind: 'edit'; id: string } | { kind: 'add'; group: PackGroup } | null;
 
@@ -44,7 +44,7 @@ export function PackListPage() {
       <Card className="flex flex-col gap-3">
         <Eyebrow>Vertrekgewicht</Eyebrow>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Wat je draagt als je uit een dorp vertrekt: je basisgewicht plus eten en water. ASCEND rekent met {formatNumberNL(FOOD_KG_PER_DAY, 1)} kg droog eten per dag en 1 kg per liter water.
+          Wat je draagt als je uit een dorp vertrekt: je basisgewicht plus eten en water. ASCEND rekent met {kgLabel(FOOD_KG_PER_DAY)} droog eten per dag en 1 kg per liter water.
         </p>
         <div role="table" aria-label="Vertrekgewicht per aantal dagen eten en liters water" className="flex flex-col">
           <div role="row" className="flex items-center border-b pb-1.5 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
@@ -58,7 +58,7 @@ export function PackListPage() {
               <span role="rowheader" className="flex-1 text-sm" style={{ color: 'var(--color-ink)' }}>{row.foodDays} dagen</span>
               {row.kg.map((kg, i) => (
                 <span role="cell" key={WATER_LITER_OPTIONS[i]} className="w-24 text-right font-sans tabular-nums text-lg" style={{ color: 'var(--color-ink)' }}>
-                  {formatNumberNL(kg, 1)} kg
+                  {kgLabel(kg)}
                 </span>
               ))}
             </div>

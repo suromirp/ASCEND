@@ -4,6 +4,7 @@
 
 import type { Exercise } from '../models/exercise';
 import { formatNumberNL } from '../utils/number';
+import { kgLabel } from '../utils/kg';
 import { isRepsBased, type ExtraChange } from './forgeHistory';
 import type { ExerciseView } from './strengthHistory';
 import type { OneRmView } from './strengthSettings';
@@ -11,12 +12,11 @@ import { formatWeight } from './strengthModel';
 
 export type DeltaTone = 'up' | 'flat';
 
-const nl = (n: number) => formatNumberNL(n, 1);
 
 // "+2,5 kg", "-1 kg" of "gelijk". Een tiende of minder telt als gelijk.
 export function signedKg(delta: number): string {
   if (Math.abs(delta) < 0.05) return 'gelijk';
-  return `${delta > 0 ? '+' : '-'}${nl(Math.abs(delta))} kg`;
+  return `${delta > 0 ? '+' : '-'}${kgLabel(Math.abs(delta))}`;
 }
 
 export const deltaTone = (delta: number | undefined): DeltaTone => (delta !== undefined && delta >= 0.05 ? 'up' : 'flat');
@@ -30,10 +30,10 @@ export function extraText(c: ExtraChange): string {
   switch (c.kind) {
     case 'reps_same_weight':
       return c.delta === 0
-        ? `Evenveel herhalingen bij ${nl(c.atKg ?? 0)} kg`
-        : `${sign}${Math.abs(c.delta)} ${reps(Math.abs(c.delta))} bij ${nl(c.atKg ?? 0)} kg`;
+        ? `Evenveel herhalingen bij ${kgLabel(c.atKg ?? 0)}`
+        : `${sign}${Math.abs(c.delta)} ${reps(Math.abs(c.delta))} bij ${kgLabel(c.atKg ?? 0)}`;
     case 'top_weight':
-      return `${sign}${nl(Math.abs(c.delta))} kg in je zwaarste set`;
+      return `${sign}${kgLabel(Math.abs(c.delta))} in je zwaarste set`;
     case 'total_reps':
       return c.delta === 0 ? 'Evenveel herhalingen in totaal' : `${sign}${Math.abs(c.delta)} ${reps(Math.abs(c.delta))} in totaal`;
     case 'volume':
@@ -57,9 +57,9 @@ export const repsLabel = (n: number): string => `${formatNumberNL(n, 0)} ${n ===
 export function valueText(value: number, kind: ValueKind, exercise: Exercise | undefined, bodyKg: number | undefined, short = false): string {
   if (kind === 'reps') return short ? `${formatNumberNL(value, 0)} herh.` : repsLabel(value);
   if (kind === 'work_weight' && exercise?.resistance === 'assisted_bodyweight') {
-    return bodyKg ? `${nl(bodyKg + value)} kg` : `hulp ${nl(Math.abs(value))} kg`;
+    return bodyKg ? kgLabel(bodyKg + value) : `hulp ${kgLabel(Math.abs(value))}`;
   }
-  return `${nl(value)} kg`;
+  return kgLabel(value);
 }
 
 // De zwaarste set zoals hij gelogd is: "60 kg x 8", "hulp 30 kg x 8".
@@ -70,7 +70,7 @@ export const topSetText = (exercise: Exercise | undefined, weightKg: number | un
 export function deltaText(delta: number, kind: ValueKind, exercise: Exercise | undefined, bodyKg: number | undefined, short = false): string {
   if (kind === 'reps') return Math.abs(delta) < 0.5 ? 'gelijk' : `${delta > 0 ? '+' : '-'}${Math.abs(Math.round(delta))} ${short ? 'herh.' : reps(Math.abs(Math.round(delta)))}`;
   if (kind === 'work_weight' && exercise?.resistance === 'assisted_bodyweight' && !bodyKg && Math.abs(delta) >= 0.05) {
-    return `${nl(Math.abs(delta))} kg ${delta > 0 ? 'minder' : 'meer'} hulp`;
+    return `${kgLabel(Math.abs(delta))} ${delta > 0 ? 'minder' : 'meer'} hulp`;
   }
   return signedKg(delta);
 }

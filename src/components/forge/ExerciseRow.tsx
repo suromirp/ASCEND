@@ -5,7 +5,6 @@
 // Alle rekenwerk staat in engine/forgeHistory.ts en engine/forgeText.ts.
 
 import { useMemo } from 'react';
-import { formatNumberNL } from '../../utils/number';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../icons';
 import { ExerciseArtButton } from '../ExerciseArtButton';
@@ -20,6 +19,7 @@ import { missingData, type ExerciseView, type MissingData } from '../../engine/s
 import { describePlannedSet, formatWeight, WEIGHT_MISMATCH_TEXT } from '../../engine/strengthModel';
 import type { OneRmView } from '../../engine/strengthSettings';
 import type { ValueKind } from '../../engine/forgeText';
+import { kgLabel } from '../../utils/kg';
 
 // Mint is vooruit, gedempt is gelijk of lager. Geen rood: het is een kleine regel zonder oordeel.
 const TONE: Record<DeltaTone, string> = { up: 'var(--color-progress)', flat: 'var(--color-ink-dim)' };
@@ -128,7 +128,7 @@ function Cell({ label, point, status = 'ok', today, kind, view, bodyKg, showExtr
   const top = !point
     ? undefined
     : point.unit === 'reps'
-      ? [point.totalReps !== undefined ? `totaal ${point.totalReps}` : '', point.topWeightKg ? `met ${formatNumberNL(point.topWeightKg, 1)} kg` : ''].filter(Boolean).join(', ')
+      ? [point.totalReps !== undefined ? `totaal ${point.totalReps}` : '', point.topWeightKg ? `met ${kgLabel(point.topWeightKg)}` : ''].filter(Boolean).join(', ')
       : topSetText(exercise, point.topWeightKg, point.topReps);
   return (
     <div className="flex min-w-0 flex-col gap-1">
