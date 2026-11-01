@@ -29,6 +29,10 @@ bijgewerkt.
   `security-review` op de Android-app en Health Connect.
 - `simplify` in ronde 3 bij het opsplitsen en opruimen.
 - `dataviz` voor elke grafiek die gebouwd of herzien wordt (Run in detail, Stand, het ontwerprapport gegevens).
+- `skill-creator` bij de reflectie na elke ronde, om de eigen skills (`werkverdeling`, `lookout`, `onderhoud`)
+  te verbeteren en hun beschrijving scherp te houden.
+- `deep-research` als een onderdeel nieuw onderzoek vraagt (bijvoorbeeld bij Kansen of de spierindex), in plaats
+  van een losse Scout.
 - De eigen skills `werkverdeling`, `lookout` en `onderhoud` zoals altijd.
 
 ## Zelfstandig, ook als de eigenaar slaapt
