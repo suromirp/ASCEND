@@ -164,6 +164,12 @@ Ronde 1, tegelijk:
    a. Gegevens: Stand, Logboek, Ascend, Run in detail, Lichaam, Weekterugblik en Jaaroverzicht. Welke gegevens
       staan waar, wat is dubbel, te veel of onduidelijk, wat vind je niet terug, wat is juist goed. Doel: alles
       inzichtelijker en beter georganiseerd; een complete herinrichting van een tab mag.
+      Input van de eigenaar (1 november, screenshot Stand): "Dit is lelijk" over de lichte kaart midden op Stand
+      (Deze week 2 van 5, Volgehouden 18 van 23, Op rij 0 trainingsdagen, met bergen onderaan). Wat opvalt: een
+      lichte SkyPanel midden in een donkere pagina valt uit de toon; drie blokken met lange uitlegzinnen
+      ("De coach op Ascend telt hetzelfde", "Dagen zonder training tellen niet mee...") die bij elk bezoek
+      herhaald worden; "0 trainingsdagen" groot in beeld werkt ontmoedigend; drie tellingen van bijna hetzelfde
+      naast elkaar. Neem deze kaart als eerste voorbeeld in het rapport en geef een mooier, rustiger voorstel.
    b. Instellingen: alle acht groepen en de bladen eronder. Wat is logisch ingedeeld, wat zoek je en vind je niet,
       wat kan samen of weg, wat mist een goede uitleg.
    Elk levert een rapport in docs/visie/ met wat goed is, wat niet, en een voorstel per tab of groep, de beste
