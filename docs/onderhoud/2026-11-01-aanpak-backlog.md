@@ -36,7 +36,7 @@ Ronde 1, tegelijk:
 
 Ronde 2, tegelijk:
 5. Sherpa (opus): spierindex stap 1 en 2 (lees eerst `docs/onderzoek` en `docs/visie` over de spierindex).
-6. Sherpa (opus): Kansen middelgroot, zonder voeding (die wacht op een besluit van de eigenaar): klimtempo met
+6. Sherpa (opus): Kansen middelgroot: klimtempo met
    rugzak, GR5-etappeschatting als band, tempocurve tussen twee testen; en het kleine werk dat over is. Geen voeding.
 7. Cartographer (sonnet) de pictogrammen voor Sporten die meetellen stap 1, daarna Sherpa (opus) stap 4 tot 9.
 8. Sherpa (sonnet): Zonder doel, de kaart Je week op Je stand en de vorm van de week bij een andere richting.
