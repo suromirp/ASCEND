@@ -29,6 +29,16 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Week: na het wissen van een vakantie houdt een training die je zelf verplaatste een `leave`-merk naar een periode die niet meer bestaat (vraagt dan blijvend om Akkoord). Merk wissen in `putBack` als `byYou`.
 - Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
 
+## Voor de eigenaar
+
+- Forge (ontwerprapport, vraag 1 en 4): welke snelknop wil je houden, als er een blijft, en gebruik je Alles vaak? Tot je antwoord bouwt Sherpa de rest van het Forge-voorstel en blijven de snelknoppen en Alles staan.
+- De overige vragen uit de drie ontwerprapporten (`docs/visie/Ontwerprapport gegevens.md`, `instellingen.md`, `Forge.md`) kiest de coördinator met het advies; elke keuze staat in de terugblik van de ronde waarin hij gebouwd wordt. Het citaat onderaan Vandaag wordt Engels, zoals de eigenaar al vroeg.
+
+## Uit de ontwerprapporten
+
+- Jaaroverzicht: "Testloop 5 km: 14 jan en 15 jan", twee dagen voor één test. Nakijken of dat een fout in de gegevens of de telling is.
+- De vaste doorloop van Lookout gaf Stand helemaal leeg (zonder lucht of titel); een eigen afdruk was wel vol. Nagaan of de kit te vroeg afdrukt.
+
 ## Bewust niet
 
 - Voeding naast gewicht en kracht (kans E): de eigenaar laat dit liggen (1 november).
