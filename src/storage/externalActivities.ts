@@ -232,7 +232,7 @@ export function onWatchChange(listener: () => void): () => void {
     listeners.delete(listener);
   };
 }
-function notifyWatchChange(): void {
+export function notifyWatchChange(): void {
   listeners.forEach((l) => l());
 }
 
