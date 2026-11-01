@@ -45,7 +45,7 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Snelkoppelingen onder het app-icoon: Start training, Ochtendvraag (Android; in de web-app via `shortcuts` in het PWA-manifest). Ronde 2b.
 - Een widget op het startscherm met je missie van vandaag (Android, eigen native code; de web-app heeft geen widget). Ronde 2b, na de rest.
 - Health Connect als bron (al gepland). Ronde 2b.
-- Je locatie, alleen als je het aanzet (uit als standaard), in de app en in de browser, om te weten waar je bent: het weer op je plek, en tijdens een tocht waar je bent op je etappe (hoeveel nog tot het eind, de volgende plek). Alleen je plek van nu; geen route, geen spoor, niets bewaard of gedeeld. Ronde 2b.
+- Je locatie, alleen als je het aanzet (uit als standaard), in de app en in de browser, om te weten waar je bent: het weer op je plek, en tijdens een tocht waar je bent op je etappe (hoeveel nog tot het eind, de volgende plek). Alleen je plek van nu; geen route, geen spoor, niets bewaard of gedeeld. Ronde 2b. Daarbij ook: een eigen plek per tocht voor het bergweer, zodat de kaart al de dag ervoor kan komen (nu alleen op de tochtdag zelf en als het weer je locatie volgt).
 - Niet: hartslagband via Bluetooth (eigenaar). Niet gebouwd tenzij de eigenaar het vraagt: camera en een gps-route of spoor van tochten (afgeraden om batterij en privacy; de eigenaar wil alleen weten waar hij is).
 
 ## Voor de eigenaar
