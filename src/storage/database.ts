@@ -1,3 +1,4 @@
+import type { AboveMission } from '../engine/todayCards';
 import { withHardSameDay } from '../engine/scheduler';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Program } from '../models/program';
@@ -773,6 +774,9 @@ export interface AppSettings {
   missedTraining?: 'ask' | 'auto' | 'off';
   missedTrainingDays?: 1 | 2 | 3;
   missedLink?: boolean;
+  // "Kaarten boven de missie" (engine/todayCards.ts, docs/beslissingen/2026-11-01-vandaag-volgorde.md): hoeveel
+  // kaarten op Vandaag boven de missie mogen staan, 1, 2 of 'all'. Absent = 1, het advies. Optional and additive.
+  cardsAboveMission?: AboveMission;
   // "Voorstel bij een probleem in de week": what is wrong in a week and may not be repaired by
   // ASCEND itself (a training you or an accepted proposal fixed) gets a proposal with Akkoord.
   // Off keeps the notice and the lines in the rows, only the proposal is gone. Absent = on.

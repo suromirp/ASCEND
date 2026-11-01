@@ -6,6 +6,7 @@ import {
   autoSkipNotice,
   linkEyebrow,
   linkLine,
+  linkCandidates,
   linkLog,
   planMissed,
   resolveMissedMemory,
@@ -115,6 +116,45 @@ describe('de vraag "Niet gedaan?" op Vandaag', () => {
   it('de regel zegt de training en de dag', () => {
     const easy = templates.find((t) => t.id === 'tpl_easy_run')!;
     expect(askLine(planned('easy', 'tpl_easy_run', '2026-10-26'), easy)).toBe('Rustige duurloop van maandag 26 oktober');
+  });
+});
+
+describe('ziek gemeld: de vragen wachten', () => {
+  // Ziek sinds maandag 26 oktober, nog niet beter. De training van zaterdag 24 oktober was van voor de ziekte.
+  const ill = [{ id: 'ziek', kind: 'below_neck' as const, startDate: '2026-10-26' }];
+  const before = planned('za', 'tpl_easy_run', '2026-10-24');
+
+  it('geen Niet gedaan? zolang je ziek bent, ook niet over een training van voor de ziekte', () => {
+    expect(planMissed(input({ plannedSessions: [before] })).item).toMatchObject({ kind: 'ask', session: { id: 'za' } });
+    expect(planMissed(input({ plannedSessions: [before], illnessEpisodes: ill }))).toEqual({ item: undefined, autoSkip: [] });
+  });
+
+  it('geen koppelvoorstel zolang je ziek bent', () => {
+    const logs = [watchRun('w1', '2026-10-25')];
+    expect(planMissed(input({ plannedSessions: [before], logs })).item).toMatchObject({ kind: 'link' });
+    expect(planMissed(input({ plannedSessions: [before], logs, illnessEpisodes: ill })).item).toBeUndefined();
+  });
+
+  it('ook Zelf overslaan wacht', () => {
+    const auto = planMissed(input({ plannedSessions: [before], illnessEpisodes: ill, settings: { ...MISSED_ADVICE, choice: 'auto' } }));
+    expect(auto.autoSkip).toEqual([]);
+  });
+
+  it('weer beter: de vraag en het koppelvoorstel komen terug', () => {
+    const better = [{ ...ill[0], endDate: '2026-10-27' }];
+    expect(planMissed(input({ plannedSessions: [before], illnessEpisodes: better })).item).toMatchObject({ kind: 'ask', session: { id: 'za' } });
+    const logs = [watchRun('w1', '2026-10-25')];
+    expect(planMissed(input({ plannedSessions: [before], logs, illnessEpisodes: better })).item).toMatchObject({ kind: 'link', session: { id: 'za' } });
+  });
+
+  it('weer beter: de grens van 14 dagen telt vanaf de training, niet vanaf de dag dat je beter werd', () => {
+    // Een training van 13 en 15 dagen terug, ziek in de tussentijd en vandaag beter gemeld.
+    const sessions = [planned('oud', 'tpl_easy_run', '2026-10-13'), planned('net', 'tpl_upper_a', '2026-10-15')];
+    const episodes = [{ id: 'ziek', kind: 'below_neck' as const, startDate: '2026-10-16', endDate: TODAY }];
+    const plan = planMissed(input({ plannedSessions: sessions, illnessEpisodes: episodes }));
+    expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'net' } });
+    const later = planMissed(input({ plannedSessions: sessions, illnessEpisodes: episodes, today: '2026-10-30' }));
+    expect(later.item).toBeUndefined();
   });
 });
 
@@ -237,6 +277,15 @@ describe('een log op een andere dag koppelen', () => {
     // Ook als er een eerdere training is: de log hoort bij vandaag, die van maandag krijgt de gewone vraag.
     const two = planMissed(input({ plannedSessions: [planned('mon', 'tpl_easy_run', '2026-10-26'), planned('today', 'tpl_easy_run', TODAY)], logs: [watchRun('w1', '2026-10-27')] }));
     expect(two.item).toMatchObject({ kind: 'link', session: { id: 'mon' } });
+  });
+
+  it('linkCandidates: dezelfde koppeling als de kaart, zonder het paar waarop je Liever niet zei', () => {
+    const sessions = [planned('easy', 'tpl_easy_run', '2026-10-26')];
+    const logs = [watchRun('w1', '2026-10-27')];
+    expect([...linkCandidates({ plannedSessions: sessions, logs, templates, today: TODAY })].map(([id, l]) => [id, l.id])).toEqual([['easy', 'w1']]);
+    expect(linkCandidates({ plannedSessions: sessions, logs, templates, today: TODAY, declined: ['w1|easy'] }).size).toBe(0);
+    // Een log bij de training van vandaag: niets te koppelen.
+    expect(linkCandidates({ plannedSessions: [planned('t', 'tpl_easy_run', TODAY)], logs, templates, today: TODAY }).size).toBe(0);
   });
 
   it('uit: geen koppelvoorstel', () => {

@@ -59,6 +59,7 @@ import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
+import { resolveAboveMission } from './todayCards';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
@@ -619,6 +620,9 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.dragWeek !== false };
     case 'korte-nacht':
       return { checked: s.askShortNight !== false };
+    // Kaarten boven de missie (engine/todayCards.ts): "Eén".
+    case 'boven-missie':
+      return { value: choiceShort('bovenMissie', resolveAboveMission(s.cardsAboveMission)) };
     case 'ochtend-vanaf':
       return { value: choiceShort('ochtendVanaf', o.morningCardFrom) };
     case 'ochtendmelding': {
