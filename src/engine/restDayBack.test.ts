@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { applyPlanChangeItems } from './proposalEngine';
+import { planPass } from './planPass';
 import { emptyDayText, restDaysToBringBack, REST_BACK_RULE } from './restDayBack';
 import type { PlannedSession, SessionLog } from '../models/training';
 
@@ -79,6 +80,23 @@ describe('REST-BACK: de rustdag komt terug als een voorstel hem weghaalde', () =
     expect(walk.lock).toBeUndefined();
     // En daarna is er niets meer te vragen.
     expect(restBack({ plannedSessions: after, respondedIds: new Set(['retest:2026-10-27']) })).toBeUndefined();
+  });
+
+  it('de planningsronde na Akkoord laat Herstel op ma 2 november staan, en REST-BACK en TEST-RETRY blijven weg', () => {
+    const sessions = moveAway(afterRetry(), 'long', '2026-11-04');
+    const a = restBack({ plannedSessions: sessions, respondedIds: new Set(['retest:2026-10-27']) })!;
+    const applied = applyPlanChangeItems(a.proposal!.changes, sessions, () => 'nieuw', { by: 'proposal', at: 'x' }).sessions;
+    let n = 0;
+    const pass = planPass(applied, { today: '2026-10-28', logs: [testLog], templates, program: null, blocks: [], restDay: 1, newId: () => `pass-${n++}` });
+    const walk = pass.sessions.find((s) => s.id === 'walk')!;
+    expect(walk).toMatchObject({ status: 'planned', scheduledDate: '2026-11-02' });
+    expect(pass.repairs.filter((r) => JSON.stringify(r).includes('"walk"'))).toEqual([]);
+    // Liever niet op TEST-RETRY is al gegeven (het voorstel was eerder Akkoord); zonder dat antwoord mag
+    // TEST-RETRY ook niet terugkomen, want de test staat al gepland.
+    for (const responded of [new Set(['retest:2026-10-27']), new Set<string>()]) {
+      const after = computeAdvice(inputs({ plannedSessions: pass.sessions, respondedIds: responded }));
+      expect(after.filter((x) => x.ruleId === REST_BACK_RULE || x.ruleId === 'TEST-RETRY')).toEqual([]);
+    }
   });
 
   it('zegt niets als je de rustdag zelf oversloeg', () => {
