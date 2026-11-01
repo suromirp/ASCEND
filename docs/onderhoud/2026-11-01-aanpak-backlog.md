@@ -93,7 +93,10 @@ Ronde 2, tegelijk:
 Ronde 3, alleen:
 9. Grote bestanden opsplitsen (AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations). Dit
    raakt alles en gaat pas als ronde 1 en 2 live staan. Gedrag mag niet veranderen: alle tests en de kaart
-   gelijk, review door Warden.
+   gelijk, review door Warden. In dezelfde ronde: de ongebruikte exports uit de nulmeting van 29 oktober
+   (`docs/onderhoud/2026-10-29-exports.txt`, 854 stuks) opruimen waar ze echt nergens gebruikt worden, en een
+   korte, menselijke uitleg `docs/architectuur/zo-werkt-de-app.md`: in gewone taal hoe de app in elkaar zit,
+   waar je wat vindt en hoe een wijziging van idee naar live gaat, met verwijzingen naar de andere bestanden.
 
 Ronde 2b, naast ronde 2:
 10. Android-app met Capacitor, een grote feature van deze ronde: de configuratie, lokale meldingen, en een
