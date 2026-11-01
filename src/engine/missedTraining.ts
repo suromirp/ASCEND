@@ -68,6 +68,9 @@ export function resolveMissedMemory(raw: unknown): MissedMemory & { notNow: stri
   return { notNow: strings(r.notNow), ...(notNowOn ? { notNowOn } : {}), auto: strings(r.auto), declined: strings(r.declined) };
 }
 
+// De sleutel in de meta-opslag; gaat mee in de back-up zoals de antwoorden op adviezen.
+export const MISSED_MEMORY_KEY = 'missedTraining';
+
 export const declinedKey = (logId: string, sessionId: string) => `${logId}|${sessionId}`;
 
 export interface MissedInput {
@@ -115,9 +118,10 @@ function logKind(l: SessionLog): Kind | undefined {
 const looseSourceLog = (l: SessionLog) => !l.plannedSessionId && !isHandLog(l);
 
 // Vanzelf overslaan mag alleen wat de automatische planning ook zelf mag aanraken: geen test of
-// wedstrijd en niets wat jij of een voorstel vastzette. Gelezen zoals op de dag zelf (`lockLevel`).
+// wedstrijd, niets wat jij of een voorstel vastzette en niets van een vakantie of tocht. Gelezen zoals op
+// de dag zelf (`lockLevel`).
 function freeToSkip(m: MissedSession): boolean {
-  return lockLevel(m.session, new Set(), m.session.scheduledDate) === 3 && !isTestOrRace(m.template);
+  return lockLevel(m.session, new Set(), m.session.scheduledDate) === 3 && !isTestOrRace(m.template) && !m.session.leave;
 }
 
 export function planMissed(input: MissedInput): MissedPlan {
@@ -133,9 +137,9 @@ export function planMissed(input: MissedInput): MissedPlan {
     .map((s) => ({ session: s, template: templateById.get(s.templateId) }))
     .filter((m): m is MissedSession => !!m.template && templateKind(m.template) !== undefined);
 
-  // Voorbij of vandaag, niet ouder dan twee weken, niet op een ziektedag en niet al in een ander voorstel.
+  // Voorbij (vandaag telt nog niet: die training kan nog komen), niet ouder dan twee weken, niet op een ziektedag en niet al in een ander voorstel.
   const open = unlogged
-    .filter((m) => age(m.session) >= 0 && age(m.session) <= MISSED_MAX_AGE_DAYS)
+    .filter((m) => age(m.session) >= 1 && age(m.session) <= MISSED_MAX_AGE_DAYS)
     .filter((m) => !isIllnessDay(m.session.scheduledDate, illnessEpisodes, today) && !input.busy?.has(m.session.id))
     .sort((a, b) => a.session.scheduledDate.localeCompare(b.session.scheduledDate) || a.session.order - b.session.order || a.session.id.localeCompare(b.session.id));
 
@@ -154,14 +158,16 @@ export function planMissed(input: MissedInput): MissedPlan {
         .filter((x) => x.d <= LINK_WINDOW_DAYS && !links.has(x.m.session.id))
         .sort((a, b) => a.d - b.d || a.m.session.scheduledDate.localeCompare(b.m.session.scheduledDate));
       const best = near[0]?.m;
-      if (!best || age(best.session) < 0) continue;
+      // Hoort de log het dichtst bij de training van vandaag of later, dan is er niets te vragen.
+      if (!best || age(best.session) < 1) continue;
       if (memory.declined.includes(declinedKey(log.id, best.session.id))) continue;
       links.set(best.session.id, log);
     }
   }
 
   // Met een log die erbij kan horen komt geen vraag en niets vanzelf: eerst het koppelvoorstel.
-  const due = open.filter((m) => !links.has(m.session.id) && age(m.session) >= settings.days && !memory.auto.includes(m.session.id));
+  // Wat een vakantie of tocht neerzette, verplaatste of liet gaan (`leave`) gaat via zijn eigen weg: geen vraag en niets vanzelf.
+  const due = open.filter((m) => !links.has(m.session.id) && age(m.session) >= settings.days && !memory.auto.includes(m.session.id) && !m.session.leave);
   const autoSkip = settings.choice === 'auto' ? due.filter(freeToSkip) : [];
   const autoIds = new Set(autoSkip.map((m) => m.session.id));
   const asks = settings.choice === 'off' ? [] : due.filter((m) => !autoIds.has(m.session.id) && !memory.notNow.includes(m.session.id));
@@ -202,7 +208,7 @@ export function linkLine(session: PlannedSession, template: SessionTemplate, log
 export function autoSkipNotice(skipped: readonly MissedSession[], days: number): { title: string; lines: string[]; why: string } {
   const title = skipped.length === 1 ? `${skipped[0].template.name} overgeslagen` : `${skipped.length} trainingen overgeslagen`;
   const lines = skipped.map((m) => `${askLine(m.session, m.template)} overgeslagen`);
-  const why = `Je koos bij Training die niet doorging voor Zelf overslaan. Na ${days === 1 ? '1 dag' : `${days} dagen`} stond er geen training bij, dus zette ASCEND ${skipped.length === 1 ? 'hem' : 'ze'} op overgeslagen. Er is geen training verzonnen en je historie blijft zoals hij was. Met Ongedaan maken ${skipped.length === 1 ? 'staat hij' : 'staan ze'} weer open.`;
+  const why = `Je koos bij Training die niet doorging voor Zelf overslaan. Na ${days === 1 ? '1 dag' : `${days} dagen`} was er nog niets gelogd, dus zette ASCEND ${skipped.length === 1 ? 'hem' : 'ze'} op overgeslagen. Er is geen training verzonnen en je historie blijft zoals hij was. Met Ongedaan maken ${skipped.length === 1 ? 'staat hij' : 'staan ze'} weer open.`;
   return { title, lines, why };
 }
 
@@ -217,9 +223,10 @@ export function validLinkedLater(v: unknown): v is LinkedLater {
   return typeof v === 'object' && v !== null && typeof (v as Record<string, unknown>).at === 'string' && (v as { at: string }).at.length > 0;
 }
 
-// Alleen een log die nog nergens aan hing krijgt de verwijzing; verder blijft alles zoals het was.
+// Alleen een log van het horloge of MacroFactor die nog nergens aan hing krijgt de verwijzing; verder
+// blijft alles zoals het was. Een log die je zelf invulde koppel je zelf, dus nooit hier.
 export function linkLog(log: SessionLog, sessionId: string, at: string): SessionLog | undefined {
-  if (log.plannedSessionId) return undefined;
+  if (log.plannedSessionId || isHandLog(log)) return undefined;
   return { ...log, plannedSessionId: sessionId, linkedLater: { at } };
 }
 

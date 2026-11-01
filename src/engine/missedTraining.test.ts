@@ -145,6 +145,13 @@ describe('Zelf overslaan', () => {
     expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'mine' } });
   });
 
+  it('een rij van een vakantie of tocht: niets vanzelf en geen vraag', () => {
+    const leave = { periodId: 'vak', role: 'placed' } as unknown as PlannedSession['leave'];
+    const plan = planMissed(input({ plannedSessions: [planned('trek', 'tpl_easy_run', '2026-10-24', { leave })], settings: auto }));
+    expect(plan).toEqual({ item: undefined, autoSkip: [] });
+    expect(planMissed(input({ plannedSessions: [planned('trek', 'tpl_easy_run', '2026-10-24', { leave })] })).item).toBeUndefined();
+  });
+
   it('na Ongedaan maken niet nog eens vanzelf, en ook geen vraag', () => {
     const plan = planMissed(input({ plannedSessions: [planned('easy', 'tpl_easy_run', '2026-10-26')], settings: auto, memory: { auto: ['easy'] } }));
     expect(plan.autoSkip).toEqual([]);
@@ -223,6 +230,14 @@ describe('een log op een andere dag koppelen', () => {
     expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'easy' } });
   });
 
+  it('geen kaart voor de training van vandaag: een losse log van gisteren met een training van vandaag', () => {
+    const plan = planMissed(input({ plannedSessions: [planned('today', 'tpl_easy_run', TODAY)], logs: [watchRun('w1', '2026-10-27')] }));
+    expect(plan).toEqual({ item: undefined, autoSkip: [] });
+    // Ook als er een eerdere training is: de log hoort bij vandaag, die van maandag krijgt de gewone vraag.
+    const two = planMissed(input({ plannedSessions: [planned('mon', 'tpl_easy_run', '2026-10-26'), planned('today', 'tpl_easy_run', TODAY)], logs: [watchRun('w1', '2026-10-27')] }));
+    expect(two.item).toMatchObject({ kind: 'link', session: { id: 'mon' } });
+  });
+
   it('uit: geen koppelvoorstel', () => {
     const plan = planMissed(input({ plannedSessions: [planned('easy', 'tpl_easy_run', '2026-10-26')], logs: [watchRun('w1', '2026-10-27')], settings: { ...MISSED_ADVICE, link: false } }));
     expect(plan.item).toMatchObject({ kind: 'ask' });
@@ -242,6 +257,10 @@ describe('koppelen schrijft alleen de verwijzing, en Ongedaan maken haalt alleen
     const linked = linkLog(log, 'easy', '2026-10-28T09:00:00Z')!;
     expect(linked).toEqual({ ...log, plannedSessionId: 'easy', linkedLater: { at: '2026-10-28T09:00:00Z' } });
     expect(unlinkLog(linked)).toEqual(log);
+  });
+
+  it('een log die je zelf invulde wordt hier nooit gekoppeld', () => {
+    expect(linkLog({ ...watchRun('h1', '2026-10-28'), externalId: undefined, source: 'manual' }, 'easy', '2026-10-28T09:00:00Z')).toBeUndefined();
   });
 
   it('een log die al ergens aan hing wordt nooit omgezet', () => {
