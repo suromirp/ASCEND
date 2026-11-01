@@ -1,9 +1,13 @@
 name: Android-app
 
-# Bouwt de Android-app (Capacitor) als debug-APK en bewaart hem als artefact bij de run
-# (docs/beslissingen/2026-11-01-android-app.md). Los van de Pages-deploy (deploy.yml): die
-# blijft precies zoals hij was. Hier wordt niets gepubliceerd en niets ondertekend met een
-# geheime sleutel; de app blijft lokaal, zonder server.
+# Bouwt de Android-app (Capacitor) en zet hem als release op GitHub
+# (docs/beslissingen/2026-11-01-android-app.md, uitleg voor de sleutel in
+# docs/android-sleutel.md). Los van de Pages-deploy (deploy.yml).
+#
+# Een update van een APK lukt alleen als hij met dezelfde sleutel is ondertekend als de vorige;
+# anders moet je de app verwijderen en ben je je gegevens kwijt. Daarom ondertekent deze workflow
+# met een vaste sleutel uit vier repository-secrets. Ontbreken die, dan bouwt hij wel een
+# debug-APK als artefact, maar zet hij geen release en zegt hij waarom.
 
 on:
   push:
@@ -11,7 +15,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pages: read
 
 concurrency:
   group: android-${{ github.ref }}
@@ -22,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      HAS_KEYSTORE: ${{ secrets.ANDROID_DEBUG_KEYSTORE != '' }}
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && secrets.ANDROID_KEYSTORE_PASSWORD != '' && secrets.ANDROID_KEY_ALIAS != '' && secrets.ANDROID_KEY_PASSWORD != '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -40,6 +45,9 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
+      - id: pages
+        uses: actions/configure-pages@v6
+
       - run: npm ci
 
       - name: Lint
@@ -47,30 +55,62 @@ jobs:
       - name: Tests
         run: npm test
 
-      # De webbuild met basis "/" en zonder service worker, gekopieerd naar android/.
+      # De webbuild met basis "/" en zonder service worker, gekopieerd naar android/. Met het adres
+      # van app-versie.json op Pages (live update) en van de releases (voor een nieuwe APK).
       - name: Webbuild in de app zetten
+        env:
+          ASCEND_UPDATE_URL: ${{ steps.pages.outputs.base_url }}/
+          ASCEND_RELEASES_URL: ${{ github.server_url }}/${{ github.repository }}/releases/latest
         run: npm run android:sync
 
-      # Een vaste debug-sleutel (optioneel, als geheim ANDROID_DEBUG_KEYSTORE in base64): dan
-      # installeert elke nieuwe APK over de vorige heen en blijven je gegevens staan. Zonder
-      # dat geheim maakt elke run een eigen sleutel en moet je de oude app eerst verwijderen.
-      - name: Vaste debug-sleutel
-        if: ${{ env.HAS_KEYSTORE == 'true' }}
+      - name: Sleutel klaarzetten
+        if: ${{ env.HAS_KEY == 'true' }}
         env:
-          KEYSTORE: ${{ secrets.ANDROID_DEBUG_KEYSTORE }}
-        run: |
-          mkdir -p ~/.android
-          echo "$KEYSTORE" | base64 --decode > ~/.android/debug.keystore
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/ascend.keystore"
 
-      - name: APK bouwen
+      - name: APK bouwen en ondertekenen
+        if: ${{ env.HAS_KEY == 'true' }}
         working-directory: android
         env:
           ASCEND_VERSION_CODE: ${{ github.run_number }}
-        run: ./gradlew assembleDebug --no-daemon
+          ASCEND_KEYSTORE_FILE: ${{ runner.temp }}/ascend.keystore
+          ASCEND_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ASCEND_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ASCEND_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/ascend.apk"
+
+      - name: Debug-APK bouwen (geen sleutel)
+        if: ${{ env.HAS_KEY != 'true' }}
+        working-directory: android
+        env:
+          ASCEND_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          echo "::warning title=Geen release::De vier secrets voor de sleutel ontbreken (zie docs/android-sleutel.md). Er is alleen een debug-APK als artefact gebouwd en geen release gezet: zo'n APK kan niet over een vorige heen worden geïnstalleerd."
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/ascend.apk"
+
+      - name: Sleutel opruimen
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/ascend.keystore"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ascend-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: ascend-apk
+          path: ${{ runner.temp }}/ascend.apk
           retention-days: 30
           if-no-files-found: error
+
+      # De release waar de app naar wijst als een nieuwe webversie een nieuwere APK nodig heeft.
+      - name: Release zetten
+        if: ${{ env.HAS_KEY == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "apk-${{ github.run_number }}" "$RUNNER_TEMP/ascend.apk#ascend.apk" \
+            --target "$GITHUB_SHA" \
+            --title "ASCEND voor Android ${{ github.run_number }}" \
+            --notes "Installeer ascend.apk over de vorige heen; je gegevens blijven staan. Gebouwd uit ${GITHUB_SHA::7}." \
+            --latest

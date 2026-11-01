@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 // Which build this is — shown in Settings so a user can see whether they
 // run the newest version. GitHub Actions provides GITHUB_SHA; locally the
@@ -13,6 +14,16 @@ function buildVersion(): string {
     return execSync('git rev-parse --short HEAD').toString().trim();
   } catch {
     return 'dev';
+  }
+}
+
+// Het native niveau van de Android-app: één getal in android/native-level.txt, op te hogen bij
+// een nieuwe plugin of toestemming (docs/beslissingen/2026-11-01-android-app.md).
+function nativeLevel(): number {
+  try {
+    return Number(readFileSync(new URL('./android/native-level.txt', import.meta.url), 'utf8').trim()) || 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -31,7 +42,14 @@ export default defineConfig({
   base: BASE_PATH,
   define: {
     __APP_VERSION__: JSON.stringify(buildVersion()),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    // De deploy-workflow geeft één tijd mee aan de site en aan de zip voor de app, zodat
+    // app-versie.json en de bundel hetzelfde zeggen (scripts/app-versie.mjs).
+    __BUILD_TIME__: JSON.stringify(process.env.ASCEND_BUILD_TIME || new Date().toISOString()),
+    // Voor de Android-app: het native niveau van deze build (android/native-level.txt), waar
+    // app-versie.json staat en waar de nieuwste APK te halen is. Leeg: niet bijwerken.
+    __NATIVE_LEVEL__: JSON.stringify(nativeLevel()),
+    __UPDATE_URL__: JSON.stringify(process.env.ASCEND_UPDATE_URL || ''),
+    __RELEASES_URL__: JSON.stringify(process.env.ASCEND_RELEASES_URL || ''),
   },
   plugins: [
     react(),

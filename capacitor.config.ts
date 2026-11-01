@@ -20,6 +20,16 @@ const config: CapacitorConfig = {
     LocalNotifications: {
       smallIcon: 'ic_stat_ascend',
     },
+    // Live update zonder cloud: geen appId, dus de plugin praat nooit met de dienst van de maker;
+    // ASCEND haalt zelf een zip van GitHub Pages (src/integrations/liveUpdate.ts). Meldt een nieuwe
+    // bundel zich niet binnen 20 seconden als gezond (ready), dan valt de app terug op de vorige
+    // werkende versie en wordt die bundel nooit meer geladen.
+    LiveUpdate: {
+      autoUpdateStrategy: 'none',
+      readyTimeout: 20000,
+      autoBlockRolledBackBundles: true,
+      autoDeleteBundles: true,
+    },
   },
 };
 

@@ -8,9 +8,13 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // De workflow .github/workflows/android.yml geeft het runnummer mee, zodat elke nieuwe
-        // APK over de vorige heen te installeren is.
-        versionCode((System.getenv("ASCEND_VERSION_CODE") ?: "1").toInteger())
-        versionName "1.0." + (System.getenv("ASCEND_VERSION_CODE") ?: "0")
+        // APK over de vorige heen te installeren is. Het native niveau (android/native-level.txt)
+        // staat vooraan in de versienaam: de app leest het daar om te weten of een nieuwe
+        // webversie bij deze APK past (src/engine/liveUpdate.ts).
+        def nativeLevel = rootProject.file('native-level.txt').text.trim().toInteger()
+        def run = (System.getenv("ASCEND_VERSION_CODE") ?: "0").toInteger()
+        versionCode nativeLevel * 100000 + run
+        versionName "${nativeLevel}.${run}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -18,8 +22,24 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // De vaste sleutel komt alleen uit de omgeving (de workflow zet hem uit de secrets klaar; zie
+    // docs/android-sleutel.md). Nooit een sleutel of wachtwoord in de repo.
+    def keystoreFile = System.getenv("ASCEND_KEYSTORE_FILE")
+    signingConfigs {
+        if (keystoreFile) {
+            release {
+                storeFile file(keystoreFile)
+                storePassword System.getenv("ASCEND_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ASCEND_KEY_ALIAS")
+                keyPassword System.getenv("ASCEND_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
+            if (keystoreFile) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
