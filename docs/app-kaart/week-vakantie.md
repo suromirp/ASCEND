@@ -41,8 +41,6 @@ Za 31 · niets gepland
 
 --- kaart 4 ---
 Vrije dagen en vakanties
-ASCEND houdt hier rekening mee. Een periode toevoegen of weghalen zie je eerst als voorstel; pas na jouw Akkoord verandert er iets.
-Vakantie zonder training
-[knop: Verwijderen] (aria: Vakantie zonder training ma 9 november t/m vr 13 november verwijderen)
-ma 9 nov t/m vr 13 nov · 5 dagen
+ASCEND houdt hier rekening mee. Tik op een periode om hem bij te werken. Wat je planning raakt zie je eerst als voorstel; pas na jouw Akkoord verandert er iets.
+[knop: Vakantie zonder trainingma 9 nov t/m vr 13 nov · 5 dagen] (aria: Vakantie zonder training, ma 9 november t/m vr 13 november, bijwerken)
 [knop: Periode toevoegen]

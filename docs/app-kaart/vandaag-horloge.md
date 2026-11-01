@@ -59,5 +59,5 @@ Je dag
 [knop: Benen fris · 0 van 3 gedaan · deze week is even zwaar als de 4 weken ervoor] (aria: Je stand openen)
 [knop: Losse training]
 [knop: Niet fit?]
-[knop: “Houd vol en spaar jezelf voor betere tijden.”] (aria: Origineel tonen)
-[knop: Vergilius · Aeneis 1.207]
+[knop: “If you want to improve, be content to be thought foolish and stupid with regard to external things.”] (aria: Nederlandse vertaling tonen)
+[knop: Epictetus · Enchiridion 13]
