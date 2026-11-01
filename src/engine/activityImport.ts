@@ -21,6 +21,7 @@ import { logSport, templateSport, type Sport } from './sports';
 import { formatNumberNL } from '../utils/number';
 import type { RunDynamics, StreamKind } from '../models/activityDetail';
 import { round } from '../utils/round';
+import { formatHoursMinutesNL } from '../utils/dates';
 
 export type ExternalActivityKind = 'run' | 'hike' | 'ride' | 'strength' | 'other';
 
@@ -412,10 +413,7 @@ export function pendingProposals(
 // --- words ------------------------------------------------------------------------
 
 export function durationLabel(sec: number): string {
-  const minutes = Math.max(1, Math.round(sec / 60));
-  const h = Math.floor(minutes / 60);
-  if (h === 0) return `${minutes} min`;
-  return minutes % 60 === 0 ? `${h} uur` : `${h} uur ${minutes % 60} min`;
+  return formatHoursMinutesNL(Math.max(1, Math.round(sec / 60)));
 }
 
 // One line: "Loop, 6,9 km, 55 min, +40 m".

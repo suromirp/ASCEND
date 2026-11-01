@@ -1,7 +1,7 @@
 import type { ShownReadiness } from '../engine/gr5Readiness';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { dayMonth } from './stand/chartParts';
+import { formatDayMonthNL } from '../utils/dates';
 import { Card, Eyebrow, SheetGrip } from './ui';
 
 // De vier meters achter het percentage: jouw beste van de laatste acht weken
@@ -40,7 +40,7 @@ export function Gr5ReadinessSheet({ readiness, title = 'Klaar voor de GR5', mile
                   )}
                   <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
                     {m.why}
-                    {m.parts.length === 1 && m.key !== 'dagen' && m.parts[0].bestDate ? ` Je beste was op ${dayMonth(m.parts[0].bestDate)}.` : ''}
+                    {m.parts.length === 1 && m.key !== 'dagen' && m.parts[0].bestDate ? ` Je beste was op ${formatDayMonthNL(m.parts[0].bestDate)}.` : ''}
                   </p>
                 </div>
               ))}

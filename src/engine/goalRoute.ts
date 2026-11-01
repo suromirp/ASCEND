@@ -15,6 +15,7 @@ import type { GoalRequirement, GoalExecution, TrainingGoal } from '../models/goa
 import type { MeasuredValue } from '../models/units';
 import { makeId } from '../utils/id';
 import { formatNumberNL } from '../utils/number';
+import { kgLabel } from '../utils/kg';
 
 export type RouteKind = 'distance' | 'elevationGain' | 'elevationLoss';
 export const ROUTE_KINDS: RouteKind[] = ['distance', 'elevationGain', 'elevationLoss'];
@@ -128,7 +129,7 @@ export function routeDayParts(requirements: GoalRequirement[], which: 'average' 
     return amount !== undefined ? [formatRouteDayValue(k, amount)] : [];
   });
   const pack = requirements.find((r) => r.kind === 'packWeight')?.target?.amount;
-  if (includePack && pack && parts.length > 0) parts.push(`${formatNumberNL(pack, 1)} kg`);
+  if (includePack && pack && parts.length > 0) parts.push(kgLabel(pack));
   return parts;
 }
 

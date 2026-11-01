@@ -4,16 +4,16 @@ import type { TimelineTask } from '../../engine/journey';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Portal } from '../Portal';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from '../ui';
-import { shortDateNL } from './format';
+import { formatDayMonthNL } from '../../utils/dates';
 import { Icon } from '../icons';
 import { TextButton } from '../TextButton';
 
 function windowLine(row: TimelineTask): string {
   if (row.status === 'done' && row.derived) return row.derived;
-  if (row.status === 'done' && row.doneOn) return `Gedaan op ${shortDateNL(row.doneOn)}`;
-  if (row.status === 'later') return `Komt aan de beurt vanaf ${shortDateNL(row.opensOn)}`;
-  if (row.status === 'lapsed') return `Nog open. Het mooiste moment was tot en met ${shortDateNL(row.closesOn)}`;
-  return `Past nu: tot en met ${shortDateNL(row.closesOn)}`;
+  if (row.status === 'done' && row.doneOn) return `Gedaan op ${formatDayMonthNL(row.doneOn)}`;
+  if (row.status === 'later') return `Komt aan de beurt vanaf ${formatDayMonthNL(row.opensOn)}`;
+  if (row.status === 'lapsed') return `Nog open. Het mooiste moment was tot en met ${formatDayMonthNL(row.closesOn)}`;
+  return `Past nu: tot en met ${formatDayMonthNL(row.closesOn)}`;
 }
 
 // One task of the reisplanner: why, a link, and the tick box.

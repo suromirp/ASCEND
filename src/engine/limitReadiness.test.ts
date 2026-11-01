@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeLimitReadiness, readLimit, stretchTime, hoursMinutes, NEED_HIKES_LINE, NEED_LONG_RUN_LINE } from './limitReadiness';
+import { computeLimitReadiness, readLimit, stretchTime, NEED_HIKES_LINE, NEED_LONG_RUN_LINE } from './limitReadiness';
+import { hoursMinutes } from '../utils/hoursMinutes';
 import { computeGoalReadiness, readinessInputOf } from './goalReadiness';
 import { estimatedHikingMinutes } from './goalRoute';
 import type { GoalDetails, TrainingGoal } from '../models/goals';

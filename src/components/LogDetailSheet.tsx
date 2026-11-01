@@ -40,6 +40,7 @@ import { runDetailRowLine, runTotalsOf } from '../engine/runDetailView';
 import { resolveRunInsight } from '../engine/runInsightSettings';
 import { logSport } from '../engine/sports';
 import { useDetailsOn } from './useRunInsight';
+import { kgLabel } from '../utils/kg';
 
 // Putting the numbers back is local work; longer than this means it is stuck.
 const RESTORE_TIMEOUT_MS = 15_000;
@@ -109,7 +110,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   if (activity?.cadence !== undefined) rows.push({ label: 'Cadans', value: `${activity.cadence}` });
   if (activity?.power !== undefined) rows.push({ label: 'Vermogen', value: `${activity.power} W` });
   if (log.outdoorData?.poles) rows.push({ label: 'Wandelstokken', value: 'Met stokken' });
-  if (log.outdoorData?.backpackWeightKg !== undefined) rows.push({ label: 'Rugzakgewicht', value: `${formatNumberNL(log.outdoorData.backpackWeightKg, 1)} kg` });
+  if (log.outdoorData?.backpackWeightKg !== undefined) rows.push({ label: 'Rugzakgewicht', value: kgLabel(log.outdoorData.backpackWeightKg) });
   if (log.outdoorData?.terrain) rows.push({ label: 'Terrein', value: log.outdoorData.terrain });
   if (log.rpe !== undefined) rows.push({ label: 'Zwaarte', value: `${log.rpe} van 10` });
   if (log.legsAtStart) rows.push({ label: 'Benen bij het inlopen', value: log.legsAtStart });

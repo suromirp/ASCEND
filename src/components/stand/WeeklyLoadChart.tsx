@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { LOAD_SPORTS, LOAD_JUMP, loadVersusBefore, type LoadSport, type WeekLoad } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow } from '../ui';
-import { dayMonth, dayShort as dayShortNL, roundedTop } from './chartParts';
+import { roundedTop } from './chartParts';
+import { formatDayMonthNL, formatWeekdayDayMonthNL } from '../../utils/dates';
 
 // Je stand → weekly load: minutes × effort per week, per sport. Solid is
 // done, faded is still planned. Tap a week for its numbers.
@@ -75,7 +76,7 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
               {i === selected && <rect x={x - 3} y={TOP + plotH + 3} width={barW + 6} height={2} rx={1} fill="var(--color-action)" />}
               {(slot >= 44 || (weeks.length - 1 - i) % 2 === 0) && (
                 <text x={i * slot + slot / 2} y={H - 18} textAnchor="middle" fontSize={12} fill={w.isCurrent ? 'var(--color-ink)' : 'var(--color-ink-dim)'} fontWeight={w.isCurrent ? 600 : 400}>
-                  {w.isCurrent ? 'nu' : dayMonth(w.weekStart)}
+                  {w.isCurrent ? 'nu' : formatDayMonthNL(w.weekStart)}
                 </text>
               )}
               {w.isRestWeek && <text x={i * slot + slot / 2} y={H - 4} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">rust</text>}
@@ -116,7 +117,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl px-3.5 py-3" style={{ background: 'var(--color-charcoal)' }} aria-live="polite">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{week.isCurrent ? 'Deze week' : `Week van ${dayMonth(week.weekStart)}`}{week.isRestWeek ? ' · rustweek' : ''}</p>
+        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{week.isCurrent ? 'Deze week' : `Week van ${formatDayMonthNL(week.weekStart)}`}{week.isRestWeek ? ' · rustweek' : ''}</p>
         <p className="tabular-nums">
           <span className="font-sans tabular-nums text-xl" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(week.doneTotal, 0)}</span>
           {week.plannedTotal > 0 && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}> + {formatNumberNL(week.plannedTotal, 0)} gepland</span>}
@@ -145,7 +146,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
               <div className="min-w-0 flex-1">
                 <p className="break-words text-xs" style={{ color: 'var(--color-ink)' }}>{it.name}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {dayShortNL(it.date)} · {it.minutes} min · zwaarte {it.estimated ? '±' : ''}{formatNumberNL(it.effort, 0)}
+                  {formatWeekdayDayMonthNL(it.date)} · {it.minutes} min · zwaarte {it.estimated ? '±' : ''}{formatNumberNL(it.effort, 0)}
                 </p>
               </div>
               <div className="flex w-24 shrink-0 items-center gap-2">

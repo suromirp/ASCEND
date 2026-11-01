@@ -14,15 +14,15 @@
 //   that has a value, the duration included, stays as it was.
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import { daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
+import { daysBetween, formatDateNL, formatHoursMinutesNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
-import { isLegSession, minutesLabel, strengthDataFor, strengthRirFor } from './macrofactorSets';
+import { isLegSession, strengthDataFor, strengthRirFor } from './macrofactorSets';
 import { strengthChangeFor, type StrengthChange } from './macrofactorLead';
 import { enrichStrengthData } from './macrofactorEnrich';
 import { findSameWorkoutLog, logsOfWorkoutsInFile } from './macrofactorSame';
 import type { ExerciseSetLog } from '../models/training';
 
-export { isLegSession, minutesLabel, strengthDataFor, strengthRirFor };
+export { isLegSession, strengthDataFor, strengthRirFor };
 import type { SessionLogDraft } from './activityImport';
 import { profileIdFromWorkoutName } from './machineWeights';
 import type { GymProfile } from './strengthSettings';
@@ -111,7 +111,7 @@ export const MOST_PLAUSIBLE_WEIGHT_KG = 1000;
 export function doubtAbout(workout: MacroFactorWorkout, today: string = todayISO(), skipDuration = false): string | undefined {
   if (workout.date > today) return `Deze training staat in de toekomst (${formatDateNL(workout.date)}).`;
   if (!skipDuration && workout.durationSec && workout.durationSec / 60 > LONGEST_PLAUSIBLE_WORKOUT_MIN) {
-    return `De duur in het bestand is ${minutesLabel(Math.round(workout.durationSec / 60))}. Dat lijkt te lang.`;
+    return `De duur in het bestand is ${formatHoursMinutesNL(Math.round(workout.durationSec / 60))}. Dat lijkt te lang.`;
   }
   const odd = workout.exercises.some((e) => e.sets.some((s) => s.reps > MOST_PLAUSIBLE_REPS || Math.abs(s.weightKg ?? 0) > MOST_PLAUSIBLE_WEIGHT_KG));
   if (odd) return 'Een set heeft een onwaarschijnlijk gewicht of aantal herhalingen.';
@@ -254,7 +254,7 @@ export function planMacroFactor(
 // "62 min, 18 sets": each number with what it is.
 export function describeWorkout(workout: MacroFactorWorkout): string {
   const parts: string[] = [];
-  if (workout.durationSec) parts.push(minutesLabel(Math.max(1, Math.round(workout.durationSec / 60))));
+  if (workout.durationSec) parts.push(formatHoursMinutesNL(Math.max(1, Math.round(workout.durationSec / 60))));
   parts.push(`${workout.setCount} ${workout.setCount === 1 ? 'set' : 'sets'}`);
   return parts.join(', ');
 }

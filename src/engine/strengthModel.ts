@@ -22,6 +22,7 @@ import type { WarmKind } from './warmup';
 import type { SetLog } from '../models/training';
 import { daysBetween } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
+import { kgLabel } from '../utils/kg';
 import { isWorkSet } from './workSets';
 import type { ResolvedStrengthSettings } from './strengthSettings';
 import { countsForProfile, ownWeightsFor } from './machineWeights';
@@ -416,10 +417,10 @@ const nl = (n: number) => formatNumberNL(n, 2);
 // With `dumbbellTotal` the weight is the total of two dumbbells and says so:
 // "60 kg (2 x 30)".
 export function formatWeight(exercise: Exercise | undefined, weightKg: number, dumbbellTotal = false): string {
-  if (exercise?.resistance === 'assisted_bodyweight') return weightKg === 0 ? 'geen hulp' : `hulp ${nl(Math.abs(weightKg))} kg`;
+  if (exercise?.resistance === 'assisted_bodyweight') return weightKg === 0 ? 'geen hulp' : `hulp ${kgLabel(Math.abs(weightKg), 2)}`;
   if (weightKg === 0 && (exercise?.resistance === 'bodyweight' || exercise?.resistance === 'pack_or_vest')) return 'eigen gewicht';
-  if (dumbbellTotal && exercise?.resistance === 'dumbbell' && !exercise.oneDumbbell && weightKg > 0) return `${nl(weightKg)} kg (2 x ${nl(weightKg / 2)})`;
-  return `${nl(weightKg)} kg`;
+  if (dumbbellTotal && exercise?.resistance === 'dumbbell' && !exercise.oneDumbbell && weightKg > 0) return `${kgLabel(weightKg, 2)} (2 x ${nl(weightKg / 2)})`;
+  return kgLabel(weightKg, 2);
 }
 
 export function describePlannedSet(exercise: Exercise | undefined, set: PlannedSet, dumbbellTotal = false): string {
@@ -817,7 +818,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   } else if (widened) {
     kind = 'widened';
     const step = stepAt(candidates, idx);
-    reason = `Een stap van ${nl(step)} kg is hier te grof voor ${low} tot ${high} herhalingen, daarom is het bereik nu tijdelijk verbreed.`;
+    reason = `Een stap van ${kgLabel(step, 2)} is hier te grof voor ${low} tot ${high} herhalingen, daarom is het bereik nu tijdelijk verbreed.`;
   } else if (lighter) {
     kind = 'pause';
     reason = 'Je deed dit meer dan vier weken niet, dus het voorstel begint iets lichter. Na deze training kijkt ASCEND opnieuw.';

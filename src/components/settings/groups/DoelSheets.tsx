@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAppData } from '../../../state/AppDataContext';
 import { PHASE_BASIS, PHASE_LENGTH_LIMITS, PHASE_OPBOUW, programAnchorDate, type AdjustablePhaseId, type PhaseLengthOverrides } from '../../../engine/programLayout';
-import { shortDate } from '../../../engine/settingsSummary';
+import { formatDayMonthNL } from '../../../utils/dates';
 import { shortGoalName } from '../../../engine/settingsStatus';
 import { addDays, mondayOfWeek, todayISO } from '../../../utils/dates';
 import { Icon } from '../../icons';
@@ -47,7 +47,7 @@ export function ProgramSheet({ onClose, onRestart }: { onClose: () => void; onRe
     return { phase: p, startWeek, from: addDays(start, startWeek * 7) };
   });
   const line = goalDate && main
-    ? `Week ${weekNow + 1} van ${total}. Teruggerekend vanaf ${shortGoalName(main.name)}, ${shortDate(goalDate)}.`
+    ? `Week ${weekNow + 1} van ${total}. Teruggerekend vanaf ${shortGoalName(main.name)}, ${formatDayMonthNL(goalDate)}.`
     : `Week ${weekNow + 1} van ${total}. Zonder doel staan de fases vast.`;
 
   async function save(next: PhaseLengthOverrides | undefined) {

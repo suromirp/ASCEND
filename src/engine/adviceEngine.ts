@@ -33,7 +33,7 @@ import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { findHeavyConflicts, freshnessAt, isHardRun, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL, legSpacingDays } from './scheduler';
 import { LEG_EASE_INDEX, legEaseCardSession } from './legDayEase';
 import { isTemplatePlannable, type EnabledSports } from './sports';
-import { addDays, daysBetween, formatDateNL, formatShortDayNL, mondayOfWeek, weekDates, weekdayLongNL, weekdayShortNL } from '../utils/dates';
+import { addDays, daysBetween, formatShortDayNL, mondayOfWeek, weekDates, weekdayLongNL, formatWeekdayDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
@@ -171,10 +171,6 @@ function inProgram(s: PlannedSession, program: Program | null | undefined): bool
   return !program || s.scheduledDate >= mondayOfWeek(program.startDate);
 }
 
-function shortDate(iso: string): string {
-  return `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
-}
-
 function proposal(issue: string, items: PlanChangeItem[], consequences: string, explanation: string): PlanChangeProposal {
   return { id: makeId('planchange'), trigger: 'session_skipped', issue, changes: items, alternatives: [], consequences, explanation, createdAt: new Date().toISOString() };
 }
@@ -220,9 +216,9 @@ function catchUpDates(session: PlannedSession, template: SessionTemplate, inputs
 // proposal itself. One option only: no choice to show.
 function moveOptions(title: string, item: PlanChangeItem, dates: string[], name: string, why: string, effectFor: (date: string) => string): { proposal: PlanChangeProposal; options?: AdviceOption[] } {
   const all = dates.slice(0, MAX_OPTIONS).map((d) => ({
-    label: `${name} naar ${shortDate(d)}`,
+    label: `${name} naar ${formatWeekdayDateNL(d)}`,
     effect: effectFor(d),
-    proposal: proposal(title, [{ ...item, toDate: d }], `${name} schuift naar ${shortDate(d)}.`, why),
+    proposal: proposal(title, [{ ...item, toDate: d }], `${name} schuift naar ${formatWeekdayDateNL(d)}.`, why),
   }));
   return { proposal: all[0].proposal, options: all.length > 1 ? all : undefined };
 }
@@ -309,12 +305,12 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
     if (restDay) {
       usedRest = true;
       const minutes = catchUpMinutes(s, template, restDay.scheduledDate, inputs, templateById);
-      items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: restDay.scheduledDate, plannedMinutes: minutes, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op je rustdag: de dag ervoor deed je geen training.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
+      items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: restDay.scheduledDate, plannedMinutes: minutes, reason: `Gemist op ${formatWeekdayDateNL(s.scheduledDate)}, ingehaald op je rustdag: de dag ervoor deed je geen training.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       items.push({ plannedSessionId: restDay.id, action: 'remove', reason: 'Rustdag niet nodig: de dag ervoor deed je geen training.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       caughtUp.push(`${template.name} doe je ${restDay.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen'} in plaats van je rustdag, want ${restDay.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag'} deed je geen training${minutes ? `. Korter, ${minutes} minuten: deze week staat er al een lange training, en twee volle in één week is te veel ineens` : ''}`);
     } else if (catchUp) {
-      items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
-      caughtUp.push(`${template.name} haal je in op ${shortDate(catchUp)}`);
+      items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${formatWeekdayDateNL(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
+      caughtUp.push(`${template.name} haal je in op ${formatWeekdayDateNL(catchUp)}`);
     } else {
       items.push({ plannedSessionId: s.id, action: 'remove', reason: key ? 'Gemist en deze week niet in te halen zonder te stapelen.' : 'Gemist; alleen de sleuteltraining van de week wordt ingehaald.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       dropped.push(template.name);
@@ -323,7 +319,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   const names = missed.map((m) => m.template.name);
   // Een naam met "en" erin ("Heuvelsprints en afdalen") maakt een opsomming met "en" onleesbaar; dan alleen komma's.
   const list = (xs: string[]) => (xs.length === 1 ? xs[0] : xs.some((x) => / en /.test(x)) ? xs.join(', ') : `${xs.slice(0, -1).join(', ')} en ${xs.at(-1)}`);
-  const title = missed.length === 1 ? `${names[0]} van ${shortDate(missed[0].s.scheduledDate)} is blijven liggen` : `${missed.length} trainingen zijn blijven liggen: ${list(names)}`;
+  const title = missed.length === 1 ? `${names[0]} van ${formatWeekdayDateNL(missed[0].s.scheduledDate)} is blijven liggen` : `${missed.length} trainingen zijn blijven liggen: ${list(names)}`;
   const effect = [
     caughtUp.length > 0 ? `${caughtUp.join('; ')}.` : '',
     dropped.length > 0 ? `${list(dropped)} ${dropped.length === 1 ? 'vervalt' : 'vervallen'}. De rest van je week blijft zoals gepland.` : '',
@@ -333,7 +329,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   const single = items.length === 1 && items[0].action === 'move' && !usedRest ? missed[0] : undefined;
   if (single) {
     const dates = catchUpDates(single.s, single.template, inputs, templateById, inputs.asOf);
-    if (dates.length > 1) options = moveOptions(title, items[0], dates, single.template.name, rule, (d) => `${single.template.name} haal je in op ${shortDate(d)}.`).options;
+    if (dates.length > 1) options = moveOptions(title, items[0], dates, single.template.name, rule, (d) => `${single.template.name} haal je in op ${formatWeekdayDateNL(d)}.`).options;
   }
   return [{
     options,
@@ -444,7 +440,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     : Array.from({ length: TEST_ROOM_DAYS }, (_, i) => addDays(today, i + 1));
   const why = forced?.why ?? 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daarop stelt ASCEND je tempo af, en daaruit rekent hij je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Alleen jij beslist: dit is een voorstel.';
   const missedWord = lost.status === 'skipped' ? 'overgeslagen' : 'gemist';
-  const title = forced ? forced.title : onRestDay ? `Testloop van ${shortDate(lost.scheduledDate)} staat op je rustdag` : notFresh ? `Testloop van ${shortDate(lost.scheduledDate)}: je benen zijn dan nog niet fris` : `Testloop van ${shortDate(lost.scheduledDate)} ${missedWord}`;
+  const title = forced ? forced.title : onRestDay ? `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)} staat op je rustdag` : notFresh ? `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)}: je benen zijn dan nog niet fris` : `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)} ${missedWord}`;
   const adviceId = forced?.id ?? `testroom:${lost.id}`;
   const moveItem = (date: string): PlanChangeItem => ({ plannedSessionId: lost.id, action: 'move', fromDate: lost.scheduledDate, toDate: date, reason: 'De testloop is het meetpunt voor je tempo.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] });
 
@@ -489,13 +485,13 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     }
     const weekAfter = [...weekOf(date).filter((o) => !moves.some((m) => m.session.id === o.id)), ...moves.map((m) => ({ ...m.session, scheduledDate: m.to }))];
     if (moves.length !== toMove.length || !dayHasRoomFor(date, test, weekAfter, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference) || !respectsHeavySpacing(date, test, now, templateById, inputs.logs, lost.id)) return undefined;
-    const moveLines = moves.map((m) => `${templateById.get(m.session.templateId)?.name ?? 'Kracht'} naar ${m.to === date ? `${shortDate(m.to)}, na de test (liefst 6 uur later)` : shortDate(m.to)}`);
+    const moveLines = moves.map((m) => `${templateById.get(m.session.templateId)?.name ?? 'Kracht'} naar ${m.to === date ? `${formatWeekdayDateNL(m.to)}, na de test (liefst 6 uur later)` : formatWeekdayDateNL(m.to)}`);
     const items: PlanChangeItem[] = [
       ...moves.map((m): PlanChangeItem => ({ plannedSessionId: m.session.id, action: 'move', fromDate: m.session.scheduledDate, toDate: m.to, reason: 'Na de test, zodat je benen fris zijn voor de testloop.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] })),
       moveItem(date),
     ];
-    const effect = `Doe hem ${shortDate(date)}, en ${moveLines.join(' en ')}. Eerst lopen en daarna kracht verstoort je volgende loop niet, andersom wel.`;
-    return [{ id: adviceId, trigger: around ? 'plan_update' : 'session_missed', ruleId: forced ? 'TEST-INFLUENCE' : 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${shortDate(date)}; ${moveLines.join('; ')}.`, why) }];
+    const effect = `Doe hem ${formatWeekdayDateNL(date)}, en ${moveLines.join(' en ')}. Eerst lopen en daarna kracht verstoort je volgende loop niet, andersom wel.`;
+    return [{ id: adviceId, trigger: around ? 'plan_update' : 'session_missed', ruleId: forced ? 'TEST-INFLUENCE' : 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${formatWeekdayDateNL(date)}; ${moveLines.join('; ')}.`, why) }];
   }
 
   // 1. Per day, nearest first: a free day, or else (1b below) a day that
@@ -514,7 +510,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       const moved = moveStrengthFor(date);
       if (moved) {
         const extra = moved[0].proposal!.changes.filter((c) => c.plannedSessionId !== lost.id);
-        const label = `${shortDate(date)}, ${extra.map((c) => `${templateById.get(inputs.plannedSessions.find((x) => x.id === c.plannedSessionId)?.templateId ?? '')?.name ?? 'training'} naar ${shortDate(c.toDate!)}`).join(', ')}`;
+        const label = `${formatWeekdayDateNL(date)}, ${extra.map((c) => `${templateById.get(inputs.plannedSessions.find((x) => x.id === c.plannedSessionId)?.templateId ?? '')?.name ?? 'training'} naar ${formatWeekdayDateNL(c.toDate!)}`).join(', ')}`;
         candidates.push({ cost: daysFrom(date) + 2 * extra.length, date, label, effect: moved[0].effect, proposal: moved[0].proposal! });
       }
       continue;
@@ -524,7 +520,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const legsNote = legsName ? ` ${legsName} die dag pas na de test, liefst 6 uur later (minstens 3): eerst lopen, dan kracht.` : '';
     // The leg day the option shows stays as shown: kept, so accepting fixes it.
     const keeps = sameDayLegs.map((l): PlanChangeItem => ({ plannedSessionId: l.id, action: 'keep', reason: `${legsName} blijft die dag, na de test.`, generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] }));
-    candidates.push({ cost: daysFrom(date), date, label: `${shortDate(date)}${legsName ? `, ${legsName} erna` : ''}`, effect: `Doe hem ${shortDate(date)}.${legsNote}`, proposal: proposal(title, [moveItem(date), ...keeps], `De testloop komt op ${shortDate(date)}.`, why) });
+    candidates.push({ cost: daysFrom(date), date, label: `${formatWeekdayDateNL(date)}${legsName ? `, ${legsName} erna` : ''}`, effect: `Doe hem ${formatWeekdayDateNL(date)}.${legsNote}`, proposal: proposal(title, [moveItem(date), ...keeps], `De testloop komt op ${formatWeekdayDateNL(date)}.`, why) });
   }
 
   // 2. Make room: the least important trainings that stand in the way, on
@@ -550,9 +546,9 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const verb = remove.length === 1 ? 'vervalt' : 'vervallen';
     const sameDay = remove.every((s) => s.scheduledDate === date);
     const effect = sameDay
-      ? `Er is geen vrije dag. Mijn voorstel: ${names.join(' en ')} van ${shortDate(date)} ${verb} en de testloop komt daar.`
-      : `Er is geen dag met frisse benen. Mijn voorstel: de testloop op ${shortDate(date)}, en ${remove.map((s) => `${templateById.get(s.templateId)?.name ?? 'training'} van ${shortDate(s.scheduledDate)}`).join(' en ')} ${verb}. In een testweek is de test je kwaliteitstraining.`;
-    candidates.push({ cost: daysFrom(date) + 3 + (costs as number[]).reduce((a, b) => a + b, 0), date, label: `${shortDate(date)}, ${names.join(' en ')} ${verb}`, effect, proposal: proposal(title, items, `${names.join(' en ')} ${verb}; de testloop komt op ${shortDate(date)}.`, why) });
+      ? `Er is geen vrije dag. Mijn voorstel: ${names.join(' en ')} van ${formatWeekdayDateNL(date)} ${verb} en de testloop komt daar.`
+      : `Er is geen dag met frisse benen. Mijn voorstel: de testloop op ${formatWeekdayDateNL(date)}, en ${remove.map((s) => `${templateById.get(s.templateId)?.name ?? 'training'} van ${formatWeekdayDateNL(s.scheduledDate)}`).join(' en ')} ${verb}. In een testweek is de test je kwaliteitstraining.`;
+    candidates.push({ cost: daysFrom(date) + 3 + (costs as number[]).reduce((a, b) => a + b, 0), date, label: `${formatWeekdayDateNL(date)}, ${names.join(' en ')} ${verb}`, effect, proposal: proposal(title, items, `${names.join(' en ')} ${verb}; de testloop komt op ${formatWeekdayDateNL(date)}.`, why) });
   }
 
   // The best first; up to three different days to choose from (one way per day, so a
@@ -605,9 +601,9 @@ function tooHardAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const laterDates = catchUpDates(next, nextTemplate, inputs, templateById, addDays(next.scheduledDate, 1));
   const later = laterDates[0];
   if (!later) {
-    return [{ ...base, id: `hard:${recent.id}`, effect: `${nextTemplate.name} op ${shortDate(next.scheduledDate)} rustig houden (RPE 3-4); er is geen latere plek deze week.`, why: `${hardWas('Je laatste training')}. ${rule}` }];
+    return [{ ...base, id: `hard:${recent.id}`, effect: `${nextTemplate.name} op ${formatWeekdayDateNL(next.scheduledDate)} rustig houden (RPE 3-4); er is geen latere plek deze week.`, why: `${hardWas('Je laatste training')}. ${rule}` }];
   }
-  const hardEffect = (d: string) => `${nextTemplate.name} naar ${shortDate(d)}.`;
+  const hardEffect = (d: string) => `${nextTemplate.name} naar ${formatWeekdayDateNL(d)}.`;
   const moved = moveOptions(base.title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `Extra herstel na ${loggedName} (${signal}).`, generatedBy: ['engine/adviceEngine.ts', 'HARD-THEN-SPACE'] }, laterDates, nextTemplate.name, rule, hardEffect);
   return [{
     ...base,
@@ -664,7 +660,7 @@ function injuryAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
     .filter((s) => s.status !== 'skipped' && s.scheduledDate >= inputs.asOf && daysBetween(inputs.asOf, s.scheduledDate) <= 6)
     .filter((s) => { const t = templateById.get(s.templateId); return t ? isLegHeavyTemplate(t) : false; })
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))
-    .map((s) => `${templateById.get(s.templateId)?.name} (${shortDate(s.scheduledDate)})`);
+    .map((s) => `${templateById.get(s.templateId)?.name} (${formatWeekdayDateNL(s.scheduledDate)})`);
   return [{
     id: `injury:${leg.id}`,
     trigger: 'injury_active',
@@ -750,7 +746,7 @@ function spacingAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       const why = `Er staan twee zware trainingen voor ${muscles} op opeenvolgende dagen. Zware training voor dezelfde spieren hoort ongeveer 48 uur uit elkaar te liggen, zodat ze kunnen herstellen.`;
       const target = candidates[0];
       if (!target) {
-        advice.push({ id: `spacing:${b.id}:${b.scheduledDate}`, trigger: 'same_muscles_back_to_back', ruleId: 'SAME-MUSCLE-SPACING', title, effect: `Er is deze week geen dag met 48 uur ertussen. Houd ${tb.name} op ${shortDate(b.scheduledDate)} lichter, of kies de korte variant.`, why, priority: 3 });
+        advice.push({ id: `spacing:${b.id}:${b.scheduledDate}`, trigger: 'same_muscles_back_to_back', ruleId: 'SAME-MUSCLE-SPACING', title, effect: `Er is deze week geen dag met 48 uur ertussen. Houd ${tb.name} op ${formatWeekdayDateNL(b.scheduledDate)} lichter, of kies de korte variant.`, why, priority: 3 });
         continue;
       }
       advice.push({
@@ -758,10 +754,10 @@ function spacingAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
         trigger: 'same_muscles_back_to_back',
         ruleId: 'SAME-MUSCLE-SPACING',
         title,
-        effect: `${tb.name} naar ${shortDate(target)}, zodat er 48 uur tussen zit.`,
+        effect: `${tb.name} naar ${formatWeekdayDateNL(target)}, zodat er 48 uur tussen zit.`,
         why,
         priority: 3,
-        proposal: proposal(title, [{ plannedSessionId: b.id, action: 'move', fromDate: b.scheduledDate, toDate: target, reason: `48 uur tussen zware training voor hetzelfde ${muscles}.`, generatedBy: ['engine/adviceEngine.ts', 'SAME-MUSCLE-SPACING'] }], `${tb.name} schuift naar ${shortDate(target)}.`, why),
+        proposal: proposal(title, [{ plannedSessionId: b.id, action: 'move', fromDate: b.scheduledDate, toDate: target, reason: `48 uur tussen zware training voor hetzelfde ${muscles}.`, generatedBy: ['engine/adviceEngine.ts', 'SAME-MUSCLE-SPACING'] }], `${tb.name} schuift naar ${formatWeekdayDateNL(target)}.`, why),
       });
     }
   }
@@ -832,7 +828,7 @@ function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
     const minutes = catchUpMinutes(s, template, rest.scheduledDate, inputs, templateById);
     const effect = `Doe hem ${when} in plaats van je rustdag: ${before} deed je geen training, dus die rust heb je niet nodig.${minutes ? ` Wel korter, ${minutes} minuten: deze week staat er al een lange training, en twee volle in één week is te veel ineens.` : ''}`;
     const items: PlanChangeItem[] = [
-      { plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: rest.scheduledDate, plannedMinutes: minutes, reason: `Overgeslagen op ${shortDate(s.scheduledDate)}, gedaan op de rustdag erna.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
+      { plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: rest.scheduledDate, plannedMinutes: minutes, reason: `Overgeslagen op ${formatWeekdayDateNL(s.scheduledDate)}, gedaan op de rustdag erna.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
       { plannedSessionId: rest.id, action: 'remove', reason: `Rustdag niet nodig: ${before} geen training.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
     ];
     return [{ id: `skippedkey:${s.id}`, trigger: 'session_missed', ruleId: 'SKIPPED-KEY-TO-REST', title, effect, why: rule, priority: 3, proposal: proposal(title, items, effect, rule) }];
@@ -882,7 +878,7 @@ function restPullAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
     if (!template || !isTemplatePlannable(template, inputs.enabledSports)) continue;
     const others = inputs.plannedSessions.filter((s) => s.id !== c.id && s.id !== rest.id && s.status !== 'skipped' && (s.scheduledDate >= today || loggedIds.has(s.id)));
     if (!respectsHeavySpacing(tomorrow, template, others, templateById, inputs.logs, c.id)) continue;
-    const effect = `Dan is vandaag je rustdag en doe je morgen ${template.name}${c.movedFromDate === today ? '' : ` (gepland op ${shortDate(c.scheduledDate)})`}.`;
+    const effect = `Dan is vandaag je rustdag en doe je morgen ${template.name}${c.movedFromDate === today ? '' : ` (gepland op ${formatWeekdayDateNL(c.scheduledDate)})`}.`;
     const items: PlanChangeItem[] = [restToToday, { plannedSessionId: c.id, action: 'move', fromDate: c.scheduledDate, toDate: tomorrow, reason: 'Naar de oude rustdag: de rust is naar vandaag gegaan.', generatedBy: ['engine/adviceEngine.ts', 'REST-PULL'] }];
     return [{ id: `restpull:${rest.id}`, trigger: 'plan_update', ruleId: 'REST-PULL', title, effect, why: rule, priority: 3, proposal: proposal(title, items, effect, rule) }];
   }
@@ -906,7 +902,7 @@ function extraSessionAdvice(inputs: AdviceInputs, templateById: Map<string, Sess
   if (!found) return [];
   const template = templateById.get(found.choice.templateId)!;
   const title = `Extra training: ${template.name}`;
-  const effect = `${found.choice.reason} Voorstel: ${shortDate(found.date)}.`;
+  const effect = `${found.choice.reason} Voorstel: ${formatWeekdayDateNL(found.date)}.`;
   const why = `${found.earnedReason} Dan mag je week groeien. Dat gaat via een extra korte training, niet via langere: één loop meer dan 10% langer dan je langste van de afgelopen maand gaf meer blessures, een groter weektotaal niet (Frandsen e.a. 2025).`;
   const items: PlanChangeItem[] = [{
     action: 'add', newSessionDraft: { templateId: template.id, scheduledDate: found.date, weekStartDate: found.weekStart },
@@ -968,15 +964,15 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       const later = laterDates[0];
       const title = `${reason}: ${t.name} later`;
       if (later) {
-        const morningEffect = (d: string) => `${t.name} van ${shortDate(next.scheduledDate)} naar ${shortDate(d)}.${sig.sore === 'flink' ? ' Ook de rustige loop mag vandaag wandelen of fietsen worden.' : ''}`;
+        const morningEffect = (d: string) => `${t.name} van ${formatWeekdayDateNL(next.scheduledDate)} naar ${formatWeekdayDateNL(d)}.${sig.sore === 'flink' ? ' Ook de rustige loop mag vandaag wandelen of fietsen worden.' : ''}`;
         out.push({
           id: `morning:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 4, title,
           effect: morningEffect(later),
           why: rule,
-          ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op de ochtend van ${shortDate(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'MORNING-CHECK'] }, laterDates, t.name, rule, morningEffect),
+          ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op de ochtend van ${formatWeekdayDateNL(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'MORNING-CHECK'] }, laterDates, t.name, rule, morningEffect),
         });
       } else {
-        const when = next.scheduledDate === today ? 'vandaag' : next.scheduledDate === addDays(today, 1) ? 'morgen' : shortDate(next.scheduledDate);
+        const when = next.scheduledDate === today ? 'vandaag' : next.scheduledDate === addDays(today, 1) ? 'morgen' : formatWeekdayDateNL(next.scheduledDate);
         // Een test of wedstrijd "rustig" doen is geen test meer: zeg wat je dan wel doet.
         const testLike = hasRole(t, 'test') || hasRole(t, 'race');
         const effect = testLike
@@ -1042,12 +1038,12 @@ export function legEaseMoveAdvice(inputs: AdviceInputs, sessionId: string, reaso
   // "Later" en niet "een dag later": de eerste goede dag kan ook twee dagen verder liggen; de knop noemt de dag.
   const title = `${t.name} later`;
   const why = 'Met vermoeide benen levert een zware beendag of harde training minder op, en doortrainen mag. Een dag later kan helpen, en je kiest zelf (docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md).';
-  const effectFor = (d: string) => `${t.name} van ${shortDate(next.scheduledDate)} naar ${shortDate(d)}.`;
+  const effectFor = (d: string) => `${t.name} van ${formatWeekdayDateNL(next.scheduledDate)} naar ${formatWeekdayDateNL(d)}.`;
   return {
     id: `leg-ease:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'LEG-EASE', priority: 4, title,
     effect: effectFor(later),
     why,
-    ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op ${shortDate(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'LEG-EASE'] }, laterDates, t.name, why, effectFor),
+    ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op ${formatWeekdayDateNL(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'LEG-EASE'] }, laterDates, t.name, why, effectFor),
   };
 }
 
@@ -1089,7 +1085,7 @@ function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {
   });
   if (!found) return [];
   const title = 'Rustweek overslaan?';
-  const effect = `De week van ${shortDate(found.weekStart)} is een rustweek. Je liep de afgelopen weken ${found.doneMinutes} van de ${found.plannedMinutes} geplande minuten, dus er is weinig om van te herstellen. Voorstel: doortrainen als een normale opbouwweek, geen tweede zwaarste week.`;
+  const effect = `De week van ${formatWeekdayDateNL(found.weekStart)} is een rustweek. Je liep de afgelopen weken ${found.doneMinutes} van de ${found.plannedMinutes} geplande minuten, dus er is weinig om van te herstellen. Voorstel: doortrainen als een normale opbouwweek, geen tweede zwaarste week.`;
   const why = 'Een rustweek is er om de vermoeidheid van de weken ervoor kwijt te raken. Trainers zien hem als hulpmiddel, niet als vaste regel (Bell e.a. 2023), en na een licht begin is er weinig vermoeidheid. Je loopt nog steeds nooit meer dan 10% langer dan je langste loop van de afgelopen maand. Voelen je benen toch zwaar, zet de rustweek dan terug in Week.';
   return [{ id: found.id, trigger: 'plan_update', ruleId: 'REST-WEEK-SKIP', title, effect, why, priority: 2, restWeekSkip: found.weekStart }];
 }
@@ -1188,13 +1184,13 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
     const now = `${Math.round(check.predictedMinutes)} minuten`;
     // Dezelfde rekening als de doelkaart: gemiddelde groei, geteld vanaf vandaag.
     const said = outlookWeeksSaid(check.outlook);
-    const raceDay = shortDate(race.raceDate);
+    const raceDay = formatWeekdayDateNL(race.raceDate);
     const outlookText = `Bij ${inputs.goalGrowth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei is dat rond ${raceDay} ${outlookSaid(check.outlook, km)}`;
     const ambitious = check.verdict === 'ambitious';
     const title = ambitious
       ? `Doeltijd ${distance} km: ${clockTarget} past nog niet bij je test`
       : `Doeltijd ${distance} km: ${clockTarget} is ruim langzamer dan je test`;
-    const lead = `Je testloop van ${shortDate(paces.test.date)} (${test}) past bij een ${distance} km in ongeveer ${now}.${testStopsRemark(paces.test) ? ` ${testStopsRemark(paces.test)}` : ''}`;
+    const lead = `Je testloop van ${formatWeekdayDateNL(paces.test.date)} (${test}) past bij een ${distance} km in ongeveer ${now}.${testStopsRemark(paces.test) ? ` ${testStopsRemark(paces.test)}` : ''}`;
     const effect = ambitious
       ? `${lead} ${outlookText}, en ${clockTarget} vraagt ongeveer ${said.need} weken; tot ${raceDay} zijn het er ${said.left}. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${clockTarget} staan en vraagt ASCEND hier niet meer naar.`
       : `${lead} ${outlookText}, dus ${clockTarget} laat veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${clockTarget} staan en vraagt ASCEND hier niet meer naar.`;
@@ -1271,8 +1267,8 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   if (ranked.length === 0) return [];
 
   const was = stops
-    ? `Je testloop van ${shortDate(last.date)} had ${(last.stoppedSec ?? 0) > 60 ? `${stoppedTime(last.stoppedSec ?? 0)} stilstand` : `${last.stops} keer stilstand`}, dus hij is iets te gunstig.`
-    : `Je testloop van ${shortDate(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
+    ? `Je testloop van ${formatWeekdayDateNL(last.date)} had ${(last.stoppedSec ?? 0) > 60 ? `${stoppedTime(last.stoppedSec ?? 0)} stilstand` : `${last.stops} keer stilstand`}, dus hij is iets te gunstig.`
+    : `Je testloop van ${formatWeekdayDateNL(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
   const longDay = weekdayLongNL(last.date);
   const dayName = `${longDay.charAt(0).toUpperCase()}${longDay.slice(1)}`;
   const shortDay = formatShortDayNL(last.date);
@@ -1287,18 +1283,18 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   // A session you locked is named as yours; one an earlier proposal moved is said as such.
   const whose = (x: PlannedSession) => (levelOf(x) !== 1 ? '' : x.lock?.by === 'proposal' ? ', die al eerder verschoof,' : ', die je zelf vastzette,');
   const build = (plan: RetryPlan) => {
-    const when = shortDate(plan.found.scheduledDate);
+    const when = formatWeekdayDateNL(plan.found.scheduledDate);
     const title = `Nieuwe testpoging op ${when}`;
     const lower = (x: string) => `${x.charAt(0).toLowerCase()}${x.slice(1)}`;
     const short = (m: { minutes?: number }) => (m.minutes ? `, korter (${m.minutes} minuten)` : '');
     const lines = [
       ...plan.moves.map((m) => m.rest
-        ? `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)} doe je op ${shortDate(m.to)} in plaats van je rustdag${short(m)}. De ${lower(nameOf(m.rest))} van die dag vervalt.`
-        : `${nameOf(m.session)} van ${shortDate(m.session.scheduledDate)}${whose(m.session)} gaat naar ${shortDate(m.to)}${isStrength(m.session) ? ', na de test' : ''}${short(m)}.`),
-      ...plan.moves.filter((m) => m.lightDrop).map((m) => `${nameOf(m.lightDrop!)} van ${shortDate(m.lightDrop!.scheduledDate)} vervalt: dat wordt je rustdag.`),
+        ? `${nameOf(m.session)} van ${formatWeekdayDateNL(m.session.scheduledDate)} doe je op ${formatWeekdayDateNL(m.to)} in plaats van je rustdag${short(m)}. De ${lower(nameOf(m.rest))} van die dag vervalt.`
+        : `${nameOf(m.session)} van ${formatWeekdayDateNL(m.session.scheduledDate)}${whose(m.session)} gaat naar ${formatWeekdayDateNL(m.to)}${isStrength(m.session) ? ', na de test' : ''}${short(m)}.`),
+      ...plan.moves.filter((m) => m.lightDrop).map((m) => `${nameOf(m.lightDrop!)} van ${formatWeekdayDateNL(m.lightDrop!.scheduledDate)} vervalt: dat wordt je rustdag.`),
       ...plan.dropped.map((l) => plan.restLoss.includes(l.id)
-        ? `${nameOf(l)} van ${shortDate(l.scheduledDate)} vervalt deze keer: zo houd je die week een rustdag.`
-        : `${nameOf(l)} van ${shortDate(l.scheduledDate)}${whose(l)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
+        ? `${nameOf(l)} van ${formatWeekdayDateNL(l.scheduledDate)} vervalt deze keer: zo houd je die week een rustdag.`
+        : `${nameOf(l)} van ${formatWeekdayDateNL(l.scheduledDate)}${whose(l)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
     ];
     const extra = lines.length > 0 ? ` ${lines.join(' ')}` : '';
     const effect = `${was} Met Akkoord wordt ${nameOf(plan.found)} op ${when} een testloop van 5 km.${extra} ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.`;
@@ -1315,7 +1311,7 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
         reason: stops ? 'Nieuwe testpoging: de vorige had veel stilstand.' : 'Nieuwe testpoging: de vorige telde nog niet.', generatedBy: by,
       },
     ];
-    const label = `Testloop ${when}${plan.moves.length + plan.dropped.length > 0 ? `, ${[...plan.moves.map((m) => `${nameOf(m.session)} naar ${shortDate(m.to)}`), ...plan.moves.filter((m) => m.lightDrop).map((m) => `${nameOf(m.lightDrop!)} vervalt`), ...plan.dropped.map((d) => `${nameOf(d)} vervalt`)].join(', ')}` : ''}`;
+    const label = `Testloop ${when}${plan.moves.length + plan.dropped.length > 0 ? `, ${[...plan.moves.map((m) => `${nameOf(m.session)} naar ${formatWeekdayDateNL(m.to)}`), ...plan.moves.filter((m) => m.lightDrop).map((m) => `${nameOf(m.lightDrop!)} vervalt`), ...plan.dropped.map((d) => `${nameOf(d)} vervalt`)].join(', ')}` : ''}`;
     return { title, effect, label, proposal: proposal(title, items, `${nameOf(plan.found)} op ${when} wordt een testloop van 5 km.${extra}`, why) };
   };
   const built = ranked.map(build);

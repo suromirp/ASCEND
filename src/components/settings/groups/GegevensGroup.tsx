@@ -7,6 +7,7 @@ import { SettingsSection } from '../SettingsList';
 import { useAdviceReset } from '../useAdviceReset';
 import { BackupSheet, BaselineSheet, FolderSheet, RebuildSheet, ResetSheet, SnapshotsSheet, StorageSheet, StreamsSheet, VersionSheet } from './GegevensSheets';
 import { SummaryRow } from './SummaryRow';
+import { useMorningBackupOff } from './MorningBackupOff';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveStreamsBackup } from '../../../engine/streamsBackup';
@@ -21,6 +22,8 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   // en de uitkomst blijven staan als het blad dicht is.
   const advice = useAdviceReset();
   const { updateSettings } = useAppData();
+  // Uitzetten zonder koppeling ruimt de bewaarde ochtenden op, dus dat vraagt eerst (MorningBackupOff.tsx).
+  const morningOff = useMorningBackupOff();
   return (
     <>
       <SettingsSection title="Back-up">
@@ -35,8 +38,9 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <SummaryRow id="reeksen-bewaren" title="Volledige reeks bewaren" facts={facts} info="reeksenBewaren" onChange={(on) => void updateSettings({ keepStreams: on })} />
         <SummaryRow id="reeksen-backup" title="Reeksen in back-up" facts={facts} info="reeksenBackup" onClick={() => setSheet('reeksen-backup')} />
         <SummaryRow id="reeksen-ruimte" title="Ruimte van reeksen" facts={facts} onClick={() => setSheet('reeksen')} />
-        <SummaryRow id="ochtend-backup" title="Ochtendgetallen in back-up" facts={facts} info="ochtendBackup" onChange={(on) => void updateSettings({ morningInBackup: on })} />
+        <SummaryRow id="ochtend-backup" title="Ochtendgetallen in back-up" facts={facts} info="ochtendBackup" onChange={(on) => void morningOff.onChange(on)} />
       </SettingsSection>
+      {morningOff.notice}
 
       <SettingsSection
         title="App"
@@ -83,6 +87,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {sheet === 'voorstellen-opruimen' && (
         <ChoiceFromDef def={CHOICES.voorstellenOpruimen} value={resolveProposalTidyMonths(facts.settings.proposalTidyMonths)} onPick={(v) => void updateSettings({ proposalTidyMonths: v })} onClose={close} />
       )}
+      {morningOff.sheet}
       {sheet === 'momentopnamen' && <SnapshotsSheet onChanged={reload} onClose={close} />}
       {sheet === 'versie' && <VersionSheet onClose={close} />}
       {sheet === 'startniveau' && <BaselineSheet onClose={close} />}

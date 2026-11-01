@@ -19,7 +19,8 @@ import { formatNumberNL } from '../utils/number';
 import { plausibleStrengthMinutes } from './logDuration';
 import type { MacroFactorWorkout } from './macrofactorImport';
 import { isWorkSet } from './workSets';
-import { legacySetShape, minutesLabel, strengthDataFor, strengthRirFor } from './macrofactorSets';
+import { formatHoursMinutesNL } from '../utils/dates';
+import { legacySetShape, strengthDataFor, strengthRirFor } from './macrofactorSets';
 
 export const isStrengthTakeover = (log: SessionLog): boolean => !!log.manualMeasured?.strength;
 
@@ -104,7 +105,7 @@ const setsText = (n: number) => `${n} ${n === 1 ? 'set' : 'sets'}`;
 // every number with what it is.
 export function describeStrengthChange(change: StrengthChange): string {
   const parts: string[] = [];
-  if (change.duration) parts.push(`duur ${minutesLabel(change.duration.before)} wordt ${minutesLabel(change.duration.after)}`);
+  if (change.duration) parts.push(`duur ${formatHoursMinutesNL(change.duration.before)} wordt ${formatHoursMinutesNL(change.duration.after)}`);
   if (change.exercises) {
     const { before, after } = change.exercises;
     parts.push(before === undefined ? `${setsText(after)} komen erbij` : before === after ? `de oefeningen en gewichten worden die van MacroFactor` : `${setsText(before)} wordt ${setsText(after)}`);
@@ -126,7 +127,7 @@ export function describeStrengthManualLine(log: SessionLog): string {
   const before: string[] = [];
   const added: string[] = [];
   const duration = m.values.durationMinutes;
-  if (typeof duration === 'number') before.push(minutesLabel(duration));
+  if (typeof duration === 'number') before.push(formatHoursMinutesNL(duration));
   if ('strengthData' in s) {
     if (s.strengthData) before.push(setsText(setCount(s.strengthData) ?? 0));
     else added.push('de sets');

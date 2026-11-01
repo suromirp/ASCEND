@@ -50,6 +50,7 @@ import { activeIllness, recoveryRamp } from './illness';
 import { buildWeekReview } from './weekReview';
 import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
 import { idHasRole } from './templateRoles';
+import { kgLabel } from '../utils/kg';
 
 // Below this share of the planned trainings (rest sessions not counted) a
 // week fell short. A round, explainable line, not a number from a study.
@@ -249,7 +250,7 @@ export function proposeRepeatWeek(inputs: RepeatWeekInputs): RepeatWeekProposal 
 function describeLoad(l: LoadLine): string {
   const parts = [`${l.minutes} minuten`];
   if (l.elevationGainM) parts.push(`${Math.round(l.elevationGainM)} m omhoog`);
-  if (l.backpackKg) parts.push(`${String(l.backpackKg).replace('.', ',')} kg rugzak`);
+  if (l.backpackKg) parts.push(`${kgLabel(l.backpackKg, 2)} rugzak`);
   return parts.join(', ');
 }
 

@@ -25,6 +25,7 @@ import { HeartSign } from '../components/influence/HeartSign';
 import { InfluenceSheet } from '../components/influence/InfluenceSheet';
 import { useDeviations } from '../components/influence/useInfluence';
 import { entryForLog, isNoted, signState } from '../engine/influence';
+import { hoursMinutes } from '../utils/hoursMinutes';
 
 const NO_LOGS: SessionLog[] = [];
 
@@ -88,12 +89,6 @@ function sportLine(r: SportRow): { line: string; value: string; unit: string } {
   if (r.key === 'walk' || r.key === 'mountain') return { line: `${r.count} ${r.count === 1 ? 'tocht' : 'tochten'}${r.elevation > 0 ? ` · ${formatNumberNL(r.elevation, 0)} m stijgen` : ''}`, value: kmText(r.km), unit: 'km' };
   if (r.key === 'bike') return { line: times, value: kmText(r.km), unit: 'km' };
   return { line: times, value: formatHoursMinutesNL(r.minutes), unit: '' };
-}
-
-// 21:15 voor 1275 minuten.
-function clock(totalMinutes: number): string {
-  const m = Math.max(0, Math.round(totalMinutes));
-  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
 }
 
 // Het verschil met vorige maand als korte pil; stil als vorige maand leeg was of er niets verschilt.
@@ -200,7 +195,7 @@ export function HistoryPage() {
         </div>
         <LightCard className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Stat label="Getraind" value={clock(summary.totalMinutes)} unit="uur" size="l" />
+            <Stat label="Getraind" value={hoursMinutes(summary.totalMinutes)} unit="uur" size="l" />
             {prevSummary.totalMinutes > 0 && deltaPill(Math.round(summary.totalMinutes) - Math.round(prevSummary.totalMinutes), formatHoursMinutesNL(Math.abs(Math.round(summary.totalMinutes) - Math.round(prevSummary.totalMinutes))))}
           </div>
           <div className="flex flex-col gap-2 border-l pl-4" style={{ borderColor: 'var(--color-card-border)' }}>

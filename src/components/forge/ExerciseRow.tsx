@@ -4,8 +4,8 @@
 // het voorstel voor de volgende keer. Vanuit daar opent de volledige geschiedenis.
 // Alle rekenwerk staat in engine/forgeHistory.ts en engine/forgeText.ts.
 
+import { formatShortDateNL } from '../../utils/dates';
 import { useMemo } from 'react';
-import { formatNumberNL } from '../../utils/number';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../icons';
 import { ExerciseArtButton } from '../ExerciseArtButton';
@@ -15,11 +15,12 @@ import { TrendSpark } from './TrendSpark';
 import type { OneRmReading } from '../../models/metrics';
 import { TextButton } from '../TextButton';
 import { compareExercise, forgePoints, trendValues, type Comparison, type ForgePoint } from '../../engine/forgeHistory';
-import { deltaText, deltaTone, extraText, extraTone, shortDateNL, topSetText, valueKind, valueText, type DeltaTone } from '../../engine/forgeText';
+import { deltaText, deltaTone, extraText, extraTone, topSetText, valueKind, valueText, type DeltaTone } from '../../engine/forgeText';
 import { missingData, type ExerciseView, type MissingData } from '../../engine/strengthHistory';
 import { describePlannedSet, formatWeight, WEIGHT_MISMATCH_TEXT } from '../../engine/strengthModel';
 import type { OneRmView } from '../../engine/strengthSettings';
 import type { ValueKind } from '../../engine/forgeText';
+import { kgLabel } from '../../utils/kg';
 
 // Mint is vooruit, gedempt is gelijk of lager. Geen rood: het is een kleine regel zonder oordeel.
 const TONE: Record<DeltaTone, string> = { up: 'var(--color-progress)', flat: 'var(--color-ink-dim)' };
@@ -93,9 +94,9 @@ export function ExerciseRow({
                 <span className="block text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{text(cmp.now.value)}</span>
                 <span className="block text-xs" style={{ color: rowChange !== undefined ? TONE[deltaTone(rowChange)] : 'var(--color-ink-dim)' }}>
                   {first?.change !== undefined
-                    ? `${diff(first.change)} sinds ${first.near || !first.point ? `${first.weeks} wk` : shortDateNL(first.point.date, today)}`
+                    ? `${diff(first.change)} sinds ${first.near || !first.point ? `${first.weeks} wk` : formatShortDateNL(first.point.date, today)}`
                     : cmp.previous && cmp.previousChange !== undefined
-                      ? `${diff(cmp.previousChange)} sinds ${shortDateNL(cmp.previous.date, today)}`
+                      ? `${diff(cmp.previousChange)} sinds ${formatShortDateNL(cmp.previous.date, today)}`
                       : count === 1 ? 'Eerste keer' : 'Geen vergelijking'}
                 </span>
               </>
@@ -128,7 +129,7 @@ function Cell({ label, point, status = 'ok', today, kind, view, bodyKg, showExtr
   const top = !point
     ? undefined
     : point.unit === 'reps'
-      ? [point.totalReps !== undefined ? `totaal ${point.totalReps}` : '', point.topWeightKg ? `met ${formatNumberNL(point.topWeightKg, 1)} kg` : ''].filter(Boolean).join(', ')
+      ? [point.totalReps !== undefined ? `totaal ${point.totalReps}` : '', point.topWeightKg ? `met ${kgLabel(point.topWeightKg)}` : ''].filter(Boolean).join(', ')
       : topSetText(exercise, point.topWeightKg, point.topReps);
   return (
     <div className="flex min-w-0 flex-col gap-1">
@@ -136,7 +137,7 @@ function Cell({ label, point, status = 'ok', today, kind, view, bodyKg, showExtr
       {point ? (
         <>
           <span className="break-words font-sans text-sm font-semibold tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{valueText(point.value, kind, exercise, bodyKg, true)}</span>
-          <span className="font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{shortDateNL(point.date, today)}</span>
+          <span className="font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatShortDateNL(point.date, today)}</span>
           {showExtras && top && <span className="break-words font-sans text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{top}</span>}
         </>
       ) : (
@@ -197,7 +198,7 @@ function ExerciseDetail({ view, kind, bodyKg, today, cmp, showExtras, onHistory 
         <div className="flex flex-col gap-2">
           {withExtras.map((m) => (
             <div key={m.weeks} className="flex flex-col gap-0.5">
-              <span className="text-xs font-medium" style={{ color: 'var(--color-ink-dim)' }}>{m.near || !m.point ? `Sinds ${m.weeks} weken geleden` : `Sinds ${shortDateNL(m.point.date, today)}`}</span>
+              <span className="text-xs font-medium" style={{ color: 'var(--color-ink-dim)' }}>{m.near || !m.point ? `Sinds ${m.weeks} weken geleden` : `Sinds ${formatShortDateNL(m.point.date, today)}`}</span>
               {m.extras.map((c) => (
                 <span key={c.kind} className="font-sans text-sm tabular-nums leading-snug" style={{ color: TONE[extraTone(c)] }}>{extraText(c)}</span>
               ))}

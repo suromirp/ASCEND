@@ -27,6 +27,7 @@ import { fillFromWeeks, weeksOfWork } from './goalGap';
 import { estimatedHikingMinutes } from './goalRoute';
 import { logSport } from './sports';
 import { descentOf } from './standing';
+import { hoursMinutes } from '../utils/hoursMinutes';
 
 export const LIMIT_WINDOW_DAYS = 56;
 export const LIMIT_MIN_MINUTES = 90;
@@ -38,12 +39,6 @@ export const TRAIL_LONG_MINUTES = 180;
 
 export const NEED_HIKES_LINE = 'Na drie lange wandelingen kan ASCEND je tempo schatten.';
 export const NEED_LONG_RUN_LINE = 'Na een lange loop of wandeling van minstens anderhalf uur kan ASCEND je tempo schatten.';
-
-// "6:54" (uren en minuten), voor een dag die langer duurt dan een uur.
-export function hoursMinutes(minutes: number): string {
-  const total = Math.max(0, Math.round(minutes));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-}
 
 const dataOf = (l: SessionLog) => l.outdoorData ?? l.cardioData;
 const kmOf = (l: SessionLog): number => dataOf(l)?.distanceKm ?? 0;

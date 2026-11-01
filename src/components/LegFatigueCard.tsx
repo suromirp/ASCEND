@@ -6,7 +6,7 @@ import { LegFatigueInfoSheet } from './LegFatigueInfoSheet';
 import { legSorenessList } from '../engine/legSoreness';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { currentBodyKg } from '../engine/bodyWeight';
-import { todayISO, weekdayShortNL } from '../utils/dates';
+import { formatWeekdayDayMonthNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { Card } from './ui';
 import { TextButton } from './TextButton';
@@ -15,8 +15,6 @@ import { TextButton } from './TextButton';
 // see, not only for the planning: how fresh your legs are today, what still
 // counts, and how fresh they will be at your next test or race.
 
-const MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-const short = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))} ${MONTHS[Number(iso.slice(5, 7)) - 1]}`;
 const SCALE = 20;
 // Drie zones op de balk, met dezelfde grenzen als het woord erboven (engine/legFatigue.ts#fatigueWord):
 // fris is mint, wat vermoeid amber (de kleur van de benen), vermoeid oranje op de inspanningsschaal.
@@ -93,7 +91,7 @@ export function LegFatigueCard() {
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Werkt nog door</p>
           {now.contributions.slice(0, 3).map((c) => (
             <div key={c.id} className="flex items-baseline justify-between gap-3 text-xs">
-              <span className="truncate" style={{ color: 'var(--color-ink)' }}>{c.name} <span style={{ color: 'var(--color-ink-dim)' }}>· {short(c.date)}</span></span>
+              <span className="truncate" style={{ color: 'var(--color-ink)' }}>{c.name} <span style={{ color: 'var(--color-ink-dim)' }}>· {formatWeekdayDayMonthNL(c.date)}</span></span>
               <span className="shrink-0 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatNumberNL(c.points, 1)}</span>
             </div>
           ))}
@@ -102,12 +100,12 @@ export function LegFatigueCard() {
 
       {next && nextResult && nextStatus && (
         <p className="rounded-xl border px-3 py-2 text-xs leading-relaxed" style={{ borderColor: nextStatus === 'fris' ? 'var(--color-card-border)' : 'color-mix(in srgb, var(--color-warning) 55%, var(--color-card-border))', color: 'var(--color-ink)' }}>
-          {purpose === 'race' ? 'Wedstrijd' : 'Testloop'} {short(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
+          {purpose === 'race' ? 'Wedstrijd' : 'Testloop'} {formatWeekdayDayMonthNL(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
           {band && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(band.low, 0)} tot {formatNumberNL(band.high, 0)})</span>},{' '}
           <span style={{ color: nextStatus === 'fris' && !band?.nearLine ? 'var(--color-status)' : 'var(--color-warning)' }}>{band?.nearLine ? 'op de grens' : nextStatus}</span>
           {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Beslis bij het inlopen: voelen je benen zwaarder dan normaal, dan een dag later.</span>}
           {nextStatus !== 'fris' && nextResult.contributions[0] && (
-            <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {short(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '' : ': korter, of naar na de ' + (purpose === 'race' ? 'wedstrijd' : 'test')}.</span>
+            <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {formatWeekdayDayMonthNL(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '' : ': korter, of naar na de ' + (purpose === 'race' ? 'wedstrijd' : 'test')}.</span>
           )}
           {nextResult.painRecent && <span style={{ color: 'var(--color-ink-dim)' }}> Je meldde pijn, dus dit telt nooit vanzelf als fris.</span>}
         </p>

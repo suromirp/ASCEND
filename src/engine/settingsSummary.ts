@@ -8,6 +8,7 @@
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
 import { isDefaultOrder, resolveCardOrder } from './cardOrder';
+import { kgLabel } from '../utils/kg';
 import { resolveTestStops } from './bestEffort';
 import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
@@ -58,7 +59,7 @@ import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
-import { formatDateNL, localDateOf } from '../utils/dates';
+import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
 export const SUB_MAX_LENGTH = 40;
@@ -163,18 +164,15 @@ function noticeState(f: SettingsFacts): { on: boolean; support: NoticeSupport } 
 
 // ---- hulpjes -----------------------------------------------------------------
 
-const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
 const LONG_MONTHS = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
 const WEEKDAYS = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
 const WEEKDAYS_SHORT = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
 const dayOf = (iso: string) => Number(iso.slice(8, 10));
 const monthIndex = (iso: string) => Number(iso.slice(5, 7)) - 1;
-export const shortDate = (iso: string): string => `${dayOf(iso)} ${SHORT_MONTHS[monthIndex(iso)]}`;
 export const longDate = (iso: string): string => `${dayOf(iso)} ${LONG_MONTHS[monthIndex(iso)]}`;
 
 const num = (n: number, decimals = 2) => formatNumberNL(n, decimals);
-const kg = (n: number) => `${num(n)} kg`;
 const capitalize = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 const lower = (text: string) => text.toLowerCase();
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -217,7 +215,7 @@ function durationsValue(f: SettingsFacts): { value: string; auto: boolean } | un
 }
 
 function weightWords(w: NonNullable<SettingsFacts['weight']>): string {
-  return `${w.source === 'macrofactor' ? 'MacroFactor' : 'Zelf ingevuld'}, ${shortDate(w.date)}`;
+  return `${w.source === 'macrofactor' ? 'MacroFactor' : 'Zelf ingevuld'}, ${formatDayMonthNL(w.date)}`;
 }
 
 function clothingValue(f: SettingsFacts): { value: string; auto: boolean } {
@@ -370,7 +368,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
 
     // Doel en tochten
     case 'doelen':
-      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${shortDate(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' };
+      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${formatDayMonthNL(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' };
     case 'programma':
       return f.position
         ? { value: `Week ${f.position.weekInProgram} van ${f.position.totalWeeks}`, sub: f.goal ? `${capitalize(lower(f.position.phaseName))}, teruggerekend vanaf je doel` : capitalize(lower(f.position.phaseName)) }
@@ -400,7 +398,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bergschoenen-herinnering':
       return { checked: s.bootBreakInReminder !== false };
     case 'paklijst':
-      return f.packKg === undefined ? {} : { value: kg(f.packKg) };
+      return f.packKg === undefined ? {} : { value: kgLabel(f.packKg, 2) };
 
     // Forge
     case 'forge':
@@ -481,11 +479,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'stangen':
       return { value: listWeights(forge.profile.barsKg) };
     case 'schijven':
-      return { value: `${num(Math.min(...forge.profile.platesKg))} tot ${kg(Math.max(...forge.profile.platesKg))}` };
+      return { value: `${num(Math.min(...forge.profile.platesKg))} tot ${kgLabel(Math.max(...forge.profile.platesKg), 2)}` };
     case 'dumbbells':
-      return { value: `${num(forge.profile.dumbbells.startKg)} tot ${kg(forge.profile.dumbbells.maxKg)}` };
+      return { value: `${num(forge.profile.dumbbells.startKg)} tot ${kgLabel(forge.profile.dumbbells.maxKg, 2)}` };
     case 'kabels':
-      return { value: `Per ${kg(forge.profile.stackStepKg)}` };
+      return { value: `Per ${kgLabel(forge.profile.stackStepKg, 2)}` };
     case 'gym-profiel':
       return { value: forge.profile.name };
     case 'toestelgewichten': {
@@ -503,7 +501,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Lichaam
     case 'lichaamsgewicht':
       return f.weight
-        ? { value: `${num(f.weight.kg, 1)} kg`, auto: f.weight.source === 'macrofactor', sub: weightWords(f.weight) }
+        ? { value: kgLabel(f.weight.kg, 1), auto: f.weight.source === 'macrofactor', sub: weightWords(f.weight) }
         : { value: 'Niet ingevuld', dim: true };
     case 'vetpercentage':
       return { checked: s.showBodyFat !== false };
@@ -751,7 +749,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showWatchStatus !== false && s.showWatchStatusOnWeek !== false };
     case 'macrofactor':
       return f.macroFactor?.readAt
-        ? { title: 'Laatste export', value: shortDate(localDateOf(f.macroFactor.readAt)) }
+        ? { title: 'Laatste export', value: formatDayMonthNL(localDateOf(f.macroFactor.readAt)) }
         : { title: 'Export inlezen', value: 'Nog niet', dim: true, sub: 'Kracht en gewicht uit MacroFactor' };
     case 'macrofactor-leidend':
       return { checked: f.macroFactor?.leads !== false };
@@ -863,7 +861,7 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
       const hrText = hr.lthr ? `Drempel ${hr.lthr} bpm` : hr.maxHr ? `Max ${hr.maxHr} bpm` : 'Hartslag niet ingevuld';
       const inj = f.activeInjuries > 0 ? plural(f.activeInjuries, 'blessure', 'blessures') : 'geen blessures';
       return {
-        value: f.weight ? `${num(f.weight.kg, 1)} kg` : 'Leeg',
+        value: f.weight ? kgLabel(f.weight.kg, 1) : 'Leeg',
         dim: !f.weight,
         sub: `${hrText}, ${inj}`,
       };
@@ -881,7 +879,7 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
       if (!garmin && !mf) return { value: 'Geen', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' };
       const parts = [
         garmin ? `Garmin${f.watch?.syncedAt ? ` om ${clock(f.watch.syncedAt)}` : ''}` : null,
-        mf && f.macroFactor?.readAt ? `MacroFactor ${shortDate(localDateOf(f.macroFactor.readAt))}` : null,
+        mf && f.macroFactor?.readAt ? `MacroFactor ${formatDayMonthNL(localDateOf(f.macroFactor.readAt))}` : null,
       ].filter((p): p is string => p !== null);
       return garmin ? { value: 'Verbonden', dot: 'ok', sub: parts.join(', ') } : { value: 'MacroFactor', sub: parts.join(', ') };
     }
