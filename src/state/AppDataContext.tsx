@@ -725,6 +725,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [planChangeLog, setPlanChangeLog] = useState<PlanChangeProposal[]>([]);
   const [adviceResponses, setAdviceResponses] = useState<Record<string, AdviceResponse>>({});
   const [missedMemory, setMissedMemory] = useState<ResolvedMissedMemory | null>(null);
+  // Volgnummer van de laatste rememberMissed en hoeveel schrijfacties nog lopen: een lezing in loadState die
+  // begon voor een antwoord, of terwijl het nog geschreven wordt, mag dat antwoord niet overschrijven.
+  const missedSeq = useRef(0);
+  const missedWriting = useRef(0);
   const [debriefLogId, setDebriefLogId] = useState<string | null>(null);
   const [storageNotice, setStorageNotice] = useState<string | null>(null);
   // Planned sessions with a log being written right now: a second tap
@@ -742,6 +746,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // over a change made elsewhere.
   // Reads everything from storage and shows it. No planning sync here.
   const loadState = useCallback(async () => {
+    const missedSeqAtRead = missedSeq.current;
     const [programs, tpls, planned, storedLogs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses, missedRaw] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
@@ -769,7 +774,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const carried = carryTargetTimeAnswers(responses ?? {}, goals.map((g) => ({ id: g.id, updatedAt: g.updatedAt, targetMinutes: goalDetailsOf(g).targetMinutes })));
     if (carried) await MetaRepo.set('adviceResponses', carried);
     setAdviceResponses(carried ?? responses ?? {});
-    setMissedMemory(resolveMissedMemory(missedRaw));
+    if (missedSeq.current === missedSeqAtRead && missedWriting.current === 0) setMissedMemory(resolveMissedMemory(missedRaw));
     setTemplates(tpls);
     setPlannedSessions(planned);
     setSessionLogs(logs);
@@ -1590,8 +1595,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   // Een antwoord op de kaart (Niet nu, Liever niet, wat ASCEND zelf oversloeg): meteen in beeld, dan op dit toestel.
   const rememberMissed = useCallback((change: (m: ResolvedMissedMemory) => MissedMemory) => {
+    const seq = ++missedSeq.current;
+    missedWriting.current++;
     setMissedMemory((m) => resolveMissedMemory(change(m ?? resolveMissedMemory(undefined))));
-    void updateMissedMemory(change).then(setMissedMemory).catch(() => undefined);
+    void updateMissedMemory(change)
+      .then((stored) => {
+        if (missedSeq.current === seq) setMissedMemory(stored);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        missedWriting.current--;
+      });
   }, []);
 
   // "Hoort die bij elkaar?" Akkoord: the loose log gets the reference to its planned training.
