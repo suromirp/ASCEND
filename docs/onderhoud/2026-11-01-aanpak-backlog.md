@@ -42,6 +42,20 @@ de volgende ronde anders gaat. Wat blijvend beter werkt gaat in `.claude/skills/
 vooraf, model per soort taak, wat Warden of Lookout eerder had kunnen vangen) en, als het een fout is die terug kan
 komen, als invariant in de tekstkaart of als test. De volgende ronde begint pas na die reflectie.
 
+Bij elke fout, herstelronde of dure helper zoekt de reflectie de echte oorzaak, en kijkt naar al deze lagen:
+- de opdracht: ontbrak een eis vooraf, een maat, een bestand of een regel uit CLAUDE.md;
+- de rol: was het de goede helper (bouwer, ontwerper, reviewer, tester, Explore), of had een andere het beter
+  of goedkoper gedaan;
+- het model en het denkwerk: te licht (een fout die een zwaarder model had gezien) of te zwaar (dure helper voor
+  werk dat sonnet of haiku ook kon);
+- de informatie: had de helper de goede bronnen (docs, tekstkaart, echte back-up), of ontbrak er kennis die in de
+  repo hoort;
+- de poort: welke controle (test, invariant, Warden, screenshot) had het eerder kunnen vangen;
+- de coördinator zelf: verkeerde volgorde, te veel tegelijk, te weinig gelezen, te veel zelf gedaan.
+Per oorzaak één concrete aanpassing, en die gaat meteen in de werkverdeling, een skill, een agentbeschrijving,
+de tekstkaart of een test, zodat de volgende ronde hem al heeft. Aanpassingen aan `.claude/agents/` en
+`.claude/skills/` zijn met toestemming van de eigenaar (1 november).
+
 ## Volgorde
 
 Ronde 1, tegelijk:
