@@ -172,7 +172,7 @@ function permissionsRow(f: SettingsFacts): RowSummary {
   const rows = permissionRows(d, noticesNeed(f.settings, d));
   const sum = permissionsSummary(rows, !d.timed && f.storage === 'not_protected' ? 1 : 0);
   const warn = rows.find((r) => r.warn);
-  return { value: sum.value, ...(sum.warn ? { dot: 'warn' as const, sub: `${warn?.id === 'wekker' ? 'Exacte wekker' : 'Toestemming voor meldingen'} staat uit` } : {}) };
+  return { value: sum.value, ...(!sum.warn && sum.value !== 'Alles aan' ? { dim: true } : {}), ...(sum.warn ? { dot: 'warn' as const, sub: `${warn?.id === 'wekker' ? 'Exacte wekker' : 'Toestemming voor meldingen'} staat uit` } : {}) };
 }
 
 // De ochtendmelding: staat hij aan en kan hij ook werken (toestemming en een telefoon die het kan)?
