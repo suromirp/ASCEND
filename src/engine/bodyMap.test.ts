@@ -9,7 +9,7 @@ import {
   breakableSpotName,
   careForSpot, injuryNameFor, openComplaints, openComplaintsBySpot, resolvedComplaints, spotById, spotForComplaint, spotForStretchArea,
   halfClip, isOpen, noteTitle, spotTitle, openComplaintsBySpot as bySpotOpen, openSoreness, openSorenessBySpot, partnerOf, sideChoicesFor, sideOfInjury, spotsForSide, closedOn,
-  hitBoxes, isValidReportDate, MIN_TAP, offFigureParts, spotsForInjury, spotsForView, stretchesForSpot, stretchMinutes,
+  fysioSignal, hitBoxes, isValidReportDate, MIN_TAP, offFigureParts, spotsForInjury, spotsForView, stretchesForSpot, stretchMinutes,
 } from './bodyMap';
 
 function note(over: Partial<InjuryNote>): InjuryNote {
@@ -346,5 +346,33 @@ describe('titels in het blad van de kaart', () => {
     expect(noteTitle({ bodyPart: 'Quadriceps' })).toBe('Bovenbenen');
     expect(noteTitle({ bodyPart: 'Quadriceps', side: 'beide' })).toBe('Bovenbenen');
     expect(noteTitle({ bodyPart: 'Onderrug midden' })).toBe('Onderrug midden');
+  });
+});
+
+describe('een reden om het na te laten kijken', () => {
+  const knie = spotById('knie-r')!;
+  const today = '2026-10-22';
+  const week = '2026-10-19';
+
+  it('is er niet zonder melding of bij een lichte of matige melding', () => {
+    expect(fysioSignal(knie, [], undefined, week, today)).toBe(false);
+    expect(fysioSignal(knie, [note({ severity: 'licht' }), note({ id: 'n2', severity: 'matig' })], undefined, week, today)).toBe(false);
+  });
+
+  it('is er bij een open ernstige pijnmelding op die plek, niet op een andere', () => {
+    expect(fysioSignal(knie, [note({ severity: 'ernstig' })], undefined, week, today)).toBe(true);
+    expect(fysioSignal(knie, [note({ severity: 'ernstig', bodyPart: 'Knie links' })], undefined, week, today)).toBe(false);
+  });
+
+  it('telt een opgeloste of een spierpijnmelding niet', () => {
+    expect(fysioSignal(knie, [note({ severity: 'ernstig', resolvedDate: '2026-10-21' })], undefined, week, today)).toBe(false);
+    expect(fysioSignal(knie, [note({ severity: 'ernstig', kind: 'spierpijn' })], undefined, week, today)).toBe(false);
+  });
+
+  it('is er als je deze week niet kon trainen met deze plek, niet een andere week', () => {
+    const check = { weekStart: week, trouble: 'niet_kunnen' as const, area: 'Knie' };
+    expect(fysioSignal(knie, [], [check], week, today)).toBe(true);
+    expect(fysioSignal(knie, [], [{ ...check, weekStart: '2026-10-12' }], week, today)).toBe(false);
+    expect(fysioSignal(knie, [], [{ ...check, trouble: 'minder' }], week, today)).toBe(false);
   });
 });

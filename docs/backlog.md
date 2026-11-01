@@ -7,11 +7,11 @@ Bijgewerkt op 1 november 2026.
 ## Loopt nu
 
 Ronde 1 van `docs/onderhoud/2026-11-01-aanpak-backlog.md`, gestart op 1 november om 19:00:
-- De rustdag komt terug nadat een voorstel hem weghaalde (gebouwd en groen bij Warden, drie kleine punten).
+- Trainingen die niet doorgingen afhandelen (Sherpa, opus).
 - Fysio-tekst, voorschriftregel en het citaat in het Engels (Sherpa, sonnet).
 - Een vakantie bijwerken in Week, met het leave-merk na wissen (Sherpa, opus).
 
-Live op 1 november: Stand schuift niet meer zijwaarts, het cijferblok van Forge blijft open, de ochtendkaart na je antwoord, drie ontwerprapporten in `docs/visie/`.
+Live op 1 november: Stand schuift niet meer zijwaarts, het cijferblok van Forge blijft open, de ochtendkaart na je antwoord, de rustdag die terugkomt, drie ontwerprapporten in `docs/visie/`.
 
 Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10, onderhoud punt 2 en 3.
 
@@ -52,7 +52,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 ## Na het herstel van het abonnement (zondag 1 november)
 
-- Trainingen die niet doorgingen automatisch afhandelen. In de back-up van 31 oktober telden 22 van de 34 trainingen van de laatste 8 weken als gemist, veel nog op "gepland" zonder log. Idee: na een paar dagen zonder log vraagt de app één keer kort "Niet gedaan?" (of zet hem zelf op overgeslagen als je dat instelt), en een log van het horloge of MacroFactor op een andere dag koppelt hij als voorstel aan de geplande training. Nooit een log verzinnen; overslaan is een status, geen historie. Instelbaar, met besluit.
+- (Loopt nu) Trainingen die niet doorgingen automatisch afhandelen. In de back-up van 31 oktober telden 22 van de 34 trainingen van de laatste 8 weken als gemist, veel nog op "gepland" zonder log. Idee: na een paar dagen zonder log vraagt de app één keer kort "Niet gedaan?" (of zet hem zelf op overgeslagen als je dat instelt), en een log van het horloge of MacroFactor op een andere dag koppelt hij als voorstel aan de geplande training. Nooit een log verzinnen; overslaan is een status, geen historie. Instelbaar, met besluit.
 - Spierindex stap 1 en 2: controle op je training en slimmer vervangen.
 - Grote bestanden opsplitsen: AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations.
 - Android-app (Capacitor), als een van de grote nieuwe features van deze ronde. Lokale meldingen komen daarmee (een PWA zonder server kan geen melding sturen als de app dicht is).

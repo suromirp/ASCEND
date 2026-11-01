@@ -584,6 +584,13 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
     expect(rowSummary('lucht-vanaf', withSettings({ sky: 'day' })).hidden).toBe(true);
   });
 
+  it('het citaat op Vandaag is Engels tot je iets anders kiest', () => {
+    expect(rowSummary('dagcitaat', facts()).value).toBe('Engels');
+    expect(rowSummary('dagcitaat', withSettings({ quoteLanguage: 'nl' })).value).toBe('Nederlands');
+    expect(rowSummary('dagcitaat', withSettings({ quoteLanguage: 'off' })).value).toBe('Uit');
+    expect(rowSummary('dagcitaat', withSettings({ quoteLanguage: 'rommel' })).value).toBe('Engels');
+  });
+
   it('beweging is Normaal tot je iets anders kiest', () => {
     expect(rowSummary('beweging', facts()).value).toBe('Normaal');
     expect(rowSummary('beweging', withSettings({ motion: 'calm' })).value).toBe('Rustig');

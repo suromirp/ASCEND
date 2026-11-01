@@ -1,5 +1,6 @@
 import { QUOTE_LIBRARY, type Quote } from '../data/quoteLibrary';
 import { AUTHOR_WIKIPEDIA } from '../data/quoteAuthors';
+import { QUOTE_NL } from '../data/quoteTranslations';
 
 // "Victory-tier" — milestones cleared on the Ascent Ladder draw from this
 // narrower, more triumphant slice instead of the full library.
@@ -26,8 +27,16 @@ export function pickCompletionQuote(): Quote {
 // same quote out), drawn from the source library's own recommended picks
 // so the daily card is always a strong one rather than a random draw from
 // the full 72.
-export function dailyQuote(dateIso: string): Quote {
-  const pool = DAILY_POOL.length > 0 ? DAILY_POOL : QUOTE_LIBRARY;
+// Is het citaat in de bibliotheek Engels? Latijnse en Griekse spreuken niet: die hebben geen Engelse tekst.
+export function isEnglishQuote(q: Quote): boolean {
+  return !QUOTE_NL[q.id]?.latin && !/[\u0370-\u03FF]/.test(q.quote);
+}
+
+// Met `language: 'en'` komen alleen citaten in het Engels aan de beurt, zodat de instelling "Engels" klopt.
+export function dailyQuote(dateIso: string, language?: 'en' | 'nl'): Quote {
+  const base = DAILY_POOL.length > 0 ? DAILY_POOL : QUOTE_LIBRARY;
+  const english = language === 'en' ? base.filter(isEnglishQuote) : base;
+  const pool = english.length > 0 ? english : base;
   const hash = Array.from(dateIso).reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 0);
   return pool[hash % pool.length];
 }

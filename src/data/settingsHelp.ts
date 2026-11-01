@@ -83,6 +83,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Extra licht', text: 'zeker 4 herhalingen over en een set minder.' },
     ],
   },
+  dagcitaat: {
+    title: 'Citaat op Vandaag',
+    lead: 'Het citaat onderaan Vandaag, elke dag een ander. Een tik op het citaat wisselt van taal.',
+    points: [
+      { head: 'Engels', text: 'de gangbare Engelse vertaling van de stoïcijnen en anderen. Een paar spreuken blijven Latijn.' },
+      { head: 'Nederlands', text: 'onze eigen vertaling, waar die er is.' },
+      { head: 'Uit', text: 'geen citaat onderaan Vandaag. Het citaat na een training heeft een eigen schakelaar.' },
+    ],
+  },
   beweging: {
     title: 'Beweging',
     lead: 'Hoeveel de app beweegt: een zachte indruk bij een tik, ringen die vollopen, getallen die optellen.',

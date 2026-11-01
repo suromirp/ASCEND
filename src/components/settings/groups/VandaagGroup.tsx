@@ -6,6 +6,7 @@ import { resolveNavigation } from '../../../engine/navigationSettings';
 import { resolveBodyCheck } from '../../../engine/bodyCheckSettings';
 import { resolveLegEase, resolveLegEaseHow } from '../../../engine/legEaseSettings';
 import { resolveMotion } from '../../../engine/motionSettings';
+import { resolveQuoteLanguage } from '../../../engine/quoteSettings';
 import { resolveSky } from '../../../engine/skySettings';
 import { type InsightTopicSwitch, type RunDetailScreenSettings, type RunFormSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
 import { matchTodayProfile, todayProfilePatch, type TodayProfileChoice } from '../../../engine/settingsProfiles';
@@ -126,6 +127,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
                 <SummaryRow id="lijfvraag" title="Hoe voelt je lijf?" facts={facts} info="lijfvraag" onClick={() => setInner('lijfvraag')} />
                 <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} onChange={(on) => set({ weeklyQuestion: on })} />
                 <SummaryRow id="citaten" title="Citaat na een training" facts={facts} onChange={(on) => set({ completionMoment: on })} />
+                <SummaryRow id="dagcitaat" title="Citaat op Vandaag" facts={facts} info="dagcitaat" onClick={() => setInner('dagcitaat')} />
                 <SummaryRow id="geluid" title="Geluid" facts={facts} onChange={(on) => void updateSettings({ introSoundEnabled: on })} />
               </SettingsList>
             </div>
@@ -208,6 +210,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {inner === 'lichterbenen-hoe' && <ChoiceFromDef def={CHOICES.lichterbenenHoe} value={resolveLegEaseHow(settings)} onPick={(v) => void updateSettings({ legEaseHow: v })} onClose={closeInner} />}
       {inner === 'lijfvraag' && <ChoiceFromDef def={CHOICES.lijfvraag} value={resolveBodyCheck(settings)} onPick={(v) => void updateSettings({ bodyCheck: v })} onClose={closeInner} />}
       {inner === 'lucht-vanaf' && <ChoiceFromDef def={CHOICES.luchtVanaf} value={sky.nightFrom} onPick={(v) => void updateSettings({ skyNightFrom: v })} onClose={closeInner} />}
+      {inner === 'dagcitaat' && <ChoiceFromDef def={CHOICES.dagcitaat} value={resolveQuoteLanguage(settings)} onPick={(v) => void updateSettings({ quoteLanguage: v })} onClose={closeInner} />}
       {sheet === 'beweging' && <ChoiceFromDef def={CHOICES.beweging} value={resolveMotion(settings)} onPick={(v) => void updateSettings({ motion: v })} onClose={close} />}
       {sheet === 'terugknop' && <ChoiceFromDef def={CHOICES.terugknop} value={nav.tabBack} onPick={(v) => void updateSettings({ tabBack: v })} onClose={close} />}
       {sheet === 'hervatten' && <ChoiceFromDef def={CHOICES.hervatten} value={nav.resumeMinutes as 0 | 60 | 120 | 240 | 480} onPick={(v) => void updateSettings({ resumeMinutes: v })} onClose={close} />}
