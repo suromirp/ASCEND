@@ -8,6 +8,7 @@ import { BootScreen } from './components/BootScreen';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt, UpdatedNotice } from './components/UpdatePrompt';
 import { DeviceNoticesHost } from './components/DeviceNoticesHost';
+import { DeviceShellHost } from './components/DeviceShellHost';
 import { LiveUpdateHost } from './components/LiveUpdateHost';
 import { PermissionWelcome } from './components/welcome/PermissionWelcome';
 import { SHOW_SPLASH } from './utils/updateFlag';
@@ -385,6 +386,7 @@ function AppShell() {
       <UpdatedNotice />
       {/* De Android-app: meldingen op tijd, zelf bijwerken en de welkomstreeks. In de browser doen ze niets. */}
       <DeviceNoticesHost />
+      <DeviceShellHost />
       <LiveUpdateHost ready={mainReady} />
       <PermissionWelcome ready={mainReady} />
       <CompletionMoment event={celebration} onDismiss={dismissCelebration} />
