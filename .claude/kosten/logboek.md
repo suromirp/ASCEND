@@ -53,3 +53,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-01, Ontwerprapport Forge, Cartographer, opus (ontwerper), 136k, 5 min, 0
 - 2026-11-01, Ontwerprapport gegevens, Cartographer, opus (ontwerper), 158k, 6 min, 0
 - 2026-11-01, Ontwerprapport instellingen, Cartographer, opus (ontwerper), 209k, 9 min, 0
+- 2026-11-01, Stand overloop, Sherpa, sonnet (ontwikkelaar), 86k, 24 min, 0
+- 2026-11-01, Forge cijferblok, Sherpa, sonnet (ontwikkelaar), 86k, 24 min, 0
