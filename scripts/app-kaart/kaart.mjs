@@ -235,6 +235,7 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
       if (breed) breedteRegel += `\n[te breed: ${breed.breedste} px in een venster van ${breed.w} px, het verst: ${breed.dader}]\n`;
     }
     await o.page.setViewportSize({ width: 390, height: hoogteNu });
+    await o.page.waitForTimeout(300);
     const fouten = o.errs.filter((e) => !/favicon|manifest|Service Worker/i.test(e)).map((e) => `[console: ${e.slice(0, 160)}]`);
     const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.\n\n${tekst}${breedteRegel}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
     writeFileSync(join(uitMap, id + '.md'), md);
