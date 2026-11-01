@@ -79,7 +79,7 @@ describe('morningProposal: altijd een voorstel met Akkoord', () => {
     expect(a?.id).toBe(morningProposalId(c.session.id, TODAY));
     expect(a?.ruleId).toBe('MORNING-WATCH');
     expect(a?.proposal?.changes[0]).toMatchObject({ plannedSessionId: c.session.id, action: 'move', fromDate: TODAY });
-    expect(a?.proposal?.changes[0].toDate! > TODAY).toBe(true);
+    expect((a?.proposal?.changes[0].toDate ?? '') > TODAY).toBe(true);
     expect(a?.effect).toContain('rusthartslag 6 hoger dan normaal en HRV lager dan normaal');
     expect(a?.why).toMatch(/kan het helpen/);
     expect(a?.why).not.toMatch(/voorkom/i);

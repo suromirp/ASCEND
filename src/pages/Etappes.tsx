@@ -23,12 +23,22 @@ import { mainGoal } from '../engine/mainGoal';
 import { climbPace, stageOwnLine, stageTimeEstimate } from '../engine/climbPace';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { signalOn } from '../engine/signalSettings';
+import type { SessionLog } from '../models/training';
+import type { AppSettings } from '../storage/database';
 
 // "Nachten: 2 tent, 1 gîte, 33 nog niet gekozen." Alleen wat er is.
 function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): string {
   const chosen = SLEEP_KINDS.filter((k) => nights[k] > 0).map((k) => `${nights[k]} ${SLEEP_LABEL[k].toLowerCase()}`);
   if (chosen.length === 0) return 'Je hebt nog geen slaapplekken gekozen. Kies ze per etappe.';
   return `Nachten: ${[...chosen, ...(nights.open > 0 ? [`${nights.open} nog niet gekozen`] : [])].join(', ')}.`;
+}
+
+// De etappe op je eigen klimtempo, met de rugzak van je hoofddoel (engine/climbPace.ts).
+function ownStageTime(stage: Gr5Stage, logs: SessionLog[], today: string, settings: AppSettings, packKg: number | undefined): string | undefined {
+  if (stage.km === null || stage.up === null || stage.down === null) return undefined;
+  const on = signalOn(settings, 'stageOwnPace');
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  return stageOwnLine(stageTimeEstimate(on ? climbPace(logs, today) : undefined, { km: stage.km, up: stage.up, down: stage.down }, { on, packKg, bodyKg }));
 }
 
 export function EtappesPage() {
@@ -49,21 +59,13 @@ export function EtappesPage() {
   // Het hoofddoel (het doel met de ladder) bepaalt de startdatum.
   const goal = mainGoal(trainingGoals, goalMilestones, 'live');
   const startDate = goal?.targetDate;
+  const goalPack = useMemo(() => goal?.requirements.find((r) => r.kind === 'packWeight')?.target?.amount, [goal]);
 
   const days = useMemo(() => buildItinerary(plan, startDate), [plan, startDate]);
   const totals = useMemo(() => itineraryTotals(days), [days]);
   const hardest = useMemo(() => hardestDays(days), [days]);
   const dayOfStage = (stage: Gr5Stage): ItineraryDay => days.find((d) => d.stages.some((s) => s.id === stage.id))!;
   const open = openId ? GR5_STAGES.find((s) => s.id === openId) : undefined;
-  // De etappe op je eigen klimtempo, met de rugzak van je hoofddoel (engine/climbPace.ts).
-  const ownPaceOn = signalOn(settings, 'stageOwnPace');
-  const climb = useMemo(() => (ownPaceOn ? climbPace(sessionLogs, today) : undefined), [ownPaceOn, sessionLogs, today]);
-  const goalPack = goal?.requirements.find((r) => r.kind === 'packWeight')?.target?.amount;
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
-  const ownTime = (stage: Gr5Stage): string | undefined =>
-    stage.km === null || stage.up === null || stage.down === null
-      ? undefined
-      : stageOwnLine(stageTimeEstimate(climb, { km: stage.km, up: stage.up, down: stage.down }, { on: ownPaceOn, packKg: goalPack, bodyKg }));
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
@@ -197,7 +199,7 @@ export function EtappesPage() {
           logs={sessionLogs}
           today={today}
           water={showWater ? stageWater(open, sweat) : undefined}
-          ownTime={ownTime(open)}
+          ownTime={ownStageTime(open, sessionLogs, today, settings, goalPack)}
           onChoose={choose}
           onClose={() => setOpenId(null)}
         />
