@@ -94,9 +94,11 @@ Ronde 3, alleen:
 9. Grote bestanden opsplitsen (AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations). Dit
    raakt alles en gaat pas als ronde 1 en 2 live staan. Gedrag mag niet veranderen: alle tests en de kaart
    gelijk, review door Warden. In dezelfde ronde: de ongebruikte exports uit de nulmeting van 29 oktober
-   (`docs/onderhoud/2026-10-29-exports.txt`, 854 stuks) opruimen waar ze echt nergens gebruikt worden, en een
-   korte, menselijke uitleg `docs/architectuur/zo-werkt-de-app.md`: in gewone taal hoe de app in elkaar zit,
-   waar je wat vindt en hoe een wijziging van idee naar live gaat, met verwijzingen naar de andere bestanden.
+   (`docs/onderhoud/2026-10-29-exports.txt`, 854 stuks) opruimen waar ze echt nergens gebruikt worden.
+   Daarna code optimaliseren, gemeten voor en na: de bundel (grootte per chunk, routes en zware schermen lui laden),
+   de start van de app (tijd tot Vandaag in beeld op 4x vertraagde processor), onnodige renders in de grote
+   schermen, IndexedDB-lezingen die vaker of breder gaan dan nodig, en de duur van de testsuite (nu ongeveer 4 min;
+   bijvoorbeeld pool en isolatie van vitest). Alleen wat meetbaar beter wordt en gedrag niet verandert.
 
 Ronde 2b, naast ronde 2:
 10. Android-app met Capacitor, een grote feature van deze ronde: de configuratie, lokale meldingen, en een
