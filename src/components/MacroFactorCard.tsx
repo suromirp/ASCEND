@@ -22,10 +22,10 @@ import { useMacroFactor } from '../state/useMacroFactor';
 import { clearRunMessage, getRunState, runMacroFactor, subscribeRun } from '../storage/macrofactorRun';
 import { describeEnrichment } from '../engine/macrofactorEnrich';
 import { describeStrengthChange } from '../engine/macrofactorLead';
-import { describeWorkout, minutesLabel } from '../engine/macrofactorLink';
+import { describeWorkout } from '../engine/macrofactorLink';
 import { canAdjustDuration, chosenDurationLine, suggestedDuration, withChosenDuration, type DurationChoice, type NewProposal } from '../engine/macrofactorDuration';
 import { isReady, openProposals, RUN_SLOW_NOTE, runProgressLabel, type ReadyProposal } from '../engine/macrofactorRun';
-import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
+import { formatDateNL, formatHoursMinutesNL, todayISO, weekdayLongNL } from '../utils/dates';
 import { Icon } from './icons';
 import { MacroFactorDurationSheet } from './MacroFactorDurationSheet';
 import { TextButton } from './TextButton';
@@ -215,6 +215,6 @@ function what(p: ReadyProposal): string {
   if (p.patch.strengthData) missing.push('de sets en gewichten');
   if (p.patch.strengthRir !== undefined) missing.push('de herhalingen in reserve');
   const minutes = p.workout.durationSec ? Math.round(p.workout.durationSec / 60) : undefined;
-  const kept = minutes !== undefined && Math.abs(minutes - p.log.durationMinutes) >= 1 ? ` MacroFactor noteerde ${minutesLabel(minutes)}; jouw ${minutesLabel(p.log.durationMinutes)} blijft staan.` : '';
+  const kept = minutes !== undefined && Math.abs(minutes - p.log.durationMinutes) >= 1 ? ` MacroFactor noteerde ${formatHoursMinutesNL(minutes)}; jouw ${formatHoursMinutesNL(p.log.durationMinutes)} blijft staan.` : '';
   return `Je legde hem al vast op ${dayLabel(p.log.completedDate)}. Aanvullen: ${missing.join(' en ')}.${kept}`;
 }
