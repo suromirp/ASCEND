@@ -1,3 +1,4 @@
+import type { MissedMemory } from '../engine/missedTraining';
 // ASCEND — Backup / Import / Restore domain types
 //
 // Implements ASCEND Technical Architecture v0.3.2's backup/import/restore
@@ -109,6 +110,10 @@ export interface AscendBackupPayloadV5 extends Omit<AscendBackupPayloadV4, 'vers
   // imports as before. Left out with "Ochtendgetallen in back-up" off and in the copies taken
   // before an import (an import only adds mornings, it never removes one).
   mornings?: BackupMorning[];
+  // What you answered on "Training die niet doorging" (Niet nu, Liever niet, what ASCEND skipped by
+  // itself; engine/missedTraining.ts#MissedMemory). Optional and additive, so the version stays 5: a
+  // file without it imports as before and the device keeps its own.
+  missedTraining?: MissedMemory;
 }
 
 export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4 | AscendBackupPayloadV5;
@@ -164,6 +169,9 @@ export interface NormalizedBackupData {
   // The mornings that came with the file (storage/migrations.ts#migrateMornings); undefined
   // means "not in this backup".
   mornings?: RecoveryMetric[];
+  // The answers on "Training die niet doorging", read through resolveMissedMemory; undefined means
+  // "not in this backup".
+  missedTraining?: MissedMemory;
 }
 
 // --- Data categories ---------------------------------------------------------

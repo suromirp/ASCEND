@@ -253,7 +253,7 @@ separate entities:
 
 ### Logs en historie
 
-**Never rewrite historical logs when schedules change.** Completion is never stored as a flag: a session is "done" when a `SessionLog` references the `PlannedSession` (`engine/sessionStatus.ts`). `MilestoneProgress` and derived additions (`detail`, `bestEffort`, `runDetail`, `forgeLog`) are append-only too. Four exceptions, each at the owner's request and each put back by its own function: hand-made log over watch numbers (`manualMeasured`, `restoreManual`), MacroFactor numbers into a strength log (same field), a watch log cut at both ends (`trim`, `undoTrim`), and a log that follows corrections in intervals.icu (`sourceSync`, `restoreSourceUpdate`). Full text: `docs/architectuur/historie-en-logs.md`.
+**Never rewrite historical logs when schedules change.** Completion is never stored as a flag: a session is "done" when a `SessionLog` references the `PlannedSession` (`engine/sessionStatus.ts`). `MilestoneProgress` and derived additions (`detail`, `bestEffort`, `runDetail`, `forgeLog`) are append-only too. Five exceptions, each at the owner's request and each put back by its own function: hand-made log over watch numbers (`manualMeasured`, `restoreManual`), MacroFactor numbers into a strength log (same field), a watch log cut at both ends (`trim`, `undoTrim`), a log that follows corrections in intervals.icu (`sourceSync`, `restoreSourceUpdate`), and a loose watch or MacroFactor log linked to its planned training after Akkoord (`linkedLater`, `unlinkLog`). Full text: `docs/architectuur/historie-en-logs.md`.
 
 ### Onderwerpen
 

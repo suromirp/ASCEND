@@ -17,6 +17,7 @@ import type { GroupProps } from './types';
 import { FAST_GROWTH_WARNING, resolveLongRunGrowth } from '../../../engine/runGrowth';
 import { resolveTestStops } from '../../../engine/bestEffort';
 import { REST_DAY_OPTIONS } from '../../../engine/restDay';
+import { resolveMissedSettings } from '../../../engine/missedTraining';
 import { ChoiceList, ChoiceSheet } from '../Sheet';
 
 const SPORTS: Sport[] = SPORT_LIST;
@@ -36,6 +37,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
   const [advancedGrowth, setAdvancedGrowth] = useState(false);
   const sport = SPORTS.find((s) => sheet === `sport-${s}`);
   const restDay = settings.restDay ?? 1;
+  const missed = resolveMissedSettings(settings);
 
   // Een andere rustdag is altijd een voorstel met Akkoord (engine/restDayProposal.ts).
   function chooseRestDay(day: number) {
@@ -66,11 +68,12 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="Hoe ASCEND plant"
-        advancedIds={['slepen-week', 'volgorde-stand', 'vakantie-opzij']}
-        advancedTitles="Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie"
+        advancedIds={['bundel-niet-doorgegaan', 'slepen-week', 'volgorde-stand', 'vakantie-opzij']}
+        advancedTitles="Training die niet doorging, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie"
         storageKey="planning-geavanceerd"
         advanced={
           <>
+            <SummaryRow id="bundel-niet-doorgegaan" title="Training die niet doorging" facts={facts} info="nietDoorgegaan" onClick={() => setSheet('bundel-niet-doorgegaan')} />
             <SummaryRow id="slepen-week" title="Trainingen slepen in Week" facts={facts} info="slepenWeek" onChange={(on) => void updateSettings({ dragWeek: on })} />
             <SummaryRow id="volgorde-stand" title="Volgorde van Je stand" facts={facts} info="volgordeStand" onClick={() => setSheet('volgorde-stand')} />
             <SummaryRow id="vakantie-opzij" title="Opzij voor een vakantie" facts={facts} info="vakantieOpzij" onClick={() => setSheet('vakantie-opzij')} />
@@ -93,6 +96,19 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="rustdag" title="Rustdag" facts={facts} onClick={() => setInner('rustdag')} />
           <SummaryRow id="rustdag-doen" title="Op je rustdag" facts={facts} onClick={() => setInner('rustdag-doen')} />
         </BundleSheet>
+      )}
+      {sheet === 'bundel-niet-doorgegaan' && (
+        <BundleSheet eyebrow="Planning" title="Training die niet doorging" line="Een training die voorbij is zonder log." onClose={close}>
+          <SummaryRow id="niet-doorgegaan" title="Wat ASCEND doet" facts={facts} onClick={() => setInner('niet-doorgegaan')} />
+          {rowShown('niet-doorgegaan-dagen', facts) && <SummaryRow id="niet-doorgegaan-dagen" title="Na hoeveel dagen" facts={facts} onClick={() => setInner('niet-doorgegaan-dagen')} />}
+          <SummaryRow id="log-koppelen" title="Log op een andere dag koppelen" facts={facts} onChange={(on) => void updateSettings({ missedLink: on })} />
+        </BundleSheet>
+      )}
+      {inner === 'niet-doorgegaan' && (
+        <ChoiceFromDef def={CHOICES.nietDoorgegaan} value={missed.choice} onPick={(v) => void updateSettings({ missedTraining: v })} onClose={closeInner} />
+      )}
+      {inner === 'niet-doorgegaan-dagen' && (
+        <ChoiceFromDef def={CHOICES.nietDoorgegaanDagen} value={missed.days} onPick={(v) => void updateSettings({ missedTrainingDays: v })} onClose={closeInner} />
       )}
       {inner === 'trainingstijd' && (
         <BudgetSheet dailyTimeBudget={goalEngineConfig.availability.dailyTimeBudget} onSave={plan.saveBudget} onClose={closeInner} />
