@@ -30,7 +30,8 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 ## Voor de eigenaar
 
-- Forge (ontwerprapport, vraag 1 en 4): welke snelknop wil je houden, als er een blijft, en gebruik je Alles vaak? Tot je antwoord bouwt Sherpa de rest van het Forge-voorstel en blijven de snelknoppen en Alles staan.
+- Beantwoord (1 november): de snelknoppen in Forge gaan weg; de kolom Alles gebruikt de eigenaar nooit en verhuist naar het blad Oefening. Bouwen met het Forge-ontwerprapport.
+- Helemaal aan het eind, als alles klaar is (toestemming van de eigenaar, 1 november): de vakantiedata van de eigenaar uit de geschiedenis van git halen (oude commits van `docs/onderhoud/2026-11-01-aanpak-backlog.md` en de commit c305cb1 die nooit op main kwam). Dat herschrijft geschiedenis op main en de werkbranch; eerst alle helpers stoppen, daarna de deploy controleren.
 - De overige vragen uit de drie ontwerprapporten (`docs/visie/Ontwerprapport gegevens.md`, `instellingen.md`, `Forge.md`) kiest de coördinator met het advies; elke keuze staat in de terugblik van de ronde waarin hij gebouwd wordt. Het citaat onderaan Vandaag wordt Engels, zoals de eigenaar al vroeg.
 
 ## Uit de ontwerprapporten
