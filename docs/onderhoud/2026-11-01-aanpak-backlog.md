@@ -84,6 +84,32 @@ Per oorzaak één concrete aanpassing, en die gaat meteen in de werkverdeling, e
 de tekstkaart of een test, zodat de volgende ronde hem al heeft. Aanpassingen aan `.claude/agents/` en
 `.claude/skills/` zijn met toestemming van de eigenaar (1 november).
 
+## Na elke functie en elke ronde: klopt het geheel?
+
+Wens van de eigenaar (1 november): het eind moet een volledig pakket zijn, waarin alles af is en logisch samenhangt.
+Daarom kijkt de coördinator naast het terugkijken op het werk ook naar het product zelf.
+
+Na elke functie, voordat hij live gaat, een korte toets door de coördinator zelf:
+- Is de functie af van begin tot eind: een ingang die je vindt, een lege stand, een foutstand, de instelling op de
+  vijf plekken, de uitleg, de export en import, en een weg terug (Annuleren, een voorstel afwijzen, ongedaan maken)?
+- Past hij bij de rest: dezelfde woorden, dezelfde plek voor hetzelfde soort ding, geen tweede manier om iets te
+  doen wat al kan, en hij helpt de vraag "wat is mijn missie vandaag" binnen twee seconden?
+- Wat raakt hij dat nu niet meer klopt: een andere kaart, een melding, de weekterugblik, een tekst in de uitleg?
+
+Na elke ronde een bredere blik, met de tekstkaart (`docs/app-kaart/`) en screenshots van de veranderde schermen:
+- Loop de app langs als de vier personen uit ronde 4 en kijk of de nieuwe functies samen een logisch verhaal zijn.
+- Wat mist er nu, wat is dubbel geworden, en wat is er door het nieuwe werk opgekomen om het af te maken?
+- De uitkomst gaat als kopje "Klopt het geheel?" in `docs/onderhoud/reflectie-2026-11-01.md`.
+
+Wat er uit zo'n toets komt, en waar het heen gaat:
+- Een gat in een functie die net gebouwd is (een ontbrekende lege stand, instelling of weg terug): dezelfde bouwer
+  maakt hem af voordat hij live gaat. Een functie met zo'n gat is niet af.
+- Iets wat nodig is om het geheel logisch te maken, binnen wat de backlog al wil: een nieuw punt in
+  `docs/backlog.md` met de reden, en het gaat mee in de eerstvolgende ronde.
+- Een echt nieuw idee of iets wat de richting verandert: in de backlog onder "Voor de eigenaar", niet bouwen.
+- Zo blijft de backlog eindig: elke ronde mag hoogstens vijf nieuwe punten toevoegen. Wat erbuiten valt wordt
+  gebundeld voor de eigenaar.
+
 ## Alles wat zichtbaar is krijgt de ASCEND-stijl
 
 Elke opdracht voor iets zichtbaars noemt de stijl als eis, niet als wens: de ontwerptaal uit CLAUDE.md (zee en berg,
