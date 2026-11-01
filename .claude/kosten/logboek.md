@@ -72,3 +72,8 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-01, Review niet doorgegaan, Warden, opus (reviewer), 100k, 9 min, 0, rood: twee blokkerend
 - 2026-11-01, Tekstkaart uitbreiden, Sherpa, sonnet (ontwikkelaar), 153k, 52 min, 0, poortgat gedicht; kaart nu 21 schermen en bijna 4 min
 - 2026-11-01, Ochtenden in back-up, Sherpa, opus (ontwikkelaar), 96k, 23 min, 0
+- 2026-11-01, Gemist herstel tien punten, Sherpa, opus (ontwikkelaar), hervat 38k, 21 min, 1
+- 2026-11-01, Review ochtenden, Warden, opus (reviewer), 68k, 3 min, 0, rood: twee blokkerend (dataverlies)
+- 2026-11-01, Ochtenden herstel, Sherpa, opus (ontwikkelaar), hervat 30k, 19 min, 1
+- 2026-11-01, Onderhoud opmaak, Sherpa, sonnet (ontwikkelaar), 143k, 41 min, 0
+- 2026-11-01, Review onderhoud opmaak, Warden, sonnet (reviewer), 71k, 3 min, 0, groen
