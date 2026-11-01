@@ -101,6 +101,7 @@ export function ValueCell({
     <button
       type="button"
       onClick={onOpen}
+      data-dock-keep=""
       aria-label={`${label}: ${text === '' ? 'leeg' : text}`}
       aria-pressed={active}
       className="flex min-h-[44px] w-full min-w-0 items-center justify-center rounded-lg px-1 font-sans text-sm tabular-nums"

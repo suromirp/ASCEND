@@ -18,6 +18,12 @@ export const INVARIANTEN = [
     controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^.*\b(NaN|undefined|null)\b.*$/gm).map((m) => `${s}: "${m[0].trim()}"`)),
   },
   {
+    // kaart.mjs meet bij elk scherm de breedte van de pagina en schrijft alleen bij een overschrijding een regel
+    // "[te breed: ...]". Een pagina die breder is dan het venster schuift zijwaarts.
+    naam: 'Geen scherm breder dan het venster',
+    controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^\[te breed: .*\]$/gm).map((m) => `${s}: ${m[0]}`)),
+  },
+  {
     naam: 'Geen "0 min" bij een gedane training',
     controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^.*\bgedaan\b.*\b0 min\b.*$|^.*\b0 min\b.*\bgedaan\b.*$/gim).map((m) => `${s}: "${m[0].trim()}"`)),
   },

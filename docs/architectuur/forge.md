@@ -126,3 +126,5 @@ pager. The set swipe never sets React state or measures while moving: a transfor
 row moved by the same transform, `will-change` only while swiping, 200 ms ease-out on release (none in Uit). Measured with CDP touch
 events: no commits from the moves. An untouched exercise of a reopened draft always takes today's plan (`forgeInput.ts#touchedInDraft`),
 and Zonder spotter turns a set to failure into an open set with reserve (`SetTarget.open`, "7+ met 1 over").
+
+**Het eigen cijferblok** (`components/forge/InputDock.tsx`, `engine/forgeInput.ts#tapClosesDock`): het blok blijft open van veld naar veld, met de pijl, bij een tik op een ander vak, bij vegen en bij een tik op de strip met oefeningen. Het sluit bij een tik buiten de velden (ook afvinken), bij de terugknop en bij het verlaten van Forge. De key van `InputDock` is alleen `dockEpoch`, nooit het slot, de set of het veld (`dockKey.scan.test.ts`); wat bij een veld hoort wordt in de render gezet via `fieldKey`. Wat het blok openhoudt draagt `data-dock-keep`.

@@ -316,7 +316,7 @@ function AppShell() {
       <main
         id={SCROLLER_ID}
         ref={mainRef}
-        className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
+        className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto overflow-x-clip"
         style={{ paddingBottom: pill ? 'calc(8.25rem + max(env(safe-area-inset-bottom), 8px))' : 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
       >
         {/* De kop (merkteken en tandwiel) staat op elke tab in SkyBand, bovenaan

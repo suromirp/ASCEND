@@ -34,10 +34,16 @@ bijgewerkt.
 - `deep-research` als een onderdeel nieuw onderzoek vraagt (bijvoorbeeld bij Kansen of de spierindex), in plaats
   van een losse Scout.
 - De eigen skills `werkverdeling`, `lookout` en `onderhoud` zoals altijd.
-- Plug-ins van het account (als een sessie ze laadt; op 1 november zag deze sessie ze niet): `frontend-design` en
-  `Design` (kritiek, toegankelijkheid, UX-teksten) bij de ontwerprapporten en elk nieuw scherm, naast de
-  ontwerptaal van ASCEND, die altijd voorgaat; `Engineering` als extra blik bij architectuur en het opsplitsen;
-  `Data` bij grafieken; `Product Management` bij het samenvoegen van de gebruikerstest tot een lijst.
+- Plug-ins van het account. De coördinatorsessie van 1 november ziet ze wel (een eerdere sessie zag ze niet).
+  De ontwerptaal van ASCEND gaat altijd voor op wat een plug-in voorstelt.
+  - `Design` (kritiek, toegankelijkheid, UX-teksten) bij de ontwerprapporten en elk nieuw scherm.
+  - `frontend-design` alleen als tweede blik op een ontwerprapport, nooit als opdracht aan een bouwer.
+  - `Engineering` als extra blik bij architectuur en het opsplitsen.
+  - `Product Management` bij het samenvoegen van de gebruikerstest tot een lijst.
+  - `modern-web-guidance` bij de Android-app en bij de optimalisatie in ronde 3.
+  - `Data` doet niet mee: `dataviz` is genoeg voor grafieken, en twee methodes naast elkaar spreken elkaar tegen.
+  - Plug-ins die niets met ASCEND te maken hebben (Gmail, Agenda, Drive, Shopify, QuickBooks, Canva en dergelijke)
+    komen nooit in een opdracht aan een helper, ook niet als ze geladen zijn.
 
 ## Zelfstandig, ook als de eigenaar slaapt
 
@@ -78,6 +84,32 @@ Per oorzaak één concrete aanpassing, en die gaat meteen in de werkverdeling, e
 de tekstkaart of een test, zodat de volgende ronde hem al heeft. Aanpassingen aan `.claude/agents/` en
 `.claude/skills/` zijn met toestemming van de eigenaar (1 november).
 
+## Na elke functie en elke ronde: klopt het geheel?
+
+Wens van de eigenaar (1 november): het eind moet een volledig pakket zijn, waarin alles af is en logisch samenhangt.
+Daarom kijkt de coördinator naast het terugkijken op het werk ook naar het product zelf.
+
+Na elke functie, voordat hij live gaat, een korte toets door de coördinator zelf:
+- Is de functie af van begin tot eind: een ingang die je vindt, een lege stand, een foutstand, de instelling op de
+  vijf plekken, de uitleg, de export en import, en een weg terug (Annuleren, een voorstel afwijzen, ongedaan maken)?
+- Past hij bij de rest: dezelfde woorden, dezelfde plek voor hetzelfde soort ding, geen tweede manier om iets te
+  doen wat al kan, en hij helpt de vraag "wat is mijn missie vandaag" binnen twee seconden?
+- Wat raakt hij dat nu niet meer klopt: een andere kaart, een melding, de weekterugblik, een tekst in de uitleg?
+
+Na elke ronde een bredere blik, met de tekstkaart (`docs/app-kaart/`) en screenshots van de veranderde schermen:
+- Loop de app langs als de vier personen uit ronde 4 en kijk of de nieuwe functies samen een logisch verhaal zijn.
+- Wat mist er nu, wat is dubbel geworden, en wat is er door het nieuwe werk opgekomen om het af te maken?
+- De uitkomst gaat als kopje "Klopt het geheel?" in `docs/onderhoud/reflectie-2026-11-01.md`.
+
+Wat er uit zo'n toets komt, en waar het heen gaat:
+- Een gat in een functie die net gebouwd is (een ontbrekende lege stand, instelling of weg terug): dezelfde bouwer
+  maakt hem af voordat hij live gaat. Een functie met zo'n gat is niet af.
+- Iets wat nodig is om het geheel logisch te maken, binnen wat de backlog al wil: een nieuw punt in
+  `docs/backlog.md` met de reden, en het gaat mee in de eerstvolgende ronde.
+- Een echt nieuw idee of iets wat de richting verandert: in de backlog onder "Voor de eigenaar", niet bouwen.
+- Zo blijft de backlog eindig: elke ronde mag hoogstens vijf nieuwe punten toevoegen. Wat erbuiten valt wordt
+  gebundeld voor de eigenaar.
+
 ## Alles wat zichtbaar is krijgt de ASCEND-stijl
 
 Elke opdracht voor iets zichtbaars noemt de stijl als eis, niet als wens: de ontwerptaal uit CLAUDE.md (zee en berg,
@@ -93,6 +125,42 @@ screenshots en, bij een animatie, ook de stand met Beweging Uit. Wat er kaal of 
 Ronde 1, tegelijk:
 1. Zelf: het veiligheidsnet (tests in `.github/workflows/deploy.yml` voor de deploy) en CLAUDE.md bijwerken
    (Zonder doel, Kansen, Run in detail, ochtendkaart, tekstkaart, backlog, werkverdeling).
+2d. Sherpa (sonnet): de ochtendkaart na je antwoord (screenshot van de eigenaar, 1 november). (a) De kaart houdt de
+   hoogte van de vraag vast, waardoor er na "Fris genoteerd." een groot leeg vlak staat met alleen onderaan
+   "Ongedaan maken"; laat de gevolgstand zijn eigen, korte hoogte hebben met een zachte overgang (geen
+   verspringing van de missiekaart eronder, wel geen lege ruimte), en Ongedaan maken direct onder de zin.
+   (b) Het gevolg noemt alleen "Bovenlichaam B blijft staan." terwijl vandaag eerst de Testloop 5 km staat
+   (gepaard: eerst de testloop, dan Bovenlichaam B). `morningConsequence` moet de belangrijkste training van
+   vandaag noemen (een test of race eerst, anders de eerste in de volgorde van de dag), of beide ("Testloop 5 km
+   en Bovenlichaam B blijven staan."). Met test op deze vorm en een screenshot op 360 en 390 px.
+2e. Sherpa (sonnet), bij de kleine punten: op de plekpagina van Lichaam (`src/pages/BodySpot.tsx`, tekst in
+   `src/data/bodyCare.ts`) staat onder "Wat je doet bij last" altijd een open blok "Naar een fysio of je huisarts
+   bij" met zes punten. De eigenaar vindt die steeds terugkerende fysio-tekst irritant. Maak het rustig: een
+   ingeklapte regel ("Wanneer laat je het nakijken?") die openklapt, zonder waarschuwingsicoon zolang er niets aan
+   de hand is; open en in amber alleen als de gebruiker zelf een van die signalen meldde (bijvoorbeeld pijn die
+   erger werd, of een plek die hij niet kan belasten). De inhoud blijft gelijk (zorgteksten blijven "kan helpen"),
+   alleen de plek en de toon veranderen. Met screenshot op 360 en 390 px.
+2f. Sherpa (sonnet), met voorrang: Stand schuift zijwaarts (screenshot van de eigenaar, 1 november). De hele pagina
+   staat een stuk naar links, met rechts een donkere strook: iets op Stand is breder dan het scherm, waardoor je
+   horizontaal kunt vegen. Vermoedelijk de kaart "Klaar voor de GR5" (de chip "gelijk aan 4 weken geleden" naast
+   het grote getal, of een rij als "1 uur 8 min van 7 uur 55 min") of een grafiek. Zoek de echte boosdoener met de
+   kit (meet scrollWidth tegen clientWidth per element op 360 en 390 px, met zijn echte gegevens: lange
+   getallen), maak dat element passend (afbreken, kleiner of onder elkaar), en zet als vangnet `overflow-x: clip`
+   op de pagina-inhoud zodat een pagina nooit meer zijwaarts kan schuiven. Voeg een invariant aan de tekstkaart
+   toe: geen enkel scherm is breder dan het venster.
+2g. Sherpa (sonnet), met voorrang: het cijferblok van Forge klapt steeds dicht en weer open (schermopname van de
+   eigenaar, 1 november, Bovenlichaam B, één oefening per scherm). Bij de overgang van het ene veld naar het
+   volgende (kg naar herhalingen, de pijl, een tik op een ander vak) en bij het vegen naar de volgende oefening
+   schuift het eigen cijferblok weg en komt het terug. Het blok hoort open te blijven zolang je van veld naar veld
+   gaat, ook naar een veld van de volgende oefening; het sluit alleen als je buiten de velden tikt, de set afrondt
+   of Forge verlaat. Kijk in ForgeWorkout en het cijferblok (focus en blur, de key van de kaart per oefening, de
+   paged-weergave). Met een test op het gedrag en een korte doorloop met de kit op 360 en 390 px (vertraagd).
+2h. Bij de kleine punten (Sherpa sonnet): de regel boven de sets in Forge is lelijk (screenshot van de eigenaar,
+   1 november): "Je programma vraagt nu 4 sets: 9+ tot falen, 9+ tot falen, 9+ tot falen, 9+ tot falen; het gewicht
+   volgt uit je geschatte kracht." Gelijke sets samenvoegen ("4 sets van 9+ herhalingen tot falen"), verschillende
+   kort na elkaar ("2 sets van 8 tot 10, dan 1 tot falen"), en de tweede helft als eigen korte zin of weg als hij
+   niets toevoegt. Kort genoeg om zonder "Meer" op twee regels te passen op 360 px. De tekst komt uit
+   `src/engine/forgeRows.ts` en `src/engine/forgeWorkout.ts`; met tests op beide vormen.
 2c. Sherpa (opus): de rustdag komt niet terug. Gevonden in de back-up van 1 november: een voorstel (TEST-RETRY,
    28 oktober) haalde de rij Herstel op maandag 2 november weg om plaats te maken; de test en de lange duurloop
    gingen daarna elders heen, maar de rustdag bleef weg (status skipped, lock van het voorstel). Week toont nu
@@ -113,12 +181,33 @@ Ronde 1, tegelijk:
 4. Sherpa (sonnet): de kleine vervolgpunten in één ronde (ochtenden in de back-up, het leave-merk na het wissen
    van een vakantie, onderhoud latere ronde), plus: het citaat onderaan Vandaag standaard in het Engels in
    plaats van het Nederlands, instelbaar (Engels, Nederlands, uit) op de vijf plekken van een instelling.
-5. Twee Cartographers (opus, ontwerper), tegelijk, alleen een ontwerprapport, nog niets bouwen:
+5. Drie Cartographers (opus, ontwerper), tegelijk, alleen een ontwerprapport, nog niets bouwen:
    a. Gegevens: Stand, Logboek, Ascend, Run in detail, Lichaam, Weekterugblik en Jaaroverzicht. Welke gegevens
       staan waar, wat is dubbel, te veel of onduidelijk, wat vind je niet terug, wat is juist goed. Doel: alles
       inzichtelijker en beter georganiseerd; een complete herinrichting van een tab mag.
+      Input van de eigenaar (1 november, screenshot Stand): "Dit is lelijk" over de lichte kaart midden op Stand
+      (Deze week 2 van 5, Volgehouden 18 van 23, Op rij 0 trainingsdagen, met bergen onderaan). Wat opvalt: een
+      lichte SkyPanel midden in een donkere pagina valt uit de toon; drie blokken met lange uitlegzinnen
+      ("De coach op Ascend telt hetzelfde", "Dagen zonder training tellen niet mee...") die bij elk bezoek
+      herhaald worden; "0 trainingsdagen" groot in beeld werkt ontmoedigend; drie tellingen van bijna hetzelfde
+      naast elkaar. Neem deze kaart als eerste voorbeeld in het rapport en geef een mooier, rustiger voorstel.
+      Tweede voorbeeld (1 november, screenshot Weekterugblik "Je week", week van 26 oktober): "mag ook beter". Wat
+      opvalt: een lange lijst kopjes onder elkaar (Advies, Blijven liggen, Wat ASCEND aanpaste, Je antwoord deze
+      week) met losse zinnen; "gem. zwaarte 9" is jargon; "Wat ASCEND aanpaste" toont oude verschuivingen met pijlen
+      die je niet meer helpen; de terugblik op zondag zegt al "2/5 gedaan" en "blijven liggen" terwijl er vandaag
+      nog twee trainingen staan. Voorstel gevraagd voor een korte, mooie terugblik: eerst het beeld van de week in
+      één oogopslag, dan hoogstens drie dingen die ertoe doen, en de rest achter een tik.
    b. Instellingen: alle acht groepen en de bladen eronder. Wat is logisch ingedeeld, wat zoek je en vind je niet,
       wat kan samen of weg, wat mist een goede uitleg.
+   c. Forge, het trainingsscherm (wens van de eigenaar, 1 november, met screenshots): "heel veel opties, ik zoek
+      een logischere UI en UX, met behoud van de essentie". Wat opvalt: Ruilen, Opwarmset en Notitie staan zowel als
+      knoppen op de kaart als in het menu, en Set toevoegen ook twee keer; het menu heeft negen regels plus tips; de
+      kolom Voorschrift herhaalt wat in de vakken kg en Herh. al staat; RIR en Alles zijn kleine losse kolommen; de
+      voorschriftregel is lang. Doel: tijdens het trainen alleen wat je per set nodig hebt (gewicht, herhalingen,
+      afvinken, rust), de rest rustig en logisch gegroepeerd achter één plek (bijvoorbeeld Oefening: ruilen,
+      notitie, uitleg; Sets: toevoegen, opwarmset, verwijderen; Rust; Toestel: gewichten). Niets verdwijnt wat de
+      eigenaar gebruikt; wel minder dubbel en minder tekst. Lees eerst docs/architectuur/forge.md en de besluiten
+      over Forge en de snelknoppen.
    Elk levert een rapport in docs/visie/ met wat goed is, wat niet, en een voorstel per tab of groep, de beste
    eerst. Ze gebruiken de tekstkaart (docs/app-kaart/) en screenshots met de kit. De coördinator kiest daarna
    met de aanbevolen opties en laat het in ronde 2 of 3 bouwen; een grote herinrichting gaat na het opsplitsen.
@@ -142,7 +231,15 @@ Ronde 3, alleen:
 
 Ronde 2b, naast ronde 2:
 10. Android-app met Capacitor, een grote feature van deze ronde: de configuratie, lokale meldingen, en een
-    GitHub Actions-workflow die een APK als artefact bouwt (de cloudsessie heeft geen Android SDK). Daarop de
+    GitHub Actions-workflow die een APK als artefact bouwt (de cloudsessie heeft geen Android SDK).
+    Meldingen moeten werken met het scherm uit en de app op de achtergrond, met trillen (instelbaar, volgens de
+    instelling Trillen): eerst het einde van de rusttijd in Forge (de klok loopt door als het scherm uit is en
+    je telefoon trilt en geeft een melding als de rust voorbij is), daarna de ochtendvraag en de weekmelding.
+    Gebruik daarvoor de lokale meldingen van Capacitor met een exacte tijd. Toestemmingen (meldingen, exacte
+    wekker, Health Connect) vraagt de app direct na de installatie, in een korte, mooie welkomstreeks in de
+    ASCEND-stijl (wens van de eigenaar, 1 november): per toestemming één scherm met een pictogram, één zin waarom
+    ("Zodat je telefoon trilt als je rust voorbij is, ook met het scherm uit"), de knop om toe te staan en "Niet nu".
+    Wat je overslaat kun je later aanzetten in Instellingen, en daar staat ook of elke toestemming aan staat. Daarop de
     korte weekmelding op zondagavond. Daarna Health Connect als bron via de adapter in `src/integrations/`
     (dezelfde vormen als intervals.icu, met `source: 'health-connect'`; geen veld met een merknaam), met een
     instelling en een besluit. Agenda-planning komt pas daarna.

@@ -2,11 +2,15 @@
 
 Wat nog op de lijst staat, zodat een nieuwe sessie het niet uit het gesprek hoeft te halen. De
 coördinator houdt dit bij: iets wat live staat gaat eruit, iets nieuws komt erbij met een regel uitleg.
-Bijgewerkt op 31 oktober 2026.
+Bijgewerkt op 1 november 2026.
 
 ## Loopt nu
 
-- Niets. Alles uit "Kan nu" is af of staat hieronder als vervolg.
+Ronde 1 van `docs/onderhoud/2026-11-01-aanpak-backlog.md`, gestart op 1 november om 19:00:
+- Stand schuift zijwaarts (Sherpa, sonnet).
+- Het cijferblok van Forge blijft open tussen velden (Sherpa, sonnet).
+- De rustdag komt terug nadat een voorstel hem weghaalde (Sherpa, opus).
+- Drie ontwerprapporten: gegevens, instellingen en Forge (Cartographer, opus).
 
 Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10, onderhoud punt 2 en 3.
 
@@ -25,6 +29,16 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Week: na het wissen van een vakantie houdt een training die je zelf verplaatste een `leave`-merk naar een periode die niet meer bestaat (vraagt dan blijvend om Akkoord). Merk wissen in `putBack` als `byYou`.
 - Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
 
+## Voor de eigenaar
+
+- Forge (ontwerprapport, vraag 1 en 4): welke snelknop wil je houden, als er een blijft, en gebruik je Alles vaak? Tot je antwoord bouwt Sherpa de rest van het Forge-voorstel en blijven de snelknoppen en Alles staan.
+- De overige vragen uit de drie ontwerprapporten (`docs/visie/Ontwerprapport gegevens.md`, `instellingen.md`, `Forge.md`) kiest de coördinator met het advies; elke keuze staat in de terugblik van de ronde waarin hij gebouwd wordt. Het citaat onderaan Vandaag wordt Engels, zoals de eigenaar al vroeg.
+
+## Uit de ontwerprapporten
+
+- Jaaroverzicht: "Testloop 5 km: 14 jan en 15 jan", twee dagen voor één test. Nakijken of dat een fout in de gegevens of de telling is.
+- De vaste doorloop van Lookout gaf Stand helemaal leeg (zonder lucht of titel); een eigen afdruk was wel vol. Nagaan of de kit te vroeg afdrukt.
+
 ## Bewust niet
 
 - Voeding naast gewicht en kracht (kans E): de eigenaar laat dit liggen (1 november).
@@ -42,6 +56,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Android-app (Capacitor), als een van de grote nieuwe features van deze ronde. Lokale meldingen komen daarmee (een PWA zonder server kan geen melding sturen als de app dicht is).
 - De rustdag komt niet terug nadat een voorstel hem weghaalde en de dag weer leeg werd; Week toont dan "Vrij" op de vaste rustdag (ronde 1).
 - Een vakantie of vrije periode bijwerken in Week (data, soort, notitie), als voorstel met Akkoord (ronde 1).
+- Android-meldingen met het scherm uit en trillen: het einde van de rust in Forge, de ochtendvraag en de weekmelding (ronde 2b, bij de Android-app). Toestemmingen direct na de installatie, in een korte welkomstreeks met per toestemming één scherm en "Niet nu".
 - Health Connect als bron in de Android-app, via de adapter in `src/integrations/` (ronde 2b).
 - Gegevens en instellingen overzichtelijker: een ontwerprapport per gebied (Stand, Logboek, Ascend, Run in detail, Lichaam, terugblikken; en de acht groepen instellingen), daarna bouwen; een complete herinrichting van een tab mag.
 - Het citaat onderaan Vandaag standaard in het Engels, instelbaar (Engels, Nederlands, uit).
@@ -63,11 +78,9 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 ## Werkwijze, voor de coördinator
 
-- Veiligheidsnet: nagaan of `.github/workflows/deploy.yml` de tests draait voor de deploy naar GitHub Pages; zo niet, `npx tsc -p tsconfig.app.json --noEmit`, `npm run lint` en `npx vitest run` ervoor zetten, zodat er nooit iets rood live gaat.
 - Meer invarianten in `scripts/app-kaart/invarianten.mjs` uit de fouten van 31 oktober: de kop en de totaaltijd in Run in detail gelijk, geen testloopzin bij een training die geen test is, hoogstens één gevulde mint knop per scherm.
 - De tekstkaart uitbreiden: nagemaakte standen met horlogegegevens, een vakantie, zonder doel en ziek, en de schermen Gegevens, Lichaam, Run in detail en de ochtendkaart met horloge.
 - Een controle op echte data: een script dat een back-up van de eigenaar (alleen in de scratchpad, nooit in de repo) door de engine haalt en dezelfde invarianten toetst. Draaien zodra de eigenaar een back-up stuurt.
-- CLAUDE.md bijwerken met Zonder doel, Kansen, Run in detail, de ochtendkaart en de tekstkaart (de eigenaar gaf op 31 oktober akkoord).
 - Afspraken die nu alleen in het gesprek staan: de eigenaar stuurt elke zondag een verse back-up, en start na 1 november elke paar dagen een nieuwe chat ("lees docs/backlog.md en ga verder").
 
 ## Werkwijze, overig

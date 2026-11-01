@@ -33,7 +33,7 @@ export const ForgeStrip = memo(function ForgeStrip({
     el.scrollTo({ left: Math.max(0, left), behavior: off ? 'auto' : 'smooth' });
   }, [current]);
   return (
-    <div ref={strip} className="forge-strip flex gap-1.5 overflow-x-auto px-3 pb-1.5" role="group" aria-label="Oefeningen van deze training" data-no-sheet-drag>
+    <div ref={strip} className="forge-strip flex gap-1.5 overflow-x-auto px-3 pb-1.5" role="group" aria-label="Oefeningen van deze training" data-no-sheet-drag data-dock-keep="">
       {workout.map((ex, i) => {
         const on = i === current;
         const done = !readOnly && exerciseComplete(ex);
