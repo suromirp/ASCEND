@@ -40,6 +40,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Spierindex stap 1 en 2: controle op je training en slimmer vervangen.
 - Grote bestanden opsplitsen: AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations.
 - Android-app (Capacitor), als een van de grote nieuwe features van deze ronde. Lokale meldingen komen daarmee (een PWA zonder server kan geen melding sturen als de app dicht is).
+- De rustdag komt niet terug nadat een voorstel hem weghaalde en de dag weer leeg werd; Week toont dan "Vrij" op de vaste rustdag (ronde 1).
 - Een vakantie of vrije periode bijwerken in Week (data, soort, notitie), als voorstel met Akkoord (ronde 1).
 - Health Connect als bron in de Android-app, via de adapter in `src/integrations/` (ronde 2b).
 - Gegevens en instellingen overzichtelijker: een ontwerprapport per gebied (Stand, Logboek, Ascend, Run in detail, Lichaam, terugblikken; en de acht groepen instellingen), daarna bouwen; een complete herinrichting van een tab mag.
