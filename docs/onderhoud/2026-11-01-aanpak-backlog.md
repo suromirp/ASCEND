@@ -32,7 +32,17 @@ Ronde 1, tegelijk:
    verzinnen, overslaan als status, koppelen als voorstel, instelbaar, besluit).
 3. Sherpa (sonnet): de tekstkaart uitbreiden met meer standen en schermen, en de nieuwe invarianten.
 4. Sherpa (sonnet): de kleine vervolgpunten in één ronde (ochtenden in de back-up, het leave-merk na het wissen
-   van een vakantie, onderhoud latere ronde).
+   van een vakantie, onderhoud latere ronde), plus: het citaat onderaan Vandaag standaard in het Engels in
+   plaats van het Nederlands, instelbaar (Engels, Nederlands, uit) op de vijf plekken van een instelling.
+5. Twee Cartographers (opus, ontwerper), tegelijk, alleen een ontwerprapport, nog niets bouwen:
+   a. Gegevens: Stand, Logboek, Ascend, Run in detail, Lichaam, Weekterugblik en Jaaroverzicht. Welke gegevens
+      staan waar, wat is dubbel, te veel of onduidelijk, wat vind je niet terug, wat is juist goed. Doel: alles
+      inzichtelijker en beter georganiseerd; een complete herinrichting van een tab mag.
+   b. Instellingen: alle acht groepen en de bladen eronder. Wat is logisch ingedeeld, wat zoek je en vind je niet,
+      wat kan samen of weg, wat mist een goede uitleg.
+   Elk levert een rapport in docs/visie/ met wat goed is, wat niet, en een voorstel per tab of groep, de beste
+   eerst. Ze gebruiken de tekstkaart (docs/app-kaart/) en screenshots met de kit. De coördinator kiest daarna
+   met de aanbevolen opties en laat het in ronde 2 of 3 bouwen; een grote herinrichting gaat na het opsplitsen.
 
 Ronde 2, tegelijk:
 5. Sherpa (opus): spierindex stap 1 en 2 (lees eerst `docs/onderzoek` en `docs/visie` over de spierindex).
@@ -49,7 +59,9 @@ Ronde 3, alleen:
 Ronde 2b, naast ronde 2:
 10. Android-app met Capacitor, een grote feature van deze ronde: de configuratie, lokale meldingen, en een
     GitHub Actions-workflow die een APK als artefact bouwt (de cloudsessie heeft geen Android SDK). Daarop de
-    korte weekmelding op zondagavond. Agenda-planning komt pas daarna.
+    korte weekmelding op zondagavond. Daarna Health Connect als bron via de adapter in `src/integrations/`
+    (dezelfde vormen als intervals.icu, met `source: 'health-connect'`; geen veld met een merknaam), met een
+    instelling en een besluit. Agenda-planning komt pas daarna.
 11. Sherpa (sonnet): "Waarom staat dit hier?" in Week, "Minder tijd vandaag" (voorstel), zones bijwerken na een
     test (voorstel), en Run in detail voor oudere runs.
 
