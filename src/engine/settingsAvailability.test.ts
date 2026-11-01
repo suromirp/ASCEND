@@ -33,6 +33,8 @@ function facts(over: Partial<SettingsFacts> = {}): SettingsFacts {
     snapshots: 0,
     buildLabel: '22 okt, 18:59',
     longSundayVisible: true,
+    device: { timed: true, notifications: 'granted', exactAlarm: 'granted', healthConnect: 'soon' },
+    liveUpdate: true,
     ...over,
   };
 }

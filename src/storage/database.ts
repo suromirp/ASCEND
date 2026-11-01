@@ -975,6 +975,16 @@ export interface AppSettings {
   // the name and the shape. Optional and additive; travels with the settings in a
   // backup (the permission of the phone does not), where it is read defensively.
   morningNotice?: MorningNoticeSettings;
+  // De meldingen van de Android-app (engine/deviceNotices.ts, docs/beslissingen/2026-11-01-android-app.md):
+  // "Einde van de rust" (een melding op de eindtijd van de rust in Forge, ook met het scherm uit) en
+  // "Weekmelding op zondag" met zijn tijd. Absent = aan, om 19:00. In de browser doen ze niets.
+  // Optional and additive, so no migration step; a backup keeps only valid values (storage/backup.ts).
+  restNotice?: boolean;
+  weekNotice?: boolean;
+  weekNoticeTime?: '18:00' | '19:00' | '20:00' | '21:00';
+  // "Automatisch bijwerken" (engine/liveUpdate.ts): de Android-app haalt een nieuwere webversie
+  // stil op voor de volgende start. Absent = aan. Optional and additive.
+  autoUpdate?: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

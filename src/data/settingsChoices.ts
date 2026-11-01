@@ -641,6 +641,19 @@ export const CHOICES = {
       { value: 'all', label: 'Alles', note: 'Alles wat erboven mag, ook als je missie dan uit beeld schuift', short: 'Alles' },
     ],
   }),
+  weekmeldingTijd: def({
+    group: 'Vandaag en meldingen',
+    title: 'Tijd van de weekmelding',
+    line: 'Op zondag, op deze tijd.',
+    advice: '19:00' as '18:00' | '19:00' | '20:00' | '21:00',
+    help: 'weekmelding',
+    options: [
+      { value: '18:00', label: '18:00', short: 'Zondag 18:00' },
+      { value: '19:00', label: '19:00', short: 'Zondag 19:00' },
+      { value: '20:00', label: '20:00', short: 'Zondag 20:00' },
+      { value: '21:00', label: '21:00', short: 'Zondag 21:00' },
+    ],
+  }),
   ochtendVanaf: def({
     group: 'Vandaag en meldingen',
     title: 'Ochtend begint om',

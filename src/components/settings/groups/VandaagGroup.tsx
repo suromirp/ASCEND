@@ -20,6 +20,9 @@ import { rowShown } from './rowShown';
 import { resolveMorningNotice } from '../../../engine/morningNotice';
 import { disableMorningNotice, enableMorningNotice } from '../../../utils/morningNotice';
 import { ClothingSheet, NoticeInfoSheet, PlaceSheet } from './VandaagSheets';
+import { PermissionAskButton } from './PermissionSheets';
+import { notificationPort } from '../../../integrations/notifications';
+import { noticesNeed, resolveDeviceNotices } from '../../../engine/deviceNotices';
 import type { GroupProps } from './types';
 
 const ADVANCED = ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'];
@@ -57,11 +60,13 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       reload();
       return;
     }
-    const result = await enableMorningNotice();
+    // In de app vraagt de telefoon zelf om meldingen; daarna plant ASCEND de vraag op tijd.
+    const port = notificationPort();
+    const result = port.timed ? ((await port.requestNotifications()) === 'granted' ? 'ok' : 'denied') : await enableMorningNotice();
     if (result === 'ok') await updateSettings({ morningNotice: { ...settings.morningNotice, enabled: true, time: notice.time } });
     else {
       setNoticeFailure(result);
-      setSheet('ochtendmelding-info');
+      setInner('ochtendmelding-info');
     }
     reload();
   }
@@ -74,8 +79,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       <SettingsSection title="Meldingen">
-        <SummaryRow id="ochtendmelding" title="Ochtendmelding" facts={facts} info="ochtendmelding" onChange={(on) => void setNotice(on)} onClick={() => setSheet('ochtendmelding-info')} />
-        <SummaryRow id="ochtendmelding-tijd" title="Tijd van de melding" facts={facts} onClick={() => setSheet('ochtendmelding-tijd')} />
+        <SummaryRow id="bundel-meldingen" title="Meldingen" facts={facts} info="meldingen" onClick={() => setSheet('bundel-meldingen')} />
       </SettingsSection>
 
       <SettingsSection title="Weer">
@@ -136,6 +140,22 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           }
         />
       )}
+      {sheet === 'bundel-meldingen' && (
+        <BundleSheet
+          eyebrow="Vandaag en meldingen"
+          title="Meldingen"
+          line="Welke meldingen ASCEND op je telefoon mag geven, en wanneer."
+          onClose={close}
+          footer={facts.device && facts.device !== 'unknown' && facts.device.timed ? <PermissionAskButton device={facts.device} need={noticesNeed(settings, facts.device)} onDone={reload} /> : undefined}
+        >
+          <SummaryRow id="ochtendmelding" title="Ochtendvraag" facts={facts} info="ochtendmelding" onChange={(on) => void setNotice(on)} onClick={() => setInner('ochtendmelding-info')} />
+          <SummaryRow id="ochtendmelding-tijd" title="Tijd van de ochtendvraag" facts={facts} onClick={() => setInner('ochtendmelding-tijd')} />
+          <SummaryRow id="rust-melding" title="Einde van de rust" facts={facts} info="rustMelding" onChange={(on) => void updateSettings({ restNotice: on })} />
+          <SummaryRow id="weekmelding" title="Weekmelding op zondag" facts={facts} info="weekmelding" onChange={(on) => void updateSettings({ weekNotice: on })} />
+          <SummaryRow id="weekmelding-tijd" title="Tijd van de weekmelding" facts={facts} onClick={() => setInner('weekmelding-tijd')} />
+        </BundleSheet>
+      )}
+      {inner === 'weekmelding-tijd' && <ChoiceFromDef def={CHOICES.weekmeldingTijd} value={resolveDeviceNotices(settings).weekTime} onPick={(v) => void updateSettings({ weekNoticeTime: v })} onClose={closeInner} />}
       {sheet === 'bundel-weer' && (
         <BundleSheet eyebrow="Vandaag en meldingen" title="Weer en kleding" line="Het weer bij je training en wat je aantrekt." onClose={close}>
           <SummaryRow id="weerregel" title="Weer bij je training" facts={facts} onChange={(on) => set({ weatherLine: on })} />
@@ -219,8 +239,8 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {sheet === 'hervatten' && <ChoiceFromDef def={CHOICES.hervatten} value={nav.resumeMinutes as 0 | 60 | 120 | 240 | 480} onPick={(v) => void updateSettings({ resumeMinutes: v })} onClose={close} />}
       {sheet === 'ochtend-vanaf' && <ChoiceFromDef def={CHOICES.ochtendVanaf} value={o.morningCardFrom} onPick={(v) => set({ morningCardFrom: v })} onClose={close} />}
       {sheet === 'weekterugblik-dag' && <ChoiceFromDef def={CHOICES.terugblikDag} value={o.weekReviewDay} onPick={(v) => set({ weekReviewDay: v })} onClose={close} />}
-      {sheet === 'ochtendmelding-tijd' && <ChoiceFromDef def={CHOICES.ochtendTijd} value={notice.time as typeof CHOICES.ochtendTijd.advice} onPick={(v) => void updateSettings({ morningNotice: { ...settings.morningNotice, time: v } })} onClose={close} />}
-      {sheet === 'ochtendmelding-info' && <NoticeInfoSheet support={facts.notice?.support} failure={noticeFailure} onClose={() => { setNoticeFailure(undefined); close(); }} />}
+      {inner === 'ochtendmelding-tijd' && <ChoiceFromDef def={CHOICES.ochtendTijd} value={notice.time as typeof CHOICES.ochtendTijd.advice} onPick={(v) => void updateSettings({ morningNotice: { ...settings.morningNotice, time: v } })} onClose={closeInner} />}
+      {inner === 'ochtendmelding-info' && <NoticeInfoSheet support={facts.notice?.support} failure={noticeFailure} onClose={() => { setNoticeFailure(undefined); closeInner(); }} />}
       {sheet === 'weerplaats' && <PlaceSheet onClose={close} />}
       {inner === 'kleding-voorkeur' && <ClothingSheet onClose={closeInner} />}
     </>

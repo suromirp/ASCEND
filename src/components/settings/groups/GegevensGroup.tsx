@@ -7,6 +7,7 @@ import { SettingsSection } from '../SettingsList';
 import { useAdviceReset } from '../useAdviceReset';
 import { BackupSheet, BaselineSheet, FolderSheet, RebuildSheet, ResetSheet, SnapshotsSheet, StorageSheet, StreamsSheet, VersionSheet } from './GegevensSheets';
 import { SummaryRow } from './SummaryRow';
+import { PermissionsSheet } from './PermissionSheets';
 import { useMorningBackupOff } from './MorningBackupOff';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { CHOICES } from '../../../data/settingsChoices';
@@ -29,7 +30,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Back-up">
         <SummaryRow id="backup" title="Laatste back-up" facts={facts} onClick={() => setSheet('backup')} />
         <SummaryRow id="backupmap" title="Vaste map" facts={facts} onClick={() => setSheet('backupmap')} />
-        <SummaryRow id="opslag" title="Opslag beschermd" facts={facts} kind={facts.storage === 'unsupported' || facts.storage === undefined ? 'static' : 'nav'} onClick={() => setSheet('opslag')} />
+        <SummaryRow id="toestemmingen" title="Toestemmingen" facts={facts} info="toestemmingen" onClick={() => setSheet('toestemmingen')} />
         <SummaryRow id="ruimte-app" title="Ruimte op dit toestel" facts={facts} kind="static" info="ruimteApp" />
         <SummaryRow id="momentopnamen" title="Kopieën van voor een import" facts={facts} onClick={() => setSheet('momentopnamen')} />
       </SettingsSection>
@@ -44,11 +45,12 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="App"
-        advancedIds={['voorstellen-opruimen', 'startniveau']}
-        advancedTitles="Oude voorstellen opruimen, Startniveau zelf invullen"
+        advancedIds={['auto-bijwerken', 'voorstellen-opruimen', 'startniveau']}
+        advancedTitles={facts.liveUpdate ? 'Automatisch bijwerken, Oude voorstellen opruimen, Startniveau zelf invullen' : 'Oude voorstellen opruimen, Startniveau zelf invullen'}
         storageKey="gegevens-geavanceerd"
         advanced={
           <>
+            <SummaryRow id="auto-bijwerken" title="Automatisch bijwerken" facts={facts} info="autoBijwerken" onChange={(on) => void updateSettings({ autoUpdate: on })} />
             <SummaryRow id="voorstellen-opruimen" title="Oude voorstellen opruimen" facts={facts} info="voorstellenOpruimen" onClick={() => setSheet('voorstellen-opruimen')} />
             <SummaryRow id="startniveau" title="Startniveau zelf invullen" facts={facts} onClick={() => setSheet('startniveau')} />
           </>
@@ -73,6 +75,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {sheet === 'backup' && <BackupSheet onClose={close} onImport={() => setSheet('import')} />}
       {sheet === 'import' && <ImportWizard onClose={close} />}
       {sheet === 'backupmap' && <FolderSheet chosen={facts.folderChosen} onChanged={reload} onClose={close} />}
+      {sheet === 'toestemmingen' && <PermissionsSheet facts={facts} onChanged={reload} onStorage={() => setSheet('opslag')} onClose={close} />}
       {sheet === 'opslag' && <StorageSheet onChanged={reload} onClose={close} />}
       {sheet === 'reeksen' && <StreamsSheet onChanged={reload} onClose={close} />}
       {sheet === 'reeksen-backup' && (

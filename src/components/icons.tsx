@@ -142,6 +142,21 @@ const PATHS = {
       <path d="M10.4 8.9l4.6 3.1-4.6 3.1z" />
     </>
   ),
+  // Een bel: meldingen.
+  bel: (
+    <>
+      <path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2H5z" />
+      <path d="M10 20.5a2 2 0 0 0 4 0" />
+    </>
+  ),
+  // Een wekker: de exacte wekker voor het einde van de rust.
+  wekker: (
+    <>
+      <circle cx="12" cy="13" r="7" />
+      <path d="M12 9.5V13l2.5 1.5" />
+      <path d="M4 6.5L6.5 4M20 6.5L17.5 4" />
+    </>
+  ),
   timer: (
     <>
       <path d="M7 3h10M7 21h10" />

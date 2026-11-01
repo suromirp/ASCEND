@@ -12,9 +12,10 @@ Nog nooit
 [knop: Vaste map, Niet gekozen]
 Vaste map
 Niet gekozen
-[knop: Opslag beschermd, Nee]
-Opslag beschermd
-Nee
+[knop: Toestemmingen, 2 staan uit]
+Toestemmingen
+[knop: Uitleg: Toestemmingen]
+2 staan uit
 Ruimte op dit toestel
 [knop: Uitleg: Ruimte op dit toestel]
 Van de <ruimte> die de browser geeft

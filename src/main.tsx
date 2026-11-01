@@ -13,6 +13,7 @@ import { startServiceWorkerUpdates } from './utils/swUpdate'
 import { installBackLayers } from './utils/backLayers'
 import { installSheetOrigin } from './utils/sheetGrowDom'
 import { installStorageLifecycle } from './storage/lifecycle'
+import { deviceShell } from './integrations/deviceShell'
 
 // Before anything touches IndexedDB: out of view or frozen, this window starts
 // no transactions and finishes the open ones, so it never holds the storage
@@ -28,6 +29,10 @@ installBackLayers()
 
 // A sheet opened from a row remembers which row, so it can grow out of it (utils/sheetGrowDom.ts).
 installSheetOrigin()
+
+// In the Android app: the status bar in the colour of the sky, and the native splash makes way for
+// the app's own (integrations/deviceShell.ts). In the browser this does nothing.
+deviceShell().start?.()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
