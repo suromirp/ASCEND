@@ -155,6 +155,12 @@ Ronde 1, tegelijk:
    gaat, ook naar een veld van de volgende oefening; het sluit alleen als je buiten de velden tikt, de set afrondt
    of Forge verlaat. Kijk in ForgeWorkout en het cijferblok (focus en blur, de key van de kaart per oefening, de
    paged-weergave). Met een test op het gedrag en een korte doorloop met de kit op 360 en 390 px (vertraagd).
+2h. Bij de kleine punten (Sherpa sonnet): de regel boven de sets in Forge is lelijk (screenshot van de eigenaar,
+   1 november): "Je programma vraagt nu 4 sets: 9+ tot falen, 9+ tot falen, 9+ tot falen, 9+ tot falen; het gewicht
+   volgt uit je geschatte kracht." Gelijke sets samenvoegen ("4 sets van 9+ herhalingen tot falen"), verschillende
+   kort na elkaar ("2 sets van 8 tot 10, dan 1 tot falen"), en de tweede helft als eigen korte zin of weg als hij
+   niets toevoegt. Kort genoeg om zonder "Meer" op twee regels te passen op 360 px. De tekst komt uit
+   `src/engine/forgeRows.ts` en `src/engine/forgeWorkout.ts`; met tests op beide vormen.
 2c. Sherpa (opus): de rustdag komt niet terug. Gevonden in de back-up van 1 november: een voorstel (TEST-RETRY,
    28 oktober) haalde de rij Herstel op maandag 2 november weg om plaats te maken; de test en de lange duurloop
    gingen daarna elders heen, maar de rustdag bleef weg (status skipped, lock van het voorstel). Week toont nu
