@@ -2,7 +2,10 @@ import { describe, it, expect } from 'vitest';
 import type { SessionLog } from '../models/training';
 import type { RunDetail, RunKm } from '../models/runDetail';
 import type { TestResult } from './racePrediction';
+import { buildDefaultProgramData } from '../data/defaultProgram';
 import { CURVE_MIN, paceCurve, paceCurveLine, paceCurveWaitLine, trainingEffort } from './paceCurve';
+
+const { templates } = buildDefaultProgramData();
 
 // Nagemaakte loopjes: alleen de kilometers en de beste 5 km die de details zouden geven.
 function kms(paces: number[]): RunKm[] {
@@ -46,6 +49,16 @@ describe('trainingEffort: de snelste stukken van een gewone loop', () => {
     expect(trainingEffort(run('2026-09-10', [300, 300]))).toBeUndefined();
     expect(trainingEffort(run('2026-09-10', [300, 300, 300, 300, 300], { bestFiveSec: 1500, templateId: 'tpl_test_run' }))).toBeUndefined();
   });
+
+  it('herkent een test en een wedstrijd aan de rol, en telt een wedstrijd niet als training', () => {
+    const race = run('2026-09-10', [280, 280, 280, 280, 280], { bestFiveSec: 1400, templateId: 'tpl_race' });
+    expect(trainingEffort(race, templates)).toBeUndefined();
+    expect(trainingEffort(race)).toBeUndefined();
+    // Een eigen sjabloon met de rol test, onder een ander id.
+    const own = run('2026-09-10', [290, 290, 290, 290, 290], { bestFiveSec: 1450, templateId: 'tpl_eigen_test' });
+    expect(trainingEffort(own, [{ id: 'tpl_eigen_test', roles: ['test'] }])).toBeUndefined();
+    expect(trainingEffort(own, [{ id: 'tpl_eigen_test', roles: [] }])).toBeDefined();
+  });
 });
 
 describe('paceCurve: een controle naast de test', () => {
@@ -80,6 +93,11 @@ describe('paceCurve: een controle naast de test', () => {
       run('2026-09-22', [390, 390, 390, 390, 390], { bestFiveSec: 1950 }),
     ];
     expect(paceCurve(slow, TEST, TODAY)).toMatchObject({ state: 'ready', verdict: 'easier' });
+  });
+
+  it('een snelle wedstrijd na de test maakt de curve niet sneller', () => {
+    const race = run('2026-10-03', [270, 270, 270, 270, 270], { bestFiveSec: 1350, templateId: 'tpl_race' });
+    expect(paceCurve([...easy, race], TEST, TODAY, templates)).toMatchObject({ state: 'ready', verdict: 'fits', runs: 3 });
   });
 
   it('kijkt alleen naar loopjes na de laatste test die telt, tot en met vandaag', () => {

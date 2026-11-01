@@ -7,7 +7,8 @@
 // daar iets anders over zeggen, en zegt dat in één zin.
 //
 // Wat telt per loop: de snelste 5 km uit de details (`runDetail.bestFive`), of zonder die de
-// snelste drie hele kilometers achter elkaar. Alleen hardlopen buiten, geen test, na de laatste
+// snelste drie hele kilometers achter elkaar. Alleen hardlopen buiten, geen test en geen wedstrijd
+// (herkend aan de rol van het sjabloon, templateRoles.ts; een wedstrijd is geen training), na de laatste
 // test die telt en tot en met vandaag. Het stuk wordt met dezelfde VDOT als de tempo's
 // (racePaces.ts#vdotOf) naast de test gelegd.
 //
@@ -23,7 +24,7 @@
 import type { SessionLog } from '../models/training';
 import { formatRaceTime, TEST_NOISE, type TestResult } from './racePrediction';
 import { vdotOf } from './racePaces';
-import { TEST_TEMPLATE_ID } from './raceBlock';
+import { idHasRole, type RoleCarrier } from './templateRoles';
 import { isIndoorLog, logSport } from './sports';
 import { addDays, formatDayMonthNL } from '../utils/dates';
 
@@ -50,8 +51,11 @@ function fastestThree(kmsSec: number[]): number | undefined {
   return best;
 }
 
-export function trainingEffort(log: SessionLog): TrainingEffort | undefined {
-  if (log.templateId === TEST_TEMPLATE_ID || logSport(log) !== 'running' || isIndoorLog(log)) return undefined;
+// `templates`: de sjablonen, zodat een test of wedstrijd aan zijn rol herkend wordt; zonder een bekend
+// sjabloon gelden de rollen van het id.
+export function trainingEffort(log: SessionLog, templates?: Iterable<RoleCarrier>): TrainingEffort | undefined {
+  if (idHasRole(log.templateId, 'test', templates) || idHasRole(log.templateId, 'race', templates)) return undefined;
+  if (logSport(log) !== 'running' || isIndoorLog(log)) return undefined;
   const d = log.runDetail;
   if (!d) return undefined;
   const make = (km: number, sec: number): TrainingEffort | undefined =>
@@ -71,11 +75,11 @@ export type PaceCurve =
 
 // `test`: de test waar je tempo's uit komen, dus die van pacesFromLogs (testJudgment.ts), nooit
 // zelf de laatste testlog. Undefined zonder test.
-export function paceCurve(logs: readonly SessionLog[], test: TestResult | undefined, today: string): PaceCurve | undefined {
+export function paceCurve(logs: readonly SessionLog[], test: TestResult | undefined, today: string, templates?: readonly RoleCarrier[]): PaceCurve | undefined {
   if (!test || test.km <= 0 || test.minutes <= 0) return undefined;
   const efforts = logs
     .filter((l) => l.completedDate > test.date && l.completedDate <= today)
-    .map(trainingEffort)
+    .map((l) => trainingEffort(l, templates))
     .filter((e): e is TrainingEffort => e !== undefined);
   const readyFrom = addDays(test.date, CURVE_MIN.days);
   if (efforts.length < CURVE_MIN.runs || today < readyFrom) return { state: 'wait', test, runs: efforts.length, readyFrom };

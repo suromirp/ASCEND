@@ -13,14 +13,14 @@ import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow } from '../ui';
 
 export function PaceCurveCard() {
-  const { sessionLogs, settings } = useAppData();
+  const { sessionLogs, settings, templates } = useAppData();
   const on = signalOn(settings, 'paceCurve');
   const today = todayISO();
   const curve = useMemo(() => {
     if (!on) return undefined;
     const { paces } = pacesFromLogs(sessionLogs, judgmentOptions(settings));
-    return paceCurve(sessionLogs, paces?.test, today);
-  }, [on, sessionLogs, settings, today]);
+    return paceCurve(sessionLogs, paces?.test, today, templates);
+  }, [on, sessionLogs, settings, today, templates]);
   if (!curve) return null;
   const { test } = curve;
   return (
