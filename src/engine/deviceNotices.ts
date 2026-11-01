@@ -244,8 +244,9 @@ export function permissionRows(p: DevicePermissions, need: { notifications: bool
   return rows;
 }
 
-export function permissionsSummary(rows: PermissionRow[]): { value: string; warn: boolean } {
-  const off = rows.filter((r) => !r.on && r.value !== 'Binnenkort').length;
+// `extraOff`: een toestemming die hier geen rij is maar wel uit staat (Opslag beschermd in de browser).
+export function permissionsSummary(rows: PermissionRow[], extraOff = 0): { value: string; warn: boolean } {
+  const off = rows.filter((r) => !r.on && r.value !== 'Binnenkort').length + extraOff;
   return { value: off === 0 ? 'Alles aan' : `${off} ${off === 1 ? 'staat' : 'staan'} uit`, warn: rows.some((r) => r.warn) };
 }
 

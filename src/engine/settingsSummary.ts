@@ -19,6 +19,7 @@ import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../
 import { countDifferences } from './settingsDiff';
 import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
+import { noticesBundleSummary, noticesNeed, permissionRows, permissionsSummary, resolveDeviceNotices, type DevicePermissions } from './deviceNotices';
 import { isMyLocation } from './weatherLocation';
 import { resolveStrengthSettings } from './strengthSettings';
 import { allProfiles, exerciseAddOnCount, formatAddOns, machineListCount } from './machineWeights';
@@ -153,6 +154,25 @@ export interface SettingsFacts {
   // Wat deze telefoon kan voor de ochtendmelding en of meldingen mogen; weglaten als dat
   // nog niet bekend is (dan telt alleen de schakelaar).
   notice?: { support: NoticeSupport; granted: boolean };
+  // Wat de telefoon toestaat (meldingen, exacte wekker, Health Connect); weglaten zolang dat nog
+  // niet binnen is, 'unknown' als het na twee seconden nog niet lukte.
+  device?: DevicePermissions | 'unknown';
+  // De app kan zijn webdeel zelf bijwerken (de Android-app).
+  liveUpdate?: boolean;
+}
+
+const deviceOf = (f: SettingsFacts): DevicePermissions | undefined => (f.device && f.device !== 'unknown' ? f.device : undefined);
+
+// De rij Toestemmingen: "Alles aan", of met een amber stip hoeveel er uit staan als iets wat je
+// gekozen hebt er een nodig heeft. In de browser telt Opslag beschermd mee.
+function permissionsRow(f: SettingsFacts): RowSummary {
+  if (f.device === 'unknown') return { value: 'Onbekend', dim: true };
+  const d = deviceOf(f);
+  if (!d) return { value: 'Even kijken', dim: true };
+  const rows = permissionRows(d, noticesNeed(f.settings, d));
+  const sum = permissionsSummary(rows, !d.timed && f.storage === 'not_protected' ? 1 : 0);
+  const warn = rows.find((r) => r.warn);
+  return { value: sum.value, ...(sum.warn ? { dot: 'warn' as const, sub: `${warn?.id === 'wekker' ? 'Exacte wekker' : 'Toestemming voor meldingen'} staat uit` } : {}) };
 }
 
 // De ochtendmelding: staat hij aan en kan hij ook werken (toestemming en een telefoon die het kan)?
@@ -253,6 +273,8 @@ export function rowContext(f: SettingsFacts): RowContext {
     sameDayAllowed: f.pairing !== 'never',
     folderSupported: f.folderSupported,
     noticeAvailable: support !== 'unavailable' && support !== 'not_installed',
+    timed: deviceOf(f)?.timed === true,
+    liveUpdate: f.liveUpdate === true,
     bodyFat: f.hasBodyFat === true,
   };
 }
@@ -627,6 +649,18 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       if (n.support === 'not_installed') return { value: 'Niet mogelijk', dim: true, sub: 'Zet ASCEND eerst op je beginscherm' };
       return { checked: n.on, sub: n.support === 'blocked' ? 'Geblokkeerd in je telefoon' : undefined };
     }
+    case 'bundel-meldingen':
+      return noticesBundleSummary(s, deviceOf(f), noticeState(f).on);
+    case 'rust-melding':
+      return { checked: resolveDeviceNotices(s).rest };
+    case 'weekmelding':
+      return { checked: resolveDeviceNotices(s).week };
+    case 'weekmelding-tijd':
+      return { value: choiceShort('weekmeldingTijd', resolveDeviceNotices(s).weekTime) };
+    case 'toestemmingen':
+      return permissionsRow(f);
+    case 'auto-bijwerken':
+      return { checked: s.autoUpdate !== false };
     case 'ochtendmelding-tijd': {
       // Er voor als de telefoon het kan; gedimd zolang de melding uit staat.
       const n = noticeState(f);

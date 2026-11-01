@@ -978,6 +978,9 @@ export interface AppSettings {
   restNotice?: boolean;
   weekNotice?: boolean;
   weekNoticeTime?: '18:00' | '19:00' | '20:00' | '21:00';
+  // "Automatisch bijwerken" (engine/liveUpdate.ts): de Android-app haalt een nieuwere webversie
+  // stil op voor de volgende start. Absent = aan. Optional and additive.
+  autoUpdate?: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
