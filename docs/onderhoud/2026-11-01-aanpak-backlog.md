@@ -107,6 +107,13 @@ Ronde 1, tegelijk:
    (gepaard: eerst de testloop, dan Bovenlichaam B). `morningConsequence` moet de belangrijkste training van
    vandaag noemen (een test of race eerst, anders de eerste in de volgorde van de dag), of beide ("Testloop 5 km
    en Bovenlichaam B blijven staan."). Met test op deze vorm en een screenshot op 360 en 390 px.
+2e. Sherpa (sonnet), bij de kleine punten: op de plekpagina van Lichaam (`src/pages/BodySpot.tsx`, tekst in
+   `src/data/bodyCare.ts`) staat onder "Wat je doet bij last" altijd een open blok "Naar een fysio of je huisarts
+   bij" met zes punten. De eigenaar vindt die steeds terugkerende fysio-tekst irritant. Maak het rustig: een
+   ingeklapte regel ("Wanneer laat je het nakijken?") die openklapt, zonder waarschuwingsicoon zolang er niets aan
+   de hand is; open en in amber alleen als de gebruiker zelf een van die signalen meldde (bijvoorbeeld pijn die
+   erger werd, of een plek die hij niet kan belasten). De inhoud blijft gelijk (zorgteksten blijven "kan helpen"),
+   alleen de plek en de toon veranderen. Met screenshot op 360 en 390 px.
 2c. Sherpa (opus): de rustdag komt niet terug. Gevonden in de back-up van 1 november: een voorstel (TEST-RETRY,
    28 oktober) haalde de rij Herstel op maandag 2 november weg om plaats te maken; de test en de lange duurloop
    gingen daarna elders heen, maar de rustdag bleef weg (status skipped, lock van het voorstel). Week toont nu
