@@ -87,9 +87,18 @@ export function restBackAdvice(input: RestBackInput & { on?: boolean }): Advice[
   });
 }
 
-// Een lege dag in Week: op je vaste rustdag "Rustdag", anders "Vrij". Alleen weergave.
-export function emptyDayText(date: string, restDay: number | undefined): { rest: boolean; title: string; line: string } {
-  return restDay && isoWeekday(date) === restDay
+// Een lege dag in Week: op je vaste rustdag "Rustdag", anders "Vrij". Staat de rust van die week al op
+// een andere dag (een rij Herstel die niet overgeslagen is, na REST-SWAP of REST-PULL), dan is de lege
+// vaste rustdag gewoon "Vrij", zodat Week geen twee keer rust in één week toont. Alleen weergave.
+export function emptyDayText(
+  date: string,
+  restDay: number | undefined,
+  sessions: PlannedSession[] = [],
+  templateById: Map<string, SessionTemplate> = new Map(),
+): { rest: boolean; title: string; line: string } {
+  const monday = mondayOfWeek(date);
+  const restElsewhere = sessions.some((o) => o.status !== 'skipped' && o.scheduledDate !== date && mondayOfWeek(o.scheduledDate) === monday && templateById.get(o.templateId)?.type === 'recovery');
+  return restDay && isoWeekday(date) === restDay && !restElsewhere
     ? { rest: true, title: 'Rustdag', line: 'je vaste rustdag' }
     : { rest: false, title: 'Vrij', line: 'niets gepland' };
 }

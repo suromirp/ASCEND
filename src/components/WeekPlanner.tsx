@@ -348,8 +348,9 @@ export function WeekPlanner({
         // A day with a band (holiday, tocht, a light day around it) already shows its date there: no second row.
         const loose = looseLogs.filter((l) => l.completedDate === date);
         const showEmpty = rows.length === 0 && !leaveLabel && loose.length === 0;
-        // Op je vaste rustdag heet een lege dag Rustdag, met de hangmat; een andere lege dag is Vrij.
-        const empty = emptyDayText(date, settings.restDay ?? 1);
+        // Op je vaste rustdag heet een lege dag Rustdag, met de hangmat; een andere lege dag is Vrij, net als
+        // de vaste rustdag als de rust van deze week al op een andere dag staat.
+        const empty = emptyDayText(date, settings.restDay ?? 1, sessions, templateById);
         return (
           <div
             key={date}

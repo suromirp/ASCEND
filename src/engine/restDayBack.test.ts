@@ -131,4 +131,16 @@ describe('Week: een lege dag op je vaste rustdag', () => {
     expect(emptyDayText('2026-11-08', 7)).toMatchObject({ rest: true, title: 'Rustdag' });
     expect(emptyDayText('2026-11-02', undefined)).toMatchObject({ rest: false, title: 'Vrij' });
   });
+
+  it('staat de rust van die week op een andere dag (na REST-SWAP of REST-PULL), dan is de lege rustdag gewoon Vrij', () => {
+    const byId = new Map(templates.map((t) => [t.id, t]));
+    const moved = [planned('walk', 'tpl_herstel', '2026-11-03', '2026-11-02'), planned('easy', 'tpl_easy_run', '2026-11-05', '2026-11-02')];
+    expect(emptyDayText('2026-11-02', 1, moved, byId)).toEqual({ rest: false, title: 'Vrij', line: 'niets gepland' });
+    // Een overgeslagen Herstel elders telt niet als rust van de week.
+    const skipped = [{ ...moved[0], status: 'skipped' as const }, moved[1]];
+    expect(emptyDayText('2026-11-02', 1, skipped, byId)).toMatchObject({ rest: true, title: 'Rustdag' });
+    // Herstel in een andere week telt ook niet.
+    const otherWeek = [planned('walk', 'tpl_herstel', '2026-11-10', '2026-11-09')];
+    expect(emptyDayText('2026-11-02', 1, otherWeek, byId)).toMatchObject({ rest: true, title: 'Rustdag' });
+  });
 });
