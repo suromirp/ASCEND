@@ -229,8 +229,11 @@ Ronde 2b, naast ronde 2:
     Meldingen moeten werken met het scherm uit en de app op de achtergrond, met trillen (instelbaar, volgens de
     instelling Trillen): eerst het einde van de rusttijd in Forge (de klok loopt door als het scherm uit is en
     je telefoon trilt en geeft een melding als de rust voorbij is), daarna de ochtendvraag en de weekmelding.
-    Gebruik daarvoor de lokale meldingen van Capacitor met een exacte tijd, en vraag de toestemming voor meldingen
-    pas op het moment dat je ze voor het eerst nodig hebt. Daarop de
+    Gebruik daarvoor de lokale meldingen van Capacitor met een exacte tijd. Toestemmingen (meldingen, exacte
+    wekker, Health Connect) vraagt de app direct na de installatie, in een korte, mooie welkomstreeks in de
+    ASCEND-stijl (wens van de eigenaar, 1 november): per toestemming één scherm met een pictogram, één zin waarom
+    ("Zodat je telefoon trilt als je rust voorbij is, ook met het scherm uit"), de knop om toe te staan en "Niet nu".
+    Wat je overslaat kun je later aanzetten in Instellingen, en daar staat ook of elke toestemming aan staat. Daarop de
     korte weekmelding op zondagavond. Daarna Health Connect als bron via de adapter in `src/integrations/`
     (dezelfde vormen als intervals.icu, met `source: 'health-connect'`; geen veld met een merknaam), met een
     instelling en een besluit. Agenda-planning komt pas daarna.
