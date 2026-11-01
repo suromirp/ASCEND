@@ -9,6 +9,7 @@ import { WeeklyLoadChart } from '../components/stand/WeeklyLoadChart';
 import { IntensityMixCard } from '../components/stand/IntensityMixCard';
 import { DescentCard } from '../components/stand/DescentCard';
 import { ClimbPaceCard } from '../components/stand/ClimbPaceCard';
+import type { HikeDay } from '../engine/climbPace';
 import { RunTrendsCard } from '../components/stand/RunTrendsCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
@@ -76,6 +77,13 @@ export function StandingPage() {
     return r && r.percent !== undefined ? { percent: r.percent, meters: r.meters, weakest: r.weakest, sentence: r.sentence, weakestSentence: r.weakestSentence, change: r.change } : undefined;
   }, [primaryGoal, sessionLogs, today, testJudgments, askDoubtTest, readinessWeighting, goalGrowth, limitMargin]);
   const routeDescent = primaryGoal ? typicalDayValue(primaryGoal.requirements, 'elevationLoss')?.value.amount : undefined;
+  // Een gewone dag van je hoofddoel, voor de band op je eigen klimtempo (engine/climbPace.ts).
+  const goalDay = useMemo((): HikeDay | undefined => {
+    const dist = primaryGoal ? typicalDayValue(primaryGoal.requirements, 'distance')?.value : undefined;
+    if (!primaryGoal || dist?.unit !== 'km') return undefined;
+    return { km: dist.amount, up: typicalDayValue(primaryGoal.requirements, 'elevationGain')?.value.amount ?? 0, down: routeDescent ?? 0 };
+  }, [primaryGoal, routeDescent]);
+  const goalPack = primaryGoal?.requirements.find((r) => r.kind === 'packWeight')?.target?.amount;
   const milestones = useMemo(() => goalMilestones.filter((m) => m.goalId === primaryGoal?.id), [goalMilestones, primaryGoal?.id]);
   const progress = useMemo(
     () => (primaryGoal ? computeGoalProgress(primaryGoal.id, primaryGoal.name, milestones, goalMilestoneProgress, sessionLogs) : null),
@@ -151,7 +159,7 @@ export function StandingPage() {
         <WeeklyLoadChart weeks={weeks} />
         <IntensityMixCard mix={mix} />
         <DescentCard weeks={descent} routeDayDescent={routeDescent} />
-        <ClimbPaceCard />
+        <ClimbPaceCard goalDay={goalDay} pack={{ packKg: goalPack, bodyKg: inputs.bodyKg }} />
       </section>
     ),
     'kracht': (

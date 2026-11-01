@@ -493,6 +493,8 @@ describe('rowSummary: gegevens en back-up', () => {
     expect(rowSummary('luchtkwaliteit', facts({ settings: { airQuality: false } as never })).checked).toBe(false);
     expect(rowSummary('klimtempo', facts()).checked).toBe(true);
     expect(rowSummary('klimtempo', facts({ settings: { climbPace: false } as never })).checked).toBe(false);
+    expect(rowSummary('etappetijd-eigen', facts()).checked).toBe(true);
+    expect(rowSummary('etappetijd-eigen', facts({ settings: { stageOwnPace: false } as never })).checked).toBe(false);
     expect(rowSummary('ochtendregel', facts({ settings: { morningRule: false } as never })).checked).toBe(false);
     expect(rowSummary('horloge-stil', facts({ settings: { watchSilence: false } as never })).checked).toBe(false);
     expect(rowSummary('ochtend-backup', facts({ settings: { morningInBackup: false } as never })).checked).toBe(false);

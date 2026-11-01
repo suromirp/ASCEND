@@ -848,6 +848,9 @@ export interface AppSettings {
   // "Ochtendregel" (engine/morningRule.ts): the three watch numbers with a word each on the morning
   // card, and the question "Ben je moe?" when two of the three are off. Absent = on.
   morningRule?: boolean;
+  // "Etappetijd op je eigen tempo" (engine/climbPace.ts#stageTimeEstimate): a GR5 stage and a usual day of the main
+  // goal as a band of hours on your own climbing pace, once there are enough climbs; else the old estimate. Absent = on.
+  stageOwnPace?: boolean;
   // "Je klimtempo" (engine/climbPace.ts): your own metres per hour up and down from the climbs of your walks
   // and tochten, on Je stand once there are six climbs from three tochten. Absent = on. Optional and additive.
   climbPace?: boolean;

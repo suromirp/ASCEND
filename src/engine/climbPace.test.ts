@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { SessionLog } from '../models/training';
 import type { ActivityDetail, TerrainStretch } from '../models/activityDetail';
-import { CLIMB_PACE_MIN, climbPace, climbPaceBasisLine, climbPaceWaitLine, hoursBandText, ownHikingBand, stageTimeEstimate } from './climbPace';
+import { CLIMB_PACE_MIN, climbPace, climbPaceBasisLine, climbPaceWaitLine, goalDayOwnLine, hoursBandText, ownHikingBand, stageOwnLine, stageTimeEstimate } from './climbPace';
 import { estimatedHikingMinutes } from './goalRoute';
 
 // Nagemaakte tochten: alleen de klim- en dalstukken die het profiel ervan zou geven.
@@ -129,6 +129,16 @@ describe('ownHikingBand en stageTimeEstimate: een etappe op je eigen tempo', () 
     expect(stageTimeEstimate({ state: 'enough', pace }, stage, { on: false }).kind).toBe('norm');
     const own = stageTimeEstimate({ state: 'enough', pace }, stage);
     expect(own.kind).toBe('own');
+  });
+
+  it('zegt de etappetijd en de dag van je hoofddoel alleen op je eigen tempo', () => {
+    const own = stageTimeEstimate({ state: 'enough', pace }, { km: 20, up: 1100, down: 1100 });
+    expect(stageOwnLine(own)).toMatch(/^Op je eigen tempo \d+(,5)? tot \d+(,5)? uur lopen, zonder pauzes\.$/);
+    expect(goalDayOwnLine(own, { km: 20, up: 1100, down: 1100 })).toContain('20 km met 1.100 m omhoog en 1.100 m omlaag');
+    expect(goalDayOwnLine(own, { km: 20, up: 1100, down: 1100 })).toContain('De wandelnorm zegt 8 uur 20 min.');
+    const norm = stageTimeEstimate(undefined, { km: 20, up: 1100, down: 1100 });
+    expect(stageOwnLine(norm)).toBeUndefined();
+    expect(goalDayOwnLine(norm, { km: 20, up: 1100, down: 1100 })).toBeUndefined();
   });
 
   it('zegt de band in hele en halve uren', () => {

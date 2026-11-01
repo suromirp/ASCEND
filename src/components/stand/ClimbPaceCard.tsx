@@ -2,18 +2,20 @@
 // bergtochten (engine/climbPace.ts). Pas een getal na genoeg klimmen; daarvoor één regel met hoeveel
 // er al zijn, en zonder een enkele klim niets. Een gewone marine kaart, geen eigen accent.
 
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useAppData } from '../../state/AppDataContext';
-import { climbPace, climbPaceBasisLine, climbPaceWaitLine, NORM_DOWN_MPH, NORM_UP_MPH } from '../../engine/climbPace';
+import { climbPace, climbPaceBasisLine, climbPaceWaitLine, goalDayOwnLine, NORM_DOWN_MPH, NORM_UP_MPH, stageTimeEstimate, type HikeDay, type PackOptions } from '../../engine/climbPace';
 import { signalOn } from '../../engine/signalSettings';
 import { todayISO } from '../../utils/dates';
 import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow, Stat } from '../ui';
 
-export function ClimbPaceCard({ children }: { children?: ReactNode }) {
+// `goalDay`: een gewone dag van je hoofddoel, voor de band op je eigen tempo (Etappetijd op je eigen tempo).
+export function ClimbPaceCard({ goalDay, pack }: { goalDay?: HikeDay; pack?: PackOptions }) {
   const { sessionLogs, settings } = useAppData();
   const on = signalOn(settings, 'climbPace');
   const state = useMemo(() => (on ? climbPace(sessionLogs, todayISO()) : undefined), [on, sessionLogs]);
+  const dayLine = state && goalDay ? goalDayOwnLine(stageTimeEstimate(state, goalDay, { ...pack, on: signalOn(settings, 'stageOwnPace') }), goalDay) : undefined;
   if (!state) return null;
   if (state.state === 'notYet') {
     return (
@@ -33,7 +35,7 @@ export function ClimbPaceCard({ children }: { children?: ReactNode }) {
       </div>
       {pace.downMph === undefined && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Voor omlaag zijn er nog te weinig dalingen; daar geldt de norm.</p>}
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{climbPaceBasisLine(pace)}</p>
-      {children}
+      {dayLine && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{dayLine}</p>}
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         De wandelnorm rekent met <span className="tabular-nums">{NORM_UP_MPH}</span> meter per uur omhoog en <span className="tabular-nums">{NORM_DOWN_MPH}</span> omlaag. Dit is bewegend, zonder pauzes.
       </p>

@@ -20,6 +20,9 @@ import { sweatRateAt, usableSweatEntries } from '../engine/sweat';
 import { usePageState } from '../components/usePageState';
 import { Icon } from '../components/icons';
 import { mainGoal } from '../engine/mainGoal';
+import { climbPace, stageOwnLine, stageTimeEstimate } from '../engine/climbPace';
+import { currentBodyKg } from '../engine/bodyWeight';
+import { signalOn } from '../engine/signalSettings';
 
 // "Nachten: 2 tent, 1 gîte, 33 nog niet gekozen." Alleen wat er is.
 function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): string {
@@ -52,6 +55,15 @@ export function EtappesPage() {
   const hardest = useMemo(() => hardestDays(days), [days]);
   const dayOfStage = (stage: Gr5Stage): ItineraryDay => days.find((d) => d.stages.some((s) => s.id === stage.id))!;
   const open = openId ? GR5_STAGES.find((s) => s.id === openId) : undefined;
+  // De etappe op je eigen klimtempo, met de rugzak van je hoofddoel (engine/climbPace.ts).
+  const ownPaceOn = signalOn(settings, 'stageOwnPace');
+  const climb = useMemo(() => (ownPaceOn ? climbPace(sessionLogs, today) : undefined), [ownPaceOn, sessionLogs, today]);
+  const goalPack = goal?.requirements.find((r) => r.kind === 'packWeight')?.target?.amount;
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  const ownTime = (stage: Gr5Stage): string | undefined =>
+    stage.km === null || stage.up === null || stage.down === null
+      ? undefined
+      : stageOwnLine(stageTimeEstimate(climb, { km: stage.km, up: stage.up, down: stage.down }, { on: ownPaceOn, packKg: goalPack, bodyKg }));
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
@@ -185,6 +197,7 @@ export function EtappesPage() {
           logs={sessionLogs}
           today={today}
           water={showWater ? stageWater(open, sweat) : undefined}
+          ownTime={ownTime(open)}
           onChoose={choose}
           onClose={() => setOpenId(null)}
         />

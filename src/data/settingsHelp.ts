@@ -537,6 +537,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Wat je ziet', text: 'op Je stand je meters per uur omhoog en omlaag, met het rugzakgewicht als dat bij je tochten bekend is. Het verandert niets aan je planning.' },
     ],
   },
+  etappetijdEigen: {
+    title: 'Etappetijd op je eigen tempo',
+    lead: 'De looptijd op de bordjes en de site is een norm. Met je eigen klimtempo kan ASCEND zeggen hoe lang een etappe voor jou ongeveer duurt.',
+    points: [
+      { head: 'Wat je ziet', text: 'bij een etappe en op Je stand een band als 6,5 tot 7,5 uur lopen, zonder pauzes. Een tijd, geen tweede percentage: Klaar voor je doel blijft het ene getal.' },
+      { head: 'Wanneer', text: 'pas als je klimtempo er is, na zes klimmen uit drie tochten. Tot dan blijft de looptijd van de site en de wandelnorm staan.' },
+      { head: 'Hoe het rekent', text: 'vlak met 4 km per uur zoals de norm, omhoog en omlaag met jouw meters per uur. Is je rugzak voor de GR5 zwaarder dan op je klimmen en weet ASCEND je gewicht, dan rekent het iets trager. Vermoeidheid na een paar dagen lopen telt niet mee.' },
+    ],
+  },
   ochtendregel: {
     title: 'Twee van drie',
     lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',

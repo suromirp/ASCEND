@@ -25,7 +25,7 @@
 import type { SessionLog } from '../models/training';
 import { climbsOf, descentsOf, isUnavailable } from './runMetrics';
 import { isIndoorLog, isWalkOrTripLog } from './sports';
-import { addDays } from '../utils/dates';
+import { addDays, formatHoursMinutesNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { estimatedHikingMinutes } from './goalRoute';
 
@@ -187,6 +187,19 @@ export function climbPaceBasisLine(pace: ClimbPace): string {
   const grade = pace.gradeLow === pace.gradeHigh ? `op hellingen van ongeveer ${pace.gradeLow} procent` : `op hellingen van ${pace.gradeLow} tot ${pace.gradeHigh} procent`;
   const pack = pace.packKg ? `, met gemiddeld ${formatNumberNL(pace.packKg, 1)} kg rugzak` : ', zonder bekend rugzakgewicht';
   return `Uit ${plural(pace.climbs, 'klim', 'klimmen')} in ${plural(pace.trips, 'tocht', 'tochten')} van het laatste jaar, ${grade}${pack}.`;
+}
+
+// Bij een etappe: "Op je eigen tempo 6,5 tot 7,5 uur lopen, zonder pauzes." Undefined bij de oude
+// schatting: dan blijft de looptijd van de site staan.
+export function stageOwnLine(estimate: StageTimeEstimate): string | undefined {
+  return estimate.kind === 'own' ? `Op je eigen tempo ${hoursBandText(estimate.band)} lopen, zonder pauzes.` : undefined;
+}
+
+// Bij een gewone dag van je hoofddoel, op Je stand. Undefined bij de oude schatting.
+export function goalDayOwnLine(estimate: StageTimeEstimate, day: HikeDay): string | undefined {
+  if (estimate.kind !== 'own') return undefined;
+  const route = `${formatNumberNL(day.km, 1)} km met ${formatNumberNL(day.up, 0)} m omhoog en ${formatNumberNL(day.down, 0)} m omlaag`;
+  return `Een gewone dag van je hoofddoel, ${route}, is voor jou dan ${hoursBandText(estimate.band)} lopen. De wandelnorm zegt ${formatHoursMinutesNL(estimate.norm)}.`;
 }
 
 // Tot er genoeg zijn: hoeveel er nodig zijn en hoeveel er al zijn.
