@@ -34,6 +34,23 @@ Tabellen staan hier omdat dit een werkinstructie is; in teksten voor de eigenaar
 - Lookout gebruikt de skill `lookout` en schrijft geen nieuwe testkit.
 - Een helper leest geen back-up van de eigenaar, tenzij de opdracht het pad noemt en zegt dat het
   alleen lezen is en nooit in de repo komt.
+- Datums, plekken en andere details uit een back-up van de eigenaar gaan nooit letterlijk in een opdracht:
+  verschuif datums met een paar weken en noem het een nagemaakt voorbeeld (ronde 1: vakantiedata in de repo).
+- Alles wat zorg of gezondheid raakt: een waarschuwing of spoedtekst ("bel je huisarts of 112") staat nooit
+  achter een tik of in een ingeklapt deel (ronde 1).
+- Opslag en historie: de opdracht noemt deze randgevallen als eis, met een test per geval: een fout halverwege
+  (alles of niets, Ongedaan maken blijft), een koppeling die verlopen of tijdelijk kapot is, de dag zelf
+  (vandaag telt nog niet als voorbij), een rij van een vakantie of tocht, en of het een uitzondering is op
+  "logs nooit herschrijven" (dan in CLAUDE.md) (ronde 1).
+- Teksten: zoek eerst het bestaande woord op (grep) en gebruik dat; een voorbeeld in een opdracht is nooit een
+  nieuw vast woord. Voorstellen hebben Liever niet links en Akkoord rechts (ronde 1).
+- Een fout in de interface: noem het gemeten symptoom, de vermoedelijke oorzaak als vermoeden ("meet het") en een
+  doorloop met de kit als eis. Dat werkte in ronde 1 in één keer op sonnet.
+- Herstel na een review gaat terug naar dezelfde bouwer (SendMessage), niet naar een nieuwe: 20k tot 40k tegen
+  90k tot 290k (ronde 1).
+- De tekstkaart bouwt altijd zelf op een vrije poort; zet geen `KAART_PORT`. Alleen "Geen verschil met
+  docs/app-kaart/." telt als gelijk, nooit een gefilterde uitvoer (ronde 1).
+- Geen pagina of artefact voor de eigenaar dat de coördinator niet zelf geopend en gecontroleerd heeft (ronde 1).
 
 ## Opschalen en afschalen
 
