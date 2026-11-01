@@ -11,6 +11,7 @@ import { DescentCard } from '../components/stand/DescentCard';
 import { ClimbPaceCard } from '../components/stand/ClimbPaceCard';
 import type { HikeDay } from '../engine/climbPace';
 import { RunTrendsCard } from '../components/stand/RunTrendsCard';
+import { PaceCurveCard } from '../components/stand/PaceCurveCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
 import { TextButton } from '../components/TextButton';
@@ -192,6 +193,7 @@ export function StandingPage() {
     'lopen': (
       <section className="flex flex-col gap-5" aria-label="Lopen">
         <RunTrendsCard />
+        <PaceCurveCard />
         <AerobicTrendCard />
       </section>
     ),

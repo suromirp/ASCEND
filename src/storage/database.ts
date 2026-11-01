@@ -848,6 +848,9 @@ export interface AppSettings {
   // "Ochtendregel" (engine/morningRule.ts): the three watch numbers with a word each on the morning
   // card, and the question "Ben je moe?" when two of the three are off. Absent = on.
   morningRule?: boolean;
+  // "Tempocurve tussen testen" (engine/paceCurve.ts): the fastest 5 km or 3 km of your usual runs since the last
+  // test that counts, next to that test on Je stand, as a check. The test stays the source of the paces. Absent = on.
+  paceCurve?: boolean;
   // "Etappetijd op je eigen tempo" (engine/climbPace.ts#stageTimeEstimate): a GR5 stage and a usual day of the main
   // goal as a band of hours on your own climbing pace, once there are enough climbs; else the old estimate. Absent = on.
   stageOwnPace?: boolean;

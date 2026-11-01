@@ -60,6 +60,7 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="hitte-tempo" title="Hitte bij je tempo" facts={facts} info="hitteTempo" onChange={(on) => void updateSettings({ heatPace: on })} />
           <SummaryRow id="klimtempo" title="Je klimtempo" facts={facts} info="klimtempo" onChange={(on) => void updateSettings({ climbPace: on })} />
           <SummaryRow id="etappetijd-eigen" title="Etappetijd op je eigen tempo" facts={facts} info="etappetijdEigen" onChange={(on) => void updateSettings({ stageOwnPace: on })} />
+          <SummaryRow id="tempocurve" title="Tempocurve tussen testen" facts={facts} info="tempocurve" onChange={(on) => void updateSettings({ paceCurve: on })} />
           <SummaryRow id="luchtkwaliteit" title="Luchtkwaliteit" facts={facts} info="luchtkwaliteit" onChange={(on) => void updateSettings({ airQuality: on })} />
         </BundleSheet>
       )}

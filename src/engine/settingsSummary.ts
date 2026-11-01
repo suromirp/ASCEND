@@ -783,6 +783,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.climbPace !== false };
     case 'etappetijd-eigen':
       return { checked: s.stageOwnPace !== false };
+    case 'tempocurve':
+      return { checked: s.paceCurve !== false };
     case 'ochtendregel':
       return { checked: s.morningRule !== false };
     case 'horloge-stil':

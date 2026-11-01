@@ -546,6 +546,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Hoe het rekent', text: 'vlak met 4 km per uur zoals de norm, omhoog en omlaag met jouw meters per uur. Is je rugzak voor de GR5 zwaarder dan op je klimmen en weet ASCEND je gewicht, dan rekent het iets trager. Vermoeidheid na een paar dagen lopen telt niet mee.' },
     ],
   },
+  tempocurve: {
+    title: 'Tempocurve tussen testen',
+    lead: 'Tussen twee testen in lopen je gewone loopjes ook snelle stukken. ASCEND legt de snelste daarvan naast je test, als controle.',
+    points: [
+      { head: 'Wat je ziet', text: 'op Je stand onder Lopen je snelste 5 km in training sinds je test, met één zin: past bij je testtempo\'s, wijst op iets sneller, of is rustiger, wat normaal is.' },
+      { head: 'De test blijft de bron', text: 'je tempo\'s, de voorspelling en wat naar je horloge gaat komen uit de test die telt. Dit verandert daar niets aan; een nieuwe test zegt meer.' },
+      { head: 'Wanneer', text: 'drie weken na je test en na drie loopjes buiten met details. Je loopt in training zelden voluit, dus dit is een ondergrens.' },
+    ],
+  },
   ochtendregel: {
     title: 'Twee van drie',
     lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',
