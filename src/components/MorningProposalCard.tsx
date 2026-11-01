@@ -13,12 +13,18 @@ import { todayISO } from '../utils/dates';
 import { ProposalSheet } from './ProposalSheet';
 import { Card, SecondaryButton } from './ui';
 import { useTodayWatch } from './useWellness';
+import { useLegEase } from './useLegEase';
+import { resolveLegEase } from '../engine/legEaseSettings';
 
 export function MorningProposalCard() {
-  const { sessionLogs, plannedSessions, templates, program, settings, injuryNotes, goalEngineConfig, answeredAdviceIds, advice } = useAppData();
+  const { sessionLogs, plannedSessions, templates, program, settings, injuryNotes, goalEngineConfig, answeredAdviceIds, advice, influenceMove } = useAppData();
+  // De kaart Benen en het testvoorstel na Wat speelde er spreken al voor hun training: dan zwijgt deze kaart.
+  const legCardId = useLegEase().state?.target.session.id;
+  const influenceId = influenceMove?.cause.session.id;
   const today = todayISO();
   const { rule } = useTodayWatch(today);
   const [open, setOpen] = useState(false);
+  const legEase = resolveLegEase(settings);
   const enabled = signalOn(settings, 'morningProposal') && signalOn(settings, 'morningRule');
   const found = useMemo(() => {
     try {
@@ -31,14 +37,15 @@ export function MorningProposalCard() {
         dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
         sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
         enabledSports: settings.enabledSports, respondedIds: answeredAdviceIds, asOf: today, illnessEpisodes: settings.illnessEpisodes,
+        legEase, checkIns: settings.morningCheckIns,
       }, cause, new Set(advice.map((a) => a.id)));
       return proposal ? { cause, proposal } : undefined;
     } catch (err) {
       console.error('Voorstel bij een slechte ochtend: berekening mislukt:', err);
       return undefined;
     }
-  }, [today, rule, plannedSessions, templates, sessionLogs, settings.morningCheckIns, settings.illnessEpisodes, settings.enabledSports, enabled, injuryNotes, program, goalEngineConfig, answeredAdviceIds, advice]);
-  if (!found) return null;
+  }, [today, rule, plannedSessions, templates, sessionLogs, settings.morningCheckIns, settings.illnessEpisodes, settings.enabledSports, legEase, enabled, injuryNotes, program, goalEngineConfig, answeredAdviceIds, advice]);
+  if (!found || found.cause.session.id === legCardId || found.cause.session.id === influenceId) return null;
   return (
     <>
       <Card className="flex flex-col gap-3">

@@ -1068,7 +1068,7 @@ export function laterMoveAdvice(inputs: AdviceInputs, sessionId: string, spec: L
 }
 
 // The training the card of LEG-EASE speaks for today, when soreness is reported (engine/legDayEase.ts).
-function legCardSessionOf(inputs: AdviceInputs): PlannedSession | undefined {
+export function legCardSessionOf(inputs: AdviceInputs): PlannedSession | undefined {
   return legEaseCardSession({ mode: inputs.legEase, today: inputs.asOf, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries, checkIns: inputs.checkIns });
 }
 

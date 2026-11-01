@@ -95,6 +95,24 @@ describe('morningProposal: altijd een voorstel met Akkoord', () => {
     expect(morningProposal(inputs(plan), undefined, new Set())).toBeUndefined();
   });
 
+  it('staat nooit naast de kaart Benen of een beantwoord voorstel van de ochtendcheck voor dezelfde training', () => {
+    const plan = week(MONDAY, { 2: 'tpl_lower_a' }).filter((s) => s.scheduledDate !== addDays(TODAY, 1));
+    const sore = [{ date: TODAY, legs: 'spierpijn' as const }];
+    const c = cause(plan, { checkIns: sore })!;
+    expect(c.session.templateId).toBe('tpl_lower_a');
+    // Met de kaart Benen als voorstel en spierpijn spreekt die kaart: dit voorstel zwijgt.
+    expect(morningProposal(inputs(plan, { legEase: 'voorstel', checkIns: sore }), c, new Set())).toBeUndefined();
+    // Staat de kaart uit, dan mag het voorstel er wel zijn.
+    expect(morningProposal(inputs(plan, { legEase: 'uit', checkIns: sore }), c, new Set())).toBeDefined();
+    // Zonder spierpijn spreekt de kaart Benen niet vanuit de ochtendcheck.
+    const plain = cause(plan)!;
+    expect(morningProposal(inputs(plan, { legEase: 'voorstel', checkIns: [] }), plain, new Set())).toBeDefined();
+    // Een beantwoord voorstel van de ochtendcheck of de kaart Benen voor dezelfde sessie.
+    for (const id of [`morning:${TODAY}:${plain.session.id}`, `leg-ease:${TODAY}:${plain.session.id}`]) {
+      expect(morningProposal(inputs(plan, { respondedIds: new Set([id]) }), plain, new Set())).toBeUndefined();
+    }
+  });
+
   it('zegt op Vandaag in één zin wat er is', () => {
     const c = cause(week(MONDAY))!;
     expect(morningProposalLine(c, 'Tempoloop')).toBe('Twee van de drie getallen van je horloge wijken vanochtend af, en vandaag staat Tempoloop. Er ligt een voorstel om hem later te doen.');
