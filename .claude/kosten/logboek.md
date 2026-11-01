@@ -82,3 +82,8 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-01, Rustdag na rust (melding eigenaar), Sherpa, opus (ontwikkelaar), hervat, 17 min, 0
 - 2026-11-01, Review rustdag na rust, Warden, opus (reviewer), 45k, 2 min, 0, groen; twee tekstpunten door coördinator
 - 2026-11-01, Review Vandaag rustiger, Warden, opus (reviewer), 104k, 5 min, 0, rood: opbouwkaart duwde vragen onder de vouw
+- 2026-11-01, Vandaag rustiger herstel, Sherpa, opus (ontwikkelaar), hervat 30k, 35 min, 1
+- 2026-11-01, Android-app, Sherpa, opus (ontwikkelaar), 389k, 91 min, 0
+- 2026-11-01, Review Android-app, Warden, opus (reviewer), 146k, 6 min, 0, groen met twee belangrijke punten
+- 2026-11-01, Beveiligingsreview Android, Warden, opus (reviewer), 67k, 2 min, 0, nog niet live: workflowrechten, sleutel, updatebron
+- 2026-11-01, Kansen middelgroot, Sherpa, opus (ontwikkelaar), 405k, 95 min, 0
