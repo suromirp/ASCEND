@@ -63,6 +63,7 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="tempocurve" title="Tempocurve tussen testen" facts={facts} info="tempocurve" onChange={(on) => void updateSettings({ paceCurve: on })} />
           <SummaryRow id="wennen-warmte" title="Wennen aan warmte" facts={facts} info="wennenWarmte" onChange={(on) => void updateSettings({ heatAcclimation: on })} />
           <SummaryRow id="bergweer" title="Bergweer op hoogte" facts={facts} info="bergweer" onChange={(on) => void updateSettings({ mountainWeather: on })} />
+          <SummaryRow id="ochtend-voorstel" title="Voorstel bij een slechte ochtend" facts={facts} info="ochtendVoorstel" onChange={(on) => void updateSettings({ morningProposal: on })} />
           <SummaryRow id="luchtkwaliteit" title="Luchtkwaliteit" facts={facts} info="luchtkwaliteit" onChange={(on) => void updateSettings({ airQuality: on })} />
         </BundleSheet>
       )}

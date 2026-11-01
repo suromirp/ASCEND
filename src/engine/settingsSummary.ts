@@ -789,6 +789,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.heatAcclimation !== false };
     case 'bergweer':
       return { checked: s.mountainWeather !== false };
+    case 'ochtend-voorstel':
+      return { checked: s.morningProposal !== false };
     case 'ochtendregel':
       return { checked: s.morningRule !== false };
     case 'horloge-stil':

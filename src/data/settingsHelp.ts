@@ -573,6 +573,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waar het vandaan komt', text: 'Open-Meteo, dezelfde bron en dezelfde afgeronde plek als je gewone weer, hoogstens eens per uur. Zet je weerplek dus op de plek van je tocht, of laat het weer je locatie volgen. Een weermodel rekent een bergkam grof uit.' },
     ],
   },
+  ochtendVoorstel: {
+    title: 'Voorstel bij een slechte ochtend',
+    lead: 'Wijken twee van de drie getallen van je horloge af op de ochtend van een zware training, dan kan het helpen om die training later in de week te doen.',
+    points: [
+      { head: 'Wanneer', text: 'op de ochtend van een tempoloop, intervallen, een test of een zware beendag, als je rusthartslag, HRV of slaap op twee van de drie afwijken. Eén afwijkend getal blijft één woord op de ochtendkaart.' },
+      { head: 'Wat je ziet', text: 'een kaart op Vandaag met een voorstel om de training naar een goede latere dag te doen, met welke getallen afwijken. Alleen met jouw Akkoord verandert er iets; lichter doen kan ook, zonder iets te verschuiven.' },
+      { head: 'Niet', text: 'als je zei dat je niet moe bent, bij een wedstrijd, als je ziek bent gemeld of als er al een ander voorstel voor die training ligt. Werkt alleen als Twee van drie aan staat.' },
+    ],
+  },
   ochtendregel: {
     title: 'Twee van drie',
     lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',
