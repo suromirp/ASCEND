@@ -7,10 +7,11 @@ import { deriveSessionStatus } from '../engine/sessionStatus';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
+import { emptyDayText } from '../engine/restDayBack';
 import { useAppData } from '../state/AppDataContext';
 import { LeaveBand } from './LeaveBand';
 import { WeekStatusIcon } from './WeekIcons';
-import { LogDisc, SportDisc } from './SportDisc';
+import { IconDisc, LogDisc, SportDisc } from './SportDisc';
 import { SPORT_LOOK, sportKeyOfLog } from './logbook/sportLook';
 import { zoneOfTemplate } from './vandaag/zone';
 import { Icon } from './icons';
@@ -347,6 +348,9 @@ export function WeekPlanner({
         // A day with a band (holiday, tocht, a light day around it) already shows its date there: no second row.
         const loose = looseLogs.filter((l) => l.completedDate === date);
         const showEmpty = rows.length === 0 && !leaveLabel && loose.length === 0;
+        // Op je vaste rustdag heet een lege dag Rustdag, met de hangmat; een andere lege dag is Vrij, net als
+        // de vaste rustdag als de rust van deze week al op een andere dag staat.
+        const empty = emptyDayText(date, settings.restDay ?? 1, sessions, templateById);
         return (
           <div
             key={date}
@@ -367,11 +371,15 @@ export function WeekPlanner({
               <LooseRow key={l.id} log={l} template={templateById.get(l.templateId)} isToday={isToday} onTap={() => onSelectLog?.(l)} sign={signOf(l)} />
             ))}
             {showEmpty && (
-              <div className="flex min-h-[64px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
-                <span aria-hidden="true" className="inline-flex h-11 w-11 shrink-0 rounded-full" style={{ border: '1.5px dashed var(--color-control-border)' }} />
+              <div className="flex min-h-[64px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : empty.rest ? restStyle : undefined}>
+                {empty.rest ? (
+                  <IconDisc icon="maan" size={44} tone="status" />
+                ) : (
+                  <span aria-hidden="true" className="inline-flex h-11 w-11 shrink-0 rounded-full" style={{ border: '1.5px dashed var(--color-control-border)' }} />
+                )}
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Vrij</span>
-                  <span className="block text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{dayLabel(date)} · niets gepland</span>
+                  <span className="block text-[15px] font-medium leading-snug" style={{ color: empty.rest ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{empty.title}</span>
+                  <span className="block text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{dayLabel(date)} · {empty.line}</span>
                 </span>
                 {isToday && onAddFree && (
                   <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-action)' }}>

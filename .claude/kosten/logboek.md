@@ -60,3 +60,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-01, Rustdag terug, Sherpa, opus (ontwikkelaar), 199k, 31 min, 1 (drie kleine punten van Warden)
 - 2026-11-01, Review rustdag terug, Warden, opus (reviewer), 80k, 8 min, 0, groen met vier kleine punten
 - 2026-11-01, Ochtendkaart na antwoord, Sherpa, sonnet (ontwikkelaar), 88k, 27 min, 0
+- 2026-11-01, Review ochtendkaart, Warden, sonnet (reviewer), 34k, 2 min, 0, groen; besluit en tekst door coördinator

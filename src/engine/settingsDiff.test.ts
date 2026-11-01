@@ -52,6 +52,7 @@ const everything: AppSettings = {
   askShortNight: false,
   askDoubtTest: false,
   newTestOnStops: false,
+  restDayBack: false,
   weekFixProposal: false,
   dragWeek: false,
   forgeQuickButtons: false,
