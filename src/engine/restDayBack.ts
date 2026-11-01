@@ -72,7 +72,7 @@ export function restBackAdvice(input: RestBackInput & { on?: boolean }): Advice[
     const title = `Je rustdag op ${weekday} is weer vrij`;
     // De titel en de eerste regel lezen samen als "Je rustdag op maandag is weer vrij. Zet hem terug?".
     const lead = `Zet hem terug? Dan staat hij weer op ${weekday} ${formatDateNL(date)}.`;
-    const effect = `Zet hem terug? Met Akkoord staat je rustdag weer op ${weekday} ${formatDateNL(date)}. Met Liever niet blijft de dag leeg en vraagt ASCEND er niet meer naar.`;
+    const effect = `Met Akkoord staat Herstel weer op ${weekday} ${formatDateNL(date)}, zoals je week hem had. Met Liever niet blijft de dag leeg en vraagt ASCEND er niet meer naar.`;
     const why = 'Een eerder voorstel liet je rustdag vervallen om plek te maken. Wat daar kwam, staat nu ergens anders, dus de dag is weer leeg. Een vaste rustdag in de week kan helpen om fris aan je volgende training te beginnen. ASCEND zet hem niet stil terug: alleen jij beslist.';
     const item: PlanChangeItem = {
       plannedSessionId: s.id, action: 'add', toDate: date,

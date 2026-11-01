@@ -60,8 +60,9 @@ describe('REST-BACK: de rustdag komt terug als een voorstel hem weghaalde', () =
     expect(a.id).toBe('restback:walk');
     expect(a.title).toBe('Je rustdag op maandag is weer vrij');
     expect(a.lead).toBe('Zet hem terug? Dan staat hij weer op maandag 2 november.');
-    expect(a.effect.startsWith('Zet hem terug?')).toBe(true);
-    expect(a.effect).toContain('Met Akkoord staat je rustdag weer op maandag 2 november.');
+    expect(a.effect.startsWith('Met Akkoord')).toBe(true);
+    expect(a.effect).not.toContain('Zet hem terug?');
+    expect(a.effect).toContain('Met Akkoord staat Herstel weer op maandag 2 november, zoals je week hem had.');
     expect(a.effect).toContain('Liever niet');
     expect(`${a.title}${a.effect}${a.why}${a.brief}`).not.toMatch(/[\u2013\u2014]/);
     // Eén item: de overgeslagen rij zelf komt terug, geen tweede rij ernaast.

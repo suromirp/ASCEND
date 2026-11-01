@@ -13,6 +13,8 @@ TEST-RETRY haalde Herstel op een maandag weg om plek te maken voor de lange duur
 
 Wanneer het voorstel komt: alleen op de vaste rustdag, als de rij Herstel daar door een voorstel is overgeslagen (niet door jezelf, niet door een vakantie of tocht, geen ingehaalde rij), de dag vandaag of later is, er die dag niets anders gepland of gedaan is en de week zijn rust niet al op een andere dag heeft. Niet in een vakantie, op een ziektedag of op of na de dag van je hoofddoel. Liever niet wordt per rij onthouden (id `restback:<rij>`). Het voorstel staat op Vandaag tussen de adviezen en in Week in de kaart Rustdag van de week waarin de dag valt.
 
+Na Akkoord blijft de rij in `removedByPlanIds` staan (`state/AppDataContext.tsx`, opgebouwd uit elke aanvaarde 'remove'): hij staat weer gepland, maar het eerdere voorstel liet hem vallen. Een latere regel die die verzameling leest, kijkt dus ook naar de status van de rij en niet alleen naar het id. SKIPPED-KEY-TO-REST en TEST-MAKE-ROOM lezen hem nu alleen voor overgeslagen rijen of tests, dus daar speelt het niet.
+
 De instelling "Rustdag terugzetten voorstellen" (Planning, `AppSettings.restDayBack`, afwezig is aan) zet het voorstel uit; de weergave "Rustdag" in Week blijft dan. Het veld is optioneel en erbij gekomen, zoals de andere ja-nee-instellingen: een oude back-up leest zoals altijd en de import houdt alleen een ja of nee over (`storage/backup.ts`), dus er is geen migratiestap nodig.
 
 ## Alternatieven
