@@ -1,29 +1,14 @@
-import { useEffect, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { MetaRepo } from '../storage/database';
-import { shouldOfferRestore } from '../engine/freshStart';
-import { todayISO } from '../utils/dates';
+import type { FreshStartState } from './useFreshStart';
 import { ImportWizard } from './ImportWizard';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
 
 // On Today, in the first days after ASCEND started from an empty database:
 // had you used it before, put your backup back right away.
-export function FreshStartCard() {
-  const { sessionLogs, settings, updateSettings } = useAppData();
-  const [seededAt, setSeededAt] = useState<string | undefined>();
-  const [importing, setImporting] = useState(false);
-  useEffect(() => {
-    void MetaRepo.get<string>('seededAt').then(setSeededAt);
-  }, []);
-
-  const show = shouldOfferRestore({
-    seededAt,
-    today: todayISO(),
-    logCount: sessionLogs.length,
-    lastExportedAt: settings.lastExportedAt,
-    dismissedAt: settings.freshStartDismissedAt,
-  });
-  if (!show && !importing) return null;
+export function FreshStartCard({ state }: { state: FreshStartState }) {
+  const { updateSettings } = useAppData();
+  const { shown, importing, setImporting } = state;
+  if (!shown) return null;
 
   return (
     <Card className="flex flex-col gap-2">

@@ -8,6 +8,7 @@
 // additive, and engine/templateRoles.ts falls back to the roles of the id when
 // it is missing or not a list, so an older backup imports as before.
 
+import { ABOVE_MISSION_CHOICES, type AboveMission } from '../engine/todayCards';
 import { parseSportHandling, type SportHandlingMap } from '../engine/sportRole';
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
@@ -612,6 +613,14 @@ export function cleanNavigationSettings(raw: { tabBack?: unknown; resumeMinutes?
     else skipped++;
   }
   return { value, skipped };
+}
+
+// --- kaarten boven de missie (2026-11-01) ----------------------------------------------
+// `settings.cardsAboveMission` (engine/todayCards.ts): hoeveel kaarten op Vandaag boven de missie staan.
+// Optioneel en additief: een back-up van ervoor heeft het niet en krijgt het advies (één). Staat er iets,
+// dan blijft alleen 1, 2 of 'all'; iets anders wordt weggelaten (undefined) en geteld.
+export function migrateCardsAboveMission(raw: unknown): AboveMission | undefined {
+  return ABOVE_MISSION_CHOICES.find((c) => c === raw);
 }
 
 // --- gegevens op lange termijn (2026-10-31) ------------------------------------------

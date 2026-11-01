@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
 import { waveHeader } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
-import { activeIllness, isHeavySession } from '../engine/illness';
+import { activeIllness, isHeavySession, recoveryRamp } from '../engine/illness';
+import { arrangeToday, resolveAboveMission, type TodayCardId } from '../engine/todayCards';
 import { hasRole } from '../engine/templateRoles';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
@@ -24,8 +25,10 @@ import { WeightReminder } from '../components/WeightCard';
 import { WatchActivityCard } from '../components/WatchActivityCard';
 import { WatchAlignCard } from '../components/WatchAlignCard';
 import { MissedTrainingCard } from '../components/MissedTrainingCard';
+import { useMissedTraining } from '../components/useMissedTraining';
 import { SourceSilenceLine } from '../components/SourceSilenceLine';
 import { IllnessSignCard } from '../components/IllnessSignCard';
+import { useIllnessSign } from '../components/useIllnessSign';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { DailyStretchCard } from '../components/DailyStretchCard';
@@ -36,6 +39,7 @@ import { useSleepRefetch } from '../components/useSleepRefetch';
 import { useMorningCardVisible } from '../components/useMorningCardVisible';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
+import { useFreshStart } from '../components/useFreshStart';
 import { StartWelcome } from '../components/start/StartWelcome';
 import { needsFirstPlan } from '../engine/freshStart';
 import { asPlannedLog } from '../engine/asPlanned';
@@ -76,13 +80,16 @@ import { logDay, plannedByIdOf } from '../engine/logDay';
 import { mainGoal as findMainGoal } from '../engine/mainGoal';
 
 function TodayContent() {
-  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
+  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
   const isMorning = new Date().getHours() < 12;
   const morningCardVisible = useMorningCardVisible();
   useSleepRefetch();
+  const illnessSignState = useIllnessSign();
+  const freshStart = useFreshStart();
+  const missed = useMissedTraining();
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
   const [adHocOpen, setAdHocOpen] = useState(false);
   const [adHocTemplate, setAdHocTemplate] = useState<SessionTemplate | null>(null);
@@ -250,6 +257,103 @@ function TodayContent() {
     <DailyStretchCard label="Avond" title="Rekken" stretches={EVENING_ROUTINE} completed={stretchCompletion.evening === today} onToggleComplete={() => toggleStretchRoutine('evening')} />
   );
 
+  // De missie: je training van vandaag, of de rustige kaart van een dag zonder.
+  const missionCard: ReactNode = primary && primaryTemplate && mission ? (
+    <TodayMissionCard
+      session={primary}
+      template={primaryTemplate}
+      fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
+      weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
+      chips={mission.chips}
+      zone={zoneOfTemplate(primaryTemplate, primary.scheduledDate, program, templates)}
+      paceNote={mission.paceNote}
+      quickComplete={isQuickComplete(primaryTemplate)}
+      onStart={(variant, feel, durationMinutes, extra) => startSession(primary, primaryTemplate, variant, feel, durationMinutes, extra)}
+      onLog={(variant) => { setLoggingVariant(variant); setLoggingAtForm(true); setLoggingSession(primary); }}
+      onShowPlan={() => { setLoggingVariant('full'); setLoggingAtForm(false); setLoggingSession(primary); }}
+      onMove={(date) => handleMove(primary.id, date)}
+      onSkip={() => handleSkip(primary.id)}
+      suggestions={suggestMoves(primary.id)}
+      onPickSuggestion={(sug) => void applyProposal(sug.proposal)}
+      originalDate={primary.movedFromDate}
+      coachLine={coachLineForToday({
+        template: primaryTemplate,
+        date: primary.scheduledDate,
+        program,
+        tomorrow: plannedSessions.filter((s) => s.scheduledDate === addDays(today, 1) && s.status !== 'skipped').map((s) => templateById.get(s.templateId)).filter((t): t is SessionTemplate => !!t),
+        yesterdayLogs: sessionLogs.filter((l) => l.completedDate === addDays(today, -1)),
+        templateById,
+      })}
+    />
+  ) : restToday && !allTodayDone ? (
+    <QuietDayCard
+      title={REST_DAY_COPY[restMode].title}
+      body={REST_DAY_COPY[restMode].valley}
+      detail={restMode === 'active' ? REST_DAY_COPY.active.detail : undefined}
+      doneLabel={restMode === 'active' ? 'Gedaan' : undefined}
+      onDone={() => { const t = templateById.get(restToday.templateId); if (t) void logSession(asPlannedLog(restToday, t, program, today)); }}
+      linkLabel={restMode === 'active' ? 'Invullen wat je deed' : 'Toch gewandeld?'}
+      onLink={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }}
+      tomorrow={quietTomorrow}
+    />
+  ) : allTodayDone && anyDoneToday ? (
+    <DoneTodayCard
+      title="Vandaag zit erop"
+      line={`${doneToday.map((l) => templateById.get(l.templateId)?.name).filter(Boolean).join(' en ')} gedaan, ${doneToday.reduce((sum, l) => sum + l.durationMinutes, 0)} min`}
+      tomorrow={tomorrowLine}
+    />
+  ) : (
+    <QuietDayCard
+      title={mainTiming?.state === 'underway' ? `${mainGoal!.name}, dag ${mainTiming.day} van ${mainTiming.days}` : mainTiming?.state === 'past' ? 'Je hoofddoel ligt achter je' : onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
+      body={mainTiming?.state === 'underway'
+        ? 'De tocht is je training. Tot het eind plant ASCEND niets.'
+        : mainTiming?.state === 'past'
+          ? 'Na je hoofddoel plant ASCEND niets meer. Kies een nieuw doel bij Ascend.'
+        : onHoliday
+        ? 'Vrij vandaag. Er staat niets op de planning.'
+        : allTodayDone
+          ? illness
+            ? 'Je bent ziek gemeld. Rust uit; wat je nu mist, hoef je niet in te halen.'
+            : 'Je training van vandaag is van de planning gehaald. Rust is ook training.'
+          : 'Vandaag staat er niets gepland.'}
+      tomorrow={quietTomorrow}
+    />
+  );
+
+  // De kaarten die met de missie om de plek bovenaan concurreren, en waar ze nu staan.
+  const presentCards: TodayCardId[] = [
+    ...(illness ? (['ill'] as const) : []),
+    ...(illnessSignState.shown ? (['illnessSign'] as const) : []),
+    ...(morningCardVisible ? (['morning'] as const) : []),
+    ...(!illness && recoveryRamp(settings.illnessEpisodes, today) ? (['ramp'] as const) : []),
+    ...(advice.length > 0 ? (['advice'] as const) : []),
+    ...(missed.item ? (['missed'] as const) : []),
+    ...(freshStart.shown ? (['freshStart'] as const) : []),
+    ...(showExportReminder ? (['backup'] as const) : []),
+  ];
+  const arrangement = arrangeToday(presentCards, resolveAboveMission(settings.cardsAboveMission));
+  const aroundMission: Record<TodayCardId, ReactNode> = {
+    // Ziek gemeld, of weer opbouwen: dezelfde kaart, op een andere plek in de volgorde.
+    ill: <IllnessStatusCard />,
+    ramp: <IllnessStatusCard />,
+    // Rusthartslag en HRV wijken een paar ochtenden samen af: een vraag, geen waarschuwing.
+    illnessSign: <IllnessSignCard state={illnessSignState} />,
+    // De ochtendvraag: wat je antwoordt kan de dag veranderen.
+    morning: <MorningCard />,
+    advice: <CoachCard />,
+    // Een training die niet doorging: één vraag of een koppelvoorstel, de oudste eerst (engine/missedTraining.ts).
+    missed: <MissedTrainingCard state={missed} onLogNow={setActionSheetSession} />,
+    freshStart: <FreshStartCard state={freshStart} />,
+    backup: (
+      <ExportReminderBanner
+        logsSinceBackup={logsSinceBackup}
+        neverBackedUp={!settings.lastExportedAt}
+        onExport={() => exportData()}
+        onDismiss={() => updateSettings({ lastExportReminderDismissedAt: new Date().toISOString() })}
+      />
+    ),
+  };
+
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
       {/* De lucht met de kop: merkteken, rekken en het tandwiel, daaronder de
@@ -266,87 +370,14 @@ function TodayContent() {
         <WeekStrip weekStart={weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
       </SkyBand>
 
-      {/* Boven de missie alleen wat echt eerst moet: ziek, nieuw begonnen, back-up. */}
-      <IllnessStatusCard />
-
-      <FreshStartCard />
-
-      {showExportReminder && (
-        <ExportReminderBanner
-          logsSinceBackup={logsSinceBackup}
-          neverBackedUp={!settings.lastExportedAt}
-          onExport={() => exportData()}
-          onDismiss={() => updateSettings({ lastExportReminderDismissedAt: new Date().toISOString() })}
-        />
-      )}
-
-      {/* De ochtendvraag staat boven de missie: wat je antwoordt kan de dag veranderen. */}
-      {morningCardVisible && <MorningCard />}
-      {/* Rusthartslag en HRV wijken een paar ochtenden samen af: een vraag, geen waarschuwing. */}
-      <IllnessSignCard />
       <MorningDeepLink />
 
-      {primary && primaryTemplate && mission ? (
-        <TodayMissionCard
-          session={primary}
-          template={primaryTemplate}
-          fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
-          weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
-          chips={mission.chips}
-          zone={zoneOfTemplate(primaryTemplate, primary.scheduledDate, program, templates)}
-          paceNote={mission.paceNote}
-          quickComplete={isQuickComplete(primaryTemplate)}
-          onStart={(variant, feel, durationMinutes, extra) => startSession(primary, primaryTemplate, variant, feel, durationMinutes, extra)}
-          onLog={(variant) => { setLoggingVariant(variant); setLoggingAtForm(true); setLoggingSession(primary); }}
-          onShowPlan={() => { setLoggingVariant('full'); setLoggingAtForm(false); setLoggingSession(primary); }}
-          onMove={(date) => handleMove(primary.id, date)}
-          onSkip={() => handleSkip(primary.id)}
-          suggestions={suggestMoves(primary.id)}
-          onPickSuggestion={(sug) => void applyProposal(sug.proposal)}
-          originalDate={primary.movedFromDate}
-          coachLine={coachLineForToday({
-            template: primaryTemplate,
-            date: primary.scheduledDate,
-            program,
-            tomorrow: plannedSessions.filter((s) => s.scheduledDate === addDays(today, 1) && s.status !== 'skipped').map((s) => templateById.get(s.templateId)).filter((t): t is SessionTemplate => !!t),
-            yesterdayLogs: sessionLogs.filter((l) => l.completedDate === addDays(today, -1)),
-            templateById,
-          })}
-        />
-      ) : restToday && !allTodayDone ? (
-        <QuietDayCard
-          title={REST_DAY_COPY[restMode].title}
-          body={REST_DAY_COPY[restMode].valley}
-          detail={restMode === 'active' ? REST_DAY_COPY.active.detail : undefined}
-          doneLabel={restMode === 'active' ? 'Gedaan' : undefined}
-          onDone={() => { const t = templateById.get(restToday.templateId); if (t) void logSession(asPlannedLog(restToday, t, program, today)); }}
-          linkLabel={restMode === 'active' ? 'Invullen wat je deed' : 'Toch gewandeld?'}
-          onLink={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }}
-          tomorrow={quietTomorrow}
-        />
-      ) : allTodayDone && anyDoneToday ? (
-        <DoneTodayCard
-          title="Vandaag zit erop"
-          line={`${doneToday.map((l) => templateById.get(l.templateId)?.name).filter(Boolean).join(' en ')} gedaan, ${doneToday.reduce((sum, l) => sum + l.durationMinutes, 0)} min`}
-          tomorrow={tomorrowLine}
-        />
-      ) : (
-        <QuietDayCard
-          title={mainTiming?.state === 'underway' ? `${mainGoal!.name}, dag ${mainTiming.day} van ${mainTiming.days}` : mainTiming?.state === 'past' ? 'Je hoofddoel ligt achter je' : onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
-          body={mainTiming?.state === 'underway'
-            ? 'De tocht is je training. Tot het eind plant ASCEND niets.'
-            : mainTiming?.state === 'past'
-              ? 'Na je hoofddoel plant ASCEND niets meer. Kies een nieuw doel bij Ascend.'
-            : onHoliday
-            ? 'Vrij vandaag. Er staat niets op de planning.'
-            : allTodayDone
-              ? illness
-                ? 'Je bent ziek gemeld. Rust uit; wat je nu mist, hoef je niet in te halen.'
-                : 'Je training van vandaag is van de planning gehaald. Rust is ook training.'
-              : 'Vandaag staat er niets gepland.'}
-          tomorrow={quietTomorrow}
-        />
-      )}
+      {/* Kaarten rond de missie in een vaste volgorde, hoogstens zoveel erboven als je koos (engine/todayCards.ts,
+          docs/beslissingen/2026-11-01-vandaag-volgorde.md). De missie staat op een vaste plek tussen twee lijsten:
+          verdwijnt er een kaart, dan verhuist de missie zelf niet. */}
+      {arrangement.above.map((id) => <Fragment key={id}>{aroundMission[id]}</Fragment>)}
+      {missionCard}
+      {arrangement.below.map((id) => <Fragment key={id}>{aroundMission[id]}</Fragment>)}
 
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
@@ -354,11 +385,9 @@ function TodayContent() {
       {/* Een trage test die wacht op je antwoord: een rustige regel, tot je kiest. */}
       <TestPendingLine />
 
-      {/* Direct onder de missie: wat bevestigd moet worden. */}
+      {/* Daarna: wat bevestigd moet worden. */}
       <WatchActivityCard />
       <WatchAlignCard />
-      {/* Een training die niet doorging: één vraag of een koppelvoorstel, de oudste eerst (engine/missedTraining.ts). */}
-      <MissedTrainingCard onLogNow={setActionSheetSession} />
       {/* Komt er van je horloge niets meer binnen terwijl de koppeling werkt: één rustige zin. */}
       <SourceSilenceLine />
 
@@ -392,8 +421,6 @@ function TodayContent() {
       )}
 
       <LegEaseCard />
-
-      <CoachCard />
 
       {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
 

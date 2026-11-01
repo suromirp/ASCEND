@@ -67,7 +67,7 @@ import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -437,6 +437,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   if ('missedTraining' in s && s.missedTraining !== 'ask' && s.missedTraining !== 'auto' && s.missedTraining !== 'off') {
     delete s.missedTraining;
     skipped.n++;
+  }
+  // Kaarten boven de missie: 1, 2 of alles, of niet daar (storage/migrations.ts#migrateCardsAboveMission).
+  if ('cardsAboveMission' in s) {
+    const above = migrateCardsAboveMission(s.cardsAboveMission);
+    if (above === undefined) {
+      delete s.cardsAboveMission;
+      skipped.n++;
+    }
   }
   if ('missedTrainingDays' in s && s.missedTrainingDays !== 1 && s.missedTrainingDays !== 2 && s.missedTrainingDays !== 3) {
     delete s.missedTrainingDays;

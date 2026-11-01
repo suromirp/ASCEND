@@ -7,77 +7,27 @@
 // - met Zelf overslaan zet ASCEND hem zelf op overgeslagen en zegt het in de meldingsbalk.
 // Geen gevulde mint knop: het ene mint accent van Vandaag blijft de missie.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { askLine, declinedKey, linkEyebrow, linkLine, planMissed, resolveMissedSettings, type MissedMemory } from '../engine/missedTraining';
-import { readMissedMemory, updateMissedMemory } from '../storage/missedTraining';
+import { askLine, declinedKey, linkEyebrow, linkLine } from '../engine/missedTraining';
+import type { MissedTrainingState } from './useMissedTraining';
 import type { PlannedSession } from '../models/training';
 import { todayISO } from '../utils/dates';
 import { withTimeout } from '../utils/withTimeout';
 import { Card, Eyebrow, SecondaryButton } from './ui';
 import { TextButton } from './TextButton';
 
-// Wacht even tot de planning na het openen staat, zoals het vanzelf afvinken.
-const AUTO_DELAY_MS = 1500;
 // Een knop die wacht, wacht nooit langer dan dit.
 const SAVE_LIMIT_MS = 8000;
 
-export function MissedTrainingCard({ onLogNow }: { onLogNow: (session: PlannedSession) => void }) {
-  const { plannedSessions, sessionLogs, templates, settings, advice, skipMissed, linkMissedLog } = useAppData();
+export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingState; onLogNow: (session: PlannedSession) => void }) {
+  const { skipMissed, linkMissedLog, rememberMissed: remember } = useAppData();
   const today = todayISO();
-  const [memory, setMemory] = useState<MissedMemory | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  const autoRunning = useRef(false);
-
-  useEffect(() => {
-    let alive = true;
-    void readMissedMemory().then((m) => alive && setMemory(m)).catch(() => alive && setMemory({}));
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const missedSettings = resolveMissedSettings(settings);
-  // Wat al in een advies op Vandaag staat (een gemiste training inhalen of laten vervallen), krijgt geen tweede kaart.
-  const busyIds = useMemo(
-    () => new Set(advice.flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])]).flatMap((p) => p?.changes ?? []).map((c) => c.plannedSessionId).filter((id): id is string => !!id)),
-    [advice],
-  );
-  const plan = useMemo(
-    () => (memory ? planMissed({ plannedSessions, logs: sessionLogs, templates, today, settings: missedSettings, memory, busy: busyIds, illnessEpisodes: settings.illnessEpisodes }) : undefined),
-    // missedSettings komt uit settings.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memory, plannedSessions, sessionLogs, templates, today, settings, busyIds],
-  );
-
-  // Zelf overslaan: eerst overslaan, met de melding; pas als dat lukte onthouden dat ASCEND het deed (dan komt
-  // het na Ongedaan maken niet terug).
-  const autoIds = plan?.autoSkip.map((m) => m.session.id).join(',') ?? '';
-  useEffect(() => {
-    if (!autoIds || autoRunning.current) return;
-    const ids = autoIds.split(',');
-    const timer = setTimeout(() => {
-      autoRunning.current = true;
-      void skipMissed(ids, 'auto')
-        .then(async (n) => {
-          if (n > 0) setMemory(await updateMissedMemory((m) => ({ ...m, auto: [...(m.auto ?? []), ...ids] })));
-        })
-        .catch(() => undefined)
-        .finally(() => {
-          autoRunning.current = false;
-        });
-    }, AUTO_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [autoIds, skipMissed]);
-
-  const item = plan?.item;
+  const { item, missedSettings } = state;
   if (!item) return null;
 
-  const remember = (change: (m: MissedMemory) => MissedMemory) => {
-    setMemory((m) => change(m ?? {}));
-    void updateMissedMemory(change).then(setMemory).catch(() => undefined);
-  };
   const run = (action: () => Promise<boolean | number>) => {
     setBusy(true);
     setNote(null);
@@ -96,7 +46,7 @@ export function MissedTrainingCard({ onLogNow }: { onLogNow: (session: PlannedSe
         <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{linkLine(item.session, item.template, item.log, today)}</p>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Met Akkoord telt die training als gedaan. Alleen de koppeling is nieuw, de cijfers blijven zoals ze waren.</p>
         <div className="mt-3 flex gap-2">
-          <SecondaryButton disabled={busy} onClick={() => remember((m) => ({ ...m, declined: [...(m.declined ?? []), declinedKey(item.log.id, item.session.id)] }))}>Liever niet</SecondaryButton>
+          <SecondaryButton disabled={busy} onClick={() => remember((m) => ({ ...m, declined: [...m.declined, declinedKey(item.log.id, item.session.id)], declinedOn: { ...m.declinedOn, [declinedKey(item.log.id, item.session.id)]: today } }))}>Liever niet</SecondaryButton>
           <SecondaryButton disabled={busy} onClick={() => run(() => linkMissedLog(item.log.id, item.session.id))}>{busy ? 'Bezig…' : 'Akkoord'}</SecondaryButton>
         </div>
         {note && <p className="mt-2 text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
@@ -115,7 +65,7 @@ export function MissedTrainingCard({ onLogNow }: { onLogNow: (session: PlannedSe
         <SecondaryButton disabled={busy} onClick={() => onLogNow(item.session)}>Toch gedaan</SecondaryButton>
       </div>
       <div className="mt-1 flex justify-end">
-        <TextButton tone="dim" disabled={busy} onClick={() => remember((m) => ({ ...m, notNow: [...(m.notNow ?? []), item.session.id], notNowOn: today }))}>Niet nu</TextButton>
+        <TextButton tone="dim" disabled={busy} onClick={() => remember((m) => ({ ...m, notNow: [...m.notNow, item.session.id], notNowOn: today }))}>Niet nu</TextButton>
       </div>
       {note && <p className="mt-2 text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
       {missedSettings.choice === 'auto' && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Een test, een wedstrijd of iets wat je zelf vastzette slaat ASCEND nooit zelf over.</p>}

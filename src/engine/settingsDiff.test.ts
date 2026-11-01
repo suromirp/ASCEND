@@ -56,6 +56,7 @@ const everything: AppSettings = {
   restDayBack: false,
   missedTraining: 'off',
   missedTrainingDays: 3,
+  cardsAboveMission: 'all',
   missedLink: false,
   weekFixProposal: false,
   dragWeek: false,

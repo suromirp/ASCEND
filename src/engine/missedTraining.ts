@@ -14,7 +14,7 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { IllnessEpisode } from '../models/illness';
-import { isIllnessDay } from './illness';
+import { activeIllness, isIllnessDay } from './illness';
 import { isTestOrRace } from './templateRoles';
 import { lockLevel } from './weekValidator';
 import { logSport, templateSport } from './sports';
@@ -58,20 +58,35 @@ export interface MissedMemory {
   auto?: string[];
   // Paren `<logId>|<sessionId>` waarop je Liever niet zei.
   declined?: string[];
+  // De dag waarop je Liever niet zei, per paar. Het inhaaladvies telt zijn venster van drie dagen vanaf
+  // die dag, zodat inhalen niet voorgoed wegvalt omdat er eerst een koppelvoorstel stond. Optioneel: een
+  // oudere back-up heeft het niet, dan telt het venster vanaf de training zoals eerst.
+  declinedOn?: Record<string, string>;
 }
 
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
 
-export function resolveMissedMemory(raw: unknown): MissedMemory & { notNow: string[]; auto: string[]; declined: string[] } {
+export type ResolvedMissedMemory = MissedMemory & { notNow: string[]; auto: string[]; declined: string[] };
+
+export function resolveMissedMemory(raw: unknown): ResolvedMissedMemory {
   const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
   const notNowOn = typeof r.notNowOn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.notNowOn) ? r.notNowOn : undefined;
-  return { notNow: strings(r.notNow), ...(notNowOn ? { notNowOn } : {}), auto: strings(r.auto), declined: strings(r.declined) };
+  const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const on = typeof r.declinedOn === 'object' && r.declinedOn !== null && !Array.isArray(r.declinedOn)
+    ? Object.fromEntries(Object.entries(r.declinedOn as Record<string, unknown>).filter((e): e is [string, string] => isDay(e[1])))
+    : {};
+  return { notNow: strings(r.notNow), ...(notNowOn ? { notNowOn } : {}), auto: strings(r.auto), declined: strings(r.declined), ...(Object.keys(on).length > 0 ? { declinedOn: on } : {}) };
 }
 
 // De sleutel in de meta-opslag; gaat mee in de back-up zoals de antwoorden op adviezen.
 export const MISSED_MEMORY_KEY = 'missedTraining';
 
 export const declinedKey = (logId: string, sessionId: string) => `${logId}|${sessionId}`;
+
+// De laatste dag waarop je Liever niet zei op een koppeling met deze training, of niets.
+export function lastDeclinedOn(sessionId: string, declinedOn: Readonly<Record<string, string>> | undefined): string | undefined {
+  return Object.entries(declinedOn ?? {}).filter(([key]) => key.endsWith(`|${sessionId}`)).map(([, day]) => day).sort().at(-1);
+}
 
 export interface MissedInput {
   plannedSessions: readonly PlannedSession[];
@@ -124,8 +139,55 @@ function freeToSkip(m: MissedSession): boolean {
   return lockLevel(m.session, new Set(), m.session.scheduledDate) === 3 && !isTestOrRace(m.template) && !m.session.leave;
 }
 
+export interface LinkInput {
+  plannedSessions: readonly PlannedSession[];
+  logs: readonly SessionLog[];
+  templates: readonly SessionTemplate[];
+  today: string;
+  // Paren `<logId>|<sessionId>` waarop je Liever niet zei.
+  declined?: readonly string[];
+}
+
+// Welke log van het horloge of MacroFactor bij welke voorbije training zonder log kan horen: per log de
+// dichtstbijzijnde training van dezelfde soort, bij gelijke afstand de eerdere. Sleutel: id van de training.
+// De kaart op Vandaag en het inhaaladvies lezen allebei dit, zodat er eerst gekoppeld wordt en pas daarna
+// ingehaald.
+export function linkCandidates(input: LinkInput): Map<string, SessionLog> {
+  const { today } = input;
+  const declined = input.declined ?? [];
+  const templateById = new Map(input.templates.map((t) => [t.id, t]));
+  const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
+  const age = (s: PlannedSession) => daysBetween(s.scheduledDate, today);
+  const unlogged = input.plannedSessions
+    .filter((s) => s.status !== 'skipped' && !logged.has(s.id))
+    .map((s) => ({ session: s, template: templateById.get(s.templateId) }))
+    .filter((m): m is MissedSession => !!m.template && templateKind(m.template) !== undefined);
+  const links = new Map<string, SessionLog>();
+  const loose = input.logs.filter((l) => looseSourceLog(l) && l.completedDate <= today && daysBetween(l.completedDate, today) <= MISSED_MAX_AGE_DAYS + LINK_WINDOW_DAYS);
+  for (const log of [...loose].sort((a, b) => a.completedAt.localeCompare(b.completedAt))) {
+    const kind = logKind(log);
+    if (!kind) continue;
+    const logTemplate = templateById.get(log.templateId);
+    const logIsTest = !!logTemplate && isTestOrRace(logTemplate);
+    const near = unlogged
+      .filter((m) => templateKind(m.template) === kind && isTestOrRace(m.template) === logIsTest)
+      .map((m) => ({ m, d: Math.abs(daysBetween(log.completedDate, m.session.scheduledDate)) }))
+      .filter((x) => x.d <= LINK_WINDOW_DAYS && !links.has(x.m.session.id))
+      .sort((a, b) => a.d - b.d || a.m.session.scheduledDate.localeCompare(b.m.session.scheduledDate));
+    const best = near[0]?.m;
+    // Hoort de log het dichtst bij de training van vandaag of later, dan is er niets te vragen.
+    if (!best || age(best.session) < 1) continue;
+    if (declined.includes(declinedKey(log.id, best.session.id))) continue;
+    links.set(best.session.id, log);
+  }
+  return links;
+}
+
 export function planMissed(input: MissedInput): MissedPlan {
   const { today, settings, illnessEpisodes } = input;
+  // Ziek gemeld: de vragen wachten tot je beter bent, ook over een training van voor de ziekte. Daarna
+  // komen ze terug, binnen dezelfde twee weken gerekend vanaf de training.
+  if (activeIllness(illnessEpisodes)) return { autoSkip: [] };
   const memory = resolveMissedMemory(input.memory);
   const templateById = new Map(input.templates.map((t) => [t.id, t]));
   const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
@@ -143,27 +205,8 @@ export function planMissed(input: MissedInput): MissedPlan {
     .filter((m) => !isIllnessDay(m.session.scheduledDate, illnessEpisodes, today) && !input.busy?.has(m.session.id))
     .sort((a, b) => a.session.scheduledDate.localeCompare(b.session.scheduledDate) || a.session.order - b.session.order || a.session.id.localeCompare(b.session.id));
 
-  // Koppelen: per log de dichtstbijzijnde training van dezelfde soort zonder log; bij gelijke afstand de eerdere.
-  const links = new Map<string, SessionLog>();
-  if (settings.link) {
-    const loose = input.logs.filter((l) => looseSourceLog(l) && l.completedDate <= today && daysBetween(l.completedDate, today) <= MISSED_MAX_AGE_DAYS + LINK_WINDOW_DAYS);
-    for (const log of [...loose].sort((a, b) => a.completedAt.localeCompare(b.completedAt))) {
-      const kind = logKind(log);
-      if (!kind) continue;
-      const logTemplate = templateById.get(log.templateId);
-      const logIsTest = !!logTemplate && isTestOrRace(logTemplate);
-      const near = unlogged
-        .filter((m) => templateKind(m.template) === kind && isTestOrRace(m.template) === logIsTest)
-        .map((m) => ({ m, d: Math.abs(daysBetween(log.completedDate, m.session.scheduledDate)) }))
-        .filter((x) => x.d <= LINK_WINDOW_DAYS && !links.has(x.m.session.id))
-        .sort((a, b) => a.d - b.d || a.m.session.scheduledDate.localeCompare(b.m.session.scheduledDate));
-      const best = near[0]?.m;
-      // Hoort de log het dichtst bij de training van vandaag of later, dan is er niets te vragen.
-      if (!best || age(best.session) < 1) continue;
-      if (memory.declined.includes(declinedKey(log.id, best.session.id))) continue;
-      links.set(best.session.id, log);
-    }
-  }
+  // Koppelen: eerst koppelen, dan vragen (en dan pas inhalen, engine/adviceEngine.ts#MISSED-CATCH-UP).
+  const links = settings.link ? linkCandidates({ plannedSessions: input.plannedSessions, logs: input.logs, templates: input.templates, today, declined: memory.declined }) : new Map<string, SessionLog>();
 
   // Met een log die erbij kan horen komt geen vraag en niets vanzelf: eerst het koppelvoorstel.
   // Wat een vakantie of tocht neerzette, verplaatste of liet gaan (`leave`) gaat via zijn eigen weg: geen vraag en niets vanzelf.

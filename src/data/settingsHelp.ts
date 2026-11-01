@@ -639,6 +639,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Anders niets', text: 'is je gewone uur al prima, of is er geen beter blok, dan staat er niets extra.' },
     ],
   },
+  bovenMissie: {
+    title: 'Kaarten boven de missie',
+    lead: 'Je missie hoort binnen twee seconden in beeld te staan. Daarom staat er normaal hoogstens één kaart boven, de belangrijkste.',
+    points: [
+      { head: 'Volgorde', text: 'eerst ziek gemeld en de vraag of je ziek wordt (je ochtenden), dan de ochtendkaart, dan weer opbouwen na ziekte, dan een advies voor vandaag, dan een vraag over een training die niet doorging, dan Nieuw begonnen en als laatste de back-up.' },
+      { head: 'Altijd boven', text: 'ziek gemeld en de vraag of je ziek wordt. Die staan boven je missie, ook als er al een kaart boven staat.' },
+      { head: 'Altijd onder de missie', text: 'een advies over je planning en de vraag Niet gedaan?. Die beantwoord je rustig, je missie gaat voor.' },
+      { head: 'De rest', text: 'staat direct onder je missie, in dezelfde volgorde. Er verdwijnt niets.' },
+      { head: 'Alles', text: 'zet alles wat erboven mag boven je missie, ook als die dan uit beeld schuift.' },
+    ],
+  },
   kaarten: {
     title: 'Kaarten op Vandaag',
     lead: 'Een profiel zet in een keer de losse schakelaars voor je. Je training staat altijd op Vandaag.',
