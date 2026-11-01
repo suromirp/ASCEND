@@ -120,7 +120,7 @@ export function restBackAdvice(input: RestBackInput & { on?: boolean }): Advice[
     const title = `Je ${name} op ${weekday} kan terug`;
     const lead = `${Weekday} ${formatDateNL(date)} staat weer leeg. Zet je hem terug?`;
     const effect = `Met Akkoord staat de ${name} weer op ${weekday} ${formatDateNL(date)}, zoals je week hem had. Met Liever niet blijft de dag leeg en vraagt ASCEND er niet meer naar.`;
-    const why = `Een eerder voorstel liet de ${name} op je vaste rustdag vervallen om plek te maken. Wat daar kwam, staat nu ergens anders, en de dagen ervoor trainde je, dus de dag is weer leeg. Een vaste rustdag in de week kan helpen om fris aan je volgende training te beginnen. ASCEND zet hem niet stil terug: alleen jij beslist.`;
+    const why = `Een eerder voorstel liet de ${name} op je vaste rustdag vervallen om plek te maken. Wat daar kwam, staat nu ergens anders, en je trainde de dagen ervoor, dus de dag is weer leeg. Een vaste rustdag in de week kan helpen om fris aan je volgende training te beginnen. ASCEND zet hem niet stil terug: alleen jij beslist.`;
     const item: PlanChangeItem = {
       plannedSessionId: s.id, action: 'add', toDate: date,
       newSessionDraft: { templateId: s.templateId, scheduledDate: date, weekStartDate: mondayOfWeek(date) },
