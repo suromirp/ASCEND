@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Geen back-up door Android naar Google: je gegevens (ook gezondheidsgegevens) gaan niet
+         ongemerkt de deur uit; de eigen back-up in Instellingen is de weg. Eén regel om te wisselen
+         (docs/beslissingen/2026-11-01-android-app.md). -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

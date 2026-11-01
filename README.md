@@ -141,7 +141,8 @@ in `docs/beslissingen/2026-11-01-android-app.md`.
 
 **Eén keer: de sleutel.** Een nieuwe APK installeert alleen over de oude heen als
 hij met dezelfde sleutel is ondertekend; anders moet je de app verwijderen en ben
-je je gegevens kwijt. Maak de sleutel en zet de vier secrets in GitHub zoals
+je je gegevens kwijt. Maak de sleutel en zet de vier secrets in de environment
+`android-release` in GitHub zoals
 `docs/android-sleutel.md` het stap voor stap uitlegt.
 
 **De APK halen en installeren.**
@@ -149,9 +150,10 @@ je je gegevens kwijt. Maak de sleutel en zet de vier secrets in GitHub zoals
 1. Na een push naar `main` (of via Actions, Android-app, Run workflow) bouwt de
    workflow `.github/workflows/android.yml` de app en zet hem als release
    `apk-<nummer>` op GitHub. Open op je telefoon de releases van de repo en tik
-   op `ascend.apk`. Zonder de secrets staat er alleen een debug-APK bij de run
-   (Artifacts, `ascend-apk`, een zip met de APK erin); die kan niet over een
-   vorige heen.
+   op `ascend.apk`. Bij elke run staat er ook een proef-APK (Artifacts,
+   `ascend-proef-apk`, een zip met de APK erin). Die heet "ASCEND proef" en staat
+   naast de echte app. Gebruik een debug-APK alleen om te proberen; je gegevens
+   daarin gaan niet mee naar de echte app.
 2. Sta je browser of bestandsbeheer toe om apps te installeren als Android daarom
    vraagt. Op een Samsung moet Auto Blocker uit (Instellingen, Beveiliging en
    privacy, Auto Blocker).

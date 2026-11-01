@@ -51,8 +51,9 @@ Per functie, in de app en in de browser:
   met een link naar de release. Instelling Automatisch bijwerken (aan als advies, alleen in de app).
   Browser: de service worker werkt de site bij zoals altijd.
 - De APK (`.github/workflows/android.yml`): bij een push naar main en met de hand, ondertekend met
-  een vaste sleutel uit vier repository-secrets en als release op GitHub. Zonder de secrets alleen
-  een debug-APK als artefact, geen release, en een waarschuwing in de run. De `versionCode` is het
+  een vaste sleutel uit vier secrets in de environment `android-release` en als release op GitHub.
+  Zonder de secrets alleen een proef-APK ("ASCEND proef", die naast de echte app staat) als
+  artefact, geen release, en een waarschuwing in de run. De `versionCode` is het
   native niveau maal 100000 plus het runnummer, dus elke APK is een update van de vorige. Uitleg:
   `docs/android-sleutel.md`.
 - De terugknop (`engine/backPress.ts`, `components/DeviceShellHost.tsx`). App: de knop van
@@ -67,6 +68,25 @@ Per functie, in de app en in de browser:
 - Statusbalk en openingsscherm. App: de statusbalk krijgt de kleur van de lucht bovenaan
   (`--color-sky-top`, 's avonds de donkere), het openingsscherm het marine van `--color-bg` met het
   logo. Browser: niets.
+
+- Back-up door Android: uit (`android:allowBackup="false"` in `android/app/src/main/AndroidManifest.xml`,
+  één regel om te wisselen). Zo gaan je gegevens, ook die over je gezondheid, niet ongemerkt naar
+  Google; de eigen back-up in Instellingen is de weg. Het nadeel: na een nieuwe telefoon komt de app
+  leeg terug tot je je back-up terugzet. De eigenaar beslist dit nog definitief. Toestemmingen zegt
+  het in de uitleg.
+- Wat er bij het bijwerken naar buiten gaat: alleen het opvragen van `app-versie.json` en de zip bij
+  GitHub Pages, op een adres dat met `https://` begint en op `.github.io` eindigt (een ander adres in
+  de build betekent: niet bijwerken). De plugin stuurt bij het downloaden de kop
+  `X-Capawesome-Device-Id` mee: een willekeurige id die de plugin zelf op het toestel maakt, zonder
+  iets van jou erin, en die alleen naar GitHub Pages gaat. Een bouwtijd meer dan een dag in de
+  toekomst wordt niet geloofd.
+- Database en native niveau: gaat `DB_VERSION` omhoog, dan gaat `android/native-level.txt` mee
+  omhoog, zodat terugvallen nooit een oude bundel op een nieuwere database zet. Een test
+  (`src/storage/nativeLevel.test.ts`) bewaakt dat, en vergelijkt ook de plugins in `package.json`
+  met de vaste lijst in `android/native-plugins.json`: een nieuwe plugin vraagt een nieuwe APK.
+- De workflow: bouwen met alleen leesrechten en zonder sleutel; ondertekenen met `zipalign` en
+  `apksigner` alleen vanaf main in de environment `android-release`, met de geheimen alleen in die
+  stap; de release in een eigen job, de enige die mag schrijven.
 
 De webview laadt de bundel van `https://localhost`. Die herkomst bepaalt waar de gegevens van de app
 staan en mag dus nooit veranderen.

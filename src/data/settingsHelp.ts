@@ -843,7 +843,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Op de seconde', text: 'met de toestemming Exacte wekker. Zonder kan Android hem een paar minuten later laten komen.' },
       { head: 'Scherm aan', text: 'dan geeft Forge het signaal zelf en komt er geen melding bij.' },
-      { head: 'Geluid en trillen', text: 'zoals je ze bij Forge onder Signaal hebt gekozen.' },
+      { head: 'Geluid en trillen', text: 'zoals je ze bij Forge onder Signaal hebt gekozen. Staat het signaal uit, dan komt er een stille melding.' },
     ],
   },
   weekmelding: {
@@ -861,6 +861,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Amber stip', text: 'een toestemming staat uit terwijl iets wat je aan hebt staan hem nodig heeft.' },
       { head: 'Exacte wekker', text: 'Android laat een melding anders tot een paar minuten te laat komen. Voor het einde van je rust is dat te laat.' },
       { head: 'Health Connect', text: 'komt later: dan leest ASCEND je gewicht, stappen en trappen.' },
+      { head: 'Back-up van Android', text: 'staat in de app uit. Zo gaan je gegevens niet ongemerkt naar Google; je eigen back-up bij Gegevens en back-up is de weg.' },
     ],
   },
   autoBijwerken: {
