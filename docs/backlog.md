@@ -83,7 +83,8 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 
 ## Na de Android-app
 
-- Trainingen in je agenda inplannen en afstemmen, met kaders voor ochtend, middag en avond.
+- Trainingen in je agenda inplannen en afstemmen, met kaders voor ochtend, middag en avond. Nog niet (eigenaar, 1 november): niet in deze ronde bouwen.
+- Ook nog niet (eigenaar, 1 november): gesproken signalen, vergrendelen met vingerafdruk, 's nachts horlogegegevens ophalen, delen met één tik. Spraakloggen en een getal op het icoon afgeraden.
 
 ## Geparkeerd
 
