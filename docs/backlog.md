@@ -40,6 +40,8 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Jaaroverzicht: "Testloop 5 km: 14 jan en 15 jan", twee dagen voor één test. Nakijken of dat een fout in de gegevens of de telling is.
 - De vaste doorloop van Lookout gaf Stand helemaal leeg (zonder lucht of titel); een eigen afdruk was wel vol. Nagaan of de kit te vroeg afdrukt.
 
+- De nagemaakte stand van de kit (`.claude/skills/lookout/kit/state-kracht.json`) laat bij elke start "Weekplanning bijgewerkt, 25 trainingen" zien. Dat ligt over screenshots heen en laat de tekstkaart soms flakkeren. De stand opnieuw opslaan na een planningsronde.
+
 ## Bewust niet
 
 - Voeding naast gewicht en kracht (kans E): de eigenaar laat dit liggen (1 november).
