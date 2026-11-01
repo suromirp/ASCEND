@@ -16,6 +16,7 @@ import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgression
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
 import { NextTrekLine } from '../components/NextTrekLine';
+import { MountainWeatherCard } from '../components/MountainWeatherCard';
 import { TestPendingLine } from '../components/TestPendingLine';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
@@ -363,6 +364,8 @@ function TodayContent() {
       <SourceSilenceLine />
 
       <NextTrekLine onlyWhenOn />
+      {/* Een tochtdag in de bergen of de sneeuw: het weer op de hoogte van je tocht (engine/mountainWeather.ts). */}
+      <MountainWeatherCard />
 
       <MacroFactorCard />
 

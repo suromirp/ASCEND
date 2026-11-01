@@ -848,6 +848,10 @@ export interface AppSettings {
   // "Ochtendregel" (engine/morningRule.ts): the three watch numbers with a word each on the morning
   // card, and the question "Ben je moe?" when two of the three are off. Absent = on.
   morningRule?: boolean;
+  // "Bergweer op hoogte" (engine/mountainWeather.ts): on a day of a tocht in the mountains or the snow with a highest
+  // point, and the day before, the weather at that height on Vandaag. Asks Open-Meteo with the same rounded place as
+  // the forecast, at most once an hour. Absent = on. Optional and additive.
+  mountainWeather?: boolean;
   // "Wennen aan warmte" (engine/heatAcclimation.ts): one line in the reisplanner in the last three weeks before
   // a departure from June to September. Absent = on. Optional and additive.
   heatAcclimation?: boolean;

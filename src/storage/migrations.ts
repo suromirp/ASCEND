@@ -15,7 +15,7 @@ import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/propos
 import type { PlanChangeProposal } from '../models/planChange';
 import { BackupMessageError } from './backupMessage';
 import type { AppSettings } from './database';
-import { isLeavePeriod, isTrekDetails } from '../engine/leave';
+import { isLeavePeriod, isTrekDetails, isTrekHeight } from '../engine/leave';
 import { parseWeekShape, type WeekShape } from '../engine/sports';
 import { parseDirection, parseDirectionStart } from '../engine/direction';
 import { resolveWeekBudget } from '../engine/weekBudget';
@@ -109,7 +109,7 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
     return {
       id: rec.id, kind: rec.kind, startDate: rec.startDate, endDate: rec.endDate,
       ...(rec.note ? { note: rec.note } : {}),
-      ...(trek ? { trek: { name: trek.name.trim(), terrain: trek.terrain, ...(trek.packKg ? { packKg: trek.packKg } : {}), tent: trek.tent, importance: trek.importance } } : {}),
+      ...(trek ? { trek: { name: trek.name.trim(), terrain: trek.terrain, ...(trek.packKg ? { packKg: trek.packKg } : {}), ...(isTrekHeight(trek.highestM) && (trek.terrain === 'mountain' || trek.terrain === 'snow') ? { highestM: Math.round(trek.highestM) } : {}), tent: trek.tent, importance: trek.importance } } : {}),
     };
   });
   return { periods, skipped: raw.length - periods.length + lostDetails };

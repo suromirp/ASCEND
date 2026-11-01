@@ -5,7 +5,7 @@ import { normalizeBackupToCurrentModel } from '../storage/backup';
 
 describe('signalen uit je gegevens', () => {
   it('staan allemaal aan tot je er een uitzet', () => {
-    expect(SIGNAL_KEYS).toEqual(['illnessSigns', 'morningRule', 'heatPace', 'weekdayPattern', 'airQuality', 'climbPace', 'stageOwnPace', 'paceCurve', 'heatAcclimation']);
+    expect(SIGNAL_KEYS).toEqual(['illnessSigns', 'morningRule', 'heatPace', 'weekdayPattern', 'airQuality', 'climbPace', 'stageOwnPace', 'paceCurve', 'heatAcclimation', 'mountainWeather']);
     expect(signalsOnCount(undefined)).toBe(SIGNAL_KEYS.length);
     expect(signalOn({ heatPace: false }, 'heatPace')).toBe(false);
     expect(signalsOnCount({ heatPace: false, airQuality: false })).toBe(SIGNAL_KEYS.length - 2);

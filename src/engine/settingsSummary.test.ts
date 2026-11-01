@@ -499,6 +499,8 @@ describe('rowSummary: gegevens en back-up', () => {
     expect(rowSummary('tempocurve', facts({ settings: { paceCurve: false } as never })).checked).toBe(false);
     expect(rowSummary('wennen-warmte', facts()).checked).toBe(true);
     expect(rowSummary('wennen-warmte', facts({ settings: { heatAcclimation: false } as never })).checked).toBe(false);
+    expect(rowSummary('bergweer', facts()).checked).toBe(true);
+    expect(rowSummary('bergweer', facts({ settings: { mountainWeather: false } as never })).checked).toBe(false);
     expect(rowSummary('ochtendregel', facts({ settings: { morningRule: false } as never })).checked).toBe(false);
     expect(rowSummary('horloge-stil', facts({ settings: { watchSilence: false } as never })).checked).toBe(false);
     expect(rowSummary('ochtend-backup', facts({ settings: { morningInBackup: false } as never })).checked).toBe(false);
