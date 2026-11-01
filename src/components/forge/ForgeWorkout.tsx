@@ -1374,7 +1374,7 @@ interface BlockActions {
 }
 
 // Een uitleg onder de kop langer dan dit klapt in tot één regel met "Meer".
-const REASON_SHORT = 60;
+const REASON_SHORT = 100;
 
 const ExerciseBlock = memo(function ExerciseBlock({
   ex,

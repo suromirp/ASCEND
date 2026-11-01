@@ -30,7 +30,7 @@ import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
 import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, formatWeight, lastDateBefore, prescribe, usedBefore, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
 import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
-import { setsText } from './macrofactorProgram';
+import { programLine } from './programLine';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
 import { barFor, candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
 import { spotterApplies, spotterSlot } from './spotter';
@@ -332,7 +332,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   }
   const repsHigh = rows.find((r) => r.kind === 'work')?.target.repsHigh;
   const programRest = targets?.find((x) => x.restSec !== undefined)?.restSec;
-  const why = rx ? (fromProgram?.differs ? `Je programma vraagt nu ${setsText(targets!)}; het gewicht volgt uit je geschatte kracht.` : rx.reason) : undefined;
+  const why = rx ? (fromProgram?.differs ? `Je programma vraagt nu ${programLine(targets!)}.` : rx.reason) : undefined;
   const reason = why && rx?.notice ? `${rx.notice} ${why}` : why;
   return {
     slot: slot.id,

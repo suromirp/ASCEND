@@ -62,7 +62,7 @@ describe('Zonder spotter bij een set "7+" uit een programma', () => {
     expect(first.target.spotter).toBe(true);
     expect(repsText(first.target)).toBe('7+');
     expect(bench.reason ?? '').not.toContain('tot falen');
-    expect(bench.reason).toContain('7+ met 1 over');
+    expect(bench.reason).toContain('7+ met 1 in reserve');
   });
   it('een oefening zonder risico houdt haar set tot falen', () => {
     const pull = planWorkout(slots, ctx)[1];
