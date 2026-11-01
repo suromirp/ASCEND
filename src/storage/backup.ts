@@ -481,6 +481,10 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.trekLegRest;
     skipped.n++;
   }
+  if ('leaveCrowding' in s && s.leaveCrowding !== 'drop' && s.leaveCrowding !== 'shift') {
+    delete s.leaveCrowding;
+    skipped.n++;
+  }
   // Back button and resuming after a restart: known values stay, the rest goes.
   if ('tabBack' in s || 'resumeMinutes' in s) {
     const nav = cleanNavigationSettings({ tabBack: s.tabBack, resumeMinutes: s.resumeMinutes });

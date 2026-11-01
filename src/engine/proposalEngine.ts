@@ -154,6 +154,12 @@ export function applyPlanChangeItems(
   for (const item of items) {
     switch (item.action) {
       case 'keep':
+        // Only the mark of a period goes (engine/leaveProposal.ts): a training
+        // you moved yourself keeps its day and your own lock.
+        if (item.leave === null && item.plannedSessionId) {
+          next = next.map((s) => (s.id === item.plannedSessionId ? withLeave(s, item) : s));
+          break;
+        }
         // A session the proposal shows unchanged ("Benen A erna") is part
         // of what you agreed to.
         if (lock && item.plannedSessionId) next = next.map((s) => (s.id === item.plannedSessionId ? { ...s, lock } : s));
@@ -273,4 +279,21 @@ export function applyPlanChangeItems(
   }
 
   return { sessions: next, prescriptionChanges, unsupported };
+}
+
+// The items of an accepted proposal that can no longer be done on the stored
+// plan, because it changed after the proposal was made: a row it moves, lets
+// go or keeps is gone or stands on another day, or a dry run of
+// applyPlanChangeItems refuses it (a row it brings back is already back).
+// Empty: the proposal still fits. A new row of its own never makes it stale.
+export function staleItems(items: PlanChangeItem[], sessions: PlannedSession[]): PlanChangeItem[] {
+  const byId = new Map(sessions.map((s) => [s.id, s]));
+  const refused = new Set(applyPlanChangeItems(items, sessions, () => 'dry-run').unsupported);
+  return items.filter((item) => {
+    if (refused.has(item)) return true;
+    if (!item.plannedSessionId || item.action === 'add' || item.action === 'replace' || item.action === 'reduce') return false;
+    const s = byId.get(item.plannedSessionId);
+    if (!s) return true;
+    return !!item.fromDate && s.scheduledDate !== item.fromDate;
+  });
 }

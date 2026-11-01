@@ -55,6 +55,7 @@ import { writeCatchUp } from '../storage/catchUpApply';
 import { planIllnessChange, type IllnessChange, type IllnessPlan } from '../engine/illness';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
+import { leaveKey, withNote } from '../engine/leaveEdit';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
 import { applyRestDayInOrder, planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
@@ -63,7 +64,7 @@ import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { runWeeklyPrescriptionStep } from '../storage/weeklyPrescriptionStep';
-import { applyPlanChangeItems } from '../engine/proposalEngine';
+import { applyPlanChangeItems, staleItems } from '../engine/proposalEngine';
 import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
 import { applyScheduleAnomalyFixNow } from '../storage/scheduleAnomalyFix';
@@ -252,10 +253,13 @@ async function horizonKey(): Promise<string> {
       settings.enabledSports,
       settings.programPhaseOverrides,
       settings.restDay,
-      // Free days, holidays and treks (engine/leave.ts).
-      settings.leavePeriods,
+      // Free days, holidays and treks (engine/leave.ts): what the planning reads,
+      // never the note, so a new note starts no planning run.
+      leaveKey(settings.leavePeriods),
       // Soft or strict rest after a bergtocht: switching it plans again at once.
       settings.trekLegRest,
+      // Let go or shift a training that moves for a holiday (engine/leaveSpacing.ts).
+      settings.leaveCrowding,
       // How fast the long run grows toward a race (engine/runGrowth.ts).
       settings.longRunGrowth,
       // Planning after the main goal (engine/programLayout.ts#planEndDay).
@@ -330,6 +334,9 @@ import { withTargetMinutes } from '../engine/goals';
 import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/overviewSettings';
 import { isMarathonGoal, mainGoal } from '../engine/mainGoal';
 import { injuryChangedSince } from '../engine/injuryKind';
+
+// What committing an accepted proposal came to: applied, nothing to do, or could not (the plan changed).
+type CommitOutcome = 'applied' | 'nothing' | 'stale';
 
 interface AppData {
   loading: boolean;
@@ -585,7 +592,11 @@ interface AppData {
   // and applies the proposal, only after Akkoord.
   leavePeriods: LeavePeriod[];
   planLeave: (mode: 'add' | 'remove', period: LeavePeriod, replaces?: LeavePeriod) => LeavePlan;
-  applyLeave: (plan: LeavePlan) => Promise<void>;
+  // 'stale': the planning changed since the proposal was made; nothing was stored.
+  applyLeave: (plan: LeavePlan) => Promise<'applied' | 'stale'>;
+  // Only another note on a period: the planning does not change, so it is stored
+  // at once, with Ongedaan maken in the notice (engine/leaveEdit.ts).
+  saveLeaveNote: (periodId: string, note: string) => Promise<void>;
   respondToAdvice: (advice: Advice, response: 'accepted' | 'declined') => Promise<void>;
   debriefLogId: string | null;
   dismissDebrief: () => void;
@@ -802,9 +813,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   // `afterWrites`: runs once the plan rows are stored and before the planning
   // run, for a setting that goes with this layout (the rest day).
-  const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore, afterWrites?: () => Promise<void>): Promise<boolean> => {
-    const real = proposal.changes.filter((c) => c.action !== 'keep');
-    if (real.length === 0) return false;
+  // The outcome tells "nothing to do" ('nothing') apart from "could not"
+  // ('stale': the stored plan changed and an item no longer fits).
+  const commitPlanChangeOutcome = useCallback(async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore, afterWrites?: () => Promise<void>): Promise<CommitOutcome> => {
+    // A 'keep' that clears the mark of a period (engine/leaveProposal.ts) is a write too.
+    const real = proposal.changes.filter((c) => c.action !== 'keep' || c.leave === null);
+    if (real.length === 0) return 'nothing';
     armFlip();
     await planSettled();
     const [planned, tpls] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll()]);
@@ -813,7 +827,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned, undefined, { by: 'proposal', proposalId: proposal.id, at: new Date().toISOString() });
     if (unsupported.length > 0) {
       console.error('commitPlanChange: refusing to apply, unsupported plan change items present', unsupported);
-      return false;
+      return 'stale';
     }
     const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
     const originalIds = new Set(planned.map((s) => s.id));
@@ -845,8 +859,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // The intervals.icu agenda follows the move now, not at the next opening;
     // in the background, and nothing happens while the switch is off.
     void syncWatchWorkoutsAfterPlanChange();
-    return true;
+    return 'applied';
   }, [refresh]);
+
+  // True when the change was applied; false for nothing to do or could not.
+  const commitPlanChange = useCallback(
+    async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore, afterWrites?: () => Promise<void>): Promise<boolean> =>
+      (await commitPlanChangeOutcome(proposal, title, restore, afterWrites)) === 'applied',
+    [commitPlanChangeOutcome],
+  );
 
   const respondToAdvice = useCallback(async (item: Advice, response: 'accepted' | 'declined') => {
     if (response === 'accepted' && item.proposal && (await commitPlanChange(item.proposal, item.title))) {
@@ -2369,7 +2390,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       newId: () => `preview-pass-${n++}`,
       until,
-      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
+      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
     });
   }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
 
@@ -2396,22 +2417,51 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
           newId: () => `leave-${n++}`,
           until: addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, 21),
-          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
+          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
         };
       },
     });
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
 
-  const applyLeave = useCallback(async (plan: LeavePlan) => {
+  const applyLeave = useCallback(async (plan: LeavePlan): Promise<'applied' | 'stale'> => {
     await planSettled();
+    // First a dry run on the stored rows: when the planning changed since the
+    // proposal was made, nothing is stored, not even the period.
+    if (staleItems(plan.proposal.changes, await PlannedSessionsRepo.getAll()).length > 0) return 'stale';
     const stored = await SettingsRepo.get();
     const current = stored.leavePeriods ?? [];
     const after = plan.mode === 'add' ? [...current.filter((p) => p.id !== plan.period.id), plan.period] : current.filter((p) => p.id !== plan.period.id);
     setSettings(await SettingsRepo.set({ leavePeriods: sortPeriods(after) }));
     // Undo puts the periods back exactly as they were, with the planning.
     const restore = { settings: { leavePeriods: current } };
-    if (!(await commitPlanChange(plan.proposal, plan.proposal.issue, restore))) await showStatusOnlyChange(plan.proposal, restore);
-  }, [commitPlanChange, showStatusOnlyChange]);
+    const outcome = await commitPlanChangeOutcome(plan.proposal, plan.proposal.issue, restore);
+    if (outcome === 'stale') {
+      // Changed between the dry run and the write: the period goes back too.
+      setSettings(await SettingsRepo.set({ leavePeriods: current }));
+      return 'stale';
+    }
+    if (outcome === 'nothing') await showStatusOnlyChange(plan.proposal, restore);
+    return 'applied';
+  }, [commitPlanChangeOutcome, showStatusOnlyChange]);
+
+  const saveLeaveNote = useCallback(async (periodId: string, note: string) => {
+    await planSettled();
+    const stored = await SettingsRepo.get();
+    const current = stored.leavePeriods ?? [];
+    if (!current.some((p) => p.id === periodId)) return;
+    setSettings(await SettingsRepo.set({ leavePeriods: sortPeriods(withNote(current, periodId, note)) }));
+    setRecentChange({
+      id: makeId('leavenote'),
+      trigger: 'leave_note',
+      title: 'Notitie bewaard',
+      lines: ['Je planning blijft zoals ze was.'],
+      why: 'Alleen de notitie van je periode is anders.',
+      before: [],
+      addedIds: [],
+      settingsBefore: { leavePeriods: current },
+      createdAt: new Date().toISOString(),
+    });
+  }, []);
 
   // Rustdag: the proposal for another rest day (engine/restDayProposal.ts),
   // with the same planning run as the sync. Nothing is stored until Akkoord.
@@ -2429,7 +2479,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         slotDays: patternDays(templates, settings, restDay),
         minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
         newId: () => `restday-${n++}`,
-        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
+        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
       },
     });
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
@@ -2537,7 +2587,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
       slotDays: patternDays(templates, settings, restDay),
       minutesOf: (s: PlannedSession, t: SessionTemplate) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
-      leave: settings.leavePeriods, trekRest: settings.trekLegRest,
+      leave: settings.leavePeriods, trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
     };
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
   const weekNoticeState = useCallback((): NonNullable<typeof weekNoticeCache.current> => {
@@ -2737,6 +2787,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     leavePeriods,
     planLeave,
     applyLeave,
+    saveLeaveNote,
     planRestDay,
     applyRestDay,
     planGoalChange,

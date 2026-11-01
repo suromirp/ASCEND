@@ -25,6 +25,7 @@ import { ProposalSheet } from './ProposalSheet';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
 
+const STALE_TEXT = 'Je planning is intussen veranderd. Bekijk het voorstel opnieuw.';
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' };
 
@@ -32,6 +33,8 @@ export function TrekGoalsCard() {
   const { leavePeriods, planLeave, applyLeave, planPreviewPass, settings, updateSettings } = useAppData();
   const [editing, setEditing] = useState<LeavePeriod | 'new' | null>(null);
   const [plan, setPlan] = useState<LeavePlan | null>(null);
+  // The planning changed while the proposal was open: nothing was stored.
+  const [stale, setStale] = useState(false);
   const today = todayISO();
   // What is over for more than two weeks is no longer shown.
   const shown = trekPeriods(leavePeriods).filter((p) => p.endDate >= addDays(today, -14));
@@ -84,6 +87,7 @@ export function TrekGoalsCard() {
           </ul>
         )}
 
+        {stale && <p className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }} role="status">{STALE_TEXT}</p>}
         <SecondaryButton onClick={() => setEditing('new')} className="min-h-[46px] flex-none">Tocht toevoegen</SecondaryButton>
 
         <div className="flex items-center justify-between gap-3 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
@@ -118,7 +122,7 @@ export function TrekGoalsCard() {
             ? 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de tocht en houdt ASCEND er rekening mee.'
             : 'Je planning hoeft niet te veranderen. Met Akkoord verwijder je de tocht.'}
           onRespond={async (response) => {
-            if (response === 'accepted') await applyLeave(plan);
+            setStale(response === 'accepted' && (await applyLeave(plan)) === 'stale');
           }}
           onClose={() => setPlan(null)}
         />

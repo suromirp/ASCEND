@@ -31,6 +31,7 @@ export const TRIGGER_LABEL: Record<EngineEvent, string> = {
   plan_check: 'Weekcontrole',
   leave_added: 'Vrije periode toegevoegd',
   leave_removed: 'Vrije periode verwijderd',
+  leave_note: 'Notitie bij een vrije periode',
   week_load_changed: 'Rustweek of herhaalde week',
   direction_changed: 'Je richting',
   wave_review: 'Na je golf',

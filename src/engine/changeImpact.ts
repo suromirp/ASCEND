@@ -94,6 +94,11 @@ export function describeChanges(items: PlanChangeItem[], sessions: PlannedSessio
       case 'replace':
         if (session) lines.push(`${name} op ${shortDate(session.scheduledDate)} krijgt een andere invulling`);
         break;
+      case 'keep':
+        // A training you moved yourself loses the mark of a period (engine/leaveProposal.ts):
+        // say that it stays, so the notice after Akkoord is never empty.
+        if (item.leave === null && session) lines.push(`${name} op ${shortDate(session.scheduledDate)} blijft staan`);
+        break;
       default:
         break;
     }

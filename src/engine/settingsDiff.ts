@@ -175,6 +175,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('volgende-tocht', 'Volgende tocht op Vandaag', 'doel', 'showNextTrek'),
   flag('water-per-etappe', 'Water per etappe tonen', 'doel', 'showStageWater'),
   choice('rust-na-tocht', 'Rust na een bergtocht', 'doel', 'trekLegRest', 'soft', 'rustNaTocht', true),
+  choice('vakantie-opzij', 'Opzij voor een vakantie', 'planning', 'leaveCrowding', 'drop', 'vakantieOpzij', true),
   {
     id: 'bergschoenen', title: 'Bergschoenen inlopen', page: 'doel',
     differs: (s) => bootGoalKm(s.bootBreakInKm) !== bootGoalKm(undefined),

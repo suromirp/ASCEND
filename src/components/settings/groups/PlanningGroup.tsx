@@ -66,13 +66,14 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="Hoe ASCEND plant"
-        advancedIds={['slepen-week', 'volgorde-stand']}
-        advancedTitles="Trainingen slepen in Week, Volgorde van Je stand"
+        advancedIds={['slepen-week', 'volgorde-stand', 'vakantie-opzij']}
+        advancedTitles="Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie"
         storageKey="planning-geavanceerd"
         advanced={
           <>
             <SummaryRow id="slepen-week" title="Trainingen slepen in Week" facts={facts} info="slepenWeek" onChange={(on) => void updateSettings({ dragWeek: on })} />
             <SummaryRow id="volgorde-stand" title="Volgorde van Je stand" facts={facts} info="volgordeStand" onClick={() => setSheet('volgorde-stand')} />
+            <SummaryRow id="vakantie-opzij" title="Opzij voor een vakantie" facts={facts} info="vakantieOpzij" onClick={() => setSheet('vakantie-opzij')} />
           </>
         }
       >
@@ -134,6 +135,14 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.wijzigingen} value={plan.applyMode} onPick={(v) => void updateSettings({ changeApplyMode: v })} onClose={close} />
       )}
       {sheet === 'volgorde-stand' && <OrderSheet onClose={close} />}
+      {sheet === 'vakantie-opzij' && (
+        <ChoiceFromDef
+          def={CHOICES.vakantieOpzij}
+          value={settings.leaveCrowding ?? 'drop'}
+          onPick={(v) => { if (v !== (settings.leaveCrowding ?? 'drop')) void plan.changeSetting(`Opzij voor een vakantie: ${choiceShort('vakantieOpzij', v)}`, { leaveCrowding: v }, 'Volgt je keuze voor trainingen die moeten wijken voor een vakantie.'); }}
+          onClose={close}
+        />
+      )}
       {sheet === 'test-stilstaan' && (
         <ChoiceFromDef def={CHOICES.testStilstaan} value={resolveTestStops(settings.testStops)} onPick={(v) => void updateSettings({ testStops: v })} onClose={close} />
       )}

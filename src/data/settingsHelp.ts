@@ -956,6 +956,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geldt voor', text: 'nieuwe en gewijzigde tochten. Een tocht die al staat, houdt zijn planning tot je hem wijzigt.' },
     ],
   },
+  vakantieOpzij: {
+    title: 'Opzij voor een vakantie',
+    lead: 'Wat ASCEND doet met een training die moet wijken voor een vakantie of de lichte dagen rond een tocht.',
+    points: [
+      { head: 'Liever laten vervallen', text: 'de training schuift naar een andere dag van die week, maar niet vlak voor of na zijn volgende keer. Een training die elke week terugkomt houdt minstens vier dagen afstand. Lukt dat niet, dan vervalt hij.' },
+      { head: 'Toch verschuiven', text: 'de training gaat naar elke dag van die week die past, ook als hij dan kort voor zijn volgende keer staat.' },
+      { head: 'Altijd', text: 'twee zware beendagen staan nooit binnen 48 uur, en wat je zelf vastzette blijft staan.' },
+      { head: 'Geldt voor', text: 'nieuwe en gewijzigde periodes. Je ziet het altijd eerst in het voorstel.' },
+    ],
+  },
   seizoensstrook: {
     title: 'Seizoensstrook',
     lead: 'Bovenaan Ascend staat je seizoen als een strook van nu tot je laatste doel, met een vlag per doel.',

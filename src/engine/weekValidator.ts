@@ -20,6 +20,7 @@ import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isLegHe
 import { patternSlotOf } from './programLayout';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { leaveDays, lightDays } from './leave';
+import { crowdsOwnNext } from './leaveSpacing';
 import { templateSport } from './sports';
 import { hasRole, idHasRole, idIsTestOrRace, isTestOrRace } from './templateRoles';
 
@@ -94,6 +95,10 @@ export interface CheckInput {
   // Rest after a tocht (Instellingen): 'soft' (default) accepts the short
   // version of a heavy leg day from 48 hours after a tocht, 'strict' keeps 72.
   trekRest?: 'soft' | 'strict';
+  // A training that moves for a holiday or the light days of a tocht (LEAVE-OFF, LEAVE-LIGHT):
+  // 'drop' (default, absent) lets it go rather than put it right before or after its own next
+  // time (engine/leaveSpacing.ts); 'shift' moves it to any day of the week that fits, as before.
+  leaveCrowding?: 'drop' | 'shift';
   // Report also a training on the rest day that you (or an accepted proposal) fixed in place, level 1.
   // Off by default: the planning run counts the same findings as before (engine/weekConcerns.ts sets it).
   reportYours?: boolean;
@@ -403,7 +408,9 @@ export function repairWeeks(input: CheckInput): RepairResult {
     const monday = mondayOfWeek(subject.scheduledDate);
     const candidates = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
       .filter((d) => d !== subject.scheduledDate && d >= input.today && d <= until && (!input.goalDay || d < input.goalDay) && !(input.raceDays ?? []).includes(d) && isoWeekday(d) !== input.restDay && !isBlockedDay(d) && (!leaveActive || hasRoom(d, subject)))
-      .sort((a, b) => Math.abs(daysBetween(subject.scheduledDate, a)) - Math.abs(daysBetween(subject.scheduledDate, b)) || a.localeCompare(b));
+      .sort((a, b) => Math.abs(daysBetween(subject.scheduledDate, a)) - Math.abs(daysBetween(subject.scheduledDate, b)) || a.localeCompare(b))
+      // Moving for a holiday or a tocht: not right before or after its own next time; then it goes.
+      .filter((d) => !((rule === 'LEAVE-OFF' || rule === 'LEAVE-LIGHT') && input.leaveCrowding !== 'shift' && crowdsOwnNext(subject, d, sessions, byId)));
     // Its own place in the week first (a test goes where the easy run is).
     const slotDay = input.slotDays?.get(patternSlotOf(subject.templateId));
     if (slotDay) candidates.sort((a, b) => Number(isoWeekday(b) === slotDay) - Number(isoWeekday(a) === slotDay));
