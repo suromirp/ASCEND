@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RecoveryMetricsRepo, wipeAllData } from './database';
-import { clearConnection, saveConnection, syncWatchActivities } from './externalActivities';
+import { clearConnection, onWatchChange, saveConnection, syncWatchActivities } from './externalActivities';
 import { archivedMornings, clearArchivedMornings, putBackMornings } from './morningArchive';
 import { clearWellness, getRecoveryMetrics } from './wellness';
 import type { RecoveryMetric } from '../models/metrics';
@@ -23,27 +23,59 @@ describe('het archief met ochtenden', () => {
     await syncWatchActivities({ fetchImpl: fakeFetch() });
     await RecoveryMetricsRepo.putAll([hand()]);
     await clearConnection();
-    expect(await archivedMornings()).toHaveLength(1);
-    const removed = await clearArchivedMornings();
-    expect(removed.map((r) => r.date)).toEqual([todayISO()]);
+    const found = await archivedMornings();
+    expect(found).toEqual({ linked: false, list: [expect.objectContaining({ date: todayISO() })] });
+    await clearArchivedMornings(found.list);
     expect((await getRecoveryMetrics()).map((r) => r.id)).toEqual(['hand-1']);
   });
 
-  it('ruimt niets op zolang er een koppeling is', async () => {
+  it('met een koppeling alleen wat ouder is dan 400 dagen, want dat haalt de volgende keer ophalen weg', async () => {
+    const old = addDays(todayISO(), -450);
     await saveConnection({ athleteId: ATHLETE, apiKey: KEY });
     await syncWatchActivities({ fetchImpl: fakeFetch() });
-    expect(await archivedMornings()).toEqual([]);
-    expect(await clearArchivedMornings()).toEqual([]);
-    expect(await getRecoveryMetrics()).toHaveLength(1);
+    await RecoveryMetricsRepo.putAll([{ id: `intervals.icu:${old}`, date: old, source: 'import', restingHeartRate: 49 }]);
+    const found = await archivedMornings();
+    expect(found.linked).toBe(true);
+    expect(found.list.map((r) => r.date)).toEqual([old]);
   });
 
-  it('Ongedaan maken zet de opgeruimde ochtenden terug, precies zoals ze waren', async () => {
+  it('ruimt alles in een keer op, met deleteMany, en meldt het aan Vandaag', async () => {
+    const a: RecoveryMetric = { id: `intervals.icu:${todayISO()}`, date: todayISO(), source: 'import', hrv: 47 };
+    const b: RecoveryMetric = { id: `intervals.icu:${addDays(todayISO(), -1)}`, date: addDays(todayISO(), -1), source: 'import', hrv: 45 };
+    await RecoveryMetricsRepo.putAll([a, b, hand()]);
+    const many = vi.spyOn(RecoveryMetricsRepo, 'deleteMany');
+    const one = vi.spyOn(RecoveryMetricsRepo, 'delete');
+    const listener = vi.fn();
+    const stop = onWatchChange(listener);
+    await clearArchivedMornings([a, b]);
+    stop();
+    expect(many).toHaveBeenCalledTimes(1);
+    expect(one).not.toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledTimes(1);
+    many.mockRestore();
+    one.mockRestore();
+    expect((await getRecoveryMetrics()).map((r) => r.id)).toEqual(['hand-1']);
+  });
+
+  it('deleteMany laat bij een fout alles staan', async () => {
+    const a: RecoveryMetric = { id: `intervals.icu:${todayISO()}`, date: todayISO(), source: 'import', hrv: 47 };
+    await RecoveryMetricsRepo.putAll([a, hand()]);
+    // Een ongeldige sleutel halverwege breekt de hele transactie af.
+    await expect(RecoveryMetricsRepo.deleteMany([a.id, null as unknown as string])).rejects.toBeTruthy();
+    expect((await getRecoveryMetrics()).map((r) => r.id).sort()).toEqual(['hand-1', a.id].sort());
+  });
+
+  it('Ongedaan maken zet de opgeruimde ochtenden terug, precies zoals ze waren, en slaat over wat er al staat', async () => {
     const kept: RecoveryMetric = { id: `intervals.icu:${todayISO()}`, date: todayISO(), source: 'import', restingHeartRate: 54, hrv: 47 };
-    await RecoveryMetricsRepo.putAll([kept, hand()]);
-    const removed = await clearArchivedMornings();
-    expect(await getRecoveryMetrics()).toHaveLength(1);
-    await putBackMornings(removed);
-    expect((await getRecoveryMetrics()).find((r) => r.id === kept.id)).toEqual(kept);
+    const newer: RecoveryMetric = { id: `intervals.icu:${addDays(todayISO(), -1)}`, date: addDays(todayISO(), -1), source: 'import', hrv: 40 };
+    await RecoveryMetricsRepo.putAll([kept, newer, hand()]);
+    const { list } = await archivedMornings();
+    await clearArchivedMornings(list.filter((r) => r.id === kept.id));
+    expect(await getRecoveryMetrics()).toHaveLength(2);
+    await putBackMornings(list);
+    const all = await getRecoveryMetrics();
+    expect(all.find((r) => r.id === kept.id)).toEqual(kept);
+    expect(all.find((r) => r.id === newer.id)).toEqual(newer);
   });
 
   it('nog een keer ontkoppelen laat een kale ochtend zoals hij is', async () => {

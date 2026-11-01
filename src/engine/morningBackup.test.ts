@@ -51,16 +51,26 @@ describe('een ochtend die de cache verlaat (retire)', () => {
   });
 });
 
-describe('uitzetten zonder koppeling', () => {
-  const hand: RecoveryMetric = { id: 'hand-1', date: '2026-10-18', source: 'manual', restingHeartRate: 50 };
-  const records = [m('2026-10-20', { restingHeartRate: 52 }), hand, m('2026-10-21', { hrv: 50 })];
+describe('wat uitzetten opruimt', () => {
+  const hand: RecoveryMetric = { id: 'hand-1', date: '2025-01-18', source: 'manual', restingHeartRate: 50 };
+  const old = m('2025-09-26', { restingHeartRate: 49 });
+  const edge = m('2025-09-27', { hrv: 51 });
+  const records = [m('2026-10-20', { restingHeartRate: 52 }), hand, m('2026-10-21', { hrv: 50 }), old, edge];
+  const today = '2026-11-01';
 
-  it('ruimt alleen de opgehaalde ochtenden op, nooit wat je zelf invulde', () => {
-    expect(archiveToClear(records, { connected: false, fetchedPrefix: 'intervals.icu:' }).map((r) => r.id)).toEqual(['intervals.icu:2026-10-20', 'intervals.icu:2026-10-21']);
+  it('zonder koppeling: alle opgehaalde ochtenden, nooit wat je zelf invulde', () => {
+    expect(archiveToClear(records, { connected: false, fetchedPrefix: 'intervals.icu:', today }).map((r) => r.id)).toEqual([
+      'intervals.icu:2026-10-20', 'intervals.icu:2026-10-21', 'intervals.icu:2025-09-26', 'intervals.icu:2025-09-27',
+    ]);
   });
 
-  it('ruimt niets op zolang er een koppeling is die ze opnieuw kan leveren', () => {
-    expect(archiveToClear(records, { connected: true, fetchedPrefix: 'intervals.icu:' })).toEqual([]);
+  it('met een koppeling: alleen wat ouder is dan 400 dagen, want dat gaat bij de volgende keer ophalen weg', () => {
+    // 2025-09-27 is precies 400 dagen voor 2026-11-01 en blijft, net als in syncWellness.
+    expect(archiveToClear(records, { connected: true, fetchedPrefix: 'intervals.icu:', today }).map((r) => r.id)).toEqual(['intervals.icu:2025-09-26']);
+  });
+
+  it('met een koppeling en niets ouds: niets', () => {
+    expect(archiveToClear([m('2026-10-20', { hrv: 50 })], { connected: true, fetchedPrefix: 'intervals.icu:', today })).toEqual([]);
   });
 
   it('Ongedaan maken zet alleen terug wat er nu niet staat', () => {

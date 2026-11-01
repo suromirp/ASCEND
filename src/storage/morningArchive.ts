@@ -1,30 +1,40 @@
 // ASCEND: het archief met ochtenden (docs/beslissingen/2026-11-01-ochtenden-archief.md).
 //
 // Met "Ochtendgetallen in back-up" aan blijven de opgehaalde ochtenden (datum en vier getallen)
-// ook na ontkoppelen op deze telefoon. Alleen het uitzetten van die instelling zonder koppeling
-// ruimt ze op; de instellingenpagina vraagt dat eerst en biedt daarna Ongedaan maken.
+// ook na ontkoppelen op deze telefoon. Uitzetten zonder koppeling ruimt ze op; met een koppeling
+// haalt de volgende keer ophalen het deel van langer dan 400 dagen geleden weg. De
+// instellingenpagina vraagt dat eerst en biedt daarna Ongedaan maken.
 
 import { RecoveryMetricsRepo } from './database';
-import { getConnection } from './externalActivities';
+import { getConnection, notifyWatchChange } from './externalActivities';
 import { archiveToClear, morningsToPutBack } from '../engine/morningBackup';
 import { INTERVALS_ADAPTER_ID } from '../integrations/intervalsIcu';
 import type { RecoveryMetric } from '../models/metrics';
+import { todayISO } from '../utils/dates';
 
-// De ochtenden die alleen nog voor de back-up bewaard worden: leeg zolang er een koppeling is.
-export async function archivedMornings(): Promise<RecoveryMetric[]> {
-  const connected = !!(await getConnection());
-  return archiveToClear(await RecoveryMetricsRepo.getAll(), { connected, fetchedPrefix: `${INTERVALS_ADAPTER_ID}:` });
+export interface ArchivedMornings {
+  // Er is een koppeling (ook met een verlopen sleutel): dan gaat alleen het oude deel weg.
+  linked: boolean;
+  list: RecoveryMetric[];
 }
 
-// Ruimt ze op en geeft terug wat weg is, zodat Ongedaan maken het kan terugzetten.
-export async function clearArchivedMornings(): Promise<RecoveryMetric[]> {
-  const removed = await archivedMornings();
-  for (const r of removed) await RecoveryMetricsRepo.delete(r.id);
-  return removed;
+// Wat er verdwijnt als je de instelling uitzet. De pagina bewaart deze lijst voor Ongedaan maken.
+export async function archivedMornings(today: string = todayISO()): Promise<ArchivedMornings> {
+  const linked = !!(await getConnection());
+  return { linked, list: archiveToClear(await RecoveryMetricsRepo.getAll(), { connected: linked, fetchedPrefix: `${INTERVALS_ADAPTER_ID}:`, today }) };
+}
+
+// Alles of niets, in één transactie.
+export async function clearArchivedMornings(list: readonly RecoveryMetric[]): Promise<void> {
+  if (list.length === 0) return;
+  await RecoveryMetricsRepo.deleteMany(list.map((r) => r.id));
+  notifyWatchChange();
 }
 
 // Ongedaan maken: alleen wat er nu niet staat komt terug.
-export async function putBackMornings(removed: readonly RecoveryMetric[]): Promise<void> {
-  const back = morningsToPutBack(removed, await RecoveryMetricsRepo.getAll());
-  if (back.length > 0) await RecoveryMetricsRepo.putAll(back);
+export async function putBackMornings(list: readonly RecoveryMetric[]): Promise<void> {
+  const back = morningsToPutBack(list, await RecoveryMetricsRepo.getAll());
+  if (back.length === 0) return;
+  await RecoveryMetricsRepo.putAll(back);
+  notifyWatchChange();
 }
