@@ -16,7 +16,7 @@ import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, weekdayOf, weekdayShortNL } from '../utils/dates';
-import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isLegHeavyTemplate } from './scheduler';
+import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isIntentionalBackToBack, isLegHeavyTemplate, sharedHeavyAxes } from './scheduler';
 import { patternSlotOf } from './programLayout';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { leaveDays, lightDays } from './leave';
@@ -175,6 +175,13 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
   const openByDate = index(input.sessions.filter(open));
   const around = (date: string, days: number) => Array.from({ length: days * 2 + 1 }, (_, i) => allByDate.get(addDays(date, i - days)) ?? []).flat();
   const tpl = (s: PlannedSession) => byId.get(s.templateId);
+  // The weekday a session has in the week pattern (its own place, or the place of the slot it fills).
+  // Unknown: counted as its own day.
+  const onOwnDay = (x: PlannedSession, xt: SessionTemplate) => {
+    const slot = patternSlotOf(x.templateId);
+    const own = input.slotDays?.get(x.templateId) ?? input.slotDays?.get(slot) ?? xt.defaultDayOfWeek ?? byId.get(slot)?.defaultDayOfWeek;
+    return own === undefined || isoWeekday(x.scheduledDate) === own;
+  };
   const minutes = (s: PlannedSession) => { const t = tpl(s); return s.plannedMinutes ?? (t ? input.minutesOf?.(s, t) ?? t.durationVariants.full : 0); };
 
   for (const s of active) {
@@ -293,6 +300,21 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
       if (input.trekRest !== 'strict' && leave.inTrek(c) && c.scheduledDate < s.scheduledDate && daysBetween(c.scheduledDate, s.scheduledDate) >= 2 && t.type === 'strength' && isLegHeavyTemplate(t) && !!t.durationVariants.short && s.plannedMinutes === t.durationVariants.short) continue;
       const subject = level(s) === 3 || level(c) !== 3 ? s : c;
       findings.push({ rule: 'LEG-SPACING', date: s.scheduledDate, sessionIds: [c.id, s.id], subjectId: subject.id, level: level(subject), message: `${tpl(c)?.name ?? 'Training'} (${day(c.scheduledDate)}) en ${name} (${day(s.scheduledDate)}) te dicht op elkaar.` });
+    }
+    // A pair the program puts back to back on purpose (pairingOverride: the hills, then the long run the next
+    // day) is that only on its own days of the week. Put somewhere else by you, it is two heavy leg days in a
+    // row: reported for Week (`reportYours`) so you see it, never repaired by the planning itself, which
+    // reads the check without that option (docs/beslissingen/2026-11-02-testloop-en-zware-benen.md).
+    if (input.reportYours) {
+      for (const c of allByDate.get(addDays(s.scheduledDate, -1)) ?? []) {
+        const ct = tpl(c);
+        if (!ct || idIsTestOrRace(c.templateId, byId) || !isIntentionalBackToBack(ct, t) || !sharedHeavyAxes(ct, t).includes('lowerBodyLoad')) continue;
+        if (leave.inTrek(s) || leave.inTrek(c) || (level(s) !== 1 && level(c) !== 1)) continue;
+        if (onOwnDay(c, ct) && onOwnDay(s, t)) continue;
+        if (findings.some((f) => f.rule === 'LEG-SPACING' && f.sessionIds.includes(c.id) && f.sessionIds.includes(s.id))) continue;
+        const subject = level(s) === 3 || level(c) !== 3 ? s : c;
+        findings.push({ rule: 'LEG-SPACING', date: s.scheduledDate, sessionIds: [c.id, s.id], subjectId: subject.id, level: level(subject), message: `${ct.name} (${day(c.scheduledDate)}) en ${name} (${day(s.scheduledDate)}) achter elkaar, buiten hun eigen dagen.` });
+      }
     }
   }
 

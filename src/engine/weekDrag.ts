@@ -204,7 +204,13 @@ export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Ve
 // wijziging gaat meteen (met Ongedaan maken in de melding). Een cascade of een botsing die niet op te
 // lossen is, een rustdag, een dag waar de tijd niet past en een test vragen het bestaande blad.
 // Het actieblad geeft geen verdict en geen askAlways mee en gedraagt zich dus zoals voorheen.
-export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict }
+// `legsClose`: the new day gives two heavy leg days in a row that the rules do not count as a clash
+// (a pair that belongs together on its own days, engine/weekValidator.ts). A clean move then asks first,
+// with "Toch hier" and "Annuleren"; a cascade or clash keeps its own question.
+export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict; legsClose?: boolean }
+
+export const LEGS_ASK = 'Twee zware beendagen achter elkaar. Toch hier?';
+export const LEGS_CONFIRM = { yes: 'Toch hier', no: 'Annuleren' } as const;
 
 export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {}): MoveDecision {
   const real = proposal.changes.filter((c) => c.toDate !== c.fromDate || c.restore);
@@ -220,10 +226,25 @@ export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {})
     resolved = false;
   }
   if (opts.askAlways) reasons.push(typeof opts.askAlways === 'string' ? opts.askAlways : TEST_ASK_REASON);
+  const legs = !!opts.legsClose && clean;
+  if (legs) {
+    reasons.unshift(LEGS_ASK);
+    resolved = false;
+  }
   if (reasons.length === 0) return { action: clean ? 'apply' : 'ask', proposal };
   // Een cascade of botsing houdt zijn eigen reden, met de nieuwe er vooraan.
   const kept = clean ? [] : [proposal.reason];
-  return { action: 'ask', proposal: { ...proposal, resolved, reason: [...reasons, ...kept].join(' ') } };
+  return { action: 'ask', proposal: { ...proposal, resolved, reason: [...reasons, ...kept].join(' '), ...(legs ? { confirm: { ...LEGS_CONFIRM } } : {}) } };
+}
+
+// Does moving this training to `date` give two heavy leg days in a row that the week check reports (as yours,
+// the move locks it) and that were not there before? Pure, the same check as the card in Week.
+export function legsCloseAfterMove(input: CheckInput, sessionId: string, date: string): boolean {
+  const weekStart = mondayOfWeek(date);
+  const pairs = (sessions: PlannedSession[]) => new Set(weekConcerns({ ...input, sessions }, weekStart).filter((c) => c.rule === 'LEG-SPACING' && c.finding.sessionIds.includes(sessionId)).map((c) => c.finding.sessionIds.filter((id) => id !== sessionId).join(',')));
+  const before = pairs(input.sessions);
+  const moved = input.sessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: date, weekStartDate: weekStart, status: 'moved' as const, lock: { by: 'user' as const, at: 'voorbeeld' } } : s));
+  return [...pairs(moved)].some((other) => !before.has(other));
 }
 
 // --- wat er na het slepen nieuw ontstaat -----------------------------------------------
