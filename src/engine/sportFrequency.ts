@@ -22,7 +22,7 @@ import { dayHasRoomFor } from './scheduler';
 import { searchWeeklyPlacement, type PlacementRequest } from './candidatePlacement';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { templateSport, SPORT_LABEL, type Sport } from './sports';
-import { weekDates, weekdayShortNL, formatDateNL } from '../utils/dates';
+import { weekDates, formatWeekdayDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 
 const LOAD_RANK: Record<string, number> = { none: 0, light: 1, moderate: 2, heavy: 3 };
@@ -55,10 +55,6 @@ export interface SportFrequencyResult {
   proposal: PlanChangeProposal;
   shortWeeks: number; // weeks where the target didn't fit
   clashWeeks: number; // weeks where it only fit next to other leg load
-}
-
-function shortDate(iso: string): string {
-  return `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
 }
 
 export function computeSportFrequencyPlan(inputs: SportFrequencyInputs): SportFrequencyResult {
@@ -123,7 +119,7 @@ export function computeSportFrequencyPlan(inputs: SportFrequencyInputs): SportFr
 
   const warnings: string[] = [];
   if (shortWeeks > 0) {
-    warnings.push(`Past eigenlijk niet: in ${shortWeeks} ${shortWeeks === 1 ? 'week' : 'weken'} (vanaf ${shortDate(firstShortWeek!)}) is geen dag met ruimte voor nog een ${label.toLowerCase()}sessie. Geef dagen meer tijd bij Trainingstijd per dag, sta meerdere trainingen op één dag toe, of kies een lager aantal.`);
+    warnings.push(`Past eigenlijk niet: in ${shortWeeks} ${shortWeeks === 1 ? 'week' : 'weken'} (vanaf ${formatWeekdayDateNL(firstShortWeek!)}) is geen dag met ruimte voor nog een ${label.toLowerCase()}sessie. Geef dagen meer tijd bij Trainingstijd per dag, sta meerdere trainingen op één dag toe, of kies een lager aantal.`);
   }
   if (clashWeeks > 0) {
     warnings.push(`In ${clashWeeks} ${clashWeeks === 1 ? 'week' : 'weken'} kon het alleen dicht op andere zware beenbelasting.`);

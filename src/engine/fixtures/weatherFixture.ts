@@ -2,8 +2,7 @@
 
 import type { WeatherDay, WeatherForecast, WeatherHour } from '../../models/weather';
 import { addDays } from '../../utils/dates';
-
-const pad = (n: number) => String(n).padStart(2, '0');
+import { pad } from '../../utils/pad';
 
 export const MILD: Omit<WeatherHour, 'time'> = { tempC: 14, feelsC: 14, precipMm: 0, precipProb: 5, windKmh: 12, gustKmh: 20, code: 3 };
 

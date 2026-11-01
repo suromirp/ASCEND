@@ -15,6 +15,7 @@ import type { WeatherForecast, WeatherHour } from '../models/weather';
 import { isIndoorLog, logSport, templateSport } from './sports';
 import { addDays, daysBetween, isoWeekday, toISODate } from '../utils/dates';
 import { deriveSessionStatus } from './sessionStatus';
+import { pad } from '../utils/pad';
 
 // --- 1. when do you usually train ----------------------------------------------
 
@@ -130,7 +131,6 @@ export interface SessionWeather {
   line: string;
 }
 
-const pad = (n: number) => String(n).padStart(2, '0');
 const hourKey = (date: string, hour: number) => `${date}T${pad(hour)}:00`;
 const minutesOfClock = (iso: string) => Number(iso.slice(11, 13)) * 60 + Number(iso.slice(14, 16));
 

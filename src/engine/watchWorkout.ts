@@ -42,7 +42,7 @@
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { WORKOUTS, type StepKind } from '../data/workoutStructure';
-import { addDays, weekdayShortNL } from '../utils/dates';
+import { addDays, formatWeekdayDayMonthNL } from '../utils/dates';
 import { buildWorkoutPlan, type PlanStep, type WorkoutPlan } from './workoutPlan';
 import { formatPace, type PaceRange, type RacePaces } from './racePaces';
 import { hrPercentTarget, type WatchHrPlan } from './watchHeartRate';
@@ -69,13 +69,6 @@ export interface WatchBuildOptions {
   // name. Absent = the zone name. Only runs use it: the zones of ASCEND are
   // running zones.
   hr?: WatchHrPlan;
-}
-
-const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-
-// "za 24 okt", the same wherever it runs (no year, so a fingerprint does not change at New Year).
-export function shortDateNL(iso: string): string {
-  return `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))} ${SHORT_MONTHS[Number(iso.slice(5, 7)) - 1]}`;
 }
 
 export type WatchSport = 'Run' | 'Walk' | 'Hike' | 'Ride';
@@ -224,7 +217,7 @@ export function buildWatchWorkout(
   const target = built.target;
   const prefix = WATCH_NAME_PREFIXES[options.namePrefix ?? DEFAULT_WATCH_NAME_PREFIX];
   const marked = options.namePrefix !== 'none';
-  const text = marked ? `Gepland door ASCEND voor ${shortDateNL(session.scheduledDate)}\n\n${built.text}` : built.text;
+  const text = marked ? `Gepland door ASCEND voor ${formatWeekdayDayMonthNL(session.scheduledDate)}\n\n${built.text}` : built.text;
   const movingTimeSec = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
   const base = { plannedId: session.id, externalId: externalIdFor(session.id), date: session.scheduledDate, name: `${prefix}${template.name}`, type, description: text, movingTimeSec, target };
   return { ...base, fingerprint: fingerprintOf(JSON.stringify([base.date, base.name, base.type, base.description, base.movingTimeSec, base.target])) };

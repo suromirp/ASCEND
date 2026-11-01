@@ -7,7 +7,7 @@ import { addWeightEntry, freshMacroFactorWeight, latestWeight, weightsInUse, WEI
 import { bodyFatLines, bodyFatTrend } from '../../../engine/bodyFat';
 import { zoneBpm } from '../../../engine/heartRateZones';
 import { heartRateProblem, type HeartRateField } from '../../../engine/inputLimits';
-import { shortDate } from '../../../engine/settingsSummary';
+import { formatDayMonthNL } from '../../../utils/dates';
 import { resolveFigureSetting } from '../../../engine/figureSettings';
 import { formatNumberNL } from '../../../utils/number';
 import { todayISO } from '../../../utils/dates';
@@ -56,7 +56,7 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
                 <div className="st-src">
                   {fromMf && <AutoTag />}
                   <span className="st-num">
-                    {fromMf ? `${basis === 'scale' ? 'Gewicht' : 'Trendgewicht'} uit MacroFactor, ${shortDate(last.date)}` : `Zelf ingevuld, ${shortDate(last.date)}`}
+                    {fromMf ? `${basis === 'scale' ? 'Gewicht' : 'Trendgewicht'} uit MacroFactor, ${formatDayMonthNL(last.date)}` : `Zelf ingevuld, ${formatDayMonthNL(last.date)}`}
                   </span>
                   <InfoButton compact label="Uitleg: lichaamsgewicht" onClick={() => setHelp(true)} />
                 </div>
@@ -75,7 +75,7 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
                   <InfoButton compact label="Uitleg: vetpercentage" onClick={() => setFatHelp(true)} />
                 </div>
                 {fatText.lean && <div className="st-fat-line dim"><span className="st-num">{fatText.lean}</span></div>}
-                <p className="st-fat-note st-num">Gemiddelde van je laatste {fat.readings === 1 ? 'meting' : `${fat.readings} metingen`}, tot {shortDate(fat.asOf)}</p>
+                <p className="st-fat-note st-num">Gemiddelde van je laatste {fat.readings === 1 ? 'meting' : `${fat.readings} metingen`}, tot {formatDayMonthNL(fat.asOf)}</p>
               </div>
             )}
 

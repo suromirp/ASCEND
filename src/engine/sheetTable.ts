@@ -6,6 +6,8 @@
 // messages exist once. This file is tiny and pure on purpose: it is loaded
 // with the readers, while the zip library is only loaded for an xlsx.
 
+import { pad } from '../utils/pad';
+
 export type Cell = string | number;
 
 export interface SheetTable {
@@ -38,10 +40,6 @@ export const SERIAL_MIN = 20000;
 export const SERIAL_MAX = 80000;
 
 const DAY_MS = 86400000;
-
-function pad(n: number): string {
-  return String(n).padStart(2, '0');
-}
 
 function clock(seconds: number, hourDigits = 1): string {
   return `${String(Math.floor(seconds / 3600)).padStart(hourDigits, '0')}:${pad(Math.floor((seconds % 3600) / 60))}:${pad(seconds % 60)}`;

@@ -12,6 +12,7 @@ import { resolveEffectiveStressProfile } from './stressProfile';
 import { resolveProgramWeek } from '../utils/dates';
 import { progressionTarget, waveWeek } from './programLayout';
 import { formatNumberNL } from '../utils/number';
+import { kgLabel } from '../utils/kg';
 
 export interface PlanStep {
   kind: StepKind;
@@ -120,7 +121,7 @@ export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | un
   const step = target?.step;
   const targets = [
     step?.elevationGainM ? `${formatNumberNL(step.elevationGainM, 0)} m omhoog en omlaag` : undefined,
-    step?.backpackKg ? `Rugzak ${formatNumberNL(step.backpackKg, 1)} kg` : undefined,
+    step?.backpackKg ? `Rugzak ${kgLabel(step.backpackKg)}` : undefined,
   ].filter((t): t is string => !!t);
 
   return {

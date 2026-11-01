@@ -54,12 +54,6 @@ export function strengthDataFor(workout: MacroFactorWorkout, template: SessionTe
   });
 }
 
-export function minutesLabel(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  if (h === 0) return `${minutes} min`;
-  return minutes % 60 === 0 ? `${h} uur` : `${h} uur ${minutes % 60} min`;
-}
-
 // --- working sets only ----------------------------------------------------------
 
 // The sets as ASCEND kept them before reps in reserve and warm-ups were stored:

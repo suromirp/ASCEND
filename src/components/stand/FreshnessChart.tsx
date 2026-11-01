@@ -3,7 +3,7 @@ import { FATIGUE_BAND, FATIGUE_THRESHOLDS, fatigueWord } from '../../engine/legF
 import type { DayMark, FreshnessPoint } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow } from '../ui';
-import { dayMonth, dayShort } from './chartParts';
+import { formatDayMonthNL, formatWeekdayDayMonthNL } from '../../utils/dates';
 
 // Je stand → freshness: the leg fatigue index day by day, from last week to
 // two weeks ahead. Lower is fresher. Ahead it is an estimate from the plan,
@@ -78,7 +78,7 @@ export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; to
                 ? <rect x={cx - 4} y={cy - 4} width={8} height={8} transform={`rotate(45 ${cx} ${cy})`} fill={MARK_COLOR[main.mark]} opacity={main.logged ? 1 : 0.85} />
                 : <circle cx={cx} cy={cy} r={main.mark === 'easy' ? 2 : 3} fill={MARK_COLOR[main.mark]} opacity={main.logged ? 1 : 0.6} />)}
               {(i % 7 === 0 || i === points.length - 1) && Math.abs(i - todayIdx) > 2
-                ? <text x={cx} y={TOP + plotH + 30} textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'} fontSize={12} fill="var(--color-ink-dim)">{dayMonth(p.date)}</text>
+                ? <text x={cx} y={TOP + plotH + 30} textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'} fontSize={12} fill="var(--color-ink-dim)">{formatDayMonthNL(p.date)}</text>
                 : null}
             </g>
           );
@@ -94,7 +94,7 @@ export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; to
       {point && (
         <div className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }} aria-live="polite">
           <p>
-            <span className="font-medium">{point.date === today ? 'Vandaag' : dayShort(point.date)}: </span>
+            <span className="font-medium">{point.date === today ? 'Vandaag' : formatWeekdayDayMonthNL(point.date)}: </span>
             <span className="tabular-nums">{formatNumberNL(point.index, 1)}</span>, {fatigueWord(point.index).word.toLowerCase()}
             {point.date > today && <span style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(Math.max(0, point.index - FATIGUE_BAND), 0)} tot {formatNumberNL(point.index + FATIGUE_BAND, 0)})</span>}
           </p>

@@ -11,6 +11,7 @@
 // Puur: geen React, geen IndexedDB, geen browser.
 
 import type { MorningCheckIn } from '../models/checkIn';
+import { pad } from '../utils/pad';
 
 export interface MorningNoticeSettings {
   enabled?: boolean;
@@ -67,8 +68,6 @@ export function cleanMorningNotice(raw: unknown): { value: MorningNoticeSettings
   for (const key of Object.keys(r)) if (key !== 'enabled' && key !== 'time') dropped++;
   return { value: Object.keys(out).length > 0 ? out : undefined, dropped };
 }
-
-const pad = (n: number) => String(n).padStart(2, '0');
 
 // De datum van het toestel, zoals de rest van de app die telt.
 function localDate(now: Date): string {

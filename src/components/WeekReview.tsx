@@ -15,6 +15,7 @@ import { weeklyCheckLine } from '../engine/bodyCheck';
 import { Icon } from './icons';
 import { DisclosureRow } from './DisclosureRow';
 import { usePageState } from './usePageState';
+import { hoursMinutes } from '../utils/hoursMinutes';
 
 function useWeekReview(weekStart: string): WeekReview | null {
   const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
@@ -84,7 +85,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function clock(minutes: number): { value: string; unit: string } {
   const m = Math.max(0, Math.round(minutes));
   if (m < 60) return { value: String(m), unit: 'min' };
-  return { value: `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`, unit: 'uur' };
+  return { value: hoursMinutes(m), unit: 'uur' };
 }
 
 // "Week 1 van 26, opbouw" + "Wennen" wordt "opbouw, week 1 · wennen".

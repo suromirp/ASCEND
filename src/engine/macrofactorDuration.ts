@@ -11,9 +11,8 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import { predictDuration } from './durationLearning';
 import { MAX_STRENGTH_MINUTES } from './logDuration';
 import { doubtAbout, LONGEST_PLAUSIBLE_WORKOUT_MIN, type MacroFactorProposal } from './macrofactorLink';
-import { minutesLabel } from './macrofactorSets';
 import type { MacroFactorWorkout } from './macrofactorImport';
-import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
+import { formatDateNL, formatHoursMinutesNL, todayISO, weekdayLongNL } from '../utils/dates';
 import { isNextDay } from './logDay';
 
 export type NewProposal = Extract<MacroFactorProposal, { kind: 'new' }>;
@@ -70,7 +69,7 @@ export function isValidMinutes(minutes: number | undefined): minutes is number {
 // "Het bestand zegt 6 uur 16 min. Je klok liep waarschijnlijk door."
 export function fileDurationSentence(workout: MacroFactorWorkout): string {
   const minutes = Math.round((workout.durationSec ?? 0) / 60);
-  return `Het bestand zegt ${minutesLabel(minutes)}. Je klok liep waarschijnlijk door.`;
+  return `Het bestand zegt ${formatHoursMinutesNL(minutes)}. Je klok liep waarschijnlijk door.`;
 }
 
 // The row after the choice: the draft carries the chosen duration, the doubt is
@@ -96,7 +95,7 @@ export function withChosenDuration(p: NewProposal, choice: DurationChoice): NewP
 
 // The line under the row after the choice.
 export function chosenDurationLine(p: NewProposal): string {
-  const file = minutesLabel(p.draft.fileDurationMinutes ?? 0);
+  const file = formatHoursMinutesNL(p.draft.fileDurationMinutes ?? 0);
   const day = p.draft.completedDate !== p.workout.date ? ` Telt op ${weekdayLongNL(p.draft.completedDate)} ${formatDateNL(p.draft.completedDate)}.` : '';
-  return `Duur ${minutesLabel(p.draft.durationMinutes)} (het bestand zegt ${file}).${day}`;
+  return `Duur ${formatHoursMinutesNL(p.draft.durationMinutes)} (het bestand zegt ${file}).${day}`;
 }

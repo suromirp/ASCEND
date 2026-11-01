@@ -2,12 +2,12 @@ import { useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { asksSweat, preWeightOn, sweatActivityOfTemplate, weightSuggestion } from '../engine/sweatMoments';
-import { formatNumberNL } from '../utils/number';
 import { todayISO } from '../utils/dates';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { NumberField } from './NumberField';
 import { TextButton } from './TextButton';
 import { SecondaryButton } from './ui';
+import { kgLabel } from '../utils/kg';
 
 const SAVE_LIMIT_MS = 10_000;
 
@@ -47,7 +47,7 @@ export function SweatBeforeRow({ template, className = '' }: { template: Session
       <div className={`flex items-center justify-between gap-3 ${className}`}>
         {stored ? (
           <>
-            <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>Gewicht voor: {formatNumberNL(stored.weightKg, 1)} kg</p>
+            <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>Gewicht voor: {kgLabel(stored.weightKg)}</p>
             <TextButton tone="dim" onClick={() => { setValue(stored.weightKg); setOpen(true); }}>Wijzig</TextButton>
           </>
         ) : (
@@ -63,7 +63,7 @@ export function SweatBeforeRow({ template, className = '' }: { template: Session
       <NumberField tall label="Gewicht voor (kg)" value={value} onChange={setValue} unit="kg" decimals={1} helper="Zonder kleren, na het plassen. Na afloop vraagt ASCEND naar je gewicht erna." />
       {suggestion && value === undefined && (
         <div>
-          <TextButton onClick={() => setValue(suggestion.kg)}>Gebruik {formatNumberNL(suggestion.kg, 1)} kg {when}</TextButton>
+          <TextButton onClick={() => setValue(suggestion.kg)}>Gebruik {kgLabel(suggestion.kg)} {when}</TextButton>
         </div>
       )}
       <div className="flex items-center gap-2">

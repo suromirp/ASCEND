@@ -1,7 +1,7 @@
 import type { IndexCheck } from '../../engine/learning';
 import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow } from '../ui';
-import { dayShort } from './chartParts';
+import { formatWeekdayDayMonthNL } from '../../utils/dates';
 
 // Je stand → the leg index against your own legs: what you said at the
 // warm-up of a hard run or test next to what the index said that morning.
@@ -33,7 +33,7 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
           <div className="flex flex-col gap-1">
             {checks.slice(0, 5).map((c) => (
               <div key={c.date + c.name} className="flex items-baseline justify-between gap-3 text-xs">
-                <span className="truncate" style={{ color: 'var(--color-ink)' }}>{c.name} <span style={{ color: 'var(--color-ink-dim)' }}>· {dayShort(c.date)}</span></span>
+                <span className="truncate" style={{ color: 'var(--color-ink)' }}>{c.name} <span style={{ color: 'var(--color-ink-dim)' }}>· {formatWeekdayDayMonthNL(c.date)}</span></span>
                 <span className="shrink-0 tabular-nums" style={{ color: c.agrees ? 'var(--color-ink-dim)' : 'var(--color-action)' }}>
                   index {formatNumberNL(c.index, 1)}, benen {LEGS_WORD[c.legs]}{c.agrees ? '' : ', wijkt af'}
                 </span>

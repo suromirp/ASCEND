@@ -1,7 +1,8 @@
 import type { WeekDescent } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow } from '../ui';
-import { dayMonth, roundedTop } from './chartParts';
+import { roundedTop } from './chartParts';
+import { formatDayMonthNL } from '../../utils/dates';
 
 // Je stand → descent: metres down per week. Bergaf is what makes legs sore
 // on a mountain trip, and in the Netherlands there is little of it, so this
@@ -44,7 +45,7 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
               {w.metres > 0 && <path d={roundedTop(x, 14 + plotH - h, barW, h, 4)} fill="var(--color-progress)" />}
               {w.metres > 0 && h > 16 && <text x={x + barW / 2} y={14 + plotH - h - 3} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">{formatNumberNL(w.metres, 0)}</text>}
               {(slot >= 44 || (weeks.length - 1 - i) % 2 === 0) && (
-                <text x={i * slot + slot / 2} y={H - 5} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">{i === weeks.length - 1 ? 'nu' : dayMonth(w.weekStart)}</text>
+                <text x={i * slot + slot / 2} y={H - 5} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">{i === weeks.length - 1 ? 'nu' : formatDayMonthNL(w.weekStart)}</text>
               )}
             </g>
           );

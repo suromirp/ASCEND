@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
-import { repsLabel, shortDateNL, deltaText, deltaTone, extraText, extraTone, signedKg, topSetText, valueText } from './forgeText';
+import { repsLabel, deltaText, deltaTone, extraText, extraTone, signedKg, topSetText, valueText } from './forgeText';
 
 describe('signedKg', () => {
   it('zet teken en eenheid erbij, met een komma', () => {
@@ -61,13 +61,6 @@ describe('oefeningen met hulp', () => {
     expect(topSetText(exerciseById('bench-press'), 60, 8)).toBe('60 kg x 8');
     expect(topSetText(pull, -30, 8)).toBe('hulp 30 kg x 8');
     expect(topSetText(pull, undefined, 8)).toBeUndefined();
-  });
-});
-
-describe('shortDateNL', () => {
-  it('dag en maand, het jaar alleen als het een ander jaar is', () => {
-    expect(shortDateNL('2026-10-05', '2026-10-24')).toBe('5 okt');
-    expect(shortDateNL('2025-12-31', '2026-10-24')).toBe('31 dec 2025');
   });
 });
 

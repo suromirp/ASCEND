@@ -16,6 +16,7 @@ import type { LeavePeriod, TrekDetails, TrekImportance, TrekTerrain } from '../m
 import { addDays, daysBetween } from '../utils/dates';
 import { dayCount } from './leave';
 import { trekLightDaysBefore } from './trekTaper';
+import { kgLabel } from '../utils/kg';
 
 export const TREK_TERRAINS: TrekTerrain[] = ['flat_trail', 'uneven_trail', 'mountain', 'snow'];
 export const TREK_TERRAIN_LABEL: Record<TrekTerrain, string> = {
@@ -118,7 +119,7 @@ export function trekFacts(period: LeavePeriod): string {
   if (!t) return '';
   const n = dayCount(period);
   const parts = [TREK_TERRAIN_LABEL[t.terrain], `${n} ${n === 1 ? 'dag' : 'dagen'}`];
-  if (t.packKg) parts.push(`rugzak ${String(t.packKg).replace('.', ',')} kg`);
+  if (t.packKg) parts.push(`rugzak ${kgLabel(t.packKg, 2)}`);
   parts.push(t.tent ? 'met tent' : 'zonder tent');
   return parts.join(', ');
 }

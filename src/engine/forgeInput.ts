@@ -26,6 +26,7 @@ import { isLightWeight } from './strengthModel';
 import { barFor, candidatesFor, nearestIndex, stepFor } from './strengthWeights';
 import { isOwnRow } from './forgeRows';
 import { r2 } from '../utils/round';
+import { kgLabel } from '../utils/kg';
 
 
 // --- steps ---------------------------------------------------------------------------------
@@ -301,7 +302,7 @@ export function exerciseSummary(ex: WorkoutExercise): string {
   const sets = count === 1 ? '1 set' : `${count} sets`;
   if (ex.timed) return sets;
   const top = [...work].sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0];
-  if (top.weightKg !== undefined && top.weightKg !== 0) return `${sets}, zwaarste ${formatNumberNL(top.weightKg, 2)} kg × ${top.reps ?? 0}`;
+  if (top.weightKg !== undefined && top.weightKg !== 0) return `${sets}, zwaarste ${kgLabel(top.weightKg, 2)} × ${top.reps ?? 0}`;
   return `${sets}, ${top.reps ?? 0} herhalingen`;
 }
 
@@ -354,8 +355,8 @@ export function plateSideText(step: Pick<PlateStep, 'perSide'>): string {
 export function plateSentence(step: Pick<PlateStep, 'perSide' | 'barKg'>): string {
   const side = r2(step.perSide.reduce((n, p) => n + p, 0));
   const total = r2(step.barKg + 2 * side);
-  const sideText = `${formatNumberNL(side, 2)} kg per kant`;
-  return step.barKg > 0 ? `${sideText} + stang ${formatNumberNL(step.barKg, 2)} kg = ${formatNumberNL(total, 2)} kg` : `${sideText} = ${formatNumberNL(total, 2)} kg`;
+  const sideText = `${kgLabel(side, 2)} per kant`;
+  return step.barKg > 0 ? `${sideText} + stang ${kgLabel(step.barKg, 2)} = ${kgLabel(total, 2)}` : `${sideText} = ${kgLabel(total, 2)}`;
 }
 
 // What changes from the set before: "Erbij 1 × 2,5, eraf 1 × 1,25." Undefined when nothing does.

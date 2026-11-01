@@ -21,7 +21,7 @@
 
 import type { LeaveKind, LeavePeriod, TrekDetails } from '../models/leave';
 import { trekLightDaysBefore } from './trekTaper';
-import { addDays, daysBetween, formatDateNL, weekdayShortNL } from '../utils/dates';
+import { addDays, daysBetween, formatWeekdayDateNL, formatWeekdayDayMonthNL } from '../utils/dates';
 
 export const LEAVE_KINDS: LeaveKind[] = ['no_training', 'trek', 'free_days'];
 
@@ -192,8 +192,7 @@ export function leaveLabelOn(date: string, periods: LeavePeriod[] | undefined): 
 }
 
 const MONTHS_SHORT = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-const dayText = (iso: string, short = false) =>
-  short ? `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))} ${MONTHS_SHORT[Number(iso.slice(5, 7)) - 1]}` : `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
+const dayText = (iso: string, short = false) => (short ? formatWeekdayDayMonthNL(iso) : formatWeekdayDateNL(iso));
 
 // "ma 4 mei t/m wo 6 mei" or, for one day, "do 14 mei". `short`: "ma 4 mei" with
 // the month in three letters, for a narrow line.

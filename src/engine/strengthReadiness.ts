@@ -24,6 +24,7 @@ import { formatNumberNL } from '../utils/number';
 import { computeGoalReadiness, readinessInputOf, type ExternalValue, type GoalReadiness, type ReadinessOptions } from './goalReadiness';
 import { fillFromWeeks, weeksOfWork } from './goalGap';
 import { EPLEY_DIVISOR, estimateSet } from './strengthModel';
+import { kgLabel } from '../utils/kg';
 
 export const STRENGTH_WINDOW_DAYS = 28;
 // Vanaf zoveel dagen geschiedenis op een oefening geldt "ervaren".
@@ -91,7 +92,7 @@ function readExercise(target: { exercise: string; kg: number; reps: number }, lo
     ? `${target.exercise}: gehaald`
     : missingKg <= 0
     ? `${target.exercise} nog minder dan een halve kilo voor ${target.reps} herhalingen`
-    : `${target.exercise} nog ${formatNumberNL(missingKg, 1)} kg voor ${target.reps} herhalingen`;
+    : `${target.exercise} nog ${kgLabel(missingKg)} voor ${target.reps} herhalingen`;
   return { exercise: target.exercise, text, share: fillFromWeeks(weeks), weeks, level, historyDays };
 }
 

@@ -8,6 +8,7 @@
 import { DEFAULT_PACK_ITEMS, PACK_GROUPS, type PackGroup, type PackItem } from '../data/packList';
 import { formatNumberNL } from '../utils/number';
 import { isRecord } from '../utils/guards';
+import { kgLabel } from '../utils/kg';
 
 // What is stored (AppSettings.packList). Absent means: the example list.
 // `v` is the shape's own version, for a later migration.
@@ -65,11 +66,11 @@ export function packVersusGoal(baseGrams: number, goalKg: number | undefined): s
   if (goalKg === undefined || !(goalKg > 0)) return undefined;
   const kg = departureWeightKg(baseGrams, REFERENCE_FOOD_DAYS, REFERENCE_WATER_LITERS);
   const diff = Math.round((kg - goalKg) * 10) / 10;
-  const lead = `Je doel is ${formatNumberNL(goalKg, 1)} kg en met ${REFERENCE_FOOD_DAYS} dagen eten en ${REFERENCE_WATER_LITERS} liter water vertrek je met ${formatNumberNL(kg, 1)} kg`;
+  const lead = `Je doel is ${kgLabel(goalKg)} en met ${REFERENCE_FOOD_DAYS} dagen eten en ${REFERENCE_WATER_LITERS} liter water vertrek je met ${kgLabel(kg)}`;
   if (diff === 0) return `${lead}: precies op je doel.`;
   return diff < 0
-    ? `${lead}: ${formatNumberNL(-diff, 1)} kg onder je doel.`
-    : `${lead}: ${formatNumberNL(diff, 1)} kg boven je doel.`;
+    ? `${lead}: ${kgLabel(-diff)} onder je doel.`
+    : `${lead}: ${kgLabel(diff)} boven je doel.`;
 }
 
 // Grams as the list shows them, also above a thousand: "1.100 g".
@@ -78,7 +79,7 @@ export function formatGrams(grams: number): string {
 }
 
 export function formatKg(grams: number): string {
-  return `${formatNumberNL(grams / 1000, 1)} kg`;
+  return kgLabel(grams / 1000);
 }
 
 // --- changes (each returns a new list; nothing is mutated) -----------------------
