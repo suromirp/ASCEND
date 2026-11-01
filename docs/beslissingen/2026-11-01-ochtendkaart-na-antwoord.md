@@ -13,9 +13,19 @@ Na een antwoord krijgt de ochtendkaart zijn eigen korte hoogte in plaats van die
 
 Na "Fris genoteerd." stond er een groot leeg vlak met alleen onderaan "Ongedaan maken", en het gevolg noemde alleen Bovenlichaam B terwijl vandaag eerst de testloop staat.
 
+## Alternatieven
+
+- Een vaste hoogte voor de kaart: dan blijft er bij een kort gevolg weer een leeg vlak, of breekt een lang gevolg af.
+- Een overgang op `max-height` in CSS: die rekent met een gok voor de hoogste stand en loopt daardoor ongelijk; meten met `useHeightMorph` geeft een echte begin- en eindhoogte.
+- Alleen de training die bovenaan de dag staat noemen: dan zie je de test niet als die later op de dag staat, terwijl die het belangrijkst is.
+
 ## Bron
 
 `docs/beslissingen/2026-10-31-ochtendkaart-vernieuwd.md`.
+
+## Vervangt
+
+Het stuk over de hoogte van de kaart na je antwoord in `2026-10-31-ochtendkaart-vernieuwd.md`; de rest van dat besluit blijft.
 
 ## Terugdraaien
 

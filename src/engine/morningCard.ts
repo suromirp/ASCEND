@@ -175,11 +175,11 @@ function noEnd(title: string): string {
   return (colon > 0 ? t.slice(colon + 2) : t).replace(/[.?!:\s]+$/, '');
 }
 
-// "Testloop 5 km blijft staan", "A en B blijven staan", bij meer dan twee "A, B en nog 1 blijven staan".
+// "Testloop 5 km blijft staan", "A en B blijven staan", bij meer dan twee "A, B en nog 1 andere blijven staan".
 function staan(names: string[]): string {
   if (names.length === 1) return `${names[0]} blijft staan`;
   if (names.length === 2) return `${names[0]} en ${names[1]} blijven staan`;
-  return `${names[0]}, ${names[1]} en nog ${names.length - 2} blijven staan`;
+  return `${names[0]}, ${names[1]} en nog ${names.length - 2} andere blijven staan`;
 }
 
 // Wat een ochtendantwoord voor vandaag doet, uit dezelfde regels als het blad en Vandaag

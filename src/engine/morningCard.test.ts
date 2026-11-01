@@ -130,6 +130,11 @@ describe('morningConsequence', () => {
     expect(c.line).toBe('Bovenlichaam B en Rustige duurloop blijven staan.');
   });
 
+  it('noemt bij drie trainingen de eerste twee en hoeveel er nog zijn', () => {
+    const planned = [{ ...ps('t', 'tpl_test_run', day), order: 2 }, { ...ps('b', 'tpl_upper_b', day), order: 0 }, { ...ps('e', 'tpl_easy_run', day), order: 1 }];
+    expect(morningConsequence(entry('fris'), ctx(planned)).line).toBe('Testloop 5 km, Bovenlichaam B en nog 1 andere blijven staan.');
+  });
+
   it('een lichter gevolg klopt ook met twee trainingen', () => {
     const planned = [ps('t', 'tpl_test_run', day), { ...ps('b', 'tpl_upper_b', day), order: 1 }];
     expect(morningConsequence(entry('stijf'), ctx(planned)).line).toBe('Testloop 5 km en Bovenlichaam B blijven staan, warm rustig in.');
