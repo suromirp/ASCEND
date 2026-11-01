@@ -33,6 +33,15 @@ describe('describeChanges: another training on its day', () => {
   });
 });
 
+describe('describeChanges: a training you moved yourself loses the mark of a period', () => {
+  it('says that it stays, so the notice is never empty; a plain keep says nothing', () => {
+    const planned = [session('l', '2026-10-25', '2026-10-19', 'tpl_a')];
+    const templates = [tpl('tpl_a', 'Lange duurloop')];
+    expect(describeChanges([{ plannedSessionId: 'l', action: 'keep', leave: null }], planned, templates)).toEqual(['Lange duurloop op zo 25 oktober blijft staan']);
+    expect(describeChanges([{ plannedSessionId: 'l', action: 'keep' }], planned, templates)).toEqual([]);
+  });
+});
+
 describe('askBeforeApplying: one rule for every automatic change (Warden Logica punt 3)', () => {
   const sessions = [session('near', '2026-10-01', '2026-09-28'), session('far', '2026-10-21', '2026-10-19')];
   it('Kleine wijzigingen automatisch: schrappen vraagt altijd eerst, ook ver weg', () => {

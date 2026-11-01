@@ -353,6 +353,17 @@ export const CHOICES = {
       { value: 'strict', label: 'Streng', note: 'Altijd 72 uur' },
     ],
   }),
+  vakantieOpzij: def({
+    group: 'Planning',
+    title: 'Opzij voor een vakantie',
+    line: 'Een training die moet wijken voor een vakantie of een tocht.',
+    advice: 'drop' as 'drop' | 'shift',
+    help: 'vakantieOpzij',
+    options: [
+      { value: 'drop', label: 'Liever laten vervallen', note: 'Als hij anders vlak voor of na zijn volgende keer komt', short: 'Laten vervallen' },
+      { value: 'shift', label: 'Toch verschuiven', note: 'Naar elke dag van die week die past', short: 'Verschuiven' },
+    ],
+  }),
   bergschoenen: def({
     group: 'Doel en tochten',
     title: 'Bergschoenen inlopen',

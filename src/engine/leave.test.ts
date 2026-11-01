@@ -130,13 +130,22 @@ describe('vacation without training', () => {
   });
 
   it('moves what fits to another day of that week, lets go of what does not', () => {
-    const r = run(plan, [holiday], { dailyTimeBudget });
-    // Upper A fits another day of the week; Lower A has no day that keeps 48 hours from the hills and the long run.
+    // With "Toch verschuiven": Upper A fits another day of the week; Lower A has no day that keeps 48 hours from the hills and the long run.
+    const r = run(plan, [holiday], { dailyTimeBudget, leaveCrowding: 'shift' });
     expect(byId(r.sessions, id(MONDAY, 1))).toBeDefined();
     expect(open(r.sessions).some((s) => s.id === id(MONDAY, 1))).toBe(true);
     expect(isoWeekday(byId(r.sessions, id(MONDAY, 1))!.scheduledDate)).not.toBe(2);
     expect(open(r.sessions).some((s) => s.id === id(MONDAY, 2))).toBe(false);
     expect(r.repairs.filter((x) => x.rule === 'LEAVE-OFF').map((x) => !!x.removed)).toEqual([false, true, true]);
+  });
+
+  it('by default a training is let go rather than put right before its own next time', () => {
+    // The only day left for Upper A is Sunday, two days before the next Upper A on Tuesday 3 November.
+    const shifted = run(plan, [holiday], { dailyTimeBudget, leaveCrowding: 'shift' });
+    expect(byId(shifted.sessions, id(MONDAY, 1))?.scheduledDate).toBe('2026-11-01');
+    const r = run(plan, [holiday], { dailyTimeBudget });
+    expect(open(r.sessions).some((s) => s.id === id(MONDAY, 1))).toBe(false);
+    expect(r.repairs.filter((x) => x.rule === 'LEAVE-OFF').map((x) => !!x.removed)).toEqual([true, true, true]);
   });
 
   it('never stacks a session on a day without a time budget: it takes an empty day or goes', () => {
@@ -399,7 +408,7 @@ describe('as a proposal with Akkoord', () => {
   });
 
   it('moved and let go sessions keep a mark with the period and their old day; what you accept is locked', () => {
-    const p = input('add', holiday, [], plan, { dailyTimeBudget });
+    const p = input('add', holiday, [], plan, { dailyTimeBudget, leaveCrowding: 'shift' });
     const applied = accept(p, plan).sessions;
     const moved = byId(applied, id(MONDAY, 1))!;
     expect(moved.leave).toEqual({ periodId: holiday.id, role: 'moved', from: '2026-10-27' });
@@ -484,7 +493,9 @@ describe('as a proposal with Akkoord', () => {
     const afterAdd = accept(add, plan).sessions;
     const youMoved = afterAdd.map((s) => (s.id === id(MONDAY, 1) ? { ...s, scheduledDate: '2026-11-03', weekStartDate: addDays(MONDAY, 7), lock: { by: 'user' as const, at: '2026-10-22T08:00:00.000Z' } } : s));
     const remove = input('remove', holiday, [holiday], youMoved, { dailyTimeBudget });
-    expect(remove.proposal.changes.some((c) => c.plannedSessionId === id(MONDAY, 1))).toBe(false);
+    // Not moved and not let go: only the mark of the holiday goes (engine/leaveEdit.test.ts).
+    const items = remove.proposal.changes.filter((c) => c.plannedSessionId === id(MONDAY, 1));
+    expect(items.every((c) => c.action === 'keep' && c.leave === null)).toBe(true);
   });
 });
 

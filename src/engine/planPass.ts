@@ -43,6 +43,8 @@ export interface PlanPassContext {
   hikingEnabled?: boolean;
   // Rest after a tocht: soft (default) or strict (engine/weekValidator.ts).
   trekRest?: 'soft' | 'strict';
+  // A training that moves for a holiday: let go rather than crowd its own next time (default), or shift.
+  leaveCrowding?: 'drop' | 'shift';
 }
 
 export interface PlanPassResult {
@@ -77,7 +79,7 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
       afterGoals: ctx.afterGoals ?? ctx.blocks.filter((b) => (b.recoveryDays ?? 0) > 0).map((b) => ({ date: b.raceDate, days: b.recoveryDays! })),
       program: ctx.program, dailyTimeBudget: ctx.dailyTimeBudget,
       sameDayPairingPreference: ctx.sameDayPairingPreference, slotDays: ctx.slotDays, minutesOf: ctx.minutesOf, until: ctx.until,
-      leave: ctx.leave, trekRest: ctx.trekRest,
+      leave: ctx.leave, trekRest: ctx.trekRest, leaveCrowding: ctx.leaveCrowding,
     };
     // Walks on a trek, a long walk on a free day: what the periods put in.
     const placed = applyLeaveBlocks(afterRace, { check: checkInput, newId: ctx.newId, hikingEnabled: ctx.hikingEnabled });

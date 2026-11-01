@@ -35,3 +35,14 @@ and "ingehaald op do 29". The automatic planning does not touch this, `planGolde
 **De dag van een log in Week** (`engine/logDay.ts`, decision `docs/beslissingen/2026-10-29-dag-van-een-training.md`): to show, a MacroFactor log counts on the day of its planned training when that is exactly the day after `completedDate` (begun before midnight, finished after), so the row and the chart "Belasting per dag" say the same; the log is never rewritten. Only display uses it (Week, the weekly review, Vandaag, the Logboek calendar); leg index, load over 7 and 28 days, readiness and planning stay on `completedDate`.
 
 **De rustdag terug** (`engine/restDayBack.ts`, decision `docs/beslissingen/2026-11-01-rustdag-terug.md`): an empty day on your fixed rest day reads "Rustdag · je vaste rustdag" with the hammock, display only. When a proposal let the Herstel row of that day go (skipped with the lock of a proposal, never yours, never a leave mark) and the day is empty again, rule REST-BACK gives a proposal with Akkoord that brings the same row back without a lock; it shows on Vandaag and in the Rustdag card of that week. After Akkoord the row stays in `removedByPlanIds` (`AppDataContext.tsx`, built from every accepted `remove`): it is planned again, but a later rule that reads that set must check the status of the row, not only its id. Setting "Rustdag terugzetten voorstellen" (`restDayBack`, absent = on). The planning run and `planGolden.test.ts` do not move.
+
+**Een vakantie bijwerken** (`components/LeavePeriods.tsx`, `engine/leaveEdit.ts`, `engine/leaveSpacing.ts`, decision
+`docs/beslissingen/2026-11-01-vakantie-bijwerken.md`): a tap on a period in "Vrije dagen en vakanties" (the row has `data-sheet-from`) opens the
+sheet with its days, kind and note filled in, and Verwijderen. Other days or another kind is one proposal with Akkoord through
+`planLeave('add', after, before)`, the `replaces` road of a tocht: what it moved, let go or placed is put back first, then the planning runs with
+the new period, so the proposal shows what comes, what goes and what moves. The period is stored only on Akkoord; Liever niet keeps everything.
+Only another note (`leaveEditScope` is `note`) is stored at once by `saveLeaveNote`, with Ongedaan maken. A tocht keeps its kind here; its name,
+terrain and importance stay with Tochten on Ascend. A training that has to move for a holiday or a tocht (LEAVE-OFF, LEAVE-LIGHT) never lands
+right before or after its own next time (same template or a role `long`, `hard_run`, `hills`, `blocks`, at least half the usual gap): it is let
+go instead, unless the setting "Opzij voor een vakantie" (`leaveCrowding`, absent = drop) says shift. A training you moved yourself loses the
+mark of a period that is removed or changed (a `keep` item with `leave: null`, your lock stays). `planGolden.test.ts` does not move.

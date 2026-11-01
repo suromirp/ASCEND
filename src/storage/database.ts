@@ -654,6 +654,10 @@ export interface AppSettings {
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';
+  // A training that moves for a holiday or a tocht (engine/leaveSpacing.ts): 'drop' (absent = drop,
+  // the advice) lets it go rather than put it right before or after its own next time, 'shift' moves
+  // it to any day of that week that fits. Optional and additive, so no migration step.
+  leaveCrowding?: 'drop' | 'shift';
   // How fast the long run grows toward a running race (engine/runGrowth.ts): 'weekly' (absent =
   // weekly, the advice), 'biweekly' or 'wave' (per block of four weeks, as before). Optional, additive.
   longRunGrowth?: 'weekly' | 'biweekly' | 'wave' | 'firm' | 'fast';
@@ -1649,7 +1653,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     slotDays: patternDays(templates, settings, restDay),
     minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),
     newId: () => makeId('planned'),
-    leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
+    leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
   })));
   if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 

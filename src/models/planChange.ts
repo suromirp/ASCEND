@@ -116,6 +116,8 @@ export type EngineEvent =
   // A period of free days, a holiday or a trek was added or removed
   // (engine/leaveProposal.ts).
   | 'leave_added' | 'leave_removed'
+  // Only the note of a period changed: the planning did not (engine/leaveEdit.ts).
+  | 'leave_note'
   // A rest week trained through or put back, a week repeated or the repeat
   // taken back (engine/weekLoadChange.ts). Additive: older data never has it.
   | 'week_load_changed';

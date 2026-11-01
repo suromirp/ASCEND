@@ -386,6 +386,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showStageWater !== false };
     case 'rust-na-tocht':
       return { value: choiceShort('rustNaTocht', s.trekLegRest ?? 'soft') };
+    case 'vakantie-opzij':
+      return { value: choiceShort('vakantieOpzij', s.leaveCrowding ?? 'drop') };
     case 'vrije-dagen':
       return f.vacations > 0 ? { value: `${f.vacations} gepland` } : { value: 'Geen', dim: true };
     case 'reisplanner':

@@ -66,6 +66,8 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const byId = new Map(templates.map((t) => [t.id, t]));
   const nameOf = (templateId: string) => byId.get(templateId)?.name ?? 'Training';
+  // How the period that is changed is called in a reason: "de tocht", or "je vakantie".
+  const former = (replaces ?? period).kind === 'trek' ? 'de tocht' : (replaces ?? period).kind === 'no_training' ? 'je vakantie' : 'je vrije dagen';
   const windowEnd = addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, AFTER_DAYS);
 
   // What the planning looks like without the period's earlier work.
@@ -76,7 +78,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const result = planPass(start, { ...input.context(periodsAfter), newId: () => `leave-draft-${++drafts}` });
 
   const reasonFor = (session: PlannedSession | undefined, date: string, what: 'remove' | 'move' | 'add', back = false): string => {
-    if (back) return what === 'remove' ? `Hoorde bij de tocht zoals die was: ${dayText(date)} vervalt.` : `Terug naar ${dayText(date)}, de tocht ligt nu anders.`;
+    if (back) return what === 'remove' ? `Hoorde bij ${former} zoals die was: ${dayText(date)} vervalt.` : `Terug naar ${dayText(date)}, ${former} ligt nu anders.`;
     if (mode === 'remove') return what === 'remove' ? `Hoorde bij ${LEAVE_KIND_LABEL[period.kind].toLowerCase()}: ${dayText(date)} vervalt.` : `Terug naar ${dayText(date)}, je periode is weg.`;
     const label = leaveLabelOn(date, periodsAfter);
     if (what === 'add') return label?.kind === 'trek' ? `Tochtdag ${dayText(date)}: een wandeling met je rugzak.` : `Vrije dag ${dayText(date)}: er past een wandeling.`;
@@ -114,9 +116,21 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   };
   const isBack = (s: PlannedSession, a: PlannedSession | undefined) => !!replaces && s.leave?.periodId === replaces.id && markOf(s, a, 'moved') === null;
 
+  // A training you moved yourself after the period moved it keeps its day and
+  // its lock; only the mark of the period goes (putBack). No other change.
+  const ownedBefore = (s: PlannedSession) => !!s.leave && (s.leave.periodId === period.id || s.leave.periodId === replaces?.id);
+  const markOnly = (s: PlannedSession, a: PlannedSession | undefined) =>
+    s.lock?.by === 'user' && ownedBefore(s) && !!a && !a.leave && a.scheduledDate === s.scheduledDate && a.status === s.status && a.plannedMinutes === s.plannedMinutes;
+
   for (const s of sessions) {
-    if (!inWindow(s.scheduledDate) || logged.has(s.id)) continue;
+    if (logged.has(s.id)) continue;
     const a = after.get(s.id);
+    // Wherever you put it: the mark goes with the period, also outside the window.
+    if (s.scheduledDate >= today && markOnly(s, a)) {
+      items.push({ plannedSessionId: s.id, action: 'keep', fromDate: s.scheduledDate, toDate: s.scheduledDate, reason: `${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} zette je zelf neer. Die blijft staan.`, generatedBy: SOURCE, leave: null });
+      continue;
+    }
+    if (!inWindow(s.scheduledDate)) continue;
     if (s.status === 'skipped') {
       // Let go because of the period, and now back on the plan.
       if (a && a.status !== 'skipped' && inWindow(a.scheduledDate)) {
@@ -163,6 +177,8 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const label = dayCount(period) > 1 && period.kind !== 'no_training' ? (period.kind === 'trek' ? 'Tocht' : 'Vrije dagen') : LEAVE_KIND_SHORT[period.kind];
   const when = describePeriodCompact(period);
   const title = period.trek?.name ? `Tocht ${period.trek.name}` : label;
+  // Only a training of yours that loses its mark: nothing in the planning moves.
+  const moving = items.filter((c) => c.action !== 'keep').length;
   const proposal: PlanChangeProposal = {
     id: makeId('planchange'),
     trigger: mode === 'add' ? 'leave_added' : 'leave_removed',
@@ -170,7 +186,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     issue: mode === 'add' ? `${replaces ? `${title} gewijzigd` : title}, ${when}` : `${title} verwijderd, ${when}`,
     changes: items,
     alternatives: [],
-    consequences: explain(mode, period, items.length, !!replaces),
+    consequences: explain(mode, period, moving, !!replaces),
     explanation: 'Een vrije periode verandert je planning nooit ongemerkt. ASCEND laat zien wat er verschuift, vervalt of erbij komt, en past het pas toe na jouw akkoord. Wat je zelf vastzette, een geplande test of wedstrijd en alles wat al geweest is blijven zoals het is.',
     createdAt: new Date().toISOString(),
   };
@@ -187,7 +203,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
 
 function explain(mode: 'add' | 'remove', period: LeavePeriod, count: number, changed = false): string {
   if (count === 0) {
-    if (changed) return 'De tocht is bijgewerkt en ASCEND houdt er rekening mee.';
+    if (changed) return period.kind === 'trek' ? 'De tocht is bijgewerkt en ASCEND houdt er rekening mee.' : 'De periode is bijgewerkt en ASCEND houdt er rekening mee.';
     return mode === 'add'
       ? 'De periode is bewaard en ASCEND houdt er rekening mee.'
       : 'De periode is verwijderd.';
@@ -226,7 +242,16 @@ function putBack(sessions: PlannedSession[], periodId: string, today: string, lo
       if (s.status === 'skipped') out.push(s);
       continue;
     }
-    if (byYou || !mark.from || mark.from < today) { out.push(s); continue; }
+    // Moved by you since: it stays where you put it, but the period no longer
+    // owns it. Its mark goes, so it does not keep pointing at a period that is
+    // gone or changed (and keep asking for Akkoord when you drag it).
+    if (byYou) {
+      const yours: PlannedSession = { ...s };
+      delete yours.leave;
+      out.push(yours);
+      continue;
+    }
+    if (!mark.from || mark.from < today) { out.push(s); continue; }
     const back: PlannedSession = { ...s, status: 'planned', scheduledDate: mark.from, weekStartDate: mondayOfWeek(mark.from) };
     delete back.lock;
     delete back.leave;
