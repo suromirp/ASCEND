@@ -87,3 +87,10 @@ rij alleen kort verschijnen, Uit doet niets. Een nieuwe rij die een blad opent k
 De lucht bovenaan heeft een donkere variant (`data-sky="day|night"` op `<html>`, instelling
 "Lucht bovenaan", `engine/skySettings.ts`; `docs/beslissingen/2026-10-24-nachtlucht.md`).
 Een component gebruikt alleen de tokens en `.on-light`; wat licht lijkt wordt 's avonds vanzelf donker.
+
+De Android-app (`docs/beslissingen/2026-11-01-android-app.md`): wat de app anders doet dan de browser zit
+achter `integrations/deviceShell.ts` (trillen via Haptics, scherm aan via Keep Awake, de terugknop, de
+statusbalk), `integrations/notifications.ts` (meldingen op tijd) en `integrations/liveUpdate.ts` (zelf
+bijwerken). Geen andere code weet op welk toestel hij draait. De terugknop van de app gaat door dezelfde
+geschiedenis als in de browser (`engine/backPress.ts`, `components/DeviceShellHost.tsx`), dus een nieuw blad
+hoeft alleen `useSheetClose` te gebruiken zoals altijd.

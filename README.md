@@ -132,6 +132,46 @@ Om GitHub Pages te activeren: **Settings → Pages → Source: GitHub Actions** 
 de repository-instellingen. Daarna publiceert elke push naar `main`
 automatisch een nieuwe versie.
 
+## De Android-app
+
+ASCEND bestaat ook als Android-app: dezelfde code, met meldingen die ook met het
+scherm uit komen (het einde van je rust in Forge, de ochtendvraag, de weekmelding
+op zondag). Het besluit en hoe elke functie in de app en in de browser werkt, staan
+in `docs/beslissingen/2026-11-01-android-app.md`.
+
+**Eén keer: de sleutel.** Een nieuwe APK installeert alleen over de oude heen als
+hij met dezelfde sleutel is ondertekend; anders moet je de app verwijderen en ben
+je je gegevens kwijt. Maak de sleutel en zet de vier secrets in GitHub zoals
+`docs/android-sleutel.md` het stap voor stap uitlegt.
+
+**De APK halen en installeren.**
+
+1. Na een push naar `main` (of via Actions, Android-app, Run workflow) bouwt de
+   workflow `.github/workflows/android.yml` de app en zet hem als release
+   `apk-<nummer>` op GitHub. Open op je telefoon de releases van de repo en tik
+   op `ascend.apk`. Zonder de secrets staat er alleen een debug-APK bij de run
+   (Artifacts, `ascend-apk`, een zip met de APK erin); die kan niet over een
+   vorige heen.
+2. Sta je browser of bestandsbeheer toe om apps te installeren als Android daarom
+   vraagt. Op een Samsung moet Auto Blocker uit (Instellingen, Beveiliging en
+   privacy, Auto Blocker).
+3. Open de app. Een korte welkomstreeks vraagt om meldingen en de exacte wekker;
+   met Niet nu sla je een stap over en vind je hem later terug bij Instellingen,
+   Gegevens en back-up, Toestemmingen.
+
+**Je gegevens meenemen.** De app en de website in Chrome hebben elk hun eigen
+opslag. Gebruikte je de website al? Maak daar een back-up (Instellingen,
+Gegevens en back-up, Laatste back-up) en zet die in de app terug; de welkomstreeks
+heeft er een knop voor. Gebruik daarna één van de twee, anders heb je twee
+logboeken.
+
+**Bijwerken.** De app werkt zichzelf bij: de deploy zet naast de site een zip van
+de app en een klein `app-versie.json`. De app kijkt bij het openen stil of er een
+nieuwere versie is en gebruikt hem bij de volgende start; er gaat niets van jou
+naar buiten. Een nieuwe APK is alleen nodig als de app iets nieuws van je telefoon
+vraagt (een nieuwe toestemming); dan zegt de app dat er een nieuwe versie klaarstaat.
+Zelf bouwen kan met Android Studio na `npm run android:sync`.
+
 ## Architectuur
 
 ```
