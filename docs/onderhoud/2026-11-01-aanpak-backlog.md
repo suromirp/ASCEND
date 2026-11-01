@@ -37,7 +37,7 @@ Ronde 1, tegelijk:
 Ronde 2, tegelijk:
 5. Sherpa (opus): spierindex stap 1 en 2 (lees eerst `docs/onderzoek` en `docs/visie` over de spierindex).
 6. Sherpa (opus): Kansen middelgroot, zonder voeding (die wacht op een besluit van de eigenaar): klimtempo met
-   rugzak, GR5-etappeschatting als band, tempocurve tussen twee testen; en het kleine werk dat over is.
+   rugzak, GR5-etappeschatting als band, tempocurve tussen twee testen; en het kleine werk dat over is. Geen voeding.
 7. Cartographer (sonnet) de pictogrammen voor Sporten die meetellen stap 1, daarna Sherpa (opus) stap 4 tot 9.
 8. Sherpa (sonnet): Zonder doel, de kaart Je week op Je stand en de vorm van de week bij een andere richting.
 
@@ -46,12 +46,15 @@ Ronde 3, alleen:
    raakt alles en gaat pas als ronde 1 en 2 live staan. Gedrag mag niet veranderen: alle tests en de kaart
    gelijk, review door Warden.
 
-Daarnaast, als er ruimte is:
-10. Android-app met Capacitor: de configuratie en een GitHub Actions-workflow die een APK als artefact bouwt
-    (de cloudsessie heeft geen Android SDK). Agenda-planning komt pas daarna en staat niet in deze ronde.
+Ronde 2b, naast ronde 2:
+10. Android-app met Capacitor, een grote feature van deze ronde: de configuratie, lokale meldingen, en een
+    GitHub Actions-workflow die een APK als artefact bouwt (de cloudsessie heeft geen Android SDK). Daarop de
+    korte weekmelding op zondagavond. Agenda-planning komt pas daarna.
+11. Sherpa (sonnet): "Waarom staat dit hier?" in Week, "Minder tijd vandaag" (voorstel), zones bijwerken na een
+    test (voorstel), en Run in detail voor oudere runs.
 
 ## Wat niet zonder de eigenaar kan
 
-- Voeding naast gewicht en kracht (kans E): eerst zijn besluit.
+- Voeding (kans E): bewust niet, de eigenaar laat het liggen.
 - Een controle op echte data: wacht op een verse back-up.
 - De vier tekstpunten: wachten op een screenshot.

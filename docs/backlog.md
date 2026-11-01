@@ -15,7 +15,6 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Kansen met gegevens, het middelgrote werk uit de top 10 (`docs/onderzoek/Kansen met gegevens.md`; stap 0 en het kleine werk staan in `docs/beslissingen/2026-10-31-kansen-stap-0.md`):
   - je eigen klimtempo met rugzak en een eerlijke schatting van een GR5-etappe (kans A), naast `engine/goalRoute.ts#estimatedHikingMinutes`;
   - de GR5-etappeschatting op je eigen tempo als band ("6,5 tot 7,5 uur"), pas na genoeg klimmen;
-  - voeding naast gewicht en kracht uit de Food Log van MacroFactor (kans E), eerst een besluit van de eigenaar;
   - een persoonlijke tempocurve tussen twee testen in (kans F), als controle naast de test.
 - Kansen, klein werk dat nog over is: de regel over wennen aan warmte in de laatste weken voor een zomertocht (tweede helft van kans D), bergweer op de hoogte van je tocht (kans I), en een voorstel met Akkoord bij een zware sessie op een ochtend waar twee van de drie afwijken (de rest van kans C, na de ochtendkaart). De bestandsroute voor FIT-bestanden als vangnet (stap 0c van het onderzoek) is later.
 - Onderhoud, latere ronde: kg-opmaak, minuten- en uurlabels, korte datum en `pad` samenbrengen (`docs/onderhoud/2026-10-31.md`).
@@ -25,6 +24,10 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Sporten die meetellen stap 1 (pictogrammen, Cartographer) en stap 4 tot 9 (import, vraag op Vandaag, scherm Sporten, weekcheck, vaste dag, hoeveel per soort). Stap 2 en 3 zijn gebouwd.
 - Week: na het wissen van een vakantie houdt een training die je zelf verplaatste een `leave`-merk naar een periode die niet meer bestaat (vraagt dan blijvend om Akkoord). Merk wissen in `putBack` als `byYou`.
 - Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
+
+## Bewust niet
+
+- Voeding naast gewicht en kracht (kans E): de eigenaar laat dit liggen (1 november).
 
 ## Ochtendkaart, later
 
@@ -36,7 +39,14 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Trainingen die niet doorgingen automatisch afhandelen. In de back-up van 31 oktober telden 22 van de 34 trainingen van de laatste 8 weken als gemist, veel nog op "gepland" zonder log. Idee: na een paar dagen zonder log vraagt de app één keer kort "Niet gedaan?" (of zet hem zelf op overgeslagen als je dat instelt), en een log van het horloge of MacroFactor op een andere dag koppelt hij als voorstel aan de geplande training. Nooit een log verzinnen; overslaan is een status, geen historie. Instelbaar, met besluit.
 - Spierindex stap 1 en 2: controle op je training en slimmer vervangen.
 - Grote bestanden opsplitsen: AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations.
-- Android-app (Capacitor).
+- Android-app (Capacitor), als een van de grote nieuwe features van deze ronde. Lokale meldingen komen daarmee (een PWA zonder server kan geen melding sturen als de app dicht is).
+- Korte weekmelding op zondagavond: wat er gebeurde, wat er komt, één tip. Als melding via de Android-app; in de PWA als kaart op Vandaag bij het openen.
+- "Waarom staat dit hier?" bij elke training in Week: één tik geeft de reden van de planning (welke regel, welk voorstel).
+- Snel aanpassen voor vandaag: één knop "Minder tijd vandaag" die de training inkort, via een voorstel met Akkoord.
+- Je tempo- en hartslagzones automatisch bijwerken na een test, als voorstel met Akkoord.
+- Run in detail voor oudere runs: de details van eerdere loopjes alsnog ophalen (nu hebben er maar twee runDetail).
+- De ochtendkaart met horloge en de vraag "Ben je moe?" duwt de missiekaart onder de vouw op een klein scherm: compacter of de vraag in plaats van de keuzes.
+- Startvragen: standaardkeuze is nu "Een tocht of wedstrijd"; nagaan of "Fit blijven" logischer is voor iemand zonder plan.
 
 ## Na de Android-app
 
