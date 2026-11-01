@@ -203,3 +203,42 @@ describe('walking poles', () => {
     expect(eventsOf([planned('d', 'tpl_mountain_hike', day)], { logs: [logged, later] }).find((e) => e.id === 'd')!.poles).toBe(false);
   });
 });
+
+// docs/onderzoek/RPE bij een testloop.md, voorstel 1: at a test or race, 10 is the plan, not a sign of
+// tiredness. Only the 5 km logged (no warm-up), on a flat route.
+describe('a test or race is planned at RPE 10', () => {
+  const D = '2026-11-12';
+  const flat = { durationMinutes: 30, distanceKm: 5, elevationGainM: 0, elevationLossM: 0, source: 'manual' as const };
+  const after = (templateId: string, rpe: number | undefined, days = 1, minutes = 30) =>
+    legFatigueOn(addDays(D, days), inputs([log(templateId, D, minutes, { rpe, cardioData: { ...flat, durationMinutes: minutes } })])).index;
+  const testProfile = templates.find((t) => t.id === 'tpl_test_run')!.baseStressProfile;
+  const own = (id: string, roles: ('test' | 'race')[]) => ({ ...templates.find((t) => t.id === 'tpl_tempo_run')!, id, name: 'Eigen loop', roles, baseStressProfile: testProfile });
+  const ownLog = (templateId: string) => ({ ...log('tpl_test_run', D, 30, { rpe: 10, cardioData: flat }), templateId });
+
+  it('30 minutes at RPE 10: 3.5 the day after (was 4.4), as the report works it out', () => {
+    // Intensity 24 x 0.5 h x 1 = 12, a quarter left: 3. Impact 2 x 0.5 = 1, half left: 0.5.
+    expect(after('tpl_test_run', 10)).toBeCloseTo(3.5, 1);
+    expect(after('tpl_test_run', 10, 2)).toBeCloseTo(1.0, 1);
+  });
+
+  it('a 9 counts a little lighter than planned, a 7 on a test counts lighter still (0.75)', () => {
+    // The index is rounded to one decimal.
+    expect(Math.abs(after('tpl_test_run', 9) - 3.5 * 0.9)).toBeLessThanOrEqual(0.06);
+    expect(Math.abs(after('tpl_test_run', 7) - 3.5 * 0.75)).toBeLessThanOrEqual(0.06);
+    // Without an RPE nothing changes: the plan.
+    expect(after('tpl_test_run', undefined)).toBeCloseTo(3.5, 1);
+  });
+
+  it('recognised by the role, not the template id', () => {
+    const r = legFatigueOn(addDays(D, 1), { ...inputs([ownLog('tpl_own_test')]), templates: [...templates, own('tpl_own_test', ['test'])] }).index;
+    expect(r).toBeCloseTo(3.5, 1);
+    // A hard run without the role keeps its planned 8: a 10 there is 25% heavier.
+    const h = legFatigueOn(addDays(D, 1), { ...inputs([ownLog('tpl_own_hard')]), templates: [...templates, own('tpl_own_hard', [])] }).index;
+    expect(h).toBeCloseTo(4.4, 1);
+  });
+
+  it('a race at RPE 10 counts as planned too', () => {
+    const race = (rpe?: number) => legFatigueOn(addDays(D, 1), inputs([log('tpl_race', D, 50, { rpe, cardioData: { ...flat, durationMinutes: 50, distanceKm: 10 } })])).index;
+    expect(race(10)).toBeCloseTo(race(undefined), 5);
+  });
+});

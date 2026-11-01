@@ -21,7 +21,7 @@ import { progressionTarget } from './programLayout';
 import { daysBetween, addDays } from '../utils/dates';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { templateSport } from './sports';
-import { hasRole } from './templateRoles';
+import { hasRole, isTestOrRace } from './templateRoles';
 
 type Level = 'none' | 'light' | 'moderate' | 'heavy';
 
@@ -48,6 +48,10 @@ const RUNNING_DESCENT = 1.5;
 // Planned effort when nothing is logged yet.
 export const PLANNED_RPE: Record<string, number> = { low: 4, moderate: 6, high: 8 };
 export const PLANNED_STRENGTH_RPE = 8;
+// At a test or race the effort is fixed at the maximum and the pace varies: a 10 there is the plan,
+// not a sign of tiredness (docs/onderzoek/RPE bij een testloop.md, voorstel 1). Recognised by the
+// role, never by a template id. A 7 on a test counts lighter (the floor of 0.75).
+export const PLANNED_MAX_EFFORT_RPE = 10;
 // Descent without a log or a target of its own (hills walked back down;
 // the up-and-down session run down).
 const DEFAULT_DESCENT_M: Record<string, number> = { tpl_hill_intervals: 150, tpl_hills_descent: 200 };
@@ -265,7 +269,7 @@ export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, a
     strength = LOWER_BODY_PER_HOUR[p.lowerBodyLoad as Level] * hours * effort;
     damage = ECCENTRIC_PER_HOUR[p.eccentricLoad as Level] * hours * effort * adapt;
   } else if (template.type !== 'recovery') {
-    const planned = PLANNED_RPE[p.intensity] ?? 4;
+    const planned = isTestOrRace(template) ? PLANNED_MAX_EFFORT_RPE : PLANNED_RPE[p.intensity] ?? 4;
     const factor = rpeFactor(event.rpe, planned);
     const pack = event.packKg ? 1 + event.packKg / bodyKg : 1;
     const damagePack = event.packKg ? 1 + DAMAGE_PACK_WEIGHT * event.packKg / bodyKg : 1;
