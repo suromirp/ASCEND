@@ -30,6 +30,6 @@ describe('wennen aan warmte voor een zomertocht', () => {
   it('zegt kan helpen, nooit voorkomt', () => {
     const line = heatAcclimationLine('2027-08-01', '2027-07-20')!;
     expect(line).not.toMatch(/voorkom/i);
-    expect(line).not.toMatch(/[–—]/);
+    expect(line).not.toMatch(/[\u2013\u2014]/);
   });
 });
