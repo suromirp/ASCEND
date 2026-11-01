@@ -2,21 +2,27 @@ import { useState } from 'react';
 import { Icon } from './icons';
 import { Sheet } from './settings/Sheet';
 import type { Quote } from '../data/quoteLibrary';
+import type { QuoteLanguage } from '../engine/quoteSettings';
 import { authorWikipediaUrl, quoteSourceLabel } from '../utils/quotes';
 import { QUOTE_NL } from '../data/quoteTranslations';
 
-// Het citaat onderaan Vandaag: één rustig blok. Nederlands eerst als die er is;
-// een tik op het citaat toont het origineel en een tweede tik wisselt terug. De
-// bronregel opent een blad met het origineel, de vertaling en de bronlinks.
-export function QuoteCard({ quote }: { quote: Quote }) {
+// Het citaat onderaan Vandaag: één rustig blok, in de taal van de instelling "Citaat op Vandaag"
+// (standaard Engels, de gangbare vertaling uit de bibliotheek). Een tik op het citaat wisselt naar de
+// andere taal als die er is en een tweede tik wisselt terug. De bronregel opent een blad met het
+// origineel, de vertaling en de bronlinks.
+export function QuoteCard({ quote, language = 'en' }: { quote: Quote; language?: Exclude<QuoteLanguage, 'off'> }) {
   const translation = QUOTE_NL[quote.id];
-  const [showOriginal, setShowOriginal] = useState(false);
+  const [flipped, setFlipped] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
 
-  const author = translation?.author ?? quote.author;
-  const work = translation?.source ?? (quote.sourceLabel ? quoteSourceLabel(quote.sourceLabel).split(', vertaling')[0] : undefined);
+  // Nederlands staat eerst als dat gekozen is en er een vertaling is; Engels is het origineel uit de bibliotheek.
+  const dutchFirst = language === 'nl';
+  const showDutch = !!translation && (dutchFirst ? !flipped : flipped);
+  const author = showDutch ? translation?.author ?? quote.author : quote.author;
+  const englishWork = quote.sourceLabel ? quoteSourceLabel(quote.sourceLabel).split(', vertaling')[0] : undefined;
+  const work = showDutch ? translation?.source ?? englishWork : englishWork;
   const sourceLine = work ? `${author} · ${work}` : author;
-  const shown = translation && !showOriginal ? translation.text : quote.quote;
+  const shown = showDutch && translation ? translation.text : quote.quote;
   const wikipediaUrl = authorWikipediaUrl(quote.author);
 
   return (
@@ -25,10 +31,10 @@ export function QuoteCard({ quote }: { quote: Quote }) {
       {translation ? (
         <button
           type="button"
-          onClick={() => setShowOriginal((v) => !v)}
+          onClick={() => setFlipped((v) => !v)}
           className="min-h-[44px] font-display text-base leading-relaxed"
           style={{ color: 'var(--color-ink-dim)' }}
-          aria-label={showOriginal ? 'Nederlandse vertaling tonen' : 'Origineel tonen'}
+          aria-label={showDutch ? 'Origineel tonen' : 'Nederlandse vertaling tonen'}
         >
           “{shown}”
         </button>

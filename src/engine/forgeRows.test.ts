@@ -4,7 +4,7 @@ import { canRemoveRow, droppedCount, droppedLine, isOwnRow, ownCountSentence, pr
 
 const row = (id: string, kind: 'work' | 'warmup' = 'work', done = false): WorkoutRow => ({ id, kind, target: { repsLow: 8, repsHigh: 10 }, reps: 8, weightKg: 60, done });
 const ex = (rows: WorkoutRow[], reason?: string): WorkoutExercise => ({ slot: 'bench', exerciseId: 'bench', name: 'Bankdrukken', known: true, rows, restSec: 90, timed: false, ...(reason ? { reason } : {}) });
-const program = () => ex([row('bench:w0', 'warmup'), row('bench:s0'), row('bench:s1'), row('bench:s2')], 'Je programma vraagt nu 3 sets van 8 tot 10; het gewicht volgt uit je geschatte kracht.');
+const program = () => ex([row('bench:w0', 'warmup'), row('bench:s0'), row('bench:s1'), row('bench:s2')], 'Je programma vraagt nu 3 sets van 8 tot 10 met 2 over.');
 
 describe('isOwnRow', () => {
   it('kent programmasets en eigen sets aan hun id', () => {
@@ -75,7 +75,7 @@ describe('de regel en de zin', () => {
   it('voegt "Jij doet er 2." toe als er een set minder is', () => {
     const e = removeSet(program(), 'bench:s1').ex;
     expect(ownCountSentence(e)).toBe('Jij doet er 2.');
-    expect(reasonWithOwnCount(e)).toMatch(/geschatte kracht\. Jij doet er 2\.$/);
+    expect(reasonWithOwnCount(e)).toMatch(/over\. Jij doet er 2\.$/);
   });
   it('voegt "Jij doet er 4." toe bij een eigen set erbij', () => {
     const e = { ...program(), rows: [...program().rows, row('bench:a1x4')] };

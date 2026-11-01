@@ -887,6 +887,9 @@ export interface AppSettings {
   // "Beweging" (engine/motionSettings.ts): how much the app moves. Absent = 'full'.
   // Optional and additive; read defensively, so no migration step is needed.
   motion?: 'full' | 'calm' | 'off';
+  // "Citaat op Vandaag" (engine/quoteSettings.ts): Engels (standaard), Nederlands of Uit. Absent = 'en'.
+  // Optional and additive; read defensively, so no migration step is needed (an old backup reads as 'en').
+  quoteLanguage?: 'en' | 'nl' | 'off';
   // "Hoe voelt je lijf?" (engine/bodyCheck.ts): wanneer de kaart op Vandaag komt: alleen als er
   // reden is (de standaard), elke week of nooit. Optional and additive; read defensively
   // (engine/bodyCheck.ts#resolveBodyCheck), so no migration step is needed.

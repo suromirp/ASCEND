@@ -386,6 +386,18 @@ export const CHOICES = {
       { value: 'previous', label: 'Naar de vorige tab', note: 'In de volgorde waarin je ze opende', short: 'Vorige tab' },
     ],
   }),
+  dagcitaat: def({
+    group: 'Vandaag en meldingen',
+    title: 'Citaat op Vandaag',
+    line: 'Het citaat onderaan Vandaag.',
+    advice: 'en' as 'en' | 'nl' | 'off',
+    help: 'dagcitaat',
+    options: [
+      { value: 'en', label: 'Engels', note: 'De gangbare vertaling, het Nederlands een tik verder', short: 'Engels' },
+      { value: 'nl', label: 'Nederlands', note: 'Onze eigen vertaling, het origineel een tik verder', short: 'Nederlands' },
+      { value: 'off', label: 'Uit', note: 'Geen citaat onderaan Vandaag', short: 'Uit' },
+    ],
+  }),
   beweging: def({
     group: 'Vandaag en meldingen',
     title: 'Beweging',

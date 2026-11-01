@@ -4,6 +4,7 @@
 // geen IndexedDB. De componenten tonen alleen wat hier uitkomt.
 
 import type { InjuryNote } from '../models/injury';
+import type { WeeklyHealthCheck } from '../models/checkIn';
 import type { Stretch } from '../models/training';
 import { BODY_CARE, GENERAL_RED_FLAGS, type BodyCare } from '../data/bodyCare';
 import { BODY_PART_OPTIONS } from '../data/bodyAreas';
@@ -170,6 +171,16 @@ export function careForSpot(spot: BodySpot): SpotCare {
   const care = BODY_CARE[spot.care];
   if (!care) throw new Error(`Geen zorg voor ${spot.care}`);
   return { ...care, fysioAll: [...GENERAL_RED_FLAGS, ...care.fysio] };
+}
+
+// Heeft de gebruiker zelf iets gemeld wat een reden is om het na te laten kijken? Alleen wat de app al
+// kent: een open pijnmelding op deze plek die ernstig is (hindert ook in het gewone leven, dezelfde
+// regel als `bodyCheck.ts#suggestionFor`), of een antwoord van deze week dat je niet kon trainen met
+// deze plek als gebied. Zonder melding blijft de regel ingeklapt en rustig.
+export function fysioSignal(spot: BodySpot, notes: InjuryNote[], checks: WeeklyHealthCheck[] | undefined, weekStart: string, today: string): boolean {
+  const severe = (openComplaintsBySpot(notes, today)[spot.id] ?? []).some((n) => n.severity === 'ernstig');
+  if (severe) return true;
+  return (checks ?? []).some((c) => c.weekStart === weekStart && c.trouble === 'niet_kunnen' && !!c.area && spot.injuryParts.some((p) => p.toLowerCase() === c.area!.toLowerCase()));
 }
 
 // ---- klachten -----------------------------------------------------------------------
