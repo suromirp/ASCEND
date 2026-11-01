@@ -840,6 +840,52 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Kan het niet', text: 'dan krijg je de vraag als je de app opent.' },
     ],
   },
+  meldingen: {
+    title: 'Meldingen',
+    lead: 'Welke meldingen ASCEND op je telefoon mag geven, en wanneer.',
+    points: [
+      { head: 'In de browser', text: 'alleen de ochtendvraag, en Chrome kiest het precieze moment.' },
+      { head: 'In de Android-app', text: 'ook het einde van je rust en de weekmelding, op tijd. Ze trillen zoals je Trillen hebt staan; het einde van de rust volgt het signaal van Forge.' },
+      { head: 'Alles lokaal', text: 'de meldingen worden op je telefoon bedacht. Er gaat niets naar een server.' },
+    ],
+  },
+  rustMelding: {
+    title: 'Einde van de rust',
+    lead: 'Een melding als je rust in Forge om is, ook met je scherm uit of met muziek aan.',
+    points: [
+      { head: 'Op de seconde', text: 'met de toestemming Exacte wekker. Zonder kan Android hem een paar minuten later laten komen.' },
+      { head: 'Scherm aan', text: 'dan geeft Forge het signaal zelf en komt er geen melding bij.' },
+      { head: 'Geluid en trillen', text: 'zoals je ze bij Forge onder Signaal hebt gekozen. Staat het signaal uit, dan komt er een stille melding.' },
+    ],
+  },
+  weekmelding: {
+    title: 'Weekmelding op zondag',
+    lead: 'Op zondagavond een korte melding: wat je deed, wat er komt en één tip.',
+    points: [
+      { head: 'Waar het vandaan komt', text: 'dezelfde getallen als de weekterugblik op Vandaag, van de laatste keer dat je de app opende.' },
+      { head: 'Geen week', text: 'stond er niets gepland en deed je niets, dan komt er geen melding.' },
+    ],
+  },
+  toestemmingen: {
+    title: 'Toestemmingen',
+    lead: 'Wat je telefoon ASCEND toestaat. Zonder een toestemming werkt alleen dat ene ding niet.',
+    points: [
+      { head: 'Amber stip', text: 'een toestemming staat uit terwijl iets wat je aan hebt staan hem nodig heeft.' },
+      { head: 'Exacte wekker', text: 'Android laat een melding anders tot een paar minuten te laat komen. Voor het einde van je rust is dat te laat.' },
+      { head: 'Health Connect', text: 'komt later: dan leest ASCEND je gewicht, stappen en trappen.' },
+      { head: 'Back-up van Android', text: 'Android zet een kopie van je ASCEND-gegevens in je Google-back-up, versleuteld met je schermvergrendeling. Je eigen back-up blijft de echte; boven ongeveer 25 MB slaat Android hem over.' },
+    ],
+  },
+  autoBijwerken: {
+    title: 'Automatisch bijwerken',
+    lead: 'De app kijkt bij het openen stil of er een nieuwe versie is, haalt hem op de achtergrond op en gebruikt hem bij de volgende start.',
+    points: [
+      { head: 'Wat er naar buiten gaat', text: 'niets van jou. ASCEND vraagt alleen een klein versiebestand en de nieuwe versie op bij de site van ASCEND.' },
+      { head: 'Gaat het mis', text: 'start een nieuwe versie niet goed, dan valt de app terug op de vorige en probeert hij die versie niet opnieuw.' },
+      { head: 'Nieuwe app nodig', text: 'vraagt een nieuwe versie meer van je telefoon (een nieuwe toestemming), dan zegt de app dat er een nieuwe versie klaarstaat om te installeren.' },
+      { head: 'Uit', text: 'dan blijft de app zoals hij is tot je zelf een nieuwe installeert.' },
+    ],
+  },
   loopinzicht: {
     title: 'Inzicht na een training',
     lead: 'Na een loop of tocht zie je hoogstens twee regels over wat beter ging en waar je op moet letten.',

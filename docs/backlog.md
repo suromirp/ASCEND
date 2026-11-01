@@ -29,6 +29,16 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 - Een training die je zelf oversloeg of waarvan je het inhaalvoorstel afwees, houdt de rustdag tot zeven dagen tegen, ook als er nooit een inhaalvoorstel komt. Dan blijft de dag leeg. `catchUpFits` laat afgewezen inhaalvoorstellen negeren. En `trainedOn` telt een log op `completedDate`, `dayLoads` op de geplande dag (`logDay`); gelijktrekken.
 
+## RPE bij een testloop (onderzoek 2 november, `docs/onderzoek/RPE bij een testloop.md`), ronde 2
+
+Op vraag van de eigenaar. Bouwen bij de eerstvolgende vrije plek (Sherpa, opus; Warden op opus):
+- `rpeFactor` in `engine/legFatigue.ts`: de geplande RPE van een test of wedstrijd is 10 (via de rol), zodat een 10 niet als 25 procent zwaarder dan gepland telt.
+- `effortFactor` geldt alleen voor kracht; vastleggen met een test.
+- Nagaan of een gekoppelde test met inlopen en uitlopen als één blok op RPE 10 binnenkomt; zo ja de belasting splitsen (de 5 km maal de RPE, de rest maal 3).
+- Bij een test met RPE 7 of lager in `testJudgment` melden dat hij waarschijnlijk niet maximaal was.
+- De ochtend na een test of wedstrijd de vraag "Hoe voelen je benen?" actief aanbieden.
+- "gem. zwaarte" in de weekterugblik wordt minuten rustig en hard: gaat mee met de herinrichting van de gegevens in ronde 3.
+
 ## Uit de terugblik op ronde 1 (vijf nieuwe punten)
 
 - Vandaag: een vaste volgorde en een maximum voor kaarten boven de missie (ochtendkaart, Niet gedaan?, koppelvoorstel, rustdag terug, back-up). Op een slechte ochtend staan er nu vier boven de missie. Ronde 2.
@@ -45,7 +55,8 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Snelkoppelingen onder het app-icoon: Start training, Ochtendvraag (Android; in de web-app via `shortcuts` in het PWA-manifest). Ronde 2b.
 - Een widget op het startscherm met je missie van vandaag (Android, eigen native code; de web-app heeft geen widget). Ronde 2b, na de rest.
 - Health Connect als bron (al gepland). Ronde 2b.
-- Je locatie, alleen als je het aanzet (uit als standaard), in de app en in de browser, om te weten waar je bent: het weer op je plek, en tijdens een tocht waar je bent op je etappe (hoeveel nog tot het eind, de volgende plek). Alleen je plek van nu; geen route, geen spoor, niets bewaard of gedeeld. Ronde 2b.
+- Je locatie, alleen als je het aanzet (uit als standaard), in de app en in de browser, om te weten waar je bent: het weer op je plek, en tijdens een tocht waar je bent op je etappe (hoeveel nog tot het eind, de volgende plek). Alleen je plek van nu; geen route, geen spoor, niets bewaard of gedeeld. Ronde 2b. Daarbij ook: een eigen plek per tocht voor het bergweer, zodat de kaart al de dag ervoor kan komen (nu alleen op de tochtdag zelf en als het weer je locatie volgt).
+- De back-up van Android (naar Google) staat aan, keuze van de eigenaar (2 november), naast de eigen back-up; alleen de opslag van de webview, zonder caches.
 - Niet: hartslagband via Bluetooth (eigenaar). Niet gebouwd tenzij de eigenaar het vraagt: camera en een gps-route of spoor van tochten (afgeraden om batterij en privacy; de eigenaar wil alleen weten waar hij is).
 
 ## Voor de eigenaar

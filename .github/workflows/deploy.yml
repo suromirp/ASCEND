@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v7
         with:
@@ -38,6 +40,10 @@ jobs:
       - name: Tests
         run: npm test
 
+      # Eén bouwtijd voor de site en voor de zip van de Android-app hieronder.
+      - name: Bouwtijd
+        run: echo "ASCEND_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" >> "$GITHUB_ENV"
+
       - run: npm run build
         env:
           # Derived from the repo's actual GitHub Pages configuration, so
@@ -45,6 +51,25 @@ jobs:
           # (https://<username>.github.io/<repo-name>/) and for a root or
           # custom domain (base_path is empty there).
           ASCEND_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
+
+      # De live update van de Android-app (docs/beslissingen/2026-11-01-android-app.md): dezelfde
+      # code nog eens gebouwd zoals de app hem gebruikt (basis "/", geen service worker), als zip
+      # naast de site, met app-versie.json. Dit komt na de build van de site en schrijft alleen in
+      # dist/app en dist/app-versie.json; mislukt het, dan gaat de site gewoon live zonder update
+      # voor de app.
+      - name: Webbuild voor de app als zip
+        continue-on-error: true
+        env:
+          ASCEND_BASE_PATH: /
+          ASCEND_TARGET: android
+          ASCEND_UPDATE_URL: ${{ steps.pages.outputs.base_url }}/
+          ASCEND_RELEASES_URL: ${{ github.server_url }}/${{ github.repository }}/releases/latest
+        run: |
+          npx vite build --outDir dist-app --emptyOutDir
+          mkdir -p dist/app
+          ZIP="dist/app/ascend-web-${GITHUB_SHA::7}.zip"
+          (cd dist-app && zip -qr "../$ZIP" .)
+          node scripts/app-versie.mjs "$ZIP" dist
 
       - uses: actions/upload-pages-artifact@v5
         with:

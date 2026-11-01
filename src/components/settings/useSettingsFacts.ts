@@ -29,6 +29,10 @@ import { webBackupFileAdapter } from '../../storage/backupFileAdapter';
 import { buildLabel } from '../../utils/buildLabel';
 import { noticeSupport } from '../../engine/morningNotice';
 import { readNoticeEnvironment } from '../../utils/morningNotice';
+import { nativeNoticeSupport, type DevicePermissions } from '../../engine/deviceNotices';
+import { notificationPort } from '../../integrations/notifications';
+import { liveUpdatePort } from '../../integrations/liveUpdate';
+import { withTimeout } from '../../utils/withTimeout';
 import { resolveProgramWeek, todayISO } from '../../utils/dates';
 import { mainGoal as findMainGoal } from '../../engine/mainGoal';
 import { listedGoals } from '../../engine/goalList';
@@ -48,6 +52,7 @@ interface Loaded {
   streamsBytes?: number;
   storageUse?: StorageEstimate;
   notice: SettingsFacts['notice'];
+  device?: DevicePermissions | 'unknown';
 }
 
 const EMPTY: Loaded = { linked: false, watch: null, sendEnabled: false, macroFactor: null, storage: undefined, snapshots: 0, folderChosen: false, notice: undefined };
@@ -61,7 +66,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize, storageUse] = await Promise.all([
+      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize, storageUse, device] = await Promise.all([
         getConnection().catch(() => null),
         getWatchState().catch(() => null),
         getWatchWorkoutState().catch(() => null),
@@ -73,9 +78,15 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         ActivityStreamsRepo.totalBytes().catch(() => undefined),
         // Met een eigen tijdsgrens (storage/storageEstimate.ts): wacht nooit langer dan een paar seconden.
         estimateStorage(),
+        // Wat de telefoon toestaat; hoogstens twee seconden, daarna "Onbekend".
+        withTimeout(notificationPort().permissions(), 2000).catch(() => 'unknown' as const),
       ]);
       if (!alive) return;
-      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, notice: noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
+      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, device,
+        // In de app komt de ochtendvraag als melding op tijd; dan telt alleen of meldingen mogen.
+        notice: device !== 'unknown' && device.timed
+          ? { support: nativeNoticeSupport(device.notifications), granted: device.notifications === 'granted' }
+          : noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
     };
     void load();
     const offWatch = onWatchChange(() => void load());
@@ -159,6 +170,8 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       longSundayVisible: !mainIsTrek || settings.longSundaySession === 'run',
       noGoal: listedGoals(trainingGoals, ladder, today).length === 0 && !!program && plannedSessions.length > 0,
       notice: loaded.notice,
+      device: loaded.device,
+      liveUpdate: liveUpdatePort().available,
     };
   }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, strengthCheck]);
 

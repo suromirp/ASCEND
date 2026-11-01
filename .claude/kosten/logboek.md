@@ -87,3 +87,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-01, Review Android-app, Warden, opus (reviewer), 146k, 6 min, 0, groen met twee belangrijke punten
 - 2026-11-01, Beveiligingsreview Android, Warden, opus (reviewer), 67k, 2 min, 0, nog niet live: workflowrechten, sleutel, updatebron
 - 2026-11-01, Kansen middelgroot, Sherpa, opus (ontwikkelaar), 405k, 95 min, 0
+- 2026-11-02, Review Kansen middelgroot, Warden, opus (reviewer), rood: dubbel voorstel en bergweer voor de verkeerde plek; terug naar Sherpa
+- 2026-11-02, Onderzoek RPE bij een testloop, Scout, opus (sportwetenschapper), 0; zes voorstellen
