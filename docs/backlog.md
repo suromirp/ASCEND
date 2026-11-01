@@ -8,10 +8,9 @@ Bijgewerkt op 1 november 2026.
 
 Ronde 1 van `docs/onderhoud/2026-11-01-aanpak-backlog.md`, gestart op 1 november om 19:00:
 - Trainingen die niet doorgingen afhandelen (Sherpa, opus).
-- Fysio-tekst, voorschriftregel en het citaat in het Engels (Sherpa, sonnet).
 - Een vakantie bijwerken in Week, met het leave-merk na wissen (Sherpa, opus).
 
-Live op 1 november: Stand schuift niet meer zijwaarts, het cijferblok van Forge blijft open, de ochtendkaart na je antwoord, de rustdag die terugkomt, drie ontwerprapporten in `docs/visie/`.
+Live op 1 november: Stand schuift niet meer zijwaarts, het cijferblok van Forge blijft open, de ochtendkaart na je antwoord, de rustdag die terugkomt, de rustiger fysioregel, de kortere voorschriftregel, het citaat in het Engels, drie ontwerprapporten in `docs/visie/`.
 
 Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10, onderhoud punt 2 en 3.
 
