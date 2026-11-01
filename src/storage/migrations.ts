@@ -32,6 +32,7 @@ import type { TestJudgment } from '../models/testJudgment';
 import { isUsableBestEffort } from '../engine/bestEffort';
 import { isUsableRunDetail } from '../engine/runDetail';
 import { cleanForgeLog } from '../engine/forgeLog';
+import { validLinkedLater } from '../engine/missedTraining';
 import { deserializeStreams } from '../engine/streamPack';
 import type { ActivityStreams } from '../models/activityStreams';
 import { capTestJudgments } from '../engine/testJudgment';
@@ -373,6 +374,19 @@ export function migrateLogFileDuration(log: SessionLog): SessionLog {
   const raw = (log as { fileDurationMinutes?: unknown }).fileDurationMinutes;
   if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return log;
   const { fileDurationMinutes: _damaged, ...rest } = log;
+  void _damaged;
+  return rest;
+}
+
+// --- SessionLog.linkedLater ------------------------------------------------------------------
+// Een log van het horloge of MacroFactor die na je Akkoord aan een geplande training werd gekoppeld
+// (engine/missedTraining.ts, decision 2026-11-01-niet-doorgegaan.md). Optional and additive: een bestand
+// van ervoor heeft het niet en leest zoals het was. Iets wat geen heel moment is uit een bewerkte back-up
+// valt weg; de log en zijn verwijzing blijven.
+export function migrateLogLinkedLater(log: SessionLog): SessionLog {
+  if (!('linkedLater' in log)) return log;
+  if (validLinkedLater((log as { linkedLater?: unknown }).linkedLater)) return log;
+  const { linkedLater: _damaged, ...rest } = log;
   void _damaged;
   return rest;
 }

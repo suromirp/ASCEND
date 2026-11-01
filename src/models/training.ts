@@ -547,6 +547,11 @@ export interface SessionLog {
   // The totals a run's series gave no usable `runDetail` for, so they are not fetched again
   // for the same numbers (engine/runDetail.ts#runDetailFingerprint). Derived, optional.
   runDetailTried?: string;
+  // Gekoppeld na je Akkoord: een log van het horloge of MacroFactor die nergens aan hing, kreeg
+  // later zijn geplande training (`plannedSessionId`). Alleen het moment; de log zelf is niet
+  // veranderd, en Ongedaan maken haalt precies de verwijzing en dit veld weg
+  // (engine/missedTraining.ts, docs/beslissingen/2026-11-01-niet-doorgegaan.md). Optional, additive.
+  linkedLater?: { at: string };
   source: MetricSource;
 }
 

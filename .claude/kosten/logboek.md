@@ -67,3 +67,8 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-01, Review kleine punten, Warden, sonnet (reviewer), 58k, 3 min, 0, rood: spoedtekst verstopt en tweede woord voor reserve; terug naar Sherpa
 - 2026-11-01, Review vakantie bijwerken, Warden, opus (reviewer), 122k, 5 min, 0, groen met vijf punten (een over privacy); terug naar Sherpa
 - 2026-11-01, Kleine punten herstel, Sherpa, sonnet (ontwikkelaar), hervat 23k, 16 min, 1 (spoedtekst, vast woord)
+- 2026-11-01, Vakantie herstel vijf punten, Sherpa, opus (ontwikkelaar), hervat 40k, 35 min, 1 (privacy en droog toepassen)
+- 2026-11-01, Trainingen niet doorgegaan, Sherpa, opus (ontwikkelaar), 292k, 46 min, 1 (historie en training van vandaag)
+- 2026-11-01, Review niet doorgegaan, Warden, opus (reviewer), 100k, 9 min, 0, rood: twee blokkerend
+- 2026-11-01, Tekstkaart uitbreiden, Sherpa, sonnet (ontwikkelaar), 153k, 52 min, 0, poortgat gedicht; kaart nu 21 schermen en bijna 4 min
+- 2026-11-01, Ochtenden in back-up, Sherpa, opus (ontwikkelaar), 96k, 23 min, 0
