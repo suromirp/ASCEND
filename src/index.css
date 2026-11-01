@@ -1289,6 +1289,14 @@ html[data-motion='off'] .ea-licht .ea-m { animation: none; }
 .mx-fold {
   animation: mx-swap 0.25s ease-out backwards;
 }
+/* De hoogte van de ochtendkaart loopt vloeiend naar de nieuwe maat (useHeightMorph in motion.ts),
+   zodat de missiekaart eronder niet verspringt. Uit en beperkte beweging slaan het over. */
+.mx-height {
+  transition: height 0.25s ease-out;
+}
+html[data-motion='calm'] .mx-height {
+  transition-duration: 0.15s;
+}
 html[data-motion='calm'] .mx-fold {
   animation-duration: 0.15s;
 }

@@ -55,3 +55,8 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-01, Ontwerprapport instellingen, Cartographer, opus (ontwerper), 209k, 9 min, 0
 - 2026-11-01, Stand overloop, Sherpa, sonnet (ontwikkelaar), 86k, 24 min, 0
 - 2026-11-01, Forge cijferblok, Sherpa, sonnet (ontwikkelaar), 86k, 24 min, 0
+- 2026-11-01, Review Stand overloop, Warden, sonnet (reviewer), 34k, 6 min, 0, groen; 1 klein punt door coördinator
+- 2026-11-01, Review Forge cijferblok, Warden, sonnet (reviewer), 44k, 2 min, 0, groen; strip en opruimen door coördinator
+- 2026-11-01, Rustdag terug, Sherpa, opus (ontwikkelaar), 199k, 31 min, 1 (drie kleine punten van Warden)
+- 2026-11-01, Review rustdag terug, Warden, opus (reviewer), 80k, 8 min, 0, groen met vier kleine punten
+- 2026-11-01, Ochtendkaart na antwoord, Sherpa, sonnet (ontwikkelaar), 88k, 27 min, 0
