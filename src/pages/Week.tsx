@@ -38,6 +38,7 @@ import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catc
 import { decideMove, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
+import { REST_BACK_RULE } from '../engine/restDayBack';
 import { SkyBand } from '../components/SkyBand';
 import { Icon } from '../components/icons';
 import { hoursMinutes } from '../utils/hoursMinutes';
@@ -76,6 +77,9 @@ export function WeekPage() {
   // A rest day ASCEND gave up for a catch-up is simply gone, not "skipped".
   // Rest-day proposals show up right where you just moved a training.
   const restAdvice = advice.filter((a) => REST_RULES.includes(a.ruleId) && weekStart <= todayISO() && todayISO() <= addDays(weekStart, 6));
+  // Een rustdag die weer vrij is (engine/restDayBack.ts) staat bij de week waarin hij valt.
+  const restBackAdvice = advice.filter((a) => a.ruleId === REST_BACK_RULE && a.proposal?.changes.some((c) => c.newSessionDraft?.weekStartDate === weekStart));
+  const restCard = [...restAdvice, ...restBackAdvice];
   const extraAdvice = advice.filter((a) => a.ruleId === 'EXTRA-SESSION' && a.proposal?.changes.some((c) => c.newSessionDraft?.weekStartDate === weekStart));
   // What a holiday or a trek let go of is explained by the band on those days: not listed, not counted.
   const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped')));
@@ -245,10 +249,10 @@ export function WeekPage() {
         </Card>
       )}
 
-      {!monthView && restAdvice.length > 0 && (
+      {!monthView && restCard.length > 0 && (
         <Card className="flex flex-col gap-3" texture>
           <Eyebrow>Rustdag</Eyebrow>
-          {restAdvice.map((a) => (
+          {restCard.map((a) => (
             <div key={a.id}>
               <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
               <AdviceItem advice={a} compact />

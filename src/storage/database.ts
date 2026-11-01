@@ -731,6 +731,10 @@ export interface AppSettings {
   // waits for your answer) gets a proposal for a new attempt in place of the next hard run.
   // Absent = on. Optional and additive.
   newTestOnStops?: boolean;
+  // "Rustdag terugzetten voorstellen": liet een voorstel je rustdag vervallen en is die dag weer leeg,
+  // dan stelt ASCEND voor hem terug te zetten, met Akkoord (engine/restDayBack.ts). Absent = on.
+  // Optional and additive.
+  restDayBack?: boolean;
   // "Voorstel bij een probleem in de week": what is wrong in a week and may not be repaired by
   // ASCEND itself (a training you or an accepted proposal fixed) gets a proposal with Akkoord.
   // Off keeps the notice and the lines in the rows, only the proposal is gone. Absent = on.
