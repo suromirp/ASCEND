@@ -23,7 +23,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 ## Met voorrang: de planner en de 48 uur (gevonden 2 november)
 
-- De planner zelf zet een lange duurloop en een zware beendag (Benen A) op twee dagen achter elkaar: `scheduler.ts#legSpacingDays` telt een loop met `intensity: 'low'` als rustig volume, terwijl `tpl_long_run` `lowerBodyLoad: 'heavy'` heeft. Dat botst met CLAUDE.md ("twee beenzware sessies niet binnen 48 uur"). Herstel in een eigen opdracht (Sherpa en Warden op opus), met een besluit en de golden die beweegt met de reden in de commit; eerst nagaan met de Scout of 48 uur na een lange rustige duurloop nodig is of dat 24 uur volstaat (het onderzoek naar spierbelasting in `docs/onderzoek/`).
+- De planner zelf zet een lange duurloop en een zware beendag (Benen A) op twee dagen achter elkaar: `scheduler.ts#legSpacingDays` telt een loop met `intensity: 'low'` als rustig volume, terwijl `tpl_long_run` `lowerBodyLoad: 'heavy'` heeft. Dat botst met CLAUDE.md ("twee beenzware sessies niet binnen 48 uur"). Onderzoek klaar (`docs/onderzoek/Lange duurloop en een zware beendag.md`): 48 uur tussen zware beenkracht en de lange duurloop in beide volgordes; het weekendblok (heuvels zaterdag, lange duurloop zondag) blijft vrijgesteld; een instelling, standaard uit, die beenkracht de dag na de lange duurloop toestaat. Bouwen bij de eerstvolgende vrije plek (Sherpa en Warden op opus), met een nieuw besluit dat het 24-uursdeel van `2026-10-27-groei-tot-de-wedstrijdpiek.md` vervangt en de golden die beweegt met de reden in de commit.
 
 ## Uit de review van rustdag na rust (voor de terugblik van ronde 2)
 
