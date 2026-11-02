@@ -344,6 +344,7 @@ function AppShell() {
             <Route path="/more" element={<SettingsOverview />} />
             <Route path="/more/planning/sporten" element={<SportsPage />} />
             <Route path="/more/planning/hoeveel" element={<KindAmountPage />} />
+            <Route path="/more/:groep/geavanceerd" element={<SettingsGroupPage advanced />} />
             <Route path="/more/:groep" element={<SettingsGroupPage />} />
             <Route path="/lichaam" element={<BodyPage />} />
             <Route path="/lichaam/:plek" element={<BodySpotPage />} />

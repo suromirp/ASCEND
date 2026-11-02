@@ -4,8 +4,8 @@
 //
 // The question: the weather at the hour you usually train is not good, but is
 // there a block later or earlier on the same day, as long as the training,
-// where it is clearly better? If so, one calm line: "Beste moment: 16 tot
-// 17.30 uur, droog". If the usual hour is fine already, or no block is better,
+// where it is clearly better? If so, one calm line: "Beste moment: 16:00 tot
+// 17:30, droog". If the usual hour is fine already, or no block is better,
 // there is nothing at all (no noise).
 //
 // "Better" means exactly what weather.ts means: the same blocks are judged by
@@ -51,7 +51,7 @@ export interface BestMoment {
   verdict: WeatherVerdict; // of the block: 'prima' or 'let_op'
   // What is better than at the usual hour, in two words at most: "droog", "droog en minder wind".
   reason: string;
-  // The whole line: "Beste moment: 16 tot 17.30 uur, droog".
+  // The whole line: "Beste moment: 16:00 tot 17:30, droog".
   text: string;
   weather: SessionWeather;
 }
@@ -65,11 +65,9 @@ export interface BestMomentInput {
   now: Date;
 }
 
-// 990 -> "16.30", 960 -> "16": a whole hour has no minutes, as people say it.
+// 990 -> "16:30", 960 -> "16:00": the one notation for a time (utils/clock.ts).
 export function hourNL(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return m === 0 ? String(h) : `${h}.${pad(m)}`;
+  return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
 }
 
 const has = (w: SessionWeather, ...reasons: string[]) => reasons.some((r) => w.reasons.includes(r));
@@ -150,7 +148,7 @@ export function bestMomentForTraining({ forecast, template, logs, date, duration
     endMinutes,
     verdict: best.verdict,
     reason,
-    text: `Beste moment: ${hourNL(startMinutes)} tot ${hourNL(endMinutes)} uur, ${reason}`,
+    text: `Beste moment: ${hourNL(startMinutes)} tot ${hourNL(endMinutes)}, ${reason}`,
     weather: best,
   };
 }

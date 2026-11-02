@@ -67,6 +67,10 @@ app reopens where you were after `AppSettings.resumeMinutes` (`utils/launchRoute
   tegen. De eerste keer zegt een rij die nog op haar bron wacht "Bezig" (`engine/settingsPending.ts`,
   `pending` in de feiten); een nieuwe bron krijgt een regel in `settingsParts` en in die tabel.
   Een wijziging van het horloge, MacroFactor, de back-up of Health Connect leest alleen haar eigen bron.
+  Geavanceerd is een eigen pagina (`/more/<groep>/geavanceerd`, `docs/beslissingen/2026-11-02-instellingen-ronde3.md`):
+  een sectie met `advanced` toont op de groep één rij "Geavanceerd" met de titels eronder, en op de pagina alleen die rijen
+  (`SettingsAdvancedContext`); een sprong naar een geavanceerde rij gaat vanzelf naar die pagina (`isAdvancedRow`).
+  Een tijd van de dag schrijf je altijd met `formatClock` (`utils/clock.ts`): "13:05".
 
 Vloeiende overgangen (`docs/beslissingen/2026-10-28-vloeiende-overgangen.md`, ontwerp
 `docs/visie/Vloeiende overgangen.md`): de tik van `utils/haptics.ts` (`TAP_MS`, 15 ms) heeft een
