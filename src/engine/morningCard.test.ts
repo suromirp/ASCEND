@@ -3,7 +3,8 @@ import type { MorningCheckIn } from '../models/checkIn';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import type { AdviceInputs } from './adviceEngine';
-import { LEG_CARD_TARGET, MORNING_CARD_UNTIL_HOUR, NOTHING_PLANNED_TEXT, legsShortText, morningConsequence, morningPrefill, showMorningCard, suggestLegs } from './morningCard';
+import { LEG_CARD_TARGET, MORNING_CARD_UNTIL_HOUR, NOTHING_PLANNED_TEXT, legsShortText, maxEffortYesterday, morningConsequence, morningPrefill, showMorningCard, suggestLegs } from './morningCard';
+import type { SessionLog } from '../models/training';
 
 const TODAY = '2026-10-22';
 const fresh = { index: 2, painRecent: false, contributions: [{ id: 'a' }] } as Parameters<typeof suggestLegs>[0] & object;
@@ -61,6 +62,38 @@ describe('morningPrefill', () => {
 
   it('leaves out what it does not know', () => {
     expect(morningPrefill({ legIndex: undefined, reading: undefined })).toEqual({});
+  });
+});
+
+// docs/onderzoek/RPE bij een testloop.md, voorstel 6: the morning after a test or race the card asks
+// "Hoe voelen je benen?" openly. The leg index counts a test lightly (about 3.5), so its "Klopt: fris"
+// would answer for you; what your legs say that morning tells more.
+describe('the morning after a test or race', () => {
+  const { templates: tpls } = buildDefaultProgramData();
+  const done = (templateId: string, date: string): SessionLog => ({ id: `${templateId}-${date}`, templateId, type: 'cardio', completedDate: date, completedAt: `${date}T09:00:00Z`, variant: 'full', durationMinutes: 30, source: 'manual' });
+  const ask = (logs: SessionLog[], enabled = true) => maxEffortYesterday({ logs, templates: tpls, today: TODAY, enabled });
+
+  it('a test or race of yesterday, recognised by the role', () => {
+    expect(ask([done('tpl_test_run', '2026-10-21')])).toEqual({ kind: 'test', line: 'Gisteren liep je je test. Wat je benen vanochtend zeggen, telt meer dan de beenindex.' });
+    expect(ask([done('tpl_race', '2026-10-21')])?.kind).toBe('race');
+    expect(ask([done('tpl_race', '2026-10-21')])?.line).toBe('Gisteren liep je je wedstrijd. Wat je benen vanochtend zeggen, telt meer dan de beenindex.');
+    // A race goes before a test on the same day.
+    expect(ask([done('tpl_test_run', '2026-10-21'), done('tpl_race', '2026-10-21')])?.kind).toBe('race');
+    const own = { ...tpls.find((t) => t.id === 'tpl_tempo_run')!, id: 'tpl_own_test', roles: ['test' as const] };
+    expect(maxEffortYesterday({ logs: [done('tpl_own_test', '2026-10-21')], templates: [...tpls, own], today: TODAY, enabled: true })?.kind).toBe('test');
+  });
+
+  it('nothing for an older test, one of today, another training, or with the setting off', () => {
+    expect(ask([done('tpl_test_run', '2026-10-20')])).toBeUndefined();
+    expect(ask([done('tpl_test_run', TODAY)])).toBeUndefined();
+    expect(ask([done('tpl_tempo_run', '2026-10-21')])).toBeUndefined();
+    expect(ask([done('tpl_test_run', '2026-10-21')], false)).toBeUndefined();
+  });
+
+  it('the legs are not filled in from the leg index that morning; sleep and energy from the watch stay', () => {
+    const reading = { date: TODAY, lines: [], suggestedSleep: 'goed' as const, suggestedEnergy: 'moe' as const };
+    expect(morningPrefill({ legIndex: fresh, reading, afterEffort: true })).toEqual({ sleep: { value: 'goed', from: 'horloge' }, energy: { value: 'moe', from: 'horloge' } });
+    expect(morningPrefill({ legIndex: fresh, reading, afterEffort: false }).legs).toEqual({ value: 'fris', from: 'beenindex' });
   });
 });
 

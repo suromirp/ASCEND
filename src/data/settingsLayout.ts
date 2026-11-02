@@ -139,7 +139,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-signalen', 'vroeg-ziek', 'ochtendregel', 'weekdag-patroon', 'hitte-tempo', 'luchtkwaliteit', 'ochtend-voorstel', 'bergweer', 'wennen-warmte', 'tempocurve', 'etappetijd-eigen', 'klimtempo'),
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd'),
   // Vandaag en meldingen
-  ...inSheet('kaarten', 'boven-missie', 'ochtendcheck', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'dagcitaat', 'geluid'),
+  ...inSheet('kaarten', 'boven-missie', 'ochtendcheck', 'benen-na-test', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'dagcitaat', 'geluid'),
   ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
   ...inSheet('bundel-run-detail', 'run-detail', 'run-detail-patronen', 'run-detail-advies', 'loopvorm-cadans', 'loopvorm-grondcontact', 'loopvorm-staplengte', 'loopvorm-oscillatie', 'loopvorm-balans'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
@@ -254,7 +254,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   // Doel en tochten
   ...rule([B.goalOrProgram], 'programma'),
   ...rule([B.noGoal], 'bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
-  ...rule([B.goal], 'na-hoofddoel'),
+  ...rule([B.goal], 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge'),
   ...rule([B.longSunday], 'lange-zondag'),
   ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
@@ -271,7 +271,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   // Lichaam
   ...rule([B.bodyFat], 'vetpercentage'),
   // Vandaag en meldingen
-  ...rule([B.morning], 'ochtendkaart', 'korte-nacht', 'ochtend-vanaf'),
+  ...rule([B.morning], 'ochtendkaart', 'korte-nacht', 'ochtend-vanaf', 'benen-na-test'),
   ...rule([B.review], 'weekterugblik-dag'),
   ...rule([B.notice], 'ochtendmelding-tijd'),
   ...rule([B.timed], 'rust-melding', 'weekmelding'),

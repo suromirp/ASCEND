@@ -5,6 +5,10 @@
 import { daysBetween } from '../utils/dates';
 import { backupAge, backupAgoText, backupNeedsAttention } from './settingsAttention';
 import type { SettingsPageId } from '../data/settingsLayout';
+import { DIRECTIONS } from '../data/directions';
+import { settingBudget } from './weekBudget';
+import { waveShapeFor, waveWeek } from './waves';
+import { parseDirectionStart } from './direction';
 
 export interface StatusFacts {
   today: string;
@@ -13,10 +17,28 @@ export interface StatusFacts {
   // Het hoofddoel met een datum die nog komt, of null.
   goal: { name: string; date: string } | null;
   lastExportedAt: string | undefined;
+  // Zonder doel zegt het eerste vak waar je naartoe werkt: de richting. Weglaten als er een doel is.
+  direction?: DirectionStatus;
+}
+
+export interface DirectionStatus {
+  label: string;
+  // "golf, week 2 van 4", of de lengte van de golf als de richting nog niet gekozen is.
+  detail: string;
+  chosen: boolean;
+}
+
+// De richting zoals het vak op het overzicht hem toont: de naam, en waar je in de golf bent.
+export function directionStatus(settings: { direction?: unknown; weekBudget?: unknown; directionStart?: unknown; waves?: unknown }, today: string): DirectionStatus {
+  const w = settingBudget(settings);
+  const shape = waveShapeFor(w.id, settings.waves);
+  const wave = shape && w.chosen ? waveWeek(parseDirectionStart(settings.directionStart), today, shape.weeks) : undefined;
+  const detail = wave ? `golf, week ${wave.week} van ${wave.length}` : shape ? `golven van ${shape.weeks} weken` : 'zonder golven';
+  return { label: DIRECTIONS[w.id].label, detail, chosen: w.chosen };
 }
 
 export interface StatusCell {
-  key: 'fase' | 'doel' | 'backup';
+  key: 'fase' | 'richting' | 'doel' | 'backup';
   label: string;
   value: string;
   detail: string;
@@ -41,7 +63,12 @@ export function shortGoalName(name: string): string {
 
 export function statusCells(facts: StatusFacts): [StatusCell, StatusCell, StatusCell] {
   const { position, goal, today } = facts;
-  const fase: StatusCell = position
+  const fase: StatusCell = !goal && facts.direction
+    ? {
+        key: 'richting', label: 'Richting', value: capitalize(facts.direction.label), detail: facts.direction.detail,
+        attention: false, dim: !facts.direction.chosen, target: { page: 'doel', row: 'richting', sheet: true },
+      }
+    : position
     ? {
         key: 'fase', label: 'Fase', value: capitalize(position.phaseName), detail: `week ${position.weekInProgram} van ${position.totalWeeks}`,
         attention: false, dim: false, target: { page: 'doel', row: 'programma', sheet: true },
@@ -65,7 +92,7 @@ export function statusCells(facts: StatusFacts): [StatusCell, StatusCell, Status
   const backup: StatusCell = {
     key: 'backup',
     label: 'Back-up',
-    value: age.days === null ? 'Nooit' : age.days === 0 ? 'Vandaag' : age.days === 1 ? 'Gisteren' : `${age.days} dagen`,
+    value: age.days === null ? 'Nog nooit' : age.days === 0 ? 'Vandaag' : age.days === 1 ? 'Gisteren' : `${age.days} dagen`,
     detail: attention ? 'Nu maken' : 'in orde',
     attention,
     dim: false,

@@ -14,7 +14,7 @@ import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
-import { matchTodayProfile, TODAY_PROFILE_LABEL } from './settingsProfiles';
+import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { countDifferences } from './settingsDiff';
 import { resolveOverviews } from './overviewSettings';
@@ -160,6 +160,9 @@ export interface SettingsFacts {
   device?: DevicePermissions | 'unknown';
   // De app kan zijn webdeel zelf bijwerken (de Android-app).
   liveUpdate?: boolean;
+  // Het lezen van de koppelstatus mislukte: dan zeggen we dat, in plaats van "Koppelen" alsof je
+  // nooit gekoppeld was.
+  watchUnreadable?: boolean;
 }
 
 const deviceOf = (f: SettingsFacts): DevicePermissions | undefined => (f.device && f.device !== 'unknown' ? f.device : undefined);
@@ -565,12 +568,14 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Vandaag en meldingen
     case 'kaarten': {
       const p = matchTodayProfile(s);
-      return p === 'aangepast' ? { value: TODAY_PROFILE_LABEL.aangepast, dim: true } : { value: TODAY_PROFILE_LABEL[p], dim: false };
+      return { value: TODAY_PROFILE_SHORT[p], dim: p === 'aangepast' };
     }
     case 'ochtendcheck':
       return { checked: o.morningCheckIn };
     case 'ochtendkaart':
       return { checked: o.morningCard };
+    case 'benen-na-test':
+      return { checked: o.legsAfterEffort, sub: o.legsAfterEffort ? 'Open vraag, zonder voorstel' : 'Zoals elke ochtend' };
     case 'zweet-vragen':
       return { checked: s.askSweat !== false };
     case 'bundel-zonder-doel': {
@@ -750,6 +755,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
 
     // Koppelingen
     case 'garmin':
+      if (f.watchUnreadable) return { value: 'Niet te lezen', dim: true, sub: 'Probeer het zo opnieuw' };
       return watchOn
         ? { value: 'Verbonden', dot: 'ok', sub: f.watch?.syncedAt ? `Laatst bijgewerkt om ${clock(f.watch.syncedAt)}` : 'Nog niet opgehaald' }
         : { value: 'Koppelen', sub: 'Trainingen, slaap en hartslag' };
@@ -911,22 +917,22 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
       const hrText = hr.lthr ? `Drempel ${hr.lthr} bpm` : hr.maxHr ? `Max ${hr.maxHr} bpm` : 'Hartslag niet ingevuld';
       const inj = f.activeInjuries > 0 ? plural(f.activeInjuries, 'blessure', 'blessures') : 'geen blessures';
       return {
-        value: f.weight ? kgLabel(f.weight.kg, 1) : 'Leeg',
+        value: f.weight ? kgLabel(f.weight.kg, 1) : 'Niet ingevuld',
         dim: !f.weight,
         sub: `${hrText}, ${inj}`,
       };
     }
     case 'vandaag': {
       const o = resolveOverviews(s.overviews);
-      const aan = [o.morningCheckIn, o.weekReview, o.weeklyQuestion, o.weatherLine, o.weatherSwap, o.bestMoment, o.clothingAdvice, o.completionMoment, s.introSoundEnabled].filter(Boolean).length;
       const place = s.homeLocation;
       const follows = isMyLocation(place) && o.weatherFollowsLocation;
-      return { value: `${aan} aan`, sub: follows ? 'Weer volgt je locatie' : place ? `Weer voor ${place.name}` : 'Nog geen plaats voor het weer' };
+      return { value: TODAY_PROFILE_SHORT[matchTodayProfile(s)], dim: matchTodayProfile(s) === 'aangepast', sub: follows ? 'Weer volgt je locatie' : place ? `Weer voor ${place.name}` : 'Nog geen plaats voor het weer' };
     }
     case 'koppelingen': {
       const garmin = f.watch?.linked === true;
       const mf = !!f.macroFactor?.readAt;
-      if (!garmin && !mf) return { value: 'Geen', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' };
+      if (f.watchUnreadable && !mf) return { value: 'Niet te lezen', dim: true, sub: 'Probeer het zo opnieuw' };
+      if (!garmin && !mf) return { value: 'Niet gekoppeld', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' };
       const parts = [
         garmin ? `Garmin${f.watch?.syncedAt ? ` om ${clock(f.watch.syncedAt)}` : ''}` : null,
         mf && f.macroFactor?.readAt ? `MacroFactor ${formatDayMonthNL(localDateOf(f.macroFactor.readAt))}` : null,

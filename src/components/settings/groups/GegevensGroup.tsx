@@ -28,11 +28,11 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   return (
     <>
       <SettingsSection title="Back-up">
-        <SummaryRow id="backup" title="Laatste back-up" facts={facts} onClick={() => setSheet('backup')} />
-        <SummaryRow id="backupmap" title="Vaste map" facts={facts} onClick={() => setSheet('backupmap')} />
+        <SummaryRow id="backup" title="Laatste back-up" facts={facts} info="backup" onClick={() => setSheet('backup')} />
+        <SummaryRow id="backupmap" title="Vaste map" facts={facts} info="backupmap" onClick={() => setSheet('backupmap')} />
         <SummaryRow id="toestemmingen" title="Toestemmingen" facts={facts} info="toestemmingen" onClick={() => setSheet('toestemmingen')} />
         <SummaryRow id="ruimte-app" title="Ruimte op dit toestel" facts={facts} kind="static" info="ruimteApp" />
-        <SummaryRow id="momentopnamen" title="Kopieën van voor een import" facts={facts} onClick={() => setSheet('momentopnamen')} />
+        <SummaryRow id="momentopnamen" title="Kopieën van voor een import" facts={facts} info="momentopnamen" onClick={() => setSheet('momentopnamen')} />
       </SettingsSection>
 
       <SettingsSection title="Van je horloge">
@@ -52,17 +52,17 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <>
             <SummaryRow id="auto-bijwerken" title="Automatisch bijwerken" facts={facts} info="autoBijwerken" onChange={(on) => void updateSettings({ autoUpdate: on })} />
             <SummaryRow id="voorstellen-opruimen" title="Oude voorstellen opruimen" facts={facts} info="voorstellenOpruimen" onClick={() => setSheet('voorstellen-opruimen')} />
-            <SummaryRow id="startniveau" title="Startniveau zelf invullen" facts={facts} onClick={() => setSheet('startniveau')} />
+            <SummaryRow id="startniveau" title="Startniveau zelf invullen" facts={facts} info="startniveau" onClick={() => setSheet('startniveau')} />
           </>
         }
       >
-        <SummaryRow id="herbouwen" title="Adviezen opnieuw berekenen" facts={facts} onClick={() => setSheet('herbouwen')} />
+        <SummaryRow id="herbouwen" title="Adviezen opnieuw berekenen" facts={facts} info="herbouwen" onClick={() => setSheet('herbouwen')} />
         <SummaryRow id="aangepast" title="Aangepaste instellingen" facts={facts} info="aangepast" onClick={() => setSheet('aangepast')} />
       </SettingsSection>
       {advice.note && <p className="st-hint" role="status">{advice.note}</p>}
 
       <SettingsSection>
-        <SummaryRow id="wissen" title="Alles verwijderen" facts={facts} kind="danger" onClick={() => setSheet('wissen')} />
+        <SummaryRow id="wissen" title="Alles verwijderen" facts={facts} info="wissen" kind="danger" onClick={() => setSheet('wissen')} />
       </SettingsSection>
 
       {/* De versie is geen instelling maar een voettekst; tikken zoekt naar een update. */}

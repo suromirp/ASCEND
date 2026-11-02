@@ -93,3 +93,10 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Testloop en zware benen, Sherpa, opus (ontwikkelaar), 325k, 47 min, 1 (Warden rood)
 - 2026-11-02, Review testloop, Warden, opus (reviewer), 105k, 4 min, 0, rood: tweede testvoorstel toetst andere voorstellen niet
 - 2026-11-02, Testloop herstel en herkeuring, Sherpa en Warden, opus, hervat, 0 open punten
+- 2026-11-02, Zonder doel Je week, Sherpa, sonnet (ontwikkelaar), 197k, 36 min, 1; raakte toch planning, had opus moeten zijn (werkverdeling)
+- 2026-11-02, Review zonder doel, Warden, opus (reviewer), rood: kracht erbij zonder toets, krachtblok overschreven
+- 2026-11-02, Instellingen kleine delen, Sherpa, sonnet (ontwikkelaar), 209k, 39 min, 0
+- 2026-11-02, RPE bij een testloop, Sherpa, opus (ontwikkelaar), 231k, 58 min, 1
+- 2026-11-02, Review RPE, Warden, opus (reviewer), 99k, 7 min, 0, rood: weekbalk sprak zichzelf tegen
+- 2026-11-02, RPE herstel en herkeuring, Sherpa en Warden, opus, hervat, 0 open
+- 2026-11-02, Instellingen herstel teksten, Sherpa, sonnet, hervat, 0; Warden zat fout over het geluid na een training, de bouwer controleerde de code

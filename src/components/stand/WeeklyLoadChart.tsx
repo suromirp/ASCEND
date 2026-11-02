@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LOAD_SPORTS, LOAD_JUMP, loadVersusBefore, type LoadSport, type WeekLoad } from '../../engine/standing';
+import { LOAD_SPORTS, LOAD_JUMP, loadItemText, loadVersusBefore, SPLIT_NOTE, type LoadSport, type WeekLoad } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow } from '../ui';
 import { roundedTop } from './chartParts';
@@ -40,7 +40,7 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
       <div>
         <Eyebrow>Belasting per week</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien.
+          Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien.{weeks.some((w) => w.items.some((it) => it.split)) ? ` ${SPLIT_NOTE}` : ''}
         </p>
       </div>
 
@@ -146,7 +146,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
               <div className="min-w-0 flex-1">
                 <p className="break-words text-xs" style={{ color: 'var(--color-ink)' }}>{it.name}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {formatWeekdayDayMonthNL(it.date)} · {it.minutes} min · zwaarte {it.estimated ? '±' : ''}{formatNumberNL(it.effort, 0)}
+                  {formatWeekdayDayMonthNL(it.date)} · {loadItemText(it)}
                 </p>
               </div>
               <div className="flex w-24 shrink-0 items-center gap-2">
@@ -162,6 +162,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
 
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         Punten per training: minuten maal zwaarte.
+        {week.items.some((it) => it.split) ? ` ${SPLIT_NOTE}` : ''}
         {week.items.some((it) => it.planned) ? ' Lichter: nog gepland.' : ''}
         {week.items.some((it) => it.estimated) ? ' ±: geen zwaarte ingevuld, geteld met de geplande.' : ''}
       </p>

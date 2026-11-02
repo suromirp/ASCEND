@@ -31,8 +31,8 @@ card too, only with "a day later" and no Lichter. MORNING-CHECK makes the same c
 card; without a card (setting not on voorstel, open pain on a leg spot) it speaks itself. The choices: "Lichter" (`easeSlots`: at least 3 reps in reserve, the last set off, extras gone, only exercises that
 load the legs) or a day later (`adviceEngine.ts#legEaseMoveAdvice`, rule LEG-EASE, a proposal with Akkoord), always with
 "Liever niet". The choice is kept per date and training in `AppSettings.legEaseDays` (last 60, `migrateLegEaseDays`) and
-never touches a template, the planning or a log. `legFatigueOn` and the planner stay as they were, so `planGolden.test.ts`
-does not move; the week rule LEG-FRESH is not built. A log of a training you eased is left out of "raak" per row, only for exercises that load the legs and
+never touches a template, the planning or a log. The leg-ease card itself leaves `legFatigueOn` and the planner as they were, so `planGolden.test.ts`
+does not move (for what the RPE of a test changed in the index, see the paragraph below); the week rule LEG-FRESH is not built. A log of a training you eased is left out of "raak" per row, only for exercises that load the legs and
 tied by the planned session with a day of room for the date (`strengthHistory.ts#comparisonRows`, `eased`). A soreness note of the
 same day does not make a logged training "tired" (it has no time), the morning check does (`legsTiredAt`). Moving a heavy leg day or hard run shows a quiet line with the leg index of
 the new day (`moveLegNote`). Settings "Lichter bij vermoeide benen" (`legEase`: voorstel, regel, uit; uit also silences the
@@ -72,3 +72,14 @@ days for this (`engine/wellnessRange.ts`); while "Ochtendgetallen in back-up" is
 Strava text. Setting "Voorbeelden bij naam noemen" (`AppSettings.influenceNames`, on by default) only
 decides whether the explanation and help name alcohol and wiet or say "wat je dronk of gebruikte";
 the chips stay (`data/settingsHelp.ts#settingsHelp`, decision `docs/beslissingen/2026-10-27-redenen-bij-naam.md`).
+
+**RPE at a test, what the planner reads** (decision `docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md`): the leg
+index counts a logged test (role `test`) or race at a planned RPE of 10 instead of 8, and a linked test with warm-up and
+cool-down (a usable `bestEffort`) in two parts, the rest as an easy run at RPE 3. Everything that reads the index after
+a logged test therefore reads a lower number: `freshnessAt` (placing a test or race in the scheduler, TEST-FRESH and the
+week check in `weekValidator.ts`, TEST-MAKE-ROOM and TEST-RETRY), and `legFatigueOn` for LEG-EASE and
+`earlierTodayPoints` (a test at RPE 9 earlier today about 7 points instead of 8.8). HARD-THEN-SPACE triggers on the logged
+RPE itself (8 or more) and does not change. Only down, never up: a race gets no split, a session without the role keeps its 8, a planned test (no RPE yet) is unchanged. The
+thresholds (8, 3, 12), AFTER-TEST and the 48 hours between heavy leg days stay. Tested in
+`engine/freshnessAfterTest.test.ts` (a test day 3 to 7 days after a logged test at RPE 10); `planGolden.test.ts` does not
+move.

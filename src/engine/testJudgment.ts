@@ -17,6 +17,7 @@ import { MANY_STOPS_SENTENCE, EFFORT_VERSION, manyStops, stopsSentence, effortTr
 import { countedTests, formatRaceTime, TEST_DISTANCE_KM, testTotals, type CountedTests, type TestJudgmentOptions, type TestResult } from './racePrediction';
 import { TEST_TEMPLATE_ID } from './raceBlock';
 import { daysBetween } from '../utils/dates';
+import { idHasRole } from './templateRoles';
 
 export const MAX_TEST_JUDGMENTS = 60;
 
@@ -81,6 +82,18 @@ export function testBasisLine(t: TestResult): string {
 // One dry sentence when a test had a lot of standing still, else nothing.
 export function testStopsRemark(t: Pick<TestResult, 'basis' | 'stops' | 'stoppedSec'>): string | undefined {
   return t.basis === 'effort' && manyStops(t) ? MANY_STOPS_SENTENCE : undefined;
+}
+
+// A test you gave a 7 or lower was probably not a full effort, and the paces it gives are then on the
+// careful side (docs/onderzoek/RPE bij een testloop.md, vraag 4 en voorstel 5). One quiet sentence; the
+// test counts as before and the paces keep reading pacesFromLogs/countedTests. Not for an RPE ASCEND
+// assumed itself.
+export const NOT_MAXIMAL_RPE = 7;
+export function testEffortRemark(log: Pick<SessionLog, 'templateId' | 'rpe' | 'rpeAssumed'> | undefined): string | undefined {
+  if (!log || !idHasRole(log.templateId, 'test') || log.rpeAssumed === true) return undefined;
+  const rpe = log.rpe;
+  if (typeof rpe !== 'number' || !Number.isFinite(rpe) || rpe <= 0 || rpe > NOT_MAXIMAL_RPE) return undefined;
+  return `Zwaarte ${Math.round(rpe)} van 10: waarschijnlijk geen volle poging. Je tempo's vallen dan wat voorzichtig uit.`;
 }
 
 // 'held': a slower test that a newer test has passed (the newer one counts), so nothing waits on it.

@@ -7,7 +7,7 @@ Meer
 ## Instellingen
 [knop: FaseBasisfaseweek 1 van 16] (aria: Fase: Basisfase, week 1 van 16)
 [knop: DoelGeenkies een doel] (aria: Doel: Geen, kies een doel)
-[knop: Back-upNooitNu maken] (aria: Back-up: nog nooit, nu maken)
+[knop: Back-upNog nooitNu maken] (aria: Back-up: nog nooit, nu maken)
 Zoek in de instellingen
 [veld: Zoek, bijvoorbeeld horloge]
 Je training
@@ -23,19 +23,19 @@ Geen doel
 Forge
 Eerst gewicht, opwarmen slim
 Aan
-[knop: Lichaam, Leeg]
+[knop: Lichaam, Niet ingevuld]
 Lichaam
 Hartslag niet ingevuld, geen blessures
-Leeg
+Niet ingevuld
 De app
-[knop: Vandaag en meldingen, 9 aan]
+[knop: Vandaag en meldingen, Alles]
 Vandaag en meldingen
 Nog geen plaats voor het weer
-9 aan
-[knop: Koppelingen, Geen]
+Alles
+[knop: Koppelingen, Niet gekoppeld]
 Koppelingen
 Garmin en MacroFactor nog niet gekoppeld
-Geen
+Niet gekoppeld
 [knop: Gegevens en back-up, Nog nooit]
 Gegevens en back-up
 Alles staat alleen op deze telefoon

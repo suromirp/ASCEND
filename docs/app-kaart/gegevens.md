@@ -8,9 +8,11 @@ Adres: `#/more/gegevens`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 Back-up
 [knop: Laatste back-up, Nog nooit]
 Laatste back-up
+[knop: Uitleg: Laatste back-up]
 Nog nooit
 [knop: Vaste map, Niet gekozen]
 Vaste map
+[knop: Uitleg: Vaste map]
 Niet gekozen
 [knop: Toestemmingen, 2 staan uit]
 Toestemmingen
@@ -22,6 +24,7 @@ Van de <ruimte> die de browser geeft
 <gebruikt>
 [knop: Kopieën van voor een import, 0]
 Kopieën van voor een import
+[knop: Uitleg: Kopieën van voor een import]
 0
 Van je horloge
 [knop: Volledige reeks bewaren]
@@ -42,8 +45,10 @@ Ook je slaap en hartslag gaan mee
 App
 [knop: Adviezen opnieuw berekenen]
 Adviezen opnieuw berekenen
+[knop: Uitleg: Adviezen opnieuw berekenen]
 [knop: Geavanceerd]
 Oude voorstellen opruimen, Startniveau zelf invullen
 [knop: Alles verwijderen]
 Alles verwijderen
+[knop: Uitleg: Alles verwijderen]
 [knop: Versie <bouwtijd>]
