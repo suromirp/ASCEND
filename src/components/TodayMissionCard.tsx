@@ -24,6 +24,8 @@ import { ClothingAdvice } from './ClothingAdvice';
 import { WatchStatusRow } from './WatchStatusRow';
 import { BootReminderLine } from './reis/BootReminderLine';
 import { SweatBeforeRow } from './SweatBeforeRow';
+import { shorterChoices, TEST_NOT_SHORTER } from '../engine/shorterToday';
+import { isTestOrRace } from '../engine/templateRoles';
 
 // "40 minuten" groot, de rest kleiner met zijn eenheid ernaast.
 function splitChip(text: string, tempo: boolean): { value: string; unit: string } | undefined {
@@ -58,6 +60,7 @@ export function TodayMissionCard({
   coachLine,
   weatherSlot,
   session,
+  onShorter,
 }: {
   template: SessionTemplate;
   fullDuration: number;
@@ -85,11 +88,16 @@ export function TodayMissionCard({
   weatherSlot?: ReactNode;
   // De geplande training zelf: voor de regel over het horloge.
   session?: PlannedSession;
+  // "Minder tijd vandaag" (engine/shorterToday.ts): de gekozen minuten gaan naar een voorstel met
+  // Akkoord. Zonder: geen regel in het menu (de instelling staat uit).
+  onShorter?: (minutes: number) => void;
 }) {
   const navigate = useNavigate();
   const [showMove, setShowMove] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showShorter, setShowShorter] = useState(false);
+  const afterShorter = useRef<(() => void) | null>(null);
   // Wat je in het menu koos, gebeurt pas als het blad dicht is: nooit twee lagen tegelijk.
   const afterMenu = useRef<(() => void) | null>(null);
   const variants = availableVariants(template);
@@ -102,7 +110,11 @@ export function TodayMissionCard({
 
   const showShort = !quickComplete && !!shortVariant;
   const showPlan = quickComplete && !!onShowPlan;
-  const hasMenu = !!guide || showShort || showPlan;
+  // Een test of wedstrijd kan niet korter; de regel blijft, met uitleg en Verplaatsen.
+  const testDay = isTestOrRace(template);
+  const shorterTimes = shorterChoices(fullDuration);
+  const showShorterRow = !!onShorter && (testDay || shorterTimes.length > 0);
+  const hasMenu = !!guide || showShort || showPlan || showShorterRow;
 
   // De minuten staan groot; wat de duurchip méér zegt dan alleen de minuten ("4 × 4 min") blijft als tekst.
   const plainMinutes = new RegExp(`^${fullDuration} min$`);
@@ -241,6 +253,12 @@ export function TodayMissionCard({
                     <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
                   </button>
                 )}
+                {showShorterRow && (
+                  <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => setShowShorter(true))}>
+                    <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>Minder tijd vandaag</span>
+                    <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
+                  </button>
+                )}
                 {showPlan && (
                   <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => onShowPlan?.())}>
                     <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>Voorschrift</span>
@@ -250,6 +268,39 @@ export function TodayMissionCard({
               </div>
             );
           }}
+        </TodaySheet>
+      )}
+
+      {showShorter && (
+        <TodaySheet
+          eyebrow="Minder tijd vandaag"
+          title={template.name}
+          onClose={() => {
+            setShowShorter(false);
+            const next = afterShorter.current;
+            afterShorter.current = null;
+            next?.();
+          }}
+        >
+          {(close) => testDay ? (
+            <div className="flex flex-col gap-4">
+              <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink)' }}>{TEST_NOT_SHORTER}</p>
+              <SecondaryButton onClick={() => { afterShorter.current = () => setShowMove(true); close(); }}>Verplaatsen</SecondaryButton>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink)' }}>
+                Hoeveel tijd heb je? Je ziet eerst wat er verandert; pas met Akkoord wordt je training van vandaag korter.
+              </p>
+              <div className="flex gap-2" role="group" aria-label="Hoeveel tijd heb je?">
+                {shorterTimes.map((m) => (
+                  <SecondaryButton key={m} onClick={() => { afterShorter.current = () => onShorter?.(m); close(); }}>
+                    <span className="tabular-nums">{m} min</span>
+                  </SecondaryButton>
+                ))}
+              </div>
+            </div>
+          )}
         </TodaySheet>
       )}
 

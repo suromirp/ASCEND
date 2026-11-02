@@ -82,6 +82,9 @@ import { WeekStrip } from '../components/vandaag/WeekStrip';
 import { zoneOfTemplate } from '../components/vandaag/zone';
 import { logDay, plannedByIdOf } from '../engine/logDay';
 import { mainGoal as findMainGoal } from '../engine/mainGoal';
+import { planShorter, resolveShorterToday, shorterAdvice } from '../engine/shorterToday';
+import type { Advice } from '../engine/adviceEngine';
+import { ProposalSheet } from '../components/ProposalSheet';
 
 function TodayContent() {
   const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
@@ -104,6 +107,8 @@ function TodayContent() {
   const location = useLocation();
   const [actionSheetSession, setActionSheetSession] = useState<PlannedSession | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
+  // "Minder tijd vandaag": het voorstel met wat er verandert (engine/shorterToday.ts).
+  const [shorter, setShorter] = useState<{ advice: Advice; lines: string[] } | null>(null);
 
   const position = program ? resolveProgramWeek(program, today) : null;
   const weekStart = mondayOfWeek(today);
@@ -274,6 +279,14 @@ function TodayContent() {
     <DailyStretchCard label="Avond" title="Rekken" stretches={EVENING_ROUTINE} completed={stretchCompletion.evening === today} onToggleComplete={() => toggleStretchRoutine('evening')} />
   );
 
+  const shorterSetting = resolveShorterToday(settings.shorterToday);
+  function proposeShorter(session: PlannedSession, template: SessionTemplate, minutes: number) {
+    if (shorterSetting === 'off') return;
+    const plan = planShorter({ template, fullMinutes: resolveEffectiveFullDuration(template, session.scheduledDate, program), available: minutes, how: shorterSetting });
+    if (plan.kind !== 'ok') return;
+    setShorter({ advice: shorterAdvice({ session, template, plan, now: new Date().toISOString() }), lines: plan.lines });
+  }
+
   // De missie: je training van vandaag, of de rustige kaart van een dag zonder.
   const missionCard: ReactNode = primary && primaryTemplate && mission ? (
     <TodayMissionCard
@@ -293,6 +306,7 @@ function TodayContent() {
       suggestions={suggestMoves(primary.id)}
       onPickSuggestion={(sug) => void applyProposal(sug.proposal)}
       originalDate={primary.movedFromDate}
+      onShorter={shorterSetting === 'off' ? undefined : (minutes) => proposeShorter(primary, primaryTemplate, minutes)}
       coachLine={coachLineForToday({
         template: primaryTemplate,
         date: primary.scheduledDate,
@@ -572,6 +586,17 @@ function TodayContent() {
             setActionSheetSession(null);
           }}
           onClose={() => setActionSheetSession(null)}
+        />
+      )}
+
+      {shorter && (
+        <ProposalSheet
+          advice={shorter.advice}
+          eyebrow="Minder tijd vandaag"
+          summary={shorter.advice.effect}
+          extraLines={shorter.lines}
+          extraTitle="Wat er vandaag verandert"
+          onClose={() => setShorter(null)}
         />
       )}
 

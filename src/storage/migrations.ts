@@ -8,6 +8,7 @@
 // additive, and engine/templateRoles.ts falls back to the roles of the id when
 // it is missing or not a list, so an older backup imports as before.
 
+import { MAX_ZONE_ANSWERS, type ZoneAnswer } from '../models/zoneAnswer';
 import { ABOVE_MISSION_CHOICES, type AboveMission } from '../engine/todayCards';
 import { parseSportHandling, type SportHandlingMap } from '../engine/sportRole';
 import { isPlausibleFatPct } from '../engine/bodyFat';
@@ -484,6 +485,28 @@ export function migrateTestJudgments(raw: unknown): { list: TestJudgment[] | und
     byLog.set(item.logId, { logId: item.logId, verdict: item.verdict, date });
   }
   return { list: capTestJudgments([...byLog.values()]), skipped };
+}
+
+// --- zones bijwerken na een test: settings.zoneAnswers ------------------------------------
+// Je antwoord per test op het voorstel voor je drempelhartslag (engine/zoneUpdate.ts). Optioneel en
+// additief: een oudere back-up heeft er geen en laat de antwoorden op het toestel staan. Antwoord voor
+// antwoord gelezen; een beschadigd antwoord valt weg en wordt geteld, een los fout getal valt alleen
+// zelf weg (lthrFrom).
+export function migrateZoneAnswers(raw: unknown): { list: ZoneAnswer[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const hr = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n >= 100 && n <= 220;
+  const byLog = new Map<string, ZoneAnswer>();
+  let skipped = 0;
+  for (const item of raw) {
+    const date = isObj(item) && typeof item.date === 'string' && ISO_DAY.test(item.date.slice(0, 10)) ? item.date.slice(0, 10) : undefined;
+    if (!isObj(item) || typeof item.logId !== 'string' || item.logId.trim() === '' || item.logId.length > 80 || (item.answer !== 'accepted' && item.answer !== 'declined') || !hr(item.lthrTo) || !date) {
+      skipped++;
+      continue;
+    }
+    byLog.set(item.logId, { logId: item.logId, answer: item.answer, date, ...(hr(item.lthrFrom) ? { lthrFrom: Math.round(item.lthrFrom) } : {}), lthrTo: Math.round(item.lthrTo) });
+  }
+  return { list: [...byLog.values()].slice(-MAX_ZONE_ANSWERS), skipped };
 }
 
 // --- InjuryNote.kind en InjuryNote.side ---------------------------------------------------

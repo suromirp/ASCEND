@@ -12,6 +12,7 @@
 // it, a sheet title in Marcellus, the cross at the top right.
 
 import type { AllowedPair } from '../engine/allowedPair';
+import type { PlaceReason } from '../engine/placeReason';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextButton } from './TextButton';
@@ -105,6 +106,7 @@ export function SessionActionSheet({
   startStep,
   catchUp = false,
   caughtUpOn,
+  placeReason,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -138,12 +140,15 @@ export function SessionActionSheet({
   // De oude rij van een inhaal ("ingehaald op za 31"): alleen dat feit, geen acties, zodat je hem niet
   // dubbel plant of logt.
   caughtUpOn?: string;
+  // Week: waarom de training op deze dag staat (engine/placeReason.ts), achter één tik.
+  placeReason?: PlaceReason;
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   // "Hoe je het doet" for a day still to come: the training screen of that day, to read only.
   const [showPreview, setShowPreview] = useState(false);
   const [step, setStep] = useState<'main' | 'done' | 'move'>(startStep ?? 'main');
+  const [whyOpen, setWhyOpen] = useState(false);
   // The "Gedaan" step for a training of a later day, done today.
   const [doneToday, setDoneToday] = useState(false);
   const variants = availableVariants(template);
@@ -336,6 +341,17 @@ export function SessionActionSheet({
       )}
       {bikeOption && !skipped && (
         <p className="mt-1 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>Kan ook op de fiets, buiten of binnen.</p>
+      )}
+      {placeReason && (
+        <div className="mt-1">
+          <TextButton tone="dim" icon="omlaag" flipped={whyOpen} aria-expanded={whyOpen} onClick={() => setWhyOpen((v) => !v)}>Waarom staat dit hier?</TextButton>
+          {whyOpen && (
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
+              {placeReason.text}
+              {placeReason.extra && <span className="mt-1 block" style={{ color: 'var(--color-ink-dim)' }}>{placeReason.extra}</span>}
+            </p>
+          )}
+        </div>
       )}
       <div className="mt-6 flex flex-col gap-4">
         {!skipped && <WatchStatusRow session={session} template={template} offer={false} onLeave={requestClose} />}

@@ -68,8 +68,8 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="Hoe ASCEND plant"
-        advancedIds={['bundel-niet-doorgegaan', 'lange-loop-benen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij']}
-        advancedTitles="Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie"
+        advancedIds={['bundel-niet-doorgegaan', 'lange-loop-benen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test']}
+        advancedTitles="Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie, Zones bijwerken na een test"
         storageKey="planning-geavanceerd"
         advanced={
           <>
@@ -78,6 +78,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
             <SummaryRow id="slepen-week" title="Trainingen slepen in Week" facts={facts} info="slepenWeek" onChange={(on) => void updateSettings({ dragWeek: on })} />
             <SummaryRow id="volgorde-stand" title="Volgorde van Je stand" facts={facts} info="volgordeStand" onClick={() => setSheet('volgorde-stand')} />
             <SummaryRow id="vakantie-opzij" title="Opzij voor een vakantie" facts={facts} info="vakantieOpzij" onClick={() => setSheet('vakantie-opzij')} />
+            <SummaryRow id="zones-na-test" title="Zones bijwerken na een test" facts={facts} info="zonesNaTest" onChange={(on) => void updateSettings({ zonesAfterTest: on })} />
           </>
         }
       >
