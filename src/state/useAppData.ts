@@ -1,4 +1,4 @@
-// De context van de app en de hook die hem leest. De provider staat in AppDataContext.tsx.
+// De context van de app en de hook die hem leest. De provider staat in AppDataProvider.tsx.
 
 import { createContext, useContext } from 'react';
 import type { AppData } from './appDataTypes';
