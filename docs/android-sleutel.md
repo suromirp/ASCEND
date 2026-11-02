@@ -4,6 +4,10 @@ Android installeert een nieuwe versie van een app alleen over de oude heen als b
 
 ## 1. De sleutel maken
 
+Doe dit op je eigen computer, niet op een laptop van je werk: daar kan de werkgever meekijken of back-ups maken, en de sleutel hoort alleen bij jou.
+
+Kijk eerst of Java er is: typ in een terminal (Windows: PowerShell, Mac: Terminal) `keytool -help`. Krijg je "niet gevonden", installeer dan Temurin JDK 21 van adoptium.net en open de terminal opnieuw.
+
 Op een computer met Java (Android Studio heeft het al), in een map buiten de repo en buiten een cloudmap (dus niet in OneDrive, Google Drive, Dropbox of iCloud Drive, die kopiëren alles vanzelf naar een server):
 
 ```bash
@@ -22,6 +26,14 @@ base64 -w 0 ascend.keystore > ascend.keystore.txt
 
 (Op een Mac: `base64 -i ascend.keystore -o ascend.keystore.txt`.)
 
+Op Windows, in PowerShell in dezelfde map:
+
+```bash
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("$PWD\ascend.keystore")) | Set-Content ascend.keystore.txt
+```
+
+Gebruik op Windows niet `certutil`: die zet er kop- en voetregels in en dan mislukt de bouw.
+
 De sleutel staat niet bij de gewone secrets van de repo, maar in een environment, zodat alleen de stap die vanaf main ondertekent erbij kan. Ga in GitHub naar de repo, Settings, Environments, New environment, en noem hem `android-release`. Zet bij Deployment branches "Selected branches" en voeg `main` toe. Maak daar onder Environment secrets vier secrets:
 
 1. `ANDROID_KEYSTORE_BASE64`: de hele inhoud van `ascend.keystore.txt`.
@@ -29,7 +41,7 @@ De sleutel staat niet bij de gewone secrets van de repo, maar in een environment
 3. `ANDROID_KEY_ALIAS`: `ascend` (de naam achter `-alias`).
 4. `ANDROID_KEY_PASSWORD`: het wachtwoord van de sleutel.
 
-Gooi `ascend.keystore.txt` daarna weg. Zet de sleutel en de wachtwoorden nooit in de repo.
+Gooi `ascend.keystore.txt` daarna weg. Zeg de coördinator dat de secrets erin staan; plak nooit een wachtwoord of de sleutel in een chat. Zet de sleutel en de wachtwoorden nooit in de repo.
 
 De volgende keer dat de workflow vanaf main draait (bij een push naar main, of met de hand via Actions, Android-app, Run workflow) bouwt hij de APK zonder sleutel, ondertekent hij hem daarna in een aparte stap en zet hij hem als release `apk-<nummer>` op GitHub. Zonder de vier secrets bouwt hij alleen een proef-APK als artefact, zonder release, en meldt hij dat in de run.
 
