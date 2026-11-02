@@ -18,8 +18,9 @@ import { usePlanSettingChange } from '../../components/settings/usePlanSettingCh
 import { ROLE_LABEL, ROLE_NOTE, dayName, roleChoices, sportCards, sportWeekDots, weekDotsLabel, type SportCardInfo, type WeekDot } from '../../engine/sportsScreen';
 import { parseSportHandling, type FixedSlot } from '../../engine/sportRole';
 import { FixedDaysStep } from '../../components/sports/FixedDaysStep';
+import { keptFixedNote } from '../../engine/fixedSports';
 import { FEEL_ADVICE, FEEL_LABEL, parseCustomSports, type CustomFeel, type CustomSport } from '../../engine/customSport';
-import { anySportDefinition, SPORT_IDS, type AnySportId, type SportId, type SportRole } from '../../data/sports';
+import { anySportDefinition, SPORT_IDS, type AnySportId, type CountedSportId, type SportId, type SportRole } from '../../data/sports';
 import { addDays, mondayOfWeek, todayISO } from '../../utils/dates';
 import { SportCountingSheet } from '../../components/settings/groups/SportCountingSheet';
 import { settingsPageRoute } from '../../data/settingsLayout';
@@ -162,7 +163,7 @@ function CustomSportSheet({ type, onClose }: { type: string; onClose: () => void
 }
 
 function SportRoleSheet({ sport, plan, startFixed = false, onClose }: { sport: AnySportId; plan: ReturnType<typeof usePlanSettingChange>; startFixed?: boolean; onClose: () => void }) {
-  const { settings } = useAppData();
+  const { settings, plannedSessions } = useAppData();
   const def = anySportDefinition(sport);
   const card = sportCards(settings).find((c) => c.sport === sport)!;
   const choices = roleChoices(sport);
@@ -185,7 +186,9 @@ function SportRoleSheet({ sport, plan, startFixed = false, onClose }: { sport: A
       return;
     }
     // Van Vaste dag af haalt je afspraken uit de planning: altijd eerst het voorstel.
-    void plan.changeSetting(`${def.label}: ${ROLE_LABEL[role].toLowerCase()}`, { sportHandling: handling }, role === 'off' ? `${def.label} telt niet meer mee.` : `${def.label} telt mee als je het doet.`, card.role === 'fixed' ? { alwaysAsk: true } : {});
+    // Rijen die je zelf verplaatste of oversloeg blijven; dan zegt het voorstel dat.
+    const kept = card.role === 'fixed' ? keptFixedNote(plannedSessions, sport as CountedSportId, todayISO()) : undefined;
+    void plan.changeSetting(`${def.label}: ${ROLE_LABEL[role].toLowerCase()}`, { sportHandling: handling }, role === 'off' ? `${def.label} telt niet meer mee.` : `${def.label} telt mee als je het doet.`, card.role === 'fixed' ? { alwaysAsk: true, ...(kept ? { notes: [kept] } : {}) } : {});
   }
 
   function saveFixed(slots: FixedSlot[], close: () => void) {

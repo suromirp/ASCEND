@@ -5,7 +5,7 @@ import type { LeavePeriod } from '../models/leave';
 import { addDays, daysBetween } from '../utils/dates';
 import { planPass, type PlanPassContext } from './planPass';
 import { withCountingSports } from './sportTemplate';
-import { fixedInLeave, fixedLeaveNote, fixedSessionsForWeek, reconcileFixedSessions } from './fixedSports';
+import { fixedInLeave, fixedLeaveNote, fixedSessionsForWeek, keptFixedNote, reconcileFixedSessions } from './fixedSports';
 import { isLegHeavyTemplate } from './scheduler';
 import { lockLevel, validateWeeks, hardDayLimit } from './weekValidator';
 import { raceBlocks } from './raceBlock';
@@ -133,6 +133,17 @@ describe('een vaste rij die je zelf verplaatste blijft van jou (Warden punt 1)',
     const off = reconcileFixedSessions(skipped, { football: { role: 'count' } }, opts(TODAY));
     const left = off.sessions.filter((s) => s.fixed).map((s) => [s.scheduledDate, s.status]);
     expect(left).toEqual([['2026-11-12', 'moved'], ['2026-11-14', 'skipped']]);
+  });
+
+  it('het voorstel van Vaste dag naar Telt mee zegt het alleen als er zulke rijen zijn', () => {
+    expect(keptFixedNote(first(), 'football', TODAY)).toBeUndefined();
+    const moved = first().map((s) => (s.fixed && s.scheduledDate === '2026-11-10' ? { ...s, scheduledDate: '2026-11-12', status: 'moved' as const } : s));
+    expect(keptFixedNote(moved, 'football', TODAY)).toBe('Wat je verplaatste of oversloeg blijft staan.');
+    const skipped = first().map((s) => (s.fixed && s.scheduledDate === '2026-11-14' ? { ...s, status: 'skipped' as const } : s));
+    expect(keptFixedNote(skipped, 'football', TODAY)).toBe('Wat je verplaatste of oversloeg blijft staan.');
+    // Een andere sport of iets in het verleden telt niet.
+    expect(keptFixedNote(moved, 'padel', TODAY)).toBeUndefined();
+    expect(keptFixedNote(moved, 'football', '2026-11-13')).toBeUndefined();
   });
 
   it('een rij van voor het veld week leest zijn eigen week', () => {

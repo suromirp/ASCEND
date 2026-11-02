@@ -36,7 +36,7 @@ export function usePlanSettingChange(): {
   saveBudget: (next: Partial<Record<Weekday, DailyTimeBudget>>) => Promise<void>;
   // A setting the planning run reads: a proposal first, stored only with Akkoord.
   // `alwaysAsk`: always the proposal first (a fixed appointment), whatever Wijzigingen says.
-  changeSetting: (title: string, patch: Partial<AppSettings>, why: string, opts?: { alwaysAsk?: boolean; onStored?: () => void }) => Promise<void>;
+  changeSetting: (title: string, patch: Partial<AppSettings>, why: string, opts?: { alwaysAsk?: boolean; onStored?: () => void; notes?: string[] }) => Promise<void>;
   busy: boolean;
 } {
   const {
@@ -99,11 +99,11 @@ export function usePlanSettingChange(): {
     }).proposal;
   }
 
-  function changeSetting(title: string, patch: Partial<AppSettings>, why: string, opts: { alwaysAsk?: boolean; onStored?: () => void } = {}) {
+  function changeSetting(title: string, patch: Partial<AppSettings>, why: string, opts: { alwaysAsk?: boolean; onStored?: () => void; notes?: string[] } = {}) {
     setNote(null);
     return horizon.propose(
       () => planHorizonChange({
-        title, why, trigger: 'availability_changed', settings: patch,
+        title, why, trigger: 'availability_changed', settings: patch, ...(opts.notes?.length ? { notes: opts.notes } : {}),
         explanation: 'Deze instelling bepaalt hoe ASCEND je weken plant. Ze verandert je planning nooit ongemerkt: je ziet eerst wat er verschuift, omgaat of vervalt. Wat je al deed en wat je zelf vastzette blijft staan.',
       }),
       { eyebrow: 'Planning aanpassen', ask: opts.alwaysAsk ? 'always' : 'setting', declined: 'Je instelling en je planning blijven zoals ze waren.', ...(opts.alwaysAsk ? { alwaysAsk: true } : {}), ...(opts.onStored ? { onStored: opts.onStored } : {}) },

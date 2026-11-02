@@ -135,6 +135,13 @@ export function reconcileFixedSessions(
   return { sessions: out, added, removed, changed };
 }
 
+// Bij Vaste dag naar Telt mee of Negeren: blijven er rijen van die sport staan die je zelf verplaatste of
+// oversloeg (open, niet meer op hun eigen dag), dan zegt het voorstel dat. Anders niets.
+export function keptFixedNote(sessions: readonly PlannedSession[], sport: CountedSportId, today: string): string | undefined {
+  const kept = sessions.some((s) => s.fixed?.sport === sport && s.scheduledDate >= today && !isUntouchedFixed(s));
+  return kept ? 'Wat je verplaatste of oversloeg blijft staan.' : undefined;
+}
+
 // "Voetbal op dinsdag valt in je vrije dagen en vervalt."
 export function fixedLeaveNote(item: { sport: CountedSportId; date: string; period: LeavePeriod }): string {
   const day = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'][(new Date(`${item.date}T00:00:00Z`).getUTCDay() + 6) % 7];
