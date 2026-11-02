@@ -6,7 +6,7 @@ import {
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonChangeInput } from './horizonPlan';
 import { undoPlanChangeNow } from './undoPlanChange';
 import type { RecentPlanChange } from '../models/planChange';
-import { reshapeStrength, strengthPlanItems } from '../engine/directionStrength';
+import { reshapeStrength, strengthNotes, strengthPlanItems } from '../engine/directionStrength';
 import { isStrengthTemplateId } from '../engine/weekShape';
 import { mondayOfWeek, addDays } from '../utils/dates';
 import type { TrainingGoal } from '../models/goals';
@@ -36,22 +36,24 @@ describe('een richting verandert het aantal keer kracht', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  const build = async (target: number) => {
+  const build = async (target: number, extra: Partial<Parameters<typeof strengthPlanItems>[1]> = {}) => {
     const [templates, settings, config, planned, logs, programs] = await Promise.all([
       SessionTemplatesRepo.getAll(), SettingsRepo.get(), GoalEngineConfigRepo.get(), PlannedSessionsRepo.getAll(), SessionLogsRepo.getAll(), ProgramsRepo.getAll(),
     ]);
     const reshape = reshapeStrength({ templates, weekShape: settings.weekShape, restDay: settings.restDay, target })!;
-    const items = strengthPlanItems(reshape, {
-      templates, plannedSessions: planned, logs, program: programs[0], today: TODAY,
-      dailyTimeBudget: config.availability.dailyTimeBudget, pairing: config.strategy.sameDayPairingPreference,
+    const plan = strengthPlanItems(reshape, {
+      templates, plannedSessions: planned, logs, program: programs[0], today: TODAY, restDay: settings.restDay,
+      leave: settings.leavePeriods, illnessEpisodes: settings.illnessEpisodes,
+      dailyTimeBudget: config.availability.dailyTimeBudget, pairing: config.strategy.sameDayPairingPreference, ...extra,
     });
+    const items = plan.items;
     const input: HorizonChangeInput = {
       title: 'Richting', why: 'Test.', explanation: 'Test.', trigger: 'direction_changed',
       settings: { direction: 'easy', directionStart: FROM, weekShape: reshape.shape },
       strengthBlock: reshape.strategy,
       ...(items.length > 0 ? { startItems: items } : {}),
     };
-    return { reshape, input };
+    return { reshape, input, plan };
   };
 
   it('Rustig aan haalt kracht weg uit alle weken die komen, het voorstel laat het zien, en ongedaan maken zet alles terug', async () => {
@@ -99,5 +101,75 @@ describe('een richting verandert het aantal keer kracht', () => {
     await applyHorizonPlanNow(await computeHorizonPlan(up.input));
     await syncProgramHorizon();
     expect((await strengthPerWeek()).every((n) => n === 3)).toBe(true);
+  });
+
+  const down = async () => {
+    const d = await build(1);
+    await applyHorizonPlanNow(await computeHorizonPlan(d.input));
+    await syncProgramHorizon();
+  };
+
+  it('zet nooit kracht in een vakantie en zegt dat het in die week niet paste', async () => {
+    await down();
+    const start = addDays(FROM, 14);
+    await SettingsRepo.set({ leavePeriods: [{ id: 'v1', kind: 'free_days', startDate: start, endDate: addDays(start, 6) }] });
+    const up = await build(3);
+    const adds = up.plan.items.filter((i) => i.action === 'add').map((i) => i.newSessionDraft!.scheduledDate);
+    expect(adds.length).toBeGreaterThan(0);
+    expect(adds.every((d) => d < start || d > addDays(start, 6))).toBe(true);
+    expect(up.plan.noRoomWeeks).toBeGreaterThanOrEqual(1);
+    expect(strengthNotes(up.reshape, up.plan, true).join(' ')).toMatch(/In \d+ week(en)? paste het niet, daar blijft het bij 1 keer\./);
+  });
+
+  it('zet geen kracht in een ziekteperiode', async () => {
+    await down();
+    await SettingsRepo.set({ illnessEpisodes: [{ id: 'z1', kind: 'cold_above_neck', startDate: TODAY } as never] });
+    const up = await build(3);
+    const first = addDays(TODAY, 7);
+    expect(up.plan.items.filter((i) => i.action === 'add').every((i) => i.newSessionDraft!.scheduledDate > first)).toBe(true);
+  });
+
+  it('laat kracht weg in een week waar een verschoven lange duurloop of een zware beendag het te dichtbij maakt', async () => {
+    await down();
+    const up0 = await build(3);
+    const lowerDay = up0.reshape.shape.days.tpl_lower_a;
+    const week = addDays(FROM, 21);
+    const date = addDays(week, lowerDay - 1);
+    const rows = await PlannedSessionsRepo.getAll();
+    const heavy = rows.find((x) => x.templateId === 'tpl_long_run' && x.weekStartDate === week)!;
+    await PlannedSessionsRepo.put({ ...heavy, scheduledDate: date, lock: { by: 'user', at: `${TODAY}T08:00:00.000Z` } });
+    const up = await build(3);
+    const adds = up.plan.items.filter((i) => i.action === 'add').map((i) => i.newSessionDraft!);
+    expect(adds.some((a) => a.weekStartDate === week && a.templateId === 'tpl_lower_a')).toBe(false);
+    expect(up.plan.noRoomWeeks + up.plan.partialWeeks).toBeGreaterThanOrEqual(1);
+  });
+
+  it('zonder enige toevoeging zegt het voorstel dat er geen extra keer bij past', async () => {
+    await down();
+    await SettingsRepo.set({ leavePeriods: [{ id: 'v2', kind: 'free_days', startDate: addDays(FROM, 1), endDate: addDays(FROM, 7 * 60) }] });
+    const up = await build(3);
+    expect(up.plan.addedWeeks).toBe(0);
+    expect(strengthNotes(up.reshape, up.plan, false)).toEqual(['Je richting vraagt 3 keer kracht; op je dagen past er nu geen extra keer bij.']);
+  });
+
+  it('laat kracht van vandaag en een open Forge-training staan en raakt alleen het aantal van het krachtblok aan', async () => {
+    const rows = await PlannedSessionsRepo.getAll();
+    const todays = rows.find((x) => x.templateId === 'tpl_upper_b' && x.scheduledDate >= TODAY)!;
+    const open = rows.filter((x) => x.templateId === 'tpl_upper_b' && x.scheduledDate > TODAY).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+    const { plan } = await build(1, { openPlannedId: open.id });
+    const gone = new Set(plan.items.filter((i) => i.action === 'remove').map((i) => i.plannedSessionId));
+    expect(gone.has(open.id)).toBe(false);
+    expect(rows.filter((x) => x.scheduledDate <= TODAY && gone.has(x.id))).toEqual([]);
+    void todays;
+    const before = (await StrengthProgramStrategiesRepo.getAll()).filter((x) => x.status === 'active' || x.status === 'ending');
+    const { input } = await build(1);
+    await applyHorizonPlanNow(await computeHorizonPlan(input));
+    const after = (await StrengthProgramStrategiesRepo.getAll()).filter((x) => x.status === 'active' || x.status === 'ending');
+    for (const a of after) {
+      const b = before.find((x) => x.id === a.id)!;
+      expect(a.splitType).toBe(b.splitType);
+      expect([...a.sessionTemplateIds].sort()).toEqual([...b.sessionTemplateIds].sort());
+      expect(a.sessionsPerWeek).toBe(1);
+    }
   });
 });

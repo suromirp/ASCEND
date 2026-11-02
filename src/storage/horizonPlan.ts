@@ -73,8 +73,8 @@ export interface HorizonChangeInput {
   // gets this.
   firstPlan?: FirstPlanExtras;
   // Een richting die het aantal keer kracht verandert (engine/directionStrength.ts): het actieve krachtblok
-  // volgt de nieuwe week, zodat de krachtplanning er niet tegenin gaat. Alleen bij Akkoord, met ongedaan maken.
-  strengthBlock?: { sessionTemplateIds: string[]; sessionsPerWeek: number; splitType: string };
+  // volgt in het aantal per week (en de overgebleven sjablonen komen vooraan); sjablonen en split blijven van jou. Alleen bij Akkoord, met ongedaan maken.
+  strengthBlock?: { sessionsPerWeek: number; keepFirst: string[] };
 }
 
 export interface FirstPlanExtras {
@@ -307,7 +307,7 @@ async function takeSnapshot(input: HorizonChangeInput, sessions: PlannedSession[
     newGoalIds: (input.goals ?? []).filter((g) => !storedGoals.has(g.id)).map((g) => g.id),
     ...(input.program && programs[0] ? { program: programs[0] } : {}),
   };
-  if (input.strengthBlock) restore.strategies = (await StrengthProgramStrategiesRepo.getAll()).filter((st) => st.status === 'active');
+  if (input.strengthBlock) restore.strategies = (await StrengthProgramStrategiesRepo.getAll()).filter((st) => st.status === 'active' || st.status === 'ending');
   const extras = input.firstPlan || input.strengthBlock
     ? { config: await GoalEngineConfigRepo.get(), strategies: await StrengthProgramStrategiesRepo.getAll(), strategyFlag: await MetaRepo.get('strengthProgramDefaultSeeded') }
     : undefined;
@@ -399,7 +399,12 @@ export async function applyHorizonPlanNow(plan: HorizonPlan, deps: HorizonDeps =
     if (input.strengthBlock) {
       const at = new Date().toISOString();
       for (const st of await StrengthProgramStrategiesRepo.getAll()) {
-        if (st.status === 'active') await StrengthProgramStrategiesRepo.put({ ...st, ...input.strengthBlock, updatedAt: at });
+        if (st.status !== 'active' && st.status !== 'ending') continue;
+        const first = input.strengthBlock.keepFirst.filter((id) => st.sessionTemplateIds.includes(id));
+        await StrengthProgramStrategiesRepo.put({
+          ...st, sessionsPerWeek: input.strengthBlock.sessionsPerWeek, updatedAt: at,
+          sessionTemplateIds: [...first, ...st.sessionTemplateIds.filter((id) => !first.includes(id))],
+        });
       }
     }
     // The registers follow the stored settings again, now with the change.

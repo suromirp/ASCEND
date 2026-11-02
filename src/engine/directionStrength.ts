@@ -12,8 +12,12 @@ import type { PlanChangeItem } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
-import { computeSportEnableProposal } from './scheduleFit';
-import { lockLevel } from './weekValidator';
+import type { IllnessEpisode } from '../models/illness';
+import type { LeavePeriod } from '../models/leave';
+import { addDays, mondayOfWeek } from '../utils/dates';
+import { activeIllness, isIllnessDay } from './illness';
+import { leaveDays, lightDays } from './leave';
+import { lockLevel, validateWeeks } from './weekValidator';
 import { WEEK_SHAPE_STRENGTH, WEEK_SHAPE_TEMPLATE_IDS, parseWeekShape, type WeekShape } from './sports';
 import { WEEKDAY_NAMES } from './firstPlan';
 import { shapeSpacingConflicts } from './weekShape';
@@ -33,8 +37,11 @@ export interface StrengthReshape {
   to: number;
   added: string[];
   removed: string[];
-  // Voor het krachtblok dat de planning leest (StrengthProgramStrategy).
-  strategy: { sessionTemplateIds: string[]; sessionsPerWeek: number; splitType: string };
+  // Het aantal keer dat de richting vraagt (het kan meer zijn dan er op je dagen past).
+  target: number;
+  // Voor het krachtblok dat de planning leest (StrengthProgramStrategy): alleen het aantal per week, en welke
+  // sjablonen vooraan komen. De sjablonen zelf en de split van het blok blijven zoals jij ze koos.
+  strategy: { sessionsPerWeek: number; keepFirst: string[] };
   // Gewone zinnen voor het voorstel.
   lines: string[];
 }
@@ -103,37 +110,97 @@ export function reshapeStrength(input: {
     to,
     added,
     removed,
-    strategy: { sessionTemplateIds: kept, sessionsPerWeek: to, splitType: to === 1 ? 'full_body' : 'upper_lower' },
+    target: input.target,
+    strategy: { sessionsPerWeek: to, keepFirst: kept },
     lines,
   };
 }
 
-// De rijen van de bestaande planning die meegaan: kracht die vervalt (alleen wat het systeem plande en nog
-// niet gedaan is; wat jij vastzette en wat voorbij is blijft) en kracht die erbij komt op de nieuwe dag, waar
-// die dag ruimte heeft. Weken die nog niet gepland zijn volgen de nieuwe weekvorm vanzelf bij de planningsronde.
-export function strengthPlanItems(
-  reshape: Pick<StrengthReshape, 'shape' | 'added' | 'removed' | 'to'>,
-  ctx: {
-    templates: readonly SessionTemplate[];
-    plannedSessions: readonly PlannedSession[];
-    logs: readonly Pick<SessionLog, 'plannedSessionId'>[];
-    program: Program | null | undefined;
-    dailyTimeBudget: Partial<Record<Weekday, DailyTimeBudget>> | undefined;
-    pairing: TrainingStrategyProfile['sameDayPairingPreference'];
-    today: string;
-  },
-): PlanChangeItem[] {
+// De rijen van de bestaande planning die meegaan. Kracht die vervalt: alleen vanaf morgen, alleen wat het
+// systeem plande en nog niet gedaan is, nooit de training die in Forge open staat. Kracht die erbij komt:
+// alleen vanaf morgen op de nieuwe dag, en alleen als de weekcontrole (weekValidator) er niets op aanmerkt
+// met jouw vakanties en je ziekte erbij (geen vakantiedag, geen ziekteperiode, 48 uur tussen zware beendagen,
+// ruimte op de dag). Past het niet, dan blijft die week zoals hij is en telt het mee in `noRoomWeeks`.
+export interface StrengthPlanContext {
+  templates: readonly SessionTemplate[];
+  plannedSessions: readonly PlannedSession[];
+  logs: readonly SessionLog[];
+  program: Program | null | undefined;
+  dailyTimeBudget: Partial<Record<Weekday, DailyTimeBudget>> | undefined;
+  pairing: TrainingStrategyProfile['sameDayPairingPreference'];
+  today: string;
+  restDay?: number;
+  leave?: LeavePeriod[];
+  illnessEpisodes?: IllnessEpisode[];
+  // De geplande training die nu open staat in Forge: die blijft.
+  openPlannedId?: string;
+}
+
+export interface StrengthPlanItems {
+  items: PlanChangeItem[];
+  addedWeeks: number;
+  // Weken waar niets bij paste, en weken waar maar een deel bij paste.
+  noRoomWeeks: number;
+  partialWeeks: number;
+}
+
+export function strengthPlanItems(reshape: Pick<StrengthReshape, 'shape' | 'added' | 'removed' | 'to'>, ctx: StrengthPlanContext): StrengthPlanItems {
   const reason = `Je richting vraagt ${reshape.to} keer kracht per week.`;
   const logged = new Set(ctx.logs.map((l) => l.plannedSessionId));
   const removing = new Set(reshape.removed);
   const items: PlanChangeItem[] = ctx.plannedSessions
-    .filter((s) => s.status !== 'skipped' && removing.has(s.templateId) && lockLevel(s, logged, ctx.today) === 3)
+    .filter((s) => s.status !== 'skipped' && s.scheduledDate > ctx.today && s.id !== ctx.openPlannedId && removing.has(s.templateId) && lockLevel(s, logged, ctx.today) === 3)
     .map((s) => ({ plannedSessionId: s.id, action: 'remove' as const, reason, generatedBy: ['engine/directionStrength.ts'] }));
+
+  let addedWeeks = 0;
+  let noRoomWeeks = 0;
+  let partialWeeks = 0;
   if (reshape.added.length > 0) {
-    const days = reshape.shape.days;
-    const addTemplates = ctx.templates.filter((t) => reshape.added.includes(t.id) && days[t.id]).map((t) => ({ ...t, defaultDayOfWeek: days[t.id] }));
-    const { proposal } = computeSportEnableProposal(addTemplates, 'Kracht', [...ctx.plannedSessions], [...ctx.templates], ctx.program, ctx.dailyTimeBudget, ctx.pairing, ctx.today);
-    for (const c of proposal.changes) items.push({ ...c, reason, generatedBy: ['engine/directionStrength.ts'] });
+    const leave = leaveDays(ctx.leave);
+    const light = lightDays(ctx.leave, leave);
+    const templates = [...ctx.templates];
+    const weekStarts = [...new Set(ctx.plannedSessions.filter((s) => s.scheduledDate > ctx.today).map((s) => s.weekStartDate))].sort();
+    for (const weekStart of weekStarts) {
+      const week = [...ctx.plannedSessions.filter((s) => s.weekStartDate === weekStart && s.status !== 'skipped')];
+      let placedHere = false;
+      let failedHere = false;
+      for (const id of reshape.added) {
+        if (week.some((s) => s.templateId === id)) continue;
+        const dow = reshape.shape.days[id];
+        if (!dow) continue;
+        const date = addDays(mondayOfWeek(weekStart), dow - 1);
+        if (date <= ctx.today) continue;
+        const draft: PlannedSession = { id: `draft:${weekStart}:${id}`, templateId: id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order: 99 };
+        const blocked = leave.has(date) || light.has(date) || isIllnessDay(date, ctx.illnessEpisodes, ctx.today) || (!!activeIllness(ctx.illnessEpisodes) && date <= addDays(ctx.today, 7));
+        const findings = blocked ? [] : validateWeeks({
+          sessions: [...ctx.plannedSessions.filter((s) => s.status !== 'skipped'), ...week.filter((s) => s.id.startsWith('draft:')), draft],
+          logs: [...ctx.logs] as SessionLog[], templates, today: ctx.today, restDay: ctx.restDay, program: ctx.program,
+          dailyTimeBudget: ctx.dailyTimeBudget, sameDayPairingPreference: ctx.pairing, leave: ctx.leave, until: addDays(weekStart, 13),
+        }, new Set([weekStart])).filter((f) => f.sessionIds.includes(draft.id) || f.subjectId === draft.id);
+        if (blocked || findings.length > 0) { failedHere = true; continue; }
+        week.push(draft);
+        placedHere = true;
+        items.push({
+          action: 'add', newSessionDraft: { templateId: id, scheduledDate: date, weekStartDate: weekStart }, reason, generatedBy: ['engine/directionStrength.ts'],
+        });
+      }
+      if (placedHere) addedWeeks++;
+      if (failedHere) { if (placedHere) partialWeeks++; else noRoomWeeks++; }
+    }
   }
-  return items;
+  return { items, addedWeeks, noRoomWeeks, partialWeeks };
+}
+
+// De regels van het voorstel, eerlijk over wat lukte en wat niet.
+export function strengthNotes(reshape: StrengthReshape, outcome: Pick<StrengthPlanItems, 'addedWeeks' | 'noRoomWeeks' | 'partialWeeks'>, blockFollows: boolean): string[] {
+  const lines: string[] = [];
+  if (reshape.added.length > 0 && outcome.addedWeeks === 0 && (outcome.noRoomWeeks > 0 || outcome.partialWeeks > 0)) {
+    lines.push(`Je richting vraagt ${reshape.target} keer kracht; op je dagen past er nu geen extra keer bij.`);
+  } else {
+    lines.push(...reshape.lines);
+    if (outcome.noRoomWeeks > 0) lines.push(`In ${outcome.noRoomWeeks} ${outcome.noRoomWeeks === 1 ? 'week' : 'weken'} paste het niet, daar blijft het bij ${reshape.from} keer.`);
+  }
+  if (outcome.partialWeeks > 0) lines.push(`In ${outcome.partialWeeks} ${outcome.partialWeeks === 1 ? 'week' : 'weken'} paste maar een deel van de extra kracht, daar komt er minder bij.`);
+  if (blockFollows) lines.push(`Je krachtblok gaat mee naar ${reshape.to} keer per week.`);
+  return lines;
 }

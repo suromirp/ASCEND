@@ -9,8 +9,11 @@ import { resolveWaveSettings } from '../../engine/waves';
 import { noGoalWavesLines, wavesHeld } from '../../engine/noGoalWaves';
 import { waveReviewPatch, type WaveReviewCard, type WaveReviewChoice } from '../../engine/waveReviewCard';
 import { mondayOfWeek, todayISO } from '../../utils/dates';
-import { reshapeStrength, strengthPlanItems, strengthTargetFor } from '../../engine/directionStrength';
+import { reshapeStrength, strengthNotes, strengthPlanItems, strengthTargetFor } from '../../engine/directionStrength';
 import { resolveWeekBudget } from '../../engine/weekBudget';
+import { listedGoals } from '../../engine/goalList';
+import { activeStrengthStrategy } from '../../engine/strengthProgram';
+import { readPointer } from '../../utils/forgeSessionStore';
 import { useHorizonChange } from '../useHorizonChange';
 
 const KEEP = 'Prima, alles blijft zoals het was.';
@@ -30,26 +33,31 @@ export function useDirectionChange(): {
   sheet: ReactNode;
   busy: boolean;
 } {
-  const { settings, updateSettings, planHorizonChange, program, sessionLogs, templates, plannedSessions, goalEngineConfig } = useAppData();
+  const { settings, updateSettings, planHorizonChange, program, sessionLogs, templates, plannedSessions, goalEngineConfig, trainingGoals, goalMilestones, strengthProgramStrategies } = useAppData();
   const horizon = useHorizonChange();
 
   // Past de richting het aantal keer kracht aan? Dan gaat de nieuwe weekvorm mee in hetzelfde voorstel, met
-  // de regels die zeggen wat erbij komt en wat vervalt (engine/directionStrength.ts).
+  // de regels die zeggen wat erbij komt, wat vervalt en wat niet lukte (engine/directionStrength.ts).
+  // Met een doel in de lijst doet dit niets: dan bepaalt het doel je week.
   function strengthChange(id: DirectionId, weekBudget: unknown) {
+    const none = { settings: {}, block: {}, lines: [] as string[] };
+    const ladder = new Set(goalMilestones.map((m) => m.goalId));
+    if (listedGoals(trainingGoals, ladder, todayISO()).length > 0) return none;
     const reshape = reshapeStrength({
       templates, weekShape: settings.weekShape, restDay: settings.restDay,
       target: strengthTargetFor(id, resolveWeekBudget(weekBudget)),
     });
-    const items = reshape
-      ? strengthPlanItems(reshape, {
-          templates, plannedSessions, logs: sessionLogs, program, today: todayISO(),
-          dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, pairing: goalEngineConfig.strategy.sameDayPairingPreference,
-        })
-      : [];
+    if (!reshape) return none;
+    const planned = strengthPlanItems(reshape, {
+      templates, plannedSessions, logs: sessionLogs, program, today: todayISO(), restDay: settings.restDay,
+      leave: settings.leavePeriods, illnessEpisodes: settings.illnessEpisodes, openPlannedId: readPointer()?.plannedSessionId,
+      dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, pairing: goalEngineConfig.strategy.sameDayPairingPreference,
+    });
+    const blockFollows = !!activeStrengthStrategy(strengthProgramStrategies);
     return {
-      settings: reshape ? { weekShape: reshape.shape } : {},
-      block: reshape ? { strengthBlock: reshape.strategy, ...(items.length > 0 ? { startItems: items } : {}) } : {},
-      lines: reshape?.lines ?? [],
+      settings: { weekShape: reshape.shape },
+      block: { ...(blockFollows ? { strengthBlock: reshape.strategy } : {}), ...(planned.items.length > 0 ? { startItems: planned.items } : {}) },
+      lines: strengthNotes(reshape, planned, blockFollows),
     };
   }
 

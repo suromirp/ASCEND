@@ -28,7 +28,8 @@ describe('reshapeStrength', () => {
     expect(r.removed).toEqual(['tpl_upper_b', 'tpl_lower_a']);
     expect(r.added).toEqual([]);
     expect(r.shape.days).toEqual({ tpl_upper_a: 2, tpl_easy_run: 3, tpl_long_run: 6, tpl_herstel: 1 });
-    expect(r.strategy).toEqual({ sessionTemplateIds: ['tpl_upper_a'], sessionsPerWeek: 1, splitType: 'full_body' });
+    expect(r.strategy).toEqual({ sessionsPerWeek: 1, keepFirst: ['tpl_upper_a'] });
+    expect(r.target).toBe(1);
   });
 
   it('zonder eigen weekvorm gaat het gewone patroon uit, met alles op zijn vaste dag', () => {
