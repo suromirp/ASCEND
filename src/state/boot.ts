@@ -53,7 +53,7 @@ function sessionStorageOrNull(): Storage | null {
     return null;
   }
 }
-export function runBootMigrationsOnce(): Promise<void> {
+function runBootMigrationsOnce(): Promise<void> {
   if (!bootMigrations) {
     const { ready, settled } = runBootUnderLock({
       locks: typeof navigator !== 'undefined' ? navigator.locks : undefined,

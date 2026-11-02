@@ -6,7 +6,7 @@
 // docs/onderzoek/. Waar daar niets over een plek staat, zegt de tekst dat eerlijk en
 // is het een algemene, rustige aanpak. Dit is algemene uitleg, geen diagnose.
 
-export interface CareExercise {
+interface CareExercise {
   name: string;
   // "3 × 8 per been": hoe vaak of hoe lang.
   dose: string;

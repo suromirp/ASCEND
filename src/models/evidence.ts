@@ -7,8 +7,8 @@
 // referenced everywhere by id, never restated inline.
 
 export type RuleClass = 'evidence_backed' | 'evidence_informed' | 'ascend_heuristic' | 'product_rule';
-export type EvidenceStrength = 'strong' | 'moderate' | 'limited' | 'heuristic';
-export type PopulationDirectness = 'high' | 'medium' | 'low';
+type EvidenceStrength = 'strong' | 'moderate' | 'limited' | 'heuristic';
+type PopulationDirectness = 'high' | 'medium' | 'low';
 export type PublicationType =
   | 'systematic_review' | 'meta_analysis' | 'rct' | 'cohort_study'
   | 'cross_sectional' | 'case_series' | 'consensus_statement' | 'other';

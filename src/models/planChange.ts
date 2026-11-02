@@ -19,7 +19,7 @@ import type { PlannedLeaveMark } from './leave';
 import type { Program } from './program';
 import type { StrengthProgramStrategy } from './strengthProgram';
 
-export type PlanChangeAction = 'keep' | 'add' | 'move' | 'swap' | 'reduce' | 'replace' | 'remove';
+type PlanChangeAction = 'keep' | 'add' | 'move' | 'swap' | 'reduce' | 'replace' | 'remove';
 
 export interface PlanChangeItem {
   // Absent for an 'add' of a new row. An 'add' that names a skipped row brings

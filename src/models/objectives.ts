@@ -27,7 +27,7 @@ export type MilestoneRequirement =
   | { kind: 'consecutiveDays'; days: number }
   | { kind: 'manual' };
 
-export interface MilestoneDefinition {
+interface MilestoneDefinition {
   id: string;
   objectiveId: string;
   order: number;

@@ -19,7 +19,7 @@
 
 export type StrengthProgramSource = 'macrofactor_workouts' | 'manual' | 'future_provider';
 
-export type StrengthProgramStatus = 'active' | 'ending' | 'completed' | 'archived';
+type StrengthProgramStatus = 'active' | 'ending' | 'completed' | 'archived';
 
 export interface StrengthProgramStrategy {
   id: string;

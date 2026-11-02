@@ -1508,5 +1508,3 @@ const NEUTRAL_HELP: Record<string, SettingsHelp> = {
 export function settingsHelp(key: string, named: boolean = true): SettingsHelp | undefined {
   return (!named && NEUTRAL_HELP[key]) || SETTINGS_HELP[key];
 }
-
-export type SettingsHelpKey = keyof typeof SETTINGS_HELP;

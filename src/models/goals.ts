@@ -17,12 +17,10 @@ export type TerrainContext =
   | 'snow'                                                             // a snow hike (tochten, models/leave.ts)
   | 'unknown';
 
-export type GoalStatus = 'active' | 'paused' | 'completed' | 'archived';
-
 // Requirement scope — over what span a GoalRequirement's target is measured
 // (Technical Architecture v0.3.6 §E1, correcting v0.3.1 REVISED's original
 // lowercase casing to what was explicitly re-confirmed there).
-export type RequirementScope = 'SINGLE_EVENT' | 'PER_DAY' | 'TOTAL_EVENT' | 'CONSECUTIVE_DAYS';
+type RequirementScope = 'SINGLE_EVENT' | 'PER_DAY' | 'TOTAL_EVENT' | 'CONSECUTIVE_DAYS';
 
 export interface GoalRequirement {
   id: string;
@@ -89,7 +87,7 @@ export interface GoalDetails {
   strengthDays?: number;
 }
 
-export interface TrainingGoalBase {
+interface TrainingGoalBase {
   id: string;
   name: string;
   requirements: GoalRequirement[];
@@ -140,11 +138,6 @@ export interface GoalMilestone {
   order: number; // DISPLAY order only; identity lives in `id`
   title: string;
   requirement: MilestoneRequirement;
-}
-
-export interface GoalAchievementTrack {
-  goalId: string;
-  milestones: GoalMilestone[];
 }
 
 // Append-only — identical semantics to the legacy MilestoneProgress.

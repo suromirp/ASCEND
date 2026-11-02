@@ -4,7 +4,7 @@
 // 2024 tot 2026 en regels veranderen: elk gebied toont "controleer voor
 // vertrek" met de link.
 
-export interface SourceLink {
+interface SourceLink {
   label: string;
   url: string;
 }

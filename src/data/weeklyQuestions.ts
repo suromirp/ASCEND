@@ -43,7 +43,7 @@ export type WeekQuestionPhase =
   | 'taper'
   | 'gr5';
 
-export type WeekQuestionTheme =
+type WeekQuestionTheme =
   | 'tegenslag'
   | 'pijn_ziekte'
   | 'weer'
@@ -55,7 +55,7 @@ export type WeekQuestionTheme =
   | 'uitrusting'
   | 'wedstrijd';
 
-export interface WeekQuestionSource {
+interface WeekQuestionSource {
   tekst: string; // eigen vertaling, kort
   auteur: 'Marcus Aurelius' | 'Seneca' | 'Epictetus';
   werk: string; // werk en plaats, bijvoorbeeld "Overpeinzingen 4.49"

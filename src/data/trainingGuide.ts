@@ -14,17 +14,17 @@ import { isoWeekday } from '../utils/dates';
 // inferred from the order they were supplied and the order the original
 // document cited Garmin for each topic, not independently confirmed.
 
-export interface GuideSource {
+interface GuideSource {
   label: string;
   url?: string;
 }
 
-export interface GuideSubsection {
+interface GuideSubsection {
   heading: string;
   items: string[];
 }
 
-export interface GuideSection {
+interface GuideSection {
   heading: string;
   body?: string;
   items?: string[];
