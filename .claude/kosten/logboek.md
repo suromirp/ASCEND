@@ -122,3 +122,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Week en Vandaag hulp herstel, Sherpa, opus, hervat, 1; live
 - 2026-11-02, Locatie, Sherpa, sonnet, 228k, 32 min, review loopt
 - 2026-11-02, Review locatie, Warden, opus, 89k, 4 min, groen met 7 punten
+- 2026-11-02, Locatie herstel, Sherpa, sonnet, hervat 243k, 13 min, 1; live
+- 2026-11-02, Health Connect, Sherpa, opus, 359k, 68 min, review volgt na merge; vond de plugin-proxyfout
