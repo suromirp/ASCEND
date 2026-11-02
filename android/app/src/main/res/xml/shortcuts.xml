@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dezelfde vier snelkoppelingen als de PWA (vite.config.ts). Het adres wordt in de webview een
+     hash-route (src/engine/shortcutAction.ts#routeFromNativeShortcut); de origin verandert nooit. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="vandaag"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_vandaag"
+        android:shortcutShortLabel="@string/shortcut_vandaag">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="app.ascend.training://open/vandaag"
+            android:targetClass="app.ascend.training.MainActivity"
+            android:targetPackage="app.ascend.training" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="week"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_week"
+        android:shortcutShortLabel="@string/shortcut_week">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="app.ascend.training://open/week"
+            android:targetClass="app.ascend.training.MainActivity"
+            android:targetPackage="app.ascend.training" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="logboek"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_logboek"
+        android:shortcutShortLabel="@string/shortcut_logboek">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="app.ascend.training://open/logboek"
+            android:targetClass="app.ascend.training.MainActivity"
+            android:targetPackage="app.ascend.training" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="afvinken"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_afvinken"
+        android:shortcutShortLabel="@string/shortcut_afvinken">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="app.ascend.training://open/afvinken"
+            android:targetClass="app.ascend.training.MainActivity"
+            android:targetPackage="app.ascend.training" />
+    </shortcut>
+</shortcuts>

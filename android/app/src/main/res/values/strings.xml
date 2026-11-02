@@ -4,4 +4,12 @@
     <string name="title_activity_main">ASCEND</string>
     <string name="package_name">app.ascend.training</string>
     <string name="custom_url_scheme">app.ascend.training</string>
+    <string name="shortcut_vandaag">Vandaag</string>
+    <string name="shortcut_week">Week</string>
+    <string name="shortcut_logboek">Logboek</string>
+    <string name="shortcut_afvinken">Training afvinken</string>
+    <string name="widget_eyebrow">Vandaag</string>
+    <string name="widget_open">Open ASCEND</string>
+    <string name="widget_minutes">%1$d min</string>
+    <string name="widget_description">Je training van vandaag, met één tik naar de app.</string>
 </resources>
