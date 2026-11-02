@@ -134,6 +134,10 @@ export interface SessionTemplate {
   sport?: SportId;
   // Only on the derived template of a sport that counts (engine/sportTemplate.ts); never stored.
   countedSport?: CountedSportId;
+  // Only on a derived sport day (engine/sportDays.ts): the hours the legs stay free of the next heavy leg
+  // day, and whether "Rust na een zware sport" is on Korter. Never stored.
+  legRestHours?: number;
+  restShort?: boolean;
   // See TemplateRole. Optional: absent falls back to the defaults of the id.
   roles?: TemplateRole[];
   focus?: string; // e.g. "Borst • Rug • Schouders"

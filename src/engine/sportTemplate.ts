@@ -7,7 +7,7 @@
 import { COUNTED_SPORTS, anySportDefinition, type CountedSportId, type SportDefinition } from '../data/sports';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { stressProfileOf, type SportIntensity } from './sportStress';
-import { sportCounts } from './sportRole';
+import { resolveSportCounting, sportCounts } from './sportRole';
 
 const PREFIX = 'sport_';
 
@@ -21,7 +21,7 @@ export function countedSportOfTemplate(template: Pick<SessionTemplate, 'countedS
   return template.countedSport;
 }
 
-export function sportTemplate(sport: CountedSportId, intensity?: SportIntensity): SessionTemplate {
+export function sportTemplate(sport: CountedSportId, intensity?: SportIntensity, opts: { restShort?: boolean } = {}): SessionTemplate {
   const def = anySportDefinition(sport) as SportDefinition;
   return {
     id: sportTemplateId(sport),
@@ -31,6 +31,7 @@ export function sportTemplate(sport: CountedSportId, intensity?: SportIntensity)
     countedSport: sport,
     durationVariants: { full: 60 },
     baseStressProfile: stressProfileOf(def, intensity ?? def.typicalIntensity),
+    ...(opts.restShort ? { restShort: true } : {}),
   };
 }
 
@@ -38,7 +39,8 @@ type CountingSettings = Parameters<typeof sportCounts>[0];
 
 // De afgeleide sjablonen van de sporten die nu meetellen (Telt mee of Vaste dag).
 export function countingSportTemplates(settings: CountingSettings): SessionTemplate[] {
-  return COUNTED_SPORTS.filter((s) => sportCounts(settings, s.id)).map((s) => sportTemplate(s.id));
+  const restShort = resolveSportCounting(settings.sportCounting).rest === 'korter';
+  return COUNTED_SPORTS.filter((s) => sportCounts(settings, s.id)).map((s) => sportTemplate(s.id, undefined, { restShort }));
 }
 
 // De opgeslagen sjablonen met de afgeleide erbij; een opgeslagen sjabloon met dezelfde id gaat voor.

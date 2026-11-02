@@ -106,7 +106,7 @@ export function SportsPage() {
           </SettingsList>
         </div>
       </div>
-      {counting && <SportCountingSheet facts={facts} onClose={() => setCounting(false)} />}
+      {counting && <SportCountingSheet facts={facts} plan={plan} onClose={() => setCounting(false)} />}
       {open && <SportRoleSheet sport={open} plan={plan} onClose={() => setOpen(null)} />}
       {plan.impact}
     </div>

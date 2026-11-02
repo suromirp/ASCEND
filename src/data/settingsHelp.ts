@@ -826,6 +826,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Vragen bij een nieuwe sport', text: 'komt er van je horloge een sport binnen die je nog niet koos, dan staat op Vandaag één rustige vraag: hoe telt dit? Tot je antwoordt telt hij niet mee en verandert er niets. Uit: zo’n sport telt meteen mee als je hem doet.' },
       { head: 'Vragen hoe zwaar het was', text: 'Rustig, Pittig, Zwaar of Heel zwaar. Hoe zwaarder, hoe meer het telt voor je benen. Uit: ASCEND neemt de gebruikelijke zwaarte van de sport aan en rekent een tikje voorzichtiger.' },
+      { head: 'Rust na een zware sport', text: 'Ruim houdt na een voetbalwedstrijd 72 uur en na padel of een voetbaltraining 48 uur vrij van zware beenkracht. Korter maakt dat 48 en 24 uur: dan staat er na voetbal eerder weer zware beenkracht. Het bewijs voor recreanten is matig; de 72 uur komt van onderzoek bij profs.' },
+      { head: 'Nooit stil', text: 'staat een zware beendag van ASCEND te dicht na een sport die je deed, dan zie je in Week een voorstel om hem te verplaatsen. Pas met Akkoord verandert er iets.' },
       { head: 'Bewijs', text: 'wat een sport met je benen doet is afgeleid uit onderzoek en niet getoetst. Het kan helpen om een zware beendag niet vlak na een wedstrijd te zetten.' },
     ],
   },

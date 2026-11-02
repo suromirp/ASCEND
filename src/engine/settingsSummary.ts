@@ -630,6 +630,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveSportCounting(s.sportCounting).askNew };
     case 'sport-zwaarte':
       return { checked: resolveSportCounting(s.sportCounting).askFelt };
+    case 'sport-rust':
+      return { value: choiceShort('sportRust', resolveSportCounting(s.sportCounting).rest) };
     case 'rustdag-terug':
       return { checked: s.restDayBack !== false };
     case 'trillen':

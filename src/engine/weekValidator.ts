@@ -16,6 +16,7 @@ import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, weekdayOf, weekdayShortNL } from '../utils/dates';
+import { isSportLogSession, sportLogDays } from './sportDays';
 import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isLegHeavyTemplate } from './scheduler';
 import { patternSlotOf } from './programLayout';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
@@ -63,6 +64,9 @@ export interface Finding {
   subjectId: string;
   level: LockLevel;
   message: string;
+  // Caused by a sport you did that counts (engine/sportDays.ts): never repaired by itself, only as a
+  // proposal with Akkoord (weekFixProposal.ts), which lets the repair move its subject via `mayMove`.
+  fromSport?: true;
   // TEST-FRESH only: the leg index on the test day and the line it is held to.
   legIndex?: number;
   limit?: number;
@@ -122,11 +126,14 @@ const EASY_ID = 'tpl_easy_run';
 
 function context(input: CheckInput) {
   const byId = new Map(input.templates.map((t) => [t.id, t]));
+  // The days you did a sport that counts, as fixed rows in the past with their own profile.
+  const sportDays = sportLogDays(input.logs, byId, input.today);
+  for (const t of sportDays.templates) byId.set(t.id, t);
   const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter(Boolean));
   const until = [input.goalDay ? addDays(input.goalDay, -1) : addDays(input.today, HORIZON_DAYS), input.until].filter((d): d is string => !!d).sort()[0];
   // What the rules look at: open sessions from today until the goal.
   const open = (s: PlannedSession) => s.status !== 'skipped' && !logged.has(s.id) && s.scheduledDate >= input.today;
-  return { byId, logged, until, open };
+  return { byId, logged, until, open, sportDays: sportDays.sessions };
 }
 
 // The leave periods as the rules read them. A walking day of a trek is a
@@ -158,12 +165,12 @@ function afterGoal(input: CheckInput, date: string): { day: number; date: string
 const day = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))}-${Number(iso.slice(5, 7))}`;
 
 export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Finding[] {
-  const { byId, logged, until, open } = context(input);
+  const { byId, logged, until, open, sportDays } = context(input);
   const level = (s: PlannedSession) => lockLevel(s, logged, input.today);
   const leave = leaveContext(input, byId);
   const findings: Finding[] = [];
   const active = input.sessions.filter(open).filter((s) => !onlyWeeks || onlyWeeks.has(mondayOfWeek(s.scheduledDate)));
-  const all = input.sessions.filter((s) => s.status !== 'skipped');
+  const all = [...input.sessions.filter((s) => s.status !== 'skipped'), ...sportDays];
   const recentLogs = input.logs.filter((l) => daysBetween(l.completedDate, input.today) <= 56);
   // By date, so each rule looks at a few days instead of the whole plan.
   const index = (list: PlannedSession[]) => {
@@ -292,7 +299,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
       // Soft rest after a tocht: the short version of a heavy leg day may stand 48 hours after a walking day of the tocht.
       if (input.trekRest !== 'strict' && leave.inTrek(c) && c.scheduledDate < s.scheduledDate && daysBetween(c.scheduledDate, s.scheduledDate) >= 2 && t.type === 'strength' && isLegHeavyTemplate(t) && !!t.durationVariants.short && s.plannedMinutes === t.durationVariants.short) continue;
       const subject = level(s) === 3 || level(c) !== 3 ? s : c;
-      findings.push({ rule: 'LEG-SPACING', date: s.scheduledDate, sessionIds: [c.id, s.id], subjectId: subject.id, level: level(subject), message: `${tpl(c)?.name ?? 'Training'} (${day(c.scheduledDate)}) en ${name} (${day(s.scheduledDate)}) te dicht op elkaar.` });
+      findings.push({ rule: 'LEG-SPACING', date: s.scheduledDate, sessionIds: [c.id, s.id], subjectId: subject.id, level: level(subject), message: `${tpl(c)?.name ?? 'Training'} (${day(c.scheduledDate)}) en ${name} (${day(s.scheduledDate)}) te dicht op elkaar.`, ...(isSportLogSession(c.id) ? { fromSport: true as const } : {}) });
     }
   }
 
@@ -454,6 +461,8 @@ export function repairWeeks(input: CheckInput): RepairResult {
     // the system's strength before it (also a test you placed yourself).
     const next = findings
       // A test that is on the wrong day itself waits for its proposal first.
+      // A sport you did only via a proposal with Akkoord, never by itself.
+      .filter((f) => !f.fromSport || yours.has(f.subjectId))
       .filter((f) => (((f.level === 3 || (f.level === 1 && yours.has(f.subjectId))) && movable(byIdNow.get(f.subjectId)!)) || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
       .sort((a, b) => RULE_ORDER.indexOf(a.rule) - RULE_ORDER.indexOf(b.rule) || a.date.localeCompare(b.date))[0];
     if (!next) return { sessions, repairs, remaining: findings };

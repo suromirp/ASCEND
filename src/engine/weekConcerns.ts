@@ -16,6 +16,8 @@ import { daysBetween, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { idHasRole } from './templateRoles';
 import { legSpacingDays } from './scheduler';
 import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
+import { intensityOfLog, isSportLogSession, restHoursFor, sportDoneLine, sportLogIdOf } from './sportDays';
+import { anySportDefinition } from '../data/sports';
 
 export const CONCERN_RULES: readonly CheckRule[] = ['REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
 
@@ -66,6 +68,24 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
         };
       }
       case 'LEG-SPACING': {
+        // Een sport die je deed en die meetelt (engine/sportDays.ts): het feit eerst, met de rust van die sport.
+        const sportLog = f.fromSport ? input.logs.find((l) => l.id === sportLogIdOf(a) || l.id === sportLogIdOf(b)) : undefined;
+        if (sportLog?.countedSport) {
+          const late = isSportLogSession(a) ? b : a;
+          const sport = sportLog.countedSport;
+          const label = anySportDefinition(sport).label.toLowerCase();
+          const base = input.templates.find((t) => t.id === sportLog.templateId);
+          const hours = restHoursFor(sport, intensityOfLog(sportLog, sport), !!base?.restShort);
+          const gap = Math.abs(daysBetween(sportLog.completedDate, dateOf(late)));
+          return {
+            key: `${f.rule}:${[...f.sessionIds].sort().join(',')}`, rule: f.rule, finding: f,
+            headline: `${sportDoneLine(sport, sportLog.completedDate, input.today)} ${nameOf(late)} staat er vlak na.`,
+            fact: `${nameOf(late)} staat op ${dayName(dateOf(late))}, ${plural(gap, 'dag', 'dagen')} na je ${label}. ASCEND houdt liefst ${hours} uur tussen een zware sport en een zware beendag.`,
+            title: `${nameOf(late)} verder van je ${label}`,
+            why: `Wat je ${label === 'zwemmen' ? 'zwom' : 'speelde'} telt mee voor je benen. Het kan helpen om een zware beendag niet vlak erna te zetten. Het bewijs voor recreanten is matig.`,
+            notes: { [late]: `${plural(gap, 'dag', 'dagen')} na ${label}` },
+          };
+        }
         const gap = Math.abs(daysBetween(dateOf(a), dateOf(b)));
         const early = dateOf(a) <= dateOf(b) ? a : b;
         const late = early === a ? b : a;

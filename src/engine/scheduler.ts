@@ -266,6 +266,8 @@ export function findHeavyConflicts(
 // Returned as the largest gap in days that still counts as too close:
 // 0 = the next day is fine, 1 = one day between (48h), 2 = two (72h).
 export function legSpacingDays(first: SessionTemplate, second: SessionTemplate): number {
+  // A sport day that counts (engine/sportDays.ts) carries its own rest: 72 hours is 2 days between, 48 one, 24 none.
+  if (first.legRestHours !== undefined) return Math.max(0, Math.round(first.legRestHours / 24) - 1);
   const isHike = (t: SessionTemplate) => templateSport(t) === 'hiking' && resolveEffectiveStressProfile(t).eccentricLoad !== 'none';
   if (isHike(first) && !isHike(second)) return 2;
   const easyVolume = (t: SessionTemplate) => templateSport(t) === 'running' && resolveEffectiveStressProfile(t).intensity === 'low';
