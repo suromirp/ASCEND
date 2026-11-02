@@ -84,11 +84,23 @@ export function mayRetryAutoBackup(failedAt: string | undefined, now: Date): boo
 
 // ---- bestanden ---------------------------------------------------------------------------
 
-// De vorm van `storage/backup.ts#backupFileName`: ascend-JJJJ-MM-DD.ascend-backup.json.
-const NAME_RE = /^ascend-(\d{4}-\d{2}-\d{2})\.ascend-backup\.json$/;
+// De vorm van `storage/backup.ts#backupFileName`: ascend-JJJJ-MM-DD.ascend-backup.json. Staat er op die
+// dag al een bestand met die naam dat niet van de automatische back-up is, dan krijgt hij een volgnummer
+// (ascend-JJJJ-MM-DD-2.ascend-backup.json): een vreemd bestand wordt nooit overschreven.
+const NAME_RE = /^ascend-(\d{4}-\d{2}-\d{2})(?:-([2-9]|[1-9]\d+))?\.ascend-backup\.json$/;
+
+export function autoBackupFileName(day: string, n: number): string {
+  return n <= 1 ? `ascend-${day}.ascend-backup.json` : `ascend-${day}-${n}.ascend-backup.json`;
+}
 
 export function isAutoBackupName(name: string): boolean {
   return NAME_RE.test(name);
+}
+
+// Dag en volgnummer, om op te sorteren (de gewone naam is nummer 1).
+function sortKey(name: string): string {
+  const m = NAME_RE.exec(name);
+  return m ? `${m[1]}#${String(Number(m[2] ?? 1)).padStart(6, '0')}` : '';
 }
 
 // Een geschreven bestand bijschrijven in de lijst van eigen bestanden, zonder dubbele.
@@ -97,11 +109,11 @@ export function rememberFile(own: readonly string[], name: string): string[] {
   return [...own, name];
 }
 
-// Welke eigen bestanden weg mogen: alles behalve de nieuwste `keep`, naar de datum in de naam.
-// Een naam die niet van ASCEND is, staat er nooit in. `keep` 0 bewaart alles.
+// Welke eigen bestanden weg mogen: alles behalve de nieuwste `keep`, naar de dag en het volgnummer in
+// de naam. Een naam die niet van ASCEND is, staat er nooit in. `keep` 0 bewaart alles.
 export function filesToPrune(own: readonly string[], keep: number): string[] {
   if (keep <= 0) return [];
-  const ours = [...new Set(own.filter(isAutoBackupName))].sort();
+  const ours = [...new Set(own.filter(isAutoBackupName))].sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
   return ours.slice(0, Math.max(0, ours.length - keep));
 }
 

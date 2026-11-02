@@ -3,6 +3,7 @@ import {
   AUTO_BACKUP_ADVICE,
   AUTO_BACKUP_KEEP_ADVICE,
   autoBackupFailureText,
+  autoBackupFileName,
   autoBackupSlot,
   backupCardOnToday,
   backupWhereText,
@@ -162,6 +163,19 @@ describe('oude bestanden opruimen', () => {
     expect(rememberFile([name('2026-11-01')], name('2026-11-01'))).toEqual([name('2026-11-01')]);
     expect(rememberFile([name('2026-11-01')], name('2026-11-08'))).toEqual([name('2026-11-01'), name('2026-11-08')]);
     expect(rememberFile([], 'vreemd.txt')).toEqual([]);
+  });
+
+  it('een tweede naam op dezelfde dag, als de eerste niet van ASCEND is', () => {
+    expect(autoBackupFileName('2026-11-02', 1)).toBe(name('2026-11-02'));
+    expect(autoBackupFileName('2026-11-02', 2)).toBe('ascend-2026-11-02-2.ascend-backup.json');
+    expect(isAutoBackupName('ascend-2026-11-02-2.ascend-backup.json')).toBe(true);
+    expect(isAutoBackupName('ascend-2026-11-02-0.ascend-backup.json')).toBe(false);
+    expect(isAutoBackupName('ascend-2026-11-02-1.ascend-backup.json')).toBe(false);
+  });
+
+  it('opruimen kijkt naar dag en volgnummer: -2 is nieuwer dan de gewone naam van die dag', () => {
+    const own = [name('2026-11-01'), 'ascend-2026-11-01-2.ascend-backup.json', name('2026-10-25'), 'ascend-2026-11-08-10.ascend-backup.json', 'ascend-2026-11-08-9.ascend-backup.json'];
+    expect(filesToPrune(own, 2)).toEqual([name('2026-10-25'), name('2026-11-01'), 'ascend-2026-11-01-2.ascend-backup.json']);
   });
 });
 
