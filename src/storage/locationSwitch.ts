@@ -5,6 +5,8 @@
 // naar de aanroeper.
 
 import { requestAppLocationPermission } from '../integrations/geolocation';
+import { autoLocateAllowed } from '../engine/locationSetting';
+import { readLocationPermission } from './weatherLocation';
 import type { LocationPermission } from '../engine/weatherLocation';
 import { LocateError, locateMe, type LocateFailure, type Position2 } from '../utils/geolocation';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
@@ -47,4 +49,18 @@ export function locateOnce(options: { locate?: () => Promise<Position2>; limitMs
     locate: options.locate ?? (() => locateMe({ timeoutMs: LOCATE_TIMEOUT_MS, maximumAge: 60_000, precise: true })),
     limitMs: options.limitMs,
   });
+}
+
+// Zonder dat de gebruiker erom vraagt wordt je plek alleen bepaald als de toestemming er al is: een
+// toestel dat nog moet vragen krijgt nooit een venster uit zichzelf. 'skipped' zegt dat de knop
+// "Opnieuw bepalen" het werk moet doen.
+export async function locateIfGranted(options: { getPermission?: () => Promise<LocationPermission>; locate?: () => Promise<Position2>; limitMs?: number } = {}): Promise<SwitchResult | { status: 'skipped' }> {
+  let permission: LocationPermission;
+  try {
+    permission = await (options.getPermission ?? readLocationPermission)();
+  } catch {
+    permission = 'unknown';
+  }
+  if (!autoLocateAllowed(permission)) return { status: 'skipped' };
+  return locateOnce(options);
 }

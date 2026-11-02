@@ -8,11 +8,13 @@
 // instelling nooit zelf aanraakte, houdt wat hij had: voor hem telt de instelling als aan.
 
 import type { LocateFailure } from '../utils/geolocation';
-import { isMyLocation } from './weatherLocation';
+import { isMyLocation, type LocationPermission } from './weatherLocation';
+import { followsLocation, type OverviewSettings } from './overviewSettings';
 
 interface LocationSettings {
   locationOn?: boolean;
   homeLocation?: { name: string };
+  overviews?: OverviewSettings;
 }
 
 export function locationEnabled(s: LocationSettings): boolean {
@@ -62,4 +64,21 @@ export function stageLocateFailureText(reason: LocateFailure | 'away'): string {
     default:
       return 'Je plek is nu niet beschikbaar. Controleer of de locatie van je telefoon aan staat.';
   }
+}
+
+// Het weer volgt je plek alleen als Je locatie aan staat en "Weer volgt je locatie" ook.
+export function weatherFollowsLocation(s: LocationSettings): boolean {
+  return locationEnabled(s) && followsLocation(s.overviews);
+}
+
+// Een toestel dat nog moet vragen krijgt nooit uit zichzelf een venster.
+export function autoLocateAllowed(permission: LocationPermission): boolean {
+  return permission === 'granted';
+}
+
+// "Gebruik mijn locatie" op het Weer-scherm zet Je locatie ook aan en zegt dat.
+export function weatherLocateText(wasOn: boolean): string {
+  return wasOn
+    ? 'Je locatie is je plaats. Het weer wordt nu opgehaald.'
+    : 'Je locatie is je plaats en Je locatie staat nu aan. Het weer wordt nu opgehaald en volgt je plek.';
 }

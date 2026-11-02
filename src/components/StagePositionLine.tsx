@@ -13,12 +13,12 @@ import { buildItinerary, walkDayOn } from '../engine/routePlan';
 import { locationEnabled, stageLocateFailureText } from '../engine/locationSetting';
 import { stageHasCoords, stagePosition, stagePositionText, type StagePosition } from '../engine/stagePosition';
 import { updatedLabel } from '../engine/weather';
-import { locateOnce } from '../storage/locationSwitch';
+import { locateIfGranted, locateOnce } from '../storage/locationSwitch';
 import { todayISO } from '../utils/dates';
 import { Card, Eyebrow } from './ui';
 import { TextButton } from './TextButton';
 
-type Shown = { kind: 'busy' } | { kind: 'ok'; position: StagePosition; at: string } | { kind: 'fail'; text: string };
+type Shown = { kind: 'busy' } | { kind: 'idle' } | { kind: 'ok'; position: StagePosition; at: string } | { kind: 'fail'; text: string };
 
 // Het hek: pas als alles klopt wordt het etappeplan gelezen, zodat Vandaag er anders niets voor doet.
 export function StagePositionLine() {
@@ -44,26 +44,31 @@ function StagePositionCard({ startDate }: { startDate: string }) {
 
   const stages = day?.stages;
   // Vraagt je plek; zet zelf niets synchroon, zodat een effect hem veilig kan aanroepen.
-  const locate = useCallback(() => {
+  // Uit zichzelf alleen met een toestemming die er al is; de knop vraagt altijd.
+  const locate = useCallback((auto: boolean) => {
     if (!stages) return;
-    void locateOnce().then((result) => {
+    void (auto ? locateIfGranted() : locateOnce()).then((result) => {
       if (!alive.current) return;
+      if (result.status === 'skipped') {
+        setShown({ kind: 'idle' });
+        return;
+      }
       if (result.status === 'failed') {
         setShown({ kind: 'fail', text: stageLocateFailureText(result.reason) });
         return;
       }
-      const position = stagePosition(stages, result.position);
+      const position = stagePosition(stages, result.position, result.position.accuracyM);
       setShown(position ? { kind: 'ok', position, at: new Date().toISOString() } : { kind: 'fail', text: stageLocateFailureText('away') });
     });
   }, [stages]);
 
   const dayNumber = day?.dayNumber;
   useEffect(() => {
-    if (hasCoords) locate();
+    if (hasCoords) locate(true);
   }, [hasCoords, dayNumber, locate]);
   const again = () => {
     setShown({ kind: 'busy' });
-    locate();
+    locate(false);
   };
 
   if (!day || !hasCoords) return null;
@@ -71,6 +76,7 @@ function StagePositionCard({ startDate }: { startDate: string }) {
     <Card className="flex flex-col gap-1">
       <Eyebrow>Op je etappe, {day.from} naar {day.to}</Eyebrow>
       {shown.kind === 'busy' && <p className="text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>Je plek wordt bepaald. Dit duurt hoogstens tien seconden.</p>}
+      {shown.kind === 'idle' && <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND vraagt je plek pas als jij erom vraagt. Tik op Opnieuw bepalen om te zien hoever je nog moet.</p>}
       {shown.kind === 'ok' && (
         <>
           <p className="text-sm leading-relaxed tabular-nums" role="status" style={{ color: 'var(--color-ink)' }}>{stagePositionText(shown.position)}</p>

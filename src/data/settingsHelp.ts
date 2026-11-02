@@ -1011,7 +1011,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Waarvoor', text: 'het weer op je plek, en op een tochtdag hoeveel kilometer je nog hebt tot het eind van je etappe en welke plek daarna komt.' },
       { head: 'Toestemming', text: 'je telefoon of browser vraagt die pas als je dit aanzet. Zegt hij nee of lukt het niet binnen tien seconden, dan blijft dit uit en zie je waarom.' },
-      { head: 'Wat blijft', text: 'het weer bewaart je plek afgerond op twee decimalen, ongeveer een kilometer. Je plek op een etappe blijft alleen in het geheugen en verdwijnt als je de app sluit. Geen route, geen spoor, niets gedeeld.' },
+      { head: 'Wat blijft', text: 'het weer bewaart je plek afgerond op twee decimalen, ongeveer een kilometer. Je plek op een etappe blijft alleen in het geheugen en verdwijnt als je de app sluit. Geen route, geen spoor; alleen de afgeronde plek gaat naar het weer.' },
       { head: 'Uit', text: 'ASCEND vraagt je plek niet meer. Het weer blijft op de laatste plek tot je zelf een andere kiest.' },
     ],
   },

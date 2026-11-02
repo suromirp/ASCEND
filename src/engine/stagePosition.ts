@@ -29,6 +29,8 @@ const rad = (d: number) => (d * Math.PI) / 180;
 const ARRIVED_KM = 0.5;
 // Verder dan dit van de etappe af zegt een getal niets: je bent niet op je etappe.
 export const MAX_OFF_STAGE_KM = 15;
+// Nauwkeuriger dan dit is een plek van GPS; grover zegt de tekst erbij.
+export const COARSE_M = 500;
 
 const valid = (p: GeoPoint | undefined): p is GeoPoint => !!p && Number.isFinite(p.lat) && Number.isFinite(p.lon) && Math.abs(p.lat) <= 90 && Math.abs(p.lon) <= 180;
 
@@ -95,11 +97,15 @@ export interface StagePosition {
   kmToNext: number;
   nextName: string;
   arrived: boolean;
+  // Voorbij het eind van de laatste etappe (de plek ligt voorbij het eindpunt).
+  pastEnd: boolean;
+  // Hoe nauwkeurig je plek is, in meters, als dat bekend is.
+  accuracyM?: number;
 }
 
 // De etappes van een dag (een, of twee samengevoegd) en de plek van nu. Undefined als een van de
 // etappes geen coordinaten heeft of als de plek niet bij de etappe past.
-export function stagePosition(stages: readonly StageLike[], pos: GeoPoint): StagePosition | undefined {
+export function stagePosition(stages: readonly StageLike[], pos: GeoPoint, accuracyM?: number): StagePosition | undefined {
   if (stages.length === 0 || !valid(pos) || !stages.every(stageHasCoords)) return undefined;
   const coords = stages.map((s) => s.coords as StageCoords);
   const last = stages.length - 1;
@@ -107,22 +113,36 @@ export function stagePosition(stages: readonly StageLike[], pos: GeoPoint): Stag
   if (offKm > MAX_OFF_STAGE_KM) return undefined;
 
   // Het eind van etappe k is gepasseerd als het eind van de dag nu dichterbij is dan vanaf dat punt.
+  // Met een pad voor elke etappe is de etappe waar je het dichtst bij ligt de huidige (een route die
+  // terugbuigt zou de regel hieronder in de war brengen); de eerste wint bij gelijke afstand.
+  // Zonder pad geldt de regel dat het eind van de dag dichterbij komt.
+  const hasPath = (c: StageCoords) => !!c.path && c.path.length >= 2 && c.path.every(valid);
   let current = 0;
-  while (current < last && distanceKm(pos, coords[last].end) < distanceKm(coords[current].end, coords[last].end)) current++;
+  if (coords.every(hasPath)) {
+    const offs = coords.map((c) => projectOnPath(geometry(c), pos).offKm);
+    offs.forEach((o, k) => { if (o < offs[current] - 0.05) current = k; });
+  } else {
+    while (current < last && distanceKm(pos, coords[last].end) < distanceKm(coords[current].end, coords[last].end)) current++;
+  }
 
-  const usesPath = coords.slice(current).every((c) => !!c.path && c.path.length >= 2 && c.path.every(valid));
+  const usesPath = coords.slice(current).every(hasPath);
   const inStage = (c: StageCoords) => (usesPath ? projectOnPath(geometry(c), pos).remainingKm : distanceKm(pos, c.end));
   const whole = (c: StageCoords) => (usesPath ? pathLengthKm(geometry(c)) : distanceKm(c.start, c.end));
   const kmToNext = inStage(coords[current]);
   let kmToEnd = kmToNext;
   for (let k = current + 1; k <= last; k++) kmToEnd += whole(coords[k]);
+  // Voorbij het eind: op de laatste etappe valt de plek op het eindpunt van de lijn en ligt er verder af dan "je bent er".
+  const final = projectOnPath(geometry(coords[last]), pos);
+  const pastEnd = current === last && final.remainingKm < 1e-6 && final.offKm > ARRIVED_KM;
   return {
     method: usesPath ? 'path' : 'straight',
     kmToEnd,
     endName: stages[last].to,
     kmToNext,
     nextName: stages[current].to,
-    arrived: kmToEnd < ARRIVED_KM,
+    arrived: !pastEnd && kmToEnd < ARRIVED_KM,
+    pastEnd,
+    ...(accuracyM !== undefined && Number.isFinite(accuracyM) ? { accuracyM } : {}),
   };
 }
 
@@ -130,8 +150,13 @@ const km = (value: number) => formatNumberNL(value, value < 10 ? 1 : 0);
 
 // "Nog ongeveer 3,9 km in een rechte lijn tot Dorp B." Het droge feit eerst, de manier van meten erbij.
 export function stagePositionText(p: StagePosition): string {
+  if (p.pastEnd) return `Je bent voorbij ${p.endName}, het eind van deze etappe.`;
   if (p.arrived) return `Je bent bij ${p.endName}.`;
   const how = p.method === 'path' ? 'langs de route' : 'in een rechte lijn';
-  if (p.nextName === p.endName) return `Nog ongeveer ${km(p.kmToEnd)} km ${how} tot ${p.endName}.`;
-  return `Nog ongeveer ${km(p.kmToNext)} km ${how} tot ${p.nextName}. Het eind van de dag, ${p.endName}, is nog ongeveer ${km(p.kmToEnd)} km ver.`;
+  let text = p.nextName === p.endName
+    ? `Nog ongeveer ${km(p.kmToEnd)} km ${how} tot ${p.endName}.`
+    : `Nog ongeveer ${km(p.kmToNext)} km ${how} tot ${p.nextName}. Het eind van de dag, ${p.endName}, is nog ongeveer ${km(p.kmToEnd)} km ver.`;
+  // Een grove plek (de Android-app vraagt de ruwe plek) zegt eerlijk dat het ongeveer is.
+  if (p.accuracyM !== undefined && p.accuracyM > COARSE_M) text += ` Je plek is op ongeveer ${km(p.accuracyM / 1000)} km na bekend.`;
+  return text;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { askForLocation, locateOnce } from './locationSwitch';
+import { askForLocation, locateIfGranted, locateOnce } from './locationSwitch';
 import { LocateError } from '../utils/geolocation';
 
 const ok = () => Promise.resolve({ lat: 46.12, lon: 6.93 });
@@ -43,5 +43,19 @@ describe('je plek voor je etappe', () => {
     expect(await locateOnce({ locate: ok })).toEqual({ status: 'found', position: { lat: 46.12, lon: 6.93 } });
     expect(await locateOnce({ locate: () => Promise.reject(new LocateError('denied')) })).toEqual({ status: 'failed', reason: 'denied' });
     expect(await locateOnce({ locate: () => new Promise(() => undefined), limitMs: 20 })).toEqual({ status: 'failed', reason: 'timeout' });
+  });
+});
+
+describe('je plek zonder dat je erom vraagt', () => {
+  it('wordt alleen bepaald met een toestemming die er al is', async () => {
+    let asked = 0;
+    const locate = () => { asked++; return ok(); };
+    expect(await locateIfGranted({ getPermission: () => Promise.resolve('prompt'), locate })).toEqual({ status: 'skipped' });
+    expect(await locateIfGranted({ getPermission: () => Promise.resolve('denied'), locate })).toEqual({ status: 'skipped' });
+    expect(await locateIfGranted({ getPermission: () => Promise.resolve('unknown'), locate })).toEqual({ status: 'skipped' });
+    expect(await locateIfGranted({ getPermission: () => Promise.reject(new Error('stuk')), locate })).toEqual({ status: 'skipped' });
+    expect(asked).toBe(0);
+    expect((await locateIfGranted({ getPermission: () => Promise.resolve('granted'), locate })).status).toBe('found');
+    expect(asked).toBe(1);
   });
 });

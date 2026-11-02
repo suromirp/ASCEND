@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { distanceKm, pathLengthKm, remainingAlongPath, stageHasCoords, stagePosition, stagePositionText, type StageLike } from './stagePosition';
+import { COARSE_M, distanceKm, pathLengthKm, remainingAlongPath, stageHasCoords, stagePosition, stagePositionText, type StageLike } from './stagePosition';
 
 // Nagemaakte plekken op een vlak stuk, geen echte route: een etappe van west naar oost langs 46 graden noord.
 const A = { lat: 46.0, lon: 7.0 };
@@ -112,5 +112,39 @@ describe('stagePositionText', () => {
   it('rondt groter dan tien kilometer af op hele kilometers', () => {
     const far: StageLike = { to: 'Verderop', coords: { start: A, end: { lat: 46.0, lon: 7.3 } } };
     expect(stagePositionText(stagePosition([far], A)!)).toMatch(/^Nog ongeveer \d+ km in een rechte lijn tot Verderop\.$/);
+  });
+});
+
+describe('een grove plek, voorbij het eind en een route die terugbuigt', () => {
+  it('zegt eerlijk dat een grove plek ongeveer is', () => {
+    const fine = stagePosition([one], { lat: 46.0, lon: 7.05 }, 20)!;
+    expect(stagePositionText(fine)).not.toContain('na bekend');
+    expect(COARSE_M).toBe(500);
+    const coarse = stagePosition([one], { lat: 46.0, lon: 7.05 }, 3000)!;
+    expect(stagePositionText(coarse)).toMatch(/^Nog ongeveer 3,\d km in een rechte lijn tot Dorp B\. Je plek is op ongeveer 3 km na bekend\.$/);
+  });
+
+  it('een eigen zin voorbij het eind, ook met een pad', () => {
+    const past = stagePosition([one], { lat: 46.0, lon: 7.13 })!;
+    expect(past.pastEnd).toBe(true);
+    expect(past.arrived).toBe(false);
+    expect(stagePositionText(past)).toBe('Je bent voorbij Dorp B, het eind van deze etappe.');
+    const withPath: StageLike = { to: 'Dorp B', coords: { start: A, end: B, path: [A, B] } };
+    expect(stagePosition([withPath], { lat: 46.0, lon: 7.13 })!.pastEnd).toBe(true);
+    // Vlak bij het eind of ervoor is het niet voorbij.
+    expect(stagePosition([one], { lat: 46.0, lon: 7.05 })!.pastEnd).toBe(false);
+    expect(stagePosition([one], { lat: 46.0, lon: 7.0999 })!.pastEnd).toBe(false);
+  });
+
+  it('met een pad telt de etappe waar je het dichtst bij ligt, ook als de route terugbuigt', () => {
+    // De tweede etappe loopt terug naar het begin van de eerste: het eind van de dag ligt bij A.
+    const one2: StageLike = { to: 'Dorp B', coords: { start: A, end: B, path: [A, B] } };
+    const back: StageLike = { to: 'Terug bij A', coords: { start: B, end: A, path: [B, { lat: 46.02, lon: 7.05 }, A] } };
+    const p = stagePosition([one2, back], { lat: 46.0, lon: 7.01 })!;
+    expect(p.nextName).toBe('Dorp B');
+    expect(p.method).toBe('path');
+    // Zonder pad blijft de oude regel gelden.
+    const plain = stagePosition([one, { to: 'Dorp C', coords: { start: B, end: C } }], { lat: 46.0, lon: 7.04 })!;
+    expect(plain.nextName).toBe('Dorp B');
   });
 });

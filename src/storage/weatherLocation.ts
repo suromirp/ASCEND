@@ -17,7 +17,7 @@ const LOCATE_LIMIT_MS = 15_000;
 
 // Vraagt nooit zelf om toestemming: permissions.query toont geen venster.
 // Een browser zonder die functie telt als 'unknown', en dan blijft de plek staan.
-async function readLocationPermission(): Promise<LocationPermission> {
+export async function readLocationPermission(): Promise<LocationPermission> {
   try {
     // In de Android-app weet de plugin het; in de browser vraagt permissions.query het.
     const app = await withTimeout(appLocationPermission(), PERMISSION_TIMEOUT_MS);

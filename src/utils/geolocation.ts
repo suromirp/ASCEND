@@ -25,6 +25,8 @@ export class LocateError extends Error {
 export interface Position2 {
   lat: number;
   lon: number;
+  // Hoe nauwkeurig de plek is, in meters (alleen bij precise). De Android-app geeft een grove plek.
+  accuracyM?: number;
 }
 
 export const LOCATE_TIMEOUT_MS = 10_000;
@@ -60,7 +62,7 @@ export function locateMe(options: LocateOptions = {}): Promise<Position2> {
     timer = setTimeout(() => finish(() => reject(new LocateError('timeout'))), timeoutMs + HARD_LIMIT_EXTRA_MS);
     try {
       geo.getCurrentPosition(
-        (pos) => finish(() => resolve(options.precise ? { lat: pos.coords.latitude, lon: pos.coords.longitude } : { lat: roundCoordinate(pos.coords.latitude), lon: roundCoordinate(pos.coords.longitude) })),
+        (pos) => finish(() => resolve(options.precise ? { lat: pos.coords.latitude, lon: pos.coords.longitude, ...(Number.isFinite(pos.coords.accuracy) ? { accuracyM: pos.coords.accuracy } : {}) } : { lat: roundCoordinate(pos.coords.latitude), lon: roundCoordinate(pos.coords.longitude) })),
         (err) => finish(() => reject(new LocateError(err.code === 1 ? 'denied' : err.code === 3 ? 'timeout' : 'unavailable'))),
         { timeout: timeoutMs, maximumAge: options.maximumAge ?? LOCATE_MAX_AGE_MS },
       );

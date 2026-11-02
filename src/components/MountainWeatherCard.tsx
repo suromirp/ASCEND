@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { MOUNTAIN_WEATHER_LINK, mountainTrekDay, mountainUpdatedLabel, mountainWeatherLine, type MountainWeatherLine } from '../engine/mountainWeather';
 import { signalOn } from '../engine/signalSettings';
-import { followsLocation } from '../engine/overviewSettings';
+import { weatherFollowsLocation } from '../engine/locationSetting';
 import { refreshMountainWeather } from '../storage/mountainWeather';
 import { todayISO } from '../utils/dates';
 import { Card, Eyebrow } from './ui';
@@ -17,7 +17,7 @@ import { Icon } from './icons';
 export function MountainWeatherCard() {
   const { leavePeriods, settings } = useAppData();
   const today = todayISO();
-  const day = signalOn(settings, 'mountainWeather') ? mountainTrekDay(leavePeriods, today, followsLocation(settings.overviews)) : undefined;
+  const day = signalOn(settings, 'mountainWeather') ? mountainTrekDay(leavePeriods, today, weatherFollowsLocation(settings)) : undefined;
   // De eigen plek van de tocht, anders de plek van het gewone weer.
   const place = day?.place ?? settings.homeLocation;
   const [shown, setShown] = useState<MountainWeatherLine | undefined>();
