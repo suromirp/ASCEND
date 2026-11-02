@@ -201,7 +201,7 @@ export function ForgeSheet({ title, sub, onClose, children }: { title: string; s
               <Icon name="sluiten" size={20} />
             </button>
           </div>
-          <div className="overflow-y-auto px-4 pb-4" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}>
+          <div className="overflow-y-auto px-4 pb-4" style={{ paddingBottom: 'max(var(--rand-onder), 16px)' }}>
             {children(requestClose)}
           </div>
         </div>

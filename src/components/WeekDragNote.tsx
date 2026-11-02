@@ -14,7 +14,7 @@ export function WeekDragNote({ text, tone, position, live }: { text?: string; to
           <div
             aria-hidden="true"
             className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-4"
-            style={position === 'top' ? { top: 'calc(env(safe-area-inset-top) + 12px)' } : { bottom: 'calc(env(safe-area-inset-bottom) + 84px)' }}
+            style={position === 'top' ? { top: 'calc(env(safe-area-inset-top) + 12px)' } : { bottom: 'calc(var(--rand-onder) + 84px)' }}
           >
             <div
               className="w-full max-w-md rounded-2xl border px-4 py-3 text-sm leading-snug"

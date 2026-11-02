@@ -155,7 +155,7 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
           </div>
           {/* Verder staat altijd onderaan het scherm, ook bij een lange lijst. */}
           <div
-            className="completion-rise fixed inset-x-0 bottom-0 z-10 mx-auto w-full max-w-md px-4 pb-[max(env(safe-area-inset-bottom),20px)] pt-6"
+            className="completion-rise fixed inset-x-0 bottom-0 z-10 mx-auto w-full max-w-md px-4 pb-[max(var(--rand-onder),20px)] pt-6"
             style={{ background: 'linear-gradient(to top, var(--color-bg) 65%, transparent)', ...delay(780) }}
           >
             <PrimaryButton onClick={() => void goOn()} disabled={goingOn}>Verder</PrimaryButton>

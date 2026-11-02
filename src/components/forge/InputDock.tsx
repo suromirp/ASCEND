@@ -177,7 +177,7 @@ export function InputDock(props: DockProps) {
         style={{ ['--forge-fill' as string]: 'var(--color-card)' }}
       >
  <p className="sr-only" aria-live="polite">{`${label}: ${text === '' ? 'leeg' : text}`}</p>
-        <div className="mx-auto max-w-md rounded-t-2xl border border-b-0" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 10px)' }}>
+        <div className="mx-auto max-w-md rounded-t-2xl border border-b-0" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)', paddingBottom: 'max(var(--rand-onder), 10px)' }}>
           {showPlates && plate && (
             <div className="border-b px-4 pb-2 pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
               <div className="flex items-center gap-4">
