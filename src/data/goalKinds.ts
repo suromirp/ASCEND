@@ -28,7 +28,7 @@ export interface Sourced<T> {
 }
 
 // Een getal met per variant (bijvoorbeeld '10k', 'ultra') een eigen waarde.
-export interface Varied<T> {
+interface Varied<T> {
   base: Sourced<T>;
   variants?: Record<string, Sourced<T>>;
 }
@@ -39,11 +39,11 @@ const v = <T>(base: Sourced<T>, variants?: Record<string, Sourced<T>>): Varied<T
 
 // --- soorten training -------------------------------------------------------
 
-export type SessionMinimumKind =
+type SessionMinimumKind =
   | 'strength' | 'easy_endurance' | 'long_day' | 'hard_session' | 'pack_session' | 'descent_stimulus'
   | 'back_to_back' | 'long_run' | 'hill_session' | 'brick' | 'swim' | 'bike_long' | 'weekly_volume' | 'guideline';
 
-export interface SessionMinimum {
+interface SessionMinimum {
   session: SessionMinimumKind;
   label: string;
   amount: { min: number; max?: number };
@@ -75,7 +75,7 @@ export type MeterType = 'beste_dag' | 'reeks' | 'volume_of_trend' | 'versheid';
 
 // Wat een meter uit de logs meet. De eerste zes volgen de oude GR5-meters
 // (engine/standing.ts#routeDayRows), de rest is nieuw.
-export type MeterMetric =
+type MeterMetric =
   | 'rugzak' | 'langsteDag' | 'stijgenDalen' | 'stijgen' | 'dalen' | 'dagenOpRij' // de route-meters
   | 'langsteMinuten' | 'langsteKm' | 'weekMinuten' | 'weekKm' | 'weekStijgen' | 'afdalenVers' | 'krachtdagen' | 'reeksDagen'
   | 'extern'; // niet uit logs te halen hier: de aanroeper levert hem aan (volhouden, testloop, krachttrend ...)
@@ -89,7 +89,7 @@ export type NeedRule =
   | { from: 'guideline'; key: keyof GoalDetails; value: number } // de richtlijn, de gebruiker mag hem verhogen
   | { from: 'external' };
 
-export type MeterSport = 'hiking' | 'running' | 'cycling' | 'swimming' | 'strength';
+type MeterSport = 'hiking' | 'running' | 'cycling' | 'swimming' | 'strength';
 
 export interface MeterSpec {
   id: string;
@@ -119,7 +119,7 @@ export interface MeterSpec {
 
 // --- de definitie ----------------------------------------------------------------
 
-export interface VariantSpec {
+interface VariantSpec {
   id: string;
   label: string;
 }

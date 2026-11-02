@@ -111,13 +111,13 @@ export function postponeTask(state: JourneyState | undefined, taskId: string, to
 // --- tasks that are done by what you did ----------------------------------------------------
 // "Meet je zweetverlies" is done once there are two weighings of your own. Never stored as a
 // flag: derived from the list, so removing a weighing opens the task again.
-export const SWEAT_TASK_ID = 'meet-zweetverlies';
-export const SWEAT_TASK_MEASUREMENTS = 2;
+const SWEAT_TASK_ID = 'meet-zweetverlies';
+const SWEAT_TASK_MEASUREMENTS = 2;
 
 // Which tasks the data says are done, with the line that tells why. Such a task has no
 // "Haal vinkje weg": the data would only tick it again. `sweat` is the list as
 // engine/sweat.ts#usableSweatEntries gives it (logs that still exist).
-export const BOOTS_TASK_ID = 'schoenen';
+const BOOTS_TASK_ID = 'schoenen';
 
 export function derivedDoneLines(sweat: SweatEntry[] | undefined, boots: Pick<BootBreakInStatus, 'kind' | 'km' | 'goalKm'>): Record<string, string> {
   const lines: Record<string, string> = {};

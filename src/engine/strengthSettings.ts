@@ -13,11 +13,11 @@
 import { normalizeStrengthProgram, type StoredStrengthProgram } from './strengthProgramStore';
 import { isRecord, isNum } from '../utils/guards';
 
-export type ProgressionFirst = 'weight_first' | 'reps_first';
+type ProgressionFirst = 'weight_first' | 'reps_first';
 export type WorkSetsMode = 'descending' | 'equal';
-export type WarmupMode = 'smart' | 'scheme' | 'off';
+type WarmupMode = 'smart' | 'scheme' | 'off';
 // Who gets the full build-up: the first heavy exercise of a body part, or every compound exercise.
-export type WarmupScope = 'group' | 'exercise';
+type WarmupScope = 'group' | 'exercise';
 // What happens when the rest timer of the workout screen runs out.
 export type RestAlert = 'sound_vibrate' | 'vibrate' | 'sound' | 'off';
 // The sound at the end of the rest: three soft bells, one deep bell, or the old beep.
@@ -30,7 +30,7 @@ export type OneRmView = 'one_rm' | 'work_weight';
 export type DumbbellLog = 'auto' | 'each' | 'total';
 // How much strength each earlier working set costs the next: learned per exercise
 // from your own sets (the advice) or a fixed 3%.
-export type FatigueMode = 'learned' | 'fixed';
+type FatigueMode = 'learned' | 'fixed';
 // The weights ASCEND proposes on a cable or a machine with a stack: learned from
 // what you used and estimated in between (the advice), only what you used, or
 // the steps of your gym profile.
@@ -45,7 +45,7 @@ export type ForgeSort = 'most' | 'recent' | 'name';
 // Wat er in het RIR-veld van een werkset staat voor je iets invult: niets, met het
 // doel als gedimde hint ('hint'), of het doel zelf als waarde ('target'). In beide
 // gevallen krijgt een set die je niet aanraakte het merkje `rirAssumed`.
-export type RirPrefill = 'hint' | 'target';
+type RirPrefill = 'hint' | 'target';
 
 export interface DumbbellRack {
   // The lightest dumbbell, the step up to `upToKg`, the step above that and the heaviest.
@@ -68,7 +68,7 @@ export interface WeightRange {
 }
 
 export const RANGE_LIMITS = { minKg: 0.25, maxKg: 500, maxCount: 200, maxRanges: 5 };
-export const KG_PER_LB = 0.45359237;
+const KG_PER_LB = 0.45359237;
 const r2n = (n: number) => Math.round(n * 100) / 100;
 const r1n = (n: number) => Math.round(n * 10) / 10;
 
@@ -120,7 +120,7 @@ export function poundRangeFor(startKg: number, endKg: number, stepKg: number): {
 }
 
 // Een bereik dat opgeslagen mag worden, of undefined.
-export function cleanWeightRange(raw: unknown): WeightRange | undefined {
+function cleanWeightRange(raw: unknown): WeightRange | undefined {
   if (!isRecord(raw)) return undefined;
   const { startKg, endKg, stepKg } = raw;
   if (!isNum(startKg) || !isNum(endKg) || !isNum(stepKg)) return undefined;
@@ -284,7 +284,7 @@ export interface ResolvedStrengthSettings {
 // The day the quiet measuring began. A choice of the owner, kept here and not in a component.
 export const DEFAULT_CHECK_FROM = '2026-10-24';
 
-export const DEFAULT_PROFILE_ID = 'standaard';
+const DEFAULT_PROFILE_ID = 'standaard';
 
 export const DEFAULT_PROFILE: GymProfile = {
   id: DEFAULT_PROFILE_ID,
@@ -393,22 +393,22 @@ const PROGRESSIONS: ProgressionFirst[] = ['weight_first', 'reps_first'];
 const WORK_SETS: WorkSetsMode[] = ['descending', 'equal'];
 const WARMUPS: WarmupMode[] = ['smart', 'scheme', 'off'];
 const WARMUP_SCOPES: WarmupScope[] = ['group', 'exercise'];
-export const ONE_RM_VIEWS: OneRmView[] = ['one_rm', 'work_weight'];
-export const COMPARE_WEEKS: CompareWeeks[] = ['4_8', '2_4', '8_12', '12_26'];
-export const FORGE_SORTS: ForgeSort[] = ['most', 'recent', 'name'];
-export type CarryMode = 'equal' | 'shift' | 'off';
-export const CARRY_MODES: CarryMode[] = ['equal', 'shift', 'off'];
-export const RIR_PREFILLS: RirPrefill[] = ['hint', 'target'];
-export const DUMBBELL_LOGS: DumbbellLog[] = ['auto', 'each', 'total'];
-export const FATIGUE_MODES: FatigueMode[] = ['learned', 'fixed'];
-export const STACK_WEIGHTS: StackWeights[] = ['learned', 'used_only', 'profile'];
+const ONE_RM_VIEWS: OneRmView[] = ['one_rm', 'work_weight'];
+const COMPARE_WEEKS: CompareWeeks[] = ['4_8', '2_4', '8_12', '12_26'];
+const FORGE_SORTS: ForgeSort[] = ['most', 'recent', 'name'];
+type CarryMode = 'equal' | 'shift' | 'off';
+const CARRY_MODES: CarryMode[] = ['equal', 'shift', 'off'];
+const RIR_PREFILLS: RirPrefill[] = ['hint', 'target'];
+const DUMBBELL_LOGS: DumbbellLog[] = ['auto', 'each', 'total'];
+const FATIGUE_MODES: FatigueMode[] = ['learned', 'fixed'];
+const STACK_WEIGHTS: StackWeights[] = ['learned', 'used_only', 'profile'];
 // '4_8' to [4, 8].
 export const compareMoments = (c: CompareWeeks): [number, number] => {
   const [a, b] = c.split('_').map(Number);
   return [a, b];
 };
-export const REST_ALERTS: RestAlert[] = ['sound_vibrate', 'vibrate', 'sound', 'off'];
-export const REST_SOUNDS: RestSound[] = ['chime', 'bell', 'beep', 'boxing', 'whistle', 'gong'];
+const REST_ALERTS: RestAlert[] = ['sound_vibrate', 'vibrate', 'sound', 'off'];
+const REST_SOUNDS: RestSound[] = ['chime', 'bell', 'beep', 'boxing', 'whistle', 'gong'];
 export const REST_LIMITS = { min: 15, max: 600 };
 export const EXERCISE_NOTE_MAX = 200;
 const MAX_PER_EXERCISE_ENTRIES = 300;
@@ -430,7 +430,7 @@ function perExercise<T>(raw: unknown, keep: (v: unknown) => T | undefined): Reco
 
 const restValue = (v: unknown): number | undefined => (isNum(v) && v >= REST_LIMITS.min && v <= REST_LIMITS.max ? Math.round(v) : undefined);
 const noteValue = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, EXERCISE_NOTE_MAX) : undefined);
-export const ESTIMATE_UP_TO_OPTIONS = [12, 15, 20];
+const ESTIMATE_UP_TO_OPTIONS = [12, 15, 20];
 
 // What a backup import keeps of the block: only valid values. Undefined when
 // the block is not a record at all.

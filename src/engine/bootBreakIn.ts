@@ -62,7 +62,7 @@ export function breakInTotals(logs: SessionLog[], since: string): BreakInTotals 
   return { km, gainM, count };
 }
 
-export type BootBreakInKind = 'none' | 'busy' | 'done' | 'late';
+type BootBreakInKind = 'none' | 'busy' | 'done' | 'late';
 
 export interface BootBreakInStatus {
   kind: BootBreakInKind;

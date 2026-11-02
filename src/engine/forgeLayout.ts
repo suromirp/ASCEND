@@ -5,8 +5,8 @@
 //   bovenaan (het advies, de eigenaar vroeg erom).
 // - 'lijst': alle oefeningen onder elkaar, zoals eerst.
 export type ForgeLayout = 'scherm' | 'lijst';
-export const FORGE_LAYOUTS: ForgeLayout[] = ['scherm', 'lijst'];
-export const DEFAULT_FORGE_LAYOUT: ForgeLayout = 'scherm';
+const FORGE_LAYOUTS: ForgeLayout[] = ['scherm', 'lijst'];
+const DEFAULT_FORGE_LAYOUT: ForgeLayout = 'scherm';
 
 export function resolveForgeLayout(raw: { forgeLayout?: unknown } | undefined | null): ForgeLayout {
   return FORGE_LAYOUTS.find((m) => m === raw?.forgeLayout) ?? DEFAULT_FORGE_LAYOUT;

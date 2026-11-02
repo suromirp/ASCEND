@@ -24,7 +24,7 @@ export interface WeekDragState {
   fingerY: number;
 }
 
-export interface WeekDragView {
+interface WeekDragView {
   text: string;
   tone: 'ok' | 'warn' | 'none';
   chip?: string;

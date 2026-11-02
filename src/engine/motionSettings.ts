@@ -8,8 +8,8 @@
 // - 'off' (Uit): alles direct op de eindstand.
 export type MotionMode = 'full' | 'calm' | 'off';
 
-export const MOTION_MODES: MotionMode[] = ['full', 'calm', 'off'];
-export const DEFAULT_MOTION: MotionMode = 'full';
+const MOTION_MODES: MotionMode[] = ['full', 'calm', 'off'];
+const DEFAULT_MOTION: MotionMode = 'full';
 
 export function resolveMotion(raw: { motion?: unknown } | undefined, prefersReduced = false): MotionMode {
   if (prefersReduced) return 'off';

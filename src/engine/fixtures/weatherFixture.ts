@@ -4,7 +4,7 @@ import type { WeatherDay, WeatherForecast, WeatherHour } from '../../models/weat
 import { addDays } from '../../utils/dates';
 import { pad } from '../../utils/pad';
 
-export const MILD: Omit<WeatherHour, 'time'> = { tempC: 14, feelsC: 14, precipMm: 0, precipProb: 5, windKmh: 12, gustKmh: 20, code: 3 };
+const MILD: Omit<WeatherHour, 'time'> = { tempC: 14, feelsC: 14, precipMm: 0, precipProb: 5, windKmh: 12, gustKmh: 20, code: 3 };
 
 // Seven mild days from `start`; `tweak` changes single hours.
 export function makeForecast(

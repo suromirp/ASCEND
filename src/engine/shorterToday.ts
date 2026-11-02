@@ -18,8 +18,8 @@ export type ShorterHow = 'kern' | 'volume';
 export type ShorterSetting = ShorterHow | 'off';
 
 export const SHORTER_RULE = 'SHORTER-TODAY';
-export const SHORTER_MINUTES = [30, 45, 60] as const;
-export const SHORTER_ADVICE: ShorterSetting = 'kern';
+const SHORTER_MINUTES = [30, 45, 60] as const;
+const SHORTER_ADVICE: ShorterSetting = 'kern';
 
 export const TEST_NOT_SHORTER = 'Een test kan niet korter: dan meet hij iets anders. Verplaatsen kan wel, dan zie je eerst wat er verschuift.';
 

@@ -58,7 +58,7 @@ export const TARGET_OPTIONS: { id: 'trek' | 'race'; label: string; note: string 
 // Een richting zonder doel, of een doel met een datum.
 export const isDirectionKind = (goal: StartGoalKind): boolean => goal !== 'trek' && goal !== 'race';
 // De richting die bij een antwoord hoort ('fit' is Fit blijven).
-export function directionOfStart(goal: StartGoalKind): DirectionId | undefined {
+function directionOfStart(goal: StartGoalKind): DirectionId | undefined {
   if (!isDirectionKind(goal)) return undefined;
   return goal === 'fit' ? 'maintain' : (goal as DirectionId);
 }
@@ -101,7 +101,7 @@ export interface StartAnswers {
 export const STRONGER_SESSIONS = [2, 3, 4];
 export const STRONGER_ADVICE = 3;
 // Een beginner traint de eerste weken hoogstens zoveel dagen (docs/visie/Zonder doel.md, 2.7).
-export const BEGINNER_MAX_DAYS = 4;
+const BEGINNER_MAX_DAYS = 4;
 
 // Het advies als startpunt: de week die bij het doel past, alle dagen
 // beschikbaar, met kracht.

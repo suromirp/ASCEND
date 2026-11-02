@@ -198,7 +198,7 @@ export function addOnSource(profile: GymProfile, exercise: Exercise | undefined)
 
 // Alle sommen van tussengewichten (elk hoogstens een keer), zonder de lege som, met de gewichten
 // waaruit ze bestaan. Eerst de kortste combinatie, dan de lichtste.
-export function addOnCombos(addOns: number[]): { sumKg: number; parts: number[] }[] {
+function addOnCombos(addOns: number[]): { sumKg: number; parts: number[] }[] {
   const list = cleanAddOns(addOns) ?? [];
   const out: { sumKg: number; parts: number[] }[] = [];
   for (let mask = 1; mask < 1 << list.length; mask++) {

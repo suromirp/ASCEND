@@ -38,7 +38,7 @@ interface CourseInputs {
   illnessEpisodes?: IllnessEpisode[];
 }
 
-export const LOOKBACK_WEEKS = 4;
+const LOOKBACK_WEEKS = 4;
 const MIN_WEEKS = 2;
 
 // What the current phase is for, in one sentence.

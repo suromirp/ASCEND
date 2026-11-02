@@ -57,7 +57,7 @@ import { kgLabel } from '../utils/kg';
 export const REPEAT_SHARE_LIMIT = 0.6;
 // With fewer planned trainings one miss decides the share, so only the
 // key session counts then.
-export const REPEAT_MIN_PLANNED = 3;
+const REPEAT_MIN_PLANNED = 3;
 // Offered on Monday, Tuesday and Wednesday of the week that would repeat.
 const OFFER_DAYS = 2;
 
@@ -135,7 +135,7 @@ export function repeatWeekChange(program: Program, weekStart: string, repeat: bo
 
 // --- 3. what it costs -------------------------------------------------------
 
-export interface LoadLine {
+interface LoadLine {
   minutes: number;
   elevationGainM?: number;
   backpackKg?: number;

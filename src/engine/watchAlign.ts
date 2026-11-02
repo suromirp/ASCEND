@@ -74,7 +74,7 @@ function readField(log: SessionLog, field: MeasuredField): Value | undefined {
 
 // --- one pair: what would change ------------------------------------------------------
 
-export interface FieldChange {
+interface FieldChange {
   field: MeasuredField;
   // The hand-made value (absent: nothing was filled in) and the watch's.
   before: number | undefined;

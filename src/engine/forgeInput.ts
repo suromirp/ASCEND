@@ -113,7 +113,7 @@ export const dockFieldKey = (at: FieldRef, taps: number): string => `${at.slot}:
 
 // A tap closes the input dock unless it lands on the dock itself or on a field of a set
 // (`data-dock-keep`). Swiping to another exercise gives no tap, so the dock stays open there.
-export const DOCK_KEEP_SELECTOR = '[data-dock-keep]';
+const DOCK_KEEP_SELECTOR = '[data-dock-keep]';
 export function tapClosesDock(target: { closest: (selector: string) => unknown } | null): boolean {
   if (!target) return false;
   return !target.closest(DOCK_KEEP_SELECTOR);
@@ -370,7 +370,7 @@ export function plateChange(step: Pick<PlateStep, 'add' | 'remove'>): string | u
 // geruild, een set erbij of eraf. Een oefening zonder iets van jou krijgt altijd het plan van nu, ook als
 // de naam gelijk bleef: anders blijft een voorschrift van voor een nieuwe regel (Zonder spotter) staan in
 // een training die je opende maar nog niet begon (de klok begint dan opnieuw, het concept niet).
-export function touchedInDraft(e: WorkoutExercise, f: WorkoutExercise): boolean {
+function touchedInDraft(e: WorkoutExercise, f: WorkoutExercise): boolean {
   return !!e.swappedFrom || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || (r.rir !== undefined && r.rirAssumed === false) || isOwnRow(r));
 }
 

@@ -140,11 +140,11 @@ const SMALL: Set<MovementPattern> = new Set(['calf', 'shin', 'core', 'hip']);
 // 2,5 with low reps; an isolation exercise 1,5 minutes; calves, shins, hips and
 // core 1 minute. Starting values (the research report, chapter 3: longer rest
 // keeps more reps on compound lifts); your own value per exercise wins.
-export const REST_BARBELL_COMPOUND = 180;
-export const REST_COMPOUND = 120;
-export const REST_COMPOUND_LOW_REPS = 150;
-export const REST_ISOLATION = 90;
-export const REST_SMALL = 60;
+const REST_BARBELL_COMPOUND = 180;
+const REST_COMPOUND = 120;
+const REST_COMPOUND_LOW_REPS = 150;
+const REST_ISOLATION = 90;
+const REST_SMALL = 60;
 
 export function estimatedRest(exercise: Exercise | undefined, repsHigh?: number): number {
   if (!exercise) return repsHigh !== undefined && repsHigh <= 8 ? REST_COMPOUND : REST_ISOLATION;

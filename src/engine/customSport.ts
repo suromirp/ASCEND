@@ -31,7 +31,7 @@ export const FEEL_ADVICE: CustomFeel = 'whole';
 
 // AFGELEID, niet getoetst: het antwoord als kenmerken (impact, remmen, stop en start, bovenlichaam, techniek).
 // Benen: een balsport of iets met springen; armen en schouders: roeien, peddelen, klimmen; hele lijf: ertussen.
-export const FEEL_TRAITS: Record<CustomFeel, SportTraits> = {
+const FEEL_TRAITS: Record<CustomFeel, SportTraits> = {
   legs: { impact: 2, eccentric: 1, stopStart: 2, upperBody: 0, technique: 1 },
   arms: { impact: 0, eccentric: 0, stopStart: 0, upperBody: 3, technique: 2 },
   whole: { impact: 1, eccentric: 1, stopStart: 1, upperBody: 2, technique: 2 },
@@ -82,11 +82,6 @@ export function customTemplate(sport: CustomSport): SessionTemplate {
 // mee, met het hele lijf als aanname.
 export function countingCustomTemplates(settings: { customSports?: unknown; sportCounting?: unknown }): SessionTemplate[] {
   return (parseCustomSports(settings.customSports).value ?? []).filter((c) => c.role === 'count').map(customTemplate);
-}
-
-export function customSportOf(activity: Pick<ExternalActivity, 'otherType'>, settings: { customSports?: unknown }): CustomSport | undefined {
-  if (!activity.otherType) return undefined;
-  return parseCustomSports(settings.customSports).value?.find((c) => c.type === activity.otherType);
 }
 
 export interface CustomQuestion {

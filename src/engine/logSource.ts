@@ -9,7 +9,7 @@ import { durationLabel } from './activityImport';
 import { isAligned, MEASURED_FIELDS } from './watchAlign';
 import { formatNumberNL } from '../utils/number';
 
-export type LogSourceIcon = 'horloge' | 'notitie';
+type LogSourceIcon = 'horloge' | 'notitie';
 
 export interface LogSourceInfo {
   label: string;

@@ -56,7 +56,7 @@ export const PLANNED_STRENGTH_RPE = 8;
 // At a test or race the effort is fixed at the maximum and the pace varies: a 10 there is the plan,
 // not a sign of tiredness (docs/onderzoek/RPE bij een testloop.md, voorstel 1). Recognised by the
 // role, never by a template id. A 7 on a test counts lighter (the floor of 0.75).
-export const PLANNED_MAX_EFFORT_RPE = 10;
+const PLANNED_MAX_EFFORT_RPE = 10;
 // Descent without a log or a target of its own (hills walked back down;
 // the up-and-down session run down).
 const DEFAULT_DESCENT_M: Record<string, number> = { tpl_hill_intervals: 150, tpl_hills_descent: 200 };
@@ -155,7 +155,7 @@ export interface FatigueEvent {
   logged: boolean;
 }
 
-export interface FatigueContribution {
+interface FatigueContribution {
   id: string;
   templateId: string;
   name: string;

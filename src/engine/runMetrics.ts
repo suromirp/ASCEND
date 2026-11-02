@@ -225,7 +225,7 @@ export function driftOf(detail: ActivityDetail | undefined): Drift | NotAvailabl
 
 // --- climbs and descents ---------------------------------------------------------------------------
 
-export type HillClass = 'heuvel' | 'klim';
+type HillClass = 'heuvel' | 'klim';
 
 export interface ClimbFact {
   klass: HillClass;
@@ -256,13 +256,13 @@ export interface DescentFact {
 // A hill: at least 50 m, 4 minutes and 4 percent on average. A climb: at least
 // 150 m and 8 minutes. The hill class is the more sensitive to the noise of a
 // barometer (own assumption).
-export const HILL_MIN = { metres: 50, sec: 240, gradientPct: 4 };
-export const CLIMB_MIN = { metres: 150, sec: 480 };
-export const GRADE_CLASS_WIDTH = 4;
+const HILL_MIN = { metres: 50, sec: 240, gradientPct: 4 };
+const CLIMB_MIN = { metres: 150, sec: 480 };
+const GRADE_CLASS_WIDTH = 4;
 // Our own climb against the climb the source reports: further apart than this
 // and the altitude of this training is not trusted (a corrected altitude at the
 // source can differ legitimately, so the margin is wide).
-export const GAIN_AGREEMENT_RANGE: [number, number] = [60, 140];
+const GAIN_AGREEMENT_RANGE: [number, number] = [60, 140];
 
 const altitudeTrusted = (d: ActivityDetail) => d.quality.gainAgreementPct === undefined || (d.quality.gainAgreementPct >= GAIN_AGREEMENT_RANGE[0] && d.quality.gainAgreementPct <= GAIN_AGREEMENT_RANGE[1]);
 
@@ -312,7 +312,7 @@ export function descentsOf(detail: ActivityDetail | undefined): DescentFact[] | 
 
 // --- form: the first third against the last ----------------------------------------------------------
 
-export type FormSample = RunDynamics & { cadence?: number; paceSec: number };
+type FormSample = RunDynamics & { cadence?: number; paceSec: number };
 
 export interface Form {
   first: FormSample;
@@ -327,9 +327,9 @@ export interface Form {
 // Form is read within one run, so that day-to-day noise and differences between
 // people drop out (Zandbergen 2023): only when the pace of the last third is
 // within 6 percent of the first, and on terrain that is not hilly.
-export const FORM_MAX_PACE_CHANGE_PCT = 6;
-export const FORM_MAX_CLIMB_PER_KM = 15;
-export const FORM_MIN_SEC = 20 * 60;
+const FORM_MAX_PACE_CHANGE_PCT = 6;
+const FORM_MAX_CLIMB_PER_KM = 15;
+const FORM_MIN_SEC = 20 * 60;
 
 function third(slices: DetailSlice[]): FormSample | undefined {
   const sec = slices.reduce((n, s) => n + s.sec, 0);

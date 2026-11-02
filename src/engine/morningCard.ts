@@ -69,7 +69,7 @@ export function maxEffortYesterday(p: { logs: SessionLog[]; templates: SessionTe
 
 export type SuggestionSource = 'beenindex' | 'horloge' | 'zelf';
 
-export interface Suggested<T> {
+interface Suggested<T> {
   value: T;
   from: SuggestionSource;
 }
@@ -111,7 +111,7 @@ export const SLEEP: [SleepFeeling, string][] = [['goed', 'Goed'], ['gewoon', 'Ge
 
 // --- de getallen bovenaan de kaart ---------------------------------------------------
 
-export interface CardStat {
+interface CardStat {
   // Welk horlogegetal het is (voor het woord van engine/morningRule.ts#ruleWord).
   key: WellnessLine['key'];
   label: string;
@@ -175,7 +175,7 @@ export function reviseCheckInSleep(checkIn: MorningCheckIn, judgment: { verdict:
 // --- wat je antwoord doet, in één regel -----------------------------------------------
 
 export const NOTHING_PLANNED_TEXT = 'Vandaag staat er niets gepland. Alles blijft zoals het is.';
-export const NO_CHANGE_TEXT = 'Niets verandert zonder jouw akkoord.';
+const NO_CHANGE_TEXT = 'Niets verandert zonder jouw akkoord.';
 // Het id waarmee "Bekijk voorstel" naar de kaart Benen gaat (data-advice-ids op Vandaag).
 export const LEG_CARD_TARGET = 'kaart-benen';
 

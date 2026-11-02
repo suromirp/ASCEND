@@ -26,8 +26,8 @@ import type { EnergyFeeling } from '../models/checkIn';
 import type { RecoveryMetric } from '../models/metrics';
 import { baselineValues, dayRecord, MIN_BASELINE_DAYS, SHORT_NIGHT_MINUTES, sleepLabel } from './wellnessCheck';
 
-export const RHR_OFF = 5;
-export const SLEEP_SHORTER_OFF = 60;
+const RHR_OFF = 5;
+const SLEEP_SHORTER_OFF = 60;
 // Kleiner dan dit verschil heet "normaal".
 const RHR_SAME = 2;
 const SLEEP_SAME = 20;

@@ -98,7 +98,7 @@ const HEAVY_SNOW = new Set([75, 86]);
 const SNOW = new Set([71, 73, 77, 85]);
 const FOG = new Set([45, 48]);
 
-export interface Daylight {
+interface Daylight {
   sunrise: string; // 'HH:MM'
   sunset: string; // 'HH:MM'
   // You finish after sunset / start before sunrise: take a light.
@@ -337,7 +337,7 @@ export function updatedLabel(fetchedAt: string): string {
 }
 
 // Older than this and the line says when it was last updated.
-export const STALE_AFTER_MINUTES = 120;
+const STALE_AFTER_MINUTES = 120;
 
 export function isForecastStale(fetchedAt: string, now: Date, maxMinutes = STALE_AFTER_MINUTES): boolean {
   const at = Date.parse(fetchedAt);

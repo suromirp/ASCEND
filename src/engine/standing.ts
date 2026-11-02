@@ -209,7 +209,7 @@ export interface LegDay {
 
 // Light: an easy run or upper body. Middle: a long run, a hill session.
 // Heavy: heavy leg strength, a hilly hike. Very heavy: a long mountain day.
-export const LEG_LEVELS = [1, 8, 18, 30];
+const LEG_LEVELS = [1, 8, 18, 30];
 
 export function legCalendar(inputs: LegFatigueInputs, weeksBack = 3, weeksAhead = 1): LegDay[] {
   const events = fatigueEvents(inputs);

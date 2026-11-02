@@ -14,7 +14,7 @@ export interface SessionContribution {
   capabilityKeys: CapabilityKey[];
 }
 
-export type GoalFocusReasonComponent = 'base' | 'urgency' | 'phase' | 'feasibilityPressure' | 'trainableGap' | 'userPriority';
+type GoalFocusReasonComponent = 'base' | 'urgency' | 'phase' | 'feasibilityPressure' | 'trainableGap' | 'userPriority';
 
 export interface GoalFocusReason {
   component: GoalFocusReasonComponent;
@@ -34,7 +34,7 @@ export interface GoalFocus {
 
 // v0.2b REVISED §35: an ASCEND-calibrated model, explicitly not a
 // scientifically validated predictor — never a pseudo-precise success %.
-export type FeasibilityStatus = 'on_track' | 'challenging' | 'unlikely' | 'insufficient_data';
+type FeasibilityStatus = 'on_track' | 'challenging' | 'unlikely' | 'insufficient_data';
 
 export interface FeasibilityAssessment {
   goalId: string;

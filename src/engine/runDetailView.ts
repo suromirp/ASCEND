@@ -75,7 +75,7 @@ export function runKindOf(log: Pick<SessionLog, 'templateId'>, templates: Sessio
 const easyOrLong = (kind: RunKind) => kind === 'easy' || kind === 'long';
 
 // The kilometres the verdict is read on: for a test the five of its best stretch.
-export function verdictKms(rd: RunDetail, kind: RunKind): RunKm[] {
+function verdictKms(rd: RunDetail, kind: RunKind): RunKm[] {
   return kind === 'test' && rd.bestFive ? rd.bestFive.kms : rd.kms;
 }
 
@@ -140,7 +140,7 @@ export function heartOf(kms: RunKm[]): HeartHalves | undefined {
 
 // --- the verdict in one word and one sentence (4.2, 5.2) ------------------------------------
 
-export type VerdictTone = 'measure' | 'short' | 'fast-start' | 'sag' | 'strong' | 'explained' | 'blocks-fade' | 'blocks-even' | 'heart' | 'even' | 'mixed';
+type VerdictTone = 'measure' | 'short' | 'fast-start' | 'sag' | 'strong' | 'explained' | 'blocks-fade' | 'blocks-even' | 'heart' | 'even' | 'mixed';
 
 export interface RunVerdict {
   word: string;
@@ -149,7 +149,7 @@ export interface RunVerdict {
 }
 
 // A full kilometre this much faster than the middle one does not fit the run: the GPS.
-export const MEASURE_FAST_FACTOR = 0.6;
+const MEASURE_FAST_FACTOR = 0.6;
 
 function medianOf(xs: number[]): number {
   const s = [...xs].sort((a, b) => a - b);
@@ -279,7 +279,7 @@ export function headlineStats(rd: RunDetail, kind: RunKind, totals?: RunTotals):
 
 // --- tempo per kilometre: the bars (4.4) --------------------------------------------------------------
 
-export interface PaceBar {
+interface PaceBar {
   index: number;
   paceSecKm: number;
   distanceM: number;
@@ -416,7 +416,7 @@ export function kmWord(km: RunKm, meanPace: number): string | undefined {
 
 export type FormKey = 'cadence' | 'stanceTimeMs' | 'stepLengthM' | 'oscillationMm' | 'stanceBalanceLeftPct';
 
-export const FORM_KEYS: FormKey[] = ['cadence', 'stanceTimeMs', 'stepLengthM', 'oscillationMm', 'stanceBalanceLeftPct'];
+const FORM_KEYS: FormKey[] = ['cadence', 'stanceTimeMs', 'stepLengthM', 'oscillationMm', 'stanceBalanceLeftPct'];
 
 export const FORM_INFO: Record<FormKey, { label: string; noun: string; unit: string; decimals: number; scale: number; meaning: string }> = {
   cadence: { label: 'Cadans', noun: 'cadans', unit: 'stappen/min', decimals: 0, scale: 1, meaning: 'Hoeveel stappen je per minuut zet. Hij verandert weinig met je tempo; wat bij jou past hangt af van je eigen gemiddelde, niet van een vaste norm als 180.' },
@@ -685,8 +685,8 @@ export interface RecurringStart {
   of: number;
 }
 
-export const RECURRING_OF = 5;
-export const RECURRING_MIN = 3;
+const RECURRING_OF = 5;
+const RECURRING_MIN = 3;
 
 // Three of the latest five tests, races and trainings with blocks (with kilometres) began too
 // fast. Only runs up to and including `subject` count.
@@ -750,7 +750,7 @@ export function runAdvice(rd: RunDetail, kind: RunKind, opts: { pain?: boolean; 
 
 // --- the test as a special case (6.2) --------------------------------------------------------------------
 
-export interface TestPiece {
+interface TestPiece {
   m: number;
   sec: number;
 }
@@ -796,9 +796,9 @@ export function testHalvesLine(h: Halves | undefined): string | undefined {
 
 // --- against similar runs (4.9) ----------------------------------------------------------------------
 
-export type CompareWord = 'Beter' | 'Normaal' | 'Slechter';
+type CompareWord = 'Beter' | 'Normaal' | 'Slechter';
 
-export interface CompareRow {
+interface CompareRow {
   label: string;
   value: string;
   word: CompareWord;
@@ -814,8 +814,8 @@ export interface SimilarComparison {
 
 // From this many percent in pace (the spread of a 5 km time trial is 3,4 percent) a
 // difference gets a word; the same for the pace per heartbeat.
-export const COMPARE_PACE_PCT = 3.5;
-export const COMPARE_SPLIT_SEC = 5;
+const COMPARE_PACE_PCT = 3.5;
+const COMPARE_SPLIT_SEC = 5;
 
 // The numbers of this run against the middle of the earlier ones the gate chose
 // (engine/runComparison.ts#similarRuns). Undefined with fewer than three.

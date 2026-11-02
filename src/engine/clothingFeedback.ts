@@ -17,7 +17,7 @@ export type ClothingAdjust = Partial<Record<Sport, number>>;
 
 export const CLOTHING_FEEL_LABEL: Record<ClothingFeel, string> = { too_warm: 'Te warm', good: 'Goed', too_cold: 'Te koud' };
 
-export const FEEDBACK_STEP_C = 0.5;
+const FEEDBACK_STEP_C = 0.5;
 export const MAX_ADJUST_C = 4;
 const SPORTS: Sport[] = SPORT_LIST;
 const SPORT_WORD = Object.fromEntries(DEFINED_SPORTS.map((s) => [s.id, s.verb])) as Record<Sport, string>;

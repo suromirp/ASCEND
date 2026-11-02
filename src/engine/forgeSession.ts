@@ -74,21 +74,21 @@ export function resume(s: SessionClock, now: number): SessionClock {
   return { ...s, pauses: [...list.slice(0, -1), { from: last.from, to: Math.max(now, last.from) }], lastActionAt: now };
 }
 
-export function noteAction(s: SessionClock, now: number): SessionClock {
+function noteAction(s: SessionClock, now: number): SessionClock {
   return { ...s, lastActionAt: now };
 }
 
 // De drempel van de instelling "Lange onderbreking vragen na", in minuten; 0 is uit, afwezig is het advies.
 export const BREAK_ASK_OPTIONS = [0, 30, 45, 60, 90] as const;
 export type BreakAsk = (typeof BREAK_ASK_OPTIONS)[number];
-export const DEFAULT_BREAK_ASK: BreakAsk = 45;
+const DEFAULT_BREAK_ASK: BreakAsk = 45;
 
 export function resolveBreakAsk(raw: { forgeLongBreak?: unknown } | undefined | null): BreakAsk {
   return BREAK_ASK_OPTIONS.find((m) => m === raw?.forgeLongBreak) ?? DEFAULT_BREAK_ASK;
 }
 
 // Het laatste moment van handelen; valt terug op het begin.
-export function lastActionOf(s: SessionClock): number {
+function lastActionOf(s: SessionClock): number {
   return typeof s.lastActionAt === 'number' && Number.isFinite(s.lastActionAt) ? Math.max(s.lastActionAt, s.startedAt) : s.startedAt;
 }
 
@@ -118,7 +118,7 @@ export function formatAway(ms: number): string {
 // De duur die Afronden voorstelt: de actieve tijd, tenzij de klok onwaarschijnlijk lang liep (een vergeten
 // sessie, een telefoon in een tas). Boven de grens valt het voorstel terug op de verwachte duur en zegt een
 // regel wat de klok zei. Jij kunt het getal altijd zelf aanpassen.
-export const MAX_CLOCK_MINUTES = 240;
+const MAX_CLOCK_MINUTES = 240;
 
 export interface FinishDuration {
   minutes: number;

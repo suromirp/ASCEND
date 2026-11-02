@@ -16,7 +16,7 @@
 
 import type { TrekImportance } from '../models/leave';
 
-export const TREK_LIGHT_DAYS_BEFORE_DEFAULT = 1;
+const TREK_LIGHT_DAYS_BEFORE_DEFAULT = 1;
 
 export function trekLightDaysBefore(days: number, importance: TrekImportance | undefined): number {
   if (importance !== 'goal') return TREK_LIGHT_DAYS_BEFORE_DEFAULT;

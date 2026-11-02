@@ -50,7 +50,7 @@ export interface SportDefinition {
 // Het belastingsprofiel zoals models/prescription.ts#SessionStressProfile het kent, hier zonder import
 // zodat dit bestand niets uit models/ leest.
 type Load = 'none' | 'light' | 'moderate' | 'heavy';
-export interface SportStress {
+interface SportStress {
   lowerBodyLoad: Load;
   impact: Load;
   eccentricLoad: Load;

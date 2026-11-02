@@ -17,7 +17,7 @@ import { isNum } from '../utils/guards';
 export const MAX_GAP_SEC = 20;
 // The distance of the series may differ this much from the distance of the log
 // before it is not trusted (a treadmill, a wrong calibration).
-export const DISTANCE_AGREEMENT = 0.1;
+const DISTANCE_AGREEMENT = 0.1;
 
 
 interface Point {
@@ -59,24 +59,24 @@ export function distancePoints(stream: StreamSet): Point[] {
 // in time whose distance hardly moved (a watch that paused by itself), or a run of readings
 // that creep forward slower than STOP_SPEED_MS, are a stop. A gap where the distance does
 // jump stays a hole (the watch lost the run), and says nothing about the pace.
-export const STOP_GAP_MAX_M = 15;
-export const STOP_SPEED_MS = 1;
+const STOP_GAP_MAX_M = 15;
+const STOP_SPEED_MS = 1;
 // A creep shorter than this is noise, not a stop.
-export const STOP_MIN_SEC = 3;
+const STOP_MIN_SEC = 3;
 // The version of how a best effort is read. 2: stops are told apart (docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop.md).
 export const EFFORT_VERSION = 2;
 // Many stops make the test a little too friendly: standing still is rest.
 // Stops closer together than this (seconds or metres of movement between them) are one stop.
-export const MERGE_STOP_SEC = 10;
-export const MERGE_STOP_M = 20;
+const MERGE_STOP_SEC = 10;
+const MERGE_STOP_M = 20;
 // After a stop, this many seconds are looked at for a catch-up jump: more than this factor times
 // the median pace of the CATCH_UP_BEFORE_SEC before the stop (or of the whole run when that is higher), or more than CATCH_UP_MAX_MS, is a hole.
-export const CATCH_UP_SEC = 10;
-export const CATCH_UP_BEFORE_SEC = 60;
-export const CATCH_UP_FACTOR = 1.5;
-export const CATCH_UP_MAX_MS = 6.5;
-export const MANY_STOPPED_SEC = 60;
-export const MANY_STOPS = 3;
+const CATCH_UP_SEC = 10;
+const CATCH_UP_BEFORE_SEC = 60;
+const CATCH_UP_FACTOR = 1.5;
+const CATCH_UP_MAX_MS = 6.5;
+const MANY_STOPPED_SEC = 60;
+const MANY_STOPS = 3;
 
 export type StopMode = 'skip' | 'count';
 

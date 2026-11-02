@@ -22,7 +22,7 @@ import { matchExercise, normalizeExerciseName } from './exerciseMatch';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession } from './macrofactorSets';
 
-export type Kind = 'legs' | 'upper' | 'full';
+type Kind = 'legs' | 'upper' | 'full';
 
 const LEG_PATTERNS = new Set<MovementPattern>(['squat', 'hinge', 'lunge_step', 'calf', 'shin', 'hip', 'isolation_leg']);
 

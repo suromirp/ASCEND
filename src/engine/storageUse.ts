@@ -6,7 +6,7 @@
 // Puur: geen React, geen IndexedDB.
 
 // Boven dit deel van wat de browser geeft, is het krap.
-export const STORAGE_TIGHT_SHARE = 0.8;
+const STORAGE_TIGHT_SHARE = 0.8;
 // Zo lang mag de meting duren.
 export const STORAGE_ESTIMATE_MS = 3_000;
 
@@ -36,7 +36,7 @@ export interface StorageUseText {
 
 // De back-up van Android slaat een app boven ongeveer 25 MB over; vanaf 20 MB zegt de app het
 // (alleen in de Android-app, docs/beslissingen/2026-11-01-android-app.md).
-export const ANDROID_BACKUP_WARN_BYTES = 20_000_000;
+const ANDROID_BACKUP_WARN_BYTES = 20_000_000;
 export const ANDROID_BACKUP_WARN_TEXT = 'De back-up van Android kan te groot worden; je eigen back-up blijft werken.';
 
 export function storageUseText(estimate: StorageEstimate | undefined, androidBackup = false): StorageUseText | undefined {

@@ -10,7 +10,7 @@
 // order they were supplied and the order the original research document
 // cited Garmin for each topic, not independently confirmed.
 
-export interface GuideSource {
+interface GuideSource {
   label: string;
   url?: string;
 }

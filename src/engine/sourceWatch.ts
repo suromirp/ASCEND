@@ -18,9 +18,9 @@ import type { SessionLog } from '../models/training';
 import { addDays, formatDateNL, localDateOf } from '../utils/dates';
 import { fromIntervals } from './logSource';
 
-export const SILENT_DAYS = 3;
+const SILENT_DAYS = 3;
 
-export type SourceSilenceKind = 'mornings' | 'activities' | 'both';
+type SourceSilenceKind = 'mornings' | 'activities' | 'both';
 
 export interface SourceSilence {
   kind: SourceSilenceKind;

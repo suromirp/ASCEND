@@ -22,5 +22,4 @@ export async function checkForUpdate(): Promise<UpdateCheck> {
   return registration.installing || registration.waiting ? 'update' : 'latest';
 }
 
-export const APP_VERSION = __APP_VERSION__;
 export const BUILD_TIME = __BUILD_TIME__;

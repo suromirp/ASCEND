@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react';
 import type { DisplayStatus } from '../engine/sessionStatus';
-import type { SessionTemplate } from '../models/training';
-import { templateSport } from '../engine/sports';
 
 // De kleine pictogrammen van de weeklijst: één lijn, 1,6 breed, op 24 bij 24
 // (de stijl van de ontwerpen in "steen en contour"). Alleen voor Week.
@@ -41,22 +39,4 @@ export function WeekStatusIcon({ status }: { status: DisplayStatus }) {
       <span className="sr-only">{s.label}</span>
     </span>
   );
-}
-
-// De sport van een template: kracht, hardlopen, wandelen, fietsen. Een rustdag
-// of onbekende vorm krijgt niets, zodat de naam op dezelfde plek begint.
-export function WeekSportIcon({ template }: { template: SessionTemplate }) {
-  const sport = template.type === 'strength' ? 'kracht' : templateSport(template);
-  return (
-    <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
-      {sport === 'kracht' && (<Svg size={16}><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" /></Svg>)}
-      {sport === 'running' && (<Svg size={16}><path d="M3 16.5V13l3-1 2-5h3l1 3 4 1.5c2.5.9 5 2 5 4v1H3z" /><path d="M3 19.5h18" /></Svg>)}
-      {sport === 'hiking' && (<Svg size={16}><path d="M8 3l3 18" /><path d="M6.5 6.5h4" /><path d="M15 4c1.7 0 3 1.3 3 3s-1.3 3-3 3" /><path d="M15 10l2 11" /></Svg>)}
-      {sport === 'cycling' && (<Svg size={16}><circle cx="6" cy="16" r="3.5" /><circle cx="18" cy="16" r="3.5" /><path d="M6 16l4-8h5l3 8M10 8l3 8" /></Svg>)}
-    </span>
-  );
-}
-
-export function MapIcon() {
-  return <Svg size={16}><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" /><path d="M9 4v13.5M15 6.5V20" /></Svg>;
 }

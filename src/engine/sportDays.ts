@@ -11,7 +11,7 @@ import { legRestHours, stressProfileOf, type SportIntensity } from './sportStres
 import { anySportDefinition, type CountedSportId } from '../data/sports';
 import { sportTemplate } from './sportTemplate';
 
-export const SPORT_LOG_PREFIX = 'sportlog:';
+const SPORT_LOG_PREFIX = 'sportlog:';
 // Hoe ver terug een gelogde sport meetelt voor de check: langer dan 72 uur doet hij er niet meer toe.
 const LOOK_BACK_DAYS = 4;
 

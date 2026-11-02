@@ -9,7 +9,7 @@
 
 import { noticeSupport, type NoticeEnvironment, type NoticeSupport } from '../engine/morningNotice';
 
-export const SYNC_TAG = 'ascend-ochtend';
+const SYNC_TAG = 'ascend-ochtend';
 // Hoe vaak de browser hoogstens mag wakker maken: twee keer per dag is genoeg om
 // de ochtend te raken; Chrome rekent zelf nog strenger.
 const MIN_INTERVAL_MS = 12 * 60 * 60 * 1000;

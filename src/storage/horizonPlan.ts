@@ -77,7 +77,7 @@ export interface HorizonChangeInput {
   strengthBlock?: { sessionsPerWeek: number; keepFirst: string[] };
 }
 
-export interface FirstPlanExtras {
+interface FirstPlanExtras {
   // The ladder of the goal (a trek).
   milestones: GoalMilestone[];
   // The strength block, or none when you train without strength.
@@ -106,7 +106,7 @@ export interface HorizonPlan {
 
 // What undo puts back: the settings and goals as they were just before
 // Akkoord wrote them (read again then, not at the preview: Warden Planning punt 7).
-export interface HorizonRestore {
+interface HorizonRestore {
   settings?: Partial<AppSettings>;
   goals: TrainingGoal[];
   newGoalIds: string[];

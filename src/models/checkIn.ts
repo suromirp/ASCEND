@@ -33,7 +33,7 @@ export interface MorningCheckIn {
 // 'klopt': the short night counts as it is. 'niet_goed': the night is left out
 // of your own averages and of the proposal; `hours` is your own estimate (5 to
 // 9), `hoursSkipped` that you chose "Weet ik niet".
-export type NightVerdict = 'klopt' | 'niet_goed';
+type NightVerdict = 'klopt' | 'niet_goed';
 
 export interface NightJudgment {
   date: string; // ISO date of the morning, the same date as the sleep record
@@ -61,7 +61,7 @@ export interface PainReport {
 // back trouble from training get in the way this week? Asked in the week
 // review; the full overuse questionnaire found about ten times more problems
 // than plain injury registration.
-export type WeeklyTrouble = 'geen' | 'wel_gewoon' | 'minder' | 'niet_kunnen';
+type WeeklyTrouble = 'geen' | 'wel_gewoon' | 'minder' | 'niet_kunnen';
 export type TroubleSeverity = 'mild' | 'matig' | 'ernstig';
 
 export interface WeeklyHealthCheck {

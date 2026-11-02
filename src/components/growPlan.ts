@@ -28,7 +28,7 @@ export interface GrowPlan {
 
 export const GROW_OPEN_MS = 280;
 export const GROW_CLOSE_MS = 240;
-export const GROW_CONTENT_DELAY_MS = 100;
+const GROW_CONTENT_DELAY_MS = 100;
 // De rij moet minstens voor de helft in beeld staan om iets te hebben waar het blad uit groeit.
 const MIN_VISIBLE = 0.5;
 // Een onthouden rij is na zo lang niet meer de rij waar je net op tikte.

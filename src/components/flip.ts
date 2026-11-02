@@ -14,7 +14,7 @@ export interface FlipDelta {
 }
 
 // Een verschuiving kleiner dan dit telt niet.
-export const FLIP_MIN_PX = 4;
+const FLIP_MIN_PX = 4;
 export const FLIP_MIN_MS = 220;
 export const FLIP_MAX_MS = 400;
 // Vanaf deze afstand duurt het schuiven het langst: ongeveer een heel scherm.

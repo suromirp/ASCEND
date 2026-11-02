@@ -2,14 +2,14 @@
 // Alleen rekensom, zonder DOM: het gebaar zelf staat in utils/sheetDragDom.ts.
 
 // Hoe ver het blad omlaag moet voor het dichtgaat, als deel van zijn hoogte.
-export const CLOSE_FRACTION = 0.3;
+const CLOSE_FRACTION = 0.3;
 // Of sneller dan dit (px per ms), met minstens CLOSE_MIN_PX afstand.
-export const CLOSE_VELOCITY = 0.5;
-export const CLOSE_MIN_PX = 24;
+const CLOSE_VELOCITY = 0.5;
+const CLOSE_MIN_PX = 24;
 // Vanaf hoeveel pixels beweging het gebaar zich laat zien, en wanneer het verticaal genoeg is.
-export const INTENT_PX = 8;
+const INTENT_PX = 8;
 // Alleen de laatste meetpunten tellen voor de snelheid.
-export const VELOCITY_WINDOW_MS = 100;
+const VELOCITY_WINDOW_MS = 100;
 
 // Naar boven past het blad niet mee, er is geen rek.
 export function sheetFollow(dy: number): number {

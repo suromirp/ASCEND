@@ -137,7 +137,7 @@ function parseStyles(xml: string): (DateKind | undefined)[] {
   });
 }
 
-export interface WorkbookSheet {
+interface WorkbookSheet {
   name: string;
   relId: string;
 }
@@ -170,7 +170,7 @@ export function columnIndex(ref: string | undefined): number | undefined {
   return n - 1;
 }
 
-export interface SheetContext {
+interface SheetContext {
   shared: string[];
   styles: (DateKind | undefined)[];
   date1904: boolean;

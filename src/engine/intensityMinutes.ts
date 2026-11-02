@@ -19,7 +19,7 @@ export interface ZoneMinutes {
 }
 
 // Minder hartslag dan dit deel van de tijd en het profiel zegt te weinig.
-export const MIN_HEART_RATE_COVERAGE_PCT = 80;
+const MIN_HEART_RATE_COVERAGE_PCT = 80;
 
 export function minutesByZone(log: SessionLog, hr: HeartRateSettings | undefined): ZoneMinutes | undefined {
   const detail = log.detail;

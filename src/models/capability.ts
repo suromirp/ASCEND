@@ -43,7 +43,7 @@ export interface CapabilityKey {
 
 // Not all data counts equally (v0.2 §5). A proxy must never be silently
 // equated 1:1 with the specific thing it's supporting evidence for.
-export type EvidenceType = 'direct' | 'derived' | 'proxy' | 'manual';
+type EvidenceType = 'direct' | 'derived' | 'proxy' | 'manual';
 
 export interface CapabilityEvidence {
   id: string;

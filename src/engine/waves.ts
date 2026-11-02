@@ -79,9 +79,9 @@ export interface WaveReview {
 }
 
 // Een week "gehaald" is minstens dit deel van het budget.
-export const HIT_RATIO = 0.9;
+const HIT_RATIO = 0.9;
 // Gemiddeld meer dan dit deel van het budget heet zwaar: je deed meer dan voorgesteld.
-export const HEAVY_RATIO = 1.15;
+const HEAVY_RATIO = 1.15;
 export const DEFAULT_WEEKS_FOR_STEP = 3;
 
 // De terugblik op een golf. `weekMinutes` en `budgets` zijn per week van de golf, in volgorde.

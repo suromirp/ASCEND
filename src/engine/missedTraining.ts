@@ -21,8 +21,8 @@ import { logSport, templateSport } from './sports';
 import { isHandLog } from './activityImport';
 import { daysBetween, formatDateNL, weekdayLongNL } from '../utils/dates';
 
-export type MissedChoice = 'ask' | 'auto' | 'off';
-export type MissedDays = 1 | 2 | 3;
+type MissedChoice = 'ask' | 'auto' | 'off';
+type MissedDays = 1 | 2 | 3;
 
 export interface MissedSettings {
   choice: MissedChoice;
@@ -33,12 +33,12 @@ export interface MissedSettings {
 }
 
 export const MISSED_ADVICE: MissedSettings = { choice: 'ask', days: 2, link: true };
-export const MISSED_CHOICES: readonly MissedChoice[] = ['ask', 'auto', 'off'];
-export const MISSED_DAYS: readonly MissedDays[] = [1, 2, 3];
+const MISSED_CHOICES: readonly MissedChoice[] = ['ask', 'auto', 'off'];
+const MISSED_DAYS: readonly MissedDays[] = [1, 2, 3];
 // Ouder dan dit vraagt ASCEND niet meer: dan weet je het niet meer precies, en het blijft gewoon gemist.
-export const MISSED_MAX_AGE_DAYS = 14;
+const MISSED_MAX_AGE_DAYS = 14;
 // Een log zo ver van de geplande dag (ervoor of erna) kan bij die training horen.
-export const LINK_WINDOW_DAYS = 2;
+const LINK_WINDOW_DAYS = 2;
 
 export function resolveMissedSettings(raw: { missedTraining?: unknown; missedTrainingDays?: unknown; missedLink?: unknown } | undefined): MissedSettings {
   const choice = MISSED_CHOICES.includes(raw?.missedTraining as MissedChoice) ? (raw!.missedTraining as MissedChoice) : MISSED_ADVICE.choice;
@@ -107,7 +107,7 @@ export interface MissedSession {
   template: SessionTemplate;
 }
 
-export type MissedItem = (MissedSession & { kind: 'ask' }) | (MissedSession & { kind: 'link'; log: SessionLog });
+type MissedItem = (MissedSession & { kind: 'ask' }) | (MissedSession & { kind: 'link'; log: SessionLog });
 
 export interface MissedPlan {
   // De ene kaart op Vandaag, of niets.

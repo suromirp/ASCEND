@@ -28,12 +28,12 @@ import { daysBetween, formatDateNL } from '../utils/dates';
 import { effectivePriority, goalDetailsOf, goalKindOf, PRIORITY_NAME, sortedForList } from './goalLabels';
 import { mainGoal } from './mainGoal';
 
-export const TOP_TOP_MIN_DAYS = 42;
-export const TOP_REBUILD_DAYS = 21;
-export const VOORTOP_REBUILD_DAYS = 7;
-export const VOORTOP_BEFORE_TOP_MIN_DAYS = 10;
+const TOP_TOP_MIN_DAYS = 42;
+const TOP_REBUILD_DAYS = 21;
+const VOORTOP_REBUILD_DAYS = 7;
+const VOORTOP_BEFORE_TOP_MIN_DAYS = 10;
 // Hoe kort een afbouw ten minste blijft als hij wordt ingekort, per label.
-export const MIN_TAPER_DAYS: Record<GoalPriority, number> = { top: 7, voortop: 3, verkenning: 0 };
+const MIN_TAPER_DAYS: Record<GoalPriority, number> = { top: 7, voortop: 3, verkenning: 0 };
 
 const RANK: Record<GoalPriority, number> = { top: 0, voortop: 1, verkenning: 2 };
 const LOWER: Record<GoalPriority, GoalPriority | undefined> = { top: 'voortop', voortop: 'verkenning', verkenning: undefined };
@@ -52,7 +52,7 @@ export interface ConflictGoal {
   accepted: string[];
 }
 
-export type ConflictRule = 'TOP-TOP' | 'VOORTOP-VOOR-TOP' | 'NA-HERSTEL' | 'IN-AFBOUW';
+type ConflictRule = 'TOP-TOP' | 'VOORTOP-VOOR-TOP' | 'NA-HERSTEL' | 'IN-AFBOUW';
 
 export type ConflictResolution =
   // De afbouw van `goalId` wordt `taperDays` dagen.

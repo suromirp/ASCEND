@@ -93,7 +93,7 @@ export interface RowSummary {
 
 // De regel onder "Hartslag op je horloge": waarom het bij de zonenaam blijft, anders het
 // verschil als de drempel van intervals.icu meer dan 3 slagen afwijkt, anders de grens van zone 2.
-export const THRESHOLD_GAP = 3;
+const THRESHOLD_GAP = 3;
 function watchHrSub(f: SettingsFacts): string | undefined {
   const s = f.settings;
   const basis = f.watch?.hrBasis;

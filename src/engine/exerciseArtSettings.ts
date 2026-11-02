@@ -5,8 +5,8 @@
 // - 'spierkaart': alleen het spierkaartje, de tekeningen worden niet geladen.
 // - 'uit': geen plaatjes; het kaartje in Forge en het blad van een oefening verdwijnen.
 export type ExerciseArtMode = 'beide' | 'spierkaart' | 'uit';
-export const EXERCISE_ART_MODES: ExerciseArtMode[] = ['beide', 'spierkaart', 'uit'];
-export const DEFAULT_EXERCISE_ART: ExerciseArtMode = 'beide';
+const EXERCISE_ART_MODES: ExerciseArtMode[] = ['beide', 'spierkaart', 'uit'];
+const DEFAULT_EXERCISE_ART: ExerciseArtMode = 'beide';
 
 export function resolveExerciseArt(raw: { exerciseArt?: unknown } | undefined | null): ExerciseArtMode {
   return EXERCISE_ART_MODES.find((m) => m === raw?.exerciseArt) ?? DEFAULT_EXERCISE_ART;

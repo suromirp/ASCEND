@@ -233,7 +233,7 @@ export const outlookMinutes = (o: RaceOutlook): number => o.wholeMinutes;
 
 // Up to and including 10 km the time on race day is said as a clock (20:05), because "about 21 minutes" is
 // too coarse for a 5 km; above that whole minutes. The card, the sheet and TARGET-TIME all say it this way.
-export const CLOCK_UP_TO_KM = 10;
+const CLOCK_UP_TO_KM = 10;
 export function outlookSaid(o: RaceOutlook, km: number): string {
   return km <= CLOCK_UP_TO_KM ? `ongeveer ${formatRaceTime(o.atRaceDay)}` : `ongeveer ${o.wholeMinutes} minuten`;
 }

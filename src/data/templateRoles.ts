@@ -24,7 +24,7 @@ const IDS_BY_ROLE: Record<TemplateRole, string[]> = {
   extra: ['tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_bergconditie', 'tpl_ruck_walk'],
 };
 
-export const ROLE_ORDER = Object.keys(IDS_BY_ROLE) as TemplateRole[];
+const ROLE_ORDER = Object.keys(IDS_BY_ROLE) as TemplateRole[];
 
 export function defaultRolesOf(templateId: string): TemplateRole[] {
   return ROLE_ORDER.filter((role) => IDS_BY_ROLE[role].includes(templateId));

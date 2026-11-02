@@ -14,7 +14,7 @@ export interface FixedSlot {
   intensity: 'low' | 'moderate' | 'high';
 }
 
-export interface SportHandling {
+interface SportHandling {
   role: SportRole;
   fixed?: FixedSlot[];
 }
@@ -65,8 +65,6 @@ export interface SportCounting {
   askFelt: boolean;
   rest: 'ruim' | 'korter';
 }
-
-export const SPORT_COUNTING_ADVICE: SportCounting = { askNew: true, askFelt: true, rest: 'ruim' };
 
 export function resolveSportCounting(raw: unknown): SportCounting {
   const r = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};

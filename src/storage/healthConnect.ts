@@ -43,14 +43,14 @@ const PREFIX = `${HEALTH_CONNECT_ADAPTER_ID}:`;
 // Hoe ver een ronde terugkijkt: de trainingen zoals bij intervals.icu, de ochtenden vier weken
 // (het gemiddelde van de ochtendcheck). Health Connect geeft zonder extra toestemming toch niet
 // meer dan dertig dagen terug.
-export const HC_ACTIVITY_DAYS = 7;
-export const HC_MORNING_DAYS = 28;
+const HC_ACTIVITY_DAYS = 7;
+const HC_MORNING_DAYS = 28;
 // Bij openen van de app, en dan hoogstens eens per drie uur. Na een fout een half uur rust.
 export const HC_FETCH_HOURS = 3;
 export const HC_RETRY_MINUTES = 30;
 // Een hele ronde duurt nooit langer dan dit; daarna is de uitkomst een fout en wordt er niets
 // geschreven.
-export const HC_ROUND_MS = 30_000;
+const HC_ROUND_MS = 30_000;
 
 export interface HealthConnectState {
   enabled: boolean;
@@ -95,7 +95,7 @@ export interface HealthSyncOptions {
   roundMs?: number;
 }
 
-export function isHealthFetchDue(state: Pick<HealthConnectState, 'fetchedAt' | 'attemptAt' | 'lastError'>, now: Date): boolean {
+function isHealthFetchDue(state: Pick<HealthConnectState, 'fetchedAt' | 'attemptAt' | 'lastError'>, now: Date): boolean {
   const since = (iso: string | undefined) => (iso && Number.isFinite(Date.parse(iso)) ? now.getTime() - Date.parse(iso) : Infinity);
   if (state.lastError && since(state.attemptAt) < HC_RETRY_MINUTES * 60_000) return false;
   return since(state.fetchedAt) >= HC_FETCH_HOURS * 3600_000;

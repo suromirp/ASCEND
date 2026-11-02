@@ -78,7 +78,7 @@ const ELEVATION_RANGES = [
   { label: '1.500+ m', value: 1500 },
 ];
 
-export const RANGE_OPTIONS: Partial<Record<BaselineDimension, { label: string; value: number }[]>> = {
+const RANGE_OPTIONS: Partial<Record<BaselineDimension, { label: string; value: number }[]>> = {
   aerobic_engine: DURATION_RANGES,
   endurance_duration: DURATION_RANGES,
   mechanical_tolerance: DURATION_RANGES,

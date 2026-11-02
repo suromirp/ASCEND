@@ -20,9 +20,8 @@ export interface MorningNoticeSettings {
 }
 
 export const DEFAULT_NOTICE_TIME = '07:30';
-export const NOTICE_TIMES = ['06:30', '07:00', '07:30', '08:00', '08:30', '09:00'];
 // Na dit uur komt er geen melding meer: dan is het geen ochtend meer.
-export const NOTICE_UNTIL_MINUTES = 11 * 60;
+const NOTICE_UNTIL_MINUTES = 11 * 60;
 
 export const NOTICE_TITLE = 'Goedemorgen. Hoe voel je je?';
 export const NOTICE_BODY = 'Tik om je ochtend in te vullen.';

@@ -10,7 +10,7 @@
 
 import type { SportId } from './sports';
 
-export interface ModalitySource {
+interface ModalitySource {
   label: string;
   url?: string;
 }
@@ -27,7 +27,7 @@ export const ROLE_LABEL: Record<ModalityRole, string> = {
 
 // What the day's log form should show for this modality — keeps the field
 // set data-driven instead of a big switch on modality string in the UI.
-export interface ModalityFields {
+interface ModalityFields {
   distance?: boolean;
   inclinePercent?: boolean; // treadmill incline % -> Ascend estimates D+
   elevation?: boolean; // manual/GPS D+ (and D− when outdoor)
@@ -74,7 +74,7 @@ const TRAILRUNNER_MOUNTAIN_TRAINING: ModalitySource = { label: 'Trail Runner Mag
 const RUNINFINITE_VERTICAL_GAIN: ModalitySource = { label: 'Run Infinite, hoeveel D+ is genoeg in training', url: 'https://runinfinite.com/training-for-vertical-gain/' };
 const MARATHONHANDBOOK_TEN_PERCENT: ModalitySource = { label: 'Marathon Handbook, de 10%-regel voor mijlage-opbouw', url: 'https://marathonhandbook.com/the-10-percent-rule/' };
 
-export const TUESDAY_MODALITIES: ModalityDefinition[] = [
+const TUESDAY_MODALITIES: ModalityDefinition[] = [
   {
     key: 'run_outdoor',
     label: 'Hardlopen, buiten',
@@ -142,7 +142,7 @@ export const TUESDAY_MODALITIES: ModalityDefinition[] = [
   },
 ];
 
-export const FRIDAY_MODALITIES: ModalityDefinition[] = [
+const FRIDAY_MODALITIES: ModalityDefinition[] = [
   {
     key: 'incline_treadmill',
     label: 'Wandelen, loopband op helling',
@@ -249,7 +249,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   },
 ];
 
-export const HILL_INTERVAL_MODALITIES: ModalityDefinition[] = [
+const HILL_INTERVAL_MODALITIES: ModalityDefinition[] = [
   {
     key: 'hill_repeats_outdoor',
     label: 'Hardlopen, buiten op een heuvel',
@@ -291,7 +291,7 @@ export const HILL_INTERVAL_MODALITIES: ModalityDefinition[] = [
   },
 ];
 
-export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
+const LONG_RUN_MODALITIES: ModalityDefinition[] = [
   {
     key: 'long_run_outdoor',
     label: 'Hardlopen, buiten',
@@ -334,7 +334,7 @@ export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
 
 // Fase 3 — the mountain hike and the first of two hiking days. Outdoor
 // with D+ first; a treadmill/stairs combination when there are no hills.
-export const MOUNTAIN_HIKE_MODALITIES: ModalityDefinition[] = [
+const MOUNTAIN_HIKE_MODALITIES: ModalityDefinition[] = [
   {
     key: 'mountain_hike_outdoor',
     label: 'Wandelen met hoogtemeters, buiten',
@@ -366,7 +366,7 @@ export const MOUNTAIN_HIKE_MODALITIES: ModalityDefinition[] = [
 // Monday when the week was reshaped around a weekend hill/long-run block,
 // but this content (rest/recovery-walk options) didn't change, and it's
 // keyed by templateId below, not by name.
-export const SUNDAY_MODALITIES: ModalityDefinition[] = [
+const SUNDAY_MODALITIES: ModalityDefinition[] = [
   {
     key: 'rest',
     label: 'Volledige rust',
@@ -418,7 +418,7 @@ export const SUNDAY_MODALITIES: ModalityDefinition[] = [
 // Fase 4 — the dedicated cycling session (tpl_bike): the two existing bike
 // modalities, outside first (the usual case), inside as the exception.
 // Reused by key from the Tuesday list — one definition, never two copies.
-export const CYCLING_MODALITIES: ModalityDefinition[] = ['bike_outdoor', 'bike_indoor']
+const CYCLING_MODALITIES: ModalityDefinition[] = ['bike_outdoor', 'bike_indoor']
   .map((key) => TUESDAY_MODALITIES.find((m) => m.key === key))
   .filter((m): m is ModalityDefinition => m !== undefined)
   .map((m) => (m.key === 'bike_outdoor'

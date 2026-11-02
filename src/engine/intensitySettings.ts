@@ -4,8 +4,8 @@
 // geks, dan geldt het advies.
 
 export type IntensityCounting = 'heartrate' | 'plan';
-export const INTENSITY_COUNTINGS: IntensityCounting[] = ['heartrate', 'plan'];
-export const DEFAULT_INTENSITY_COUNTING: IntensityCounting = 'heartrate';
+const INTENSITY_COUNTINGS: IntensityCounting[] = ['heartrate', 'plan'];
+const DEFAULT_INTENSITY_COUNTING: IntensityCounting = 'heartrate';
 
 export function resolveIntensityCounting(raw: { intensityCounting?: unknown } | undefined): IntensityCounting {
   return INTENSITY_COUNTINGS.find((c) => c === raw?.intensityCounting) ?? DEFAULT_INTENSITY_COUNTING;

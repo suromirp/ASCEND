@@ -67,17 +67,6 @@ export const RESISTANCES = [
 
 export type Resistance = (typeof RESISTANCES)[number];
 
-export const RESISTANCE_LABEL: Record<Resistance, string> = {
-  barbell: 'Stang met schijven',
-  dumbbell: 'Dumbbells',
-  cable: 'Kabel',
-  machine_stack: 'Machine met gewichtstapel',
-  machine_plates: 'Machine met schijven',
-  bodyweight: 'Lichaamsgewicht',
-  assisted_bodyweight: 'Lichaamsgewicht met hulp',
-  pack_or_vest: 'Rugzak of vest',
-};
-
 export const MOVEMENT_PATTERNS = [
   'squat',
   'hinge',

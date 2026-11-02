@@ -26,7 +26,7 @@ import type { MorningRule, MorningSignal } from './morningRule';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { hasRole } from './templateRoles';
 
-export const MORNING_WATCH_RULE = 'MORNING-WATCH';
+const MORNING_WATCH_RULE = 'MORNING-WATCH';
 
 export interface MorningProposalCause {
   session: PlannedSession;

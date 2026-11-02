@@ -13,7 +13,7 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
 import { countsAsTraining } from './weekLogs';
 
-export interface SeasonWeekItem {
+interface SeasonWeekItem {
   label: string;
   kind: 'race' | 'test' | 'long' | 'quality' | 'extra';
 }

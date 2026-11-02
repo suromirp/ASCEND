@@ -318,7 +318,7 @@ export async function resetAllDataAndAgenda(options: WorkoutOptions = {}): Promi
 
 // How far ahead the clean-up looks in the agenda for events ASCEND once sent
 // (a test, an earlier install): about four months.
-export const CLEANUP_DAYS = 120;
+const CLEANUP_DAYS = 120;
 
 export type CleanUpResult =
   | { status: 'ok'; removed: number; strays: number }

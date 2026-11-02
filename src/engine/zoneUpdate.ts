@@ -28,7 +28,7 @@ import { MAX_ZONE_ANSWERS, type ZoneAnswer } from '../models/zoneAnswer';
 
 export const LTHR_FROM_5K = 0.98;
 // Kleiner dan dit verschil is ruis: geen voorstel.
-export const MIN_LTHR_CHANGE = 3;
+const MIN_LTHR_CHANGE = 3;
 // Zoveel kilometers met hartslag (van 2 tot en met 5) zijn nodig voor een schatting.
 const MIN_KMS = 3;
 
@@ -47,7 +47,7 @@ export function lthrFromTest(log: SessionLog): number | undefined {
   return Math.round(avg * LTHR_FROM_5K);
 }
 
-export interface ZoneRow {
+interface ZoneRow {
   label: string;
   from: string;
   to: string;

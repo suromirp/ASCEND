@@ -74,7 +74,7 @@ export interface ExternalActivity {
   otherType?: string;
 }
 
-export const ACTIVITY_KIND_LABEL: Record<ExternalActivityKind, string> = {
+const ACTIVITY_KIND_LABEL: Record<ExternalActivityKind, string> = {
   run: 'Loop',
   hike: 'Wandeling',
   ride: 'Fietstocht',
