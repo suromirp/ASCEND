@@ -183,14 +183,13 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
         const test = f.sessionIds[f.sessionIds.length - 1];
         const heavy = f.sessionIds.length > 1 ? f.sessionIds[0] : undefined;
         const heavyName = rest.name;
-        const lowerName = heavyName.charAt(1) && heavyName.charAt(1) !== heavyName.charAt(1).toLowerCase() ? heavyName : `${heavyName.charAt(0).toLowerCase()}${heavyName.slice(1)}`;
-        return {
+                return {
           ...base,
           headline: `Je testloop staat ${rest.hours} uur na een zware dag.`,
           fact: `${heavyName} op ${dayName(rest.date)} en je testloop op ${dayName(dateOf(test))}. Liefst ${rest.limitHours} uur ertussen.`,
           title: 'Meer rust voor je testloop',
-          why: `Een test laat zien wat je kunt als je benen fris zijn. ASCEND houdt liefst ${rest.limitHours} uur tussen een zware loop- of beendag en een test. Bij Rust voor een test kun je ook ${rest.limitHours === 72 ? '48' : '72'} uur kiezen. Wat jij of een voorstel vastzette, verschuift ASCEND niet zonder jouw Akkoord.`,
-          notes: { ...(heavy ? { [heavy]: `${rest.hours} uur voor je testloop` } : {}), [test]: `${rest.hours} uur na ${lowerName}` },
+          why: `Een test laat zien wat je kunt als je benen fris zijn. ASCEND houdt liefst ${rest.limitHours} uur tussen een zware loop- of beendag en een test. Bij Rust voor een test kun je ook ${rest.limitHours === 72 ? '48' : '72'} uur kiezen. ${f.subjectId === test ? 'De zware dag is al gedaan, dus alleen je testloop kan schuiven, en dat doet ASCEND niet zonder jouw Akkoord.' : 'Jij of een voorstel zette dit zo neer, daarom verschuift ASCEND niets zonder jouw Akkoord.'}`,
+          notes: { ...(heavy ? { [heavy]: `${rest.hours} uur voor je testloop` } : {}), [test]: `${rest.hours} uur na ${heavyName}` },
         };
       }
       default: {

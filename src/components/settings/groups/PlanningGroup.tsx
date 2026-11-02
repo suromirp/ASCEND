@@ -180,7 +180,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {inner === 'test-rust' && (
-        <ChoiceFromDef def={CHOICES.testRust} value={resolveTestRest(settings.testRest)} onPick={(v) => void updateSettings({ testRest: v }).then(() => refresh())} onClose={closeInner} />
+        <ChoiceFromDef def={CHOICES.testRust} value={resolveTestRest(settings.testRest)} onPick={(v) => { if (v !== resolveTestRest(settings.testRest)) void plan.changeSetting(`Rust voor een test: ${choiceShort('testRust', v)}`, { testRest: v }, `Een testloop staat nu minstens ${v} uur na een zware loop- of beendag.`); }} onClose={closeInner} />
       )}
       {inner === 'test-stilstaan' && (
         <ChoiceFromDef def={CHOICES.testStilstaan} value={resolveTestStops(settings.testStops)} onPick={(v) => void updateSettings({ testStops: v })} onClose={closeInner} />

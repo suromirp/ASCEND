@@ -955,7 +955,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: '72 uur', text: 'een test staat minstens 72 uur na de laatste zware loop- of beendag: een zware beendag, de lange duurloop, heuvels of intervallen die zwaar zijn voor je benen, een bergtocht. Dat is het advies.' },
       { head: '48 uur', text: 'een test mag 48 uur na zo\'n dag staan. Kies dit als je benen snel herstellen of je week vol is.' },
       { head: 'Wat ASCEND doet', text: 'een nieuwe testpoging en een gemiste test komen alleen op een dag met genoeg rust. Staat een test al te dicht op een zware dag, dan meldt Week het, met een voorstel om de test of de zware dag te verschuiven.' },
-      { head: 'Altijd', text: 'wat jij of een voorstel vastzette, verschuift ASCEND niet zonder jouw Akkoord. Je planning verandert niet vanzelf door deze keuze.' },
+      { head: 'In je planning', text: 'in een testweek zet ASCEND je zware beendag zo neer dat hij die rust houdt, meestal na de test. Past dat nergens, dan blijft hij ervoor in de korte versie. Je ziet eerst wat er verschuift.' },
+      { head: 'Altijd', text: 'wat jij of een voorstel vastzette, verschuift ASCEND niet zonder jouw Akkoord.' },
     ],
   },
   testStilstaan: {

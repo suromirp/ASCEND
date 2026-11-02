@@ -4,7 +4,7 @@ import { FATIGUE_THRESHOLDS } from './legFatigue';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
-import { findHeavyConflicts, freshnessAt, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate } from './scheduler';
+import { findHeavyConflicts, freshnessAt, respectsHeavySpacing, dayHasRoomFor, isHeavyBeforeTest, isLegHeavyTemplate, testRestHours, withTestRestHours } from './scheduler';
 import { addDays, daysBetween, mondayOfWeek, formatWeekdayDateNL } from '../utils/dates';
 import { type AdviceInputs, type Advice, isDone, inProgram, leavesNextHardFresh, proposal, MAX_OPTIONS } from './adviceShared';
 
@@ -227,7 +227,32 @@ export function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, Se
   }
   // The retry once more: no workable day, no advice.
   if (again) return [];
+  // No day with the full rest of 72 hours: said dryly, with the best day at 48 hours as a proposal of its own
+  // (docs/beslissingen/2026-11-02-rust-voor-een-test.md). The hours stand in the text; nothing changes without Akkoord.
+  if (!forced && testRestHours() === 72) {
+    const noDay = around ? 'Rond die dag is er geen dag met 72 uur rust na een zware dag.' : `Binnen ${TEST_ROOM_DAYS} dagen is er geen dag met 72 uur rust na een zware dag.`;
+    const at48 = withTestRestHours(48, () => testRunAdvice(inputs, templateById, usedIds)).find((a) => a.id === adviceId && a.proposal);
+    if (at48?.proposal) {
+      const date = at48.proposal.changes.find((c) => c.plannedSessionId === lost.id)?.toDate ?? lost.scheduledDate;
+      const heavy = lastHeavyNear(date, inputs, templateById, lost.id);
+      const hours = heavy ? ` Dan staat de test ${daysBetween(heavy.date, date) * 24} uur na ${heavy.name}, niet de 72 uur van het advies.` : '';
+      const effect = `${noDay} Op 48 uur kan het wel: ${at48.effect.charAt(0).toLowerCase()}${at48.effect.slice(1)}${hours}`;
+      return [{ id: adviceId, trigger, ruleId, title, effect, why, priority: 3, proposal: { ...at48.proposal, consequences: `${noDay} ${at48.proposal.consequences}${hours}` } }];
+    }
+    return [{ id: adviceId, trigger, ruleId, title, effect: `${noDay} De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.`, why, priority: 1 }];
+  }
   return [{ id: adviceId, trigger, ruleId, title, effect: 'De komende dagen is er geen goede plek voor de testloop zonder je zware dagen te raken. De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.', why, priority: 1 }];
+}
+
+// The last heavy day for running or legs in the three days before `date` (planned and not skipped, or logged), for the
+// hours in the text of a test at 48 hours.
+function lastHeavyNear(date: string, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, except: string): { date: string; name: string } | undefined {
+  const heavy = (templateId: string) => { const t = templateById.get(templateId); return !!t && isHeavyBeforeTest(t); };
+  const near = (d: string) => daysBetween(d, date) >= 1 && daysBetween(d, date) <= 2;
+  const planned = inputs.plannedSessions.filter((s) => s.id !== except && s.status !== 'skipped' && near(s.scheduledDate) && heavy(s.templateId)).map((s) => ({ date: s.scheduledDate, templateId: s.templateId }));
+  const logged = inputs.logs.filter((l) => near(l.completedDate) && heavy(l.templateId)).map((l) => ({ date: l.completedDate, templateId: l.templateId }));
+  const last = [...planned, ...logged].sort((a, b) => b.date.localeCompare(a.date))[0];
+  return last ? { date: last.date, name: templateById.get(last.templateId)?.name ?? 'een zware dag' } : undefined;
 }
 
 // The proposal to move one given test (engine/influenceProposal.ts), with the same preview,

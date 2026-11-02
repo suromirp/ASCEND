@@ -79,8 +79,9 @@ describe('TEST-RETRY: de lange duurloop vervalt of schuift', () => {
 
 describe('rust voor een test: 72 uur, of 48 met de instelling', () => {
   const MON = '2027-03-15';
-  // De testloop op donderdag 18 maart.
-  const week = (longDay: string, over: Partial<PlannedSession> = {}): PlannedSession[] => [
+  // De testloop op donderdag 18 maart; de zware dag zette je zelf neer (de melding gaat over wat van jou is).
+  const mine = { status: 'moved' as const, lock: userLock, movedFromDate: '2027-03-21' };
+  const week = (longDay: string, over: Partial<PlannedSession> = mine): PlannedSession[] => [
     row('lang', 'tpl_long_run', longDay, MON, over),
     row('test', 'tpl_test_run', '2027-03-18', MON),
     row('boven', 'tpl_upper_b', '2027-03-20', MON),
@@ -102,7 +103,7 @@ describe('rust voor een test: 72 uur, of 48 met de instelling', () => {
     const c = list[0];
     expect(c.headline).toBe('Je testloop staat 48 uur na een zware dag.');
     expect(c.fact).toBe('Lange duurloop op dinsdag 16 en je testloop op donderdag 18. Liefst 72 uur ertussen.');
-    expect(c.notes).toEqual({ lang: '48 uur voor je testloop', test: '48 uur na lange duurloop' });
+    expect(c.notes).toEqual({ lang: '48 uur voor je testloop', test: '48 uur na Lange duurloop' });
     expect(c.finding.subjectId).toBe('lang');
     expect(`${c.headline}${c.fact}${c.why}${c.title}`).not.toMatch(/[\u2013\u2014]/);
   });
@@ -118,21 +119,30 @@ describe('rust voor een test: 72 uur, of 48 met de instelling', () => {
   });
 
   it('telt een zware beendag en heuvels die zwaar zijn voor de benen, via het profiel, en een gelogde dag', () => {
-    const legs = [row('benen', 'tpl_lower_a', '2027-03-16', MON), row('test', 'tpl_test_run', '2027-03-18', MON)];
+    const legs = [row('benen', 'tpl_lower_a', '2027-03-16', MON, mine), row('test', 'tpl_test_run', '2027-03-18', MON)];
     expect(rest(legs)).toHaveLength(1);
-    const hills = [row('heuvels', 'tpl_hill_intervals', '2027-03-17', MON), row('test', 'tpl_test_run', '2027-03-18', MON)];
+    const hills = [row('heuvels', 'tpl_hill_intervals', '2027-03-17', MON, mine), row('test', 'tpl_test_run', '2027-03-18', MON)];
     expect(rest(hills).map((c) => c.finding.rest?.hours)).toEqual([24]);
     // Een rustige loop en bovenlichaam tellen niet.
-    const easy = [row('rustig', 'tpl_easy_run', '2027-03-16', MON), row('boven', 'tpl_upper_a', '2027-03-17', MON), row('test', 'tpl_test_run', '2027-03-18', MON)];
+    const easy = [row('rustig', 'tpl_easy_run', '2027-03-16', MON, mine), row('boven', 'tpl_upper_a', '2027-03-17', MON, mine), row('test', 'tpl_test_run', '2027-03-18', MON)];
     expect(rest(easy)).toEqual([]);
     // Een lange duurloop die al gedaan is: dan schuift de test, de historie niet.
-    const done = week('2027-03-16');
+    const done = week('2027-03-16', {});
     const log = { id: 'log-lang', templateId: 'tpl_long_run', plannedSessionId: 'lang', type: 'cardio', completedDate: '2027-03-16', completedAt: '2027-03-16T08:00:00Z', variant: 'full', durationMinutes: 80, source: 'manual' } as SessionLog;
     const list = rest(done, { logs: [log], today: '2027-03-17' });
     expect(list).toHaveLength(1);
     expect(list[0].finding.subjectId).toBe('test');
     // Een gemiste lange duurloop in het verleden telde niet: niet gedaan, geen rust nodig.
     expect(rest(done, { today: '2027-03-17' })).toEqual([]);
+  });
+
+  it('wat alleen van het systeem is, meldt Week niet: dat houdt het wedstrijdblok zelf uit elkaar', () => {
+    expect(rest(week('2027-03-16', {}))).toEqual([]);
+    // Een test die jij vastzette, naast een zware dag van het systeem, wel.
+    const ownTest = week('2027-03-16', {}).map((x) => (x.id === 'test' ? { ...x, lock: userLock } : x));
+    const list = rest(ownTest);
+    expect(list).toHaveLength(1);
+    expect(list[0].why).toContain('Jij of een voorstel zette dit zo neer');
   });
 
   it('een wedstrijd valt er niet onder, die heeft zijn eigen taper', () => {
@@ -209,5 +219,38 @@ describe('rust voor een test bij verplaatsen, ruilen en het zoeken van een testd
       setTestRestHours(undefined);
     }
     expect(testRestHours()).toBe(72);
+  });
+});
+
+describe('TEST-MAKE-ROOM zonder dag met 72 uur rust', () => {
+  // Een gemiste testloop op do 11 maart; vandaag is za 13 maart. Elke dag binnen negen dagen ligt binnen 72 uur
+  // na de lange duurloop of een zware beendag, of de dag erna is zwaar.
+  const plan = (): PlannedSession[] => [
+    row('benen', 'tpl_lower_a', '2027-03-10', '2027-03-08'),
+    row('test', 'tpl_test_run', '2027-03-11', '2027-03-08'),
+    row('lang', 'tpl_long_run', '2027-03-14', '2027-03-08'),
+    row('herstel', 'tpl_herstel', '2027-03-15', '2027-03-15'),
+    row('boven', 'tpl_upper_a', '2027-03-16', '2027-03-15'),
+    row('benen2', 'tpl_lower_a', '2027-03-17', '2027-03-15'),
+    row('rustig', 'tpl_easy_run', '2027-03-18', '2027-03-15'),
+    row('lang2', 'tpl_long_run', '2027-03-21', '2027-03-15'),
+    row('herstel2', 'tpl_herstel', '2027-03-22', '2027-03-22'),
+    row('boven2', 'tpl_upper_a', '2027-03-23', '2027-03-22'),
+  ];
+  const room = () => computeAdvice({ logs: [], plannedSessions: plan(), templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf: '2027-03-13' }).find((a) => a.ruleId === 'TEST-MAKE-ROOM');
+
+  it('zegt het droog en stelt de beste dag op 48 uur voor, met de uren erbij', () => {
+    const a = room()!;
+    expect(a.effect.startsWith('Binnen 9 dagen is er geen dag met 72 uur rust na een zware dag. Op 48 uur kan het wel: doe hem di 16 maart')).toBe(true);
+    expect(a.effect).toContain('Dan staat de test 48 uur na Lange duurloop, niet de 72 uur van het advies.');
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'test')).toMatchObject({ action: 'move', toDate: '2027-03-16' });
+    expect(a.proposal!.consequences.startsWith('Binnen 9 dagen is er geen dag met 72 uur rust na een zware dag.')).toBe(true);
+    expect(a.effect).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  it('met de instelling op 48 uur is dat gewoon het voorstel, zonder die zin', () => {
+    const a = withTestRestHours(48, room)!;
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'test')).toMatchObject({ toDate: '2027-03-16' });
+    expect(a.effect).not.toContain('72 uur');
   });
 });

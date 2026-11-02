@@ -328,7 +328,10 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
       // otherwise the test.
       if (input.reportYours && isTestOnly(t)) {
         const rest = lastHeavyBefore(s, around(s.scheduledDate, 3), input, byId, logged);
-        if (rest) {
+        // Only what the planning cannot put right itself: a heavy day that is yours, a proposal's or already done, or a
+        // test you or a proposal fixed in place. The system's own the race block keeps apart (engine/raceBlock.ts).
+        const heavyLevel = rest?.session ? level(rest.session) : 0;
+        if (rest && (heavyLevel <= 1 || level(s) === 1)) {
           const limitHours = testRestHours();
           const hours = daysBetween(rest.date, s.scheduledDate) * 24;
           const heavy = rest.session;

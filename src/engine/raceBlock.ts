@@ -30,9 +30,13 @@
 //   runs, a long run and heavy leg strength next to it, a second hard session
 //   buys less than one more easy run). A session that is yours, logged or
 //   past counts: it is the week's quality session and nothing is added to it;
-// - a tempo run or test may not sit within 48 hours (a test 72) after
-//   heavy leg strength: the leg day swaps with an upper body day earlier
-//   in the week, and in a test week it is also the short version.
+// - a tempo run may not sit within 48 hours after heavy leg strength: the
+//   leg day swaps with an upper body day earlier in the week. A test keeps
+//   the rest of the setting "Rust voor een test" (72 hours, or 48): the leg
+//   day swaps earlier only when that gives the full rest, otherwise it goes
+//   to after the test (the Saturday of that week a quiet run when it would
+//   otherwise follow the legs), and only when neither fits it stays close in
+//   its short version (docs/beslissingen/2026-11-02-rust-voor-een-test.md).
 //
 // Outside a block the Saturday alternates too: every second week of the
 // four-week wave "Heuvelsprints en afdalen" (hills, then controlled descending) in
@@ -50,7 +54,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_BASIS, PHASE_OPBOUW, PHASE_ONDERHOUD, waveWeek } from './programLayout';
-import { isLegHeavyTemplate } from './scheduler';
+import { isHardRun as isHardRunTemplate, isLegHeavyTemplate, testRestHours } from './scheduler';
 import { templateSport } from './sports';
 import { idHasRole } from './templateRoles';
 import { effectivePriority, isPlanned, goalDetailsOf, goalKindOf, goalRecoveryDays, goalTaperDays, goalPlanRole, isRaceGoal, type GoalPlanRole } from './goalLabels';
@@ -365,7 +369,7 @@ function restoreLegSwaps(open: PlannedSession[], update: Map<string, PlannedSess
       .filter((s) => !s.raceBlock && free(s) && s.weekStartDate === legs.weekStartDate && s.scheduledDate > legs.scheduledDate && isStrength(s, false))
       .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
     if (!partner) continue;
-    const needed = runs.some((r) => { const d = daysBetween(partner.scheduledDate, r.scheduledDate); return d >= 0 && d < (r.templateId === TEST_TEMPLATE_ID ? 3 : 2); });
+    const needed = runs.some((r) => { const d = daysBetween(partner.scheduledDate, r.scheduledDate); return d >= 0 && d < needFor(r); });
     if (needed) continue;
     const { plannedMinutes: _short, ...rest } = legs;
     void _short;
@@ -385,7 +389,7 @@ function restoreLegSwaps(open: PlannedSession[], update: Map<string, PlannedSess
     const from = legs.raceBlock!.from;
     const needed = runs.some((r) => {
       const d = daysBetween(from, r.scheduledDate);
-      return d >= 0 && d < (r.templateId === TEST_TEMPLATE_ID ? 3 : 2);
+      return d >= 0 && d < needFor(r);
     });
     if (needed) continue;
     for (const m of marked.filter((s) => s.raceBlock!.pair === legs.id)) {
@@ -401,20 +405,32 @@ function restoreLegSwaps(open: PlannedSession[], update: Map<string, PlannedSess
   }
 }
 
+// The days a hard run keeps from heavy leg strength before it: 2 for a tempo run (48 hours), and for a test the rest
+// of the setting "Rust voor een test" (3 days for 72 hours, 2 for 48).
+const needFor = (run: PlannedSession) => (run.templateId === TEST_TEMPLATE_ID ? testRestHours() / 24 : 2);
+
 function swapLegsBeforeHardRuns(open: PlannedSession[], update: Map<string, PlannedSession>, byId: Map<string, SessionTemplate>, removed: Set<string>): void {
   const now = () => open.filter((s) => !removed.has(s.id) && free(s)).map((s) => update.get(s.id) ?? s);
-  const runs = open.filter((s) => !removed.has(s.id)).map((s) => update.get(s.id) ?? s).filter(isHardRun);
+  const all = () => open.filter((s) => !removed.has(s.id)).map((s) => update.get(s.id) ?? s);
+  const runs = all().filter(isHardRun);
+  const isLegs = (s: PlannedSession) => { const t = byId.get(s.templateId); return !!t && t.type === 'strength' && isLegHeavyTemplate(t); };
+  const isUpper = (s: PlannedSession) => byId.get(s.templateId)?.type === 'strength' && !isLegs(s);
+  // Heavy for the legs or a hard run (hills, intervals, tempo, the long run, a hike): what leg strength keeps 48 hours from.
+  const heavyNeighbour = (s: PlannedSession) => { const t = byId.get(s.templateId); return !!t && t.type !== 'strength' && t.type !== 'recovery' && (isLegHeavyTemplate(t) || isHardRunTemplate(t)); };
   for (const run of runs) {
-    const need = run.templateId === TEST_TEMPLATE_ID ? 3 : 2;
-    const isLegs = (s: PlannedSession) => { const t = byId.get(s.templateId); return !!t && t.type === 'strength' && isLegHeavyTemplate(t); };
+    const need = needFor(run);
+    const isTest = run.templateId === TEST_TEMPLATE_ID;
     for (const legs of now().filter((s) => isLegs(s) && daysBetween(s.scheduledDate, run.scheduledDate) >= 0 && daysBetween(s.scheduledDate, run.scheduledDate) < need)) {
       const partner = now()
-        .filter((s) => s.weekStartDate === legs.weekStartDate && s.scheduledDate < legs.scheduledDate && byId.get(s.templateId)?.type === 'strength' && !isLegs(s))
+        .filter((s) => s.weekStartDate === legs.weekStartDate && s.scheduledDate < legs.scheduledDate && isUpper(s))
         .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
+      const pair = legs.raceBlock?.pair ?? legs.id;
+      const from = legs.raceBlock?.from ?? legs.scheduledDate;
+      // A test: the swap earlier only when it gives the full rest; otherwise first a day after the test.
+      if (isTest && !(partner && daysBetween(partner.scheduledDate, run.scheduledDate) >= need) && placeAfterTest(legs, run, pair, from)) continue;
       let moved = legs;
       if (partner) {
-        const pair = legs.raceBlock?.pair ?? legs.id;
-        moved = { ...legs, scheduledDate: partner.scheduledDate, raceBlock: { pair, from: legs.raceBlock?.from ?? legs.scheduledDate, to: partner.scheduledDate, short: legs.raceBlock?.short } };
+        moved = { ...legs, scheduledDate: partner.scheduledDate, raceBlock: { pair, from, to: partner.scheduledDate, short: legs.raceBlock?.short } };
         update.set(partner.id, { ...partner, scheduledDate: legs.scheduledDate, raceBlock: { pair, from: partner.raceBlock?.from ?? partner.scheduledDate, to: legs.scheduledDate } });
         update.set(legs.id, moved);
       }
@@ -423,5 +439,50 @@ function swapLegsBeforeHardRuns(open: PlannedSession[], update: Map<string, Plan
         update.set(legs.id, { ...moved, plannedMinutes: short, raceBlock: moved.raceBlock ? { ...moved.raceBlock, short: true } : { pair: legs.id, from: legs.scheduledDate, to: legs.scheduledDate, short: true } });
       }
     }
+  }
+
+  // A leg day that already went to after a test keeps its quiet Saturday on every run (the first loop of
+  // applyRaceBlocks puts the Saturday back first), so a second run changes nothing.
+  for (const legs of now().filter((s) => isLegs(s) && s.raceBlock && s.raceBlock.to > s.raceBlock.from && runs.some((r) => r.templateId === TEST_TEMPLATE_ID && r.weekStartDate === s.weekStartDate && r.scheduledDate < s.scheduledDate))) {
+    const next = now().find((o) => o.scheduledDate === addDays(legs.scheduledDate, 1) && SATURDAY_FAMILY.includes(o.templateId));
+    if (!next || !byId.has(QUIET_TEMPLATE_ID)) continue;
+    const stored = open.find((o) => o.id === next.id);
+    if (stored?.templateId === QUIET_TEMPLATE_ID && stored.blockQuiet) { update.delete(next.id); continue; }
+    const { blockQuiet: _q, ...rest } = next;
+    void _q;
+    update.set(next.id, { ...rest, templateId: QUIET_TEMPLATE_ID, blockQuiet: true });
+  }
+
+  // Leg strength to a day after the test in the same week: a free day or one with an upper body day of the race
+  // block's own (they swap). Never the day of the test (only with "Zware dingen op één dag", not decided here),
+  // never next to another heavy day or hard run; a Saturday session of the system right after it becomes the quiet
+  // run (blockQuiet, so it comes back when the test or the block goes). A day that needs no such change goes first.
+  function placeAfterTest(legs: PlannedSession, test: PlannedSession, pair: string, from: string): boolean {
+    const week = all().filter((s) => s.id !== legs.id && s.weekStartDate === legs.weekStartDate && s.status !== 'skipped');
+    const sunday = addDays(legs.weekStartDate, 6);
+    const options: { day: string; partner?: PlannedSession; quiet?: PlannedSession }[] = [];
+    for (let d = addDays(test.scheduledDate, 1); d <= sunday; d = addDays(d, 1)) {
+      const there = week.filter((s) => s.scheduledDate === d && byId.get(s.templateId)?.type !== 'recovery');
+      if (there.length > 1 || (there.length === 1 && !(isUpper(there[0]) && free(there[0])))) continue;
+      const near = (day: string) => all().filter((s) => s.id !== legs.id && s.status !== 'skipped' && s.scheduledDate === day);
+      if (near(addDays(d, -1)).some((s) => s.id !== test.id && (heavyNeighbour(s) || isLegs(s)))) continue;
+      const after = near(addDays(d, 1)).filter((s) => heavyNeighbour(s) || isLegs(s));
+      if (after.length === 0) { options.push({ day: d, partner: there[0] }); continue; }
+      const quietable = after.length === 1 && free(after[0]) && SATURDAY_FAMILY.includes(after[0].templateId) && byId.has(QUIET_TEMPLATE_ID);
+      if (quietable) options.push({ day: d, partner: there[0], quiet: after[0] });
+    }
+    const pick = options.find((o) => !o.quiet) ?? options[0];
+    if (!pick) return false;
+    if (pick.partner) update.set(pick.partner.id, { ...pick.partner, scheduledDate: legs.scheduledDate, raceBlock: { pair, from: pick.partner.raceBlock?.from ?? pick.partner.scheduledDate, to: legs.scheduledDate } });
+    const { plannedMinutes: _short, ...whole } = legs;
+    void _short;
+    const keep = legs.raceBlock?.short ? whole : legs;
+    update.set(legs.id, { ...keep, scheduledDate: pick.day, raceBlock: { pair, from, to: pick.day } });
+    if (pick.quiet) {
+      const { blockQuiet: _q, ...rest } = pick.quiet;
+      void _q;
+      update.set(pick.quiet.id, { ...rest, templateId: QUIET_TEMPLATE_ID, blockQuiet: true });
+    }
+    return true;
   }
 }
