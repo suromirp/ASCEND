@@ -2160,6 +2160,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       goalsBefore: result.restore.goals,
       goalsAdded: result.restore.newGoalIds,
       ...(result.restore.program ? { programBefore: result.restore.program } : {}),
+      ...(result.restore.strategies ? { strategiesBefore: result.restore.strategies } : {}),
       createdAt: now,
     });
     planRevision++;

@@ -13,6 +13,8 @@ import type { HikeDay } from '../engine/climbPace';
 import { RunTrendsCard } from '../components/stand/RunTrendsCard';
 import { PaceCurveCard } from '../components/stand/PaceCurveCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
+import { YourWeekStandCard } from '../components/stand/YourWeekStandCard';
+import { useStandYourWeek } from '../components/stand/useStandYourWeek';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
 import { TextButton } from '../components/TextButton';
 import { OrderSheet } from '../components/stand/OrderSheet';
@@ -37,6 +39,7 @@ import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { SkyBand, SkyPanel } from '../components/SkyBand';
 import { InfluenceCard } from '../components/influence/InfluenceCard';
+import { waveHeader } from '../engine/programLayout';
 import { mainGoal } from '../engine/mainGoal';
 import { resolveCardOrder } from '../engine/cardOrder';
 
@@ -68,6 +71,8 @@ export function StandingPage() {
   const checks = useMemo(() => indexChecks(sessionLogs, templates, inputs.bodyKg), [sessionLogs, templates, inputs.bodyKg]);
 
   // Not an archived goal, as on Ascend (pages/Ascend.tsx).
+  // Zonder doel: Je week, dezelfde berekening als op Ascend. Met een doel staat hij er niet.
+  const weekWithoutGoal = useStandYourWeek();
   const primaryGoal = mainGoal(trainingGoals, goalMilestones, 'live');
   // The same number and sentence as on Ascend (engine/gr5Readiness.ts).
   // Dezelfde functie als de Ascend-kaart (engine/goalReadinessFor.ts), dus altijd hetzelfde getal.
@@ -214,7 +219,7 @@ export function StandingPage() {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
       <SkyBand>
         <div>
-          {position && <Eyebrow>Week {position.weekInPhase} van {position.phase.weekCount}, {position.phase.name.toLowerCase()}</Eyebrow>}
+          {position && <Eyebrow>{waveHeader(position) ?? `Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}`}</Eyebrow>}
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe je ervoor staat, naast wat je vandaag doet.</p>
         </div>
@@ -224,6 +229,8 @@ export function StandingPage() {
           groot wit vlak op de lucht: de lucht houdt dezelfde licht-donkerverhouding als
           op de andere tabs. */}
       {gr5 && <Gr5ReadinessCard readiness={gr5} milestone={!primaryGoal || usesMilestoneReadiness(primaryGoal)} title={primaryGoal && !usesMilestoneReadiness(primaryGoal) ? 'Klaar voor je doel' : 'Klaar voor de GR5'} />}
+
+      {weekWithoutGoal && !gr5 && <YourWeekStandCard week={weekWithoutGoal} />}
 
       {order.map((id) => (
         <Fragment key={id}>{blocks[id]}</Fragment>

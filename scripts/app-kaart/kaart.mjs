@@ -137,6 +137,7 @@ const SCHERMEN = {
   'vandaag-zonder-doel': { titel: 'Vandaag zonder doel (Fit blijven)', pad: '#/', stand: 'zonder-doel' },
   'week-zonder-doel': { titel: 'Week zonder doel (Fit blijven)', pad: '#/week', stand: 'zonder-doel' },
   'ascend-zonder-doel': { titel: 'Ascend zonder doel (Fit blijven)', pad: '#/ascend', stand: 'zonder-doel' },
+  'stand-zonder-doel': { titel: 'Stand zonder doel (Fit blijven)', pad: '#/stand', stand: 'zonder-doel' },
   'vandaag-ziek': { titel: 'Vandaag, ziek gemeld', pad: '#/', stand: 'ziek' },
   'week-ziek': { titel: 'Week, ziek gemeld', pad: '#/week', stand: 'ziek' },
 };

@@ -120,7 +120,7 @@ export const INVARIANTEN = [
 const SCHERMEN = [
   'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad',
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
-  'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'vandaag-ziek', 'week-ziek',
+  'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {
