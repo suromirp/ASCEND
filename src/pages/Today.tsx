@@ -569,6 +569,7 @@ function TodayContent() {
           eyebrow="Minder tijd vandaag"
           summary={shorter.advice.effect}
           extraLines={shorter.lines}
+          extraTitle="Wat er vandaag verandert"
           onClose={() => setShorter(null)}
         />
       )}
