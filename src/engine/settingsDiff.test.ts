@@ -47,7 +47,7 @@ const everything: AppSettings = {
   influenceNames: false,
   intensityCounting: 'plan',
   overviews: {
-    morningCheckIn: false, morningCard: false, morningCardFrom: '7', weekReview: false, weekReviewDay: 'sunday', weeklyQuestion: false,
+    morningCheckIn: false, morningCard: false, legsAfterEffort: false, morningCardFrom: '7', weekReview: false, weekReviewDay: 'sunday', weeklyQuestion: false,
     weatherLine: false, weatherSwap: false, bestMoment: false, clothingAdvice: false, completionMoment: false,
   },
   askShortNight: false,

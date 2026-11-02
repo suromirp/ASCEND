@@ -3,16 +3,22 @@
 
 import { useMemo } from 'react';
 import { legFatigueOn } from '../engine/legFatigue';
-import { morningPrefill, type MorningPrefill } from '../engine/morningCard';
+import { maxEffortYesterday, morningPrefill, type MaxEffortMorning, type MorningPrefill } from '../engine/morningCard';
+import { askLegsAfterEffort } from '../engine/overviewSettings';
+import { useAppData } from '../state/AppDataContext';
 import type { WellnessReading } from '../engine/wellnessCheck';
 import type { MorningRule } from '../engine/morningRule';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { useTodayWatch } from './useWellness';
 
-export function useMorningPrefill(today: string): { prefill: MorningPrefill; reading: WellnessReading | undefined; rule: MorningRule | undefined; linked: boolean; sleepOn: boolean } {
+// De ochtend na een test of wedstrijd (`afterEffort`): je benen open gevraagd, zonder voorstel uit de beenindex.
+export function useMorningPrefill(today: string): { prefill: MorningPrefill; afterEffort: MaxEffortMorning | undefined; reading: WellnessReading | undefined; rule: MorningRule | undefined; linked: boolean; sleepOn: boolean } {
+  const { sessionLogs, templates, settings } = useAppData();
   const watch = useTodayWatch(today);
   const inputs = useLegFatigueInputs();
   const legIndex = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
-  const prefill = useMemo(() => morningPrefill({ legIndex, reading: watch.reading }), [legIndex, watch.reading]);
-  return { prefill, ...watch };
+  const enabled = askLegsAfterEffort(settings.overviews);
+  const afterEffort = useMemo(() => maxEffortYesterday({ logs: sessionLogs, templates, today, enabled }), [sessionLogs, templates, today, enabled]);
+  const prefill = useMemo(() => morningPrefill({ legIndex, reading: watch.reading, afterEffort: !!afterEffort }), [legIndex, watch.reading, afterEffort]);
+  return { prefill, afterEffort, ...watch };
 }

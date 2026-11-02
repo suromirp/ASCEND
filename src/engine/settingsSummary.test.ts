@@ -675,6 +675,20 @@ describe('rowSummary: vragen bij een korte nacht', () => {
   });
 });
 
+describe('rowSummary: benen vragen na een test', () => {
+  const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
+
+  it('staat standaard aan en volgt de schakelaar', () => {
+    expect(rowSummary('benen-na-test', facts()).checked).toBe(true);
+    expect(rowSummary('benen-na-test', withSettings({ overviews: { legsAfterEffort: false } })).checked).toBe(false);
+  });
+
+  it('is gedimd zolang de ochtendcheck uit staat', () => {
+    expect(rowSummary('benen-na-test', facts()).hidden).toBeFalsy();
+    expect(rowSummary('benen-na-test', withSettings({ overviews: { morningCheckIn: false } })).hidden).toBe(true);
+  });
+});
+
 describe('rowSummary: tekst voor Strava', () => {
   const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
 
