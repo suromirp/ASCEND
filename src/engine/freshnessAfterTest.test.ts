@@ -6,7 +6,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import { addDays } from '../utils/dates';
 
 // docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md: what the planner reads after a logged test.
-// freshnessAt (TEST-FRESH, HARD-THEN-SPACE and the week check read it) gets a lower number after a
+// freshnessAt (TEST-FRESH, TEST-MAKE-ROOM, TEST-RETRY and the week check read it) gets a lower number after a
 // logged test at RPE 10, never a higher one; the thresholds stay. Nagemaakte gegevens.
 const { templates } = buildDefaultProgramData();
 const test = templates.find((t) => t.id === 'tpl_test_run')!;
