@@ -38,6 +38,7 @@ import {
 import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
 import { runBootMigrations } from '../storage/bootMigrations';
 import { tidyOldProposals } from '../storage/proposalTidy';
+import { noteBackupMade } from '../storage/autoBackup';
 import { withPlausibleDurations } from '../engine/logDuration';
 import { runBootUnderLock } from '../storage/bootLock';
 import { describeStorageError, describeWriteError } from '../storage/storageError';
@@ -49,7 +50,7 @@ import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Pro
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { orderForRestored, PRIORITY_RULE } from '../engine/goalList';
 import { goalDetailsOf } from '../engine/goalLabels';
-import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
 import { writeCatchUp } from '../storage/catchUpApply';
 import { linkLogNow, skipMissedNow, unlinkLogsNow, updateMissedMemory } from '../storage/missedTraining';
@@ -61,7 +62,7 @@ import { leaveKey, withNote } from '../engine/leaveEdit';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
 import { applyRestDayInOrder, planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
-import { dayVerdicts, newConcernLines, type DayVerdict } from '../engine/weekDrag';
+import { dayVerdicts, legsCloseAfterMove, newConcernLines, type DayVerdict } from '../engine/weekDrag';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
@@ -75,7 +76,7 @@ import { undoPlanChangeNow } from '../storage/undoPlanChange';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type HorizonApplyStatus, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { resolveMotion, splashMinimumMs } from '../engine/motionSettings';
-import { carryTargetTimeAnswers, computeAdvice, type Advice } from '../engine/adviceEngine';
+import { carryTargetTimeAnswers, computeAdvice, retryTestRows, type Advice } from '../engine/adviceEngine';
 import { resolveLegEase } from '../engine/legEaseSettings';
 import { influenceMove, influenceMoveCause, type InfluenceMove } from '../engine/influenceProposal';
 import { useWeatherForecast, type WeatherView } from './useWeather';
@@ -212,6 +213,7 @@ function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], 
   setRecentSessionMaxima(recentSessionMaxima(logs, todayISO(), raceGoalDates));
   setLearnedDurations(scope.learnedDurations);
   setHardSameDayAllowed(!!loadedSettings.hardSameDay);
+  setLongRunThenLegs(!!loadedSettings.longRunThenLegs);
   // The planner's leg index with the same inputs as the Benen card.
   const lastWeight = currentBodyKg(loadedSettings.weightEntries, loadedSettings.weightFromMacroFactor);
   setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
@@ -437,6 +439,9 @@ interface AppData {
   // the new week concerns a move to a day would cause (skipRules: those the day already says itself).
   dragVerdicts: (sessionId: string, weekStart: string) => DayVerdict[];
   previewDrop: (sessionId: string, date: string, skipRules?: string[]) => string[];
+  // Geeft deze plek twee zware beendagen achter elkaar die de regels niet als botsing zien? Dan vraagt
+  // Week eerst "Toch hier?" (engine/weekDrag.ts#legsCloseAfterMove).
+  legsCloseAt: (sessionId: string, date: string) => boolean;
   applyProposal: (proposal: ScheduleProposal) => Promise<void>;
   // Phase 5: folded into the same proposal-confirm pattern moveSession
   // already uses (Technical Architecture v0.3.1 REVISED,
@@ -2174,6 +2179,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       goalsBefore: result.restore.goals,
       goalsAdded: result.restore.newGoalIds,
       ...(result.restore.program ? { programBefore: result.restore.program } : {}),
+      ...(result.restore.strategies ? { strategiesBefore: result.restore.strategies } : {}),
       createdAt: now,
     });
     planRevision++;
@@ -2685,6 +2691,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn },
         leave: settings.leavePeriods,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
+        // De herkansingen die TEST-RETRY neerzette: ging er een niet door, dan vraagt hij het nog één keer.
+        retryRows: retryTestRows(planChangeLog),
         extraSession: extraSessionContext,
         tentPack: tentPackProposal(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))),
         raceGoals: extraSessionContext.races,
@@ -2750,6 +2758,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('De weekmelding bij het slepen kon niet worden berekend:', err);
       return [];
+    }
+  }, [weekCheckInput]);
+
+  // Twee zware beendagen achter elkaar op de nieuwe plek: de vraag voor het loslaten. Een fout laat de
+  // verplaatsing gewoon zijn eigen weg gaan.
+  const legsCloseAt = useCallback((sessionId: string, date: string): boolean => {
+    try {
+      return legsCloseAfterMove(weekCheckInput(), sessionId, date);
+    } catch (err) {
+      console.error('De controle op zware beendagen bij het verplaatsen kon niet worden berekend:', err);
+      return false;
     }
   }, [weekCheckInput]);
 
@@ -2820,6 +2839,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     suggestMoves,
     dragVerdicts,
     previewDrop,
+    legsCloseAt,
     applyProposal,
     proposeSkip,
     proposeBackOnPlan,
@@ -2850,7 +2870,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
       const result = await webBackupFileAdapter.saveBackup(blob, backupFileName(envelope.createdAt));
       if (!result.success) return null;
-      await updateSettings({ lastExportedAt: new Date().toISOString() });
+      const at = new Date().toISOString();
+      await updateSettings({ lastExportedAt: at });
+      // Wanneer en waar, voor Laatste back-up; een mislukte automatische back-up is daarmee opgelost.
+      await noteBackupMade(result.folder ? { kind: 'folder', label: result.folder } : result.viaDownload ? { kind: 'download' } : { kind: 'file' }, at).catch(() => undefined);
       return result.viaDownload ? 'downloaded' : 'saved';
     },
     resetDemoData: async () => {

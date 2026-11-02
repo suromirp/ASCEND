@@ -8,6 +8,7 @@
 // additive, and engine/templateRoles.ts falls back to the roles of the id when
 // it is missing or not a list, so an older backup imports as before.
 
+import { MAX_ZONE_ANSWERS, type ZoneAnswer } from '../models/zoneAnswer';
 import { ABOVE_MISSION_CHOICES, type AboveMission } from '../engine/todayCards';
 import { cleanSportCounting, parseSportHandling, type SportCounting, type SportHandlingMap } from '../engine/sportRole';
 import { COUNTED_SPORTS } from '../data/sports';
@@ -17,6 +18,7 @@ import { parseCustomSports, type CustomSport } from '../engine/customSport';
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/proposalTidy';
+import { AUTO_BACKUP_CHOICES, AUTO_BACKUP_KEEP_CHOICES, type AutoBackupFrequency, type AutoBackupKeep } from '../engine/autoBackup';
 import type { PlanChangeProposal } from '../models/planChange';
 import { BackupMessageError } from './backupMessage';
 import type { AppSettings } from './database';
@@ -489,6 +491,28 @@ export function migrateTestJudgments(raw: unknown): { list: TestJudgment[] | und
   return { list: capTestJudgments([...byLog.values()]), skipped };
 }
 
+// --- zones bijwerken na een test: settings.zoneAnswers ------------------------------------
+// Je antwoord per test op het voorstel voor je drempelhartslag (engine/zoneUpdate.ts). Optioneel en
+// additief: een oudere back-up heeft er geen en laat de antwoorden op het toestel staan. Antwoord voor
+// antwoord gelezen; een beschadigd antwoord valt weg en wordt geteld, een los fout getal valt alleen
+// zelf weg (lthrFrom).
+export function migrateZoneAnswers(raw: unknown): { list: ZoneAnswer[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const hr = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n >= 100 && n <= 220;
+  const byLog = new Map<string, ZoneAnswer>();
+  let skipped = 0;
+  for (const item of raw) {
+    const date = isObj(item) && typeof item.date === 'string' && ISO_DAY.test(item.date.slice(0, 10)) ? item.date.slice(0, 10) : undefined;
+    if (!isObj(item) || typeof item.logId !== 'string' || item.logId.trim() === '' || item.logId.length > 80 || (item.answer !== 'accepted' && item.answer !== 'declined') || !hr(item.lthrTo) || !date) {
+      skipped++;
+      continue;
+    }
+    byLog.set(item.logId, { logId: item.logId, answer: item.answer, date, ...(hr(item.lthrFrom) ? { lthrFrom: Math.round(item.lthrFrom) } : {}), lthrTo: Math.round(item.lthrTo) });
+  }
+  return { list: [...byLog.values()].slice(-MAX_ZONE_ANSWERS), skipped };
+}
+
 // --- InjuryNote.kind en InjuryNote.side ---------------------------------------------------
 // What you noticed (spierpijn, stijf or pijn) and which side (links, midden, rechts or beide), from
 // the card "Hoe voelt je lijf?" (decision 2026-10-26-hoe-voelt-je-lijf.md). Both are optional and
@@ -649,6 +673,30 @@ export function migrateDataSettings(raw: { streamsBackup?: unknown; streamsInBac
   if (value.streamsBackup === undefined && raw.streamsInBackup === false) value.streamsBackup = 'none';
   if (raw.proposalTidyMonths !== undefined) {
     if ((PROPOSAL_TIDY_OPTIONS as readonly unknown[]).includes(raw.proposalTidyMonths)) value.proposalTidyMonths = raw.proposalTidyMonths as ProposalTidyMonths;
+    else skipped++;
+  }
+  return { value, skipped };
+}
+
+// --- automatische back-up (2026-11-02) ------------------------------------------------
+// `settings.autoBackup` en `settings.autoBackupKeep` (engine/autoBackup.ts) zijn nieuw, optioneel en
+// additief: een back-up van ervoor heeft ze niet en krijgt het advies (wekelijks, de laatste 8). Staat
+// er iets, dan blijft alleen een bekende waarde; de rest wordt weggelaten en geteld. Waar de bestanden
+// staan en welke ASCEND schreef hoort bij het toestel en zit nooit in een back-up.
+export function migrateAutoBackupSettings(raw: { autoBackup?: unknown; autoBackupKeep?: unknown }): {
+  value: { autoBackup?: AutoBackupFrequency; autoBackupKeep?: AutoBackupKeep };
+  skipped: number;
+} {
+  const value: { autoBackup?: AutoBackupFrequency; autoBackupKeep?: AutoBackupKeep } = {};
+  let skipped = 0;
+  if (raw.autoBackup !== undefined) {
+    const f = AUTO_BACKUP_CHOICES.find((c) => c === raw.autoBackup);
+    if (f) value.autoBackup = f;
+    else skipped++;
+  }
+  if (raw.autoBackupKeep !== undefined) {
+    const k = AUTO_BACKUP_KEEP_CHOICES.find((c) => c === raw.autoBackupKeep);
+    if (k !== undefined) value.autoBackupKeep = k;
     else skipped++;
   }
   return { value, skipped };

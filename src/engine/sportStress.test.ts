@@ -60,11 +60,13 @@ describe('legRestHours', () => {
   });
 
   it('geeft voor elk sjabloon dezelfde rust als de bestaande regel na een zware beendag', () => {
-    // Tegen een zware loop, niet tegen kracht: lang en rustig voor kracht is een uitzondering per paar (24 uur).
-    const next = tpl('tpl_hills_descent');
-    for (const t of templates.filter(isLegHeavyTemplate)) {
-      const hours = legRestHours(resolveEffectiveStressProfile(t), { hike: templateSport(t) === 'hiking' });
-      expect({ id: t.id, hours }).toEqual({ id: t.id, hours: (legSpacingDays(t, next) + 1) * 24 });
+    // Tegen een zware loop en tegen kracht. Tot 2 november 2026 alleen tegen een loop, omdat de lange duurloop
+    // voor kracht 24 uur had; sinds docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md is dat standaard 48.
+    for (const next of [tpl('tpl_hills_descent'), tpl('tpl_lower_a')]) {
+      for (const t of templates.filter(isLegHeavyTemplate)) {
+        const hours = legRestHours(resolveEffectiveStressProfile(t), { hike: templateSport(t) === 'hiking' });
+        expect({ id: t.id, next: next.id, hours }).toEqual({ id: t.id, next: next.id, hours: (legSpacingDays(t, next) + 1) * 24 });
+      }
     }
   });
 

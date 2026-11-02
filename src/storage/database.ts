@@ -1,5 +1,6 @@
+import type { ZoneAnswer } from '../models/zoneAnswer';
 import type { AboveMission } from '../engine/todayCards';
-import { withHardSameDay } from '../engine/scheduler';
+import { withHardSameDay, withLongRunThenLegs } from '../engine/scheduler';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
@@ -599,6 +600,8 @@ export interface AppSettings {
   restDay?: RestWeekday;
   // Leg strength and a hard run on one day, 6+ hours apart (engine/scheduler.ts#setHardSameDayAllowed).
   hardSameDay?: boolean;
+  // Leg strength the day after the long run, 24 hours instead of 48 (engine/scheduler.ts#setLongRunThenLegs). Unset: off.
+  longRunThenLegs?: boolean;
   // Your own heart rate values (Settings → Training → Mijn hartslag); the
   // training screens then show zones in bpm (engine/heartRateZones.ts).
   heartRate?: { maxHr?: number; lthr?: number; restingHr?: number };
@@ -831,6 +834,16 @@ export interface AppSettings {
   // traffic light out of the fastest 5 km, 'count' keeps the clock as it ran. Read when the series is
   // read; what is stored stays as it was. Optional and additive.
   testStops?: 'skip' | 'count';
+  // "Minder tijd vandaag" in het menu van de missiekaart (engine/shorterToday.ts): 'kern' (advice,
+  // absent = kern) houdt de kernsets of de kern van de loop, 'volume' doet alles met minder, 'off'
+  // laat de regel weg. Optional and additive.
+  shorterToday?: 'kern' | 'volume' | 'off';
+  // "Zones bijwerken na een test" (engine/zoneUpdate.ts): na een test die meetelt een voorstel met
+  // Akkoord voor je drempelhartslag. Absent = on. Optional and additive.
+  zonesAfterTest?: boolean;
+  // De antwoorden op dat voorstel, per test (logId). Optional and additive
+  // (storage/migrations.ts#migrateZoneAnswers).
+  zoneAnswers?: ZoneAnswer[];
   // "Volledige reeks bewaren": keep the full series of a run or tocht on this device
   // (activityStreams). Absent = on. Off keeps only the derived profile and kilometres.
   // Optional and additive.
@@ -1018,6 +1031,13 @@ export interface AppSettings {
   // "Automatisch bijwerken" (engine/liveUpdate.ts): de Android-app haalt een nieuwere webversie
   // stil op voor de volgende start. Absent = aan. Optional and additive.
   autoUpdate?: boolean;
+  // "Automatische back-up" (engine/autoBackup.ts, docs/beslissingen/2026-11-02-automatische-backup.md):
+  // 'weekly' (zondagavond, the advice, absent = weekly), 'daily' or 'off'; and how many of the files
+  // ASCEND wrote itself stay (4, 8 the advice, 16, or 0 for all). Where the files go and which ones
+  // ASCEND wrote is of this device only and never travels in a backup (storage/autoBackup.ts).
+  // Optional and additive; a backup keeps only valid values (storage/migrations.ts#migrateAutoBackupSettings).
+  autoBackup?: 'off' | 'weekly' | 'daily';
+  autoBackupKeep?: 0 | 4 | 8 | 16;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -1731,7 +1751,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   // A sport that counts has a derived template (engine/sportTemplate.ts): its fixed rows and its logs are
   // read by the week check like any training.
   const passTemplates = withCountingSports(templates, settings);
-  const pass = withHardSameDay(overrides.registers?.hardSameDay, () => withDurationScope(overrides.registers, () => planPass(asWillBe, {
+  const pass = withLongRunThenLegs(overrides.registers?.longRunThenLegs, () => withHardSameDay(overrides.registers?.hardSameDay, () => withDurationScope(overrides.registers, () => planPass(asWillBe, {
     today, logs, templates: passTemplates, program: next, blocks, afterGoals: afterGoalWindows(goals, mainGoalId, ctx.anchor, today), restDay, goalDay: ctx.anchor,
     dailyTimeBudget: engineConfig.availability.dailyTimeBudget, sameDayPairingPreference: engineConfig.strategy.sameDayPairingPreference,
     slotDays: patternDays(templates, settings, restDay),
@@ -1740,7 +1760,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
     fixedSports: settings.sportHandling ?? null,
     kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
-  })));
+  }))));
   if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 
   // Write only what differs from what is stored.

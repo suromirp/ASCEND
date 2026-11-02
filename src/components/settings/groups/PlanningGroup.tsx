@@ -64,24 +64,26 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Sporten">
         <SummaryRow id="sporten" title="Sporten" facts={facts} info="sporten" onClick={() => navigate(SPORTS_ROUTE)} />
         <SummaryRow id="hoeveel-per-soort" title="Hoeveel per soort" facts={facts} info="hoeveelPerSoort" onClick={() => navigate(KIND_AMOUNT_ROUTE)} />
+        <SummaryRow id="bundel-sporten-tellen" title="Hoe sporten meetellen" facts={facts} info="sportenTellen" onClick={() => setSheet('bundel-sporten-tellen')} />
       </SettingsSection>
 
       <SettingsSection
         title="Hoe ASCEND plant"
-        advancedIds={['bundel-niet-doorgegaan', 'bundel-sporten-tellen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij']}
-        advancedTitles="Training die niet doorging, Hoe sporten meetellen, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie"
+        advancedIds={['bundel-niet-doorgegaan', 'lange-loop-benen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test']}
+        advancedTitles="Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie, Zones bijwerken na een test"
         storageKey="planning-geavanceerd"
         advanced={
           <>
             <SummaryRow id="bundel-niet-doorgegaan" title="Training die niet doorging" facts={facts} info="nietDoorgegaan" onClick={() => setSheet('bundel-niet-doorgegaan')} />
-            <SummaryRow id="bundel-sporten-tellen" title="Hoe sporten meetellen" facts={facts} info="sportenTellen" onClick={() => setSheet('bundel-sporten-tellen')} />
+            <SummaryRow id="lange-loop-benen" title="Beenkracht de dag na de lange duurloop" facts={facts} info="langeLoopBenen" onChange={(on) => void plan.changeSetting('Beenkracht de dag na de lange duurloop', { longRunThenLegs: on }, on ? 'Beenkracht mag de dag na de lange duurloop.' : 'Weer 48 uur tussen de lange duurloop en beenkracht.')} />
             <SummaryRow id="slepen-week" title="Trainingen slepen in Week" facts={facts} info="slepenWeek" onChange={(on) => void updateSettings({ dragWeek: on })} />
             <SummaryRow id="volgorde-stand" title="Volgorde van Je stand" facts={facts} info="volgordeStand" onClick={() => setSheet('volgorde-stand')} />
             <SummaryRow id="vakantie-opzij" title="Opzij voor een vakantie" facts={facts} info="vakantieOpzij" onClick={() => setSheet('vakantie-opzij')} />
+            <SummaryRow id="zones-na-test" title="Zones bijwerken na een test" facts={facts} info="zonesNaTest" onChange={(on) => void updateSettings({ zonesAfterTest: on })} />
           </>
         }
       >
-        <SummaryRow id="meerdere" title="Twee trainingen per dag" facts={facts} onClick={() => setSheet('meerdere')} />
+        <SummaryRow id="meerdere" title="Twee trainingen per dag" facts={facts} info="meerdere" onClick={() => setSheet('meerdere')} />
         <SummaryRow id="wijzigingen" title="Wijzigingen" facts={facts} info="wijzigingen" onClick={() => setSheet('wijzigingen')} />
         <SummaryRow id="ambitie" title="Ambitie" facts={facts} info="ambitie" onClick={() => setSheet('ambitie')} />
         <SummaryRow id="twijfeltest" title="Twijfeltest eerst vragen" facts={facts} info="twijfeltest" onChange={(on) => void updateSettings({ askDoubtTest: on })} />
@@ -93,14 +95,14 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
 
       {sheet === 'bundel-dagen' && (
         <BundleSheet eyebrow="Planning" title="Dagen en tijd" line="Hoeveel tijd je hebt en wanneer je rust." onClose={close}>
-          <SummaryRow id="trainingstijd" title="Trainingstijd per dag" facts={facts} onClick={() => setInner('trainingstijd')} />
-          <SummaryRow id="rustdag" title="Rustdag" facts={facts} onClick={() => setInner('rustdag')} />
+          <SummaryRow id="trainingstijd" title="Trainingstijd per dag" facts={facts} info="trainingstijd" onClick={() => setInner('trainingstijd')} />
+          <SummaryRow id="rustdag" title="Rustdag" facts={facts} info="rustdag" onClick={() => setInner('rustdag')} />
           <SummaryRow id="rustdag-doen" title="Op je rustdag" facts={facts} onClick={() => setInner('rustdag-doen')} />
         </BundleSheet>
       )}
       {sheet === 'bundel-niet-doorgegaan' && (
         <BundleSheet eyebrow="Planning" title="Training die niet doorging" line="Een training die voorbij is zonder log." onClose={close}>
-          <SummaryRow id="niet-doorgegaan" title="Wat ASCEND doet" facts={facts} onClick={() => setInner('niet-doorgegaan')} />
+          <SummaryRow id="niet-doorgegaan" title="Wat ASCEND doet" facts={facts} info="nietDoorgegaan" onClick={() => setInner('niet-doorgegaan')} />
           {rowShown('niet-doorgegaan-dagen', facts) && <SummaryRow id="niet-doorgegaan-dagen" title="Na hoeveel dagen" facts={facts} onClick={() => setInner('niet-doorgegaan-dagen')} />}
           <SummaryRow id="log-koppelen" title="Log op een andere dag koppelen" facts={facts} onChange={(on) => void updateSettings({ missedLink: on })} />
         </BundleSheet>

@@ -23,14 +23,14 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
   return (
     <>
       <SettingsSection>
-        <SummaryRow id="lichaamsgewicht" title="Lichaamsgewicht" facts={facts} onClick={() => setSheet('lichaamsgewicht')} />
+        <SummaryRow id="lichaamsgewicht" title="Lichaamsgewicht" facts={facts} info="gewicht" onClick={() => setSheet('lichaamsgewicht')} />
         <SummaryRow id="vetpercentage" title="Vetpercentage tonen" facts={facts} info="vetpercentage" onChange={(on) => void updateSettings({ showBodyFat: on })} />
-        <SummaryRow id="hartslag" title="Hartslag" facts={facts} onClick={() => setSheet('hartslag')} />
-        <SummaryRow id="blessures" title="Blessures" facts={facts} onClick={() => navigate('/lichaam')} />
+        <SummaryRow id="hartslag" title="Hartslag" facts={facts} info="drempel" onClick={() => setSheet('hartslag')} />
+        <SummaryRow id="blessures" title="Blessures" facts={facts} info="blessures" onClick={() => navigate('/lichaam')} />
         <SummaryRow id="figuur" title="Figuur" facts={facts} info="figuur" onClick={() => setSheet('figuur')} />
       </SettingsSection>
       <SettingsSection>
-        <SummaryRow id="bundel-wat" title="Wat speelde er" facts={facts} onClick={() => setSheet('bundel-wat')} />
+        <SummaryRow id="bundel-wat" title="Wat speelde er" facts={facts} info="bundelWat" onClick={() => setSheet('bundel-wat')} />
       </SettingsSection>
       <SettingsSection>
         <SummaryRow id="bundel-signalen" title="Signalen uit je gegevens" facts={facts} onClick={() => setSheet('bundel-signalen')} />

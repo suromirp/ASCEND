@@ -92,3 +92,31 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Kansen herstel, Sherpa, opus (ontwikkelaar), hervat 45k, 33 min, 1
 - 2026-11-02, Testloop en zware benen, Sherpa, opus (ontwikkelaar), 325k, 47 min, 1 (Warden rood)
 - 2026-11-02, Review testloop, Warden, opus (reviewer), 105k, 4 min, 0, rood: tweede testvoorstel toetst andere voorstellen niet
+- 2026-11-02, Testloop herstel en herkeuring, Sherpa en Warden, opus, hervat, 0 open punten
+- 2026-11-02, Zonder doel Je week, Sherpa, sonnet (ontwikkelaar), 197k, 36 min, 1; raakte toch planning, had opus moeten zijn (werkverdeling)
+- 2026-11-02, Review zonder doel, Warden, opus (reviewer), rood: kracht erbij zonder toets, krachtblok overschreven
+- 2026-11-02, Instellingen kleine delen, Sherpa, sonnet (ontwikkelaar), 209k, 39 min, 0
+- 2026-11-02, RPE bij een testloop, Sherpa, opus (ontwikkelaar), 231k, 58 min, 1
+- 2026-11-02, Review RPE, Warden, opus (reviewer), 99k, 7 min, 0, rood: weekbalk sprak zichzelf tegen
+- 2026-11-02, RPE herstel en herkeuring, Sherpa en Warden, opus, hervat, 0 open
+- 2026-11-02, Instellingen herstel teksten, Sherpa, sonnet, hervat, 0; Warden zat fout over het geluid na een training, de bouwer controleerde de code
+- 2026-11-02, Onderzoek lange duurloop en zware beendag, Scout, opus (sportwetenschapper), 0; 48 uur in beide volgordes
+- 2026-11-02, Zonder doel laatste rondes, Sherpa sonnet en Warden opus, hervat, 2 herstelrondes; een onveilige optie kwam uit mijn opdracht
+- 2026-11-02, Automatische back-up, Sherpa, opus (ontwikkelaar), 260k, 49 min, 0
+- 2026-11-02, Onderzoek 48 uur, Scout, opus, 152k, 5 min, 0
+- 2026-11-02, Review automatische back-up, Warden, opus (reviewer), rood: kon een eigen back-up met dezelfde naam overschrijven
+- 2026-11-02, Planner 48 uur, Sherpa, opus (ontwikkelaar), 199k, 42 min, 0
+- 2026-11-02, Review planner 48 uur met probe op de back-up, Warden, opus (reviewer), groen; voor de eigenaar verandert er de komende vier weken niets
+- 2026-11-02, Planner 48 uur herstel, Sherpa, opus, hervat, 0
+- 2026-11-02, Automatische back-up herstel, Sherpa, opus, hervat 30k, 26 min, 1
+- 2026-11-02, Sporten die meetellen, Sherpa, opus, 600k, 191 min, review loopt
+- 2026-11-02, Automatische back-up drie kleine punten, Sherpa, opus, hervat 300k, 16 min, 2
+- 2026-11-02, Review Sporten die meetellen, Warden, opus, 178k, 10 min, rood (2 blokkerend)
+- 2026-11-02, Week en Vandaag hulp, Sherpa, opus, 378k + eerder, hervat na limiet, review loopt
+- 2026-11-02, Review Week en Vandaag hulp, Warden, opus, 119k, 5 min, groen met 8 punten
+- 2026-11-02, Snelkoppelingen en widget, Sherpa, sonnet, 97k, 24 min, review loopt
+- 2026-11-02, Sporten herstel 10 punten, Sherpa, opus, hervat, 1
+- 2026-11-02, Review snelkoppelingen en widget, Warden, sonnet, 50k, 2 min, rood (1 blokkerend)
+- 2026-11-02, Herkeuring Sporten, Warden, opus, 197k, 4 min, groen
+- 2026-11-02, Widget herstel, Sherpa, sonnet, hervat 108k, 12 min, 1
+- 2026-11-02, Week en Vandaag hulp herstel, Sherpa, opus, hervat, 1; live

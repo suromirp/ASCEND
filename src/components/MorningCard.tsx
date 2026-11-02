@@ -75,7 +75,7 @@ function MorningChoice({ children, onClick, disabled, selected }: { children: st
 export function MorningCard() {
   const today = todayISO();
   const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig, answeredAdviceIds, injuryNotes } = useAppData();
-  const { prefill, reading, rule: watchRule, linked, sleepOn } = useMorningPrefill(today);
+  const { prefill, afterEffort, reading, rule: watchRule, linked, sleepOn } = useMorningPrefill(today);
   const rule = signalOn(settings, 'morningRule') ? watchRule : undefined;
   // Je antwoord op "Ben je moe?" van de ochtendregel: de energie van deze ochtend.
   const [tired, setTired] = useState<EnergyFeeling | undefined>(undefined);
@@ -255,6 +255,7 @@ export function MorningCard() {
         <div ref={bodyRef} className="flex flex-col gap-3">
           <Header heading={heading} />
           <p className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>Hoe voelen je benen?</p>
+          {afterEffort && <p className="-mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{afterEffort.line}</p>}
           {(stats.length > 0 || line || linked) && (
             <div style={{ minHeight: linked ? 48 : undefined }}>
               {stats.length > 0 ? (

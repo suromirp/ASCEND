@@ -35,6 +35,7 @@ Doe hem di 3 november, en Bovenlichaam A naar vr 6 november.
 
 --- kaart 5 ---
 Back-up
+Tijd voor je back-up.
 Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.
 [knop: Niet nu]
 [knop: Back-up maken]

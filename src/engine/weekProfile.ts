@@ -32,6 +32,9 @@ export interface DayLoad {
   minutes: number;
   // Er is op deze dag iets gedaan (een log) of er komt nog iets (gepland).
   hasTraining: boolean;
+  // Op deze dag staat een test met inlopen die in twee delen telt (standing.ts#LoadItem.split): de
+  // hoogte is dan niet meer gewoon minuten maal zwaarte, en de uitleg zegt dat.
+  split?: boolean;
   // De training die het zwaarst is voor de benen, als die er is.
   legTemplate?: SessionTemplate;
   // Een dag van een tocht: de wandeling die de tocht zelf plaatste. Tochtdagen
@@ -86,6 +89,7 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
       load: items.reduce((n, i) => n + i.load, 0),
       minutes: items.reduce((n, i) => n + i.minutes, 0),
       hasTraining: items.length > 0,
+      ...(items.some((i) => i.split) ? { split: true } : {}),
       legTemplate: legs[0],
       ...(trekDays.has(date) ? { trekDay: true } : {}),
     };
@@ -138,7 +142,8 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
     pairs.push({
       first, second,
       gap: daysBetween(first.date, second.date),
-      need: legSpacingDays(first.legTemplate!, second.legTemplate!),
+      // As the planner: the day after the long run only when the day before it was not a heavy leg day too.
+      need: Math.max(legSpacingDays(first.legTemplate!, second.legTemplate!), i >= 2 && daysBetween(legs[i - 2].date, first.date) === 1 ? 1 : 0),
       // Two days of one tocht follow each other by design.
       trek: !!first.trekDay && !!second.trekDay,
       intended: isIntentionalBackToBack(first.legTemplate!, second.legTemplate!) || (!!first.trekDay && !!second.trekDay),

@@ -11,8 +11,11 @@
 
 import { MetaRepo } from './database';
 import type { BackupFileAdapter, PickedBackupFile, SaveResult } from './backupTypes';
+import { AutoBackupError } from '../engine/autoBackup';
+import type { AutoBackupTarget } from '../integrations/backupFolder';
 
 const DIRECTORY_HANDLE_KEY = 'backupDirectoryHandle';
+const INSTALL_ID_KEY = 'autoBackupInstallId';
 
 // Minimal local shape for the parts of the File System Access API this file
 // actually uses — kept separate from any global lib.dom.d.ts declarations
@@ -24,6 +27,8 @@ interface FSFileHandleLike {
 }
 
 interface FSDirectoryHandleLike {
+  name?: string;
+  removeEntry?(name: string): Promise<void>;
   queryPermission?(opts: { mode: 'readwrite' }): Promise<string>;
   requestPermission?(opts: { mode: 'readwrite' }): Promise<string>;
   getFileHandle(name: string, opts?: { create?: boolean }): Promise<FSFileHandleLike>;
@@ -66,7 +71,7 @@ async function saveViaFileSystemAccess(data: Blob, suggestedName: string): Promi
       const writable = await fileHandle.createWritable();
       await writable.write(data);
       await writable.close();
-      return { success: true, savedTo: suggestedName };
+      return { success: true, savedTo: suggestedName, folder: dirHandle.name ?? 'je vaste map' };
     } catch {
       // Remembered directory may have been moved/deleted/revoked since it
       // was chosen — fall through to a one-off save-file picker instead of
@@ -145,16 +150,94 @@ export const webBackupFileAdapter: BackupFileAdapter = {
   },
 
   async choosePreferredDirectory() {
-    if (!hasFileSystemAccess()) return;
+    if (!hasFileSystemAccess()) return false;
     try {
       const handle = await fsWindow().showDirectoryPicker({ mode: 'readwrite' });
       await MetaRepo.set(DIRECTORY_HANDLE_KEY, handle);
+      return true;
     } catch (err) {
       if (!isAbort(err)) throw err;
+      return false;
     }
   },
 
   async hasPreferredDirectory() {
     return (await getStoredDirectoryHandle()) !== undefined;
+  },
+};
+
+// ---- de automatische back-up in de browser ----------------------------------------------
+// (docs/beslissingen/2026-11-02-automatische-backup.md) Een browser mag niet zelf een bestand
+// opslaan zonder tik. Alleen als de vaste map gekozen is en de browser hem nog zonder vragen vrijgeeft
+// (queryPermission 'granted'), schrijft ASCEND er stil naartoe. Er wordt nooit om toestemming gevraagd:
+// dat kan alleen na een tik, en dan doet de knop "Back-up maken" op de kaart van Vandaag het.
+
+function domReason(err: unknown): 'folder' | 'permission' | 'write' {
+  const name = err instanceof DOMException ? err.name : '';
+  if (name === 'NotFoundError' || name === 'InvalidStateError') return 'folder';
+  if (name === 'NotAllowedError' || name === 'SecurityError') return 'permission';
+  return 'write';
+}
+
+export const webFolderTarget: AutoBackupTarget = {
+  platform: 'browser',
+  async access() {
+    if (!hasFileSystemAccess()) return 'needs-tap';
+    const handle = await getStoredDirectoryHandle().catch(() => undefined);
+    if (!handle) return 'needs-tap';
+    if (!handle.queryPermission) return 'ready';
+    try {
+      const state = await handle.queryPermission({ mode: 'readwrite' });
+      return state === 'granted' ? 'ready' : state === 'denied' ? 'denied' : 'needs-tap';
+    } catch {
+      return 'needs-tap';
+    }
+  },
+  async where() {
+    const handle = await getStoredDirectoryHandle().catch(() => undefined);
+    return { kind: 'folder', label: handle?.name ?? 'je vaste map' };
+  },
+  async write(name, text) {
+    const handle = await getStoredDirectoryHandle().catch(() => undefined);
+    if (!handle) throw new AutoBackupError('folder');
+    try {
+      const file = await handle.getFileHandle(name, { create: true });
+      const writable = await file.createWritable();
+      await writable.write(new Blob([text], { type: 'application/json' }));
+      await writable.close();
+    } catch (err) {
+      throw new AutoBackupError(domReason(err));
+    }
+  },
+  async exists(name) {
+    const handle = await getStoredDirectoryHandle().catch(() => undefined);
+    if (!handle) return false;
+    try {
+      await handle.getFileHandle(name);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  async verify(name, bytes) {
+    const handle = await getStoredDirectoryHandle().catch(() => undefined);
+    if (!handle) return false;
+    try {
+      return (await (await handle.getFileHandle(name)).getFile()).size === bytes;
+    } catch {
+      return false;
+    }
+  },
+  async remove(name) {
+    const handle = await getStoredDirectoryHandle();
+    await handle?.removeEntry?.(name);
+  },
+  // In de browser reist de opslag niet mee met een back-up van Android; een id per opslag is genoeg.
+  async installId() {
+    const known = await MetaRepo.get<string>(INSTALL_ID_KEY).catch(() => undefined);
+    if (typeof known === 'string' && known) return known;
+    const id = crypto.randomUUID();
+    await MetaRepo.set(INSTALL_ID_KEY, id);
+    return id;
   },
 };

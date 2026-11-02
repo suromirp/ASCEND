@@ -269,6 +269,21 @@ describe('an older run: filling in when its sheet opens', () => {
     expect(ensureOutcomeText('no-series')).toContain('geen reeks per moment');
   });
 
+  it('a tap on Details ophalen asks again after a failure this session; opening the sheet does not', async () => {
+    await state();
+    expect(await ensureRunDetail('log_1', { fetchImpl: asFetch(vi.fn(async () => new Response('{}', { status: 500 }))) })).toBe('failed');
+    const quiet = requests();
+    expect(await ensureRunDetail('log_1', { fetchImpl: asFetch(quiet) })).toBe('failed');
+    expect(quiet).not.toHaveBeenCalled();
+    const tap = requests();
+    expect(await ensureRunDetail('log_1', { fetchImpl: asFetch(tap), manual: true })).toBe('added');
+    expect(tap).toHaveBeenCalled();
+    expect(isUsableRunDetail((await SessionLogsRepo.getAll())[0].runDetail)).toBe(true);
+    expect(ensureOutcomeText('failed', true)).toBe('Het ophalen lukte niet. Er is niets veranderd; probeer het later nog eens.');
+    expect(ensureOutcomeText('timeout', true)).toContain('probeer het later nog eens');
+    expect(ensureOutcomeText('added', true)).toBe('Opgehaald. Kilometer na kilometer staat nu bij Run in detail.');
+  });
+
   it('a request that fails says so and changes nothing; a request that hangs ends in a timeout', async () => {
     await state();
     expect(await ensureRunDetail('log_1', { fetchImpl: asFetch(vi.fn(async () => new Response('{}', { status: 500 }))) })).toBe('failed');

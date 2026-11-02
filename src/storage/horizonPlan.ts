@@ -72,6 +72,9 @@ export interface HorizonChangeInput {
   // put back if anything goes wrong. A device that already has a program never
   // gets this.
   firstPlan?: FirstPlanExtras;
+  // Een richting die het aantal keer kracht verandert (engine/directionStrength.ts): het actieve krachtblok
+  // volgt in het aantal per week (en de overgebleven sjablonen komen vooraan); sjablonen en split blijven van jou. Alleen bij Akkoord, met ongedaan maken.
+  strengthBlock?: { sessionsPerWeek: number; keepFirst: string[] };
 }
 
 export interface FirstPlanExtras {
@@ -109,6 +112,8 @@ export interface HorizonRestore {
   newGoalIds: string[];
   // The program as it was, when the change wrote another one.
   program?: Program;
+  // The active strength block as it was, when the change moved it along with a new week.
+  strategies?: StrengthProgramStrategy[];
 }
 
 // Some steps of the planning run only settle in a second round (the race
@@ -182,7 +187,7 @@ async function scopeFor(input: HorizonChangeInput): Promise<DurationScope | unde
   if (!input.settings) return undefined;
   const [settings, logs, templates, programs] = await Promise.all([SettingsRepo.get(), SessionLogsRepo.getAll(), SessionTemplatesRepo.getAll(), ProgramsRepo.getAll()]);
   const merged = { ...settings, ...input.settings };
-  return { ...durationScopeFor(merged, logs, templates, programs[0], todayISO()), hardSameDay: !!merged.hardSameDay };
+  return { ...durationScopeFor(merged, logs, templates, programs[0], todayISO()), hardSameDay: !!merged.hardSameDay, longRunThenLegs: !!merged.longRunThenLegs };
 }
 
 // The goals as the change would leave them: the stored ones, the changed ones in their place, new ones added.
@@ -302,7 +307,8 @@ async function takeSnapshot(input: HorizonChangeInput, sessions: PlannedSession[
     newGoalIds: (input.goals ?? []).filter((g) => !storedGoals.has(g.id)).map((g) => g.id),
     ...(input.program && programs[0] ? { program: programs[0] } : {}),
   };
-  const extras = input.firstPlan
+  if (input.strengthBlock) restore.strategies = (await StrengthProgramStrategiesRepo.getAll()).filter((st) => st.status === 'active' || st.status === 'ending');
+  const extras = input.firstPlan || input.strengthBlock
     ? { config: await GoalEngineConfigRepo.get(), strategies: await StrengthProgramStrategiesRepo.getAll(), strategyFlag: await MetaRepo.get('strengthProgramDefaultSeeded') }
     : undefined;
   return { sessions, settingsRaw, restore, programs, milestones, appliedRestDay, ...(extras ? { extras } : {}) };
@@ -329,6 +335,7 @@ async function rollback(snap: Snapshot): Promise<void> {
   if (snap.extras) {
     const strategiesNow = await StrengthProgramStrategiesRepo.getAll();
     for (const st of strategiesNow) if (!snap.extras.strategies.some((o) => o.id === st.id)) await StrengthProgramStrategiesRepo.delete(st.id);
+    for (const st of snap.extras.strategies) await StrengthProgramStrategiesRepo.put(st);
     await GoalEngineConfigRepo.set({ availability: snap.extras.config.availability });
     await MetaRepo.set('strengthProgramDefaultSeeded', snap.extras.strategyFlag);
   }
@@ -388,6 +395,17 @@ export async function applyHorizonPlanNow(plan: HorizonPlan, deps: HorizonDeps =
     if (first?.strategy) {
       const at = new Date().toISOString();
       await StrengthProgramStrategiesRepo.put({ ...first.strategy, createdAt: at, updatedAt: at });
+    }
+    if (input.strengthBlock) {
+      const at = new Date().toISOString();
+      for (const st of await StrengthProgramStrategiesRepo.getAll()) {
+        if (st.status !== 'active' && st.status !== 'ending') continue;
+        const first = input.strengthBlock.keepFirst.filter((id) => st.sessionTemplateIds.includes(id));
+        await StrengthProgramStrategiesRepo.put({
+          ...st, sessionsPerWeek: input.strengthBlock.sessionsPerWeek, updatedAt: at,
+          sessionTemplateIds: [...first, ...st.sessionTemplateIds.filter((id) => !first.includes(id))],
+        });
+      }
     }
     // The registers follow the stored settings again, now with the change.
     if (deps.prime) await deps.prime();

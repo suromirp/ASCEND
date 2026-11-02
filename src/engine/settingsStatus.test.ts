@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { backupAge, backupAgoText, backupNeedsAttention } from './settingsAttention';
-import { backupSpoken, shortGoalName, statusCells, type StatusFacts } from './settingsStatus';
+import { backupSpoken, directionStatus, shortGoalName, statusCells, type StatusFacts } from './settingsStatus';
 
 const TODAY = '2026-10-22';
 
@@ -53,7 +53,23 @@ describe('statusCells', () => {
     const [fase, doel, backup] = statusCells({ ...base, position: null, goal: null, lastExportedAt: undefined });
     expect(fase).toMatchObject({ value: 'Geen', dim: true });
     expect(doel).toMatchObject({ value: 'Geen', detail: 'kies een doel', dim: true });
-    expect(backup).toMatchObject({ value: 'Nooit', detail: 'Nu maken', attention: true });
+    expect(backup).toMatchObject({ value: 'Nog nooit', detail: 'Nu maken', attention: true });
+  });
+
+  it('zonder doel toont het eerste vak de richting in plaats van een fase', () => {
+    const direction = directionStatus({ direction: 'maintain', directionStart: '2026-10-12' }, TODAY);
+    expect(direction).toMatchObject({ label: 'Fit blijven', chosen: true });
+    expect(direction.detail).toMatch(/^golf, week \d van \d$/);
+    const [eerste] = statusCells({ ...base, position: null, goal: null, direction });
+    expect(eerste).toMatchObject({ key: 'richting', label: 'Richting', value: 'Fit blijven', dim: false });
+    expect(eerste.target).toEqual({ page: 'doel', row: 'richting', sheet: true });
+  });
+
+  it('een richting die nog niet gekozen is staat gedimd, een doel wint altijd', () => {
+    const direction = directionStatus({}, TODAY);
+    expect(direction.chosen).toBe(false);
+    expect(statusCells({ ...base, goal: null, direction })[0]).toMatchObject({ key: 'richting', dim: true });
+    expect(statusCells({ ...base, direction })[0].key).toBe('fase');
   });
 
   it('elk vak zegt waar je het verandert', () => {

@@ -7,6 +7,7 @@
 // regel (`sub`): een feit of een bron, nooit uitleg. Een test bewaakt dat een regel
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
+import { resolveShorterToday } from './shorterToday';
 import { isDefaultOrder, resolveCardOrder } from './cardOrder';
 import { kgLabel } from '../utils/kg';
 import { resolveTestStops } from './bestEffort';
@@ -14,7 +15,7 @@ import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
-import { matchTodayProfile, TODAY_PROFILE_LABEL } from './settingsProfiles';
+import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { countDifferences } from './settingsDiff';
 import { resolveOverviews } from './overviewSettings';
@@ -52,6 +53,7 @@ import { resolveWaveSettings } from './waves';
 import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
 import { resolveStreamsBackup } from './streamsBackup';
+import { backupWhereText, resolveAutoBackup, type AutoBackupFailureReason, type BackupWhere } from './autoBackup';
 import { SIGNAL_KEYS, signalsOnCount } from './signalSettings';
 import { resolveProposalTidyMonths } from './proposalTidy';
 import { storageUseText, type StorageEstimate } from './storageUse';
@@ -142,6 +144,10 @@ export interface SettingsFacts {
   // Of de browser een vaste map kan onthouden en of die gekozen is.
   folderSupported: boolean;
   folderChosen: boolean;
+  // De automatische back-up op dit toestel: in de app of de browser, waar de laatste staat, de naam
+  // van de map waar hij stil naartoe kan (in de browser alleen als de vaste map gekozen is) en de
+  // reden als de laatste poging mislukte. Weglaten zolang dat nog niet is gelezen.
+  autoBackup?: { platform: 'app' | 'browser'; where?: BackupWhere; folder?: string; failure?: AutoBackupFailureReason };
   storage: 'protected' | 'not_protected' | 'unsupported' | undefined;
   // De ruimte die de volledige reeksen van loopjes en tochten innemen (bytes); weglaten zolang
   // dat nog niet is geteld.
@@ -163,6 +169,9 @@ export interface SettingsFacts {
   device?: DevicePermissions | 'unknown';
   // De app kan zijn webdeel zelf bijwerken (de Android-app).
   liveUpdate?: boolean;
+  // Het lezen van de koppelstatus mislukte: dan zeggen we dat, in plaats van "Koppelen" alsof je
+  // nooit gekoppeld was.
+  watchUnreadable?: boolean;
 }
 
 const deviceOf = (f: SettingsFacts): DevicePermissions | undefined => (f.device && f.device !== 'unknown' ? f.device : undefined);
@@ -184,6 +193,17 @@ function noticeState(f: SettingsFacts): { on: boolean; support: NoticeSupport } 
   const n = resolveMorningNotice(f.settings.morningNotice);
   const support = f.notice?.support ?? 'ready';
   return { on: n.enabled && support === 'ready' && (f.notice?.granted ?? true), support };
+}
+
+// Automatische back-up: hoe vaak, en waar hij heen gaat of dat Vandaag een kaart neerzet. Mislukte de
+// laatste poging, dan een amber stip; de regel met wat je kunt doen staat onder de groep.
+function autoBackupRow(f: SettingsFacts): RowSummary {
+  const frequency = resolveAutoBackup(f.settings.autoBackup);
+  if (frequency === 'off') return { value: choiceShort('autoBackup', frequency), dim: true };
+  const when = frequency === 'weekly' ? 'Zondagavond' : 'Elke avond';
+  const folder = f.autoBackup?.folder;
+  const sub = f.autoBackup?.failure ? 'De laatste keer lukte het niet' : folder ? `${when}, in ${folder}` : `${when}, met een kaart op Vandaag`;
+  return { value: choiceShort('autoBackup', frequency), sub, ...(f.autoBackup?.failure ? { dot: 'warn' as const } : {}) };
 }
 
 // ---- hulpjes -----------------------------------------------------------------
@@ -275,7 +295,7 @@ export function rowContext(f: SettingsFacts): RowContext {
     longSundayVisible: f.longSundayVisible,
     noGoal: f.noGoal === true,
     sameDayAllowed: f.pairing !== 'never',
-    folderSupported: f.folderSupported,
+    folderSupported: f.folderSupported || f.autoBackup?.platform === 'app',
     noticeAvailable: support !== 'unavailable' && support !== 'not_installed',
     timed: deviceOf(f)?.timed === true,
     liveUpdate: f.liveUpdate === true,
@@ -390,6 +410,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('langeLoopGroei', resolveLongRunGrowth(s.longRunGrowth)) };
     case 'zware-dingen':
       return { checked: !!s.hardSameDay, sub: 'Op één dag, eerst de loop' };
+    case 'lange-loop-benen':
+      return { checked: !!s.longRunThenLegs, sub: s.longRunThenLegs ? 'Een dag ertussen is genoeg' : '48 uur ertussen' };
 
     // Doel en tochten
     case 'doelen':
@@ -567,12 +589,14 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Vandaag en meldingen
     case 'kaarten': {
       const p = matchTodayProfile(s);
-      return p === 'aangepast' ? { value: TODAY_PROFILE_LABEL.aangepast, dim: true } : { value: TODAY_PROFILE_LABEL[p], dim: false };
+      return { value: TODAY_PROFILE_SHORT[p], dim: p === 'aangepast' };
     }
     case 'ochtendcheck':
       return { checked: o.morningCheckIn };
     case 'ochtendkaart':
       return { checked: o.morningCard };
+    case 'benen-na-test':
+      return { checked: o.legsAfterEffort, sub: o.legsAfterEffort ? 'Open vraag, zonder voorstel' : 'Zoals elke ochtend' };
     case 'zweet-vragen':
       return { checked: s.askSweat !== false };
     case 'bundel-zonder-doel': {
@@ -694,6 +718,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('plaatjes', resolveExerciseArt(s)) };
     case 'lijfvraag':
       return { value: choiceShort('lijfvraag', resolveBodyCheck(s)) };
+    case 'korter-vandaag':
+      return { value: choiceShort('korterVandaag', resolveShorterToday(s.shorterToday)) };
+    case 'zones-na-test':
+      return { checked: s.zonesAfterTest !== false };
     case 'lichterbenen':
       return { value: choiceShort('lichterbenen', resolveLegEase(s)) };
     case 'lichterbenen-hoe':
@@ -766,6 +794,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
 
     // Koppelingen
     case 'garmin':
+      if (f.watchUnreadable) return { value: 'Niet te lezen', dim: true, sub: 'Probeer het zo opnieuw' };
       return watchOn
         ? { value: 'Verbonden', dot: 'ok', sub: f.watch?.syncedAt ? `Laatst bijgewerkt om ${clock(f.watch.syncedAt)}` : 'Nog niet opgehaald' }
         : { value: 'Koppelen', sub: 'Trainingen, slaap en hartslag' };
@@ -815,9 +844,14 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: 'Komt later', dim: true };
 
     // Gegevens en back-up
-    case 'backup':
-      return { value: backupAgoText(age), dim: age.level === 'never' };
+    case 'backup': {
+      const where = age.days !== null ? backupWhereText(f.autoBackup?.where) : undefined;
+      return { value: backupAgoText(age), dim: age.level === 'never', ...(where ? { sub: where } : {}) };
+    }
+    case 'auto-backup':
+      return autoBackupRow(f);
     case 'backupmap':
+      if (f.autoBackup?.platform === 'app' && f.autoBackup.folder) return { value: f.autoBackup.folder };
       return f.folderSupported ? { value: f.folderChosen ? 'Gekozen' : 'Niet gekozen', dim: !f.folderChosen } : {};
     case 'opslag':
       if (f.storage === 'protected') return { value: 'Ja' };
@@ -927,22 +961,22 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
       const hrText = hr.lthr ? `Drempel ${hr.lthr} bpm` : hr.maxHr ? `Max ${hr.maxHr} bpm` : 'Hartslag niet ingevuld';
       const inj = f.activeInjuries > 0 ? plural(f.activeInjuries, 'blessure', 'blessures') : 'geen blessures';
       return {
-        value: f.weight ? kgLabel(f.weight.kg, 1) : 'Leeg',
+        value: f.weight ? kgLabel(f.weight.kg, 1) : 'Niet ingevuld',
         dim: !f.weight,
         sub: `${hrText}, ${inj}`,
       };
     }
     case 'vandaag': {
       const o = resolveOverviews(s.overviews);
-      const aan = [o.morningCheckIn, o.weekReview, o.weeklyQuestion, o.weatherLine, o.weatherSwap, o.bestMoment, o.clothingAdvice, o.completionMoment, s.introSoundEnabled].filter(Boolean).length;
       const place = s.homeLocation;
       const follows = isMyLocation(place) && o.weatherFollowsLocation;
-      return { value: `${aan} aan`, sub: follows ? 'Weer volgt je locatie' : place ? `Weer voor ${place.name}` : 'Nog geen plaats voor het weer' };
+      return { value: TODAY_PROFILE_SHORT[matchTodayProfile(s)], dim: matchTodayProfile(s) === 'aangepast', sub: follows ? 'Weer volgt je locatie' : place ? `Weer voor ${place.name}` : 'Nog geen plaats voor het weer' };
     }
     case 'koppelingen': {
       const garmin = f.watch?.linked === true;
       const mf = !!f.macroFactor?.readAt;
-      if (!garmin && !mf) return { value: 'Geen', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' };
+      if (f.watchUnreadable && !mf) return { value: 'Niet te lezen', dim: true, sub: 'Probeer het zo opnieuw' };
+      if (!garmin && !mf) return { value: 'Niet gekoppeld', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' };
       const parts = [
         garmin ? `Garmin${f.watch?.syncedAt ? ` om ${clock(f.watch.syncedAt)}` : ''}` : null,
         mf && f.macroFactor?.readAt ? `MacroFactor ${formatDayMonthNL(localDateOf(f.macroFactor.readAt))}` : null,

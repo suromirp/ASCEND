@@ -25,7 +25,8 @@ import { getPersistenceStatus, type PersistenceStatus } from '../../storage/pers
 import { estimateStorage } from '../../storage/storageEstimate';
 import type { StorageEstimate } from '../../engine/storageUse';
 import { listSnapshots } from '../../storage/backup';
-import { webBackupFileAdapter } from '../../storage/backupFileAdapter';
+import { webBackupFileAdapter, webFolderTarget } from '../../storage/backupFileAdapter';
+import { autoBackupTarget, readAutoBackupState, subscribeAutoBackup } from '../../storage/autoBackup';
 import { buildLabel } from '../../utils/buildLabel';
 import { noticeSupport } from '../../engine/morningNotice';
 import { readNoticeEnvironment } from '../../utils/morningNotice';
@@ -53,6 +54,22 @@ interface Loaded {
   storageUse?: StorageEstimate;
   notice: SettingsFacts['notice'];
   device?: DevicePermissions | 'unknown';
+  // Het lezen van de koppelstatus mislukte.
+  watchUnreadable?: boolean;
+  autoBackup?: SettingsFacts['autoBackup'];
+}
+
+// De automatische back-up: in de app altijd de map van de app, in de browser alleen de vaste map.
+async function readAutoBackupFacts(folderChosen: boolean): Promise<SettingsFacts['autoBackup']> {
+  const target = autoBackupTarget();
+  const state = await readAutoBackupState();
+  const folderWhere = target.platform === 'app' ? await target.where() : folderChosen ? await webFolderTarget.where() : undefined;
+  return {
+    platform: target.platform,
+    ...(state.where ? { where: state.where } : {}),
+    ...(folderWhere?.kind === 'folder' ? { folder: folderWhere.label } : {}),
+    ...(state.failure ? { failure: state.failure.reason } : {}),
+  };
 }
 
 const EMPTY: Loaded = { linked: false, watch: null, sendEnabled: false, macroFactor: null, storage: undefined, snapshots: 0, folderChosen: false, notice: undefined };
@@ -66,9 +83,14 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   useEffect(() => {
     let alive = true;
     const load = async () => {
+      let unreadable = false;
+      const unread = () => {
+        unreadable = true;
+        return null;
+      };
       const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize, storageUse, device] = await Promise.all([
-        getConnection().catch(() => null),
-        getWatchState().catch(() => null),
+        getConnection().catch(unread),
+        getWatchState().catch(unread),
         getWatchWorkoutState().catch(() => null),
         getMacroFactorState().catch(() => null),
         getPersistenceStatus().catch(() => undefined),
@@ -81,8 +103,9 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         // Wat de telefoon toestaat; hoogstens twee seconden, daarna "Onbekend".
         withTimeout(notificationPort().permissions(), 2000).catch(() => 'unknown' as const),
       ]);
+      const autoBackup = await readAutoBackupFacts(!!folder).catch(() => undefined);
       if (!alive) return;
-      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, device,
+      setLoaded({ autoBackup, linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, device, watchUnreadable: unreadable,
         // In de app komt de ochtendvraag als melding op tijd; dan telt alleen of meldingen mogen.
         notice: device !== 'unknown' && device.timed
           ? { support: nativeNoticeSupport(device.notifications), granted: device.notifications === 'granted' }
@@ -91,10 +114,12 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     void load();
     const offWatch = onWatchChange(() => void load());
     const offMf = onMacroFactorChange(() => void load());
+    const offBackup = subscribeAutoBackup(() => void load());
     return () => {
       alive = false;
       offWatch();
       offMf();
+      offBackup();
     };
   }, [tick]);
 
@@ -162,6 +187,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       packKg: Math.round(baseWeightGrams(resolvePackItems(settings.packList)) / 100) / 10,
       folderSupported: webBackupFileAdapter.supportsPreferredDirectory(),
       folderChosen: loaded.folderChosen,
+      autoBackup: loaded.autoBackup,
       storage: loaded.storage,
       streamsBytes: loaded.streamsBytes,
       storageUse: loaded.storageUse,
@@ -172,6 +198,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       notice: loaded.notice,
       device: loaded.device,
       liveUpdate: liveUpdatePort().available,
+      watchUnreadable: loaded.watchUnreadable,
     };
   }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, strengthCheck]);
 

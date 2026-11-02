@@ -56,7 +56,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, initialEner
   const existing = settings.morningCheckIns?.find((c) => c.date === today);
   const spot = recentPainSpot(today, sessionLogs);
   const [draft, setDraft] = useState<MorningCheckIn>(() => existing ? { ...existing, sleep: existing.sleepSuggested ? undefined : existing.sleep } : { date: today, legs: initialLegs, energy: initialEnergy, spot: spot ? { area: spot.area, score: spot.lastScore } : undefined });
-  const { prefill, reading } = useMorningPrefill(today);
+  const { prefill, afterEffort, reading } = useMorningPrefill(today);
   const wellness = painOnly ? undefined : reading;
 
   // Wat je zelf koos gaat voor; anders staat het voorstel erin (de cijfers van het
@@ -105,6 +105,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, initialEner
         </button>}
         {wellness && <WellnessLines reading={wellness} />}
         {wellness?.night && <ShortNightAsk reading={wellness} today={today} />}
+        {!painOnly && afterEffort && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{afterEffort.line}</p>}
         {!painOnly && <ChoiceRow label="Benen" from={legsFrom} options={LEGS} value={legs} set={(v) => setDraft({ ...draft, legs: v, soreWhere: v === 'spierpijn' || v === 'flink' ? draft.soreWhere : undefined })} />}
         {!painOnly && (legs === 'spierpijn' || legs === 'flink') && (
           <button onClick={() => setDraft({ ...draft, soreWhere: upper ? undefined : 'upper' })} aria-pressed={upper} className="-mt-1 min-h-[44px] self-start rounded-full border px-3.5 text-xs" style={{ borderColor: upper ? 'var(--color-action)' : 'var(--color-control-border)', color: upper ? 'var(--color-action)' : 'var(--color-ink-dim)', background: upper ? 'color-mix(in srgb, currentColor 8%, transparent)' : 'transparent' }}>

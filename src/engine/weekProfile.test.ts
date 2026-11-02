@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { dayLoads, ridgeSentence, weekProgress } from './weekProfile';
 import { plannedEffort, weeklyLoad } from './standing';
 import { buildDefaultProgramData } from '../data/defaultProgram';
+import { setLongRunThenLegs } from './scheduler';
 import type { PlannedSession, SessionLog } from '../models/training';
 
 const { templates } = buildDefaultProgramData();
@@ -24,6 +25,16 @@ describe('dayLoads', () => {
     const days = dayLoads({ ...base, weekStart: WEEK, logs: [], plannedSessions: [] });
     expect(days.map((d) => d.date)).toEqual(['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25']);
     expect(days.every((d) => d.load === 0 && !d.hasTraining)).toBe(true);
+  });
+
+  it('een gekoppelde test met snelste 5 km telt in twee delen, en de dag zegt dat', () => {
+    const bestEffort = { km: 5, minutes: 25, wholeKm: 8.2, wholeMinutes: 45, accepted: true, v: 2 };
+    const cardioData = { durationMinutes: 45, distanceKm: 8.2, source: 'garmin' as const };
+    const days = dayLoads({ ...base, weekStart: WEEK, logs: [log('tpl_test_run', '2026-10-20', 45, { rpe: 10, cardioData, bestEffort })], plannedSessions: [] });
+    const tue = days.find((d) => d.date === '2026-10-20')!;
+    expect(tue.load).toBe(310);
+    expect(tue.split).toBe(true);
+    expect(days.filter((d) => d.split)).toHaveLength(1);
   });
 
   it('is minuten maal inspanning: je eigen RPE voor wat gedaan is, de geplande inspanning voor wat komt', () => {
@@ -121,6 +132,21 @@ describe('ridgeSentence', () => {
   it('zegt "net genoeg" bij precies 48 uur', () => {
     const d = days([], [planned('tpl_lower_a', '2026-10-23', { plannedMinutes: 60 }), planned('tpl_hill_intervals', '2026-10-25', { plannedMinutes: 35 })]);
     expect(ridgeSentence(d, TODAY)).toMatch(/zit één dag, net genoeg\.$/);
+  });
+
+  // docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md: 48 uur tussen de lange duurloop en beenkracht.
+  it('waarschuwt bij Benen A de dag na de lange duurloop, ook met de instelling aan na het weekendblok', () => {
+    const longThenLegs = () => days([], [planned('tpl_long_run', '2026-10-24', { plannedMinutes: 50 }), planned('tpl_lower_a', '2026-10-25', { plannedMinutes: 60 })]);
+    expect(ridgeSentence(longThenLegs(), TODAY)).toContain('Let op: tussen Lange duurloop en Benen A');
+    // Drie beendagen op rij: heuvels, lange duurloop, Benen A.
+    const three = () => days([], [planned('tpl_hill_intervals', '2026-10-22', { plannedMinutes: 35 }), planned('tpl_long_run', '2026-10-23', { plannedMinutes: 50 }), planned('tpl_lower_a', '2026-10-24', { plannedMinutes: 60 })]);
+    setLongRunThenLegs(true);
+    try {
+      expect(ridgeSentence(longThenLegs(), TODAY)).not.toContain('Let op');
+      expect(ridgeSentence(three(), TODAY)).toContain('Let op: tussen Lange duurloop en Benen A');
+    } finally {
+      setLongRunThenLegs(false);
+    }
   });
 
   it('vindt de bewuste combinatie van heuvelintervallen en lange duurloop geen fout', () => {

@@ -69,7 +69,7 @@ import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateSportCounting, migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateKindAmount, migrateCustomSports, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateSportCounting, migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateKindAmount, migrateCustomSports, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateZoneAnswers, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -323,6 +323,13 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     else s.testJudgments = tests.list;
     skipped.n += tests.skipped;
   }
+  // Je antwoorden op Zones bijwerken na een test (storage/migrations.ts#migrateZoneAnswers).
+  if ('zoneAnswers' in s) {
+    const zones = migrateZoneAnswers(s.zoneAnswers);
+    if (zones.list === undefined) delete s.zoneAnswers;
+    else s.zoneAnswers = zones.list;
+    skipped.n += zones.skipped;
+  }
   // Your own weighings for sweat loss: record by record, a damaged one is dropped and
   // counted, an older file has none and leaves the weighings on the device alone
   // (storage/migrations.ts#migrateSweatEntries).
@@ -420,7 +427,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.bootBreakInReminder;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'forgeQuickButtons', 'forgeSwipeDelete', 'haptics', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'heatAcclimation', 'paceCurve', 'stageOwnPace', 'climbPace'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeQuickButtons', 'forgeSwipeDelete', 'haptics', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'heatAcclimation', 'paceCurve', 'stageOwnPace', 'climbPace', 'zonesAfterTest'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -434,6 +441,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.proposalTidyMonths;
     Object.assign(s, data.value);
     skipped.n += data.skipped;
+  }
+  // Automatische back-up: hoe vaak en hoeveel bestanden blijven (storage/migrations.ts#migrateAutoBackupSettings).
+  {
+    const auto = migrateAutoBackupSettings(s);
+    delete s.autoBackup;
+    delete s.autoBackupKeep;
+    Object.assign(s, auto.value);
+    skipped.n += auto.skipped;
   }
   // Training die niet doorging: een van de drie keuzes en 1, 2 of 3 dagen, of niet daar.
   if ('missedTraining' in s && s.missedTraining !== 'ask' && s.missedTraining !== 'auto' && s.missedTraining !== 'off') {
@@ -478,6 +493,11 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   }
   if ('testStops' in s && s.testStops !== 'skip' && s.testStops !== 'count') {
     delete s.testStops;
+    skipped.n++;
+  }
+  // Minder tijd vandaag (engine/shorterToday.ts): een van de drie keuzes, of niet daar.
+  if ('shorterToday' in s && s.shorterToday !== 'kern' && s.shorterToday !== 'volume' && s.shorterToday !== 'off') {
+    delete s.shorterToday;
     skipped.n++;
   }
   if ('intensityCounting' in s && s.intensityCounting !== 'heartrate' && s.intensityCounting !== 'plan') {

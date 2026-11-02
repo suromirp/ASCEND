@@ -7,6 +7,8 @@ import { SettingsSection } from '../SettingsList';
 import { useAdviceReset } from '../useAdviceReset';
 import { BackupSheet, BaselineSheet, FolderSheet, RebuildSheet, ResetSheet, SnapshotsSheet, StorageSheet, StreamsSheet, VersionSheet } from './GegevensSheets';
 import { SummaryRow } from './SummaryRow';
+import { AppFolderSheet, AutoBackupSheet } from './AutoBackupSheets';
+import { autoBackupFailureText } from '../../../engine/autoBackup';
 import { PermissionsSheet } from './PermissionSheets';
 import { useMorningBackupOff } from './MorningBackupOff';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -28,12 +30,17 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   return (
     <>
       <SettingsSection title="Back-up">
-        <SummaryRow id="backup" title="Laatste back-up" facts={facts} onClick={() => setSheet('backup')} />
-        <SummaryRow id="backupmap" title="Vaste map" facts={facts} onClick={() => setSheet('backupmap')} />
+        <SummaryRow id="backup" title="Laatste back-up" facts={facts} info="backup" onClick={() => setSheet('backup')} />
+        <SummaryRow id="auto-backup" title="Automatische back-up" facts={facts} info="autoBackup" onClick={() => setSheet('auto-backup')} />
+        <SummaryRow id="backupmap" title="Vaste map" facts={facts} info="backupmap" onClick={() => setSheet('backupmap')} />
         <SummaryRow id="toestemmingen" title="Toestemmingen" facts={facts} info="toestemmingen" onClick={() => setSheet('toestemmingen')} />
         <SummaryRow id="ruimte-app" title="Ruimte op dit toestel" facts={facts} kind="static" info="ruimteApp" />
-        <SummaryRow id="momentopnamen" title="Kopieën van voor een import" facts={facts} onClick={() => setSheet('momentopnamen')} />
+        <SummaryRow id="momentopnamen" title="Kopieën van voor een import" facts={facts} info="momentopnamen" onClick={() => setSheet('momentopnamen')} />
       </SettingsSection>
+      {/* Een mislukte automatische back-up: één rustige regel met wat je kunt doen, nooit stil. */}
+      {facts.autoBackup?.failure && (
+        <p className="st-hint warn" role="status">{autoBackupFailureText(facts.autoBackup.failure, facts.autoBackup.platform)}</p>
+      )}
 
       <SettingsSection title="Van je horloge">
         <SummaryRow id="reeksen-bewaren" title="Volledige reeks bewaren" facts={facts} info="reeksenBewaren" onChange={(on) => void updateSettings({ keepStreams: on })} />
@@ -45,24 +52,24 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="App"
-        advancedIds={['auto-bijwerken', 'voorstellen-opruimen', 'startniveau']}
-        advancedTitles={facts.liveUpdate ? 'Automatisch bijwerken, Oude voorstellen opruimen, Startniveau zelf invullen' : 'Oude voorstellen opruimen, Startniveau zelf invullen'}
+        advancedIds={['auto-bijwerken', 'voorstellen-opruimen', 'herbouwen', 'startniveau']}
+        advancedTitles={facts.liveUpdate ? 'Automatisch bijwerken, Oude voorstellen opruimen, Adviezen opnieuw berekenen, Startniveau zelf invullen' : 'Oude voorstellen opruimen, Adviezen opnieuw berekenen, Startniveau zelf invullen'}
         storageKey="gegevens-geavanceerd"
         advanced={
           <>
             <SummaryRow id="auto-bijwerken" title="Automatisch bijwerken" facts={facts} info="autoBijwerken" onChange={(on) => void updateSettings({ autoUpdate: on })} />
             <SummaryRow id="voorstellen-opruimen" title="Oude voorstellen opruimen" facts={facts} info="voorstellenOpruimen" onClick={() => setSheet('voorstellen-opruimen')} />
-            <SummaryRow id="startniveau" title="Startniveau zelf invullen" facts={facts} onClick={() => setSheet('startniveau')} />
+            <SummaryRow id="herbouwen" title="Adviezen opnieuw berekenen" facts={facts} info="herbouwen" onClick={() => setSheet('herbouwen')} />
+            <SummaryRow id="startniveau" title="Startniveau zelf invullen" facts={facts} info="startniveau" onClick={() => setSheet('startniveau')} />
           </>
         }
       >
-        <SummaryRow id="herbouwen" title="Adviezen opnieuw berekenen" facts={facts} onClick={() => setSheet('herbouwen')} />
         <SummaryRow id="aangepast" title="Aangepaste instellingen" facts={facts} info="aangepast" onClick={() => setSheet('aangepast')} />
       </SettingsSection>
       {advice.note && <p className="st-hint" role="status">{advice.note}</p>}
 
       <SettingsSection>
-        <SummaryRow id="wissen" title="Alles verwijderen" facts={facts} kind="danger" onClick={() => setSheet('wissen')} />
+        <SummaryRow id="wissen" title="Alles verwijderen" facts={facts} info="wissen" kind="danger" onClick={() => setSheet('wissen')} />
       </SettingsSection>
 
       {/* De versie is geen instelling maar een voettekst; tikken zoekt naar een update. */}
@@ -74,7 +81,10 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
 
       {sheet === 'backup' && <BackupSheet onClose={close} onImport={() => setSheet('import')} />}
       {sheet === 'import' && <ImportWizard onClose={close} />}
-      {sheet === 'backupmap' && <FolderSheet chosen={facts.folderChosen} onChanged={reload} onClose={close} />}
+      {sheet === 'auto-backup' && <AutoBackupSheet facts={facts} onClose={close} />}
+      {sheet === 'backupmap' && (facts.autoBackup?.platform === 'app'
+        ? <AppFolderSheet facts={facts} onChanged={reload} onClose={close} />
+        : <FolderSheet chosen={facts.folderChosen} onChanged={reload} onClose={close} />)}
       {sheet === 'toestemmingen' && <PermissionsSheet facts={facts} onChanged={reload} onStorage={() => setSheet('opslag')} onClose={close} />}
       {sheet === 'opslag' && <StorageSheet onChanged={reload} onClose={close} />}
       {sheet === 'reeksen' && <StreamsSheet onChanged={reload} onClose={close} />}

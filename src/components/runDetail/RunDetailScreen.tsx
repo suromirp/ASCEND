@@ -171,7 +171,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
     if (fetching) return;
     setFetching(true);
     setOutcome(undefined);
-    const r = await ensureRunDetail(log.id, { timeoutMs: 15_000 });
+    const r = await ensureRunDetail(log.id, { timeoutMs: 15_000, manual: true });
     setOutcome(r);
     setFetching(false);
     if (r === 'added') await refresh();
@@ -179,7 +179,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
 
   if (!rd) {
     const pace = d?.distanceKm ? (log.durationMinutes * 60) / d.distanceKm : undefined;
-    const text = outcome ? ensureOutcomeText(outcome) : undefined;
+    const text = outcome ? ensureOutcomeText(outcome, true) : undefined;
     return (
       <div className="mt-3 flex flex-col gap-3">
         <Card texture>
@@ -190,10 +190,10 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
             {pace !== undefined && <Stat label="Tempo" value={formatPace(pace)} unit="/km" />}
           </div>
           <p className="mt-3 text-sm leading-snug" style={dim}>
-            {fetching ? 'Gegevens ophalen…' : text ?? 'Voor kilometer na kilometer heb je de gegevens van je horloge nodig.'}
+            {fetching ? 'Details ophalen…' : text ?? 'Voor kilometer na kilometer heb je de gegevens van je horloge nodig.'}
           </p>
           {log.externalId && !fetching && outcome !== 'off' && outcome !== 'no-link' && (
-            <div className="mt-1"><TextButton onClick={() => void fetchNow()}>{outcome === 'failed' || outcome === 'timeout' ? 'Opnieuw proberen' : 'Gegevens ophalen'}</TextButton></div>
+            <div className="mt-1"><TextButton onClick={() => void fetchNow()}>{outcome === 'failed' || outcome === 'timeout' ? 'Opnieuw proberen' : 'Details ophalen'}</TextButton></div>
           )}
           {!log.externalId && <p className="mt-1 text-xs" style={dim}>Koppel je horloge bij Meer, Koppelingen.</p>}
         </Card>

@@ -23,6 +23,8 @@ import { allowedPairs } from '../engine/allowedPair';
 import { ChangeLogCard } from '../components/ChangeLogCard';
 import { LeavePeriodsCard } from '../components/LeavePeriods';
 import { adjustedSessionReasons } from '../engine/changeLog';
+import { placeReason } from '../engine/placeReason';
+import { patternDays } from '../engine/planPass';
 import { SeasonOverview } from '../components/SeasonOverview';
 import { useSeasonHeader } from '../components/useSeasonHeader';
 import { SessionActionSheet } from '../components/SessionActionSheet';
@@ -46,7 +48,7 @@ import { hoursMinutes } from '../utils/hoursMinutes';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor } = useAppData();
+  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
@@ -86,6 +88,12 @@ export function WeekPage() {
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const caughtUp = useMemo(() => caughtUpMap(plannedSessions), [plannedSessions]);
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
+  // "Waarom staat dit hier?": alleen uit wat er al bewaard is (engine/placeReason.ts).
+  const slotDays = useMemo(() => patternDays(templates, settings, settings.restDay ?? 1), [templates, settings]);
+  const selectedPlace = useMemo(
+    () => (selected ? placeReason({ session: selected, proposals: planChangeLog, patternDay: slotDays.get(selected.templateId), leavePeriods }) : undefined),
+    [selected, planChangeLog, slotDays, leavePeriods],
+  );
 
   // The time this week: what was done (the same sum as the weekly review, a loose
   // training included) of that plus what is still open at its planned length. A
@@ -147,9 +155,9 @@ export function WeekPage() {
 
   // De ene weg voor een verplaatsing, voor het actieblad en voor slepen (engine/weekDrag.ts#decideMove):
   // een schone verplaatsing gaat meteen (Ongedaan maken staat in de melding), een cascade, een botsing,
-  // een rustdag of een test vraagt eerst om Akkoord.
+  // een rustdag of een test vraagt eerst om Akkoord. Twee zware beendagen achter elkaar vragen "Toch hier?".
   async function moveTo(sessionId: string, date: string, opts?: DecideOptions): Promise<MoveDecision['action']> {
-    const decision = decideMove(moveSession(sessionId, date), opts);
+    const decision = decideMove(moveSession(sessionId, date), { ...opts, legsClose: legsCloseAt(sessionId, date) });
     if (decision.action === 'apply') await applyProposal(decision.proposal);
     else if (decision.action === 'ask') setPendingProposal(decision.proposal);
     return decision.action;
@@ -346,6 +354,7 @@ export function WeekPage() {
           catchUp={!selectedLog && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id) }).ok}
           template={templateById.get(selected.templateId)!}
           allowedPair={pairs.get(selected.id)}
+          placeReason={selectedPlace}
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
           completedLog={selectedLog}

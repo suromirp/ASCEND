@@ -7,6 +7,7 @@ import { useAppData } from '../state/AppDataContext';
 import { testMeaning, type TestMeaning } from '../engine/racePaces';
 import { judgmentOptions, pacesFromLogs, testState } from '../engine/testJudgment';
 import { TestVerdictCard } from './TestVerdictCard';
+import { ZoneUpdateCard } from './ZoneUpdateCard';
 import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
 import { extractEvidenceFromLogs, keyId } from '../engine/capability';
 import { capabilityKeyLabel } from '../data/baselineQuestions';
@@ -73,7 +74,7 @@ function Sheet({ name, counted, logAdvice, strengthExternal, meaning, testLogId,
                 <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{meaning.note}</p>
               </div>
             )}
-            {testLogId && <TestVerdictCard logId={testLogId} />}
+            {testLogId && <div><TestVerdictCard logId={testLogId} /><ZoneUpdateCard logId={testLogId} /></div>}
             {counted.length > 0 && !strengthExternal && (
               <div>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Telt mee voor</p>

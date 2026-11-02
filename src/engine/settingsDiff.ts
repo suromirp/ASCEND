@@ -17,6 +17,7 @@ import type { AppSettings } from '../storage/database';
 import { choiceShort, type ChoiceId } from '../data/settingsChoices';
 import type { SettingsPageId } from '../data/settingsLayout';
 import { bootGoalKm } from './bootBreakIn';
+import { AUTO_BACKUP_ADVICE, AUTO_BACKUP_KEEP_ADVICE, resolveAutoBackup, resolveAutoBackupKeep } from './autoBackup';
 import { resolveFigureSetting } from './figureSettings';
 import { resolveIntensityCounting } from './intensitySettings';
 import { resolveMotion } from './motionSettings';
@@ -154,6 +155,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('lange-loop', 'Groei van de lange loop', 'planning', 'longRunGrowth', 'weekly', 'langeLoopGroei', true),
   choice('rustdag-doen', 'Op je rustdag', 'planning', 'restDayMode', 'rest', 'rustdagDoen', true),
   plain('zware-dingen', 'Benen en een zware loop', 'planning', 'hardSameDay', false as boolean, (v) => onOff(v === true), { plan: true }),
+  plain('lange-loop-benen', 'Beenkracht de dag na de lange duurloop', 'planning', 'longRunThenLegs', false as boolean, (v) => onOff(v === true), { plan: true }),
 
   // Doel en tochten
   {
@@ -237,6 +239,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   // Vandaag en meldingen
   overviewFlag('ochtendcheck', 'Ochtendcheck', 'morningCheckIn'),
   overviewFlag('ochtendkaart', 'Ochtendkaart', 'morningCard'),
+  overviewFlag('benen-na-test', 'Benen vragen na een test', 'legsAfterEffort'),
   overviewSpec('ochtend-vanaf', 'Ochtend begint om', 'morningCardFrom', (v: string) => choiceShort('ochtendVanaf', v)),
   choice('boven-missie', 'Kaarten boven de missie', 'vandaag', 'cardsAboveMission', 1, 'bovenMissie'),
   flag('zweet-vragen', 'Zweetverlies vragen', 'vandaag', 'askSweat'),
@@ -273,6 +276,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewSpec('weekterugblik-dag', 'Dag van de terugblik', 'weekReviewDay', (v: string) => choiceShort('terugblikDag', v)),
   choice('forge-plaatjes', 'Plaatjes bij oefeningen', 'forge', 'exerciseArt', 'beide', 'plaatjes'),
   choice('lijfvraag', 'Hoe voelt je lijf?', 'vandaag', 'bodyCheck', 'reden', 'lijfvraag'),
+  choice('korter-vandaag', 'Minder tijd vandaag', 'vandaag', 'shorterToday', 'kern', 'korterVandaag'),
+  flag('zones-na-test', 'Zones bijwerken na een test', 'planning', 'zonesAfterTest'),
   choice('lichterbenen', 'Lichter bij vermoeide benen', 'vandaag', 'legEase', 'voorstel', 'lichterbenen'),
   choice('lichterbenen-hoe', 'Hoe licht', 'vandaag', 'legEaseHow', 'standaard', 'lichterbenenHoe'),
   overviewFlag('weekvraag', 'Vraag van de week', 'weeklyQuestion'),
@@ -376,6 +381,18 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     differs: (s) => resolveStreamsBackup(s) !== DEFAULT_STREAMS_BACKUP,
     value: (s) => choiceShort('reeksenBackup', resolveStreamsBackup(s)),
     reset: () => ({ streamsBackup: undefined, streamsInBackup: undefined }),
+  },
+  {
+    id: 'auto-backup', title: 'Automatische back-up', page: 'gegevens',
+    differs: (s) => resolveAutoBackup(s.autoBackup) !== AUTO_BACKUP_ADVICE,
+    value: (s) => choiceShort('autoBackup', resolveAutoBackup(s.autoBackup)),
+    reset: () => ({ autoBackup: undefined }),
+  },
+  {
+    id: 'backup-bewaren', title: 'Back-ups bewaren', page: 'gegevens',
+    differs: (s) => resolveAutoBackupKeep(s.autoBackupKeep) !== AUTO_BACKUP_KEEP_ADVICE,
+    value: (s) => choiceShort('autoBackupKeep', resolveAutoBackupKeep(s.autoBackupKeep)),
+    reset: () => ({ autoBackupKeep: undefined }),
   },
   {
     id: 'voorstellen-opruimen', title: 'Oude voorstellen opruimen', page: 'gegevens',

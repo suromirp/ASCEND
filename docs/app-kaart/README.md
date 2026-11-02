@@ -9,7 +9,7 @@ Schermen op de gewone stand (kracht): vandaag, week, stand, ascend, logboek, ins
 Schermen op een eigen stand, met de stand in de naam:
 - horloge: `vandaag-horloge` (de ochtendkaart met slaap, rusthartslag en HRV van het horloge) en `run-in-detail` (het scherm Run in detail van een rustige duurloop van 6 km in 39 minuten).
 - vakantie (9 tot en met 13 november, zonder training): `vandaag-vakantie` en `week-vakantie`.
-- zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel` en `ascend-zonder-doel`.
+- zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel`, `ascend-zonder-doel` en `stand-zonder-doel`.
 - ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek` en `week-ziek`.
 
 ## De standen

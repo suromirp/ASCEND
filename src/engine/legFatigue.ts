@@ -21,7 +21,8 @@ import { progressionTarget } from './programLayout';
 import { daysBetween, addDays } from '../utils/dates';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { templateSport } from './sports';
-import { hasRole } from './templateRoles';
+import { hasRole, isTestOrRace } from './templateRoles';
+import { EASY_PART_RPE, testEffortSplit } from './testEffortSplit';
 
 type Level = 'none' | 'light' | 'moderate' | 'heavy';
 
@@ -52,6 +53,10 @@ const SPORT_ECCENTRIC_SHARE = 0.5;
 // Planned effort when nothing is logged yet.
 export const PLANNED_RPE: Record<string, number> = { low: 4, moderate: 6, high: 8 };
 export const PLANNED_STRENGTH_RPE = 8;
+// At a test or race the effort is fixed at the maximum and the pace varies: a 10 there is the plan,
+// not a sign of tiredness (docs/onderzoek/RPE bij een testloop.md, voorstel 1). Recognised by the
+// role, never by a template id. A 7 on a test counts lighter (the floor of 0.75).
+export const PLANNED_MAX_EFFORT_RPE = 10;
 // Descent without a log or a target of its own (hills walked back down;
 // the up-and-down session run down).
 const DEFAULT_DESCENT_M: Record<string, number> = { tpl_hill_intervals: 150, tpl_hills_descent: 200 };
@@ -144,6 +149,9 @@ export interface FatigueEvent {
   climbM?: number;
   packKg?: number;
   poles?: boolean; // walked with poles
+  // A linked test or race with warm-up and cool-down (engine/testEffortSplit.ts): the part of
+  // `minutes` outside the fastest 5 km, counted as an easy run at RPE 3. Derived, never stored.
+  easyMinutes?: number;
   logged: boolean;
 }
 
@@ -175,9 +183,11 @@ export function fatigueEvents(inputs: Pick<LegFatigueInputs, 'logs' | 'plannedSe
   const habitPoles = recentPoles(inputs.logs);
   const events: FatigueEvent[] = inputs.logs.map((l) => {
     const d = l.outdoorData ?? l.cardioData;
+    const split = testEffortSplit(l, byId.get(l.templateId));
     return {
       id: l.id, templateId: l.templateId, date: l.completedDate, minutes: l.durationMinutes, rpe: l.rpe, rir: l.strengthRir, feel: l.subjectiveFeel,
-      descentM: l.outdoorData?.elevationLossM ?? d?.elevationGainM, climbM: d?.elevationGainM, packKg: l.outdoorData?.backpackWeightKg, poles: l.outdoorData?.poles, logged: true,
+      descentM: l.outdoorData?.elevationLossM ?? d?.elevationGainM, climbM: d?.elevationGainM, packKg: l.outdoorData?.backpackWeightKg, poles: l.outdoorData?.poles,
+      ...(split ? { easyMinutes: split.easyMinutes } : {}), logged: true,
     };
   });
   for (const s of inputs.plannedSessions) {
@@ -269,14 +279,19 @@ export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, a
     strength = LOWER_BODY_PER_HOUR[p.lowerBodyLoad as Level] * hours * effort;
     damage = ECCENTRIC_PER_HOUR[p.eccentricLoad as Level] * hours * effort * adapt;
   } else if (template.type !== 'recovery') {
-    const planned = PLANNED_RPE[p.intensity] ?? 4;
+    const planned = isTestOrRace(template) ? PLANNED_MAX_EFFORT_RPE : PLANNED_RPE[p.intensity] ?? 4;
     const factor = rpeFactor(event.rpe, planned);
     const pack = event.packKg ? 1 + event.packKg / bodyKg : 1;
     const damagePack = event.packKg ? 1 + DAMAGE_PACK_WEIGHT * event.packKg / bodyKg : 1;
     const poles = event.poles ? POLES_DESCENT_FACTOR : 1;
     const running = templateSport(template) === 'running' && !hasRole(template, 'walked_down');
-    intensity = (INTENSITY_PER_HOUR[p.intensity] ?? 2) * hours * factor * pack;
-    strength = (IMPACT_PER_HOUR[p.impact as Level] * hours + CLIMB_PER_1000 * (event.climbM ?? 0) / 1000) * factor * pack;
+    // A split test: the 5 km as planned, the warm-up and cool-down as an easy run at RPE 3.
+    const easyHours = Math.min(hours, Math.max(0, event.easyMinutes ?? 0) / 60);
+    const hardHours = hours - easyHours;
+    // The rest at 3, never above the RPE you gave (as sessionLoad and weeklyLoad).
+    const easyFactor = rpeFactor(Math.min(EASY_PART_RPE, event.rpe ?? EASY_PART_RPE), PLANNED_RPE.low);
+    intensity = ((INTENSITY_PER_HOUR[p.intensity] ?? 2) * hardHours * factor + INTENSITY_PER_HOUR.low * easyHours * easyFactor) * pack;
+    strength = (IMPACT_PER_HOUR[p.impact as Level] * hardHours * factor + IMPACT_PER_HOUR[p.impact as Level] * easyHours * easyFactor + CLIMB_PER_1000 * (event.climbM ?? 0) / 1000 * factor) * pack;
     damage = DESCENT_PER_1000 * ((event.descentM ?? 0) / 1000) * (running ? RUNNING_DESCENT : 1) * damagePack * poles * adapt;
     if (hasRole(template, 'counted_sport')) damage += ECCENTRIC_PER_HOUR[p.eccentricLoad as Level] * hours * factor * SPORT_ECCENTRIC_SHARE;
   }

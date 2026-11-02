@@ -17,6 +17,7 @@ import type { CapabilityGap, PreparationTarget } from './capability';
 import type { FeasibilityAssessment } from './feasibility';
 import type { PlannedLeaveMark } from './leave';
 import type { Program } from './program';
+import type { StrengthProgramStrategy } from './strengthProgram';
 
 export type PlanChangeAction = 'keep' | 'add' | 'move' | 'swap' | 'reduce' | 'replace' | 'remove';
 
@@ -195,6 +196,8 @@ export interface RecentPlanChange {
   // The program exactly as it was before a rest week or a repeated week was
   // changed (engine/weekLoadChange.ts): undo puts it back too.
   programBefore?: Program;
+  // The strength block as it was before a new direction moved it along with the week.
+  strategiesBefore?: StrengthProgramStrategy[];
   // The coach advice this change came from: undo brings the advice back.
   adviceId?: string;
   // Typed-in trainings that took over the watch's numbers (engine/watchAlign.ts):

@@ -92,11 +92,17 @@ function SessionRow({
     <>
       <SportDisc template={template} size={44} />
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5">
-          <span className="min-w-0 break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>
-            {isRest ? REST_DAY_COPY[restMode].title : template.name}
+        {/* De naam breekt alleen tussen woorden. Past hij met het label Vandaag niet op één regel, dan
+            schuift het label onder de naam (flex-wrap; alleen op zijn regel staat het links), in plaats van de
+            naam midden in een woord te breken. */}
+        <span className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="min-w-0 break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>
+              {isRest ? REST_DAY_COPY[restMode].title : template.name}
+            </span>
+            {sign && <HeartSign state={sign} />}
           </span>
-          {sign && <HeartSign state={sign} />}
+          {showToday && <span className="flex shrink-0"><StatusPill tone="action">Vandaag</StatusPill></span>}
         </span>
         <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
           <span>{dayLabel(date)}</span>
@@ -136,9 +142,7 @@ function SessionRow({
             <Icon name="vinkje" size={14} />
             <span className="sr-only">Gedaan</span>
           </span>
-        ) : showToday ? (
-          <StatusPill tone="action">Vandaag</StatusPill>
-        ) : isRest ? (
+        ) : showToday ? null : isRest ? (
           <StatusPill tone="status">{status === 'skipped' ? 'Overgeslagen' : 'Herstel'}</StatusPill>
         ) : status === 'planned' || status === 'moved' ? (
           handle || ghost ? null : (

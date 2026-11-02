@@ -114,7 +114,8 @@ export function buildStrengthProgramRecommendation(inputs: StrengthRecommendatio
     rationaleParts.push(
       'Er waren de laatste tijd herhaaldelijk conflicten tussen zware beensessies en andere training, een lagere frequentie kan dit verminderen.',
     );
-    suggestedSessionsPerWeek = Math.max(2, suggestedSessionsPerWeek - 1);
+    // Een lagere frequentie, nooit een hogere: een blok van 1 keer (Rustig aan) blijft 1.
+    if (suggestedSessionsPerWeek > 1) suggestedSessionsPerWeek = Math.max(2, suggestedSessionsPerWeek - 1);
   }
 
   if (triggers.includes('block_ending_soon')) {

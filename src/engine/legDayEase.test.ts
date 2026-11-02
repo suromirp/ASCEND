@@ -73,9 +73,11 @@ describe('earlierTodayPoints: gepland of gelogd', () => {
 describe('earlierTodayPoints', () => {
   const testRun = (date = TODAY, minutes = 25, rpe = 9) => log('tpl_test_run', date, minutes, { rpe, completedAt: `${date}T09:00:00` });
 
-  it('een testloop van 25 minuten op RPE 9 geeft ruim 8 en minder dan 12 punten', () => {
+  // Bij een test is RPE 10 gepland (legFatigue.ts#PLANNED_MAX_EFFORT_RPE): een 9 telt iets lichter
+  // dan gepland, dus ongeveer 7 punten (was 8,8 toen 8 de geplande RPE was).
+  it('een testloop van 25 minuten op RPE 9 geeft ruim 6 en minder dan 12 punten', () => {
     const e = earlierTodayPoints(TODAY, { logs: [testRun()], templates, program });
-    expect(e.points).toBeGreaterThan(8);
+    expect(e.points).toBeGreaterThan(6);
     expect(e.points).toBeLessThan(12);
     expect(e.label).toBe('testloop');
     expect(e.morning).toBe(true);

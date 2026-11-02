@@ -47,7 +47,9 @@ export function weekFixId(concern: WeekConcern, sessions: PlannedSession[]): str
   return `weekfix:${concern.rule}:${ids.join(',')}:${dates}`;
 }
 
-export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: string): Advice | null {
+// `avoid`: sessions an open proposal on Vandaag already changes. The swap of a full week (`viaRoom`) never takes
+// one of them to make room, so two proposals never pull the same training two ways.
+export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: string, avoid: ReadonlySet<string> = new Set()): Advice | null {
   const monday = mondayOfWeek(weekStart);
   const byTemplate = new Map(input.templates.map((t) => [t.id, t]));
   const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -112,6 +114,26 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
     return [];
   };
 
+  // Another day for one session when that day only fits once a training of the system's own makes room on it:
+  // that one goes to another day of the week. Two changes, so only tried when one change does not do it.
+  const viaRoom = (id: string): Change[] => {
+    const s = sessionById(id);
+    if (!s) return [];
+    const open = (d: string) => d >= input.today && (!input.goalDay || d < input.goalDay) && !(input.raceDays ?? []).includes(d) && isoWeekday(d) !== input.restDay;
+    const near = (from: string) => (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(from)) - Math.abs(Date.parse(b) - Date.parse(from)) || a.localeCompare(b);
+    const week = Array.from({ length: 7 }, (_, i) => addDays(monday, i)).filter(open);
+    for (const d of week.filter((x) => x !== s.scheduledDate).sort(near(s.scheduledDate))) {
+      const there = input.sessions.filter((o) => o.id !== id && !avoid.has(o.id) && o.scheduledDate === d && o.status !== 'skipped' && !isRecovery(o) && level(o) === 3 && !o.raceBlock && !o.leave && !isTestOrRace(templateOf(o) ?? ({} as SessionTemplate)));
+      for (const o of there) {
+        for (const e of week.filter((x) => x !== d && x !== o.scheduledDate).sort(near(d))) {
+          const change: Change[] = [{ id, from: s.scheduledDate, to: d }, { id: o.id, from: o.scheduledDate, to: e }];
+          if (improves(change)) return change;
+        }
+      }
+    }
+    return [];
+  };
+
   // May this one go without hurting the plan? Never a long run, hard run, test, race or tocht.
   const droppable = (s: PlannedSession) => {
     const t = templateOf(s);
@@ -161,12 +183,20 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       }
       break;
     }
+    case 'LEAVE-OFF': {
+      // Only what is yours or a proposal's (level 1); a test or race stays and is only reported.
+      const subject = sessionById(concern.finding.subjectId);
+      if (subject && level(subject) === 1 && !isTestOrRace(templateOf(subject) ?? ({} as SessionTemplate))) push(viaCheck([subject.id]));
+      break;
+    }
     case 'LEG-SPACING': {
       // The later one first (as the check would), then the earlier one.
       const ordered = [...sessions].sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate));
       const mine = ordered.filter((s) => level(s) === 1 || level(s) === 3);
       if (mine[0] && mine[0].id === concern.finding.subjectId) push(viaCheck([mine[0].id]));
       for (const s of mine) push(viaScan(s.id));
+      // A full week: one of the two moves to a day a training of the system's makes room on.
+      if (candidates.length === 0) for (const s of mine) push(viaRoom(s.id));
       break;
     }
     case 'ONE-LONG': {
@@ -303,7 +333,7 @@ export function weekNotice(input: CheckInput, weekStart: string, proposals: bool
   for (const c of concerns) {
     if (touches([...c.finding.sessionIds, c.finding.subjectId])) { covered.push(c.key); continue; }
     if (!proposals) continue;
-    const fix = planWeekFix(input, c, weekStart);
+    const fix = planWeekFix(input, c, weekStart, taken);
     if (!fix) continue;
     if (touches(adviceSessionIds([fix]))) { covered.push(c.key); continue; }
     fixes[c.key] = fix;

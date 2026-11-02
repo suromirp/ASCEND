@@ -254,14 +254,18 @@ describe('free days', () => {
   });
 
   it('the long training moves to the free day when its own day is tight', () => {
-    // The long run shares Sunday with a strength training; the free day is Tuesday. Hills on Saturday, Lower A on Wednesday.
+    // The long run shares Sunday with a strength training; the free day is Monday. Hills on Saturday, Lower A on Wednesday.
+    // Tuesday was the free day here until the long run kept 48 hours from Lower A in either order
+    // (docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md): on Tuesday it stays where it is.
     const crowded = [...plan, { id: 'extra', templateId: 'tpl_upper_b', scheduledDate: '2026-11-01', weekStartDate: MONDAY, status: 'planned' as const, order: 9 }];
-    const free = period('free_days', '2026-10-27', '2026-10-27');
+    const tuesday = run(crowded, [period('free_days', '2026-10-27', '2026-10-27')]);
+    expect(byId(tuesday.sessions, id(MONDAY, 6))!.scheduledDate).toBe('2026-11-01');
+    const free = period('free_days', '2026-10-26', '2026-10-26');
     const r = run(crowded, [free]);
     const long = byId(r.sessions, id(MONDAY, 6))!;
-    expect(long.scheduledDate).toBe('2026-10-27');
+    expect(long.scheduledDate).toBe('2026-10-26');
     expect(long.leave).toEqual({ periodId: free.id, role: 'moved', from: '2026-11-01' });
-    expect(r.repairs).toContainEqual({ sessionId: id(MONDAY, 6), rule: 'LEAVE-PLACE', from: '2026-11-01', to: '2026-10-27' });
+    expect(r.repairs).toContainEqual({ sessionId: id(MONDAY, 6), rule: 'LEAVE-PLACE', from: '2026-11-01', to: '2026-10-26' });
     // Whatever it chose, a second run is quiet and nothing breaks the leg rules.
     expect(run(r.sessions, [free]).repairs).toEqual([]);
     expect(validateWeeks(check(r.sessions, [free])).filter((f) => f.level === 3)).toEqual([]);

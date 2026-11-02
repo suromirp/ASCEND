@@ -12,7 +12,7 @@
 
 import type { BestEffort, SessionLog } from '../models/training';
 import type { TestJudgment } from '../models/testJudgment';
-import { isStaleEffort, isUsableBestEffort } from './bestEffort';
+import { isStaleEffort, isUsableBestEffort, testTotals } from './bestEffort';
 import { TEST_TEMPLATE_ID } from './raceBlock';
 
 export const RIEGEL_EXPONENT = 1.06;
@@ -52,11 +52,8 @@ export interface TestResult {
   stoppedSec?: number;
 }
 
-// The totals of a test log: distance and time as the log has them now.
-export function testTotals(l: SessionLog): { km: number; minutes: number } {
-  const d = l.cardioData ?? l.outdoorData;
-  return { km: d?.distanceKm ?? 0, minutes: d?.durationMinutes || l.durationMinutes };
-}
+// The totals of a test log live in bestEffort.ts (the leg index reads them too, without the scheduler).
+export { testTotals };
 
 // The best effort of a log as it may count: usable, accepted (see BestEffort.accepted), read for
 // the totals the log has now, and the log not cut. Undefined otherwise: the whole log counts.

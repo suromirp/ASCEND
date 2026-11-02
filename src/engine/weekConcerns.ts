@@ -13,13 +13,13 @@
 
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { daysBetween, mondayOfWeek, weekdayLongNL } from '../utils/dates';
-import { idHasRole } from './templateRoles';
-import { legSpacingDays } from './scheduler';
+import { idHasRole, idIsTestOrRace } from './templateRoles';
+import { isIntentionalBackToBack, legSpacingDays } from './scheduler';
 import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
 import { intensityOfLog, isSportLogSession, restHoursFor, sportDoneLine, sportLogIdOf } from './sportDays';
 import { anySportDefinition } from '../data/sports';
 
-export const CONCERN_RULES: readonly CheckRule[] = ['REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
+export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
 
 export interface WeekConcern {
   // Dezelfde sleutel als de bevinding; verandert er iets in de week, dan verandert hij mee.
@@ -67,6 +67,21 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
           notes: { [a]: 'op je rustdag' },
         };
       }
+      case 'LEAVE-OFF': {
+        // Een training die jij of een voorstel vastzette staat op een dag waarop je vrij bent of op tocht.
+        // De planning zelf laat die staan; hier staat het, met een voorstel voor wat van jou is.
+        const test = f.level >= 2 || idIsTestOrRace(byId.get(a)?.templateId ?? '', input.templates);
+        return {
+          ...base,
+          headline: `${nameOf(a)} staat op ${dayName(dateOf(a))}, een dag waarop je vrij bent.`,
+          fact: f.message,
+          title: 'Een training van je vrije dag halen',
+          why: test
+            ? `Een testloop of wedstrijd schuift niet zonder jouw Akkoord, en ASCEND verplaatst hem niet zelf. Je ziet hier alleen dat hij op een vrije dag staat.`
+            : 'Je bent die dag vrij of op tocht. Deze training stond er door een voorstel dat je accepteerde of door jouw eigen keuze, daarom vraagt ASCEND het eerst.',
+          notes: { [a]: 'op een vrije dag' },
+        };
+      }
       case 'LEG-SPACING': {
         // Een sport die je deed en die meetelt (engine/sportDays.ts): het feit eerst, met de rust van die sport.
         const sportLog = f.fromSport ? input.logs.find((l) => l.id === sportLogIdOf(a) || l.id === sportLogIdOf(b)) : undefined;
@@ -94,6 +109,18 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
         const tplOf = (id: string): SessionTemplate | undefined => input.templates.find((t) => t.id === byId.get(id)?.templateId);
         const [tEarly, tLate] = [tplOf(early), tplOf(late)];
         const need = tEarly && tLate ? Math.max(1, legSpacingDays(tEarly, tLate)) : 1;
+        // A pair that belongs together on its own days, put elsewhere (engine/weekValidator.ts): said as two
+        // heavy leg days in a row, with both names and days, so a name with "en" in it stays readable.
+        if (tEarly && tLate && isIntentionalBackToBack(tEarly, tLate)) {
+          return {
+            ...base,
+            headline: 'Twee zware beendagen achter elkaar.',
+            fact: `${nameOf(early)} op ${dayName(dateOf(early))} en ${nameOf(late)} op ${dayName(dateOf(late))}, zonder dag ertussen. Liefst ${need === 2 ? 72 : 48} uur ertussen.`,
+            title: 'Zware beendagen verder uit elkaar',
+            why: `In je schema horen deze twee bewust bij elkaar, op hun eigen dagen. Op andere dagen houdt ASCEND liefst ${need === 2 ? 72 : 48} uur tussen zware beendagen, zodat je benen kunnen herstellen. Jij zette ze zo neer, daarom verschuift ASCEND niets zonder jouw Akkoord.`,
+            notes: { [early]: `${days} voor ${nameOf(late)}`, [late]: `${days} na ${nameOf(early)}` },
+          };
+        }
         return {
           ...base,
           headline: `${nameOf(early)} en ${nameOf(late)} liggen te dicht op elkaar.`,
