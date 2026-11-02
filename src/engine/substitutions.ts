@@ -135,6 +135,8 @@ export interface DurationScope {
   hardSameDay?: boolean;
   // Leg strength the day after the long run (engine/scheduler.ts#withLongRunThenLegs), the same way.
   longRunThenLegs?: boolean;
+  // Rest before a test in hours (engine/scheduler.ts#withTestRestHours), the same way: the race block reads it.
+  testRest?: 48 | 72;
 }
 
 export function withDurationScope<T>(scope: DurationScope | undefined, fn: () => T): T {

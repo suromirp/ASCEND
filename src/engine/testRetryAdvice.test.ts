@@ -134,7 +134,10 @@ describe('TEST-RETRY: ruimte maken in een gewone week', () => {
   ];
   const week = (legsLock?: typeof lockUser, drop: string[] = []) => normalWeek(legsLock).filter((s) => !drop.includes(s.id));
 
-  it('geeft in een gewone week een voorstel voor za: de lange duurloop schuift en Benen A van do wordt genoemd', () => {
+  // De week erna heeft een eigen lange duurloop (zo 8 november): dan vervalt de lange duurloop van zo 1 november
+  // in plaats van ingekort te schuiven (docs/beslissingen/2026-11-02-lange-duurloop-vervalt.md). Tot dat besluit ging
+  // hij korter naar ma 2 november, in plaats van de rustdag. Zo komt de zondag vrij voor Benen A, na de test.
+  it('geeft in een gewone week een voorstel voor za: de lange duurloop vervalt en Benen A van do wordt genoemd', () => {
     const a = retry({ plannedSessions: week(lockUser) })!;
     expect(a).toBeDefined();
     expect(a.title).toBe('Nieuwe testpoging op za 31 oktober');
@@ -142,35 +145,45 @@ describe('TEST-RETRY: ruimte maken in een gewone week', () => {
     expect(ids).toContain('hills');
     expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'hills')).toMatchObject({ templateId: 'tpl_test_run' });
     const long = a.proposal!.changes.find((c) => c.plannedSessionId === 'long')!;
-    expect(long).toMatchObject({ action: 'move', fromDate: '2026-11-01' });
-    expect(long.toDate).toBe('2026-11-02');
-    expect(long.plannedMinutes).toBeGreaterThan(0);
-    expect(a.effect).toContain('Lange duurloop van zo 1 november doe je op ma 2 november in plaats van je rustdag, korter (45 minuten). De herstelwandeling van die dag vervalt.');
-    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'walk')).toMatchObject({ action: 'remove' });
-    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober, die je zelf vastzette, laat je deze week gaan, zodat je benen zaterdag fris zijn.');
+    expect(long).toMatchObject({ action: 'remove' });
+    expect(long.plannedMinutes).toBeUndefined();
+    expect(a.effect).toContain('Lange duurloop van zo 1 november vervalt. Je houdt de lange duurloop van zo 8 november in die week.');
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'walk')).toBeUndefined();
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'long2')).toBeUndefined();
+    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober, die je zelf vastzette, gaat naar zo 1 november, na de test.');
     expect(a.effect).toContain('Kies een route zonder stoplichten en zet auto-pauze uit.');
     expect(`${a.title}${a.effect}${a.why}`).not.toMatch(/[\u2013\u2014]/);
-    // De zelf vastgezette beendag vervalt alleen met Akkoord en staat er met naam in.
-    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')).toMatchObject({ action: 'remove' });
+    // De zelf vastgezette beendag schuift alleen met Akkoord en staat er met naam in; laten gaan is de tweede keuze.
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')).toMatchObject({ action: 'move', toDate: '2026-11-01' });
+    expect(a.options?.some((o) => o.proposal.changes.some((c) => c.plannedSessionId === 'legs' && c.action === 'remove'))).toBe(true);
   });
 
-  it('past toe: de lange duurloop staat op de nieuwe dag, Benen A van do vervalt', () => {
+  it('past toe: de lange duurloop is overgeslagen, die van de week erna blijft, Benen A staat na de test', () => {
     const a = retry({ plannedSessions: week(lockUser) })!;
     const { sessions } = applyPlanChangeItems(a.proposal!.changes, week(lockUser), undefined, { by: 'proposal' as const, at: 'x' });
-    expect(sessions.find((s) => s.id === 'legs')!.status).toBe('skipped');
+    expect(sessions.find((s) => s.id === 'long')!.status).toBe('skipped');
+    expect(sessions.find((s) => s.id === 'long2')).toMatchObject({ scheduledDate: '2026-11-08', status: 'planned' });
     expect(sessions.find((s) => s.id === 'hills')).toMatchObject({ templateId: 'tpl_test_run', scheduledDate: '2026-10-31' });
-    expect(sessions.find((s) => s.id === 'long')!.scheduledDate).not.toBe('2026-11-01');
+    expect(sessions.find((s) => s.id === 'legs')!.scheduledDate).toBe('2026-11-01');
   });
 
   it('verschuift een beendag die niet vastgezet is alleen naar een dag die geen nieuw advies geeft', () => {
     const a = retry({ plannedSessions: week(undefined, ['upA2', 'legs2']) })!;
     const legs = a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')!;
     const long = a.proposal!.changes.find((c) => c.plannedSessionId === 'long');
-    // De lange duurloop gaat naar ma 2 november. Benen A houdt er 48 uur van af, in beide volgordes
-    // (scheduler.ts#legSpacingDays, docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md; tot dan mocht een dag ertussen weg).
-    expect(long).toMatchObject({ action: 'move', toDate: '2026-11-02' });
+    // De lange duurloop vervalt (de week erna heeft er een); Benen A gaat naar na de test en houdt 48 uur van de
+    // lange duurloop van zo 8 november (scheduler.ts#legSpacingDays).
+    expect(long).toMatchObject({ action: 'remove' });
     expect(['move', 'remove']).toContain(legs.action);
-    if (legs.action === 'move') expect(Math.abs(daysBetween(legs.toDate!, '2026-11-02'))).toBeGreaterThanOrEqual(2);
+    if (legs.action === 'move') {
+      expect(legs.toDate! >= '2026-10-31').toBe(true);
+      expect(Math.abs(daysBetween(legs.toDate!, '2026-11-08'))).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('zonder eigen lange duurloop in de week erna schuift de lange duurloop nog naar ma 2 november', () => {
+    const a = retry({ plannedSessions: week(undefined, ['upA2', 'legs2', 'long2']) })!;
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'long')).toMatchObject({ action: 'move', toDate: '2026-11-02' });
   });
 
   it('verschuift een beendag naar na de test als daar een dag voor is, in hetzelfde voorstel', () => {

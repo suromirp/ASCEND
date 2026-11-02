@@ -22,6 +22,7 @@
 // De aanroeper (AppDataContext) zorgt dat dit in de wachtrij van de
 // planningssync loopt, zodat er nooit twee rondes tegelijk schrijven.
 
+import { resolveTestRest } from '../engine/testRest';
 import type { EngineEvent, PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -187,7 +188,7 @@ async function scopeFor(input: HorizonChangeInput): Promise<DurationScope | unde
   if (!input.settings) return undefined;
   const [settings, logs, templates, programs] = await Promise.all([SettingsRepo.get(), SessionLogsRepo.getAll(), SessionTemplatesRepo.getAll(), ProgramsRepo.getAll()]);
   const merged = { ...settings, ...input.settings };
-  return { ...durationScopeFor(merged, logs, templates, programs[0], todayISO()), hardSameDay: !!merged.hardSameDay, longRunThenLegs: !!merged.longRunThenLegs };
+  return { ...durationScopeFor(merged, logs, templates, programs[0], todayISO()), hardSameDay: !!merged.hardSameDay, longRunThenLegs: !!merged.longRunThenLegs, testRest: resolveTestRest(merged.testRest) };
 }
 
 // The goals as the change would leave them: the stored ones, the changed ones in their place, new ones added.

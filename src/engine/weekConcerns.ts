@@ -4,8 +4,8 @@
 // droog feit eronder en een korte tekst voor de rij van elke betrokken
 // training (docs/visie/Waarschuwingen in Week.md, hoofdstuk 4).
 //
-// Zeven regels: REST-DAY, LEG-SPACING, TWO-HARD-RUNS, TEST-DAY, AFTER-TEST, ONE-LONG en
-// TEST-FRESH. De controle draait met `reportYours`, zodat ook een training op
+// Acht regels: REST-DAY, LEG-SPACING, TWO-HARD-RUNS, TEST-DAY, AFTER-TEST, ONE-LONG,
+// TEST-FRESH en TEST-REST (rust voor een test). De controle draait met `reportYours`, zodat ook een training op
 // je rustdag meetelt die jij of een geaccepteerd voorstel vastzette. Alleen
 // toekomstige dagen van de getoonde week; een verleden week meldt niets.
 //
@@ -19,7 +19,7 @@ import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Fi
 import { intensityOfLog, isSportLogSession, restHoursFor, sportDoneLine, sportLogIdOf } from './sportDays';
 import { anySportDefinition } from '../data/sports';
 
-export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
+export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
 
 export interface WeekConcern {
   // Dezelfde sleutel als de bevinding; verandert er iets in de week, dan verandert hij mee.
@@ -175,6 +175,21 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
           title: 'Eén volle lange training in de week',
           why: 'Twee volle lange trainingen in een week zijn veel. Eén vol en de ander korter houdt de week te doen.',
           notes: { [last.id]: 'tweede lange training' },
+        };
+      }
+      case 'TEST-REST': {
+        // Het droge feit eerst: hoeveel uur er tussen de zware dag en de test zit, en hoeveel ASCEND liefst houdt.
+        const rest = f.rest!;
+        const test = f.sessionIds[f.sessionIds.length - 1];
+        const heavy = f.sessionIds.length > 1 ? f.sessionIds[0] : undefined;
+        const heavyName = rest.name;
+                return {
+          ...base,
+          headline: `Je testloop staat ${rest.hours} uur na een zware dag.`,
+          fact: `${heavyName} op ${dayName(rest.date)} en je testloop op ${dayName(dateOf(test))}. Liefst ${rest.limitHours} uur ertussen.`,
+          title: 'Meer rust voor je testloop',
+          why: `Een test laat zien wat je kunt als je benen fris zijn. ASCEND houdt liefst ${rest.limitHours} uur tussen een zware loop- of beendag en een test. Bij Rust voor een test kun je ook ${rest.limitHours === 72 ? '48' : '72'} uur kiezen. ${f.subjectId === test ? 'De zware dag is al gedaan, dus alleen je testloop kan schuiven, en dat doet ASCEND niet zonder jouw Akkoord.' : 'Jij of een voorstel zette dit zo neer, daarom verschuift ASCEND niets zonder jouw Akkoord.'}`,
+          notes: { ...(heavy ? { [heavy]: `${rest.hours} uur voor je testloop` } : {}), [test]: `${rest.hours} uur na ${heavyName}` },
         };
       }
       default: {

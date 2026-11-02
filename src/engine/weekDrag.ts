@@ -7,7 +7,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { dayOrder } from './dayOrder';
-import { dayHasRoomFor, findHeavyConflicts, HEAVY_AXIS_LABEL, sharedHeavyAxes, type ScheduleProposal } from './scheduler';
+import { dayHasRoomFor, findHeavyConflicts, HEAVY_AXIS_LABEL, isHeavyBeforeTest, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
 import { keptDayReason, type KeptReason, type MoveContext } from './moveSuggestions';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { lockLevel } from './weekValidator';
@@ -138,7 +138,14 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
       const axes = shared.map((a) => HEAVY_AXIS_LABEL[a]).join(' en ');
       // De 48 uur gelden voor twee zware beendagen; een test vraagt frisse benen; anders alleen het feit.
       const testInvolved = hasRole(template, 'test') || (firstTemplate ? hasRole(firstTemplate, 'test') : false);
-      const rule = testInvolved ? ' Je test heeft frisse benen nodig.' : shared.includes('lowerBodyLoad') ? ' Liefst 48 uur ertussen.' : '';
+      // Rest before a test: a heavy day for running or legs too close before it says the hours (rust-voor-een-test).
+      const restClash = conflicts.some((c) => {
+        const ct = templateById.get(c.templateId);
+        if (!ct) return false;
+        return (isTestOnly(template) && isHeavyBeforeTest(ct) && tooCloseBeforeTest(c.scheduledDate, date))
+          || (isTestOnly(ct) && isHeavyBeforeTest(template) && tooCloseBeforeTest(date, c.scheduledDate));
+      });
+      const rule = restClash ? ` Liefst ${testRestHours()} uur tussen een zware dag en je test.` : testInvolved ? ' Je test heeft frisse benen nodig.' : shared.includes('lowerBodyLoad') ? ' Liefst 48 uur ertussen.' : '';
       const alsoHeavy = axes ? `, ook zwaar voor ${axes}` : '';
       const named = joinNames(conflictNames);
       return {

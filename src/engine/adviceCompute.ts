@@ -6,12 +6,13 @@ import { FATIGUE_THRESHOLDS } from './legFatigue';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
-import { findHeavyConflicts, freshnessAt, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate } from './scheduler';
+import { findHeavyConflicts, freshnessAt, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, testRestHours } from './scheduler';
 import { LEG_EASE_INDEX, legEaseCardSession } from './legDayEase';
 import { addDays, daysBetween, formatShortDayNL, mondayOfWeek, weekdayLongNL, formatWeekdayDateNL } from '../utils/dates';
 import { countedTests, type TestResult } from './racePrediction';
 import { manyStops } from './bestEffort';
 import { hasRole, idIsTestOrRace } from './templateRoles';
+import { templateSport } from './sports';
 import { leaveDays, lightDays } from './leave';
 import { freeDaysOfWeek, lockLevel, validateWeeks, type CheckInput, type Finding } from './weekValidator';
 import { CONCERN_RULES } from './weekConcerns';
@@ -113,7 +114,9 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
         ? `${nameOf(m.session)} van ${formatWeekdayDateNL(m.session.scheduledDate)} doe je op ${formatWeekdayDateNL(m.to)} in plaats van je rustdag${short(m)}. De ${lower(nameOf(m.rest))} van die dag vervalt.`
         : `${nameOf(m.session)} van ${formatWeekdayDateNL(m.session.scheduledDate)}${whose(m.session)} gaat naar ${formatWeekdayDateNL(m.to)}${isStrength(m.session) ? ', na de test' : ''}${short(m)}.`),
       ...plan.moves.filter((m) => m.lightDrop).map((m) => `${nameOf(m.lightDrop!)} van ${formatWeekdayDateNL(m.lightDrop!.scheduledDate)} vervalt: dat wordt je rustdag.`),
-      ...plan.dropped.map((l) => plan.restLoss.includes(l.id)
+      ...plan.dropped.map((l) => plan.longKept.has(l.id)
+        ? `${nameOf(l)} van ${formatWeekdayDateNL(l.scheduledDate)} vervalt. Je houdt de ${lower(nameOf(plan.longKept.get(l.id)!))} van ${formatWeekdayDateNL(plan.longKept.get(l.id)!.scheduledDate)} in die week.`
+        : plan.restLoss.includes(l.id)
         ? `${nameOf(l)} van ${formatWeekdayDateNL(l.scheduledDate)} vervalt deze keer: zo houd je die week een rustdag.`
         : `${nameOf(l)} van ${formatWeekdayDateNL(l.scheduledDate)}${whose(l)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
     ];
@@ -126,7 +129,7 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
         ...(m.rest ? [{ plannedSessionId: m.rest.id, action: 'remove' as const, reason: 'Rustdag niet nodig: de dag ervoor staat dan geen training meer.', generatedBy: by }] : []),
         ...(m.lightDrop ? [{ plannedSessionId: m.lightDrop.id, action: 'remove' as const, reason: 'Zodat die week een rustdag houdt.', generatedBy: by }] : []),
       ]),
-      ...plan.dropped.map((d): PlanChangeItem => ({ plannedSessionId: d.id, action: 'remove', reason: plan.restLoss.includes(d.id) ? 'Zodat die week een rustdag houdt.' : 'Zodat je benen fris zijn voor de testloop.', generatedBy: by })),
+      ...plan.dropped.map((d): PlanChangeItem => ({ plannedSessionId: d.id, action: 'remove', reason: plan.longKept.has(d.id) ? 'Die week heeft al een eigen lange duurloop.' : plan.restLoss.includes(d.id) ? 'Zodat die week een rustdag houdt.' : 'Zodat je benen fris zijn voor de testloop.', generatedBy: by })),
       {
         plannedSessionId: plan.found.id, action: 'move', fromDate: plan.found.scheduledDate, toDate: plan.found.scheduledDate, templateId: TEST_RUN_ID, plannedMinutes: test.durationVariants.full,
         reason: stops ? 'Nieuwe testpoging: de vorige had veel stilstand.' : 'Nieuwe testpoging: de vorige telde nog niet.', generatedBy: by,
@@ -167,7 +170,7 @@ function retryAgainAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
     : `Je testloop van ${formatWeekdayDateNL(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
   const lead = `${was} De herkansing van ${when} ging niet door.`;
   const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
-  const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een herkansing die niet doorging is geen herkansing die gedaan is, daarom vraagt ASCEND het nog één keer. Hij zoekt een dag met frisse benen, minstens 48 uur na een zware beendag, buiten je vakanties en tochten. Wat jij zelf vastzette, blijft staan. Alleen jij beslist: dit is een voorstel.';
+  const why = `De testloop is het meetpunt voor je tempo's en je voorspelde tijd. Een herkansing die niet doorging is geen herkansing die gedaan is, daarom vraagt ASCEND het nog één keer. Hij zoekt een dag met frisse benen, minstens ${testRestHours()} uur na een zware loop- of beendag, buiten je vakanties en tochten. Wat jij zelf vastzette, blijft staan. Alleen jij beslist: dit is een voorstel.`;
   const yours = (s: PlannedSession) => lockLevel(s, loggedIds, today) === 1;
   const easeId = legEaseCardSession({ mode: inputs.legEase, today, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries, checkIns: inputs.checkIns })?.id;
   const taken = (s: PlannedSession) => usedIds.has(s.id) || s.id === easeId;
@@ -210,6 +213,9 @@ interface RetryPlan {
   dropped: PlannedSession[];
   // Ids in `dropped` that go because moving them would cost the week its last rest day.
   restLoss: string[];
+  // A long run in `dropped` that goes because the week it would move to has a long run of its own: that one stays
+  // (docs/beslissingen/2026-11-02-lange-duurloop-vervalt.md). Dropped id to the long run that stays.
+  longKept: Map<string, PlannedSession>;
 }
 
 interface RetryContext {
@@ -260,7 +266,18 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
     const moves: RetryPlan['moves'] = [];
     const dropped: PlannedSession[] = [];
     const restLoss = new Set<string>();
+    const longKept = new Map<string, PlannedSession>();
     let restBlocked = false;
+    // The long run of the week a long run would move to (role long and the same sport), when there is one.
+    let longTwin: PlannedSession | undefined;
+    const ownLongOf = (s: PlannedSession, t: SessionTemplate, d: string, others: PlannedSession[]) => {
+      if (!hasRole(t, 'long')) return undefined;
+      const sport = templateSport(t);
+      return others.find((o) => {
+        const ot = templateById.get(o.templateId);
+        return o.id !== s.id && o.id !== found.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === mondayOfWeek(d) && !!ot && hasRole(ot, 'long') && templateSport(ot) === sport;
+      });
+    };
     const weekOf = (d: string, without: string) => state.filter((o) => o.id !== without && mondayOfWeek(o.scheduledDate) === mondayOfWeek(d));
     const drop = (s: PlannedSession) => { dropped.push(s); state = state.filter((o) => o.id !== s.id); };
     // The first day after the test (0 to 3 for leg strength) where the session fits, the same building blocks as TEST-MAKE-ROOM.
@@ -284,6 +301,7 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
     };
     const tryMove = (s: PlannedSession): boolean => {
       restBlocked = false;
+      longTwin = undefined;
       const t = templateById.get(s.templateId)!;
       const strength = t.type === 'strength';
       const others = state.filter((o) => o.id !== s.id);
@@ -295,6 +313,9 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
       for (const letGo of [false, true]) for (const off of targets) {
         const d = addDays(date, off);
         if (d <= today || d === s.scheduledDate || ban.has(`${s.id}@${d}`) || (strength && restDates.has(d)) || isIllnessDay(d, inputs.illnessEpisodes, today) || ctx.blocked(d, isHeavyFor(t))) continue;
+        // A long run never moves into a week that has a long run of its own: then it goes instead (below).
+        const twin = ownLongOf(s, t, d, others);
+        if (twin) { longTwin ??= twin; continue; }
         if (!respectsHeavySpacing(d, t, others, templateById, inputs.logs, s.id) || !leavesNextHardFresh(inputs, templateById, d, s, others)) continue;
         const week = weekOf(d, s.id);
         // The day budget counts the length the session will have there (short in a week with a long training of its own).
@@ -329,6 +350,9 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
 
     for (const s of toMove) {
       if (tryMove(s)) continue;
+      // A long run with no day left outside a week with a long run of its own: it goes, and that week keeps its own.
+      const twin = longTwin;
+      if (twin && levelOf(s) === 3) { drop(s); longKept.set(s.id, twin); continue; }
       // Leg strength before the test with no place after it can only go (with Akkoord).
       if (legStrength(templateById.get(s.templateId)!) && s.scheduledDate < date) { drop(s); continue; }
       // No day without costing the week its rest day: this time it goes, rather than the rest day.
@@ -368,7 +392,7 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
     if (!touched.every((id) => !ctx.usedIds.has(id) && id !== ctx.easeId)) return undefined;
     const own = (s: PlannedSession) => levelOf(s) === 1;
     const cost = moves.reduce((n, m) => n + (own(m.session) ? 3 : 2) + (m.rest ? 1 : 0) + (m.lightDrop ? 2 : 0), 0) + dropped.reduce((n, d) => n + (own(d) ? 8 : 5), 0);
-    return { found, moves, dropped, cost, restLoss: [...restLoss] };
+    return { found, moves, dropped, cost, restLoss: [...restLoss], longKept };
   };
 
   // The proposal tests its own end state with the rules of the rest of the app. A plan that gives a new

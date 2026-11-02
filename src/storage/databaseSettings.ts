@@ -57,6 +57,9 @@ export interface AppSettings {
   hardSameDay?: boolean;
   // Leg strength the day after the long run, 24 hours instead of 48 (engine/scheduler.ts#setLongRunThenLegs). Unset: off.
   longRunThenLegs?: boolean;
+  // Rest before a test: at least this many hours after the last heavy day for running or legs
+  // (engine/scheduler.ts#setTestRestHours). Unset: 72, the advice. Only 48 or 72.
+  testRest?: 48 | 72;
   // Your own heart rate values (Settings → Training → Mijn hartslag); the
   // training screens then show zones in bpm (engine/heartRateZones.ts).
   heartRate?: { maxHr?: number; lthr?: number; restingHr?: number };

@@ -9,7 +9,8 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { searchWeeklyPlacement, type PlacementRequest, type WeekPlacementCandidate } from './candidatePlacement';
 import { FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueResult } from './legFatigue';
 import { patternSlotOf } from './programLayout';
-import { isTestOrRace } from './templateRoles';
+import { hasRole, isTestOrRace } from './templateRoles';
+import { resolveTestRest, TEST_REST_ADVICE, type TestRestHours } from './testRest';
 
 // ASCEND's scheduling engine is deterministic on purpose (spec §16, §29):
 // it never guesses and it never runs an LLM in the loop. A future AI layer
@@ -199,12 +200,52 @@ export function conflictsOnTestDay(other: SessionTemplate): boolean {
   return isHardRun(other) || isLegHeavyTemplate(other) || isTestLike(other);
 }
 
-// Pairwise rules that stay around a test: the same day and the day after.
-function testPairConflict(_test: SessionTemplate, testDate: string, other: SessionTemplate, otherDate: string): boolean {
+// Pairwise rules that stay around a test: the same day, the day after, and the rest before a test (not a race):
+// at least 72 hours (or 48 with the setting) after the last heavy day for running or legs.
+function testPairConflict(test: SessionTemplate, testDate: string, other: SessionTemplate, otherDate: string): boolean {
   const gap = daysBetween(testDate, otherDate); // > 0: the other comes after the test
   if (gap === 0) return conflictsOnTestDay(other);
   if (gap === 1) return other.type !== 'strength' && (isHardRun(other) || isLegHeavyTemplate(other));
+  if (gap < 0 && -gap < testRestDays && isTestOnly(test) && isHeavyBeforeTest(other)) return true;
   return false;
+}
+
+// --- rest before a test (docs/beslissingen/2026-11-02-rust-voor-een-test.md) ---------
+// A test (role test, not a race) stands at least 72 hours after the last heavy day for running or the legs: a
+// heavy leg day, the long run, hills or intervals that count as heavy for the legs, a hike. Read through the
+// roles and the stress profile, never through template ids. Setting "Rust voor een test": 72 hours (the
+// advice) or 48. Set from the settings on every refresh, like "Zware dingen op één dag".
+export { resolveTestRest, TEST_REST_ADVICE, type TestRestHours };
+let testRestDays = TEST_REST_ADVICE / 24;
+export function setTestRestHours(hours: TestRestHours | undefined): void {
+  testRestDays = resolveTestRest(hours) / 24;
+}
+export function testRestHours(): TestRestHours {
+  return testRestDays === 2 ? 48 : 72;
+}
+// The value for one synchronous call only (a test or a preview), put back at once.
+export function withTestRestHours<T>(hours: TestRestHours | undefined, fn: () => T): T {
+  if (hours === undefined) return fn();
+  const saved = testRestDays;
+  testRestDays = resolveTestRest(hours) / 24;
+  try {
+    return fn();
+  } finally {
+    testRestDays = saved;
+  }
+}
+export function isTestOnly(t: SessionTemplate): boolean {
+  return hasRole(t, 'test') && !hasRole(t, 'race');
+}
+// A heavy day for running or the legs, as the rest before a test counts it. A test or race itself is not.
+export function isHeavyBeforeTest(t: SessionTemplate): boolean {
+  if (t.type === 'recovery' || isTestOrRace(t)) return false;
+  return isLegHeavyTemplate(t) || hasRole(t, 'long');
+}
+// Too close before a test: the other day lies 1 to (rest days - 1) days before it.
+export function tooCloseBeforeTest(heavyDate: string, testDate: string): boolean {
+  const gap = daysBetween(heavyDate, testDate);
+  return gap >= 1 && gap < testRestDays;
 }
 
 // Every session that would clash, not just the first: moving one session

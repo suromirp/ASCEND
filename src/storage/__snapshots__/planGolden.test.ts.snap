@@ -79,11 +79,11 @@ sessies=272
 2027-01-02 tpl_hills_descent planned - - eff=46 kg=-
 2027-01-03 tpl_long_run planned - - eff=70 kg=-
 2027-01-04 tpl_herstel planned - - eff=45 kg=-
-2027-01-05 tpl_lower_a planned - 45 eff=75 kg=- race
-2027-01-06 tpl_upper_a planned - - eff=75 kg=- race
+2027-01-05 tpl_upper_a planned - - eff=75 kg=-
+2027-01-06 tpl_upper_b planned - - eff=75 kg=- race
 2027-01-07 tpl_test_run planned - - eff=45 kg=-
-2027-01-08 tpl_upper_b planned - - eff=75 kg=-
-2027-01-09 tpl_hill_intervals planned - - eff=52 kg=-
+2027-01-08 tpl_lower_a planned - - eff=75 kg=- race
+2027-01-09 tpl_strides_run planned - - eff=41 kg=-
 2027-01-10 tpl_long_run planned - - eff=81 kg=-
 2027-01-11 tpl_herstel planned - - eff=45 kg=-
 2027-01-12 tpl_lower_a planned - - eff=75 kg=- race
@@ -114,10 +114,10 @@ sessies=272
 2027-02-06 tpl_intervals planned - - eff=55 kg=-
 2027-02-07 tpl_long_run planned - - eff=82 kg=-
 2027-02-08 tpl_herstel planned - - eff=45 kg=-
-2027-02-09 tpl_lower_a planned - 45 eff=75 kg=- race
-2027-02-10 tpl_upper_a planned - - eff=75 kg=- race
+2027-02-09 tpl_upper_a planned - - eff=75 kg=-
+2027-02-10 tpl_upper_b planned - - eff=75 kg=- race
 2027-02-11 tpl_test_run planned - - eff=45 kg=-
-2027-02-12 tpl_upper_b planned - - eff=75 kg=-
+2027-02-12 tpl_lower_a planned - - eff=75 kg=- race
 2027-02-13 tpl_strides_run planned - - eff=43 kg=-
 2027-02-14 tpl_long_run planned - - eff=95 kg=-
 2027-02-15 tpl_herstel planned - - eff=45 kg=-
@@ -429,9 +429,9 @@ sessies=81
 2026-12-31 tpl_easy_run planned - - eff=41 kg=-
 2027-01-03 tpl_mountain_hike planned - - eff=150 kg=11
 2027-01-04 tpl_herstel planned - - eff=45 kg=-
-2027-01-05 tpl_lower_a planned - 45 eff=75 kg=- race
-2027-01-06 tpl_upper_a planned - - eff=75 kg=- race
+2027-01-05 tpl_upper_a planned - - eff=75 kg=-
 2027-01-07 tpl_test_run planned - - eff=45 kg=-
+2027-01-08 tpl_lower_a planned - - eff=75 kg=- race
 2027-01-10 tpl_mountain_hike planned - - eff=165 kg=13
 2027-01-11 tpl_herstel planned - - eff=45 kg=-
 2027-01-12 tpl_lower_a planned - - eff=75 kg=- race
@@ -454,9 +454,9 @@ sessies=81
 2027-02-04 tpl_easy_run planned - - eff=50 kg=-
 2027-02-07 tpl_mountain_hike planned - - eff=300 kg=15
 2027-02-08 tpl_herstel planned - - eff=45 kg=-
-2027-02-09 tpl_lower_a planned - 45 eff=75 kg=- race
-2027-02-10 tpl_upper_a planned - - eff=75 kg=- race
+2027-02-09 tpl_upper_a planned - - eff=75 kg=-
 2027-02-11 tpl_test_run planned - - eff=45 kg=-
+2027-02-12 tpl_lower_a planned - - eff=75 kg=- race
 2027-02-14 tpl_mountain_hike planned - - eff=180 kg=13
 2027-03-13 tpl_race planned - 60 eff=60 kg=-"
 `;

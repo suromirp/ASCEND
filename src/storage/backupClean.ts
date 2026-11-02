@@ -309,6 +309,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.trekLegRest;
     skipped.n++;
   }
+  // Rust voor een test: 48 of 72 uur, of niet aanwezig (72, het advies).
+  if ('testRest' in s && s.testRest !== 48 && s.testRest !== 72) {
+    delete s.testRest;
+    skipped.n++;
+  }
   if ('leaveCrowding' in s && s.leaveCrowding !== 'drop' && s.leaveCrowding !== 'shift') {
     delete s.leaveCrowding;
     skipped.n++;
