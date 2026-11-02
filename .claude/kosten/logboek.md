@@ -113,3 +113,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Automatische back-up drie kleine punten, Sherpa, opus, hervat 300k, 16 min, 2
 - 2026-11-02, Review Sporten die meetellen, Warden, opus, 178k, 10 min, rood (2 blokkerend)
 - 2026-11-02, Week en Vandaag hulp, Sherpa, opus, 378k + eerder, hervat na limiet, review loopt
+- 2026-11-02, Review Week en Vandaag hulp, Warden, opus, 119k, 5 min, groen met 8 punten
