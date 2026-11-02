@@ -35,18 +35,19 @@ const browserPort: LiveUpdatePort = {
   },
 };
 
-type Plugin = (typeof import('@capawesome/capacitor-live-update'))['LiveUpdate'];
+type LiveUpdateModule = typeof import('@capawesome/capacitor-live-update');
 
 function androidPort(updateUrl: string, releasesUrl: string, builtAt: string): LiveUpdatePort {
-  let plugin: Promise<Plugin> | undefined;
-  const load = () => (plugin ??= import('@capawesome/capacitor-live-update').then((m) => m.LiveUpdate));
+  // Een plugin is een Proxy met een methode `then`: in een belofte blijft hij hangen. Bewaar dus de module.
+  let mod: Promise<LiveUpdateModule> | undefined;
+  const load = () => (mod ??= import('@capawesome/capacitor-live-update'));
   const base = updateUrl.endsWith('/') ? updateUrl : `${updateUrl}/`;
   return {
     available: true,
     releasesUrl,
     async ready() {
       try {
-        const p = await load();
+        const p = (await load()).LiveUpdate;
         return readyOutcome(await withTimeout(p.ready(), FETCH_MS));
       } catch {
         return { rolledBack: false };
@@ -55,7 +56,7 @@ function androidPort(updateUrl: string, releasesUrl: string, builtAt: string): L
     async check(enabled) {
       if (!enabled) return 'none';
       try {
-        const p = await load();
+        const p = (await load()).LiveUpdate;
         // Alleen dit ene bestand, zonder iets van jou erbij; nooit uit een cache.
         const response = await withTimeout(fetch(`${base}app-versie.json`, { cache: 'no-store', credentials: 'omit' }), FETCH_MS);
         if (!response.ok) return 'failed';

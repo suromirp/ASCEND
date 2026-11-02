@@ -62,7 +62,8 @@ export const browserPort: NotificationPort = {
 
 // ---- de Android-app ----------------------------------------------------------------------
 
-type Plugin = (typeof import('@capacitor/local-notifications'))['LocalNotifications'];
+type NotificationsModule = typeof import('@capacitor/local-notifications');
+type Plugin = NotificationsModule['LocalNotifications'];
 
 function toState(state: string | undefined): PermissionState {
   if (state === 'granted' || state === 'denied') return state;
@@ -71,11 +72,13 @@ function toState(state: string | undefined): PermissionState {
 
 function androidPort(): NotificationPort {
   // De plugin pas laden als hij nodig is: de webbuild hoeft hem nooit te openen.
-  let plugin: Promise<Plugin> | undefined;
-  const load = () => (plugin ??= import('@capacitor/local-notifications').then((m) => m.LocalNotifications));
+  // De module in een belofte, nooit de plugin zelf: een plugin is een Proxy met een methode `then`.
+  let mod: Promise<NotificationsModule> | undefined;
+  const load = () => (mod ??= import('@capacitor/local-notifications'));
   let channels: Promise<void> | undefined;
   const ensureChannels = () =>
-    (channels ??= load().then(async (p) => {
+    (channels ??= load().then(async (m) => {
+      const p = m.LocalNotifications;
       for (const c of NOTICE_CHANNELS) {
         await p.createChannel({ id: c.id, name: c.name, description: c.description, importance: c.importance, vibration: c.vibration, visibility: 1, ...(c.sound ? { sound: c.sound } : {}) });
       }
@@ -101,14 +104,14 @@ function androidPort(): NotificationPort {
   return {
     timed: true,
     async permissions() {
-      const p = await load();
+      const p = (await load()).LocalNotifications;
       const [notifications, exactAlarm] = await Promise.all([displayState(p), exactState(p)]);
       // Health Connect heeft een eigen rij met schakelaar bij Koppelingen, en daar vraagt Android om
       // toestemming (storage/healthConnect.ts). Bij Toestemmingen staat hij daarom niet.
       return { timed: true, notifications, exactAlarm, healthConnect: 'unavailable' };
     },
     async requestNotifications() {
-      const p = await load();
+      const p = (await load()).LocalNotifications;
       try {
         return toState((await withTimeout(p.requestPermissions(), SETTINGS_MS)).display);
       } catch {
@@ -116,7 +119,7 @@ function androidPort(): NotificationPort {
       }
     },
     async requestExactAlarm() {
-      const p = await load();
+      const p = (await load()).LocalNotifications;
       try {
         return toState((await withTimeout(p.changeExactNotificationSetting(), SETTINGS_MS)).exact_alarm);
       } catch {
@@ -125,7 +128,7 @@ function androidPort(): NotificationPort {
     },
     async schedule(list) {
       if (list.length === 0) return;
-      const p = await load();
+      const p = (await load()).LocalNotifications;
       // Nooit zelf om toestemming vragen of een scherm openen midden in een training: zonder
       // toestemming slaat ASCEND het over, zonder exacte wekker plant hij "ongeveer op tijd".
       if ((await displayState(p)) !== 'granted') return;
@@ -150,14 +153,14 @@ function androidPort(): NotificationPort {
     },
     async cancel(ids) {
       if (ids.length === 0) return;
-      const p = await load();
+      const p = (await load()).LocalNotifications;
       await withTimeout(p.cancel({ notifications: ids.map((id) => ({ id })) }), ASK_MS).catch(() => undefined);
     },
     onTap(handler) {
       let remove: (() => void) | undefined;
       let gone = false;
-      void load().then((p) =>
-        p.addListener('localNotificationActionPerformed', (action) => {
+      void load().then((m) =>
+        m.LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
           const link = (action.notification.extra as { link?: unknown } | undefined)?.link;
           if (typeof link === 'string') handler(link);
         }).then((h) => {
