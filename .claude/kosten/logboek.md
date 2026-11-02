@@ -92,3 +92,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Kansen herstel, Sherpa, opus (ontwikkelaar), hervat 45k, 33 min, 1
 - 2026-11-02, Testloop en zware benen, Sherpa, opus (ontwikkelaar), 325k, 47 min, 1 (Warden rood)
 - 2026-11-02, Review testloop, Warden, opus (reviewer), 105k, 4 min, 0, rood: tweede testvoorstel toetst andere voorstellen niet
+- 2026-11-02, Testloop herstel en herkeuring, Sherpa en Warden, opus, hervat, 0 open punten
