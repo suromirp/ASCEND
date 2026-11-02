@@ -4,7 +4,7 @@ import type { PlannedSession } from '../models/training';
 import { proposeMove } from './scheduler';
 import { applyPlanChangeItems } from './proposalEngine';
 import { weekConcerns } from './weekConcerns';
-import { planWeekFix } from './weekFixProposal';
+import { planWeekFix, weekNotice } from './weekFixProposal';
 import { validateWeeks, type CheckInput } from './weekValidator';
 import { decideMove, LEGS_ASK, legsCloseAfterMove } from './weekDrag';
 
@@ -89,6 +89,11 @@ describe('twee zware beendagen achter elkaar die je zelf zo neerzette', () => {
     // Staat die training al in een voorstel op Vandaag, dan ruilt de week hem niet ook nog.
     const again = planWeekFix(input(full, { dailyTimeBudget }), c, MONDAY, new Set([other.id]));
     expect((again?.proposal?.changes ?? []).some((ch) => ch.plannedSessionId === other.id)).toBe(false);
+    // Zo ook via Week: wat een open voorstel op Vandaag al raakt, ruilt viaRoom nooit.
+    const notice = weekNotice(input(full, { dailyTimeBudget }), MONDAY, true, new Set([other.id]));
+    for (const f of Object.values(notice.fixes)) {
+      for (const p of [f.proposal!, ...(f.options ?? []).map((o) => o.proposal)]) expect(p.changes.some((ch) => ch.plannedSessionId === other.id)).toBe(false);
+    }
   });
 });
 
@@ -110,6 +115,14 @@ describe('slepen naar zo\'n plek vraagt het eerst', () => {
     expect(d.proposal.reason.startsWith(LEGS_ASK)).toBe(true);
     expect(LEGS_ASK).toBe('Twee zware beendagen achter elkaar. Toch hier?');
     expect(d.proposal.confirm).toEqual({ yes: 'Toch hier', no: 'Annuleren' });
+  });
+
+  it('met een andere reden erbij blijven de gewone knoppen, de zin over de benen staat vooraan', () => {
+    const proposal = proposeMove(before(), templates, 'long', '2026-10-06', [], null, {}, 'automatic', TODAY);
+    const d = decideMove(proposal, { legsClose: true, askAlways: 'Een testloop verplaats je alleen met Akkoord.' });
+    expect(d.action).toBe('ask');
+    expect(d.proposal.confirm).toBeUndefined();
+    expect(d.proposal.reason.startsWith(LEGS_ASK)).toBe(true);
   });
 
   it('een cascade of botsing houdt zijn eigen vraag', () => {

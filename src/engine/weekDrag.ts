@@ -206,7 +206,8 @@ export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Ve
 // Het actieblad geeft geen verdict en geen askAlways mee en gedraagt zich dus zoals voorheen.
 // `legsClose`: the new day gives two heavy leg days in a row that the rules do not count as a clash
 // (a pair that belongs together on its own days, engine/weekValidator.ts). A clean move then asks first,
-// with "Toch hier" and "Annuleren"; a cascade or clash keeps its own question.
+// with "Toch hier" and "Annuleren" when that is the only reason; with another reason too (a rest day, a test)
+// the sentence comes first and the usual buttons stay. A cascade or clash keeps its own question.
 export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict; legsClose?: boolean }
 
 export const LEGS_ASK = 'Twee zware beendagen achter elkaar. Toch hier?';
@@ -234,7 +235,7 @@ export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {})
   if (reasons.length === 0) return { action: clean ? 'apply' : 'ask', proposal };
   // Een cascade of botsing houdt zijn eigen reden, met de nieuwe er vooraan.
   const kept = clean ? [] : [proposal.reason];
-  return { action: 'ask', proposal: { ...proposal, resolved, reason: [...reasons, ...kept].join(' '), ...(legs ? { confirm: { ...LEGS_CONFIRM } } : {}) } };
+  return { action: 'ask', proposal: { ...proposal, resolved, reason: [...reasons, ...kept].join(' '), ...(legs && reasons.length === 1 ? { confirm: { ...LEGS_CONFIRM } } : {}) } };
 }
 
 // Does moving this training to `date` give two heavy leg days in a row that the week check reports (as yours,
