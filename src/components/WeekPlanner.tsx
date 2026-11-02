@@ -361,8 +361,9 @@ export function WeekPlanner({
         const loose = looseLogs.filter((l) => l.completedDate === date);
         const showEmpty = rows.length === 0 && !leaveLabel && loose.length === 0;
         // Op je vaste rustdag heet een lege dag Rustdag, met de hangmat; een andere lege dag is Vrij, net als
-        // de vaste rustdag als de rust van deze week al op een andere dag staat.
-        const empty = emptyDayText(date, settings.restDay ?? 1, sessions, templateById);
+        // de vaste rustdag als de rust van deze week al op een andere dag staat. Is je vaste rustdag bezet, dan
+        // heet de vrije dag die deze week je rust is "Rustdag deze week" (engine/restDayThisWeek.ts).
+        const empty = emptyDayText(date, settings.restDay ?? 1, sessions, templateById, { logs, today, leave });
         return (
           <div
             key={date}

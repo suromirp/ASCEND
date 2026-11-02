@@ -10,7 +10,8 @@
 // dagen ervoor geen trainingsbelasting, dan is er niets om van te herstellen. En staat er een gemiste test
 // of sleuteltraining die op die dag past, dan blijft de dag vrij om in te halen: dat voorstel gaat voor.
 //
-// Ook de weergave van een lege dag in Week staat hier: op je vaste rustdag heet die "Rustdag".
+// Ook de weergave van een lege dag in Week staat hier: op je vaste rustdag heet die "Rustdag", en is die
+// bezet, dan heet de vrije dag die deze week je rust is "Rustdag deze week".
 //
 // Puur: geen React, geen IndexedDB.
 
@@ -26,6 +27,7 @@ import { leaveDays } from './leave';
 import { hasRole } from './templateRoles';
 import { respectsHeavySpacing } from './scheduler';
 import { caughtUpMap } from './catchUp';
+import { restDayThisWeek } from './restDayThisWeek';
 
 export const REST_BACK_RULE = 'REST-BACK';
 
@@ -136,16 +138,21 @@ export function restBackAdvice(input: RestBackInput & { on?: boolean }): Advice[
 
 // Een lege dag in Week: op je vaste rustdag "Rustdag", anders "Vrij". Staat de rust van die week al op
 // een andere dag (een rij Herstel die niet overgeslagen is, na REST-SWAP of REST-PULL), dan is de lege
-// vaste rustdag gewoon "Vrij", zodat Week geen twee keer rust in één week toont. Alleen weergave.
+// vaste rustdag gewoon "Vrij", zodat Week geen twee keer rust in één week toont. Is je vaste rustdag bezet
+// (met `extra`: de logs en vandaag), dan heet de dag die deze week je rust is "Rustdag deze week", met de
+// reden erbij (engine/restDayThisWeek.ts). Alleen weergave.
 export function emptyDayText(
   date: string,
   restDay: number | undefined,
   sessions: PlannedSession[] = [],
   templateById: Map<string, SessionTemplate> = new Map(),
+  extra?: { logs: SessionLog[]; today: string; leave?: LeavePeriod[] },
 ): { rest: boolean; title: string; line: string } {
   const monday = mondayOfWeek(date);
   const restElsewhere = sessions.some((o) => o.status !== 'skipped' && o.scheduledDate !== date && mondayOfWeek(o.scheduledDate) === monday && templateById.get(o.templateId)?.type === 'recovery');
-  return restDay && isoWeekday(date) === restDay && !restElsewhere
-    ? { rest: true, title: 'Rustdag', line: 'je vaste rustdag' }
+  if (restDay && isoWeekday(date) === restDay && !restElsewhere) return { rest: true, title: 'Rustdag', line: 'je vaste rustdag' };
+  const thisWeek = extra ? restDayThisWeek({ anyDay: date, restDay, sessions, logs: extra.logs, templateById, today: extra.today, leave: extra.leave }) : null;
+  return thisWeek?.date === date
+    ? { rest: true, title: 'Rustdag deze week', line: thisWeek.reason }
     : { rest: false, title: 'Vrij', line: 'niets gepland' };
 }

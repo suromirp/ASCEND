@@ -79,7 +79,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       {anyShown(ADVANCED, facts) && (
-        <SettingsSection advancedIds={ADVANCED} advancedTitles={advancedTitles} storageKey="forge-geavanceerd" advanced={
+        <SettingsSection advancedTitles={advancedTitles} advanced={
           <>
             <SummaryRow id="trainingsduur" title="Trainingsduur" facts={facts} info="trainingsduur" onClick={() => setSheet('trainingsduur')} />
             <SummaryRow id="bundel-rekenmodel" title="Rekenmodel" facts={facts} info="bundelRekenmodel" onClick={() => setSheet('bundel-rekenmodel')} />
