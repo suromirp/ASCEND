@@ -22,7 +22,7 @@ export interface SerialQueue {
   runOrLate<T>(job: () => Promise<T>, onLate: (value: T) => void, onLateError?: (err: unknown) => void): Promise<QueueOutcome<T>>;
 }
 
-export type QueueOutcome<T> = { status: 'done'; value: T } | { status: 'failed' } | { status: 'late' };
+type QueueOutcome<T> = { status: 'done'; value: T } | { status: 'failed' } | { status: 'late' };
 
 export function createSerialQueue(options: { timeoutMs: number; name: string; onProblem?: (err: unknown) => void }): SerialQueue {
   let tail: Promise<unknown> = Promise.resolve();

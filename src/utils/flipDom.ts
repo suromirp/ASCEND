@@ -82,10 +82,6 @@ export function setFlipOrigin(id: string, viewportTop: number): void {
   origin = { id, pageTop: viewportTop - base().top, at: performance.now() };
 }
 
-export function flipIsArmed(): boolean {
-  return armed !== null && isArmed(armed.at, performance.now());
-}
-
 function stopRunning() {
   for (const a of running) a.cancel();
   running = [];
