@@ -224,28 +224,31 @@ describe('replanPreview', () => {
     const p = replanPreview(stored, after, diff, templates);
     expect(p.moves.map((m) => m.action).sort()).toEqual(['add', 'add', 'move', 'move', 'remove', 'remove']);
     expect(p.weeks.map((w) => w.weekStart)).toEqual([MON]);
-    // Met de lijst in het blad mag Akkoord.
-    expect(sheetAnswer({ realItems: 6, moves: p.moves.length, extraLines: 0 })).toEqual({ showEmpty: false, canAccept: true, unshown: false });
+    // Elke rij heeft een regel, dus met deze lijst mag Akkoord.
+    const items = Array.from({ length: 6 }, (_, i) => ({ plannedSessionId: [...diff.writes.map((w) => w.id), ...diff.removedIds][i], action: 'move' as const }));
+    expect(sheetAnswer({ items, data: p, extraLines: 0 })).toEqual({ showEmpty: false, canAccept: true, unshown: false });
   });
 
   it('een rij die alleen weer van het plan wordt, staat er ook in', () => {
     const only = weekDiff([s('x', 'tpl_easy_run', d(3), { lock: yours, plannedMinutes: 20 })], [s('x', 'tpl_easy_run', d(3))], MON);
-    expect(replanPreview([s('x', 'tpl_easy_run', d(3), { lock: yours })], [s('x', 'tpl_easy_run', d(3))], only, templates).moves).toEqual([{ name: expect.any(String), action: 'reset', to: d(3) }]);
+    expect(replanPreview([s('x', 'tpl_easy_run', d(3), { lock: yours })], [s('x', 'tpl_easy_run', d(3))], only, templates).moves).toEqual([{ name: expect.any(String), action: 'reset', to: d(3), sessionId: 'x' }]);
   });
 
   it('een training die terugkomt is een geldig item: het gewone voorbeeld toont hem ook', () => {
     const items = [{ plannedSessionId: 'back', action: 'add' as const, toDate: d(5), newSessionDraft: { templateId: 'tpl_hill_intervals', scheduledDate: d(5), weekStartDate: MON }, restore: true }];
-    expect(previewProposal(items, stored, templates).moves).toEqual([{ name: expect.any(String), action: 'add', to: d(5) }]);
+    expect(previewProposal(items, stored, templates).moves).toEqual([{ name: expect.any(String), action: 'add', to: d(5), sessionId: 'back' }]);
   });
 });
 
 describe('het blad: nooit Akkoord naast een lege lijst', () => {
   it('wijzigingen die het blad niet kan tonen: geen Akkoord en geen "er verandert niets"', () => {
-    expect(sheetAnswer({ realItems: 6, moves: 0, extraLines: 0 })).toEqual({ showEmpty: false, canAccept: false, unshown: true });
+    const items = [{ plannedSessionId: 'a', action: 'move' as const, fromDate: d(2), toDate: d(3) }];
+    expect(sheetAnswer({ items, data: { moves: [] }, extraLines: 0 })).toEqual({ showEmpty: false, canAccept: false, unshown: true });
+    expect(sheetAnswer({ items, data: { moves: [], failed: true }, extraLines: 2 })).toEqual({ showEmpty: false, canAccept: false, unshown: true });
   });
   it('de lege tekst met Akkoord alleen als het voorstel zelf niets aan het plan doet; answerless alleen Begrepen', () => {
-    expect(sheetAnswer({ realItems: 0, moves: 0, extraLines: 0 })).toEqual({ showEmpty: true, canAccept: true, unshown: false });
-    expect(sheetAnswer({ answerless: true, realItems: 0, moves: 0, extraLines: 0 })).toEqual({ showEmpty: true, canAccept: false, unshown: false });
+    expect(sheetAnswer({ items: [], data: { moves: [] }, extraLines: 0 })).toEqual({ showEmpty: true, canAccept: true, unshown: false });
+    expect(sheetAnswer({ answerless: true, items: [], data: { moves: [] }, extraLines: 0 })).toEqual({ showEmpty: true, canAccept: false, unshown: false });
   });
   it('ProposalSheet volgt sheetAnswer: Akkoord staat alleen in de tak waar het mag, de lege tekst alleen met showEmpty', () => {
     const buttons = sheetSource.slice(sheetSource.indexOf('{answerless ? ('), sheetSource.indexOf('>Akkoord</PrimaryButton>'));

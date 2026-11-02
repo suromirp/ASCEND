@@ -18,7 +18,7 @@ import type { IllnessEpisode } from '../models/illness';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { idHasRole } from './templateRoles';
 import { activeIllness, isHeavySession, recoveryRamp } from './illness';
-import { previewBetween, type PreviewMove, type ProposalPreviewData } from './proposalPreview';
+import { MOVE_ORDER, previewBetween, type PreviewMove, type ProposalPreviewData } from './proposalPreview';
 
 export interface ReplanWeekInput {
   // Het hele opgeslagen plan.
@@ -215,18 +215,19 @@ export function replanPreview(stored: PlannedSession[], after: PlannedSession[],
   const moves: PreviewMove[] = [];
   for (const s of diff.writes) {
     const old = was.get(s.id);
-    if (!old || (old.status === 'skipped' && s.status !== 'skipped')) moves.push({ name: name(s.templateId), action: 'add', to: s.scheduledDate });
-    else if (old.status !== 'skipped' && s.status === 'skipped') moves.push({ name: name(old.templateId), action: 'remove', from: old.scheduledDate });
-    else if (old.scheduledDate !== s.scheduledDate) moves.push({ name: name(s.templateId), action: 'move', from: old.scheduledDate, to: s.scheduledDate });
-    else if (old.templateId !== s.templateId) moves.push({ name: name(old.templateId), action: 'change', to: s.scheduledDate, newName: name(s.templateId) });
-    else moves.push({ name: name(s.templateId), action: 'reset', to: s.scheduledDate });
+    if (!old || (old.status === 'skipped' && s.status !== 'skipped')) moves.push({ name: name(s.templateId), action: 'add', to: s.scheduledDate, sessionId: s.id, ...(old ? {} : { isNew: true as const }) });
+    else if (old.status !== 'skipped' && s.status === 'skipped') moves.push({ name: name(old.templateId), action: 'remove', from: old.scheduledDate, sessionId: s.id });
+    else if (old.scheduledDate !== s.scheduledDate) moves.push({ name: name(s.templateId), action: 'move', from: old.scheduledDate, to: s.scheduledDate, sessionId: s.id });
+    else if (old.templateId !== s.templateId) moves.push({ name: name(old.templateId), action: 'change', to: s.scheduledDate, newName: name(s.templateId), sessionId: s.id });
+    else moves.push({ name: name(s.templateId), action: 'reset', to: s.scheduledDate, sessionId: s.id });
   }
   for (const id of diff.removedIds) {
     const old = was.get(id);
-    if (old) moves.push({ name: name(old.templateId), action: 'remove', from: old.scheduledDate });
+    if (old) moves.push({ name: name(old.templateId), action: 'remove', from: old.scheduledDate, sessionId: id });
   }
-  const order = { move: 0, change: 1, reset: 1, remove: 2, add: 3 };
-  moves.sort((a, b) => order[a.action] - order[b.action] || (a.from ?? a.to ?? '').localeCompare(b.from ?? b.to ?? ''));
+  moves.sort((a, b) => MOVE_ORDER[a.action] - MOVE_ORDER[b.action] || (a.from ?? a.to ?? '').localeCompare(b.from ?? b.to ?? ''));
   const weeks = [...diff.before, ...diff.writes].map((s) => mondayOfWeek(s.scheduledDate));
-  return { moves, weeks: previewBetween(stored, after, templates, undefined, weeks).weeks };
+  // Elke rij van de diff heeft een regel: dat is de lijst die sheetAnswer controleert.
+  const changedIds = [...diff.writes.map((s) => s.id), ...diff.removedIds];
+  return { moves, changedIds, weeks: previewBetween(stored, after, templates, undefined, weeks).weeks };
 }

@@ -95,12 +95,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
   const chosen = advice.options?.[choice]?.proposal ?? advice.proposal;
   const data = useMemo(() => preview ?? (chosen ? previewProposal(chosen.changes, plannedSessions, templates, planPreviewPass, leave) : { moves: [], weeks: [] }), [preview, chosen, plannedSessions, templates, planPreviewPass, leave]);
   // Nooit Akkoord naast een lege lijst, nooit "er verandert niets" naast Akkoord als het voorstel iets doet.
-  const answer = sheetAnswer({
-    answerless,
-    realItems: (chosen?.changes ?? []).filter((c) => c.action !== 'keep' && c.action !== 'replace').length,
-    moves: data.moves.length,
-    extraLines: extraLines?.length ?? 0,
-  });
+  const answer = sheetAnswer({ answerless, items: chosen?.changes ?? [], data, extraLines: extraLines?.length ?? 0 });
   const byId = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
   const listed = listUntil ? data.moves.filter((m) => (m.from ?? m.to ?? '') <= listUntil) : data.moves;
   // Counted from the proposal's own items, so the total is the real number of changes.
@@ -314,6 +309,13 @@ function MoveLine({ move }: { move: PreviewMove }) {
             <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.from!)} · vervalt</span>
           ) : move.action === 'reset' ? (
             <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.to!)} · weer zoals het plan</span>
+          ) : move.action === 'length' ? (
+            <>
+              <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.to!)} · </span>
+              <span style={{ color: 'var(--color-ink)' }}>{move.minutes !== undefined ? `${move.minutes} minuten` : 'de gewone lengte'}</span>
+            </>
+          ) : move.action === 'mark' ? (
+            <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.to!)} · {move.leaveOn ? 'hoort nu bij je vakantie of tocht' : 'hoort niet meer bij je vakantie of tocht'}</span>
           ) : move.action === 'change' ? (
             <>
               <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.to!)} · wordt </span>
@@ -338,7 +340,7 @@ function Glyph({ kind }: { kind: PreviewMove['action'] }) {
     <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ background: tint(color, 14) }} aria-hidden>
       <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         {kind === 'move' && <path d="M3 8h9M9 4.5 12.5 8 9 11.5" />}
-        {(kind === 'change' || kind === 'reset') && <path d="M3.5 6h9M10 3.5 12.5 6 10 8.5M12.5 10h-9M6 7.5 3.5 10 6 12.5" />}
+        {(kind === 'change' || kind === 'reset' || kind === 'length' || kind === 'mark') && <path d="M3.5 6h9M10 3.5 12.5 6 10 8.5M12.5 10h-9M6 7.5 3.5 10 6 12.5" />}
         {kind === 'add' && <path d="M8 3.5v9M3.5 8h9" />}
         {kind === 'remove' && <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" />}
       </svg>
