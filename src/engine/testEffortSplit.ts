@@ -12,7 +12,7 @@
 
 import type { SessionLog } from '../models/training';
 import { isStaleEffort, isUsableBestEffort, testTotals } from './bestEffort';
-import { isTestOrRace, type RoleCarrier } from './templateRoles';
+import { hasRole, type RoleCarrier } from './templateRoles';
 
 // De zwaarte van het inlopen en uitlopen: rustig.
 export const EASY_PART_RPE = 3;
@@ -26,11 +26,12 @@ export interface EffortSplit {
   easyMinutes: number;
 }
 
-// Het harde en het rustige deel van een test of wedstrijd (herkend via de rol), of niets. De snelste 5 km
+// Het harde en het rustige deel van een test (herkend via de rol `test`), of niets. Een wedstrijd loop je
+// als geheel op wedstrijdzwaarte; die wordt niet gesplitst. De snelste 5 km
 // telt ook als hij nog op je Akkoord voor de tempo's wacht: gelopen zijn de minuten hoe dan ook. Niet bij een
 // snelste 5 km voor andere totalen (een correctie bij de bron) of bij een ingekorte log.
 export function testEffortSplit(log: Pick<SessionLog, 'durationMinutes' | 'bestEffort' | 'trim' | 'cardioData' | 'outdoorData'>, template: RoleCarrier | undefined): EffortSplit | undefined {
-  if (!template || !isTestOrRace(template) || log.trim) return undefined;
+  if (!template || !hasRole(template, 'test') || log.trim) return undefined;
   const b = log.bestEffort;
   if (!isUsableBestEffort(b)) return undefined;
   const { km, minutes } = testTotals(log);

@@ -25,8 +25,14 @@ describe('testEffortSplit: a linked test with warm-up and cool-down', () => {
     expect(testEffortSplit(watchTest({ bestEffort: effort({ accepted: undefined }) }), test)).toEqual({ hardMinutes: 25, easyMinutes: 20 });
   });
 
-  it('a race is recognised by its role too', () => {
-    expect(testEffortSplit(watchTest({ templateId: 'tpl_race' }), race)).toEqual({ hardMinutes: 25, easyMinutes: 20 });
+  // A race is run as a whole at race effort: only a test (by its role) is split.
+  it('a race is never split', () => {
+    expect(testEffortSplit(watchTest({ templateId: 'tpl_race' }), race)).toBeUndefined();
+  });
+
+  it('a test is recognised by its role, not its id', () => {
+    const own = { ...easy, id: 'tpl_own_test', roles: ['test' as const] };
+    expect(testEffortSplit(watchTest({ templateId: 'tpl_own_test' }), own)).toEqual({ hardMinutes: 25, easyMinutes: 20 });
   });
 
   it('without detail it stays as it is', () => {
