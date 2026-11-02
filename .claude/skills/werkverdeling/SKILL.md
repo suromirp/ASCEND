@@ -51,6 +51,15 @@ Tabellen staan hier omdat dit een werkinstructie is; in teksten voor de eigenaar
 - De tekstkaart bouwt altijd zelf op een vrije poort; zet geen `KAART_PORT`. Alleen "Geen verschil met
   docs/app-kaart/." telt als gelijk, nooit een gefilterde uitvoer (ronde 1).
 - Geen pagina of artefact voor de eigenaar dat de coördinator niet zelf geopend en gecontroleerd heeft (ronde 1).
+- Alles wat de planning raakt is opus, ook als het klein lijkt; kies op wat het raakt, niet op de omvang (ronde 2).
+- Een opdracht noemt nooit een optie die een regel uit CLAUDE.md breekt, ook niet als voorbeeld (ronde 2).
+- Elke uitlegzin in de app wordt in de review aan de code getoetst; een bewering van een review ook (ronde 2).
+- Elke native wijziging (Java, XML, manifest, gradle) gaat eerst door de Android-workflow als proefbouw op de
+  branch (workflow_dispatch); tsc, lint, tests en build vangen daar niets (ronde 2b).
+- Merge-conflicten in planning of opslag lost de bouwer op die de code kent; de coördinator alleen lijstjes en
+  imports (ronde 2b).
+- Een bouwer zet elke eigen keuze buiten de opdracht in het besluit; de coördinator leest die lijst voor de review.
+  Kleine herstelpunten bundelen in één bericht; een heel klein punt doet de coördinator zelf (ronde 2b).
 
 ## Opschalen en afschalen
 

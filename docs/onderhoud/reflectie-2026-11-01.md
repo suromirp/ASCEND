@@ -82,3 +82,74 @@ vragen pauzeren tijdens ziekte; eerst koppelen, dan inhalen; de kleine delen van
 - Datums uit een back-up nooit letterlijk in een opdracht.
 - Na het samenvoegen eerst de kaart met eigen build; alleen "Geen verschil" telt.
 - Herstel na review altijd bij dezelfde bouwer.
+
+## Ronde 2 en 2b
+
+Gestart in de nacht van 1 op 2 november, af op de ochtend van 2 november op Health Connect na. Live gezet:
+Kansen middelgroot, de testloop die terugkomt na een mislukte test, RPE bij een testloop, Zonder doel Je week, de
+kleine delen van het rapport instellingen, de 48 uur tussen beenzware dagen ook na de lange duurloop, de
+automatische back-up naar een bestand, Sporten die meetellen (stap 1 en 4 tot 9), Week en Vandaag hulp (Waarom
+staat dit hier, Minder tijd vandaag, zones na een test, Details ophalen), snelkoppelingen en een widget in de
+Android-app, en Je locatie.
+
+### Wat het kostte
+
+Volgens het kostenlogboek ruim 6 miljoen tokens aan helpers. Sporten die meetellen was met afstand het duurst
+(ruim 650k voor de bouwer alleen, en twee reviews op opus), gevolgd door Week en Vandaag hulp. Herstelrondes:
+elf, alle na een review en geen door rode controles. Halverwege stopten twee bouwers op de limiet van vijf uur;
+hervatten na de reset werkte zonder verlies.
+
+### Wat heel goed ging, en hoe dat de standaard wordt
+
+- De review op opus vond opnieuw fouten die geen test ving: een vaste afspraak die stil verdween na verplaatsen,
+  een RPE die achteraf te herschrijven was, een back-up die een eigen bestand kon wissen, een deep link die
+  `constructor` doorliet, en een locatievraag zonder dat je Je locatie aanzette. Planning, opslag en privacy
+  blijven op opus.
+- De Android-proefbouw via de workflow op de branch ving een fout die tsc, lint, tests en build allemaal misten
+  (een dubbel streepje in XML-commentaar). Standaard: elke native wijziging gaat eerst door die proefbouw.
+- Een merge met conflicten in planning of opslag ging terug naar de bouwer die de code kende; die loste zeven
+  conflicten in één keer goed op. Standaard: de coördinator lost alleen lijstjes en imports zelf op.
+- De opdracht met de vaste lijst randgevallen voor opslag en historie werkte: geen enkele review vond nog een
+  fout bij een import of een fout halverwege.
+
+### Wat misging, met de echte oorzaak
+
+- Zonder doel op sonnet terwijl het de planning raakte. Oorzaak: de coördinator koos op de omvang en niet op wat
+  het raakte. Aanpassing: alles wat de planning raakt is opus, ook als het klein lijkt.
+- Een onveilige optie in een opdracht (een voorstel op een vakantiedag). Oorzaak: de opdracht zelf. Aanpassing:
+  een opdracht noemt nooit een optie die een regel uit CLAUDE.md breekt, ook niet als voorbeeld.
+- Uitleg die niet klopt met de code ("volgens je weekpatroon" terwijl het patroon een andere dag had; "je planning
+  verandert niet" terwijl de beenindex meetelde; Warden die zich vergiste over het geluid na een training).
+  Oorzaak: tekst geschreven vanuit de bedoeling, niet vanuit wat de code doet. Aanpassing: elke uitlegzin wordt in
+  de review aan de code getoetst, en een bewering van een review ook.
+- Hervatten is niet altijd goedkoop: een bouwer met een grote context kostte bij drie kleine punten toch 300k.
+  Aanpassing: na een groot onderwerp kleine herstelpunten bundelen in één bericht, en een heel klein punt zelf doen.
+- De bouwer van Sporten koos zelf "fietsen standaard Telt mee" en een eigen sport die meteen meetelt; de eerste
+  bleek alleen weergave, de tweede maakte een tekst onwaar. Oorzaak: open vragen in het ontwerp. Aanpassing: een
+  bouwer zet elke eigen keuze in het besluit en de coördinator leest die lijst voor de review.
+
+### Klopt het geheel?
+
+Vandaag vraagt steeds meer ruimte: de vraag "Hoe telt dit?", Minder tijd vandaag, een etappe-regel, een
+back-upkaart, de ochtendkaart. De volgorde en het maximum van kaarten op Vandaag (uit ronde 1) staan; de nieuwe
+regels moeten daar ook in passen, en dat is nog niet nagelopen. Verder is Planning nu op het plafond van twaalf
+rijen en Geavanceerd ook vol: dat maakt de vraag of Geavanceerd een eigen pagina wordt dringender.
+
+Opgekomen:
+- De Android-app heeft drie native niveaus erbij gekregen zonder één keer op een toestel te draaien. Het eerste
+  dat moet gebeuren zodra de sleutel er is: een doorloop op de telefoon van de eigenaar (snelkoppelingen, widget,
+  locatie, back-upmap).
+- De etappe-regel is gebouwd maar toont niets zonder GR5-coördinaten.
+- De spierindex heeft geen opzet; zonder opzet niet bouwen.
+
+Nieuw in de backlog, vijf punten: de nieuwe regels op Vandaag in de vaste volgorde en het maximum; een doorloop
+op een echt toestel na de sleutel; GR5-coördinaten uit een GPX; een opzet voor de spierindex; een test die alle
+Android-XML vooraf leest.
+
+### Wat ronde 3 anders doet
+
+- Alles wat planning raakt op opus, ook klein.
+- Elke native wijziging door de Android-proefbouw voor de review.
+- Merge-conflicten in planning of opslag bij de bouwer.
+- Uitlegzinnen aan de code toetsen, in de opdracht en in de review.
+- Kleine herstelpunten bundelen of zelf doen.
