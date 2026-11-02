@@ -9,18 +9,15 @@
 // dezelfde tabel zonder invulvelden: het voorschrift om in de sportschool mee
 // te kijken, en één knop om de training af te vinken.
 
-import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
-import { ExerciseArtButton } from '../ExerciseArtButton';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
-import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, type DroppedRow } from '../../engine/forgeRows';
-import { SwipeRow } from './SwipeRow';
+import { canRemoveRow, reinsertRow, removeSet, restoreDropped, rowLabel, type DroppedRow } from '../../engine/forgeRows';
 import { ForgeStrip } from './ForgeStrip';
 import { pageAt, resolveForgeLayout } from '../../engine/forgeLayout';
-import { QUICK_LABEL, quickActionsFor, quickButtonsOn, swipeDeleteOn, type QuickAction } from '../../engine/forgeQuickActions';
+import { quickButtonsOn, swipeDeleteOn } from '../../engine/forgeQuickActions';
 import { previewDayLine } from '../../engine/sessionActions';
 import { restAlertChannels, restVibrationPattern } from '../../engine/restVibration';
-import { MUSCLE_LABEL } from '../../models/exercise';
 import { currentBodyKg } from '../../engine/bodyWeight';
 import {
   activeRow,
@@ -31,12 +28,9 @@ import {
   copyRow,
   dockFieldKey,
   exerciseComplete,
-  exerciseSummary,
   makeLight,
   makeSnap,
-  plateShortText,
   nextField,
-  plateSideText,
   repsBounds,
   stepNumber,
   takeTarget,
@@ -50,54 +44,40 @@ import {
 import {
   addRow,
   exerciseOf,
-  formatClock,
   hardestLegRir,
   legDayLine,
   planExercise,
   planStateBefore,
   planWorkout,
   plateSteps,
-  previousFor,
-  previousText,
   progress,
   removeLastRow,
-  repsText,
   swapOptions,
-  targetText,
   tickAllRows,
   tickRow,
   toStrengthData,
   updateRow,
   usesPlates,
   type PlanContext,
-  type PlateStep,
   type WorkoutExercise,
-  type WorkoutRow,
 } from '../../engine/forgeWorkout';
-import type { GymProfile } from '../../engine/strengthSettings';
-import type { Exercise } from '../../models/exercise';
-import { profileFor, stepFor } from '../../engine/strengthWeights';
+import { profileFor } from '../../engine/strengthWeights';
 import { programExercisesFor } from '../../engine/macrofactorProgram';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import { templateSport } from '../../engine/sports';
 import { durationForVariant, exercisesForVariant, resolveVariantDuration } from '../../engine/substitutions';
-import { EXERCISE_NOTE_MAX, REST_LIMITS, resolveStrengthSettings, withExerciseValue } from '../../engine/strengthSettings';
+import { EXERCISE_NOTE_MAX, resolveStrengthSettings, withExerciseValue } from '../../engine/strengthSettings';
 import { getTrainingGuide, guideDayLabel } from '../../data/trainingGuide';
 import type { Program } from '../../models/program';
 import type { SessionTemplate, SessionVariant } from '../../models/training';
-import type { PainReport } from '../../models/checkIn';
 import { useAppData } from '../../state/AppDataContext';
-import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../../utils/dates';
+import { todayISO } from '../../utils/dates';
 import { haptics } from '../../utils/haptics';
-import { animateEl, reducedMotion } from '../../utils/motion';
+import { reducedMotion } from '../../utils/motion';
 import { clearDraft, draftKey, loadDraft, saveDraft } from '../../utils/loggerDraft';
-import { formatNumberNL } from '../../utils/number';
 import { playRestSound, primeAudio } from '../../utils/sound';
 import { useBackToClose } from '../../utils/useBackToClose';
-import { TimeoutError, withTimeout } from '../../utils/withTimeout';
 import { Icon } from '../icons';
-import { NumberField } from '../NumberField';
-import { PainReportFields } from '../PainReportFields';
 import { Portal } from '../Portal';
 import { TrainingGuideSheet } from '../TrainingGuideSheet';
 import { TextButton } from '../TextButton';
@@ -106,33 +86,32 @@ import { useGuardedSave, useLegEase } from '../useLegEase';
 import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_KEPT_LINE, EASE_STARTED_LINE } from '../../engine/legDayEase';
 import { resolveLegEaseHow } from '../../engine/legEaseSettings';
 import { adjustText, applyLighter, fitStillOpen, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
-import { addOnText, addOnsFor, formatAddOns, hasStack, ownWeightsFor } from '../../engine/machineWeights';
+import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
 import { appendEvents, cleanForgeLog, deriveChanges, noFitEvent, setCountEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
 import { SPOTTER_EXPLAIN, SPOTTER_HOW, SPOTTER_SIGN } from '../../engine/spotter';
 import { makeId } from '../../utils/id';
-import { activeSeconds, finishDuration, sessionIsDead, breakAsPause, breakCounts, cleanPauses, formatAway, formatSessionClock, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
+import { activeSeconds, sessionIsDead, breakAsPause, breakCounts, cleanPauses, formatAway, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
 import { useSessionWorld } from './useForgeSession';
 import { clearSessionPointer, notifySession, readSession, registerForgeOpen, requestOpenSession, writeSessionPointer } from '../../utils/forgeSessionStore';
 import { ExerciseAddOnForgeSheet } from './AddOnWeights';
 import { ForgeLogSheet } from './ForgeLogSheet';
 import { MachineWeightsForgeSheet } from './MachineWeights';
 import { InputDock } from './InputDock';
-import { ForgeSheet, LongPressRow, MenuRow, RirBubble, TickBox, ValueCell } from './parts';
+import { ForgeSheet, MenuRow, RirBubble } from './parts';
 import { useWakeLock } from './useWakeLock';
 import { useRestNotice } from './useRestNotice';
 import { resolveDeviceNotices } from '../../engine/deviceNotices';
+import { type Rest, clock, isAssisted, type BlockActions, dockRowLabel, addOnMenuSub } from './forgeWorkoutHelpers';
+import { ExerciseBlock } from './ExerciseBlock';
+import { ElapsedClock, RestBar, RestStepper } from './ForgeTimers';
+import { SwapList, NoteSheet } from './ExerciseSheets';
+import { FinishSheet } from './FinishSheet';
 
 const DRAFT_VERSION = 1;
 // Na afloop blijft de balk nog even staan, dan verdwijnt hij.
 const REST_DONE_LINGER_MS = 8000;
 // Een reden die ouder is dan dit hoort niet meer bij de volgende verandering van de rijen.
 const CAUSE_MAX_AGE_MS = 2000;
-
-interface Rest {
-  endsAt: number;
-  total: number;
-  name: string;
-}
 
 interface WorkoutDraft {
   v: number;
@@ -153,16 +132,12 @@ interface WorkoutDraft {
   lastActionAt?: number;
 }
 
-const clock = () => Date.now();
-
 // Het laatste moment van handelen in een concept: het bewaarde moment, of de laatst afgevinkte set, of het wegschrijven.
 function lastActionOfDraft(d: Partial<WorkoutDraft>, startedAt: number): number {
   const ticks = (d.exercises ?? []).flatMap((e) => e.rows.map((r) => r.doneAt)).filter((t): t is number => typeof t === 'number' && Number.isFinite(t));
   const saved = typeof d.lastActionAt === 'number' ? d.lastActionAt : typeof d.savedAt === 'number' ? d.savedAt : startedAt;
   return Math.max(saved, ...ticks);
 }
-
-const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
 
 interface ForgeWorkoutProps {
   template: SessionTemplate;
@@ -1339,719 +1314,5 @@ function ForgeWorkoutInner({
         />
       )}
     </Portal>
-  );
-}
-
-// Hoe lang Opslaan mag duren voordat het scherm zegt dat het langer duurt.
-const SAVE_LIMIT_MS = 15_000;
-
-// Een klok die zichzelf ververst: alleen dit stukje, nooit de hele tabel.
-function useNow(intervalMs: number): number {
-  const [now, setNow] = useState(clock);
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(clock()), intervalMs);
-    return () => window.clearInterval(id);
-  }, [intervalMs]);
-  return now;
-}
-
-function ElapsedClock({ startedAt, pauses }: { startedAt: number | null; pauses: Pause[] }) {
-  const paused = startedAt !== null && isPaused({ startedAt, pauses });
-  const now = useNow(1000);
-  return <span className="font-sans tabular-nums" aria-label="Verstreken tijd" style={paused ? { opacity: 0.7 } : undefined}>{formatSessionClock(startedAt === null ? 0 : activeSeconds({ startedAt, pauses }, now))}</span>;
-}
-
-const isAssisted = (ex: WorkoutExercise) => exerciseOf(ex)?.resistance === 'assisted_bodyweight';
-
-// "W" voor een opwarmset, anders het nummer van de werkset.
-function dockRowLabel(ex: WorkoutExercise, index: number): string {
-  const row = ex.rows[index];
-  if (!row) return '';
-  if (row.kind === 'warmup') return 'W';
-  return String(ex.rows.slice(0, index + 1).filter((r) => r.kind === 'work').length);
-}
-
-
-// --- één oefening ------------------------------------------------------------------------
-
-// De handelingen van de tabel. Eén vaste set (nooit een nieuwe functie per render),
-// zodat een oefening alleen opnieuw tekent als hijzelf verandert.
-interface BlockActions {
-  column: () => void;
-  fold: (slot: string) => void;
-  menu: (slot: string) => void;
-  tick: (slot: string, rowId: string) => void;
-  tickAll: (slot: string) => void;
-  open: (slot: string, rowId: string, name: FieldName) => void;
-  take: (slot: string, rowId: string) => void;
-  rowMenu: (slot: string, rowId: string) => void;
-  rir: (slot: string, rowId: string) => void;
-  add: (slot: string) => void;
-  lighter: (slot: string) => void;
-  keep: (slot: string) => void;
-  fill: (slot: string) => void;
-  keepFit: (slot: string) => void;
-  // Uitleg bij "1 over, zonder spotter".
-  spotter: () => void;
-  // De snelknoppen onder de naam (engine/forgeQuickActions.ts): dezelfde handelingen als het menu.
-  quick: (slot: string, action: QuickAction) => void;
-  // Een set weghalen (vegen of het setmenu), terugzetten wat je van het programma weghaalde, de melding terugdraaien.
-  remove: (slot: string, rowId: string) => void;
-  restore: (slot: string) => void;
-  undo: () => void;
-}
-
-// Een uitleg onder de kop langer dan dit klapt in tot één regel met "Meer".
-const REASON_SHORT = 100;
-
-const ExerciseBlock = memo(function ExerciseBlock({
-  ex,
-  first,
-  paged = false,
-  readOnly,
-  column,
-  note,
-  active,
-  field,
-  selected,
-  folded,
-  profile,
-  showPlates,
-  lighterText,
-  noFitText,
-  heavyTip,
-  rirAsValue,
-  quickOn,
-  swipeOn,
-  undoText,
-  act,
-}: {
-  ex: WorkoutExercise;
-  first: boolean;
-  // Een oefening per scherm: elke oefening is een kaart, niet alleen die aan de beurt.
-  paged?: boolean;
-  readOnly: boolean;
-  column: 'target' | 'previous';
-  note?: string;
-  // De set die nu aan de beurt is, en het veld dat in het paneel open staat.
-  active?: string;
-  field: FieldRef | null;
-  selected: boolean;
-  folded: boolean;
-  profile: GymProfile;
-  showPlates: boolean;
-  // Het voorstel om de volgende sets lichter te maken, als er een is.
-  lighterText?: string;
-  // De vraag of je de gewichten van dit toestel invult, als geen gewicht past.
-  noFitText?: string;
-  // Na het invullen nog steeds te zwaar: één stille regel, zonder knoppen.
-  heavyTip?: string;
-  // "RIR vooraf invullen: Met het doel": het doel staat er als waarde, niet als hint.
-  rirAsValue: boolean;
-  // De instelling "Snelknoppen tonen".
-  quickOn: boolean;
-  swipeOn: boolean;
-  // "Set 3 verwijderd" zolang je het nog ongedaan kunt maken.
-  undoText?: string;
-  act: BlockActions;
-}) {
-  const [reasonOpen, setReasonOpen] = useState(false);
-  const reasonText = reasonWithOwnCount(ex) ?? '';
-  const quick = quickActionsFor({ readOnly, preview: false, timed: !!ex.timed });
-  const plates = useMemo(() => (usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined), [ex, profile]);
-  const exercise = exerciseOf(ex);
-  const assisted = exercise?.resistance === 'assisted_bodyweight';
-  const workDone = ex.rows.filter((r) => r.kind === 'work' && r.done).length;
-  const workTotal = ex.rows.filter((r) => r.kind === 'work').length;
-  const complete = !readOnly && exerciseComplete(ex);
-  // Met MacroFactor als bron staan kg en herhalingen al in hun eigen kolom;
-  // de tweede kolom zegt dan wat je vorige keer deed.
-  const showPrevious = readOnly || column === 'previous';
-  // Zonder spotter: het teken staat hoogstens één keer bij de oefening, bij de eerste open set waar Forge
-  // de reserve ophoogde. Vul je zelf 0 in, dan verdwijnt het teken: jij besliste.
-  const spotterRowId = ex.rows.find((r) => r.kind === 'work' && r.target.spotter && !r.done && (r.rir ?? r.target.rir ?? 1) >= 1)?.id;
-  let workNo = 0;
-  const headText = (
-    <>
-      <span className="flex items-center gap-2">
-        {complete && (
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-progress)', color: 'var(--color-on-action)' }}>
-            <Icon name="vinkje" size={14} />
-          </span>
-        )}
-        <span className="min-w-0 text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{ex.name}</span>
-      </span>
-      <span className="mt-0.5 block font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-        {complete && folded ? exerciseSummary(ex) : readOnly ? `${workTotal} sets` : `${workDone} van ${workTotal} sets`}
-        {!(complete && folded) && <> · rust {formatClock(ex.restSec)}</>}
-        {ex.swappedFrom ? ` · voor ${ex.swappedFrom}` : ''}
-      </span>
-    </>
-  );
-  const card = paged || active !== undefined;
-  return (
-    <section
-      className={`pb-2 pt-4 ${card ? 'mx-2 mt-2 rounded-2xl border px-3' : `px-4 ${first ? '' : 'mt-2 border-t'}`}`}
-      style={{ borderColor: 'var(--color-card-border)', background: card ? 'var(--color-raised)' : undefined }}
-      aria-label={ex.name}
-      data-slot={ex.slot}
-    >
-      <div className="flex items-start gap-2">
-        {ex.known && <ExerciseArtButton key={ex.exerciseId} exerciseId={ex.exerciseId} name={ex.name} />}
-        {complete ? (
-          <button type="button" onClick={() => act.fold(ex.slot)} aria-expanded={!folded} aria-label={`${ex.name}, ${folded ? 'uitklappen' : 'inklappen'}`} className="min-h-[44px] min-w-0 flex-1 py-1.5 text-left">
-            {headText}
-          </button>
-        ) : (
-          <div className="min-w-0 flex-1 pt-1.5">
-            <h2 className="m-0 p-0 font-[inherit]">{headText}</h2>
-          </div>
-        )}
-        <button type="button" onClick={() => act.menu(ex.slot)} aria-label={`Menu van ${ex.name}`} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
-          <Icon name="meer" size={22} />
-        </button>
-      </div>
-      <div className="forge-fold" data-folded={folded} inert={folded}>
-        <div>
-          {quick.length > 0 && (
-            <div className="mx-quick" data-shown={quickOn} inert={!quickOn}>
-              <div>
-                <div className="-mx-1 mt-1 flex gap-1.5 overflow-x-auto px-1 py-0.5" role="group" aria-label={`Snel bij ${ex.name}`} data-no-sheet-drag>
-                  {quick.map((a) => (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => act.quick(ex.slot, a)}
-                      className="flex min-h-[44px] shrink-0 items-center gap-1 rounded-full border px-3 text-sm active:opacity-70"
-                      style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink-dim)' }}
-                    >
-                      <Icon name={a === 'ruilen' ? 'ruilen' : a === 'notitie' ? 'notitie' : 'plus'} size={14} />
-                      {QUICK_LABEL[a]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-          {note && (
-            <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>
-              <span className="mt-px shrink-0" style={{ color: 'var(--color-action)' }}><Icon name="notitie" size={14} /></span>
-              <span>{note}</span>
-            </p>
-          )}
-          {ex.reason && (
-            <div className="mt-1.5 flex items-start gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-sage)' }}>
-              <p className={`min-w-0 flex-1 text-xs leading-snug ${reasonOpen || reasonText.length <= REASON_SHORT ? '' : 'truncate'}`} style={{ color: 'var(--color-ink-dim)' }}>{reasonText}</p>
-              {reasonText.length > REASON_SHORT && (
-                <button
-                  type="button"
-                  onClick={() => setReasonOpen((o) => !o)}
-                  aria-expanded={reasonOpen}
-                  className="relative shrink-0 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']"
-                  style={{ color: 'var(--color-action)' }}
-                >
-                  {reasonOpen ? 'Minder' : 'Meer'}
-                </button>
-              )}
-            </div>
-          )}
-
-          {lighterText && !readOnly && (
-            <div className="mt-2 flex flex-col gap-0.5 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }} role="group" aria-label="Voorstel voor de volgende sets">
-              <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{lighterText}</p>
-              <div className="-mb-1 flex gap-4">
-                <TextButton onClick={() => act.lighter(ex.slot)}>Lichter</TextButton>
-                <TextButton tone="dim" onClick={() => act.keep(ex.slot)}>Liever niet</TextButton>
-              </div>
-            </div>
-          )}
-
-          {heavyTip && !readOnly && !noFitText && (
-            <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>{heavyTip}</p>
-          )}
-
-          {noFitText && !readOnly && (
-            <div className="mt-2 flex flex-col gap-0.5 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }} role="group" aria-label="Gewichten van dit toestel">
-              <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{noFitText}</p>
-              <div className="-mb-1 flex gap-4">
-                <TextButton onClick={() => act.fill(ex.slot)}>{noFitText.endsWith('aanpassen?') ? 'Aanpassen' : 'Invullen'}</TextButton>
-                <TextButton tone="dim" onClick={() => act.keepFit(ex.slot)}>Liever niet</TextButton>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-2" role="table" aria-label={`Sets van ${ex.name}`}>
-            <div role="row" className="forge-grid items-end pb-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              <span role="columnheader" className="text-center">Set</span>
-              {readOnly ? (
-                <span role="columnheader">Vorige</span>
-              ) : (
-                <button type="button" role="columnheader" onClick={act.column} className="relative flex items-center gap-1 text-left before:absolute before:-inset-y-[14px] before:inset-x-0 before:content-['']" aria-label={showPrevious ? 'Toon het voorschrift' : 'Toon vorige keer'}>
-                  {showPrevious ? 'Vorige' : 'Voorschrift'}
-                  <Icon name="ruilen" size={12} />
-                </button>
-              )}
-              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : 'kg'}</span>
-              <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Herh.'}</span>
-              <span role="columnheader" className="text-center">RIR</span>
-              <span role="columnheader" className="flex justify-center">
-                {readOnly ? <span className="sr-only">Gedaan</span> : (
-                  <button type="button" onClick={() => act.tickAll(ex.slot)} className="relative -mx-1 min-w-[44px] before:absolute before:-inset-y-[14px] before:inset-x-0 before:content-['']" aria-label={`Alle sets van ${ex.name} gedaan`}>
-                    Alles
-                  </button>
-                )}
-              </span>
-            </div>
-            {ex.rows.map((row, i) => {
-              if (row.kind === 'work') workNo++;
-              const label = row.kind === 'warmup' ? 'W' : String(workNo);
-              const prev = previousText(previousFor(ex, row), exerciseOf(ex));
-              const step = plates?.[i];
-              const isActive = !readOnly && active === row.id;
-              const own = isOwnRow(row);
-              const fieldOn = (name: FieldName) => field?.slot === ex.slot && field.rowId === row.id && field.field === name;
-              return (
-                <div key={row.id} data-row-id={row.id}>
-                  <SwipeRow label={label} enabled={!readOnly && swipeOn && canRemoveRow(ex, row.id)} onDelete={() => act.remove(ex.slot, row.id)}>
-                  <LongPressRow
-                    onLong={() => act.rowMenu(ex.slot, row.id)}
-                    disabled={readOnly}
-                    data-active={isActive}
-                    className="forge-grid forge-row items-center rounded-xl py-0.5"
-                    style={{
-                      background: row.done ? 'color-mix(in srgb, var(--color-progress) 16%, transparent)' : isActive ? 'color-mix(in srgb, var(--color-ink) 5%, transparent)' : 'transparent',
-                      opacity: row.kind === 'warmup' && !row.done ? 0.78 : 1,
-                      transition: 'background-color 0.3s ease, opacity 0.3s ease',
-                    }}
-                  >
-                    <span role="cell" data-swipe-zone className="flex min-h-[44px] items-center justify-center">
-                      <span
-                        className="flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums"
-                        style={{ background: row.done ? 'var(--color-progress)' : own ? 'transparent' : 'var(--color-surface)', boxShadow: own && !row.done ? 'inset 0 0 0 1.5px var(--color-control-border)' : undefined, color: row.done ? 'var(--color-on-action)' : row.kind === 'warmup' ? 'var(--color-ink-dim)' : 'var(--color-ink)', transition: 'background-color 0.3s ease' }}
-                      >
-                        {label}
-                      </span>
-                    </span>
-                    <span role="cell" data-swipe-zone className="min-w-0 font-sans text-xs leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-                      {showPrevious ? (
-                        <span>{prev ?? ''}</span>
-                      ) : own ? (
-                        <span className="flex min-h-[44px] items-center text-sm">eigen set</span>
-                      ) : readOnly ? (
-                        <PrescriptionText row={row} ex={ex} />
-                      ) : (
-                        <button type="button" data-swipe-ok onClick={() => act.take(ex.slot, row.id)} disabled={row.done} aria-label={`Voorschrift overnemen, set ${label}`} className="flex min-h-[44px] w-full flex-col justify-center text-left">
-                          <PrescriptionText row={row} ex={ex} />
-                        </button>
-                      )}
-                    </span>
-                    {readOnly || ex.timed ? (
-                      <>
-                        <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? '' : row.target.weightKg !== undefined ? formatNumberNL(row.target.weightKg, 2) : ''}</span>
-                        <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? repsText(row.target) : row.reps}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span role="cell">
-                          <ValueCell value={assisted && row.weightKg !== undefined ? Math.abs(row.weightKg) : row.weightKg} decimals={2} label={`${assisted ? 'Hulp' : 'Gewicht'}, set ${label}`} done={row.done} active={fieldOn('weightKg')} selected={selected} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
-                        </span>
-                        <span role="cell">
-                          <ValueCell value={row.reps} decimals={0} label={`Herhalingen, set ${label}`} done={row.done} active={fieldOn('reps')} selected={selected} onOpen={() => act.open(ex.slot, row.id, 'reps')} />
-                        </span>
-                      </>
-                    )}
-                    <span role="cell" className="flex justify-center">
-                      {row.kind === 'work' && !ex.timed && (readOnly ? row.target.rir : row.rir ?? row.target.rir) !== undefined && (
-                        <RirBubble
-                          rir={(readOnly ? row.target.rir : row.rir ?? row.target.rir)!}
-                          // Een RIR die je niet zelf invulde staat gedimd: het is een hint, geen meting. Met "RIR vooraf invullen: Met het doel" staat het doel er als gewone waarde.
-                          hint={!readOnly && (row.rir === undefined || (!!row.rirAssumed && !rirAsValue))}
-                          label={
-                            !readOnly && (row.rir === undefined || (row.rirAssumed && !rirAsValue))
-                              ? `Voorschrift ${row.rir ?? row.target.rir} over, set ${label}, tik om je eigen RIR in te vullen`
-                              : `${row.rir ?? row.target.rir} over, set ${label}${readOnly ? '' : ', tik om te wijzigen'}`
-                          }
-                          onClick={readOnly ? undefined : () => act.rir(ex.slot, row.id)}
-                        />
-                      )}
-                    </span>
-                    <span role="cell" className="flex justify-center">
-                      {!readOnly && <TickBox done={row.done} onClick={() => act.tick(ex.slot, row.id)} label={`Set ${label} gedaan`} />}
-                    </span>
-                  </LongPressRow>
-                  </SwipeRow>
-                  {!readOnly && row.kind === 'work' && addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg) && (
-                    <p className="ml-9 h-5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg)} kg</p>
-                  )}
-                  {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
-                    <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
-                  )}
-                  {!readOnly && row.id === spotterRowId && (
-                    <div className="ml-9 h-5">
-                      <button type="button" onClick={act.spotter} aria-label={`${SPOTTER_SIGN}, set ${label}. Tik voor uitleg`} className="relative flex h-5 items-center gap-1.5 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
-                        <Icon name="schild" size={14} />
-                        {SPOTTER_SIGN}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {!readOnly && undoText && (
-            <p role="status" className="mt-1 flex min-h-[44px] items-center gap-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              <span>{undoText}</span>
-              <TextButton onClick={act.undo}>Ongedaan maken</TextButton>
-            </p>
-          )}
-          {!readOnly && !undoText && droppedCount(ex) > 0 && (
-            <p className="mt-1 flex min-h-[44px] items-center gap-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              <span>{droppedLine(droppedCount(ex))}</span>
-              <TextButton onClick={() => act.restore(ex.slot)}>Terugzetten</TextButton>
-            </p>
-          )}
-          {!readOnly && !ex.timed && (
-            <button type="button" onClick={() => act.add(ex.slot)} className="mt-1 flex min-h-[44px] items-center gap-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              <Icon name="plus" size={16} /> Set toevoegen
-            </button>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-});
-
-// Het voorschrift van een set: "47,5 kg × 11-13" met de RIR eronder.
-function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise }) {
-  return (
-    <>
-      <span className="block">
-        {/* Alleen breken tussen gewicht en herhalingen, nooit midden in "8-10". */}
-        {targetText(row, exerciseOf(ex)).split(' × ').map((part, k) => (
-          <Fragment key={k}>
-            {k > 0 && ' '}
-            <span className="whitespace-nowrap">{k > 0 ? `× ${part}` : part}</span>
-          </Fragment>
-        ))}
-      </span>
-      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && <span className="block text-xs">{row.target.rir} RIR</span>}
-    </>
-  );
-}
-
-// "70 + 2,3" onder een werkset van een toestel met een tussengewicht, als het gewicht daarmee gemaakt is.
-function addOnLine(profile: GymProfile, exercise: Exercise | undefined, weightKg: number | undefined): string | undefined {
-  return addOnText(profile, exercise, weightKg, stepFor(exercise, profile));
-}
-
-// De regel onder "Tussengewicht van dit toestel" in het menu van een oefening.
-function addOnMenuSub(profile: GymProfile, exercise: Exercise | undefined): string {
-  const list = addOnsFor(profile, exercise);
-  return list.length > 0 ? `${formatAddOns(list)} erbij, in ${profile.name}.` : `Geen los gewicht in ${profile.name}.`;
-}
-
-// De schijven bij een stang, klein onder een werkset: een tik opent het invoerpaneel.
-function PlateLine({ step, onOpen }: { step?: PlateStep; onOpen: () => void }) {
-  return (
-    <div className="ml-9 h-5">
-      {step && (
-        <button type="button" onClick={onOpen} aria-label={`Schijven: per kant ${plateSideText(step)}. Tik voor de stang`} className="relative flex h-5 items-center gap-1.5 font-sans text-xs tabular-nums before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
-          <Icon name="schijf" size={14} />
-          {step.shortKg > 0 ? plateShortText(step) : step.perSide.length > 0 ? `per kant ${plateSideText(step)}` : 'alleen de stang'}
-        </button>
-      )}
-    </div>
-  );
-}
-
-// --- de rusttimer ----------------------------------------------------------------------
-
-// De balk komt omhoog, de voortgang loopt vloeiend af naar de eindtijd (de bron;
-// niet naar het aantal ticks), −15 en +30 laten het getal even schuiven, aan het
-// eind pulseert hij zacht, en naar beneden vegen sluit hem (Overslaan).
-function RestBar({ rest, lift, onAdd, onSkip }: { rest: Rest; lift: number; onAdd: (seconds: number) => void; onSkip: () => void }) {
-  const now = useNow(500);
-  const left = Math.max(0, Math.ceil((rest.endsAt - now) / 1000));
-  const over = left === 0;
-  const share = rest.total > 0 ? Math.min(1, 1 - Math.max(0, rest.endsAt - now) / (rest.total * 1000)) : 1;
-  const bar = useRef<HTMLDivElement>(null);
-  const slab = useRef<HTMLDivElement>(null);
-  const clockText = useRef<HTMLParagraphElement>(null);
-  const drag = useRef<{ y: number; dy: number } | null>(null);
-
-  // De voortgang loopt als één beweging tot de eindtijd, zonder ticks.
-  useEffect(() => {
-    const total = rest.total * 1000;
-    const remaining = Math.max(0, rest.endsAt - Date.now());
-    const from = total > 0 ? Math.min(1, Math.max(0, 1 - remaining / total)) : 1;
-    const a = animateEl(bar.current, [{ transform: `scaleX(${from})` }, { transform: 'scaleX(1)' }], { duration: remaining, easing: 'linear', fill: 'forwards' });
-    return () => a?.cancel();
-  }, [rest.endsAt, rest.total]);
-
-  function add(seconds: number) {
-    animateEl(clockText.current, [{ opacity: 0.3, transform: `translateY(${seconds > 0 ? 8 : -8}px)` }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
-    onAdd(seconds);
-  }
-
-  function skip() {
-    const a = animateEl(slab.current, [{ transform: `translateY(${drag.current?.dy ?? 0}px)` }, { transform: 'translateY(110%)' }], { duration: 180, easing: 'ease-in', fill: 'forwards' });
-    if (a) a.onfinish = onSkip;
-    else onSkip();
-  }
-
-  return (
-    <div
-      className="forge-up fixed inset-x-0 z-30"
-      style={{ bottom: lift, transition: reducedMotion() ? undefined : 'bottom 0.25s cubic-bezier(0.22, 1, 0.36, 1)', ['--forge-fill' as string]: 'var(--color-surface)' }}
-      role="timer"
-      aria-live="off"
-    >
-      <div
-        ref={slab}
-        className="border-t"
-        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', paddingBottom: lift > 0 ? 0 : 'env(safe-area-inset-bottom)', touchAction: 'none' }}
-        onPointerDown={(e) => {
-          if ((e.target as HTMLElement).closest('button')) return;
-          drag.current = { y: e.clientY, dy: 0 };
-          e.currentTarget.setPointerCapture(e.pointerId);
-        }}
-        onPointerMove={(e) => {
-          const d = drag.current;
-          if (!d) return;
-          d.dy = Math.max(0, e.clientY - d.y);
-          e.currentTarget.style.transform = `translateY(${d.dy}px)`;
-        }}
-        onPointerUp={(e) => {
-          const d = drag.current;
-          drag.current = null;
-          if (!d) return;
-          if (d.dy > 36) {
-            drag.current = { y: 0, dy: d.dy };
-            skip();
-            return;
-          }
-          const el = e.currentTarget;
-          if (d.dy > 0) {
-            const a = animateEl(el, [{ transform: `translateY(${d.dy}px)` }, { transform: 'translateY(0)' }], { duration: 220, easing: 'cubic-bezier(0.22, 1.12, 0.36, 1)' });
-            if (!a) el.style.transform = '';
-            else a.onfinish = () => (el.style.transform = '');
-          }
-        }}
-        onPointerCancel={(e) => {
-          drag.current = null;
-          e.currentTarget.style.transform = '';
-        }}
-      >
-        <div className="h-0.5 overflow-hidden" style={{ background: 'var(--color-card-border)' }}>
-          <div ref={bar} className={`h-0.5 origin-left ${over ? 'forge-glow' : ''}`} style={{ transform: `scaleX(${share})`, background: over ? 'var(--color-success)' : 'var(--color-action)', transition: 'background-color 0.3s ease' }} />
-        </div>
-        <div className="mx-auto flex max-w-md items-center gap-2 px-4 py-1.5">
-          <div className="min-w-0 flex-1">
-            <p ref={clockText} key={over ? 'over' : 'run'} className={`origin-left font-sans text-2xl leading-none tabular-nums ${over ? 'forge-pulse' : ''}`} style={{ color: over ? 'var(--color-success-text)' : 'var(--color-ink)' }}>{over ? 'Tijd om' : formatClock(left)}</p>
-            <p className="mt-1 truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>Rust · {rest.name}</p>
-          </div>
-          {!over && (
-            <>
-              <button type="button" onClick={() => add(-15)} className="min-h-[44px] min-w-[44px] rounded-xl border px-2 font-sans text-sm tabular-nums" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="15 seconden korter">−15</button>
-              <button type="button" onClick={() => add(30)} className="min-h-[44px] min-w-[44px] rounded-xl border px-2 font-sans text-sm tabular-nums" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="30 seconden langer">+30</button>
-            </>
-          )}
-          <button type="button" onClick={skip} className="min-h-[44px] rounded-xl border px-3 text-sm" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>
-            {over ? 'Sluiten' : 'Overslaan'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RestStepper({ seconds, onChange }: { seconds: number; onChange: (s: number) => void }) {
-  const step = (d: number) => onChange(Math.min(REST_LIMITS.max, Math.max(REST_LIMITS.min, seconds + d)));
-  const btn = 'flex h-11 w-11 items-center justify-center rounded-xl border';
-  return (
-    <span className="flex shrink-0 items-center gap-1">
-      <button type="button" onClick={() => step(-15)} className={btn} style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="15 seconden korter"><Icon name="min" size={18} /></button>
-      <span className="w-12 text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatClock(seconds)}</span>
-      <button type="button" onClick={() => step(15)} className={btn} style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="15 seconden langer"><Icon name="plus" size={18} /></button>
-    </span>
-  );
-}
-
-// --- notitie ---------------------------------------------------------------------------
-
-function NoteSheet({ name, value, onSave, onClose }: { name: string; value: string; onSave: (text: string) => void; onClose: () => void }) {
-  const [text, setText] = useState(value);
-  return (
-    <ForgeSheet title={`Notitie bij ${name}`} sub="Staat bij deze oefening, elke training weer." onClose={onClose}>
-      {(close) => (
-        <div className="flex flex-col gap-3">
-          <textarea
-            value={text}
-            maxLength={EXERCISE_NOTE_MAX}
-            onChange={(e) => setText(e.target.value)}
-            rows={3}
-            placeholder="Bijvoorbeeld: stoel op 4, voeten hoog"
-            className="w-full rounded-xl border px-3 py-2 text-sm"
-            style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
-          />
-          <div className="flex gap-3">
-            <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
-            <PrimaryButton fullWidth={false} onClick={() => { onSave(text); close(); }}>Opslaan</PrimaryButton>
-          </div>
-        </div>
-      )}
-    </ForgeSheet>
-  );
-}
-
-// --- afronden ---------------------------------------------------------------------------
-
-interface FinishExtra {
-  minutes: number;
-  rpe?: number;
-  feel?: 'better' | 'normal' | 'worse';
-  pain: PainReport[];
-  notes: string;
-  doneOn: string;
-}
-
-function FinishSheet({
-  template,
-  readOnly,
-  workout,
-  elapsedSeconds,
-  defaultMinutes,
-  plannedSessionId,
-  scheduledDate,
-  onClose,
-  onSave,
-}: {
-  template: SessionTemplate;
-  readOnly: boolean;
-  workout: WorkoutExercise[];
-  elapsedSeconds: number;
-  defaultMinutes: number;
-  plannedSessionId?: string;
-  scheduledDate?: string;
-  onClose: () => void;
-  onSave: (extra: FinishExtra) => Promise<boolean>;
-}) {
-  const today = todayISO();
-  const { done, total } = progress(workout);
-  const anyTicked = workout.some((e) => e.rows.some((r) => r.done));
-  // Boven vier uur actieve tijd is de klok verdacht: dan staat hier je gewone duur en zegt een regel wat de klok zei.
-  const dur = finishDuration(elapsedSeconds, defaultMinutes);
-  const [minutes, setMinutes] = useState<number | undefined>(readOnly || !anyTicked ? defaultMinutes : dur.minutes);
-  const [rpe, setRpe] = useState<number | undefined>();
-  const [feel, setFeel] = useState<FinishExtra['feel']>();
-  const [pain, setPain] = useState<PainReport[]>([]);
-  const [notes, setNotes] = useState('');
-  const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
-  const [doneOn, setDoneOn] = useState(plannedInPast ? scheduledDate! : today);
-  const [saving, setSaving] = useState(false);
-  const [outcome, setOutcome] = useState<string | null>(null);
-  const busy = useRef(false);
-  const notTicked = total - done;
-
-  async function save() {
-    if (busy.current) return;
-    busy.current = true;
-    setSaving(true);
-    setOutcome(null);
-    try {
-      const ok = await withTimeout(onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn }), SAVE_LIMIT_MS);
-      if (ok === true) return;
-      setOutcome('Deze training staat al in je logboek. Er is niets dubbel opgeslagen.');
-    } catch (err) {
-      setOutcome(err instanceof TimeoutError ? 'Opslaan duurt langer dan normaal. Je sets blijven bewaard; probeer het zo nog eens.' : 'Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.');
-    }
-    busy.current = false;
-    setSaving(false);
-  }
-
-  return (
-    <ForgeSheet
-      title={readOnly ? 'Training afvinken' : 'Training afronden'}
-      sub={readOnly ? 'Sets en gewichten komen uit MacroFactor.' : `${done} van ${total} werksets gedaan.${notTicked > 0 && anyTicked ? ' Wat niet is afgevinkt, wordt niet bewaard.' : ''}`}
-      onClose={onClose}
-    >
-      {(close) => (
-        <div className="flex flex-col gap-4">
-          {!readOnly && !anyTicked && (
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>Je hebt nog geen set afgevinkt. Dan wordt alleen de training afgevinkt, zonder sets.</p>
-          )}
-          {!readOnly && anyTicked && dur.clamped && (
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>De klok zegt {dur.clockSaid}. Klopt dat niet, dan staat hier je gewone duur.</p>
-          )}
-          {(plannedInPast || !plannedSessionId) && (
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span style={{ color: 'var(--color-ink-dim)' }}>Gedaan op</span>
-              {plannedInPast ? (
-                [scheduledDate!, today].map((d) => (
-                  <button key={d} type="button" onClick={() => setDoneOn(d)} className="min-h-[44px] rounded-full border px-3" style={{ borderColor: doneOn === d ? 'var(--color-ink)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}>
-                    {d === today ? 'vandaag' : `${weekdayShortNL(d).toLowerCase()} ${formatDateNL(d)}`}
-                  </button>
-                ))
-              ) : (
-                <input type="date" lang="nl" value={doneOn} max={today} min={addDays(today, -60)} onChange={(e) => e.target.value && setDoneOn(e.target.value)} className="rounded-lg border bg-transparent px-2" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)', colorScheme: 'dark' }} />
-              )}
-            </div>
-          )}
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Duur</span>
-            <div className="w-32"><NumberField value={minutes} onChange={setMinutes} unit="min" tall /></div>
-          </div>
-          <div>
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE) van de hele training, als je wilt</p>
-            <div className="mt-2 grid grid-cols-5 gap-2" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
-              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                <button key={n} type="button" role="radio" aria-checked={rpe === n} onClick={() => setRpe(rpe === n ? undefined : n)} className="min-h-[44px] rounded-lg border font-sans text-sm tabular-nums" style={{ borderColor: rpe === n ? 'var(--color-ink)' : 'var(--color-card-border)', background: rpe === n ? 'var(--color-surface)' : 'transparent', color: rpe === n ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Ten opzichte van normaal</p>
-            <div className="mt-2 flex gap-2">
-              {(['better', 'normal', 'worse'] as const).map((f) => (
-                <button key={f} type="button" aria-pressed={feel === f} onClick={() => setFeel(feel === f ? undefined : f)} className="min-h-[44px] flex-1 rounded-lg border text-sm" style={{ borderColor: feel === f ? 'var(--color-ink)' : 'var(--color-card-border)', color: feel === f ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>
-                  {FEEL_LABEL[f]}
-                </button>
-              ))}
-            </div>
-          </div>
-          {isLegHeavyTemplate(template) && <PainReportFields value={pain} onChange={setPain} />}
-          <div>
-            <label htmlFor="forge-notes" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Notitie bij deze training</label>
-            <textarea id="forge-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} />
-          </div>
-          {outcome && <p className="text-xs leading-snug" role="status" style={{ color: 'var(--color-warning)' }}>{outcome}</p>}
-          <div className="flex gap-3">
-            <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
-            <PrimaryButton
-              fullWidth={false}
-              disabled={saving}
-              onClick={() => void save()}
-            >
-              {saving ? 'Opslaan…' : readOnly ? 'Afvinken' : 'Opslaan'}
-            </PrimaryButton>
-          </div>
-        </div>
-      )}
-    </ForgeSheet>
-  );
-}
-
-// De keuzes in het ruilblad, met links het kaartje. De tekeningen ervan worden opgehaald zodra het blad
-// opent, zodat de kaartjes de oefening laten zien en niet alleen de spieren.
-function SwapList({ options, onPick }: { options: ReturnType<typeof swapOptions>; onPick: (id: string) => void }) {
-  useDrawingsFor(useMemo(() => options.map((o) => o.id), [options]));
-  return (
-    <div className="flex flex-col">
-      {options.map((o) => (
-        <MenuRow key={o.id} lead={<ExerciseArtButton exerciseId={o.id} name={o.name} />} title={o.name} sub={o.primary.map((m) => MUSCLE_LABEL[m]).join(', ')} onClick={() => onPick(o.id)} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />
-      ))}
-    </div>
   );
 }
