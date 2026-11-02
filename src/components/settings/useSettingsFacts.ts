@@ -53,6 +53,8 @@ interface Loaded {
   storageUse?: StorageEstimate;
   notice: SettingsFacts['notice'];
   device?: DevicePermissions | 'unknown';
+  // Het lezen van de koppelstatus mislukte.
+  watchUnreadable?: boolean;
 }
 
 const EMPTY: Loaded = { linked: false, watch: null, sendEnabled: false, macroFactor: null, storage: undefined, snapshots: 0, folderChosen: false, notice: undefined };
@@ -66,9 +68,14 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   useEffect(() => {
     let alive = true;
     const load = async () => {
+      let unreadable = false;
+      const unread = () => {
+        unreadable = true;
+        return null;
+      };
       const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize, storageUse, device] = await Promise.all([
-        getConnection().catch(() => null),
-        getWatchState().catch(() => null),
+        getConnection().catch(unread),
+        getWatchState().catch(unread),
         getWatchWorkoutState().catch(() => null),
         getMacroFactorState().catch(() => null),
         getPersistenceStatus().catch(() => undefined),
@@ -82,7 +89,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         withTimeout(notificationPort().permissions(), 2000).catch(() => 'unknown' as const),
       ]);
       if (!alive) return;
-      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, device,
+      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, device, watchUnreadable: unreadable,
         // In de app komt de ochtendvraag als melding op tijd; dan telt alleen of meldingen mogen.
         notice: device !== 'unknown' && device.timed
           ? { support: nativeNoticeSupport(device.notifications), granted: device.notifications === 'granted' }
@@ -172,6 +179,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       notice: loaded.notice,
       device: loaded.device,
       liveUpdate: liveUpdatePort().available,
+      watchUnreadable: loaded.watchUnreadable,
     };
   }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, strengthCheck]);
 

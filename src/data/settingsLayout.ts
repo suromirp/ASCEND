@@ -254,7 +254,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   // Doel en tochten
   ...rule([B.goalOrProgram], 'programma'),
   ...rule([B.noGoal], 'bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
-  ...rule([B.goal], 'na-hoofddoel'),
+  ...rule([B.goal], 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge'),
   ...rule([B.longSunday], 'lange-zondag'),
   ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
