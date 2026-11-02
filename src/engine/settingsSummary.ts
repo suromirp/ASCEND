@@ -64,7 +64,7 @@ import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { resolveSportCounting } from './sportRole';
 import { sportsRowSummary } from './sportsScreen';
-import { isRowPending, type SettingsSource } from './settingsPending';
+import { isRowPending, isRowUnknown, type SettingsSource } from './settingsPending';
 import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
@@ -180,6 +180,8 @@ export interface SettingsFacts {
   healthConnect?: HealthConnectFacts;
   // Bronnen die de eerste keer nog niet binnen zijn: hun rijen zeggen "Bezig" (engine/settingsPending.ts).
   pending?: readonly SettingsSource[];
+  // Bronnen die de eerste keer te lang duurden of faalden: hun rijen zeggen "Onbekend", nooit een verzonnen waarde.
+  unknown?: readonly SettingsSource[];
 }
 
 export interface HealthConnectFacts {
@@ -345,12 +347,17 @@ export function rowContext(f: SettingsFacts): RowContext {
 // De samenvatting van een rij. Of de rij er nu hoort (`hidden`) komt uit SHOW_WHEN in
 // data/settingsLayout.ts, zodat de afhankelijkheden op één plek staan.
 export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
-  const base = isRowPending(rowId, f.pending) ? busySummary(baseSummary(rowId, f)) : baseSummary(rowId, f);
+  const base = isRowPending(rowId, f.pending)
+    ? waitingSummary(baseSummary(rowId, f), 'Bezig…')
+    : isRowUnknown(rowId, f.unknown)
+      ? waitingSummary(baseSummary(rowId, f), 'Onbekend')
+      : baseSummary(rowId, f);
   return SHOW_WHEN[rowId] ? { ...base, hidden: !isRowShown(rowId, f.settings, rowContext(f)) } : base;
 }
 
-// Een rij die op een bron wacht: de waarde is "Bezig", de rest blijft.
-const busySummary = (base: RowSummary): RowSummary => ({ ...base, value: 'Bezig', dim: true, dot: undefined, checked: undefined });
+// Een rij die op een bron wacht of er geen antwoord van kreeg: alleen de titel en dit woord, gedimd,
+// zonder regel eronder (die zou een feit zijn dat we niet weten).
+const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title: base.title, auto: base.auto, value, dim: true });
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
@@ -983,7 +990,9 @@ type GroupSummary = { value?: string; sub: string; dim?: boolean; dot?: 'ok' | '
 
 export function groupSummary(page: SettingsPageId, f: SettingsFacts): GroupSummary {
   const group = groupSummaryNow(page, f);
-  return isRowPending(page, f.pending) ? { value: 'Bezig', sub: group.sub, dim: true } : group;
+  if (isRowPending(page, f.pending)) return { value: 'Bezig…', sub: '', dim: true };
+  if (isRowUnknown(page, f.unknown)) return { value: 'Onbekend', sub: '', dim: true };
+  return group;
 }
 
 function groupSummaryNow(page: SettingsPageId, f: SettingsFacts): GroupSummary {

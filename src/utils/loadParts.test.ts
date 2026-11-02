@@ -12,9 +12,9 @@ describe('loadParts', () => {
     vi.useFakeTimers();
     const got: string[] = [];
     const parts: Part<'a' | 'b' | 'c', T>[] = [
-      { key: 'a', ms: 60_000, load: async () => ({ a: 1 }), fallback: {} },
-      { key: 'b', ms: 3000, load: never, fallback: { b: -1 } },
-      { key: 'c', ms: 3000, load: async () => ({ c: 3 }), fallback: {} },
+      { key: 'a', ms: 60_000, load: async () => ({ a: 1 }) },
+      { key: 'b', ms: 3000, load: never },
+      { key: 'c', ms: 3000, load: async () => ({ c: 3 }) },
     ];
     const done = loadParts(parts, (key) => got.push(key));
     await vi.advanceTimersByTimeAsync(0);
@@ -24,19 +24,20 @@ describe('loadParts', () => {
     expect(got).toEqual(['a', 'c', 'b']);
   });
 
-  it('gebruikt de terugval na de eigen grens en bij een fout', async () => {
+  it('meldt een mislukte bron zonder waarde, na de eigen grens en bij een fout', async () => {
     vi.useFakeTimers();
-    const patches: Record<string, Partial<T>> = {};
+    const patches: Record<string, { patch: Partial<T>; ok: boolean }> = {};
     const done = loadParts<'a' | 'b', T>(
       [
-        { key: 'a', ms: 2000, load: never, fallback: { a: 9 } },
-        { key: 'b', ms: 2000, load: async () => { throw new Error('stuk'); }, fallback: { b: 8 } },
+        { key: 'a', ms: 2000, load: never },
+        { key: 'b', ms: 2000, load: async () => { throw new Error('stuk'); } },
       ],
-      (k, p) => (patches[k] = p),
+      (k, patch, ok) => (patches[k] = { patch, ok }),
     );
     await vi.advanceTimersByTimeAsync(2000);
     await done;
-    expect(patches).toEqual({ a: { a: 9 }, b: { b: 8 } });
+    // Geen verzonnen waarde: een lege patch en ok: false.
+    expect(patches).toEqual({ a: { patch: {}, ok: false }, b: { patch: {}, ok: false } });
   });
 
   it('een plugin die nooit antwoordt houdt de andere bronnen niet tegen', async () => {
@@ -45,8 +46,8 @@ describe('loadParts', () => {
     const seen: number[] = [];
     const done = loadParts<'plugin' | 'quick', T>(
       [
-        { key: 'plugin', ms: 4000, load: async () => ({ a: (await slow.checkPermissions()) as unknown as number }), fallback: { a: 0 } },
-        { key: 'quick', ms: 4000, load: async () => ({ b: 1 }), fallback: {} },
+        { key: 'plugin', ms: 4000, load: async () => ({ a: (await slow.checkPermissions()) as unknown as number }) },
+        { key: 'quick', ms: 4000, load: async () => ({ b: 1 }) },
       ],
       (_k, p) => seen.push(Object.values(p)[0] as number),
     );
@@ -54,6 +55,6 @@ describe('loadParts', () => {
     expect(seen).toEqual([1]);
     await vi.advanceTimersByTimeAsync(4000);
     await done;
-    expect(seen).toEqual([1, 0]);
+    expect(seen).toEqual([1, undefined]);
   });
 });

@@ -82,24 +82,22 @@ export function settingsParts(): Part<SettingsSource, Loaded>[] {
         const [connection, watch, workouts] = await Promise.all([getConnection().catch(unread), getWatchState().catch(unread), getWatchWorkoutState().catch(() => null)]);
         return { linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, watchUnreadable: unreadable };
       },
-      fallback: { watchUnreadable: true },
     },
-    { key: 'macroFactor', ms: 3000, load: async () => ({ macroFactor: await getMacroFactorState().catch(() => null) }), fallback: {} },
-    { key: 'storage', ms: 3000, load: async () => ({ storage: await getPersistenceStatus().catch(() => undefined) }), fallback: {} },
-    { key: 'snapshots', ms: 4000, load: async () => ({ snapshots: (await listSnapshots().catch(() => [])).length }), fallback: {} },
+    { key: 'macroFactor', ms: 3000, load: async () => ({ macroFactor: await getMacroFactorState() }) },
+    { key: 'storage', ms: 3000, load: async () => ({ storage: await getPersistenceStatus() }) },
+    { key: 'snapshots', ms: 4000, load: async () => ({ snapshots: (await listSnapshots()).length }) },
     {
       key: 'autoBackup',
       ms: 3000,
       load: async () => {
-        const folder = webBackupFileAdapter.supportsPreferredDirectory() ? await (webBackupFileAdapter.hasPreferredDirectory?.() ?? Promise.resolve(false)).catch(() => false) : false;
-        return { folderChosen: !!folder, autoBackup: await readAutoBackupFacts(!!folder).catch(() => undefined) };
+        const folder = webBackupFileAdapter.supportsPreferredDirectory() ? await (webBackupFileAdapter.hasPreferredDirectory?.() ?? Promise.resolve(false)) : false;
+        return { folderChosen: !!folder, autoBackup: await readAutoBackupFacts(!!folder) };
       },
-      fallback: {},
     },
     // Telt elke reeks een voor een; bij veel loopjes en tochten kan dat op een telefoon lang duren.
-    { key: 'streams', ms: 4000, load: async () => ({ streamsBytes: (await ActivityStreamsRepo.totalBytes().catch(() => undefined))?.bytes }), fallback: {} },
+    { key: 'streams', ms: 4000, load: async () => ({ streamsBytes: (await ActivityStreamsRepo.totalBytes()).bytes }) },
     // Met een eigen tijdsgrens (storage/storageEstimate.ts).
-    { key: 'storageUse', ms: 4000, load: async () => ({ storageUse: await estimateStorage() }), fallback: { storageUse: { kind: 'timeout' } } },
+    { key: 'storageUse', ms: 4000, load: async () => ({ storageUse: await estimateStorage() }) },
     {
       key: 'device',
       ms: 3000,
@@ -114,9 +112,8 @@ export function settingsParts(): Part<SettingsSource, Loaded>[] {
             : noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined,
         };
       },
-      fallback: { device: 'unknown' },
     },
-    { key: 'healthConnect', ms: 3000, load: async () => ({ healthConnect: await readHealthConnectFacts().catch(() => undefined) }), fallback: {} },
+    { key: 'healthConnect', ms: 3000, load: async () => ({ healthConnect: await readHealthConnectFacts() }) },
   ];
 }
 

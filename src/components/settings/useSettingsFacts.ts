@@ -1,5 +1,4 @@
-import { webBackupFileAdapter } from '../../storage/backupFileAdapter';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { isOpenOn, isSoreness } from '../../engine/injuryKind';
 import { effectiveAmbition } from '../../engine/ambition';
@@ -21,48 +20,38 @@ import { onHealthConnectChange } from '../../storage/healthConnect';
 import { onWatchChange } from '../../storage/externalActivities';
 import { onMacroFactorChange } from '../../storage/macrofactor';
 import { subscribeAutoBackup } from '../../storage/autoBackup';
+import { webBackupFileAdapter } from '../../storage/backupFileAdapter';
 import { buildLabel } from '../../utils/buildLabel';
 import { liveUpdatePort } from '../../integrations/liveUpdate';
-import { loadParts } from '../../utils/loadParts';
 import { ALL_SOURCES, EMPTY, settingsParts, type Loaded } from './settingsFactsParts';
-import type { SettingsSource } from '../../engine/settingsPending';
+import { startFactsLoading, type LoaderState, type SourceLink } from './factsLoader';
 import { resolveProgramWeek, todayISO } from '../../utils/dates';
 import { mainGoal as findMainGoal } from '../../engine/mainGoal';
 import { listedGoals } from '../../engine/goalList';
 
+const FACT_LINKS: SourceLink[] = [
+  { subscribe: onWatchChange, sources: ['watch'] },
+  { subscribe: onMacroFactorChange, sources: ['macroFactor'] },
+  { subscribe: subscribeAutoBackup, sources: ['autoBackup', 'snapshots'] },
+  { subscribe: onHealthConnectChange, sources: ['healthConnect'] },
+];
+
 export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void } {
   const app = useAppData();
-  const [loaded, setLoaded] = useState<Loaded>(EMPTY);
-  // De bronnen die de eerste keer nog niet binnen zijn; bij een volgende ronde blijft de oude waarde staan.
-  const [pending, setPending] = useState<readonly SettingsSource[]>(ALL_SOURCES);
-  const [tick, setTick] = useState(0);
-  const reload = () => setTick((n) => n + 1);
+  // De laadstand per bron (components/settings/factsLoader.ts): wat al bekend is blijft staan.
+  const [state, setState] = useState<LoaderState<Loaded>>({ loaded: EMPTY, pending: ALL_SOURCES, unknown: [] });
+  const control = useRef<{ reload: () => void } | null>(null);
+  const reload = useCallback(() => control.current?.reload(), []);
 
   useEffect(() => {
-    let alive = true;
-    const load = (only?: readonly SettingsSource[]) =>
-      loadParts(
-        settingsParts().filter((p) => !only || only.includes(p.key)),
-        (key, patch) => {
-          if (!alive) return;
-          setLoaded((prev) => ({ ...prev, ...patch }));
-          setPending((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : prev));
-        },
-      );
-    void load();
-    // Een wijziging vraagt alleen de bron die erbij hoort; de zware tellingen lopen niet mee.
-    const offWatch = onWatchChange(() => void load(['watch']));
-    const offMf = onMacroFactorChange(() => void load(['macroFactor']));
-    const offBackup = subscribeAutoBackup(() => void load(['autoBackup', 'snapshots']));
-    const offHealth = onHealthConnectChange(() => void load(['healthConnect']));
+    const run = startFactsLoading(settingsParts, EMPTY, ALL_SOURCES, FACT_LINKS, setState);
+    control.current = run;
     return () => {
-      alive = false;
-      offHealth();
-      offWatch();
-      offMf();
-      offBackup();
+      control.current = null;
+      run.stop();
     };
-  }, [tick]);
+  }, []);
+  const { loaded, pending, unknown } = state;
 
   const { settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal } = app;
 
@@ -142,8 +131,9 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       watchUnreadable: loaded.watchUnreadable,
       healthConnect: loaded.healthConnect,
       pending,
+      unknown,
     };
-  }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, pending, strengthCheck]);
+  }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, pending, unknown, strengthCheck]);
 
   return { facts, reload };
 }

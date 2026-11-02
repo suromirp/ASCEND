@@ -68,11 +68,30 @@ describe('de rijen van de app-meldingen', () => {
 });
 
 describe('Rijen die op een bron wachten', () => {
-  it('zeggen Bezig zolang hun bron niet binnen is, en alleen die rijen', () => {
+  it('zeggen Bezig… zolang hun bron niet binnen is, zonder regel, en alleen die rijen', () => {
     const f = facts({ pending: ['snapshots'] });
-    expect(rowSummary('momentopnamen', f)).toMatchObject({ value: 'Bezig', dim: true });
-    expect(groupSummary('gegevens', f)).toMatchObject({ value: 'Bezig' });
+    expect(rowSummary('momentopnamen', f)).toEqual({ value: 'Bezig…', dim: true });
+    expect(groupSummary('gegevens', f)).toEqual({ value: 'Bezig…', sub: '', dim: true });
     expect(rowSummary('opslag', f)).toMatchObject({ value: 'Ja' });
     expect(rowSummary('momentopnamen', facts({ pending: [] }))).toMatchObject({ value: '0' });
+  });
+  it('de bundel meldingen wacht op de telefoon', () => {
+    expect(rowSummary('bundel-meldingen', facts({ pending: ['device'] }))).toMatchObject({ value: 'Bezig…' });
+  });
+});
+
+describe('Rijen waarvan de bron te traag was of faalde', () => {
+  it('kopieën: Onbekend, nooit 0 of "Alles staat alleen op deze telefoon"', () => {
+    const f = facts({ unknown: ['snapshots'] });
+    expect(rowSummary('momentopnamen', f)).toEqual({ value: 'Onbekend', dim: true });
+    expect(groupSummary('gegevens', f)).toEqual({ value: 'Onbekend', sub: '', dim: true });
+  });
+  it('MacroFactor: geen "Niet gekoppeld" bij een time-out', () => {
+    const f = facts({ unknown: ['macroFactor'] });
+    expect(groupSummary('koppelingen', f)).toEqual({ value: 'Onbekend', sub: '', dim: true });
+  });
+  it('opslag en Health Connect: Onbekend', () => {
+    expect(rowSummary('opslag', facts({ unknown: ['storage'], storage: undefined }))).toEqual({ value: 'Onbekend', dim: true });
+    expect(rowSummary('health-connect', facts({ unknown: ['healthConnect'] }))).toEqual({ value: 'Onbekend', dim: true });
   });
 });
