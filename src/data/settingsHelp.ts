@@ -1126,7 +1126,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   trainingstijd: {
     title: 'Trainingstijd per dag',
-    lead: 'Hoeveel tijd je normaal per dag hebt. ASCEND plant nooit langer.',
+    lead: 'Hoeveel tijd je normaal per dag hebt. ASCEND kiest dagen waar de training in past en zet er geen tweede training bij als het niet past. Een beetje ruimte erboven mag.',
     points: [
       { head: 'Veranderen', text: 'je ziet eerst wat er in je week verschuift en kiest zelf met Akkoord.' },
     ],
@@ -1164,14 +1164,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   geluid: {
     title: 'Geluid',
-    lead: 'Een paar lage tonen bij het openen en een klank als je een training afrondt.',
+    lead: 'Een paar lage tonen als je de app voor het eerst aanraakt en een alarm als een afteltimer afloopt, bijvoorbeeld bij rekken.',
     points: [
+      { head: 'Na een training', text: 'een klank als je een training afrondt.' },
       { head: 'Forge', text: 'het rustsignaal van Forge stel je in bij Forge.' },
     ],
   },
   weekvraag: {
     title: 'Vraag van de week',
-    lead: 'Elke week één korte vraag om je plan scherp te houden.',
+    lead: 'Een korte vraag om stil te staan bij je week. Je antwoord verandert je planning niet.',
     points: [
       { head: 'Privé', text: 'je antwoord blijft op je telefoon.' },
     ],
@@ -1207,21 +1208,21 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   naarHorloge: {
     title: 'Trainingen naar je horloge',
-    lead: 'De trainingen van de komende week staan in je intervals.icu-agenda en zo op je horloge.',
+    lead: 'ASCEND zet ze in je intervals.icu-agenda en Garmin brengt ze naar je horloge.',
     points: [
-      { head: 'Via intervals.icu', text: 'ASCEND zet de trainingen in je agenda daar en Garmin brengt ze naar je horloge.' },
+      { head: 'Komende week', text: 'de trainingen van de komende week staan er.' },
     ],
   },
   horlogeVoorvoegsel: {
     title: 'Voorvoegsel voor de naam',
-    lead: 'ASC voor de naam, zodat je de trainingen van ASCEND herkent op je horloge.',
+    lead: 'Standaard ASC voor de naam, of ASCEND, of niets. Zo herken je de trainingen van ASCEND op je horloge.',
     points: [
       { head: 'Geen', text: 'dan staat de naam van de training er alleen.' },
     ],
   },
   horlogeRustigeLoop: {
     title: 'Rustige loop: ruime grens',
-    lead: 'Bij een rustige loop piept je horloge alleen als je boven zone 2 komt, niet als je even zakt.',
+    lead: 'Bij een rustige loop loopt de grens van zone 1 tot en met zone 2, zodat je niet piept bij even zakken. Alleen bij een hartslagdoel.',
     points: [
       { head: 'Waarom', text: 'hardlopend kom je zelden onder zone 1, dus het horloge piept vooral als je te hoog gaat.' },
     ],
@@ -1244,7 +1245,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Laatste export',
     lead: 'Krachttrainingen en gewicht uit je MacroFactor-export, met de echte duur en herhalingen in reserve.',
     points: [
-      { head: 'Opnieuw inlezen', text: 'een nieuwe export vult de nieuwe dagen aan. Wat er al stond blijft.' },
+      { head: 'Opnieuw inlezen', text: 'lees de export opnieuw in voor nieuwe dagen.' },
     ],
   },
   backup: {
@@ -1263,7 +1264,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   momentopnamen: {
     title: 'Kopieën van voor een import',
-    lead: 'Voor elke import bewaart ASCEND een kopie, zodat je terug kunt.',
+    lead: 'Voor elke import bewaart ASCEND een kopie, zodat je terug kunt. De laatste vijf blijven.',
     points: [
       { head: 'Waarom', text: 'een import vervangt je gegevens. Met de kopie kun je terug als het niet is wat je dacht.' },
     ],
@@ -1332,7 +1333,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     ],
   },
   blessures: {
-    title: 'Klachten en rekken',
+    title: 'Blessures',
     lead: 'Waar je last van hebt, zodat ASCEND er rekening mee houdt, en wat je kunt rekken of versterken.',
     points: [
       { head: 'Je planning', text: 'verandert alleen met jouw Akkoord.' },
