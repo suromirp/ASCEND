@@ -4,9 +4,11 @@
 // staat buiten "Kaarten op Vandaag", want het is een vraag en geen overzicht.
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { SPORTS_ROUTE } from '../../pages/settings/sportsRoute';
 import { useAppData } from '../../state/AppDataContext';
 import { getWatchState, onWatchChange, type WatchActivityState } from '../../storage/externalActivities';
-import { ASK_ADVICE, adviceFelt, pendingSports, sportQuestionLine, type SportQuestion } from '../../engine/sportAsk';
+import { ASK_ADVICE, ASK_ROLES, adviceFelt, pendingSports, sportQuestionLine, type SportQuestion } from '../../engine/sportAsk';
 import { parseSportHandling, resolveSportCounting } from '../../engine/sportRole';
 import { activityToDraft, durationLabel } from '../../engine/activityImport';
 import { sportTemplate } from '../../engine/sportTemplate';
@@ -66,12 +68,14 @@ function dayText(iso: string): string {
 }
 
 const ROLE_TEXT: Partial<Record<SportRole, { label: string; note: string }>> = {
+  fixed: { label: 'Vaste dag', note: 'Jij kiest de dag. ASCEND plant de rest eromheen.' },
   count: { label: 'Telt mee als ik het doe', note: 'Je plant het zelf. Wat je doet telt mee in je benen en je week.' },
   off: { label: 'Negeren', note: 'ASCEND doet er niets mee. Je kunt het wel loggen.' },
 };
 
 export function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose: () => void }) {
   const { settings, updateSettings, logSession } = useAppData();
+  const navigate = useNavigate();
   const def = anySportDefinition(question.sport);
   const counting = resolveSportCounting(settings.sportCounting);
   const [role, setRole] = useState<SportRole>(ASK_ADVICE);
@@ -114,12 +118,12 @@ export function SportAskSheet({ question, onClose }: { question: SportQuestion; 
         <>
           <ChoiceList<SportRole>
             label={`Hoe telt ${def.label.toLowerCase()}?`}
-            options={(['count', 'off'] as SportRole[]).map((r) => ({ value: r, label: ROLE_TEXT[r]!.label, note: ROLE_TEXT[r]!.note }))}
+            options={ASK_ROLES.map((r) => ({ value: r, label: ROLE_TEXT[r]!.label, note: ROLE_TEXT[r]!.note }))}
             value={role}
             advice={ASK_ADVICE}
             onPick={setRole}
           />
-          <p className="st-hint" style={{ marginLeft: 0 }}>ASCEND kan dit nog niet voor je plannen.</p>
+          <p className="st-hint" style={{ marginLeft: 0 }}>ASCEND kan dit nog niet voor je plannen. Een vaste dag of meetellen kan wel.</p>
           {askFelt && (
             <div style={{ marginTop: 16 }}>
               <FeltChoice
@@ -138,7 +142,11 @@ export function SportAskSheet({ question, onClose }: { question: SportQuestion; 
           {error && <p className="st-hint" style={{ marginLeft: 0, color: 'var(--color-ink)' }} role="status">Dit lukte niet. Probeer het zo nog eens.</p>}
           <SheetButtons>
             <button type="button" className="st-btn" onClick={close}>Niet nu</button>
-            <button type="button" className="st-btn gold" disabled={busy} onClick={() => void save(close)}>{busy ? 'Bezig…' : 'Opslaan'}</button>
+            {role === 'fixed' ? (
+              <button type="button" className="st-btn gold" onClick={() => { close(); navigate(SPORTS_ROUTE, { state: { openSport: question.sport, fixed: true } }); }}>Kies je dagen</button>
+            ) : (
+              <button type="button" className="st-btn gold" disabled={busy} onClick={() => void save(close)}>{busy ? 'Bezig…' : 'Opslaan'}</button>
+            )}
           </SheetButtons>
         </>
       )}

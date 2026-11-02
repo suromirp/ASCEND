@@ -4,7 +4,7 @@
 // wordt meteen bewaard. De inhoud komt uit engine/sportsScreen.ts.
 
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppData } from '../../state/AppDataContext';
 import { SkyBand } from '../../components/SkyBand';
 import { Icon } from '../../components/icons';
@@ -15,8 +15,9 @@ import { SettingsList } from '../../components/settings/SettingsList';
 import { SummaryRow } from '../../components/settings/groups/SummaryRow';
 import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { usePlanSettingChange } from '../../components/settings/usePlanSettingChange';
-import { ROLE_LABEL, ROLE_NOTE, roleChoices, sportCards, sportWeekDots, weekDotsLabel, type SportCardInfo, type WeekDot } from '../../engine/sportsScreen';
-import { parseSportHandling } from '../../engine/sportRole';
+import { ROLE_LABEL, ROLE_NOTE, dayName, roleChoices, sportCards, sportWeekDots, weekDotsLabel, type SportCardInfo, type WeekDot } from '../../engine/sportsScreen';
+import { parseSportHandling, type FixedSlot } from '../../engine/sportRole';
+import { FixedDaysStep } from '../../components/sports/FixedDaysStep';
 import { anySportDefinition, SPORT_IDS, type AnySportId, type SportId, type SportRole } from '../../data/sports';
 import { addDays, mondayOfWeek, todayISO } from '../../utils/dates';
 import { SportCountingSheet } from '../../components/settings/groups/SportCountingSheet';
@@ -76,7 +77,10 @@ export function SportsPage() {
   const { settings, plannedSessions, templates } = useAppData();
   const { facts } = useSettingsFacts();
   const plan = usePlanSettingChange();
-  const [open, setOpen] = useState<AnySportId | null>(null);
+  const location = useLocation();
+  // Vanuit de vraag op Vandaag: meteen het blad van die sport.
+  const asked = location.state as { openSport?: AnySportId; fixed?: boolean } | null;
+  const [open, setOpen] = useState<AnySportId | null>(() => asked?.openSport ?? null);
   const [counting, setCounting] = useState(false);
   const weekStart = mondayOfWeek(todayISO());
   const cards = useMemo(() => sportCards(settings), [settings]);
@@ -107,23 +111,28 @@ export function SportsPage() {
         </div>
       </div>
       {counting && <SportCountingSheet facts={facts} plan={plan} onClose={() => setCounting(false)} />}
-      {open && <SportRoleSheet sport={open} plan={plan} onClose={() => setOpen(null)} />}
+      {open && <SportRoleSheet sport={open} plan={plan} startFixed={!!asked?.fixed && asked.openSport === open} onClose={() => setOpen(null)} />}
       {plan.impact}
     </div>
   );
 }
 
-function SportRoleSheet({ sport, plan, onClose }: { sport: AnySportId; plan: ReturnType<typeof usePlanSettingChange>; onClose: () => void }) {
+function SportRoleSheet({ sport, plan, startFixed = false, onClose }: { sport: AnySportId; plan: ReturnType<typeof usePlanSettingChange>; startFixed?: boolean; onClose: () => void }) {
   const { settings } = useAppData();
   const def = anySportDefinition(sport);
   const card = sportCards(settings).find((c) => c.sport === sport)!;
-  const choices = roleChoices(sport).filter((r) => r !== 'fixed');
+  const choices = roleChoices(sport);
+  // Vaste dag opent de tweede stap in hetzelfde blad; bewaard wordt pas met Akkoord op het voorstel.
+  const [fixedStep, setFixedStep] = useState(card.role === 'fixed' || startFixed);
+  const current = parseSportHandling(settings.sportHandling).value ?? {};
   const planned = SPORT_IDS.find((s): s is SportId => s === sport);
   const perWeek = planned ? settings.sportFrequency?.[planned] : undefined;
 
   function pick(role: SportRole, close: () => void) {
+    if (role === 'fixed') { setFixedStep(true); return; }
+    setFixedStep(false);
     if (role === card.role) return;
-    const handling = { ...(parseSportHandling(settings.sportHandling).value ?? {}), [sport]: { role } };
+    const handling = { ...current, [sport]: { role } };
     close();
     if (planned) {
       // Een sport die ASCEND plant: Plan dit voor mij is hem aanzetten. Hetzelfde voorstel als altijd, met de
@@ -134,6 +143,13 @@ function SportRoleSheet({ sport, plan, onClose }: { sport: AnySportId; plan: Ret
     void plan.changeSetting(`${def.label}: ${ROLE_LABEL[role].toLowerCase()}`, { sportHandling: handling }, role === 'off' ? `${def.label} telt niet meer mee.` : `${def.label} telt mee als je het doet.`);
   }
 
+  function saveFixed(slots: FixedSlot[], close: () => void) {
+    close();
+    const handling = { ...current, [sport]: { role: 'fixed' as const, fixed: slots } };
+    const days = slots.map((s) => dayName(s.day)).join(' en ');
+    void plan.changeSetting(`${def.label} vast op ${days}`, { sportHandling: handling }, `${def.label} staat vast op ${days}. ASCEND plant de rest eromheen.`, { alwaysAsk: true });
+  }
+
   return (
     <Sheet eyebrow="Sporten" title={def.label} line="Wat past bij jou?" onClose={onClose}>
       {(close) => (
@@ -141,10 +157,15 @@ function SportRoleSheet({ sport, plan, onClose }: { sport: AnySportId; plan: Ret
           <ChoiceList<SportRole>
             label={`Hoe ASCEND met ${def.label.toLowerCase()} omgaat`}
             options={choices.map((r) => ({ value: r, label: ROLE_LABEL[r], note: ROLE_NOTE[r] }))}
-            value={card.role ?? ('' as SportRole)}
+            value={fixedStep ? 'fixed' : card.role ?? ('' as SportRole)}
             onPick={(r) => pick(r, close)}
           />
-          {!def.plannable && <p className="st-hint" style={{ marginLeft: 0 }}>ASCEND kan dit nog niet voor je plannen. Meetellen kan wel.</p>}
+          {!def.plannable && !fixedStep && <p className="st-hint" style={{ marginLeft: 0 }}>ASCEND kan dit nog niet voor je plannen. Een vaste dag of meetellen kan wel.</p>}
+          {fixedStep && (
+            <div style={{ marginTop: 20 }}>
+              <FixedDaysStep initial={current[sport]?.fixed ?? []} busy={plan.busy} onSubmit={(slots) => saveFixed(slots, close)} />
+            </div>
+          )}
           {planned && card.role === 'plan' && (
             <>
               <p className="st-lab" style={{ marginTop: 24 }}>Per week</p>

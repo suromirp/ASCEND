@@ -44,7 +44,7 @@ import type { AlcoholAmount, InfluenceEntry, InfluenceReason, InfluenceReasonNot
 import { AMOUNTS, MAX_LABEL_LENGTH, REASON_LABEL } from '../data/influenceReasons';
 import type { ExternalOneRm, OneRmReading, RecoveryMetric, WeightEntry } from '../models/metrics';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
-import type { BestEffort, ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
+import type { BestEffort, ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, PlannedSession, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
 import { isRecord } from '../utils/guards';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
@@ -772,6 +772,20 @@ export function migrateLogCountedSport(log: SessionLog): SessionLog {
   const { countedSport: _wrong, ...rest } = log as SessionLog & { countedSport?: unknown };
   void _wrong;
   return rest as SessionLog;
+}
+
+// PlannedSession.fixed (sporten die meetellen, stap 7): een vaste afspraak met een bekende sport, een dag van 1
+// tot 7 en een bekende zwaarte. Iets anders valt weg en de rij blijft verder zoals hij was.
+export function migratePlannedFixed(s: PlannedSession): PlannedSession {
+  if (!('fixed' in s)) return s;
+  const f = (s as { fixed?: unknown }).fixed as Record<string, unknown> | undefined;
+  const ok = !!f && typeof f === 'object' && COUNTED_SPORTS.some((c) => c.id === f.sport)
+    && typeof f.day === 'number' && Number.isInteger(f.day) && f.day >= 1 && f.day <= 7
+    && (f.intensity === 'low' || f.intensity === 'moderate' || f.intensity === 'high');
+  if (ok) return s;
+  const { fixed: _wrong, ...rest } = s as PlannedSession & { fixed?: unknown };
+  void _wrong;
+  return rest as PlannedSession;
 }
 
 // SessionLog.rpeAssumed: alleen `true` blijft, iets anders valt weg. Het log zelf verandert niet.

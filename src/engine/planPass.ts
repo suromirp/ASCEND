@@ -18,6 +18,9 @@ import { repairWeeks, type Finding, type Repair } from './weekValidator';
 import { arrangeWeekForRestDay, type RestWeekday } from './restDay';
 import { DEFAULT_ENABLED_SPORTS, parseWeekShape, weeklyPatternTemplates, type PatternSettings } from './sports';
 import { PATTERN_SWAPS } from './programLayout';
+import { addDays } from '../utils/dates';
+import { reconcileFixedSessions } from './fixedSports';
+import type { SportHandlingMap } from './sportRole';
 
 export interface PlanPassContext {
   today: string;
@@ -45,6 +48,9 @@ export interface PlanPassContext {
   trekRest?: 'soft' | 'strict';
   // A training that moves for a holiday: let go rather than crowd its own next time (default), or shift.
   leaveCrowding?: 'drop' | 'shift';
+  // The roles of the sports (AppSettings.sportHandling): a fixed appointment becomes a fixed row first
+  // (engine/fixedSports.ts). Absent: fixed rows are left as they are.
+  fixedSports?: SportHandlingMap | null;
 }
 
 export interface PlanPassResult {
@@ -66,6 +72,18 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
   let current = all;
   let beforeCheck: PlannedSession[] | undefined;
   const repairs: Repair[] = [];
+  // Fixed appointments first: the race block, the periods and the week check plan around them.
+  if (ctx.fixedSports !== undefined) {
+    const fixed = reconcileFixedSessions(all, ctx.fixedSports ?? undefined, { today: ctx.today, until: ctx.until ?? (ctx.goalDay ? addDays(ctx.goalDay, -1) : undefined), leave: ctx.leave, logs: ctx.logs, newId: ctx.newId });
+    if (fixed.added.length + fixed.removed.length + fixed.changed.length > 0) {
+      const before = new Map(all.map((s) => [s.id, s]));
+      const after = new Map(fixed.sessions.map((s) => [s.id, s]));
+      for (const id of fixed.added) repairs.push({ sessionId: id, rule: 'FIXED-SPORT', from: after.get(id)!.scheduledDate, to: after.get(id)!.scheduledDate, added: true });
+      for (const id of fixed.removed) repairs.push({ sessionId: id, rule: 'FIXED-SPORT', from: before.get(id)!.scheduledDate, to: before.get(id)!.scheduledDate, removed: true });
+      for (const id of fixed.changed) repairs.push({ sessionId: id, rule: 'FIXED-SPORT', from: after.get(id)!.scheduledDate, to: after.get(id)!.scheduledDate, plannedMinutes: after.get(id)!.plannedMinutes });
+      current = fixed.sessions;
+    }
+  }
   let remaining: Finding[] = [];
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const open = current.filter((s) => s.scheduledDate >= ctx.today && !logged.has(s.id) && s.status !== 'skipped');

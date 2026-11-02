@@ -207,6 +207,10 @@ export interface PlannedSession {
   // shows it here. The automatic planning never moves, swaps, shortens or
   // retemplates it (docs/onderzoek/Planning op een lijn.md). Optional, additive.
   lock?: PlanLock;
+  // A fixed appointment of a sport ASCEND does not plan (engine/fixedSports.ts): the sport, the weekday it
+  // was chosen for and how hard it usually is. Always with a lock of yours. Optional, additive; a broken one
+  // is dropped on import and the row stays (migrations.ts#migratePlannedFixed).
+  fixed?: { sport: CountedSportId; day: number; intensity: 'low' | 'moderate' | 'high' };
   // Planned to walk with poles. Optional, additive; without it the last log
   // of the same training decides (engine/legFatigue.ts).
   poles?: boolean;

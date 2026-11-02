@@ -16,7 +16,7 @@ import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, weekdayOf, weekdayShortNL } from '../utils/dates';
-import { isSportLogSession, sportLogDays } from './sportDays';
+import { isSportLogSession, sportDayTemplate, sportLogDays } from './sportDays';
 import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isLegHeavyTemplate } from './scheduler';
 import { patternSlotOf } from './programLayout';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
@@ -46,6 +46,7 @@ export type CheckRule =
   | 'LEAVE-LIGHT' // the day before and after a trek stays light
   | 'REST-DAY' // the rest day stays free
   | 'TWO-HARD-RUNS' // at most one hard run a day
+  | 'HARD-DAYS' // with a hard sport of your own in the week: at most 2 or 3 hard days over all sports
   | 'TEST-DAY' // on a test or race day: nothing else hard, strength after it only with "Zware dingen op één dag"
   | 'AFTER-TEST' // the day after a test or race: no hard run, nothing heavy for the legs but strength
   | 'AFTER-GOAL' // the days of recovery after a goal (recoveryDaysFor of its kind): no hard training, no heavy leg strength
@@ -164,7 +165,31 @@ function afterGoal(input: CheckInput, date: string): { day: number; date: string
 
 const day = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))}-${Number(iso.slice(5, 7))}`;
 
-export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Finding[] {
+// A fixed appointment (engine/fixedSports.ts) is read with the profile of how hard it usually is: a match
+// on Zwaar keeps the legs free for 72 hours, a training on Pittig for 48.
+function withFixedDays(input: CheckInput): CheckInput {
+  if (!input.sessions.some((s) => s.fixed)) return input;
+  const byId = new Map(input.templates.map((t) => [t.id, t]));
+  const extra = new Map<string, SessionTemplate>();
+  const sessions = input.sessions.map((s) => {
+    const base = s.fixed ? byId.get(s.templateId) : undefined;
+    if (!s.fixed || !base || base.countedSport !== s.fixed.sport) return s;
+    const tpl = sportDayTemplate(base, s.fixed.sport, s.fixed.intensity);
+    extra.set(tpl.id, tpl);
+    return { ...s, templateId: tpl.id };
+  });
+  return { ...input, sessions, templates: [...input.templates, ...extra.values()] };
+}
+
+// Hard days a week over all sports (docs/visie/Sporten die meetellen.md, 3.4): 2 with four training days or
+// fewer, 3 with more. Only in a week with a fixed appointment on Zwaar: without one this rule does nothing,
+// so a plan without a sport of your own gets exactly the check it had.
+export function hardDayLimit(trainingDays: number): number {
+  return trainingDays <= 4 ? 2 : 3;
+}
+
+export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Finding[] {
+  const input = withFixedDays(rawInput);
   const { byId, logged, until, open, sportDays } = context(input);
   const level = (s: PlannedSession) => lockLevel(s, logged, input.today);
   const leave = leaveContext(input, byId);
@@ -303,6 +328,24 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     }
   }
 
+  // Hard days over all sports, only in a week with a fixed appointment on Zwaar.
+  const hardWeeks = new Set(active.filter((s) => s.fixed?.intensity === 'high').map((s) => s.weekStartDate));
+  for (const monday of hardWeeks) {
+    const week = all.filter((s) => mondayOfWeek(s.scheduledDate) === monday);
+    const isOutsideHard = (s: PlannedSession) => (s.fixed?.intensity === 'high') || (isSportLogSession(s.id) && s.templateId.endsWith('@high'));
+    const isOwnHard = (s: PlannedSession) => { const t = tpl(s); return !!t && !s.fixed && !isSportLogSession(s.id) && t.type !== 'recovery' && (isHardRun(t) || hasRole(t, 'hard_effort')); };
+    const loggedDays = input.logs.filter((l) => mondayOfWeek(l.completedDate) === monday && byId.get(l.templateId)?.type !== 'recovery').map((l) => l.completedDate);
+    const trainingDays = new Set([...week.filter((s) => tpl(s)?.type !== 'recovery').map((s) => s.scheduledDate), ...loggedDays]).size;
+    const hardDays = new Set(week.filter((s) => isOutsideHard(s) || isOwnHard(s)).map((s) => s.scheduledDate));
+    const limit = hardDayLimit(trainingDays);
+    if (hardDays.size <= limit) continue;
+    // The last hard training of ASCEND that may change; a test or race never.
+    const subject = week.filter((s) => isOwnHard(s) && open(s) && !isTestOrRace(tpl(s)!)).sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
+    if (!subject) continue;
+    const outside = week.find(isOutsideHard)!;
+    findings.push({ rule: 'HARD-DAYS', date: subject.scheduledDate, sessionIds: [outside.id, subject.id], subjectId: subject.id, level: level(subject), message: `${hardDays.size} harde dagen in de week van ${day(monday)}, grens ${limit}.` });
+  }
+
   // One full long session a week.
   const weeks = new Map<string, PlannedSession[]>();
   for (const s of active) if (idHasRole(s.templateId, 'long', byId) && !s.plannedMinutes && !leave.inTrek(s)) weeks.set(s.weekStartDate, [...(weeks.get(s.weekStartDate) ?? []), s]);
@@ -318,7 +361,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
 // --- repairing what the system planned ----------------------------------------------
 // A repair is made for a rule of the check, or by the leave step that puts a
 // walk on a trek day or a free day (engine/leaveBlock.ts).
-export type RepairRule = CheckRule | 'LEAVE-PLACE';
+export type RepairRule = CheckRule | 'LEAVE-PLACE' | 'FIXED-SPORT';
 
 export interface Repair {
   sessionId: string;
@@ -352,7 +395,7 @@ const MAX_ROUNDS = 60;
 // A holiday or a trek can ask for a repair per session; those get their own rounds.
 const ROUNDS_PER_LEAVE_FINDING = 2;
 // The order repairs are tried in: what the rest are judged on first.
-const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'AFTER-GOAL', 'TWO-HARD-RUNS', 'TEST-FRESH', 'LEG-SPACING', 'ONE-LONG'];
+const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'AFTER-GOAL', 'TWO-HARD-RUNS', 'HARD-DAYS', 'TEST-FRESH', 'LEG-SPACING', 'ONE-LONG'];
 const key = (f: Finding) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
 // Two findings are the same finding when this is the same.
 export const findingKey = key;
@@ -476,6 +519,14 @@ export function repairWeeks(input: CheckInput): RepairResult {
       repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate });
       continue;
     }
+    // One hard day too many next to a fixed appointment on Zwaar: the hard run of ASCEND becomes an easy run.
+    if (next.rule === 'HARD-DAYS') {
+      if (t.type === 'strength' || templateSport(t) !== 'running' || !byId.has(EASY_ID)) continue;
+      sessions = sessions.map((s) => (s.id === subject.id ? { ...s, templateId: EASY_ID } : s));
+      const outside = byId.get(sessions.find((s) => s.id === next.sessionIds[0])?.templateId ?? '')?.name ?? 'je vaste afspraak';
+      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: `met ${outside.toLowerCase()} deze week past er een harde training van ASCEND minder, daarom een rustige loop` });
+      continue;
+    }
     if (next.rule === 'ONE-LONG') {
       const short = t.durationVariants.short;
       if (!short) continue;
@@ -594,8 +645,10 @@ const REASON: Record<RepairRule, string> = {
   'LEAVE-OFF': 'je bent vrij of op tocht',
   'LEAVE-LIGHT': 'de dagen voor en na je tocht blijven licht',
   'LEAVE-PLACE': 'past bij je vrije periode',
+  'FIXED-SPORT': 'je vaste afspraak',
   'REST-DAY': 'je rustdag blijft vrij',
   'TWO-HARD-RUNS': 'niet twee harde loopjes op één dag',
+  'HARD-DAYS': 'niet te veel harde dagen in een week',
   'TEST-DAY': 'niets zwaars op de dag van een test of wedstrijd',
   'AFTER-TEST': 'de dag na een test of wedstrijd niets zwaars',
   'AFTER-GOAL': 'je herstelt nog van je wedstrijd: niets hards en geen zware beenkracht',

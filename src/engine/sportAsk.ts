@@ -36,8 +36,8 @@ export function sportQuestionLine(q: SportQuestion): string {
 }
 
 // De keuzes in het blad: zonder Plan dit voor mij, want ASCEND kan deze sporten niet plannen. Telt mee is het
-// advies.
-export const ASK_ROLES: readonly SportRole[] = ['count', 'off'];
+// advies. Vaste dag gaat verder op het scherm Sporten, waar je de dagen kiest.
+export const ASK_ROLES: SportRole[] = ['fixed', 'count', 'off'];
 export const ASK_ADVICE: SportRole = 'count';
 
 // Het woord dat het blad voorkiest bij Hoe zwaar voelde het: de gebruikelijke zwaarte van de sport.

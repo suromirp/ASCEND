@@ -73,7 +73,10 @@ export interface Adherence {
 export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes'>;
 
 export function recentAdherence(inputs: AdherenceInputs): Adherence {
-  const { today, program, plannedSessions, logs, templates, planChangeLog, illnessEpisodes } = inputs;
+  const { today, program, logs, templates, planChangeLog, illnessEpisodes } = inputs;
+  // Een vaste afspraak van een sport (voetbal op dinsdag) telt hier niet: ASCEND beoordeelt geen teamrooster
+  // (docs/visie/Sporten die meetellen.md, vraag 2). In Je week telt hij wel.
+  const plannedSessions = inputs.plannedSessions.filter((s) => !s.fixed);
   const thisMonday = mondayOfWeek(today);
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {

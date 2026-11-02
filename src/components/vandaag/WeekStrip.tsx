@@ -5,7 +5,7 @@ import { weekDates, weekdayLongNL } from '../../utils/dates';
 import { Icon } from '../icons';
 import { Pictogram, type PictogramName } from '../pictograms';
 import { LightCard } from '../ui';
-import { SPORT_COLOR, sportKind, sportPictogram } from '../sportKind';
+import { sportColor, sportPictogram } from '../sportKind';
 
 // De week in één strook op de lucht van Vandaag: per dag het pictogram van de
 // sport in de kleur van die sport. Gepland is alleen het pictogram, gedaan is
@@ -88,7 +88,7 @@ export function WeekStrip({
               <div aria-hidden="true" className="flex h-10 flex-col items-center justify-center gap-[3px]">
                 {shown.length > 0 ? (
                   shown.map((t) => (
-                    <span key={t.s.id} className="flex" style={{ color: SPORT_COLOR[sportKind(t.template)] }}>
+                    <span key={t.s.id} className="flex" style={{ color: sportColor(t.template) }}>
                       <DayGlyph icon={sportPictogram(t.template)} done={t.done} small={shown.length > 1} />
                     </span>
                   ))
