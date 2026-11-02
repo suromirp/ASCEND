@@ -384,6 +384,10 @@ export function repairWeeks(input: CheckInput): RepairResult {
   // has no time budget: a session that has to move takes an empty day.
   const leaveActive = (input.leave?.length ?? 0) > 0;
   const yours = new Set(input.mayMove ?? []);
+  // Een training die een voorstel met Akkoord bijzette (lock.by 'proposal') mag van een vakantiedag af: ze
+  // blijft anders stil op een vrije dag staan. Wat jij zelf vastzette (lock.by 'user') blijft altijd.
+  const proposalOnLeave = (f: Finding, s: PlannedSession | undefined) =>
+    f.rule === 'LEAVE-OFF' && f.level === 1 && s?.lock?.by === 'proposal' && !s.raceBlock && !leave.inTrek(s);
   const movable = (s: PlannedSession) => (level(s) === 3 || (level(s) === 1 && yours.has(s.id))) && !s.raceBlock && !leave.inTrek(s);
   let sessions = input.sessions;
   const repairs: Repair[] = [];
@@ -476,7 +480,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
     // the system's strength before it (also a test you placed yourself).
     const next = findings
       // A test that is on the wrong day itself waits for its proposal first.
-      .filter((f) => (((f.level === 3 || (f.level === 1 && yours.has(f.subjectId))) && movable(byIdNow.get(f.subjectId)!)) || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
+      .filter((f) => (((f.level === 3 || (f.level === 1 && yours.has(f.subjectId))) && movable(byIdNow.get(f.subjectId)!)) || proposalOnLeave(f, byIdNow.get(f.subjectId)) || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
       .sort((a, b) => RULE_ORDER.indexOf(a.rule) - RULE_ORDER.indexOf(b.rule) || a.date.localeCompare(b.date))[0];
     if (!next) return { sessions, repairs, remaining: findings };
     tried.add(key(next));
