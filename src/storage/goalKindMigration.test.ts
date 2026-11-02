@@ -113,7 +113,7 @@ describe('soort, gegevens en belangrijkheid van een doel', () => {
     }] as never;
     const migrated = migrateTrainingGoal(trekGoal, { isMain: true, tent: true });
     const before = computeMainGoalReadiness(trekGoal.requirements, logs, '2026-10-21');
-    const after = computeGoalReadiness({ kind: migrated.kind!, details: migrated.details, requirements: migrated.requirements }, logs, '2026-10-21', { naming: { the: 'de GR5', your: 'je GR5' } });
+    const after = computeGoalReadiness({ kind: migrated.kind!, details: migrated.details, requirements: migrated.requirements }, logs, '2026-10-21', { naming: { the: 'de tocht', your: 'je tocht' } });
     expect(after.percent).toBe(before.percent);
     expect(after.sentence).toBe(before.sentence);
   });

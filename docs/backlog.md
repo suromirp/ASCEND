@@ -53,7 +53,6 @@ Op vraag van de eigenaar. Bouwen bij de eerstvolgende vrije plek (Sherpa, opus; 
 
 Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie werkt los en samen; in de browser een webweg of een nette stilte. De Android-app werkt zichzelf bij (live update) en gebruikt een vaste sleutel, zodat je gegevens bij een update blijven.
 - In de Android-opdracht zelf: de terugknop, scherm aan tijdens Forge (in de browser met Wake Lock), trillen, statusbalk en startscherm.
-- Ongedaan maken van Verplaatsen zet blind terug, ook als de training intussen gelogd of opnieuw verplaatst is (bij Ruilen opgelost met undoSwap). Ronde 3.
 - Gebruikerstest met vier nagemaakte personen (ronde 4) en de herstelronde erna: niet in de sessie van 2 november (eigenaar); later, in een eigen sessie.
 - Back-up naar een map die de eigenaar zelf koos (Interne opslag/Ascend_backup) in de Android-app: eenmalig Map kiezen via de mappenkiezer van Android (Storage Access Framework, blijvende toestemming), daarna schrijven Back-up maken en de automatische back-up daarheen, met terugval op Documents/ASCEND en een melding. Vraagt een nieuwe plugin en APK. Op verzoek van de eigenaar later (2 november).
 - Forge: Ruilen op een toegevoegde bergspieroefening die na Uit deze training halen met afgevinkte sets in de sessie blijft, doet stil niets (ForgeWorkout swap). Verbergen of de prescriptie van de sessie gebruiken. Klein.
@@ -92,7 +91,6 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Android-app (Capacitor), als een van de grote nieuwe features van deze ronde. Lokale meldingen komen daarmee (een PWA zonder server kan geen melding sturen als de app dicht is).
 - Android-meldingen met het scherm uit en trillen: het einde van de rust in Forge, de ochtendvraag en de weekmelding (ronde 2b, bij de Android-app). Toestemmingen direct na de installatie, in een korte welkomstreeks met per toestemming één scherm en "Niet nu".
 - Korte weekmelding op zondagavond: wat er gebeurde, wat er komt, één tip. Als melding via de Android-app; in de PWA als kaart op Vandaag bij het openen.
-- De ochtendkaart met horloge en de vraag "Ben je moe?" duwt de missiekaart onder de vouw op een klein scherm: compacter of de vraag in plaats van de keuzes.
 - Startvragen: standaardkeuze is nu "Een tocht of wedstrijd"; nagaan of "Fit blijven" logischer is voor iemand zonder plan.
 
 ## Na de Android-app

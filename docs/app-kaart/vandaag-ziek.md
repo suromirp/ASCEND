@@ -24,14 +24,9 @@ Vandaag
 Vandaag staat er niets gepland.
 
 --- kaart 4 ---
-Goedemorgen
 Hoe voelen je benen?
 [knop: Klopt: fris]
-Voorstel volgens je beenindex. Of kies zelf:
-[knop: Wat stijf]
-[knop: Spierpijn]
-[knop: Flinke spierpijn]
-[knop: Energie, slaap of pijn invullen]
+[knop: Anders]
 
 --- kaart 5 ---
 Advies, planning
