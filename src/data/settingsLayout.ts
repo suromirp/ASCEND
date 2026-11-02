@@ -77,7 +77,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {
-    rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
+    rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'health-connect', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
     advanced: [],
   },
   gegevens: { rows: ['backup', 'auto-backup', 'backupmap', 'toestemmingen', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'aangepast', 'wissen'], advanced: ['auto-bijwerken', 'voorstellen-opruimen', 'herbouwen', 'startniveau'], footer: ['versie'] },
@@ -95,17 +95,17 @@ export interface SettingPlacement {
   row: string;
   // De instelling zit in het blad van de rij: de sprong opent het blad.
   sheet?: boolean;
-  // Geen rij maar een verwijzing naar een andere pagina (Reisplanner, Paklijst, Health Connect):
+  // Geen rij maar een verwijzing naar een andere pagina (Reisplanner, Paklijst):
   // het zoekresultaat opent die pagina.
   link?: boolean;
 }
 
 // Verwijzingen die vroeger een rij waren. De plek waar ze nu horen (het Ascend-scherm) is de
-// pagina zelf; in het zoekveld blijven ze vindbaar.
+// pagina zelf; in het zoekveld blijven ze vindbaar. Health Connect is sinds 2 november 2026
+// weer een gewone rij op Koppelingen.
 const LINKS: Record<string, SettingsPageId> = {
   reisplanner: 'doel',
   paklijst: 'doel',
-  'health-connect': 'koppelingen',
 };
 
 const inSheet = (row: string, ...ids: string[]): Record<string, { row: string; sheet: true }> =>

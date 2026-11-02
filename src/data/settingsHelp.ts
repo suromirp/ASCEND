@@ -669,6 +669,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Zelf plakken', text: 'ASCEND schrijft niet naar Strava, want daar is een server voor nodig en die heeft ASCEND bewust niet.' },
     ],
   },
+  healthConnect: {
+    title: 'Health Connect',
+    lead: 'In de Android-app leest ASCEND je trainingen, slaap, rusthartslag en HRV uit Health Connect, als je dat aanzet.',
+    points: [
+      { head: 'Toestemming', text: 'Android vraagt pas als je het aanzet, en ASCEND vraagt alleen leesrechten. Het schrijft nooit iets in Health Connect.' },
+      { head: 'Met intervals.icu', text: 'intervals.icu gaat voor. Een training die daar al binnenkwam, komt niet nog eens als voorstel; slaap en hartslag uit Health Connect vullen alleen aan wat ontbreekt.' },
+      { head: 'Ophalen', text: 'bij het openen van de app en hoogstens elke drie uur.' },
+      { head: 'Je planning', text: 'verandert er niet door. Een training wordt pas een log als je hem op Vandaag opslaat.' },
+      { head: 'Uit', text: 'wat ASCEND ophaalde gaat van je telefoon; je logs blijven staan.' },
+    ],
+  },
   garminLeidend: {
     title: 'Garmin is leidend',
     lead: 'Komt een training die je zelf invulde ook van je horloge, dan tellen de cijfers van het horloge.',

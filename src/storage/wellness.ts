@@ -22,6 +22,7 @@ import { fetchIntervalsWellness, INTERVALS_ADAPTER_ID, intervalsErrorMessage, ty
 import { DEFAULT_WATCH_USE, filterRecovery, wellnessWanted, type WatchUse } from '../engine/watchUse';
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays, todayISO } from '../utils/dates';
+import { orderBySource } from '../engine/sourcePrecedence';
 
 // Records are kept for KEEP_DAYS (engine/wellnessRange.ts): "Wat speelde er" compares a noted
 // morning with the 28 days before it, which can lie months back. Everything that reads them picks
@@ -35,8 +36,10 @@ export type WellnessSyncResult =
   | { status: 'ok'; days: number; today: boolean }
   | { status: 'error'; message: string };
 
+// In de volgorde waarin ze tellen: Health Connect vult alleen aan waar een andere bron niets heeft
+// (engine/sourcePrecedence.ts, docs/beslissingen/2026-11-02-health-connect.md).
 export async function getRecoveryMetrics(): Promise<RecoveryMetric[]> {
-  return RecoveryMetricsRepo.getAll();
+  return orderBySource(await RecoveryMetricsRepo.getAll());
 }
 
 // A fetched morning that leaves the cache: with "Ochtendgetallen in back-up" on only the backup

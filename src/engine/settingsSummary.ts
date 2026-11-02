@@ -172,6 +172,16 @@ export interface SettingsFacts {
   // Het lezen van de koppelstatus mislukte: dan zeggen we dat, in plaats van "Koppelen" alsof je
   // nooit gekoppeld was.
   watchUnreadable?: boolean;
+  // Health Connect op dit toestel; weglaten zolang dat nog niet gelezen is.
+  healthConnect?: HealthConnectFacts;
+}
+
+export interface HealthConnectFacts {
+  // Draait ASCEND als Android-app? Alleen daar bestaat Health Connect.
+  inApp: boolean;
+  enabled: boolean;
+  fetchedAt?: string;
+  errorKind?: 'web' | 'not-installed' | 'needs-update' | 'denied' | 'timeout' | 'failed';
 }
 
 const deviceOf = (f: SettingsFacts): DevicePermissions | undefined => (f.device && f.device !== 'unknown' ? f.device : undefined);
@@ -227,6 +237,28 @@ function listNL(items: string[]): string {
 }
 
 // "14:02", in de tijd van het toestel.
+// Health Connect (docs/beslissingen/2026-11-02-health-connect.md): in de browser gedimd met
+// uitleg en zonder schakelaar; in de app een schakelaar, met daaronder wat de laatste ronde zei.
+const HEALTH_ERROR_LINE: Record<NonNullable<HealthConnectFacts['errorKind']>, string> = {
+  web: 'Alleen in de Android-app',
+  'not-installed': 'Health Connect staat niet op je telefoon',
+  'needs-update': 'Health Connect moet worden bijgewerkt',
+  denied: 'Geen toestemming meer',
+  timeout: 'Geen antwoord, straks opnieuw',
+  failed: 'Ophalen lukte niet, straks opnieuw',
+};
+
+function healthConnectRow(f: SettingsFacts): RowSummary {
+  const h = f.healthConnect;
+  if (!h) return { value: 'Even kijken', dim: true };
+  if (!h.inApp) return { value: 'Alleen in de app', dim: true, sub: 'Werkt in de Android-app van ASCEND' };
+  if (!h.enabled) return { checked: false, sub: 'Trainingen, slaap, rusthartslag en HRV' };
+  if (h.errorKind) return { checked: true, sub: HEALTH_ERROR_LINE[h.errorKind] };
+  if (!h.fetchedAt) return { checked: true, sub: 'Nog niets opgehaald' };
+  const day = localDateOf(h.fetchedAt);
+  return { checked: true, sub: day === f.today ? `Opgehaald om ${clock(h.fetchedAt)}` : `Opgehaald op ${formatDayMonthNL(day)}` };
+}
+
 function clock(iso: string): string {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -841,7 +873,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'strava-tekst':
       return { checked: s.stravaText !== false };
     case 'health-connect':
-      return { value: 'Komt later', dim: true };
+      return healthConnectRow(f);
 
     // Gegevens en back-up
     case 'backup': {

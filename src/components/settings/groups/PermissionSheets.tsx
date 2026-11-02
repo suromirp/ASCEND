@@ -22,7 +22,7 @@ const WHERE: Record<Exclude<PermissionId, 'health'>, string> = {
 const WHY: Record<PermissionId, string> = {
   meldingen: 'Zodat ASCEND je de ochtendvraag, het einde van je rust en de weekmelding kan sturen.',
   wekker: 'Zodat je telefoon trilt als je rust voorbij is, op de seconde en ook met het scherm uit.',
-  health: 'Binnenkort leest ASCEND hier je gewicht, stappen en trappen. Je hoeft nu niets te doen.',
+  health: 'Zet Health Connect aan bij Koppelingen. Dan vraagt Android welke gegevens ASCEND mag lezen.',
 };
 
 async function ask(id: PermissionId): Promise<boolean> {

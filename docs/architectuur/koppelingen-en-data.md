@@ -14,6 +14,8 @@ the date you started wearing them, walks and treks only (`engine/bootBreakIn.ts`
 (`engine/journey.ts#withDerivedDone`, `withBootsDone`), never a stored flag. Running shoe
 kilometres stay with Garmin.
 
+**Health Connect** (decision `2026-11-02-health-connect.md`): in the Android app only, off by default, one switch on Koppelingen that asks for read access when you turn it on; trainings, sleep, resting heart rate and HRV through `integrations/healthConnect.ts` (the only file that knows the plugin) into the same `ExternalActivity` and `RecoveryMetric` with `source: 'health-connect'`, stored by `storage/healthConnect.ts` in one transaction per round; intervals.icu goes first (`engine/sourcePrecedence.ts`), and nothing makes a log or changes the plan by itself.
+
 **Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
 need a server); it prepares a short text to copy. Planned numbers appear only when
 the log belongs to a planned session, and no minutes without a measured duration.

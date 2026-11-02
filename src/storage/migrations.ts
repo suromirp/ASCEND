@@ -51,6 +51,9 @@ import type { ExternalOneRm, OneRmReading, RecoveryMetric, WeightEntry } from '.
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
 import type { BestEffort, ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, PlannedSession, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
 import { isRecord } from '../utils/guards';
+import type { ExternalActivity } from '../engine/activityImport';
+import type { HealthConnectErrorKind, HealthKind } from '../integrations/healthConnect';
+import type { HealthConnectState } from './healthConnect';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
 // activity). Nothing in a v1 file has to change for it.
@@ -1562,4 +1565,50 @@ export function migrateTrainingGoals(
   const main = mainGoal(goals, ladderGoalIds, 'activeFirst');
   const ladderUnknown = opts.ladderKnown === false && ladderGoalIds.size === 0;
   return goals.map((g) => migrateTrainingGoal(g, { isMain: main?.id === g.id, tent, ...(ladderUnknown ? { ladderUnknown } : {}) }));
+}
+
+// --- Health Connect op dit toestel (2026-11-02) ------------------------------------------------
+// De stand van Health Connect (storage/healthConnect.ts, docs/beslissingen/2026-11-02-health-connect.md)
+// staat onder een eigen meta-sleutel, alleen op dit toestel, en gaat niet mee in de back-up: het is
+// een apparaatvoorkeur plus een cache van wat Health Connect gaf. Wat er ook staat (niets, een
+// oudere of een beschadigde vorm), het wordt de vorm van nu. Ontbreekt iets, dan staat het uit; een
+// activiteit die niet van Health Connect is of geen geldige vorm heeft valt weg. De back-up
+// verandert niet: een log uit Health Connect is een gewone SessionLog met `source: 'health-connect'`
+// en een ochtend een gewone ochtend (MORNING_SOURCES hierboven), dus een oude back-up importeert
+// zoals hij was en een nieuwe heeft geen veld dat een oudere app niet kent.
+const HC_KINDS: readonly HealthKind[] = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability'];
+const HC_ERROR_KINDS: readonly HealthConnectErrorKind[] = ['web', 'not-installed', 'needs-update', 'denied', 'timeout', 'failed'];
+const HC_ACTIVITY_KINDS: readonly string[] = ['run', 'hike', 'ride', 'strength', 'other'];
+const isMoment = (v: unknown): v is string => typeof v === 'string' && Number.isFinite(Date.parse(v));
+
+function migrateHealthActivity(raw: unknown): ExternalActivity | undefined {
+  if (!isRecord(raw)) return undefined;
+  const a = raw as Partial<ExternalActivity>;
+  if (typeof a.externalId !== 'string' || !a.externalId.startsWith('health-connect:')) return undefined;
+  if (typeof a.start !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(a.start)) return undefined;
+  if (typeof a.durationSec !== 'number' || !(a.durationSec > 0) || !HC_ACTIVITY_KINDS.includes(a.kind as string)) return undefined;
+  return { ...(a as ExternalActivity), source: 'health-connect', treadmill: a.treadmill === true };
+}
+
+export function migrateHealthConnectState(raw: unknown): HealthConnectState {
+  const r = isRecord(raw) ? raw : {};
+  const granted = Array.isArray(r.granted) ? HC_KINDS.filter((k) => (r.granted as unknown[]).includes(k)) : [];
+  const err = isRecord(r.lastError) ? r.lastError : undefined;
+  const lastError = err && HC_ERROR_KINDS.includes(err.kind as HealthConnectErrorKind) && typeof err.message === 'string' ? { kind: err.kind as HealthConnectErrorKind, message: err.message } : undefined;
+  const seen = new Set<string>();
+  const activities: ExternalActivity[] = [];
+  for (const item of Array.isArray(r.activities) ? r.activities : []) {
+    const a = migrateHealthActivity(item);
+    if (!a || seen.has(a.externalId)) continue;
+    seen.add(a.externalId);
+    activities.push(a);
+  }
+  return {
+    enabled: r.enabled === true,
+    granted,
+    ...(isMoment(r.fetchedAt) ? { fetchedAt: r.fetchedAt } : {}),
+    ...(isMoment(r.attemptAt) ? { attemptAt: r.attemptAt } : {}),
+    ...(lastError ? { lastError } : {}),
+    activities,
+  };
 }

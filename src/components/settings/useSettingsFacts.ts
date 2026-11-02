@@ -17,7 +17,9 @@ import { easedLogIds } from '../../engine/legDayEase';
 import { checkModelKey, resolveStrengthSettings, type StrengthSettings } from '../../engine/strengthSettings';
 import { DEFAULT_WATCH_USE } from '../../engine/watchUse';
 import type { IntervalsHrBasis } from '../../engine/watchHeartRate';
-import type { SettingsFacts } from '../../engine/settingsSummary';
+import type { HealthConnectFacts, SettingsFacts } from '../../engine/settingsSummary';
+import { getHealthConnectState, onHealthConnectChange } from '../../storage/healthConnect';
+import { healthConnectPort } from '../../integrations/healthConnect';
 import { getConnection, getWatchState, onWatchChange, type WatchActivityState } from '../../storage/externalActivities';
 import { getWatchWorkoutState } from '../../storage/watchWorkouts';
 import { getMacroFactorState, onMacroFactorChange, type MacroFactorState } from '../../storage/macrofactor';
@@ -57,6 +59,14 @@ interface Loaded {
   // Het lezen van de koppelstatus mislukte.
   watchUnreadable?: boolean;
   autoBackup?: SettingsFacts['autoBackup'];
+  healthConnect?: HealthConnectFacts;
+}
+
+// Health Connect: of dit de app is, of het aan staat en wat de laatste ronde zei.
+async function readHealthConnectFacts(): Promise<HealthConnectFacts> {
+  const inApp = healthConnectPort().inApp;
+  const state = await getHealthConnectState();
+  return { inApp, enabled: inApp && state.enabled, ...(state.fetchedAt ? { fetchedAt: state.fetchedAt } : {}), ...(state.lastError ? { errorKind: state.lastError.kind } : {}) };
 }
 
 // De automatische back-up: in de app altijd de map van de app, in de browser alleen de vaste map.
@@ -88,7 +98,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         unreadable = true;
         return null;
       };
-      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize, storageUse, device] = await Promise.all([
+      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize, storageUse, device, healthConnect] = await Promise.all([
         getConnection().catch(unread),
         getWatchState().catch(unread),
         getWatchWorkoutState().catch(() => null),
@@ -102,10 +112,11 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         estimateStorage(),
         // Wat de telefoon toestaat; hoogstens twee seconden, daarna "Onbekend".
         withTimeout(notificationPort().permissions(), 2000).catch(() => 'unknown' as const),
+        readHealthConnectFacts().catch(() => undefined),
       ]);
       const autoBackup = await readAutoBackupFacts(!!folder).catch(() => undefined);
       if (!alive) return;
-      setLoaded({ autoBackup, linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, device, watchUnreadable: unreadable,
+      setLoaded({ autoBackup, healthConnect, linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, device, watchUnreadable: unreadable,
         // In de app komt de ochtendvraag als melding op tijd; dan telt alleen of meldingen mogen.
         notice: device !== 'unknown' && device.timed
           ? { support: nativeNoticeSupport(device.notifications), granted: device.notifications === 'granted' }
@@ -115,8 +126,10 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     const offWatch = onWatchChange(() => void load());
     const offMf = onMacroFactorChange(() => void load());
     const offBackup = subscribeAutoBackup(() => void load());
+    const offHealth = onHealthConnectChange(() => void load());
     return () => {
       alive = false;
+      offHealth();
       offWatch();
       offMf();
       offBackup();
@@ -199,6 +212,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       device: loaded.device,
       liveUpdate: liveUpdatePort().available,
       watchUnreadable: loaded.watchUnreadable,
+      healthConnect: loaded.healthConnect,
     };
   }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, strengthCheck]);
 

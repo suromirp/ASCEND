@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
@@ -7,21 +7,46 @@ import type { WatchUseKey } from '../../../engine/watchUse';
 import { getConnection, setAutoTick, setGarminLeads, setTakeCorrections, setWatchUse, syncWatchActivities } from '../../../storage/externalActivities';
 import { setMacroFactorLeads } from '../../../storage/macrofactor';
 import { setWatchWorkoutsEnabled, syncWatchWorkouts } from '../../../storage/watchWorkouts';
+import { disableHealthConnect, enableHealthConnect, openHealthConnectSettings } from '../../../storage/healthConnect';
+import { healthEnableNote, healthOffNote, type HealthNote } from '../../../engine/healthConnectNote';
+import { TextButton } from '../../TextButton';
 import { SettingsSection } from '../SettingsList';
 import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
 
-// Koppelingen: Garmin via intervals.icu, MacroFactor en (later) Health Connect. De schakelaars van wat
-// ASCEND van je horloge gebruikt staan hier; koppelen en inlezen blijven hun eigen pagina. Wat hier
-// aan of uit gaat is een apparaatvoorkeur en gaat niet mee in een back-up.
+// Koppelingen: Garmin via intervals.icu, Health Connect (alleen in de Android-app) en MacroFactor. De
+// schakelaars van wat ASCEND van je horloge gebruikt staan hier; koppelen en inlezen blijven hun eigen
+// pagina. Wat hier aan of uit gaat is een apparaatvoorkeur en gaat niet mee in een back-up.
 export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
   const [note, setNote] = useState<string | null>(null);
   // Een keuze in het blad Trainingen naar je horloge opent haar onderblad bovenop dat blad.
   const [inner, setInner] = useState<string | null>(null);
+  // Health Connect: de zin na aan- of uitzetten, en een slot zodat een tweede tik niet dubbel vraagt.
+  const [health, setHealth] = useState<HealthNote | null>(null);
+  const healthBusy = useRef(false);
+
+  // Aan: pas nu vraagt Android om toestemming, daarna meteen een ronde. Elke uitkomst staat onder de rij.
+  async function changeHealth(on: boolean) {
+    if (healthBusy.current) return;
+    healthBusy.current = true;
+    setHealth(on ? { text: 'Even kijken bij Health Connect…', tone: 'ok' } : null);
+    try {
+      if (on) setHealth(healthEnableNote(await enableHealthConnect()));
+      else {
+        await disableHealthConnect();
+        setHealth(healthOffNote());
+      }
+    } catch {
+      setHealth({ text: 'Dat lukte niet. Probeer het zo opnieuw.', tone: 'warn' });
+    } finally {
+      healthBusy.current = false;
+      reload();
+    }
+  }
 
   // Uit: weg van de telefoon. Aan: meteen ophalen, als er een koppeling is.
   async function changeUse(key: WatchUseKey, on: boolean) {
@@ -90,6 +115,21 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
         <SummaryRow id="horloge-stil" title="Melden als je horloge stilvalt" facts={facts} info="horlogeStil" onChange={(on) => void updateSettings({ watchSilence: on })} />
         <SummaryRow id="bundel-horloge-sturen" title="Trainingen naar je horloge" facts={facts} info="naarHorloge" onClick={() => setSheet('bundel-horloge-sturen')} />
       </SettingsSection>
+
+      <SettingsSection title="Health Connect">
+        {/* In de browser gedimd met uitleg, zonder schakelaar (engine/settingsSummary.ts#healthConnectRow). */}
+        <SummaryRow id="health-connect" title="Health Connect" facts={facts} info="healthConnect" kind="static" onChange={(on) => void changeHealth(on)} />
+      </SettingsSection>
+      {health && (
+        <div role="status">
+          <p className={`st-hint${health.tone === 'warn' ? ' warn' : ''}`}>{health.text}</p>
+          {health.openSettings && (
+            <div className="st-hint" style={{ marginTop: 0 }}>
+              <TextButton onClick={() => void openHealthConnectSettings().then((ok) => !ok && setHealth({ text: 'Health Connect ging niet open. Je vindt het in de instellingen van je telefoon.', tone: 'warn' }))}>Health Connect openen</TextButton>
+            </div>
+          )}
+        </div>
+      )}
 
       <SettingsSection title="MacroFactor">
         <SummaryRow id="macrofactor" title="Laatste export" facts={facts} info="macrofactorExport" onClick={() => navigate('/koppelen/macrofactor')} />
