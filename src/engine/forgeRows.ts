@@ -39,7 +39,7 @@ export interface RemoveResult {
 
 // Wat er weggehaald is, alleen de stukken die kloppen: een concept kan oud of beschadigd zijn.
 type Drop = NonNullable<WorkoutExercise['dropped']>[number];
-export function dropsOf(ex: Pick<WorkoutExercise, 'dropped'>): Drop[] {
+function dropsOf(ex: Pick<WorkoutExercise, 'dropped'>): Drop[] {
   if (!Array.isArray(ex.dropped)) return [];
   return ex.dropped.filter((d): d is Drop => typeof d === 'object' && d !== null && typeof d.index === 'number' && typeof d.row === 'object' && d.row !== null && typeof d.row.id === 'string' && typeof d.row.kind === 'string');
 }

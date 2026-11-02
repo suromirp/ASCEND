@@ -113,7 +113,7 @@ export function validateLeaveDraft(draft: { kind?: LeaveKind; startDate?: string
 // 'off': no training. 'trek': a walking day. 'free': extra time. Where periods
 // overlap the strictest wins: a holiday without training beats a trek, a trek
 // beats free days.
-export type LeaveDayKind = 'off' | 'trek' | 'free';
+type LeaveDayKind = 'off' | 'trek' | 'free';
 export interface LeaveDay {
   kind: LeaveDayKind;
   period: LeavePeriod;

@@ -28,7 +28,7 @@ export const MERGE_MS = 60_000;
 
 // --- de stand van een rij ---------------------------------------------------------------------
 
-export function stateOf(row: Pick<WorkoutRow, 'weightKg' | 'reps' | 'rir'>): ForgeSetState {
+function stateOf(row: Pick<WorkoutRow, 'weightKg' | 'reps' | 'rir'>): ForgeSetState {
   return {
     ...(row.weightKg !== undefined ? { kg: row.weightKg } : {}),
     ...(row.reps !== undefined ? { reps: row.reps } : {}),

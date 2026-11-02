@@ -40,7 +40,7 @@ import { descentOf, routeDayRows, type RouteDayRow } from './standing';
 // Het getal vergelijkt met het getal van zoveel dagen terug ("+6 in 4 weken").
 export const VERGELIJK_DAGEN = 28;
 
-export type PartUnit = 'kg' | 'min' | 'm' | 'dagen' | 'km';
+type PartUnit = 'kg' | 'min' | 'm' | 'dagen' | 'km';
 
 // Eén vergelijking binnen een meter: jouw beste naast wat het doel vraagt.
 export interface MeterPart {
@@ -53,7 +53,7 @@ export interface MeterPart {
   text: string; // "9 van 14 kg"
 }
 
-export interface GoalMeter {
+interface GoalMeter {
   key: string;
   label: string;
   parts: MeterPart[];
@@ -106,7 +106,7 @@ export interface ReadinessOptions {
 }
 
 // Het gewicht van een meter die niet in `weights` staat.
-export const DEFAULT_METER_WEIGHT = 0.2;
+const DEFAULT_METER_WEIGHT = 0.2;
 
 export interface GoalReadinessInput {
   kind: GoalKindId;
@@ -163,7 +163,7 @@ export function dayShareOf(dayMinutes: number): number {
   return 0.5;
 }
 
-export const DAY_SHARE_NOTE = '100% is hier een aandeel van de doeldag: 1,0 tot 3 uur, 0,6 bij 8 uur en 0,5 vanaf 12 uur. Dat is een afgeleide keuze, niet getoetst.';
+const DAY_SHARE_NOTE = '100% is hier een aandeel van de doeldag: 1,0 tot 3 uur, 0,6 bij 8 uur en 0,5 vanaf 12 uur. Dat is een afgeleide keuze, niet getoetst.';
 
 // --- eisen uit de ingevulde gegevens -----------------------------------------------------------
 

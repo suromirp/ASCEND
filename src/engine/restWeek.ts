@@ -71,7 +71,7 @@ export function restWeekChange(program: Program, weekStart: string, skip: boolea
 // skip it yourself. The 75% is a practical line derived from what a rest
 // week is for, not a number from a study.
 
-export const LOW_LOAD_SHARE = 0.75;
+const LOW_LOAD_SHARE = 0.75;
 
 export interface RestWeekSkipProposal {
   id: string; // per rest week: a "liever niet" holds for that week

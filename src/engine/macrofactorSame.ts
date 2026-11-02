@@ -15,7 +15,7 @@ import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isWorkSet } from './workSets';
 
 // The part of the working sets that must be the same: 4 of every 5.
-export const SAME_SETS_RATIO = 0.8;
+const SAME_SETS_RATIO = 0.8;
 
 // A log that came from a MacroFactor file, or that took over its numbers.
 const isMacroFactorLog = (l: SessionLog) => !!l.externalId?.startsWith('macrofactor:') || !!l.manualMeasured?.strength;

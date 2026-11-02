@@ -22,7 +22,7 @@ import { isLightWeekOf } from '../models/program';
 import { lockLevel } from './weekValidator';
 
 // The minutes of a session with this program, as the screens show them.
-export type MinutesOf = (session: PlannedSession, template: SessionTemplate, program: Program) => number;
+type MinutesOf = (session: PlannedSession, template: SessionTemplate, program: Program) => number;
 
 export interface WeekLoadContext {
   sessions: PlannedSession[];
@@ -114,7 +114,7 @@ export function doneSentence(program: Program, weekStart: string): string {
   return `Deze week is al zo goed als klaar; de volgende rustweek komt ${k === 1 ? 'volgende week' : `over ${k} weken`}.`;
 }
 
-export const PAST_SENTENCE = 'Deze week is voorbij. Wat je deed blijft staan zoals het was.';
+const PAST_SENTENCE = 'Deze week is voorbij. Wat je deed blijft staan zoals het was.';
 
 function changeSentence(n: number, heavier: boolean, laterWeeks: boolean): string {
   const what = n === 1 ? 'de training die nog komt' : `de ${n} trainingen die nog komen`;

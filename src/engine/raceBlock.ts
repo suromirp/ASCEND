@@ -61,7 +61,7 @@ export { goalPlanRole, isRaceGoal };
 export type { GoalPlanRole };
 
 export const RACE_BLOCK_WEEKS = 8;
-export const TEMPO_TEMPLATE_ID = 'tpl_tempo_run';
+const TEMPO_TEMPLATE_ID = 'tpl_tempo_run';
 export const RACE_TEMPLATE_ID = 'tpl_race';
 export const TEST_TEMPLATE_ID = 'tpl_test_run';
 // Weeks before race week with a 5 km test: just before the block starts,
@@ -69,17 +69,17 @@ export const TEST_TEMPLATE_ID = 'tpl_test_run';
 // Plus a first test 20 weeks out, at the start of Opbouw in your plan, so ASCEND knows your pace (and
 // what to train) long before the block.
 const TEST_WEEKS_BEFORE_RACE = [20, RACE_BLOCK_WEEKS + 1, 4];
-export const INTERVALS_TEMPLATE_ID = 'tpl_intervals';
-export const HILLS_TEMPLATE_ID = 'tpl_hill_intervals';
-export const HILLS_DESCENT_TEMPLATE_ID = 'tpl_hills_descent';
+const INTERVALS_TEMPLATE_ID = 'tpl_intervals';
+const HILLS_TEMPLATE_ID = 'tpl_hill_intervals';
+const HILLS_DESCENT_TEMPLATE_ID = 'tpl_hills_descent';
 const SATURDAY_FAMILY = [HILLS_TEMPLATE_ID, INTERVALS_TEMPLATE_ID, HILLS_DESCENT_TEMPLATE_ID];
 const DESCENT_PHASES = [PHASE_BASIS, PHASE_OPBOUW, PHASE_ONDERHOUD];
 const DESCENT_BLOCK_WEEK = 3;
 const EASY_TEMPLATE_ID = 'tpl_easy_run';
 // The quiet run a Saturday becomes in a week with one quality session only.
-export const QUIET_TEMPLATE_ID = 'tpl_strides_run';
+const QUIET_TEMPLATE_ID = 'tpl_strides_run';
 // From this many runs in a week both quality sessions stay.
-export const TWO_QUALITY_MIN_RUNS = 4;
+const TWO_QUALITY_MIN_RUNS = 4;
 const QUALITY_TEMPLATES = new Set([TEMPO_TEMPLATE_ID, TEST_TEMPLATE_ID, INTERVALS_TEMPLATE_ID, HILLS_TEMPLATE_ID, HILLS_DESCENT_TEMPLATE_ID]);
 // Which slot carries the week when there is room for one quality session, by
 // block week (1 to 8). Threshold work first and last (the tempo run: the

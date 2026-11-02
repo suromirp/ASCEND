@@ -21,7 +21,7 @@
 import type { SessionLog } from '../models/training';
 import { addDays } from '../utils/dates';
 
-export type SpikeDimension = 'distance' | 'elevationGain' | 'elevationLoss' | 'packWeight';
+type SpikeDimension = 'distance' | 'elevationGain' | 'elevationLoss' | 'packWeight';
 
 const DIMENSION_LABEL: Record<SpikeDimension, string> = {
   distance: 'afstand',

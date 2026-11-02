@@ -22,8 +22,6 @@ import type { Intensity } from '../data/workoutStructure';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
 
 export type WatchHrMode = 'ascend' | 'intervals';
-export const DEFAULT_WATCH_HR_MODE: WatchHrMode = 'ascend';
-export const DEFAULT_WATCH_CALM_RUN = true;
 
 // The most the written percentage may be off from the beats of ASCEND.
 export const MAX_BPM_ERROR = 1;

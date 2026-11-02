@@ -15,7 +15,7 @@ export interface OneRmPoint {
   kg: number;
 }
 
-export const ONE_RM_WINDOW_DAYS = 28;
+const ONE_RM_WINDOW_DAYS = 28;
 
 // One point per training that has an estimate, oldest first.
 export function oneRmSeries(points: SessionPoint[]): OneRmPoint[] {

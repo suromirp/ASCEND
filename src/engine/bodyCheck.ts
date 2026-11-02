@@ -30,31 +30,31 @@ export { BODY_CHECK_MODES, DEFAULT_BODY_CHECK, resolveBodyCheck, type BodyCheckM
 // bestaande woorden "Wat vermoeid" bent, en ligt minstens een kwart boven de eigen mediaan van de
 // vier weken ervoor. Zo komt een gewone, zware opbouwweek niet elke week met een vraag.
 export const HEAVY_LEG_INDEX = FATIGUE_THRESHOLDS.hard.fresh;
-export const HEAVY_VERSUS_MEDIAN = 1.25;
+const HEAVY_VERSUS_MEDIAN = 1.25;
 // Dalen (meters omlaag in 7 dagen) voor niveau 1, 2 en 3. De afdaling uit het onderzoek die
 // spierpijn geeft is ongeveer 900 m.
 export const DESCENT_LEVELS = [800, 1200, 1800] as const;
 // Klimmen (meters omhoog in 7 dagen).
-export const CLIMB_LEVELS = [1200, 2000, 3000] as const;
+const CLIMB_LEVELS = [1200, 2000, 3000] as const;
 // Rugzak: kilogram maal uren met rugzak in 7 dagen.
-export const PACK_LEVELS = [25, 45, 70] as const;
+const PACK_LEVELS = [25, 45, 70] as const;
 // Hardlopen: kilometers in 7 dagen tegen je gemiddelde van de 4 weken ervoor. Pas vanaf 15 km.
-export const RUN_MIN_KM = 15;
-export const RUN_RATIO_LEVELS = [1.3, 1.6, 2] as const;
+const RUN_MIN_KM = 15;
+const RUN_RATIO_LEVELS = [1.3, 1.6, 2] as const;
 // Een rugzak van minstens zoveel kilo telt mee bij de knieën bij dalen.
-export const PACK_ON_KNEES_KG = 5;
+const PACK_ON_KNEES_KG = 5;
 // Na een tocht of wedstrijd: spierpijn piekt 48 tot 72 uur na afdalen. De kaart komt de tweede
 // ochtend erna en blijft vijf dagen.
 export const AFTER_EVENT_FROM_DAYS = 2;
-export const AFTER_EVENT_UNTIL_DAYS = 6;
+const AFTER_EVENT_UNTIL_DAYS = 6;
 // Een bergtocht telt als tocht vanaf zoveel minuten.
-export const TOCHT_MIN_MINUTES = 240;
+const TOCHT_MIN_MINUTES = 240;
 
 // ---- plekgroepen en wat het hardst werkte ---------------------------------------------
 
-export type LoadGroupId = 'bovenbenen' | 'knieen' | 'kuiten' | 'schouders';
+type LoadGroupId = 'bovenbenen' | 'knieen' | 'kuiten' | 'schouders';
 
-export interface LoadGroup {
+interface LoadGroup {
   id: LoadGroupId;
   label: string;
   // De plekken op het figuur die bij de groep horen.
@@ -63,7 +63,7 @@ export interface LoadGroup {
   openSpotId: string;
 }
 
-export const LOAD_GROUPS: LoadGroup[] = [
+const LOAD_GROUPS: LoadGroup[] = [
   { id: 'bovenbenen', label: 'Bovenbenen', spotIds: ['dij-r', 'dij-l'], openSpotId: 'dij-r' },
   { id: 'knieen', label: 'Knieën', spotIds: ['knie-r', 'knie-l'], openSpotId: 'knie-r' },
   { id: 'kuiten', label: 'Kuiten', spotIds: ['kuit-r', 'kuit-l'], openSpotId: 'kuit-r' },
@@ -169,7 +169,7 @@ export function weekHotSpots(logs: SessionLog[], today: string): HotSpot[] {
 
 // ---- de redenen ------------------------------------------------------------------------
 
-export type BodyCheckReasonKind = 'pijn' | 'zwaar' | 'tocht' | 'wedstrijd';
+type BodyCheckReasonKind = 'pijn' | 'zwaar' | 'tocht' | 'wedstrijd';
 
 export interface BodyCheckReason {
   kind: BodyCheckReasonKind;

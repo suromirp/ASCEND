@@ -18,9 +18,9 @@ import { formatNumberNL } from '../utils/number';
 import { kgLabel } from '../utils/kg';
 
 export type RouteKind = 'distance' | 'elevationGain' | 'elevationLoss';
-export const ROUTE_KINDS: RouteKind[] = ['distance', 'elevationGain', 'elevationLoss'];
+const ROUTE_KINDS: RouteKind[] = ['distance', 'elevationGain', 'elevationLoss'];
 
-export type DayValueSource = 'override' | 'derived' | 'single_day';
+type DayValueSource = 'override' | 'derived' | 'single_day';
 
 export interface DayValue {
   value: MeasuredValue;

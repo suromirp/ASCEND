@@ -31,7 +31,7 @@ export function roleOf(t: SessionTemplate): DayRole {
   return 'overig';
 }
 
-export type Evidence = 'sterk' | 'matig' | 'zwak' | 'expertopinie' | 'afgeleid';
+type Evidence = 'sterk' | 'matig' | 'zwak' | 'expertopinie' | 'afgeleid';
 
 export interface DayOrderAdvice {
   order: string[]; // session ids, first one first

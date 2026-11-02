@@ -32,7 +32,7 @@ import type { SheetModel } from './runInsight';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 
-export type TrendWord = 'Beter' | 'Normaal' | 'Slechter' | 'Te weinig gegevens';
+type TrendWord = 'Beter' | 'Normaal' | 'Slechter' | 'Te weinig gegevens';
 
 export interface TrendRow {
   key: 'efficiency' | 'longDays' | 'climbing' | 'form';
@@ -60,7 +60,7 @@ export interface RunTrendsInput {
   excludedLogIds?: ReadonlySet<string>;
 }
 
-export const TREND_WEEKS = 12;
+const TREND_WEEKS = 12;
 const num = (n: number, decimals = 0) => formatNumberNL(n, decimals);
 const rounded = (n: number) => Math.round(n);
 const label = (iso: string) => `${Number(iso.slice(8, 10))}-${Number(iso.slice(5, 7))}`;

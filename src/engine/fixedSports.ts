@@ -12,7 +12,7 @@ import { parseSportHandling, type FixedSlot, type SportHandlingMap } from './spo
 import { sportTemplateId } from './sportTemplate';
 
 // Hoe ver vooruit de vaste rijen staan; de dagelijkse ronde vult de volgende weken aan.
-export const FIXED_WEEKS_AHEAD = 8;
+const FIXED_WEEKS_AHEAD = 8;
 
 export interface FixedRow {
   sport: CountedSportId;
@@ -21,7 +21,7 @@ export interface FixedRow {
 }
 
 // Een dag van een vakantie zonder training of van een tocht: daar vervalt een vaste afspraak (het advies).
-export function leaveBlocks(date: string, leave: readonly LeavePeriod[] | undefined): LeavePeriod | undefined {
+function leaveBlocks(date: string, leave: readonly LeavePeriod[] | undefined): LeavePeriod | undefined {
   return (leave ?? []).find((p) => (p.kind === 'no_training' || p.kind === 'trek') && date >= p.startDate && date <= p.endDate);
 }
 
@@ -68,7 +68,7 @@ export interface FixedReconcile {
 }
 
 // De week waarvoor een vaste rij werd gezet. Een rij van voor dit veld leest zijn eigen week.
-export function fixedWeekOf(s: PlannedSession): string {
+function fixedWeekOf(s: PlannedSession): string {
   return s.fixed?.week ?? s.weekStartDate;
 }
 

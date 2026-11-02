@@ -31,7 +31,7 @@ export type ClothingKind =
 // Degrees Celsius added to the felt temperature (report, "Eigen afleiding").
 // Own values a few degrees under the rules of thumb of the sources (Runner's
 // World, Wyndo, RunDida); only the direction (harder = warmer) is certain.
-export const WARMTH_BONUS_C: Record<ClothingKind, number> = {
+const WARMTH_BONUS_C: Record<ClothingKind, number> = {
   easy_run: 6,
   long_run: 5,
   tempo: 8,
@@ -90,7 +90,7 @@ export function isHeatSession(template: Pick<SessionTemplate, 'id' | 'name'>): b
 // --- thresholds -----------------------------------------------------------------
 
 // Degrees Celsius unless said otherwise. Report section in the comment.
-export const CLOTHING_RULES = {
+const CLOTHING_RULES = {
   // Romp: T bands. Translated from cycling and running sources (id.nl, 12GoBiking,
   // Brooks, Runner's World reprint). Certainty: low to medium.
   torsoLight: 22,

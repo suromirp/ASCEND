@@ -35,14 +35,14 @@ import { estimatedHikingMinutes } from './goalRoute';
 
 export const CLIMB_PACE_MIN = { climbs: 6, trips: 3 };
 // Een stuk telt vanaf 100 meter en 8 procent, omhoog en omlaag.
-export const CLIMB_COUNTS = { metres: 100, gradientPct: 8 };
+const CLIMB_COUNTS = { metres: 100, gradientPct: 8 };
 // Het rugzakgewicht telt mee bij minstens driekwart van de klimmen.
-export const PACK_KNOWN_SHARE = 0.75;
-export const CLIMB_WINDOW_DAYS = 365;
+const PACK_KNOWN_SHARE = 0.75;
+const CLIMB_WINDOW_DAYS = 365;
 // Zonder eigen dalingen geldt de norm omlaag; met drie of meer je eigen tempo.
-export const DESCENT_MIN = 3;
+const DESCENT_MIN = 3;
 // De norm (DIN 33466).
-export const NORM_FLAT_KMH = 4;
+const NORM_FLAT_KMH = 4;
 export const NORM_UP_MPH = 300;
 export const NORM_DOWN_MPH = 500;
 const BAND_STEP = 30;

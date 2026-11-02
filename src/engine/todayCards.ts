@@ -11,7 +11,7 @@
 // de missie is waar Vandaag over gaat. Puur: geen React, geen opslag.
 
 export type TodayCardId = 'ill' | 'illnessSign' | 'morning' | 'ramp' | 'advice' | 'missed' | 'freshStart' | 'backup' | 'backupDue';
-export type TodayCardGroup = 'safety' | 'morning' | 'recovery' | 'today' | 'yesterday' | 'upkeep';
+type TodayCardGroup = 'safety' | 'morning' | 'recovery' | 'today' | 'yesterday' | 'upkeep';
 
 export interface TodayCardSpec {
   id: TodayCardId;

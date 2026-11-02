@@ -383,7 +383,7 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
 // --- repairing what the system planned ----------------------------------------------
 // A repair is made for a rule of the check, or by the leave step that puts a
 // walk on a trek day or a free day (engine/leaveBlock.ts).
-export type RepairRule = CheckRule | 'LEAVE-PLACE' | 'FIXED-SPORT' | 'KIND-AMOUNT';
+type RepairRule = CheckRule | 'LEAVE-PLACE' | 'FIXED-SPORT' | 'KIND-AMOUNT';
 
 export interface Repair {
   sessionId: string;
@@ -398,10 +398,10 @@ export interface Repair {
   reason?: string;
 }
 
-export const SOFT_REST_REASON = 'Iets eerder dan ASCEND graag ziet na je tocht, daarom de korte versie.';
+const SOFT_REST_REASON = 'Iets eerder dan ASCEND graag ziet na je tocht, daarom de korte versie.';
 
 // Why a leg day next to a tocht is let go: concrete, so it is clear it is not a mistake.
-export function legAndTrekReason(afterTrek: boolean): string {
+function legAndTrekReason(afterTrek: boolean): string {
   return afterTrek
     ? 'Te dicht na je tocht: na een bergtocht houdt ASCEND 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.'
     : 'Te dicht voor je tocht: tussen een zware beendag en je tocht houdt ASCEND 48 uur, en deze week is er geen dag voor.';

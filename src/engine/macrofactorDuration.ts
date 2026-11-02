@@ -44,7 +44,7 @@ function completedAtOn(date: string, start: string, minutes: number): string {
   return (sameDay ? end : new Date(y, m - 1, d, 0, 15)).toISOString();
 }
 
-export const tooLong = (workout: MacroFactorWorkout): boolean => !!workout.durationSec && workout.durationSec / 60 > LONGEST_PLAUSIBLE_WORKOUT_MIN;
+const tooLong = (workout: MacroFactorWorkout): boolean => !!workout.durationSec && workout.durationSec / 60 > LONGEST_PLAUSIBLE_WORKOUT_MIN;
 
 // Only a new log can get its duration set here; a row that takes over or fills
 // in an existing log already ignores an impossible duration. Only a row whose

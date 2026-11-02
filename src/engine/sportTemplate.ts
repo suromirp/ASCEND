@@ -5,7 +5,7 @@
 // niet, en tellen de logs van die sport nergens mee. Puur: geen React, geen IndexedDB.
 
 import { COUNTED_SPORTS, anySportDefinition, type CountedSportId, type SportDefinition } from '../data/sports';
-import type { SessionLog, SessionTemplate } from '../models/training';
+import type { SessionTemplate } from '../models/training';
 import { stressProfileOf, type SportIntensity } from './sportStress';
 import { resolveSportCounting, sportCounts } from './sportRole';
 import { countingCustomTemplates } from './customSport';
@@ -48,11 +48,6 @@ export function countingSportTemplates(settings: CountingSettings): SessionTempl
 export function withCountingSports(templates: SessionTemplate[], settings: CountingSettings & { customSports?: unknown }): SessionTemplate[] {
   const ids = new Set(templates.map((t) => t.id));
   return [...templates, ...[...countingSportTemplates(settings), ...countingCustomTemplates(settings)].filter((t) => !ids.has(t.id))];
-}
-
-// Telt dit log van een sport mee? Alleen een log met een sport die meetelt.
-export function countedLogCounts(log: Pick<SessionLog, 'countedSport'>, settings: CountingSettings): boolean {
-  return !!log.countedSport && sportCounts(settings, log.countedSport);
 }
 
 // Voor weergave: elke sport die kan meetellen bij naam, ook als hij dat nog niet doet (een voorstel dat een

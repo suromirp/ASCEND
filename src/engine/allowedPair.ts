@@ -16,7 +16,7 @@ import { daysBetween } from '../utils/dates';
 import { findHeavyConflicts, isHardRun, isLegHeavyTemplate, legSpacingDays } from './scheduler';
 import { isTestOrRace } from './templateRoles';
 
-export type AllowedPairKind = 'run-after-strength' | 'strength-after-run';
+type AllowedPairKind = 'run-after-strength' | 'strength-after-run';
 
 export interface AllowedPair {
   // De eerste van het paar.

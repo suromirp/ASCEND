@@ -17,7 +17,7 @@ import { dayTitle, dragEligibility, type DayVerdict, type DragContext, type Move
 import { addDays, formatDateNL, mondayOfWeek, weekdayLongNL, weekdayOf } from '../utils/dates';
 
 export const SWAP_TEST = 'Een testloop ruil je alleen met Akkoord.';
-export const SWAP_LEAVE = 'Deze training schoof opzij voor je vakantie. Ruil je hem, dan blijft hij op de nieuwe dag staan.';
+const SWAP_LEAVE = 'Deze training schoof opzij voor je vakantie. Ruil je hem, dan blijft hij op de nieuwe dag staan.';
 export const SWAP_LEGS = 'Twee zware beendagen achter elkaar.';
 const SWAP_ASK_TAIL = 'Als je loslaat, vraagt ASCEND eerst of je dat echt wilt.';
 const CHIP_MAX = 28;

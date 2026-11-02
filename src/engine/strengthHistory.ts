@@ -47,9 +47,9 @@ export interface LegsTired {
 // The thresholds of "a mountain hike, a long run or a hard run" in the 48
 // hours before a leg exercise. Choices of this file (the report names the three
 // but not the numbers).
-export const HIKE_CLIMB_M = 500;
-export const LONG_HIKE_MINUTES = 180;
-export const LONG_RUN_MINUTES = 75;
+const HIKE_CLIMB_M = 500;
+const LONG_HIKE_MINUTES = 180;
+const LONG_RUN_MINUTES = 75;
 export const HARD_RUN_RPE = 7;
 export const HARD_RUN_MINUTES = 20;
 
@@ -105,7 +105,7 @@ export function legsTiredAt(date: string, before: string | undefined, deps: Legs
 
 // --- per exercise ---------------------------------------------------------------------------
 
-export interface HistorySession extends SessionInput {
+interface HistorySession extends SessionInput {
   logId: string;
   trainingName: string;
   templateId?: string;
@@ -160,7 +160,7 @@ export function exerciseHistories(logs: SessionLog[], templates: SessionTemplate
 
 // --- the view of one exercise ---------------------------------------------------------------------
 
-export interface LinePoint {
+interface LinePoint {
   label: string;
   value: number;
   // The day of the training (ISO), so the line can be read at a date.
@@ -361,7 +361,7 @@ export interface Accuracy {
 }
 
 // The one honest sentence above the comparison.
-export const MIN_COMPARISONS = 5;
+const MIN_COMPARISONS = 5;
 
 export function accuracy(all: ComparisonRow[]): Accuracy {
   const rows = all.filter((r) => !r.eased);

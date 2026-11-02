@@ -10,9 +10,9 @@
 import type { SessionLog } from '../models/training';
 import type { PainReport } from '../models/checkIn';
 
-export const LEGACY_PAIN_SCORE = 4;
+const LEGACY_PAIN_SCORE = 4;
 export const PAIN_HOLDS_BACK = 3;
-export const PAIN_STOPS = 6; // above 5: 2 to 3 days without running on that spot
+const PAIN_STOPS = 6; // above 5: 2 to 3 days without running on that spot
 
 export function painReports(log: Pick<SessionLog, 'painAreas' | 'painReports'>): PainReport[] {
   if (log.painReports && log.painReports.length > 0) return log.painReports;

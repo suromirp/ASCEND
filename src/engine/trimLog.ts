@@ -29,7 +29,7 @@ import { blockKeyOf } from './watchAlign';
 
 type Block = CardioMetric | OutdoorMetric;
 
-export const TRIM_FIELDS: TrimField[] = ['distanceKm', 'elevationGainM', 'elevationLossM', 'avgHeartRate', 'maxHeartRate'];
+const TRIM_FIELDS: TrimField[] = ['distanceKm', 'elevationGainM', 'elevationLossM', 'avgHeartRate', 'maxHeartRate'];
 
 // A log the watch made and that has numbers to cut: the "Inkorten" row shows for
 // it, and with `trim` set, the line with "Inkorten ongedaan maken" instead.

@@ -13,7 +13,7 @@ import { mondayOfWeek, weekDates } from '../utils/dates';
 import { leaveLabelOn, type LeaveLabel } from './leave';
 
 // 'anders': the same day, another training (a long run that becomes a mountain hike).
-export type PreviewChange = 'nieuw' | 'hierheen' | 'weg' | 'vervalt' | 'anders';
+type PreviewChange = 'nieuw' | 'hierheen' | 'weg' | 'vervalt' | 'anders';
 
 export interface PreviewEntry {
   name: string;
@@ -27,7 +27,7 @@ export interface PreviewEntry {
   otherName?: string;
 }
 
-export interface PreviewDay {
+interface PreviewDay {
   date: string;
   entries: PreviewEntry[];
   changed: boolean;
@@ -35,7 +35,7 @@ export interface PreviewDay {
   leave?: LeaveLabel;
 }
 
-export interface PreviewWeek {
+interface PreviewWeek {
   weekStart: string;
   days: PreviewDay[];
 }

@@ -97,7 +97,7 @@ export function testEffortRemark(log: Pick<SessionLog, 'templateId' | 'rpe' | 'r
 }
 
 // 'held': a slower test that a newer test has passed (the newer one counts), so nothing waits on it.
-export type TestStanding = 'counts' | 'pending' | 'held' | 'ignored';
+type TestStanding = 'counts' | 'pending' | 'held' | 'ignored';
 
 export interface TestState {
   result: TestResult;
@@ -158,7 +158,7 @@ export function offerReread(o: Pick<EffortOffer, 'minutes' | 'prevMinutes'>): bo
 export const REREAD_SENTENCE = 'Opnieuw gelezen zonder stilstaan.';
 
 // How many days back an accepted best effort of an older reading is read once more.
-export const REREAD_DAYS = 60;
+const REREAD_DAYS = 60;
 
 // Does this test log still want its best stretch read from the series? Not when it has a usable
 // one read for the totals it has now, nor when the series was already tried for these totals (and

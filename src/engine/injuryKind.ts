@@ -8,7 +8,7 @@ import { addDays, daysBetween } from '../utils/dates';
 
 // Een afgeleide drempel: spierpijn na een zware dag is meestal binnen een paar dagen weg
 // (docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md); een week is ruim genoeg.
-export const SORENESS_OPEN_DAYS = 7;
+const SORENESS_OPEN_DAYS = 7;
 
 // Een melding zonder soort is pijn, zoals elke melding van voor deze kaart.
 export function kindOf(note: Pick<InjuryNote, 'kind'>): InjuryKind {

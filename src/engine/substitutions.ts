@@ -239,7 +239,7 @@ export function weeklyProgressionNote(
 // variant data, exercise trimming and progression handling all stay in
 // place; flipping this back on restores the short/minimum buttons. See
 // BACKLOG.md.
-export const SESSION_VARIANTS_ENABLED = false;
+const SESSION_VARIANTS_ENABLED = false;
 
 export function availableVariants(template: SessionTemplate): SessionVariant[] {
   const variants: SessionVariant[] = ['full'];

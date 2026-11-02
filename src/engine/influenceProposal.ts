@@ -28,8 +28,8 @@ import { testMoveAdvice, type Advice, type AdviceInputs } from './adviceEngine';
 import { morningOf } from './influenceEffects';
 import { MIN_BASELINE_DAYS, baselineValues } from './wellnessCheck';
 
-export const TEST_TEMPLATE_ID = 'tpl_test_run';
-export const TEST_NAME = 'Testloop 5 km';
+const TEST_TEMPLATE_ID = 'tpl_test_run';
+const TEST_NAME = 'Testloop 5 km';
 
 export interface InfluenceMoveCause {
   session: PlannedSession;

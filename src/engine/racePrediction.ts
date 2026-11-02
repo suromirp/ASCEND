@@ -15,7 +15,7 @@ import type { TestJudgment } from '../models/testJudgment';
 import { isStaleEffort, isUsableBestEffort, testTotals } from './bestEffort';
 import { TEST_TEMPLATE_ID } from './raceBlock';
 
-export const RIEGEL_EXPONENT = 1.06;
+const RIEGEL_EXPONENT = 1.06;
 // Beyond this, Riegel underestimates the time (the marathon).
 export const RIEGEL_MAX_KM = 21.1;
 export const TEST_NOISE = 0.035;

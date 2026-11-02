@@ -17,7 +17,7 @@ import { hasRole } from './templateRoles';
 import { addDays, mondayOfWeek, weekdayLongNL, weekdayOf, formatDateNL, weekDates } from '../utils/dates';
 
 // --- wie mag slepen ----------------------------------------------------------------
-export type DragRefusal = 'history' | 'skipped' | 'rest' | 'race' | 'leave';
+type DragRefusal = 'history' | 'skipped' | 'rest' | 'race' | 'leave';
 // askAlways: true (a test, with its own sentence) or the sentence the Akkoord sheet shows.
 export type DragEligibility = { ok: true; askAlways: boolean | string } | { ok: false; reason: DragRefusal };
 
@@ -39,7 +39,7 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
 
 // --- wat elke dag zegt -------------------------------------------------------------
 // swap: the day holds exactly one training that may move; letting go trades their days (engine/weekSwap.ts).
-export type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'blocked' | 'swap';
+type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'blocked' | 'swap';
 
 export interface DayVerdict {
   date: string;
@@ -214,7 +214,7 @@ export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Ve
 export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict; legsClose?: boolean }
 
 export const LEGS_ASK = 'Twee zware beendagen achter elkaar. Toch hier?';
-export const LEGS_CONFIRM = { yes: 'Toch hier', no: 'Annuleren' } as const;
+const LEGS_CONFIRM = { yes: 'Toch hier', no: 'Annuleren' } as const;
 
 export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {}): MoveDecision {
   const real = proposal.changes.filter((c) => c.toDate !== c.fromDate || c.restore);

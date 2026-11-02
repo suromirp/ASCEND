@@ -45,7 +45,7 @@ export type ReadinessWeighting = 'speed' | 'equal';
 // "Klaar voor je doel bij een doeltijd" (AppSettings.readinessWeighting): afwezig of onbekend = snelheid.
 export const resolveReadinessWeighting = (v: unknown): ReadinessWeighting => (v === 'equal' ? 'equal' : 'speed');
 
-export type SpeedStatus = 'counted' | 'waiting' | 'none' | 'no-target';
+type SpeedStatus = 'counted' | 'waiting' | 'none' | 'no-target';
 
 export interface RaceFacts {
   status: SpeedStatus;

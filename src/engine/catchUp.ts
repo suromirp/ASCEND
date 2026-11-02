@@ -9,7 +9,7 @@ import type { ScheduleChange } from './scheduler';
 import { hasRole } from './templateRoles';
 import { addDays, mondayOfWeek, weekdayShortNL } from '../utils/dates';
 
-export type CatchUpRefusal = 'logged' | 'future' | 'old' | 'skipped' | 'rest' | 'race' | 'test' | 'leave' | 'done' | 'fixed';
+type CatchUpRefusal = 'logged' | 'future' | 'old' | 'skipped' | 'rest' | 'race' | 'test' | 'leave' | 'done' | 'fixed';
 export type CatchUpEligibility = { ok: true } | { ok: false; reason: CatchUpRefusal };
 
 // Een gemiste training: de dag is voorbij, er is geen log, hij is niet overgeslagen en nog niet ingehaald.

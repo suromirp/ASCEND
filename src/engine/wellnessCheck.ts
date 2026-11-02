@@ -25,7 +25,7 @@ export const MIN_BASELINE_DAYS = 7;
 // A night under this many minutes is called short (6 hours).
 export const SHORT_NIGHT_MINUTES = 360;
 
-export type WellnessKey = 'sleep' | 'restingHeartRate' | 'hrv';
+type WellnessKey = 'sleep' | 'restingHeartRate' | 'hrv';
 
 export interface WellnessLine {
   key: WellnessKey;

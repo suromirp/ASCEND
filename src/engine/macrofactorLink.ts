@@ -103,8 +103,8 @@ export type MacroFactorProposal =
 // A strength workout of more than five hours is a mistake in the file (a
 // stopwatch left running), not a workout.
 export const LONGEST_PLAUSIBLE_WORKOUT_MIN = 300;
-export const MOST_PLAUSIBLE_REPS = 300;
-export const MOST_PLAUSIBLE_WEIGHT_KG = 1000;
+const MOST_PLAUSIBLE_REPS = 300;
+const MOST_PLAUSIBLE_WEIGHT_KG = 1000;
 
 // Why a row is set apart on the card, in one short sentence; undefined when it
 // looks fine. Such a row is not part of "Alles verwerken" unless the user ticks it.

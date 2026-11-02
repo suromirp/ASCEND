@@ -33,8 +33,8 @@ import { restWeekState } from './restWeek';
 import { PHASE_TAPER } from './programLayout';
 import { hasRole, idHasRole, idIsTestOrRace } from './templateRoles';
 
-export const TREK_TEMPLATE_ID = 'tpl_mountain_hike';
-export const FREE_DAY_WALK_TEMPLATE_ID = 'tpl_ruck_walk';
+const TREK_TEMPLATE_ID = 'tpl_mountain_hike';
+const FREE_DAY_WALK_TEMPLATE_ID = 'tpl_ruck_walk';
 
 export interface LeaveStepInput {
   // The week check's own input without the sessions: a placement is only kept

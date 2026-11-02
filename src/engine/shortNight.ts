@@ -12,8 +12,8 @@ import type { RecoveryMetric } from '../models/metrics';
 // Onder 4 uur is een nacht altijd twijfelachtig; daarnaast onder de helft van je eigen
 // gemiddelde, als dat uit minstens 7 dagen komt (dezelfde ondergrens als
 // MIN_BASELINE_DAYS in wellnessCheck.ts).
-export const DOUBTFUL_SLEEP_MINUTES = 240;
-export const MIN_OWN_DAYS = 7;
+const DOUBTFUL_SLEEP_MINUTES = 240;
+const MIN_OWN_DAYS = 7;
 export const MAX_JUDGMENTS = 120;
 
 // De uren die je kunt kiezen als je zelf schat.

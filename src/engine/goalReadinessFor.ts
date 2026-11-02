@@ -28,7 +28,7 @@ import { computeRaceReadiness, resolveReadinessWeighting, type RaceReadiness } f
 import { computeStrengthReadiness } from './strengthReadiness';
 
 // Hoe een doel in de zinnen heet ("die je tocht vraagt").
-export const GOAL_NAMING: Record<GoalKindId, string> = {
+const GOAL_NAMING: Record<GoalKindId, string> = {
   trek_hut: 'je tocht', trek_tent: 'je tocht', day_hike: 'je bergtocht', mountaineering: 'je bergtocht', run_race: 'je wedstrijd',
   trail: 'je trailrun', bike: 'je fietsdoel', triathlon: 'je triathlon', stronger: 'je krachtdoel', fit: 'je beweegdoel',
 };

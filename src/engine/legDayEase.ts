@@ -42,12 +42,12 @@ export { soreFromNotes } from './legSoreness';
 export const LEG_EASE_INDEX = FATIGUE_THRESHOLDS.hard.fresh;
 // De uren tussen een loop eerder die dag en de beendag als de tijd niet bekend is: de ondergrens uit
 // docs/onderzoek/Volgorde van twee trainingen.md.
-export const SAME_DAY_HOURS = 6;
+const SAME_DAY_HOURS = 6;
 // Zeker zoveel herhalingen over bij "Lichter" (extra licht: een meer).
 export const EASE_RIR = 3;
 export const EASE_RIR_EXTRA = 4;
 // Een oefening met zoveel sets of meer verliest de laatste.
-export const EASE_DROP_FROM_SETS = 3;
+const EASE_DROP_FROM_SETS = 3;
 export { MAX_LEG_EASE_DAYS };
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -217,7 +217,7 @@ export function legEaseCardSession(args: {
 
 // --- wie krijgt het voorstel ---------------------------------------------------------------------
 
-export type EaseKind = 'beendag' | 'kwaliteit';
+type EaseKind = 'beendag' | 'kwaliteit';
 
 export interface EaseTarget {
   session: PlannedSession;

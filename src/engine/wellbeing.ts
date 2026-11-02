@@ -52,7 +52,7 @@ export function upperOnly(checkIn: MorningCheckIn | undefined): boolean {
   return !!checkIn && checkIn.soreWhere === 'upper' && (checkIn.legs === 'spierpijn' || checkIn.legs === 'flink');
 }
 
-export function legFeelingOf(checkIn: MorningCheckIn | undefined): MorningCheckIn['legs'] {
+function legFeelingOf(checkIn: MorningCheckIn | undefined): MorningCheckIn['legs'] {
   return upperOnly(checkIn) ? undefined : checkIn?.legs;
 }
 

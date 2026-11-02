@@ -13,9 +13,9 @@ import type { SessionLog } from '../models/training';
 import { recentPainSpot } from './wellbeing';
 import { reviewWeekFor } from './weekReview';
 
-export type ReviewDay = 'both' | 'sunday' | 'monday';
+type ReviewDay = 'both' | 'sunday' | 'monday';
 
-export type MorningFrom = '4' | '5' | '6' | '7';
+type MorningFrom = '4' | '5' | '6' | '7';
 
 export interface OverviewSettings {
   // Weekterugblik op Vandaag, en op welke dag(en) hij verschijnt.
@@ -71,7 +71,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
 };
 
 const REVIEW_DAYS: ReviewDay[] = ['both', 'sunday', 'monday'];
-export const MORNING_FROM: MorningFrom[] = ['4', '5', '6', '7'];
+const MORNING_FROM: MorningFrom[] = ['4', '5', '6', '7'];
 
 // Leest defensief: een back-up kan van een oudere of beschadigde versie zijn.
 export function resolveOverviews(raw: OverviewSettings | undefined | null): ResolvedOverviews {

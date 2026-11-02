@@ -13,13 +13,13 @@ import type { SessionLog } from '../models/training';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 
 export type BeginnerStartChoice = 'auto' | 'ja' | 'nee';
-export const BEGINNER_START_CHOICES: BeginnerStartChoice[] = ['auto', 'ja', 'nee'];
+const BEGINNER_START_CHOICES: BeginnerStartChoice[] = ['auto', 'ja', 'nee'];
 
 // Vier weken zonder harde training (expert).
 export const BEGINNER_WEEKS = 4;
 // Gemeten over acht weken voor de start: minder dan twee keer per week is een beginnersstart (afgeleid).
-export const LOOKBACK_WEEKS = 8;
-export const MIN_PER_WEEK = 2;
+const LOOKBACK_WEEKS = 8;
+const MIN_PER_WEEK = 2;
 
 export function parseBeginnerStart(raw: unknown): BeginnerStartChoice {
   return BEGINNER_START_CHOICES.find((c) => c === raw) ?? 'auto';

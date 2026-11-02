@@ -10,20 +10,20 @@ export function stepBy(current: number, delta: number): Step {
 }
 
 // De rem op de tik bij een stap die je zelf zet: snel vegen mag niet gaan zoemen.
-export const STEP_TAP_GAP_MS = 140;
+const STEP_TAP_GAP_MS = 140;
 export function mayTap(lastAt: number, now: number, gapMs = STEP_TAP_GAP_MS): boolean {
   return now - lastAt >= gapMs;
 }
 
 // Een veeg telt vanaf deze afstand (px) en alleen als hij meer horizontaal dan verticaal is.
-export const SWIPE_MIN_PX = 36;
+const SWIPE_MIN_PX = 36;
 export function swipeDelta(dx: number, dy: number): -1 | 0 | 1 {
   if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) < Math.abs(dy)) return 0;
   return dx < 0 ? 1 : -1;
 }
 
 // Hoe lang de opening duurt (ms) in een stand van Beweging: 900 in Normaal, half zo lang in Rustig, niets in Uit.
-export const OPENING_MS = 900;
+const OPENING_MS = 900;
 export function openingMs(mode: 'full' | 'calm' | 'off'): number {
   return mode === 'full' ? OPENING_MS : mode === 'calm' ? OPENING_MS / 2 : 0;
 }

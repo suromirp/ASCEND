@@ -36,25 +36,25 @@ export const EPLEY_DIVISOR = 30;
 // uncertain (Nuzzo, Halperin). It is only the fallback when no setting is
 // passed in; the real limit comes from the settings (20 by default), so ranges
 // such as 14 to 16 or 17 to 19 with 2 or 3 in reserve still count.
-export const STRICTEST_REPS_TO_FAILURE = 12;
+const STRICTEST_REPS_TO_FAILURE = 12;
 // From this many reps in reserve a set counts half; from this many it does not count.
-export const HALF_WEIGHT_FROM_RIR = 4;
-export const NO_ESTIMATE_FROM_RIR = 6;
+const HALF_WEIGHT_FROM_RIR = 4;
+const NO_ESTIMATE_FROM_RIR = 6;
 
 // KR-3, the share of the way the smoothed number moves to today's.
-export const K_UP = 0.5;
-export const K_DOWN = 0.25;
-export const K_DOWN_TWICE = 0.5;
-export const K_DOWN_TIRED_LEGS = 0.1;
-export const K_AFTER_BREAK = 0.7;
-export const BREAK_DAYS = 21;
+const K_UP = 0.5;
+const K_DOWN = 0.25;
+const K_DOWN_TWICE = 0.5;
+const K_DOWN_TIRED_LEGS = 0.1;
+const K_AFTER_BREAK = 0.7;
+const BREAK_DAYS = 21;
 // After more than this many days without the exercise the proposal counts with a
 // little less strength (setting "Na een pauze lichter beginnen"). Up to about four
 // weeks little strength is lost, after that more (Bosquet 2013, moderate).
-export const LIGHTER_AFTER_DAYS = 28;
-export const LIGHTER_AFTER_BREAK = 0.05;
+const LIGHTER_AFTER_DAYS = 28;
+const LIGHTER_AFTER_BREAK = 0.05;
 // A day counts as "bad" when it is more than 1% under the smoothed number.
-export const BAD_DAY_MARGIN = 0.99;
+const BAD_DAY_MARGIN = 0.99;
 
 // KR-5, on the estimated STRENGTH, not on the weight: the strength the proposal
 // counts with may rise at most this much per training and per week, and fall at
@@ -62,12 +62,12 @@ export const BAD_DAY_MARGIN = 0.99;
 // training. The weight then follows freely from that strength and the goal of
 // this time (KR-4), so a wave in the rep range (4 to 6, then 7 to 9, then 2 to 4;
 // Moesgaard 2022) moves the weight where it should.
-export const MAX_RAISE_PER_TRAINING = 0.05;
-export const MAX_RAISE_PER_WEEK = 0.1;
-export const MAX_DROP_PER_TRAINING = 0.1;
+const MAX_RAISE_PER_TRAINING = 0.05;
+const MAX_RAISE_PER_WEEK = 0.1;
+const MAX_DROP_PER_TRAINING = 0.1;
 // Two trainings in a row clearly under what was expected: this much lighter.
-export const UNDER_EXPECTATION_REPS = 2;
-export const UNDER_EXPECTATION_DROP = 0.05;
+const UNDER_EXPECTATION_REPS = 2;
+const UNDER_EXPECTATION_DROP = 0.05;
 
 // Fatigue within a training. CHOICE OF THIS FILE (the report has no rule for
 // it): every earlier working set costs the next one this share of the strength.
@@ -78,19 +78,19 @@ export const FATIGUE_PER_SET = 0.03;
 // Learned per exercise (setting "Vermoeidheid per set"): the median drop in
 // estimated strength from one working set to the next, pulled toward the 3% while
 // there are few pairs: (n x measured + k x 3%) / (n + k), and kept between 1% and 12%.
-export const FATIGUE_SHRINK_PAIRS = 8;
+const FATIGUE_SHRINK_PAIRS = 8;
 export const FATIGUE_MIN = 0.01;
 export const FATIGUE_MAX = 0.12;
 // A step down of more than this share of the weight is too coarse for a later set:
 // the weight stays and the bottom of the range goes down a little.
-export const COARSE_STEP = 0.1;
+const COARSE_STEP = 0.1;
 
 // The rep ranges, as three reps wide bands around these centres (common programs
 // use bands like 7 to 9, 9 to 11, 11 to 13, 14 to 16). The range is not stored
 // anywhere yet, so it is derived from what was done: the middle of the first
 // training, snapped to the nearest band (halfway goes up: 11 reps is the bottom
 // of 11 to 13), and moved only after two trainings in a row outside it.
-export const RANGE_CENTRES = [4, 6, 8, 10, 12, 15, 18];
+const RANGE_CENTRES = [4, 6, 8, 10, 12, 15, 18];
 export const DEFAULT_RIR = 2;
 
 // --- KR-1 ------------------------------------------------------------------------------
@@ -206,7 +206,7 @@ export interface SessionInput {
   gymProfileId?: string;
 }
 
-export type SmoothNote = 'none' | 'start' | 'up' | 'down' | 'down_twice' | 'legs' | 'restart';
+type SmoothNote = 'none' | 'start' | 'up' | 'down' | 'down_twice' | 'legs' | 'restart';
 
 export interface TopSet {
   weightKg: number;
@@ -359,7 +359,7 @@ export interface WarmupSet {
   reps: number;
 }
 
-export type PrescriptionKind = 'tired' | 'two_under' | 'widened' | 'coarse_heavier' | 'capped' | 'pause' | 'used_top' | 'used_bottom' | 'up' | 'down' | 'same';
+type PrescriptionKind = 'tired' | 'two_under' | 'widened' | 'coarse_heavier' | 'capped' | 'pause' | 'used_top' | 'used_bottom' | 'up' | 'down' | 'same';
 
 export interface Prescription {
   sets: PlannedSet[];

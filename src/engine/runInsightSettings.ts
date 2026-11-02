@@ -28,7 +28,7 @@ export interface ResolvedRunDetailScreen {
   form: Record<RunFormSwitch, boolean>;
 }
 
-export const FORM_SWITCHES: RunFormSwitch[] = ['cadence', 'stanceTimeMs', 'stepLengthM', 'oscillationMm', 'stanceBalanceLeftPct'];
+const FORM_SWITCHES: RunFormSwitch[] = ['cadence', 'stanceTimeMs', 'stepLengthM', 'oscillationMm', 'stanceBalanceLeftPct'];
 
 // De balans staat uit: na één run zegt hij niets (docs/beslissingen/2026-10-22-loopinzicht.md).
 export const DEFAULT_RUN_DETAIL_SCREEN: ResolvedRunDetailScreen = {
@@ -62,7 +62,7 @@ export interface ResolvedRunInsight {
   detail: ResolvedRunDetailScreen;
 }
 
-export const TOPIC_SWITCHES: InsightTopicSwitch[] = ['efficiency', 'longDays', 'climbing', 'form'];
+const TOPIC_SWITCHES: InsightTopicSwitch[] = ['efficiency', 'longDays', 'climbing', 'form'];
 
 export const DEFAULT_RUN_INSIGHT: ResolvedRunInsight = {
   enabled: true,
@@ -92,7 +92,7 @@ export function resolveRunInsight(raw: RunInsightSettings | undefined | null): R
   };
 }
 
-export function resolveRunDetailScreen(raw: unknown): ResolvedRunDetailScreen {
+function resolveRunDetailScreen(raw: unknown): ResolvedRunDetailScreen {
   const d = isRecord(raw) ? raw : {};
   const formRaw = isRecord(d.form) ? d.form : {};
   const flag = (v: unknown, fallback: boolean) => (typeof v === 'boolean' ? v : fallback);

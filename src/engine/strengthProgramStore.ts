@@ -35,7 +35,7 @@ export interface StoredStrengthProgram {
   importedOn: string;
 }
 
-export const PROGRAM_LIMITS = { cycles: 26, days: 7, exercises: 15, sets: 10, name: 80, note: 200 };
+const PROGRAM_LIMITS = { cycles: 26, days: 7, exercises: 15, sets: 10, name: 80, note: 200 };
 
 const isIsoDate = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 const text = (v: unknown, max: number): string | undefined => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, max) : undefined);

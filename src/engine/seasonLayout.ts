@@ -6,8 +6,8 @@
 //
 // Puur: geen React, geen IndexedDB.
 
-export const NAME_WIDTHS = [96, 72, 52] as const;
-export const NAME_ROWS = 3;
+const NAME_WIDTHS = [96, 72, 52] as const;
+const NAME_ROWS = 3;
 const GAP = 4;
 // Een stok mag de naam niet raken, ook niet net langs de rand.
 const POLE_LEFT = 3;

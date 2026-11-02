@@ -18,7 +18,7 @@ import { headingUnit, LB_TO_KG, parseDateCell, parseNumber } from './macrofactor
 import { mapWeightColumns } from './macrofactorWeight';
 import { cellText, type Cell } from './sheetTable';
 
-export interface MacroFactorOneRmExercise {
+interface MacroFactorOneRmExercise {
   // As MacroFactor writes it, without the unit.
   name: string;
   // Oldest first, one per day.

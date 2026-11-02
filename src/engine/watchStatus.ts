@@ -109,7 +109,7 @@ export function sentWhen(sentAt: string, today: string, todayWord = false): stri
   return `op ${formatDateNL(day)} om ${time}`;
 }
 
-export type WatchStatusAction = 'send' | 'retry' | 'link';
+type WatchStatusAction = 'send' | 'retry' | 'link';
 
 export interface WatchStatusLine {
   text: string;

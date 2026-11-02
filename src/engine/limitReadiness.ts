@@ -29,13 +29,13 @@ import { logSport } from './sports';
 import { descentOf } from './standing';
 import { hoursMinutes } from '../utils/hoursMinutes';
 
-export const LIMIT_WINDOW_DAYS = 56;
-export const LIMIT_MIN_MINUTES = 90;
-export const LIMIT_MIN_HIKES = 3;
+const LIMIT_WINDOW_DAYS = 56;
+const LIMIT_MIN_MINUTES = 90;
+const LIMIT_MIN_HIKES = 3;
 // Riegel-exponent voor een trail: tot drie uur en daarboven (Vickers en Vertosick 2016, matig; daarboven afgeleid, zwak).
-export const TRAIL_EXPONENT = 1.06;
-export const TRAIL_EXPONENT_LONG = 1.15;
-export const TRAIL_LONG_MINUTES = 180;
+const TRAIL_EXPONENT = 1.06;
+const TRAIL_EXPONENT_LONG = 1.15;
+const TRAIL_LONG_MINUTES = 180;
 
 export const NEED_HIKES_LINE = 'Na drie lange wandelingen kan ASCEND je tempo schatten.';
 export const NEED_LONG_RUN_LINE = 'Na een lange loop of wandeling van minstens anderhalf uur kan ASCEND je tempo schatten.';
@@ -59,7 +59,7 @@ const median = (xs: number[]): number => {
 };
 
 // Jouw factor ten opzichte van de DIN-tijd, uit je eigen wandelingen. Undefined onder de drie.
-export function dinFactor(logs: SessionLog[], date: string): number | undefined {
+function dinFactor(logs: SessionLog[], date: string): number | undefined {
   const since = addDays(date, -LIMIT_WINDOW_DAYS);
   const ratios = logs
     .filter((l) => l.completedDate >= since && l.completedDate <= date && isHike(l) && l.durationMinutes >= LIMIT_MIN_MINUTES && kmOf(l) > 0)
@@ -68,7 +68,7 @@ export function dinFactor(logs: SessionLog[], date: string): number | undefined 
 }
 
 // Het tempo per inspanningskilometer van je beste loop of wandeling, en de tijd van die dag.
-export function bestEffortPace(logs: SessionLog[], date: string): { pace: number; minutes: number; effortKm: number; sport: 'run' | 'hike' } | undefined {
+function bestEffortPace(logs: SessionLog[], date: string): { pace: number; minutes: number; effortKm: number; sport: 'run' | 'hike' } | undefined {
   const since = addDays(date, -LIMIT_WINDOW_DAYS);
   let best: { pace: number; minutes: number; effortKm: number; sport: 'run' | 'hike' } | undefined;
   for (const l of logs) {
@@ -89,7 +89,7 @@ export function stretchTime(minutes: number, ratio: number): number {
   return ratio <= at180 ? minutes * Math.pow(ratio, TRAIL_EXPONENT) : TRAIL_LONG_MINUTES * Math.pow(ratio / at180, TRAIL_EXPONENT_LONG);
 }
 
-export interface LimitRead {
+interface LimitRead {
   kind: 'hike' | 'trail';
   expected: number;
   limit: number;

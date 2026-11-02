@@ -7,10 +7,10 @@
 export type FigureSetting = 'auto' | 'man' | 'vrouw';
 export type Figure = 'man' | 'vrouw';
 
-export const FIGURE_SETTINGS: FigureSetting[] = ['auto', 'man', 'vrouw'];
-export const DEFAULT_FIGURE: FigureSetting = 'auto';
+const FIGURE_SETTINGS: FigureSetting[] = ['auto', 'man', 'vrouw'];
+const DEFAULT_FIGURE: FigureSetting = 'auto';
 // Wat Automatisch toont zolang de koppeling het geslacht niet weet.
-export const FALLBACK_FIGURE: Figure = 'man';
+const FALLBACK_FIGURE: Figure = 'man';
 
 export function resolveFigureSetting(raw: { figure?: unknown } | undefined): FigureSetting {
   return FIGURE_SETTINGS.find((s) => s === raw?.figure) ?? DEFAULT_FIGURE;

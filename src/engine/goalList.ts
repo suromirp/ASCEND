@@ -70,7 +70,7 @@ export function goalsSentence(listed: readonly ListedGoal[], today: string): str
 
 // --- de seizoensstrook -------------------------------------------------------------------------
 
-export interface SeasonFlag {
+interface SeasonFlag {
   id: string;
   name: string;
   date: string;
@@ -81,13 +81,13 @@ export interface SeasonFlag {
   taperFraction?: number;
 }
 
-export interface SeasonGap {
+interface SeasonGap {
   from: number;
   to: number;
   weeks: number;
 }
 
-export interface SeasonMonth {
+interface SeasonMonth {
   letter: string;
   fraction: number;
 }

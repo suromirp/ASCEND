@@ -18,11 +18,11 @@
 import type { PlannedSession, SessionLog } from '../models/training';
 import { addDays, isoWeekday } from '../utils/dates';
 
-export const PATTERN_WEEKS = 8;
-export const MIN_OCCASIONS = 6;
-export const MIN_MISSED = 4;
-export const MIN_SHARE = 0.5;
-export const MIN_GAP = 0.3;
+const PATTERN_WEEKS = 8;
+const MIN_OCCASIONS = 6;
+const MIN_MISSED = 4;
+const MIN_SHARE = 0.5;
+const MIN_GAP = 0.3;
 
 const DAY_NAME = ['', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
 const COUNT_WORD = ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien', 'elf', 'twaalf'];

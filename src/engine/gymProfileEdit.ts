@@ -13,8 +13,8 @@ export const COMMON_BARS_KG = [20, 15, 10, 7.5];
 export const COMMON_PLATES_KG = [0.5, 1.25, 2.5, 5, 10, 15, 20, 25];
 export const COMMON_STACK_STEPS_KG = [1.25, 2.5, 5];
 
-export const BAR_LIMITS = { min: 1, max: 40, count: 6 };
-export const PLATE_LIMITS = { min: 0.25, max: 50, count: 12 };
+const BAR_LIMITS = { min: 1, max: 40, count: 6 };
+const PLATE_LIMITS = { min: 0.25, max: 50, count: 12 };
 export const STEP_LIMITS = { min: 0.25, max: 50 };
 export const RACK_LIMITS = { startMin: 0.5, startMax: 20, upToMax: 100, maxMax: 200 };
 

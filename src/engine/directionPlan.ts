@@ -20,14 +20,14 @@ import { waveShapeFor, waveWeek as waveOfDate } from './waves';
 import { plannedEffort } from './standing';
 
 // De week van het schema die als gewone lengte geldt: de opbouwweek.
-export const BASE_STEP_WEEK = 2;
+const BASE_STEP_WEEK = 2;
 // Veiligheid (afgeleid): een training wordt hoogstens 1,6 keer en minstens de helft van haar
 // gewone lengte. De sessiepiek en je tijd per dag kunnen daarna nog verder begrenzen.
-export const FACTOR_MIN = 0.5;
+const FACTOR_MIN = 0.5;
 export const FACTOR_MAX = 1.6;
 
 // Telt deze training mee in de minuten (geen kracht, geen herstel)?
-export function countsInMinutes(template: Pick<SessionTemplate, 'type'>): boolean {
+function countsInMinutes(template: Pick<SessionTemplate, 'type'>): boolean {
   return template.type !== 'strength' && template.type !== 'recovery';
 }
 

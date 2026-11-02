@@ -8,7 +8,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import { describeChanges } from './changeImpact';
 import { addDays, mondayOfWeek, localDateOf } from '../utils/dates';
 
-export const TRIGGER_LABEL: Record<EngineEvent, string> = {
+const TRIGGER_LABEL: Record<EngineEvent, string> = {
   goal_created: 'Nieuw doel',
   goal_changed: 'Doel aangepast',
   goal_removed: 'Doel verwijderd',

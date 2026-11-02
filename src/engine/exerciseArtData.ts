@@ -70,8 +70,8 @@ export function artSlugForId(id: string): string | undefined {
   return exerciseById(id) ? exerciseArt(id)?.slug : undefined;
 }
 
-export const CUE_LABELS = ['Doen', 'Let op', 'Vaak fout'] as const;
-export type CueLabel = (typeof CUE_LABELS)[number];
+const CUE_LABELS = ['Doen', 'Let op', 'Vaak fout'] as const;
+type CueLabel = (typeof CUE_LABELS)[number];
 
 export interface Cue {
   label: CueLabel | null;

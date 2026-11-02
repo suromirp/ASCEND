@@ -20,10 +20,10 @@ export type AutoBackupKeep = (typeof AUTO_BACKUP_KEEP_CHOICES)[number];
 export const AUTO_BACKUP_KEEP_ADVICE: AutoBackupKeep = 8;
 
 // Zondagavond, en bij dagelijks elke avond: na de training van de dag.
-export const AUTO_BACKUP_HOUR = 18;
+const AUTO_BACKUP_HOUR = 18;
 
 // Na een mislukte poging niet bij elke keer terugkomen in de app opnieuw proberen.
-export const AUTO_BACKUP_RETRY_MS = 60 * 60 * 1000;
+const AUTO_BACKUP_RETRY_MS = 60 * 60 * 1000;
 
 export function resolveAutoBackup(raw: unknown): AutoBackupFrequency {
   return AUTO_BACKUP_CHOICES.find((c) => c === raw) ?? AUTO_BACKUP_ADVICE;
