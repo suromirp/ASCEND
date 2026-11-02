@@ -1,0 +1,77 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { loadParts, type Part } from './loadParts';
+import { fakeCapacitorPlugin } from '../test/capacitorProxy';
+
+interface T { a?: number; b?: number; c?: number }
+const never = () => new Promise<never>(() => undefined);
+
+afterEach(() => vi.useRealTimers());
+
+describe('loadParts', () => {
+  it('geeft een snel deel meteen door, ook als een ander deel hangt', async () => {
+    vi.useFakeTimers();
+    const got: string[] = [];
+    const parts: Part<'a' | 'b' | 'c', T>[] = [
+      { key: 'a', ms: 60_000, load: async () => ({ a: 1 }) },
+      { key: 'b', ms: 3000, load: never },
+      { key: 'c', ms: 3000, load: async () => ({ c: 3 }) },
+    ];
+    const done = loadParts(parts, (key) => got.push(key));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(got).toEqual(['a', 'c']);
+    await vi.advanceTimersByTimeAsync(3000);
+    await done;
+    expect(got).toEqual(['a', 'c', 'b']);
+  });
+
+  it('meldt een mislukte bron zonder waarde, na de eigen grens en bij een fout', async () => {
+    vi.useFakeTimers();
+    const patches: Record<string, { patch: Partial<T>; ok: boolean }> = {};
+    const done = loadParts<'a' | 'b', T>(
+      [
+        { key: 'a', ms: 2000, load: never },
+        { key: 'b', ms: 2000, load: async () => { throw new Error('stuk'); } },
+      ],
+      (k, patch, ok) => (patches[k] = { patch, ok }),
+    );
+    await vi.advanceTimersByTimeAsync(2000);
+    await done;
+    // Geen verzonnen waarde: een lege patch en ok: false.
+    expect(patches).toEqual({ a: { patch: {}, ok: false }, b: { patch: {}, ok: false } });
+  });
+
+  it('een plugin die nooit antwoordt houdt de andere bronnen niet tegen', async () => {
+    vi.useFakeTimers();
+    const slow = fakeCapacitorPlugin({ checkPermissions: () => new Promise(() => undefined) });
+    const seen: number[] = [];
+    const done = loadParts<'plugin' | 'quick', T>(
+      [
+        { key: 'plugin', ms: 4000, load: async () => ({ a: (await slow.checkPermissions()) as unknown as number }) },
+        { key: 'quick', ms: 4000, load: async () => ({ b: 1 }) },
+      ],
+      (_k, p) => seen.push(Object.values(p)[0] as number),
+    );
+    await vi.advanceTimersByTimeAsync(10);
+    expect(seen).toEqual([1]);
+    await vi.advanceTimersByTimeAsync(4000);
+    await done;
+    expect(seen).toEqual([1, undefined]);
+  });
+
+  it('een te trage bron meldt eerst ok: false en daarna alsnog zijn antwoord', async () => {
+    vi.useFakeTimers();
+    const calls: [boolean, Partial<T>][] = [];
+    const done = loadParts<'a', T>([{ key: 'a', ms: 1000, load: () => new Promise((resolve) => setTimeout(() => resolve({ a: 7 }), 3000)) }], (_k, patch, ok) => calls.push([ok, patch]));
+    await vi.advanceTimersByTimeAsync(1000);
+    await done;
+    expect(calls).toEqual([[false, {}]]);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(calls).toEqual([[false, {}], [true, { a: 7 }]]);
+  });
+
+  it('een fout krijgt geen tweede melding', async () => {
+    const calls: boolean[] = [];
+    await loadParts<'a', T>([{ key: 'a', ms: 1000, load: async () => { throw new Error('stuk'); } }], (_k, _p, ok) => calls.push(ok));
+    expect(calls).toEqual([false]);
+  });
+});

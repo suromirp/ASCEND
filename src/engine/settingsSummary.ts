@@ -64,6 +64,7 @@ import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { resolveSportCounting } from './sportRole';
 import { sportsRowSummary } from './sportsScreen';
+import { isRowPending, isRowUnknown, type SettingsSource } from './settingsPending';
 import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
@@ -177,6 +178,10 @@ export interface SettingsFacts {
   watchUnreadable?: boolean;
   // Health Connect op dit toestel; weglaten zolang dat nog niet gelezen is.
   healthConnect?: HealthConnectFacts;
+  // Bronnen die de eerste keer nog niet binnen zijn: hun rijen zeggen "Bezig" (engine/settingsPending.ts).
+  pending?: readonly SettingsSource[];
+  // Bronnen die de eerste keer te lang duurden of faalden: hun rijen zeggen "Onbekend", nooit een verzonnen waarde.
+  unknown?: readonly SettingsSource[];
 }
 
 export interface HealthConnectFacts {
@@ -342,9 +347,41 @@ export function rowContext(f: SettingsFacts): RowContext {
 // De samenvatting van een rij. Of de rij er nu hoort (`hidden`) komt uit SHOW_WHEN in
 // data/settingsLayout.ts, zodat de afhankelijkheden op één plek staan.
 export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
-  const base = baseSummary(rowId, f);
+  const waiting = unsettledRow(rowId, f);
+  if (waiting) return { ...waitingSummary(baseSummary(rowId, f), waiting), hidden: false };
+  const base = isRowPending(rowId, f.pending)
+    ? waitingSummary(baseSummary(rowId, f), 'Bezig…')
+    : isRowUnknown(rowId, f.unknown)
+      ? waitingSummary(baseSummary(rowId, f), 'Onbekend')
+      : baseSummary(rowId, f);
   return SHOW_WHEN[rowId] ? { ...base, hidden: !isRowShown(rowId, f.settings, rowContext(f)) } : base;
 }
+
+// De voorwaarden van rowContext die uit een bron komen. Is die bron nog niet binnen of onbekend, dan
+// weten we niet of de rij er hoort: hij blijft zichtbaar met Bezig… of Onbekend in plaats van te verdwijnen.
+const CONTEXT_OF_SOURCE: Partial<Record<SettingsSource, (keyof RowContext)[]>> = {
+  watch: ['garmin', 'activities', 'sendToWatch'],
+  macroFactor: ['macroFactorExport'],
+  healthConnect: ['healthConnect'],
+  device: ['timed', 'noticeAvailable'],
+  autoBackup: ['folderSupported'],
+};
+
+function unsettledRow(rowId: string, f: SettingsFacts): 'Bezig…' | 'Onbekend' | undefined {
+  if (!SHOW_WHEN[rowId]) return undefined;
+  const ctx = rowContext(f);
+  if (isRowShown(rowId, f.settings, ctx)) return undefined;
+  const open = (list: readonly SettingsSource[] | undefined) => (list ?? []).flatMap((src) => CONTEXT_OF_SOURCE[src] ?? []);
+  const guess = { ...ctx };
+  for (const key of [...open(f.pending), ...open(f.unknown)]) guess[key] = true;
+  if (!isRowShown(rowId, f.settings, guess)) return undefined;
+  // Wacht minstens een bron nog, dan Bezig…; anders is de bron onbekend.
+  return open(f.pending).length > 0 ? 'Bezig…' : 'Onbekend';
+}
+
+// Een rij die op een bron wacht of er geen antwoord van kreeg: alleen de titel en dit woord, gedimd,
+// zonder regel eronder (die zou een feit zijn dat we niet weten).
+const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title: base.title, auto: base.auto, value, dim: true });
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
@@ -973,7 +1010,16 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
 
 // ---- de groepen op het overzicht -------------------------------------------------
 
-export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: string; sub: string; dim?: boolean; dot?: 'ok' | 'no' } {
+type GroupSummary = { value?: string; sub: string; dim?: boolean; dot?: 'ok' | 'no' };
+
+export function groupSummary(page: SettingsPageId, f: SettingsFacts): GroupSummary {
+  const group = groupSummaryNow(page, f);
+  if (isRowPending(page, f.pending)) return { value: 'Bezig…', sub: '', dim: true };
+  if (isRowUnknown(page, f.unknown)) return { value: 'Onbekend', sub: '', dim: true };
+  return group;
+}
+
+function groupSummaryNow(page: SettingsPageId, f: SettingsFacts): GroupSummary {
   const s = f.settings;
   switch (page) {
     case 'planning': {
