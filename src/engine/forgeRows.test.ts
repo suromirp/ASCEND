@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
-import { canRemoveRow, droppedCount, droppedLine, isOwnRow, ownCountSentence, programmedWorkSets, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel } from './forgeRows';
+import { canRemoveRow, droppedCount, droppedLine, isOwnRow, ownCountSentence, programmedWorkSets, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn } from './forgeRows';
 
 const row = (id: string, kind: 'work' | 'warmup' = 'work', done = false): WorkoutRow => ({ id, kind, target: { repsLow: 8, repsHigh: 10 }, reps: 8, weightKg: 60, done });
 const ex = (rows: WorkoutRow[], reason?: string): WorkoutExercise => ({ slot: 'bench', exerciseId: 'bench', name: 'Bankdrukken', known: true, rows, restSec: 90, timed: false, ...(reason ? { reason } : {}) });
@@ -99,5 +99,14 @@ describe('restoreDropped na twee keer weghalen', () => {
     const a = removeSet(start, 'bench:s1').ex;
     const b = removeSet(a, 'bench:s2').ex;
     expect(restoreDropped(b).rows.map((r) => r.id)).toEqual(start.rows.map((r) => r.id));
+  });
+});
+
+describe('swipeDeleteOn', () => {
+  it('staat standaard aan en is alleen uit bij een echte false', () => {
+    expect(swipeDeleteOn({})).toBe(true);
+    expect(swipeDeleteOn(undefined)).toBe(true);
+    expect(swipeDeleteOn({ forgeSwipeDelete: false })).toBe(false);
+    expect(swipeDeleteOn({ forgeSwipeDelete: 'nee' })).toBe(true);
   });
 });

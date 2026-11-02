@@ -1,5 +1,6 @@
 // ASCEND: sets per muscle group per week, rule KR-10 of
-// docs/onderzoek/Kracht loggen en progressie.md. Pure. Not shown anywhere yet.
+// docs/onderzoek/Kracht loggen en progressie.md. Pure. Read by engine/mountainMuscles.ts (the notice in the
+// week review and the order of Ruilen in Forge).
 //
 // A set counts when it is a working set (not a warm-up) and at most 4 reps were
 // left (RIR 4 or less); a set without a known RIR counts too. A primary muscle

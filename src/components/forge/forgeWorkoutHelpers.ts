@@ -1,6 +1,5 @@
 // Kleine hulpjes en typen die het workoutscherm van Forge (ForgeWorkout.tsx) deelt met zijn onderdelen, zonder JSX.
 
-import type { QuickAction } from '../../engine/forgeQuickActions';
 import type { FieldName } from '../../engine/forgeInput';
 import { exerciseOf, type WorkoutExercise } from '../../engine/forgeWorkout';
 import type { GymProfile } from '../../engine/strengthSettings';
@@ -32,7 +31,6 @@ export interface BlockActions {
   fold: (slot: string) => void;
   menu: (slot: string) => void;
   tick: (slot: string, rowId: string) => void;
-  tickAll: (slot: string) => void;
   open: (slot: string, rowId: string, name: FieldName) => void;
   take: (slot: string, rowId: string) => void;
   rowMenu: (slot: string, rowId: string) => void;
@@ -44,8 +42,6 @@ export interface BlockActions {
   keepFit: (slot: string) => void;
   // Uitleg bij "1 over, zonder spotter".
   spotter: () => void;
-  // De snelknoppen onder de naam (engine/forgeQuickActions.ts): dezelfde handelingen als het menu.
-  quick: (slot: string, action: QuickAction) => void;
   // Een set weghalen (vegen of het setmenu), terugzetten wat je van het programma weghaalde, de melding terugdraaien.
   remove: (slot: string, rowId: string) => void;
   restore: (slot: string) => void;

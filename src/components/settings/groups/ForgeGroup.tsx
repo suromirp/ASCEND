@@ -17,7 +17,7 @@ import { SummaryRow } from './SummaryRow';
 import { anyShown, rowShown } from './rowShown';
 import type { GroupProps } from './types';
 
-const ADVANCED = ['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets'];
+const ADVANCED = ['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren'];
 
 // Forge: kracht meerekenen, wat je bijhoudt, de voorstellen en je sportschool. Elke keuze heeft
 // het advies als standaard (docs/beslissingen/2026-10-22-alles-instelbaar.md). Keuzes die bij
@@ -43,6 +43,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
     rowShown('bundel-invullen', facts) && 'Bij het invullen',
     rowShown('bundel-toets', facts) && 'Toets tegen MacroFactor',
     rowShown('trainingsduur', facts) && 'Trainingsduur',
+    rowShown('forge-bergspieren', facts) && 'Spieren voor de berg',
   ].filter(Boolean).join(', ');
 
   return (
@@ -84,6 +85,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
             <SummaryRow id="bundel-rekenmodel" title="Rekenmodel" facts={facts} info="bundelRekenmodel" onClick={() => setSheet('bundel-rekenmodel')} />
             <SummaryRow id="bundel-invullen" title="Bij het invullen" facts={facts} info="bundelInvullen" onClick={() => setSheet('bundel-invullen')} />
             <SummaryRow id="bundel-toets" title="Toets tegen MacroFactor" facts={facts} info="forgeNaast" onClick={() => setSheet('bundel-toets')} />
+            <SummaryRow id="forge-bergspieren" title="Spieren voor de berg" facts={facts} info="forgeBergspieren" onChange={(on) => save({ mountainMuscles: on })} />
           </>
         }>
           {null}
@@ -124,7 +126,6 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <BundleSheet eyebrow="Forge" title="Bij het invullen" line="Wat het workoutscherm voor je doet." onClose={close}>
           <SummaryRow id="forge-oefeningen" title="Oefeningen in een training" facts={facts} info="forgeOefeningen" onClick={() => setInner('forge-oefeningen')} />
           <SummaryRow id="forge-onderbreking" title="Lange onderbreking vragen na" facts={facts} info="forgeOnderbreking" onClick={() => setInner('forge-onderbreking')} />
-          <SummaryRow id="forge-snelknoppen" title="Snelknoppen tonen" facts={facts} info="forgeSnelknoppen" onChange={(on) => void updateSettings({ forgeQuickButtons: on })} />
           <SummaryRow id="forge-vegen" title="Vegen om te verwijderen" facts={facts} info="forgeVegen" onChange={(on) => void updateSettings({ forgeSwipeDelete: on })} />
           <SummaryRow id="forge-rir-vooraf" title="RIR vooraf invullen" facts={facts} info="forgeRirVooraf" onClick={() => setInner('forge-rir-vooraf')} />
           <SummaryRow id="forge-doorvoeren" title="Wijzigingen doorvoeren" facts={facts} info="forgeDoorvoeren" onClick={() => setInner('forge-doorvoeren')} />

@@ -12,10 +12,13 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
-import { canRemoveRow, reinsertRow, removeSet, restoreDropped, rowLabel, type DroppedRow } from '../../engine/forgeRows';
+import { canRemoveRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn, type DroppedRow } from '../../engine/forgeRows';
+import { addedSlotsFor, isAddedSlot, withoutAddedSlot } from '../../engine/addedExercises';
+import { swapPreference, swapReason } from '../../engine/mountainMuscles';
+import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
+import { ExerciseArtSheet } from '../ExerciseArtSheet';
 import { ForgeStrip } from './ForgeStrip';
 import { pageAt, resolveForgeLayout } from '../../engine/forgeLayout';
-import { quickButtonsOn, swipeDeleteOn } from '../../engine/forgeQuickActions';
 import { previewDayLine } from '../../engine/sessionActions';
 import { restAlertChannels, restVibrationPattern } from '../../engine/restVibration';
 import { currentBodyKg } from '../../engine/bodyWeight';
@@ -97,7 +100,7 @@ import { ExerciseAddOnForgeSheet } from './AddOnWeights';
 import { ForgeLogSheet } from './ForgeLogSheet';
 import { MachineWeightsForgeSheet } from './MachineWeights';
 import { InputDock } from './InputDock';
-import { ForgeSheet, MenuRow, RirBubble } from './parts';
+import { ForgeSheet, MenuRow, RirBubble, SheetGroup } from './parts';
 import { useWakeLock } from './useWakeLock';
 import { useRestNotice } from './useRestNotice';
 import { resolveDeviceNotices } from '../../engine/deviceNotices';
@@ -203,7 +206,7 @@ function ForgeWorkoutInner({
   preview = false,
   onClose,
 }: ForgeWorkoutProps) {
-  const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs, injuryNotes, plannedSessions } = useAppData();
+  const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs, injuryNotes, plannedSessions, trainingGoals, goalMilestones } = useAppData();
   const today = todayISO();
   const date = scheduledDate ?? today;
   // Met MacroFactor als bron en bij alleen kijken is dit het voorschrift zonder invulvelden.
@@ -212,7 +215,10 @@ function ForgeWorkoutInner({
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   // A program from MacroFactor gives the exercises of the week of this training.
   const programSlots = programExercisesFor(settings.strengthModel?.program, template.id, date);
-  const slots = exercisesForVariant(programSlots ? { ...template, exercises: programSlots } : template, initialVariant);
+  // Een oefening die je na een voorstel met Akkoord toevoegde (engine/addedExercises.ts) komt achter de training.
+  const added = addedSlotsFor(settings.strengthModel, template.id);
+  const baseSlots = programSlots ?? template.exercises;
+  const slots = exercisesForVariant(added.length > 0 || programSlots ? { ...template, exercises: [...(baseSlots ?? []), ...added] } : template, initialVariant);
 
   const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
   const [restored] = useState(() => {
@@ -274,6 +280,8 @@ function ForgeWorkoutInner({
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [swapFor, setSwapFor] = useState<string | null>(null);
   const [noteFor, setNoteFor] = useState<string | null>(null);
+  // Uitleg en tekening vanuit het blad Oefening: hetzelfde blad als het kaartje in de kop.
+  const [artFor, setArtFor] = useState<string | null>(null);
   const [rirFor, setRirFor] = useState<{ slot: string; rowId: string } | null>(null);
   // Het voorstel "Lichter?" per oefening, na een set die te zwaar was (engine/forgeAdjust.ts).
   const [lighter, setLighter] = useState<Record<string, Adjustment>>({});
@@ -844,7 +852,6 @@ function ForgeWorkoutInner({
       fold: (slot) => setFolded((f) => ({ ...f, [slot]: !f[slot] })),
       menu: (slot) => setMenuFor(slot),
       tick: (slot, rowId) => latest.current.tick(slot, rowId),
-      tickAll: (slot) => latest.current.tickAll(slot),
       open: (slot, rowId, name) => latest.current.openField(slot, rowId, name),
       take: (slot, rowId) => latest.current.take(slot, rowId),
       rowMenu: (slot, rowId) => setRowMenu({ slot, rowId }),
@@ -858,11 +865,6 @@ function ForgeWorkoutInner({
       fill: (slot) => setFillFor(slot),
       keepFit: (slot) => setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
       spotter: () => setSpotterInfo(true),
-      quick: (slot, action) => {
-        if (action === 'ruilen') setSwapFor(slot);
-        else if (action === 'notitie') setNoteFor(slot);
-        else latest.current.addSetLogged(slot, action === 'opwarmset' ? 'warmup' : 'work');
-      },
     }),
     [],
   );
@@ -883,6 +885,12 @@ function ForgeWorkoutInner({
 
   function saveStrength(next: typeof settings.strengthModel) {
     void updateSettings({ strengthModel: next });
+  }
+
+  // "Uit deze training halen": de oefening gaat uit de lijst en uit deze training; wat je eerder deed blijft.
+  function removeAddedExercise(slot: string) {
+    saveStrength(withoutAddedSlot(settings.strengthModel, template.id, slot));
+    setWorkout((w) => w.filter((e) => e.slot !== slot));
   }
 
   const menuEx = workout.find((e) => e.slot === menuFor);
@@ -926,7 +934,6 @@ function ForgeWorkoutInner({
               noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, noFit[ex.slot]) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
               heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, heavyTip[ex.slot]) ? heavyTip[ex.slot].text : undefined}
               rirAsValue={strength.rirPrefill === 'target'}
-              quickOn={quickButtonsOn(settings)}
               swipeOn={swipeDeleteOn(settings)}
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
               act={actions}
@@ -1059,81 +1066,113 @@ function ForgeWorkoutInner({
       )}
 
       {menuEx && (
+        // Het blad Oefening (docs/beslissingen/2026-11-02-forge-herinrichting.md): bovenaan Waarom zo, dan vier
+        // groepen onder elkaar. Wat eerst als snelknop onder de naam stond (Ruilen, Opwarmset, Notitie) en de kolom
+        // Alles staan hier, elk één keer.
         <ForgeSheet title={menuEx.name} sub={menuEx.swappedFrom ? `In plaats van ${menuEx.swappedFrom}, alleen deze training` : undefined} onClose={() => setMenuFor(null)}>
-          {(close) => (
-            <div className="flex flex-col">
-              {!readOnly && (
-                <MenuRow icon="ruilen" title="Ruilen" sub="Zelfde spieren, met wat je sportschool heeft. Alleen voor deze training." onClick={() => { close(); setSwapFor(menuEx.slot); }} />
-              )}
-              {preview ? (
-                // Alleen lezen voor een dag die nog komt: een notitie die er is staat er, schrijven kan op de dag zelf.
-                strength.exerciseNotes[menuEx.exerciseId] && <p className="px-4 py-3 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Notitie: {strength.exerciseNotes[menuEx.exerciseId]}</p>
-              ) : (
-                <MenuRow icon="notitie" title="Notitie" sub={strength.exerciseNotes[menuEx.exerciseId] ?? 'Bijvoorbeeld de stand van de stoel. Blijft bij deze oefening staan.'} onClick={() => { close(); setNoteFor(menuEx.slot); }} />
-              )}
-              {!readOnly && !preview && hasStack(exerciseOf(menuEx)) && (
-                <MenuRow icon="plus" title="Gewichten van dit toestel" sub={ownWeightsFor(strength.profile, exerciseOf(menuEx)) ? `Je eigen lijst in ${strength.profile.name}.` : `Vul in wat er hangt in ${strength.profile.name}.`} onClick={() => { close(); setFillFor(menuEx.slot); }} />
-              )}
-              {!readOnly && !preview && hasStack(exerciseOf(menuEx)) && (
-                <MenuRow icon="plus" title="Tussengewicht van dit toestel" sub={addOnMenuSub(strength.profile, exerciseOf(menuEx))} onClick={() => { close(); setAddOnFor(menuEx.slot); }} />
-              )}
-              {!readOnly && !menuEx.timed && (
-                <>
-                  <MenuRow icon="plus" title="Set toevoegen" onClick={() => { addSetLogged(menuEx.slot, 'work'); close(); }} />
-                  <MenuRow icon="plus" title="Opwarmset toevoegen" onClick={() => { addSetLogged(menuEx.slot, 'warmup'); close(); }} />
-                </>
-              )}
-              {!readOnly && menuEx.rows.some((r) => !r.done) && menuEx.rows.length > 1 && (
-                <MenuRow icon="min" title="Laatste set verwijderen" sub="Een set die je al afvinkte blijft staan." onClick={() => { setExercise(menuEx.slot, removeLastRow); close(); }} />
-              )}
-              {!readOnly && (
-                <MenuRow
-                  icon="timer"
-                  title="Rust starten"
-                  sub="De rusttimer van deze oefening, ook als hij niet vanzelf start."
-                  onClick={() => {
-                    alerted.current = null;
-                    setRest({ endsAt: clock() + menuEx.restSec * 1000, total: menuEx.restSec, name: menuEx.name });
-                    close();
-                  }}
-                />
-              )}
-              {!readOnly && (
-                <MenuRow
-                  icon="timer"
-                  title="Rusttijd"
-                  sub={strength.restSeconds[menuEx.exerciseId] !== undefined ? 'Je eigen tijd voor deze oefening' : 'Geschat: zwaarder en samengesteld langer'}
-                  right={
-                    <RestStepper
-                      seconds={menuEx.restSec}
-                      onChange={(s) => {
-                        setWorkout((w) => w.map((e) => (e.exerciseId === menuEx.exerciseId ? { ...e, restSec: s } : e)));
-                        saveStrength(withExerciseValue(settings.strengthModel, 'restSeconds', menuEx.exerciseId, s));
+          {(close) => {
+            const exercise = exerciseOf(menuEx);
+            const why = reasonWithOwnCount(menuEx);
+            const art = menuEx.known && !!exercise && showsExerciseArt(resolveExerciseArt(settings));
+            const allDone = menuEx.rows.length > 0 && menuEx.rows.every((r) => r.done);
+            const added = !readOnly && !preview && isAddedSlot(settings.strengthModel, template.id, menuEx.slot);
+            return (
+              <div className="flex flex-col">
+                {why && (
+                  <SheetGroup title="Waarom zo">
+                    <p className="pb-3 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{why}</p>
+                  </SheetGroup>
+                )}
+                <SheetGroup title="Oefening">
+                  {!readOnly && (menuEx.swappedFrom ? (
+                    <MenuRow icon="ruilen" title={`Terug naar ${menuEx.swappedFrom}`} onClick={() => { swap(menuEx.slot, null); close(); }} />
+                  ) : (
+                    <MenuRow icon="ruilen" title="Ruilen" sub="Zelfde spieren, met wat je sportschool heeft. Alleen voor deze training." onClick={() => { close(); setSwapFor(menuEx.slot); }} />
+                  ))}
+                  {preview ? (
+                    // Alleen lezen voor een dag die nog komt: een notitie die er is staat er, schrijven kan op de dag zelf.
+                    strength.exerciseNotes[menuEx.exerciseId] && <p className="py-3 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Notitie: {strength.exerciseNotes[menuEx.exerciseId]}</p>
+                  ) : (
+                    <MenuRow icon="notitie" title="Notitie" sub={strength.exerciseNotes[menuEx.exerciseId] ?? 'Bijvoorbeeld de stand van de stoel. Blijft bij deze oefening staan.'} onClick={() => { close(); setNoteFor(menuEx.slot); }} />
+                  )}
+                  {art && (
+                    <MenuRow icon="info" title="Uitleg en tekening" sub="Hoe het gaat, welke spieren werken en waar je op let." onClick={() => { close(); setArtFor(menuEx.exerciseId); }} />
+                  )}
+                  {added && (
+                    <MenuRow icon="min" title="Uit deze training halen" sub="Je voegde hem toe na een voorstel. Je sets van eerder blijven staan." onClick={() => { close(); removeAddedExercise(menuEx.slot); }} />
+                  )}
+                </SheetGroup>
+                {!readOnly && (
+                  <SheetGroup title="Sets">
+                    {!menuEx.timed && <MenuRow icon="plus" title="Set toevoegen" onClick={() => { addSetLogged(menuEx.slot, 'work'); close(); }} />}
+                    {!menuEx.timed && <MenuRow icon="plus" title="Opwarmset toevoegen" onClick={() => { addSetLogged(menuEx.slot, 'warmup'); close(); }} />}
+                    {menuEx.rows.length > 0 && (
+                      <MenuRow icon="vinkje" title={allDone ? 'Alle vinkjes weghalen' : 'Alle sets afvinken'} sub={allDone ? undefined : 'Ook de rust start.'} onClick={() => { tickAll(menuEx.slot); close(); }} />
+                    )}
+                    {menuEx.rows.some((r) => !r.done) && menuEx.rows.length > 1 && (
+                      <MenuRow icon="min" title="Laatste set verwijderen" sub="Een set die je al afvinkte blijft staan." onClick={() => { setExercise(menuEx.slot, removeLastRow); close(); }} />
+                    )}
+                  </SheetGroup>
+                )}
+                {!readOnly && (
+                  <SheetGroup title="Rust">
+                    <MenuRow
+                      icon="timer"
+                      title="Rusttijd"
+                      sub={strength.restSeconds[menuEx.exerciseId] !== undefined ? 'Je eigen tijd voor deze oefening' : 'Geschat: zwaarder en samengesteld langer'}
+                      right={
+                        <RestStepper
+                          seconds={menuEx.restSec}
+                          onChange={(s) => {
+                            setWorkout((w) => w.map((e) => (e.exerciseId === menuEx.exerciseId ? { ...e, restSec: s } : e)));
+                            saveStrength(withExerciseValue(settings.strengthModel, 'restSeconds', menuEx.exerciseId, s));
+                          }}
+                        />
+                      }
+                    />
+                    <MenuRow
+                      icon="timer"
+                      title="Rust nu starten"
+                      sub="Ook als hij niet vanzelf start."
+                      onClick={() => {
+                        alerted.current = null;
+                        setRest({ endsAt: clock() + menuEx.restSec * 1000, total: menuEx.restSec, name: menuEx.name });
+                        close();
                       }}
                     />
-                  }
-                />
-              )}
-              {!readOnly && menuEx.swappedFrom && (
-                <MenuRow icon="ruilen" title={`Terug naar ${menuEx.swappedFrom}`} onClick={() => { swap(menuEx.slot, null); close(); }} />
-              )}
-              {exerciseOf(menuEx)?.cues && (
-                <div className="mt-3 flex flex-col gap-1.5 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-                  {exerciseOf(menuEx)!.cues.map((c) => (
-                    <p key={c} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{c}</p>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                  </SheetGroup>
+                )}
+                {!readOnly && !preview && hasStack(exercise) && (
+                  <SheetGroup title="Toestel">
+                    <MenuRow icon="plus" title="Gewichten van dit toestel" sub={ownWeightsFor(strength.profile, exercise) ? `Je eigen lijst in ${strength.profile.name}.` : `Vul in wat er hangt in ${strength.profile.name}.`} onClick={() => { close(); setFillFor(menuEx.slot); }} />
+                    <MenuRow icon="plus" title="Tussengewicht van dit toestel" sub={addOnMenuSub(strength.profile, exercise)} onClick={() => { close(); setAddOnFor(menuEx.slot); }} />
+                  </SheetGroup>
+                )}
+                {/* De tips staan in Uitleg en tekening; alleen zonder dat blad staan ze hier. */}
+                {!art && exercise?.cues && (
+                  <SheetGroup title="Tips">
+                    <div className="flex flex-col gap-1.5 pb-2">
+                      {exercise.cues.map((c) => (
+                        <p key={c} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{c}</p>
+                      ))}
+                    </div>
+                  </SheetGroup>
+                )}
+              </div>
+            );
+          }}
         </ForgeSheet>
       )}
+
+      {artFor && <ExerciseArtSheet exerciseId={artFor} onClose={() => setArtFor(null)} />}
 
       {swapEx && (
         <ForgeSheet title={`${swapEx.name} ruilen`} sub="Zelfde spieren, met wat je sportschool heeft. Je programma blijft zoals het is." onClose={() => setSwapFor(null)}>
           {(close) => {
-            const options = swapOptions(exerciseOf(swapEx), strength.profile, workout.map((e) => e.exerciseId));
-            if (options.length > 0) return <SwapList options={options} onPick={(id) => { swap(swapEx.slot, id); close(); }} />;
+            // Bij een bergdoel staat bij gelijke keuze een oefening voorop voor een spier die weinig kreeg (engine/mountainMuscles.ts).
+            const prefer = swapPreference({ on: strength.mountainMuscles, goals: trainingGoals, milestones: goalMilestones, logs: sessionLogs, today, program });
+            const options = swapOptions(exerciseOf(swapEx), strength.profile, workout.map((e) => e.exerciseId), 8, prefer);
+            if (options.length > 0) return <SwapList options={options} reasonOf={(e) => swapReason(e, prefer)} onPick={(id) => { swap(swapEx.slot, id); close(); }} />;
             if (options.length === 0) return <p className="py-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze oefening niet goed genoeg om iets met dezelfde spieren voor te stellen.</p>;
             return null;
           }}
@@ -1212,13 +1251,6 @@ function ForgeWorkoutInner({
                   <MenuRow icon="omlaag" title="Kleiner maken" sub="Het scherm sluit, de training loopt door." onClick={() => { close(); onClose(); }} />
                   <MenuRow icon="vinkje" title="Afronden" onClick={() => { close(); setFinishing(true); }} />
                 </>
-              )}
-              {!readOnly && (
-                <MenuRow
-                  title="Snelknoppen tonen"
-                  sub="Ruilen, Opwarmset en Notitie onder elke oefening."
-                  right={<Toggle checked={quickButtonsOn(settings)} onChange={(on) => void updateSettings({ forgeQuickButtons: on })} label="Snelknoppen tonen" />}
-                />
               )}
               <MenuRow
                 title="Een oefening per scherm"
