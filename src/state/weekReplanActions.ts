@@ -7,11 +7,11 @@ import type { RecentPlanChange } from '../models/planChange';
 import type { SessionTemplate } from '../models/training';
 import { planWeekReplan as planWeekReplanNow, writeWeekReplan, REPLAN_STALE, type WeekReplanPlan } from '../storage/weekReplan';
 import { formatDateNL, weekdayShortNL } from '../utils/dates';
-import { makeId } from '../utils/id';
 import { withTimeout } from '../utils/withTimeout';
 import { armFlip, disarmFlip } from '../utils/flipDom';
 import { bumpPlanRevision, failureNotice, planSettled } from './planningSync';
 import { syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
+import { readPointer } from '../utils/forgeSessionStore';
 
 // Het uitrekenen loopt de planningsronde een of enkele keren: nooit langer dan dit.
 const PLAN_TIMEOUT_MS = 20_000;
@@ -48,13 +48,23 @@ export function useWeekReplanActions(deps: {
   // Rekent alleen: er wordt niets geschreven.
   const planWeekReplan = useCallback(async (weekStart: string): Promise<WeekReplanPlan | null> => {
     await withTimeout(planSettled(), PLAN_TIMEOUT_MS);
-    return withTimeout(planWeekReplanNow(weekStart), PLAN_TIMEOUT_MS, 'Het uitrekenen duurde te lang.');
+    // Een training die nu open staat in Forge blijft staan.
+    const open = readPointer()?.plannedSessionId;
+    return withTimeout(planWeekReplanNow(weekStart, { keepIds: new Set(open ? [open] : []) }), PLAN_TIMEOUT_MS, 'Het uitrekenen duurde te lang.');
   }, []);
 
   // Akkoord: alles in één keer, of niets. Lukt het niet, dan zegt de melding dat, zonder Ongedaan maken.
   const applyWeekReplan = useCallback(async (plan: WeekReplanPlan): Promise<void> => {
     armFlip();
-    await planSettled();
+    // Op de planning wachten heeft een grens; duurt het te lang, dan verandert er niets en zegt de melding dat.
+    try {
+      await withTimeout(planSettled(), PLAN_TIMEOUT_MS);
+    } catch (err) {
+      disarmFlip();
+      console.error('Week opnieuw plannen wachtte te lang op de planning:', err);
+      setRecentChange(failureNotice('Niet opnieuw gepland', 'De planning was nog bezig. Je week staat nog zoals hij was; probeer het zo nog eens.'));
+      return;
+    }
     let written: Awaited<ReturnType<typeof writeWeekReplan>>;
     try {
       written = await writeWeekReplan(plan);
@@ -67,7 +77,8 @@ export function useWeekReplanActions(deps: {
     }
     const lines = replanLines(plan, templates);
     setRecentChange({
-      id: makeId('replan'),
+      // Hetzelfde id als het voorstel in het wijzigingslog: Ongedaan maken verwijst ernaar.
+      id: plan.proposal.id,
       trigger: 'session_moved',
       title: 'Week opnieuw gepland',
       lines,

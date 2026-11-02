@@ -35,7 +35,7 @@ export function WeekReplanButton({ weekStart }: { weekStart: string }) {
   const changes = plan ? plan.diff.writes.length + plan.diff.removedIds.length : 0;
   const advice: Advice | undefined = plan && {
     id: `replan:${plan.weekStart}`, trigger: 'plan_update', ruleId: 'WEEK-REPLAN', title: REPLAN_TITLE, effect: '', why: '', priority: 0,
-    proposal: { id: `replan:${plan.weekStart}`, trigger: 'session_moved', issue: REPLAN_TITLE, changes: plan.items, alternatives: [], consequences: '', explanation: '', createdAt: new Date().toISOString() },
+    proposal: plan.proposal,
   };
 
   return (
@@ -50,7 +50,7 @@ export function WeekReplanButton({ weekStart }: { weekStart: string }) {
         <ProposalSheet
           advice={advice}
           eyebrow="Week"
-          summary={replanSummary({ changes, testMove: plan.testMove && { name: plan.testMove.name, toLabel: formatShortDayNL(plan.testMove.to) } })}
+          summary={replanSummary({ changes, caughtUp: plan.caughtUp, nextWeek: plan.nextWeek, testMove: plan.testMove && { name: plan.testMove.name, toLabel: formatShortDayNL(plan.testMove.to) } })}
           emptyText={REPLAN_NO_CHANGE}
           answerless={changes === 0}
           notes={changes > 0 ? plan.notes : undefined}

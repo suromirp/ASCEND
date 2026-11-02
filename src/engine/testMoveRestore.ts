@@ -11,8 +11,9 @@
 
 import type { PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import type { ScheduleChange } from './scheduler';
-import { addDays, daysBetween } from '../utils/dates';
+import type { ScheduleChange, ScheduleProposal } from './scheduler';
+import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
+import { findingKey, validateWeeks, type CheckInput } from './weekValidator';
 import { idHasRole } from './templateRoles';
 import { isHeavySession } from './illness';
 
@@ -27,6 +28,9 @@ export interface TestMoveRestoreInput {
   logs: SessionLog[];
   templates: SessionTemplate[];
   today: string;
+  // De weekcontrole zonder de rijen: een rij komt alleen terug als hij geen nieuwe bevinding geeft (ook
+  // 48 uur met een training die TEST-RETRY zelf verschoof). Zonder: alleen de vaste afstand tot de test.
+  check?: Omit<CheckInput, 'sessions'>;
 }
 
 export function restoresForTestMove(input: TestMoveRestoreInput): ScheduleChange[] {
@@ -51,10 +55,42 @@ export function restoresForTestMove(input: TestMoveRestoreInput): ScheduleChange
       if (row.scheduledDate === toDate || row.scheduledDate === addDays(toDate, 1)) continue;
       if (isHeavySession(template) && Math.abs(daysBetween(row.scheduledDate, toDate)) < 2) continue;
       if (out.some((o) => o.sessionId === row.id)) continue;
+      if (input.check && givesNewFinding(input.check, sessions, testId, toDate, row)) continue;
       out.push({ sessionId: row.id, templateId: row.templateId, templateName: template.name, fromDate: row.scheduledDate, toDate: row.scheduledDate, restore: true });
     }
   }
   return out;
+}
+
+// Geeft de rij terug op zijn dag (met de test op de nieuwe dag) een bevinding die er zonder hem niet is?
+// Gekeken als jouw rij (reportYours), over zijn week en de weken ernaast.
+function givesNewFinding(check: Omit<CheckInput, 'sessions'>, sessions: PlannedSession[], testId: string, toDate: string, row: PlannedSession): boolean {
+  const lock = { by: 'user' as const, at: 'check' };
+  const base = sessions.map((s) => (s.id === testId ? { ...s, scheduledDate: toDate, weekStartDate: mondayOfWeek(toDate), lock } : s));
+  const withRow = base.map((s) => (s.id === row.id ? { ...s, status: 'planned' as const, lock } : s));
+  const monday = mondayOfWeek(row.scheduledDate);
+  const weeks = new Set([addDays(monday, -7), monday, addDays(monday, 7)]);
+  const keys = (list: PlannedSession[]) => new Set(validateWeeks({ ...check, sessions: list, reportYours: true }, weeks).map(findingKey));
+  const before = keys(base);
+  return [...keys(withRow)].some((k) => !before.has(k));
+}
+
+// De verplaatsing van een test met wat terugkomt erbij, in hetzelfde voorstel (state/moveActions.ts#moveSession).
+// Zonder iets terug blijft het voorstel zoals het was.
+export function withTestRestores(proposal: ScheduleProposal, sessionId: string, input: Omit<TestMoveRestoreInput, 'testId' | 'toDate'>): ScheduleProposal {
+  const own = proposal.changes[0];
+  if (!own || own.sessionId !== sessionId || own.toDate === own.fromDate || own.restore) return proposal;
+  const back = restoresForTestMove({ ...input, testId: sessionId, toDate: own.toDate })
+    .filter((c) => !proposal.changes.some((x) => x.sessionId === c.sessionId));
+  if (back.length === 0) return proposal;
+  return { ...proposal, changes: [...proposal.changes, ...back], reason: [proposal.reason, restoreSentence(back)].filter(Boolean).join(' ') };
+}
+
+// Een rij die "weer op" de planning komt (Toch doen, of terug na een verplaatste test): op zijn dag, en
+// van jou, zodat de automatische planning hem laat staan. Terug op de dag waar hij vandaan kwam is hij
+// gewoon gepland, anders verplaatst (state/moveActions.ts#applyProposal).
+export function restoredRow(session: PlannedSession, toDate: string, lock: PlannedSession['lock']): PlannedSession {
+  return { ...session, scheduledDate: toDate, status: toDate === (session.movedFromDate ?? toDate) ? 'planned' : 'moved', lock };
 }
 
 // De zin in het voorstel van de verplaatsing.

@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runBootMigrations } from './bootMigrations';
-import { wipeAllData, seedIfEmpty, syncProgramHorizon, PlannedSessionsRepo, SessionLogsRepo, TrainingGoalsRepo } from './database';
+import { wipeAllData, seedIfEmpty, syncProgramHorizon, PlannedSessionsRepo, SessionLogsRepo, TrainingGoalsRepo, PlanChangeProposalsRepo } from './database';
+import { undoPlanChangeNow } from './undoPlanChange';
+import { restoredRow } from '../engine/testMoveRestore';
 import { planWeekReplan, writeWeekReplan, undoWeekReplan, REPLAN_STALE, REPLAN_UNDO_STALE } from './weekReplan';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { TrainingGoal } from '../models/goals';
@@ -123,5 +125,54 @@ describe('Week opnieuw plannen', () => {
     await expect(writeWeekReplan(broken)).rejects.toBeTruthy();
     const byId = (rows: PlannedSession[]) => [...rows].sort((a, b) => a.id.localeCompare(b.id));
     expect(byId(await week())).toEqual(byId(messy));
+  });
+
+  it('na Akkoord heeft de sync niets meer te herstellen, ook met een zware beendag op maandag van de week erna', async () => {
+    const nextLower = (await PlannedSessionsRepo.getAll()).find((x) => x.templateId === 'tpl_lower_a' && x.scheduledDate >= '2026-11-09' && x.scheduledDate <= '2026-11-15')!;
+    expect(nextLower).toBeTruthy();
+    // Van het systeem, op maandag direct na de lange duurloop van zondag.
+    await PlannedSessionsRepo.put({ ...nextLower, scheduledDate: '2026-11-09' });
+    await messUp();
+    const proposal = (await planWeekReplan(MON))!;
+    expect(proposal.nextWeek).toBe(true);
+    await writeWeekReplan(proposal);
+    const result = await syncProgramHorizon();
+    expect(result.repairs).toBeUndefined();
+    expect(result.added + result.removed + result.swapped).toBe(0);
+  });
+
+  it('schrijft nooit een rij die bij het uitrekenen niet in de gecontroleerde dagen stond', async () => {
+    await messUp();
+    const proposal = (await planWeekReplan(MON))!;
+    const far = (await PlannedSessionsRepo.getAll()).find((x) => x.scheduledDate > '2026-12-01')!;
+    const sneaky = { ...proposal, diff: { ...proposal.diff, writes: [...proposal.diff.writes, { ...far, scheduledDate: '2026-12-31' }] } };
+    const before = await PlannedSessionsRepo.getAll();
+    await expect(writeWeekReplan(sneaky)).rejects.toThrow(REPLAN_STALE);
+    expect(await PlannedSessionsRepo.getAll()).toEqual(before);
+  });
+
+  it('het Akkoord staat in het wijzigingslog, en Ongedaan maken wordt daar ook genoteerd', async () => {
+    await messUp();
+    const proposal = (await planWeekReplan(MON))!;
+    await writeWeekReplan(proposal);
+    const log = await PlanChangeProposalsRepo.getAll();
+    expect(log.find((p) => p.id === proposal.proposal.id)).toMatchObject({ resolution: 'accepted', issue: 'Week opnieuw gepland' });
+  });
+
+  it('een ingehaalde training die teruggaat wordt genoemd', async () => {
+    const row = (await week()).find(open)!;
+    await PlannedSessionsRepo.put({ ...row, id: 'ingehaald', scheduledDate: SUN, catchUp: { fromId: row.id, fromDate: '2026-11-02' }, lock: yours });
+    const proposal = (await planWeekReplan(MON))!;
+    expect(proposal.caughtUp.length).toBe(1);
+  });
+
+  it('een rij die weer op de planning komt (Toch doen, of na een verplaatste test) is van jou, en Ongedaan maken zet hem terug', async () => {
+    const row = (await week()).find(open)!;
+    const skipped = { ...row, status: 'skipped' as const, lock: { by: 'proposal' as const, proposalId: 'retry1', at: '2026-11-02T08:00:00.000Z' } };
+    await PlannedSessionsRepo.put(skipped);
+    await PlannedSessionsRepo.put(restoredRow(skipped, skipped.scheduledDate, yours));
+    expect((await PlannedSessionsRepo.getAll()).find((x) => x.id === row.id)).toMatchObject({ status: 'planned', lock: yours });
+    await undoPlanChangeNow({ id: 'u1', trigger: 'session_moved', title: 'Sessies verplaatst', lines: [], why: '', before: [skipped], addedIds: [], createdAt: '2026-11-04T08:00:00.000Z' });
+    expect((await PlannedSessionsRepo.getAll()).find((x) => x.id === row.id)).toEqual(skipped);
   });
 });

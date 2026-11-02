@@ -30,6 +30,8 @@ export interface ReplanWeekInput {
   templates: SessionTemplate[];
   // Een dag die blijft zoals hij is voor deze training (ziek, opbouwen na ziekte).
   held?: (date: string, templateId: string) => boolean;
+  // Rijen die blijven zoals ze zijn, zoals een training die nu open staat in Forge.
+  keepIds?: ReadonlySet<string>;
 }
 
 export interface ReplanWeekResult {
@@ -74,7 +76,7 @@ export function replanWeek(input: ReplanWeekInput): ReplanWeekResult {
   // Wat blijft zoals het is.
   const stays = (s: PlannedSession) =>
     logged.has(s.id) || s.scheduledDate < today || !!s.fixed || !!s.leave || isRace(s.templateId) || isTest(s.templateId)
-    || held(s.scheduledDate, s.templateId)
+    || held(s.scheduledDate, s.templateId) || !!input.keepIds?.has(s.id)
     || (s.status === 'skipped' && s.lock?.by === 'user');
   const kept = weekRows.filter(stays);
   const free = weekRows.filter((s) => !stays(s));
@@ -144,12 +146,15 @@ export interface WeekDiff {
   addedIds: string[];
 }
 
-// Het verschil tussen de week zoals hij staat en zoals hij wordt. Een nieuwe rij van dezelfde training
+// Het verschil tussen de week zoals hij staat en zoals hij wordt, over `days` dagen vanaf maandag (de week
+// zelf, of ook de week erna als de planningsronde daar iets aan deed). Een rij die de ronde van binnen naar
+// buiten trok telt mee (hij stond erin); een rij die buiten bleef niet. Een nieuwe rij van dezelfde training
 // als een rij die weggaat krijgt het id van die rij: dat is een verschuiving, geen nieuw plus weg.
-export function weekDiff(stored: PlannedSession[], after: PlannedSession[], weekStart: string): WeekDiff {
-  const storedWeek = stored.filter((s) => inWeek(s.scheduledDate, weekStart));
+export function weekDiff(stored: PlannedSession[], after: PlannedSession[], weekStart: string, days = 7): WeekDiff {
+  const inside = (date: string) => date >= weekStart && date <= addDays(weekStart, days - 1);
+  const storedWeek = stored.filter((s) => inside(s.scheduledDate));
   const storedById = new Map(stored.map((s) => [s.id, s]));
-  const afterWeek = after.filter((s) => inWeek(s.scheduledDate, weekStart) || (storedById.has(s.id) && inWeek(storedById.get(s.id)!.scheduledDate, weekStart)));
+  const afterWeek = after.filter((s) => (storedById.has(s.id) ? inside(storedById.get(s.id)!.scheduledDate) : inside(s.scheduledDate)));
   const afterIds = new Set(after.map((s) => s.id));
   const gone = storedWeek.filter((s) => !afterIds.has(s.id));
   const goneTaken = new Set<string>();
@@ -190,9 +195,12 @@ export const REPLAN_TITLE = 'Week opnieuw plannen';
 export const REPLAN_NO_CHANGE = 'Je week staat al zoals het plan hem maakt.';
 export const REPLAN_YOURS = 'Ook wat je zelf verplaatste gaat terug naar het plan.';
 
-export function replanSummary(opts: { changes: number; testMove?: { name: string; toLabel: string } }): string | undefined {
+export function replanSummary(opts: { changes: number; testMove?: { name: string; toLabel: string }; caughtUp?: string[]; nextWeek?: boolean }): string | undefined {
   if (opts.changes === 0) return undefined;
   const parts = [`De rest van deze week gaat terug naar hoe het plan hem maakt, vanaf vandaag. ${REPLAN_YOURS}`];
+  const caught = opts.caughtUp ?? [];
+  if (caught.length > 0) parts.push(`Dat geldt ook voor wat je inhaalde: ${caught.length === 1 ? caught[0] : `${caught.slice(0, -1).join(', ')} en ${caught.at(-1)}`}.`);
   if (opts.testMove) parts.push(`${opts.testMove.name} blijft in de week en gaat naar ${opts.testMove.toLabel}: daar past hij beter.`);
+  if (opts.nextWeek) parts.push('Zodat de week erna er goed op aansluit, verandert daar ook iets; dat staat hieronder.');
   return parts.join(' ');
 }

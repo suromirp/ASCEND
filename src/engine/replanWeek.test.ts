@@ -100,6 +100,13 @@ describe('replanWeek', () => {
     expect(logged.filter((x) => x.templateId === 'tpl_tempo_run')).toEqual([done]);
   });
 
+  it('een training die open staat in Forge blijft staan', () => {
+    const rows = messy();
+    const out = run(rows, { keepIds: new Set(['tempo']) }).sessions;
+    expect(out.find((x) => x.id === 'tempo')).toEqual(rows.find((x) => x.id === 'tempo'));
+    expect(out.filter((x) => x.templateId === 'tpl_tempo_run')).toHaveLength(1);
+  });
+
   it('een vaste sport blijft op zijn dag', () => {
     const fixed = s('padel', 'sport_padel', d(4), { fixed: { sport: 'padel' as never, day: 5, intensity: 'moderate' }, lock: yours });
     const out = run([...messy(), fixed]).sessions;
@@ -185,6 +192,8 @@ describe('replanSummary', () => {
   it('zegt dat ook wat je zelf verplaatste teruggaat, en niets zonder verschil', () => {
     expect(replanSummary({ changes: 2 })).toContain('Ook wat je zelf verplaatste gaat terug naar het plan.');
     expect(replanSummary({ changes: 0 })).toBeUndefined();
+    expect(replanSummary({ changes: 1, caughtUp: ['Bovenlichaam A'] })).toContain('Dat geldt ook voor wat je inhaalde: Bovenlichaam A.');
+    expect(replanSummary({ changes: 1, nextWeek: true })).toContain('week erna');
     expect(replanSummary({ changes: 1, testMove: { name: 'Testloop 5 km', toLabel: 'vr 6 nov' } })).toContain('Testloop 5 km blijft in de week en gaat naar vr 6 nov');
   });
 });
