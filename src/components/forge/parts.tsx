@@ -210,9 +210,20 @@ export function ForgeSheet({ title, sub, onClose, children }: { title: string; s
   );
 }
 
+// Een groep in een blad (het blad Oefening): een kopje in de tabkleur en de regels eronder.
+export function SheetGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="mt-3 first:mt-0" aria-label={title}>
+      <Eyebrow>{title}</Eyebrow>
+      <div className="mt-1 flex flex-col">{children}</div>
+    </section>
+  );
+}
+
 // Een regel in een blad: een keuze met een pictogram, de hele regel is te tikken.
 // `lead` is een eigen knop links (het kaartje van een oefening); die staat naast de rij, niet erin.
-export function MenuRow({ icon, title, sub, onClick, danger = false, right, lead }: { icon?: Parameters<typeof Icon>[0]['name']; title: string; sub?: string; onClick?: () => void; danger?: boolean; right?: ReactNode; lead?: ReactNode }) {
+// `sheetFrom`: de regel opent een blad, dat vanuit deze regel uitgroeit (data-sheet-from).
+export function MenuRow({ icon, title, sub, onClick, danger = false, right, lead, sheetFrom = false }: { icon?: Parameters<typeof Icon>[0]['name']; title: string; sub?: string; onClick?: () => void; danger?: boolean; right?: ReactNode; lead?: ReactNode; sheetFrom?: boolean }) {
   const body = (
     <>
       {icon && <span className="shrink-0" style={{ color: danger ? 'var(--color-danger-text)' : 'var(--color-ink-dim)' }}><Icon name={icon} size={20} /></span>}
@@ -236,7 +247,7 @@ export function MenuRow({ icon, title, sub, onClick, danger = false, right, lead
   }
   if (!onClick) return <div className={cls} style={{ borderColor: 'var(--color-card-border)' }}>{body}</div>;
   return (
-    <button type="button" onClick={onClick} className={`${cls} active:opacity-70`} style={{ borderColor: 'var(--color-card-border)' }}>
+    <button type="button" data-sheet-from={sheetFrom || undefined} onClick={onClick} className={`${cls} active:opacity-70`} style={{ borderColor: 'var(--color-card-border)' }}>
       {body}
     </button>
   );

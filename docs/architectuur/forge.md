@@ -1,4 +1,4 @@
-Forge, de krachttraining: Je stand en volgorde, vergelijken, sessie, verloop, spotter, plaatjes, snelknoppen en een oefening per scherm.
+Forge, de krachttraining: Je stand en volgorde, vergelijken, sessie, verloop, spotter, plaatjes, het blad Oefening, spieren voor de berg en een oefening per scherm.
 
 **Forge and the order of Je stand** (`engine/forgeEntry.ts`, `engine/cardOrder.ts`, `components/stand/ForgeEntryCard.tsx`,
 `components/stand/OrderSheet.tsx`, decision `docs/beslissingen/2026-10-28-forge-en-volgorde.md`): Forge is the entry card at
@@ -104,11 +104,14 @@ only with "Spierkaart en tekening" and only when the drawing is already there (i
 `exerciseArtLoader#readCachedDrawing`; the card never fetches, but `useDrawingsFor` fetches what is in view: the exercises of an open training and the choices of the swap sheet, decision `2026-10-29-tekeningen-in-beeld.md`). Until then, with "Alleen spierkaart" and when loading fails it stays the
 muscle card (`MuscleThumb`); the switch is a 200 ms fade, straight to the end state in Rustig and Uit.
 
-**Snelknoppen en sets in Forge** (`engine/forgeQuickActions.ts`, `engine/forgeRows.ts`, `components/swipeRow.ts`,
-`components/forge/SwipeRow.tsx`, decision `docs/beslissingen/2026-10-29-snelknoppen-in-forge.md`): under the name of every exercise a row of
-outlined, muted chips (Ruilen, Opwarmset, Notitie; an exercise on time only Ruilen and Notitie, a read-only training none; "Set toevoegen" stays under the sets), the
-menu keeps everything. Setting "Snelknoppen tonen" (`AppSettings.forgeQuickButtons`, absent = on; the one word for it is "verwijderen", decision `2026-10-29-snelknoppen-in-forge-aanvulling.md`) also sits in the menu of the training;
-the row fades in and out (`mx-quick`). A long reason under the head folds to one line with "Meer". A set swipes to the left: 1 to 1,
+**Het blad Oefening en sets in Forge** (`engine/forgeRows.ts`, `components/swipeRow.ts`, `components/forge/SwipeRow.tsx`,
+decision `docs/beslissingen/2026-11-02-forge-herinrichting.md`, which replaces the chip row of `2026-10-29-snelknoppen-in-forge.md`): there are no
+quick buttons under the name and no column head Alles any more (`AppSettings.forgeQuickButtons` is no longer read; an old backup drops it silently in
+`backupClean.ts`). The three dots (and "Waarom zo" next to a long reason, which sits on one line) open the sheet Oefening: Waarom zo on top, then four
+groups under an `Eyebrow` (`SheetGroup` in `parts.tsx`): Oefening (Ruilen or Terug naar, Notitie, Uitleg en tekening, Uit deze training halen for an
+added exercise), Sets (Set toevoegen, Opwarmset toevoegen, Alle sets afvinken or Alle vinkjes weghalen, Laatste set verwijderen), Rust (Rusttijd, Rust nu
+starten) and Toestel (only a cable or stack). The cues are in Uitleg en tekening, and only without that sheet in a group Tips. "Set toevoegen" also stays
+under the sets. A set swipes to the left: 1 to 1,
 direction decided after 8 px, past 54 px it stays open with a red 72 px button ("Set 3 verwijderen"), past 60% of the width or 24 px before your finger reaches the screen edge (a swipe starts on the left of the row; never under 96 px) or fast it deletes at
 once, never started on kg, reps, RIR or the tick, one row open at a time. "Set 3 verwijderd" with "Ongedaan maken" stands under the sets for
 ten seconds. A set you added (`:a` or `:c` in its id, `isOwnRow`) has an outlined number and "eigen set" in the Voorschrift column; a work
@@ -128,3 +131,13 @@ events: no commits from the moves. An untouched exercise of a reopened draft alw
 and Zonder spotter turns a set to failure into an open set with reserve (`SetTarget.open`, "7+ met 1 over").
 
 **Het eigen cijferblok** (`components/forge/InputDock.tsx`, `engine/forgeInput.ts#tapClosesDock`): het blok blijft open van veld naar veld, met de pijl, bij een tik op een ander vak, bij vegen en bij een tik op de strip met oefeningen. Het sluit bij een tik buiten de velden (ook afvinken), bij de terugknop en bij het verlaten van Forge. De key van `InputDock` is alleen `dockEpoch`, nooit het slot, de set of het veld (`dockKey.scan.test.ts`); wat bij een veld hoort wordt in de render gezet via `fieldKey`. Wat het blok openhoudt draagt `data-dock-keep`.
+
+**Spieren voor de berg** (`engine/mountainMuscles.ts`, `engine/addedExercises.ts`, `components/MountainMuscleNotice.tsx`, `utils/muscleDeclines.ts`,
+decisions `docs/beslissingen/2026-11-02-spierindex-klein.md` and `2026-11-02-forge-herinrichting.md`): with a mountain goal (`hasMountainGoal`) the
+week review shows one quiet notice when calves, tibialis or glutes got on average under 4 hard sets a week over four weeks (`muscleVolume.ts`, sets via
+`isWorkSet`, a rest week and weeks before the program left out), with a proposal for one exercise in the strength training with the most leg work.
+Only after Akkoord: the exercise goes into `strengthModel.addedExercises` (per template, at most three, read defensively, no migration), because the
+built-in templates are reset at every start; Forge puts those slots (`plus:<id>`) behind the exercises of the training. "Liever niet" keeps that muscle
+quiet for eight weeks, remembered on this device only. `swapOptions(..., prefer)` puts, only at an equal `swapScore`, an exercise that works such a
+muscle first, with a short reason (`swapReason`); Forge never swaps by itself. No score, no colour per muscle, no heatmap. Setting "Spieren voor de berg"
+(`strengthModel.mountainMuscles`, default on, under Geavanceerd in Forge).

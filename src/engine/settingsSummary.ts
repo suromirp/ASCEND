@@ -60,7 +60,7 @@ import { backupWhereText, resolveAutoBackup, type AutoBackupFailureReason, type 
 import { SIGNAL_KEYS, signalsOnCount } from './signalSettings';
 import { resolveProposalTidyMonths } from './proposalTidy';
 import { storageUseText, type StorageEstimate } from './storageUse';
-import { quickButtonsOn, swipeDeleteOn } from './forgeQuickActions';
+import { swipeDeleteOn } from './forgeRows';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { resolveSportCounting } from './sportRole';
@@ -562,6 +562,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.adjustLive };
     case 'forge-spotter':
       return { checked: forge.noSpotter };
+    case 'forge-bergspieren':
+      return { checked: forge.mountainMuscles };
     case 'spotterrek':
       return { checked: !!forge.profile.spotterRack };
     case 'forge-rir-vooraf':
@@ -762,8 +764,6 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('forgeOnderbreking', resolveBreakAsk(s)), dim: resolveBreakAsk(s) === 0 };
     case 'forge-vegen':
       return { checked: swipeDeleteOn(s) };
-    case 'forge-snelknoppen':
-      return { checked: quickButtonsOn(s) };
     // Slepen in Week (engine/weekSwap.ts): "Ruilen" of "Samen", of uit.
     case 'bundel-slepen':
       return s.dragWeek === false ? { value: 'Uit', dim: true } : { value: `Aan, ${choiceShort('loslaten', resolveDropOnTraining(s)).toLowerCase()}` };

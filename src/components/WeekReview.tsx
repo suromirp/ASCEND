@@ -16,6 +16,7 @@ import { Icon } from './icons';
 import { DisclosureRow } from './DisclosureRow';
 import { usePageState } from './usePageState';
 import { hoursMinutes } from '../utils/hoursMinutes';
+import { MountainMuscleNotice } from './MountainMuscleNotice';
 
 function useWeekReview(weekStart: string): WeekReview | null {
   const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
@@ -144,6 +145,8 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                 </div>
               </Section>
             )}
+
+            <MountainMuscleNotice weekStart={review.weekStart} />
 
             {review.weeklyCheck && !review.weeklyCheck.laterOn && (
               <p className="mt-5 text-sm" style={{ color: 'var(--color-ink)' }}>{weeklyCheckLine(review.weeklyCheck)}</p>

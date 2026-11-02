@@ -261,8 +261,8 @@ export interface AppSettings {
   // Loslaten op een training in Week (engine/dropOnTraining.ts): 'swap' ruilt de twee van dag, 'together' zet
   // ze samen op die dag. Afwezig is 'swap', het advies. Optional and additive.
   dropOnTraining?: 'swap' | 'together';
-  // Snelknoppen onder de naam van een oefening in Forge (engine/forgeQuickActions.ts). Afwezig is aan.
-  forgeQuickButtons?: boolean;
+  // `forgeQuickButtons` (Snelknoppen tonen) bestaat niet meer: de snelknoppen zijn weg
+  // (docs/beslissingen/2026-11-02-forge-herinrichting.md). Een oude waarde in een back-up wordt genegeerd.
   // Een set naar links vegen om hem te verwijderen (components/forge/SwipeRow.tsx). Afwezig is aan.
   forgeSwipeDelete?: boolean;
   // Oefeningen in een training (engine/forgeLayout.ts): 'scherm' een per scherm, opzij vegen (het advies) of 'lijst'

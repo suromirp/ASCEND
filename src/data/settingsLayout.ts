@@ -69,7 +69,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   forge: {
     rows: ['forge', 'kracht', 'forge-programma', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-weergave', 'bundel-rusttimer', 'forge-scherm', 'forge-bijsturen', 'forge-spotter', 'bundel-sportschool'],
-    advanced: ['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets'],
+    advanced: ['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren'],
   },
   lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit'], advanced: [] },
   vandaag: {
@@ -135,7 +135,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes'),
   ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid'),
   ...inSheet('bundel-rekenmodel', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),
-  ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-snelknoppen', 'forge-vegen', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven'),
+  ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven'),
   ...inSheet('bundel-toets', 'forge-naast', 'forge-sinds'),
   // Lichaam
   ...inSheet('bundel-signalen', 'vroeg-ziek', 'ochtendregel', 'weekdag-patroon', 'hitte-tempo', 'luchtkwaliteit', 'ochtend-voorstel', 'bergweer', 'wennen-warmte', 'tempocurve', 'etappetijd-eigen', 'klimtempo'),
@@ -268,11 +268,11 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...rule([B.trainings], 'trainingsduur'),
-  ...rule([B.forge], 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-rekenmodel', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren', 'bundel-weergave', 'forge-1rm', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-dumbbells'),
+  ...rule([B.forge], 'forge-bergspieren', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-rekenmodel', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren', 'bundel-weergave', 'forge-1rm', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-dumbbells'),
   ...rule([B.forge, B.oneRm], 'forge-weergave'),
   ...rule([B.forge, B.oneRm, B.mf], 'forge-1rm-macrofactor'),
   ...rule([B.forge, B.inApp], 'forge-bijsturen', 'forge-spotter', 'spotterrek'),
-  ...rule([B.inApp], 'bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-snelknoppen', 'forge-vegen', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven', 'bundel-rusttimer', 'forge-rust'),
+  ...rule([B.inApp], 'bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven', 'bundel-rusttimer', 'forge-rust'),
   ...rule([B.inApp, B.restAuto], 'forge-signaal'),
   ...rule([B.inApp, B.restAuto, B.restAlert], 'forge-geluid'),
   ...rule([B.forge, B.mf], 'bundel-toets', 'forge-naast', 'forge-sinds'),

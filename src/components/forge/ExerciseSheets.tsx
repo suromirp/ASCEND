@@ -39,12 +39,13 @@ export function NoteSheet({ name, value, onSave, onClose }: { name: string; valu
 
 // De keuzes in het ruilblad, met links het kaartje. De tekeningen ervan worden opgehaald zodra het blad
 // opent, zodat de kaartjes de oefening laten zien en niet alleen de spieren.
-export function SwapList({ options, onPick }: { options: ReturnType<typeof swapOptions>; onPick: (id: string) => void }) {
+// Een korte reden (`reasonOf`) staat onder de spieren als een keuze voorop staat omdat hij een spier bedient die weinig kreeg.
+export function SwapList({ options, onPick, reasonOf }: { options: ReturnType<typeof swapOptions>; onPick: (id: string) => void; reasonOf?: (e: ReturnType<typeof swapOptions>[number]) => string | undefined }) {
   useDrawingsFor(useMemo(() => options.map((o) => o.id), [options]));
   return (
     <div className="flex flex-col">
       {options.map((o) => (
-        <MenuRow key={o.id} lead={<ExerciseArtButton exerciseId={o.id} name={o.name} />} title={o.name} sub={o.primary.map((m) => MUSCLE_LABEL[m]).join(', ')} onClick={() => onPick(o.id)} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />
+        <MenuRow key={o.id} lead={<ExerciseArtButton exerciseId={o.id} name={o.name} />} title={o.name} sub={[o.primary.map((m) => MUSCLE_LABEL[m]).join(', '), reasonOf?.(o)].filter(Boolean).join('. ')} onClick={() => onPick(o.id)} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />
       ))}
     </div>
   );

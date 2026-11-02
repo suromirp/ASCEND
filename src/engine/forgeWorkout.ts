@@ -18,7 +18,7 @@
 // - what is stored: only ticked rows, as SetLog with kind, kg, reps and RIR.
 
 import { EXERCISES, exerciseById } from '../data/exercises';
-import type { Exercise, MovementPattern } from '../models/exercise';
+import type { Exercise, MovementPattern, MuscleGroup } from '../models/exercise';
 import type { Program } from '../models/program';
 import type { ExercisePrescription, ExerciseSetLog, SessionLog, SessionTemplate, SetKind, SetLog, SetTarget } from '../models/training';
 import { formatNumberNL } from '../utils/number';
@@ -736,23 +736,33 @@ export function plateList(plates: number[]): string {
 
 // --- swapping -------------------------------------------------------------------------------
 
+// How well `e` can take the place of `current`: shared main muscles weigh most, then the same movement.
+// Zero when they share no main muscle.
+export function swapScore(current: Exercise, e: Exercise): number {
+  const primary = e.primary.filter((m) => current.primary.includes(m)).length;
+  if (primary === 0) return 0;
+  const secondary = e.secondary.filter((m) => current.secondary.includes(m) || current.primary.includes(m)).length;
+  return primary * 3 + secondary + (e.pattern === current.pattern ? 4 : 0) + (e.loadsLegs === current.loadsLegs ? 1 : 0);
+}
+
 // Exercises that can take the place of this one: the same main muscles (at
 // least one in common), in the gym you have (a barbell needs a bar), the same
 // movement first. Never the exercise itself or one that is already in the training.
-export function swapOptions(current: Exercise | undefined, profile: GymProfile, inTraining: string[] = [], limit = 8): Exercise[] {
+// `prefer`: muscles that got too little (engine/mountainMuscles.ts#swapPreference). Only at an equal score an
+// exercise that works one of them comes first; the choice stays yours, Forge never swaps by itself.
+export function swapOptions(current: Exercise | undefined, profile: GymProfile, inTraining: string[] = [], limit = 8, prefer: readonly MuscleGroup[] = []): Exercise[] {
   if (!current) return [];
   const taken = new Set([current.id, ...inTraining]);
+  const serves = (e: Exercise) => (prefer.some((m) => e.primary.includes(m) || e.secondary.includes(m)) ? 0 : 1);
   const scored: { e: Exercise; score: number }[] = [];
   for (const e of EXERCISES) {
     if (taken.has(e.id)) continue;
     if (e.resistance === 'barbell' && profile.barsKg.length === 0) continue;
-    const primary = e.primary.filter((m) => current.primary.includes(m)).length;
-    if (primary === 0) continue;
-    const secondary = e.secondary.filter((m) => current.secondary.includes(m) || current.primary.includes(m)).length;
-    const score = primary * 3 + secondary + (e.pattern === current.pattern ? 4 : 0) + (e.loadsLegs === current.loadsLegs ? 1 : 0);
+    const score = swapScore(current, e);
+    if (score === 0) continue;
     scored.push({ e, score });
   }
-  return scored.sort((a, b) => b.score - a.score || a.e.name.localeCompare(b.e.name)).slice(0, limit).map((s) => s.e);
+  return scored.sort((a, b) => b.score - a.score || serves(a.e) - serves(b.e) || a.e.name.localeCompare(b.e.name)).slice(0, limit).map((s) => s.e);
 }
 
 // --- the legs ---------------------------------------------------------------------------------
