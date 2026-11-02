@@ -313,6 +313,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.leaveCrowding;
     skipped.n++;
   }
+  // Loslaten op een training in Week: ruilen of samen, of niet aanwezig (het advies).
+  if ('dropOnTraining' in s && s.dropOnTraining !== 'swap' && s.dropOnTraining !== 'together') {
+    delete s.dropOnTraining;
+    skipped.n++;
+  }
   // Back button and resuming after a restart: known values stay, the rest goes.
   if ('tabBack' in s || 'resumeMinutes' in s) {
     const nav = cleanNavigationSettings({ tabBack: s.tabBack, resumeMinutes: s.resumeMinutes });

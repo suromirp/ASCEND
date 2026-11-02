@@ -255,6 +255,9 @@ export interface AppSettings {
   weekFixProposal?: boolean;
   // Trainingen slepen in Week (components/useWeekDrag.ts). Afwezig is aan; uit haalt de grepen weg.
   dragWeek?: boolean;
+  // Loslaten op een training in Week (engine/dropOnTraining.ts): 'swap' ruilt de twee van dag, 'together' zet
+  // ze samen op die dag. Afwezig is 'swap', het advies. Optional and additive.
+  dropOnTraining?: 'swap' | 'together';
   // Snelknoppen onder de naam van een oefening in Forge (engine/forgeQuickActions.ts). Afwezig is aan.
   forgeQuickButtons?: boolean;
   // Een set naar links vegen om hem te verwijderen (components/forge/SwipeRow.tsx). Afwezig is aan.
