@@ -1,6 +1,6 @@
 // De planningsronde: het programma naar de doeldatum.
 
-import { withHardSameDay, withLongRunThenLegs } from '../engine/scheduler';
+import { withHardSameDay, withLongRunThenLegs, withTestRestHours } from '../engine/scheduler';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { TrainingGoal, GoalMilestone } from '../models/goals';
@@ -348,7 +348,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   // A sport that counts has a derived template (engine/sportTemplate.ts): its fixed rows and its logs are
   // read by the week check like any training.
   const passTemplates = withCountingSports(templates, settings);
-  const pass = withLongRunThenLegs(overrides.registers?.longRunThenLegs, () => withHardSameDay(overrides.registers?.hardSameDay, () => withDurationScope(overrides.registers, () => planPass(asWillBe, {
+  const pass = withTestRestHours(overrides.registers?.testRest, () => withLongRunThenLegs(overrides.registers?.longRunThenLegs, () => withHardSameDay(overrides.registers?.hardSameDay, () => withDurationScope(overrides.registers, () => planPass(asWillBe, {
     today, logs, templates: passTemplates, program: next, blocks, afterGoals: afterGoalWindows(goals, mainGoalId, ctx.anchor, today), restDay, goalDay: ctx.anchor,
     dailyTimeBudget: engineConfig.availability.dailyTimeBudget, sameDayPairingPreference: engineConfig.strategy.sameDayPairingPreference,
     slotDays: patternDays(templates, settings, restDay),
@@ -357,7 +357,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
     fixedSports: settings.sportHandling ?? null,
     kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
-  }))));
+  })))));
   if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 
   // Write only what differs from what is stored.

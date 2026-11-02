@@ -12,6 +12,7 @@ import { resolveShorterToday } from './shorterToday';
 import { isDefaultOrder, resolveCardOrder } from './cardOrder';
 import { kgLabel } from '../utils/kg';
 import { resolveTestStops } from './bestEffort';
+import { resolveTestRest } from './testRest';
 import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
 import type { HealthConnectErrorKind } from '../models/healthConnect';
@@ -708,6 +709,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('klaarMarge', resolveLimitMargin(s.limitMargin)) };
     case 'doeltijd-voorstel':
       return { checked: s.proposeTargetTime !== false };
+    // Testloop: de vier keuzes rond een test in één blad; de rij noemt de rust, de rest staat in het blad.
+    case 'bundel-testloop':
+      return { value: `${choiceShort('testRust', resolveTestRest(s.testRest))} rust`, sub: s.newTestOnStops === false ? 'Geen nieuwe test bij stilstand' : 'Nieuwe test bij stilstand' };
+    case 'test-rust':
+      return { value: choiceShort('testRust', resolveTestRest(s.testRest)) };
     case 'test-stilstaan':
       return { value: choiceShort('testStilstaan', resolveTestStops(s.testStops)) };
     case 'twijfeltest':

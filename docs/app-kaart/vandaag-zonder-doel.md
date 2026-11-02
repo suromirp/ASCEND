@@ -30,7 +30,7 @@ Morgen: Lange duurloop, 50 min
 Advies, gemist
 [knop: nog 2]
 Testloop van do 29 oktober gemist
-Doe hem di 3 november, en Bovenlichaam A naar vr 6 november.
+Binnen 9 dagen is er geen dag met 72 uur rust na een zware dag.
 [knop: Bekijk]
 
 --- kaart 5 ---

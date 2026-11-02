@@ -17,7 +17,7 @@ import {
 } from '../storage/database';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf } from '../engine/gr5Profile';
-import { setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs } from '../engine/scheduler';
+import { resolveTestRest, setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, setTestRestHours } from '../engine/scheduler';
 import { leaveKey } from '../engine/leaveEdit';
 import { createSerialQueue } from '../utils/serialQueue';
 import type { RecentPlanChange } from '../models/planChange';
@@ -91,6 +91,7 @@ export function setPlanningRegisters(program: Program | null, tpls: SessionTempl
   setLearnedDurations(scope.learnedDurations);
   setHardSameDayAllowed(!!loadedSettings.hardSameDay);
   setLongRunThenLegs(!!loadedSettings.longRunThenLegs);
+  setTestRestHours(resolveTestRest(loadedSettings.testRest));
   // The planner's leg index with the same inputs as the Benen card.
   const lastWeight = currentBodyKg(loadedSettings.weightEntries, loadedSettings.weightFromMacroFactor);
   setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });

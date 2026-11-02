@@ -6,7 +6,7 @@
 // Puur: geen React, geen IndexedDB.
 
 import type { PlanLock, PlannedSession, SessionTemplate } from '../models/training';
-import { dayHasRoomFor, findHeavyConflicts, isLegHeavyTemplate, sharedHeavyAxes, type ScheduleProposal } from './scheduler';
+import { dayHasRoomFor, findHeavyConflicts, isHeavyBeforeTest, isLegHeavyTemplate, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
 import { keptDayReason, type KeptReason } from './moveSuggestions';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
@@ -86,7 +86,13 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
     const others = conflicts.flatMap((c) => { const t = templateById.get(c.templateId); return t ? [t] : []; });
     const test = hasRole(leg.t, 'test') || others.some((t) => hasRole(t, 'test'));
     const legsBoth = others.some((t) => sharedHeavyAxes(leg.t, t).includes('lowerBodyLoad') || (isLegHeavyTemplate(leg.t) && isLegHeavyTemplate(t)));
-    const rule = test ? ' Je test heeft frisse benen nodig.' : legsBoth ? ' Liefst 48 uur ertussen.' : '';
+    // Rest before a test: a heavy day too close before it says the hours (docs/beslissingen/2026-11-02-rust-voor-een-test.md).
+    const restClash = conflicts.some((c) => {
+      const ct = templateById.get(c.templateId);
+      const cDate = simulated.find((x) => x.id === c.id)?.scheduledDate ?? c.scheduledDate;
+      return !!ct && ((isTestOnly(leg.t) && isHeavyBeforeTest(ct) && tooCloseBeforeTest(cDate, leg.to)) || (isTestOnly(ct) && isHeavyBeforeTest(leg.t) && tooCloseBeforeTest(leg.to, cDate)));
+    });
+    const rule = restClash ? ` Liefst ${testRestHours()} uur tussen een zware dag en je test.` : test ? ' Je test heeft frisse benen nodig.' : legsBoth ? ' Liefst 48 uur ertussen.' : '';
     asks.push(`${leg.t.name} op ${dayLower(leg.to)} valt dicht op ${others.map((t) => t.name).join(' en ')}.${rule}`);
   }
   for (const leg of legs) {
