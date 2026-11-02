@@ -3,7 +3,8 @@ import { painReports } from '../engine/pain';
 import type { SessionLog, WorkoutDetails } from '../models/training';
 import { getModality } from '../data/modalities';
 import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
-import { formatDateNL } from '../utils/dates';
+import { formatDateNL, todayISO } from '../utils/dates';
+import { detailFetchMode } from '../engine/detailFetch';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, SecondaryButton, SheetGrip } from './ui';
@@ -73,15 +74,29 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   // found nothing or did not finish, one quiet line says so; the other outcomes say nothing.
   const hasRunDetail = !!log.runDetail;
   const [ensureOutcome, setEnsureOutcome] = useState<EnsureOutcome | undefined>();
+  // Een oudere run zonder kilometers haalt niets vanzelf op: daar staat "Details ophalen"
+  // (engine/detailFetch.ts), één run per tik, met een grens in tijd en een zichtbare uitkomst.
+  const fetchMode = detailFetchMode(log, todayISO());
+  const [fetching, setFetching] = useState(false);
+  const [manualOutcome, setManualOutcome] = useState<EnsureOutcome | undefined>();
+  async function fetchDetails() {
+    if (fetching) return;
+    setFetching(true);
+    setManualOutcome(undefined);
+    const r = await ensureRunDetail(log.id, { timeoutMs: 15_000, manual: true });
+    setManualOutcome(r);
+    setFetching(false);
+    if (r === 'added') refresh();
+  }
   useEffect(() => {
-    if (log.externalId && !log.trim) {
+    if (log.externalId && !log.trim && fetchMode === 'auto') {
       void ensureRunDetail(log.id).then((r) => {
         setEnsureOutcome(r);
         if (r === 'added') refresh();
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [log.id, log.externalId, log.trim, hasRunDetail, refresh]);
+  }, [log.id, log.externalId, log.trim, hasRunDetail, fetchMode, refresh]);
   const compatibility = garminType ? getCompatibility(log.templateId, garminType) : undefined;
   // "Run in detail": a run from the watch, with the switch on (docs/visie/Run in detail.md, 3).
   const detailsOn = useDetailsOn();
@@ -236,6 +251,23 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
 
           {ensureOutcome && (ensureOutcome === 'no-series' || ensureOutcome === 'failed' || ensureOutcome === 'timeout') && !hasRunDetail && (
             <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{ensureOutcomeText(ensureOutcome)}</p>
+          )}
+
+          {fetchMode === 'button' && (!hasRunDetail || manualOutcome === 'added') && (
+            <div className="mt-4 flex flex-col gap-2">
+              {!hasRunDetail && (
+                <SecondaryButton className="w-full" disabled={fetching} onClick={() => void fetchDetails()}>
+                  {fetching ? 'Details ophalen…' : manualOutcome === 'failed' || manualOutcome === 'timeout' ? 'Opnieuw proberen' : 'Details ophalen'}
+                </SecondaryButton>
+              )}
+              <p className="text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>
+                {fetching
+                  ? 'Bij intervals.icu, hoogstens 15 seconden.'
+                  : manualOutcome
+                    ? ensureOutcomeText(manualOutcome, true) ?? 'Er was niets nieuws op te halen.'
+                    : 'Kilometer na kilometer van deze run, bij intervals.icu. Alleen deze run.'}
+              </p>
+            </div>
           )}
 
           {strengthExercises.length > 0 && (

@@ -52,6 +52,9 @@ export interface AttachOptions extends FetchOptions {
   skipWeather?: boolean;
   // How long ensureRunDetail waits before it says so (a test makes it short).
   timeoutMs?: number;
+  // A tap on "Details ophalen" (engine/detailFetch.ts): ask once more, even when this log failed
+  // earlier this session. Only for the one log of the tap.
+  manual?: boolean;
 }
 
 // A series that could not be fetched this session (no connection, no stream): not asked again
@@ -429,12 +432,14 @@ export type EnsureOutcome =
   | 'failed'
   | 'timeout';
 
-// The sentence to show for an outcome; undefined when there is nothing to say.
-export function ensureOutcomeText(outcome: EnsureOutcome): string | undefined {
+// The sentence to show for an outcome; undefined when there is nothing to say. `manual`: the
+// outcome of a tap on "Details ophalen", where nothing tries again by itself.
+export function ensureOutcomeText(outcome: EnsureOutcome, manual = false): string | undefined {
   switch (outcome) {
     case 'ready':
-    case 'added':
       return undefined;
+    case 'added':
+      return manual ? 'Opgehaald. Kilometer na kilometer staat nu bij Run in detail.' : undefined;
     case 'off':
       return 'Details van loopjes en tochten staan uit, dus er zijn geen kilometers opgehaald.';
     case 'no-link':
@@ -442,9 +447,9 @@ export function ensureOutcomeText(outcome: EnsureOutcome): string | undefined {
     case 'no-series':
       return 'Van deze training heeft intervals.icu geen reeks per moment. Er is niets veranderd.';
     case 'failed':
-      return 'Het ophalen lukte niet. Er is niets veranderd; de volgende keer dat je de app opent probeert hij het opnieuw.';
+      return `Het ophalen lukte niet. Er is niets veranderd; ${manual ? 'probeer het later nog eens.' : 'de volgende keer dat je de app opent probeert hij het opnieuw.'}`;
     case 'timeout':
-      return 'Het ophalen duurde te lang. Er is niets veranderd; de volgende keer dat je de app opent probeert hij het opnieuw.';
+      return `Het ophalen duurde te lang. Er is niets veranderd; ${manual ? 'probeer het later nog eens.' : 'de volgende keer dat je de app opent probeert hij het opnieuw.'}`;
   }
 }
 
@@ -460,6 +465,8 @@ function kindOfLog(log: SessionLog): ExternalActivityKind | undefined {
 // totals), fills in the kilometres and the series of a run that has none. Never throws and
 // always answers within ENSURE_TIMEOUT_MS with something to show.
 export async function ensureRunDetail(logId: string, options: AttachOptions = {}): Promise<EnsureOutcome> {
+  // A tap asks again, also after a failure earlier this session; only for this log.
+  if (options.manual) failedThisSession.delete(logId);
   const work = async (): Promise<EnsureOutcome> => {
     const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
     if (!log || !log.externalId || log.trim) return 'no-link';
