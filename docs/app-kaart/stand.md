@@ -88,8 +88,8 @@ Kracht
 gemiddelde vier weken ervoor
 Deze week
 224 + 200 gepland
-[label: 224 gedaan, 200 gepland, gemiddeld 552]
-Streepje: je gemiddelde van de vier weken ervoor, 552.
+[label: 224 gedaan, 200 gepland, gemiddeld 540]
+Streepje: je gemiddelde van de vier weken ervoor, 540.
 Rustige duurloop
 ma 26 okt · 56 min · zwaarte ±4
 224
