@@ -12,7 +12,7 @@ and the week has another session with the same task, decision `docs/beslissingen
 never a long run, hard run, leg day, test, race or tocht), as `Advice` `WEEK-CHECK` through `ProposalSheet`, only when the week
 is demonstrably better, with the id `weekfix:<rule>:<ids>:<dates>`. It is not in `advice` and not on Vandaag. Liever niet keeps the
 card, quieter, with "Toch een voorstel"; the problem is never hidden. Setting "Voorstel bij een probleem in de week"
-(`weekFixProposal`, absent = on): off keeps the card and the row texts and drops only the button. Not built yet: the sentence in
+(`weekFixProposal`, absent = on): off keeps the card and the row texts and drops only the button. A pair the program puts back to back on purpose (`pairingOverride`, the hills then the long run) counts as intended only on its own days of the week pattern; placed elsewhere with at least one of the two yours, LEG-SPACING reports it under `reportYours` only ("Twee zware beendagen achter elkaar."), so the planning never moves it and `planGolden.test.ts` stays; in a full week the fix may let one training of the system's own swap days (`viaRoom`). Dragging to such a day asks "Twee zware beendagen achter elkaar. Toch hier?" with Annuleren and Toch hier (`weekDrag.ts#legsCloseAfterMove`, `DecideOptions.legsClose`, `ScheduleProposal.confirm`; decision `docs/beslissingen/2026-11-02-testloop-en-zware-benen.md`). Not built yet: the sentence in
 the action sheet of a training, the link with TEST-MAKE-ROOM (no second proposal for one training), the other rules.
 
 **Dragging a training in Week** (`engine/weekDrag.ts`, `components/useWeekDrag.ts`, `components/useVerticalDrag.ts`, decision

@@ -371,6 +371,8 @@ export interface ScheduleProposal {
   // candidatePlacement.ts#weekCandidatesToAlternatives. Leeg wanneer er geen
   // cascade nodig was (geen conflict) of geen alternatieven overleefden.
   alternatives?: WeekPlacementCandidate[];
+  // A question instead of Akkoord: the dialog shows `reason` and these two buttons (engine/weekDrag.ts#decideMove).
+  confirm?: { yes: string; no: string };
 }
 
 function templateName(templates: Map<string, SessionTemplate>, id: string): string {
