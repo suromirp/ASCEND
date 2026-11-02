@@ -15,9 +15,10 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { IllnessEpisode } from '../models/illness';
-import { addDays, daysBetween } from '../utils/dates';
+import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { idHasRole } from './templateRoles';
 import { activeIllness, isHeavySession, recoveryRamp } from './illness';
+import { previewBetween, type PreviewMove, type ProposalPreviewData } from './proposalPreview';
 
 export interface ReplanWeekInput {
   // Het hele opgeslagen plan.
@@ -203,4 +204,29 @@ export function replanSummary(opts: { changes: number; testMove?: { name: string
   if (opts.testMove) parts.push(`${opts.testMove.name} blijft in de week en gaat naar ${opts.testMove.toLabel}: daar past hij beter.`);
   if (opts.nextWeek) parts.push('Zodat de week erna er goed op aansluit, verandert daar ook iets; dat staat hieronder.');
   return parts.join(' ');
+}
+
+// "Zo ziet je week eruit" voor Week opnieuw plannen, uit dezelfde bron als de wijzigingen zelf (`diff`): elke
+// rij die geschreven of weggehaald wordt is precies één regel, ook een die alleen weer van het plan wordt
+// (zelfde dag, zonder slot of vaste lengte). De dagen eronder komen uit het plan nu en zoals het wordt.
+export function replanPreview(stored: PlannedSession[], after: PlannedSession[], diff: WeekDiff, templates: SessionTemplate[]): ProposalPreviewData {
+  const name = (id: string) => templates.find((t) => t.id === id)?.name ?? 'Training';
+  const was = new Map(diff.before.map((s) => [s.id, s]));
+  const moves: PreviewMove[] = [];
+  for (const s of diff.writes) {
+    const old = was.get(s.id);
+    if (!old || (old.status === 'skipped' && s.status !== 'skipped')) moves.push({ name: name(s.templateId), action: 'add', to: s.scheduledDate });
+    else if (old.status !== 'skipped' && s.status === 'skipped') moves.push({ name: name(old.templateId), action: 'remove', from: old.scheduledDate });
+    else if (old.scheduledDate !== s.scheduledDate) moves.push({ name: name(s.templateId), action: 'move', from: old.scheduledDate, to: s.scheduledDate });
+    else if (old.templateId !== s.templateId) moves.push({ name: name(old.templateId), action: 'change', to: s.scheduledDate, newName: name(s.templateId) });
+    else moves.push({ name: name(s.templateId), action: 'reset', to: s.scheduledDate });
+  }
+  for (const id of diff.removedIds) {
+    const old = was.get(id);
+    if (old) moves.push({ name: name(old.templateId), action: 'remove', from: old.scheduledDate });
+  }
+  const order = { move: 0, change: 1, reset: 1, remove: 2, add: 3 };
+  moves.sort((a, b) => order[a.action] - order[b.action] || (a.from ?? a.to ?? '').localeCompare(b.from ?? b.to ?? ''));
+  const weeks = [...diff.before, ...diff.writes].map((s) => mondayOfWeek(s.scheduledDate));
+  return { moves, weeks: previewBetween(stored, after, templates, undefined, weeks).weeks };
 }

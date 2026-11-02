@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { withSportNames } from '../engine/sportTemplate';
 import { useAppData } from '../state/AppDataContext';
-import { previewProposal, type PreviewEntry, type PreviewMove } from '../engine/proposalPreview';
+import { previewProposal, sheetAnswer, type PreviewEntry, type PreviewMove, type ProposalPreviewData } from '../engine/proposalPreview';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { Advice } from '../engine/adviceEngine';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -76,9 +76,12 @@ export interface ProposalSheetProps {
   alternative?: { label: string; onClick: () => void };
   // Niets om op te antwoorden (er verandert niets): alleen Begrepen, geen Akkoord.
   answerless?: boolean;
+  // De lijst en de dagen uit een eigen bron (Week opnieuw plannen: engine/replanWeek.ts#replanPreview),
+  // in plaats van uit de items van het voorstel.
+  preview?: ProposalPreviewData;
 }
 
-export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'Voorstel', emptyText, listUntil, extraLines, extraTitle = 'Andere lengte, de komende twee weken', summary, alternative, answerless }: ProposalSheetProps) {
+export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'Voorstel', emptyText, listUntil, extraLines, extraTitle = 'Andere lengte, de komende twee weken', summary, alternative, answerless, preview }: ProposalSheetProps) {
   const { plannedSessions, templates: ctxTemplates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
   // A fixed appointment of a sport that does not count yet is new in this proposal: show it by its name.
   const templates = useMemo(() => withSportNames(ctxTemplates), [ctxTemplates]);
@@ -90,7 +93,14 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
   // With more than one option: the chosen one drives the week shown and Akkoord.
   const [choice, setChoice] = useState(0);
   const chosen = advice.options?.[choice]?.proposal ?? advice.proposal;
-  const data = useMemo(() => (chosen ? previewProposal(chosen.changes, plannedSessions, templates, planPreviewPass, leave) : { moves: [], weeks: [] }), [chosen, plannedSessions, templates, planPreviewPass, leave]);
+  const data = useMemo(() => preview ?? (chosen ? previewProposal(chosen.changes, plannedSessions, templates, planPreviewPass, leave) : { moves: [], weeks: [] }), [preview, chosen, plannedSessions, templates, planPreviewPass, leave]);
+  // Nooit Akkoord naast een lege lijst, nooit "er verandert niets" naast Akkoord als het voorstel iets doet.
+  const answer = sheetAnswer({
+    answerless,
+    realItems: (chosen?.changes ?? []).filter((c) => c.action !== 'keep' && c.action !== 'replace').length,
+    moves: data.moves.length,
+    extraLines: extraLines?.length ?? 0,
+  });
   const byId = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
   const listed = listUntil ? data.moves.filter((m) => (m.from ?? m.to ?? '') <= listUntil) : data.moves;
   // Counted from the proposal's own items, so the total is the real number of changes.
@@ -213,7 +223,11 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                 </div>
               )}
 
-              {data.moves.length === 0 && (!extraLines || extraLines.length === 0) && emptyText && (
+              {answer.unshown && (
+                <p className="mt-4 rounded-xl border p-3.5 text-sm leading-relaxed" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}>Dit voorstel kan ASCEND nu niet goed laten zien. Er verandert niets; probeer het straks nog eens.</p>
+              )}
+
+              {answer.showEmpty && emptyText && (
                 <p className="mt-4 rounded-xl border p-3.5 text-sm leading-relaxed" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}>{emptyText}</p>
               )}
 
@@ -267,6 +281,8 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
             <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
               {answerless ? (
                 <SecondaryButton onClick={requestClose} className="min-h-[46px]">Begrepen</SecondaryButton>
+              ) : !answer.canAccept ? (
+                <SecondaryButton onClick={requestClose} className="min-h-[46px]">Annuleren</SecondaryButton>
               ) : (
                 <>
                   <SecondaryButton onClick={() => void respond('declined')} disabled={busy} className="min-h-[46px]">Liever niet</SecondaryButton>
@@ -296,6 +312,8 @@ function MoveLine({ move }: { move: PreviewMove }) {
         <span className="mt-0.5 block text-xs tabular-nums">
           {removed ? (
             <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.from!)} · vervalt</span>
+          ) : move.action === 'reset' ? (
+            <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.to!)} · weer zoals het plan</span>
           ) : move.action === 'change' ? (
             <>
               <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.to!)} · wordt </span>
@@ -314,13 +332,13 @@ function MoveLine({ move }: { move: PreviewMove }) {
   );
 }
 
-function Glyph({ kind }: { kind: 'move' | 'add' | 'remove' | 'change' }) {
+function Glyph({ kind }: { kind: PreviewMove['action'] }) {
   const color = kind === 'remove' ? 'var(--color-ink-dim)' : 'var(--color-action)';
   return (
     <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ background: tint(color, 14) }} aria-hidden>
       <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         {kind === 'move' && <path d="M3 8h9M9 4.5 12.5 8 9 11.5" />}
-        {kind === 'change' && <path d="M3.5 6h9M10 3.5 12.5 6 10 8.5M12.5 10h-9M6 7.5 3.5 10 6 12.5" />}
+        {(kind === 'change' || kind === 'reset') && <path d="M3.5 6h9M10 3.5 12.5 6 10 8.5M12.5 10h-9M6 7.5 3.5 10 6 12.5" />}
         {kind === 'add' && <path d="M8 3.5v9M3.5 8h9" />}
         {kind === 'remove' && <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" />}
       </svg>

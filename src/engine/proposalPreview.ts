@@ -42,7 +42,8 @@ interface PreviewWeek {
 
 export interface PreviewMove {
   name: string;
-  action: 'move' | 'add' | 'remove' | 'change';
+  // 'reset': dezelfde dag en training, maar weer zoals het plan hem maakt (zonder slot of vaste lengte).
+  action: 'move' | 'add' | 'remove' | 'change' | 'reset';
   from?: string;
   to?: string;
   // For 'change': the training it becomes.
@@ -66,13 +67,18 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
   const empty = { moves: [], weeks: [] };
   const real = items.filter((i) => i.action !== 'keep' && i.action !== 'replace');
   if (real.length === 0) return empty;
-  const byId = new Map(templates.map((t) => [t.id, t]));
-  const info = (s: PlannedSession) => ({ name: byId.get(s.templateId)?.name ?? 'Training', type: byId.get(s.templateId)?.type ?? ('cardio' as SessionType), templateId: s.templateId, plannedMinutes: s.plannedMinutes });
-  const before = new Map(sessions.map((s) => [s.id, s]));
   let n = 0;
   const applied = applyPlanChangeItems(items.filter((i) => i.action !== 'replace'), sessions, () => `preview-${n++}`, { by: 'proposal', at: 'preview' });
   if (applied.unsupported.length > 0) return empty;
-  const after = pass ? pass(applied.sessions) : applied.sessions;
+  return previewBetween(sessions, pass ? pass(applied.sessions) : applied.sessions, templates, leave);
+}
+
+// Het verschil tussen het plan nu (`sessions`) en zoals het wordt (`after`), dag voor dag. `alsoWeeks`: weken
+// die er ook in horen (een voorstel met een eigen lijst, zoals Week opnieuw plannen).
+export function previewBetween(sessions: PlannedSession[], after: PlannedSession[], templates: SessionTemplate[], leave?: LeavePeriod[], alsoWeeks: string[] = []): ProposalPreviewData {
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  const info = (s: PlannedSession) => ({ name: byId.get(s.templateId)?.name ?? 'Training', type: byId.get(s.templateId)?.type ?? ('cardio' as SessionType), templateId: s.templateId, plannedMinutes: s.plannedMinutes });
+  const before = new Map(sessions.map((s) => [s.id, s]));
   const afterIds = new Set(after.map((s) => s.id));
 
   const moves: PreviewMove[] = [];
@@ -106,10 +112,10 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
     }
   }
   // Moves first, then what changes, then what goes, then what comes; each in date order.
-  const order = { move: 0, change: 1, remove: 2, add: 3 };
+  const order = { move: 0, change: 1, reset: 1, remove: 2, add: 3 };
   moves.sort((a, b) => order[a.action] - order[b.action] || (a.from ?? a.to ?? '').localeCompare(b.from ?? b.to ?? ''));
 
-  const weeks = new Set<string>();
+  const weeks = new Set<string>(alsoWeeks);
   for (const id of added) weeks.add(mondayOfWeek(after.find((s) => s.id === id)!.scheduledDate));
   for (const m of moved.values()) { weeks.add(mondayOfWeek(m.to)); weeks.add(mondayOfWeek(m.from)); }
   for (const s of gone) weeks.add(mondayOfWeek(s.scheduledDate));
@@ -136,4 +142,24 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
       }),
     })),
   };
+}
+
+// Wat het blad onderaan laat zien. Nooit Akkoord naast een lege lijst terwijl het voorstel wel iets
+// verandert, en nooit "er verandert niets" naast Akkoord als het voorstel wel iets doet.
+// - answerless: er is niets te beslissen; alleen de lege tekst en Begrepen.
+// - het voorstel heeft echte wijzigingen maar het blad kan ze niet tonen: geen Akkoord, alleen Annuleren
+//   en een zin dat het niet te tonen is.
+// - anders Liever niet en Akkoord; de lege tekst alleen als het voorstel zelf niets aan het plan doet
+//   (een periode of instelling die bij Akkoord bewaard wordt).
+export interface SheetAnswer {
+  showEmpty: boolean;
+  canAccept: boolean;
+  unshown: boolean;
+}
+
+export function sheetAnswer(o: { answerless?: boolean; realItems: number; moves: number; extraLines: number }): SheetAnswer {
+  if (o.answerless) return { showEmpty: true, canAccept: false, unshown: false };
+  const listed = o.moves + o.extraLines;
+  if (o.realItems > 0 && listed === 0) return { showEmpty: false, canAccept: false, unshown: true };
+  return { showEmpty: o.realItems === 0 && listed === 0, canAccept: true, unshown: false };
 }
