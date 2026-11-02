@@ -95,3 +95,17 @@ describe('Rijen waarvan de bron te traag was of faalde', () => {
     expect(rowSummary('health-connect', facts({ unknown: ['healthConnect'] }))).toEqual({ value: 'Onbekend', dim: true });
   });
 });
+
+describe('Rijen die van een nog onbekende bron afhangen blijven zichtbaar', () => {
+  it('Garmin-rij is er met Bezig… zolang het horloge nog niet gelezen is, daarna verdwijnt hij als er geen koppeling is', () => {
+    expect(rowSummary('slaap', facts({ pending: ['watch'] }))).toEqual({ value: 'Bezig…', dim: true, hidden: false });
+    expect(rowSummary('slaap', facts({ unknown: ['watch'] }))).toEqual({ value: 'Onbekend', dim: true, hidden: false });
+    expect(rowSummary('slaap', facts({ pending: [], unknown: [] })).hidden).toBe(true);
+  });
+  it('de rij van een bron die al bekend is blijft verborgen', () => {
+    expect(rowSummary('slaap', facts({ pending: ['snapshots'] })).hidden).toBe(true);
+  });
+  it('Toestemmingen wacht ook op Opslag', () => {
+    expect(rowSummary('toestemmingen', facts({ pending: ['storage'] }))).toMatchObject({ value: 'Bezig…' });
+  });
+});

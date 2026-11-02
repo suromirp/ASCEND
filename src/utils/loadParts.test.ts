@@ -57,4 +57,21 @@ describe('loadParts', () => {
     await done;
     expect(seen).toEqual([1, undefined]);
   });
+
+  it('een te trage bron meldt eerst ok: false en daarna alsnog zijn antwoord', async () => {
+    vi.useFakeTimers();
+    const calls: [boolean, Partial<T>][] = [];
+    const done = loadParts<'a', T>([{ key: 'a', ms: 1000, load: () => new Promise((resolve) => setTimeout(() => resolve({ a: 7 }), 3000)) }], (_k, patch, ok) => calls.push([ok, patch]));
+    await vi.advanceTimersByTimeAsync(1000);
+    await done;
+    expect(calls).toEqual([[false, {}]]);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(calls).toEqual([[false, {}], [true, { a: 7 }]]);
+  });
+
+  it('een fout krijgt geen tweede melding', async () => {
+    const calls: boolean[] = [];
+    await loadParts<'a', T>([{ key: 'a', ms: 1000, load: async () => { throw new Error('stuk'); } }], (_k, _p, ok) => calls.push(ok));
+    expect(calls).toEqual([false]);
+  });
 });

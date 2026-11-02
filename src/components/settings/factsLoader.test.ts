@@ -34,6 +34,43 @@ describe('laadstand van de instellingen', () => {
     expect(r.last().loaded).toEqual({ snapshots: 0, macro: 'gelezen' });
   });
 
+  it('een te trage bron zegt eerst Onbekend en het late antwoord wordt alsnog overgenomen', async () => {
+    vi.useFakeTimers();
+    const r = recorder();
+    const loader = createFactsLoader(() => [{ key: 'snapshots', ms: 1000, load: () => new Promise<Partial<T>>((resolve) => setTimeout(() => resolve({ snapshots: 4 }), 5000)) }], INITIAL, ['snapshots'], r.onState);
+    const done = loader.load();
+    await vi.advanceTimersByTimeAsync(1000);
+    await done;
+    expect(r.last().unknown).toEqual(['snapshots']);
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(r.last().unknown).toEqual([]);
+    expect(r.last().loaded.snapshots).toBe(4);
+  });
+
+  it('een laat antwoord van een oudere ronde telt niet als er al een nieuwere is', async () => {
+    vi.useFakeTimers();
+    let n = 0;
+    const r = recorder();
+    const loader = createFactsLoader(
+      () => {
+        const mine = ++n;
+        return [{ key: 'snapshots' as const, ms: 1000, load: () => new Promise<Partial<T>>((resolve) => setTimeout(() => resolve({ snapshots: mine }), mine === 1 ? 5000 : 10)) }];
+      },
+      INITIAL,
+      ['snapshots'],
+      r.onState,
+    );
+    const first = loader.load();
+    await vi.advanceTimersByTimeAsync(1000);
+    await first;
+    const second = loader.load();
+    await vi.advanceTimersByTimeAsync(10);
+    await second;
+    expect(r.last().loaded.snapshots).toBe(2);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(r.last().loaded.snapshots).toBe(2);
+  });
+
   it('een fout geeft Onbekend; een latere ronde die lukt haalt het weg', async () => {
     let fail = true;
     const r = recorder();

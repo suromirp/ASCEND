@@ -15,7 +15,7 @@ const ROWS: Record<string, readonly SettingsSource[]> = {
   backupmap: ['autoBackup'],
   'ruimte-app': ['storageUse'],
   'reeksen-ruimte': ['streams'],
-  toestemmingen: ['device'],
+  toestemmingen: ['device', 'storage'],
   'bundel-meldingen': ['device'],
 };
 

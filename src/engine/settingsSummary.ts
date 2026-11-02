@@ -347,12 +347,36 @@ export function rowContext(f: SettingsFacts): RowContext {
 // De samenvatting van een rij. Of de rij er nu hoort (`hidden`) komt uit SHOW_WHEN in
 // data/settingsLayout.ts, zodat de afhankelijkheden op één plek staan.
 export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
+  const waiting = unsettledRow(rowId, f);
+  if (waiting) return { ...waitingSummary(baseSummary(rowId, f), waiting), hidden: false };
   const base = isRowPending(rowId, f.pending)
     ? waitingSummary(baseSummary(rowId, f), 'Bezig…')
     : isRowUnknown(rowId, f.unknown)
       ? waitingSummary(baseSummary(rowId, f), 'Onbekend')
       : baseSummary(rowId, f);
   return SHOW_WHEN[rowId] ? { ...base, hidden: !isRowShown(rowId, f.settings, rowContext(f)) } : base;
+}
+
+// De voorwaarden van rowContext die uit een bron komen. Is die bron nog niet binnen of onbekend, dan
+// weten we niet of de rij er hoort: hij blijft zichtbaar met Bezig… of Onbekend in plaats van te verdwijnen.
+const CONTEXT_OF_SOURCE: Partial<Record<SettingsSource, (keyof RowContext)[]>> = {
+  watch: ['garmin', 'activities', 'sendToWatch'],
+  macroFactor: ['macroFactorExport'],
+  healthConnect: ['healthConnect'],
+  device: ['timed', 'noticeAvailable'],
+  autoBackup: ['folderSupported'],
+};
+
+function unsettledRow(rowId: string, f: SettingsFacts): 'Bezig…' | 'Onbekend' | undefined {
+  if (!SHOW_WHEN[rowId]) return undefined;
+  const ctx = rowContext(f);
+  if (isRowShown(rowId, f.settings, ctx)) return undefined;
+  const open = (list: readonly SettingsSource[] | undefined) => (list ?? []).flatMap((src) => CONTEXT_OF_SOURCE[src] ?? []);
+  const guess = { ...ctx };
+  for (const key of [...open(f.pending), ...open(f.unknown)]) guess[key] = true;
+  if (!isRowShown(rowId, f.settings, guess)) return undefined;
+  // Wacht minstens een bron nog, dan Bezig…; anders is de bron onbekend.
+  return open(f.pending).length > 0 ? 'Bezig…' : 'Onbekend';
 }
 
 // Een rij die op een bron wacht of er geen antwoord van kreeg: alleen de titel en dit woord, gedimd,
