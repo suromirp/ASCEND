@@ -22,6 +22,7 @@ import { daysBetween, addDays } from '../utils/dates';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { templateSport } from './sports';
 import { hasRole, isTestOrRace } from './templateRoles';
+import { EASY_PART_RPE, testEffortSplit } from './testEffortSplit';
 
 type Level = 'none' | 'light' | 'moderate' | 'heavy';
 
@@ -144,6 +145,9 @@ export interface FatigueEvent {
   climbM?: number;
   packKg?: number;
   poles?: boolean; // walked with poles
+  // A linked test or race with warm-up and cool-down (engine/testEffortSplit.ts): the part of
+  // `minutes` outside the fastest 5 km, counted as an easy run at RPE 3. Derived, never stored.
+  easyMinutes?: number;
   logged: boolean;
 }
 
@@ -175,9 +179,11 @@ export function fatigueEvents(inputs: Pick<LegFatigueInputs, 'logs' | 'plannedSe
   const habitPoles = recentPoles(inputs.logs);
   const events: FatigueEvent[] = inputs.logs.map((l) => {
     const d = l.outdoorData ?? l.cardioData;
+    const split = testEffortSplit(l, byId.get(l.templateId));
     return {
       id: l.id, templateId: l.templateId, date: l.completedDate, minutes: l.durationMinutes, rpe: l.rpe, rir: l.strengthRir, feel: l.subjectiveFeel,
-      descentM: l.outdoorData?.elevationLossM ?? d?.elevationGainM, climbM: d?.elevationGainM, packKg: l.outdoorData?.backpackWeightKg, poles: l.outdoorData?.poles, logged: true,
+      descentM: l.outdoorData?.elevationLossM ?? d?.elevationGainM, climbM: d?.elevationGainM, packKg: l.outdoorData?.backpackWeightKg, poles: l.outdoorData?.poles,
+      ...(split ? { easyMinutes: split.easyMinutes } : {}), logged: true,
     };
   });
   for (const s of inputs.plannedSessions) {
@@ -275,8 +281,12 @@ export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, a
     const damagePack = event.packKg ? 1 + DAMAGE_PACK_WEIGHT * event.packKg / bodyKg : 1;
     const poles = event.poles ? POLES_DESCENT_FACTOR : 1;
     const running = templateSport(template) === 'running' && !hasRole(template, 'walked_down');
-    intensity = (INTENSITY_PER_HOUR[p.intensity] ?? 2) * hours * factor * pack;
-    strength = (IMPACT_PER_HOUR[p.impact as Level] * hours + CLIMB_PER_1000 * (event.climbM ?? 0) / 1000) * factor * pack;
+    // A split test: the 5 km as planned, the warm-up and cool-down as an easy run at RPE 3.
+    const easyHours = Math.min(hours, Math.max(0, event.easyMinutes ?? 0) / 60);
+    const hardHours = hours - easyHours;
+    const easyFactor = rpeFactor(EASY_PART_RPE, PLANNED_RPE.low);
+    intensity = ((INTENSITY_PER_HOUR[p.intensity] ?? 2) * hardHours * factor + INTENSITY_PER_HOUR.low * easyHours * easyFactor) * pack;
+    strength = (IMPACT_PER_HOUR[p.impact as Level] * hardHours * factor + IMPACT_PER_HOUR[p.impact as Level] * easyHours * easyFactor + CLIMB_PER_1000 * (event.climbM ?? 0) / 1000 * factor) * pack;
     damage = DESCENT_PER_1000 * ((event.descentM ?? 0) / 1000) * (running ? RUNNING_DESCENT : 1) * damagePack * poles * adapt;
   }
   return { intensity: intensity * feel, strength: strength * feel, damage: damage * feel };

@@ -25,6 +25,7 @@ import { minutesByZone } from './intensityMinutes';
 import type { IntensityCounting } from './intensitySettings';
 import { estimatedHikingMinutes, typicalDayValue } from './goalRoute';
 import { hasRole } from './templateRoles';
+import { EASY_PART_RPE, testEffortSplit } from './testEffortSplit';
 
 // --- weekly load (session-RPE) ---------------------------------------------------
 export type LoadSport = 'lopen' | 'kracht' | 'wandelen' | 'overig';
@@ -99,7 +100,9 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
       if (l.completedDate < weekStart || l.completedDate >= weekEnd || l.type === 'recovery') continue;
       const t = byId.get(l.templateId);
       const rpe = l.rpe ?? (t ? plannedEffort(t) : 4);
-      const load = l.durationMinutes * rpe;
+      // A linked test with warm-up and cool-down: the fastest 5 km at its RPE, the rest at 3 (testEffortSplit.ts).
+      const split = testEffortSplit(l, t);
+      const load = split ? split.hardMinutes * rpe + split.easyMinutes * Math.min(EASY_PART_RPE, rpe) : l.durationMinutes * rpe;
       week.items.push({ date: l.completedDate, name: t?.name ?? 'Training', sport: sportOfLog(l, t), minutes: l.durationMinutes, effort: rpe, load, planned: false, estimated: l.rpe === undefined });
       week.done[sportOfLog(l, t)] += load;
       week.doneTotal += load;

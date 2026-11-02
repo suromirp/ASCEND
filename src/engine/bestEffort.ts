@@ -9,7 +9,7 @@
 // Pure and provider-free: it reads a StreamSet, nothing else.
 
 import type { StreamSet } from '../models/activityDetail';
-import type { BestEffort } from '../models/training';
+import type { BestEffort, SessionLog } from '../models/training';
 import { isNum } from '../utils/guards';
 
 // A hole in the series longer than this (seconds between two readings) cannot be
@@ -299,4 +299,10 @@ export function isUsableBestEffort(raw: unknown): raw is BestEffort {
   if (typeof raw !== 'object' || raw === null) return false;
   const b = raw as Record<string, unknown>;
   return isNum(b.km) && isNum(b.minutes) && b.km >= 3 && b.km <= 50 && b.minutes > 0 && b.minutes / b.km >= 2 && b.minutes / b.km <= 20;
+}
+
+// The totals of a test log: distance and time as the log has them now.
+export function testTotals(l: Pick<SessionLog, 'cardioData' | 'outdoorData' | 'durationMinutes'>): { km: number; minutes: number } {
+  const d = l.cardioData ?? l.outdoorData;
+  return { km: d?.distanceKm ?? 0, minutes: d?.durationMinutes || l.durationMinutes };
 }

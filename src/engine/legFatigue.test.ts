@@ -260,3 +260,38 @@ describe('a test or race is planned at RPE 10', () => {
     expect(race(10)).toBeCloseTo(race(undefined), 5);
   });
 });
+
+// Voorstel 4: a test from the watch is one activity (warm-up, 5 km, cool-down) at RPE 10. With the
+// fastest 5 km of the series, the 5 km counts at its RPE and the rest as an easy run at RPE 3.
+describe('a linked test with warm-up and cool-down', () => {
+  const D = '2026-11-12';
+  const whole = { durationMinutes: 45, distanceKm: 8.2, elevationGainM: 0, elevationLossM: 0, source: 'garmin' as const };
+  const best = { km: 5, minutes: 25, wholeKm: 8.2, wholeMinutes: 45, accepted: true, v: 2 };
+  const watchTest = (extra: Partial<SessionLog> = {}) => log('tpl_test_run', D, 45, { rpe: 10, source: 'garmin', cardioData: whole, bestEffort: best, ...extra });
+  const dayAfter = (l: SessionLog) => legFatigueOn(addDays(D, 1), inputs([l])).index;
+
+  it('the event carries the easy minutes; the log is not changed', () => {
+    const l = watchTest();
+    const before = JSON.stringify(l);
+    const e = fatigueEvents({ logs: [l], plannedSessions: [], templates, today: D }).find((x) => x.id === l.id)!;
+    expect(e.minutes).toBe(45);
+    expect(e.easyMinutes).toBe(20);
+    expect(JSON.stringify(l)).toBe(before);
+  });
+
+  it('the day after: 3.3 instead of 5.3 for the whole 45 minutes at 10', () => {
+    // 5 km: 24 x 25/60 = 10 and impact 2 x 25/60 = 0.83. Rest: 2 x 20/60 x 0.75 = 0.5 and 0.5.
+    // A quarter of the intensity and half of the impact left: 2.6 + 0.67 = 3.3.
+    expect(Math.abs(dayAfter(watchTest()) - 3.3)).toBeLessThanOrEqual(0.06);
+    expect(Math.abs(dayAfter(watchTest({ bestEffort: undefined })) - 5.25)).toBeLessThanOrEqual(0.06);
+  });
+
+  it('without detail, or with a best effort for other totals, it stays as it is', () => {
+    const plain = dayAfter(watchTest({ bestEffort: undefined }));
+    expect(dayAfter(watchTest({ bestEffort: { ...best, wholeMinutes: 50 } }))).toBe(plain);
+    // Logged by hand, only the 5 km: as before.
+    const hand = log('tpl_test_run', D, 25, { rpe: 10, cardioData: { ...whole, durationMinutes: 25, distanceKm: 5, source: 'manual' } });
+    expect(dayAfter(hand)).toBeCloseTo(legFatigueOn(addDays(D, 1), inputs([{ ...hand }])).index, 5);
+    expect(fatigueEvents({ logs: [hand], plannedSessions: [], templates, today: D })[0].easyMinutes).toBeUndefined();
+  });
+});

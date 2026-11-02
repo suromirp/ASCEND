@@ -27,6 +27,18 @@ describe('weekly load', () => {
     expect(weeks[0].estimated).toBe(0);
   });
 
+  // docs/onderzoek/RPE bij een testloop.md, voorstel 4: a linked test (warm-up, 5 km, cool-down in one
+  // activity) with the fastest 5 km from the watch counts the 5 km at its RPE and the rest at 3.
+  it('a linked test with its fastest 5 km: 25 x 10 + 20 x 3 = 310, not 450; without it as before', () => {
+    const cardioData = { durationMinutes: 45, distanceKm: 8.2, source: 'garmin' as const };
+    const bestEffort = { km: 5, minutes: 25, wholeKm: 8.2, wholeMinutes: 45, accepted: true, v: 2 };
+    const split = weeklyLoad({ logs: [log('tpl_test_run', '2026-10-20', 45, { rpe: 10, cardioData, bestEffort })], plannedSessions: [], templates, today: TODAY }, 0, 0);
+    expect(split[0].done.lopen).toBe(310);
+    expect(split[0].items[0]).toMatchObject({ minutes: 45, effort: 10, load: 310 });
+    const whole = weeklyLoad({ logs: [log('tpl_test_run', '2026-10-20', 45, { rpe: 10, cardioData })], plannedSessions: [], templates, today: TODAY }, 0, 0);
+    expect(whole[0].done.lopen).toBe(450);
+  });
+
   it('estimates the effort from the plan when none was logged, and says so', () => {
     const weeks = weeklyLoad({ logs: [log('tpl_long_run', '2026-10-19', 60)], plannedSessions: [], templates, today: TODAY }, 0, 0);
     expect(weeks[0].doneTotal).toBe(60 * plannedEffort(tpl('tpl_long_run')));
