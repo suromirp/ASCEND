@@ -7,7 +7,7 @@
 import type { RecentPlanChange } from '../models/planChange';
 import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import type { StoredResponse } from '../engine/learning';
-import { GoalEngineConfigRepo, MetaRepo, PlanChangeProposalsRepo, PlannedSessionsRepo, ProgramsRepo, SettingsRepo, TrainingGoalsRepo, type AppSettings } from './database';
+import { GoalEngineConfigRepo, MetaRepo, PlanChangeProposalsRepo, PlannedSessionsRepo, ProgramsRepo, SettingsRepo, StrengthProgramStrategiesRepo, TrainingGoalsRepo, type AppSettings } from './database';
 import { makeId } from '../utils/id';
 
 export interface UndoOutcome {
@@ -30,6 +30,7 @@ export async function undoPlanChangeNow(change: RecentPlanChange): Promise<UndoO
   for (const id of change.goalsAdded ?? []) await TrainingGoalsRepo.delete(id);
   // A rest week or a repeated week changed: the program goes back as it was.
   if (change.programBefore) await ProgramsRepo.put(change.programBefore);
+  for (const st of change.strategiesBefore ?? []) await StrengthProgramStrategiesRepo.put(st);
   if (change.adviceId) {
     const responses = { ...((await MetaRepo.get<Record<string, StoredResponse>>('adviceResponses')) ?? {}) };
     delete responses[change.adviceId];

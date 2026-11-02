@@ -21,6 +21,10 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Sporten die meetellen stap 1 (pictogrammen, Cartographer) en stap 4 tot 9 (import, vraag op Vandaag, scherm Sporten, weekcheck, vaste dag, hoeveel per soort). Stap 2 en 3 zijn gebouwd.
 - Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
 
+## Met voorrang: de planner en de 48 uur (gevonden 2 november)
+
+- De planner zelf zet een lange duurloop en een zware beendag (Benen A) op twee dagen achter elkaar: `scheduler.ts#legSpacingDays` telt een loop met `intensity: 'low'` als rustig volume, terwijl `tpl_long_run` `lowerBodyLoad: 'heavy'` heeft. Dat botst met CLAUDE.md ("twee beenzware sessies niet binnen 48 uur"). Onderzoek klaar (`docs/onderzoek/Lange duurloop en een zware beendag.md`): 48 uur tussen zware beenkracht en de lange duurloop in beide volgordes; het weekendblok (heuvels zaterdag, lange duurloop zondag) blijft vrijgesteld; een instelling, standaard uit, die beenkracht de dag na de lange duurloop toestaat. Bouwen bij de eerstvolgende vrije plek (Sherpa en Warden op opus), met een nieuw besluit dat het 24-uursdeel van `2026-10-27-groei-tot-de-wedstrijdpiek.md` vervangt en de golden die beweegt met de reden in de commit.
+
 ## Uit de review van rustdag na rust (voor de terugblik van ronde 2)
 
 - Een training die je zelf oversloeg of waarvan je het inhaalvoorstel afwees, houdt de rustdag tot zeven dagen tegen, ook als er nooit een inhaalvoorstel komt. Dan blijft de dag leeg. `catchUpFits` laat afgewezen inhaalvoorstellen negeren. En `trainedOn` telt een log op `completedDate`, `dayLoads` op de geplande dag (`logDay`); gelijktrekken.

@@ -183,6 +183,12 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       }
       break;
     }
+    case 'LEAVE-OFF': {
+      // Only what is yours or a proposal's (level 1); a test or race stays and is only reported.
+      const subject = sessionById(concern.finding.subjectId);
+      if (subject && level(subject) === 1 && !isTestOrRace(templateOf(subject) ?? ({} as SessionTemplate))) push(viaCheck([subject.id]));
+      break;
+    }
     case 'LEG-SPACING': {
       // The later one first (as the check would), then the earlier one.
       const ordered = [...sessions].sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate));
