@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { proposeMove, proposeNoTimeToday, proposeSkip, skipSession, dayHasRoomFor, respectsHeavySpacing } from './scheduler';
+import { proposeMove, proposeNoTimeToday, proposeSkip, skipSession, dayHasRoomFor, respectsHeavySpacing, withTestRestHours } from './scheduler';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { daysBetween } from '../utils/dates';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
@@ -354,9 +354,16 @@ describe('the 5 km test needs fresh legs', () => {
   it('before the test the leg fatigue index decides, not a fixed number of days', () => {
     // A full Lower A the day before: too heavy. Two days before, short: fresh enough.
     expect(respectsHeavySpacing(THU, t('tpl_test_run'), [session('legs', 'tpl_lower_a', WED, MON)], byId)).toBe(false);
-    expect(respectsHeavySpacing(THU, t('tpl_test_run'), [{ ...session('legs', 'tpl_lower_a', '2026-09-08', MON), plannedMinutes: 45 }], byId)).toBe(true);
-    // Hills alone two days before: fine now (the old rule said no).
-    expect(respectsHeavySpacing(WED, t('tpl_test_run'), [session('x', 'tpl_hill_intervals', MON, MON)], byId)).toBe(true);
+    // With the setting "Rust voor een test" on 48 hours the index decides from two days before: a short Lower A and
+    // hills alone are fresh enough. With the advice of 72 hours they are too close (rust-voor-een-test).
+    const shortLegs = [{ ...session('legs', 'tpl_lower_a', '2026-09-08', MON), plannedMinutes: 45 }];
+    const hillsMon = [session('x', 'tpl_hill_intervals', MON, MON)];
+    withTestRestHours(48, () => {
+      expect(respectsHeavySpacing(THU, t('tpl_test_run'), shortLegs, byId)).toBe(true);
+      expect(respectsHeavySpacing(WED, t('tpl_test_run'), hillsMon, byId)).toBe(true);
+    });
+    expect(respectsHeavySpacing(THU, t('tpl_test_run'), shortLegs, byId)).toBe(false);
+    expect(respectsHeavySpacing(WED, t('tpl_test_run'), hillsMon, byId)).toBe(false);
     // Hills Saturday and the long run Sunday (planned at its 300 m target): Monday too heavy, Wednesday fine.
     const weekend = [session('h', 'tpl_hill_intervals', '2026-09-05', '2026-08-31'), session('l', 'tpl_long_run', '2026-09-06', '2026-08-31')];
     expect(respectsHeavySpacing(MON, t('tpl_test_run'), weekend, byId)).toBe(false);

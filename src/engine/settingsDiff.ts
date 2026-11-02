@@ -272,6 +272,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('klaar-groei', 'Groei bij het rekenen', 'doel', 'goalGrowth', 'average', 'klaarGroei'),
   choice('klaar-marge', 'Marge bij een tijdslimiet', 'doel', 'limitMargin', 'ten', 'klaarMarge'),
   flag('doeltijd-voorstel', 'Doeltijd aanpassen voorstellen', 'doel', 'proposeTargetTime'),
+  choice('test-rust', 'Rust voor een test', 'planning', 'testRest', 72, 'testRust'),
   choice('test-stilstaan', 'Stilstaan bij een testloop', 'planning', 'testStops', 'skip', 'testStilstaan'),
   flag('korte-nacht', 'Vragen bij een korte nacht', 'vandaag', 'askShortNight'),
   overviewFlag('weekterugblik', 'Weekterugblik', 'weekReview'),

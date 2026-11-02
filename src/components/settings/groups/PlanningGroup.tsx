@@ -18,6 +18,7 @@ import { rowShown } from './rowShown';
 import type { GroupProps } from './types';
 import { FAST_GROWTH_WARNING, resolveLongRunGrowth } from '../../../engine/runGrowth';
 import { resolveTestStops } from '../../../engine/bestEffort';
+import { resolveTestRest } from '../../../engine/testRest';
 import { REST_DAY_OPTIONS } from '../../../engine/restDay';
 import { resolveMissedSettings } from '../../../engine/missedTraining';
 import { ChoiceList, ChoiceSheet } from '../Sheet';
@@ -87,9 +88,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="meerdere" title="Twee trainingen per dag" facts={facts} info="meerdere" onClick={() => setSheet('meerdere')} />
         <SummaryRow id="wijzigingen" title="Wijzigingen" facts={facts} info="wijzigingen" onClick={() => setSheet('wijzigingen')} />
         <SummaryRow id="ambitie" title="Ambitie" facts={facts} info="ambitie" onClick={() => setSheet('ambitie')} />
-        <SummaryRow id="twijfeltest" title="Twijfeltest eerst vragen" facts={facts} info="twijfeltest" onChange={(on) => void updateSettings({ askDoubtTest: on })} />
-        <SummaryRow id="test-stilstaan" title="Stilstaan bij een testloop" facts={facts} info="testStilstaan" onClick={() => setSheet('test-stilstaan')} />
-        <SummaryRow id="nieuwe-test" title="Nieuwe test voorstellen bij stilstand" facts={facts} info="nieuweTest" onChange={(on) => void updateSettings({ newTestOnStops: on })} />
+        <SummaryRow id="bundel-testloop" title="Testloop" facts={facts} onClick={() => setSheet('bundel-testloop')} />
         <SummaryRow id="rustdag-terug" title="Rustdag terugzetten voorstellen" facts={facts} info="rustdagTerug" onChange={(on) => void updateSettings({ restDayBack: on })} />
         <SummaryRow id="weekvoorstel" title="Voorstel bij een probleem in de week" facts={facts} info="weekVoorstel" onChange={(on) => void updateSettings({ weekFixProposal: on })} />
       </SettingsSection>
@@ -172,8 +171,19 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           onClose={close}
         />
       )}
-      {sheet === 'test-stilstaan' && (
-        <ChoiceFromDef def={CHOICES.testStilstaan} value={resolveTestStops(settings.testStops)} onPick={(v) => void updateSettings({ testStops: v })} onClose={close} />
+      {sheet === 'bundel-testloop' && (
+        <BundleSheet eyebrow="Planning" title="Testloop" line="Hoe ASCEND een test leest en plant." onClose={close}>
+          <SummaryRow id="twijfeltest" title="Twijfeltest eerst vragen" facts={facts} info="twijfeltest" onChange={(on) => void updateSettings({ askDoubtTest: on })} />
+          <SummaryRow id="test-stilstaan" title="Stilstaan bij een testloop" facts={facts} info="testStilstaan" onClick={() => setInner('test-stilstaan')} />
+          <SummaryRow id="nieuwe-test" title="Nieuwe test voorstellen bij stilstand" facts={facts} info="nieuweTest" onChange={(on) => void updateSettings({ newTestOnStops: on })} />
+          <SummaryRow id="test-rust" title="Rust voor een test" facts={facts} info="testRust" onClick={() => setInner('test-rust')} />
+        </BundleSheet>
+      )}
+      {inner === 'test-rust' && (
+        <ChoiceFromDef def={CHOICES.testRust} value={resolveTestRest(settings.testRest)} onPick={(v) => void updateSettings({ testRest: v }).then(() => refresh())} onClose={closeInner} />
+      )}
+      {inner === 'test-stilstaan' && (
+        <ChoiceFromDef def={CHOICES.testStilstaan} value={resolveTestStops(settings.testStops)} onPick={(v) => void updateSettings({ testStops: v })} onClose={closeInner} />
       )}
       {sheet === 'ambitie' && (
         <ChoiceFromDef

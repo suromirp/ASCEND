@@ -227,6 +227,16 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       push(viaCheck(near));
       break;
     }
+    case 'TEST-REST': {
+      // Rest before a test (docs/beslissingen/2026-11-02-rust-voor-een-test.md): the heavy day to another day of the
+      // week first, then the test itself (a test only ever moves through a proposal like this one). What is done or
+      // past stays; a full week may let one training of the system's own make room. Never anything let go.
+      const order = [...sessions].sort((a, b) => Number(isTestOrRace(templateOf(a) ?? ({} as SessionTemplate))) - Number(isTestOrRace(templateOf(b) ?? ({} as SessionTemplate))));
+      const may = order.filter((s) => level(s) !== 0 && !s.raceBlock && !s.leave && mondayOfWeek(s.scheduledDate) === monday);
+      for (const s of may) push(viaScan(s.id));
+      if (candidates.length === 0) for (const s of may) push(viaRoom(s.id));
+      break;
+    }
     default: {
       // TWO-HARD-RUNS, TEST-DAY and AFTER-TEST: the one the rule would change, then the other of yours.
       const subject = sessionById(concern.finding.subjectId);

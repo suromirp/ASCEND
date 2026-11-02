@@ -34,6 +34,15 @@ Je testloop van za 10 oktober (snelste 5 km in 26:42) past bij een 10 km in onge
 [knop: Bekijk]
 
 --- kaart 5 ---
+Nog open
+Niet gedaan?
+Testloop 5 km van donderdag 29 oktober
+Je hebt hier nog niets voor gelogd. Ging hij niet door, dan zet ASCEND hem op overgeslagen; verder verandert er niets.
+[knop: Niet gedaan]
+[knop: Toch gedaan]
+[knop: Niet nu]
+
+--- kaart 6 ---
 Back-up
 Tijd voor je back-up.
 Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.
@@ -41,7 +50,7 @@ Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.
 [knop: Back-up maken]
 Je dag
 
---- kaart 6 ---
+--- kaart 7 ---
 [knop: Rekken, 6 oefeningenOchtend]
 [knop: Rekken afvinken]
 [knop: Een zin is genoegVraag]

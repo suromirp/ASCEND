@@ -12,8 +12,8 @@ import { type AdviceInputs, type Advice, isDone, inProgram, leavesNextHardFresh,
 // Trigger: the 5 km test run was missed or skipped (no time). The test is
 // what sets your race pace, so it is worth more than most trainings around
 // it. Rule: first a free day in the next 9 days that keeps the spacing
-// (a test never within 48 hours after heavy legs, 72 before a test, and not
-// next to another hard run); if there is none, the least important training
+// (a test never within 72 hours after a heavy day for running or legs, or 48
+// with the setting "Rust voor een test", and not next to another hard run); if there is none, the least important training
 // on a day that does fit goes, and the test takes its place. Never the long
 // run, the mountain hike, a race or leg strength. Always a proposal.
 export const TEST_RUN_ID = 'tpl_test_run';

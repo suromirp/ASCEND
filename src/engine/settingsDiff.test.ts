@@ -17,6 +17,7 @@ const everything: AppSettings = {
   restDayMode: 'active',
   hardSameDay: true,
   longRunThenLegs: true,
+  testRest: 48,
   longSundaySession: 'run',
   afterMainGoal: 'maintain',
   showNextTrek: false,

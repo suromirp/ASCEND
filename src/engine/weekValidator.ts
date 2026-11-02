@@ -17,7 +17,7 @@ import type { LeavePeriod } from '../models/leave';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, weekdayOf, weekdayShortNL } from '../utils/dates';
 import { isSportLogSession, sportDayTemplate, sportLogDays } from './sportDays';
-import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isIntentionalBackToBack, isLegHeavyTemplate, sharedHeavyAxes } from './scheduler';
+import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isHeavyBeforeTest, isIntentionalBackToBack, isLegHeavyTemplate, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest } from './scheduler';
 import { patternSlotOf } from './programLayout';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { leaveDays, lightDays } from './leave';
@@ -52,6 +52,7 @@ export type CheckRule =
   | 'AFTER-GOAL' // the days of recovery after a goal (recoveryDaysFor of its kind): no hard training, no heavy leg strength
   | 'LEG-SPACING' // heavy days for the same muscles far enough apart
   | 'TEST-FRESH' // fresh legs for a test or race, by the leg index
+  | 'TEST-REST' // a test at least 72 hours (or 48, the setting) after the last heavy day for running or legs; reported for Week only
   | 'ONE-LONG' // one full long session a week
   | 'DUPLICATE' // the same training twice on one day
   | 'DAY-FULL' // more on a day than the time you have for it
@@ -71,6 +72,8 @@ export interface Finding {
   // TEST-FRESH only: the leg index on the test day and the line it is held to.
   legIndex?: number;
   limit?: number;
+  // TEST-REST only: the last heavy day before the test (a planned session or a log) and the hours asked for.
+  rest?: { date: string; templateId: string; name: string; hours: number; limitHours: number };
 }
 
 export interface CheckInput {
@@ -319,6 +322,25 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
       if (legIndex > limit) {
         findings.push({ rule: 'TEST-FRESH', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), legIndex, limit, message: `${name} op ${day(s.scheduledDate)}: beenindex ${legIndex.toFixed(1).replace('.', ',')}, grens ${limit}.` });
       }
+      // Rest before a test: the last heavy day for running or legs too close before it. Only for Week (`reportYours`):
+      // the planning itself reads the check without it, so it moves nothing by itself and planGolden.test.ts stays
+      // (docs/beslissingen/2026-11-02-rust-voor-een-test.md). The heavy day is the subject when it may still change,
+      // otherwise the test.
+      if (input.reportYours && isTestOnly(t)) {
+        const rest = lastHeavyBefore(s, around(s.scheduledDate, 3), input, byId, logged);
+        if (rest) {
+          const limitHours = testRestHours();
+          const hours = daysBetween(rest.date, s.scheduledDate) * 24;
+          const heavy = rest.session;
+          const subject = heavy && level(heavy) !== 0 ? heavy : s;
+          const heavyName = byId.get(rest.templateId)?.name ?? 'Training';
+          findings.push({
+            rule: 'TEST-REST', date: s.scheduledDate, sessionIds: heavy ? [heavy.id, s.id] : [s.id], subjectId: subject.id, level: level(subject),
+            rest: { date: rest.date, templateId: rest.templateId, name: heavyName, hours, limitHours },
+            message: `${heavyName} (${day(rest.date)}) ${hours} uur voor ${name} (${day(s.scheduledDate)}), liefst ${limitHours}.`,
+          });
+        }
+      }
       continue;
     }
 
@@ -380,6 +402,22 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
   return findings;
 }
 
+// The last heavy day for running or legs too close before a test (scheduler.ts#tooCloseBeforeTest): a planned
+// session that is still to come or done, a sport you did that counts, or a log without a planned session of its
+// own. A planned session in the past without a log did not happen and does not count.
+function lastHeavyBefore(test: PlannedSession, near: PlannedSession[], input: CheckInput, byId: Map<string, SessionTemplate>, logged: Set<string | undefined>): { date: string; templateId: string; session?: PlannedSession } | undefined {
+  const heavy = (templateId: string) => { const t = byId.get(templateId); return !!t && isHeavyBeforeTest(t); };
+  const sessionIds = new Set(input.sessions.map((o) => o.id));
+  const fromPlan = near
+    .filter((o) => o.id !== test.id && o.status !== 'skipped' && tooCloseBeforeTest(o.scheduledDate, test.scheduledDate) && heavy(o.templateId))
+    .filter((o) => o.scheduledDate >= input.today || logged.has(o.id) || isSportLogSession(o.id))
+    .map((o) => ({ date: o.scheduledDate, templateId: o.templateId, session: o }));
+  const fromLogs = input.logs
+    .filter((l) => (!l.plannedSessionId || !sessionIds.has(l.plannedSessionId)) && !l.countedSport && tooCloseBeforeTest(l.completedDate, test.scheduledDate) && heavy(l.templateId))
+    .map((l) => ({ date: l.completedDate, templateId: l.templateId, session: undefined }));
+  return [...fromPlan, ...fromLogs].sort((a, b) => b.date.localeCompare(a.date) || Number(!a.session) - Number(!b.session))[0];
+}
+
 // --- repairing what the system planned ----------------------------------------------
 // A repair is made for a rule of the check, or by the leave step that puts a
 // walk on a trek day or a free day (engine/leaveBlock.ts).
@@ -417,7 +455,7 @@ const MAX_ROUNDS = 60;
 // A holiday or a trek can ask for a repair per session; those get their own rounds.
 const ROUNDS_PER_LEAVE_FINDING = 2;
 // The order repairs are tried in: what the rest are judged on first.
-const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'AFTER-GOAL', 'TWO-HARD-RUNS', 'HARD-DAYS', 'TEST-FRESH', 'LEG-SPACING', 'ONE-LONG'];
+const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'AFTER-GOAL', 'TWO-HARD-RUNS', 'HARD-DAYS', 'TEST-FRESH', 'TEST-REST', 'LEG-SPACING', 'ONE-LONG'];
 const key = (f: Finding) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
 // Two findings are the same finding when this is the same.
 export const findingKey = key;
@@ -684,6 +722,7 @@ const REASON: Record<RepairRule, string> = {
   'AFTER-GOAL': 'je herstelt nog van je wedstrijd: niets hards en geen zware beenkracht',
   'LEG-SPACING': 'genoeg ruimte tussen zware dagen voor dezelfde spieren',
   'TEST-FRESH': 'frisse benen voor de test',
+  'TEST-REST': 'genoeg rust voor de test',
   'ONE-LONG': 'één volle lange training per week',
   'DUPLICATE': 'stond dubbel',
   'DAY-FULL': 'past in je tijd voor die dag',
