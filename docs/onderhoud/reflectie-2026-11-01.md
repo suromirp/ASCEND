@@ -153,3 +153,36 @@ Android-XML vooraf leest.
 - Merge-conflicten in planning of opslag bij de bouwer.
 - Uitlegzinnen aan de code toetsen, in de opdracht en in de review.
 - Kleine herstelpunten bundelen of zelf doen.
+
+## Ronde 3 (2 november)
+
+### Wat er live ging
+
+De Android-app met eigen sleutel en live updates, Health Connect, een betere widget, de rand onderaan, back-up
+maken op Android met een zichtbare uitkomst, trainingen ruilen, Week opnieuw plannen met een blad dat elke
+wijziging toont, 72 uur rust voor een test en de lange duurloop die vervalt bij een herhaalde test, de rustdag
+deze week, Instellingen die per bron eerlijk laden, de herinrichting van Forge en van Gegevens, veilig Ongedaan
+maken, en Klaar voor je doel dat de tocht noemt in plaats van altijd de GR5.
+
+### Wat goed ging
+
+- Echte gegevens van de eigenaar (alleen in de scratchpad) lieten bugs zien die geen test vond: twee lange
+  duurlopen in een week, een blad dat Akkoord gaf zonder de wijzigingen te tonen, een back-up die stil niets deed.
+- Herstel ging steeds terug naar dezelfde bouwer, en Warden vond in drie onderwerpen een echt blokkerend punt.
+- De Android-proefbouw ving een fout in XML voordat hij op een toestel kwam.
+
+### Wat beter moet
+
+- Ik vertelde de eigenaar een keer dat hij twee keer had getikt, zonder bewijs. Eerst de gegevens lezen, dan pas
+  een oorzaak noemen.
+- Een blad mocht "Je week staat al zoals het plan hem maakt" zeggen terwijl er zes dingen veranderden. Een tekst
+  die zegt dat er niets gebeurt moet uit dezelfde berekening komen als de wijziging zelf.
+- Een helper liep tegen de limiet van vijf uur. Grote en kleine taken beter over de dag spreiden en sonnet
+  gebruiken waar het kan.
+- De oude werkmappen van helpers stapelen zich op; na een live gang opruimen.
+
+### Wat ronde 4 anders doet
+
+- Een zin die "er verandert niets" zegt, komt uit dezelfde functie als de lijst met wijzigingen.
+- Na elke live gang de werkmappen van afgeronde helpers verwijderen.
+- Een oorzaak noemen pas na bewijs uit de gegevens.
