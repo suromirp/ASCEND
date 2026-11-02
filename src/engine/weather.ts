@@ -128,16 +128,16 @@ export interface SessionWeather {
   watch: string[];
   bad: string[];
   daylight?: Daylight;
-  // The text for the one calm line, e.g. "14 graden, droog, licht tot 18.12".
+  // The text for the one calm line, e.g. "14 graden, droog, licht tot 18:12".
   line: string;
 }
 
 const hourKey = (date: string, hour: number) => `${date}T${pad(hour)}:00`;
 const minutesOfClock = (iso: string) => Number(iso.slice(11, 13)) * 60 + Number(iso.slice(14, 16));
 
-// "18:12" -> "18.12", "08:05" -> "8.05": how Dutch people write a clock time.
+// "18:12" stays "18:12", "8:05" becomes "08:05": the one notation for a time (utils/clock.ts).
 export function clockNL(hhmm: string): string {
-  return `${Number(hhmm.slice(0, 2))}.${hhmm.slice(3, 5)}`;
+  return `${pad(Number(hhmm.slice(0, 2)))}:${hhmm.slice(3, 5)}`;
 }
 
 function joinNL(parts: string[]): string {
@@ -292,7 +292,7 @@ function daylightPhrase(d: Daylight, short = false): string {
   return `licht tot ${clockNL(d.sunset)}`;
 }
 
-// "14 graden, droog, licht tot 18.12". Heat or cold you feel differently from
+// "14 graden, droog, licht tot 18:12". Heat or cold you feel differently from
 // what the thermometer says comes with the felt temperature.
 export function weatherLine(w: SessionWeather, opts: { darkInClothing?: boolean } = {}): string {
   const temp = Math.round(w.tempC);

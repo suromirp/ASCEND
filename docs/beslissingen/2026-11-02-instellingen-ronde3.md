@@ -35,7 +35,7 @@ Het plafond blijft 12 rijen per groep en hoogstens 6 onder Geavanceerd (minstens
 
 ## Niet aangepast
 
-Tekst in de kennisbank en de gidsen over openingstijden en bivaktijden ("van 19.00 tot 9.00 uur") staat in lopende tekst over de wereld buiten de app en blijft zoals die was. Bestandsnamen van back-ups ("14u05") ook.
+De vaste teksten in `data/journeyTasks.ts`, `data/knowledge/` en `data/gr5Bivouac.ts` over openingstijden en bivaktijden ("van 19.00 tot 9.00 uur") zijn een bewuste uitzondering: ze staan in lopende tekst over de wereld buiten de app en blijven zoals ze waren. Bestandsnamen van back-ups ("14u05") ook.
 
 ## Bron
 

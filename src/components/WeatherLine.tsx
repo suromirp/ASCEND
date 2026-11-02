@@ -1,5 +1,5 @@
 // ASCEND: one calm line with the weather for a training, e.g.
-// "14 graden, droog, licht tot 18.12". Not a widget: nothing at all when the
+// "14 graden, droog, licht tot 18:12". Not a widget: nothing at all when the
 // training happens indoors or when the forecast does not reach that day.
 // Offline or when the forecast is old it says when it was last updated
 // ("bijgewerkt om 13:05").

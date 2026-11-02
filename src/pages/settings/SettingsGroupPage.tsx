@@ -55,6 +55,7 @@ function jumpRowOf(state: unknown): string | undefined {
 
 function GroupPageInner({ id, advanced }: { id: SettingsPageId; advanced: boolean }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const jump = useJumpState();
   const { facts, reload } = useSettingsFacts();
   // Een link naar een keuze die nu in het blad van een rij zit (de oude rij-id's) gaat naar die
@@ -71,7 +72,7 @@ function GroupPageInner({ id, advanced }: { id: SettingsPageId; advanced: boolea
     <SettingsJumpContext.Provider value={{ target }}>
       <div className="st-page animate-page-in">
         <SkyBand variant="low" gear={false}>
-          <button type="button" className="st-back" onClick={() => navigate(advanced ? settingsPageRoute(id) : SETTINGS_ROOT)}>
+          <button type="button" className="st-back" onClick={() => (advanced ? (location.key !== 'default' ? navigate(-1) : navigate(settingsPageRoute(id), { replace: true })) : navigate(SETTINGS_ROOT))}>
             <Icon name="terug" size={20} />
             {advanced ? settingsPageTitle(id) : 'Instellingen'}
           </button>
