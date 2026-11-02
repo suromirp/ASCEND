@@ -1,5 +1,5 @@
 {
-  "nativeLevel": 3,
+  "nativeLevel": 4,
   "dbVersion": 9,
   "packages": {
     "@capacitor-community/keep-awake": "^8.0.1",
@@ -8,6 +8,7 @@
     "@capacitor/cli": "^8.6.0",
     "@capacitor/core": "^8.6.0",
     "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/geolocation": "^8.2.4",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/splash-screen": "^8.0.2",

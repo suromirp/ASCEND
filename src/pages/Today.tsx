@@ -18,6 +18,7 @@ import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } 
 import { TodayMissionCard } from '../components/TodayMissionCard';
 import { NextTrekLine } from '../components/NextTrekLine';
 import { MountainWeatherCard } from '../components/MountainWeatherCard';
+import { StagePositionLine } from '../components/StagePositionLine';
 import { TestPendingLine } from '../components/TestPendingLine';
 import { SportAskLine } from '../components/sports/SportAskLine';
 import { ExerciseLogger } from '../components/ExerciseLogger';
@@ -441,6 +442,8 @@ function TodayContent() {
       <NextTrekLine onlyWhenOn />
       {/* Een tochtdag in de bergen of de sneeuw: het weer op de hoogte van je tocht (engine/mountainWeather.ts). */}
       <MountainWeatherCard />
+      {/* Een etappe van vandaag met coordinaten en Je locatie aan: hoeveel nog tot het eind (engine/stagePosition.ts). */}
+      <StagePositionLine />
 
       <MacroFactorCard />
 

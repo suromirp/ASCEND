@@ -18,6 +18,7 @@ import { dayCount, isTrekHeight, TREK_HEIGHT_RANGE } from './leave';
 import { formatNumberNL } from '../utils/number';
 import { trekLightDaysBefore } from './trekTaper';
 import { kgLabel } from '../utils/kg';
+import { roundCoordinate } from '../integrations/openMeteo';
 
 export const TREK_TERRAINS: TrekTerrain[] = ['flat_trail', 'uneven_trail', 'mountain', 'snow'];
 export const TREK_TERRAIN_LABEL: Record<TrekTerrain, string> = {
@@ -50,8 +51,24 @@ export interface TrekDraft {
   packKg?: number;
   // Het hoogste punt, alleen bij bergen of sneeuw (engine/mountainWeather.ts).
   highestM?: number;
+  // Een eigen plek voor het bergweer (alleen bij bergen of sneeuw).
+  place?: TrekPlace;
   tent: boolean;
   importance: TrekImportance;
+}
+
+export type TrekPlace = NonNullable<TrekDetails['place']>;
+
+const PLACE_NAME_MAX = 60;
+
+// Een plek zoals hij wordt bewaard: een naam en coordinaten op twee decimalen. Undefined als hij
+// kapot is; de tocht blijft dan gewoon staan.
+export function parseTrekPlace(raw: unknown): TrekPlace | undefined {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
+  const p = raw as Record<string, unknown>;
+  if (typeof p.name !== 'string' || p.name.trim() === '' || typeof p.lat !== 'number' || typeof p.lon !== 'number') return undefined;
+  if (!Number.isFinite(p.lat) || !Number.isFinite(p.lon) || Math.abs(p.lat) > 90 || Math.abs(p.lon) > 180) return undefined;
+  return { name: p.name.trim().slice(0, PLACE_NAME_MAX), lat: roundCoordinate(p.lat), lon: roundCoordinate(p.lon) };
 }
 
 export const hasHeight = (terrain: TrekTerrain): boolean => terrain === 'mountain' || terrain === 'snow';
@@ -76,6 +93,7 @@ export function trekToPeriod(draft: TrekDraft, id: string): LeavePeriod {
     terrain: draft.terrain,
     ...(draft.packKg !== undefined && draft.packKg > 0 ? { packKg: draft.packKg } : {}),
     ...(hasHeight(draft.terrain) && isTrekHeight(draft.highestM) ? { highestM: Math.round(draft.highestM) } : {}),
+    ...(hasHeight(draft.terrain) && parseTrekPlace(draft.place) ? { place: parseTrekPlace(draft.place) } : {}),
     tent: draft.tent,
     importance: draft.importance,
   };
@@ -86,7 +104,7 @@ export function periodToTrekDraft(period: LeavePeriod): TrekDraft | undefined {
   if (!period.trek) return undefined;
   return {
     name: period.trek.name, startDate: period.startDate, days: dayCount(period), terrain: period.trek.terrain,
-    packKg: period.trek.packKg, highestM: period.trek.highestM, tent: period.trek.tent, importance: period.trek.importance,
+    packKg: period.trek.packKg, highestM: period.trek.highestM, place: period.trek.place, tent: period.trek.tent, importance: period.trek.importance,
   };
 }
 

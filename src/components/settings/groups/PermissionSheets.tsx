@@ -7,6 +7,7 @@ import { SecondaryButton } from '../../ui';
 import { SettingsList, SettingsRow } from '../SettingsList';
 import { Sheet } from '../Sheet';
 import { SummaryRow } from './SummaryRow';
+import { useLocationSwitch } from './LocationSwitch';
 
 // Toestemmingen (docs/beslissingen/2026-11-01-android-app.md, ontwerprapport instellingen, Gegevens
 // en back-up): per toestemming één rij, Aan of Uit en waarvoor hij nodig is. Een rij die uit staat
@@ -69,6 +70,8 @@ function PermissionAskSheet({ row, onDone, onClose }: { row: PermissionRow; onDo
 
 export function PermissionsSheet({ facts, onChanged, onStorage, onClose }: { facts: SettingsFacts; onChanged: () => void; onStorage: () => void; onClose: () => void }) {
   const { settings } = useAppData();
+  // Je locatie staat hier, bij de toestemmingen: aanzetten vraagt er een en toont de uitkomst.
+  const location = useLocationSwitch();
   const [open, setOpen] = useState<PermissionRow | null>(null);
   const device = facts.device && facts.device !== 'unknown' ? facts.device : undefined;
   const rows = device ? permissionRows(device, noticesNeed(settings, device)) : [];
@@ -89,9 +92,11 @@ export function PermissionsSheet({ facts, onChanged, onStorage, onClose }: { fac
             onClick={r.on ? undefined : () => setOpen(r)}
           />
         ))}
+        <SummaryRow id="locatie" title="Je locatie" facts={facts} info="locatie" onChange={(on) => void location.onChange(on)} />
         {/* Opslag beschermd is een vraag aan de browser; in de app ruimt de telefoon niets zomaar op. */}
         {!device?.timed && facts.storage !== undefined && facts.storage !== 'unsupported' && <SummaryRow id="opslag" title="Opslag beschermd" facts={facts} sub="Je telefoon ruimt je gegevens niet zomaar op" onClick={onStorage} />}
       </SettingsList>
+      {location.status}
       {open && <PermissionAskSheet row={open} onDone={onChanged} onClose={() => setOpen(null)} />}
     </Sheet>
   );

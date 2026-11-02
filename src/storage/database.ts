@@ -817,6 +817,10 @@ export interface AppSettings {
   // "Trillen": een korte tik in je hand bij een schakelaar, een afgevinkte set, een training
   // oppakken en Akkoord. Absent = aan. Het rustsignaal van Forge staat hier los van.
   haptics?: boolean;
+  // "Je locatie" (engine/locationSetting.ts, docs/beslissingen/2026-11-02-locatie.md): ASCEND mag je plek
+  // van nu opvragen, voor het weer op je plek en voor je plek op een etappe. Absent = uit, behalve voor wie
+  // het weer al liet volgen met "Mijn locatie". Alleen een yes or no; optional and additive, no migration.
+  locationOn?: boolean;
   // "Doeltijd aanpassen voorstellen": a test that says your goal time is out of reach (or far too easy)
   // gets a proposal to change it (rule TARGET-TIME). Absent = on. One Liever niet holds for every later
   // test until the goal time itself changes. Optional and additive.

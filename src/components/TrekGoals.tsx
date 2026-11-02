@@ -24,6 +24,9 @@ import { Portal } from './Portal';
 import { ProposalSheet } from './ProposalSheet';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
+import { openMeteoErrorMessage, searchPlaces, type PlaceResult } from '../integrations/openMeteo';
+import { withTimeout } from '../utils/withTimeout';
+import type { TrekPlace } from '../engine/trek';
 
 const STALE_TEXT = 'Je planning is intussen veranderd. Bekijk het voorstel opnieuw.';
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
@@ -151,6 +154,75 @@ function Choice({ on, onClick, title, hint }: { on: boolean; onClick: () => void
   );
 }
 
+const PLACE_SEARCH_LIMIT_MS = 10_000;
+
+// Een eigen plek voor het bergweer: zoek een plaats of een dal bij de berg. Met een plek komt de kaart
+// al de dag ervoor en hoeft het weer je locatie niet te volgen. Alleen de naam en de afgeronde
+// plek worden bewaard, bij de tocht.
+function TrekPlaceField({ value, onChange }: { value: TrekPlace | undefined; onChange: (place: TrekPlace | undefined) => void }) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<PlaceResult[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function search() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const found = await withTimeout(searchPlaces(query), PLACE_SEARCH_LIMIT_MS, 'Zoeken duurde te lang. Probeer het zo nog eens.');
+      setResults(found);
+      if (found.length === 0) setMessage('Geen plaats gevonden met die naam. Controleer de spelling of probeer een grotere plaats in de buurt.');
+    } catch (err) {
+      setResults(null);
+      setMessage(err instanceof Error && err.name === 'TimeoutError' ? err.message : openMeteoErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Plek voor het bergweer</p>
+      {value ? (
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <span className="min-w-0 break-words text-sm" style={{ color: 'var(--color-ink)' }}>{value.name}</span>
+          <TextButton tone="dim" onClick={() => onChange(undefined)}>Wissen</TextButton>
+        </div>
+      ) : (
+        <div className="mt-1 flex gap-2">
+          <input
+            type="text" value={query} maxLength={60} placeholder="Bijvoorbeeld: Chamonix" aria-label="Plek voor het bergweer"
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && query.trim().length >= 2 && !busy) { e.preventDefault(); void search(); } }}
+            className="min-h-[44px] min-w-0 flex-1 rounded-lg border px-2.5 py-2 text-sm" style={inputStyle}
+          />
+          <SecondaryButton className="max-w-[40%]" disabled={busy || query.trim().length < 2} onClick={() => void search()}>{busy ? 'Zoeken…' : 'Zoeken'}</SecondaryButton>
+        </div>
+      )}
+      {message && <p role="status" className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{message}</p>}
+      {results && results.length > 0 && !value && (
+        <div className="mt-2 flex flex-col gap-2">
+          {results.map((r) => (
+            <button
+              key={`${r.name}-${r.lat}-${r.lon}`}
+              type="button"
+              onClick={() => { onChange({ name: r.name, lat: r.lat, lon: r.lon }); setResults(null); setQuery(''); }}
+              className="flex min-h-[44px] items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left"
+              style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
+            >
+              <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{r.name}</span>
+              <span className="min-w-0 text-right text-xs" style={{ color: 'var(--color-ink-dim)' }}>{[r.region, r.country].filter(Boolean).join(', ')}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        Zo kan het bergweer al de dag ervoor komen, ook als het weer je locatie niet volgt. Mag je leeg laten.
+      </p>
+    </div>
+  );
+}
+
 function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; onSubmit: (period: LeavePeriod) => void; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const today = todayISO();
@@ -209,6 +281,7 @@ function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; on
               {hasHeight(d.terrain) && (
                 <div className="mt-4">
                   <NumberField label="Hoogste punt" value={d.highestM} unit="m" onChange={(v) => set({ highestM: v })} helper="Voor het bergweer op die hoogte. Mag je leeg laten." />
+                  <div className="mt-4"><TrekPlaceField value={d.place} onChange={(place) => set({ place })} /></div>
                 </div>
               )}
 

@@ -1005,6 +1005,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Widget', text: 'De widget Vandaag onthoudt alleen de naam en duur van je training van vandaag. Ben je ziek, dan staat er alleen Rust vandaag. Dat staat op deze telefoon zelf en gaat nergens heen.' },
     ],
   },
+  locatie: {
+    title: 'Je locatie',
+    lead: 'Alleen je plek van nu, niets bewaard of gedeeld behalve de afgeronde plek die het weer nodig heeft.',
+    points: [
+      { head: 'Waarvoor', text: 'het weer op je plek, en op een tochtdag hoeveel kilometer je nog hebt tot het eind van je etappe en welke plek daarna komt.' },
+      { head: 'Toestemming', text: 'je telefoon of browser vraagt die pas als je dit aanzet. Zegt hij nee of lukt het niet binnen tien seconden, dan blijft dit uit en zie je waarom.' },
+      { head: 'Wat blijft', text: 'het weer bewaart je plek afgerond op twee decimalen, ongeveer een kilometer. Je plek op een etappe blijft alleen in het geheugen en verdwijnt als je de app sluit. Geen route, geen spoor, niets gedeeld.' },
+      { head: 'Uit', text: 'ASCEND vraagt je plek niet meer. Het weer blijft op de laatste plek tot je zelf een andere kiest.' },
+    ],
+  },
   autoBijwerken: {
     title: 'Automatisch bijwerken',
     lead: 'De app kijkt bij het openen stil of er een nieuwe versie is, haalt hem op de achtergrond op en gebruikt hem bij de volgende start.',

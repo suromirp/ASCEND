@@ -9,6 +9,7 @@
 // voor het weer en voor afstanden, geen adres.
 
 import { roundCoordinate } from '../integrations/openMeteo';
+import { appGeolocationOrUndefined } from '../integrations/geolocation';
 
 export type LocateFailure = 'unsupported' | 'denied' | 'unavailable' | 'timeout';
 
@@ -35,10 +36,13 @@ export interface LocateOptions {
   geolocation?: Pick<Geolocation, 'getCurrentPosition'> | undefined;
   timeoutMs?: number;
   maximumAge?: number;
+  // Zonder afronden: alleen voor je plek op een etappe, die in het geheugen blijft en nooit wordt bewaard.
+  precise?: boolean;
 }
 
 export function locateMe(options: LocateOptions = {}): Promise<Position2> {
-  const geo = 'geolocation' in options ? options.geolocation : typeof navigator !== 'undefined' ? navigator.geolocation : undefined;
+  // In de Android-app de plugin, in de browser navigator.geolocation (integrations/geolocation.ts).
+  const geo = 'geolocation' in options ? options.geolocation : appGeolocationOrUndefined() ?? (typeof navigator !== 'undefined' ? navigator.geolocation : undefined);
   const timeoutMs = options.timeoutMs ?? LOCATE_TIMEOUT_MS;
   return new Promise<Position2>((resolve, reject) => {
     if (!geo) {
@@ -56,7 +60,7 @@ export function locateMe(options: LocateOptions = {}): Promise<Position2> {
     timer = setTimeout(() => finish(() => reject(new LocateError('timeout'))), timeoutMs + HARD_LIMIT_EXTRA_MS);
     try {
       geo.getCurrentPosition(
-        (pos) => finish(() => resolve({ lat: roundCoordinate(pos.coords.latitude), lon: roundCoordinate(pos.coords.longitude) })),
+        (pos) => finish(() => resolve(options.precise ? { lat: pos.coords.latitude, lon: pos.coords.longitude } : { lat: roundCoordinate(pos.coords.latitude), lon: roundCoordinate(pos.coords.longitude) })),
         (err) => finish(() => reject(new LocateError(err.code === 1 ? 'denied' : err.code === 3 ? 'timeout' : 'unavailable'))),
         { timeout: timeoutMs, maximumAge: options.maximumAge ?? LOCATE_MAX_AGE_MS },
       );

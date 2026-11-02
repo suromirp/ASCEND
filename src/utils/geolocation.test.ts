@@ -16,6 +16,11 @@ describe('locateMe', () => {
     expect(seen).toHaveBeenCalledWith({ timeout: 10_000, maximumAge: 600_000 });
   });
 
+  it('keeps the exact spot only when asked, for a position that is never stored', async () => {
+    const found = await locateMe({ precise: true, geolocation: geo((ok) => ok({ coords: { latitude: 52.1234, longitude: 5.3478 } })) });
+    expect(found).toEqual({ lat: 52.1234, lon: 5.3478 });
+  });
+
   it('says why it failed', async () => {
     await expect(locateMe({ geolocation: geo((_o, fail) => fail({ code: 1 })) })).rejects.toMatchObject({ reason: 'denied' });
     await expect(locateMe({ geolocation: geo((_o, fail) => fail({ code: 2 })) })).rejects.toMatchObject({ reason: 'unavailable' });
