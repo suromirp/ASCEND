@@ -1,13 +1,13 @@
 // ASCEND: one calm line with the weather for a training, e.g.
-// "14 graden, droog, licht tot 18.12". Not a widget: nothing at all when the
+// "14 graden, droog, licht tot 18:12". Not a widget: nothing at all when the
 // training happens indoors or when the forecast does not reach that day.
 // Offline or when the forecast is old it says when it was last updated
-// ("bijgewerkt om 13.05").
+// ("bijgewerkt om 13:05").
 //
 // Placed on the mission card of Today and in the training explanation; the
 // engine (engine/weather.ts) does all the work. When the weather at your
 // usual hour is worse than a block later or earlier that day, a second dimmed
-// line says so ("Beste moment: 16 tot 17.30 uur, droog", engine/bestMoment.ts);
+// line says so ("Beste moment: 16:00 tot 17:30, droog", engine/bestMoment.ts);
 // otherwise nothing is added.
 //
 // `onOpen` makes the line a button (the mission card passes it, the page Weer

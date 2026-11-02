@@ -123,6 +123,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       storageUse: loaded.storageUse,
       snapshots: loaded.snapshots,
       buildLabel: buildLabel(),
+      mainIsTrek,
       longSundayVisible: !mainIsTrek || settings.longSundaySession === 'run',
       noGoal: listedGoals(trainingGoals, ladder, today).length === 0 && !!program && plannedSessions.length > 0,
       notice: loaded.notice,

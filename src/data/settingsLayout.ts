@@ -45,11 +45,14 @@ export const SETTINGS_PAGES: SettingsPage[] = [
 ];
 
 export const settingsPageRoute = (id: SettingsPageId): string => `${SETTINGS_ROOT}/${id}`;
+// Geavanceerd is een eigen pagina onder de groep: /more/<groep>/geavanceerd
+// (docs/beslissingen/2026-11-02-instellingen-ronde3.md).
+export const settingsAdvancedRoute = (id: SettingsPageId): string => `${SETTINGS_ROOT}/${id}/geavanceerd`;
 export const isSettingsPageId = (value: string | undefined): value is SettingsPageId => SETTINGS_PAGES.some((p) => p.id === value);
 export const settingsPageTitle = (id: SettingsPageId): string => SETTINGS_PAGES.find((p) => p.id === id)?.title ?? '';
 
-// Alle rijen per pagina, in volgorde. `advanced` staan achter "Geavanceerd" (alleen bij minstens
-// twee rijen), `footer` is tekst onderaan de pagina (telt niet als rij). Een rij met `bundel-` is
+// Alle rijen per pagina, in volgorde. `advanced` staan op de eigen pagina Geavanceerd (alleen bij minstens
+// twee rijen; de rij die erheen gaat telt niet mee in het plafond van `rows`), `footer` is tekst onderaan de pagina (telt niet als rij). Een rij met `bundel-` is
 // een rij met een blad: de losse keuzes erin staan in MOVED met `sheet: true`, zodat zoeken en
 // oude ankers ze blijven vinden.
 export interface PageRows {
@@ -85,6 +88,9 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
 };
 
 export const allRowIds = (page: SettingsPageId): string[] => [...PAGE_ROWS[page].rows, ...PAGE_ROWS[page].advanced, ...(PAGE_ROWS[page].footer ?? [])];
+
+// Een rij die op de pagina Geavanceerd van haar groep staat.
+export const isAdvancedRow = (page: SettingsPageId, rowId: string): boolean => PAGE_ROWS[page].advanced.includes(rowId);
 
 export function pageOfRow(rowId: string): SettingsPageId | undefined {
   return SETTINGS_PAGES.find((p) => allRowIds(p.id).includes(rowId))?.id;

@@ -86,17 +86,17 @@ describe('usualStartHour', () => {
 });
 
 describe('sessionWeather: the line', () => {
-  it('reads like "14 graden, droog, licht tot 18.12"', () => {
+  it('reads like "14 graden, droog, licht tot 18:12"', () => {
     const w = sessionWeather({ forecast: forecast(), date: WEEKDAY, startHour: 17, durationMinutes: 45 })!;
     expect(w.verdict).toBe('prima');
-    expect(w.line).toBe('14 graden, droog, licht tot 18.12');
+    expect(w.line).toBe('14 graden, droog, licht tot 18:12');
     expect(w.daylight).toMatchObject({ sunset: '18:12', endsAfterSunset: false, lampNeeded: false });
   });
 
   it('says to take a light when you finish after sunset', () => {
     const w = sessionWeather({ forecast: forecast(), date: WEEKDAY, startHour: 18, durationMinutes: 60 })!;
     expect(w.daylight).toMatchObject({ endsAfterSunset: true, lampNeeded: true });
-    expect(w.line).toBe('14 graden, droog, donker vanaf 18.12, neem een lampje mee');
+    expect(w.line).toBe('14 graden, droog, donker vanaf 18:12, neem een lampje mee');
   });
 
   it('the last minute counts: ending exactly at sunset is still light', () => {
@@ -108,7 +108,7 @@ describe('sessionWeather: the line', () => {
   it('says to take a light when you start before sunrise', () => {
     const w = sessionWeather({ forecast: forecast(), date: WEEKDAY, startHour: 7, durationMinutes: 60 })!;
     expect(w.daylight).toMatchObject({ startsBeforeSunrise: true, lampNeeded: true });
-    expect(w.line).toContain('donker tot 8.05, neem een lampje mee');
+    expect(w.line).toContain('donker tot 08:05, neem een lampje mee');
   });
 
   it('adds the felt temperature when it differs by four degrees or more', () => {
@@ -246,12 +246,12 @@ describe('weatherForTraining', () => {
 
 describe('showing it', () => {
   it('writes clock times the Dutch way', () => {
-    expect(clockNL('18:12')).toBe('18.12');
-    expect(clockNL('08:05')).toBe('8.05');
+    expect(clockNL('18:12')).toBe('18:12');
+    expect(clockNL('08:05')).toBe('08:05');
   });
 
   it('says when the forecast was updated, in local time', () => {
-    expect(updatedLabel(new Date(2026, 9, 22, 13, 5).toISOString())).toBe('bijgewerkt om 13.05');
+    expect(updatedLabel(new Date(2026, 9, 22, 13, 5).toISOString())).toBe('bijgewerkt om 13:05');
     expect(updatedLabel('nonsense')).toMatch(/onbekend/);
   });
 
