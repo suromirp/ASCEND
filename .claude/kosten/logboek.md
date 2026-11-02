@@ -98,3 +98,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Instellingen kleine delen, Sherpa, sonnet (ontwikkelaar), 209k, 39 min, 0
 - 2026-11-02, RPE bij een testloop, Sherpa, opus (ontwikkelaar), 231k, 58 min, 1
 - 2026-11-02, Review RPE, Warden, opus (reviewer), 99k, 7 min, 0, rood: weekbalk sprak zichzelf tegen
+- 2026-11-02, RPE herstel en herkeuring, Sherpa en Warden, opus, hervat, 0 open
+- 2026-11-02, Instellingen herstel teksten, Sherpa, sonnet, hervat, 0; Warden zat fout over het geluid na een training, de bouwer controleerde de code
