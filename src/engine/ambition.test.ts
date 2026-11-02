@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { effectiveAmbition } from './ambition';
 import { resolveEffectiveFullDuration, setAmbition, setRecentSessionMaxima } from './substitutions';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -16,7 +16,10 @@ afterEach(() => {
 
 describe('ambition', () => {
   it('Stevig builds 10% faster, Rustig 10% slower', () => {
-    // A build week (week 3 of the phase: 40 min for the easy run).
+    // The default program starts on the Monday of this week: pin "today" so the date lies inside it.
+    vi.useFakeTimers({ now: new Date('2026-10-29T12:00:00'), toFake: ['Date'] });
+    const { program } = buildDefaultProgramData();
+    vi.useRealTimers();
     const date = '2026-10-29';
     const std = resolveEffectiveFullDuration(easy, date, program);
     setAmbition('stevig');
