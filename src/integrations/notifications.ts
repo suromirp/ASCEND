@@ -106,7 +106,9 @@ function androidPort(): NotificationPort {
     async permissions() {
       const p = (await load()).LocalNotifications;
       const [notifications, exactAlarm] = await Promise.all([displayState(p), exactState(p)]);
-      return { timed: true, notifications, exactAlarm, healthConnect: 'soon' };
+      // Health Connect heeft een eigen rij met schakelaar bij Koppelingen, en daar vraagt Android om
+      // toestemming (storage/healthConnect.ts). Bij Toestemmingen staat hij daarom niet.
+      return { timed: true, notifications, exactAlarm, healthConnect: 'unavailable' };
     },
     async requestNotifications() {
       const p = (await load()).LocalNotifications;

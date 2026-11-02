@@ -5,6 +5,8 @@
 // training of that day is ticked off by itself (engine/autoTick.ts, switch
 // "Vanzelf afvinken" on the link screen), and the card then only asks how it
 // went (components/WatchAskCard.tsx), with "Klopt niet" to undo it.
+// In the Android app the trainings of Health Connect come in the same way
+// (storage/healthConnect.ts), after those of intervals.icu, which goes first.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
@@ -17,6 +19,8 @@ import {
   setAutoLoggedStatus,
   type WatchActivityState,
 } from '../storage/externalActivities';
+import { getHealthConnectState, onHealthConnectChange, syncHealthConnect } from '../storage/healthConnect';
+import { offeredActivities } from '../engine/sourcePrecedence';
 import { canRejectAutoLog, pendingQuestions, planAutoTicks, type FeedbackPatch } from '../engine/autoTick';
 import { isTrimmable } from '../engine/trimLog';
 import { TrimSheet } from './TrimSheet';
@@ -49,6 +53,9 @@ const AUTO_TICK_DELAY_MS = 1200;
 export function WatchActivityCard() {
   const { plannedSessions, templates, sessionLogs, logSession, undoLog, setLogFeedback, refresh } = useAppData();
   const [state, setState] = useState<WatchActivityState | null>(null);
+  // De trainingen uit Health Connect (Android-app, als dat aan staat). intervals.icu gaat voor: wat
+  // daar al is of al een log werd, komt hier niet nog eens (engine/sourcePrecedence.ts).
+  const [fromHealth, setFromHealth] = useState<ExternalActivity[]>([]);
   const [choosing, setChoosing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [later, setLater] = useState<string[]>([]);
@@ -62,15 +69,24 @@ export function WatchActivityCard() {
     const load = () => void getWatchState().then((s) => alive && setState(s)).catch(() => undefined);
     load();
     const stop = onWatchChange(load);
+    const loadHealth = () => void getHealthConnectState().then((s) => alive && setFromHealth(s.enabled ? s.activities : [])).catch(() => undefined);
+    loadHealth();
+    const stopHealth = onHealthConnectChange(loadHealth);
     // Back in the app (after a training, with the app still open): look again
     // at intervals.icu. The sync itself keeps to once per 15 minutes.
     const onVisible = () => {
-      if (document.visibilityState === 'visible') void syncWatchActivities().catch(() => undefined);
+      if (document.visibilityState !== 'visible') return;
+      // Health Connect na intervals.icu, zodat het de trainingen van intervals.icu al kent.
+      void syncWatchActivities()
+        .catch(() => undefined)
+        .then(() => syncHealthConnect())
+        .catch(() => undefined);
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       alive = false;
       stop();
+      stopHealth();
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
@@ -84,10 +100,12 @@ export function WatchActivityCard() {
     [refresh],
   );
 
+  const activities = useMemo(() => (state ? offeredActivities(state.activities, fromHealth, sessionLogs, state.history) : []), [state, fromHealth, sessionLogs]);
+
   // Vanzelf afvinken: only what nothing is left to choose about.
   useEffect(() => {
     if (!state || !state.autoTick || !state.use.activities || ticking.current) return;
-    const ticks = planAutoTicks(state.activities, state.dismissed, state.autoLogged, plannedSessions, templates, sessionLogs)
+    const ticks = planAutoTicks(activities, state.dismissed, state.autoLogged, plannedSessions, templates, sessionLogs)
       .filter((t) => !attempted.current.has(t.activity.externalId));
     if (ticks.length === 0) return;
     const timer = setTimeout(() => {
@@ -108,7 +126,7 @@ export function WatchActivityCard() {
       })();
     }, AUTO_TICK_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [state, plannedSessions, templates, sessionLogs, logSession, addDetail]);
+  }, [state, activities, plannedSessions, templates, sessionLogs, logSession, addDetail]);
 
   // Trainings switched off ("Wat ASCEND van je horloge gebruikt"): nothing of
   // the watch is offered or asked here.
@@ -117,8 +135,8 @@ export function WatchActivityCard() {
     [state, sessionLogs, later],
   );
   const proposals = useMemo(
-    () => (state?.use.activities ? pendingProposals(state.activities, state.dismissed, plannedSessions, templates, sessionLogs) : []),
-    [state, plannedSessions, templates, sessionLogs],
+    () => (state?.use.activities ? pendingProposals(activities, state.dismissed, plannedSessions, templates, sessionLogs) : []),
+    [state, activities, plannedSessions, templates, sessionLogs],
   );
   const question = questions[0];
   const proposal = proposals[0];

@@ -228,7 +228,7 @@ export interface PermissionRow {
 const PERMISSION_TEXT: Record<PermissionId, { title: string; line: string }> = {
   meldingen: { title: 'Meldingen', line: 'De ochtendvraag en het einde van je rust' },
   wekker: { title: 'Exacte wekker', line: 'Het einde van je rust op de seconde' },
-  health: { title: 'Health Connect', line: 'Gewicht, stappen en trappen' },
+  health: { title: 'Health Connect', line: 'Trainingen, slaap, rusthartslag en HRV' },
 };
 
 export function permissionRows(p: DevicePermissions, need: { notifications: boolean; exactAlarm: boolean }): PermissionRow[] {

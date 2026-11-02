@@ -287,6 +287,7 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
     kind,
     name: typeof raw.name === 'string' && raw.name ? raw.name : undefined,
     durationSec,
+    ...(positive(raw.elapsed_time) !== undefined && raw.elapsed_time! > durationSec ? { elapsedSec: raw.elapsed_time } : {}),
     distanceM: positive(raw.distance),
     elevationGainM: typeof raw.total_elevation_gain === 'number' && raw.total_elevation_gain >= 0 ? raw.total_elevation_gain : undefined,
     // Some sources write the descent as a negative number.

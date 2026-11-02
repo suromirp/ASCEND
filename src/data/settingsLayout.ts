@@ -77,7 +77,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {
-    rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
+    rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'health-connect', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
     advanced: [],
   },
   gegevens: { rows: ['backup', 'auto-backup', 'backupmap', 'toestemmingen', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'aangepast', 'wissen'], advanced: ['auto-bijwerken', 'voorstellen-opruimen', 'herbouwen', 'startniveau'], footer: ['versie'] },
@@ -95,17 +95,17 @@ export interface SettingPlacement {
   row: string;
   // De instelling zit in het blad van de rij: de sprong opent het blad.
   sheet?: boolean;
-  // Geen rij maar een verwijzing naar een andere pagina (Reisplanner, Paklijst, Health Connect):
+  // Geen rij maar een verwijzing naar een andere pagina (Reisplanner, Paklijst):
   // het zoekresultaat opent die pagina.
   link?: boolean;
 }
 
 // Verwijzingen die vroeger een rij waren. De plek waar ze nu horen (het Ascend-scherm) is de
-// pagina zelf; in het zoekveld blijven ze vindbaar.
+// pagina zelf; in het zoekveld blijven ze vindbaar. Health Connect is sinds 2 november 2026
+// weer een gewone rij op Koppelingen.
 const LINKS: Record<string, SettingsPageId> = {
   reisplanner: 'doel',
   paklijst: 'doel',
-  'health-connect': 'koppelingen',
 };
 
 const inSheet = (row: string, ...ids: string[]): Record<string, { row: string; sheet: true }> =>
@@ -175,6 +175,8 @@ export function placementOf(settingId: string): SettingPlacement | undefined {
 export interface RowContext {
   // Garmin is gekoppeld, en wat er van het horloge gebruikt wordt.
   garmin: boolean;
+  // Health Connect staat aan (alleen in de Android-app).
+  healthConnect: boolean;
   activities: boolean;
   sendToWatch: boolean;
   // Er is een MacroFactor-export ingelezen.
@@ -220,6 +222,8 @@ const B = {
   restAlert: { ok: (s) => strength(s).restAlert !== 'off', reason: 'Zichtbaar zodra de rusttimer een signaal geeft', parent: 'forge-signaal' },
   mf: { ok: (_s, c) => c.macroFactorExport, reason: 'Zichtbaar zodra je een MacroFactor-export hebt ingelezen', parent: 'macrofactor' },
   garmin: { ok: (_s, c) => c.garmin, reason: 'Zichtbaar zodra Garmin is gekoppeld', parent: 'garmin' },
+  // Slaap, rusthartslag, HRV en trainingen komen van Garmin of uit Health Connect: de keuzes gelden voor beide.
+  watchData: { ok: (_s, c) => c.garmin || c.healthConnect, reason: 'Zichtbaar zodra Garmin is gekoppeld of Health Connect aan staat', parent: 'garmin' },
   activities: { ok: (_s, c) => c.activities, reason: 'Zichtbaar zodra Trainingen van je horloge aan staat', parent: 'garmin-trainingen' },
   send: { ok: (_s, c) => c.sendToWatch, reason: 'Zichtbaar zodra Trainingen naar je horloge aan staat', parent: 'naar-horloge' },
   ascendHr: { ok: (s) => resolveWatchHrMode({ mode: s.watchHeartRate }) !== 'intervals', reason: 'Zichtbaar zodra de hartslag van ASCEND naar je horloge gaat', parent: 'horloge-hartslag' },
@@ -283,7 +287,8 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.skyAuto], 'lucht-vanaf'),
   ...rule([B.legEaseOffers], 'lichterbenen-hoe'),
   // Koppelingen
-  ...rule([B.garmin], 'horloge-stil', 'bundel-horloge-gebruik', 'garmin-trainingen', 'slaap', 'rusthartslag', 'hrv', 'bundel-horloge-sturen', 'naar-horloge'),
+  ...rule([B.garmin], 'horloge-stil', 'bundel-horloge-sturen', 'naar-horloge'),
+  ...rule([B.watchData], 'bundel-horloge-gebruik', 'garmin-trainingen', 'slaap', 'rusthartslag', 'hrv'),
   ...rule([B.garmin, B.activities], 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-details'),
   ...rule([B.garmin, B.send], 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
   ...rule([B.garmin, B.send, B.ascendHr], 'horloge-rustige-loop'),

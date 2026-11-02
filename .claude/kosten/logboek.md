@@ -124,3 +124,8 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Review locatie, Warden, opus, 89k, 4 min, groen met 7 punten
 - 2026-11-02, Locatie herstel, Sherpa, sonnet, hervat 243k, 13 min, 1; live
 - 2026-11-02, Health Connect, Sherpa, opus, 359k, 68 min, review volgt na merge; vond de plugin-proxyfout
+- 2026-11-02, Plugin-proxyfout, Sherpa, sonnet, 60k, 15 min, 0; live
+- 2026-11-02, Health Connect merge niveau 5, Sherpa, opus, hervat, 0
+- 2026-11-02, Review Health Connect, Warden, opus, 137k, 9 min, rood (dubbele tocht door bewegingstijd tegen totale tijd)
+- 2026-11-02, Health Connect herstel 10 punten, Sherpa, opus, hervat 407k, 17 min, 1
+- 2026-11-02, Herkeuring Health Connect, Warden, opus, hervat, groen

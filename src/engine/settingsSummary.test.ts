@@ -884,6 +884,20 @@ describe('rowSummary: rijen met een blad', () => {
     expect(rowSummary('bundel-horloge-gebruik', facts({ watch: { ...facts().watch!, linked: false } })).hidden).toBe(true);
   });
 
+  it('Gebruik van je gegevens: ook met alleen Health Connect aan, en dan niet alleen over het horloge', () => {
+    const hc = { inApp: true, enabled: true } as const;
+    const zonderGarmin = facts({ watch: { ...facts().watch!, linked: false }, healthConnect: hc });
+    expect(rowSummary('bundel-horloge-gebruik', zonderGarmin)).toEqual({ title: 'Gebruik van je gegevens', value: '4 van 4 aan', hidden: false });
+    for (const id of ['garmin-trainingen', 'slaap', 'rusthartslag', 'hrv']) expect(rowSummary(id, zonderGarmin).hidden, id).toBe(false);
+    // Details van loopjes en de rest van Garmin blijven bij Garmin.
+    expect(rowSummary('horloge-details', zonderGarmin).hidden).toBe(true);
+    expect(rowSummary('horloge-stil', zonderGarmin).hidden).toBe(true);
+    // Met Garmin en Health Connect: vijf keuzes, en de titel zegt gegevens.
+    expect(rowSummary('bundel-horloge-gebruik', facts({ healthConnect: hc }))).toEqual({ title: 'Gebruik van je gegevens', value: '5 van 5 aan', hidden: false });
+    // Health Connect uit of op het web: zoals het was.
+    expect(rowSummary('bundel-horloge-gebruik', facts({ watch: { ...facts().watch!, linked: false }, healthConnect: { inApp: false, enabled: false } })).hidden).toBe(true);
+  });
+
   it('Trainingen naar je horloge is een rij met de stand, en Wat speelde er telt je aantekeningen', () => {
     expect(rowSummary('bundel-horloge-sturen', facts())).toEqual({ value: 'Aan', hidden: false });
     expect(rowSummary('bundel-horloge-sturen', facts({ watch: { ...facts().watch!, sendEnabled: false } })).value).toBe('Uit');
