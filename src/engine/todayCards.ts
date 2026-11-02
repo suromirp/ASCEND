@@ -10,7 +10,7 @@
 // over een training die niet doorging komen nooit boven de missie: die beantwoord je in een blad, en
 // de missie is waar Vandaag over gaat. Puur: geen React, geen opslag.
 
-export type TodayCardId = 'ill' | 'illnessSign' | 'morning' | 'ramp' | 'advice' | 'missed' | 'freshStart' | 'backup' | 'backupDue';
+export type TodayCardId = 'ill' | 'illnessSign' | 'morning' | 'ramp' | 'advice' | 'stagePosition' | 'missed' | 'sportAsk' | 'freshStart' | 'backup' | 'backupDue';
 type TodayCardGroup = 'safety' | 'morning' | 'recovery' | 'today' | 'yesterday' | 'upkeep';
 
 export interface TodayCardSpec {
@@ -20,6 +20,9 @@ export interface TodayCardSpec {
   lead: boolean;
   // Staat altijd boven de missie, ook boven het maximum (veiligheid).
   always?: boolean;
+  // Een rustige regel die zelf weet of hij er is (de component geeft niets terug als er niets te zeggen is). Vandaag
+  // geeft hem altijd mee; hij mag nooit boven de missie, dus zijn plek telt nergens mee.
+  quiet?: true;
 }
 
 // De vaste rangorde, de belangrijkste eerst.
@@ -33,8 +36,15 @@ export const TODAY_CARD_RANK: readonly TodayCardSpec[] = [
   { id: 'ramp', group: 'recovery', lead: true },
   // Het belangrijkste advies (CoachCard), zoals de rustdag terug.
   { id: 'advice', group: 'today', lead: false },
+  // Op een dag van je etappe: hoeveel nog tot het eind (engine/stagePosition.ts). Een rustige regel die zelf weet
+  // of hij er is; hij hoort bij vandaag, maar de missie zegt al wat je loopt
+  // (docs/beslissingen/2026-11-02-vandaag-en-ongedaan.md).
+  { id: 'stagePosition', group: 'today', lead: false, quiet: true },
   // Niet gedaan? of een log om te koppelen.
   { id: 'missed', group: 'yesterday', lead: false },
+  // "Je deed padel. Hoe telt dit?" (engine/sportAsk.ts): een vraag over iets wat al gebeurd is. Een rustige regel
+  // die zelf weet of hij er is; de planning verandert niet tot je antwoordt.
+  { id: 'sportAsk', group: 'yesterday', lead: false, quiet: true },
   // Nieuw begonnen: je back-up terugzetten.
   { id: 'freshStart', group: 'upkeep', lead: true },
   { id: 'backup', group: 'upkeep', lead: true },
@@ -69,4 +79,22 @@ export function arrangeToday(present: Iterable<TodayCardId>, limit: AboveMission
     else below.push(card.id);
   }
   return { above, below };
+}
+
+// De rustige regels: Vandaag geeft ze altijd mee, ze staan onder de missie op hun plek in de rij.
+export const QUIET_TODAY_LINES: readonly TodayCardId[] = TODAY_CARD_RANK.filter((c) => c.quiet).map((c) => c.id);
+
+export const isSafetyCard = (id: TodayCardId): boolean => TODAY_CARD_RANK.some((c) => c.id === id && c.always === true);
+
+// Hoeveel kaarten er te veel boven de missie staan: een kaart die nooit boven mag telt altijd, en verder staan er
+// hoogstens zoveel gewone kaarten als het maximum toelaat. Veiligheid mag altijd, en telt mee voor het maximum.
+// Dezelfde regel leest de tekstkaart uit het scherm (scripts/app-kaart/kaart.mjs, invariant "Hoogstens het
+// afgesproken aantal kaarten boven de missie").
+export function aboveMissionOverflow(above: readonly TodayCardId[], limit: AboveMission): number {
+  const spec = new Map(TODAY_CARD_RANK.map((c) => [c.id, c]));
+  const never = above.filter((id) => !spec.get(id)?.lead).length;
+  if (limit === 'all') return never;
+  const safety = above.filter(isSafetyCard).length;
+  const plain = above.length - safety - never;
+  return never + Math.max(0, plain - Math.max(0, limit - safety));
 }

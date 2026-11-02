@@ -271,6 +271,31 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
     });
     if (process.env.KAART_MINT) console.log(`${id}: ${mint.length} gevulde mint knoppen ${JSON.stringify(mint)}`);
     const mintRegel = mint.length > 1 ? `\n[gevulde mint knoppen: ${mint.length}, ${mint.map((m) => `"${m}"`).join(', ')}]\n` : '';
+    // Vandaag: hoogstens het afgesproken aantal kaarten boven de missie (engine/todayCards.ts#aboveMissionOverflow, dezelfde
+    // regel). Telt elke zichtbare kaart die in de pagina voor de missie staat, behalve de lucht en een blad; een kaart
+    // met data-today-safety (ziek gemeld, vroeg ziek zien) mag altijd en telt mee. Een kaart zonder data-today-card telt
+    // als gewone kaart, zodat een kaart die buiten de rij om boven de missie komt ook opvalt. Alleen bij te veel komt er
+    // een regel bij (de invariant "Hoogstens het afgesproken aantal kaarten boven de missie" in invarianten.mjs leest die).
+    const boven = await o.page.evaluate(() => {
+      const missie = document.querySelector('[data-today-mission]');
+      if (!missie) return null;
+      const limiet = missie.getAttribute('data-above-limit');
+      const zicht = (e) => { const r = e.getBoundingClientRect(); const c = getComputedStyle(e); return r.height > 0 && c.visibility !== 'hidden' && c.position !== 'fixed'; };
+      const vakken = (e) => (getComputedStyle(e).display === 'contents' ? [...e.children].flatMap(vakken) : [e]);
+      const kaarten = [];
+      for (const e of missie.parentElement.children) {
+        if (e === missie) break;
+        if (e.classList.contains('sky-band')) continue;
+        if (!vakken(e).some(zicht)) continue;
+        kaarten.push({ id: e.getAttribute('data-today-card') || (e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 30), veilig: e.hasAttribute('data-today-safety'), mag: e.hasAttribute('data-today-card') });
+      }
+      const veilig = kaarten.filter((k) => k.veilig).length;
+      const gewoon = kaarten.length - veilig;
+      const max = limiet === 'all' ? Infinity : Number(limiet) || 1;
+      const teVeel = Math.max(0, gewoon - Math.max(0, max - veilig)) + kaarten.filter((k) => !k.mag).length;
+      return teVeel > 0 ? { n: kaarten.length, limiet, ids: kaarten.map((k) => k.id) } : null;
+    });
+    const bovenRegel = boven ? `\n[boven de missie: ${boven.n} kaarten, hoogstens ${boven.limiet === 'all' ? 'alles' : boven.limiet}: ${boven.ids.join(', ')}]\n` : '';
     let breedteRegel = '';
     const hoogteNu = o.page.viewportSize().height;
     for (const breedte of [390, 360, 320]) {
@@ -281,7 +306,7 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
     await o.page.setViewportSize({ width: 390, height: hoogteNu });
     await o.page.waitForTimeout(300);
     const fouten = o.errs.filter((e) => !/favicon|manifest|Service Worker/i.test(e)).map((e) => `[console: ${e.slice(0, 160)}]`);
-    const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.\n\n${tekst}${mintRegel}${breedteRegel}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
+    const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.\n\n${tekst}${mintRegel}${bovenRegel}${breedteRegel}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
     writeFileSync(join(uitMap, id + '.md'), md);
     if (fotoMap) return await volleAfdruk(o.page, join(fotoMap, id + '.png'), markeer);
     return false;

@@ -24,6 +24,7 @@ import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
 import { applyScheduleAnomalyFixNow } from '../storage/scheduleAnomalyFix';
+import { snapshotWritten } from '../storage/undoPlanChange';
 import type { Advice } from '../engine/adviceEngine';
 import type { RecentPlanChange } from '../models/planChange';
 import { computeActiveGoalOverviews } from '../engine/goalOverview';
@@ -145,6 +146,8 @@ export function useStrengthAndReplan(deps: {
       const { proposal, realChanges, planned, templates: tpls, updatedSessions } = outcome;
       const touched = new Set(realChanges.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
       const originalIds = new Set(planned.map((s) => s.id));
+      const before = planned.filter((x) => touched.has(x.id));
+      const addedIds = updatedSessions.filter((x) => !originalIds.has(x.id)).map((x) => x.id);
       setRecentChange({
         id: proposal.id,
         trigger: proposal.trigger,
@@ -152,8 +155,9 @@ export function useStrengthAndReplan(deps: {
         lines: describeChanges(realChanges, planned, tpls),
         summary: prescriptionSummary(realChanges),
         why: proposal.consequences,
-        before: planned.filter((x) => touched.has(x.id)),
-        addedIds: updatedSessions.filter((x) => !originalIds.has(x.id)).map((x) => x.id),
+        before,
+        addedIds,
+        written: await snapshotWritten(before, addedIds),
         createdAt: new Date().toISOString(),
       });
     }

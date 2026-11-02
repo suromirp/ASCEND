@@ -10,7 +10,7 @@ import { unlinkLogsNow } from '../storage/missedTraining';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { describeChanges } from '../engine/changeImpact';
 import { armFlip, disarmFlip } from '../utils/flipDom';
-import { undoPlanChangeNow } from '../storage/undoPlanChange';
+import { PLAN_UNDO_STALE, snapshotWritten, undoPlanChangeNow } from '../storage/undoPlanChange';
 import type { Advice } from '../engine/adviceEngine';
 import { syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
 import { restoreAlignments } from '../storage/watchAlign';
@@ -60,14 +60,16 @@ export function usePlanChangeActions(deps: {
     const remaining = new Set(updatedSessions.map((s) => s.id));
     for (const s of planned) if (touchedIds.has(s.id) && !remaining.has(s.id)) await PlannedSessionsRepo.delete(s.id);
     await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
+    const before = planned.filter((s) => touchedIds.has(s.id));
     setRecentChange({
       id: proposal.id,
       trigger: proposal.trigger,
       title,
       lines: describeChanges(proposal.changes, planned, tpls),
       why: proposal.consequences,
-      before: planned.filter((s) => touchedIds.has(s.id)),
+      before,
       addedIds,
+      written: await snapshotWritten(before, addedIds),
       settingsBefore: restore?.settings,
       configBefore: restore?.config,
       createdAt: new Date().toISOString(),
@@ -162,29 +164,33 @@ export function usePlanChangeActions(deps: {
       await refresh();
       return;
     }
-    // A log linked to a planned training afterwards: only the link goes (engine/missedTraining.ts).
-    if (recentChange.linkedLogIds?.length) {
-      await unlinkLogsNow(recentChange.linkedLogIds);
-      if (recentChange.before.length === 0 && recentChange.addedIds.length === 0) {
-        setRecentChange(null);
-        bumpPlanRevision();
-        await refresh();
-        return;
-      }
+    // A log linked to a planned training afterwards, or numbers of the watch taken over by typed-in trainings:
+    // when that was all the change did, only the link goes (engine/missedTraining.ts) or the hand-made numbers
+    // come back (storage/watchAlign.ts), and that is the undo.
+    const rowsTouched = recentChange.before.length > 0 || recentChange.addedIds.length > 0;
+    if (!rowsTouched && (recentChange.linkedLogIds?.length || recentChange.alignedLogIds?.length)) {
+      if (recentChange.linkedLogIds?.length) await unlinkLogsNow(recentChange.linkedLogIds);
+      if (recentChange.alignedLogIds?.length) await restoreAlignments(recentChange.alignedLogIds);
+      setRecentChange(null);
+      bumpPlanRevision();
+      await refresh();
+      return;
     }
-    // Numbers of the watch taken over by typed-in trainings: the hand-made ones
-    // come back first. When that was all the change did, that is the undo.
-    if (recentChange.alignedLogIds?.length) {
-      await restoreAlignments(recentChange.alignedLogIds);
-      if (recentChange.before.length === 0 && recentChange.addedIds.length === 0) {
-        setRecentChange(null);
-        bumpPlanRevision();
-        await refresh();
-        return;
-      }
+    // Settings, config, goals and rows back as they were, in one transaction, and only when the rows are still
+    // exactly what the change wrote and nothing of it was logged since (storage/undoPlanChange.ts). Otherwise
+    // nothing changes and the notice says so.
+    let undone: Awaited<ReturnType<typeof undoPlanChangeNow>>;
+    try {
+      undone = await undoPlanChangeNow(recentChange);
+    } catch (err) {
+      disarmFlip();
+      setRecentChange(failureNotice('Niet teruggezet', err instanceof Error && err.message === PLAN_UNDO_STALE ? PLAN_UNDO_STALE : 'Er ging iets mis; je planning staat zoals hij na de wijziging was.'));
+      await refresh();
+      return;
     }
-    // Settings, config, goals and rows back as they were (storage/undoPlanChange.ts).
-    const undone = await undoPlanChangeNow(recentChange);
+    // The link and the hand-made numbers go back once the rows did.
+    if (recentChange.linkedLogIds?.length) await unlinkLogsNow(recentChange.linkedLogIds);
+    if (recentChange.alignedLogIds?.length) await restoreAlignments(recentChange.alignedLogIds);
     if (undone.settings) setSettings(undone.settings);
     if (undone.config) setGoalEngineConfig(undone.config);
     if (undone.responses) setAdviceResponses(undone.responses);

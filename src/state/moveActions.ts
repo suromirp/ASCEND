@@ -16,6 +16,7 @@ import {
 import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
 import { writeCatchUp } from '../storage/catchUpApply';
 import { writeSwap } from '../storage/weekSwap';
+import { snapshotWritten } from '../storage/undoPlanChange';
 import { resolveDropOnTraining } from '../engine/dropOnTraining';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
 import { dayVerdicts, type DayVerdict, type DragContext } from '../engine/weekDrag';
@@ -224,6 +225,7 @@ export function useMoveActions(deps: {
           why: proposal.changes.length > 1 ? proposal.reason : '',
           before,
           addedIds,
+          written: await snapshotWritten(before, addedIds),
           createdAt: new Date().toISOString(),
         });
       }

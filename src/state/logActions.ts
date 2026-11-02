@@ -29,6 +29,7 @@ import { trimStoredLog, undoTrimStoredLog } from '../storage/trim';
 import { onSourceCorrected, restoreSourceUpdateStored, takeOverOfferedStored } from '../storage/sourceCorrection';
 import type { StreamSet } from '../models/activityDetail';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
+import { snapshotWritten } from '../storage/undoPlanChange';
 import type { RecentPlanChange } from '../models/planChange';
 import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -251,6 +252,7 @@ export function useLogActions(deps: {
         why: notice.why,
         before,
         addedIds: [],
+        written: await snapshotWritten(before, []),
         createdAt: now,
       });
       bumpPlanRevision();

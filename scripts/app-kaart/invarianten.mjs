@@ -115,6 +115,13 @@ export const INVARIANTEN = [
     naam: 'Hoogstens één gevulde mint knop per scherm',
     controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^\[gevulde mint knoppen: .*\]$/gm).map((m) => `${s}: ${m[0]}`)),
   },
+  {
+    // kaart.mjs telt op Vandaag de zichtbare kaarten voor de missie en schrijft alleen bij te veel een regel "[boven de
+    // missie: ...]". Hoogstens het afgesproken aantal (Kaarten boven de missie, het advies is één); ziek gemeld en vroeg
+    // ziek zien mogen altijd en tellen mee (engine/todayCards.ts, docs/beslissingen/2026-11-02-vandaag-en-ongedaan.md).
+    naam: 'Hoogstens het afgesproken aantal kaarten boven de missie',
+    controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^\[boven de missie: .*\]$/gm).map((m) => `${s}: ${m[0]}`)),
+  },
 ];
 
 const SCHERMEN = [

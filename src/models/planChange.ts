@@ -212,6 +212,10 @@ export interface RecentPlanChange {
   // Week opnieuw plannen (engine/replanWeek.ts): de rijen zoals het schreef en wat eraf ging. Ongedaan maken
   // zet de week alleen terug als die rijen nog precies zo zijn (storage/weekReplan.ts#undoWeekReplan).
   replan?: { written: PlannedSession[]; removedIds: string[] };
+  // De rijen zoals de wijziging ze achterliet, direct na het schrijven gelezen (storage/undoPlanChange.ts#snapshotWritten).
+  // Ongedaan maken zet alleen terug als ze nog precies zo zijn en niet gelogd (engine/undoGuard.ts). Een id uit before
+  // of addedIds dat er niet in staat, haalde de wijziging weg. Alleen in het geheugen, nooit bewaard.
+  written?: PlannedSession[];
   // Een handeling die niet lukte: de melding zegt dat, zonder Ongedaan maken (before is leeg).
   failed?: true;
   createdAt: string;
