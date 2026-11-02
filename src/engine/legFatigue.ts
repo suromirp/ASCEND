@@ -284,7 +284,8 @@ export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, a
     // A split test: the 5 km as planned, the warm-up and cool-down as an easy run at RPE 3.
     const easyHours = Math.min(hours, Math.max(0, event.easyMinutes ?? 0) / 60);
     const hardHours = hours - easyHours;
-    const easyFactor = rpeFactor(EASY_PART_RPE, PLANNED_RPE.low);
+    // The rest at 3, never above the RPE you gave (as sessionLoad and weeklyLoad).
+    const easyFactor = rpeFactor(Math.min(EASY_PART_RPE, event.rpe ?? EASY_PART_RPE), PLANNED_RPE.low);
     intensity = ((INTENSITY_PER_HOUR[p.intensity] ?? 2) * hardHours * factor + INTENSITY_PER_HOUR.low * easyHours * easyFactor) * pack;
     strength = (IMPACT_PER_HOUR[p.impact as Level] * hardHours * factor + IMPACT_PER_HOUR[p.impact as Level] * easyHours * easyFactor + CLIMB_PER_1000 * (event.climbM ?? 0) / 1000 * factor) * pack;
     damage = DESCENT_PER_1000 * ((event.descentM ?? 0) / 1000) * (running ? RUNNING_DESCENT : 1) * damagePack * poles * adapt;
