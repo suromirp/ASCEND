@@ -1257,6 +1257,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Altijd', text: 'het weekend blijft voor je lange trainingen.' },
       { head: 'Akkoord', text: 'de nieuwe rustdag geldt pas als jij Akkoord geeft.' },
+      { head: 'Bezet', text: 'staat er deze week een training op je rustdag, dan heet een vrije dag in Week "Rustdag deze week", liefst niet vlak voor een zware dag. Er verschuift niets.' },
     ],
   },
   citaten: {

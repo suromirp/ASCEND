@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
-import { betterTestDay, illnessHeld, replanSummary, replanWeek, weekDiff } from './replanWeek';
+import { betterTestDay, illnessHeld, replanPreview, replanSummary, replanWeek, weekDiff } from './replanWeek';
+import { previewProposal, sheetAnswer } from './proposalPreview';
+import sheetSource from '../components/ProposalSheet.tsx?raw';
 import { planPass } from './planPass';
 import { validateWeeks } from './weekValidator';
 
@@ -195,5 +197,64 @@ describe('replanSummary', () => {
     expect(replanSummary({ changes: 1, caughtUp: ['Bovenlichaam A'] })).toContain('Dat geldt ook voor wat je inhaalde: Bovenlichaam A.');
     expect(replanSummary({ changes: 1, nextWeek: true })).toContain('week erna');
     expect(replanSummary({ changes: 1, testMove: { name: 'Testloop 5 km', toLabel: 'vr 6 nov' } })).toContain('Testloop 5 km blijft in de week en gaat naar vr 6 nov');
+  });
+});
+
+// Een voorstel met 2 erbij (een nieuwe en een die terugkomt), 2 verschoven en 2 die vervallen, zoals bij de eigenaar.
+describe('replanPreview', () => {
+  const stored = [
+    s('a', 'tpl_easy_run', d(2)),
+    s('b', 'tpl_upper_a', d(3), { lock: yours }),
+    s('c', 'tpl_long_run', d(4), { lock: yours }),
+    s('e', 'tpl_lower_a', d(5)),
+    s('back', 'tpl_hill_intervals', d(5), { status: 'skipped', lock: byProposal }),
+    s('keep', 'tpl_upper_b', d(6)),
+  ];
+  const after = [
+    s('a', 'tpl_easy_run', d(3)),
+    s('c', 'tpl_long_run', d(6)),
+    s('back', 'tpl_hill_intervals', d(5)),
+    s('new', 'tpl_tempo_run', d(2)),
+    s('keep', 'tpl_upper_b', d(6)),
+  ];
+  const diff = weekDiff(stored, after, MON);
+
+  it('toont alle zes: twee erbij, twee verschoven, twee die vervallen', () => {
+    expect(diff.writes.length + diff.removedIds.length).toBe(6);
+    const p = replanPreview(stored, after, diff, templates);
+    expect(p.moves.map((m) => m.action).sort()).toEqual(['add', 'add', 'move', 'move', 'remove', 'remove']);
+    expect(p.weeks.map((w) => w.weekStart)).toEqual([MON]);
+    // Elke rij heeft een regel, dus met deze lijst mag Akkoord.
+    const items = Array.from({ length: 6 }, (_, i) => ({ plannedSessionId: [...diff.writes.map((w) => w.id), ...diff.removedIds][i], action: 'move' as const }));
+    expect(sheetAnswer({ items, data: p, extraLines: 0 })).toEqual({ showEmpty: false, canAccept: true, unshown: false });
+  });
+
+  it('een rij die alleen weer van het plan wordt, staat er ook in', () => {
+    const only = weekDiff([s('x', 'tpl_easy_run', d(3), { lock: yours, plannedMinutes: 20 })], [s('x', 'tpl_easy_run', d(3))], MON);
+    expect(replanPreview([s('x', 'tpl_easy_run', d(3), { lock: yours })], [s('x', 'tpl_easy_run', d(3))], only, templates).moves).toEqual([{ name: expect.any(String), action: 'reset', to: d(3), sessionId: 'x' }]);
+  });
+
+  it('een training die terugkomt is een geldig item: het gewone voorbeeld toont hem ook', () => {
+    const items = [{ plannedSessionId: 'back', action: 'add' as const, toDate: d(5), newSessionDraft: { templateId: 'tpl_hill_intervals', scheduledDate: d(5), weekStartDate: MON }, restore: true }];
+    expect(previewProposal(items, stored, templates).moves).toEqual([{ name: expect.any(String), action: 'add', to: d(5), sessionId: 'back' }]);
+  });
+});
+
+describe('het blad: nooit Akkoord naast een lege lijst', () => {
+  it('wijzigingen die het blad niet kan tonen: geen Akkoord en geen "er verandert niets"', () => {
+    const items = [{ plannedSessionId: 'a', action: 'move' as const, fromDate: d(2), toDate: d(3) }];
+    expect(sheetAnswer({ items, data: { moves: [] }, extraLines: 0 })).toEqual({ showEmpty: false, canAccept: false, unshown: true });
+    expect(sheetAnswer({ items, data: { moves: [], failed: true }, extraLines: 2 })).toEqual({ showEmpty: false, canAccept: false, unshown: true });
+  });
+  it('de lege tekst met Akkoord alleen als het voorstel zelf niets aan het plan doet; answerless alleen Begrepen', () => {
+    expect(sheetAnswer({ items: [], data: { moves: [] }, extraLines: 0 })).toEqual({ showEmpty: true, canAccept: true, unshown: false });
+    expect(sheetAnswer({ answerless: true, items: [], data: { moves: [] }, extraLines: 0 })).toEqual({ showEmpty: true, canAccept: false, unshown: false });
+  });
+  it('ProposalSheet volgt sheetAnswer: Akkoord staat alleen in de tak waar het mag, de lege tekst alleen met showEmpty', () => {
+    const buttons = sheetSource.slice(sheetSource.indexOf('{answerless ? ('), sheetSource.indexOf('>Akkoord</PrimaryButton>'));
+    expect(buttons).toContain('!answer.canAccept ? (');
+    expect(buttons.indexOf('!answer.canAccept ? (')).toBeLessThan(buttons.lastIndexOf('<PrimaryButton'));
+    expect(sheetSource).toContain('{answer.showEmpty && emptyText && (');
+    expect(sheetSource).not.toContain('data.moves.length === 0 && (!extraLines');
   });
 });

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { withSportNames } from '../engine/sportTemplate';
 import { useAppData } from '../state/AppDataContext';
 import type { Advice } from '../engine/adviceEngine';
 import type { WeekReplanPlan } from '../storage/weekReplan';
-import { REPLAN_NO_CHANGE, REPLAN_TITLE, replanSummary } from '../engine/replanWeek';
+import { REPLAN_NO_CHANGE, REPLAN_TITLE, replanPreview, replanSummary } from '../engine/replanWeek';
 import { formatShortDayNL } from '../utils/dates';
 import { ProposalSheet } from './ProposalSheet';
 import { TextButton } from './TextButton';
@@ -14,7 +15,7 @@ import { TextButton } from './TextButton';
 type State = { step: 'idle' } | { step: 'busy' } | { step: 'failed' } | { step: 'open'; plan: WeekReplanPlan };
 
 export function WeekReplanButton({ weekStart }: { weekStart: string }) {
-  const { planWeekReplan, applyWeekReplan } = useAppData();
+  const { planWeekReplan, applyWeekReplan, templates } = useAppData();
   const [state, setState] = useState<State>({ step: 'idle' });
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -32,7 +33,9 @@ export function WeekReplanButton({ weekStart }: { weekStart: string }) {
   };
 
   const plan = state.step === 'open' ? state.plan : undefined;
-  const changes = plan ? plan.diff.writes.length + plan.diff.removedIds.length : 0;
+  // De lijst in het blad en het aantal wijzigingen komen uit dezelfde bron: plan.diff.
+  const preview = useMemo(() => (plan ? replanPreview(plan.stored, plan.after, plan.diff, withSportNames(templates)) : undefined), [plan, templates]);
+  const changes = preview?.moves.length ?? 0;
   const advice: Advice | undefined = plan && {
     id: `replan:${plan.weekStart}`, trigger: 'plan_update', ruleId: 'WEEK-REPLAN', title: REPLAN_TITLE, effect: '', why: '', priority: 0,
     proposal: plan.proposal,
@@ -54,7 +57,7 @@ export function WeekReplanButton({ weekStart }: { weekStart: string }) {
           emptyText={REPLAN_NO_CHANGE}
           answerless={changes === 0}
           notes={changes > 0 ? plan.notes : undefined}
-          previewPass={() => plan.after}
+          preview={preview}
           onRespond={async (response) => {
             if (response === 'accepted') await applyWeekReplan(plan);
           }}

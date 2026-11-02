@@ -163,3 +163,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Instellingen ronde 3, Sherpa sonnet 141k; review sonnet groen na clockNL
 - 2026-11-02, Rustdag deze week, Sherpa opus 121k; review loopt
 - 2026-11-02, Vandaag en Ongedaan, Sherpa opus 198k; review opus rood (written ontbreekt bij meldingen zonder rijen)
+- 2026-11-02, Week opnieuw blad (3 herkeuringen), live; Gegevens review groen met punten; Ongedaan herkeuring rood (refreshWritten)

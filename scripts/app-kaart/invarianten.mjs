@@ -122,6 +122,22 @@ export const INVARIANTEN = [
     naam: 'Hoogstens het afgesproken aantal kaarten boven de missie',
     controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^\[boven de missie: .*\]$/gm).map((m) => `${s}: ${m[0]}`)),
   },
+  {
+    // Elke week in Week heeft een rustdag in beeld (engine/restDayThisWeek.ts): de vaste rustdag ("Rustdag"), een rij
+    // Herstel, een vakantiedag, of, als de vaste rustdag bezet is, een vrije dag als "Rustdag deze week" met de reden.
+    // Staat er een lege dag "Vrij" en nergens rust, dan telde de app een dag stil als rustdag zonder het te zeggen.
+    naam: 'Week met bezette rustdag toont een vrije dag als rustdag',
+    controleer: (k, schermen) => schermen.filter((s) => s === 'week' || s.startsWith('week-')).flatMap((s) => {
+      const t = k(s);
+      if (!t) return [];
+      const uit = [];
+      const vrij = /^Vrij$/m.test(t);
+      const rust = /^Rustdag( deze week)?$|^\[knop: (Rustdag|Hersteldag)|^Vakantie$/m.test(t);
+      if (vrij && !rust) uit.push(`${s}: een lege dag heet Vrij, maar geen dag van de week heet Rustdag`);
+      for (const m of alle(t, /^Rustdag deze week\n(.*)$/gm)) if (!/je rustdag op \w+ is bezet/.test(m[1])) uit.push(`${s}: "Rustdag deze week" zonder reden ("${m[1].trim()}")`);
+      return uit;
+    }),
+  },
 ];
 
 const SCHERMEN = [

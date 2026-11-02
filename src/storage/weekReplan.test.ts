@@ -3,6 +3,9 @@ import { runBootMigrations } from './bootMigrations';
 import { wipeAllData, seedIfEmpty, syncProgramHorizon, PlannedSessionsRepo, SessionLogsRepo, TrainingGoalsRepo, PlanChangeProposalsRepo } from './database';
 import { undoPlanChangeNow } from './undoPlanChange';
 import { restoredRow } from '../engine/testMoveRestore';
+import { replanPreview } from '../engine/replanWeek';
+import { applyPlanChangeItems } from '../engine/proposalEngine';
+import { SessionTemplatesRepo } from './database';
 import { planWeekReplan, writeWeekReplan, undoWeekReplan, REPLAN_STALE, REPLAN_UNDO_STALE } from './weekReplan';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { TrainingGoal } from '../models/goals';
@@ -174,5 +177,18 @@ describe('Week opnieuw plannen', () => {
     expect((await PlannedSessionsRepo.getAll()).find((x) => x.id === row.id)).toMatchObject({ status: 'planned', lock: yours });
     await undoPlanChangeNow({ id: 'u1', trigger: 'session_moved', title: 'Sessies verplaatst', lines: [], why: '', before: [skipped], addedIds: [], createdAt: '2026-11-04T08:00:00.000Z' });
     expect((await PlannedSessionsRepo.getAll()).find((x) => x.id === row.id)).toEqual(skipped);
+  });
+
+  it('het blad toont elke wijziging, en de items van het voorstel zijn allemaal toe te passen', async () => {
+    // Een training die een voorstel liet gaan: hij komt terug (zoals bij de eigenaar).
+    const last = (await week()).filter(open).sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
+    await PlannedSessionsRepo.put({ ...last, status: 'skipped', lock: { by: 'proposal', proposalId: 'p1', at: '2026-11-03T08:00:00.000Z' } });
+    await messUp();
+    const proposal = (await planWeekReplan(MON))!;
+    const preview = replanPreview(proposal.stored, proposal.after, proposal.diff, await SessionTemplatesRepo.getAll());
+    expect(preview.moves.length).toBe(proposal.diff.writes.length + proposal.diff.removedIds.length);
+    expect(preview.moves.length).toBeGreaterThan(0);
+    expect(preview.moves.some((m) => m.action === 'add')).toBe(true);
+    expect(applyPlanChangeItems(proposal.items, proposal.stored).unsupported).toEqual([]);
   });
 });

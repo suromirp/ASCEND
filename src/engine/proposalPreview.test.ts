@@ -13,7 +13,7 @@ describe('the week as a proposal would leave it', () => {
   it('marks the moved test: away from Thursday, here on Tuesday, the rest unchanged; one summary line', () => {
     const move: PlanChangeItem = { plannedSessionId: 't', action: 'move', fromDate: '2026-10-29', toDate: '2026-10-27', reason: '', generatedBy: ['x'] };
     const { moves, weeks: [w] } = previewProposal([move], week, templates);
-    expect(moves).toEqual([{ name: 'Testloop 5 km', action: 'move', from: '2026-10-29', to: '2026-10-27' }]);
+    expect(moves.map(({ sessionId: _id, isNew: _new, ...m }) => m)).toEqual([{ name: 'Testloop 5 km', action: 'move', from: '2026-10-29', to: '2026-10-27' }]);
     expect(w.weekStart).toBe('2026-10-26');
     const day = (d: string) => w.days.find((x) => x.date === d)!;
     expect(day('2026-10-27').entries.map((e) => [e.name, e.change])).toEqual([['Bovenlichaam A', undefined], ['Testloop 5 km', 'hierheen']]);
@@ -29,7 +29,7 @@ describe('the week as a proposal would leave it', () => {
     // The run moves Lower A off the test day, as the race block would.
     const pass = (list: PlannedSession[]) => list.map((x) => (x.id === 'b' ? { ...x, scheduledDate: '2026-10-30' } : x));
     const { moves } = previewProposal([move], week, templates, pass);
-    expect(moves).toEqual([
+    expect(moves.map(({ sessionId: _id, isNew: _new, ...m }) => m)).toEqual([
       { name: 'Benen A (zwaar)', action: 'move', from: '2026-10-28', to: '2026-10-30' },
       { name: 'Testloop 5 km', action: 'move', from: '2026-10-29', to: '2026-10-28' },
     ]);
@@ -38,7 +38,7 @@ describe('the week as a proposal would leave it', () => {
   it('shows a removal struck through, and nothing for content-only changes', () => {
     const remove: PlanChangeItem = { plannedSessionId: 'c', action: 'remove', reason: '', generatedBy: ['x'] };
     const { moves, weeks: [w] } = previewProposal([remove], week, templates);
-    expect(moves).toEqual([{ name: 'Bovenlichaam B', action: 'remove', from: '2026-10-30' }]);
+    expect(moves.map(({ sessionId: _id, isNew: _new, ...m }) => m)).toEqual([{ name: 'Bovenlichaam B', action: 'remove', from: '2026-10-30' }]);
     expect(w.days.find((d) => d.date === '2026-10-30')!.entries).toEqual([{ name: 'Bovenlichaam B', type: 'strength', templateId: 'tpl_upper_b', plannedMinutes: undefined, change: 'vervalt' }]);
     expect(previewProposal([{ plannedSessionId: 'c', action: 'replace', reason: '', generatedBy: ['x'] }], week, templates).weeks).toEqual([]);
   });
@@ -47,7 +47,7 @@ describe('the week as a proposal would leave it', () => {
     const plan = [...week, s('l', 'tpl_long_run', '2026-11-01')];
     const change: PlanChangeItem = { plannedSessionId: 'l', action: 'move', fromDate: '2026-11-01', toDate: '2026-11-01', templateId: 'tpl_mountain_hike', restore: true };
     const { moves, weeks: [w] } = previewProposal([change], plan, templates);
-    expect(moves).toEqual([{ name: 'Lange duurloop', action: 'change', to: '2026-11-01', newName: 'Bergtocht' }]);
+    expect(moves.map(({ sessionId: _id, isNew: _new, ...m }) => m)).toEqual([{ name: 'Lange duurloop', action: 'change', to: '2026-11-01', newName: 'Bergtocht' }]);
     expect(w.days.find((d) => d.date === '2026-11-01')!.entries[0]).toMatchObject({ name: 'Bergtocht', change: 'anders', otherName: 'Lange duurloop' });
   });
 });
