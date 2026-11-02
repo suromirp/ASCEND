@@ -1002,6 +1002,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Exacte wekker', text: 'Android laat een melding anders tot een paar minuten te laat komen. Voor het einde van je rust is dat te laat.' },
       { head: 'Health Connect', text: 'komt later: dan leest ASCEND je gewicht, stappen en trappen.' },
       { head: 'Back-up van Android', text: 'Android zet een kopie van je ASCEND-gegevens in je Google-back-up, versleuteld met je schermvergrendeling. Je eigen back-up blijft de echte; boven ongeveer 25 MB slaat Android hem over.' },
+      { head: 'Widget', text: 'De widget Vandaag onthoudt alleen de naam en duur van je training van vandaag. Ben je ziek, dan staat er alleen Rust vandaag. Dat staat op deze telefoon zelf en gaat nergens heen.' },
     ],
   },
   autoBijwerken: {

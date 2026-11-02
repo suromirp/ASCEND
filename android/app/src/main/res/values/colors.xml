@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- De waarden van de tokens in src/index.css, voor de delen die niet in de webview staan
+     (snelkoppelingen en widget). Verandert een token, verander het hier mee. -->
+<resources>
+    <color name="ascend_bg">#0B1733</color>
+    <color name="ascend_card">#172B54</color>
+    <color name="ascend_card_border">#27416F</color>
+    <color name="ascend_ink">#F1F6FF</color>
+    <color name="ascend_ink_dim">#ABBBDB</color>
+    <color name="ascend_action">#5EEAD4</color>
+</resources>
