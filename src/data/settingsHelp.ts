@@ -112,7 +112,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   wijzigingen: {
     title: 'Wijzigingen',
-    lead: 'Na een training, een gemiste sessie of een nieuwe instelling kan je planning schuiven.',
+    lead: 'Wie beslist als je planning verandert: jij, of bij kleine dingen ASCEND zelf. Na een training, een gemiste sessie of een nieuwe instelling kan je planning schuiven.',
     points: [
       { head: 'Vraag eerst', text: 'je ziet alles vooraf en kiest Akkoord. Alleen de weekcontrole zet wat ASCEND zelf plande meteen recht (rustdag vrij, ruimte tussen zware dagen), met de melding Planning bijgewerkt en ongedaan maken.' },
       { head: 'Deels zelf', text: 'weken verder weg past ASCEND zelf aan, met een melding. Deze en volgende week, of iets schrappen, vraagt altijd eerst.' },
@@ -150,7 +150,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   forge: {
     title: 'Kracht meerekenen',
-    lead: 'ASCEND rekent stil mee met de krachttrainingen die je uit MacroFactor inleest.',
+    lead: 'Forge rekent met je krachttrainingen en stelt per oefening voor wat je de volgende keer doet. Uit: je ziet alleen wat je deed.',
     points: [
       { head: 'Je krijgt', text: 'per oefening een voorstel voor de volgende keer.' },
       { head: 'Je planning', text: 'verandert er niet door.' },
@@ -395,7 +395,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   gewicht: {
     title: 'Lichaamsgewicht',
-    lead: 'ASCEND rekent met je trendgewicht, want dat is rustiger dan één weging.',
+    lead: 'Je trendgewicht, voor je rugzak en je zweetverlies. ASCEND rekent ermee, want dat is rustiger dan één weging.',
     points: [
       { head: 'Uit MacroFactor', text: 'staat er een trendgewicht in de export, dan gebruikt ASCEND dat. Anders de weging zelf.' },
       { head: 'Waarvoor', text: 'je rugzak als deel van je lichaamsgewicht, de beenindex en eiwit per kilo.' },
@@ -1122,6 +1122,256 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Alleen met sets in ASCEND', text: 'houd je sets in MacroFactor bij, dan is het workoutscherm alleen om mee te kijken en doen deze keuzes niets. Ze verdwijnen dan uit beeld.' },
       { head: 'Terugzetten', text: 'kan per keuze, of met Terug naar het advies bovenaan Instellingen.' },
+    ],
+  },
+  trainingstijd: {
+    title: 'Trainingstijd per dag',
+    lead: 'Hoeveel tijd je normaal per dag hebt. ASCEND plant nooit langer.',
+    points: [
+      { head: 'Veranderen', text: 'je ziet eerst wat er in je week verschuift en kiest zelf met Akkoord.' },
+    ],
+  },
+  rustdag: {
+    title: 'Rustdag',
+    lead: 'De dag waarop je niet traint. Een andere dag laat eerst zien wat er verschuift.',
+    points: [
+      { head: 'Altijd', text: 'het weekend blijft voor je lange trainingen.' },
+      { head: 'Akkoord', text: 'de nieuwe rustdag geldt pas als jij Akkoord geeft.' },
+    ],
+  },
+  sporten: {
+    title: 'Sporten',
+    lead: 'Welke sporten ASCEND inplant en hoe vaak. Wat je zelf doet, telt ook mee voor je benen.',
+    points: [
+      { head: 'Aan of uit', text: 'een sport die uit staat, plant ASCEND niet in. Wat je ervan al deed blijft in je logboek.' },
+    ],
+  },
+  citaten: {
+    title: 'Citaat na een training',
+    lead: 'Een citaat op het rustige scherm als je een training afrondt.',
+    points: [
+      { head: 'Uit', text: 'haalt alleen het citaat weg, de rest van het scherm blijft.' },
+      { head: 'Onderaan Vandaag', text: 'het citaat onderaan Vandaag heeft een eigen keuze.' },
+    ],
+  },
+  bundelWeer: {
+    title: 'Weer en kleding',
+    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, kleding, en een regel bij hitte of slechte lucht.',
+    points: [
+      { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
+      { head: 'Je plaats', text: 'het weer volgt de plaats die je bij Plaats koos.' },
+    ],
+  },
+  geluid: {
+    title: 'Geluid',
+    lead: 'Een paar lage tonen bij het openen en een klank als je een training afrondt.',
+    points: [
+      { head: 'Forge', text: 'het rustsignaal van Forge stel je in bij Forge.' },
+    ],
+  },
+  weekvraag: {
+    title: 'Vraag van de week',
+    lead: 'Elke week één korte vraag om je plan scherp te houden.',
+    points: [
+      { head: 'Privé', text: 'je antwoord blijft op je telefoon.' },
+    ],
+  },
+  terugknop: {
+    title: 'Terugknop op een tab',
+    lead: 'Wat de terugknop van je telefoon doet op een andere tab dan Vandaag.',
+    points: [
+      { head: 'Een blad of menu', text: 'sluit altijd eerst, wat je ook kiest.' },
+    ],
+  },
+  hervatten: {
+    title: 'Na een herstart',
+    lead: 'Open je ASCEND binnen deze tijd opnieuw, dan kom je terug waar je was.',
+    points: [
+      { head: 'Daarna', text: 'begin je op Vandaag.' },
+    ],
+  },
+  garmin: {
+    title: 'Via intervals.icu',
+    lead: 'Je trainingen, slaap en hartslag komen van je Garmin via intervals.icu binnen, zonder overtypen.',
+    points: [
+      { head: 'Waarvoor', text: 'afvinken, slaap, rusthartslag en HRV. Wat je gebruikt kies je bij Gebruik van je horloge.' },
+      { head: 'Niet te lezen', text: 'lukt het kijken naar de koppeling even niet, dan staat dat er. Probeer het zo opnieuw.' },
+    ],
+  },
+  bundelHorlogeGebruik: {
+    title: 'Gebruik van je horloge',
+    lead: 'Per soort gegeven of ASCEND het ophaalt.',
+    points: [
+      { head: 'Uit', text: 'betekent: niet ophalen en niet bewaren.' },
+    ],
+  },
+  naarHorloge: {
+    title: 'Trainingen naar je horloge',
+    lead: 'De trainingen van de komende week staan in je intervals.icu-agenda en zo op je horloge.',
+    points: [
+      { head: 'Via intervals.icu', text: 'ASCEND zet de trainingen in je agenda daar en Garmin brengt ze naar je horloge.' },
+    ],
+  },
+  horlogeVoorvoegsel: {
+    title: 'Voorvoegsel voor de naam',
+    lead: 'ASC voor de naam, zodat je de trainingen van ASCEND herkent op je horloge.',
+    points: [
+      { head: 'Geen', text: 'dan staat de naam van de training er alleen.' },
+    ],
+  },
+  horlogeRustigeLoop: {
+    title: 'Rustige loop: ruime grens',
+    lead: 'Bij een rustige loop piept je horloge alleen als je boven zone 2 komt, niet als je even zakt.',
+    points: [
+      { head: 'Waarom', text: 'hardlopend kom je zelden onder zone 1, dus het horloge piept vooral als je te hoog gaat.' },
+    ],
+  },
+  horlogeGedaanWeghalen: {
+    title: 'Gedane trainingen weghalen',
+    lead: 'Een training die je deed of oversloeg, verdwijnt weer uit je agenda.',
+    points: [
+      { head: 'Waarom', text: 'een opgeruimde agenda laat zien wat er nog komt.' },
+    ],
+  },
+  horlogeStatus: {
+    title: 'Laten zien of het gelukt is',
+    lead: 'Eén regel bij de training en een klein horloge in Week, alleen als het verstuurd is of niet lukte.',
+    points: [
+      { head: 'Uit', text: 'geen regel en geen horloge, het versturen gaat gewoon door.' },
+    ],
+  },
+  macrofactorExport: {
+    title: 'Laatste export',
+    lead: 'Krachttrainingen en gewicht uit je MacroFactor-export, met de echte duur en herhalingen in reserve.',
+    points: [
+      { head: 'Opnieuw inlezen', text: 'een nieuwe export vult de nieuwe dagen aan. Wat er al stond blijft.' },
+    ],
+  },
+  backup: {
+    title: 'Laatste back-up',
+    lead: 'Al je gegevens in één bestand, om te bewaren of terug te zetten.',
+    points: [
+      { head: 'Alleen hier', text: 'alles staat alleen op deze telefoon, dus dit is je enige kopie.' },
+    ],
+  },
+  backupmap: {
+    title: 'Vaste map',
+    lead: 'Een map die de browser onthoudt, zodat een back-up daar vanzelf landt.',
+    points: [
+      { head: 'Niet gekozen', text: 'dan bewaar je het bestand elke keer zelf.' },
+    ],
+  },
+  momentopnamen: {
+    title: 'Kopieën van voor een import',
+    lead: 'Voor elke import bewaart ASCEND een kopie, zodat je terug kunt.',
+    points: [
+      { head: 'Waarom', text: 'een import vervangt je gegevens. Met de kopie kun je terug als het niet is wat je dacht.' },
+    ],
+  },
+  herbouwen: {
+    title: 'Adviezen opnieuw berekenen',
+    lead: 'ASCEND kijkt opnieuw naar je planning en je adviezen. Er wordt niets verwijderd.',
+    points: [
+      { head: 'Meestal niet nodig', text: 'ASCEND doet het zelf na een update of import. Dit is een noodknop.' },
+    ],
+  },
+  startniveau: {
+    title: 'Startniveau zelf invullen',
+    lead: 'Meestal niet nodig, want ASCEND vraagt zelf wat ontbreekt. Hier vul je het in als je dat liever doet.',
+    points: [
+      { head: 'Je historie', text: 'blijft zoals hij was.' },
+    ],
+  },
+  wissen: {
+    title: 'Alles verwijderen',
+    lead: 'Wist alles op deze telefoon. Maak eerst een back-up, want dit kan niet terug.',
+    points: [
+      { head: 'Eerst een back-up', text: 'maak er een bij Laatste back-up, dan kun je alles later terugzetten.' },
+    ],
+  },
+  hoofddoel: {
+    title: 'Hoofddoel',
+    lead: 'Waar je naartoe werkt. ASCEND rekent je weken terug vanaf die datum.',
+    points: [
+      { head: 'Zonder doel', text: 'dan werk je in golven met een richting.' },
+    ],
+  },
+  programma: {
+    title: 'Programma',
+    lead: 'In welke week en fase je zit. Opnieuw beginnen bij week 1 kan in het blad.',
+    points: [
+      { head: 'Opnieuw bij week 1', text: 'kies je een schone start of alleen de weektelling, en vanaf welke week.' },
+    ],
+  },
+  langeZondag: {
+    title: 'De lange zondag',
+    lead: 'Op zondag staat je langste training: een bergtocht of een lange duurloop. Een andere keuze laat eerst zien wat er verschuift.',
+    points: [
+      { head: 'Bergdoel', text: 'is je hoofddoel een bergtocht, dan staat deze keuze er niet.' },
+    ],
+  },
+  naHoofddoel: {
+    title: 'Na je hoofddoel',
+    lead: 'Wat ASCEND plant als je doel voorbij is: niets (advies) of onderhoudsweken.',
+    points: [
+      { head: 'Tijdens de tocht', text: 'verandert er nooit iets.' },
+    ],
+  },
+  bundelTochten: {
+    title: 'Tochten',
+    lead: 'Wat ASCEND doet rond een tocht: op Vandaag tonen, water per etappe, rust erna en je schoenen.',
+    points: [
+      { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
+    ],
+  },
+  vrijeDagen: {
+    title: 'Vrije dagen en vakanties',
+    lead: 'Dagen zonder training, een vakantie of een tocht. Je zet ze in Week.',
+    points: [
+      { head: 'Voorstel', text: 'ASCEND laat eerst zien wat er in je planning verandert.' },
+    ],
+  },
+  blessures: {
+    title: 'Klachten en rekken',
+    lead: 'Waar je last van hebt, zodat ASCEND er rekening mee houdt, en wat je kunt rekken of versterken.',
+    points: [
+      { head: 'Je planning', text: 'verandert alleen met jouw Akkoord.' },
+    ],
+  },
+  bundelWat: {
+    title: 'Wat speelde er',
+    lead: 'Je eigen aantekeningen bij een training of een dag, en wat ASCEND ermee doet.',
+    points: [
+      { head: 'Alleen op je telefoon', text: 'wat je vastlegt blijft hier.' },
+    ],
+  },
+  krachtBijhouden: {
+    title: 'Waar je sets bijhoudt',
+    lead: 'Houd je je sets bij in ASCEND of in MacroFactor?',
+    points: [
+      { head: 'In ASCEND', text: 'je vult ze in tijdens je training, met de rusttimer en voorstellen per set.' },
+      { head: 'In MacroFactor', text: 'ASCEND leest ze uit je export en het workoutscherm is om mee te kijken.' },
+    ],
+  },
+  forgeVolgorde: {
+    title: 'Wat eerst omhoog',
+    lead: 'Gaat een oefening goed, dan verhoogt Forge eerst dit. Het andere volgt als het bovenaan je bereik zit.',
+    points: [
+      { head: 'Alleen voorstellen', text: 'Forge stelt voor, jij beslist.' },
+    ],
+  },
+  bundelRusttimer: {
+    title: 'Rusttimer',
+    lead: 'Na elke werkset en je laatste opwarmset start de rust, met een tijd per oefening.',
+    points: [
+      { head: 'Signaal', text: 'of en hoe de rusttimer je laat weten dat de rust om is, kies je in het blad.' },
+    ],
+  },
+  forgeScherm: {
+    title: 'Scherm aan tijdens je training',
+    lead: 'Je scherm blijft aan zolang je training open is, ook als je alleen meekijkt.',
+    points: [
+      { head: 'Uit', text: 'dan volgt je scherm de instelling van je telefoon.' },
     ],
   },
 };

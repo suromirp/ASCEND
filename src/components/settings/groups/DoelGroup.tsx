@@ -56,11 +56,11 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
     <>
       {(note || plan.note || direction.note) && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{note ?? plan.note ?? direction.note}</p>}
       <SettingsSection title="Doel">
-        <SummaryRow id="doelen" title="Hoofddoel" facts={facts} onClick={() => navigate('/ascend/doelen')} />
-        <SummaryRow id="programma" title="Programma" facts={facts} onClick={() => setSheet('programma')} />
+        <SummaryRow id="doelen" title="Hoofddoel" facts={facts} info="hoofddoel" onClick={() => navigate('/ascend/doelen')} />
+        <SummaryRow id="programma" title="Programma" facts={facts} info="programma" onClick={() => setSheet('programma')} />
         <SummaryRow id="bundel-zonder-doel" title="Zonder doel" facts={facts} onClick={() => setSheet('bundel-zonder-doel')} />
-        <SummaryRow id="lange-zondag" title="De lange zondag" facts={facts} onClick={() => setSheet('lange-zondag')} />
-        <SummaryRow id="na-hoofddoel" title="Na je hoofddoel" facts={facts} onClick={() => setSheet('na-hoofddoel')} />
+        <SummaryRow id="lange-zondag" title="De lange zondag" facts={facts} info="langeZondag" onClick={() => setSheet('lange-zondag')} />
+        <SummaryRow id="na-hoofddoel" title="Na je hoofddoel" facts={facts} info="naHoofddoel" onClick={() => setSheet('na-hoofddoel')} />
         <SummaryRow id="klaar-weging" title="Weging bij een doeltijd" facts={facts} info="klaarWeging" onClick={() => setSheet('klaar-weging')} />
         <SummaryRow id="klaar-groei" title="Groei bij het rekenen" facts={facts} info="klaarGroei" onClick={() => setSheet('klaar-groei')} />
         <SummaryRow id="klaar-marge" title="Marge bij een tijdslimiet" facts={facts} info="klaarMarge" onClick={() => setSheet('klaar-marge')} />
@@ -69,8 +69,8 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       <SettingsSection title="Tochten">
-        <SummaryRow id="bundel-tochten" title="Tochten" facts={facts} onClick={() => setSheet('bundel-tochten')} />
-        <SummaryRow id="vrije-dagen" title="Vrije dagen en vakanties" facts={facts} onClick={() => navigate('/week')} />
+        <SummaryRow id="bundel-tochten" title="Tochten" facts={facts} info="bundelTochten" onClick={() => setSheet('bundel-tochten')} />
+        <SummaryRow id="vrije-dagen" title="Vrije dagen en vakanties" facts={facts} info="vrijeDagen" onClick={() => navigate('/week')} />
       </SettingsSection>
 
       {sheet === 'bundel-tochten' && (

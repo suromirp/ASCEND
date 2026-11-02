@@ -84,7 +84,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
 
       <SettingsSection title="Weer">
         <SummaryRow id="weerplaats" title="Plaats" facts={facts} info="plaats" onClick={() => setSheet('weerplaats')} />
-        <SummaryRow id="bundel-weer" title="Weer en kleding" facts={facts} onClick={() => setSheet('bundel-weer')} />
+        <SummaryRow id="bundel-weer" title="Weer en kleding" facts={facts} info="bundelWeer" onClick={() => setSheet('bundel-weer')} />
       </SettingsSection>
 
       <SettingsSection title="Na een training">
@@ -109,8 +109,8 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
             <SummaryRow id="ochtend-vanaf" title="Ochtend begint om" facts={facts} onClick={() => setSheet('ochtend-vanaf')} />
             <SummaryRow id="korte-nacht" title="Vragen bij een korte nacht" facts={facts} info="korteNacht" onChange={(on) => void updateSettings({ askShortNight: on })} />
             <SummaryRow id="weekterugblik-dag" title="Dag van de terugblik" facts={facts} onClick={() => setSheet('weekterugblik-dag')} />
-            <SummaryRow id="terugknop" title="Terugknop op een tab" facts={facts} onClick={() => setSheet('terugknop')} />
-            <SummaryRow id="hervatten" title="Na een herstart" facts={facts} onClick={() => setSheet('hervatten')} />
+            <SummaryRow id="terugknop" title="Terugknop op een tab" facts={facts} info="terugknop" onClick={() => setSheet('terugknop')} />
+            <SummaryRow id="hervatten" title="Na een herstart" facts={facts} info="hervatten" onClick={() => setSheet('hervatten')} />
           </>
         }
       >
@@ -131,10 +131,10 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
                 <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
                 <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
                 <SummaryRow id="lijfvraag" title="Hoe voelt je lijf?" facts={facts} info="lijfvraag" onClick={() => setInner('lijfvraag')} />
-                <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} onChange={(on) => set({ weeklyQuestion: on })} />
-                <SummaryRow id="citaten" title="Citaat na een training" facts={facts} onChange={(on) => set({ completionMoment: on })} />
+                <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} info="weekvraag" onChange={(on) => set({ weeklyQuestion: on })} />
+                <SummaryRow id="citaten" title="Citaat na een training" facts={facts} info="citaten" onChange={(on) => set({ completionMoment: on })} />
                 <SummaryRow id="dagcitaat" title="Citaat op Vandaag" facts={facts} info="dagcitaat" onClick={() => setInner('dagcitaat')} />
-                <SummaryRow id="geluid" title="Geluid" facts={facts} onChange={(on) => void updateSettings({ introSoundEnabled: on })} />
+                <SummaryRow id="geluid" title="Geluid" facts={facts} info="geluid" onChange={(on) => void updateSettings({ introSoundEnabled: on })} />
               </SettingsList>
             </div>
           }
@@ -162,7 +162,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="beste-moment" title="Beste moment tonen" facts={facts} info="besteMoment" onChange={(on) => set({ bestMoment: on })} />
           <SummaryRow id="weerruil" title="Ruilen bij slecht weer" facts={facts} onChange={(on) => set({ weatherSwap: on })} />
           <SummaryRow id="kledingadvies" title="Kledingadvies" facts={facts} onChange={(on) => set({ clothingAdvice: on })} />
-          <SummaryRow id="kleding-voorkeur" title="Je kleding" facts={facts} onClick={() => setInner('kleding-voorkeur')} />
+          <SummaryRow id="kleding-voorkeur" title="Je kleding" facts={facts} info="kleding" onClick={() => setInner('kleding-voorkeur')} />
         </BundleSheet>
       )}
       {sheet === 'bundel-inzicht' && (
