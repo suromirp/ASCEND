@@ -130,3 +130,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Health Connect herstel 10 punten, Sherpa, opus, hervat 407k, 17 min, 1
 - 2026-11-02, Herkeuring Health Connect, Warden, opus, hervat, groen
 - 2026-11-02, Health Connect laatste twee punten, Sherpa, opus, hervat, 0; live
+- 2026-11-02, Opzet spierindex, Scout, opus, 98k, 2 min, 0
