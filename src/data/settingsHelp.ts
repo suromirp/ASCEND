@@ -937,6 +937,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Een test', text: 'een testloop verplaats of ruil je altijd met Akkoord.' },
       { head: 'Een wedstrijd', text: 'hoort er niet bij. Die verplaats je via je doel op de Ascend-tab.' },
       { head: 'Ongedaan maken', text: 'een gewone verplaatsing of ruil gaat meteen, met Ongedaan maken in de melding.' },
+      { head: 'Weer zoals het plan', text: 'is je week scheef geraakt, kies dan onder de week Week opnieuw plannen. Je ziet eerst een voorstel; met Akkoord gaat de rest van de week terug naar het plan.' },
     ],
   },
   loslatenTraining: {

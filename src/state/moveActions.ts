@@ -21,7 +21,8 @@ import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions
 import { dayVerdicts, type DayVerdict, type DragContext } from '../engine/weekDrag';
 import { withSwapVerdicts } from '../engine/weekSwap';
 import { armFlip, disarmFlip } from '../utils/flipDom';
-import type { RecentPlanChange } from '../models/planChange';
+import type { PlanChangeProposal, RecentPlanChange } from '../models/planChange';
+import { restoreSentence, restoresForTestMove } from '../engine/testMoveRestore';
 import { mondayOfWeek, todayISO, addDays, weekdayShortNL, formatDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { planEndDay } from '../engine/programLayout';
@@ -40,8 +41,10 @@ export function useMoveActions(deps: {
   setRecentChange: Dispatch<SetStateAction<RecentPlanChange | null>>;
   refresh: (fromOtherWindow?: boolean) => Promise<void>;
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
+  // Het wijzigingslog: welke test een nieuwe testpoging was (engine/testMoveRestore.ts).
+  planChangeLog?: PlanChangeProposal[];
 }) {
-  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalEngineConfig, settings, templates, setRecentChange, refresh, sessionsForWeek } = deps;
+  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalEngineConfig, settings, templates, setRecentChange, refresh, sessionsForWeek, planChangeLog } = deps;
   const moveSession = useCallback(
     (sessionId: string, targetDate: string): ScheduleProposal => {
       const targetMonday = mondayOfWeek(targetDate);
@@ -58,9 +61,16 @@ export function useMoveActions(deps: {
       const nextWeek = sessionsForWeek(addDays(targetMonday, 7));
       const nearby = [...previousWeek, ...week, ...nextWeek];
       const combined = nearby.some((s) => s.id === sessionId) ? nearby : [...nearby, ...plannedSessions.filter((s) => s.id === sessionId)];
-      return proposeMove(combined, templates, sessionId, targetDate, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference);
+      const proposal = proposeMove(combined, templates, sessionId, targetDate, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference);
+      // Een nieuwe testpoging die verhuist: wat alleen voor die test wegging komt in hetzelfde voorstel terug.
+      const own = proposal.changes[0];
+      if (!own || own.sessionId !== sessionId || own.toDate === own.fromDate) return proposal;
+      const back = restoresForTestMove({ testId: sessionId, toDate: own.toDate, sessions: plannedSessions, proposals: planChangeLog ?? [], logs: sessionLogs, templates, today: todayISO() })
+        .filter((c) => !proposal.changes.some((x) => x.sessionId === c.sessionId));
+      if (back.length === 0) return proposal;
+      return { ...proposal, changes: [...proposal.changes, ...back], reason: [proposal.reason, restoreSentence(back)].filter(Boolean).join(' ') };
     },
-    [sessionsForWeek, plannedSessions, templates, sessionLogs, program, goalEngineConfig],
+    [sessionsForWeek, plannedSessions, templates, sessionLogs, program, goalEngineConfig, planChangeLog],
   );
 
   const suggestMoves = useCallback(

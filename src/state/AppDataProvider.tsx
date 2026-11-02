@@ -74,6 +74,7 @@ import {
 import { usePlanChangeActions } from './planChangeActions';
 import { useStrengthAndReplan } from './strengthAndReplan';
 import { useLogActions, useWatchAndSourceActions } from './logActions';
+import { useWeekReplanActions } from './weekReplanActions';
 import { useMoveActions } from './moveActions';
 import { useGoalActions } from './goalActions';
 import { useNotesAndIllness } from './notesAndIllness';
@@ -223,6 +224,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   useBoot({ setLoading, setBootError, setBootStep, loadState, refresh, runForecastReplan, runWeeklyPrescriptionBuild, runStrengthReviewCheck });
 
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
+  const { planWeekReplan, applyWeekReplan } = useWeekReplanActions({ templates, setRecentChange, refresh });
 
   // Reactive mirror of the same computeActiveGoalOverviews call every
   // strength-review function already makes from fresh repo reads — exposed
@@ -262,7 +264,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       });
   }, []);
   const { linkMissedLog, restoreFromWatch, trimWatchActivity, undoTrimWatchActivity, restoreSourceUpdate, takeOverSourceNumbers, takeOverFromMacroFactor, restoreFromMacroFactor, setLogWorkout } = useWatchAndSourceActions({ setRecentChange, refresh });
-  const { moveSession, suggestMoves, dragContextFor, dragVerdicts, applyProposal, proposeSkip, proposeBackOnPlan } = useMoveActions({ program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalEngineConfig, settings, templates, setRecentChange, refresh, sessionsForWeek });
+  const { moveSession, suggestMoves, dragContextFor, dragVerdicts, applyProposal, proposeSkip, proposeBackOnPlan } = useMoveActions({ program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalEngineConfig, settings, templates, setRecentChange, refresh, sessionsForWeek, planChangeLog });
   const { clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, strengthExternal, setStrengthExternal, updateSettings, showStatusOnlyChange } = useGoalActions({ trainingGoals, goalMilestones, settings, setSettings, setCelebration, setRecentChange, strengthProgramStrategies, setStrengthProgramStrategies, refresh });
   const { saveInfluence, saveSweat, saveSweatPre, removeInfluence, clearInfluences, planIllness, applyIllness } = useNotesAndIllness({ plannedSessions, sessionLogs, setSettings, settings, templates, commitPlanChange, showStatusOnlyChange });
   const { updateGoalEngineConfig, planHorizonChangeImpl, applyHorizonPlanImpl, planWeekLoadChange, planGoalChange, planGoalRole, planGoalPriority, setGoalOrder, planMarathonGoal, activateGoal } = useHorizonActions({ setGoalEngineConfig, setRecentChange, setStorageNotice, refresh });
@@ -439,6 +441,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     applyIllness,
     dismissRecentChange: () => setRecentChange(null),
     showFailure: (title: string, line: string) => setRecentChange(failureNotice(title, line)),
+    planWeekReplan,
+    applyWeekReplan,
     strengthProgramStrategies,
     strengthExternal,
     setStrengthExternal,
