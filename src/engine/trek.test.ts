@@ -337,6 +337,27 @@ describe('oude back-ups en de opgeslagen vorm', () => {
     const p = trekToPeriod(draft(), 'trek-a');
     expect(migrateLeavePeriods(JSON.parse(JSON.stringify([p])))).toEqual({ periods: [p], skipped: 0 });
   });
+  it('het hoogste punt reist mee; een verkeerd of los hoogste punt valt weg en de tocht blijft', () => {
+    const p = trekToPeriod(draft({ terrain: 'mountain', highestM: 2512.4 }), 'trek-h');
+    expect(p.trek?.highestM).toBe(2512);
+    expect(migrateLeavePeriods(JSON.parse(JSON.stringify([p])))).toEqual({ periods: [p], skipped: 0 });
+    const wrong = { ...p, trek: { ...p.trek!, highestM: 99999 } };
+    expect(migrateLeavePeriods([wrong]).periods?.[0].trek).toEqual({ name: p.trek!.name, terrain: 'mountain', packKg: 9, tent: true, importance: 'goal' });
+    expect(migrateLeavePeriods([wrong]).skipped).toBe(1);
+    const flat = { ...p, trek: { ...p.trek!, terrain: 'flat_trail' } };
+    expect(migrateLeavePeriods([flat]).periods?.[0].trek).not.toHaveProperty('highestM');
+    expect(migrateLeavePeriods([flat]).skipped).toBe(1);
+    expect(migrateLeavePeriods([{ ...p, trek: { ...p.trek!, highestM: 'hoog' } }]).skipped).toBe(1);
+  });
+  it('het hoogste punt hoort bij bergen en sneeuw, binnen wat Open-Meteo kan rekenen', () => {
+    expect(validateTrekDraft(draft({ terrain: 'mountain', highestM: 2500 }), TODAY)).toBeUndefined();
+    expect(validateTrekDraft(draft({ terrain: 'mountain', highestM: 9000 }), TODAY)).toMatch(/hoogste punt/);
+    // Bij vlak terrein telt het niet en gaat het niet mee.
+    expect(validateTrekDraft(draft({ terrain: 'flat_trail', highestM: 9000 }), TODAY)).toBeUndefined();
+    expect(trekToPeriod(draft({ terrain: 'flat_trail', highestM: 2500 }), 'x').trek).not.toHaveProperty('highestM');
+    expect(periodToTrekDraft(trekToPeriod(draft({ terrain: 'snow', highestM: 1800 }), 'x'))?.highestM).toBe(1800);
+    expect(trekFacts(trekToPeriod(draft({ terrain: 'snow', highestM: 1800 }), 'x'))).toContain('tot 1.800 m');
+  });
   it('beschadigde tochtgegevens: de periode blijft, alleen de gegevens vervallen, en dat wordt geteld', () => {
     const bad = [{ id: 'p1', kind: 'trek', startDate: '2026-11-14', endDate: '2026-11-15', trek: { name: 'X', terrain: 'lava', tent: true, importance: 'goal' } }];
     expect(migrateLeavePeriods(bad)).toEqual({ periods: [{ id: 'p1', kind: 'trek', startDate: '2026-11-14', endDate: '2026-11-15' }], skipped: 1 });

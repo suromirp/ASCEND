@@ -67,6 +67,13 @@ export function isLeavePeriod(v: unknown): v is LeavePeriod {
   );
 }
 
+// A highest point that can be asked for (integrations/openMeteo.ts#MIN_ELEVATION_M to MAX_ELEVATION_M).
+export const TREK_HEIGHT_RANGE: [number, number] = [200, 4800];
+export function isTrekHeight(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v) && v >= TREK_HEIGHT_RANGE[0] && v <= TREK_HEIGHT_RANGE[1];
+}
+
+// `highestM` is not checked here: a damaged one is dropped by itself, the tocht stays.
 export function isTrekDetails(v: unknown): v is TrekDetails {
   if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
   const t = v as Record<string, unknown>;

@@ -40,7 +40,7 @@ import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
 import { PACK_WEIGHT_EXPLANATION, type TentPackProposal } from './gr5Profile';
 import type { GrowthChoice } from '../data/goalGrowth';
 import { checkTargetTime, outlookSaid, outlookWeeksSaid, racePaces } from './racePaces';
-import { countedTests, formatRaceTime } from './racePrediction';
+import { countedTests, formatRaceTime, type TestResult } from './racePrediction';
 import { RACE_TEMPLATE_ID, type RaceBlock } from './raceBlock';
 import { formatNumberNL } from '../utils/number';
 import type { WeatherForecast } from '../models/weather';
@@ -157,6 +157,9 @@ export interface AdviceInputs {
   // A missed training a loose watch or MacroFactor log may belong to gets the link proposal first, never
   // a catch-up (rule MISSED-CATCH-UP). Absent = on, nothing declined.
   missedLink?: { on: boolean; declined: readonly string[]; declinedOn?: Readonly<Record<string, string>> };
+  // Rows an accepted TEST-RETRY proposal made a test (`retryTestRows` of the stored proposals). A
+  // retry that was skipped or missed is spoken for by TEST-RETRY once more, not by TEST-MAKE-ROOM.
+  retryRows?: ReadonlySet<string>;
   // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
   noRetry?: boolean;
 }
@@ -403,7 +406,21 @@ export interface ForcedTestMove {
   why: string;
 }
 
-function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>, forced?: ForcedTestMove): Advice[] {
+// `again`: the retry of TEST-RETRY that did not happen (skipped or missed) gets one new day through the
+// same search as a missed test, with its own id and reason; nothing you locked is moved or let go for it,
+// holiday, trek and light days are no candidates, and without a day that fits there is no advice.
+interface RetryAgain {
+  row: PlannedSession;
+  id: string;
+  title: string;
+  why: string;
+  blocked: (date: string) => boolean;
+  yours: (s: PlannedSession) => boolean;
+  // A session another open proposal already changes, or the leg day the Benen card speaks for: left alone.
+  taken: (s: PlannedSession) => boolean;
+}
+
+function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>, forced?: ForcedTestMove, again?: RetryAgain): Advice[] {
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
   const test = templateById.get(TEST_RUN_ID);
   if (!test) return [];
@@ -417,14 +434,14 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   // Any test ahead, not only the next two weeks: the week check
   // (engine/weekValidator.ts) leaves where a test goes to you.
   const restDates = new Set(inputs.plannedSessions.filter((s) => open(s) && templateById.get(s.templateId)?.type === 'recovery').map((s) => s.scheduledDate));
-  const onRestDay = inputs.plannedSessions
+  const onRestDay = again ? undefined : inputs.plannedSessions
     .filter((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate > today && restDates.has(s.scheduledDate) && !usedIds.has(s.id))
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
   // A test in the next two weeks your legs won't be fresh for by the index
   // (clearly above the line, not just near it: there the card says to decide
   // at the warm-up). Arranged around its own date too (docs/onderzoek/
   // Planning op een lijn.md, conflict 6).
-  const notFresh = onRestDay ? undefined : inputs.plannedSessions
+  const notFresh = onRestDay || again ? undefined : inputs.plannedSessions
     .filter((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate > today && daysBetween(today, s.scheduledDate) <= 14 && !usedIds.has(s.id)
       && freshnessAt(s.scheduledDate, inputs.plannedSessions.filter((o) => o.id !== s.id), templateById, inputs.logs).index > FATIGUE_THRESHOLDS.test.doubt)
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
@@ -434,8 +451,9 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   // Another test already waiting in the next two weeks: nothing to arrange.
   if (!around && inputs.plannedSessions.some((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14)) return [];
 
-  const lost = around ?? inputs.plannedSessions
-    .filter((s) => s.templateId === TEST_RUN_ID && !loggedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id)
+  // A retry of TEST-RETRY that did not happen is TEST-RETRY's to speak for (one voice, one Liever niet).
+  const lost = again?.row ?? around ?? inputs.plannedSessions
+    .filter((s) => s.templateId === TEST_RUN_ID && !loggedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id) && !inputs.retryRows?.has(s.id)
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, today)
       && (s.status === 'skipped' ? daysBetween(s.scheduledDate, today) >= -14 && daysBetween(s.scheduledDate, today) <= 7 : s.scheduledDate < today && daysBetween(s.scheduledDate, today) <= 7))
     .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
@@ -448,12 +466,15 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const days = around
     ? Array.from({ length: 9 }, (_, i) => addDays(lost.scheduledDate, [1, -1, 2, -2, 3, -3, 4, -4, 5][i]))
       .filter((d) => d > today && !restDates.has(d) && !isIllnessDay(d, inputs.illnessEpisodes, today))
-    : Array.from({ length: TEST_ROOM_DAYS }, (_, i) => addDays(today, i + 1));
-  const why = forced?.why ?? 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daarop stelt ASCEND je tempo af, en daaruit rekent hij je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Alleen jij beslist: dit is een voorstel.';
+    : Array.from({ length: TEST_ROOM_DAYS }, (_, i) => addDays(today, i + 1))
+      .filter((d) => !again || (!again.blocked(d) && !isIllnessDay(d, inputs.illnessEpisodes, today)));
+  const ruleId = forced ? 'TEST-INFLUENCE' : again ? 'TEST-RETRY' : 'TEST-MAKE-ROOM';
+  const by = ['engine/adviceEngine.ts', again ? 'TEST-RETRY' : 'TEST-MAKE-ROOM'];
+  const why = forced?.why ?? again?.why ?? 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daarop stelt ASCEND je tempo af, en daaruit rekent hij je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Alleen jij beslist: dit is een voorstel.';
   const missedWord = lost.status === 'skipped' ? 'overgeslagen' : 'gemist';
-  const title = forced ? forced.title : onRestDay ? `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)} staat op je rustdag` : notFresh ? `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)}: je benen zijn dan nog niet fris` : `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)} ${missedWord}`;
-  const adviceId = forced?.id ?? `testroom:${lost.id}`;
-  const moveItem = (date: string): PlanChangeItem => ({ plannedSessionId: lost.id, action: 'move', fromDate: lost.scheduledDate, toDate: date, reason: 'De testloop is het meetpunt voor je tempo.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] });
+  const title = forced ? forced.title : again ? again.title : onRestDay ? `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)} staat op je rustdag` : notFresh ? `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)}: je benen zijn dan nog niet fris` : `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)} ${missedWord}`;
+  const adviceId = forced?.id ?? again?.id ?? `testroom:${lost.id}`;
+  const moveItem = (date: string): PlanChangeItem => ({ plannedSessionId: lost.id, action: 'move', fromDate: lost.scheduledDate, toDate: date, reason: 'De testloop is het meetpunt voor je tempo.', generatedBy: by });
 
   // 1b. Move leg strength out of the way rather than dropping anything: to
   // after the test, that evening (with "Zware dingen op één dag") or in the
@@ -484,7 +505,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       // Leg strength after the test (that evening first); upper body the nearest free day.
       const targets = legs ? [0, 1, 2, 3] : [1, -1, 2, -2, 3];
       const to = targets.map((d) => addDays(date, d)).find((d) => {
-        if (d < today || d === s.scheduledDate && d === date || restDates.has(d) || isIllnessDay(d, inputs.illnessEpisodes, today)) return false;
+        if (d < today || d === s.scheduledDate && d === date || restDates.has(d) || isIllnessDay(d, inputs.illnessEpisodes, today) || !!again?.blocked(d)) return false;
         const week = [...weekOf(d).filter((o) => o.id !== s.id && !moves.some((m) => m.session.id === o.id)), ...moves.filter((m) => m.to === d).map((m) => ({ ...m.session, scheduledDate: m.to })), ...(d === date ? [testAt] : [])];
         return dayHasRoomFor(d, t, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)
           && respectsHeavySpacing(d, t, [...others, testAt], templateById, inputs.logs, s.id)
@@ -498,17 +519,17 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     if (moves.length !== toMove.length || !dayHasRoomFor(date, test, weekAfter, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference) || !respectsHeavySpacing(date, test, now, templateById, inputs.logs, lost.id)) return undefined;
     const moveLines = moves.map((m) => `${templateById.get(m.session.templateId)?.name ?? 'Kracht'} naar ${m.to === date ? `${formatWeekdayDateNL(m.to)}, na de test (liefst 6 uur later)` : formatWeekdayDateNL(m.to)}`);
     const items: PlanChangeItem[] = [
-      ...moves.map((m): PlanChangeItem => ({ plannedSessionId: m.session.id, action: 'move', fromDate: m.session.scheduledDate, toDate: m.to, reason: 'Na de test, zodat je benen fris zijn voor de testloop.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] })),
+      ...moves.map((m): PlanChangeItem => ({ plannedSessionId: m.session.id, action: 'move', fromDate: m.session.scheduledDate, toDate: m.to, reason: 'Na de test, zodat je benen fris zijn voor de testloop.', generatedBy: by })),
       moveItem(date),
     ];
     const effect = `Doe hem ${formatWeekdayDateNL(date)}, en ${moveLines.join(' en ')}. Eerst lopen en daarna kracht verstoort je volgende loop niet, andersom wel.`;
-    return [{ id: adviceId, trigger: around ? 'plan_update' : 'session_missed', ruleId: forced ? 'TEST-INFLUENCE' : 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${formatWeekdayDateNL(date)}; ${moveLines.join('; ')}.`, why) }];
+    return [{ id: adviceId, trigger: around || again ? 'plan_update' : 'session_missed', ruleId, title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${formatWeekdayDateNL(date)}; ${moveLines.join('; ')}.`, why) }];
   }
 
   // 1. Per day, nearest first: a free day, or else (1b below) a day that
   // becomes free by moving strength, before looking at the next day.
   const isStrength = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'strength';
-  const movable = (s: PlannedSession) => isStrength(s) && s.scheduledDate >= today && !loggedIds.has(s.id);
+  const movable = (s: PlannedSession) => isStrength(s) && s.scheduledDate >= today && !loggedIds.has(s.id) && !again?.yours(s) && !again?.taken(s);
   // The smallest change wins: a day further away weighs one, every training
   // moved aside two (a free day two days off beats moving two sessions).
   const daysFrom = (date: string) => (around ? Math.abs(daysBetween(lost.scheduledDate, date)) : daysBetween(today, date));
@@ -530,7 +551,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const legsName = sameDayLegs.length > 0 ? templateById.get(sameDayLegs[0].templateId)?.name ?? 'Beenkracht' : undefined;
     const legsNote = legsName ? ` ${legsName} die dag pas na de test, liefst 6 uur later (minstens 3): eerst lopen, dan kracht.` : '';
     // The leg day the option shows stays as shown: kept, so accepting fixes it.
-    const keeps = sameDayLegs.map((l): PlanChangeItem => ({ plannedSessionId: l.id, action: 'keep', reason: `${legsName} blijft die dag, na de test.`, generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] }));
+    const keeps = sameDayLegs.filter((l) => !again?.yours(l) && !again?.taken(l)).map((l): PlanChangeItem => ({ plannedSessionId: l.id, action: 'keep', reason: `${legsName} blijft die dag, na de test.`, generatedBy: by }));
     candidates.push({ cost: daysFrom(date), date, label: `${formatWeekdayDateNL(date)}${legsName ? `, ${legsName} erna` : ''}`, effect: `Doe hem ${formatWeekdayDateNL(date)}.${legsNote}`, proposal: proposal(title, [moveItem(date), ...keeps], `De testloop komt op ${formatWeekdayDateNL(date)}.`, why) });
   }
 
@@ -545,13 +566,13 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const there = fitsBeside ? [] : inputs.plannedSessions.filter((s) => s.scheduledDate === date && s.id !== lost.id && open(s) && templateById.get(s.templateId)?.type !== 'recovery');
     const blockers = findHeavyConflicts(lost.id, test, date, load(new Set(there.map((s) => s.id))), templateById, inputs.logs);
     const remove = [...there, ...blockers.filter((b) => !there.some((t) => t.id === b.id))];
-    if (remove.length === 0 || remove.some((s) => loggedIds.has(s.id) || s.scheduledDate < today)) continue;
+    if (remove.length === 0 || remove.some((s) => loggedIds.has(s.id) || s.scheduledDate < today || !!again?.yours(s) || !!again?.taken(s))) continue;
     const costs = remove.map((s) => { const t = templateById.get(s.templateId); return t ? removalCost(s.templateId, t) : undefined; });
     if (costs.some((c) => c === undefined)) continue;
     if (!respectsHeavySpacing(date, test, load(new Set(remove.map((s) => s.id))), templateById, inputs.logs, lost.id)) continue;
     const names = remove.map((s) => templateById.get(s.templateId)?.name ?? 'training');
     const items: PlanChangeItem[] = [
-      ...remove.map((s): PlanChangeItem => ({ plannedSessionId: s.id, action: 'remove', reason: 'Plaats gemaakt voor de testloop.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] })),
+      ...remove.map((s): PlanChangeItem => ({ plannedSessionId: s.id, action: 'remove', reason: 'Plaats gemaakt voor de testloop.', generatedBy: by })),
       moveItem(date),
     ];
     const verb = remove.length === 1 ? 'vervalt' : 'vervallen';
@@ -566,12 +587,14 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   // "Liever niet" to tomorrow still leaves other days, also in the next week).
   for (const c of candidates) c.label = `Testloop ${c.label}`;
   const ranked = candidates.sort((a, b) => a.cost - b.cost || a.date.localeCompare(b.date)).filter((c, n, all) => all.findIndex((o) => o.date === c.date) === n).slice(0, MAX_OPTIONS);
-  const trigger = around ? 'plan_update' as const : 'session_missed' as const;
+  const trigger = around || again ? 'plan_update' as const : 'session_missed' as const;
   if (ranked.length > 0) {
     const [first] = ranked;
-    return [{ id: adviceId, trigger, ruleId: forced ? 'TEST-INFLUENCE' : 'TEST-MAKE-ROOM', title, effect: first.effect, why, priority: 3, proposal: first.proposal, options: ranked.length > 1 ? ranked.map((c) => ({ label: c.label, effect: c.effect, proposal: c.proposal })) : undefined }];
+    return [{ id: adviceId, trigger, ruleId, title, effect: first.effect, why, priority: 3, proposal: first.proposal, options: ranked.length > 1 ? ranked.map((c) => ({ label: c.label, effect: c.effect, proposal: c.proposal })) : undefined }];
   }
-  return [{ id: adviceId, trigger, ruleId: forced ? 'TEST-INFLUENCE' : 'TEST-MAKE-ROOM', title, effect: 'De komende dagen is er geen goede plek voor de testloop zonder je zware dagen te raken. De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.', why, priority: 1 }];
+  // The retry once more: no workable day, no advice.
+  if (again) return [];
+  return [{ id: adviceId, trigger, ruleId, title, effect: 'De komende dagen is er geen goede plek voor de testloop zonder je zware dagen te raken. De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.', why, priority: 1 }];
 }
 
 // The proposal to move one given test (engine/influenceProposal.ts), with the same preview,
@@ -1032,6 +1055,27 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
 // Akkoord through the usual planning round. Undefined when there is no good day this week: the card
 // then offers Lichter only. `fromOffset` 2 after soreness (one to two days no heavy legs), else 1.
 export function legEaseMoveAdvice(inputs: AdviceInputs, sessionId: string, reason: string, fromOffset: 1 | 2): Advice | undefined {
+  return laterMoveAdvice(inputs, sessionId, {
+    id: `leg-ease:${inputs.asOf}:${sessionId}`,
+    ruleId: 'LEG-EASE',
+    why: 'Met vermoeide benen levert een zware beendag of harde training minder op, en doortrainen mag. Een dag later kan helpen, en je kiest zelf (docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md).',
+    reason,
+  }, fromOffset);
+}
+
+// One training of today (or later) to the first good days after it, with the same checks as every
+// other move (room, the 48-hour rule, not next to another hard or leg-heavy session), as a proposal
+// with Akkoord. Shared by LEG-EASE and MORNING-WATCH (engine/morningProposal.ts), each with its own
+// id, rule and reason. Undefined when there is no good day this week.
+export interface LaterMoveSpec {
+  id: string;
+  ruleId: string;
+  why: string;
+  // Why the training moves, written on the change ("Spierpijn", "Twee van drie wijken af").
+  reason: string;
+}
+
+export function laterMoveAdvice(inputs: AdviceInputs, sessionId: string, spec: LaterMoveSpec, fromOffset: 1 | 2): Advice | undefined {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   const next = inputs.plannedSessions.find((s) => s.id === sessionId);
   const t = next ? templateById.get(next.templateId) : undefined;
@@ -1048,18 +1092,17 @@ export function legEaseMoveAdvice(inputs: AdviceInputs, sessionId: string, reaso
   if (!later) return undefined;
   // "Later" en niet "een dag later": de eerste goede dag kan ook twee dagen verder liggen; de knop noemt de dag.
   const title = `${t.name} later`;
-  const why = 'Met vermoeide benen levert een zware beendag of harde training minder op, en doortrainen mag. Een dag later kan helpen, en je kiest zelf (docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md).';
   const effectFor = (d: string) => `${t.name} van ${formatWeekdayDateNL(next.scheduledDate)} naar ${formatWeekdayDateNL(d)}.`;
   return {
-    id: `leg-ease:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'LEG-EASE', priority: 4, title,
+    id: spec.id, trigger: 'session_too_hard', ruleId: spec.ruleId, priority: 4, title,
     effect: effectFor(later),
-    why,
-    ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op ${formatWeekdayDateNL(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'LEG-EASE'] }, laterDates, t.name, why, effectFor),
+    why: spec.why,
+    ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${spec.reason} op ${formatWeekdayDateNL(today)}.`, generatedBy: ['engine/adviceEngine.ts', spec.ruleId] }, laterDates, t.name, spec.why, effectFor),
   };
 }
 
 // The training the card of LEG-EASE speaks for today, when soreness is reported (engine/legDayEase.ts).
-function legCardSessionOf(inputs: AdviceInputs): PlannedSession | undefined {
+export function legCardSessionOf(inputs: AdviceInputs): PlannedSession | undefined {
   return legEaseCardSession({ mode: inputs.legEase, today: inputs.asOf, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries, checkIns: inputs.checkIns });
 }
 
@@ -1260,6 +1303,8 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   const levelOf = (s: PlannedSession) => lockLevel(s, loggedIds, today);
   const leaveMap = leaveDays(inputs.leave);
   const light = lightDays(inputs.leave, leaveMap);
+  // The first question was answered: once more only when its retry did not happen (decision 2026-11-02-testloop-en-zware-benen.md).
+  if (inputs.respondedIds.has(`retest:${last.date}`)) return retryAgainAdvice(inputs, templateById, usedIds, last, stops, (d) => { const kind = leaveMap.get(d)?.kind; return kind === 'off' || kind === 'trek' || light.has(d); });
   const ctx: RetryContext = {
     usedIds,
     easeId: legEaseCardSession({ mode: inputs.legEase, today, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries, checkIns: inputs.checkIns })?.id,
@@ -1332,6 +1377,62 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
     proposal: first.proposal,
     options: built.length > 1 ? built.map((b) => ({ label: b.label, effect: b.effect, proposal: b.proposal })) : undefined,
   }];
+}
+
+// --- TEST-RETRY once more -----------------------------------------------------
+// Trigger: the retry TEST-RETRY placed (an accepted proposal, `AdviceInputs.retryRows`) was skipped or
+// missed and has no log, and the test it was for still asks for a new attempt. A skipped retry is not a
+// retry that was done. Rule: one new day for that same row, through the search of a missed test (fresh
+// legs, 48 hours after heavy legs, the day after stays easy), never on a holiday, trek or light day or
+// an illness day, and nothing you locked yourself moves or goes for it. Effect: a proposal with Akkoord;
+// Liever niet keeps it quiet until a new test is logged (the id carries the date of the test).
+function retryAgainAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>, last: TestResult, stops: boolean, blocked: (date: string) => boolean): Advice[] {
+  const today = inputs.asOf;
+  const id = `retest:${last.date}:opnieuw`;
+  if (inputs.respondedIds.has(id) || !inputs.retryRows || inputs.retryRows.size === 0) return [];
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const row = inputs.plannedSessions
+    .filter((s) => inputs.retryRows!.has(s.id) && s.templateId === TEST_RUN_ID && s.scheduledDate > last.date && !loggedIds.has(s.id) && (s.status === 'skipped' || s.scheduledDate < today))
+    .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
+  if (!row) return [];
+  const when = formatWeekdayDateNL(row.scheduledDate);
+  const shortDay = formatShortDayNL(row.scheduledDate);
+  const was = stops
+    ? `Je testloop van ${formatWeekdayDateNL(last.date)} had ${(last.stoppedSec ?? 0) > 60 ? `${stoppedTime(last.stoppedSec ?? 0)} stilstand` : `${last.stops} keer stilstand`}, dus hij is iets te gunstig.`
+    : `Je testloop van ${formatWeekdayDateNL(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
+  const lead = `${was} De herkansing van ${when} ging niet door.`;
+  const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
+  const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een herkansing die niet doorging is geen herkansing die gedaan is, daarom vraagt ASCEND het nog één keer. Hij zoekt een dag met frisse benen, minstens 48 uur na een zware beendag, buiten je vakanties en tochten. Wat jij zelf vastzette, blijft staan. Alleen jij beslist: dit is een voorstel.';
+  const yours = (s: PlannedSession) => lockLevel(s, loggedIds, today) === 1;
+  const easeId = legEaseCardSession({ mode: inputs.legEase, today, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries, checkIns: inputs.checkIns })?.id;
+  const taken = (s: PlannedSession) => usedIds.has(s.id) || s.id === easeId;
+  // Only a way whose end state gives nothing new about the sessions it touches (decision 2026-10-28-voorstel-eindstand.md).
+  const found = testRunAdvice(inputs, templateById, usedIds, undefined, { row, id, title: `Je herkansing van ${when} ging niet door`, why, blocked, yours, taken })
+    .filter((a) => a.proposal)
+    .flatMap((a): Advice[] => {
+      const ways = (a.options ?? [{ label: '', effect: a.effect, proposal: a.proposal! }]).filter((o) => !newConcernsOfItems(o.proposal.changes, inputs));
+      if (ways.length === 0) return [];
+      return [{ ...a, effect: ways[0].effect, proposal: ways[0].proposal, options: ways.length > 1 ? ways : undefined }];
+    });
+  const wrap = (effect: string) => `${lead} ${effect.replace(/^Doe hem /, 'Doe de nieuwe test ')} ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar, tot je een nieuwe test logt.`;
+  return found.map((a) => ({
+    ...a, lead, tip, priority: 2, relatedLogId: last.logId,
+    brief: `${shortDay.charAt(0).toUpperCase()}${shortDay.slice(1)}: herkansing ging niet door`,
+    effect: wrap(a.effect),
+    options: a.options?.map((o) => ({ ...o, effect: wrap(o.effect) })),
+  }));
+}
+
+// The rows an accepted TEST-RETRY proposal made a test: the item that gave a row the template of the test
+// run. Read from the stored proposals; a proposal that was undone does not count.
+export function retryTestRows(log: readonly PlanChangeProposal[]): Set<string> {
+  const reverted = new Set(log.map((p) => p.revertsProposalId).filter((x): x is string => !!x));
+  const out = new Set<string>();
+  for (const p of log) {
+    if (p.resolution !== 'accepted' || reverted.has(p.id)) continue;
+    for (const c of p.changes) if (c.plannedSessionId && c.templateId === TEST_RUN_ID && c.generatedBy?.includes('TEST-RETRY')) out.add(c.plannedSessionId);
+  }
+  return out;
 }
 
 // One way to make a hard run the new test: what has to give way for it, and what that costs.
@@ -1553,7 +1654,18 @@ function endStateOf(plan: RetryPlan, inputs: AdviceInputs, test: SessionTemplate
 const adviceBeforeCache = new WeakMap<AdviceInputs, Set<string>>();
 function newConcernIds(plan: RetryPlan, inputs: AdviceInputs, test: SessionTemplate): Set<string> | undefined {
   const touched = new Set([plan.found.id, ...plan.moves.flatMap((m) => [m.session.id, m.rest?.id, m.lightDrop?.id]), ...plan.dropped.map((d) => d.id)].filter((id): id is string => !!id));
-  const end = endStateOf(plan, inputs, test);
+  return newConcernsOfEnd(endStateOf(plan, inputs, test), touched, inputs);
+}
+
+// The same check for a proposal as it stands: its items applied the way Akkoord applies them.
+function newConcernsOfItems(items: PlanChangeItem[], inputs: AdviceInputs): Set<string> | undefined {
+  const touched = new Set(items.map((c) => c.plannedSessionId).filter((id): id is string => !!id));
+  let n = 0;
+  const end = applyPlanChangeItems(items, inputs.plannedSessions, () => `end-state-${n++}`, { by: 'proposal', at: `${inputs.asOf}T00:00:00.000Z` }).sessions;
+  return newConcernsOfEnd(end, touched, inputs);
+}
+
+function newConcernsOfEnd(end: PlannedSession[], touched: Set<string>, inputs: AdviceInputs): Set<string> | undefined {
   const hit = new Set<string>();
   const idsOf = (a: Advice) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])].flatMap((p) => p?.changes.map((c) => c.plannedSessionId).filter((id): id is string => !!id) ?? []);
   // The advice on the plan as it is now is the same for every candidate of this run: worked out once.

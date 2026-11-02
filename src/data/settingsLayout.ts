@@ -74,14 +74,14 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit'], advanced: [] },
   vandaag: {
-    rows: ['kaarten', 'lichterbenen', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
+    rows: ['kaarten', 'lichterbenen', 'bundel-meldingen', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {
     rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
     advanced: [],
   },
-  gegevens: { rows: ['backup', 'backupmap', 'opslag', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'herbouwen', 'aangepast', 'wissen'], advanced: ['voorstellen-opruimen', 'startniveau'], footer: ['versie'] },
+  gegevens: { rows: ['backup', 'backupmap', 'toestemmingen', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'herbouwen', 'aangepast', 'wissen'], advanced: ['auto-bijwerken', 'voorstellen-opruimen', 'startniveau'], footer: ['versie'] },
   gidsen: { rows: ['weer-gids', 'kennisbank', 'plekken', 'bronnen'], advanced: [] },
 };
 
@@ -136,7 +136,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-snelknoppen', 'forge-vegen', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven'),
   ...inSheet('bundel-toets', 'forge-naast', 'forge-sinds'),
   // Lichaam
-  ...inSheet('bundel-signalen', 'vroeg-ziek', 'ochtendregel', 'weekdag-patroon', 'hitte-tempo', 'luchtkwaliteit'),
+  ...inSheet('bundel-signalen', 'vroeg-ziek', 'ochtendregel', 'weekdag-patroon', 'hitte-tempo', 'luchtkwaliteit', 'ochtend-voorstel', 'bergweer', 'wennen-warmte', 'tempocurve', 'etappetijd-eigen', 'klimtempo'),
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd'),
   // Vandaag en meldingen
   ...inSheet('kaarten', 'boven-missie', 'ochtendcheck', 'benen-na-test', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'dagcitaat', 'geluid'),
@@ -145,6 +145,9 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),
   ...inSheet('lichterbenen', 'lichterbenen-hoe'),
+  ...inSheet('bundel-meldingen', 'ochtendmelding', 'ochtendmelding-tijd', 'rust-melding', 'weekmelding', 'weekmelding-tijd'),
+  // Gegevens en back-up
+  ...inSheet('toestemmingen', 'opslag'),
   // Koppelingen
   ...inSheet('bundel-horloge-gebruik', 'horloge-gebruik', 'garmin-trainingen', 'horloge-details', 'slaap', 'rusthartslag', 'hrv'),
   ...inSheet('bundel-horloge-sturen', 'naar-horloge', 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-rustige-loop', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
@@ -191,6 +194,10 @@ export interface RowContext {
   // Wat dit toestel kan of heeft.
   folderSupported: boolean;
   noticeAvailable: boolean;
+  // Meldingen op een vast moment, ook met het scherm uit (de Android-app).
+  timed: boolean;
+  // De app kan zijn webdeel zelf bijwerken (de Android-app).
+  liveUpdate: boolean;
   bodyFat: boolean;
 }
 
@@ -227,6 +234,9 @@ const B = {
   morning: { ok: (s) => resolveOverviews(s.overviews).morningCheckIn, reason: 'Zichtbaar zodra de ochtendcheck aan staat', parent: 'ochtendcheck' },
   review: { ok: (s) => resolveOverviews(s.overviews).weekReview, reason: 'Zichtbaar zodra de weekterugblik aan staat', parent: 'weekterugblik' },
   notice: { ok: (_s, c) => c.noticeAvailable, reason: 'Zichtbaar zodra je telefoon de ochtendmelding kan sturen', parent: 'ochtendmelding' },
+  timed: { ok: (_s, c) => c.timed, reason: 'Zichtbaar zodra ASCEND als Android-app draait', parent: 'toestemmingen' },
+  weekNotice: { ok: (s) => s.weekNotice !== false, reason: 'Zichtbaar zodra de weekmelding aan staat', parent: 'weekmelding' },
+  liveUpdate: { ok: (_s, c) => c.liveUpdate, reason: 'Zichtbaar zodra ASCEND als Android-app draait', parent: 'toestemmingen' },
   clothing: { ok: (s) => resolveOverviews(s.overviews).clothingAdvice, reason: 'Zichtbaar zodra het kledingadvies aan staat', parent: 'kledingadvies' },
   runDetail: { ok: (s) => resolveRunInsight(s.runInsight).detail.show, reason: 'Zichtbaar zodra Run in detail tonen aan staat', parent: 'run-detail' },
   insight: { ok: (s) => resolveRunInsight(s.runInsight).enabled, reason: 'Zichtbaar zodra Inzicht na een training aan staat', parent: 'loopinzicht' },
@@ -264,6 +274,8 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.morning], 'ochtendkaart', 'korte-nacht', 'ochtend-vanaf', 'benen-na-test'),
   ...rule([B.review], 'weekterugblik-dag'),
   ...rule([B.notice], 'ochtendmelding-tijd'),
+  ...rule([B.timed], 'rust-melding', 'weekmelding'),
+  ...rule([B.timed, B.weekNotice], 'weekmelding-tijd'),
   ...rule([B.clothing], 'kleding-voorkeur'),
   ...rule([B.runDetail], 'run-detail-patronen', 'run-detail-advies', 'loopvorm-cadans', 'loopvorm-grondcontact', 'loopvorm-staplengte', 'loopvorm-oscillatie', 'loopvorm-balans'),
   ...rule([B.insight], 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm'),
@@ -277,6 +289,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.mf], 'macrofactor-leidend', 'macrofactor-gewicht'),
   // Gegevens en back-up
   ...rule([B.folder], 'backupmap'),
+  ...rule([B.liveUpdate], 'auto-bijwerken'),
 ]);
 
 // De eerste voorwaarde die niet klopt, of undefined als de rij er is.

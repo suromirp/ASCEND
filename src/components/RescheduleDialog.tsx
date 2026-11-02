@@ -68,6 +68,12 @@ export function RescheduleDialog({
                 <SecondaryButton onClick={requestClose}>Liever niet</SecondaryButton>
                 <PrimaryButton onClick={() => { haptics.tap(); onApply(); }} fullWidth={false}>Akkoord</PrimaryButton>
               </div>
+            ) : proposal.confirm ? (
+              // Een vraag in plaats van een voorstel: hier laten is de standaard, toch verplaatsen een bewuste tweede keus.
+              <div className="mt-5 flex flex-col gap-3">
+                <PrimaryButton onClick={requestClose}>{proposal.confirm.no}</PrimaryButton>
+                <SecondaryButton onClick={onApply}>{proposal.confirm.yes}</SecondaryButton>
+              </div>
             ) : (
               <div className="mt-5 flex flex-col gap-3">
                 <PrimaryButton onClick={requestClose}>Liever niet</PrimaryButton>

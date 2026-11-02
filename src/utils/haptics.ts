@@ -1,13 +1,12 @@
 import { REST_ALARM_PATTERN } from '../engine/restVibration';
+import { deviceShell } from '../integrations/deviceShell';
 
-// Thin wrapper around the Vibration API. Android/Chrome supports it, iOS
-// Safari doesn't expose `navigator.vibrate` at all — every call is silently
-// a no-op there rather than a thrown error, so call sites never need to
+// Thin wrapper: in the browser the Vibration API (Android/Chrome; iOS Safari
+// has none, so every call is silently a no-op there), in the Android app the
+// plugin Haptics (integrations/deviceShell.ts). Call sites never need to
 // feature-detect themselves.
 function vibrate(pattern: number | number[]) {
-  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-    navigator.vibrate(pattern);
-  }
+  deviceShell().vibrate(pattern);
 }
 
 // De duur van de korte tik, op één plek te verstellen. Veel Android-motoren laten

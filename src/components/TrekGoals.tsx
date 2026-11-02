@@ -13,7 +13,7 @@ import type { LeavePlan } from '../engine/leaveProposal';
 import { describePeriodDates } from '../engine/leave';
 import {
   TREK_IMPORTANCES, TREK_IMPORTANCE_LABEL, TREK_TERRAINS, TREK_TERRAIN_LABEL, MAX_TREK_DAYS,
-  periodToTrekDraft, trekFacts, trekImportanceHint, trekPeriods, trekToPeriod, validateTrekDraft, type TrekDraft,
+  hasHeight, periodToTrekDraft, trekFacts, trekImportanceHint, trekPeriods, trekToPeriod, validateTrekDraft, type TrekDraft,
 } from '../engine/trek';
 import { addDays, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -205,6 +205,12 @@ function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; on
               <div className="mt-4">
                 <NumberField label="Rugzakgewicht" value={d.packKg} unit="kg" decimals={1} onChange={(v) => set({ packKg: v })} helper="Mag je leeg laten als je het nog niet weet." />
               </div>
+
+              {hasHeight(d.terrain) && (
+                <div className="mt-4">
+                  <NumberField label="Hoogste punt" value={d.highestM} unit="m" onChange={(v) => set({ highestM: v })} helper="Voor het bergweer op die hoogte. Mag je leeg laten." />
+                </div>
+              )}
 
               <p className="mt-4 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Slapen</p>
               <div className="mt-1 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Tent en slaapzak">

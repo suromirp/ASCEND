@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Alleen de cachemap van de app; nodig voor een foto of bestand dat de webview via de
+     bestandskiezer doorgeeft. -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="my_cache_images" path="." />
+</paths>

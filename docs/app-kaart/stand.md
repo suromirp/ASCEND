@@ -137,12 +137,18 @@ Op rij
 Achter elkaar alles gedaan wat gepland stond. Dagen zonder training tellen niet mee en breken de reeks niet.
 
 --- kaart 11 ---
+Tempo naast je test
+Je tempo's komen uit je test van 10 okt: 5 km in 26:42.
+Je snelste stukken in training legt ASCEND na nog 3 loopjes met details naast je test.
+Een controle, geen nieuw getal: de test blijft de bron voor je tempo's.
+
+--- kaart 12 ---
 Tempo bij zone 2
 Je rustige en lange duurlopen, omgerekend naar dezelfde hartslag. Word je fitter, dan loop je bij dezelfde hartslag sneller.
 Nog geen loopjes om te vergelijken. Na twee weken met loopjes zie je hier je lijn.
 Telt mee: vlakke rustige loopjes met afstand, tijd en gemiddelde hartslag ingevuld. Vul bij Instellingen, Lichaam je hartslag in, dan telt alleen zone 2.
 
---- kaart 12 ---
+--- kaart 13 ---
 Les van de week
 uitrusting
 Je rugzak pakken

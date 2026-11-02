@@ -14,7 +14,7 @@
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { daysBetween, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { idHasRole } from './templateRoles';
-import { legSpacingDays } from './scheduler';
+import { isIntentionalBackToBack, legSpacingDays } from './scheduler';
 import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
 
 export const CONCERN_RULES: readonly CheckRule[] = ['REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
@@ -74,6 +74,18 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
         const tplOf = (id: string): SessionTemplate | undefined => input.templates.find((t) => t.id === byId.get(id)?.templateId);
         const [tEarly, tLate] = [tplOf(early), tplOf(late)];
         const need = tEarly && tLate ? Math.max(1, legSpacingDays(tEarly, tLate)) : 1;
+        // A pair that belongs together on its own days, put elsewhere (engine/weekValidator.ts): said as two
+        // heavy leg days in a row, with both names and days, so a name with "en" in it stays readable.
+        if (tEarly && tLate && isIntentionalBackToBack(tEarly, tLate)) {
+          return {
+            ...base,
+            headline: 'Twee zware beendagen achter elkaar.',
+            fact: `${nameOf(early)} op ${dayName(dateOf(early))} en ${nameOf(late)} op ${dayName(dateOf(late))}, zonder dag ertussen. Liefst ${need === 2 ? 72 : 48} uur ertussen.`,
+            title: 'Zware beendagen verder uit elkaar',
+            why: `In je schema horen deze twee bewust bij elkaar, op hun eigen dagen. Op andere dagen houdt ASCEND liefst ${need === 2 ? 72 : 48} uur tussen zware beendagen, zodat je benen kunnen herstellen. Jij zette ze zo neer, daarom verschuift ASCEND niets zonder jouw Akkoord.`,
+            notes: { [early]: `${days} voor ${nameOf(late)}`, [late]: `${days} na ${nameOf(early)}` },
+          };
+        }
         return {
           ...base,
           headline: `${nameOf(early)} en ${nameOf(late)} liggen te dicht op elkaar.`,

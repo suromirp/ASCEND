@@ -528,6 +528,60 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waar het vandaan komt', text: 'Open-Meteo, met dezelfde afgeronde plek als het weer en zonder sleutel. Het raster is ongeveer 11 km; een drukke weg naast je route ziet het niet.' },
     ],
   },
+  klimtempo: {
+    title: 'Je klimtempo',
+    lead: 'De wandelnorm rekent met 300 meter per uur omhoog. Jij klimt misschien sneller of trager, en met een rugzak anders dan zonder.',
+    points: [
+      { head: 'Wat telt', text: 'de klimmen van minstens 100 meter en 8 procent in je wandelingen en bergtochten buiten van het laatste jaar, uit de details van je horloge. Hardlopen en de loopband tellen niet.' },
+      { head: 'Wanneer je het ziet', text: 'na zes klimmen uit minstens drie tochten. Tot dan zegt Je stand hoeveel er al zijn; in Nederland duurt dat vaak tot de bergen.' },
+      { head: 'Wat je ziet', text: 'op Je stand je meters per uur omhoog en omlaag, met het rugzakgewicht als dat bij minstens driekwart van je klimmen bekend is. Een lange klim telt zwaarder dan een korte. Het verandert niets aan je planning.' },
+    ],
+  },
+  etappetijdEigen: {
+    title: 'Etappetijd op je eigen tempo',
+    lead: 'De looptijd op de bordjes en de site is een norm. Met je eigen klimtempo kan ASCEND zeggen hoe lang een etappe voor jou ongeveer duurt.',
+    points: [
+      { head: 'Wat je ziet', text: 'bij een etappe en op Je stand een band als 6,5 tot 7,5 uur lopen, zonder pauzes. Een tijd, geen tweede percentage: Klaar voor je doel blijft het ene getal.' },
+      { head: 'Wanneer', text: 'pas als je klimtempo er is, na zes klimmen uit drie tochten. Tot dan blijft de looptijd van de site en de wandelnorm staan.' },
+      { head: 'Hoe het rekent', text: 'vlak met 4 km per uur zoals de norm, omhoog en omlaag met jouw meters per uur. Is je rugzak voor de GR5 zwaarder dan op je klimmen en weet ASCEND je gewicht, dan rekent het iets trager. Vermoeidheid na een paar dagen lopen telt niet mee.' },
+    ],
+  },
+  tempocurve: {
+    title: 'Tempocurve tussen testen',
+    lead: 'Tussen twee testen in lopen je gewone loopjes ook snelle stukken. ASCEND legt de snelste daarvan naast je test, als controle.',
+    points: [
+      { head: 'Wat je ziet', text: 'op Je stand onder Lopen je snelste 5 km in training sinds je test, met één zin: past bij je testtempo\'s, wijst op iets sneller, of is rustiger, wat normaal is.' },
+      { head: 'De test blijft de bron', text: 'je tempo\'s, de voorspelling en wat naar je horloge gaat komen uit de test die telt. Dit verandert daar niets aan; een nieuwe test zegt meer.' },
+      { head: 'Wanneer', text: 'drie weken na je test en na drie loopjes buiten met details. Je loopt in training zelden voluit, dus dit is een ondergrens.' },
+    ],
+  },
+  wennenWarmte: {
+    title: 'Wennen aan warmte',
+    lead: 'Een tocht in de zomer is warm in de dalen. Je lichaam went in een week of twee aan warmte, als je er af en toe in traint.',
+    points: [
+      { head: 'Wat je ziet', text: 'in de reisplanner, in de laatste drie weken voor een vertrek van juni tot en met september, één regel over een paar trainingen in de warmte.' },
+      { head: 'Hoe zeker', text: 'wennen aan warmte in 1 tot 2 weken met trainingen van een uur tot anderhalf in de warmte is breed onderbouwd. Het kan helpen; het is geen garantie tegen een warme dag.' },
+      { head: 'Je planning', text: 'verandert er niet door. Wil je een training in de warmte doen, dan kies je zelf het moment.' },
+    ],
+  },
+  bergweer: {
+    title: 'Bergweer op hoogte',
+    lead: 'In de bergen is het op de pas anders dan in het dal. Geef je bij een tocht in de bergen of de sneeuw het hoogste punt op, dan laat Vandaag het weer op die hoogte zien.',
+    points: [
+      { head: 'Wat je ziet', text: 'op een dag van je tocht een regel als: op 2.500 m vandaag tussen 2 en 8 graden, windstoten tot 50 km per uur, kans op onweer in de middag, met het vriespunt en een verwijzing naar het officiële bergweer.' },
+      { head: 'Alleen informatie', text: 'ASCEND zegt niet of je moet gaan; dat is vakwerk. Je planning verandert er niet door.' },
+      { head: 'Waar het vandaan komt', text: 'Open-Meteo, dezelfde bron en dezelfde afgeronde plek als je gewone weer, hoogstens eens per uur. Daarom alleen als het weer je locatie volgt: dan is de plek van het weer de plek waar je bent. Een weermodel rekent een bergkam grof uit.' },
+    ],
+  },
+  ochtendVoorstel: {
+    title: 'Voorstel bij een slechte ochtend',
+    lead: 'Wijken twee van de drie getallen van je horloge af op de ochtend van een zware training, dan kan het helpen om die training later in de week te doen.',
+    points: [
+      { head: 'Wanneer', text: 'op de ochtend van een tempoloop, intervallen, een test of een zware beendag, als je rusthartslag, HRV of slaap op twee van de drie afwijken. Eén afwijkend getal blijft één woord op de ochtendkaart.' },
+      { head: 'Wat je ziet', text: 'een kaart op Vandaag met een voorstel om de training naar een goede latere dag te doen, met welke getallen afwijken. Alleen met jouw Akkoord verandert er iets; lichter doen kan ook, zonder iets te verschuiven.' },
+      { head: 'Niet', text: 'als je zei dat je niet moe bent, bij een wedstrijd, als je ziek bent gemeld of als er al een ander voorstel voor die training ligt. Werkt alleen als Twee van drie aan staat.' },
+    ],
+  },
   ochtendregel: {
     title: 'Twee van drie',
     lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',
@@ -754,6 +808,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Wat er gebeurt', text: 'je eerstvolgende harde loop, minstens 3 dagen later, wordt die dag een testloop van 5 km. Er komt geen training bij. Wat in de weg staat schuift mee in hetzelfde voorstel; wat jij vastzette alleen met je Akkoord en met naam in de tekst. Een zware beendag schuift eerst naar na de test en vervalt pas als er geen dag voor is.' },
       { head: 'Alleen met Akkoord', text: 'je ziet eerst wat er verandert. Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.' },
       { head: 'Geen goede dag', text: 'zijn je benen op geen enkele dag binnen 10 dagen fris genoeg te krijgen, valt de dag in een vakantie of tocht, of staat er al een test gepland, dan zegt ASCEND niets.' },
+      { head: 'Ging de herkansing niet door', text: 'sloeg je hem over of liet je hem liggen, dan vraagt ASCEND het nog één keer, op een dag die past en zonder iets te verschuiven wat jij vastzette. Na Liever niet vraagt hij het pas weer na een nieuwe test. Staat deze instelling uit, dan krijgt ook een overgeslagen herkansing geen voorstel meer.' },
     ],
   },
   nietDoorgegaan: {
@@ -848,6 +903,52 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Alleen geïnstalleerd', text: 'het werkt op Chrome voor Android, met ASCEND op je beginscherm. Chrome wekt een app vaker als je hem vaker gebruikt.' },
       { head: 'Toestemming', text: 'bij het aanzetten vraagt je telefoon om meldingen te mogen sturen. Er gaat niets naar een server: de melding wordt op je telefoon bedacht.' },
       { head: 'Kan het niet', text: 'dan krijg je de vraag als je de app opent.' },
+    ],
+  },
+  meldingen: {
+    title: 'Meldingen',
+    lead: 'Welke meldingen ASCEND op je telefoon mag geven, en wanneer.',
+    points: [
+      { head: 'In de browser', text: 'alleen de ochtendvraag, en Chrome kiest het precieze moment.' },
+      { head: 'In de Android-app', text: 'ook het einde van je rust en de weekmelding, op tijd. Ze trillen zoals je Trillen hebt staan; het einde van de rust volgt het signaal van Forge.' },
+      { head: 'Alles lokaal', text: 'de meldingen worden op je telefoon bedacht. Er gaat niets naar een server.' },
+    ],
+  },
+  rustMelding: {
+    title: 'Einde van de rust',
+    lead: 'Een melding als je rust in Forge om is, ook met je scherm uit of met muziek aan.',
+    points: [
+      { head: 'Op de seconde', text: 'met de toestemming Exacte wekker. Zonder kan Android hem een paar minuten later laten komen.' },
+      { head: 'Scherm aan', text: 'dan geeft Forge het signaal zelf en komt er geen melding bij.' },
+      { head: 'Geluid en trillen', text: 'zoals je ze bij Forge onder Signaal hebt gekozen. Staat het signaal uit, dan komt er een stille melding.' },
+    ],
+  },
+  weekmelding: {
+    title: 'Weekmelding op zondag',
+    lead: 'Op zondagavond een korte melding: wat je deed, wat er komt en één tip.',
+    points: [
+      { head: 'Waar het vandaan komt', text: 'dezelfde getallen als de weekterugblik op Vandaag, van de laatste keer dat je de app opende.' },
+      { head: 'Geen week', text: 'stond er niets gepland en deed je niets, dan komt er geen melding.' },
+    ],
+  },
+  toestemmingen: {
+    title: 'Toestemmingen',
+    lead: 'Wat je telefoon ASCEND toestaat. Zonder een toestemming werkt alleen dat ene ding niet.',
+    points: [
+      { head: 'Amber stip', text: 'een toestemming staat uit terwijl iets wat je aan hebt staan hem nodig heeft.' },
+      { head: 'Exacte wekker', text: 'Android laat een melding anders tot een paar minuten te laat komen. Voor het einde van je rust is dat te laat.' },
+      { head: 'Health Connect', text: 'komt later: dan leest ASCEND je gewicht, stappen en trappen.' },
+      { head: 'Back-up van Android', text: 'Android zet een kopie van je ASCEND-gegevens in je Google-back-up, versleuteld met je schermvergrendeling. Je eigen back-up blijft de echte; boven ongeveer 25 MB slaat Android hem over.' },
+    ],
+  },
+  autoBijwerken: {
+    title: 'Automatisch bijwerken',
+    lead: 'De app kijkt bij het openen stil of er een nieuwe versie is, haalt hem op de achtergrond op en gebruikt hem bij de volgende start.',
+    points: [
+      { head: 'Wat er naar buiten gaat', text: 'niets van jou. ASCEND vraagt alleen een klein versiebestand en de nieuwe versie op bij de site van ASCEND.' },
+      { head: 'Gaat het mis', text: 'start een nieuwe versie niet goed, dan valt de app terug op de vorige en probeert hij die versie niet opnieuw.' },
+      { head: 'Nieuwe app nodig', text: 'vraagt een nieuwe versie meer van je telefoon (een nieuwe toestemming), dan zegt de app dat er een nieuwe versie klaarstaat om te installeren.' },
+      { head: 'Uit', text: 'dan blijft de app zoals hij is tot je zelf een nieuwe installeert.' },
     ],
   },
   loopinzicht: {

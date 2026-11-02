@@ -248,6 +248,10 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('niet-doorgegaan-dagen', 'Na hoeveel dagen', 'planning', 'missedTrainingDays', 2, 'nietDoorgegaanDagen'),
   flag('log-koppelen', 'Log op een andere dag koppelen', 'planning', 'missedLink'),
   flag('trillen', 'Trillen', 'vandaag', 'haptics'),
+  flag('rust-melding', 'Einde van de rust', 'vandaag', 'restNotice'),
+  flag('weekmelding', 'Weekmelding op zondag', 'vandaag', 'weekNotice'),
+  choice('weekmelding-tijd', 'Tijd van de weekmelding', 'vandaag', 'weekNoticeTime', '19:00', 'weekmeldingTijd'),
+  flag('auto-bijwerken', 'Automatisch bijwerken', 'gegevens', 'autoUpdate'),
   flag('weekvoorstel', 'Voorstel bij een probleem in de week', 'planning', 'weekFixProposal'),
   {
     id: 'volgorde-stand', title: 'Volgorde van Je stand', page: 'planning',
@@ -360,6 +364,12 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('weekdag-patroon', 'Patronen per weekdag', 'lichaam', 'weekdayPattern'),
   flag('luchtkwaliteit', 'Luchtkwaliteit', 'lichaam', 'airQuality'),
   flag('ochtendregel', 'Twee van drie', 'lichaam', 'morningRule'),
+  flag('ochtend-voorstel', 'Voorstel bij een slechte ochtend', 'lichaam', 'morningProposal'),
+  flag('bergweer', 'Bergweer op hoogte', 'lichaam', 'mountainWeather'),
+  flag('wennen-warmte', 'Wennen aan warmte', 'lichaam', 'heatAcclimation'),
+  flag('tempocurve', 'Tempocurve tussen testen', 'lichaam', 'paceCurve'),
+  flag('etappetijd-eigen', 'Etappetijd op je eigen tempo', 'lichaam', 'stageOwnPace'),
+  flag('klimtempo', 'Je klimtempo', 'lichaam', 'climbPace'),
   flag('horloge-stil', 'Melden als je horloge stilvalt', 'koppelingen', 'watchSilence'),
   flag('ochtend-backup', 'Ochtendgetallen in back-up', 'gegevens', 'morningInBackup'),
   {

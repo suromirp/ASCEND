@@ -43,13 +43,12 @@ describe('sessionSheetActions', () => {
 });
 
 describe('previewDayLine: de dag en week van de training zelf', () => {
+  // Het demoprogramma begint op vandaag: een vaste klok houdt de weken van deze test vast.
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-31T08:00:00Z') });
   const { program } = buildDefaultProgramData();
+  vi.useRealTimers();
 
   it('noemt de weekdag, de datum en de week van het programma op die dag, niet van vandaag', () => {
-    // Het programma begint op de maandag van deze week: zet "vandaag" vast, zodat de datum erin valt.
-    vi.useFakeTimers({ now: new Date('2026-10-29T12:00:00'), toFake: ['Date'] });
-    const { program } = buildDefaultProgramData();
-    vi.useRealTimers();
     const date = '2026-10-29';
     const position = resolveProgramWeek(program, date)!;
     expect(position).toBeTruthy();

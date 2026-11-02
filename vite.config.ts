@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 // Which build this is — shown in Settings so a user can see whether they
 // run the newest version. GitHub Actions provides GITHUB_SHA; locally the
@@ -16,21 +17,45 @@ function buildVersion(): string {
   }
 }
 
+// Het native niveau van de Android-app: één getal in android/native-level.txt, op te hogen bij
+// een nieuwe plugin of toestemming (docs/beslissingen/2026-11-01-android-app.md).
+function nativeLevel(): number {
+  try {
+    return Number(readFileSync(new URL('./android/native-level.txt', import.meta.url), 'utf8').trim()) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 // Set this to match your GitHub repository name so assets resolve correctly
 // on GitHub Pages, e.g. https://username.github.io/ascend/ -> '/ascend/'.
 // Using a custom domain or username.github.io root? Set this to '/'.
 const BASE_PATH = process.env.ASCEND_BASE_PATH || '/ascend/';
 
+// De Android-app (capacitor.config.ts) bundelt dezelfde build met basis "/" en zonder
+// service worker: de app heeft zijn bestanden al bij zich, en een service worker in de
+// webview zou een nieuwe APK achter een oude cache kunnen verstoppen
+// (docs/beslissingen/2026-11-01-android-app.md). `npm run android:sync` zet dit aan.
+const ANDROID = process.env.ASCEND_TARGET === 'android';
+
 export default defineConfig({
   base: BASE_PATH,
   define: {
     __APP_VERSION__: JSON.stringify(buildVersion()),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    // De deploy-workflow geeft één tijd mee aan de site en aan de zip voor de app, zodat
+    // app-versie.json en de bundel hetzelfde zeggen (scripts/app-versie.mjs).
+    __BUILD_TIME__: JSON.stringify(process.env.ASCEND_BUILD_TIME || new Date().toISOString()),
+    // Voor de Android-app: het native niveau van deze build (android/native-level.txt), waar
+    // app-versie.json staat en waar de nieuwste APK te halen is. Leeg: niet bijwerken.
+    __NATIVE_LEVEL__: JSON.stringify(nativeLevel()),
+    __UPDATE_URL__: JSON.stringify(process.env.ASCEND_UPDATE_URL || ''),
+    __RELEASES_URL__: JSON.stringify(process.env.ASCEND_RELEASES_URL || ''),
   },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
+      disable: ANDROID,
       // 'prompt': a new build waits; utils/swUpdate.ts activates it itself at
       // a quiet moment (cold start, or back after ~30 min away, never with a
       // sheet or form open), and BIJWERKEN (components/UpdatePrompt.tsx) is

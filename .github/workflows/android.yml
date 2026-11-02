@@ -1,0 +1,172 @@
+name: Android-app
+
+# Bouwt de Android-app (Capacitor) en zet hem als release op GitHub
+# (docs/beslissingen/2026-11-01-android-app.md, uitleg voor de sleutel in
+# docs/android-sleutel.md). Los van de Pages-deploy (deploy.yml).
+#
+# Drie jobs, elk met zo weinig rechten als het kan:
+# 1. bouwen: alleen lezen; bouwt een niet ondertekende release-APK en een debug-APK (die als
+#    "ASCEND proef" naast de echte app staat). De sleutel komt hier nooit.
+# 2. ondertekenen: alleen vanaf main, in de environment android-release waar de sleutel staat;
+#    zipalign en apksigner uit de Android SDK van de runner, de geheimen alleen in die ene stap.
+# 3. release: alleen vanaf main, de enige job die mag schrijven; haalt het ondertekende artefact
+#    op en zet het als release, zonder iets uit de repo of node_modules te draaien.
+# Ontbreken de secrets, dan bouwt de workflow wel, maar zet hij geen release en zegt hij waarom.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bouwen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # De gradle-wrapper in android/ moet een echte, bekende zijn.
+      - uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      # Capacitor 8 vraagt JDK 21 en de Android SDK met API 36.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+
+      - id: pages
+        uses: actions/configure-pages@v6
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+
+      # De webbuild met basis "/" en zonder service worker, gekopieerd naar android/. Met het adres
+      # van app-versie.json op Pages (live update) en van de releases (voor een nieuwe APK).
+      - name: Webbuild in de app zetten
+        env:
+          ASCEND_UPDATE_URL: ${{ steps.pages.outputs.base_url }}/
+          ASCEND_RELEASES_URL: ${{ github.server_url }}/${{ github.repository }}/releases/latest
+        run: npm run android:sync
+
+      - name: APK bouwen (zonder sleutel)
+        working-directory: android
+        env:
+          ASCEND_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          ./gradlew assembleRelease assembleDebug --no-daemon
+          mkdir -p "$RUNNER_TEMP/apk"
+          cp app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/apk/ascend-unsigned.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/apk/ascend-proef.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ascend-niet-ondertekend
+          path: ${{ runner.temp }}/apk/ascend-unsigned.apk
+          retention-days: 7
+          if-no-files-found: error
+
+      # Alleen om te proberen: staat als "ASCEND proef" naast de echte app, met eigen gegevens.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ascend-proef-apk
+          path: ${{ runner.temp }}/apk/ascend-proef.apk
+          retention-days: 30
+          if-no-files-found: error
+
+  ondertekenen:
+    needs: bouwen
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: android-release
+    permissions:
+      contents: read
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ascend-niet-ondertekend
+          path: ${{ runner.temp }}/apk
+
+      - name: Ondertekenen met zipalign en apksigner
+        id: sign
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE" ] || [ -z "$KS_PASS" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASS" ]; then
+            echo "::warning title=Geen release::De vier secrets voor de sleutel ontbreken in de environment android-release (zie docs/android-sleutel.md). Er is alleen een proef-APK gebouwd en geen release gezet."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          KS="$RUNNER_TEMP/ascend.keystore"
+          trap 'rm -f "$KS"' EXIT
+          echo "$KEYSTORE" | base64 --decode > "$KS"
+          "$TOOLS/zipalign" -p -f 4 "$RUNNER_TEMP/apk/ascend-unsigned.apk" "$RUNNER_TEMP/apk/ascend-aligned.apk"
+          "$TOOLS/apksigner" sign --ks "$KS" --ks-pass env:KS_PASS --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS \
+            --out "$RUNNER_TEMP/apk/ascend.apk" "$RUNNER_TEMP/apk/ascend-aligned.apk"
+          "$TOOLS/apksigner" verify "$RUNNER_TEMP/apk/ascend.apk"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ steps.sign.outputs.signed == 'true' }}
+        with:
+          name: ascend-apk
+          path: ${{ runner.temp }}/apk/ascend.apk
+          retention-days: 30
+          if-no-files-found: error
+
+  release:
+    needs: ondertekenen
+    if: ${{ github.ref == 'refs/heads/main' && needs.ondertekenen.outputs.signed == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ascend-apk
+          path: ${{ runner.temp }}/apk
+
+      # De release waar de app naar wijst als een nieuwe webversie een nieuwere APK nodig heeft.
+      - name: Release zetten
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.run_number }}
+        run: |
+          gh release create "apk-$RUN" "$RUNNER_TEMP/apk/ascend.apk#ascend.apk" \
+            --target "$GITHUB_SHA" \
+            --title "ASCEND voor Android $RUN" \
+            --notes "Installeer ascend.apk over de vorige heen; je gegevens blijven staan. Gebouwd uit ${GITHUB_SHA::7}." \
+            --latest

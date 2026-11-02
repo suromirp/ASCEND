@@ -4,7 +4,10 @@ import { resolveEffectiveFullDuration, setAmbition, setRecentSessionMaxima } fro
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { SessionLog } from '../models/training';
 
+// Het demoprogramma begint op vandaag: een vaste klok houdt de weken van deze test vast.
+vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-31T08:00:00Z') });
 const { templates, program } = buildDefaultProgramData();
+vi.useRealTimers();
 const byId = new Map(templates.map((t) => [t.id, t]));
 const easy = byId.get('tpl_easy_run')!;
 const log = (date: string, extra: Partial<SessionLog>): SessionLog => ({ id: date, templateId: 'tpl_easy_run', type: 'cardio', completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: 35, source: 'manual', ...extra });
@@ -16,10 +19,7 @@ afterEach(() => {
 
 describe('ambition', () => {
   it('Stevig builds 10% faster, Rustig 10% slower', () => {
-    // The default program starts on the Monday of this week: pin "today" so the date lies inside it.
-    vi.useFakeTimers({ now: new Date('2026-10-29T12:00:00'), toFake: ['Date'] });
-    const { program } = buildDefaultProgramData();
-    vi.useRealTimers();
+    // A build week (week 3 of the phase: 40 min for the easy run).
     const date = '2026-10-29';
     const std = resolveEffectiveFullDuration(easy, date, program);
     setAmbition('stevig');
