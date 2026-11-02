@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { applyPlanChangeItems } from './proposalEngine';
-import { setFreshnessContext } from './scheduler';
+import { setFreshnessContext, setLongRunThenLegs } from './scheduler';
 import type { PlannedSession, SessionLog } from '../models/training';
 
 const { templates } = buildDefaultProgramData();
@@ -45,9 +45,20 @@ describe('TEST-RETRY toetst zijn eigen eindstand', () => {
     });
   }
 
-  it('de lange duurloop en Benen A op twee dagen achter elkaar geven geen advies, net als in de planning', () => {
-    const old = week().map((s) => (s.id === 'p-sun' ? { ...s, scheduledDate: '2026-11-02', weekStartDate: '2026-11-02' } : s.id === 'p-thu' ? { ...s, scheduledDate: '2026-11-03', weekStartDate: '2026-11-02' } : s.id === 'p-mon' ? { ...s, status: 'skipped' as const } : s));
-    const fresh = computeAdvice(inputs(old)).filter((a) => a.ruleId === 'SAME-MUSCLE-SPACING');
-    expect(fresh).toEqual([]);
+  // Tot 2 november 2026 gaf dit paar geen advies (24 uur); sinds docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md
+  // houdt de planning 48 uur tussen de lange duurloop en Benen A, en het advies volgt de planning.
+  const longThenLegs = () => week().map((s) => (s.id === 'p-sun' ? { ...s, scheduledDate: '2026-11-02', weekStartDate: '2026-11-02' } : s.id === 'p-thu' ? { ...s, scheduledDate: '2026-11-03', weekStartDate: '2026-11-02' } : s.id === 'p-mon' ? { ...s, status: 'skipped' as const } : s));
+  it('de lange duurloop en Benen A op twee dagen achter elkaar geven advies, net als in de planning', () => {
+    const fresh = computeAdvice(inputs(longThenLegs())).filter((a) => a.ruleId === 'SAME-MUSCLE-SPACING');
+    expect(fresh.length).toBe(1);
+  });
+
+  it('met Beenkracht de dag na de lange duurloop aan geven ze geen advies', () => {
+    setLongRunThenLegs(true);
+    try {
+      expect(computeAdvice(inputs(longThenLegs())).filter((a) => a.ruleId === 'SAME-MUSCLE-SPACING')).toEqual([]);
+    } finally {
+      setLongRunThenLegs(false);
+    }
   });
 });

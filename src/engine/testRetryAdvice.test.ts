@@ -5,6 +5,7 @@ import { applyPlanChangeItems } from './proposalEngine';
 import { planPass } from './planPass';
 import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionLog } from '../models/training';
+import { daysBetween } from '../utils/dates';
 
 const { templates } = buildDefaultProgramData();
 
@@ -165,10 +166,11 @@ describe('TEST-RETRY: ruimte maken in een gewone week', () => {
     const a = retry({ plannedSessions: week(undefined, ['upA2', 'legs2']) })!;
     const legs = a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')!;
     const long = a.proposal!.changes.find((c) => c.plannedSessionId === 'long');
-    // De lange duurloop gaat naar ma 2 november. Benen A mag er een dag na staan: een rustige lange loop en
-    // beenkracht mogen op twee dagen achter elkaar, in de planning en in het advies (scheduler.ts#legSpacingDays).
+    // De lange duurloop gaat naar ma 2 november. Benen A houdt er 48 uur van af, in beide volgordes
+    // (scheduler.ts#legSpacingDays, docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md; tot dan mocht een dag ertussen weg).
     expect(long).toMatchObject({ action: 'move', toDate: '2026-11-02' });
     expect(['move', 'remove']).toContain(legs.action);
+    if (legs.action === 'move') expect(Math.abs(daysBetween(legs.toDate!, '2026-11-02'))).toBeGreaterThanOrEqual(2);
   });
 
   it('verschuift een beendag naar na de test als daar een dag voor is, in hetzelfde voorstel', () => {

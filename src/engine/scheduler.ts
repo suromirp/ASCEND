@@ -246,7 +246,11 @@ export function findHeavyConflicts(
     const extra = Math.max(requiredSpacingDays(sessionId, recentLogs), requiredSpacingDays(s.id, recentLogs)) - 1;
     const first = date <= s.scheduledDate ? template : other;
     const second = first === template ? other : template;
-    return gap <= legSpacingDays(first, second) + extra;
+    let need = legSpacingDays(first, second);
+    // Leg strength the day after the long run (the setting) only when the day before the long run is not
+    // already heavy for the legs: never three heavy leg days in a row.
+    if (need === 0 && legHeavyDayBefore(first === template ? date : s.scheduledDate, sessions, templateMap, [sessionId, s.id])) need = 1;
+    return gap <= need + extra;
   });
   if (!isTestLike(template)) return pairwise;
   const blockers = freshnessBlockers(date, FRESH_LIMIT[template.id], sessions.filter((s) => s.id !== sessionId), templateMap, recentLogs);
@@ -255,12 +259,16 @@ export function findHeavyConflicts(
 
 // ASCEND_HEURISTIC(LEG-SPACING-BY-PAIR): the days that must lie between two
 // heavy leg sessions depend on what kind of load they are, not one flat
-// 48 hours (production feedback, October 2026):
+// 48 hours (production feedback, October 2026; the long run since
+// docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md):
 // - after a hike with a lot of descending (mountain hike, hike day one):
 //   72 hours before the next heavy leg session. Descending is the most
 //   muscle-damaging load there is (eccentric work).
-// - between the easy long run and leg strength, either order: 24 hours.
-//   Long and easy is mostly volume, little muscle damage.
+// - the easy long run and leg strength: 48 hours in either order, the long
+//   run counts as heavy for the legs. Only with the setting "Beenkracht de
+//   dag na de lange duurloop" may strength follow the long run after 24
+//   hours, never the other way round (findHeavyConflicts adds: not when the
+//   day before the long run is heavy for the legs too).
 // - everything else (leg strength and hill intervals, two strength days):
 //   48 hours, as before.
 // Returned as the largest gap in days that still counts as too close:
@@ -268,9 +276,44 @@ export function findHeavyConflicts(
 export function legSpacingDays(first: SessionTemplate, second: SessionTemplate): number {
   const isHike = (t: SessionTemplate) => templateSport(t) === 'hiking' && resolveEffectiveStressProfile(t).eccentricLoad !== 'none';
   if (isHike(first) && !isHike(second)) return 2;
-  const easyVolume = (t: SessionTemplate) => templateSport(t) === 'running' && resolveEffectiveStressProfile(t).intensity === 'low';
-  if ((easyVolume(first) && second.type === 'strength') || (first.type === 'strength' && easyVolume(second))) return 0;
+  if (longRunThenLegs && isEasyVolume(first) && second.type === 'strength') return 0;
   return 1;
+}
+
+// Long and easy running: mostly volume (the long run in the default program).
+function isEasyVolume(t: SessionTemplate): boolean {
+  return templateSport(t) === 'running' && resolveEffectiveStressProfile(t).intensity === 'low';
+}
+
+// A session heavy for the legs on the day before `date`, leaving out `exclude` (the pair itself).
+export function legHeavyDayBefore(date: string, sessions: PlannedSession[], templateMap: Map<string, SessionTemplate>, exclude: string[] = []): boolean {
+  const before = addDays(date, -1);
+  return sessions.some((o) => {
+    if (o.scheduledDate !== before || o.status === 'skipped' || exclude.includes(o.id)) return false;
+    const t = templateMap.get(o.templateId);
+    return !!t && isLegHeavyTemplate(t);
+  });
+}
+
+// Setting (Planning → Geavanceerd → Beenkracht de dag na de lange duurloop): off by default.
+// Set from the settings on every refresh, like "Zware dingen op één dag" below.
+let longRunThenLegs = false;
+export function setLongRunThenLegs(allowed: boolean): void {
+  longRunThenLegs = allowed;
+}
+export function isLongRunThenLegsAllowed(): boolean {
+  return longRunThenLegs;
+}
+// The value for one synchronous call only (the preview of a proposal), put back at once.
+export function withLongRunThenLegs<T>(allowed: boolean | undefined, fn: () => T): T {
+  if (allowed === undefined) return fn();
+  const saved = longRunThenLegs;
+  longRunThenLegs = allowed;
+  try {
+    return fn();
+  } finally {
+    longRunThenLegs = saved;
+  }
 }
 
 // ASCEND_HEURISTIC(HARD-RUN-AFTER-LEG-STRENGTH): a hard run (tempo,

@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import { allowedPairs } from './allowedPair';
+import { setLongRunThenLegs } from './scheduler';
 
 const { templates } = buildDefaultProgramData();
 const s = (id: string, templateId: string, date: string, status: PlannedSession['status'] = 'planned'): PlannedSession => ({
@@ -10,17 +11,31 @@ const s = (id: string, templateId: string, date: string, status: PlannedSession[
 const pairs = (list: PlannedSession[]) => allowedPairs(list, templates, []);
 
 describe('allowedPairs', () => {
-  it('beenkracht op zondag en een rustige lange loop op maandag: de loop is de tweede, ook over de weekgrens', () => {
-    const map = pairs([s('a', 'tpl_lower_a', '2026-11-01'), s('b', 'tpl_long_run', '2026-11-02')]);
-    expect([...map.keys()]).toEqual(['b']);
-    expect(map.get('b')).toMatchObject({ withId: 'a', kind: 'run-after-strength', rowNote: 'mag na beenkracht' });
-    expect(map.get('b')!.sheetText).toContain('de dag na beenkracht');
+  afterEach(() => setLongRunThenLegs(false));
+
+  // Tot 2 november 2026 mochten de lange duurloop en beenkracht in elke volgorde op twee dagen achter elkaar.
+  // Sinds docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md is het 48 uur, en alleen met de instelling
+  // Beenkracht de dag na de lange duurloop mag kracht de dag na de lange loop. Andersom nooit.
+  it('standaard geen toegestaan paar meer, in geen van beide volgordes', () => {
+    expect(pairs([s('a', 'tpl_lower_a', '2026-11-01'), s('b', 'tpl_long_run', '2026-11-02')]).size).toBe(0);
+    expect(pairs([s('a', 'tpl_long_run', '2026-10-27'), s('b', 'tpl_lower_a', '2026-10-28')]).size).toBe(0);
   });
 
-  it('de loop eerst en beenkracht erna: de beendag is de tweede', () => {
-    const map = pairs([s('a', 'tpl_long_run', '2026-10-27'), s('b', 'tpl_lower_a', '2026-10-28')]);
+  it('met de instelling: de loop eerst en beenkracht erna, de beendag is de tweede, ook over de weekgrens', () => {
+    setLongRunThenLegs(true);
+    const map = pairs([s('a', 'tpl_long_run', '2026-11-01'), s('b', 'tpl_lower_a', '2026-11-02')]);
     expect([...map.keys()]).toEqual(['b']);
-    expect(map.get('b')).toMatchObject({ kind: 'strength-after-run', rowNote: 'mag na rustige loop' });
+    expect(map.get('b')).toMatchObject({ withId: 'a', kind: 'strength-after-run', rowNote: 'mag na rustige loop' });
+  });
+
+  it('met de instelling: beenkracht eerst en dan de lange loop blijft geen paar', () => {
+    setLongRunThenLegs(true);
+    expect(pairs([s('a', 'tpl_lower_a', '2026-11-01'), s('b', 'tpl_long_run', '2026-11-02')]).size).toBe(0);
+  });
+
+  it('met de instelling: geen paar na het weekendblok, dat zouden drie zware beendagen op rij zijn', () => {
+    setLongRunThenLegs(true);
+    expect(pairs([s('h', 'tpl_hill_intervals', '2026-10-31'), s('a', 'tpl_long_run', '2026-11-01'), s('b', 'tpl_lower_a', '2026-11-02')]).size).toBe(0);
   });
 
   it('niet bij een harde loop, een test of twee krachttrainingen', () => {
@@ -36,9 +51,9 @@ describe('allowedPairs', () => {
     expect(pairs([s('a', 'tpl_lower_a', '2026-10-27', 'skipped'), s('b', 'tpl_long_run', '2026-10-28')]).size).toBe(0);
   });
 
-  it('beenkracht, loop, beenkracht: allebei de tweede van een paar', () => {
-    const map = pairs([s('a', 'tpl_lower_a', '2026-10-27'), s('b', 'tpl_long_run', '2026-10-28'), s('c', 'tpl_lower_b', '2026-10-29')]);
-    expect([...map.keys()].sort()).toEqual(['b', 'c']);
+  it('beenkracht, loop, beenkracht: ook met de instelling geen paar, de loop staat te dicht na de eerste beendag', () => {
+    setLongRunThenLegs(true);
+    expect(pairs([s('a', 'tpl_lower_a', '2026-10-27'), s('b', 'tpl_long_run', '2026-10-28'), s('c', 'tpl_lower_b', '2026-10-29')]).size).toBe(0);
   });
 
   it('twee krachttrainingen met een dag ertussen zijn geen paar', () => {

@@ -182,7 +182,7 @@ async function scopeFor(input: HorizonChangeInput): Promise<DurationScope | unde
   if (!input.settings) return undefined;
   const [settings, logs, templates, programs] = await Promise.all([SettingsRepo.get(), SessionLogsRepo.getAll(), SessionTemplatesRepo.getAll(), ProgramsRepo.getAll()]);
   const merged = { ...settings, ...input.settings };
-  return { ...durationScopeFor(merged, logs, templates, programs[0], todayISO()), hardSameDay: !!merged.hardSameDay };
+  return { ...durationScopeFor(merged, logs, templates, programs[0], todayISO()), hardSameDay: !!merged.hardSameDay, longRunThenLegs: !!merged.longRunThenLegs };
 }
 
 // The goals as the change would leave them: the stored ones, the changed ones in their place, new ones added.

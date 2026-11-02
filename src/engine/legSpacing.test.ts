@@ -18,9 +18,11 @@ describe('wait time per pair of heavy leg sessions', () => {
     expect(fits('tpl_lower_a', '2026-10-14', [ps('tpl_hill_intervals', '2026-10-12')])).toBe(true);
   });
 
-  it('24 hours between the easy long run and leg strength, in either order', () => {
-    expect(fits('tpl_lower_a', '2026-10-13', [ps('tpl_long_run', '2026-10-12')])).toBe(true);
-    expect(fits('tpl_long_run', '2026-10-13', [ps('tpl_lower_a', '2026-10-12')])).toBe(true);
+  // Was 24 hours; 48 since docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md (more in longRunLegSpacing.test.ts).
+  it('48 hours between the easy long run and leg strength, in either order', () => {
+    expect(fits('tpl_lower_a', '2026-10-13', [ps('tpl_long_run', '2026-10-12')])).toBe(false);
+    expect(fits('tpl_long_run', '2026-10-13', [ps('tpl_lower_a', '2026-10-12')])).toBe(false);
+    expect(fits('tpl_lower_a', '2026-10-14', [ps('tpl_long_run', '2026-10-12')])).toBe(true);
     expect(fits('tpl_lower_a', '2026-10-12', [ps('tpl_long_run', '2026-10-12')])).toBe(false);
   });
 

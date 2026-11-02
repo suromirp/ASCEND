@@ -1,7 +1,9 @@
-// ASCEND: een rustige loop en beenkracht op twee dagen achter elkaar, in elke volgorde,
-// is bewust toegestaan (scheduler.ts#legSpacingDays geeft 0). Dat valt op in Week omdat
-// beide zware benen zijn en er toch geen melding staat. Hier wordt per training gezegd of hij
-// de tweede van zo'n paar is, met een korte rijtekst en een zin voor het actieblad.
+// ASCEND: een rustige loop en beenkracht op twee dagen achter elkaar is bewust toegestaan als
+// scheduler.ts#legSpacingDays 0 geeft. Sinds docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md
+// is dat alleen zo met de instelling "Beenkracht de dag na de lange duurloop", en alleen in de
+// volgorde lange loop en dan kracht; 'run-after-strength' komt dus niet meer voor zolang de regel
+// zo is. Dat valt op in Week omdat beide zware benen zijn en er toch geen melding staat. Hier wordt
+// per training gezegd of hij de tweede van zo'n paar is, met een korte rijtekst en een zin voor het actieblad.
 //
 // Alleen informatie: dit verandert niets aan de planning en is geen melding. Dezelfde regel
 // als de planning: legSpacingDays === 0 en findHeavyConflicts vindt geen botsing met de eerste.
