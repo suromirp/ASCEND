@@ -9,7 +9,7 @@ Bijgewerkt op 1 november 2026.
 
 Ronde 2 van `docs/onderhoud/2026-11-01-aanpak-backlog.md` (ronde 1 is af, terugblik in `docs/onderhoud/reflectie-2026-11-01.md`).
 
-Live op 2 november: de 48 uur tussen beenzware dagen ook na de lange duurloop, de automatische back-up naar een bestand (Android: Documenten/ASCEND).
+Live op 2 november: Sporten die meetellen (zwemmen, padel, voetbal, vaste dagen, rust na een zware sport, hoeveel per soort, eigen sporten), Waarom staat dit hier, Minder tijd vandaag, zones na een test, details ophalen voor oudere runs, snelkoppelingen en een widget in de Android-app (native niveau 3, nog niet op een toestel gezien), de 48 uur tussen beenzware dagen ook na de lange duurloop, de automatische back-up naar een bestand (Android: Documenten/ASCEND).
 
 Live op 1 november: Stand schuift niet meer zijwaarts, het cijferblok van Forge blijft open, de ochtendkaart na je antwoord, de rustdag die terugkomt, de rustiger fysioregel, de kortere voorschriftregel, het citaat in het Engels, een vakantie bijwerken, trainingen die niet doorgingen, ochtenden in de back-up veilig uitzetten, opmaak samengebracht, de tekstkaart met 21 schermen, drie ontwerprapporten in `docs/visie/`.
 
@@ -20,7 +20,6 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 - Kansen met gegevens, het middelgrote werk (kans A en F, de etappeschatting als band) en het kleine werk dat over was (kans C, D en I): gebouwd op `claude/kansen-middelgroot`, wacht op de poorten (`docs/beslissingen/2026-11-01-kansen-middelgroot.md`). De bestandsroute voor FIT-bestanden als vangnet (stap 0c van het onderzoek) is later.
 - Vier tekstpunten uit eerdere Lookout-rondes die zonder screenshot niet terug te vinden waren. Wachten op een screenshot van de eigenaar.
 
-- Sporten die meetellen stap 1 (pictogrammen, Cartographer) en stap 4 tot 9 (import, vraag op Vandaag, scherm Sporten, weekcheck, vaste dag, hoeveel per soort). Stap 2 en 3 zijn gebouwd.
 - Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
 
 ## Met voorrang: de planner en de 48 uur (gevonden 2 november)
@@ -53,9 +52,8 @@ Op vraag van de eigenaar. Bouwen bij de eerstvolgende vrije plek (Sherpa, opus; 
 
 Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie werkt los en samen; in de browser een webweg of een nette stilte. De Android-app werkt zichzelf bij (live update) en gebruikt een vaste sleutel, zodat je gegevens bij een update blijven.
 - In de Android-opdracht zelf: de terugknop, scherm aan tijdens Forge (in de browser met Wake Lock), trillen, statusbalk en startscherm.
-- Snelkoppelingen onder het app-icoon: Start training, Ochtendvraag (Android; in de web-app via `shortcuts` in het PWA-manifest). Ronde 2b.
-- Een widget op het startscherm met je missie van vandaag (Android, eigen native code; de web-app heeft geen widget). Ronde 2b, na de rest.
 - Health Connect als bron (al gepland). Ronde 2b.
+- Nagekomen uit ronde 2b: de factor 0,98 voor de drempelhartslag na een 5 km toetsen (Scout); Sporten lezen echte intervals.icu-types (Swim, Padel, Soccer, Yoga) alleen met nagemaakte data getest; een eigen sport telt niet in de weekcheck; "Laten staan" bij een vakantie en "laten rusten?" rond een Top-race voor vaste sporten; de waarde "Alles normaal" valt af in de rij Hoeveel per soort op 360 px; een test die alle Android-XML vooraf leest (een dubbel streepje in commentaar brak de APK-bouw).
 - Je locatie, alleen als je het aanzet (uit als standaard), in de app en in de browser, om te weten waar je bent: het weer op je plek, en tijdens een tocht waar je bent op je etappe (hoeveel nog tot het eind, de volgende plek). Alleen je plek van nu; geen route, geen spoor, niets bewaard of gedeeld. Ronde 2b. Daarbij ook: een eigen plek per tocht voor het bergweer, zodat de kaart al de dag ervoor kan komen (nu alleen op de tochtdag zelf en als het weer je locatie volgt).
 - De back-up van Android (naar Google) staat aan, keuze van de eigenaar (2 november), naast de eigen back-up; alleen de opslag van de webview, zonder caches.
 - Niet: hartslagband via Bluetooth (eigenaar). Niet gebouwd tenzij de eigenaar het vraagt: camera en een gps-route of spoor van tochten (afgeraden om batterij en privacy; de eigenaar wil alleen weten waar hij is).
@@ -89,10 +87,6 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Android-meldingen met het scherm uit en trillen: het einde van de rust in Forge, de ochtendvraag en de weekmelding (ronde 2b, bij de Android-app). Toestemmingen direct na de installatie, in een korte welkomstreeks met per toestemming één scherm en "Niet nu".
 - Health Connect als bron in de Android-app, via de adapter in `src/integrations/` (ronde 2b).
 - Korte weekmelding op zondagavond: wat er gebeurde, wat er komt, één tip. Als melding via de Android-app; in de PWA als kaart op Vandaag bij het openen.
-- "Waarom staat dit hier?" bij elke training in Week: één tik geeft de reden van de planning (welke regel, welk voorstel).
-- Snel aanpassen voor vandaag: één knop "Minder tijd vandaag" die de training inkort, via een voorstel met Akkoord.
-- Je tempo- en hartslagzones automatisch bijwerken na een test, als voorstel met Akkoord.
-- Run in detail voor oudere runs: de details van eerdere loopjes alsnog ophalen (nu hebben er maar twee runDetail).
 - De ochtendkaart met horloge en de vraag "Ben je moe?" duwt de missiekaart onder de vouw op een klein scherm: compacter of de vraag in plaats van de keuzes.
 - Startvragen: standaardkeuze is nu "Een tocht of wedstrijd"; nagaan of "Fit blijven" logischer is voor iemand zonder plan.
 
