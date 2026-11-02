@@ -26,3 +26,7 @@ Niets. Het stuk over de vorm van de vraag in `2026-10-31-ochtendkaart-vernieuwd.
 ## Terugdraaien
 
 Haal het blok `if (compact)` en de staat `opened` uit `MorningCard.tsx`.
+
+## Grenzen (na review)
+
+De compacte vraag staat er alleen als er geen korte-nachtvraag (`reading?.night`) en geen ontbrekende slaap is: die twee wil je zonder tik zien, dus dan staat de volle vraag er meteen (`engine/morningCard.ts#isCompactAsk`, met test). Wijkt minstens één horlogewoord af, dan staat rechts in het kopje "Beenindex: fris" (of de waarde van het voorstel), zodat "Klopt: fris" niet tegen de woorden in lijkt te gaan; een aparte regel kostte te veel hoogte voor 360 bij 640. De wissel van compact naar vol loopt met `HeightMorph`.

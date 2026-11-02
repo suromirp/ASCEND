@@ -3,7 +3,7 @@ import type { MorningCheckIn } from '../models/checkIn';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import type { AdviceInputs } from './adviceEngine';
-import { LEG_CARD_TARGET, MORNING_CARD_UNTIL_HOUR, NOTHING_PLANNED_TEXT, legsShortText, maxEffortYesterday, morningConsequence, morningPrefill, showMorningCard, suggestLegs } from './morningCard';
+import { LEG_CARD_TARGET, isCompactAsk, MORNING_CARD_UNTIL_HOUR, NOTHING_PLANNED_TEXT, legsShortText, maxEffortYesterday, morningConsequence, morningPrefill, showMorningCard, suggestLegs } from './morningCard';
 import type { SessionLog } from '../models/training';
 
 const TODAY = '2026-10-22';
@@ -203,4 +203,15 @@ describe('morningConsequence', () => {
     expect(legsShortText({ legs: 'flink' })).toBe('Benen flinke spierpijn');
     expect(legsShortText({ allNormal: true })).toBe('Gaat goed');
   });
+});
+
+describe('isCompactAsk', () => {
+  const base = { hasSuggestion: true, shortNight: false, missingSleep: false, opened: false };
+  it('is compact bij een voorstel', () => { expect(isCompactAsk(base)).toBe(true); });
+  it('is niet compact zonder voorstel of na Anders', () => {
+    expect(isCompactAsk({ ...base, hasSuggestion: false })).toBe(false);
+    expect(isCompactAsk({ ...base, opened: true })).toBe(false);
+  });
+  it('toont de korte-nachtvraag zonder tik', () => { expect(isCompactAsk({ ...base, shortNight: true })).toBe(false); });
+  it('toont Opnieuw ophalen zonder tik bij ontbrekende slaap', () => { expect(isCompactAsk({ ...base, missingSleep: true })).toBe(false); });
 });

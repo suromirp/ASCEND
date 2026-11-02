@@ -12,7 +12,7 @@ Week 1 van de basis
 
 --- kaart 2 ---
 Hoe voelen je benen?
-van je horloge
+Beenindex: fris
 Slaap
 6:35u
 korter
