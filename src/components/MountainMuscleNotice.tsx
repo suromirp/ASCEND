@@ -2,17 +2,18 @@
 // voorstel om één oefening toe te voegen. Pas na Akkoord verandert er iets; "Liever niet" laat de spier acht
 // weken met rust. Besluit: docs/beslissingen/2026-11-02-forge-herinrichting.md.
 
-import { useMemo, useState } from 'react';
-import { addedSlotsFor, withAddedExercise } from '../engine/addedExercises';
-import { programExercisesFor } from '../engine/macrofactorProgram';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { canAddExercise, withAddedExercise } from '../engine/addedExercises';
+import { forgeSlotsFor } from '../engine/forgeSlots';
 import { mountainMuscleProposal, muscleNoticeText, type MuscleProposal } from '../engine/mountainMuscles';
 import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { useAppData } from '../state/AppDataContext';
-import { todayISO } from '../utils/dates';
+import { mondayOfWeek, todayISO } from '../utils/dates';
 import { readMuscleDeclines, rememberMuscleDecline } from '../utils/muscleDeclines';
 import { Eyebrow, SecondaryButton } from './ui';
 
-// Opslaan is lokaal en snel; na deze tijd zegt de melding dat het niet lukte.
+// Opslaan is lokaal en snel; na deze tijd zegt de melding dat het niet op tijd lukte. Lukt het daarna alsnog, dan
+// toont hij het als gelukt.
 const SAVE_LIMIT_MS = 8000;
 
 export function MountainMuscleNotice({ weekStart }: { weekStart: string }) {
@@ -21,18 +22,31 @@ export function MountainMuscleNotice({ weekStart }: { weekStart: string }) {
   const [state, setState] = useState<'open' | 'busy' | 'done' | 'declined' | 'failed'>('open');
   // Na Akkoord blijft het voorstel staan als bevestiging, ook al staat de oefening nu in de training.
   const [accepted, setAccepted] = useState<MuscleProposal | null>(null);
+  // De tijdgrens van het opslaan, opgeruimd na afloop en als het blad sluit.
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      clearTimeout(timer.current);
+    };
+  }, []);
   const live = useMemo(() => {
     const strength = resolveStrengthSettings(settings.strengthModel);
     const today = todayISO();
+    const templateIds = templates.map((t) => t.id);
     return mountainMuscleProposal({
       on: strength.enabled && strength.mountainMuscles,
       weekStart,
+      today,
+      canAdd: (id) => canAddExercise(settings.strengthModel, id, templateIds),
       logs: sessionLogs,
       program,
       goals: trainingGoals,
       milestones: goalMilestones,
       templates,
-      exercisesOf: (t) => [...(programExercisesFor(settings.strengthModel?.program, t.id, today) ?? t.exercises ?? []), ...addedSlotsFor(settings.strengthModel, t.id)],
+      exercisesOf: (t) => forgeSlotsFor(t, settings.strengthModel, today),
       profile: strength.profile,
       declined: declines,
     });
@@ -45,20 +59,35 @@ export function MountainMuscleNotice({ weekStart }: { weekStart: string }) {
     if (!proposal) return;
     setAccepted(proposal);
     setState('busy');
-    const save = updateSettings({ strengthModel: withAddedExercise(settings.strengthModel, proposal.templateId, proposal.exerciseId) });
-    const limit = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('tijd')), SAVE_LIMIT_MS));
+    const shown = proposal;
+    const save = updateSettings({ strengthModel: withAddedExercise(settings.strengthModel, shown.templateId, shown.exerciseId, templates.map((t) => t.id)) });
+    let saved = false;
+    // Een late gelukte opslag telt alsnog als gelukt.
+    save.then(() => {
+      saved = true;
+      if (!mounted.current) return;
+      setAccepted(shown);
+      setState('done');
+    }, () => undefined);
+    const limit = new Promise<never>((_, reject) => {
+      timer.current = setTimeout(() => reject(new Error('tijd')), SAVE_LIMIT_MS);
+    });
     try {
       await Promise.race([save, limit]);
-      setState('done');
     } catch {
-      setAccepted(null);
-      setState('failed');
+      if (!saved && mounted.current) {
+        setAccepted(null);
+        setState('failed');
+      }
+    } finally {
+      clearTimeout(timer.current);
     }
   }
 
   function decline() {
     if (!proposal) return;
-    rememberMuscleDecline({ muscle: proposal.muscle, weekStart });
+    // De stilte telt vanaf deze week, ook als je een oude terugblik bekijkt.
+    rememberMuscleDecline({ muscle: proposal.muscle, weekStart: mondayOfWeek(todayISO()) });
     setState('declined');
   }
 

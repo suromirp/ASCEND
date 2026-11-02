@@ -13,7 +13,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { exerciseById } from '../../data/exercises';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { canRemoveRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn, type DroppedRow } from '../../engine/forgeRows';
-import { addedSlotsFor, isAddedSlot, withoutAddedSlot } from '../../engine/addedExercises';
+import { isAddedSlot, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
+import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { swapPreference, swapReason } from '../../engine/mountainMuscles';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
 import { ExerciseArtSheet } from '../ExerciseArtSheet';
@@ -65,7 +66,6 @@ import {
   type WorkoutExercise,
 } from '../../engine/forgeWorkout';
 import { profileFor } from '../../engine/strengthWeights';
-import { programExercisesFor } from '../../engine/macrofactorProgram';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import { templateSport } from '../../engine/sports';
 import { durationForVariant, exercisesForVariant, resolveVariantDuration } from '../../engine/substitutions';
@@ -213,12 +213,9 @@ function ForgeWorkoutInner({
   const readOnly = strengthExternal || preview;
   const strength = useMemo(() => resolveStrengthSettings(settings.strengthModel), [settings.strengthModel]);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
-  // A program from MacroFactor gives the exercises of the week of this training.
-  const programSlots = programExercisesFor(settings.strengthModel?.program, template.id, date);
-  // Een oefening die je na een voorstel met Akkoord toevoegde (engine/addedExercises.ts) komt achter de training.
-  const added = addedSlotsFor(settings.strengthModel, template.id);
-  const baseSlots = programSlots ?? template.exercises;
-  const slots = exercisesForVariant(added.length > 0 || programSlots ? { ...template, exercises: [...(baseSlots ?? []), ...added] } : template, initialVariant);
+  // A program from MacroFactor gives the exercises of the week of this training, and an exercise you added after a
+  // proposal with Akkoord comes behind them (engine/forgeSlots.ts, the same list the week review reads).
+  const slots = exercisesForVariant({ ...template, exercises: forgeSlotsFor(template, settings.strengthModel, date) }, initialVariant);
 
   const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
   const [restored] = useState(() => {
@@ -887,10 +884,11 @@ function ForgeWorkoutInner({
     void updateSettings({ strengthModel: next });
   }
 
-  // "Uit deze training halen": de oefening gaat uit de lijst en uit deze training; wat je eerder deed blijft.
+  // "Uit deze training halen": de oefening gaat uit de lijst voor volgende keren. In deze training gaat hij er
+  // alleen uit zolang er nog geen set is afgevinkt; afgevinkte sets gaan nooit stil weg.
   function removeAddedExercise(slot: string) {
     saveStrength(withoutAddedSlot(settings.strengthModel, template.id, slot));
-    setWorkout((w) => w.filter((e) => e.slot !== slot));
+    setWorkout((w) => workoutWithoutAdded(w, slot));
   }
 
   const menuEx = workout.find((e) => e.slot === menuFor);
@@ -949,7 +947,7 @@ function ForgeWorkoutInner({
               <button type="button" onClick={onClose} aria-label={preview ? 'Sluiten' : 'Kleiner maken, de training loopt door'} className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="terug" size={22} />
               </button>
-              <h1 className="min-w-0 flex-1 line-clamp-2 break-words font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
+              <h1 className="min-w-0 flex-1 truncate font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
               <button type="button" onClick={() => setWorkoutMenu(true)} aria-label="Menu van de training" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="meer" size={22} />
               </button>
@@ -1096,10 +1094,10 @@ function ForgeWorkoutInner({
                     <MenuRow icon="notitie" title="Notitie" sub={strength.exerciseNotes[menuEx.exerciseId] ?? 'Bijvoorbeeld de stand van de stoel. Blijft bij deze oefening staan.'} onClick={() => { close(); setNoteFor(menuEx.slot); }} />
                   )}
                   {art && (
-                    <MenuRow icon="info" title="Uitleg en tekening" sub="Hoe het gaat, welke spieren werken en waar je op let." onClick={() => { close(); setArtFor(menuEx.exerciseId); }} />
+                    <MenuRow icon="info" sheetFrom title="Uitleg en tekening" sub="Hoe het gaat, welke spieren werken en waar je op let." onClick={() => { close(); setArtFor(menuEx.exerciseId); }} />
                   )}
                   {added && (
-                    <MenuRow icon="min" title="Uit deze training halen" sub="Je voegde hem toe na een voorstel. Je sets van eerder blijven staan." onClick={() => { close(); removeAddedExercise(menuEx.slot); }} />
+                    <MenuRow icon="min" title="Uit deze training halen" sub={menuEx.rows.some((r) => r.done) ? 'Vanaf je volgende training. Wat je vandaag afvinkte blijft staan.' : 'Je voegde hem toe na een voorstel. Je sets van eerder blijven staan.'} onClick={() => { close(); removeAddedExercise(menuEx.slot); }} />
                   )}
                 </SheetGroup>
                 {!readOnly && (

@@ -28,3 +28,12 @@ export function rememberMuscleDecline(decline: MuscleDecline): void {
     // geen opslag: de melding komt de volgende keer terug, er gaat niets stuk
   }
 }
+
+// "Alles verwijderen" wist ook deze herinnering (storage/databaseSeed.ts#resetToDemoData).
+export function clearMuscleDeclines(): void {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    // geen opslag: dan is er ook niets te wissen
+  }
+}

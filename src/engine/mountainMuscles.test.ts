@@ -29,6 +29,7 @@ const upper = tpl('tpl_upper_a', 'Bovenlichaam A', [slot('ex1', 'Barbell Bench P
 const input = (over: Partial<MuscleProposalInput> = {}): MuscleProposalInput => ({
   on: true,
   weekStart: LAST,
+  today: '2026-11-02',
   logs: WEEKS.map((d, i) => log(`l${i}`, d, [squat(4)])),
   goals: [goal()],
   milestones: ladder,
@@ -120,10 +121,19 @@ describe('het voorstel in de weekterugblik', () => {
     expect(mountainMuscleProposal(input({ templates: [] }))).toBeNull();
   });
 
-  it('na Liever niet acht weken stil voor die spier', () => {
+  it('na Liever niet acht weken stil voor die spier, gerekend vanaf deze week', () => {
     const p = mountainMuscleProposal(input({ declined: [{ muscle: 'calves', weekStart: '2026-10-19' }] }));
     expect(p?.muscle).toBe('tibialis');
     expect(mountainMuscleProposal(input({ declined: [{ muscle: 'calves', weekStart: '2026-08-03' }] }))?.muscle).toBe('calves');
+    // Liever niet deze week, op een oude terugblik uit oktober: die terugblik zwijgt ook.
+    expect(mountainMuscleProposal(input({ weekStart: '2026-10-12', declined: [{ muscle: 'calves', weekStart: '2026-11-02' }] }))?.muscle).toBe('tibialis');
+    // Acht weken later mag het weer.
+    expect(mountainMuscleProposal(input({ today: '2026-12-28', declined: [{ muscle: 'calves', weekStart: '2026-11-02' }] }))?.muscle).toBe('calves');
+  });
+
+  it('geen voorstel als er in die training geen plek meer is', () => {
+    expect(mountainMuscleProposal(input({ canAdd: () => false }))).toBeNull();
+    expect(mountainMuscleProposal(input({ canAdd: (id) => id === 'tpl_lower_a' }))?.templateId).toBe('tpl_lower_a');
   });
 
   it('een tibialis-melding spreekt in het enkelvoud', () => {

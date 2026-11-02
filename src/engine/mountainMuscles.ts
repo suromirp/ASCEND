@@ -114,6 +114,11 @@ export interface MuscleProposal extends MuscleShort {
 export interface MuscleProposalInput {
   on: boolean;
   weekStart: string;
+  // Vandaag: de stilte na "Liever niet" telt vanaf de week waarin je het zei tot nu, ook bij een oude terugblik.
+  today: string;
+  // Of er in die training nog plek is voor een toevoeging (engine/addedExercises.ts#canAddExercise). Geen plek:
+  // geen voorstel, want Akkoord zou niets doen.
+  canAdd?: (templateId: string) => boolean;
   logs: readonly SessionLog[];
   program?: Program | null;
   goals: readonly TrainingGoal[];
@@ -143,7 +148,9 @@ export function mountainMuscleProposal(input: MuscleProposalInput): MusclePropos
   const target = [...strength].sort((a, b) => legWork(b) - legWork(a) || a.name.localeCompare(b.name))[0];
   const inTarget = idsIn(input.exercisesOf(target));
   const inPlan = new Set(strength.flatMap((t) => [...idsIn(input.exercisesOf(t))]));
-  const quiet = (m: MuscleGroup) => (input.declined ?? []).some((d) => d.muscle === m && d.weekStart <= input.weekStart && addDays(d.weekStart, 7 * DECLINE_QUIET_WEEKS) > input.weekStart);
+  if (input.canAdd && !input.canAdd(target.id)) return null;
+  const now = mondayOfWeek(input.today);
+  const quiet = (m: MuscleGroup) => (input.declined ?? []).some((d) => d.muscle === m && d.weekStart <= now && addDays(d.weekStart, 7 * DECLINE_QUIET_WEEKS) > now);
   for (const short of mountainMusclesShort(input.logs, input.weekStart, input.program)) {
     if (quiet(short.muscle)) continue;
     if ([...inPlan].some((id) => exerciseById(id)?.primary.includes(short.muscle))) continue;

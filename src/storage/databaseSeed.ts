@@ -5,6 +5,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 import { layoutPhases } from '../engine/programLayout';
 import { clearForgeSessions } from '../utils/forgeSessionStore';
+import { clearMuscleDeclines } from '../utils/muscleDeclines';
 import { MetaRepo, putAll, ProgramsRepo, PlannedSessionsRepo, SessionLogsRepo, SessionTemplatesRepo, clearStore, replacePlannedSessions } from './databaseRepos';
 import { SCHEMA_VERSION } from './databaseSchema';
 import { patternContext, defaultPatternSelector, patternSessions, withPackTarget } from './databaseHorizon';
@@ -193,6 +194,8 @@ export async function clearLegacyObjectiveStores(): Promise<void> {
 export async function resetToDemoData(): Promise<void> {
   // Een lopende training hoort bij de planning die nu weggaat: wijzer en concepten mee.
   clearForgeSessions();
+  // Wat dit toestel onthield van Liever niet bij Spieren voor de berg gaat ook weg.
+  clearMuscleDeclines();
   await Promise.all([
     clearStore('programs'),
     clearStore('sessionTemplates'),
