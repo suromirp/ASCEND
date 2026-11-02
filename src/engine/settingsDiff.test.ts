@@ -61,6 +61,7 @@ const everything: AppSettings = {
   missedLink: false,
   weekFixProposal: false,
   dragWeek: false,
+  dropOnTraining: 'together',
   forgeQuickButtons: false,
   forgeSwipeDelete: false,
   forgeLayout: 'lijst',

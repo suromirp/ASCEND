@@ -64,14 +64,18 @@ export function ChangeNotice() {
       <div className={`${anchor} justify-end`} style={anchorStyle}>
         <button
           onClick={() => setState({ key: changeKey, view: 'full' })}
-          aria-label={`Planning aangepast: ${recentChange.title}. Open om te lezen of ongedaan te maken.`}
+          aria-label={recentChange.failed ? `Niet gelukt: ${recentChange.title}. Open om te lezen.` : `Planning aangepast: ${recentChange.title}. Open om te lezen of ongedaan te maken.`}
           className="animate-fade-in pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border shadow-lg"
-          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', color: 'var(--color-action)' }}
+          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', color: recentChange.failed ? 'var(--color-warning)' : 'var(--color-action)' }}
         >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M9 14L4 9l5-5" />
-            <path d="M4 9h10a6 6 0 0 1 0 12h-3" />
-          </svg>
+          {recentChange.failed ? (
+            <Icon name="info" size={18} />
+          ) : (
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M9 14L4 9l5-5" />
+              <path d="M4 9h10a6 6 0 0 1 0 12h-3" />
+            </svg>
+          )}
         </button>
       </div>
     );
@@ -86,13 +90,15 @@ export function ChangeNotice() {
       >
         <div className="flex items-center gap-1">
           <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="min-h-[44px] min-w-0 flex-1 py-1.5 text-left">
-            <Eyebrow>Aangepast</Eyebrow>
+            <Eyebrow tone={recentChange.failed ? 'var(--color-warning)' : undefined}>{recentChange.failed ? 'Niet gelukt' : 'Aangepast'}</Eyebrow>
             <p className="mt-0.5 line-clamp-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{recentChange.title}</p>
             {!open && <p className="line-clamp-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{summary}{recentChange.why ? ' · waarom' : ''}</p>}
           </button>
-          <TextButton onClick={handleUndo} disabled={undoing} className="shrink-0 px-2">
-            {undoing ? 'Bezig…' : 'Ongedaan maken'}
-          </TextButton>
+          {!recentChange.failed && (
+            <TextButton onClick={handleUndo} disabled={undoing} className="shrink-0 px-2">
+              {undoing ? 'Bezig…' : 'Ongedaan maken'}
+            </TextButton>
+          )}
           <button
             onClick={dismissRecentChange}
             aria-label="Melding sluiten"

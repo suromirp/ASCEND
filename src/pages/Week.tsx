@@ -38,6 +38,7 @@ import { WeekLoadCards } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { decideMove, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
+import { SWAP_STALE } from '../storage/weekSwap';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
 import { REST_BACK_RULE } from '../engine/restDayBack';
@@ -46,9 +47,12 @@ import { Icon } from '../components/icons';
 import { hoursMinutes } from '../utils/hoursMinutes';
 
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
+// Wat de melding zegt als een ruil of verplaatsing niet weggeschreven kon worden.
+const SWAP_FAILED = 'Beide trainingen staan nog op hun eigen dag.';
+const MOVE_FAILED = 'Kijk in je week wat er nu staat.';
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt } = useAppData();
+  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
@@ -157,10 +161,42 @@ export function WeekPage() {
   // een schone verplaatsing gaat meteen (Ongedaan maken staat in de melding), een cascade, een botsing,
   // een rustdag of een test vraagt eerst om Akkoord. Twee zware beendagen achter elkaar vragen "Toch hier?".
   async function moveTo(sessionId: string, date: string, opts?: DecideOptions): Promise<MoveDecision['action']> {
+    // Losgelaten op een dag met precies één training die mag bewegen: de twee ruilen (engine/weekSwap.ts).
+    if (opts?.verdict?.kind === 'swap' && opts.verdict.swapWithId) return swapWith(sessionId, opts.verdict.swapWithId);
     const decision = decideMove(moveSession(sessionId, date), { ...opts, legsClose: legsCloseAt(sessionId, date) });
     if (decision.action === 'apply') await applyProposal(decision.proposal);
     else if (decision.action === 'ask') setPendingProposal(decision.proposal);
     return decision.action;
+  }
+
+  // Ruilen, uit het actieblad en uit het slepen: dezelfde weg als Verplaatsen. Schoon gaat meteen (Ongedaan
+  // maken in de melding), anders het blad met Akkoord en wat er botst.
+  // Lukt het schrijven niet, dan blijven beide staan en zegt de melding dat (zonder Ongedaan maken).
+  async function swapWith(sessionId: string, otherId: string): Promise<MoveDecision['action']> {
+    let decision: MoveDecision;
+    try {
+      decision = proposeSwap(sessionId, otherId);
+    } catch (err) {
+      console.error('Ruilen mislukt:', err);
+      showFailure('Dat lukte niet, er is niets geruild.', SWAP_FAILED);
+      return 'none';
+    }
+    if (decision.action === 'ask') setPendingProposal(decision.proposal);
+    if (decision.action !== 'apply') return decision.action;
+    return applyOrTell(decision.proposal).then((ok) => (ok ? 'apply' : 'none'));
+  }
+
+  // Akkoord (of een schone ruil): toepassen, en een fout zichtbaar maken in plaats van hem te laten vallen.
+  async function applyOrTell(proposal: ScheduleProposal): Promise<boolean> {
+    try {
+      await applyProposal(proposal);
+      return true;
+    } catch (err) {
+      console.error(proposal.swap ? 'Ruilen mislukt:' : 'Verplaatsen mislukt:', err);
+      const why = err instanceof Error && err.message === SWAP_STALE ? SWAP_STALE : proposal.swap ? SWAP_FAILED : MOVE_FAILED;
+      showFailure(proposal.swap ? 'Dat lukte niet, er is niets geruild.' : 'Dat lukte niet.', why);
+      return false;
+    }
   }
 
   // Slepen (components/useWeekDrag.ts): niet in het jaaroverzicht en niet terwijl er een blad of scherm open is.
@@ -377,6 +413,11 @@ export function WeekPage() {
             void moveTo(selected.id, date);
             setSelected(null);
           }}
+          swapOptions={swapOptionsFor(selected.id)}
+          onSwap={(otherId) => {
+            void swapWith(selected.id, otherId);
+            setSelected(null);
+          }}
           suggestions={suggestMoves(selected.id)}
           onPickSuggestion={(sug) => {
             void applyProposal(sug.proposal);
@@ -417,7 +458,7 @@ export function WeekPage() {
         <RescheduleDialog
           proposal={pendingProposal}
           onApply={() => {
-            applyProposal(pendingProposal);
+            void applyOrTell(pendingProposal);
             setPendingProposal(null);
           }}
           onCancel={() => setPendingProposal(null)}

@@ -206,5 +206,10 @@ export interface RecentPlanChange {
   // Logs die na Akkoord aan een geplande training werden gekoppeld (engine/missedTraining.ts):
   // undo haalt alleen die verwijzing weer weg. Not part of the plan itself.
   linkedLogIds?: string[];
+  // Een ruil (engine/weekSwap.ts): de twee rijen zoals de ruil ze schreef. Ongedaan maken zet ze alleen
+  // terug als ze nog precies zo zijn (storage/weekSwap.ts#undoSwap).
+  swapAfter?: PlannedSession[];
+  // Een handeling die niet lukte: de melding zegt dat, zonder Ongedaan maken (before is leeg).
+  failed?: true;
   createdAt: string;
 }

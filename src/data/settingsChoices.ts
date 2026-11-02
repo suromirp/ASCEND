@@ -388,6 +388,17 @@ export const CHOICES = {
       { value: 'korter', label: 'Korter', note: '48 uur na een wedstrijd, 24 uur na een training of padel', short: 'Korter' },
     ],
   }),
+  loslaten: def({
+    group: 'Planning',
+    title: 'Loslaten op een training',
+    line: 'Wat er gebeurt als je in Week een training loslaat op een dag waar al een training staat.',
+    advice: 'swap' as 'swap' | 'together',
+    help: 'loslatenTraining',
+    options: [
+      { value: 'swap', label: 'Ruilen', note: 'De twee ruilen van dag, als die ene training mag bewegen', short: 'Ruilen' },
+      { value: 'together', label: 'Samen', note: 'Ze staan samen op die dag', short: 'Samen' },
+    ],
+  }),
   vakantieOpzij: def({
     group: 'Planning',
     title: 'Opzij voor een vakantie',

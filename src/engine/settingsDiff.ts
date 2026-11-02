@@ -267,6 +267,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('forge-vegen', 'Vegen om te verwijderen', 'forge', 'forgeSwipeDelete'),
   flag('forge-snelknoppen', 'Snelknoppen tonen', 'forge', 'forgeQuickButtons'),
   flag('slepen-week', 'Trainingen slepen in Week', 'planning', 'dragWeek'),
+  choice('loslaten-training', 'Loslaten op een training', 'planning', 'dropOnTraining', 'swap', 'loslaten'),
   choice('klaar-weging', 'Weging bij een doeltijd', 'doel', 'readinessWeighting', 'speed', 'klaarWeging'),
   choice('klaar-groei', 'Groei bij het rekenen', 'doel', 'goalGrowth', 'average', 'klaarGroei'),
   choice('klaar-marge', 'Marge bij een tijdslimiet', 'doel', 'limitMargin', 'ten', 'klaarMarge'),

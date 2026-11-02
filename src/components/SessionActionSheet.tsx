@@ -40,6 +40,7 @@ import { SheetRow, SheetRows } from './SheetRows';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
+import type { SwapOption } from '../engine/weekSwap';
 import { macroFactorLine, pendingMacroFactorWorkout, sessionSheetActions, strengthDoneDuration, type DoneKind, type MacroFactorSource, type SheetAction } from '../engine/sessionActions';
 import { workoutToDraft } from '../engine/macrofactorLink';
 import { allProfiles } from '../engine/machineWeights';
@@ -107,6 +108,8 @@ export function SessionActionSheet({
   catchUp = false,
   caughtUpOn,
   placeReason,
+  swapOptions = [],
+  onSwap,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -142,12 +145,15 @@ export function SessionActionSheet({
   caughtUpOn?: string;
   // Week: waarom de training op deze dag staat (engine/placeReason.ts), achter één tik.
   placeReason?: PlaceReason;
+  // Week: de andere trainingen van deze week waarmee deze van dag kan ruilen (engine/weekSwap.ts).
+  swapOptions?: SwapOption[];
+  onSwap?: (otherId: string) => void;
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   // "Hoe je het doet" for a day still to come: the training screen of that day, to read only.
   const [showPreview, setShowPreview] = useState(false);
-  const [step, setStep] = useState<'main' | 'done' | 'move'>(startStep ?? 'main');
+  const [step, setStep] = useState<'main' | 'done' | 'move' | 'swap'>(startStep ?? 'main');
   const [whyOpen, setWhyOpen] = useState(false);
   // The "Gedaan" step for a training of a later day, done today.
   const [doneToday, setDoneToday] = useState(false);
@@ -186,7 +192,7 @@ export function SessionActionSheet({
     return () => { live = false; };
   }, [quickComplete, completedLog]);
   const waiting = quickComplete && !completedLog ? pendingMacroFactorWorkout(session.scheduledDate, template.id, macroFactor, sessionLogs) : undefined;
-  const actions = sessionSheetActions({ date: session.scheduledDate, today, skipped, canComeBack, kind, workoutWaiting: !!waiting });
+  const actions = sessionSheetActions({ date: session.scheduledDate, today, skipped, canComeBack, kind, workoutWaiting: !!waiting, canSwap: !!onSwap && swapOptions.length > 0 });
   const duration = strengthDoneDuration({ scheduledDate: doneToday ? today : session.scheduledDate }, template, fullDuration, macroFactor, sessionLogs);
 
   const info = guide ? <InfoButton onClick={() => setShowGuide(true)} label="Meer over deze training" /> : undefined;
@@ -281,6 +287,26 @@ export function SessionActionSheet({
     );
   }
 
+  if (step === 'swap') {
+    return (
+      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={`${template.name} ruilen`} scrollKey="swap" head={<SheetHeader eyebrow="Ruilen" title={template.name} facts={`Staat op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
+        <p className="mt-4 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Kies een training van deze week. Die twee ruilen van dag.</p>
+        <div className="mt-4">
+          <SheetRows label="Ruilen met">
+            {swapOptions.map((o) => (
+              <SheetRow
+                key={o.session.id}
+                title={o.template.name}
+                sub={`${dayLabel(o.session.scheduledDate, today)}${o.hint ? ` · ${o.hint}` : ''}`}
+                onClick={() => onSwap?.(o.session.id)}
+              />
+            ))}
+          </SheetRows>
+        </div>
+      </SheetFrame>
+    );
+  }
+
   const run = (action: SheetAction) => () => {
     switch (action) {
       case 'done':
@@ -289,6 +315,7 @@ export function SessionActionSheet({
         return;
       case 'start': return onStart(variant);
       case 'move': return setStep('move');
+      case 'swap': return setStep('swap');
       case 'preview': return setShowPreview(true);
       case 'skip': return onSkip();
       case 'backOnPlan': return onBackOnPlan?.();
@@ -309,6 +336,7 @@ export function SessionActionSheet({
     start: template.type === 'strength' ? 'Training starten' : 'Hoe je het doet',
     preview: 'Hoe je het doet',
     move: catchUp ? 'Inhalen' : 'Verplaatsen',
+    swap: 'Ruilen',
     skip: 'Overslaan',
     backOnPlan: 'Toch doen',
     doToday: 'Vandaag al doen',

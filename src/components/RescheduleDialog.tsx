@@ -32,7 +32,7 @@ export function RescheduleDialog({
         <div ref={sheetRef} className={`relative w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-6">
-            <div className="-mt-2"><SheetHeader eyebrow={catchUp ? 'Inhalen' : 'Schema-aanpassing'} onClose={requestClose} /></div>
+            <div className="-mt-2"><SheetHeader eyebrow={proposal.swap ? 'Ruilen' : catchUp ? 'Inhalen' : 'Schema-aanpassing'} onClose={requestClose} /></div>
             <div className="mt-3 flex flex-col gap-2">
               {proposal.changes.map((c) => (
                 <div key={c.sessionId} className="flex items-center justify-between text-sm">
@@ -63,6 +63,8 @@ export function RescheduleDialog({
             {/* An unresolved clash is never applied under the same button as a
                 clean one: keeping the plan is the default, moving anyway is
                 a conscious second choice. */}
+            {/* Ruilen (engine/weekSwap.ts) volgt dezelfde opbouw: een test of vakantietraining vraagt Akkoord,
+                iets wat botst heeft Liever niet als hoofdknop en "Toch ruilen" als tweede keus. */}
             {proposal.resolved ? (
               <div className="mt-5 flex gap-3">
                 <SecondaryButton onClick={requestClose}>Liever niet</SecondaryButton>
@@ -77,7 +79,7 @@ export function RescheduleDialog({
             ) : (
               <div className="mt-5 flex flex-col gap-3">
                 <PrimaryButton onClick={requestClose}>Liever niet</PrimaryButton>
-                <SecondaryButton onClick={onApply}>{proposal.changes[0]?.restore ? 'Toch doen' : catchUp ? 'Toch inhalen' : 'Toch verplaatsen'}</SecondaryButton>
+                <SecondaryButton onClick={onApply}>{proposal.swap ? 'Toch ruilen' : proposal.changes[0]?.restore ? 'Toch doen' : catchUp ? 'Toch inhalen' : 'Toch verplaatsen'}</SecondaryButton>
               </div>
             )}
           </Card>

@@ -97,7 +97,7 @@ export function useWeekDrag({ weekStart, enabled, moveTo, onOpenMove }: {
     try {
       const action = await live.current.moveTo(id, verdict.date, { askAlways, verdict });
       if (action === 'apply') {
-        setAnnounce(`Verplaatst naar ${verdict.line.split('.')[0].toLowerCase()}`);
+        setAnnounce(verdict.kind === 'swap' ? `Geruild, ${verdict.line.split('.')[0].toLowerCase()}` : `Verplaatst naar ${verdict.line.split('.')[0].toLowerCase()}`);
         setMovedId(id);
         later(() => setMovedId(null), MOVED_MS);
         // De greep op zijn nieuwe plek krijgt de focus terug.
@@ -176,7 +176,8 @@ export function useWeekDrag({ weekStart, enabled, moveTo, onOpenMove }: {
 
   // Wat de dag onder je vinger zegt, plus wat er nieuw ontstaat in de week en de stille regel met de beenindex.
   const current = drag?.target ? drag.verdicts.find((v) => v.date === drag.target) : undefined;
-  const checked = drag && current && current.droppable && current.kind !== 'origin' ? current : undefined;
+  // Een ruil zegt zelf wat er botst (engine/weekSwap.ts); de meldingen van één verplaatsing gelden dan niet.
+  const checked = drag && current && current.droppable && current.kind !== 'origin' && current.kind !== 'swap' ? current : undefined;
   const skipRules = checked?.kind === 'clash' ? ['LEG-SPACING'] : checked?.kind === 'rest' ? ['REST-DAY'] : [];
   const dragId = drag?.id;
   const checkedDate = checked?.date;
