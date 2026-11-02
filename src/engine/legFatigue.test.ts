@@ -237,6 +237,24 @@ describe('a test or race is planned at RPE 10', () => {
     expect(h).toBeCloseTo(4.4, 1);
   });
 
+  // Voorstel 2: the effort factor (0.7 to 1.5, sets near failure) is for strength only. A run at
+  // RPE 10 only uses the bounded ratio of logged to planned RPE, and reps in reserve do nothing.
+  it('the effort factor of strength never applies to a run', () => {
+    const byId = new Map(templates.map((t) => [t.id, t]));
+    const run = templates.find((t) => t.id === 'tpl_intervals')!;
+    const ev = (rpe: number, rir?: number): FatigueEvent => ({ id: `r${rpe}${rir ?? ''}`, templateId: run.id, date: D, minutes: 40, rpe, rir, descentM: 0, climbM: 0, logged: true });
+    const imp = (rpe: number, rir?: number) => { const e = ev(rpe, rir); return sessionImpulse(e, run, [e], byId); };
+    // Planned 8: a 10 is 10/8 = 1.25, not the 1.5 of strength.
+    expect(imp(10).intensity / imp(8).intensity).toBeCloseTo(1.25, 5);
+    expect(imp(10).strength / imp(8).strength).toBeCloseTo(1.25, 5);
+    expect(imp(10, 0)).toEqual(imp(10));
+    // Strength at RPE 10 does use it: 1.5 in the strength layer.
+    const legs = templates.find((t) => t.id === 'tpl_lower_a')!;
+    const sev = (rpe: number): FatigueEvent => ({ id: `s${rpe}`, templateId: legs.id, date: D, minutes: 60, rpe, logged: true });
+    const simp = (rpe: number) => { const e = sev(rpe); return sessionImpulse(e, legs, [e], byId); };
+    expect(simp(10).strength / simp(8).strength).toBeCloseTo(1.5, 5);
+  });
+
   it('a race at RPE 10 counts as planned too', () => {
     const race = (rpe?: number) => legFatigueOn(addDays(D, 1), inputs([log('tpl_race', D, 50, { rpe, cardioData: { ...flat, durationMinutes: 50, distanceKm: 10 } })])).index;
     expect(race(10)).toBeCloseTo(race(undefined), 5);
