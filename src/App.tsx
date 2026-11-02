@@ -5,6 +5,7 @@ import { HashRouter, Routes, Route, NavLink, Navigate, useLocation, useNavigate 
 import { BOOT_LOCK_BUSY_TEXT, BOOT_STEAL_FLAG } from './engine/bootWatch';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { BootScreen } from './components/BootScreen';
+import { PageLoading } from './components/PageLoading';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt, UpdatedNotice } from './components/UpdatePrompt';
 import { DeviceNoticesHost } from './components/DeviceNoticesHost';
@@ -32,17 +33,18 @@ import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
-import { SettingsOverview } from './pages/settings/SettingsOverview';
-import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
-import { SportsPage } from './pages/settings/SportsPage';
-import { KindAmountPage } from './pages/settings/KindAmountPage';
-import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
-import { StretchAreaRedirect } from './pages/StretchAreaRedirect';
 import { SessionPill } from './components/forge/SessionPill';
 import { useOpenRequest, useSessionHousekeeping, useSessionPill } from './components/forge/useForgeSession';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
 // they still work offline.
+const SettingsOverview = lazy(() => import('./pages/settings/SettingsOverview').then((m) => ({ default: m.SettingsOverview })));
+const SettingsGroupPage = lazy(() => import('./pages/settings/SettingsGroupPage').then((m) => ({ default: m.SettingsGroupPage })));
+const SportsPage = lazy(() => import('./pages/settings/SportsPage').then((m) => ({ default: m.SportsPage })));
+const KindAmountPage = lazy(() => import('./pages/settings/KindAmountPage').then((m) => ({ default: m.KindAmountPage })));
+const KnowledgePage = lazy(() => import('./pages/Knowledge').then((m) => ({ default: m.KnowledgePage })));
+const KnowledgeTopicPage = lazy(() => import('./pages/Knowledge').then((m) => ({ default: m.KnowledgeTopicPage })));
+const StretchAreaRedirect = lazy(() => import('./pages/StretchAreaRedirect').then((m) => ({ default: m.StretchAreaRedirect })));
 const BodyPage = lazy(() => import('./pages/Body').then((m) => ({ default: m.BodyPage })));
 const BodySpotPage = lazy(() => import('./pages/BodySpot').then((m) => ({ default: m.BodySpotPage })));
 const GarminLinkPage = lazy(() => import('./pages/GarminLink').then((m) => ({ default: m.GarminLinkPage })));
@@ -137,7 +139,7 @@ function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t"
       style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}
     >
-      <div className="mx-auto flex w-full max-w-md items-stretch justify-around px-1 pb-[max(env(safe-area-inset-bottom),8px)] pt-1.5">
+      <div className="mx-auto flex w-full max-w-md items-stretch justify-around px-1 pb-[max(var(--rand-onder),8px)] pt-1.5">
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}
@@ -324,13 +326,14 @@ function AppShell() {
         id={SCROLLER_ID}
         ref={mainRef}
         className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto overflow-x-clip"
-        style={{ paddingBottom: pill ? 'calc(8.25rem + max(env(safe-area-inset-bottom), 8px))' : 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
+        style={{ paddingBottom: pill ? 'calc(8.25rem + max(var(--rand-onder), 8px))' : 'calc(4.5rem + max(var(--rand-onder), 8px))' }}
       >
         {/* De kop (merkteken en tandwiel) staat op elke tab in SkyBand, bovenaan
             de pagina zelf. data-tab geeft de pagina haar eigen kleur. */}
         <div className="relative" data-tab={tabKeyFor(location.pathname)}>
         <ErrorBoundary resetKey={location.pathname}>
-          <Suspense fallback={null}>
+          {/* Een pagina die nog laadt toont haar lucht met titel en een lege kaart, nooit een leeg scherm. */}
+          <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/" element={<TodayPage />} />
             <Route path="/stand" element={<StandingPage />} />
@@ -373,7 +376,7 @@ function AppShell() {
         </div>
       </main>
       {offlineNotice && (
-        <div role="status" className="fixed inset-x-0 z-50 mx-auto flex max-w-md items-center gap-3 border-t px-4 py-3" style={{ bottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))', background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)' }}>
+        <div role="status" className="fixed inset-x-0 z-50 mx-auto flex max-w-md items-center gap-3 border-t px-4 py-3" style={{ bottom: 'calc(4.5rem + max(var(--rand-onder), 8px))', background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)' }}>
           <p className="flex-1 text-xs" style={{ color: 'var(--color-ink)' }}>Je bent offline. Deze link opent zodra je weer verbinding hebt. De rest van ASCEND werkt gewoon.</p>
           <button onClick={() => setOfflineNotice(false)} aria-label="Melding sluiten" className="min-h-[44px] min-w-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}><Icon name="sluiten" size={20} /></button>
         </div>

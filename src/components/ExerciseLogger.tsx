@@ -695,12 +695,12 @@ function GeneralLogger({
         style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}
       >
         {preview ? (
-          <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
+          <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
             {guide && <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Info</SecondaryButton>}
             <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
           </div>
         ) : confirmLong ? (
-          <div className="mx-auto max-w-md px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }} role="alert">
+          <div className="mx-auto max-w-md px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }} role="alert">
             <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Klopt dit?</p>
             <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{longDurationText(entryMinutes(duration))}.</p>
             <div className="mt-3 flex gap-3">
@@ -709,7 +709,7 @@ function GeneralLogger({
             </div>
           </div>
         ) : (
-        <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
+        <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
           {guide ? (
             <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Info</SecondaryButton>
           ) : (

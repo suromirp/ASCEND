@@ -200,9 +200,8 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-vergelijken', withForge({ enabled: false })).hidden).toBe(true);
     expect(rowSummary('forge-extras', facts())).toEqual({ checked: true, hidden: false });
     expect(rowSummary('forge-extras', withForge({ showExtras: false })).checked).toBe(false);
-    expect(rowSummary('forge-snelknoppen', facts()).checked).toBe(true);
-    expect(rowSummary('forge-snelknoppen', facts({ settings: { ...facts().settings, forgeQuickButtons: false } })).checked).toBe(false);
     expect(rowSummary('forge-vegen', facts()).checked).toBe(true);
+    expect(rowSummary('forge-bergspieren', facts()).checked).toBe(true);
     expect(rowSummary('forge-vegen', facts({ settings: { ...facts().settings, forgeSwipeDelete: false } })).checked).toBe(false);
     expect(rowSummary('forge-oefeningen', facts()).value).toBe('Een per scherm');
     expect(rowSummary('forge-oefeningen', facts({ settings: { ...facts().settings, forgeLayout: 'lijst' } })).value).toBe('Onder elkaar');

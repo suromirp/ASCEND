@@ -27,7 +27,7 @@ import {
   type AutoBackupFailureReason,
   type BackupWhere,
 } from '../engine/autoBackup';
-import { appBackupFolder, type AutoBackupTarget } from '../integrations/backupFolder';
+import { APP_BACKUP_LABEL, appBackupFolder, type AutoBackupTarget } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { buildBackupEnvelope } from './backup';
 import { toISODate } from '../utils/dates';
@@ -49,6 +49,8 @@ export interface AutoBackupState {
   // De laatste back-up op dit toestel, met de hand of vanzelf, en waar hij staat.
   lastAt?: string;
   where?: BackupWhere;
+  // Het moment van de laatste gelukte automatische back-up (niet die met de hand).
+  autoAt?: string;
   failure?: AutoBackupFailure;
   // De bestanden die de automatische back-up schreef, en in welke map (het label van `where`).
   files: string[];
@@ -64,6 +66,14 @@ const isWhere = (v: unknown): v is BackupWhere => {
   return w.kind === 'download' || w.kind === 'file' || (w.kind === 'folder' && typeof w.label === 'string');
 };
 
+// Het label van de map heette eerst "Documenten/ASCEND" en is nu het pad zoals de bestandsbeheerder het
+// toont. Een oude staat wordt omgezet, zodat de bestanden die de automatische back-up al schreef eigen
+// blijven (en opgeruimd worden).
+const OLD_FOLDER_LABEL = 'Documenten/ASCEND';
+export function currentFolderLabel(label: string): string {
+  return label === OLD_FOLDER_LABEL ? APP_BACKUP_LABEL : label === `In ${OLD_FOLDER_LABEL}` ? `In ${APP_BACKUP_LABEL}` : label;
+}
+
 // Defensief lezen: een kapotte waarde wordt een lege staat, nooit een fout.
 function cleanAutoBackupState(raw: unknown): AutoBackupState {
   if (!raw || typeof raw !== 'object') return { files: [] };
@@ -71,10 +81,11 @@ function cleanAutoBackupState(raw: unknown): AutoBackupState {
   const failure = r.failure as Record<string, unknown> | undefined;
   return {
     ...(typeof r.lastAt === 'string' ? { lastAt: r.lastAt } : {}),
-    ...(isWhere(r.where) ? { where: r.where } : {}),
+    ...(typeof r.autoAt === 'string' ? { autoAt: r.autoAt } : {}),
+    ...(isWhere(r.where) ? { where: r.where.kind === 'folder' ? { kind: 'folder' as const, label: currentFolderLabel(r.where.label) } : r.where } : {}),
     ...(failure && typeof failure.at === 'string' && isFailureReason(failure.reason) ? { failure: { at: failure.at, reason: failure.reason } } : {}),
     files: Array.isArray(r.files) ? r.files.filter((f): f is string => typeof f === 'string' && isAutoBackupName(f)) : [],
-    ...(typeof r.filesIn === 'string' ? { filesIn: r.filesIn } : {}),
+    ...(typeof r.filesIn === 'string' ? { filesIn: currentFolderLabel(r.filesIn) } : {}),
     ...(typeof r.filesBy === 'string' ? { filesBy: r.filesBy } : {}),
   };
 }
@@ -287,7 +298,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     }
   }
   try {
-    await writeState({ lastAt: at, where, files, ...(label ? { filesIn: label } : {}), ...(by !== undefined ? { filesBy: by } : {}) });
+    await writeState({ lastAt: at, autoAt: at, where, files, ...(label ? { filesIn: label } : {}), ...(by !== undefined ? { filesBy: by } : {}) });
   } catch (err) {
     console.warn('Automatische back-up gemaakt, maar niet bijgehouden', err);
   }

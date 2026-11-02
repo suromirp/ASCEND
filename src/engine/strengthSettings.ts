@@ -12,6 +12,7 @@
 
 import { normalizeStrengthProgram, type StoredStrengthProgram } from './strengthProgramStore';
 import { isRecord, isNum } from '../utils/guards';
+import { normalizeAddedExercises, type AddedExercises } from './addedExercises';
 
 type ProgressionFirst = 'weight_first' | 'reps_first';
 export type WorkSetsMode = 'descending' | 'equal';
@@ -240,6 +241,12 @@ export interface StrengthSettings {
   // The strength program read in from MacroFactor, after Akkoord: it fills the
   // strength templates (engine/macrofactorProgram.ts). Absent: ASCEND's own.
   program?: StoredStrengthProgram;
+  // Spieren voor de berg (docs/beslissingen/2026-11-02-forge-herinrichting.md): bij een bergdoel een melding in
+  // de weekterugblik als kuiten, scheen of bilspieren weinig kregen, en bij Ruilen zo'n oefening voorop bij
+  // gelijke keuze (default on). Plant nooit zelf iets.
+  mountainMuscles?: boolean;
+  // Oefeningen die je na zo'n voorstel met Akkoord aan een training toevoegde (engine/addedExercises.ts).
+  addedExercises?: AddedExercises;
 }
 
 export interface ResolvedStrengthSettings {
@@ -279,6 +286,7 @@ export interface ResolvedStrengthSettings {
   adjustLive: boolean;
   noSpotter: boolean;
   rirPrefill: RirPrefill;
+  mountainMuscles: boolean;
 }
 
 // The day the quiet measuring began. A choice of the owner, kept here and not in a component.
@@ -484,6 +492,9 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (fatigue) out.fatigue = fatigue;
   if (typeof raw.adjustLive === 'boolean') out.adjustLive = raw.adjustLive;
   if (typeof raw.noSpotter === 'boolean') out.noSpotter = raw.noSpotter;
+  if (typeof raw.mountainMuscles === 'boolean') out.mountainMuscles = raw.mountainMuscles;
+  const added = normalizeAddedExercises(raw.addedExercises);
+  if (added) out.addedExercises = added;
   const rirPrefill = RIR_PREFILLS.find((v) => v === raw.rirPrefill);
   if (rirPrefill) out.rirPrefill = rirPrefill;
   if (typeof raw.showComparison === 'boolean') out.showComparison = raw.showComparison;
@@ -539,6 +550,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     adjustLive: s.adjustLive ?? true,
     noSpotter: s.noSpotter ?? true,
     rirPrefill: s.rirPrefill ?? 'hint',
+    mountainMuscles: s.mountainMuscles ?? true,
   };
 }
 

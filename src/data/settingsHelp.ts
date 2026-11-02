@@ -188,6 +188,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Past er niets', text: 'dan is er geen voorstel, in plaats van een gewicht dat veel te veel herhalingen geeft.' },
     ],
   },
+  forgeBergspieren: {
+    title: 'Spieren voor de berg',
+    lead: 'Bergop en bergaf met een rugzak vragen veel van je kuiten, je scheenspier en je bilspieren, en juist die slaat een gewoon krachtschema vaak over. Bij een bergdoel let ASCEND daar rustig op.',
+    points: [
+      { head: 'De melding', text: 'krijgt een van die spieren de laatste vier weken gemiddeld minder dan 4 harde sets per week, dan staat dat één keer in de weekterugblik, met een voorstel voor één oefening. Een rustweek telt niet mee.' },
+      { head: 'Pas na Akkoord', text: 'de oefening komt in je krachttraining met het meeste beenwerk. In het blad van de oefening haal je hem weer weg. Liever niet laat die spier acht weken met rust.' },
+      { head: 'Bij Ruilen', text: 'is de keuze verder gelijk, dan staat een oefening voor zo’n spier voorop, met een korte reden. Forge ruilt nooit zelf.' },
+      { head: 'Wat telt', text: 'werksets met hoogstens 4 herhalingen over, ook zonder RIR. Een oefening die ASCEND niet kent telt niet; dat staat er dan eerlijk bij.' },
+      { head: 'Uit', text: 'geen melding en de gewone volgorde bij Ruilen.' },
+    ],
+  },
   forgeSpotter: {
     title: 'Zonder spotter',
     lead: 'Een stang op je borst of je schouders kan je klem zetten als je tot het uiterste gaat. Daarom schrijft Forge hier minstens 1 herhaling in reserve voor.',
@@ -378,15 +389,6 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Uit', text: 'een set verwijderen kan nog altijd: houd de rij ingedrukt en kies Set verwijderen.' },
       { head: 'Aan', text: 'een korte veeg laat een rode knop zien, een lange veeg verwijdert meteen. Je kunt het direct terugdraaien.' },
-    ],
-  },
-  forgeSnelknoppen: {
-    title: 'Snelknoppen tonen',
-    lead: 'Onder de naam van elke oefening staan de handelingen die je tijdens een training het vaakst nodig hebt. Het menu met de drie puntjes houdt alles.',
-    points: [
-      { head: 'De knoppen', text: 'Ruilen, Opwarmset en Notitie. Bij een oefening op tijd alleen Ruilen en Notitie. Een set toevoegen doe je met de knop onder de sets.' },
-      { head: 'Uitleg en vorige keer', text: 'die hebben al een plek: het kaartje links van de naam en de kolomkop Vorige.' },
-      { head: 'Uit', text: 'de rij verdwijnt, alles staat nog in het menu. Je kunt dit ook in het menu van de training zelf zetten.' },
     ],
   },
   forgeLijntjes: {
@@ -1372,7 +1374,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Een map die de browser onthoudt, zodat een back-up daar vanzelf landt.',
     points: [
       { head: 'Niet gekozen', text: 'dan bewaar je het bestand elke keer zelf.' },
-      { head: 'In de app', text: 'gaat de automatische back-up naar Documenten/ASCEND op je telefoon. Die map zie je in je bestandsbeheerder, en een app die mappen naar Google Drive kopieert kan hem meenemen.' },
+      { head: 'In de app', text: 'gaat de automatische back-up naar Interne opslag > Documents > ASCEND op je telefoon. Die map zie je in je bestandsbeheerder, en een app die mappen naar Google Drive kopieert kan hem meenemen.' },
     ],
   },
   autoBackup: {
@@ -1380,7 +1382,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Alles staat alleen op deze telefoon. Met een wekelijkse back-up raak je hoogstens een week kwijt, met dagelijks hoogstens een dag.',
     points: [
       { head: 'Wanneer', text: 'zondagavond vanaf 18:00, of bij dagelijks elke avond. Is de app op dat moment dicht, dan gebeurt het de eerstvolgende keer dat je hem opent. Een back-up die je die dag zelf maakte telt ook.' },
-      { head: 'In de app', text: 'maakt ASCEND het bestand zelf, met de datum in de naam, in Documenten/ASCEND. Er gaat niets naar buiten, alleen het bestand in die map.' },
+      { head: 'In de app', text: 'maakt ASCEND het bestand zelf, met de datum in de naam, in Interne opslag > Documents > ASCEND. Er gaat niets naar buiten, alleen het bestand in die map.' },
       { head: 'In de browser', text: 'mag een website niet zelf een bestand opslaan. Op het moment staat er een kaart op Vandaag met Back-up maken. Heb je een vaste map gekozen en geeft je browser die zonder vragen vrij, dan gaat hij daar stil naartoe.' },
       { head: 'Bewaren', text: 'het aantal dat je kiest (het advies is 8) blijft staan, oudere ruimt ASCEND op. Alleen bestanden die hij zelf maakte; wat je er zelf in zet blijft altijd staan en wordt nooit overschreven.' },
       { head: 'Lukt het niet', text: 'dan zegt ASCEND dat in een regel hier en op Vandaag, met wat je kunt doen. Je kunt de back-up dan altijd zelf maken.' },

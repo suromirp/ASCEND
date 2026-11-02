@@ -278,7 +278,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
               ))}
             </div>
 
-            <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
+            <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: '14px' }}>
               {answerless ? (
                 <SecondaryButton onClick={requestClose} className="min-h-[46px]">Begrepen</SecondaryButton>
               ) : !answer.canAccept ? (
@@ -291,7 +291,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
               )}
             </div>
             {alternative && (
-              <div className="flex justify-center px-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+              <div className="flex justify-center px-5" style={{ paddingBottom: '8px' }}>
                 <TextButton tone="dim" onClick={alternative.onClick} disabled={busy}>{alternative.label}</TextButton>
               </div>
             )}

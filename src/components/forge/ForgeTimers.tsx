@@ -69,7 +69,7 @@ export function RestBar({ rest, lift, onAdd, onSkip }: { rest: Rest; lift: numbe
       <div
         ref={slab}
         className="border-t"
-        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', paddingBottom: lift > 0 ? 0 : 'env(safe-area-inset-bottom)', touchAction: 'none' }}
+        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', paddingBottom: lift > 0 ? 0 : 'var(--rand-onder)', touchAction: 'none' }}
         onPointerDown={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
           drag.current = { y: e.clientY, dy: 0 };

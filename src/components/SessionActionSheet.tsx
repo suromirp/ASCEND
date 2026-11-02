@@ -79,7 +79,7 @@ function SheetFrame({ closing, sheetRef, onClose, label, scrollKey, head, childr
         >
           <SheetGrip />
           <div className="shrink-0 px-4 pb-1 pt-3">{head}</div>
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">{children}</div>
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">{children}</div>
         </div>
       </div>
     </Portal>

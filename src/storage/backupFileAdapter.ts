@@ -12,7 +12,8 @@
 import { MetaRepo } from './database';
 import type { BackupFileAdapter, PickedBackupFile, SaveResult } from './backupTypes';
 import { AutoBackupError } from '../engine/autoBackup';
-import type { AutoBackupTarget } from '../integrations/backupFolder';
+import { APP_BACKUP_LABEL, appBackupFolder, type AutoBackupTarget } from '../integrations/backupFolder';
+import { saveManualBackup } from './manualBackup';
 
 const DIRECTORY_HANDLE_KEY = 'backupDirectoryHandle';
 const INSTALL_ID_KEY = 'autoBackupInstallId';
@@ -124,6 +125,13 @@ function pickViaInput(): Promise<PickedBackupFile | null> {
 
 export const webBackupFileAdapter: BackupFileAdapter = {
   async saveBackup(data, suggestedName) {
+    // De Android-app: een download met een link doet in de webview niets, dus het bestand gaat zelf naar
+    // Documenten/ASCEND (storage/manualBackup.ts). Een mislukking wordt gegooid, nooit stil geslikt.
+    const folder = appBackupFolder();
+    if (folder) {
+      const { name } = await saveManualBackup(folder, await data.text());
+      return { success: true, savedTo: name, folder: APP_BACKUP_LABEL };
+    }
     if (hasFileSystemAccess()) return saveViaFileSystemAccess(data, suggestedName);
     return saveViaDownload(data, suggestedName);
   },

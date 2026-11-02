@@ -1,10 +1,9 @@
 // Een oefening in het workoutscherm van Forge: de kop, de tabel met sets en de regels eronder.
 
-import { Fragment, memo, useMemo, useState } from 'react';
+import { Fragment, memo, useMemo } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
-import { QUICK_LABEL, quickActionsFor } from '../../engine/forgeQuickActions';
 import {
   exerciseComplete,
   exerciseSummary,
@@ -37,7 +36,8 @@ import { SPOTTER_SIGN } from '../../engine/spotter';
 import { LongPressRow, RirBubble, TickBox, ValueCell } from './parts';
 import type { BlockActions } from './forgeWorkoutHelpers';
 
-// Een uitleg onder de kop langer dan dit klapt in tot één regel met "Meer".
+// Een uitleg onder de kop langer dan dit staat op één regel met "Waarom zo", dat het blad Oefening opent; daar
+// staat de hele reden bovenaan (docs/beslissingen/2026-11-02-forge-herinrichting.md).
 const REASON_SHORT = 100;
 
 export const ExerciseBlock = memo(function ExerciseBlock({
@@ -57,7 +57,6 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   noFitText,
   heavyTip,
   rirAsValue,
-  quickOn,
   swipeOn,
   undoText,
   act,
@@ -84,16 +83,12 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   heavyTip?: string;
   // "RIR vooraf invullen: Met het doel": het doel staat er als waarde, niet als hint.
   rirAsValue: boolean;
-  // De instelling "Snelknoppen tonen".
-  quickOn: boolean;
   swipeOn: boolean;
   // "Set 3 verwijderd" zolang je het nog ongedaan kunt maken.
   undoText?: string;
   act: BlockActions;
 }) {
-  const [reasonOpen, setReasonOpen] = useState(false);
   const reasonText = reasonWithOwnCount(ex) ?? '';
-  const quick = quickActionsFor({ readOnly, preview: false, timed: !!ex.timed });
   const plates = useMemo(() => (usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined), [ex, profile]);
   const exercise = exerciseOf(ex);
   const assisted = exercise?.resistance === 'assisted_bodyweight';
@@ -143,32 +138,12 @@ export const ExerciseBlock = memo(function ExerciseBlock({
             <h2 className="m-0 p-0 font-[inherit]">{headText}</h2>
           </div>
         )}
-        <button type="button" onClick={() => act.menu(ex.slot)} aria-label={`Menu van ${ex.name}`} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+        <button type="button" data-sheet-from onClick={() => act.menu(ex.slot)} aria-label={`Menu van ${ex.name}`} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
           <Icon name="meer" size={22} />
         </button>
       </div>
       <div className="forge-fold" data-folded={folded} inert={folded}>
         <div>
-          {quick.length > 0 && (
-            <div className="mx-quick" data-shown={quickOn} inert={!quickOn}>
-              <div>
-                <div className="-mx-1 mt-1 flex gap-1.5 overflow-x-auto px-1 py-0.5" role="group" aria-label={`Snel bij ${ex.name}`} data-no-sheet-drag>
-                  {quick.map((a) => (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => act.quick(ex.slot, a)}
-                      className="flex min-h-[44px] shrink-0 items-center gap-1 rounded-full border px-3 text-sm active:opacity-70"
-                      style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink-dim)' }}
-                    >
-                      <Icon name={a === 'ruilen' ? 'ruilen' : a === 'notitie' ? 'notitie' : 'plus'} size={14} />
-                      {QUICK_LABEL[a]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
           {note && (
             <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>
               <span className="mt-px shrink-0" style={{ color: 'var(--color-action)' }}><Icon name="notitie" size={14} /></span>
@@ -176,17 +151,11 @@ export const ExerciseBlock = memo(function ExerciseBlock({
             </p>
           )}
           {ex.reason && (
-            <div className="mt-1.5 flex items-start gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-sage)' }}>
-              <p className={`min-w-0 flex-1 text-xs leading-snug ${reasonOpen || reasonText.length <= REASON_SHORT ? '' : 'truncate'}`} style={{ color: 'var(--color-ink-dim)' }}>{reasonText}</p>
+            <div className="mt-1.5 flex items-center gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-sage)' }}>
+              <p className={`min-w-0 flex-1 text-xs leading-snug ${reasonText.length <= REASON_SHORT ? '' : 'truncate'}`} style={{ color: 'var(--color-ink-dim)' }}>{reasonText}</p>
               {reasonText.length > REASON_SHORT && (
-                <button
-                  type="button"
-                  onClick={() => setReasonOpen((o) => !o)}
-                  aria-expanded={reasonOpen}
-                  className="relative shrink-0 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']"
-                  style={{ color: 'var(--color-action)' }}
-                >
-                  {reasonOpen ? 'Minder' : 'Meer'}
+                <button type="button" data-sheet-from onClick={() => act.menu(ex.slot)} className="flex min-h-[44px] shrink-0 items-center text-xs" style={{ color: 'var(--color-action)' }}>
+                  Waarom zo
                 </button>
               )}
             </div>
@@ -230,13 +199,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : 'kg'}</span>
               <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Herh.'}</span>
               <span role="columnheader" className="text-center">RIR</span>
-              <span role="columnheader" className="flex justify-center">
-                {readOnly ? <span className="sr-only">Gedaan</span> : (
-                  <button type="button" onClick={() => act.tickAll(ex.slot)} className="relative -mx-1 min-w-[44px] before:absolute before:-inset-y-[14px] before:inset-x-0 before:content-['']" aria-label={`Alle sets van ${ex.name} gedaan`}>
-                    Alles
-                  </button>
-                )}
-              </span>
+              {/* Alle sets afvinken staat in het blad Oefening, groep Sets (docs/beslissingen/2026-11-02-forge-herinrichting.md). */}
+              <span role="columnheader" className="flex justify-center"><span className="sr-only">Gedaan</span></span>
             </div>
             {ex.rows.map((row, i) => {
               if (row.kind === 'work') workNo++;

@@ -151,3 +151,11 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Week opnieuw plannen, Sherpa, opus, 245k, 47 min, review loopt
 - 2026-11-02, Review week opnieuw, Warden, opus, groen met punten; testloop rust herstel, Sherpa, opus, hervat, 1
 - 2026-11-02, Herkeuring testloop rust, Warden, opus, groen; live
+- 2026-11-02, Week opnieuw herstel en herkeuring, Sherpa en Warden, opus, hervat, 1; live
+- 2026-11-02, Sneller, Sherpa, opus, 245k, 94 min; review sonnet groen, laatste punt loopt
+- 2026-11-02, Sneller laatste punten, Sherpa, opus, hervat; live
+- 2026-11-02, Forge herinrichting, Sherpa, opus, 274k, 46 min; review opus: één belangrijk punt
+- 2026-11-02, Back-up Android, Sherpa, sonnet, 127k, 22 min; review opus groen met punten
+- 2026-11-02, Rand onderaan, Sherpa, sonnet, 115k, 18 min, herstel loopt
+- 2026-11-02, Forge herstel en herkeuring, Back-up Android herstel, Rand onderaan review: allemaal groen; samen live (native niveau 7)
+- 2026-11-02, Probe eigenaar-back-up (alleen lezen): replan-voorstel geaccepteerd op een blad dat 'staat al' toonde; herstel loopt

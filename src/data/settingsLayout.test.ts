@@ -79,8 +79,9 @@ describe('de indeling in acht groepen', () => {
   });
 
   it('wat achter Geavanceerd staat is een rij van dezelfde pagina', () => {
-    expect(PAGE_ROWS.forge.advanced).toEqual(['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets']);
+    expect(PAGE_ROWS.forge.advanced).toEqual(['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren']);
     expect(pageOfRow('bundel-rekenmodel')).toBe('forge');
+    expect(pageOfRow('forge-bergspieren')).toBe('forge');
   });
 
   it('zoeken vindt elke instelling op de eigen titel', () => {

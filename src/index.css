@@ -156,6 +156,12 @@
 
 html {
   color-scheme: dark;
+  /* De onderrand: de ruimte onder de inhoud voor de gebaren- of navigatiebalk (en de iPhone-balk).
+     Eén plek voor tabbalk, bladen, meldingen en knoppenbalken. In de browser is dit 0. In de
+     Android-app geeft de webview de inset door als env(), en Capacitor (SystemBars) zet hem ook
+     als --safe-area-inset-bottom; de grootste telt. Nooit env(safe-area-inset-bottom) los
+     gebruiken (randOnder.scan.test.ts). */
+  --rand-onder: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
 }
 
 /* One visible focus ring everywhere, also on the mint button: ice, the colour
@@ -683,6 +689,22 @@ html[data-motion='off'] .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mounta
   max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 16px));
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Elk blad zit vast aan de onderkant van het scherm: de onderrand erbij, zodat de knop onderaan
+     boven de navigatiebalk blijft. */
+  padding-bottom: var(--rand-onder);
+}
+
+/* Een blad waarvan het paneel zelf doorzichtig is en de kaart erin de kleur draagt: de onderrand
+   komt dan als doorzichtige rand onder de kaart, zodat de kleur van het blad doorloopt tot de
+   schermrand (de achtergrond van een kaart reikt tot onder de rand). */
+.animate-sheet-in:has(> .ui-card:last-child),
+.animate-sheet-out:has(> .ui-card:last-child) {
+  padding-bottom: 0;
+}
+
+.animate-sheet-in > .ui-card:last-child,
+.animate-sheet-out > .ui-card:last-child {
+  border-bottom: var(--rand-onder) solid transparent !important;
 }
 
 /* Tactile press feedback on every button in the app — a slight scale-down
@@ -823,25 +845,6 @@ button.w-full:not(.mx-primary):not(:disabled):not([role='switch']):active {
 .forge-fold > div {
   min-height: 0;
   overflow: hidden;
-}
-
-/* Snelknoppen onder een oefening (docs/beslissingen/2026-10-29-snelknoppen-in-forge.md): de rij
-   vervaagt en klapt in zoals een oefening die inklapt. Geen lus. Rustig en Uit: meteen de eindstand. */
-.mx-quick {
-  display: grid;
-  grid-template-rows: 1fr;
-  transition: grid-template-rows 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease-out;
-}
-.mx-quick[data-shown='false'] {
-  grid-template-rows: 0fr;
-  opacity: 0;
-}
-.mx-quick > div {
-  min-height: 0;
-  overflow: hidden;
-}
-html[data-motion='calm'] .mx-quick {
-  transition: none;
 }
 
 /* Een regel die openklapt (Lichaam, "Wanneer laat je het nakijken?"): de hoogte groeit zonder meten.

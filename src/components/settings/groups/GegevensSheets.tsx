@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAppData } from '../../../state/AppDataContext';
+import { backupOutcomeText } from '../../../engine/manualBackup';
 import { backupAge } from '../../../engine/settingsAttention';
 import { longDate } from '../../../engine/settingsSummary';
 import { getPersistenceStatus, requestPersistentStorage, type PersistenceStatus } from '../../../storage/persistence';
@@ -21,6 +22,7 @@ export function BackupSheet({ onClose, onImport }: { onClose: () => void; onImpo
   const { exportData, settings, sessionLogs } = useAppData();
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   const age = backupAge(settings.lastExportedAt, todayISO());
   const last = settings.lastExportedAt;
   const since = last ? sessionLogs.filter((l) => l.completedAt > last).length : sessionLogs.length;
@@ -32,11 +34,8 @@ export function BackupSheet({ onClose, onImport }: { onClose: () => void; onImpo
     setBusy(true);
     try {
       const result = await exportData();
-      setStatus(result === 'saved'
-        ? 'Back-up opgeslagen.'
-        : result === 'downloaded'
-          ? 'Back-up gedownload. Controleer of het bestand in je Downloads staat en bewaar het op een veilige plek.'
-          : null);
+      setStatus(backupOutcomeText(result));
+      setFailed(result.status === 'failed');
     } finally {
       setBusy(false);
     }
@@ -51,7 +50,7 @@ export function BackupSheet({ onClose, onImport }: { onClose: () => void; onImpo
             <button type="button" className="st-btn" onClick={() => onImport()}>Back-up terugzetten</button>
           </div>
           {busy && <p className="st-hint" style={{ marginLeft: 0 }} role="status">Met veel reeksen kan dit een paar seconden duren.</p>}
-          {!busy && status && <p className="st-hint" style={{ marginLeft: 0 }} role="status">{status}</p>}
+          {!busy && status && <p className={`st-hint${failed ? ' warn' : ''}`} style={{ marginLeft: 0 }} role="status">{status}</p>}
           {!busy && !status && since > 0 && (
             <p className="st-hint" style={{ marginLeft: 0 }}>{`Sinds de laatste back-up ${since === 1 ? 'is 1 training' : `zijn ${since} trainingen`} gelogd.`}</p>
           )}

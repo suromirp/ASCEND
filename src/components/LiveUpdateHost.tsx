@@ -51,7 +51,7 @@ export function LiveUpdateHost({ ready }: { ready: boolean }) {
 
   if (view === 'gone') return null;
   const anchor = 'pointer-events-none fixed inset-x-0 z-40 flex px-4';
-  const anchorStyle = { bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' };
+  const anchorStyle = { bottom: 'calc(4.5rem + var(--rand-onder))' };
 
   if (view === 'chip') {
     // Links, zodat hij nooit op de ronde knop van ChangeNotice rechts valt.

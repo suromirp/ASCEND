@@ -59,6 +59,8 @@ async function readAutoBackupFacts(folderChosen: boolean): Promise<SettingsFacts
     ...(state.where ? { where: state.where } : {}),
     ...(folderWhere?.kind === 'folder' ? { folder: folderWhere.label } : {}),
     ...(state.failure ? { failure: state.failure.reason } : {}),
+    ...(target.platform === 'app' ? { access: await target.access().catch(() => 'denied' as const) } : {}),
+    ...(state.autoAt ? { lastAutoAt: state.autoAt } : {}),
   };
 }
 

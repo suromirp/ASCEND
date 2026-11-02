@@ -21,6 +21,7 @@ import {
   removeLastRow,
   restFor,
   swapOptions,
+  swapScore,
   targetText,
   tickAllRows,
   tickRow,
@@ -342,6 +343,28 @@ describe('ruilen', () => {
   });
   it('een oefening die de lijst niet kent heeft geen ruilopties', () => {
     expect(swapOptions(undefined, profile)).toEqual([]);
+  });
+  it('bij gelijke score een oefening voorop die een spier met te weinig sets bedient, nooit boven een betere', () => {
+    const serves = (e: { primary: string[]; secondary: string[] }) => [...e.primary, ...e.secondary].includes('calves');
+    for (const id of ['bulgarian-split-squat', 'walking-lunge', 'goblet-squat', 'step-down', 'back-squat', 'leg-press']) {
+      const current = exerciseById(id)!;
+      const plain = swapOptions(current, profile, [], 50);
+      const preferred = swapOptions(current, profile, [], 50, ['calves']);
+      // Dezelfde keuzes, alleen anders op volgorde.
+      expect([...preferred].map((e) => e.id).sort()).toEqual(plain.map((e) => e.id).sort());
+      for (let i = 1; i < preferred.length; i++) {
+        const a = preferred[i - 1];
+        const b = preferred[i];
+        expect(swapScore(current, a)).toBeGreaterThanOrEqual(swapScore(current, b));
+        if (swapScore(current, a) === swapScore(current, b)) expect(serves(a) || !serves(b)).toBe(true);
+      }
+    }
+    // Er is minstens één geval waarin de volgorde echt verandert.
+    const changed = ['bulgarian-split-squat', 'walking-lunge', 'goblet-squat', 'step-down', 'back-squat', 'leg-press'].some((id) => {
+      const current = exerciseById(id)!;
+      return swapOptions(current, profile, [], 50).map((e) => e.id).join() !== swapOptions(current, profile, [], 50, ['calves']).map((e) => e.id).join();
+    });
+    expect(changed).toBe(true);
   });
 });
 
