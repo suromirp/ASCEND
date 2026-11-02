@@ -1,4 +1,6 @@
 import type { SessionTemplate, ExercisePrescription, SessionVariant } from '../models/training';
+import { scaledMinutes, trainingKindOf } from './trainingKind';
+import type { KindAmountMap } from '../data/trainingKinds';
 import type { Program } from '../models/program';
 import { ambitionFactor, type Ambition } from './ambitionLevels';
 import { addDays } from '../utils/dates';
@@ -104,6 +106,13 @@ export function recentSessionMaxima(
   return { asOf, minutesByTemplate, ...(afterRace.length > 0 ? { afterRace } : {}) };
 }
 
+// Hoeveel per soort (engine/kindAmount.ts): Minder or Meer per kind of training, set on every refresh like
+// the registries above. Empty: every session as planned.
+let kindAmounts: KindAmountMap = {};
+export function setKindAmounts(map: KindAmountMap | undefined): void {
+  kindAmounts = map ?? {};
+}
+
 // The ambition in force (engine/ambition.ts#effectiveAmbition), set on every
 // refresh like the registries above.
 let currentAmbition: Ambition = 'standaard';
@@ -121,6 +130,7 @@ export interface DurationScope {
   ambition?: Ambition;
   durationAdjustments?: DurationAdjustment[];
   learnedDurations?: Record<string, number>;
+  kindAmounts?: KindAmountMap;
   // Leg strength and a hard run on one day (engine/scheduler.ts#withHardSameDay); read by the planning run of a preview.
   hardSameDay?: boolean;
   // Leg strength the day after the long run (engine/scheduler.ts#withLongRunThenLegs), the same way.
@@ -129,10 +139,11 @@ export interface DurationScope {
 
 export function withDurationScope<T>(scope: DurationScope | undefined, fn: () => T): T {
   if (!scope) return fn();
-  const saved = { ambition: currentAmbition, adjustments: durationAdjustments, learned: learnedDurations };
+  const saved = { ambition: currentAmbition, adjustments: durationAdjustments, learned: learnedDurations, kinds: kindAmounts };
   if (scope.ambition !== undefined) currentAmbition = scope.ambition;
   if (scope.durationAdjustments !== undefined) durationAdjustments = scope.durationAdjustments;
   if (scope.learnedDurations !== undefined) learnedDurations = scope.learnedDurations;
+  if (scope.kindAmounts !== undefined) kindAmounts = scope.kindAmounts;
   try {
     const out = fn();
     // An async callback would read the registers after they are put back.
@@ -142,6 +153,7 @@ export function withDurationScope<T>(scope: DurationScope | undefined, fn: () =>
     currentAmbition = saved.ambition;
     durationAdjustments = saved.adjustments;
     learnedDurations = saved.learned;
+    kindAmounts = saved.kinds;
   }
 }
 
@@ -167,6 +179,11 @@ export function resolveEffectiveFullDuration(
     base = Math.max(15, Math.round((base * ambitionFactor(currentAmbition, /rust/i.test(target.step.note ?? ''))) / 5) * 5);
   }
   const longest = recentMaxima.minutesByTemplate[template.id];
+  // Hoeveel per soort: 15 procent korter of langer, rounded to 5 minutes. A session without a build-up
+  // (strength) is held to 110% of its longest in 30 days here; one with a build-up by the cap below.
+  const kind = fixed ? undefined : trainingKindOf(template);
+  const amount = kind ? kindAmounts[kind] : undefined;
+  if (amount) base = scaledMinutes(base, amount, !target && longest ? Math.round((longest * SESSION_SPIKE_LIMIT) / 5) * 5 : undefined);
   if (!fixed && target && longest && scheduledDate >= recentMaxima.asOf && scheduledDate <= addDays(recentMaxima.asOf, SPIKE_CAP_DAYS)) {
     // Never below the first "Wennen" step: one short session must not pull
     // the whole build down.

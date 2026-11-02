@@ -60,6 +60,9 @@ import { storageUseText, type StorageEstimate } from './storageUse';
 import { quickButtonsOn, swipeDeleteOn } from './forgeQuickActions';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
+import { resolveSportCounting } from './sportRole';
+import { sportsRowSummary } from './sportsScreen';
+import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
 import { resolveAboveMission } from './todayCards';
@@ -389,14 +392,13 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: s.restDayMode === 'active' ? 'Hersteldag' : 'Rust' };
     case 'meerdere':
       return { value: choiceShort('meerdere', f.pairing) };
-    case 'sport-running':
-    case 'sport-hiking':
-    case 'sport-cycling': {
-      const sport = rowId.slice(6) as Sport;
-      const st = sportState(f, sport);
-      if (!st.on) return { value: 'Uit', dim: true };
-      if (st.perWeek) return { value: `${st.perWeek}× per week` };
-      return { value: 'Aan', auto: true };
+    // Het scherm Sporten (engine/sportsScreen.ts): "2 gepland, 1 telt mee".
+    case 'sporten':
+      return sportsRowSummary(s);
+    // Hoeveel per soort (engine/kindAmount.ts): "Alles normaal" of "2 anders".
+    case 'hoeveel-per-soort': {
+      const r = kindAmountSummary(parseKindAmounts(s.kindAmount).value);
+      return r.sub ? { value: r.value, sub: r.sub } : { value: r.value, auto: true };
     }
     case 'wijzigingen':
       return { value: choiceShort('wijzigingen', s.changeApplyMode ?? 'auto_small') };
@@ -646,6 +648,20 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('nietDoorgegaanDagen', resolveMissedSettings(s).days) };
     case 'log-koppelen':
       return { checked: resolveMissedSettings(s).link };
+    // Hoe sporten meetellen (engine/sportRole.ts#resolveSportCounting): "Vragen" of wat er anders is.
+    case 'bundel-sporten-tellen': {
+      const c = resolveSportCounting(s.sportCounting);
+      const off = [!c.askNew ? 'Nieuwe sport telt meteen' : '', !c.askFelt ? 'zwaarte aangenomen' : '', c.rest === 'korter' ? 'kortere rust' : ''].filter(Boolean);
+      if (off.length === 0) return { value: 'Vragen', auto: true };
+      const sub = off.join(', ');
+      return { value: 'Aangepast', sub: sub.charAt(0).toUpperCase() + sub.slice(1) };
+    }
+    case 'sport-vragen':
+      return { checked: resolveSportCounting(s.sportCounting).askNew };
+    case 'sport-zwaarte':
+      return { checked: resolveSportCounting(s.sportCounting).askFelt };
+    case 'sport-rust':
+      return { value: choiceShort('sportRust', resolveSportCounting(s.sportCounting).rest) };
     case 'rustdag-terug':
       return { checked: s.restDayBack !== false };
     case 'trillen':

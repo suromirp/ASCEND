@@ -219,6 +219,7 @@ function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], 
   setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
   setFixedSessionMinutes(planned);
   setAmbition(scope.ambition);
+  setKindAmounts(scope.kindAmounts);
 }
 
 // Always as stored. A proposal's preview never sets these to values you did
@@ -313,6 +314,8 @@ import { activeStrengthStrategy, strengthTrackedExternally, daysUntilBlockEnd, c
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
 import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDateNL, localDateOf } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
+import { withCountingSports } from '../engine/sportTemplate';
+import { parseKindAmounts } from '../engine/kindAmount';
 import { makeId } from '../utils/id';
 import type { InfluenceEntry } from '../models/influence';
 import type { SweatEntry } from '../models/sweat';
@@ -320,7 +323,7 @@ import { clearSweatPre, setSweatPre } from '../engine/sweatMoments';
 import { applyChange, blankEntry, excludedLogIds, type NoteTarget } from '../engine/influence';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
-import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes, setAmbition, resolveVariantDuration } from '../engine/substitutions';
+import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes, setAmbition, setKindAmounts, resolveVariantDuration } from '../engine/substitutions';
 import { coachReaction } from '../engine/coach';
 import { requestPersistentStorage } from '../storage/persistence';
 import { durationScopeFor } from '../engine/durationScope';
@@ -658,9 +661,14 @@ export interface LogSessionInput {
   templateId: string;
   type: SessionLog['type'];
   sport?: SessionLog['sport'];
+  // A sport that counts (engine/sportTemplate.ts): swimming, padel, football.
+  countedSport?: SessionLog['countedSport'];
+  customSport?: SessionLog['customSport'];
   variant: SessionVariant;
   durationMinutes: number;
   rpe?: number;
+  // The RPE was preselected and not touched (engine/sessionLoad.ts).
+  rpeAssumed?: SessionLog['rpeAssumed'];
   notes?: string;
   strengthData?: SessionLog['strengthData'];
   cardioData?: SessionLog['cardioData'];
@@ -722,7 +730,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [goalEngineConfig, setGoalEngineConfig] = useState<GoalEngineConfig>(DEFAULT_GOAL_ENGINE_CONFIG);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const strengthProgram = settings.strengthModel?.program;
-  const templates = useMemo(() => withProgramExercises(storedTemplates, strengthProgram, todayISO()), [storedTemplates, strengthProgram]);
+  // A sport that counts (swimming, padel, football) has a derived template while it counts
+  // (engine/sportTemplate.ts): its logs then count in the leg index and the week check like any training.
+  const { sportHandling, sportCounting, customSports } = settings;
+  const templates = useMemo(
+    () => withCountingSports(withProgramExercises(storedTemplates, strengthProgram, todayISO()), { sportHandling, sportCounting, customSports }),
+    [storedTemplates, strengthProgram, sportHandling, sportCounting, customSports],
+  );
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
   const [forecastSummary, setForecastSummary] = useState<string | null>(null);
@@ -1438,11 +1452,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           templateId: input.templateId,
           type: input.type,
           sport: input.sport,
+          ...(input.countedSport ? { countedSport: input.countedSport } : {}),
+          ...(input.customSport ? { customSport: input.customSport } : {}),
           completedDate: input.completedDate ?? todayISO(),
           completedAt: input.completedAt ?? new Date().toISOString(),
           variant: input.variant,
           durationMinutes: input.durationMinutes,
           rpe: input.rpe,
+          ...(input.rpeAssumed && input.rpe !== undefined ? { rpeAssumed: true as const } : {}),
           notes: input.notes,
           strengthData: input.strengthData,
           cardioData: input.cardioData,
@@ -2502,7 +2519,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       newId: () => `preview-pass-${n++}`,
       until,
-      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
+      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
     });
   }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
 
@@ -2529,7 +2546,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
           newId: () => `leave-${n++}`,
           until: addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, 21),
-          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
+          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
         };
       },
     });
@@ -2591,7 +2608,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         slotDays: patternDays(templates, settings, restDay),
         minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
         newId: () => `restday-${n++}`,
-        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
+        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
       },
     });
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);

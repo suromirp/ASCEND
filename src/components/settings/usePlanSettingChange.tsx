@@ -29,12 +29,14 @@ export function usePlanSettingChange(): {
   note: string | null;
   clearNote: () => void;
   impact: ReactNode;
-  toggleSport: (sport: Sport, on: boolean) => Promise<void>;
+  // `extra`: what is stored with it in the same Akkoord (the role of the sport, engine/sportRole.ts).
+  toggleSport: (sport: Sport, on: boolean, extra?: Partial<AppSettings>) => Promise<void>;
   setFrequency: (sport: Sport, perWeek: number | undefined) => Promise<void>;
   setPairing: (value: TrainingStrategyProfile['sameDayPairingPreference']) => Promise<void>;
   saveBudget: (next: Partial<Record<Weekday, DailyTimeBudget>>) => Promise<void>;
   // A setting the planning run reads: a proposal first, stored only with Akkoord.
-  changeSetting: (title: string, patch: Partial<AppSettings>, why: string) => Promise<void>;
+  // `alwaysAsk`: always the proposal first (a fixed appointment), whatever Wijzigingen says.
+  changeSetting: (title: string, patch: Partial<AppSettings>, why: string, opts?: { alwaysAsk?: boolean; onStored?: () => void; notes?: string[] }) => Promise<void>;
   busy: boolean;
 } {
   const {
@@ -97,21 +99,21 @@ export function usePlanSettingChange(): {
     }).proposal;
   }
 
-  function changeSetting(title: string, patch: Partial<AppSettings>, why: string) {
+  function changeSetting(title: string, patch: Partial<AppSettings>, why: string, opts: { alwaysAsk?: boolean; onStored?: () => void; notes?: string[] } = {}) {
     setNote(null);
     return horizon.propose(
       () => planHorizonChange({
-        title, why, trigger: 'availability_changed', settings: patch,
+        title, why, trigger: 'availability_changed', settings: patch, ...(opts.notes?.length ? { notes: opts.notes } : {}),
         explanation: 'Deze instelling bepaalt hoe ASCEND je weken plant. Ze verandert je planning nooit ongemerkt: je ziet eerst wat er verschuift, omgaat of vervalt. Wat je al deed en wat je zelf vastzette blijft staan.',
       }),
-      { eyebrow: 'Planning aanpassen', ask: 'setting', declined: 'Je instelling en je planning blijven zoals ze waren.' },
+      { eyebrow: 'Planning aanpassen', ask: opts.alwaysAsk ? 'always' : 'setting', declined: 'Je instelling en je planning blijven zoals ze waren.', ...(opts.alwaysAsk ? { alwaysAsk: true } : {}), ...(opts.onStored ? { onStored: opts.onStored } : {}) },
     );
   }
 
   // A sport on or off: its own proposal (the sessions of that sport), and on top
   // what the planning run then does (a long run that becomes a mountain hike and
   // back). Both together, stored only with Akkoord.
-  async function toggleSport(sport: Sport, on: boolean) {
+  async function toggleSport(sport: Sport, on: boolean, extra?: Partial<AppSettings>) {
     const nextEnabled = { ...enabledSports, [sport]: on };
     let start: PlanChangeProposal | null = null;
     let onStored: (() => void) | undefined;
@@ -138,7 +140,7 @@ export function usePlanSettingChange(): {
         why: start?.consequences ?? 'Volgt je sporten.',
         explanation: start?.explanation ?? 'Je sporten bepalen wat ASCEND plant. Een sport aan of uit verandert je planning nooit ongemerkt: je ziet eerst wat er verandert.',
         trigger: 'availability_changed',
-        settings: { enabledSports: nextEnabled },
+        settings: { enabledSports: nextEnabled, ...extra },
         ...(start && start.changes.length > 0 ? { startItems: start.changes } : {}),
       }),
       { eyebrow: 'Planning aanpassen', ask: 'setting', declined: `${SPORT_LABEL[sport]} blijft ${on ? 'uit' : 'aan'} en je planning blijft zoals ze was.`, onStored },

@@ -377,6 +377,17 @@ export const CHOICES = {
       { value: 'strict', label: 'Streng', note: 'Altijd 72 uur' },
     ],
   }),
+  sportRust: def({
+    group: 'Planning',
+    title: 'Rust na een zware sport',
+    line: 'Voor je benen, na padel of voetbal.',
+    advice: 'ruim' as 'ruim' | 'korter',
+    help: 'sportenTellen',
+    options: [
+      { value: 'ruim', label: 'Ruim', note: '72 uur na een wedstrijd, 48 uur na een training of padel', short: 'Ruim' },
+      { value: 'korter', label: 'Korter', note: '48 uur na een wedstrijd, 24 uur na een training of padel', short: 'Korter' },
+    ],
+  }),
   vakantieOpzij: def({
     group: 'Planning',
     title: 'Opzij voor een vakantie',

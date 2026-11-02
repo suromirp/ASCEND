@@ -1,7 +1,7 @@
 import type { SessionTemplate } from '../models/training';
 import { templateSport } from '../engine/sports';
 import type { PictogramName } from './pictograms';
-import { sportDefinition } from '../data/sports';
+import { anySportDefinition, sportDefinition } from '../data/sports';
 
 // De sport van een training in één van de sportkleuren: hardlopen oranje,
 // kracht paars, wandelen groen, een bergtocht bergzon-geel, fietsen roze (zoals
@@ -44,5 +44,12 @@ export const SPORT_PICTOGRAM: Record<SportKind, PictogramName> = {
 };
 
 export function sportPictogram(template: SessionTemplate): PictogramName {
+  // A sport that only counts (zwemmen, padel, voetbal) has its own pictogram in sage.
+  if (template.countedSport) return anySportDefinition(template.countedSport).pictogram ?? 'rekken';
   return SPORT_PICTOGRAM[sportKind(template)];
+}
+
+export function sportColor(template: SessionTemplate): string {
+  if (template.countedSport) return anySportDefinition(template.countedSport).colorToken;
+  return SPORT_COLOR[sportKind(template)];
 }

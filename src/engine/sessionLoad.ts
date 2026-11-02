@@ -18,6 +18,12 @@ export function feltWordOf(rpe: number): FeltWord {
   return (Object.keys(FELT_RPE) as FeltWord[]).reduce((best, w) => (Math.abs(FELT_RPE[w] - rpe) < Math.abs(FELT_RPE[best] - rpe) ? w : best), 'rustig');
 }
 
+// Mag het logblad nog vragen hoe zwaar het was? Alleen zolang er geen eigen antwoord op het log staat:
+// geen RPE, of een die ASCEND aannam. Een gegeven RPE wordt nooit overschreven; dan alleen tonen.
+export function mayAskFelt(log: Pick<SessionLog, 'rpe' | 'rpeAssumed'>): boolean {
+  return log.rpe === undefined || log.rpeAssumed === true;
+}
+
 // De aangenomen RPE bij een zwaarte.
 export function assumedRpe(intensity: 'low' | 'moderate' | 'high'): number {
   return PLANNED_RPE[intensity] ?? PLANNED_RPE.moderate;

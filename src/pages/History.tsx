@@ -15,7 +15,7 @@ import { LogDetailSheet } from '../components/LogDetailSheet';
 import { Card, Eyebrow, LightCard, Stat, StatusPill } from '../components/ui';
 import { MonthCalendar } from '../components/MonthCalendar';
 import { DisclosureRow } from '../components/DisclosureRow';
-import { SPORT_LOOK, sportKeyOfLog, type SportKey } from '../components/logbook/sportLook';
+import { SPORT_LOOK, lookOfLog, sportKeyOfLog, type SportKey } from '../components/logbook/sportLook';
 import { usePageState } from '../components/usePageState';
 import { validMonthAnchor } from '../utils/pageMemory';
 import { Icon } from '../components/icons';
@@ -244,7 +244,7 @@ export function HistoryPage() {
               const modalityLabel = modalityKey ? getModality(log.templateId, modalityKey)?.label : undefined;
               const environment = log.outdoorData?.environment ?? log.cardioData?.environment;
               const garminType = log.outdoorData?.garminSuggestedType ?? log.cardioData?.garminSuggestedType;
-              const look = SPORT_LOOK[sportKeyOfLog(log)];
+              const look = lookOfLog(log);
               return (
                 <button key={log.id} onClick={() => setSelectedLog(log)} data-sheet-from className="min-h-[52px] text-left">
                   <div className="flex items-center gap-3 rounded-xl border px-3 py-3" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>

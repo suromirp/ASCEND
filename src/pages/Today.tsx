@@ -19,6 +19,7 @@ import { TodayMissionCard } from '../components/TodayMissionCard';
 import { NextTrekLine } from '../components/NextTrekLine';
 import { MountainWeatherCard } from '../components/MountainWeatherCard';
 import { TestPendingLine } from '../components/TestPendingLine';
+import { SportAskLine } from '../components/sports/SportAskLine';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
@@ -428,6 +429,8 @@ function TodayContent() {
 
       {/* Een trage test die wacht op je antwoord: een rustige regel, tot je kiest. */}
       <TestPendingLine />
+      {/* Een sport van je horloge zonder gekozen rol: een rustige vraag, geen kaart (docs/visie/Sporten die meetellen.md, 2.5). */}
+      <SportAskLine />
 
       {/* Daarna: wat bevestigd moet worden. */}
       <WatchActivityCard />

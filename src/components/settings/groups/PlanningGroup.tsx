@@ -5,12 +5,14 @@ import { ProposalSheet } from '../../ProposalSheet';
 import type { RestDayPlan } from '../../../engine/restDayProposal';
 import { addDays, mondayOfWeek, todayISO } from '../../../utils/dates';
 import { CHOICES, choiceShort } from '../../../data/settingsChoices';
-import { SPORT_LABEL, SPORT_LIST, type Sport } from '../../../engine/sports';
 import { SettingsList, SettingsSection } from '../SettingsList';
 import { usePlanSettingChange } from '../usePlanSettingChange';
 import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
-import { BudgetSheet, SportSheet } from './PlanningSheets';
+import { BudgetSheet } from './PlanningSheets';
+import { SportCountingSheet } from './SportCountingSheet';
+import { useNavigate } from 'react-router-dom';
+import { KIND_AMOUNT_ROUTE, SPORTS_ROUTE } from '../../../pages/settings/sportsRoute';
 import { SummaryRow } from './SummaryRow';
 import { rowShown } from './rowShown';
 import type { GroupProps } from './types';
@@ -20,7 +22,6 @@ import { REST_DAY_OPTIONS } from '../../../engine/restDay';
 import { resolveMissedSettings } from '../../../engine/missedTraining';
 import { ChoiceList, ChoiceSheet } from '../Sheet';
 
-const SPORTS: Sport[] = SPORT_LIST;
 const WEEKDAYS_NL = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag'];
 
 // Planning: je week, je sporten en hoe ASCEND plant. Alles wat de planning verandert gaat via
@@ -35,7 +36,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
   const [inner, setInner] = useState<string | null>(null);
   const closeInner = () => setInner(null);
   const [advancedGrowth, setAdvancedGrowth] = useState(false);
-  const sport = SPORTS.find((s) => sheet === `sport-${s}`);
+  const navigate = useNavigate();
   const restDay = settings.restDay ?? 1;
   const missed = resolveMissedSettings(settings);
 
@@ -52,7 +53,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
 
   return (
     <>
-      {(restNote || (plan.note && !sport)) && (
+      {(restNote || plan.note) && (
         <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{restNote ?? plan.note}</p>
       )}
 
@@ -61,9 +62,9 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       <SettingsSection title="Sporten">
-        {SPORTS.map((s) => (
-          <SummaryRow key={s} id={`sport-${s}`} title={SPORT_LABEL[s]} facts={facts} info="sporten" onClick={() => setSheet(`sport-${s}`)} />
-        ))}
+        <SummaryRow id="sporten" title="Sporten" facts={facts} info="sporten" onClick={() => navigate(SPORTS_ROUTE)} />
+        <SummaryRow id="hoeveel-per-soort" title="Hoeveel per soort" facts={facts} info="hoeveelPerSoort" onClick={() => navigate(KIND_AMOUNT_ROUTE)} />
+        <SummaryRow id="bundel-sporten-tellen" title="Hoe sporten meetellen" facts={facts} info="sportenTellen" onClick={() => setSheet('bundel-sporten-tellen')} />
       </SettingsSection>
 
       <SettingsSection
@@ -106,6 +107,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="log-koppelen" title="Log op een andere dag koppelen" facts={facts} onChange={(on) => void updateSettings({ missedLink: on })} />
         </BundleSheet>
       )}
+      {sheet === 'bundel-sporten-tellen' && <SportCountingSheet facts={facts} plan={plan} onClose={close} />}
       {inner === 'niet-doorgegaan' && (
         <ChoiceFromDef def={CHOICES.nietDoorgegaan} value={missed.choice} onPick={(v) => void updateSettings({ missedTraining: v })} onClose={closeInner} />
       )}
@@ -148,7 +150,6 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           }
         />
       )}
-      {sport && <SportSheet sport={sport} note={plan.note} onToggle={(s, on) => void plan.toggleSport(s, on)} onFrequency={(s, n) => void plan.setFrequency(s, n)} onClose={close} />}
       {sheet === 'wijzigingen' && (
         <ChoiceFromDef def={CHOICES.wijzigingen} value={plan.applyMode} onPick={(v) => void updateSettings({ changeApplyMode: v })} onClose={close} />
       )}

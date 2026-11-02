@@ -16,6 +16,7 @@
 // transaction — so a bad import can always be undone by re-importing that
 // snapshot's own envelope.
 
+import { anySportDefinition, type AnySportId } from '../data/sports';
 import { cleanCardOrder } from '../engine/cardOrder';
 import { localDateOf, todayISO } from '../utils/dates';
 import { logIdsForBackup, resolveStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
@@ -68,7 +69,7 @@ import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateZoneAnswers, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateSportCounting, migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateKindAmount, migrateCustomSports, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateZoneAnswers, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -551,6 +552,27 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     if (clean.value) s.sportHandling = clean.value;
     skipped.n += clean.skipped;
   }
+  // Je eigen sporten: a type, a feel and a role.
+  if ('customSports' in s) {
+    const clean = migrateCustomSports(s.customSports);
+    delete s.customSports;
+    if (clean.value) s.customSports = clean.value;
+    skipped.n += clean.skipped;
+  }
+  // Hoeveel per soort: known kinds with Minder or Meer.
+  if ('kindAmount' in s) {
+    const clean = migrateKindAmount(s.kindAmount);
+    delete s.kindAmount;
+    if (clean.value) s.kindAmount = clean.value;
+    skipped.n += clean.skipped;
+  }
+  // Hoe sporten meetellen: known choices only.
+  if ('sportCounting' in s) {
+    const clean = migrateSportCounting(s.sportCounting);
+    delete s.sportCounting;
+    if (clean.value) s.sportCounting = clean.value;
+    skipped.n += clean.skipped;
+  }
   // Zonder doel: the choices around waves; known values stay.
   if ('beginnerStart' in s || 'waves' in s || 'waveReviewDone' in s || 'noGoalWaves' in s) {
     const clean = migrateWaveSettings({ beginnerStart: s.beginnerStart, waves: s.waves, waveReviewDone: s.waveReviewDone, noGoalWaves: s.noGoalWaves });
@@ -649,8 +671,8 @@ interface RawSource {
 function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoals, hasCapability, hasV4Extras, hasV5Extras }: RawSource): NormalizedBackupData {
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
-  const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped)?.map(cleanPlannedCatchUp);
-  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogRpeAssumed).map(migrateLogLinkedLater);
+  const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped)?.map(cleanPlannedCatchUp).map(migratePlannedFixed).map(migratePlannedAmount);
+  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogRpeAssumed).map(migrateLogCountedSport).map(migrateLogCustomSport).map(migrateLogLinkedLater);
   const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped)?.map(migrateInjuryNote);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;
   const settings = cleanSettings(raw.settings, skipped);
@@ -951,6 +973,16 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
   if (incoming.externalOneRm || current.externalOneRm) {
     merged.externalOneRm = mergeExternalOneRm(incoming.externalOneRm, current.externalOneRm ?? []);
   }
+  // Je eigen sporten: per type samengevoegd, de keuze op dit toestel gaat voor.
+  if (incoming.customSports || current.customSports) {
+    const byType = new Map((incoming.customSports ?? []).map((c) => [c.type, c]));
+    for (const c of current.customSports ?? []) byType.set(c.type, c);
+    merged.customSports = [...byType.values()];
+  }
+  // Sporten die meetellen: per sport samengevoegd, de keuze op dit toestel gaat voor.
+  if (incoming.sportHandling || current.sportHandling) {
+    merged.sportHandling = { ...(incoming.sportHandling ?? {}), ...(current.sportHandling ?? {}) };
+  }
   if (incoming.illnessEpisodes || current.illnessEpisodes) {
     const byId = new Map((incoming.illnessEpisodes ?? []).map((e) => [e.id, e]));
     for (const e of current.illnessEpisodes ?? []) byId.set(e.id, e);
@@ -1221,6 +1253,20 @@ function computeDiff(
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+// Vaste afspraken in de back-up (PlannedSession.fixed). De keuze per sport wordt samengevoegd en die op dit
+// toestel gaat voor (mergeSettingsHistory). Staat een sport hier niet op Vaste dag, dan haalt de volgende
+// planningsronde de open rijen die nog op hun eigen dag staan weg en zegt dat; wat je verplaatste, oversloeg of
+// logde blijft. Een noot in het importvoorbeeld, zodat het nooit stil gebeurt.
+export function fixedSportImportNote(backup: Pick<NormalizedBackupData, 'plannedSessions' | 'settings'>, current: Partial<AppSettings>): string | undefined {
+  const sports = [...new Set(backup.plannedSessions.filter((s) => s.fixed).map((s) => s.fixed!.sport))];
+  if (sports.length === 0) return undefined;
+  const merged = { ...(backup.settings?.sportHandling ?? {}), ...(current.sportHandling ?? {}) };
+  const notFixed = sports.filter((s) => merged[s]?.role !== 'fixed');
+  const names = (list: string[]) => list.map((s) => anySportDefinition(s as AnySportId).label.toLowerCase()).join(' en ');
+  if (notFixed.length === 0) return `Deze back-up heeft vaste afspraken voor ${names(sports)}. Ze komen terug zoals ze waren.`;
+  return `Deze back-up heeft vaste afspraken voor ${names(notFixed)}, maar op deze telefoon staat die sport niet op Vaste dag. Die keuze blijft; de volgende planningsronde haalt de open afspraken weg en zegt dat. Wat je verplaatste, oversloeg of logde blijft staan.`;
+}
+
 export async function buildImportPreview(
   backup: NormalizedBackupData,
   categorySelections: Partial<Record<BackupDataCategory, CategoryAction>>,
@@ -1245,6 +1291,7 @@ export async function buildImportPreview(
       ? 'Deze back-up is meer dan 30 dagen oud. Je planning en instellingen gaan terug naar die stand.'
       : undefined;
   const logsSinceBackup = current.sessionLogs.filter((l) => l.completedAt > backup.createdAt).length;
+  const fixedSportNote = fixedSportImportNote(backup, current.settings);
 
   return {
     backupMeta: {
@@ -1256,6 +1303,7 @@ export async function buildImportPreview(
       restoreDateWarning,
       logsSinceBackup,
       skippedInvalid: backup.skippedInvalid,
+      ...(fixedSportNote ? { fixedSportNote } : {}),
     },
     diffByCategory,
     settingsChanges,

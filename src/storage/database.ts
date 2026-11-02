@@ -35,7 +35,11 @@ import type { RunInsightSettings } from '../engine/runInsightSettings';
 import type { MorningNoticeSettings } from '../engine/morningNotice';
 import { activeSwaps, directionSwaps, patternSlotOf, layoutPhases, patternForWeek, PHASE_GOLF, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { planDirection } from '../engine/direction';
-import type { SportHandlingMap } from '../engine/sportRole';
+import { withCountingSports } from '../engine/sportTemplate';
+import { parseKindAmounts } from '../engine/kindAmount';
+import type { KindAmountMap } from '../data/trainingKinds';
+import type { CustomSport } from '../engine/customSport';
+import type { SportCounting, SportHandlingMap } from '../engine/sportRole';
 import { programDirection } from '../engine/directionPlan';
 import { BEGINNER_WEEKS, isBeginnerStart } from '../engine/beginnerStart';
 import { resolveWaveSettings } from '../engine/waves';
@@ -622,6 +626,16 @@ export interface AppSettings {
   // zwaarte). Absent = the old settings: a sport that is on is planned, off does nothing, a sport ASCEND
   // does not plan has no role yet. Optional and additive; cleaned on import (migrations.ts#migrateSportHandling).
   sportHandling?: SportHandlingMap;
+  // Hoe sporten meetellen (engine/sportRole.ts#resolveSportCounting): vragen bij een nieuwe sport, vragen hoe
+  // zwaar het was, en de rust na een zware sport. Absent = het advies. Optional and additive; cleaned on
+  // import (migrations.ts#migrateSportCounting).
+  sportCounting?: Partial<SportCounting>;
+  // Hoeveel per soort (engine/kindAmount.ts): per soort training Minder of Meer; Normaal staat er niet in.
+  // Optional and additive; cleaned on import (migrations.ts#migrateKindAmount).
+  kindAmount?: KindAmountMap;
+  // Je eigen sporten (engine/customSport.ts): het type bij de bron, waar je het merkt en of het meetelt.
+  // Optional and additive; cleaned on import (migrations.ts#migrateCustomSports).
+  customSports?: CustomSport[];
   // "Zoveel keer per week" per sport (engine/sportFrequency.ts). A sport
   // missing here is on Automatisch: the weekly pattern and weekly planning
   // decide. Optional, so older settings need no migration.
@@ -1734,13 +1748,18 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   ];
   const engineConfig = await GoalEngineConfigRepo.get();
   const restDay = settings.restDay ?? 1;
+  // A sport that counts has a derived template (engine/sportTemplate.ts): its fixed rows and its logs are
+  // read by the week check like any training.
+  const passTemplates = withCountingSports(templates, settings);
   const pass = withLongRunThenLegs(overrides.registers?.longRunThenLegs, () => withHardSameDay(overrides.registers?.hardSameDay, () => withDurationScope(overrides.registers, () => planPass(asWillBe, {
-    today, logs, templates, program: next, blocks, afterGoals: afterGoalWindows(goals, mainGoalId, ctx.anchor, today), restDay, goalDay: ctx.anchor,
+    today, logs, templates: passTemplates, program: next, blocks, afterGoals: afterGoalWindows(goals, mainGoalId, ctx.anchor, today), restDay, goalDay: ctx.anchor,
     dailyTimeBudget: engineConfig.availability.dailyTimeBudget, sameDayPairingPreference: engineConfig.strategy.sameDayPairingPreference,
     slotDays: patternDays(templates, settings, restDay),
     minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),
     newId: () => makeId('planned'),
     leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
+    fixedSports: settings.sportHandling ?? null,
+    kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
   }))));
   if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 
@@ -1750,7 +1769,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   for (const s of sessions) if (!removedNow.has(s.id) && !resultIds.has(s.id)) toRemove.push(s);
 
   if (!dryRun && toRemove.length + writes.length > 0) await replacePlannedSessions(toRemove, writes);
-  const byTemplate = new Map(templates.map((t) => [t.id, t.name]));
+  const byTemplate = new Map(passTemplates.map((t) => [t.id, t.name]));
   // Only what you would notice: a session that was never stored and is let go
   // again in the same run (a pattern week inside a holiday) is not news.
   const shown = pass.repairs.filter(visibleRepair).filter((r) => !(r.removed && !stored.has(r.sessionId)));

@@ -833,6 +833,38 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Ging de herkansing niet door', text: 'sloeg je hem over of liet je hem liggen, dan vraagt ASCEND het nog één keer, op een dag die past en zonder iets te verschuiven wat jij vastzette. Na Liever niet vraagt hij het pas weer na een nieuwe test. Staat deze instelling uit, dan krijgt ook een overgeslagen herkansing geen voorstel meer.' },
     ],
   },
+  sporten: {
+    title: 'Sporten',
+    lead: 'Per sport kies je hoe ASCEND ermee omgaat.',
+    points: [
+      { head: 'Plan dit voor mij', text: 'ASCEND zet het in je week, op dagen die bij je benen passen. Alleen voor hardlopen, wandelen en fietsen: voor de andere sporten heeft ASCEND geen trainingen.' },
+      { head: 'Telt mee als ik het doe', text: 'je plant het zelf. Wat je doet telt mee voor je benen en je week.' },
+      { head: 'Negeren', text: 'ASCEND doet er niets mee. Je kunt het wel loggen.' },
+      { head: 'Nooit stil', text: 'verandert een keuze je planning, dan zie je eerst het voorstel. Met Liever niet blijft alles zoals het was.' },
+    ],
+  },
+  hoeveelPerSoort: {
+    title: 'Hoeveel per soort',
+    lead: 'Per soort training kies je Minder, Normaal of Meer. Normaal is het advies.',
+    points: [
+      { head: 'Eerst de duur', text: 'Minder is 15 procent korter, Meer 15 procent langer, afgerond op 5 minuten. Nooit meer dan 110 procent van je langste training van die soort in de laatste 30 dagen.' },
+      { head: 'Dan het aantal', text: 'Meer zet er een training van die soort bij op een vrije dag, alleen als de regels het toelaten. Minder laat er een weg als er meer dan één staat.' },
+      { head: 'Veiligheid schuift nooit', text: '48 uur tussen zware beendagen, de rust na een tocht of wedstrijd, je rustdag en het aantal harde dagen blijven staan. Past een extra training niet, dan blijft het bij langer.' },
+      { head: 'Wat je doel vraagt', text: 'minder dan één per week van een soort kan niet. Kies je Minder voor de training die je doel het meest vraagt, dan zegt het voorstel wat het kost.' },
+      { head: 'Nooit stil', text: 'je ziet eerst het voorstel. Met Liever niet blijft alles zoals het was. Je wens blijft bewaard, ook na een lichte week of een nieuw blok.' },
+    ],
+  },
+  sportenTellen: {
+    title: 'Hoe sporten meetellen',
+    lead: 'Zwemmen, padel en voetbal plant ASCEND niet, maar ze kunnen meetellen voor je benen en je week.',
+    points: [
+      { head: 'Vragen bij een nieuwe sport', text: 'komt er van je horloge een sport binnen die je nog niet koos, dan staat op Vandaag één rustige vraag: hoe telt dit? Tot je antwoordt telt hij niet mee en verandert er niets. Uit: zo’n sport telt meteen mee als je hem doet.' },
+      { head: 'Vragen hoe zwaar het was', text: 'Rustig, Pittig, Zwaar of Heel zwaar. Hoe zwaarder, hoe meer het telt voor je benen. Uit: ASCEND neemt de gebruikelijke zwaarte van de sport aan en rekent een tikje voorzichtiger.' },
+      { head: 'Rust na een zware sport', text: 'Ruim houdt na een voetbalwedstrijd 72 uur en na padel of een voetbaltraining 48 uur vrij van zware beenkracht. Korter maakt dat 48 en 24 uur: dan staat er na voetbal eerder weer zware beenkracht. Het bewijs voor recreanten is matig; de 72 uur komt van onderzoek bij profs.' },
+      { head: 'Nooit stil', text: 'staat een zware beendag van ASCEND te dicht na een sport die je deed, dan zie je in Week een voorstel om hem te verplaatsen. Pas met Akkoord verandert er iets.' },
+      { head: 'Bewijs', text: 'wat een sport met je benen doet is afgeleid uit onderzoek en niet getoetst. Het kan helpen om een zware beendag niet vlak na een wedstrijd te zetten.' },
+    ],
+  },
   nietDoorgegaan: {
     title: 'Training die niet doorging',
     lead: 'Wat ASCEND doet met een training die een paar dagen voorbij is zonder log.',
@@ -1178,13 +1210,6 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Altijd', text: 'het weekend blijft voor je lange trainingen.' },
       { head: 'Akkoord', text: 'de nieuwe rustdag geldt pas als jij Akkoord geeft.' },
-    ],
-  },
-  sporten: {
-    title: 'Sporten',
-    lead: 'Welke sporten ASCEND inplant en hoe vaak. Wat je zelf doet, telt ook mee voor je benen.',
-    points: [
-      { head: 'Aan of uit', text: 'een sport die uit staat, plant ASCEND niet in. Wat je ervan al deed blijft in je logboek.' },
     ],
   },
   citaten: {

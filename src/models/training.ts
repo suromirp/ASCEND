@@ -13,7 +13,8 @@
 // tied to an intervals.icu activity follows a correction made there (`sourceSync`
 // keeps the numbers it replaced; docs/beslissingen/2026-10-25-correcties-uit-intervals.md).
 
-import type { SportId } from '../data/sports';
+import type { CountedSportId, SportId } from '../data/sports';
+import type { TrainingKindId } from '../data/trainingKinds';
 import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
 import type { PlannedLeaveMark } from './leave';
@@ -119,7 +120,10 @@ export type TemplateRole =
   | 'walked_down' // the descent is walked, not run
   | 'blocks' // has blocks (tempo, intervals) whose pace is compared in the run insight
   | 'hills' // a hill session whose effort can wear down the long run after it (the nudge on Vandaag)
-  | 'extra'; // an extra session the planner may add to a week
+  | 'extra' // an extra session the planner may add to a week
+  | 'counted_sport' // a sport ASCEND does not plan but that counts (engine/sportTemplate.ts), never stored
+  | 'strength' // a strength training (Hoeveel per soort, data/trainingKinds.ts)
+  | 'ruck'; // a walk with a backpack (Hoeveel per soort)
 
 // The reusable definition of a workout — "what" a session is, independent of
 // when it happens.
@@ -131,6 +135,14 @@ export interface SessionTemplate {
   // session is type 'cardio' like a run). Absent = derived from type
   // (engine/sports.ts#templateSport): cardio -> running, hiking -> hiking.
   sport?: SportId;
+  // Only on the derived template of a sport that counts (engine/sportTemplate.ts); never stored.
+  countedSport?: CountedSportId;
+  // Only on the derived template of a sport of your own (engine/customSport.ts); never stored.
+  customSport?: string;
+  // Only on a derived sport day (engine/sportDays.ts): the hours the legs stay free of the next heavy leg
+  // day, and whether "Rust na een zware sport" is on Korter. Never stored.
+  legRestHours?: number;
+  restShort?: boolean;
   // See TemplateRole. Optional: absent falls back to the defaults of the id.
   roles?: TemplateRole[];
   focus?: string; // e.g. "Borst • Rug • Schouders"
@@ -200,6 +212,15 @@ export interface PlannedSession {
   // shows it here. The automatic planning never moves, swaps, shortens or
   // retemplates it (docs/onderzoek/Planning op een lijn.md). Optional, additive.
   lock?: PlanLock;
+  // A fixed appointment of a sport ASCEND does not plan (engine/fixedSports.ts): the sport, the weekday it
+  // was chosen for and how hard it usually is. Always with a lock of yours. Optional, additive; a broken one
+  // is dropped on import and the row stays (migrations.ts#migratePlannedFixed).
+  // `week`: the Monday of the week it was set for, so a row you moved to another week stays that week's.
+  fixed?: { sport: CountedSportId; day: number; intensity: 'low' | 'moderate' | 'high'; week?: string };
+  // Hoeveel per soort (engine/kindAmount.ts): an extra training ASCEND put in for Meer, or one it left out for
+  // Minder (skipped). Put back as it was once you choose Normaal. Optional, additive; a broken one is dropped
+  // on import (migrations.ts#migratePlannedAmount).
+  amount?: { kind: TrainingKindId; change: 'extra' | 'left_out' };
   // Planned to walk with poles. Optional, additive; without it the last log
   // of the same training decides (engine/legFatigue.ts).
   poles?: boolean;
@@ -462,6 +483,12 @@ export interface SessionLog {
   // SetLog.rirAssumed. Telt iets voorzichtiger mee (engine/sessionLoad.ts). Optioneel en aanvullend:
   // een oud log zonder dit veld leest zoals altijd.
   rpeAssumed?: true;
+  // Een sport die ASCEND niet plant maar die meetelt (zwemmen, padel, voetbal; engine/sportTemplate.ts). Het
+  // log hangt aan het afgeleide sjabloon van die sport. Optioneel en aanvullend: een oud log heeft het niet,
+  // een onbekende waarde valt bij een import weg (migrations.ts#migrateLogCountedSport).
+  countedSport?: CountedSportId;
+  // A sport of your own (engine/customSport.ts), "custom_<type>". Optional and additive; cleaned on import.
+  customSport?: string;
   notes?: string;
   strengthData?: ExerciseSetLog[];
   cardioData?: CardioMetric;

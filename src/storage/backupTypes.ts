@@ -252,6 +252,8 @@ export interface ImportPreview {
     // backup is older than what they have.
     logsSinceBackup: number;
     skippedInvalid: number;
+    // De back-up heeft vaste afspraken van een sport (engine/fixedSports.ts): wat er na het terugzetten mee gebeurt.
+    fixedSportNote?: string;
   };
   diffByCategory: ImportDiffEntry[];
   settingsChanges: { key: string; current: unknown; incoming: unknown }[];

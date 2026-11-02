@@ -46,6 +46,10 @@ const ECCENTRIC_PER_HOUR: Record<Level, number> = { none: 0, light: 4, moderate:
 const CLIMB_PER_1000 = 4;
 const DESCENT_PER_1000 = 24;
 const RUNNING_DESCENT = 1.5;
+// A sport that counts (padel, football): braking and turning work like eccentric load, but in bursts
+// instead of continuously as in a strength set, so half the strength rate per hour. AFGELEID, niet getoetst
+// (docs/visie/Sporten die meetellen.md, 3.3; docs/beslissingen/2026-11-02-sporten-die-meetellen.md).
+const SPORT_ECCENTRIC_SHARE = 0.5;
 // Planned effort when nothing is logged yet.
 export const PLANNED_RPE: Record<string, number> = { low: 4, moderate: 6, high: 8 };
 export const PLANNED_STRENGTH_RPE = 8;
@@ -289,6 +293,7 @@ export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, a
     intensity = ((INTENSITY_PER_HOUR[p.intensity] ?? 2) * hardHours * factor + INTENSITY_PER_HOUR.low * easyHours * easyFactor) * pack;
     strength = (IMPACT_PER_HOUR[p.impact as Level] * hardHours * factor + IMPACT_PER_HOUR[p.impact as Level] * easyHours * easyFactor + CLIMB_PER_1000 * (event.climbM ?? 0) / 1000 * factor) * pack;
     damage = DESCENT_PER_1000 * ((event.descentM ?? 0) / 1000) * (running ? RUNNING_DESCENT : 1) * damagePack * poles * adapt;
+    if (hasRole(template, 'counted_sport')) damage += ECCENTRIC_PER_HOUR[p.eccentricLoad as Level] * hours * factor * SPORT_ECCENTRIC_SHARE;
   }
   return { intensity: intensity * feel, strength: strength * feel, damage: damage * feel };
 }

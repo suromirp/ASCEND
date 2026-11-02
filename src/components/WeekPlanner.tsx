@@ -12,7 +12,7 @@ import { useAppData } from '../state/AppDataContext';
 import { LeaveBand } from './LeaveBand';
 import { WeekStatusIcon } from './WeekIcons';
 import { IconDisc, LogDisc, SportDisc } from './SportDisc';
-import { SPORT_LOOK, sportKeyOfLog } from './logbook/sportLook';
+import { lookOfLog } from './logbook/sportLook';
 import { zoneOfTemplate } from './vandaag/zone';
 import { Icon } from './icons';
 import { useWatchStatuses } from './useWatchStatus';
@@ -79,7 +79,8 @@ function SessionRow({
   const restMode = useAppData().settings.restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
   const { status, wasMoved } = deriveSessionStatus(session, logs, isRest);
-  const duration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
+  // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
+  const duration = session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program);
   const dim = status === 'skipped' || status === 'missed';
   const note = status === 'completed' ? undefined : catchNote ?? (adjusted ? 'aangepast' : wasMoved ? 'verplaatst' : undefined);
   const zone = isRest ? undefined : zoneOfTemplate(template, session.scheduledDate, program, templates);
@@ -117,6 +118,13 @@ function SessionRow({
                 </>
               )}
               <span>{duration} min</span>
+              {session.fixed && (
+                <span className="inline-flex items-center gap-1">
+                  <span aria-hidden="true">·</span>
+                  <Icon name="slot" size={12} />
+                  Vaste afspraak
+                </span>
+              )}
               {legs && <span>· zware benen</span>}
               {pairNote && <span>· {pairNote}</span>}
               {concern && <span style={{ color: 'var(--color-warning)' }}>· {concern}</span>}
@@ -203,7 +211,7 @@ function SessionRow({
 // Garmin-activiteit die je als zodanig bewaarde): een gedane rij zoals een gedane
 // geplande training, met "zonder plan" erbij. Een tik opent het logblad.
 function LooseRow({ log, template, isToday, onTap, sign }: { log: SessionLog; template?: SessionTemplate; isToday: boolean; onTap: () => void; sign?: SignState }) {
-  const name = template?.name ?? SPORT_LOOK[sportKeyOfLog(log)].label;
+  const name = template?.name ?? lookOfLog(log).label;
   return (
     <button
       type="button"

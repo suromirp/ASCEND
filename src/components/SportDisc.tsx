@@ -1,13 +1,13 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { Icon, type IconName } from './icons';
 import { Pictogram } from './pictograms';
-import { SPORT_COLOR, sportKind, sportPictogram } from './sportKind';
-import { SPORT_LOOK, sportKeyOfLog } from './logbook/sportLook';
+import { sportColor, sportPictogram } from './sportKind';
+import { lookOfLog } from './logbook/sportLook';
 
 // Het pictogram van de sport in een getinte schijf (stijl C, pictograms.tsx).
 // `done` zet er een klein mint vinkje bij, zoals in de weekstrook.
 export function SportDisc({ template, size = 44, done = false, className = '' }: { template: SessionTemplate; size?: number; done?: boolean; className?: string }) {
-  const color = SPORT_COLOR[sportKind(template)];
+  const color = sportColor(template);
   return (
     <span
       aria-hidden="true"
@@ -29,9 +29,9 @@ export function SportDisc({ template, size = 44, done = false, className = '' }:
 
 // De schijf van een log die geen geplande training heeft (een losse training op
 // Week): de sport zoals het Logboek hem laat zien, een rustdag het rustende poppetje.
-export function LogDisc({ log, size = 44 }: { log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'> & { templateId?: string }; size?: number }) {
+export function LogDisc({ log, size = 44 }: { log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData' | 'countedSport'> & { templateId?: string }; size?: number }) {
   if (log.type === 'recovery') return <IconDisc icon="maan" size={size} tone="status" />;
-  const look = SPORT_LOOK[sportKeyOfLog(log)];
+  const look = lookOfLog(log);
   return (
     <span
       aria-hidden="true"

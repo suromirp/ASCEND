@@ -7,7 +7,7 @@
 // zonder kringverwijzing. Een nieuwe sport komt hier bij (ronde 4). Zwemmen, padel en voetbal
 // staan in COUNTED_SPORTS (docs/visie/Sporten die meetellen.md, stap 2): sporten die ASCEND niet
 // plant maar die later mee kunnen tellen. Ze horen nog niet bij SPORT_IDS, zodat de instellingen,
-// de import en de planning er niets van merken tot er een keuze voor is. Yoga staat er bewust niet in.
+// de import en de planning er niets van merken tot er een keuze voor is. Yoga kwam erbij als gegevensrij in stap 9.
 
 import type { PictogramName } from '../components/pictograms';
 
@@ -105,8 +105,8 @@ export const SPORTS = [
 
 // Sporten die meetellen maar die ASCEND niet plant (docs/visie/Sporten die meetellen.md, 3.2). De
 // kenmerken zijn AFGELEID uit het onderzoek en niet getoetst (impact, remmen, stop en start,
-// bovenlichaam, techniek): startwaarden, bij te stellen met je eigen logs. Nog geen pictogram in
-// stijl C: dan toont de app niets, nooit een emoji. De kleur is de rustige salie: geen eigen sportkleur zolang ze niet gepland worden. De typenamen van intervals.icu worden gecontroleerd
+// bovenlichaam, techniek): startwaarden, bij te stellen met je eigen logs. De pictogrammen in stijl C
+// staan in components/pictograms.tsx (docs/visie/Pictogrammen zwemmen padel voetbal.md). De kleur is de rustige salie: geen eigen sportkleur zolang ze niet gepland worden. De typenamen van intervals.icu worden gecontroleerd
 // zodra het importeren aan gaat; Tennis hoort bewust niet bij padel.
 export const COUNTED_SPORTS = [
   {
@@ -114,7 +114,7 @@ export const COUNTED_SPORTS = [
     label: 'Zwemmen',
     verb: 'zwemmen',
     disciplineLabel: 'Zwemmen',
-    pictogram: undefined,
+    pictogram: 'zwemmen',
     colorToken: 'var(--color-sage)',
     traits: { impact: 0, eccentric: 0, stopStart: 0, upperBody: 3, technique: 3 },
     typicalIntensity: 'moderate',
@@ -127,7 +127,7 @@ export const COUNTED_SPORTS = [
     label: 'Padel',
     verb: 'padel spelen',
     disciplineLabel: 'Padel',
-    pictogram: undefined,
+    pictogram: 'padel',
     colorToken: 'var(--color-sage)',
     traits: { impact: 2, eccentric: 2, stopStart: 3, upperBody: 2, technique: 2 },
     typicalIntensity: 'moderate',
@@ -140,13 +140,28 @@ export const COUNTED_SPORTS = [
     label: 'Voetbal',
     verb: 'voetballen',
     disciplineLabel: 'Voetbal',
-    pictogram: undefined,
+    pictogram: 'voetbal',
     colorToken: 'var(--color-sage)',
     traits: { impact: 3, eccentric: 3, stopStart: 3, upperBody: 1, technique: 2 },
     typicalIntensity: 'high',
     plannable: false,
     roles: ['fixed', 'count', 'off'],
     externalKinds: ['Soccer'],
+  },
+  // Yoga als gegevensrij, zonder code (stap 9). Kenmerken afgeleid: nauwelijks impact, wat bovenlichaam en
+  // veel techniek. Het pictogram is de rekker uit de bestaande set.
+  {
+    id: 'yoga',
+    label: 'Yoga',
+    verb: 'yoga doen',
+    disciplineLabel: 'Yoga',
+    pictogram: 'rekken',
+    colorToken: 'var(--color-sage)',
+    traits: { impact: 0, eccentric: 0, stopStart: 0, upperBody: 1, technique: 2 },
+    typicalIntensity: 'low',
+    plannable: false,
+    roles: ['fixed', 'count', 'off'],
+    externalKinds: ['Yoga'],
   },
 ] as const satisfies readonly SportDefinition[];
 

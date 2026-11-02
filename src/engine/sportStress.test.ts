@@ -10,12 +10,13 @@ const { templates } = buildDefaultProgramData();
 const tpl = (id: string) => templates.find((t) => t.id === id)!;
 
 describe('de nieuwe sporten als gegevens', () => {
-  it('zwemmen, padel en voetbal tellen alleen mee, ASCEND plant ze niet', () => {
-    expect(COUNTED_SPORTS.map((s) => s.id)).toEqual(['swimming', 'padel', 'football']);
+  it('zwemmen, padel, voetbal en (stap 9) yoga tellen alleen mee, ASCEND plant ze niet', () => {
+    expect(COUNTED_SPORTS.map((s) => s.id)).toEqual(['swimming', 'padel', 'football', 'yoga']);
+    expect(COUNTED_SPORTS.map((s) => s.pictogram)).toEqual(['zwemmen', 'padel', 'voetbal', 'rekken']);
     for (const s of COUNTED_SPORTS) {
       expect(s.plannable).toBe(false);
       expect(s.roles).toEqual(['fixed', 'count', 'off']);
-      expect(s.pictogram).toBeUndefined();
+      expect(s.colorToken).toBe('var(--color-sage)');
     }
   });
 

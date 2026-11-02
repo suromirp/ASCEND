@@ -58,13 +58,61 @@ export function parseSportHandling(raw: unknown): { value: SportHandlingMap | un
   return { value: Object.keys(out).length > 0 ? out : undefined, skipped };
 }
 
-// De rol van een sport, of undefined als er nog niets gekozen is (een sport die ASCEND niet plant).
-export function sportRole(settings: { sportHandling?: unknown; enabledSports?: Partial<Record<SportId, boolean>> }, sport: AnySportId): SportRole | undefined {
+// Hoe sporten meetellen (Instellingen, Planning): vragen bij een nieuwe sport, vragen hoe zwaar het was, en
+// hoe lang de benen rust krijgen na een zware sport. Het advies: twee keer aan, en Ruim.
+export interface SportCounting {
+  askNew: boolean;
+  askFelt: boolean;
+  rest: 'ruim' | 'korter';
+}
+
+export const SPORT_COUNTING_ADVICE: SportCounting = { askNew: true, askFelt: true, rest: 'ruim' };
+
+export function resolveSportCounting(raw: unknown): SportCounting {
+  const r = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  return {
+    askNew: r.askNew !== false,
+    askFelt: r.askFelt !== false,
+    rest: r.rest === 'korter' ? 'korter' : 'ruim',
+  };
+}
+
+// Leest defensief voor een import: alleen de drie bekende velden met een bekende waarde, en alleen wat
+// afwijkt van het advies. Niets over: undefined.
+export function cleanSportCounting(raw: unknown): { value: Partial<SportCounting> | undefined; skipped: number } {
+  if (raw === undefined) return { value: undefined, skipped: 0 };
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { value: undefined, skipped: 1 };
+  const r = raw as Record<string, unknown>;
+  const out: Partial<SportCounting> = {};
+  let skipped = 0;
+  for (const key of ['askNew', 'askFelt'] as const) {
+    if (!(key in r)) continue;
+    if (typeof r[key] === 'boolean') out[key] = r[key] as boolean;
+    else skipped++;
+  }
+  if ('rest' in r) {
+    if (r.rest === 'ruim' || r.rest === 'korter') out.rest = r.rest;
+    else skipped++;
+  }
+  for (const key of Object.keys(r)) if (!['askNew', 'askFelt', 'rest'].includes(key)) skipped++;
+  return { value: Object.keys(out).length > 0 ? out : undefined, skipped };
+}
+
+export interface RoleSettings {
+  sportHandling?: unknown;
+  enabledSports?: Partial<Record<SportId, boolean>>;
+  sportCounting?: unknown;
+}
+
+// De rol van een sport, of undefined als er nog niets gekozen is (een sport die ASCEND niet plant). Staat
+// "Vragen bij een nieuwe sport" uit, dan begint zo'n sport op Telt mee als ik het doe.
+export function sportRole(settings: RoleSettings, sport: AnySportId): SportRole | undefined {
   const chosen = parseSportHandling(settings.sportHandling).value?.[sport]?.role;
   if (chosen) return chosen;
   const planned = SPORT_IDS.find((s) => s === sport);
-  if (!planned) return undefined;
-  return { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports }[planned] ? 'plan' : 'off';
+  if (!planned) return resolveSportCounting(settings.sportCounting).askNew ? undefined : 'count';
+  // Uit: ASCEND plant hem niet, maar wat je doet blijft een training in je logboek die meetelt.
+  return { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports }[planned] ? 'plan' : 'count';
 }
 
 // Telt wat je deed mee voor je benen en je week? Alles behalve Negeren en nog niet gekozen.

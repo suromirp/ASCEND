@@ -5,7 +5,7 @@
 
 import type { SessionTemplate, SessionLog } from '../models/training';
 import { findModalityByKey, isCyclingModality, modalitySport } from '../data/modalities';
-import { SPORTS, SPORT_IDS, type SportId } from '../data/sports';
+import { SPORTS, SPORT_IDS, anySportDefinition, type SportId } from '../data/sports';
 
 export type Sport = SportId;
 export type EnabledSports = Record<Sport, boolean>;
@@ -19,6 +19,8 @@ export const DEFAULT_ENABLED_SPORTS: EnabledSports = { running: true, hiking: tr
 // never filtered here (strength has its own block strategy).
 export function templateSport(template: SessionTemplate): Sport | undefined {
   if (template.sport) return template.sport;
+  // A sport that only counts (swimming, padel, football) is none of the planned sports.
+  if (template.countedSport || template.customSport) return undefined;
   if (template.type === 'cardio') return 'running';
   if (template.type === 'hiking') return 'hiking';
   return undefined;
@@ -37,13 +39,23 @@ const TYPE_KIND: Record<SessionTemplate['type'], string> = {
 };
 
 export function sessionKindLabel(template: SessionTemplate): string {
+  if (template.countedSport) return anySportDefinition(template.countedSport).label;
+  if (template.customSport) return template.name;
   const sport = template.type === 'strength' || template.type === 'recovery' ? undefined : templateSport(template);
   return sport ? SPORT_LABEL[sport] : TYPE_KIND[template.type];
 }
 
-export function logKindLabel(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>): string {
+export function logKindLabel(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData' | 'countedSport'> & { customSport?: string }): string {
+  if (log.countedSport) return anySportDefinition(log.countedSport).label;
+  if (log.customSport) return customName(log.customSport);
   const sport = log.type === 'strength' || log.type === 'recovery' ? undefined : logSport(log);
   return sport ? SPORT_LABEL[sport] : TYPE_KIND[log.type];
+}
+
+// "custom_rock_climbing" as a word: "Rock climbing".
+export function customName(id: string): string {
+  const words = id.replace(/^custom_/, '').replace(/_/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 export function isSportEnabled(sport: Sport | undefined, enabled: Partial<EnabledSports> | undefined): boolean {
@@ -58,7 +70,9 @@ export function isTemplatePlannable(template: SessionTemplate, enabled: Partial<
 // Which sport a LOG was — a ride logged on the run slot with the bike
 // modality is cycling, not running. Order: the log's own sport field (set
 // when logged), then the chosen modality, then the session type.
-export function logSport(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>): Sport | undefined {
+export function logSport(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'> & { countedSport?: SessionLog['countedSport']; customSport?: string }): Sport | undefined {
+  // A swim, a padel match or a sport of your own is no run, even though it is stored as cardio.
+  if (log.countedSport || log.customSport) return undefined;
   // The way it was done wins over what was stored from the template, so a
   // long run logged as a run counts as running even in older logs.
   const modality = log.cardioData?.modality ?? log.outdoorData?.modality;

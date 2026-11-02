@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { useAppData } from '../state/AppDataContext';
+import { SportFeltBlock } from './sports/SportFeltBlock';
 import { TestVerdictCard } from './TestVerdictCard';
 import { ZoneUpdateCard } from './ZoneUpdateCard';
 import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
@@ -252,6 +253,9 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               Gevoel: {FEEL_LABEL[log.subjectiveFeel]}
             </p>
           )}
+
+          {/* Een sport die meetelt: hoe zwaar het voelde (docs/visie/Sporten die meetellen.md, 2.6). */}
+          <SportFeltBlock log={log} />
 
           {log.templateId === TEST_TEMPLATE_ID && <div className="mt-3"><TestVerdictCard logId={log.id} /><ZoneUpdateCard logId={log.id} /></div>}
 

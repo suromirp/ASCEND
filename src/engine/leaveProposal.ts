@@ -24,6 +24,7 @@ import { makeId } from '../utils/id';
 import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, describePeriodDates, leaveLabelOn, sortPeriods } from './leave';
 import { trekLightDaysBefore } from './trekTaper';
 import { planPass, type PlanPassContext } from './planPass';
+import { fixedInLeave, fixedLeaveNote } from './fixedSports';
 import type { Finding } from './weekValidator';
 import { idIsTestOrRace } from './templateRoles';
 
@@ -197,6 +198,12 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
       if (s.status === 'skipped' || !idIsTestOrRace(s.templateId, byId) || s.scheduledDate < addDays(period.startDate, -trekLightDaysBefore(dayCount(period), period.trek?.importance)) || s.scheduledDate > period.endDate) continue;
       notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt bij je tocht. Die verplaatst ASCEND niet zomaar. Kies zelf een andere dag als je fris wilt vertrekken.`);
     }
+  }
+  // A fixed appointment of a sport (engine/fixedSports.ts) in a holiday or on a tocht lapses, the advice: say
+  // which, so it is never silent.
+  if (mode === 'add') {
+    const fixedSports = input.context(periodsAfter).fixedSports ?? undefined;
+    for (const item of fixedInLeave(input.today, period.endDate, fixedSports, [period])) notes.push(fixedLeaveNote(item));
   }
   return { mode, period, ...(replaces ? { replaces } : {}), periodsAfter, proposal, notes: [...new Set(notes)] };
 }

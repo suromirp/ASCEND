@@ -1,11 +1,8 @@
 import { useState } from 'react';
-import { useAppData } from '../../../state/AppDataContext';
 import type { DailyTimeBudget, Weekday } from '../../../models/goalEngineConfig';
-import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../../../engine/sports';
-import { Segmented } from '../../ui';
 import { NumberField } from '../../NumberField';
 import { Icon } from '../../icons';
-import { SettingsFieldRow, SettingsList, SettingsRow } from '../SettingsList';
+import { SettingsFieldRow, SettingsList } from '../SettingsList';
 import { Sheet } from '../Sheet';
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -18,52 +15,6 @@ const WEEKDAY_LABELS_NL: Record<Weekday, string> = {
 // voorkeursduur, met 15 minuten als ondergrens, is een gewone, gedocumenteerde standaard.
 function deriveSoftFlexMinutes(preferredMinutes: number): number {
   return Math.max(15, Math.round(preferredMinutes * 0.15));
-}
-
-// Eén sport: inplannen aan of uit, en hoe vaak per week. Het resultaat van elke tik gaat
-// langs usePlanSettingChange (een voorstel met Akkoord als het de planning raakt).
-export function SportSheet({
-  sport,
-  note,
-  onToggle,
-  onFrequency,
-  onClose,
-}: {
-  sport: Sport;
-  note: string | null;
-  onToggle: (sport: Sport, on: boolean) => void;
-  onFrequency: (sport: Sport, perWeek: number | undefined) => void;
-  onClose: () => void;
-}) {
-  const { settings } = useAppData();
-  const on = { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports }[sport];
-  const perWeek = settings.sportFrequency?.[sport];
-  const name = SPORT_LABEL[sport];
-  return (
-    <Sheet eyebrow="Sporten" title={name} onClose={onClose}>
-      <SettingsList>
-        <SettingsRow id={`inplannen-${sport}`} title="Inplannen" kind="toggle" checked={on} onChange={(v) => onToggle(sport, v)} />
-      </SettingsList>
-      {on ? (
-        <>
-          <p className="st-lab" style={{ marginTop: 24 }}>Per week</p>
-          <Segmented<number>
-            tall
-            label={`${name} per week`}
-            value={perWeek ?? 0}
-            options={[{ value: 0, label: 'Auto' }, ...[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}×` }))]}
-            onChange={(n) => onFrequency(sport, n === 0 ? undefined : n)}
-          />
-          <p className="st-hint" style={{ marginLeft: 0 }}>
-            {perWeek ? `ASCEND houdt ${perWeek}× aan en kiest zelf de dagen.` : 'Je weekschema bepaalt hoe vaak.'}
-          </p>
-        </>
-      ) : (
-        <p className="st-hint" style={{ marginLeft: 0 }}>{`Uit: ASCEND plant geen ${name.toLowerCase()} meer. Loggen kan altijd.`}</p>
-      )}
-      {note && <p className="st-hint" style={{ marginLeft: 0, color: 'var(--color-ink)' }} role="status">{note}</p>}
-    </Sheet>
-  );
 }
 
 // Trainingstijd per dag, zoals die al was: minuten per weekdag, met een harde limiet onder
