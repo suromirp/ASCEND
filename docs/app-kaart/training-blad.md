@@ -7,6 +7,7 @@ Morgen, zondag
 ### Lange duurloop
 [knop: Meer over deze training]
 Hardlopen · 50 min · Wennen, rustig tempo
+[knop: Waarom staat dit hier?]
 [knop: Verplaatsen]
 
 --- kaart 1 ---
