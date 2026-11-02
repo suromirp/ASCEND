@@ -8,10 +8,10 @@ const { templates } = buildDefaultProgramData();
 const MON = '2026-11-02';
 
 describe('de kaarten', () => {
-  it('zes sporten in vaste volgorde, met de rollen van nu zonder keuze', () => {
+  it('de sporten in vaste volgorde, met de rollen van nu zonder keuze (yoga sinds stap 9)', () => {
     const cards = sportCards({});
-    expect(cards.map((c) => c.label)).toEqual(['Hardlopen', 'Wandelen', 'Fietsen', 'Zwemmen', 'Padel', 'Voetbal']);
-    expect(cards.map((c) => c.pill)).toEqual(['Gepland', 'Gepland', 'Telt mee', 'Nog niet gekozen', 'Nog niet gekozen', 'Nog niet gekozen']);
+    expect(cards.map((c) => c.label)).toEqual(['Hardlopen', 'Wandelen', 'Fietsen', 'Zwemmen', 'Padel', 'Voetbal', 'Yoga']);
+    expect(cards.map((c) => c.pill)).toEqual(['Gepland', 'Gepland', 'Telt mee', 'Nog niet gekozen', 'Nog niet gekozen', 'Nog niet gekozen', 'Nog niet gekozen']);
     expect(cards[3].line).toBe('Zodra je dit doet, vraagt ASCEND hoe het telt.');
   });
 

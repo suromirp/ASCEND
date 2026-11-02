@@ -1,5 +1,5 @@
 import type { SessionLog } from '../../models/training';
-import { logSport } from '../../engine/sports';
+import { customName, logSport } from '../../engine/sports';
 import type { PictogramName } from '../pictograms';
 import { isMountainTrip } from '../sportKind';
 import { anySportDefinition, sportDefinition } from '../../data/sports';
@@ -19,7 +19,9 @@ export const SPORT_LOOK: Record<SportKey, { label: string; color: string; icon: 
 };
 
 // The look of one log: a sport that only counts (zwemmen, padel, voetbal) with its own name and pictogram.
-export function lookOfLog(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData' | 'countedSport'> & { templateId?: string }): { label: string; color: string; icon: PictogramName } {
+export function lookOfLog(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData' | 'countedSport' | 'customSport'> & { templateId?: string }): { label: string; color: string; icon: PictogramName } {
+  // A sport of your own: its name, in sage, with the body (no pictogram of its own).
+  if (log.customSport) return { label: customName(log.customSport), color: 'var(--color-sage)', icon: 'lichaam' };
   if (log.countedSport) {
     const def = anySportDefinition(log.countedSport);
     return { label: def.label, color: def.colorToken, icon: def.pictogram ?? 'rekken' };

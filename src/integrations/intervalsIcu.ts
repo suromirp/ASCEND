@@ -299,6 +299,8 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
     treadmill: kind !== 'strength' && (raw.trainer === true || raw.type === 'VirtualRun' || raw.type === 'VirtualRide'),
     // A swim, padel or football: our own sport id, never the provider's type name.
     ...(kind === 'other' && countedSport ? { countedSport } : {}),
+    // A kind ASCEND does not know: its type, so you can say how it counts (engine/customSport.ts).
+    ...(kind === 'other' && !countedSport && typeof raw.type === 'string' && raw.type ? { otherType: raw.type.slice(0, 60) } : {}),
     ...(dynamics ? { dynamics } : {}),
     ...(streams ? { streamsAvailable: streams } : {}),
     ...(others ? { otherStreams: others } : {}),

@@ -8,6 +8,7 @@ import { COUNTED_SPORTS, anySportDefinition, type CountedSportId, type SportDefi
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { stressProfileOf, type SportIntensity } from './sportStress';
 import { resolveSportCounting, sportCounts } from './sportRole';
+import { countingCustomTemplates } from './customSport';
 
 const PREFIX = 'sport_';
 
@@ -44,9 +45,9 @@ export function countingSportTemplates(settings: CountingSettings): SessionTempl
 }
 
 // De opgeslagen sjablonen met de afgeleide erbij; een opgeslagen sjabloon met dezelfde id gaat voor.
-export function withCountingSports(templates: SessionTemplate[], settings: CountingSettings): SessionTemplate[] {
+export function withCountingSports(templates: SessionTemplate[], settings: CountingSettings & { customSports?: unknown }): SessionTemplate[] {
   const ids = new Set(templates.map((t) => t.id));
-  return [...templates, ...countingSportTemplates(settings).filter((t) => !ids.has(t.id))];
+  return [...templates, ...[...countingSportTemplates(settings), ...countingCustomTemplates(settings)].filter((t) => !ids.has(t.id))];
 }
 
 // Telt dit log van een sport mee? Alleen een log met een sport die meetelt.

@@ -7,7 +7,7 @@
 // zonder kringverwijzing. Een nieuwe sport komt hier bij (ronde 4). Zwemmen, padel en voetbal
 // staan in COUNTED_SPORTS (docs/visie/Sporten die meetellen.md, stap 2): sporten die ASCEND niet
 // plant maar die later mee kunnen tellen. Ze horen nog niet bij SPORT_IDS, zodat de instellingen,
-// de import en de planning er niets van merken tot er een keuze voor is. Yoga staat er bewust niet in.
+// de import en de planning er niets van merken tot er een keuze voor is. Yoga kwam erbij als gegevensrij in stap 9.
 
 import type { PictogramName } from '../components/pictograms';
 
@@ -147,6 +147,21 @@ export const COUNTED_SPORTS = [
     plannable: false,
     roles: ['fixed', 'count', 'off'],
     externalKinds: ['Soccer'],
+  },
+  // Yoga als gegevensrij, zonder code (stap 9). Kenmerken afgeleid: nauwelijks impact, wat bovenlichaam en
+  // veel techniek. Het pictogram is de rekker uit de bestaande set.
+  {
+    id: 'yoga',
+    label: 'Yoga',
+    verb: 'yoga doen',
+    disciplineLabel: 'Yoga',
+    pictogram: 'rekken',
+    colorToken: 'var(--color-sage)',
+    traits: { impact: 0, eccentric: 0, stopStart: 0, upperBody: 1, technique: 2 },
+    typicalIntensity: 'low',
+    plannable: false,
+    roles: ['fixed', 'count', 'off'],
+    externalKinds: ['Yoga'],
   },
 ] as const satisfies readonly SportDefinition[];
 

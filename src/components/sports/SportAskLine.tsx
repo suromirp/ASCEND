@@ -3,7 +3,7 @@
 // niet tot je antwoordt. Een tik opent het blad met de keuzes; Telt mee als ik het doe is het advies. Het
 // staat buiten "Kaarten op Vandaag", want het is een vraag en geen overzicht.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SPORTS_ROUTE } from '../../pages/settings/sportsRoute';
 import { useAppData } from '../../state/AppDataContext';
@@ -20,11 +20,16 @@ import { Icon } from '../icons';
 import { Pictogram } from '../pictograms';
 import { ChoiceList, Sheet, SheetButtons } from '../settings/Sheet';
 import { FeltChoice } from './FeltChoice';
+import { autoCustomSports, customIdOf, customQuestionLine, customTemplate, FEEL_ADVICE, FEEL_LABEL, parseCustomSports, pendingCustomSports, type CustomFeel, type CustomQuestion, type CustomSport } from '../../engine/customSport';
+
+// Opslaan wacht hoogstens zo lang; daarna een zichtbare uitkomst.
+const SAVE_TIMEOUT_MS = 8000;
 
 export function SportAskLine() {
-  const { settings } = useAppData();
+  const { settings, updateSettings } = useAppData();
   const [state, setState] = useState<WatchActivityState | null>(null);
   const [open, setOpen] = useState<SportQuestion | null>(null);
+  const [openCustom, setOpenCustom] = useState<CustomQuestion | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -37,8 +42,20 @@ export function SportAskLine() {
     };
   }, []);
 
+  // Vragen bij een nieuwe sport staat uit: een nieuw type telt meteen mee, met het advies (stap 9).
+  const auto = useMemo(() => (state?.use.activities ? autoCustomSports(state.activities, settings) : []), [state, settings]);
+  const autoKey = auto.map((c) => c.type).join('|');
+  const added = useRef(new Set<string>());
+  useEffect(() => {
+    if (!autoKey || added.current.has(autoKey)) return;
+    added.current.add(autoKey);
+    const current = parseCustomSports(settings.customSports).value ?? [];
+    void updateSettings({ customSports: [...current, ...auto.filter((c) => !current.some((k) => k.type === c.type))] });
+  }, [autoKey, auto, settings.customSports, updateSettings]);
+
   const question = state?.use.activities ? pendingSports(state.activities, settings, todayISO())[0] : undefined;
-  if (!question && !open) return null;
+  const custom = !question && state?.use.activities ? pendingCustomSports(state.activities, settings, todayISO())[0] : undefined;
+  if (!question && !custom && !open && !openCustom) return null;
   const def = question ? anySportDefinition(question.sport) : undefined;
   return (
     <>
@@ -55,13 +72,105 @@ export function SportAskLine() {
           <span className="shrink-0"><Icon name="verder" size={16} /></span>
         </button>
       )}
+      {custom && (
+        <button
+          type="button"
+          onClick={() => setOpenCustom(custom)}
+          className="flex min-h-[44px] w-full items-center gap-2 px-1 text-left text-sm active:opacity-70"
+          style={{ color: 'var(--color-ink-dim)' }}
+          data-sheet-from
+        >
+          <span className="min-w-0 flex-1">{customQuestionLine(custom)}</span>
+          <span className="shrink-0"><Icon name="verder" size={16} /></span>
+        </button>
+      )}
       {open && <SportAskSheet question={open} onClose={() => setOpen(null)} />}
+      {openCustom && <CustomSportAskSheet question={openCustom} onClose={() => setOpenCustom(null)} />}
     </>
   );
 }
 
-// Opslaan wacht hoogstens zo lang; daarna een zichtbare uitkomst.
-const SAVE_TIMEOUT_MS = 8000;
+// Je deed iets nieuws (stap 9): waar je het vooral merkt vult de kenmerken in, dan of het meetelt.
+function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; onClose: () => void }) {
+  const { settings, updateSettings, logSession } = useAppData();
+  const counting = resolveSportCounting(settings.sportCounting);
+  const [feel, setFeel] = useState<CustomFeel>(FEEL_ADVICE);
+  const [role, setRole] = useState<'count' | 'off'>('count');
+  const [felt, setFelt] = useState<FeltWord>('pittig');
+  const [touched, setTouched] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+  const askFelt = counting.askFelt && question.activity.rpe === undefined && role === 'count';
+  const day = question.activity.start.slice(0, 10);
+
+  async function save(close: () => void) {
+    if (busy) return;
+    setBusy(true);
+    setError(false);
+    try {
+      await withTimeout((async () => {
+        const sport: CustomSport = { id: customIdOf(question.type), label: question.label, type: question.type, feel, role };
+        const current = parseCustomSports(settings.customSports).value ?? [];
+        await updateSettings({ customSports: [...current.filter((c) => c.type !== sport.type), sport] });
+        if (role === 'count') {
+          await logSession({
+            ...activityToDraft(question.activity, customTemplate(sport)),
+            ...(askFelt ? { rpe: FELT_RPE[felt], ...(touched ? {} : { rpeAssumed: true as const }) } : {}),
+            quiet: true,
+          });
+        }
+      })(), SAVE_TIMEOUT_MS);
+      close();
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Sheet eyebrow="Sporten" title={question.label} line={`Je deed iets nieuws op ${dayText(day)}, ${durationLabel(question.activity.durationSec)}. Hoe telt dit?`} onClose={onClose}>
+      {(close) => (
+        <>
+          <p className="st-lab">Merk je dit vooral in je benen, in je armen en schouders, of in je hele lijf?</p>
+          <ChoiceList<CustomFeel>
+            label="Waar merk je het vooral?"
+            options={(['legs', 'arms', 'whole'] as CustomFeel[]).map((f) => ({ value: f, label: FEEL_LABEL[f] }))}
+            value={feel}
+            advice={FEEL_ADVICE}
+            onPick={setFeel}
+          />
+          <div style={{ marginTop: 16 }}>
+            <ChoiceList<'count' | 'off'>
+              label={`Hoe telt ${question.label.toLowerCase()}?`}
+              options={(['count', 'off'] as const).map((r) => ({ value: r, label: ROLE_TEXT[r]!.label, note: ROLE_TEXT[r]!.note }))}
+              value={role}
+              advice="count"
+              onPick={setRole}
+            />
+          </div>
+          {askFelt && (
+            <div style={{ marginTop: 16 }}>
+              <FeltChoice
+                value={felt}
+                onPick={(w) => {
+                  setFelt(w);
+                  setTouched(true);
+                }}
+                note={touched ? 'Hoe zwaarder het voelde, hoe meer het meetelt voor je benen.' : `ASCEND kiest voor: ${FELT_LABEL[felt].toLowerCase()}. Tik als het anders was.`}
+              />
+            </div>
+          )}
+          {error && <p className="st-hint" style={{ marginLeft: 0, color: 'var(--color-ink)' }} role="status">Dit lukte niet. Probeer het zo nog eens.</p>}
+          <SheetButtons>
+            <button type="button" className="st-btn" onClick={close}>Niet nu</button>
+            <button type="button" className="st-btn gold" disabled={busy} onClick={() => void save(close)}>{busy ? 'Bezig…' : 'Opslaan'}</button>
+          </SheetButtons>
+        </>
+      )}
+    </Sheet>
+  );
+}
 
 function dayText(iso: string): string {
   return iso === todayISO() ? 'vandaag' : `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;

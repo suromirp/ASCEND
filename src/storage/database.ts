@@ -37,6 +37,7 @@ import { planDirection } from '../engine/direction';
 import { withCountingSports } from '../engine/sportTemplate';
 import { parseKindAmounts } from '../engine/kindAmount';
 import type { KindAmountMap } from '../data/trainingKinds';
+import type { CustomSport } from '../engine/customSport';
 import type { SportCounting, SportHandlingMap } from '../engine/sportRole';
 import { programDirection } from '../engine/directionPlan';
 import { BEGINNER_WEEKS, isBeginnerStart } from '../engine/beginnerStart';
@@ -629,6 +630,9 @@ export interface AppSettings {
   // Hoeveel per soort (engine/kindAmount.ts): per soort training Minder of Meer; Normaal staat er niet in.
   // Optional and additive; cleaned on import (migrations.ts#migrateKindAmount).
   kindAmount?: KindAmountMap;
+  // Je eigen sporten (engine/customSport.ts): het type bij de bron, waar je het merkt en of het meetelt.
+  // Optional and additive; cleaned on import (migrations.ts#migrateCustomSports).
+  customSports?: CustomSport[];
   // "Zoveel keer per week" per sport (engine/sportFrequency.ts). A sport
   // missing here is on Automatisch: the weekly pattern and weekly planning
   // decide. Optional, so older settings need no migration.

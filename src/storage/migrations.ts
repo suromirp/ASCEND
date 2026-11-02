@@ -13,6 +13,7 @@ import { cleanSportCounting, parseSportHandling, type SportCounting, type SportH
 import { COUNTED_SPORTS } from '../data/sports';
 import { TRAINING_KINDS, type KindAmountMap } from '../data/trainingKinds';
 import { parseKindAmounts } from '../engine/kindAmount';
+import { parseCustomSports, type CustomSport } from '../engine/customSport';
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/proposalTidy';
@@ -804,6 +805,21 @@ export function migratePlannedAmount(s: PlannedSession): PlannedSession {
   const { amount: _wrong, ...rest } = s as PlannedSession & { amount?: unknown };
   void _wrong;
   return rest as PlannedSession;
+}
+
+// Je eigen sporten (engine/customSport.ts): een type, waar je het merkt en een rol; hoogstens twintig.
+export function migrateCustomSports(raw: unknown): { value: CustomSport[] | undefined; skipped: number } {
+  return parseCustomSports(raw);
+}
+
+// SessionLog.customSport: alleen een id van een eigen sport blijft, iets anders valt weg. Het log verandert niet.
+export function migrateLogCustomSport(log: SessionLog): SessionLog {
+  if (!('customSport' in log)) return log;
+  const v = (log as { customSport?: unknown }).customSport;
+  if (typeof v === 'string' && /^custom_[a-z0-9_]{1,60}$/.test(v)) return log;
+  const { customSport: _wrong, ...rest } = log as SessionLog & { customSport?: unknown };
+  void _wrong;
+  return rest as SessionLog;
 }
 
 // SessionLog.rpeAssumed: alleen `true` blijft, iets anders valt weg. Het log zelf verandert niet.

@@ -65,6 +65,9 @@ export interface ExternalActivity {
   // A sport ASCEND does not plan but that can count (swimming, padel, football), when the source said so.
   // The adapter fills it from its own type names (data/sports.ts#countedSportOfExternalType); kind stays 'other'.
   countedSport?: CountedSportId;
+  // An activity of a kind ASCEND does not know (tennis, rowing): its type at the source, so you can say how it
+  // counts (engine/customSport.ts). Only with kind 'other' and no countedSport.
+  otherType?: string;
 }
 
 export const ACTIVITY_KIND_LABEL: Record<ExternalActivityKind, string> = {
@@ -86,8 +89,11 @@ export function activityDate(activity: Pick<ExternalActivity, 'start'>): string 
 // once you chose that it does: then its derived template is in the list
 // (engine/sportTemplate.ts) and the proposal is saved under it.
 export function isImportable(activity: ExternalActivity): boolean {
-  return (activity.kind !== 'other' || !!activity.countedSport) && activity.durationSec > 0;
+  return (activity.kind !== 'other' || !!activity.countedSport || !!activity.otherType) && activity.durationSec > 0;
 }
+
+// A sport of your own: its derived template carries the id of the type (engine/customSport.ts).
+const customIdOfType = (type: string) => `custom_${type.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
 
 // "Duration in the neighbourhood": within 15 minutes or 35 percent of the
 // other length, whichever is more. A 40-minute run done in 52 or 27 counts; a
@@ -102,7 +108,8 @@ export function durationIsClose(actualMinutes: number, otherMinutes: number): bo
 
 // --- does this activity fit this template? ---------------------------------
 
-function fitsTemplate(kind: ExternalActivityKind, template: SessionTemplate, countedSport?: CountedSportId): boolean {
+function fitsTemplate(kind: ExternalActivityKind, template: SessionTemplate, countedSport?: CountedSportId, otherType?: string): boolean {
+  if (otherType || template.customSport) return !!otherType && !countedSport && template.customSport === customIdOfType(otherType);
   const own = countedSportOfTemplate(template);
   if (countedSport || own) return !!countedSport && own === countedSport;
   switch (kind) {
@@ -120,8 +127,8 @@ function fitsTemplate(kind: ExternalActivityKind, template: SessionTemplate, cou
   }
 }
 
-export function templatesForKind(kind: ExternalActivityKind, templates: SessionTemplate[], countedSport?: CountedSportId): SessionTemplate[] {
-  return templates.filter((t) => fitsTemplate(kind, t, countedSport));
+export function templatesForKind(kind: ExternalActivityKind, templates: SessionTemplate[], countedSport?: CountedSportId, otherType?: string): SessionTemplate[] {
+  return templates.filter((t) => fitsTemplate(kind, t, countedSport, otherType));
 }
 
 // --- which planned session does it belong to? -------------------------------
@@ -159,13 +166,13 @@ export function candidatePlanned(
     if (options.notAfter && session.scheduledDate > options.notAfter) continue;
     const template = templateById.get(session.templateId);
     if (!template) continue;
-    if (!options.anyKind && !fitsTemplate(activity.kind, template, activity.countedSport)) continue;
+    if (!options.anyKind && !fitsTemplate(activity.kind, template, activity.countedSport, activity.otherType)) continue;
     const distance = Math.abs(Date.parse(`${session.scheduledDate}T00:00:00Z`) - dayMs) / 86_400_000;
     if (options.sameDayOnly ? distance !== 0 : distance > 6) continue;
     matches.push({ session, template, distance });
   }
 
-  const fits = (m: PlannedMatch) => fitsTemplate(activity.kind, m.template, activity.countedSport);
+  const fits = (m: PlannedMatch) => fitsTemplate(activity.kind, m.template, activity.countedSport, activity.otherType);
   return matches
     .sort((a, b) => {
       // The right kind before anything else, a real session before a rest-day
@@ -195,10 +202,10 @@ export function proposeMatch(
 // saved under, by kind. A short walk is a Herstel walk; a real mountain day
 // (300 m up or more) is a Bergtocht.
 export function fallbackTemplate(activity: ExternalActivity, templates: SessionTemplate[]): SessionTemplate | undefined {
-  const pool = templatesForKind(activity.kind, templates, activity.countedSport);
+  const pool = templatesForKind(activity.kind, templates, activity.countedSport, activity.otherType);
   const byId = (id: string) => pool.find((t) => t.id === id);
   // A sport that counts: its own derived template, only there while the sport counts.
-  if (activity.countedSport) return pool[0];
+  if (activity.countedSport || activity.otherType) return pool[0];
   switch (activity.kind) {
     case 'run':
       return byId('tpl_easy_run') ?? pool[0];
@@ -268,6 +275,7 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
     type: template.type,
     sport: KIND_SPORT[activity.kind],
     countedSport: activity.countedSport,
+    customSport: template.customSport,
     completedDate: activity.start.slice(0, 10),
     completedAt,
     variant: 'custom',
@@ -294,6 +302,7 @@ export function isHandLog(log: Pick<SessionLog, 'source' | 'externalId'>): boole
 
 function logFitsKind(log: SessionLog, kind: ExternalActivityKind, countedSport?: CountedSportId): boolean {
   if (countedSport || log.countedSport) return !!countedSport && log.countedSport === countedSport;
+  if (log.customSport) return false;
   if (kind === 'strength') return log.type === 'strength';
   // A walk on a rest day is logged as a Herstel session.
   if (kind === 'hike' && log.type === 'recovery') return true;
@@ -371,7 +380,9 @@ export function findSimilarLog(activity: ExternalActivity, logs: SessionLog[]): 
   const minutes = activity.durationSec / 60;
   return logs.find((l) => {
     if (l.externalId || l.completedDate !== day) return false;
-    if (activity.countedSport || l.countedSport) {
+    if (activity.otherType || l.customSport) {
+      if (!activity.otherType || l.customSport !== customIdOfType(activity.otherType)) return false;
+    } else if (activity.countedSport || l.countedSport) {
       if (l.countedSport !== activity.countedSport) return false;
     } else if (activity.kind === 'strength') {
       if (l.type !== 'strength') return false;
@@ -401,7 +412,7 @@ export function proposeImport(
   const match = proposeMatch(activity, planned, templates, logs);
   const template = match?.template ?? fallbackTemplate(activity, templates);
   // A sport that does not count (yet): nothing to save it under, so no proposal.
-  if (activity.countedSport && !template) return undefined;
+  if ((activity.countedSport || activity.otherType) && !template) return undefined;
   return {
     activity,
     match,
@@ -436,7 +447,7 @@ export function durationLabel(sec: number): string {
 
 // One line: "Loop, 6,9 km, 55 min, +40 m".
 export function describeActivity(activity: ExternalActivity): string {
-  const parts: string[] = [activity.countedSport ? anySportDefinition(activity.countedSport).label : ACTIVITY_KIND_LABEL[activity.kind]];
+  const parts: string[] = [activity.countedSport ? anySportDefinition(activity.countedSport).label : activity.otherType ? activity.otherType.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2') : ACTIVITY_KIND_LABEL[activity.kind]];
   if (activity.distanceM !== undefined && activity.distanceM > 0) parts.push(`${formatNumberNL(activity.distanceM / 1000, 1)} km`);
   parts.push(durationLabel(activity.durationSec));
   if (activity.elevationGainM !== undefined && activity.elevationGainM >= 1) {

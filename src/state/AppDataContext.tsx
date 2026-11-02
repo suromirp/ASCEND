@@ -658,6 +658,7 @@ export interface LogSessionInput {
   sport?: SessionLog['sport'];
   // A sport that counts (engine/sportTemplate.ts): swimming, padel, football.
   countedSport?: SessionLog['countedSport'];
+  customSport?: SessionLog['customSport'];
   variant: SessionVariant;
   durationMinutes: number;
   rpe?: number;
@@ -726,10 +727,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const strengthProgram = settings.strengthModel?.program;
   // A sport that counts (swimming, padel, football) has a derived template while it counts
   // (engine/sportTemplate.ts): its logs then count in the leg index and the week check like any training.
-  const { sportHandling, sportCounting } = settings;
+  const { sportHandling, sportCounting, customSports } = settings;
   const templates = useMemo(
-    () => withCountingSports(withProgramExercises(storedTemplates, strengthProgram, todayISO()), { sportHandling, sportCounting }),
-    [storedTemplates, strengthProgram, sportHandling, sportCounting],
+    () => withCountingSports(withProgramExercises(storedTemplates, strengthProgram, todayISO()), { sportHandling, sportCounting, customSports }),
+    [storedTemplates, strengthProgram, sportHandling, sportCounting, customSports],
   );
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
@@ -1447,6 +1448,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           type: input.type,
           sport: input.sport,
           ...(input.countedSport ? { countedSport: input.countedSport } : {}),
+          ...(input.customSport ? { customSport: input.customSport } : {}),
           completedDate: input.completedDate ?? todayISO(),
           completedAt: input.completedAt ?? new Date().toISOString(),
           variant: input.variant,

@@ -137,6 +137,8 @@ export interface SessionTemplate {
   sport?: SportId;
   // Only on the derived template of a sport that counts (engine/sportTemplate.ts); never stored.
   countedSport?: CountedSportId;
+  // Only on the derived template of a sport of your own (engine/customSport.ts); never stored.
+  customSport?: string;
   // Only on a derived sport day (engine/sportDays.ts): the hours the legs stay free of the next heavy leg
   // day, and whether "Rust na een zware sport" is on Korter. Never stored.
   legRestHours?: number;
@@ -484,6 +486,8 @@ export interface SessionLog {
   // log hangt aan het afgeleide sjabloon van die sport. Optioneel en aanvullend: een oud log heeft het niet,
   // een onbekende waarde valt bij een import weg (migrations.ts#migrateLogCountedSport).
   countedSport?: CountedSportId;
+  // A sport of your own (engine/customSport.ts), "custom_<type>". Optional and additive; cleaned on import.
+  customSport?: string;
   notes?: string;
   strengthData?: ExerciseSetLog[];
   cardioData?: CardioMetric;

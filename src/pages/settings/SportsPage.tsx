@@ -18,6 +18,7 @@ import { usePlanSettingChange } from '../../components/settings/usePlanSettingCh
 import { ROLE_LABEL, ROLE_NOTE, dayName, roleChoices, sportCards, sportWeekDots, weekDotsLabel, type SportCardInfo, type WeekDot } from '../../engine/sportsScreen';
 import { parseSportHandling, type FixedSlot } from '../../engine/sportRole';
 import { FixedDaysStep } from '../../components/sports/FixedDaysStep';
+import { FEEL_ADVICE, FEEL_LABEL, parseCustomSports, type CustomFeel, type CustomSport } from '../../engine/customSport';
 import { anySportDefinition, SPORT_IDS, type AnySportId, type SportId, type SportRole } from '../../data/sports';
 import { addDays, mondayOfWeek, todayISO } from '../../utils/dates';
 import { SportCountingSheet } from '../../components/settings/groups/SportCountingSheet';
@@ -83,6 +84,8 @@ export function SportsPage() {
   const asked = location.state as { openSport?: AnySportId; fixed?: boolean } | null;
   const [open, setOpen] = useState<AnySportId | null>(() => asked?.openSport ?? null);
   const [counting, setCounting] = useState(false);
+  const [openCustom, setOpenCustom] = useState<string | null>(null);
+  const customs = parseCustomSports(settings.customSports).value ?? [];
   const weekStart = mondayOfWeek(todayISO());
   const cards = useMemo(() => sportCards(settings), [settings]);
   const weekSessions = useMemo(() => plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= addDays(weekStart, 6)), [plannedSessions, weekStart]);
@@ -103,6 +106,24 @@ export function SportsPage() {
           <SportCard key={c.sport} info={c} dots={sportWeekDots({ sport: c.sport, settings, weekStart, sessions: weekSessions, templates })} onOpen={() => setOpen(c.sport)} />
         ))}
       </div>
+      {customs.length > 0 && (
+        <div className="mt-6 flex flex-col gap-3">
+          <Eyebrow>Je eigen sporten</Eyebrow>
+          {customs.map((c) => (
+            <Card key={c.id} className="p-0">
+              <button type="button" onClick={() => setOpenCustom(c.type)} data-sheet-from className="block min-h-[44px] w-full p-4 text-left active:opacity-80">
+                <div className="flex items-center gap-3">
+                  <span className="font-display min-w-0 flex-1 text-xl" style={{ color: 'var(--color-ink)' }}>{c.label}</span>
+                  <span className="shrink-0 rounded-full px-3 py-1 text-xs font-medium" style={{ color: c.role === 'count' ? 'var(--color-action)' : 'var(--color-ink-dim)', border: `1px solid ${c.role === 'count' ? 'var(--color-action)' : 'var(--color-control-border)'}` }}>
+                    {c.role === 'count' ? 'Telt mee' : 'Negeren'}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{c.role === 'count' ? `${FEEL_LABEL[c.feel]}. Telt mee voor je benen en je week.` : 'Doet niet mee in je planning en je benen. Je kunt het wel loggen.'}</p>
+              </button>
+            </Card>
+          ))}
+        </div>
+      )}
       <div className="mt-6">
         <Eyebrow>Hoe het meetelt</Eyebrow>
         <div className="mt-2">
@@ -112,10 +133,31 @@ export function SportsPage() {
           </SettingsList>
         </div>
       </div>
+      {openCustom && <CustomSportSheet type={openCustom} onClose={() => setOpenCustom(null)} />}
       {counting && <SportCountingSheet facts={facts} plan={plan} onClose={() => setCounting(false)} />}
       {open && <SportRoleSheet sport={open} plan={plan} startFixed={!!asked?.fixed && asked.openSport === open} onClose={() => setOpen(null)} />}
       {plan.impact}
     </div>
+  );
+}
+
+// Een eigen sport: waar je het merkt en of het meetelt. Verandert je planning niet (de weekcheck leest alleen
+// de sporten die als gegevensrij bestaan), dus meteen bewaard.
+function CustomSportSheet({ type, onClose }: { type: string; onClose: () => void }) {
+  const { settings, updateSettings } = useAppData();
+  const list = parseCustomSports(settings.customSports).value ?? [];
+  const sport = list.find((c) => c.type === type);
+  if (!sport) return null;
+  const save = (patch: Partial<CustomSport>) => void updateSettings({ customSports: list.map((c) => (c.type === type ? { ...c, ...patch } : c)) });
+  return (
+    <Sheet eyebrow="Sporten" title={sport.label} line="Wat past bij jou?" onClose={onClose}>
+      <p className="st-lab">Merk je dit vooral in je benen, in je armen en schouders, of in je hele lijf?</p>
+      <ChoiceList<CustomFeel> label="Waar merk je het vooral?" options={(['legs', 'arms', 'whole'] as CustomFeel[]).map((f) => ({ value: f, label: FEEL_LABEL[f] }))} value={sport.feel} advice={FEEL_ADVICE} onPick={(f) => save({ feel: f })} />
+      <div style={{ marginTop: 16 }}>
+        <ChoiceList<'count' | 'off'> label={`Hoe telt ${sport.label.toLowerCase()}?`} options={(['count', 'off'] as const).map((r) => ({ value: r, label: ROLE_LABEL[r], note: ROLE_NOTE[r] }))} value={sport.role} advice="count" onPick={(r) => save({ role: r })} />
+      </div>
+      <p className="st-hint" style={{ marginLeft: 0 }}>Opgeslagen zodra je kiest. Je planning verandert er niet door.</p>
+    </Sheet>
   );
 }
 
