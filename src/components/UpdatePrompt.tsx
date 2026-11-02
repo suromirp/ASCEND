@@ -58,7 +58,7 @@ function Bar({ children, attention = false }: { children: ReactNode; attention?:
   return (
     <div
       className="animate-rise-in fixed inset-x-0 z-50 flex justify-center px-4"
-      style={{ bottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px) + 0.75rem)' }}
+      style={{ bottom: 'calc(4.5rem + max(var(--rand-onder), 8px) + 0.75rem)' }}
     >
       <div role="status"
         className={`${attention ? 'mx-attention ' : ''}flex w-full max-w-md items-center justify-between gap-3 rounded-xl border px-4 py-3 shadow-lg`}

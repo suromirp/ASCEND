@@ -99,3 +99,11 @@ statusbalk), `integrations/notifications.ts` (meldingen op tijd) en `integration
 bijwerken). Geen andere code weet op welk toestel hij draait. De terugknop van de app gaat door dezelfde
 geschiedenis als in de browser (`engine/backPress.ts`, `components/DeviceShellHost.tsx`), dus een nieuw blad
 hoeft alleen `useSheetClose` te gebruiken zoals altijd.
+
+De onderrand (`docs/beslissingen/2026-11-02-rand-onderaan.md`): onder de inhoud ligt in de Android-app de
+gebarenbalk of navigatiebalk (edge-to-edge). Alles wat aan de onderkant vastzit rekent op één variabele,
+`--rand-onder` (`src/index.css`, het grootste van `env(safe-area-inset-bottom)` en de `--safe-area-inset-bottom`
+die Capacitor zet; in de browser 0). Elk blad krijgt hem vanzelf als opvulling van het paneel
+(`.animate-sheet-in`), dus een blad zet er zelf niets voor. Tabbalk, meldingen, pillen en knoppenbalken gebruiken
+`var(--rand-onder)`; `env(safe-area-inset-bottom)` los gebruiken laat `randOnder.scan.test.ts` falen.
+Testen in de browser: `document.documentElement.style.setProperty('--rand-onder', '48px')`.

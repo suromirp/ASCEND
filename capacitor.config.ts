@@ -32,6 +32,15 @@ const config: CapacitorConfig = {
       backgroundColor: '#dcebf8',
       style: 'LIGHT',
     },
+    // Edge-to-edge (Android 15 en hoger): de app loopt onder de statusbalk en de gebarenbalk door.
+    // SystemBars geeft de ruimte onderaan door als env(safe-area-inset-bottom) en als
+    // --safe-area-inset-bottom; src/index.css maakt daar --rand-onder van, die elk blad, de tabbalk
+    // en de knoppenbalken gebruiken. De hint 'cover' (zoals de viewport-meta in index.html) voorkomt
+    // dat de eerste afbeelding eerst met en dan zonder opvulling staat.
+    SystemBars: {
+      insetsHandling: 'css',
+      initialViewportFitValueHint: 'cover',
+    },
     LocalNotifications: {
       smallIcon: 'ic_stat_ascend',
     },
