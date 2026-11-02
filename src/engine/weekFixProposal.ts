@@ -22,7 +22,7 @@ import { addDays, isoWeekday, mondayOfWeek, weekdayLongNL, weekdayOf } from '../
 import { makeId } from '../utils/id';
 import type { Advice, AdviceOption } from './adviceEngine';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
-import { hasRole, isTestOrRace, templateRoles } from './templateRoles';
+import { hasRole, idIsTestOrRace, isTestOrRace, templateRoles } from './templateRoles';
 import { templateSport } from './sports';
 import { dayName, weekConcerns, type WeekConcern } from './weekConcerns';
 import { findingKey, lockLevel, repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
@@ -225,6 +225,16 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       const test = sessionById(concern.finding.subjectId);
       const near = input.sessions.filter((s) => level(s) === 1 && test && s.scheduledDate < test.scheduledDate && s.scheduledDate >= addDays(test.scheduledDate, -7)).map((s) => s.id);
       push(viaCheck(near));
+      break;
+    }
+    case 'TEST-REST': {
+      // Rest before a test (docs/beslissingen/2026-11-02-rust-voor-een-test.md): the heavy day to another day of the
+      // week first, then the test itself (a test only ever moves through a proposal like this one). What is done or
+      // past stays; a full week may let one training of the system's own make room. Never anything let go.
+      const order = [...sessions].sort((a, b) => Number(idIsTestOrRace(a.templateId, byTemplate)) - Number(idIsTestOrRace(b.templateId, byTemplate)));
+      const may = order.filter((s) => level(s) !== 0 && !s.raceBlock && !s.leave && mondayOfWeek(s.scheduledDate) === monday);
+      for (const s of may) push(viaScan(s.id));
+      if (candidates.length === 0) for (const s of may) push(viaRoom(s.id));
       break;
     }
     default: {

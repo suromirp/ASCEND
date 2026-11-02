@@ -6,7 +6,7 @@ only "something is wrong here"; a heavy leg day is the muted text "zware benen" 
 ridge legend is muted). The week check reads the shown week with `CheckInput.reportYours` (REST-DAY then also reports a
 training with your lock, level 1; off by default so the planning and `planGolden.test.ts` do not move) and gives the card
 "Let op" under the sky (`weekConcerns`: headline, fact, row text for REST-DAY, LEG-SPACING, TWO-HARD-RUNS, TEST-DAY, AFTER-TEST,
-ONE-LONG, TEST-FRESH; TEST-DAY in a full week offers removing the other session as the last choice, only when it is yours
+ONE-LONG, TEST-FRESH, TEST-REST (a test less than 72 hours, or 48 with the setting, after a heavy day for running or legs; the fix moves the heavy day or the test, never lets anything go, decision `docs/beslissingen/2026-11-02-rust-voor-een-test.md`); TEST-DAY in a full week offers removing the other session as the last choice, only when it is yours
 and the week has another session with the same task, decision `docs/beslissingen/2026-10-31-testdag-in-week.md`; LEG-SPACING has the same last choice when moving gives nothing, so the shorter of two long runs goes when it is yours and the week keeps one of the same sport at least as long, never a hike, tocht, holiday or race block session, decision `docs/beslissingen/2026-11-02-tweede-lange-duurloop.md`). What the check may not repair itself because it is yours becomes a proposal with Akkoord
 (`planWeekFix`: `repairWeeks` with `CheckInput.mayMove` on exactly that session, or in a full week the lightest training goes,
 never a long run, hard run, leg day, test, race or tocht), as `Advice` `WEEK-CHECK` through `ProposalSheet`, only when the week

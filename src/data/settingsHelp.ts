@@ -839,7 +839,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Stond je veel stil tijdens je testloop, dan stelt ASCEND een nieuwe poging voor.',
     points: [
       { head: 'Wanneer', text: 'meer dan een minuut stilstand of meer dan 3 keer stilstaan in je snelste 5 km, of een test die nog op je antwoord wacht.' },
-      { head: 'Wat er gebeurt', text: 'je eerstvolgende harde loop, minstens 3 dagen later, wordt die dag een testloop van 5 km. Er komt geen training bij. Wat in de weg staat schuift mee in hetzelfde voorstel; wat jij vastzette alleen met je Akkoord en met naam in de tekst. Een zware beendag schuift eerst naar na de test en vervalt pas als er geen dag voor is.' },
+      { head: 'Wat er gebeurt', text: 'je eerstvolgende harde loop, minstens 3 dagen later, wordt die dag een testloop van 5 km. Er komt geen training bij. Wat in de weg staat schuift mee in hetzelfde voorstel; wat jij vastzette alleen met je Akkoord en met naam in de tekst. Een zware beendag schuift eerst naar na de test en vervalt pas als er geen dag voor is. Heeft de week erna al een eigen lange duurloop, dan vervalt de lange duurloop die moet wijken en houd je die van de week erna.' },
       { head: 'Alleen met Akkoord', text: 'je ziet eerst wat er verandert. Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.' },
       { head: 'Geen goede dag', text: 'zijn je benen op geen enkele dag binnen 10 dagen fris genoeg te krijgen, valt de dag in een vakantie of tocht, of staat er al een test gepland, dan zegt ASCEND niets.' },
       { head: 'Ging de herkansing niet door', text: 'sloeg je hem over of liet je hem liggen, dan vraagt ASCEND het nog één keer, op een dag die past en zonder iets te verschuiven wat jij vastzette. Na Liever niet vraagt hij het pas weer na een nieuwe test. Staat deze instelling uit, dan krijgt ook een overgeslagen herkansing geen voorstel meer.' },
@@ -946,6 +946,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Ruilen', text: 'de twee ruilen van dag. Dat is het advies: zo blijft elke dag één training en hoef je niets na te schuiven.' },
       { head: 'Samen', text: 'de training komt erbij en ze staan samen op die dag, zoals eerst.' },
       { head: 'Altijd', text: 'botst het, dan zie je dat tijdens het slepen en vraagt ASCEND het eerst. Een gewone ruil gaat meteen, met Ongedaan maken in de melding. Via het actieblad kun je altijd ruilen.' },
+    ],
+  },
+  testRust: {
+    title: 'Rust voor een test',
+    lead: 'Een testloop laat zien wat je kunt als je benen fris zijn. Daarom houdt ASCEND rust tussen een zware dag en je test.',
+    points: [
+      { head: '72 uur', text: 'een test staat minstens 72 uur na de laatste zware loop- of beendag: een zware beendag, de lange duurloop, heuvels of intervallen die zwaar zijn voor je benen, een bergtocht. Dat is het advies.' },
+      { head: '48 uur', text: 'een test mag 48 uur na zo\'n dag staan. Kies dit als je benen snel herstellen of je week vol is.' },
+      { head: 'Wat ASCEND doet', text: 'een nieuwe testpoging en een gemiste test komen alleen op een dag met genoeg rust. Staat een test al te dicht op een zware dag, dan meldt Week het, met een voorstel om de test of de zware dag te verschuiven.' },
+      { head: 'In je planning', text: 'in een testweek zet ASCEND je zware beendag zo neer dat hij die rust houdt, meestal na de test. Past dat nergens, dan blijft hij ervoor in de korte versie. Je ziet eerst wat er verschuift.' },
+      { head: 'Altijd', text: 'wat jij of een voorstel vastzette, verschuift ASCEND niet zonder jouw Akkoord.' },
     ],
   },
   testStilstaan: {

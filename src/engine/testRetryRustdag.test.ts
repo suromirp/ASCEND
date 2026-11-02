@@ -42,6 +42,12 @@ const ownerWeek = (over: Record<string, Partial<PlannedSession>> = {}): PlannedS
   planned('long2', 'tpl_long_run', '2026-11-08', '2026-11-02'),
 ].map((s) => ({ ...s, ...(over[s.id] ?? {}) }));
 
+// Dezelfde week, maar de week erna heeft geen eigen lange duurloop (op zondag een rustige duurloop): dan schuift
+// de lange duurloop nog. Met een eigen lange duurloop in die week vervalt hij (2026-11-02-lange-duurloop-vervalt.md).
+const noOwnLong = (over: Record<string, Partial<PlannedSession>> = {}): PlannedSession[] => ownerWeek()
+  .map((s) => (s.id === 'long2' ? { ...s, id: 'easy2', templateId: 'tpl_easy_run' } : s))
+  .map((s) => ({ ...s, ...(over[s.id] ?? {}) }));
+
 const trainedDays = (list: PlannedSession[], monday: string) => {
   const typeOf = (s: PlannedSession) => templates.find((t) => t.id === s.templateId)?.type;
   const week = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
@@ -51,8 +57,18 @@ const trainedDays = (list: PlannedSession[], monday: string) => {
 afterEach(() => setFreshnessContext(undefined));
 
 describe('TEST-RETRY neemt de rustdag van een week alleen in als die week een andere krijgt', () => {
-  it('laat de rustige duurloop vervallen als de lange duurloop op de rustdag moet', () => {
+  it('laat de lange duurloop vervallen als de week erna al een eigen lange duurloop heeft', () => {
     const a = retryOf(ownerWeek())!;
+    expect(a).toBeDefined();
+    const ch = a.proposal!.changes;
+    expect(ch.find((c) => c.plannedSessionId === 'long')).toMatchObject({ action: 'remove' });
+    expect(ch.find((c) => c.plannedSessionId === 'long2')).toBeUndefined();
+    expect(ch.find((c) => c.plannedSessionId === 'walk')).toBeUndefined();
+    expect(a.effect).toContain('Lange duurloop van zo 1 november vervalt. Je houdt de lange duurloop van zo 8 november in die week.');
+  });
+
+  it('laat de rustige duurloop vervallen als de lange duurloop op de rustdag moet', () => {
+    const a = retryOf(noOwnLong())!;
     expect(a).toBeDefined();
     const ch = a.proposal!.changes;
     expect(ch.find((c) => c.plannedSessionId === 'long')).toMatchObject({ action: 'move', toDate: '2026-11-02' });
@@ -86,7 +102,7 @@ describe('TEST-RETRY neemt de rustdag van een week alleen in als die week een an
 
   it('laat de lange duurloop deze keer vervallen als er geen lichte training te schrappen is', () => {
     // Alles van de week erna is van jou of zwaar: er is niets lichts dat de rustdag kan teruggeven.
-    const a = retryOf(ownerWeek({ easy: { lock: lockUser }, upB2: { lock: lockUser }, upA2: { lock: lockUser } }))!;
+    const a = retryOf(noOwnLong({ easy: { lock: lockUser }, upB2: { lock: lockUser }, upA2: { lock: lockUser }, easy2: { lock: lockUser } }))!;
     expect(a).toBeDefined();
     const ch = a.proposal!.changes;
     expect(ch.find((c) => c.plannedSessionId === 'long')?.action).toBe('remove');
@@ -95,7 +111,7 @@ describe('TEST-RETRY neemt de rustdag van een week alleen in als die week een an
   });
 
   it('laat de lange duurloop gewoon schuiven als de week een andere rustdag houdt', () => {
-    const sessions = ownerWeek().filter((s) => s.id !== 'easy');
+    const sessions = noOwnLong().filter((s) => s.id !== 'easy' && s.id !== 'easy2');
     const a = retryOf(sessions)!;
     expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'long')).toMatchObject({ action: 'move' });
     expect(a.proposal!.changes.some((c) => c.action === 'remove' && c.plannedSessionId !== 'legs' && c.plannedSessionId !== 'walk')).toBe(false);
@@ -105,9 +121,9 @@ describe('TEST-RETRY neemt de rustdag van een week alleen in als die week een an
 describe('voorstel, voorvertoning en uitkomst zijn gelijk', () => {
   for (const restDay of [1, 4] as const) {
     it(`rustdag ${restDay}: de rustige duurloop is na Akkoord overgeslagen en de week heeft een rustdag`, () => {
-      const a = retryOf(ownerWeek(), { restDay } as Partial<AdviceInputs>)!;
+      const a = retryOf(noOwnLong(), { restDay } as Partial<AdviceInputs>)!;
       expect(a).toBeDefined();
-      const sessions = ownerWeek();
+      const sessions = noOwnLong();
       const pass = (list: PlannedSession[]) => planPass(list, { today: '2026-10-28', logs: [testLog()], templates, program: null, blocks: [], restDay, goalDay: '2027-08-01', until: '2026-12-31', slotDays: patternDays(templates, {} as never, restDay), newId: () => 'new' }).sessions;
       const preview = previewProposal(a.proposal!.changes, sessions, templates, pass);
       const applied = pass(applyPlanChangeItems(a.proposal!.changes, sessions, undefined, lockProposal).sessions);

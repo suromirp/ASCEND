@@ -6,6 +6,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { TrainingGoal } from '../models/goals';
 import type { PlannedSession } from '../models/training';
 import { lockLevel } from './weekValidator';
+import { withTestRestHours } from './scheduler';
 import { addDays, mondayOfWeek } from '../utils/dates';
 
 const { templates } = buildDefaultProgramData();
@@ -106,7 +107,7 @@ describe('the Saturday, heavy legs before a hard run, and the first test', () =>
     expect(templateForRaceBlock('tpl_easy_run', '2026-11-26', blocks)).toBe('tpl_easy_run');
   });
 
-  it('the leg day swaps with the upper body day before a tempo run, and is short before a test', () => {
+  it('the leg day swaps with the upper body day before a tempo run, and goes to after a test (rust voor een test)', () => {
     const block = applyRaceBlocks(week('2027-01-25'), blocks, templates, newId, program);
     const day = (id: string) => block.update.find((u) => u.id === `2027-01-25-${id}`);
     expect(day('tpl_easy_run')?.templateId).toBe('tpl_tempo_run'); // Thursday
@@ -117,10 +118,23 @@ describe('the Saturday, heavy legs before a hard run, and the first test', () =>
     const after = week('2027-01-25').map((s) => block.update.find((u) => u.id === s.id) ?? s);
     expect(applyRaceBlocks(after, blocks, templates, newId, program).update).toEqual([]);
 
+    // A test keeps 72 hours (docs/beslissingen/2026-11-02-rust-voor-een-test.md). Tuesday is only 48, so the leg day
+    // goes to the Friday after the test, full length; Upper B takes its Wednesday and the Saturday hills become the
+    // quiet run, so the legs keep 48 hours from the next hard session. Until that decision it stayed short on Tuesday.
     const test = applyRaceBlocks(week('2027-02-15'), blocks, templates, newId, program); // 4 weeks before: test
-    const legs = test.update.find((u) => u.id === '2027-02-15-tpl_lower_a');
-    expect(legs?.scheduledDate).toBe('2027-02-16');
-    expect(legs?.plannedMinutes).toBe(templates.find((t) => t.id === 'tpl_lower_a')!.durationVariants.short);
+    const of = (id: string) => test.update.find((u) => u.id === `2027-02-15-${id}`);
+    expect(of('tpl_easy_run')?.templateId).toBe('tpl_test_run');
+    expect(of('tpl_lower_a')).toMatchObject({ scheduledDate: '2027-02-19', raceBlock: { from: '2027-02-17', to: '2027-02-19' } });
+    expect(of('tpl_lower_a')?.plannedMinutes).toBeUndefined();
+    expect(of('tpl_upper_b')).toMatchObject({ scheduledDate: '2027-02-17' });
+    expect(of('tpl_hill_intervals')).toMatchObject({ templateId: 'tpl_strides_run', blockQuiet: true });
+    const settled = week('2027-02-15').map((s) => test.update.find((u) => u.id === s.id) ?? s);
+    expect(applyRaceBlocks(settled, blocks, templates, newId, program).update).toEqual([]);
+    // With the setting on 48 hours Tuesday is enough: the swap as before, full length.
+    const at48 = withTestRestHours(48, () => applyRaceBlocks(week('2027-02-15'), blocks, templates, newId, program));
+    const legs48 = at48.update.find((u) => u.id === '2027-02-15-tpl_lower_a');
+    expect(legs48?.scheduledDate).toBe('2027-02-16');
+    expect(legs48?.plannedMinutes).toBeUndefined();
   });
 });
 
@@ -149,7 +163,9 @@ describe('a swap for a run that moved is swapped back', () => {
     const first = applyRaceBlocks(w, blocks, templates, newId, program);
     const after = w.map((s) => first.update.find((u) => u.id === s.id) ?? s);
     const legs = after.find((s) => s.templateId === 'tpl_lower_a')!;
-    expect(legs).toMatchObject({ scheduledDate: '2026-10-27', plannedMinutes: 45, raceBlock: { from: '2026-10-28', to: '2026-10-27', short: true } });
+    // 72 hours before the test (rust-voor-een-test): to the Friday after it, Upper B on Wednesday.
+    expect(legs).toMatchObject({ scheduledDate: '2026-10-30', raceBlock: { from: '2026-10-28', to: '2026-10-30' } });
+    expect(legs.plannedMinutes).toBeUndefined();
     // Stable while the test stays.
     expect(applyRaceBlocks(after, blocks, templates, newId, program).update).toEqual([]);
     // The test goes to an easy run: swapped back.
@@ -160,7 +176,9 @@ describe('a swap for a run that moved is swapped back', () => {
     expect(restored).toMatchObject({ scheduledDate: '2026-10-28' });
     expect(restored.plannedMinutes).toBeUndefined();
     expect(restored.raceBlock).toBeUndefined();
-    expect(back.update.find((u) => u.templateId === 'tpl_upper_a')).toMatchObject({ scheduledDate: '2026-10-27' });
+    expect(back.update.find((u) => u.templateId === 'tpl_upper_b')).toMatchObject({ scheduledDate: '2026-10-30' });
+    // The quiet Saturday is the hills again.
+    expect(back.update.find((u) => u.id === '2026-10-26-tpl_hill_intervals')?.templateId).not.toBe('tpl_strides_run');
   });
 });
 

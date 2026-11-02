@@ -44,6 +44,17 @@ export const CHOICES = {
       { value: 'count', label: 'Meetellen', note: 'De klok loopt door, zoals het was', short: 'Meetellen' },
     ],
   }),
+  testRust: def({
+    group: 'Planning',
+    title: 'Rust voor een test',
+    line: 'Hoelang na een zware loop- of beendag een testloop mag staan.',
+    advice: 72 as 72 | 48,
+    help: 'testRust',
+    options: [
+      { value: 72, label: '72 uur', note: 'Twee dagen ertussen, de test op de derde dag', short: '72 uur' },
+      { value: 48, label: '48 uur', note: 'Eén dag ertussen', short: '48 uur' },
+    ],
+  }),
   nietDoorgegaan: def({
     group: 'Planning',
     title: 'Wat ASCEND doet',
