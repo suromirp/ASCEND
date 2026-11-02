@@ -28,6 +28,9 @@ import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
 import { idHasRole } from './templateRoles';
 import { kgLabel } from '../utils/kg';
+import type { HeartRateSettings } from './heartRateZones';
+import type { IntensityCounting } from './intensitySettings';
+import { effortMinutes, type EffortMinutes } from './weekEffort';
 
 export interface WeekReview {
   weekStart: string;
@@ -44,6 +47,14 @@ export interface WeekReview {
   pain: string[]; // "knie 2 keer", from what you ticked after a training
   lighter: number;
   avgRpe?: number;
+  // Minuten rustig en hard (engine/weekEffort.ts), in plaats van een gemiddelde zwaarte.
+  effort: EffortMinutes;
+  // De week loopt nog (asOf valt erin): dan is het "je week tot nu" en blijft wat vandaag nog staat niet liggen.
+  running: boolean;
+  // Hoeveel trainingen er vandaag nog open staan, alleen als de week nog loopt.
+  todayLeft: number;
+  keyMissedName?: string; // de sleuteltraining die nog open blijft liggen
+  checkAdvice?: string; // de zin uit je wekelijkse lijfvraag
   changes: string[]; // what ASCEND adjusted in this week
   next?: { title: string; note?: string; minutes: number; key?: string };
   advice: string[];
@@ -62,6 +73,9 @@ interface ReviewInputs {
   asOf: string;
   illnessEpisodes?: IllnessEpisode[];
   weeklyChecks?: WeeklyHealthCheck[];
+  heartRate?: HeartRateSettings;
+  // Instelling "Intensiteit tellen" (engine/intensitySettings.ts): bij "plan" telt de hartslag niet.
+  intensityCounting?: IntensityCounting;
 }
 
 // The key sessions are the templates with the role 'key' (engine/templateRoles.ts).
@@ -137,7 +151,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   const pain = [...painCount.entries()].sort((a, b) => b[1] - a[1]).map(([a, n]) => `${a.toLowerCase()}${n > 1 ? ` ${n} keer` : ''}`);
   const avgRpe = rpes.length > 0 ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10 : undefined;
 
-  const changes = weekChanges(planChangeLog, plannedSessions, templates, weekStart, asOf, 21).map((c) => c.line);
+  const changes = weekChanges(planChangeLog, plannedSessions, templates, weekStart, asOf, 7).map((c) => c.line);
 
   // Next week: phase, what it asks, the key session.
   const nextStart = addDays(weekStart, 7);
@@ -161,6 +175,11 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
         : undefined,
     };
   }
+
+  const running = asOf <= weekEnd && asOf >= weekStart;
+  const todayLeft = running ? trainings.filter((s) => s.scheduledDate === asOf && s.status !== 'skipped' && !loggedIds.has(s.id)).length : 0;
+  const keyMissedSession = missedSessions.find((s) => idHasRole(s.templateId, 'key', byId) && s.status !== 'skipped');
+  const effort = effortMinutes(weekLogs, byId, inputs.heartRate, inputs.intensityCounting);
 
   // The coach: at most three lines, the most important first.
   const advice: string[] = [];
@@ -205,6 +224,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
       advice.push(`Een lichte klacht${where}, zonder dat je minder kon trainen. Let erop; zakt hij niet, meld het dan weer volgende week.`);
     }
   }
+  const checkAdvice = weeklyCheck && weeklyCheck.trouble !== 'geen' ? advice.find((a) => /klacht|pijn/i.test(a)) : undefined;
   if (heavier >= 2) {
     advice.push('Twee of meer trainingen voelden zwaarder dan gepland. Voelt het volgende week weer zo, kies dan de korte versie of houd de minuten gelijk. Slaap en eten kunnen helpen.');
   } else if (lighter >= 2 && advice.length < 3) {
@@ -229,6 +249,11 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     pain,
     lighter,
     avgRpe,
+    effort,
+    running,
+    todayLeft,
+    keyMissedName: keyMissedSession ? byId.get(keyMissedSession.templateId)?.name : undefined,
+    checkAdvice,
     changes,
     next,
     advice: advice.slice(0, 3),

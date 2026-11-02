@@ -29,16 +29,41 @@ export const INVARIANTEN = [
   },
   {
     // "x van y gedaan" of "x/y gedaan" van deze week moet op Week en in de Weekterugblik gelijk zijn.
-    naam: 'Trainingen gedaan deze week: Vandaag, Week, Stand en Weekterugblik gelijk',
+    // Stand telt deze week niet meer als getal: Ritme toont stipjes en de laatste vier weken (zie de volgende invarianten).
+    naam: 'Trainingen gedaan deze week: Vandaag, Week en Weekterugblik gelijk',
     controleer: (k) => {
       const pak = (t) => {
         const m = t.match(/\b(\d+)\s*(?:van|\/)\s*(\d+)\s+(?:trainingen\s+)?gedaan/i) ?? t.match(/\b(\d+)\/(\d+)\s*\n\s*gedaan/i);
         return m ? `${m[1]} van ${m[2]}` : null;
       };
-      const bronnen = { vandaag: pak(k('vandaag')), week: pak(k('week')), stand: pak(k('stand')), weekterugblik: pak(k('weekterugblik')) };
+      const bronnen = { vandaag: pak(k('vandaag')), week: pak(k('week')), weekterugblik: pak(k('weekterugblik')) };
       const waarden = Object.values(bronnen).filter(Boolean);
       return new Set(waarden).size > 1 ? [`telling verschilt: ${JSON.stringify(bronnen)}`] : [];
     },
+  },
+  {
+    // Ritme op Stand telt zoals de coach op Ascend (engine/onCourse.ts#recentAdherence): dezelfde laatste weken,
+    // hetzelfde "x van y". Alleen te controleren als beide schermen de telling tonen.
+    naam: 'Ritme op Stand telt hetzelfde als de coach op Ascend',
+    controleer: (k) => {
+      const uit = [];
+      for (const [stand, ascend] of [['stand', 'ascend'], ['stand-zonder-doel', 'ascend-zonder-doel']]) {
+        const r = k(stand).match(/Laatste (\d+) weken?: (\d+) van (\d+) gedaan/);
+        const c = k(ascend).match(/Laatste (\d+) weken?: (\d+) van (\d+) trainingen/);
+        if (r && c && r.slice(1).join(' ') !== c.slice(1).join(' ')) uit.push(`${stand} zegt "${r[0]}", ${ascend} zegt "${c[0]}"`);
+      }
+      return uit;
+    },
+  },
+  {
+    // Het ene voortgangsgetal "Klaar voor je doel" staat alleen op Ascend, nooit ook op Stand.
+    naam: 'Klaar voor je doel alleen op Ascend, niet op Stand',
+    controleer: (k) => ['stand', 'stand-zonder-doel'].flatMap((s) => alle(k(s), /^.*Klaar voor (?:je doel|de GR5).*$/gm).map((m) => `${s}: "${m[0].trim()}"`)),
+  },
+  {
+    // Het Logboek is wat je deed: geen noemer met wat gepland stond en geen "Gemist".
+    naam: 'Logboek zonder noemer en zonder Gemist',
+    controleer: (k) => alle(k('logboek'), /^.*(?:\b\d+ van \d+\b|\bGemist\b).*$/gm).map((m) => `logboek: "${m[0].trim()}"`),
   },
   {
     naam: 'Weeknummer en fase gelijk op Vandaag, Week en Stand',
@@ -114,6 +139,13 @@ export const INVARIANTEN = [
     // bij meer dan één een regel "[gevulde mint knoppen: ...]". Eén accent per scherm (CLAUDE.md, Zee en berg).
     naam: 'Hoogstens één gevulde mint knop per scherm',
     controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^\[gevulde mint knoppen: .*\]$/gm).map((m) => `${s}: ${m[0]}`)),
+  },
+  {
+    // kaart.mjs telt op Vandaag de zichtbare kaarten voor de missie en schrijft alleen bij te veel een regel "[boven de
+    // missie: ...]". Hoogstens het afgesproken aantal (Kaarten boven de missie, het advies is één); ziek gemeld en vroeg
+    // ziek zien mogen altijd en tellen mee (engine/todayCards.ts, docs/beslissingen/2026-11-02-vandaag-en-ongedaan.md).
+    naam: 'Hoogstens het afgesproken aantal kaarten boven de missie',
+    controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^\[boven de missie: .*\]$/gm).map((m) => `${s}: ${m[0]}`)),
   },
   {
     // Elke week in Week heeft een rustdag in beeld (engine/restDayThisWeek.ts): de vaste rustdag ("Rustdag"), een rij

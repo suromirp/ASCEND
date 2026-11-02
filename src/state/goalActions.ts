@@ -152,6 +152,7 @@ export function useGoalActions(deps: {
       why: proposal.consequences,
       before: [],
       addedIds: [],
+      written: [],
       settingsBefore: restore?.settings,
       configBefore: restore?.config,
       createdAt: new Date().toISOString(),

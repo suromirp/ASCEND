@@ -15,6 +15,8 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { plannedByIdOf } from './logDay';
+import type { HeartRateSettings } from './heartRateZones';
+import type { IntensityCounting } from './intensitySettings';
 import { buildWeekReview, type WeekReview } from './weekReview';
 
 export type CourseStatus = 'early' | 'on' | 'nearly' | 'behind';
@@ -70,7 +72,8 @@ export interface Adherence {
   enough: boolean; // genoeg weken om iets over te zeggen
 }
 
-export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes'>;
+type ReviewInputsLite = { heartRate: HeartRateSettings; intensityCounting: IntensityCounting };
+export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
 
 export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const { today, program, logs, templates, planChangeLog, illnessEpisodes } = inputs;
@@ -80,7 +83,7 @@ export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const thisMonday = mondayOfWeek(today);
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting });
     if (review && review.planned > 0) reviews.push(review);
   }
   return {
@@ -101,6 +104,13 @@ export function adherenceSummary(a: Adherence): string {
     (a.keyPlanned > 0 ? `, lange training ${a.keyDone} van ${a.keyPlanned}` : '');
 }
 
+// Op koers, bijna of achter: dezelfde lat voor de coach op Ascend en Ritme op Stand.
+export function adherenceStatus(a: Adherence): Exclude<CourseStatus, 'early'> {
+  const share = percent(a.done, a.planned);
+  const keyShare = percent(a.keyDone, a.keyPlanned);
+  return share >= 0.8 && keyShare >= 0.75 ? 'on' : share >= 0.6 && keyShare >= 0.5 ? 'nearly' : 'behind';
+}
+
 export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
   const { today, goalName, goalDate, program, templates } = inputs;
   const byId = new Map(templates.map((t) => [t.id, t]));
@@ -109,7 +119,7 @@ export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
   const focus = phase ? PHASE_FOCUS[phase.id] : undefined;
 
   const adherence = recentAdherence(inputs);
-  const { reviews, done, planned, keyDone, keyPlanned } = adherence;
+  const { reviews, keyDone, keyPlanned } = adherence;
 
   if (!adherence.enough) {
     return {
@@ -122,13 +132,8 @@ export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
     };
   }
 
-  const share = percent(done, planned);
   const keyShare = percent(keyDone, keyPlanned);
-
-  const status: CourseStatus =
-    share >= 0.8 && keyShare >= 0.75 ? 'on'
-      : share >= 0.6 && keyShare >= 0.5 ? 'nearly'
-        : 'behind';
+  const status = adherenceStatus(adherence);
 
   const summary = adherenceSummary(adherence);
 

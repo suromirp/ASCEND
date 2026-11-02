@@ -20,11 +20,13 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
   const biggest = Math.max(0, ...weeks.map((w) => w.biggestDay));
   const last4 = weeks.slice(-4).reduce((n, w) => n + w.metres, 0);
   // Nothing measured at all: one line instead of an empty chart with axes.
+  // Alleen een kaart als je doel dalen vraagt; anders is er niets te tonen en staat er niets.
   if (weeks.every((w) => w.metres <= 0)) {
+    if (routeDayDescent === undefined) return null;
     return (
       <Card className="flex flex-col gap-1">
         <Eyebrow>Dalen</Eyebrow>
-        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen dalingen gemeten</p>
+        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen dalingen gemeten. Je doel vraagt bergaf, dus je lijn komt hier zodra een tocht of loop er een meet.</p>
       </Card>
     );
   }

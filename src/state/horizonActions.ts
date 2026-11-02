@@ -22,6 +22,7 @@ import { extractEvidenceFromLogs } from '../engine/capability';
 import { describeChanges } from '../engine/changeImpact';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type HorizonApplyStatus, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
 import { syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
+import { snapshotWritten } from '../storage/undoPlanChange';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan, RecentPlanChange } from '../models/planChange';
 import { formatDateNL } from '../utils/dates';
@@ -84,6 +85,7 @@ export function useHorizonActions(deps: {
       why: plan.proposal.explanation,
       before: result.before,
       addedIds: result.addedIds,
+      written: await snapshotWritten(result.before, result.addedIds),
       settingsBefore: result.restore.settings,
       goalsBefore: result.restore.goals,
       goalsAdded: result.restore.newGoalIds,

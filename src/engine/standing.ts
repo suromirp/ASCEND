@@ -263,6 +263,15 @@ export const EASY_FLOOR = 0.7;
 // An easy run counts as too hard when clearly more than half of it was above zone 2.
 const TOO_HARD_SHARE = 0.55;
 
+// Hoe zwaar een training volgens het plan is: de ene indeling voor Intensiteit op Stand en voor minuten rustig
+// en hard in de weekterugblik (engine/weekEffort.ts). Een rol "hard_effort" telt als hard; een training die we
+// niet kennen als rustig.
+export type PlannedEffortKind = 'easy' | 'middle' | 'hard';
+export function plannedEffortKind(t: SessionTemplate | undefined): PlannedEffortKind {
+  const goal = t ? resolveEffectiveStressProfile(t).intensity : 'low';
+  return goal === 'high' || (t && hasRole(t, 'hard_effort')) ? 'hard' : goal === 'moderate' ? 'middle' : 'easy';
+}
+
 export function intensityMix(logs: SessionLog[], templates: SessionTemplate[], today: string, hr?: HeartRateSettings, days = 28, counting: IntensityCounting = 'heartrate'): IntensityMix {
   const byId = new Map(templates.map((t) => [t.id, t]));
   const since = addDays(today, -days);
@@ -272,8 +281,7 @@ export function intensityMix(logs: SessionLog[], templates: SessionTemplate[], t
     if (l.completedDate < since || l.completedDate > today) continue;
     if (l.type === 'strength' || l.type === 'recovery') continue;
     const t = byId.get(l.templateId);
-    const goal = t ? resolveEffectiveStressProfile(t).intensity : 'low';
-    const kind = goal === 'high' || (t && hasRole(t, 'hard_effort')) ? 'hard' : goal === 'moderate' ? 'middle' : 'easy';
+    const kind = plannedEffortKind(t);
     mix.sessions[kind]++;
     mix.total++;
     const measured = counting === 'heartrate' ? minutesByZone(l, hr) : undefined;

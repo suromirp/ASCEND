@@ -10,7 +10,7 @@ import { unlinkLogsNow } from '../storage/missedTraining';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { describeChanges } from '../engine/changeImpact';
 import { armFlip, disarmFlip } from '../utils/flipDom';
-import { undoPlanChangeNow } from '../storage/undoPlanChange';
+import { PLAN_UNDO_PLANNED, PLAN_UNDO_STALE, snapshotWritten, undoPlanChangeNow } from '../storage/undoPlanChange';
 import type { Advice } from '../engine/adviceEngine';
 import { syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
 import { restoreAlignments } from '../storage/watchAlign';
@@ -60,14 +60,16 @@ export function usePlanChangeActions(deps: {
     const remaining = new Set(updatedSessions.map((s) => s.id));
     for (const s of planned) if (touchedIds.has(s.id) && !remaining.has(s.id)) await PlannedSessionsRepo.delete(s.id);
     await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
+    const before = planned.filter((s) => touchedIds.has(s.id));
     setRecentChange({
       id: proposal.id,
       trigger: proposal.trigger,
       title,
       lines: describeChanges(proposal.changes, planned, tpls),
       why: proposal.consequences,
-      before: planned.filter((s) => touchedIds.has(s.id)),
+      before,
       addedIds,
+      written: await snapshotWritten(before, addedIds),
       settingsBefore: restore?.settings,
       configBefore: restore?.config,
       createdAt: new Date().toISOString(),
@@ -162,29 +164,55 @@ export function usePlanChangeActions(deps: {
       await refresh();
       return;
     }
-    // A log linked to a planned training afterwards: only the link goes (engine/missedTraining.ts).
-    if (recentChange.linkedLogIds?.length) {
-      await unlinkLogsNow(recentChange.linkedLogIds);
-      if (recentChange.before.length === 0 && recentChange.addedIds.length === 0) {
-        setRecentChange(null);
-        bumpPlanRevision();
+    // A log linked to a planned training afterwards, or numbers of the watch taken over by typed-in trainings:
+    // when that was all the change did, only the link goes (engine/missedTraining.ts) or the hand-made numbers
+    // come back (storage/watchAlign.ts), and that is the undo.
+    const rowsTouched = recentChange.before.length > 0 || recentChange.addedIds.length > 0;
+    if (!rowsTouched && (recentChange.linkedLogIds?.length || recentChange.alignedLogIds?.length)) {
+      try {
+        if (recentChange.linkedLogIds?.length) await unlinkLogsNow(recentChange.linkedLogIds);
+        if (recentChange.alignedLogIds?.length) await restoreAlignments(recentChange.alignedLogIds);
+      } catch (err) {
+        console.error('Ongedaan maken van de log mislukt:', err);
+        disarmFlip();
+        setRecentChange(failureNotice('Niet teruggezet', 'Er ging iets mis; je training staat zoals hij na de wijziging was.'));
         await refresh();
         return;
       }
+      setRecentChange(null);
+      bumpPlanRevision();
+      await refresh();
+      return;
     }
-    // Numbers of the watch taken over by typed-in trainings: the hand-made ones
-    // come back first. When that was all the change did, that is the undo.
+    // Settings, config, goals and rows back as they were, in one transaction, and only when the rows are still
+    // exactly what the change wrote and nothing of it was logged since (storage/undoPlanChange.ts). Otherwise
+    // nothing changes and the notice says so.
+    let undone: Awaited<ReturnType<typeof undoPlanChangeNow>>;
+    try {
+      undone = await undoPlanChangeNow(recentChange);
+    } catch (err) {
+      disarmFlip();
+      const known = err instanceof Error && (err.message === PLAN_UNDO_STALE || err.message === PLAN_UNDO_PLANNED);
+      if (!known) console.error('Ongedaan maken mislukt:', err);
+      setRecentChange(failureNotice('Niet teruggezet', known ? (err as Error).message : 'Er ging iets mis; je planning staat zoals hij na de wijziging was.'));
+      await refresh();
+      return;
+    }
+    // The link went back in the same transaction; the hand-made numbers of the watch come back once the rows did.
+    // Does that fail, the notice says so: the plan is back, the numbers are not.
     if (recentChange.alignedLogIds?.length) {
-      await restoreAlignments(recentChange.alignedLogIds);
-      if (recentChange.before.length === 0 && recentChange.addedIds.length === 0) {
-        setRecentChange(null);
-        bumpPlanRevision();
+      try {
+        await restoreAlignments(recentChange.alignedLogIds);
+      } catch (err) {
+        console.error('Eigen cijfers terugzetten mislukt:', err);
+        if (undone.settings) setSettings(undone.settings);
+        if (undone.config) setGoalEngineConfig(undone.config);
+        if (undone.responses) setAdviceResponses(undone.responses);
+        setRecentChange(failureNotice('Half teruggezet', 'Je planning staat weer zoals hij was, maar je eigen cijfers kwamen niet terug. Zet ze terug via Terugzetten bij Garmin koppelen.'));
         await refresh();
         return;
       }
     }
-    // Settings, config, goals and rows back as they were (storage/undoPlanChange.ts).
-    const undone = await undoPlanChangeNow(recentChange);
     if (undone.settings) setSettings(undone.settings);
     if (undone.config) setGoalEngineConfig(undone.config);
     if (undone.responses) setAdviceResponses(undone.responses);

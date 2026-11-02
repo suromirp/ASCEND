@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
@@ -6,7 +6,7 @@ import { waveHeader } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { activeIllness, isHeavySession, recoveryRamp } from '../engine/illness';
-import { arrangeToday, resolveAboveMission, type TodayCardId } from '../engine/todayCards';
+import { QUIET_TODAY_LINES, arrangeToday, isSafetyCard, resolveAboveMission, type TodayCardId } from '../engine/todayCards';
 import { hasRole } from '../engine/templateRoles';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
@@ -381,8 +381,18 @@ function TodayContent() {
     ...(freshStart.shown ? (['freshStart'] as const) : []),
     ...(showExportReminder ? (['backup'] as const) : []),
     ...(backupCard === 'due' ? (['backupDue'] as const) : []),
+    // De rustige regels weten zelf of ze er zijn; ze staan altijd onder de missie, op hun plek in de rij.
+    ...QUIET_TODAY_LINES,
   ];
-  const arrangement = arrangeToday(presentCards, resolveAboveMission(settings.cardsAboveMission));
+  const aboveLimit = resolveAboveMission(settings.cardsAboveMission);
+  const arrangement = arrangeToday(presentCards, aboveLimit);
+  // Elke kaart in een omhulsel zonder eigen vak (`contents`), zodat de tekstkaart kan tellen wat boven de missie
+  // staat (scripts/app-kaart/kaart.mjs, invariant "Hoogstens het afgesproken aantal kaarten boven de missie").
+  const around = (id: TodayCardId) => (
+    <div key={id} className="contents" data-today-card={id} data-today-safety={isSafetyCard(id) ? '' : undefined}>
+      {aroundMission[id]}
+    </div>
+  );
   const aroundMission: Record<TodayCardId, ReactNode> = {
     // Ziek gemeld, of weer opbouwen: dezelfde kaart, op een andere plek in de volgorde.
     ill: <IllnessStatusCard />,
@@ -395,6 +405,10 @@ function TodayContent() {
     // Een training die niet doorging: één vraag of een koppelvoorstel, de oudste eerst (engine/missedTraining.ts).
     missed: <MissedTrainingCard state={missed} onLogNow={setActionSheetSession} />,
     freshStart: <FreshStartCard state={freshStart} />,
+    // Een etappe van vandaag met coordinaten en Je locatie aan: hoeveel nog tot het eind (engine/stagePosition.ts).
+    stagePosition: <StagePositionLine />,
+    // Een sport van je horloge zonder gekozen rol: een rustige vraag, geen kaart (docs/visie/Sporten die meetellen.md, 2.5).
+    sportAsk: <SportAskLine />,
     backup: (
       <ExportReminderBanner
         logsSinceBackup={logsSinceBackup}
@@ -433,14 +447,15 @@ function TodayContent() {
         <WeekStrip weekStart={weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
       </SkyBand>
 
-      <MorningDeepLink />
-
       {/* Kaarten rond de missie in een vaste volgorde, hoogstens zoveel erboven als je koos (engine/todayCards.ts,
           docs/beslissingen/2026-11-01-vandaag-volgorde.md). De missie staat op een vaste plek tussen twee lijsten:
           verdwijnt er een kaart, dan verhuist de missie zelf niet. */}
-      {arrangement.above.map((id) => <Fragment key={id}>{aroundMission[id]}</Fragment>)}
-      {missionCard}
-      {arrangement.below.map((id) => <Fragment key={id}>{aroundMission[id]}</Fragment>)}
+      {arrangement.above.map(around)}
+      <div className="contents" data-today-mission="" data-above-limit={String(aboveLimit)}>{missionCard}</div>
+      {arrangement.below.map(around)}
+      {/* De snelkoppeling naar de ochtendvraag: alleen een blad, geen kaart. Onder de missie, zodat niets voor de
+          missie staat wat niet in de rij hoort (docs/beslissingen/2026-11-02-vandaag-en-ongedaan.md). */}
+      <MorningDeepLink />
 
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
@@ -449,8 +464,6 @@ function TodayContent() {
 
       {/* Een trage test die wacht op je antwoord: een rustige regel, tot je kiest. */}
       <TestPendingLine />
-      {/* Een sport van je horloge zonder gekozen rol: een rustige vraag, geen kaart (docs/visie/Sporten die meetellen.md, 2.5). */}
-      <SportAskLine />
 
       {/* Daarna: wat bevestigd moet worden. */}
       <WatchActivityCard />
@@ -461,8 +474,6 @@ function TodayContent() {
       <NextTrekLine onlyWhenOn />
       {/* Een tochtdag in de bergen of de sneeuw: het weer op de hoogte van je tocht (engine/mountainWeather.ts). */}
       <MountainWeatherCard />
-      {/* Een etappe van vandaag met coordinaten en Je locatie aan: hoeveel nog tot het eind (engine/stagePosition.ts). */}
-      <StagePositionLine />
 
       <MacroFactorCard />
 

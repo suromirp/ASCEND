@@ -105,6 +105,15 @@ export function reviewWeekToShow(today: string, isoWeekday: number, raw: Overvie
   return reviewWeekFor(today, isoWeekday);
 }
 
+// Of de kaart op Vandaag er nu staat voor de week die hij beschrijft. Op zondag loopt die week nog: staat er vandaag
+// nog een training, dan wacht de kaart op de dag erna (bij "Zondag en maandag" is de maandag er altijd). Staat de
+// instelling op alleen "Zondag", dan is er geen andere dag en toont hij toch, als "Je week tot nu"
+// (docs/beslissingen/2026-11-02-gegevens-herinrichting.md).
+export function weekReviewCardShown(review: { running: boolean; todayLeft: number }, raw: OverviewSettings | undefined): boolean {
+  if (!review.running || review.todayLeft === 0) return true;
+  return resolveOverviews(raw).weekReviewDay === 'sunday';
+}
+
 export const showWeeklyQuestion = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weeklyQuestion;
 export const showMorningCardSetting = (raw: OverviewSettings | undefined) => resolveOverviews(raw).morningCheckIn && resolveOverviews(raw).morningCard;
 export const askLegsAfterEffort = (raw: OverviewSettings | undefined) => resolveOverviews(raw).legsAfterEffort;

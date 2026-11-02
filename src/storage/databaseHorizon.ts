@@ -26,7 +26,7 @@ import { makeId } from '../utils/id';
 import { mainGoal } from '../engine/mainGoal';
 import { programRunBuild } from '../engine/runGrowth';
 import { SettingsRepo, type AppSettings } from './databaseSettings';
-import { TrainingGoalsRepo, GoalMilestonesRepo, SessionLogsRepo, GoalMilestoneProgressRepo, ProgramsRepo, PlannedSessionsRepo, SessionTemplatesRepo, PlanChangeProposalsRepo, MetaRepo, GoalEngineConfigRepo, replacePlannedSessions } from './databaseRepos';
+import { TrainingGoalsRepo, GoalMilestonesRepo, SessionLogsRepo, GoalMilestoneProgressRepo, ProgramsRepo, PlannedSessionsRepo, SessionTemplatesRepo, PlanChangeProposalsRepo, MetaRepo, GoalEngineConfigRepo, replacePlannedSessions, withDerivedWeek } from './databaseRepos';
 
 // --- the program toward the goal date (Fase 3) --------------------------
 
@@ -172,6 +172,12 @@ export interface ProgramHorizonResult {
   // addedIds: sessions the run put on the plan itself (a walk on a trek day):
   // undo takes those off again.
   repairs?: { lines: string[]; before: PlannedSession[]; stored: PlannedSession[]; addedIds?: string[] };
+  // Every row this run wrote or took off the plan, said or not (the race block, WEEK-START, a test revived, the rest
+  // day laid out again, a stray tochtdag): the notice of your last change reads them again, so its undo is not
+  // refused because the planning moved on (engine/undoGuard.ts#refreshWritten). Per row how it was before this run
+  // (null: there was none) and how the run left it (null: taken off), so a row another writer changed first is never
+  // taken over.
+  touched?: { id: string; before: PlannedSession | null; after: PlannedSession | null }[];
 }
 
 // A change that is not stored yet: the planning run as it would be with it
@@ -252,8 +258,11 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const milestones = overrides.milestones ? [...storedMilestones, ...overrides.milestones.filter((m) => !storedMilestones.some((s) => s.id === m.id))] : storedMilestones;
   const sessions = [...(overrides.sessions ?? storedSessions)];
   const startedFrom = [...sessions];
+  const storedById = new Map(storedSessions.map((s) => [s.id, s]));
   const program = overrides.program ?? programs[0];
   if (!program) return { result: { phasesChanged: false, added: 0, swapped: 0, removed: 0 }, before: startedFrom, after: startedFrom, program: null };
+  // What this run wrote (the row) or took off (null), by id.
+  const touched = new Map<string, PlannedSession | null>();
   const settings: AppSettings = overrides.settings ? { ...storedSettings, ...overrides.settings } : storedSettings;
   const replaced = new Map((overrides.goals ?? []).map((g) => [g.id, g]));
   const goals = [...storedGoals.map((g) => replaced.get(g.id) ?? g), ...[...replaced.values()].filter((g) => !storedGoals.some((s) => s.id === g.id))];
@@ -272,12 +281,14 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const strays = new Set(strayTrekRows(sessions, proposals, logs));
   if (strays.size > 0) {
     if (!dryRun) for (const id of strays) await PlannedSessionsRepo.delete(id);
+    for (const id of strays) touched.set(id, null);
     sessions.splice(0, sessions.length, ...sessions.filter((s) => !strays.has(s.id)));
   }
   // Test runs the weekly prescription wrongly took out come back first.
   const revived = revivePrescriptionRemovedTests(sessions, proposals, logged, today);
   if (revived.length > 0) {
     if (!dryRun) for (const r of revived) await PlannedSessionsRepo.put(r);
+    for (const r of revived) touched.set(r.id, withDerivedWeek(r));
     const byId = new Map(revived.map((r) => [r.id, r]));
     sessions.splice(0, sessions.length, ...sessions.map((s) => byId.get(s.id) ?? s));
   }
@@ -366,6 +377,8 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   for (const s of sessions) if (!removedNow.has(s.id) && !resultIds.has(s.id)) toRemove.push(s);
 
   if (!dryRun && toRemove.length + writes.length > 0) await replacePlannedSessions(toRemove, writes);
+  for (const s of toRemove) touched.set(s.id, null);
+  for (const s of writes) touched.set(s.id, withDerivedWeek(s));
   const byTemplate = new Map(passTemplates.map((t) => [t.id, t.name]));
   // Only what you would notice: a session that was never stored and is let go
   // again in the same run (a pattern week inside a holiday) is not news.
@@ -401,7 +414,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const newCount = writes.filter((w) => !stored.has(w.id)).length;
   const removedFinal = new Set(toRemove.map((s) => s.id));
   return {
-    result: { phasesChanged, added: newCount, swapped: writes.length - newCount, removed: toRemove.length, repairs },
+    result: { phasesChanged, added: newCount, swapped: writes.length - newCount, removed: toRemove.length, repairs, ...(touched.size > 0 ? { touched: [...touched].map(([id, after]) => ({ id, before: storedById.get(id) ?? null, after })) } : {}) },
     before: startedFrom,
     after: pass.sessions.filter((s) => !removedFinal.has(s.id)),
     program: next,
