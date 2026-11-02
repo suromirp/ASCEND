@@ -42,7 +42,9 @@ eerst vragen" (`askDoubtTest`); off means the latest test counts, as before. A t
 `engine/testJudgment.ts#testEffortRemark`, `engine/morningCard.ts#maxEffortYesterday`, decision
 `docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md`): in the leg index a test or race (by role) is planned at RPE
 10, so a 10 counts as planned; `effortFactor` is for strength only (tested). A linked test arrives from intervals.icu
-as one activity (warm-up, 5 km, cool-down); with a usable `bestEffort` for the totals of now and no `trim`, the load
-(`sessionLoad`, `weeklyLoad`, the leg index) counts the 5 km at its RPE and the rest at 3, derived and never stored.
+as one activity (warm-up, 5 km, cool-down); for a test only (role `test`, never a race), with a usable `bestEffort`
+for the totals of now and no `trim`, the load (`weeklyLoad` with `LoadItem.split` and the row text `loadItemText`,
+`dayLoads`, the leg index) counts the 5 km at its RPE and the rest at `min(3, RPE)`, derived and never stored;
+`sessionLoad` takes the split too but has no caller yet (built ahead).
 A test at RPE 7 or lower gets one quiet sentence on its card, the paces unchanged. The morning after a test or race
 the morning card asks the legs openly, without the leg-index guess (setting `overviews.legsAfterEffort`).

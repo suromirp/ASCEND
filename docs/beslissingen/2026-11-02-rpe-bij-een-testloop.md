@@ -16,18 +16,34 @@ Vijf kleine verbeteringen uit `docs/onderzoek/RPE bij een testloop.md`:
 3. Een test van het horloge komt via intervals.icu binnen als één activiteit: inlopen, de 5 km en uitlopen
    samen, met de RPE die je op het horloge of bij intervals.icu gaf. Heeft de log een snelste 5 km uit de
    reeks (`SessionLog.bestEffort`, voor de totalen die de log nu heeft, en de log niet ingekort), dan telt de
-   belasting de minuten van die 5 km maal de RPE en de rest maal 3 (`engine/testEffortSplit.ts`). Dat geldt
-   voor `sessionLoad`, de weekbalk in Stand (`standing.ts#weeklyLoad`) en de beenindex, waar de rest telt als
-   een rustige loop op RPE 3. Voorbeeld: 45 minuten op 10 met een 5 km van 25 minuten is 310 in plaats van
+   belasting de minuten van die 5 km maal de RPE en de rest maal 3, nooit zwaarder dan de RPE zelf
+   (`engine/testEffortSplit.ts`). Alleen bij een test (de rol `test`), niet bij een wedstrijd: die loop je als
+   geheel op wedstrijdzwaarte. Dat geldt voor de weekbalk in Stand en het bergprofiel in Week
+   (`standing.ts#weeklyLoad`, `weekProfile.ts#dayLoads`) en de beenindex, waar de rest telt als een rustige
+   loop op RPE 3. `sessionLoad` kan de split ook rekenen, maar wordt in de app nog nergens aangeroepen: dat
+   deel is vooruit gebouwd. De rij in Stand zegt hoe het telt ("45 min · 25 op zwaarte 10, 20 rustig") en de
+   uitleg in Stand en Week zegt erbij: "Bij een test met inlopen telt de rest als rustig." Voorbeeld: 45 minuten op 10 met een 5 km van 25 minuten is 310 in plaats van
    450, en de dag erna 3,3 in plaats van 5,3 in de index. Zonder snelste 5 km blijft alles zoals het was. De
    log verandert nooit: het is een afgeleide berekening.
 4. Bij een test met zwaarte 7 of lager zegt de kaart van de test één rustige zin: "Zwaarte 7 van 10:
    waarschijnlijk geen volle poging. Je tempo's vallen dan wat voorzichtig uit." De test telt mee zoals
    voorheen; tempo's lezen `pacesFromLogs` en `countedTests`.
 5. De ochtend na een test of wedstrijd stelt de ochtendkaart "Hoe voelen je benen?" open, met één zin over
-   gisteren en zonder voorstel uit de beenindex (`engine/morningCard.ts#maxEffortYesterday`). De kaart volgt
+   gisteren en zonder voorstel uit de beenindex (`engine/morningCard.ts#maxEffortYesterday`). Dezelfde zin staat in
+   het blad van de ochtendcheck, boven de keuze voor je benen. De kaart volgt
    verder zijn eigen regels en zijn plek op Vandaag (`engine/todayCards.ts`). Instelling "Benen vragen na
    een test" (`overviews.legsAfterEffort`, standaard aan) in het blad Kaarten op Vandaag.
+
+### Wat er voor de planner verandert
+
+De planner en de regels lezen de beenindex. Na een gelogde test of wedstrijd lezen ze dus een lager getal:
+`freshnessAt` (het plaatsen van een test of wedstrijd in de planner, TEST-FRESH en de weekcontrole,
+TEST-MAKE-ROOM en TEST-RETRY), en `legFatigueOn` voor LEG-EASE en `earlierTodayPoints` (een test van 25 minuten
+op RPE 9 eerder vandaag ongeveer 7 punten in plaats van 8,8). HARD-THEN-SPACE gaat af op de gelogde RPE zelf (8
+of meer) en verandert niet. Het getal gaat alleen omlaag, nooit omhoog: een wedstrijd wordt niet gesplitst, een
+training zonder de rol houdt zijn 8, en een geplande test zonder RPE telt zoals voorheen. De drempels (8, 3 en
+12), AFTER-TEST en de 48 uur tussen zware beendagen blijven. `engine/freshnessAfterTest.test.ts` legt dat vast
+voor een testdag 3 tot 7 dagen na een gelogde test op RPE 10. `planGolden.test.ts` beweegt niet.
 
 ## Reden
 
@@ -65,6 +81,6 @@ Niets.
 ## Terugdraaien
 
 Punt 1: `PLANNED_MAX_EFFORT_RPE` weghalen in `sessionImpulse`. Punt 3: `testEffortSplit` niet meer aanroepen in
-`fatigueEvents`, `weeklyLoad` en de aanroepers van `sessionLoad`. Punt 4: de regel met `testEffortRemark` uit
+`fatigueEvents` en `weeklyLoad`, en `split` uit `LoadItem` (de rij valt dan terug op minuten maal zwaarte). Punt 4: de regel met `testEffortRemark` uit
 `TestVerdictCard.tsx`. Punt 5: de instelling uitzetten, of `afterEffort` niet meer doorgeven in
 `useMorningPrefill.ts`. Niets is opgeslagen behalve de optionele schakelaar.

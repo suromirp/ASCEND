@@ -8,7 +8,11 @@
 // later, altijd met "Liever niet". Niets verandert stil; de training en de logs blijven zoals ze zijn.
 //
 // Alle getallen zijn afgeleid en niet gemeten (zoals in engine/bodyCheck.ts). De planner en de
-// weekcontrole lezen niets uit dit bestand: `legFatigueOn` en `freshnessAt` zijn ongewijzigd.
+// weekcontrole lezen niets uit dit bestand, en dit bestand verandert `legFatigueOn` en `freshnessAt`
+// niet. Die twee volgen wel de beenindex zelf: sinds docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md
+// telt een gelogde test (rol `test`) of wedstrijd lichter (gepland op RPE 10, een gekoppelde test met
+// inlopen in twee delen), en dat lezen ook `earlierTodayPoints` en LEG-EASE hier. Alleen omlaag; de
+// drempels blijven.
 
 import type { Program } from '../models/program';
 import type { ExercisePrescription, PlannedSession, SessionLog, SessionTemplate, SetTarget } from '../models/training';
