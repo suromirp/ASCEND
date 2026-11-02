@@ -916,7 +916,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Kies zelf in welke volgorde de blokken op Je stand staan. Het verandert niets aan je planning of je cijfers.',
     points: [
       { head: 'Blokken', text: 'je sleept hele blokken, zoals Benen, Belasting en Kracht, niet losse kaarten. Binnen een blok blijft de volgorde vast.' },
-      { head: 'Bovenaan', text: 'Klaar voor het doel blijft altijd eerst. Het vlak "Je stand in vier regels" staat nooit als eerste blok.' },
+      { head: 'Bovenaan', text: 'De lucht met de drie woorden (Benen, Belasting, Ritme) blijft altijd bovenaan; daaronder bepaal jij de volgorde.' },
       { head: 'Zonder slepen', text: 'in het blad kun je per blok ook Hoger of Lager kiezen.' },
       { head: 'Terug naar standaard', text: 'zet alles weer zoals de app het bedacht. Een blok dat in de instellingen uit staat, houdt zijn plek.' },
     ],

@@ -4,11 +4,11 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import { isoWeekday, monthBounds, parseISODate, todayISO, toISODate } from '../utils/dates';
 import { SPORT_LOOK, sportKeyOfLog, type SportKey } from './logbook/sportLook';
 
-// De maand in bolletjes: per dag een bolletje in de kleur van de sport die je
-// deed (lopen, kracht, wandelen), een grijze ring voor een rustdag, een mint ring
-// voor een training die nog komt (mint is wat je nog moet doen), vandaag met een
-// ijsblauwe rand. Het leest de echte logs en het plan; de legenda toont alleen wat
-// deze maand voorkomt.
+// De maand als wat je deed: onder het getal van een gedane dag staat een stipje in de kleur van de sport
+// (twee stipjes bij twee sporten). Wat nog gepland staat is een stille rand in de baankleur, nooit mint:
+// het Logboek is geen planner. Vandaag met een ijsblauwe rand. Het leest de echte logs en het plan; de
+// legenda is "Gedaan" en "Gepland", alleen waar het deze maand voorkomt
+// (docs/beslissingen/2026-11-02-gegevens-herinrichting.md).
 
 const WEEKDAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
@@ -24,7 +24,7 @@ export function MonthCalendar({
   plannedSessions: PlannedSession[];
   sessionLogs: SessionLog[];
   isRest?: (session: PlannedSession) => boolean;
-  // Elke dag tot en met vandaag is tikbaar: "Wat speelde er?" (components/influence/).
+  // Elke dag tot en met vandaag is tikbaar: het blad van die dag (components/logbook/DaySheet.tsx).
   onPickDay?: (date: string) => void;
   // Dagen met een eigen notitie: een klein gedempt stipje, nooit de reden.
   notedDates?: ReadonlySet<string>;
@@ -74,8 +74,7 @@ export function MonthCalendar({
     return list;
   }, [start, end]);
 
-  const present = (Object.keys(SPORT_LOOK) as SportKey[]).filter((k) => [...sportsByDate.values()].some((v) => v.includes(k)));
-  const hasRest = [...restDates].some((d) => !sportsByDate.has(d));
+  const hasDone = sportsByDate.size > 0;
   const hasPlanned = [...plannedDates].some((d) => !sportsByDate.has(d));
 
   // Elk tikvlak is 44 bij 44 px zonder overlap: de rijen sluiten op elkaar aan, en de kalender gebruikt
@@ -89,9 +88,10 @@ export function MonthCalendar({
         {cells.map((date, i) => {
           if (!date) return <div key={`blank-${i}`} className="h-11" />;
           const sports = sportsByDate.get(date);
-          const sport = sports?.[0];
-          const planned = !sport && plannedDates.has(date);
-          const rest = !sport && !planned && restDates.has(date);
+          const done = !!sports && sports.length > 0;
+          const dots = [...new Set(sports ?? [])].slice(0, 2);
+          const planned = !done && plannedDates.has(date);
+          const rest = !done && !planned && restDates.has(date);
           const isToday = date === today;
           const day = parseISODate(date).getDate();
           const label = sports ? `${day}: ${sports.map((k) => SPORT_LOOK[k].label.toLowerCase()).join(', ')}` : planned ? `${day}: gepland` : rest ? `${day}: rustdag` : `${day}`;
@@ -101,14 +101,18 @@ export function MonthCalendar({
               <span
                 className="relative flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold tabular-nums"
                 style={{
-                  background: sport ? SPORT_LOOK[sport].color : 'transparent',
-                  color: sport ? 'var(--color-on-action)' : planned ? 'var(--color-ink)' : 'var(--color-ink-dim)',
-                  boxShadow: planned ? 'inset 0 0 0 1.5px var(--color-action)' : rest ? 'inset 0 0 0 1.5px var(--color-control-border)' : undefined,
+                  color: done ? 'var(--color-ink)' : planned ? 'var(--color-ink)' : 'var(--color-ink-dim)',
+                  boxShadow: planned ? 'inset 0 0 0 1.5px var(--color-track)' : undefined,
                   outline: isToday ? '2px solid var(--color-status)' : undefined,
                   outlineOffset: 2,
                 }}
               >
                 {day}
+                {dots.length > 0 && (
+                  <span className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 gap-0.5" aria-hidden>
+                    {dots.map((k) => <span key={k} className="h-1.5 w-1.5 rounded-full" style={{ background: SPORT_LOOK[k].color }} />)}
+                  </span>
+                )}
                 {noted && <span className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full" style={{ background: 'var(--color-ink-dim)' }} aria-hidden />}
               </span>
           );
@@ -124,7 +128,7 @@ export function MonthCalendar({
               <button
                 type="button"
                 onClick={() => onPickDay(date)}
-                aria-label={`${isToday ? `${label}, vandaag` : label}. Wat speelde er?${noted ? ' Ingevuld.' : ''}`}
+                aria-label={`${isToday ? `${label}, vandaag` : label}. Dag bekijken.${noted ? ' Met een notitie.' : ''}`}
                 className="relative flex h-11 w-full items-center justify-center"
               >
                 {circle}
@@ -133,13 +137,10 @@ export function MonthCalendar({
           );
         })}
       </div>
-      {(present.length > 0 || hasRest || hasPlanned) && (
+      {(hasDone || hasPlanned) && (
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {present.map((k) => (
-            <span key={k} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: SPORT_LOOK[k].color }} aria-hidden />{SPORT_LOOK[k].label}</span>
-          ))}
-          {hasPlanned && <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-action)' }} aria-hidden />Gepland</span>}
-          {hasRest && <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-control-border)' }} aria-hidden />Rust</span>}
+          {hasDone && <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-ink-dim)' }} aria-hidden />Gedaan</span>}
+          {hasPlanned && <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-track)' }} aria-hidden />Gepland</span>}
         </div>
       )}
     </div>

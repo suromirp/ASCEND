@@ -101,6 +101,13 @@ export function adherenceSummary(a: Adherence): string {
     (a.keyPlanned > 0 ? `, lange training ${a.keyDone} van ${a.keyPlanned}` : '');
 }
 
+// Op koers, bijna of achter: dezelfde lat voor de coach op Ascend en Ritme op Stand.
+export function adherenceStatus(a: Adherence): Exclude<CourseStatus, 'early'> {
+  const share = percent(a.done, a.planned);
+  const keyShare = percent(a.keyDone, a.keyPlanned);
+  return share >= 0.8 && keyShare >= 0.75 ? 'on' : share >= 0.6 && keyShare >= 0.5 ? 'nearly' : 'behind';
+}
+
 export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
   const { today, goalName, goalDate, program, templates } = inputs;
   const byId = new Map(templates.map((t) => [t.id, t]));
@@ -109,7 +116,7 @@ export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
   const focus = phase ? PHASE_FOCUS[phase.id] : undefined;
 
   const adherence = recentAdherence(inputs);
-  const { reviews, done, planned, keyDone, keyPlanned } = adherence;
+  const { reviews, keyDone, keyPlanned } = adherence;
 
   if (!adherence.enough) {
     return {
@@ -122,13 +129,8 @@ export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
     };
   }
 
-  const share = percent(done, planned);
   const keyShare = percent(keyDone, keyPlanned);
-
-  const status: CourseStatus =
-    share >= 0.8 && keyShare >= 0.75 ? 'on'
-      : share >= 0.6 && keyShare >= 0.5 ? 'nearly'
-        : 'behind';
+  const status = adherenceStatus(adherence);
 
   const summary = adherenceSummary(adherence);
 

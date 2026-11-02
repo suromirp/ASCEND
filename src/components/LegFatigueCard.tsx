@@ -8,8 +8,7 @@ import { resolveVariantDuration } from '../engine/substitutions';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { formatWeekdayDayMonthNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
-import { Card } from './ui';
-import { TextButton } from './TextButton';
+import { Card, InfoButton } from './ui';
 
 // Vandaag → "Benen": the leg fatigue index (engine/legFatigue.ts) for you to
 // see, not only for the planning: how fresh your legs are today, what still
@@ -40,7 +39,6 @@ export function useLegFatigueInputs(): LegFatigueInputs {
 export function LegFatigueCard() {
   const { plannedSessions, sessionLogs, templates } = useAppData();
   const inputs = useLegFatigueInputs();
-  const [open, setOpen] = useState(false);
   const [info, setInfo] = useState(false);
   const today = inputs.today;
   const now = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
@@ -62,10 +60,8 @@ export function LegFatigueCard() {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
-        <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Beenindex</span>
-        <TextButton tone="dim" size="xs" onClick={() => setOpen((v) => !v)} className="-my-2.5" aria-expanded={open}>
-          {open ? 'Minder' : 'Hoe werkt dit?'}
-        </TextButton>
+        <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Benen</span>
+        <InfoButton onClick={() => setInfo(true)} label="Hoe de beenindex werkt" />
       </div>
       <div className="flex items-baseline gap-3">
         <span className="font-sans text-[40px] font-semibold leading-none tracking-[-0.03em] tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(now.index, 1)}</span>
@@ -111,14 +107,6 @@ export function LegFatigueCard() {
         </p>
       )}
 
-      {open && (
-        <p className="border-t pt-2 text-xs leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
-          Elke training laat iets achter in je benen. Hard lopen is na een dag grotendeels weg, kracht en klappen halveren per dag, en spierschade van bergaf of zware beenkracht houdt 3 tot 5 dagen aan. Die drie tellen samen op. 8 of lager is fris genoeg voor een testloop, tot 12 voor een harde training. Het zwaarst telt je beentraining: hoe lang, hoe zwaar en of je eraan gewend bent. Grote verschillen kloppen bijna altijd; rond de grens is het getal onzeker, kijk dan naar je gevoel bij het inlopen.
-          <span className="mt-2 flex">
-            <TextButton onClick={() => setInfo(true)} className="text-left" icon="verder">Alles over dit getal, en hoe betrouwbaar het is</TextButton>
-          </span>
-        </p>
-      )}
       {info && <LegFatigueInfoSheet onClose={() => setInfo(false)} />}
     </Card>
   );

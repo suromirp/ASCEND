@@ -51,6 +51,7 @@ export function WeekStrip({
   templateById,
   program,
   today,
+  plain = false,
 }: {
   weekStart: string;
   sessions: PlannedSession[];
@@ -58,10 +59,14 @@ export function WeekStrip({
   templateById: Map<string, SessionTemplate>;
   program?: Program | null;
   today: string;
+  // Donker in een blad (de weekterugblik): zonder lichte kaart eromheen, en een dag die voorbij is zonder
+  // gedaan te zijn staat gedempt, zonder rood en zonder kruis.
+  plain?: boolean;
 }) {
+  const Wrap = plain ? 'div' : LightCard;
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   return (
-    <LightCard>
+    <Wrap>
       <ol className="grid grid-cols-7 gap-1" aria-label="Je week">
         {weekDates(weekStart).map((date) => {
           const letter = weekdayLongNL(date).charAt(0).toUpperCase();
@@ -88,7 +93,7 @@ export function WeekStrip({
               <div aria-hidden="true" className="flex h-10 flex-col items-center justify-center gap-[3px]">
                 {shown.length > 0 ? (
                   shown.map((t) => (
-                    <span key={t.s.id} className="flex" style={{ color: sportColor(t.template) }}>
+                    <span key={t.s.id} className="flex" style={{ color: sportColor(t.template), opacity: plain && date < today && !t.done ? 0.4 : undefined }}>
                       <DayGlyph icon={sportPictogram(t.template)} done={t.done} small={shown.length > 1} />
                     </span>
                   ))
@@ -109,6 +114,6 @@ export function WeekStrip({
           );
         })}
       </ol>
-    </LightCard>
+    </Wrap>
   );
 }

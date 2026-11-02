@@ -1,5 +1,4 @@
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { Eyebrow } from '../components/ui';
 import { LegFatigueCard, useLegFatigueInputs } from '../components/LegFatigueCard';
@@ -15,49 +14,52 @@ import { PaceCurveCard } from '../components/stand/PaceCurveCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { YourWeekStandCard } from '../components/stand/YourWeekStandCard';
 import { useStandYourWeek } from '../components/stand/useStandYourWeek';
-import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
 import { TextButton } from '../components/TextButton';
 import { OrderSheet } from '../components/stand/OrderSheet';
 import { ForgeEntryCard } from '../components/stand/ForgeEntryCard';
 import { StrengthProgressionCard } from '../components/stand/StrengthProgressionCard';
 import { TrainingSplitRow } from '../components/stand/TrainingSplitRow';
 import { IndexCheckCard } from '../components/stand/IndexCheckCard';
+import { RhythmCard } from '../components/stand/RhythmCard';
+import { StandSummary, type SummaryColumn } from '../components/stand/StandSummary';
 import { indexChecks } from '../engine/learning';
-import { AdventureCard } from '../components/AdventureCard';
-import { LessonCard } from '../components/LessonCard';
 import { resolveIntensityCounting } from '../engine/intensitySettings';
 import { freshnessCurve, intensityMix, legCalendar, weeklyDescent, weeklyLoad } from '../engine/standing';
-import { goalReadinessFor, usesMilestoneReadiness } from '../engine/goalReadinessFor';
-import type { ShownReadiness } from '../engine/gr5Readiness';
-import { adherenceSummary, recentAdherence } from '../engine/onCourse';
+import { recentAdherence } from '../engine/onCourse';
+import { buildRhythm, loadVerdict, standSentence } from '../engine/standRhythm';
+import { buildWeekReview } from '../engine/weekReview';
+import { plannedByIdOf } from '../engine/logDay';
+import { fatigueWord, legFatigueOn } from '../engine/legFatigue';
 import { restWeekState } from '../engine/restWeek';
 import { computeCurrentStreak } from '../engine/streak';
 import { leftOutOfCount } from '../engine/weekLogs';
-import { computeGoalProgress } from '../engine/progression';
-import { deriveSessionStatus } from '../engine/sessionStatus';
 import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
-import { SkyBand, SkyPanel } from '../components/SkyBand';
+import { formatNumberNL } from '../utils/number';
+import { SkyBand } from '../components/SkyBand';
 import { InfluenceCard } from '../components/influence/InfluenceCard';
 import { waveHeader } from '../engine/programLayout';
 import { mainGoal } from '../engine/mainGoal';
 import { resolveCardOrder } from '../engine/cardOrder';
 
 // Je stand: where you are, apart from what to do today. Today stays the
-// mission; here are the numbers behind it, each on its own card, no
-// folding: your legs now and ahead, the load per week, the intensity, the
-// descent, your running (Lopen: efficiency, long days, climbing and form, with
-// the card Tempo bij zone 2) and your main goal (engine/standing.ts).
+// mission; here are the numbers behind it. Bovenaan op de lucht staan drie woorden
+// (Benen, Belasting, Ritme) met één zin; daaronder elke kaart op zijn eigen plek:
+// your legs now and ahead, the load per week, the intensity, the descent, Ritme
+// (de laatste weken als stipjes, dezelfde telling als de coach), your running and
+// your strength (engine/standing.ts, engine/standRhythm.ts). Het ene percentage
+// "Klaar voor je doel" staat alleen op Ascend
+// (docs/beslissingen/2026-11-02-gegevens-herinrichting.md).
 
 export function StandingPage() {
-  const navigate = useNavigate();
   const [ordering, setOrdering] = useState(false);
-  const { program, plannedSessions, sessionLogs, templates, templateById, settings, planChangeLog, trainingGoals, goalMilestones, goalMilestoneProgress, sessionsForWeek } = useAppData();
+  const { program, plannedSessions, sessionLogs, templates, templateById, settings, planChangeLog, trainingGoals, goalMilestones } = useAppData();
   const inputs = useLegFatigueInputs();
   const today = inputs.today;
 
   const curve = useMemo(() => freshnessCurve(inputs), [inputs]);
   const calendar = useMemo(() => legCalendar(inputs), [inputs]);
+  const legNow = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
   const weeks = useMemo(
     () => weeklyLoad({
       logs: sessionLogs, plannedSessions, templates, today, minutesOf: inputs.minutesOf,
@@ -70,18 +72,10 @@ export function StandingPage() {
   const descent = useMemo(() => weeklyDescent(sessionLogs, today), [sessionLogs, today]);
   const checks = useMemo(() => indexChecks(sessionLogs, templates, inputs.bodyKg), [sessionLogs, templates, inputs.bodyKg]);
 
-  // Not an archived goal, as on Ascend (pages/Ascend.tsx).
   // Zonder doel: Je week, dezelfde berekening als op Ascend. Met een doel staat hij er niet.
   const weekWithoutGoal = useStandYourWeek();
+  // Not an archived goal, as on Ascend (pages/Ascend.tsx).
   const primaryGoal = mainGoal(trainingGoals, goalMilestones, 'live');
-  // The same number and sentence as on Ascend (engine/gr5Readiness.ts).
-  // Dezelfde functie als de Ascend-kaart (engine/goalReadinessFor.ts), dus altijd hetzelfde getal.
-  const { testJudgments, askDoubtTest, readinessWeighting, goalGrowth, limitMargin } = settings;
-  const gr5 = useMemo((): ShownReadiness | undefined => {
-    if (!primaryGoal) return undefined;
-    const r = goalReadinessFor(primaryGoal, sessionLogs, today, { testJudgments, askDoubtTest, readinessWeighting, goalGrowth, limitMargin }, { isMain: true });
-    return r && r.percent !== undefined ? { percent: r.percent, meters: r.meters, weakest: r.weakest, sentence: r.sentence, weakestSentence: r.weakestSentence, change: r.change } : undefined;
-  }, [primaryGoal, sessionLogs, today, testJudgments, askDoubtTest, readinessWeighting, goalGrowth, limitMargin]);
   const routeDescent = primaryGoal ? typicalDayValue(primaryGoal.requirements, 'elevationLoss')?.value.amount : undefined;
   // Een gewone dag van je hoofddoel, voor de band op je eigen klimtempo (engine/climbPace.ts).
   const goalDay = useMemo((): HikeDay | undefined => {
@@ -92,78 +86,54 @@ export function StandingPage() {
     return { km: dist.amount, up, down: routeDescent };
   }, [primaryGoal, routeDescent]);
   const goalPack = primaryGoal?.requirements.find((r) => r.kind === 'packWeight')?.target?.amount;
-  const milestones = useMemo(() => goalMilestones.filter((m) => m.goalId === primaryGoal?.id), [goalMilestones, primaryGoal?.id]);
-  const progress = useMemo(
-    () => (primaryGoal ? computeGoalProgress(primaryGoal.id, primaryGoal.name, milestones, goalMilestoneProgress, sessionLogs) : null),
-    [primaryGoal, milestones, goalMilestoneProgress, sessionLogs],
-  );
 
-  // The four numbers that used to sit on Today.
   const position = program ? resolveProgramWeek(program, today) : null;
-  const weekTrainings = sessionsForWeek(mondayOfWeek(today)).filter((s) => templateById.get(s.templateId)?.type !== 'recovery');
-  const weekDone = weekTrainings.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
   // The same count as the coach on Ascend (engine/onCourse.ts#recentAdherence): the last
-  // four finished weeks, what you skipped counts as not done.
+  // four finished weeks, what you skipped counts as not done. Deze week komt er als stipjes bij.
   const adherence = useMemo(
     () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes }),
     [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes],
   );
+  const thisWeek = useMemo(() => {
+    const planned = plannedSessions.filter((s) => !s.fixed);
+    return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, heartRate: settings.heartRate });
+  }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.heartRate]);
   const streak = useMemo(
     () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate) }),
     [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes, planChangeLog, today],
   );
+  const rhythm = useMemo(() => buildRhythm({ adherence, thisWeek, streak }), [adherence, thisWeek, streak]);
   // The main goal is behind you: nothing planned any more (engine/programLayout.ts#planEndDay).
   const mainState = primaryGoal?.status === 'active' ? goalTiming(primaryGoal, today).state : undefined;
   const mainPast = mainState === 'past' && settings.afterMainGoal !== 'maintain';
-  // Each number with what it means, in one plain sentence (production
-  // feedback: "veel te vaag, wat betekenen deze categorieën").
-  const phaseName = (name: string) => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-  const nextPhase = position && program ? program.phases[position.phaseIndex + 1] : undefined;
   const restWeek = program ? restWeekState(program, mondayOfWeek(today), sessionLogs, today) : undefined;
-  const rows = [
-    {
-      label: 'Deze week',
-      value: `${weekDone} van ${weekTrainings.length}`,
-      text: 'trainingen gedaan',
-      dots: weekTrainings.map((s) => deriveSessionStatus(s, sessionLogs).status === 'completed'),
-    },
-    {
-      label: 'Volgehouden',
-      value: adherence.enough ? `${adherence.done} van ${adherence.planned}` : 'nog niet',
-      text: adherence.enough
-        ? `${adherenceSummary(adherence)}. Wat je oversloeg telt als niet gedaan; ziek en rustdagen tellen niet mee. De coach op Ascend telt hetzelfde.`
-        : mainPast
-          ? 'Na je hoofddoel staat er niets meer gepland, dus er is niets om te tellen.'
-          : 'Na twee volle weken zie je hier hoeveel van de geplande trainingen je deed.',
-    },
-    {
-      // De kop zegt al "Week 2 van 4, basisfase"; deze regel komt alleen als er iets bij te zeggen is.
-      label: 'Fase',
-      value: position ? (restWeek?.isRestWeek && !restWeek.skipped ? 'Rustweek' : position.weekInPhase === position.phase.weekCount ? 'Laatste week' : phaseName(position.phase.name)) : mainPast ? 'klaar' : mainState === 'underway' ? 'onderweg' : 'nog niet',
-      text: position
-        ? `${restWeek?.isRestWeek && !restWeek.skipped ? 'Deze week is een rustweek: minder, zodat de weken ervoor binnenkomen.' : ''}${position.weekInPhase === position.phase.weekCount && nextPhase ? `${restWeek?.isRestWeek && !restWeek.skipped ? ' ' : ''}Volgende week begint ${phaseName(nextPhase.name)}.` : ''}`
-        : mainPast || mainState === 'underway' ? 'Het programma naar je hoofddoel is af.' : '',
-    },
-    {
-      label: 'Op rij',
-      value: `${streak} ${streak === 1 ? 'trainingsdag' : 'trainingsdagen'}`,
-      text: 'Achter elkaar alles gedaan wat gepland stond. Dagen zonder training tellen niet mee en breken de reeks niet.',
-    },
-  ].filter((r) => r.label !== 'Fase' || !position || r.text);
 
-  // De volgorde van de blokken is jouw voorkeur (engine/cardOrder.ts); de eerste kaart, Klaar voor het doel, blijft vast bovenaan.
+  // Drie woorden en één zin op de lucht. Zonder een enkele training staat er "nog niets".
+  const empty = sessionLogs.length === 0;
+  const load = useMemo(() => loadVerdict(weeks), [weeks]);
+  const leg = fatigueWord(legNow.index);
+  const sentence = empty
+    ? 'Na je eerste training zie je hier hoe je ervoor staat.'
+    : standSentence({ legLevel: leg.level, load, rhythm, restWeek: !!restWeek?.isRestWeek && !restWeek.skipped });
+  const columns: SummaryColumn[] = [
+    { id: 'benen', label: 'Benen', word: empty ? 'Fris' : leg.word, fact: empty ? 'nog niets' : `index ${formatNumberNL(legNow.index, 1)}`, target: 'stand-benen' },
+    { id: 'belasting', label: 'Belasting', word: load?.word ?? 'Nog niets', fact: load?.fact ?? 'na enkele weken', target: 'stand-belasting' },
+    { id: 'ritme', label: 'Ritme', word: rhythm.enough && rhythm.status ? { on: 'Op koers', nearly: 'Bijna', behind: 'Achter' }[rhythm.status] : 'Nog niets', fact: rhythm.enough ? rhythm.fact : 'na twee weken', target: 'stand-ritme' },
+  ];
+
+  // De volgorde van de blokken is jouw voorkeur (engine/cardOrder.ts).
   const order = resolveCardOrder('stand', settings.cardOrder);
   const blocks: Record<string, ReactNode> = {
     'benen': (
-      <section className="flex flex-col gap-5" aria-label="Benen">
+      <section className="flex flex-col gap-5" aria-label="Benen" id="stand-benen">
         <LegFatigueCard />
         <FreshnessChart points={curve} today={today} />
         <LegCalendar days={calendar} today={today} />
-        <IndexCheckCard checks={checks} />
+        {checks.length > 0 && <IndexCheckCard checks={checks} />}
       </section>
     ),
     'belasting': (
-      <section className="flex flex-col gap-5" aria-label="Belasting">
+      <section className="flex flex-col gap-5" aria-label="Belasting" id="stand-belasting">
         <WeeklyLoadChart weeks={weeks} />
         <IntensityMixCard mix={mix} />
         <DescentCard weeks={descent} routeDayDescent={routeDescent} />
@@ -177,26 +147,7 @@ export function StandingPage() {
         <TrainingSplitRow />
       </section>
     ),
-    'vier-regels': (
-      <SkyPanel className="flex flex-col" label="Je stand in vier regels">
-        {rows.map((r, i) => (
-          <div key={r.label} className={`flex flex-col gap-1 py-3 ${i === 0 ? 'pt-0' : 'border-t'} ${i === rows.length - 1 ? 'pb-0' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
-            <div className="flex items-baseline justify-between gap-3">
-              <Eyebrow as="span">{r.label}</Eyebrow>
-              <span className="font-sans text-lg tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.value}</span>
-            </div>
-            {'dots' in r && r.dots && r.dots.length > 0 && (
-              <div className="flex gap-1.5" aria-hidden>
-                {r.dots.map((done, j) => (
-                  <span key={j} className="h-1.5 flex-1 rounded-full" style={{ background: done ? 'var(--color-progress)' : 'var(--color-track)' }} />
-                ))}
-              </div>
-            )}
-            {r.text && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{r.text}</p>}
-          </div>
-        ))}
-      </SkyPanel>
-    ),
+    'ritme': <RhythmCard rhythm={rhythm} mainPast={mainPast} />,
     'lopen': (
       <section className="flex flex-col gap-5" aria-label="Lopen">
         <RunTrendsCard />
@@ -207,12 +158,6 @@ export function StandingPage() {
     'invloed': (
       <InfluenceCard />
     ),
-    'doel': (
-      <section className="flex flex-col gap-5" aria-label="Doel">
-        {progress && <AdventureCard progress={progress} onOpenLadder={() => navigate('/ascend')} />}
-        <LessonCard />
-      </section>
-    ),
   };
 
   return (
@@ -221,16 +166,12 @@ export function StandingPage() {
         <div>
           {position && <Eyebrow>{waveHeader(position) ?? `Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}`}</Eyebrow>}
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe je ervoor staat, naast wat je vandaag doet.</p>
+          {sentence && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{sentence}</p>}
         </div>
+        <StandSummary columns={columns} />
       </SkyBand>
 
-      {/* Het ene voortgangsgetal staat als gewone marine kaart onder de bergen, niet als
-          groot wit vlak op de lucht: de lucht houdt dezelfde licht-donkerverhouding als
-          op de andere tabs. */}
-      {gr5 && <Gr5ReadinessCard readiness={gr5} milestone={!primaryGoal || usesMilestoneReadiness(primaryGoal)} title={primaryGoal && !usesMilestoneReadiness(primaryGoal) ? 'Klaar voor je doel' : 'Klaar voor de GR5'} />}
-
-      {weekWithoutGoal && !gr5 && <YourWeekStandCard week={weekWithoutGoal} />}
+      {weekWithoutGoal && <YourWeekStandCard week={weekWithoutGoal} />}
 
       {order.map((id) => (
         <Fragment key={id}>{blocks[id]}</Fragment>

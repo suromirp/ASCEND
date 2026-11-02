@@ -1,78 +1,52 @@
-import { WeekReviewList } from '../components/WeekReview';
+import { WeekHeaderRow } from '../components/WeekReview';
 import { formatNumberNL } from '../utils/number';
-import { logKindLabel, logSport } from '../engine/sports';
+import { logKindLabel } from '../engine/sports';
 import { logsInRange, plannedByIdOf } from '../engine/logDay';
 import { logLineParts } from '../engine/logLine';
 import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
-import { deriveSessionStatus } from '../engine/sessionStatus';
-import { isIllnessDay } from '../engine/illness';
-import { countsAsTraining, leftOutOfCount } from '../engine/weekLogs';
+import { groupByWeek, monthCompare } from '../engine/logbookMonth';
+import { DaySheet } from '../components/logbook/DaySheet';
 import { getModality } from '../data/modalities';
 import { LogDetailSheet } from '../components/LogDetailSheet';
-import { Card, Eyebrow, LightCard, Stat, StatusPill } from '../components/ui';
+import { Card, Eyebrow, LightCard, Num, Stat, StatusPill } from '../components/ui';
 import { MonthCalendar } from '../components/MonthCalendar';
-import { DisclosureRow } from '../components/DisclosureRow';
 import { SPORT_LOOK, lookOfLog, sportKeyOfLog, type SportKey } from '../components/logbook/sportLook';
 import { usePageState } from '../components/usePageState';
 import { validMonthAnchor } from '../utils/pageMemory';
 import { Icon } from '../components/icons';
 import { Pictogram } from '../components/pictograms';
-import { SkyBand, SkyPanel } from '../components/SkyBand';
+import { SkyBand } from '../components/SkyBand';
 import { HeartSign } from '../components/influence/HeartSign';
 import { InfluenceSheet } from '../components/influence/InfluenceSheet';
 import { useDeviations } from '../components/influence/useInfluence';
 import { entryForLog, isNoted, signState } from '../engine/influence';
 import { hoursMinutes } from '../utils/hoursMinutes';
 
-const NO_LOGS: SessionLog[] = [];
 
 
 function computeMonthSummary(logs: SessionLog[]) {
-  const strengthCount = logs.filter((l) => l.type === 'strength').length;
-  const runningKm = logs.reduce((sum, l) => sum + (logSport(l) === 'cycling' ? 0 : (l.cardioData?.distanceKm ?? 0)), 0);
-  const cyclingKm = logs.reduce((sum, l) => sum + (logSport(l) === 'cycling' ? (l.cardioData?.distanceKm ?? l.outdoorData?.distanceKm ?? 0) : 0), 0);
-  const hikingKm = logs.reduce((sum, l) => sum + (logSport(l) === 'cycling' ? 0 : (l.outdoorData?.distanceKm ?? 0)), 0);
   const elevation = logs.reduce((sum, l) => sum + (l.outdoorData?.elevationGainM ?? l.cardioData?.elevationGainM ?? 0), 0);
   const elevationLoss = logs.reduce((sum, l) => sum + (l.outdoorData?.elevationLossM ?? 0), 0);
-  const machineVertical = logs.reduce((sum, l) => sum + (l.outdoorData?.machineVerticalM ?? 0), 0);
   const totalMinutes = logs.reduce((sum, l) => sum + l.durationMinutes, 0);
-
-  const cadenceValues = logs.map((l) => l.outdoorData?.cadence ?? l.cardioData?.cadence).filter((v): v is number => v !== undefined);
-  const avgCadence = cadenceValues.length > 0 ? Math.round(cadenceValues.reduce((sum, v) => sum + v, 0) / cadenceValues.length) : undefined;
-
-  const powerValues = logs.map((l) => l.outdoorData?.power ?? l.cardioData?.power).filter((v): v is number => v !== undefined);
-  const avgPower = powerValues.length > 0 ? Math.round(powerValues.reduce((sum, v) => sum + v, 0) / powerValues.length) : undefined;
-
-  return { strengthCount, runningKm, hikingKm, cyclingKm, elevation, elevationLoss, machineVertical, totalMinutes, avgCadence, avgPower };
-}
-
-// Only sessions that really were missed: in the past, not logged, not
-// skipped on purpose (a move, an illness, the coach), not a rest day and
-// not a day you were ill.
-function countMissed(plannedSessions: PlannedSession[], sessionLogs: SessionLog[], start: string, end: string, isRest: (p: PlannedSession) => boolean, wasIll: (date: string) => boolean) {
-  const today = todayISO();
-  return plannedSessions.filter((p) => {
-    if (p.scheduledDate < start || p.scheduledDate > end || p.scheduledDate >= today) return false;
-    if (isRest(p) || wasIll(p.scheduledDate)) return false;
-    return deriveSessionStatus(p, sessionLogs).status === 'missed';
-  }).length;
+  return { elevation, elevationLoss, totalMinutes };
 }
 
 // Per sport wat er deze maand gedaan is, voor de lijst onder de kalender.
-interface SportRow { key: SportKey; count: number; minutes: number; km: number; elevation: number }
+interface SportRow { key: SportKey; count: number; minutes: number; km: number; elevation: number; machine: number }
 function groupBySport(logs: SessionLog[]): SportRow[] {
   const rows = new Map<SportKey, SportRow>();
   for (const l of logs) {
     if (l.type === 'recovery') continue;
     const key = sportKeyOfLog(l);
-    const row = rows.get(key) ?? { key, count: 0, minutes: 0, km: 0, elevation: 0 };
+    const row = rows.get(key) ?? { key, count: 0, minutes: 0, km: 0, elevation: 0, machine: 0 };
     row.count += 1;
     row.minutes += l.durationMinutes;
     row.km += l.outdoorData?.distanceKm ?? l.cardioData?.distanceKm ?? 0;
     row.elevation += l.outdoorData?.elevationGainM ?? l.cardioData?.elevationGainM ?? 0;
+    row.machine += l.outdoorData?.machineVerticalM ?? 0;
     rows.set(key, row);
   }
   const order: SportKey[] = ['run', 'strength', 'walk', 'mountain', 'bike', 'other'];
@@ -81,53 +55,23 @@ function groupBySport(logs: SessionLog[]): SportRow[] {
 
 const kmText = (km: number) => formatNumberNL(km, km >= 10 ? 0 : 1);
 
-// De regel en het grote getal van een sportrij.
+// De regel en het grote getal van een sportrij. Hoogtemeters staan in de regel van lopen, wandelen en bergtocht.
 function sportLine(r: SportRow): { line: string; value: string; unit: string } {
-  const times = `${r.count} keer`;
-  if (r.key === 'run') return { line: times, value: kmText(r.km), unit: 'km' };
+  const up = r.elevation > 0 ? ` · ${formatNumberNL(r.elevation, 0)} m omhoog` : '';
+  const machine = r.machine > 0 ? ` · ${Math.round(r.machine)} m op het toestel` : '';
+  if (r.key === 'run') return { line: `${r.count} keer${up}${machine}`, value: kmText(r.km), unit: 'km' };
   if (r.key === 'strength') return { line: formatHoursMinutesNL(r.minutes), value: `${r.count}`, unit: r.count === 1 ? 'sessie' : 'sessies' };
-  if (r.key === 'walk' || r.key === 'mountain') return { line: `${r.count} ${r.count === 1 ? 'tocht' : 'tochten'}${r.elevation > 0 ? ` · ${formatNumberNL(r.elevation, 0)} m stijgen` : ''}`, value: kmText(r.km), unit: 'km' };
-  if (r.key === 'bike') return { line: times, value: kmText(r.km), unit: 'km' };
-  return { line: times, value: formatHoursMinutesNL(r.minutes), unit: '' };
-}
-
-// Het verschil met vorige maand als korte pil; stil als vorige maand leeg was of er niets verschilt.
-function deltaPill(diff: number, text: string) {
-  if (diff === 0) return undefined;
-  return (
-    <div className="flex flex-col gap-1">
-      <StatusPill tone={diff > 0 ? 'progress' : 'neutral'}>{diff > 0 ? '+' : '−'}{text}</StatusPill>
-      <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>tegen vorige maand</span>
-    </div>
-  );
-}
-
-// Positive means "more than last month" — good for training-volume stats,
-// bad for Gemist (invert). Silent when both months are zero, so a stat that
-// simply doesn't apply this program (e.g. no Afdaling yet) doesn't clutter
-// the card with a "±0" delta forever.
-// Also silent when last month had nothing: "+15,5 km" then only repeats the value.
-function formatDelta(current: number, previous: number, opts?: { unit?: string; decimals?: number; invert?: boolean; format?: (n: number) => string }): { text: string; color: string } | undefined {
-  if (previous === 0) return undefined;
-  const diff = current - previous;
-  const decimals = opts?.decimals ?? 0;
-  const unit = opts?.unit ?? '';
-  const sign = diff > 0 ? '+' : diff < 0 ? '−' : '';
-  const amount = opts?.format ? opts.format(Math.abs(diff)) : `${formatNumberNL(Math.abs(diff), decimals)}${unit}`;
-  const text = `${sign}${amount} t.o.v. vorige maand`;
-  const goodDirection = opts?.invert ? diff <= 0 : diff >= 0;
-  const color = diff === 0 ? 'var(--color-ink-dim)' : goodDirection ? 'var(--color-success-text)' : 'var(--color-danger-text)';
-  return { text, color };
+  if (r.key === 'walk' || r.key === 'mountain') return { line: `${r.count} ${r.count === 1 ? 'tocht' : 'tochten'}${up}${machine}`, value: kmText(r.km), unit: 'km' };
+  if (r.key === 'bike') return { line: `${r.count} keer${up}`, value: kmText(r.km), unit: 'km' };
+  return { line: `${r.count} keer`, value: formatHoursMinutesNL(r.minutes), unit: '' };
 }
 
 export function HistoryPage() {
-  const { sessionLogs, plannedSessions, templateById, settings, program, planChangeLog } = useAppData();
+  const { sessionLogs, plannedSessions, templateById, settings } = useAppData();
   const isRest = useCallback((p: PlannedSession) => templateById.get(p.templateId)?.type === 'recovery', [templateById]);
-  // Days before week 1 (leftovers of an earlier schedule) never count.
-  const wasIll = useCallback((date: string) => (program ? date < program.startDate : false) || isIllnessDay(date, settings.illnessEpisodes, todayISO()), [settings.illnessEpisodes, program]);
-  const [anchor, setAnchor] = usePageState('anchor', todayISO(), (v) => validMonthAnchor(v, todayISO()));
+  const today = todayISO();
+  const [anchor, setAnchor] = usePageState('anchor', today, (v) => validMonthAnchor(v, today));
   const { start, end } = monthBounds(anchor);
-  const { start: prevStart, end: prevEnd } = monthBounds(shiftMonthAnchor(anchor, -1));
 
   const monthLogs = useMemo(
     () => sessionLogs.filter((l) => l.completedDate >= start && l.completedDate <= end).sort((a, b) => (a.completedDate < b.completedDate ? 1 : -1)),
@@ -138,44 +82,40 @@ export function HistoryPage() {
   // (engine/logDay.ts); de lijst hieronder blijft op de datum van het bestand
   // (docs/beslissingen/2026-10-29-dag-van-een-training.md).
   const plannedById = useMemo(() => plannedByIdOf(plannedSessions), [plannedSessions]);
-  const totalsLogs = useMemo(
-    () => logsInRange(sessionLogs, plannedById, start, end),
-    [sessionLogs, plannedById, start, end],
-  );
-  const prevMonthLogs = useMemo(
-    () => logsInRange(sessionLogs, plannedById, prevStart, prevEnd),
-    [sessionLogs, plannedById, prevStart, prevEnd],
-  );
-
-  const missedCount = useMemo(() => countMissed(plannedSessions, sessionLogs, start, end, isRest, wasIll), [plannedSessions, sessionLogs, start, end, isRest, wasIll]);
-  const prevMissedCount = useMemo(() => countMissed(plannedSessions, sessionLogs, prevStart, prevEnd, isRest, wasIll), [plannedSessions, sessionLogs, prevStart, prevEnd, isRest, wasIll]);
-
+  const totalsLogs = useMemo(() => logsInRange(sessionLogs, plannedById, start, end), [sessionLogs, plannedById, start, end]);
   const summary = useMemo(() => computeMonthSummary(totalsLogs), [totalsLogs]);
-  const prevSummary = useMemo(() => computeMonthSummary(prevMonthLogs), [prevMonthLogs]);
+  // Wat je deed, tegen dezelfde dagen van vorige maand (engine/logbookMonth.ts). Geen noemer en geen "Gemist".
+  const compare = useMemo(() => monthCompare({ anchor, today, logs: sessionLogs, plannedById }), [anchor, today, sessionLogs, plannedById]);
+  const sportRows = useMemo(() => groupBySport(totalsLogs), [totalsLogs]);
+  const weeks = useMemo(() => groupByWeek(monthLogs), [monthLogs]);
 
   const [selectedLog, setSelectedLog] = useState<SessionLog | null>(null);
-
-  const [logsOpen, setLogsOpen] = usePageState('logsOpen', false);
-  const [moreOpen, setMoreOpen] = usePageState('moreOpen', false);
-
-  // "Wat speelde er": the sign by a run with a heart rate that stands out (only worked out while the list is open),
-  // and a day of the calendar, opened with a tap.
-  const deviations = useDeviations(logsOpen ? monthLogs : NO_LOGS);
+  // "Wat speelde er": het teken bij een run met een opvallende hartslag, en een dag van de kalender.
+  const deviations = useDeviations(monthLogs);
   const [dayOpen, setDayOpen] = useState<string | null>(null);
+  const [influenceDay, setInfluenceDay] = useState<string | null>(null);
   const notedDates = useMemo(() => new Set((settings.influences ?? []).filter((e) => !e.logId && isNoted(e)).map((e) => e.date)), [settings.influences]);
+  const dayLogs = useMemo(() => (dayOpen ? logsInRange(sessionLogs, plannedById, dayOpen, dayOpen).filter((l) => l.type !== 'recovery') : []), [dayOpen, sessionLogs, plannedById]);
+
+  // Voor je eerste training: de pijl terug is gedimd en de maand zegt dat je er nog niet begon.
+  const firstDate = useMemo(() => sessionLogs.reduce<string | undefined>((min, l) => (min === undefined || l.completedDate < min ? l.completedDate : min), undefined), [sessionLogs]);
+  const beforeFirst = firstDate !== undefined && end < firstDate.slice(0, 7) + '-01';
+  const atFirstMonth = firstDate === undefined || monthBounds(shiftMonthAnchor(anchor, -1)).end < firstDate.slice(0, 7) + '-01';
 
   function shiftMonth(delta: number) {
     setAnchor(shiftMonthAnchor(anchor, delta));
   }
 
-  const trainingLogs = totalsLogs.filter((l) => l.type !== 'recovery');
-  const prevTrainingCount = prevMonthLogs.filter((l) => l.type !== 'recovery').length;
-  // "van": wat er die maand gepland stond, alleen als dat er is en niet minder dan wat je deed.
-  // Dezelfde telling als Week en de weekterugblik (engine/weekLogs.ts#countsAsTraining): een overgeslagen training
-  // telt mee als gepland, wat ASCEND zelf weghaalde, een ziektedag en wat voor de start lag niet.
-  const leftOut = useMemo(() => leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, todayISO(), program?.startDate), [plannedSessions, planChangeLog, settings.illnessEpisodes, program?.startDate]);
-  const plannedCount = plannedSessions.filter((p) => p.scheduledDate >= start && p.scheduledDate <= end && countsAsTraining(p, templateById.get(p.templateId), leftOut)).length;
-  const sportRows = useMemo(() => groupBySport(totalsLogs), [totalsLogs]);
+  const trainingCount = totalsLogs.filter((l) => l.type !== 'recovery').length;
+  const monthName = formatMonthNL(anchor).split(' ')[0];
+  // Vandaag nog gepland en niet gedaan, voor de zin op de eerste dagen van een maand.
+  const todayPlanned = plannedSessions.find((p) => p.scheduledDate === today && p.status !== 'skipped' && !isRest(p) && !sessionLogs.some((l) => l.plannedSessionId === p.id));
+  const todayName = todayPlanned ? templateById.get(todayPlanned.templateId)?.name : undefined;
+  const vs = compare.vs;
+  const vsText = vs ? (vs.whole ? `dan in ${formatMonthNL(vs.from).split(' ')[0]}` : `dan ${Number(vs.from.slice(8, 10))} tot ${formatDateNL(vs.to)}`) : '';
+  const hm = (m: number) => formatHoursMinutesNL(Math.abs(m));
+  const totalUp = Math.round(summary.elevation);
+  const totalDown = Math.round(summary.elevationLoss);
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
@@ -189,20 +129,41 @@ export function HistoryPage() {
             <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Logboek</h1>
           </div>
           <div className="-mr-2.5 flex shrink-0 items-center">
-            <button onClick={() => shiftMonth(-1)} className="flex h-11 w-11 items-center justify-center" aria-label="Vorige maand" style={{ color: 'var(--color-on-light)' }}><Icon name="terug" size={24} /></button>
+            <button onClick={() => shiftMonth(-1)} className="flex h-11 w-11 items-center justify-center" aria-label="Vorige maand" aria-disabled={atFirstMonth} style={{ color: 'var(--color-on-light)', opacity: atFirstMonth ? 0.4 : 1 }}><Icon name="terug" size={24} /></button>
             <button onClick={() => shiftMonth(1)} className="flex h-11 w-11 items-center justify-center" aria-label="Volgende maand" style={{ color: 'var(--color-on-light)' }}><Icon name="verder" size={24} /></button>
           </div>
         </div>
-        <LightCard className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            <Stat label="Getraind" value={hoursMinutes(summary.totalMinutes)} unit="uur" size="l" />
-            {prevSummary.totalMinutes > 0 && deltaPill(Math.round(summary.totalMinutes) - Math.round(prevSummary.totalMinutes), formatHoursMinutesNL(Math.abs(Math.round(summary.totalMinutes) - Math.round(prevSummary.totalMinutes))))}
-          </div>
-          <div className="flex flex-col gap-2 border-l pl-4" style={{ borderColor: 'var(--color-card-border)' }}>
-            <Stat label="Trainingen" value={trainingLogs.length} unit={plannedCount >= trainingLogs.length && plannedCount > 0 ? `van ${plannedCount}` : undefined} size="l" />
-            {prevTrainingCount > 0 && deltaPill(trainingLogs.length - prevTrainingCount, `${Math.abs(trainingLogs.length - prevTrainingCount)}`)}
-          </div>
-        </LightCard>
+        {compare.nothingYet ? (
+          <LightCard className="flex flex-col gap-1">
+            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Nog niets in {monthName}.</p>
+            {todayName && <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Vandaag staat je {todayName.charAt(0).toLowerCase()}{todayName.slice(1)}.</p>}
+          </LightCard>
+        ) : trainingCount === 0 ? (
+          <LightCard>
+            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{beforeFirst ? 'Hier begon je nog niet.' : 'Nog niets in deze maand.'}</p>
+          </LightCard>
+        ) : (
+          <LightCard className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Stat label="Getraind" value={hoursMinutes(summary.totalMinutes)} unit="uur" size="l" />
+              {vs && vs.diffMinutes !== 0 && (
+                <div className="flex flex-col gap-1">
+                  <StatusPill tone={vs.diffMinutes > 0 ? 'progress' : 'neutral'}>{hm(vs.diffMinutes)} {vs.diffMinutes > 0 ? 'meer' : 'minder'}</StatusPill>
+                  <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{vsText}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 border-l pl-4" style={{ borderColor: 'var(--color-card-border)' }}>
+              <Stat label="Trainingen" value={trainingCount} size="l" />
+              {vs && vs.diffCount !== 0 && (
+                <div className="flex flex-col gap-1">
+                  <StatusPill tone={vs.diffCount > 0 ? 'progress' : 'neutral'}>{Math.abs(vs.diffCount)} {vs.diffCount > 0 ? 'meer' : 'minder'}</StatusPill>
+                  <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{vsText}</span>
+                </div>
+              )}
+            </div>
+          </LightCard>
+        )}
       </SkyBand>
 
       <Card>
@@ -210,7 +171,7 @@ export function HistoryPage() {
       </Card>
 
       {sportRows.length > 0 && (
-        <SkyPanel className="flex flex-col" label="Per sport">
+        <Card className="flex flex-col" aria-label="Per sport">
           {sportRows.map((r, i) => {
             const look = SPORT_LOOK[r.key];
             const t = sportLine(r);
@@ -227,18 +188,20 @@ export function HistoryPage() {
               </div>
             );
           })}
-        </SkyPanel>
+          {totalUp > 0 && (
+            <p className="border-t pt-3 text-sm" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
+              Samen <Num>{formatNumberNL(totalUp, 0)}</Num> meter omhoog{totalDown > 0 ? <> en <Num>{formatNumberNL(totalDown, 0)}</Num> meter omlaag</> : ''}.
+            </p>
+          )}
+        </Card>
       )}
 
-      <WeekReviewList />
-
-      <Card className="flex flex-col py-1">
-        <DisclosureRow title="Alle trainingen van deze maand" value={monthLogs.length} open={logsOpen} onToggle={() => setLogsOpen(!logsOpen)}>
-          <div className="mx-stagger flex flex-col gap-2 pb-2">
-            {monthLogs.length === 0 && (
-              <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen trainingen deze maand.</p>
-            )}
-            {monthLogs.map((log) => {
+      {/* De trainingen van de maand, per week, zonder uitklap: de kop van elke week opent de weekterugblik. */}
+      {weeks.map((w) => (
+        <section key={w.weekStart} className="flex flex-col gap-2" aria-label={`Week van ${formatDateNL(w.weekStart)}`}>
+          <WeekHeaderRow weekStart={w.weekStart} />
+          <div className="flex flex-col gap-2">
+            {w.logs.map((log) => {
               const template = templateById.get(log.templateId);
               const modalityKey = log.outdoorData?.modality ?? log.cardioData?.modality;
               const modalityLabel = modalityKey ? getModality(log.templateId, modalityKey)?.label : undefined;
@@ -258,7 +221,7 @@ export function HistoryPage() {
                           return sign ? <HeartSign state={sign} /> : null;
                         })()}
                       </p>
-                      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                      <p className="break-words text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                         {logLineParts({
                           kind: logKindLabel(log),
                           minutes: log.durationMinutes,
@@ -279,28 +242,26 @@ export function HistoryPage() {
               );
             })}
           </div>
-        </DisclosureRow>
-      </Card>
+        </section>
+      ))}
 
-      <Card className="flex flex-col py-1">
-        <DisclosureRow title="Meer cijfers" open={moreOpen} onToggle={() => setMoreOpen(!moreOpen)}>
-          <div className="grid grid-cols-2 gap-4 pb-3 pt-1">
-            <MiniStat label="Hoogtemeters" value={`${formatNumberNL(summary.elevation, 0)} m D+`} delta={formatDelta(Math.round(summary.elevation), Math.round(prevSummary.elevation), { unit: ' m D+' })} />
-            <MiniStat label="Gemist" value={`${missedCount}`} delta={formatDelta(missedCount, prevMissedCount, { invert: true })} />
-            {summary.elevationLoss > 0 && <MiniStat label="Afdaling" value={`${formatNumberNL(summary.elevationLoss, 0)} m D−`} />}
-            {summary.machineVertical > 0 && <MiniStat label="Hoogtemeters op toestel" value={`${Math.round(summary.machineVertical)} m`} />}
-            {summary.avgCadence !== undefined && <MiniStat label="Gem. cadans" value={`${summary.avgCadence}`} />}
-            {summary.avgPower !== undefined && <MiniStat label="Gem. vermogen" value={`${summary.avgPower} W`} />}
-          </div>
-        </DisclosureRow>
-      </Card>
+      {dayOpen && !influenceDay && (
+        <DaySheet
+          date={dayOpen}
+          logs={dayLogs}
+          nameOf={(l) => templateById.get(l.templateId)?.name ?? l.templateId}
+          onPickLog={(l) => setSelectedLog(l)}
+          onInfluence={() => setInfluenceDay(dayOpen)}
+          onClose={() => setDayOpen(null)}
+        />
+      )}
 
-      {dayOpen && (
+      {influenceDay && (
         <InfluenceSheet
           eyebrow="Logboek"
-          title={`Wat speelde er op ${formatShortDayNL(dayOpen)}?`}
-          target={{ date: dayOpen }}
-          onClose={() => setDayOpen(null)}
+          title={`Wat speelde er op ${formatShortDayNL(influenceDay)}?`}
+          target={{ date: influenceDay }}
+          onClose={() => { setInfluenceDay(null); setDayOpen(null); }}
         />
       )}
 
@@ -311,16 +272,6 @@ export function HistoryPage() {
           onClose={() => setSelectedLog(null)}
         />
       )}
-    </div>
-  );
-}
-
-function MiniStat({ label, value, delta }: { label: string; value: string; delta?: { text: string; color: string } }) {
-  return (
-    <div>
-      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label}</p>
-      <p className="mt-0.5 break-words font-sans text-xl font-semibold tabular-nums" style={{ color: 'var(--color-ink)' }}>{value}</p>
-      {delta && <p className="mt-0.5 text-xs leading-tight" style={{ color: delta.color }}>{delta.text}</p>}
     </div>
   );
 }
