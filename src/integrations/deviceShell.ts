@@ -4,6 +4,7 @@
 // stilte; de rest van de app vraagt alleen deze laag, nooit het platform.
 
 import { Capacitor } from '@capacitor/core';
+import { routeFromNativeShortcut } from '../engine/shortcutAction';
 
 export interface DeviceShell {
   // Trillen: één duur of een patroon (trillen, pauze, ...).
@@ -116,6 +117,17 @@ function androidShell(): DeviceShell {
       void app.then((a) => a.exitApp()).catch(() => undefined);
     },
     start() {
+      // Snelkoppelingen onder het app-icoon en de tik op de widget: een adres als
+      // app.ascend.training://open/week wordt dezelfde hash-route als bij de PWA. De origin van
+      // de webview (https://localhost) blijft zoals hij is, alleen de hash verandert.
+      const open = (url: string | undefined) => {
+        const route = url ? routeFromNativeShortcut(url) : null;
+        if (route) window.location.hash = `#${route}`;
+      };
+      void app.then(async (a) => {
+        void a.addListener('appUrlOpen', (e) => open(e.url));
+        open((await a.getLaunchUrl())?.url);
+      }).catch(() => undefined);
       void import('@capacitor/splash-screen').then((m) => m.SplashScreen.hide()).catch(() => undefined);
       void import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
         // De kleur van de lucht bovenaan (het token --color-sky-top), ook als die 's avonds donker wordt.

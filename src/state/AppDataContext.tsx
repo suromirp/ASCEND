@@ -81,6 +81,8 @@ import { resolveLegEase } from '../engine/legEaseSettings';
 import { influenceMove, influenceMoveCause, type InfluenceMove } from '../engine/influenceProposal';
 import { useWeatherForecast, type WeatherView } from './useWeather';
 import { useFollowLocation } from './useFollowLocation';
+import { widgetSummary } from '../engine/widgetSummary';
+import { writeWidgetSummary } from '../integrations/widgetBridge';
 import { syncWatchActivities } from '../storage/externalActivities';
 import { ensureRecentTestEfforts } from '../storage/activityDetail';
 import { resetAllDataAndAgenda, syncWatchWorkouts, syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
@@ -2632,6 +2634,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const weather = useWeatherForecast(settings.homeLocation, !loading && needsWeather(settings.overviews));
   useFollowLocation(settings, updateSettings, !loading);
+
+  // De widget op het startscherm van de Android-app (engine/widgetSummary.ts): na elke wijziging
+  // van de planning en bij terugkeer in de app opnieuw; op het web doet dit niets.
+  useEffect(() => {
+    if (loading) return;
+    const write = () =>
+      writeWidgetSummary(widgetSummary({ today: todayISO(), sessions: plannedSessions, logs: sessionLogs, templateById, program, leavePeriods: settings.leavePeriods, illnessEpisodes: settings.illnessEpisodes }));
+    write();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') write();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [loading, plannedSessions, sessionLogs, templateById, program, settings.leavePeriods, settings.illnessEpisodes]);
 
   // Een bestaand plan zonder doel: neutrale golven pas na Akkoord (engine/noGoalWaves.ts).
   const wavesOffer = useMemo(

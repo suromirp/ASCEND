@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { wantsLogShortcut, wantsMorningLink, withoutShortcut } from './shortcutAction';
+import { routeFromNativeShortcut, wantsLogShortcut, wantsMorningLink, withoutShortcut } from './shortcutAction';
+
+describe('routeFromNativeShortcut', () => {
+  it('zet de adressen van de Android-snelkoppelingen om naar hash-routes', () => {
+    expect(routeFromNativeShortcut('app.ascend.training://open/vandaag')).toBe('/');
+    expect(routeFromNativeShortcut('app.ascend.training://open/week')).toBe('/week');
+    expect(routeFromNativeShortcut('app.ascend.training://open/logboek')).toBe('/history');
+    expect(routeFromNativeShortcut('app.ascend.training://open/afvinken')).toBe('/?actie=afvinken');
+  });
+  it('negeert al het andere', () => {
+    expect(routeFromNativeShortcut('https://localhost/week')).toBeNull();
+    expect(routeFromNativeShortcut('app.ascend.training://open/onbekend')).toBeNull();
+    expect(routeFromNativeShortcut('')).toBeNull();
+  });
+});
 
 describe('snelkoppeling afvinken', () => {
   it('herkent de actie met of zonder vraagteken', () => {
