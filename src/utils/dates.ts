@@ -96,22 +96,24 @@ export function weekDates(mondayIso: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(mondayIso, i));
 }
 
-// Middernacht van een datum als getal, onthouden per datum (zie addDays). Een ongeldige datum geeft NaN,
-// net als voorheen.
-const midnightCache = new Map<string, number>();
-function midnightOf(iso: string): number {
-  const known = midnightCache.get(iso);
+// Het dagnummer van een datum (dagen sinds 1970 in UTC), onthouden per datum (zie addDays). Puur
+// rekenen op de kalender, zonder tijdzone: het geheugen blijft dus kloppen als de wintertijd ingaat of
+// je tijdzone wisselt terwijl de app openstaat. Voor elke echte datum dezelfde uitkomst als het oude
+// verschil tussen twee lokale middernachten, want dat rondde het uur verschil van de zomertijd weg.
+// Een ongeldige datum geeft NaN, net als voorheen.
+const dayNumberCache = new Map<string, number>();
+function dayNumberOf(iso: string): number {
+  const known = dayNumberCache.get(iso);
   if (known !== undefined) return known;
-  const time = parseISODate(iso).getTime();
-  if (midnightCache.size >= DATE_CACHE_LIMIT) midnightCache.clear();
-  midnightCache.set(iso, time);
-  return time;
+  const [y, m, d] = iso.split('-').map(Number);
+  const day = Date.UTC(y, m - 1, d) / (1000 * 60 * 60 * 24);
+  if (dayNumberCache.size >= DATE_CACHE_LIMIT) dayNumberCache.clear();
+  dayNumberCache.set(iso, day);
+  return day;
 }
 
 export function daysBetween(fromIso: string, toIso: string): number {
-  const a = midnightOf(fromIso);
-  const b = midnightOf(toIso);
-  return Math.round((b - a) / (1000 * 60 * 60 * 24));
+  return Math.round(dayNumberOf(toIso) - dayNumberOf(fromIso));
 }
 
 const DUTCH_WEEKDAYS_SHORT = ['MA', 'DI', 'WO', 'DO', 'VR', 'ZA', 'ZO'];

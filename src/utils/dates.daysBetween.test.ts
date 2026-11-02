@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, parseISODate, toISODate } from './dates';
 
 // De oude berekeningen, letterlijk: addDays, isoWeekday en daysBetween onthouden nu hun uitkomst per
-// invoer, maar die uitkomst moet precies dezelfde blijven, ook voor rare invoer.
+// invoer (daysBetween rekent in UTC), maar die uitkomst moet precies dezelfde blijven, ook voor rare invoer.
 function referenceAddDays(iso: string, days: number): string {
   const d = parseISODate(iso);
   d.setDate(d.getDate() + days);
@@ -70,5 +70,31 @@ describe('datums onthouden zonder andere uitkomst', () => {
     expect(daysBetween('2026-01-01', '2026-01-31')).toBe(30);
     expect(addDays('2026-01-31', 1)).toBe('2026-02-01');
     expect(isoWeekday('2026-11-02')).toBe(1);
+  });
+
+  it('blijft gelijk als de tijdzone wisselt tussen twee aanroepen', () => {
+    const env = (globalThis as unknown as { process: { env: Record<string, string | undefined> } }).process.env;
+    const before = env.TZ;
+    try {
+      env.TZ = 'Europe/Amsterdam';
+      const amsterdam = [daysBetween('2026-10-24', '2026-10-26'), daysBetween('2026-03-28', '2026-03-30'), daysBetween('2026-01-01', '2026-12-31')];
+      expect(amsterdam).toEqual([2, 2, 364]);
+      env.TZ = 'America/New_York';
+      expect([daysBetween('2026-10-24', '2026-10-26'), daysBetween('2026-03-28', '2026-03-30'), daysBetween('2026-01-01', '2026-12-31')]).toEqual(amsterdam);
+      expect(daysBetween('2026-10-31', '2026-11-02')).toBe(reference('2026-10-31', '2026-11-02'));
+      env.TZ = 'Pacific/Auckland';
+      expect(daysBetween('2026-04-04', '2026-04-06')).toBe(2);
+      expect(daysBetween('2026-10-24', '2026-10-26')).toBe(2);
+      // Een datum onthouden in de ene uiterste zone en vergeleken in de andere: een onthouden lokale
+      // middernacht zou hier 25 uur verschuiven en een dag te veel tellen.
+      env.TZ = 'Pacific/Kiritimati';
+      expect(daysBetween('2026-05-01', '2026-05-01')).toBe(0);
+      env.TZ = 'Pacific/Pago_Pago';
+      expect(daysBetween('2026-05-01', '2026-05-03')).toBe(2);
+      expect(daysBetween('2026-05-03', '2026-05-01')).toBe(-2);
+    } finally {
+      if (before === undefined) delete env.TZ;
+      else env.TZ = before;
+    }
   });
 });
