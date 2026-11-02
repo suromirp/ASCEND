@@ -39,7 +39,7 @@ describe('planWeekFix, een week zonder rustdag', () => {
     const advice = planWeekFix(input(sessions), rest, MONDAY)!;
     expect(advice).toMatchObject({ ruleId: 'WEEK-CHECK', trigger: 'plan_update', title: 'Je week heeft geen rustdag' });
     expect(advice.id).toBe('weekfix:REST-DAY:w-3:2026-10-29');
-    expect(advice.effect).toBe('Laat Rustige duurloop op donderdag 29 gaan. Dan heb je donderdag vrij.');
+    expect(advice.effect).toBe('Laat de rustige duurloop op donderdag 29 gaan. Dan heb je donderdag vrij.');
     expect(advice.proposal!.changes).toEqual([expect.objectContaining({ plannedSessionId: 'w-3', action: 'remove', fromDate: '2026-10-29' })]);
     expect(advice.proposal!.changes[0].restore).toBeUndefined();
   });
@@ -169,7 +169,7 @@ describe('planWeekFix, testdag in een volle week', () => {
     const removal = all.find((p) => p.changes.some((c) => c.action === 'remove'))!;
     expect(removal).toBeDefined();
     expect(removal.changes).toEqual([expect.objectContaining({ plannedSessionId: 'l', action: 'remove', fromDate: '2026-10-27' })]);
-    expect(removal.consequences).toBe('Laat Lange duurloop op dinsdag 27 gaan. Je houdt de lange duurloop op zondag 1.');
+    expect(removal.consequences).toBe('Laat de lange duurloop op dinsdag 27 gaan. Je houdt de lange duurloop op zondag 1.');
     // Nooit de test, nooit de lange duurloop van zondag.
     for (const p of all) for (const c of p.changes) expect(['t', 'zo']).not.toContain(c.plannedSessionId);
     // Weghalen is de laatste keuze.
@@ -219,5 +219,126 @@ describe('een training van jou of van een voorstel op een vakantiedag', () => {
     const concern = weekConcerns(inp, MONDAY).find((c) => c.rule === 'LEAVE-OFF' && c.finding.subjectId === 'l-1');
     expect(concern).toBeDefined();
     expect(planWeekFix(inp, concern!, MONDAY)).toBeNull();
+  });
+});
+
+describe('planWeekFix, twee zware beendagen met een tweede lange duurloop in de week', () => {
+  // Nagemaakt, met verschoven datums: de rustdag is maandag. Een eerder voorstel zette de lange duurloop van de week
+  // ervoor kort (45 minuten) in deze week, op dinsdag; zelf zette je de heuvels op maandag, Bovenlichaam A op woensdag
+  // en Benen A op vrijdag. Donderdag de testloop, zaterdag vrij, zondag de eigen lange duurloop van de week.
+  // Zaterdag past niet: de dag na Benen A en de dag voor de lange duurloop. Verplaatsen lost niets op; de lange
+  // duurloop van dinsdag laten gaan wel, want de week houdt die van zondag.
+  const userLock = { by: 'user' as const, at: '2026-10-25T20:00:00.000Z' };
+  const row = (id: string, templateId: string, day: number, over: Partial<PlannedSession> = {}): PlannedSession => ({ id, templateId, scheduledDate: addDays(MONDAY, day), weekStartDate: MONDAY, status: 'planned', order: day, ...over });
+  const sessions: PlannedSession[] = [
+    row('rust', 'tpl_herstel', 0, { status: 'skipped', lock }),
+    row('heuvel', 'tpl_hills_descent', 0, { status: 'moved', lock: userLock, movedFromDate: addDays(MONDAY, 5) }),
+    row('lang-kort', 'tpl_long_run', 1, { status: 'moved', lock: userLock, plannedMinutes: 45, movedFromDate: addDays(MONDAY, -1) }),
+    row('boven-a', 'tpl_upper_a', 2, { status: 'moved', lock: userLock }),
+    row('test', 'tpl_test_run', 3, { status: 'moved', lock, plannedMinutes: 45 }),
+    row('rustig', 'tpl_easy_run', 3, { status: 'skipped', lock }),
+    row('benen', 'tpl_lower_a', 4, { status: 'moved', lock: userLock }),
+    row('boven-b', 'tpl_upper_b', 4, { order: 9 }),
+    row('lang', 'tpl_long_run', 6),
+  ];
+  const at = (over: Partial<CheckInput> = {}) => input(sessions, { today: MONDAY, restDay: 1, ...over });
+  const concernOf = (i: CheckInput) => weekConcerns(i, MONDAY).find((c) => c.rule === 'LEG-SPACING');
+  const proposalsOf = (i: CheckInput) => {
+    const c = concernOf(i);
+    const advice = c ? planWeekFix(i, c, MONDAY) : null;
+    return advice ? advice.options?.map((o) => o.proposal!) ?? [advice.proposal!] : [];
+  };
+
+  it('meldt de heuvels en de lange duurloop achter elkaar', () => {
+    const c = concernOf(at());
+    expect(c).toBeDefined();
+    expect([...c!.finding.sessionIds].sort()).toEqual(['heuvel', 'lang-kort']);
+  });
+
+  it('zaterdag lost het niet op: te dicht op Benen A en op de lange duurloop van zondag', () => {
+    for (const id of ['heuvel', 'lang-kort']) {
+      const moved = sessions.map((s) => (s.id === id ? { ...s, scheduledDate: addDays(MONDAY, 5) } : s));
+      const after = validateWeeks({ ...at({ sessions: moved }), reportYours: true }, new Set([MONDAY]));
+      expect(after.some((f) => f.rule === 'LEG-SPACING' && f.sessionIds.includes(id))).toBe(true);
+    }
+  });
+
+  it('biedt als laatste keuze aan de extra lange duurloop van dinsdag te laten gaan, met Akkoord', () => {
+    const copy = JSON.stringify(sessions);
+    const all = proposalsOf(at());
+    expect(JSON.stringify(sessions)).toBe(copy);
+    const removal = all.find((p) => p.changes.some((c) => c.action === 'remove'));
+    expect(removal).toBeDefined();
+    expect(all.at(-1)).toBe(removal);
+    expect(removal!.changes).toEqual([expect.objectContaining({ plannedSessionId: 'lang-kort', action: 'remove', fromDate: addDays(MONDAY, 1) })]);
+    expect(removal!.consequences).toBe('Laat de lange duurloop op dinsdag 27 gaan. Dan heb je dinsdag vrij. Je houdt de lange duurloop op zondag 1.');
+    // Nooit de test, nooit de lange duurloop van zondag, nooit iets van het systeem zelf.
+    for (const p of all) for (const c of p.changes) expect(['test', 'lang', 'boven-b']).not.toContain(c.plannedSessionId);
+    const after = applyPlanChangeItems(removal!.changes, sessions, () => 'x', { by: 'proposal', at: 'nu' }).sessions;
+    expect(validateWeeks({ ...at({ sessions: after }), reportYours: true }, new Set([MONDAY])).some((f) => f.rule === 'LEG-SPACING')).toBe(false);
+    expect(after.find((s) => s.id === 'lang')).toEqual(sessions.find((s) => s.id === 'lang'));
+  });
+
+  it('haalt niets weg als de week geen tweede lange duurloop heeft', () => {
+    const i = at({ sessions: sessions.filter((s) => s.id !== 'lang') });
+    for (const p of proposalsOf(i)) expect(p.changes.some((c) => c.action === 'remove')).toBe(false);
+  });
+
+  it('haalt de heuvels niet weg: die hebben geen tweede in de week', () => {
+    for (const p of proposalsOf(at())) expect(p.changes.some((c) => c.action === 'remove' && c.plannedSessionId === 'heuvel')).toBe(false);
+  });
+
+  it('laat altijd de kortste gaan: de volle eerst en de korte later geeft geen weghalen', () => {
+    // Andersom dan hierboven: dinsdag de volle lange duurloop van jou, zondag een korte.
+    const swapped = sessions.map((s) => {
+      if (s.id === 'lang-kort') { const { plannedMinutes: _drop, ...rest } = s; void _drop; return rest; }
+      if (s.id === 'lang') return { ...s, plannedMinutes: 45 };
+      return s;
+    });
+    const i = at({ sessions: swapped });
+    expect(concernOf(i)).toBeDefined();
+    for (const p of proposalsOf(i)) expect(p.changes.some((c) => c.action === 'remove')).toBe(false);
+  });
+
+  it('biedt het weghalen niet aan als verplaatsen iets oplevert', () => {
+    // Zaterdag zonder Benen A op vrijdag en zonder lange duurloop op zondag: de lange duurloop van dinsdag kan
+    // gewoon verschuiven, dus geen weghalen. De tweede lange duurloop staat dan op woensdag, met Bovenlichaam A op donderdag.
+    const roomy = sessions
+      .filter((s) => s.id !== 'benen' && s.id !== 'test' && s.id !== 'rustig')
+      .map((s) => (s.id === 'lang' ? { ...s, scheduledDate: addDays(MONDAY, 3), lock: userLock, status: 'moved' as const } : s.id === 'boven-a' ? { ...s, scheduledDate: addDays(MONDAY, 4) } : s));
+    const all = proposalsOf(at({ sessions: roomy }));
+    expect(all.length).toBeGreaterThan(0);
+    for (const p of all) expect(p.changes.some((c) => c.action === 'remove')).toBe(false);
+  });
+
+  it('een zelf verplaatste bergtocht valt nooit weg om een lange duurloop', () => {
+    // Zaterdag een bergtocht die jij daar zette, de dag na Benen A; zondag de lange duurloop (zelfde taak "lang").
+    const hike: PlannedSession[] = [
+      row('benen', 'tpl_lower_a', 4, { status: 'moved', lock: userLock }),
+      row('berg', 'tpl_mountain_hike', 5, { status: 'moved', lock: userLock, plannedMinutes: 60 }),
+      row('lang', 'tpl_long_run', 6),
+      ...[0, 1, 2, 3].map((d) => row(`vol-${d}`, d % 2 ? 'tpl_upper_a' : 'tpl_upper_b', d, { status: 'moved', lock: userLock })),
+    ];
+    const i = at({ sessions: hike });
+    expect(concernOf(i)).toBeDefined();
+    for (const p of proposalsOf(i)) expect(p.changes.some((c) => c.action === 'remove' && c.plannedSessionId === 'berg')).toBe(false);
+  });
+
+  it('een wandeldag van een tocht valt niet weg om een andere dag van die tocht', () => {
+    const mark = { periodId: 'tocht', role: 'placed' as const, from: addDays(MONDAY, 5) };
+    const trek: PlannedSession[] = [
+      row('benen', 'tpl_lower_a', 4, { status: 'moved', lock: userLock }),
+      row('tocht-1', 'tpl_mountain_hike', 5, { status: 'moved', lock: userLock, leave: mark }),
+      row('tocht-2', 'tpl_mountain_hike', 6, { status: 'moved', lock: userLock, leave: { ...mark, from: addDays(MONDAY, 6) } }),
+      ...[0, 1, 2, 3].map((d) => row(`vol-${d}`, d % 2 ? 'tpl_upper_a' : 'tpl_upper_b', d, { status: 'moved', lock: userLock })),
+    ];
+    expect(concernOf(at({ sessions: trek }))).toBeDefined();
+    for (const p of proposalsOf(at({ sessions: trek }))) expect(p.changes.some((c) => c.action === 'remove' && c.plannedSessionId?.startsWith('tocht'))).toBe(false);
+  });
+
+  it('een lange duurloop met het merkteken van een vakantie valt zo niet weg', () => {
+    const marked = sessions.map((s) => (s.id === 'lang-kort' ? { ...s, leave: { periodId: 'vakantie', role: 'moved' as const, from: addDays(MONDAY, -1) } } : s));
+    expect(concernOf(at({ sessions: marked }))).toBeDefined();
+    for (const p of proposalsOf(at({ sessions: marked }))) expect(p.changes.some((c) => c.action === 'remove')).toBe(false);
   });
 });
