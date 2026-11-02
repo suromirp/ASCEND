@@ -18,7 +18,7 @@ import { WeatherTodayCard } from '../components/WeatherTodayCard';
 import { clearWeather } from '../storage/weather';
 import { OPEN_METEO_SITE, openMeteoErrorMessage, searchPlaces, type PlaceResult } from '../integrations/openMeteo';
 import { DEFAULT_WEEKDAY_HOUR, DEFAULT_WEEKEND_HOUR, MIN_LOGS, updatedLabel, weatherRuleRows, type WeatherRuleRow } from '../engine/weather';
-import { followsLocation } from '../engine/overviewSettings';
+import { locationEnabled, weatherFollowsLocation, weatherLocateText } from '../engine/locationSetting';
 import { isMyLocation, myLocation } from '../engine/weatherLocation';
 import { locateErrorMessage, locateMe } from '../utils/geolocation';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
@@ -70,9 +70,10 @@ export function WeatherPage() {
       } catch (err) {
         return { tone: 'error', text: locateErrorMessage(err) };
       }
-      await withTimeout(updateSettings({ homeLocation: myLocation(found.lat, found.lon) }), SAVE_LIMIT_MS);
+      const wasOn = locationEnabled(settings);
+      await withTimeout(updateSettings({ locationOn: true, homeLocation: myLocation(found.lat, found.lon) }), SAVE_LIMIT_MS);
       setResults(null);
-      return { tone: 'ok', text: 'Je locatie is je plaats. Het weer wordt nu opgehaald.' };
+      return { tone: 'ok', text: weatherLocateText(wasOn) };
     });
 
   const search = () =>
@@ -110,7 +111,7 @@ export function WeatherPage() {
   }
 
   const fetchedAt = weather.forecast?.fetchedAt;
-  const following = !!place && isMyLocation(place) && followsLocation(settings.overviews);
+  const following = !!place && isMyLocation(place) && weatherFollowsLocation(settings);
   const noticeFor = (area: Notice['area']) =>
     notice && notice.area === area ? (
       <p role="status" className="text-xs leading-snug" style={{ color: notice.tone === 'error' ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{notice.text}</p>

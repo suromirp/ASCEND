@@ -147,7 +147,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('lichterbenen', 'lichterbenen-hoe'),
   ...inSheet('bundel-meldingen', 'ochtendmelding', 'ochtendmelding-tijd', 'rust-melding', 'weekmelding', 'weekmelding-tijd'),
   // Gegevens en back-up
-  ...inSheet('toestemmingen', 'opslag'),
+  ...inSheet('toestemmingen', 'opslag', 'locatie'),
   ...inSheet('auto-backup', 'backup-bewaren'),
   // Koppelingen
   ...inSheet('bundel-horloge-gebruik', 'horloge-gebruik', 'garmin-trainingen', 'horloge-details', 'slaap', 'rusthartslag', 'hrv'),

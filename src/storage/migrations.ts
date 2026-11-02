@@ -23,6 +23,7 @@ import type { PlanChangeProposal } from '../models/planChange';
 import { BackupMessageError } from './backupMessage';
 import type { AppSettings } from './database';
 import { isLeavePeriod, isTrekDetails, isTrekHeight } from '../engine/leave';
+import { parseTrekPlace } from '../engine/trek';
 import { parseWeekShape, type WeekShape } from '../engine/sports';
 import { parseDirection, parseDirectionStart } from '../engine/direction';
 import { resolveWeekBudget } from '../engine/weekBudget';
@@ -119,10 +120,13 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
     // Een kapot hoogste punt valt weg en telt mee; de tocht zelf blijft.
     const height = trek?.highestM;
     if (height !== undefined && !(isTrekHeight(height) && (trek?.terrain === 'mountain' || trek?.terrain === 'snow'))) lostDetails++;
+    // Een kapotte eigen plek voor het bergweer valt weg en telt mee; de tocht zelf blijft.
+    const place = parseTrekPlace(trek?.place);
+    if (trek?.place !== undefined && !(place && (trek.terrain === 'mountain' || trek.terrain === 'snow'))) lostDetails++;
     return {
       id: rec.id, kind: rec.kind, startDate: rec.startDate, endDate: rec.endDate,
       ...(rec.note ? { note: rec.note } : {}),
-      ...(trek ? { trek: { name: trek.name.trim(), terrain: trek.terrain, ...(trek.packKg ? { packKg: trek.packKg } : {}), ...(isTrekHeight(trek.highestM) && (trek.terrain === 'mountain' || trek.terrain === 'snow') ? { highestM: Math.round(trek.highestM) } : {}), tent: trek.tent, importance: trek.importance } } : {}),
+      ...(trek ? { trek: { name: trek.name.trim(), terrain: trek.terrain, ...(trek.packKg ? { packKg: trek.packKg } : {}), ...(isTrekHeight(trek.highestM) && (trek.terrain === 'mountain' || trek.terrain === 'snow') ? { highestM: Math.round(trek.highestM) } : {}), ...(place && (trek.terrain === 'mountain' || trek.terrain === 'snow') ? { place } : {}), tent: trek.tent, importance: trek.importance } } : {}),
     };
   });
   return { periods, skipped: raw.length - periods.length + lostDetails };

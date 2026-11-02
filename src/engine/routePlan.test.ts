@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyChoice, buildItinerary, canMergeWithNext, compareWithBest, dayLabel, effectiveMerge, hardestDays, itineraryTotals, sanitizeRoutePlan, sanitizeSoloPlan, sleepWarning } from './routePlan';
+import { applyChoice, buildItinerary, canMergeWithNext, compareWithBest, dayLabel, effectiveMerge, hardestDays, walkDayOn, itineraryTotals, sanitizeRoutePlan, sanitizeSoloPlan, sleepWarning } from './routePlan';
 import { EMPTY_ROUTE_PLAN, type RoutePlan } from '../models/routePlan';
 import { GR5_STAGES } from '../data/gr5Stages';
 import type { SessionLog } from '../models/training';
@@ -173,4 +173,16 @@ describe('opschonen van wat uit een bestand komt', () => {
 
 it('de som van de officiële etappes is 560,8 km', () => {
   expect(Math.round(GR5_STAGES.reduce((a, s) => a + (s.km ?? 0), 0) * 10) / 10).toBe(560.8);
+});
+
+describe('de loopdag van een datum', () => {
+  it('vindt de etappe van die dag en niets op een rustdag of buiten de reis', () => {
+    const plan: RoutePlan = { choices: { [GR5_STAGES[0].id]: { restAfter: true } }, updatedAt: 'x' };
+    const days = buildItinerary(plan, '2027-07-01');
+    expect(walkDayOn(days, '2027-07-01')?.stages[0].id).toBe(GR5_STAGES[0].id);
+    expect(walkDayOn(days, '2027-07-02')).toBeUndefined();
+    expect(walkDayOn(days, '2027-07-03')?.stages[0].id).toBe(GR5_STAGES[1].id);
+    expect(walkDayOn(days, '2027-06-30')).toBeUndefined();
+    expect(walkDayOn(buildItinerary(EMPTY_ROUTE_PLAN), '2027-07-01')).toBeUndefined();
+  });
 });

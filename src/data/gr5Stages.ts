@@ -18,6 +18,7 @@
 // pagina's geven daar per etappe verder niets over.
 
 import type { BivouacAreaId } from './gr5Bivouac';
+import type { StageCoords } from '../models/geo';
 
 export const STAGES_SOURCE = 'grande-traversee-alpes.com';
 export const STAGES_SOURCE_URL = 'https://www.grande-traversee-alpes.com/en/litineraire-par-troncons/';
@@ -74,6 +75,10 @@ export interface Gr5Stage {
   // Wat de officiële tekst bij de etappe zegt over omleidingen en varianten.
   notes: StageFact[];
   gpx: string;
+  // Begin, eind en eventueel punten langs de route, voor "waar ben je op je etappe" (engine/stagePosition.ts).
+  // Nu bij geen enkele etappe ingevuld: zonder coordinaten toont ASCEND niets. Een waarde komt pas uit de
+  // GPX van de site, nooit uit een gok.
+  coords?: StageCoords;
 }
 
 const GPX = (section: number, n: number) => `https://www.grande-traversee-alpes.com/wp-content/uploads/2026/02/GTA_troncon${section}_etape${n}.gpx`;

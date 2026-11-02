@@ -51,3 +51,7 @@ before a summer departure (`engine/heatAcclimation.ts`), mountain weather at the
 as the forecast with `elevation`, at most once an hour, only on a day of the tocht itself and only while the weather follows your location, never in a backup) and a proposal
 with Akkoord to do a hard session later when two of the three morning numbers are off (`engine/morningProposal.ts`,
 rule MORNING-WATCH, moving through `adviceEngine.ts#laterMoveAdvice` like LEG-EASE).
+
+## Je locatie
+
+Instelling `locationOn` (standaard uit, `engine/locationSetting.ts`), bij Toestemmingen. Besluit: `docs/beslissingen/2026-11-02-locatie.md`. Je plek komt alleen via `utils/geolocation.ts#locateMe` (browser of de plugin Geolocation via `integrations/geolocation.ts`), met een grens van tien seconden en altijd een plek of een reden (`storage/locationSwitch.ts`). Het weer bewaart hoogstens de laatste plek afgerond op twee decimalen; je plek op een etappe (`engine/stagePosition.ts`) blijft in het geheugen. Geen spoor, geen route. Een eigen plek per tocht voor het bergweer staat op `TrekDetails.place` (`engine/trek.ts#parseTrekPlace`).

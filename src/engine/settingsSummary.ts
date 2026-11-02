@@ -7,6 +7,7 @@
 // regel (`sub`): een feit of een bron, nooit uitleg. Een test bewaakt dat een regel
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
+import { locationSummary } from './locationSetting';
 import { resolveShorterToday } from './shorterToday';
 import { isDefaultOrder, resolveCardOrder } from './cardOrder';
 import { kgLabel } from '../utils/kg';
@@ -698,6 +699,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.restDayBack !== false };
     case 'trillen':
       return { checked: s.haptics !== false };
+    case 'locatie':
+      return locationSummary(s);
     case 'weekvoorstel':
       return { checked: s.weekFixProposal !== false };
     case 'volgorde-stand':

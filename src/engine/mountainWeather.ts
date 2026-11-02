@@ -4,11 +4,13 @@
 // Alleen informatie en een vaste verwijzing, nooit een oordeel als "ga niet": veiligheid in de
 // bergen is vakwerk en ASCEND geeft daar geen advies over (docs/onderzoek/Doelsoorten berg en
 // buiten.md). Wanneer: een tocht met terrein bergen of sneeuw waarvoor je een hoogste punt
-// opgaf, alleen op een dag van de tocht zelf en alleen als het weer je locatie volgt (dan is de plek
-// van het weer de plek waar je bent; de dag ervoor ben je meestal nog thuis). Dan vraagt de app
-// Open-Meteo met dezelfde afgeronde plek als het gewone weer, met die hoogte erbij
-// (integrations/openMeteo.ts), hoogstens eens per uur, zoals het gewone weer. Een eigen plek per
-// tocht komt later, samen met de locatie-functie uit de backlog.
+// opgaf. Twee wegen:
+// - Heeft de tocht een eigen plek voor het bergweer (`trek.place`), dan komt de kaart al de dag
+//   ervoor ("morgen") en blijft hij tot en met de laatste dag, voor die plek, ook als je thuis zit.
+// - Heeft hij die niet, dan alleen op een dag van de tocht zelf en alleen als het weer je locatie
+//   volgt (dan is de plek van het weer de plek waar je bent; de dag ervoor ben je meestal nog thuis).
+// De app vraagt Open-Meteo met de afgeronde plek, met de hoogte erbij (integrations/openMeteo.ts),
+// hoogstens eens per uur, zoals het gewone weer.
 //
 // Een model van 1 tot 11 km rekent een bergkam grof uit: de hoogte helpt bij de temperatuur, niet
 // bij een lokale bui. Daarom de tijd van het ophalen erbij, en de verwijzing naar het officiële
@@ -35,19 +37,31 @@ export const MOUNTAIN_WEATHER_LINK = { label: 'Bergweer van Météo-France', url
 export interface MountainTrekDay {
   period: LeavePeriod;
   trek: TrekDetails;
+  // De dag waarvoor het bergweer is: vandaag, of morgen als de tocht morgen begint.
   date: string;
+  when: 'vandaag' | 'morgen';
   highestM: number;
+  // De eigen plek van de tocht; zonder gebruikt de kaart de plek van het gewone weer.
+  place?: NonNullable<TrekDetails['place']>;
 }
 
-// De tochtdag van vandaag, als de tocht bezig is en het weer je locatie volgt
-// (overviewSettings.ts#followsLocation). Undefined zonder tocht in de bergen of de sneeuw met een
-// hoogste punt, of als het weer een vaste plek heeft.
+// De dag waarvoor het bergweer wordt getoond, of undefined. Zonder tocht in de bergen of de sneeuw met een
+// hoogste punt is er niets. Een tocht die bezig is gaat voor op een die morgen begint. Een tocht met
+// een eigen plek mag de dag ervoor; een tocht zonder alleen op een dag van de tocht en als het weer je
+// locatie volgt (overviewSettings.ts#followsLocation).
 export function mountainTrekDay(periods: readonly LeavePeriod[] | undefined, today: string, followsLocation: boolean): MountainTrekDay | undefined {
-  if (!followsLocation) return undefined;
-  for (const p of periods ?? []) {
+  const withHeight = (periods ?? []).filter((p): p is LeavePeriod & { trek: TrekDetails & { highestM: number } } => {
     const t = p.trek;
-    if (p.kind !== 'trek' || !t || (t.terrain !== 'mountain' && t.terrain !== 'snow') || !t.highestM) continue;
-    if (p.startDate <= today && today <= p.endDate) return { period: p, trek: t, date: today, highestM: t.highestM };
+    return p.kind === 'trek' && !!t && (t.terrain === 'mountain' || t.terrain === 'snow') && !!t.highestM;
+  });
+  for (const p of withHeight) {
+    if (p.startDate <= today && today <= p.endDate && (followsLocation || p.trek.place)) {
+      return { period: p, trek: p.trek, date: today, when: 'vandaag', highestM: p.trek.highestM, ...(p.trek.place ? { place: p.trek.place } : {}) };
+    }
+  }
+  const tomorrow = addDays(today, 1);
+  for (const p of withHeight) {
+    if (p.trek.place && p.startDate === tomorrow) return { period: p, trek: p.trek, date: tomorrow, when: 'morgen', highestM: p.trek.highestM, place: p.trek.place };
   }
   return undefined;
 }
@@ -63,14 +77,14 @@ export interface MountainWeatherLine {
 
 // "Op 2.500 m vandaag tussen 2 en 8 graden, windstoten tot 50 km per uur, kans op onweer in de
 // middag. Het vriespunt ligt rond 3.100 m." Undefined zonder uren voor die dag.
-export function mountainWeatherLine(forecast: MountainForecast, date: string): MountainWeatherLine | undefined {
+export function mountainWeatherLine(forecast: MountainForecast, date: string, when: 'vandaag' | 'morgen' = 'vandaag'): MountainWeatherLine | undefined {
   const day = forecast.hours.filter((h) => h.time.startsWith(date) && hourOf(h.time) >= DAY_HOURS[0] && hourOf(h.time) <= DAY_HOURS[1]);
   if (day.length === 0) return undefined;
   const temps = day.map((h) => h.tempC);
   const lo = Math.round(Math.min(...temps));
   const hi = Math.round(Math.max(...temps));
   const temp = hi - lo <= SAME_TEMP ? `rond ${Math.round((lo + hi) / 2)} graden` : `tussen ${lo} en ${hi} graden`;
-  const parts = [`Op ${formatNumberNL(forecast.elevationM, 0)} m vandaag ${temp}`];
+  const parts = [`Op ${formatNumberNL(forecast.elevationM, 0)} m ${when} ${temp}`];
   const gusts = day.map((h) => h.gustKmh).filter((g): g is number => g !== undefined);
   if (gusts.length > 0) parts.push(`windstoten tot ${Math.round(Math.max(...gusts))} km per uur`);
   const afternoon = forecast.hours.filter((h) => h.time.startsWith(date) && hourOf(h.time) >= AFTERNOON[0] && hourOf(h.time) <= AFTERNOON[1]);

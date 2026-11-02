@@ -111,6 +111,7 @@ const everything: AppSettings = {
   stageOwnPace: false,
   climbPace: false,
   streamsInBackup: false,
+  locationOn: true,
   proposalTidyMonths: 12,
   autoBackup: 'daily',
   autoBackupKeep: 16,

@@ -74,6 +74,13 @@
          requestLegacyExternalStorage hierboven is voor Android 10. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <!-- Je locatie (plugin Geolocation, docs/beslissingen/2026-11-02-locatie.md): alleen als je de
+         instelling aanzet, en dan alleen je plek van nu. ASCEND vraagt de ruwe plek (coarse); de
+         precieze staat erbij omdat de plugin hem verwacht en Android 12 en nieuwer hem als keuze
+         toont. Geen achtergrondlocatie. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <!-- Meldingen (Android 13 en nieuwer) en de exacte wekker voor het einde van de rust komen
          uit de plugin Local Notifications: POST_NOTIFICATIONS en SCHEDULE_EXACT_ALARM. -->
 
