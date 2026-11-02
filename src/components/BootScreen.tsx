@@ -65,7 +65,8 @@ export function BootScreen({ splash }: { splash: boolean }) {
     }
     try {
       const result = await withTimeout(exportData(), BACKUP_LIMIT_MS, 'Back-up');
-      setBackupText(backupOutcomeText(result));
+      const text = backupOutcomeText(result);
+      setBackupText(text && result.status === 'downloaded' ? `${text} Bewaar het bestand op een veilige plek.` : text);
       setBackup(result.status === 'failed' ? 'failed' : result.status === 'cancelled' ? 'idle' : 'done');
     } catch {
       setBackupProbe(await probeStorage());

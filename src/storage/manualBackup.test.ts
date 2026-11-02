@@ -142,6 +142,26 @@ describe('uitkomst en Laatste back-up', () => {
     expect(markMade).not.toHaveBeenCalled();
   });
 
+  it('het hele traject heeft een tijdsgrens, ook als het klaarmaken blijft hangen', async () => {
+    const markMade = vi.fn(async () => undefined);
+    const outcome = await runManualBackup({ prepare: () => new Promise(() => undefined), adapter: webBackupFileAdapter, markMade, limitMs: 50 });
+    expect(outcome).toMatchObject({ status: 'failed', message: expect.stringContaining('Kijk in de map of hij er toch staat') });
+    expect(markMade).not.toHaveBeenCalled();
+  });
+
+  it('een gelukte back-up wordt nooit als mislukt gemeld, ook niet als Laatste back-up niet lukt', async () => {
+    const markMade = vi.fn(async () => { throw new Error('opslag vol'); });
+    const outcome = await runManualBackup({ prepare, adapter: webBackupFileAdapter, markMade });
+    expect(outcome.status).toBe('saved');
+  });
+
+  it('een bestaand bestand wordt in de map zelf ook niet vervangen (neverReplace)', async () => {
+    mem.files.set(`ASCEND/${NAME}`, 'vreemd');
+    mem.hidden.add(`ASCEND/${NAME}`);
+    await saveManualBackup(appBackupFolder()!, TEXT, { now: NOW });
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe('vreemd');
+  });
+
   it('afgebroken door de gebruiker: geen fout en niets bijgewerkt', async () => {
     const markMade = vi.fn(async () => undefined);
     const outcome = await runManualBackup({ prepare, adapter: { saveBackup: async () => ({ success: false }) }, markMade });

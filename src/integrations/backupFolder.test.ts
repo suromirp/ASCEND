@@ -74,4 +74,16 @@ describe('schrijven via een tijdelijk bestand', () => {
     expect(files.get(`${NAME}.oud.old`)).toBe('vorige');
     expect(files.get(NAME)).toBe('nieuw');
   });
+
+  it('neverReplace: een bestaande naam geeft meteen NameTakenError en er verandert niets', async () => {
+    const { fs, files } = memoryFs({ [NAME]: 'vreemd' });
+    await expect(writeThroughTemp(fs, NAME, 'nieuw', 'p1', { neverReplace: true })).rejects.toBeInstanceOf(NameTakenError);
+    expect([...files]).toEqual([[NAME, 'vreemd']]);
+  });
+
+  it('neverReplace op een vrije naam schrijft gewoon', async () => {
+    const { fs, files } = memoryFs();
+    await writeThroughTemp(fs, NAME, 'nieuw', 'p1', { neverReplace: true });
+    expect([...files]).toEqual([[NAME, 'nieuw']]);
+  });
 });

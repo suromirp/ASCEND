@@ -34,7 +34,7 @@ const REASON_TEXT: Record<AutoBackupFailureReason, string> = {
   permission: 'ASCEND mag niet in Documents schrijven. Geef toegang bij Vaste map en probeer het nog eens',
   folder: 'de map ASCEND in Documents is niet te bereiken',
   write: 'het bestand kon niet worden geschreven. Kijk of er nog ruimte is op je telefoon',
-  timeout: 'het duurde te lang. Probeer het nog eens',
+  timeout: 'het duurde te lang. Kijk in de map of hij er toch staat',
 };
 
 export function failedBackupText(reason: AutoBackupFailureReason | 'unknown'): string {

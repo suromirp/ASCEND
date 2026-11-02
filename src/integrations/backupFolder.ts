@@ -30,7 +30,8 @@ export interface AutoBackupTarget {
   // Schrijft het bestand; de naam is vrij of van de automatische back-up zelf. `attemptId` is uniek per
   // poging, zodat tijdelijke bestanden van een afgebroken poging een nieuwe nooit raken. Gooit een
   // AutoBackupError, of een NameTakenError als de naam toch bezet blijkt.
-  write(name: string, text: string, attemptId: string): Promise<void>;
+  // Met `neverReplace` wordt een bestaande naam nooit vervangen (NameTakenError).
+  write(name: string, text: string, attemptId: string, opts?: { neverReplace?: boolean }): Promise<void>;
   // Staat het bestand er heel (zoveel bytes, en in de app een back-up die te lezen is)?
   verify(name: string, bytes: number): Promise<boolean>;
   remove(name: string): Promise<void>;
@@ -69,7 +70,10 @@ function asBackupError(err: unknown): AutoBackupError {
 // echte naam. Staat er al een eigen bestand met die naam (de opslag kijkt na dat het van ASCEND is), dan
 // gaat dat eerst opzij naar `.old` en pas na een gelukte rename weg; mislukt de rename, dan komt het terug.
 // Leek de naam vrij en lukt de rename toch niet, dan is hij bezet door een bestand dat de app niet ziet.
-export async function writeThroughTemp(fs: TempFs, name: string, text: string, attemptId: string): Promise<void> {
+// Met `neverReplace` (Back-up maken met de hand) gaat een bestaand bestand nooit opzij: een bestaande naam
+// geeft meteen een NameTakenError en er wordt niets geschreven.
+export async function writeThroughTemp(fs: TempFs, name: string, text: string, attemptId: string, opts: { neverReplace?: boolean } = {}): Promise<void> {
+  if (opts.neverReplace && (await fs.exists(name).catch(() => false))) throw new NameTakenError(name);
   const tmp = `${name}.${attemptId}.tmp`;
   const old = `${name}.${attemptId}.old`;
   try {
@@ -135,7 +139,7 @@ function androidFolder(): AppBackupFolder {
       return { kind: 'folder', label: APP_BACKUP_LABEL };
     },
     exists,
-    async write(name, text, attemptId) {
+    async write(name, text, attemptId, opts) {
       const fs = await load().catch(() => {
         throw new AutoBackupError('folder');
       });
@@ -151,7 +155,7 @@ function androidFolder(): AppBackupFolder {
         remove: async (n) => {
           await fs.Filesystem.deleteFile({ path: path(n), directory: dir });
         },
-      }, name, text, attemptId);
+      }, name, text, attemptId, opts);
     },
     async verify(name, bytes) {
       const fs = await load();
