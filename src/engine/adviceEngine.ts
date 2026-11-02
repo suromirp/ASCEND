@@ -416,6 +416,8 @@ interface RetryAgain {
   why: string;
   blocked: (date: string) => boolean;
   yours: (s: PlannedSession) => boolean;
+  // A session another open proposal already changes, or the leg day the Benen card speaks for: left alone.
+  taken: (s: PlannedSession) => boolean;
 }
 
 function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>, forced?: ForcedTestMove, again?: RetryAgain): Advice[] {
@@ -503,7 +505,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       // Leg strength after the test (that evening first); upper body the nearest free day.
       const targets = legs ? [0, 1, 2, 3] : [1, -1, 2, -2, 3];
       const to = targets.map((d) => addDays(date, d)).find((d) => {
-        if (d < today || d === s.scheduledDate && d === date || restDates.has(d) || isIllnessDay(d, inputs.illnessEpisodes, today)) return false;
+        if (d < today || d === s.scheduledDate && d === date || restDates.has(d) || isIllnessDay(d, inputs.illnessEpisodes, today) || !!again?.blocked(d)) return false;
         const week = [...weekOf(d).filter((o) => o.id !== s.id && !moves.some((m) => m.session.id === o.id)), ...moves.filter((m) => m.to === d).map((m) => ({ ...m.session, scheduledDate: m.to })), ...(d === date ? [testAt] : [])];
         return dayHasRoomFor(d, t, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)
           && respectsHeavySpacing(d, t, [...others, testAt], templateById, inputs.logs, s.id)
@@ -527,7 +529,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   // 1. Per day, nearest first: a free day, or else (1b below) a day that
   // becomes free by moving strength, before looking at the next day.
   const isStrength = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'strength';
-  const movable = (s: PlannedSession) => isStrength(s) && s.scheduledDate >= today && !loggedIds.has(s.id) && !again?.yours(s);
+  const movable = (s: PlannedSession) => isStrength(s) && s.scheduledDate >= today && !loggedIds.has(s.id) && !again?.yours(s) && !again?.taken(s);
   // The smallest change wins: a day further away weighs one, every training
   // moved aside two (a free day two days off beats moving two sessions).
   const daysFrom = (date: string) => (around ? Math.abs(daysBetween(lost.scheduledDate, date)) : daysBetween(today, date));
@@ -549,7 +551,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const legsName = sameDayLegs.length > 0 ? templateById.get(sameDayLegs[0].templateId)?.name ?? 'Beenkracht' : undefined;
     const legsNote = legsName ? ` ${legsName} die dag pas na de test, liefst 6 uur later (minstens 3): eerst lopen, dan kracht.` : '';
     // The leg day the option shows stays as shown: kept, so accepting fixes it.
-    const keeps = sameDayLegs.filter((l) => !again?.yours(l)).map((l): PlanChangeItem => ({ plannedSessionId: l.id, action: 'keep', reason: `${legsName} blijft die dag, na de test.`, generatedBy: by }));
+    const keeps = sameDayLegs.filter((l) => !again?.yours(l) && !again?.taken(l)).map((l): PlanChangeItem => ({ plannedSessionId: l.id, action: 'keep', reason: `${legsName} blijft die dag, na de test.`, generatedBy: by }));
     candidates.push({ cost: daysFrom(date), date, label: `${formatWeekdayDateNL(date)}${legsName ? `, ${legsName} erna` : ''}`, effect: `Doe hem ${formatWeekdayDateNL(date)}.${legsNote}`, proposal: proposal(title, [moveItem(date), ...keeps], `De testloop komt op ${formatWeekdayDateNL(date)}.`, why) });
   }
 
@@ -564,7 +566,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const there = fitsBeside ? [] : inputs.plannedSessions.filter((s) => s.scheduledDate === date && s.id !== lost.id && open(s) && templateById.get(s.templateId)?.type !== 'recovery');
     const blockers = findHeavyConflicts(lost.id, test, date, load(new Set(there.map((s) => s.id))), templateById, inputs.logs);
     const remove = [...there, ...blockers.filter((b) => !there.some((t) => t.id === b.id))];
-    if (remove.length === 0 || remove.some((s) => loggedIds.has(s.id) || s.scheduledDate < today || !!again?.yours(s))) continue;
+    if (remove.length === 0 || remove.some((s) => loggedIds.has(s.id) || s.scheduledDate < today || !!again?.yours(s) || !!again?.taken(s))) continue;
     const costs = remove.map((s) => { const t = templateById.get(s.templateId); return t ? removalCost(s.templateId, t) : undefined; });
     if (costs.some((c) => c === undefined)) continue;
     if (!respectsHeavySpacing(date, test, load(new Set(remove.map((s) => s.id))), templateById, inputs.logs, lost.id)) continue;
@@ -1402,8 +1404,16 @@ function retryAgainAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
   const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
   const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een herkansing die niet doorging is geen herkansing die gedaan is, daarom vraagt ASCEND het nog één keer. Hij zoekt een dag met frisse benen, minstens 48 uur na een zware beendag, buiten je vakanties en tochten. Wat jij zelf vastzette, blijft staan. Alleen jij beslist: dit is een voorstel.';
   const yours = (s: PlannedSession) => lockLevel(s, loggedIds, today) === 1;
-  const found = testRunAdvice(inputs, templateById, usedIds, undefined, { row, id, title: `Je herkansing van ${when} ging niet door`, why, blocked, yours })
-    .filter((a) => a.proposal);
+  const easeId = legEaseCardSession({ mode: inputs.legEase, today, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries, checkIns: inputs.checkIns })?.id;
+  const taken = (s: PlannedSession) => usedIds.has(s.id) || s.id === easeId;
+  // Only a way whose end state gives nothing new about the sessions it touches (decision 2026-10-28-voorstel-eindstand.md).
+  const found = testRunAdvice(inputs, templateById, usedIds, undefined, { row, id, title: `Je herkansing van ${when} ging niet door`, why, blocked, yours, taken })
+    .filter((a) => a.proposal)
+    .flatMap((a): Advice[] => {
+      const ways = (a.options ?? [{ label: '', effect: a.effect, proposal: a.proposal! }]).filter((o) => !newConcernsOfItems(o.proposal.changes, inputs));
+      if (ways.length === 0) return [];
+      return [{ ...a, effect: ways[0].effect, proposal: ways[0].proposal, options: ways.length > 1 ? ways : undefined }];
+    });
   const wrap = (effect: string) => `${lead} ${effect.replace(/^Doe hem /, 'Doe de nieuwe test ')} ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar, tot je een nieuwe test logt.`;
   return found.map((a) => ({
     ...a, lead, tip, priority: 2, relatedLogId: last.logId,
@@ -1644,7 +1654,18 @@ function endStateOf(plan: RetryPlan, inputs: AdviceInputs, test: SessionTemplate
 const adviceBeforeCache = new WeakMap<AdviceInputs, Set<string>>();
 function newConcernIds(plan: RetryPlan, inputs: AdviceInputs, test: SessionTemplate): Set<string> | undefined {
   const touched = new Set([plan.found.id, ...plan.moves.flatMap((m) => [m.session.id, m.rest?.id, m.lightDrop?.id]), ...plan.dropped.map((d) => d.id)].filter((id): id is string => !!id));
-  const end = endStateOf(plan, inputs, test);
+  return newConcernsOfEnd(endStateOf(plan, inputs, test), touched, inputs);
+}
+
+// The same check for a proposal as it stands: its items applied the way Akkoord applies them.
+function newConcernsOfItems(items: PlanChangeItem[], inputs: AdviceInputs): Set<string> | undefined {
+  const touched = new Set(items.map((c) => c.plannedSessionId).filter((id): id is string => !!id));
+  let n = 0;
+  const end = applyPlanChangeItems(items, inputs.plannedSessions, () => `end-state-${n++}`, { by: 'proposal', at: `${inputs.asOf}T00:00:00.000Z` }).sessions;
+  return newConcernsOfEnd(end, touched, inputs);
+}
+
+function newConcernsOfEnd(end: PlannedSession[], touched: Set<string>, inputs: AdviceInputs): Set<string> | undefined {
   const hit = new Set<string>();
   const idsOf = (a: Advice) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])].flatMap((p) => p?.changes.map((c) => c.plannedSessionId).filter((id): id is string => !!id) ?? []);
   // The advice on the plan as it is now is the same for every candidate of this run: worked out once.

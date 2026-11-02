@@ -3,6 +3,8 @@ import { computeAdvice, retryTestRows, type AdviceInputs } from './adviceEngine'
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { applyPlanChangeItems } from './proposalEngine';
 import { findHeavyConflicts } from './scheduler';
+import { validateWeeks, type CheckInput, type Finding } from './weekValidator';
+import { CONCERN_RULES } from './weekConcerns';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog } from '../models/training';
 
@@ -155,5 +157,68 @@ describe('TEST-RETRY opnieuw: de herkansing ging niet door', () => {
   it('niet als je ziek bent of de instelling uit staat', () => {
     expect(again({ illnessEpisodes: [{ id: 'i', kind: 'above_neck', startDate: '2026-10-04' }] })).toBeUndefined();
     expect(again({ newTestOnStops: false })).toBeUndefined();
+  });
+
+  it('de eindstand van elke keuze geeft geen nieuwe melding over wat hij raakt', () => {
+    const a = again()!;
+    const check = (sessions: PlannedSession[]): CheckInput => ({ sessions, logs: [testLog()], templates, today: TODAY, restDay: 1, reportYours: true });
+    const key = (f: Finding) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
+    const before = new Set(validateWeeks(check(plan())).map(key));
+    for (const option of [a.proposal!, ...(a.options ?? []).map((o) => o.proposal)]) {
+      const touched = new Set(option.changes.map((c) => c.plannedSessionId));
+      const { sessions } = applyPlanChangeItems(option.changes, plan(), undefined, { by: 'proposal', at: 'x' });
+      const fresh = validateWeeks(check(sessions)).filter((f) => CONCERN_RULES.includes(f.rule) && !before.has(key(f)) && f.sessionIds.some((id) => touched.has(id)));
+      expect(fresh).toEqual([]);
+    }
+  });
+
+  it('na Akkoord op het tweede voorstel en weer overslaan: geen derde voorstel en geen TEST-MAKE-ROOM', () => {
+    const a = again()!;
+    const { sessions } = applyPlanChangeItems(a.proposal!.changes, plan(), undefined, { by: 'proposal', at: 'x' });
+    const skippedAgain = sessions.map((s) => (s.id === 'retry' ? { ...s, status: 'skipped' as const, lock: userLock } : s));
+    const later = computeAdvice(inputs({
+      plannedSessions: skippedAgain,
+      respondedIds: new Set([`retest:${TEST_DAY}`, `retest:${TEST_DAY}:opnieuw`]),
+      asOf: '2026-10-07',
+    }));
+    expect(later.filter((x) => x.ruleId === 'TEST-RETRY')).toEqual([]);
+    expect(later.some((x) => x.id === 'testroom:retry')).toBe(false);
+  });
+});
+
+describe('TEST-RETRY opnieuw: wat al in een ander voorstel staat, en kracht naar een vakantie', () => {
+  // Nagemaakte korte week: beenkracht op dinsdag, daarna een vakantie, zodat de test deze week moet vallen.
+  const short = (extra: PlannedSession[] = []): PlannedSession[] => [
+    row('retry', 'tpl_test_run', '2026-10-04', { status: 'skipped', lock: userLock }),
+    row('legs', 'tpl_lower_a', '2026-10-06'),
+    row('easy', 'tpl_easy_run', '2026-10-08'),
+    row('long', 'tpl_long_run', '2026-10-11'),
+    ...extra,
+  ];
+  const holiday = { id: 'v', kind: 'no_training' as const, startDate: '2026-10-12', endDate: '2026-10-25' };
+  const all = (sessions: PlannedSession[], leave = [holiday], logs: SessionLog[] = [testLog()]) => computeAdvice(inputs({ plannedSessions: sessions, leave, logs }));
+  const ways = (a: { proposal?: { changes: { plannedSessionId?: string; toDate?: string }[] }; options?: { proposal: { changes: { plannedSessionId?: string; toDate?: string }[] } }[] }) => [a.proposal!, ...(a.options ?? []).map((o) => o.proposal)];
+
+  it('zonder ander voorstel schuift de beenkracht mee naar na de test', () => {
+    const a = all(short()).find((x) => x.id === `retest:${TEST_DAY}:opnieuw`)!;
+    expect(ways(a).some((p) => p.changes.some((c) => c.plannedSessionId === 'legs'))).toBe(true);
+  });
+
+  it('staat dezelfde krachttraining al in een open voorstel, dan raakt het tweede voorstel hem niet', () => {
+    // Een zware loop vandaag: HARD-THEN-SPACE stelt voor om de beenkracht van morgen een dag later te doen.
+    const hard = { id: 'log-hard', templateId: 'tpl_easy_run', type: 'cardio', completedDate: TODAY, completedAt: `${TODAY}T07:00:00Z`, variant: 'full', durationMinutes: 30, rpe: 9, source: 'manual', cardioData: { durationMinutes: 30, distanceKm: 5, source: 'manual' } } as SessionLog;
+    const list = all(short(), [holiday], [testLog(), hard]);
+    expect(list.some((x) => x.proposal?.changes.some((c) => c.plannedSessionId === 'legs') && x.ruleId !== 'TEST-RETRY')).toBe(true);
+    for (const a of list.filter((x) => x.ruleId === 'TEST-RETRY')) {
+      for (const p of ways(a)) expect(p.changes.some((c) => c.plannedSessionId === 'legs')).toBe(false);
+    }
+  });
+
+  it('kracht schuift nooit naar een vakantie-, tocht- of lichte dag', () => {
+    const off = { id: 'w', kind: 'no_training' as const, startDate: '2026-10-07', endDate: '2026-10-07' };
+    const a = all(short(), [holiday, off]).find((x) => x.id === `retest:${TEST_DAY}:opnieuw`);
+    for (const p of a ? ways(a) : []) {
+      for (const c of p.changes) if (c.toDate) expect(c.toDate === '2026-10-07' || (c.toDate >= holiday.startDate && c.toDate <= holiday.endDate)).toBe(false);
+    }
   });
 });
