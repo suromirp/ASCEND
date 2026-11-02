@@ -1374,7 +1374,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Een map die de browser onthoudt, zodat een back-up daar vanzelf landt.',
     points: [
       { head: 'Niet gekozen', text: 'dan bewaar je het bestand elke keer zelf.' },
-      { head: 'In de app', text: 'gaat de automatische back-up naar Documenten/ASCEND op je telefoon. Die map zie je in je bestandsbeheerder, en een app die mappen naar Google Drive kopieert kan hem meenemen.' },
+      { head: 'In de app', text: 'gaat de automatische back-up naar Interne opslag > Documents > ASCEND op je telefoon. Die map zie je in je bestandsbeheerder, en een app die mappen naar Google Drive kopieert kan hem meenemen.' },
     ],
   },
   autoBackup: {
@@ -1382,7 +1382,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Alles staat alleen op deze telefoon. Met een wekelijkse back-up raak je hoogstens een week kwijt, met dagelijks hoogstens een dag.',
     points: [
       { head: 'Wanneer', text: 'zondagavond vanaf 18:00, of bij dagelijks elke avond. Is de app op dat moment dicht, dan gebeurt het de eerstvolgende keer dat je hem opent. Een back-up die je die dag zelf maakte telt ook.' },
-      { head: 'In de app', text: 'maakt ASCEND het bestand zelf, met de datum in de naam, in Documenten/ASCEND. Er gaat niets naar buiten, alleen het bestand in die map.' },
+      { head: 'In de app', text: 'maakt ASCEND het bestand zelf, met de datum in de naam, in Interne opslag > Documents > ASCEND. Er gaat niets naar buiten, alleen het bestand in die map.' },
       { head: 'In de browser', text: 'mag een website niet zelf een bestand opslaan. Op het moment staat er een kaart op Vandaag met Back-up maken. Heb je een vaste map gekozen en geeft je browser die zonder vragen vrij, dan gaat hij daar stil naartoe.' },
       { head: 'Bewaren', text: 'het aantal dat je kiest (het advies is 8) blijft staan, oudere ruimt ASCEND op. Alleen bestanden die hij zelf maakte; wat je er zelf in zet blijft altijd staan en wordt nooit overschreven.' },
       { head: 'Lukt het niet', text: 'dan zegt ASCEND dat in een regel hier en op Vandaag, met wat je kunt doen. Je kunt de back-up dan altijd zelf maken.' },

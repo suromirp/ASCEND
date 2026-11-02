@@ -42,6 +42,7 @@ import { useSleepRefetch } from '../components/useSleepRefetch';
 import { useMorningCardVisible } from '../components/useMorningCardVisible';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { useAutoBackupStatus } from '../components/useAutoBackupStatus';
+import { backupOutcomeText } from '../engine/manualBackup';
 import { autoBackupFailureText, backupCardOnToday, resolveAutoBackup } from '../engine/autoBackup';
 import { FreshStartCard } from '../components/FreshStartCard';
 import { useFreshStart } from '../components/useFreshStart';
@@ -174,7 +175,23 @@ function TodayContent() {
     checked: autoBackup.checked,
     reminderDue,
   });
-  const showExportReminder = backupCard === 'reminder';
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupResult, setBackupResult] = useState<{ text: string; ok: boolean } | undefined>();
+  // Back-up maken vanaf de kaart; de uitkomst blijft zichtbaar, ook als de kaart na een gelukte back-up
+  // anders weg zou zijn.
+  const makeBackup = async () => {
+    setBackupBusy(true);
+    setBackupResult(undefined);
+    try {
+      const outcome = await exportData();
+      const text = backupOutcomeText(outcome);
+      if (text) setBackupResult({ text, ok: outcome.status !== 'failed' });
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+  const backupResultProps = { busy: backupBusy, result: backupResult, onDismissResult: () => setBackupResult(undefined) };
+  const showExportReminder = backupCard === 'reminder' || (backupCard === null && !!backupResult);
   const logsSinceBackup = settings.lastExportedAt ? sessionLogs.filter((l) => l.completedAt > settings.lastExportedAt!).length : sessionLogs.length;
 
   const quoteLanguage = resolveQuoteLanguage(settings);
@@ -382,7 +399,8 @@ function TodayContent() {
       <ExportReminderBanner
         logsSinceBackup={logsSinceBackup}
         neverBackedUp={!settings.lastExportedAt}
-        onExport={() => exportData()}
+        onExport={() => void makeBackup()}
+        {...backupResultProps}
         onDismiss={() => updateSettings({ lastExportReminderDismissedAt: new Date().toISOString() })}
       />
     ),
@@ -392,7 +410,8 @@ function TodayContent() {
         logsSinceBackup={logsSinceBackup}
         neverBackedUp={!settings.lastExportedAt}
         failure={autoBackup.failure ? autoBackupFailureText(autoBackup.failure.reason, autoBackup.platform) : undefined}
-        onExport={() => exportData()}
+        onExport={() => void makeBackup()}
+        {...backupResultProps}
         onDismiss={() => updateSettings({ lastExportReminderDismissedAt: new Date().toISOString() })}
       />
     ),

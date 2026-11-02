@@ -56,5 +56,5 @@ function storageUseBase(estimate: StorageEstimate | undefined): StorageUseText |
   if (share >= STORAGE_TIGHT_SHARE) {
     return { value: formatSize(usage), tight: true, sub: `Bijna vol: ${Math.min(100, Math.round(share * 100))} % van ${formatSize(quota)}. Maak een back-up en ruim reeksen op` };
   }
-  return { value: formatSize(usage), sub: `Van de ${formatSize(quota)} die de browser geeft` };
+  return { value: formatSize(usage), sub: `Van de ${formatSize(quota)} die ASCEND mag gebruiken` };
 }

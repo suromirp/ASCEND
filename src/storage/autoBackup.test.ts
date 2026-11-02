@@ -38,7 +38,7 @@ function fakeTarget(opts: {
   const target: AutoBackupTarget = {
     platform: 'app',
     access: async () => (opts.hangAccess ? new Promise<FolderAccess>(() => undefined) : opts.access ?? 'ready'),
-    where: async () => ({ kind: 'folder', label: opts.label ?? 'Documenten/ASCEND' }),
+    where: async () => ({ kind: 'folder', label: opts.label ?? 'Interne opslag > Documents > ASCEND' }),
     exists: async (n) => files.has(n),
     write: async (n, text, attemptId) => {
       attempts.push(attemptId);
@@ -78,7 +78,7 @@ describe('de automatische back-up', () => {
     expect(normalizeBackupToCurrentModel(envelope).plannedSessions?.map((s) => s.id)).toEqual(['ps_a']);
     expect((await SettingsRepo.get()).lastExportedAt).toBe(MONDAY.toISOString());
     const state = await readAutoBackupState();
-    expect(state.where).toEqual({ kind: 'folder', label: 'Documenten/ASCEND' });
+    expect(state.where).toEqual({ kind: 'folder', label: 'Interne opslag > Documents > ASCEND' });
     expect(state.files).toEqual([file]);
   });
 
@@ -142,6 +142,18 @@ describe('de automatische back-up', () => {
     expect(files.has(yours)).toBe(true);
     expect(files.has('notities.txt')).toBe(true);
     expect((await readAutoBackupState()).files).toHaveLength(8);
+  });
+
+  it('een staat met het oude label van de map blijft eigen en wordt omgezet', async () => {
+    const own = ['2026-09-06', '2026-09-13', '2026-09-20', '2026-09-27', '2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25', '2026-11-01'].map(name);
+    await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In Documenten/ASCEND', where: { kind: 'folder', label: 'Documenten/ASCEND' }, filesBy: INSTALL });
+    const state = await readAutoBackupState();
+    expect(state.filesIn).toBe('In Interne opslag > Documents > ASCEND');
+    expect(state.where).toEqual({ kind: 'folder', label: 'Interne opslag > Documents > ASCEND' });
+    // De opslag herkent de lijst als eigen en ruimt de oudste op.
+    const { target, removed } = fakeTarget({ files: own, label: 'Interne opslag > Documents > ASCEND' });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
+    expect(removed).toEqual([name('2026-09-06'), name('2026-09-13')]);
   });
 
   it('alles bewaren ruimt niets op', async () => {
@@ -280,7 +292,7 @@ describe('de automatische back-up', () => {
     await runAutoBackupIfDue({ now: MONDAY, target });
     const [text] = [...files.values()];
     expect(text).not.toContain('autoBackupState');
-    expect(text).not.toContain('Documenten/ASCEND');
+    expect(text).not.toContain('Documents > ASCEND');
   });
 });
 

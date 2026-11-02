@@ -2,13 +2,17 @@ import { Card, SecondaryButton, Eyebrow } from './ui';
 
 // De back-up op Vandaag. Zonder `due` de herinnering na 7 dagen; met `due` het moment van de
 // automatische back-up ("Tijd voor je back-up"), met de reden in amber als die net mislukte.
-export function ExportReminderBanner({ logsSinceBackup, neverBackedUp, onExport, onDismiss, due = false, failure }: {
+export function ExportReminderBanner({ logsSinceBackup, neverBackedUp, onExport, onDismiss, due = false, failure, busy = false, result, onDismissResult }: {
   logsSinceBackup: number;
   neverBackedUp: boolean;
   onExport: () => void;
   onDismiss: () => void;
   due?: boolean;
   failure?: string;
+  // Het maken loopt; en de uitkomst daarna, altijd zichtbaar (Begrepen sluit hem).
+  busy?: boolean;
+  result?: { text: string; ok: boolean };
+  onDismissResult?: () => void;
 }) {
   const one = logsSinceBackup === 1;
   const sinceLine = neverBackedUp
@@ -28,9 +32,20 @@ export function ExportReminderBanner({ logsSinceBackup, neverBackedUp, onExport,
           {failure}
         </p>
       )}
+      {result && (
+        <p className="text-sm" role="status" style={{ color: result.ok ? 'var(--color-success-text)' : 'var(--color-warning)' }}>
+          {result.text}
+        </p>
+      )}
       <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={onDismiss}>Niet nu</SecondaryButton>
-        <SecondaryButton onClick={onExport}>Back-up maken</SecondaryButton>
+        {result?.ok ? (
+          <SecondaryButton onClick={() => onDismissResult?.()}>Begrepen</SecondaryButton>
+        ) : (
+          <>
+            <SecondaryButton onClick={onDismiss} disabled={busy}>Niet nu</SecondaryButton>
+            <SecondaryButton onClick={onExport} disabled={busy}>{busy ? 'Back-up maken…' : 'Back-up maken'}</SecondaryButton>
+          </>
+        )}
       </div>
     </Card>
   );
