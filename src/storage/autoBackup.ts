@@ -13,6 +13,7 @@
 
 import {
   AutoBackupError,
+  NameTakenError,
   autoBackupFileName,
   backupWhereText,
   filesToPrune,
@@ -36,6 +37,8 @@ import { tidyOldProposals } from './proposalTidy';
 
 const STATE_KEY = 'autoBackupState';
 export const AUTO_BACKUP_WRITE_MS = 30_000;
+// Zoveel namen die vrij leken maar bezet bleken, dan houdt de poging op.
+const MAX_TAKEN = 5;
 
 export interface AutoBackupFailure {
   at: string;
@@ -245,15 +248,24 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     by = await target.installId().catch(() => undefined);
     // Eigen bestanden: alleen de lijst van deze installatie en van deze map.
     own = by !== undefined && state.filesBy === by && state.filesIn === backupWhereText(where) ? state.files : [];
-    // Een vrije naam, of een eigen naam van vandaag: een vreemd bestand wordt nooit overschreven.
+    // Een vrije naam, of een eigen naam van vandaag: een vreemd bestand wordt nooit overschreven. Blijkt
+    // een vrije naam toch bezet (een bestand dat de app niet ziet), dan het volgende volgnummer.
     const day = toISODate(now);
+    const text = JSON.stringify(envelope, null, 2);
+    const attemptId = `${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    let taken = 0;
     for (let n = 1; n <= 99 && !name; n++) {
       const candidate = autoBackupFileName(day, n);
-      if (own.includes(candidate) || !(await target.exists(candidate))) name = candidate;
+      if (!own.includes(candidate) && (await target.exists(candidate))) continue;
+      try {
+        await withTimeout(target.write(candidate, text, attemptId), timeoutMs);
+        name = candidate;
+      } catch (err) {
+        if (err instanceof NameTakenError && ++taken < MAX_TAKEN) continue;
+        throw err instanceof NameTakenError ? new AutoBackupError('write') : err;
+      }
     }
     if (!name) throw new AutoBackupError('write');
-    const text = JSON.stringify(envelope, null, 2);
-    await withTimeout(target.write(name, text), timeoutMs);
     // Eerst nakijken of het bestand er heel staat; pas daarna opruimen.
     const ok = await withTimeout(target.verify(name, new TextEncoder().encode(text).length), timeoutMs).catch(() => false);
     if (!ok) throw new AutoBackupError('write');

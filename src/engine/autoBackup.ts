@@ -133,6 +133,15 @@ export type AutoBackupFailureReason = 'permission' | 'folder' | 'write' | 'timeo
 const FAILURE_REASONS: readonly AutoBackupFailureReason[] = ['permission', 'folder', 'write', 'timeout'];
 export const isFailureReason = (v: unknown): v is AutoBackupFailureReason => FAILURE_REASONS.includes(v as AutoBackupFailureReason);
 
+// De naam leek vrij, maar hernoemen ernaartoe lukte niet: vermoedelijk een bestand van een vorige
+// installatie dat deze app niet kan zien (Android 11 en nieuwer). De opslag probeert het volgende volgnummer.
+export class NameTakenError extends Error {
+  constructor(name: string) {
+    super(`Naam bezet: ${name}`);
+    this.name = 'NameTakenError';
+  }
+}
+
 // Een mislukte back-up met de reden; de lagen in integrations/ en storage/ gooien hem.
 export class AutoBackupError extends Error {
   readonly reason: AutoBackupFailureReason;

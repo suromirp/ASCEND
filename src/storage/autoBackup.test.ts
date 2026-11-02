@@ -4,7 +4,7 @@ import { forgetAutoBackupFolder, getAutoBackupStatus, noteBackupMade, readAutoBa
 import { CURRENT_BACKUP_SCHEMA_VERSION } from './backupTypes';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
 import { migrateAutoBackupSettings } from './migrations';
-import { AutoBackupError, type AutoBackupFailureReason } from '../engine/autoBackup';
+import { AutoBackupError, NameTakenError, type AutoBackupFailureReason } from '../engine/autoBackup';
 import type { AutoBackupTarget, FolderAccess } from '../integrations/backupFolder';
 import type { PlannedSession } from '../models/training';
 
@@ -27,17 +27,22 @@ function fakeTarget(opts: {
   install?: string;
   corrupt?: boolean;
   hangAccess?: boolean;
+  hidden?: string[];
 } = {}) {
   const files = new Map<string, string>([...(opts.files ?? []), ...(opts.foreign ?? [])].map((f) => [f, '{}']));
   const foreign = new Set(opts.foreign ?? []);
   const removed: string[] = [];
   const overwritten: string[] = [];
+  const attempts: string[] = [];
+  const hidden = new Set(opts.hidden ?? []);
   const target: AutoBackupTarget = {
     platform: 'app',
     access: async () => (opts.hangAccess ? new Promise<FolderAccess>(() => undefined) : opts.access ?? 'ready'),
     where: async () => ({ kind: 'folder', label: opts.label ?? 'Documenten/ASCEND' }),
     exists: async (n) => files.has(n),
-    write: async (n, text) => {
+    write: async (n, text, attemptId) => {
+      attempts.push(attemptId);
+      if (hidden.has(n)) throw new NameTakenError(n);
       if (opts.fail === 'hang') return new Promise<void>(() => undefined);
       if (opts.fail === 'boom') throw new Error('kapot');
       if (opts.fail) throw new AutoBackupError(opts.fail);
@@ -53,7 +58,7 @@ function fakeTarget(opts: {
     },
     installId: async () => opts.install ?? INSTALL,
   };
-  return { target, files, removed, overwritten };
+  return { target, files, removed, overwritten, attempts };
 }
 
 describe('de automatische back-up', () => {
@@ -186,6 +191,31 @@ describe('de automatische back-up', () => {
     expect(files.get(yours)).toBe('{}');
     expect(files.has('ascend-2026-11-02-2.ascend-backup.json')).toBe(true);
     expect((await readAutoBackupState()).files).toEqual(['ascend-2026-11-02-2.ascend-backup.json']);
+  });
+
+  it('een naam die vrij leek maar bezet is (een onzichtbaar bestand): het volgende volgnummer', async () => {
+    const { target, files } = fakeTarget({ hidden: [name('2026-11-02')] });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
+    expect([...files.keys()]).toEqual(['ascend-2026-11-02-2.ascend-backup.json']);
+    expect((await readAutoBackupState()).files).toEqual(['ascend-2026-11-02-2.ascend-backup.json']);
+  });
+
+  it('te veel bezette namen achter elkaar: mislukt, niet eindeloos doorgaan', async () => {
+    const hidden = [name('2026-11-02'), ...[2, 3, 4, 5, 6, 7].map((n) => `ascend-2026-11-02-${n}.ascend-backup.json`)];
+    const { target, files } = fakeTarget({ hidden });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('failed');
+    expect(files.size).toBe(0);
+    expect((await readAutoBackupState()).failure?.reason).toBe('write');
+  });
+
+  it('elke poging heeft een eigen id voor zijn tijdelijke bestand', async () => {
+    const first = fakeTarget({ fail: 'write' });
+    await runAutoBackupIfDue({ now: MONDAY, target: first.target });
+    const second = fakeTarget();
+    await runAutoBackupIfDue({ now: new Date(2026, 10, 2, 9, 5), target: second.target });
+    expect(first.attempts).toHaveLength(1);
+    expect(second.attempts).toHaveLength(1);
+    expect(first.attempts[0]).not.toBe(second.attempts[0]);
   });
 
   it('een eigen bestand van vandaag mag wel worden overschreven', async () => {

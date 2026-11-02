@@ -10,7 +10,7 @@
 // geeft null) en gebruikt storage/autoBackup.ts de vaste map van de browser.
 
 import { Capacitor } from '@capacitor/core';
-import { AutoBackupError, type BackupWhere } from '../engine/autoBackup';
+import { AutoBackupError, NameTakenError, type BackupWhere } from '../engine/autoBackup';
 
 export const APP_BACKUP_DIR = 'ASCEND';
 export const APP_BACKUP_LABEL = 'Documenten/ASCEND';
@@ -26,8 +26,10 @@ export interface AutoBackupTarget {
   // Staat er al een bestand met deze naam? storage/autoBackup.ts schrijft nooit over een bestand dat
   // niet van de automatische back-up is.
   exists(name: string): Promise<boolean>;
-  // Schrijft het bestand; de naam is vrij of van de automatische back-up zelf. Gooit een AutoBackupError.
-  write(name: string, text: string): Promise<void>;
+  // Schrijft het bestand; de naam is vrij of van de automatische back-up zelf. `attemptId` is uniek per
+  // poging, zodat tijdelijke bestanden van een afgebroken poging een nieuwe nooit raken. Gooit een
+  // AutoBackupError, of een NameTakenError als de naam toch bezet blijkt.
+  write(name: string, text: string, attemptId: string): Promise<void>;
   // Staat het bestand er heel (zoveel bytes, en in de app een back-up die te lezen is)?
   verify(name: string, bytes: number): Promise<boolean>;
   remove(name: string): Promise<void>;
@@ -47,6 +49,56 @@ type FilesystemModule = typeof import('@capacitor/filesystem');
 // In de map van de app zelf (files/), die niet in de back-up van Android zit (res/xml/backup_rules.xml
 // en data_extraction_rules.xml nemen alleen app_webview/ mee). Een nieuwe telefoon krijgt dus een nieuw id.
 const INSTALL_FILE = 'ascend-installatie.txt';
+
+// Het deel van de map dat schrijven nodig heeft, los te testen (backupFolder.test.ts).
+export interface TempFs {
+  exists(name: string): Promise<boolean>;
+  writeFile(name: string, text: string): Promise<void>;
+  rename(from: string, to: string): Promise<void>;
+  remove(name: string): Promise<void>;
+}
+
+function asBackupError(err: unknown): AutoBackupError {
+  if (err instanceof AutoBackupError) return err;
+  const message = err instanceof Error ? err.message.toLowerCase() : '';
+  return new AutoBackupError(message.includes('permission') || message.includes('denied') ? 'permission' : 'write');
+}
+
+// Eerst een tijdelijk bestand met de id van de poging, dan hernoemen: een half bestand krijgt nooit de
+// echte naam. Staat er al een eigen bestand met die naam (de opslag kijkt na dat het van ASCEND is), dan
+// gaat dat eerst opzij naar `.old` en pas na een gelukte rename weg; mislukt de rename, dan komt het terug.
+// Leek de naam vrij en lukt de rename toch niet, dan is hij bezet door een bestand dat de app niet ziet.
+export async function writeThroughTemp(fs: TempFs, name: string, text: string, attemptId: string): Promise<void> {
+  const tmp = `${name}.${attemptId}.tmp`;
+  const old = `${name}.${attemptId}.old`;
+  try {
+    await fs.writeFile(tmp, text);
+  } catch (err) {
+    await fs.remove(tmp).catch(() => undefined);
+    throw asBackupError(err);
+  }
+  let moved = false;
+  if (await fs.exists(name).catch(() => false)) {
+    try {
+      await fs.rename(name, old);
+      moved = true;
+    } catch (err) {
+      await fs.remove(tmp).catch(() => undefined);
+      throw asBackupError(err);
+    }
+  }
+  try {
+    await fs.rename(tmp, name);
+  } catch (err) {
+    await fs.remove(tmp).catch(() => undefined);
+    if (moved) {
+      await fs.rename(old, name).catch(() => undefined);
+      throw asBackupError(err);
+    }
+    throw new NameTakenError(name);
+  }
+  if (moved) await fs.remove(old).catch(() => undefined);
+}
 
 function androidFolder(): AppBackupFolder {
   let plugin: Promise<FilesystemModule> | undefined;
@@ -82,23 +134,23 @@ function androidFolder(): AppBackupFolder {
       return { kind: 'folder', label: APP_BACKUP_LABEL };
     },
     exists,
-    async write(name, text) {
+    async write(name, text, attemptId) {
       const fs = await load().catch(() => {
         throw new AutoBackupError('folder');
       });
       const dir = fs.Directory.Documents;
-      const tmp = path(`${name}.tmp`);
-      try {
-        // Eerst een tijdelijk bestand, dan hernoemen: een half bestand krijgt nooit de echte naam.
-        await fs.Filesystem.writeFile({ path: tmp, data: text, directory: dir, encoding: fs.Encoding.UTF8, recursive: true });
-        // De naam is vrij of van de automatische back-up zelf (storage/autoBackup.ts kijkt dat na).
-        if (await exists(name)) await fs.Filesystem.deleteFile({ path: path(name), directory: dir });
-        await fs.Filesystem.rename({ from: tmp, to: path(name), directory: dir, toDirectory: dir });
-      } catch (err) {
-        await fs.Filesystem.deleteFile({ path: tmp, directory: dir }).catch(() => undefined);
-        const message = err instanceof Error ? err.message.toLowerCase() : '';
-        throw new AutoBackupError(message.includes('permission') || message.includes('denied') ? 'permission' : 'write');
-      }
+      await writeThroughTemp({
+        exists,
+        writeFile: async (n, data) => {
+          await fs.Filesystem.writeFile({ path: path(n), data, directory: dir, encoding: fs.Encoding.UTF8, recursive: true });
+        },
+        rename: async (from, to) => {
+          await fs.Filesystem.rename({ from: path(from), to: path(to), directory: dir, toDirectory: dir });
+        },
+        remove: async (n) => {
+          await fs.Filesystem.deleteFile({ path: path(n), directory: dir });
+        },
+      }, name, text, attemptId);
     },
     async verify(name, bytes) {
       const fs = await load();
