@@ -5,6 +5,7 @@ import { HashRouter, Routes, Route, NavLink, Navigate, useLocation, useNavigate 
 import { BOOT_LOCK_BUSY_TEXT, BOOT_STEAL_FLAG } from './engine/bootWatch';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { BootScreen } from './components/BootScreen';
+import { PageLoading } from './components/PageLoading';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt, UpdatedNotice } from './components/UpdatePrompt';
 import { DeviceNoticesHost } from './components/DeviceNoticesHost';
@@ -331,7 +332,8 @@ function AppShell() {
             de pagina zelf. data-tab geeft de pagina haar eigen kleur. */}
         <div className="relative" data-tab={tabKeyFor(location.pathname)}>
         <ErrorBoundary resetKey={location.pathname}>
-          <Suspense fallback={null}>
+          {/* Een pagina die nog laadt toont haar lucht met titel en een lege kaart, nooit een leeg scherm. */}
+          <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/" element={<TodayPage />} />
             <Route path="/stand" element={<StandingPage />} />
