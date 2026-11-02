@@ -155,3 +155,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Sneller, Sherpa, opus, 245k, 94 min; review sonnet groen, laatste punt loopt
 - 2026-11-02, Sneller laatste punten, Sherpa, opus, hervat; live
 - 2026-11-02, Forge herinrichting, Sherpa, opus, 274k, 46 min; review opus: één belangrijk punt
+- 2026-11-02, Back-up Android, Sherpa, sonnet, 127k, 22 min; review opus groen met punten
+- 2026-11-02, Rand onderaan, Sherpa, sonnet, 115k, 18 min, herstel loopt
