@@ -68,12 +68,13 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="Hoe ASCEND plant"
-        advancedIds={['bundel-niet-doorgegaan', 'slepen-week', 'volgorde-stand', 'vakantie-opzij']}
-        advancedTitles="Training die niet doorging, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie"
+        advancedIds={['bundel-niet-doorgegaan', 'lange-loop-benen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij']}
+        advancedTitles="Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie"
         storageKey="planning-geavanceerd"
         advanced={
           <>
             <SummaryRow id="bundel-niet-doorgegaan" title="Training die niet doorging" facts={facts} info="nietDoorgegaan" onClick={() => setSheet('bundel-niet-doorgegaan')} />
+            <SummaryRow id="lange-loop-benen" title="Beenkracht de dag na de lange duurloop" facts={facts} info="langeLoopBenen" onChange={(on) => void plan.changeSetting('Beenkracht de dag na de lange duurloop', { longRunThenLegs: on }, on ? 'Beenkracht mag de dag na de lange duurloop.' : 'Weer 48 uur tussen de lange duurloop en beenkracht.')} />
             <SummaryRow id="slepen-week" title="Trainingen slepen in Week" facts={facts} info="slepenWeek" onChange={(on) => void updateSettings({ dragWeek: on })} />
             <SummaryRow id="volgorde-stand" title="Volgorde van Je stand" facts={facts} info="volgordeStand" onClick={() => setSheet('volgorde-stand')} />
             <SummaryRow id="vakantie-opzij" title="Opzij voor een vakantie" facts={facts} info="vakantieOpzij" onClick={() => setSheet('vakantie-opzij')} />

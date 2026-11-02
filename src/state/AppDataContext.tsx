@@ -49,7 +49,7 @@ import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Pro
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { orderForRestored, PRIORITY_RULE } from '../engine/goalList';
 import { goalDetailsOf } from '../engine/goalLabels';
-import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
 import { writeCatchUp } from '../storage/catchUpApply';
 import { linkLogNow, skipMissedNow, unlinkLogsNow, updateMissedMemory } from '../storage/missedTraining';
@@ -212,6 +212,7 @@ function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], 
   setRecentSessionMaxima(recentSessionMaxima(logs, todayISO(), raceGoalDates));
   setLearnedDurations(scope.learnedDurations);
   setHardSameDayAllowed(!!loadedSettings.hardSameDay);
+  setLongRunThenLegs(!!loadedSettings.longRunThenLegs);
   // The planner's leg index with the same inputs as the Benen card.
   const lastWeight = currentBodyKg(loadedSettings.weightEntries, loadedSettings.weightFromMacroFactor);
   setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });

@@ -142,7 +142,8 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
     pairs.push({
       first, second,
       gap: daysBetween(first.date, second.date),
-      need: legSpacingDays(first.legTemplate!, second.legTemplate!),
+      // As the planner: the day after the long run only when the day before it was not a heavy leg day too.
+      need: Math.max(legSpacingDays(first.legTemplate!, second.legTemplate!), i >= 2 && daysBetween(legs[i - 2].date, first.date) === 1 ? 1 : 0),
       // Two days of one tocht follow each other by design.
       trek: !!first.trekDay && !!second.trekDay,
       intended: isIntentionalBackToBack(first.legTemplate!, second.legTemplate!) || (!!first.trekDay && !!second.trekDay),

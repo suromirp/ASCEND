@@ -6,7 +6,8 @@ import { previewProposal } from '../engine/proposalPreview';
 import type { TrainingGoal } from '../models/goals';
 import { SessionTemplatesRepo } from './database';
 import { templateSport } from '../engine/sports';
-import { isHardSameDayAllowed, setHardSameDayAllowed, withHardSameDay } from '../engine/scheduler';
+import { isHardSameDayAllowed, isLongRunThenLegsAllowed, setHardSameDayAllowed, withHardSameDay } from '../engine/scheduler';
+import { addDays, daysBetween } from '../utils/dates';
 
 // Warden Logica punten 1 en 2: een andere doeldatum en "De lange zondag" worden
 // een voorstel met wat er verdwijnt of omgaat, niets verandert voor Akkoord, en
@@ -137,6 +138,44 @@ describe('doel of planningsinstelling als voorstel met Akkoord', () => {
     } finally {
       setHardSameDayAllowed(false);
     }
+  }, 30000);
+
+  it('Beenkracht de dag na de lange duurloop: het voorbeeld rekent met de waarde van het voorstel en bewaart niets', async () => {
+    await goal('2027-08-01');
+    // Rustdag op donderdag: dan staat de maandag na de lange duurloop niet vanzelf vrij.
+    await SettingsRepo.set({ restDay: 4 });
+    await syncProgramHorizon();
+    const tpls = new Map((await SessionTemplatesRepo.getAll()).map((x) => [x.id, x]));
+    const all = await PlannedSessionsRepo.getAll();
+    const open = all.filter((s) => s.scheduledDate >= TODAY && s.scheduledDate <= '2026-12-20' && s.status !== 'skipped' && !s.lock);
+    const byDate = (a: { scheduledDate: string }, b: { scheduledDate: string }) => a.scheduledDate.localeCompare(b.scheduledDate);
+    const longs = open.filter((s) => s.templateId === 'tpl_long_run').sort(byDate);
+    const legs = open.filter((s) => s.templateId === 'tpl_lower_a').sort(byDate);
+    const heavy = (s: { templateId: string }) => tpls.get(s.templateId)?.baseStressProfile?.lowerBodyLoad === 'heavy';
+    let shown = false;
+    for (const long of longs) {
+      const next = addDays(long.scheduledDate, 1);
+      const legsRow = legs.find((l) => l.scheduledDate > next && daysBetween(next, l.scheduledDate) <= 6);
+      if (!legsRow) continue;
+      // De dag vóór de lange duurloop en de dag erna vrij, zodat alleen deze regel telt.
+      const cleared = open.filter((o) => o.id !== long.id && o.id !== legsRow.id && (o.scheduledDate === next || (o.scheduledDate === addDays(long.scheduledDate, -1) && heavy(o))));
+      for (const c of cleared) await PlannedSessionsRepo.delete(c.id);
+      const moved = { ...legsRow, id: 'planned_0-benen', scheduledDate: next, weekStartDate: next };
+      await PlannedSessionsRepo.delete(legsRow.id);
+      await PlannedSessionsRepo.put(moved);
+      const ask = (on: boolean) => computeHorizonPlan({ ...base, trigger: 'availability_changed', title: 'Beenkracht de dag na de lange duurloop', settings: { longRunThenLegs: on } });
+      const off = await ask(false);
+      const on = await ask(true);
+      await PlannedSessionsRepo.delete(moved.id);
+      await PlannedSessionsRepo.put(legsRow);
+      for (const c of cleared) await PlannedSessionsRepo.put(c);
+      const touches = (p: Awaited<ReturnType<typeof ask>>) => p.proposal.changes.some((i) => i.plannedSessionId === moved.id);
+      if (touches(off) && !touches(on)) shown = true;
+      if (shown) break;
+    }
+    expect(shown).toBe(true);
+    expect(isLongRunThenLegsAllowed()).toBe(false);
+    expect((await SettingsRepo.get()).longRunThenLegs).toBeUndefined();
   }, 30000);
 
   it('withHardSameDay geldt maar voor één aanroep', () => {

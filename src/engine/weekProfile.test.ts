@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { dayLoads, ridgeSentence, weekProgress } from './weekProfile';
 import { plannedEffort, weeklyLoad } from './standing';
 import { buildDefaultProgramData } from '../data/defaultProgram';
+import { setLongRunThenLegs } from './scheduler';
 import type { PlannedSession, SessionLog } from '../models/training';
 
 const { templates } = buildDefaultProgramData();
@@ -131,6 +132,21 @@ describe('ridgeSentence', () => {
   it('zegt "net genoeg" bij precies 48 uur', () => {
     const d = days([], [planned('tpl_lower_a', '2026-10-23', { plannedMinutes: 60 }), planned('tpl_hill_intervals', '2026-10-25', { plannedMinutes: 35 })]);
     expect(ridgeSentence(d, TODAY)).toMatch(/zit één dag, net genoeg\.$/);
+  });
+
+  // docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md: 48 uur tussen de lange duurloop en beenkracht.
+  it('waarschuwt bij Benen A de dag na de lange duurloop, ook met de instelling aan na het weekendblok', () => {
+    const longThenLegs = () => days([], [planned('tpl_long_run', '2026-10-24', { plannedMinutes: 50 }), planned('tpl_lower_a', '2026-10-25', { plannedMinutes: 60 })]);
+    expect(ridgeSentence(longThenLegs(), TODAY)).toContain('Let op: tussen Lange duurloop en Benen A');
+    // Drie beendagen op rij: heuvels, lange duurloop, Benen A.
+    const three = () => days([], [planned('tpl_hill_intervals', '2026-10-22', { plannedMinutes: 35 }), planned('tpl_long_run', '2026-10-23', { plannedMinutes: 50 }), planned('tpl_lower_a', '2026-10-24', { plannedMinutes: 60 })]);
+    setLongRunThenLegs(true);
+    try {
+      expect(ridgeSentence(longThenLegs(), TODAY)).not.toContain('Let op');
+      expect(ridgeSentence(three(), TODAY)).toContain('Let op: tussen Lange duurloop en Benen A');
+    } finally {
+      setLongRunThenLegs(false);
+    }
   });
 
   it('vindt de bewuste combinatie van heuvelintervallen en lange duurloop geen fout', () => {

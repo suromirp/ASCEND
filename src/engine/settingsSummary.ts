@@ -391,6 +391,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('langeLoopGroei', resolveLongRunGrowth(s.longRunGrowth)) };
     case 'zware-dingen':
       return { checked: !!s.hardSameDay, sub: 'Op één dag, eerst de loop' };
+    case 'lange-loop-benen':
+      return { checked: !!s.longRunThenLegs, sub: s.longRunThenLegs ? 'Een dag ertussen is genoeg' : '48 uur ertussen' };
 
     // Doel en tochten
     case 'doelen':

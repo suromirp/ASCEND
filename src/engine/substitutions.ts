@@ -123,6 +123,8 @@ export interface DurationScope {
   learnedDurations?: Record<string, number>;
   // Leg strength and a hard run on one day (engine/scheduler.ts#withHardSameDay); read by the planning run of a preview.
   hardSameDay?: boolean;
+  // Leg strength the day after the long run (engine/scheduler.ts#withLongRunThenLegs), the same way.
+  longRunThenLegs?: boolean;
 }
 
 export function withDurationScope<T>(scope: DurationScope | undefined, fn: () => T): T {
