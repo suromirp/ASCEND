@@ -35,7 +35,7 @@ const CONNECTION_KEY = 'intervalsIcuConnection';
 const STATE_KEY = 'watchActivities';
 
 // How far back one fetch looks, and how often at most it asks.
-export const FETCH_DAYS = 7;
+const FETCH_DAYS = 7;
 export const MIN_FETCH_INTERVAL_MINUTES = 15;
 
 export interface WatchActivityState {

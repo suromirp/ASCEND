@@ -39,7 +39,7 @@ import type { AppSettings } from './database';
 
 export const CURRENT_BACKUP_SCHEMA_VERSION = 5;
 
-export interface AscendBackupPayloadV1 {
+interface AscendBackupPayloadV1 {
   version: 1;
   program: Program | null;
   templates: SessionTemplate[];
@@ -51,7 +51,7 @@ export interface AscendBackupPayloadV1 {
   settings: AppSettings;
 }
 
-export interface AscendBackupPayloadV2 {
+interface AscendBackupPayloadV2 {
   version: 2;
   program: Program | null;
   templates: SessionTemplate[];
@@ -64,7 +64,7 @@ export interface AscendBackupPayloadV2 {
   settings: AppSettings;
 }
 
-export interface AscendBackupPayloadV3 {
+interface AscendBackupPayloadV3 {
   version: 3;
   program: Program | null;
   templates: SessionTemplate[];
@@ -82,7 +82,7 @@ export interface AscendBackupPayloadV3 {
 // rebuild the same week: availability/strategy (goalEngineConfig), the
 // strength block and its recommendations, the change log, and the coach's
 // remembered answers. All optional on read, so a V3 file still imports.
-export interface AscendBackupPayloadV4 extends Omit<AscendBackupPayloadV3, 'version'> {
+interface AscendBackupPayloadV4 extends Omit<AscendBackupPayloadV3, 'version'> {
   version: 4;
   goalEngineConfig: Partial<GoalEngineConfig> | null;
   strengthProgramStrategies: StrengthProgramStrategy[];
@@ -116,7 +116,7 @@ export interface AscendBackupPayloadV5 extends Omit<AscendBackupPayloadV4, 'vers
   missedTraining?: MissedMemory;
 }
 
-export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4 | AscendBackupPayloadV5;
+type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4 | AscendBackupPayloadV5;
 
 export interface AscendBackupEnvelope {
   backupSchemaVersion: number;

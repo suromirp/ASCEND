@@ -11,7 +11,7 @@ import type { LocationPermission } from '../engine/weatherLocation';
 import { LocateError, locateMe, type LocateFailure, type Position2 } from '../utils/geolocation';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
-export const SWITCH_LIMIT_MS = 10_000;
+const SWITCH_LIMIT_MS = 10_000;
 // De eigen klok van de browser tikt eerder af dan de harde grens hierboven.
 const LOCATE_TIMEOUT_MS = 6_000;
 

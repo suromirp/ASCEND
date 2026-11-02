@@ -36,11 +36,11 @@ import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo } from './
 import { tidyOldProposals } from './proposalTidy';
 
 const STATE_KEY = 'autoBackupState';
-export const AUTO_BACKUP_WRITE_MS = 30_000;
+const AUTO_BACKUP_WRITE_MS = 30_000;
 // Zoveel namen die vrij leken maar bezet bleken, dan houdt de poging op.
 const MAX_TAKEN = 5;
 
-export interface AutoBackupFailure {
+interface AutoBackupFailure {
   at: string;
   reason: AutoBackupFailureReason;
 }
@@ -65,7 +65,7 @@ const isWhere = (v: unknown): v is BackupWhere => {
 };
 
 // Defensief lezen: een kapotte waarde wordt een lege staat, nooit een fout.
-export function cleanAutoBackupState(raw: unknown): AutoBackupState {
+function cleanAutoBackupState(raw: unknown): AutoBackupState {
   if (!raw || typeof raw !== 'object') return { files: [] };
   const r = raw as Record<string, unknown>;
   const failure = r.failure as Record<string, unknown> | undefined;
@@ -164,7 +164,7 @@ export async function clearAutoBackupFailure(): Promise<void> {
 
 // De hele poging (toegang, bouwen, schrijven, nakijken, opruimen) duurt nooit langer dan dit, zodat
 // een volgende poging altijd weer kan.
-export const AUTO_BACKUP_ATTEMPT_MS = 120_000;
+const AUTO_BACKUP_ATTEMPT_MS = 120_000;
 
 export interface RunOptions {
   now?: Date;

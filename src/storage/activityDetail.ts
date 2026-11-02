@@ -384,8 +384,8 @@ export async function ensureBestEffort(logId: string, options: AttachOptions = {
 }
 
 // How far back the opening looks for a test that still wants its best 5 km, and how long one read may take.
-export const RECENT_TEST_DAYS = 60;
-export const RECENT_TEST_TIMEOUT_MS = 20_000;
+const RECENT_TEST_DAYS = 60;
+const RECENT_TEST_TIMEOUT_MS = 20_000;
 
 // At the opening, in the background: the test runs of the last 60 days that carry an activity and
 // still want their best 5 km, one after the other, each with a limit in time. What is read for the
@@ -416,7 +416,7 @@ export async function ensureRecentTestEfforts(options: AttachOptions & { today?:
 
 // How long the whole fetch may take before the sheet says so (the requests each have their own
 // limit of 15 seconds).
-export const ENSURE_TIMEOUT_MS = 25_000;
+const ENSURE_TIMEOUT_MS = 25_000;
 
 export type EnsureOutcome =
   // Nothing to do: the log has its kilometres and, if wanted, its series.
