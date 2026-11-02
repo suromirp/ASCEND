@@ -431,6 +431,9 @@ export interface ScheduleProposal {
   alternatives?: WeekPlacementCandidate[];
   // A question instead of Akkoord: the dialog shows `reason` and these two buttons (engine/weekDrag.ts#decideMove).
   confirm?: { yes: string; no: string };
+  // Two trainings of one week that trade days (engine/weekSwap.ts): always exactly two changes, written
+  // together or not at all (AppDataContext#applyProposal, storage/weekSwap.ts).
+  swap?: true;
 }
 
 function templateName(templates: Map<string, SessionTemplate>, id: string): string {

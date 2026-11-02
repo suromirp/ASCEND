@@ -933,9 +933,10 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Sleep een training met het greepje naar een andere dag. Het gaat zoals Verplaatsen in het actieblad. Uit haalt de grepen weg.',
     points: [
       { head: 'Een botsing', text: 'liggen er dan twee zware beendagen binnen 48 uur, of is het je rustdag, dan zie je dat al tijdens het slepen en krijg je bij het loslaten een voorstel met Akkoord. Liever niet laat alles staan.' },
-      { head: 'Een test', text: 'een testloop verplaats je altijd met Akkoord.' },
+      { head: 'Loslaten op een training', text: 'staat er op die dag precies één training die mag bewegen, dan ruilen de twee van dag. De dag kleurt mee en zegt "Ruilen met". Staan er twee, dan verplaats je gewoon. Ruilen kan ook altijd via het actieblad, ook met deze instelling uit.' },
+      { head: 'Een test', text: 'een testloop verplaats of ruil je altijd met Akkoord.' },
       { head: 'Een wedstrijd', text: 'hoort er niet bij. Die verplaats je via je doel op de Ascend-tab.' },
-      { head: 'Ongedaan maken', text: 'een gewone verplaatsing gaat meteen, met Ongedaan maken in de melding.' },
+      { head: 'Ongedaan maken', text: 'een gewone verplaatsing of ruil gaat meteen, met Ongedaan maken in de melding.' },
     ],
   },
   testStilstaan: {

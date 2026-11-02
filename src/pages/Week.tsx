@@ -48,7 +48,7 @@ import { hoursMinutes } from '../utils/hoursMinutes';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt } = useAppData();
+  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
@@ -157,7 +157,18 @@ export function WeekPage() {
   // een schone verplaatsing gaat meteen (Ongedaan maken staat in de melding), een cascade, een botsing,
   // een rustdag of een test vraagt eerst om Akkoord. Twee zware beendagen achter elkaar vragen "Toch hier?".
   async function moveTo(sessionId: string, date: string, opts?: DecideOptions): Promise<MoveDecision['action']> {
+    // Losgelaten op een dag met precies één training die mag bewegen: de twee ruilen (engine/weekSwap.ts).
+    if (opts?.verdict?.kind === 'swap' && opts.verdict.swapWithId) return swapWith(sessionId, opts.verdict.swapWithId);
     const decision = decideMove(moveSession(sessionId, date), { ...opts, legsClose: legsCloseAt(sessionId, date) });
+    if (decision.action === 'apply') await applyProposal(decision.proposal);
+    else if (decision.action === 'ask') setPendingProposal(decision.proposal);
+    return decision.action;
+  }
+
+  // Ruilen, uit het actieblad en uit het slepen: dezelfde weg als Verplaatsen. Schoon gaat meteen (Ongedaan
+  // maken in de melding), anders het blad met Akkoord en wat er botst.
+  async function swapWith(sessionId: string, otherId: string): Promise<MoveDecision['action']> {
+    const decision = proposeSwap(sessionId, otherId);
     if (decision.action === 'apply') await applyProposal(decision.proposal);
     else if (decision.action === 'ask') setPendingProposal(decision.proposal);
     return decision.action;
@@ -375,6 +386,11 @@ export function WeekPage() {
           }}
           onMove={(date) => {
             void moveTo(selected.id, date);
+            setSelected(null);
+          }}
+          swapOptions={swapOptionsFor(selected.id)}
+          onSwap={(otherId) => {
+            swapWith(selected.id, otherId).catch((err) => console.error('Ruilen mislukt:', err));
             setSelected(null);
           }}
           suggestions={suggestMoves(selected.id)}

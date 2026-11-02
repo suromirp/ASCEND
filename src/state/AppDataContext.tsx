@@ -53,6 +53,7 @@ import { goalDetailsOf } from '../engine/goalLabels';
 import { setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
 import { writeCatchUp } from '../storage/catchUpApply';
+import { writeSwap } from '../storage/weekSwap';
 import { linkLogNow, skipMissedNow, unlinkLogsNow, updateMissedMemory } from '../storage/missedTraining';
 import { askLine, autoSkipNotice, resolveMissedMemory, resolveMissedSettings, MISSED_MEMORY_KEY, type MissedMemory, type ResolvedMissedMemory } from '../engine/missedTraining';
 import { planIllnessChange, type IllnessChange, type IllnessPlan } from '../engine/illness';
@@ -62,7 +63,8 @@ import { leaveKey, withNote } from '../engine/leaveEdit';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
 import { applyRestDayInOrder, planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
-import { dayVerdicts, legsCloseAfterMove, newConcernLines, type DayVerdict } from '../engine/weekDrag';
+import { dayVerdicts, legsCloseAfterMove, newConcernLines, type DayVerdict, type DragContext, type MoveDecision } from '../engine/weekDrag';
+import { checkSwap, decideSwap, legsCloseAfterSwap, swapOptions, withSwapVerdicts, type SwapOption } from '../engine/weekSwap';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
@@ -445,6 +447,10 @@ interface AppData {
   // Geeft deze plek twee zware beendagen achter elkaar die de regels niet als botsing zien? Dan vraagt
   // Week eerst "Toch hier?" (engine/weekDrag.ts#legsCloseAfterMove).
   legsCloseAt: (sessionId: string, date: string) => boolean;
+  // Twee trainingen van één week ruilen van dag (engine/weekSwap.ts): het besluit (meteen, vragen of niet)
+  // en de trainingen waarmee deze kan ruilen, voor het actieblad in Week.
+  proposeSwap: (sessionId: string, otherId: string) => MoveDecision;
+  swapOptionsFor: (sessionId: string) => SwapOption[];
   applyProposal: (proposal: ScheduleProposal) => Promise<void>;
   // Phase 5: folded into the same proposal-confirm pattern moveSession
   // already uses (Technical Architecture v0.3.1 REVISED,
@@ -1821,18 +1827,28 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones],
   );
 
-  const dragVerdicts = useCallback(
-    (sessionId: string, weekStart: string): DayVerdict[] => {
+  // The week of `weekStart` and the weeks around it, with what keeps a day free: for dragging and swapping.
+  const dragContextFor = useCallback(
+    (weekStart: string): DragContext => {
       const today = todayISO();
       const monday = mondayOfWeek(weekStart);
       const nearby = [-7, 0, 7].flatMap((offset) => sessionsForWeek(addDays(monday, offset)));
-      return dayVerdicts({
+      return {
         sessions: nearby, templates, logs: sessionLogs, program,
         dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference, asOf: today,
         move: { leave: settings.leavePeriods, restDay: settings.restDay ?? 1, goalDay: planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal), illness: settings.illnessEpisodes },
-      }, sessionId, monday);
+      };
     },
     [sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones],
+  );
+
+  // A day with exactly one training that may move becomes Ruilen (engine/weekSwap.ts#withSwapVerdicts).
+  const dragVerdicts = useCallback(
+    (sessionId: string, weekStart: string): DayVerdict[] => {
+      const ctx = dragContextFor(weekStart);
+      return withSwapVerdicts(ctx, sessionId, dayVerdicts(ctx, sessionId, mondayOfWeek(weekStart)));
+    },
+    [dragContextFor],
   );
 
   // A same-date change (toDate === fromDate) is how proposeSkipEngine
@@ -1856,6 +1872,24 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // Your own move or skip is yours: the automatic planning leaves it.
       // Back on its own day it is the plan's again.
       const lock = { by: 'user' as const, at: new Date().toISOString() };
+      // Ruilen (engine/weekSwap.ts): beide rijen in één keer, of geen van beide (storage/weekSwap.ts).
+      if (proposal.swap && proposal.changes.length === 2) {
+        const [ca, cb] = proposal.changes;
+        const { before: swapped } = await writeSwap({ aId: ca.sessionId, aFrom: ca.fromDate, bId: cb.sessionId, bFrom: cb.fromDate }, lock);
+        setRecentChange({
+          id: makeId('usermove'),
+          trigger: 'session_moved',
+          title: `${ca.templateName} en ${cb.templateName} geruild`,
+          lines: proposal.changes.map((c) => `${c.templateName}: ${day(c.fromDate)} → ${day(c.toDate)}`),
+          why: '',
+          before: swapped,
+          addedIds: [],
+          createdAt: new Date().toISOString(),
+        });
+        planRevision++;
+        await refresh();
+        return;
+      }
       // Inhalen: een gemiste training die naar vandaag of later gaat. De rij van toen blijft op zijn dag,
       // overgeslagen, en er komt een nieuwe rij op de gekozen dag (engine/catchUp.ts).
       const catchUpTemplates = new Map((await SessionTemplatesRepo.getAll()).map((t) => [t.id, t]));
@@ -2803,6 +2837,31 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   }, [weekCheckInput]);
 
+  // Ruilen: dezelfde controles als Verplaatsen, voor beide richtingen (engine/weekSwap.ts#decideSwap).
+  const proposeSwap = useCallback((sessionId: string, otherId: string): MoveDecision => {
+    const session = plannedSessions.find((s) => s.id === sessionId);
+    if (!session) return { action: 'none', proposal: { changes: [], reason: 'Sessie niet gevonden.', resolved: false } };
+    const check = checkSwap(dragContextFor(session.scheduledDate), sessionId, otherId);
+    let legsClose = false;
+    try {
+      legsClose = check.ok && legsCloseAfterSwap(weekCheckInput(), sessionId, otherId);
+    } catch (err) {
+      console.error('De controle op zware beendagen bij het ruilen kon niet worden berekend:', err);
+    }
+    return decideSwap(check, { legsClose });
+  }, [plannedSessions, dragContextFor, weekCheckInput]);
+
+  const swapOptionsFor = useCallback((sessionId: string): SwapOption[] => {
+    const session = plannedSessions.find((s) => s.id === sessionId);
+    if (!session) return [];
+    try {
+      return swapOptions(dragContextFor(session.scheduledDate), sessionId);
+    } catch (err) {
+      console.error('De trainingen om mee te ruilen konden niet worden berekend:', err);
+      return [];
+    }
+  }, [plannedSessions, dragContextFor]);
+
   // The proposal to move a test after what you noted about the evening before. Its own memo
   // so the coach advice above stays as it was; the answer is kept like any advice response.
   const influenceMoveNow = useMemo(() => {
@@ -2871,6 +2930,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     dragVerdicts,
     previewDrop,
     legsCloseAt,
+    proposeSwap,
+    swapOptionsFor,
     applyProposal,
     proposeSkip,
     proposeBackOnPlan,

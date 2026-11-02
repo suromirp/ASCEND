@@ -38,7 +38,8 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
 }
 
 // --- wat elke dag zegt -------------------------------------------------------------
-export type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'blocked';
+// swap: the day holds exactly one training that may move; letting go trades their days (engine/weekSwap.ts).
+export type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'blocked' | 'swap';
 
 export interface DayVerdict {
   date: string;
@@ -53,6 +54,8 @@ export interface DayVerdict {
   // Loslaten opent het blad met Akkoord, met deze reden erin.
   ask: boolean;
   askReason?: string;
+  // kind 'swap': the training that goes the other way.
+  swapWithId?: string;
 }
 
 export interface DragContext {

@@ -40,6 +40,12 @@ describe('sessionSheetActions', () => {
     expect(sessionSheetActions({ date: '2026-10-20', today: TODAY, skipped: true, canComeBack: false, kind: 'log' })).toEqual({ main: 'move', rows: ['done'] });
     expect(sessionSheetActions({ date: '2026-10-20', today: TODAY, skipped: true, canComeBack: false, kind: 'inApp' })).toEqual({ main: 'move', rows: ['start'] });
   });
+
+  it('Ruilen staat direct na Verplaatsen, alleen als Week een training heeft om mee te ruilen', () => {
+    expect(sessionSheetActions({ date: '2026-10-23', today: TODAY, skipped: false, canComeBack: false, kind: 'log', canSwap: true })).toEqual({ main: 'move', rows: ['swap', 'preview', 'doToday', 'skip'] });
+    expect(sessionSheetActions({ date: TODAY, today: TODAY, skipped: false, canComeBack: false, kind: 'log', canSwap: true })).toEqual({ main: 'done', rows: ['start', 'move', 'swap', 'skip'] });
+    expect(sessionSheetActions({ date: '2026-10-24', today: TODAY, skipped: true, canComeBack: true, kind: 'log', canSwap: true }).rows).not.toContain('swap');
+  });
 });
 
 describe('previewDayLine: de dag en week van de training zelf', () => {

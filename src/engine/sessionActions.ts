@@ -26,12 +26,13 @@ import { isWorkSet } from './workSets';
 // - start: open the training screen (strength logged in ASCEND, or a run you
 //   are about to do)
 // - move, skip: the move step, and skipping
+// - swap: trade days with another training of the same week (engine/weekSwap.ts), only in Week
 // - backOnPlan: "Toch doen", a skipped training back on its own day
 // - doToday: a training of a later day, done today
 // - preview: the training screen of a later day to read, without ticking off
 // - saveWorkout: the MacroFactor workout of that day is in the last file read
 //   but not saved yet; one tap saves it, ticking off is not needed
-export type SheetAction = 'done' | 'start' | 'move' | 'skip' | 'backOnPlan' | 'doToday' | 'preview' | 'saveWorkout';
+export type SheetAction = 'done' | 'start' | 'move' | 'swap' | 'skip' | 'backOnPlan' | 'doToday' | 'preview' | 'saveWorkout';
 
 // How a training is ticked off: strength kept in MacroFactor (one short step
 // in the sheet), strength kept in ASCEND (the training screen), or anything
@@ -43,7 +44,7 @@ export interface SheetActions {
   rows: SheetAction[];
 }
 
-export function sessionSheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting = false }: {
+export function sessionSheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting = false, canSwap = false }: {
   date: string;
   today: string;
   skipped: boolean;
@@ -52,7 +53,10 @@ export function sessionSheetActions({ date, today, skipped, canComeBack, kind, w
   kind: DoneKind;
   // pendingMacroFactorWorkout found one for this training.
   workoutWaiting?: boolean;
+  // Week has another training of this week to trade days with: "Ruilen" right after moving.
+  canSwap?: boolean;
 }): SheetActions {
+  const swap: SheetAction[] = canSwap && !skipped ? ['swap'] : [];
   const due = date <= today;
   // Opslaan first, with Gedaan and Verplaatsen still there if this is not that workout.
   if (workoutWaiting && due && kind === 'quick') return { main: 'saveWorkout', rows: ['done', 'move'] };
@@ -62,9 +66,9 @@ export function sessionSheetActions({ date, today, skipped, canComeBack, kind, w
     // Its day is over: move it to a day that comes, or say it happened after all.
     return { main: 'move', rows: due ? [tick] : [] };
   }
-  if (due) return { main: tick, rows: kind === 'log' ? ['start', 'move', 'skip'] : ['move', 'skip'] };
+  if (due) return { main: tick, rows: kind === 'log' ? ['start', 'move', ...swap, 'skip'] : ['move', ...swap, 'skip'] };
   // A day still to come: read how it goes first (harmless), then the choices that change something.
-  return { main: 'move', rows: ['preview', 'doToday', 'skip'] };
+  return { main: 'move', rows: [...swap, 'preview', 'doToday', 'skip'] };
 }
 
 // The line over a training screen opened ahead ("Hoe je het doet"): the day and

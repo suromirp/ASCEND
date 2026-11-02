@@ -32,7 +32,7 @@ export function RescheduleDialog({
         <div ref={sheetRef} className={`relative w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-6">
-            <div className="-mt-2"><SheetHeader eyebrow={catchUp ? 'Inhalen' : 'Schema-aanpassing'} onClose={requestClose} /></div>
+            <div className="-mt-2"><SheetHeader eyebrow={proposal.swap ? 'Ruilen' : catchUp ? 'Inhalen' : 'Schema-aanpassing'} onClose={requestClose} /></div>
             <div className="mt-3 flex flex-col gap-2">
               {proposal.changes.map((c) => (
                 <div key={c.sessionId} className="flex items-center justify-between text-sm">
@@ -63,7 +63,9 @@ export function RescheduleDialog({
             {/* An unresolved clash is never applied under the same button as a
                 clean one: keeping the plan is the default, moving anyway is
                 a conscious second choice. */}
-            {proposal.resolved ? (
+            {/* Ruilen (engine/weekSwap.ts) komt hier alleen als er iets botst of het een test is: de zin zegt
+                droog wat, en de keuze is Liever niet links, Akkoord rechts. */}
+            {proposal.resolved || proposal.swap ? (
               <div className="mt-5 flex gap-3">
                 <SecondaryButton onClick={requestClose}>Liever niet</SecondaryButton>
                 <PrimaryButton onClick={() => { haptics.tap(); onApply(); }} fullWidth={false}>Akkoord</PrimaryButton>
