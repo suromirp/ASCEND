@@ -52,6 +52,7 @@ import { resolveWaveSettings } from './waves';
 import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
 import { resolveStreamsBackup } from './streamsBackup';
+import { backupWhereText, resolveAutoBackup, type AutoBackupFailureReason, type BackupWhere } from './autoBackup';
 import { SIGNAL_KEYS, signalsOnCount } from './signalSettings';
 import { resolveProposalTidyMonths } from './proposalTidy';
 import { storageUseText, type StorageEstimate } from './storageUse';
@@ -139,6 +140,10 @@ export interface SettingsFacts {
   // Of de browser een vaste map kan onthouden en of die gekozen is.
   folderSupported: boolean;
   folderChosen: boolean;
+  // De automatische back-up op dit toestel: in de app of de browser, waar de laatste staat, de naam
+  // van de map waar hij stil naartoe kan (in de browser alleen als de vaste map gekozen is) en de
+  // reden als de laatste poging mislukte. Weglaten zolang dat nog niet is gelezen.
+  autoBackup?: { platform: 'app' | 'browser'; where?: BackupWhere; folder?: string; failure?: AutoBackupFailureReason };
   storage: 'protected' | 'not_protected' | 'unsupported' | undefined;
   // De ruimte die de volledige reeksen van loopjes en tochten innemen (bytes); weglaten zolang
   // dat nog niet is geteld.
@@ -184,6 +189,17 @@ function noticeState(f: SettingsFacts): { on: boolean; support: NoticeSupport } 
   const n = resolveMorningNotice(f.settings.morningNotice);
   const support = f.notice?.support ?? 'ready';
   return { on: n.enabled && support === 'ready' && (f.notice?.granted ?? true), support };
+}
+
+// Automatische back-up: hoe vaak, en waar hij heen gaat of dat Vandaag een kaart neerzet. Mislukte de
+// laatste poging, dan een amber stip; de regel met wat je kunt doen staat onder de groep.
+function autoBackupRow(f: SettingsFacts): RowSummary {
+  const frequency = resolveAutoBackup(f.settings.autoBackup);
+  if (frequency === 'off') return { value: choiceShort('autoBackup', frequency), dim: true };
+  const when = frequency === 'weekly' ? 'Zondagavond' : 'Elke avond';
+  const folder = f.autoBackup?.folder;
+  const sub = f.autoBackup?.failure ? 'De laatste keer lukte het niet' : folder ? `${when}, in ${folder}` : `${when}, met een kaart op Vandaag`;
+  return { value: choiceShort('autoBackup', frequency), sub, ...(f.autoBackup?.failure ? { dot: 'warn' as const } : {}) };
 }
 
 // ---- hulpjes -----------------------------------------------------------------
@@ -275,7 +291,7 @@ export function rowContext(f: SettingsFacts): RowContext {
     longSundayVisible: f.longSundayVisible,
     noGoal: f.noGoal === true,
     sameDayAllowed: f.pairing !== 'never',
-    folderSupported: f.folderSupported,
+    folderSupported: f.folderSupported || f.autoBackup?.platform === 'app',
     noticeAvailable: support !== 'unavailable' && support !== 'not_installed',
     timed: deviceOf(f)?.timed === true,
     liveUpdate: f.liveUpdate === true,
@@ -805,9 +821,14 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: 'Komt later', dim: true };
 
     // Gegevens en back-up
-    case 'backup':
-      return { value: backupAgoText(age), dim: age.level === 'never' };
+    case 'backup': {
+      const where = age.days !== null ? backupWhereText(f.autoBackup?.where) : undefined;
+      return { value: backupAgoText(age), dim: age.level === 'never', ...(where ? { sub: where } : {}) };
+    }
+    case 'auto-backup':
+      return autoBackupRow(f);
     case 'backupmap':
+      if (f.autoBackup?.platform === 'app' && f.autoBackup.folder) return { value: f.autoBackup.folder };
       return f.folderSupported ? { value: f.folderChosen ? 'Gekozen' : 'Niet gekozen', dim: !f.folderChosen } : {};
     case 'opslag':
       if (f.storage === 'protected') return { value: 'Ja' };

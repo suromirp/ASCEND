@@ -1004,6 +1004,13 @@ export interface AppSettings {
   // "Automatisch bijwerken" (engine/liveUpdate.ts): de Android-app haalt een nieuwere webversie
   // stil op voor de volgende start. Absent = aan. Optional and additive.
   autoUpdate?: boolean;
+  // "Automatische back-up" (engine/autoBackup.ts, docs/beslissingen/2026-11-02-automatische-backup.md):
+  // 'weekly' (zondagavond, the advice, absent = weekly), 'daily' or 'off'; and how many of the files
+  // ASCEND wrote itself stay (4, 8 the advice, 16, or 0 for all). Where the files go and which ones
+  // ASCEND wrote is of this device only and never travels in a backup (storage/autoBackup.ts).
+  // Optional and additive; a backup keeps only valid values (storage/migrations.ts#migrateAutoBackupSettings).
+  autoBackup?: 'off' | 'weekly' | 'daily';
+  autoBackupKeep?: 0 | 4 | 8 | 16;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

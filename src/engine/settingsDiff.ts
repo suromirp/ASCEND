@@ -17,6 +17,7 @@ import type { AppSettings } from '../storage/database';
 import { choiceShort, type ChoiceId } from '../data/settingsChoices';
 import type { SettingsPageId } from '../data/settingsLayout';
 import { bootGoalKm } from './bootBreakIn';
+import { AUTO_BACKUP_ADVICE, AUTO_BACKUP_KEEP_ADVICE, resolveAutoBackup, resolveAutoBackupKeep } from './autoBackup';
 import { resolveFigureSetting } from './figureSettings';
 import { resolveIntensityCounting } from './intensitySettings';
 import { resolveMotion } from './motionSettings';
@@ -377,6 +378,18 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     differs: (s) => resolveStreamsBackup(s) !== DEFAULT_STREAMS_BACKUP,
     value: (s) => choiceShort('reeksenBackup', resolveStreamsBackup(s)),
     reset: () => ({ streamsBackup: undefined, streamsInBackup: undefined }),
+  },
+  {
+    id: 'auto-backup', title: 'Automatische back-up', page: 'gegevens',
+    differs: (s) => resolveAutoBackup(s.autoBackup) !== AUTO_BACKUP_ADVICE,
+    value: (s) => choiceShort('autoBackup', resolveAutoBackup(s.autoBackup)),
+    reset: () => ({ autoBackup: undefined }),
+  },
+  {
+    id: 'backup-bewaren', title: 'Back-ups bewaren', page: 'gegevens',
+    differs: (s) => resolveAutoBackupKeep(s.autoBackupKeep) !== AUTO_BACKUP_KEEP_ADVICE,
+    value: (s) => choiceShort('autoBackupKeep', resolveAutoBackupKeep(s.autoBackupKeep)),
+    reset: () => ({ autoBackupKeep: undefined }),
   },
   {
     id: 'voorstellen-opruimen', title: 'Oude voorstellen opruimen', page: 'gegevens',

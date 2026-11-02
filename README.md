@@ -167,6 +167,12 @@ Gegevens en back-up, Laatste back-up) en zet die in de app terug; de welkomstree
 heeft er een knop voor. Gebruik daarna één van de twee, anders heb je twee
 logboeken.
 
+**Automatische back-up.** Standaard maakt ASCEND elke zondagavond een back-up
+(Instellingen, Gegevens en back-up, Automatische back-up; ook dagelijks of uit).
+In de app komt het bestand vanzelf in Documenten/ASCEND op je telefoon en blijven
+de laatste 8 staan; in de browser staat er op dat moment een kaart op Vandaag met
+Back-up maken, of gaat hij stil naar je vaste map als je browser die vrijgeeft.
+
 **Bijwerken.** De app werkt zichzelf bij: de deploy zet naast de site een zip van
 de app en een klein `app-versie.json`. De app kijkt bij het openen stil of er een
 nieuwere versie is en gebruikt hem bij de volgende start; er gaat niets van jou

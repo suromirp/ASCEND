@@ -5,6 +5,7 @@ import { longDate } from '../../../engine/settingsSummary';
 import { getPersistenceStatus, requestPersistentStorage, type PersistenceStatus } from '../../../storage/persistence';
 import { backupErrorText, backupFileName, listSnapshots, restoreSnapshot } from '../../../storage/backup';
 import { webBackupFileAdapter } from '../../../storage/backupFileAdapter';
+import { chooseBackupFolder } from '../../../storage/autoBackup';
 import type { PreImportSnapshot } from '../../../storage/backupTypes';
 import { checkForUpdate } from '../../../utils/appUpdate';
 import { buildLabel } from '../../../utils/buildLabel';
@@ -73,7 +74,7 @@ export function FolderSheet({ chosen, onChanged, onClose }: { chosen: boolean; o
           onClick={async () => {
             setBusy(true);
             try {
-              await webBackupFileAdapter.choosePreferredDirectory?.();
+              await chooseBackupFolder();
               onChanged();
             } finally {
               setBusy(false);

@@ -5,8 +5,8 @@ const ALL: TodayCardId[] = ['backup', 'missed', 'advice', 'freshStart', 'ramp', 
 
 describe('arrangeToday', () => {
   it('geeft elke kaart een vaste plek: veiligheid, ochtend, opbouwen, vandaag, gisteren, onderhoud', () => {
-    expect(TODAY_CARD_RANK.map((c) => c.id)).toEqual(['ill', 'illnessSign', 'morning', 'ramp', 'advice', 'missed', 'freshStart', 'backup']);
-    expect(TODAY_CARD_RANK.map((c) => c.group)).toEqual(['safety', 'safety', 'morning', 'recovery', 'today', 'yesterday', 'upkeep', 'upkeep']);
+    expect(TODAY_CARD_RANK.map((c) => c.id)).toEqual(['ill', 'illnessSign', 'morning', 'ramp', 'advice', 'missed', 'freshStart', 'backup', 'backupDue']);
+    expect(TODAY_CARD_RANK.map((c) => c.group)).toEqual(['safety', 'safety', 'morning', 'recovery', 'today', 'yesterday', 'upkeep', 'upkeep', 'upkeep']);
   });
 
   it('laat met het advies één kaart boven de missie, de rest eronder in dezelfde volgorde', () => {
@@ -42,6 +42,11 @@ describe('arrangeToday', () => {
 
   it('de back-up mag boven als er niets voor gaat dat boven mag', () => {
     expect(arrangeToday(['advice', 'missed', 'backup'], 1)).toEqual({ above: ['backup'], below: ['advice', 'missed'] });
+  });
+
+  it('Tijd voor je back-up (de automatische back-up) staat altijd onder de missie', () => {
+    expect(arrangeToday(['backupDue'], 1)).toEqual({ above: [], below: ['backupDue'] });
+    expect(arrangeToday(['backupDue', 'missed'], 'all')).toEqual({ above: [], below: ['missed', 'backupDue'] });
   });
 
   it('twee boven als je dat kiest', () => {

@@ -38,6 +38,7 @@ import {
 import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
 import { runBootMigrations } from '../storage/bootMigrations';
 import { tidyOldProposals } from '../storage/proposalTidy';
+import { noteBackupMade } from '../storage/autoBackup';
 import { withPlausibleDurations } from '../engine/logDuration';
 import { runBootUnderLock } from '../storage/bootLock';
 import { describeStorageError, describeWriteError } from '../storage/storageError';
@@ -2851,7 +2852,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
       const result = await webBackupFileAdapter.saveBackup(blob, backupFileName(envelope.createdAt));
       if (!result.success) return null;
-      await updateSettings({ lastExportedAt: new Date().toISOString() });
+      const at = new Date().toISOString();
+      await updateSettings({ lastExportedAt: at });
+      // Wanneer en waar, voor Laatste back-up; een mislukte automatische back-up is daarmee opgelost.
+      await noteBackupMade(result.folder ? { kind: 'folder', label: result.folder } : result.viaDownload ? { kind: 'download' } : { kind: 'file' }, at).catch(() => undefined);
       return result.viaDownload ? 'downloaded' : 'saved';
     },
     resetDemoData: async () => {
