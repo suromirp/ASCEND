@@ -176,7 +176,7 @@ Never hardcode hex or rgba values in a component.
 - `html { color-scheme: dark }`: the app is dark-only, there is no light
   theme to preserve; the sky band is one light surface, not a theme
 - Shared primitives live in `src/components/ui.tsx` (`Card`, `LightCard`,
-  `PrimaryButton`, `SecondaryButton`, `StatusDot`, `StatusPill`, `Eyebrow`,
+  `PrimaryButton`, `SecondaryButton`, `StatusPill`, `Eyebrow`,
   `Stat`, `Ring`, `Meter`, `ZoneBar`, `Toggle`, `InfoButton`), `TextButton` and
   `TextLink` in `TextButton.tsx` (a small action in mint or dimmed, no underline,
   44 px; only a source link outside the app stays underlined), and the sky in
