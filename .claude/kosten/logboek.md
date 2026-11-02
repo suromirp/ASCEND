@@ -132,3 +132,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Health Connect laatste twee punten, Sherpa, opus, hervat, 0; live
 - 2026-11-02, Opzet spierindex, Scout, opus, 98k, 2 min, 0
 - 2026-11-02, Trainingen ruilen, Sherpa, opus, 203k, 30 min, review loopt
+- 2026-11-02, Review ruilen, Warden, opus, rood (geen zichtbare uitkomst bij een mislukte ruil; knoppen anders dan Verplaatsen door mijn opdracht)
