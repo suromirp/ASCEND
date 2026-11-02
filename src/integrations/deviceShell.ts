@@ -71,16 +71,19 @@ export const browserShell: DeviceShell = {
 // ---- de Android-app ----------------------------------------------------------------------
 
 function androidShell(): DeviceShell {
-  const haptics = import('@capacitor/haptics').then((m) => m.Haptics);
-  const keepAwake = import('@capacitor-community/keep-awake').then((m) => m.KeepAwake);
-  const app = import('@capacitor/app').then((m) => m.App);
+  // Modules in een belofte, nooit de plugin zelf: een plugin is een Proxy met een methode `then`
+  // en een belofte die ermee vervuld wordt, blijft hangen.
+  const haptics = import('@capacitor/haptics');
+  const keepAwake = import('@capacitor-community/keep-awake');
+  const app = import('@capacitor/app');
   let holds = 0;
 
   return {
     // Trillen via de plugin Haptics; een patroon als losse stoten na elkaar.
     vibrate(pattern) {
       const list = typeof pattern === 'number' ? [pattern] : pattern;
-      void haptics.then((h) => {
+      void haptics.then((m) => {
+        const h = m.Haptics;
         let at = 0;
         list.forEach((ms, i) => {
           if (i % 2 === 0 && ms > 0) window.setTimeout(() => void h.vibrate({ duration: ms }).catch(() => undefined), at);
@@ -90,20 +93,20 @@ function androidShell(): DeviceShell {
     },
     holdScreen() {
       holds++;
-      void keepAwake.then((k) => k.keepAwake()).catch(() => undefined);
+      void keepAwake.then((m) => m.KeepAwake.keepAwake()).catch(() => undefined);
       let released = false;
       return () => {
         if (released) return;
         released = true;
         holds--;
-        if (holds === 0) void keepAwake.then((k) => k.allowSleep()).catch(() => undefined);
+        if (holds === 0) void keepAwake.then((m) => m.KeepAwake.allowSleep()).catch(() => undefined);
       };
     },
     onBackButton(handler) {
       let remove: (() => void) | undefined;
       let gone = false;
-      void app.then((a) =>
-        a.addListener('backButton', (e) => handler(e.canGoBack)).then((h) => {
+      void app.then((m) =>
+        m.App.addListener('backButton', (e) => handler(e.canGoBack)).then((h) => {
           if (gone) void h.remove();
           else remove = () => void h.remove();
         }),
@@ -114,7 +117,7 @@ function androidShell(): DeviceShell {
       };
     },
     exitApp() {
-      void app.then((a) => a.exitApp()).catch(() => undefined);
+      void app.then((m) => m.App.exitApp()).catch(() => undefined);
     },
     start() {
       // Snelkoppelingen onder het app-icoon en de tik op de widget: een adres als
@@ -124,7 +127,8 @@ function androidShell(): DeviceShell {
         const route = url ? routeFromNativeShortcut(url) : null;
         if (route) window.location.hash = `#${route}`;
       };
-      void app.then(async (a) => {
+      void app.then(async (m) => {
+        const a = m.App;
         void a.addListener('appUrlOpen', (e) => open(e.url));
         open((await a.getLaunchUrl())?.url);
       }).catch(() => undefined);
