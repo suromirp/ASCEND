@@ -52,6 +52,11 @@ export interface TrekDetails {
   name: string;
   terrain: TrekTerrain;
   packKg?: number;
+  // The highest point of the tocht in metres, for the mountain weather at that height
+  // (engine/mountainWeather.ts). Only for terrain mountain or snow. Optional and additive: older
+  // data has none, and a damaged value is dropped on import without losing the tocht
+  // (storage/migrations.ts#migrateLeavePeriods).
+  highestM?: number;
   tent: boolean; // with tent and sleeping bag
   importance: TrekImportance;
 }

@@ -17,6 +17,9 @@ import { baseWeightGrams, formatKg, packProgress } from '../engine/packList';
 import { formatDateNL, formatMonthNL, todayISO } from '../utils/dates';
 import { Icon } from '../components/icons';
 import { MIN_BREAKIN_WEEKS, type BootBreakInStatus } from '../engine/bootBreakIn';
+import { heatAcclimationLine } from '../engine/heatAcclimation';
+import { signalOn } from '../engine/signalSettings';
+import { useAppData } from '../state/AppDataContext';
 
 function rowMeta(row: TimelineTask, boots?: BootBreakInStatus): string {
   if (row.task.id === 'schoenen' && boots && (boots.kind === 'busy' || boots.kind === 'late') && row.status !== 'done') return boots.kind === 'late' ? `te laat voor ${MIN_BREAKIN_WEEKS} weken` : boots.line;
@@ -32,7 +35,10 @@ export function JourneyPage() {
   const [params, setParams] = useSearchParams();
   const { goalDate, state, derived, pick, progress, tick, untick, boots, setBoots } = useJourney();
   const { items } = usePackList();
+  const { settings } = useAppData();
   const today = todayISO();
+  // In de laatste weken voor een vertrek in de zomer (engine/heatAcclimation.ts).
+  const heatLine = heatAcclimationLine(goalDate, today, signalOn(settings, 'heatAcclimation'));
 
   const timeline = goalDate ? journeyTimeline(JOURNEY_TASKS, state, today, goalDate, pick?.task.id, derived) : [];
   // The open task lives in state, not in the address: the sheet takes one
@@ -78,6 +84,7 @@ export function JourneyPage() {
             <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
               Elke week komt er één taak naar voren op Vandaag. De rest staat hier op volgorde van wanneer het uiterlijk moet. Wat je niet haalt, blijft gewoon open.
             </p>
+            {heatLine && <p className="border-t pt-2 text-sm leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>{heatLine}</p>}
           </Card>
 
           <button onClick={() => navigate('/reis/paklijst')} className="text-left">

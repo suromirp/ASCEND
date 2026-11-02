@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Back-up door Android, tot en met Android 11 (docs/beslissingen/2026-11-01-android-app.md).
+     Alleen de opslag van de webview, waar IndexedDB en localStorage van ASCEND staan. Caches en de
+     bundels van de live update (in files/) gaan niet mee. -->
+<full-backup-content>
+    <include domain="root" path="app_webview/" />
+    <exclude domain="root" path="app_webview/Default/Cache/" />
+    <exclude domain="root" path="app_webview/Default/Code Cache/" />
+    <exclude domain="root" path="app_webview/Default/GPUCache/" />
+    <exclude domain="root" path="app_webview/Default/Service Worker/" />
+</full-backup-content>

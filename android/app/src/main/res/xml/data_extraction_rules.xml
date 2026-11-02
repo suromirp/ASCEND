@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Back-up door Android, vanaf Android 12 (docs/beslissingen/2026-11-01-android-app.md). Zowel de
+     cloudback-up als het overzetten naar een nieuwe telefoon nemen alleen de opslag van de webview
+     mee, waar IndexedDB en localStorage van ASCEND staan. Caches en de bundels van de live update
+     (in files/) gaan niet mee. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="root" path="app_webview/" />
+        <exclude domain="root" path="app_webview/Default/Cache/" />
+        <exclude domain="root" path="app_webview/Default/Code Cache/" />
+        <exclude domain="root" path="app_webview/Default/GPUCache/" />
+        <exclude domain="root" path="app_webview/Default/Service Worker/" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="root" path="app_webview/" />
+        <exclude domain="root" path="app_webview/Default/Cache/" />
+        <exclude domain="root" path="app_webview/Default/Code Cache/" />
+        <exclude domain="root" path="app_webview/Default/GPUCache/" />
+        <exclude domain="root" path="app_webview/Default/Service Worker/" />
+    </device-transfer>
+</data-extraction-rules>
