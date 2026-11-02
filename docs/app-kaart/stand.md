@@ -82,7 +82,7 @@ Nog geen metingen. Hier zie je straks hoe goed het getal bij jou klopt.
 
 --- kaart 5 ---
 Belasting per week
-Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien.
+Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien. Bij een test met inlopen telt de rest als rustig.
 Lopen
 Kracht
 gemiddelde vier weken ervoor
