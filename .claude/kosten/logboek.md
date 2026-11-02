@@ -147,3 +147,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Herkeuringen week eigenaar en instellingen, Warden, opus en sonnet, groen
 - 2026-11-02, Widget herstel laag, Sherpa, sonnet, hervat, 1
 - 2026-11-02, Week eigenaar, instellingen snel, widget beter, exports opruimen: live
+- 2026-11-02, Testloop rust, Sherpa, opus, 322k, 44 min; review Warden opus rood (wedstrijdblok geeft eigen melding)
