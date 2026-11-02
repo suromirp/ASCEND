@@ -34,16 +34,46 @@ export function parseISODate(iso: string): Date {
   return new Date(y, m - 1, d);
 }
 
+// De planner, de weekcontrole en het advies vragen bij het starten honderdduizenden keren naar dezelfde
+// paar honderd datums (docs/onderhoud/2026-11-02-sneller.md). addDays, isoWeekday en daysBetween onthouden
+// daarom hun uitkomst per invoer: dezelfde berekening als voorheen, dus dezelfde uitkomst, alleen niet steeds
+// opnieuw. Een geheugen begint opnieuw als het vol is.
+const DATE_CACHE_LIMIT = 20000;
+
+// Per datum een kleine tabel van verschuiving naar uitkomst.
+const addDaysCache = new Map<string, Map<number, string>>();
+let addDaysCount = 0;
 export function addDays(iso: string, days: number): string {
+  let byDays = addDaysCache.get(iso);
+  const known = byDays?.get(days);
+  if (known !== undefined) return known;
   const d = parseISODate(iso);
   d.setDate(d.getDate() + days);
-  return toISODate(d);
+  const result = toISODate(d);
+  if (addDaysCount >= DATE_CACHE_LIMIT) {
+    addDaysCache.clear();
+    addDaysCount = 0;
+    byDays = undefined;
+  }
+  if (!byDays) {
+    byDays = new Map();
+    addDaysCache.set(iso, byDays);
+  }
+  byDays.set(days, result);
+  addDaysCount++;
+  return result;
 }
 
 // Monday-start ISO weekday: Monday = 1 ... Sunday = 7
+const weekdayCache = new Map<string, number>();
 export function isoWeekday(iso: string): number {
+  const known = weekdayCache.get(iso);
+  if (known !== undefined) return known;
   const jsDay = parseISODate(iso).getDay(); // 0 = Sunday
-  return jsDay === 0 ? 7 : jsDay;
+  const result = jsDay === 0 ? 7 : jsDay;
+  if (weekdayCache.size >= DATE_CACHE_LIMIT) weekdayCache.clear();
+  weekdayCache.set(iso, result);
+  return result;
 }
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -66,10 +96,24 @@ export function weekDates(mondayIso: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(mondayIso, i));
 }
 
+// Het dagnummer van een datum (dagen sinds 1970 in UTC), onthouden per datum (zie addDays). Puur
+// rekenen op de kalender, zonder tijdzone: het geheugen blijft dus kloppen als de wintertijd ingaat of
+// je tijdzone wisselt terwijl de app openstaat. Voor elke echte datum dezelfde uitkomst als het oude
+// verschil tussen twee lokale middernachten, want dat rondde het uur verschil van de zomertijd weg.
+// Een ongeldige datum geeft NaN, net als voorheen.
+const dayNumberCache = new Map<string, number>();
+function dayNumberOf(iso: string): number {
+  const known = dayNumberCache.get(iso);
+  if (known !== undefined) return known;
+  const [y, m, d] = iso.split('-').map(Number);
+  const day = Date.UTC(y, m - 1, d) / (1000 * 60 * 60 * 24);
+  if (dayNumberCache.size >= DATE_CACHE_LIMIT) dayNumberCache.clear();
+  dayNumberCache.set(iso, day);
+  return day;
+}
+
 export function daysBetween(fromIso: string, toIso: string): number {
-  const a = parseISODate(fromIso).getTime();
-  const b = parseISODate(toIso).getTime();
-  return Math.round((b - a) / (1000 * 60 * 60 * 24));
+  return Math.round(dayNumberOf(toIso) - dayNumberOf(fromIso));
 }
 
 const DUTCH_WEEKDAYS_SHORT = ['MA', 'DI', 'WO', 'DO', 'VR', 'ZA', 'ZO'];

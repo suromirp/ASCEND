@@ -153,3 +153,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Herkeuring testloop rust, Warden, opus, groen; live
 - 2026-11-02, Week opnieuw herstel en herkeuring, Sherpa en Warden, opus, hervat, 1; live
 - 2026-11-02, Sneller, Sherpa, opus, 245k, 94 min; review sonnet groen, laatste punt loopt
+- 2026-11-02, Sneller laatste punten, Sherpa, opus, hervat; live
