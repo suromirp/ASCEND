@@ -23,6 +23,8 @@ import { allowedPairs } from '../engine/allowedPair';
 import { ChangeLogCard } from '../components/ChangeLogCard';
 import { LeavePeriodsCard } from '../components/LeavePeriods';
 import { adjustedSessionReasons } from '../engine/changeLog';
+import { placeReason } from '../engine/placeReason';
+import { patternDays } from '../engine/planPass';
 import { SeasonOverview } from '../components/SeasonOverview';
 import { useSeasonHeader } from '../components/useSeasonHeader';
 import { SessionActionSheet } from '../components/SessionActionSheet';
@@ -86,6 +88,12 @@ export function WeekPage() {
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const caughtUp = useMemo(() => caughtUpMap(plannedSessions), [plannedSessions]);
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
+  // "Waarom staat dit hier?": alleen uit wat er al bewaard is (engine/placeReason.ts).
+  const slotDays = useMemo(() => patternDays(templates, settings, settings.restDay ?? 1), [templates, settings]);
+  const selectedPlace = useMemo(
+    () => (selected ? placeReason({ session: selected, proposals: planChangeLog, patternDay: slotDays.get(selected.templateId), leavePeriods }) : undefined),
+    [selected, planChangeLog, slotDays, leavePeriods],
+  );
 
   // The time this week: what was done (the same sum as the weekly review, a loose
   // training included) of that plus what is still open at its planned length. A
@@ -346,6 +354,7 @@ export function WeekPage() {
           catchUp={!selectedLog && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id) }).ok}
           template={templateById.get(selected.templateId)!}
           allowedPair={pairs.get(selected.id)}
+          placeReason={selectedPlace}
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
           completedLog={selectedLog}
