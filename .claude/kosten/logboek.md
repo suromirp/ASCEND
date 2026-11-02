@@ -104,3 +104,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Zonder doel laatste rondes, Sherpa sonnet en Warden opus, hervat, 2 herstelrondes; een onveilige optie kwam uit mijn opdracht
 - 2026-11-02, Automatische back-up, Sherpa, opus (ontwikkelaar), 260k, 49 min, 0
 - 2026-11-02, Onderzoek 48 uur, Scout, opus, 152k, 5 min, 0
+- 2026-11-02, Review automatische back-up, Warden, opus (reviewer), rood: kon een eigen back-up met dezelfde naam overschrijven
