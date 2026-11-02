@@ -123,6 +123,16 @@ describe('buildStrengthProgramRecommendation', () => {
     expect(rec.rationale).toMatch(/conflicten tussen zware beensessies/);
   });
 
+  it('stelt bij een blok van 1 keer (Rustig aan) nooit 2 voor', () => {
+    const rec = buildStrengthProgramRecommendation({
+      currentStrategy: strategy({ sessionsPerWeek: 1 }),
+      triggers: ['repeated_leg_conflicts'],
+      goalOverviews: [],
+      asOf: ASOF,
+    });
+    expect(rec.suggestedSessionsPerWeek).toBe(1);
+  });
+
   it('never reduces frequency below 2 sessions/week', () => {
     const rec = buildStrengthProgramRecommendation({
       currentStrategy: strategy({ sessionsPerWeek: 2 }),

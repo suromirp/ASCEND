@@ -39,6 +39,7 @@ import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { SkyBand, SkyPanel } from '../components/SkyBand';
 import { InfluenceCard } from '../components/influence/InfluenceCard';
+import { waveHeader } from '../engine/programLayout';
 import { mainGoal } from '../engine/mainGoal';
 import { resolveCardOrder } from '../engine/cardOrder';
 
@@ -218,7 +219,7 @@ export function StandingPage() {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
       <SkyBand>
         <div>
-          {position && <Eyebrow>Week {position.weekInPhase} van {position.phase.weekCount}, {position.phase.name.toLowerCase()}</Eyebrow>}
+          {position && <Eyebrow>{waveHeader(position) ?? `Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}`}</Eyebrow>}
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe je ervoor staat, naast wat je vandaag doet.</p>
         </div>

@@ -13,7 +13,7 @@ export function YourWeekStandCard({ week }: { week: YourWeek }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="block w-full text-left" aria-label="Je week bekijken">
+      <button type="button" onClick={() => setOpen(true)} data-sheet-from className="block w-full text-left" aria-label="Je week bekijken">
         <Card className="flex flex-col gap-3">
           <div className="flex items-center gap-4">
             <Ring value={week.progress.fraction} label={week.minutesLine} size={88} stroke={8}>

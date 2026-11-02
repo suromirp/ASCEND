@@ -21,7 +21,7 @@ const AFTER_SHEET_MS = 280;
 export function YourWeekCard({ week, onOpen }: { week: YourWeek; onOpen: () => void }) {
   return (
     <Card className="p-0!">
-      <button type="button" onClick={onOpen} className="flex w-full items-center gap-4 rounded-2xl p-4 text-left" aria-label="Je week bekijken">
+      <button type="button" onClick={onOpen} data-sheet-from className="flex w-full items-center gap-4 rounded-2xl p-4 text-left" aria-label="Je week bekijken">
         <Ring value={week.progress.fraction} label={week.minutesLine} size={88} stroke={8}>
           <span className="font-sans text-xl font-semibold tabular-nums" style={{ color: 'var(--color-ink)' }}>{week.progress.minutes}</span>
           <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>min</span>
