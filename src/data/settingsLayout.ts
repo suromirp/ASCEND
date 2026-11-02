@@ -62,7 +62,7 @@ export interface PageRows {
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
     rows: ['bundel-dagen', 'meerdere', ...SPORT_IDS.map((id) => `sport-${id}`), 'wijzigingen', 'ambitie', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'rustdag-terug', 'weekvoorstel'],
-    advanced: ['bundel-niet-doorgegaan', 'lange-loop-benen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij'],
+    advanced: ['bundel-niet-doorgegaan', 'lange-loop-benen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test'],
   },
   doel: {
     rows: ['doelen', 'programma', 'bundel-zonder-doel', 'lange-zondag', 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge', 'doeltijd-voorstel', 'seizoensstrook', 'bundel-tochten', 'vrije-dagen'],
@@ -74,7 +74,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit'], advanced: [] },
   vandaag: {
-    rows: ['kaarten', 'lichterbenen', 'bundel-meldingen', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
+    rows: ['kaarten', 'lichterbenen', 'korter-vandaag', 'bundel-meldingen', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {

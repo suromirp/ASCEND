@@ -48,3 +48,5 @@ for the totals of now and no `trim`, the load (`weeklyLoad` with `LoadItem.split
 `sessionLoad` takes the split too but has no caller yet (built ahead).
 A test at RPE 7 or lower gets one quiet sentence on its card, the paces unchanged. The morning after a test or race
 the morning card asks the legs openly, without the leg-index guess (setting `overviews.legsAfterEffort`).
+
+**Zones after a test and details of older runs** (`engine/zoneUpdate.ts`, `engine/detailFetch.ts`, decision `docs/beslissingen/2026-11-02-week-en-vandaag-hulp.md`): after the latest test that counts (`countedTests`) a proposal with Akkoord sets a new `heartRate.lthr` (98% of the heart rate of km 2 to 5 of `runDetail.bestFive`, at least 3 bpm off), showing old and new per zone and the paces that already follow the test; the answer is kept per test in `settings.zoneAnswers` (setting `zonesAfterTest`). A run older than 14 days without `runDetail` fetches nothing when its sheet opens; "Details ophalen" fetches that one run (`ensureRunDetail` with `manual`, 15 seconds).

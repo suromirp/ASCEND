@@ -67,13 +67,15 @@ export interface ProposalSheetProps {
   // Changes that are not a row of the plan, one plain line each (a training
   // that only gets another length, like with another ambition).
   extraLines?: string[];
+  // The small heading above those lines. Default: another length over the coming two weeks.
+  extraTitle?: string;
   // One sentence under the title: what the proposal does as a whole.
   summary?: string;
   // Een stille tekstknop onder Akkoord en Liever niet ("Toch allebei" bij twee doelen die botsen).
   alternative?: { label: string; onClick: () => void };
 }
 
-export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'Voorstel', emptyText, listUntil, extraLines, summary, alternative }: ProposalSheetProps) {
+export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'Voorstel', emptyText, listUntil, extraLines, extraTitle = 'Andere lengte, de komende twee weken', summary, alternative }: ProposalSheetProps) {
   const { plannedSessions, templates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
   const planPreviewPass = previewPass ?? contextPass;
   const [busy, setBusy] = useState(false);
@@ -200,7 +202,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {extraLines && extraLines.length > 0 && (
                 <div className="mt-3 flex flex-col gap-1.5 rounded-xl border px-3.5 py-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-                  <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Andere lengte, de komende twee weken</p>
+                  <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{extraTitle}</p>
                   {extraLines.slice(0, 8).map((l) => <p key={l} className="text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink)' }}>{l}</p>)}
                   {extraLines.length > 8 && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>En nog <span className="tabular-nums">{extraLines.length - 8}</span> andere.</p>}
                 </div>

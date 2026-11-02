@@ -1,3 +1,4 @@
+import type { ZoneAnswer } from '../models/zoneAnswer';
 import type { AboveMission } from '../engine/todayCards';
 import { withHardSameDay, withLongRunThenLegs } from '../engine/scheduler';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
@@ -819,6 +820,16 @@ export interface AppSettings {
   // traffic light out of the fastest 5 km, 'count' keeps the clock as it ran. Read when the series is
   // read; what is stored stays as it was. Optional and additive.
   testStops?: 'skip' | 'count';
+  // "Minder tijd vandaag" in het menu van de missiekaart (engine/shorterToday.ts): 'kern' (advice,
+  // absent = kern) houdt de kernsets of de kern van de loop, 'volume' doet alles met minder, 'off'
+  // laat de regel weg. Optional and additive.
+  shorterToday?: 'kern' | 'volume' | 'off';
+  // "Zones bijwerken na een test" (engine/zoneUpdate.ts): na een test die meetelt een voorstel met
+  // Akkoord voor je drempelhartslag. Absent = on. Optional and additive.
+  zonesAfterTest?: boolean;
+  // De antwoorden op dat voorstel, per test (logId). Optional and additive
+  // (storage/migrations.ts#migrateZoneAnswers).
+  zoneAnswers?: ZoneAnswer[];
   // "Volledige reeks bewaren": keep the full series of a run or tocht on this device
   // (activityStreams). Absent = on. Off keeps only the derived profile and kilometres.
   // Optional and additive.

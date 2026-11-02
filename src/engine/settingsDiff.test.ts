@@ -71,6 +71,8 @@ const everything: AppSettings = {
   weekNoticeTime: '21:00',
   autoUpdate: false,
   testStops: 'count',
+  shorterToday: 'volume',
+  zonesAfterTest: false,
   readinessWeighting: 'equal',
   goalGrowth: 'careful',
   limitMargin: 'none',

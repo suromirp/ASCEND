@@ -7,6 +7,7 @@
 // regel (`sub`): een feit of een bron, nooit uitleg. Een test bewaakt dat een regel
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
+import { resolveShorterToday } from './shorterToday';
 import { isDefaultOrder, resolveCardOrder } from './cardOrder';
 import { kgLabel } from '../utils/kg';
 import { resolveTestStops } from './bestEffort';
@@ -701,6 +702,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('plaatjes', resolveExerciseArt(s)) };
     case 'lijfvraag':
       return { value: choiceShort('lijfvraag', resolveBodyCheck(s)) };
+    case 'korter-vandaag':
+      return { value: choiceShort('korterVandaag', resolveShorterToday(s.shorterToday)) };
+    case 'zones-na-test':
+      return { checked: s.zonesAfterTest !== false };
     case 'lichterbenen':
       return { value: choiceShort('lichterbenen', resolveLegEase(s)) };
     case 'lichterbenen-hoe':
