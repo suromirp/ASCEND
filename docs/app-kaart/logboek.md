@@ -58,7 +58,7 @@ zo
 [knop: 29] (aria: 29. Dag bekijken.)
 [knop: 30] (aria: 30. Dag bekijken.)
 [knop: 31] (aria: 31, vandaag. Dag bekijken.)
-Gedaan
+Gedaan, in de kleur van je sport
 
 --- kaart 3 ---
 Lopen
