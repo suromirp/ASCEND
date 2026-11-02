@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { widgetSummary, widgetShows } from './widgetSummary';
+import { isHeavySession } from './illness';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 
@@ -29,9 +30,19 @@ describe('widgetSummary', () => {
     const s = widgetSummary({ ...base, today: '2026-11-04', sessions: [ps('a', 'tpl_easy_run', '2026-11-04')], leavePeriods: [{ id: 'p', kind: 'no_training', startDate: '2026-11-03', endDate: '2026-11-06' } as never] });
     expect(s).toEqual({ date: '2026-11-04', title: 'Vakantie' });
   });
-  it('says Ziek while ill with a fever', () => {
+  it('says Rust vandaag (not Ziek) while ill with a fever', () => {
     const s = widgetSummary({ ...base, today: '2026-11-04', sessions: [ps('a', 'tpl_easy_run', '2026-11-04')], illnessEpisodes: [{ id: 'i', kind: 'below_neck', startDate: '2026-11-03' } as never] });
-    expect(s).toEqual({ date: '2026-11-04', title: 'Ziek' });
+    expect(s).toEqual({ date: '2026-11-04', title: 'Rust vandaag' });
+  });
+  it('shows a light training while ill above the neck, like Vandaag', () => {
+    const light = templates.find((t) => t.type !== 'recovery' && !isHeavySession(t))!;
+    const s = widgetSummary({ ...base, today: '2026-11-04', sessions: [ps('a', light.id, '2026-11-04')], illnessEpisodes: [{ id: 'i', kind: 'above_neck', startDate: '2026-11-03' } as never] });
+    expect(s.title).toBe(light.name);
+  });
+  it('a heavy training is not shown while ill above the neck', () => {
+    const heavy = templates.find((t) => t.type !== 'recovery' && isHeavySession(t))!;
+    const s = widgetSummary({ ...base, today: '2026-11-04', sessions: [ps('a', heavy.id, '2026-11-04')], illnessEpisodes: [{ id: 'i', kind: 'above_neck', startDate: '2026-11-03' } as never] });
+    expect(s.title).toBe('Rust vandaag');
   });
   it('after midnight the stored summary no longer shows', () => {
     const s = widgetSummary({ ...base, today: '2026-11-04', sessions: [ps('a', 'tpl_easy_run', '2026-11-04')] });

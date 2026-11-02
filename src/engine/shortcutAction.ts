@@ -19,7 +19,7 @@ const NATIVE_SHORTCUTS: Record<string, string> = {
 
 export function routeFromNativeShortcut(url: string): string | null {
   const m = /^app\.ascend\.training:\/\/open\/([a-z]+)\/?$/.exec(url.trim());
-  return (m && NATIVE_SHORTCUTS[m[1]]) || null;
+  return (m && (Object.hasOwn(NATIVE_SHORTCUTS, m[1]) ? NATIVE_SHORTCUTS[m[1]] : null)) || null;
 }
 
 /** Staat de ochtend-actie (de melding "Goedemorgen. Hoe voel je je?") in deze zoekparameters? */

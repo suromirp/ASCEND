@@ -13,6 +13,11 @@ describe('routeFromNativeShortcut', () => {
     expect(routeFromNativeShortcut('app.ascend.training://open/onbekend')).toBeNull();
     expect(routeFromNativeShortcut('')).toBeNull();
   });
+  it('vindt niets via het prototype', () => {
+    for (const naam of ['constructor', 'tostring', 'hasownproperty', 'valueof']) {
+      expect(routeFromNativeShortcut(`app.ascend.training://open/${naam}`)).toBeNull();
+    }
+  });
 });
 
 describe('snelkoppeling afvinken', () => {

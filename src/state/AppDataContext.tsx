@@ -2646,7 +2646,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (document.visibilityState === 'visible') write();
     };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    // Blijft de app open over middernacht, dan klopt de dag van de samenvatting niet meer.
+    let timer: number | undefined;
+    const arm = () => {
+      const now = new Date();
+      const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5);
+      timer = window.setTimeout(() => {
+        write();
+        arm();
+      }, Math.max(1000, next.getTime() - now.getTime()));
+    };
+    arm();
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.clearTimeout(timer);
+    };
   }, [loading, plannedSessions, sessionLogs, templateById, program, settings.leavePeriods, settings.illnessEpisodes]);
 
   // Een bestaand plan zonder doel: neutrale golven pas na Akkoord (engine/noGoalWaves.ts).

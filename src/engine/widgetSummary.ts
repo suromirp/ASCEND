@@ -14,7 +14,7 @@ import { leaveLabelOn } from './leave';
 
 export interface WidgetSummary {
   date: string; // yyyy-mm-dd, de dag waarvoor dit geldt
-  title: string; // de naam van de training, "Rustdag", "Vakantie" of "Ziek"
+  title: string; // de naam van de training, "Rustdag", "Vakantie" of "Rust vandaag" (bij ziekte, dat hoort niet op een vergrendelscherm)
   minutes?: number;
 }
 
@@ -47,7 +47,7 @@ export function widgetSummary(input: WidgetInput): WidgetSummary {
   });
   const template = open ? templateById.get(open.templateId) : undefined;
   if (open && template) return { date, title: template.name, minutes: resolveEffectiveFullDuration(template, open.scheduledDate, program) };
-  if (illness) return { date, title: 'Ziek' };
+  if (illness) return { date, title: 'Rust vandaag' };
   return { date, title: 'Rustdag' };
 }
 
