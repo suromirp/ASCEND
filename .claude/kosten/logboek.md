@@ -140,3 +140,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Review opsplitsen B, Warden, opus, 112k, 5 min, groen; wacht op de Android-bouw voor main
 - 2026-11-02, Instellingen snel, Sherpa, sonnet, 121k, 30 min, review loopt
 - 2026-11-02, Week eigenaar (probe op back-up), Sherpa, opus, review loopt
+- 2026-11-02, Review instellingen snel, Warden, sonnet, rood (terugval die liegt, race)
