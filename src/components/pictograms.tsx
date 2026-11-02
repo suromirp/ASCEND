@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 // --pic-mid staan in index.css, op de lichte lucht wat sterker. De drie lagen komen
 // na elkaar op (mx-pic-1 tot en met mx-pic-3), alleen als het pictogram verschijnt.
 
-export type PictogramName = 'rust' | 'lichaam' | 'lopen' | 'kracht' | 'wandelen' | 'rekken' | 'bergtocht' | 'fietsen';
+export type PictogramName = 'rust' | 'lichaam' | 'lopen' | 'kracht' | 'wandelen' | 'rekken' | 'bergtocht' | 'fietsen' | 'zwemmen' | 'padel' | 'voetbal';
 
 type Tone = 'light' | 'mid' | 'strong' | 'full' | 'cut';
 
@@ -146,6 +146,73 @@ const SHAPES: Record<PictogramName, ReactNode> = {
       <Layer n={3} tone="full">
         <path d="M5.8 16l4.4-7.2h5.6l2.4 7.2M10.2 8.8L12.6 16h5.6M15.8 8.8l-.8-2.6h2.2M9 6.6h2.6" fill="none" stroke="currentColor" strokeWidth="2.2" {...round} />
         <circle cx="12.6" cy="16" r="1.5" fill="currentColor" />
+      </Layer>
+    </>
+  ),
+  // Een zwemmer in borstcrawl met één arm over het water, op een golf.
+  zwemmen: (
+    <>
+      <Layer n={1} tone="light">
+        <path d="M2 21.8c1.7-1.4 3.3-1.4 5 0s3.3 1.4 5 0 3.3-1.4 5 0 3.3 1.4 5 0" fill="none" stroke="currentColor" strokeWidth="1.5" {...round} />
+      </Layer>
+      <Layer n={2} tone="mid">
+        <path d="M2 18.8c1.7-1.4 3.3-1.4 5 0s3.3 1.4 5 0 3.3-1.4 5 0 3.3 1.4 5 0" fill="none" stroke="currentColor" strokeWidth="1.8" {...round} />
+        <circle cx="3.4" cy="11.8" r="0.9" fill="currentColor" />
+        <circle cx="5.6" cy="10.2" r="0.7" fill="currentColor" />
+      </Layer>
+      <Layer n={3} tone="full">
+        <circle cx="18.6" cy="11.8" r="2.1" fill="currentColor" />
+        <path d="M4.2 15.8c3.4-1.9 8-2.3 12.8-1.1" fill="none" stroke="currentColor" strokeWidth="3" {...round} />
+        <path d="M11.5 13.6C11 8.6 15.4 5.8 20.5 7.6" fill="none" stroke="currentColor" strokeWidth="2.4" {...round} />
+      </Layer>
+    </>
+  ),
+  // Een padelracket met gaten in de kop, en een bal. De racket staat rechtop in een binnenste g die
+  // als geheel draait, zodat de animatie van de laag (translateY) er niet mee botst. Net als bij kracht
+  // zijn er twee lagen 3: de volle kop en de uitgespaarde gaten verschijnen tegelijk.
+  padel: (
+    <>
+      <Layer n={1} tone="light">
+        <path d="M3 22.2h18" fill="none" stroke="currentColor" strokeWidth="1.4" {...round} />
+      </Layer>
+      <Layer n={2} tone="mid">
+        <circle cx="18.6" cy="17.4" r="2.4" fill="currentColor" />
+        <g transform="rotate(35 10 12)">
+          <path d="M8.3 13.6h3.4l.5 2.6H7.8z" fill="currentColor" />
+          <rect x="8.8" y="16" width="2.4" height="5" rx="1.2" fill="currentColor" />
+        </g>
+      </Layer>
+      <Layer n={3} tone="full">
+        <g transform="rotate(35 10 12)">
+          <path d="M10 2.3c3.4 0 5.6 2.4 5.6 5.6 0 2.4-1.4 4.4-3 5.8H7.4c-1.6-1.4-3-3.4-3-5.8 0-3.2 2.2-5.6 5.6-5.6z" fill="currentColor" />
+        </g>
+      </Layer>
+      <Layer n={3} tone="cut">
+        <g transform="rotate(35 10 12)" fill="var(--color-card)">
+          <circle cx="8.2" cy="5.4" r="0.8" />
+          <circle cx="11.8" cy="5.4" r="0.8" />
+          <circle cx="6.6" cy="8.2" r="0.8" />
+          <circle cx="10" cy="8.2" r="0.8" />
+          <circle cx="13.4" cy="8.2" r="0.8" />
+          <circle cx="8.2" cy="11" r="0.8" />
+          <circle cx="11.8" cy="11" r="0.8" />
+        </g>
+      </Layer>
+    </>
+  ),
+  // Een voetbal met snelheidsstreepjes.
+  voetbal: (
+    <>
+      <Layer n={1} tone="light">
+        <path d="M1.4 8.5h3M1.4 11.5h2.2M1.4 14.5h3M8 22h11" fill="none" stroke="currentColor" strokeWidth="1.3" {...round} />
+      </Layer>
+      <Layer n={2} tone="mid">
+        <circle cx="13.5" cy="11.5" r="8" fill="currentColor" />
+      </Layer>
+      <Layer n={3} tone="full">
+        <circle cx="13.5" cy="11.5" r="7.1" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M13.5 8.5l2.85 2.07-1.09 3.36h-3.52l-1.09-3.36z" fill="currentColor" />
+        <path d="M13.5 8.5V4.4M16.35 10.57l3.9-1.26M15.26 13.93l2.41 3.31M11.74 13.93l-2.41 3.31M10.65 10.57L6.75 9.31" fill="none" stroke="currentColor" strokeWidth="1.5" {...round} />
       </Layer>
     </>
   ),
