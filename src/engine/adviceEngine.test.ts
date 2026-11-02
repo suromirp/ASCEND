@@ -210,11 +210,30 @@ describe('SAME-MUSCLE-SPACING', () => {
     expect(Math.abs(daysBetween('2026-10-01', move!.toDate!))).toBeGreaterThanOrEqual(2);
   });
 
-  it('zegt niets over een rustige lange loop de dag na beenkracht, net als de planning', async () => {
+  // Tot 2 november 2026 zei dit advies niets over dit paar (24 uur); sinds
+  // docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md houdt de planning 48 uur, en het advies ook.
+  it('ziet beenkracht en de lange duurloop op twee dagen achter elkaar, net als de planning', async () => {
     const { buildDefaultProgramData } = await import('../data/defaultProgram');
     const all = buildDefaultProgramData().templates;
     const planned = [ps('legs', 'tpl_lower_a', '2026-10-04'), ps('long', 'tpl_long_run', '2026-10-05')];
-    expect(computeAdvice(inputs({ templates: all, plannedSessions: planned, asOf: '2026-10-01' })).some((x) => x.ruleId === 'SAME-MUSCLE-SPACING')).toBe(false);
+    expect(computeAdvice(inputs({ templates: all, plannedSessions: planned, asOf: '2026-10-01' })).some((x) => x.ruleId === 'SAME-MUSCLE-SPACING')).toBe(true);
+  });
+
+  it('met Beenkracht de dag na de lange duurloop aan: niets over lange loop en dan kracht, wel na een beenzware dag ervoor', async () => {
+    const { buildDefaultProgramData } = await import('../data/defaultProgram');
+    const { setLongRunThenLegs } = await import('./scheduler');
+    const all = buildDefaultProgramData().templates;
+    setLongRunThenLegs(true);
+    try {
+      const after = [ps('long', 'tpl_long_run', '2026-10-04'), ps('legs', 'tpl_lower_a', '2026-10-05')];
+      expect(computeAdvice(inputs({ templates: all, plannedSessions: after, asOf: '2026-10-01' })).some((x) => x.ruleId === 'SAME-MUSCLE-SPACING')).toBe(false);
+      const before = [ps('legs', 'tpl_lower_a', '2026-10-04'), ps('long', 'tpl_long_run', '2026-10-05')];
+      expect(computeAdvice(inputs({ templates: all, plannedSessions: before, asOf: '2026-10-01' })).some((x) => x.ruleId === 'SAME-MUSCLE-SPACING')).toBe(true);
+      const three = [ps('hills', 'tpl_hills_descent', '2026-10-03'), ...after];
+      expect(computeAdvice(inputs({ templates: all, plannedSessions: three, asOf: '2026-10-01' })).some((x) => x.ruleId === 'SAME-MUSCLE-SPACING' && x.proposal?.changes.some((c) => c.plannedSessionId === 'legs'))).toBe(true);
+    } finally {
+      setLongRunThenLegs(false);
+    }
   });
 
   it('leaves the intentional hill-intervals + long-run weekend alone and ignores light sessions', () => {

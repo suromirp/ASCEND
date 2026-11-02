@@ -853,6 +853,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Terug naar standaard', text: 'zet alles weer zoals de app het bedacht. Een blok dat in de instellingen uit staat, houdt zijn plek.' },
     ],
   },
+  langeLoopBenen: {
+    title: 'Beenkracht de dag na de lange duurloop',
+    lead: 'Kracht is een dag na een rustige lange loop meestal weer op niveau. Zet dit aan als je liever een vrije dag houdt dan 48 uur tussen die twee.',
+    points: [
+      { head: 'Uit', text: 'ASCEND houdt 48 uur tussen de lange duurloop en een zware beendag, in beide volgordes. Dat is het advies.' },
+      { head: 'Aan', text: 'beenkracht mag de dag na de lange duurloop. Niet als de dag ervoor al zwaar was voor je benen, zoals de heuvels op zaterdag: drie zware beendagen op rij komen er nooit.' },
+      { head: 'Altijd', text: 'kracht de dag vóór de lange duurloop blijft 48 uur. De heuvels op zaterdag en de lange duurloop op zondag blijven bij elkaar. Je ziet eerst wat er in je planning verschuift.' },
+    ],
+  },
   slepenWeek: {
     title: 'Trainingen slepen in Week',
     lead: 'Sleep een training met het greepje naar een andere dag. Het gaat zoals Verplaatsen in het actieblad. Uit haalt de grepen weg.',

@@ -20,6 +20,16 @@ land within 48 hours of each other. Moving a session into conflict produces
 a cascade proposal (shown via `RescheduleDialog`) rather than applying
 silently.
 
+**48 uur tussen zware beenkracht en de lange duurloop** (`engine/scheduler.ts#legSpacingDays`, besluit
+`docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md`): de lange duurloop telt als beenzwaar, in beide volgordes.
+Het weekendblok (heuvels zaterdag, lange duurloop zondag, `pairingOverride: 'prefer'`) blijft vrij, alleen in die
+volgorde en op de eigen dagen; 72 uur na een tocht met afdalen en de extra dag bij een RPE van 9 of hoger blijven.
+Met de instelling "Beenkracht de dag na de lange duurloop" (`AppSettings.longRunThenLegs`, standaard uit, een
+register in `scheduler.ts` zoals "Zware dingen op één dag") mag kracht 24 uur na de lange loop, nooit andersom, en
+niet als de dag vóór de lange loop al beenzwaar is (`legHeavyDayBefore` in `findHeavyConflicts`). De planningsronde
+verschuift alleen wat het systeem plande (niveau 3); wat jij of een voorstel vastzette blijft en Week meldt het als
+LEG-SPACING. "Op de eigen dagen" geldt voor de melding (`reportYours` in `weekValidator.ts`): staat het weekendblok door jou buiten zijn eigen dagen, dan meldt Week het, maar de planningsronde herstelt dat niet zelf.
+
 **Who may touch a planned session** (`engine/weekValidator.ts#lockLevel`):
 history (logged or past) never; yours (`PlannedSession.lock`, set by your
 own move/skip and by every other accepted proposal item, or legacy status

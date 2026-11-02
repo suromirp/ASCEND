@@ -1,5 +1,5 @@
 import type { AboveMission } from '../engine/todayCards';
-import { withHardSameDay } from '../engine/scheduler';
+import { withHardSameDay, withLongRunThenLegs } from '../engine/scheduler';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
@@ -595,6 +595,8 @@ export interface AppSettings {
   restDay?: RestWeekday;
   // Leg strength and a hard run on one day, 6+ hours apart (engine/scheduler.ts#setHardSameDayAllowed).
   hardSameDay?: boolean;
+  // Leg strength the day after the long run, 24 hours instead of 48 (engine/scheduler.ts#setLongRunThenLegs). Unset: off.
+  longRunThenLegs?: boolean;
   // Your own heart rate values (Settings → Training → Mijn hartslag); the
   // training screens then show zones in bpm (engine/heartRateZones.ts).
   heartRate?: { maxHr?: number; lthr?: number; restingHr?: number };
@@ -1714,14 +1716,14 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   ];
   const engineConfig = await GoalEngineConfigRepo.get();
   const restDay = settings.restDay ?? 1;
-  const pass = withHardSameDay(overrides.registers?.hardSameDay, () => withDurationScope(overrides.registers, () => planPass(asWillBe, {
+  const pass = withLongRunThenLegs(overrides.registers?.longRunThenLegs, () => withHardSameDay(overrides.registers?.hardSameDay, () => withDurationScope(overrides.registers, () => planPass(asWillBe, {
     today, logs, templates, program: next, blocks, afterGoals: afterGoalWindows(goals, mainGoalId, ctx.anchor, today), restDay, goalDay: ctx.anchor,
     dailyTimeBudget: engineConfig.availability.dailyTimeBudget, sameDayPairingPreference: engineConfig.strategy.sameDayPairingPreference,
     slotDays: patternDays(templates, settings, restDay),
     minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),
     newId: () => makeId('planned'),
     leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
-  })));
+  }))));
   if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 
   // Write only what differs from what is stored.

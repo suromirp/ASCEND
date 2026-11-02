@@ -30,7 +30,7 @@ import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../model
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
-import { findHeavyConflicts, freshnessAt, isHardRun, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL, legSpacingDays } from './scheduler';
+import { findHeavyConflicts, freshnessAt, isHardRun, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL, legHeavyDayBefore, legSpacingDays } from './scheduler';
 import { LEG_EASE_INDEX, legEaseCardSession } from './legDayEase';
 import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatShortDayNL, mondayOfWeek, weekDates, weekdayLongNL, formatWeekdayDateNL } from '../utils/dates';
@@ -760,9 +760,9 @@ function spacingAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       if (!ta || !tb || isIntentionalBackToBack(ta, tb)) continue;
       const shared = heavyAxes(ta).filter((axis) => heavyAxes(tb).includes(axis));
       if (shared.length === 0) continue;
-      // Dezelfde regel als de planning en de weekcontrole (scheduler.ts#legSpacingDays): een rustige
-      // lange loop en beenkracht mogen op twee dagen achter elkaar, in elke volgorde.
-      if (shared.every((axis) => axis === 'lowerBodyLoad') && legSpacingDays(ta, tb) === 0) continue;
+      // Dezelfde regel als de planning en de weekcontrole (scheduler.ts#legSpacingDays): beenkracht de dag
+      // na de lange duurloop alleen met de instelling, en niet als de dag ervoor al beenzwaar is.
+      if (shared.every((axis) => axis === 'lowerBodyLoad') && legSpacingDays(ta, tb) === 0 && !legHeavyDayBefore(a.scheduledDate, inputs.plannedSessions, templateById, [a.id, b.id])) continue;
       handled.add(b.id);
 
       const week = inputs.plannedSessions.filter((s) => s.weekStartDate === b.weekStartDate && s.id !== b.id && s.status !== 'skipped');

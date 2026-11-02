@@ -154,6 +154,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('lange-loop', 'Groei van de lange loop', 'planning', 'longRunGrowth', 'weekly', 'langeLoopGroei', true),
   choice('rustdag-doen', 'Op je rustdag', 'planning', 'restDayMode', 'rest', 'rustdagDoen', true),
   plain('zware-dingen', 'Benen en een zware loop', 'planning', 'hardSameDay', false as boolean, (v) => onOff(v === true), { plan: true }),
+  plain('lange-loop-benen', 'Beenkracht de dag na de lange duurloop', 'planning', 'longRunThenLegs', false as boolean, (v) => onOff(v === true), { plan: true }),
 
   // Doel en tochten
   {

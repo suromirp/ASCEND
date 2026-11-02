@@ -20,7 +20,7 @@ export interface DurationSettings {
   sessionDurationEstimates?: Record<string, number>;
 }
 
-export function durationScopeFor(settings: DurationSettings, logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, today: string): Required<Omit<DurationScope, 'hardSameDay'>> {
+export function durationScopeFor(settings: DurationSettings, logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, today: string): Required<Omit<DurationScope, 'hardSameDay' | 'longRunThenLegs'>> {
   return {
     ambition: effectiveAmbition(settings.ambition, logs, new Map(templates.map((t) => [t.id, t])), program, today).effective,
     durationAdjustments: recoveryDurationAdjustments(settings.illnessEpisodes),
