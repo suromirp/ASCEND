@@ -19,4 +19,24 @@ describe('strengthModel in een back-up', () => {
     cleanSettings({ strengthModel: { enabled: true, activeProfileId: 'a', profiles: [{ id: 'a', name: 'Thuis', barsKg: ['kapot'] }] } }, skipped);
     expect(skipped.n).toBe(1);
   });
+
+  it('houdt Spieren voor de berg en de toegevoegde oefeningen (nagemaakt)', () => {
+    const skipped = { n: 0 };
+    const out = cleanSettings({ strengthModel: { mountainMuscles: false, addedExercises: { tpl_lower_a: ['tibialis-raise'] } } }, skipped);
+    expect(skipped.n).toBe(0);
+    expect(out?.strengthModel).toMatchObject({ mountainMuscles: false, addedExercises: { tpl_lower_a: ['tibialis-raise'] } });
+  });
+});
+
+// Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md).
+describe('een oude back-up met Snelknoppen tonen', () => {
+  it('importeert zonder fout en laat het veld weg', () => {
+    for (const value of [false, true, 'kapot']) {
+      const skipped = { n: 0 };
+      const out = cleanSettings({ forgeQuickButtons: value, forgeSwipeDelete: false }, skipped);
+      expect(skipped.n).toBe(0);
+      expect(out).not.toHaveProperty('forgeQuickButtons');
+      expect(out?.forgeSwipeDelete).toBe(false);
+    }
+  });
 });

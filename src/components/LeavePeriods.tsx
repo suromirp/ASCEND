@@ -290,7 +290,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
               <SettingsLinkRow page="doel" row="rust-na-tocht" label="Rust na een bergtocht instellen" />
             </div>
 
-            <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
+            <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: '14px' }}>
               <SecondaryButton onClick={requestClose} className="min-h-[46px]">Annuleren</SecondaryButton>
               <PrimaryButton
                 disabled={scope === 'none' || (scope === 'plan' && !!problem)}

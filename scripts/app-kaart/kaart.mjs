@@ -82,7 +82,7 @@ export function normaliseer(t) {
     .replace(/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?\b/g, '<tijdstempel>')
     .replace(/\b\d{13}\b/g, '<tijdstempel>')
     // Hoeveel ruimte de browser geeft en hoeveel de stand gebruikt hangt van de schijf van de machine af.
-    .replace(/(Van de )[\d.,]+ [KMGT]?B( die de browser geeft\n)[\d.,]+ [KMGT]?B/g, '$1<ruimte>$2<gebruikt>')
+    .replace(/(Van de )[\d.,]+ [KMGT]?B( die ASCEND mag gebruiken\n)[\d.,]+ [KMGT]?B/g, '$1<ruimte>$2<gebruikt>')
     .replace(/Versie \d{1,2} \w+, \d{2}:\d{2}/g, 'Versie <bouwtijd>')
     .replace(/\n{3,}/g, '\n\n')
     .split('\n').map((l) => l.trimEnd()).join('\n').trim() + '\n';
@@ -126,7 +126,7 @@ const SCHERMEN = {
   jaaroverzicht: { titel: 'Jaaroverzicht (in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Jaaroverzicht")') },
   'training-blad': { titel: 'Blad van een geplande training (Week)', pad: '#/week', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Lange duurloop")') },
   // De opslagrijen komen asynchroon uit de browser (storage.estimate); wacht tot ze er zijn.
-  gegevens: { titel: 'Instellingen: Gegevens en back-up', pad: '#/more/gegevens', actie: (p) => p.waitForFunction(() => /die de browser geeft/.test(document.body.innerText) && /Ruimte van reeksen, /.test(document.body.innerText), null, { timeout: 15000 }).catch(() => {}) },
+  gegevens: { titel: 'Instellingen: Gegevens en back-up', pad: '#/more/gegevens', actie: (p) => p.waitForFunction(() => /die ASCEND mag gebruiken/.test(document.body.innerText) && /Ruimte van reeksen, /.test(document.body.innerText), null, { timeout: 15000 }).catch(() => {}) },
   lichaam: { titel: 'Lichaam', pad: '#/lichaam' },
   'lichaam-plek': { titel: 'Lichaam: een plek (rechterknie)', pad: '#/lichaam/knie-r' },
   // De standen met horlogegegevens, een vakantie, zonder doel en ziek gemeld (scripts/app-kaart/maak-standen.mjs).

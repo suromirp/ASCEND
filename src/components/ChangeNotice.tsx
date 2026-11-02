@@ -57,7 +57,7 @@ export function ChangeNotice() {
   }
 
   const anchor = 'pointer-events-none fixed inset-x-0 z-40 flex px-4';
-  const anchorStyle = { bottom: `calc(${pill ? '8.25rem' : '4.5rem'} + env(safe-area-inset-bottom))` };
+  const anchorStyle = { bottom: `calc(${pill ? '8.25rem' : '4.5rem'} + var(--rand-onder))` };
 
   if (view === 'chip') {
     return (

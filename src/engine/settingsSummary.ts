@@ -60,7 +60,7 @@ import { backupWhereText, resolveAutoBackup, type AutoBackupFailureReason, type 
 import { SIGNAL_KEYS, signalsOnCount } from './signalSettings';
 import { resolveProposalTidyMonths } from './proposalTidy';
 import { storageUseText, type StorageEstimate } from './storageUse';
-import { quickButtonsOn, swipeDeleteOn } from './forgeQuickActions';
+import { swipeDeleteOn } from './forgeRows';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { resolveSportCounting } from './sportRole';
@@ -152,7 +152,9 @@ export interface SettingsFacts {
   // De automatische back-up op dit toestel: in de app of de browser, waar de laatste staat, de naam
   // van de map waar hij stil naartoe kan (in de browser alleen als de vaste map gekozen is) en de
   // reden als de laatste poging mislukte. Weglaten zolang dat nog niet is gelezen.
-  autoBackup?: { platform: 'app' | 'browser'; where?: BackupWhere; folder?: string; failure?: AutoBackupFailureReason };
+  autoBackup?: { platform: 'app' | 'browser'; where?: BackupWhere; folder?: string; failure?: AutoBackupFailureReason;
+    // Alleen in de app: of ASCEND in de map mag schrijven, en wanneer de laatste automatische back-up lukte.
+    access?: 'ready' | 'needs-tap' | 'denied'; lastAutoAt?: string };
   storage: 'protected' | 'not_protected' | 'unsupported' | undefined;
   // De ruimte die de volledige reeksen van loopjes en tochten innemen (bytes); weglaten zolang
   // dat nog niet is geteld.
@@ -562,6 +564,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.adjustLive };
     case 'forge-spotter':
       return { checked: forge.noSpotter };
+    case 'forge-bergspieren':
+      return { checked: forge.mountainMuscles };
     case 'spotterrek':
       return { checked: !!forge.profile.spotterRack };
     case 'forge-rir-vooraf':
@@ -762,8 +766,6 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('forgeOnderbreking', resolveBreakAsk(s)), dim: resolveBreakAsk(s) === 0 };
     case 'forge-vegen':
       return { checked: swipeDeleteOn(s) };
-    case 'forge-snelknoppen':
-      return { checked: quickButtonsOn(s) };
     // Slepen in Week (engine/weekSwap.ts): "Ruilen" of "Samen", of uit.
     case 'bundel-slepen':
       return s.dragWeek === false ? { value: 'Uit', dim: true } : { value: `Aan, ${choiceShort('loslaten', resolveDropOnTraining(s)).toLowerCase()}` };

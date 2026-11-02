@@ -31,7 +31,7 @@ export function SessionPill({ session }: { session: SessionState }) {
   return (
     <div
       className="pointer-events-none fixed inset-x-0 z-30 mx-auto w-full max-w-md px-4"
-      style={{ bottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px) + 8px)' }}
+      style={{ bottom: 'calc(4.5rem + max(var(--rand-onder), 8px) + 8px)' }}
     >
       <button
         type="button"
