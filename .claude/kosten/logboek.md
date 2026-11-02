@@ -107,3 +107,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Review automatische back-up, Warden, opus (reviewer), rood: kon een eigen back-up met dezelfde naam overschrijven
 - 2026-11-02, Planner 48 uur, Sherpa, opus (ontwikkelaar), 199k, 42 min, 0
 - 2026-11-02, Review planner 48 uur met probe op de back-up, Warden, opus (reviewer), groen; voor de eigenaar verandert er de komende vier weken niets
+- 2026-11-02, Planner 48 uur herstel, Sherpa, opus, hervat, 0
+- 2026-11-02, Automatische back-up herstel, Sherpa, opus, hervat 30k, 26 min, 1
