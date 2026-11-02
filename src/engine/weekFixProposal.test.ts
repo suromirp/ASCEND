@@ -191,3 +191,33 @@ describe('planWeekFix, testdag in een volle week', () => {
     for (const p of proposalsOf(i)) expect(p.changes.some((c) => c.action === 'remove')).toBe(false);
   });
 });
+
+describe('een training van jou of van een voorstel op een vakantiedag', () => {
+  const leave = [{ id: 'v', kind: 'no_training' as const, startDate: '2026-10-27', endDate: '2026-10-29' }];
+  const base = (ids: string[]) => input(ids.map((templateId, i) => ({ id: `l-${i}`, templateId, scheduledDate: addDays(MONDAY, 1 + i), weekStartDate: MONDAY, status: 'moved' as const, order: i, lock })), { leave, reportYours: true });
+
+  it('de stille weekcontrole laat een test en een race staan die een voorstel op een vakantiedag zette', () => {
+    const inp = base(['tpl_test_run', 'tpl_race']);
+    const r = repairWeeks(inp);
+    expect(r.repairs).toEqual([]);
+    expect(r.sessions.map((s) => s.scheduledDate)).toEqual(inp.sessions.map((s) => s.scheduledDate));
+  });
+
+  it('kracht van een voorstel blijft in de planning staan en wordt in Week een melding met een voorstel met Akkoord', () => {
+    const inp = base(['tpl_easy_run', 'tpl_upper_b']);
+    expect(repairWeeks({ ...inp, reportYours: false }).repairs).toEqual([]);
+    const concerns = weekConcerns(inp, MONDAY).filter((c) => c.rule === 'LEAVE-OFF');
+    expect(concerns.length).toBeGreaterThan(0);
+    const advice = planWeekFix(inp, concerns[0], MONDAY);
+    expect(advice).not.toBeNull();
+    expect(advice!.proposal!.changes.length).toBeGreaterThan(0);
+    expect(inp.sessions.every((s) => s.status === 'moved')).toBe(true);
+  });
+
+  it('een test op een vakantiedag is alleen een melding, zonder voorstel dat hem verplaatst', () => {
+    const inp = base(['tpl_easy_run', 'tpl_test_run']);
+    const concern = weekConcerns(inp, MONDAY).find((c) => c.rule === 'LEAVE-OFF' && c.finding.subjectId === 'l-1');
+    expect(concern).toBeDefined();
+    expect(planWeekFix(inp, concern!, MONDAY)).toBeNull();
+  });
+});

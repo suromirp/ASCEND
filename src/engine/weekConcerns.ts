@@ -13,11 +13,11 @@
 
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { daysBetween, mondayOfWeek, weekdayLongNL } from '../utils/dates';
-import { idHasRole } from './templateRoles';
+import { idHasRole, idIsTestOrRace } from './templateRoles';
 import { isIntentionalBackToBack, legSpacingDays } from './scheduler';
 import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
 
-export const CONCERN_RULES: readonly CheckRule[] = ['REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
+export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
 
 export interface WeekConcern {
   // Dezelfde sleutel als de bevinding; verandert er iets in de week, dan verandert hij mee.
@@ -63,6 +63,21 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
             ? `Een rustdag is er om te herstellen. ${idHasRole(byId.get(a)?.templateId ?? '', 'race', input.templates) ? 'Je wedstrijd' : 'Je testloop'} staat op die dag en schuift niet zonder jouw Akkoord, daarom vraagt ASCEND het eerst.`
             : 'Een rustdag is er om te herstellen. Deze training stond er door een voorstel dat je accepteerde of door jouw eigen keuze, daarom vraagt ASCEND het eerst.',
           notes: { [a]: 'op je rustdag' },
+        };
+      }
+      case 'LEAVE-OFF': {
+        // Een training die jij of een voorstel vastzette staat op een dag waarop je vrij bent of op tocht.
+        // De planning zelf laat die staan; hier staat het, met een voorstel voor wat van jou is.
+        const test = f.level >= 2 || idIsTestOrRace(byId.get(a)?.templateId ?? '', input.templates);
+        return {
+          ...base,
+          headline: `${nameOf(a)} staat op ${dayName(dateOf(a))}, een dag waarop je vrij bent.`,
+          fact: f.message,
+          title: 'Een training van je vrije dag halen',
+          why: test
+            ? `Een testloop of wedstrijd schuift niet zonder jouw Akkoord, en ASCEND verplaatst hem niet zelf. Je ziet hier alleen dat hij op een vrije dag staat.`
+            : 'Je bent die dag vrij of op tocht. Deze training stond er door een voorstel dat je accepteerde of door jouw eigen keuze, daarom vraagt ASCEND het eerst.',
+          notes: { [a]: 'op een vrije dag' },
         };
       }
       case 'LEG-SPACING': {
