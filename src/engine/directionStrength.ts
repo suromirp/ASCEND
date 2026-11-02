@@ -180,7 +180,7 @@ export function strengthPlanItems(reshape: Pick<StrengthReshape, 'shape' | 'adde
         const date = addDays(mondayOfWeek(weekStart), dow - 1);
         if (date <= ctx.today) continue;
         const draft: PlannedSession = { id: `draft:${weekStart}:${id}`, templateId: id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order: 99 };
-        const nextToHeavy = isLegHeavyTemplate(byId.get(id)!) && [-1, 1].some((o) => ctx.plannedSessions.some((x) => x.status !== 'skipped' && x.scheduledDate === addDays(date, o) && !!byId.get(x.templateId) && isLegHeavyTemplate(byId.get(x.templateId)!)));
+        const nextToHeavy = isLegHeavyTemplate(byId.get(id)!) && [-1, 1].some((o) => ctx.plannedSessions.some((x) => x.status !== 'skipped' && x.scheduledDate === addDays(date, o) && !!byId.get(x.templateId) && isLegHeavyTemplate(byId.get(x.templateId)!)) || ctx.logs.some((l) => l.completedDate === addDays(date, o) && !!byId.get(l.templateId) && isLegHeavyTemplate(byId.get(l.templateId)!)));
         const blocked = nextToHeavy || leave.has(date) || light.has(date) || isIllnessDay(date, ctx.illnessEpisodes, ctx.today) || (!!activeIllness(ctx.illnessEpisodes) && date <= addDays(ctx.today, 7));
         const findings = blocked ? [] : validateWeeks({
           sessions: [...ctx.plannedSessions.filter((s) => s.status !== 'skipped'), ...week.filter((s) => s.id.startsWith('draft:')), draft],

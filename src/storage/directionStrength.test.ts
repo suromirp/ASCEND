@@ -4,6 +4,8 @@ import {
   wipeAllData, seedIfEmpty, syncProgramHorizon, GoalEngineConfigRepo, ProgramsRepo, SessionLogsRepo, PlannedSessionsRepo, SessionTemplatesRepo, TrainingGoalsRepo, SettingsRepo, StrengthProgramStrategiesRepo,
 } from './database';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonChangeInput } from './horizonPlan';
+import { weekConcerns } from '../engine/weekConcerns';
+import { planWeekFix } from '../engine/weekFixProposal';
 import { undoPlanChangeNow } from './undoPlanChange';
 import type { RecentPlanChange } from '../models/planChange';
 import { reshapeStrength, strengthNotes, strengthPlanItems } from '../engine/directionStrength';
@@ -184,5 +186,36 @@ describe('een richting verandert het aantal keer kracht', () => {
     const up = await build(3);
     expect(up.plan.items.some((i) => i.action === 'add' && i.newSessionDraft!.templateId === 'tpl_lower_a' && i.newSessionDraft!.weekStartDate === week)).toBe(false);
     expect(up.plan.noRoomWeeks + up.plan.partialWeeks).toBeGreaterThanOrEqual(1);
+  });
+
+  it('een gelogde beenzware training gisteren telt mee voor de afstand', async () => {
+    await down();
+    const up0 = await build(3);
+    const week = addDays(FROM, 14);
+    const date = addDays(week, up0.reshape.shape.days.tpl_lower_a - 1);
+    const log = { id: 'gelogd-zwaar', templateId: 'tpl_long_run', type: 'hiking' as const, completedDate: addDays(date, -1), completedAt: `${addDays(date, -1)}T10:00:00.000Z`, variant: 'full' as const, durationMinutes: 120, source: 'manual' as const };
+    const up = await build(3, { logs: [log] });
+    expect(up.plan.items.some((i) => i.action === 'add' && i.newSessionDraft!.templateId === 'tpl_lower_a' && i.newSessionDraft!.weekStartDate === week)).toBe(false);
+  });
+
+  it('kracht die met Akkoord erbij kwam en later een vakantie krijgt: niets verschuift stil, Week meldt het met een voorstel', async () => {
+    await down();
+    const up = await build(3);
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(up.input))).status).toMatch(/applied|partial/);
+    await syncProgramHorizon();
+    const week = addDays(FROM, 14);
+    const added = (await PlannedSessionsRepo.getAll()).find((x) => x.templateId === 'tpl_lower_a' && x.weekStartDate === week && x.status !== 'skipped')!;
+    expect(added.lock?.by).toBe('proposal');
+    const leave = [{ id: 'v3', kind: 'no_training' as const, startDate: added.scheduledDate, endDate: added.scheduledDate }];
+    await SettingsRepo.set({ leavePeriods: leave });
+    await syncProgramHorizon();
+    await syncProgramHorizon();
+    const [templates, planned, logs, settings, config] = await Promise.all([SessionTemplatesRepo.getAll(), PlannedSessionsRepo.getAll(), SessionLogsRepo.getAll(), SettingsRepo.get(), GoalEngineConfigRepo.get()]);
+    // Niet stil verplaatst.
+    expect(planned.find((x) => x.id === added.id)).toEqual(added);
+    const check = { sessions: planned, logs, templates, today: TODAY, restDay: settings.restDay, leave, reportYours: true, dailyTimeBudget: config.availability.dailyTimeBudget };
+    const concern = weekConcerns(check, week).find((c) => c.rule === 'LEAVE-OFF' && c.finding.subjectId === added.id);
+    expect(concern).toBeDefined();
+    expect(planWeekFix(check, concern!, week)).not.toBeNull();
   });
 });
