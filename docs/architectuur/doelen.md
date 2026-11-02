@@ -22,8 +22,7 @@ main goal any more.
 `docs/beslissingen/2026-10-22-gr5-voortgang-een-percentage.md`): "Klaar voor de
 GR5" is a single percentage, the average of four meters (rugzak, langste dag,
 stijging en daling, dagen achter elkaar), each capped at 100%, always shown
-with the sentence it is made of (on the goal card of Ascend; `Gr5ReadinessCard` left Je stand and is gone, `Gr5ReadinessSheet`
-is kept but no screen opens it now). The percentage is shown on Ascend only, never on Je stand (`2026-11-02-gegevens-herinrichting.md`). The
+with the sentence it is made of (on the goal card of Ascend; `Gr5ReadinessCard` left Je stand and is gone; `Gr5ReadinessSheet` opens from the row "Waar staat dit op?" on the Ascend goal card, only for a main goal with the milestones calculation). The percentage is shown on Ascend only, never on Je stand (`2026-11-02-gegevens-herinrichting.md`). The
 milestones stay a ladder ("volgend kamp"), never a second progress number. The
 coach (Ascend) and "Ritme" (Je stand) count with the same function,
 `engine/onCourse.ts#recentAdherence`. Do not add another percentage or
