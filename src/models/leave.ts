@@ -57,6 +57,11 @@ export interface TrekDetails {
   // data has none, and a damaged value is dropped on import without losing the tocht
   // (storage/migrations.ts#migrateLeavePeriods).
   highestM?: number;
+  // A place of its own for the mountain weather, so the card can come the day before and does not
+  // depend on where you are (engine/mountainWeather.ts). Name and coordinates rounded to two
+  // decimals (engine/trek.ts#parseTrekPlace). Optional and additive: older data has none, and a
+  // damaged value is dropped on import without losing the tocht (storage/migrations.ts#migrateLeavePeriods).
+  place?: { name: string; lat: number; lon: number };
   tent: boolean; // with tent and sleeping bag
   importance: TrekImportance;
 }

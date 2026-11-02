@@ -17,6 +17,7 @@ import type { AppSettings } from '../storage/database';
 import { choiceShort, type ChoiceId } from '../data/settingsChoices';
 import type { SettingsPageId } from '../data/settingsLayout';
 import { bootGoalKm } from './bootBreakIn';
+import { locationEnabled } from './locationSetting';
 import { AUTO_BACKUP_ADVICE, AUTO_BACKUP_KEEP_ADVICE, resolveAutoBackup, resolveAutoBackupKeep } from './autoBackup';
 import { resolveFigureSetting } from './figureSettings';
 import { resolveIntensityCounting } from './intensitySettings';
@@ -363,6 +364,12 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('macrofactor-gewicht', 'Gewicht gebruiken', 'koppelingen', 'weightFromMacroFactor'),
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
+  {
+    id: 'locatie', title: 'Je locatie', page: 'gegevens',
+    differs: (s) => locationEnabled(s),
+    value: (s) => onOff(locationEnabled(s)),
+    reset: () => ({ locationOn: false }),
+  },
   flag('vroeg-ziek', 'Vroeg ziek zien', 'lichaam', 'illnessSigns'),
   flag('hitte-tempo', 'Hitte bij je tempo', 'lichaam', 'heatPace'),
   flag('weekdag-patroon', 'Patronen per weekdag', 'lichaam', 'weekdayPattern'),

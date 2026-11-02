@@ -26,7 +26,7 @@ describe('de vraag aan Open-Meteo', () => {
 });
 
 describe('mountainTrekDay: wanneer er bergweer is', () => {
-  it('alleen op een dag van een tocht in de bergen of de sneeuw met een hoogste punt, nooit de dag ervoor', () => {
+  it('zonder eigen plek alleen op een dag van een tocht in de bergen of de sneeuw met een hoogste punt, nooit de dag ervoor', () => {
     const t = trek('2027-07-02', '2027-07-05', 'mountain', 2500);
     expect(mountainTrekDay([t], '2027-07-01', true)).toBeUndefined();
     expect(mountainTrekDay([t], '2027-07-02', true)).toMatchObject({ date: '2027-07-02', highestM: 2500 });
@@ -35,6 +35,28 @@ describe('mountainTrekDay: wanneer er bergweer is', () => {
     expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'uneven_trail', 600)], '2027-07-03', true)).toBeUndefined();
     expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'snow')], '2027-07-03', true)).toBeUndefined();
     expect(mountainTrekDay([trek('2027-07-02', '2027-07-05', 'snow', 1800)], '2027-07-03', true)).toMatchObject({ highestM: 1800 });
+  });
+
+  it('met een eigen plek voor de tocht komt de kaart de dag ervoor, voor die plek, ook als het weer je locatie niet volgt', () => {
+    const own = { name: 'Bergdorp', lat: 45.12, lon: 6.99 };
+    const t = { ...trek('2027-07-02', '2027-07-05', 'mountain', 2500) };
+    t.trek = { ...t.trek!, place: own };
+    expect(mountainTrekDay([t], '2027-07-01', false)).toMatchObject({ date: '2027-07-02', when: 'morgen', place: own, highestM: 2500 });
+    expect(mountainTrekDay([t], '2027-06-30', false)).toBeUndefined();
+    expect(mountainTrekDay([t], '2027-07-03', false)).toMatchObject({ date: '2027-07-03', when: 'vandaag', place: own });
+    expect(mountainTrekDay([t], '2027-07-06', false)).toBeUndefined();
+    // Zonder hoogste punt is er geen bergweer, ook met een plek.
+    const noHeight = { ...t, trek: { ...t.trek!, highestM: undefined } };
+    expect(mountainTrekDay([noHeight], '2027-07-01', false)).toBeUndefined();
+  });
+
+  it('een tocht die bezig is gaat voor op een die morgen begint', () => {
+    const own = { name: 'Bergdorp', lat: 45.12, lon: 6.99 };
+    const now = trek('2027-07-01', '2027-07-02', 'mountain', 2000);
+    const next = trek('2027-07-03', '2027-07-05', 'mountain', 3000);
+    now.trek = { ...now.trek!, place: own };
+    next.trek = { ...next.trek!, place: own };
+    expect(mountainTrekDay([next, now], '2027-07-02', false)).toMatchObject({ highestM: 2000, when: 'vandaag' });
   });
 
   it('alleen als het weer je locatie volgt: een vaste plek is meestal thuis', () => {
@@ -58,6 +80,7 @@ describe('mountainWeatherLine: alleen informatie, geen oordeel', () => {
   it('zegt rond bij weinig verschil en noemt geen onweer als het er niet is', () => {
     const f = forecast(hours('2027-07-02', () => ({ tempC: 4, gustKmh: 25 })));
     expect(mountainWeatherLine(f, '2027-07-02')!.line).toBe('Op 2.500 m vandaag rond 4 graden, windstoten tot 25 km per uur.');
+    expect(mountainWeatherLine(f, '2027-07-02', 'morgen')!.line).toBe('Op 2.500 m morgen rond 4 graden, windstoten tot 25 km per uur.');
   });
 
   it('zegt niets zonder uren voor die dag', () => {

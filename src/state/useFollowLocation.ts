@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react';
 import type { AppSettings } from '../storage/database';
 import { followLocation } from '../storage/weatherLocation';
 import { followsLocation, needsWeather } from '../engine/overviewSettings';
+import { locationEnabled } from '../engine/locationSetting';
 
 export function useFollowLocation(
   settings: AppSettings,
@@ -28,7 +29,7 @@ export function useFollowLocation(
       running.current = true;
       try {
         const { settings: s, updateSettings: update } = latest.current;
-        const result = await followLocation({ enabled: needsWeather(s.overviews) && followsLocation(s.overviews), place: s.homeLocation });
+        const result = await followLocation({ enabled: locationEnabled(s) && needsWeather(s.overviews) && followsLocation(s.overviews), place: s.homeLocation });
         if (result.status === 'updated') await update({ homeLocation: result.place });
       } catch {
         // De plek blijft zoals ze was; de app gaat gewoon door.

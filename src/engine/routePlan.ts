@@ -105,6 +105,11 @@ export function buildItinerary(plan: RoutePlan, startDate?: string, stages: Gr5S
   return days;
 }
 
+// De loopdag van een datum, als er een startdatum is en die dag een etappe heeft.
+export function walkDayOn(days: readonly ItineraryDay[], date: string): ItineraryDay | undefined {
+  return days.find((d) => d.kind === 'walk' && d.date === date);
+}
+
 export interface ItineraryTotals {
   walkDays: number;
   restDays: number;

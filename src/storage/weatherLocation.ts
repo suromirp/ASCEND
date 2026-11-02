@@ -9,6 +9,7 @@ import { followSkipReason, movedTo, myLocation, type FollowSkip, type LocationPe
 import type { WeatherPlace } from '../models/weather';
 import { locateMe, type Position2 } from '../utils/geolocation';
 import { withTimeout } from '../utils/withTimeout';
+import { appLocationPermission } from '../integrations/geolocation';
 
 const CHECKED_KEY = 'weatherLocationCheckedAt';
 const PERMISSION_TIMEOUT_MS = 2_000;
@@ -16,8 +17,11 @@ const LOCATE_LIMIT_MS = 15_000;
 
 // Vraagt nooit zelf om toestemming: permissions.query toont geen venster.
 // Een browser zonder die functie telt als 'unknown', en dan blijft de plek staan.
-async function readLocationPermission(): Promise<LocationPermission> {
+export async function readLocationPermission(): Promise<LocationPermission> {
   try {
+    // In de Android-app weet de plugin het; in de browser vraagt permissions.query het.
+    const app = await withTimeout(appLocationPermission(), PERMISSION_TIMEOUT_MS);
+    if (app) return app;
     const permissions = typeof navigator !== 'undefined' ? navigator.permissions : undefined;
     if (!permissions?.query) return 'unknown';
     const status = await withTimeout(permissions.query({ name: 'geolocation' }), PERMISSION_TIMEOUT_MS);
