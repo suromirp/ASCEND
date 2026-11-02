@@ -71,7 +71,7 @@ describe('Klaar voor je doel, meerdaagse tocht: exact gelijk aan de oude GR5-uit
 
   it('computeGoalReadiness met de GR5-naam en twee dagen geeft dezelfde percentages en zinnen', () => {
     for (const [name, { reqs, logs }] of Object.entries(SCENARIOS)) {
-      const r = computeGoalReadiness({ kind: 'trek_hut', requirements: reqs }, logs, TODAY, { naming: { the: 'de GR5', your: 'je GR5' }, homeDays: 2 });
+      const r = computeGoalReadiness({ kind: 'trek_hut', requirements: reqs }, logs, TODAY, { naming: { the: 'de tocht', your: 'je tocht' }, homeDays: 2 });
       const golden = GR5_GOLDEN[name as keyof typeof GR5_GOLDEN] as { percent: number; sentence: string; change?: number };
       expect(r.percent).toBe(golden.percent);
       expect(r.sentence).toBe(golden.sentence);
@@ -82,7 +82,7 @@ describe('Klaar voor je doel, meerdaagse tocht: exact gelijk aan de oude GR5-uit
 
   it('een doel dat migreerde (details met homeDaysInRow 2) rekent hetzelfde als de eisen', () => {
     const { reqs, logs } = SCENARIOS.half;
-    const viaDetails = computeGoalReadiness({ kind: 'trek_hut', details: { homeDaysInRow: 2 }, requirements: reqs }, logs, TODAY, { naming: { the: 'de GR5', your: 'je GR5' } });
+    const viaDetails = computeGoalReadiness({ kind: 'trek_hut', details: { homeDaysInRow: 2 }, requirements: reqs }, logs, TODAY, { naming: { the: 'de tocht', your: 'je tocht' } });
     expect(viaDetails.percent).toBe(GR5_GOLDEN.half.percent);
   });
 

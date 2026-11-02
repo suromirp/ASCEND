@@ -29,7 +29,7 @@ export interface ShownReadiness {
   change?: number;
 }
 
-const GR5_NAMING = { the: 'de GR5', your: 'je GR5' };
+const GR5_NAMING = { the: 'de tocht', your: 'je tocht' };
 
 // De ene rekenregel voor het doel met de mijlpalen: Je stand en de Ascend-tab lezen allebei deze.
 export function computeMainGoalReadiness(requirements: GoalRequirement[], logs: SessionLog[], today: string): GoalReadiness {

@@ -53,7 +53,6 @@ Op vraag van de eigenaar. Bouwen bij de eerstvolgende vrije plek (Sherpa, opus; 
 
 Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie werkt los en samen; in de browser een webweg of een nette stilte. De Android-app werkt zichzelf bij (live update) en gebruikt een vaste sleutel, zodat je gegevens bij een update blijven.
 - In de Android-opdracht zelf: de terugknop, scherm aan tijdens Forge (in de browser met Wake Lock), trillen, statusbalk en startscherm.
-- Het blad Klaar voor je doel noemt de rugzak altijd "het rugzakdoel van je GR5", ook bij een andere tocht. Klein, tekst uit het doel halen.
 - Gebruikerstest met vier nagemaakte personen (ronde 4) en de herstelronde erna: niet in de sessie van 2 november (eigenaar); later, in een eigen sessie.
 - Back-up naar een map die de eigenaar zelf koos (Interne opslag/Ascend_backup) in de Android-app: eenmalig Map kiezen via de mappenkiezer van Android (Storage Access Framework, blijvende toestemming), daarna schrijven Back-up maken en de automatische back-up daarheen, met terugval op Documents/ASCEND en een melding. Vraagt een nieuwe plugin en APK. Op verzoek van de eigenaar later (2 november).
 - Forge: Ruilen op een toegevoegde bergspieroefening die na Uit deze training halen met afgevinkte sets in de sessie blijft, doet stil niets (ForgeWorkout swap). Verbergen of de prescriptie van de sessie gebruiken. Klein.

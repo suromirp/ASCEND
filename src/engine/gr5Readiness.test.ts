@@ -43,7 +43,7 @@ describe('Klaar voor de GR5', () => {
     expect(r.meters.map((m) => m.key)).toEqual(['rugzak', 'langsteDag', 'hoogte', 'dagen']);
     expect(r.meters.every((m) => m.share === 0)).toBe(true);
     expect(r.change).toBeUndefined();
-    expect(r.sentence).toContain('Zo sta je ervoor, gemiddeld over vier dingen die de GR5 vraagt');
+    expect(r.sentence).toContain('Zo sta je ervoor, gemiddeld over vier dingen die de tocht vraagt');
     expect(r.sentence).toContain('je rugzak 0 van 14 kg');
   });
 
@@ -122,7 +122,7 @@ describe('Klaar voor de GR5', () => {
     const r = oudeVorm(GR5.filter((x) => x.kind === 'packWeight'), [hike('2026-10-10', 60, 0, 7)], TODAY)!;
     expect(r.meters).toHaveLength(1);
     expect(r.percent).toBe(50);
-    expect(r.sentence).toBe('Dit telt één ding dat de GR5 vraagt: je rugzak 7 van 14 kg.');
+    expect(r.sentence).toBe('Dit telt één ding dat de tocht vraagt: je rugzak 7 van 14 kg.');
     expect(oudeVorm([], [], TODAY)).toBeUndefined();
   });
 
