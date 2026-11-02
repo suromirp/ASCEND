@@ -39,6 +39,8 @@ import { MorningCard, MorningDeepLink } from '../components/MorningCard';
 import { useSleepRefetch } from '../components/useSleepRefetch';
 import { useMorningCardVisible } from '../components/useMorningCardVisible';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
+import { useAutoBackupStatus } from '../components/useAutoBackupStatus';
+import { autoBackupFailureText, backupCardOnToday, resolveAutoBackup } from '../engine/autoBackup';
 import { FreshStartCard } from '../components/FreshStartCard';
 import { useFreshStart } from '../components/useFreshStart';
 import { StartWelcome } from '../components/start/StartWelcome';
@@ -152,7 +154,20 @@ function TodayContent() {
   const backupTouchedAt = [settings.lastExportedAt, settings.lastExportReminderDismissedAt].filter((d): d is string => !!d).sort().at(-1);
   const firstLogDate = sessionLogs.map((l) => l.completedDate).sort()[0];
   const reminderReference = (backupTouchedAt ? localDateOf(backupTouchedAt) : undefined) ?? firstLogDate;
-  const showExportReminder = !!reminderReference && daysBetween(reminderReference, today) >= 7;
+  const reminderDue = !!reminderReference && daysBetween(reminderReference, today) >= 7;
+  // Met de automatische back-up aan komt de kaart op zijn moment, onder de missie; uit blijft de
+  // herinnering na 7 dagen (engine/autoBackup.ts#backupCardOnToday).
+  const autoBackup = useAutoBackupStatus();
+  const backupCard = backupCardOnToday({
+    frequency: resolveAutoBackup(settings.autoBackup),
+    now: new Date(),
+    lastBackupAt: settings.lastExportedAt,
+    dismissedAt: settings.lastExportReminderDismissedAt,
+    hasData: sessionLogs.length > 0 || plannedSessions.length > 0,
+    checked: autoBackup.checked,
+    reminderDue,
+  });
+  const showExportReminder = backupCard === 'reminder';
   const logsSinceBackup = settings.lastExportedAt ? sessionLogs.filter((l) => l.completedAt > settings.lastExportedAt!).length : sessionLogs.length;
 
   const quoteLanguage = resolveQuoteLanguage(settings);
@@ -332,6 +347,7 @@ function TodayContent() {
     ...(missed.item ? (['missed'] as const) : []),
     ...(freshStart.shown ? (['freshStart'] as const) : []),
     ...(showExportReminder ? (['backup'] as const) : []),
+    ...(backupCard === 'due' ? (['backupDue'] as const) : []),
   ];
   const arrangement = arrangeToday(presentCards, resolveAboveMission(settings.cardsAboveMission));
   const aroundMission: Record<TodayCardId, ReactNode> = {
@@ -350,6 +366,16 @@ function TodayContent() {
       <ExportReminderBanner
         logsSinceBackup={logsSinceBackup}
         neverBackedUp={!settings.lastExportedAt}
+        onExport={() => exportData()}
+        onDismiss={() => updateSettings({ lastExportReminderDismissedAt: new Date().toISOString() })}
+      />
+    ),
+    backupDue: (
+      <ExportReminderBanner
+        due
+        logsSinceBackup={logsSinceBackup}
+        neverBackedUp={!settings.lastExportedAt}
+        failure={autoBackup.failure ? autoBackupFailureText(autoBackup.failure.reason, autoBackup.platform) : undefined}
         onExport={() => exportData()}
         onDismiss={() => updateSettings({ lastExportReminderDismissedAt: new Date().toISOString() })}
       />

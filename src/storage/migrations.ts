@@ -13,6 +13,7 @@ import { parseSportHandling, type SportHandlingMap } from '../engine/sportRole';
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/proposalTidy';
+import { AUTO_BACKUP_CHOICES, AUTO_BACKUP_KEEP_CHOICES, type AutoBackupFrequency, type AutoBackupKeep } from '../engine/autoBackup';
 import type { PlanChangeProposal } from '../models/planChange';
 import { BackupMessageError } from './backupMessage';
 import type { AppSettings } from './database';
@@ -645,6 +646,30 @@ export function migrateDataSettings(raw: { streamsBackup?: unknown; streamsInBac
   if (value.streamsBackup === undefined && raw.streamsInBackup === false) value.streamsBackup = 'none';
   if (raw.proposalTidyMonths !== undefined) {
     if ((PROPOSAL_TIDY_OPTIONS as readonly unknown[]).includes(raw.proposalTidyMonths)) value.proposalTidyMonths = raw.proposalTidyMonths as ProposalTidyMonths;
+    else skipped++;
+  }
+  return { value, skipped };
+}
+
+// --- automatische back-up (2026-11-02) ------------------------------------------------
+// `settings.autoBackup` en `settings.autoBackupKeep` (engine/autoBackup.ts) zijn nieuw, optioneel en
+// additief: een back-up van ervoor heeft ze niet en krijgt het advies (wekelijks, de laatste 8). Staat
+// er iets, dan blijft alleen een bekende waarde; de rest wordt weggelaten en geteld. Waar de bestanden
+// staan en welke ASCEND schreef hoort bij het toestel en zit nooit in een back-up.
+export function migrateAutoBackupSettings(raw: { autoBackup?: unknown; autoBackupKeep?: unknown }): {
+  value: { autoBackup?: AutoBackupFrequency; autoBackupKeep?: AutoBackupKeep };
+  skipped: number;
+} {
+  const value: { autoBackup?: AutoBackupFrequency; autoBackupKeep?: AutoBackupKeep } = {};
+  let skipped = 0;
+  if (raw.autoBackup !== undefined) {
+    const f = AUTO_BACKUP_CHOICES.find((c) => c === raw.autoBackup);
+    if (f) value.autoBackup = f;
+    else skipped++;
+  }
+  if (raw.autoBackupKeep !== undefined) {
+    const k = AUTO_BACKUP_KEEP_CHOICES.find((c) => c === raw.autoBackupKeep);
+    if (k !== undefined) value.autoBackupKeep = k;
     else skipped++;
   }
   return { value, skipped };

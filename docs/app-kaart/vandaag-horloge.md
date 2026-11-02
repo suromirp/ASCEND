@@ -45,6 +45,7 @@ Je testloop van za 10 oktober (snelste 5 km in 26:42) past bij een 10 km in onge
 
 --- kaart 5 ---
 Back-up
+Tijd voor je back-up.
 Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.
 [knop: Niet nu]
 [knop: Back-up maken]

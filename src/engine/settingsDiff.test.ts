@@ -110,6 +110,8 @@ const everything: AppSettings = {
   climbPace: false,
   streamsInBackup: false,
   proposalTidyMonths: 12,
+  autoBackup: 'daily',
+  autoBackupKeep: 16,
 };
 
 describe('adviceDifferences', () => {

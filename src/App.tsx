@@ -10,6 +10,7 @@ import { UpdatePrompt, UpdatedNotice } from './components/UpdatePrompt';
 import { DeviceNoticesHost } from './components/DeviceNoticesHost';
 import { DeviceShellHost } from './components/DeviceShellHost';
 import { LiveUpdateHost } from './components/LiveUpdateHost';
+import { AutoBackupHost } from './components/AutoBackupHost';
 import { PermissionWelcome } from './components/welcome/PermissionWelcome';
 import { SHOW_SPLASH } from './utils/updateFlag';
 import { ChangeNotice } from './components/ChangeNotice';
@@ -388,6 +389,8 @@ function AppShell() {
       <DeviceNoticesHost />
       <DeviceShellHost />
       <LiveUpdateHost ready={mainReady} />
+      {/* De automatische back-up: in de app stil naar de map, in de browser een kaart op Vandaag. */}
+      <AutoBackupHost ready={mainReady} />
       <PermissionWelcome ready={mainReady} />
       <CompletionMoment event={celebration} onDismiss={dismissCelebration} />
     </>
