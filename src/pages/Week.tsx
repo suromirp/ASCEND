@@ -173,7 +173,14 @@ export function WeekPage() {
   // maken in de melding), anders het blad met Akkoord en wat er botst.
   // Lukt het schrijven niet, dan blijven beide staan en zegt de melding dat (zonder Ongedaan maken).
   async function swapWith(sessionId: string, otherId: string): Promise<MoveDecision['action']> {
-    const decision = proposeSwap(sessionId, otherId);
+    let decision: MoveDecision;
+    try {
+      decision = proposeSwap(sessionId, otherId);
+    } catch (err) {
+      console.error('Ruilen mislukt:', err);
+      showFailure('Dat lukte niet, er is niets geruild.', SWAP_FAILED);
+      return 'none';
+    }
     if (decision.action === 'ask') setPendingProposal(decision.proposal);
     if (decision.action !== 'apply') return decision.action;
     return applyOrTell(decision.proposal).then((ok) => (ok ? 'apply' : 'none'));

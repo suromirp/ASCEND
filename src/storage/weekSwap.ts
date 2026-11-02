@@ -7,7 +7,7 @@ import { swapRows } from '../engine/weekSwap';
 import { getDB } from './database';
 
 export const SWAP_STALE = 'Een van de twee trainingen is intussen veranderd. Kijk in je week wat er nu staat.';
-export const SWAP_UNDO_STALE = 'Een van de twee trainingen is na de ruil nog veranderd. Ongedaan maken kan niet meer; zet ze zelf terug als je wilt.';
+export const SWAP_UNDO_STALE = 'Een van de twee trainingen is na de ruil nog veranderd. Ongedaan maken kan niet meer. Zet ze zelf terug als je wilt.';
 
 // Wat een ruil aan een rij verandert: de dag, de status, waar hij vandaan kwam en het slot.
 const sameAsWritten = (row: PlannedSession | undefined, written: PlannedSession) => !!row

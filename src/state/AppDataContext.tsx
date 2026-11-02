@@ -53,7 +53,7 @@ import { goalDetailsOf } from '../engine/goalLabels';
 import { setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
 import { writeCatchUp } from '../storage/catchUpApply';
-import { undoSwap, writeSwap } from '../storage/weekSwap';
+import { undoSwap, writeSwap, SWAP_UNDO_STALE } from '../storage/weekSwap';
 import { resolveDropOnTraining } from '../engine/dropOnTraining';
 import { linkLogNow, skipMissedNow, unlinkLogsNow, updateMissedMemory } from '../storage/missedTraining';
 import { askLine, autoSkipNotice, resolveMissedMemory, resolveMissedSettings, MISSED_MEMORY_KEY, type MissedMemory, type ResolvedMissedMemory } from '../engine/missedTraining';
@@ -973,7 +973,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         await undoSwap(recentChange.before, recentChange.swapAfter);
       } catch (err) {
         disarmFlip();
-        setRecentChange(failureNotice('Ongedaan maken kan niet meer', err instanceof Error ? err.message : String(err)));
+        setRecentChange(failureNotice('Niet teruggezet', err instanceof Error && err.message === SWAP_UNDO_STALE ? SWAP_UNDO_STALE : 'Er ging iets mis; je week staat zoals hij na de ruil was.'));
         await refresh();
         return;
       }
