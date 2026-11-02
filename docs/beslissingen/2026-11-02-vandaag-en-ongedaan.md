@@ -25,8 +25,12 @@ Hoe het werkt:
   horlogecijfers, ziek zonder planwijziging, een notitie) krijgt `written: []`, zodat een rij die er later bij komt
   altijd gecontroleerd wordt.
 - De planning (`syncProgramHorizon`) geeft elke rij terug die ze schreef of weghaalde (`touchedIds`: het
-  wedstrijdblok, WEEK-START, een teruggezette test, de rustdag opnieuw gelegd, een losse tochtdag). Na elke sync leest
-  de melding die rijen opnieuw (`engine/undoGuard.ts#refreshWritten`), en zet de weekcontrole er binnen vijftien
+  wedstrijdblok, WEEK-START, een teruggezette test, de rustdag opnieuw gelegd, een losse tochtdag), met hoe de rij
+  ervoor was en hoe de planning hem achterliet (`touched`). Na elke sync neemt de melding die rijen over
+  (`engine/undoGuard.ts#refreshWritten`), maar alleen als de rij voor de planning nog precies was wat de melding
+  vastlegde (of beide ontbraken). Schreef iets zonder melding de rij eerst (de krachtwizard, een ander venster), dan
+  blijft het oude en weigert ongedaan maken terecht; zat zo'n schrijver tussen twee rondes, dan ook (`chainTouch`).
+  Zet de weekcontrole er binnen vijftien
   seconden iets bij recht, dan komt dat bij dezelfde melding. Zo wordt een terechte undo niet geweigerd omdat de
   planning verder ging; Ongedaan maken zet dan alles terug zoals het voor je wijziging was.
 - Waarom het niet meer kan (`undoBlockReason`): een log, een rij met jouw slot van na de wijziging (jij), of anders de

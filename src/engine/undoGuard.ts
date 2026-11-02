@@ -53,17 +53,49 @@ export function undoBlockReason(input: UndoGuardInput): UndoBlock | null {
 
 export const undoBlocked = (input: UndoGuardInput): boolean => undoBlockReason(input) !== null;
 
-// De planning schreef rijen opnieuw of haalde ze weg (ProgramHorizonResult.touchedIds), of de weekcontrole zette
-// iets recht dat bij de melding komt: die rijen gelden nu zoals ze nu zijn, zodat een terechte undo niet geweigerd
-// wordt omdat de planning verder ging. Een melding zonder vastgelegde rijen begint leeg, zodat een rij die erbij kwam
-// en die jij daarna veranderde nooit blind teruggaat.
+// Wat een planningsronde met een rij deed: hoe hij ervoor was en hoe de ronde hem achterliet (null: er was er
+// geen, of de ronde haalde hem weg). `broken`: tussen twee rondes schreef iets anders de rij (de krachtwizard, een
+// ander venster), dus wat de rondes deden is niet meer los te zien van die schrijver.
+export interface SyncTouch {
+  before: PlannedSession | null;
+  after: PlannedSession | null;
+  broken?: true;
+}
+
+const sameOrBothGone = (a: PlannedSession | null | undefined, b: PlannedSession | null | undefined) => (a ? sameRow(b ?? undefined, a) : !b);
+
+// Twee rondes na elkaar voor dezelfde rij: het begin van de eerste, het eind van de laatste. Paste de tweede niet op
+// waar de eerste eindigde, dan zat er een andere schrijver tussen.
+export function chainTouch(prev: SyncTouch | undefined, next: SyncTouch): SyncTouch {
+  if (!prev) return next;
+  const broken = prev.broken || !sameOrBothGone(prev.after, next.before);
+  return { before: prev.before, after: next.after, ...(broken ? { broken: true as const } : {}) };
+}
+
+// De planning schreef rijen opnieuw of haalde ze weg (ProgramHorizonResult.touched): de melding neemt die rij over zoals
+// de planning hem achterliet, maar alleen als hij voor de planning nog precies was wat de melding vastlegde (of
+// allebei ontbraken). Schreef iets anders hem eerst (zonder melding), dan blijft het oude en weigert ongedaan maken
+// terecht. `fresh`: rijen die nu pas bij de melding komen (de weekcontrole zette ze recht); die gelden zoals ze nu
+// zijn. Een melding zonder vastgelegde rijen begint leeg, zodat een rij die erbij kwam en die jij daarna veranderde
+// nooit blind teruggaat.
 export function refreshWritten(
   written: readonly PlannedSession[] | undefined,
+  touched: ReadonlyMap<string, SyncTouch>,
   ids: Iterable<string>,
-  now: ReadonlyMap<string, PlannedSession>,
+  fresh: ReadonlyMap<string, PlannedSession | null> = new Map(),
 ): PlannedSession[] {
-  const touched = new Set(ids);
-  const kept = (written ?? []).filter((s) => !touched.has(s.id));
-  const fresh = [...touched].map((id) => now.get(id)).filter((s): s is PlannedSession => !!s);
-  return [...kept, ...fresh];
+  const out = new Map((written ?? []).map((s) => [s.id, s]));
+  for (const id of ids) {
+    if (fresh.has(id)) {
+      const row = fresh.get(id);
+      if (row) out.set(id, row);
+      else out.delete(id);
+      continue;
+    }
+    const t = touched.get(id);
+    if (!t || t.broken || !sameOrBothGone(out.get(id), t.before)) continue;
+    if (t.after) out.set(id, t.after);
+    else out.delete(id);
+  }
+  return [...out.values()];
 }

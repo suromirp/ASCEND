@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlannedSession } from '../models/training';
-import { refreshWritten, sameRow, undoBlockReason, undoBlocked } from './undoGuard';
+import { chainTouch, refreshWritten, sameRow, undoBlockReason, undoBlocked, type SyncTouch } from './undoGuard';
 
 // Nagemaakte rijen.
 const lock = { by: 'user' as const, at: '2026-10-29T08:00:00.000Z' };
@@ -69,20 +69,48 @@ describe('undoBlockReason', () => {
 });
 
 describe('refreshWritten', () => {
-  it('neemt de rijen die de planning raakte over zoals ze nu zijn, en wat weg is valt eruit', () => {
-    const repaired = { ...moved, plannedMinutes: 40 };
-    expect(refreshWritten([moved, added], [moved.id, added.id], rows(repaired))).toEqual([repaired]);
-    expect(refreshWritten([moved], ['p9'], rows({ ...added, id: 'p9' }))).toEqual([moved, { ...added, id: 'p9' }]);
+  const repaired = { ...moved, plannedMinutes: 40 };
+  const touch = (...list: [string, SyncTouch][]) => new Map(list);
+
+  it('neemt een rij over zoals de planning hem achterliet, als hij ervoor nog was wat de melding vastlegde', () => {
+    expect(refreshWritten([moved, added], touch([moved.id, { before: moved, after: repaired }], [added.id, { before: added, after: null }]), [moved.id, added.id])).toEqual([repaired]);
   });
 
-  it('een melding zonder vastgelegde rijen begint leeg', () => {
-    expect(refreshWritten(undefined, ['p1'], rows(moved))).toEqual([moved]);
+  it('schreef iets anders de rij eerst (zonder melding), dan blijft het oude', () => {
+    const other = { ...moved, plannedMinutes: 25 };
+    expect(refreshWritten([moved], touch([moved.id, { before: other, after: repaired }]), [moved.id])).toEqual([moved]);
+    // Een rij die de melding weghaalde en die iets anders terugzette.
+    expect(refreshWritten([], touch([was.id, { before: was, after: repaired }]), [was.id])).toEqual([]);
+    // Tussen twee rondes schreef iets anders.
+    expect(refreshWritten([moved], touch([moved.id, { before: moved, after: repaired, broken: true }]), [moved.id])).toEqual([moved]);
+  });
+
+  it('beide ontbraken: wat de planning neerzette telt', () => {
+    expect(refreshWritten([], touch([added.id, { before: null, after: added }]), [added.id])).toEqual([added]);
+  });
+
+  it('rijen die nu pas bij de melding komen gelden zoals ze nu zijn', () => {
+    expect(refreshWritten(undefined, touch(), ['p1'], new Map([['p1', moved]]))).toEqual([moved]);
+    expect(refreshWritten([moved], touch(), [moved.id], new Map([[moved.id, null]]))).toEqual([]);
   });
 
   it('een rij die de weekcontrole bij een melding zonder rijen zette en die jij daarna verandert, gaat niet blind terug', () => {
-    // Melding zonder rijen (koppelen), daarna zet de weekcontrole een rij recht die erbij komt.
-    const written = refreshWritten([], [was.id], rows(moved));
+    const written = refreshWritten([], touch(), [was.id], new Map([[was.id, moved]]));
     const yours = { ...moved, scheduledDate: '2026-11-02', lock: { by: 'user' as const, at: '2026-10-30T08:00:00.000Z' } };
     expect(undoBlockReason({ before: [was], addedIds: [], written, current: rows(yours), loggedIds: new Set() })).toBe('yours');
+  });
+});
+
+describe('chainTouch', () => {
+  const repaired = { ...moved, plannedMinutes: 40 };
+  it('neemt het begin van de eerste ronde en het eind van de laatste', () => {
+    expect(chainTouch(undefined, { before: was, after: moved })).toEqual({ before: was, after: moved });
+    expect(chainTouch({ before: was, after: moved }, { before: moved, after: repaired })).toEqual({ before: was, after: repaired });
+    expect(chainTouch({ before: null, after: null }, { before: null, after: added })).toEqual({ before: null, after: added });
+  });
+
+  it('zat er een andere schrijver tussen, dan is het gebroken', () => {
+    expect(chainTouch({ before: was, after: moved }, { before: { ...moved, plannedMinutes: 25 }, after: repaired })).toEqual({ before: was, after: repaired, broken: true });
+    expect(chainTouch({ before: was, after: moved, broken: true }, { before: moved, after: repaired }).broken).toBe(true);
   });
 });

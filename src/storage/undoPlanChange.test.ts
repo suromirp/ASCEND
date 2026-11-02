@@ -144,7 +144,7 @@ describe('een melding zonder rijen waar de weekcontrole iets bij zette', () => {
     // en dat komt bij dezelfde melding.
     const checked: PlannedSession = { ...run, scheduledDate: '2026-10-31' };
     await PlannedSessionsRepo.put(checked);
-    const written = refreshWritten([], [run.id], new Map([[run.id, checked]]));
+    const written = refreshWritten([], new Map(), [run.id], new Map([[run.id, checked]]));
     const change = notice({ before: [run], written });
     // Daarna verplaats jij hem zelf.
     const yours: PlannedSession = { ...checked, scheduledDate: '2026-11-01', status: 'moved', movedFromDate: '2026-10-31', lock: { by: 'user', at: '2026-10-30T08:00:00.000Z' } };
@@ -196,13 +196,41 @@ describe('de planning gaat verder na je wijziging (wedstrijdblok)', () => {
     const change = notice({ before: pair, written: await snapshotWritten(pair, []) });
     // De planning loopt erna en schrijft in die week opnieuw.
     const sync = await syncProgramHorizon();
-    const ids = pair.map((s) => s.id).filter((id) => sync.touchedIds?.includes(id));
+    const touched = new Map((sync.touched ?? []).map((t) => [t.id, t]));
+    const ids = pair.map((s) => s.id).filter((id) => touched.has(id));
     expect(ids.length).toBeGreaterThan(0);
     // Zonder opnieuw lezen: geweigerd, met de zin dat de planning verder ging (niet dat jij iets deed).
     await expect(undoPlanChangeNow(change)).rejects.toThrow(PLAN_UNDO_PLANNED);
     // Opnieuw gelezen zoals AppDataProvider na elke sync doet: gaat door, en de week staat zoals hij was.
-    const fresh = { ...change, written: refreshWritten(change.written, ids, new Map((await snapshotWritten([], ids)).map((s) => [s.id, s]))) };
-    await undoPlanChangeNow(fresh);
+    await undoPlanChangeNow({ ...change, written: refreshWritten(change.written, touched, ids) });
     for (const s of pair) expect(await rowOf(s.id)).toEqual(s);
+  }, 60000);
+
+  it('een schrijver zonder melding en daarna de planning: ongedaan maken weigert terecht', async () => {
+    const all = await PlannedSessionsRepo.getAll();
+    const lead = all.filter((s) => s.raceBlock?.pair === s.id).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+    if (!lead) throw new Error('verwacht een beendag van het wedstrijdblok');
+    const pair = all.filter((s) => s.weekStartDate === lead.weekStartDate);
+    // Jouw wijziging: de beendag een eigen lengte.
+    await PlannedSessionsRepo.put({ ...lead, plannedMinutes: 35 });
+    const change = notice({ before: [lead], written: await snapshotWritten([lead], []) });
+    // Daarna schrijft iets zonder melding dezelfde rij (de krachtwizard, een ander venster): het merkteken gaat eraf.
+    const { raceBlock: _gone, ...bare } = lead;
+    void _gone;
+    await PlannedSessionsRepo.put({ ...(bare as PlannedSession), plannedMinutes: 35 });
+    // Dan de planning.
+    const sync = await syncProgramHorizon();
+    const touched = new Map((sync.touched ?? []).map((t) => [t.id, t]));
+    const ids = pair.map((s) => s.id).filter((id) => touched.has(id));
+    const written = refreshWritten(change.written, touched, [lead.id, ...ids]);
+    // De beendag is niet overgenomen: wat de andere schrijver deed wordt nooit het nieuwe uitgangspunt.
+    expect(written.find((s) => s.id === lead.id)).toEqual(change.written?.find((s) => s.id === lead.id));
+    const now = await rowOf(lead.id);
+    if (now && JSON.stringify(now) !== JSON.stringify(change.written?.[0])) {
+      await expect(undoPlanChangeNow({ ...change, written })).rejects.toThrow();
+      expect(await rowOf(lead.id)).toEqual(now);
+    } else {
+      throw new Error('verwacht dat de rij na de andere schrijver en de planning anders is');
+    }
   }, 60000);
 });

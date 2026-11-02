@@ -191,13 +191,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // The week check put something right: say what, with undo.
     const repaired = pendingRepairs;
     clearPendingRepairs();
-    // Every row the syncs wrote or took off since the last read: the notice of your last change takes them as they
-    // are now, so its undo is not refused because the planning moved on (engine/undoGuard.ts#refreshWritten).
+    // Every row the syncs wrote or took off since the last read: the notice of your last change takes it as the
+    // planning left it, but only when it was still what the notice recorded before the planning ran, so its undo is
+    // not refused because the planning moved on, and a writer without a notice is never taken over
+    // (engine/undoGuard.ts#refreshWritten).
     const syncTouched = takeSyncTouched();
-    const repairedIds = repaired ? [...repaired.before, ...repaired.stored].map((s) => s.id).concat(repaired.addedIds ?? []) : [];
-    const touchedIds = new Set([...syncTouched, ...repairedIds]);
-    const rowsNow = touchedIds.size > 0 ? new Map((await snapshotWritten([], [...touchedIds])).map((s) => [s.id, s])) : new Map<string, PlannedSession>();
-    const noticeIds = (c: RecentPlanChange) => [...c.before.map((s) => s.id), ...c.addedIds].filter((x) => touchedIds.has(x));
+    const noticeIds = (c: RecentPlanChange) => [...c.before.map((s) => s.id), ...c.addedIds];
+    // Rows the week check put right that join a notice now: as they are now.
+    const repairedIds = repaired ? [...new Set([...repaired.before, ...repaired.stored].map((s) => s.id).concat(repaired.addedIds ?? []))] : [];
+    const repairedRows = new Map((repairedIds.length > 0 ? await snapshotWritten([], repairedIds) : []).map((s) => [s.id, s]));
+    const freshFor = (ids: string[]) => new Map(ids.map((x) => [x, repairedRows.get(x) ?? null]));
     // Not on a fresh install: there is nothing of yours to put right yet.
     if (repaired && logs.length > 0) {
       const id = makeId('plancheck');
@@ -211,16 +214,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         if (prev && !prev.failed && prev.trigger !== 'plan_check' && Date.now() - Date.parse(prev.createdAt) < 15_000) {
           const known = new Set(prev.before.map((s) => s.id));
           const joined = { ...prev, lines: [...prev.lines, ...repaired.lines], before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))], addedIds: [...prev.addedIds, ...(repaired.addedIds ?? [])] };
-          return { ...joined, written: refreshWritten(prev.written, noticeIds(joined), rowsNow) };
+          const joinedIds = noticeIds(joined).filter((x) => !noticeIds(prev).includes(x));
+          return { ...joined, written: refreshWritten(prev.written, syncTouched, noticeIds(joined), freshFor(joinedIds)) };
         }
         const notice: RecentPlanChange = { id, trigger: 'plan_check', title: 'Planning bijgewerkt', lines: repaired.lines, why, before: repaired.before, addedIds: repaired.addedIds ?? [], createdAt: now };
-        return { ...notice, written: refreshWritten([], noticeIds(notice), rowsNow) };
+        return { ...notice, written: refreshWritten([], syncTouched, noticeIds(notice), freshFor(noticeIds(notice))) };
       });
-    } else if (syncTouched.length > 0) {
+    } else if (syncTouched.size > 0) {
       setRecentChange((prev) => {
         if (!prev || prev.failed) return prev;
-        const ids = noticeIds(prev);
-        return ids.length === 0 ? prev : { ...prev, written: refreshWritten(prev.written, ids, rowsNow) };
+        const ids = noticeIds(prev).filter((x) => syncTouched.has(x));
+        return ids.length === 0 ? prev : { ...prev, written: refreshWritten(prev.written, syncTouched, ids) };
       });
     }
   }, []);

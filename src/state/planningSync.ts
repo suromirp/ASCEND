@@ -20,6 +20,7 @@ import { packWeightOf } from '../engine/gr5Profile';
 import { resolveTestRest, setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, setTestRestHours } from '../engine/scheduler';
 import { leaveKey } from '../engine/leaveEdit';
 import { createSerialQueue } from '../utils/serialQueue';
+import { chainTouch, type SyncTouch } from '../engine/undoGuard';
 import type { RecentPlanChange } from '../models/planChange';
 import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -113,11 +114,12 @@ export let pendingRepairs: ProgramHorizonResult['repairs'];
 export function clearPendingRepairs() {
   pendingRepairs = undefined;
 }
-// Every row the syncs since the last refresh wrote or took off the plan (ProgramHorizonResult.touchedIds).
-let pendingTouched = new Set<string>();
-export function takeSyncTouched(): string[] {
-  const out = [...pendingTouched];
-  pendingTouched = new Set();
+// Every row the syncs since the last refresh wrote or took off the plan, with how it was before the first of them
+// and how the last left it (ProgramHorizonResult.touched, engine/undoGuard.ts#chainTouch).
+let pendingTouched = new Map<string, SyncTouch>();
+export function takeSyncTouched(): Map<string, SyncTouch> {
+  const out = pendingTouched;
+  pendingTouched = new Map();
   return out;
 }
 
@@ -178,7 +180,7 @@ export function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Prom
       if ((await currentKey()) === lastHorizonKey) return false;
       await prime?.();
       const result = await syncProgramHorizon();
-      for (const id of result.touchedIds ?? []) pendingTouched.add(id);
+      for (const t of result.touched ?? []) pendingTouched.set(t.id, chainTouch(pendingTouched.get(t.id), { before: t.before, after: t.after }));
       // Two syncs before one refresh: both notices count.
       if (result.repairs) pendingRepairs = pendingRepairs
         ? { lines: [...pendingRepairs.lines, ...result.repairs.lines], before: [...pendingRepairs.before, ...result.repairs.before.filter((b) => !pendingRepairs!.before.some((p) => p.id === b.id))], stored: [...pendingRepairs.stored, ...result.repairs.stored.filter((b) => !pendingRepairs!.stored.some((p) => p.id === b.id))], addedIds: [...(pendingRepairs.addedIds ?? []), ...(result.repairs.addedIds ?? [])] }
