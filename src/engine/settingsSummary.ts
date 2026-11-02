@@ -59,6 +59,7 @@ import { quickButtonsOn, swipeDeleteOn } from './forgeQuickActions';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { resolveSportCounting } from './sportRole';
+import { sportsRowSummary } from './sportsScreen';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
 import { resolveAboveMission } from './todayCards';
@@ -370,15 +371,9 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: s.restDayMode === 'active' ? 'Hersteldag' : 'Rust' };
     case 'meerdere':
       return { value: choiceShort('meerdere', f.pairing) };
-    case 'sport-running':
-    case 'sport-hiking':
-    case 'sport-cycling': {
-      const sport = rowId.slice(6) as Sport;
-      const st = sportState(f, sport);
-      if (!st.on) return { value: 'Uit', dim: true };
-      if (st.perWeek) return { value: `${st.perWeek}× per week` };
-      return { value: 'Aan', auto: true };
-    }
+    // Het scherm Sporten (engine/sportsScreen.ts): "2 gepland, 1 telt mee".
+    case 'sporten':
+      return sportsRowSummary(s);
     case 'wijzigingen':
       return { value: choiceShort('wijzigingen', s.changeApplyMode ?? 'auto_small') };
     case 'ambitie': {

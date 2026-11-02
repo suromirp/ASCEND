@@ -18,7 +18,6 @@ import { resolveLegEase } from '../engine/legEaseSettings';
 import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { resolveWatchHrMode } from '../engine/watchHeartRate';
 
-import { SPORT_IDS } from './sports';
 
 // De plek van de pagina's: /more is het overzicht (ook voor het tandwiel en oude links),
 // /more/:groep een groep. Een onbekende groep gaat terug naar het overzicht.
@@ -61,7 +60,7 @@ export interface PageRows {
 
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
-    rows: ['bundel-dagen', 'meerdere', ...SPORT_IDS.map((id) => `sport-${id}`), 'wijzigingen', 'ambitie', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'rustdag-terug', 'weekvoorstel'],
+    rows: ['bundel-dagen', 'meerdere', 'sporten', 'wijzigingen', 'ambitie', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'rustdag-terug', 'weekvoorstel'],
     advanced: ['bundel-niet-doorgegaan', 'bundel-sporten-tellen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij'],
   },
   doel: {
@@ -114,8 +113,8 @@ const inSheet = (row: string, ...ids: string[]): Record<string, { row: string; s
 
 // Instellingen uit de index die niet op een rij met hun eigen id staan.
 const MOVED: Record<string, { row: string; sheet?: boolean }> = {
-  sporten: { row: 'sport-running' },
-  'sport-per-week': { row: 'sport-running' },
+  // Het scherm Sporten (pages/settings/SportsPage.tsx) hangt aan de rij Sporten.
+  'sport-per-week': { row: 'sporten' },
   'garmin-gids': { row: 'garmin' },
   rugzak: { row: 'doelen' },
   weervolgt: { row: 'weerplaats', sheet: true },

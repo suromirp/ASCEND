@@ -5,11 +5,11 @@ import { migrateLogRpeAssumed, migrateSportHandling } from '../storage/migration
 import type { SessionLog } from '../models/training';
 
 describe('sportRole', () => {
-  it('zonder keuze de oude instelling: aan is plannen, uit doet niet mee', () => {
+  it('zonder keuze de oude instelling: aan is plannen, uit telt mee als je het doet (stap 5, advies bij vraag 5)', () => {
     expect(sportRole({}, 'running')).toBe('plan');
     expect(sportRole({}, 'hiking')).toBe('plan');
-    expect(sportRole({}, 'cycling')).toBe('off');
-    expect(sportRole({ enabledSports: { running: false, hiking: true, cycling: true } }, 'running')).toBe('off');
+    expect(sportRole({}, 'cycling')).toBe('count');
+    expect(sportRole({ enabledSports: { running: false, hiking: true, cycling: true } }, 'running')).toBe('count');
     expect(sportRole({ enabledSports: { running: true, hiking: true, cycling: true } }, 'cycling')).toBe('plan');
   });
 

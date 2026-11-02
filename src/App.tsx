@@ -33,6 +33,7 @@ import { AscendPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SettingsOverview } from './pages/settings/SettingsOverview';
 import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
+import { SportsPage } from './pages/settings/SportsPage';
 import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
 import { StretchAreaRedirect } from './pages/StretchAreaRedirect';
 import { SessionPill } from './components/forge/SessionPill';
@@ -336,6 +337,7 @@ function AppShell() {
             <Route path="/ascend/doelen" element={<Navigate to="/ascend" replace />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/more" element={<SettingsOverview />} />
+            <Route path="/more/planning/sporten" element={<SportsPage />} />
             <Route path="/more/:groep" element={<SettingsGroupPage />} />
             <Route path="/lichaam" element={<BodyPage />} />
             <Route path="/lichaam/:plek" element={<BodySpotPage />} />

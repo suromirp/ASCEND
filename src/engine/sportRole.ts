@@ -111,7 +111,8 @@ export function sportRole(settings: RoleSettings, sport: AnySportId): SportRole 
   if (chosen) return chosen;
   const planned = SPORT_IDS.find((s) => s === sport);
   if (!planned) return resolveSportCounting(settings.sportCounting).askNew ? undefined : 'count';
-  return { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports }[planned] ? 'plan' : 'off';
+  // Uit: ASCEND plant hem niet, maar wat je doet blijft een training in je logboek die meetelt.
+  return { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports }[planned] ? 'plan' : 'count';
 }
 
 // Telt wat je deed mee voor je benen en je week? Alles behalve Negeren en nog niet gekozen.

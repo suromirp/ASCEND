@@ -60,11 +60,8 @@ describe('rowSummary: planning', () => {
     expect(rowSummary('rustdag', damaged).sub).toBeUndefined();
   });
 
-  it('een sport staat uit, op het weekschema (auto) of op een vast aantal', () => {
-    const settings = { ...facts().settings, sportFrequency: { running: 3 } };
-    expect(rowSummary('sport-running', facts({ settings }))).toEqual({ value: '3× per week' });
-    expect(rowSummary('sport-hiking', facts({ settings }))).toEqual({ value: 'Aan', auto: true });
-    expect(rowSummary('sport-cycling', facts({ settings }))).toEqual({ value: 'Uit', dim: true });
+  it('de rij Sporten telt de rollen (sporten die meetellen, stap 5)', () => {
+    expect(rowSummary('sporten', facts())).toEqual({ value: '2 gepland', sub: '1 telt mee' });
   });
 
   it('twee trainingen op een dag toont de korte keuze', () => {
@@ -799,7 +796,7 @@ describe('rowSummary: rijen met een blad', () => {
     expect(rowSummary('bundel-dagen', facts({ dailyTimeBudget: {} })).value).toBe('Rust ma');
     expect(rowSummary('bundel-dagen', facts({ dailyTimeBudget: {}, settings: { ...facts().settings, restDay: 3 } })).value).toBe('Rust wo');
     // Waarden in de rij blijven kort genoeg voor 360 px.
-    for (const id of ['sport-running', 'sport-hiking', 'sport-cycling', 'bundel-dagen', 'forge-leren', 'forge-vermoeidheid']) {
+    for (const id of ['sporten', 'bundel-dagen', 'forge-leren', 'forge-vermoeidheid']) {
       expect(rowSummary(id, facts()).value!.length, id).toBeLessThanOrEqual(14);
     }
     expect(rowSummary('forge-vermoeidheid', facts()).auto).toBeUndefined();

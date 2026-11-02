@@ -3,10 +3,9 @@ import { SETTINGS_INDEX } from './settingsIndex';
 import { PAGE_ROWS, SETTINGS_PAGES, SHOW_WHEN, allRowIds, isSettingsPageId, pageOfRow, placementOf, settingsPageRoute, SETTINGS_ROOT } from './settingsLayout';
 import { searchSettings } from '../engine/settingsSearch';
 
-// Rijen die geen instelling zijn om naar te zoeken: de sporten staan onder 'sporten', met
-// het aantal keer per week, en de rijen met een blad (`bundel-`) zijn de naam van een groepje
-// instellingen die zelf in de index staan.
-const NOT_SEARCHABLE = ['sport-hiking', 'sport-cycling'];
+// Rijen die geen instelling zijn om naar te zoeken. De rijen met een blad (`bundel-`) zijn de naam
+// van een groepje instellingen die zelf in de index staan.
+const NOT_SEARCHABLE: string[] = [];
 
 // Het plafond: wie een rij toevoegt, haalt er een weg of zet hem in een blad of onder Geavanceerd
 // (docs/beslissingen/2026-10-26-instellingen-opruimen.md).

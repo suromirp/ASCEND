@@ -810,6 +810,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geen goede dag', text: 'zijn je benen op geen enkele dag binnen 10 dagen fris genoeg te krijgen, valt de dag in een vakantie of tocht, of staat er al een test gepland, dan zegt ASCEND niets.' },
     ],
   },
+  sporten: {
+    title: 'Sporten',
+    lead: 'Per sport kies je hoe ASCEND ermee omgaat.',
+    points: [
+      { head: 'Plan dit voor mij', text: 'ASCEND zet het in je week, op dagen die bij je benen passen. Alleen voor hardlopen, wandelen en fietsen: voor de andere sporten heeft ASCEND geen trainingen.' },
+      { head: 'Telt mee als ik het doe', text: 'je plant het zelf. Wat je doet telt mee voor je benen en je week.' },
+      { head: 'Negeren', text: 'ASCEND doet er niets mee. Je kunt het wel loggen.' },
+      { head: 'Nooit stil', text: 'verandert een keuze je planning, dan zie je eerst het voorstel. Met Liever niet blijft alles zoals het was.' },
+    ],
+  },
   sportenTellen: {
     title: 'Hoe sporten meetellen',
     lead: 'Zwemmen, padel en voetbal plant ASCEND niet, maar ze kunnen meetellen voor je benen en je week.',

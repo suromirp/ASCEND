@@ -34,7 +34,7 @@ describe('de rol zonder keuze', () => {
   it('met Vragen bij een nieuwe sport uit begint hij op Telt mee', () => {
     expect(sportRole({ sportCounting: { askNew: false } }, 'padel')).toBe('count');
     // Een sport die ASCEND plant blijft zoals hij was.
-    expect(sportRole({ sportCounting: { askNew: false } }, 'cycling')).toBe('off');
+    expect(sportRole({ sportCounting: { askNew: false } }, 'cycling')).toBe('count');
   });
 
   it('de instelling leest defensief en heeft het advies als standaard', () => {

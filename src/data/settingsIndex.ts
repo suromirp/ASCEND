@@ -30,7 +30,7 @@ export interface SettingsIndexItem {
 export const settingsAnchor = (id: string) => `instelling-${id}`;
 
 export const SETTINGS_INDEX: SettingsIndexItem[] = [
-  { id: 'sporten', title: 'Sporten', group: 'planning', note: 'Welke sporten ASCEND mag inplannen en hoe vaak per week.', keywords: ['hardlopen', 'lopen', 'wandelen', 'fietsen', 'frequentie', 'hoe vaak', 'per week'] },
+  { id: 'sporten', title: 'Sporten', group: 'planning', note: 'Per sport hoe ASCEND ermee omgaat: plannen, meetellen of negeren.', keywords: ['hardlopen', 'lopen', 'wandelen', 'fietsen', 'zwemmen', 'padel', 'voetbal', 'telt mee', 'negeren', 'frequentie', 'hoe vaak', 'per week'] },
   { id: 'sport-per-week', title: 'Hoe vaak per week', group: 'planning', note: 'Per sport een vast aantal keer per week, of automatisch.', keywords: ['hardlopen', 'wandelen', 'fietsen', 'frequentie', 'keer per week', 'auto'] },
   { id: 'wijzigingen', title: 'Wijzigingen toepassen', group: 'planning', note: 'Of ASCEND eerst vraagt voordat de planning verandert, of kleine dingen zelf doet.', keywords: ['akkoord', 'bevestigen', 'automatisch', 'vragen', 'voorstel', 'planning'] },
   { id: 'trainingstijd', title: 'Trainingstijd per dag', group: 'planning', note: 'Hoeveel tijd je normaal hebt per dag.', keywords: ['tijd', 'minuten', 'budget', 'dagbudget', 'uur', 'beschikbaar', 'dagen en tijd'] },
