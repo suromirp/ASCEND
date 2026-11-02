@@ -35,7 +35,7 @@ describe('bestMomentForTraining: een beter blok', () => {
     expect(weatherForTraining({ forecast: f, template: run, logs: [], date: DAY, durationMinutes: 90, now: MORNING })?.verdict).toBe('let_op');
     const m = best(f);
     expect(m).toMatchObject({ date: DAY, startHour: 16, startMinutes: 960, endMinutes: 1050, verdict: 'prima', reason: 'droog' });
-    expect(m?.text).toBe('Beste moment: 16 tot 17.30 uur, droog');
+    expect(m?.text).toBe('Beste moment: 16:00 tot 17:30, droog');
   });
 
   it('kiest van gelijke blokken het blok het dichtst bij het gewone uur', () => {
@@ -50,7 +50,7 @@ describe('bestMomentForTraining: een beter blok', () => {
       id: `l${i}`, templateId: 'run', type: 'cardio', completedDate: d, completedAt: new Date(`${d}T07:30:00`).toISOString(), variant: 'full', durationMinutes: 30, source: 'manual',
     }));
     const f = forecast((h) => (h >= 7 && h < 9 ? rain() : undefined));
-    expect(best(f, { logs, minutes: 45, now: at(5, 30) })?.text).toBe('Beste moment: 9 tot 9.45 uur, droog en licht');
+    expect(best(f, { logs, minutes: 45, now: at(5, 30) })?.text).toBe('Beste moment: 09:00 tot 09:45, droog en licht');
   });
 
   it('van slecht naar let op telt ook, met de reden in woorden', () => {
@@ -90,8 +90,8 @@ describe('bestMomentForTraining: een beter blok', () => {
   it('rondt het einde af op vijf minuten', () => {
     // Een uur voorspelling telt mee, dus het blok van 17 uur is droog.
     const f = forecast((h) => (h >= 18 ? rain() : undefined));
-    expect(best(f, { minutes: 47 })?.text).toBe('Beste moment: 17 tot 17.50 uur, droog');
-    expect(best(f, { minutes: 60 })?.text).toBe('Beste moment: 17 tot 18 uur, droog');
+    expect(best(f, { minutes: 47 })?.text).toBe('Beste moment: 17:00 tot 17:50, droog');
+    expect(best(f, { minutes: 60 })?.text).toBe('Beste moment: 17:00 tot 18:00, droog');
   });
 
   it('kijkt ook naar de komende dagen, tot drie dagen vooruit', () => {
@@ -99,7 +99,7 @@ describe('bestMomentForTraining: een beter blok', () => {
     // Donderdag, gewone uur 18: het blok van 16 uur.
     expect(best(f, { date: '2026-10-22' })?.startHour).toBe(16);
     // Zaterdag (drie dagen), gewone uur 10 met regen: 8 en 12 liggen even ver weg, het eerste wint.
-    expect(best(f, { date: '2026-10-24' })?.text).toBe('Beste moment: 8 tot 9.30 uur, droog');
+    expect(best(f, { date: '2026-10-24' })?.text).toBe('Beste moment: 08:00 tot 09:30, droog');
     // Zondag is vier dagen vooruit: een voorspelling die zo ver vooruit ligt wisselt te vaak.
     expect(best(f, { date: '2026-10-25' })).toBeUndefined();
   });
@@ -173,8 +173,8 @@ describe('bestMomentForTraining: niets extra', () => {
 
 describe('hourNL', () => {
   it('schrijft een heel uur zonder minuten, zoals mensen het zeggen', () => {
-    expect(hourNL(960)).toBe('16');
-    expect(hourNL(1050)).toBe('17.30');
-    expect(hourNL(485)).toBe('8.05');
+    expect(hourNL(960)).toBe('16:00');
+    expect(hourNL(1050)).toBe('17:30');
+    expect(hourNL(485)).toBe('08:05');
   });
 });

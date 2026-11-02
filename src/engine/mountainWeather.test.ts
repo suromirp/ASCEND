@@ -95,8 +95,8 @@ describe('mountainWeatherLine: alleen informatie, geen oordeel', () => {
 describe('mountainUpdatedLabel: van gisteren blijft staan, met de dag erbij', () => {
   it('zegt gisteren of de datum als het niet van vandaag is', () => {
     const at = new Date(2027, 6, 1, 21, 10).toISOString();
-    expect(mountainUpdatedLabel(at, '2027-07-01')).toBe('bijgewerkt om 21.10');
-    expect(mountainUpdatedLabel(at, '2027-07-02')).toBe('gisteren bijgewerkt om 21.10');
-    expect(mountainUpdatedLabel(at, '2027-07-04')).toBe('bijgewerkt om 21.10 op 1 jul');
+    expect(mountainUpdatedLabel(at, '2027-07-01')).toBe('bijgewerkt om 21:10');
+    expect(mountainUpdatedLabel(at, '2027-07-02')).toBe('gisteren bijgewerkt om 21:10');
+    expect(mountainUpdatedLabel(at, '2027-07-04')).toBe('bijgewerkt om 21:10 op 1 jul');
   });
 });

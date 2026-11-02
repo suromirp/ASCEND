@@ -722,7 +722,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   besteMoment: {
     title: 'Beste moment',
-    lead: 'Is het weer op je gewone uur slechter dan later of eerder op dezelfde dag, dan staat er onder het weer één regel, zoals "Beste moment: 16 tot 17.30 uur, droog".',
+    lead: 'Is het weer op je gewone uur slechter dan later of eerder op dezelfde dag, dan staat er onder het weer één regel, zoals "Beste moment: 16:00 tot 17:30, droog".',
     points: [
       { head: 'Alleen als het echt scheelt', text: 'een klasse beter (slecht, let op, prima), of regen of wind die onder de drempel van ASCEND blijft.' },
       { head: 'Altijd in het licht', text: 'tussen zonsopkomst en zonsondergang, en niet in het verleden.' },

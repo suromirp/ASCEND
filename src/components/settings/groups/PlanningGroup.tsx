@@ -71,9 +71,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="Hoe ASCEND plant"
-        advancedIds={['bundel-niet-doorgegaan', 'lange-loop-benen', 'bundel-slepen', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test']}
         advancedTitles="Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie, Zones bijwerken na een test"
-        storageKey="planning-geavanceerd"
         advanced={
           <>
             <SummaryRow id="bundel-niet-doorgegaan" title="Training die niet doorging" facts={facts} info="nietDoorgegaan" onClick={() => setSheet('bundel-niet-doorgegaan')} />

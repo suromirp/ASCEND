@@ -251,7 +251,7 @@ describe('showing it', () => {
   });
 
   it('says when the forecast was updated, in local time', () => {
-    expect(updatedLabel(new Date(2026, 9, 22, 13, 5).toISOString())).toBe('bijgewerkt om 13.05');
+    expect(updatedLabel(new Date(2026, 9, 22, 13, 5).toISOString())).toBe('bijgewerkt om 13:05');
     expect(updatedLabel('nonsense')).toMatch(/onbekend/);
   });
 

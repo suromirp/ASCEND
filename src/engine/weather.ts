@@ -16,6 +16,7 @@ import { isIndoorLog, logSport, templateSport } from './sports';
 import { addDays, daysBetween, isoWeekday, toISODate } from '../utils/dates';
 import { deriveSessionStatus } from './sessionStatus';
 import { pad } from '../utils/pad';
+import { formatClock } from '../utils/clock';
 
 // --- 1. when do you usually train ----------------------------------------------
 
@@ -329,11 +330,11 @@ export function isWeatherSensitive(template: SessionTemplate): boolean {
 
 // --- showing it ----------------------------------------------------------------
 
-// "bijgewerkt om 13.05", from the time the forecast was fetched.
+// "bijgewerkt om 13:05", from the time the forecast was fetched.
 export function updatedLabel(fetchedAt: string): string {
   const d = new Date(fetchedAt);
   if (Number.isNaN(d.getTime())) return 'bijgewerkt op een onbekend moment';
-  return `bijgewerkt om ${d.getHours()}.${pad(d.getMinutes())}`;
+  return `bijgewerkt om ${formatClock(d)}`;
 }
 
 // Older than this and the line says when it was last updated.

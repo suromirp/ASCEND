@@ -26,6 +26,7 @@ import { addDays, formatDateNL, toISODate, weekdayLongNL } from '../utils/dates'
 import type { RacePaces } from './racePaces';
 import type { WatchHrPlan } from './watchHeartRate';
 import { buildWatchWorkout, WATCH_DAYS, type TrackedWorkout, type WatchNamePrefix } from './watchWorkout';
+import { formatClock } from '../utils/clock';
 
 export type WatchStatusKind = 'none' | 'unlinked' | 'sent' | 'stale' | 'pending' | 'later' | 'failed';
 
@@ -92,13 +93,13 @@ export function shortWatchError(message: string): string {
   return 'reden onbekend';
 }
 
-// "19.04", in the time of the device.
+// "19:04", in the time of the device.
 export function formatClockTime(date: Date): string {
-  return `${String(date.getHours()).padStart(2, '0')}.${String(date.getMinutes()).padStart(2, '0')}`;
+  return formatClock(date);
 }
 
-// "om 19.04", "gisteren om 19.04" or "op 20 oktober om 19.04". With
-// `todayWord` the first reads "vandaag om 19.04", for a sentence of its own.
+// "om 19:04", "gisteren om 19:04" or "op 20 oktober om 19:04". With
+// `todayWord` the first reads "vandaag om 19:04", for a sentence of its own.
 export function sentWhen(sentAt: string, today: string, todayWord = false): string {
   const d = new Date(sentAt);
   if (Number.isNaN(d.getTime())) return '';
