@@ -42,6 +42,14 @@ export const TODAY_PROFILE_LABEL: Record<TodayProfile, string> = {
   aangepast: 'Aangepast',
 };
 
+// De naam zoals een rij of een groep hem toont, kort genoeg voor naast de titel.
+export const TODAY_PROFILE_SHORT: Record<TodayProfile, string> = {
+  alles: 'Alles',
+  belangrijkst: 'Het belangrijkste',
+  training: 'Alleen je training',
+  aangepast: 'Eigen keuze',
+};
+
 export const TODAY_PROFILE_NOTE: Record<TodayProfileChoice, string> = {
   alles: 'Alle kaarten, zoals het advies.',
   belangrijkst: 'Je training, de ochtendcheck en het weer.',

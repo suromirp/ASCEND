@@ -340,6 +340,17 @@ describe('rowSummary: lichaam', () => {
     expect(rowSummary('hartslag', hr({}))).toEqual({ value: 'Niet ingevuld', dim: true, sub: 'Zonder hartslag alleen zonenummers' });
   });
 
+  it('zonder gewicht staat er Niet ingevuld, niet Leeg', () => {
+    expect(groupSummary('lichaam', facts({ weight: null }))).toMatchObject({ value: 'Niet ingevuld', dim: true });
+  });
+
+  it('de rijen van Klaar voor je doel staan er alleen met een doel', () => {
+    for (const id of ['klaar-weging', 'klaar-groei', 'klaar-marge']) {
+      expect(rowSummary(id, facts()).hidden, id).toBe(false);
+      expect(rowSummary(id, facts({ goal: null, position: null })).hidden, id).toBe(true);
+    }
+  });
+
   it('blessures: geen of het aantal', () => {
     expect(rowSummary('blessures', facts()).value).toBe('Geen');
     expect(rowSummary('blessures', facts({ activeInjuries: 2 })).value).toBe('2 actief');
@@ -401,10 +412,12 @@ describe('rowSummary: intensiteit tellen', () => {
 });
 
 describe('rowSummary: vandaag en meldingen', () => {
-  it('telt wat aan staat, standaard negen', () => {
-    expect(groupSummary('vandaag', facts()).value).toBe('9 aan');
+  it('zegt de naam van het profiel in plaats van hoeveel er aan staan', () => {
+    expect(groupSummary('vandaag', facts())).toMatchObject({ value: 'Alles' });
+    expect(rowSummary('kaarten', facts())).toMatchObject({ value: 'Alles', dim: false });
     const settings = { ...facts().settings, overviews: { weekReview: false, morningCheckIn: false }, introSoundEnabled: false };
-    expect(groupSummary('vandaag', facts({ settings })).value).toBe('6 aan');
+    expect(groupSummary('vandaag', facts({ settings }))).toMatchObject({ value: 'Eigen keuze', dim: true });
+    expect(rowSummary('kaarten', facts({ settings }))).toMatchObject({ value: 'Eigen keuze', dim: true });
   });
 
   it('beste moment: een schakelaar die standaard aan staat, ook als de sleutel ontbreekt', () => {
@@ -412,7 +425,8 @@ describe('rowSummary: vandaag en meldingen', () => {
     expect(rowSummary('beste-moment', facts({ settings: { ...facts().settings, overviews: { weatherLine: false } } })).checked).toBe(true);
     expect(rowSummary('beste-moment', facts({ settings: { ...facts().settings, overviews: { bestMoment: false } } })).checked).toBe(false);
     const off = { ...facts().settings, overviews: { bestMoment: false } };
-    expect(groupSummary('vandaag', facts({ settings: off })).value).toBe('8 aan');
+    // Het beste moment hoort niet bij een profiel: het profiel blijft wat het was.
+    expect(groupSummary('vandaag', facts({ settings: off })).value).toBe('Alles');
   });
 
   it('de dag van de terugblik hoort bij de terugblik', () => {
@@ -449,10 +463,18 @@ describe('rowSummary: koppelingen', () => {
   it('niet gekoppeld: alleen de rij om te koppelen, de schakelaars staan er niet', () => {
     const f = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false }, macroFactor: { leads: true } });
     expect(rowSummary('garmin', f)).toEqual({ value: 'Koppelen', sub: 'Trainingen, slaap en hartslag' });
+    expect(groupSummary('koppelingen', { ...f, macroFactor: null })).toMatchObject({ value: 'Niet gekoppeld', dim: true });
     expect(rowSummary('slaap', f).hidden).toBe(true);
     expect(rowSummary('macrofactor', f)).toEqual({ title: 'Export inlezen', value: 'Nog niet', dim: true, sub: 'Kracht en gewicht uit MacroFactor' });
     expect(rowSummary('macrofactor-leidend', f).hidden).toBe(true);
-    expect(groupSummary('koppelingen', f)).toEqual({ value: 'Geen', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' });
+    expect(groupSummary('koppelingen', f)).toEqual({ value: 'Niet gekoppeld', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' });
+  });
+
+  it('een mislukte lezing zegt Niet te lezen en nooit Koppelen', () => {
+    const f = facts({ watch: null, macroFactor: null, watchUnreadable: true });
+    expect(rowSummary('garmin', f)).toEqual({ value: 'Niet te lezen', dim: true, sub: 'Probeer het zo opnieuw' });
+    expect(groupSummary('koppelingen', f)).toMatchObject({ value: 'Niet te lezen', dim: true });
+    expect(groupSummary('koppelingen', f).sub.length).toBeLessThanOrEqual(SUB_MAX_LENGTH);
   });
 
   it('Vanzelf afvinken verdwijnt als Trainingen uit staat, in plaats van uitgegrijsd te blijven', () => {

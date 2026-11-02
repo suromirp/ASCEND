@@ -11,7 +11,7 @@ import { SETTINGS_PAGES, placementOf, settingsPageRoute, settingsPageTitle, type
 import { searchSettings } from '../../engine/settingsSearch';
 import { settingAvailabilityOnPage } from '../../engine/settingsAvailability';
 import { groupSummary, searchValue } from '../../engine/settingsSummary';
-import { backupSpoken, statusCells } from '../../engine/settingsStatus';
+import { backupSpoken, directionStatus, statusCells } from '../../engine/settingsStatus';
 
 const MAX_RESULTS = 10;
 
@@ -34,6 +34,7 @@ export function SettingsOverview() {
     position: facts.position,
     goal: facts.goal,
     lastExportedAt: facts.settings.lastExportedAt,
+    ...(facts.noGoal ? { direction: directionStatus(facts.settings, facts.today) } : {}),
   });
   const searching = query.trim().length > 0;
   const results = searching ? searchSettings(query, SETTINGS_INDEX).slice(0, MAX_RESULTS) : [];
