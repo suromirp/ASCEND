@@ -1,3 +1,4 @@
+import { resolveShorterToday } from '../../../engine/shorterToday';
 import { useState } from 'react';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
@@ -76,6 +77,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Op Vandaag">
         <SummaryRow id="kaarten" title="Kaarten" facts={facts} info="kaarten" onClick={() => setSheet('kaarten')} />
         <SummaryRow id="lichterbenen" title="Lichter bij vermoeide benen" facts={facts} info="lichterbenen" onClick={() => setSheet('lichterbenen')} />
+        <SummaryRow id="korter-vandaag" title="Minder tijd vandaag" facts={facts} info="korterVandaag" onClick={() => setSheet('korter-vandaag')} />
       </SettingsSection>
 
       <SettingsSection title="Meldingen">
@@ -117,6 +119,9 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         {null}
       </SettingsSection>
 
+      {sheet === 'korter-vandaag' && (
+        <ChoiceFromDef def={CHOICES.korterVandaag} value={resolveShorterToday(settings.shorterToday)} onPick={(v) => void updateSettings({ shorterToday: v })} onClose={close} />
+      )}
       {sheet === 'kaarten' && (
         <ChoiceFromDef
           def={CHOICES.kaarten}

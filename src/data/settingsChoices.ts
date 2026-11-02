@@ -494,6 +494,18 @@ export const CHOICES = {
       { value: 'uit', label: 'Uit', note: 'Geen kaart. Klachten melden kan altijd op Lichaam', short: 'Uit' },
     ],
   }),
+  korterVandaag: def({
+    group: 'Vandaag en meldingen',
+    title: 'Minder tijd vandaag',
+    line: 'In het menu van je missie: dezelfde training in 30, 45 of 60 minuten.',
+    advice: 'kern' as 'kern' | 'volume' | 'off',
+    help: 'korterVandaag',
+    options: [
+      { value: 'kern', label: 'Kernsets', note: 'De kernoefeningen of de kern van de loop blijven, de rest gaat eraf', short: 'Kernsets' },
+      { value: 'volume', label: 'Minder van alles', note: 'Alles blijft, met minder sets of herhalingen', short: 'Minder van alles' },
+      { value: 'off', label: 'Uit', note: 'Geen regel in het menu van je missie', short: 'Uit' },
+    ],
+  }),
   lichterbenen: def({
     group: 'Vandaag en meldingen',
     title: 'Lichter bij vermoeide benen',

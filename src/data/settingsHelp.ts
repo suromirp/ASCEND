@@ -64,6 +64,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'geen kaart. Op Lichaam meld je altijd zelf wat je voelt. Pijn in je benen blijft een hint geven bij zware beentrainingen.' },
     ],
   },
+  korterVandaag: {
+    title: 'Minder tijd vandaag',
+    lead: 'Heb je vandaag minder tijd, kies dan in het menu van je missie 30, 45 of 60 minuten. ASCEND stelt dezelfde training korter voor.',
+    points: [
+      { head: 'Kernsets', text: 'bij kracht doe je de kernoefeningen en laat je de rest liggen; bij een tempoloop of intervallen blijft de kern en worden inlopen en uitlopen korter.' },
+      { head: 'Minder van alles', text: 'alles blijft, met een set minder per oefening of minder herhalingen in hetzelfde tempo.' },
+      { head: 'Alleen met Akkoord', text: 'je ziet eerst wat er verandert. Akkoord geeft je training van vandaag een kortere duur; met Ongedaan maken staat hij weer zoals hij was. Wat je logt blijft een gewone log.' },
+      { head: 'Een test of wedstrijd', text: 'kan niet korter, want dan meet hij iets anders. Verplaatsen kan wel, met Akkoord.' },
+    ],
+  },
   lichterbenen: {
     title: 'Lichter bij vermoeide benen',
     lead: 'Na spierpijn of een zware loop stelt ASCEND een lichtere beendag of een dag later voor. Je kiest zelf, en je planning verandert nooit zonder jouw akkoord. De kaart komt ook voor een harde loop van vandaag, daar alleen met een dag later.',

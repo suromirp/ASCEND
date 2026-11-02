@@ -479,6 +479,11 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.testStops;
     skipped.n++;
   }
+  // Minder tijd vandaag (engine/shorterToday.ts): een van de drie keuzes, of niet daar.
+  if ('shorterToday' in s && s.shorterToday !== 'kern' && s.shorterToday !== 'volume' && s.shorterToday !== 'off') {
+    delete s.shorterToday;
+    skipped.n++;
+  }
   if ('intensityCounting' in s && s.intensityCounting !== 'heartrate' && s.intensityCounting !== 'plan') {
     delete s.intensityCounting;
     skipped.n++;

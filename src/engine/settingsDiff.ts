@@ -274,6 +274,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewSpec('weekterugblik-dag', 'Dag van de terugblik', 'weekReviewDay', (v: string) => choiceShort('terugblikDag', v)),
   choice('forge-plaatjes', 'Plaatjes bij oefeningen', 'forge', 'exerciseArt', 'beide', 'plaatjes'),
   choice('lijfvraag', 'Hoe voelt je lijf?', 'vandaag', 'bodyCheck', 'reden', 'lijfvraag'),
+  choice('korter-vandaag', 'Minder tijd vandaag', 'vandaag', 'shorterToday', 'kern', 'korterVandaag'),
   choice('lichterbenen', 'Lichter bij vermoeide benen', 'vandaag', 'legEase', 'voorstel', 'lichterbenen'),
   choice('lichterbenen-hoe', 'Hoe licht', 'vandaag', 'legEaseHow', 'standaard', 'lichterbenenHoe'),
   overviewFlag('weekvraag', 'Vraag van de week', 'weeklyQuestion'),

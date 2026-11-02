@@ -817,6 +817,10 @@ export interface AppSettings {
   // traffic light out of the fastest 5 km, 'count' keeps the clock as it ran. Read when the series is
   // read; what is stored stays as it was. Optional and additive.
   testStops?: 'skip' | 'count';
+  // "Minder tijd vandaag" in het menu van de missiekaart (engine/shorterToday.ts): 'kern' (advice,
+  // absent = kern) houdt de kernsets of de kern van de loop, 'volume' doet alles met minder, 'off'
+  // laat de regel weg. Optional and additive.
+  shorterToday?: 'kern' | 'volume' | 'off';
   // "Volledige reeks bewaren": keep the full series of a run or tocht on this device
   // (activityStreams). Absent = on. Off keeps only the derived profile and kilometres.
   // Optional and additive.
