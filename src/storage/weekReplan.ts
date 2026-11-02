@@ -24,6 +24,8 @@ export interface WeekReplanPlan {
   // De rijen van de week en de week erna zoals ze stonden toen het voorstel werd uitgerekend: alles wat
   // geschreven kan worden staat hierin, zodat er nooit ongecontroleerd buiten geschreven wordt.
   expected: PlannedSession[];
+  // Het hele plan zoals het stond toen het voorstel werd uitgerekend (voor het blad).
+  stored: PlannedSession[];
   // Het voorstel zoals het na Akkoord in het wijzigingslog komt.
   proposal: PlanChangeProposal;
   // Ingehaalde trainingen die teruggaan naar het plan (hun namen).
@@ -55,7 +57,7 @@ function itemsOf(diff: WeekDiff, stored: Map<string, PlannedSession>): PlanChang
   for (const s of diff.writes) {
     const was = stored.get(s.id);
     if (!was) items.push({ action: 'add', newSessionDraft: { templateId: s.templateId, scheduledDate: s.scheduledDate, weekStartDate: s.weekStartDate }, restore: true, generatedBy: by });
-    else if (was.status === 'skipped' && s.status !== 'skipped') items.push({ plannedSessionId: s.id, action: 'add', toDate: s.scheduledDate, restore: true, generatedBy: by });
+    else if (was.status === 'skipped' && s.status !== 'skipped') items.push({ plannedSessionId: s.id, action: 'add', toDate: s.scheduledDate, newSessionDraft: { templateId: s.templateId, scheduledDate: s.scheduledDate, weekStartDate: s.weekStartDate }, restore: true, generatedBy: by });
     else items.push({ plannedSessionId: s.id, action: 'move', fromDate: was.scheduledDate, toDate: s.scheduledDate, restore: true, ...(was.templateId !== s.templateId ? { templateId: s.templateId } : {}), generatedBy: by });
   }
   for (const id of diff.removedIds) items.push({ plannedSessionId: id, action: 'remove', discard: true, generatedBy: by });
@@ -141,7 +143,7 @@ export async function planWeekReplan(weekStartIn: string, opts: { keepIds?: Read
     id: makeId('replan'), trigger: 'session_moved', issue: 'Week opnieuw gepland', changes: items, alternatives: [],
     consequences: '', explanation: 'Op jouw verzoek gaat de rest van de week terug naar hoe het plan hem maakt.', createdAt: now,
   };
-  return { weekStart, expected, proposal, caughtUp, nextWeek, diff, after, items, hadYours, testMove, notes: notesOf(expected.filter((s) => inWeek(s.scheduledDate, weekStart)), logged, today, templates) };
+  return { weekStart, expected, stored, proposal, caughtUp, nextWeek, diff, after, items, hadYours, testMove, notes: notesOf(expected.filter((s) => inWeek(s.scheduledDate, weekStart)), logged, today, templates) };
 }
 
 // Gaat er halverwege iets mis, dan wordt de hele transactie afgebroken: er blijft niets half staan.

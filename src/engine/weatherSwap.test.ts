@@ -82,7 +82,7 @@ describe('WEATHER-SWAP', () => {
     const [advice] = weatherAdvice(inputs({ plannedSessions: planned, bad: ['2026-10-03'] }), byId);
     const items = advice.proposal!.changes;
     const preview = previewProposal(items, planned, templates);
-    expect(preview.moves).toEqual([{ name: 'Bergtocht', action: 'move', from: '2026-10-03', to: '2026-10-04' }]);
+    expect(preview.moves).toEqual([{ name: 'Bergtocht', action: 'move', from: '2026-10-03', to: '2026-10-04', sessionId: 'hike1' }]);
     const applied = applyPlanChangeItems(items, planned, undefined, { by: 'proposal', at: 'now' });
     expect(applied.sessions.find((s) => s.id === 'hike1')).toMatchObject({ scheduledDate: '2026-10-04', status: 'moved', movedFromDate: '2026-10-03', lock: { by: 'proposal' } });
   });
