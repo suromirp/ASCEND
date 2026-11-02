@@ -44,8 +44,8 @@ describe('weekSummaryLine', () => {
     expect(weekSummaryLine(base)).toBe('2 van 5 gedaan · 1:56 uur · hardlopen 8,6 km');
   });
   it('zegt op zondag wat vandaag nog staat', () => {
-    expect(weekSummaryLine({ ...base, running: true, todayLeft: 2 })).toBe('2 gedaan, vandaag staan er nog 2');
-    expect(weekSummaryLine({ ...base, running: true, todayLeft: 1 })).toBe('2 gedaan, vandaag staat er nog 1');
+    expect(weekSummaryLine({ ...base, running: true, todayLeft: 2 })).toBe('2 gedaan, vandaag staan er nog 2 · 1:56 uur · hardlopen 8,6 km');
+    expect(weekSummaryLine({ ...base, running: true, todayLeft: 1, minutes: 0, perSport: [] })).toBe('2 gedaan, vandaag staat er nog 1');
   });
   it('is vriendelijk bij een week zonder training', () => {
     expect(weekSummaryLine({ ...base, done: 0, minutes: 0, perSport: [] })).toBe('Deze week kwam het er niet van. Volgende week begint gewoon volgens plan.');

@@ -22,6 +22,7 @@ export function StandSummary({ columns }: { columns: SummaryColumn[] }) {
             key={c.id}
             type="button"
             onClick={() => jump(c.target)}
+            aria-label={`${c.label}: ${c.word}, ${c.fact}. Naar de kaart.`}
             className={`flex min-h-[44px] flex-col items-start gap-0.5 rounded-xl px-2 py-2 text-left ${i > 0 ? 'border-l' : ''}`}
             style={{ borderColor: 'var(--color-card-border)' }}
           >

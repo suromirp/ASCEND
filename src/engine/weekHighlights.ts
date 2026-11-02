@@ -43,14 +43,16 @@ export function weekHighlights(r: WeekReview): Highlight[] {
 
 // De ene feitregel onder de dagen.
 export function weekSummaryLine(r: WeekReview): string {
-  if (r.running) {
-    return `${r.done} gedaan${r.todayLeft > 0 ? `, vandaag ${r.todayLeft === 1 ? 'staat er' : 'staan er'} nog ${r.todayLeft}` : ''}`;
-  }
-  if (r.done === 0) return 'Deze week kwam het er niet van. Volgende week begint gewoon volgens plan.';
+  if (!r.running && r.done === 0 && r.minutes === 0) return 'Deze week kwam het er niet van. Volgende week begint gewoon volgens plan.';
   const time = r.minutes >= 60 ? `${hoursMinutes(r.minutes)} uur` : `${r.minutes} min`;
   const sports = r.perSport.map((p) => {
     const [name, rest] = p.split(': ');
     return `${name.toLowerCase()} ${(rest ?? '').replace(', ', ' · ').replace(' m D+', ' m omhoog')}`.trim();
   });
-  return [`${r.done} van ${r.planned} gedaan`, time, ...sports].join(' · ');
+  const count = r.running
+    ? `${r.done} gedaan${r.todayLeft > 0 ? `, vandaag ${r.todayLeft === 1 ? 'staat er' : 'staan er'} nog ${r.todayLeft}` : ''}`
+    : `${r.done} van ${r.planned} gedaan`;
+  // Wat je deed zonder plan telt in de minuten en afstand, ook als de telling van gepland op 0 staat.
+  if (r.running && r.minutes === 0) return count;
+  return [count, time, ...sports].join(' · ');
 }

@@ -4,7 +4,7 @@ import { useAppData } from '../state/AppDataContext';
 import { buildWeekReview, type WeekReview } from '../engine/weekReview';
 import { effortLine } from '../engine/weekEffort';
 import { weekHighlights, weekSummaryLine } from '../engine/weekHighlights';
-import { weekLogsOf } from '../engine/weekLogs';
+import { looseLogsOfWeek, weekLogsOf } from '../engine/weekLogs';
 import { intentionForWeek } from '../engine/weeklyQuestion';
 import { addDays, formatDateNL, formatHoursMinutesNL, formatShortDayNL, todayISO } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -123,9 +123,9 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
             {view === 'main' && (
               <>
                 <div className="mt-4 flex flex-col gap-3">
-                  <WeekStrip plain weekStart={review.weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
+                  <WeekStrip plain loose={looseLogsOfWeek(sessionLogs, plannedSessions, review.weekStart)} weekStart={review.weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
                   <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{weekSummaryLine(review)}</p>
-                  {effort && !review.running && <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{effort}</p>}
+                  {effort && <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{effort}</p>}
                 </div>
 
                 {highlights.length > 0 && (

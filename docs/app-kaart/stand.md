@@ -6,11 +6,16 @@ Adres: `#/stand`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 [link: Meer: instellingen, gegevens, koppelingen en gidsen]
 Week 1 van 4, basisfase
 ## Je stand
-Hoe je ervoor staat, naast wat je vandaag doet.
+Je benen zijn fris en je week is in lijn met de weken ervoor.
 
 --- kaart 1 ---
-Beenindex
-[knop: Hoe werkt dit?]
+[knop: BenenFrisindex 0,1] (aria: Benen: Fris, index 0,1. Naar de kaart.)
+[knop: BelastingIn lijn224 van 540 gewoonlijk] (aria: Belasting: In lijn, 224 van 540 gewoonlijk. Naar de kaart.)
+[knop: RitmeNog nietsna twee weken] (aria: Ritme: Nog niets, na twee weken. Naar de kaart.)
+
+--- kaart 2 ---
+Benen
+[knop: Hoe de beenindex werkt]
 0,1
 Fris
 [label: Beenvermoeidheid 0,1: fris]
@@ -18,16 +23,14 @@ Werkt nog door
 Rustige duurloop · ma 26 okt
 0,1
 
---- kaart 2 ---
+--- kaart 3 ---
 Frisheid
 Je beenvermoeidheid per dag. Lager is frisser. Vooruit is het een schatting uit je planning, met de marge eromheen.
 test of wedstrijd
 harde loop
 benen
-Vandaag: 0,1, fris
-Je benen zijn fris.
 
---- kaart 3 ---
+--- kaart 4 ---
 Beenkalender
 Wat elke dag in je benen stopt. Feller is zwaarder, gestippeld is nog gepland. Twee felle vakjes vlak na elkaar zijn zwaar voor je benen.
 [label: Beenbelasting per dag]
@@ -75,11 +78,6 @@ zo
 [knop: 8] (aria: zo 8 nov: middel, Lange duurloop)
 Vandaag: geen training
 
---- kaart 4 ---
-Index en je benen
-Na een harde loop of test vraagt ASCEND hoe je benen voelden bij het inlopen, en legt dat naast wat de index die ochtend zei.
-Nog geen metingen. Hier zie je straks hoe goed het getal bij jou klopt.
-
 --- kaart 5 ---
 Belasting per week
 Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien. Bij een test met inlopen telt de rest als rustig.
@@ -111,30 +109,22 @@ Naar het plan, niet naar je hartslag.
 Goed verdeeld: het meeste rustig, een paar keer echt hard. Zo groeit je basis en blijf je fris voor de harde dagen.
 
 --- kaart 7 ---
-Dalen
-Nog geen dalingen gemeten
-
---- kaart 8 ---
 [knop: Forge1 oefening ging omhoog in 8 weken. Voor je volgende training staat een voorstel klaar.]
 
---- kaart 9 ---
+--- kaart 8 ---
 Krachtprogressie
 [veld: Oefening = bench]
 67.5 kg
 26 augustus
 21 oktober
 
---- kaart 10 ---
+--- kaart 9 ---
 [knop: TrainingsverdelingHoe kracht, hardlopen en bergwerk zich in je week verhouden.]
-Deze week
-0 van 3
-trainingen gedaan
-Volgehouden
-nog niet
-Na twee volle weken zie je hier hoeveel van de geplande trainingen je deed.
-Op rij
-0 trainingsdagen
-Achter elkaar alles gedaan wat gepland stond. Dagen zonder training tellen niet mee en breken de reeks niet.
+
+--- kaart 10 ---
+Ritme
+[knop: Wat Ritme telt]
+Na twee volle weken zie je hier je ritme.
 
 --- kaart 11 ---
 Tempo naast je test
@@ -147,11 +137,4 @@ Tempo bij zone 2
 Je rustige en lange duurlopen, omgerekend naar dezelfde hartslag. Word je fitter, dan loop je bij dezelfde hartslag sneller.
 Nog geen loopjes om te vergelijken. Na twee weken met loopjes zie je hier je lijn.
 Telt mee: vlakke rustige loopjes met afstand, tijd en gemiddelde hartslag ingevuld. Vul bij Instellingen, Lichaam je hartslag in, dan telt alleen zone 2.
-
---- kaart 13 ---
-Les van de week
-uitrusting
-Je rugzak pakken
-Weeg alles wat je meeneemt op een keukenweegschaal en tel het basisgewicht op. De tent, slaapzak en het matje bepalen samen de helft ervan.
-[knop: Lees en kijk]
 [knop: Volgorde aanpassen]

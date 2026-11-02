@@ -6,6 +6,7 @@ import { Icon } from '../icons';
 import { Pictogram, type PictogramName } from '../pictograms';
 import { LightCard } from '../ui';
 import { sportColor, sportPictogram } from '../sportKind';
+import { lookOfLog } from '../logbook/sportLook';
 
 // De week in één strook op de lucht van Vandaag: per dag het pictogram van de
 // sport in de kleur van die sport. Gepland is alleen het pictogram, gedaan is
@@ -52,6 +53,7 @@ export function WeekStrip({
   program,
   today,
   plain = false,
+  loose = [],
 }: {
   weekStart: string;
   sessions: PlannedSession[];
@@ -62,6 +64,8 @@ export function WeekStrip({
   // Donker in een blad (de weekterugblik): zonder lichte kaart eromheen, en een dag die voorbij is zonder
   // gedaan te zijn staat gedempt, zonder rood en zonder kruis.
   plain?: boolean;
+  // Trainingen zonder plan op een dag zonder geplande training: ook die staan er als gedaan.
+  loose?: SessionLog[];
 }) {
   const Wrap = plain ? 'div' : LightCard;
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -97,6 +101,10 @@ export function WeekStrip({
                       <DayGlyph icon={sportPictogram(t.template)} done={t.done} small={shown.length > 1} />
                     </span>
                   ))
+                ) : plain && loose.some((l) => l.completedDate === date && l.type !== 'recovery') ? (
+                  <span className="flex" style={{ color: lookOfLog(loose.find((l) => l.completedDate === date && l.type !== 'recovery')!).color }}>
+                    <DayGlyph icon={lookOfLog(loose.find((l) => l.completedDate === date && l.type !== 'recovery')!).icon} done small={false} />
+                  </span>
                 ) : rest ? (
                   <span className="flex" style={{ color: 'var(--color-ink-dim)' }}><Pictogram name="rust" size={24} /></span>
                 ) : (
