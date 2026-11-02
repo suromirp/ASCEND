@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import levelText from '../../android/native-level.txt?raw';
 import pluginsText from '../../android/native-plugins.json?raw';
 import packageText from '../../package.json?raw';
-import databaseSource from './database.ts?raw';
+import databaseSource from './databaseSchema.ts?raw';
 
 // Het native niveau van de Android-app (android/native-level.txt) zegt welke APK een webversie
 // nodig heeft (engine/liveUpdate.ts, docs/beslissingen/2026-11-01-android-app.md). Twee regels
