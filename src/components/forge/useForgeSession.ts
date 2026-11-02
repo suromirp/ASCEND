@@ -25,7 +25,7 @@ export function useSessionWorld(): SessionWorld & { loading: boolean } {
 
 // De lopende training, of niets. Een sessie waarvan de training of de geplande sessie niet meer bestaat, of
 // al in het logboek staat, telt niet meer mee (useSessionHousekeeping ruimt de restanten op).
-export function useLiveSession(): SessionState | undefined {
+function useLiveSession(): SessionState | undefined {
   const snap = useSyncExternalStore(subscribeSession, sessionSnapshot);
   const world = useSessionWorld();
   const session = useMemo(() => (snap ? readSession() : undefined), [snap]);

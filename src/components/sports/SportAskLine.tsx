@@ -183,7 +183,7 @@ const ROLE_TEXT: Partial<Record<SportRole, { label: string; note: string }>> = {
   off: { label: 'Negeren', note: 'ASCEND doet er niets mee. Je kunt het wel loggen.' },
 };
 
-export function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose: () => void }) {
+function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose: () => void }) {
   const { settings, updateSettings, logSession } = useAppData();
   const navigate = useNavigate();
   const def = anySportDefinition(question.sport);
