@@ -41,8 +41,8 @@ everything else the system planned is free. Every planning run ends with
 the same pass (`engine/planPass.ts`): the race block, then the week check,
 which repairs only the system's own sessions and only when the week is
 demonstrably better, and announces it ("Planning bijgewerkt", with undo).
-A repair never moves a session onto the last free day of a week
-(`repairWeeks#relocate`, decision `docs/beslissingen/2026-11-02-tweede-lange-duurloop.md`).
+A repair never moves a session onto the last free day of a week, except in a
+week with a holiday, free days or a tocht (`repairWeeks#relocate`, decision `docs/beslissingen/2026-11-02-tweede-lange-duurloop.md`).
 A proposal's preview runs that same pass, so what it shows is what you get.
 The sync (`storage/databaseHorizon.ts#syncProgramHorizon`) runs whenever the
 stored plan changed (a fingerprint is part of its key), not once a day.

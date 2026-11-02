@@ -5,8 +5,9 @@ Status: aangenomen
 
 ## Besluit
 
-1. Twee zware beendagen achter elkaar (LEG-SPACING) in Week krijgen dezelfde laatste keuze als TEST-DAY: lost verplaatsen het niet op, dan biedt het voorstel aan om een training van jou (niveau 1) te laten gaan, alleen als de week nog een sessie met dezelfde taak houdt, zoals de eigen lange duurloop van die week. Altijd een voorstel met Akkoord, als laatste optie; iets van het systeem, een test of wedstrijd gaat zo nooit weg.
+1. Twee zware beendagen achter elkaar (LEG-SPACING) in Week krijgen dezelfde laatste keuze als TEST-DAY: alleen als verplaatsen niets oplevert, biedt het voorstel aan om een training van jou (niveau 1) te laten gaan. Dat mag alleen als de week nog een sessie met dezelfde taak en dezelfde sport houdt die minstens even lang is, zoals de eigen lange duurloop van die week. Zo gaat altijd de kortste van de twee. Altijd een voorstel met Akkoord, als laatste optie. Zo gaat nooit weg: iets van het systeem, een test of wedstrijd, een bergtocht of wandeling, een training met het merkteken van een vakantie of tocht, of een training van het wedstrijdblok. De zin in het voorstel luidt "Laat de lange duurloop op dinsdag 27 gaan.", ook bij TEST-DAY.
 2. De planningsronde (`repairWeeks`, `relocate`) zet een training van het systeem nooit op de laatste vrije dag van een week. Staat er op je rustdag iets van jou, dan is die vrije dag de rust die de week nog heeft. Past de training nergens anders, dan blijft hij staan en meldt de controle het zoals eerst.
+3. Uitzondering op punt 2: in een week met een vakantie, vrije dagen of een tocht (of de lichte dag ervoor of erna) geldt die regel niet. Daar zijn de vakantiedagen de rust, en LEAVE-OFF, LEAVE-LIGHT en een beendag naast een tocht houden hun eigen weg. Zonder deze uitzondering zou de eerste van twee trainingen op een vakantiedag vervallen in plaats van verhuizen, omdat de vakantiedag nog niet vrij is zolang de tweede er staat.
 
 ## Reden
 

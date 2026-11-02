@@ -171,6 +171,30 @@ describe('de laatste vrije dag van een week', () => {
     for (const id of ['heuvel', 'kort', 'boven-a', 'rustig', 'benen']) expect(r.sessions.find((s) => s.id === id)).toEqual(list.find((s) => s.id === id));
   });
 
+  it('een vakantiedag met twee trainingen: de eerste mag naar de laatste vrije dag, want de vakantiedag wordt vrij', () => {
+    // Woensdag is een vakantiedag met twee trainingen van het systeem. Zaterdag is de enige andere vrije dag.
+    // Zolang de tweede er nog staat, telt woensdag niet als vrij; de uitzondering voor een vakantie houdt de
+    // verhuizing naar zaterdag toch mogelijk, zoals voor deze wijziging.
+    const leave = [{ id: 'v', kind: 'no_training' as const, startDate: addDays(MONDAY, 2), endDate: addDays(MONDAY, 2) }];
+    const trip: PlannedSession[] = [
+      row('heuvel', 'tpl_hills_descent', 0, { status: 'moved', lock: userLock }),
+      row('kort', 'tpl_easy_run', 1, { status: 'moved', lock: userLock }),
+      row('boven-a', 'tpl_upper_a', 2),
+      row('boven-b', 'tpl_upper_b', 2, { order: 9 }),
+      row('rustig', 'tpl_easy_run', 3, { status: 'moved', lock: userLock }),
+      row('benen', 'tpl_lower_a', 4, { status: 'moved', lock: userLock }),
+      row('lang', 'tpl_long_run', 6),
+    ];
+    const r = repairWeeks(input(trip, { today: MONDAY, restDay: 1, leave }));
+    const off = r.repairs.filter((x) => x.rule === 'LEAVE-OFF');
+    expect(off.map((x) => x.sessionId).sort()).toEqual(['boven-a', 'boven-b']);
+    // Zoals voor deze wijziging: de eerste (Bovenlichaam A) gaat naar zaterdag, de tweede past nergens meer en vervalt.
+    expect(off.find((x) => x.sessionId === 'boven-a')).toMatchObject({ to: addDays(MONDAY, 5) });
+    expect(off.find((x) => x.sessionId === 'boven-b')).toMatchObject({ removed: true });
+    // Wat van jou is blijft staan.
+    for (const id of ['heuvel', 'kort', 'rustig', 'benen']) expect(r.sessions.find((s) => s.id === id)).toEqual(trip.find((s) => s.id === id));
+  });
+
   it('met een vrije rustdag mag zaterdag gewoon', () => {
     const free = at({ sessions: list.filter((s) => s.id !== 'heuvel') });
     const r = repairWeeks(free);

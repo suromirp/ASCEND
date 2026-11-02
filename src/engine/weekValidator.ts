@@ -489,7 +489,10 @@ export function repairWeeks(input: CheckInput): RepairResult {
     const better = judge([subject.scheduledDate, ...alsoCheck]);
     // Never the last free day of the week: with your rest day taken by something of yours, that day is the rest
     // the week still has (the same notion as REST-DAY and TEST-RETRY, docs/beslissingen/2026-11-02-tweede-lange-duurloop.md).
-    const hadFree = freeDaysOfWeek(monday, sessions, input.logs, byId).length > 0;
+    // Not in a week with a holiday, free days or a tocht (LEAVE-OFF, LEAVE-LIGHT, a leg day next to a tocht): those
+    // days are the rest of that week and keep their own rules, as before.
+    const leaveWeek = Array.from({ length: 7 }, (_, i) => addDays(monday, i)).some((d) => leave.days.has(d) || leave.light.has(d));
+    const hadFree = !leaveWeek && freeDaysOfWeek(monday, sessions, input.logs, byId).length > 0;
     for (const d of candidates) {
       const moved = sessions.map((s) => (s.id === subject.id ? { ...s, scheduledDate: d, weekStartDate: monday, ...(plannedMinutes ? { plannedMinutes } : {}) } : s));
       if (hadFree && t.type !== 'recovery' && freeDaysOfWeek(monday, moved, input.logs, byId).length === 0) continue;
