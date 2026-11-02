@@ -5,7 +5,7 @@ import { applyPlanChangeItems } from './proposalEngine';
 import { leaveDays, leaveLabelOn, lightDays, isLeavePeriod } from './leave';
 import { trekLightDaysBefore } from './trekTaper';
 import {
-  MAX_TREK_DAYS, nextTrek, periodToTrekDraft, trekFacts, trekToPeriod, validateTrekDraft, whenText, type TrekDraft,
+  MAX_TREK_DAYS, nextTrek, parseTrekPlace, periodToTrekDraft, trekFacts, trekToPeriod, validateTrekDraft, whenText, type TrekDraft,
 } from './trek';
 import { migrateLeavePeriods } from '../storage/migrations';
 import { raceBlocks } from './raceBlock';
@@ -357,6 +357,28 @@ describe('oude back-ups en de opgeslagen vorm', () => {
     expect(trekToPeriod(draft({ terrain: 'flat_trail', highestM: 2500 }), 'x').trek).not.toHaveProperty('highestM');
     expect(periodToTrekDraft(trekToPeriod(draft({ terrain: 'snow', highestM: 1800 }), 'x'))?.highestM).toBe(1800);
     expect(trekFacts(trekToPeriod(draft({ terrain: 'snow', highestM: 1800 }), 'x'))).toContain('tot 1.800 m');
+  });
+  it('een eigen plek voor het bergweer reist mee, afgerond; een kapotte of losse valt weg en de tocht blijft', () => {
+    const place = { name: ' Bergdorp ', lat: 45.12345, lon: 6.98765 };
+    const p = trekToPeriod(draft({ terrain: 'mountain', highestM: 2500, place }), 'trek-p');
+    expect(p.trek?.place).toEqual({ name: 'Bergdorp', lat: 45.12, lon: 6.99 });
+    expect(migrateLeavePeriods(JSON.parse(JSON.stringify([p])))).toEqual({ periods: [p], skipped: 0 });
+    expect(periodToTrekDraft(p)?.place).toEqual({ name: 'Bergdorp', lat: 45.12, lon: 6.99 });
+    // Een oude back-up zonder plek blijft zoals hij was.
+    const old = trekToPeriod(draft({ terrain: 'mountain', highestM: 2500 }), 'trek-o');
+    expect(old.trek).not.toHaveProperty('place');
+    expect(migrateLeavePeriods([old])).toEqual({ periods: [old], skipped: 0 });
+    // Kapot: de plek valt weg en wordt geteld, de tocht en het hoogste punt blijven.
+    const broken = { ...p, trek: { ...p.trek!, place: { name: 'x', lat: 'hoog', lon: 6 } } };
+    const read = migrateLeavePeriods([broken]);
+    expect(read.skipped).toBe(1);
+    expect(read.periods?.[0].trek).not.toHaveProperty('place');
+    expect(read.periods?.[0].trek?.highestM).toBe(2500);
+    // Bij vlak terrein hoort geen bergweer en dus geen plek.
+    expect(trekToPeriod(draft({ terrain: 'flat_trail', place }), 'x').trek).not.toHaveProperty('place');
+    expect(parseTrekPlace({ name: 'x', lat: 91, lon: 0 })).toBeUndefined();
+    expect(parseTrekPlace({ name: '  ', lat: 1, lon: 1 })).toBeUndefined();
+    expect(parseTrekPlace(null)).toBeUndefined();
   });
   it('beschadigde tochtgegevens: de periode blijft, alleen de gegevens vervallen, en dat wordt geteld', () => {
     const bad = [{ id: 'p1', kind: 'trek', startDate: '2026-11-14', endDate: '2026-11-15', trek: { name: 'X', terrain: 'lava', tent: true, importance: 'goal' } }];
