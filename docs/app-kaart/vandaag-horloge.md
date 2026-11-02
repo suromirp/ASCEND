@@ -11,9 +11,8 @@ Week 1 van de basis
 --- kaart 1 ---
 
 --- kaart 2 ---
-Goedemorgen
-van je horloge
 Hoe voelen je benen?
+van je horloge
 Slaap
 6:35u
 korter
@@ -24,11 +23,7 @@ HRV
 56ms
 lager
 [knop: Klopt: fris]
-Voorstel volgens je beenindex. Of kies zelf:
-[knop: Wat stijf]
-[knop: Spierpijn]
-[knop: Flinke spierpijn]
-[knop: Energie, slaap of pijn invullen]
+[knop: Anders]
 
 --- kaart 3 ---
 Vandaag
