@@ -53,7 +53,8 @@ import { goalDetailsOf } from '../engine/goalLabels';
 import { setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
 import { writeCatchUp } from '../storage/catchUpApply';
-import { writeSwap } from '../storage/weekSwap';
+import { undoSwap, writeSwap } from '../storage/weekSwap';
+import { resolveDropOnTraining } from '../engine/dropOnTraining';
 import { linkLogNow, skipMissedNow, unlinkLogsNow, updateMissedMemory } from '../storage/missedTraining';
 import { askLine, autoSkipNotice, resolveMissedMemory, resolveMissedSettings, MISSED_MEMORY_KEY, type MissedMemory, type ResolvedMissedMemory } from '../engine/missedTraining';
 import { planIllnessChange, type IllnessChange, type IllnessPlan } from '../engine/illness';
@@ -73,7 +74,7 @@ import { applyPlanChangeItems, staleItems } from '../engine/proposalEngine';
 import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
 import { applyScheduleAnomalyFixNow } from '../storage/scheduleAnomalyFix';
-import { armFlip } from '../utils/flipDom';
+import { armFlip, disarmFlip } from '../utils/flipDom';
 import { undoPlanChangeNow } from '../storage/undoPlanChange';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type HorizonApplyStatus, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
 import { SHOW_SPLASH } from '../utils/updateFlag';
@@ -197,9 +198,15 @@ const horizonQueue = createSerialQueue({ timeoutMs: 60_000, name: 'Planningssync
 function planSettled(): Promise<void> {
   return horizonQueue.run(async () => undefined).then(() => undefined);
 }
+
+// Een melding dat iets niet lukte: geen rijen om terug te zetten, dus geen Ongedaan maken (ChangeNotice).
+function failureNotice(title: string, line: string): RecentPlanChange {
+  return { id: makeId('failed'), trigger: 'session_moved', title, lines: [line], summary: line, why: '', before: [], addedIds: [], failed: true, createdAt: new Date().toISOString() };
+}
 // Raised after every Akkoord and every move or skip of your own, so the sync
 // checks the week right away instead of the next day (docs/onderzoek/Planning op een
 // lijn.md, conflict 9).
+
 let planRevision = 0;
 // The durations, spacing and leg index every planning step reads (engine/
 // substitutions.ts, engine/scheduler.ts). Set before the sync too, so the
@@ -597,6 +604,8 @@ interface AppData {
   planIllness: (change: IllnessChange) => IllnessPlan | undefined;
   applyIllness: (plan: IllnessPlan) => Promise<void>;
   dismissRecentChange: () => void;
+  // Een handeling die niet lukte, als melding zonder Ongedaan maken (bijvoorbeeld een ruil die niet kon).
+  showFailure: (title: string, line: string) => void;
   // Fase 3: advice engine (engine/adviceEngine.ts) + change log.
   planChangeLog: PlanChangeProposal[];
   advice: Advice[];
@@ -955,9 +964,26 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [commitPlanChange, refresh]);
 
   const undoRecentChange = useCallback(async () => {
-    if (!recentChange) return;
+    if (!recentChange || recentChange.failed) return;
     armFlip();
     await planSettled();
+    // Een ruil gaat alleen terug als beide rijen nog zijn wat de ruil schreef (storage/weekSwap.ts#undoSwap).
+    if (recentChange.swapAfter) {
+      try {
+        await undoSwap(recentChange.before, recentChange.swapAfter);
+      } catch (err) {
+        disarmFlip();
+        setRecentChange(failureNotice('Ongedaan maken kan niet meer', err instanceof Error ? err.message : String(err)));
+        await refresh();
+        return;
+      }
+      // Alleen het logboek van het ongedaan maken; de rijen staan al terug.
+      await undoPlanChangeNow({ ...recentChange, before: [], addedIds: [] });
+      setRecentChange(null);
+      planRevision++;
+      await refresh();
+      return;
+    }
     // A log linked to a planned training afterwards: only the link goes (engine/missedTraining.ts).
     if (recentChange.linkedLogIds?.length) {
       await unlinkLogsNow(recentChange.linkedLogIds);
@@ -1842,13 +1868,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones],
   );
 
-  // A day with exactly one training that may move becomes Ruilen (engine/weekSwap.ts#withSwapVerdicts).
+  // A day with exactly one training that may move becomes Ruilen (engine/weekSwap.ts#withSwapVerdicts), unless
+  // the setting "Loslaten op een training" says Samen (engine/dropOnTraining.ts).
+  const dropOnTraining = resolveDropOnTraining(settings);
   const dragVerdicts = useCallback(
     (sessionId: string, weekStart: string): DayVerdict[] => {
       const ctx = dragContextFor(weekStart);
-      return withSwapVerdicts(ctx, sessionId, dayVerdicts(ctx, sessionId, mondayOfWeek(weekStart)));
+      const verdicts = dayVerdicts(ctx, sessionId, mondayOfWeek(weekStart));
+      return dropOnTraining === 'swap' ? withSwapVerdicts(ctx, sessionId, verdicts) : verdicts;
     },
-    [dragContextFor],
+    [dragContextFor, dropOnTraining],
   );
 
   // A same-date change (toDate === fromDate) is how proposeSkipEngine
@@ -1875,14 +1904,24 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // Ruilen (engine/weekSwap.ts): beide rijen in één keer, of geen van beide (storage/weekSwap.ts).
       if (proposal.swap && proposal.changes.length === 2) {
         const [ca, cb] = proposal.changes;
-        const { before: swapped } = await writeSwap({ aId: ca.sessionId, aFrom: ca.fromDate, bId: cb.sessionId, bFrom: cb.fromDate }, lock);
+        let written: Awaited<ReturnType<typeof writeSwap>>;
+        try {
+          written = await writeSwap({ aId: ca.sessionId, aFrom: ca.fromDate, bId: cb.sessionId, bFrom: cb.fromDate }, lock);
+        } catch (err) {
+          // Niets geschreven, dus er mag ook niets gaan schuiven; de aanroeper meldt het (Week.tsx#applyOrTell).
+          // Het scherm leest de opslag opnieuw, zodat je ziet wat er nu echt staat.
+          disarmFlip();
+          await refresh();
+          throw err;
+        }
         setRecentChange({
           id: makeId('usermove'),
           trigger: 'session_moved',
           title: `${ca.templateName} en ${cb.templateName} geruild`,
           lines: proposal.changes.map((c) => `${c.templateName}: ${day(c.fromDate)} → ${day(c.toDate)}`),
           why: '',
-          before: swapped,
+          before: written.before,
+          swapAfter: written.after,
           addedIds: [],
           createdAt: new Date().toISOString(),
         });
@@ -3051,6 +3090,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     planIllness,
     applyIllness,
     dismissRecentChange: () => setRecentChange(null),
+    showFailure: (title: string, line: string) => setRecentChange(failureNotice(title, line)),
     strengthProgramStrategies,
     strengthExternal,
     setStrengthExternal,

@@ -63,9 +63,9 @@ export function RescheduleDialog({
             {/* An unresolved clash is never applied under the same button as a
                 clean one: keeping the plan is the default, moving anyway is
                 a conscious second choice. */}
-            {/* Ruilen (engine/weekSwap.ts) komt hier alleen als er iets botst of het een test is: de zin zegt
-                droog wat, en de keuze is Liever niet links, Akkoord rechts. */}
-            {proposal.resolved || proposal.swap ? (
+            {/* Ruilen (engine/weekSwap.ts) volgt dezelfde opbouw: een test of vakantietraining vraagt Akkoord,
+                iets wat botst heeft Liever niet als hoofdknop en "Toch ruilen" als tweede keus. */}
+            {proposal.resolved ? (
               <div className="mt-5 flex gap-3">
                 <SecondaryButton onClick={requestClose}>Liever niet</SecondaryButton>
                 <PrimaryButton onClick={() => { haptics.tap(); onApply(); }} fullWidth={false}>Akkoord</PrimaryButton>
@@ -79,7 +79,7 @@ export function RescheduleDialog({
             ) : (
               <div className="mt-5 flex flex-col gap-3">
                 <PrimaryButton onClick={requestClose}>Liever niet</PrimaryButton>
-                <SecondaryButton onClick={onApply}>{proposal.changes[0]?.restore ? 'Toch doen' : catchUp ? 'Toch inhalen' : 'Toch verplaatsen'}</SecondaryButton>
+                <SecondaryButton onClick={onApply}>{proposal.swap ? 'Toch ruilen' : proposal.changes[0]?.restore ? 'Toch doen' : catchUp ? 'Toch inhalen' : 'Toch verplaatsen'}</SecondaryButton>
               </div>
             )}
           </Card>

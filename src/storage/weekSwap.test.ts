@@ -1,7 +1,7 @@
 // Een ruil schrijft beide rijen of geen van beide; ongedaan maken zet ze allebei terug.
 import { describe, it, expect, beforeEach } from 'vitest';
 import { wipeAllData, seedIfEmpty, PlannedSessionsRepo, SessionLogsRepo } from './database';
-import { writeSwap, SWAP_STALE } from './weekSwap';
+import { undoSwap, writeSwap, SWAP_STALE, SWAP_UNDO_STALE } from './weekSwap';
 import { undoPlanChangeNow } from './undoPlanChange';
 import type { PlannedSession, SessionLog } from '../models/training';
 
@@ -44,5 +44,30 @@ describe('een ruil wegschrijven', () => {
     const rows = await PlannedSessionsRepo.getAll();
     expect(rows.find((s) => s.id === a.id)).toEqual(a);
     expect(rows.find((s) => s.id === b.id)).toEqual(b);
+  });
+
+  it('undoSwap zet beide terug als ze nog zijn wat de ruil schreef', async () => {
+    const { before, after } = await writeSwap(change, lock);
+    await undoSwap(before, after);
+    const rows = await PlannedSessionsRepo.getAll();
+    expect(rows.find((s) => s.id === a.id)).toEqual(a);
+    expect(rows.find((s) => s.id === b.id)).toEqual(b);
+  });
+
+  it('undoSwap doet niets als een van de twee daarna nog verplaatst is', async () => {
+    const { before, after } = await writeSwap(change, lock);
+    const moved = { ...after[1], scheduledDate: '2026-10-02' };
+    await PlannedSessionsRepo.put(moved);
+    await expect(undoSwap(before, after)).rejects.toThrow(SWAP_UNDO_STALE);
+    const rows = await PlannedSessionsRepo.getAll();
+    expect(rows.find((s) => s.id === a.id)).toEqual(after[0]);
+    expect(rows.find((s) => s.id === b.id)?.scheduledDate).toBe('2026-10-02');
+  });
+
+  it('undoSwap doet niets als er een intussen gelogd is', async () => {
+    const { before, after } = await writeSwap(change, lock);
+    await SessionLogsRepo.put({ id: 'log-a', plannedSessionId: a.id, templateId: a.templateId, type: 'run', variant: 'full', completedDate: '2026-10-03', completedAt: '2026-10-03T08:00:00.000Z', source: 'manual', durationMinutes: 40 } as unknown as SessionLog);
+    await expect(undoSwap(before, after)).rejects.toThrow(SWAP_UNDO_STALE);
+    expect((await PlannedSessionsRepo.getAll()).find((s) => s.id === a.id)).toEqual(after[0]);
   });
 });

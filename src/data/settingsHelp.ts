@@ -933,10 +933,19 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Sleep een training met het greepje naar een andere dag. Het gaat zoals Verplaatsen in het actieblad. Uit haalt de grepen weg.',
     points: [
       { head: 'Een botsing', text: 'liggen er dan twee zware beendagen binnen 48 uur, of is het je rustdag, dan zie je dat al tijdens het slepen en krijg je bij het loslaten een voorstel met Akkoord. Liever niet laat alles staan.' },
-      { head: 'Loslaten op een training', text: 'staat er op die dag precies één training die mag bewegen, dan ruilen de twee van dag. De dag kleurt mee en zegt "Ruilen met". Staan er twee, dan verplaats je gewoon. Ruilen kan ook altijd via het actieblad, ook met deze instelling uit.' },
+      { head: 'Loslaten op een training', text: 'staat er op die dag precies één training die mag bewegen, dan ruilen de twee van dag. De dag kleurt mee en zegt "Ruilen met". Staan er twee, dan verplaats je gewoon. Liever samen op één dag? Kies dat bij Loslaten op een training. Ruilen kan ook altijd via het actieblad, ook met slepen uit.' },
       { head: 'Een test', text: 'een testloop verplaats of ruil je altijd met Akkoord.' },
       { head: 'Een wedstrijd', text: 'hoort er niet bij. Die verplaats je via je doel op de Ascend-tab.' },
       { head: 'Ongedaan maken', text: 'een gewone verplaatsing of ruil gaat meteen, met Ongedaan maken in de melding.' },
+    ],
+  },
+  loslatenTraining: {
+    title: 'Loslaten op een training',
+    lead: 'Wat er gebeurt als je in Week een training loslaat op een dag waar al één training staat die mag bewegen.',
+    points: [
+      { head: 'Ruilen', text: 'de twee ruilen van dag. Dat is het advies: zo blijft elke dag één training en hoef je niets na te schuiven.' },
+      { head: 'Samen', text: 'de training komt erbij en ze staan samen op die dag, zoals eerst.' },
+      { head: 'Altijd', text: 'botst het, dan zie je dat tijdens het slepen en vraagt ASCEND het eerst. Een gewone ruil gaat meteen, met Ongedaan maken in de melding. Via het actieblad kun je altijd ruilen.' },
     ],
   },
   testStilstaan: {

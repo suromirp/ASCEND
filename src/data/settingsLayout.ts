@@ -61,7 +61,7 @@ export interface PageRows {
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
     rows: ['bundel-dagen', 'meerdere', 'sporten', 'hoeveel-per-soort', 'bundel-sporten-tellen', 'wijzigingen', 'ambitie', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'rustdag-terug', 'weekvoorstel'],
-    advanced: ['bundel-niet-doorgegaan', 'lange-loop-benen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test'],
+    advanced: ['bundel-niet-doorgegaan', 'lange-loop-benen', 'bundel-slepen', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test'],
   },
   doel: {
     rows: ['doelen', 'programma', 'bundel-zonder-doel', 'lange-zondag', 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge', 'doeltijd-voorstel', 'seizoensstrook', 'bundel-tochten', 'vrije-dagen'],
@@ -123,6 +123,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-dagen', 'trainingstijd', 'rustdag', 'rustdag-doen'),
   ...inSheet('meerdere', 'zware-dingen'),
   ...inSheet('ambitie', 'lange-loop'),
+  ...inSheet('bundel-slepen', 'slepen-week', 'loslaten-training'),
   ...inSheet('bundel-niet-doorgegaan', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'log-koppelen'),
   ...inSheet('bundel-sporten-tellen', 'sport-vragen', 'sport-zwaarte', 'sport-rust'),
   // Doel en tochten
@@ -227,6 +228,7 @@ const B = {
   activities: { ok: (_s, c) => c.activities, reason: 'Zichtbaar zodra Trainingen van je horloge aan staat', parent: 'garmin-trainingen' },
   send: { ok: (_s, c) => c.sendToWatch, reason: 'Zichtbaar zodra Trainingen naar je horloge aan staat', parent: 'naar-horloge' },
   ascendHr: { ok: (s) => resolveWatchHrMode({ mode: s.watchHeartRate }) !== 'intervals', reason: 'Zichtbaar zodra de hartslag van ASCEND naar je horloge gaat', parent: 'horloge-hartslag' },
+  dragWeek: { ok: (s) => s.dragWeek !== false, reason: 'Zichtbaar zodra Trainingen slepen in Week aan staat', parent: 'slepen-week' },
   missedOn: { ok: (s) => s.missedTraining !== 'off', reason: 'Zichtbaar zodra ASCEND iets doet met een training die niet doorging', parent: 'niet-doorgegaan' },
   goal: { ok: (_s, c) => c.goal, reason: 'Zichtbaar zodra je een hoofddoel hebt', parent: 'doelen' },
   noGoal: { ok: (_s, c) => c.noGoal, reason: 'Zichtbaar zodra je geen doel hebt', parent: 'doelen' },
@@ -256,6 +258,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   // Planning
   ...rule([B.pairing], 'zware-dingen'),
   ...rule([B.missedOn], 'niet-doorgegaan-dagen'),
+  ...rule([B.dragWeek], 'loslaten-training'),
   // Doel en tochten
   ...rule([B.goalOrProgram], 'programma'),
   ...rule([B.noGoal], 'bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),

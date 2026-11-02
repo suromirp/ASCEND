@@ -297,7 +297,7 @@ export function SessionActionSheet({
               <SheetRow
                 key={o.session.id}
                 title={o.template.name}
-                sub={`${dayLabel(o.session.scheduledDate, today)}${o.tone === 'warn' ? ' · vraagt eerst Akkoord' : ''}`}
+                sub={`${dayLabel(o.session.scheduledDate, today)}${o.hint ? ` · ${o.hint}` : ''}`}
                 onClick={() => onSwap?.(o.session.id)}
               />
             ))}

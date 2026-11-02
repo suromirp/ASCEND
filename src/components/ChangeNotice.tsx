@@ -64,7 +64,7 @@ export function ChangeNotice() {
       <div className={`${anchor} justify-end`} style={anchorStyle}>
         <button
           onClick={() => setState({ key: changeKey, view: 'full' })}
-          aria-label={`Planning aangepast: ${recentChange.title}. Open om te lezen of ongedaan te maken.`}
+          aria-label={recentChange.failed ? `Niet gelukt: ${recentChange.title}. Open om te lezen.` : `Planning aangepast: ${recentChange.title}. Open om te lezen of ongedaan te maken.`}
           className="animate-fade-in pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border shadow-lg"
           style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', color: 'var(--color-action)' }}
         >
@@ -86,13 +86,15 @@ export function ChangeNotice() {
       >
         <div className="flex items-center gap-1">
           <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="min-h-[44px] min-w-0 flex-1 py-1.5 text-left">
-            <Eyebrow>Aangepast</Eyebrow>
+            <Eyebrow>{recentChange.failed ? 'Niet gelukt' : 'Aangepast'}</Eyebrow>
             <p className="mt-0.5 line-clamp-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{recentChange.title}</p>
             {!open && <p className="line-clamp-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{summary}{recentChange.why ? ' · waarom' : ''}</p>}
           </button>
-          <TextButton onClick={handleUndo} disabled={undoing} className="shrink-0 px-2">
-            {undoing ? 'Bezig…' : 'Ongedaan maken'}
-          </TextButton>
+          {!recentChange.failed && (
+            <TextButton onClick={handleUndo} disabled={undoing} className="shrink-0 px-2">
+              {undoing ? 'Bezig…' : 'Ongedaan maken'}
+            </TextButton>
+          )}
           <button
             onClick={dismissRecentChange}
             aria-label="Melding sluiten"

@@ -70,6 +70,12 @@ export function armFlip(): void {
   }
 }
 
+// Een handeling die mislukte: niets is verschoven, dus er mag ook niets gaan schuiven.
+export function disarmFlip(): void {
+  armed = null;
+  origin = null;
+}
+
 // Na het loslaten van een zwevende rij: de rij begint waar die rij was, niet op zijn oude plek.
 export function setFlipOrigin(id: string, viewportTop: number): void {
   if (typeof document === 'undefined') return;

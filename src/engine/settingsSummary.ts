@@ -68,6 +68,7 @@ import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
 import { resolveAboveMission } from './todayCards';
+import { resolveDropOnTraining } from './dropOnTraining';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
@@ -720,8 +721,13 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: swipeDeleteOn(s) };
     case 'forge-snelknoppen':
       return { checked: quickButtonsOn(s) };
+    // Slepen in Week (engine/weekSwap.ts): "Ruilen" of "Samen", of uit.
+    case 'bundel-slepen':
+      return s.dragWeek === false ? { value: 'Uit', dim: true } : { value: `Aan, ${choiceShort('loslaten', resolveDropOnTraining(s)).toLowerCase()}` };
     case 'slepen-week':
       return { checked: s.dragWeek !== false };
+    case 'loslaten-training':
+      return { value: choiceShort('loslaten', resolveDropOnTraining(s)) };
     case 'korte-nacht':
       return { checked: s.askShortNight !== false };
     // Kaarten boven de missie (engine/todayCards.ts): "Eén".

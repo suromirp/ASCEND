@@ -188,7 +188,7 @@ function SessionRow({
         <button
           type="button"
           data-drag-handle={session.id}
-          aria-label={`Verplaats ${isRest ? REST_DAY_COPY[restMode].title : template.name}, nu op ${weekdayLongNL(date)}${note ? `, ${note}` : ''}. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.`}
+          aria-label={`Verplaats of ruil ${isRest ? REST_DAY_COPY[restMode].title : template.name}, nu op ${weekdayLongNL(date)}${note ? `, ${note}` : ''}. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.`}
           aria-pressed={handle.active}
           onPointerDown={handle.onPointerDown}
           onKeyDown={handle.onKeyDown}

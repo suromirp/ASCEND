@@ -12,8 +12,9 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
 import { weekConcerns } from './weekConcerns';
 import type { CheckInput } from './weekValidator';
+import { dayOrder } from './dayOrder';
 import { dayTitle, dragEligibility, type DayVerdict, type DragContext, type MoveDecision } from './weekDrag';
-import { formatDateNL, mondayOfWeek, weekdayLongNL, weekdayOf } from '../utils/dates';
+import { addDays, formatDateNL, mondayOfWeek, weekdayLongNL, weekdayOf } from '../utils/dates';
 
 export const SWAP_TEST = 'Een testloop ruil je alleen met Akkoord.';
 export const SWAP_LEAVE = 'Deze training schoof opzij voor je vakantie. Ruil je hem, dan blijft hij op de nieuwe dag staan.';
@@ -35,9 +36,12 @@ const KEPT_LINE: Record<Exclude<KeptReason, 'rest'>, string> = {
 
 export type SwapCheck =
   | { ok: false; line: string }
-  // asks: the dry facts that make it a question (empty: clean). clash: one of them is a heavy clash, which
-  // already says what two heavy leg days in a row would. proposal: the two changes, swap: true.
-  | { ok: true; asks: string[]; clash: boolean; proposal: ScheduleProposal };
+  // asks: the dry facts that make it a question (empty: clean). hard: one of them is a clash, your rest day
+  // or too little time; then the sheet has Liever niet as its main button, like a move that clashes. Only a
+  // test or a training that moved for a holiday keeps Akkoord as the main button (as decideMove does).
+  // clash: one of them is a heavy clash, which already says what two heavy leg days in a row would.
+  // hints: a quiet fact that asks nothing ("Beter niet op één dag"). proposal: the two changes, swap: true.
+  | { ok: true; asks: string[]; hard: boolean; clash: boolean; hints: string[]; proposal: ScheduleProposal };
 
 // Mag `aId` met `bId` ruilen, en wat zegt de week erna? Beide mogen bewegen, staan op een andere dag van
 // dezelfde week en geen van beide komt op een dag die dicht is.
@@ -99,6 +103,17 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
     if (askedFits) continue;
     asks.push(ctx.sameDayPairingPreference === 'never' ? 'Je wilt geen twee trainingen op één dag.' : `Samen ${total} min op ${dayLower(leg.to)}, meer dan je die dag wilt trainen.`);
   }
+  const hard = asks.length > 0;
+  // Twee trainingen samen op een dag die je beter niet combineert: het stille feit, net als bij slepen.
+  const hints: string[] = [];
+  for (const leg of legs) {
+    const there = simulated.filter((s) => s.id !== leg.s.id && s.status !== 'skipped' && s.scheduledDate === leg.to);
+    if (there.length === 0) continue;
+    const advice = dayOrder([...there, { ...leg.s, scheduledDate: leg.to }], simulated.filter((s) => s.scheduledDate === addDays(leg.to, 1)), templateById);
+    if (!advice?.avoid) continue;
+    const names = there.flatMap((s) => { const t = templateById.get(s.templateId); return t ? [t.name] : []; }).join(' en ');
+    hints.push(`${leg.t.name} komt op ${dayLower(leg.to)} samen met ${names}. Beter niet op één dag.`);
+  }
   for (const leg of legs) {
     if (leg.ask === true) { if (!asks.includes(SWAP_TEST)) asks.push(SWAP_TEST); }
     else if (leg.ask) { if (!asks.includes(SWAP_LEAVE)) asks.push(SWAP_LEAVE); }
@@ -107,28 +122,32 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   const proposal: ScheduleProposal = {
     changes: legs.map((leg) => ({ sessionId: leg.s.id, templateId: leg.t.id, templateName: leg.t.name, fromDate: leg.s.scheduledDate, toDate: leg.to })),
     reason: asks.length > 0 ? asks.join(' ') : `${ta.name} en ${tb.name} ruilen van dag.`,
-    resolved: asks.length === 0,
+    resolved: !hard,
     swap: true,
   };
-  return { ok: true, asks, clash, proposal };
+  return { ok: true, asks, hard, clash, hints, proposal };
 }
 
-// Het ene besluit voor de ruil, uit het blad en uit het slepen. Schoon gaat meteen; anders het blad met
-// Akkoord. `legsClose`: twee zware beendagen achter elkaar die de regels niet als botsing zien
+// Het ene besluit voor de ruil, uit het blad en uit het slepen. Schoon gaat meteen; anders het blad, met dezelfde
+// opbouw als Verplaatsen: botst het (de 48 uur, je rustdag, te weinig tijd, twee zware beendagen), dan is Liever
+// niet de hoofdknop en "Toch ruilen" de tweede keus (resolved: false); alleen een test of een training die
+// opzij schoof voor een vakantie vraagt gewoon Akkoord (resolved: true). `legsClose`: twee zware beendagen achter elkaar die de regels niet als botsing zien
 // (legsCloseAfterSwap), dan vraagt het ook; zegt een botsing van de 48 uur het al, dan niet nog een keer.
 export function decideSwap(check: SwapCheck, opts: { legsClose?: boolean } = {}): MoveDecision {
   if (!check.ok) return { action: 'none', proposal: { changes: [], reason: check.line, resolved: false } };
-  const asks = opts.legsClose && !check.clash ? [SWAP_LEGS, ...check.asks] : check.asks;
+  const legs = !!opts.legsClose && !check.clash;
+  const asks = legs ? [SWAP_LEGS, ...check.asks] : check.asks;
   if (asks.length === 0) return { action: 'apply', proposal: check.proposal };
-  return { action: 'ask', proposal: { ...check.proposal, resolved: false, reason: asks.join(' ') } };
+  return { action: 'ask', proposal: { ...check.proposal, resolved: !(check.hard || legs), reason: asks.join(' ') } };
 }
 
 export interface SwapOption {
   session: PlannedSession;
   template: SessionTemplate;
-  // ok: past zonder vraag. warn: vraagt Akkoord, met de eerste reden in `note`.
+  // ok: past zonder vraag. warn: vraagt eerst (het blad zegt waarom).
   tone: 'ok' | 'warn';
-  note?: string;
+  // De korte regel onder de naam in het blad: "vraagt eerst Akkoord" of "beter niet op één dag".
+  hint?: string;
 }
 
 // De andere trainingen van dezelfde week waarmee deze kan ruilen, in de volgorde van de dagen.
@@ -144,7 +163,8 @@ export function swapOptions(ctx: DragContext, sessionId: string): SwapOption[] {
       const template = templateById.get(s.templateId);
       const check = checkSwap(ctx, a.id, s.id);
       if (!template || !check.ok) return [];
-      return [{ session: s, template, tone: check.asks.length > 0 ? 'warn' : 'ok', ...(check.asks[0] ? { note: check.asks[0] } : {}) }];
+      const hint = check.asks.length > 0 ? 'vraagt eerst Akkoord' : check.hints.length > 0 ? 'beter niet op één dag' : undefined;
+      return [{ session: s, template, tone: check.asks.length > 0 ? 'warn' : 'ok', ...(hint ? { hint } : {}) }];
     });
 }
 
@@ -167,13 +187,14 @@ export function withSwapVerdicts(ctx: DragContext, sessionId: string, verdicts: 
     const check = checkSwap(ctx, a.id, b.id);
     if (!check.ok) return v;
     const asks = check.asks.join(' ');
+    const hints = check.hints.length > 0 ? ` ${check.hints.join(' ')}` : '';
     return {
       date: v.date,
       kind: 'swap',
       droppable: true,
       tone: asks ? 'warn' : 'ok',
       chip: fit(`Ruilen met ${tb.name}`, 'Ruilen'),
-      line: `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${asks ? ` ${asks} ${SWAP_ASK_TAIL}` : ''}`,
+      line: `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${asks ? ` ${asks} ${SWAP_ASK_TAIL}` : hints}`,
       ask: !!asks,
       ...(asks ? { askReason: asks } : {}),
       swapWithId: b.id,

@@ -3,7 +3,8 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { DailyTimeBudget, Weekday } from '../models/goalEngineConfig';
 import { dayVerdicts, type DragContext } from './weekDrag';
-import type { CheckInput } from './weekValidator';
+import { lockLevel, repairWeeks, type CheckInput } from './weekValidator';
+import { planPass } from './planPass';
 import { checkSwap, decideSwap, legsCloseAfterSwap, swapOptions, swapRows, SWAP_LEGS, SWAP_TEST, withSwapVerdicts } from './weekSwap';
 
 // Nagemaakte week van maandag 28 september 2026; vandaag is dinsdag 29 september.
@@ -66,9 +67,36 @@ describe('checkSwap', () => {
   });
 
   it('een test ruil je alleen met Akkoord', () => {
-    const sessions = [...week(), s('test', 'tpl_test_run', '2026-10-02')];
-    const c = checkSwap(ctx(sessions), 'test', 'easy');
-    expect(c.ok && c.asks).toContain(SWAP_TEST);
+    const sessions = [s('test', 'tpl_test_run', '2026-10-02'), s('upperA', 'tpl_upper_a', '2026-10-03')];
+    const c = checkSwap(ctx(sessions), 'test', 'upperA');
+    expect(c.ok && c.asks).toEqual([SWAP_TEST]);
+    // Alleen een test: Akkoord blijft de hoofdknop, zoals bij Verplaatsen.
+    const d = decideSwap(c);
+    expect(d.action).toBe('ask');
+    expect(d.proposal.resolved).toBe(true);
+  });
+
+  it('een botsing, je rustdag of te weinig tijd: Liever niet is de hoofdknop (resolved false)', () => {
+    const clash = checkSwap(ctx(week()), 'lowerA', 'upperA');
+    const rest = checkSwap(ctx(week(), { move: { restDay: 6 } }), 'easy', 'upperA');
+    const time = checkSwap(ctx(week(), { dailyTimeBudget: { ...roomy, thu: day(20) } }), 'easy', 'upperA');
+    for (const c of [clash, rest, time]) {
+      if (!c.ok) throw new Error('verwacht ok');
+      expect(c.hard).toBe(true);
+      expect(decideSwap(c).proposal.resolved).toBe(false);
+    }
+    const clean = checkSwap(ctx(week()), 'easy', 'upperA');
+    if (!clean.ok) throw new Error('verwacht ok');
+    expect(decideSwap(clean, { legsClose: true }).proposal.resolved).toBe(false);
+  });
+
+  it('een ruil die twee trainingen samen zet die je beter niet combineert, zegt dat stil', () => {
+    // Een rustige duurloop staat donderdag naast een tempoloop; de intervallen gaan daarheen in zijn plaats.
+    const sessions = [s('int', 'tpl_intervals', '2026-09-29'), s('easy', 'tpl_easy_run', '2026-10-01'), s('tempo', 'tpl_tempo_run', '2026-10-01')];
+    const c = checkSwap(ctx(sessions), 'int', 'easy');
+    if (!c.ok) throw new Error('verwacht ok');
+    expect(c.hints).toEqual(['Intervallen komt op donderdag 1 oktober samen met Tempoloop. Beter niet op één dag.']);
+    expect(swapOptions(ctx(sessions), 'int').find((o) => o.session.id === 'easy')?.hint).toBe(c.asks.length > 0 ? 'vraagt eerst Akkoord' : 'beter niet op één dag');
   });
 
   it('niet: dezelfde dag, een andere week, gelogd, voorbij, een rustwandeling, een wedstrijd', () => {
@@ -207,5 +235,29 @@ describe('legsCloseAfterSwap', () => {
     ];
     expect(legsCloseAfterSwap(input(sessions), 'easy', 'long')).toBe(true);
     expect(legsCloseAfterSwap(input(sessions), 'hills', 'easy')).toBe(false);
+  });
+});
+
+describe('een geruild paar blijft staan', () => {
+  // Nagemaakt: Benen A en Bovenlichaam A geruild, zodat Benen A de dag voor de lange duurloop staat (Toch ruilen).
+  const [lower, upper] = swapRows(s('lowerA', 'tpl_lower_a', '2026-09-30'), s('upperA', 'tpl_upper_a', '2026-10-03'), lock);
+  const sessions = [lower, upper, s('easy', 'tpl_easy_run', '2026-10-01'), s('long', 'tpl_long_run', '2026-10-04')];
+
+  it('beide hebben jouw slot (niveau 1)', () => {
+    expect(lockLevel(lower, new Set(), ASOF)).toBe(1);
+    expect(lockLevel(upper, new Set(), ASOF)).toBe(1);
+  });
+
+  it('de weekcontrole verplaatst ze niet', () => {
+    const result = repairWeeks({ sessions, logs: [], templates, today: ASOF, restDay: 1, goalDay: '2027-08-01' });
+    expect(result.sessions.find((x) => x.id === 'lowerA')?.scheduledDate).toBe('2026-10-03');
+    expect(result.sessions.find((x) => x.id === 'upperA')?.scheduledDate).toBe('2026-09-30');
+  });
+
+  it('de planningsronde verplaatst ze niet', () => {
+    let n = 0;
+    const result = planPass(sessions, { today: ASOF, logs: [], templates, program: null, blocks: [], restDay: 1, until: '2026-10-11', newId: () => `nieuw${++n}` });
+    expect(result.sessions.find((x) => x.id === 'lowerA')).toMatchObject({ scheduledDate: '2026-10-03', lock });
+    expect(result.sessions.find((x) => x.id === 'upperA')).toMatchObject({ scheduledDate: '2026-09-30', lock });
   });
 });

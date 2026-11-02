@@ -24,7 +24,7 @@ De hoogte is minuten maal hoe zwaar het was.
 Vrij
 Di 27 · niets gepland
 [knop: Benen A (zwaar)Wo 28·45 min· zware benenGemist]
-[knop: Verplaats Benen A (zwaar), nu op woensdag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
+[knop: Verplaats of ruil Benen A (zwaar), nu op woensdag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 [knop: Testloop 5 kmDo 29·45 minGemist]
 Vrij
 Vr 30 · niets gepland
@@ -32,7 +32,7 @@ Vrij
 Za 31 · niets gepland
 [knop: Losse training toevoegen]
 [knop: Lange duurloopZo 1·Zone 250 min· zware benen]
-[knop: Verplaats Lange duurloop, nu op zondag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
+[knop: Verplaats of ruil Lange duurloop, nu op zondag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 [knop: Jaaroverzicht]
 [knop: Weekterugblik]
 
