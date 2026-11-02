@@ -25,6 +25,8 @@ import {
   awaitsEffort,
   wantsBestEffort,
   testStopsRemark,
+  testEffortRemark,
+  NOT_MAXIMAL_RPE,
   effortFreshAllowed,
   offerReread,
   withEffortAccepted,
@@ -323,6 +325,31 @@ describe('the quiet line for a best 5 km that waits for Akkoord', () => {
     const both = [NORMAL, OFFERED, slow];
     expect(pendingTestLine(both, {})?.logId).toBe('e');
     expect(effortOfferLine(both, {})).toBeUndefined();
+  });
+});
+
+// docs/onderzoek/RPE bij een testloop.md, voorstel 5: a test is only a good measurement when it was
+// a full effort. A 7 or lower says it probably was not; the paces then come out careful.
+describe('a test that was probably not a full effort', () => {
+  const at = (rpe: number | undefined, extra: Partial<SessionLog> = {}) => ({ ...test('r', '2027-01-10', 5, 28), rpe, ...extra });
+
+  it('one quiet sentence at RPE 7 or lower, nothing at 8 or more or without an RPE', () => {
+    expect(NOT_MAXIMAL_RPE).toBe(7);
+    expect(testEffortRemark(at(7))).toBe("Zwaarte 7 van 10: waarschijnlijk geen volle poging. Je tempo's vallen dan wat voorzichtig uit.");
+    expect(testEffortRemark(at(5))).toBe("Zwaarte 5 van 10: waarschijnlijk geen volle poging. Je tempo's vallen dan wat voorzichtig uit.");
+    expect(testEffortRemark(at(8))).toBeUndefined();
+    expect(testEffortRemark(at(10))).toBeUndefined();
+    expect(testEffortRemark(at(undefined))).toBeUndefined();
+  });
+
+  it('not for an RPE ASCEND assumed, and only for a test', () => {
+    expect(testEffortRemark(at(6, { rpeAssumed: true }))).toBeUndefined();
+    expect(testEffortRemark(at(6, { templateId: 'tpl_easy_run' }))).toBeUndefined();
+  });
+
+  it('the paces stay as they are: the remark changes nothing', () => {
+    const logs = [at(6)];
+    expect(pacesFromLogs(logs, {}).paces).toEqual(pacesFromLogs([test('r', '2027-01-10', 5, 28)], {}).paces);
   });
 });
 

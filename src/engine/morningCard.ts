@@ -9,7 +9,9 @@ import type { EnergyFeeling, LegFeeling, MorningCheckIn, SleepFeeling } from '..
 import { previewLegCard, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
 import { adviceLead } from './adviceText';
 import { fatigueWord, type LegFatigueResult } from './legFatigue';
-import { isTestOrRace } from './templateRoles';
+import { idHasRole, isTestOrRace } from './templateRoles';
+import type { SessionLog, SessionTemplate } from '../models/training';
+import { addDays } from '../utils/dates';
 import { suggestSleepFeeling, watchSummaryLine, type WellnessLine, type WellnessReading } from './wellnessCheck';
 
 // De kaart staat er vanaf het begin van de ochtend (instelbaar, standaard 5 uur)
@@ -34,6 +36,37 @@ export function suggestLegs(result: LegIndex | undefined): LegFeeling | undefine
   return level === 1 ? 'stijf' : 'spierpijn';
 }
 
+// --- de ochtend na een test of wedstrijd -----------------------------------------------
+
+// De ochtend na een test of wedstrijd vraagt de kaart "Hoe voelen je benen?" open, met één zin erbij
+// (docs/onderzoek/RPE bij een testloop.md, vraag 4; docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md).
+// De RPE van een test is bijna altijd 9 of 10 en zegt weinig over je herstel; de beenindex telt een vlakke
+// test licht (ongeveer 3,5 de dag erna), dus "Klopt: fris" zou het antwoord voor je geven. Wat je benen die
+// ochtend zeggen, zegt meer. De kaart volgt verder zijn eigen regels (showMorningCard) en zijn plek op
+// Vandaag (engine/todayCards.ts). Herkend via de rol, nooit via een template-id.
+export interface MaxEffortMorning {
+  kind: 'test' | 'race';
+  line: string;
+}
+
+const AFTER_EFFORT_LINE: Record<MaxEffortMorning['kind'], string> = {
+  test: 'Gisteren liep je je test. Wat je benen vanochtend zeggen, telt meer dan de beenindex.',
+  race: 'Gisteren liep je je wedstrijd. Wat je benen vanochtend zeggen, telt meer dan de beenindex.',
+};
+
+export function maxEffortYesterday(p: { logs: SessionLog[]; templates: SessionTemplate[]; today: string; enabled: boolean }): MaxEffortMorning | undefined {
+  if (!p.enabled) return undefined;
+  const yesterday = addDays(p.today, -1);
+  const byId = new Map(p.templates.map((t) => [t.id, t]));
+  let kind: MaxEffortMorning['kind'] | undefined;
+  for (const l of p.logs) {
+    if (l.completedDate !== yesterday) continue;
+    if (idHasRole(l.templateId, 'race', byId)) kind = 'race';
+    else if (!kind && idHasRole(l.templateId, 'test', byId)) kind = 'test';
+  }
+  return kind ? { kind, line: AFTER_EFFORT_LINE[kind] } : undefined;
+}
+
 export type SuggestionSource = 'beenindex' | 'horloge' | 'zelf';
 
 export interface Suggested<T> {
@@ -47,9 +80,11 @@ export interface MorningPrefill {
   sleep?: Suggested<SleepFeeling>;
 }
 
-export function morningPrefill(p: { legIndex: LegIndex | undefined; reading: WellnessReading | undefined }): MorningPrefill {
+// `afterEffort`: the morning after a test or race (maxEffortYesterday) the legs are asked openly,
+// without a guess from the leg index; sleep and energy from the watch stay.
+export function morningPrefill(p: { legIndex: LegIndex | undefined; reading: WellnessReading | undefined; afterEffort?: boolean }): MorningPrefill {
   const out: MorningPrefill = {};
-  const legs = suggestLegs(p.legIndex);
+  const legs = p.afterEffort ? undefined : suggestLegs(p.legIndex);
   if (legs) out.legs = { value: legs, from: 'beenindex' };
   if (p.reading?.suggestedSleep) out.sleep = { value: p.reading.suggestedSleep, from: p.reading.suggestedSleepFrom ?? 'horloge' };
   if (p.reading?.suggestedEnergy) out.energy = { value: p.reading.suggestedEnergy, from: 'horloge' };

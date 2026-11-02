@@ -129,6 +129,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
               <SettingsList>
                 <SummaryRow id="boven-missie" title="Kaarten boven de missie" facts={facts} info="bovenMissie" onClick={() => setInner('boven-missie')} />
                 <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
+                <SummaryRow id="benen-na-test" title="Benen vragen na een test" facts={facts} info="benenNaTest" onChange={(on) => set({ legsAfterEffort: on })} />
                 <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
                 <SummaryRow id="lijfvraag" title="Hoe voelt je lijf?" facts={facts} info="lijfvraag" onClick={() => setInner('lijfvraag')} />
                 <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} onChange={(on) => set({ weeklyQuestion: on })} />

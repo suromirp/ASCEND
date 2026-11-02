@@ -26,6 +26,16 @@ describe('dayLoads', () => {
     expect(days.every((d) => d.load === 0 && !d.hasTraining)).toBe(true);
   });
 
+  it('een gekoppelde test met snelste 5 km telt in twee delen, en de dag zegt dat', () => {
+    const bestEffort = { km: 5, minutes: 25, wholeKm: 8.2, wholeMinutes: 45, accepted: true, v: 2 };
+    const cardioData = { durationMinutes: 45, distanceKm: 8.2, source: 'garmin' as const };
+    const days = dayLoads({ ...base, weekStart: WEEK, logs: [log('tpl_test_run', '2026-10-20', 45, { rpe: 10, cardioData, bestEffort })], plannedSessions: [] });
+    const tue = days.find((d) => d.date === '2026-10-20')!;
+    expect(tue.load).toBe(310);
+    expect(tue.split).toBe(true);
+    expect(days.filter((d) => d.split)).toHaveLength(1);
+  });
+
   it('is minuten maal inspanning: je eigen RPE voor wat gedaan is, de geplande inspanning voor wat komt', () => {
     const days = dayLoads({
       ...base, weekStart: WEEK,

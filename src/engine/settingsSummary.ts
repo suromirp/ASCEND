@@ -571,6 +571,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.morningCheckIn };
     case 'ochtendkaart':
       return { checked: o.morningCard };
+    case 'benen-na-test':
+      return { checked: o.legsAfterEffort, sub: o.legsAfterEffort ? 'Open vraag, zonder voorstel' : 'Zoals elke ochtend' };
     case 'zweet-vragen':
       return { checked: s.askSweat !== false };
     case 'bundel-zonder-doel': {

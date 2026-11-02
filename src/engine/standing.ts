@@ -25,6 +25,8 @@ import { minutesByZone } from './intensityMinutes';
 import type { IntensityCounting } from './intensitySettings';
 import { estimatedHikingMinutes, typicalDayValue } from './goalRoute';
 import { hasRole } from './templateRoles';
+import { EASY_PART_RPE, testEffortSplit, type EffortSplit } from './testEffortSplit';
+import { formatNumberNL } from '../utils/number';
 
 // --- weekly load (session-RPE) ---------------------------------------------------
 export type LoadSport = 'lopen' | 'kracht' | 'wandelen' | 'overig';
@@ -40,6 +42,23 @@ export interface LoadItem {
   load: number;
   planned: boolean; // still to come
   estimated: boolean; // done, but no effort filled in: the planned effort
+  // A linked test with warm-up and cool-down (testEffortSplit.ts): the fastest 5 km counted at
+  // `effort`, the rest at 3. Then `load` is not `minutes x effort`, and the row says so.
+  split?: EffortSplit;
+}
+
+// The sentence under a chart when a split test is in it.
+export const SPLIT_NOTE = 'Bij een test met inlopen telt de rest als rustig.';
+
+// The second line of a row: "45 min · zwaarte 6", or for a split test "45 min · 25 op zwaarte 10,
+// 20 rustig". Whole minutes; the two parts add up to the total shown.
+export function loadItemText(it: Pick<LoadItem, 'minutes' | 'effort' | 'estimated' | 'split'>): string {
+  const minutes = Math.round(it.minutes);
+  // A non-breaking space after "zwaarte", as the row always had.
+  const effort = `zwaarte\u00a0${it.estimated ? '±' : ''}${formatNumberNL(it.effort, 0)}`;
+  if (!it.split) return `${formatNumberNL(minutes, 0)} min · ${effort}`;
+  const hard = Math.min(minutes, Math.round(it.split.hardMinutes));
+  return `${formatNumberNL(minutes, 0)} min · ${formatNumberNL(hard, 0)} op ${effort}, ${formatNumberNL(minutes - hard, 0)} rustig`;
 }
 
 export interface WeekLoad {
@@ -99,8 +118,10 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
       if (l.completedDate < weekStart || l.completedDate >= weekEnd || l.type === 'recovery') continue;
       const t = byId.get(l.templateId);
       const rpe = l.rpe ?? (t ? plannedEffort(t) : 4);
-      const load = l.durationMinutes * rpe;
-      week.items.push({ date: l.completedDate, name: t?.name ?? 'Training', sport: sportOfLog(l, t), minutes: l.durationMinutes, effort: rpe, load, planned: false, estimated: l.rpe === undefined });
+      // A linked test with warm-up and cool-down: the fastest 5 km at its RPE, the rest at 3 (testEffortSplit.ts).
+      const split = testEffortSplit(l, t);
+      const load = split ? split.hardMinutes * rpe + split.easyMinutes * Math.min(EASY_PART_RPE, rpe) : l.durationMinutes * rpe;
+      week.items.push({ date: l.completedDate, name: t?.name ?? 'Training', sport: sportOfLog(l, t), minutes: l.durationMinutes, effort: rpe, load, planned: false, estimated: l.rpe === undefined, ...(split ? { split } : {}) });
       week.done[sportOfLog(l, t)] += load;
       week.doneTotal += load;
       if (l.rpe === undefined) week.estimated += load;

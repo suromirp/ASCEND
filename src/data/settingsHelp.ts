@@ -874,6 +874,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Bestaande tests', text: 'een snelste 5 km die al meetelt blijft tellen tot jij Akkoord geeft op de nieuwe lezing. Die komt één keer, zonder stilstaan.' },
     ],
   },
+  benenNaTest: {
+    title: 'Benen vragen na een test',
+    lead: 'De ochtend na een test of wedstrijd vraagt de ochtendkaart open hoe je benen voelen, zonder voorstel uit de beenindex.',
+    points: [
+      { head: 'Waarom', text: 'de zwaarte van een test is bijna altijd 9 of 10 en zegt weinig over je herstel. De beenindex telt een vlakke test licht. Hoe je benen de ochtend erna voelen, zegt meer.' },
+      { head: 'Wat je ziet', text: 'één zin over je test of wedstrijd van gisteren, en de vier keuzes zonder dat er een is voorgekozen. Slaap en energie van je horloge staan er gewoon bij.' },
+      { head: 'Wanneer', text: 'alleen de ochtend direct na de test of wedstrijd, en alleen als de ochtendkaart er staat.' },
+      { head: 'Uit', text: 'dan is het een ochtend als alle andere, met het voorstel uit je beenindex.' },
+    ],
+  },
   korteNacht: {
     title: 'Vragen bij een korte nacht',
     lead: 'Zag je horloge maar een deel van de nacht, dan vraagt ASCEND of dat klopt in plaats van te denken dat je slecht sliep.',

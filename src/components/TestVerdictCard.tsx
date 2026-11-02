@@ -7,7 +7,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { MANY_STOPS_SENTENCE, manyStops, stopsSentence } from '../engine/bestEffort';
-import { effortOffer, judgmentOptions, offerReread, REREAD_SENTENCE, previewEffort, previewVerdict, testBasisLine, testState, testStopsRemark, upsertTestJudgment, type PaceChangeRow } from '../engine/testJudgment';
+import { effortOffer, judgmentOptions, offerReread, REREAD_SENTENCE, previewEffort, previewVerdict, testBasisLine, testEffortRemark, testState, testStopsRemark, upsertTestJudgment, type PaceChangeRow } from '../engine/testJudgment';
 import { formatRaceTime, TEST_DISTANCE_KM } from '../engine/racePrediction';
 import { acceptBestEffort } from '../storage/activityDetail';
 import type { TestVerdict } from '../models/testJudgment';
@@ -83,6 +83,7 @@ export function TestVerdictCard({ logId }: { logId: string }) {
       )}
       <p className="text-xs" style={dim}>{testBasisLine(state.result)}</p>
       {testStopsRemark(state.result) && <p className="text-xs" style={dim}>{testStopsRemark(state.result)}</p>}
+      {testEffortRemark(log) && <p className="text-xs" style={dim}>{testEffortRemark(log)}</p>}
       {state.result.basis === 'whole' && !!log?.externalId && !log.bestEffort && !log.bestEffortTried && (
         <p className="text-xs" style={dim}>Dit is de hele run. De beste {String(TEST_DISTANCE_KM).replace('.', ',')} km komt erbij zodra de reeks van je horloge binnen is.</p>
       )}

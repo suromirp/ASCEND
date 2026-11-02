@@ -5,6 +5,7 @@
 
 import type { SessionLog } from '../models/training';
 import { PLANNED_RPE } from './legFatigue';
+import { EASY_PART_RPE, type EffortSplit } from './testEffortSplit';
 
 export type FeltWord = 'rustig' | 'pittig' | 'zwaar' | 'heel-zwaar';
 
@@ -30,11 +31,14 @@ export interface SessionLoad {
 }
 
 // De belasting van een log. `intensity` is de bedoelde of gebruikelijke zwaarte, voor een log zonder RPE.
-export function sessionLoad(log: Pick<SessionLog, 'durationMinutes' | 'rpe' | 'rpeAssumed'>, intensity: 'low' | 'moderate' | 'high'): SessionLoad {
+// `split`: een gekoppelde test met inlopen en uitlopen (engine/testEffortSplit.ts): de minuten van de
+// snelste 5 km maal de RPE, de rest maal 3 (nooit zwaarder dan de RPE zelf). Zonder split alles maal de RPE.
+export function sessionLoad(log: Pick<SessionLog, 'durationMinutes' | 'rpe' | 'rpeAssumed'>, intensity: 'low' | 'moderate' | 'high', split?: EffortSplit): SessionLoad {
   const minutes = Math.max(0, log.durationMinutes || 0);
   const given = typeof log.rpe === 'number' && Number.isFinite(log.rpe) ? Math.min(10, Math.max(0, log.rpe)) : undefined;
   const assumed = given === undefined || log.rpeAssumed === true;
   const base = given ?? assumedRpe(intensity);
   const rpe = assumed ? Math.min(10, base + 1) : base;
+  if (split) return { load: Math.round(split.hardMinutes * rpe + split.easyMinutes * Math.min(EASY_PART_RPE, rpe)), rpe, assumed };
   return { load: Math.round(minutes * rpe), rpe, assumed };
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { descentOf, freshnessCurve, intensityMix, legCalendar, loadVersusBefore, plannedEffort, routeDayRows, weeklyDescent, weeklyLoad } from './standing';
+import { descentOf, loadItemText, SPLIT_NOTE, freshnessCurve, intensityMix, legCalendar, loadVersusBefore, plannedEffort, routeDayRows, weeklyDescent, weeklyLoad } from './standing';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { GoalRequirement } from '../models/goals';
@@ -25,6 +25,28 @@ describe('weekly load', () => {
     expect(weeks[0].done.lopen).toBe(120);
     expect(weeks[0].done.kracht).toBe(480);
     expect(weeks[0].estimated).toBe(0);
+  });
+
+  // docs/onderzoek/RPE bij een testloop.md, voorstel 4: a linked test (warm-up, 5 km, cool-down in one
+  // activity) with the fastest 5 km from the watch counts the 5 km at its RPE and the rest at 3.
+  it('a linked test with its fastest 5 km: 25 x 10 + 20 x 3 = 310, not 450; without it as before', () => {
+    const cardioData = { durationMinutes: 45, distanceKm: 8.2, source: 'garmin' as const };
+    const bestEffort = { km: 5, minutes: 25, wholeKm: 8.2, wholeMinutes: 45, accepted: true, v: 2 };
+    const split = weeklyLoad({ logs: [log('tpl_test_run', '2026-10-20', 45, { rpe: 10, cardioData, bestEffort })], plannedSessions: [], templates, today: TODAY }, 0, 0);
+    expect(split[0].done.lopen).toBe(310);
+    expect(split[0].items[0]).toMatchObject({ minutes: 45, effort: 10, load: 310, split: { hardMinutes: 25, easyMinutes: 20 } });
+    // The row says how it counted, so "minuten maal zwaarte" still adds up.
+    expect(loadItemText(split[0].items[0])).toBe('45 min · 25 op zwaarte\u00a010, 20 rustig');
+    const whole = weeklyLoad({ logs: [log('tpl_test_run', '2026-10-20', 45, { rpe: 10, cardioData })], plannedSessions: [], templates, today: TODAY }, 0, 0);
+    expect(whole[0].done.lopen).toBe(450);
+    expect(whole[0].items[0].split).toBeUndefined();
+    expect(loadItemText(whole[0].items[0])).toBe('45 min · zwaarte\u00a010');
+  });
+
+  it('the row text: an estimated effort gets ±, split minutes are whole and add up', () => {
+        expect(loadItemText({ minutes: 36, effort: 8, estimated: true, split: { hardMinutes: 26.7, easyMinutes: 9.3 } })).toBe('36 min · 27 op zwaarte\u00a0±8, 9 rustig');
+    expect(loadItemText({ minutes: 40, effort: 3, estimated: false })).toBe('40 min · zwaarte\u00a03');
+    expect(SPLIT_NOTE).toBe('Bij een test met inlopen telt de rest als rustig.');
   });
 
   it('estimates the effort from the plan when none was logged, and says so', () => {

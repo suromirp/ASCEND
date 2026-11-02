@@ -28,6 +28,10 @@ export interface OverviewSettings {
   // De ochtendkaart bovenaan Vandaag met de vraag "Hoe voel je je?" (engine/morningCard.ts).
   // Alleen zinvol als de ochtendcheck aan staat; uit laat de regel in "Je dag".
   morningCard?: boolean;
+  // De ochtend na een test of wedstrijd vraagt de ochtendkaart je benen open, zonder voorstel uit
+  // de beenindex en met één zin erbij (engine/morningCard.ts#maxEffortYesterday). Ontbreekt de
+  // sleutel, dan staat hij aan.
+  legsAfterEffort?: boolean;
   // Vanaf welk uur de ochtend begint: de ochtendkaart en de vraag in "Je dag"
   // verschijnen niet midden in de nacht (engine/morningCard.ts).
   morningCardFrom?: MorningFrom;
@@ -56,6 +60,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   weeklyQuestion: true,
   morningCheckIn: true,
   morningCard: true,
+  legsAfterEffort: true,
   morningCardFrom: '5',
   weatherLine: true,
   weatherSwap: true,
@@ -79,6 +84,7 @@ export function resolveOverviews(raw: OverviewSettings | undefined | null): Reso
     weeklyQuestion: flag('weeklyQuestion'),
     morningCheckIn: flag('morningCheckIn'),
     morningCard: flag('morningCard'),
+    legsAfterEffort: flag('legsAfterEffort'),
     morningCardFrom: MORNING_FROM.find((h) => h === r.morningCardFrom) ?? DEFAULT_OVERVIEWS.morningCardFrom,
     weatherLine: flag('weatherLine'),
     weatherSwap: flag('weatherSwap'),
@@ -101,6 +107,7 @@ export function reviewWeekToShow(today: string, isoWeekday: number, raw: Overvie
 
 export const showWeeklyQuestion = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weeklyQuestion;
 export const showMorningCardSetting = (raw: OverviewSettings | undefined) => resolveOverviews(raw).morningCheckIn && resolveOverviews(raw).morningCard;
+export const askLegsAfterEffort = (raw: OverviewSettings | undefined) => resolveOverviews(raw).legsAfterEffort;
 export const showMorningCheckIn = (raw: OverviewSettings | undefined) => resolveOverviews(raw).morningCheckIn;
 // Het uur vanaf wanneer de ochtend begint (de kaart en de vraag in "Je dag").
 export const morningFromHour = (raw: OverviewSettings | undefined) => Number(resolveOverviews(raw).morningCardFrom);
