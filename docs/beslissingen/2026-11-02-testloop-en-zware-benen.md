@@ -43,7 +43,14 @@ ook niet op andere dagen. Midden in de week is het gewoon twee zware beendagen b
   eigen dag van het weekpatroon staan.
 - Is de week te vol om één van de twee te verplaatsen, dan mag het voorstel een training van het systeem zelf
   laten ruilen (twee wijzigingen, nooit iets van jou).
-- Instellingen: het tweede testvoorstel hoort bij "Nieuwe test voorstellen bij stilstand", de knop van de melding
+- Het tweede voorstel raakt geen training waar al een ander open voorstel over gaat, en ook niet de beendag
+  waar de kaart Benen voor spreekt. Kracht schuift er nooit voor naar een vakantie-, tocht- of lichte dag. Net als
+  bij de gewone TEST-RETRY telt alleen een keuze waarvan de eindstand niets nieuws meldt over wat hij raakt
+  (`2026-10-28-voorstel-eindstand.md`).
+- De vraag "Toch hier?" met Annuleren en Toch hier komt alleen als twee zware beendagen de enige reden is. Is er
+  ook een andere reden (je rustdag, een test), dan staat de zin vooraan en blijven Liever niet en Toch verplaatsen.
+- Instellingen: het tweede testvoorstel hoort bij "Nieuwe test voorstellen bij stilstand"; staat die uit, dan
+  krijgt een overgeslagen herkansing geen voorstel meer. Verder hoort de knop van de melding
   bij "Voorstel bij een probleem in de week", de vraag bij slepen bij "Trainingen slepen in Week".
 
 ## Alternatieven
