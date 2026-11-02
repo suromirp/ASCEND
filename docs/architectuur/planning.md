@@ -42,7 +42,7 @@ the same pass (`engine/planPass.ts`): the race block, then the week check,
 which repairs only the system's own sessions and only when the week is
 demonstrably better, and announces it ("Planning bijgewerkt", with undo).
 A proposal's preview runs that same pass, so what it shows is what you get.
-The sync (`storage/database.ts#syncProgramHorizon`) runs whenever the
+The sync (`storage/databaseHorizon.ts#syncProgramHorizon`) runs whenever the
 stored plan changed (a fingerprint is part of its key), not once a day.
 Background jobs at boot run one after the other, never at once. Opening never
 waits for the sync: the app shows the stored data first and syncs in the
@@ -63,7 +63,7 @@ safety limits between heavy leg days stay. With a running goal as Top or Voortop
 the long run grows every two weeks toward the race (`Program.runBuild`), under the 110% cap on your own
 logs, and the first week after a race it is at most half the race.
 
-**First ask, then plan** (`storage/database.ts#seedIfEmpty`, `engine/firstPlan.ts`,
+**First ask, then plan** (`storage/databaseSeed.ts#seedIfEmpty`, `engine/firstPlan.ts`,
 `engine/weekShape.ts`, decision `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`):
 a new install plans nothing. The app starts with `seedIfEmpty({ withProgram: false })`: only
 the templates, no program, goal or planning; "Alles verwijderen" ends the same way. Vandaag
@@ -101,7 +101,7 @@ Akkoord, and undo puts the setting back. A session a period moved, let go of or
 placed carries `PlannedSession.leave` so removing the period can put it back.
 Logged and past sessions, what you locked yourself and a test or race are never
 moved by it; they come back as notes in the proposal. Backup schema 5 carries
-the periods; older files import as before (`storage/migrations.ts#migrateLeavePeriods`).
+the periods; older files import as before (`storage/migrationsPlanning.ts#migrateLeavePeriods`).
 
 **Tochten as goals of their own** (`LeavePeriod.trek`, `engine/trek.ts`, decision
 `docs/beslissingen/2026-10-22-tochten-als-doel.md`): a tocht is a trek period with
@@ -124,7 +124,7 @@ Monday; which phase/week-number it belongs to is computed from
 `Program.startDate` + `Phase.weekCount` (`utils/dates.ts`), never persisted
 as its own entity. The phases themselves are counted back from the main
 goal's date (`engine/programLayout.ts`, applied by
-`storage/database.ts#syncProgramHorizon`): a taper right before the goal,
+`storage/databaseHorizon.ts#syncProgramHorizon`): a taper right before the goal,
 nothing planned on or after it, and no empty weeks before it.
 
 The backpack of the rucksack walk, the mountain hike and the first hiking day
