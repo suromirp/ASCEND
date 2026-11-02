@@ -947,7 +947,8 @@ function ForgeWorkoutInner({
               <button type="button" onClick={onClose} aria-label={preview ? 'Sluiten' : 'Kleiner maken, de training loopt door'} className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="terug" size={22} />
               </button>
-              <h1 className="min-w-0 flex-1 truncate font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
+              {/* Op een smal scherm eerst kleiner (16 in plaats van 20), zodat de A of B blijft staan; pas daarna afkappen. */}
+              <h1 className="min-w-0 flex-1 truncate font-display text-base leading-tight min-[380px]:text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
               <button type="button" onClick={() => setWorkoutMenu(true)} aria-label="Menu van de training" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="meer" size={22} />
               </button>
