@@ -10,6 +10,11 @@ Back-up
 Laatste back-up
 [knop: Uitleg: Laatste back-up]
 Nog nooit
+[knop: Automatische back-up, Wekelijks]
+Automatische back-up
+[knop: Uitleg: Automatische back-up]
+Zondagavond, met een kaart op Vandaag
+Wekelijks
 [knop: Vaste map, Niet gekozen]
 Vaste map
 [knop: Uitleg: Vaste map]
@@ -43,11 +48,8 @@ Ochtendgetallen in back-up
 [knop: Uitleg: Ochtendgetallen in back-up]
 Ook je slaap en hartslag gaan mee
 App
-[knop: Adviezen opnieuw berekenen]
-Adviezen opnieuw berekenen
-[knop: Uitleg: Adviezen opnieuw berekenen]
 [knop: Geavanceerd]
-Oude voorstellen opruimen, Startniveau zelf invullen
+Oude voorstellen opruimen, Adviezen opnieuw berekenen, Startniveau zelf invullen
 [knop: Alles verwijderen]
 Alles verwijderen
 [knop: Uitleg: Alles verwijderen]

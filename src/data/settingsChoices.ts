@@ -699,6 +699,31 @@ export const CHOICES = {
       { value: 'none', label: 'Geen reeksen', note: 'Een kleine back-up, de kilometers gaan wel mee', short: 'Geen' },
     ],
   }),
+  autoBackup: def({
+    group: 'Gegevens en back-up',
+    title: 'Automatische back-up',
+    line: 'Wanneer ASCEND vanzelf een back-up maakt.',
+    advice: 'weekly' as 'off' | 'weekly' | 'daily',
+    help: 'autoBackup',
+    options: [
+      { value: 'weekly', label: 'Wekelijks', note: 'Zondagavond vanaf 18:00', short: 'Wekelijks' },
+      { value: 'daily', label: 'Dagelijks', note: 'Elke avond vanaf 18:00', short: 'Dagelijks' },
+      { value: 'off', label: 'Uit', note: 'Je maakt hem zelf, na 7 dagen herinnert Vandaag je eraan', short: 'Uit' },
+    ],
+  }),
+  autoBackupKeep: def({
+    group: 'Gegevens en back-up',
+    title: 'Bewaren',
+    line: 'Hoeveel back-ups ASCEND in de map laat staan.',
+    advice: 8 as 0 | 4 | 8 | 16,
+    help: 'autoBackup',
+    options: [
+      { value: 4, label: 'De laatste 4', short: '4' },
+      { value: 8, label: 'De laatste 8', note: 'Bij wekelijks ongeveer twee maanden', short: '8' },
+      { value: 16, label: 'De laatste 16', short: '16' },
+      { value: 0, label: 'Alles bewaren', note: 'ASCEND ruimt niets op', short: 'Alles' },
+    ],
+  }),
   voorstellenOpruimen: def({
     group: 'Gegevens en back-up',
     title: 'Oude voorstellen opruimen',

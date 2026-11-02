@@ -293,6 +293,8 @@ export interface SaveResult {
   // The browser was handed a download; whether it actually landed on disk
   // isn't knowable (a blocked download looks the same), so say so.
   viaDownload?: boolean;
+  // Written straight into the folder the user chose once (its name), for "Laatste back-up".
+  folder?: string;
 }
 
 export interface PickedBackupFile {
@@ -304,6 +306,7 @@ export interface BackupFileAdapter {
   saveBackup(data: Blob, suggestedName: string): Promise<SaveResult>;
   pickBackupFile(): Promise<PickedBackupFile | null>;
   supportsPreferredDirectory(): boolean;
-  choosePreferredDirectory?(): Promise<void>;
+  // True when a folder was chosen (false or nothing when the picker was closed).
+  choosePreferredDirectory?(): Promise<boolean | void>;
   hasPreferredDirectory?(): Promise<boolean>;
 }

@@ -10,7 +10,7 @@
 // over een training die niet doorging komen nooit boven de missie: die beantwoord je in een blad, en
 // de missie is waar Vandaag over gaat. Puur: geen React, geen opslag.
 
-export type TodayCardId = 'ill' | 'illnessSign' | 'morning' | 'ramp' | 'advice' | 'missed' | 'freshStart' | 'backup';
+export type TodayCardId = 'ill' | 'illnessSign' | 'morning' | 'ramp' | 'advice' | 'missed' | 'freshStart' | 'backup' | 'backupDue';
 export type TodayCardGroup = 'safety' | 'morning' | 'recovery' | 'today' | 'yesterday' | 'upkeep';
 
 export interface TodayCardSpec {
@@ -38,6 +38,9 @@ export const TODAY_CARD_RANK: readonly TodayCardSpec[] = [
   // Nieuw begonnen: je back-up terugzetten.
   { id: 'freshStart', group: 'upkeep', lead: true },
   { id: 'backup', group: 'upkeep', lead: true },
+  // Tijd voor je back-up: het moment van de automatische back-up (engine/autoBackup.ts). Een rustige
+  // kaart die nooit boven de missie komt (docs/beslissingen/2026-11-02-automatische-backup.md).
+  { id: 'backupDue', group: 'upkeep', lead: false },
 ];
 
 export type AboveMission = 1 | 2 | 'all';

@@ -81,7 +81,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
     advanced: [],
   },
-  gegevens: { rows: ['backup', 'backupmap', 'toestemmingen', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'herbouwen', 'aangepast', 'wissen'], advanced: ['auto-bijwerken', 'voorstellen-opruimen', 'startniveau'], footer: ['versie'] },
+  gegevens: { rows: ['backup', 'auto-backup', 'backupmap', 'toestemmingen', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'aangepast', 'wissen'], advanced: ['auto-bijwerken', 'voorstellen-opruimen', 'herbouwen', 'startniveau'], footer: ['versie'] },
   gidsen: { rows: ['weer-gids', 'kennisbank', 'plekken', 'bronnen'], advanced: [] },
 };
 
@@ -148,6 +148,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-meldingen', 'ochtendmelding', 'ochtendmelding-tijd', 'rust-melding', 'weekmelding', 'weekmelding-tijd'),
   // Gegevens en back-up
   ...inSheet('toestemmingen', 'opslag'),
+  ...inSheet('auto-backup', 'backup-bewaren'),
   // Koppelingen
   ...inSheet('bundel-horloge-gebruik', 'horloge-gebruik', 'garmin-trainingen', 'horloge-details', 'slaap', 'rusthartslag', 'hrv'),
   ...inSheet('bundel-horloge-sturen', 'naar-horloge', 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-rustige-loop', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
@@ -242,7 +243,7 @@ const B = {
   insight: { ok: (s) => resolveRunInsight(s.runInsight).enabled, reason: 'Zichtbaar zodra Inzicht na een training aan staat', parent: 'loopinzicht' },
   legEaseOffers: { ok: (s) => resolveLegEase(s) === 'voorstel', reason: 'Zichtbaar zodra Lichter bij vermoeide benen met een voorstel werkt', parent: 'lichterbenen' },
   skyAuto: { ok: (s) => resolveSky(s).sky === 'auto', reason: 'Zichtbaar zodra Lucht bovenaan op Automatisch staat', parent: 'lucht' },
-  folder: { ok: (_s, c) => c.folderSupported, reason: 'Zichtbaar zodra je browser een vaste map kan onthouden', parent: 'backup' },
+  folder: { ok: (_s, c) => c.folderSupported, reason: 'Zichtbaar zodra je browser een vaste map kan onthouden of ASCEND als Android-app draait', parent: 'backup' },
 } satisfies Record<string, Blocker>;
 
 const rule = (blockers: Blocker[], ...ids: string[]): [string, Blocker[]][] => ids.map((id) => [id, blockers]);
