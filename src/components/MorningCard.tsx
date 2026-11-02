@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import type { EnergyFeeling, LegFeeling, MorningCheckIn } from '../models/checkIn';
 import { checkInFor, recentPainSpot } from '../engine/wellbeing';
-import { LEGS, SOURCE_TEXT, morningCardView, morningConsequence } from '../engine/morningCard';
+import { LEGS, SOURCE_TEXT, isCompactAsk, morningCardView, morningConsequence } from '../engine/morningCard';
 import { resolveLegEase } from '../engine/legEaseSettings';
 import { NO_SLEEP_TEXT } from '../engine/wellnessCheck';
 import { MORNING_RULE_QUESTION, TIRED_CHOICES, ruleWord } from '../engine/morningRule';
@@ -83,6 +83,8 @@ export function MorningCard() {
   const [state, dispatch] = useReducer(cardReducer, { answered: false, folded: false });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  // Met een voorstel start de vraag compact (zie hieronder); Anders klapt de volle vraag open.
+  const [opened, setOpened] = useState(false);
   const [undoError, setUndoError] = useState(false);
   const [held, setHeld] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -133,6 +135,7 @@ export function MorningCard() {
     setUndoError(false);
     try {
       await withTimeout(updateSettings({ morningCheckIns: (settings.morningCheckIns ?? []).filter((c) => c.date !== today) }), SAVE_LIMIT_MS, 'Ongedaan maken');
+      setOpened(false);
       dispatch({ type: 'reset' });
     } catch {
       setUndoError(true);
@@ -249,9 +252,46 @@ export function MorningCard() {
     );
   }
 
+  // Compact: met een voorstel van je beenindex is de vraag één rij met Klopt en Anders, zodat de
+  // missiekaart op een klein scherm in beeld blijft. De ochtendregel, de vraag "Ben je moe?" en de
+  // andere keuzes staan achter Anders. Zonder voorstel staat de volle vraag er meteen.
+  const compact = !!suggested && !!suggestedText && isCompactAsk({ hasSuggestion: true, shortNight: !!reading?.night, missingSleep, opened });
+  const anyOff = stats.some((st) => st.from === 'horloge' && ruleWord(rule, st.key)?.off);
+  if (compact) {
+    return (
+      <>
+        <Card className="flex flex-col gap-1.5 py-3">
+          <div ref={bodyRef} className="flex flex-col gap-1.5">
+            <Header heading={heading} title="Hoe voelen je benen?" iconOnly note={anyOff && suggestedText ? `Beenindex: ${suggestedText.toLowerCase()}` : undefined} />
+            {stats.length > 0 && (
+              <div className="grid divide-x" style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`, borderColor: 'var(--color-card-border)' }}>
+                {stats.map((st, i) => (
+                  <div key={st.label} className={`min-w-0 ${i > 0 ? 'pl-4' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
+                    <Stat label={st.label} value={st.value} unit={st.unit} />
+                    {st.from === 'horloge' && <StatWord word={ruleWord(rule, st.key)} />}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <SecondaryButton className="flex min-w-0 flex-1 items-center justify-center gap-2" disabled={saving} onClick={() => void answer(suggested.value)}>
+                <Icon name="vinkje" size={18} />
+                Klopt: {suggestedText.toLowerCase()}
+              </SecondaryButton>
+              <MorningChoice disabled={saving} onClick={() => { rememberHeight(); setOpened(true); }}>{rule?.askTired ? 'Moe of anders' : 'Anders'}</MorningChoice>
+            </div>
+            {spot && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Eerst nog één vraag over je {spot.area.toLowerCase()}.</p>}
+            {saveError && <p className="text-xs leading-snug" role="alert" style={{ color: 'var(--color-warning)' }}>{SAVE_FAILED}</p>}
+          </div>
+        </Card>
+        {sheetEl}
+      </>
+    );
+  }
+
   return (
     <>
-      <Card className="flex flex-col gap-3">
+      <HeightMorph key="vol" from={opened ? bodyHeight : 0}><Card className="flex flex-col gap-3">
         <div ref={bodyRef} className="flex flex-col gap-3">
           <Header heading={heading} />
           <p className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>Hoe voelen je benen?</p>
@@ -311,7 +351,7 @@ export function MorningCard() {
         <TextButton tone="dim" size="xs" className="-my-2 self-start" onClick={() => setSheet({})}>
           Energie, slaap of pijn invullen
         </TextButton>
-      </Card>
+      </Card></HeightMorph>
       {sheetEl}
     </>
   );
@@ -337,17 +377,17 @@ function StatWord({ word }: { word: { word: string; off: boolean } | undefined }
   );
 }
 
-function Header({ heading }: { heading: string | undefined }) {
+function Header({ heading, title = 'Goedemorgen', iconOnly = false, note }: { heading: string | undefined; title?: string; iconOnly?: boolean; note?: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2" style={{ color: 'var(--color-page)' }}>
+      <div className="flex items-center gap-2 whitespace-nowrap" style={{ color: 'var(--color-page)' }}>
         <Icon name="vandaag" size={20} />
-        <Eyebrow>Goedemorgen</Eyebrow>
+        <Eyebrow>{title}</Eyebrow>
       </div>
       {heading && (
-        <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+        <span className="inline-flex min-w-0 items-center gap-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           <Icon name="horloge" size={14} />
-          {heading}
+          {iconOnly ? <span className={note ? 'min-w-0 truncate' : 'sr-only'}>{note ?? heading}</span> : heading}
         </span>
       )}
     </div>

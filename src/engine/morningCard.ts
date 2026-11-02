@@ -253,3 +253,10 @@ export function morningConsequence(entry: MorningCheckIn, ctx: { inputs: AdviceI
     return make('blijft', undefined);
   }
 }
+
+// De compacte vraag (één rij met Klopt en Anders) staat er alleen bij een voorstel, zolang er niets bij
+// moet dat je zonder tik moet zien: de vraag over een korte nacht en de melding dat de slaap ontbreekt
+// (met Opnieuw ophalen). Dan staat de volle vraag er meteen.
+export function isCompactAsk(o: { hasSuggestion: boolean; shortNight: boolean; missingSleep: boolean; opened: boolean }): boolean {
+  return o.hasSuggestion && !o.shortNight && !o.missingSleep && !o.opened;
+}
