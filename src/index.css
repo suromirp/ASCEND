@@ -694,6 +694,19 @@ html[data-motion='off'] .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mounta
   padding-bottom: var(--rand-onder);
 }
 
+/* Een blad waarvan het paneel zelf doorzichtig is en de kaart erin de kleur draagt: de onderrand
+   komt dan als doorzichtige rand onder de kaart, zodat de kleur van het blad doorloopt tot de
+   schermrand (de achtergrond van een kaart reikt tot onder de rand). */
+.animate-sheet-in:has(> .ui-card:last-child),
+.animate-sheet-out:has(> .ui-card:last-child) {
+  padding-bottom: 0;
+}
+
+.animate-sheet-in > .ui-card:last-child,
+.animate-sheet-out > .ui-card:last-child {
+  border-bottom: var(--rand-onder) solid transparent !important;
+}
+
 /* Tactile press feedback on every button in the app — a slight scale-down
    on tap so buttons feel responsive instead of just snapping straight to
    their active/opacity state. Scoped off the switch role: a toggle already
