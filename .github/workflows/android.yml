@@ -7,7 +7,7 @@ name: Android-app
 # Drie jobs, elk met zo weinig rechten als het kan:
 # 1. bouwen: alleen lezen; bouwt een niet ondertekende release-APK en een debug-APK (die als
 #    "ASCEND proef" naast de echte app staat). De sleutel komt hier nooit.
-# 2. ondertekenen: alleen vanaf main, in de environment android-release waar de sleutel staat;
+# 2. ondertekenen: alleen vanaf main, in de environment android-release1 waar de sleutel staat;
 #    zipalign en apksigner uit de Android SDK van de runner, de geheimen alleen in die ene stap.
 # 3. release: alleen vanaf main, de enige job die mag schrijven; haalt het ondertekende artefact
 #    op en zet het als release, zonder iets uit de repo of node_modules te draaien.
@@ -102,7 +102,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: android-release
+    environment: android-release1
     permissions:
       contents: read
     outputs:
@@ -123,7 +123,7 @@ jobs:
           KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE" ] || [ -z "$KS_PASS" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASS" ]; then
-            echo "::warning title=Geen release::De vier secrets voor de sleutel ontbreken in de environment android-release (zie docs/android-sleutel.md). Er is alleen een proef-APK gebouwd en geen release gezet."
+            echo "::warning title=Geen release::De vier secrets voor de sleutel ontbreken in de environment android-release1 (zie docs/android-sleutel.md). Er is alleen een proef-APK gebouwd en geen release gezet."
             echo "signed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi

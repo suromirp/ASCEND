@@ -136,3 +136,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Opsplitsen A (opslag en adviceEngine), Sherpa, opus, review loopt
 - 2026-11-02, Review opsplitsen A, Warden, opus, 63k, 6 min, groen; live
 - 2026-11-02, Herkeuring ruilen, Warden, opus, 126k, 4 min, groen; kleine punten zelf gedaan; live
+- 2026-11-02, Opsplitsen B (AppDataContext en Forge), Sherpa, opus, 250k, 46 min, review loopt
+- 2026-11-02, Review opsplitsen B, Warden, opus, 112k, 5 min, groen; wacht op de Android-bouw voor main
