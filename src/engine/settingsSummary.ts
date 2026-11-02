@@ -14,6 +14,7 @@ import { kgLabel } from '../utils/kg';
 import { resolveTestStops } from './bestEffort';
 import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
+import type { HealthConnectErrorKind } from '../models/healthConnect';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
@@ -173,6 +174,16 @@ export interface SettingsFacts {
   // Het lezen van de koppelstatus mislukte: dan zeggen we dat, in plaats van "Koppelen" alsof je
   // nooit gekoppeld was.
   watchUnreadable?: boolean;
+  // Health Connect op dit toestel; weglaten zolang dat nog niet gelezen is.
+  healthConnect?: HealthConnectFacts;
+}
+
+export interface HealthConnectFacts {
+  // Draait ASCEND als Android-app? Alleen daar bestaat Health Connect.
+  inApp: boolean;
+  enabled: boolean;
+  fetchedAt?: string;
+  errorKind?: HealthConnectErrorKind;
 }
 
 const deviceOf = (f: SettingsFacts): DevicePermissions | undefined => (f.device && f.device !== 'unknown' ? f.device : undefined);
@@ -225,6 +236,28 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 function listNL(items: string[]): string {
   if (items.length <= 1) return items.join('');
   return `${items.slice(0, -1).join(', ')} en ${items[items.length - 1]}`;
+}
+
+// Health Connect (docs/beslissingen/2026-11-02-health-connect.md): in de browser gedimd met
+// uitleg en zonder schakelaar; in de app een schakelaar, met daaronder wat de laatste ronde zei.
+const HEALTH_ERROR_LINE: Record<HealthConnectErrorKind, string> = {
+  web: 'Alleen in de Android-app',
+  'not-installed': 'Health Connect staat niet op je telefoon',
+  'needs-update': 'Health Connect moet worden bijgewerkt',
+  denied: 'Geen toestemming meer',
+  timeout: 'Geen antwoord, straks opnieuw',
+  failed: 'Ophalen lukte niet, straks opnieuw',
+};
+
+function healthConnectRow(f: SettingsFacts): RowSummary {
+  const h = f.healthConnect;
+  if (!h) return { value: 'Even kijken', dim: true };
+  if (!h.inApp) return { value: 'Alleen in de app', dim: true, sub: 'Werkt in de Android-app van ASCEND' };
+  if (!h.enabled) return { checked: false, sub: 'Trainingen, slaap, rusthartslag en HRV' };
+  if (h.errorKind) return { checked: true, sub: HEALTH_ERROR_LINE[h.errorKind] };
+  if (!h.fetchedAt) return { checked: true, sub: 'Nog niets opgehaald' };
+  const day = localDateOf(h.fetchedAt);
+  return { checked: true, sub: day === f.today ? `Opgehaald om ${clock(h.fetchedAt)}` : `Opgehaald op ${formatDayMonthNL(day)}` };
 }
 
 // "14:02", in de tijd van het toestel.
@@ -285,6 +318,7 @@ export function rowContext(f: SettingsFacts): RowContext {
   const support = f.notice?.support ?? 'ready';
   return {
     garmin: f.watch?.linked === true,
+    healthConnect: f.healthConnect?.enabled === true,
     activities: f.watch?.use.activities !== false,
     sendToWatch: f.watch?.sendEnabled === true,
     macroFactorExport: !!f.macroFactor?.readAt,
@@ -371,7 +405,12 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     }
     case 'bundel-horloge-gebruik': {
       const use = f.watch?.use;
-      return { value: `${countOn([use?.activities !== false, use?.details !== false && use?.activities !== false, use?.sleep !== false, use?.restingHeartRate !== false, use?.hrv !== false])} van 5 aan` };
+      // Met Health Connect aan komt niet alles van het horloge: dan heet de rij "Gebruik van je gegevens".
+      // Zonder Garmin zijn er geen details van loopjes, dus vier keuzes.
+      const title = f.healthConnect?.enabled ? { title: 'Gebruik van je gegevens' } : {};
+      const flags = [use?.activities !== false, use?.sleep !== false, use?.restingHeartRate !== false, use?.hrv !== false];
+      if (f.watch?.linked !== true) return { ...title, value: `${countOn(flags)} van 4 aan` };
+      return { ...title, value: `${countOn([...flags, use?.details !== false && use?.activities !== false])} van 5 aan` };
     }
     case 'bundel-horloge-sturen':
       return f.watch?.sendEnabled ? { value: 'Aan' } : { value: 'Uit', dim: true };
@@ -844,7 +883,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'strava-tekst':
       return { checked: s.stravaText !== false };
     case 'health-connect':
-      return { value: 'Komt later', dim: true };
+      return healthConnectRow(f);
 
     // Gegevens en back-up
     case 'backup': {

@@ -1,5 +1,7 @@
 ext {
-    minSdkVersion = 24
+    // 26 (Android 8) in plaats van 24: de Health Connect-bibliotheek van de plugin
+    // @capgo/capacitor-health vraagt minstens 26 (docs/beslissingen/2026-11-02-health-connect.md).
+    minSdkVersion = 26
     compileSdkVersion = 36
     targetSdkVersion = 36
     androidxActivityVersion = '1.11.0'

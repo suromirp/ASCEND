@@ -84,6 +84,7 @@ import { useFollowLocation } from './useFollowLocation';
 import { widgetSummary } from '../engine/widgetSummary';
 import { writeWidgetSummary } from '../integrations/widgetBridge';
 import { syncWatchActivities } from '../storage/externalActivities';
+import { syncHealthConnect } from '../storage/healthConnect';
 import { ensureRecentTestEfforts } from '../storage/activityDetail';
 import { resetAllDataAndAgenda, syncWatchWorkouts, syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
 import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
@@ -1344,7 +1345,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const readRecentTestEfforts = async () => {
           if (await ensureRecentTestEfforts()) await refresh();
         };
-        for (const [name, step] of [['planning sync', () => refresh()], ['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['best 5 km of recent tests', readRecentTestEfforts], ['watch workouts', syncWatchWorkouts]] as const) {
+        for (const [name, step] of [['planning sync', () => refresh()], ['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['health connect', () => syncHealthConnect()], ['best 5 km of recent tests', readRecentTestEfforts], ['watch workouts', syncWatchWorkouts]] as const) {
           try {
             await step();
           } catch (err) {

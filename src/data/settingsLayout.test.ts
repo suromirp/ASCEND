@@ -69,10 +69,11 @@ describe('de indeling in acht groepen', () => {
 
   it('wat geen instelling is staat niet meer als rij, en blijft als verwijzing vindbaar', () => {
     const rows = SETTINGS_PAGES.flatMap((p) => allRowIds(p.id));
-    for (const gone of ['forge-open', 'reisplanner', 'paklijst', 'health-connect', 'horloge-status-week']) expect(rows, gone).not.toContain(gone);
+    for (const gone of ['forge-open', 'reisplanner', 'paklijst', 'horloge-status-week']) expect(rows, gone).not.toContain(gone);
     expect(placementOf('reisplanner')).toEqual({ page: 'doel', row: 'reisplanner', link: true });
     expect(placementOf('paklijst')).toEqual({ page: 'doel', row: 'paklijst', link: true });
-    expect(placementOf('health-connect')).toEqual({ page: 'koppelingen', row: 'health-connect', link: true });
+    // Health Connect is weer een echte rij, met een schakelaar (docs/beslissingen/2026-11-02-health-connect.md).
+    expect(placementOf('health-connect')).toEqual({ page: 'koppelingen', row: 'health-connect' });
     expect(PAGE_ROWS.gegevens.footer).toEqual(['versie']);
     expect(placementOf('versie')).toEqual({ page: 'gegevens', row: 'versie' });
   });

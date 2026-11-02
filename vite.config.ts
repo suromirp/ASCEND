@@ -124,7 +124,7 @@ export default defineConfig({
         // De tekeningen bij oefeningen (public/exercise-art, ruim 5 MB) staan bewust niet in de precache:
         // ze worden geladen als je een oefening opent en op de achtergrond vooraf voor je eigen
         // trainingen, en bewaard in een eigen cache (docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen.md).
-        globIgnores: ['share-target-sw.js', 'morning-notice-sw.js', 'exercise-art/**'],
+        globIgnores: ['share-target-sw.js', 'morning-notice-sw.js', 'exercise-art/**', 'privacypolicy.html'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.includes('/exercise-art/') && url.pathname.endsWith('.json'),

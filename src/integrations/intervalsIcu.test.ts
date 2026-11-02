@@ -112,6 +112,8 @@ describe('mapping to the general shape', () => {
       kind: 'run',
       name: 'Ochtendloop',
       durationSec: 3320,
+      // De totale tijd met pauzes, alleen om dezelfde training uit Health Connect te herkennen.
+      elapsedSec: 3400,
       distanceM: 6912.4,
       elevationGainM: 40.2,
       elevationLossM: 38.7,

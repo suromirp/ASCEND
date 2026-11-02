@@ -30,7 +30,7 @@ describe('het native niveau van de Android-app', () => {
 
   it('de plugins in package.json zijn die van de vaste lijst', () => {
     const all = { ...pkg.dependencies, ...pkg.devDependencies };
-    const native = Object.fromEntries(Object.entries(all).filter(([name]) => /^@capacitor(-community)?\/|^@capawesome\//.test(name)).sort(([a], [b]) => a.localeCompare(b)));
+    const native = Object.fromEntries(Object.entries(all).filter(([name]) => /^@capacitor(-community)?\/|^@capawesome\/|^@capgo\//.test(name)).sort(([a], [b]) => a.localeCompare(b)));
     expect(native, 'een plugin veranderd: hoog android/native-level.txt op en werk android/native-plugins.json bij').toEqual(fixed.packages);
   });
 });

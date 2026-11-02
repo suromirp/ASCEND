@@ -41,6 +41,10 @@ export interface ExternalActivity {
   kind: ExternalActivityKind;
   name?: string;
   durationSec: number;
+  // De totale tijd van start tot eind, met pauzes, als de bron die apart geeft (intervals.icu:
+  // durationSec is daar de tijd in beweging). Alleen om dezelfde training uit twee bronnen te
+  // herkennen (engine/sourcePrecedence.ts); het zit in de cache van de laatste ronde, niet in een log.
+  elapsedSec?: number;
   distanceM?: number;
   elevationGainM?: number;
   elevationLossM?: number;
