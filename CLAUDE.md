@@ -149,7 +149,7 @@ Never hardcode hex or rgba values in a component.
   `--color-sport-run` `--color-sport-strength` `--color-sport-walk`
   `--color-sport-stretch` `--color-sport-mountain` (bergtocht, bergzon-geel; on
   the sky an olive ochre; also the `--color-chart-*` order). A bergtocht is told
-  apart from a walk by `isMountainTrip` in `components/sportKind.ts`
+  apart from a walk by `isMountainTrip` in `engine/sportKind.ts`
 - The light sky: `--color-sky-top` `--color-sky-bottom` `--color-light-card`
   `--color-light-border` `--color-on-light` `--color-on-light-dim`
   `--color-action-on-light` `--color-status-on-light`; the mountains

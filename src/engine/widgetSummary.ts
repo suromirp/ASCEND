@@ -11,7 +11,7 @@ import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isHeavySession } from './illness';
 import type { LeavePeriod } from '../models/leave';
 import { leaveLabelOn } from './leave';
-import { sportKind } from '../components/sportKind';
+import { sportKind, type SportKind } from './sportKind';
 import { addDays } from '../utils/dates';
 
 export interface WidgetSummary {
@@ -28,7 +28,7 @@ export interface WidgetSummary {
   tomorrowRest?: boolean;
 }
 
-export type WidgetKind = 'run' | 'strength' | 'walk' | 'mountain' | 'bike' | 'rest';
+export type WidgetKind = SportKind;
 
 export interface WidgetInput {
   today: string;
