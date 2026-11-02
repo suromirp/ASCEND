@@ -13,6 +13,7 @@
 
 import {
   AutoBackupError,
+  autoBackupFileName,
   backupWhereText,
   filesToPrune,
   isAutoBackupDue,
@@ -27,7 +28,8 @@ import {
 } from '../engine/autoBackup';
 import { appBackupFolder, type AutoBackupTarget } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
-import { backupFileName, buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backup';
+import { toISODate } from '../utils/dates';
 import { webBackupFileAdapter, webFolderTarget } from './backupFileAdapter';
 import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo } from './database';
 import { tidyOldProposals } from './proposalTidy';
@@ -48,6 +50,9 @@ export interface AutoBackupState {
   // De bestanden die de automatische back-up schreef, en in welke map (het label van `where`).
   files: string[];
   filesIn?: string;
+  // De installatie die de lijst maakte (AutoBackupTarget.installId). De lijst reist in de app mee in
+  // de back-up van Android; op een nieuwe telefoon is hij dus niet van deze installatie.
+  filesBy?: string;
 }
 
 const isWhere = (v: unknown): v is BackupWhere => {
@@ -67,6 +72,7 @@ export function cleanAutoBackupState(raw: unknown): AutoBackupState {
     ...(failure && typeof failure.at === 'string' && isFailureReason(failure.reason) ? { failure: { at: failure.at, reason: failure.reason } } : {}),
     files: Array.isArray(r.files) ? r.files.filter((f): f is string => typeof f === 'string' && isAutoBackupName(f)) : [],
     ...(typeof r.filesIn === 'string' ? { filesIn: r.filesIn } : {}),
+    ...(typeof r.filesBy === 'string' ? { filesBy: r.filesBy } : {}),
   };
 }
 
@@ -130,6 +136,7 @@ export async function forgetAutoBackupFolder(): Promise<void> {
   const next: AutoBackupState = { ...state, files: [] };
   delete next.failure;
   delete next.filesIn;
+  delete next.filesBy;
   await writeState(next);
   setStatus({ failure: undefined });
 }
@@ -152,35 +159,64 @@ export async function clearAutoBackupFailure(): Promise<void> {
 
 // ---- vanzelf ----------------------------------------------------------------------------
 
+// De hele poging (toegang, bouwen, schrijven, nakijken, opruimen) duurt nooit langer dan dit, zodat
+// een volgende poging altijd weer kan.
+export const AUTO_BACKUP_ATTEMPT_MS = 120_000;
+
 export interface RunOptions {
   now?: Date;
   target?: AutoBackupTarget;
   // Na een gelukte back-up: lastExportedAt bijwerken via de app-staat (anders rechtstreeks).
   onSaved?: (at: string) => unknown;
+  // Tijdsgrens voor schrijven en nakijken, en voor de hele poging.
   timeoutMs?: number;
+  attemptMs?: number;
 }
 
 let running: Promise<AutoBackupOutcome> | undefined;
 
 // Kijkt of er een back-up nodig is en maakt hem als dat stil kan. Twee aanroepen tegelijk delen
-// dezelfde poging.
+// dezelfde poging; na de tijdsgrens is hij altijd voorbij.
 export function runAutoBackupIfDue(options: RunOptions = {}): Promise<AutoBackupOutcome> {
-  running ??= attempt(options).finally(() => {
+  running ??= guarded(options).finally(() => {
     running = undefined;
   });
   return running;
 }
 
-async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved, timeoutMs = AUTO_BACKUP_WRITE_MS }: RunOptions): Promise<AutoBackupOutcome> {
+interface Abort {
+  aborted: boolean;
+}
+
+async function guarded(options: RunOptions): Promise<AutoBackupOutcome> {
+  const abort: Abort = { aborted: false };
+  try {
+    return await withTimeout(attempt(options, abort), options.attemptMs ?? AUTO_BACKUP_ATTEMPT_MS);
+  } catch (err) {
+    abort.aborted = true;
+    const failure: AutoBackupFailure = { at: (options.now ?? new Date()).toISOString(), reason: err instanceof TimeoutError ? 'timeout' : 'write' };
+    try {
+      const state = await withTimeout(readAutoBackupState(), 5_000);
+      await withTimeout(writeState({ ...state, failure }), 5_000);
+    } catch {
+      // De regel komt hieronder toch op het scherm.
+    }
+    setStatus({ checked: true, outcome: 'failed', failure, platform: (options.target ?? autoBackupTarget()).platform });
+    return 'failed';
+  }
+}
+
+async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved, timeoutMs = AUTO_BACKUP_WRITE_MS }: RunOptions, abort: Abort): Promise<AutoBackupOutcome> {
   const done = (outcome: AutoBackupOutcome, failure?: AutoBackupFailure) => {
-    setStatus({ checked: true, outcome, failure, platform: target.platform });
+    if (!abort.aborted) setStatus({ checked: true, outcome, failure, platform: target.platform });
     return outcome;
   };
   const settings = await SettingsRepo.get();
   const frequency = resolveAutoBackup(settings.autoBackup);
   const state = await readAutoBackupState();
   if (frequency === 'off') return done('off', state.failure);
-  const due = (hasData: boolean) => isAutoBackupDue({ frequency, now, lastBackupAt: settings.lastExportedAt, dismissedAt: settings.lastExportReminderDismissedAt, hasData });
+  // "Niet nu" op de kaart geldt alleen voor de kaart (Today.tsx); de stille poging gaat gewoon door.
+  const due = (hasData: boolean) => isAutoBackupDue({ frequency, now, lastBackupAt: settings.lastExportedAt, hasData });
   if (!due(true)) return done('not-due', state.failure);
   const hasData = (await SessionLogsRepo.getAll()).length > 0 || (await PlannedSessionsRepo.getAll()).length > 0;
   if (!due(hasData)) return done('not-due', state.failure);
@@ -189,7 +225,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
 
   const fail = async (reason: AutoBackupFailureReason) => {
     const failure = { at: now.toISOString(), reason };
-    await writeState({ ...state, failure });
+    if (!abort.aborted) await writeState({ ...state, failure });
     return done('failed', failure);
   };
 
@@ -197,31 +233,57 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
   if (access === 'needs-tap') return done('needs-tap', state.failure);
   if (access === 'denied') return fail('permission');
 
+  let name: string | undefined;
+  let where: BackupWhere;
+  let own: string[];
+  let by: string | undefined;
   try {
     // Zoals Back-up maken: eerst oude voorstellen samenvatten; lukt dat niet, dan gewoon door.
     await tidyOldProposals().catch(() => 0);
     const envelope = await buildBackupEnvelope();
-    const name = backupFileName(envelope.createdAt);
-    const where = await target.where();
-    await withTimeout(target.write(name, JSON.stringify(envelope, null, 2)), timeoutMs);
-
-    // Opruimen: alleen eigen bestanden uit deze map.
-    const label = backupWhereText(where);
-    let files = rememberFile(state.filesIn === undefined || state.filesIn === label ? state.files : [], name);
-    for (const old of filesToPrune(files, resolveAutoBackupKeep(settings.autoBackupKeep))) {
-      await target.remove(old).catch(() => undefined);
-      files = files.filter((f) => f !== old);
+    where = await target.where();
+    by = await target.installId().catch(() => undefined);
+    // Eigen bestanden: alleen de lijst van deze installatie en van deze map.
+    own = by !== undefined && state.filesBy === by && state.filesIn === backupWhereText(where) ? state.files : [];
+    // Een vrije naam, of een eigen naam van vandaag: een vreemd bestand wordt nooit overschreven.
+    const day = toISODate(now);
+    for (let n = 1; n <= 99 && !name; n++) {
+      const candidate = autoBackupFileName(day, n);
+      if (own.includes(candidate) || !(await target.exists(candidate))) name = candidate;
     }
-
-    const at = now.toISOString();
-    const next: AutoBackupState = { lastAt: at, where, files, ...(label ? { filesIn: label } : {}) };
-    await writeState(next);
-    if (onSaved) await onSaved(at);
-    else await SettingsRepo.set({ lastExportedAt: at });
-    return done('saved');
+    if (!name) throw new AutoBackupError('write');
+    const text = JSON.stringify(envelope, null, 2);
+    await withTimeout(target.write(name, text), timeoutMs);
+    // Eerst nakijken of het bestand er heel staat; pas daarna opruimen.
+    const ok = await withTimeout(target.verify(name, new TextEncoder().encode(text).length), timeoutMs).catch(() => false);
+    if (!ok) throw new AutoBackupError('write');
   } catch (err) {
     if (err instanceof AutoBackupError) return fail(err.reason);
     if (err instanceof TimeoutError) return fail('timeout');
     return fail('write');
   }
+  if (abort.aborted) return 'failed';
+
+  // Het bestand staat er. Wat hierna misgaat (opruimen, bijhouden) maakt de back-up niet mislukt.
+  const at = now.toISOString();
+  const label = backupWhereText(where);
+  let files = rememberFile(own, name);
+  if (by !== undefined) {
+    for (const old of filesToPrune(files, resolveAutoBackupKeep(settings.autoBackupKeep))) {
+      await target.remove(old).catch(() => undefined);
+      files = files.filter((f) => f !== old);
+    }
+  }
+  try {
+    await writeState({ lastAt: at, where, files, ...(label ? { filesIn: label } : {}), ...(by !== undefined ? { filesBy: by } : {}) });
+  } catch (err) {
+    console.warn('Automatische back-up gemaakt, maar niet bijgehouden', err);
+  }
+  try {
+    if (onSaved) await onSaved(at);
+    else await SettingsRepo.set({ lastExportedAt: at });
+  } catch (err) {
+    console.warn('Automatische back-up gemaakt, maar Laatste back-up niet bijgewerkt', err);
+  }
+  return done('saved');
 }

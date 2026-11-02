@@ -15,6 +15,7 @@ import { AutoBackupError } from '../engine/autoBackup';
 import type { AutoBackupTarget } from '../integrations/backupFolder';
 
 const DIRECTORY_HANDLE_KEY = 'backupDirectoryHandle';
+const INSTALL_ID_KEY = 'autoBackupInstallId';
 
 // Minimal local shape for the parts of the File System Access API this file
 // actually uses — kept separate from any global lib.dom.d.ts declarations
@@ -208,8 +209,35 @@ export const webFolderTarget: AutoBackupTarget = {
       throw new AutoBackupError(domReason(err));
     }
   },
+  async exists(name) {
+    const handle = await getStoredDirectoryHandle().catch(() => undefined);
+    if (!handle) return false;
+    try {
+      await handle.getFileHandle(name);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  async verify(name, bytes) {
+    const handle = await getStoredDirectoryHandle().catch(() => undefined);
+    if (!handle) return false;
+    try {
+      return (await (await handle.getFileHandle(name)).getFile()).size === bytes;
+    } catch {
+      return false;
+    }
+  },
   async remove(name) {
     const handle = await getStoredDirectoryHandle();
     await handle?.removeEntry?.(name);
+  },
+  // In de browser reist de opslag niet mee met een back-up van Android; een id per opslag is genoeg.
+  async installId() {
+    const known = await MetaRepo.get<string>(INSTALL_ID_KEY).catch(() => undefined);
+    if (typeof known === 'string' && known) return known;
+    const id = crypto.randomUUID();
+    await MetaRepo.set(INSTALL_ID_KEY, id);
+    return id;
   },
 };

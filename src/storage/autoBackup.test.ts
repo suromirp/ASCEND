@@ -13,26 +13,47 @@ const session: PlannedSession = { id: 'ps_a', templateId: 'tpl_easy_run', schedu
 const MONDAY = new Date(2026, 10, 2, 8, 0);
 const name = (day: string) => `ascend-${day}.ascend-backup.json`;
 
-// Een map in het geheugen, met de bestanden die er al stonden.
-function fakeTarget(opts: { access?: FolderAccess; fail?: AutoBackupFailureReason | 'hang' | 'boom'; files?: string[]; label?: string } = {}) {
-  const files = new Map<string, string>((opts.files ?? []).map((f) => [f, '{}']));
+const INSTALL = 'installatie-a';
+
+// Een map in het geheugen, met de bestanden die er al stonden. `foreign` zijn bestanden die niet van
+// de automatische back-up zijn: die weigert de map te overschrijven, zodat een test faalt als het toch
+// gebeurt.
+function fakeTarget(opts: {
+  access?: FolderAccess;
+  fail?: AutoBackupFailureReason | 'hang' | 'boom';
+  files?: string[];
+  foreign?: string[];
+  label?: string;
+  install?: string;
+  corrupt?: boolean;
+  hangAccess?: boolean;
+} = {}) {
+  const files = new Map<string, string>([...(opts.files ?? []), ...(opts.foreign ?? [])].map((f) => [f, '{}']));
+  const foreign = new Set(opts.foreign ?? []);
   const removed: string[] = [];
+  const overwritten: string[] = [];
   const target: AutoBackupTarget = {
     platform: 'app',
-    access: async () => opts.access ?? 'ready',
+    access: async () => (opts.hangAccess ? new Promise<FolderAccess>(() => undefined) : opts.access ?? 'ready'),
     where: async () => ({ kind: 'folder', label: opts.label ?? 'Documenten/ASCEND' }),
+    exists: async (n) => files.has(n),
     write: async (n, text) => {
       if (opts.fail === 'hang') return new Promise<void>(() => undefined);
       if (opts.fail === 'boom') throw new Error('kapot');
       if (opts.fail) throw new AutoBackupError(opts.fail);
-      files.set(n, text);
+      if (foreign.has(n)) throw new Error(`vreemd bestand overschreven: ${n}`);
+      if (files.has(n)) overwritten.push(n);
+      files.set(n, opts.corrupt ? text.slice(0, 10) : text);
     },
+    verify: async (n, bytes) => new TextEncoder().encode(files.get(n) ?? '').length === bytes,
     remove: async (n) => {
+      if (foreign.has(n)) throw new Error(`vreemd bestand weggehaald: ${n}`);
       removed.push(n);
       files.delete(n);
     },
+    installId: async () => opts.install ?? INSTALL,
   };
-  return { target, files, removed };
+  return { target, files, removed, overwritten };
 }
 
 describe('de automatische back-up', () => {
@@ -109,8 +130,8 @@ describe('de automatische back-up', () => {
     const own = ['2026-09-06', '2026-09-13', '2026-09-20', '2026-09-27', '2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25', '2026-11-01'].map(name);
     // Een back-up die je zelf in de map zette, met dezelfde vorm van naam: die is niet van ASCEND.
     const yours = name('2026-08-30');
-    await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In Documenten/ASCEND' });
-    const { target, files, removed } = fakeTarget({ files: [...own, yours, 'notities.txt'] });
+    await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In Documenten/ASCEND', filesBy: INSTALL });
+    const { target, files, removed } = fakeTarget({ files: own, foreign: [yours, 'notities.txt'] });
     expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
     expect(removed).toEqual([name('2026-09-06'), name('2026-09-13')]);
     expect(files.has(yours)).toBe(true);
@@ -120,7 +141,7 @@ describe('de automatische back-up', () => {
 
   it('alles bewaren ruimt niets op', async () => {
     const own = ['2026-09-06', '2026-09-13', '2026-09-20', '2026-09-27', '2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25', '2026-11-01'].map(name);
-    await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In Documenten/ASCEND' });
+    await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In Documenten/ASCEND', filesBy: INSTALL });
     await SettingsRepo.set({ autoBackupKeep: 0 });
     const { target, removed } = fakeTarget({ files: own });
     expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
@@ -129,7 +150,7 @@ describe('de automatische back-up', () => {
 
   it('namen uit een andere map worden nooit in deze map opgeruimd', async () => {
     const own = ['2026-09-06', '2026-09-13', '2026-09-20', '2026-09-27', '2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25', '2026-11-01'].map(name);
-    await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In oude-map' });
+    await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In oude-map', filesBy: INSTALL });
     const { target, removed } = fakeTarget({ files: own, label: 'nieuwe-map' });
     expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
     expect(removed).toEqual([]);
@@ -156,6 +177,71 @@ describe('de automatische back-up', () => {
   it('een kapotte staat leest als leeg, nooit als fout', async () => {
     await MetaRepo.set('autoBackupState', { files: 'veel', failure: { reason: 'onbekend' }, where: { kind: 'wolk' } });
     expect(await readAutoBackupState()).toEqual({ files: [] });
+  });
+
+  it('een vreemd bestand met de naam van vandaag blijft staan: de back-up krijgt een volgnummer', async () => {
+    const yours = name('2026-11-02');
+    const { target, files } = fakeTarget({ foreign: [yours] });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
+    expect(files.get(yours)).toBe('{}');
+    expect(files.has('ascend-2026-11-02-2.ascend-backup.json')).toBe(true);
+    expect((await readAutoBackupState()).files).toEqual(['ascend-2026-11-02-2.ascend-backup.json']);
+  });
+
+  it('een eigen bestand van vandaag mag wel worden overschreven', async () => {
+    await MetaRepo.set('autoBackupState', { files: [name('2026-11-02')], filesIn: 'In Documenten/ASCEND', filesBy: INSTALL });
+    const { target, overwritten } = fakeTarget({ files: [name('2026-11-02')] });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
+    expect(overwritten).toEqual([name('2026-11-02')]);
+  });
+
+  it('een eigen naam van een andere installatie telt als vreemd', async () => {
+    await MetaRepo.set('autoBackupState', { files: [name('2026-11-02')], filesIn: 'In Documenten/ASCEND', filesBy: 'oude-telefoon' });
+    const { target, overwritten, files } = fakeTarget({ foreign: [name('2026-11-02')] });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
+    expect(overwritten).toEqual([]);
+    expect(files.has('ascend-2026-11-02-2.ascend-backup.json')).toBe(true);
+  });
+
+  it('een lijst van een andere installatie (de back-up van Android) ruimt niets op', async () => {
+    const own = ['2026-09-06', '2026-09-13', '2026-09-20', '2026-09-27', '2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25', '2026-11-01'].map(name);
+    await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In Documenten/ASCEND', filesBy: 'oude-telefoon' });
+    const { target, removed } = fakeTarget({ foreign: own });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
+    expect(removed).toEqual([]);
+    const state = await readAutoBackupState();
+    expect(state.files).toEqual([name('2026-11-02')]);
+    expect(state.filesBy).toBe(INSTALL);
+  });
+
+  it('eerst nakijken, dan opruimen: een bestand dat niet heel staat is mislukt en ruimt niets op', async () => {
+    const own = ['2026-09-06', '2026-09-13', '2026-09-20', '2026-09-27', '2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25', '2026-11-01'].map(name);
+    await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In Documenten/ASCEND', filesBy: INSTALL });
+    const { target, removed } = fakeTarget({ files: own, corrupt: true });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('failed');
+    expect(removed).toEqual([]);
+    expect((await readAutoBackupState()).failure?.reason).toBe('write');
+    expect((await SettingsRepo.get()).lastExportedAt).toBeUndefined();
+  });
+
+  it('een fout na een gelukt bestand maakt de back-up niet mislukt', async () => {
+    const { target } = fakeTarget();
+    const outcome = await runAutoBackupIfDue({ now: MONDAY, target, onSaved: () => Promise.reject(new Error('app-staat weg')) });
+    expect(outcome).toBe('saved');
+    expect((await readAutoBackupState()).failure).toBeUndefined();
+  });
+
+  it('een poging die ergens blijft hangen stopt na de tijdsgrens, en de volgende kan weer', async () => {
+    expect(await runAutoBackupIfDue({ now: MONDAY, target: fakeTarget({ hangAccess: true }).target, attemptMs: 30 })).toBe('failed');
+    expect((await readAutoBackupState()).failure?.reason).toBe('timeout');
+    expect(await runAutoBackupIfDue({ now: new Date(2026, 10, 2, 10), target: fakeTarget().target })).toBe('saved');
+  });
+
+  it('"Niet nu" op de kaart houdt de stille back-up niet tegen', async () => {
+    await SettingsRepo.set({ lastExportReminderDismissedAt: new Date(2026, 10, 2, 7).toISOString() });
+    const { target, files } = fakeTarget();
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
+    expect(files.size).toBe(1);
   });
 
   it('de staat van de automatische back-up reist nooit mee in een back-up', async () => {
