@@ -14,7 +14,8 @@
 
 import type { LeavePeriod, TrekDetails, TrekImportance, TrekTerrain } from '../models/leave';
 import { addDays, daysBetween } from '../utils/dates';
-import { dayCount } from './leave';
+import { dayCount, isTrekHeight, TREK_HEIGHT_RANGE } from './leave';
+import { formatNumberNL } from '../utils/number';
 import { trekLightDaysBefore } from './trekTaper';
 import { kgLabel } from '../utils/kg';
 
@@ -47,9 +48,13 @@ export interface TrekDraft {
   days: number;
   terrain: TrekTerrain;
   packKg?: number;
+  // Het hoogste punt, alleen bij bergen of sneeuw (engine/mountainWeather.ts).
+  highestM?: number;
   tent: boolean;
   importance: TrekImportance;
 }
+
+export const hasHeight = (terrain: TrekTerrain): boolean => terrain === 'mountain' || terrain === 'snow';
 
 // What you may fill in. Returns the message to show, or nothing when fine.
 export function validateTrekDraft(draft: TrekDraft, today: string): string | undefined {
@@ -59,6 +64,7 @@ export function validateTrekDraft(draft: TrekDraft, today: string): string | und
   if (draft.days > MAX_TREK_DAYS) return `Langer dan ${MAX_TREK_DAYS} dagen? Controleer het aantal dagen.`;
   if (addDays(draft.startDate, draft.days - 1) < today) return 'Deze tocht is al voorbij.';
   if (draft.packKg !== undefined && (!Number.isFinite(draft.packKg) || draft.packKg < 0 || draft.packKg > MAX_PACK_KG)) return `Een rugzak van 0 tot ${MAX_PACK_KG} kg.`;
+  if (hasHeight(draft.terrain) && draft.highestM !== undefined && !isTrekHeight(draft.highestM)) return `Een hoogste punt van ${formatNumberNL(TREK_HEIGHT_RANGE[0], 0)} tot ${formatNumberNL(TREK_HEIGHT_RANGE[1], 0)} m.`;
   return undefined;
 }
 
@@ -69,6 +75,7 @@ export function trekToPeriod(draft: TrekDraft, id: string): LeavePeriod {
     name: draft.name.trim(),
     terrain: draft.terrain,
     ...(draft.packKg !== undefined && draft.packKg > 0 ? { packKg: draft.packKg } : {}),
+    ...(hasHeight(draft.terrain) && isTrekHeight(draft.highestM) ? { highestM: Math.round(draft.highestM) } : {}),
     tent: draft.tent,
     importance: draft.importance,
   };
@@ -79,7 +86,7 @@ export function periodToTrekDraft(period: LeavePeriod): TrekDraft | undefined {
   if (!period.trek) return undefined;
   return {
     name: period.trek.name, startDate: period.startDate, days: dayCount(period), terrain: period.trek.terrain,
-    packKg: period.trek.packKg, tent: period.trek.tent, importance: period.trek.importance,
+    packKg: period.trek.packKg, highestM: period.trek.highestM, tent: period.trek.tent, importance: period.trek.importance,
   };
 }
 
@@ -120,6 +127,7 @@ export function trekFacts(period: LeavePeriod): string {
   const n = dayCount(period);
   const parts = [TREK_TERRAIN_LABEL[t.terrain], `${n} ${n === 1 ? 'dag' : 'dagen'}`];
   if (t.packKg) parts.push(`rugzak ${kgLabel(t.packKg, 2)}`);
+  if (t.highestM) parts.push(`tot ${formatNumberNL(t.highestM, 0)} m`);
   parts.push(t.tent ? 'met tent' : 'zonder tent');
   return parts.join(', ');
 }

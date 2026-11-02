@@ -376,3 +376,81 @@ export async function fetchAirQuality(place: WeatherPlace, options: FetchOptions
   const body = await getJson(airQualityUrl(place), options);
   return mapAirQuality(body, place, (options.now ?? new Date()).toISOString());
 }
+
+// --- mountain weather at a height (engine/mountainWeather.ts) ------------------------------
+//
+//   GET https://api.open-meteo.com/v1/forecast?latitude=..&longitude=..&elevation=2500
+//       &hourly=temperature_2m,wind_gusts_10m,cape,freezing_level_height,weather_code
+//       &timezone=auto&forecast_days=3&wind_speed_unit=kmh
+//
+// The same endpoint and the same rounded place as the forecast. `elevation` makes Open-Meteo
+// work the temperature out for that height instead of the height of its grid; wind, thunder and
+// the freezing level stay those of the grid. Asked only around a day of a tocht in the mountains
+// or the snow with a highest point, at most once an hour, and kept as a cache that never goes in a
+// backup (storage/mountainWeather.ts).
+
+export const MOUNTAIN_DAYS = 3;
+export const MIN_ELEVATION_M = 200;
+export const MAX_ELEVATION_M = 4800;
+
+export interface MountainHour {
+  time: string; // 'YYYY-MM-DDTHH:00', local time of the place
+  tempC: number; // at the height asked for
+  gustKmh?: number;
+  capeJkg?: number; // energy for thunderstorms
+  freezingM?: number; // freezing level, metres above sea level
+  code?: number; // WMO weather code
+}
+
+export interface MountainForecast {
+  fetchedAt: string;
+  place: WeatherPlace;
+  elevationM: number;
+  hours: MountainHour[];
+}
+
+export function mountainForecastUrl(place: WeatherPlace, elevationM: number): string {
+  const query = new URLSearchParams({
+    latitude: String(roundCoordinate(place.lat)),
+    longitude: String(roundCoordinate(place.lon)),
+    elevation: String(Math.round(elevationM)),
+    hourly: 'temperature_2m,wind_gusts_10m,cape,freezing_level_height,weather_code',
+    timezone: 'auto',
+    forecast_days: String(MOUNTAIN_DAYS),
+    wind_speed_unit: 'kmh',
+  });
+  return `${OPEN_METEO_FORECAST_URL}?${query.toString().replace(/%2C/g, ',')}`;
+}
+
+export function mapMountainForecast(raw: unknown, place: WeatherPlace, elevationM: number, fetchedAt: string): MountainForecast {
+  const h = (raw as { hourly?: Record<string, unknown> } | null)?.hourly;
+  if (!h || !Array.isArray(h.time)) throw new OpenMeteoError('response', MESSAGES.response);
+  const col = (key: string): unknown[] => (Array.isArray(h[key]) ? (h[key] as unknown[]) : []);
+  const temp = col('temperature_2m');
+  const gust = col('wind_gusts_10m');
+  const cape = col('cape');
+  const freezing = col('freezing_level_height');
+  const code = col('weather_code');
+  const hours: MountainHour[] = [];
+  (h.time as unknown[]).forEach((time, i) => {
+    const tempC = num(temp[i]);
+    if (!isLocalTime(time) || tempC === undefined) return;
+    const hour: MountainHour = { time, tempC };
+    const g = num(gust[i]);
+    const c = num(cape[i]);
+    const f = num(freezing[i]);
+    const w = num(code[i]);
+    if (g !== undefined && g >= 0) hour.gustKmh = g;
+    if (c !== undefined && c >= 0) hour.capeJkg = c;
+    if (f !== undefined) hour.freezingM = f;
+    if (w !== undefined) hour.code = w;
+    hours.push(hour);
+  });
+  if (hours.length === 0) throw new OpenMeteoError('response', MESSAGES.response);
+  return { fetchedAt, place: roundedPlace(place), elevationM: Math.round(elevationM), hours };
+}
+
+export async function fetchMountainForecast(place: WeatherPlace, elevationM: number, options: FetchOptions & { now?: Date } = {}): Promise<MountainForecast> {
+  const body = await getJson(mountainForecastUrl(place, elevationM), options);
+  return mapMountainForecast(body, place, elevationM, (options.now ?? new Date()).toISOString());
+}

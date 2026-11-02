@@ -39,6 +39,7 @@ export function StageSheet({
   logs,
   today,
   water,
+  ownTime,
   onChoose,
   onClose,
 }: {
@@ -50,6 +51,9 @@ export function StageSheet({
   today: string;
   // Je zweet op deze etappe, als de instelling aan staat en de site een looptijd geeft.
   water?: StageWater;
+  // De etappe op je eigen klimtempo als band (engine/climbPace.ts#stageOwnLine), of niets: dan
+  // blijft de looptijd van de site de schatting.
+  ownTime?: string;
   onChoose: (stageId: string, patch: Partial<StageChoice>) => void;
   onClose: () => void;
 }) {
@@ -100,6 +104,7 @@ export function StageSheet({
             <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               Omhoog en omlaag zijn de hoogtemeters die je in totaal stijgt en daalt. De looptijd is die van de officiële site, zonder lange pauzes.
             </p>
+            {ownTime && <p className="mt-2 text-sm font-medium leading-snug tabular-nums" style={{ color: 'var(--color-ink)' }}>{ownTime}</p>}
 
             {stage.alt && (
               <div className="mt-3 rounded-xl border p-3 text-xs leading-relaxed" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>

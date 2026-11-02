@@ -363,6 +363,12 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('weekdag-patroon', 'Patronen per weekdag', 'lichaam', 'weekdayPattern'),
   flag('luchtkwaliteit', 'Luchtkwaliteit', 'lichaam', 'airQuality'),
   flag('ochtendregel', 'Twee van drie', 'lichaam', 'morningRule'),
+  flag('ochtend-voorstel', 'Voorstel bij een slechte ochtend', 'lichaam', 'morningProposal'),
+  flag('bergweer', 'Bergweer op hoogte', 'lichaam', 'mountainWeather'),
+  flag('wennen-warmte', 'Wennen aan warmte', 'lichaam', 'heatAcclimation'),
+  flag('tempocurve', 'Tempocurve tussen testen', 'lichaam', 'paceCurve'),
+  flag('etappetijd-eigen', 'Etappetijd op je eigen tempo', 'lichaam', 'stageOwnPace'),
+  flag('klimtempo', 'Je klimtempo', 'lichaam', 'climbPace'),
   flag('horloge-stil', 'Melden als je horloge stilvalt', 'koppelingen', 'watchSilence'),
   flag('ochtend-backup', 'Ochtendgetallen in back-up', 'gegevens', 'morningInBackup'),
   {

@@ -1032,6 +1032,27 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
 // Akkoord through the usual planning round. Undefined when there is no good day this week: the card
 // then offers Lichter only. `fromOffset` 2 after soreness (one to two days no heavy legs), else 1.
 export function legEaseMoveAdvice(inputs: AdviceInputs, sessionId: string, reason: string, fromOffset: 1 | 2): Advice | undefined {
+  return laterMoveAdvice(inputs, sessionId, {
+    id: `leg-ease:${inputs.asOf}:${sessionId}`,
+    ruleId: 'LEG-EASE',
+    why: 'Met vermoeide benen levert een zware beendag of harde training minder op, en doortrainen mag. Een dag later kan helpen, en je kiest zelf (docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md).',
+    reason,
+  }, fromOffset);
+}
+
+// One training of today (or later) to the first good days after it, with the same checks as every
+// other move (room, the 48-hour rule, not next to another hard or leg-heavy session), as a proposal
+// with Akkoord. Shared by LEG-EASE and MORNING-WATCH (engine/morningProposal.ts), each with its own
+// id, rule and reason. Undefined when there is no good day this week.
+export interface LaterMoveSpec {
+  id: string;
+  ruleId: string;
+  why: string;
+  // Why the training moves, written on the change ("Spierpijn", "Twee van drie wijken af").
+  reason: string;
+}
+
+export function laterMoveAdvice(inputs: AdviceInputs, sessionId: string, spec: LaterMoveSpec, fromOffset: 1 | 2): Advice | undefined {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   const next = inputs.plannedSessions.find((s) => s.id === sessionId);
   const t = next ? templateById.get(next.templateId) : undefined;
@@ -1048,18 +1069,17 @@ export function legEaseMoveAdvice(inputs: AdviceInputs, sessionId: string, reaso
   if (!later) return undefined;
   // "Later" en niet "een dag later": de eerste goede dag kan ook twee dagen verder liggen; de knop noemt de dag.
   const title = `${t.name} later`;
-  const why = 'Met vermoeide benen levert een zware beendag of harde training minder op, en doortrainen mag. Een dag later kan helpen, en je kiest zelf (docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md).';
   const effectFor = (d: string) => `${t.name} van ${formatWeekdayDateNL(next.scheduledDate)} naar ${formatWeekdayDateNL(d)}.`;
   return {
-    id: `leg-ease:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'LEG-EASE', priority: 4, title,
+    id: spec.id, trigger: 'session_too_hard', ruleId: spec.ruleId, priority: 4, title,
     effect: effectFor(later),
-    why,
-    ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op ${formatWeekdayDateNL(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'LEG-EASE'] }, laterDates, t.name, why, effectFor),
+    why: spec.why,
+    ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${spec.reason} op ${formatWeekdayDateNL(today)}.`, generatedBy: ['engine/adviceEngine.ts', spec.ruleId] }, laterDates, t.name, spec.why, effectFor),
   };
 }
 
 // The training the card of LEG-EASE speaks for today, when soreness is reported (engine/legDayEase.ts).
-function legCardSessionOf(inputs: AdviceInputs): PlannedSession | undefined {
+export function legCardSessionOf(inputs: AdviceInputs): PlannedSession | undefined {
   return legEaseCardSession({ mode: inputs.legEase, today: inputs.asOf, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries, checkIns: inputs.checkIns });
 }
 

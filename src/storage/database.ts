@@ -852,6 +852,25 @@ export interface AppSettings {
   // "Ochtendregel" (engine/morningRule.ts): the three watch numbers with a word each on the morning
   // card, and the question "Ben je moe?" when two of the three are off. Absent = on.
   morningRule?: boolean;
+  // "Voorstel bij een slechte ochtend" (engine/morningProposal.ts): when two of the three watch numbers are off
+  // (morningRule) and a hard session is planned today, one proposal with Akkoord to do it later. Absent = on.
+  morningProposal?: boolean;
+  // "Bergweer op hoogte" (engine/mountainWeather.ts): on a day of a tocht in the mountains or the snow with a highest
+  // point, while the weather follows your location, the weather at that height on Vandaag. Asks Open-Meteo with the same rounded place as
+  // the forecast, at most once an hour. Absent = on. Optional and additive.
+  mountainWeather?: boolean;
+  // "Wennen aan warmte" (engine/heatAcclimation.ts): one line in the reisplanner in the last three weeks before
+  // a departure from June to September. Absent = on. Optional and additive.
+  heatAcclimation?: boolean;
+  // "Tempocurve tussen testen" (engine/paceCurve.ts): the fastest 5 km or 3 km of your usual runs since the last
+  // test that counts, next to that test on Je stand, as a check. The test stays the source of the paces. Absent = on.
+  paceCurve?: boolean;
+  // "Etappetijd op je eigen tempo" (engine/climbPace.ts#stageTimeEstimate): a GR5 stage and a usual day of the main
+  // goal as a band of hours on your own climbing pace, once there are enough climbs; else the old estimate. Absent = on.
+  stageOwnPace?: boolean;
+  // "Je klimtempo" (engine/climbPace.ts): your own metres per hour up and down from the climbs of your walks
+  // and tochten, on Je stand once there are six climbs from three tochten. Absent = on. Optional and additive.
+  climbPace?: boolean;
   // "Oude voorstellen opruimen" (engine/proposalTidy.ts): decided proposals older than this many
   // months are summarised. 3 (advice, absent = 3), 6, 12 or 0 (off). Optional and additive.
   proposalTidyMonths?: 0 | 3 | 6 | 12;

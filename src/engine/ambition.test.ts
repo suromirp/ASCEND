@@ -1,10 +1,13 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { effectiveAmbition } from './ambition';
 import { resolveEffectiveFullDuration, setAmbition, setRecentSessionMaxima } from './substitutions';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { SessionLog } from '../models/training';
 
+// Het demoprogramma begint op vandaag: een vaste klok houdt de weken van deze test vast.
+vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-31T08:00:00Z') });
 const { templates, program } = buildDefaultProgramData();
+vi.useRealTimers();
 const byId = new Map(templates.map((t) => [t.id, t]));
 const easy = byId.get('tpl_easy_run')!;
 const log = (date: string, extra: Partial<SessionLog>): SessionLog => ({ id: date, templateId: 'tpl_easy_run', type: 'cardio', completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: 35, source: 'manual', ...extra });
