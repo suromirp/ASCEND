@@ -197,6 +197,14 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       for (const s of mine) push(viaScan(s.id));
       // A full week: one of the two moves to a day a training of the system's makes room on.
       if (candidates.length === 0) for (const s of mine) push(viaRoom(s.id));
+      // The last choice: one of yours goes when the week keeps another session with the same task, such as a long
+      // run that an earlier change brought in next to the week's own (docs/beslissingen/2026-11-02-tweede-lange-duurloop.md).
+      for (const s of ordered.filter((x) => level(x) === 1)) {
+        const twin = sameRoleElsewhere(s);
+        if (!twin) continue;
+        const removal: Change[] = [{ id: s.id, from: s.scheduledDate, removed: true, keeps: twin.id }];
+        if (improves(removal)) { lastResort = removal; break; }
+      }
       break;
     }
     case 'ONE-LONG': {
