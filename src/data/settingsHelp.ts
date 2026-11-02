@@ -810,6 +810,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geen goede dag', text: 'zijn je benen op geen enkele dag binnen 10 dagen fris genoeg te krijgen, valt de dag in een vakantie of tocht, of staat er al een test gepland, dan zegt ASCEND niets.' },
     ],
   },
+  sportenTellen: {
+    title: 'Hoe sporten meetellen',
+    lead: 'Zwemmen, padel en voetbal plant ASCEND niet, maar ze kunnen meetellen voor je benen en je week.',
+    points: [
+      { head: 'Vragen bij een nieuwe sport', text: 'komt er van je horloge een sport binnen die je nog niet koos, dan staat op Vandaag één rustige vraag: hoe telt dit? Tot je antwoordt telt hij niet mee en verandert er niets. Uit: zo’n sport telt meteen mee als je hem doet.' },
+      { head: 'Vragen hoe zwaar het was', text: 'Rustig, Pittig, Zwaar of Heel zwaar. Hoe zwaarder, hoe meer het telt voor je benen. Uit: ASCEND neemt de gebruikelijke zwaarte van de sport aan en rekent een tikje voorzichtiger.' },
+      { head: 'Bewijs', text: 'wat een sport met je benen doet is afgeleid uit onderzoek en niet getoetst. Het kan helpen om een zware beendag niet vlak na een wedstrijd te zetten.' },
+    ],
+  },
   nietDoorgegaan: {
     title: 'Training die niet doorging',
     lead: 'Wat ASCEND doet met een training die een paar dagen voorbij is zonder log.',

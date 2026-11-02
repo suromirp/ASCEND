@@ -62,7 +62,7 @@ export interface PageRows {
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
     rows: ['bundel-dagen', 'meerdere', ...SPORT_IDS.map((id) => `sport-${id}`), 'wijzigingen', 'ambitie', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'rustdag-terug', 'weekvoorstel'],
-    advanced: ['bundel-niet-doorgegaan', 'slepen-week', 'volgorde-stand', 'vakantie-opzij'],
+    advanced: ['bundel-niet-doorgegaan', 'bundel-sporten-tellen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij'],
   },
   doel: {
     rows: ['doelen', 'programma', 'bundel-zonder-doel', 'lange-zondag', 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge', 'doeltijd-voorstel', 'seizoensstrook', 'bundel-tochten', 'vrije-dagen'],
@@ -125,6 +125,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('meerdere', 'zware-dingen'),
   ...inSheet('ambitie', 'lange-loop'),
   ...inSheet('bundel-niet-doorgegaan', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'log-koppelen'),
+  ...inSheet('bundel-sporten-tellen', 'sport-vragen', 'sport-zwaarte'),
   // Doel en tochten
   ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),

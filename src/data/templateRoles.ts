@@ -17,6 +17,8 @@ const IDS_BY_ROLE: Record<TemplateRole, string[]> = {
   walked_down: ['tpl_hill_intervals'],
   blocks: ['tpl_tempo_run', 'tpl_intervals'],
   hills: ['tpl_hill_intervals'],
+  // Afgeleid (engine/sportTemplate.ts), nooit een opgeslagen sjabloon.
+  counted_sport: [],
   extra: ['tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_bergconditie', 'tpl_ruck_walk'],
 };
 

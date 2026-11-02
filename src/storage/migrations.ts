@@ -9,7 +9,8 @@
 // it is missing or not a list, so an older backup imports as before.
 
 import { ABOVE_MISSION_CHOICES, type AboveMission } from '../engine/todayCards';
-import { parseSportHandling, type SportHandlingMap } from '../engine/sportRole';
+import { cleanSportCounting, parseSportHandling, type SportCounting, type SportHandlingMap } from '../engine/sportRole';
+import { COUNTED_SPORTS } from '../data/sports';
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/proposalTidy';
@@ -754,6 +755,23 @@ export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unkn
 // echte vaste afspraken. Een oud bestand zonder dit veld importeert zoals het was.
 export function migrateSportHandling(raw: unknown): { value: SportHandlingMap | undefined; skipped: number } {
   return parseSportHandling(raw);
+}
+
+// Hoe sporten meetellen (engine/sportRole.ts#resolveSportCounting): alleen de bekende keuzes. Een oud
+// bestand zonder dit veld importeert zoals het was.
+export function migrateSportCounting(raw: unknown): { value: Partial<SportCounting> | undefined; skipped: number } {
+  return cleanSportCounting(raw);
+}
+
+// SessionLog.countedSport (sporten die meetellen, stap 4): alleen een bekende sport blijft, iets anders valt
+// weg. Het log zelf verandert niet; zonder sport is het een gewone training zoals eerst.
+export function migrateLogCountedSport(log: SessionLog): SessionLog {
+  if (!('countedSport' in log)) return log;
+  const value = (log as { countedSport?: unknown }).countedSport;
+  if (COUNTED_SPORTS.some((s) => s.id === value)) return log;
+  const { countedSport: _wrong, ...rest } = log as SessionLog & { countedSport?: unknown };
+  void _wrong;
+  return rest as SessionLog;
 }
 
 // SessionLog.rpeAssumed: alleen `true` blijft, iets anders valt weg. Het log zelf verandert niet.

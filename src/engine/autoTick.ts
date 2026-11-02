@@ -172,7 +172,11 @@ export interface FeedbackPatch {
 
 export function applyFeedback(log: SessionLog, patch: FeedbackPatch): SessionLog {
   const next: SessionLog = { ...log };
-  if (patch.rpe !== undefined) next.rpe = Math.min(10, Math.max(1, Math.round(patch.rpe)));
+  if (patch.rpe !== undefined) {
+    next.rpe = Math.min(10, Math.max(1, Math.round(patch.rpe)));
+    // Your own answer replaces a value ASCEND assumed.
+    delete next.rpeAssumed;
+  }
   if (patch.subjectiveFeel !== undefined) next.subjectiveFeel = patch.subjectiveFeel;
   if (patch.painReports && patch.painReports.length > 0) next.painReports = patch.painReports;
   return next;

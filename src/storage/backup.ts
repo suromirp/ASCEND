@@ -68,7 +68,7 @@ import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateSportCounting, migrateLogCountedSport, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -531,6 +531,13 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     if (clean.value) s.sportHandling = clean.value;
     skipped.n += clean.skipped;
   }
+  // Hoe sporten meetellen: known choices only.
+  if ('sportCounting' in s) {
+    const clean = migrateSportCounting(s.sportCounting);
+    delete s.sportCounting;
+    if (clean.value) s.sportCounting = clean.value;
+    skipped.n += clean.skipped;
+  }
   // Zonder doel: the choices around waves; known values stay.
   if ('beginnerStart' in s || 'waves' in s || 'waveReviewDone' in s || 'noGoalWaves' in s) {
     const clean = migrateWaveSettings({ beginnerStart: s.beginnerStart, waves: s.waves, waveReviewDone: s.waveReviewDone, noGoalWaves: s.noGoalWaves });
@@ -630,7 +637,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped)?.map(cleanPlannedCatchUp);
-  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogRpeAssumed).map(migrateLogLinkedLater);
+  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogRpeAssumed).map(migrateLogCountedSport).map(migrateLogLinkedLater);
   const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped)?.map(migrateInjuryNote);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;
   const settings = cleanSettings(raw.settings, skipped);
@@ -930,6 +937,10 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
   // the device's own reading wins.
   if (incoming.externalOneRm || current.externalOneRm) {
     merged.externalOneRm = mergeExternalOneRm(incoming.externalOneRm, current.externalOneRm ?? []);
+  }
+  // Sporten die meetellen: per sport samengevoegd, de keuze op dit toestel gaat voor.
+  if (incoming.sportHandling || current.sportHandling) {
+    merged.sportHandling = { ...(incoming.sportHandling ?? {}), ...(current.sportHandling ?? {}) };
   }
   if (incoming.illnessEpisodes || current.illnessEpisodes) {
     const byId = new Map((incoming.illnessEpisodes ?? []).map((e) => [e.id, e]));

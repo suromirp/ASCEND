@@ -34,7 +34,7 @@ import type { RunInsightSettings } from '../engine/runInsightSettings';
 import type { MorningNoticeSettings } from '../engine/morningNotice';
 import { activeSwaps, directionSwaps, patternSlotOf, layoutPhases, patternForWeek, PHASE_GOLF, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { planDirection } from '../engine/direction';
-import type { SportHandlingMap } from '../engine/sportRole';
+import type { SportCounting, SportHandlingMap } from '../engine/sportRole';
 import { programDirection } from '../engine/directionPlan';
 import { BEGINNER_WEEKS, isBeginnerStart } from '../engine/beginnerStart';
 import { resolveWaveSettings } from '../engine/waves';
@@ -619,6 +619,10 @@ export interface AppSettings {
   // zwaarte). Absent = the old settings: a sport that is on is planned, off does nothing, a sport ASCEND
   // does not plan has no role yet. Optional and additive; cleaned on import (migrations.ts#migrateSportHandling).
   sportHandling?: SportHandlingMap;
+  // Hoe sporten meetellen (engine/sportRole.ts#resolveSportCounting): vragen bij een nieuwe sport, vragen hoe
+  // zwaar het was, en de rust na een zware sport. Absent = het advies. Optional and additive; cleaned on
+  // import (migrations.ts#migrateSportCounting).
+  sportCounting?: Partial<SportCounting>;
   // "Zoveel keer per week" per sport (engine/sportFrequency.ts). A sport
   // missing here is on Automatisch: the weekly pattern and weekly planning
   // decide. Optional, so older settings need no migration.

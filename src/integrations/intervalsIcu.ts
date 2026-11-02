@@ -25,7 +25,7 @@
 
 import type { DataSourceAdapter, DateRange } from './types';
 import type { ExternalActivity, ExternalActivityKind } from '../engine/activityImport';
-import { sportOfExternalType, type SportId } from '../data/sports';
+import { countedSportOfExternalType, sportOfExternalType, type SportId } from '../data/sports';
 import { WATCH_EXTERNAL_PREFIX, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
 import type { SubjectiveFeel } from '../models/training';
 import type { RecoveryMetric } from '../models/metrics';
@@ -272,6 +272,7 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
   if (durationSec === undefined) return undefined;
 
   const kind = kindOf(raw.type);
+  const countedSport = typeof raw.type === 'string' ? countedSportOfExternalType(raw.type) : undefined;
   const fromGarmin = raw.source === 'GARMIN_CONNECT' || /garmin|forerunner|fenix|enduro|venu|vivoactive/i.test(raw.device_name ?? '');
   const rpe = positive(raw.icu_rpe);
   // Strength has no running form; a treadmill has contact times too, so only
@@ -296,6 +297,8 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
     rpe: rpe !== undefined && rpe <= 10 ? rpe : undefined,
     feel: feelOf(raw.feel),
     treadmill: kind !== 'strength' && (raw.trainer === true || raw.type === 'VirtualRun' || raw.type === 'VirtualRide'),
+    // A swim, padel or football: our own sport id, never the provider's type name.
+    ...(kind === 'other' && countedSport ? { countedSport } : {}),
     ...(dynamics ? { dynamics } : {}),
     ...(streams ? { streamsAvailable: streams } : {}),
     ...(others ? { otherStreams: others } : {}),

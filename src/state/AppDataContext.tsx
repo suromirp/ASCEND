@@ -311,6 +311,7 @@ import { activeStrengthStrategy, strengthTrackedExternally, daysUntilBlockEnd, c
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
 import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDateNL, localDateOf } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
+import { withCountingSports } from '../engine/sportTemplate';
 import { makeId } from '../utils/id';
 import type { InfluenceEntry } from '../models/influence';
 import type { SweatEntry } from '../models/sweat';
@@ -653,9 +654,13 @@ export interface LogSessionInput {
   templateId: string;
   type: SessionLog['type'];
   sport?: SessionLog['sport'];
+  // A sport that counts (engine/sportTemplate.ts): swimming, padel, football.
+  countedSport?: SessionLog['countedSport'];
   variant: SessionVariant;
   durationMinutes: number;
   rpe?: number;
+  // The RPE was preselected and not touched (engine/sessionLoad.ts).
+  rpeAssumed?: SessionLog['rpeAssumed'];
   notes?: string;
   strengthData?: SessionLog['strengthData'];
   cardioData?: SessionLog['cardioData'];
@@ -717,7 +722,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [goalEngineConfig, setGoalEngineConfig] = useState<GoalEngineConfig>(DEFAULT_GOAL_ENGINE_CONFIG);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const strengthProgram = settings.strengthModel?.program;
-  const templates = useMemo(() => withProgramExercises(storedTemplates, strengthProgram, todayISO()), [storedTemplates, strengthProgram]);
+  // A sport that counts (swimming, padel, football) has a derived template while it counts
+  // (engine/sportTemplate.ts): its logs then count in the leg index and the week check like any training.
+  const { sportHandling, sportCounting } = settings;
+  const templates = useMemo(
+    () => withCountingSports(withProgramExercises(storedTemplates, strengthProgram, todayISO()), { sportHandling, sportCounting }),
+    [storedTemplates, strengthProgram, sportHandling, sportCounting],
+  );
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
   const [forecastSummary, setForecastSummary] = useState<string | null>(null);
@@ -1433,11 +1444,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           templateId: input.templateId,
           type: input.type,
           sport: input.sport,
+          ...(input.countedSport ? { countedSport: input.countedSport } : {}),
           completedDate: input.completedDate ?? todayISO(),
           completedAt: input.completedAt ?? new Date().toISOString(),
           variant: input.variant,
           durationMinutes: input.durationMinutes,
           rpe: input.rpe,
+          ...(input.rpeAssumed && input.rpe !== undefined ? { rpeAssumed: true as const } : {}),
           notes: input.notes,
           strengthData: input.strengthData,
           cardioData: input.cardioData,

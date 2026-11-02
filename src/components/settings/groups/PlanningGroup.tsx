@@ -68,12 +68,13 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="Hoe ASCEND plant"
-        advancedIds={['bundel-niet-doorgegaan', 'slepen-week', 'volgorde-stand', 'vakantie-opzij']}
-        advancedTitles="Training die niet doorging, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie"
+        advancedIds={['bundel-niet-doorgegaan', 'bundel-sporten-tellen', 'slepen-week', 'volgorde-stand', 'vakantie-opzij']}
+        advancedTitles="Training die niet doorging, Hoe sporten meetellen, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie"
         storageKey="planning-geavanceerd"
         advanced={
           <>
             <SummaryRow id="bundel-niet-doorgegaan" title="Training die niet doorging" facts={facts} info="nietDoorgegaan" onClick={() => setSheet('bundel-niet-doorgegaan')} />
+            <SummaryRow id="bundel-sporten-tellen" title="Hoe sporten meetellen" facts={facts} info="sportenTellen" onClick={() => setSheet('bundel-sporten-tellen')} />
             <SummaryRow id="slepen-week" title="Trainingen slepen in Week" facts={facts} info="slepenWeek" onChange={(on) => void updateSettings({ dragWeek: on })} />
             <SummaryRow id="volgorde-stand" title="Volgorde van Je stand" facts={facts} info="volgordeStand" onClick={() => setSheet('volgorde-stand')} />
             <SummaryRow id="vakantie-opzij" title="Opzij voor een vakantie" facts={facts} info="vakantieOpzij" onClick={() => setSheet('vakantie-opzij')} />
@@ -102,6 +103,12 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="niet-doorgegaan" title="Wat ASCEND doet" facts={facts} onClick={() => setInner('niet-doorgegaan')} />
           {rowShown('niet-doorgegaan-dagen', facts) && <SummaryRow id="niet-doorgegaan-dagen" title="Na hoeveel dagen" facts={facts} onClick={() => setInner('niet-doorgegaan-dagen')} />}
           <SummaryRow id="log-koppelen" title="Log op een andere dag koppelen" facts={facts} onChange={(on) => void updateSettings({ missedLink: on })} />
+        </BundleSheet>
+      )}
+      {sheet === 'bundel-sporten-tellen' && (
+        <BundleSheet eyebrow="Planning" title="Hoe sporten meetellen" line="Zwemmen, padel en voetbal: wat ASCEND je vraagt." onClose={close}>
+          <SummaryRow id="sport-vragen" title="Vragen bij een nieuwe sport" facts={facts} onChange={(on) => void updateSettings({ sportCounting: { ...settings.sportCounting, askNew: on } })} />
+          <SummaryRow id="sport-zwaarte" title="Vragen hoe zwaar het was" facts={facts} onChange={(on) => void updateSettings({ sportCounting: { ...settings.sportCounting, askFelt: on } })} />
         </BundleSheet>
       )}
       {inner === 'niet-doorgegaan' && (
