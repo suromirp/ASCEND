@@ -34,7 +34,7 @@ Op Windows, in PowerShell in dezelfde map:
 
 Gebruik op Windows niet `certutil`: die zet er kop- en voetregels in en dan mislukt de bouw.
 
-De sleutel staat niet bij de gewone secrets van de repo, maar in een environment, zodat alleen de stap die vanaf main ondertekent erbij kan. Ga in GitHub naar de repo, Settings, Environments, New environment, en noem hem `android-release`. Zet bij Deployment branches "Selected branches" en voeg `main` toe. Maak daar onder Environment secrets vier secrets:
+De sleutel staat niet bij de gewone secrets van de repo, maar in een environment, zodat alleen de stap die vanaf main ondertekent erbij kan. Ga in GitHub naar de repo, Settings, Environments, New environment, en noem hem `android-release1`. Zet bij Deployment branches "Selected branches" en voeg `main` toe. Maak daar onder Environment secrets vier secrets:
 
 1. `ANDROID_KEYSTORE_BASE64`: de hele inhoud van `ascend.keystore.txt`.
 2. `ANDROID_KEYSTORE_PASSWORD`: het wachtwoord van het bestand.
@@ -55,7 +55,7 @@ Bewaar `ascend.keystore` en de wachtwoorden op twee veilige plekken, bijvoorbeel
 
 Denk je dat iemand anders de sleutel of de wachtwoorden heeft, dan kan die een APK maken die Android als update van jouw app accepteert. Doe dan dit:
 
-1. Verwijder de vier secrets uit de environment `android-release`, zodat er niets meer mee ondertekend wordt.
+1. Verwijder de vier secrets uit de environment `android-release1`, zodat er niets meer mee ondertekend wordt.
 2. Maak in de app een back-up (Instellingen, Gegevens en back-up) en bewaar hem op je telefoon of computer.
 3. Maak een nieuwe sleutel zoals bij stap 1 en zet de vier secrets opnieuw.
 4. Laat de workflow draaien, verwijder de oude app, installeer de nieuwe APK en zet je back-up terug.
