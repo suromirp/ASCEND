@@ -120,3 +120,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Herkeuring Sporten, Warden, opus, 197k, 4 min, groen
 - 2026-11-02, Widget herstel, Sherpa, sonnet, hervat 108k, 12 min, 1
 - 2026-11-02, Week en Vandaag hulp herstel, Sherpa, opus, hervat, 1; live
+- 2026-11-02, Locatie, Sherpa, sonnet, 228k, 32 min, review loopt
