@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SETTINGS_INDEX } from './settingsIndex';
-import { PAGE_ROWS, SETTINGS_PAGES, SHOW_WHEN, allRowIds, isSettingsPageId, pageOfRow, placementOf, settingsPageRoute, SETTINGS_ROOT } from './settingsLayout';
+import { PAGE_ROWS, SETTINGS_PAGES, SHOW_WHEN, allRowIds, isSettingsPageId, pageOfRow, placementOf, settingsPageRoute, settingsAdvancedRoute, isAdvancedRow, SETTINGS_ROOT } from './settingsLayout';
 import { searchSettings } from '../engine/settingsSearch';
 
 // Rijen die geen instelling zijn om naar te zoeken. De rijen met een blad (`bundel-`) zijn de naam
@@ -9,6 +9,7 @@ const NOT_SEARCHABLE: string[] = [];
 
 // Het plafond: wie een rij toevoegt, haalt er een weg of zet hem in een blad of onder Geavanceerd
 // (docs/beslissingen/2026-10-26-instellingen-opruimen.md).
+// De rij Geavanceerd zelf telt niet mee: ze is geen instelling maar de deur naar een eigen pagina.
 const MAX_ROWS = 12;
 const MAX_ADVANCED = 6;
 const MIN_ADVANCED = 2;
@@ -82,6 +83,17 @@ describe('de indeling in acht groepen', () => {
     expect(PAGE_ROWS.forge.advanced).toEqual(['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren']);
     expect(pageOfRow('bundel-rekenmodel')).toBe('forge');
     expect(pageOfRow('forge-bergspieren')).toBe('forge');
+  });
+
+  it('Geavanceerd is een eigen pagina onder de groep, en zoeken vindt de rijen daar nog', () => {
+    expect(settingsAdvancedRoute('forge')).toBe(`${SETTINGS_ROOT}/forge/geavanceerd`);
+    expect(isAdvancedRow('forge', 'bundel-rekenmodel')).toBe(true);
+    expect(isAdvancedRow('forge', 'forge')).toBe(false);
+    // Een instelling in een blad van een geavanceerde rij wijst naar die rij, en die staat op Geavanceerd.
+    const place = placementOf('forge-vermoeidheid');
+    expect(place?.row).toBe('bundel-rekenmodel');
+    expect(isAdvancedRow(place!.page, place!.row)).toBe(true);
+    expect(placementOf('korte-nacht')).toEqual({ page: 'vandaag', row: 'korte-nacht' });
   });
 
   it('zoeken vindt elke instelling op de eigen titel', () => {

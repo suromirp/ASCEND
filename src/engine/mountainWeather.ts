@@ -95,7 +95,7 @@ export function mountainWeatherLine(forecast: MountainForecast, date: string, wh
   return { line, fetchedAt: forecast.fetchedAt, place: forecast.place.name };
 }
 
-// "bijgewerkt om 21.10", met "gisteren" ervoor als de voorspelling van de avond ervoor is: op een
+// "bijgewerkt om 21:10", met "gisteren" ervoor als de voorspelling van de avond ervoor is: op een
 // tocht heb je vaak geen bereik, dan blijft die van gisteren staan.
 export function mountainUpdatedLabel(fetchedAt: string, today: string): string {
   const d = new Date(fetchedAt);

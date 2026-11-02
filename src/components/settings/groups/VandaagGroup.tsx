@@ -26,7 +26,6 @@ import { notificationPort } from '../../../integrations/notifications';
 import { noticesNeed, resolveDeviceNotices } from '../../../engine/deviceNotices';
 import type { GroupProps } from './types';
 
-const ADVANCED = ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'];
 
 // Vandaag en meldingen: wat ASCEND je op Vandaag laat zien en vraagt, het weer, en wat er na een
 // training komt. Alles mag uit (docs/beslissingen/2026-10-22-alles-instelbaar.md).
@@ -102,9 +101,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       <SettingsSection
-        advancedIds={ADVANCED}
         advancedTitles="Ochtendkaart, Ochtend begint om, Vragen bij een korte nacht, Dag van de terugblik, Terugknop, Na een herstart"
-        storageKey="vandaag-geavanceerd"
         advanced={
           <>
             <SummaryRow id="ochtendkaart" title="Ochtendkaart" facts={facts} info="ochtendkaart" onChange={(on) => set({ morningCard: on })} />

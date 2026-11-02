@@ -52,9 +52,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="App"
-        advancedIds={['auto-bijwerken', 'voorstellen-opruimen', 'herbouwen', 'startniveau']}
         advancedTitles={facts.liveUpdate ? 'Automatisch bijwerken, Oude voorstellen opruimen, Adviezen opnieuw berekenen, Startniveau zelf invullen' : 'Oude voorstellen opruimen, Adviezen opnieuw berekenen, Startniveau zelf invullen'}
-        storageKey="gegevens-geavanceerd"
         advanced={
           <>
             <SummaryRow id="auto-bijwerken" title="Automatisch bijwerken" facts={facts} info="autoBijwerken" onChange={(on) => void updateSettings({ autoUpdate: on })} />
