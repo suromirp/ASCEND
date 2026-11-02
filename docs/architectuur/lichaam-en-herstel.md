@@ -42,7 +42,7 @@ quiet line) and "Hoe licht" (`legEaseHow`). Soreness only in the upper body is a
 average once there are 7 days) becomes a question in the morning check instead of a
 warning (`engine/shortNight.ts`, decision `docs/beslissingen/2026-10-25-korte-nacht-vragen.md`).
 Your verdict per date lives in `AppSettings.nightJudgments`, tied to the measured minutes
-(a later full night makes it lapse), read through `storage/migrations.ts#migrateNightJudgments`
+(a later full night makes it lapse), read through `storage/migrationsBody.ts#migrateNightJudgments`
 and merged per date on restore. "Niet goed gemeten" keeps sleep, sleep score and HRV of
 that night out of your own averages and the suggestion; resting heart rate still counts;
 the numbers at Garmin and intervals.icu are never changed. Switch "Vragen bij een korte
@@ -54,7 +54,7 @@ nacht" (`AppSettings.askShortNight`).
 Logboek: the sheet of a training and a tapped day in the calendar, never on the morning card.
 A note on a training touches the morning of that day, one on a calendar day the morning after
 (`engine/influence.ts#affectedMorning`, the one rule). It is a list next to the history, so a
-log is never changed; it travels in the backup (`storage/migrations.ts#migrateInfluences`,
+log is never changed; it travels in the backup (`storage/migrationsBody.ts#migrateInfluences`,
 merged per id). An easy run with a heart rate outside 1.5 times the noise of the loopinzicht
 gets a sign in Logboek and Week; "Niet meetellen voor hartslag" keeps a run out of Tempo bij
 zone 2 and later comparisons, "Deze nacht niet meetellen" keeps a morning out of the resting
