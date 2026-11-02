@@ -54,3 +54,10 @@ export function withCountingSports(templates: SessionTemplate[], settings: Count
 export function countedLogCounts(log: Pick<SessionLog, 'countedSport'>, settings: CountingSettings): boolean {
   return !!log.countedSport && sportCounts(settings, log.countedSport);
 }
+
+// Voor weergave: elke sport die kan meetellen bij naam, ook als hij dat nog niet doet (een voorstel dat een
+// vaste afspraak toevoegt). Nooit voor de beenindex of de planning: daar telt alleen wat meetelt.
+export function withSportNames(templates: SessionTemplate[]): SessionTemplate[] {
+  const ids = new Set(templates.map((t) => t.id));
+  return [...templates, ...COUNTED_SPORTS.map((s) => sportTemplate(s.id)).filter((t) => !ids.has(t.id))];
+}

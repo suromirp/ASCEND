@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { withSportNames } from '../engine/sportTemplate';
 import { useAppData } from '../state/AppDataContext';
 import { previewProposal, type PreviewEntry, type PreviewMove } from '../engine/proposalPreview';
 import { resolveVariantDuration } from '../engine/substitutions';
@@ -74,7 +75,9 @@ export interface ProposalSheetProps {
 }
 
 export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'Voorstel', emptyText, listUntil, extraLines, summary, alternative }: ProposalSheetProps) {
-  const { plannedSessions, templates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
+  const { plannedSessions, templates: ctxTemplates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
+  // A fixed appointment of a sport that does not count yet is new in this proposal: show it by its name.
+  const templates = useMemo(() => withSportNames(ctxTemplates), [ctxTemplates]);
   const planPreviewPass = previewPass ?? contextPass;
   const [busy, setBusy] = useState(false);
   // While Akkoord runs, the back button and a tap beside the sheet wait for it
@@ -353,7 +356,8 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
 // (pictogram, naam, "do 29 okt > zo 1 nov", "wordt Testloop 5 km", "vervalt"). Dezelfde regels als
 // bovenaan "Zo ziet je week eruit", zodat het advies en het voorstel hetzelfde laten zien.
 export function ProposalChangeList({ proposal }: { proposal: PlanChangeProposal }) {
-  const { plannedSessions, templates, planPreviewPass } = useAppData();
+  const { plannedSessions, templates: ctxTemplates, planPreviewPass } = useAppData();
+  const templates = useMemo(() => withSportNames(ctxTemplates), [ctxTemplates]);
   const data = useMemo(() => previewProposal(proposal.changes, plannedSessions, templates, planPreviewPass), [proposal, plannedSessions, templates, planPreviewPass]);
   if (data.moves.length === 0) return null;
   return (

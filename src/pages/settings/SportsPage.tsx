@@ -52,7 +52,7 @@ function DotStrip({ dots }: { dots: WeekDot[] }) {
 function SportCard({ info, dots, onOpen }: { info: SportCardInfo; dots: WeekDot[]; onOpen: () => void }) {
   const def = anySportDefinition(info.sport);
   return (
-    <Card className="p-0">
+    <Card className="!p-0">
       <button type="button" onClick={onOpen} data-sheet-from className="block min-h-[44px] w-full p-4 text-left active:opacity-80">
         <div className="flex items-center gap-3">
           {def.pictogram && <span style={{ color: def.colorToken }}><Pictogram name={def.pictogram} size={32} /></span>}
@@ -110,7 +110,7 @@ export function SportsPage() {
         <div className="mt-6 flex flex-col gap-3">
           <Eyebrow>Je eigen sporten</Eyebrow>
           {customs.map((c) => (
-            <Card key={c.id} className="p-0">
+            <Card key={c.id} className="!p-0">
               <button type="button" onClick={() => setOpenCustom(c.type)} data-sheet-from className="block min-h-[44px] w-full p-4 text-left active:opacity-80">
                 <div className="flex items-center gap-3">
                   <span className="font-display min-w-0 flex-1 text-xl" style={{ color: 'var(--color-ink)' }}>{c.label}</span>
