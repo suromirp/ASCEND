@@ -1,0 +1,102 @@
+// ASCEND: verplaats je een nieuwe testpoging (regel TEST-RETRY), dan komt terug wat alleen voor die test
+// van de planning ging (besluit docs/beslissingen/2026-11-02-week-opnieuw-plannen.md).
+//
+// TEST-RETRY laat een training gaan "zodat je benen fris zijn voor de testloop". Staat de test daarna op
+// een andere dag, dan is die reden weg. Het verplaatsen van een test vraagt altijd Akkoord
+// (engine/weekDrag.ts#decideMove), dus de training komt in hetzelfde voorstel terug, als "weer op",
+// net als Toch doen; Ongedaan maken zet beide terug. Alleen een rij die nog overgeslagen is met het slot
+// van dat voorstel (niet door jou, niet gelogd), vandaag of later, en alleen als hij niet botst met de
+// test op zijn nieuwe dag: niet op de testdag, niet de dag erna, en iets zwaars niet binnen twee dagen.
+// Pure: no React, no IndexedDB.
+
+import type { PlanChangeProposal } from '../models/planChange';
+import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
+import type { ScheduleChange, ScheduleProposal } from './scheduler';
+import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
+import { findingKey, validateWeeks, type CheckInput } from './weekValidator';
+import { idHasRole } from './templateRoles';
+import { isHeavySession } from './illness';
+
+// De reden waarmee TEST-RETRY een training laat gaan voor frisse benen (engine/adviceCompute.ts).
+export const FRESH_FOR_TEST_REASON = 'Zodat je benen fris zijn voor de testloop.';
+
+export interface TestMoveRestoreInput {
+  testId: string;
+  toDate: string;
+  sessions: PlannedSession[];
+  proposals: readonly PlanChangeProposal[];
+  logs: SessionLog[];
+  templates: SessionTemplate[];
+  today: string;
+  // De weekcontrole zonder de rijen: een rij komt alleen terug als hij geen nieuwe bevinding geeft (ook
+  // 48 uur met een training die TEST-RETRY zelf verschoof). Zonder: alleen de vaste afstand tot de test.
+  check?: Omit<CheckInput, 'sessions'>;
+}
+
+export function restoresForTestMove(input: TestMoveRestoreInput): ScheduleChange[] {
+  const { testId, toDate, sessions, templates, today } = input;
+  const test = sessions.find((s) => s.id === testId);
+  if (!test || test.scheduledDate === toDate || !idHasRole(test.templateId, 'test', templates)) return [];
+  const reverted = new Set(input.proposals.map((p) => p.revertsProposalId).filter((x): x is string => !!x));
+  const placedBy = input.proposals.filter((p) => p.resolution === 'accepted' && !reverted.has(p.id)
+    && p.changes.some((c) => c.plannedSessionId === testId && c.templateId === test.templateId && c.generatedBy?.includes('TEST-RETRY')));
+  if (placedBy.length === 0) return [];
+  const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  const rows = new Map(sessions.map((s) => [s.id, s]));
+  const out: ScheduleChange[] = [];
+  for (const p of placedBy) {
+    for (const c of p.changes) {
+      if (c.action !== 'remove' || !c.plannedSessionId || c.reason !== FRESH_FOR_TEST_REASON) continue;
+      const row = rows.get(c.plannedSessionId);
+      const template = row ? byId.get(row.templateId) : undefined;
+      if (!row || !template || row.status !== 'skipped' || logged.has(row.id) || row.scheduledDate < today) continue;
+      if (row.lock?.by !== 'proposal' || row.lock.proposalId !== p.id) continue;
+      if (row.scheduledDate === toDate || row.scheduledDate === addDays(toDate, 1)) continue;
+      if (isHeavySession(template) && Math.abs(daysBetween(row.scheduledDate, toDate)) < 2) continue;
+      if (out.some((o) => o.sessionId === row.id)) continue;
+      if (input.check && givesNewFinding(input.check, sessions, testId, toDate, row)) continue;
+      out.push({ sessionId: row.id, templateId: row.templateId, templateName: template.name, fromDate: row.scheduledDate, toDate: row.scheduledDate, restore: true });
+    }
+  }
+  return out;
+}
+
+// Geeft de rij terug op zijn dag (met de test op de nieuwe dag) een bevinding die er zonder hem niet is?
+// Gekeken als jouw rij (reportYours), over zijn week en de weken ernaast.
+function givesNewFinding(check: Omit<CheckInput, 'sessions'>, sessions: PlannedSession[], testId: string, toDate: string, row: PlannedSession): boolean {
+  const lock = { by: 'user' as const, at: 'check' };
+  const base = sessions.map((s) => (s.id === testId ? { ...s, scheduledDate: toDate, weekStartDate: mondayOfWeek(toDate), lock } : s));
+  const withRow = base.map((s) => (s.id === row.id ? { ...s, status: 'planned' as const, lock } : s));
+  const monday = mondayOfWeek(row.scheduledDate);
+  const weeks = new Set([addDays(monday, -7), monday, addDays(monday, 7)]);
+  const keys = (list: PlannedSession[]) => new Set(validateWeeks({ ...check, sessions: list, reportYours: true }, weeks).map(findingKey));
+  const before = keys(base);
+  return [...keys(withRow)].some((k) => !before.has(k));
+}
+
+// De verplaatsing van een test met wat terugkomt erbij, in hetzelfde voorstel (state/moveActions.ts#moveSession).
+// Zonder iets terug blijft het voorstel zoals het was.
+export function withTestRestores(proposal: ScheduleProposal, sessionId: string, input: Omit<TestMoveRestoreInput, 'testId' | 'toDate'>): ScheduleProposal {
+  const own = proposal.changes[0];
+  if (!own || own.sessionId !== sessionId || own.toDate === own.fromDate || own.restore) return proposal;
+  const back = restoresForTestMove({ ...input, testId: sessionId, toDate: own.toDate })
+    .filter((c) => !proposal.changes.some((x) => x.sessionId === c.sessionId));
+  if (back.length === 0) return proposal;
+  return { ...proposal, changes: [...proposal.changes, ...back], reason: [proposal.reason, restoreSentence(back)].filter(Boolean).join(' ') };
+}
+
+// Een rij die "weer op" de planning komt (Toch doen, of terug na een verplaatste test): op zijn dag, en
+// van jou, zodat de automatische planning hem laat staan. Terug op de dag waar hij vandaan kwam is hij
+// gewoon gepland, anders verplaatst (state/moveActions.ts#applyProposal).
+export function restoredRow(session: PlannedSession, toDate: string, lock: PlannedSession['lock']): PlannedSession {
+  return { ...session, scheduledDate: toDate, status: toDate === (session.movedFromDate ?? toDate) ? 'planned' : 'moved', lock };
+}
+
+// De zin in het voorstel van de verplaatsing.
+export function restoreSentence(changes: ScheduleChange[]): string {
+  if (changes.length === 0) return '';
+  const names = changes.map((c) => c.templateName);
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} en ${names.at(-1)}`;
+  return `${list} ging alleen weg voor de test en ${changes.length === 1 ? 'komt' : 'komen'} terug op ${changes.length === 1 ? 'zijn' : 'hun'} eigen dag.`;
+}

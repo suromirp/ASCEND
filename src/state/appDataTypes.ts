@@ -1,6 +1,7 @@
 // De vorm van wat useAppData geeft, en de invoer van een paar acties. Alleen typen.
 
 import type { Program } from '../models/program';
+import type { WeekReplanPlan } from '../storage/weekReplan';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress, GoalPriority } from '../models/goals';
 import type { InjuryNote } from '../models/injury';
@@ -298,6 +299,10 @@ export interface AppData {
   dismissRecentChange: () => void;
   // Een handeling die niet lukte, als melding zonder Ongedaan maken (bijvoorbeeld een ruil die niet kon).
   showFailure: (title: string, line: string) => void;
+  // Week opnieuw plannen (engine/replanWeek.ts): het voorstel voor de getoonde week (alleen rekenen), en na
+  // Akkoord alles in één keer met Ongedaan maken in de melding.
+  planWeekReplan: (weekStart: string) => Promise<WeekReplanPlan | null>;
+  applyWeekReplan: (plan: WeekReplanPlan) => Promise<void>;
   // Fase 3: advice engine (engine/adviceEngine.ts) + change log.
   planChangeLog: PlanChangeProposal[];
   advice: Advice[];

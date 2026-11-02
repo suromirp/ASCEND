@@ -35,6 +35,7 @@ Vrij
 Zo 1 · niets gepland
 [knop: Jaaroverzicht]
 [knop: Weekterugblik]
+[knop: Week opnieuw plannen]
 
 --- kaart 3 ---
 [knop: Deze week door ASCEND aangepast · 2bekijk]
