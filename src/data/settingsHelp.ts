@@ -675,7 +675,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Toestemming', text: 'Android vraagt pas als je het aanzet, en ASCEND vraagt alleen leesrechten. Het schrijft nooit iets in Health Connect.' },
       { head: 'Met intervals.icu', text: 'intervals.icu gaat voor. Een training die daar al binnenkwam, komt niet nog eens als voorstel; slaap en hartslag uit Health Connect vullen alleen aan wat ontbreekt.' },
-      { head: 'Je keuzes', text: 'Zet je bij Gebruik van je horloge slaap, rusthartslag of HRV uit, dan haalt ASCEND die ook uit Health Connect niet op.' },
+      { head: 'Je keuzes', text: 'Zet je bij Gebruik van je gegevens trainingen, slaap, rusthartslag of HRV uit, dan haalt ASCEND die ook uit Health Connect niet op.' },
       { head: 'Ophalen', text: 'Bij het openen van de app, en hoogstens elke drie uur.' },
       { head: 'Je planning', text: 'Die verandert er niet door. Een training wordt pas een log als je hem op Vandaag opslaat.' },
       { head: 'Uit', text: 'Wat ASCEND ophaalde gaat van je telefoon. Je logs blijven staan.' },
@@ -1293,6 +1293,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Per soort gegeven of ASCEND het ophaalt.',
     points: [
       { head: 'Uit', text: 'betekent: niet ophalen en niet bewaren.' },
+      { head: 'Health Connect', text: 'de keuzes gelden ook daarvoor. Staat Health Connect aan, dan heet deze rij Gebruik van je gegevens.' },
     ],
   },
   naarHorloge: {

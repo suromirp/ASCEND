@@ -22,6 +22,10 @@ export const SECONDARY_SOURCES: readonly string[] = ['health-connect'];
 export const SAME_START_MINUTES = 5;
 export const SAME_DURATION_MINUTES = 5;
 export const SAME_DURATION_RATIO = 0.1;
+// Een log uit intervals.icu kent alleen de tijd in beweging; de pauzes zijn weg. Een duur van start
+// tot eind tot anderhalf keer die tijd past er dan nog bij (een tocht met lange stops).
+export const MOVING_ONLY_FACTOR = 1.5;
+const MOVING_ONLY_SOURCES: readonly string[] = ['intervals.icu'];
 
 export interface Moment {
   externalId: string;
@@ -72,7 +76,8 @@ export function momentOfLog(l: Pick<SessionLog, 'externalId' | 'completedAt' | '
   if (!Number.isFinite(end) || !(l.durationMinutes > 0)) return undefined;
   const startMs = end - l.durationMinutes * 60_000;
   if (hasGuessedTime(l, startMs)) return undefined;
-  return { externalId: l.externalId, startMs, minMinutes: l.durationMinutes, maxMinutes: l.durationMinutes, strength: l.type === 'strength' };
+  const maxMinutes = MOVING_ONLY_SOURCES.includes(sourcePrefix(l.externalId)) ? l.durationMinutes * MOVING_ONLY_FACTOR : l.durationMinutes;
+  return { externalId: l.externalId, startMs, minMinutes: l.durationMinutes, maxMinutes, strength: l.type === 'strength' };
 }
 
 export function isSameMoment(a: Moment, b: Moment): boolean {

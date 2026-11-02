@@ -68,7 +68,9 @@ describe('rowAvailability', () => {
 
   it('niet gekoppeld: de horlogeschakelaars en de MacroFactor-keuzes staan er niet, met de reden', () => {
     const none = facts({ watch: watch({ linked: false }), macroFactor: { leads: true } });
-    expect(rowAvailability('slaap', none)).toEqual({ available: false, reason: 'Zichtbaar zodra Garmin is gekoppeld', parent: 'garmin' });
+    expect(rowAvailability('slaap', none)).toEqual({ available: false, reason: 'Zichtbaar zodra Garmin is gekoppeld of Health Connect aan staat', parent: 'garmin' });
+    // Met Health Connect aan staan de keuzes er wel (de rij heet dan Gebruik van je gegevens).
+    expect(rowAvailability('slaap', facts({ watch: watch({ linked: false }), healthConnect: { inApp: true, enabled: true } })).available).toBe(true);
     expect(rowAvailability('macrofactor-leidend', none)).toMatchObject({ available: false, parent: 'macrofactor' });
     expect(settingAvailabilityOnPage('horloge-gebruik', none).available).toBe(false);
     expect(settingAvailabilityOnPage('garmin', none).available).toBe(true);

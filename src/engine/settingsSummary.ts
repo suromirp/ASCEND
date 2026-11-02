@@ -318,6 +318,7 @@ export function rowContext(f: SettingsFacts): RowContext {
   const support = f.notice?.support ?? 'ready';
   return {
     garmin: f.watch?.linked === true,
+    healthConnect: f.healthConnect?.enabled === true,
     activities: f.watch?.use.activities !== false,
     sendToWatch: f.watch?.sendEnabled === true,
     macroFactorExport: !!f.macroFactor?.readAt,
@@ -404,7 +405,12 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     }
     case 'bundel-horloge-gebruik': {
       const use = f.watch?.use;
-      return { value: `${countOn([use?.activities !== false, use?.details !== false && use?.activities !== false, use?.sleep !== false, use?.restingHeartRate !== false, use?.hrv !== false])} van 5 aan` };
+      // Met Health Connect aan komt niet alles van het horloge: dan heet de rij "Gebruik van je gegevens".
+      // Zonder Garmin zijn er geen details van loopjes, dus vier keuzes.
+      const title = f.healthConnect?.enabled ? { title: 'Gebruik van je gegevens' } : {};
+      const flags = [use?.activities !== false, use?.sleep !== false, use?.restingHeartRate !== false, use?.hrv !== false];
+      if (f.watch?.linked !== true) return { ...title, value: `${countOn(flags)} van 4 aan` };
+      return { ...title, value: `${countOn([...flags, use?.details !== false && use?.activities !== false])} van 5 aan` };
     }
     case 'bundel-horloge-sturen':
       return f.watch?.sendEnabled ? { value: 'Aan' } : { value: 'Uit', dim: true };

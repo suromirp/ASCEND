@@ -50,7 +50,8 @@ describe('dezelfde activiteit uit twee bronnen', () => {
   it('een log zonder bron-id heeft geen moment om mee te vergelijken', () => {
     expect(momentOfLog(log('l1', undefined, '2026-10-20T07:30:00', 40))).toBeUndefined();
     const m = momentOfLog(log('l2', 'intervals.icu:i1', '2026-10-20T07:30:00', 40));
-    expect([m?.minMinutes, m?.maxMinutes, m?.strength]).toEqual([40, 40, false]);
+    expect([m?.minMinutes, m?.maxMinutes, m?.strength]).toEqual([40, 60, false]);
+    expect(momentOfLog(log('l3', 'health-connect:x', '2026-10-20T07:30:00', 40))?.maxMinutes).toBe(40);
     expect(m?.startMs).toBe(new Date('2026-10-20T07:30:00').getTime());
   });
 });
@@ -92,6 +93,19 @@ describe('wat er als voorstel komt (intervals.icu gaat voor)', () => {
     // Zonder de totale tijd zou het twee tochten lijken.
     const zonder = act('intervals.icu:t2', '2026-10-25T09:00:00', 240, { kind: 'hike' });
     expect(offeredActivities([zonder], [hcTocht], []).map((a) => a.externalId)).toEqual(['intervals.icu:t2', 'health-connect:t']);
+  });
+
+  it('een log uit intervals.icu kent alleen de bewegingstijd: een duur tot anderhalf keer past erbij', () => {
+    // 200 minuten in beweging opgeslagen; Health Connect zegt 290 minuten van start tot eind.
+    const icuLog = log('l10', 'intervals.icu:t9', '2026-10-26T09:00:00', 200);
+    const hcLang = act('health-connect:l', '2026-10-26T09:02:00', 290, { kind: 'hike' });
+    expect(offeredActivities([], [hcLang], [icuLog]).map((a) => a.externalId)).toEqual([]);
+    // Ruim meer dan anderhalf keer (plus de marge) is een andere training.
+    const hcTeLang = act('health-connect:m', '2026-10-26T09:02:00', 340, { kind: 'hike' });
+    expect(offeredActivities([], [hcTeLang], [icuLog]).map((a) => a.externalId)).toEqual(['health-connect:m']);
+    // Een log uit een andere bron krijgt die ruimte niet.
+    const otherLog = log('l11', 'garmin:t9', '2026-10-26T09:00:00', 200);
+    expect(offeredActivities([], [hcLang], [otherLog]).map((a) => a.externalId)).toEqual(['health-connect:l']);
   });
 
   it('kracht en cardio zijn nooit dezelfde training', () => {

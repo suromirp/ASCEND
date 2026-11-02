@@ -7,7 +7,7 @@ import type { WatchUseKey } from '../../../engine/watchUse';
 import { getConnection, setAutoTick, setGarminLeads, setTakeCorrections, setWatchUse, syncWatchActivities } from '../../../storage/externalActivities';
 import { setMacroFactorLeads } from '../../../storage/macrofactor';
 import { setWatchWorkoutsEnabled, syncWatchWorkouts } from '../../../storage/watchWorkouts';
-import { disableHealthConnect, enableHealthConnect, openHealthConnectSettings } from '../../../storage/healthConnect';
+import { disableHealthConnect, enableHealthConnect, openHealthConnectSettings, syncHealthConnect } from '../../../storage/healthConnect';
 import { healthEnableNote, healthOffNote, type HealthNote } from '../../../engine/healthConnectNote';
 import { TextButton } from '../../TextButton';
 import { SettingsSection } from '../SettingsList';
@@ -53,6 +53,8 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
     try {
       await setWatchUse({ [key]: on });
       if (on && (await getConnection())) await syncWatchActivities({ force: true });
+      // Dezelfde keuzes gelden voor Health Connect: wat weer aan gaat, haalt een ronde meteen op.
+      if (on && facts.healthConnect?.enabled) await syncHealthConnect({ force: true });
     } finally {
       reload();
     }
@@ -101,14 +103,19 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
   }
   const changeCalm = (on: boolean) => changeHr({ watchCalmRun: on });
 
+  // Met Health Connect aan komt niet alles van het horloge (engine/settingsSummary.ts, bundel-horloge-gebruik).
+  const usageTitle = facts.healthConnect?.enabled ? 'Gebruik van je gegevens' : 'Gebruik van je horloge';
+  const usageRow = <SummaryRow id="bundel-horloge-gebruik" title={usageTitle} facts={facts} info="bundelHorlogeGebruik" onClick={() => setSheet('bundel-horloge-gebruik')} />;
+
   return (
     <>
       {note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-warning)' }} role="status">{note}</p>}
 
       <SettingsSection title="Garmin">
         <SummaryRow id="garmin" title="Via intervals.icu" facts={facts} info="garmin" onClick={() => navigate('/koppelen/garmin')} />
-        {/* Zonder koppeling hoort een rij er niet (SHOW_WHEN in data/settingsLayout.ts). */}
-        <SummaryRow id="bundel-horloge-gebruik" title="Gebruik van je horloge" facts={facts} info="bundelHorlogeGebruik" onClick={() => setSheet('bundel-horloge-gebruik')} />
+        {/* Zonder koppeling hoort een rij er niet (SHOW_WHEN in data/settingsLayout.ts). Zonder Garmin
+            maar met Health Connect aan staat Gebruik van je gegevens bij Health Connect. */}
+        {facts.watch?.linked === true && usageRow}
         <SummaryRow id="vanzelf-afvinken" title="Vanzelf afvinken" facts={facts} info="vanzelfAfvinken" onChange={(on) => void setAutoTick(on).finally(reload)} />
         <SummaryRow id="garmin-leidend" title="Garmin is leidend" facts={facts} info="garminLeidend" onChange={(on) => void setGarminLeads(on).finally(reload)} />
         <SummaryRow id="correcties-overnemen" title="Correcties uit intervals.icu overnemen" facts={facts} info="correctiesOvernemen" onChange={(on) => void setTakeCorrections(on).finally(reload)} />
@@ -119,6 +126,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
       <SettingsSection title="Health Connect">
         {/* In de browser gedimd met uitleg, zonder schakelaar (engine/settingsSummary.ts#healthConnectRow). */}
         <SummaryRow id="health-connect" title="Health Connect" facts={facts} info="healthConnect" kind="static" onChange={(on) => void changeHealth(on)} />
+        {facts.watch?.linked !== true && usageRow}
       </SettingsSection>
       {health && (
         <div role="status">
@@ -142,7 +150,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
       </SettingsSection>
 
       {sheet === 'bundel-horloge-gebruik' && (
-        <BundleSheet eyebrow="Koppelingen" title="Gebruik van je horloge" line="Uit betekent: ASCEND haalt het niet meer op en bewaart het niet." onClose={() => setSheet(null)}>
+        <BundleSheet eyebrow="Koppelingen" title={usageTitle} line="Uit betekent: ASCEND haalt het niet meer op en bewaart het niet." onClose={() => setSheet(null)}>
           <SummaryRow id="garmin-trainingen" title="Trainingen" facts={facts} onChange={(on) => void changeUse('activities', on)} />
           <SummaryRow id="horloge-details" title="Details van loopjes" facts={facts} onChange={(on) => void changeUse('details', on)} />
           <SummaryRow id="slaap" title="Slaap" facts={facts} onChange={(on) => void changeUse('sleep', on)} />
