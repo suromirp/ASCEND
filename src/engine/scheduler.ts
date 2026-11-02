@@ -250,6 +250,9 @@ export function findHeavyConflicts(
     // Leg strength the day after the long run (the setting) only when the day before the long run is not
     // already heavy for the legs: never three heavy leg days in a row.
     if (need === 0 && legHeavyDayBefore(first === template ? date : s.scheduledDate, sessions, templateMap, [sessionId, s.id])) need = 1;
+    // The other side of the same three in a row: this session heavy for the legs on D, the long run on D+1 and
+    // strength on D+2 that only stands there because of the setting. Then the strength session is the clash.
+    if (s.scheduledDate === addDays(date, 2) && longRunAfter(addDays(date, 1), other, sessions, templateMap, [sessionId, s.id])) return true;
     return gap <= need + extra;
   });
   if (!isTestLike(template)) return pairwise;
@@ -292,6 +295,16 @@ export function legHeavyDayBefore(date: string, sessions: PlannedSession[], temp
     if (o.scheduledDate !== before || o.status === 'skipped' || exclude.includes(o.id)) return false;
     const t = templateMap.get(o.templateId);
     return !!t && isLegHeavyTemplate(t);
+  });
+}
+
+// On `date` a session after which `strength` may follow the next day (legSpacingDays 0, so only with the setting).
+function longRunAfter(date: string, strength: SessionTemplate, sessions: PlannedSession[], templateMap: Map<string, SessionTemplate>, exclude: string[]): boolean {
+  if (!longRunThenLegs) return false;
+  return sessions.some((o) => {
+    if (o.scheduledDate !== date || o.status === 'skipped' || exclude.includes(o.id)) return false;
+    const t = templateMap.get(o.templateId);
+    return !!t && isLegHeavyTemplate(t) && legSpacingDays(t, strength) === 0;
   });
 }
 

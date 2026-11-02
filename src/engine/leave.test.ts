@@ -259,7 +259,7 @@ describe('free days', () => {
     // (docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md): on Tuesday it stays where it is.
     const crowded = [...plan, { id: 'extra', templateId: 'tpl_upper_b', scheduledDate: '2026-11-01', weekStartDate: MONDAY, status: 'planned' as const, order: 9 }];
     const tuesday = run(crowded, [period('free_days', '2026-10-27', '2026-10-27')]);
-    expect(byId(tuesday.sessions, id(MONDAY, 6))!.scheduledDate).not.toBe('2026-10-27');
+    expect(byId(tuesday.sessions, id(MONDAY, 6))!.scheduledDate).toBe('2026-11-01');
     const free = period('free_days', '2026-10-26', '2026-10-26');
     const r = run(crowded, [free]);
     const long = byId(r.sessions, id(MONDAY, 6))!;

@@ -28,7 +28,7 @@ Met de instelling "Beenkracht de dag na de lange duurloop" (`AppSettings.longRun
 register in `scheduler.ts` zoals "Zware dingen op één dag") mag kracht 24 uur na de lange loop, nooit andersom, en
 niet als de dag vóór de lange loop al beenzwaar is (`legHeavyDayBefore` in `findHeavyConflicts`). De planningsronde
 verschuift alleen wat het systeem plande (niveau 3); wat jij of een voorstel vastzette blijft en Week meldt het als
-LEG-SPACING.
+LEG-SPACING. "Op de eigen dagen" geldt voor de melding (`reportYours` in `weekValidator.ts`): staat het weekendblok door jou buiten zijn eigen dagen, dan meldt Week het, maar de planningsronde herstelt dat niet zelf.
 
 **Who may touch a planned session** (`engine/weekValidator.ts#lockLevel`):
 history (logged or past) never; yours (`PlannedSession.lock`, set by your

@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { isLongRunThenLegsAllowed, legSpacingDays, respectsHeavySpacing, setLongRunThenLegs, withLongRunThenLegs } from './scheduler';
+import { findHeavyConflicts, isLongRunThenLegsAllowed, legSpacingDays, respectsHeavySpacing, setLongRunThenLegs, withLongRunThenLegs } from './scheduler';
 import { repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
@@ -98,6 +98,15 @@ describe('instelling: Beenkracht de dag na de lange duurloop', () => {
     expect(fits('tpl_lower_a', '2026-10-19', weekend)).toBe(false);
     // Ook als de lange duurloop zelf wordt geplaatst, met heuvels ervoor en Benen A erna.
     expect(fits('tpl_long_run', '2026-10-18', [ps('tpl_hill_intervals', '2026-10-17'), ps('tpl_lower_a', '2026-10-19')])).toBe(false);
+    // En vanaf de andere kant: heuvels plaatsen voor een lange loop met Benen A de dag erna.
+    expect(fits('tpl_hill_intervals', '2026-10-17', [ps('tpl_long_run', '2026-10-18'), ps('tpl_lower_a', '2026-10-19')])).toBe(false);
+    expect(respectsHeavySpacing('2026-10-16', t('tpl_hills_descent'), [ps('tpl_long_run', '2026-10-17'), ps('tpl_lower_a', '2026-10-18')], byId)).toBe(false);
+    const clash = findHeavyConflicts('nieuw', t('tpl_hill_intervals'), '2026-10-17', [ps('tpl_long_run', '2026-10-18'), ps('tpl_lower_a', '2026-10-19')], byId);
+    expect(clash.map((c) => c.templateId)).toEqual(['tpl_lower_a']);
+    // Zonder de instelling botst Benen A daar al met de lange loop; de heuvels zelf staan dan vrij van Benen A.
+    setLongRunThenLegs(false);
+    expect(fits('tpl_hill_intervals', '2026-10-17', [ps('tpl_long_run', '2026-10-18'), ps('tpl_lower_a', '2026-10-19')])).toBe(true);
+    setLongRunThenLegs(true);
     // Een lichte dag ervoor telt niet.
     expect(fits('tpl_lower_a', '2026-10-19', [ps('tpl_easy_run', '2026-10-17'), ps('tpl_long_run', '2026-10-18')])).toBe(true);
     // Een overgeslagen heuvelsessie telt ook niet.
