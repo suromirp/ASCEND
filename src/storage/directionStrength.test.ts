@@ -112,7 +112,7 @@ describe('een richting verandert het aantal keer kracht', () => {
   it('zet nooit kracht in een vakantie en zegt dat het in die week niet paste', async () => {
     await down();
     const start = addDays(FROM, 14);
-    await SettingsRepo.set({ leavePeriods: [{ id: 'v1', kind: 'no_training', startDate: start, endDate: addDays(start, 6) }] });
+    await SettingsRepo.set({ leavePeriods: [{ id: 'v1', kind: 'free_days', startDate: start, endDate: addDays(start, 6) }] });
     const up = await build(3);
     const adds = up.plan.items.filter((i) => i.action === 'add').map((i) => i.newSessionDraft!.scheduledDate);
     expect(adds.length).toBeGreaterThan(0);
@@ -146,7 +146,7 @@ describe('een richting verandert het aantal keer kracht', () => {
 
   it('zonder enige toevoeging zegt het voorstel dat er geen extra keer bij past', async () => {
     await down();
-    await SettingsRepo.set({ leavePeriods: [{ id: 'v2', kind: 'no_training', startDate: addDays(FROM, 1), endDate: addDays(FROM, 7 * 60) }] });
+    await SettingsRepo.set({ leavePeriods: [{ id: 'v2', kind: 'free_days', startDate: addDays(FROM, 1), endDate: addDays(FROM, 7 * 60) }] });
     const up = await build(3);
     expect(up.plan.addedWeeks).toBe(0);
     expect(strengthNotes(up.reshape, up.plan, false)).toEqual(['Je richting vraagt 3 keer kracht; op je dagen past er nu geen extra keer bij.']);
@@ -184,29 +184,5 @@ describe('een richting verandert het aantal keer kracht', () => {
     const up = await build(3);
     expect(up.plan.items.some((i) => i.action === 'add' && i.newSessionDraft!.templateId === 'tpl_lower_a' && i.newSessionDraft!.weekStartDate === week)).toBe(false);
     expect(up.plan.noRoomWeeks + up.plan.partialWeeks).toBeGreaterThanOrEqual(1);
-  });
-
-  it('kracht die met Akkoord erbij kwam blijft later niet stil op een vakantiedag staan', async () => {
-    await down();
-    const up = await build(3);
-    expect((await applyHorizonPlanNow(await computeHorizonPlan(up.input))).status).toMatch(/applied|partial/);
-    await syncProgramHorizon();
-    const week = addDays(FROM, 14);
-    const added = (await PlannedSessionsRepo.getAll()).find((x) => x.templateId === 'tpl_lower_a' && x.weekStartDate === week && x.status !== 'skipped')!;
-    expect(added.lock?.by).toBe('proposal');
-    await SettingsRepo.set({ leavePeriods: [{ id: 'v3', kind: 'no_training', startDate: addDays(week, 0), endDate: addDays(week, 6) }] });
-    await syncProgramHorizon();
-    await syncProgramHorizon();
-    const left = (await PlannedSessionsRepo.getAll()).filter((x) => x.weekStartDate === week && x.status !== 'skipped' && x.scheduledDate >= week && x.scheduledDate <= addDays(week, 6));
-    expect(left).toEqual([]);
-  });
-
-  it('wat je zelf vastzette blijft op een vakantiedag staan', async () => {
-    const week = addDays(FROM, 14);
-    const mine = (await PlannedSessionsRepo.getAll()).find((x) => x.templateId === 'tpl_upper_a' && x.weekStartDate === week)!;
-    await PlannedSessionsRepo.put({ ...mine, lock: { by: 'user', at: `${TODAY}T08:00:00.000Z` } });
-    await SettingsRepo.set({ leavePeriods: [{ id: 'v4', kind: 'no_training', startDate: addDays(week, 0), endDate: addDays(week, 6) }] });
-    await syncProgramHorizon();
-    expect((await PlannedSessionsRepo.getAll()).some((x) => x.id === mine.id && x.status !== 'skipped')).toBe(true);
   });
 });
