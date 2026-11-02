@@ -319,7 +319,7 @@ describe('het donker in de weerregel', () => {
     weatherLineForTraining({ forecast: forecast(), template: template({ id }), logs: [], date: '2026-11-03', durationMinutes: 40, clothingOn });
   it('zegt alleen "donker vanaf" als het kledingadvies aan staat en zelf iets over het donker zegt', () => {
     const on = run(true)!;
-    expect(on).toContain('donker vanaf 16.50');
+    expect(on).toContain('donker vanaf 16:50');
     expect(on).not.toContain('lampje');
   });
   it('houdt "neem een lampje mee" als het kledingadvies uit staat', () => {

@@ -116,21 +116,21 @@ describe('the words', () => {
   const at = (h: number, m: number) => new Date(2026, 9, 22, h, m).toISOString();
   const day = toISODate(new Date(2026, 9, 22));
 
-  it('writes the time with a dot', () => {
-    expect(formatClockTime(new Date(2026, 9, 22, 19, 4))).toBe('19.04');
-    expect(formatClockTime(new Date(2026, 9, 22, 7, 5))).toBe('07.05');
+  it('writes the time with a colon', () => {
+    expect(formatClockTime(new Date(2026, 9, 22, 19, 4))).toBe('19:04');
+    expect(formatClockTime(new Date(2026, 9, 22, 7, 5))).toBe('07:05');
   });
 
   it('says today, yesterday or the date', () => {
-    expect(sentWhen(at(19, 4), day)).toBe('om 19.04');
-    expect(sentWhen(at(19, 4), day, true)).toBe('vandaag om 19.04');
-    expect(sentWhen(at(19, 4), addDays(day, 1))).toBe('gisteren om 19.04');
-    expect(sentWhen(at(19, 4), addDays(day, 5))).toMatch(/^op 22 oktober( 2026)? om 19\.04$/);
+    expect(sentWhen(at(19, 4), day)).toBe('om 19:04');
+    expect(sentWhen(at(19, 4), day, true)).toBe('vandaag om 19:04');
+    expect(sentWhen(at(19, 4), addDays(day, 1))).toBe('gisteren om 19:04');
+    expect(sentWhen(at(19, 4), addDays(day, 5))).toMatch(/^op 22 oktober( 2026)? om 19:04$/);
   });
 
   it('has one short line per state, and a button where something can be done', () => {
     expect(watchStatusLine({ kind: 'none' }, day)).toBeUndefined();
-    expect(watchStatusLine({ kind: 'sent', sentAt: at(19, 4) }, day)).toEqual({ text: 'Verstuurd naar je horloge om 19.04' });
+    expect(watchStatusLine({ kind: 'sent', sentAt: at(19, 4) }, day)).toEqual({ text: 'Verstuurd naar je horloge om 19:04' });
     expect(watchStatusLine({ kind: 'sent' }, day)).toEqual({ text: 'Verstuurd naar je horloge' });
     expect(watchStatusLine({ kind: 'pending' }, day)).toEqual({ text: 'Nog niet op je horloge', action: 'send', actionLabel: 'Nu versturen' });
     expect(watchStatusLine({ kind: 'stale' }, day)?.action).toBe('send');
@@ -159,7 +159,7 @@ describe('watchOverview', () => {
   it('counts only today and later, and names the last round', () => {
     const overview = watchOverview(items, new Date(2026, 9, 22, 19, 4).toISOString(), '2026-10-22');
     expect(overview.count).toBe(2);
-    expect(watchOverviewText(overview, '2026-10-22')).toBe('2 trainingen staan klaar voor je horloge. Laatste ronde vandaag om 19.04.');
+    expect(watchOverviewText(overview, '2026-10-22')).toBe('2 trainingen staan klaar voor je horloge. Laatste ronde vandaag om 19:04.');
   });
 
   it('says so when nothing is there and no round has run', () => {

@@ -58,6 +58,7 @@ import type { WatchUseKey } from '../engine/watchUse';
 import { intervalsErrorMessage, normalizeConnection, type IntervalsConnection } from '../integrations/intervalsIcu';
 import { formatDateNL, todayISO, localDateOf } from '../utils/dates';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
+import { formatClock } from '../utils/clock';
 
 const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -239,7 +240,7 @@ export function GarminLinkPage() {
             <p>Athlete-id: {connection.athleteId}</p>
             <p>API-sleutel: {maskKey(connection.apiKey)}</p>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              {watch?.fetchedAt ? `Laatst opgehaald op ${formatDateNL(localDateOf(watch.fetchedAt))} om ${new Date(watch.fetchedAt).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}.` : 'Nog niet opgehaald.'}
+              {watch?.fetchedAt ? `Laatst opgehaald op ${formatDateNL(localDateOf(watch.fetchedAt))} om ${formatClock(watch.fetchedAt)}.` : 'Nog niet opgehaald.'}
             </p>
           </div>
           {watch?.lastError && !notice && <NoticeLine notice={{ tone: 'error', text: watch.lastError }} />}

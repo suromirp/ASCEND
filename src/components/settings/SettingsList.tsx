@@ -1,10 +1,12 @@
 import { useContext, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { settingsAdvancedRoute } from '../../data/settingsLayout';
 import { settingsAnchor } from '../../data/settingsIndex';
 import { haptics } from '../../utils/haptics';
 import { Icon } from '../icons';
 import { AdjustedTag, AutoTag, Eyebrow, InfoButton, ToggleVisual } from '../ui';
 import { InfoSheet } from './Sheet';
-import { SettingsAdjustedContext, SettingsJumpContext } from './jumpContext';
+import { SettingsAdjustedContext, SettingsAdvancedContext } from './jumpContext';
 import './settings.css';
 
 // De bouwstenen van de instellingen (docs/beslissingen/2026-10-22-instellingen-in-groepen.md):
@@ -16,26 +18,6 @@ export function SettingsList({ children, className = '' }: { children: ReactNode
   return <div className={`st-list ${className}`}>{children}</div>;
 }
 
-const ADV_KEY = 'ascend.instellingen.geavanceerd';
-
-function readAdvanced(): Record<string, boolean> {
-  try {
-    const raw = localStorage.getItem(ADV_KEY);
-    const parsed = raw ? (JSON.parse(raw) as unknown) : {};
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, boolean>) : {};
-  } catch {
-    return {};
-  }
-}
-
-function writeAdvanced(key: string, open: boolean) {
-  try {
-    localStorage.setItem(ADV_KEY, JSON.stringify({ ...readAdvanced(), [key]: open }));
-  } catch {
-    // Alleen gemak: zonder opslag staat Geavanceerd bij het openen dicht.
-  }
-}
-
 // Een kopje (Eyebrow) met 24 px erboven en 8 px eronder, daaronder de lijst. Rijen
 // die achter "Geavanceerd" horen staan in `advanced`; `advancedIds` zijn hun id's,
 // zodat een sprong ernaartoe de rij eerst openklapt. Of het open staat, onthoudt
@@ -44,44 +26,30 @@ export function SettingsSection({
   title,
   children,
   advanced,
-  advancedIds = [],
   advancedTitles,
-  storageKey,
 }: {
   title?: string;
   children: ReactNode;
   advanced?: ReactNode;
-  advancedIds?: string[];
-  // De titels van wat achter Geavanceerd zit, in één regel eronder zolang het dicht is.
+  // De titels van wat op de pagina Geavanceerd staat, in één regel onder de rij.
   advancedTitles?: string;
-  storageKey?: string;
 }) {
-  const jump = useContext(SettingsJumpContext);
-  const key = storageKey ?? title ?? 'sectie';
-  const [open, setOpen] = useState(() => readAdvanced()[key] === true);
-  const forced = jump.target !== undefined && advancedIds.includes(jump.target);
-  const shown = open || forced;
+  const navigate = useNavigate();
+  const { page, onAdvanced } = useContext(SettingsAdvancedContext);
+  // Op de pagina Geavanceerd zelf: alleen de geavanceerde rijen, zonder kopje.
+  if (onAdvanced) return advanced ? <><div className="st-eyebrow-gap" /><SettingsList>{advanced}</SettingsList></> : null;
   return (
     <>
       {title ? <div className="st-eyebrow"><Eyebrow>{title}</Eyebrow></div> : <div className="st-eyebrow-gap" />}
       <SettingsList>
         {children}
-        {advanced && (
+        {advanced && page && (
           <>
-            <button
-              type="button"
-              className="st-more"
-              aria-expanded={shown}
-              onClick={() => {
-                setOpen(!shown);
-                writeAdvanced(key, !shown);
-              }}
-            >
+            <button type="button" className="st-more" data-row="geavanceerd" onClick={() => navigate(settingsAdvancedRoute(page))}>
               <span>Geavanceerd</span>
               <Icon name="verder" size={16} />
             </button>
-            {!shown && advancedTitles && <p className="st-more-titles">{advancedTitles}</p>}
-            {shown && advanced}
+            {advancedTitles && <p className="st-more-titles">{advancedTitles}</p>}
           </>
         )}
       </SettingsList>

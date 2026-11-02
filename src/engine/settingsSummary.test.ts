@@ -844,6 +844,15 @@ describe('rowSummary: rijen met een blad', () => {
     expect(rowSummary('bundel-tochten', facts({ goal: null, treks: 1 })).hidden).toBe(false);
   });
 
+  it('Tochten zegt bij een tocht als hoofddoel dat er geen andere zijn', () => {
+    const trek = facts({ treks: 0, mainIsTrek: true });
+    expect(rowSummary('bundel-tochten', trek)).toMatchObject({ value: 'Geen andere', dim: true, sub: 'GR5 is je doel' });
+    expect(groupSummary('doel', trek).value).toBe('Alleen je doel');
+    // Met een tocht erbij blijft het aantal staan, en zonder tocht als doel blijft het "Geen tochten".
+    expect(rowSummary('bundel-tochten', facts({ treks: 1, mainIsTrek: true })).value).toBe('1 tocht');
+    expect(groupSummary('doel', facts({ treks: 0, mainIsTrek: false })).value).toBe('Geen tochten');
+  });
+
   it('Mijn sportschool noemt het profiel en wat erin ligt', () => {
     expect(rowSummary('bundel-sportschool', facts())).toEqual({ value: 'Mijn sportschool', sub: '2 stangen, 7 schijven' });
   });

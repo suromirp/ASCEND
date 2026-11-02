@@ -72,6 +72,7 @@ import { resolveMissedSettings } from './missedTraining';
 import { resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
+import { formatClock } from '../utils/clock';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
 export const SUB_MAX_LENGTH = 40;
@@ -120,6 +121,8 @@ export interface SettingsFacts {
   pairing: 'automatic' | 'always' | 'only_if_useful' | 'never';
   position: { weekInProgram: number; totalWeeks: number; phaseName: string } | null;
   goal: { name: string; date: string } | null;
+  // Het hoofddoel is zelf een tocht (GR5, een bergtocht): dan klopt "Geen tochten" niet.
+  mainIsTrek?: boolean;
   // Tochten van jezelf die nog komen, en andere vrije dagen of vakanties die nog komen.
   treks: number;
   vacations: number;
@@ -271,8 +274,7 @@ function healthConnectRow(f: SettingsFacts): RowSummary {
 
 // "14:02", in de tijd van het toestel.
 function clock(iso: string): string {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return formatClock(iso);
 }
 
 const SPORTS: Sport[] = SPORT_LIST;
@@ -412,7 +414,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: `Rust ${lower(WEEKDAYS_SHORT[restDayIndex(f)])}`, dim: false };
     }
     case 'bundel-tochten':
-      return f.treks > 0 ? { value: plural(f.treks, 'tocht', 'tochten') } : { value: 'Geen tochten', dim: true };
+      if (f.treks > 0) return { value: plural(f.treks, 'tocht', 'tochten') };
+      // Een tocht als hoofddoel is al een tocht: zeg dat er geen andere zijn.
+      if (f.goal && f.mainIsTrek) return { value: 'Geen andere', dim: true, sub: `${shortGoalName(f.goal.name)} is je doel` };
+      return { value: 'Geen tochten', dim: true };
     case 'bundel-sportschool':
       return { value: forge.profile.name, sub: `${plural(forge.profile.barsKg.length, 'stang', 'stangen')}, ${plural(forge.profile.platesKg.length, 'schijf', 'schijven')}` };
     case 'bundel-weergave':
@@ -1046,7 +1051,7 @@ function groupSummaryNow(page: SettingsPageId, f: SettingsFacts): GroupSummary {
     }
     case 'doel': {
       const treks = f.treks;
-      const value = treks > 0 ? plural(treks, 'tocht', 'tochten') : f.goal ? 'Geen tochten' : 'Geen doel';
+      const value = treks > 0 ? plural(treks, 'tocht', 'tochten') : f.goal ? (f.mainIsTrek ? 'Alleen je doel' : 'Geen tochten') : 'Geen doel';
       const sub = f.goal
         ? `${shortGoalName(f.goal.name)} op ${longDate(f.goal.date)}${f.position ? `, ${lower(f.position.phaseName)}` : ''}`
         : 'Kies een doel om naartoe te plannen';

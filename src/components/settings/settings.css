@@ -110,7 +110,6 @@ button.st-hit:not(:disabled):active { transform: none; }
 /* Geavanceerd */
 .st-more { position: relative; display: grid; grid-template-columns: 1fr 16px; align-items: center; width: 100%; min-height: var(--row); padding: 0 var(--s4); color: var(--color-ink-dim); text-align: left; font-size: 15px; }
 .st-more svg { transition: transform .2s; }
-.st-more[aria-expanded="true"] svg { transform: rotate(90deg); }
 .st-more.plain { padding: 0; }
 .st-more-titles { margin: calc(var(--s2) * -1) 0 0; padding: 0 var(--s4) var(--s3); font-size: 12px; line-height: 16px; color: var(--color-ink-dim); }
 

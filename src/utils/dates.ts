@@ -1,5 +1,6 @@
 import { PHASE_TAPER, WAVE_LENGTH, phaseWaveLength, type HeldWeekDays, type Program, type ResolvedProgramPosition } from '../models/program';
 import type { Weekday } from '../models/goalEngineConfig';
+import { formatClock } from './clock';
 
 export function toISODate(d: Date): string {
   const year = d.getFullYear();
@@ -26,7 +27,7 @@ export function localDateOf(moment: string): string {
 export function localTimeOf(moment: string): string {
   const d = new Date(moment);
   if (Number.isNaN(d.getTime())) return moment.slice(11, 16);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return formatClock(d);
 }
 
 export function parseISODate(iso: string): Date {
