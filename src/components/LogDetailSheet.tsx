@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { useAppData } from '../state/AppDataContext';
 import { TestVerdictCard } from './TestVerdictCard';
+import { ZoneUpdateCard } from './ZoneUpdateCard';
 import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
 import { ensureBestEffort, ensureOutcomeText, ensureRunDetail, type EnsureOutcome } from '../storage/activityDetail';
 import { wantsBestEffort } from '../engine/testJudgment';
@@ -231,7 +232,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
             </p>
           )}
 
-          {log.templateId === TEST_TEMPLATE_ID && <div className="mt-3"><TestVerdictCard logId={log.id} /></div>}
+          {log.templateId === TEST_TEMPLATE_ID && <div className="mt-3"><TestVerdictCard logId={log.id} /><ZoneUpdateCard logId={log.id} /></div>}
 
           {ensureOutcome && (ensureOutcome === 'no-series' || ensureOutcome === 'failed' || ensureOutcome === 'timeout') && !hasRunDetail && (
             <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{ensureOutcomeText(ensureOutcome)}</p>

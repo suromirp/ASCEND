@@ -686,6 +686,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('lijfvraag', resolveBodyCheck(s)) };
     case 'korter-vandaag':
       return { value: choiceShort('korterVandaag', resolveShorterToday(s.shorterToday)) };
+    case 'zones-na-test':
+      return { checked: s.zonesAfterTest !== false };
     case 'lichterbenen':
       return { value: choiceShort('lichterbenen', resolveLegEase(s)) };
     case 'lichterbenen-hoe':

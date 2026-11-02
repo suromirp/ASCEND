@@ -68,7 +68,7 @@ import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateLogRpeAssumed, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateZoneAnswers, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, migrateDataSettings, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -316,6 +316,13 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   // Your verdicts on test runs: record by record, a damaged one is dropped and counted, an
   // older file has none and leaves the verdicts on the device alone
   // (storage/migrations.ts#migrateTestJudgments).
+  // Je antwoorden op Zones bijwerken na een test (storage/migrations.ts#migrateZoneAnswers).
+  if ('zoneAnswers' in s) {
+    const zones = migrateZoneAnswers(s.zoneAnswers);
+    if (zones.list === undefined) delete s.zoneAnswers;
+    else s.zoneAnswers = zones.list;
+    skipped.n += zones.skipped;
+  }
   if ('testJudgments' in s) {
     const tests = migrateTestJudgments(s.testJudgments);
     if (tests.list === undefined) delete s.testJudgments;
@@ -419,7 +426,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.bootBreakInReminder;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'forgeQuickButtons', 'forgeSwipeDelete', 'haptics', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'heatAcclimation', 'paceCurve', 'stageOwnPace', 'climbPace'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'forgeQuickButtons', 'forgeSwipeDelete', 'haptics', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'heatAcclimation', 'paceCurve', 'stageOwnPace', 'climbPace', 'zonesAfterTest'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
