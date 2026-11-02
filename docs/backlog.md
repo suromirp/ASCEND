@@ -47,15 +47,17 @@ Op vraag van de eigenaar. Bouwen bij de eerstvolgende vrije plek (Sherpa, opus; 
 - Eerst koppelen, dan inhalen: MISSED-CATCH-UP kijkt eerst of er een losse log te koppelen is. Ronde 2.
 - Ontwerprapport instellingen, de kleine delen: betere waarden en uitleg in de rijen, de bundel De ochtend, Weer en kleding. Ronde 2.
 - Ontwerprapporten gegevens en Forge, de grote herinrichting (Stand met Ritme, weekterugblik, Logboek, Forge zonder snelknoppen en met Alles in het blad Oefening). Ronde 3, na het opsplitsen.
+- Geavanceerd in Instellingen wordt een eigen pagina (eigenaar akkoord, 2 november): Planning en Geavanceerd zitten op hun plafond van rijen. Ronde 3, bij de herinrichting.
 
 ## Android en web, wens van de eigenaar (1 november)
 
 Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie werkt los en samen; in de browser een webweg of een nette stilte. De Android-app werkt zichzelf bij (live update) en gebruikt een vaste sleutel, zodat je gegevens bij een update blijven.
 - In de Android-opdracht zelf: de terugknop, scherm aan tijdens Forge (in de browser met Wake Lock), trillen, statusbalk en startscherm.
+- Trainingen wisselen in één week (wens van de eigenaar, 2 november): Wisselen in het actieblad en loslaten op een bezette dag; schoon meteen met Ongedaan maken, anders een dialoog met Akkoord. In aanbouw.
 - Eén notatie voor tijden in de hele app (nu "13.05" bij het weer en "06:11" in Instellingen). Ronde 3.
-- Nagekomen uit de terugblik op ronde 2: de nieuwe regels op Vandaag (Hoe telt dit?, Minder tijd vandaag, de etappe-regel) in de vaste volgorde en het maximum van kaarten; een doorloop op de telefoon van de eigenaar zodra de Android-sleutel er is (snelkoppelingen, widget, locatie, back-upmap); een opzet voor de spierindex door Scout voordat er iets gebouwd wordt.
+- Nagekomen uit de terugblik op ronde 2: de nieuwe regels op Vandaag (Hoe telt dit?, Minder tijd vandaag, de etappe-regel) in de vaste volgorde en het maximum van kaarten; een doorloop op de telefoon van de eigenaar zodra de Android-sleutel er is (snelkoppelingen, widget, locatie, back-upmap); een opzet voor de spierindex door Scout voordat er iets gebouwd wordt (opdracht loopt; de eigenaar laat de keuze daarna aan de coördinator).
 - Nagekomen uit ronde 2b: de factor 0,98 voor de drempelhartslag na een 5 km toetsen (Scout); Sporten lezen echte intervals.icu-types (Swim, Padel, Soccer, Yoga) alleen met nagemaakte data getest; een eigen sport telt niet in de weekcheck; "Laten staan" bij een vakantie en "laten rusten?" rond een Top-race voor vaste sporten; de waarde "Alles normaal" valt af in de rij Hoeveel per soort op 360 px; een test die alle Android-XML vooraf leest (een dubbel streepje in commentaar brak de APK-bouw).
-- Coördinaten voor de 36 GR5-etappes (uit een GPX van de eigenaar), zodat de regel op je etappe iets toont; daarbij de keuze van de eigenaar over een fijne plek op Android.
+- Coördinaten voor de 36 GR5-etappes uit een GPX die de eigenaar aanlevert (ja, 2 november), zodat de regel op je etappe iets toont. Een fijne plek op Android: nu niet, grof met een eerlijke tekst (keuze aan de coördinator gelaten, 2 november).
 - De back-up van Android (naar Google) staat aan, keuze van de eigenaar (2 november), naast de eigen back-up; alleen de opslag van de webview, zonder caches.
 - Niet: hartslagband via Bluetooth (eigenaar). Niet gebouwd tenzij de eigenaar het vraagt: camera en een gps-route of spoor van tochten (afgeraden om batterij en privacy; de eigenaar wil alleen weten waar hij is).
 
@@ -82,7 +84,7 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 
 ## Na het herstel van het abonnement (zondag 1 november)
 
-- Spierindex stap 1 en 2: controle op je training en slimmer vervangen.
+- Spierindex in de kleinste vorm (besluit `2026-11-02-spierindex-klein.md`): melding als een bergspier ontbreekt bij een bergdoel, met voorstel, en de volgorde in `swapOptions`. Ronde 3, met de herinrichting van Forge.
 - Grote bestanden opsplitsen: AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations.
 - Android-app (Capacitor), als een van de grote nieuwe features van deze ronde. Lokale meldingen komen daarmee (een PWA zonder server kan geen melding sturen als de app dicht is).
 - Android-meldingen met het scherm uit en trillen: het einde van de rust in Forge, de ochtendvraag en de weekmelding (ronde 2b, bij de Android-app). Toestemmingen direct na de installatie, in een korte welkomstreeks met per toestemming één scherm en "Niet nu".

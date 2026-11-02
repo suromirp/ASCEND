@@ -6,7 +6,7 @@ stand counts real minutes per zone from the heart rate profile on a log
 (`engine/intensityMinutes.ts`, read by `engine/standing.ts#intensityMix`), and falls back to what a
 training was meant to be when there is no heart rate; switch "Intensiteit tellen". Sweat loss is
 your own weighing before and after a log (or the watch estimate you type in), kept in
-`AppSettings.sweatEntries` next to the logs (`storage/migrations.ts#migrateSweatEntries`); it
+`AppSettings.sweatEntries` next to the logs (`storage/migrationsBody.ts#migrateSweatEntries`); it
 gives your own sweat rate by temperature (`engine/sweat.ts`) and the water per GR5 stage
 (`engine/stageWater.ts`, "ongeveer", never medical advice). New mountain boots are counted from
 the date you started wearing them, walks and treks only (`engine/bootBreakIn.ts`,
@@ -24,7 +24,7 @@ the log belongs to a planned session, and no minutes without a measured duration
 Vandaag when nothing comes in from the watch for three days while the link works (`storage/sourceWatch.ts`,
 `components/SourceSilenceLine.tsx`, setting `watchSilence`). The mornings (date, resting heart rate, HRV, sleep
 duration and score only) travel in the backup as `payload.mornings` (`engine/morningBackup.ts`,
-`storage/migrations.ts#migrateMornings`, setting `morningInBackup`); a restore only adds mornings the device lacks.
+`storage/migrationsBody.ts#migrateMornings`, setting `morningInBackup`); a restore only adds mornings the device lacks.
 Those mornings are an archive that survives unlinking while the setting is on. Switching the setting off asks first
 and offers Ongedaan maken: without a link it clears them all at once, in one transaction (`RecoveryMetricsRepo.deleteMany`);
 with a link (also with an expired key) the next fetch drops the part older than 400 days, and the sheet says so
