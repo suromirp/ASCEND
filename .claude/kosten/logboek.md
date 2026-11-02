@@ -110,3 +110,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Planner 48 uur herstel, Sherpa, opus, hervat, 0
 - 2026-11-02, Automatische back-up herstel, Sherpa, opus, hervat 30k, 26 min, 1
 - 2026-11-02, Sporten die meetellen, Sherpa, opus, 600k, 191 min, review loopt
+- 2026-11-02, Automatische back-up drie kleine punten, Sherpa, opus, hervat 300k, 16 min, 2
+- 2026-11-02, Review Sporten die meetellen, Warden, opus, 178k, 10 min, rood (2 blokkerend)

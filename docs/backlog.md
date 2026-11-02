@@ -9,6 +9,8 @@ Bijgewerkt op 1 november 2026.
 
 Ronde 2 van `docs/onderhoud/2026-11-01-aanpak-backlog.md` (ronde 1 is af, terugblik in `docs/onderhoud/reflectie-2026-11-01.md`).
 
+Live op 2 november: de 48 uur tussen beenzware dagen ook na de lange duurloop, de automatische back-up naar een bestand (Android: Documenten/ASCEND).
+
 Live op 1 november: Stand schuift niet meer zijwaarts, het cijferblok van Forge blijft open, de ochtendkaart na je antwoord, de rustdag die terugkomt, de rustiger fysioregel, de kortere voorschriftregel, het citaat in het Engels, een vakantie bijwerken, trainingen die niet doorgingen, ochtenden in de back-up veilig uitzetten, opmaak samengebracht, de tekstkaart met 21 schermen, drie ontwerprapporten in `docs/visie/`.
 
 Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10, onderhoud punt 2 en 3.
@@ -51,7 +53,6 @@ Op vraag van de eigenaar. Bouwen bij de eerstvolgende vrije plek (Sherpa, opus; 
 
 Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie werkt los en samen; in de browser een webweg of een nette stilte. De Android-app werkt zichzelf bij (live update) en gebruikt een vaste sleutel, zodat je gegevens bij een update blijven.
 - In de Android-opdracht zelf: de terugknop, scherm aan tijdens Forge (in de browser met Wake Lock), trillen, statusbalk en startscherm.
-- Automatische back-up naar een bestand op je telefoon, bijvoorbeeld elke zondag (Android: Filesystem in een gekozen map; web: een herinnering met de bestaande download). Ronde 2b.
 - Snelkoppelingen onder het app-icoon: Start training, Ochtendvraag (Android; in de web-app via `shortcuts` in het PWA-manifest). Ronde 2b.
 - Een widget op het startscherm met je missie van vandaag (Android, eigen native code; de web-app heeft geen widget). Ronde 2b, na de rest.
 - Health Connect als bron (al gepland). Ronde 2b.
