@@ -67,9 +67,21 @@ export interface FixedReconcile {
   changed: string[];
 }
 
+// De week waarvoor een vaste rij werd gezet. Een rij van voor dit veld leest zijn eigen week.
+export function fixedWeekOf(s: PlannedSession): string {
+  return s.fixed?.week ?? s.weekStartDate;
+}
+
+// Staat de rij nog zoals ASCEND hem zette: gepland, op zijn eigen dag van zijn eigen week. Alleen zo'n rij
+// mag deze stap weghalen of aanpassen; wat je verplaatste, oversloeg of inhaalde blijft van jou.
+export function isUntouchedFixed(s: PlannedSession): boolean {
+  return !!s.fixed && s.status === 'planned' && s.scheduledDate === addDays(fixedWeekOf(s), s.fixed.day - 1);
+}
+
 // Zet de vaste rijen in de planning zoals je ze koos: wat erbij komt, wat er niet meer hoort en wat een
-// andere lengte of zwaarte kreeg. Een rij die je zelf verplaatste of oversloeg telt als die van die week. Alleen
-// open rijen (vanaf vandaag, niet gelogd) veranderen.
+// andere lengte of zwaarte kreeg. Alleen open rijen (vanaf vandaag, niet gelogd) die nog op hun eigen dag
+// staan veranderen. Een rij die je zelf verplaatste of oversloeg blijft onaangeroerd en telt als die van
+// zijn week, zodat er geen tweede bij komt.
 export function reconcileFixedSessions(
   all: readonly PlannedSession[],
   handling: SportHandlingMap | undefined,
@@ -85,7 +97,7 @@ export function reconcileFixedSessions(
       wanted.set(`${row.sport}|${mondayOfWeek(row.date)}|${row.slot.day}`, row);
     }
   }
-  const keyOf = (s: PlannedSession) => (s.fixed ? `${s.fixed.sport}|${s.weekStartDate}|${s.fixed.day}` : '');
+  const keyOf = (s: PlannedSession) => (s.fixed ? `${s.fixed.sport}|${fixedWeekOf(s)}|${s.fixed.day}` : '');
   const seen = new Set<string>();
   const out: PlannedSession[] = [];
   const added: string[] = [];
@@ -95,10 +107,10 @@ export function reconcileFixedSessions(
     if (!s.fixed) { out.push(s); continue; }
     const key = keyOf(s);
     const row = wanted.get(key);
-    if (!open(s)) { out.push(s); seen.add(key); continue; }
+    if (!open(s) || !isUntouchedFixed(s)) { out.push(s); seen.add(key); continue; }
     if (!row || seen.has(key)) { removed.push(s.id); continue; }
     seen.add(key);
-    // Een overgeslagen rij blijft overgeslagen; een andere lengte of zwaarte volgt je keuze.
+    // Een andere lengte of zwaarte volgt je keuze.
     if (s.plannedMinutes !== row.slot.minutes || s.fixed.intensity !== row.slot.intensity) {
       out.push({ ...s, plannedMinutes: row.slot.minutes, fixed: { ...s.fixed, intensity: row.slot.intensity } });
       changed.push(s.id);
@@ -116,7 +128,7 @@ export function reconcileFixedSessions(
       order: 0,
       plannedMinutes: row.slot.minutes,
       lock: { by: 'user', at: ctx.now ?? `${ctx.today}T00:00:00.000Z` },
-      fixed: { sport: row.sport, day: row.slot.day, intensity: row.slot.intensity },
+      fixed: { sport: row.sport, day: row.slot.day, intensity: row.slot.intensity, week: mondayOfWeek(row.date) },
     });
     added.push(id);
   }

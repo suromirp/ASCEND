@@ -319,6 +319,11 @@ function PreviewStep({ preview, deviceEmpty, onConfirm, onBack }: { preview: Imp
           {preview.backupMeta.restoreDateWarning}
         </p>
       )}
+      {preview.backupMeta.fixedSportNote && (
+        <p className="rounded-lg border p-2 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>
+          {preview.backupMeta.fixedSportNote}
+        </p>
+      )}
       {logsSinceBackup > 0 && (
         <p className="rounded-lg border p-2 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>
           Je hebt na deze back-up nog {logsSinceBackup} {logsSinceBackup === 1 ? 'training' : 'trainingen'} gelogd. Die blijven bewaard.

@@ -125,19 +125,21 @@ export function applyKindAmounts(all: readonly PlannedSession[], amounts: KindAm
       // nieuws door vindt (48 uur tussen zware beendagen, de rustdag, het aantal harde dagen).
       const model = ofKind[0];
       if (!model) continue;
-      const weeks = new Set([-7, 0, 7].map((o) => addDays(monday, o)));
-      const before = new Set(validateWeeks({ ...ctx.check, sessions }, weeks).map(findingKey));
       const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
         .filter((d) => d >= ctx.today && d <= last && isoWeekday(d) !== ctx.check.restDay && !blockedByLeave(d, ctx.leave) && !sessions.some((s) => s.scheduledDate === d && isTraining(s)))
         .sort((a, b) => Math.abs(isoWeekday(a) - 3) - Math.abs(isoWeekday(b) - 3) || a.localeCompare(b));
-      for (const d of days) {
-        const extra: PlannedSession = { id: ctx.newId(), templateId: model.templateId, scheduledDate: d, weekStartDate: monday, status: 'planned', order: 9, amount: { kind, change: 'extra' } };
-        const after = validateWeeks({ ...ctx.check, sessions: [...sessions, extra] }, weeks);
-        if (after.every((f) => before.has(findingKey(f)))) {
-          sessions = [...sessions, extra];
-          repairs.push({ sessionId: extra.id, rule: 'KIND-AMOUNT', from: d, to: d, added: true, reason: 'je koos Meer' });
-          break;
-        }
+      // Alleen de beste vrije dag: past het daar niet, dan blijft het die week bij langer. Zo kost een ronde
+      // hoogstens twee keer de weekcheck per week en soort.
+      const d = days[0];
+      if (!d) continue;
+      const weeks = new Set([-7, 0, 7].map((o) => addDays(monday, o)));
+      const before = new Set(validateWeeks({ ...ctx.check, sessions }, weeks).map(findingKey));
+      const probe: PlannedSession = { id: `kind-extra-${kind}-${d}`, templateId: model.templateId, scheduledDate: d, weekStartDate: monday, status: 'planned', order: 9, amount: { kind, change: 'extra' } };
+      const after = validateWeeks({ ...ctx.check, sessions: [...sessions, probe] }, weeks);
+      if (after.every((f) => before.has(findingKey(f)))) {
+        const extra = { ...probe, id: ctx.newId() };
+        sessions = [...sessions, extra];
+        repairs.push({ sessionId: extra.id, rule: 'KIND-AMOUNT', from: d, to: d, added: true, reason: 'je koos Meer' });
       }
     }
   }

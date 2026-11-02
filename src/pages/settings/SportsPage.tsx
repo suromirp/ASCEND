@@ -156,7 +156,7 @@ function CustomSportSheet({ type, onClose }: { type: string; onClose: () => void
       <div style={{ marginTop: 16 }}>
         <ChoiceList<'count' | 'off'> label={`Hoe telt ${sport.label.toLowerCase()}?`} options={(['count', 'off'] as const).map((r) => ({ value: r, label: ROLE_LABEL[r], note: ROLE_NOTE[r] }))} value={sport.role} advice="count" onPick={(r) => save({ role: r })} />
       </div>
-      <p className="st-hint" style={{ marginLeft: 0 }}>Opgeslagen zodra je kiest. Je planning verandert er niet door.</p>
+      <p className="st-hint" style={{ marginLeft: 0 }}>Opgeslagen zodra je kiest. Telt het mee, dan telt het mee voor je benen en je week; je planning schuift er niet door.</p>
     </Sheet>
   );
 }
@@ -184,7 +184,8 @@ function SportRoleSheet({ sport, plan, startFixed = false, onClose }: { sport: A
       void plan.toggleSport(planned, role === 'plan', { sportHandling: handling });
       return;
     }
-    void plan.changeSetting(`${def.label}: ${ROLE_LABEL[role].toLowerCase()}`, { sportHandling: handling }, role === 'off' ? `${def.label} telt niet meer mee.` : `${def.label} telt mee als je het doet.`);
+    // Van Vaste dag af haalt je afspraken uit de planning: altijd eerst het voorstel.
+    void plan.changeSetting(`${def.label}: ${ROLE_LABEL[role].toLowerCase()}`, { sportHandling: handling }, role === 'off' ? `${def.label} telt niet meer mee.` : `${def.label} telt mee als je het doet.`, card.role === 'fixed' ? { alwaysAsk: true } : {});
   }
 
   function saveFixed(slots: FixedSlot[], close: () => void) {

@@ -168,11 +168,14 @@ export interface FeedbackPatch {
   rpe?: number;
   subjectiveFeel?: SessionLog['subjectiveFeel'];
   painReports?: SessionLog['painReports'];
+  // Only when the log has no answer of yours yet (no RPE, or one ASCEND assumed): the question in the log
+  // sheet of a sport that counts. A given RPE is never overwritten (engine/sessionLoad.ts#mayAskFelt).
+  onlyIfOpen?: true;
 }
 
 export function applyFeedback(log: SessionLog, patch: FeedbackPatch): SessionLog {
   const next: SessionLog = { ...log };
-  if (patch.rpe !== undefined) {
+  if (patch.rpe !== undefined && !(patch.onlyIfOpen && log.rpe !== undefined && log.rpeAssumed !== true)) {
     next.rpe = Math.min(10, Math.max(1, Math.round(patch.rpe)));
     // Your own answer replaces a value ASCEND assumed.
     delete next.rpeAssumed;

@@ -110,8 +110,7 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
     try {
       await withTimeout((async () => {
         const sport: CustomSport = { id: customIdOf(question.type), label: question.label, type: question.type, feel, role };
-        const current = parseCustomSports(settings.customSports).value ?? [];
-        await updateSettings({ customSports: [...current.filter((c) => c.type !== sport.type), sport] });
+        // Eerst het log, dan de keuze: lukt het log niet, dan blijft alles zoals het was en staat de vraag er nog.
         if (role === 'count') {
           await logSession({
             ...activityToDraft(question.activity, customTemplate(sport)),
@@ -119,6 +118,8 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
             quiet: true,
           });
         }
+        const current = parseCustomSports(settings.customSports).value ?? [];
+        await updateSettings({ customSports: [...current.filter((c) => c.type !== sport.type), sport] });
       })(), SAVE_TIMEOUT_MS);
       close();
     } catch {
@@ -202,8 +203,7 @@ export function SportAskSheet({ question, onClose }: { question: SportQuestion; 
     setError(false);
     try {
       await withTimeout((async () => {
-        const current = parseSportHandling(settings.sportHandling).value ?? {};
-        await updateSettings({ sportHandling: { ...current, [question.sport]: { role } } });
+        // Eerst het log, dan de rol: lukt het log niet, dan blijft alles zoals het was en staat de vraag er nog.
         if (role === 'count') {
           const draft = activityToDraft(question.activity, sportTemplate(question.sport));
           await logSession({
@@ -212,6 +212,8 @@ export function SportAskSheet({ question, onClose }: { question: SportQuestion; 
             quiet: true,
           });
         }
+        const current = parseSportHandling(settings.sportHandling).value ?? {};
+        await updateSettings({ sportHandling: { ...current, [question.sport]: { role } } });
       })(), SAVE_TIMEOUT_MS);
       close();
     } catch {

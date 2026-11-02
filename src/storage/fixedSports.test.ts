@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runBootMigrations } from './bootMigrations';
 import { wipeAllData, syncProgramHorizon, PlannedSessionsRepo, SessionTemplatesRepo, SettingsRepo } from './database';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonChangeInput } from './horizonPlan';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { applyImportPlan, buildBackupEnvelope, buildImportPreview, createImportPlan, createPreImportSnapshot, defaultActionsForMode, defaultPlanPolicyForMode, normalizeBackupToCurrentModel } from './backup';
+import { isUntouchedFixed } from '../engine/fixedSports';
 import { buildFirstPlan, defaultAnswers } from '../engine/firstPlan';
 import type { SportHandlingMap } from '../engine/sportRole';
 
@@ -58,5 +59,46 @@ describe('vaste dag via het voorstel', () => {
     const broken = normalizeBackupToCurrentModel(envelope);
     expect(broken.plannedSessions?.some((s) => s.fixed)).toBe(false);
     expect(broken.plannedSessions?.length).toBe(back.plannedSessions?.length);
+  });
+
+  it('terugzetten met een sport die hier niet op Vaste dag staat: het voorbeeld zegt het, de ronde haalt alleen de open rijen op hun eigen dag weg (Warden punt 7)', async () => {
+    await start();
+    await applyHorizonPlanNow(await computeHorizonPlan({ title: 'Voetbal vast', why: 'Test.', explanation: 'Test.', trigger: 'availability_changed', settings: { sportHandling: football } }));
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    // In de back-up heb je de afspraak van volgende week zelf naar woensdag verplaatst.
+    let movedId = '';
+    envelope.payload.plannedSessions = envelope.payload.plannedSessions.map((x: { id: string; fixed?: { day: number }; scheduledDate: string; status: string }) => {
+      if (!movedId && x.fixed?.day === 2 && x.scheduledDate === '2026-11-10') { movedId = x.id; return { ...x, scheduledDate: '2026-11-11', status: 'moved' }; }
+      return x;
+    });
+    expect(movedId).not.toBe('');
+    // Op deze telefoon telt voetbal alleen mee.
+    await SettingsRepo.set({ sportHandling: { football: { role: 'count' } } });
+    const backup = normalizeBackupToCurrentModel(envelope);
+    const selections = defaultActionsForMode('full_restore');
+    const policy = defaultPlanPolicyForMode('full_restore');
+    const preview = await buildImportPreview(backup, selections, policy);
+    expect(preview.backupMeta.fixedSportNote).toContain('niet op Vaste dag');
+    const snapshot = await createPreImportSnapshot();
+    await applyImportPlan(backup, createImportPlan(backup, 'full_restore', selections, policy, preview.diffByCategory.flatMap((d) => d.conflicts), snapshot.id));
+    expect((await SettingsRepo.get()).sportHandling).toEqual({ football: { role: 'count' } });
+    const result = await syncProgramHorizon();
+    const rows = (await PlannedSessionsRepo.getAll()).filter((x) => x.fixed && x.scheduledDate >= TODAY);
+    expect(rows.filter(isUntouchedFixed)).toEqual([]);
+    expect(rows.map((x) => x.id)).toEqual([movedId]);
+    expect(result.repairs?.lines.some((l) => l.includes('vaste afspraak'))).toBe(true);
+  });
+
+  it('Hoeveel per soort: hoe lang een ronde duurt (Warden punt 8)', async () => {
+    await start();
+    const t0 = performance.now();
+    await syncProgramHorizon();
+    const plain = performance.now() - t0;
+    expect((await applyHorizonPlanNow(await computeHorizonPlan({ title: 'Meer', why: 'Test.', explanation: 'Test.', trigger: 'availability_changed', settings: { kindAmount: { easy: 'more', strength: 'less', hard: 'more' } } }))).status).not.toBe('failed');
+    const t1 = performance.now();
+    await syncProgramHorizon();
+    const withAmounts = performance.now() - t1;
+    console.info(`Ronde zonder Hoeveel per soort ${Math.round(plain)} ms, met drie keuzes ${Math.round(withAmounts)} ms`);
+    expect(withAmounts).toBeLessThan(Math.max(5000, plain * 4));
   });
 });

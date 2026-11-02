@@ -6,7 +6,7 @@ import { useState } from 'react';
 import type { SessionLog } from '../../models/training';
 import { useAppData } from '../../state/AppDataContext';
 import { anySportDefinition } from '../../data/sports';
-import { FELT_LABEL, FELT_RPE, feltWordOf, sessionLoad, type FeltWord } from '../../engine/sessionLoad';
+import { FELT_LABEL, FELT_RPE, feltWordOf, mayAskFelt, sessionLoad, type FeltWord } from '../../engine/sessionLoad';
 import { resolveSportCounting, sportCounts } from '../../engine/sportRole';
 import { FeltChoice } from './FeltChoice';
 
@@ -19,16 +19,20 @@ export function SportFeltBlock({ log }: { log: SessionLog }) {
     return <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{`Telt niet mee: je koos Negeren voor ${def.label.toLowerCase()}.`}</p>;
   }
   const load = sessionLoad(log, def.typicalIntensity);
-  const given = log.rpe !== undefined && !log.rpeAssumed ? feltWordOf(log.rpe) : undefined;
-  // Vragen hoe zwaar het was staat uit: alleen het feit.
-  if (!resolveSportCounting(settings.sportCounting).askFelt && !given) {
-    return <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{`ASCEND nam aan: ${FELT_LABEL[feltWordOf(load.rpe - 1)].toLowerCase()}.`}</p>;
+  // Een eigen antwoord staat vast: alleen tonen, nooit overschrijven.
+  if (!mayAskFelt(log)) {
+    return <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{`Hoe zwaar voelde het: ${FELT_LABEL[feltWordOf(log.rpe!)].toLowerCase()}.`}</p>;
+  }
+  const assumed = FELT_LABEL[feltWordOf(load.rpe - 1)].toLowerCase();
+  // Vragen hoe zwaar het was staat uit: alleen wat ASCEND aannam.
+  if (!resolveSportCounting(settings.sportCounting).askFelt) {
+    return <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{`ASCEND nam aan: ${assumed}.`}</p>;
   }
   async function pick(word: FeltWord) {
-    if (saving) return;
+    if (saving || !mayAskFelt(log)) return;
     setSaving(true);
     try {
-      await setLogFeedback(log.id, { rpe: FELT_RPE[word] });
+      await setLogFeedback(log.id, { rpe: FELT_RPE[word], onlyIfOpen: true });
     } finally {
       setSaving(false);
     }
@@ -36,9 +40,9 @@ export function SportFeltBlock({ log }: { log: SessionLog }) {
   return (
     <div className="mt-4">
       <FeltChoice
-        value={given}
+        value={undefined}
         onPick={(w) => void pick(w)}
-        note={given ? 'Hoe zwaarder het voelde, hoe meer het meetelt voor je benen.' : `ASCEND nam aan: ${FELT_LABEL[feltWordOf(load.rpe - 1)].toLowerCase()}. Tik als het anders was.`}
+        note={`ASCEND nam aan: ${assumed}. Tik als het anders was. Je antwoord staat daarna vast.`}
       />
     </div>
   );

@@ -785,7 +785,15 @@ export function migratePlannedFixed(s: PlannedSession): PlannedSession {
   const ok = !!f && typeof f === 'object' && COUNTED_SPORTS.some((c) => c.id === f.sport)
     && typeof f.day === 'number' && Number.isInteger(f.day) && f.day >= 1 && f.day <= 7
     && (f.intensity === 'low' || f.intensity === 'moderate' || f.intensity === 'high');
-  if (ok) return s;
+  if (ok) {
+    // De week is optioneel: een kapotte week valt weg en de rij leest dan zijn eigen week.
+    if ('week' in f! && !(typeof f!.week === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f!.week))) {
+      const { week: _w, ...fixed } = f!;
+      void _w;
+      return { ...s, fixed: fixed as PlannedSession['fixed'] };
+    }
+    return s;
+  }
   const { fixed: _wrong, ...rest } = s as PlannedSession & { fixed?: unknown };
   void _wrong;
   return rest as PlannedSession;

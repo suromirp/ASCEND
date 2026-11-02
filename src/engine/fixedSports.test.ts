@@ -102,6 +102,46 @@ describe('de planningsronde met voetbal op dinsdag en zaterdag, vijf dagen', () 
   });
 });
 
+describe('een vaste rij die je zelf verplaatste blijft van jou (Warden punt 1)', () => {
+  const opts = (today: string) => ({ today, until: '2026-11-22', logs: [], newId: () => `f${++n}` });
+  const first = () => reconcileFixedSessions(sessions, football, opts(TODAY)).sessions;
+
+  it('de rij weet voor welke week hij werd gezet', () => {
+    expect(first().find((s) => s.fixed && s.scheduledDate === '2026-11-10')?.fixed?.week).toBe('2026-11-09');
+  });
+
+  it('dinsdag naar donderdag verplaatst, de ronde op woensdag: donderdag blijft en er komt niets bij', () => {
+    const moved = first().map((s) => (s.fixed && s.scheduledDate === '2026-11-10' ? { ...s, scheduledDate: '2026-11-12', status: 'moved' as const } : s));
+    const again = reconcileFixedSessions(moved, football, opts('2026-11-11'));
+    expect(again.removed).toEqual([]);
+    expect(again.added).toEqual([]);
+    expect(again.sessions.filter((s) => s.fixed && s.fixed.day === 2 && s.fixed.week === '2026-11-09').map((s) => s.scheduledDate)).toEqual(['2026-11-12']);
+  });
+
+  it('naar een andere week verplaatst: hij blijft, de oude week krijgt er geen tweede bij, de nieuwe week houdt zijn eigen rij', () => {
+    const moved = first().map((s) => (s.fixed && s.scheduledDate === '2026-11-10' ? { ...s, scheduledDate: '2026-11-18', weekStartDate: '2026-11-16', status: 'moved' as const } : s));
+    const again = reconcileFixedSessions(moved, football, opts(TODAY));
+    expect(again.removed).toEqual([]);
+    expect(again.added).toEqual([]);
+    const tuesdays = again.sessions.filter((s) => s.fixed?.day === 2);
+    expect(tuesdays.map((s) => s.scheduledDate).sort()).toEqual(['2026-11-03', '2026-11-17', '2026-11-18']);
+  });
+
+  it('ook als je de sport niet meer vast hebt: alleen de rijen op hun eigen dag gaan weg', () => {
+    const moved = first().map((s) => (s.fixed && s.scheduledDate === '2026-11-10' ? { ...s, scheduledDate: '2026-11-12', status: 'moved' as const } : s));
+    const skipped = moved.map((s) => (s.fixed && s.scheduledDate === '2026-11-14' ? { ...s, status: 'skipped' as const } : s));
+    const off = reconcileFixedSessions(skipped, { football: { role: 'count' } }, opts(TODAY));
+    const left = off.sessions.filter((s) => s.fixed).map((s) => [s.scheduledDate, s.status]);
+    expect(left).toEqual([['2026-11-12', 'moved'], ['2026-11-14', 'skipped']]);
+  });
+
+  it('een rij van voor het veld week leest zijn eigen week', () => {
+    const legacy = first().map((s) => (s.fixed ? { ...s, fixed: { sport: s.fixed.sport, day: s.fixed.day, intensity: s.fixed.intensity } } : s));
+    const again = reconcileFixedSessions(legacy, football, opts(TODAY));
+    expect(again.added.length + again.removed.length + again.changed.length).toBe(0);
+  });
+});
+
 describe('HARD-DAYS', () => {
   const hardWeek: PlannedSession[] = [[1, 'tpl_tempo_run'], [3, 'tpl_intervals'], [4, 'tpl_hill_intervals']].map(([d, templateId], i) => ({
     id: `h${i}`, templateId: templateId as string, scheduledDate: addDays('2026-11-09', d as number), weekStartDate: '2026-11-09', status: 'planned', order: i,
@@ -115,6 +155,14 @@ describe('HARD-DAYS', () => {
     expect(changed.length).toBeGreaterThan(0);
     expect(result.sessions.find((s) => s.id === changed[0].sessionId)?.templateId).toBe('tpl_easy_run');
     expect(changed[0].reason).toContain('voetbal');
+  });
+
+  it('een gelogde zware sport telt mee als harde dag, herkend aan het profiel van de sportdag (Warden punt 9)', () => {
+    const rows = reconcileFixedSessions(hardWeek, onlySat, { today: '2026-11-10', logs: [], newId: () => `f${++n}` }).sessions;
+    const match: SessionLog = { id: 'lf', templateId: 'sport_football', type: 'cardio', countedSport: 'football', completedDate: '2026-11-09', completedAt: '2026-11-09T20:00:00Z', variant: 'custom', durationMinutes: 90, rpe: 8, source: 'garmin' };
+    const msg = (logs: SessionLog[]) => validateWeeks({ sessions: rows, logs, templates: tpls, today: '2026-11-10', restDay: 7 }).find((f) => f.rule === 'HARD-DAYS')?.message ?? '';
+    expect(msg([])).toContain('4 harde dagen');
+    expect(msg([match])).toContain('5 harde dagen');
   });
 
   it('zonder zware sport van jezelf doet de regel niets', () => {

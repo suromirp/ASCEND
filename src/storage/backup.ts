@@ -16,6 +16,7 @@
 // transaction — so a bad import can always be undone by re-importing that
 // snapshot's own envelope.
 
+import { anySportDefinition, type AnySportId } from '../data/sports';
 import { cleanCardOrder } from '../engine/cardOrder';
 import { localDateOf, todayISO } from '../utils/dates';
 import { logIdsForBackup, resolveStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
@@ -1232,6 +1233,20 @@ function computeDiff(
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+// Vaste afspraken in de back-up (PlannedSession.fixed). De keuze per sport wordt samengevoegd en die op dit
+// toestel gaat voor (mergeSettingsHistory). Staat een sport hier niet op Vaste dag, dan haalt de volgende
+// planningsronde de open rijen die nog op hun eigen dag staan weg en zegt dat; wat je verplaatste, oversloeg of
+// logde blijft. Een noot in het importvoorbeeld, zodat het nooit stil gebeurt.
+export function fixedSportImportNote(backup: Pick<NormalizedBackupData, 'plannedSessions' | 'settings'>, current: Partial<AppSettings>): string | undefined {
+  const sports = [...new Set(backup.plannedSessions.filter((s) => s.fixed).map((s) => s.fixed!.sport))];
+  if (sports.length === 0) return undefined;
+  const merged = { ...(backup.settings?.sportHandling ?? {}), ...(current.sportHandling ?? {}) };
+  const notFixed = sports.filter((s) => merged[s]?.role !== 'fixed');
+  const names = (list: string[]) => list.map((s) => anySportDefinition(s as AnySportId).label.toLowerCase()).join(' en ');
+  if (notFixed.length === 0) return `Deze back-up heeft vaste afspraken voor ${names(sports)}. Ze komen terug zoals ze waren.`;
+  return `Deze back-up heeft vaste afspraken voor ${names(notFixed)}, maar op deze telefoon staat die sport niet op Vaste dag. Die keuze blijft; de volgende planningsronde haalt de open afspraken weg en zegt dat. Wat je verplaatste, oversloeg of logde blijft staan.`;
+}
+
 export async function buildImportPreview(
   backup: NormalizedBackupData,
   categorySelections: Partial<Record<BackupDataCategory, CategoryAction>>,
@@ -1256,6 +1271,7 @@ export async function buildImportPreview(
       ? 'Deze back-up is meer dan 30 dagen oud. Je planning en instellingen gaan terug naar die stand.'
       : undefined;
   const logsSinceBackup = current.sessionLogs.filter((l) => l.completedAt > backup.createdAt).length;
+  const fixedSportNote = fixedSportImportNote(backup, current.settings);
 
   return {
     backupMeta: {
@@ -1267,6 +1283,7 @@ export async function buildImportPreview(
       restoreDateWarning,
       logsSinceBackup,
       skippedInvalid: backup.skippedInvalid,
+      ...(fixedSportNote ? { fixedSportNote } : {}),
     },
     diffByCategory,
     settingsChanges,

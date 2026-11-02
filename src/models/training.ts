@@ -215,7 +215,8 @@ export interface PlannedSession {
   // A fixed appointment of a sport ASCEND does not plan (engine/fixedSports.ts): the sport, the weekday it
   // was chosen for and how hard it usually is. Always with a lock of yours. Optional, additive; a broken one
   // is dropped on import and the row stays (migrations.ts#migratePlannedFixed).
-  fixed?: { sport: CountedSportId; day: number; intensity: 'low' | 'moderate' | 'high' };
+  // `week`: the Monday of the week it was set for, so a row you moved to another week stays that week's.
+  fixed?: { sport: CountedSportId; day: number; intensity: 'low' | 'moderate' | 'high'; week?: string };
   // Hoeveel per soort (engine/kindAmount.ts): an extra training ASCEND put in for Meer, or one it left out for
   // Minder (skipped). Put back as it was once you choose Normaal. Optional, additive; a broken one is dropped
   // on import (migrations.ts#migratePlannedAmount).

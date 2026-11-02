@@ -6,7 +6,7 @@ import { ALL_SPORT_IDS, anySportDefinition, type AnySportId, type SportRole } fr
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { addDays } from '../utils/dates';
 import { legRestHours, stressProfileOf } from './sportStress';
-import { parseSportHandling, sportRole, type FixedSlot, type RoleSettings } from './sportRole';
+import { parseSportHandling, resolveSportCounting, sportRole, type FixedSlot, type RoleSettings } from './sportRole';
 import { templateSport } from './sports';
 
 // De vaste volgorde: eerst wat ASCEND plant, dan wat alleen kan meetellen.
@@ -49,8 +49,12 @@ function joinDays(days: number[]): string {
   return `${names.slice(0, -1).join(', ')} en ${names.at(-1)}`;
 }
 
-export function slotRestHours(sport: AnySportId, slot: Pick<FixedSlot, 'intensity'>): number {
-  return legRestHours(stressProfileOf(anySportDefinition(sport), slot.intensity));
+// De rust na een vaste afspraak, zoals de weekcheck hem leest: Rustig niets, en met Rust na een zware sport op
+// Korter een dag minder (engine/sportDays.ts#restHoursFor).
+export function slotRestHours(sport: AnySportId, slot: Pick<FixedSlot, 'intensity'>, settings: RoleSettings = {}): number {
+  if (slot.intensity === 'low') return 0;
+  const hours = legRestHours(stressProfileOf(anySportDefinition(sport), slot.intensity));
+  return resolveSportCounting(settings.sportCounting).rest === 'korter' && hours > 0 ? hours - 24 : hours;
 }
 
 export interface SportCardInfo {
@@ -72,10 +76,10 @@ export function sportCardLine(sport: AnySportId, role: SportRole | undefined, se
   if (role === 'fixed') {
     const slots = parseSportHandling(settings.sportHandling).value?.[sport]?.fixed ?? [];
     if (slots.length === 0) return 'Nog geen dag gekozen.';
-    const heavy = slots.filter((s) => slotRestHours(sport, s) >= 72);
+    const heavy = slots.filter((s) => slotRestHours(sport, s, settings) >= 72);
     const days = cap(joinDays(slots.map((s) => s.day)));
     if (heavy.length > 0) return `${days}. De ${joinDays(heavy.map((s) => s.day))} telt als zwaar: de 72 uur erna blijven je benen vrij van zware kracht.`;
-    if (slots.some((s) => slotRestHours(sport, s) > 0)) return `${days}. De dag erna blijft lichter voor je benen.`;
+    if (slots.some((s) => slotRestHours(sport, s, settings) >= 48)) return `${days}. De dag erna blijft lichter voor je benen.`;
     return `${days}. ASCEND plant de rest eromheen.`;
   }
   if (role === 'count') {
@@ -131,7 +135,7 @@ export function sportWeekDots(input: {
     const slots = parseSportHandling(input.settings.sportHandling).value?.[input.sport]?.fixed ?? [];
     for (const s of slots) dots[s.day - 1] = 'fixed';
     for (const s of slots) {
-      const restDays = Math.max(0, slotRestHours(input.sport, s) / 24 - 1);
+      const restDays = Math.max(0, slotRestHours(input.sport, s, input.settings) / 24 - 1);
       for (let d = 1; d <= restDays; d++) {
         const i = s.day - 1 + d;
         if (i < 7 && dots[i] === 'none') dots[i] = 'rest';

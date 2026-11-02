@@ -332,7 +332,7 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
   const hardWeeks = new Set(active.filter((s) => s.fixed?.intensity === 'high').map((s) => s.weekStartDate));
   for (const monday of hardWeeks) {
     const week = all.filter((s) => mondayOfWeek(s.scheduledDate) === monday);
-    const isOutsideHard = (s: PlannedSession) => (s.fixed?.intensity === 'high') || (isSportLogSession(s.id) && s.templateId.endsWith('@high'));
+    const isOutsideHard = (s: PlannedSession) => (s.fixed?.intensity === 'high') || (isSportLogSession(s.id) && !!tpl(s)?.countedSport && tpl(s)?.baseStressProfile?.intensity === 'high');
     const isOwnHard = (s: PlannedSession) => { const t = tpl(s); return !!t && !s.fixed && !isSportLogSession(s.id) && t.type !== 'recovery' && (isHardRun(t) || hasRole(t, 'hard_effort')); };
     const loggedDays = input.logs.filter((l) => mondayOfWeek(l.completedDate) === monday && byId.get(l.templateId)?.type !== 'recovery').map((l) => l.completedDate);
     const trainingDays = new Set([...week.filter((s) => tpl(s)?.type !== 'recovery').map((s) => s.scheduledDate), ...loggedDays]).size;

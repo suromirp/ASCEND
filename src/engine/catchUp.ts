@@ -9,12 +9,12 @@ import type { ScheduleChange } from './scheduler';
 import { hasRole } from './templateRoles';
 import { addDays, mondayOfWeek, weekdayShortNL } from '../utils/dates';
 
-export type CatchUpRefusal = 'logged' | 'future' | 'old' | 'skipped' | 'rest' | 'race' | 'test' | 'leave' | 'done';
+export type CatchUpRefusal = 'logged' | 'future' | 'old' | 'skipped' | 'rest' | 'race' | 'test' | 'leave' | 'done' | 'fixed';
 export type CatchUpEligibility = { ok: true } | { ok: false; reason: CatchUpRefusal };
 
 // Een gemiste training: de dag is voorbij, er is geen log, hij is niet overgeslagen en nog niet ingehaald.
 // Tot en met de week voor de huidige week. Een herstelwandeling, wedstrijd, test en wat een vakantie of
-// tocht neerzette niet (die gaan via hun eigen weg).
+// tocht neerzette niet (die gaan via hun eigen weg), en een vaste afspraak van een sport ook niet.
 export function catchUpEligibility(session: PlannedSession, template: SessionTemplate, args: { logged: boolean; today: string; caughtUp: boolean }): CatchUpEligibility {
   if (args.logged) return { ok: false, reason: 'logged' };
   if (session.scheduledDate >= args.today) return { ok: false, reason: 'future' };
@@ -25,6 +25,8 @@ export function catchUpEligibility(session: PlannedSession, template: SessionTem
   if (hasRole(template, 'race')) return { ok: false, reason: 'race' };
   if (hasRole(template, 'test')) return { ok: false, reason: 'test' };
   if (session.leave) return { ok: false, reason: 'leave' };
+  // Een vaste afspraak van een sport (engine/fixedSports.ts) haalt ASCEND nooit in: die is van jou.
+  if (session.fixed) return { ok: false, reason: 'fixed' };
   return { ok: true };
 }
 
