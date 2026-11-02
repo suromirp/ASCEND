@@ -18,11 +18,13 @@ export function SheetRows({ children, label }: { children: ReactNode; label?: st
   );
 }
 
-export function SheetRow({ title, sub, onClick, emphasis = false }: { title: string; sub?: string; onClick: () => void; emphasis?: boolean }) {
+// `sheetFrom`: de rij opent een blad en laat het uit de rij groeien (utils/sheetGrowDom.ts).
+export function SheetRow({ title, sub, onClick, emphasis = false, sheetFrom = false }: { title: string; sub?: string; onClick: () => void; emphasis?: boolean; sheetFrom?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      data-sheet-from={sheetFrom ? '' : undefined}
       className={`flex w-full items-center gap-3 border-t px-4 first:border-t-0 text-left transition-colors active:bg-black/20 ${sub ? 'min-h-[68px] py-2' : 'min-h-[52px]'}`}
       style={{ borderColor: 'var(--color-card-border)' }}
     >

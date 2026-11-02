@@ -28,9 +28,9 @@ export function DaySheet({ date, logs, nameOf, onPickLog, onInfluence, onClose }
             <div className="mt-4">
               <SheetRows label="Deze dag">
                 {logs.map((l) => (
-                  <SheetRow key={l.id} title={nameOf(l)} sub={formatHoursMinutesNL(l.durationMinutes)} onClick={() => onPickLog(l)} />
+                  <SheetRow key={l.id} title={nameOf(l)} sub={formatHoursMinutesNL(l.durationMinutes)} onClick={() => onPickLog(l)} sheetFrom />
                 ))}
-                <SheetRow title="Wat speelde er?" onClick={onInfluence} />
+                <SheetRow title="Wat speelde er?" onClick={onInfluence} sheetFrom />
               </SheetRows>
             </div>
           </Card>

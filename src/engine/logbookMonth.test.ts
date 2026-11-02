@@ -45,6 +45,32 @@ describe('monthCompare', () => {
   });
 });
 
+describe('monthCompare: korte maanden en de jaargrens', () => {
+  const sum = (anchor: string, today: string, logs: SessionLog[]) => monthCompare({ anchor, today, logs, plannedById: none }).vs;
+
+  it('loopt op 31 maart tot en met 28 februari in een gewoon jaar', () => {
+    const logs = [log('f1', '2027-02-27', 30), log('f2', '2027-02-28', 30), log('m', '2027-03-20', 60)];
+    expect(sum('2027-03-15', '2027-03-31', logs)).toMatchObject({ from: '2027-02-01', to: '2027-02-28', minutes: 60, count: 2 });
+  });
+
+  it('loopt op 30 maart tot en met 29 februari in een schrikkeljaar', () => {
+    const logs = [log('f1', '2028-02-29', 30), log('f2', '2028-02-10', 30)];
+    expect(sum('2028-03-15', '2028-03-30', logs)).toMatchObject({ to: '2028-02-29', minutes: 60, count: 2 });
+    // Op 29 maart ook: de 29e februari bestaat.
+    expect(sum('2028-03-15', '2028-03-29', logs)).toMatchObject({ to: '2028-02-29' });
+  });
+
+  it('vergelijkt januari met december van het jaar ervoor', () => {
+    const logs = [log('d1', '2026-12-05', 40), log('d2', '2026-12-20', 40), log('j', '2027-01-12', 50)];
+    expect(sum('2027-01-10', '2027-01-15', logs)).toMatchObject({ from: '2026-12-01', to: '2026-12-15', minutes: 40, count: 1, diffMinutes: 10 });
+  });
+
+  it('vergelijkt een afgesloten januari met de hele december', () => {
+    const logs = [log('d1', '2026-12-05', 40), log('d2', '2026-12-30', 40), log('j', '2027-01-12', 50)];
+    expect(sum('2027-01-10', '2027-03-01', logs)).toMatchObject({ whole: true, from: '2026-12-01', to: '2026-12-31', minutes: 80, count: 2 });
+  });
+});
+
 describe('groupByWeek', () => {
   it('zet de nieuwste week bovenaan en binnen de week de nieuwste training eerst', () => {
     const groups = groupByWeek([log('a', '2026-10-27', 30), log('b', '2026-10-21', 30), log('c', '2026-10-29', 30), log('d', '2026-11-01', 30)]);

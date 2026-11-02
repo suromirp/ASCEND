@@ -1,8 +1,10 @@
+import { resolveIntensityCounting } from '../engine/intensitySettings';
 import { useState } from 'react';
 import { plannedByIdOf } from '../engine/logDay';
 import { useAppData } from '../state/AppDataContext';
 import { buildWeekReview, type WeekReview } from '../engine/weekReview';
 import { effortLine } from '../engine/weekEffort';
+import { weekReviewCardShown } from '../engine/overviewSettings';
 import { weekHighlights, weekSummaryLine } from '../engine/weekHighlights';
 import { looseLogsOfWeek, weekLogsOf } from '../engine/weekLogs';
 import { intentionForWeek } from '../engine/weeklyQuestion';
@@ -28,7 +30,7 @@ import type { SessionLog } from '../models/training';
 
 function useWeekReviewFor(weekStart: string): WeekReview | null {
   const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
-  return buildWeekReview({ weekStart, plannedById: plannedByIdOf(plannedSessions), plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate });
+  return buildWeekReview({ weekStart, plannedById: plannedByIdOf(plannedSessions), plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings) });
 }
 
 // On Today, Sunday and Monday: the short version, with the coach's first
@@ -36,9 +38,10 @@ function useWeekReviewFor(weekStart: string): WeekReview | null {
 // gepland staat gedaan is: een week "tot nu" met nog werk voor vandaag is geen terugblik.
 export function WeekReviewCard({ weekStart }: { weekStart: string }) {
   const review = useWeekReviewFor(weekStart);
+  const { settings } = useAppData();
   const [open, setOpen] = useState(false);
   if (!review || review.planned === 0) return null;
-  if (review.running && review.todayLeft > 0) return null;
+  if (!weekReviewCardShown(review, settings.overviews)) return null;
   const first = weekHighlights(review)[0]?.text ?? review.advice[0];
   return (
     <Card className="flex flex-col gap-2">
@@ -162,9 +165,9 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                 {(weekLogs.length > 0 || review.changes.length > 0 || intention?.answer) && (
                   <div className="mt-5">
                     <SheetRows>
-                      {weekLogs.length > 0 && <SheetRow title="Je trainingen" sub={`${weekLogs.length} ${weekLogs.length === 1 ? 'training' : 'trainingen'}`} onClick={() => setView('trainings')} />}
-                      {review.changes.length > 0 && <SheetRow title="Wat ASCEND aanpaste" sub={`${review.changes.length}`} onClick={() => setView('changes')} />}
-                      {intention?.answer && <SheetRow title="Je antwoord deze week" onClick={() => setView('answer')} />}
+                      {weekLogs.length > 0 && <SheetRow title="Je trainingen" sub={`${weekLogs.length} ${weekLogs.length === 1 ? 'training' : 'trainingen'}`} onClick={() => setView('trainings')} sheetFrom />}
+                      {review.changes.length > 0 && <SheetRow title="Wat ASCEND aanpaste" sub={`${review.changes.length}`} onClick={() => setView('changes')} sheetFrom />}
+                      {intention?.answer && <SheetRow title="Je antwoord deze week" onClick={() => setView('answer')} sheetFrom />}
                     </SheetRows>
                   </div>
                 )}
@@ -181,7 +184,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                       key={l.id}
                       title={templateById.get(l.templateId)?.name ?? l.templateId}
                       sub={`${formatShortDayNL(l.completedDate)} · ${formatHoursMinutesNL(l.durationMinutes)}${l.rpe !== undefined ? ` · zwaarte ${l.rpe} van 10` : ''}`}
-                      onClick={() => setPicked(l)}
+                      onClick={() => setPicked(l)} sheetFrom
                     />
                   ))}
                 </SheetRows>

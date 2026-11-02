@@ -96,8 +96,8 @@ export function StandingPage() {
   );
   const thisWeek = useMemo(() => {
     const planned = plannedSessions.filter((s) => !s.fixed);
-    return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, heartRate: settings.heartRate });
-  }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.heartRate]);
+    return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, heartRate: settings.heartRate, intensityCounting: counting });
+  }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.heartRate, counting]);
   const streak = useMemo(
     () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate) }),
     [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes, planChangeLog, today],

@@ -15,6 +15,8 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { plannedByIdOf } from './logDay';
+import type { HeartRateSettings } from './heartRateZones';
+import type { IntensityCounting } from './intensitySettings';
 import { buildWeekReview, type WeekReview } from './weekReview';
 
 export type CourseStatus = 'early' | 'on' | 'nearly' | 'behind';
@@ -70,7 +72,8 @@ export interface Adherence {
   enough: boolean; // genoeg weken om iets over te zeggen
 }
 
-export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes'>;
+type ReviewInputsLite = { heartRate: HeartRateSettings; intensityCounting: IntensityCounting };
+export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
 
 export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const { today, program, logs, templates, planChangeLog, illnessEpisodes } = inputs;
@@ -80,7 +83,7 @@ export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const thisMonday = mondayOfWeek(today);
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting });
     if (review && review.planned > 0) reviews.push(review);
   }
   return {

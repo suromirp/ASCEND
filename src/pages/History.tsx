@@ -129,7 +129,7 @@ export function HistoryPage() {
             <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Logboek</h1>
           </div>
           <div className="-mr-2.5 flex shrink-0 items-center">
-            <button onClick={() => shiftMonth(-1)} className="flex h-11 w-11 items-center justify-center" aria-label="Vorige maand" aria-disabled={atFirstMonth} style={{ color: 'var(--color-on-light)', opacity: atFirstMonth ? 0.4 : 1 }}><Icon name="terug" size={24} /></button>
+            <button onClick={() => shiftMonth(-1)} className="flex h-11 w-11 items-center justify-center" aria-label="Vorige maand" disabled={atFirstMonth} style={{ color: 'var(--color-on-light)', opacity: atFirstMonth ? 0.4 : 1 }}><Icon name="terug" size={24} /></button>
             <button onClick={() => shiftMonth(1)} className="flex h-11 w-11 items-center justify-center" aria-label="Volgende maand" style={{ color: 'var(--color-on-light)' }}><Icon name="verder" size={24} /></button>
           </div>
         </div>

@@ -29,6 +29,7 @@ import type { IllnessEpisode } from '../models/illness';
 import { idHasRole } from './templateRoles';
 import { kgLabel } from '../utils/kg';
 import type { HeartRateSettings } from './heartRateZones';
+import type { IntensityCounting } from './intensitySettings';
 import { effortMinutes, type EffortMinutes } from './weekEffort';
 
 export interface WeekReview {
@@ -73,6 +74,8 @@ interface ReviewInputs {
   illnessEpisodes?: IllnessEpisode[];
   weeklyChecks?: WeeklyHealthCheck[];
   heartRate?: HeartRateSettings;
+  // Instelling "Intensiteit tellen" (engine/intensitySettings.ts): bij "plan" telt de hartslag niet.
+  intensityCounting?: IntensityCounting;
 }
 
 // The key sessions are the templates with the role 'key' (engine/templateRoles.ts).
@@ -176,7 +179,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   const running = asOf <= weekEnd && asOf >= weekStart;
   const todayLeft = running ? trainings.filter((s) => s.scheduledDate === asOf && s.status !== 'skipped' && !loggedIds.has(s.id)).length : 0;
   const keyMissedSession = missedSessions.find((s) => idHasRole(s.templateId, 'key', byId) && s.status !== 'skipped');
-  const effort = effortMinutes(weekLogs, byId, inputs.heartRate);
+  const effort = effortMinutes(weekLogs, byId, inputs.heartRate, inputs.intensityCounting);
 
   // The coach: at most three lines, the most important first.
   const advice: string[] = [];
