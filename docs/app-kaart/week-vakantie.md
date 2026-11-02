@@ -21,8 +21,8 @@ De hoogte is minuten maal hoe zwaar het was.
 
 --- kaart 2 ---
 [knop: Rustige duurloopMa 26·56 min·zonder planGedaan]
-Vrij
-Di 27 · niets gepland
+Rustdag deze week
+Di 27 · je rustdag op maandag is bezet
 [knop: Benen A (zwaar)Wo 28·45 min· zware benenGemist]
 [knop: Verplaats of ruil Benen A (zwaar), nu op woensdag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 [knop: Testloop 5 kmDo 29·45 minGemist]
