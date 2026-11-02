@@ -20,6 +20,8 @@ import { DEFAULT_ENABLED_SPORTS, parseWeekShape, weeklyPatternTemplates, type Pa
 import { PATTERN_SWAPS } from './programLayout';
 import { addDays } from '../utils/dates';
 import { reconcileFixedSessions } from './fixedSports';
+import { applyKindAmounts } from './kindAmount';
+import type { KindAmountMap } from '../data/trainingKinds';
 import type { SportHandlingMap } from './sportRole';
 
 export interface PlanPassContext {
@@ -51,6 +53,9 @@ export interface PlanPassContext {
   // The roles of the sports (AppSettings.sportHandling): a fixed appointment becomes a fixed row first
   // (engine/fixedSports.ts). Absent: fixed rows are left as they are.
   fixedSports?: SportHandlingMap | null;
+  // Hoeveel per soort (engine/kindAmount.ts): an extra training for Meer, one fewer for Minder. Absent: left as
+  // it is.
+  kindAmounts?: KindAmountMap | null;
 }
 
 export interface PlanPassResult {
@@ -83,6 +88,19 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
       for (const id of fixed.changed) repairs.push({ sessionId: id, rule: 'FIXED-SPORT', from: after.get(id)!.scheduledDate, to: after.get(id)!.scheduledDate, plannedMinutes: after.get(id)!.plannedMinutes });
       current = fixed.sessions;
     }
+  }
+  // Hoeveel per soort, after the fixed rows: an extra training only where the week check finds nothing new.
+  if (ctx.kindAmounts !== undefined) {
+    const amount = applyKindAmounts(current, ctx.kindAmounts ?? undefined, {
+      today: ctx.today, until: ctx.until ?? (ctx.goalDay ? addDays(ctx.goalDay, -1) : undefined), leave: ctx.leave, newId: ctx.newId,
+      check: {
+        logs: ctx.logs, templates: ctx.templates, today: ctx.today, restDay: ctx.restDay, goalDay: ctx.goalDay, raceDays: ctx.blocks.map((b) => b.raceDate),
+        program: ctx.program, dailyTimeBudget: ctx.dailyTimeBudget, sameDayPairingPreference: ctx.sameDayPairingPreference, slotDays: ctx.slotDays,
+        minutesOf: ctx.minutesOf, leave: ctx.leave, trekRest: ctx.trekRest, leaveCrowding: ctx.leaveCrowding,
+      },
+    });
+    repairs.push(...amount.repairs);
+    current = amount.sessions;
   }
   let remaining: Finding[] = [];
   for (let turn = 0; turn < MAX_TURNS; turn++) {

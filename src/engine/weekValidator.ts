@@ -361,7 +361,7 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
 // --- repairing what the system planned ----------------------------------------------
 // A repair is made for a rule of the check, or by the leave step that puts a
 // walk on a trek day or a free day (engine/leaveBlock.ts).
-export type RepairRule = CheckRule | 'LEAVE-PLACE' | 'FIXED-SPORT';
+export type RepairRule = CheckRule | 'LEAVE-PLACE' | 'FIXED-SPORT' | 'KIND-AMOUNT';
 
 export interface Repair {
   sessionId: string;
@@ -646,6 +646,7 @@ const REASON: Record<RepairRule, string> = {
   'LEAVE-LIGHT': 'de dagen voor en na je tocht blijven licht',
   'LEAVE-PLACE': 'past bij je vrije periode',
   'FIXED-SPORT': 'je vaste afspraak',
+  'KIND-AMOUNT': 'hoeveel per soort',
   'REST-DAY': 'je rustdag blijft vrij',
   'TWO-HARD-RUNS': 'niet twee harde loopjes op één dag',
   'HARD-DAYS': 'niet te veel harde dagen in een week',

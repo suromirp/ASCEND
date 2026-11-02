@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
+import { PlannedSessionsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
 import { applyImportPlan, buildBackupEnvelope, buildImportPreview, createImportPlan, createPreImportSnapshot, defaultActionsForMode, defaultPlanPolicyForMode, normalizeBackupToCurrentModel } from './backup';
 import type { SessionLog } from '../models/training';
 
@@ -66,6 +66,22 @@ describe('sportHandling in de back-up', () => {
     const s = await SettingsRepo.get();
     expect(s.sportHandling).toBeUndefined();
     expect(s.sportCounting).toBeUndefined();
+  });
+
+  it('hoeveel per soort en de markering op een rij reizen mee; onzin valt weg en de rij blijft', async () => {
+    await SettingsRepo.set({ kindAmount: { strength: 'more' } });
+    await PlannedSessionsRepo.put({ id: 'p-extra', templateId: 'tpl_easy_run', scheduledDate: '2026-11-06', weekStartDate: '2026-11-02', status: 'planned', order: 9, amount: { kind: 'easy', change: 'extra' } });
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    const back = normalizeBackupToCurrentModel(envelope);
+    expect(back.settings?.kindAmount).toEqual({ strength: 'more' });
+    expect(back.plannedSessions?.find((s) => s.id === 'p-extra')?.amount).toEqual({ kind: 'easy', change: 'extra' });
+    envelope.payload.settings = { ...envelope.payload.settings, kindAmount: { strength: 'veel' } };
+    envelope.payload.plannedSessions = envelope.payload.plannedSessions.map((s: { id: string }) => (s.id === 'p-extra' ? { ...s, amount: { kind: 'yoga' } } : s));
+    const broken = normalizeBackupToCurrentModel(envelope);
+    expect(broken.settings?.kindAmount).toBeUndefined();
+    const row = broken.plannedSessions?.find((s) => s.id === 'p-extra');
+    expect(row).toBeDefined();
+    expect(row?.amount).toBeUndefined();
   });
 
   it('bij terugzetten wordt per sport samengevoegd, de keuze op dit toestel gaat voor', async () => {

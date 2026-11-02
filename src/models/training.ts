@@ -14,6 +14,7 @@
 // keeps the numbers it replaced; docs/beslissingen/2026-10-25-correcties-uit-intervals.md).
 
 import type { CountedSportId, SportId } from '../data/sports';
+import type { TrainingKindId } from '../data/trainingKinds';
 import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
 import type { PlannedLeaveMark } from './leave';
@@ -120,7 +121,9 @@ export type TemplateRole =
   | 'blocks' // has blocks (tempo, intervals) whose pace is compared in the run insight
   | 'hills' // a hill session whose effort can wear down the long run after it (the nudge on Vandaag)
   | 'extra' // an extra session the planner may add to a week
-  | 'counted_sport'; // a sport ASCEND does not plan but that counts (engine/sportTemplate.ts), never stored
+  | 'counted_sport' // a sport ASCEND does not plan but that counts (engine/sportTemplate.ts), never stored
+  | 'strength' // a strength training (Hoeveel per soort, data/trainingKinds.ts)
+  | 'ruck'; // a walk with a backpack (Hoeveel per soort)
 
 // The reusable definition of a workout — "what" a session is, independent of
 // when it happens.
@@ -211,6 +214,10 @@ export interface PlannedSession {
   // was chosen for and how hard it usually is. Always with a lock of yours. Optional, additive; a broken one
   // is dropped on import and the row stays (migrations.ts#migratePlannedFixed).
   fixed?: { sport: CountedSportId; day: number; intensity: 'low' | 'moderate' | 'high' };
+  // Hoeveel per soort (engine/kindAmount.ts): an extra training ASCEND put in for Meer, or one it left out for
+  // Minder (skipped). Put back as it was once you choose Normaal. Optional, additive; a broken one is dropped
+  // on import (migrations.ts#migratePlannedAmount).
+  amount?: { kind: TrainingKindId; change: 'extra' | 'left_out' };
   // Planned to walk with poles. Optional, additive; without it the last log
   // of the same training decides (engine/legFatigue.ts).
   poles?: boolean;

@@ -820,6 +820,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Nooit stil', text: 'verandert een keuze je planning, dan zie je eerst het voorstel. Met Liever niet blijft alles zoals het was.' },
     ],
   },
+  hoeveelPerSoort: {
+    title: 'Hoeveel per soort',
+    lead: 'Per soort training kies je Minder, Normaal of Meer. Normaal is het advies.',
+    points: [
+      { head: 'Eerst de duur', text: 'Minder is 15 procent korter, Meer 15 procent langer, afgerond op 5 minuten. Nooit meer dan 110 procent van je langste training van die soort in de laatste 30 dagen.' },
+      { head: 'Dan het aantal', text: 'Meer zet er een training van die soort bij op een vrije dag, alleen als de regels het toelaten. Minder laat er een weg als er meer dan één staat.' },
+      { head: 'Veiligheid schuift nooit', text: '48 uur tussen zware beendagen, de rust na een tocht of wedstrijd, je rustdag en het aantal harde dagen blijven staan. Past een extra training niet, dan blijft het bij langer.' },
+      { head: 'Wat je doel vraagt', text: 'minder dan één per week van een soort kan niet. Kies je Minder voor de training die je doel het meest vraagt, dan zegt het voorstel wat het kost.' },
+      { head: 'Nooit stil', text: 'je ziet eerst het voorstel. Met Liever niet blijft alles zoals het was. Je wens blijft bewaard, ook na een lichte week of een nieuw blok.' },
+    ],
+  },
   sportenTellen: {
     title: 'Hoe sporten meetellen',
     lead: 'Zwemmen, padel en voetbal plant ASCEND niet, maar ze kunnen meetellen voor je benen en je week.',

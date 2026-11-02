@@ -11,6 +11,8 @@
 import { ABOVE_MISSION_CHOICES, type AboveMission } from '../engine/todayCards';
 import { cleanSportCounting, parseSportHandling, type SportCounting, type SportHandlingMap } from '../engine/sportRole';
 import { COUNTED_SPORTS } from '../data/sports';
+import { TRAINING_KINDS, type KindAmountMap } from '../data/trainingKinds';
+import { parseKindAmounts } from '../engine/kindAmount';
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';
 import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/proposalTidy';
@@ -784,6 +786,22 @@ export function migratePlannedFixed(s: PlannedSession): PlannedSession {
     && (f.intensity === 'low' || f.intensity === 'moderate' || f.intensity === 'high');
   if (ok) return s;
   const { fixed: _wrong, ...rest } = s as PlannedSession & { fixed?: unknown };
+  void _wrong;
+  return rest as PlannedSession;
+}
+
+// Hoeveel per soort (engine/kindAmount.ts): alleen bekende soorten met Minder of Meer.
+export function migrateKindAmount(raw: unknown): { value: KindAmountMap | undefined; skipped: number } {
+  return parseKindAmounts(raw);
+}
+
+// PlannedSession.amount (Hoeveel per soort): een bekende soort en een bekende verandering, anders valt het weg
+// en blijft de rij verder zoals hij was.
+export function migratePlannedAmount(s: PlannedSession): PlannedSession {
+  if (!('amount' in s)) return s;
+  const a = (s as { amount?: unknown }).amount as Record<string, unknown> | undefined;
+  if (a && typeof a === 'object' && TRAINING_KINDS.some((k) => k.id === a.kind) && (a.change === 'extra' || a.change === 'left_out')) return s;
+  const { amount: _wrong, ...rest } = s as PlannedSession & { amount?: unknown };
   void _wrong;
   return rest as PlannedSession;
 }

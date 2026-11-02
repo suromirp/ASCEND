@@ -12,7 +12,7 @@ import { ChoiceFromDef } from './ChoiceFromDef';
 import { BudgetSheet } from './PlanningSheets';
 import { SportCountingSheet } from './SportCountingSheet';
 import { useNavigate } from 'react-router-dom';
-import { SPORTS_ROUTE } from '../../../pages/settings/sportsRoute';
+import { KIND_AMOUNT_ROUTE, SPORTS_ROUTE } from '../../../pages/settings/sportsRoute';
 import { SummaryRow } from './SummaryRow';
 import { rowShown } from './rowShown';
 import type { GroupProps } from './types';
@@ -63,6 +63,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
 
       <SettingsSection title="Sporten">
         <SummaryRow id="sporten" title="Sporten" facts={facts} info="sporten" onClick={() => navigate(SPORTS_ROUTE)} />
+        <SummaryRow id="hoeveel-per-soort" title="Hoeveel per soort" facts={facts} info="hoeveelPerSoort" onClick={() => navigate(KIND_AMOUNT_ROUTE)} />
       </SettingsSection>
 
       <SettingsSection

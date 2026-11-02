@@ -22,6 +22,7 @@ import { anySportDefinition, SPORT_IDS, type AnySportId, type SportId, type Spor
 import { addDays, mondayOfWeek, todayISO } from '../../utils/dates';
 import { SportCountingSheet } from '../../components/settings/groups/SportCountingSheet';
 import { settingsPageRoute } from '../../data/settingsLayout';
+import { KIND_AMOUNT_ROUTE } from './sportsRoute';
 import '../../components/settings/settings.css';
 
 const DAY_LETTER = ['M', 'D', 'W', 'D', 'V', 'Z', 'Z'];
@@ -107,6 +108,7 @@ export function SportsPage() {
         <div className="mt-2">
           <SettingsList>
             <SummaryRow id="bundel-sporten-tellen" title="Hoe sporten meetellen" facts={facts} info="sportenTellen" onClick={() => setCounting(true)} />
+            <SummaryRow id="hoeveel-per-soort" title="Hoeveel per soort" facts={facts} info="hoeveelPerSoort" onClick={() => navigate(KIND_AMOUNT_ROUTE)} />
           </SettingsList>
         </div>
       </div>

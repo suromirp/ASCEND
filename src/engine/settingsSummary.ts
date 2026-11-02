@@ -60,6 +60,7 @@ import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { resolveSportCounting } from './sportRole';
 import { sportsRowSummary } from './sportsScreen';
+import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
 import { resolveAboveMission } from './todayCards';
@@ -374,6 +375,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Het scherm Sporten (engine/sportsScreen.ts): "2 gepland, 1 telt mee".
     case 'sporten':
       return sportsRowSummary(s);
+    // Hoeveel per soort (engine/kindAmount.ts): "Alles normaal" of "2 anders".
+    case 'hoeveel-per-soort': {
+      const r = kindAmountSummary(parseKindAmounts(s.kindAmount).value);
+      return r.sub ? { value: r.value, sub: r.sub } : { value: r.value, auto: true };
+    }
     case 'wijzigingen':
       return { value: choiceShort('wijzigingen', s.changeApplyMode ?? 'auto_small') };
     case 'ambitie': {

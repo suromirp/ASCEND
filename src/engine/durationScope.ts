@@ -13,9 +13,11 @@ import type { DurationScope } from './substitutions';
 import { effectiveAmbition } from './ambition';
 import { recoveryDurationAdjustments } from './illness';
 import { learnedStrengthDurations } from './durationLearning';
+import { parseKindAmounts } from './kindAmount';
 
 export interface DurationSettings {
   ambition?: Ambition;
+  kindAmount?: unknown;
   illnessEpisodes?: IllnessEpisode[];
   sessionDurationEstimates?: Record<string, number>;
 }
@@ -25,5 +27,6 @@ export function durationScopeFor(settings: DurationSettings, logs: SessionLog[],
     ambition: effectiveAmbition(settings.ambition, logs, new Map(templates.map((t) => [t.id, t])), program, today).effective,
     durationAdjustments: recoveryDurationAdjustments(settings.illnessEpisodes),
     learnedDurations: learnedStrengthDurations(templates, logs, settings.sessionDurationEstimates),
+    kindAmounts: parseKindAmounts(settings.kindAmount).value ?? {},
   };
 }

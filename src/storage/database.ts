@@ -35,6 +35,8 @@ import type { MorningNoticeSettings } from '../engine/morningNotice';
 import { activeSwaps, directionSwaps, patternSlotOf, layoutPhases, patternForWeek, PHASE_GOLF, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { planDirection } from '../engine/direction';
 import { withCountingSports } from '../engine/sportTemplate';
+import { parseKindAmounts } from '../engine/kindAmount';
+import type { KindAmountMap } from '../data/trainingKinds';
 import type { SportCounting, SportHandlingMap } from '../engine/sportRole';
 import { programDirection } from '../engine/directionPlan';
 import { BEGINNER_WEEKS, isBeginnerStart } from '../engine/beginnerStart';
@@ -624,6 +626,9 @@ export interface AppSettings {
   // zwaar het was, en de rust na een zware sport. Absent = het advies. Optional and additive; cleaned on
   // import (migrations.ts#migrateSportCounting).
   sportCounting?: Partial<SportCounting>;
+  // Hoeveel per soort (engine/kindAmount.ts): per soort training Minder of Meer; Normaal staat er niet in.
+  // Optional and additive; cleaned on import (migrations.ts#migrateKindAmount).
+  kindAmount?: KindAmountMap;
   // "Zoveel keer per week" per sport (engine/sportFrequency.ts). A sport
   // missing here is on Automatisch: the weekly pattern and weekly planning
   // decide. Optional, so older settings need no migration.
@@ -1730,6 +1735,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     newId: () => makeId('planned'),
     leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
     fixedSports: settings.sportHandling ?? null,
+    kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
   })));
   if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 

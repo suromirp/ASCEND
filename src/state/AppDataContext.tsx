@@ -217,6 +217,7 @@ function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], 
   setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
   setFixedSessionMinutes(planned);
   setAmbition(scope.ambition);
+  setKindAmounts(scope.kindAmounts);
 }
 
 // Always as stored. A proposal's preview never sets these to values you did
@@ -312,6 +313,7 @@ import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedR
 import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDateNL, localDateOf } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
 import { withCountingSports } from '../engine/sportTemplate';
+import { parseKindAmounts } from '../engine/kindAmount';
 import { makeId } from '../utils/id';
 import type { InfluenceEntry } from '../models/influence';
 import type { SweatEntry } from '../models/sweat';
@@ -319,7 +321,7 @@ import { clearSweatPre, setSweatPre } from '../engine/sweatMoments';
 import { applyChange, blankEntry, excludedLogIds, type NoteTarget } from '../engine/influence';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
-import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes, setAmbition, resolveVariantDuration } from '../engine/substitutions';
+import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes, setAmbition, setKindAmounts, resolveVariantDuration } from '../engine/substitutions';
 import { coachReaction } from '../engine/coach';
 import { requestPersistentStorage } from '../storage/persistence';
 import { durationScopeFor } from '../engine/durationScope';
@@ -2509,7 +2511,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       newId: () => `preview-pass-${n++}`,
       until,
-      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null,
+      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
     });
   }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
 
@@ -2536,7 +2538,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
           newId: () => `leave-${n++}`,
           until: addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, 21),
-          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null,
+          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
         };
       },
     });
@@ -2598,7 +2600,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         slotDays: patternDays(templates, settings, restDay),
         minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
         newId: () => `restday-${n++}`,
-        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null,
+        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
       },
     });
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
