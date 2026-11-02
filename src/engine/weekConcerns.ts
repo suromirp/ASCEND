@@ -183,7 +183,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
         const test = f.sessionIds[f.sessionIds.length - 1];
         const heavy = f.sessionIds.length > 1 ? f.sessionIds[0] : undefined;
         const heavyName = rest.name;
-                return {
+        return {
           ...base,
           headline: `Je testloop staat ${rest.hours} uur na een zware dag.`,
           fact: `${heavyName} op ${dayName(rest.date)} en je testloop op ${dayName(dateOf(test))}. Liefst ${rest.limitHours} uur ertussen.`,
