@@ -17,6 +17,7 @@ import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgression
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
 import { NextTrekLine } from '../components/NextTrekLine';
+import { MountainWeatherCard } from '../components/MountainWeatherCard';
 import { TestPendingLine } from '../components/TestPendingLine';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
@@ -57,6 +58,7 @@ import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
 import { LegEaseCard } from '../components/LegEaseCard';
 import { InfluenceMoveCard } from '../components/influence/InfluenceMoveCard';
+import { MorningProposalCard } from '../components/MorningProposalCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
@@ -381,6 +383,8 @@ function TodayContent() {
 
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
+      {/* Twee van de drie getallen van je horloge wijken af op de ochtend van een zware training (engine/morningProposal.ts). */}
+      <MorningProposalCard />
 
       {/* Een trage test die wacht op je antwoord: een rustige regel, tot je kiest. */}
       <TestPendingLine />
@@ -392,6 +396,8 @@ function TodayContent() {
       <SourceSilenceLine />
 
       <NextTrekLine onlyWhenOn />
+      {/* Een tochtdag in de bergen of de sneeuw: het weer op de hoogte van je tocht (engine/mountainWeather.ts). */}
+      <MountainWeatherCard />
 
       <MacroFactorCard />
 

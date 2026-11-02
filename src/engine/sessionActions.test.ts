@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { macroFactorLine, pendingMacroFactorWorkout, previewDayLine, sessionSheetActions, strengthDoneDuration, QUICK_RPE_SCALE } from './sessionActions';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { resolveProgramWeek } from '../utils/dates';
@@ -43,7 +43,10 @@ describe('sessionSheetActions', () => {
 });
 
 describe('previewDayLine: de dag en week van de training zelf', () => {
+  // Het demoprogramma begint op vandaag: een vaste klok houdt de weken van deze test vast.
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-31T08:00:00Z') });
   const { program } = buildDefaultProgramData();
+  vi.useRealTimers();
 
   it('noemt de weekdag, de datum en de week van het programma op die dag, niet van vandaag', () => {
     const date = '2026-10-29';

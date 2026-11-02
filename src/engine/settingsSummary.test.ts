@@ -491,6 +491,18 @@ describe('rowSummary: gegevens en back-up', () => {
     expect(rowSummary('hitte-tempo', facts({ settings: { heatPace: false } as never })).checked).toBe(false);
     expect(rowSummary('weekdag-patroon', facts({ settings: { weekdayPattern: false } as never })).checked).toBe(false);
     expect(rowSummary('luchtkwaliteit', facts({ settings: { airQuality: false } as never })).checked).toBe(false);
+    expect(rowSummary('klimtempo', facts()).checked).toBe(true);
+    expect(rowSummary('klimtempo', facts({ settings: { climbPace: false } as never })).checked).toBe(false);
+    expect(rowSummary('etappetijd-eigen', facts()).checked).toBe(true);
+    expect(rowSummary('etappetijd-eigen', facts({ settings: { stageOwnPace: false } as never })).checked).toBe(false);
+    expect(rowSummary('tempocurve', facts()).checked).toBe(true);
+    expect(rowSummary('tempocurve', facts({ settings: { paceCurve: false } as never })).checked).toBe(false);
+    expect(rowSummary('wennen-warmte', facts()).checked).toBe(true);
+    expect(rowSummary('wennen-warmte', facts({ settings: { heatAcclimation: false } as never })).checked).toBe(false);
+    expect(rowSummary('bergweer', facts()).checked).toBe(true);
+    expect(rowSummary('bergweer', facts({ settings: { mountainWeather: false } as never })).checked).toBe(false);
+    expect(rowSummary('ochtend-voorstel', facts()).checked).toBe(true);
+    expect(rowSummary('ochtend-voorstel', facts({ settings: { morningProposal: false } as never })).checked).toBe(false);
     expect(rowSummary('ochtendregel', facts({ settings: { morningRule: false } as never })).checked).toBe(false);
     expect(rowSummary('horloge-stil', facts({ settings: { watchSilence: false } as never })).checked).toBe(false);
     expect(rowSummary('ochtend-backup', facts({ settings: { morningInBackup: false } as never })).checked).toBe(false);

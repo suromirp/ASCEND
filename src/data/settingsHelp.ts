@@ -528,6 +528,60 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waar het vandaan komt', text: 'Open-Meteo, met dezelfde afgeronde plek als het weer en zonder sleutel. Het raster is ongeveer 11 km; een drukke weg naast je route ziet het niet.' },
     ],
   },
+  klimtempo: {
+    title: 'Je klimtempo',
+    lead: 'De wandelnorm rekent met 300 meter per uur omhoog. Jij klimt misschien sneller of trager, en met een rugzak anders dan zonder.',
+    points: [
+      { head: 'Wat telt', text: 'de klimmen van minstens 100 meter en 8 procent in je wandelingen en bergtochten buiten van het laatste jaar, uit de details van je horloge. Hardlopen en de loopband tellen niet.' },
+      { head: 'Wanneer je het ziet', text: 'na zes klimmen uit minstens drie tochten. Tot dan zegt Je stand hoeveel er al zijn; in Nederland duurt dat vaak tot de bergen.' },
+      { head: 'Wat je ziet', text: 'op Je stand je meters per uur omhoog en omlaag, met het rugzakgewicht als dat bij minstens driekwart van je klimmen bekend is. Een lange klim telt zwaarder dan een korte. Het verandert niets aan je planning.' },
+    ],
+  },
+  etappetijdEigen: {
+    title: 'Etappetijd op je eigen tempo',
+    lead: 'De looptijd op de bordjes en de site is een norm. Met je eigen klimtempo kan ASCEND zeggen hoe lang een etappe voor jou ongeveer duurt.',
+    points: [
+      { head: 'Wat je ziet', text: 'bij een etappe en op Je stand een band als 6,5 tot 7,5 uur lopen, zonder pauzes. Een tijd, geen tweede percentage: Klaar voor je doel blijft het ene getal.' },
+      { head: 'Wanneer', text: 'pas als je klimtempo er is, na zes klimmen uit drie tochten. Tot dan blijft de looptijd van de site en de wandelnorm staan.' },
+      { head: 'Hoe het rekent', text: 'vlak met 4 km per uur zoals de norm, omhoog en omlaag met jouw meters per uur. Is je rugzak voor de GR5 zwaarder dan op je klimmen en weet ASCEND je gewicht, dan rekent het iets trager. Vermoeidheid na een paar dagen lopen telt niet mee.' },
+    ],
+  },
+  tempocurve: {
+    title: 'Tempocurve tussen testen',
+    lead: 'Tussen twee testen in lopen je gewone loopjes ook snelle stukken. ASCEND legt de snelste daarvan naast je test, als controle.',
+    points: [
+      { head: 'Wat je ziet', text: 'op Je stand onder Lopen je snelste 5 km in training sinds je test, met één zin: past bij je testtempo\'s, wijst op iets sneller, of is rustiger, wat normaal is.' },
+      { head: 'De test blijft de bron', text: 'je tempo\'s, de voorspelling en wat naar je horloge gaat komen uit de test die telt. Dit verandert daar niets aan; een nieuwe test zegt meer.' },
+      { head: 'Wanneer', text: 'drie weken na je test en na drie loopjes buiten met details. Je loopt in training zelden voluit, dus dit is een ondergrens.' },
+    ],
+  },
+  wennenWarmte: {
+    title: 'Wennen aan warmte',
+    lead: 'Een tocht in de zomer is warm in de dalen. Je lichaam went in een week of twee aan warmte, als je er af en toe in traint.',
+    points: [
+      { head: 'Wat je ziet', text: 'in de reisplanner, in de laatste drie weken voor een vertrek van juni tot en met september, één regel over een paar trainingen in de warmte.' },
+      { head: 'Hoe zeker', text: 'wennen aan warmte in 1 tot 2 weken met trainingen van een uur tot anderhalf in de warmte is breed onderbouwd. Het kan helpen; het is geen garantie tegen een warme dag.' },
+      { head: 'Je planning', text: 'verandert er niet door. Wil je een training in de warmte doen, dan kies je zelf het moment.' },
+    ],
+  },
+  bergweer: {
+    title: 'Bergweer op hoogte',
+    lead: 'In de bergen is het op de pas anders dan in het dal. Geef je bij een tocht in de bergen of de sneeuw het hoogste punt op, dan laat Vandaag het weer op die hoogte zien.',
+    points: [
+      { head: 'Wat je ziet', text: 'op een dag van je tocht een regel als: op 2.500 m vandaag tussen 2 en 8 graden, windstoten tot 50 km per uur, kans op onweer in de middag, met het vriespunt en een verwijzing naar het officiële bergweer.' },
+      { head: 'Alleen informatie', text: 'ASCEND zegt niet of je moet gaan; dat is vakwerk. Je planning verandert er niet door.' },
+      { head: 'Waar het vandaan komt', text: 'Open-Meteo, dezelfde bron en dezelfde afgeronde plek als je gewone weer, hoogstens eens per uur. Daarom alleen als het weer je locatie volgt: dan is de plek van het weer de plek waar je bent. Een weermodel rekent een bergkam grof uit.' },
+    ],
+  },
+  ochtendVoorstel: {
+    title: 'Voorstel bij een slechte ochtend',
+    lead: 'Wijken twee van de drie getallen van je horloge af op de ochtend van een zware training, dan kan het helpen om die training later in de week te doen.',
+    points: [
+      { head: 'Wanneer', text: 'op de ochtend van een tempoloop, intervallen, een test of een zware beendag, als je rusthartslag, HRV of slaap op twee van de drie afwijken. Eén afwijkend getal blijft één woord op de ochtendkaart.' },
+      { head: 'Wat je ziet', text: 'een kaart op Vandaag met een voorstel om de training naar een goede latere dag te doen, met welke getallen afwijken. Alleen met jouw Akkoord verandert er iets; lichter doen kan ook, zonder iets te verschuiven.' },
+      { head: 'Niet', text: 'als je zei dat je niet moe bent, bij een wedstrijd, als je ziek bent gemeld of als er al een ander voorstel voor die training ligt. Werkt alleen als Twee van drie aan staat.' },
+    ],
+  },
   ochtendregel: {
     title: 'Twee van drie',
     lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',

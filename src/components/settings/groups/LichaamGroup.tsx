@@ -58,6 +58,12 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="ochtendregel" title="Twee van drie" facts={facts} info="ochtendregel" onChange={(on) => void updateSettings({ morningRule: on })} />
           <SummaryRow id="weekdag-patroon" title="Patronen per weekdag" facts={facts} info="weekdagPatroon" onChange={(on) => void updateSettings({ weekdayPattern: on })} />
           <SummaryRow id="hitte-tempo" title="Hitte bij je tempo" facts={facts} info="hitteTempo" onChange={(on) => void updateSettings({ heatPace: on })} />
+          <SummaryRow id="klimtempo" title="Je klimtempo" facts={facts} info="klimtempo" onChange={(on) => void updateSettings({ climbPace: on })} />
+          <SummaryRow id="etappetijd-eigen" title="Etappetijd op je eigen tempo" facts={facts} info="etappetijdEigen" onChange={(on) => void updateSettings({ stageOwnPace: on })} />
+          <SummaryRow id="tempocurve" title="Tempocurve tussen testen" facts={facts} info="tempocurve" onChange={(on) => void updateSettings({ paceCurve: on })} />
+          <SummaryRow id="wennen-warmte" title="Wennen aan warmte" facts={facts} info="wennenWarmte" onChange={(on) => void updateSettings({ heatAcclimation: on })} />
+          <SummaryRow id="bergweer" title="Bergweer op hoogte" facts={facts} info="bergweer" onChange={(on) => void updateSettings({ mountainWeather: on })} />
+          <SummaryRow id="ochtend-voorstel" title="Voorstel bij een slechte ochtend" facts={facts} info="ochtendVoorstel" onChange={(on) => void updateSettings({ morningProposal: on })} />
           <SummaryRow id="luchtkwaliteit" title="Luchtkwaliteit" facts={facts} info="luchtkwaliteit" onChange={(on) => void updateSettings({ airQuality: on })} />
         </BundleSheet>
       )}

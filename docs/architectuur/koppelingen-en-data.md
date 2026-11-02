@@ -38,3 +38,14 @@ fall away (`engine/weekdayPattern.ts`, a line on Week), air quality for a hard t
 `storage/airQuality.ts`, a cache at air-quality-api.open-meteo.com, never in a backup) and the morning rule two of
 three (`engine/morningRule.ts`: on the morning card one word under each watch number, amber when it asks attention, and
 at two of three "Ben je moe?" with Ja or Nee, which becomes the energy of the morning check). None of them changes the planning.
+
+**Signals, the middle part** (decision `2026-11-01-kansen-middelgroot.md`, the same sheet, all on by default): your own
+climbing pace with a rucksack (`engine/climbPace.ts`, card Klimtempo on Je stand after six climbs from three tochten),
+a GR5 stage and a usual day of the main goal as a band of hours on that pace next to `goalRoute.ts#estimatedHikingMinutes`
+(`climbPace.ts#stageTimeEstimate`; a time, never a second percentage), the fastest stretch of usual runs next to the
+test (`engine/paceCurve.ts`, reads the test of `pacesFromLogs`, changes no pace), a line about getting used to heat
+before a summer departure (`engine/heatAcclimation.ts`), mountain weather at the highest point of a tocht
+(`engine/mountainWeather.ts`, `storage/mountainWeather.ts`, `TrekDetails.highestM`; the same rounded place and source
+as the forecast with `elevation`, at most once an hour, only on a day of the tocht itself and only while the weather follows your location, never in a backup) and a proposal
+with Akkoord to do a hard session later when two of the three morning numbers are off (`engine/morningProposal.ts`,
+rule MORNING-WATCH, moving through `adviceEngine.ts#laterMoveAdvice` like LEG-EASE).

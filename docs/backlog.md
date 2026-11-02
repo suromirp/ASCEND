@@ -15,11 +15,7 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 ## Kan nu, na wat loopt
 
-- Kansen met gegevens, het middelgrote werk uit de top 10 (`docs/onderzoek/Kansen met gegevens.md`; stap 0 en het kleine werk staan in `docs/beslissingen/2026-10-31-kansen-stap-0.md`):
-  - je eigen klimtempo met rugzak en een eerlijke schatting van een GR5-etappe (kans A), naast `engine/goalRoute.ts#estimatedHikingMinutes`;
-  - de GR5-etappeschatting op je eigen tempo als band ("6,5 tot 7,5 uur"), pas na genoeg klimmen;
-  - een persoonlijke tempocurve tussen twee testen in (kans F), als controle naast de test.
-- Kansen, klein werk dat nog over is: de regel over wennen aan warmte in de laatste weken voor een zomertocht (tweede helft van kans D), bergweer op de hoogte van je tocht (kans I), en een voorstel met Akkoord bij een zware sessie op een ochtend waar twee van de drie afwijken (de rest van kans C, na de ochtendkaart). De bestandsroute voor FIT-bestanden als vangnet (stap 0c van het onderzoek) is later.
+- Kansen met gegevens, het middelgrote werk (kans A en F, de etappeschatting als band) en het kleine werk dat over was (kans C, D en I): gebouwd op `claude/kansen-middelgroot`, wacht op de poorten (`docs/beslissingen/2026-11-01-kansen-middelgroot.md`). De bestandsroute voor FIT-bestanden als vangnet (stap 0c van het onderzoek) is later.
 - Vier tekstpunten uit eerdere Lookout-rondes die zonder screenshot niet terug te vinden waren. Wachten op een screenshot van de eigenaar.
 
 - Sporten die meetellen stap 1 (pictogrammen, Cartographer) en stap 4 tot 9 (import, vraag op Vandaag, scherm Sporten, weekcheck, vaste dag, hoeveel per soort). Stap 2 en 3 zijn gebouwd.
