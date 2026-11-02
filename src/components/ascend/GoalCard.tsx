@@ -1,4 +1,4 @@
-import { forwardRef, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
+import { forwardRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CountUp } from '../CountUp';
 import { Icon } from '../icons';
@@ -14,6 +14,8 @@ import type { GoalView } from './useGoalViews';
 import { JourneyRows } from './JourneyRows';
 import { isTrekGoal, whenText } from './goalText';
 import type { RaceFacts } from '../../engine/raceReadiness';
+import { usesMilestoneReadiness } from '../../engine/goalReadinessFor';
+import { Gr5ReadinessSheet } from '../Gr5ReadinessSheet';
 
 // Wat een hardloopwedstrijd met een doeltijd bovenaan zegt: eerst het droge feit (verwacht nu, doel,
 // de afstand ertussen), dan de haalbaarheid als droog feit. Zonder test één regel. De basis ("Uit je
@@ -55,6 +57,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
   onLabel: () => void;
 }>(function GoalCard({ view, open, first, next, dragging, dragStyle, handle, onToggle, onDetails, onLabel }, ref) {
   const navigate = useNavigate();
+  const [metersOpen, setMetersOpen] = useState(false);
   const { item, readiness, timing } = view;
   const goal = item.goal;
   const kind = goalKindOf(goal) ?? (item.isMain ? 'trek_hut' : undefined);
@@ -66,6 +69,9 @@ export const GoalCard = forwardRef<HTMLDivElement, {
   // Een wedstrijd met een gemeten doeltijd: feiten en meters staan altijd open, er valt niets uit te klappen.
   const raceOpen = raceCard && readiness?.race?.status === 'counted';
   const change = readiness ? changeLabel(readiness.change) : undefined;
+  // Het doel met de mijlpalen (de GR5, een tocht): het percentage is het gemiddelde van vier meters, en "Waar staat dit op?"
+  // opent het blad met per meter jouw beste naast wat het doel vraagt (Gr5ReadinessSheet). Een ander doel heeft zijn eigen uitleg.
+  const metersSheet = item.isMain && usesMilestoneReadiness(goal) && !!readiness && percent !== undefined && readiness.meters.length > 0;
   const sentence = readiness?.sentence ?? (kind
     ? 'Nog niets te meten. Dat komt met trainingen die meetellen.'
     : 'Dit doel heeft nog geen soort, dus er valt niets te meten. Kies er een via Doel aanpassen.');
@@ -132,6 +138,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
         {!raceOpen && (
           <p className={`text-sm leading-relaxed ${open ? '' : 'line-clamp-2'}`} style={{ color: 'var(--color-ink)' }}>{sentence}</p>
         )}
+        {metersSheet && <div className="-mb-2"><TextButton onClick={() => setMetersOpen(true)} data-sheet-from icon="verder">Waar staat dit op?</TextButton></div>}
       </div>
 
       {(open || raceCard) && (
@@ -163,6 +170,9 @@ export const GoalCard = forwardRef<HTMLDivElement, {
         {/* Een wedstrijd met een gemeten doeltijd toont alles al: dan klapt er niets. */}
         {!raceOpen && <TextButton tone="dim" onClick={onToggle} icon="omlaag" flipped={open} aria-expanded={open}>{open ? 'Inklappen' : 'Uitklappen'}</TextButton>}
       </div>
+      {metersOpen && metersSheet && readiness && percent !== undefined && (
+        <Gr5ReadinessSheet readiness={{ percent, meters: readiness.meters, weakest: readiness.weakest, sentence: readiness.sentence, weakestSentence: readiness.weakestSentence, change: readiness.change }} title="Klaar voor je doel" onClose={() => setMetersOpen(false)} />
+      )}
       {timing.state === 'underway' && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Tijdens het doel plant ASCEND geen training. Het doel is je training.</p>
       )}

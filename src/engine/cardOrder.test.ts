@@ -6,7 +6,7 @@ const allOnce = (order: string[]) => expect([...order].sort()).toEqual([...STD].
 
 describe('resolveCardOrder', () => {
   it('zonder instelling is de volgorde zoals de pagina altijd stond', () => {
-    expect(resolveCardOrder('stand', undefined)).toEqual(['benen', 'belasting', 'kracht', 'vier-regels', 'lopen', 'invloed', 'doel']);
+    expect(resolveCardOrder('stand', undefined)).toEqual(['benen', 'belasting', 'kracht', 'ritme', 'lopen', 'invloed']);
   });
   it('geeft de standaard bij niets', () => {
     for (const raw of [undefined, null, {}, [], 'x', 5]) expect(resolveCardOrder('stand', raw)).toEqual(STD);
@@ -16,7 +16,7 @@ describe('resolveCardOrder', () => {
     expect(resolveCardOrder('stand', { stand: [1, 2, null, {}] })).toEqual(STD);
   });
   it('leest een geldige volgorde', () => {
-    const order = ['kracht', 'benen', 'belasting', 'vier-regels', 'lopen', 'invloed', 'doel'];
+    const order = ['kracht', 'benen', 'belasting', 'ritme', 'lopen', 'invloed'];
     expect(resolveCardOrder('stand', { stand: order })).toEqual(order);
   });
   it('laat onbekende en dubbele id\'s vallen', () => {
@@ -27,23 +27,24 @@ describe('resolveCardOrder', () => {
     expect(r).toHaveLength(STD.length);
   });
   it('zet een ontbrekend blok terug direct na zijn voorganger uit de standaard', () => {
-    const saved = ['benen', 'belasting', 'vier-regels', 'lopen', 'invloed', 'doel'];
+    const saved = ['benen', 'belasting', 'ritme', 'lopen', 'invloed'];
     const r = resolveCardOrder('stand', { stand: saved });
     expect(r).toEqual(STD);
-    const saved2 = ['doel', 'benen', 'belasting', 'vier-regels', 'lopen', 'invloed'];
+    const saved2 = ['invloed', 'benen', 'belasting', 'ritme', 'lopen'];
     const r2 = resolveCardOrder('stand', { stand: saved2 });
     expect(r2.indexOf('kracht')).toBe(r2.indexOf('belasting') + 1);
     allOnce(r2);
   });
   it('zet een ontbrekend eerste blok vooraan', () => {
-    const r = resolveCardOrder('stand', { stand: ['doel'] });
+    const r = resolveCardOrder('stand', { stand: ['invloed'] });
     allOnce(r);
     expect(r[0]).toBe('benen');
   });
-  it('zet het lucht-vlak nooit eerst', () => {
+  it('zet een bewaarde volgorde van voor de herinrichting om: vier regels wordt Ritme, doel valt weg', () => {
     const r = resolveCardOrder('stand', { stand: ['vier-regels', 'doel', 'benen'] });
-    expect(r[0]).not.toBe('vier-regels');
-    expect(r[1]).toBe('vier-regels');
+    expect(r[0]).toBe('ritme');
+    expect(r).not.toContain('doel');
+    expect(r).not.toContain('vier-regels');
     allOnce(r);
   });
 });
@@ -59,13 +60,7 @@ describe('moveBlock', () => {
   });
   it('begin en eind, ook buiten het bereik', () => {
     expect(moveBlock('stand', STD, 'benen', 99).at(-1)).toBe('benen');
-    expect(moveBlock('stand', STD, 'doel', -5)[0]).toBe('doel');
-  });
-  it('stuurt het lucht-vlak van plek 1 naar plek 2', () => {
-    const r = moveBlock('stand', STD, 'vier-regels', 0);
-    expect(r[0]).not.toBe('vier-regels');
-    expect(r[1]).toBe('vier-regels');
-    allOnce(r);
+    expect(moveBlock('stand', STD, 'invloed', -5)[0]).toBe('invloed');
   });
   it('laat een onbekend blok met rust', () => {
     expect(moveBlock('stand', STD, 'nee', 2)).toEqual(STD);
@@ -94,7 +89,7 @@ describe('blockIndexAtY', () => {
 describe('isDefaultOrder en cleanCardOrder', () => {
   it('herkent de standaard', () => {
     expect(isDefaultOrder('stand', STD)).toBe(true);
-    expect(isDefaultOrder('stand', moveBlock('stand', STD, 'doel', 0))).toBe(false);
+    expect(isDefaultOrder('stand', moveBlock('stand', STD, 'invloed', 0))).toBe(false);
   });
   it('houdt alleen een geldig record', () => {
     expect(cleanCardOrder({ stand: ['a', 'b'] })).toEqual({ stand: ['a', 'b'] });
@@ -108,7 +103,7 @@ describe('isDefaultOrder en cleanCardOrder', () => {
 describe('zinnen voor de schermlezer', () => {
   it('zegt plek en naam, zonder gedachtestreepjes', () => {
     const order = moveBlock('stand', STD, 'kracht', 1);
-    expect(orderAnnouncement('stand', order, 'kracht', 'moving')).toBe('Plek 2 van 7, Kracht.');
+    expect(orderAnnouncement('stand', order, 'kracht', 'moving')).toBe('Plek 2 van 6, Kracht.');
     expect(orderAnnouncement('stand', order, 'kracht', 'dropped')).toBe('Kracht staat nu tweede.');
     expect(orderAnnouncement('stand', order, 'kracht', 'cancelled')).toBe('Kracht blijft op zijn plek.');
     expect(handleLabel('stand', order, 'kracht')).toBe('Verplaats Kracht, nu op plek 2. Spatie pakt op, pijltjes verplaatsen, spatie laat los, Escape annuleert.');

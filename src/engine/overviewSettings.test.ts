@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionLog } from '../models/training';
-import { DEFAULT_OVERVIEWS, morningCheckInMode, needsWeather, resolveOverviews, showMorningCheckInCard, reviewWeekToShow, showCompletionQuote, showMorningCheckIn, showMorningCardSetting, showWeatherLine, showWeatherSwap, showWeeklyQuestion, showBestMoment } from './overviewSettings';
+import { DEFAULT_OVERVIEWS, morningCheckInMode, needsWeather, resolveOverviews, showMorningCheckInCard, reviewWeekToShow, showCompletionQuote, showMorningCheckIn, showMorningCardSetting, showWeatherLine, showWeatherSwap, showWeeklyQuestion, showBestMoment, weekReviewCardShown } from './overviewSettings';
 import { reviewWeekFor } from './weekReview';
 
 describe('resolveOverviews', () => {
@@ -122,5 +122,19 @@ describe('de ochtendkaart', () => {
     expect(showMorningCardSetting(undefined)).toBe(true);
     expect(showMorningCardSetting({ morningCard: false })).toBe(false);
     expect(showMorningCardSetting({ morningCheckIn: false })).toBe(false);
+  });
+});
+
+describe('weekReviewCardShown', () => {
+  it('toont een afgesloten week altijd', () => {
+    expect(weekReviewCardShown({ running: false, todayLeft: 3 }, undefined)).toBe(true);
+  });
+  it('wacht op zondag tot wat vandaag staat gedaan is', () => {
+    expect(weekReviewCardShown({ running: true, todayLeft: 2 }, undefined)).toBe(false);
+    expect(weekReviewCardShown({ running: true, todayLeft: 2 }, { weekReviewDay: 'both' })).toBe(false);
+    expect(weekReviewCardShown({ running: true, todayLeft: 0 }, undefined)).toBe(true);
+  });
+  it('toont hem bij alleen zondag toch, want er is geen andere dag', () => {
+    expect(weekReviewCardShown({ running: true, todayLeft: 2 }, { weekReviewDay: 'sunday' })).toBe(true);
   });
 });

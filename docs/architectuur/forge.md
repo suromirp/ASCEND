@@ -7,8 +7,8 @@ and the fixed explanation as fallback; with Kracht meerekenen off the card stays
 (benen, belasting, kracht, vier-regels, lopen, invloed, doel) after the fixed first card "Klaar voor het doel"; the order is
 a preference in `AppSettings.cardOrder` (optional, read defensively by `resolveCardOrder`, in the backup through
 `cleanCardOrder`, no migration), changed in the sheet "Volgorde aanpassen" (handle with `useVerticalDrag` and its optional
-`scroller`, Hoger and Lager per row) and the row "Volgorde van Je stand" in Planning under Geavanceerd. The sky block
-"Je stand in vier regels" is never first. No dragging on Vandaag, Logboek, settings or in Forge itself; Ascend and Week
+`scroller`, Hoger and Lager per row) and the row "Volgorde van Je stand" in Planning under Geavanceerd. The block "Je stand in vier regels"
+is now "Ritme" (`resolveCardOrder` turns a saved `vier-regels` into `ritme`; `doel` is gone). No dragging on Vandaag, Logboek, settings or in Forge itself; Ascend and Week
 dragging are untouched. A block that is off through its own setting keeps its place.
 
 **Forge** compares each exercise now against 4 and 8 weeks back and the best ever

@@ -1,3 +1,4 @@
+import { resolveIntensityCounting } from '../engine/intensitySettings';
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
@@ -18,15 +19,16 @@ export function DeviceNoticesHost() {
   const port = notificationPort();
   const notices = resolveDeviceNotices(settings);
   const haptics = settings.haptics !== false;
+  const counting = resolveIntensityCounting(settings);
 
   // De tekst van de weekmelding: de weekterugblik van de week met de eerstvolgende zondag.
   const weekText = useMemo(() => {
     if (!port.timed || !notices.week) return null;
     const sunday = toISODate(nextWeekNoticeAt(new Date(), notices.weekTime));
     const weekStart = mondayOfWeek(sunday);
-    const review = buildWeekReview({ weekStart, plannedById: plannedByIdOf(plannedSessions), plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks });
+    const review = buildWeekReview({ weekStart, plannedById: plannedByIdOf(plannedSessions), plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: counting });
     return weekNoticeText(review);
-  }, [port.timed, notices.week, notices.weekTime, plannedSessions, sessionLogs, templates, program, planChangeLog, settings.illnessEpisodes, settings.weeklyHealthChecks]);
+  }, [port.timed, notices.week, notices.weekTime, plannedSessions, sessionLogs, templates, program, planChangeLog, settings.illnessEpisodes, settings.weeklyHealthChecks, settings.heartRate, counting]);
 
   const morningKey = JSON.stringify([notices.morning, resolveOverviews(settings.overviews).morningCheckIn, morningFromHour(settings.overviews), (settings.morningCheckIns ?? []).map((c) => c.date).slice(-3)]);
 

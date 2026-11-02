@@ -9,7 +9,7 @@ export interface CardBlock {
   name: string;
   // Eén regel met wat erin zit, voor in het blad.
   line: string;
-  // Het lucht-vlak mag nooit de eerste zijn: hoogstens één vlak lucht halverwege.
+  // Een blok dat niet eerst mag staan (geen enkel blok nu: Je stand heeft geen lucht-vlak halverwege meer).
   canBeFirst: boolean;
   // Een eigen instelling kan het blok uitzetten; het houdt dan zijn plek in de volgorde.
   settingNote?: string;
@@ -20,10 +20,9 @@ export const STAND_BLOCKS: CardBlock[] = [
   { id: 'benen', name: 'Benen', line: 'Beenindex, frisheid, kalender', canBeFirst: true },
   { id: 'belasting', name: 'Belasting', line: 'Wekelijkse belasting, intensiteit, afdaling', canBeFirst: true },
   { id: 'kracht', name: 'Kracht', line: 'Forge, krachtprogressie, trainingsverdeling', canBeFirst: true },
-  { id: 'vier-regels', name: 'Je stand in vier regels', line: 'Deze week, volgehouden, fase, op rij', canBeFirst: false },
+  { id: 'ritme', name: 'Ritme', line: 'Je laatste weken als stipjes, en hoe je erbij zit', canBeFirst: true },
   { id: 'lopen', name: 'Lopen', line: 'Looptrends, tempo bij zone 2', canBeFirst: true },
   { id: 'invloed', name: 'Wat speelde er', line: 'Wat je zelf noteerde bij trainingen en dagen', canBeFirst: true },
-  { id: 'doel', name: 'Doel', line: 'Avontuurkaart en les', canBeFirst: true },
 ];
 
 const BLOCKS: Record<CardPage, CardBlock[]> = { stand: STAND_BLOCKS };
@@ -47,7 +46,11 @@ export function resolveCardOrder(page: CardPage, raw: unknown): string[] {
   const value = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>)[page] : raw;
   const out: string[] = [];
   if (Array.isArray(value)) {
-    for (const id of value) if (typeof id === 'string' && known.has(id) && !out.includes(id)) out.push(id);
+    for (const raw of value) {
+      // Een bewaarde volgorde van voor de herinrichting: "Je stand in vier regels" is nu Ritme; "doel" is weg.
+      const id = raw === 'vier-regels' ? 'ritme' : raw;
+      if (typeof id === 'string' && known.has(id) && !out.includes(id)) out.push(id);
+    }
   }
   // Een blok dat ontbreekt komt terug direct na het blok dat in de standaard voor hem stond.
   std.forEach((id, i) => {

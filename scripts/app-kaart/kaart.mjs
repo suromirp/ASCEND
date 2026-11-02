@@ -107,9 +107,8 @@ async function tik(page, sel) {
   await page.waitForTimeout(1200);
 }
 
-// Logboek, de rustige duurloop van 23 oktober (6 km, met detail uit het horloge), dan de rij "Run in detail".
+// Logboek (de trainingen staan per week in beeld), de rustige duurloop van 23 oktober (6 km, met detail uit het horloge), dan de rij "Run in detail".
 async function openRunInDetail(page) {
-  await tik(page, 'button:has-text("Alle trainingen van deze maand")');
   await tik(page, 'button:has-text("Rustige duurloop"):has-text("23")');
   await tik(page, 'button:has-text("Run in detail")');
   await page.waitForTimeout(1500);

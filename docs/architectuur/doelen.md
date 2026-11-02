@@ -7,7 +7,7 @@ the whole visible list), the first one open, a goal sheet per goal, and a season
 tonen"). A new label, a goal added or changed, "In hutten" or "Met tent", and an order that shifts a conflict
 (`goalList.ts#moveOutcome`) are always a proposal with Akkoord, never silent. "Klaar voor je doel" of the main goal: only for
 `trek_hut`, `trek_tent` or no kind (`goalReadinessFor.ts#usesMilestoneReadiness`) it is
-`gr5Readiness.ts#computeMainGoalReadiness`, the same as on Je stand; every other kind goes through
+`gr5Readiness.ts#computeMainGoalReadiness`; every other kind goes through
 `goalReadinessFor.ts#goalReadinessFor`. `/ascend/doelen` redirects to the tab. Krachtprogressie
 and Trainingsverdeling live on Je stand.
 
@@ -22,10 +22,9 @@ main goal any more.
 `docs/beslissingen/2026-10-22-gr5-voortgang-een-percentage.md`): "Klaar voor de
 GR5" is a single percentage, the average of four meters (rugzak, langste dag,
 stijging en daling, dagen achter elkaar), each capped at 100%, always shown
-with the sentence it is made of (`Gr5ReadinessCard`, tap opens the four meters
-in `Gr5ReadinessSheet`). Ascend and Je stand read the same function. The
+with the sentence it is made of (on the goal card of Ascend; `Gr5ReadinessCard` left Je stand and is gone; `Gr5ReadinessSheet` opens from the row "Waar staat dit op?" on the Ascend goal card, only for a main goal with the milestones calculation). The percentage is shown on Ascend only, never on Je stand (`2026-11-02-gegevens-herinrichting.md`). The
 milestones stay a ladder ("volgend kamp"), never a second progress number. The
-coach (Ascend) and "Volgehouden" (Je stand) count with the same function,
+coach (Ascend) and "Ritme" (Je stand) count with the same function,
 `engine/onCourse.ts#recentAdherence`. Do not add another percentage or
 "x van y" for goal progress next to these; extend the engine function instead.
 
@@ -49,7 +48,7 @@ The finish (`2026-10-28-klaar-voor-je-doel-logisch-afwerking.md`): which calcula
 the smallest whole minute that fits the weeks there are (`raceOutlook().wholeMinutes`, the same number the card calls "ongeveer"), so
 after Akkoord the card says it fits; a meter without weight never makes "het meeste te winnen" and does not keep the number under 100.
 Two settings: "Groei bij het rekenen" (`goalGrowth`: gemiddeld = the middle of the band, voorzichtig = the bottom, `data/goalGrowth.ts#growthPer`)
-and "Marge bij een tijdslimiet" (`limitMargin`: 10%, 5%, geen); Sterker worden follows "Weging bij een doeltijd" too. The follow-up (`2026-10-28-klaar-voor-je-doel-vervolg.md`): the main goal only gets the milestones calculation when it is a tocht (`trek_hut`, `trek_tent`) or has no kind (`goalReadinessFor.ts#usesMilestoneReadiness`), any other main goal gets the calculation of its own kind, and Je stand reads `goalReadinessFor` too, so both show the same number; a goal time within the spread of the prediction (`PREDICTION_SPREAD`) of the time on race day counts as "past" (`RaceOutlook.holds`, the same line as TARGET-TIME; `fits` stays strict and sets the whole minute of the proposal), so the card never contradicts an Akkoord a day later; up to and including 10 km the expected time on race day is a clock ("ongeveer 20:05"), above that whole minutes (`racePaces.ts#outlookSaid`); the form of Sterker worden takes a fully filled exercise with Volgende (`strengthTargetsDraft.ts#finishStrengthTargets`, a half filled one blocks with one sentence) and the strength meter knows an exercise by name, id or alias. The 0,55% is the middle
+and "Marge bij een tijdslimiet" (`limitMargin`: 10%, 5%, geen); Sterker worden follows "Weging bij een doeltijd" too. The follow-up (`2026-10-28-klaar-voor-je-doel-vervolg.md`): the main goal only gets the milestones calculation when it is a tocht (`trek_hut`, `trek_tent`) or has no kind (`goalReadinessFor.ts#usesMilestoneReadiness`), any other main goal gets the calculation of its own kind, and Ascend is the only screen that shows the number; a goal time within the spread of the prediction (`PREDICTION_SPREAD`) of the time on race day counts as "past" (`RaceOutlook.holds`, the same line as TARGET-TIME; `fits` stays strict and sets the whole minute of the proposal), so the card never contradicts an Akkoord a day later; up to and including 10 km the expected time on race day is a clock ("ongeveer 20:05"), above that whole minutes (`racePaces.ts#outlookSaid`); the form of Sterker worden takes a fully filled exercise with Volgende (`strengthTargetsDraft.ts#finishStrengthTargets`, a half filled one blocks with one sentence) and the strength meter knows an exercise by name, id or alias. The 0,55% is the middle
 of 0,3 to 0,8% derived from several sources, never attributed to one study. The form of Sterker worden takes the strength targets per exercise
 (`StrengthTargetsField`, `engine/strengthTargetsDraft.ts`); a cutoff only belongs to an ultra, also when editing.
 

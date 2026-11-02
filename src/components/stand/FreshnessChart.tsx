@@ -91,13 +91,13 @@ export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; to
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: MARK_COLOR.legs }} aria-hidden />benen</span>
       </div>
 
-      {point && (
+      {point && (point.date !== today || point.sessions.length > 0) && (
         <div className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }} aria-live="polite">
-          <p>
-            <span className="font-medium">{point.date === today ? 'Vandaag' : formatWeekdayDayMonthNL(point.date)}: </span>
+          {point.date !== today && <p>
+            <span className="font-medium">{formatWeekdayDayMonthNL(point.date)}: </span>
             <span className="tabular-nums">{formatNumberNL(point.index, 1)}</span>, {fatigueWord(point.index).word.toLowerCase()}
             {point.date > today && <span style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(Math.max(0, point.index - FATIGUE_BAND), 0)} tot {formatNumberNL(point.index + FATIGUE_BAND, 0)})</span>}
-          </p>
+          </p>}
           {point.sessions.length > 0 && (
             <p style={{ color: 'var(--color-ink-dim)' }}>
               {point.sessions.map((s) => `${s.name} (${MARK_LABEL[s.mark]}${s.logged ? ', gedaan' : ''})`).join(' · ')}
