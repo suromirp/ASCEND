@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import type { DayLoad } from '../engine/weekProfile';
 import { ridgeSentence } from '../engine/weekProfile';
+import { SPLIT_NOTE } from '../engine/standing';
 import { weekdayLongNL } from '../utils/dates';
 import { Card, Eyebrow } from './ui';
 
@@ -100,7 +101,7 @@ export function WeekRidge({ days, previous, today, bare = false }: { days: DayLo
       </div>
 
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{ridgeSentence(days, today)}</p>
-      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De hoogte is minuten maal hoe zwaar het was.</p>
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De hoogte is minuten maal hoe zwaar het was.{days.some((d) => d.split) ? ` ${SPLIT_NOTE}` : ''}</p>
     </>
   );
   return bare ? <div className="flex flex-col gap-2">{body}</div> : <Card className="flex flex-col gap-2">{body}</Card>;

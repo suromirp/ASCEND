@@ -32,6 +32,9 @@ export interface DayLoad {
   minutes: number;
   // Er is op deze dag iets gedaan (een log) of er komt nog iets (gepland).
   hasTraining: boolean;
+  // Op deze dag staat een test met inlopen die in twee delen telt (standing.ts#LoadItem.split): de
+  // hoogte is dan niet meer gewoon minuten maal zwaarte, en de uitleg zegt dat.
+  split?: boolean;
   // De training die het zwaarst is voor de benen, als die er is.
   legTemplate?: SessionTemplate;
   // Een dag van een tocht: de wandeling die de tocht zelf plaatste. Tochtdagen
@@ -86,6 +89,7 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
       load: items.reduce((n, i) => n + i.load, 0),
       minutes: items.reduce((n, i) => n + i.minutes, 0),
       hasTraining: items.length > 0,
+      ...(items.some((i) => i.split) ? { split: true } : {}),
       legTemplate: legs[0],
       ...(trekDays.has(date) ? { trekDay: true } : {}),
     };
