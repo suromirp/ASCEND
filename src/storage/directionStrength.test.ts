@@ -172,4 +172,17 @@ describe('een richting verandert het aantal keer kracht', () => {
       expect(a.sessionsPerWeek).toBe(1);
     }
   });
+
+  it('zet Benen A niet de dag na een lange duurloop, ook niet als de maandag vrij is', async () => {
+    await down();
+    const up0 = await build(3);
+    const lowerDay = up0.reshape.shape.days.tpl_lower_a;
+    const week = addDays(FROM, 21);
+    const rows = await PlannedSessionsRepo.getAll();
+    const run = rows.find((x) => x.templateId === 'tpl_long_run' && x.weekStartDate === week)!;
+    await PlannedSessionsRepo.put({ ...run, scheduledDate: addDays(week, lowerDay - 2), lock: { by: 'user', at: `${TODAY}T08:00:00.000Z` } });
+    const up = await build(3);
+    expect(up.plan.items.some((i) => i.action === 'add' && i.newSessionDraft!.templateId === 'tpl_lower_a' && i.newSessionDraft!.weekStartDate === week)).toBe(false);
+    expect(up.plan.noRoomWeeks + up.plan.partialWeeks).toBeGreaterThanOrEqual(1);
+  });
 });

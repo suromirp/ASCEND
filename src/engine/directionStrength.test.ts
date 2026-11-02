@@ -75,4 +75,12 @@ describe('reshapeStrength', () => {
     expect(up.lines[0]).toBe('Kracht gaat van 1 naar 2 keer per week.');
     expect(up.lines[1]).toMatch(/^Erbij: .* op (maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\.$/);
   });
+
+  it('zet een beenzwaar sjabloon nooit naast een beenzware dag, ook niet over het weekeinde heen', () => {
+    const r = reshapeStrength({ templates, weekShape: { days: { tpl_upper_a: 2, tpl_easy_run: 4, tpl_long_run: 7 }, allowed: [1, 2, 3, 4, 5, 6, 7] }, target: 2 })!;
+    expect([1, 6]).not.toContain(r.shape.days.tpl_lower_a);
+    expect([3, 5]).toContain(r.shape.days.tpl_lower_a);
+    // Alleen de maandag en de zaterdag zijn vrij: dan past het niet.
+    expect(reshapeStrength({ templates, weekShape: { days: { tpl_upper_a: 2, tpl_easy_run: 3, tpl_long_run: 7, tpl_upper_b: 4 }, allowed: [1, 2, 3, 4, 6, 7] }, target: 4 })).toBeUndefined();
+  });
 });

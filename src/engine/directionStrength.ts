@@ -17,6 +17,7 @@ import type { LeavePeriod } from '../models/leave';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { activeIllness, isIllnessDay } from './illness';
 import { leaveDays, lightDays } from './leave';
+import { isLegHeavyTemplate } from './scheduler';
 import { lockLevel, validateWeeks } from './weekValidator';
 import { WEEK_SHAPE_STRENGTH, WEEK_SHAPE_TEMPLATE_IDS, parseWeekShape, type WeekShape } from './sports';
 import { WEEKDAY_NAMES } from './firstPlan';
@@ -84,7 +85,14 @@ export function reshapeStrength(input: {
       const restDays = new Set<number>([days[HERSTEL], input.restDay].filter((d): d is number => typeof d === 'number'));
       const free = (allowed ?? [1, 2, 3, 4, 5, 6, 7]).filter((d) => !used.has(d) && !restDays.has(d));
       // Er blijft een doordeweekse dag over voor rust.
-      const candidates = free.filter((d) => [1, 2, 3, 4, 5].some((w) => w !== d && !used.has(w)));
+      const byTemplate = new Map(input.templates.map((t) => [t.id, t]));
+      const legHeavy = (tid: string) => { const t = byTemplate.get(tid); return !!t && isLegHeavyTemplate(t); };
+      const heavyDays = new Set(Object.entries(days).filter(([tid]) => legHeavy(tid)).map(([, d]) => d));
+      // Een beenzwaar sjabloon komt nooit naast een beenzware dag, ook niet over het weekeinde heen (zondag en maandag).
+      const nextToHeavy = (d: number) => heavyDays.has(d === 1 ? 7 : d - 1) || heavyDays.has(d === 7 ? 1 : d + 1);
+      const candidates = free
+        .filter((d) => [1, 2, 3, 4, 5].some((w) => w !== d && !used.has(w)))
+        .filter((d) => !(legHeavy(id) && nextToHeavy(d)));
       if (candidates.length === 0) break;
       const home = input.templates.find((t) => t.id === id)?.defaultDayOfWeek ?? 3;
       const scored = candidates
@@ -159,6 +167,7 @@ export function strengthPlanItems(reshape: Pick<StrengthReshape, 'shape' | 'adde
     const leave = leaveDays(ctx.leave);
     const light = lightDays(ctx.leave, leave);
     const templates = [...ctx.templates];
+    const byId = new Map(templates.map((t) => [t.id, t]));
     const weekStarts = [...new Set(ctx.plannedSessions.filter((s) => s.scheduledDate > ctx.today).map((s) => s.weekStartDate))].sort();
     for (const weekStart of weekStarts) {
       const week = [...ctx.plannedSessions.filter((s) => s.weekStartDate === weekStart && s.status !== 'skipped')];
@@ -171,7 +180,8 @@ export function strengthPlanItems(reshape: Pick<StrengthReshape, 'shape' | 'adde
         const date = addDays(mondayOfWeek(weekStart), dow - 1);
         if (date <= ctx.today) continue;
         const draft: PlannedSession = { id: `draft:${weekStart}:${id}`, templateId: id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order: 99 };
-        const blocked = leave.has(date) || light.has(date) || isIllnessDay(date, ctx.illnessEpisodes, ctx.today) || (!!activeIllness(ctx.illnessEpisodes) && date <= addDays(ctx.today, 7));
+        const nextToHeavy = isLegHeavyTemplate(byId.get(id)!) && [-1, 1].some((o) => ctx.plannedSessions.some((x) => x.status !== 'skipped' && x.scheduledDate === addDays(date, o) && !!byId.get(x.templateId) && isLegHeavyTemplate(byId.get(x.templateId)!)));
+        const blocked = nextToHeavy || leave.has(date) || light.has(date) || isIllnessDay(date, ctx.illnessEpisodes, ctx.today) || (!!activeIllness(ctx.illnessEpisodes) && date <= addDays(ctx.today, 7));
         const findings = blocked ? [] : validateWeeks({
           sessions: [...ctx.plannedSessions.filter((s) => s.status !== 'skipped'), ...week.filter((s) => s.id.startsWith('draft:')), draft],
           logs: [...ctx.logs] as SessionLog[], templates, today: ctx.today, restDay: ctx.restDay, program: ctx.program,
