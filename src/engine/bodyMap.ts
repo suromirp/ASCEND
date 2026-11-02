@@ -222,7 +222,7 @@ export function spotsForSide(spot: BodySpot, side: SideChoice | undefined): Body
 // figuur. De kant is die van de persoon: op de voorkant staat zijn links rechts in beeld, op
 // de achterkant juist links. Midden is een smalle strook langs de ruggengraat; links en rechts
 // zijn wat daarbuiten ligt. Beide (of een plek zonder keuze) is de hele plek.
-export const MIDDLE_STRIP = 0.34;
+const MIDDLE_STRIP = 0.34;
 export function halfClip(spot: BodySpot, side: SideChoice | undefined): { x1: number; x2: number } {
   const left = spot.cx - spot.rx - 1;
   const right = spot.cx + spot.rx + 1;

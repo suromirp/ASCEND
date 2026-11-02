@@ -79,7 +79,7 @@ export function GymAddOnForm({ onDone }: { onDone: () => void }) {
 type Choice = 'gym' | 'own' | 'none';
 
 // Eén toestel: zoals de sportschool, een eigen keuze of geen.
-export function ExerciseAddOnForm({ exerciseId, onDone }: { exerciseId: string; onDone: () => void }) {
+function ExerciseAddOnForm({ exerciseId, onDone }: { exerciseId: string; onDone: () => void }) {
   const { settings, updateSettings } = useAppData();
   const profile = useActiveProfile();
   const exercise = exerciseById(exerciseId);

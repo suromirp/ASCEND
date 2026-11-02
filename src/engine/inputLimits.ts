@@ -28,7 +28,7 @@ export function longDurationText(minutes: number): string {
 
 export type HeartRateField = keyof HeartRateSettings;
 
-export const HEART_RATE_LIMITS: Record<HeartRateField, [number, number]> = {
+const HEART_RATE_LIMITS: Record<HeartRateField, [number, number]> = {
   lthr: [100, 220],
   maxHr: [120, 230],
   restingHr: [30, 110],

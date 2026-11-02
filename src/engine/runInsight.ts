@@ -158,8 +158,8 @@ export interface RunInsightInput {
   today: string;
 }
 
-export const BRAKE_DAYS = 14;
-export const BRAKE_FURTHER = 0.5;
+const BRAKE_DAYS = 14;
+const BRAKE_FURTHER = 0.5;
 
 const TITLE: Record<InsightTopic, string> = {
   efficiency: 'Efficiëntie',

@@ -9,7 +9,7 @@
 // Het zijn gemiddelden voor gezonde volwassenen met een brede spreiding tussen mensen, geen
 // voorspelling voor jou en geen medisch advies.
 
-export type GrowthEvidence = 'sterk' | 'matig' | 'zwak' | 'expert' | 'afgeleid';
+type GrowthEvidence = 'sterk' | 'matig' | 'zwak' | 'expert' | 'afgeleid';
 
 export interface GrowthRate {
   // Gemiddelde groei per week als breuk van de prestatie (0,0055 is 0,55% per week): het midden van de band.
@@ -43,7 +43,6 @@ export const HALF_WEEKS = 10;
 // "Marge bij een tijdslimiet" (AppSettings.limitMargin): tien procent is het advies, afwezig = tien.
 export type LimitMarginChoice = 'ten' | 'five' | 'none';
 export const LIMIT_MARGINS: Record<LimitMarginChoice, number> = { ten: 0.1, five: 0.05, none: 0 };
-export const LIMIT_MARGIN = LIMIT_MARGINS.ten;
 export const resolveLimitMargin = (v: unknown): LimitMarginChoice => (v === 'five' || v === 'none' ? v : 'ten');
 
 // Instelling "Groei bij het rekenen" (AppSettings.goalGrowth): gemiddeld (het midden van de band, advies,

@@ -84,25 +84,6 @@ export function SecondaryButton({
   );
 }
 
-export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' }) {
-  const map: Record<string, { symbol: ReactNode; color: string; label: string }> = {
-    completed: { symbol: <Icon name="vinkje" size={16} />, color: 'var(--color-progress)', label: 'Gedaan' },
-    today: { symbol: <Icon name="vandaagStip" size={16} />, color: 'var(--color-status)', label: 'Vandaag' },
-    planned: { symbol: <Icon name="gepland" size={16} />, color: 'var(--color-ink-dim)', label: 'Gepland' },
-    moved: { symbol: <Icon name="verplaatst" size={16} />, color: 'var(--color-status)', label: 'Verplaatst' },
-    skipped: { symbol: <Icon name="sluiten" size={16} />, color: 'var(--color-danger-text)', label: 'Overgeslagen' },
-    missed: { symbol: '!', color: 'var(--color-warning)', label: 'Gemist' },
-    rest: { symbol: <Icon name="rustdag" size={16} />, color: 'var(--color-ink-dim)', label: 'Rustdag' },
-  };
-  const s = map[status];
-  return (
-    <span className="inline-flex h-5 w-5 items-center justify-center text-xs font-bold" style={{ color: s.color }}>
-      <span aria-hidden="true">{s.symbol}</span>
-      <span className="sr-only">{s.label}</span>
-    </span>
-  );
-}
-
 // De baan en de bol van een schakelaar, zonder knop eromheen. Aan is mint gedempt
 // met een mint rand, zodat de gevulde mint knop het ene accent van het scherm
 // blijft (docs/beslissingen/2026-10-24-thema-zee-en-berg.md). Een rij in de

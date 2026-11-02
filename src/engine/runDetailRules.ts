@@ -40,20 +40,20 @@ export const PACING = {
 
 // The advice only comes with at least this much difference with the first kilometre (seconds).
 export const ADVICE_MIN_SEC = 10;
-export const ADVICE_STEP_SEC = 5;
+const ADVICE_STEP_SEC = 5;
 // A block that is this much slower than the first one is a fact (percent).
-export const BLOCK_FADE_PCT = 4;
+const BLOCK_FADE_PCT = 4;
 // Under this many metres a repeat is too short for a pace (the GPS is too coarse).
-export const MIN_REPEAT_M = 400;
+const MIN_REPEAT_M = 400;
 // Warm-up that is seen in the series (minutes of running before the test stretch).
 export const WARMUP_MIN = 8;
 // Feels-like temperature from which warmth is a fact (degrees).
-export const WARM_FEELS_C = 20;
+const WARM_FEELS_C = 20;
 // Climb per kilometre that makes a route hilly (metres).
 export const HILLY_M_PER_KM = 10;
 // Wind that can colour a whole test, from runComparison.ts (km/h).
-export const WIND_MEAN_KMH = 25;
-export const WIND_GUST_KMH = 40;
+const WIND_MEAN_KMH = 25;
+const WIND_GUST_KMH = 40;
 
 const pct = (a: number, b: number) => ((a - b) / b) * 100;
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -61,7 +61,7 @@ const secs = (n: number) => `${Math.round(n)} ${Math.round(n) === 1 ? 'seconde' 
 
 // --- RD-4: the spread of the pace ---------------------------------------------------------------
 
-export type PacingWord = 'gelijkmatig' | 'te snel begonnen' | 'ingezakt' | 'sterker geëindigd';
+type PacingWord = 'gelijkmatig' | 'te snel begonnen' | 'ingezakt' | 'sterker geëindigd';
 
 export interface Pacing {
   // The one word; absent when the run is in none of the four (then only the numbers speak).
@@ -227,7 +227,7 @@ export function pacingLine(rd: RunDetail | undefined, kind: PacingLineKind): str
 
 // --- RD-6: what played a part -----------------------------------------------------------------------------------
 
-export type FactKind = 'wind' | 'legs' | 'soreness' | 'illness' | 'warmth' | 'warmup' | 'route' | 'pause';
+type FactKind = 'wind' | 'legs' | 'soreness' | 'illness' | 'warmth' | 'warmup' | 'route' | 'pause';
 
 export interface PlayedFact {
   kind: FactKind;
@@ -321,7 +321,7 @@ export function driftFromKms(rd: RunDetail | undefined, opts: { easyOrLong: bool
 
 // --- form: facts, never a verdict ---------------------------------------------------------------------------------------
 
-export type FormMetric = 'cadence' | 'stepLengthM' | 'stanceTimeMs' | 'oscillationMm' | 'verticalRatioPct' | 'stanceBalanceLeftPct' | 'powerW';
+type FormMetric = 'cadence' | 'stepLengthM' | 'stanceTimeMs' | 'oscillationMm' | 'verticalRatioPct' | 'stanceBalanceLeftPct' | 'powerW';
 
 export interface FormFact {
   metric: FormMetric;

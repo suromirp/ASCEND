@@ -8,7 +8,7 @@ import type { AppSettings } from '../storage/database';
 // Het veld staat in AppSettings (storage/databaseSettings.ts); de back-up laat een kapotte waarde weg
 // (storage/backupClean.ts#cleanSettings). Afwezig of onbekend is het advies.
 export type DropOnTraining = NonNullable<AppSettings['dropOnTraining']>;
-export const DROP_ON_TRAINING_ADVICE: DropOnTraining = 'swap';
+const DROP_ON_TRAINING_ADVICE: DropOnTraining = 'swap';
 
 export function resolveDropOnTraining(s: Pick<AppSettings, 'dropOnTraining'> | undefined): DropOnTraining {
   return s?.dropOnTraining === 'together' ? 'together' : DROP_ON_TRAINING_ADVICE;

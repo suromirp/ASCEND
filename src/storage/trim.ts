@@ -27,8 +27,8 @@ export class TrimUnavailableError extends Error {
   }
 }
 
-export const MIN_TRIM_SAMPLES = 30;
-export const MIN_TRIM_SEC = 120;
+const MIN_TRIM_SAMPLES = 30;
+const MIN_TRIM_SEC = 120;
 
 function kindOfLog(log: SessionLog): ExternalActivityKind {
   const sport = logSport(log);

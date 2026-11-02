@@ -46,7 +46,6 @@ import { isLeaveBlockedDay } from './leave';
 import type { LeavePeriod } from '../models/leave';
 import { idHasRole } from './templateRoles';
 
-export const EXTRA_RUN_TEMPLATE_ID = 'tpl_strides_run';
 const LOOKBACK_WEEKS = 4;
 const MIN_WEEKS = 2;
 const MIN_DONE_SHARE = 0.8;
@@ -223,7 +222,7 @@ export function chooseExtraSession(ctx: { phaseId: string; wave: number; inRaceB
   return { templateId: 'tpl_ruck_walk', reason: `${lead}Wandelen met een rugzak bouwt uren onderweg en draagkracht op, met weinig belasting voor je benen.` };
 }
 
-export const EXTRA_PHASES = [PHASE_OPBOUW, PHASE_BERG];
+const EXTRA_PHASES = [PHASE_OPBOUW, PHASE_BERG];
 
 export interface ExtraAdviceInputs extends Omit<ExtraRunInputs, 'newId'> {
   gaps: FocusGap[];

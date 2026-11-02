@@ -7,9 +7,9 @@
 
 import { daysBetween, localDateOf } from '../utils/dates';
 
-export const BACKUP_OLD_AFTER_DAYS = 7;
+const BACKUP_OLD_AFTER_DAYS = 7;
 
-export type BackupLevel = 'never' | 'old' | 'ok';
+type BackupLevel = 'never' | 'old' | 'ok';
 
 export interface BackupAge {
   // Hele dagen sinds de laatste back-up, of null als die er nooit was.

@@ -66,17 +66,17 @@ export const MAX_BASELINE = 5;
 // explain a difference, over 8 is another day (one small study: about one beat
 // per degree).
 export const TEMP_SAME_C = 4;
-export const TEMP_TOO_DIFFERENT_C = 8;
-export const WIND_MEAN_KMH = 25;
-export const WIND_GUST_KMH = 40;
-export const RAIN_MM = 5;
-export const FORM_PACE_TOLERANCE_PCT = 6;
-export const PACK_TOLERANCE_KG = 2;
+const TEMP_TOO_DIFFERENT_C = 8;
+const WIND_MEAN_KMH = 25;
+const WIND_GUST_KMH = 40;
+const RAIN_MM = 5;
+const FORM_PACE_TOLERANCE_PCT = 6;
+const PACK_TOLERANCE_KG = 2;
 // Without zones of the owner's own: another heart rate than this many beats
 // from the one of the subject is no same zone.
-export const ZONE_FALLBACK_BPM = 10;
+const ZONE_FALLBACK_BPM = 10;
 
-export type ReasonCode =
+type ReasonCode =
   | 'noDetail'
   | 'treadmill'
   | 'unavailableMetric'
@@ -347,8 +347,8 @@ export function comparableLogs(subject: SessionLog, topic: InsightTopic, ctx: Co
 
 // A run is like this one with about the same distance and climb (own assumption: 15 percent
 // and 5 metres per kilometre), the same kind of training, outdoors, with kilometres stored.
-export const SIMILAR_DISTANCE_PCT = 15;
-export const SIMILAR_CLIMB_M_PER_KM = 5;
+const SIMILAR_DISTANCE_PCT = 15;
+const SIMILAR_CLIMB_M_PER_KM = 5;
 
 const climbPerKm = (log: SessionLog) => {
   const rd = log.runDetail;

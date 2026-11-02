@@ -15,7 +15,7 @@ import { formatHoursMinutesNL, toISODate } from '../utils/dates';
 
 // ---- de opgeslagen keuzes ---------------------------------------------------------------
 
-export const WEEK_NOTICE_TIMES = ['18:00', '19:00', '20:00', '21:00'] as const;
+const WEEK_NOTICE_TIMES = ['18:00', '19:00', '20:00', '21:00'] as const;
 export type WeekNoticeTime = (typeof WEEK_NOTICE_TIMES)[number];
 export const DEFAULT_WEEK_NOTICE_TIME: WeekNoticeTime = '19:00';
 

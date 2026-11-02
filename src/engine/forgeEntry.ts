@@ -7,7 +7,7 @@ export const FORGE_FALLBACK_LINE = 'Je krachttraining: vooruitgang per oefening 
 export const FORGE_OFF_LINE = 'Kracht meerekenen staat uit.';
 export const FORGE_NO_DATA_LINE = 'Nog geen krachttrainingen ingelezen uit MacroFactor.';
 
-export type ForgeEntryState = 'off' | 'empty' | 'rising' | 'steady' | 'unknown';
+type ForgeEntryState = 'off' | 'empty' | 'rising' | 'steady' | 'unknown';
 
 export interface ForgeEntryInput {
   enabled: boolean;

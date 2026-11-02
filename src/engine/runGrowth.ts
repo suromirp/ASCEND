@@ -33,7 +33,7 @@ import { daysBetween } from '../utils/dates';
 //   de lichtere week, de herstart na een pauze, de rem bij pijn en het rekenen vanaf wat je echt liep
 //   blijven. De 110% blijft de standaard en het advies.
 export type LongRunGrowth = 'weekly' | 'biweekly' | 'wave' | 'firm' | 'fast';
-export const LONG_RUN_GROWTH_ADVICE: LongRunGrowth = 'weekly';
+const LONG_RUN_GROWTH_ADVICE: LongRunGrowth = 'weekly';
 export const FAST_GROWTH_WARNING = 'Boven 10% langer dan je langste loop gaf in het grootste onderzoek ongeveer 64% meer kans op een overbelastingsblessure (Frandsen 2025).';
 
 // Per keuze: weken per stap, de stap, of de piek afwisselt en de rem op je langste loop van 30 dagen.
@@ -44,7 +44,7 @@ const GROWTH_SPEC: Record<Exclude<LongRunGrowth, 'wave'>, NonNullable<Program['r
   fast: { raceDate: '', stepWeeks: 1, peakMinutes: 0, alternatePeak: false, stepPercent: 20, spikeLimit: 1.2 },
 };
 
-export const WAVE_NO_ALTERNATION: NonNullable<Program['runBuild']> = { raceDate: '', stepWeeks: 1, peakMinutes: 0, alternatePeak: false };
+const WAVE_NO_ALTERNATION: NonNullable<Program['runBuild']> = { raceDate: '', stepWeeks: 1, peakMinutes: 0, alternatePeak: false };
 
 // Defensief gelezen: wat geen bekende keuze is, wordt het advies.
 export function resolveLongRunGrowth(raw: unknown): LongRunGrowth {

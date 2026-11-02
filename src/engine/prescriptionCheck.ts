@@ -121,7 +121,7 @@ export function checkDone(set: { reps: number; rir?: number }, target: RepTarget
 }
 
 // A proposal is "close" when it lies within this share of the load that was used.
-export const NEAR_SHARE = 0.05;
+const NEAR_SHARE = 0.05;
 
 export const isNear = (proposedLoadKg: number, doneLoadKg: number): boolean => doneLoadKg > 0 && Math.abs(proposedLoadKg - doneLoadKg) <= NEAR_SHARE * doneLoadKg + 1e-9;
 

@@ -14,10 +14,10 @@
 import type { AirQualityHour } from '../integrations/openMeteo';
 import { pad } from '../utils/pad';
 
-export const AQI_POOR = 60;
+const AQI_POOR = 60;
 // Ozon vanaf hier is in de Europese index zelf "slecht" (µg/m³, uurwaarde).
-export const OZONE_POOR = 130;
-export const PM25_POOR = 25;
+const OZONE_POOR = 130;
+const PM25_POOR = 25;
 
 export interface AirQualityNote {
   aqi: number;

@@ -37,7 +37,7 @@ function read(key: string): string | null {
   }
 }
 
-export function parsePointer(raw: string | null): SessionPointer | undefined {
+function parsePointer(raw: string | null): SessionPointer | undefined {
   if (!raw) return undefined;
   try {
     const p = JSON.parse(raw) as Partial<SessionPointer> | null;

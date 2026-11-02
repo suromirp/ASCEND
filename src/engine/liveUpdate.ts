@@ -38,7 +38,7 @@ export function parseAppVersion(raw: unknown): AppVersion | null {
 }
 
 // Een versie uit de toekomst zou elke volgende versie blokkeren; meer dan een dag vooruit is fout.
-export const MAX_FUTURE_MS = 24 * 60 * 60 * 1000;
+const MAX_FUTURE_MS = 24 * 60 * 60 * 1000;
 
 // Alleen een adres op GitHub Pages, via https, mag de app een nieuwe versie geven.
 export function isTrustedUpdateUrl(url: string): boolean {

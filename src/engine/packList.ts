@@ -20,11 +20,11 @@ export interface PackListState {
 // Dry food per day: 0,8 to 1,0 kg at 400 to 500 kcal per 100 g, so 0,9.
 // Water: one litre weighs one kilo.
 export const FOOD_KG_PER_DAY = 0.9;
-export const FOOD_DAY_OPTIONS = [2, 3, 4];
+const FOOD_DAY_OPTIONS = [2, 3, 4];
 export const WATER_LITER_OPTIONS = [2, 3];
 // The case the goal is compared with: the usual one for leaving a village.
-export const REFERENCE_FOOD_DAYS = 3;
-export const REFERENCE_WATER_LITERS = 2;
+const REFERENCE_FOOD_DAYS = 3;
+const REFERENCE_WATER_LITERS = 2;
 
 export function resolvePackItems(stored: PackListState | undefined): PackItem[] {
   return stored ? stored.items : DEFAULT_PACK_ITEMS;

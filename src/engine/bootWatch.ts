@@ -32,8 +32,8 @@ export function bootLockChoice(storage: { getItem: (key: string) => string | nul
   }
 }
 
-export const BOOT_SLOW_MS = 6_000;
-export const BOOT_STUCK_MS = 20_000;
+const BOOT_SLOW_MS = 6_000;
+const BOOT_STUCK_MS = 20_000;
 
 export function bootWatchStage(elapsedMs: number): BootWatchStage {
   if (elapsedMs >= BOOT_STUCK_MS) return 'stuck';

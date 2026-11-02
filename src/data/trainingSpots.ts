@@ -12,7 +12,7 @@ export type SpotUse = 'bergop' | 'bergaf' | 'trap' | 'rugzak' | 'heuvelintervall
 // One measured climb at a spot. From our spot research: heights from
 // the AHN elevation model (bare ground, ±0,5 m) or Climbfinder; lengths
 // measured along a straight line unless the source measured the road.
-export interface SpotClimb {
+interface SpotClimb {
   name: string;
   lengthM: number;
   gainM: number;

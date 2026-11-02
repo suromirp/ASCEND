@@ -18,13 +18,13 @@ export const CATEGORY_LABEL: Record<KnowledgeCategory, string> = {
   mentaal: 'Hoofd en alleen lopen',
 };
 
-export interface KnowledgeSection {
+interface KnowledgeSection {
   heading: string;
   body?: string;
   items?: string[];
 }
 
-export interface KnowledgeVideo {
+interface KnowledgeVideo {
   title: string;
   channel: string;
   url: string;
@@ -33,7 +33,7 @@ export interface KnowledgeVideo {
   note?: string; // why this one, in a sentence
 }
 
-export interface KnowledgeSource {
+interface KnowledgeSource {
   label: string;
   url: string;
 }

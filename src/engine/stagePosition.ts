@@ -28,7 +28,7 @@ const rad = (d: number) => (d * Math.PI) / 180;
 // Dichterbij dan dit is "je bent er".
 const ARRIVED_KM = 0.5;
 // Verder dan dit van de etappe af zegt een getal niets: je bent niet op je etappe.
-export const MAX_OFF_STAGE_KM = 15;
+const MAX_OFF_STAGE_KM = 15;
 // Nauwkeuriger dan dit is een plek van GPS; grover zegt de tekst erbij.
 export const COARSE_M = 500;
 

@@ -30,7 +30,7 @@ import { addDays, formatDayMonthNL } from '../utils/dates';
 
 export const CURVE_MIN = { runs: 3, days: 21 };
 // Zo veel trager dan de test past nog: in training loop je niet voluit.
-export const CURVE_FITS_BELOW = 0.1;
+const CURVE_FITS_BELOW = 0.1;
 const THREE_KM = 3;
 
 export interface TrainingEffort {
@@ -67,7 +67,7 @@ export function trainingEffort(log: SessionLog, templates?: Iterable<RoleCarrier
   return three === undefined ? undefined : make(THREE_KM, three);
 }
 
-export type PaceCurveVerdict = 'faster' | 'fits' | 'easier';
+type PaceCurveVerdict = 'faster' | 'fits' | 'easier';
 
 export type PaceCurve =
   | { state: 'wait'; test: TestResult; runs: number; readyFrom: string }

@@ -36,7 +36,7 @@ export interface AdjustContext {
   fatiguePerSet?: number;
 }
 
-export interface AdjustItem {
+interface AdjustItem {
   rowId: string;
   weightKg: number;
 }

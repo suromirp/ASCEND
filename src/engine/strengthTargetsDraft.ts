@@ -20,8 +20,8 @@ export interface StrengthTargetInput {
 
 // Meer dan dit lezen we niet terug (storage/migrations.ts#readGoalDetails): een doel gaat over een paar hoofdoefeningen.
 export const MAX_STRENGTH_TARGETS = 8;
-export const MAX_REPS = 30;
-export const MAX_KG = 500;
+const MAX_REPS = 30;
+const MAX_KG = 500;
 
 const norm = (s: string) => s.trim().toLowerCase();
 
@@ -65,7 +65,7 @@ export function strengthTargetLine(t: StrengthTarget): string {
 
 // Wat er in de velden staat maar nog niet met "Doel toevoegen" is toegevoegd. Leeg is geen invoer; half ingevuld
 // is een vraag aan de gebruiker, geen stille keuze.
-export function isBlankInput(t: StrengthTargetInput): boolean {
+function isBlankInput(t: StrengthTargetInput): boolean {
   return !t.exercise.trim() && t.kg === undefined && t.reps === undefined;
 }
 

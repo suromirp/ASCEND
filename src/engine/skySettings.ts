@@ -8,17 +8,17 @@
 
 import { isNightAt, sunDay, sunPlace, type PolarDay, type SunTimes } from './sun';
 
-export type SkySetting = 'auto' | 'day' | 'night';
+type SkySetting = 'auto' | 'day' | 'night';
 export type SkyMode = 'day' | 'night';
 
-export const SKY_SETTINGS: SkySetting[] = ['auto', 'day', 'night'];
-export const DEFAULT_SKY: SkySetting = 'auto';
+const SKY_SETTINGS: SkySetting[] = ['auto', 'day', 'night'];
+const DEFAULT_SKY: SkySetting = 'auto';
 
-export const SKY_NIGHT_FROM_CHOICES = ['zon', '19:00', '20:00', '21:00', '22:00'] as const;
-export type SkyNightFrom = (typeof SKY_NIGHT_FROM_CHOICES)[number];
-export const DEFAULT_SKY_NIGHT_FROM: SkyNightFrom = 'zon';
+const SKY_NIGHT_FROM_CHOICES = ['zon', '19:00', '20:00', '21:00', '22:00'] as const;
+type SkyNightFrom = (typeof SKY_NIGHT_FROM_CHOICES)[number];
+const DEFAULT_SKY_NIGHT_FROM: SkyNightFrom = 'zon';
 // Vanaf dit uur is het weer licht.
-export const SKY_DAY_FROM_MINUTES = 7 * 60;
+const SKY_DAY_FROM_MINUTES = 7 * 60;
 
 export interface SkyConfig {
   sky: SkySetting;

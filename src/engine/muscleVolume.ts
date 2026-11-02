@@ -14,11 +14,11 @@ import { matchExercise } from './exerciseMatch';
 import { isWorkSet } from './workSets';
 
 // The most reps in reserve at which a set still counts as hard enough.
-export const HARD_SET_MAX_RIR = 4;
-export const PRIMARY_WEIGHT = 1;
-export const SECONDARY_WEIGHT = 0.5;
+const HARD_SET_MAX_RIR = 4;
+const PRIMARY_WEIGHT = 1;
+const SECONDARY_WEIGHT = 0.5;
 
-export type MuscleVolume = Record<MuscleGroup, number>;
+type MuscleVolume = Record<MuscleGroup, number>;
 
 const emptyMuscleVolume = (): MuscleVolume => Object.fromEntries(MUSCLE_GROUPS.map((m) => [m, 0])) as MuscleVolume;
 

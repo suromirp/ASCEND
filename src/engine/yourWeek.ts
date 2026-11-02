@@ -34,7 +34,7 @@ export interface YourWeekInputs {
   today: string;
 }
 
-export interface WaveBar {
+interface WaveBar {
   week: number;
   budget: number;
   done: number;

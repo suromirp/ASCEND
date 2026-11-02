@@ -14,7 +14,7 @@ import { TimeoutError, withTimeout } from '../utils/withTimeout';
 // beslissingen staan in de engine; dit leest alleen de gegevens en bewaart wat je kiest. Een fout
 // in de berekening maakt de kaart stil (niets te zeggen is niets zeggen).
 
-export interface LegEaseState {
+interface LegEaseState {
   target: EaseTarget;
   signals: LegDaySignals;
   offer: EaseOffer;

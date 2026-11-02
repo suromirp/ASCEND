@@ -87,7 +87,7 @@ export function recoveryRamp(episodes: IllnessEpisode[] | undefined, asOf: strin
 // Building back after illness: the first sessions at about three quarters
 // of the usual volume (docs/onderzoek: return at 70-80%). Covers the whole
 // ramp window; past episodes only, an active one has no window yet.
-export const RETURN_VOLUME_FACTOR = 0.75;
+const RETURN_VOLUME_FACTOR = 0.75;
 export function recoveryDurationAdjustments(episodes: IllnessEpisode[] | undefined): { from: string; until: string; factor: number }[] {
   return (episodes ?? [])
     .filter((e) => e.endDate)

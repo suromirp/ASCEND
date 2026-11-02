@@ -24,7 +24,6 @@ import { kgLabel } from '../utils/kg';
 
 export const HUT_PACK_KG = 12;
 export const TENT_PACK_KG = 14;
-export const TENT_PACK_RANGE_KG: [number, number] = [12.5, 14.5];
 
 // Wat je bij een rugzakgewicht moet weten, in gewone woorden. Eén tekst voor
 // het doel-scherm én het bewerkscherm.
@@ -85,9 +84,9 @@ export function tentPackProposal(goals: TrainingGoal[], ladderGoalIds: ReadonlyS
 
 // Onderzoek: een rustdag per 6 tot 8 loopdagen; we rekenen met 7. De eerste
 // 3 tot 4 dagen op 60 tot 70% van een normale dag.
-export const REST_EVERY_WALKING_DAYS = 7;
-export const SOFT_START_DAYS: [number, number] = [3, 4];
-export const SOFT_START_PCT: [number, number] = [60, 70];
+const REST_EVERY_WALKING_DAYS = 7;
+const SOFT_START_DAYS: [number, number] = [3, 4];
+const SOFT_START_PCT: [number, number] = [60, 70];
 
 export interface TripShape {
   walkingDays: number;

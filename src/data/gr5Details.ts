@@ -52,35 +52,6 @@ const PUBMED_LOAD_CARRYING: MilestoneSource = { label: 'PubMed, load-carriage/ru
 const ANDERSON_PACKWEIGHT: MilestoneSource = { label: 'Anderson e.a. 2009, rugzakgewicht en klachten bij langeafstandswandelaars', url: 'https://complete.bioone.org/journals/wilderness-and-environmental-medicine/volume-20/issue-3/08-WEME-OR-196R2.1/The-Impact-of-Footwear-and-Packweight-on-Injury-and-Illness/10.1580/08-WEME-OR-196R2.1.full' };
 const GARMIN_ZONES: MilestoneSource = { label: 'Garmin, sportspecifieke hartslagzones', url: 'https://www8.garmin.com/manuals-apac/webhelp/forerunner255series/EN-SG/GUID-21F7EFD8-1AE2-4E1A-959E-A98B6A297584-1763.html' };
 
-// De uitrustingslijst voor de GR5 met tent en bivak, los van de ladder hierboven
-// en als eigen kaart op de Ascend-pagina getoond (niet aan een mijlpaal
-// gebonden). Slaapzak, tent en matje kies je deze winter en test je in het
-// voorjaar op een eerste nacht buiten; de rest hoef je pas later te regelen.
-export const GR5_PACKING_LIST: string[] = [
-  'wandelschoenen, ingelopen',
-  'tent of tarp',
-  'slaapzak of quilt',
-  'slaapmatje',
-  'brander en pan',
-  'rugzak met heupband',
-  'water en filter',
-  'eten voor 2 tot 4 dagen',
-  'regenjas, warme laag',
-  'handschoenen, muts',
-  'EHBO en blarenset',
-  'hoofdlamp',
-  'offline kaart en GPX',
-  'kompas',
-  'telefoon en powerbank',
-  'zonnebril, zonnebrand, pet',
-  'noodfluit, nooddeken',
-  'noodzender (satelliet)',
-  'trekkingstokken (optioneel)',
-];
-
-export const GR5_PACKING_NOTE =
-  'Met tent, slaapzak, matje, kookspullen, water en eten voor twee tot vier dagen vertrek je uit een dorp met 12,5 tot 14,5 kg. Onnodig zwaar pakken is ongunstig, de etappes zijn al lang genoeg: 2 kg minder aan basisgewicht (alles zonder eten en water) is meer dan een dag eten. Kies tent, slaapzak en matje deze winter en test ze in het voorjaar op een eerste nacht buiten, nog ruim voor de tocht. Neem je stokken mee op de tochten van je training, dan weet je hoe ze in je rugzak zitten. GPX en offline navigatie zijn verstandig; let op je batterij, want onderweg is laden niet altijd mogelijk. Reken op weercontrole, routevoorbereiding, voldoende eten en drinken, en laat iemand thuis weten welke tocht je doet.';
-
 export const GR5_PACKING_SOURCES: MilestoneSource[] = [GR5_ALPES_EQUIPMENT, GR5_ALPES_WAYMARKING, FFRANDONNEE_SACADOS, NKBV];
 
 // Backs the "TRAININGSVERDELING RICHTING GR5" card on the Ascend page —

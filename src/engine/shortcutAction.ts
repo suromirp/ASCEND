@@ -2,10 +2,10 @@
 // `#/?actie=afvinken`. Vandaag leest die zoekparameter één keer en haalt hem
 // daarna uit het adres, zodat een herlaad of terug-knop het niet nog eens doet.
 
-export const SHORTCUT_PARAM = 'actie';
-export const SHORTCUT_LOG = 'afvinken';
+const SHORTCUT_PARAM = 'actie';
+const SHORTCUT_LOG = 'afvinken';
 
-export const SHORTCUT_MORNING = 'ochtend';
+const SHORTCUT_MORNING = 'ochtend';
 
 // De snelkoppelingen onder het app-icoon van de Android-app (android/app/src/main/res/xml/
 // shortcuts.xml) sturen een adres als `app.ascend.training://open/week`. Dit zet het om naar

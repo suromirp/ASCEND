@@ -14,17 +14,17 @@ import type { SessionLog } from '../models/training';
 import type { RecoveryMetric } from '../models/metrics';
 
 // Bronnen die achter de andere komen: wat zij brengen is een aanvulling.
-export const SECONDARY_SOURCES: readonly string[] = ['health-connect'];
+const SECONDARY_SOURCES: readonly string[] = ['health-connect'];
 
 // "Zelfde start binnen enkele minuten en ongeveer dezelfde duur". De duur is een bereik: intervals.icu
 // telt de tijd in beweging en kent ook de totale tijd met pauzes (`elapsedSec`), Health Connect telt
 // van start tot eind. Twee bereiken die elkaar raken, met een kleine marge, zijn dezelfde duur.
-export const SAME_START_MINUTES = 5;
-export const SAME_DURATION_MINUTES = 5;
-export const SAME_DURATION_RATIO = 0.1;
+const SAME_START_MINUTES = 5;
+const SAME_DURATION_MINUTES = 5;
+const SAME_DURATION_RATIO = 0.1;
 // Een log uit intervals.icu kent alleen de tijd in beweging; de pauzes zijn weg. Een duur van start
 // tot eind tot anderhalf keer die tijd past er dan nog bij (een tocht met lange stops).
-export const MOVING_ONLY_FACTOR = 1.5;
+const MOVING_ONLY_FACTOR = 1.5;
 const MOVING_ONLY_SOURCES: readonly string[] = ['intervals.icu'];
 
 export interface Moment {
@@ -43,7 +43,7 @@ export function sourcePrefix(id: string): string {
   return at < 0 ? id : id.slice(0, at);
 }
 
-export const isSecondary = (id: string): boolean => SECONDARY_SOURCES.includes(sourcePrefix(id));
+const isSecondary = (id: string): boolean => SECONDARY_SOURCES.includes(sourcePrefix(id));
 
 // Twee bereiken van minuten raken elkaar, met een marge van vijf minuten of tien procent.
 export function durationsMatch(a: Pick<Moment, 'minMinutes' | 'maxMinutes'>, b: Pick<Moment, 'minMinutes' | 'maxMinutes'>): boolean {

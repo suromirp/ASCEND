@@ -11,7 +11,7 @@
 // Rules and prices change (bivouac rules especially): every task that
 // leans on one says "controleer" and carries a link.
 
-export interface JourneyLink {
+interface JourneyLink {
   label: string;
   // Either an outside page or a screen inside ASCEND.
   url?: string;

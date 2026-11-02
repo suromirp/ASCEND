@@ -29,8 +29,8 @@ export interface Position2 {
   accuracyM?: number;
 }
 
-export const LOCATE_TIMEOUT_MS = 10_000;
-export const LOCATE_MAX_AGE_MS = 600_000;
+const LOCATE_TIMEOUT_MS = 10_000;
+const LOCATE_MAX_AGE_MS = 600_000;
 // Net na de eigen time-out van het toestel: de harde klok is het vangnet.
 const HARD_LIMIT_EXTRA_MS = 3_000;
 

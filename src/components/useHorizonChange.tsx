@@ -17,7 +17,7 @@ import { firstChangeDate } from '../engine/changeImpact';
 // met een melding en ongedaan maken, anders eerst het voorstel.
 // Verandert er niets, dan wordt de keuze bewaard en zegt het dat.
 
-export const STALE_NOTE = 'Je planning veranderde net nog. Er is niets aangepast; kies het opnieuw om het voorstel met de planning van nu te zien.';
+const STALE_NOTE = 'Je planning veranderde net nog. Er is niets aangepast; kies het opnieuw om het voorstel met de planning van nu te zien.';
 // Only said when everything is back as it was (storage/horizonPlan.ts puts it back first).
 const FAILED_NOTE = 'Het lukte niet om je planning nu bij te werken. Er is niets aangepast; probeer het zo nog eens.';
 const PENDING_NOTE = 'Je planning wordt nog bijgewerkt. Zodra het klaar is, zie je onderin wat er veranderde, met ongedaan maken.';

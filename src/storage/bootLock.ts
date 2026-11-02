@@ -54,8 +54,8 @@ export interface LockManagerLike {
   request(name: string, options: { signal?: AbortSignal; steal?: boolean }, fn: () => Promise<unknown>): Promise<unknown>;
 }
 
-export const BOOT_LOCK_NAME = 'ascend-boot';
-export const BOOT_LOCK_WAIT_MS = 10_000;
+const BOOT_LOCK_NAME = 'ascend-boot';
+const BOOT_LOCK_WAIT_MS = 10_000;
 
 export function runBootUnderLock(deps: {
   locks?: LockManagerLike;

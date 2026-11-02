@@ -121,8 +121,6 @@ export function createPageMemory(getStorage: () => StorageLike | null, options: 
   };
 }
 
-export type PageMemory = ReturnType<typeof createPageMemory>;
-
 // De sleutel van een geschiedenisstap: de key van de locatie en het pad (de
 // eerste stap na een verse start heeft altijd de key "default").
 export function stepKey(location: { key: string; pathname: string }): string {

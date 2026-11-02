@@ -10,7 +10,7 @@ import { parseSportHandling, resolveSportCounting, sportRole, type FixedSlot, ty
 import { templateSport } from './sports';
 
 // De vaste volgorde: eerst wat ASCEND plant, dan wat alleen kan meetellen.
-export const SPORT_ORDER: readonly AnySportId[] = ALL_SPORT_IDS;
+const SPORT_ORDER: readonly AnySportId[] = ALL_SPORT_IDS;
 
 // De vaste woorden van de rollen.
 export const ROLE_LABEL: Record<SportRole, string> = {
@@ -20,8 +20,8 @@ export const ROLE_LABEL: Record<SportRole, string> = {
   off: 'Negeren',
 };
 // Kort, voor de pil op de kaart.
-export const ROLE_PILL: Record<SportRole, string> = { plan: 'Gepland', fixed: 'Vaste dag', count: 'Telt mee', off: 'Negeren' };
-export const NOT_CHOSEN = 'Nog niet gekozen';
+const ROLE_PILL: Record<SportRole, string> = { plan: 'Gepland', fixed: 'Vaste dag', count: 'Telt mee', off: 'Negeren' };
+const NOT_CHOSEN = 'Nog niet gekozen';
 
 export const ROLE_NOTE: Record<SportRole, string> = {
   plan: 'ASCEND zet het in je week, op dagen die bij je benen passen.',
@@ -51,7 +51,7 @@ function joinDays(days: number[]): string {
 
 // De rust na een vaste afspraak, zoals de weekcheck hem leest: Rustig niets, en met Rust na een zware sport op
 // Korter een dag minder (engine/sportDays.ts#restHoursFor).
-export function slotRestHours(sport: AnySportId, slot: Pick<FixedSlot, 'intensity'>, settings: RoleSettings = {}): number {
+function slotRestHours(sport: AnySportId, slot: Pick<FixedSlot, 'intensity'>, settings: RoleSettings = {}): number {
   if (slot.intensity === 'low') return 0;
   const hours = legRestHours(stressProfileOf(anySportDefinition(sport), slot.intensity));
   return resolveSportCounting(settings.sportCounting).rest === 'korter' && hours > 0 ? hours - 24 : hours;

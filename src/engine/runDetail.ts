@@ -28,16 +28,16 @@ const round = (n: number, decimals: number): number => {
 };
 
 // A run shorter than this says nothing per kilometre.
-export const MIN_RUN_M = 1000;
+const MIN_RUN_M = 1000;
 // A last piece shorter than this is left out; between this and 1 km it is shown as partial.
-export const MIN_PIECE_M = 100;
+const MIN_PIECE_M = 100;
 // Below this speed a reading counts as standing still.
-export const STILL_MS = 0.5;
+const STILL_MS = 0.5;
 // The wind at 10 metres against the wind at the chest of a runner (docs/onderzoek, RD-8).
-export const CHEST_WIND_FACTOR = 0.65;
+const CHEST_WIND_FACTOR = 0.65;
 // GAP is shown for a kilometre with at least this much climb or descent (own assumption).
-export const GAP_MIN_CHANGE_M = 10;
-export const LINE_POINTS = 150;
+const GAP_MIN_CHANGE_M = 10;
+const LINE_POINTS = 150;
 // A reading counts for at most this long (smart recording writes a point every few seconds).
 const MAX_WEIGHT_SEC = 10;
 

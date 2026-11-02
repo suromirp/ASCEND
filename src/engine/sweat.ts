@@ -28,13 +28,13 @@ import type { SessionLog } from '../models/training';
 import type { SweatActivity, SweatEntry } from '../models/sweat';
 
 // Korter dan dit weegt de weegschaal (op 100 g) te zwaar mee in het tempo.
-export const MIN_SWEAT_MINUTES = 30;
+const MIN_SWEAT_MINUTES = 30;
 // Daarboven (ml per uur) is het geen zweet maar een vergissing in de invoer.
-export const MAX_SWEAT_ML_PER_HOUR = 4000;
+const MAX_SWEAT_ML_PER_HOUR = 4000;
 // Metingen binnen dit aantal graden tellen als "in de buurt".
-export const NEAR_TEMP_C = 4;
+const NEAR_TEMP_C = 4;
 
-export type SweatBasis = 'measured' | 'watch' | 'default';
+type SweatBasis = 'measured' | 'watch' | 'default';
 
 export interface SweatRate {
   mlPerHour: number;
@@ -116,7 +116,7 @@ export function weighedDate(entries: SweatEntry[] | undefined, n: number): strin
 // ongeveer de helft tot twee derde van de energie van rustig hardlopen, en zweten volgt de
 // energie: voor wandelen geldt daarom 60% van de lijn (eigen afleiding, geen gepubliceerd
 // getal). Zo komt een etappe van 8 uur bij 20 graden op ongeveer 4,5 liter, niet op 7.
-export const WALK_SWEAT_FACTOR = 0.6;
+const WALK_SWEAT_FACTOR = 0.6;
 
 export function defaultSweatRate(tempC: number, activity?: SweatActivity): number {
   const t = Math.min(30, Math.max(10, tempC));
@@ -204,7 +204,7 @@ export function entryResultLine(e: SweatEntry): string | undefined {
 
 // --- herstel uit een back-up -------------------------------------------------------------
 
-export const MAX_SWEAT_ENTRIES = 500;
+const MAX_SWEAT_ENTRIES = 500;
 
 // Samenvoegen bij herstel: per training blijft er één over, en het exemplaar op dit toestel
 // wint (ook als dat ouder is). Staat een training alleen in de back-up, dan komt die meting

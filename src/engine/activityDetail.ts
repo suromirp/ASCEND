@@ -29,12 +29,12 @@ export const PAUSE_JUMP_SEC = 10;
 export const STILL_SPEED_MS = 0.4;
 export const HEART_RATE_GAP_SEC = 5;
 export const ALTITUDE_DEAD_BAND_M = 10 / 2;
-export const STRETCH_REVERSAL_M = 10;
-export const STRETCH_MIN_M = 50;
+const STRETCH_REVERSAL_M = 10;
+const STRETCH_MIN_M = 50;
 const TRIM_TOLERANCE_M = 1;
-export const STRETCH_MIN_SEC = 240;
+const STRETCH_MIN_SEC = 240;
 // Shorter than this there is nothing to say about.
-export const MIN_MOVING_SEC = 300;
+const MIN_MOVING_SEC = 300;
 
 export interface BuildOptions {
   source: MetricSource;

@@ -92,7 +92,7 @@ export function strengthCount(logs: readonly SessionLog[], weekStart: string, pl
   return logs.filter((l) => dayOfLog(l, plannedById) >= weekStart && dayOfLog(l, plannedById) < end && countsAsStrength(l)).length;
 }
 
-export interface WeekItem {
+interface WeekItem {
   log: SessionLog;
   kind: 'minutes' | 'strength';
   detail: CountedDetail;

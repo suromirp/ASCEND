@@ -10,10 +10,10 @@ import type { SessionLog } from '../models/training';
 import { monthsBefore } from './proposalTidy';
 
 export type StreamsBackup = 'twoYears' | 'all' | 'none';
-export const STREAMS_BACKUP_OPTIONS: readonly StreamsBackup[] = ['twoYears', 'all', 'none'];
+const STREAMS_BACKUP_OPTIONS: readonly StreamsBackup[] = ['twoYears', 'all', 'none'];
 export const DEFAULT_STREAMS_BACKUP: StreamsBackup = 'twoYears';
 // "De laatste 2 jaar", in maanden.
-export const STREAMS_BACKUP_MONTHS = 24;
+const STREAMS_BACKUP_MONTHS = 24;
 
 export const isStreamsBackup = (v: unknown): v is StreamsBackup => (STREAMS_BACKUP_OPTIONS as readonly unknown[]).includes(v);
 

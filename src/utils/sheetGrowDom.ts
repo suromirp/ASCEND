@@ -27,7 +27,7 @@ export function installSheetOrigin(): void {
 }
 
 // De stand van Beweging zoals useMotionAttribute hem op <html> zet; `prefers-reduced-motion` telt als Uit.
-export function documentMotion(): MotionMode {
+function documentMotion(): MotionMode {
   const reduced = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   return resolveMotion({ motion: document.documentElement.dataset.motion }, reduced);
 }

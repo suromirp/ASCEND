@@ -131,7 +131,7 @@ export function bestEver(points: ForgePoint[]): ForgePoint | undefined {
 export const valueChange = (now: ForgePoint | undefined, then: ForgePoint | undefined): number | undefined =>
   now && then ? round1(now.value - then.value) : undefined;
 
-export type ChangeKind = 'top_weight' | 'reps_same_weight' | 'volume' | 'total_reps';
+type ChangeKind = 'top_weight' | 'reps_same_weight' | 'volume' | 'total_reps';
 
 export interface ExtraChange {
   kind: ChangeKind;
@@ -172,7 +172,7 @@ export function extraChanges(now: ForgePoint | undefined, then: ForgePoint | und
   return out;
 }
 
-export interface Moment {
+interface Moment {
   weeks: number;
   // De dag waarop gekeken wordt: vandaag min dit aantal weken.
   asOf: string;

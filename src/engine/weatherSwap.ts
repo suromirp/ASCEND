@@ -33,7 +33,7 @@ import { makeId } from '../utils/id';
 const MAX_OPTIONS = 3;
 // A forecast further than three days ahead changes too often to move a
 // training for: the proposal comes when the day is this close, not before.
-export const WEATHER_SWAP_HORIZON_DAYS = 3;
+const WEATHER_SWAP_HORIZON_DAYS = 3;
 const RULE_ID = 'WEATHER-SWAP';
 const GENERATED_BY = ['engine/weatherSwap.ts', RULE_ID];
 

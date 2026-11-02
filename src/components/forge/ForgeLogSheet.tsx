@@ -25,7 +25,7 @@ function State({ s, label }: { s: ForgeSetState | undefined; label: string }) {
 }
 
 // De tijdlijn, nieuwste bovenaan.
-export function ForgeLogList({ events, workout }: { events: ForgeEvent[]; workout?: WorkoutExercise[] }) {
+function ForgeLogList({ events, workout }: { events: ForgeEvent[]; workout?: WorkoutExercise[] }) {
   const sorted = [...events].sort((a, b) => b.at - a.at);
   if (sorted.length === 0) {
     return <p className="mt-3 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Nog niets veranderd. Wat Forge bijstuurt en wat jij aanpast, komt hier te staan.</p>;

@@ -43,7 +43,7 @@ import { round as roundTo } from '../utils/round';
 
 type Block = CardioMetric | OutdoorMetric;
 
-export const SOURCE_FIELDS: SourceField[] = MEASURED_FIELDS.filter((f): f is SourceField => f !== 'estimatedElevation');
+const SOURCE_FIELDS: SourceField[] = MEASURED_FIELDS.filter((f): f is SourceField => f !== 'estimatedElevation');
 
 const ELEVATION: SourceField[] = ['elevationGainM', 'elevationLossM'];
 
@@ -69,13 +69,13 @@ function noAltitude(log: SessionLog, treadmill: boolean): boolean {
   return treadmill || isIndoorLog(log) || block?.estimatedElevation === true;
 }
 
-export interface SourceChange {
+interface SourceChange {
   field: SourceField;
   before: number | undefined;
   after: number;
 }
 
-export type CorrectionKind =
+type CorrectionKind =
   // A first look: the log gets its fingerprint, nothing else.
   | 'baseline'
   // The source changed, but the log already says the same (or only the fingerprint moves).

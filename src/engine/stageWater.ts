@@ -16,7 +16,7 @@ import type { Gr5Stage, SectionId } from '../data/gr5Stages';
 import type { SweatEntry } from '../models/sweat';
 import { basisLabel, mlPerHourText, sweatRateAt, type SweatRate } from './sweat';
 
-export const SECTION_TEMP_C: Record<SectionId, number> = { 1: 20, 2: 18, 3: 20, 4: 26 };
+const SECTION_TEMP_C: Record<SectionId, number> = { 1: 20, 2: 18, 3: 20, 4: 26 };
 
 export function expectedStageTempC(stage: Pick<Gr5Stage, 'section'>): number {
   return SECTION_TEMP_C[stage.section];

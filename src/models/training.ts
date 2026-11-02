@@ -26,7 +26,7 @@ export type MetricSource = 'manual' | 'garmin' | 'health-connect' | 'macrofactor
 
 export type SessionType = 'strength' | 'cardio' | 'hiking' | 'recovery' | 'adventure';
 
-export type ExercisePriority = 'core' | 'accessory' | 'optional';
+type ExercisePriority = 'core' | 'accessory' | 'optional';
 
 export interface ExercisePrescription {
   id: string;
@@ -55,19 +55,19 @@ export interface SetTarget {
   restSec?: number;
 }
 
-export interface DurationVariants {
+interface DurationVariants {
   full: number;
   short?: number;
   minimum?: number;
 }
 
-export interface CardioTarget {
+interface CardioTarget {
   zone?: string; // e.g. "Zone 2"
   targetDurationMin?: number;
   targetDistanceKm?: number;
 }
 
-export interface OutdoorTarget {
+interface OutdoorTarget {
   targetDistanceKm?: number;
   targetElevationM?: number;
   backpackWeightKg?: number;
@@ -181,7 +181,7 @@ export interface SessionTemplate {
   pairingOverride?: { withTemplateId: string; verdict: 'prefer' | 'avoid' }[];
 }
 
-export type PlannedSessionStatus = 'planned' | 'moved' | 'skipped' | 'optional';
+type PlannedSessionStatus = 'planned' | 'moved' | 'skipped' | 'optional';
 
 // A template scheduled onto a specific calendar date. Completion is derived
 // (a SessionLog exists referencing this id) rather than stored as a flag, so
@@ -290,7 +290,7 @@ export type TrainingEnvironment = 'treadmill' | 'outdoor';
 // interface per activity (running/cycling/stairmaster/...) — same fields
 // (distance, HR, cadence, ...) apply loosely across most of them, and the
 // UI only shows what's relevant for the selected modality.
-export type ActivityModality = string;
+type ActivityModality = string;
 
 // How the session's target/intensity was decided — ASCEND's own plan, the
 // Daily Suggested Workout shown on the Garmin watch (selected manually;

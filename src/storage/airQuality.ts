@@ -9,7 +9,7 @@ import { fetchAirQuality, roundCoordinate, type AirQualityForecast, type FetchOp
 import type { WeatherPlace } from '../models/weather';
 
 const KEY = 'airQuality';
-export const AIR_FETCH_MINUTES = 180;
+const AIR_FETCH_MINUTES = 180;
 
 const samePlace = (a: WeatherPlace, b: WeatherPlace) => roundCoordinate(a.lat) === roundCoordinate(b.lat) && roundCoordinate(a.lon) === roundCoordinate(b.lon);
 

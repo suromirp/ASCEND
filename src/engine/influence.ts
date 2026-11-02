@@ -142,7 +142,7 @@ export const markSeen = (entry: InfluenceEntry): InfluenceEntry => (entry.seen ?
 
 // --- the heart rate that stands out ---------------------------------------------------------
 
-export interface DeviationPoint {
+interface DeviationPoint {
   label: string;
   // Heart rate at the pace of this run, in beats per minute.
   value: number;
@@ -263,7 +263,7 @@ const feels = (log: SessionLog): number | undefined => {
 };
 
 // The material of many targets at once: logs and nights looked up per date, built one time.
-export interface FactIndex {
+interface FactIndex {
   logsByDate: ReadonlyMap<string, readonly SessionLog[]>;
   recordByDate: ReadonlyMap<string, RecoveryMetric>;
   templateById: ReadonlyMap<string, SessionTemplate>;
@@ -379,7 +379,7 @@ export interface DerivedFactsInput {
 }
 
 // How far back the overview reads (the mornings from intervals.icu are kept as long, storage/wellness.ts).
-export const FACT_WINDOW_DAYS = 400;
+const FACT_WINDOW_DAYS = 400;
 
 // What ASCEND knows by itself, as notes that are never stored: one per training and one per day
 // with a fact, made by `knownFacts` itself so there is one way of counting. They sit at the same

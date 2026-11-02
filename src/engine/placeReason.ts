@@ -14,7 +14,7 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { LeavePeriod } from '../models/leave';
 import { formatWeekdayDayMonthNL, isoWeekday, localDateOf, weekdayLongNL } from '../utils/dates';
 
-export type PlaceReasonKind = 'catchUp' | 'proposal' | 'yours' | 'leave' | 'rule' | 'pattern' | 'unknown';
+type PlaceReasonKind = 'catchUp' | 'proposal' | 'yours' | 'leave' | 'rule' | 'pattern' | 'unknown';
 
 export interface PlaceReason {
   kind: PlaceReasonKind;
@@ -37,7 +37,7 @@ export const UNKNOWN_PLACE = 'Waarom precies deze dag, is niet bewaard.';
 const WEEKDAYS_LONG = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
 
 // Het weekpatroon heeft een andere vaste dag dan de dag waarop hij nu staat.
-export function otherPatternDay(patternDay: number, date: string): string {
+function otherPatternDay(patternDay: number, date: string): string {
   return `Je weekpatroon zet hem op ${WEEKDAYS_LONG[patternDay - 1]}. Waarom hij nu op ${weekdayLongNL(date)} staat, is niet bewaard.`;
 }
 

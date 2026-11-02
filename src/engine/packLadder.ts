@@ -21,20 +21,20 @@
 // Puur: geen React, geen opslag, geen imports. De aanroeper
 // (engine/programLayout.ts) vertaalt het programma naar LadderWeek's.
 
-export const PACK_START_KG = 5; // de eerste rugzakwandelingen van de winter
-export const PACK_HIKE_ENTRY_KG = 7; // de eerste bergtocht, bij een doel van 14 kg
-export const PACK_PEAK_OVER_KG = 1; // de zwaarste weken: tot 1 kg boven het doel
-export const PACK_MIN_STEP_KG = 1;
+const PACK_START_KG = 5; // de eerste rugzakwandelingen van de winter
+const PACK_HIKE_ENTRY_KG = 7; // de eerste bergtocht, bij een doel van 14 kg
+const PACK_PEAK_OVER_KG = 1; // de zwaarste weken: tot 1 kg boven het doel
+const PACK_MIN_STEP_KG = 1;
 export const PACK_MAX_STEP_KG = 2;
-export const PACK_REST_DROP_KG = 2;
-export const PACK_FLOOR_KG = 4; // lichter dan dit is geen rugzak meer
+const PACK_REST_DROP_KG = 2;
+const PACK_FLOOR_KG = 4; // lichter dan dit is geen rugzak meer
 // Eerste en tweede week van de afbouw: zoveel onder de piek.
-export const PACK_TAPER_DROPS_KG = [3, 6];
+const PACK_TAPER_DROPS_KG = [3, 6];
 // In de winter een halve kilo per drie wekelijkse stappen: 5 kg in het begin,
 // 6 tot 6,5 kg vlak voor Bergcapaciteit.
 const WINTER_KG_PER_BUILD_WEEK = 1 / 3;
 
-export type LadderWeekKind = 'build' | 'rest' | 'taper';
+type LadderWeekKind = 'build' | 'rest' | 'taper';
 
 export interface LadderWeek {
   kind: LadderWeekKind;

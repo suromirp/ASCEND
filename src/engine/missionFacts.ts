@@ -13,7 +13,7 @@ import { formatPace, paceForTemplate, type PaceRange, type RacePaces } from './r
 import { formatDateNL } from '../utils/dates';
 import { idHasRole } from './templateRoles';
 
-export type MissionChipKind = 'duur' | 'zone' | 'tempo' | 'overig';
+type MissionChipKind = 'duur' | 'zone' | 'tempo' | 'overig';
 
 export interface MissionChip {
   text: string;

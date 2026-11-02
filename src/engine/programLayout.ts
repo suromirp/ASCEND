@@ -348,9 +348,9 @@ function cycleMultiplier(weekInProgram: number): number {
 // grow faster without that risk, which is what the extra run in Opbouw is
 // for (engine/extraRun.ts). After Opbouw the runs hold that level. The
 // per-session cap in engine/substitutions.ts still guards every session.
-export const RUN_BUILD_PER_WAVE = 0.1;
+const RUN_BUILD_PER_WAVE = 0.1;
 const LONG_RUN_ID = 'tpl_long_run';
-export const RUN_BUILD_PEAK_MINUTES: Record<string, number> = {
+const RUN_BUILD_PEAK_MINUTES: Record<string, number> = {
   tpl_long_run: 120,
   tpl_easy_run: 55,
 };
@@ -517,7 +517,7 @@ function longRunPeak(program: Program): number {
 // days before a running race of a Top or Voortop goal the long run is at most the peak of that race
 // (10 km 75 minutes, half 120, marathon 180), in the last 7 days at most 70% of it. After the race the
 // usual recovery applies. Only with a known race peak (Program.runBuild.peakMinutes).
-export const RACE_TAPER_RATIO = 0.7;
+const RACE_TAPER_RATIO = 0.7;
 function raceTaperCap(program: Program, dateIso: string, minutes: number): number {
   const build = readRunBuild(program.runBuild);
   if (!build || !(build.peakMinutes > 0)) return minutes;
@@ -526,7 +526,7 @@ function raceTaperCap(program: Program, dateIso: string, minutes: number): numbe
   return Math.min(minutes, Math.round(build.peakMinutes * (days <= 7 ? RACE_TAPER_RATIO : 1)));
 }
 
-export const PEAK_ALTERNATE_RATIO = 0.8;
+const PEAK_ALTERNATE_RATIO = 0.8;
 
 function alternatePeak(template: SessionTemplate, program: Program, dateIso: string, generic: WeeklyProgressionStep[], minutes: number, peak: number | undefined, usual?: number): number {
   if (!peak || program.runBuild?.alternatePeak === false) return minutes;
@@ -673,11 +673,11 @@ export const PATTERN_SWAPS: PatternSwap[] = [
 
 // Rustig aan (docs/visie/Zonder doel.md, 2.3): nooit een harde training. In een golf wordt de
 // heuvelloop van de zaterdag een herstelloop; kies je iets anders, dan wordt hij weer de heuvelloop.
-export const CALM_SWAPS: PatternSwap[] = [
+const CALM_SWAPS: PatternSwap[] = [
   { from: 'tpl_hill_intervals', to: 'tpl_recovery_run', phases: [PHASE_GOLF, PHASE_GOLF_START] },
 ];
 // De beginnersstart: dezelfde wissel, alleen in de eerste vier weken (regel NO-HARD-YET in het ontwerp).
-export const BEGINNER_SWAPS: PatternSwap[] = [
+const BEGINNER_SWAPS: PatternSwap[] = [
   { from: 'tpl_hill_intervals', to: 'tpl_recovery_run', phases: [PHASE_GOLF_START] },
 ];
 

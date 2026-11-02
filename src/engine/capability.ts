@@ -170,7 +170,7 @@ export function extractEvidenceFromLog(log: SessionLog): CapabilityEvidence[] {
 
 // Effort from which a run's average pace says something about the pace you
 // can sustain (RPE 6 = steady, still controlled).
-export const SUSTAINED_PACE_MIN_RPE = 6;
+const SUSTAINED_PACE_MIN_RPE = 6;
 
 export function extractEvidenceFromLogs(logs: SessionLog[]): CapabilityEvidence[] {
   return logs.flatMap(extractEvidenceFromLog);

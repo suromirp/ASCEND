@@ -9,7 +9,7 @@
 
 import { daysBetween, localDateOf } from '../utils/dates';
 
-export const FRESH_START_DAYS = 14;
+const FRESH_START_DAYS = 14;
 
 export function shouldOfferRestore(input: {
   seededAt: string | undefined;

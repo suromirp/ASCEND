@@ -35,25 +35,12 @@ const PROFILES: Record<TodayProfileChoice, TodayCardValues> = {
 
 export const TODAY_PROFILE_ORDER: TodayProfileChoice[] = ['alles', 'belangrijkst', 'training'];
 
-export const TODAY_PROFILE_LABEL: Record<TodayProfile, string> = {
-  alles: 'Alles laten zien',
-  belangrijkst: 'Alleen het belangrijkste',
-  training: 'Alleen je training',
-  aangepast: 'Aangepast',
-};
-
 // De naam zoals een rij of een groep hem toont, kort genoeg voor naast de titel.
 export const TODAY_PROFILE_SHORT: Record<TodayProfile, string> = {
   alles: 'Alles',
   belangrijkst: 'Het belangrijkste',
   training: 'Alleen je training',
   aangepast: 'Eigen keuze',
-};
-
-export const TODAY_PROFILE_NOTE: Record<TodayProfileChoice, string> = {
-  alles: 'Alle kaarten, zoals het advies.',
-  belangrijkst: 'Je training, de ochtendcheck en het weer.',
-  training: 'Ook de ochtendcheck en het weer gaan uit.',
 };
 
 type ProfileInput = Pick<AppSettings, 'overviews' | 'introSoundEnabled' | 'bodyCheck'>;

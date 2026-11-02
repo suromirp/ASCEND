@@ -20,8 +20,8 @@ import type { RecoveryMetric } from '../models/metrics';
 import { addDays } from '../utils/dates';
 import { baselineValues, dayRecord, MIN_BASELINE_DAYS } from './wellnessCheck';
 
-export const ILLNESS_RHR_RISE = 6;
-export const ILLNESS_MIN_MORNINGS = 2;
+const ILLNESS_RHR_RISE = 6;
+const ILLNESS_MIN_MORNINGS = 2;
 // Verder dan dit kijkt de regel niet terug (een week).
 const LOOKBACK = 7;
 

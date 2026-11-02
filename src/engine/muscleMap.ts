@@ -6,7 +6,7 @@
 import { MUSCLE_REGIONS, MUSCLE_SIDE, type MuscleSide } from '../data/muscleRegions';
 import { MUSCLE_LABEL, type Exercise, type MuscleGroup } from '../models/exercise';
 
-export type MuscleLevel = 'primary' | 'secondary';
+type MuscleLevel = 'primary' | 'secondary';
 
 export interface MuscleMark {
   group: MuscleGroup;

@@ -36,16 +36,16 @@ export const FAST_KMH: Record<TrimSport, number> = { running: 20, hiking: 15, cy
 // For at least this long above that speed (together, not in one go).
 export const FAST_MIN_SEC: Record<TrimSport, number> = { running: 60, hiking: 60, cycling: 120 };
 // Two fast stretches closer than this are one drive (a traffic light is not the end of it).
-export const FAST_MERGE_GAP_SEC = 120;
+const FAST_MERGE_GAP_SEC = 120;
 // The fast stretch has to lie against the beginning or the end: at most this long
 // from the edge (stopping the watch, parking). A fast piece in the middle is not
 // something to cut from the edges.
-export const FAST_EDGE_SEC = 300;
+const FAST_EDGE_SEC = 300;
 // Below this you stand still or walk: where the drive starts or stops.
-export const SLOW_KMH = 5;
-export const SLOW_LOOK_SEC = 120;
+const SLOW_KMH = 5;
+const SLOW_LOOK_SEC = 120;
 // What is left must be at least this much moving time, or there is nothing to suggest.
-export const KEEP_MIN_SEC = 300;
+const KEEP_MIN_SEC = 300;
 
 // --- the series, prepared once ----------------------------------------------------------
 

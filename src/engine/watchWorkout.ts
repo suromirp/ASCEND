@@ -71,8 +71,8 @@ export interface WatchBuildOptions {
   hr?: WatchHrPlan;
 }
 
-export type WatchSport = 'Run' | 'Walk' | 'Hike' | 'Ride';
-export type WatchTarget = 'HR' | 'PACE';
+type WatchSport = 'Run' | 'Walk' | 'Hike' | 'Ride';
+type WatchTarget = 'HR' | 'PACE';
 
 export interface WatchWorkout {
   plannedId: string;
@@ -147,7 +147,7 @@ function hrTarget(step: PlanStep, hr?: WatchHrPlan): string | undefined {
 
 const HEADER: Partial<Record<StepKind, string>> = { warmup: 'Warming-up', cooldown: 'Cooling-down' };
 
-export interface WorkoutText {
+interface WorkoutText {
   text: string;
   target: WatchTarget;
 }

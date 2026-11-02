@@ -12,7 +12,7 @@
 import type { WeatherPlace } from '../models/weather';
 
 export const MY_LOCATION_NAME = 'Mijn locatie';
-export const LOCATION_CHECK_MINUTES = 60;
+const LOCATION_CHECK_MINUTES = 60;
 
 export type LocationPermission = 'granted' | 'denied' | 'prompt' | 'unknown';
 

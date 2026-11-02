@@ -11,7 +11,7 @@ export type InjurySeverity = 'licht' | 'matig' | 'ernstig';
 export type InjuryKind = 'spierpijn' | 'stijf' | 'pijn';
 // Welke kant. Ontbreekt het, dan staat de kant in de naam (oud) of is het beide kanten; een
 // rugplek zonder kant leest als 'midden'.
-export type InjurySide = 'links' | 'midden' | 'rechts' | 'beide';
+type InjurySide = 'links' | 'midden' | 'rechts' | 'beide';
 
 export interface InjuryNote {
   id: string;

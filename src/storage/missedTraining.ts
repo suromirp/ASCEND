@@ -14,7 +14,7 @@ import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo } from './database';
 
 const MEMORY_KEY = MISSED_MEMORY_KEY;
 
-export async function readMissedMemory(): Promise<ReturnType<typeof resolveMissedMemory>> {
+async function readMissedMemory(): Promise<ReturnType<typeof resolveMissedMemory>> {
   return resolveMissedMemory(await MetaRepo.get<unknown>(MEMORY_KEY));
 }
 

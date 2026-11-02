@@ -11,7 +11,7 @@
 // programme that lowered shoulder problems (Andersson e.a. 2017); the ankle
 // and hip drills are for squat depth, with running and hiking in the legs.
 
-export interface WarmupStep {
+interface WarmupStep {
   name: string;
   amount: string; // "60 sec", "15 keer", "10 per arm"
   seconds: number; // about how long it takes
@@ -19,7 +19,7 @@ export interface WarmupStep {
   videoUrl?: string;
 }
 
-export interface WarmupBlock {
+interface WarmupBlock {
   title: string;
   hint?: string;
   // Only when you come in cold: not counted in the minutes.

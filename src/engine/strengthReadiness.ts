@@ -26,12 +26,12 @@ import { fillFromWeeks, weeksOfWork } from './goalGap';
 import { EPLEY_DIVISOR, estimateSet } from './strengthModel';
 import { kgLabel } from '../utils/kg';
 
-export const STRENGTH_WINDOW_DAYS = 28;
+const STRENGTH_WINDOW_DAYS = 28;
 // Vanaf zoveel dagen geschiedenis op een oefening geldt "ervaren".
-export const EXPERIENCED_DAYS = 730;
+const EXPERIENCED_DAYS = 730;
 
 // Krachttrend 60%, harde sets 40% (zoals het document); Volhouden weegt hier zoals voorheen.
-export const STRENGTH_WEIGHTS: Record<string, number> = { krachttrend: 0.6, hardeSets: 0.4 };
+const STRENGTH_WEIGHTS: Record<string, number> = { krachttrend: 0.6, hardeSets: 0.4 };
 
 export function strengthLevelFor(historyDays: number): StrengthLevel {
   return historyDays > EXPERIENCED_DAYS ? 'ervaren' : 'gevorderd';

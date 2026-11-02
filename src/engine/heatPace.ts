@@ -15,10 +15,10 @@
 
 import type { SessionWeather } from './weather';
 
-export const WARM_FEELS_C = 22;
-export const HOT_FEELS_C = 28;
-export const HUMID_DEW_C = 16;
-export const MUGGY_DEW_C = 20;
+const WARM_FEELS_C = 22;
+const HOT_FEELS_C = 28;
+const HUMID_DEW_C = 16;
+const MUGGY_DEW_C = 20;
 
 export interface HeatPace {
   level: 'warm' | 'heet';

@@ -26,7 +26,7 @@ export interface CompatibilityEntry {
 }
 
 // Keyed by SessionTemplate.id, then by the Garmin-suggested type.
-export const GARMIN_COMPATIBILITY: Record<string, Record<string, CompatibilityEntry>> = {
+const GARMIN_COMPATIBILITY: Record<string, Record<string, CompatibilityEntry>> = {
   tpl_easy_run: {
     Recovery: { compatibility: 'compatible', note: 'Als de duur genoeg is. Lagere prikkel dan gepland, prima als je moe bent.' },
     Base: { compatibility: 'compatible', note: 'Het meest compatibel met een rustige duurloop.' },

@@ -26,7 +26,7 @@ export function straightKm(a: { lat: number; lon: number }, b: { lat: number; lo
 const ROUTE_FACTOR = 1.3;
 const BIKE_KMH = 22; // relaxed road-bike pace, including stops
 const CAR_KMH = 65; // mixed roads, door to door
-export const MAX_BIKE_KM = 35; // one way; further than this, take the car or train
+const MAX_BIKE_KM = 35; // one way; further than this, take the car or train
 
 export interface TravelAdvice {
   routeKm: number;

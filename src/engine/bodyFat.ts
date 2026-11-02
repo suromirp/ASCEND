@@ -16,8 +16,8 @@
 import type { WeightEntry } from '../models/metrics';
 import { addDays } from '../utils/dates';
 
-export const MIN_FAT_PCT = 3;
-export const MAX_FAT_PCT = 60;
+const MIN_FAT_PCT = 3;
+const MAX_FAT_PCT = 60;
 
 const WINDOW_DAYS = 28;
 const PER_AVERAGE = 7;

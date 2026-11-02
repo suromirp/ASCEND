@@ -4,7 +4,7 @@
 // need indexed queries, all three are read/written together as one small
 // config unit.
 
-export type ProgressionStyle = 'conservative' | 'balanced' | 'aggressive' | 'custom';
+type ProgressionStyle = 'conservative' | 'balanced' | 'aggressive' | 'custom';
 
 export interface TrainingStrategyProfile {
   progressionStyle: ProgressionStyle;
@@ -24,7 +24,7 @@ export interface TrainingStrategyProfile {
   sameDayPairingPreference: 'automatic' | 'always' | 'only_if_useful' | 'never';
 }
 
-export type GuardrailMode = 'block' | 'warn' | 'allow';
+type GuardrailMode = 'block' | 'warn' | 'allow';
 
 // ONLY configurable guardrails are represented as data. System invariants
 // (below) are never a TrainingGuardrail row.
@@ -33,16 +33,6 @@ export interface TrainingGuardrail {
   ruleId: string;
   mode: GuardrailMode;
 }
-
-// Enforced unconditionally by the (future) Constraint Engine. Not
-// configurable, not stored as toggleable objects, never given a
-// BLOCK/WARN/ALLOW mode.
-export const SYSTEM_INVARIANTS = [
-  'history_never_rewritten',        // SessionLog & GoalMilestoneProgress stay append-only
-  'deterministic_behavior',          // same input + engine version + rule version -> same output
-  'no_corrupt_state',
-  'confirmation_horizon_respected',  // current/next week always proposal-gated, never silent
-] as const;
 
 export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 

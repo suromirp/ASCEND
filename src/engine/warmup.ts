@@ -27,7 +27,7 @@ export type WarmKind =
   | 'light'
   | 'none';
 
-export type Region = 'lower' | 'upper';
+type Region = 'lower' | 'upper';
 
 export interface WarmState {
   // A compound exercise of this body part has been done in this training.

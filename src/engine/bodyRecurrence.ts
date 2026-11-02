@@ -15,10 +15,10 @@ import { PART_PLURAL, sideOfInjury, spotsForInjury } from './bodyMap';
 
 export const RECURRENCE_WEEKS = 8;
 // Een plek staat pas in het overzicht vanaf zoveel weken.
-export const RECURRENCE_MIN_WEEKS = 2;
+const RECURRENCE_MIN_WEEKS = 2;
 
 // 0 niets, 1 spierpijn of stijf, 2 pijn.
-export type RecurrenceCell = 0 | 1 | 2;
+type RecurrenceCell = 0 | 1 | 2;
 
 export interface RecurringSpot {
   key: string;

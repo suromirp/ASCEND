@@ -45,10 +45,10 @@ import { BASELINE_DAYS, MIN_BASELINE_DAYS } from './wellnessCheck';
 // Vanaf zoveel keer staat er een getal; daaronder alleen de naam met het aantal.
 export const MIN_TIMES = 3;
 // Hoeveel trainingen er in de vier weken ervoor minstens moeten zijn om "zwaarte" te vergelijken.
-export const MIN_BASELINE_TRAININGS = 4;
+const MIN_BASELINE_TRAININGS = 4;
 // De band is de mediaan plus en min zoveel keer de geschaalde MAD (zo breed als twee
 // standaardafwijkingen bij normaal verdeelde waarden).
-export const BAND_SIGMAS = 2;
+const BAND_SIGMAS = 2;
 const MAD_TO_SIGMA = 1.4826;
 // Een band wordt nooit smaller dan dit, anders zou een heel vlakke reeks elk verschil "buiten" maken.
 const BAND_FLOOR = {
@@ -58,7 +58,7 @@ const BAND_FLOOR = {
   effort: 1, // punt
 } as const;
 // Een reden telt in het koprijtje alleen als dit deel van de keren buiten de band viel.
-export const CLEAR_SHARE = 0.5;
+const CLEAR_SHARE = 0.5;
 
 export type InfluenceMeasure = 'restingHr' | 'hrv' | 'paceHr' | 'sleep' | 'effort';
 
@@ -678,7 +678,7 @@ export function researchLine(group: ReasonGroup, measure: InfluenceMeasure): str
 
 // --- "lijkt op" --------------------------------------------------------------------------------------
 
-export const LOOKS_LIKE_MIN = 4;
+const LOOKS_LIKE_MIN = 4;
 
 export interface LooksLike {
   group: ReasonGroup;
