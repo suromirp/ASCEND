@@ -32,17 +32,18 @@ import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
-import { SettingsOverview } from './pages/settings/SettingsOverview';
-import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
-import { SportsPage } from './pages/settings/SportsPage';
-import { KindAmountPage } from './pages/settings/KindAmountPage';
-import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
-import { StretchAreaRedirect } from './pages/StretchAreaRedirect';
 import { SessionPill } from './components/forge/SessionPill';
 import { useOpenRequest, useSessionHousekeeping, useSessionPill } from './components/forge/useForgeSession';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
 // they still work offline.
+const SettingsOverview = lazy(() => import('./pages/settings/SettingsOverview').then((m) => ({ default: m.SettingsOverview })));
+const SettingsGroupPage = lazy(() => import('./pages/settings/SettingsGroupPage').then((m) => ({ default: m.SettingsGroupPage })));
+const SportsPage = lazy(() => import('./pages/settings/SportsPage').then((m) => ({ default: m.SportsPage })));
+const KindAmountPage = lazy(() => import('./pages/settings/KindAmountPage').then((m) => ({ default: m.KindAmountPage })));
+const KnowledgePage = lazy(() => import('./pages/Knowledge').then((m) => ({ default: m.KnowledgePage })));
+const KnowledgeTopicPage = lazy(() => import('./pages/Knowledge').then((m) => ({ default: m.KnowledgeTopicPage })));
+const StretchAreaRedirect = lazy(() => import('./pages/StretchAreaRedirect').then((m) => ({ default: m.StretchAreaRedirect })));
 const BodyPage = lazy(() => import('./pages/Body').then((m) => ({ default: m.BodyPage })));
 const BodySpotPage = lazy(() => import('./pages/BodySpot').then((m) => ({ default: m.BodySpotPage })));
 const GarminLinkPage = lazy(() => import('./pages/GarminLink').then((m) => ({ default: m.GarminLinkPage })));
