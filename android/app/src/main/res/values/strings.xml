@@ -11,5 +11,11 @@
     <string name="widget_eyebrow">Vandaag</string>
     <string name="widget_open">Open ASCEND</string>
     <string name="widget_minutes">%1$d min</string>
+    <string name="widget_done">Gedaan</string>
+    <string name="widget_tomorrow">Morgen: %1$s</string>
+    <string name="widget_tomorrow_rest">Morgen rust</string>
+    <string name="widget_tomorrow_short">morgen %1$s</string>
+    <string name="widget_tomorrow_rest_short">morgen rust</string>
+    <string name="widget_join">%1$s · %2$s</string>
     <string name="widget_description">Je training van vandaag, met één tik naar de app.</string>
 </resources>

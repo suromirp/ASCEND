@@ -8,4 +8,10 @@
     <color name="ascend_ink">#F1F6FF</color>
     <color name="ascend_ink_dim">#ABBBDB</color>
     <color name="ascend_action">#5EEAD4</color>
+    <color name="ascend_status">#93CCFF</color>
+    <color name="ascend_sport_run">#FFB26B</color>
+    <color name="ascend_sport_strength">#B4A6FF</color>
+    <color name="ascend_sport_walk">#8FDB8A</color>
+    <color name="ascend_sport_mountain">#F4D94E</color>
+    <color name="ascend_sport_bike">#F4A3C8</color>
 </resources>

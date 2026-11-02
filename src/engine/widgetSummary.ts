@@ -11,12 +11,24 @@ import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isHeavySession } from './illness';
 import type { LeavePeriod } from '../models/leave';
 import { leaveLabelOn } from './leave';
+import { sportKind } from '../components/sportKind';
+import { addDays } from '../utils/dates';
 
 export interface WidgetSummary {
   date: string; // yyyy-mm-dd, de dag waarvoor dit geldt
   title: string; // de naam van de training, "Rustdag", "Vakantie" of "Rust vandaag" (bij ziekte, dat hoort niet op een vergrendelscherm)
   minutes?: number;
+  /** Het soort voor het pictogram; rust, vakantie en ziekte zijn 'rest'. */
+  kind: WidgetKind;
+  /** De training van vandaag is gelogd: de widget toont een vinkje en "Gedaan". */
+  done?: boolean;
+  /** De naam van de training van morgen. */
+  tomorrow?: string;
+  /** Morgen is een rustdag (of vakantie); sluit `tomorrow` uit. */
+  tomorrowRest?: boolean;
 }
+
+export type WidgetKind = 'run' | 'strength' | 'walk' | 'mountain' | 'bike' | 'rest';
 
 export interface WidgetInput {
   today: string;
@@ -31,8 +43,9 @@ export interface WidgetInput {
 export function widgetSummary(input: WidgetInput): WidgetSummary {
   const { today, sessions, logs, templateById, program } = input;
   const date = today;
-  const label = leaveLabelOn(today, input.leavePeriods ? [...input.leavePeriods] : undefined);
-  if (label?.kind === 'off') return { date, title: label.title };
+  const periods = input.leavePeriods ? [...input.leavePeriods] : undefined;
+  const label = leaveLabelOn(today, periods);
+  if (label?.kind === 'off') return { date, title: label.title, kind: 'rest', ...tomorrowOf(input, periods) };
 
   const illness = activeIllness(input.illnessEpisodes ? [...input.illnessEpisodes] : undefined);
   const mine = sessions
@@ -46,9 +59,33 @@ export function widgetSummary(input: WidgetInput): WidgetSummary {
     return true;
   });
   const template = open ? templateById.get(open.templateId) : undefined;
-  if (open && template) return { date, title: template.name, minutes: resolveEffectiveFullDuration(template, open.scheduledDate, program) };
-  if (illness) return { date, title: 'Rust vandaag' };
-  return { date, title: 'Rustdag' };
+  const tomorrow = tomorrowOf(input, periods);
+  if (open && template) {
+    return { date, title: template.name, minutes: resolveEffectiveFullDuration(template, open.scheduledDate, program), kind: sportKind(template), ...tomorrow };
+  }
+  // Ziek: Rust vandaag, en niets over morgen (het is nog niet te zeggen en hoort niet op een vergrendelscherm).
+  if (illness) return { date, title: 'Rust vandaag', kind: 'rest' };
+  const doneSession = mine.find((s) => {
+    const t = templateById.get(s.templateId);
+    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, [...logs]).status === 'completed';
+  });
+  const doneTemplate = doneSession ? templateById.get(doneSession.templateId) : undefined;
+  if (doneSession && doneTemplate) {
+    return { date, title: doneTemplate.name, minutes: resolveEffectiveFullDuration(doneTemplate, doneSession.scheduledDate, program), kind: sportKind(doneTemplate), done: true, ...tomorrow };
+  }
+  return { date, title: 'Rustdag', kind: 'rest', ...tomorrow };
+}
+
+// Wat morgen is: de eerste training, anders rust. Vakantie morgen telt als rust.
+function tomorrowOf(input: WidgetInput, periods: LeavePeriod[] | undefined): Pick<WidgetSummary, 'tomorrow' | 'tomorrowRest'> {
+  const day = addDays(input.today, 1);
+  if (leaveLabelOn(day, periods)?.kind === 'off') return { tomorrowRest: true };
+  const next = input.sessions
+    .filter((s) => s.scheduledDate === day && s.status !== 'skipped')
+    .sort((a, b) => a.order - b.order)
+    .map((s) => input.templateById.get(s.templateId))
+    .find((t) => !!t && t.type !== 'recovery');
+  return next ? { tomorrow: next.name } : { tomorrowRest: true };
 }
 
 // Of de widget deze samenvatting nu toont; zo niet, dan staat er "Open ASCEND".
