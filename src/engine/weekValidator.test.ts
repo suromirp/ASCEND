@@ -139,3 +139,65 @@ describe('gelijke gevallen beslist het id', () => {
     expect(moved('b-legs', 'a-run')).toEqual(['tpl_lower_a']);
   });
 });
+
+describe('de laatste vrije dag van een week', () => {
+  // Nagemaakt, met verschoven datums: de rustdag is maandag, maar daar staan de heuvels die je er zelf neerzette.
+  // Vrijdag is te vol (Benen A van jou en Bovenlichaam B van het systeem), zaterdag is de enige vrije dag.
+  // De planningsronde mag Bovenlichaam B verplaatsen, maar niet naar zaterdag: dan heeft de week geen rustdag meer.
+  const userLock = { by: 'user' as const, at: '2026-10-25T20:00:00.000Z' };
+  const row = (id: string, templateId: string, day: number, over: Partial<PlannedSession> = {}): PlannedSession => ({ id, templateId, scheduledDate: addDays(MONDAY, day), weekStartDate: MONDAY, status: 'planned', order: day, ...over });
+  const list: PlannedSession[] = [
+    row('heuvel', 'tpl_hills_descent', 0, { status: 'moved', lock: userLock }),
+    row('kort', 'tpl_easy_run', 1, { status: 'moved', lock: userLock }),
+    row('boven-a', 'tpl_upper_a', 2, { status: 'moved', lock: userLock }),
+    row('rustig', 'tpl_easy_run', 3, { status: 'moved', lock: userLock }),
+    row('benen', 'tpl_lower_a', 4, { status: 'moved', lock: userLock }),
+    row('boven-b', 'tpl_upper_b', 4, { order: 9 }),
+    row('lang', 'tpl_long_run', 6),
+  ];
+  const fri = { preferredMinutes: 60, softFlexMinutes: 15 };
+  const budgets = { ...dailyTimeBudget, thu: budget, fri };
+  const at = (over: Partial<CheckInput> = {}) => input(list, { today: MONDAY, restDay: 1, dailyTimeBudget: budgets, ...over });
+
+  it('vrijdag is te vol en zaterdag is de enige vrije dag', () => {
+    expect(validateWeeks(at(), new Set([MONDAY])).some((f) => f.rule === 'DAY-FULL' && f.subjectId === 'boven-b')).toBe(true);
+  });
+
+  it('de planningsronde zet Bovenlichaam B niet op de laatste vrije dag', () => {
+    const r = repairWeeks(at());
+    const moved = r.sessions.find((s) => s.id === 'boven-b')!;
+    expect(moved.scheduledDate).not.toBe(addDays(MONDAY, 5));
+    // Wat van jou is blijft staan.
+    for (const id of ['heuvel', 'kort', 'boven-a', 'rustig', 'benen']) expect(r.sessions.find((s) => s.id === id)).toEqual(list.find((s) => s.id === id));
+  });
+
+  it('een vakantiedag met twee trainingen: de eerste mag naar de laatste vrije dag, want de vakantiedag wordt vrij', () => {
+    // Woensdag is een vakantiedag met twee trainingen van het systeem. Zaterdag is de enige andere vrije dag.
+    // Zolang de tweede er nog staat, telt woensdag niet als vrij; de uitzondering voor een vakantie houdt de
+    // verhuizing naar zaterdag toch mogelijk, zoals voor deze wijziging.
+    const leave = [{ id: 'v', kind: 'no_training' as const, startDate: addDays(MONDAY, 2), endDate: addDays(MONDAY, 2) }];
+    const trip: PlannedSession[] = [
+      row('heuvel', 'tpl_hills_descent', 0, { status: 'moved', lock: userLock }),
+      row('kort', 'tpl_easy_run', 1, { status: 'moved', lock: userLock }),
+      row('boven-a', 'tpl_upper_a', 2),
+      row('boven-b', 'tpl_upper_b', 2, { order: 9 }),
+      row('rustig', 'tpl_easy_run', 3, { status: 'moved', lock: userLock }),
+      row('benen', 'tpl_lower_a', 4, { status: 'moved', lock: userLock }),
+      row('lang', 'tpl_long_run', 6),
+    ];
+    const r = repairWeeks(input(trip, { today: MONDAY, restDay: 1, leave }));
+    const off = r.repairs.filter((x) => x.rule === 'LEAVE-OFF');
+    expect(off.map((x) => x.sessionId).sort()).toEqual(['boven-a', 'boven-b']);
+    // Zoals voor deze wijziging: de eerste (Bovenlichaam A) gaat naar zaterdag, de tweede past nergens meer en vervalt.
+    expect(off.find((x) => x.sessionId === 'boven-a')).toMatchObject({ to: addDays(MONDAY, 5) });
+    expect(off.find((x) => x.sessionId === 'boven-b')).toMatchObject({ removed: true });
+    // Wat van jou is blijft staan.
+    for (const id of ['heuvel', 'kort', 'rustig', 'benen']) expect(r.sessions.find((s) => s.id === id)).toEqual(trip.find((s) => s.id === id));
+  });
+
+  it('met een vrije rustdag mag zaterdag gewoon', () => {
+    const free = at({ sessions: list.filter((s) => s.id !== 'heuvel') });
+    const r = repairWeeks(free);
+    expect(r.repairs.find((x) => x.sessionId === 'boven-b')?.to).toBe(addDays(MONDAY, 5));
+  });
+});

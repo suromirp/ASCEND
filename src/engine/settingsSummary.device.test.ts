@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rowSummary, type SettingsFacts } from './settingsSummary';
+import { groupSummary, rowSummary, type SettingsFacts } from './settingsSummary';
 
 // Nagemaakte feiten; alleen wat deze rijen lezen telt.
 function facts(over: Partial<SettingsFacts> = {}): SettingsFacts {
@@ -64,5 +64,48 @@ describe('de rijen van de app-meldingen', () => {
   it('de bundel zegt hoeveel er aan staan', () => {
     expect(rowSummary('bundel-meldingen', facts({ device: app }))).toMatchObject({ value: '2 van 3 aan' });
     expect(rowSummary('bundel-meldingen', facts({ device: browser }))).toMatchObject({ value: 'Uit', dim: true });
+  });
+});
+
+describe('Rijen die op een bron wachten', () => {
+  it('zeggen Bezig… zolang hun bron niet binnen is, zonder regel, en alleen die rijen', () => {
+    const f = facts({ pending: ['snapshots'] });
+    expect(rowSummary('momentopnamen', f)).toEqual({ value: 'Bezig…', dim: true });
+    expect(groupSummary('gegevens', f)).toEqual({ value: 'Bezig…', sub: '', dim: true });
+    expect(rowSummary('opslag', f)).toMatchObject({ value: 'Ja' });
+    expect(rowSummary('momentopnamen', facts({ pending: [] }))).toMatchObject({ value: '0' });
+  });
+  it('de bundel meldingen wacht op de telefoon', () => {
+    expect(rowSummary('bundel-meldingen', facts({ pending: ['device'] }))).toMatchObject({ value: 'Bezig…' });
+  });
+});
+
+describe('Rijen waarvan de bron te traag was of faalde', () => {
+  it('kopieën: Onbekend, nooit 0 of "Alles staat alleen op deze telefoon"', () => {
+    const f = facts({ unknown: ['snapshots'] });
+    expect(rowSummary('momentopnamen', f)).toEqual({ value: 'Onbekend', dim: true });
+    expect(groupSummary('gegevens', f)).toEqual({ value: 'Onbekend', sub: '', dim: true });
+  });
+  it('MacroFactor: geen "Niet gekoppeld" bij een time-out', () => {
+    const f = facts({ unknown: ['macroFactor'] });
+    expect(groupSummary('koppelingen', f)).toEqual({ value: 'Onbekend', sub: '', dim: true });
+  });
+  it('opslag en Health Connect: Onbekend', () => {
+    expect(rowSummary('opslag', facts({ unknown: ['storage'], storage: undefined }))).toEqual({ value: 'Onbekend', dim: true });
+    expect(rowSummary('health-connect', facts({ unknown: ['healthConnect'] }))).toEqual({ value: 'Onbekend', dim: true });
+  });
+});
+
+describe('Rijen die van een nog onbekende bron afhangen blijven zichtbaar', () => {
+  it('Garmin-rij is er met Bezig… zolang het horloge nog niet gelezen is, daarna verdwijnt hij als er geen koppeling is', () => {
+    expect(rowSummary('slaap', facts({ pending: ['watch'] }))).toEqual({ value: 'Bezig…', dim: true, hidden: false });
+    expect(rowSummary('slaap', facts({ unknown: ['watch'] }))).toEqual({ value: 'Onbekend', dim: true, hidden: false });
+    expect(rowSummary('slaap', facts({ pending: [], unknown: [] })).hidden).toBe(true);
+  });
+  it('de rij van een bron die al bekend is blijft verborgen', () => {
+    expect(rowSummary('slaap', facts({ pending: ['snapshots'] })).hidden).toBe(true);
+  });
+  it('Toestemmingen wacht ook op Opslag', () => {
+    expect(rowSummary('toestemmingen', facts({ pending: ['storage'] }))).toMatchObject({ value: 'Bezig…' });
   });
 });

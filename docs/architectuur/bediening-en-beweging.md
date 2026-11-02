@@ -62,6 +62,11 @@ app reopens where you were after `AppSettings.resumeMinutes` (`utils/launchRoute
   gevulde mint knop blijft het ene accent van het scherm. De waarde en de regel van een rij komen uit
   `engine/settingsSummary.ts` (pure functies met tests), zodat de rij, het
   zoekresultaat en het overzicht hetzelfde zeggen.
+  De feiten laden per bron (`settingsFactsParts.ts`, `utils/loadParts.ts`): elke bron heeft een
+  eigen grens van 2 tot 4 seconden en een terugval, en een trage bron houdt een andere rij nooit
+  tegen. De eerste keer zegt een rij die nog op haar bron wacht "Bezig" (`engine/settingsPending.ts`,
+  `pending` in de feiten); een nieuwe bron krijgt een regel in `settingsParts` en in die tabel.
+  Een wijziging van het horloge, MacroFactor, de back-up of Health Connect leest alleen haar eigen bron.
 
 Vloeiende overgangen (`docs/beslissingen/2026-10-28-vloeiende-overgangen.md`, ontwerp
 `docs/visie/Vloeiende overgangen.md`): de tik van `utils/haptics.ts` (`TAP_MS`, 15 ms) heeft een

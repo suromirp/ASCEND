@@ -10,7 +10,7 @@ import { writeWidgetSummary } from './widgetBridge';
 
 describe('widgetBridge op het web', () => {
   it('doet niets en geeft geen fout', () => {
-    expect(() => writeWidgetSummary({ date: '2026-11-04', title: 'Rustdag' })).not.toThrow();
+    expect(() => writeWidgetSummary({ date: '2026-11-04', title: 'Rustdag', kind: 'rest' })).not.toThrow();
     expect(registerPlugin).not.toHaveBeenCalled();
   });
 });

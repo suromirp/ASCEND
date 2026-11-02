@@ -144,3 +144,6 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Review week eigenaar, Warden, opus, groen met 5 punten
 - 2026-11-02, Widget beter, Sherpa, sonnet, 79k, 25 min, review loopt
 - 2026-11-02, Exports opruimen (646 naar 57), Sherpa, sonnet, review loopt
+- 2026-11-02, Herkeuringen week eigenaar en instellingen, Warden, opus en sonnet, groen
+- 2026-11-02, Widget herstel laag, Sherpa, sonnet, hervat, 1
+- 2026-11-02, Week eigenaar, instellingen snel, widget beter, exports opruimen: live

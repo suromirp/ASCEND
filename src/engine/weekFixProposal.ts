@@ -23,6 +23,7 @@ import { makeId } from '../utils/id';
 import type { Advice, AdviceOption } from './adviceEngine';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { hasRole, isTestOrRace, templateRoles } from './templateRoles';
+import { templateSport } from './sports';
 import { dayName, weekConcerns, type WeekConcern } from './weekConcerns';
 import { findingKey, lockLevel, repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 
@@ -151,7 +152,8 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
   let lastResort: Change[] | null = null;
   // Another session of the same week, not skipped, with the same task: the same template, or a role that says
   // what the session is for (a long run, a hard run). A shared trait such as an easy pace is not enough.
-  const sameRoleElsewhere = (s: PlannedSession): PlannedSession | undefined => {
+  // `also`: an extra condition on the one that stays.
+  const sameRoleElsewhere = (s: PlannedSession, also: (o: PlannedSession, ot: SessionTemplate) => boolean = () => true): PlannedSession | undefined => {
     const t = templateOf(s);
     if (!t || isTestOrRace(t)) return undefined;
     const roles = templateRoles(t).filter((r) => TASK_ROLES.includes(r));
@@ -160,7 +162,7 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       .filter((o) => o.id !== s.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === monday && (o.scheduledDate >= input.today || input.logs.some((l) => l.plannedSessionId === o.id)))
       .filter((o) => {
         const ot = templateOf(o);
-        return !!ot && !isTestOrRace(ot) && (ot.id === t.id || roles.some((r) => hasRole(ot, r)));
+        return !!ot && !isTestOrRace(ot) && (ot.id === t.id || roles.some((r) => hasRole(ot, r))) && also(o, ot);
       })
       .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
   };
@@ -197,6 +199,20 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       for (const s of mine) push(viaScan(s.id));
       // A full week: one of the two moves to a day a training of the system's makes room on.
       if (candidates.length === 0) for (const s of mine) push(viaRoom(s.id));
+      // The last choice, only when moving gives nothing: one of yours goes when the week keeps another session with the
+      // same task and the same sport that is at least as long, such as a short long run that an earlier change brought
+      // in next to the week's own. Never a tocht, a hike, a session of a holiday or the race block
+      // (docs/beslissingen/2026-11-02-tweede-lange-duurloop.md).
+      if (candidates.length === 0) for (const s of ordered.filter((x) => level(x) === 1)) {
+        const t = templateOf(s);
+        // By sport, not by type: the long run is stored with type hiking and sport running.
+        const sport = t && templateSport(t);
+        if (!t || !sport || s.leave || s.raceBlock || sport === 'hiking' || t.type === 'adventure') continue;
+        const twin = sameRoleElsewhere(s, (o, ot) => templateSport(ot) === sport && minutesOf(o) >= minutesOf(s));
+        if (!twin) continue;
+        const removal: Change[] = [{ id: s.id, from: s.scheduledDate, removed: true, keeps: twin.id }];
+        if (improves(removal)) { lastResort = removal; break; }
+      }
       break;
     }
     case 'ONE-LONG': {
@@ -248,7 +264,7 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       const free = freeNow(c.from) ? ` ${capital(weekdayLongNL(c.from))} is dan vrij.` : '';
       const kept = c.keeps ? sessionById(c.keeps) : undefined;
       const keep = kept ? ` Je houdt de ${lower(nameOf(kept.id))} op ${dayName(kept.scheduledDate)}.` : '';
-      if (c.removed) parts.push(`Laat ${nameOf(c.id)} op ${dayName(c.from)} gaan.${freeNow(c.from) ? ` Dan heb je ${weekdayLongNL(c.from)} vrij.` : ''}${keep}`);
+      if (c.removed) parts.push(`Laat de ${lower(nameOf(c.id))} op ${dayName(c.from)} gaan.${freeNow(c.from) ? ` Dan heb je ${weekdayLongNL(c.from)} vrij.` : ''}${keep}`);
       else if (c.to && c.to !== c.from) parts.push(`${nameOf(c.id)} gaat van ${dayName(c.from)} naar ${dayName(c.to)}.${free}`);
       else parts.push(`${nameOf(c.id)} op ${dayName(c.from)} wordt de korte versie, ${c.minutes} minuten.`);
     }
