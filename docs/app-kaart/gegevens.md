@@ -25,7 +25,7 @@ Toestemmingen
 2 staan uit
 Ruimte op dit toestel
 [knop: Uitleg: Ruimte op dit toestel]
-Van de <ruimte> die de browser geeft
+Van de <ruimte> die ASCEND mag gebruiken
 <gebruikt>
 [knop: Kopieën van voor een import, 0]
 Kopieën van voor een import

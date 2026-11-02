@@ -9,18 +9,20 @@
 import { useEffect, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { backupFailedLines, bootStepLine, bootStuckLines, bootWatchStage, type StorageProbe } from '../engine/bootWatch';
+import { backupOutcomeText } from '../engine/manualBackup';
 import { probeStorage } from '../storage/storageProbe';
 import { withTimeout } from '../utils/withTimeout';
 import { AscendSplashLogo } from './AscendSplashLogo';
 import { PrimaryButton, SecondaryButton } from './ui';
 
-const BACKUP_LIMIT_MS = 12_000;
+const BACKUP_LIMIT_MS = 25_000;
 
 export function BootScreen({ splash }: { splash: boolean }) {
   const { bootStep, bootMigration, exportData } = useAppData();
   const [started] = useState(() => Date.now());
   const [now, setNow] = useState(() => Date.now());
   const [backup, setBackup] = useState<'idle' | 'busy' | 'done' | 'failed'>('idle');
+  const [backupText, setBackupText] = useState<string | null>(null);
   const [backupProbe, setBackupProbe] = useState<StorageProbe | null>(null);
   const [probe, setProbe] = useState<StorageProbe | null>(null);
   useEffect(() => {
@@ -50,6 +52,7 @@ export function BootScreen({ splash }: { splash: boolean }) {
 
   async function makeBackup() {
     setBackup('busy');
+    setBackupText(null);
     setBackupProbe(null);
     // First the short test: when the storage does not answer, a backup can not
     // be made either, and the user hears that within seconds.
@@ -62,7 +65,8 @@ export function BootScreen({ splash }: { splash: boolean }) {
     }
     try {
       const result = await withTimeout(exportData(), BACKUP_LIMIT_MS, 'Back-up');
-      setBackup(result ? 'done' : 'failed');
+      setBackupText(backupOutcomeText(result));
+      setBackup(result.status === 'failed' ? 'failed' : result.status === 'cancelled' ? 'idle' : 'done');
     } catch {
       setBackupProbe(await probeStorage());
       setBackup('failed');
@@ -87,10 +91,10 @@ export function BootScreen({ splash }: { splash: boolean }) {
           <SecondaryButton onClick={() => void makeBackup()} disabled={backup === 'busy'}>
             {backup === 'busy' ? 'Back-up wordt gemaakt…' : 'Back-up maken'}
           </SecondaryButton>
-          {backup === 'done' && <p className="text-xs" role="status" style={{ color: 'var(--color-success-text)' }}>De back-up is gemaakt. Bewaar het bestand op een veilige plek.</p>}
+          {backup === 'done' && <p className="text-xs" role="status" style={{ color: 'var(--color-success-text)' }}>{backupText ?? 'De back-up is gemaakt.'}</p>}
           {backup === 'failed' && (
             <div role="status" className="flex flex-col gap-1">
-              {backupFailedLines(backupProbe, probe === 'silent').map((line) => (
+              {(backupText && backupProbe !== 'silent' ? [backupText] : backupFailedLines(backupProbe, probe === 'silent')).map((line) => (
                 <p key={line} className="text-xs" style={{ color: 'var(--color-warning)' }}>
                   {line}
                 </p>

@@ -58,6 +58,7 @@ import { withCountingSports } from '../engine/sportTemplate';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
+import { runManualBackup } from '../storage/manualBackup';
 import { AppDataContext } from './useAppData';
 import type { AdviceResponse, AppData } from './appDataTypes';
 import { bootMigrationListeners, currentBootMigration, useBoot } from './boot';
@@ -343,20 +344,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     deleteCapabilityEvidence,
     proposeNoTimeToday: proposeNoTimeTodayAction,
     applyNoTimeToday,
-    exportData: async () => {
-      // Oude, besliste voorstellen eerst samenvatten (engine/proposalTidy.ts). Lukt dat niet, dan
-      // gaat de back-up gewoon door.
-      await tidyOldProposals().catch(() => 0);
-      const envelope = await buildBackupEnvelope();
-      const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
-      const result = await webBackupFileAdapter.saveBackup(blob, backupFileName(envelope.createdAt));
-      if (!result.success) return null;
-      const at = new Date().toISOString();
-      await updateSettings({ lastExportedAt: at });
-      // Wanneer en waar, voor Laatste back-up; een mislukte automatische back-up is daarmee opgelost.
-      await noteBackupMade(result.folder ? { kind: 'folder', label: result.folder } : result.viaDownload ? { kind: 'download' } : { kind: 'file' }, at).catch(() => undefined);
-      return result.viaDownload ? 'downloaded' : 'saved';
-    },
+    exportData: () =>
+      runManualBackup({
+        adapter: webBackupFileAdapter,
+        prepare: async () => {
+          // Oude, besliste voorstellen eerst samenvatten (engine/proposalTidy.ts). Lukt dat niet, dan
+          // gaat de back-up gewoon door.
+          await tidyOldProposals().catch(() => 0);
+          const envelope = await buildBackupEnvelope();
+          return { text: JSON.stringify(envelope, null, 2), fileName: backupFileName(envelope.createdAt) };
+        },
+        // Pas na een gelukte schrijfactie. Wanneer en waar, voor Laatste back-up; een mislukte
+        // automatische back-up is daarmee opgelost.
+        markMade: async (at, where) => {
+          await updateSettings({ lastExportedAt: at });
+          await noteBackupMade(where, at).catch(() => undefined);
+        },
+      }),
     resetDemoData: async () => {
       // The coming trainings leave the intervals.icu agenda first (storage/watchWorkouts.ts).
       await resetAllDataAndAgenda();

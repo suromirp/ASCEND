@@ -152,7 +152,9 @@ export interface SettingsFacts {
   // De automatische back-up op dit toestel: in de app of de browser, waar de laatste staat, de naam
   // van de map waar hij stil naartoe kan (in de browser alleen als de vaste map gekozen is) en de
   // reden als de laatste poging mislukte. Weglaten zolang dat nog niet is gelezen.
-  autoBackup?: { platform: 'app' | 'browser'; where?: BackupWhere; folder?: string; failure?: AutoBackupFailureReason };
+  autoBackup?: { platform: 'app' | 'browser'; where?: BackupWhere; folder?: string; failure?: AutoBackupFailureReason;
+    // Alleen in de app: of ASCEND in de map mag schrijven, en wanneer de laatste automatische back-up lukte.
+    access?: 'ready' | 'needs-tap' | 'denied'; lastAutoAt?: string };
   storage: 'protected' | 'not_protected' | 'unsupported' | undefined;
   // De ruimte die de volledige reeksen van loopjes en tochten innemen (bytes); weglaten zolang
   // dat nog niet is geteld.

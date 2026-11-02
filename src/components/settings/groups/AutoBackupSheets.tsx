@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveAutoBackup, resolveAutoBackupKeep } from '../../../engine/autoBackup';
 import type { SettingsFacts } from '../../../engine/settingsSummary';
-import { appBackupFolder } from '../../../integrations/backupFolder';
+import { lastAutoBackupLine } from '../../../engine/manualBackup';
+import { APP_BACKUP_LABEL, appBackupFolder } from '../../../integrations/backupFolder';
 import { clearAutoBackupFailure } from '../../../storage/autoBackup';
 import { useAppData } from '../../../state/AppDataContext';
 import { withTimeout } from '../../../utils/withTimeout';
@@ -21,7 +22,7 @@ export function AutoBackupSheet({ facts, onClose }: { facts: SettingsFacts; onCl
   const app = facts.autoBackup?.platform === 'app';
   const folder = facts.autoBackup?.folder;
   const how = app
-    ? `In de app maakt ASCEND het bestand zelf in ${folder ?? 'Documenten/ASCEND'}, de eerste keer dat je hem opent na het moment.`
+    ? `In de app maakt ASCEND het bestand zelf in ${folder ?? APP_BACKUP_LABEL}, de eerste keer dat je hem opent na het moment.`
     : folder
       ? `Je browser schrijft het stil in ${folder} als hij die map zonder vragen vrijgeeft. Anders staat er op het moment een kaart op Vandaag.`
       : 'Een browser mag niet zelf een bestand opslaan. Op het moment staat er een kaart op Vandaag met Back-up maken.';
@@ -56,12 +57,15 @@ export function AutoBackupSheet({ facts, onClose }: { facts: SettingsFacts; onCl
   );
 }
 
-// Vaste map in de app: altijd Documenten/ASCEND. Op Android 10 en ouder is er toestemming nodig om
-// daar te schrijven; die vraagt ASCEND alleen na een tik op deze knop.
+// Vaste map in de app: altijd Interne opslag > Documents > ASCEND. Vanaf Android 11 mag ASCEND daar zonder toestemming
+// schrijven en is er niets in te stellen; alleen op Android 10 en ouder (access is niet 'ready') staat
+// er een knop, die de toestemming vraagt.
 export function AppFolderSheet({ facts, onChanged, onClose }: { facts: SettingsFacts; onChanged: () => void; onClose: () => void }) {
   const [busy, setBusy] = useState(false);
+  const [granted, setGranted] = useState(false);
   const [note, setNote] = useState<{ text: string; warn: boolean } | null>(null);
-  const label = facts.autoBackup?.folder ?? 'Documenten/ASCEND';
+  const label = facts.autoBackup?.folder ?? APP_BACKUP_LABEL;
+  const needsTap = facts.autoBackup?.access !== undefined && facts.autoBackup.access !== 'ready' && !granted;
   async function check() {
     const folder = appBackupFolder();
     if (!folder) return;
@@ -69,6 +73,7 @@ export function AppFolderSheet({ facts, onChanged, onClose }: { facts: SettingsF
     try {
       const ok = await withTimeout(folder.requestAccess(), 15_000).catch(() => false);
       if (ok) await clearAutoBackupFailure();
+      setGranted(ok);
       setNote(ok
         ? { text: 'ASCEND mag in de map schrijven. De volgende back-up komt er vanzelf in.', warn: false }
         : { text: 'Geen toegang. Geef ASCEND toegang tot bestanden in de instellingen van je telefoon, of maak de back-up zelf.', warn: true });
@@ -80,15 +85,18 @@ export function AppFolderSheet({ facts, onChanged, onClose }: { facts: SettingsF
   return (
     <Sheet eyebrow="Gegevens en back-up" title="Vaste map" line={`De automatische back-up gaat naar ${label} op je telefoon.`} onClose={onClose}>
       <p className="st-hint" style={{ marginLeft: 0, marginTop: 0 }}>
-        Die map zie je in je bestandsbeheerder. Wil je hem ook in Google Drive, laat dan een app die mappen kopieert deze map meenemen.
+        {needsTap ? 'Op deze telefoon heeft ASCEND eerst toestemming nodig om in die map te schrijven.' : 'In de app is de map vast; je hoeft niets te doen.'}
+        {' '}Die map zie je in je bestandsbeheerder. Wil je hem ook in Google Drive, laat dan een app die mappen kopieert deze map meenemen.
       </p>
-      <div className="st-btns">
-        <button type="button" className="st-btn" disabled={busy} onClick={() => void check()}>
-          {busy ? 'Even kijken…' : 'Toegang geven'}
-        </button>
-      </div>
+      <p className="st-hint" style={{ marginLeft: 0 }}>{lastAutoBackupLine(facts.autoBackup?.lastAutoAt, label)}</p>
+      {needsTap && (
+        <div className="st-btns">
+          <button type="button" className="st-btn" disabled={busy} onClick={() => void check()}>
+            {busy ? 'Even kijken…' : 'Toegang geven'}
+          </button>
+        </div>
+      )}
       {note && <p className={`st-hint${note.warn ? ' warn' : ''}`} style={{ marginLeft: 0 }} role="status">{note.text}</p>}
     </Sheet>
   );
 }
-

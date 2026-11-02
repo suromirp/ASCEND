@@ -37,6 +37,7 @@ import type { SweatEntry } from '../models/sweat';
 import type { NoteTarget } from '../engine/influence';
 import type { WeekNotice } from '../engine/weekFixProposal';
 import type { StoredResponse } from '../engine/learning';
+import type { BackupOutcome } from '../engine/manualBackup';
 
 export type AdviceResponse = StoredResponse;
 
@@ -245,9 +246,10 @@ export interface AppData {
   deleteCapabilityEvidence: (id: string) => Promise<void>;
   proposeNoTimeToday: () => ScheduleProposal[];
   applyNoTimeToday: (proposals: ScheduleProposal[]) => Promise<void>;
-  // 'saved': written to a file the user picked; 'downloaded': handed to
-  // the browser's download (can't be confirmed); null: cancelled.
-  exportData: () => Promise<'saved' | 'downloaded' | null>;
+  // 'saved': in een bestand geschreven; 'downloaded': aan de download van de browser gegeven
+  // (niet te bevestigen); 'cancelled': afgebroken; 'failed': met de reden in gewone woorden.
+  // Altijd een uitkomst die de aanroeper laat zien; gooit niet.
+  exportData: () => Promise<BackupOutcome>;
   resetDemoData: () => Promise<void>;
   // Settings' SCHEMA OPNIEUW LADEN — regenerates the future weekly schedule
   // back to the standard rotation. Deliberately NOT resetDemoData: this

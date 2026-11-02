@@ -2,7 +2,7 @@
 // (docs/beslissingen/2026-11-02-automatische-backup.md, naast docs/beslissingen/2026-11-01-android-app.md).
 //
 // In de app schrijft ASCEND het back-upbestand zelf, met de officiële plugin Filesystem van Capacitor,
-// in de openbare map Documenten op de telefoon, onder ASCEND. Die map zie je in elke bestandsbeheerder
+// in de openbare map Documents op de telefoon, onder ASCEND. Die map zie je in elke bestandsbeheerder
 // en een app die mappen naar de cloud kopieert kan hem meenemen. De laag vraagt nooit zelf om
 // toestemming: dat gebeurt alleen na een tik op "Toegang geven" bij Vaste map (Android 10 en ouder;
 // vanaf Android 11 is er geen toestemming nodig voor bestanden die ASCEND zelf maakt). Er gaat niets
@@ -13,7 +13,8 @@ import { Capacitor } from '@capacitor/core';
 import { AutoBackupError, NameTakenError, type BackupWhere } from '../engine/autoBackup';
 
 export const APP_BACKUP_DIR = 'ASCEND';
-export const APP_BACKUP_LABEL = 'Documenten/ASCEND';
+// Zoals de bestandsbeheerder het toont (Samsung: Mijn bestanden, Interne opslag, Documents, ASCEND).
+export const APP_BACKUP_LABEL = 'Interne opslag > Documents > ASCEND';
 
 export type FolderAccess = 'ready' | 'needs-tap' | 'denied';
 

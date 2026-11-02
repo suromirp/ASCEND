@@ -49,6 +49,8 @@ export interface AutoBackupState {
   // De laatste back-up op dit toestel, met de hand of vanzelf, en waar hij staat.
   lastAt?: string;
   where?: BackupWhere;
+  // Het moment van de laatste gelukte automatische back-up (niet die met de hand).
+  autoAt?: string;
   failure?: AutoBackupFailure;
   // De bestanden die de automatische back-up schreef, en in welke map (het label van `where`).
   files: string[];
@@ -71,6 +73,7 @@ function cleanAutoBackupState(raw: unknown): AutoBackupState {
   const failure = r.failure as Record<string, unknown> | undefined;
   return {
     ...(typeof r.lastAt === 'string' ? { lastAt: r.lastAt } : {}),
+    ...(typeof r.autoAt === 'string' ? { autoAt: r.autoAt } : {}),
     ...(isWhere(r.where) ? { where: r.where } : {}),
     ...(failure && typeof failure.at === 'string' && isFailureReason(failure.reason) ? { failure: { at: failure.at, reason: failure.reason } } : {}),
     files: Array.isArray(r.files) ? r.files.filter((f): f is string => typeof f === 'string' && isAutoBackupName(f)) : [],
@@ -287,7 +290,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     }
   }
   try {
-    await writeState({ lastAt: at, where, files, ...(label ? { filesIn: label } : {}), ...(by !== undefined ? { filesBy: by } : {}) });
+    await writeState({ lastAt: at, autoAt: at, where, files, ...(label ? { filesIn: label } : {}), ...(by !== undefined ? { filesBy: by } : {}) });
   } catch (err) {
     console.warn('Automatische back-up gemaakt, maar niet bijgehouden', err);
   }
