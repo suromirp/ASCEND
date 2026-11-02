@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rowSummary, type SettingsFacts } from './settingsSummary';
+import { groupSummary, rowSummary, type SettingsFacts } from './settingsSummary';
 
 // Nagemaakte feiten; alleen wat deze rijen lezen telt.
 function facts(over: Partial<SettingsFacts> = {}): SettingsFacts {
@@ -64,5 +64,15 @@ describe('de rijen van de app-meldingen', () => {
   it('de bundel zegt hoeveel er aan staan', () => {
     expect(rowSummary('bundel-meldingen', facts({ device: app }))).toMatchObject({ value: '2 van 3 aan' });
     expect(rowSummary('bundel-meldingen', facts({ device: browser }))).toMatchObject({ value: 'Uit', dim: true });
+  });
+});
+
+describe('Rijen die op een bron wachten', () => {
+  it('zeggen Bezig zolang hun bron niet binnen is, en alleen die rijen', () => {
+    const f = facts({ pending: ['snapshots'] });
+    expect(rowSummary('momentopnamen', f)).toMatchObject({ value: 'Bezig', dim: true });
+    expect(groupSummary('gegevens', f)).toMatchObject({ value: 'Bezig' });
+    expect(rowSummary('opslag', f)).toMatchObject({ value: 'Ja' });
+    expect(rowSummary('momentopnamen', facts({ pending: [] }))).toMatchObject({ value: '0' });
   });
 });

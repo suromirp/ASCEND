@@ -64,6 +64,7 @@ import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
 import { resolveSportCounting } from './sportRole';
 import { sportsRowSummary } from './sportsScreen';
+import { isRowPending, type SettingsSource } from './settingsPending';
 import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
@@ -177,6 +178,8 @@ export interface SettingsFacts {
   watchUnreadable?: boolean;
   // Health Connect op dit toestel; weglaten zolang dat nog niet gelezen is.
   healthConnect?: HealthConnectFacts;
+  // Bronnen die de eerste keer nog niet binnen zijn: hun rijen zeggen "Bezig" (engine/settingsPending.ts).
+  pending?: readonly SettingsSource[];
 }
 
 export interface HealthConnectFacts {
@@ -342,9 +345,12 @@ export function rowContext(f: SettingsFacts): RowContext {
 // De samenvatting van een rij. Of de rij er nu hoort (`hidden`) komt uit SHOW_WHEN in
 // data/settingsLayout.ts, zodat de afhankelijkheden op één plek staan.
 export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
-  const base = baseSummary(rowId, f);
+  const base = isRowPending(rowId, f.pending) ? busySummary(baseSummary(rowId, f)) : baseSummary(rowId, f);
   return SHOW_WHEN[rowId] ? { ...base, hidden: !isRowShown(rowId, f.settings, rowContext(f)) } : base;
 }
+
+// Een rij die op een bron wacht: de waarde is "Bezig", de rest blijft.
+const busySummary = (base: RowSummary): RowSummary => ({ ...base, value: 'Bezig', dim: true, dot: undefined, checked: undefined });
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
@@ -973,7 +979,14 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
 
 // ---- de groepen op het overzicht -------------------------------------------------
 
-export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: string; sub: string; dim?: boolean; dot?: 'ok' | 'no' } {
+type GroupSummary = { value?: string; sub: string; dim?: boolean; dot?: 'ok' | 'no' };
+
+export function groupSummary(page: SettingsPageId, f: SettingsFacts): GroupSummary {
+  const group = groupSummaryNow(page, f);
+  return isRowPending(page, f.pending) ? { value: 'Bezig', sub: group.sub, dim: true } : group;
+}
+
+function groupSummaryNow(page: SettingsPageId, f: SettingsFacts): GroupSummary {
   const s = f.settings;
   switch (page) {
     case 'planning': {

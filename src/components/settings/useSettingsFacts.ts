@@ -1,6 +1,6 @@
+import { webBackupFileAdapter } from '../../storage/backupFileAdapter';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
-import { ActivityStreamsRepo } from '../../storage/database';
 import { isOpenOn, isSoreness } from '../../engine/injuryKind';
 import { effectiveAmbition } from '../../engine/ambition';
 import { hasBodyFat } from '../../engine/bodyFat';
@@ -16,117 +16,45 @@ import { checkDataKey, quietCheck } from '../../engine/strengthHistory';
 import { easedLogIds } from '../../engine/legDayEase';
 import { checkModelKey, resolveStrengthSettings, type StrengthSettings } from '../../engine/strengthSettings';
 import { DEFAULT_WATCH_USE } from '../../engine/watchUse';
-import type { IntervalsHrBasis } from '../../engine/watchHeartRate';
-import type { HealthConnectFacts, SettingsFacts } from '../../engine/settingsSummary';
-import { getHealthConnectState, onHealthConnectChange } from '../../storage/healthConnect';
-import { healthConnectPort } from '../../integrations/healthConnect';
-import { getConnection, getWatchState, onWatchChange, type WatchActivityState } from '../../storage/externalActivities';
-import { getWatchWorkoutState } from '../../storage/watchWorkouts';
-import { getMacroFactorState, onMacroFactorChange, type MacroFactorState } from '../../storage/macrofactor';
-import { getPersistenceStatus, type PersistenceStatus } from '../../storage/persistence';
-import { estimateStorage } from '../../storage/storageEstimate';
-import type { StorageEstimate } from '../../engine/storageUse';
-import { listSnapshots } from '../../storage/backup';
-import { webBackupFileAdapter, webFolderTarget } from '../../storage/backupFileAdapter';
-import { autoBackupTarget, readAutoBackupState, subscribeAutoBackup } from '../../storage/autoBackup';
+import type { SettingsFacts } from '../../engine/settingsSummary';
+import { onHealthConnectChange } from '../../storage/healthConnect';
+import { onWatchChange } from '../../storage/externalActivities';
+import { onMacroFactorChange } from '../../storage/macrofactor';
+import { subscribeAutoBackup } from '../../storage/autoBackup';
 import { buildLabel } from '../../utils/buildLabel';
-import { noticeSupport } from '../../engine/morningNotice';
-import { readNoticeEnvironment } from '../../utils/morningNotice';
-import { nativeNoticeSupport, type DevicePermissions } from '../../engine/deviceNotices';
-import { notificationPort } from '../../integrations/notifications';
 import { liveUpdatePort } from '../../integrations/liveUpdate';
-import { withTimeout } from '../../utils/withTimeout';
+import { loadParts } from '../../utils/loadParts';
+import { ALL_SOURCES, EMPTY, settingsParts, type Loaded } from './settingsFactsParts';
+import type { SettingsSource } from '../../engine/settingsPending';
 import { resolveProgramWeek, todayISO } from '../../utils/dates';
 import { mainGoal as findMainGoal } from '../../engine/mainGoal';
 import { listedGoals } from '../../engine/goalList';
 
-// Alles wat de instellingen over je weten, als de feiten die engine/settingsSummary.ts
-// leest. De opslag die niet in de app-staat zit (horloge, MacroFactor, back-up) wordt
-// hier ingelezen en volgt wijzigingen. Tot het binnen is, staat er niets "verbonden".
-interface Loaded {
-  linked: boolean;
-  watch: WatchActivityState | null;
-  sendEnabled: boolean;
-  hrBasis?: IntervalsHrBasis;
-  macroFactor: MacroFactorState | null;
-  storage: PersistenceStatus | undefined;
-  snapshots: number;
-  folderChosen: boolean;
-  streamsBytes?: number;
-  storageUse?: StorageEstimate;
-  notice: SettingsFacts['notice'];
-  device?: DevicePermissions | 'unknown';
-  // Het lezen van de koppelstatus mislukte.
-  watchUnreadable?: boolean;
-  autoBackup?: SettingsFacts['autoBackup'];
-  healthConnect?: HealthConnectFacts;
-}
-
-// Health Connect: of dit de app is, of het aan staat en wat de laatste ronde zei.
-async function readHealthConnectFacts(): Promise<HealthConnectFacts> {
-  const inApp = healthConnectPort().inApp;
-  const state = await getHealthConnectState();
-  return { inApp, enabled: inApp && state.enabled, ...(state.fetchedAt ? { fetchedAt: state.fetchedAt } : {}), ...(state.lastError ? { errorKind: state.lastError.kind } : {}) };
-}
-
-// De automatische back-up: in de app altijd de map van de app, in de browser alleen de vaste map.
-async function readAutoBackupFacts(folderChosen: boolean): Promise<SettingsFacts['autoBackup']> {
-  const target = autoBackupTarget();
-  const state = await readAutoBackupState();
-  const folderWhere = target.platform === 'app' ? await target.where() : folderChosen ? await webFolderTarget.where() : undefined;
-  return {
-    platform: target.platform,
-    ...(state.where ? { where: state.where } : {}),
-    ...(folderWhere?.kind === 'folder' ? { folder: folderWhere.label } : {}),
-    ...(state.failure ? { failure: state.failure.reason } : {}),
-  };
-}
-
-const EMPTY: Loaded = { linked: false, watch: null, sendEnabled: false, macroFactor: null, storage: undefined, snapshots: 0, folderChosen: false, notice: undefined };
-
 export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void } {
   const app = useAppData();
   const [loaded, setLoaded] = useState<Loaded>(EMPTY);
+  // De bronnen die de eerste keer nog niet binnen zijn; bij een volgende ronde blijft de oude waarde staan.
+  const [pending, setPending] = useState<readonly SettingsSource[]>(ALL_SOURCES);
   const [tick, setTick] = useState(0);
   const reload = () => setTick((n) => n + 1);
 
   useEffect(() => {
     let alive = true;
-    const load = async () => {
-      let unreadable = false;
-      const unread = () => {
-        unreadable = true;
-        return null;
-      };
-      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize, storageUse, device, healthConnect] = await Promise.all([
-        getConnection().catch(unread),
-        getWatchState().catch(unread),
-        getWatchWorkoutState().catch(() => null),
-        getMacroFactorState().catch(() => null),
-        getPersistenceStatus().catch(() => undefined),
-        listSnapshots().catch(() => []),
-        webBackupFileAdapter.supportsPreferredDirectory() ? (webBackupFileAdapter.hasPreferredDirectory?.() ?? Promise.resolve(false)).catch(() => false) : Promise.resolve(false),
-        readNoticeEnvironment().catch(() => undefined),
-        ActivityStreamsRepo.totalBytes().catch(() => undefined),
-        // Met een eigen tijdsgrens (storage/storageEstimate.ts): wacht nooit langer dan een paar seconden.
-        estimateStorage(),
-        // Wat de telefoon toestaat; hoogstens twee seconden, daarna "Onbekend".
-        withTimeout(notificationPort().permissions(), 2000).catch(() => 'unknown' as const),
-        readHealthConnectFacts().catch(() => undefined),
-      ]);
-      const autoBackup = await readAutoBackupFacts(!!folder).catch(() => undefined);
-      if (!alive) return;
-      setLoaded({ autoBackup, healthConnect, linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, storageUse, device, watchUnreadable: unreadable,
-        // In de app komt de ochtendvraag als melding op tijd; dan telt alleen of meldingen mogen.
-        notice: device !== 'unknown' && device.timed
-          ? { support: nativeNoticeSupport(device.notifications), granted: device.notifications === 'granted' }
-          : noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
-    };
+    const load = (only?: readonly SettingsSource[]) =>
+      loadParts(
+        settingsParts().filter((p) => !only || only.includes(p.key)),
+        (key, patch) => {
+          if (!alive) return;
+          setLoaded((prev) => ({ ...prev, ...patch }));
+          setPending((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : prev));
+        },
+      );
     void load();
-    const offWatch = onWatchChange(() => void load());
-    const offMf = onMacroFactorChange(() => void load());
-    const offBackup = subscribeAutoBackup(() => void load());
-    const offHealth = onHealthConnectChange(() => void load());
+    // Een wijziging vraagt alleen de bron die erbij hoort; de zware tellingen lopen niet mee.
+    const offWatch = onWatchChange(() => void load(['watch']));
+    const offMf = onMacroFactorChange(() => void load(['macroFactor']));
+    const offBackup = subscribeAutoBackup(() => void load(['autoBackup', 'snapshots']));
+    const offHealth = onHealthConnectChange(() => void load(['healthConnect']));
     return () => {
       alive = false;
       offHealth();
@@ -213,8 +141,9 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       liveUpdate: liveUpdatePort().available,
       watchUnreadable: loaded.watchUnreadable,
       healthConnect: loaded.healthConnect,
+      pending,
     };
-  }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, strengthCheck]);
+  }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, pending, strengthCheck]);
 
   return { facts, reload };
 }
