@@ -23,6 +23,15 @@ die alleen na een tik op "Toegang geven" bij Vaste map, nooit vanzelf. Er gaat n
 het bestand in die map. De laatste 8 bestanden blijven (instelbaar: 4, 8, 16 of alles); oudere ruimt
 ASCEND op, maar alleen bestanden die de automatische back-up zelf schreef en waarvan hij de naam
 bijhoudt, en alleen in de map waar hij ze schreef. Wat je er zelf in zet blijft altijd staan.
+Een bestand dat niet van de automatische back-up is wordt nooit overschreven: staat de naam van vandaag
+er al en is hij niet van ASCEND, dan krijgt de back-up een volgnummer (`ascend-JJJJ-MM-DD-2.ascend-backup.json`).
+ASCEND schrijft eerst (in de app naar een tijdelijk bestand dat daarna de echte naam krijgt), kijkt dan
+na of het bestand er heel staat (de grootte, en in de app ook een leesbare back-up) en ruimt pas daarna
+op. De lijst met eigen bestanden hoort bij één installatie: een id in de eigen map van de app, die niet
+meegaat in de back-up van Android. Komt de lijst via die back-up op een nieuwe telefoon, dan ruimt ASCEND
+daar niets mee op. De hele poging heeft een tijdsgrens van twee minuten. Op Android 10 en ouder, zolang
+de toestemming nog niet gevraagd is, staat er de kaart met Back-up maken in plaats van een amber regel.
+"Niet nu" op de kaart geldt alleen voor de kaart, niet voor de stille back-up in de app of de vaste map.
 `android/native-level.txt` gaat naar 2, want de plugin vraagt een nieuwe APK.
 
 In de browser mag een website niet zelf een bestand opslaan zonder tik. Op het moment staat er daarom
