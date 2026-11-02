@@ -5,6 +5,7 @@ import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import { SessionTemplatesRepo, PlannedSessionsRepo, TrainingGoalsRepo, PlanChangeProposalsRepo, MetaRepo, type AppSettings } from '../storage/database';
 import { withPackWeight } from '../engine/gr5Profile';
 import { undoSwap, SWAP_UNDO_STALE } from '../storage/weekSwap';
+import { undoWeekReplan, REPLAN_UNDO_STALE } from '../storage/weekReplan';
 import { unlinkLogsNow } from '../storage/missedTraining';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { describeChanges } from '../engine/changeImpact';
@@ -139,6 +140,22 @@ export function usePlanChangeActions(deps: {
         return;
       }
       // Alleen het logboek van het ongedaan maken; de rijen staan al terug.
+      await undoPlanChangeNow({ ...recentChange, before: [], addedIds: [] });
+      setRecentChange(null);
+      bumpPlanRevision();
+      await refresh();
+      return;
+    }
+    // Week opnieuw plannen gaat alleen terug als de week nog is wat het schreef (storage/weekReplan.ts#undoWeekReplan).
+    if (recentChange.replan) {
+      try {
+        await undoWeekReplan({ before: recentChange.before, written: recentChange.replan.written, addedIds: recentChange.addedIds, removedIds: recentChange.replan.removedIds });
+      } catch (err) {
+        disarmFlip();
+        setRecentChange(failureNotice('Niet teruggezet', err instanceof Error && err.message === REPLAN_UNDO_STALE ? REPLAN_UNDO_STALE : 'Er ging iets mis; je week staat zoals hij na het opnieuw plannen was.'));
+        await refresh();
+        return;
+      }
       await undoPlanChangeNow({ ...recentChange, before: [], addedIds: [] });
       setRecentChange(null);
       bumpPlanRevision();

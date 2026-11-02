@@ -74,9 +74,11 @@ export interface ProposalSheetProps {
   summary?: string;
   // Een stille tekstknop onder Akkoord en Liever niet ("Toch allebei" bij twee doelen die botsen).
   alternative?: { label: string; onClick: () => void };
+  // Niets om op te antwoorden (er verandert niets): alleen Begrepen, geen Akkoord.
+  answerless?: boolean;
 }
 
-export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'Voorstel', emptyText, listUntil, extraLines, extraTitle = 'Andere lengte, de komende twee weken', summary, alternative }: ProposalSheetProps) {
+export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'Voorstel', emptyText, listUntil, extraLines, extraTitle = 'Andere lengte, de komende twee weken', summary, alternative, answerless }: ProposalSheetProps) {
   const { plannedSessions, templates: ctxTemplates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
   // A fixed appointment of a sport that does not count yet is new in this proposal: show it by its name.
   const templates = useMemo(() => withSportNames(ctxTemplates), [ctxTemplates]);
@@ -263,8 +265,14 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
             </div>
 
             <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
-              <SecondaryButton onClick={() => void respond('declined')} disabled={busy} className="min-h-[46px]">Liever niet</SecondaryButton>
-              <PrimaryButton onClick={() => { haptics.tap(); void respond('accepted'); }} disabled={busy} fullWidth={false}>Akkoord</PrimaryButton>
+              {answerless ? (
+                <SecondaryButton onClick={requestClose} className="min-h-[46px]">Begrepen</SecondaryButton>
+              ) : (
+                <>
+                  <SecondaryButton onClick={() => void respond('declined')} disabled={busy} className="min-h-[46px]">Liever niet</SecondaryButton>
+                  <PrimaryButton onClick={() => { haptics.tap(); void respond('accepted'); }} disabled={busy} fullWidth={false}>Akkoord</PrimaryButton>
+                </>
+              )}
             </div>
             {alternative && (
               <div className="flex justify-center px-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>

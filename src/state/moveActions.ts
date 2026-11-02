@@ -21,7 +21,9 @@ import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions
 import { dayVerdicts, type DayVerdict, type DragContext } from '../engine/weekDrag';
 import { withSwapVerdicts } from '../engine/weekSwap';
 import { armFlip, disarmFlip } from '../utils/flipDom';
-import type { RecentPlanChange } from '../models/planChange';
+import type { PlanChangeProposal, RecentPlanChange } from '../models/planChange';
+import { restoredRow, withTestRestores } from '../engine/testMoveRestore';
+import { patternDays } from '../engine/planPass';
 import { mondayOfWeek, todayISO, addDays, weekdayShortNL, formatDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { planEndDay } from '../engine/programLayout';
@@ -40,8 +42,10 @@ export function useMoveActions(deps: {
   setRecentChange: Dispatch<SetStateAction<RecentPlanChange | null>>;
   refresh: (fromOtherWindow?: boolean) => Promise<void>;
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
+  // Het wijzigingslog: welke test een nieuwe testpoging was (engine/testMoveRestore.ts).
+  planChangeLog?: PlanChangeProposal[];
 }) {
-  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalEngineConfig, settings, templates, setRecentChange, refresh, sessionsForWeek } = deps;
+  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalEngineConfig, settings, templates, setRecentChange, refresh, sessionsForWeek, planChangeLog } = deps;
   const moveSession = useCallback(
     (sessionId: string, targetDate: string): ScheduleProposal => {
       const targetMonday = mondayOfWeek(targetDate);
@@ -58,9 +62,21 @@ export function useMoveActions(deps: {
       const nextWeek = sessionsForWeek(addDays(targetMonday, 7));
       const nearby = [...previousWeek, ...week, ...nextWeek];
       const combined = nearby.some((s) => s.id === sessionId) ? nearby : [...nearby, ...plannedSessions.filter((s) => s.id === sessionId)];
-      return proposeMove(combined, templates, sessionId, targetDate, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference);
+      const proposal = proposeMove(combined, templates, sessionId, targetDate, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference);
+      // Een nieuwe testpoging die verhuist: wat alleen voor die test wegging komt in hetzelfde voorstel terug,
+      // alleen als de weekcontrole er niets nieuws door vindt (engine/testMoveRestore.ts).
+      const today = todayISO();
+      const restDay = settings.restDay ?? 1;
+      return withTestRestores(proposal, sessionId, {
+        sessions: plannedSessions, proposals: planChangeLog ?? [], logs: sessionLogs, templates, today,
+        check: {
+          logs: sessionLogs, templates, today, restDay, goalDay: planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal), program,
+          dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+          slotDays: patternDays(templates, settings, restDay), leave: settings.leavePeriods, trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
+        },
+      });
     },
-    [sessionsForWeek, plannedSessions, templates, sessionLogs, program, goalEngineConfig],
+    [sessionsForWeek, plannedSessions, templates, sessionLogs, program, goalEngineConfig, planChangeLog, settings, trainingGoals, goalMilestones],
   );
 
   const suggestMoves = useCallback(
@@ -177,7 +193,7 @@ export function useMoveActions(deps: {
         }
         if (change.restore) {
           // "Toch doen": your own choice, so it stays yours against the automatic planning.
-          await PlannedSessionsRepo.put({ ...session, scheduledDate: change.toDate, status: change.toDate === (session.movedFromDate ?? change.toDate) ? 'planned' : 'moved', lock });
+          await PlannedSessionsRepo.put(restoredRow(session, change.toDate, lock));
           lines.push(`${change.templateName} op ${day(change.toDate)} staat weer op de planning`);
         } else if (change.toDate === change.fromDate) {
           await PlannedSessionsRepo.put({ ...skipSessionEngine(session), lock });

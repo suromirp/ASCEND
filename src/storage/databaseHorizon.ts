@@ -15,7 +15,7 @@ import { resolveWaveSettings } from '../engine/waves';
 import { countOptions } from '../engine/yourWeek';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, parseWeekShape, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay } from '../engine/restDay';
-import { describeRepair, lockLevel, visibleRepair } from '../engine/weekValidator';
+import { describeRepair, lockLevel, visibleRepair, type Finding } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
 import { resolveVariantDuration, withDurationScope, type DurationScope } from '../engine/substitutions';
 import { raceBlocks, afterGoalWindows, revivePrescriptionRemovedTests } from '../engine/raceBlock';
@@ -207,6 +207,8 @@ export interface HorizonRun {
   program: Program | null;
   // The day the plan ends (the main goal's day), as the run used it.
   anchor?: string;
+  // What the week check found and could not put right (Week opnieuw plannen weighs a test's day by it).
+  remaining?: Finding[];
 }
 
 const dayNL = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
@@ -404,5 +406,6 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     after: pass.sessions.filter((s) => !removedFinal.has(s.id)),
     program: next,
     anchor: ctx.anchor,
+    remaining: pass.remaining,
   };
 }

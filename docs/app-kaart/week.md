@@ -35,6 +35,7 @@ Za 31 · niets gepland
 [knop: Verplaats of ruil Lange duurloop, nu op zondag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 [knop: Jaaroverzicht]
 [knop: Weekterugblik]
+[knop: Week opnieuw plannen]
 
 --- kaart 3 ---
 [knop: Deze week door ASCEND aangepast · 3bekijk]

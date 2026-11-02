@@ -209,6 +209,9 @@ export interface RecentPlanChange {
   // Een ruil (engine/weekSwap.ts): de twee rijen zoals de ruil ze schreef. Ongedaan maken zet ze alleen
   // terug als ze nog precies zo zijn (storage/weekSwap.ts#undoSwap).
   swapAfter?: PlannedSession[];
+  // Week opnieuw plannen (engine/replanWeek.ts): de rijen zoals het schreef en wat eraf ging. Ongedaan maken
+  // zet de week alleen terug als die rijen nog precies zo zijn (storage/weekReplan.ts#undoWeekReplan).
+  replan?: { written: PlannedSession[]; removedIds: string[] };
   // Een handeling die niet lukte: de melding zegt dat, zonder Ongedaan maken (before is leeg).
   failed?: true;
   createdAt: string;

@@ -18,6 +18,7 @@ import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, Subje
 import { WeekPlanner } from '../components/WeekPlanner';
 import { useWeekDrag } from '../components/useWeekDrag';
 import { WeekNotice } from '../components/WeekNotice';
+import { WeekReplanButton } from '../components/WeekReplanButton';
 import { rowNotes } from '../engine/weekConcerns';
 import { allowedPairs } from '../engine/allowedPair';
 import { ChangeLogCard } from '../components/ChangeLogCard';
@@ -365,6 +366,9 @@ export function WeekPage() {
           )}
         </div>
       )}
+
+      {/* Week opnieuw plannen: alleen voor de getoonde week, vandaag en later (engine/replanWeek.ts). */}
+      {!monthView && program && addDays(weekStart, 6) >= today && <WeekReplanButton key={weekStart} weekStart={weekStart} />}
 
       {!monthView && <WeekLoadCards weekStart={weekStart} />}
 
