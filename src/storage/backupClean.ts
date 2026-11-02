@@ -395,7 +395,8 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
       delete s.strengthModel;
       skipped.n++;
     } else {
-      if (JSON.stringify(clean) !== JSON.stringify(s.strengthModel)) skipped.n++;
+      // Alleen een echt weggevallen of verbeterde waarde telt, niet een andere volgorde van de sleutels.
+      if (sortedJson(clean) !== sortedJson(s.strengthModel)) skipped.n++;
       s.strengthModel = clean;
     }
   }
@@ -444,4 +445,13 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     else delete s.packList;
   }
   return s as Partial<AppSettings>;
+}
+
+// JSON met de sleutels op alfabet, zodat twee gelijke objecten met een andere volgorde gelijk zijn.
+function sortedJson(value: unknown): string {
+  return JSON.stringify(value, (_key, v: unknown) =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : v,
+  );
 }
