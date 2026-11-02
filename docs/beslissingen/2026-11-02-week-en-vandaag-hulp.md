@@ -13,8 +13,9 @@ Vier hulpmiddelen, elk zonder stille wijziging van je planning:
    (`lock.by` is `user`, met de dag), een vakantie of tocht (`leave`), een ruil van het wedstrijdblok (`raceBlock`), een
    verschuiving van de planning zonder bewaarde regel (`movedFromDate` zonder slot), of het weekpatroon
    (`engine/planPass.ts#patternDays`). Een voorstel dat alleen de lengte of de training op zijn dag veranderde, staat
-   erbij in een tweede zin; de plek komt dan uit het weekpatroon. Weet de app het niet, dan zegt hij "Volgens je
-   weekpatroon. Waarom precies deze dag, is niet bewaard." Geen nieuwe opslag.
+   erbij in een tweede zin; de plek komt dan uit het weekpatroon. Weet de app het niet, dan zegt hij dat eerlijk: met een
+   andere vaste dag "Je weekpatroon zet hem op vrijdag. Waarom hij nu op woensdag staat, is niet bewaard.", zonder
+   vaste dag "Waarom precies deze dag, is niet bewaard." Geen nieuwe opslag.
 2. "Minder tijd vandaag" in het menu van de missiekaart (`engine/shorterToday.ts`). Je kiest 30, 45 of 60 minuten
    (alleen wat korter is dan de training). Het voorstel is dezelfde training op dezelfde dag met een vaste lengte
    (een `move` naar dezelfde dag met `plannedMinutes`, het slot van een voorstel), met het verschil in gewone zinnen:
@@ -25,7 +26,7 @@ Vier hulpmiddelen, elk zonder stille wijziging van je planning:
    Kernsets als advies, Minder van alles, Uit) onder Vandaag en meldingen.
 3. "Zones bijwerken na een test" (`engine/zoneUpdate.ts`, `components/ZoneUpdateCard.tsx`). Na een test die meetelt en
    de laatste is (`countedTests`) schat de app een drempelhartslag: de gemiddelde hartslag van kilometer 2 tot en met 5
-   van de snelste 5 km (`runDetail.bestFive`), keer 0,98. Verschilt die 3 bpm of meer van de drempel die er staat, dan
+   van de snelste 5 km (`runDetail.bestFive`), keer 0,98. Die factor is een aanname die nog getoetst wordt. Verschilt die 3 bpm of meer van de drempel die er staat, dan
    staat in het logblad en in de nabespreking van de test een voorstel met per zone het oude en het nieuwe getal, en
    de tempo's die met de test meeveranderen. Akkoord bewaart alleen `heartRate.lthr`; Liever niet laat alles staan. Het
    antwoord staat per test in `settings.zoneAnswers` (eigen migratiestap `migrateZoneAnswers`), zodat het voorstel

@@ -5,13 +5,15 @@ import { getModality } from '../data/modalities';
 import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { detailFetchMode } from '../engine/detailFetch';
+import { isUsableRunDetail } from '../engine/runDetail';
+import { minutesText } from '../engine/activityText';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, SecondaryButton, SheetGrip } from './ui';
 import { Icon } from './icons';
 import { keptNumbersLine, logSource, sourceNoun } from '../engine/logSource';
 import { SheetHeader } from './SheetHeader';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { useAppData } from '../state/AppDataContext';
@@ -77,10 +79,14 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   // Een oudere run zonder kilometers haalt niets vanzelf op: daar staat "Details ophalen"
   // (engine/detailFetch.ts), één run per tik, met een grens in tijd en een zichtbare uitkomst.
   const fetchMode = detailFetchMode(log, todayISO());
+  const usableDetail = isUsableRunDetail(log.runDetail);
+  // Na een tik op Details ophalen geen tweede, automatische poging voor dezelfde run.
+  const tapped = useRef(false);
   const [fetching, setFetching] = useState(false);
   const [manualOutcome, setManualOutcome] = useState<EnsureOutcome | undefined>();
   async function fetchDetails() {
     if (fetching) return;
+    tapped.current = true;
     setFetching(true);
     setManualOutcome(undefined);
     const r = await ensureRunDetail(log.id, { timeoutMs: 15_000, manual: true });
@@ -89,7 +95,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     if (r === 'added') refresh();
   }
   useEffect(() => {
-    if (log.externalId && !log.trim && fetchMode === 'auto') {
+    if (log.externalId && !log.trim && fetchMode === 'auto' && !tapped.current) {
       void ensureRunDetail(log.id).then((r) => {
         setEnsureOutcome(r);
         if (r === 'added') refresh();
@@ -228,7 +234,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
         <Card className="rounded-b-none border-b-0 pb-8">
           <div className="-mt-2"><SheetHeader eyebrow={formatDateNL(log.completedDate)} title={templateName} onClose={requestClose} /></div>
           <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-            {logKindLabel(log)} · {log.durationMinutes} min
+            {logKindLabel(log)} · {minutesText(log.durationMinutes)}
           </p>
 
           {showRunDetail && (
@@ -253,9 +259,9 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
             <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{ensureOutcomeText(ensureOutcome)}</p>
           )}
 
-          {fetchMode === 'button' && (!hasRunDetail || manualOutcome === 'added') && (
+          {(fetchMode === 'button' || tapped.current) && (!usableDetail || manualOutcome === 'added') && (
             <div className="mt-4 flex flex-col gap-2">
-              {!hasRunDetail && (
+              {!usableDetail && (
                 <SecondaryButton className="w-full" disabled={fetching} onClick={() => void fetchDetails()}>
                   {fetching ? 'Details ophalen…' : manualOutcome === 'failed' || manualOutcome === 'timeout' ? 'Opnieuw proberen' : 'Details ophalen'}
                 </SecondaryButton>

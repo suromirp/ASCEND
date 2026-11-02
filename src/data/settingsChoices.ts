@@ -502,7 +502,7 @@ export const CHOICES = {
     help: 'korterVandaag',
     options: [
       { value: 'kern', label: 'Kernsets', note: 'De kernoefeningen of de kern van de loop blijven, de rest gaat eraf', short: 'Kernsets' },
-      { value: 'volume', label: 'Minder van alles', note: 'Alles blijft, met minder sets of herhalingen', short: 'Minder van alles' },
+      { value: 'volume', label: 'Minder van alles', note: 'Alle oefeningen blijven, met een set minder per oefening', short: 'Minder van alles' },
       { value: 'off', label: 'Uit', note: 'Geen regel in het menu van je missie', short: 'Uit' },
     ],
   }),

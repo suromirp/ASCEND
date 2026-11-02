@@ -4,6 +4,7 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { LeavePeriod } from '../models/leave';
 import { placeReason, UNKNOWN_PLACE } from './placeReason';
 
+
 // Nagemaakte week: maandag 2 november 2026 is dag 1.
 const base: PlannedSession = { id: 's1', templateId: 'tpl_tempo_run', scheduledDate: '2026-11-04', weekStartDate: '2026-11-02', status: 'planned', order: 0 };
 
@@ -26,8 +27,9 @@ describe('waarom een training op zijn dag staat', () => {
   it('zegt eerlijk dat de reden niet bewaard is als er niets bekend is', () => {
     const r = placeReason({ session: base, proposals: [], patternDay: 5 });
     expect(r.kind).toBe('unknown');
-    expect(r.text).toBe(UNKNOWN_PLACE);
+    expect(r.text).toBe('Je weekpatroon zet hem op vrijdag. Waarom hij nu op woensdag staat, is niet bewaard.');
     expect(placeReason({ session: base, proposals: [] }).text).toBe(UNKNOWN_PLACE);
+    expect(UNKNOWN_PLACE).toBe('Waarom precies deze dag, is niet bewaard.');
   });
 
   it('noemt het voorstel dat hem verplaatste, met de dag van Akkoord en de reden', () => {
@@ -63,6 +65,12 @@ describe('waarom een training op zijn dag staat', () => {
     const r = placeReason({ session: s, proposals: [p], patternDay: 3 });
     expect(r.kind).toBe('pattern');
     expect(r.extra).toBe('Het voorstel "Minder tijd vandaag" (Akkoord op wo 4 nov) veranderde alleen de lengte.');
+  });
+
+  it('een voorstel op dezelfde dag wist een eerdere verplaatsing niet', () => {
+    const s: PlannedSession = { ...base, plannedMinutes: 30, movedFromDate: '2026-11-03', status: 'moved', lock: { by: 'proposal', proposalId: 'p1', at: '2026-11-04T06:00:00.000Z' } };
+    const p = proposal({ issue: 'Minder tijd vandaag', resolvedAt: '2026-11-04T06:00:00.000Z', changes: [{ plannedSessionId: 's1', action: 'move', fromDate: '2026-11-04', toDate: '2026-11-04', plannedMinutes: 30 }] });
+    expect(placeReason({ session: s, proposals: [p], patternDay: 2 }).text).toBe('De planning schoof hem hierheen van di 3 nov. Welke regel dat was, is niet bewaard.');
   });
 
   it('wat je zelf verplaatste is van jou, met de dag', () => {

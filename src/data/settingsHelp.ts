@@ -68,8 +68,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Minder tijd vandaag',
     lead: 'Heb je vandaag minder tijd, kies dan in het menu van je missie 30, 45 of 60 minuten. ASCEND stelt dezelfde training korter voor.',
     points: [
-      { head: 'Kernsets', text: 'bij kracht doe je de kernoefeningen en laat je de rest liggen; bij een tempoloop of intervallen blijft de kern en worden inlopen en uitlopen korter.' },
-      { head: 'Minder van alles', text: 'alles blijft, met een set minder per oefening of minder herhalingen in hetzelfde tempo.' },
+      { head: 'Kernsets', text: 'bij kracht doe je de kernoefeningen en laat je de rest liggen; past de kern niet in je tijd, dan wordt het minder van alles. Bij een tempoloop of intervallen blijft de kern en worden inlopen en uitlopen korter.' },
+      { head: 'Minder van alles', text: 'bij kracht blijven alle oefeningen, met een set minder per oefening; bij een loop met blokken minder herhalingen in hetzelfde tempo.' },
+      { head: 'In Forge', text: 'staan alle oefeningen; je slaat zelf over wat vandaag niet past. ASCEND strept niets voor je weg.' },
       { head: 'Alleen met Akkoord', text: 'je ziet eerst wat er verandert. Akkoord geeft je training van vandaag een kortere duur; met Ongedaan maken staat hij weer zoals hij was. Wat je logt blijft een gewone log.' },
       { head: 'Een test of wedstrijd', text: 'kan niet korter, want dan meet hij iets anders. Verplaatsen kan wel, met Akkoord.' },
     ],

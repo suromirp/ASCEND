@@ -74,7 +74,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit'], advanced: [] },
   vandaag: {
-    rows: ['kaarten', 'lichterbenen', 'bundel-meldingen', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen', 'korter-vandaag'],
+    rows: ['kaarten', 'lichterbenen', 'korter-vandaag', 'bundel-meldingen', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {

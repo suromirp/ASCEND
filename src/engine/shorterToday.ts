@@ -23,6 +23,9 @@ export const SHORTER_ADVICE: ShorterSetting = 'kern';
 
 export const TEST_NOT_SHORTER = 'Een test kan niet korter: dan meet hij iets anders. Verplaatsen kan wel, dan zie je eerst wat er verschuift.';
 
+export const VOLUME_STRENGTH = 'Alle oefeningen blijven, met een set minder per oefening.';
+export const FORGE_NOTE = 'In Forge staan alle oefeningen; je slaat zelf over wat vandaag niet past.';
+
 export function resolveShorterToday(value: unknown): ShorterSetting {
   return value === 'kern' || value === 'volume' || value === 'off' ? value : SHORTER_ADVICE;
 }
@@ -51,13 +54,17 @@ export function planShorter(args: { template: SessionTemplate; fullMinutes: numb
   if (template.type === 'strength') {
     const exercises = template.exercises ?? [];
     const core = exercises.filter((e) => e.priority === 'core');
-    if (how === 'kern' && core.length > 0) {
+    // Past de kern niet in de gekozen minuten (naar het aandeel van de sets), dan minder van alles.
+    const sets = (list: typeof exercises) => list.reduce((n, e) => n + Math.max(0, e.sets), 0);
+    const coreFits = sets(exercises) > 0 && (sets(core) / sets(exercises)) * fullMinutes <= available;
+    if (how === 'kern' && core.length > 0 && coreFits) {
       const rest = exercises.filter((e) => e.priority !== 'core').map((e) => e.exerciseName);
       lines.push(`Je doet de kernoefeningen: ${joinNL(core.map((e) => e.exerciseName))}.${rest.length > 0 ? ` ${joinNL(rest)} laat je vandaag liggen.` : ''}`);
     } else {
       how = 'volume';
-      lines.push('Alle oefeningen, met een set minder per oefening; de extra oefeningen laat je liggen.');
+      lines.push(VOLUME_STRENGTH);
     }
+    lines.push(FORGE_NOTE);
   } else if (hasRole(template, 'blocks')) {
     lines.push(how === 'kern' ? 'De kern blijft zoals hij is; het inlopen en uitlopen worden korter.' : 'Minder herhalingen of een korter blok, in hetzelfde tempo.');
   } else {

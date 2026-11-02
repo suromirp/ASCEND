@@ -32,7 +32,14 @@ export interface PlaceReasonInput {
   leavePeriods?: LeavePeriod[];
 }
 
-export const UNKNOWN_PLACE = 'Volgens je weekpatroon. Waarom precies deze dag, is niet bewaard.';
+// Zonder vaste dag in het weekpatroon en zonder ander spoor.
+export const UNKNOWN_PLACE = 'Waarom precies deze dag, is niet bewaard.';
+const WEEKDAYS_LONG = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
+
+// Het weekpatroon heeft een andere vaste dag dan de dag waarop hij nu staat.
+export function otherPatternDay(patternDay: number, date: string): string {
+  return `Je weekpatroon zet hem op ${WEEKDAYS_LONG[patternDay - 1]}. Waarom hij nu op ${weekdayLongNL(date)} staat, is niet bewaard.`;
+}
 
 const day = (iso: string) => formatWeekdayDayMonthNL(iso);
 const momentDay = (moment: string) => day(localDateOf(moment));
@@ -92,7 +99,8 @@ function systemReason(s: PlannedSession, input: PlaceReasonInput): PlaceReason {
   if (input.patternDay !== undefined && input.patternDay === isoWeekday(s.scheduledDate)) {
     return { kind: 'pattern', text: `Volgens je weekpatroon: deze training staat op ${weekdayLongNL(s.scheduledDate)}.`, ...(extra ? { extra } : {}) };
   }
-  return { kind: 'unknown', text: UNKNOWN_PLACE, ...(extra ? { extra } : {}) };
+  const text = input.patternDay !== undefined && input.patternDay >= 1 && input.patternDay <= 7 ? otherPatternDay(input.patternDay, s.scheduledDate) : UNKNOWN_PLACE;
+  return { kind: 'unknown', text, ...(extra ? { extra } : {}) };
 }
 
 export function placeReason(input: PlaceReasonInput): PlaceReason {
@@ -108,7 +116,8 @@ export function placeReason(input: PlaceReasonInput): PlaceReason {
     // een harde loop): de plek komt van ergens anders, het voorstel staat erbij.
     if (item && item.fromDate && item.toDate && item.fromDate === item.toDate && item.action === 'move') {
       const what = item.templateId ? 'de training' : 'de lengte';
-      const base = systemReason({ ...s, movedFromDate: undefined }, input);
+      // Alleen het spoor van dit voorstel zelf (dezelfde dag) gaat weg; een eerdere verplaatsing blijft.
+      const base = systemReason(s.movedFromDate === s.scheduledDate ? { ...s, movedFromDate: undefined } : s, input);
       return { ...base, extra: `Het voorstel "${proposal.issue}" (Akkoord op ${momentDay(at)}) veranderde alleen ${what}.` };
     }
     const from = item?.fromDate && item.toDate && item.fromDate !== item.toDate ? `Verplaatst van ${day(item.fromDate)} via` : 'Via';

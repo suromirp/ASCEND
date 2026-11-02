@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { applyPlanChangeItems } from './proposalEngine';
-import { planShorter, resolveShorterToday, SHORTER_RULE, shorterAdvice, shorterChoices, TEST_NOT_SHORTER } from './shorterToday';
+import { FORGE_NOTE, planShorter, resolveShorterToday, SHORTER_RULE, shorterAdvice, shorterChoices, TEST_NOT_SHORTER, VOLUME_STRENGTH } from './shorterToday';
 
 // Nagemaakte trainingen.
 const easy: SessionTemplate = { id: 'tpl_easy_run', name: 'Rustige duurloop', type: 'cardio', roles: ['easy_pace'], durationVariants: { full: 50 } };
@@ -50,12 +50,19 @@ describe('minder tijd vandaag', () => {
     expect(r.kind).toBe('ok');
     if (r.kind !== 'ok') return;
     expect(r.minutes).toBe(45);
-    expect(r.lines).toEqual(['Duur: 75 min wordt 45 min.', 'Je doet de kernoefeningen: Bankdrukken en Roeien. Schouderdrukken en Biceps laat je vandaag liggen.']);
+    expect(r.lines).toEqual(['Duur: 75 min wordt 45 min.', 'Je doet de kernoefeningen: Bankdrukken en Roeien. Schouderdrukken en Biceps laat je vandaag liggen.', FORGE_NOTE]);
   });
 
   it('kracht met minder volume: alle oefeningen, minder sets', () => {
     const r = planShorter({ template: strength, fullMinutes: 75, available: 60, how: 'volume' });
-    expect(r.kind === 'ok' && r.lines[1]).toBe('Alle oefeningen, met een set minder per oefening; de extra oefeningen laat je liggen.');
+    expect(r.kind === 'ok' && r.lines[1]).toBe('Alle oefeningen blijven, met een set minder per oefening.');
+  });
+
+  it('past de kern niet in de gekozen minuten, dan minder van alles', () => {
+    // Kern is 8 van 14 sets: ruim 42 van 75 minuten, dus niet in 30.
+    const r = planShorter({ template: strength, fullMinutes: 75, available: 30, how: 'kern' });
+    expect(r.kind === 'ok' && r.how).toBe('volume');
+    expect(r.kind === 'ok' && r.lines[1]).toBe(VOLUME_STRENGTH);
   });
 
   it('kracht zonder kernoefeningen valt terug op minder volume', () => {

@@ -316,18 +316,18 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   // Your verdicts on test runs: record by record, a damaged one is dropped and counted, an
   // older file has none and leaves the verdicts on the device alone
   // (storage/migrations.ts#migrateTestJudgments).
+  if ('testJudgments' in s) {
+    const tests = migrateTestJudgments(s.testJudgments);
+    if (tests.list === undefined) delete s.testJudgments;
+    else s.testJudgments = tests.list;
+    skipped.n += tests.skipped;
+  }
   // Je antwoorden op Zones bijwerken na een test (storage/migrations.ts#migrateZoneAnswers).
   if ('zoneAnswers' in s) {
     const zones = migrateZoneAnswers(s.zoneAnswers);
     if (zones.list === undefined) delete s.zoneAnswers;
     else s.zoneAnswers = zones.list;
     skipped.n += zones.skipped;
-  }
-  if ('testJudgments' in s) {
-    const tests = migrateTestJudgments(s.testJudgments);
-    if (tests.list === undefined) delete s.testJudgments;
-    else s.testJudgments = tests.list;
-    skipped.n += tests.skipped;
   }
   // Your own weighings for sweat loss: record by record, a damaged one is dropped and
   // counted, an older file has none and leaves the weighings on the device alone
