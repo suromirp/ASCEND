@@ -19,6 +19,8 @@ import { getDB, MetaRepo, RecoveryMetricsRepo, SettingsRepo } from './database';
 import { migrateHealthConnectState } from './migrations';
 import { planRetire, resolveMorningBackup } from '../engine/morningBackup';
 import { KEEP_DAYS } from '../engine/wellnessRange';
+import { filterRecovery } from '../engine/watchUse';
+import { getWatchState } from './externalActivities';
 import type { ExternalActivity } from '../engine/activityImport';
 import type { RecoveryMetric } from '../models/metrics';
 import {
@@ -27,10 +29,11 @@ import {
   createHealthConnectAdapter,
   healthConnectErrorOf,
   healthConnectPort,
-  type HealthConnectErrorKind,
   type HealthConnectPort,
-  type HealthKind,
 } from '../integrations/healthConnect';
+import type { HealthConnectErrorKind, HealthEnableResult, HealthKind, HealthSyncResult } from '../models/healthConnect';
+
+export type { HealthEnableResult, HealthSyncResult } from '../models/healthConnect';
 import { addDays, toISODate } from '../utils/dates';
 import { withTimeout } from '../utils/withTimeout';
 
@@ -84,13 +87,6 @@ function notifyHealthConnectChange(): void {
 
 // --- de ronde -------------------------------------------------------------------------------
 
-export type HealthSyncResult =
-  | { status: 'off' }
-  | { status: 'web' }
-  | { status: 'too-soon' }
-  | { status: 'ok'; activities: number; mornings: number }
-  | { status: 'error'; kind: HealthConnectErrorKind; message: string };
-
 export interface HealthSyncOptions {
   force?: boolean;
   now?: Date;
@@ -107,13 +103,24 @@ export function isHealthFetchDue(state: Pick<HealthConnectState, 'fetchedAt' | '
 
 // Alles in één transactie: de nieuwe ochtenden, wat ouder is dan de grens (met "Ochtendgetallen
 // in back-up" aan blijven daarvan de vier getallen, engine/morningBackup.ts#planRetire) en de stand.
-// Gaat er iets mis, dan gaat de hele transactie terug.
-export async function commitHealthRound(state: HealthConnectState, put: readonly RecoveryMetric[], remove: readonly string[] = []): Promise<void> {
+// De stand wordt binnen dezelfde transactie gelezen; `next` maakt er de nieuwe van, of geeft
+// undefined (bijvoorbeeld: Health Connect is intussen uitgezet), en dan wordt er niets geschreven en
+// is de uitkomst false. Gaat er iets mis, dan gaat de hele transactie terug.
+export async function commitHealthRound(
+  next: (current: HealthConnectState) => HealthConnectState | undefined,
+  put: readonly RecoveryMetric[] = [],
+  remove: readonly string[] = [],
+): Promise<boolean> {
   const db = await getDB();
   const tx = db.transaction(['meta', 'recoveryMetrics'], 'readwrite');
   const done = tx.done;
   done.catch(() => undefined);
   try {
+    const state = next(migrateHealthConnectState(await tx.objectStore('meta').get(HEALTH_CONNECT_KEY)));
+    if (!state) {
+      tx.abort();
+      return false;
+    }
     const metrics = tx.objectStore('recoveryMetrics');
     const requests: Promise<unknown>[] = [];
     // Elk verzoek meteen met een vangnet: gaat een later verzoek mis, dan breken de eerdere af en
@@ -135,18 +142,26 @@ export async function commitHealthRound(state: HealthConnectState, put: readonly
     throw err;
   }
   await done;
+  return true;
 }
 
 let inflight: Promise<HealthSyncResult> | undefined;
 
 // Haalt de laatste week trainingen en vier weken ochtenden uit Health Connect. Gooit nooit: een
-// fout wordt een uitkomst met een zin, en wat er al stond blijft staan. Eén ronde tegelijk.
+// fout wordt een uitkomst met een zin, en wat er al stond blijft staan. Eén ronde tegelijk: een
+// gewone vraag tijdens een ronde krijgt die ronde; met `force` (aanzetten, een knop) komt er na de
+// lopende ronde nog een eigen, zodat de nieuwe toestemming of stand echt wordt gebruikt.
 export function syncHealthConnect(options: HealthSyncOptions = {}): Promise<HealthSyncResult> {
-  if (inflight) return inflight;
-  inflight = runRound(options).finally(() => {
-    inflight = undefined;
-  });
-  return inflight;
+  if (inflight && !options.force) return inflight;
+  const before = inflight ?? Promise.resolve(undefined);
+  const mine: Promise<HealthSyncResult> = before
+    .catch(() => undefined)
+    .then(() => runRound(options))
+    .finally(() => {
+      if (inflight === mine) inflight = undefined;
+    });
+  inflight = mine;
+  return mine;
 }
 
 async function runRound(options: HealthSyncOptions): Promise<HealthSyncResult> {
@@ -167,24 +182,26 @@ async function runRound(options: HealthSyncOptions): Promise<HealthSyncResult> {
     // later toch nog komt, gaat nergens heen.
     const fetched = await withTimeout(fetchRound(port, now), options.roundMs ?? HC_ROUND_MS);
     const settings = await SettingsRepo.get();
+    // De keuzes slaap, rusthartslag en HRV ("Gebruik van je horloge") gelden ook hier.
+    const use = (await getWatchState()).use;
+    const mornings = filterRecovery(fetched.mornings, use);
     const existing = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(PREFIX));
     const cutoff = addDays(toISODate(now), -KEEP_DAYS);
     const retire = planRetire(existing.filter((m) => m.date < cutoff), resolveMorningBackup(settings));
-    const latest = await getHealthConnectState();
-    // Uitgezet terwijl de ronde liep: dan wordt er niets bewaard.
-    if (!latest.enabled) return { status: 'off' };
-    await commitHealthRound(
-      { ...latest, granted: fetched.granted, activities: fetched.activities, fetchedAt: now.toISOString(), attemptAt: now.toISOString(), lastError: undefined },
-      [...retire.put, ...fetched.mornings],
+    // Uitgezet terwijl de ronde liep: dan wordt er niets bewaard (binnen de transactie gelezen).
+    const stored = await commitHealthRound(
+      (latest) => (latest.enabled ? { ...latest, granted: fetched.granted, activities: fetched.activities, fetchedAt: now.toISOString(), attemptAt: now.toISOString(), lastError: undefined } : undefined),
+      [...retire.put, ...mornings],
       retire.remove,
     );
+    if (!stored) return { status: 'off' };
     notifyHealthConnectChange();
-    return { status: 'ok', activities: fetched.activities.length, mornings: fetched.mornings.length };
+    return { status: 'ok', activities: fetched.activities.length, mornings: mornings.length };
   } catch (err) {
     const e = healthConnectErrorOf(err);
     try {
-      const latest = await getHealthConnectState();
-      if (latest.enabled) await putState({ ...latest, attemptAt: now.toISOString(), lastError: { kind: e.kind, message: e.message } });
+      // Ook de foutregel alleen als het nog aan staat, binnen de transactie gelezen.
+      if (await commitHealthRound((latest) => (latest.enabled ? { ...latest, attemptAt: now.toISOString(), lastError: { kind: e.kind, message: e.message } } : undefined))) notifyHealthConnectChange();
     } catch {
       // Opslag die ook hapert: de uitkomst komt toch bij wie vroeg.
     }
@@ -209,11 +226,6 @@ async function fetchRound(port: HealthConnectPort, now: Date): Promise<{ granted
 
 // --- aan en uit -----------------------------------------------------------------------------
 
-export type HealthEnableResult =
-  | { status: 'on'; granted: HealthKind[]; sync: HealthSyncResult }
-  | { status: 'web' | 'not-installed' | 'needs-update' | 'denied' }
-  | { status: 'error'; message: string };
-
 // Aanzetten: pas hier vraagt Android om toestemming. Staat Health Connect niet op de telefoon, of
 // sta je niets toe, dan blijft het uit en zegt de uitkomst waarom.
 export async function enableHealthConnect(options: { port?: HealthConnectPort; now?: Date } = {}): Promise<HealthEnableResult> {
@@ -237,10 +249,9 @@ export async function enableHealthConnect(options: { port?: HealthConnectPort; n
 // het ontkoppelen van intervals.icu (storage/wellness.ts#clearWellness). Logs blijven: dat is
 // historie. In één transactie.
 export async function disableHealthConnect(): Promise<void> {
-  const state = await getHealthConnectState();
   const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(PREFIX));
   const plan = planRetire(ours, resolveMorningBackup(await SettingsRepo.get()));
-  await commitHealthRound({ ...state, enabled: false, granted: [], activities: [], fetchedAt: undefined, attemptAt: undefined, lastError: undefined }, plan.put, plan.remove);
+  await commitHealthRound((current) => ({ ...current, enabled: false, granted: [], activities: [], fetchedAt: undefined, attemptAt: undefined, lastError: undefined }), plan.put, plan.remove);
   notifyHealthConnectChange();
 }
 

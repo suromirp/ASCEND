@@ -14,6 +14,7 @@ import { kgLabel } from '../utils/kg';
 import { resolveTestStops } from './bestEffort';
 import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
+import type { HealthConnectErrorKind } from '../models/healthConnect';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
@@ -182,7 +183,7 @@ export interface HealthConnectFacts {
   inApp: boolean;
   enabled: boolean;
   fetchedAt?: string;
-  errorKind?: 'web' | 'not-installed' | 'needs-update' | 'denied' | 'timeout' | 'failed';
+  errorKind?: HealthConnectErrorKind;
 }
 
 const deviceOf = (f: SettingsFacts): DevicePermissions | undefined => (f.device && f.device !== 'unknown' ? f.device : undefined);
@@ -237,10 +238,9 @@ function listNL(items: string[]): string {
   return `${items.slice(0, -1).join(', ')} en ${items[items.length - 1]}`;
 }
 
-// "14:02", in de tijd van het toestel.
 // Health Connect (docs/beslissingen/2026-11-02-health-connect.md): in de browser gedimd met
 // uitleg en zonder schakelaar; in de app een schakelaar, met daaronder wat de laatste ronde zei.
-const HEALTH_ERROR_LINE: Record<NonNullable<HealthConnectFacts['errorKind']>, string> = {
+const HEALTH_ERROR_LINE: Record<HealthConnectErrorKind, string> = {
   web: 'Alleen in de Android-app',
   'not-installed': 'Health Connect staat niet op je telefoon',
   'needs-update': 'Health Connect moet worden bijgewerkt',
@@ -260,6 +260,7 @@ function healthConnectRow(f: SettingsFacts): RowSummary {
   return { checked: true, sub: day === f.today ? `Opgehaald om ${clock(h.fetchedAt)}` : `Opgehaald op ${formatDayMonthNL(day)}` };
 }
 
+// "14:02", in de tijd van het toestel.
 function clock(iso: string): string {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;

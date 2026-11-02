@@ -9,12 +9,12 @@ function act(id: string, start: string, minutes: number, extra: Partial<External
   return { externalId: id, source: id.startsWith('health-connect:') ? 'health-connect' : 'garmin', start, kind: 'run', durationSec: minutes * 60, treadmill: false, ...extra };
 }
 
-function log(id: string, externalId: string | undefined, start: string, minutes: number): SessionLog {
+function log(id: string, externalId: string | undefined, start: string, minutes: number, type: SessionLog['type'] = 'cardio'): SessionLog {
   const end = new Date(new Date(start).getTime() + minutes * 60_000).toISOString();
   return {
     id,
     templateId: 'tpl_easy_run',
-    type: 'cardio',
+    type,
     completedDate: start.slice(0, 10),
     completedAt: end,
     variant: 'custom',
@@ -30,10 +30,14 @@ describe('dezelfde activiteit uit twee bronnen', () => {
     expect(sourcePrefix('zonder')).toBe('zonder');
   });
 
-  it('ongeveer dezelfde duur: binnen vijf minuten of vijftien procent', () => {
-    expect(durationsMatch(40, 43)).toBe(true);
-    expect(durationsMatch(120, 136)).toBe(true);
-    expect(durationsMatch(40, 52)).toBe(false);
+  it('ongeveer dezelfde duur: bereiken die elkaar raken, met vijf minuten of tien procent marge', () => {
+    const r = (minMinutes: number, maxMinutes = minMinutes) => ({ minMinutes, maxMinutes });
+    expect(durationsMatch(r(40), r(43))).toBe(true);
+    expect(durationsMatch(r(120), r(131))).toBe(true);
+    expect(durationsMatch(r(40), r(52))).toBe(false);
+    // Bewegingstijd 240, totaal 300: een duur van start tot eind van 300 past erin.
+    expect(durationsMatch(r(240, 300), r(300))).toBe(true);
+    expect(durationsMatch(r(240), r(300))).toBe(false);
   });
 
   it('zelfde start binnen vijf minuten en ongeveer dezelfde duur is dezelfde activiteit', () => {
@@ -46,7 +50,7 @@ describe('dezelfde activiteit uit twee bronnen', () => {
   it('een log zonder bron-id heeft geen moment om mee te vergelijken', () => {
     expect(momentOfLog(log('l1', undefined, '2026-10-20T07:30:00', 40))).toBeUndefined();
     const m = momentOfLog(log('l2', 'intervals.icu:i1', '2026-10-20T07:30:00', 40));
-    expect(m?.minutes).toBe(40);
+    expect([m?.minMinutes, m?.maxMinutes, m?.strength]).toEqual([40, 40, false]);
     expect(m?.startMs).toBe(new Date('2026-10-20T07:30:00').getTime());
   });
 });
@@ -75,6 +79,37 @@ describe('wat er als voorstel komt (intervals.icu gaat voor)', () => {
   it('voor intervals.icu verandert er niets door een log uit een andere bron dan Health Connect', () => {
     const fromMf = log('l5', 'macrofactor:2026-10-20:benen a', '2026-10-20T07:31:00', 40);
     expect(offeredActivities([icu], [], [fromMf]).map((a) => a.externalId)).toEqual(['intervals.icu:i1']);
+  });
+
+  it('een tocht met een uur pauze: bewegingstijd en totale tijd van intervals.icu, start tot eind van Health Connect', () => {
+    // Vier uur lopen, een uur stil: intervals.icu zegt 240 minuten in beweging en 300 in totaal.
+    const tocht = act('intervals.icu:t1', '2026-10-25T09:00:00', 240, { kind: 'hike', elapsedSec: 300 * 60 });
+    const hcTocht = act('health-connect:t', '2026-10-25T09:01:00', 300, { kind: 'hike' });
+    expect(offeredActivities([tocht], [hcTocht], []).map((a) => a.externalId)).toEqual(['intervals.icu:t1']);
+    // Andersom: eerst via Health Connect opgeslagen (300 minuten), daarna komt dezelfde via intervals.icu.
+    const hcLog = log('l6', 'health-connect:t', '2026-10-25T09:01:00', 300);
+    expect(offeredActivities([tocht], [], [hcLog]).map((a) => a.externalId)).toEqual([]);
+    // Zonder de totale tijd zou het twee tochten lijken.
+    const zonder = act('intervals.icu:t2', '2026-10-25T09:00:00', 240, { kind: 'hike' });
+    expect(offeredActivities([zonder], [hcTocht], []).map((a) => a.externalId)).toEqual(['intervals.icu:t2', 'health-connect:t']);
+  });
+
+  it('kracht en cardio zijn nooit dezelfde training', () => {
+    const kracht = log('l7', 'intervals.icu:k1', '2026-10-21T18:00:00', 60, 'strength');
+    expect(offeredActivities([], [hcOther], [kracht]).map((a) => a.externalId)).toEqual(['health-connect:b']);
+    const hcKracht = act('health-connect:k', '2026-10-21T18:00:00', 60, { kind: 'strength' });
+    expect(offeredActivities([], [hcKracht], [kracht]).map((a) => a.externalId)).toEqual([]);
+    expect(offeredActivities([act('intervals.icu:r', '2026-10-21T18:00:00', 60)], [hcKracht], []).map((a) => a.externalId)).toEqual(['intervals.icu:r', 'health-connect:k']);
+  });
+
+  it('een log uit MacroFactor zonder eigen tijd (12:00) telt niet als moment', () => {
+    const geschat = log('l8', 'macrofactor:2026-10-22:benen a', '2026-10-22T12:00:00', 60, 'strength');
+    expect(momentOfLog(geschat)).toBeUndefined();
+    const hcMiddag = act('health-connect:m', '2026-10-22T12:02:00', 60, { kind: 'strength' });
+    expect(offeredActivities([], [hcMiddag], [geschat]).map((a) => a.externalId)).toEqual(['health-connect:m']);
+    // Met een echte tijd wel.
+    const echt = log('l9', 'macrofactor:2026-10-22:benen b', '2026-10-22T18:00:00', 60, 'strength');
+    expect(momentOfLog(echt)).toBeDefined();
   });
 
   it('een log uit dezelfde bron laat de activiteit staan (die herkent de gewone voorstelronde aan het id)', () => {

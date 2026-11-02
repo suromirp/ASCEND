@@ -12,6 +12,8 @@ import {
   syncHealthConnect,
 } from './healthConnect';
 import { migrateHealthConnectState } from './migrations';
+import { setWatchUse } from './externalActivities';
+import type { HealthConnectState } from './healthConnect';
 import { getRecoveryMetrics } from './wellness';
 import { buildBackupEnvelope } from './backup';
 import { HEALTH_KINDS, type HealthConnectPort, type HealthKind, type HealthSampleKind } from '../integrations/healthConnect';
@@ -143,9 +145,59 @@ describe('een ronde', () => {
     const good: RecoveryMetric = { id: 'health-connect:2026-10-20', date: '2026-10-20', source: 'health-connect', hrv: 50 };
     const bad = { id: 'health-connect:2026-10-21', date: '2026-10-21', source: 'health-connect', hrv: () => 1 } as unknown as RecoveryMetric;
     const state = migrateHealthConnectState({ enabled: true, granted: ['sleep'] });
-    await expect(commitHealthRound(state, [good, bad])).rejects.toBeTruthy();
+    await expect(commitHealthRound(() => state, [good, bad])).rejects.toBeTruthy();
     expect(await RecoveryMetricsRepo.getAll()).toEqual([]);
     expect(await MetaRepo.get(HEALTH_CONNECT_KEY)).toBeUndefined();
+  });
+
+  it('de transactie leest de stand zelf: staat hij uit, dan wordt er niets geschreven', async () => {
+    const good: RecoveryMetric = { id: 'health-connect:2026-10-20', date: '2026-10-20', source: 'health-connect', hrv: 50 };
+    const onlyWhenOn = (s: HealthConnectState) => (s.enabled ? { ...s, fetchedAt: NOW.toISOString() } : undefined);
+    expect(await commitHealthRound(onlyWhenOn, [good])).toBe(false);
+    expect(await RecoveryMetricsRepo.getAll()).toEqual([]);
+    await MetaRepo.set(HEALTH_CONNECT_KEY, { enabled: true, granted: ['hrv'], activities: [] });
+    expect(await commitHealthRound(onlyWhenOn, [good])).toBe(true);
+    expect(await RecoveryMetricsRepo.getAll()).toEqual([good]);
+  });
+
+  it('een fout terwijl hij net is uitgezet: ook de foutregel wordt niet bewaard', async () => {
+    await turnOn(fake());
+    let fail: (e: Error) => void = () => undefined;
+    const slow = fake({ workouts: () => new Promise<Workout[]>((_, r) => (fail = r)) });
+    const round = syncHealthConnect({ port: slow, now: later(4) });
+    await new Promise((r) => setTimeout(r, 10));
+    await disableHealthConnect();
+    fail(new Error('remote exception'));
+    expect(await round).toMatchObject({ status: 'error' });
+    const state = await getHealthConnectState();
+    expect([state.enabled, state.lastError]).toEqual([false, undefined]);
+  });
+
+  it('met force na een lopende ronde komt er nog een eigen ronde', async () => {
+    await turnOn(fake({ workouts: [workout('w1', 21, 7, 40)] }));
+    let release: (w: Workout[]) => void = () => undefined;
+    const slow = fake({ workouts: () => new Promise<Workout[]>((r) => (release = r)) });
+    const first = syncHealthConnect({ port: slow, now: later(4) });
+    const second = syncHealthConnect({ port: fake({ workouts: [workout('w2', 22, 7, 30)] }), now: later(4), force: true });
+    // Zonder force krijg je gewoon de lopende ronde.
+    expect(syncHealthConnect({ port: fake(), now: later(4) })).toBe(second);
+    await new Promise((r) => setTimeout(r, 20));
+    release([workout('w9', 22, 8, 30)]);
+    expect(await first).toMatchObject({ status: 'ok' });
+    expect(await second).toMatchObject({ status: 'ok' });
+    expect((await getHealthConnectState()).activities.map((a) => a.externalId)).toEqual(['health-connect:w2']);
+  });
+
+  it('de keuzes slaap, rusthartslag en HRV gelden ook voor Health Connect', async () => {
+    await setWatchUse({ restingHeartRate: false });
+    const hrv: HealthSample = { dataType: 'heartRateVariability', value: 60, unit: 'millisecond', startDate: iso(21, 6), endDate: iso(21, 6) };
+    await enableHealthConnect({ port: fake({ samples: { restingHeartRate: [rhr(21, 50), rhr(20, 51)], heartRateVariability: [hrv] } }), now: NOW });
+    expect(await RecoveryMetricsRepo.getAll()).toEqual([{ id: 'health-connect:2026-10-21', date: '2026-10-21', source: 'health-connect', hrv: 60 }]);
+    // Weer aan en dan een kind uit: wat er al stond gaat ook weg.
+    await setWatchUse({ restingHeartRate: true });
+    await syncHealthConnect({ port: fake({ samples: { restingHeartRate: [rhr(21, 50)], heartRateVariability: [hrv] } }), now: later(4), force: true });
+    await setWatchUse({ hrv: false });
+    expect(await RecoveryMetricsRepo.getAll()).toEqual([{ id: 'health-connect:2026-10-21', date: '2026-10-21', source: 'health-connect', restingHeartRate: 50 }]);
   });
 
   it('een koppeling die verlopen is (alles ingetrokken): een zichtbare fout, de stand blijft aan en niets verdwijnt', async () => {

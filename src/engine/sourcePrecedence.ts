@@ -16,15 +16,21 @@ import type { RecoveryMetric } from '../models/metrics';
 // Bronnen die achter de andere komen: wat zij brengen is een aanvulling.
 export const SECONDARY_SOURCES: readonly string[] = ['health-connect'];
 
-// "Zelfde start binnen enkele minuten en ongeveer dezelfde duur".
+// "Zelfde start binnen enkele minuten en ongeveer dezelfde duur". De duur is een bereik: intervals.icu
+// telt de tijd in beweging en kent ook de totale tijd met pauzes (`elapsedSec`), Health Connect telt
+// van start tot eind. Twee bereiken die elkaar raken, met een kleine marge, zijn dezelfde duur.
 export const SAME_START_MINUTES = 5;
 export const SAME_DURATION_MINUTES = 5;
-export const SAME_DURATION_RATIO = 0.15;
+export const SAME_DURATION_RATIO = 0.1;
 
 export interface Moment {
   externalId: string;
   startMs: number;
-  minutes: number;
+  // De kortste en de langste duur die bij deze training past, in minuten.
+  minMinutes: number;
+  maxMinutes: number;
+  // Kracht en de rest (lopen, wandelen, fietsen) zijn nooit dezelfde training.
+  strength: boolean;
 }
 
 // "intervals.icu:i42" -> "intervals.icu".
@@ -35,38 +41,52 @@ export function sourcePrefix(id: string): string {
 
 export const isSecondary = (id: string): boolean => SECONDARY_SOURCES.includes(sourcePrefix(id));
 
-export function durationsMatch(a: number, b: number): boolean {
-  return Math.abs(a - b) <= Math.max(SAME_DURATION_MINUTES, Math.max(a, b) * SAME_DURATION_RATIO);
+// Twee bereiken van minuten raken elkaar, met een marge van vijf minuten of tien procent.
+export function durationsMatch(a: Pick<Moment, 'minMinutes' | 'maxMinutes'>, b: Pick<Moment, 'minMinutes' | 'maxMinutes'>): boolean {
+  const margin = Math.max(SAME_DURATION_MINUTES, Math.max(a.maxMinutes, b.maxMinutes) * SAME_DURATION_RATIO);
+  return a.minMinutes <= b.maxMinutes + margin && b.minMinutes <= a.maxMinutes + margin;
 }
 
 // Het begin van een activiteit staat in lokale tijd zonder zone ("2026-10-20T07:30:00"), net
 // als bij het maken van een log (engine/activityImport.ts#activityToDraft).
-export function momentOfActivity(a: Pick<ExternalActivity, 'externalId' | 'start' | 'durationSec'>): Moment {
-  return { externalId: a.externalId, startMs: new Date(a.start).getTime(), minutes: a.durationSec / 60 };
+export function momentOfActivity(a: Pick<ExternalActivity, 'externalId' | 'start' | 'durationSec' | 'elapsedSec' | 'kind'>): Moment {
+  const minutes = a.durationSec / 60;
+  const total = a.elapsedSec !== undefined && a.elapsedSec > a.durationSec ? a.elapsedSec / 60 : minutes;
+  return { externalId: a.externalId, startMs: new Date(a.start).getTime(), minMinutes: minutes, maxMinutes: total, strength: a.kind === 'strength' };
+}
+
+// Een log uit MacroFactor zonder tijd krijgt 12:00 als begin (engine/macrofactorImport.ts): dat is
+// een schatting, geen moment om mee te vergelijken.
+function hasGuessedTime(l: Pick<SessionLog, 'externalId'>, startMs: number): boolean {
+  if (!l.externalId?.startsWith('macrofactor:')) return false;
+  const d = new Date(startMs);
+  return d.getHours() === 12 && d.getMinutes() === 0 && d.getSeconds() === 0;
 }
 
 // Een log weet wanneer hij klaar was en hoe lang hij duurde. Alleen een log met een bron-id
 // telt hier: een training die je met de hand invulde koppelt de gewone voorstelronde
 // (engine/activityImport.ts#pairWithManualLogs).
-export function momentOfLog(l: Pick<SessionLog, 'externalId' | 'completedAt' | 'durationMinutes'>): Moment | undefined {
+export function momentOfLog(l: Pick<SessionLog, 'externalId' | 'completedAt' | 'durationMinutes' | 'type'>): Moment | undefined {
   if (!l.externalId) return undefined;
   const end = Date.parse(l.completedAt);
   if (!Number.isFinite(end) || !(l.durationMinutes > 0)) return undefined;
-  return { externalId: l.externalId, startMs: end - l.durationMinutes * 60_000, minutes: l.durationMinutes };
+  const startMs = end - l.durationMinutes * 60_000;
+  if (hasGuessedTime(l, startMs)) return undefined;
+  return { externalId: l.externalId, startMs, minMinutes: l.durationMinutes, maxMinutes: l.durationMinutes, strength: l.type === 'strength' };
 }
 
 export function isSameMoment(a: Moment, b: Moment): boolean {
-  return Math.abs(a.startMs - b.startMs) <= SAME_START_MINUTES * 60_000 && durationsMatch(a.minutes, b.minutes);
+  return a.strength === b.strength && Math.abs(a.startMs - b.startMs) <= SAME_START_MINUTES * 60_000 && durationsMatch(a, b);
 }
 
 // De tegenhanger uit een andere bron: zelfde moment, ander begin van het id.
 const twinIn = (m: Moment, others: readonly Moment[]) => others.some((o) => sourcePrefix(o.externalId) !== sourcePrefix(m.externalId) && isSameMoment(m, o));
 
 // De activiteiten die als voorstel of om af te vinken in aanmerking komen. `primary` (intervals.icu)
-// blijft, behalve wat al als log uit een andere bron bestaat. `secondary` (Health Connect) valt ook
+// blijft, behalve wat al als log uit Health Connect bestaat. `secondary` (Health Connect) valt ook
 // weg als intervals.icu dezelfde activiteit heeft, in de recente lijst of in `alsoKnown` (de
-// oudere lijst voor "Garmin is leidend"). Een log uit dezelfde bron laat de activiteit staan:
-// dat ziet de gewone voorstelronde aan het id.
+// oudere lijst voor "Garmin is leidend"), of als er al een log uit een andere bron is. Een log uit
+// dezelfde bron laat de activiteit staan: dat ziet de gewone voorstelronde aan het id.
 export function offeredActivities(
   primary: readonly ExternalActivity[],
   secondary: readonly ExternalActivity[],

@@ -115,7 +115,8 @@ export async function clearWellness(): Promise<void> {
 export async function pruneWellness(use: WatchUse): Promise<void> {
   await MetaRepo.set(COVERED_KEY, undefined);
   await MetaRepo.set(TRIED_KEY, undefined);
-  const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`));
+  // Ook de ochtenden uit Health Connect: dezelfde keuzes gelden daar (storage/healthConnect.ts).
+  const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`) || m.id.startsWith('health-connect:'));
   const kept = filterRecovery(ours, use);
   const keptIds = new Set(kept.map((m) => m.id));
   for (const m of ours) if (!keptIds.has(m.id)) await RecoveryMetricsRepo.delete(m.id);

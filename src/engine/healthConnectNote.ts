@@ -2,8 +2,7 @@
 // (docs/beslissingen/2026-11-02-health-connect.md). Elke uitkomst is zichtbaar: aan met wat er
 // binnenkwam, aan maar nog niets gelukt, of uit met de reden. Puur: geen React, geen opslag.
 
-import type { HealthEnableResult } from '../storage/healthConnect';
-import type { HealthKind } from '../integrations/healthConnect';
+import type { HealthEnableResult, HealthKind } from '../models/healthConnect';
 
 export interface HealthNote {
   text: string;

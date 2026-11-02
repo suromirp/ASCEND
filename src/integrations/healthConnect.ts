@@ -16,23 +16,21 @@ import type { HealthSample, Workout, WorkoutType } from '@capgo/capacitor-health
 import type { DataSourceAdapter, DateRange } from './types';
 import type { ExternalActivity, ExternalActivityKind } from '../engine/activityImport';
 import type { RecoveryMetric } from '../models/metrics';
+import type { HealthConnectErrorKind, HealthKind } from '../models/healthConnect';
 import { countedSportOfExternalType, type CountedSportId } from '../data/sports';
 import { parseISODate, toISODate } from '../utils/dates';
 import { withTimeout } from '../utils/withTimeout';
 
 export const HEALTH_CONNECT_ADAPTER_ID = 'health-connect';
 
-// Wat ASCEND mag vragen, in de namen van de plugin. Precies de leesrechten in
-// android/app/src/main/AndroidManifest.xml.
-export type HealthKind = 'workouts' | 'distance' | 'sleep' | 'restingHeartRate' | 'heartRateVariability';
+// Wat ASCEND mag vragen (models/healthConnect.ts).
+export type { HealthConnectErrorKind, HealthKind } from '../models/healthConnect';
 export const HEALTH_KINDS: readonly HealthKind[] = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability'];
 export type HealthSampleKind = Exclude<HealthKind, 'workouts'>;
 
 export type HealthAvailability = 'ready' | 'not-installed' | 'needs-update' | 'web';
 
 // --- fouten ----------------------------------------------------------------------------
-
-export type HealthConnectErrorKind = 'web' | 'not-installed' | 'needs-update' | 'denied' | 'timeout' | 'failed';
 
 const MESSAGES: Record<HealthConnectErrorKind, string> = {
   web: 'Health Connect werkt alleen in de Android-app van ASCEND.',
@@ -130,7 +128,10 @@ export function mapHealthWorkout(w: Workout, distances: readonly HealthSample[] 
   const known = WORKOUT_KIND[w.workoutType];
   const kind = known?.kind ?? 'other';
   const countedSport: CountedSportId | undefined = known?.shared ? countedSportOfExternalType(known.shared) : undefined;
-  const distance = positive(w.totalDistance) ?? distanceOf(w, distances);
+  // Eerst de afstanden van dezelfde bron (distanceOf). `totalDistance` van de plugin telt alle bronnen
+  // samen en komt alleen als ook het recht op actieve calorieën er is; dat vraagt ASCEND niet, dus in
+  // de praktijk ontbreekt hij. Is hij er toch, dan is hij alleen de terugvaloptie.
+  const distance = distanceOf(w, distances) ?? positive(w.totalDistance);
   return {
     externalId: `${HEALTH_CONNECT_ADAPTER_ID}:${w.platformId || w.startDate}`,
     source: 'health-connect',

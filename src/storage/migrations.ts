@@ -53,7 +53,7 @@ import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, Terrai
 import type { BestEffort, ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, PlannedSession, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
 import { isRecord } from '../utils/guards';
 import type { ExternalActivity } from '../engine/activityImport';
-import type { HealthConnectErrorKind, HealthKind } from '../integrations/healthConnect';
+import type { HealthConnectErrorKind, HealthKind } from '../models/healthConnect';
 import type { HealthConnectState } from './healthConnect';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
