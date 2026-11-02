@@ -113,6 +113,13 @@ export let pendingRepairs: ProgramHorizonResult['repairs'];
 export function clearPendingRepairs() {
   pendingRepairs = undefined;
 }
+// Every row the syncs since the last refresh wrote or took off the plan (ProgramHorizonResult.touchedIds).
+let pendingTouched = new Set<string>();
+export function takeSyncTouched(): string[] {
+  const out = [...pendingTouched];
+  pendingTouched = new Set();
+  return out;
+}
 
 // The stored phases are part of the key, so a reset or an import that
 // rewrites the program also triggers a sync.
@@ -171,6 +178,7 @@ export function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Prom
       if ((await currentKey()) === lastHorizonKey) return false;
       await prime?.();
       const result = await syncProgramHorizon();
+      for (const id of result.touchedIds ?? []) pendingTouched.add(id);
       // Two syncs before one refresh: both notices count.
       if (result.repairs) pendingRepairs = pendingRepairs
         ? { lines: [...pendingRepairs.lines, ...result.repairs.lines], before: [...pendingRepairs.before, ...result.repairs.before.filter((b) => !pendingRepairs!.before.some((p) => p.id === b.id))], stored: [...pendingRepairs.stored, ...result.repairs.stored.filter((b) => !pendingRepairs!.stored.some((p) => p.id === b.id))], addedIds: [...(pendingRepairs.addedIds ?? []), ...(result.repairs.addedIds ?? [])] }

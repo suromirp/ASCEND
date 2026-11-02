@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlannedSession } from '../models/training';
-import { mergeWritten, sameRow, undoBlocked } from './undoGuard';
+import { refreshWritten, sameRow, undoBlockReason, undoBlocked } from './undoGuard';
 
 // Nagemaakte rijen.
 const lock = { by: 'user' as const, at: '2026-10-29T08:00:00.000Z' };
@@ -57,14 +57,32 @@ describe('undoBlocked', () => {
   });
 });
 
-describe('mergeWritten', () => {
-  it('neemt wat de weekcontrole erna schreef over, en wat hij weghaalde valt weg', () => {
+describe('undoBlockReason', () => {
+  const change = { before: [was], addedIds: [], written: [moved] };
+  it('zegt waarom: een log, jouw eigen wijziging of de planning', () => {
+    expect(undoBlockReason({ ...change, current: rows(moved), loggedIds: new Set() })).toBeNull();
+    expect(undoBlockReason({ ...change, current: rows(moved), loggedIds: new Set([was.id]) })).toBe('logged');
+    expect(undoBlockReason({ ...change, current: rows({ ...moved, scheduledDate: '2026-11-01', lock: { by: 'user', at: '2026-10-29T09:00:00.000Z' } }), loggedIds: new Set() })).toBe('yours');
+    expect(undoBlockReason({ ...change, current: rows({ ...moved, plannedMinutes: 30 }), loggedIds: new Set() })).toBe('plan');
+    expect(undoBlockReason({ ...change, current: rows(), loggedIds: new Set() })).toBe('plan');
+  });
+});
+
+describe('refreshWritten', () => {
+  it('neemt de rijen die de planning raakte over zoals ze nu zijn, en wat weg is valt eruit', () => {
     const repaired = { ...moved, plannedMinutes: 40 };
-    expect(mergeWritten([moved, added], [moved.id, added.id], [repaired])).toEqual([repaired]);
-    expect(mergeWritten([moved], ['p9'], [{ ...added, id: 'p9' }])).toEqual([moved, { ...added, id: 'p9' }]);
+    expect(refreshWritten([moved, added], [moved.id, added.id], rows(repaired))).toEqual([repaired]);
+    expect(refreshWritten([moved], ['p9'], rows({ ...added, id: 'p9' }))).toEqual([moved, { ...added, id: 'p9' }]);
   });
 
-  it('zonder vastgelegde rijen blijft het zonder', () => {
-    expect(mergeWritten(undefined, ['p1'], [moved])).toBeUndefined();
+  it('een melding zonder vastgelegde rijen begint leeg', () => {
+    expect(refreshWritten(undefined, ['p1'], rows(moved))).toEqual([moved]);
+  });
+
+  it('een rij die de weekcontrole bij een melding zonder rijen zette en die jij daarna verandert, gaat niet blind terug', () => {
+    // Melding zonder rijen (koppelen), daarna zet de weekcontrole een rij recht die erbij komt.
+    const written = refreshWritten([], [was.id], rows(moved));
+    const yours = { ...moved, scheduledDate: '2026-11-02', lock: { by: 'user' as const, at: '2026-10-30T08:00:00.000Z' } };
+    expect(undoBlockReason({ before: [was], addedIds: [], written, current: rows(yours), loggedIds: new Set() })).toBe('yours');
   });
 });

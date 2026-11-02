@@ -447,14 +447,15 @@ function TodayContent() {
         <WeekStrip weekStart={weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
       </SkyBand>
 
-      <MorningDeepLink />
-
       {/* Kaarten rond de missie in een vaste volgorde, hoogstens zoveel erboven als je koos (engine/todayCards.ts,
           docs/beslissingen/2026-11-01-vandaag-volgorde.md). De missie staat op een vaste plek tussen twee lijsten:
           verdwijnt er een kaart, dan verhuist de missie zelf niet. */}
       {arrangement.above.map(around)}
       <div className="contents" data-today-mission="" data-above-limit={String(aboveLimit)}>{missionCard}</div>
       {arrangement.below.map(around)}
+      {/* De snelkoppeling naar de ochtendvraag: alleen een blad, geen kaart. Onder de missie, zodat niets voor de
+          missie staat wat niet in de rij hoort (docs/beslissingen/2026-11-02-vandaag-en-ongedaan.md). */}
+      <MorningDeepLink />
 
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />

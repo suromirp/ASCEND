@@ -12,13 +12,16 @@ import type { RecentPlanChange } from '../models/planChange';
 import type { PlannedSession } from '../models/training';
 import { DEFAULT_GOAL_ENGINE_CONFIG, type GoalEngineConfig } from '../models/goalEngineConfig';
 import type { StoredResponse } from '../engine/learning';
-import { undoBlocked } from '../engine/undoGuard';
+import { undoBlockReason } from '../engine/undoGuard';
+import { unlinkLog } from '../engine/missedTraining';
 import { getDB } from './databaseSchema';
 import { withDerivedWeek } from './databaseRepos';
 import { DEFAULT_SETTINGS, type AppSettings } from './databaseSettings';
 import { makeId } from '../utils/id';
 
 export const PLAN_UNDO_STALE = 'Een van de trainingen is na deze wijziging nog veranderd of gelogd. Ongedaan maken kan niet meer. Kijk in je week wat er nu staat.';
+// Geen log en niets van jou: de planning ging intussen verder.
+export const PLAN_UNDO_PLANNED = 'De planning is intussen bijgewerkt. Ongedaan maken kan niet meer.';
 
 export interface UndoOutcome {
   settings?: AppSettings;
@@ -49,10 +52,11 @@ export async function undoPlanChangeNow(change: RecentPlanChange): Promise<UndoO
   const linked = new Set(change.linkedLogIds ?? []);
   const loggedIds = new Set(logs.filter((l) => !linked.has(l.id)).map((l) => l.plannedSessionId).filter((id): id is string => !!id));
   const current = new Map(rows.filter((r): r is PlannedSession => !!r).map((r) => [r.id, r]));
-  if (undoBlocked({ before: change.before, addedIds: change.addedIds, written: change.written, current, loggedIds })) {
+  const blocked = undoBlockReason({ before: change.before, addedIds: change.addedIds, written: change.written, current, loggedIds });
+  if (blocked) {
     tx.abort();
     await tx.done.catch(() => undefined);
-    throw new Error(PLAN_UNDO_STALE);
+    throw new Error(blocked === 'plan' ? PLAN_UNDO_PLANNED : PLAN_UNDO_STALE);
   }
   const out: UndoOutcome = {};
   try {
@@ -88,6 +92,11 @@ export async function undoPlanChangeNow(change: RecentPlanChange): Promise<UndoO
     const keep = change.trigger === 'plan_check' ? { lock: { by: 'user' as const, at: new Date().toISOString() } } : {};
     for (const session of change.before) await sessions.put(withDerivedWeek({ ...session, ...keep }));
     for (const id of change.addedIds) await sessions.delete(id);
+    // A log this change linked to its planned training loses only that link again, in the same transaction.
+    for (const id of change.linkedLogIds ?? []) {
+      const log = logs.find((l) => l.id === id);
+      if (log?.linkedLater) await tx.objectStore('sessionLogs').put(unlinkLog(log));
+    }
     const now = new Date().toISOString();
     await tx.objectStore('planChangeProposals').put({
       id: makeId('planchange'),

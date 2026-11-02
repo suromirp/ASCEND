@@ -30,28 +30,40 @@ export interface UndoGuardInput {
   loggedIds: ReadonlySet<string>;
 }
 
-export function undoBlocked(input: UndoGuardInput): boolean {
+// Waarom het niet meer kan: een log, iets wat jij daarna zelf veranderde (een rij met jouw slot van na de
+// wijziging), of de planning die intussen verder ging. Null: het kan.
+export type UndoBlock = 'logged' | 'yours' | 'plan';
+
+export function undoBlockReason(input: UndoGuardInput): UndoBlock | null {
   const ids = new Set([...input.before.map((s) => s.id), ...input.addedIds]);
-  if (ids.size === 0) return false;
-  for (const id of ids) if (input.loggedIds.has(id)) return true;
-  if (!input.written) return false;
+  if (ids.size === 0) return null;
+  for (const id of ids) if (input.loggedIds.has(id)) return 'logged';
+  if (!input.written) return null;
   const written = new Map(input.written.map((s) => [s.id, s]));
+  let reason: UndoBlock | null = null;
   for (const id of ids) {
     const w = written.get(id);
     const now = input.current.get(id);
-    if (w ? !sameRow(now, w) : !!now) return true;
+    if (w ? sameRow(now, w) : !now) continue;
+    if (now?.lock?.by === 'user' && (now.lock.at !== w?.lock?.at || w?.lock?.by !== 'user')) return 'yours';
+    reason = 'plan';
   }
-  return false;
+  return reason;
 }
 
-// De weekcontrole zette direct na je wijziging iets recht en dat hoort bij dezelfde melding: wat hij schreef
-// vervangt de vastgelegde rijen met hetzelfde id, en wat hij weghaalde valt eruit.
-export function mergeWritten(
+export const undoBlocked = (input: UndoGuardInput): boolean => undoBlockReason(input) !== null;
+
+// De planning schreef rijen opnieuw of haalde ze weg (ProgramHorizonResult.touchedIds), of de weekcontrole zette
+// iets recht dat bij de melding komt: die rijen gelden nu zoals ze nu zijn, zodat een terechte undo niet geweigerd
+// wordt omdat de planning verder ging. Een melding zonder vastgelegde rijen begint leeg, zodat een rij die erbij kwam
+// en die jij daarna veranderde nooit blind teruggaat.
+export function refreshWritten(
   written: readonly PlannedSession[] | undefined,
-  repairedIds: readonly string[],
-  repairedNow: readonly PlannedSession[],
-): PlannedSession[] | undefined {
-  if (!written) return undefined;
-  const touched = new Set(repairedIds);
-  return [...written.filter((s) => !touched.has(s.id)), ...repairedNow];
+  ids: Iterable<string>,
+  now: ReadonlyMap<string, PlannedSession>,
+): PlannedSession[] {
+  const touched = new Set(ids);
+  const kept = (written ?? []).filter((s) => !touched.has(s.id));
+  const fresh = [...touched].map((id) => now.get(id)).filter((s): s is PlannedSession => !!s);
+  return [...kept, ...fresh];
 }

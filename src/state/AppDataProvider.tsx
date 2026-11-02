@@ -64,6 +64,7 @@ import type { AdviceResponse, AppData } from './appDataTypes';
 import { bootMigrationListeners, currentBootMigration, useBoot } from './boot';
 import {
   clearPendingRepairs,
+  takeSyncTouched,
   failureNotice,
   pendingRepairs,
   primePlanningRegisters,
@@ -83,7 +84,7 @@ import { useHorizonActions } from './horizonActions';
 import { useBodyAndLeave } from './bodyAndLeave';
 import { useAdviceAndWeek } from './adviceAndWeek';
 import { snapshotWritten } from '../storage/undoPlanChange';
-import { mergeWritten } from '../engine/undoGuard';
+import { refreshWritten } from '../engine/undoGuard';
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -190,24 +191,36 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // The week check put something right: say what, with undo.
     const repaired = pendingRepairs;
     clearPendingRepairs();
+    // Every row the syncs wrote or took off since the last read: the notice of your last change takes them as they
+    // are now, so its undo is not refused because the planning moved on (engine/undoGuard.ts#refreshWritten).
+    const syncTouched = takeSyncTouched();
+    const repairedIds = repaired ? [...repaired.before, ...repaired.stored].map((s) => s.id).concat(repaired.addedIds ?? []) : [];
+    const touchedIds = new Set([...syncTouched, ...repairedIds]);
+    const rowsNow = touchedIds.size > 0 ? new Map((await snapshotWritten([], [...touchedIds])).map((s) => [s.id, s])) : new Map<string, PlannedSession>();
+    const noticeIds = (c: RecentPlanChange) => [...c.before.map((s) => s.id), ...c.addedIds].filter((x) => touchedIds.has(x));
     // Not on a fresh install: there is nothing of yours to put right yet.
     if (repaired && logs.length > 0) {
       const id = makeId('plancheck');
       const why = 'Na elke wijziging controleert ASCEND je weken op vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat het systeem zelf plande, zet het dan recht. Wat jij zelf zette en je test of wedstrijd verschuift het nooit; daarvoor krijg je een voorstel.';
       const now = new Date().toISOString();
       await PlanChangeProposalsRepo.put({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences: repaired.lines.join('; '), explanation: why, createdAt: now, resolvedAt: now, resolution: 'accepted' });
-      // What the check wrote, read right now: undo goes back only while it is still so (engine/undoGuard.ts).
-      const repairedIds = [...new Set([...repaired.before, ...repaired.stored].map((s) => s.id).concat(repaired.addedIds ?? []))];
-      const repairedNow = await snapshotWritten([...repaired.before, ...repaired.stored], repaired.addedIds ?? []);
       setRecentChange((prev) => {
         // Right after a change of yours (a move, an Akkoord): the repairs
         // join that notice, so its undo still works and puts everything
         // back as it was before your change.
-        if (prev && prev.trigger !== 'plan_check' && Date.now() - Date.parse(prev.createdAt) < 15_000) {
+        if (prev && !prev.failed && prev.trigger !== 'plan_check' && Date.now() - Date.parse(prev.createdAt) < 15_000) {
           const known = new Set(prev.before.map((s) => s.id));
-          return { ...prev, lines: [...prev.lines, ...repaired.lines], before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))], addedIds: [...prev.addedIds, ...(repaired.addedIds ?? [])], written: mergeWritten(prev.written, repairedIds, repairedNow) };
+          const joined = { ...prev, lines: [...prev.lines, ...repaired.lines], before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))], addedIds: [...prev.addedIds, ...(repaired.addedIds ?? [])] };
+          return { ...joined, written: refreshWritten(prev.written, noticeIds(joined), rowsNow) };
         }
-        return { id, trigger: 'plan_check', title: 'Planning bijgewerkt', lines: repaired.lines, why, before: repaired.before, addedIds: repaired.addedIds ?? [], written: repairedNow, createdAt: now };
+        const notice: RecentPlanChange = { id, trigger: 'plan_check', title: 'Planning bijgewerkt', lines: repaired.lines, why, before: repaired.before, addedIds: repaired.addedIds ?? [], createdAt: now };
+        return { ...notice, written: refreshWritten([], noticeIds(notice), rowsNow) };
+      });
+    } else if (syncTouched.length > 0) {
+      setRecentChange((prev) => {
+        if (!prev || prev.failed) return prev;
+        const ids = noticeIds(prev);
+        return ids.length === 0 ? prev : { ...prev, written: refreshWritten(prev.written, ids, rowsNow) };
       });
     }
   }, []);

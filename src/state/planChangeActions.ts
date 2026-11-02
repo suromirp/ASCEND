@@ -10,7 +10,7 @@ import { unlinkLogsNow } from '../storage/missedTraining';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { describeChanges } from '../engine/changeImpact';
 import { armFlip, disarmFlip } from '../utils/flipDom';
-import { PLAN_UNDO_STALE, snapshotWritten, undoPlanChangeNow } from '../storage/undoPlanChange';
+import { PLAN_UNDO_PLANNED, PLAN_UNDO_STALE, snapshotWritten, undoPlanChangeNow } from '../storage/undoPlanChange';
 import type { Advice } from '../engine/adviceEngine';
 import { syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
 import { restoreAlignments } from '../storage/watchAlign';
@@ -169,8 +169,16 @@ export function usePlanChangeActions(deps: {
     // come back (storage/watchAlign.ts), and that is the undo.
     const rowsTouched = recentChange.before.length > 0 || recentChange.addedIds.length > 0;
     if (!rowsTouched && (recentChange.linkedLogIds?.length || recentChange.alignedLogIds?.length)) {
-      if (recentChange.linkedLogIds?.length) await unlinkLogsNow(recentChange.linkedLogIds);
-      if (recentChange.alignedLogIds?.length) await restoreAlignments(recentChange.alignedLogIds);
+      try {
+        if (recentChange.linkedLogIds?.length) await unlinkLogsNow(recentChange.linkedLogIds);
+        if (recentChange.alignedLogIds?.length) await restoreAlignments(recentChange.alignedLogIds);
+      } catch (err) {
+        console.error('Ongedaan maken van de log mislukt:', err);
+        disarmFlip();
+        setRecentChange(failureNotice('Niet teruggezet', 'Er ging iets mis; je training staat zoals hij na de wijziging was.'));
+        await refresh();
+        return;
+      }
       setRecentChange(null);
       bumpPlanRevision();
       await refresh();
@@ -184,13 +192,27 @@ export function usePlanChangeActions(deps: {
       undone = await undoPlanChangeNow(recentChange);
     } catch (err) {
       disarmFlip();
-      setRecentChange(failureNotice('Niet teruggezet', err instanceof Error && err.message === PLAN_UNDO_STALE ? PLAN_UNDO_STALE : 'Er ging iets mis; je planning staat zoals hij na de wijziging was.'));
+      const known = err instanceof Error && (err.message === PLAN_UNDO_STALE || err.message === PLAN_UNDO_PLANNED);
+      if (!known) console.error('Ongedaan maken mislukt:', err);
+      setRecentChange(failureNotice('Niet teruggezet', known ? (err as Error).message : 'Er ging iets mis; je planning staat zoals hij na de wijziging was.'));
       await refresh();
       return;
     }
-    // The link and the hand-made numbers go back once the rows did.
-    if (recentChange.linkedLogIds?.length) await unlinkLogsNow(recentChange.linkedLogIds);
-    if (recentChange.alignedLogIds?.length) await restoreAlignments(recentChange.alignedLogIds);
+    // The link went back in the same transaction; the hand-made numbers of the watch come back once the rows did.
+    // Does that fail, the notice says so: the plan is back, the numbers are not.
+    if (recentChange.alignedLogIds?.length) {
+      try {
+        await restoreAlignments(recentChange.alignedLogIds);
+      } catch (err) {
+        console.error('Eigen cijfers terugzetten mislukt:', err);
+        if (undone.settings) setSettings(undone.settings);
+        if (undone.config) setGoalEngineConfig(undone.config);
+        if (undone.responses) setAdviceResponses(undone.responses);
+        setRecentChange(failureNotice('Half teruggezet', 'Je planning staat weer zoals hij was, maar je eigen cijfers kwamen niet terug. Zet ze terug via Terugzetten bij Garmin koppelen.'));
+        await refresh();
+        return;
+      }
+    }
     if (undone.settings) setSettings(undone.settings);
     if (undone.config) setGoalEngineConfig(undone.config);
     if (undone.responses) setAdviceResponses(undone.responses);

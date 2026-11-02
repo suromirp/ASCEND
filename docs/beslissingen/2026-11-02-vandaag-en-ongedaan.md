@@ -10,7 +10,9 @@ precies is wat de wijziging schreef, wat ze weghaalde nog weg is, en niets ervan
 alles wat via `undoPlanChangeNow` loopt: verplaatsen, overslaan, inhalen, Toch doen, Niet gedaan?, een voorstel met
 Akkoord, de automatische weekplanning en de weekcontrole. Klopt het niet meer, dan verandert er niets, ook niet aan de
 instelling, het doel of het programma erachter, en de melding zegt "Niet teruggezet" met "Ongedaan maken kan niet
-meer. Kijk in je week wat er nu staat." Zoals bij Ruilen en Week opnieuw plannen.
+meer. Kijk in je week wat er nu staat." Is er geen log en niets van jou de reden, maar ging de planning zelf verder,
+dan zegt hij "De planning is intussen bijgewerkt. Ongedaan maken kan niet meer." Zoals bij Ruilen en Week opnieuw
+plannen.
 
 Op Vandaag krijgen de etappe-regel en de vraag "Je deed padel. Hoe telt dit?" een vaste plek in dezelfde rij als de
 andere kaarten rond de missie (`engine/todayCards.ts`): de etappe-regel na het advies (vandaag), de vraag over een sport
@@ -19,13 +21,24 @@ Vandaag-scherm.
 
 Hoe het werkt:
 - Direct na het schrijven leest de app de geraakte rijen terug (`storage/undoPlanChange.ts#snapshotWritten`) en bewaart
-  die in de melding (`RecentPlanChange.written`, alleen in het geheugen). Zet de weekcontrole er binnen vijftien
-  seconden iets bij recht, dan neemt de melding ook wat de controle schreef over (`engine/undoGuard.ts#mergeWritten`).
+  die in de melding (`RecentPlanChange.written`, alleen in het geheugen). Een melding zonder rijen (koppelen,
+  horlogecijfers, ziek zonder planwijziging, een notitie) krijgt `written: []`, zodat een rij die er later bij komt
+  altijd gecontroleerd wordt.
+- De planning (`syncProgramHorizon`) geeft elke rij terug die ze schreef of weghaalde (`touchedIds`: het
+  wedstrijdblok, WEEK-START, een teruggezette test, de rustdag opnieuw gelegd, een losse tochtdag). Na elke sync leest
+  de melding die rijen opnieuw (`engine/undoGuard.ts#refreshWritten`), en zet de weekcontrole er binnen vijftien
+  seconden iets bij recht, dan komt dat bij dezelfde melding. Zo wordt een terechte undo niet geweigerd omdat de
+  planning verder ging; Ongedaan maken zet dan alles terug zoals het voor je wijziging was.
+- Waarom het niet meer kan (`undoBlockReason`): een log, een rij met jouw slot van na de wijziging (jij), of anders de
+  planning.
 - `undoPlanChangeNow` kijkt en schrijft in één transactie over de trainingen, de logs, de instellingen, de doelen, het
   programma, het krachtblok en het wijzigingslog (`engine/undoGuard.ts#undoBlocked`). Een rij geldt als gelijk als alle
   velden gelijk zijn; een veld zonder waarde telt niet.
 - Een log die de wijziging zelf koppelde (het koppelvoorstel) telt niet als gelogd: die koppeling gaat er met
-  Ongedaan maken juist af. Koppeling en horlogecijfers gaan pas terug nadat de rijen terug zijn.
+  Ongedaan maken juist af, in dezelfde transactie. De eigen cijfers van een training met horlogecijfers gaan daarna
+  terug; lukt dat niet, dan zegt de melding "Half teruggezet".
+- Instellingen, doel en programma achter een wijziging worden niet gecontroleerd op wat er daarna aan veranderde: ze
+  gaan terug zoals ze voor de wijziging waren. Alleen de trainingen en de logs houden een undo tegen.
 - Een melding van voor deze regel, zonder vastgelegde rijen, houdt alleen een log tegen.
 - De rustige regels (`quiet` in `TODAY_CARD_RANK`) weten zelf of ze er zijn; Vandaag geeft ze altijd mee
   (`QUIET_TODAY_LINES`) en ze staan onder de missie op hun plek. Minder tijd vandaag zit in het menu van de missiekaart
@@ -35,7 +48,8 @@ Hoe het werkt:
   `data-today-safety`), de missie in `data-today-mission` met het maximum. `kaart.mjs` telt de zichtbare kaarten voor de
   missie met dezelfde regel als `aboveMissionOverflow` en schrijft alleen bij te veel een regel; de invariant
   "Hoogstens het afgesproken aantal kaarten boven de missie" leest die. Een kaart die buiten de rij om boven de missie
-  komt, telt ook.
+  komt, telt ook. De snelkoppeling naar de ochtendvraag (`MorningDeepLink`) is alleen een blad en staat daarom onder
+  de missie.
 - Niets op Vandaag wordt ingeklapt: wat onder de missie staat blijft open, dus ziek, pijn en waarschuwingen staan nooit
   achter een tik.
 

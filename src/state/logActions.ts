@@ -216,6 +216,7 @@ export function useLogActions(deps: {
         why: 'Garmin is leidend: voor een training die je zelf invulde nam ASCEND de lengte, afstand, hartslag en hoogtemeters van je horloge over. Wat jij zelf invulde, zoals gevoel, inspanning en pijn, bleef staan. Je eigen cijfers zijn bewaard; met Ongedaan maken, of later via Terugzetten bij Garmin koppelen, komen ze terug.',
         before: [],
         addedIds: [],
+        written: [],
         alignedLogIds: outcome.logIds,
         createdAt: now,
       });
@@ -290,6 +291,7 @@ export function useWatchAndSourceActions(deps: {
         why: 'Je gaf Akkoord: de training van je horloge of MacroFactor hoort bij deze geplande training. Alleen de koppeling is nieuw; de cijfers van de log blijven zoals ze waren. Met Ongedaan maken staat hij weer los.',
         before: [],
         addedIds: [],
+        written: [],
         linkedLogIds: [logId],
         createdAt: now,
       });

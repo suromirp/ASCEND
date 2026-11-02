@@ -249,6 +249,7 @@ export function useBodyAndLeave(deps: {
       why: 'Alleen de notitie van je periode is anders.',
       before: [],
       addedIds: [],
+      written: [],
       settingsBefore: { leavePeriods: current },
       createdAt: new Date().toISOString(),
     });
