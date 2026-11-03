@@ -20,7 +20,7 @@ import { REPS_ROOM } from './prescriptionCheck';
 import { DEFAULT_RIR, estimateSet, expectedReps, FATIGUE_PER_SET, formatWeight } from './strengthModel';
 import type { GymProfile, StackWeights, WorkSetsMode } from './strengthSettings';
 import { formatNumberNL } from '../utils/number';
-import { candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
+import { candidatesFor, loadFromExternal, profileFor, type Candidate } from './strengthWeights';
 
 export interface AdjustContext {
   bodyKg?: number;
@@ -79,21 +79,28 @@ export function suggestLighter(ex: WorkoutExercise, rowId: string, ctx: AdjustCo
     const rir = r.target.rir ?? DEFAULT_RIR;
     const now = loadFromExternal(exercise, r.weightKg, ctx.bodyKg, ex.dumbbellTotal);
     if (now === undefined) continue;
-    let pick = -1;
-    for (let j = candidates.length - 1; j >= 0; j--) {
-      if (expectedReps(strength, candidates[j].loadKg, rir) >= r.target.repsLow) {
-        pick = j;
-        break;
-      }
-    }
-    if (pick < 0) continue;
-    const c = candidates[pick];
-    // Alleen lichter, en alleen als de herhalingen binnen het bereik blijven.
-    if (c.loadKg >= now - 1e-9) continue;
-    if (!r.target.failure && !r.target.open && expectedReps(strength, c.loadKg, rir) > r.target.repsHigh + REPS_ROOM) continue;
-    items.push({ rowId: r.id, weightKg: c.externalKg });
+    const c = lighterPick(strength, candidates, r.target, rir, now);
+    if (c) items.push({ rowId: r.id, weightKg: c.externalKg });
   }
   return items.length > 0 ? { fromRowId: rowId, items } : undefined;
+}
+
+// Het lichtere gewicht voor één open set bij deze kracht: het zwaarste gewicht waarmee je de onderkant
+// nog haalt, alleen als het lichter is dan nu en de herhalingen binnen het bereik blijven (met de speling
+// van raak). Ook "Forge rekent mee" (engine/forgeReckon.ts) kiest hiermee, zodat beide hetzelfde beslissen.
+export function lighterPick(strength: number, candidates: Candidate[], target: WorkoutRow['target'], rir: number, nowLoad: number): Candidate | undefined {
+  let pick = -1;
+  for (let j = candidates.length - 1; j >= 0; j--) {
+    if (expectedReps(strength, candidates[j].loadKg, rir) >= target.repsLow) {
+      pick = j;
+      break;
+    }
+  }
+  if (pick < 0) return undefined;
+  const c = candidates[pick];
+  if (c.loadKg >= nowLoad - 1e-9) return undefined;
+  if (!target.failure && !target.open && expectedReps(strength, c.loadKg, rir) > target.repsHigh + REPS_ROOM) return undefined;
+  return c;
 }
 
 export interface NoFit {

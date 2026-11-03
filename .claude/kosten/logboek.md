@@ -169,3 +169,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Ochtendkaart compact, Sherpa sonnet 193k (limiet onderbrak), Warden sonnet 38k groen met voorwaarde; live
 - 2026-11-03, Testloop in detail, Sherpa opus 520k (3 rondes, probe op echte back-up vond 2 fouten), Warden opus 220k groen; live
 - 2026-11-03, Forge tijdsgrens en Ruilen, Sherpa opus 235k (4 rondes, 3 door probes op echte data), Warden opus 2 keuringen; live
+- 2026-11-03, Forge rekent mee (3 wensen) met herstel, Sherpa, opus (ontwikkelaar), 300k, 54 min, 1, Warden vond Terugzetten na herladen
+- 2026-11-03, Review Forge rekent mee, Warden, opus (reviewer), 94k, 5 min, 0

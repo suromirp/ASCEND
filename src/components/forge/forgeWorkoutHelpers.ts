@@ -37,6 +37,8 @@ export interface BlockActions {
   rir: (slot: string, rowId: string) => void;
   add: (slot: string) => void;
   lighter: (slot: string) => void;
+  // Terugzetten van de stap omhoog die Forge rekent mee zette.
+  unraise: (slot: string) => void;
   keep: (slot: string) => void;
   fill: (slot: string) => void;
   keepFit: (slot: string) => void;
