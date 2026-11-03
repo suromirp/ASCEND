@@ -13,7 +13,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { exerciseById } from '../../data/exercises';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { canRemoveRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn, type DroppedRow } from '../../engine/forgeRows';
-import { isAddedSlot, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
+import { isAddedSlot, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
+import { learnedMinutesPerSet, predictDuration } from '../../engine/durationLearning';
+import { capForTemplate, capSlots, prescribedSets, resolveTimeCap, timeCapLine } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { swapPreference, swapReason } from '../../engine/mountainMuscles';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
@@ -215,7 +217,19 @@ function ForgeWorkoutInner({
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   // A program from MacroFactor gives the exercises of the week of this training, and an exercise you added after a
   // proposal with Akkoord comes behind them (engine/forgeSlots.ts, the same list the week review reads).
-  const slots = exercisesForVariant({ ...template, exercises: forgeSlotsFor(template, settings.strengthModel, date) }, initialVariant);
+  const allSlots = forgeSlotsFor(template, settings.strengthModel, date);
+  // Hoogstens per krachttraining (engine/forgeTimeCap.ts): met de geleerde tijd per set gaat er eerst bijwerk af
+  // als de training langer zou duren dan de grens. Alleen de inhoud van deze sessie; de planning blijft zoals hij is.
+  const capped = capSlots({
+    slots: exercisesForVariant({ ...template, exercises: allSlots }, initialVariant),
+    fullSlots: allSlots,
+    fullMinutes: predictDuration(template, sessionLogs, settings.sessionDurationEstimates?.[template.id]).minutes,
+    minutesPerSet: learnedMinutesPerSet(template, sessionLogs, allSlots.reduce((n, x) => n + prescribedSets(x), 0)),
+    cap: capForTemplate(template, resolveTimeCap(settings)),
+  });
+  const slots = capped.slots;
+  // De regel "Ingekort tot ongeveer 60 minuten" zegt wat er bij het openen wegviel, en blijft dan staan.
+  const [capLine] = useState(() => timeCapLine(capped));
 
   const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
   const [restored] = useState(() => {
@@ -867,7 +881,8 @@ function ForgeWorkoutInner({
   );
 
   function swap(slot: string, exerciseId: string | null) {
-    const prescription = effSlots.find((s) => s.id === slot);
+    const current = workout.find((e) => e.slot === slot);
+    const prescription = current && sessionPrescription(effSlots, current);
     if (!prescription) return;
     const state = planStateBefore(ctx, workout, slot);
     const to = exerciseId ? exerciseById(exerciseId) : undefined;
@@ -904,8 +919,9 @@ function ForgeWorkoutInner({
   const rirRow = rirFor ? workout.find((e) => e.slot === rirFor.slot)?.rows.find((r) => r.id === rirFor.rowId) : undefined;
 
   const bottomPad = dockH > 0 ? dockH + (rest && !readOnly ? 70 : 0) + 16 : rest ? 120 : 48;
-  const intro = (legLine || readOnly) && (
+  const intro = (legLine || readOnly || capLine) && (
             <div className="flex flex-col gap-1 px-4 pt-3">
+              {capLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-ingekort">{capLine}</p>}
               {preview && <p className="text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{previewDayLine(date, program)}</p>}
               {preview ? (
                 <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo staat hij klaar. Afvinken kan op de dag zelf.</p>
@@ -1083,7 +1099,7 @@ function ForgeWorkoutInner({
                   </SheetGroup>
                 )}
                 <SheetGroup title="Oefening">
-                  {!readOnly && (menuEx.swappedFrom ? (
+                  {!readOnly && !!sessionPrescription(effSlots, menuEx) && (menuEx.swappedFrom ? (
                     <MenuRow icon="ruilen" title={`Terug naar ${menuEx.swappedFrom}`} onClick={() => { swap(menuEx.slot, null); close(); }} />
                   ) : (
                     <MenuRow icon="ruilen" title="Ruilen" sub="Zelfde spieren, met wat je sportschool heeft. Alleen voor deze training." onClick={() => { close(); setSwapFor(menuEx.slot); }} />

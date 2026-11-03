@@ -80,7 +80,7 @@ describe('de indeling in acht groepen', () => {
   });
 
   it('wat achter Geavanceerd staat is een rij van dezelfde pagina', () => {
-    expect(PAGE_ROWS.forge.advanced).toEqual(['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren']);
+    expect(PAGE_ROWS.forge.advanced).toEqual(['trainingsduur', 'forge-tijdsgrens', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren']);
     expect(pageOfRow('bundel-rekenmodel')).toBe('forge');
     expect(pageOfRow('forge-bergspieren')).toBe('forge');
   });

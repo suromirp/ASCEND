@@ -66,6 +66,8 @@ const everything: AppSettings = {
   forgeSwipeDelete: false,
   forgeLayout: 'lijst',
   forgeLongBreak: 90,
+  forgeCapStrength: 0,
+  forgeCapLegs: 90,
   haptics: false,
   restNotice: false,
   weekNotice: false,

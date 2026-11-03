@@ -265,6 +265,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   },
   choice('forge-oefeningen', 'Oefeningen in een training', 'forge', 'forgeLayout', 'scherm', 'forgeOefeningen'),
   choice('forge-onderbreking', 'Lange onderbreking vragen na', 'forge', 'forgeLongBreak', 45, 'forgeOnderbreking'),
+  choice('forge-grens-kracht', 'Gewone krachttraining', 'forge', 'forgeCapStrength', 60, 'grensKracht'),
+  choice('forge-grens-been', 'Beendag', 'forge', 'forgeCapLegs', 75, 'grensBeen'),
   flag('forge-vegen', 'Vegen om te verwijderen', 'forge', 'forgeSwipeDelete'),
   flag('slepen-week', 'Trainingen slepen in Week', 'planning', 'dragWeek'),
   choice('loslaten-training', 'Loslaten op een training', 'planning', 'dropOnTraining', 'swap', 'loslaten'),

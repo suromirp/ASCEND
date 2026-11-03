@@ -1128,6 +1128,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Terug', text: 'met Terug naar de standaard begint ASCEND weer bij nul.' },
     ],
   },
+  forgeTijdsgrens: {
+    title: 'Hoogstens per krachttraining',
+    lead: 'Een krachttraining duurt hoogstens zo lang: 60 minuten, en een beendag 75. Zou hij langer duren, dan haalt Forge eerst sets bijwerk weg.',
+    points: [
+      { head: 'Hoe het rekent', text: 'met de tijd per set uit je eigen trainingen. Ken je die nog niet, dan met de verwachte duur van de training.' },
+      { head: 'Wat eerst gaat', text: 'een set van de extra oefeningen, dan van het bijwerk, tot elke oefening er nog twee heeft. Pas daarna een hele oefening. De kernsets blijven altijd staan.' },
+      { head: 'Al korter', text: 'dan verandert er niets. Je planning en je logboek blijven zoals ze zijn; het gaat alleen om wat Forge vandaag klaarzet.' },
+      { head: 'Beendag', text: 'een training die je benen zwaar belast, zoals de planner die ook leest.' },
+      { head: 'Uit', text: 'Forge zet de hele training klaar, hoe lang hij ook duurt.' },
+    ],
+  },
   trainingsduur: {
     title: 'Trainingsduur',
     lead: 'ASCEND leert hoe lang een krachttraining duurt uit de echte duur van je trainingen.',

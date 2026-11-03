@@ -304,6 +304,16 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('trainingsduur', facts({ strengthDurations: [] })).hidden).toBe(true);
   });
 
+  it('hoogstens per krachttraining: het advies 60 en 75, een keuze en uit', () => {
+    const inApp = (extra: object = {}) => facts({ strengthExternal: false, settings: { ...facts().settings, ...extra } });
+    expect(rowSummary('forge-tijdsgrens', inApp())).toMatchObject({ value: '60 en 75 min', sub: 'Kracht en beendag' });
+    expect(rowSummary('forge-grens-been', inApp({ forgeCapLegs: 90 })).value).toBe('90 min');
+    expect(rowSummary('forge-tijdsgrens', inApp({ forgeCapStrength: 0 }))).toMatchObject({ value: '75 min', sub: 'Alleen een beendag' });
+    expect(rowSummary('forge-tijdsgrens', inApp({ forgeCapStrength: 0, forgeCapLegs: 0 }))).toMatchObject({ value: 'Uit', dim: true });
+    // Met kracht in MacroFactor zet Forge niets klaar om in te korten.
+    expect(rowSummary('forge-tijdsgrens', facts()).hidden).toBe(true);
+  });
+
   it('sets en gewichten volgt de bron van het krachtblok', () => {
     expect(rowSummary('kracht', facts()).value).toBe('In MacroFactor');
     expect(rowSummary('kracht', facts({ strengthExternal: false })).value).toBe('In ASCEND');
