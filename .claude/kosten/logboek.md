@@ -171,3 +171,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-03, Forge tijdsgrens en Ruilen, Sherpa opus 235k (4 rondes, 3 door probes op echte data), Warden opus 2 keuringen; live
 - 2026-11-03, Forge rekent mee (3 wensen) met herstel, Sherpa, opus (ontwikkelaar), 300k, 54 min, 1, Warden vond Terugzetten na herladen
 - 2026-11-03, Review Forge rekent mee, Warden, opus (reviewer), 94k, 5 min, 0
+- 2026-11-03, Forge na de eerste vergelijking (5 punten + opwarmen), Sherpa, opus (ontwikkelaar), 356k, 67 min, 1 (correctie eigenaar opwarmen)
+- 2026-11-03, Review Forge na 3 november, Warden, opus (reviewer), 119k, 16 min, 0, groen; 2 kleine punten door coördinator

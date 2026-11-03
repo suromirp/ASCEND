@@ -391,7 +391,7 @@ const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
-const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven'];
+const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-doorvoeren', 'forge-schijven'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
   return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
@@ -612,6 +612,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: formatDateNL(forge.checkFrom) };
     case 'forge-schijven':
       return { checked: forge.showPlates };
+    case 'forge-rir-snel':
+      return { checked: forge.quickRir };
     case 'forge-programma':
       return s.strengthModel?.program ? { value: s.strengthModel.program.name } : { value: 'Van ASCEND', dim: true };
     case 'stangen':

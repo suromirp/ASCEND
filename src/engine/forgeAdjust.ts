@@ -14,10 +14,10 @@
 // voorgesteld: liever geen voorstel dan een set van 21 herhalingen.
 
 import type { Exercise } from '../models/exercise';
-import { exerciseOf, MAX_ROW_REPS, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
+import { exerciseOf, MAX_ROW_REPS, workAims, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
 import { hasStack } from './machineWeights';
 import { REPS_ROOM } from './prescriptionCheck';
-import { DEFAULT_RIR, estimateSet, expectedReps, FATIGUE_PER_SET, formatWeight } from './strengthModel';
+import { DEFAULT_RIR, estimateSet, expectedReps, FATIGUE_PER_SET, fatigueFactor, formatWeight } from './strengthModel';
 import type { GymProfile, StackWeights, WorkSetsMode } from './strengthSettings';
 import { formatNumberNL } from '../utils/number';
 import { candidatesFor, loadFromExternal, profileFor, type Candidate } from './strengthWeights';
@@ -72,10 +72,10 @@ export function suggestLighter(ex: WorkoutExercise, rowId: string, ctx: AdjustCo
   const items: AdjustItem[] = [];
   const workIds = ex.rows.filter((r) => r.kind === 'work').map((r) => r.id);
   const fromWork = workIds.indexOf(rowId);
+  const aims = workAims(ex);
   for (const r of ex.rows.slice(index + 1)) {
     if (r.kind !== 'work' || r.done || r.edited || r.weightKg === undefined) continue;
-    const distance = workIds.indexOf(r.id) - fromWork;
-    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - fatigue) ** distance;
+    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * fatigueFactor(aims, fromWork, workIds.indexOf(r.id), fatigue, ex.fatigueAfterHard);
     const rir = r.target.rir ?? DEFAULT_RIR;
     const now = loadFromExternal(exercise, r.weightKg, ctx.bodyKg, ex.dumbbellTotal);
     if (now === undefined) continue;
@@ -140,10 +140,10 @@ export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: Adjus
   const fatigue = ex.fatiguePerSet ?? ctx.fatiguePerSet ?? FATIGUE_PER_SET;
   const workIds = ex.rows.filter((r) => r.kind === 'work').map((r) => r.id);
   const fromWork = workIds.indexOf(rowId);
+  const aims = workAims(ex);
   for (const r of ex.rows.slice(index + 1)) {
     if (r.kind !== 'work' || r.done || r.edited || r.weightKg === undefined) continue;
-    const distance = workIds.indexOf(r.id) - fromWork;
-    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - fatigue) ** distance;
+    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * fatigueFactor(aims, fromWork, workIds.indexOf(r.id), fatigue, ex.fatigueAfterHard);
     const rir = r.target.rir ?? DEFAULT_RIR;
     const reps = expectedReps(strength, lightest, rir);
     if (reps < r.target.repsLow) return { fromRowId: rowId, repsLow: r.target.repsLow, repsHigh: r.target.repsHigh, lightestKg, expectedReps: Math.max(0, reps), rowId: r.id, setNo: workIds.indexOf(r.id) + 1, weightKg: r.weightKg };
@@ -211,10 +211,10 @@ export function suggestTooBigStep(ex: WorkoutExercise, rowId: string, ctx: Adjus
   const fatigue = ex.fatiguePerSet ?? ctx.fatiguePerSet ?? FATIGUE_PER_SET;
   const workIds = ex.rows.filter((r) => r.kind === 'work').map((r) => r.id);
   const fromWork = workIds.indexOf(rowId);
+  const aims = workAims(ex);
   for (const r of ex.rows.slice(index + 1)) {
     if (r.kind !== 'work' || r.done || r.edited || r.weightKg === undefined || r.target.failure) continue;
-    const distance = workIds.indexOf(r.id) - fromWork;
-    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - fatigue) ** distance;
+    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * fatigueFactor(aims, fromWork, workIds.indexOf(r.id), fatigue, ex.fatigueAfterHard);
     const rir = r.target.rir ?? DEFAULT_RIR;
     const now = loadFromExternal(exercise, r.weightKg, ctx.bodyKg, ex.dumbbellTotal);
     if (now === undefined) continue;

@@ -81,6 +81,17 @@ export const FATIGUE_PER_SET = 0.03;
 const FATIGUE_SHRINK_PAIRS = 8;
 export const FATIGUE_MIN = 0.01;
 export const FATIGUE_MAX = 0.12;
+// After a hard top set (0 or 1 in reserve, or to failure) followed by a set that asks more
+// reserve (a back-off set), the next set loses this much more on top of the drop per set.
+// CHOICE OF THIS FILE (decision 2026-11-03-forge-na-de-eerste-vergelijking.md): a set close to
+// failure costs more of the next one than a set with reserve (the rep loss over sets is larger
+// after sets to failure and with heavy loads, the work of Willardson and colleagues, moderate
+// evidence), and the training of 3 November showed about 12% between a squat top set and the
+// first back-off set, against 3% in the model. 6% on top is the start value; per exercise it is
+// learned from your own sets (`learnAfterHard`), pulled toward the 6% while there are few pairs.
+export const HARD_SET_EXTRA = 0.06;
+export const HARD_SET_MAX_RIR = 1;
+const HARD_EXTRA_MAX = 0.15;
 // A step down of more than this share of the weight is too coarse for a later set:
 // the weight stays and the bottom of the range goes down a little.
 const COARSE_STEP = 0.1;
@@ -170,10 +181,12 @@ export interface LearnedFatigue {
 // same weight count (the sets are then really the same task); with falling sets all
 // pairs do. The median is robust against one odd set, and few pairs pull it to the
 // 3% start value, so a first training barely moves the number.
-export function learnFatigue(sessions: SessionInput[], ctx: LoadContext, equalSets: boolean): LearnedFatigue {
-  const drops: number[] = [];
+// The pairs of measured working sets of a training, in order: the drop in estimated strength
+// from one to the next, and whether the first was a hard top set before a back-off set.
+function setPairs(sessions: SessionInput[], ctx: LoadContext, equalSets: boolean): { drop: number; afterHard: boolean }[] {
+  const out: { drop: number; afterHard: boolean }[] = [];
   for (const session of sessions) {
-    let prev: { strengthKg: number; weightKg: number } | undefined;
+    let prev: { strengthKg: number; weightKg: number; rir: number } | undefined;
     for (const set of session.sets) {
       // A warm-up set breaks a pair, and so does a set whose RIR was not filled in
       // (rirAssumed): its RIR is the target and its reps may be the prediction itself,
@@ -183,15 +196,63 @@ export function learnFatigue(sessions: SessionInput[], ctx: LoadContext, equalSe
         continue;
       }
       const e = estimateSet(set, ctx);
-      const current = e && e.weight >= 1 ? { strengthKg: e.strengthKg, weightKg: set.weightKg ?? 0 } : undefined;
-      if (prev && current && (!equalSets || prev.weightKg === current.weightKg)) drops.push(1 - current.strengthKg / prev.strengthKg);
+      const current = e && e.weight >= 1 ? { strengthKg: e.strengthKg, weightKg: set.weightKg ?? 0, rir: set.rir! } : undefined;
+      if (prev && current && (!equalSets || prev.weightKg === current.weightKg)) {
+        out.push({ drop: 1 - current.strengthKg / prev.strengthKg, afterHard: isHardPair({ rir: prev.rir }, { rir: current.rir }) });
+      }
       prev = current;
     }
   }
+  return out;
+}
+
+export function learnFatigue(sessions: SessionInput[], ctx: LoadContext, equalSets: boolean): LearnedFatigue {
+  // A pair after a hard top set has its own, larger drop (`learnAfterHard`); it does not count here.
+  const drops = setPairs(sessions, ctx, equalSets).filter((p) => !p.afterHard).map((p) => p.drop);
   const n = drops.length;
   if (n === 0) return { perSet: FATIGUE_PER_SET, pairs: 0 };
   const shrunk = (n * median(drops) + FATIGUE_SHRINK_PAIRS * FATIGUE_PER_SET) / (n + FATIGUE_SHRINK_PAIRS);
   return { perSet: Math.min(FATIGUE_MAX, Math.max(FATIGUE_MIN, shrunk)), pairs: n };
+}
+
+// What a set asks: the reps in reserve, or to failure (0 in reserve).
+export interface SetAim {
+  rir?: number;
+  failure?: boolean;
+}
+
+const aimRir = (a: SetAim | undefined): number => (a?.failure ? 0 : (a?.rir ?? DEFAULT_RIR));
+
+// A hard top set before a back-off set: 0 or 1 in reserve (or to failure), and the next set asks
+// more reserve. Sets that all ask the same (4 sets of 4 to 6 with 1 over) are no top set.
+export function isHardPair(a: SetAim | undefined, b: SetAim | undefined): boolean {
+  if (!a || !b) return false;
+  return aimRir(a) <= HARD_SET_MAX_RIR && aimRir(b) > aimRir(a);
+}
+
+// The share of the strength that is left at work set `to`, counted from work set `from`: every
+// earlier set costs `perSet`, and the step from a hard top set to a back-off set `afterHard` more.
+export function fatigueFactor(aims: (SetAim | undefined)[], from: number, to: number, perSet: number, afterHard = HARD_SET_EXTRA): number {
+  let f = 1;
+  for (let j = from; j < to; j++) f *= Math.max(0, 1 - perSet - (isHardPair(aims[j], aims[j + 1]) ? afterHard : 0));
+  return f;
+}
+
+export interface LearnedAfterHard {
+  // The extra share lost after a hard top set, on top of the drop per set.
+  extra: number;
+  pairs: number;
+}
+
+// The extra drop after a hard top set, from your own sets: the median drop of the pairs top set to
+// back-off set minus the drop per set, pulled toward the 6% while there are few pairs, between 0 and 15%.
+// Only sets with a RIR you filled in count (never rirAssumed), as in `learnFatigue`.
+export function learnAfterHard(sessions: SessionInput[], ctx: LoadContext, equalSets: boolean, perSet: number): LearnedAfterHard {
+  const extras = setPairs(sessions, ctx, equalSets).filter((p) => p.afterHard).map((p) => p.drop - perSet);
+  const n = extras.length;
+  if (n === 0) return { extra: HARD_SET_EXTRA, pairs: 0 };
+  const shrunk = (n * median(extras) + FATIGUE_SHRINK_PAIRS * HARD_SET_EXTRA) / (n + FATIGUE_SHRINK_PAIRS);
+  return { extra: Math.min(HARD_EXTRA_MAX, Math.max(0, shrunk)), pairs: n };
 }
 
 // --- KR-3 ------------------------------------------------------------------------------
@@ -373,6 +434,8 @@ export interface Prescription {
   // The share of strength each earlier working set costs the next: learned from
   // this exercise or the fixed 3% (setting "Vermoeidheid per set").
   fatiguePerSet: number;
+  // The extra share after a hard top set before a back-off set (`fatigueFactor`), learned or 6%.
+  fatigueAfterHard: number;
   // The smoothed strength this is based on.
   strengthKg: number;
   // The range before any widening, and the reps in reserve.
@@ -390,7 +453,7 @@ export interface Prescription {
   // "Forge rekent mee": the top of the range was reached last time with the reps in reserve
   // asked, so the weight went one step up by itself (the smallest step there is). What it went
   // up from, and what you did then, for the line "2,5 kg erbij" and for Terugzetten.
-  raised?: { fromKg: number; stepKg: number; reps: number; rir: number };
+  raised?: { fromKg: number; stepKg: number; reps: number; rir?: number };
 }
 
 export interface PrescribeInput {
@@ -509,8 +572,58 @@ export function warmupSets(
   const bar = exercise.resistance === 'barbell' ? Math.min(...candidates.map((c) => c.externalKg)) : 0;
   if (isLightWeight(exercise, dumbbellTotal ? firstWeightKg / 2 : firstWeightKg, bar)) return [];
   const heavy = exercise.resistance === 'barbell' && firstWeightKg > 3 * Math.max(...bars);
+  return buildWarmups(warmupPlan(kind, settings, strengthKg !== undefined, heavy), exercise, candidates, firstWeightKg, strengthKg, bodyKg, dumbbellTotal);
+}
+
+// What was done earlier in the same training on the muscles of a heavy top set: the heaviest working
+// weight on the same movement (pattern), and on another movement that shares a main muscle.
+export interface DoneBefore {
+  samePatternKg?: number;
+  otherPatternKg?: number;
+}
+
+// A cold full ladder for a heavy top set has this many steps (20, 60 and 80 before 105 kg).
+export const TOP_SET_LADDER = 3;
+// Already on about the weight of the top set in the same movement: no warm-up set.
+const SAME_WEIGHT_SHARE = 0.9;
+
+// The warm-up for a heavy top set (0 or 1 in reserve, or to failure) on a compound exercise, sized to the
+// jump from what you already did to the top set, not a fixed number (decision
+// 2026-11-03-forge-na-de-eerste-vergelijking.md).
+// - Cold, or the first exercise for these muscles: the full ladder, the empty bar (or a fifth of the
+//   weight), then about 57% and 76% of the top set, for 8, 5 and 3 (20, 60 and 80 before 105 kg).
+// - Warm from the same movement: only the steps of about 60% and 80% that lie above what you did; none
+//   when you were already at about the weight of the top set (90% or more).
+// - Warm from another movement on the same muscles (a deadlift after the squat): one or two sets, at about
+//   60% and 80% for 3 and 2 when the top set is heavier than what you just did, only the 80% step when not.
+// Nothing where `warmupSets` gives nothing (a light weight, an isolation exercise, Opwarmen uit).
+export function topSetWarmups(
+  settings: ResolvedStrengthSettings,
+  exercise: Exercise | undefined,
+  candidates: Candidate[],
+  firstWeightKg: number,
+  done: DoneBefore | undefined,
+  bodyKg?: number,
+  dumbbellTotal = false,
+): WarmupSet[] {
+  if (!canWarmUp(settings, exercise, 'full')) return [];
+  const bar = exercise.resistance === 'barbell' ? Math.min(...candidates.map((c) => c.externalKg)) : 0;
+  if (isLightWeight(exercise, dumbbellTotal ? firstWeightKg / 2 : firstWeightKg, bar)) return [];
+  const jump: WarmStep[] = [{ pct: 0.6, reps: 3, of: 'work' }, { pct: 0.8, reps: 2, of: 'work' }];
+  let plan: WarmStep[];
+  if (done?.samePatternKg !== undefined) {
+    if (done.samePatternKg >= SAME_WEIGHT_SHARE * firstWeightKg) return [];
+    plan = jump.filter((p) => p.pct * firstWeightKg > done.samePatternKg! + 1e-9);
+  } else if (done?.otherPatternKg !== undefined) {
+    plan = firstWeightKg > done.otherPatternKg + 1e-9 ? jump : jump.slice(1);
+  } else {
+    plan = [0.2, 0.57, 0.76].map((pct, i) => ({ pct, reps: [8, 5, 3][i], of: 'work' as const }));
+  }
+  return buildWarmups(plan, exercise, candidates, firstWeightKg, undefined, bodyKg, dumbbellTotal);
+}
+
+function buildWarmups(plan: WarmStep[], exercise: Exercise, candidates: Candidate[], firstWeightKg: number, strengthKg: number | undefined, bodyKg: number | undefined, dumbbellTotal: boolean): WarmupSet[] {
   const firstLoad = loadFromExternal(exercise, firstWeightKg, bodyKg, dumbbellTotal) ?? firstWeightKg;
-  const plan = warmupPlan(kind, settings, strengthKg !== undefined, heavy);
   const out: WarmupSet[] = [];
   for (const p of plan) {
     const load = p.pct * (p.of === 'strength' ? (strengthKg ?? firstLoad) : firstLoad);
@@ -598,9 +711,20 @@ export function lastDateBefore(dates: Iterable<string>, date: string): string | 
 }
 
 // "2,5 kg erbij, je haalde vorige keer 11 met 2 over." The line of a step that "Forge rekent mee" made.
+// Without a RIR you filled in, the line says only the reps: "2,5 kg erbij, je haalde vorige keer 10."
 export function raisedText(raised: NonNullable<Prescription['raised']>, assisted = false): string {
   const step = kgLabel(raised.stepKg, 2);
-  return `${assisted ? `${step} minder hulp` : `${step} erbij`}, je haalde vorige keer ${raised.reps} met ${raised.rir} over.`;
+  return `${assisted ? `${step} minder hulp` : `${step} erbij`}, je haalde vorige keer ${raised.reps}${raised.rir !== undefined ? ` met ${raised.rir} over` : ''}.`;
+}
+
+// "Forge rekent mee" with a RIR you did not fill in (rirAssumed, or a set to failure): only a clear sign
+// counts, this many reps or more over the top of the range. The top of "7+" is 7, so 10 is the sign.
+export const ASSUMED_RAISE_REPS = 3;
+
+// Did this set of last time go so far over the top of its range that the weight may go up without a RIR?
+export function assumedRaise(set: Pick<SetLog, 'reps' | 'rir' | 'rirAssumed'>, target: { repsHigh: number; failure?: boolean }): boolean {
+  const unsure = !!set.rirAssumed || set.rir === undefined || (!!target.failure && set.rir === 0);
+  return unsure && set.reps >= target.repsHigh + ASSUMED_RAISE_REPS;
 }
 
 export function prescribe(input: PrescribeInput): Prescription | undefined {
@@ -613,7 +737,9 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   if (!last?.top || rawStrength === undefined) return undefined;
   const candidates = candidatesOf(input, last.top.weightKg, dumbbellTotal);
   if (!candidates) return undefined;
-  const fatiguePerSet = settings.fatigue === 'learned' ? learnFatigue(input.sessions.filter((s) => s.date < input.date), ctx, settings.workSets === 'equal').perSet : FATIGUE_PER_SET;
+  const earlier = input.sessions.filter((s) => s.date < input.date);
+  const fatiguePerSet = settings.fatigue === 'learned' ? learnFatigue(earlier, ctx, settings.workSets === 'equal').perSet : FATIGUE_PER_SET;
+  const fatigueAfterHard = settings.fatigue === 'learned' ? learnAfterHard(earlier, ctx, settings.workSets === 'equal', fatiguePerSet).extra : HARD_SET_EXTRA;
   // On a cable or stack "Alleen wat je gebruikte": only the used weights exist, and
   // the proposal never invents another one.
   const usedOnly = settings.stackWeights === 'used_only' && (exercise?.resistance === 'cable' || exercise?.resistance === 'machine_stack') && !ownWeightsFor(settings.profile, exercise) && !!usedOnlyWeights(usedBefore(input));
@@ -673,7 +799,9 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   // je gebruikte" the heaviest used weight stays the end: ASCEND does not know the next one there.
   // Only on a measured RIR: the line says "met 2 over", so that must be what you felt.
   const topReached = last.top.reps >= high && last.top.rir !== undefined && !last.top.rirAssumed && last.top.rir >= rir && last.top.reps >= low && sameGoal && !lighter;
-  const reckonRaise = settings.reckon && settings.progression !== 'reps_first' && topReached && !legsTired;
+  // Without a RIR you filled in: only 3 or more reps over the top of the range is a clear enough sign.
+  const assumedReached = !topReached && last.top.reps >= low && assumedRaise(last.top, { repsHigh: high }) && sameGoal && !lighter;
+  const reckonRaise = settings.reckon && settings.progression !== 'reps_first' && (topReached || assumedReached) && !legsTired;
 
   // KR-4: the weight for the first set, for a given strength. `raise`: the step after the top of the range.
   const pick = (strengthKg: number, raise = true): number => {
@@ -762,7 +890,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const sameWeight = Math.abs(first.externalKg - lastExternal) < 1e-6;
   // Did "Forge rekent mee" make the step? Only when the plain rule would have kept the weight.
   const raised = reckonRaise && idx === lastIdx + 1 && !coarseHeavier && first.loadKg > lastLoad + 1e-6 && pick(strengthKg, false) <= lastIdx
-    ? { fromKg: lastExternal, stepKg: Math.abs(first.externalKg - lastExternal), reps: last.top.reps, rir: last.top.rir! }
+    ? { fromKg: lastExternal, stepKg: Math.abs(first.externalKg - lastExternal), reps: last.top.reps, ...(topReached ? { rir: last.top.rir! } : {}) }
     : undefined;
   // Same weight: one more than last time if the model expects it, never fewer than
   // last time (the smoothing lags half a step behind a good day).
@@ -887,6 +1015,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     reason,
     widened,
     fatiguePerSet,
+    fatigueAfterHard,
     strengthKg,
     range,
     targetReps,
