@@ -28,7 +28,7 @@ import { legSorenessList, type SoreSource } from './legSoreness';
 import type { LegEaseHow } from './legEaseSettings';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
-import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, formatWeight, lastDateBefore, prescribe, raisedText, usedBefore, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
+import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, fatigueFactor, formatWeight, isHardPair, lastDateBefore, prescribe, raisedText, usedBefore, warmupSets, warmupShapes, type Prescription, type SetAim, type WarmupSet } from './strengthModel';
 import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
 import { programLine } from './programLine';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
@@ -110,6 +110,9 @@ export interface WorkoutExercise {
   // The share of strength each earlier working set costs the next, as the proposal
   // counted it (learned or 3%); the adjusting in the training reads it from here.
   fatiguePerSet?: number;
+  // The extra share after a hard top set before a back-off set (strengthModel.ts#fatigueFactor), as the
+  // proposal counted it (learned or 6%). Absent in an old draft: the start value.
+  fatigueAfterHard?: number;
   // Werksets van het programma die jij weghaalde, met hun plek, voor "Terugzetten" (engine/forgeRows.ts).
   dropped?: { row: WorkoutRow; index: number }[];
   // The estimated strength the prescription counted with for the first working set ("Forge rekent mee").
@@ -342,7 +345,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     if (t && r && !t.failure && target.weightKg !== undefined) {
       const load = loadFromExternal(exercise, target.weightKg, ctx.bodyKg, dumbbellTotal);
       if (load !== undefined) {
-        const strength = ctx.settings.workSets === 'equal' ? r.strengthKg : r.strengthKg * (1 - r.fatiguePerSet) ** i;
+        const strength = ctx.settings.workSets === 'equal' ? r.strengthKg : r.strengthKg * fatigueFactor(aimsOf(targets!), 0, i, r.fatiguePerSet, r.fatigueAfterHard);
         reps = Math.min(reps, Math.max(t.repsLow, expectedReps(strength, load, t.rir)));
       }
     }
@@ -386,11 +389,17 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     restSec: ctx.settings.restSeconds[exerciseId] ?? programRest ?? restFor(exerciseId, exercise, repsHigh, ctx.settings.restSeconds),
     timed: false,
     ...(dumbbellTotal ? { dumbbellTotal } : {}),
-    ...(rx ? { fatiguePerSet: rx.fatiguePerSet, strengthKg: rx.strengthKg } : {}),
+    ...(rx ? { fatiguePerSet: rx.fatiguePerSet, fatigueAfterHard: rx.fatigueAfterHard, strengthKg: rx.strengthKg } : {}),
     ...(raise ? { raise } : {}),
     ...(swapTo ? { swappedFrom: cleanExerciseName(slot.exerciseName) } : {}),
   };
 }
+
+// What each set of a program asks, for the fatigue after a hard top set.
+const aimsOf = (targets: SetTarget[]): SetAim[] => targets.map((t) => ({ rir: t.rir, ...(t.failure ? { failure: true } : {}) }));
+
+// What each work set of a training asks, in order (the rows of Forge).
+export const workAims = (ex: WorkoutExercise): SetAim[] => ex.rows.filter((r) => r.kind === 'work').map((r) => ({ ...(r.target.rir !== undefined ? { rir: r.target.rir } : {}), ...(r.target.failure ? { failure: true } : {}) }));
 
 // The weight per set when a program asks for its own range and RIR per set:
 // the heaviest weight at which the estimated strength (tired a little per
@@ -401,10 +410,14 @@ function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exerci
   const candidates = candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: lastWeightKg, usedKg, stackWeights: ctx.settings.stackWeights, dumbbellTotal });
   if (!candidates) return undefined;
   let differs = false;
+  const aims = aimsOf(targets);
   const weights = targets.map((t, i) => {
-    if (t.repsLow === rx.range.low && t.repsHigh === rx.range.high && t.rir === rx.range.rir && !t.failure) return rx.sets[Math.min(i, rx.sets.length - 1)].weightKg;
+    // Forge's own weight only where no hard top set came before: after one the back-off sets count
+    // with the extra drop (fatigueFactor), which the sets of the plain prescription do not know.
+    const afterTop = aims.slice(0, i).some((a, j) => isHardPair(a, aims[j + 1]));
+    if (t.repsLow === rx.range.low && t.repsHigh === rx.range.high && t.rir === rx.range.rir && !t.failure && !afterTop) return rx.sets[Math.min(i, rx.sets.length - 1)].weightKg;
     differs = true;
-    const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * (1 - rx.fatiguePerSet) ** i;
+    const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * fatigueFactor(aimsOf(targets), 0, i, rx.fatiguePerSet, rx.fatigueAfterHard);
     const need = Math.max(1, t.repsLow - (tired ? 1 : 0));
     let idx = 0;
     for (let j = candidates.length - 1; j >= 0; j--) {

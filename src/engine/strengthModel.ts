@@ -81,6 +81,17 @@ export const FATIGUE_PER_SET = 0.03;
 const FATIGUE_SHRINK_PAIRS = 8;
 export const FATIGUE_MIN = 0.01;
 export const FATIGUE_MAX = 0.12;
+// After a hard top set (0 or 1 in reserve, or to failure) followed by a set that asks more
+// reserve (a back-off set), the next set loses this much more on top of the drop per set.
+// CHOICE OF THIS FILE (decision 2026-11-03-forge-na-de-eerste-vergelijking.md): a set close to
+// failure costs more of the next one than a set with reserve (the rep loss over sets is larger
+// after sets to failure and with heavy loads, the work of Willardson and colleagues, moderate
+// evidence), and the training of 3 November showed about 12% between a squat top set and the
+// first back-off set, against 3% in the model. 6% on top is the start value; per exercise it is
+// learned from your own sets (`learnAfterHard`), pulled toward the 6% while there are few pairs.
+export const HARD_SET_EXTRA = 0.06;
+export const HARD_SET_MAX_RIR = 1;
+const HARD_EXTRA_MAX = 0.15;
 // A step down of more than this share of the weight is too coarse for a later set:
 // the weight stays and the bottom of the range goes down a little.
 const COARSE_STEP = 0.1;
@@ -170,10 +181,12 @@ export interface LearnedFatigue {
 // same weight count (the sets are then really the same task); with falling sets all
 // pairs do. The median is robust against one odd set, and few pairs pull it to the
 // 3% start value, so a first training barely moves the number.
-export function learnFatigue(sessions: SessionInput[], ctx: LoadContext, equalSets: boolean): LearnedFatigue {
-  const drops: number[] = [];
+// The pairs of measured working sets of a training, in order: the drop in estimated strength
+// from one to the next, and whether the first was a hard top set before a back-off set.
+function setPairs(sessions: SessionInput[], ctx: LoadContext, equalSets: boolean): { drop: number; afterHard: boolean }[] {
+  const out: { drop: number; afterHard: boolean }[] = [];
   for (const session of sessions) {
-    let prev: { strengthKg: number; weightKg: number } | undefined;
+    let prev: { strengthKg: number; weightKg: number; rir: number } | undefined;
     for (const set of session.sets) {
       // A warm-up set breaks a pair, and so does a set whose RIR was not filled in
       // (rirAssumed): its RIR is the target and its reps may be the prediction itself,
@@ -183,15 +196,63 @@ export function learnFatigue(sessions: SessionInput[], ctx: LoadContext, equalSe
         continue;
       }
       const e = estimateSet(set, ctx);
-      const current = e && e.weight >= 1 ? { strengthKg: e.strengthKg, weightKg: set.weightKg ?? 0 } : undefined;
-      if (prev && current && (!equalSets || prev.weightKg === current.weightKg)) drops.push(1 - current.strengthKg / prev.strengthKg);
+      const current = e && e.weight >= 1 ? { strengthKg: e.strengthKg, weightKg: set.weightKg ?? 0, rir: set.rir! } : undefined;
+      if (prev && current && (!equalSets || prev.weightKg === current.weightKg)) {
+        out.push({ drop: 1 - current.strengthKg / prev.strengthKg, afterHard: isHardPair({ rir: prev.rir }, { rir: current.rir }) });
+      }
       prev = current;
     }
   }
+  return out;
+}
+
+export function learnFatigue(sessions: SessionInput[], ctx: LoadContext, equalSets: boolean): LearnedFatigue {
+  // A pair after a hard top set has its own, larger drop (`learnAfterHard`); it does not count here.
+  const drops = setPairs(sessions, ctx, equalSets).filter((p) => !p.afterHard).map((p) => p.drop);
   const n = drops.length;
   if (n === 0) return { perSet: FATIGUE_PER_SET, pairs: 0 };
   const shrunk = (n * median(drops) + FATIGUE_SHRINK_PAIRS * FATIGUE_PER_SET) / (n + FATIGUE_SHRINK_PAIRS);
   return { perSet: Math.min(FATIGUE_MAX, Math.max(FATIGUE_MIN, shrunk)), pairs: n };
+}
+
+// What a set asks: the reps in reserve, or to failure (0 in reserve).
+export interface SetAim {
+  rir?: number;
+  failure?: boolean;
+}
+
+const aimRir = (a: SetAim | undefined): number => (a?.failure ? 0 : (a?.rir ?? DEFAULT_RIR));
+
+// A hard top set before a back-off set: 0 or 1 in reserve (or to failure), and the next set asks
+// more reserve. Sets that all ask the same (4 sets of 4 to 6 with 1 over) are no top set.
+export function isHardPair(a: SetAim | undefined, b: SetAim | undefined): boolean {
+  if (!a || !b) return false;
+  return aimRir(a) <= HARD_SET_MAX_RIR && aimRir(b) > aimRir(a);
+}
+
+// The share of the strength that is left at work set `to`, counted from work set `from`: every
+// earlier set costs `perSet`, and the step from a hard top set to a back-off set `afterHard` more.
+export function fatigueFactor(aims: (SetAim | undefined)[], from: number, to: number, perSet: number, afterHard = HARD_SET_EXTRA): number {
+  let f = 1;
+  for (let j = from; j < to; j++) f *= Math.max(0, 1 - perSet - (isHardPair(aims[j], aims[j + 1]) ? afterHard : 0));
+  return f;
+}
+
+export interface LearnedAfterHard {
+  // The extra share lost after a hard top set, on top of the drop per set.
+  extra: number;
+  pairs: number;
+}
+
+// The extra drop after a hard top set, from your own sets: the median drop of the pairs top set to
+// back-off set minus the drop per set, pulled toward the 6% while there are few pairs, between 0 and 15%.
+// Only sets with a RIR you filled in count (never rirAssumed), as in `learnFatigue`.
+export function learnAfterHard(sessions: SessionInput[], ctx: LoadContext, equalSets: boolean, perSet: number): LearnedAfterHard {
+  const extras = setPairs(sessions, ctx, equalSets).filter((p) => p.afterHard).map((p) => p.drop - perSet);
+  const n = extras.length;
+  if (n === 0) return { extra: HARD_SET_EXTRA, pairs: 0 };
+  const shrunk = (n * median(extras) + FATIGUE_SHRINK_PAIRS * HARD_SET_EXTRA) / (n + FATIGUE_SHRINK_PAIRS);
+  return { extra: Math.min(HARD_EXTRA_MAX, Math.max(0, shrunk)), pairs: n };
 }
 
 // --- KR-3 ------------------------------------------------------------------------------
@@ -373,6 +434,8 @@ export interface Prescription {
   // The share of strength each earlier working set costs the next: learned from
   // this exercise or the fixed 3% (setting "Vermoeidheid per set").
   fatiguePerSet: number;
+  // The extra share after a hard top set before a back-off set (`fatigueFactor`), learned or 6%.
+  fatigueAfterHard: number;
   // The smoothed strength this is based on.
   strengthKg: number;
   // The range before any widening, and the reps in reserve.
@@ -613,7 +676,9 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   if (!last?.top || rawStrength === undefined) return undefined;
   const candidates = candidatesOf(input, last.top.weightKg, dumbbellTotal);
   if (!candidates) return undefined;
-  const fatiguePerSet = settings.fatigue === 'learned' ? learnFatigue(input.sessions.filter((s) => s.date < input.date), ctx, settings.workSets === 'equal').perSet : FATIGUE_PER_SET;
+  const earlier = input.sessions.filter((s) => s.date < input.date);
+  const fatiguePerSet = settings.fatigue === 'learned' ? learnFatigue(earlier, ctx, settings.workSets === 'equal').perSet : FATIGUE_PER_SET;
+  const fatigueAfterHard = settings.fatigue === 'learned' ? learnAfterHard(earlier, ctx, settings.workSets === 'equal', fatiguePerSet).extra : HARD_SET_EXTRA;
   // On a cable or stack "Alleen wat je gebruikte": only the used weights exist, and
   // the proposal never invents another one.
   const usedOnly = settings.stackWeights === 'used_only' && (exercise?.resistance === 'cable' || exercise?.resistance === 'machine_stack') && !ownWeightsFor(settings.profile, exercise) && !!usedOnlyWeights(usedBefore(input));
@@ -887,6 +952,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     reason,
     widened,
     fatiguePerSet,
+    fatigueAfterHard,
     strengthKg,
     range,
     targetReps,
