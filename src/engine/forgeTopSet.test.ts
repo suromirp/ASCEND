@@ -9,8 +9,10 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { ExercisePrescription, SessionLog, SetLog, SetTarget } from '../models/training';
 import { asksReserve, QUICK_RIR, quickRirLabel, reckonAfterTick, type ReckonContext } from './forgeReckon';
 import { planWorkout, tickRow, updateRow, type PlanContext, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
-import { fatigueFactor, FATIGUE_PER_SET, HARD_SET_EXTRA, isHardPair, learnAfterHard, learnFatigue, type SessionInput } from './strengthModel';
+import { fatigueFactor, FATIGUE_PER_SET, HARD_SET_EXTRA, isHardPair, learnAfterHard, learnFatigue, TOP_SET_LADDER, topSetWarmups, type SessionInput } from './strengthModel';
 import { resolveStrengthSettings } from './strengthSettings';
+import { candidatesFor } from './strengthWeights';
+import { exerciseById } from '../data/exercises';
 
 const { templates, program } = buildDefaultProgramData();
 const BODY = 80;
@@ -137,25 +139,34 @@ describe('de extra daling leren uit je eigen sets', () => {
 describe('opwarmen voor een zware topset', () => {
   const warm = (e: WorkoutExercise) => e.rows.filter((r) => r.kind === 'warmup');
 
-  it('de deadlift na de squat krijgt drie opwarmstappen in plaats van één voelset', () => {
-    const [squat, dl] = planWorkout([squatSlot, deadliftSlot], ctx());
-    expect(warm(squat).length).toBeGreaterThanOrEqual(3);
-    const w = warm(dl);
-    expect(w).toHaveLength(3);
-    // De lege stang, dan ongeveer 55% en 75% van de topset, oplopend en onder de topset.
-    expect(w[0].weightKg).toBe(20);
-    expect(w[1].weightKg!).toBeGreaterThan(w[0].weightKg!);
-    expect(w[2].weightKg!).toBeGreaterThan(w[1].weightKg!);
-    expect(w[2].weightKg!).toBeLessThan(102.5);
-    expect(w[2].weightKg!).toBeGreaterThanOrEqual(75);
-    // Warme spieren: minder herhalingen dan een koude opbouw.
-    expect(w.map((r) => r.reps)).toEqual([5, 3, 2]);
+  it('squat als eerste oefening: de volle ladder', () => {
+    const [squat] = planWorkout([squatSlot, deadliftSlot], ctx());
+    expect(warm(squat).length).toBeGreaterThanOrEqual(TOP_SET_LADDER);
   });
 
-  it('koud en zonder historie: ook dan drie stappen voor een topset tot falen', () => {
+  it('de deadlift na de squat: twee stappen rond 60 en 80 procent naar de zwaardere topset, geen volle ladder', () => {
+    const [, dl] = planWorkout([squatSlot, deadliftSlot], ctx());
+    const w = warm(dl);
+    expect(w).toHaveLength(2);
+    expect(w[0].weightKg! / 102.5).toBeCloseTo(0.6, 1);
+    expect(w[1].weightKg! / 102.5).toBeCloseTo(0.8, 1);
+    expect(w.map((r) => r.reps)).toEqual([3, 2]);
+  });
+
+  it('koud en zonder historie: de volle ladder, 20, 60 en 80 voor 105', () => {
     const [dl] = planWorkout([{ ...deadliftSlot, targetWeightKg: 105 }], ctx({ logs: [] }));
     expect(warm(dl).map((r) => r.weightKg)).toEqual([20, 60, 80]);
     expect(warm(dl).map((r) => r.reps)).toEqual([8, 5, 3]);
+  });
+
+  it('in hetzelfde patroon al op ongeveer het gewicht van de topset: geen opwarmset; lager: alleen de stappen erboven', () => {
+    const profile = settings.profile;
+    const ex = exerciseById('deadlift');
+    const candidates = candidatesFor(ex, profile, { lastExternalKg: 100 })!;
+    expect(topSetWarmups(settings, ex, candidates, 100, { samePatternKg: 95 })).toEqual([]);
+    expect(topSetWarmups(settings, ex, candidates, 100, { samePatternKg: 70 }).map((w) => w.weightKg)).toEqual([80]);
+    // Een ander patroon dat zwaarder was: alleen de stap van 80%.
+    expect(topSetWarmups(settings, ex, candidates, 100, { otherPatternKg: 110 }).map((w) => w.weightKg)).toEqual([80]);
   });
 
   it('een gewone eerste set met 2 over na de squat houdt één voelset', () => {

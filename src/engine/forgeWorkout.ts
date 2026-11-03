@@ -28,7 +28,7 @@ import { legSorenessList, type SoreSource } from './legSoreness';
 import type { LegEaseHow } from './legEaseSettings';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
-import { assumedRaise, DEFAULT_RIR, dumbbellTotalFor, expectedReps, fatigueFactor, formatWeight, HARD_SET_MAX_RIR, isHardPair, lastDateBefore, prescribe, raisedText, TOP_SET_WARMUPS, topSetWarmups, usedBefore, warmupSets, warmupShapes, type Prescription, type SetAim, type WarmupSet } from './strengthModel';
+import { assumedRaise, DEFAULT_RIR, dumbbellTotalFor, expectedReps, fatigueFactor, formatWeight, HARD_SET_MAX_RIR, isHardPair, lastDateBefore, prescribe, raisedText, TOP_SET_LADDER, topSetWarmups, usedBefore, warmupSets, warmupShapes, type DoneBefore, type Prescription, type SetAim, type WarmupSet } from './strengthModel';
 import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
 import { programLine } from './programLine';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
@@ -211,13 +211,31 @@ export interface PlanState {
   tiredNow?: LegsTired;
   // What is warm in this training so far (engine/warmup.ts).
   warm: WarmState;
+  // The compound exercises before this one and their heaviest working weight, for the warm-up of a top set.
+  done: { exercise: Exercise; weightKg: number }[];
+}
+
+// Wat je eerder in deze training deed op de spieren van deze oefening (een gedeelde hoofdspier):
+// het zwaarste werkgewicht in hetzelfde patroon en in een ander patroon.
+function doneBefore(state: PlanState, exercise: Exercise): DoneBefore | undefined {
+  const shared = state.done.filter((d) => d.exercise.primary.some((m) => exercise.primary.includes(m) || exercise.secondary.includes(m)) || exercise.primary.some((m) => d.exercise.primary.includes(m)));
+  if (shared.length === 0) return undefined;
+  const same = shared.filter((d) => d.exercise.pattern === exercise.pattern).map((d) => d.weightKg);
+  const other = shared.filter((d) => d.exercise.pattern !== exercise.pattern).map((d) => d.weightKg);
+  return { ...(same.length > 0 ? { samePatternKg: Math.max(...same) } : {}), ...(other.length > 0 ? { otherPatternKg: Math.max(...other) } : {}) };
+}
+
+function noteDone(state: PlanState, exercise: Exercise | undefined, rows: WorkoutRow[]): void {
+  if (!exercise || !isCompound(exercise)) return;
+  const kg = Math.max(0, ...rows.filter((r) => r.kind === 'work').map((r) => r.weightKg ?? r.target.weightKg ?? 0));
+  if (kg > 0) state.done.push({ exercise, weightKg: kg });
 }
 
 export function planState(ctx: PlanContext): PlanState {
   const strengthLogs = ctx.logs.filter((l) => l.strengthData && l.strengthData.length > 0);
   const deps = { logs: ctx.logs, templates: ctx.templates, program: ctx.program, bodyKg: ctx.bodyKg, ...(ctx.sore ? { sore: ctx.sore } : {}) };
   const histories = new Map(exerciseHistories(strengthLogs, ctx.templates, deps).map((h) => [h.key, h]));
-  return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), warm: newWarmState() };
+  return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), warm: newWarmState(), done: [] };
 }
 
 // The state for one exercise that is swapped: what is warm is what the exercises
@@ -226,7 +244,10 @@ export function planStateBefore(ctx: PlanContext, workout: WorkoutExercise[], sl
   const state = planState(ctx);
   for (const ex of workout) {
     if (ex.slot === slot) break;
-    if (!ex.timed) noteWorked(state.warm, exerciseOf(ex), ex.rows.some((r) => r.kind === 'warmup'));
+    if (!ex.timed) {
+      noteWorked(state.warm, exerciseOf(ex), ex.rows.some((r) => r.kind === 'warmup'));
+      noteDone(state, exerciseOf(ex), ex.rows);
+    }
   }
   return state;
 }
@@ -318,15 +339,17 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
       emptyWarmups = warmupShapes(ctx.settings, exercise, warmKind);
     }
   }
-  // Een zware topset (0 of 1 over of tot falen) krijgt altijd minstens drie opwarmstappen, ook als de spieren
-  // al warm zijn van een oefening ervoor (de deadlift na de squat kreeg één voelset van 65%).
+  // Een zware topset (0 of 1 over of tot falen) krijgt opwarmstappen naar de sprong toe: koud de volle ladder,
+  // warm van een oefening ervoor op dezelfde spieren alleen de stappen naar de topset (strengthModel.ts#topSetWarmups).
   const firstAim = targets?.[0] ? { rir: targets[0].rir, failure: targets[0].failure } : { rir: rx?.sets[0]?.rir ?? baseRir };
   const hardTop = !!exercise && isCompound(exercise) && (!!firstAim.failure || firstAim.rir <= HARD_SET_MAX_RIR);
-  if (hardTop && ctx.modelOn && warmKind !== 'none' && warmups.length < TOP_SET_WARMUPS && workWeights[0] !== undefined) {
+  if (hardTop && ctx.modelOn && warmKind !== 'none' && workWeights[0] !== undefined) {
     const candidates = candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: workWeights[0], usedKg: learned, stackWeights: ctx.settings.stackWeights, dumbbellTotal });
-    const more = candidates ? topSetWarmups(ctx.settings, exercise, candidates, workWeights[0], warmKind !== 'full', ctx.bodyKg, dumbbellTotal) : [];
-    if (more.length > warmups.length) {
-      warmups = more;
+    const cold = warmKind === 'full';
+    const made = candidates ? topSetWarmups(ctx.settings, exercise, candidates, workWeights[0], cold ? undefined : doneBefore(state, exercise), ctx.bodyKg, dumbbellTotal) : warmups;
+    // Koud: de bestaande opbouw blijft als hij al een volle ladder is. Warm: de stappen naar de sprong.
+    if (!cold || (warmups.length < TOP_SET_LADDER && made.length > warmups.length)) {
+      warmups = made;
       emptyWarmups = [];
     }
   }
@@ -341,6 +364,8 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   }
   // The body part counts as warm only after an exercise that got warm-up sets.
   noteWorked(state.warm, exercise, rows.length > 0 && rows.some((r) => r.kind === 'warmup'));
+  const workRowsDone: WorkoutRow[] = workWeights.map((w, i) => ({ id: `${i}`, kind: 'work', target: { repsLow: 0, repsHigh: 0, ...(w !== undefined ? { weightKg: w } : {}) }, done: false }));
+  noteDone(state, exercise, workRowsDone);
   const workRow = (r: Prescription | undefined, weightKg: number | undefined, i: number): { target: RowTarget; reps: number } => {
     let target: RowTarget;
     const t = targets?.[i];

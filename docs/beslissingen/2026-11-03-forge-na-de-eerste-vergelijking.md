@@ -8,7 +8,7 @@ Status: aangenomen
 Na de eerste training die de eigenaar naast MacroFactor in Forge deed (Benen A, 3 november) veranderen vijf dingen in Forge.
 
 1. Na een zware topset rekenen de terugsets met een grotere daling.
-2. Een zware topset krijgt altijd minstens drie opwarmstappen.
+2. Een zware topset krijgt opwarmstappen naar de sprong toe, niet een vast aantal.
 3. Na de topset en de laatste set vraagt Forge in de rij "Hoeveel over?", en een aangenomen RIR kan ook een stap zwaarder geven, maar alleen bij een duidelijk teken.
 4. Een gewicht onder de lege stang krijgt een zachte regel.
 5. Een toestel dat in ponden werkt, krijgt een voorstel om het als ponden op te slaan.
@@ -35,7 +35,15 @@ De deadlift staat vooraf dus lichter dan wat werkte. Dat is eerlijk: de terugset
 
 ## 2. Opwarmen voor een zware topset
 
-De deadlift kreeg één opwarmset omdat de benen al warm waren van de squat (`warmup.ts#warmupKind` geeft dan een voelset van 65% voor 5). De tijdsgrens van 75 minuten (`forgeTimeCap.ts`) raakt opwarmsets niet; die haalt alleen werksets weg. Een zware topset (de eerste werkset met 0 of 1 over of tot falen, bij een samengestelde oefening) krijgt nu altijd minstens drie stappen (`strengthModel.ts#topSetWarmups`, `TOP_SET_WARMUPS`): de lege stang of een vijfde van het gewicht, dan ongeveer 57% en 76% van de topset, zoals 20, 60 en 80 voor 105 kg. Op warme spieren 5, 3 en 2 herhalingen, koud 8, 5 en 3. Een opbouw die al drie stappen heeft blijft zoals hij is. Opwarmen uit blijft uit, en een licht gewicht of een isolatieoefening krijgt niets.
+De deadlift kreeg één opwarmset omdat de benen al warm waren van de squat (`warmup.ts#warmupKind` geeft dan een voelset van 65% voor 5). De tijdsgrens van 75 minuten (`forgeTimeCap.ts`) raakt opwarmsets niet; die haalt alleen werksets weg.
+
+Een zware topset (de eerste werkset met 0 of 1 over of tot falen, bij een samengestelde oefening) krijgt nu stappen naar de sprong toe: de afstand tussen wat je in deze training al deed op dezelfde spieren en de topset (`strengthModel.ts#topSetWarmups`, `forgeWorkout.ts#doneBefore`). Dezelfde spieren zijn een gedeelde hoofdspier volgens de spiergroepen van de oefeningenlijst (`primary` en `secondary`, dezelfde die `warmupKind` gebruikt), het patroon is `Exercise.pattern`, en de last is het zwaarste werkgewicht van die oefening.
+
+- Koud, of de eerste oefening voor die spieren (`warmupKind` geeft de volle opbouw): een volledige ladder, de lege stang of een vijfde van het gewicht, dan ongeveer 57% en 76% van de topset voor 8, 5 en 3, zoals 20, 60 en 80 voor 105 kg. Een opbouw die al drie stappen heeft blijft zoals hij is.
+- Warm van een ander patroon op dezelfde spieren, zoals de deadlift na de squat (benen en romp warm, maar de heup en hamstrings in een ander patroon): bij een zwaardere topset dan wat je net deed twee sets op ongeveer 60% en 80% voor 3 en 2 (62,5 en 82,5 voor 102,5 kg op 3 november); bij een lichtere alleen de stap van 80%.
+- Warm van hetzelfde patroon: alleen de stappen van 60% en 80% die boven wat je deed liggen, en geen enkele als je al op 90% of meer van de topset zat.
+
+Een isolatieoefening houdt het korte bestaande gedrag. Opwarmen uit blijft uit, en een licht gewicht krijgt niets.
 
 ## 3. Hoeveel over?
 
@@ -74,4 +82,4 @@ Niets. Het vult `2026-10-26-kracht-vermoeidheid-en-grove-stap.md` aan (de daling
 
 ## Terugdraaien
 
-Zet `HARD_SET_EXTRA` op 0 en `TOP_SET_WARMUPS` op 0 in `strengthModel.ts` voor punt 1 en 2. "Hoeveel over na een set" en "Forge rekent mee" staan uit in de instellingen. Er is geen opgeslagen vorm veranderd: `quickRir` is een optioneel veld in de Forge-instellingen, `fatigueAfterHard` leeft alleen in het concept (een oud concept rekent met de 6%), en een toestel in ponden is een gewoon bereik.
+Zet `HARD_SET_EXTRA` op 0 in `strengthModel.ts` voor punt 1, en haal voor punt 2 de aanroep van `topSetWarmups` in `forgeWorkout.ts#planExercise` weg. "Hoeveel over na een set" en "Forge rekent mee" staan uit in de instellingen. Er is geen opgeslagen vorm veranderd: `quickRir` is een optioneel veld in de Forge-instellingen, `fatigueAfterHard` leeft alleen in het concept (een oud concept rekent met de 6%), en een toestel in ponden is een gewoon bereik.

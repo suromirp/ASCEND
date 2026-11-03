@@ -575,28 +575,50 @@ export function warmupSets(
   return buildWarmups(warmupPlan(kind, settings, strengthKg !== undefined, heavy), exercise, candidates, firstWeightKg, strengthKg, bodyKg, dumbbellTotal);
 }
 
-// A heavy top set (0 or 1 in reserve, or to failure) always gets at least this many warm-up steps,
-// also when the muscles are already warm (decision 2026-11-03-forge-na-de-eerste-vergelijking.md).
-export const TOP_SET_WARMUPS = 3;
+// What was done earlier in the same training on the muscles of a heavy top set: the heaviest working
+// weight on the same movement (pattern), and on another movement that shares a main muscle.
+export interface DoneBefore {
+  samePatternKg?: number;
+  otherPatternKg?: number;
+}
 
-// The warm-up for a heavy top set: the empty bar (or a fifth of the weight), then about 57% and 76% of
-// the top set, as 20, 60 and 80 before 105 kg. Cold muscles 8, 5 and 3 reps; warm muscles 5, 3 and 2,
-// because they only need the steps, not the work. Nothing where `warmupSets` would give nothing (a light
-// weight, an isolation exercise, Opwarmen uit).
+// A cold full ladder for a heavy top set has this many steps (20, 60 and 80 before 105 kg).
+export const TOP_SET_LADDER = 3;
+// Already on about the weight of the top set in the same movement: no warm-up set.
+const SAME_WEIGHT_SHARE = 0.9;
+
+// The warm-up for a heavy top set (0 or 1 in reserve, or to failure) on a compound exercise, sized to the
+// jump from what you already did to the top set, not a fixed number (decision
+// 2026-11-03-forge-na-de-eerste-vergelijking.md).
+// - Cold, or the first exercise for these muscles: the full ladder, the empty bar (or a fifth of the
+//   weight), then about 57% and 76% of the top set, for 8, 5 and 3 (20, 60 and 80 before 105 kg).
+// - Warm from the same movement: only the steps of about 60% and 80% that lie above what you did; none
+//   when you were already at about the weight of the top set (90% or more).
+// - Warm from another movement on the same muscles (a deadlift after the squat): one or two sets, at about
+//   60% and 80% for 3 and 2 when the top set is heavier than what you just did, only the 80% step when not.
+// Nothing where `warmupSets` gives nothing (a light weight, an isolation exercise, Opwarmen uit).
 export function topSetWarmups(
   settings: ResolvedStrengthSettings,
   exercise: Exercise | undefined,
   candidates: Candidate[],
   firstWeightKg: number,
-  warmMuscles: boolean,
+  done: DoneBefore | undefined,
   bodyKg?: number,
   dumbbellTotal = false,
 ): WarmupSet[] {
   if (!canWarmUp(settings, exercise, 'full')) return [];
   const bar = exercise.resistance === 'barbell' ? Math.min(...candidates.map((c) => c.externalKg)) : 0;
   if (isLightWeight(exercise, dumbbellTotal ? firstWeightKg / 2 : firstWeightKg, bar)) return [];
-  const reps = warmMuscles ? [5, 3, 2] : [8, 5, 3];
-  const plan: WarmStep[] = [0.2, 0.57, 0.76].map((pct, i) => ({ pct, reps: reps[i], of: 'work' }));
+  const jump: WarmStep[] = [{ pct: 0.6, reps: 3, of: 'work' }, { pct: 0.8, reps: 2, of: 'work' }];
+  let plan: WarmStep[];
+  if (done?.samePatternKg !== undefined) {
+    if (done.samePatternKg >= SAME_WEIGHT_SHARE * firstWeightKg) return [];
+    plan = jump.filter((p) => p.pct * firstWeightKg > done.samePatternKg! + 1e-9);
+  } else if (done?.otherPatternKg !== undefined) {
+    plan = firstWeightKg > done.otherPatternKg + 1e-9 ? jump : jump.slice(1);
+  } else {
+    plan = [0.2, 0.57, 0.76].map((pct, i) => ({ pct, reps: [8, 5, 3][i], of: 'work' as const }));
+  }
   return buildWarmups(plan, exercise, candidates, firstWeightKg, undefined, bodyKg, dumbbellTotal);
 }
 
