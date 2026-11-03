@@ -166,3 +166,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-02, Week opnieuw blad (3 herkeuringen), live; Gegevens review groen met punten; Ongedaan herkeuring rood (refreshWritten)
 - 2026-11-02, Vandaag en Ongedaan, Sherpa opus 276k, Warden opus 133k herkeuring groen; live
 - 2026-11-02, Gegevens herinrichting plus Klaar-voor-je-doel blad op Ascend, Sherpa 354k; live
+- 2026-11-02, Ochtendkaart compact, Sherpa sonnet 193k (limiet onderbrak), Warden sonnet 38k groen met voorwaarde; live
+- 2026-11-03, Testloop in detail, Sherpa opus 520k (3 rondes, probe op echte back-up vond 2 fouten), Warden opus 220k groen; live

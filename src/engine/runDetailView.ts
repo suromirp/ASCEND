@@ -32,6 +32,8 @@ import {
   type Pacing,
   type PlayedContext,
 } from './runDetailRules';
+import { MAX_GAP_SEC } from './bestEffort';
+import type { EdgePauses } from './runDetail';
 import { isNum } from '../utils/guards';
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -140,7 +142,7 @@ export function heartOf(kms: RunKm[]): HeartHalves | undefined {
 
 // --- the verdict in one word and one sentence (4.2, 5.2) ------------------------------------
 
-type VerdictTone = 'measure' | 'short' | 'fast-start' | 'sag' | 'strong' | 'explained' | 'blocks-fade' | 'blocks-even' | 'heart' | 'even' | 'mixed';
+type VerdictTone = 'measure' | 'short' | 'fast-start' | 'sag' | 'strong' | 'explained' | 'blocks-fade' | 'blocks-even' | 'heart' | 'even' | 'near-even' | 'mixed';
 
 export interface RunVerdict {
   word: string;
@@ -215,6 +217,12 @@ export function runVerdict(rd: RunDetail, kind: RunKind): RunVerdict {
   if (p.word === 'gelijkmatig') {
     return { word: 'Gelijkmatig', tone: 'even', sentence: 'Je tempo bleef gelijk: de tweede helft wijkt minder dan 2 procent af van de eerste.' };
   }
+  // A test stretch that is just outside "gelijkmatig" but has no kilometre that sticks out is
+  // not "op en neer": say how much the halves differ (2026-11-03-testloop-in-detail.md).
+  if (kind === 'test' && rd.bestFive) {
+    const near = nearEvenTest(rd.bestFive.kms, p);
+    if (near) return near;
+  }
   return {
     word: 'Wisselend',
     tone: 'mixed',
@@ -222,6 +230,35 @@ export function runVerdict(rd: RunDetail, kind: RunKind): RunVerdict {
       ? 'Je tempo ging op en neer zonder duidelijke lijn. Bij een rustige loop op gevoel of hartslag is dat gewoon.'
       : 'Je tempo ging op en neer zonder duidelijke lijn.',
   };
+}
+
+function nearEvenTest(kms: RunKm[], p: Pacing): RunVerdict | undefined {
+  const full = kms.filter((k) => k.distanceM >= PACING.fullKmM);
+  const off = full.map((k) => ({ k, pct: Math.abs(pct(k.paceSecKm, p.meanPace)) }));
+  const worst = Math.max(...off.map((x) => x.pct));
+  const h = halvesOf(kms);
+  // The halves over the distance (as the spread and "Eerste 2,5 km" say them), not the mean of
+  // the first two kilometres against the last two: with five that leaves out the middle one.
+  if (!h || worst >= PACING.sagPct || Math.abs(pct(h.secondPace, h.firstPace)) >= PACING.nearEvenPct) return undefined;
+  const d = Math.round(h.diffSec);
+  const halves = d === 0
+    ? 'Je helften waren even snel'
+    : `Je tweede helft ging ${secs(Math.abs(d))} per km ${d > 0 ? 'trager' : 'sneller'} dan je eerste`;
+  if (worst <= PACING.evenKmPct) return { word: 'Vrij gelijkmatig', tone: 'near-even', sentence: `${halves}, zonder kilometer die eruit sprong.` };
+  const odd = off.filter((x) => x.pct > PACING.evenKmPct).map((x) => x.k.index);
+  return { word: 'Vrij gelijkmatig', tone: 'near-even', sentence: `${halves}; ${odd.length === 1 ? `alleen km ${odd[0]} van je test week` : `alleen ${kmList(odd)} van je test weken`} iets meer af.` };
+}
+
+// The kilometres the top of a test is read on, when the run has a warm-up or cooling down
+// around its best 5 km: then the verdict, the spread and the heart rate are about the test.
+function testStretchKms(rd: RunDetail, kind: RunKind): RunKm[] | undefined {
+  return kind === 'test' && rd.bestFive ? rd.bestFive.kms : undefined;
+}
+
+// The quiet line under the three numbers of a test with a warm-up or cooling down.
+export function testFocusLine(rd: RunDetail, kind: RunKind): string | undefined {
+  if (!testStretchKms(rd, kind) || !testLayout(rd)) return undefined;
+  return 'Oordeel, verdeling en hartslag gaan over je 5 km. Inlopen en uitlopen tellen hier niet mee.';
 }
 
 // --- the three numbers (4.2) ---------------------------------------------------------------------
@@ -258,15 +295,17 @@ export function headlineStats(rd: RunDetail, kind: RunKind, totals?: RunTotals):
     const d = Math.round(h.diffSec);
     out.push({ key: 'split', label: 'Verdeling', value: `${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d)}`, unit: 's', note: splitNote(h, !!test) });
   }
-  const heart = heartOf(rd.kms);
+  const stretch = testStretchKms(rd, kind);
+  const heart = heartOf(stretch ?? rd.kms);
   if (heart) {
     const d = Math.round(heart.diff);
+    const over = stretch ? 'gemiddeld over je 5 km' : 'gemiddeld';
     out.push({
       key: 'heart',
       label: 'Hartslag',
       value: String(Math.round(heart.mean)),
       unit: 'bpm',
-      note: d === 0 ? 'gemiddeld, helften gelijk' : `gemiddeld, ${d > 0 ? '+' : '−'}${Math.abs(d)} in de tweede helft`,
+      note: d === 0 ? `${over}, helften gelijk` : `${over}, ${d > 0 ? '+' : '−'}${Math.abs(d)} in de tweede helft`,
     });
   }
   const gain = sum(rd.kms.map((k) => k.gainM ?? 0));
@@ -866,6 +905,71 @@ export function compareWithSimilar(rd: RunDetail, others: RunDetail[]): SimilarC
     medianPerKm.push(v.length >= 3 ? medianOf(v) : null);
   }
   return { n: others.length, rows, medianPerKm };
+}
+
+// --- standing still before the start and after the end (2026-11-03) -----------------------------------
+
+// The detail as the screen shows it: a pause before the first or after the last movement is not
+// standing still during the run. A copy; the stored detail stays as it is (derived and
+// append-only), and the moving time and the distance do not change.
+// The edges come from the full series (`runDetail.ts#edgePausesOfStreams`); without them (the
+// series is not kept) nothing is set apart, because the stored line cannot tell a pause after
+// the end from a stop just before it.
+export function withoutEdgePauses(rd: RunDetail, found?: EdgePauses): { rd: RunDetail; edge: EdgePauses } {
+  const headSec = Math.min(Math.max(0, Math.round(found?.headSec ?? 0)), rd.pauseSec);
+  const tailSec = Math.min(Math.max(0, Math.round(found?.tailSec ?? 0)), rd.pauseSec - headSec);
+  const edge = { headSec: headSec > MAX_GAP_SEC ? headSec : 0, tailSec: tailSec > MAX_GAP_SEC ? tailSec : 0 };
+  if (edge.headSec === 0 && edge.tailSec === 0) return { rd, edge };
+  const trim = (k: RunKm): RunKm => {
+    let cut = 0;
+    if (edge.headSec > 0 && k.startM <= 0.5) cut += edge.headSec;
+    if (edge.tailSec > 0 && k.endM >= rd.totalM - 0.5) cut += edge.tailSec;
+    if (cut === 0 || !k.pauseSec) return k;
+    const left = Math.round((k.pauseSec - cut) * 10) / 10;
+    const out = { ...k };
+    if (left >= 0.5) out.pauseSec = left;
+    else delete out.pauseSec;
+    return out;
+  };
+  return {
+    edge,
+    rd: {
+      ...rd,
+      pauseSec: Math.max(0, rd.pauseSec - edge.headSec - edge.tailSec),
+      kms: rd.kms.map(trim),
+      // A lap keeps only moving seconds (no pause of its own), so the tail never shows in a lap.
+      ...(rd.laps ? { laps: rd.laps } : {}),
+      ...(rd.bestFive ? { bestFive: { ...rd.bestFive, kms: rd.bestFive.kms.map(trim) } } : {}),
+    },
+  };
+}
+
+// The detail with no standing still at all, for the moment the edges are not read yet: a stop
+// that may turn out to be the tail is not said until it is known.
+export function withPausesHidden(rd: RunDetail): RunDetail {
+  if (rd.pauseSec <= 0 && !rd.kms.some((k) => k.pauseSec) && !rd.bestFive?.kms.some((k) => k.pauseSec)) return rd;
+  const strip = (k: RunKm): RunKm => {
+    if (k.pauseSec === undefined) return k;
+    const out = { ...k };
+    delete out.pauseSec;
+    return out;
+  };
+  return {
+    ...rd,
+    pauseSec: 0,
+    kms: rd.kms.map(strip),
+    ...(rd.bestFive ? { bestFive: { ...rd.bestFive, kms: rd.bestFive.kms.map(strip) } } : {}),
+  };
+}
+
+// One quiet line about the time the watch ran without you; undefined when there was none.
+export function edgePauseLine(edge: EdgePauses): string | undefined {
+  const head = edge.headSec > 0 ? `voor de start stond je horloge al ${clock(edge.headSec)} aan` : undefined;
+  const tail = edge.tailSec > 0 ? `na afloop liep je horloge nog ${clock(edge.tailSec)} door` : undefined;
+  const parts = [head, tail].filter((x): x is string => !!x);
+  if (parts.length === 0) return undefined;
+  const text = parts.join(' en ');
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}; die tijd telt nergens mee.`;
 }
 
 // --- the screen as a whole ----------------------------------------------------------------------------

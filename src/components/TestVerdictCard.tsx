@@ -113,7 +113,7 @@ export function TestVerdictCard({ logId }: { logId: string }) {
       {state.standing === 'counts' && (
         <div className="mt-1">
           <p className="text-xs" style={dim}>Deze test telt mee voor je tempo's en je voorspelling.</p>
-          <TextButton tone="dim" size="xs" disabled={busy} onClick={() => choose('ignore')}>Telt niet mee</TextButton>
+          <TextButton tone="dim" size="xs" disabled={busy} onClick={() => choose('ignore')}>Niet laten meetellen</TextButton>
         </div>
       )}
       {state.standing === 'ignored' && (

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fastStartTest, segmentRun, type Seg } from './fixtures/testRun';
-import { buildRunDetail } from './runDetail';
+import { buildRunDetail, edgePausesOfStreams } from './runDetail';
 import { context, runLog } from './fixtures/runLogs';
 import { similarRuns } from './runComparison';
 import {
@@ -26,8 +26,12 @@ import {
   runKindOf,
   runPatterns,
   runVerdict,
+  testFocusLine,
   testHalvesLine,
   testLayout,
+  edgePauseLine,
+  withoutEdgePauses,
+  withPausesHidden,
   type FormKey,
 } from './runDetailView';
 import type { RunDetail, RunKm } from '../models/runDetail';
@@ -404,5 +408,188 @@ describe('heart rate zones for the strip', () => {
     expect(hrZoneOf(175, hr)).toBe(5);
     expect(hrZoneOf(150, undefined)).toBeUndefined();
     expect(hrZoneOf(null, hr)).toBeUndefined();
+  });
+});
+
+// A made-up 5 km test like the one that prompted this: 1,13 km warm-up with one stop of 69 s
+// after 669 m, an even test stretch (about 5:12 and 5:21 per km per half) at a high heart rate,
+// 540 m cooling down, and a watch that kept running 558 s after the last metre.
+const WARM_M = 1130;
+const TEST_KM = [310, 313, 316, 320, 322];
+function evenTestSet(opts: { tail?: number; gap?: boolean } = {}) {
+  const segs: Seg[] = [
+    { m: WARM_M, pace: 400, hr: 140 },
+    ...TEST_KM.map((pace) => ({ m: 1000, pace, hr: 183 })),
+    { m: 540, pace: 420, hr: 160 },
+  ];
+  const total = WARM_M + 5000 + 540;
+  const pauses = [{ atM: 669, seconds: 69 }];
+  if (opts.tail && !opts.gap) pauses.push({ atM: total, seconds: opts.tail });
+  const set = segmentRun(segs, { pauses });
+  if (opts.tail && opts.gap) {
+    // One hole in the series: the next reading comes long after the last metre.
+    const last = set.timeSec.length - 1;
+    set.timeSec.push((set.timeSec[last] as number) + opts.tail);
+    set.distanceM!.push(set.distanceM![last]);
+    set.speedMs!.push(0);
+    set.altitudeM!.push(set.altitudeM![last]);
+    for (const key of ['heartRate', 'cadence', 'stepLengthM', 'powerW', 'respirationRpm', 'temperatureC'] as const) set[key]?.push(null);
+  }
+  return set;
+}
+const evenTest = (opts: { tail?: number; gap?: boolean } = {}) => buildRunDetail(evenTestSet(opts), OPTS) as RunDetail;
+
+// Five test kilometres around a stretch of warm-up, as a stored detail with a best 5 km.
+function testOf(paces: number[]): RunDetail {
+  const kms = kmsOf(paces);
+  return detailOf(kmsOf([400, ...paces, 420]).map((k) => k), { bestFive: { startM: 1000, endM: 6000, startSec: 400, sec: paces.reduce((a, b) => a + b, 0), kms } });
+}
+
+describe('a test with warm-up and cooling down (2026-11-03)', () => {
+  const rd = evenTest();
+
+  it('judges the test stretch, not the warm-up: an even test is not mixed', () => {
+    const v = runVerdict(rd, 'test');
+    expect(v.word).toBe('Vrij gelijkmatig');
+    expect(v.sentence).toMatch(/^Je tweede helft ging \d+ seconden per km trager dan je eerste, zonder kilometer die eruit sprong\.$/);
+  });
+
+  it('has its own limit of 3,5 percent between the halves over the distance', () => {
+    // [a, a, a, b, b] with b = a * (1 + 1,25 x): the second 2,5 km is x slower than the first.
+    const at = (x: number) => {
+      const b = 300 * (1 + 1.25 * x);
+      const rd = testOf([300, 300, 300, b, b]);
+      const h = halvesOf(rd.bestFive!.kms)!;
+      expect(h.secondPace / h.firstPace - 1).toBeCloseTo(x, 6);
+      return runVerdict(rd, 'test');
+    };
+    expect(at(0.02).tone).toBe('near-even');
+    expect(at(0.034).tone).toBe('near-even');
+    expect(at(0.036).tone).toBe('mixed');
+    expect(at(0.05).tone).not.toBe('near-even');
+  });
+
+  it('calls the test of the report vrij gelijkmatig, with its own five kilometres', () => {
+    // Halves about 5:12 and 5:21 (+2,9 percent over the distance, +3,8 between the first two and
+    // the last two kilometres), km 4 3,9 percent slower than the mean.
+    const v = runVerdict(testOf([307.0, 313.1, 320.2, 329.3, 314.3]), 'test');
+    expect(v.word).toBe('Vrij gelijkmatig');
+    expect(v.sentence).toBe('Je tweede helft ging 9 seconden per km trager dan je eerste, zonder kilometer die eruit sprong.');
+  });
+
+  it('names the kilometre that was 4 to 5 percent off when the halves were even', () => {
+    // Halves equal, km 3 about 4,5 percent slower than the mean.
+    const v = runVerdict(testOf([310, 310, 328, 310, 310]), 'test');
+    expect(v.tone).toBe('near-even');
+    expect(v.sentence).toBe('Je helften waren even snel; alleen km 3 van je test week iets meer af.');
+    expect(v.sentence).not.toContain('eruit sprong');
+  });
+
+  it('gives the heart rate of the test stretch at the top', () => {
+    const heart = headlineStats(rd, 'test').find((s) => s.key === 'heart')!;
+    expect(Math.abs(Number(heart.value) - 183)).toBeLessThanOrEqual(1);
+    expect(heart.note).toContain('je 5 km');
+    // A plain run keeps its heart rate over the whole run.
+    const whole = headlineStats(rd, 'other').find((s) => s.key === 'heart')!;
+    expect(Number(whole.value)).toBeLessThan(180);
+  });
+
+  it('says once that warm-up and cooling down do not count, only for a test', () => {
+    expect(testFocusLine(rd, 'test')).toBe('Oordeel, verdeling en hartslag gaan over je 5 km. Inlopen en uitlopen tellen hier niet mee.');
+    expect(testFocusLine(rd, 'other')).toBeUndefined();
+    // A test that is the whole run has nothing to leave out.
+    expect(testFocusLine(even(5, 320, 180), 'test')).toBeUndefined();
+  });
+
+  it('leaves a plain run as it was', () => {
+    expect(runVerdict(detailOf(kmsOf([310, 313, 316, 320, 322])), 'other').tone).toBe('mixed');
+  });
+});
+
+describe('standing still before the start and after the end (2026-11-03)', () => {
+  it('keeps a stop during the run and splits off the long tail after the last metre', () => {
+    for (const gap of [false, true]) {
+      const set = evenTestSet({ tail: 558, gap });
+      const rd = buildRunDetail(set, OPTS) as RunDetail;
+      const before = structuredClone(rd);
+      const { rd: shown, edge } = withoutEdgePauses(rd, edgePausesOfStreams(set));
+      expect(Math.abs(edge.tailSec - 558)).toBeLessThanOrEqual(5);
+      expect(edge.headSec).toBe(0);
+      expect(Math.abs(shown.pauseSec - 69)).toBeLessThanOrEqual(5);
+      // The moving time and the distance stay exactly as they were, and the stored detail is untouched.
+      expect(shown.movingSec).toBe(rd.movingSec);
+      expect(shown.totalM).toBe(rd.totalM);
+      expect(rd).toEqual(before);
+      const last = shown.kms[shown.kms.length - 1];
+      expect(last.pauseSec ?? 0).toBeLessThan(1);
+      expect(kmChips(last).some((c) => c.startsWith('stilgestaan'))).toBe(false);
+      expect(Math.abs((shown.kms[0].pauseSec ?? 0) - 69)).toBeLessThanOrEqual(2);
+      expect(edgePauseLine(edge)).toMatch(/^Na afloop liep je horloge nog 9:\d\d door; die tijd telt nergens mee\.$/);
+    }
+  });
+
+  it('sets nothing apart without the series', () => {
+    const rd = evenTest({ tail: 558 });
+    const { rd: shown, edge } = withoutEdgePauses(rd);
+    expect(edge).toEqual({ headSec: 0, tailSec: 0 });
+    expect(shown).toEqual(rd);
+  });
+
+  it('notices a watch started before you began to move', () => {
+    const set = segmentRun([{ m: 3000, pace: 330 }], { pauses: [{ atM: 0, seconds: 90 }] });
+    const rd = buildRunDetail(set, OPTS) as RunDetail;
+    const { rd: shown, edge } = withoutEdgePauses(rd, edgePausesOfStreams(set));
+    expect(Math.abs(edge.headSec - 90)).toBeLessThanOrEqual(5);
+    expect(shown.pauseSec).toBeLessThanOrEqual(5);
+    expect(edgePauseLine(edge)).toMatch(/^Voor de start stond je horloge al 1:\d\d aan; die tijd telt nergens mee\.$/);
+  });
+
+  it('changes nothing for a run without a tail', () => {
+    const set = evenTestSet();
+    const rd = buildRunDetail(set, OPTS) as RunDetail;
+    const { rd: shown, edge } = withoutEdgePauses(rd, edgePausesOfStreams(set));
+    expect(edge).toEqual({ headSec: 0, tailSec: 0 });
+    expect(shown).toEqual(rd);
+    expect(edgePauseLine(edge)).toBeUndefined();
+  });
+
+  it('keeps a stop 25 m before the end of a half marathon that you ran on from', () => {
+    const set = segmentRun([{ m: 21100, pace: 330 }], { pauses: [{ atM: 21075, seconds: 120 }] });
+    const rd = buildRunDetail(set, OPTS) as RunDetail;
+    const { rd: shown, edge } = withoutEdgePauses(rd, edgePausesOfStreams(set));
+    expect(edge.tailSec).toBe(0);
+    expect(shown.pauseSec).toBe(rd.pauseSec);
+    expect(shown.pauseSec).toBeGreaterThanOrEqual(115);
+  });
+
+  it('counts a stop within 10 m of the end as the tail, as the decision says', () => {
+    const set = segmentRun([{ m: 3000, pace: 330 }], { pauses: [{ atM: 2994, seconds: 200 }] });
+    const rd = buildRunDetail(set, OPTS) as RunDetail;
+    const edge = edgePausesOfStreams(set)!;
+    expect(Math.abs(edge.tailSec - 200)).toBeLessThanOrEqual(2);
+    expect(withoutEdgePauses(rd, edge).rd.pauseSec).toBeLessThanOrEqual(2);
+  });
+
+  it('says no stop at all until the edges are read', () => {
+    const rd = evenTest({ tail: 558 });
+    const hidden = withPausesHidden(rd);
+    expect(hidden.pauseSec).toBe(0);
+    expect(hidden.kms.every((k) => k.pauseSec === undefined)).toBe(true);
+    expect(hidden.kms.flatMap((k) => kmChips(k)).some((c) => c.startsWith('stilgestaan'))).toBe(false);
+    expect(headlineStats(hidden, 'other').every((x) => !x.note.includes('stilstaan') || x.key === 'pace')).toBe(true);
+    expect(hidden.movingSec).toBe(rd.movingSec);
+    expect(rd.pauseSec).toBeGreaterThan(600);
+  });
+
+  it('never shows the tail in a lap', () => {
+    const set = evenTestSet({ tail: 558 });
+    const end = set.timeSec[set.timeSec.length - 1] as number;
+    const rd = buildRunDetail(set, { ...OPTS, laps: [{ startSec: 0, endSec: 600 }, { startSec: 600, endSec: end }] }) as RunDetail;
+    const { rd: shown } = withoutEdgePauses(rd, edgePausesOfStreams(set));
+    expect(shown.laps).toHaveLength(2);
+    for (const lap of shown.laps ?? []) expect((lap as { pauseSec?: number }).pauseSec).toBeUndefined();
+    // A lap counts moving seconds only: the last one does not hold the 558 seconds.
+    const last = shown.laps![1];
+    expect(last.sec).toBeLessThan(last.endSec - last.startSec - 500);
   });
 });

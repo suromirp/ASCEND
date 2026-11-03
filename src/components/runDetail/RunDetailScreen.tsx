@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { SessionLog } from '../../models/training';
-import type { RunKm, RunLap } from '../../models/runDetail';
+import type { RunDetail, RunKm, RunLap } from '../../models/runDetail';
 import { useAppData } from '../../state/AppDataContext';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { formatDateNL } from '../../utils/dates';
@@ -34,10 +34,15 @@ import {
   runKindOf,
   runVerdict,
   sourceLine,
+  testFocusLine,
   testHalvesLine,
   testLayout,
+  edgePauseLine,
+  withoutEdgePauses,
+  withPausesHidden,
 } from '../../engine/runDetailView';
-import { ensureOutcomeText, ensureRunDetail, type EnsureOutcome } from '../../storage/activityDetail';
+import { edgePausesFor, ensureOutcomeText, ensureRunDetail, type EnsureOutcome } from '../../storage/activityDetail';
+import type { EdgePauses } from '../../engine/runDetail';
 import { Portal } from '../Portal';
 import { SheetClose } from '../SheetHeader';
 import { TextButton } from '../TextButton';
@@ -121,7 +126,26 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   const legs = useLegFatigueInputs();
   const excluded = useExcludedLogIds();
   const screen = resolveRunInsight(settings.runInsight);
-  const rd = log.runDetail;
+  // What the screen shows: the stored detail, with a pause before the start or after the end
+  // set apart (a copy, the log keeps its detail as it is). The edges come from the kept series;
+  // until they are read every stop on the screen waits (the line, the chips, the list and the
+  // note at Afstand), so a long tail never flashes as standing still.
+  const logId = log.id;
+  const runDetail = log.runDetail;
+  const trimmed = !!log.trim;
+  const [edges, setEdges] = useState<{ for: RunDetail; value: EdgePauses | undefined } | undefined>();
+  useEffect(() => {
+    if (!runDetail) return;
+    let live = true;
+    void edgePausesFor({ id: logId, runDetail, trim: trimmed }).then((value) => { if (live) setEdges({ for: runDetail, value }); });
+    return () => { live = false; };
+  }, [logId, runDetail, trimmed]);
+  const edgesRead = !!runDetail && edges?.for === runDetail;
+  const shown = useMemo(() => {
+    if (!runDetail) return undefined;
+    return edgesRead ? withoutEdgePauses(runDetail, edges?.value) : { rd: withPausesHidden(runDetail), edge: { headSec: 0, tailSec: 0 } };
+  }, [runDetail, edgesRead, edges]);
+  const rd = shown?.rd;
   const d = log.cardioData ?? log.outdoorData;
   const stale = !!rd && isStaleRunDetail(rd, d?.distanceKm ?? 0, d?.durationMinutes || log.durationMinutes);
   const kind = runKindOf(log, templates);
@@ -219,6 +243,8 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   })();
   const best = isTest && rd.bestFive ? { startM: rd.bestFive.startM, endM: rd.bestFive.endM } : undefined;
   const hrNote = heartNote(rd, coverage);
+  const focusLine = testFocusLine(rd, kind);
+  const edgeLine = shown ? edgePauseLine(shown.edge) : undefined;
   const listKms = rd.kms.length > LIST_LONG_KM && !showAll ? rd.kms.slice(0, LIST_FIRST) : rd.kms;
   const testCard = isTest && tstate ? <Card><TestVerdictCard logId={log.id} /></Card> : null;
 
@@ -243,7 +269,8 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
             </div>
           ))}
         </div>
-        {isTest && tstate && !askTop && <p className="mt-3 text-xs" style={dim}>{testBasisLine(tstate.result)}</p>}
+        {focusLine && <p className="mt-3 text-xs leading-snug" style={dim}>{focusLine}</p>}
+        {isTest && tstate && !askTop && <p className={`${focusLine ? 'mt-1' : 'mt-3'} text-xs`} style={dim}>{testBasisLine(tstate.result)}</p>}
       </Card>
 
       {/* 4.3: de open vraag bij een test */}
@@ -306,6 +333,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
         </div>
         {hrNote && <p className="mt-2 text-xs leading-snug" style={dim}>{hrNote}</p>}
         {rd.pauseSec > 0 && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>Je stond samen {clock(rd.pauseSec)} stil; dat telt niet mee in je tempo.</p>}
+        {edgeLine && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>{edgeLine}</p>}
       </Card>
 
       {/* 4.6: per kilometer en per ronde */}
