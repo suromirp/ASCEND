@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fastStartTest, segmentRun, type Seg } from './fixtures/testRun';
-import { buildRunDetail } from './runDetail';
+import { buildRunDetail, edgePausesOfStreams } from './runDetail';
 import { context, runLog } from './fixtures/runLogs';
 import { similarRuns } from './runComparison';
 import {
@@ -415,7 +415,7 @@ describe('heart rate zones for the strip', () => {
 // 540 m cooling down, and a watch that kept running 558 s after the last metre.
 const WARM_M = 1130;
 const TEST_KM = [310, 313, 316, 320, 322];
-function evenTest(opts: { tail?: number; gap?: boolean } = {}) {
+function evenTestSet(opts: { tail?: number; gap?: boolean } = {}) {
   const segs: Seg[] = [
     { m: WARM_M, pace: 400, hr: 140 },
     ...TEST_KM.map((pace) => ({ m: 1000, pace, hr: 183 })),
@@ -434,7 +434,14 @@ function evenTest(opts: { tail?: number; gap?: boolean } = {}) {
     set.altitudeM!.push(set.altitudeM![last]);
     for (const key of ['heartRate', 'cadence', 'stepLengthM', 'powerW', 'respirationRpm', 'temperatureC'] as const) set[key]?.push(null);
   }
-  return buildRunDetail(set, OPTS) as RunDetail;
+  return set;
+}
+const evenTest = (opts: { tail?: number; gap?: boolean } = {}) => buildRunDetail(evenTestSet(opts), OPTS) as RunDetail;
+
+// Five test kilometres around a stretch of warm-up, as a stored detail with a best 5 km.
+function testOf(paces: number[]): RunDetail {
+  const kms = kmsOf(paces);
+  return detailOf(kmsOf([400, ...paces, 420]).map((k) => k), { bestFive: { startM: 1000, endM: 6000, startSec: 400, sec: paces.reduce((a, b) => a + b, 0), kms } });
 }
 
 describe('a test with warm-up and cooling down (2026-11-03)', () => {
@@ -442,9 +449,25 @@ describe('a test with warm-up and cooling down (2026-11-03)', () => {
 
   it('judges the test stretch, not the warm-up: an even test is not mixed', () => {
     const v = runVerdict(rd, 'test');
-    expect(v.tone).not.toBe('mixed');
     expect(v.word).toBe('Vrij gelijkmatig');
-    expect(v.sentence).toMatch(/^Je tweede helft ging \d+ seconden per km trager dan je eerste/);
+    expect(v.sentence).toMatch(/^Je tweede helft ging \d+ seconden per km trager dan je eerste, zonder kilometer die eruit sprong\.$/);
+  });
+
+  it('has its own limit of 3,5 percent between the halves', () => {
+    // Halves 2 percent apart: just outside even, so near-even.
+    expect(runVerdict(testOf([250, 250, 252, 255, 255]), 'test').tone).toBe('near-even');
+    expect(runVerdict(testOf([300, 300, 305, 310.2, 310.2]), 'test').tone).toBe('near-even');
+    // 3,6 and 5 percent: the old verdict.
+    expect(runVerdict(testOf([300, 300, 305, 310.8, 310.8]), 'test').tone).toBe('mixed');
+    expect(runVerdict(testOf([300, 300, 307, 315, 315]), 'test').tone).not.toBe('near-even');
+  });
+
+  it('names the kilometre that was 4 to 5 percent off when the halves were even', () => {
+    // Halves equal, km 3 about 4,5 percent slower than the mean.
+    const v = runVerdict(testOf([310, 310, 328, 310, 310]), 'test');
+    expect(v.tone).toBe('near-even');
+    expect(v.sentence).toBe('Je helften waren even snel; alleen km 3 van je test week iets meer af.');
+    expect(v.sentence).not.toContain('eruit sprong');
   });
 
   it('gives the heart rate of the test stretch at the top', () => {
@@ -471,9 +494,10 @@ describe('a test with warm-up and cooling down (2026-11-03)', () => {
 describe('standing still before the start and after the end (2026-11-03)', () => {
   it('keeps a stop during the run and splits off the long tail after the last metre', () => {
     for (const gap of [false, true]) {
-      const rd = evenTest({ tail: 558, gap });
+      const set = evenTestSet({ tail: 558, gap });
+      const rd = buildRunDetail(set, OPTS) as RunDetail;
       const before = structuredClone(rd);
-      const { rd: shown, edge } = withoutEdgePauses(rd);
+      const { rd: shown, edge } = withoutEdgePauses(rd, edgePausesOfStreams(set));
       expect(Math.abs(edge.tailSec - 558)).toBeLessThanOrEqual(5);
       expect(edge.headSec).toBe(0);
       expect(Math.abs(shown.pauseSec - 69)).toBeLessThanOrEqual(5);
@@ -489,28 +513,49 @@ describe('standing still before the start and after the end (2026-11-03)', () =>
     }
   });
 
+  it('sets nothing apart without the series', () => {
+    const rd = evenTest({ tail: 558 });
+    const { rd: shown, edge } = withoutEdgePauses(rd);
+    expect(edge).toEqual({ headSec: 0, tailSec: 0 });
+    expect(shown).toEqual(rd);
+  });
+
   it('notices a watch started before you began to move', () => {
     const set = segmentRun([{ m: 3000, pace: 330 }], { pauses: [{ atM: 0, seconds: 90 }] });
     const rd = buildRunDetail(set, OPTS) as RunDetail;
-    const { rd: shown, edge } = withoutEdgePauses(rd);
+    const { rd: shown, edge } = withoutEdgePauses(rd, edgePausesOfStreams(set));
     expect(Math.abs(edge.headSec - 90)).toBeLessThanOrEqual(5);
     expect(shown.pauseSec).toBeLessThanOrEqual(5);
     expect(edgePauseLine(edge)).toMatch(/^Voor de start stond je horloge al 1:\d\d aan; die tijd telt nergens mee\.$/);
   });
 
   it('changes nothing for a run without a tail', () => {
-    const rd = evenTest();
-    const { rd: shown, edge } = withoutEdgePauses(rd);
+    const set = evenTestSet();
+    const rd = buildRunDetail(set, OPTS) as RunDetail;
+    const { rd: shown, edge } = withoutEdgePauses(rd, edgePausesOfStreams(set));
     expect(edge).toEqual({ headSec: 0, tailSec: 0 });
     expect(shown).toEqual(rd);
     expect(edgePauseLine(edge)).toBeUndefined();
   });
 
-  it('keeps a stop near the end that you ran on from', () => {
-    const set = segmentRun([{ m: 3000, pace: 330 }], { pauses: [{ atM: 2500, seconds: 60 }] });
+  it('keeps a stop 25 m before the end of a half marathon that you ran on from', () => {
+    const set = segmentRun([{ m: 21100, pace: 330 }], { pauses: [{ atM: 21075, seconds: 120 }] });
     const rd = buildRunDetail(set, OPTS) as RunDetail;
-    const { rd: shown, edge } = withoutEdgePauses(rd);
+    const { rd: shown, edge } = withoutEdgePauses(rd, edgePausesOfStreams(set));
     expect(edge.tailSec).toBe(0);
     expect(shown.pauseSec).toBe(rd.pauseSec);
+    expect(shown.pauseSec).toBeGreaterThanOrEqual(115);
+  });
+
+  it('never shows the tail in a lap', () => {
+    const set = evenTestSet({ tail: 558 });
+    const end = set.timeSec[set.timeSec.length - 1] as number;
+    const rd = buildRunDetail(set, { ...OPTS, laps: [{ startSec: 0, endSec: 600 }, { startSec: 600, endSec: end }] }) as RunDetail;
+    const { rd: shown } = withoutEdgePauses(rd, edgePausesOfStreams(set));
+    expect(shown.laps).toHaveLength(2);
+    for (const lap of shown.laps ?? []) expect((lap as { pauseSec?: number }).pauseSec).toBeUndefined();
+    // A lap counts moving seconds only: the last one does not hold the 558 seconds.
+    const last = shown.laps![1];
+    expect(last.sec).toBeLessThan(last.endSec - last.startSec - 500);
   });
 });

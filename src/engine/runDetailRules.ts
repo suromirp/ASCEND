@@ -26,6 +26,9 @@ export const PACING = {
   halfPct: 2,
   // No kilometre further than this from the mean for "gelijkmatig" (percent).
   evenKmPct: 4,
+  // A test whose halves differ less than this, without a kilometre that sags, is "vrij
+  // gelijkmatig" rather than mixed (percent; 2026-11-03-testloop-in-detail.md).
+  nearEvenPct: 3.5,
   // From the third kilometre on, this much slower than the mean: sagging (percent).
   sagPct: 5,
   // The last kilometre this much faster than the mean: something left (percent).

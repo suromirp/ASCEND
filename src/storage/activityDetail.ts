@@ -31,7 +31,7 @@ import { resolveRunInsight } from '../engine/runInsightSettings';
 import { detailsWanted } from '../engine/watchUse';
 import { createIntervalsIcuAdapter, streamsToRequest, WANTED_STREAMS } from '../integrations/intervalsIcu';
 import { fetchPastWeather, type FetchOptions, type HourlyWindPoint } from '../integrations/openMeteo';
-import { buildRunDetail, isStaleRunDetail, isUsableRunDetail, runDetailFingerprint, windAgainstFn, windFromStored, windPerKm } from '../engine/runDetail';
+import { buildRunDetail, edgePausesOfStreams, isStaleRunDetail, type EdgePauses, isUsableRunDetail, runDetailFingerprint, windAgainstFn, windFromStored, windPerKm } from '../engine/runDetail';
 import { packStreams, unpackStreams } from '../engine/streamPack';
 import { isWalkOrTripLog, logSport } from '../engine/sports';
 import type { DetailConditions } from '../models/activityDetail';
@@ -504,6 +504,22 @@ export async function ensureRunDetail(logId: string, options: AttachOptions = {}
     return await withTimeout(work(), options.timeoutMs ?? ENSURE_TIMEOUT_MS);
   } catch (err) {
     return err instanceof TimeoutError ? 'timeout' : 'failed';
+  }
+}
+
+// The standing still before the first and after the last movement of a run, from its kept series,
+// for the screen "Run in detail" (2026-11-03-testloop-in-detail.md). Only read, never written.
+// Undefined when the series is not kept, belongs to other totals, or the log was cut.
+export async function edgePausesFor(log: SessionLog, timeoutMs = 3000): Promise<EdgePauses | undefined> {
+  const rd = log.runDetail;
+  if (!rd || log.trim) return undefined;
+  try {
+    const stored = await withTimeout(ActivityStreamsRepo.get(log.id), timeoutMs);
+    if (!stored || isStaleRunDetail(stored, rd.wholeKm, rd.wholeMinutes)) return undefined;
+    const set = unpackStreams(stored);
+    return set ? edgePausesOfStreams(set) : undefined;
+  } catch {
+    return undefined;
   }
 }
 

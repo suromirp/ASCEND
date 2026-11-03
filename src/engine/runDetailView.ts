@@ -33,6 +33,7 @@ import {
   type PlayedContext,
 } from './runDetailRules';
 import { MAX_GAP_SEC } from './bestEffort';
+import type { EdgePauses } from './runDetail';
 import { isNum } from '../utils/guards';
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -233,14 +234,17 @@ export function runVerdict(rd: RunDetail, kind: RunKind): RunVerdict {
 
 function nearEvenTest(kms: RunKm[], p: Pacing): RunVerdict | undefined {
   const full = kms.filter((k) => k.distanceM >= PACING.fullKmM);
-  const worst = Math.max(...full.map((k) => Math.abs(pct(k.paceSecKm, p.meanPace))));
+  const off = full.map((k) => ({ k, pct: Math.abs(pct(k.paceSecKm, p.meanPace)) }));
+  const worst = Math.max(...off.map((x) => x.pct));
   const h = halvesOf(kms);
-  if (!h || worst >= PACING.sagPct || Math.abs(p.halfSlowPct) >= PACING.sagPct) return undefined;
+  if (!h || worst >= PACING.sagPct || Math.abs(p.halfSlowPct) >= PACING.nearEvenPct) return undefined;
   const d = Math.round(h.diffSec);
-  const sentence = d === 0
-    ? 'Je helften waren even snel; één kilometer week iets meer af.'
-    : `Je tweede helft ging ${secs(Math.abs(d))} per km ${d > 0 ? 'trager' : 'sneller'} dan je eerste, zonder kilometer die eruit sprong.`;
-  return { word: 'Vrij gelijkmatig', tone: 'near-even', sentence };
+  const halves = d === 0
+    ? 'Je helften waren even snel'
+    : `Je tweede helft ging ${secs(Math.abs(d))} per km ${d > 0 ? 'trager' : 'sneller'} dan je eerste`;
+  if (worst <= PACING.evenKmPct) return { word: 'Vrij gelijkmatig', tone: 'near-even', sentence: `${halves}, zonder kilometer die eruit sprong.` };
+  const odd = off.filter((x) => x.pct > PACING.evenKmPct).map((x) => x.k.index);
+  return { word: 'Vrij gelijkmatig', tone: 'near-even', sentence: `${halves}; ${odd.length === 1 ? `alleen km ${odd[0]} van je test week` : `alleen ${kmList(odd)} van je test weken`} iets meer af.` };
 }
 
 // The kilometres the top of a test is read on, when the run has a warm-up or cooling down
@@ -903,43 +907,16 @@ export function compareWithSimilar(rd: RunDetail, others: RunDetail[]): SimilarC
 
 // --- standing still before the start and after the end (2026-11-03) -----------------------------------
 
-export interface EdgePauses {
-  // Seconds the watch ran before the first movement and after the last one.
-  headSec: number;
-  tailSec: number;
-}
-
-// The pause at either end of the run, read from the stored line: the clock time of its first
-// (or last) stretch minus the moving time its pace gives. The kilometre keeps that time in its
-// `pauseSec`, so the result is never more than that. Under the pause limit it is nothing.
-function edgePause(rd: RunDetail, i: number, j: number, km: RunKm | undefined): number {
-  const l = rd.line;
-  if (!km || !(km.pauseSec && km.pauseSec > 0) || l.n < 2) return 0;
-  const dt = l.timeSec[j] - l.timeSec[i];
-  const dd = Math.abs(l.distM[j] - l.distM[i]);
-  const paces = [l.paceSecKm[i], l.paceSecKm[j]].filter(isNum);
-  const pace = paces.length > 0 ? sum(paces) / paces.length : km.paceSecKm;
-  const est = dt - (dd * pace) / 1000;
-  if (!(est > MAX_GAP_SEC)) return 0;
-  return Math.min(est, km.pauseSec);
-}
-
-export function edgePausesOf(rd: RunDetail): EdgePauses {
-  const n = rd.line.n;
-  if (rd.pauseSec <= 0 || rd.kms.length === 0 || n < 2) return { headSec: 0, tailSec: 0 };
-  const first = rd.kms[0];
-  const last = rd.kms[rd.kms.length - 1];
-  const headSec = Math.round(edgePause(rd, 0, 1, first));
-  let tailSec = Math.round(edgePause(rd, n - 2, n - 1, last));
-  if (first === last) tailSec = Math.min(tailSec, Math.max(0, Math.round((last.pauseSec ?? 0) - headSec)));
-  return { headSec, tailSec };
-}
-
 // The detail as the screen shows it: a pause before the first or after the last movement is not
 // standing still during the run. A copy; the stored detail stays as it is (derived and
 // append-only), and the moving time and the distance do not change.
-export function withoutEdgePauses(rd: RunDetail): { rd: RunDetail; edge: EdgePauses } {
-  const edge = edgePausesOf(rd);
+// The edges come from the full series (`runDetail.ts#edgePausesOfStreams`); without them (the
+// series is not kept) nothing is set apart, because the stored line cannot tell a pause after
+// the end from a stop just before it.
+export function withoutEdgePauses(rd: RunDetail, found?: EdgePauses): { rd: RunDetail; edge: EdgePauses } {
+  const headSec = Math.min(Math.max(0, Math.round(found?.headSec ?? 0)), rd.pauseSec);
+  const tailSec = Math.min(Math.max(0, Math.round(found?.tailSec ?? 0)), rd.pauseSec - headSec);
+  const edge = { headSec: headSec > MAX_GAP_SEC ? headSec : 0, tailSec: tailSec > MAX_GAP_SEC ? tailSec : 0 };
   if (edge.headSec === 0 && edge.tailSec === 0) return { rd, edge };
   const trim = (k: RunKm): RunKm => {
     let cut = 0;
@@ -958,6 +935,8 @@ export function withoutEdgePauses(rd: RunDetail): { rd: RunDetail; edge: EdgePau
       ...rd,
       pauseSec: Math.max(0, rd.pauseSec - edge.headSec - edge.tailSec),
       kms: rd.kms.map(trim),
+      // A lap keeps only moving seconds (no pause of its own), so the tail never shows in a lap.
+      ...(rd.laps ? { laps: rd.laps } : {}),
       ...(rd.bestFive ? { bestFive: { ...rd.bestFive, kms: rd.bestFive.kms.map(trim) } } : {}),
     },
   };

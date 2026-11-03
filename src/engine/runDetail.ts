@@ -539,6 +539,37 @@ export function buildRunDetail(set: StreamSet, opts: BuildRunDetailOptions): Run
   return out;
 }
 
+// --- standing still at the edges (2026-11-03) ------------------------------------------------------
+
+// Metres at either end within which movement does not count as the start or the end of the run.
+const EDGE_M = 10;
+
+// Seconds the watch ran before the first movement and after the last one.
+export interface EdgePauses {
+  headSec: number;
+  tailSec: number;
+}
+
+// From the full series: the pause before the first moving stretch and after the last one. A stop
+// you ran on from, more than 10 metres before the end, is standing still during the run and is not counted
+// here. Undefined when the series gives no track.
+export function edgePausesOfStreams(set: StreamSet): EdgePauses | undefined {
+  const tr = trackOf(set);
+  if (!tr) return undefined;
+  const moves = (k: number) => tr.pause[k] === 0 && tr.p[k + 1].d > tr.p[k].d;
+  // A few metres of drift (or a step) at either end do not make the pause a stop during the run.
+  let first = 0;
+  while (first < tr.pause.length && !(moves(first) && tr.p[first + 1].d > EDGE_M)) first++;
+  let last = tr.pause.length - 1;
+  while (last >= 0 && !(moves(last) && tr.p[last].d < tr.total - EDGE_M)) last--;
+  if (last < first) return { headSec: 0, tailSec: 0 };
+  let headSec = 0;
+  for (let k = 0; k < first; k++) headSec += tr.pause[k];
+  let tailSec = 0;
+  for (let k = last + 1; k < tr.pause.length; k++) tailSec += tr.pause[k];
+  return { headSec: round(headSec, 0), tailSec: round(tailSec, 0) };
+}
+
 // --- the wind against you -------------------------------------------------------------------------
 
 export interface HourlyWind {

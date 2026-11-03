@@ -40,7 +40,8 @@ import {
   edgePauseLine,
   withoutEdgePauses,
 } from '../../engine/runDetailView';
-import { ensureOutcomeText, ensureRunDetail, type EnsureOutcome } from '../../storage/activityDetail';
+import { edgePausesFor, ensureOutcomeText, ensureRunDetail, type EnsureOutcome } from '../../storage/activityDetail';
+import type { EdgePauses } from '../../engine/runDetail';
 import { Portal } from '../Portal';
 import { SheetClose } from '../SheetHeader';
 import { TextButton } from '../TextButton';
@@ -126,7 +127,16 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   const screen = resolveRunInsight(settings.runInsight);
   // What the screen shows: the stored detail, with a pause before the start or after the end
   // set apart (a copy, the log keeps its detail as it is).
-  const shown = useMemo(() => (log.runDetail ? withoutEdgePauses(log.runDetail) : undefined), [log.runDetail]);
+  // The edges come from the kept series; until they are read (or when there is none) the stops
+  // lines wait, so a long tail never flashes as standing still.
+  const [edges, setEdges] = useState<{ for: SessionLog; value: EdgePauses | undefined } | undefined>();
+  useEffect(() => {
+    let live = true;
+    void edgePausesFor(log).then((value) => { if (live) setEdges({ for: log, value }); });
+    return () => { live = false; };
+  }, [log]);
+  const edgesRead = edges?.for === log;
+  const shown = useMemo(() => (log.runDetail ? withoutEdgePauses(log.runDetail, edgesRead ? edges?.value : undefined) : undefined), [log.runDetail, edgesRead, edges]);
   const rd = shown?.rd;
   const d = log.cardioData ?? log.outdoorData;
   const stale = !!rd && isStaleRunDetail(rd, d?.distanceKm ?? 0, d?.durationMinutes || log.durationMinutes);
@@ -314,7 +324,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
           <DistanceCharts line={rd.line} best={best} selectedKm={selectedBand} hr={settings.heartRate} cursor={cursor} onCursor={setCursor} />
         </div>
         {hrNote && <p className="mt-2 text-xs leading-snug" style={dim}>{hrNote}</p>}
-        {rd.pauseSec > 0 && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>Je stond samen {clock(rd.pauseSec)} stil; dat telt niet mee in je tempo.</p>}
+        {edgesRead && rd.pauseSec > 0 && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>Je stond samen {clock(rd.pauseSec)} stil; dat telt niet mee in je tempo.</p>}
         {edgeLine && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>{edgeLine}</p>}
       </Card>
 
