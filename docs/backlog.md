@@ -22,6 +22,11 @@ Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd
 
 - Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
 
+## Forge, wens van de eigenaar (3 november)
+
+- Herhalingen schatten bij een ander gewicht: vul je in een werkset zelf een ander gewicht in, dan rekent Forge het aantal herhalingen uit dat je bij dat gewicht waarschijnlijk haalt (uit je geschatte kracht en de gevraagde RIR, dezelfde rekenregel als het voorschrift), zoals MacroFactor dat doet. Alleen een voorstel in het vak, nooit over iets wat je zelf invulde. Nu bestaat alleen `forgeInput.ts#carryChange`, dat een gelijke waarde doorschuift, geen schatting.
+- Na afvinken de volgende set bijstellen: vink je een set af met meer of minder herhalingen (of een andere RIR) dan gevraagd, dan stelt Forge de herhalingen (en zo nodig het gewicht) van de volgende, nog open werkset bij naar wat hij nu verwacht. Niet bij een set die je zelf al aanpaste of afvinkte; een bestaand log blijft onaangeroerd. Instelbaar (standaard aan), met besluit en tests; past bij de herinrichting van Forge in ronde 3.
+
 ## Met voorrang: de planner en de 48 uur (gevonden 2 november)
 
 - De planner zelf zet een lange duurloop en een zware beendag (Benen A) op twee dagen achter elkaar: `scheduler.ts#legSpacingDays` telt een loop met `intensity: 'low'` als rustig volume, terwijl `tpl_long_run` `lowerBodyLoad: 'heavy'` heeft. Dat botst met CLAUDE.md ("twee beenzware sessies niet binnen 48 uur"). Onderzoek klaar (`docs/onderzoek/Lange duurloop en een zware beendag.md`): 48 uur tussen zware beenkracht en de lange duurloop in beide volgordes; het weekendblok (heuvels zaterdag, lange duurloop zondag) blijft vrijgesteld; een instelling, standaard uit, die beenkracht de dag na de lange duurloop toestaat. Bouwen bij de eerstvolgende vrije plek (Sherpa en Warden op opus), met een nieuw besluit dat het 24-uursdeel van `2026-10-27-groei-tot-de-wedstrijdpiek.md` vervangt en de golden die beweegt met de reden in de commit.
