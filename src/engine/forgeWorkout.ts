@@ -28,7 +28,7 @@ import { legSorenessList, type SoreSource } from './legSoreness';
 import type { LegEaseHow } from './legEaseSettings';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
-import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, formatWeight, lastDateBefore, prescribe, usedBefore, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
+import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, formatWeight, lastDateBefore, prescribe, raisedText, usedBefore, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
 import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
 import { programLine } from './programLine';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
@@ -74,6 +74,12 @@ export interface WorkoutRow {
   // change on an earlier set no longer carries over to this one. Lives in the
   // draft only; it is never part of the log.
   edited?: boolean;
+  // "Forge rekent mee" (engine/forgeReckon.ts): the reps Forge last put in this row (the plan, or an
+  // estimate), to see afterwards whether you did something else than asked. Draft only.
+  forgeReps?: number;
+  // The reps are Forge's estimate for a weight you typed (the row is `edited` for the weight, not for the
+  // reps), so another weight may estimate them again. Typing reps yourself clears it. Draft only.
+  repsEstimated?: boolean;
   // A warm-up row: its weight as a share of the first working weight. While you
   // do not touch the row, it follows that weight (and an empty row fills in as
   // soon as set 1 gets a weight). Lives in the draft only.
@@ -106,6 +112,14 @@ export interface WorkoutExercise {
   fatiguePerSet?: number;
   // Werksets van het programma die jij weghaalde, met hun plek, voor "Terugzetten" (engine/forgeRows.ts).
   dropped?: { row: WorkoutRow; index: number }[];
+  // The estimated strength the prescription counted with for the first working set ("Forge rekent mee").
+  strengthKg?: number;
+  // "Forge rekent mee" made the step up after the top of the range: the line that says so, the reason
+  // without the step, and the working sets as they would have been, for Terugzetten (engine/forgeReckon.ts).
+  raise?: { line: string; reason?: string; back: { rowId: string; weightKg?: number; reps: number }[] };
+  // Je zette de stap omhoog terug (undoRaise): de oefening telt dan als aangeraakt, zodat een heropend
+  // concept het teruggezette gewicht houdt en niet opnieuw het plan met de stap krijgt.
+  raiseUndone?: boolean;
 }
 
 // --- rep ranges ------------------------------------------------------------------------------
@@ -255,9 +269,10 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   const plan = swapTo ? (fromSlot?.rir !== undefined ? { rir: fromSlot.rir } : undefined) : fromSlot;
   const learned = usedBefore({ sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings });
   let rx: Prescription | undefined;
+  let rxInput: Parameters<typeof prescribe>[0] | undefined;
   if (ctx.modelOn && history && history.sessions.length > 0) {
     const lastStrengthDate = lastDateBefore([...state.histories.values()].flatMap((h) => h.sessions.map((s) => s.date)), ctx.date);
-    rx = prescribe({
+    rxInput = {
       exercise,
       sessions: history.sessions,
       date: ctx.date,
@@ -268,18 +283,23 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
       warm: warmKind,
       ...(plan ? { plan } : {}),
       nearestOnMismatch: true,
-    });
+    };
+    rx = prescribe(rxInput);
   }
 
   // Dumbbells logged as the total of two: the weights are sums of two from the rack.
   const dumbbellTotal = rx?.dumbbellTotal ?? dumbbellTotalFor({ exercise, sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings });
   const lastTop = last?.sets.filter(isWorkSet).filter((s) => s.reps > 0).sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0];
-  const fromProgram = rx && targets ? programWeights(rx, targets, exercise, ctx, lastTop?.weightKg, tired, warmKind, learned, dumbbellTotal) : undefined;
-  const workWeights: (number | undefined)[] = [];
-  for (let i = 0; i < setCount; i++) {
-    const t = targets?.[i];
-    workWeights.push(t ? (fromProgram?.weights[i] ?? (rx ? rx.sets[Math.min(i, rx.sets.length - 1)].weightKg : (slot.targetWeightKg ?? lastTop?.weightKg))) : rx ? rx.sets[Math.min(i, rx.sets.length - 1)].weightKg : (slot.targetWeightKg ?? lastTop?.weightKg));
-  }
+  const weightsOf = (r: Prescription | undefined) => {
+    const program = r && targets ? programWeights(r, targets, exercise, ctx, lastTop?.weightKg, tired, warmKind, learned, dumbbellTotal) : undefined;
+    const weights: (number | undefined)[] = [];
+    for (let i = 0; i < setCount; i++) {
+      const t = targets?.[i];
+      weights.push(t ? (program?.weights[i] ?? (r ? r.sets[Math.min(i, r.sets.length - 1)].weightKg : (slot.targetWeightKg ?? lastTop?.weightKg))) : r ? r.sets[Math.min(i, r.sets.length - 1)].weightKg : (slot.targetWeightKg ?? lastTop?.weightKg));
+    }
+    return { program, weights };
+  };
+  const { program: fromProgram, weights: workWeights } = weightsOf(rx);
   // Warm-up: from the prescription; with no prescription (no history, or none
   // with reps in reserve) from the working weight there is, else empty rows that
   // fill in when set 1 gets a weight.
@@ -305,30 +325,50 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   }
   // The body part counts as warm only after an exercise that got warm-up sets.
   noteWorked(state.warm, exercise, rows.length > 0 && rows.some((r) => r.kind === 'warmup'));
-  for (let i = 0; i < setCount; i++) {
+  const workRow = (r: Prescription | undefined, weightKg: number | undefined, i: number): { target: RowTarget; reps: number } => {
     let target: RowTarget;
     const t = targets?.[i];
-    const weightKg = workWeights[i];
     if (t) {
       target = { ...(weightKg !== undefined ? { weightKg } : {}), repsLow: t.repsLow, repsHigh: t.repsHigh, rir: t.rir, ...(t.failure ? { failure: true } : {}), ...(t.open ? { open: true } : {}) };
-    } else if (rx) {
-      const s = rx.sets[Math.min(i, rx.sets.length - 1)];
+    } else if (r) {
+      const s = r.sets[Math.min(i, r.sets.length - 1)];
       target = { weightKg: s.weightKg, repsLow: s.repsLow, repsHigh: s.repsHigh, rir: s.rir };
     } else {
       target = { weightKg, repsLow: base.repsLow, repsHigh: base.repsHigh, rir: baseRir };
     }
-    let reps = target.failure ? target.repsLow : i === 0 && rx && !targets ? rx.targetReps : midReps(target);
+    let reps = target.failure ? target.repsLow : i === 0 && r && !targets ? r.targetReps : midReps(target);
     // With a program the row starts at what the model expects at this weight, never
     // above it (and not outside the range): ticking is then honest.
-    if (t && rx && !t.failure && target.weightKg !== undefined) {
+    if (t && r && !t.failure && target.weightKg !== undefined) {
       const load = loadFromExternal(exercise, target.weightKg, ctx.bodyKg, dumbbellTotal);
       if (load !== undefined) {
-        const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * (1 - rx.fatiguePerSet) ** i;
+        const strength = ctx.settings.workSets === 'equal' ? r.strengthKg : r.strengthKg * (1 - r.fatiguePerSet) ** i;
         reps = Math.min(reps, Math.max(t.repsLow, expectedReps(strength, load, t.rir)));
       }
     }
+    return { target, reps };
+  };
+  for (let i = 0; i < setCount; i++) {
+    const made = workRow(rx, workWeights[i], i);
+    let target = made.target;
+    const reps = made.reps;
     if (spot?.raised[i]) target = { ...target, spotter: true };
-    rows.push({ id: `${slot.id}:s${i}`, kind: 'work', target, ...(target.weightKg !== undefined ? { weightKg: target.weightKg } : {}), reps, ...(target.rir !== undefined && ctx.settings.rirPrefill === 'target' ? { rir: target.rir, rirAssumed: true } : {}), done: false });
+    rows.push({ id: `${slot.id}:s${i}`, kind: 'work', target, ...(target.weightKg !== undefined ? { weightKg: target.weightKg } : {}), reps, forgeReps: reps, ...(target.rir !== undefined && ctx.settings.rirPrefill === 'target' ? { rir: target.rir, rirAssumed: true } : {}), done: false });
+  }
+  // "Forge rekent mee" ging een stap omhoog: de sets zoals ze zonder die stap waren, voor Terugzetten.
+  let raise: WorkoutExercise['raise'];
+  if (rx?.raised && history) {
+    const back = prescribe({ ...rxInput!, settings: { ...ctx.settings, reckon: false } });
+    if (back) {
+      raise = {
+        line: raisedText(rx.raised, exercise?.resistance === 'assisted_bodyweight'),
+        reason: back.reason,
+        back: weightsOf(back).weights.map((w, i) => {
+          const made = workRow(back, w, i);
+          return { rowId: `${slot.id}:s${i}`, ...(made.target.weightKg !== undefined ? { weightKg: made.target.weightKg } : {}), reps: made.reps };
+        }),
+      };
+    }
   }
   const repsHigh = rows.find((r) => r.kind === 'work')?.target.repsHigh;
   const programRest = targets?.find((x) => x.restSec !== undefined)?.restSec;
@@ -346,7 +386,8 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     restSec: ctx.settings.restSeconds[exerciseId] ?? programRest ?? restFor(exerciseId, exercise, repsHigh, ctx.settings.restSeconds),
     timed: false,
     ...(dumbbellTotal ? { dumbbellTotal } : {}),
-    ...(rx ? { fatiguePerSet: rx.fatiguePerSet } : {}),
+    ...(rx ? { fatiguePerSet: rx.fatiguePerSet, strengthKg: rx.strengthKg } : {}),
+    ...(raise ? { raise } : {}),
     ...(swapTo ? { swappedFrom: cleanExerciseName(slot.exerciseName) } : {}),
   };
 }

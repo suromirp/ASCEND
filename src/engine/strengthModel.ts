@@ -212,6 +212,8 @@ export interface TopSet {
   weightKg: number;
   reps: number;
   rir?: number;
+  // The RIR was the aim, not felt (SetLog.rirAssumed): "Forge rekent mee" makes no step on it.
+  rirAssumed?: true;
   loadKg: number;
 }
 
@@ -239,7 +241,7 @@ export function topSetOf(sets: SetLog[], ctx: LoadContext): TopSet | undefined {
     const loadKg = setLoad(s, ctx);
     if (loadKg === undefined) continue;
     if (!best || loadKg > best.loadKg || (loadKg === best.loadKg && s.reps > best.reps)) {
-      best = { weightKg: s.weightKg ?? 0, reps: s.reps, ...(s.rir !== undefined ? { rir: s.rir } : {}), loadKg };
+      best = { weightKg: s.weightKg ?? 0, reps: s.reps, ...(s.rir !== undefined ? { rir: s.rir } : {}), ...(s.rirAssumed ? { rirAssumed: true as const } : {}), loadKg };
     }
   }
   return best;
@@ -385,6 +387,10 @@ export interface Prescription {
   notice?: string;
   // The weights are the total of two dumbbells (the exercise is logged that way).
   dumbbellTotal?: boolean;
+  // "Forge rekent mee": the top of the range was reached last time with the reps in reserve
+  // asked, so the weight went one step up by itself (the smallest step there is). What it went
+  // up from, and what you did then, for the line "2,5 kg erbij" and for Terugzetten.
+  raised?: { fromKg: number; stepKg: number; reps: number; rir: number };
 }
 
 export interface PrescribeInput {
@@ -591,6 +597,12 @@ export function lastDateBefore(dates: Iterable<string>, date: string): string | 
   return best;
 }
 
+// "2,5 kg erbij, je haalde vorige keer 11 met 2 over." The line of a step that "Forge rekent mee" made.
+export function raisedText(raised: NonNullable<Prescription['raised']>, assisted = false): string {
+  const step = kgLabel(raised.stepKg, 2);
+  return `${assisted ? `${step} minder hulp` : `${step} erbij`}, je haalde vorige keer ${raised.reps} met ${raised.rir} over.`;
+}
+
 export function prescribe(input: PrescribeInput): Prescription | undefined {
   const { exercise, settings } = input;
   const dumbbellTotal = dumbbellTotalFor(input);
@@ -655,8 +667,16 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const lastReps = last.workSets.map((x) => x.reps).filter((r) => r > 0);
   const sameGoal = lastReps.length === 0 || Math.abs(median(lastReps) - (low + high) / 2) <= (high - low) / 2 + 1;
 
-  // KR-4: the weight for the first set, for a given strength.
-  const pick = (strengthKg: number): number => {
+  // "Forge rekent mee" (decision 2026-11-03-forge-rekent-mee.md): the top of the range, reached with
+  // the reps in reserve asked, is the sign for one step heavier, as with "eerst herhalingen", without
+  // asking. The step is the next weight of the list (the smallest there is). On a stack with "Alleen wat
+  // je gebruikte" the heaviest used weight stays the end: ASCEND does not know the next one there.
+  // Only on a measured RIR: the line says "met 2 over", so that must be what you felt.
+  const topReached = last.top.reps >= high && last.top.rir !== undefined && !last.top.rirAssumed && last.top.rir >= rir && last.top.reps >= low && sameGoal && !lighter;
+  const reckonRaise = settings.reckon && settings.progression !== 'reps_first' && topReached && !legsTired;
+
+  // KR-4: the weight for the first set, for a given strength. `raise`: the step after the top of the range.
+  const pick = (strengthKg: number, raise = true): number => {
     const lastExpected = expectedReps(strengthKg, candidates[lastIdx].loadKg, rir);
     if (legsTired) return lastIdx;
     if (!lighter && settings.progression === 'reps_first' && lastExpected >= low && lastExpected < high && last.top!.reps < high) return lastIdx;
@@ -672,7 +692,8 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     // Double progression: with "eerst herhalingen" the top of the range, reached
     // with the reps in reserve asked, is the sign for one step heavier.
     if (settings.progression === 'reps_first' && held && last.top!.reps >= high && i <= lastIdx) i = lastIdx + 1;
-    return i;
+    else if (raise && reckonRaise && i <= lastIdx && lastIdx + 1 < candidates.length) i = lastIdx + 1;
+    return Math.min(i, candidates.length - 1);
   };
   const strengthKg = (legsTired ? rawStrength : cappedStrength) * factor;
   let idx = pick(strengthKg);
@@ -739,6 +760,10 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     }
   }
   const sameWeight = Math.abs(first.externalKg - lastExternal) < 1e-6;
+  // Did "Forge rekent mee" make the step? Only when the plain rule would have kept the weight.
+  const raised = reckonRaise && idx === lastIdx + 1 && !coarseHeavier && first.loadKg > lastLoad + 1e-6 && pick(strengthKg, false) <= lastIdx
+    ? { fromKg: lastExternal, stepKg: Math.abs(first.externalKg - lastExternal), reps: last.top.reps, rir: last.top.rir! }
+    : undefined;
   // Same weight: one more than last time if the model expects it, never fewer than
   // last time (the smoothing lags half a step behind a good day).
   // Not on tired legs: then one rep fewer than last time is the aim, as the reason says.
@@ -812,6 +837,9 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   } else if (atBottom) {
     kind = 'used_bottom';
     reason = 'Dit is het lichtste gewicht dat je op dit toestel gebruikte. ASCEND kent hier geen lichter gewicht en stelt dat dus niet voor. Kies zelf iets lichter als dit te zwaar is.';
+  } else if (raised) {
+    kind = 'up';
+    reason = raisedText(raised, assisted);
   } else if (coarseHeavier) {
     kind = 'coarse_heavier';
     reason = `De stap is hier te grof voor ${low} tot ${high} herhalingen; met ${formatWeight(exercise, first.externalKg, dumbbellTotal)} haal je er naar verwachting ${coarseHeavier.reps}, dat zit dichter bij je doel dan ${formatWeight(exercise, coarseHeavier.lighterKg, dumbbellTotal)}.`;
@@ -865,6 +893,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     stepKg: stepAt(candidates, idx),
     lastWeightKg: last.top.weightKg,
     ...(dumbbellTotal ? { dumbbellTotal } : {}),
+    ...(raised ? { raised } : {}),
     ...(mismatch ? { notice: `Je vorige gewicht (${formatWeight(exercise, last.top.weightKg)}) past niet bij je sportschool, daarom is dit het dichtstbijzijnde gewicht dat je wel hebt (${formatWeight(exercise, candidates[lastIdx].externalKg)}). Kijk bij je stangen en dumbbells in de instellingen.` } : {}),
   };
 }

@@ -213,9 +213,16 @@ export function applyWeight(base: WorkoutExercise, rowId: string, weightKg: numb
   return { ...changed, rows };
 }
 
+function withoutEstimate(r: WorkoutRow): WorkoutRow {
+  const { repsEstimated: _e, ...rest } = r;
+  void _e;
+  return rest;
+}
+
 export function applyReps(ex: WorkoutExercise, rowId: string, reps: number | undefined): WorkoutExercise {
   const changed = updateRow(ex, rowId, { reps });
-  return { ...changed, rows: changed.rows.map((r) => (r.id === rowId ? { ...r, edited: true } : r)) };
+  // Herhalingen die jij typt zijn van jou: Forge schat ze daarna niet meer (engine/forgeReckon.ts).
+  return { ...changed, rows: changed.rows.map((r) => (r.id === rowId ? { ...withoutEstimate(r), edited: true } : r)) };
 }
 
 // "Wijzigingen doorvoeren" (decision docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md):
@@ -263,7 +270,7 @@ export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise 
       r.id !== rowId || r.done
         ? r
         : {
-            ...r,
+            ...withoutEstimate(r),
             ...(r.target.weightKg !== undefined ? { weightKg: r.target.weightKg } : {}),
             reps: targetReps(r.target),
             edited: true,
@@ -371,7 +378,7 @@ export function plateChange(step: Pick<PlateStep, 'add' | 'remove'>): string | u
 // de naam gelijk bleef: anders blijft een voorschrift van voor een nieuwe regel (Zonder spotter) staan in
 // een training die je opende maar nog niet begon (de klok begint dan opnieuw, het concept niet).
 function touchedInDraft(e: WorkoutExercise, f: WorkoutExercise): boolean {
-  return !!e.swappedFrom || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || (r.rir !== undefined && r.rirAssumed === false) || isOwnRow(r));
+  return !!e.swappedFrom || !!e.raiseUndone || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || (r.rir !== undefined && r.rirAssumed === false) || isOwnRow(r));
 }
 
 // A training opened before its exercises changed (a renamed exercise, another

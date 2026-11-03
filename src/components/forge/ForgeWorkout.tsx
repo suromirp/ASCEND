@@ -90,6 +90,7 @@ import { PrimaryButton, SecondaryButton, Toggle } from '../ui';
 import { useGuardedSave, useLegEase } from '../useLegEase';
 import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_KEPT_LINE, EASE_STARTED_LINE } from '../../engine/legDayEase';
 import { resolveLegEaseHow } from '../../engine/legEaseSettings';
+import { reckonAfterTick, reckonWeight, undoRaise } from '../../engine/forgeReckon';
 import { adjustText, applyLighter, fitStillOpen, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
 import { appendEvents, cleanForgeLog, deriveChanges, noFitEvent, setCountEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
@@ -215,6 +216,8 @@ function ForgeWorkoutInner({
   const readOnly = strengthExternal || preview;
   const strength = useMemo(() => resolveStrengthSettings(settings.strengthModel), [settings.strengthModel]);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  // "Forge rekent mee" (engine/forgeReckon.ts): dezelfde rekening als het bijsturen.
+  const reckonCtx = { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights, on: strength.enabled && strength.reckon && !readOnly };
   // A program from MacroFactor gives the exercises of the week of this training, and an exercise you added after a
   // proposal with Akkoord comes behind them (engine/forgeSlots.ts, the same list the week review reads).
   const allSlots = useMemo(() => forgeSlotsFor(template, settings.strengthModel, date), [template, settings.strengthModel, date]);
@@ -685,7 +688,11 @@ function ForgeWorkoutInner({
     haptics.tap();
     primeAudio();
     baseRef.current = null;
-    const result = tickRow(workout, slot, rowId);
+    const raw = tickRow(workout, slot, rowId);
+    // Forge rekent mee: ging de set anders dan gevraagd, dan stelt Forge de volgende open werkset bij.
+    const reckoned = raw.workout.map((e) => (e.slot === slot ? reckonAfterTick(e, rowId, reckonCtx) : e));
+    const result = { ...raw, workout: reckoned };
+    if (reckoned.some((e, i) => e !== raw.workout[i])) markCause({ kind: 'meegerekend' });
     setWorkout(result.workout);
     // De focus schuift vloeiend naar de volgende open set; is de oefening af, dan
     // klapt hij zacht in en gaat het scherm naar de volgende oefening.
@@ -807,7 +814,9 @@ function ForgeWorkoutInner({
           return strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'reps') : changed;
         }
         const changed = applyWeight(base, d.rowId, v, strength.carryMode === 'shift', makeSnap(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal), bodyKg, v, e.dumbbellTotal), weightBounds(exerciseOf(e)).min, makeLight(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal)));
-        return strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'weightKg') : changed;
+        const carried = strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'weightKg') : changed;
+        // Forge rekent mee: een ander gewicht krijgt de herhalingen die je daarbij waarschijnlijk haalt.
+        return reckonWeight(base, carried, d.rowId, reckonCtx);
       }),
     );
   }
@@ -864,9 +873,16 @@ function ForgeWorkoutInner({
     setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot)));
   }
 
-  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter, addSetLogged, removeSetLogged, undoRemove });
+  // Terugzetten: de stap omhoog die Forge na de bovenkant van het bereik zette, ongedaan.
+  function takeBack(slot: string) {
+    haptics.tap();
+    markCause({ kind: 'eigen' });
+    setExercise(slot, (e) => undoRaise(e, makeSnap(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal), bodyKg, e.rows.find((r) => r.kind === 'work')?.weightKg, e.dumbbellTotal)));
+  }
+
+  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove });
   useEffect(() => {
-    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, addSetLogged, removeSetLogged, undoRemove };
+    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove };
   });
   const actions = useMemo<BlockActions>(
     () => ({
@@ -883,6 +899,7 @@ function ForgeWorkoutInner({
       restore: (slot) => latest.current.setExercise(slot, restoreDropped),
       undo: () => latest.current.undoRemove(),
       lighter: (slot) => latest.current.takeLighter(slot),
+      unraise: (slot) => latest.current.takeBack(slot),
       keep: (slot) => setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
       fill: (slot) => setFillFor(slot),
       keepFit: (slot) => setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),

@@ -117,6 +117,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {sheet === 'bundel-rekenmodel' && (
         <BundleSheet eyebrow="Forge" title="Rekenmodel" line="Hoe Forge rekent. Het advies is meestal goed." onClose={close}>
+          <SummaryRow id="forge-rekent-mee" title="Forge rekent mee" facts={facts} info="forgeRekentMee" onChange={(on) => save({ reckon: on })} />
           <SummaryRow id="forge-sets" title="Werksets" facts={facts} onClick={() => setInner('forge-sets')} />
           <SummaryRow id="forge-vermoeidheid" title="Vermoeidheid per set" facts={facts} info="forgeVermoeidheid" onClick={() => setInner('forge-vermoeidheid')} />
           <SummaryRow id="forge-pauze" title="Na een pauze lichter beginnen" facts={facts} info="forgePauze" onChange={(on) => save({ lighterAfterBreak: on })} />

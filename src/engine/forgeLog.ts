@@ -11,7 +11,8 @@
 // - onder: een set kwam onder het bereik van het voorschrift;
 // - past-niet: geen gewicht van het toestel past bij een set;
 // - spotter: minstens 1 over voorgeschreven omdat falen zonder spotter gevaarlijk is;
-// - toegevoegd en weggehaald: een set die jij erbij zette of weghaalde (eigen handelingen, geen punt op de knop).
+// - toegevoegd en weggehaald: een set die jij erbij zette of weghaalde (eigen handelingen, geen punt op de knop);
+// - meegerekend: Forge stelde na een afgevinkte set de volgende set bij ("Forge rekent mee", engine/forgeReckon.ts).
 
 import { FORGE_EVENT_KINDS, type ForgeEvent, type ForgeEventKind, type ForgeSetState } from '../models/forgeLog';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
@@ -53,6 +54,8 @@ export type ForgeCause =
   // Jij veranderde iets. `edited` is de set die je aanraakte; wat daarna in andere werksets veranderde is doorgevoerd.
   | { kind: 'eigen'; edited?: { slot: string; rowId: string } }
   | { kind: 'bijgestuurd' }
+  // Forge rekende mee na het afvinken: de volgende open set kreeg wat Forge nu verwacht.
+  | { kind: 'meegerekend' }
   // Een verandering die geen gebeurtenis is: een nieuwe planning, een geruilde oefening, afvinken.
   | { kind: 'negeer' };
 
@@ -73,6 +76,7 @@ export function deriveChanges(before: WorkoutExercise[], after: WorkoutExercise[
       if (sameState(from, to)) continue;
       let kind: ForgeEventKind;
       if (cause.kind === 'bijgestuurd') kind = 'bijgestuurd';
+      else if (cause.kind === 'meegerekend') kind = 'meegerekend';
       else if (editedRow === undefined || row.id === editedRow) kind = 'eigen';
       else {
         // Wat in andere sets meeveranderde: alleen werksets, de opwarmsets volgen het eerste gewicht vanzelf.
@@ -213,6 +217,8 @@ export function becauseText(ev: ForgeEvent): string {
       return ev.via ? `Doorgevoerd vanuit set ${ev.via}.` : 'Doorgevoerd uit je eigen wijziging.';
     case 'eigen':
       return 'Je paste dit zelf aan.';
+    case 'meegerekend':
+      return 'Forge rekende mee met je vorige set.';
     case 'onder':
     case 'past-niet':
     case 'spotter':
