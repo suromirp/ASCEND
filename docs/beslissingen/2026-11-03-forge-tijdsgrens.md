@@ -78,3 +78,5 @@ Niets.
 
 Zet beide waarden op Uit. In code: `capSlots` niet meer aanroepen in `ForgeWorkout.tsx`; de instelling is
 optioneel en wordt defensief gelezen, een back-up met of zonder de velden blijft importeerbaar.
+
+Ook "Minder tijd vandaag" op het minimum houdt in Bovenlichaam B nu de pull-up, omdat die kern werd: drie sets meer dan eerst, ook op een toestel dat er al was (via ensureDefaultTemplates).
