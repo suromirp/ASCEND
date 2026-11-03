@@ -512,6 +512,15 @@ export function formFactLine(rd: RunDetail, key: FormKey): string | undefined {
   const pts = formSeries(rd, key);
   if (pts.length < 2) return undefined;
   const vals = pts.map((p) => p.value);
+  if (key === 'stanceBalanceLeftPct') {
+    // Een verdeling over twee kanten: zeg links en rechts, niet twee keer links.
+    const lo = Math.min(...vals) / info.scale;
+    const hi = Math.max(...vals) / info.scale;
+    const left = lo === hi ? `${nl(lo, info.decimals)} %` : `${nl(lo, info.decimals)} tot ${nl(hi, info.decimals)} %`;
+    const right = lo === hi ? `${nl(100 - lo, info.decimals)} %` : `${nl(100 - hi, info.decimals)} tot ${nl(100 - lo, info.decimals)} %`;
+    const even = lo >= 48 && hi <= 52;
+    return `Links ${left}, rechts ${right}.${even ? ' Dat is mooi in evenwicht.' : ''}`;
+  }
   return `Je ${key === 'stepLengthM' ? 'pas' : info.noun} lag tussen ${fmt(Math.min(...vals) / info.scale)} en ${fmt(Math.max(...vals) / info.scale)}.`;
 }
 
