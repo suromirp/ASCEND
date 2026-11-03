@@ -21,6 +21,10 @@ append-only like `detail` and `bestEffort`: added once, tied to the totals it wa
 is dropped by `migrateLogRunDetail` without losing the log. Kilometres, laps and the verdicts (RD-1 to RD-8) are pure
 functions with tests; a test, tempo run or interval training gets one line about the spread of its pace
 (`RunInsight.pacing`), the two-line rule after a run stays.
+On the screen, a test with a warm-up or cooling down has its verdict, spread and heart rate read on the best 5 km
+(`runDetailView.ts#testFocusLine`, "Vrij gelijkmatig" for a test just outside even); standing still before the first or
+after the last movement is set apart at display (`withoutEdgePauses`, `edgePauseLine`), the stored `runDetail` unchanged
+(`docs/beslissingen/2026-11-03-testloop-in-detail.md`). The text button on a test that counts is "Niet laten meetellen".
 
 **The test run and the paces** (`engine/racePrediction.ts#countedTests`, `engine/bestEffort.ts`,
 `engine/testJudgment.ts`, decisions `docs/beslissingen/2026-10-27-testloop-lezen.md` and

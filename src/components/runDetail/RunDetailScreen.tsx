@@ -34,8 +34,11 @@ import {
   runKindOf,
   runVerdict,
   sourceLine,
+  testFocusLine,
   testHalvesLine,
   testLayout,
+  edgePauseLine,
+  withoutEdgePauses,
 } from '../../engine/runDetailView';
 import { ensureOutcomeText, ensureRunDetail, type EnsureOutcome } from '../../storage/activityDetail';
 import { Portal } from '../Portal';
@@ -121,7 +124,10 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   const legs = useLegFatigueInputs();
   const excluded = useExcludedLogIds();
   const screen = resolveRunInsight(settings.runInsight);
-  const rd = log.runDetail;
+  // What the screen shows: the stored detail, with a pause before the start or after the end
+  // set apart (a copy, the log keeps its detail as it is).
+  const shown = useMemo(() => (log.runDetail ? withoutEdgePauses(log.runDetail) : undefined), [log.runDetail]);
+  const rd = shown?.rd;
   const d = log.cardioData ?? log.outdoorData;
   const stale = !!rd && isStaleRunDetail(rd, d?.distanceKm ?? 0, d?.durationMinutes || log.durationMinutes);
   const kind = runKindOf(log, templates);
@@ -219,6 +225,8 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   })();
   const best = isTest && rd.bestFive ? { startM: rd.bestFive.startM, endM: rd.bestFive.endM } : undefined;
   const hrNote = heartNote(rd, coverage);
+  const focusLine = testFocusLine(rd, kind);
+  const edgeLine = shown ? edgePauseLine(shown.edge) : undefined;
   const listKms = rd.kms.length > LIST_LONG_KM && !showAll ? rd.kms.slice(0, LIST_FIRST) : rd.kms;
   const testCard = isTest && tstate ? <Card><TestVerdictCard logId={log.id} /></Card> : null;
 
@@ -243,7 +251,8 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
             </div>
           ))}
         </div>
-        {isTest && tstate && !askTop && <p className="mt-3 text-xs" style={dim}>{testBasisLine(tstate.result)}</p>}
+        {focusLine && <p className="mt-3 text-xs leading-snug" style={dim}>{focusLine}</p>}
+        {isTest && tstate && !askTop && <p className={`${focusLine ? 'mt-1' : 'mt-3'} text-xs`} style={dim}>{testBasisLine(tstate.result)}</p>}
       </Card>
 
       {/* 4.3: de open vraag bij een test */}
@@ -306,6 +315,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
         </div>
         {hrNote && <p className="mt-2 text-xs leading-snug" style={dim}>{hrNote}</p>}
         {rd.pauseSec > 0 && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>Je stond samen {clock(rd.pauseSec)} stil; dat telt niet mee in je tempo.</p>}
+        {edgeLine && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>{edgeLine}</p>}
       </Card>
 
       {/* 4.6: per kilometer en per ronde */}

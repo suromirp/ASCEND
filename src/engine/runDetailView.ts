@@ -32,6 +32,7 @@ import {
   type Pacing,
   type PlayedContext,
 } from './runDetailRules';
+import { MAX_GAP_SEC } from './bestEffort';
 import { isNum } from '../utils/guards';
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -140,7 +141,7 @@ export function heartOf(kms: RunKm[]): HeartHalves | undefined {
 
 // --- the verdict in one word and one sentence (4.2, 5.2) ------------------------------------
 
-type VerdictTone = 'measure' | 'short' | 'fast-start' | 'sag' | 'strong' | 'explained' | 'blocks-fade' | 'blocks-even' | 'heart' | 'even' | 'mixed';
+type VerdictTone = 'measure' | 'short' | 'fast-start' | 'sag' | 'strong' | 'explained' | 'blocks-fade' | 'blocks-even' | 'heart' | 'even' | 'near-even' | 'mixed';
 
 export interface RunVerdict {
   word: string;
@@ -215,6 +216,12 @@ export function runVerdict(rd: RunDetail, kind: RunKind): RunVerdict {
   if (p.word === 'gelijkmatig') {
     return { word: 'Gelijkmatig', tone: 'even', sentence: 'Je tempo bleef gelijk: de tweede helft wijkt minder dan 2 procent af van de eerste.' };
   }
+  // A test stretch that is just outside "gelijkmatig" but has no kilometre that sticks out is
+  // not "op en neer": say how much the halves differ (2026-11-03-testloop-in-detail.md).
+  if (kind === 'test' && rd.bestFive) {
+    const near = nearEvenTest(rd.bestFive.kms, p);
+    if (near) return near;
+  }
   return {
     word: 'Wisselend',
     tone: 'mixed',
@@ -222,6 +229,30 @@ export function runVerdict(rd: RunDetail, kind: RunKind): RunVerdict {
       ? 'Je tempo ging op en neer zonder duidelijke lijn. Bij een rustige loop op gevoel of hartslag is dat gewoon.'
       : 'Je tempo ging op en neer zonder duidelijke lijn.',
   };
+}
+
+function nearEvenTest(kms: RunKm[], p: Pacing): RunVerdict | undefined {
+  const full = kms.filter((k) => k.distanceM >= PACING.fullKmM);
+  const worst = Math.max(...full.map((k) => Math.abs(pct(k.paceSecKm, p.meanPace))));
+  const h = halvesOf(kms);
+  if (!h || worst >= PACING.sagPct || Math.abs(p.halfSlowPct) >= PACING.sagPct) return undefined;
+  const d = Math.round(h.diffSec);
+  const sentence = d === 0
+    ? 'Je helften waren even snel; één kilometer week iets meer af.'
+    : `Je tweede helft ging ${secs(Math.abs(d))} per km ${d > 0 ? 'trager' : 'sneller'} dan je eerste, zonder kilometer die eruit sprong.`;
+  return { word: 'Vrij gelijkmatig', tone: 'near-even', sentence };
+}
+
+// The kilometres the top of a test is read on, when the run has a warm-up or cooling down
+// around its best 5 km: then the verdict, the spread and the heart rate are about the test.
+function testStretchKms(rd: RunDetail, kind: RunKind): RunKm[] | undefined {
+  return kind === 'test' && rd.bestFive ? rd.bestFive.kms : undefined;
+}
+
+// The quiet line under the three numbers of a test with a warm-up or cooling down.
+export function testFocusLine(rd: RunDetail, kind: RunKind): string | undefined {
+  if (!testStretchKms(rd, kind) || !testLayout(rd)) return undefined;
+  return 'Oordeel, verdeling en hartslag gaan over je 5 km. Inlopen en uitlopen tellen hier niet mee.';
 }
 
 // --- the three numbers (4.2) ---------------------------------------------------------------------
@@ -258,15 +289,17 @@ export function headlineStats(rd: RunDetail, kind: RunKind, totals?: RunTotals):
     const d = Math.round(h.diffSec);
     out.push({ key: 'split', label: 'Verdeling', value: `${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d)}`, unit: 's', note: splitNote(h, !!test) });
   }
-  const heart = heartOf(rd.kms);
+  const stretch = testStretchKms(rd, kind);
+  const heart = heartOf(stretch ?? rd.kms);
   if (heart) {
     const d = Math.round(heart.diff);
+    const over = stretch ? 'gemiddeld over je 5 km' : 'gemiddeld';
     out.push({
       key: 'heart',
       label: 'Hartslag',
       value: String(Math.round(heart.mean)),
       unit: 'bpm',
-      note: d === 0 ? 'gemiddeld, helften gelijk' : `gemiddeld, ${d > 0 ? '+' : '−'}${Math.abs(d)} in de tweede helft`,
+      note: d === 0 ? `${over}, helften gelijk` : `${over}, ${d > 0 ? '+' : '−'}${Math.abs(d)} in de tweede helft`,
     });
   }
   const gain = sum(rd.kms.map((k) => k.gainM ?? 0));
@@ -866,6 +899,78 @@ export function compareWithSimilar(rd: RunDetail, others: RunDetail[]): SimilarC
     medianPerKm.push(v.length >= 3 ? medianOf(v) : null);
   }
   return { n: others.length, rows, medianPerKm };
+}
+
+// --- standing still before the start and after the end (2026-11-03) -----------------------------------
+
+export interface EdgePauses {
+  // Seconds the watch ran before the first movement and after the last one.
+  headSec: number;
+  tailSec: number;
+}
+
+// The pause at either end of the run, read from the stored line: the clock time of its first
+// (or last) stretch minus the moving time its pace gives. The kilometre keeps that time in its
+// `pauseSec`, so the result is never more than that. Under the pause limit it is nothing.
+function edgePause(rd: RunDetail, i: number, j: number, km: RunKm | undefined): number {
+  const l = rd.line;
+  if (!km || !(km.pauseSec && km.pauseSec > 0) || l.n < 2) return 0;
+  const dt = l.timeSec[j] - l.timeSec[i];
+  const dd = Math.abs(l.distM[j] - l.distM[i]);
+  const paces = [l.paceSecKm[i], l.paceSecKm[j]].filter(isNum);
+  const pace = paces.length > 0 ? sum(paces) / paces.length : km.paceSecKm;
+  const est = dt - (dd * pace) / 1000;
+  if (!(est > MAX_GAP_SEC)) return 0;
+  return Math.min(est, km.pauseSec);
+}
+
+export function edgePausesOf(rd: RunDetail): EdgePauses {
+  const n = rd.line.n;
+  if (rd.pauseSec <= 0 || rd.kms.length === 0 || n < 2) return { headSec: 0, tailSec: 0 };
+  const first = rd.kms[0];
+  const last = rd.kms[rd.kms.length - 1];
+  const headSec = Math.round(edgePause(rd, 0, 1, first));
+  let tailSec = Math.round(edgePause(rd, n - 2, n - 1, last));
+  if (first === last) tailSec = Math.min(tailSec, Math.max(0, Math.round((last.pauseSec ?? 0) - headSec)));
+  return { headSec, tailSec };
+}
+
+// The detail as the screen shows it: a pause before the first or after the last movement is not
+// standing still during the run. A copy; the stored detail stays as it is (derived and
+// append-only), and the moving time and the distance do not change.
+export function withoutEdgePauses(rd: RunDetail): { rd: RunDetail; edge: EdgePauses } {
+  const edge = edgePausesOf(rd);
+  if (edge.headSec === 0 && edge.tailSec === 0) return { rd, edge };
+  const trim = (k: RunKm): RunKm => {
+    let cut = 0;
+    if (edge.headSec > 0 && k.startM <= 0.5) cut += edge.headSec;
+    if (edge.tailSec > 0 && k.endM >= rd.totalM - 0.5) cut += edge.tailSec;
+    if (cut === 0 || !k.pauseSec) return k;
+    const left = Math.round((k.pauseSec - cut) * 10) / 10;
+    const out = { ...k };
+    if (left >= 0.5) out.pauseSec = left;
+    else delete out.pauseSec;
+    return out;
+  };
+  return {
+    edge,
+    rd: {
+      ...rd,
+      pauseSec: Math.max(0, rd.pauseSec - edge.headSec - edge.tailSec),
+      kms: rd.kms.map(trim),
+      ...(rd.bestFive ? { bestFive: { ...rd.bestFive, kms: rd.bestFive.kms.map(trim) } } : {}),
+    },
+  };
+}
+
+// One quiet line about the time the watch ran without you; undefined when there was none.
+export function edgePauseLine(edge: EdgePauses): string | undefined {
+  const head = edge.headSec > 0 ? `voor de start stond je horloge al ${clock(edge.headSec)} aan` : undefined;
+  const tail = edge.tailSec > 0 ? `na afloop liep je horloge nog ${clock(edge.tailSec)} door` : undefined;
+  const parts = [head, tail].filter((x): x is string => !!x);
+  if (parts.length === 0) return undefined;
+  const text = parts.join(' en ');
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}; die tijd telt nergens mee.`;
 }
 
 // --- the screen as a whole ----------------------------------------------------------------------------

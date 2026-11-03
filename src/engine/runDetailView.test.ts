@@ -26,8 +26,11 @@ import {
   runKindOf,
   runPatterns,
   runVerdict,
+  testFocusLine,
   testHalvesLine,
   testLayout,
+  edgePauseLine,
+  withoutEdgePauses,
   type FormKey,
 } from './runDetailView';
 import type { RunDetail, RunKm } from '../models/runDetail';
@@ -404,5 +407,110 @@ describe('heart rate zones for the strip', () => {
     expect(hrZoneOf(175, hr)).toBe(5);
     expect(hrZoneOf(150, undefined)).toBeUndefined();
     expect(hrZoneOf(null, hr)).toBeUndefined();
+  });
+});
+
+// A made-up 5 km test like the one that prompted this: 1,13 km warm-up with one stop of 69 s
+// after 669 m, an even test stretch (about 5:12 and 5:21 per km per half) at a high heart rate,
+// 540 m cooling down, and a watch that kept running 558 s after the last metre.
+const WARM_M = 1130;
+const TEST_KM = [310, 313, 316, 320, 322];
+function evenTest(opts: { tail?: number; gap?: boolean } = {}) {
+  const segs: Seg[] = [
+    { m: WARM_M, pace: 400, hr: 140 },
+    ...TEST_KM.map((pace) => ({ m: 1000, pace, hr: 183 })),
+    { m: 540, pace: 420, hr: 160 },
+  ];
+  const total = WARM_M + 5000 + 540;
+  const pauses = [{ atM: 669, seconds: 69 }];
+  if (opts.tail && !opts.gap) pauses.push({ atM: total, seconds: opts.tail });
+  const set = segmentRun(segs, { pauses });
+  if (opts.tail && opts.gap) {
+    // One hole in the series: the next reading comes long after the last metre.
+    const last = set.timeSec.length - 1;
+    set.timeSec.push((set.timeSec[last] as number) + opts.tail);
+    set.distanceM!.push(set.distanceM![last]);
+    set.speedMs!.push(0);
+    set.altitudeM!.push(set.altitudeM![last]);
+    for (const key of ['heartRate', 'cadence', 'stepLengthM', 'powerW', 'respirationRpm', 'temperatureC'] as const) set[key]?.push(null);
+  }
+  return buildRunDetail(set, OPTS) as RunDetail;
+}
+
+describe('a test with warm-up and cooling down (2026-11-03)', () => {
+  const rd = evenTest();
+
+  it('judges the test stretch, not the warm-up: an even test is not mixed', () => {
+    const v = runVerdict(rd, 'test');
+    expect(v.tone).not.toBe('mixed');
+    expect(v.word).toBe('Vrij gelijkmatig');
+    expect(v.sentence).toMatch(/^Je tweede helft ging \d+ seconden per km trager dan je eerste/);
+  });
+
+  it('gives the heart rate of the test stretch at the top', () => {
+    const heart = headlineStats(rd, 'test').find((s) => s.key === 'heart')!;
+    expect(Math.abs(Number(heart.value) - 183)).toBeLessThanOrEqual(1);
+    expect(heart.note).toContain('je 5 km');
+    // A plain run keeps its heart rate over the whole run.
+    const whole = headlineStats(rd, 'other').find((s) => s.key === 'heart')!;
+    expect(Number(whole.value)).toBeLessThan(180);
+  });
+
+  it('says once that warm-up and cooling down do not count, only for a test', () => {
+    expect(testFocusLine(rd, 'test')).toBe('Oordeel, verdeling en hartslag gaan over je 5 km. Inlopen en uitlopen tellen hier niet mee.');
+    expect(testFocusLine(rd, 'other')).toBeUndefined();
+    // A test that is the whole run has nothing to leave out.
+    expect(testFocusLine(even(5, 320, 180), 'test')).toBeUndefined();
+  });
+
+  it('leaves a plain run as it was', () => {
+    expect(runVerdict(detailOf(kmsOf([310, 313, 316, 320, 322])), 'other').tone).toBe('mixed');
+  });
+});
+
+describe('standing still before the start and after the end (2026-11-03)', () => {
+  it('keeps a stop during the run and splits off the long tail after the last metre', () => {
+    for (const gap of [false, true]) {
+      const rd = evenTest({ tail: 558, gap });
+      const before = structuredClone(rd);
+      const { rd: shown, edge } = withoutEdgePauses(rd);
+      expect(Math.abs(edge.tailSec - 558)).toBeLessThanOrEqual(5);
+      expect(edge.headSec).toBe(0);
+      expect(Math.abs(shown.pauseSec - 69)).toBeLessThanOrEqual(5);
+      // The moving time and the distance stay exactly as they were, and the stored detail is untouched.
+      expect(shown.movingSec).toBe(rd.movingSec);
+      expect(shown.totalM).toBe(rd.totalM);
+      expect(rd).toEqual(before);
+      const last = shown.kms[shown.kms.length - 1];
+      expect(last.pauseSec ?? 0).toBeLessThan(1);
+      expect(kmChips(last).some((c) => c.startsWith('stilgestaan'))).toBe(false);
+      expect(Math.abs((shown.kms[0].pauseSec ?? 0) - 69)).toBeLessThanOrEqual(2);
+      expect(edgePauseLine(edge)).toMatch(/^Na afloop liep je horloge nog 9:\d\d door; die tijd telt nergens mee\.$/);
+    }
+  });
+
+  it('notices a watch started before you began to move', () => {
+    const set = segmentRun([{ m: 3000, pace: 330 }], { pauses: [{ atM: 0, seconds: 90 }] });
+    const rd = buildRunDetail(set, OPTS) as RunDetail;
+    const { rd: shown, edge } = withoutEdgePauses(rd);
+    expect(Math.abs(edge.headSec - 90)).toBeLessThanOrEqual(5);
+    expect(shown.pauseSec).toBeLessThanOrEqual(5);
+    expect(edgePauseLine(edge)).toMatch(/^Voor de start stond je horloge al 1:\d\d aan; die tijd telt nergens mee\.$/);
+  });
+
+  it('changes nothing for a run without a tail', () => {
+    const rd = evenTest();
+    const { rd: shown, edge } = withoutEdgePauses(rd);
+    expect(edge).toEqual({ headSec: 0, tailSec: 0 });
+    expect(shown).toEqual(rd);
+    expect(edgePauseLine(edge)).toBeUndefined();
+  });
+
+  it('keeps a stop near the end that you ran on from', () => {
+    const set = segmentRun([{ m: 3000, pace: 330 }], { pauses: [{ atM: 2500, seconds: 60 }] });
+    const rd = buildRunDetail(set, OPTS) as RunDetail;
+    const { rd: shown, edge } = withoutEdgePauses(rd);
+    expect(edge.tailSec).toBe(0);
+    expect(shown.pauseSec).toBe(rd.pauseSec);
   });
 });
