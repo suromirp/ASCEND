@@ -75,8 +75,8 @@ export interface TimeCapResult {
 // ervan. Zo blijft de grens staan als je vaker ingekort traint en de geleerde duur korter wordt. Eerst gaat er telkens één set af van de oefening
 // met de meeste sets boven de twee (bij gelijk de laatste), bij de extra oefeningen en daarna bij het
 // bijwerk. Pas als alles op twee staat valt een hele oefening weg, eerst een extra, van achteren af.
-// `keep` beschermt oefeningen binnen hun laag (servesMountainMuscle bij een bergdoel): die leveren als laatste
-// sets in, gaan dan eerst naar één set en vallen pas als laatste van hun laag weg.
+// `keep` beschermt oefeningen (servesMountainMuscle bij een bergdoel): die leveren pas sets in als alle andere
+// extra's en bijwerk op twee staan, gaan dan eerst naar één set en vallen als allerlaatste weg.
 export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: ExercisePrescription[]; fullMinutes: number; minutesPerSet?: number; cap: number; keep?: (slot: ExercisePrescription) => boolean }): TimeCapResult {
   const { slots, fullMinutes, cap } = args;
   const fullSets = setsOf(args.fullSlots ?? slots);
@@ -109,18 +109,15 @@ export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: Exer
     list[i] = null;
     return true;
   };
-  // Eerst sets eraf, laag voor laag, tot elke oefening er nog twee heeft.
-  for (const tier of TIERS) {
-    while (now() > cap && trim(inTier(tier, false), KEEP_SETS));
-    while (now() > cap && trim(inTier(tier, true), KEEP_SETS));
-  }
-  // Pas dan hele oefeningen, laag voor laag en van achteren af. Een beschermde oefening gaat eerst naar
-  // één set en valt pas als laatste van haar laag weg.
-  for (const tier of TIERS) {
-    while (now() > cap && drop(inTier(tier, false)));
-    while (now() > cap && trim(inTier(tier, true), 1));
-    while (now() > cap && drop(inTier(tier, true)));
-  }
+  // Eerst sets eraf, laag voor laag, tot elke oefening er nog twee heeft. De beschermde oefeningen (bergspieren)
+  // komen pas aan de beurt als alle andere van extra en bijwerk op twee staan, in welke laag ze ook zitten: een
+  // kuitheffing die als extra in de training staat gaat niet weg voordat een gewone bijwerkoefening weg is.
+  for (const keep of [false, true]) for (const tier of TIERS) while (now() > cap && trim(inTier(tier, keep), KEEP_SETS));
+  // Pas dan hele oefeningen, laag voor laag en van achteren af: eerst de gewone, dan gaan de beschermde naar
+  // één set, en pas als laatste vallen die weg.
+  for (const tier of TIERS) while (now() > cap && drop(inTier(tier, false)));
+  for (const tier of TIERS) while (now() > cap && trim(inTier(tier, true), 1));
+  for (const tier of TIERS) while (now() > cap && drop(inTier(tier, true)));
   // Sets van een oefening die daarna toch helemaal wegviel tellen niet als losse sets.
   const kept = list.filter((s): s is ExercisePrescription => s !== null);
   const keptIds = new Set(kept.map((s) => s.id));

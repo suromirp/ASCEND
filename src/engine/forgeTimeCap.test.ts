@@ -193,3 +193,42 @@ describe('bij een bergdoel vallen de bergspieren als laatste weg', () => {
     expect(r.slots.find((s) => s.id === 'b1')!.sets).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('ronde met echte namen uit de ingebouwde beendag', () => {
+  it('herkent de kuitheffing op de beenpers als kuit, ook met het id van het sjabloon', () => {
+    expect(servesMountainMuscle({ id: 'ex12', exerciseName: 'Pin-Loaded Leg Press Calf Raise' })).toBe(true);
+    expect(servesMountainMuscle({ id: 'ex24', exerciseName: 'Seated Pin-Loaded Machine Calf Raise' })).toBe(true);
+    expect(servesMountainMuscle({ id: 'ex10', exerciseName: 'Seated Hamstring Curl' })).toBe(false);
+  });
+
+  it('een kuitheffing als extra blijft staan zolang een gewone bijwerkoefening weg kan', () => {
+    const named = (id: string, exerciseName: string, priority: ExercisePrescription['priority'], sets: number): ExercisePrescription => ({ id, exerciseName, sets, reps: '10-12', priority });
+    // Nagemaakt in de vorm van Benen A: de kuitheffing staat als extra, de hamstringcurl als bijwerk.
+    const legs = [
+      named('ex7', 'Barbell Back Squat', 'core', 4),
+      named('ex8', 'Romanian Deadlift', 'core', 3),
+      named('ex9', 'Bulgarian Split Squat', 'accessory', 3),
+      named('ex10', 'Seated Hamstring Curl', 'accessory', 3),
+      named('ex11', 'Step-Down', 'accessory', 3),
+      named('ex12', 'Pin-Loaded Leg Press Calf Raise', 'optional', 3),
+      named('ex13', 'Plank', 'optional', 3),
+    ];
+    // 22 sets, 6 minuten per set: 132 minuten; onder 75 passen 12 sets.
+    const r = capSlots({ slots: legs, fullMinutes: 132, cap: 75, keep: servesMountainMuscle });
+    expect(r.minutes).toBeLessThanOrEqual(75);
+    const ids = r.slots.map((s) => s.id);
+    expect(ids).toContain('ex12');
+    expect(ids).toContain('ex11');
+    expect(ids).not.toContain('ex10');
+    expect(ids).not.toContain('ex13');
+  });
+
+  it('komt de kern alleen al boven de grens, dan zegt de regel dat eerlijk', () => {
+    // Bovenlichaam B met de pull-up als kern: 14 kernsets, ruim 4,6 minuten per set is boven de 60.
+    const upperB = buildDefaultProgramData().templates.find((t) => t.id === 'tpl_upper_b')!;
+    const r = capSlots({ slots: upperB.exercises!, fullMinutes: 75, minutesPerSet: 4.65, cap: 60 });
+    expect(r.coreOver).toBe(true);
+    expect(r.slots.every((s) => s.priority === 'core')).toBe(true);
+    expect(timeCapLine(r)).toMatch(/^Ingekort tot ongeveer 65 minuten: .* De kernsets blijven staan, ook al kom je dan boven de 60\.$/);
+  });
+});
