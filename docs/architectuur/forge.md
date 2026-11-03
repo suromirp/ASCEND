@@ -141,3 +141,16 @@ built-in templates are reset at every start; Forge puts those slots (`plus:<id>`
 quiet for eight weeks, remembered on this device only. `swapOptions(..., prefer)` puts, only at an equal `swapScore`, an exercise that works such a
 muscle first, with a short reason (`swapReason`); Forge never swaps by itself. No score, no colour per muscle, no heatmap. Setting "Spieren voor de berg"
 (`strengthModel.mountainMuscles`, default on, under Geavanceerd in Forge).
+
+**Hoogstens per krachttraining** (`engine/forgeTimeCap.ts`, `durationLearning.ts#learnedMinutesPerSet`, decision
+`docs/beslissingen/2026-11-03-forge-tijdsgrens.md`): Forge sets up a strength training of at most 60 minutes and a leg day
+(`isLegHeavyTemplate`, never a template id) of at most 75 (`AppSettings.forgeCapStrength`/`forgeCapLegs`: 0 = uit, 45, 60,
+75, 90; read by `resolveTimeCap`, no migration). It uses the minutes per work set learned from the logs' own work sets (`isWorkSet`, a log counts from six work sets; without
+enough logs the template's expected duration, never the learned whole-training duration) and takes
+sets off optional, then accessory work, down to two per exercise, then whole exercises from the back; core sets always stay. With a mountain goal (`hasMountainGoal`, Spieren voor de berg on)
+an exercise whose primary muscle is a mountain muscle (`servesMountainMuscle`) goes last across both tiers, first down to one set.
+Shorter already: nothing changes. Only the content of one session on the screen: the planning and every log stay as they
+are. One quiet line says what fell away ("Ingekort tot ongeveer 60 minuten: 2 sets bijwerk vallen weg."). Swapping in a
+session uses `addedExercises.ts#sessionPrescription`, so an added exercise that stayed after "Uit deze training halen" can
+still be swapped; an exercise without a prescription, or with a ticked set (`canSwap`), gets no Ruilen or Terug naar. The line is
+counted on the first state of the session (`capLineFor`), so a reopened draft is told as it is.

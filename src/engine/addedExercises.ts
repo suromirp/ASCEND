@@ -96,6 +96,21 @@ export function workoutWithoutAdded(workout: WorkoutExercise[], slot: string): W
   return workout.filter((e) => e.slot !== slot);
 }
 
+// Het voorschrift waarmee Ruilen (en Terug naar) in een lopende training rekent. Meestal dat van de training;
+// een toegevoegde oefening die na "Uit deze training halen" met afgevinkte sets in de sessie bleef staat daar
+// niet meer in, en krijgt dan het voorschrift van de sessie zelf: de oefening van de plek, met zoveel werksets
+// als er nu staan. Zo doet Ruilen nooit stil niets. Geen voorschrift: een plek die Forge niet kent.
+export function sessionPrescription(slots: readonly ExercisePrescription[], ex: Pick<WorkoutExercise, 'slot' | 'rows'>): ExercisePrescription | undefined {
+  const own = slots.find((s) => s.id === ex.slot);
+  if (own) return own;
+  if (!ex.slot.startsWith(SLOT_PREFIX)) return undefined;
+  const exercise = exerciseById(ex.slot.slice(SLOT_PREFIX.length));
+  if (!exercise) return undefined;
+  const work = ex.rows.filter((r) => r.kind !== 'warmup').length;
+  const base = addedPrescription(exercise);
+  return { id: ex.slot, exerciseName: exercise.name, ...base, sets: work > 0 ? work : base.sets, priority: 'accessory' };
+}
+
 // "Uit deze training halen": de oefening gaat uit de lijst. Logs van eerder blijven zoals ze zijn.
 export function withoutAddedSlot<M extends { addedExercises?: AddedExercises }>(model: M | undefined, templateId: string, slot: string): M {
   const base = (model ?? {}) as M;
@@ -106,4 +121,11 @@ export function withoutAddedSlot<M extends { addedExercises?: AddedExercises }>(
   if (list.length > 0) next[templateId] = list;
   else delete next[templateId];
   return { ...base, addedExercises: Object.keys(next).length > 0 ? next : undefined };
+}
+
+// Of Ruilen (en Terug naar) kan: een voorschrift om mee te rekenen, en nog geen afgevinkte set. Ruilen zet
+// nieuwe rijen neer, dus een oefening met een afgevinkte set wordt nooit geruild: afgevinkte sets gaan nooit
+// stil weg. Voor elke oefening, ook als vangnet in de handeling zelf.
+export function canSwap(slots: readonly ExercisePrescription[], ex: Pick<WorkoutExercise, 'slot' | 'rows'>): boolean {
+  return !ex.rows.some((r) => r.done) && !!sessionPrescription(slots, ex);
 }

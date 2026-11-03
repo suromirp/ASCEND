@@ -18,6 +18,7 @@ import { normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { validCatchUp } from '../engine/catchUp';
 import { BREAK_ASK_OPTIONS } from '../engine/forgeSession';
+import { TIME_CAP_OPTIONS } from '../engine/forgeTimeCap';
 import { isRecord } from '../utils/guards';
 
 // --- import direction: normalize ---------------------------------------------
@@ -274,6 +275,13 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   if ('forgeLongBreak' in s && !(BREAK_ASK_OPTIONS as readonly number[]).includes(s.forgeLongBreak as number)) {
     delete s.forgeLongBreak;
     skipped.n++;
+  }
+  // Hoogstens per krachttraining (engine/forgeTimeCap.ts): een van de vaste keuzes, of niet daar.
+  for (const key of ['forgeCapStrength', 'forgeCapLegs'] as const) {
+    if (key in s && !(TIME_CAP_OPTIONS as readonly number[]).includes(s[key] as number)) {
+      delete s[key];
+      skipped.n++;
+    }
   }
   if ('exerciseArt' in s && s.exerciseArt !== 'beide' && s.exerciseArt !== 'spierkaart' && s.exerciseArt !== 'uit') {
     delete s.exerciseArt;

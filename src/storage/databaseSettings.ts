@@ -272,6 +272,11 @@ export interface AppSettings {
   // handeling zo lang geleden terwijl de klok liep, dan vraagt Forge of die tijd meetelt. In minuten; 0 is uit.
   // Afwezig is 45 (het advies). Optional and additive; read defensively, so no migration step is needed.
   forgeLongBreak?: 0 | 30 | 45 | 60 | 90;
+  // "Hoogstens per krachttraining" (engine/forgeTimeCap.ts): Forge kort een krachttraining in tot ongeveer zoveel
+  // minuten, eerst het bijwerk. Gewone krachttraining (afwezig = 60, het advies) en beendag (afwezig = 75); 0 is uit.
+  // Optional and additive; read defensively by resolveTimeCap, so no migration step is needed.
+  forgeCapStrength?: 0 | 45 | 60 | 75 | 90;
+  forgeCapLegs?: 0 | 45 | 60 | 75 | 90;
   // De volgorde van de blokken op Je stand, per pagina (engine/cardOrder.ts). Absent = de standaard.
   // Gelezen door resolveCardOrder; onbekende en dubbele id's vallen weg. Optional and additive.
   cardOrder?: { stand?: string[] };

@@ -7,6 +7,7 @@ import { CHOICES } from '../../../data/settingsChoices';
 import { resolveExerciseArt } from '../../../engine/exerciseArtSettings';
 import { resolveForgeLayout } from '../../../engine/forgeLayout';
 import { resolveBreakAsk } from '../../../engine/forgeSession';
+import { resolveTimeCap } from '../../../engine/forgeTimeCap';
 import { resolveStrengthSettings, withProfile, type StrengthSettings } from '../../../engine/strengthSettings';
 import { SettingsEmpty, SettingsSection } from '../SettingsList';
 import { AddOnSheet, GymProfileSheet, MachineListSheet } from './ToestelSheets';
@@ -17,7 +18,7 @@ import { SummaryRow } from './SummaryRow';
 import { anyShown, rowShown } from './rowShown';
 import type { GroupProps } from './types';
 
-const ADVANCED = ['trainingsduur', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren'];
+const ADVANCED = ['trainingsduur', 'forge-tijdsgrens', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren'];
 
 // Forge: kracht meerekenen, wat je bijhoudt, de voorstellen en je sportschool. Elke keuze heeft
 // het advies als standaard (docs/beslissingen/2026-10-22-alles-instelbaar.md). Keuzes die bij
@@ -43,6 +44,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
     rowShown('bundel-invullen', facts) && 'Bij het invullen',
     rowShown('bundel-toets', facts) && 'Toets tegen MacroFactor',
     rowShown('trainingsduur', facts) && 'Trainingsduur',
+    rowShown('forge-tijdsgrens', facts) && 'Hoogstens per krachttraining',
     rowShown('forge-bergspieren', facts) && 'Spieren voor de berg',
   ].filter(Boolean).join(', ');
 
@@ -82,6 +84,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <SettingsSection advancedTitles={advancedTitles} advanced={
           <>
             <SummaryRow id="trainingsduur" title="Trainingsduur" facts={facts} info="trainingsduur" onClick={() => setSheet('trainingsduur')} />
+            <SummaryRow id="forge-tijdsgrens" title="Hoogstens per krachttraining" facts={facts} info="forgeTijdsgrens" onClick={() => setSheet('forge-tijdsgrens')} />
             <SummaryRow id="bundel-rekenmodel" title="Rekenmodel" facts={facts} info="bundelRekenmodel" onClick={() => setSheet('bundel-rekenmodel')} />
             <SummaryRow id="bundel-invullen" title="Bij het invullen" facts={facts} info="bundelInvullen" onClick={() => setSheet('bundel-invullen')} />
             <SummaryRow id="bundel-toets" title="Toets tegen MacroFactor" facts={facts} info="forgeNaast" onClick={() => setSheet('bundel-toets')} />
@@ -132,6 +135,12 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-schijven" title="Schijven bij de set tonen" facts={facts} info="forgeSchijven" onChange={(on) => save({ showPlates: on })} />
         </BundleSheet>
       )}
+      {sheet === 'forge-tijdsgrens' && (
+        <BundleSheet eyebrow="Forge" title="Hoogstens per krachttraining" line="Duurt een training langer, dan haalt Forge eerst sets bijwerk weg. De kern blijft." onClose={close}>
+          <SummaryRow id="forge-grens-kracht" title="Gewone krachttraining" facts={facts} onClick={() => setInner('forge-grens-kracht')} />
+          <SummaryRow id="forge-grens-been" title="Beendag" facts={facts} onClick={() => setInner('forge-grens-been')} />
+        </BundleSheet>
+      )}
       {sheet === 'bundel-toets' && (
         <BundleSheet eyebrow="Forge" title="Toets tegen MacroFactor" line="ASCEND meet stil mee. Jij beslist wat je ziet." onClose={close}>
           <SummaryRow id="forge-naast" title="ASCEND naast MacroFactor" facts={facts} info="forgeNaast" onChange={(on) => save({ showComparison: on })} />
@@ -164,6 +173,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
 
       {/* Keuzes in een blad: een onderblad bovenop. */}
       {inner === 'forge-oefeningen' && <ChoiceFromDef def={CHOICES.forgeOefeningen} value={resolveForgeLayout(settings)} onPick={(v) => void updateSettings({ forgeLayout: v })} onClose={closeInner} />}
+      {inner === 'forge-grens-kracht' && <ChoiceFromDef def={CHOICES.grensKracht} value={resolveTimeCap(settings).strength} onPick={(v) => void updateSettings({ forgeCapStrength: v })} onClose={closeInner} />}
+      {inner === 'forge-grens-been' && <ChoiceFromDef def={CHOICES.grensBeen} value={resolveTimeCap(settings).legs} onPick={(v) => void updateSettings({ forgeCapLegs: v })} onClose={closeInner} />}
       {inner === 'forge-onderbreking' && <ChoiceFromDef def={CHOICES.forgeOnderbreking} value={resolveBreakAsk(settings)} onPick={(v) => void updateSettings({ forgeLongBreak: v })} onClose={closeInner} />}
       {inner === 'forge-plaatjes' && <ChoiceFromDef def={CHOICES.plaatjes} value={resolveExerciseArt(settings)} onPick={(v) => void updateSettings({ exerciseArt: v })} onClose={closeInner} />}
       {inner === 'forge-weergave' && <ChoiceFromDef def={CHOICES.forgeWeergave} value={s.oneRmView} onPick={(v) => save({ oneRmView: v })} onClose={closeInner} />}

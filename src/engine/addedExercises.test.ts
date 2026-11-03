@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
-import { addedSlotsFor, canAddExercise, isAddedSlot, normalizeAddedExercises, withAddedExercise, withoutAddedSlot, workoutWithoutAdded, MAX_ADDED_PER_TEMPLATE, MAX_ADDED_TEMPLATES, type AddedExercises } from './addedExercises';
+import { addedSlotsFor, canAddExercise, canSwap, sessionPrescription, isAddedSlot, normalizeAddedExercises, withAddedExercise, withoutAddedSlot, workoutWithoutAdded, MAX_ADDED_PER_TEMPLATE, MAX_ADDED_TEMPLATES, type AddedExercises } from './addedExercises';
 import type { WorkoutExercise } from './forgeWorkout';
 import { forgeSlotsFor } from './forgeSlots';
 import { exerciseKey } from './strengthHistory';
@@ -60,6 +60,31 @@ describe('toegevoegde oefeningen', () => {
     expect(workoutWithoutAdded(workout, 'plus:tibialis-raise')).toBe(workout);
     expect(workoutWithoutAdded([ex('ex1', false), ex('plus:tibialis-raise', false)], 'plus:tibialis-raise').map((e) => e.slot)).toEqual(['ex1']);
     expect(workoutWithoutAdded(workout, 'bestaat-niet')).toBe(workout);
+  });
+
+  it('Ruilen na Uit deze training halen: het voorschrift van de sessie, nooit stil niets', () => {
+    const rows = [{ id: 'w', kind: 'warmup', done: true }, { id: 's1', kind: 'work', done: true }, { id: 's2', kind: 'work', done: false }];
+    const kept = { slot: 'plus:tibialis-raise', rows } as unknown as WorkoutExercise;
+    // De oefening staat niet meer in de training, wel in de sessie.
+    const p = sessionPrescription([], kept);
+    expect(p).toMatchObject({ id: 'plus:tibialis-raise', sets: 2, reps: '15-20', priority: 'accessory' });
+    expect(exerciseKey(p!.id, p!.exerciseName).exercise?.id).toBe('tibialis-raise');
+    // Staat hij er nog wel in, dan geldt het voorschrift van de training.
+    const slots = addedSlotsFor({ addedExercises: { tpl_x: ['tibialis-raise'] } }, 'tpl_x');
+    expect(sessionPrescription(slots, kept)).toBe(slots[0]);
+    expect(sessionPrescription([], { slot: 'ex1', rows } as unknown as WorkoutExercise)).toBeUndefined();
+    expect(sessionPrescription([], { slot: 'plus:bestaat-niet', rows } as unknown as WorkoutExercise)).toBeUndefined();
+  });
+
+  it('Ruilen en Terug naar alleen zonder afgevinkte set, voor elke oefening', () => {
+    const slots = [{ id: 'ex1', exerciseName: 'Bankdrukken', sets: 3, reps: '8', priority: 'core' as const }];
+    const open = { slot: 'ex1', rows: [{ id: 'a', kind: 'work', done: false }] } as unknown as WorkoutExercise;
+    const ticked = { slot: 'ex1', rows: [{ id: 'a', kind: 'work', done: true }, { id: 'b', kind: 'work', done: false }] } as unknown as WorkoutExercise;
+    expect(canSwap(slots, open)).toBe(true);
+    expect(canSwap(slots, ticked)).toBe(false);
+    expect(canSwap([], { slot: 'plus:tibialis-raise', rows: [{ id: 'a', kind: 'work', done: true }] } as unknown as WorkoutExercise)).toBe(false);
+    expect(canSwap([], { slot: 'plus:tibialis-raise', rows: [{ id: 'a', kind: 'work', done: false }] } as unknown as WorkoutExercise)).toBe(true);
+    expect(canSwap([], { slot: 'onbekend', rows: [] } as unknown as WorkoutExercise)).toBe(false);
   });
 
   it('wordt een voorschrift dat Forge herkent, achter de training', () => {

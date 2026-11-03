@@ -114,7 +114,7 @@ function buildTemplates(): SessionTemplate[] {
         { id: 'ex14', exerciseName: 'Pin-Loaded Machine Chest Press', sets: 4, reps: '6-8', priority: 'core' },
         { id: 'ex15', exerciseName: '45° Incline Dumbbell Press', sets: 3, reps: '8-10', priority: 'core' },
         { id: 'ex16', exerciseName: 'Chest-Supported Dumbbell Row', sets: 4, reps: '8-10', priority: 'core' },
-        { id: 'ex17', exerciseName: 'Neutral Grip Machine-Assisted Pull-Up', sets: 3, reps: '8-10', priority: 'accessory', notes: 'Of Underhand Grip Cable Lat Pulldown.' },
+        { id: 'ex17', exerciseName: 'Neutral Grip Machine-Assisted Pull-Up', sets: 3, reps: '8-10', priority: 'core', notes: 'Of Underhand Grip Cable Lat Pulldown.' },
         { id: 'ex18', exerciseName: 'Standing Dumbbell Lateral Raise', sets: 3, reps: '12-15', priority: 'accessory' },
         { id: 'ex19', exerciseName: 'Incline Hammer Curl', sets: 3, reps: '12-15', priority: 'optional' },
         { id: 'ex20', exerciseName: 'Overhead Triceps Extension', sets: 3, reps: '12-15', priority: 'optional' },

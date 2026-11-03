@@ -63,6 +63,7 @@ import { storageUseText, type StorageEstimate } from './storageUse';
 import { swipeDeleteOn } from './forgeRows';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveBreakAsk } from './forgeSession';
+import { resolveTimeCap } from './forgeTimeCap';
 import { resolveSportCounting } from './sportRole';
 import { sportsRowSummary } from './sportsScreen';
 import { isRowPending, isRowUnknown, type SettingsSource } from './settingsPending';
@@ -767,6 +768,18 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: isDefaultOrder('stand', resolveCardOrder('stand', s.cardOrder)) ? 'Standaard' : 'Eigen volgorde' };
     case 'forge-oefeningen':
       return { value: choiceShort('forgeOefeningen', resolveForgeLayout(s)) };
+    case 'forge-tijdsgrens': {
+      // Beide waarden in één rij: "60 en 75 min", of wat uit staat.
+      const cap = resolveTimeCap(s);
+      if (cap.strength === 0 && cap.legs === 0) return { value: 'Uit', dim: true };
+      if (cap.strength === 0) return { value: `${cap.legs} min`, sub: 'Alleen een beendag' };
+      if (cap.legs === 0) return { value: `${cap.strength} min`, sub: 'Niet op een beendag' };
+      return { value: `${cap.strength} en ${cap.legs} min`, sub: 'Kracht en beendag' };
+    }
+    case 'forge-grens-kracht':
+      return { value: choiceShort('grensKracht', resolveTimeCap(s).strength), dim: resolveTimeCap(s).strength === 0 };
+    case 'forge-grens-been':
+      return { value: choiceShort('grensBeen', resolveTimeCap(s).legs), dim: resolveTimeCap(s).legs === 0 };
     case 'forge-onderbreking':
       return { value: choiceShort('forgeOnderbreking', resolveBreakAsk(s)), dim: resolveBreakAsk(s) === 0 };
     case 'forge-vegen':

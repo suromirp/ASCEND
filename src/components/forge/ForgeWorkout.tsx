@@ -13,9 +13,11 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { exerciseById } from '../../data/exercises';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { canRemoveRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn, type DroppedRow } from '../../engine/forgeRows';
-import { isAddedSlot, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
+import { canSwap, isAddedSlot, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
+import { learnedMinutesPerSet } from '../../engine/durationLearning';
+import { capForTemplate, capLineFor, capSlots, resolveTimeCap, servesMountainMuscle } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
-import { swapPreference, swapReason } from '../../engine/mountainMuscles';
+import { hasMountainGoal, swapPreference, swapReason } from '../../engine/mountainMuscles';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
 import { ExerciseArtSheet } from '../ExerciseArtSheet';
 import { ForgeStrip } from './ForgeStrip';
@@ -215,7 +217,27 @@ function ForgeWorkoutInner({
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   // A program from MacroFactor gives the exercises of the week of this training, and an exercise you added after a
   // proposal with Akkoord comes behind them (engine/forgeSlots.ts, the same list the week review reads).
-  const slots = exercisesForVariant({ ...template, exercises: forgeSlotsFor(template, settings.strengthModel, date) }, initialVariant);
+  const allSlots = useMemo(() => forgeSlotsFor(template, settings.strengthModel, date), [template, settings.strengthModel, date]);
+  // Hoogstens per krachttraining (engine/forgeTimeCap.ts): met de geleerde tijd per set gaat er eerst bijwerk af
+  // als de training langer zou duren dan de grens. Alleen de inhoud van deze sessie; de planning blijft zoals hij is.
+  const estimate = settings.sessionDurationEstimates?.[template.id];
+  // Terugval zonder genoeg logs: de verwachte duur van het sjabloon (of je eigen schatting), nooit een duur die
+  // geleerd is uit logs met een ander aantal sets dan nu klaarstaat.
+  const fullMinutes = estimate && estimate > 0 ? estimate : template.durationVariants.full;
+  const minutesPerSet = useMemo(() => learnedMinutesPerSet(template, sessionLogs), [template, sessionLogs]);
+  const mountainGoal = useMemo(() => strength.mountainMuscles && hasMountainGoal(trainingGoals, goalMilestones), [strength.mountainMuscles, trainingGoals, goalMilestones]);
+  const capStrength = settings.forgeCapStrength;
+  const capLegs = settings.forgeCapLegs;
+  const capped = useMemo(() => capSlots({
+    slots: exercisesForVariant({ ...template, exercises: allSlots }, initialVariant),
+    fullSlots: allSlots,
+    fullMinutes,
+    minutesPerSet,
+    cap: capForTemplate(template, resolveTimeCap({ forgeCapStrength: capStrength, forgeCapLegs: capLegs })),
+    // Bij een bergdoel (zoals Spieren voor de berg het leest) vallen kuit, scheen en bilspieren als laatste weg.
+    ...(mountainGoal ? { keep: servesMountainMuscle } : {}),
+  }), [template, allSlots, initialVariant, fullMinutes, minutesPerSet, capStrength, capLegs, mountainGoal]);
+  const slots = capped.slots;
 
   const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
   const [restored] = useState(() => {
@@ -252,6 +274,9 @@ function ForgeWorkoutInner({
   const ctx = useMemo<PlanContext>(() => ({ ...baseCtx, ...(ease ? { ease } : {}) }), [baseCtx, ease]);
   const effSlots = useMemo(() => (easeOn ? easeSlots(slots, easeHow).slots : slots), [easeOn, slots, easeHow]);
   const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? resumeDraft(restored.exercises, restored.eased, easeOn, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
+  // De regel "Ingekort tot ongeveer 60 minuten" zegt wat er bij het openen wegviel, bij de eerste stand van de
+  // sessie (een heropend concept houdt wat je al deed), en blijft dan staan.
+  const [capLine] = useState(() => capLineFor(capped, workout));
   // De sessie begint op het moment van starten en houdt dat, ook na sluiten, herladen en een volgende dag.
   // De sessie begint pas bij de eerste echte handeling (afvinken, typen, een set toevoegen of weghalen, Pauzeren);
   // alleen openen is nog geen sessie: geen concept, geen wijzer, geen pil.
@@ -867,7 +892,10 @@ function ForgeWorkoutInner({
   );
 
   function swap(slot: string, exerciseId: string | null) {
-    const prescription = effSlots.find((s) => s.id === slot);
+    const current = workout.find((e) => e.slot === slot);
+    // Vangnet: met een afgevinkte set wordt nooit geruild, want ruilen zet nieuwe rijen neer.
+    if (!current || !canSwap(effSlots, current)) return;
+    const prescription = sessionPrescription(effSlots, current);
     if (!prescription) return;
     const state = planStateBefore(ctx, workout, slot);
     const to = exerciseId ? exerciseById(exerciseId) : undefined;
@@ -904,8 +932,9 @@ function ForgeWorkoutInner({
   const rirRow = rirFor ? workout.find((e) => e.slot === rirFor.slot)?.rows.find((r) => r.id === rirFor.rowId) : undefined;
 
   const bottomPad = dockH > 0 ? dockH + (rest && !readOnly ? 70 : 0) + 16 : rest ? 120 : 48;
-  const intro = (legLine || readOnly) && (
+  const intro = (legLine || readOnly || capLine) && (
             <div className="flex flex-col gap-1 px-4 pt-3">
+              {capLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-ingekort">{capLine}</p>}
               {preview && <p className="text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{previewDayLine(date, program)}</p>}
               {preview ? (
                 <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo staat hij klaar. Afvinken kan op de dag zelf.</p>
@@ -1083,7 +1112,7 @@ function ForgeWorkoutInner({
                   </SheetGroup>
                 )}
                 <SheetGroup title="Oefening">
-                  {!readOnly && (menuEx.swappedFrom ? (
+                  {!readOnly && canSwap(effSlots, menuEx) && (menuEx.swappedFrom ? (
                     <MenuRow icon="ruilen" title={`Terug naar ${menuEx.swappedFrom}`} onClick={() => { swap(menuEx.slot, null); close(); }} />
                   ) : (
                     <MenuRow icon="ruilen" title="Ruilen" sub="Zelfde spieren, met wat je sportschool heeft. Alleen voor deze training." onClick={() => { close(); setSwapFor(menuEx.slot); }} />
