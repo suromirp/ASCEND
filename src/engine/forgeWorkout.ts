@@ -28,7 +28,7 @@ import { legSorenessList, type SoreSource } from './legSoreness';
 import type { LegEaseHow } from './legEaseSettings';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
-import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, fatigueFactor, formatWeight, isHardPair, lastDateBefore, prescribe, raisedText, usedBefore, warmupSets, warmupShapes, type Prescription, type SetAim, type WarmupSet } from './strengthModel';
+import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, fatigueFactor, formatWeight, HARD_SET_MAX_RIR, isHardPair, lastDateBefore, prescribe, raisedText, TOP_SET_WARMUPS, topSetWarmups, usedBefore, warmupSets, warmupShapes, type Prescription, type SetAim, type WarmupSet } from './strengthModel';
 import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
 import { programLine } from './programLine';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
@@ -315,6 +315,18 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
       if (candidates) warmups = warmupSets(ctx.settings, exercise, candidates, w0, undefined, warmKind, ctx.bodyKg, dumbbellTotal);
     } else {
       emptyWarmups = warmupShapes(ctx.settings, exercise, warmKind);
+    }
+  }
+  // Een zware topset (0 of 1 over of tot falen) krijgt altijd minstens drie opwarmstappen, ook als de spieren
+  // al warm zijn van een oefening ervoor (de deadlift na de squat kreeg één voelset van 65%).
+  const firstAim = targets?.[0] ? { rir: targets[0].rir, failure: targets[0].failure } : { rir: rx?.sets[0]?.rir ?? baseRir };
+  const hardTop = !!exercise && isCompound(exercise) && (!!firstAim.failure || firstAim.rir <= HARD_SET_MAX_RIR);
+  if (hardTop && ctx.modelOn && warmKind !== 'none' && warmups.length < TOP_SET_WARMUPS && workWeights[0] !== undefined) {
+    const candidates = candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: workWeights[0], usedKg: learned, stackWeights: ctx.settings.stackWeights, dumbbellTotal });
+    const more = candidates ? topSetWarmups(ctx.settings, exercise, candidates, workWeights[0], warmKind !== 'full', ctx.bodyKg, dumbbellTotal) : [];
+    if (more.length > warmups.length) {
+      warmups = more;
+      emptyWarmups = [];
     }
   }
   const rows: WorkoutRow[] = [];

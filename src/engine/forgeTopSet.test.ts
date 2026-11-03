@@ -133,3 +133,40 @@ describe('de extra daling leren uit je eigen sets', () => {
     expect(learnAfterHard(assumed, squat, false, FATIGUE_PER_SET).pairs).toBe(0);
   });
 });
+
+describe('opwarmen voor een zware topset', () => {
+  const warm = (e: WorkoutExercise) => e.rows.filter((r) => r.kind === 'warmup');
+
+  it('de deadlift na de squat krijgt drie opwarmstappen in plaats van één voelset', () => {
+    const [squat, dl] = planWorkout([squatSlot, deadliftSlot], ctx());
+    expect(warm(squat).length).toBeGreaterThanOrEqual(3);
+    const w = warm(dl);
+    expect(w).toHaveLength(3);
+    // De lege stang, dan ongeveer 55% en 75% van de topset, oplopend en onder de topset.
+    expect(w[0].weightKg).toBe(20);
+    expect(w[1].weightKg!).toBeGreaterThan(w[0].weightKg!);
+    expect(w[2].weightKg!).toBeGreaterThan(w[1].weightKg!);
+    expect(w[2].weightKg!).toBeLessThan(102.5);
+    expect(w[2].weightKg!).toBeGreaterThanOrEqual(75);
+    // Warme spieren: minder herhalingen dan een koude opbouw.
+    expect(w.map((r) => r.reps)).toEqual([5, 3, 2]);
+  });
+
+  it('koud en zonder historie: ook dan drie stappen voor een topset tot falen', () => {
+    const [dl] = planWorkout([{ ...deadliftSlot, targetWeightKg: 105 }], ctx({ logs: [] }));
+    expect(warm(dl).map((r) => r.weightKg)).toEqual([20, 60, 80]);
+    expect(warm(dl).map((r) => r.reps)).toEqual([8, 5, 3]);
+  });
+
+  it('een gewone eerste set met 2 over na de squat houdt één voelset', () => {
+    const rdl: ExercisePrescription = { id: 'rdl', exerciseName: 'Conventional Deadlift', sets: 3, reps: '7-9', priority: 'core', setTargets: [top(7, 9, 2), top(7, 9, 2), top(7, 9, 2)] };
+    const [, dl] = planWorkout([squatSlot, rdl], ctx());
+    expect(warm(dl)).toHaveLength(1);
+  });
+
+  it('met Opwarmen uit blijft het uit', () => {
+    const off = resolveStrengthSettings({ warmup: 'off' });
+    const [, dl] = planWorkout([squatSlot, deadliftSlot], ctx({ settings: off }));
+    expect(warm(dl)).toHaveLength(0);
+  });
+});

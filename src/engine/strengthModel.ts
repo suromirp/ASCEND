@@ -572,8 +572,36 @@ export function warmupSets(
   const bar = exercise.resistance === 'barbell' ? Math.min(...candidates.map((c) => c.externalKg)) : 0;
   if (isLightWeight(exercise, dumbbellTotal ? firstWeightKg / 2 : firstWeightKg, bar)) return [];
   const heavy = exercise.resistance === 'barbell' && firstWeightKg > 3 * Math.max(...bars);
+  return buildWarmups(warmupPlan(kind, settings, strengthKg !== undefined, heavy), exercise, candidates, firstWeightKg, strengthKg, bodyKg, dumbbellTotal);
+}
+
+// A heavy top set (0 or 1 in reserve, or to failure) always gets at least this many warm-up steps,
+// also when the muscles are already warm (decision 2026-11-03-forge-na-de-eerste-vergelijking.md).
+export const TOP_SET_WARMUPS = 3;
+
+// The warm-up for a heavy top set: the empty bar (or a fifth of the weight), then about 57% and 76% of
+// the top set, as 20, 60 and 80 before 105 kg. Cold muscles 8, 5 and 3 reps; warm muscles 5, 3 and 2,
+// because they only need the steps, not the work. Nothing where `warmupSets` would give nothing (a light
+// weight, an isolation exercise, Opwarmen uit).
+export function topSetWarmups(
+  settings: ResolvedStrengthSettings,
+  exercise: Exercise | undefined,
+  candidates: Candidate[],
+  firstWeightKg: number,
+  warmMuscles: boolean,
+  bodyKg?: number,
+  dumbbellTotal = false,
+): WarmupSet[] {
+  if (!canWarmUp(settings, exercise, 'full')) return [];
+  const bar = exercise.resistance === 'barbell' ? Math.min(...candidates.map((c) => c.externalKg)) : 0;
+  if (isLightWeight(exercise, dumbbellTotal ? firstWeightKg / 2 : firstWeightKg, bar)) return [];
+  const reps = warmMuscles ? [5, 3, 2] : [8, 5, 3];
+  const plan: WarmStep[] = [0.2, 0.57, 0.76].map((pct, i) => ({ pct, reps: reps[i], of: 'work' }));
+  return buildWarmups(plan, exercise, candidates, firstWeightKg, undefined, bodyKg, dumbbellTotal);
+}
+
+function buildWarmups(plan: WarmStep[], exercise: Exercise, candidates: Candidate[], firstWeightKg: number, strengthKg: number | undefined, bodyKg: number | undefined, dumbbellTotal: boolean): WarmupSet[] {
   const firstLoad = loadFromExternal(exercise, firstWeightKg, bodyKg, dumbbellTotal) ?? firstWeightKg;
-  const plan = warmupPlan(kind, settings, strengthKg !== undefined, heavy);
   const out: WarmupSet[] = [];
   for (const p of plan) {
     const load = p.pct * (p.of === 'strength' ? (strengthKg ?? firstLoad) : firstLoad);
