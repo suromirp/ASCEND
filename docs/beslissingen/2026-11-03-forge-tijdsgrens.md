@@ -13,11 +13,12 @@ bijwerk vallen weg." Is de training al korter, dan verandert er niets.
 
 Hoe (`engine/forgeTimeCap.ts`):
 
-- De tijd per werkset komt uit je eigen trainingen (`durationLearning.ts#learnedMinutesPerSet`: duur gedeeld
-  door werksets via `isWorkSet`, mediaan van de laatste zes, vanaf drie, alleen logs met minstens zoveel
-  werksets als de kern van de training, zodat ingekorte trainingen en logs uit MacroFactor meetellen). Zonder die logs de verwachte duur van de training (`predictDuration`, de
-  geleerde of geschatte duur van Trainingsduur) gedeeld door de voorgeschreven werksets. Zo blijft de grens
-  staan als je vaker ingekort traint: minder sets in minder tijd geeft dezelfde tijd per set.
+- De tijd per werkset komt altijd uit de eigen werksets van je logs (`durationLearning.ts#learnedMinutesPerSet`:
+  per log de duur gedeeld door zijn werksets via `isWorkSet`, los van het voorschrift; een log telt vanaf zes
+  werksets; mediaan van de laatste zes, vanaf drie). Zonder genoeg logs is de terugval de verwachte duur van
+  het sjabloon (of je eigen schatting) gedeeld door de voorgeschreven werksets, nooit de geleerde duur van de
+  hele training: die komt uit logs met een ander aantal sets (een probe liet zien dat 23 voorgeschreven sets
+  dan "passen" in 50 minuten). Zo blijft de grens ook staan als je vaker ingekort traint.
 - Zoals "Minder tijd vandaag" de kern laat staan: eerst een set van de extra oefeningen (`optional`), dan van
   het bijwerk (`accessory`), steeds bij de oefening met de meeste sets, tot elke oefening er nog twee heeft.
   Pas daarna een hele oefening, eerst een extra, van achteren af. De kernsets (`core`) blijven altijd staan;
@@ -38,7 +39,13 @@ Ruilen en Terug naar staan er voor geen enkele oefening meer zodra er een set is
 (`addedExercises.ts#canSwap`, ook als vangnet in de handeling): ruilen zet nieuwe rijen neer, en afgevinkte
 sets gaan nooit stil weg. De regel "Ingekort" telt bij de eerste stand van de sessie (`capLineFor`), zodat
 een heropend concept dat de volle sets hield niet als ingekort wordt gemeld. In Bovenlichaam B is de
-pull-up kern geworden, zodat er bij het inkorten altijd een verticale trek blijft.
+pull-up kern geworden in `data/defaultProgram.ts`, zodat er bij het inkorten altijd een verticale trek blijft.
+Er is geen migratie van opgeslagen sjablonen voor geschreven. Let op: de ingebouwde sjablonen worden bij elke
+start gelijkgezet met hun definitie (`databaseSeed.ts#ensureDefaultTemplates`), dus het ingebouwde sjabloon
+krijgt de pull-up als kern ook op een toestel dat er al was. Komt de training uit een programma van
+MacroFactor, dan bepaalt dat programma de oefeningen en is de volgorde de rangorde
+(`macrofactorProgram.ts`: de eerste twee kern); daar verandert dit niets. Houdt de pull-up bijwerk, dan
+houdt hij bij inkorten minstens twee sets zolang er nog extra oefeningen of later bijwerk weg kunnen.
 
 ## Reden
 

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { ExercisePrescription, SessionTemplate } from '../models/training';
+import type { ExercisePrescription, SessionLog, SessionTemplate } from '../models/training';
+import { buildDefaultProgramData } from '../data/defaultProgram';
+import { learnedMinutesPerSet } from './durationLearning';
 import { capForTemplate, capLineFor, capSlots, prescribedSets, resolveTimeCap, timeCapLine } from './forgeTimeCap';
 
 // Nagemaakte trainingen: geen ingebouwd sjabloon, zodat de beendag alleen uit de belasting komt.
@@ -120,5 +122,35 @@ describe('de regel na heropenen', () => {
   it('alleen de weggevallen oefening staat er nog: de sets bijwerk blijven in de regel', () => {
     const draft = [...r.slots.map((s) => ({ slot: s.id, rows: rows(prescribedSets(s)) })), { slot: 'Triceps pushdown', rows: rows(3, true) }];
     expect(capLineFor(r, draft)).toBe('Ingekort tot ongeveer 75 minuten: 2 sets bijwerk vallen weg.');
+  });
+});
+
+describe('met de tijd per set uit je eigen logs', () => {
+  // Nagemaakte logs met de aantallen werksets en minuten uit de probe: 11, 20, 11 en 20 werksets in 45, 70, 49 en 110 min.
+  const upperB = buildDefaultProgramData().templates.find((t) => t.id === 'tpl_upper_b')!;
+  const log = (i: number, minutes: number, work: number): SessionLog => ({
+    id: `b${i}`, templateId: 'tpl_upper_b', type: 'strength', completedDate: `2026-10-0${i}`, completedAt: `2026-10-0${i}T18:00:00Z`, variant: 'full', durationMinutes: minutes, source: 'manual',
+    strengthData: [{ exerciseId: 'x', exerciseName: 'X', sets: [{ reps: 5, kind: 'warmup' }, ...Array.from({ length: work }, () => ({ reps: 8 }))] }],
+  });
+  const logs = [log(1, 45, 11), log(2, 70, 20), log(3, 49, 11), log(4, 110, 20)];
+
+  it('Bovenlichaam B komt onder 60 uit met ingekorte sets, de kern blijft', () => {
+    const perSet = learnedMinutesPerSet(upperB, logs);
+    expect(perSet).toBeGreaterThan(4);
+    expect(perSet).toBeLessThan(4.5);
+    const slots = upperB.exercises!;
+    const r = capSlots({ slots, fullMinutes: upperB.durationVariants.full, minutesPerSet: perSet, cap: 60 });
+    expect(r.fromMinutes).toBeGreaterThan(90);
+    expect(r.minutes).toBeLessThanOrEqual(60);
+    expect(r.setsRemoved + r.dropped.length).toBeGreaterThan(0);
+    for (const core of slots.filter((s) => s.priority === 'core')) expect(r.slots.find((s) => s.id === core.id)?.sets).toBe(core.sets);
+    expect(timeCapLine(r)).toMatch(/^Ingekort tot ongeveer (55|60) minuten/);
+  });
+
+  it('ook met de pull-up als bijwerk, zoals in een opgeslagen sjabloon van voor deze wijziging', () => {
+    const slots = upperB.exercises!.map((s) => (s.id === 'ex17' ? { ...s, priority: 'accessory' as const } : s));
+    const r = capSlots({ slots, fullMinutes: 75, minutesPerSet: learnedMinutesPerSet(upperB, logs), cap: 60 });
+    expect(r.minutes).toBeLessThanOrEqual(60);
+    expect(r.slots.find((s) => s.id === 'ex17')?.sets).toBe(2);
   });
 });

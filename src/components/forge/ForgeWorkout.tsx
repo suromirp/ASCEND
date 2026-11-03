@@ -14,8 +14,8 @@ import { exerciseById } from '../../data/exercises';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { canRemoveRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn, type DroppedRow } from '../../engine/forgeRows';
 import { canSwap, isAddedSlot, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
-import { learnedMinutesPerSet, predictDuration } from '../../engine/durationLearning';
-import { capForTemplate, capLineFor, capSlots, prescribedSets, resolveTimeCap } from '../../engine/forgeTimeCap';
+import { learnedMinutesPerSet } from '../../engine/durationLearning';
+import { capForTemplate, capLineFor, capSlots, resolveTimeCap } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { swapPreference, swapReason } from '../../engine/mountainMuscles';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
@@ -221,9 +221,10 @@ function ForgeWorkoutInner({
   // Hoogstens per krachttraining (engine/forgeTimeCap.ts): met de geleerde tijd per set gaat er eerst bijwerk af
   // als de training langer zou duren dan de grens. Alleen de inhoud van deze sessie; de planning blijft zoals hij is.
   const estimate = settings.sessionDurationEstimates?.[template.id];
-  const fullMinutes = useMemo(() => predictDuration(template, sessionLogs, estimate).minutes, [template, sessionLogs, estimate]);
-  const coreSets = useMemo(() => allSlots.reduce((n, x) => n + (x.priority === 'core' ? prescribedSets(x) : 0), 0), [allSlots]);
-  const minutesPerSet = useMemo(() => learnedMinutesPerSet(template, sessionLogs, coreSets), [template, sessionLogs, coreSets]);
+  // Terugval zonder genoeg logs: de verwachte duur van het sjabloon (of je eigen schatting), nooit een duur die
+  // geleerd is uit logs met een ander aantal sets dan nu klaarstaat.
+  const fullMinutes = estimate && estimate > 0 ? estimate : template.durationVariants.full;
+  const minutesPerSet = useMemo(() => learnedMinutesPerSet(template, sessionLogs), [template, sessionLogs]);
   const capStrength = settings.forgeCapStrength;
   const capLegs = settings.forgeCapLegs;
   const capped = useMemo(() => capSlots({

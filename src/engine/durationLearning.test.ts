@@ -45,13 +45,10 @@ describe('learnedMinutesPerSet', () => {
     expect(learnedMinutesPerSet(upper, [withSets('2026-10-01', 80, 16), withSets('2026-10-04', 60, 12), withSets('2026-10-07', 50, 10)])).toBe(5);
   });
 
-  it('een log met minder sets dan de kern telt niet mee, een ingekorte training wel', () => {
-    const logs = [withSets('2026-10-01', 60, 5), withSets('2026-10-04', 60, 4), withSets('2026-10-07', 60, 5)];
-    // 12 kernsets voorgeschreven, 4 of 5 in het log: dat is geen tijd per set.
-    expect(learnedMinutesPerSet(upper, logs, 12)).toBeUndefined();
-    // Ingekorte trainingen en logs uit MacroFactor met 12 tot 14 werksets, kern 12: die tellen.
-    const short = [withSets('2026-10-01', 48, 12), withSets('2026-10-04', 52, 13), withSets('2026-10-07', 56, 14)];
-    expect(learnedMinutesPerSet(upper, short, 12)).toBe(4);
+  it('telt een log vanaf zes werksets, los van het voorschrift', () => {
+    expect(learnedMinutesPerSet(upper, [withSets('2026-10-01', 60, 5), withSets('2026-10-04', 60, 4), withSets('2026-10-07', 60, 5)])).toBeUndefined();
+    // Ingekorte trainingen en logs uit MacroFactor met 12 tot 14 werksets tellen gewoon.
+    expect(learnedMinutesPerSet(upper, [withSets('2026-10-01', 48, 12), withSets('2026-10-04', 52, 13), withSets('2026-10-07', 56, 14)])).toBe(4);
   });
 
   it('een log zonder sets telt niet mee', () => {

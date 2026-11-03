@@ -145,7 +145,8 @@ muscle first, with a short reason (`swapReason`); Forge never swaps by itself. N
 **Hoogstens per krachttraining** (`engine/forgeTimeCap.ts`, `durationLearning.ts#learnedMinutesPerSet`, decision
 `docs/beslissingen/2026-11-03-forge-tijdsgrens.md`): Forge sets up a strength training of at most 60 minutes and a leg day
 (`isLegHeavyTemplate`, never a template id) of at most 75 (`AppSettings.forgeCapStrength`/`forgeCapLegs`: 0 = uit, 45, 60,
-75, 90; read by `resolveTimeCap`, no migration). It uses the learned minutes per work set (counted with `isWorkSet`) and takes
+75, 90; read by `resolveTimeCap`, no migration). It uses the minutes per work set learned from the logs' own work sets (`isWorkSet`, a log counts from six work sets; without
+enough logs the template's expected duration, never the learned whole-training duration) and takes
 sets off optional, then accessory work, down to two per exercise, then whole exercises from the back; core sets always stay.
 Shorter already: nothing changes. Only the content of one session on the screen: the planning and every log stay as they
 are. One quiet line says what fell away ("Ingekort tot ongeveer 60 minuten: 2 sets bijwerk vallen weg."). Swapping in a
