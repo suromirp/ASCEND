@@ -90,7 +90,7 @@ import { PrimaryButton, SecondaryButton, Toggle } from '../ui';
 import { useGuardedSave, useLegEase } from '../useLegEase';
 import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_KEPT_LINE, EASE_STARTED_LINE } from '../../engine/legDayEase';
 import { resolveLegEaseHow } from '../../engine/legEaseSettings';
-import { reckonAfterTick, reckonWeight, undoRaise } from '../../engine/forgeReckon';
+import { asksReserve, reckonAfterTick, reckonWeight, undoRaise } from '../../engine/forgeReckon';
 import { adjustText, applyLighter, fitStillOpen, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
 import { appendEvents, cleanForgeLog, deriveChanges, noFitEvent, setCountEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
@@ -308,6 +308,8 @@ function ForgeWorkoutInner({
   // Uitleg en tekening vanuit het blad Oefening: hetzelfde blad als het kaartje in de kop.
   const [artFor, setArtFor] = useState<string | null>(null);
   const [rirFor, setRirFor] = useState<{ slot: string; rowId: string } | null>(null);
+  // "Hoeveel over?" onder de set die je net afvinkte (alleen de topset en de laatste set, asksReserve).
+  const [quickRir, setQuickRir] = useState<{ slot: string; rowId: string } | null>(null);
   // Het voorstel "Lichter?" per oefening, na een set die te zwaar was (engine/forgeAdjust.ts).
   const [lighter, setLighter] = useState<Record<string, Adjustment>>({});
   // Geen gewicht van dit toestel past: de regel die vraagt of je de gewichten invult, per oefening.
@@ -694,6 +696,9 @@ function ForgeWorkoutInner({
     const result = { ...raw, workout: reckoned };
     if (reckoned.some((e, i) => e !== raw.workout[i])) markCause({ kind: 'meegerekend' });
     setWorkout(result.workout);
+    // Na het afvinken van de topset of de laatste set: één snelle vraag hoeveel je over had. Een andere tik haalt hem weg.
+    const askEx = result.workout.find((e) => e.slot === slot);
+    setQuickRir(strength.quickRir && !readOnly && askEx && asksReserve(askEx, rowId) ? { slot, rowId } : null);
     // De focus schuift vloeiend naar de volgende open set; is de oefening af, dan
     // klapt hij zacht in en gaat het scherm naar de volgende oefening.
     const ticked = result.workout.find((e) => e.slot === slot)?.rows.find((r) => r.id === rowId)?.done;
@@ -765,6 +770,7 @@ function ForgeWorkoutInner({
     primeAudio();
     baseRef.current = null;
     clearHints(slot);
+    setQuickRir(null);
     const result = tickAllRows(workout, slot);
     setWorkout(result.workout);
     const after = result.workout.find((e) => e.slot === slot);
@@ -880,9 +886,21 @@ function ForgeWorkoutInner({
     setExercise(slot, (e) => undoRaise(e, makeSnap(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal), bodyKg, e.rows.find((r) => r.kind === 'work')?.weightKg, e.dumbbellTotal)));
   }
 
-  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove });
+  // Je koos bij "Hoeveel over?": de RIR is van jou (niet meer aangenomen), en Forge rekent met die set opnieuw mee.
+  function chooseQuickRir(slot: string, rowId: string, rir: number) {
+    const ex = workout.find((e) => e.slot === slot);
+    setQuickRir(null);
+    if (!ex) return;
+    haptics.tap();
+    const mine = updateRow(ex, rowId, { rir });
+    const after = reckonAfterTick(mine, rowId, reckonCtx);
+    markCause(after !== mine ? { kind: 'meegerekend' } : { kind: 'eigen', edited: { slot, rowId } });
+    setExercise(slot, () => after);
+  }
+
+  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir });
   useEffect(() => {
-    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove };
+    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir };
   });
   const actions = useMemo<BlockActions>(
     () => ({
@@ -894,6 +912,7 @@ function ForgeWorkoutInner({
       take: (slot, rowId) => latest.current.take(slot, rowId),
       rowMenu: (slot, rowId) => setRowMenu({ slot, rowId }),
       rir: (slot, rowId) => setRirFor({ slot, rowId }),
+      quickRir: (slot, rowId, rir) => latest.current.chooseQuickRir(slot, rowId, rir),
       add: (slot) => latest.current.addSetLogged(slot, 'work'),
       remove: (slot, rowId) => latest.current.removeSetLogged(slot, rowId),
       restore: (slot) => latest.current.setExercise(slot, restoreDropped),
@@ -980,6 +999,7 @@ function ForgeWorkoutInner({
               rirAsValue={strength.rirPrefill === 'target'}
               swipeOn={swipeDeleteOn(settings)}
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
+              quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId) ? quickRir.rowId : undefined}
               act={actions}
             />
   );

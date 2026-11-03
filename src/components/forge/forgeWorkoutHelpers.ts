@@ -35,6 +35,8 @@ export interface BlockActions {
   take: (slot: string, rowId: string) => void;
   rowMenu: (slot: string, rowId: string) => void;
   rir: (slot: string, rowId: string) => void;
+  // "Hoeveel over?" na het afvinken: je RIR in één tik.
+  quickRir: (slot: string, rowId: string, rir: number) => void;
   add: (slot: string) => void;
   lighter: (slot: string) => void;
   // Terugzetten van de stap omhoog die Forge rekent mee zette.

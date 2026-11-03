@@ -28,7 +28,7 @@ import { legSorenessList, type SoreSource } from './legSoreness';
 import type { LegEaseHow } from './legEaseSettings';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
-import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, fatigueFactor, formatWeight, HARD_SET_MAX_RIR, isHardPair, lastDateBefore, prescribe, raisedText, TOP_SET_WARMUPS, topSetWarmups, usedBefore, warmupSets, warmupShapes, type Prescription, type SetAim, type WarmupSet } from './strengthModel';
+import { assumedRaise, DEFAULT_RIR, dumbbellTotalFor, expectedReps, fatigueFactor, formatWeight, HARD_SET_MAX_RIR, isHardPair, lastDateBefore, prescribe, raisedText, TOP_SET_WARMUPS, topSetWarmups, usedBefore, warmupSets, warmupShapes, type Prescription, type SetAim, type WarmupSet } from './strengthModel';
 import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
 import { programLine } from './programLine';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
@@ -293,8 +293,9 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   // Dumbbells logged as the total of two: the weights are sums of two from the rack.
   const dumbbellTotal = rx?.dumbbellTotal ?? dumbbellTotalFor({ exercise, sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings });
   const lastTop = last?.sets.filter(isWorkSet).filter((s) => s.reps > 0).sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0];
-  const weightsOf = (r: Prescription | undefined) => {
-    const program = r && targets ? programWeights(r, targets, exercise, ctx, lastTop?.weightKg, tired, warmKind, learned, dumbbellTotal) : undefined;
+  const lastFirst = last?.sets.filter(isWorkSet)[0];
+  const weightsOf = (r: Prescription | undefined, reckon = ctx.settings.reckon) => {
+    const program = r && targets ? programWeights(r, targets, exercise, ctx, lastTop?.weightKg, tired, warmKind, learned, dumbbellTotal, lastFirst, reckon) : undefined;
     const weights: (number | undefined)[] = [];
     for (let i = 0; i < setCount; i++) {
       const t = targets?.[i];
@@ -372,13 +373,15 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   }
   // "Forge rekent mee" ging een stap omhoog: de sets zoals ze zonder die stap waren, voor Terugzetten.
   let raise: WorkoutExercise['raise'];
-  if (rx?.raised && history) {
+  const raisedBy = fromProgram?.raised ?? rx?.raised;
+  if (raisedBy && history) {
     const back = prescribe({ ...rxInput!, settings: { ...ctx.settings, reckon: false } });
     if (back) {
+      const backProgram = targets ? programWeights(back, targets, exercise, { ...ctx, settings: { ...ctx.settings, reckon: false } }, lastTop?.weightKg, tired, warmKind, learned, dumbbellTotal, lastFirst, false) : undefined;
       raise = {
-        line: raisedText(rx.raised, exercise?.resistance === 'assisted_bodyweight'),
-        reason: back.reason,
-        back: weightsOf(back).weights.map((w, i) => {
+        line: raisedText(raisedBy, exercise?.resistance === 'assisted_bodyweight'),
+        reason: backProgram?.differs ? `Je programma vraagt nu ${programLine(targets!)}.` : back.reason,
+        back: weightsOf(back, false).weights.map((w, i) => {
           const made = workRow(back, w, i);
           return { rowId: `${slot.id}:s${i}`, ...(made.target.weightKg !== undefined ? { weightKg: made.target.weightKg } : {}), reps: made.reps };
         }),
@@ -418,10 +421,13 @@ export const workAims = (ex: WorkoutExercise): SetAim[] => ex.rows.filter((r) =>
 // earlier set, unless the sets are equal) still gives the bottom of the
 // range with the asked reps left. A set whose range and RIR are Forge's own
 // keeps Forge's weight, with its limits per training (KR-5).
-function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exercise | undefined, ctx: PlanContext, lastWeightKg: number | undefined, tired: boolean, warm: WarmKind, usedKg?: number[], dumbbellTotal?: boolean): { weights: number[]; warmups: WarmupSet[]; differs: boolean } | undefined {
+// "Forge rekent mee" with a RIR you did not fill in: the top set of last time went 3 or more reps over the
+// top of its range ("7+" has 7 as its top), so it goes at least one step heavier (`ASSUMED_RAISE_REPS`).
+function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exercise | undefined, ctx: PlanContext, lastWeightKg: number | undefined, tired: boolean, warm: WarmKind, usedKg?: number[], dumbbellTotal?: boolean, lastFirst?: SetLog, reckon = ctx.settings.reckon): { weights: number[]; warmups: WarmupSet[]; differs: boolean; raised?: NonNullable<Prescription['raised']> } | undefined {
   const candidates = candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: lastWeightKg, usedKg, stackWeights: ctx.settings.stackWeights, dumbbellTotal });
   if (!candidates) return undefined;
   let differs = false;
+  let raised: NonNullable<Prescription['raised']> | undefined;
   const aims = aimsOf(targets);
   const weights = targets.map((t, i) => {
     // Forge's own weight only where no hard top set came before: after one the back-off sets count
@@ -438,10 +444,17 @@ function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exerci
         break;
       }
     }
+    if (i === 0 && reckon && !tired && lastFirst?.weightKg !== undefined && assumedRaise(lastFirst, t)) {
+      const at = candidates.findIndex((c) => Math.abs(c.externalKg - lastFirst.weightKg!) < 1e-6);
+      if (at >= 0 && idx <= at && at + 1 < candidates.length) {
+        idx = at + 1;
+        raised = { fromKg: candidates[at].externalKg, stepKg: Math.abs(candidates[idx].externalKg - candidates[at].externalKg), reps: lastFirst.reps };
+      }
+    }
     return candidates[idx].externalKg;
   });
   const warmups = differs ? warmupSets(ctx.settings, exercise, candidates, weights[0], rx.strengthKg, warm, ctx.bodyKg, dumbbellTotal) : rx.warmups;
-  return { weights, warmups, differs };
+  return { weights, warmups, differs, ...(raised ? { raised } : {}) };
 }
 
 export function planWorkout(slots: ExercisePrescription[], ctx: PlanContext): WorkoutExercise[] {

@@ -453,7 +453,7 @@ export interface Prescription {
   // "Forge rekent mee": the top of the range was reached last time with the reps in reserve
   // asked, so the weight went one step up by itself (the smallest step there is). What it went
   // up from, and what you did then, for the line "2,5 kg erbij" and for Terugzetten.
-  raised?: { fromKg: number; stepKg: number; reps: number; rir: number };
+  raised?: { fromKg: number; stepKg: number; reps: number; rir?: number };
 }
 
 export interface PrescribeInput {
@@ -689,9 +689,20 @@ export function lastDateBefore(dates: Iterable<string>, date: string): string | 
 }
 
 // "2,5 kg erbij, je haalde vorige keer 11 met 2 over." The line of a step that "Forge rekent mee" made.
+// Without a RIR you filled in, the line says only the reps: "2,5 kg erbij, je haalde vorige keer 10."
 export function raisedText(raised: NonNullable<Prescription['raised']>, assisted = false): string {
   const step = kgLabel(raised.stepKg, 2);
-  return `${assisted ? `${step} minder hulp` : `${step} erbij`}, je haalde vorige keer ${raised.reps} met ${raised.rir} over.`;
+  return `${assisted ? `${step} minder hulp` : `${step} erbij`}, je haalde vorige keer ${raised.reps}${raised.rir !== undefined ? ` met ${raised.rir} over` : ''}.`;
+}
+
+// "Forge rekent mee" with a RIR you did not fill in (rirAssumed, or a set to failure): only a clear sign
+// counts, this many reps or more over the top of the range. The top of "7+" is 7, so 10 is the sign.
+export const ASSUMED_RAISE_REPS = 3;
+
+// Did this set of last time go so far over the top of its range that the weight may go up without a RIR?
+export function assumedRaise(set: Pick<SetLog, 'reps' | 'rir' | 'rirAssumed'>, target: { repsHigh: number; failure?: boolean }): boolean {
+  const unsure = !!set.rirAssumed || set.rir === undefined || (!!target.failure && set.rir === 0);
+  return unsure && set.reps >= target.repsHigh + ASSUMED_RAISE_REPS;
 }
 
 export function prescribe(input: PrescribeInput): Prescription | undefined {
@@ -766,7 +777,9 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   // je gebruikte" the heaviest used weight stays the end: ASCEND does not know the next one there.
   // Only on a measured RIR: the line says "met 2 over", so that must be what you felt.
   const topReached = last.top.reps >= high && last.top.rir !== undefined && !last.top.rirAssumed && last.top.rir >= rir && last.top.reps >= low && sameGoal && !lighter;
-  const reckonRaise = settings.reckon && settings.progression !== 'reps_first' && topReached && !legsTired;
+  // Without a RIR you filled in: only 3 or more reps over the top of the range is a clear enough sign.
+  const assumedReached = !topReached && last.top.reps >= low && assumedRaise(last.top, { repsHigh: high }) && sameGoal && !lighter;
+  const reckonRaise = settings.reckon && settings.progression !== 'reps_first' && (topReached || assumedReached) && !legsTired;
 
   // KR-4: the weight for the first set, for a given strength. `raise`: the step after the top of the range.
   const pick = (strengthKg: number, raise = true): number => {
@@ -855,7 +868,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const sameWeight = Math.abs(first.externalKg - lastExternal) < 1e-6;
   // Did "Forge rekent mee" make the step? Only when the plain rule would have kept the weight.
   const raised = reckonRaise && idx === lastIdx + 1 && !coarseHeavier && first.loadKg > lastLoad + 1e-6 && pick(strengthKg, false) <= lastIdx
-    ? { fromKg: lastExternal, stepKg: Math.abs(first.externalKg - lastExternal), reps: last.top.reps, rir: last.top.rir! }
+    ? { fromKg: lastExternal, stepKg: Math.abs(first.externalKg - lastExternal), reps: last.top.reps, ...(topReached ? { rir: last.top.rir! } : {}) }
     : undefined;
   // Same weight: one more than last time if the model expects it, never fewer than
   // last time (the smoothing lags half a step behind a good day).

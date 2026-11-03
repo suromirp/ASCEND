@@ -277,3 +277,21 @@ export function undoRaise(ex: WorkoutExercise, snap: (kg: number) => number = r2
   void _gone;
   return { ...rest, rows, raiseUndone: true, ...(raise.reason ? { reason: raise.reason } : {}) };
 }
+
+// "Hoeveel over?" na het afvinken: de keuzes, 3 is "3+".
+export const QUICK_RIR = [0, 1, 2, 3] as const;
+export const quickRirLabel = (n: number): string => (n >= 3 ? '3+' : String(n));
+
+// Vraagt Forge na het afvinken van deze set hoeveel je over had? Alleen bij een afgevinkte werkset waarvan
+// je de RIR niet zelf invulde, en alleen bij de sets die het meest zeggen: de eerste werkset (de topset), een
+// zware set (0 of 1 over of tot falen) en de laatste werkset van de oefening. Niet bij een set op tijd.
+export function asksReserve(ex: WorkoutExercise, rowId: string): boolean {
+  if (ex.timed) return false;
+  const work = ex.rows.filter((r) => r.kind === 'work');
+  const at = work.findIndex((r) => r.id === rowId);
+  const row = work[at];
+  if (!row || !row.done || row.target.timedSec !== undefined) return false;
+  if (row.rir !== undefined && !row.rirAssumed) return false;
+  const hard = !!row.target.failure || (row.target.rir ?? DEFAULT_RIR) <= 1;
+  return at === 0 || at === work.length - 1 || hard;
+}

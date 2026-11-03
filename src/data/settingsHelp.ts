@@ -420,6 +420,14 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Volume', text: 'gewicht maal herhalingen over de werksets van een training. Opwarmsets tellen niet mee.' },
     ],
   },
+  forgeRirSnel: {
+    title: 'Hoeveel over na een set',
+    lead: 'Na het afvinken van je topset en van de laatste set van een oefening vraagt Forge in de rij hoeveel je nog over had: 0, 1, 2 of 3+.',
+    points: [
+      { head: 'Eén tik', text: 'je kiest in de rij zelf, zonder blad. Kies je niets, dan blijft het doel staan als aangenomen RIR.' },
+      { head: 'Waarom', text: 'een RIR die je zelf kiest telt mee voor je geschatte kracht en voor de stap zwaarder; een aangenomen RIR niet.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',

@@ -7,8 +7,8 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { ExercisePrescription, SessionLog, SetLog, SetTarget } from '../models/training';
-import { reckonAfterTick, type ReckonContext } from './forgeReckon';
-import { planWorkout, tickRow, type PlanContext, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
+import { asksReserve, QUICK_RIR, quickRirLabel, reckonAfterTick, type ReckonContext } from './forgeReckon';
+import { planWorkout, tickRow, updateRow, type PlanContext, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
 import { fatigueFactor, FATIGUE_PER_SET, HARD_SET_EXTRA, isHardPair, learnAfterHard, learnFatigue, type SessionInput } from './strengthModel';
 import { resolveStrengthSettings } from './strengthSettings';
 
@@ -168,5 +168,62 @@ describe('opwarmen voor een zware topset', () => {
     const off = resolveStrengthSettings({ warmup: 'off' });
     const [, dl] = planWorkout([squatSlot, deadliftSlot], ctx({ settings: off }));
     expect(warm(dl)).toHaveLength(0);
+  });
+});
+
+describe('Forge rekent mee bij een aangenomen RIR', () => {
+  const row = (date: string, rows: SetLog[]) => log(`r-${date}`, date, [['seated-cable-row', 'Seated Cable Row', rows]]);
+
+  it('een topset tot falen 3 of meer boven de bovenkant van "8+" zet de topset een stap zwaarder, met een regel zonder "over"', () => {
+    const slot: ExercisePrescription = { id: 'cr', exerciseName: 'Seated Cable Row', sets: 3, reps: '8+', priority: 'core', setTargets: [top(8, 8, 0, true), top(8, 10, 2), top(8, 10, 2)] };
+    const logs = [row('2026-10-27', sets([[11, 50, 0], [9, 45, 2], [9, 45, 2]]))];
+    const [ex] = planWorkout([slot], ctx({ logs }));
+    expect(work(ex)[0].weightKg).toBe(55);
+    expect(ex.raise?.line).toBe('5 kg erbij, je haalde vorige keer 11.');
+    expect(ex.raise?.back[0].weightKg).toBe(50);
+    // Met Forge rekent mee uit blijft het 50.
+    const [off] = planWorkout([slot], ctx({ logs, settings: resolveStrengthSettings({ reckon: false }) }));
+    expect(work(off)[0].weightKg).toBe(50);
+    expect(off.raise).toBeUndefined();
+  });
+
+  it('2 boven de bovenkant met een aangenomen RIR is nog geen stap', () => {
+    const slot: ExercisePrescription = { id: 'cr', exerciseName: 'Seated Cable Row', sets: 3, reps: '8+', priority: 'core', setTargets: [top(8, 8, 0, true), top(8, 10, 2), top(8, 10, 2)] };
+    const logs = [row('2026-10-27', sets([[10, 50, 0], [9, 45, 2], [9, 45, 2]]))];
+    const [ex] = planWorkout([slot], ctx({ logs }));
+    expect(work(ex)[0].weightKg).toBe(50);
+    expect(ex.raise).toBeUndefined();
+  });
+
+  it('zonder programma: 13 bij 8 tot 10 met een aangenomen RIR geeft de stap, met "je haalde vorige keer 13."', () => {
+    const slot: ExercisePrescription = { id: 'cr', exerciseName: 'Seated Cable Row', sets: 3, reps: '8-10', priority: 'core' };
+    const logs = [row('2026-10-20', sets([[10, 50, 2]], false)), row('2026-10-27', sets([[13, 50, 2], [10, 50, 2], [10, 50, 2]]))];
+    const [ex] = planWorkout([slot], ctx({ logs }));
+    expect(work(ex)[0].weightKg).toBe(55);
+    expect(ex.raise?.line).toBe('5 kg erbij, je haalde vorige keer 13.');
+  });
+});
+
+describe('Hoeveel over? na het afvinken', () => {
+  it('na de topset en de laatste set, niet na een set ertussen of een set met een eigen RIR', () => {
+    const [dl] = planWorkout([deadliftSlot], ctx());
+    const ids = work(dl).map((r) => r.id);
+    const done = { ...dl, rows: dl.rows.map((r) => (r.kind === 'work' ? { ...r, done: true } : r)) };
+    expect(ids.map((id) => asksReserve(done, id))).toEqual([true, false, false, true]);
+    // Nog niet afgevinkt: geen vraag.
+    expect(asksReserve(dl, ids[0])).toBe(false);
+    // Zelf gekozen: geen vraag meer.
+    const chosen = { ...done, rows: done.rows.map((r) => (r.id === ids[0] ? { ...r, rir: 1, rirAssumed: false } : r)) };
+    expect(asksReserve(chosen, ids[0])).toBe(false);
+    expect(QUICK_RIR.map(quickRirLabel)).toEqual(['0', '1', '2', '3+']);
+  });
+
+  it('een gekozen RIR na de topset stelt de terugsets bij: 1 over bij 10 tot falen is beter dan gevraagd', () => {
+    const [dl] = planWorkout([deadliftSlot], ctx());
+    const t = work(dl)[0];
+    const ticked = tickRow([{ ...dl, rows: dl.rows.map((r) => (r.id === t.id ? { ...r, reps: 10 } : r)) }], dl.slot, t.id).workout[0];
+    const chosen = reckonAfterTick(updateRow(ticked, t.id, { rir: 1 }), t.id, reckon);
+    expect(work(chosen)[0].rirAssumed).toBe(false);
+    expect(work(chosen)[1].weightKg!).toBeGreaterThanOrEqual(95);
   });
 });

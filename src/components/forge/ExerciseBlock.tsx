@@ -2,7 +2,7 @@
 
 import { Fragment, memo, useMemo } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
-import { raiseOpen } from '../../engine/forgeReckon';
+import { QUICK_RIR, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
 import {
@@ -60,6 +60,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   rirAsValue,
   swipeOn,
   undoText,
+  quickRirRow,
   act,
 }: {
   ex: WorkoutExercise;
@@ -87,6 +88,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   swipeOn: boolean;
   // "Set 3 verwijderd" zolang je het nog ongedaan kunt maken.
   undoText?: string;
+  // De set waarna Forge vraagt hoeveel je over had ("Hoeveel over?"), als er een is.
+  quickRirRow?: string;
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
@@ -295,6 +298,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
                     <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
                   )}
+                  {!readOnly && !folded && row.id === quickRirRow && <QuickRir label={label} onPick={(n) => act.quickRir(ex.slot, row.id, n)} />}
                   {!readOnly && row.id === spotterRowId && (
                     <div className="ml-9 h-5">
                       <button type="button" onClick={act.spotter} aria-label={`${SPOTTER_SIGN}, set ${label}. Tik voor uitleg`} className="relative flex h-5 items-center gap-1.5 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
@@ -326,9 +330,40 @@ export const ExerciseBlock = memo(function ExerciseBlock({
           )}
         </div>
       </div>
+      {!readOnly && folded && quickRirRow && (
+        <QuickRir label={rowLabel(ex, quickRirRow)} onPick={(n) => act.quickRir(ex.slot, quickRirRow, n)} />
+      )}
     </section>
   );
 });
+
+// Het nummer van een werkset zoals de tabel het toont.
+function rowLabel(ex: WorkoutExercise, rowId: string): string {
+  const work = ex.rows.filter((r) => r.kind === 'work');
+  return String(work.findIndex((r) => r.id === rowId) + 1);
+}
+
+// "Hoeveel over?" na het afvinken: 0, 1, 2 of 3+ in één tik, in de rij en zonder blad. Kies je niets, dan
+// blijft het doel staan als aangenomen RIR (docs/beslissingen/2026-11-03-forge-na-de-eerste-vergelijking.md).
+function QuickRir({ label, onPick }: { label: string; onPick: (n: number) => void }) {
+  return (
+    <div className="animate-fade-in flex items-center gap-1.5 pb-1 pl-1" role="group" aria-label={`Hoeveel had je over bij set ${label}?`}>
+      <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel over?</span>
+      {QUICK_RIR.map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onPick(n)}
+          aria-label={`${quickRirLabel(n)} over, set ${label}`}
+          className="flex h-11 w-11 items-center justify-center rounded-full border font-sans text-sm font-semibold tabular-nums"
+          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+        >
+          {quickRirLabel(n)}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // Het voorschrift van een set: "47,5 kg × 11-13" met de RIR eronder.
 function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise }) {
