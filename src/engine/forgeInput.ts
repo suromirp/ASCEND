@@ -213,9 +213,16 @@ export function applyWeight(base: WorkoutExercise, rowId: string, weightKg: numb
   return { ...changed, rows };
 }
 
+function withoutEstimate(r: WorkoutRow): WorkoutRow {
+  const { repsEstimated: _e, ...rest } = r;
+  void _e;
+  return rest;
+}
+
 export function applyReps(ex: WorkoutExercise, rowId: string, reps: number | undefined): WorkoutExercise {
   const changed = updateRow(ex, rowId, { reps });
-  return { ...changed, rows: changed.rows.map((r) => (r.id === rowId ? { ...r, edited: true } : r)) };
+  // Herhalingen die jij typt zijn van jou: Forge schat ze daarna niet meer (engine/forgeReckon.ts).
+  return { ...changed, rows: changed.rows.map((r) => (r.id === rowId ? { ...withoutEstimate(r), edited: true } : r)) };
 }
 
 // "Wijzigingen doorvoeren" (decision docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md):
@@ -263,7 +270,7 @@ export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise 
       r.id !== rowId || r.done
         ? r
         : {
-            ...r,
+            ...withoutEstimate(r),
             ...(r.target.weightKg !== undefined ? { weightKg: r.target.weightKg } : {}),
             reps: targetReps(r.target),
             edited: true,

@@ -320,6 +320,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'MacroFactor', text: 'eindigt de naam van een workout op " @ " en de naam van een sportschool, dan hoort hij daarbij.' },
     ],
   },
+  forgeRekentMee: {
+    title: 'Forge rekent mee',
+    lead: 'Forge rekent tijdens je training met je mee, met dezelfde rekenregel als het voorschrift: je geschatte kracht en de RIR die gevraagd is.',
+    points: [
+      { head: 'Een ander gewicht', text: 'vul je zelf een ander gewicht in, dan zet Forge in het vak Herh. wat je daarbij waarschijnlijk haalt. Herhalingen die je zelf invulde blijven staan.' },
+      { head: 'Na een set', text: 'deed je meer of minder dan gevraagd, of was er meer of minder over, dan stelt Forge de volgende open set bij. Zo nodig ook het gewicht, met de gewichten van je sportschool, zodat je in het bereik blijft.' },
+      { head: 'De volgende keer', text: 'haalde je de bovenkant van het bereik met het gevraagde RIR, dan staat de kleinste stap zwaarder al klaar. Met Terugzetten bij de oefening ga je in één tik terug.' },
+      { head: 'Jouw getallen', text: 'wat Forge zo invult ziet eruit als elk ander voorstel. Wat je zelf typt blijft van jou, en wat je al deed verandert nooit.' },
+      { head: 'Uit', text: 'dan blijven de vakken staan zoals Forge ze voorstelde, en gaat het gewicht pas omhoog als je geschatte kracht dat vraagt.' },
+    ],
+  },
   forgePauze: {
     title: 'Na een pauze lichter beginnen',
     lead: 'Na meer dan vier weken zonder krachttraining begint het voorstel iets lichter.',
@@ -1240,7 +1251,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   bundelRekenmodel: {
     title: 'Rekenmodel',
-    lead: 'Zes keuzes over hoe Forge rekent. Het advies past bij de meeste mensen, dus je hoeft hier niets te doen.',
+    lead: 'Zeven keuzes over hoe Forge rekent. Het advies past bij de meeste mensen, dus je hoeft hier niets te doen.',
     points: [
       { head: 'Staat er Advies', text: 'dan staat alles hier zoals ASCEND het zelf kiest. Pas je iets aan, dan staat er hoeveel keuzes anders staan.' },
       { head: 'Terugzetten', text: 'kan per keuze, of met Terug naar het advies bovenaan Instellingen.' },

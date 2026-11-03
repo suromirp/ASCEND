@@ -195,6 +195,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthChoice('forge-opwarmbereik', 'Opwarmen per', 'warmupScope', 'opwarmbereik'),
   strengthChoice('forge-vermoeidheid', 'Vermoeidheid per set', 'fatigue', 'vermoeidheid'),
   strengthFlag('forge-pauze', 'Na een pauze lichter beginnen', 'lighterAfterBreak'),
+  strengthFlag('forge-rekent-mee', 'Forge rekent mee', 'reckon'),
   strengthFlag('forge-bereik', 'Bereik verbreden', 'widenRange'),
   strengthChoice('forge-schatting', 'Sets die meetellen', 'estimateUpTo', 'schatting'),
   strengthChoice('forge-leren', 'Gewichten van toestellen', 'stackWeights', 'forgeLeren', ['learnStacks']),

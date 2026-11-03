@@ -2,6 +2,7 @@
 
 import { Fragment, memo, useMemo } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
+import { raiseOpen } from '../../engine/forgeReckon';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
 import {
@@ -89,6 +90,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
+  // Forge rekent mee zette het gewicht een stap omhoog: de regel en Terugzetten, zolang een open set het nog heeft.
+  const raiseLine = !readOnly && ex.raise && raiseOpen(ex) ? ex.raise.line : undefined;
   const plates = useMemo(() => (usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined), [ex, profile]);
   const exercise = exerciseOf(ex);
   const assisted = exercise?.resistance === 'assisted_bodyweight';
@@ -150,7 +153,13 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               <span>{note}</span>
             </p>
           )}
-          {ex.reason && (
+          {raiseLine && (
+            <div className="mt-1.5 flex items-center gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-sage)' }}>
+              <p className="min-w-0 flex-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{raiseLine}</p>
+              <TextButton onClick={() => act.unraise(ex.slot)} size="xs" className="shrink-0" aria-label={`Terugzetten, ${ex.name} zonder de stap omhoog`}>Terugzetten</TextButton>
+            </div>
+          )}
+          {ex.reason && !(raiseLine && reasonText === raiseLine) && (
             <div className="mt-1.5 flex items-center gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-sage)' }}>
               <p className={`min-w-0 flex-1 text-xs leading-snug ${reasonText.length <= REASON_SHORT ? '' : 'truncate'}`} style={{ color: 'var(--color-ink-dim)' }}>{reasonText}</p>
               {reasonText.length > REASON_SHORT && (
