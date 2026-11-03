@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ExercisePrescription, SessionLog, SessionTemplate } from '../models/training';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { learnedMinutesPerSet } from './durationLearning';
-import { capForTemplate, capLineFor, capSlots, prescribedSets, resolveTimeCap, timeCapLine } from './forgeTimeCap';
+import { capForTemplate, capLineFor, capSlots, prescribedSets, resolveTimeCap, servesMountainMuscle, timeCapLine } from './forgeTimeCap';
 
 // Nagemaakte trainingen: geen ingebouwd sjabloon, zodat de beendag alleen uit de belasting komt.
 const slot = (id: string, priority: ExercisePrescription['priority'], sets: number): ExercisePrescription => ({ id, exerciseName: id, sets, reps: '8-10', priority });
@@ -152,5 +152,44 @@ describe('met de tijd per set uit je eigen logs', () => {
     const r = capSlots({ slots, fullMinutes: 75, minutesPerSet: learnedMinutesPerSet(upperB, logs), cap: 60 });
     expect(r.minutes).toBeLessThanOrEqual(60);
     expect(r.slots.find((s) => s.id === 'ex17')?.sets).toBe(2);
+  });
+});
+
+describe('bij een bergdoel vallen de bergspieren als laatste weg', () => {
+  // Nagemaakt, in de geest van een beendag: kern, bijwerk met een kuitoefening en een step-down, extra met plank.
+  const named = (id: string, exerciseName: string, priority: ExercisePrescription['priority'], sets: number): ExercisePrescription => ({ id, exerciseName, sets, reps: '10-12', priority });
+  const legs: ExercisePrescription[] = [
+    named('k1', 'Barbell Back Squat', 'core', 4),
+    named('k2', 'Romanian Deadlift', 'core', 3),
+    named('b1', 'Pin-Loaded Leg Press Calf Raise', 'accessory', 3),
+    named('b2', 'Leg Extension', 'accessory', 3),
+    named('b3', 'Lying Leg Curl', 'accessory', 3),
+    named('b4', 'Step-Down', 'accessory', 3),
+    named('o1', 'Plank', 'optional', 3),
+  ];
+  // 22 sets in 132 minuten: 6 per set; onder 75 passen 12 sets.
+  const args = { slots: legs, fullMinutes: 132, cap: 75 };
+
+  it('herkent kuit en step-down als bergspier, beenstrekken en plank niet', () => {
+    expect(legs.filter((s) => s.priority !== 'core' && servesMountainMuscle(s)).map((s) => s.id)).toEqual(['b1', 'b4']);
+  });
+
+  it('zonder bergdoel vallen ook de kuit en de step-down weg', () => {
+    const r = capSlots(args);
+    expect(r.minutes).toBeLessThanOrEqual(75);
+    expect(r.dropped).toEqual(expect.arrayContaining(['Plank', 'Step-Down']));
+  });
+
+  it('met een bergdoel vallen eerst de andere oefeningen, en houden kuit en step-down minstens een set', () => {
+    const r = capSlots({ ...args, keep: servesMountainMuscle });
+    expect(r.minutes).toBeLessThanOrEqual(75);
+    const ids = r.slots.map((s) => s.id);
+    expect(ids).toContain('b1');
+    expect(ids).toContain('b4');
+    expect(ids).not.toContain('o1');
+    expect(r.slots.find((s) => s.id === 'k1')!.sets).toBe(4);
+    expect(r.slots.find((s) => s.id === 'k2')!.sets).toBe(3);
+    // Eerder gaat er een set af van de kuit en de step-down dan dat ze helemaal wegvallen.
+    expect(r.slots.find((s) => s.id === 'b1')!.sets).toBeGreaterThanOrEqual(1);
   });
 });

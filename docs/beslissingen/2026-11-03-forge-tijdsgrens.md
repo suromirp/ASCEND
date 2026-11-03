@@ -23,6 +23,10 @@ Hoe (`engine/forgeTimeCap.ts`):
   het bijwerk (`accessory`), steeds bij de oefening met de meeste sets, tot elke oefening er nog twee heeft.
   Pas daarna een hele oefening, eerst een extra, van achteren af. De kernsets (`core`) blijven altijd staan;
   passen die alleen al niet, dan zegt de regel dat.
+- Bij een bergdoel met "Spieren voor de berg" aan (dezelfde check als `swapPreference`: `hasMountainGoal`)
+  vallen oefeningen die als hoofdspier kuit, scheen of bilspieren trainen (`servesMountainMuscle`,
+  `MOUNTAIN_MUSCLES`) als laatste binnen hun laag: ze leveren als laatste sets in, gaan dan eerst naar
+  één set en vallen pas daarna weg. Zonder bergdoel verandert er niets.
 - Een beendag wordt herkend aan de belasting van de training (`scheduler.ts#isLegHeavyTemplate`, het
   stressprofiel dat de planner en Lichter bij vermoeide benen ook lezen), nooit aan een sjabloon-id. Er is
   geen aparte rol voor een beendag; dit is de bestaande herkenning.

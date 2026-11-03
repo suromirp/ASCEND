@@ -15,9 +15,9 @@ import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { canRemoveRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn, type DroppedRow } from '../../engine/forgeRows';
 import { canSwap, isAddedSlot, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
 import { learnedMinutesPerSet } from '../../engine/durationLearning';
-import { capForTemplate, capLineFor, capSlots, resolveTimeCap } from '../../engine/forgeTimeCap';
+import { capForTemplate, capLineFor, capSlots, resolveTimeCap, servesMountainMuscle } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
-import { swapPreference, swapReason } from '../../engine/mountainMuscles';
+import { hasMountainGoal, swapPreference, swapReason } from '../../engine/mountainMuscles';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
 import { ExerciseArtSheet } from '../ExerciseArtSheet';
 import { ForgeStrip } from './ForgeStrip';
@@ -225,6 +225,7 @@ function ForgeWorkoutInner({
   // geleerd is uit logs met een ander aantal sets dan nu klaarstaat.
   const fullMinutes = estimate && estimate > 0 ? estimate : template.durationVariants.full;
   const minutesPerSet = useMemo(() => learnedMinutesPerSet(template, sessionLogs), [template, sessionLogs]);
+  const mountainGoal = useMemo(() => strength.mountainMuscles && hasMountainGoal(trainingGoals, goalMilestones), [strength.mountainMuscles, trainingGoals, goalMilestones]);
   const capStrength = settings.forgeCapStrength;
   const capLegs = settings.forgeCapLegs;
   const capped = useMemo(() => capSlots({
@@ -233,7 +234,9 @@ function ForgeWorkoutInner({
     fullMinutes,
     minutesPerSet,
     cap: capForTemplate(template, resolveTimeCap({ forgeCapStrength: capStrength, forgeCapLegs: capLegs })),
-  }), [template, allSlots, initialVariant, fullMinutes, minutesPerSet, capStrength, capLegs]);
+    // Bij een bergdoel (zoals Spieren voor de berg het leest) vallen kuit, scheen en bilspieren als laatste weg.
+    ...(mountainGoal ? { keep: servesMountainMuscle } : {}),
+  }), [template, allSlots, initialVariant, fullMinutes, minutesPerSet, capStrength, capLegs, mountainGoal]);
   const slots = capped.slots;
 
   const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;

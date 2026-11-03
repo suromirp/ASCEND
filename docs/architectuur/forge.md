@@ -147,7 +147,8 @@ muscle first, with a short reason (`swapReason`); Forge never swaps by itself. N
 (`isLegHeavyTemplate`, never a template id) of at most 75 (`AppSettings.forgeCapStrength`/`forgeCapLegs`: 0 = uit, 45, 60,
 75, 90; read by `resolveTimeCap`, no migration). It uses the minutes per work set learned from the logs' own work sets (`isWorkSet`, a log counts from six work sets; without
 enough logs the template's expected duration, never the learned whole-training duration) and takes
-sets off optional, then accessory work, down to two per exercise, then whole exercises from the back; core sets always stay.
+sets off optional, then accessory work, down to two per exercise, then whole exercises from the back; core sets always stay. With a mountain goal (`hasMountainGoal`, Spieren voor de berg on)
+an exercise whose primary muscle is a mountain muscle (`servesMountainMuscle`) goes last in its tier, first down to one set.
 Shorter already: nothing changes. Only the content of one session on the screen: the planning and every log stay as they
 are. One quiet line says what fell away ("Ingekort tot ongeveer 60 minuten: 2 sets bijwerk vallen weg."). Swapping in a
 session uses `addedExercises.ts#sessionPrescription`, so an added exercise that stayed after "Uit deze training halen" can

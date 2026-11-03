@@ -12,6 +12,8 @@
 
 import type { ExercisePrescription, SessionTemplate } from '../models/training';
 import { cleanExerciseName } from './exerciseMatch';
+import { MOUNTAIN_MUSCLES } from './mountainMuscles';
+import { exerciseKey } from './strengthHistory';
 import { isLegHeavyTemplate } from './scheduler';
 
 export const TIME_CAP_OPTIONS = [0, 45, 60, 75, 90] as const;
@@ -73,7 +75,9 @@ export interface TimeCapResult {
 // ervan. Zo blijft de grens staan als je vaker ingekort traint en de geleerde duur korter wordt. Eerst gaat er telkens één set af van de oefening
 // met de meeste sets boven de twee (bij gelijk de laatste), bij de extra oefeningen en daarna bij het
 // bijwerk. Pas als alles op twee staat valt een hele oefening weg, eerst een extra, van achteren af.
-export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: ExercisePrescription[]; fullMinutes: number; minutesPerSet?: number; cap: number }): TimeCapResult {
+// `keep` beschermt oefeningen binnen hun laag (servesMountainMuscle bij een bergdoel): die leveren als laatste
+// sets in, gaan dan eerst naar één set en vallen pas als laatste van hun laag weg.
+export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: ExercisePrescription[]; fullMinutes: number; minutesPerSet?: number; cap: number; keep?: (slot: ExercisePrescription) => boolean }): TimeCapResult {
   const { slots, fullMinutes, cap } = args;
   const fullSets = setsOf(args.fullSlots ?? slots);
   const perSet = args.minutesPerSet !== undefined && args.minutesPerSet > 0 ? args.minutesPerSet : fullSets > 0 && fullMinutes > 0 ? fullMinutes / fullSets : 0;
@@ -87,24 +91,35 @@ export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: Exer
   const dropped: string[] = [];
   const now = () => minutesOf(list.filter((s): s is ExercisePrescription => s !== null));
   const TIERS = ['optional', 'accessory'] as const;
-  const inTier = (tier: (typeof TIERS)[number]) => list.flatMap((s, i) => (s && s.priority === tier ? [i] : []));
+  const isKept = (i: number) => !!args.keep?.(slots[i]);
+  // Binnen een laag eerst de gewone oefeningen, de beschermde (bergspieren bij een bergdoel) als laatste.
+  const inTier = (tier: (typeof TIERS)[number], keep: boolean) => list.flatMap((s, i) => (s && s.priority === tier && isKept(i) === keep ? [i] : []));
+  // Telkens een set eraf bij de oefening met de meeste sets boven `floor` (bij gelijk de laatste).
+  const trim = (indices: number[], floor: number): boolean => {
+    let best = -1;
+    for (const i of indices) if (prescribedSets(list[i]!) > floor && (best < 0 || prescribedSets(list[i]!) >= prescribedSets(list[best]!))) best = i;
+    if (best < 0) return false;
+    list[best] = withoutLastSet(list[best]!);
+    return true;
+  };
+  const drop = (indices: number[]): boolean => {
+    const i = indices.at(-1);
+    if (i === undefined) return false;
+    dropped.push(cleanExerciseName(list[i]!.exerciseName));
+    list[i] = null;
+    return true;
+  };
   // Eerst sets eraf, laag voor laag, tot elke oefening er nog twee heeft.
   for (const tier of TIERS) {
-    while (now() > cap) {
-      let best = -1;
-      for (const i of inTier(tier)) if (prescribedSets(list[i]!) > KEEP_SETS && (best < 0 || prescribedSets(list[i]!) >= prescribedSets(list[best]!))) best = i;
-      if (best < 0) break;
-      list[best] = withoutLastSet(list[best]!);
-    }
+    while (now() > cap && trim(inTier(tier, false), KEEP_SETS));
+    while (now() > cap && trim(inTier(tier, true), KEEP_SETS));
   }
-  // Pas dan hele oefeningen, laag voor laag en van achteren af.
+  // Pas dan hele oefeningen, laag voor laag en van achteren af. Een beschermde oefening gaat eerst naar
+  // één set en valt pas als laatste van haar laag weg.
   for (const tier of TIERS) {
-    while (now() > cap) {
-      const i = inTier(tier).at(-1);
-      if (i === undefined) break;
-      dropped.push(cleanExerciseName(list[i]!.exerciseName));
-      list[i] = null;
-    }
+    while (now() > cap && drop(inTier(tier, false)));
+    while (now() > cap && trim(inTier(tier, true), 1));
+    while (now() > cap && drop(inTier(tier, true)));
   }
   // Sets van een oefening die daarna toch helemaal wegviel tellen niet als losse sets.
   const kept = list.filter((s): s is ExercisePrescription => s !== null);
@@ -160,4 +175,11 @@ export function capLineFor(r: TimeCapResult, workout: readonly { slot: string; r
   }
   // Alleen als de kern zelf al boven de grens komt; een oefening die je zelf liet staan is geen kern.
   return timeCapLine({ ...r, setsRemoved, dropped, minutes: r.perSet * sets, coreOver: r.perSet * coreSets > r.cap });
+}
+
+// Een oefening die als hoofdspier een bergspier traint (kuit, scheen, bilspieren; engine/mountainMuscles.ts).
+// Alleen bij een bergdoel met "Spieren voor de berg" aan geeft Forge dit als `keep` aan capSlots.
+export function servesMountainMuscle(slot: Pick<ExercisePrescription, 'id' | 'exerciseName'>): boolean {
+  const exercise = exerciseKey(slot.id, slot.exerciseName).exercise;
+  return !!exercise && exercise.primary.some((m) => MOUNTAIN_MUSCLES.includes(m));
 }
