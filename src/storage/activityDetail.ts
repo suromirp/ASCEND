@@ -510,7 +510,7 @@ export async function ensureRunDetail(logId: string, options: AttachOptions = {}
 // The standing still before the first and after the last movement of a run, from its kept series,
 // for the screen "Run in detail" (2026-11-03-testloop-in-detail.md). Only read, never written.
 // Undefined when the series is not kept, belongs to other totals, or the log was cut.
-export async function edgePausesFor(log: SessionLog, timeoutMs = 3000): Promise<EdgePauses | undefined> {
+export async function edgePausesFor(log: Pick<SessionLog, 'id' | 'runDetail'> & { trim?: unknown }, timeoutMs = 3000): Promise<EdgePauses | undefined> {
   const rd = log.runDetail;
   if (!rd || log.trim) return undefined;
   try {

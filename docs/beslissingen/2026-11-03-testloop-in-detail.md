@@ -7,8 +7,9 @@ Status: aangenomen
 
 Bij een testloop met een herkend teststuk (inlopen, beste 5 km, uitlopen; `testLayout`) gaan het oordeel,
 de verdeling en de hartslag bovenaan "Hoe de run liep" over de 5 km van het teststuk, met één zin dat inlopen
-en uitlopen hier niet meetellen (`runDetailView.ts#testFocusLine`). Een teststuk waarvan de helften minder dan
-3,5 procent verschillen (`PACING.nearEvenPct`) en waarin geen kilometer 5 procent of meer afwijkt, heet
+en uitlopen hier niet meetellen (`runDetailView.ts#testFocusLine`). Een teststuk waarvan de helften over de
+afstand (de eerste en de tweede 2,5 km, zoals de verdeling ze noemt) minder dan 3,5 procent verschillen
+(`PACING.nearEvenPct`) en waarin geen kilometer 5 procent of meer afwijkt, heet
 "Vrij gelijkmatig" in plaats van "Wisselend". Wijkt geen kilometer meer dan 4 procent af (`PACING.evenKmPct`),
 dan zegt de zin "zonder kilometer die eruit sprong"; anders noemt hij de kilometer van de test die iets meer
 afweek. Daarbuiten blijft het oude oordeel. Bij een gewone run verandert niets.
@@ -37,7 +38,10 @@ gelezen met `storage/activityDetail.ts#edgePausesFor`, alleen lezen, met een gre
 vóór het eerste en na het laatste stuk beweging, met 10 meter speling voor wat drift of een stap. Een stop
 waarna je nog verder liep, ook vlak voor het einde, blijft stilstaan tijdens de run. Is de reeks er niet
 (niet bewaard, ander totaal of ingekort), dan wordt niets apart gezet en blijft het scherm zoals het was; de
-regels over stilstaan wachten tot de reeks gelezen is, zodat een staart niet even als stilstaan oplicht.
+stilstand op het scherm (de regel, de kilometerchips, "met stilstaan" in de lijst en de notitie bij Afstand)
+wacht tot de reeks gelezen is (`withPausesHidden`), zodat een staart niet even als stilstaan oplicht. Een
+stop binnen 10 meter van het einde telt als staart. Een back-up bewaart de reeks in base64; die vorm gaat
+eerst door `deserializeStreams`, zoals bij elke import.
 Een ronde telt alleen bewegende tijd en heeft geen eigen stilstand, dus de staart komt daar nooit in.
 Tempo's en voorspelling lezen nog steeds `countedTests`; `bestEffort` is niet veranderd.
 

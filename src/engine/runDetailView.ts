@@ -237,7 +237,9 @@ function nearEvenTest(kms: RunKm[], p: Pacing): RunVerdict | undefined {
   const off = full.map((k) => ({ k, pct: Math.abs(pct(k.paceSecKm, p.meanPace)) }));
   const worst = Math.max(...off.map((x) => x.pct));
   const h = halvesOf(kms);
-  if (!h || worst >= PACING.sagPct || Math.abs(p.halfSlowPct) >= PACING.nearEvenPct) return undefined;
+  // The halves over the distance (as the spread and "Eerste 2,5 km" say them), not the mean of
+  // the first two kilometres against the last two: with five that leaves out the middle one.
+  if (!h || worst >= PACING.sagPct || Math.abs(pct(h.secondPace, h.firstPace)) >= PACING.nearEvenPct) return undefined;
   const d = Math.round(h.diffSec);
   const halves = d === 0
     ? 'Je helften waren even snel'
@@ -939,6 +941,24 @@ export function withoutEdgePauses(rd: RunDetail, found?: EdgePauses): { rd: RunD
       ...(rd.laps ? { laps: rd.laps } : {}),
       ...(rd.bestFive ? { bestFive: { ...rd.bestFive, kms: rd.bestFive.kms.map(trim) } } : {}),
     },
+  };
+}
+
+// The detail with no standing still at all, for the moment the edges are not read yet: a stop
+// that may turn out to be the tail is not said until it is known.
+export function withPausesHidden(rd: RunDetail): RunDetail {
+  if (rd.pauseSec <= 0 && !rd.kms.some((k) => k.pauseSec) && !rd.bestFive?.kms.some((k) => k.pauseSec)) return rd;
+  const strip = (k: RunKm): RunKm => {
+    if (k.pauseSec === undefined) return k;
+    const out = { ...k };
+    delete out.pauseSec;
+    return out;
+  };
+  return {
+    ...rd,
+    pauseSec: 0,
+    kms: rd.kms.map(strip),
+    ...(rd.bestFive ? { bestFive: { ...rd.bestFive, kms: rd.bestFive.kms.map(strip) } } : {}),
   };
 }
 

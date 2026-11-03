@@ -31,6 +31,7 @@ import {
   testLayout,
   edgePauseLine,
   withoutEdgePauses,
+  withPausesHidden,
   type FormKey,
 } from './runDetailView';
 import type { RunDetail, RunKm } from '../models/runDetail';
@@ -453,13 +454,27 @@ describe('a test with warm-up and cooling down (2026-11-03)', () => {
     expect(v.sentence).toMatch(/^Je tweede helft ging \d+ seconden per km trager dan je eerste, zonder kilometer die eruit sprong\.$/);
   });
 
-  it('has its own limit of 3,5 percent between the halves', () => {
-    // Halves 2 percent apart: just outside even, so near-even.
-    expect(runVerdict(testOf([250, 250, 252, 255, 255]), 'test').tone).toBe('near-even');
-    expect(runVerdict(testOf([300, 300, 305, 310.2, 310.2]), 'test').tone).toBe('near-even');
-    // 3,6 and 5 percent: the old verdict.
-    expect(runVerdict(testOf([300, 300, 305, 310.8, 310.8]), 'test').tone).toBe('mixed');
-    expect(runVerdict(testOf([300, 300, 307, 315, 315]), 'test').tone).not.toBe('near-even');
+  it('has its own limit of 3,5 percent between the halves over the distance', () => {
+    // [a, a, a, b, b] with b = a * (1 + 1,25 x): the second 2,5 km is x slower than the first.
+    const at = (x: number) => {
+      const b = 300 * (1 + 1.25 * x);
+      const rd = testOf([300, 300, 300, b, b]);
+      const h = halvesOf(rd.bestFive!.kms)!;
+      expect(h.secondPace / h.firstPace - 1).toBeCloseTo(x, 6);
+      return runVerdict(rd, 'test');
+    };
+    expect(at(0.02).tone).toBe('near-even');
+    expect(at(0.034).tone).toBe('near-even');
+    expect(at(0.036).tone).toBe('mixed');
+    expect(at(0.05).tone).not.toBe('near-even');
+  });
+
+  it('calls the test of the report vrij gelijkmatig, with its own five kilometres', () => {
+    // Halves about 5:12 and 5:21 (+2,9 percent over the distance, +3,8 between the first two and
+    // the last two kilometres), km 4 3,9 percent slower than the mean.
+    const v = runVerdict(testOf([307.0, 313.1, 320.2, 329.3, 314.3]), 'test');
+    expect(v.word).toBe('Vrij gelijkmatig');
+    expect(v.sentence).toBe('Je tweede helft ging 9 seconden per km trager dan je eerste, zonder kilometer die eruit sprong.');
   });
 
   it('names the kilometre that was 4 to 5 percent off when the halves were even', () => {
@@ -545,6 +560,25 @@ describe('standing still before the start and after the end (2026-11-03)', () =>
     expect(edge.tailSec).toBe(0);
     expect(shown.pauseSec).toBe(rd.pauseSec);
     expect(shown.pauseSec).toBeGreaterThanOrEqual(115);
+  });
+
+  it('counts a stop within 10 m of the end as the tail, as the decision says', () => {
+    const set = segmentRun([{ m: 3000, pace: 330 }], { pauses: [{ atM: 2994, seconds: 200 }] });
+    const rd = buildRunDetail(set, OPTS) as RunDetail;
+    const edge = edgePausesOfStreams(set)!;
+    expect(Math.abs(edge.tailSec - 200)).toBeLessThanOrEqual(2);
+    expect(withoutEdgePauses(rd, edge).rd.pauseSec).toBeLessThanOrEqual(2);
+  });
+
+  it('says no stop at all until the edges are read', () => {
+    const rd = evenTest({ tail: 558 });
+    const hidden = withPausesHidden(rd);
+    expect(hidden.pauseSec).toBe(0);
+    expect(hidden.kms.every((k) => k.pauseSec === undefined)).toBe(true);
+    expect(hidden.kms.flatMap((k) => kmChips(k)).some((c) => c.startsWith('stilgestaan'))).toBe(false);
+    expect(headlineStats(hidden, 'other').every((x) => !x.note.includes('stilstaan') || x.key === 'pace')).toBe(true);
+    expect(hidden.movingSec).toBe(rd.movingSec);
+    expect(rd.pauseSec).toBeGreaterThan(600);
   });
 
   it('never shows the tail in a lap', () => {

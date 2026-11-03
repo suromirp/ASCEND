@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { SessionLog } from '../../models/training';
-import type { RunKm, RunLap } from '../../models/runDetail';
+import type { RunDetail, RunKm, RunLap } from '../../models/runDetail';
 import { useAppData } from '../../state/AppDataContext';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { formatDateNL } from '../../utils/dates';
@@ -39,6 +39,7 @@ import {
   testLayout,
   edgePauseLine,
   withoutEdgePauses,
+  withPausesHidden,
 } from '../../engine/runDetailView';
 import { edgePausesFor, ensureOutcomeText, ensureRunDetail, type EnsureOutcome } from '../../storage/activityDetail';
 import type { EdgePauses } from '../../engine/runDetail';
@@ -126,17 +127,24 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   const excluded = useExcludedLogIds();
   const screen = resolveRunInsight(settings.runInsight);
   // What the screen shows: the stored detail, with a pause before the start or after the end
-  // set apart (a copy, the log keeps its detail as it is).
-  // The edges come from the kept series; until they are read (or when there is none) the stops
-  // lines wait, so a long tail never flashes as standing still.
-  const [edges, setEdges] = useState<{ for: SessionLog; value: EdgePauses | undefined } | undefined>();
+  // set apart (a copy, the log keeps its detail as it is). The edges come from the kept series;
+  // until they are read every stop on the screen waits (the line, the chips, the list and the
+  // note at Afstand), so a long tail never flashes as standing still.
+  const logId = log.id;
+  const runDetail = log.runDetail;
+  const trimmed = !!log.trim;
+  const [edges, setEdges] = useState<{ for: RunDetail; value: EdgePauses | undefined } | undefined>();
   useEffect(() => {
+    if (!runDetail) return;
     let live = true;
-    void edgePausesFor(log).then((value) => { if (live) setEdges({ for: log, value }); });
+    void edgePausesFor({ id: logId, runDetail, trim: trimmed }).then((value) => { if (live) setEdges({ for: runDetail, value }); });
     return () => { live = false; };
-  }, [log]);
-  const edgesRead = edges?.for === log;
-  const shown = useMemo(() => (log.runDetail ? withoutEdgePauses(log.runDetail, edgesRead ? edges?.value : undefined) : undefined), [log.runDetail, edgesRead, edges]);
+  }, [logId, runDetail, trimmed]);
+  const edgesRead = !!runDetail && edges?.for === runDetail;
+  const shown = useMemo(() => {
+    if (!runDetail) return undefined;
+    return edgesRead ? withoutEdgePauses(runDetail, edges?.value) : { rd: withPausesHidden(runDetail), edge: { headSec: 0, tailSec: 0 } };
+  }, [runDetail, edgesRead, edges]);
   const rd = shown?.rd;
   const d = log.cardioData ?? log.outdoorData;
   const stale = !!rd && isStaleRunDetail(rd, d?.distanceKm ?? 0, d?.durationMinutes || log.durationMinutes);
@@ -324,7 +332,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
           <DistanceCharts line={rd.line} best={best} selectedKm={selectedBand} hr={settings.heartRate} cursor={cursor} onCursor={setCursor} />
         </div>
         {hrNote && <p className="mt-2 text-xs leading-snug" style={dim}>{hrNote}</p>}
-        {edgesRead && rd.pauseSec > 0 && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>Je stond samen {clock(rd.pauseSec)} stil; dat telt niet mee in je tempo.</p>}
+        {rd.pauseSec > 0 && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>Je stond samen {clock(rd.pauseSec)} stil; dat telt niet mee in je tempo.</p>}
         {edgeLine && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>{edgeLine}</p>}
       </Card>
 
