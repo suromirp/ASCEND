@@ -326,7 +326,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Een ander gewicht', text: 'vul je zelf een ander gewicht in, dan zet Forge in het vak Herh. wat je daarbij waarschijnlijk haalt. Herhalingen die je zelf invulde blijven staan.' },
       { head: 'Na een set', text: 'deed je meer of minder dan gevraagd, of was er meer of minder over, dan stelt Forge de volgende open set bij. Zo nodig ook het gewicht, met de gewichten van je sportschool, zodat je in het bereik blijft.' },
-      { head: 'De volgende keer', text: 'haalde je de bovenkant van het bereik met het gevraagde RIR, dan staat de kleinste stap zwaarder al klaar. Met Terugzetten bij de oefening ga je in één tik terug.' },
+      { head: 'De volgende keer', text: 'haalde je de bovenkant van het bereik met het gevraagde RIR, dan staat de kleinste stap zwaarder al klaar. Vulde je je RIR niet in, dan pas bij 3 of meer boven de bovenkant (10 bij 7+). Met Terugzetten bij de oefening ga je in één tik terug.' },
+      { head: 'Na een topset', text: 'ging je topset anders dan gevraagd en weet Forge hoeveel je over had, dan volgen de terugsets erna samen je kracht van die dag.' },
       { head: 'Jouw getallen', text: 'wat Forge zo invult ziet eruit als elk ander voorstel. Wat je zelf typt blijft van jou, en wat je al deed verandert nooit.' },
       { head: 'Uit', text: 'dan blijven de vakken staan zoals Forge ze voorstelde, en gaat het gewicht pas omhoog als je geschatte kracht dat vraagt.' },
     ],
