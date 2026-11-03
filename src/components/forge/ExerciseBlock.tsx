@@ -3,6 +3,7 @@
 import { Fragment, memo, useMemo } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
 import { QUICK_RIR, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
+import { barNote } from '../../engine/barCheck';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
 import {
@@ -222,6 +223,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               const isActive = !readOnly && active === row.id;
               const own = isOwnRow(row);
               const fieldOn = (name: FieldName) => field?.slot === ex.slot && field.rowId === row.id && field.field === name;
+              const barLine = readOnly ? undefined : barNote(ex, row.id, profile);
               return (
                 <div key={row.id} data-row-id={row.id}>
                   <SwipeRow label={label} enabled={!readOnly && swipeOn && canRemoveRow(ex, row.id)} onDelete={() => act.remove(ex.slot, row.id)}>
@@ -297,6 +299,9 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   )}
                   {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
                     <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
+                  )}
+                  {barLine && (
+                    <p role="note" className="ml-9 mt-0.5 border-l-2 pl-2 font-sans text-xs leading-snug tabular-nums" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>{barLine}</p>
                   )}
                   {!readOnly && !folded && row.id === quickRirRow && <QuickRir label={label} onPick={(n) => act.quickRir(ex.slot, row.id, n)} />}
                   {!readOnly && row.id === spotterRowId && (

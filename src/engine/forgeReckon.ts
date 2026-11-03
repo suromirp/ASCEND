@@ -21,6 +21,7 @@
 
 import { exerciseOf, MAX_ROW_KG, workAims, type RowTarget, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
 import { lighterPick, type AdjustContext } from './forgeAdjust';
+import { underBar } from './barCheck';
 import { DEFAULT_RIR, estimateSet, expectedReps, FATIGUE_PER_SET, fatigueFactor, isHardPair } from './strengthModel';
 import { candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
 import { r2 } from '../utils/round';
@@ -83,7 +84,8 @@ export function strengthFor(ex: WorkoutExercise, rowId: string, ctx: ReckonConte
   let base: { kg: number; from: number } | undefined;
   for (let i = at - 1; i >= 0 && !base; i--) {
     const r = ex.rows.find((x) => x.id === ids[i])!;
-    if (!wentOtherwise(r) || r.rir === undefined) continue;
+    // Een set onder de lege stang (een tikfout als 10 bij de squat) telt niet stil mee als je kracht van vandaag.
+    if (!wentOtherwise(r) || r.rir === undefined || underBar(ex, r.id, ctx.profile) !== undefined) continue;
     const est = estimateSet({ reps: r.reps!, weightKg: r.weightKg, rir: isTopSetRow(ex, r.id) ? readRir(r) : r.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
     if (est) base = { kg: est.strengthKg, from: i };
   }
