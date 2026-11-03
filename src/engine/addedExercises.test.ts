@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
-import { addedSlotsFor, canAddExercise, sessionPrescription, isAddedSlot, normalizeAddedExercises, withAddedExercise, withoutAddedSlot, workoutWithoutAdded, MAX_ADDED_PER_TEMPLATE, MAX_ADDED_TEMPLATES, type AddedExercises } from './addedExercises';
+import { addedSlotsFor, canAddExercise, canSwap, sessionPrescription, isAddedSlot, normalizeAddedExercises, withAddedExercise, withoutAddedSlot, workoutWithoutAdded, MAX_ADDED_PER_TEMPLATE, MAX_ADDED_TEMPLATES, type AddedExercises } from './addedExercises';
 import type { WorkoutExercise } from './forgeWorkout';
 import { forgeSlotsFor } from './forgeSlots';
 import { exerciseKey } from './strengthHistory';
@@ -74,6 +74,17 @@ describe('toegevoegde oefeningen', () => {
     expect(sessionPrescription(slots, kept)).toBe(slots[0]);
     expect(sessionPrescription([], { slot: 'ex1', rows } as unknown as WorkoutExercise)).toBeUndefined();
     expect(sessionPrescription([], { slot: 'plus:bestaat-niet', rows } as unknown as WorkoutExercise)).toBeUndefined();
+  });
+
+  it('Ruilen en Terug naar alleen zonder afgevinkte set, voor elke oefening', () => {
+    const slots = [{ id: 'ex1', exerciseName: 'Bankdrukken', sets: 3, reps: '8', priority: 'core' as const }];
+    const open = { slot: 'ex1', rows: [{ id: 'a', kind: 'work', done: false }] } as unknown as WorkoutExercise;
+    const ticked = { slot: 'ex1', rows: [{ id: 'a', kind: 'work', done: true }, { id: 'b', kind: 'work', done: false }] } as unknown as WorkoutExercise;
+    expect(canSwap(slots, open)).toBe(true);
+    expect(canSwap(slots, ticked)).toBe(false);
+    expect(canSwap([], { slot: 'plus:tibialis-raise', rows: [{ id: 'a', kind: 'work', done: true }] } as unknown as WorkoutExercise)).toBe(false);
+    expect(canSwap([], { slot: 'plus:tibialis-raise', rows: [{ id: 'a', kind: 'work', done: false }] } as unknown as WorkoutExercise)).toBe(true);
+    expect(canSwap([], { slot: 'onbekend', rows: [] } as unknown as WorkoutExercise)).toBe(false);
   });
 
   it('wordt een voorschrift dat Forge herkent, achter de training', () => {

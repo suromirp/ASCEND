@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ExercisePrescription, SessionTemplate } from '../models/training';
-import { capForTemplate, capSlots, prescribedSets, resolveTimeCap, timeCapLine } from './forgeTimeCap';
+import { capForTemplate, capLineFor, capSlots, prescribedSets, resolveTimeCap, timeCapLine } from './forgeTimeCap';
 
 // Nagemaakte trainingen: geen ingebouwd sjabloon, zodat de beendag alleen uit de belasting komt.
 const slot = (id: string, priority: ExercisePrescription['priority'], sets: number): ExercisePrescription => ({ id, exerciseName: id, sets, reps: '8-10', priority });
@@ -100,5 +100,25 @@ describe('inkorten tot de grens', () => {
     const bij = r.slots.find((s) => s.id === 'Bij')!;
     expect(bij.setTargets).toEqual(targets.slice(0, 2));
     expect(bij.sets).toBe(2);
+  });
+});
+
+describe('de regel na heropenen', () => {
+  const rows = (n: number, done = false) => [{ kind: 'warmup' }, ...Array.from({ length: n }, () => ({ kind: 'work', done }))];
+  const r = capSlots({ slots: upper, fullMinutes: 85, cap: 60 });
+
+  it('een vers geopende sessie zegt hetzelfde als het inkorten', () => {
+    const fresh = r.slots.map((s) => ({ slot: s.id, rows: rows(prescribedSets(s)) }));
+    expect(capLineFor(r, fresh)).toBe(timeCapLine(r));
+  });
+
+  it('een concept dat de volle sets hield en een weggevallen oefening met afgevinkte sets: dan viel er niets weg', () => {
+    const draft = upper.map((s) => ({ slot: s.id, rows: rows(s.sets, s.id === 'Triceps pushdown') }));
+    expect(capLineFor(r, draft)).toBeUndefined();
+  });
+
+  it('alleen de weggevallen oefening staat er nog: de sets bijwerk blijven in de regel', () => {
+    const draft = [...r.slots.map((s) => ({ slot: s.id, rows: rows(prescribedSets(s)) })), { slot: 'Triceps pushdown', rows: rows(3, true) }];
+    expect(capLineFor(r, draft)).toBe('Ingekort tot ongeveer 75 minuten: 2 sets bijwerk vallen weg.');
   });
 });

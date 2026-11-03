@@ -14,8 +14,8 @@ bijwerk vallen weg." Is de training al korter, dan verandert er niets.
 Hoe (`engine/forgeTimeCap.ts`):
 
 - De tijd per werkset komt uit je eigen trainingen (`durationLearning.ts#learnedMinutesPerSet`: duur gedeeld
-  door werksets via `isWorkSet`, mediaan van de laatste zes, vanaf drie, alleen logs met minstens de helft
-  van de voorgeschreven sets). Zonder die logs de verwachte duur van de training (`predictDuration`, de
+  door werksets via `isWorkSet`, mediaan van de laatste zes, vanaf drie, alleen logs met minstens zoveel
+  werksets als de kern van de training, zodat ingekorte trainingen en logs uit MacroFactor meetellen). Zonder die logs de verwachte duur van de training (`predictDuration`, de
   geleerde of geschatte duur van Trainingsduur) gedeeld door de voorgeschreven werksets. Zo blijft de grens
   staan als je vaker ingekort traint: minder sets in minder tijd geeft dezelfde tijd per set.
 - Zoals "Minder tijd vandaag" de kern laat staan: eerst een set van de extra oefeningen (`optional`), dan van
@@ -34,6 +34,11 @@ de ingekorte versie zien.
 Daarbij: Ruilen op een toegevoegde bergspieroefening die na "Uit deze training halen" met afgevinkte sets
 in de sessie bleef, deed stil niets. Ruilen rekent nu met het voorschrift van de sessie
 (`addedExercises.ts#sessionPrescription`), en een oefening zonder voorschrift krijgt geen knop Ruilen.
+Ruilen en Terug naar staan er voor geen enkele oefening meer zodra er een set is afgevinkt
+(`addedExercises.ts#canSwap`, ook als vangnet in de handeling): ruilen zet nieuwe rijen neer, en afgevinkte
+sets gaan nooit stil weg. De regel "Ingekort" telt bij de eerste stand van de sessie (`capLineFor`), zodat
+een heropend concept dat de volle sets hield niet als ingekort wordt gemeld. In Bovenlichaam B is de
+pull-up kern geworden, zodat er bij het inkorten altijd een verticale trek blijft.
 
 ## Reden
 

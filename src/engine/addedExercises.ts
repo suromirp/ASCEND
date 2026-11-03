@@ -122,3 +122,10 @@ export function withoutAddedSlot<M extends { addedExercises?: AddedExercises }>(
   else delete next[templateId];
   return { ...base, addedExercises: Object.keys(next).length > 0 ? next : undefined };
 }
+
+// Of Ruilen (en Terug naar) kan: een voorschrift om mee te rekenen, en nog geen afgevinkte set. Ruilen zet
+// nieuwe rijen neer, dus een oefening met een afgevinkte set wordt nooit geruild: afgevinkte sets gaan nooit
+// stil weg. Voor elke oefening, ook als vangnet in de handeling zelf.
+export function canSwap(slots: readonly ExercisePrescription[], ex: Pick<WorkoutExercise, 'slot' | 'rows'>): boolean {
+  return !ex.rows.some((r) => r.done) && !!sessionPrescription(slots, ex);
+}

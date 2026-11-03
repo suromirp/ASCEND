@@ -13,9 +13,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { exerciseById } from '../../data/exercises';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { canRemoveRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn, type DroppedRow } from '../../engine/forgeRows';
-import { isAddedSlot, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
+import { canSwap, isAddedSlot, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
 import { learnedMinutesPerSet, predictDuration } from '../../engine/durationLearning';
-import { capForTemplate, capSlots, prescribedSets, resolveTimeCap, timeCapLine } from '../../engine/forgeTimeCap';
+import { capForTemplate, capLineFor, capSlots, prescribedSets, resolveTimeCap } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { swapPreference, swapReason } from '../../engine/mountainMuscles';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
@@ -217,19 +217,23 @@ function ForgeWorkoutInner({
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   // A program from MacroFactor gives the exercises of the week of this training, and an exercise you added after a
   // proposal with Akkoord comes behind them (engine/forgeSlots.ts, the same list the week review reads).
-  const allSlots = forgeSlotsFor(template, settings.strengthModel, date);
+  const allSlots = useMemo(() => forgeSlotsFor(template, settings.strengthModel, date), [template, settings.strengthModel, date]);
   // Hoogstens per krachttraining (engine/forgeTimeCap.ts): met de geleerde tijd per set gaat er eerst bijwerk af
   // als de training langer zou duren dan de grens. Alleen de inhoud van deze sessie; de planning blijft zoals hij is.
-  const capped = capSlots({
+  const estimate = settings.sessionDurationEstimates?.[template.id];
+  const fullMinutes = useMemo(() => predictDuration(template, sessionLogs, estimate).minutes, [template, sessionLogs, estimate]);
+  const coreSets = useMemo(() => allSlots.reduce((n, x) => n + (x.priority === 'core' ? prescribedSets(x) : 0), 0), [allSlots]);
+  const minutesPerSet = useMemo(() => learnedMinutesPerSet(template, sessionLogs, coreSets), [template, sessionLogs, coreSets]);
+  const capStrength = settings.forgeCapStrength;
+  const capLegs = settings.forgeCapLegs;
+  const capped = useMemo(() => capSlots({
     slots: exercisesForVariant({ ...template, exercises: allSlots }, initialVariant),
     fullSlots: allSlots,
-    fullMinutes: predictDuration(template, sessionLogs, settings.sessionDurationEstimates?.[template.id]).minutes,
-    minutesPerSet: learnedMinutesPerSet(template, sessionLogs, allSlots.reduce((n, x) => n + prescribedSets(x), 0)),
-    cap: capForTemplate(template, resolveTimeCap(settings)),
-  });
+    fullMinutes,
+    minutesPerSet,
+    cap: capForTemplate(template, resolveTimeCap({ forgeCapStrength: capStrength, forgeCapLegs: capLegs })),
+  }), [template, allSlots, initialVariant, fullMinutes, minutesPerSet, capStrength, capLegs]);
   const slots = capped.slots;
-  // De regel "Ingekort tot ongeveer 60 minuten" zegt wat er bij het openen wegviel, en blijft dan staan.
-  const [capLine] = useState(() => timeCapLine(capped));
 
   const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
   const [restored] = useState(() => {
@@ -266,6 +270,9 @@ function ForgeWorkoutInner({
   const ctx = useMemo<PlanContext>(() => ({ ...baseCtx, ...(ease ? { ease } : {}) }), [baseCtx, ease]);
   const effSlots = useMemo(() => (easeOn ? easeSlots(slots, easeHow).slots : slots), [easeOn, slots, easeHow]);
   const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? resumeDraft(restored.exercises, restored.eased, easeOn, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
+  // De regel "Ingekort tot ongeveer 60 minuten" zegt wat er bij het openen wegviel, bij de eerste stand van de
+  // sessie (een heropend concept houdt wat je al deed), en blijft dan staan.
+  const [capLine] = useState(() => capLineFor(capped, workout));
   // De sessie begint op het moment van starten en houdt dat, ook na sluiten, herladen en een volgende dag.
   // De sessie begint pas bij de eerste echte handeling (afvinken, typen, een set toevoegen of weghalen, Pauzeren);
   // alleen openen is nog geen sessie: geen concept, geen wijzer, geen pil.
@@ -882,7 +889,9 @@ function ForgeWorkoutInner({
 
   function swap(slot: string, exerciseId: string | null) {
     const current = workout.find((e) => e.slot === slot);
-    const prescription = current && sessionPrescription(effSlots, current);
+    // Vangnet: met een afgevinkte set wordt nooit geruild, want ruilen zet nieuwe rijen neer.
+    if (!current || !canSwap(effSlots, current)) return;
+    const prescription = sessionPrescription(effSlots, current);
     if (!prescription) return;
     const state = planStateBefore(ctx, workout, slot);
     const to = exerciseId ? exerciseById(exerciseId) : undefined;
@@ -1099,7 +1108,7 @@ function ForgeWorkoutInner({
                   </SheetGroup>
                 )}
                 <SheetGroup title="Oefening">
-                  {!readOnly && !!sessionPrescription(effSlots, menuEx) && (menuEx.swappedFrom ? (
+                  {!readOnly && canSwap(effSlots, menuEx) && (menuEx.swappedFrom ? (
                     <MenuRow icon="ruilen" title={`Terug naar ${menuEx.swappedFrom}`} onClick={() => { swap(menuEx.slot, null); close(); }} />
                   ) : (
                     <MenuRow icon="ruilen" title="Ruilen" sub="Zelfde spieren, met wat je sportschool heeft. Alleen voor deze training." onClick={() => { close(); setSwapFor(menuEx.slot); }} />

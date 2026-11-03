@@ -62,6 +62,9 @@ export interface TimeCapResult {
   dropped: string[];
   // Ook zonder bijwerk past de training niet onder de grens: de kern blijft staan.
   coreOver: boolean;
+  // De voorschriften voor het inkorten en de minuten per werkset, voor capLineFor.
+  from: ExercisePrescription[];
+  perSet: number;
 }
 
 // Kort de voorschriften in tot ze onder de grens passen.
@@ -76,7 +79,7 @@ export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: Exer
   const perSet = args.minutesPerSet !== undefined && args.minutesPerSet > 0 ? args.minutesPerSet : fullSets > 0 && fullMinutes > 0 ? fullMinutes / fullSets : 0;
   const minutesOf = (list: readonly ExercisePrescription[]) => perSet * setsOf(list);
   const fromMinutes = minutesOf(slots);
-  const none: TimeCapResult = { slots, cap, fromMinutes, minutes: fromMinutes, setsRemoved: 0, dropped: [], coreOver: false };
+  const none: TimeCapResult = { slots, cap, fromMinutes, minutes: fromMinutes, setsRemoved: 0, dropped: [], coreOver: false, from: slots, perSet };
   if (!(cap > 0) || perSet === 0 || fromMinutes <= cap) return none;
 
   // null = weggevallen; de volgorde van de training blijft.
@@ -108,7 +111,7 @@ export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: Exer
   const keptIds = new Set(kept.map((s) => s.id));
   const removedFromKept = slots.filter((s) => keptIds.has(s.id)).reduce((n, s) => n + prescribedSets(s), 0) - setsOf(kept);
   const minutes = minutesOf(kept);
-  return { slots: kept, cap, fromMinutes, minutes, setsRemoved: removedFromKept, dropped, coreOver: minutes > cap };
+  return { slots: kept, cap, fromMinutes, minutes, setsRemoved: removedFromKept, dropped, coreOver: minutes > cap, from: slots, perSet };
 }
 
 const roundTo5 = (m: number) => Math.max(5, Math.round(m / 5) * 5);
@@ -130,4 +133,31 @@ export function timeCapLine(r: TimeCapResult): string | undefined {
   }
   const head = `Ingekort tot ongeveer ${roundTo5(r.minutes)} minuten: ${parts.join(' ')}.`;
   return r.coreOver ? `${head} De kernsets blijven staan, ook al kom je dan boven de ${r.cap}.` : head;
+}
+
+// De regel bij wat er echt op het scherm staat. Een heropend concept houdt wat je al deed (mergeDraft): een
+// oefening die bij het inkorten wegviel maar met afgevinkte sets in de sessie staat, valt dan niet weg, en een
+// oefening die de volle sets hield telt niet als ingekort. Per plek telt het verschil tussen het voorschrift
+// en de werksets in de sessie, alleen bij extra oefeningen en bijwerk; de kern wordt nooit ingekort.
+// Aanroepen met de eerste stand van de sessie.
+export function capLineFor(r: TimeCapResult, workout: readonly { slot: string; rows: readonly { kind: string }[] }[]): string | undefined {
+  if (r.setsRemoved === 0 && r.dropped.length === 0) return undefined;
+  const bySlot = new Map(workout.map((e) => [e.slot, e]));
+  let setsRemoved = 0;
+  let sets = 0;
+  let coreSets = 0;
+  const dropped: string[] = [];
+  for (const slot of r.from) {
+    const ex = bySlot.get(slot.id);
+    if (!ex) {
+      if (slot.priority !== 'core') dropped.push(cleanExerciseName(slot.exerciseName));
+      continue;
+    }
+    const work = ex.rows.filter((row) => row.kind === 'work').length;
+    sets += work;
+    if (slot.priority === 'core') coreSets += work;
+    if (slot.priority !== 'core') setsRemoved += Math.max(0, prescribedSets(slot) - work);
+  }
+  // Alleen als de kern zelf al boven de grens komt; een oefening die je zelf liet staan is geen kern.
+  return timeCapLine({ ...r, setsRemoved, dropped, minutes: r.perSet * sets, coreOver: r.perSet * coreSets > r.cap });
 }
