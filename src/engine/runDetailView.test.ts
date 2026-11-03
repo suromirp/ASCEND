@@ -593,3 +593,12 @@ describe('standing still before the start and after the end (2026-11-03)', () =>
     expect(last.sec).toBeLessThan(last.endSec - last.startSec - 500);
   });
 });
+
+describe('balans in woorden', () => {
+  it('noemt links en rechts, niet twee keer links', async () => {
+    const { formFactLine } = await import('./runDetailView');
+    const rd = { kms: [49.8, 49.2, 49.4, 49.6, 49.3, 49].map((b, i) => ({ index: i + 1, distanceM: 1000, stanceBalanceLeftPct: b })) } as unknown as Parameters<typeof formFactLine>[0];
+    const line = formFactLine(rd, 'stanceBalanceLeftPct');
+        expect(line).toBe('Links 49 tot 49,8 %, rechts 50,2 tot 51 %. Dat is mooi in evenwicht.');
+  });
+});
