@@ -130,6 +130,7 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   const low = next.target.repsLow;
   const high = next.target.failure || next.target.open ? Infinity : next.target.repsHigh;
   let weightKg = next.weightKg;
+  let load = now;
   let reps = expectedReps(strength, now, rir);
   if (reps < low || reps > high) {
     const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: next.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), ...(row.weightKg !== undefined ? [row.weightKg] : [])], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
@@ -142,18 +143,25 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
         if (c) weightKg = c.externalKg;
       }
       if (weightKg !== next.weightKg) {
-        const load = loadFromExternal(exercise, weightKg, ctx.bodyKg, ex.dumbbellTotal);
-        if (load !== undefined && load > 0) reps = expectedReps(strength, load, rir);
+        const l = loadFromExternal(exercise, weightKg, ctx.bodyKg, ex.dumbbellTotal);
+        if (l !== undefined && l > 0) {
+          load = l;
+          reps = expectedReps(strength, l, rir);
+        }
       }
     }
   }
+  // Past er geen gewicht en haal je de onderkant toch niet: de set blijft staan. "Lichter" en de melding
+  // dat geen gewicht past doen hun eigen voorstel; een vak met 1 of 2 herhalingen helpt niemand.
+  if (reps < low) return ex;
   const fixed = clampReps(reps);
   weightKg = Math.min(MAX_ROW_KG, r2(weightKg));
   if (fixed === next.reps && weightKg === next.weightKg) return ex;
   // Alleen de kant op van wat je deed: na een betere set nooit lichter of minder, na een mindere nooit
   // zwaarder of meer. (Het voorschrift vraagt soms minder dan het verwacht, het midden van het bereik.)
   const side = directionOf(row);
-  const up = weightKg > next.weightKg + 1e-9 || (Math.abs(weightKg - next.weightKg) < 1e-9 && fixed > (next.reps ?? 0));
+  // Zwaarder is meer belasting, niet een groter getal: bij een toestel met hulp is minder hulp zwaarder.
+  const up = load > now + 1e-9 || (Math.abs(load - now) < 1e-9 && fixed > (next.reps ?? 0));
   if ((side > 0 && !up) || (side < 0 && up)) return ex;
   return { ...ex, rows: ex.rows.map((r) => (r.id === next.id ? { ...r, weightKg, reps: fixed, forgeReps: fixed } : r)) };
 }
@@ -194,5 +202,5 @@ export function undoRaise(ex: WorkoutExercise, snap: (kg: number) => number = r2
   });
   const { raise: _gone, ...rest } = ex;
   void _gone;
-  return { ...rest, rows, ...(raise.reason ? { reason: raise.reason } : {}) };
+  return { ...rest, rows, raiseUndone: true, ...(raise.reason ? { reason: raise.reason } : {}) };
 }

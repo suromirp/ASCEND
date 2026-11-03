@@ -3,10 +3,11 @@ import { exerciseById } from '../data/exercises';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { ExercisePrescription, SessionLog, SetLog } from '../models/training';
 import { suggestLighter } from './forgeAdjust';
-import { applyReps, applyWeight, carryChange } from './forgeInput';
+import { applyReps, applyWeight, carryChange, mergeDraft } from './forgeInput';
 import { estimateRepsAt, raiseOpen, reckonAfterTick, reckonWeight, RECKON_MAX_REPS, strengthFor, undoRaise, wentOtherwise, type ReckonContext } from './forgeReckon';
 import { planWorkout, tickRow, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
-import { expectedReps, prescribe, type SessionInput } from './strengthModel';
+import { estimateSet, expectedReps, prescribe, type SessionInput } from './strengthModel';
+import { loadFromExternal } from './strengthWeights';
 import { DEFAULT_PROFILE, resolveStrengthSettings } from './strengthSettings';
 
 // Nagemaakte getallen. Bankdrukken met een stang van 20 kg en schijven vanaf 1,25 kg.
@@ -234,5 +235,80 @@ describe('de stap omhoog in een training', () => {
     const work = (e: WorkoutExercise) => e.rows.filter((r) => r.kind === 'work').map((r) => [r.weightKg, r.reps]);
     expect(work(back)).toEqual(work(off));
     expect(back.reason).toBe(off.reason);
+  });
+});
+
+describe('uit de review', () => {
+  const tickWith = (ex: WorkoutExercise, rowId: string, patch: Partial<WorkoutRow>) =>
+    tickRow([{ ...ex, rows: ex.rows.map((r) => (r.id === rowId ? { ...r, ...patch } : r)) }], ex.slot, rowId).workout[0];
+
+  it('Terugzetten blijft na herladen: mergeDraft met een vers plan houdt het teruggezette gewicht', () => {
+    const { templates, program } = buildDefaultProgramData();
+    const log = (id: string, date: string, reps: number): SessionLog => ({
+      id, templateId: 'tpl_upper_a', type: 'strength', completedDate: date, completedAt: `${date}T18:30:00.000Z`, variant: 'custom', durationMinutes: 50, source: 'manual',
+      strengthData: [{ exerciseId: 'bench-press', exerciseName: 'Bench Press (Barbell)', sets: [{ reps, weightKg: 60, rir: 2 }, { reps, weightKg: 60, rir: 2 }, { reps, weightKg: 60, rir: 2 }] }],
+    });
+    const slot: ExercisePrescription = { id: 'bp', exerciseName: 'Bench Press (Barbell)', sets: 3, reps: '9-11', rpe: 8, priority: 'core' };
+    const fresh = () => planWorkout([slot], { logs: [log('a', '2026-09-01', 9), log('b', '2026-09-08', 11)], templates, program, bodyKg: 80, settings: resolveStrengthSettings({ warmup: 'off' }), date: '2026-09-15', modelOn: true });
+    const back = undoRaise(fresh()[0]);
+    expect(back.raiseUndone).toBe(true);
+    const [merged] = mergeDraft([back], fresh());
+    expect(merged.rows.find((r) => r.kind === 'work')!.weightKg).toBe(60);
+    expect(merged.raise).toBeUndefined();
+  });
+
+  describe('een toestel met hulp: minder hulp is zwaarder', () => {
+    const pull = exerciseById('assisted-pull-up')!;
+    const load = (kg: number) => loadFromExternal(pull, kg, 80)!;
+    const target = { weightKg: -30, repsLow: 9, repsHigh: 11, rir: 2 };
+    const r = (i: number, over: Partial<WorkoutRow> = {}): WorkoutRow => ({ id: `r${i}`, kind: 'work', target, weightKg: -30, reps: 10, forgeReps: 10, done: false, ...over });
+    // De kracht waarbij -30 kg net 10 herhalingen met 2 over geeft.
+    const strengthKg = load(-30) * (1 + 12 / 30);
+    const assisted = () => ({ ...bench([r(0), r(1, { reps: 9, forgeReps: 9 })], { strengthKg }), exerciseId: 'assisted-pull-up', name: 'Optrekken met hulp' });
+
+    it('na een betere set: zwaarder of meer, nooit meer hulp', () => {
+      const done = tickWith(assisted(), 'r0', { reps: 14 });
+      const after = reckonAfterTick(done, 'r0', ctx());
+      expect(after).not.toBe(done);
+      const next = after.rows[1];
+      expect(load(next.weightKg!) > load(-30) || next.reps! > 9).toBe(true);
+      expect(load(next.weightKg!)).toBeGreaterThanOrEqual(load(-30));
+    });
+
+    it('na een mindere set: meer hulp of minder, nooit zwaarder', () => {
+      const done = tickWith(assisted(), 'r0', { reps: 10, rir: 0, rirAssumed: false });
+      const after = reckonAfterTick(done, 'r0', ctx());
+      expect(after).not.toBe(done);
+      const next = after.rows[1];
+      expect(load(next.weightKg!)).toBeLessThan(load(-30));
+      expect(next.weightKg!).toBeLessThan(-30);
+      expect(next.reps!).toBeGreaterThanOrEqual(9);
+    });
+  });
+
+  it('een stap zwaarder alleen op een gemeten RIR', () => {
+    const work = (reps: number, rirAssumed = false): SetLog => ({ reps, weightKg: 60, rir: 2, ...(rirAssumed ? { rirAssumed: true } : {}) });
+    const sessions = (assumed: boolean): SessionInput[] => [
+      { date: '2026-09-01', sets: [work(9), work(9), work(9)] },
+      { date: '2026-09-08', sets: [work(11, assumed), work(11, assumed), work(11, assumed)] },
+    ];
+    const input = (assumed: boolean) => ({ exercise: exerciseById('bench-press')!, sessions: sessions(assumed), date: '2026-09-15', settings: resolveStrengthSettings({}), plan: { low: 9, high: 11, rir: 2 } });
+    expect(prescribe(input(false))!.raised).toBeDefined();
+    const p = prescribe(input(true))!;
+    expect(p.raised).toBeUndefined();
+    expect(p.reason).not.toContain('over.');
+  });
+
+  it('past er geen gewicht en haal je de onderkant niet, dan blijft de volgende set staan (dumbbells, grove stap)', () => {
+    // Zijwaartse heffing, 12 tot 15 met 2 over, 10 kg. Een set van 6 tot falen: 8 kg geeft er 11, 6 kg ver boven het bereik.
+    const t = { weightKg: 10, repsLow: 12, repsHigh: 15, rir: 2 };
+    const rows: WorkoutRow[] = [0, 1].map((i) => ({ id: `r${i}`, kind: 'work', target: t, weightKg: 10, reps: 13, forgeReps: 13, done: false }));
+    const ex: WorkoutExercise = { slot: 's', exerciseId: 'lateral-raise', name: 'Zijwaartse heffing', known: true, rows, restSec: 60, timed: false, strengthKg: 16, fatiguePerSet: 0.03 };
+    const done = tickWith(ex, 'r0', { reps: 6, rir: 0, rirAssumed: false });
+    expect(estimateSet({ reps: 6, weightKg: 10, rir: 0, kind: 'work' }, { exercise: exerciseById('lateral-raise') })).toBeDefined();
+    expect(suggestLighter(done, 'r0', ctx())).toBeUndefined();
+    const after = reckonAfterTick(done, 'r0', ctx());
+    expect(after).toBe(done);
+    expect(after.rows[1].reps).toBe(13);
   });
 });

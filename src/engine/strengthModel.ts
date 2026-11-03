@@ -212,6 +212,8 @@ export interface TopSet {
   weightKg: number;
   reps: number;
   rir?: number;
+  // The RIR was the aim, not felt (SetLog.rirAssumed): "Forge rekent mee" makes no step on it.
+  rirAssumed?: true;
   loadKg: number;
 }
 
@@ -239,7 +241,7 @@ export function topSetOf(sets: SetLog[], ctx: LoadContext): TopSet | undefined {
     const loadKg = setLoad(s, ctx);
     if (loadKg === undefined) continue;
     if (!best || loadKg > best.loadKg || (loadKg === best.loadKg && s.reps > best.reps)) {
-      best = { weightKg: s.weightKg ?? 0, reps: s.reps, ...(s.rir !== undefined ? { rir: s.rir } : {}), loadKg };
+      best = { weightKg: s.weightKg ?? 0, reps: s.reps, ...(s.rir !== undefined ? { rir: s.rir } : {}), ...(s.rirAssumed ? { rirAssumed: true as const } : {}), loadKg };
     }
   }
   return best;
@@ -669,7 +671,8 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   // the reps in reserve asked, is the sign for one step heavier, as with "eerst herhalingen", without
   // asking. The step is the next weight of the list (the smallest there is). On a stack with "Alleen wat
   // je gebruikte" the heaviest used weight stays the end: ASCEND does not know the next one there.
-  const topReached = last.top.reps >= high && ((last.top.rir !== undefined && last.top.rir >= rir) || last.legsTired) && last.top.reps >= low && sameGoal && !lighter;
+  // Only on a measured RIR: the line says "met 2 over", so that must be what you felt.
+  const topReached = last.top.reps >= high && last.top.rir !== undefined && !last.top.rirAssumed && last.top.rir >= rir && last.top.reps >= low && sameGoal && !lighter;
   const reckonRaise = settings.reckon && settings.progression !== 'reps_first' && topReached && !legsTired;
 
   // KR-4: the weight for the first set, for a given strength. `raise`: the step after the top of the range.
@@ -759,7 +762,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const sameWeight = Math.abs(first.externalKg - lastExternal) < 1e-6;
   // Did "Forge rekent mee" make the step? Only when the plain rule would have kept the weight.
   const raised = reckonRaise && idx === lastIdx + 1 && !coarseHeavier && first.loadKg > lastLoad + 1e-6 && pick(strengthKg, false) <= lastIdx
-    ? { fromKg: lastExternal, stepKg: Math.abs(first.externalKg - lastExternal), reps: last.top.reps, rir: last.top.rir ?? rir }
+    ? { fromKg: lastExternal, stepKg: Math.abs(first.externalKg - lastExternal), reps: last.top.reps, rir: last.top.rir! }
     : undefined;
   // Same weight: one more than last time if the model expects it, never fewer than
   // last time (the smoothing lags half a step behind a good day).

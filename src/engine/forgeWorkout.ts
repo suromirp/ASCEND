@@ -117,6 +117,9 @@ export interface WorkoutExercise {
   // "Forge rekent mee" made the step up after the top of the range: the line that says so, the reason
   // without the step, and the working sets as they would have been, for Terugzetten (engine/forgeReckon.ts).
   raise?: { line: string; reason?: string; back: { rowId: string; weightKg?: number; reps: number }[] };
+  // Je zette de stap omhoog terug (undoRaise): de oefening telt dan als aangeraakt, zodat een heropend
+  // concept het teruggezette gewicht houdt en niet opnieuw het plan met de stap krijgt.
+  raiseUndone?: boolean;
 }
 
 // --- rep ranges ------------------------------------------------------------------------------
