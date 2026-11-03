@@ -37,6 +37,9 @@ export interface BlockActions {
   rir: (slot: string, rowId: string) => void;
   // "Hoeveel over?" na het afvinken: je RIR in één tik.
   quickRir: (slot: string, rowId: string, rir: number) => void;
+  // Het toestel als ponden opslaan, of het voorstel laten liggen.
+  poundSave: (slot: string) => void;
+  poundKeep: (slot: string) => void;
   add: (slot: string) => void;
   lighter: (slot: string) => void;
   // Terugzetten van de stap omhoog die Forge rekent mee zette.

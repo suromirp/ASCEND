@@ -62,6 +62,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   swipeOn,
   undoText,
   quickRirRow,
+  poundText,
   act,
 }: {
   ex: WorkoutExercise;
@@ -91,6 +92,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   undoText?: string;
   // De set waarna Forge vraagt hoeveel je over had ("Hoeveel over?"), als er een is.
   quickRirRow?: string;
+  // Het voorstel om dit toestel als ponden op te slaan (engine/poundStack.ts), als er een is.
+  poundText?: string;
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
@@ -194,6 +197,16 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               <div className="-mb-1 flex gap-4">
                 <TextButton onClick={() => act.fill(ex.slot)}>{noFitText.endsWith('aanpassen?') ? 'Aanpassen' : 'Invullen'}</TextButton>
                 <TextButton tone="dim" onClick={() => act.keepFit(ex.slot)}>Liever niet</TextButton>
+              </div>
+            </div>
+          )}
+
+          {poundText && !readOnly && (
+            <div className="mt-2 flex flex-col gap-0.5 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }} role="group" aria-label="Toestel in ponden">
+              <p className="font-sans text-sm leading-snug tabular-nums" style={{ color: 'var(--color-ink)' }}>{poundText}</p>
+              <div className="-mb-1 flex gap-4">
+                <TextButton onClick={() => act.poundSave(ex.slot)}>Opslaan</TextButton>
+                <TextButton tone="dim" onClick={() => act.poundKeep(ex.slot)}>Liever niet</TextButton>
               </div>
             </div>
           )}
