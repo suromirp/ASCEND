@@ -2,7 +2,8 @@
 
 import { Fragment, memo, useMemo } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
-import { raiseOpen } from '../../engine/forgeReckon';
+import { QUICK_RIR, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
+import { barNote } from '../../engine/barCheck';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
 import {
@@ -60,6 +61,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   rirAsValue,
   swipeOn,
   undoText,
+  quickRirRow,
+  poundText,
   act,
 }: {
   ex: WorkoutExercise;
@@ -87,6 +90,10 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   swipeOn: boolean;
   // "Set 3 verwijderd" zolang je het nog ongedaan kunt maken.
   undoText?: string;
+  // De set waarna Forge vraagt hoeveel je over had ("Hoeveel over?"), als er een is.
+  quickRirRow?: string;
+  // Het voorstel om dit toestel als ponden op te slaan (engine/poundStack.ts), als er een is.
+  poundText?: string;
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
@@ -194,6 +201,16 @@ export const ExerciseBlock = memo(function ExerciseBlock({
             </div>
           )}
 
+          {poundText && !readOnly && (
+            <div className="mt-2 flex flex-col gap-0.5 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }} role="group" aria-label="Toestel in ponden">
+              <p className="font-sans text-sm leading-snug tabular-nums" style={{ color: 'var(--color-ink)' }}>{poundText}</p>
+              <div className="-mb-1 flex gap-4">
+                <TextButton onClick={() => act.poundSave(ex.slot)}>Opslaan</TextButton>
+                <TextButton tone="dim" onClick={() => act.poundKeep(ex.slot)}>Liever niet</TextButton>
+              </div>
+            </div>
+          )}
+
           <div className="mt-2" role="table" aria-label={`Sets van ${ex.name}`}>
             <div role="row" className="forge-grid items-end pb-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               <span role="columnheader" className="text-center">Set</span>
@@ -219,6 +236,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               const isActive = !readOnly && active === row.id;
               const own = isOwnRow(row);
               const fieldOn = (name: FieldName) => field?.slot === ex.slot && field.rowId === row.id && field.field === name;
+              const barLine = readOnly ? undefined : barNote(ex, row.id, profile);
               return (
                 <div key={row.id} data-row-id={row.id}>
                   <SwipeRow label={label} enabled={!readOnly && swipeOn && canRemoveRow(ex, row.id)} onDelete={() => act.remove(ex.slot, row.id)}>
@@ -295,6 +313,10 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
                     <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
                   )}
+                  {barLine && (
+                    <p role="note" className="ml-9 mt-0.5 border-l-2 pl-2 font-sans text-xs leading-snug tabular-nums" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>{barLine}</p>
+                  )}
+                  {!readOnly && !folded && row.id === quickRirRow && <QuickRir label={label} onPick={(n) => act.quickRir(ex.slot, row.id, n)} />}
                   {!readOnly && row.id === spotterRowId && (
                     <div className="ml-9 h-5">
                       <button type="button" onClick={act.spotter} aria-label={`${SPOTTER_SIGN}, set ${label}. Tik voor uitleg`} className="relative flex h-5 items-center gap-1.5 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
@@ -326,9 +348,40 @@ export const ExerciseBlock = memo(function ExerciseBlock({
           )}
         </div>
       </div>
+      {!readOnly && folded && quickRirRow && (
+        <QuickRir label={rowLabel(ex, quickRirRow)} onPick={(n) => act.quickRir(ex.slot, quickRirRow, n)} />
+      )}
     </section>
   );
 });
+
+// Het nummer van een werkset zoals de tabel het toont.
+function rowLabel(ex: WorkoutExercise, rowId: string): string {
+  const work = ex.rows.filter((r) => r.kind === 'work');
+  return String(work.findIndex((r) => r.id === rowId) + 1);
+}
+
+// "Hoeveel over?" na het afvinken: 0, 1, 2 of 3+ in één tik, in de rij en zonder blad. Kies je niets, dan
+// blijft het doel staan als aangenomen RIR (docs/beslissingen/2026-11-03-forge-na-de-eerste-vergelijking.md).
+function QuickRir({ label, onPick }: { label: string; onPick: (n: number) => void }) {
+  return (
+    <div className="animate-fade-in flex items-center gap-1.5 pb-1 pl-1" role="group" aria-label={`Hoeveel had je over bij set ${label}?`}>
+      <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel over?</span>
+      {QUICK_RIR.map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onPick(n)}
+          aria-label={`${quickRirLabel(n)} over, set ${label}`}
+          className="flex h-11 w-11 items-center justify-center rounded-full border font-sans text-sm font-semibold tabular-nums"
+          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+        >
+          {quickRirLabel(n)}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // Het voorschrift van een set: "47,5 kg × 11-13" met de RIR eronder.
 function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise }) {

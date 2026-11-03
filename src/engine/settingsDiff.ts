@@ -210,6 +210,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthChoice('forge-rir-vooraf', 'RIR vooraf invullen', 'rirPrefill', 'rirVooraf'),
   strengthChoice('forge-doorvoeren', 'Wijzigingen doorvoeren', 'carryMode', 'doorvoeren', ['carryWeights']),
   strengthFlag('forge-schijven', 'Schijven bij de set tonen', 'showPlates'),
+  strengthFlag('forge-rir-snel', 'Hoeveel over na een set', 'quickRir'),
   strengthFlag('forge-1rm', 'Geschatte 1RM tonen', 'showOneRm'),
   strengthChoice('forge-weergave', 'Forge toont', 'oneRmView', 'forgeWeergave'),
   strengthFlag('forge-1rm-macrofactor', 'MacroFactor-1RM erbij tonen', 'showMacroFactorOneRm'),

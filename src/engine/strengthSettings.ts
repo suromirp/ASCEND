@@ -197,6 +197,9 @@ export interface StrengthSettings {
   carryMode?: CarryMode;
   // A small line "per kant 15 + 2,5" under a working set of a barbell exercise.
   showPlates?: boolean;
+  // After ticking a top set or the last set of an exercise, the quick question "Hoeveel over?" (0, 1, 2, 3+)
+  // in the row (decision 2026-11-03-forge-na-de-eerste-vergelijking.md). Absent = on.
+  quickRir?: boolean;
   // The block "Geschatte 1RM" with a trend on the Forge page.
   showOneRm?: boolean;
   // The choice between the 1RM and the working weight on the cards of Forge, one
@@ -271,6 +274,7 @@ export interface ResolvedStrengthSettings {
   keepScreenOn: boolean;
   carryMode: CarryMode;
   showPlates: boolean;
+  quickRir: boolean;
   showOneRm: boolean;
   oneRmView: OneRmView;
   showMacroFactorOneRm: boolean;
@@ -478,6 +482,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   const carryMode = CARRY_MODES.find((v) => v === raw.carryMode);
   if (carryMode) out.carryMode = carryMode;
   if (typeof raw.showPlates === 'boolean') out.showPlates = raw.showPlates;
+  if (typeof raw.quickRir === 'boolean') out.quickRir = raw.quickRir;
   if (typeof raw.showOneRm === 'boolean') out.showOneRm = raw.showOneRm;
   const oneRmView = ONE_RM_VIEWS.find((v) => v === raw.oneRmView);
   if (oneRmView) out.oneRmView = oneRmView;
@@ -538,6 +543,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     keepScreenOn: s.keepScreenOn ?? true,
     carryMode: s.carryMode ?? (s.carryWeights === false ? 'off' : 'equal'),
     showPlates: s.showPlates ?? true,
+    quickRir: s.quickRir ?? true,
     showOneRm: s.showOneRm ?? true,
     oneRmView: s.oneRmView ?? 'one_rm',
     showMacroFactorOneRm: s.showMacroFactorOneRm ?? true,
