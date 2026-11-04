@@ -4,7 +4,7 @@
 
 // Wat ASCEND mag lezen, in de namen van de plugin. Precies de leesrechten in
 // android/app/src/main/AndroidManifest.xml.
-export type HealthKind = 'workouts' | 'distance' | 'sleep' | 'restingHeartRate' | 'heartRateVariability';
+export type HealthKind = 'workouts' | 'distance' | 'sleep' | 'restingHeartRate' | 'heartRateVariability' | 'weight' | 'bodyFat';
 
 export type HealthConnectErrorKind = 'web' | 'not-installed' | 'needs-update' | 'denied' | 'timeout' | 'failed';
 
@@ -13,7 +13,8 @@ export type HealthSyncResult =
   | { status: 'off' }
   | { status: 'web' }
   | { status: 'too-soon' }
-  | { status: 'ok'; activities: number; mornings: number }
+  // `weights`: hoeveel dagen gewicht nieuw of anders binnenkwamen (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md).
+  | { status: 'ok'; activities: number; mornings: number; weights: number }
   | { status: 'error'; kind: HealthConnectErrorKind; message: string };
 
 // De uitkomst van aanzetten.

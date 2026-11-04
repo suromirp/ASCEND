@@ -197,6 +197,8 @@ export interface HealthConnectFacts {
   enabled: boolean;
   fetchedAt?: string;
   errorKind?: HealthConnectErrorKind;
+  // Mag ASCEND je gewicht lezen (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md)?
+  weightGranted?: boolean;
 }
 
 const deviceOf = (f: SettingsFacts): DevicePermissions | undefined => (f.device && f.device !== 'unknown' ? f.device : undefined);
@@ -266,7 +268,7 @@ function healthConnectRow(f: SettingsFacts): RowSummary {
   const h = f.healthConnect;
   if (!h) return { value: 'Even kijken', dim: true };
   if (!h.inApp) return { value: 'Alleen in de app', dim: true, sub: 'Werkt in de Android-app van ASCEND' };
-  if (!h.enabled) return { checked: false, sub: 'Trainingen, slaap, rusthartslag en HRV' };
+  if (!h.enabled) return { checked: false, sub: 'Trainingen, slaap, rusthartslag, HRV en gewicht' };
   if (h.errorKind) return { checked: true, sub: HEALTH_ERROR_LINE[h.errorKind] };
   if (!h.fetchedAt) return { checked: true, sub: 'Nog niets opgehaald' };
   const day = localDateOf(h.fetchedAt);
@@ -305,7 +307,8 @@ function durationsValue(f: SettingsFacts): { value: string; auto: boolean } | un
 }
 
 function weightWords(w: NonNullable<SettingsFacts['weight']>): string {
-  return `${w.source === 'macrofactor' ? 'MacroFactor' : 'Zelf ingevuld'}, ${formatDayMonthNL(w.date)}`;
+  const from = w.source === 'macrofactor' ? 'MacroFactor' : w.source === 'health-connect' ? 'Uit Health Connect' : 'Zelf ingevuld';
+  return `${from}, ${formatDayMonthNL(w.date)}`;
 }
 
 function clothingValue(f: SettingsFacts): { value: string; auto: boolean } {
@@ -641,7 +644,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Lichaam
     case 'lichaamsgewicht':
       return f.weight
-        ? { value: kgLabel(f.weight.kg, 1), auto: f.weight.source === 'macrofactor', sub: weightWords(f.weight) }
+        ? { value: kgLabel(f.weight.kg, 1), auto: f.weight.source === 'macrofactor' || f.weight.source === 'health-connect', sub: weightWords(f.weight) }
         : { value: 'Niet ingevuld', dim: true };
     case 'vetpercentage':
       return { checked: s.showBodyFat !== false };
@@ -957,6 +960,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.stravaText !== false };
     case 'health-connect':
       return healthConnectRow(f);
+    case 'health-connect-gewicht':
+      // Aan, maar nog geen toestemming voor gewicht: dat staat eronder.
+      return s.weightFromHealthConnect !== false && f.healthConnect?.enabled && !f.healthConnect.weightGranted
+        ? { checked: true, sub: 'Nog geen toestemming voor gewicht' }
+        : { checked: s.weightFromHealthConnect !== false };
 
     // Gegevens en back-up
     case 'backup': {

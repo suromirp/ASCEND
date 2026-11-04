@@ -75,9 +75,9 @@ export interface WeightSuggestion {
   source: WeightEntry['source'];
 }
 
-export function weightSuggestion(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined, today: string): WeightSuggestion | undefined {
+export function weightSuggestion(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined, fromHealthConnect: boolean | undefined, today: string): WeightSuggestion | undefined {
   const yesterday = addDays(today, -1);
-  const recent = weightsInUse(entries, fromMacroFactor)
+  const recent = weightsInUse(entries, fromMacroFactor, fromHealthConnect)
     .filter((e) => e.date === today || e.date === yesterday)
     .map((e) => ({ kg: typeof e.scaleKg === 'number' ? e.scaleKg : e.kg, date: e.date, source: e.source }))
     .filter((e) => Number.isFinite(e.kg) && e.kg >= MIN_KG && e.kg <= MAX_KG)

@@ -216,7 +216,7 @@ function ForgeWorkoutInner({
   // Met MacroFactor als bron en bij alleen kijken is dit het voorschrift zonder invulvelden.
   const readOnly = strengthExternal || preview;
   const strength = useMemo(() => resolveStrengthSettings(settings.strengthModel), [settings.strengthModel]);
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   // "Forge rekent mee" (engine/forgeReckon.ts): dezelfde rekening als het bijsturen.
   const reckonCtx = { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights, on: strength.enabled && strength.reckon && !readOnly };
   // A program from MacroFactor gives the exercises of the week of this training, and an exercise you added after a

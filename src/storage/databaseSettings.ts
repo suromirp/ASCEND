@@ -413,6 +413,11 @@ export interface AppSettings {
   // it stays stored but is not used. Optional and additive, so older settings
   // and backups need no schema step; travels with the settings in an export.
   weightFromMacroFactor?: boolean;
+  // "Gewicht uit Health Connect gebruiken" (engine/bodyWeight.ts#weightsInUse,
+  // docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md): absent or true = a round of
+  // Health Connect reads your weighings and they count, false = nothing is read and what is
+  // stored is not used. Optional and additive; travels with the settings in an export.
+  weightFromHealthConnect?: boolean;
   // "Vetpercentage tonen" (engine/bodyFat.ts): absent or true = the fat percentage and the
   // fat-free mass from the weigh-ins are shown under Lichaamsgewicht, false = they stay stored
   // but are not shown. Optional and additive, so older settings and backups need no step.

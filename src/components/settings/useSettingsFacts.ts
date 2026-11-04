@@ -60,7 +60,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   // memo hangt aan een vingerafdruk van de inhoud (checkDataKey) en van de instelling
   // (checkModelKey).
   const checkKey = checkModelKey(settings.strengthModel);
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   // Spierpijn en een gekozen Lichter horen erbij: ze bepalen of een training telt (engine/legDayEase.ts).
   const easeKey = JSON.stringify([settings.legEaseDays, settings.morningCheckIns?.filter((c) => c.legs).map((c) => [c.date, c.legs, c.soreWhere]), injuryNotes.filter((n) => n.kind === 'spierpijn').map((n) => [n.date, n.bodyPart, n.resolvedDate])]);
   const dataKey = checkDataKey(sessionLogs, templates, program, bodyKg) + easeKey;
@@ -80,7 +80,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     const mainGoal = findMainGoal(trainingGoals, ladder);
     const mainIsTrek = !!mainGoal?.requirements.some((r) => r.discipline === 'hiking' || r.kind === 'elevationGain' || r.kind === 'elevationLoss');
     const periods = (settings.leavePeriods ?? []).filter((p) => p.endDate >= today);
-    const w = latestWeight(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor));
+    const w = latestWeight(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect));
     const estimates = settings.sessionDurationEstimates ?? {};
     const strength = templates.filter(
       (t) => t.type === 'strength' && !t.weeklyProgression && (t.defaultDayOfWeek || plannedSessions.some((s) => s.templateId === t.id && s.scheduledDate >= today)),
@@ -101,7 +101,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       activeInjuries: injuryNotes.filter((n) => isOpenOn(n, today) && !isSoreness(n)).length,
       strengthExternal,
       ambition: effectiveAmbition(settings.ambition, sessionLogs, templateById, program, today),
-      hasBodyFat: hasBodyFat(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor)),
+      hasBodyFat: hasBodyFat(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect)),
       weight: w ? { kg: w.kg, source: w.source, date: w.date } : null,
       watch: loaded.watch
         ? { linked: loaded.linked, syncedAt: loaded.watch.fetchedAt, use, autoTick: loaded.watch.autoTick, leads: loaded.watch.garminLeads, corrections: loaded.watch.takeCorrections, sendEnabled: loaded.sendEnabled, hrBasis: loaded.hrBasis }

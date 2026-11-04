@@ -11,9 +11,9 @@ import { resolveIntensityCounting } from '../../../engine/intensitySettings';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
 
-// Lichaam: je gewicht (komt zoveel mogelijk vanzelf uit MacroFactor), je hartslag, je blessures
+// Lichaam: je gewicht (komt zoveel mogelijk vanzelf uit Health Connect of MacroFactor), je hartslag, je blessures
 // (die staan op het scherm Lichaam) en of het figuur daar een man of een vrouw is.
-export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
+export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   const navigate = useNavigate();
   const { updateSettings, settings } = useAppData();
   const close = () => setSheet(null);
@@ -38,7 +38,7 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Je stand">
         <SummaryRow id="intensiteit" title="Intensiteit tellen" facts={facts} info="intensiteit" onClick={() => setSheet('intensiteit')} />
       </SettingsSection>
-      {sheet === 'lichaamsgewicht' && <WeightSheet onClose={close} />}
+      {sheet === 'lichaamsgewicht' && <WeightSheet health={facts.healthConnect} reload={reload} onClose={close} />}
       {sheet === 'hartslag' && <HeartRateSheet onClose={close} />}
       {sheet === 'intensiteit' && <ChoiceFromDef def={CHOICES.intensiteit} value={resolveIntensityCounting(settings)} onPick={(v) => void updateSettings({ intensityCounting: v })} onClose={close} />}
       {sheet === 'figuur' && <FigureSheet onClose={close} />}

@@ -26,14 +26,14 @@ export function useLegFatigueInputs(): LegFatigueInputs {
   const today = todayISO();
   return useMemo(() => {
     // The same weight the planner reads (state/AppDataContext.tsx): MacroFactor's trend weight when it is switched on.
-    const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+    const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
     return {
       logs: sessionLogs, plannedSessions, templates, today, bodyKg, program,
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       // Spierpijn uit de ochtendcheck en een melding op een beenplek uit Hoe voelt je lijf? tellen even zwaar.
       soreness: legSorenessList(settings.morningCheckIns, injuryNotes),
     };
-  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.morningCheckIns, injuryNotes, today]);
+  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, settings.morningCheckIns, injuryNotes, today]);
 }
 
 export function LegFatigueCard() {

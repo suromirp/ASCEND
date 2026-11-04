@@ -10,6 +10,8 @@ import { mergeTestJudgments } from '../engine/testJudgment';
 import { dedupeInfluencesByPlace } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState } from '../engine/journey';
+import { isHealthConnectWeight } from '../engine/bodyWeight';
+import type { WeightEntry } from '../models/metrics';
 import type { BackupDataCategory, CategoryAction, ImportMode, PlanPolicy, ImportConflict } from './backupTypes';
 
 // --- category action support & defaults --------------------------------------
@@ -152,11 +154,14 @@ export function resolveListCategory<T extends Keyed>(
 export function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSettings>): Partial<AppSettings> {
   const merged: Partial<AppSettings> = { ...incoming };
   if (incoming.weightEntries || current.weightEntries) {
-    const byDate = new Map((incoming.weightEntries ?? []).map((e) => [e.date, e]));
+    // Per day and place: a weighing from Health Connect has its own place next to your own or
+    // MacroFactor's (engine/bodyWeight.ts#sameWeightPlace).
+    const placeOf = (e: WeightEntry) => `${e.date}|${isHealthConnectWeight(e) ? 'hc' : 'own'}`;
+    const byDate = new Map((incoming.weightEntries ?? []).map((e) => [placeOf(e), e]));
     for (const e of current.weightEntries ?? []) {
       // The device's own record wins, but a fat percentage only the backup has is added to it.
-      const fromBackup = byDate.get(e.date);
-      byDate.set(e.date, e.fatPct === undefined && fromBackup?.fatPct !== undefined ? { ...e, fatPct: fromBackup.fatPct } : e);
+      const fromBackup = byDate.get(placeOf(e));
+      byDate.set(placeOf(e), e.fatPct === undefined && fromBackup?.fatPct !== undefined ? { ...e, fatPct: fromBackup.fatPct } : e);
     }
     merged.weightEntries = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
   }

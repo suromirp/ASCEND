@@ -16,7 +16,7 @@ export function useLegMoveNotes(moves: { sessionId?: string; toDate?: string }[]
   const { sessionLogs, plannedSessions: storedSessions, templates, program, settings, injuryNotes } = useAppData();
   const plannedSessions = endState ?? storedSessions;
   const mode = resolveLegEase(settings);
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   const key = moves.map((m) => `${m.sessionId}:${m.toDate}`).join('|');
   return useMemo(() => {
     if (mode === 'uit') return [];

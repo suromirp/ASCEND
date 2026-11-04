@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { INTENSITY, type Intensity } from '../../../data/workoutStructure';
-import { addWeightEntry, freshMacroFactorWeight, latestWeight, weightsInUse, WEIGHT_REMINDER_DAYS } from '../../../engine/bodyWeight';
+import { addWeightEntry, freshLinkedWeight, hasHealthConnectWeight, latestWeight, weightsInUse, WEIGHT_REMINDER_DAYS } from '../../../engine/bodyWeight';
+import type { HealthConnectFacts } from '../../../engine/settingsSummary';
+import { askHealthConnectWeight, openHealthConnectSettings, syncHealthConnect } from '../../../storage/healthConnect';
+import { TextButton } from '../../TextButton';
 import { bodyFatLines, bodyFatTrend } from '../../../engine/bodyFat';
 import { zoneBpm } from '../../../engine/heartRateZones';
 import { heartRateProblem, type HeartRateField } from '../../../engine/inputLimits';
@@ -18,9 +21,11 @@ import { SettingsFieldRow, SettingsList, SettingsRow } from '../SettingsList';
 import { InfoSheet, Sheet } from '../Sheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
 
-// Lichaamsgewicht: het getal groot, waar het vandaan komt, de schakelaar voor MacroFactor
-// en de herinnering. Een eigen gewicht invullen kan, maar is de uitzondering.
-export function WeightSheet({ onClose }: { onClose: () => void }) {
+// Lichaamsgewicht: het getal groot, waar het vandaan komt, de schakelaars voor MacroFactor en
+// Health Connect en de herinnering. Een eigen gewicht invullen kan, maar is de uitzondering.
+// Health Connect staat er alleen als het aan staat of er al wegingen uit kwamen
+// (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md).
+export function WeightSheet({ onClose, health, reload }: { onClose: () => void; health?: HealthConnectFacts; reload?: () => void }) {
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
   const [reminder, setReminder] = useState(false);
@@ -29,10 +34,42 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
   const [fatHelp, setFatHelp] = useState(false);
   const [kgDraft, setKgDraft] = useState<number | undefined>();
   const today = todayISO();
-  const entries = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor);
+  const entries = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   const last = latestWeight(entries);
-  const fresh = freshMacroFactorWeight(settings.weightEntries, settings.weightFromMacroFactor, today);
+  const fresh = freshLinkedWeight(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, today);
   const fromMf = last?.source === 'macrofactor';
+  const fromHc = last?.source === 'health-connect';
+  const hcOn = settings.weightFromHealthConnect !== false;
+  const showHc = health?.enabled === true || hasHealthConnectWeight(settings.weightEntries);
+  // Health Connect staat aan, maar je gewicht mag ASCEND nog niet lezen (bijvoorbeeld omdat je het
+  // aanzette voordat ASCEND ook gewicht las): dan kun je het hier alsnog toestaan.
+  const askWeight = health?.enabled === true && hcOn && health.weightGranted !== true;
+  const [hcNote, setHcNote] = useState<{ text: string; open?: boolean } | null>(null);
+  const hcBusy = useRef(false);
+
+  async function changeHc(on: boolean) {
+    await updateSettings({ weightFromHealthConnect: on });
+    if (on && health?.enabled) {
+      await syncHealthConnect({ force: true });
+      reload?.();
+    }
+  }
+
+  async function allowWeight() {
+    if (hcBusy.current) return;
+    hcBusy.current = true;
+    setHcNote({ text: 'Even kijken bij Health Connect…' });
+    try {
+      const r = await askHealthConnectWeight();
+      if (r.status === 'ok') setHcNote(null);
+      else if (r.status === 'denied') setHcNote({ text: 'Je gewicht mag ASCEND nog niet lezen. Vraagt Android het niet meer, sta het dan toe in Health Connect zelf.', open: true });
+      else if (r.status === 'error') setHcNote({ text: r.message });
+      else setHcNote({ text: 'Health Connect werkt alleen in de Android-app van ASCEND.' });
+    } finally {
+      hcBusy.current = false;
+      reload?.();
+    }
+  }
   const days = settings.weightReminderDays ?? WEIGHT_REMINDER_DAYS;
   // Het vetpercentage uit de weegschaal, als trend en alleen als je het wilt zien.
   const fat = settings.showBodyFat === false ? undefined : bodyFatTrend(entries);
@@ -54,9 +91,13 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
               <>
                 <div className="st-hero"><span className="n">{formatNumberNL(last.kg, 1)}</span><span className="u">kg</span></div>
                 <div className="st-src">
-                  {fromMf && <AutoTag />}
+                  {(fromMf || fromHc) && <AutoTag />}
                   <span className="st-num">
-                    {fromMf ? `${basis === 'scale' ? 'Gewicht' : 'Trendgewicht'} uit MacroFactor, ${formatDayMonthNL(last.date)}` : `Zelf ingevuld, ${formatDayMonthNL(last.date)}`}
+                    {fromMf
+                      ? `${basis === 'scale' ? 'Gewicht' : 'Trendgewicht'} uit MacroFactor, ${formatDayMonthNL(last.date)}`
+                      : fromHc
+                        ? `Uit Health Connect, ${formatDayMonthNL(last.date)}`
+                        : `Zelf ingevuld, ${formatDayMonthNL(last.date)}`}
                   </span>
                   <InfoButton compact label="Uitleg: lichaamsgewicht" onClick={() => setHelp(true)} />
                 </div>
@@ -87,8 +128,31 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
                 checked={settings.weightFromMacroFactor !== false}
                 onChange={(on) => void updateSettings({ weightFromMacroFactor: on })}
               />
+              {showHc && (
+                <SettingsRow
+                  id="health-connect-gewicht"
+                  title="Uit Health Connect"
+                  kind="toggle"
+                  info="healthConnectGewicht"
+                  checked={hcOn}
+                  onChange={(on) => void changeHc(on)}
+                />
+              )}
               <SettingsRow id="gewicht-herinnering" title="Herinnering" value={CHOICES.herinnering.options.find((o) => o.value === days)?.label ?? 'Nooit'} onClick={() => setReminder(true)} />
             </SettingsList>
+
+            {askWeight && (
+              <div role="status">
+                <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }}>{hcNote?.text ?? 'Health Connect staat aan, maar ASCEND mag je gewicht nog niet lezen.'}</p>
+                <div className="st-hint" style={{ marginTop: 0, marginLeft: 0 }}>
+                  {hcNote?.open ? (
+                    <TextButton onClick={() => void openHealthConnectSettings().then((ok) => !ok && setHcNote({ text: 'Health Connect ging niet open. Je vindt het in de instellingen van je telefoon.' }))}>Health Connect openen</TextButton>
+                  ) : (
+                    <TextButton onClick={() => void allowWeight()}>Gewicht toestaan</TextButton>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="st-btns">
               <button type="button" className="st-btn" onClick={() => { close(); navigate('/koppelen/macrofactor'); }}>Export inlezen</button>

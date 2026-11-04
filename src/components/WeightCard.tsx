@@ -2,14 +2,15 @@
 // WeightReminder is one line in Today's "Je dag" only when an entry is due; the weight itself
 // can be entered any time in Instellingen, Lichaam (components/settings/groups/LichaamSheets.tsx).
 //
-// With weight from a MacroFactor export (pages/MacroFactorImport.tsx) of the
-// last two weeks there is nothing to ask: the line on Today stays away and
-// the sheet in Instellingen says where the number comes from.
+// With weight from a MacroFactor export (pages/MacroFactorImport.tsx) or a
+// weighing from Health Connect (storage/healthConnect.ts) of the last two weeks
+// there is nothing to ask: the line on Today stays away and the sheet in
+// Instellingen says where the number comes from.
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { addWeightEntry, freshMacroFactorWeight, latestWeight, weightDue, weightsInUse, WEIGHT_REMINDER_DAYS } from '../engine/bodyWeight';
+import { addWeightEntry, freshLinkedWeight, latestWeight, weightDue, weightsInUse, WEIGHT_REMINDER_DAYS } from '../engine/bodyWeight';
 import { activeIllness } from '../engine/illness';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { NumberField } from './NumberField';
@@ -28,13 +29,13 @@ export function WeightReminder() {
   const { settings, updateSettings } = useAppData();
   const save = useSaveWeight();
   const navigate = useNavigate();
-  const entries = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor);
+  const entries = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   const [kg, setKg] = useState<number | undefined>(latestWeight(entries)?.kg);
   const [open, setOpen] = useState(false);
   const today = todayISO();
   if (activeIllness(settings.illnessEpisodes) || !weightDue(entries, settings.weightReminderSnoozedAt, today, settings.weightReminderDays ?? WEIGHT_REMINDER_DAYS)) return null;
-  // The weight comes from MacroFactor and is recent: nothing to ask.
-  if (freshMacroFactorWeight(settings.weightEntries, settings.weightFromMacroFactor, today)) return null;
+  // The weight comes from MacroFactor or Health Connect and is recent: nothing to ask.
+  if (freshLinkedWeight(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, today)) return null;
   const last = latestWeight(entries);
   return (
     <>
@@ -44,7 +45,9 @@ export function WeightReminder() {
           {(close) => (
             <div className="flex flex-col gap-2">
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-                {last?.source === 'macrofactor'
+                {last?.source === 'health-connect'
+                  ? `Je laatste weging uit Health Connect is van ${formatDateNL(last.date)}. Weeg je weer, dan komt het vanzelf binnen, of vul je gewicht hier zelf in; een globaal getal is genoeg.`
+                  : last?.source === 'macrofactor'
                   ? `Je laatste gewicht uit MacroFactor is van ${formatDateNL(last.date)}. Lees een nieuwe export in, of vul je trendgewicht zelf in; een globaal getal is genoeg.`
                   : last
                   ? `Je laatste gewicht is van ${formatDateNL(last.date)}. Vul je trendgewicht uit MacroFactor in; een globaal getal is genoeg.`

@@ -1,11 +1,12 @@
 // ASCEND: Health Connect als bron in de Android-app (docs/beslissingen/2026-11-02-health-connect.md).
 //
 // Health Connect is de plek waar Android gezondheidsgegevens van andere apps bewaart (Garmin
-// Connect, MacroFactor). ASCEND leest er alleen uit, en alleen wat het gebruikt: trainingen met
-// hun afstand, slaap, rusthartslag en HRV. Het schrijft er nooit iets in.
+// Connect, MacroFactor, een weegschaal). ASCEND leest er alleen uit, en alleen wat het gebruikt:
+// trainingen met hun afstand, slaap, rusthartslag, HRV, en je gewicht met vetpercentage
+// (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md). Het schrijft er nooit iets in.
 //
 // Dit bestand is de enige plek die de plugin @capgo/capacitor-health kent. Alles wat eruit komt
-// wordt hier de gewone vorm die elke bron vult (ExternalActivity, RecoveryMetric) met
+// wordt hier de gewone vorm die elke bron vult (ExternalActivity, RecoveryMetric, BodyMetric) met
 // `source: 'health-connect'`; geen scherm en geen engine-bestand ziet een veld van de plugin.
 // De laag naar de telefoon (`HealthConnectPort`) is klein en vervangbaar, zodat tests hem
 // nadoen (`setHealthConnectPort`). In de browser is er geen Health Connect: de laag zegt dat
@@ -15,7 +16,7 @@ import { Capacitor } from '@capacitor/core';
 import type { HealthSample, Workout, WorkoutType } from '@capgo/capacitor-health';
 import type { DataSourceAdapter, DateRange } from './types';
 import type { ExternalActivity, ExternalActivityKind } from '../engine/activityImport';
-import type { RecoveryMetric } from '../models/metrics';
+import type { BodyMetric, RecoveryMetric } from '../models/metrics';
 import type { HealthConnectErrorKind, HealthKind } from '../models/healthConnect';
 import { countedSportOfExternalType, type CountedSportId } from '../data/sports';
 import { parseISODate, toISODate } from '../utils/dates';
@@ -25,7 +26,7 @@ export const HEALTH_CONNECT_ADAPTER_ID = 'health-connect';
 
 // Wat ASCEND mag vragen (models/healthConnect.ts).
 export type { HealthConnectErrorKind, HealthKind } from '../models/healthConnect';
-export const HEALTH_KINDS: readonly HealthKind[] = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability'];
+export const HEALTH_KINDS: readonly HealthKind[] = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability', 'weight', 'bodyFat'];
 export type HealthSampleKind = Exclude<HealthKind, 'workouts'>;
 
 export type HealthAvailability = 'ready' | 'not-installed' | 'needs-update' | 'web';
@@ -188,6 +189,31 @@ export function mapHealthRecovery(input: Partial<Record<'sleep' | 'restingHeartR
   return [...byDate.values()].filter((m) => Object.keys(m).length > 3).sort((a, b) => a.date.localeCompare(b.date));
 }
 
+// Eén gewicht per dag: de eerste weging van de dag, want 's ochtends en nuchter is de vaste
+// meting, en een tweede app die dezelfde weging later nog eens doorgeeft telt dan niet. Het
+// vetpercentage ook van de eerste meting van die dag. Grenzen: 30 tot 250 kg en 3 tot 60 %; een
+// getal daarbuiten is een fout van de bron. Een vetpercentage zonder weging die dag geeft geen
+// gewicht. Het gewicht staat in kilo's, het vetpercentage in procenten (0 tot 100).
+export function mapHealthBody(input: Partial<Record<'weight' | 'bodyFat', readonly HealthSample[]>>): BodyMetric[] {
+  const first = (list: readonly HealthSample[] | undefined, min: number, max: number) => {
+    const seen = new Map<string, number>();
+    for (const s of [...(list ?? [])].sort((a, b) => timeOf(a.startDate) - timeOf(b.startDate))) {
+      const date = dayOf(s.startDate);
+      const v = within(s.value, min, max);
+      if (date && v !== undefined && !seen.has(date)) seen.set(date, v);
+    }
+    return seen;
+  };
+  const kg = first(input.weight, 30, 250);
+  const fat = first(input.bodyFat, 3, 60);
+  return [...kg]
+    .map(([date, weightKg]) => {
+      const bodyFatPct = fat.get(date);
+      return { id: `${HEALTH_CONNECT_ADAPTER_ID}:${date}`, date, source: 'health-connect' as const, weightKg, ...(bodyFatPct !== undefined ? { bodyFatPct } : {}) };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 // Een bereik van dagen (`to` niet meer meegeteld, zoals bij intervals.icu) als twee momenten:
 // van middernacht tot middernacht, maar nooit verder dan nu. Vandaag telt nog niet als voorbij.
 export function rangeBounds(range: DateRange, now: Date): { from: string; to: string } {
@@ -328,6 +354,15 @@ export function createHealthConnectAdapter(port: HealthConnectPort, options: { n
       if (ok.has('restingHeartRate')) input.restingHeartRate = await port.samples('restingHeartRate', from, to);
       if (ok.has('heartRateVariability')) input.heartRateVariability = await port.samples('heartRateVariability', from, to);
       return mapHealthRecovery(input).filter((m) => m.date >= range.from && m.date < range.to);
+    },
+    // Gewicht en vetpercentage; zonder toestemming voor gewicht niets.
+    fetchBodyMetrics: async (range) => {
+      const ok = await allowed();
+      if (!ok.has('weight')) return [];
+      const { from, to } = rangeBounds(range, now());
+      const weight = await port.samples('weight', from, to);
+      const bodyFat = ok.has('bodyFat') && weight.length > 0 ? await port.samples('bodyFat', from, to) : [];
+      return mapHealthBody({ weight, bodyFat }).filter((m) => m.date >= range.from && m.date < range.to);
     },
   };
 }

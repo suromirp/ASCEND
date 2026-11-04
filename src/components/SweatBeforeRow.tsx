@@ -26,7 +26,7 @@ export function SweatBeforeRow({ template, className = '' }: { template: Session
   const [note, setNote] = useState<string | null>(null);
   if (!asksSweat(settings.askSweat) || !sweatActivityOfTemplate(template)) return null;
 
-  const suggestion = weightSuggestion(settings.weightEntries, settings.weightFromMacroFactor, today);
+  const suggestion = weightSuggestion(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, today);
 
   async function save(kg: number | undefined) {
     if (busy || kg === undefined) return;
