@@ -128,6 +128,8 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Taal: fijn om te lezen, concreet, duidelijk, niet te lang. Geen letterlijke vertaling uit het Engels; Engelse vaktermen alleen waar een sporter ze zo gebruikt.
 - Nieuwe rol: een copywriter (vaste naam Scribe) in `.claude/agents/`, op sonnet. Scribe schrijft of herschrijft, Scout controleert de techniek, Warden toetst aan de stem van ASCEND (`docs/beslissingen/2026-10-27-stem-van-ascend.md`).
 - Eerst Scout: hoe MacroFactor Workouts de uitleg opbouwt, wat goed werkt en wat niet. Daarna een proef met vijf oefeningen ter keuring door de eigenaar, pas dan de rest.
+- Scout zoekt per oefening ook op hoe je hem echt goed doet, liefst geverifieerd: onderzoek, erkende bonden of opleidingen (NSCA, ACSM) en ervaren coaches, met de bron in `docs/onderzoek/`.
+- Planning (eigenaar, 4 november): niet deze week. Deze week geen grote aanpassingen meer, het abonnement staat al op 60 tot 70 procent. Ruilen met een echte vervanger ook pas daarna.
 
 ## Geparkeerd
 
