@@ -212,7 +212,16 @@ export function HistoryPage() {
                 <button key={log.id} onClick={() => setSelectedLog(log)} data-sheet-from className="min-h-[52px] text-left">
                   <div className="flex items-center gap-3 rounded-xl border px-3 py-3" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
                     <span className="h-8 w-1 shrink-0 rounded-full" style={{ background: look.color }} aria-hidden />
-                    <span className="w-[56px] shrink-0 whitespace-nowrap text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(log.completedDate)}</span>
+                    {(() => {
+                      // Dag boven, korte maand eronder: past ook bij grotere letters ("3 november" liep over de naam).
+                      const [, day, month] = formatShortDayNL(log.completedDate).split(' ');
+                      return (
+                        <span className="flex w-10 shrink-0 flex-col items-center leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }} aria-label={formatDateNL(log.completedDate)}>
+                          <span className="text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{day}</span>
+                          <span className="text-xs">{month}</span>
+                        </span>
+                      );
+                    })()}
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-1.5 break-words text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
                         <span className="min-w-0 break-words">{template?.name ?? log.templateId}</span>
