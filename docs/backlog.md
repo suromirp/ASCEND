@@ -114,6 +114,13 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Na "Gewicht toestaan" de uitkomst van de ronde tonen (gelukt, geen wegingen gevonden).
 - Vraag aan de eigenaar: je gewicht met trend op Stand? Meenemen in het ontwerprapport voor Stand.
 
+## Forge: ruilen met een echte vervanger (wens 4 november)
+
+- Bij Ruilen eerst de oefeningen die echt hetzelfde doen: dezelfde beweging, dezelfde hoofdspieren en dezelfde hoek (Barbell Bench Press naar Dumbbell Bench Press, Smith Machine Bench Press, Machine Chest Press). Bovenaan, met een korte reden, en de beste als aanbevolen.
+- Daaronder, apart, de rest die dezelfde spier raakt maar anders (dips, incline, close grip, push-up).
+- Nu (`engine/forgeWorkout.ts#swapScore`) telt alleen gedeelde spieren en het bewegingspatroon, waardoor dips boven de dumbbell bench press staat. Nodig: per oefening een fijnere beschrijving (hoek vlak, schuin of dalend, grip, bereik, stabiliteit) of een lijst met echte vervangers per oefening.
+- Eerst Scout: hoe MacroFactor Workouts vervangers kiest en toont, en wat de literatuur zegt over welke oefeningen elkaar echt vervangen. Daarna Cartographer voor het blad, Sherpa (sonnet, geen planning) voor de engine.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
