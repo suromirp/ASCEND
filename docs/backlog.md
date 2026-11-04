@@ -121,6 +121,14 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Nu (`engine/forgeWorkout.ts#swapScore`) telt alleen gedeelde spieren en het bewegingspatroon, waardoor dips boven de dumbbell bench press staat. Nodig: per oefening een fijnere beschrijving (hoek vlak, schuin of dalend, grip, bereik, stabiliteit) of een lijst met echte vervangers per oefening.
 - Eerst Scout: hoe MacroFactor Workouts vervangers kiest en toont, en wat de literatuur zegt over welke oefeningen elkaar echt vervangen. Daarna Cartographer voor het blad, Sherpa (sonnet, geen planning) voor de engine.
 
+## Forge: uitleg bij oefeningen (wens 4 november)
+
+- Eén overzicht per oefening: wat het is, hoe de beweging gaat, welke spieren, waar je op let. Bovenaan "In het kort" met de twee of drie belangrijkste punten, daaronder "Lees verder" voor wie meer wil.
+- Nu heeft elke oefening (120 in `src/data/exercises.ts`) drie korte regels (Doen, Let op, Vaak fout). Te kaal, en soms klopt het niet: bij de 45° Incline Barbell Press staat "een lichte helling".
+- Taal: fijn om te lezen, concreet, duidelijk, niet te lang. Geen letterlijke vertaling uit het Engels; Engelse vaktermen alleen waar een sporter ze zo gebruikt.
+- Nieuwe rol: een copywriter (vaste naam Scribe) in `.claude/agents/`, op sonnet. Scribe schrijft of herschrijft, Scout controleert de techniek, Warden toetst aan de stem van ASCEND (`docs/beslissingen/2026-10-27-stem-van-ascend.md`).
+- Eerst Scout: hoe MacroFactor Workouts de uitleg opbouwt, wat goed werkt en wat niet. Daarna een proef met vijf oefeningen ter keuring door de eigenaar, pas dan de rest.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
