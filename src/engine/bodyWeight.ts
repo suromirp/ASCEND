@@ -25,9 +25,15 @@ export function weightDue(entries: WeightEntry[] | undefined, snoozedAt: string 
   return !last || daysBetween(last.date, asOf) >= reminderDays;
 }
 
-// One entry per day: a second entry the same day replaces the first.
+// Een weging uit Health Connect heeft een eigen plek naast wat je zelf invulde of uit MacroFactor
+// inlas (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md): per dag hoogstens één van elk.
+export const isHealthConnectWeight = (e: Pick<WeightEntry, 'source'>): boolean => e.source === 'health-connect';
+export const sameWeightPlace = (a: Pick<WeightEntry, 'date' | 'source'>, b: Pick<WeightEntry, 'date' | 'source'>): boolean => a.date === b.date && isHealthConnectWeight(a) === isHealthConnectWeight(b);
+
+// One entry per day: a second entry the same day replaces the first. A weighing
+// from Health Connect that day stays, on its own place.
 export function addWeightEntry(entries: WeightEntry[] | undefined, entry: WeightEntry): WeightEntry[] {
-  return [...(entries ?? []).filter((e) => e.date !== entry.date), entry].sort((a, b) => a.date.localeCompare(b.date));
+  return [...(entries ?? []).filter((e) => !sameWeightPlace(e, entry)), entry].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 // "12 kg is 15% van je gewicht"; undefined without a weight.
@@ -46,27 +52,52 @@ export function packSharePct(packKg: number, entries: WeightEntry[] | undefined)
 // weightsInUse(...).
 
 // The entries the app reads. Every place that needs the body weight goes
-// through this, so the switch counts everywhere.
-export function weightsInUse(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined): WeightEntry[] {
-  const all = entries ?? [];
-  return fromMacroFactor === false ? all.filter((e) => e.source !== 'macrofactor') : all;
+// through this, so the switches count everywhere: "Gewicht uit MacroFactor"
+// (AppSettings.weightFromMacroFactor) and "Gewicht uit Health Connect"
+// (AppSettings.weightFromHealthConnect), both on unless set to false. The
+// third argument is required on purpose: a caller that forgets the switch
+// does not compile.
+//
+// Eén gewicht per dag, met een vaste voorrang: wat je zelf invulde of uit MacroFactor inlas gaat
+// voor de weging uit Health Connect. Dat was een bewuste keuze van jou, en het trendgewicht van
+// MacroFactor is rustiger dan één weging. Heeft de winnaar geen vetpercentage en de weging uit
+// Health Connect van die dag wel, dan krijgt hij dat erbij.
+export function weightsInUse(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined, fromHealthConnect: boolean | undefined): WeightEntry[] {
+  const own = new Map<string, WeightEntry>();
+  const linked = new Map<string, WeightEntry>();
+  for (const e of entries ?? []) {
+    if (fromMacroFactor === false && e.source === 'macrofactor') continue;
+    if (fromHealthConnect === false && isHealthConnectWeight(e)) continue;
+    (isHealthConnectWeight(e) ? linked : own).set(e.date, e);
+  }
+  const out: WeightEntry[] = [...own.values()].map((e) => {
+    const other = linked.get(e.date);
+    return e.fatPct === undefined && other?.fatPct !== undefined ? { ...e, fatPct: other.fatPct } : e;
+  });
+  for (const [date, e] of linked) if (!own.has(date)) out.push(e);
+  return out.sort((a, b) => a.date.localeCompare(b.date));
 }
 
 // The one body weight for the leg index and the rucksack share: the latest
 // entry in use. From MacroFactor that is the trend weight (see
 // engine/macrofactorWeight.ts for why).
-export function currentBodyKg(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined): number | undefined {
-  return latestWeight(weightsInUse(entries, fromMacroFactor))?.kg;
+export function currentBodyKg(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined, fromHealthConnect: boolean | undefined): number | undefined {
+  return latestWeight(weightsInUse(entries, fromMacroFactor, fromHealthConnect))?.kg;
 }
 
 export const MACROFACTOR_FRESH_DAYS = 14;
 
-// The weight ASCEND currently uses, when it comes from MacroFactor and is
-// from the last two weeks: then the question for a weight has no reason to
-// be asked, and the app says where the number comes from instead.
-export function freshMacroFactorWeight(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined, asOf: string): WeightEntry | undefined {
-  const last = latestWeight(weightsInUse(entries, fromMacroFactor));
-  return last && last.source === 'macrofactor' && daysBetween(last.date, asOf) <= MACROFACTOR_FRESH_DAYS ? last : undefined;
+// The weight ASCEND currently uses, when it comes from MacroFactor or Health
+// Connect and is from the last two weeks: then the question for a weight has
+// no reason to be asked, and the app says where the number comes from instead.
+export function freshLinkedWeight(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined, fromHealthConnect: boolean | undefined, asOf: string): WeightEntry | undefined {
+  const last = latestWeight(weightsInUse(entries, fromMacroFactor, fromHealthConnect));
+  return last && (last.source === 'macrofactor' || isHealthConnectWeight(last)) && daysBetween(last.date, asOf) <= MACROFACTOR_FRESH_DAYS ? last : undefined;
+}
+
+// Is there weight from Health Connect stored at all (switch on or off)?
+export function hasHealthConnectWeight(entries: WeightEntry[] | undefined): boolean {
+  return (entries ?? []).some(isHealthConnectWeight);
 }
 
 // Is there weight from MacroFactor stored at all (switch on or off)?

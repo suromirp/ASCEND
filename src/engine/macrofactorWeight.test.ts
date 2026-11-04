@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { applyWeightImport, planWeightImport, readMacroFactorWeightCsv, weightEntryFromDay } from './macrofactorWeight';
 import { readMacroFactorBytes, readMacroFactorText } from './macrofactorFile';
 import { MacroFactorFormatError } from './macrofactorImport';
-import { currentBodyKg, freshMacroFactorWeight, hasMacroFactorWeight, packSharePct, weightsInUse } from './bodyWeight';
+import { currentBodyKg, freshLinkedWeight, hasMacroFactorWeight, packSharePct, weightsInUse } from './bodyWeight';
 import type { WeightEntry } from '../models/metrics';
 import weightCsv from './fixtures/macrofactor-weight.csv?raw';
 import scaleOnlyCsv from './fixtures/macrofactor-weight-weegschaal.csv?raw';
@@ -121,8 +121,8 @@ describe('the trend weight over the scale weight', () => {
     const { days } = readMacroFactorWeightCsv(weightCsv);
     const entries = applyWeightImport([], planWeightImport([], days));
     // The last day: the scale said 84.8, the trend 85.35.
-    expect(currentBodyKg(entries, undefined)).toBe(85.35);
-    expect(packSharePct(12, weightsInUse(entries, undefined))).toBe(14);
+    expect(currentBodyKg(entries, undefined, undefined)).toBe(85.35);
+    expect(packSharePct(12, weightsInUse(entries, undefined, undefined))).toBe(14);
   });
 });
 
@@ -166,7 +166,7 @@ describe('not overwriting what you filled in yourself', () => {
 
   it('keeps a manual weight that is newer than the file as the weight in use', () => {
     const entries = applyWeightImport([own('2026-10-20', 86)], planWeightImport([own('2026-10-20', 86)], days));
-    expect(currentBodyKg(entries, undefined)).toBe(86);
+    expect(currentBodyKg(entries, undefined, undefined)).toBe(86);
   });
 
   it('keeps only the last 120 days of a long file and drops MacroFactor days older than a year', () => {
@@ -189,19 +189,19 @@ describe('the switch "Gewicht uit MacroFactor gebruiken"', () => {
   const entries = [own('2026-09-01', 87), mf];
 
   it('counts the MacroFactor weight unless it is switched off', () => {
-    expect(currentBodyKg(entries, undefined)).toBe(85.35);
-    expect(currentBodyKg(entries, true)).toBe(85.35);
-    expect(currentBodyKg(entries, false)).toBe(87);
-    expect(weightsInUse(entries, false)).toEqual([own('2026-09-01', 87)]);
+    expect(currentBodyKg(entries, undefined, undefined)).toBe(85.35);
+    expect(currentBodyKg(entries, true, undefined)).toBe(85.35);
+    expect(currentBodyKg(entries, false, undefined)).toBe(87);
+    expect(weightsInUse(entries, false, undefined)).toEqual([own('2026-09-01', 87)]);
     // Off does not delete anything: it only stops using it.
     expect(hasMacroFactorWeight(entries)).toBe(true);
   });
 
   it('is "fresh" for two weeks: then the question for a weight is not asked', () => {
-    expect(freshMacroFactorWeight(entries, undefined, '2026-10-20')).toEqual(mf);
-    expect(freshMacroFactorWeight(entries, undefined, '2026-11-01')).toEqual(mf);
-    expect(freshMacroFactorWeight(entries, undefined, '2026-11-02')).toBeUndefined();
-    expect(freshMacroFactorWeight(entries, false, '2026-10-20')).toBeUndefined();
-    expect(freshMacroFactorWeight([own('2026-10-19', 86), mf], undefined, '2026-10-20')).toBeUndefined();
+    expect(freshLinkedWeight(entries, undefined, undefined, '2026-10-20')).toEqual(mf);
+    expect(freshLinkedWeight(entries, undefined, undefined, '2026-11-01')).toEqual(mf);
+    expect(freshLinkedWeight(entries, undefined, undefined, '2026-11-02')).toBeUndefined();
+    expect(freshLinkedWeight(entries, false, undefined, '2026-10-20')).toBeUndefined();
+    expect(freshLinkedWeight([own('2026-10-19', 86), mf], undefined, undefined, '2026-10-20')).toBeUndefined();
   });
 });

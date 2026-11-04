@@ -1,18 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { healthEnableNote, healthOffNote } from './healthConnectNote';
 
-const ALL = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability'] as const;
+const ALL = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability', 'weight', 'bodyFat'] as const;
 
 describe('wat je ziet na het aanzetten van Health Connect', () => {
   it('aan en opgehaald: wat er binnenkwam', () => {
-    expect(healthEnableNote({ status: 'on', granted: [...ALL], sync: { status: 'ok', activities: 2, mornings: 1 } })).toEqual({ text: 'Health Connect staat aan. 2 trainingen en 1 ochtend opgehaald.', tone: 'ok' });
-    expect(healthEnableNote({ status: 'on', granted: [...ALL], sync: { status: 'ok', activities: 0, mornings: 0 } }).text).toBe('Health Connect staat aan. Er stond nog niets nieuws in.');
+    expect(healthEnableNote({ status: 'on', granted: [...ALL], sync: { status: 'ok', activities: 2, mornings: 1, weights: 0 } })).toEqual({ text: 'Health Connect staat aan. 2 trainingen en 1 ochtend opgehaald.', tone: 'ok' });
+    expect(healthEnableNote({ status: 'on', granted: [...ALL], sync: { status: 'ok', activities: 0, mornings: 0, weights: 0 } }).text).toBe('Health Connect staat aan. Er stond nog niets nieuws in.');
   });
 
   it('niet alles vrijgegeven: dat staat erbij', () => {
-    expect(healthEnableNote({ status: 'on', granted: ['sleep'], sync: { status: 'ok', activities: 0, mornings: 3 } }).text).toBe(
-      'Health Connect staat aan. 3 ochtenden opgehaald. Je gaf niet alles vrij: trainingen, afstand, rusthartslag en HRV haalt ASCEND niet op.',
+    expect(healthEnableNote({ status: 'on', granted: ['sleep'], sync: { status: 'ok', activities: 0, mornings: 3, weights: 0 } }).text).toBe(
+      'Health Connect staat aan. 3 ochtenden opgehaald. Je gaf niet alles vrij: trainingen, afstand, rusthartslag, HRV, gewicht en vetpercentage haalt ASCEND niet op.',
     );
+  });
+
+  it('gewicht dat binnenkwam staat erbij', () => {
+    expect(healthEnableNote({ status: 'on', granted: [...ALL], sync: { status: 'ok', activities: 1, mornings: 2, weights: 5 } }).text).toBe('Health Connect staat aan. 1 training, 2 ochtenden en 5 dagen gewicht opgehaald.');
   });
 
   it('aan, maar het ophalen lukte nog niet', () => {

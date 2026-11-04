@@ -98,6 +98,7 @@ const everything: AppSettings = {
   watchHeartRate: 'intervals',
   watchCalmRun: false,
   weightFromMacroFactor: false,
+  weightFromHealthConnect: false,
   stravaText: false,
   keepStreams: false,
   morningInBackup: false,

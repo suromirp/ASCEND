@@ -94,7 +94,7 @@ export function setPlanningRegisters(program: Program | null, tpls: SessionTempl
   setLongRunThenLegs(!!loadedSettings.longRunThenLegs);
   setTestRestHours(resolveTestRest(loadedSettings.testRest));
   // The planner's leg index with the same inputs as the Benen card.
-  const lastWeight = currentBodyKg(loadedSettings.weightEntries, loadedSettings.weightFromMacroFactor);
+  const lastWeight = currentBodyKg(loadedSettings.weightEntries, loadedSettings.weightFromMacroFactor, loadedSettings.weightFromHealthConnect);
   setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
   setFixedSessionMinutes(planned);
   setAmbition(scope.ambition);

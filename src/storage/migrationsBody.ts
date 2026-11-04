@@ -2,6 +2,8 @@
 // benen, zweet, blessures, ochtendgetallen, 1RM, gewicht en wat speelde er.
 
 import { isPlausibleFatPct } from '../engine/bodyFat';
+import { isHealthConnectWeight } from '../engine/bodyWeight';
+import { HC_MAX_KG, HC_MIN_KG } from '../engine/healthConnectWeight';
 import type { NightJudgment, WeeklyHealthCheck } from '../models/checkIn';
 import { MAX_LEG_EASE_DAYS, type LegEaseDay } from '../models/legEase';
 import type { InjuryNote } from '../models/injury';
@@ -282,16 +284,35 @@ export function migrateExternalOneRm(raw: unknown): { series: ExternalOneRm[] | 
 // 3 and 60 is dropped (and counted) while the weight of that day stays: a weigh-in is
 // worth more than the one number on it. Nothing is repaired or guessed. See
 // docs/beslissingen/2026-10-25-vetpercentage-uit-macrofactor.md.
+//
+// Since 4 Nov 2026 a weighing from Health Connect (`source: 'health-connect'`) may stand
+// next to your own or MacroFactor's weight of the same day: one per day and place
+// (engine/bodyWeight.ts#sameWeightPlace, docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md).
+// A file from before has at most one per day and reads as it did. Two for the same day and
+// place (a damaged or hand-edited file) become one, the last in the file, and the other is
+// counted. A weighing from Health Connect outside 30 to 250 kg is dropped and counted, the
+// same limits as when it is read.
 export function migrateWeightEntries(entries: WeightEntry[]): { entries: WeightEntry[]; skipped: number } {
   let skipped = 0;
-  const cleaned = entries.map((e) => {
-    if (!('fatPct' in e) || isPlausibleFatPct(e.fatPct)) return e;
-    skipped++;
-    const copy: WeightEntry = { ...e };
-    delete copy.fatPct;
-    return copy;
-  });
-  return { entries: cleaned, skipped };
+  const byPlace = new Map<string, WeightEntry>();
+  for (const e of entries) {
+    const hc = isHealthConnectWeight(e);
+    if (hc && !(e.kg >= HC_MIN_KG && e.kg <= HC_MAX_KG)) {
+      skipped++;
+      continue;
+    }
+    let clean = e;
+    if ('fatPct' in e && !isPlausibleFatPct(e.fatPct)) {
+      skipped++;
+      clean = { ...e };
+      delete clean.fatPct;
+    }
+    const place = `${e.date}|${hc ? 'hc' : 'own'}`;
+    // The last one wins, on the place of the first.
+    if (byPlace.has(place)) skipped++;
+    byPlace.set(place, clean);
+  }
+  return { entries: [...byPlace.values()], skipped };
 }
 
 // --- wat speelde er: settings.influences ---------------------------------------

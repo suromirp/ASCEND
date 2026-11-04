@@ -439,9 +439,11 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   gewicht: {
     title: 'Lichaamsgewicht',
-    lead: 'Je trendgewicht, voor je rugzak en je zweetverlies. ASCEND rekent ermee, want dat is rustiger dan één weging.',
+    lead: 'Je gewicht, voor je rugzak, je zweetverlies en oefeningen met je eigen gewicht. Een trendgewicht is rustiger dan één weging; ASCEND neemt je nieuwste weging.',
     points: [
       { head: 'Uit MacroFactor', text: 'staat er een trendgewicht in de export, dan gebruikt ASCEND dat. Anders de weging zelf.' },
+      { head: 'Uit Health Connect', text: 'in de Android-app je eerste weging van de dag, van je weegschaal of een andere app die naar Health Connect schrijft.' },
+      { head: 'Op dezelfde dag', text: 'gaat wat je zelf invult of uit MacroFactor inleest voor de weging uit Health Connect. Daarna telt de nieuwste dag.' },
       { head: 'Waarvoor', text: 'je rugzak als deel van je lichaamsgewicht, de beenindex en eiwit per kilo.' },
       { head: 'Zelf invullen', text: 'een globaal getal is genoeg.' },
     ],
@@ -693,7 +695,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   healthConnect: {
     title: 'Health Connect',
-    lead: 'In de Android-app leest ASCEND je trainingen, slaap, rusthartslag en HRV uit Health Connect, als je dat aanzet.',
+    lead: 'In de Android-app leest ASCEND je trainingen, slaap, rusthartslag, HRV en gewicht uit Health Connect, als je dat aanzet.',
     points: [
       { head: 'Toestemming', text: 'Android vraagt pas als je het aanzet, en ASCEND vraagt alleen leesrechten. Het schrijft nooit iets in Health Connect.' },
       { head: 'Met intervals.icu', text: 'intervals.icu gaat voor. Een training die daar al binnenkwam, komt niet nog eens als voorstel; slaap en hartslag uit Health Connect vullen alleen aan wat ontbreekt.' },
@@ -701,6 +703,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Ophalen', text: 'Bij het openen van de app, en hoogstens elke drie uur.' },
       { head: 'Je planning', text: 'Die verandert er niet door. Een training wordt pas een log als je hem op Vandaag opslaat.' },
       { head: 'Uit', text: 'Wat ASCEND ophaalde gaat van je telefoon. Je logs blijven staan.' },
+    ],
+  },
+  healthConnectGewicht: {
+    title: 'Gewicht uit Health Connect',
+    lead: 'In de Android-app leest ASCEND je wegingen uit Health Connect, met je vetpercentage als je weegschaal dat meet. Het advies is aan.',
+    points: [
+      { head: 'Welke weging', text: 'de eerste van de dag, want die is het rustigst. Een getal onder 30 of boven 250 kg laat ASCEND weg.' },
+      { head: 'Voorrang', text: 'vul je zelf een gewicht in of lees je MacroFactor in, dan gaat dat op die dag voor. Daarna telt de nieuwste dag.' },
+      { head: 'Waarvoor', text: 'je rugzak als deel van je lichaamsgewicht, de beenindex en eiwit per kilo. Op Vandaag vraagt ASCEND niet meer om je gewicht zolang er een weging van de laatste twee weken is.' },
+      { head: 'Uit', text: 'ASCEND leest je gewicht niet meer en rekent er niet mee. Wat er al stond blijft bewaard en gaat mee in je back-up.' },
     ],
   },
   garminLeidend: {

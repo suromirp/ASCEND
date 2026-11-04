@@ -368,6 +368,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     reset: () => ({ watchCalmRun: undefined }),
   },
   flag('macrofactor-gewicht', 'Gewicht gebruiken', 'koppelingen', 'weightFromMacroFactor'),
+  flag('health-connect-gewicht', 'Gewicht uit Health Connect', 'lichaam', 'weightFromHealthConnect'),
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
   {

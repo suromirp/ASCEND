@@ -45,7 +45,7 @@ interface StepText {
 const STEPS: Record<WelcomeStep, StepText> = {
   meldingen: { icon: 'bel', title: 'Meldingen', line: 'Zodat ASCEND je de ochtendvraag, het einde van je rust en op zondag je week kan laten weten.', allow: 'Meldingen toestaan' },
   wekker: { icon: 'wekker', title: 'Exacte wekker', line: 'Zodat je telefoon trilt als je rust voorbij is, ook met het scherm uit.', allow: 'Exacte wekker toestaan' },
-  health: { icon: 'lichaam', title: 'Health Connect', line: 'ASCEND kan je trainingen, slaap, rusthartslag en HRV uit Health Connect lezen. Wil je dat, zet het dan aan bij Instellingen, Koppelingen. Pas dan vraagt Android om toestemming.' },
+  health: { icon: 'lichaam', title: 'Health Connect', line: 'ASCEND kan je trainingen, slaap, rusthartslag, HRV en gewicht uit Health Connect lezen. Wil je dat, zet het dan aan bij Instellingen, Koppelingen. Pas dan vraagt Android om toestemming.' },
   gegevens: { icon: 'logboek', title: 'Je gegevens meenemen', line: 'De app en de website in Chrome hebben elk hun eigen opslag. Gebruikte je de website al? Maak daar een back-up en zet die hier terug.', allow: 'Back-up terugzetten' },
 };
 

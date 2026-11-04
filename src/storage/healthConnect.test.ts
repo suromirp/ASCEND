@@ -10,6 +10,7 @@ import {
   enableHealthConnect,
   getHealthConnectState,
   syncHealthConnect,
+  askHealthConnectWeight,
 } from './healthConnect';
 import { migrateHealthConnectState } from './migrations';
 import { setWatchUse } from './externalActivities';
@@ -346,6 +347,98 @@ describe('de back-up', () => {
 
   it('een oudere of beschadigde stand op het toestel leest als uit', () => {
     expect(migrateHealthConnectState(undefined)).toEqual({ enabled: false, granted: [], activities: [] });
-    expect(migrateHealthConnectState({ enabled: 'ja', granted: ['sleep', 'weight'], fetchedAt: 'kapot', lastError: { kind: 'onbekend', message: 'x' }, activities: [{ externalId: 'intervals.icu:i1', start: '2026-10-20T07:00:00', durationSec: 60, kind: 'run' }, null] })).toEqual({ enabled: false, granted: ['sleep'], activities: [] });
+    expect(migrateHealthConnectState({ enabled: 'ja', granted: ['sleep', 'weight', 'steps'], fetchedAt: 'kapot', lastError: { kind: 'onbekend', message: 'x' }, activities: [{ externalId: 'intervals.icu:i1', start: '2026-10-20T07:00:00', durationSec: 60, kind: 'run' }, null] })).toEqual({ enabled: false, granted: ['sleep', 'weight'], activities: [] });
+  });
+});
+
+// Nagemaakte wegingen (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md).
+const weighing = (d: number, h: number, kg: number): HealthSample => ({ dataType: 'weight', value: kg, unit: 'kilogram', startDate: iso(d, h), endDate: iso(d, h), sourceId: 'com.example.scale' });
+const fatSample = (d: number, h: number, pct: number): HealthSample => ({ dataType: 'bodyFat', value: pct, unit: 'percent', startDate: iso(d, h), endDate: iso(d, h), sourceId: 'com.example.scale' });
+
+describe('gewicht uit Health Connect', () => {
+  it('komt in de gewone wegingen met de bron health-connect, de eerste weging van de dag, met vetpercentage', async () => {
+    const port = fake({ samples: { weight: [weighing(20, 7, 82.4), weighing(20, 21, 83.6), weighing(21, 7, 82.2), weighing(21, 8, 400)], bodyFat: [fatSample(20, 7, 18.4)] } });
+    const result = await enableHealthConnect({ port, now: NOW });
+    expect(result).toMatchObject({ status: 'on', sync: { status: 'ok', weights: 2 } });
+    expect((await SettingsRepo.get()).weightEntries).toEqual([
+      { date: '2026-10-20', kg: 82.4, source: 'health-connect', basis: 'scale', fatPct: 18.4 },
+      { date: '2026-10-21', kg: 82.2, source: 'health-connect', basis: 'scale' },
+    ]);
+  });
+
+  it('een eigen gewicht van dezelfde dag blijft staan en gaat voor', async () => {
+    await SettingsRepo.set({ weightEntries: [{ date: '2026-10-21', kg: 84, source: 'manual' }] });
+    await enableHealthConnect({ port: fake({ samples: { weight: [weighing(21, 7, 82.2)] } }), now: NOW });
+    expect((await SettingsRepo.get()).weightEntries).toEqual([
+      { date: '2026-10-21', kg: 84, source: 'manual' },
+      { date: '2026-10-21', kg: 82.2, source: 'health-connect', basis: 'scale' },
+    ]);
+  });
+
+  it('een tweede ronde met dezelfde weging schrijft niets nieuws', async () => {
+    const port = fake({ samples: { weight: [weighing(21, 7, 82.2)] } });
+    await enableHealthConnect({ port, now: NOW });
+    expect(await syncHealthConnect({ port, now: later(1), force: true })).toMatchObject({ status: 'ok', weights: 0 });
+    expect((await SettingsRepo.get()).weightEntries).toHaveLength(1);
+  });
+
+  it('met "Gewicht uit Health Connect" uit wordt het niet gelezen', async () => {
+    await SettingsRepo.set({ weightFromHealthConnect: false });
+    let asked = 0;
+    const port = fake({
+      samples: {
+        weight: async () => {
+          asked++;
+          return [weighing(21, 7, 82.2)];
+        },
+      },
+    });
+    await enableHealthConnect({ port, now: NOW });
+    expect(asked).toBe(0);
+    expect((await SettingsRepo.get()).weightEntries).toBeUndefined();
+  });
+
+  it('zonder toestemming voor gewicht: de rest komt binnen, gewicht niet', async () => {
+    const port = fake({ granted: ['restingHeartRate'], askGives: ['restingHeartRate'], samples: { restingHeartRate: [rhr(21, 50)], weight: [weighing(21, 7, 82.2)] } });
+    await enableHealthConnect({ port, now: NOW });
+    expect((await SettingsRepo.get()).weightEntries).toBeUndefined();
+    expect(await RecoveryMetricsRepo.getAll()).toHaveLength(1);
+  });
+
+  it('uitgezet terwijl de ronde liep: ook geen gewicht', async () => {
+    await enableHealthConnect({ port: fake(), now: NOW });
+    const slow = fake({
+      samples: {
+        weight: async () => {
+          await disableHealthConnect();
+          return [weighing(21, 7, 82.2)];
+        },
+      },
+    });
+    expect(await syncHealthConnect({ port: slow, now: later(4), force: true })).toEqual({ status: 'off' });
+    expect((await SettingsRepo.get()).weightEntries).toBeUndefined();
+  });
+
+  it('uitzetten laat het gewicht staan: het is jouw meting', async () => {
+    await enableHealthConnect({ port: fake({ samples: { weight: [weighing(21, 7, 82.2)] } }), now: NOW });
+    await disableHealthConnect();
+    expect((await SettingsRepo.get()).weightEntries).toHaveLength(1);
+  });
+
+  it('het gewicht gaat mee in de back-up, zoals elk gewicht', async () => {
+    await enableHealthConnect({ port: fake({ samples: { weight: [weighing(21, 7, 82.2)] } }), now: NOW });
+    const envelope = await buildBackupEnvelope();
+    expect(JSON.stringify(envelope)).toContain('"source":"health-connect","basis":"scale"');
+  });
+
+  it('nog eens vragen: wie Health Connect al aan had, kan het gewicht alsnog toestaan', async () => {
+    const before: HealthKind[] = ['workouts', 'sleep'];
+    const port = fake({ granted: before, askGives: before, samples: { weight: [weighing(21, 7, 82.2)] } });
+    await enableHealthConnect({ port, now: NOW });
+    expect(await askHealthConnectWeight({ port, now: later(1) })).toEqual({ status: 'denied' });
+    const allowed = fake({ samples: { weight: [weighing(21, 7, 82.2)] } });
+    expect(await askHealthConnectWeight({ port: allowed, now: later(1) })).toEqual({ status: 'ok' });
+    expect((await getHealthConnectState()).granted).toContain('weight');
+    expect((await SettingsRepo.get()).weightEntries).toHaveLength(1);
   });
 });

@@ -190,10 +190,12 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     else s.externalOneRm = oneRm.series;
     skipped.n += oneRm.skipped;
   }
-  // The switch for weight from MacroFactor: a yes or a no, or not there.
-  if ('weightFromMacroFactor' in s && typeof s.weightFromMacroFactor !== 'boolean') {
-    delete s.weightFromMacroFactor;
-    skipped.n++;
+  // The switches for weight from MacroFactor and from Health Connect: a yes or a no, or not there.
+  for (const key of ['weightFromMacroFactor', 'weightFromHealthConnect']) {
+    if (key in s && typeof s[key] !== 'boolean') {
+      delete s[key];
+      skipped.n++;
+    }
   }
   // The switches for the next tocht on Vandaag and the rest after a bergtocht:
   // a yes or a no, or one of two words, or not there.

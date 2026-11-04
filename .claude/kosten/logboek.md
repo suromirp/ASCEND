@@ -173,3 +173,5 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-03, Review Forge rekent mee, Warden, opus (reviewer), 94k, 5 min, 0
 - 2026-11-03, Forge na de eerste vergelijking (5 punten + opwarmen), Sherpa, opus (ontwikkelaar), 356k, 67 min, 1 (correctie eigenaar opwarmen)
 - 2026-11-03, Review Forge na 3 november, Warden, opus (reviewer), 119k, 16 min, 0, groen; 2 kleine punten door coördinator
+- 2026-11-04, Gewicht uit Health Connect, Sherpa, opus (ontwikkelaar), 254k, 29 min, 0
+- 2026-11-04, Review gewicht Health Connect, Warden, opus (reviewer), 105k, 8 min, 0, groen; 2 kleine punten door coördinator

@@ -7,6 +7,7 @@ import {
   distanceOf,
   healthConnectErrorOf,
   localStart,
+  mapHealthBody,
   mapHealthRecovery,
   mapHealthWorkout,
   rangeBounds,
@@ -131,6 +132,20 @@ describe('het bereik en de fouten', () => {
   });
 });
 
+describe('gewicht uit Health Connect', () => {
+  it('per dag de eerste weging, binnen 30 tot 250 kg, met het vetpercentage van die dag', () => {
+    expect(
+      mapHealthBody({
+        weight: [sample('weight', 83.6, at(20, 21)), sample('weight', 82.4, at(20, 7)), sample('weight', 400, at(21, 6)), sample('weight', 82.2, at(21, 7)), sample('weight', 20, at(22, 7))],
+        bodyFat: [sample('bodyFat', 18.4, at(20, 7)), sample('bodyFat', 19, at(20, 21)), sample('bodyFat', 75, at(21, 7)), sample('bodyFat', 17, at(23, 7))],
+      }),
+    ).toEqual([
+      { id: 'health-connect:2026-10-20', date: '2026-10-20', source: 'health-connect', weightKg: 82.4, bodyFatPct: 18.4 },
+      { id: 'health-connect:2026-10-21', date: '2026-10-21', source: 'health-connect', weightKg: 82.2 },
+    ]);
+  });
+});
+
 describe('de adapter', () => {
   function port(over: Partial<HealthConnectPort> = {}): HealthConnectPort {
     return {
@@ -181,6 +196,17 @@ describe('de adapter', () => {
     expect(await adapter.fetchExternalActivities!(range)).toEqual([]);
     await adapter.fetchRecoveryMetrics!(range);
     expect(asked).toEqual(['sleep']);
+  });
+
+  it('gewicht en vetpercentage als BodyMetric, alleen met toestemming voor gewicht', async () => {
+    const samples: HealthConnectPort['samples'] = async (kind) =>
+      kind === 'weight' ? [sample('weight', 82.4, at(21, 7))] : kind === 'bodyFat' ? [sample('bodyFat', 18.4, at(21, 7))] : [];
+    const withWeight = createHealthConnectAdapter(port({ granted: async () => ['weight', 'bodyFat'], samples }), { now: () => now });
+    expect(await withWeight.fetchBodyMetrics!(range)).toEqual([{ id: 'health-connect:2026-10-21', date: '2026-10-21', source: 'health-connect', weightKg: 82.4, bodyFatPct: 18.4 }]);
+    const asked: string[] = [];
+    const without = createHealthConnectAdapter(port({ granted: async () => ['bodyFat'], samples: async (kind) => (asked.push(kind), []) }), { now: () => now });
+    expect(await without.fetchBodyMetrics!(range)).toEqual([]);
+    expect(asked).toEqual([]);
   });
 
   it('niet in de app: niet verbonden en niets op te halen', async () => {

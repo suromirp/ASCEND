@@ -85,6 +85,7 @@ import { useBodyAndLeave } from './bodyAndLeave';
 import { useAdviceAndWeek } from './adviceAndWeek';
 import { snapshotWritten } from '../storage/undoPlanChange';
 import { refreshWritten } from '../engine/undoGuard';
+import { onHealthWeightChange } from '../storage/healthConnect';
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -242,6 +243,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   }, [loadState]);
   useRefreshFromOtherWindows({ refresh });
+  // Een ronde van Health Connect bracht nieuw gewicht: opnieuw lezen, zonder planningsronde, zodat een
+  // eigen invoer daarna de nieuwe lijst gebruikt (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md).
+  useEffect(() => onHealthWeightChange(() => void loadState().catch(() => undefined)), [loadState]);
   const { commitPlanChangeOutcome, commitPlanChange, respondToAdvice, undoRecentChange } = usePlanChangeActions({ setGoalEngineConfig, setSettings, setRecentChange, recentChange, setAdviceResponses, refresh });
   const { runForecastReplan, runWeeklyPrescriptionBuild, activateStrengthProgram, applyStrengthPlacementToCommittedRange, applyScheduleAnomalyFix, reportStrengthSchemaEnded, resolveStrengthRecommendation, runStrengthReviewCheck, rebuildRecommendations } = useStrengthAndReplan({ setForecastSummary, setRecentChange, setPlannerAdvice, refresh });
   useBoot({ setLoading, setBootError, setBootStep, loadState, refresh, runForecastReplan, runWeeklyPrescriptionBuild, runStrengthReviewCheck });
