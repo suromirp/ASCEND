@@ -46,7 +46,13 @@ export interface Loaded {
 async function readHealthConnectFacts(): Promise<HealthConnectFacts> {
   const inApp = healthConnectPort().inApp;
   const state = await getHealthConnectState();
-  return { inApp, enabled: inApp && state.enabled, ...(state.fetchedAt ? { fetchedAt: state.fetchedAt } : {}), ...(state.lastError ? { errorKind: state.lastError.kind } : {}) };
+  return {
+    inApp,
+    enabled: inApp && state.enabled,
+    ...(state.fetchedAt ? { fetchedAt: state.fetchedAt } : {}),
+    ...(state.lastError ? { errorKind: state.lastError.kind } : {}),
+    weightGranted: state.granted.includes('weight'),
+  };
 }
 
 // De automatische back-up: in de app altijd de map van de app, in de browser alleen de vaste map.

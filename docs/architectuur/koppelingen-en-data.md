@@ -16,6 +16,8 @@ kilometres stay with Garmin.
 
 **Health Connect** (decision `2026-11-02-health-connect.md`): in the Android app only, off by default, one switch on Koppelingen that asks for read access when you turn it on; trainings, sleep, resting heart rate and HRV through `integrations/healthConnect.ts` (the only file that knows the plugin) into the same `ExternalActivity` and `RecoveryMetric` with `source: 'health-connect'`, stored by `storage/healthConnect.ts` in one transaction per round; intervals.icu goes first (`engine/sourcePrecedence.ts`), and nothing makes a log or changes the plan by itself.
 
+**Gewicht uit Health Connect** (decision `2026-11-04-gewicht-uit-health-connect.md`): the same round reads `weight` and `bodyFat` (first weighing of the day, 30 to 250 kg, 3 to 60 %) through `fetchBodyMetrics` into `AppSettings.weightEntries` with `source: 'health-connect'` (`engine/healthConnectWeight.ts`), in the same transaction. A weighing from Health Connect has its own place per day next to your own or MacroFactor's (`engine/bodyWeight.ts#sameWeightPlace`), and on the same day your own or MacroFactor's goes first (`weightsInUse`, whose switches for MacroFactor and Health Connect are both required arguments). Switch "Uit Health Connect" in the sheet Lichaamsgewicht; it travels in the backup like any weight. Native level 8 for `READ_WEIGHT` and `READ_BODY_FAT`.
+
 **Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
 need a server); it prepares a short text to copy. Planned numbers appear only when
 the log belongs to a planned session, and no minutes without a measured duration.

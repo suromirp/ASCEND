@@ -38,7 +38,7 @@ export function useLegEase(sessionId?: string | null): LegEaseApi {
   const mode = resolveLegEase(settings);
   const how = resolveLegEaseHow(settings);
   const today = todayISO();
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   const checkIns = settings.morningCheckIns;
 
   const state = useMemo<LegEaseState | undefined>(() => {

@@ -75,16 +75,21 @@ describe('setSweatPre', () => {
 describe('weightSuggestion', () => {
   const w = (date: string, kg: number, extra: Partial<WeightEntry> = {}): WeightEntry => ({ date, kg, source: 'macrofactor', ...extra });
   it('stelt een weging van vandaag of gisteren voor, de nieuwste eerst', () => {
-    expect(weightSuggestion([w('2026-10-26', 80), w('2026-10-27', 79.8)], true, '2026-10-27')).toEqual({ kg: 79.8, date: '2026-10-27', source: 'macrofactor' });
-    expect(weightSuggestion([w('2026-10-26', 80)], true, '2026-10-27')?.kg).toBe(80);
+    expect(weightSuggestion([w('2026-10-26', 80), w('2026-10-27', 79.8)], true, undefined, '2026-10-27')).toEqual({ kg: 79.8, date: '2026-10-27', source: 'macrofactor' });
+    expect(weightSuggestion([w('2026-10-26', 80)], true, undefined, '2026-10-27')?.kg).toBe(80);
   });
   it('neemt het weegschaalgewicht boven het trendgewicht', () => {
-    expect(weightSuggestion([w('2026-10-27', 79.8, { basis: 'scale', scaleKg: 80.4 })], true, '2026-10-27')?.kg).toBe(80.4);
+    expect(weightSuggestion([w('2026-10-27', 79.8, { basis: 'scale', scaleKg: 80.4 })], true, undefined, '2026-10-27')?.kg).toBe(80.4);
   });
   it('zwijgt bij een oudere weging en als MacroFactor is uitgezet', () => {
-    expect(weightSuggestion([w('2026-10-20', 80)], true, '2026-10-27')).toBeUndefined();
-    expect(weightSuggestion([w('2026-10-27', 80)], false, '2026-10-27')).toBeUndefined();
-    expect(weightSuggestion(undefined, undefined, '2026-10-27')).toBeUndefined();
+    expect(weightSuggestion([w('2026-10-20', 80)], true, undefined, '2026-10-27')).toBeUndefined();
+    expect(weightSuggestion([w('2026-10-27', 80)], false, undefined, '2026-10-27')).toBeUndefined();
+    expect(weightSuggestion(undefined, undefined, undefined, '2026-10-27')).toBeUndefined();
+  });
+  it('stelt ook een weging uit Health Connect voor, tenzij die is uitgezet', () => {
+    const scale = w('2026-10-27', 80.2, { source: 'health-connect', basis: 'scale' });
+    expect(weightSuggestion([scale], undefined, undefined, '2026-10-27')).toEqual({ kg: 80.2, date: '2026-10-27', source: 'health-connect' });
+    expect(weightSuggestion([scale], undefined, false, '2026-10-27')).toBeUndefined();
   });
 });
 

@@ -35,6 +35,7 @@ function facts(over: Partial<SettingsFacts> = {}): SettingsFacts {
     longSundayVisible: true,
     device: { timed: true, notifications: 'granted', exactAlarm: 'granted', healthConnect: 'soon' },
     liveUpdate: true,
+    healthConnect: { inApp: true, enabled: true, weightGranted: true },
     ...over,
   };
 }
@@ -67,13 +68,15 @@ describe('rowAvailability', () => {
   });
 
   it('niet gekoppeld: de horlogeschakelaars en de MacroFactor-keuzes staan er niet, met de reden', () => {
-    const none = facts({ watch: watch({ linked: false }), macroFactor: { leads: true } });
+    const none = facts({ watch: watch({ linked: false }), macroFactor: { leads: true }, healthConnect: { inApp: true, enabled: false } });
     expect(rowAvailability('slaap', none)).toEqual({ available: false, reason: 'Zichtbaar zodra Garmin is gekoppeld of Health Connect aan staat', parent: 'garmin' });
     // Met Health Connect aan staan de keuzes er wel (de rij heet dan Gebruik van je gegevens).
     expect(rowAvailability('slaap', facts({ watch: watch({ linked: false }), healthConnect: { inApp: true, enabled: true } })).available).toBe(true);
     expect(rowAvailability('macrofactor-leidend', none)).toMatchObject({ available: false, parent: 'macrofactor' });
     expect(settingAvailabilityOnPage('horloge-gebruik', none).available).toBe(false);
     expect(settingAvailabilityOnPage('garmin', none).available).toBe(true);
+    // Gewicht uit Health Connect staat in het blad Lichaamsgewicht zodra Health Connect aan staat.
+    expect(rowAvailability('health-connect-gewicht', none)).toEqual({ available: false, reason: 'Zichtbaar zodra Health Connect aan staat', parent: 'health-connect' });
   });
 
   it('Trainingen uit: de Garmin-kinderen verdwijnen, ze worden niet uitgegrijsd', () => {

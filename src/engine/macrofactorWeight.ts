@@ -23,6 +23,7 @@
 import type { WeightEntry } from '../models/metrics';
 import { addDays } from '../utils/dates';
 import { isPlausibleFatPct } from './bodyFat';
+import { isHealthConnectWeight } from './bodyWeight';
 import { headingKey, headingUnit, LB_TO_KG, MacroFactorFormatError, parseCsv, parseDateCell, parseNumber } from './macrofactorImport';
 import { cellText, type Cell } from './sheetTable';
 
@@ -222,7 +223,8 @@ const SAME_KG = 0.05;
 export function planWeightImport(existing: WeightEntry[] | undefined, days: MacroFactorWeightDay[]): WeightImportPlan {
   const newest = days.reduce((max, d) => (d.date > max ? d.date : max), '');
   const from = newest ? addDays(newest, -KEEP_DAYS) : '';
-  const byDate = new Map((existing ?? []).map((e) => [e.date, e]));
+  // Een weging uit Health Connect staat op een eigen plek en is nooit een conflict (engine/bodyWeight.ts#sameWeightPlace).
+  const byDate = new Map((existing ?? []).filter((e) => !isHealthConnectWeight(e)).map((e) => [e.date, e]));
   const plan: WeightImportPlan = { add: [], conflicts: [], same: 0 };
   for (const day of days) {
     if (day.date < from) continue;
@@ -257,6 +259,6 @@ export function applyWeightImport(existing: WeightEntry[] | undefined, plan: Wei
   const dates = new Set(incoming.map((e) => e.date));
   const newest = incoming.reduce((max, e) => (e.date > max ? e.date : max), '');
   const cutoff = newest ? addDays(newest, -KEEP_OLD_DAYS) : '';
-  const kept = (existing ?? []).filter((e) => !dates.has(e.date) && !(e.source === 'macrofactor' && e.date < cutoff));
+  const kept = (existing ?? []).filter((e) => isHealthConnectWeight(e) || (!dates.has(e.date) && !(e.source === 'macrofactor' && e.date < cutoff)));
   return [...kept, ...incoming].sort((a, b) => a.date.localeCompare(b.date));
 }

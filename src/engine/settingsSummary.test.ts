@@ -337,6 +337,13 @@ describe('rowSummary: lichaam', () => {
     expect(rowSummary('lichaamsgewicht', facts())).toEqual({ value: '85,6 kg', auto: true, sub: 'MacroFactor, 22 okt' });
     expect(rowSummary('lichaamsgewicht', facts({ weight: { kg: 84, source: 'manual', date: '2026-10-01' } }))).toEqual({ value: '84 kg', auto: false, sub: 'Zelf ingevuld, 1 okt' });
     expect(rowSummary('lichaamsgewicht', facts({ weight: null }))).toEqual({ value: 'Niet ingevuld', dim: true });
+    // Een weging uit Health Connect: waar hij vandaan komt en van wanneer.
+    expect(rowSummary('lichaamsgewicht', facts({ weight: { kg: 82.5, source: 'health-connect', date: '2026-11-03' } }))).toEqual({ value: '82,5 kg', auto: true, sub: 'Uit Health Connect, 3 nov' });
+    // De schakelaar in het blad: aan als advies; aan zonder toestemming zegt dat eronder.
+    expect(rowSummary('health-connect-gewicht', facts())).toMatchObject({ checked: true });
+    expect(rowSummary('health-connect-gewicht', facts({ healthConnect: { inApp: true, enabled: true } }))).toMatchObject({ checked: true, sub: 'Nog geen toestemming voor gewicht' });
+    expect(rowSummary('health-connect-gewicht', facts({ healthConnect: { inApp: true, enabled: true, weightGranted: true } }))).toMatchObject({ checked: true });
+    expect(rowSummary('health-connect-gewicht', facts({ settings: { strengthTrackedExternally: false, introSoundEnabled: true, weightFromHealthConnect: false } }))).toMatchObject({ checked: false });
   });
 
   it('hartslag: drempel, maximum of niets', () => {

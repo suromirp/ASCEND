@@ -12,8 +12,12 @@
 // - de planning veranderen. Wat binnenkomt loopt via de voorstellen die er al zijn.
 // - half opslaan. Een ronde haalt eerst alles op en schrijft dan alles in één transactie, of niets.
 //
-// Niets hiervan gaat mee in de back-up behalve de ochtenden, en die alleen zoals elke ochtend
-// (engine/morningBackup.ts).
+// Het gewicht (met vetpercentage) gaat in de gewone lijst van wegingen in de instellingen
+// (AppSettings.weightEntries) met `source: 'health-connect'`, in dezelfde transactie
+// (engine/healthConnectWeight.ts, docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md).
+//
+// Niets hiervan gaat mee in de back-up behalve de ochtenden, zoals elke ochtend
+// (engine/morningBackup.ts), en het gewicht, zoals elk gewicht.
 
 import { getDB, MetaRepo, RecoveryMetricsRepo, SettingsRepo } from './database';
 import { migrateHealthConnectState } from './migrations';
@@ -22,7 +26,9 @@ import { KEEP_DAYS } from '../engine/wellnessRange';
 import { filterRecovery } from '../engine/watchUse';
 import { getWatchState } from './externalActivities';
 import type { ExternalActivity } from '../engine/activityImport';
-import type { RecoveryMetric } from '../models/metrics';
+import type { BodyMetric, RecoveryMetric, WeightEntry } from '../models/metrics';
+import type { AppSettings } from './databaseSettings';
+import { mergeHealthWeights, weightEntryFromBody } from '../engine/healthConnectWeight';
 import {
   HEALTH_CONNECT_ADAPTER_ID,
   HealthConnectError,
@@ -38,6 +44,8 @@ import { addDays, toISODate } from '../utils/dates';
 import { withTimeout } from '../utils/withTimeout';
 
 export const HEALTH_CONNECT_KEY = 'healthConnect';
+// De instellingen staan onder deze meta-sleutel (storage/databaseSettings.ts#SettingsRepo).
+const SETTINGS_KEY = 'settings';
 const PREFIX = `${HEALTH_CONNECT_ADAPTER_ID}:`;
 
 // Hoe ver een ronde terugkijkt: de trainingen zoals bij intervals.icu, de ochtenden vier weken
@@ -85,6 +93,19 @@ function notifyHealthConnectChange(): void {
   listeners.forEach((l) => l());
 }
 
+// Een ronde die het gewicht veranderde: de app leest de instellingen opnieuw
+// (state/AppDataProvider.tsx), zodat een eigen invoer daarna nooit een oude lijst terugschrijft.
+const weightListeners = new Set<() => void>();
+export function onHealthWeightChange(listener: () => void): () => void {
+  weightListeners.add(listener);
+  return () => {
+    weightListeners.delete(listener);
+  };
+}
+function notifyHealthWeightChange(): void {
+  weightListeners.forEach((l) => l());
+}
+
 // --- de ronde -------------------------------------------------------------------------------
 
 export interface HealthSyncOptions {
@@ -106,10 +127,14 @@ function isHealthFetchDue(state: Pick<HealthConnectState, 'fetchedAt' | 'attempt
 // De stand wordt binnen dezelfde transactie gelezen; `next` maakt er de nieuwe van, of geeft
 // undefined (bijvoorbeeld: Health Connect is intussen uitgezet), en dan wordt er niets geschreven en
 // is de uitkomst false. Gaat er iets mis, dan gaat de hele transactie terug.
+// `weights` (optioneel) krijgt de wegingen zoals ze in dezelfde transactie gelezen zijn en geeft de
+// nieuwe lijst, of undefined als er niets verandert; zo schrijft een ronde nooit over een gewicht dat
+// je intussen zelf invulde.
 export async function commitHealthRound(
   next: (current: HealthConnectState) => HealthConnectState | undefined,
   put: readonly RecoveryMetric[] = [],
   remove: readonly string[] = [],
+  weights?: (current: WeightEntry[] | undefined) => WeightEntry[] | undefined,
 ): Promise<boolean> {
   const db = await getDB();
   const tx = db.transaction(['meta', 'recoveryMetrics'], 'readwrite');
@@ -132,6 +157,11 @@ export async function commitHealthRound(
     for (const id of remove) add(metrics.delete(id));
     for (const m of put) add(metrics.put(m));
     add(tx.objectStore('meta').put(state, HEALTH_CONNECT_KEY));
+    if (weights) {
+      const stored = ((await tx.objectStore('meta').get(SETTINGS_KEY)) ?? {}) as Partial<AppSettings>;
+      const list = weights(stored.weightEntries);
+      if (list) add(tx.objectStore('meta').put({ ...stored, weightEntries: list }, SETTINGS_KEY));
+    }
     await Promise.all(requests);
   } catch (err) {
     try {
@@ -180,7 +210,8 @@ async function runRound(options: HealthSyncOptions): Promise<HealthSyncResult> {
   try {
     // Na de grens telt de ronde als mislukt. Het ophalen zelf schrijft niets, dus een antwoord dat
     // later toch nog komt, gaat nergens heen.
-    const fetched = await withTimeout(fetchRound(port, now), options.roundMs ?? HC_ROUND_MS);
+    const before = await SettingsRepo.get();
+    const fetched = await withTimeout(fetchRound(port, now, before.weightFromHealthConnect !== false), options.roundMs ?? HC_ROUND_MS);
     const settings = await SettingsRepo.get();
     // De keuzes slaap, rusthartslag en HRV ("Gebruik van je horloge") gelden ook hier.
     const use = (await getWatchState()).use;
@@ -188,15 +219,26 @@ async function runRound(options: HealthSyncOptions): Promise<HealthSyncResult> {
     const existing = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(PREFIX));
     const cutoff = addDays(toISODate(now), -KEEP_DAYS);
     const retire = planRetire(existing.filter((m) => m.date < cutoff), resolveMorningBackup(settings));
+    // Het gewicht: alleen met "Gewicht uit Health Connect" aan (binnen de transactie nog eens gelezen
+    // tegen wat er dan staat).
+    const incoming = settings.weightFromHealthConnect === false ? [] : fetched.body.flatMap((m) => weightEntryFromBody(m) ?? []);
+    let weights = 0;
+    const today = toISODate(now);
     // Uitgezet terwijl de ronde liep: dan wordt er niets bewaard (binnen de transactie gelezen).
     const stored = await commitHealthRound(
       (latest) => (latest.enabled ? { ...latest, granted: fetched.granted, activities: fetched.activities, fetchedAt: now.toISOString(), attemptAt: now.toISOString(), lastError: undefined } : undefined),
       [...retire.put, ...mornings],
       retire.remove,
+      (current) => {
+        const merged = mergeHealthWeights(current, incoming, today);
+        weights = merged.changed;
+        return merged.changed > 0 ? merged.entries : undefined;
+      },
     );
     if (!stored) return { status: 'off' };
     notifyHealthConnectChange();
-    return { status: 'ok', activities: fetched.activities.length, mornings: mornings.length };
+    if (weights > 0) notifyHealthWeightChange();
+    return { status: 'ok', activities: fetched.activities.length, mornings: mornings.length, weights };
   } catch (err) {
     const e = healthConnectErrorOf(err);
     try {
@@ -210,7 +252,7 @@ async function runRound(options: HealthSyncOptions): Promise<HealthSyncResult> {
 }
 
 // Alles ophalen, in het geheugen; pas als alles er is wordt er iets geschreven.
-async function fetchRound(port: HealthConnectPort, now: Date): Promise<{ granted: HealthKind[]; activities: ExternalActivity[]; mornings: RecoveryMetric[] }> {
+async function fetchRound(port: HealthConnectPort, now: Date, withWeight: boolean): Promise<{ granted: HealthKind[]; activities: ExternalActivity[]; mornings: RecoveryMetric[]; body: BodyMetric[] }> {
   const available = await port.availability();
   if (available !== 'ready') throw new HealthConnectError(available === 'web' ? 'web' : available);
   const granted = await port.granted();
@@ -221,7 +263,9 @@ async function fetchRound(port: HealthConnectPort, now: Date): Promise<{ granted
   const tomorrow = addDays(today, 1);
   const activities = await adapter.fetchExternalActivities!({ from: addDays(today, -HC_ACTIVITY_DAYS), to: tomorrow });
   const mornings = await adapter.fetchRecoveryMetrics!({ from: addDays(today, -HC_MORNING_DAYS), to: tomorrow });
-  return { granted, activities, mornings };
+  // Het gewicht net zo ver terug als de ochtenden.
+  const body = withWeight ? await adapter.fetchBodyMetrics!({ from: addDays(today, -HC_MORNING_DAYS), to: tomorrow }) : [];
+  return { granted, activities, mornings, body };
 }
 
 // --- aan en uit -----------------------------------------------------------------------------
@@ -253,6 +297,26 @@ export async function disableHealthConnect(): Promise<void> {
   const plan = planRetire(ours, resolveMorningBackup(await SettingsRepo.get()));
   await commitHealthRound((current) => ({ ...current, enabled: false, granted: [], activities: [], fetchedAt: undefined, attemptAt: undefined, lastError: undefined }), plan.put, plan.remove);
   notifyHealthConnectChange();
+}
+
+// Nog eens vragen, voor wie Health Connect al aan had voordat ASCEND ook het gewicht las: Android
+// toont alleen wat nog niet mocht. Daarna meteen een ronde. De uitkomst zegt of het gewicht nu mag;
+// vraagt Android het niet meer (na twee keer nee), dan blijft het 'denied' en is Health Connect
+// openen de weg.
+export type HealthAskResult = { status: 'ok' | 'denied' | 'web' } | { status: 'error'; message: string };
+export async function askHealthConnectWeight(options: { port?: HealthConnectPort; now?: Date } = {}): Promise<HealthAskResult> {
+  const port = options.port ?? healthConnectPort();
+  if (!port.inApp) return { status: 'web' };
+  try {
+    const granted = await port.request();
+    await commitHealthRound((latest) => (latest.enabled ? { ...latest, granted } : undefined));
+    notifyHealthConnectChange();
+    if (!granted.includes('weight')) return { status: 'denied' };
+    await syncHealthConnect({ force: true, port, now: options.now });
+    return { status: 'ok' };
+  } catch (err) {
+    return { status: 'error', message: healthConnectErrorOf(err).message };
+  }
 }
 
 // Het scherm van Health Connect zelf, voor wie de vraag van Android niet meer krijgt.

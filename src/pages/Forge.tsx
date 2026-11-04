@@ -53,7 +53,7 @@ export function ForgePage() {
   const forgeSettings = jumpRoute('forge', { jumpTo: 'forge' });
   const { sessionLogs, templates, program, settings, updateSettings, injuryNotes } = useAppData();
   const today = todayISO();
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   // "Deze oefening in Forge" in het logboek geeft de naam mee als zoekterm; anders begint het zoeken leeg.
   const location = useLocation();
   const startQuery = (location.state as { zoek?: unknown } | null)?.zoek;

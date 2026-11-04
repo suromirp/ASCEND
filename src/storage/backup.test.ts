@@ -287,6 +287,37 @@ describe('backup envelope round-trip', () => {
     expect((await SettingsRepo.get()).weightEntries).toEqual([{ date: '2026-09-01', kg: 81, source: 'manual', fatPct: 19.5 }]);
   });
 
+  it('een oude export zonder gewicht uit Health Connect leest zoals hij was', async () => {
+    // Nagemaakte export van voor 4 november 2026: één weging per dag, geen schakelaar voor Health Connect.
+    const weights = [{ date: '2026-10-01', kg: 84, source: 'manual' }, { date: '2026-10-20', kg: 83.4, source: 'macrofactor', basis: 'trend', scaleKg: 83 }];
+    const envelope = await buildBackupEnvelope();
+    const old = { ...envelope, createdAt: '2026-10-30T08:00:00.000Z', payload: { ...envelope.payload, settings: { weightFromMacroFactor: true, weightEntries: weights } } };
+    const backup = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(old)));
+    expect(backup.settings?.weightEntries).toEqual(weights);
+    expect(backup.settings && 'weightFromHealthConnect' in backup.settings).toBe(false);
+    expect(backup.skippedInvalid).toBe(0);
+    await importEnvelope(old);
+    expect((await SettingsRepo.get()).weightEntries).toEqual(weights);
+  });
+
+  it('gewicht uit Health Connect gaat mee en komt terug naast je eigen gewicht van die dag', async () => {
+    const hc = { date: '2026-11-03', kg: 82.5, source: 'health-connect' as const, basis: 'scale' as const, fatPct: 18.2 };
+    await SettingsRepo.set({ weightFromHealthConnect: false, weightEntries: [hc] });
+    const envelope = await buildBackupEnvelope();
+    await SettingsRepo.set({ weightFromHealthConnect: true, weightEntries: [{ date: '2026-11-03', kg: 84, source: 'manual' }] });
+    await importEnvelope(envelope);
+    const s = await SettingsRepo.get();
+    expect(s.weightEntries).toEqual([hc, { date: '2026-11-03', kg: 84, source: 'manual' }]);
+    expect(s.weightFromHealthConnect).toBe(false);
+  });
+
+  it('een kapotte schakelaar voor gewicht uit Health Connect valt weg', async () => {
+    const envelope = await buildBackupEnvelope();
+    const backup = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { weightFromHealthConnect: 'ja' } } });
+    expect(backup.settings && 'weightFromHealthConnect' in backup.settings).toBe(false);
+    expect(backup.skippedInvalid).toBe(1);
+  });
+
   it('drops malformed records instead of storing them, and says how many', async () => {
     const envelope = await buildBackupEnvelope();
     const broken = { ...envelope, payload: { ...envelope.payload, sessionLogs: [{ id: 'junk' }, log('ok', '2026-09-01')], settings: { weightEntries: 'oops' } } };

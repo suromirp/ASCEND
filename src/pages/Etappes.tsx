@@ -36,7 +36,7 @@ function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): strin
 function ownStageTime(stage: Gr5Stage, climb: ClimbPaceState | undefined, settings: AppSettings, packKg: number | undefined): string | undefined {
   if (stage.km === null || stage.up === null || stage.down === null) return undefined;
   const on = signalOn(settings, 'stageOwnPace');
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   return stageOwnLine(stageTimeEstimate(climb, { km: stage.km, up: stage.up, down: stage.down }, { on, packKg, bodyKg }));
 }
 

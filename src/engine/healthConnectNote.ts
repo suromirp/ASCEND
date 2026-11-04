@@ -18,8 +18,10 @@ const KIND_WORD: Record<HealthKind, string> = {
   sleep: 'slaap',
   restingHeartRate: 'rusthartslag',
   heartRateVariability: 'HRV',
+  weight: 'gewicht',
+  bodyFat: 'vetpercentage',
 };
-const ORDER: HealthKind[] = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability'];
+const ORDER: HealthKind[] = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability', 'weight', 'bodyFat'];
 
 const count = (n: number, one: string, more: string) => `${n} ${n === 1 ? one : more}`;
 
@@ -35,8 +37,12 @@ export function healthEnableNote(result: HealthEnableResult): HealthNote {
       const sync = result.sync;
       if (sync.status === 'error') return { text: `Health Connect staat aan, maar ophalen lukte nog niet. ${sync.message}${partly}`, tone: 'warn' };
       if (sync.status !== 'ok') return { text: `Health Connect staat aan.${partly}`, tone: 'ok' };
-      const parts = [sync.activities > 0 ? count(sync.activities, 'training', 'trainingen') : '', sync.mornings > 0 ? count(sync.mornings, 'ochtend', 'ochtenden') : ''].filter(Boolean);
-      const got = parts.length > 0 ? ` ${parts.join(' en ')} opgehaald.` : ' Er stond nog niets nieuws in.';
+      const parts = [
+        sync.activities > 0 ? count(sync.activities, 'training', 'trainingen') : '',
+        sync.mornings > 0 ? count(sync.mornings, 'ochtend', 'ochtenden') : '',
+        sync.weights > 0 ? `${count(sync.weights, 'dag', 'dagen')} gewicht` : '',
+      ].filter(Boolean);
+      const got = parts.length > 0 ? ` ${list(parts)} opgehaald.` : ' Er stond nog niets nieuws in.';
       return { text: `Health Connect staat aan.${got}${partly}`, tone: 'ok' };
     }
     case 'denied':

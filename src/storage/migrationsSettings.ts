@@ -100,7 +100,7 @@ export function migrateAutoBackupSettings(raw: { autoBackup?: unknown; autoBacku
 // verandert niet: een log uit Health Connect is een gewone SessionLog met `source: 'health-connect'`
 // en een ochtend een gewone ochtend (MORNING_SOURCES hierboven), dus een oude back-up importeert
 // zoals hij was en een nieuwe heeft geen veld dat een oudere app niet kent.
-const HC_KINDS: readonly HealthKind[] = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability'];
+const HC_KINDS: readonly HealthKind[] = ['workouts', 'distance', 'sleep', 'restingHeartRate', 'heartRateVariability', 'weight', 'bodyFat'];
 const HC_ERROR_KINDS: readonly HealthConnectErrorKind[] = ['web', 'not-installed', 'needs-update', 'denied', 'timeout', 'failed'];
 const HC_ACTIVITY_KINDS: readonly string[] = ['run', 'hike', 'ride', 'strength', 'other'];
 const isMoment = (v: unknown): v is string => typeof v === 'string' && Number.isFinite(Date.parse(v));

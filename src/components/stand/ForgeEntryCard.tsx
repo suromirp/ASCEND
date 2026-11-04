@@ -18,7 +18,7 @@ export function ForgeEntryCard() {
   const navigate = useNavigate();
   const { sessionLogs, templates, program, settings, updateSettings, injuryNotes } = useAppData();
   const today = todayISO();
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   const strengthKey = strengthModelKey(settings.strengthModel);
 
   const entry = useMemo(() => {

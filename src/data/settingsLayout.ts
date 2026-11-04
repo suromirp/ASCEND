@@ -125,6 +125,8 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   rugzak: { row: 'doelen' },
   weervolgt: { row: 'weerplaats', sheet: true },
   'herinnering-gewicht': { row: 'lichaamsgewicht', sheet: true },
+  // Gewicht uit Health Connect staat in het blad Lichaamsgewicht, naast Uit MacroFactor.
+  'health-connect-gewicht': { row: 'lichaamsgewicht', sheet: true },
   // Planning
   ...inSheet('bundel-dagen', 'trainingstijd', 'rustdag', 'rustdag-doen'),
   ...inSheet('meerdere', 'zware-dingen'),
@@ -231,6 +233,7 @@ const B = {
   restAlert: { ok: (s) => strength(s).restAlert !== 'off', reason: 'Zichtbaar zodra de rusttimer een signaal geeft', parent: 'forge-signaal' },
   mf: { ok: (_s, c) => c.macroFactorExport, reason: 'Zichtbaar zodra je een MacroFactor-export hebt ingelezen', parent: 'macrofactor' },
   garmin: { ok: (_s, c) => c.garmin, reason: 'Zichtbaar zodra Garmin is gekoppeld', parent: 'garmin' },
+  hc: { ok: (_s, c) => c.healthConnect, reason: 'Zichtbaar zodra Health Connect aan staat', parent: 'health-connect' },
   // Slaap, rusthartslag, HRV en trainingen komen van Garmin of uit Health Connect: de keuzes gelden voor beide.
   watchData: { ok: (_s, c) => c.garmin || c.healthConnect, reason: 'Zichtbaar zodra Garmin is gekoppeld of Health Connect aan staat', parent: 'garmin' },
   activities: { ok: (_s, c) => c.activities, reason: 'Zichtbaar zodra Trainingen van je horloge aan staat', parent: 'garmin-trainingen' },
@@ -305,6 +308,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.garmin, B.send], 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
   ...rule([B.garmin, B.send, B.ascendHr], 'horloge-rustige-loop'),
   ...rule([B.mf], 'macrofactor-leidend', 'macrofactor-gewicht'),
+  ...rule([B.hc], 'health-connect-gewicht'),
   // Gegevens en back-up
   ...rule([B.folder], 'backupmap'),
   ...rule([B.liveUpdate], 'auto-bijwerken'),

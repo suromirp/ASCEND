@@ -86,13 +86,17 @@
 
     <!-- Health Connect (docs/beslissingen/2026-11-02-health-connect.md, plugin
          @capgo/capacitor-health). ASCEND leest alleen, en alleen wat het echt gebruikt:
-         trainingen, de afstand daarvan, slaap, rusthartslag en HRV. Android vraagt pas om
-         toestemming als je Health Connect aanzet bij Instellingen, Koppelingen. -->
+         trainingen, de afstand daarvan, slaap, rusthartslag, HRV, en sinds native niveau 8 ook
+         gewicht en vetpercentage (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md).
+         Android vraagt pas om toestemming als je Health Connect aanzet bij Instellingen,
+         Koppelingen, of bij Lichaamsgewicht op Gewicht toestaan tikt. -->
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
     <uses-permission android:name="android.permission.health.READ_DISTANCE" />
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
     <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY" />
+    <uses-permission android:name="android.permission.health.READ_WEIGHT" />
+    <uses-permission android:name="android.permission.health.READ_BODY_FAT" />
 
     <!-- De plugin noemt in zijn eigen manifest ook alle schrijfrechten en de leesrechten voor
          gegevens die ASCEND niet gebruikt. Die gaan er bij het samenvoegen uit, zodat de app
@@ -104,7 +108,6 @@
     <uses-permission android:name="android.permission.health.WRITE_ACTIVE_CALORIES_BURNED" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" tools:node="remove" />
     <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" tools:node="remove" />
-    <uses-permission android:name="android.permission.health.READ_WEIGHT" tools:node="remove" />
     <uses-permission android:name="android.permission.health.WRITE_WEIGHT" tools:node="remove" />
     <uses-permission android:name="android.permission.health.WRITE_SLEEP" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE" tools:node="remove" />
@@ -125,7 +128,6 @@
     <uses-permission android:name="android.permission.health.WRITE_HEIGHT" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED" tools:node="remove" />
     <uses-permission android:name="android.permission.health.WRITE_FLOORS_CLIMBED" tools:node="remove" />
-    <uses-permission android:name="android.permission.health.READ_BODY_FAT" tools:node="remove" />
     <uses-permission android:name="android.permission.health.WRITE_BODY_FAT" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_BASAL_BODY_TEMPERATURE" tools:node="remove" />
     <uses-permission android:name="android.permission.health.WRITE_BASAL_BODY_TEMPERATURE" tools:node="remove" />
