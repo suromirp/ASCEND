@@ -107,6 +107,13 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Trainingen in je agenda inplannen en afstemmen, met kaders voor ochtend, middag en avond. Nog niet (eigenaar, 1 november): niet in deze ronde bouwen.
 - Ook nog niet (eigenaar, 1 november): gesproken signalen, vergrendelen met vingerafdruk, 's nachts horlogegegevens ophalen, delen met één tik. Spraakloggen en een getal op het icoon afgeraden.
 
+## Gewicht uit Health Connect, verder (live 4 november)
+
+- Een trend over de wegingen uit Health Connect in plaats van de nieuwste weging: dagelijks wegen schommelt en Forge rekent ermee.
+- Zoeken: "Uit Health Connect" vindbaar maken met de reden waarom de rij soms niet zichtbaar is.
+- Na "Gewicht toestaan" de uitkomst van de ronde tonen (gelukt, geen wegingen gevonden).
+- Vraag aan de eigenaar: je gewicht met trend op Stand? Meenemen in het ontwerprapport voor Stand.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
