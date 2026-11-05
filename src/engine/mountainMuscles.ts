@@ -173,7 +173,8 @@ export function muscleNoticeText(p: MuscleProposal): { fact: string; care: strin
   const unknown = Math.round(p.unknownSets);
   const [low, high] = p.reps.split('-');
   return {
-    fact: `${named.your.charAt(0).toUpperCase()}${named.your.slice(1)} ${named.got} ${span} gemiddeld ${formatNumberNL(avg, avg % 1 === 0 ? 0 : 1)} ${setsWord(avg)} per week.`,
+    // Nul is geen gemiddelde: dan zeg je gewoon dat er niets was.
+    fact: `${named.your.charAt(0).toUpperCase()}${named.your.slice(1)} ${named.got} ${span} ${avg === 0 ? 'geen harde sets' : `gemiddeld ${formatNumberNL(avg, avg % 1 === 0 ? 0 : 1)} ${setsWord(avg)} per week`}.`,
     care: `Voor ${named.why} kan ${named.work} helpen.`,
     unknown: unknown > 0 ? `${unknown} ${unknown === 1 ? 'set kon' : 'sets konden'} niet aan een oefening gekoppeld worden; die tellen hier niet mee.` : undefined,
     proposal: `Voorstel: ${p.exerciseName} erbij in ${p.templateName}, ${p.sets} sets van ${low}${high ? ` tot ${high}` : ''} herhalingen.`,

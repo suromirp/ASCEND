@@ -131,6 +131,17 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Scout zoekt per oefening ook op hoe je hem echt goed doet, liefst geverifieerd: onderzoek, erkende bonden of opleidingen (NSCA, ACSM) en ervaren coaches, met de bron in `docs/onderzoek/`.
 - Planning (eigenaar, 4 november): niet deze week. Deze week geen grote aanpassingen meer, het abonnement staat al op 60 tot 70 procent. Ruilen met een echte vervanger ook pas daarna.
 
+## Forge: gewicht op een toestel makkelijk invullen (wens 5 november)
+
+- Nu: een toestel heeft een vaste stap (1,25, 2,5, 5 of Anders), of een eigen lijst die je per toestel via een lange lijst toevoegt. Een blok dat niet in gelijke stappen oploopt (bijvoorbeeld 7, 14, 23, 32) krijg je zo niet goed ingesteld, en het is te veel tikken.
+- Gewenst: een andere manier. Richting om uit te zoeken: in Forge gewoon het getal intikken dat op het blok staat, en Forge onthoudt per toestel welke standen er zijn en biedt die daarna aan (vorige en volgende stand). Geen instelling vooraf nodig.
+- Eerst Cartographer voor het invullen in Forge en het blad in Je sportschool, dan Sherpa. Raakt Forge en opslag van het sportschoolprofiel (opus).
+
+## Spieren voor de berg: ook buiten de weekterugblik (vraag 5 november)
+
+- Het voorstel (bijvoorbeeld Tibialis Raise erbij in Benen B) staat nu alleen in de weekterugblik, met opzet rustig. De eigenaar vond het daar pas laat te vinden.
+- Richting: ook laten zien in Forge bij het openen van de training waar de oefening bij zou komen, of één keer op Vandaag. Nog kiezen.
+
 ## Geparkeerd
 
 - Spierindex stap 3.

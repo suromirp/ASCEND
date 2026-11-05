@@ -31,6 +31,7 @@ import { kgLabel } from '../utils/kg';
 import type { HeartRateSettings } from './heartRateZones';
 import type { IntensityCounting } from './intensitySettings';
 import { effortMinutes, type EffortMinutes } from './weekEffort';
+import { caughtUpMap } from './catchUp';
 
 export interface WeekReview {
   weekStart: string;
@@ -110,7 +111,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // planning), days you were ill and days before the program started.
   const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate);
   const countsAsTraining = (s: PlannedSession) => countsAsTrainingShared(s, byId.get(s.templateId), leftOut);
-  const trainings = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && countsAsTraining(s));
+  // De oude rij van een gemiste training die je naar later zette telt niet: de nieuwe rij telt
+  // (docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md).
+  const movedOn = caughtUpMap(plannedSessions);
+  const trainings = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && countsAsTraining(s) && !(s.status === 'skipped' && movedOn.has(s.id)));
   // What was done that week, by the day it was done, with or without a plan: the same
   // logs and the same minutes as the top of Week (engine/weekLogs.ts).
   const weekLogs = weekLogsOf(logs, byId, weekStart, inputs.plannedById);
