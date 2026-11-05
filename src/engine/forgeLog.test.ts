@@ -159,3 +159,12 @@ describe('cleanForgeLog', () => {
     expect(cleanForgeLog([{ nope: 1 }])).toBeUndefined();
   });
 });
+
+describe('becauseText bij meerekenen', () => {
+  const base = { id: 'm', at: 1, exerciseId: 'x', exercise: 'X', rowId: 'x:s2', set: '2', kind: 'meegerekend' as const };
+  it('zegt of de set lichter of zwaarder werd en waarom', () => {
+    expect(becauseText({ ...base, from: { kg: 47.5, reps: 10 }, to: { kg: 40, reps: 10 } })).toBe('Lichter gezet: je vorige set ging zwaarder dan gepland.');
+    expect(becauseText({ ...base, from: { kg: 40, reps: 10 }, to: { kg: 42.5, reps: 10 } })).toBe('Zwaarder gezet: je vorige set ging makkelijker dan gepland.');
+    expect(becauseText({ ...base, from: { kg: 40, reps: 10 }, to: { kg: 40, reps: 8 } })).toBe('Herhalingen aangepast aan hoe je vorige set ging.');
+  });
+});
