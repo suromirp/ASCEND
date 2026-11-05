@@ -167,7 +167,9 @@ export function estimatedRest(exercise: Exercise | undefined, repsHigh?: number)
   if (!exercise) return repsHigh !== undefined && repsHigh <= 8 ? REST_COMPOUND : REST_ISOLATION;
   if (SMALL.has(exercise.pattern)) return REST_SMALL;
   if (!COMPOUND.has(exercise.pattern)) return REST_ISOLATION;
-  if (exercise.resistance === 'barbell') return REST_BARBELL_COMPOUND;
+  // Drie minuten alleen voor zwaar werk met de stang (8 herhalingen of minder); bij 10 of meer is
+  // twee minuten genoeg, zoals MacroFactor het doet (eigenaar, 5 november).
+  if (exercise.resistance === 'barbell' && (repsHigh === undefined || repsHigh <= 8)) return REST_BARBELL_COMPOUND;
   return repsHigh !== undefined && repsHigh <= 6 ? REST_COMPOUND_LOW_REPS : REST_COMPOUND;
 }
 
