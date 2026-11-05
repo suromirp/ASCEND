@@ -16,6 +16,8 @@ import { bootLockChoice, runBoot, type BootStep } from '../engine/bootWatch';
 import { requestPersistentStorage } from '../storage/persistence';
 import { onDatabaseBlocked } from '../storage/database';
 import type { Dispatch, SetStateAction } from 'react';
+import { notificationPort } from '../integrations/notifications';
+import { REST_NOTICE_ID } from '../engine/deviceNotices';
 
 // The boot sequence must run once per page load. React StrictMode mounts
 // effects twice in development; two concurrent seedIfEmpty() calls both saw
@@ -93,6 +95,11 @@ export function useBoot(deps: {
   const { setLoading, setBootError, setBootStep, loadState, refresh, runForecastReplan, runWeeklyPrescriptionBuild, runStrengthReviewCheck } = deps;
   useEffect(() => {
     (async () => {
+      // Een rustmelding van een vorige keer (de app werd gesloten of opnieuw gestart midden in een rust) gaat
+      // weg bij het openen. Loopt er echt nog een rust, dan plant Forge hem zelf opnieuw (useRestNotice.ts).
+      const notices = notificationPort();
+      // Niet wachten: een melding die niet antwoordt houdt het openen nooit op; de oproep gaat voor die van Forge.
+      if (notices.timed) void notices.cancel([REST_NOTICE_ID]).catch(() => undefined);
       // AscendSplashLogo's entrance sequence (glow, ring, crest, mountain,
       // trail, dot with spark, wordmark; .alogo-* in index.css) finishes at
       // 2.2s in Normaal, 0.8s in Rustig; Uit stands still at once
