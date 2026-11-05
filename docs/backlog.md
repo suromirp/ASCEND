@@ -142,6 +142,11 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Het voorstel (bijvoorbeeld Tibialis Raise erbij in Benen B) staat nu alleen in de weekterugblik, met opzet rustig. De eigenaar vond het daar pas laat te vinden.
 - Richting: ook laten zien in Forge bij het openen van de training waar de oefening bij zou komen, of één keer op Vandaag. Nog kiezen.
 
+## Weekcontrole die heen en weer schuift (gevonden 5 november)
+
+- In een week met een test botsen twee regels: "frisse benen voor de test" zet de zware beendag eerder, "genoeg ruimte tussen zware dagen" zet hem terug. Binnen één ronde eindigt alles weer waar het stond. De melding is opgelost (alleen een echte verandering telt), de botsing zelf nog niet.
+- Nodig: de planner kiest in zo'n week één oplossing die beide regels haalt, of laat het als zorg in Week staan met een voorstel. Planning, dus Sherpa en Warden op opus; `planGolden.test.ts` beweegt niet.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
