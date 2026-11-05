@@ -4,16 +4,21 @@ import { describe, expect, it } from 'vitest';
 // Deze scan faalt als een bestand `animate-sheet-in` gebruikt zonder die ref, zodat een nieuw
 // blad het niet kan vergeten. Een blad dat bewust niet mag sluiten door slepen staat hieronder,
 // met de reden. Docs: docs/beslissingen/2026-10-28-vloeiende-overgangen.md.
-const EXCEPTIONS: Record<string, string> = {};
+const EXCEPTIONS: Record<string, string> = {
+  './forge/InputDock.tsx': 'het toetsenbord van Forge sluit met Klaar of een tik ernaast; slepen zou per ongeluk een getal laten vallen',
+};
 // Een blad zonder greepje (SheetGrip, ui.tsx) laat niet zien dat je het kunt wegslepen.
-const GRIP_EXCEPTIONS: Record<string, string> = {};
+const GRIP_EXCEPTIONS: Record<string, string> = {
+  './forge/InputDock.tsx': 'het toetsenbord van Forge is geen blad om weg te slepen',
+};
 
 // Alle bronbestanden als tekst, relatief aan src/ (zonder Node-types).
 const SOURCES = import.meta.glob<string>('../**/*.tsx', { query: '?raw', import: 'default', eager: true });
 
 describe('bladen volgen je vinger', () => {
   const text = new Map(Object.entries(SOURCES).map(([path, src]) => [path.replace(/^\.\.\//, 'src/'), src]));
-  const files = [...text.keys()].filter((f) => text.get(f)!.includes('animate-sheet-in'));
+  // Ook de bladen van Forge (forge-down bij het sluiten), die eerst buiten deze scan vielen (eigenaar, 5 november).
+  const files = [...text.keys()].filter((f) => text.get(f)!.includes('animate-sheet-in') || text.get(f)!.includes('forge-down'));
 
   it('vindt de bladen', () => {
     expect(files.length).toBeGreaterThan(30);

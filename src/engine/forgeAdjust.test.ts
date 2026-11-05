@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { adjustText, applyLighter, fitStillOpen, noFitText, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type AdjustContext } from './forgeAdjust';
+import { adjustText, applyLighter, lighterPick, OPEN_ROOM, fitStillOpen, noFitText, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type AdjustContext } from './forgeAdjust';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import { DEFAULT_PROFILE } from './strengthSettings';
+import { expectedReps } from './strengthModel';
 
 // Nagemaakte getallen.
 const ctx = (over: Partial<AdjustContext> = {}): AdjustContext => ({ profile: DEFAULT_PROFILE, workSets: 'descending', bodyKg: 80, ...over });
@@ -294,5 +295,16 @@ describe('twee dumbbells met lichaamsgewicht: de tip rekent in dezelfde maat als
     expect(a.expectedReps).toBe(b.expectedReps);
     expect(a.stepKg).toBe(2);
     expect(b.stepKg).toBe(4);
+  });
+});
+
+describe('lighterPick bij een open doel (11+)', () => {
+  const target = { repsLow: 11, repsHigh: 11, rir: 0, open: true } as WorkoutRow['target'];
+  const cands = [1, 2, 3, 4, 5].map((kg) => ({ externalKg: kg, loadKg: kg }));
+  it('kiest nooit een gewicht dat veel meer dan de onderkant vraagt (geen 3 kg x 25)', () => {
+    for (let strength = 5; strength <= 9; strength += 0.25) {
+      const c = lighterPick(strength, cands, target, 0, 5);
+      if (c) expect(expectedReps(strength, c.loadKg, 0)).toBeLessThanOrEqual(11 + OPEN_ROOM);
+    }
   });
 });

@@ -8,7 +8,7 @@ import { formatNumberNL } from '../../utils/number';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Icon } from '../icons';
 import { Portal } from '../Portal';
-import { Eyebrow } from '../ui';
+import { Eyebrow, SheetGrip } from '../ui';
 
 // De inspanningskleuren van het thema, van zwaar naar rustig: 0 en 1 over is
 // Z5 (roze rood), 2 oranje, 3 geel, 4 groen en 5 of meer het lichte blauw. Het
@@ -182,15 +182,17 @@ export function LongPressRow({
 
 // Een blad van onderen, met een titel en een sluitknop.
 export function ForgeSheet({ title, sub, onClose, children }: { title: string; sub?: string; onClose: () => void; children: (close: () => void) => ReactNode }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>
       <div className={`fixed inset-0 z-[60] flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div
-          className={`flex max-h-[88dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-b-0 ${closing ? 'forge-down' : 'forge-up'}`}
+          ref={sheetRef}
+          className={`relative flex max-h-[88dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-b-0 ${closing ? 'forge-down' : 'forge-up'}`}
           style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', ['--forge-fill' as string]: 'var(--color-surface)' }}
           onClick={(e) => e.stopPropagation()}
         >
+          <SheetGrip />
           <div className="flex items-start gap-2 px-4 pb-2 pt-3">
             <div className="min-w-0 flex-1 pt-2">
               <Eyebrow>Forge</Eyebrow>

@@ -405,6 +405,19 @@ function ForgeWorkoutInner({
     const off = reducedMotion() || document.documentElement.dataset.motion === 'off';
     el.scrollTo({ left: i * el.clientWidth, behavior: off ? 'auto' : 'smooth' });
   }, []);
+  // Een oefening af in de stand een oefening per scherm: door naar de eerste oefening die nog open is (een
+  // eerdere eerst), na het inklappen. Alles af: blijven staan.
+  const pageToOpen = (list: WorkoutExercise[], delay: number) => {
+    if (!paged) return;
+    const i = list.findIndex((e) => !exerciseComplete(e));
+    if (i < 0 || i === pageRef.current) return;
+    later(() => {
+      const el = pagerEl.current;
+      if (!el) return;
+      const off = reducedMotion() || document.documentElement.dataset.motion === 'off';
+      el.scrollTo({ left: i * el.clientWidth, behavior: off ? 'auto' : 'smooth' });
+    }, delay);
+  };
   const timers = useRef<number[]>([]);
   // De oefening zoals hij was toen je dit veld begon te bewerken (zie applyWeight).
   const baseRef = useRef<{ key: string; ex: WorkoutExercise } | null>(null);
@@ -742,6 +755,7 @@ function ForgeWorkoutInner({
       if (after && exerciseComplete(after)) {
         if (dock?.slot === slot) { dockClosing.current = false; setDock(null); }
         const calm = reducedMotion();
+        pageToOpen(result.workout, calm ? 0 : 700);
         later(() => {
           setFolded((f) => ({ ...f, [slot]: true }));
           if (next) later(() => scrollToRow(next.rowId), calm ? 0 : 320);
@@ -782,6 +796,7 @@ function ForgeWorkoutInner({
       const next = activeRow(result.workout);
       setActiveRef(next);
       const calm = reducedMotion();
+      pageToOpen(result.workout, calm ? 0 : 700);
       later(() => {
         setFolded((f) => ({ ...f, [slot]: true }));
         if (next) later(() => scrollToRow(next.rowId), calm ? 0 : 320);
