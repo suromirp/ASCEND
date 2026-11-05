@@ -275,9 +275,10 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   forgeVergelijken: {
     title: 'Vergelijken met',
-    lead: 'Forge zet het getal van nu naast het getal van eerder, zodat je het verschil ziet.',
+    lead: 'Tik je op een oefening, dan zie je je geschatte 1RM van nu naast die van een paar weken terug. Zo zie je of je sterker wordt.',
     points: [
-      { head: '4 en 8 weken', text: 'het advies, een maand en twee maanden terug. Daarnaast staat altijd het beste ooit.' },
+      { head: 'Een voorbeeld', text: 'je bankdrukken staat nu op 80 kg. Vier weken geleden was dat 77,5 kg, acht weken geleden 75 kg. Dan staat er +2,5 en +5 bij. Het beste ooit staat er altijd naast.' },
+      { head: '4 en 8 weken', text: 'het advies: een maand en twee maanden terug.' },
       { head: 'Andere momenten', text: 'kies 2 en 4 weken als je vaak traint, of 12 en 26 weken voor het lange werk.' },
       { head: 'Geen oordeel', text: 'het verschil is een kleine regel. Gelijk of lager is geen mislukking, een hogere 1RM is niet het enige doel.' },
     ],
@@ -893,6 +894,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Hoeveel per soort',
     lead: 'Per soort training kies je Minder, Normaal of Meer. Normaal is het advies.',
     points: [
+      { head: 'De soorten', text: 'Kracht is je krachttraining. Lange duur is je lange loop van de week. Harde training is de loop waarbij je hijgt: intervallen, heuvelintervallen, tempo, fartlek of een versnellingsloop. Rustige duur is lopen op je gemak.' },
       { head: 'Eerst de duur', text: 'Minder is 15 procent korter, Meer 15 procent langer, afgerond op 5 minuten. Nooit meer dan 110 procent van je langste training van die soort in de laatste 30 dagen.' },
       { head: 'Dan het aantal', text: 'Meer zet er een training van die soort bij op een vrije dag, alleen als de regels het toelaten. Minder laat er een weg als er meer dan één staat.' },
       { head: 'Veiligheid schuift nooit', text: '48 uur tussen zware beendagen, de rust na een tocht of wedstrijd, je rustdag en het aantal harde dagen blijven staan. Past een extra training niet, dan blijft het bij langer.' },
