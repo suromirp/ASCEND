@@ -107,6 +107,30 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Trainingen in je agenda inplannen en afstemmen, met kaders voor ochtend, middag en avond. Nog niet (eigenaar, 1 november): niet in deze ronde bouwen.
 - Ook nog niet (eigenaar, 1 november): gesproken signalen, vergrendelen met vingerafdruk, 's nachts horlogegegevens ophalen, delen met één tik. Spraakloggen en een getal op het icoon afgeraden.
 
+## Gewicht uit Health Connect, verder (live 4 november)
+
+- Een trend over de wegingen uit Health Connect in plaats van de nieuwste weging: dagelijks wegen schommelt en Forge rekent ermee.
+- Zoeken: "Uit Health Connect" vindbaar maken met de reden waarom de rij soms niet zichtbaar is.
+- Na "Gewicht toestaan" de uitkomst van de ronde tonen (gelukt, geen wegingen gevonden).
+- Vraag aan de eigenaar: je gewicht met trend op Stand? Meenemen in het ontwerprapport voor Stand.
+
+## Forge: ruilen met een echte vervanger (wens 4 november)
+
+- Bij Ruilen eerst de oefeningen die echt hetzelfde doen: dezelfde beweging, dezelfde hoofdspieren en dezelfde hoek (Barbell Bench Press naar Dumbbell Bench Press, Smith Machine Bench Press, Machine Chest Press). Bovenaan, met een korte reden, en de beste als aanbevolen.
+- Daaronder, apart, de rest die dezelfde spier raakt maar anders (dips, incline, close grip, push-up).
+- Nu (`engine/forgeWorkout.ts#swapScore`) telt alleen gedeelde spieren en het bewegingspatroon, waardoor dips boven de dumbbell bench press staat. Nodig: per oefening een fijnere beschrijving (hoek vlak, schuin of dalend, grip, bereik, stabiliteit) of een lijst met echte vervangers per oefening.
+- Eerst Scout: hoe MacroFactor Workouts vervangers kiest en toont, en wat de literatuur zegt over welke oefeningen elkaar echt vervangen. Daarna Cartographer voor het blad, Sherpa (sonnet, geen planning) voor de engine.
+
+## Forge: uitleg bij oefeningen (wens 4 november)
+
+- Eén overzicht per oefening: wat het is, hoe de beweging gaat, welke spieren, waar je op let. Bovenaan "In het kort" met de twee of drie belangrijkste punten, daaronder "Lees verder" voor wie meer wil.
+- Nu heeft elke oefening (120 in `src/data/exercises.ts`) drie korte regels (Doen, Let op, Vaak fout). Te kaal, en soms klopt het niet: bij de 45° Incline Barbell Press staat "een lichte helling".
+- Taal: fijn om te lezen, concreet, duidelijk, niet te lang. Geen letterlijke vertaling uit het Engels; Engelse vaktermen alleen waar een sporter ze zo gebruikt.
+- Nieuwe rol: een copywriter (vaste naam Scribe) in `.claude/agents/`, op sonnet. Scribe schrijft of herschrijft, Scout controleert de techniek, Warden toetst aan de stem van ASCEND (`docs/beslissingen/2026-10-27-stem-van-ascend.md`).
+- Eerst Scout: hoe MacroFactor Workouts de uitleg opbouwt, wat goed werkt en wat niet. Daarna een proef met vijf oefeningen ter keuring door de eigenaar, pas dan de rest.
+- Scout zoekt per oefening ook op hoe je hem echt goed doet, liefst geverifieerd: onderzoek, erkende bonden of opleidingen (NSCA, ACSM) en ervaren coaches, met de bron in `docs/onderzoek/`.
+- Planning (eigenaar, 4 november): niet deze week. Deze week geen grote aanpassingen meer, het abonnement staat al op 60 tot 70 procent. Ruilen met een echte vervanger ook pas daarna.
+
 ## Geparkeerd
 
 - Spierindex stap 3.

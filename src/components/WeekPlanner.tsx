@@ -73,7 +73,7 @@ function SessionRow({
   handle?: WeekHandle;
   placeholder?: boolean;
   ghost?: boolean;
-  // Een ingehaalde training: "ingehaald van wo 28" op de nieuwe rij, "ingehaald op do 29" op de oude.
+  // Een gemiste training die je naar later sleepte: "verplaatst van wo 28" op de nieuwe rij.
   catchNote?: string;
 }) {
   const restMode = useAppData().settings.restDayMode ?? 'rest';
@@ -354,6 +354,9 @@ export function WeekPlanner({
         const isToday = date === today;
         const leaveLabel = leaveLabelOn(date, leave);
         const rows = daySessions.flatMap((s) => {
+          // De oude rij van een gemiste training die je naar later sleepte: weg uit de week, zoals bij
+          // gewoon verplaatsen. Hij blijft als overgeslagen bewaard, de historie verandert niet.
+          if (s.status === 'skipped' && caughtUp.has(s.id)) return [];
           const template = templateById.get(s.templateId);
           return template ? [{ s, template }] : [];
         });

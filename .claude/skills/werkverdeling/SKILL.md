@@ -60,6 +60,9 @@ Tabellen staan hier omdat dit een werkinstructie is; in teksten voor de eigenaar
   imports (ronde 2b).
 - Een bouwer zet elke eigen keuze buiten de opdracht in het besluit; de coördinator leest die lijst voor de review.
   Kleine herstelpunten bundelen in één bericht; een heel klein punt doet de coördinator zelf (ronde 2b).
+- Na een deploy die een nieuwe APK vraagt: eerst wachten tot de release van de Android-workflow er staat, pas
+  dan de eigenaar vertellen dat hij kan installeren. Mislukt alleen de releasestap (een 502 van GitHub), start de
+  workflow dan opnieuw (4 november).
 
 ## Opschalen en afschalen
 

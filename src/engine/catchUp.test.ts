@@ -3,7 +3,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import { proposeMove } from './scheduler';
 import { decideMove, dayVerdicts, type DragContext } from './weekDrag';
-import { catchUpEligibility, catchUpNoteFor, caughtUpNoteFor, catchUpRows, qualifiesForCatchUp, isCatchUpProposal, caughtUpMap, validCatchUp } from './catchUp';
+import { catchUpEligibility, catchUpNoteFor, caughtUpNoteFor, catchUpRows, qualifiesForCatchUp, caughtUpMap, validCatchUp } from './catchUp';
 
 const { templates } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -104,8 +104,8 @@ describe('dagen tijdens het slepen', () => {
 describe('teksten en verwijzingen', () => {
   const added = s('n', 'tpl_easy_run', '2026-10-01', { catchUp: { fromId: 'old', fromDate: '2026-09-28' } });
   it('de nieuwe rij zegt waar hij vandaan komt, de oude waar hij naartoe ging', () => {
-    expect(catchUpNoteFor(added)).toBe('ingehaald van ma 28');
-    expect(caughtUpNoteFor(added)).toBe('ingehaald op do 1');
+    expect(catchUpNoteFor(added)).toBe('verplaatst van ma 28');
+    expect(caughtUpNoteFor(added)).toBe('verplaatst naar do 1');
     expect(catchUpNoteFor(s('x', 'tpl_easy_run', '2026-10-01'))).toBeUndefined();
   });
   it('welke rijen zijn ingehaald: niet als de nieuwe rij zelf is overgeslagen', () => {
@@ -123,18 +123,5 @@ describe('validCatchUp', () => {
     const broken = { id: 'n', templateId: 't', scheduledDate: '2026-10-29', weekStartDate: '2026-10-26', status: 'planned', catchUp: {} } as unknown as PlannedSession;
     expect(caughtUpMap([broken]).size).toBe(0);
     expect(catchUpNoteFor(broken)).toBeUndefined();
-  });
-});
-
-describe('isCatchUpProposal', () => {
-  const ch = (fromDate: string, toDate: string, restore?: boolean) => ({ sessionId: 'a', templateId: 'x', templateName: 'X', fromDate, toDate, ...(restore ? { restore } : {}) });
-  it('is een inhaal als een voorbije rij naar vandaag of later gaat', () => {
-    expect(isCatchUpProposal([ch('2026-09-28', TODAY)], TODAY)).toBe(true);
-  });
-  it('is geen inhaal bij een gewone verplaatsing, terugzetten of overslaan', () => {
-    expect(isCatchUpProposal([ch('2026-09-30', '2026-10-01')], TODAY)).toBe(false);
-    expect(isCatchUpProposal([ch('2026-09-28', TODAY, true)], TODAY)).toBe(false);
-    expect(isCatchUpProposal([ch('2026-09-28', '2026-09-28')], TODAY)).toBe(false);
-    expect(isCatchUpProposal([], TODAY)).toBe(false);
   });
 });

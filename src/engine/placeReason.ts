@@ -105,7 +105,7 @@ function systemReason(s: PlannedSession, input: PlaceReasonInput): PlaceReason {
 
 export function placeReason(input: PlaceReasonInput): PlaceReason {
   const s = input.session;
-  if (s.catchUp) return { kind: 'catchUp', text: `Ingehaald: hij stond op ${day(s.catchUp.fromDate)} en ging toen niet door.` };
+  if (s.catchUp) return { kind: 'catchUp', text: `Verplaatst: hij stond op ${day(s.catchUp.fromDate)} en ging toen niet door.` };
 
   if (s.lock?.by === 'proposal') {
     const found = proposalFor(s, input.proposals);
