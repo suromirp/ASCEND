@@ -147,6 +147,16 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - In een week met een test botsen twee regels: "frisse benen voor de test" zet de zware beendag eerder, "genoeg ruimte tussen zware dagen" zet hem terug. Binnen één ronde eindigt alles weer waar het stond. De melding is opgelost (alleen een echte verandering telt), de botsing zelf nog niet.
 - Nodig: de planner kiest in zo'n week één oplossing die beide regels haalt, of laat het als zorg in Week staan met een voorstel. Planning, dus Sherpa en Warden op opus; `planGolden.test.ts` beweegt niet.
 
+## Alle teksten van ASCEND herschrijven, en Engels erbij (wens 5 november)
+
+- Doel: natuurlijker en korter, zoals goede apps het doen (MacroFactor en andere als voorbeeld). Makkelijk te lezen, nooit te veel uitleg in één keer. Engelse vaktermen mogen Engels blijven waar sporters ze zo gebruiken (1RM, RIR, tempo, fartlek), de rest gewoon Nederlands.
+- De app komt in twee talen: Nederlands en Engels, te kiezen in Instellingen.
+- Stap 1: alle teksten van de app plat in één document (schermen, knoppen, meldingen, uitleg achter de i, voorstellen), per scherm gegroepeerd, met waar ze in de code staan. Kan grotendeels uit de tekstkaart (`docs/app-kaart/`) en `src/data/settingsHelp.ts`.
+- Stap 2: Scout kijkt hoe MacroFactor en twee of drie andere apps hun teksten schrijven (lengte, toon, wat achter een tik zit). Daarna een nieuwe stemgids die `docs/beslissingen/2026-10-27-stem-van-ascend.md` vervangt, eerst ter keuring door de eigenaar.
+- Stap 3: Scribe (de copywriter, zie de uitleg bij oefeningen) herschrijft per scherm, Warden toetst. Eerst één tab als proef.
+- Stap 4: de teksten uit de code halen naar een vertaalbestand per taal, zodat Engels erbij kan. Groot werk in alle componenten; de engine geeft nu ook zinnen terug, die moeten mee. Sherpa op sonnet, per tab.
+- Samen met de uitleg bij oefeningen oppakken. Niet deze week.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
