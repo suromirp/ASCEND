@@ -88,6 +88,9 @@ export function suggestLighter(ex: WorkoutExercise, rowId: string, ctx: AdjustCo
 // Het lichtere gewicht voor één open set bij deze kracht: het zwaarste gewicht waarmee je de onderkant
 // nog haalt, alleen als het lichter is dan nu en de herhalingen binnen het bereik blijven (met de speling
 // van raak). Ook "Forge rekent mee" (engine/forgeReckon.ts) kiest hiermee, zodat beide hetzelfde beslissen.
+// Hoeveel herhalingen boven de onderkant een lichter gewicht bij een open doel mag vragen.
+export const OPEN_ROOM = 5;
+
 export function lighterPick(strength: number, candidates: Candidate[], target: WorkoutRow['target'], rir: number, nowLoad: number): Candidate | undefined {
   let pick = -1;
   for (let j = candidates.length - 1; j >= 0; j--) {
@@ -100,6 +103,9 @@ export function lighterPick(strength: number, candidates: Candidate[], target: W
   const c = candidates[pick];
   if (c.loadKg >= nowLoad - 1e-9) return undefined;
   if (!target.failure && !target.open && expectedReps(strength, c.loadKg, rir) > target.repsHigh + REPS_ROOM) return undefined;
+  // Een open doel (11+) of tot falen heeft geen bovenkant, maar een veel lichter gewicht met 20 of meer herhalingen
+  // is geen goede set en de schatting klopt daar niet meer (5 kg naar 3 kg x 25, eigenaar 5 november).
+  if ((target.failure || target.open) && expectedReps(strength, c.loadKg, rir) > target.repsLow + OPEN_ROOM) return undefined;
   return c;
 }
 

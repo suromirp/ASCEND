@@ -20,7 +20,7 @@
 // Herhalingen die je zelf invulde worden nooit overschreven; een bestaand log wordt nooit aangeraakt.
 
 import { exerciseOf, MAX_ROW_KG, workAims, type RowTarget, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
-import { lighterPick, type AdjustContext } from './forgeAdjust';
+import { lighterPick, OPEN_ROOM, type AdjustContext } from './forgeAdjust';
 import { underBar } from './barCheck';
 import { DEFAULT_RIR, estimateSet, expectedReps, FATIGUE_PER_SET, fatigueFactor, isHardPair } from './strengthModel';
 import { candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
@@ -203,7 +203,8 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   const now = loadFromExternal(exercise, next.weightKg, ctx.bodyKg, ex.dumbbellTotal);
   if (now === undefined || now <= 0) return ex;
   const low = next.target.repsLow;
-  const high = next.target.failure || next.target.open ? Infinity : next.target.repsHigh;
+  // Een open doel heeft geen bovenkant, maar zwaarder kiezen doet Forge pas boven de onderkant plus wat ruimte.
+  const high = next.target.failure || next.target.open ? low + OPEN_ROOM : next.target.repsHigh;
   let weightKg = next.weightKg;
   let load = now;
   let reps = expectedReps(strength, now, rir);
