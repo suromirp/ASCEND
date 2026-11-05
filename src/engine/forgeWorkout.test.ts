@@ -56,6 +56,8 @@ describe('parseReps', () => {
 describe('rusttijd', () => {
   it('zwaarder en samengesteld langer, klein korter', () => {
     expect(estimatedRest(exerciseById('back-squat'))).toBe(180);
+    expect(estimatedRest(exerciseById('back-squat'), 5)).toBe(180);
+    expect(estimatedRest(exerciseById('overhead-press'), 10)).toBe(120);
     expect(estimatedRest(exerciseById('leg-press'), 10)).toBe(120);
     expect(estimatedRest(exerciseById('leg-press'), 6)).toBe(150);
     expect(estimatedRest(exerciseById('lateral-raise'))).toBe(90);
