@@ -40,7 +40,7 @@ fixed length, because they return to how the system had them
 everything else the system planned is free. Every planning run ends with
 the same pass (`engine/planPass.ts`): the race block, then the week check,
 which repairs only the system's own sessions and only when the week is
-demonstrably better, and announces it ("Planning bijgewerkt", with undo).
+demonstrably better, and announces it ("Planning bijgewerkt", with undo). Only a net change is announced: a row that the check moves and moves back in one run, ending exactly as stored, is not news (`databaseHorizon.ts#changedNet`; owner report of 5 November, the notice came back at every opening).
 A repair never moves a session onto the last free day of a week, except in a
 week with a holiday, free days or a tocht (`repairWeeks#relocate`, decision `docs/beslissingen/2026-11-02-tweede-lange-duurloop.md`).
 A proposal's preview runs that same pass, so what it shows is what you get.
