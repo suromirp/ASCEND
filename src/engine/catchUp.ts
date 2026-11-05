@@ -36,12 +36,6 @@ export function qualifiesForCatchUp(session: PlannedSession, template: SessionTe
   return catchUpEligibility(session, template, args).ok;
 }
 
-// Is dit voorstel een inhaal: elke verandering haalt een rij van een voorbije dag naar vandaag of later.
-// De Akkoord-bladen gebruiken het voor de woorden "Inhalen" en "Toch inhalen".
-export function isCatchUpProposal(changes: readonly ScheduleChange[], today: string): boolean {
-  return changes.length > 0 && changes.every((c) => !c.restore && c.fromDate < today && c.toDate >= today && c.toDate !== c.fromDate);
-}
-
 // De twee rijen die een inhaal schrijft. `session` zelf wordt niet aangepast.
 export function catchUpRows(session: PlannedSession, toDate: string, lock: PlanLock, newId: string): { skipped: PlannedSession; added: PlannedSession } {
   const skipped: PlannedSession = { ...session, status: 'skipped', lock };
@@ -80,10 +74,10 @@ const dayShort = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number
 
 // Op de nieuwe rij: "ingehaald van wo 28".
 export function catchUpNoteFor(session: PlannedSession): string | undefined {
-  return validCatchUp(session.catchUp) ? `ingehaald van ${dayShort(session.catchUp.fromDate)}` : undefined;
+  return validCatchUp(session.catchUp) ? `verplaatst van ${dayShort(session.catchUp.fromDate)}` : undefined;
 }
 
-// Op de oude rij, gegeven de nieuwe: "ingehaald op do 29".
+// Op de oude rij, gegeven de nieuwe: "verplaatst naar do 29". Week toont de oude rij niet meer.
 export function caughtUpNoteFor(added: PlannedSession): string {
-  return `ingehaald op ${dayShort(added.scheduledDate)}`;
+  return `verplaatst naar ${dayShort(added.scheduledDate)}`;
 }

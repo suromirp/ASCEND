@@ -138,7 +138,7 @@ export function SessionActionSheet({
   onOpenLog?: () => void;
   // Een tik op de greep in Week opent het blad direct op Verplaatsen.
   startStep?: 'move';
-  // Een gemiste training die je inhaalt (engine/catchUp.ts): dezelfde dagkeuze, onder de naam Inhalen.
+  // Een gemiste training die je naar later zet (engine/catchUp.ts): dezelfde dagkeuze, alleen vandaag of later.
   catchUp?: boolean;
   // De oude rij van een inhaal ("ingehaald op za 31"): alleen dat feit, geen acties, zodat je hem niet
   // dubbel plant of logt.
@@ -271,7 +271,7 @@ export function SessionActionSheet({
 
   if (step === 'move') {
     return (
-      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={`${template.name} ${catchUp ? 'inhalen' : 'verplaatsen'}`} scrollKey="move" head={<SheetHeader eyebrow={catchUp ? 'Inhalen' : 'Verplaatsen'} title={template.name} facts={`${catchUp ? 'Stond' : 'Staat'} op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
+      <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={`${template.name} verplaatsen`} scrollKey="move" head={<SheetHeader eyebrow="Verplaatsen" title={template.name} facts={`${catchUp ? 'Stond' : 'Staat'} op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
         <div className="mt-6">
           <MoveSuggestions
             sessionDate={session.scheduledDate}
@@ -335,7 +335,7 @@ export function SessionActionSheet({
     // hier opent het alleen de uitleg en opbouw, naast Gedaan.
     start: template.type === 'strength' ? 'Training starten' : 'Hoe je het doet',
     preview: 'Hoe je het doet',
-    move: catchUp ? 'Inhalen' : 'Verplaatsen',
+    move: 'Verplaatsen',
     swap: 'Ruilen',
     skip: 'Overslaan',
     backOnPlan: 'Toch doen',

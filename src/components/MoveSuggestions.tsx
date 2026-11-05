@@ -72,7 +72,7 @@ export function MoveSuggestions({
     <div className="flex flex-col gap-3">
       {catchUp && (
         <p className="text-[13px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Kies vandaag of een dag erna. De oude rij blijft staan, als ingehaald.
+          Kies vandaag of een dag erna.
         </p>
       )}
       {originalDate && originalDate < today && originalDate !== sessionDate && (

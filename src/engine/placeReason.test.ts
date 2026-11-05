@@ -87,7 +87,7 @@ describe('waarom een training op zijn dag staat', () => {
 
   it('een ingehaalde training zegt waar hij vandaan kwam', () => {
     const s: PlannedSession = { ...base, catchUp: { fromId: 's0', fromDate: '2026-10-29' }, lock: { by: 'user', at: '2026-11-02T08:00:00.000Z' } };
-    expect(placeReason({ session: s, proposals: [] }).text).toBe('Ingehaald: hij stond op do 29 okt en ging toen niet door.');
+    expect(placeReason({ session: s, proposals: [] }).text).toBe('Verplaatst: hij stond op do 29 okt en ging toen niet door.');
   });
 
   it('een vakantie of tocht noemt de periode', () => {
