@@ -164,6 +164,12 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Uitkomst: een kort verslag in `docs/onderzoek/` met wat Forge kan overnemen, als punten naast wat Forge nu al doet (Hoeveel over?, aangenomen RIR, rekent mee).
 - Scout op opus. Kan vóór de grote Forge-onderdelen (vervanger, uitleg, toestel) omdat het die richting geeft.
 
+## Forge: afvinken is de RIR van het doel (wens 5 november)
+
+- Nu: vink je een set af zonder RIR te kiezen, dan bewaart Forge het doel als aangenomen RIR (`rirAssumed`). Die telt niet mee voor je geschatte kracht en voor de stap zwaarder, met opzet: anders bevestigt de voorspelling zichzelf.
+- Gewenst: afvinken betekent "gedaan zoals gepland". Haal je de herhalingen van het doel, dan telt de RIR van het doel als echt. Alleen bij twijfel komt de vraag met bolletjes (Hoeveel over?): minder herhalingen dan het doel, ruim meer dan het bereik, of een eerste keer op een nieuw gewicht.
+- Uitzoeken: of dat de schatting en de stap zwaarder te snel laat lopen (een set met precies de voorspelde herhalingen is geen nieuw bewijs). Koppelen aan het onderzoek naar RIR en RPE in de beste apps. Forge-engine, dus Sherpa en Warden op opus.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
