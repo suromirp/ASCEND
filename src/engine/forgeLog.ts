@@ -217,8 +217,14 @@ export function becauseText(ev: ForgeEvent): string {
       return ev.via ? `Doorgevoerd vanuit set ${ev.via}.` : 'Doorgevoerd uit je eigen wijziging.';
     case 'eigen':
       return 'Je paste dit zelf aan.';
-    case 'meegerekend':
-      return 'Forge rekende mee met je vorige set.';
+    case 'meegerekend': {
+      // Zeg wat er gebeurde en waarom, niet alleen dat Forge rekende.
+      const from = ev.from?.kg;
+      const to = ev.to?.kg;
+      if (from !== undefined && to !== undefined && to < from) return 'Lichter gezet: je vorige set ging zwaarder dan gepland.';
+      if (from !== undefined && to !== undefined && to > from) return 'Zwaarder gezet: je vorige set ging makkelijker dan gepland.';
+      return 'Herhalingen aangepast aan hoe je vorige set ging.';
+    }
     case 'onder':
     case 'past-niet':
     case 'spotter':
