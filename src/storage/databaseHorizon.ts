@@ -382,7 +382,12 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const byTemplate = new Map(passTemplates.map((t) => [t.id, t.name]));
   // Only what you would notice: a session that was never stored and is let go
   // again in the same run (a pattern week inside a holiday) is not news.
-  const shown = pass.repairs.filter(visibleRepair).filter((r) => !(r.removed && !stored.has(r.sessionId)));
+  // And only what really changed: the week check can move a training and move it back within one run (two rules
+  // that meet in one week); when the row ends exactly as it was stored, nothing changed and there is nothing to say,
+  // or the notice would come back at every opening.
+  const finalById = new Map(pass.sessions.map((s) => [s.id, s]));
+  const changedNet = (id: string) => { const was = stored.get(id); const now = finalById.get(id); return !was || !now || JSON.stringify(was) !== JSON.stringify(now); };
+  const shown = pass.repairs.filter(visibleRepair).filter((r) => !(r.removed && !stored.has(r.sessionId))).filter((r) => changedNet(r.sessionId));
   const nameOf = (id: string) => byTemplate.get((stored.get(id) ?? asWillBe.find((s) => s.id === id) ?? pass.sessions.find((s) => s.id === id))?.templateId ?? '') ?? 'Training';
   const addedIds = [...new Set(shown.filter((r) => r.added).map((r) => r.sessionId))].filter((id) => resultIds.has(id));
   // What the sync itself changed in a stored session: said too, never silent.

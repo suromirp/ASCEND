@@ -69,17 +69,17 @@ Kracht
 2sessies
 Week van 26 oktober
 [knop: Bekijk je week]
-[knop: 26 oktoberRustige duurloopHardlopen · 56 min · 8,6 km]
+[knop: 26oktRustige duurloopHardlopen · 56 min · 8,6 km]
 Week van 19 oktober
-[knop: 23 oktoberRustige duurloopHardlopen · 39 min · 6 km]
-[knop: 21 oktoberBovenlichaam AKracht · 60 min]
-[knop: 20 oktoberRustige duurloopHardlopen · 46 min · 7 km]
+[knop: 23oktRustige duurloopHardlopen · 39 min · 6 km]
+[knop: 21oktBovenlichaam AKracht · 60 min]
+[knop: 20oktRustige duurloopHardlopen · 46 min · 7 km]
 Week van 12 oktober
-[knop: 17 oktoberRustige duurloopHardlopen · 56 min · 8,6 km]
-[knop: 14 oktoberRustige duurloopHardlopen · 39 min · 6 km]
+[knop: 17oktRustige duurloopHardlopen · 56 min · 8,6 km]
+[knop: 14oktRustige duurloopHardlopen · 39 min · 6 km]
 Week van 5 oktober
-[knop: 10 oktoberTestloop 5 kmHardlopen · 36 min · 6 km]
-[knop: 7 oktoberBovenlichaam AKracht · 60 min]
-[knop: 7 oktoberRustige duurloopHardlopen · 40 min · 6,2 km]
+[knop: 10oktTestloop 5 kmHardlopen · 36 min · 6 km]
+[knop: 7oktBovenlichaam AKracht · 60 min]
+[knop: 7oktRustige duurloopHardlopen · 40 min · 6,2 km]
 Week van 28 september
-[knop: 3 oktoberRustige duurloopHardlopen · 20 min · 3 km]
+[knop: 3oktRustige duurloopHardlopen · 20 min · 3 km]
