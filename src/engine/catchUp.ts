@@ -72,7 +72,7 @@ export function caughtUpMap(sessions: readonly PlannedSession[]): Map<string, Pl
 
 const dayShort = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))}`;
 
-// Op de nieuwe rij: "ingehaald van wo 28".
+// Op de nieuwe rij: "verplaatst van wo 28".
 export function catchUpNoteFor(session: PlannedSession): string | undefined {
   return validCatchUp(session.catchUp) ? `verplaatst van ${dayShort(session.catchUp.fromDate)}` : undefined;
 }

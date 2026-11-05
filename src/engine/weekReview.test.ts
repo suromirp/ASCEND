@@ -33,6 +33,15 @@ describe('buildWeekReview', () => {
     expect(review.title).toBe('Week 2 van 4, basisfase');
   });
 
+  it('een gemiste training die je naar later zette blijft niet liggen: alleen de nieuwe rij telt', () => {
+    const old: PlannedSession = { ...ps('ua', 'tpl_upper_a', '2026-10-06'), status: 'skipped', lock: { by: 'user', at: '2026-10-07T08:00:00Z' } };
+    const moved: PlannedSession = { ...ps('ua2', 'tpl_upper_a', '2026-10-07'), catchUp: { fromId: 'ua', fromDate: '2026-10-06' }, lock: { by: 'user', at: '2026-10-07T08:00:00Z' } };
+    const planned = [ps('la', 'tpl_lower_a', '2026-10-05'), old, moved];
+    const review = buildWeekReview({ weekStart: W, plannedSessions: planned, logs: [log('la', 'tpl_lower_a', '2026-10-05')], templates, program, planChangeLog: [], asOf: '2026-10-07' })!;
+    expect(review.missed).toEqual([]);
+    expect(review.planned).toBe(2);
+  });
+
   it('says so when everything was done, and flags trainings that felt much harder than planned', () => {
     const logs = week.filter((s) => s.templateId !== 'tpl_herstel').map((s) => log(s.id, s.templateId, s.scheduledDate, s.templateId === 'tpl_easy_run' || s.templateId === 'tpl_long_run' ? { rpe: 7 } : {}));
     const review = buildWeekReview({ weekStart: W, plannedSessions: week, logs, templates, program, planChangeLog: [], asOf: '2026-10-11' })!;

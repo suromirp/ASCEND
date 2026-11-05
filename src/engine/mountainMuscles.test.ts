@@ -96,7 +96,7 @@ describe('het voorstel in de weekterugblik', () => {
     expect(p).toMatchObject({ muscle: 'calves', templateId: 'tpl_lower_a', templateName: 'Onderlichaam A', sets: 3 });
     expect(exerciseById(p!.exerciseId)!.primary).toContain('calves');
     const text = muscleNoticeText(p!);
-    expect(text.fact).toBe('Je kuiten kregen de laatste vier weken gemiddeld 0 harde sets per week.');
+    expect(text.fact).toBe('Je kuiten kregen de laatste vier weken geen harde sets.');
     expect(text.care).toContain('kan kuitwerk helpen');
     expect(`${text.fact} ${text.care} ${text.proposal}`).not.toMatch(/voorkomt|voorkomen/i);
     expect(text.proposal).toMatch(/^Voorstel: .+ erbij in Onderlichaam A, 3 sets van \d+ tot \d+ herhalingen\.$/);
