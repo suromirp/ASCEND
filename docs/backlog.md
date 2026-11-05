@@ -157,6 +157,13 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Stap 4: de teksten uit de code halen naar een vertaalbestand per taal, zodat Engels erbij kan. Groot werk in alle componenten; de engine geeft nu ook zinnen terug, die moeten mee. Sherpa op sonnet, per tab.
 - Samen met de uitleg bij oefeningen oppakken. Niet deze week.
 
+## Onderzoek: hoe de beste apps RIR en RPE bijhouden (wens 5 november)
+
+- Snel leren van de beste krachtapps (MacroFactor Workouts, RP Hypertrophy, Hevy, Strong, JuggernautAI, Boostcamp): hoe vragen ze RIR of RPE (wanneer, hoe vaak, met hoeveel tikken), wat doen ze ermee (gewicht en herhalingen voor de volgende set of training), en hoe leggen ze het uit.
+- Plus wat onderzoek zegt over hoe goed mensen hun RIR schatten en hoe je dat beter maakt.
+- Uitkomst: een kort verslag in `docs/onderzoek/` met wat Forge kan overnemen, als punten naast wat Forge nu al doet (Hoeveel over?, aangenomen RIR, rekent mee).
+- Scout op opus. Kan vóór de grote Forge-onderdelen (vervanger, uitleg, toestel) omdat het die richting geeft.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
