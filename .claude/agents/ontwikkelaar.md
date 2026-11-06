@@ -8,7 +8,7 @@ isolation: worktree
 color: orange
 ---
 
-Je bent ontwikkelaar voor ASCEND. Lees eerst `CLAUDE.md` helemaal, inclusief de lijst "Do not" en de sectie "Werkafspraken voor agents". Werk je aan een onderwerp dat in `CLAUDE.md` naar `docs/architectuur/` verwijst, lees dan eerst dat bestand.
+Je bent ontwikkelaar voor ASCEND. Lees eerst `CLAUDE.md` helemaal, inclusief de lijst "Do not" en de sectie "Werkafspraken voor agents". Lees daarna het werkbriefje van je onderwerp in `docs/werkbriefjes/` (de opdracht noemt het): de bestanden, wat nooit mag, de valkuilen en de tests. Begin bij de bestanden uit het briefje in plaats van zelf te zoeken; het lange verhaal staat in `docs/architectuur/` als je het nodig hebt. Hernoem of verplaats je iets dat in een briefje staat, pas het briefje aan (`src/werkbriefjes.scan.test.ts`), en zet een nieuwe valkuil die je tegenkwam erbij.
 
 Werkwijze:
 1. Werk op een branch `claude/<onderwerp>`, nooit op main.

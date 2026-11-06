@@ -1,0 +1,44 @@
+# Lopen en tests
+
+Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5 km, de rust voor een test en de RPE bij een test.
+
+## Bestanden
+- `src/engine/racePrediction.ts#countedTests` welke tests meetellen; tempo's, voorspelling en horloge lezen dit
+- `src/engine/testJudgment.ts#pacesFromLogs` tempo's uit de logs, met "Telt mee" of "Telt niet mee"
+- `src/engine/bestEffort.ts#bestEffortFromStream` de snelste 5 km aaneen uit de reeks van het horloge
+- `src/storage/activityDetail.ts#ensureRecentTestEfforts` leest recente tests op de achtergrond bij het openen
+- `src/engine/runDetail.ts#buildRunDetail` kilometers, rondes en lijn van een run; oordelen in `runDetailRules.ts`
+- `src/engine/watchHeartRate.ts#resolveWatchHr` hartslagbereik op het horloge, naar de drempel van intervals.icu
+- `src/engine/heartRateZones.ts#zoneBpm` de zones van ASCEND
+- `src/engine/zoneUpdate.ts#zoneOffer` nieuwe drempel na de laatste test, voorstel met Akkoord
+- `src/engine/testRest.ts#resolveTestRest` 72 of 48 uur rust voor een test; regel in `scheduler.ts#testPairConflict`
+- `src/engine/testEffortSplit.ts` een test met warming-up en cooling-down telt in twee delen
+- `src/engine/legFatigue.ts#PLANNED_MAX_EFFORT_RPE` een test of race is gepland op RPE 10
+
+## Nooit
+- `tests.at(-1)` of een eigen "laatste test" lezen; alles gaat door `pacesFromLogs` en `countedTests`.
+- `bestEffort`, `runDetail` of `detail` omschrijven: ze zijn afgeleid en append-only, één keer toegevoegd.
+- Een nieuw tempo of een nieuwe drempel zonder Akkoord toepassen; een test of race verplaatsen zonder voorstel.
+- Tempo's laten afhangen van of een log is geopend: `accepted` regelt wanneer de beste 5 km telt.
+- Het spoor van een run bewaren; alleen de wind per kilometer wordt bewaard.
+- `src/storage/planGolden.test.ts` laten bewegen.
+
+## Valkuilen
+- Een beste 5 km kan verouderen: een bronwijziging verandert de totalen, dan wordt `bestEffort` opnieuw gelezen; `bestEffortTried` voorkomt eindeloos ophalen van een reeks die niets gaf.
+- Een test die duidelijk trager is dan de vorige wacht op "Telt mee" of "Telt niet mee"; tot dan gelden de oude tempo's. Er is hoogstens één stille regel op Vandaag, nooit twee.
+- Tests op verschillende basis (beste 5 km tegen het hele log) vergelijk je op het hele log.
+- Een tweede testvoorstel toetste andere voorstellen niet en ging rood bij de review (2 november); laat een nieuw testvoorstel dezelfde toets doorlopen.
+- Het wedstrijdblok geeft zijn eigen melding bij rust voor een test; voeg geen tweede melding toe.
+- De reeksen staan standaard in de back-up (grote bestanden); de kopieën vóór een import (`backupSnapshots`) bevatten ze nooit.
+- `sessionLoad` kent de splitsing al maar heeft nog geen aanroeper; de weeklast en beenindex lezen `LoadItem.split`.
+- De weekbalk sprak zichzelf tegen bij de RPE van een test (review 2 november): laat getal en tekst uit dezelfde berekening komen.
+
+## Testen
+- Tijdens het werk: `npx vitest run src/engine/racePrediction src/engine/testJudgment src/engine/bestEffort src/engine/runDetail src/engine/watchHeartRate src/engine/testRest src/storage/activityDetail src/storage/testloop`
+- Nooit laten bewegen: `src/storage/planGolden.test.ts`.
+- Tekstkaart (`npm run kaart:vergelijk`) als de testkaart, het logblad of Vandaag verandert.
+
+## Lees verder
+- `docs/architectuur/lopen-en-tests.md`
+- `docs/beslissingen/2026-10-27-testloop-lezen.md`, `docs/beslissingen/2026-10-27-run-in-detail-gegevens.md`
+- `docs/beslissingen/2026-11-02-rust-voor-een-test.md`, `docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md`

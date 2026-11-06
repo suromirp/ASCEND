@@ -64,6 +64,17 @@ Tabellen staan hier omdat dit een werkinstructie is; in teksten voor de eigenaar
   dan de eigenaar vertellen dat hij kan installeren. Mislukt alleen de releasestap (een 502 van GitHub), start de
   workflow dan opnieuw (4 november).
 
+- Uit de nachtronde (1 en 2 november, 13 miljoen tokens aan helpers, 10 miljoen daarvan Sherpa op opus):
+  - Knip grote opdrachten in stukken van hoogstens een uur met een eigen controleerbaar einde; een opdracht van drie
+    uur (600k) liep vast en moest hervat worden.
+  - Een helper hervatten kost 300k tot 400k omdat hij alles opnieuw leest. Kleine reviewpunten doet de coördinator
+    zelf of een nieuwe Sherpa op sonnet met alleen de lijst en het briefje; hervatten alleen voor een groot herstel.
+  - Opus is voor de regel in de engine of de opslag. De tekst, het scherm en de instelling rond die regel kunnen in
+    een aparte opdracht op sonnet.
+- Een melding met echte data eerst naspelen met de skill `naspelen`, voordat er een helper komt.
+- Bundel kleine fixes: één commit en één keer naar main voor een handvol punten, niet een push per punt.
+- Begin per onderwerp of per dag een nieuwe sessie; de kosten per beurt groeien met de lengte van het gesprek.
+
 ## Opschalen en afschalen
 
 Begin zo licht als de tabel zegt en schaal op zodra er een reden is, niet uit gewoonte:
@@ -94,6 +105,8 @@ schermen anders zijn en controleert de invarianten (getallen die overal gelijk m
 
 ## Wat in elke opdracht staat
 
+- Welk werkbriefje de helper eerst leest (`docs/werkbriefjes/<onderwerp>.md`), en zo nodig welke valkuilen uit dat
+  briefje hier gelden. Dan hoeft hij niet zelf te zoeken.
 - Het doel en de controleerbare criteria, de bestanden als richtpunt, wat niet mag bewegen
   (`planGolden.test.ts`, scheduler, historie).
 - Wat de helper oplevert: kort, Nederlands, per punt gedaan of waarom niet, de uitslag van de

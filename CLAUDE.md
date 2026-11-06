@@ -4,7 +4,7 @@ ASCEND is a mobile-first personal training and adventure application.
 
 Guidance for Claude Code (and any other agent) working in this repository.
 
-Werk je aan een onderwerp, lees dan eerst het bijbehorende bestand in `docs/architectuur/`.
+Werk je aan een onderwerp, lees dan eerst het werkbriefje in `docs/werkbriefjes/` (bestanden, wat nooit mag, valkuilen, tests; kort) en begin daar. Het lange verhaal met de redenen staat in `docs/architectuur/`. Een fout met echte data speel je eerst na met de skill `naspelen`.
 
 ## Core identity
 

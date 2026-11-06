@@ -171,6 +171,14 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Ook voor eerdere workouts (eigenaar): als regel bij het lezen, niet door logs te herschrijven. Een oude set met `rirAssumed` en de herhalingen van het doel telt dan ook mee; het log zelf blijft zoals het is (append-only).
 - Uitzoeken: of dat de schatting en de stap zwaarder te snel laat lopen (een set met precies de voorspelde herhalingen is geen nieuw bewijs). Koppelen aan het onderzoek naar RIR en RPE in de beste apps. Forge-engine, dus Sherpa en Warden op opus.
 
+## Periode "Zonder sportschool" (wens 6 november)
+
+- Een vierde soort periode naast Vakantie zonder training, Tocht met rugzak en Vrije dagen: je bent weg, kunt wel lopen, maar hebt geen sportschool.
+- Lopen blijft staan, korter en rustiger dan thuis (vakantie: geen opbouw, geen test). Kracht in de sportschool wordt een korte sessie met je eigen gewicht (squats, lunges, push-ups, kuitheffingen; 15 tot 20 minuten), of vervalt als je dat kiest.
+- Twee keuzes bij de periode: "Heuvels in de buurt" (een loop wordt rustig heuvels op en beheerst af, goed voor een bergdoel) en "Hoeveel": Licht (2 keer lopen, het advies) of Gewoon (wat er stond, zonder sportschool).
+- Zoals de andere periodes: een voorstel met Akkoord, de periode pas bij Akkoord opgeslagen (`engine/leave.ts`, `engine/leaveBlock.ts`, `engine/leaveProposal.ts`). Een bestaande vakantie kun je omzetten in dit soort.
+- Planning, dus Sherpa en Warden op opus; `planGolden.test.ts` beweegt niet. Instelling en uitleg in de gewone plekken.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
