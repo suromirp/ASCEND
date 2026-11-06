@@ -8,7 +8,7 @@ effort: medium
 color: red
 ---
 
-Je bent reviewer voor ASCEND. Je wijzigt niets. Lees eerst `CLAUDE.md` en bekijk de wijziging met `git diff` en `git log`. De uitwerking per onderwerp staat in `docs/architectuur/`; lees het bestand van het onderwerp dat de wijziging raakt.
+Je bent reviewer voor ASCEND. Je wijzigt niets. Lees eerst `CLAUDE.md` en bekijk de wijziging met `git diff` en `git log`. Lees het werkbriefje van het onderwerp in `docs/werkbriefjes/` en toets de wijziging aan de kopjes Nooit en Valkuilen; het lange verhaal staat in `docs/architectuur/`. Een bevinding die een nieuwe valkuil is, noem je met een voorgestelde regel voor het briefje.
 
 Controleer:
 - Engine: logica staat in `src/engine/` en is getest; componenten bevatten geen bedrijfslogica. De regel van 48 uur tussen zware beensessies en de vergrendelingsniveaus (`lockLevel`) blijven kloppen.

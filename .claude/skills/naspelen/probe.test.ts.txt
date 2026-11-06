@@ -1,0 +1,33 @@
+// Tijdelijke probe: kopieer naar src/storage/zzprobe.test.ts, draai, en verwijder hem meteen weer.
+// Leest alleen het pad uit PROBE (een back-up in de scratchpad), schrijft alleen naar OUT (in de scratchpad).
+import { it, vi } from 'vitest';
+import { readFileSync, appendFileSync } from 'node:fs';
+import { wipeAllData, syncProgramHorizon } from './database';
+import { runWeeklyPrescriptionStep } from './weeklyPrescriptionStep';
+import { runBootMigrations } from './bootMigrations';
+import { normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
+import { primePlanningRegisters } from '../state/planningSync';
+
+const out = (t: string) => appendFileSync(process.env.OUT!, t + '\n');
+
+it('probe', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(process.env.WHEN ?? new Date().toISOString()));
+  await wipeAllData();
+  const backup = normalizeBackupToCurrentModel(JSON.parse(readFileSync(process.env.PROBE!, 'utf8')));
+  const sel = { ...defaultActionsForMode('full_restore'), app_settings: 'replace' as const };
+  const pol = defaultPlanPolicyForMode('full_restore');
+  const preview = await buildImportPreview(backup, sel, pol);
+  const snap = await createPreImportSnapshot();
+  await applyImportPlan(backup, createImportPlan(backup, 'full_restore', sel, pol, preview.diffByCategory.flatMap((d) => d.conflicts), snap.id));
+  // Elke ronde is een opening van de app: opstartstappen, de registers zoals loadState ze zet, de planningsronde.
+  for (let i = 0; i < 3; i++) {
+    if (i > 0) await runBootMigrations({ build: `probe-${i}` });
+    await primePlanningRegisters();
+    const r = await syncProgramHorizon();
+    out(`OPEN ${i}: ${JSON.stringify(r.repairs?.lines ?? null)}`);
+    const w = await runWeeklyPrescriptionStep();
+    out(`  voorschrift: ${w.kind}`);
+    // Hier je eigen vraag: lees een repo uit en schrijf het antwoord met out(...).
+  }
+}, 120000);
