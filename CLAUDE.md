@@ -71,7 +71,7 @@ Een regel per onderwerp: het werkbriefje (bestanden, Nooit, valkuilen, tests). D
 - Kansen met gegevens (`docs/beslissingen/2026-10-31-kansen-stap-0.md`, `docs/onderzoek/Kansen met gegevens.md`; `engine/sourceWatch.ts`, `engine/airQuality.ts`): elk signaal is instelbaar en verandert de planning nooit zelf.
 - Ochtendkaart (`docs/beslissingen/2026-10-31-ochtendkaart-vernieuwd.md`; `engine/morningCard.ts`, `components/MorningCard.tsx`): `morningConsequence` is alleen tekst en plant niets.
 - Tekstkaart (`docs/beslissingen/2026-10-31-app-kaart.md`; `npm run kaart`, `npm run kaart:vergelijk`, `docs/app-kaart/`): na elke wijziging draait de vergelijking met elk verschil verklaard; elke gevonden inconsistentie wordt een invariant.
-- Open werk: `docs/backlog.md` (coördinator). Wat de eigenaar tussendoor meldt gaat in de Inbox daarvan en wordt gebouwd op het bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`), behalve een fout waar hij nu last van heeft. Wie welke helper op welk model krijgt: de skill `werkverdeling`.
+- Open werk: `docs/backlog.md` (coördinator). Wat de eigenaar tussendoor meldt gaat in de Inbox daarvan en wordt gebouwd op het bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`). Meteen alleen: iets dat nu stuk is, of een kleine fix die de coördinator zelf in een paar minuten doet, zonder helper. Wie welke helper op welk model krijgt: de skill `werkverdeling`.
 
 **Scheduling logic belongs in `/engine`.** Domeinlogica staat in `engine/`, niet in componenten, en de scheduler is deterministisch, zonder AI. Alles wat de planning van de gebruiker inhoudelijk verandert is een voorstel met Akkoord, nooit stil.
 

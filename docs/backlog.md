@@ -7,7 +7,7 @@ Bijgewerkt op 1 november 2026.
 ## Inbox
 
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
-Een opmerking over hetzelfde komt bij het bestaande punt. Een fout waar hij nu last van heeft wordt meteen opgepakt.
+Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
 (leeg)
 
