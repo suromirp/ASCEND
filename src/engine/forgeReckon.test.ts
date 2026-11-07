@@ -324,3 +324,20 @@ describe('tot falen: na een zware set zakt het gewicht één stap', () => {
     expect(next.reps).toBe(8);
   });
 });
+
+describe('tot falen op een toestel met grote stappen', () => {
+  it('hulp 27 x 10 tot falen, blok in stappen van 7: set 3 springt niet naar 35 kg hulp en 13 herhalingen', () => {
+    const t = { weightKg: 28, repsLow: 9, repsHigh: 9, rir: 0, open: true };
+    const rows: WorkoutRow[] = [
+      { id: 'r0', kind: 'work', target: { ...t, weightKg: 21 }, weightKg: 23, reps: 11, rir: 0, done: true, edited: true },
+      { id: 'r1', kind: 'work', target: t, weightKg: 27, reps: 10, forgeReps: 11, rir: 0, done: true, edited: true },
+      { id: 'r2', kind: 'work', target: t, weightKg: 27, reps: 8, forgeReps: 8, done: false },
+      { id: 'r3', kind: 'work', target: { ...t, weightKg: 35 }, weightKg: 35, reps: 9, forgeReps: 9, done: false },
+    ];
+    const ex: WorkoutExercise = { slot: 's', exerciseId: 'assisted-pull-up', name: 'Pull-Up', known: true, rows, restSec: 120, timed: false, fatiguePerSet: 0.08 };
+    const c = ctx({ profile: { ...DEFAULT_PROFILE, stackStepKg: 7 }, bodyKg: 86 });
+    const next = reckonAfterTick(ex, 'r1', c).rows[2];
+    expect(next.weightKg).toBeLessThan(35);
+    expect(next.reps!).toBeLessThanOrEqual(11);
+  });
+});
