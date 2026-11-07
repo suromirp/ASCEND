@@ -5,7 +5,7 @@ description: Het vaste bouwmoment van ASCEND (maandag, woensdag en vrijdag): de 
 
 # Bouwmoment
 
-Tussen de bouwmomenten bouwt niemand wat de eigenaar meldt (behalve een fout waar hij nu last van heeft): het gaat
+Tussen de bouwmomenten bouwt niemand wat de eigenaar meldt, op twee uitzonderingen na. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox. Al het andere gaat
 in `## Inbox` bovenaan `docs/backlog.md`, met de datum en zijn woorden kort. Een tweede opmerking over hetzelfde
 komt bij het eerste punt. Zo wordt er één keer gebouwd, met alle wensen erin.
 
