@@ -418,6 +418,14 @@ function ForgeWorkoutInner({
       el.scrollTo({ left: i * el.clientWidth, behavior: off ? 'auto' : 'smooth' });
     }, delay);
   };
+  // De naam bij de rust en in de melding: de oefening van de set die hierna komt. Na de laatste set van een
+  // oefening is dat de volgende oefening, niet nog eens dezelfde (eigenaar, 7 november).
+  const restNameAfter = (list: WorkoutExercise[], slot: string, fallback: string) => {
+    const done = list.find((e) => e.slot === slot);
+    if (done && !exerciseComplete(done)) return fallback;
+    const next = activeRow(list);
+    return list.find((e) => e.slot === next?.slot)?.name ?? fallback;
+  };
   const timers = useRef<number[]>([]);
   // De oefening zoals hij was toen je dit veld begon te bewerken (zie applyWeight).
   const baseRef = useRef<{ key: string; ex: WorkoutExercise } | null>(null);
@@ -771,7 +779,7 @@ function ForgeWorkoutInner({
     if (result.restSec && strength.restAuto) {
       const ex = workout.find((e) => e.slot === slot);
       alerted.current = null;
-      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: ex?.name ?? '' });
+      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? '') });
     }
   }
 
@@ -807,7 +815,7 @@ function ForgeWorkoutInner({
     if (result.restSec && strength.restAuto) {
       const ex = workout.find((e) => e.slot === slot);
       alerted.current = null;
-      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: ex?.name ?? '' });
+      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? '') });
     }
   }
 
