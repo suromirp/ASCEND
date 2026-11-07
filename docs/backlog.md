@@ -179,6 +179,42 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Zoals de andere periodes: een voorstel met Akkoord, de periode pas bij Akkoord opgeslagen (`engine/leave.ts`, `engine/leaveBlock.ts`, `engine/leaveProposal.ts`). Een bestaande vakantie kun je omzetten in dit soort.
 - Planning, dus Sherpa en Warden op opus; `planGolden.test.ts` beweegt niet. Instelling en uitleg in de gewone plekken.
 
+## Buiten: UV, zon en hoogte uit Open-Meteo (akkoord eigenaar 7 november, bouwen)
+
+- UV-index: bij een lange loop of tocht op een dag met UV 6 of hoger één korte regel ("UV 7 rond het middaguur: zonnebrand en een pet kunnen helpen"). Bij de weerregel, niet als eigen kaart. Instelbaar, standaard aan.
+- Zonsopkomst en zonsondergang: bij een training buiten "Licht tot 17.12" als de training na zonsondergang zou eindigen, en in de weerregel van de dag. Eén notatie voor tijden (zie de backlog: "13.05" en "06:11").
+- Hoogte van een plek: de hoogte van je locatie of vakantieadres, voor de heuvelplekken hieronder en bij een tocht.
+- Alles uit de bestaande koppeling (`src/integrations/openMeteo.ts`, daily `uv_index_max`, `sunrise`, `sunset`; de elevation-API), zonder sleutel, met een tijdgrens en een nette stilte zonder netwerk. Verandert de planning nooit. Sherpa op sonnet.
+
+## Heuvels en trappen in de buurt via OpenStreetMap (akkoord eigenaar 7 november, bouwen)
+
+- Overpass-API (OpenStreetMap, gratis, zonder sleutel): zoek binnen een straal (standaard 3 km) heuvels en hellingen, trappen (`highway=steps`), onverharde paden en sportvelden of een atletiekbaan, en met de hoogtes uit Open-Meteo het hoogteverschil.
+- Waar je het ziet: bij een heuveltraining, een trap- of bergconditietraining en in een periode "Zonder sportschool" een regel als "Op 1,2 km een helling van 60 m" met een link naar de kaart (openstreetmap.org, buiten de app). Op je eigen locatie of het adres van een vakantie.
+- Privacy: alleen een afgeronde positie naar Overpass (zoals het weer), niets bewaard behalve het resultaat per plek op dit toestel, geen adres in de repo of de back-up tenzij je dat kiest. Instelbaar, standaard aan na een eerste vraag.
+- Koppelen aan het onderzoek naar trainingsplekken en aan de periode "Zonder sportschool". Adapter in `src/integrations/`, engine kiest wat geschikt is, component toont. Sherpa op sonnet voor de adapter en het scherm, opus alleen als het de planning raakt (dat doet het niet: alleen een regel).
+
+## Voor de GR5 en de bergen (akkoord eigenaar 7 november)
+
+- Weerwaarschuwingen (Meteoalarm, open feeds per land): onweer, hitte, storm op de dag van een tocht of lange training, als regel met het droge feit eerst. Nooit stil iets aan de planning; hoogstens een voorstel.
+- Hutten langs de GR5 via refuges.info (gratis, zonder sleutel): plaatsen, water, open of dicht, bij de etappes op de Ascend-tab. Hangt samen met de coördinaten van de 36 etappes (GPX van de eigenaar, zie Android en web).
+- Lawinebulletins (EAWS, open formaat): alleen als een tocht in het sneeuwseizoen valt; anders niet tonen.
+- Volgorde: na de twee punten hierboven.
+
+## Regen in het komende uur, feestdagen, oefeningendatabase, maanstand (akkoord eigenaar 7 november)
+
+- Regen in het komende uur: Open-Meteo `minutely_15` (zelfde koppeling als het weer). Vlak voor een training buiten één regel: "Over 20 minuten regen; nu gaan of om 18.30." Alleen op de dag zelf en alleen als de training binnen twee uur begint. Instelbaar, standaard aan. Klein, Sherpa op sonnet, samen met UV en zon.
+- Feestdagen: Nager.Date (gratis, zonder sleutel), voor Nederland en voor het land van een vakantie. Een feestdag is een voorstel, nooit stil: "Donderdag is Hemelvaart: zet je de lange training daar neer?" Liever niet laat alles staan. Eén keer per jaar ophalen, op dit toestel bewaren, zonder netwerk niets. Raakt de planning via een voorstel: de engine-regel op opus, tekst en instelling op sonnet.
+- Oefeningendatabase: wger (open source, CC-BY-SA) als bron bij de uitleg bij oefeningen, de echte vervangers en de Engelse versie. Nooit letterlijk overnemen: herschrijven door Scribe, techniek getoetst door Scout, licentie en bron vermeld zoals bij de tekeningen (`ATTRIBUTION.md`). Geen koppeling in de app, alleen bij het schrijven.
+- Maanstand: zonder API uit te rekenen. Bij een avondtocht of bivak één regel ("Volle maan, je ziet het pad zonder lamp"). Klein, bij de bergpunten.
+
+## Tempo bij zone 2 beter maken (eigenaar 7 november: "wat matig")
+
+- Nu (`src/engine/aerobicTrend.ts`): alleen geplande rustige en lange duurlopen, met de gemiddelde hartslag van de hele loop, per week één punt. Met twee of drie loopjes per week en twee die buiten zone 2 vallen geeft dat drie punten en een uitspraak ("17 seconden sneller") die sterker klinkt dan de data draagt.
+- Meer en betere data: uit de reeksen van het horloge (run in detail, `storage/activityDetail.ts`) de stukken van minstens 5 minuten stabiel in zone 2 op vlak terrein, uit elke loop (ook in- en uitlopen van intervallen en de lange duurloop), in plaats van één gemiddelde per loop. Gecorrigeerd voor helling (tempo naar vlak omgerekend) en warmte (`engine/heatPace.ts`), en hartslagdrift (alleen het stuk na de eerste 10 minuten).
+- Eerlijker zeggen: "eerste schatting" tot er minstens 8 metingen over 4 weken zijn, daarna de verandering met een marge ("ongeveer 10 tot 20 seconden sneller"). De cijfers in de tekst komen uit dezelfde functie als de grafiek.
+- Een leesbare grafiek: elke meting als stip, het weekgemiddelde als lijn, een as met tempo's en "sneller" omhoog erbij, de hoogste en laagste week benoemd. Korte tekst: één zin wat het betekent, het hoe achter de i.
+- Scout eerst kort (welke drempels voor stabiel en hoe lang, warmtecorrectie), dan Sherpa: engine op opus (afgeleid, append-only, raakt de planning niet), grafiek en tekst op sonnet.
+
 ## Geparkeerd
 
 - Spierindex stap 3.

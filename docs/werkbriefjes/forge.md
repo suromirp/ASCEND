@@ -26,6 +26,7 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 ## Valkuilen
 - Een open doel (11+) of tot falen heeft geen bovenkant: `OPEN_ROOM` in `src/engine/forgeAdjust.ts` houdt een veel lichter gewicht met veel meer herhalingen eruit.
 - `rirAssumed` (een set afgevinkt zonder aan de RIR te komen) telt niet mee voor kracht, vermoeidheid en stap, niet in `learnFatigue` en niet in "Forge rekent mee".
+- Tot falen of een open doel: na een zware set mag de volgende set één herhaling onder de onderkant (`floor` in `reckonAfterTick`), zodat het gewicht één stap zakt; een opwarmset is minstens `WARMUP_MIN_STEP` (15%) zwaarder dan de vorige. Stelde Forge al bij, dan geen tweede vraag om Lichter.
 - Rust per oefening komt uit `estimatedRest` in `src/engine/forgeWorkout.ts`; geen tweede tabel in een component.
 - Elk blad in Forge heeft `ref={sheetRef}` en `<SheetGrip />`, zoals `ForgeSheet` in `src/components/forge/parts.tsx`; bladen sluiten met `forge-down`, en `sheetDrag.scan.test.ts` kijkt mee.
 - Een rustmelding van een vorige keer wordt bij het openen geschrapt (`src/state/boot.ts`); een lopende rust plant Forge zelf opnieuw.

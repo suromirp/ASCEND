@@ -208,11 +208,14 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   let weightKg = next.weightKg;
   let load = now;
   let reps = expectedReps(strength, now, rir);
-  if (reps < low || reps > high) {
+  // Tot falen of een open doel (9+): na een zware set mag de volgende één herhaling onder de onderkant zitten, zodat
+  // het gewicht maar één stap zakt in plaats van twee (47,5 x 8 na 52,5 x 7, zoals MacroFactor; eigenaar 7 november).
+  const floor = next.target.failure || next.target.open ? Math.max(1, low - 1) : low;
+  if (reps < floor || reps > high) {
     const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: next.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), ...(row.weightKg !== undefined ? [row.weightKg] : [])], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
     if (candidates) {
-      if (reps < low) {
-        const c = lighterPick(strength, candidates, next.target, rir, now);
+      if (reps < floor) {
+        const c = lighterPick(strength, candidates, { ...next.target, repsLow: floor }, rir, now);
         if (c) weightKg = c.externalKg;
       } else {
         const c = candidates.find((x) => x.loadKg > now + 1e-9 && expectedReps(strength, x.loadKg, rir) <= high && expectedReps(strength, x.loadKg, rir) >= low);
@@ -229,7 +232,7 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   }
   // Past er geen gewicht en haal je de onderkant toch niet: de set blijft staan. "Lichter" en de melding
   // dat geen gewicht past doen hun eigen voorstel; een vak met 1 of 2 herhalingen helpt niemand.
-  if (reps < low) return ex;
+  if (reps < floor) return ex;
   const fixed = clampReps(reps);
   weightKg = Math.min(MAX_ROW_KG, r2(weightKg));
   if (fixed === next.reps && weightKg === next.weightKg) return ex;
