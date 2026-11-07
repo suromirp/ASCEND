@@ -176,3 +176,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-04, Gewicht uit Health Connect, Sherpa, opus (ontwikkelaar), 254k, 29 min, 0
 - 2026-11-04, Review gewicht Health Connect, Warden, opus (reviewer), 105k, 8 min, 0, groen; 2 kleine punten door coördinator
 - 2026-11-06, Werkbriefjes (negen onderwerpen), Sherpa, sonnet (ontwikkelaar), 152k, 7 min, 0
+- 2026-11-07, CLAUDE.md korter (28 naar 12 KB), Sherpa, sonnet (ontwikkelaar), 43k, 2 min, 0
