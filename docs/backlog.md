@@ -200,6 +200,13 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Lawinebulletins (EAWS, open formaat): alleen als een tocht in het sneeuwseizoen valt; anders niet tonen.
 - Volgorde: na de twee punten hierboven.
 
+## Regen in het komende uur, feestdagen, oefeningendatabase, maanstand (akkoord eigenaar 7 november)
+
+- Regen in het komende uur: Open-Meteo `minutely_15` (zelfde koppeling als het weer). Vlak voor een training buiten één regel: "Over 20 minuten regen; nu gaan of om 18.30." Alleen op de dag zelf en alleen als de training binnen twee uur begint. Instelbaar, standaard aan. Klein, Sherpa op sonnet, samen met UV en zon.
+- Feestdagen: Nager.Date (gratis, zonder sleutel), voor Nederland en voor het land van een vakantie. Een feestdag is een voorstel, nooit stil: "Donderdag is Hemelvaart: zet je de lange training daar neer?" Liever niet laat alles staan. Eén keer per jaar ophalen, op dit toestel bewaren, zonder netwerk niets. Raakt de planning via een voorstel: de engine-regel op opus, tekst en instelling op sonnet.
+- Oefeningendatabase: wger (open source, CC-BY-SA) als bron bij de uitleg bij oefeningen, de echte vervangers en de Engelse versie. Nooit letterlijk overnemen: herschrijven door Scribe, techniek getoetst door Scout, licentie en bron vermeld zoals bij de tekeningen (`ATTRIBUTION.md`). Geen koppeling in de app, alleen bij het schrijven.
+- Maanstand: zonder API uit te rekenen. Bij een avondtocht of bivak één regel ("Volle maan, je ziet het pad zonder lamp"). Klein, bij de bergpunten.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
