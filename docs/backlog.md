@@ -4,6 +4,13 @@ Wat nog op de lijst staat, zodat een nieuwe sessie het niet uit het gesprek hoef
 coördinator houdt dit bij: iets wat live staat gaat eruit, iets nieuws komt erbij met een regel uitleg.
 Bijgewerkt op 1 november 2026.
 
+## Inbox
+
+Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
+Een opmerking over hetzelfde komt bij het bestaande punt. Een fout waar hij nu last van heeft wordt meteen opgepakt.
+
+(leeg)
+
 ## Loopt nu
 
 
