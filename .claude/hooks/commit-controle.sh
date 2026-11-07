@@ -18,6 +18,13 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)" || exit 0
 [ -d node_modules ] || [ -d "${CLAUDE_PROJECT_DIR:-.}/node_modules" ] || exit 0
 [ -d node_modules ] || ln -s "${CLAUDE_PROJECT_DIR}/node_modules" node_modules 2>/dev/null
 
+# Pakketten bijwerken als package-lock.json nieuwer is dan wat er geinstalleerd is (een merge bracht een nieuw
+# pakket mee, zoals Capacitor op 3 november): anders faalt de typecontrole om een ontbrekend pakket.
+if [ ! -L node_modules ] && [ -f package-lock.json ] && [ package-lock.json -nt node_modules/.package-lock.json ]; then
+  echo "Pakketten lopen achter op package-lock.json: npm ci." >&2
+  npm ci --no-audit --no-fund >/dev/null 2>&1 || echo "npm ci lukte niet; de controles lopen met de oude pakketten." >&2
+fi
+
 # Staged and unstaged together: the hook runs before the command, so in
 # "git add ... && git commit" nothing is staged yet when it looks.
 if ! { git diff --cached --name-only; git diff --name-only; git ls-files --others --exclude-standard; } | grep -qE '^(src/|package(-lock)?\.json$|vite\.config|vitest\.config|tsconfig)'; then

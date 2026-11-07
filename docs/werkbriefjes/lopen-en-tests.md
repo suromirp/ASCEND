@@ -11,9 +11,9 @@ Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5
 - `src/engine/watchHeartRate.ts#resolveWatchHr` hartslagbereik op het horloge, naar de drempel van intervals.icu
 - `src/engine/heartRateZones.ts#zoneBpm` de zones van ASCEND
 - `src/engine/zoneUpdate.ts#zoneOffer` nieuwe drempel na de laatste test, voorstel met Akkoord
-- `src/engine/testRest.ts#resolveTestRest` 72 of 48 uur rust voor een test; regel in `scheduler.ts#testPairConflict`
+- `src/engine/testRest.ts#resolveTestRest` 72 of 48 uur rust voor een test; regel in `scheduler.ts` (`testPairConflict`, niet geëxporteerd, en `tooCloseBeforeTest`) en in de weekcontrole (`TEST-REST`, alleen voor Week)
 - `src/engine/testEffortSplit.ts` een test met warming-up en cooling-down telt in twee delen
-- `src/engine/legFatigue.ts#PLANNED_MAX_EFFORT_RPE` een test of race is gepland op RPE 10
+- `src/engine/legFatigue.ts#PLANNED_MAX_EFFORT_RPE` (privé) een test of race is gepland op RPE 10
 
 ## Nooit
 - `tests.at(-1)` of een eigen "laatste test" lezen; alles gaat door `pacesFromLogs` en `countedTests`.
@@ -30,7 +30,7 @@ Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5
 - Een tweede testvoorstel toetste andere voorstellen niet en ging rood bij de review (2 november); laat een nieuw testvoorstel dezelfde toets doorlopen.
 - Het wedstrijdblok geeft zijn eigen melding bij rust voor een test; voeg geen tweede melding toe.
 - De reeksen staan standaard in de back-up (grote bestanden); de kopieën vóór een import (`backupSnapshots`) bevatten ze nooit.
-- `sessionLoad` kent de splitsing al maar heeft nog geen aanroeper; de weeklast en beenindex lezen `LoadItem.split`.
+- `sessionLoad` kent de splitsing (`split`), maar geen aanroeper geeft hem nog mee (de enige, `SportFeltBlock`, rekent zonder); de weeklast en beenindex lezen `LoadItem.split`.
 - De weekbalk sprak zichzelf tegen bij de RPE van een test (review 2 november): laat getal en tekst uit dezelfde berekening komen.
 
 ## Testen
