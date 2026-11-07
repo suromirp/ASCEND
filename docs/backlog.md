@@ -169,6 +169,7 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 
 - Snel leren van de beste krachtapps (MacroFactor Workouts, RP Hypertrophy, Hevy, Strong, JuggernautAI, Boostcamp): hoe vragen ze RIR of RPE (wanneer, hoe vaak, met hoeveel tikken), wat doen ze ermee (gewicht en herhalingen voor de volgende set of training), en hoe leggen ze het uit.
 - Plus wat onderzoek zegt over hoe goed mensen hun RIR schatten en hoe je dat beter maakt.
+- Ook (eigenaar, 7 november): vermoeidheid tussen oefeningen. Forge rekent nu alleen binnen een oefening met vermoeidheid (`fatigueFactor`); wat je eerder in de training voor dezelfde spieren deed telt niet, alleen indirect via je historie als de volgorde gelijk blijft. Voorstel: de harde sets voor dezelfde hoofdspieren eerder in de training tellen, afgezet tegen wat je daar normaal voor deed, en de eerste set daarop bijstellen; hoeveel per set leren uit je eigen trainingen. Uitzoeken hoe MacroFactor en anderen dit doen en wat onderzoek zegt over voorvermoeidheid.
 - Uitkomst: een kort verslag in `docs/onderzoek/` met wat Forge kan overnemen, als punten naast wat Forge nu al doet (Hoeveel over?, aangenomen RIR, rekent mee).
 - Scout op opus. Kan vóór de grote Forge-onderdelen (vervanger, uitleg, toestel) omdat het die richting geeft.
 
