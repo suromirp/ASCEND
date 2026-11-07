@@ -179,6 +179,27 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Zoals de andere periodes: een voorstel met Akkoord, de periode pas bij Akkoord opgeslagen (`engine/leave.ts`, `engine/leaveBlock.ts`, `engine/leaveProposal.ts`). Een bestaande vakantie kun je omzetten in dit soort.
 - Planning, dus Sherpa en Warden op opus; `planGolden.test.ts` beweegt niet. Instelling en uitleg in de gewone plekken.
 
+## Buiten: UV, zon en hoogte uit Open-Meteo (akkoord eigenaar 7 november, bouwen)
+
+- UV-index: bij een lange loop of tocht op een dag met UV 6 of hoger één korte regel ("UV 7 rond het middaguur: zonnebrand en een pet kunnen helpen"). Bij de weerregel, niet als eigen kaart. Instelbaar, standaard aan.
+- Zonsopkomst en zonsondergang: bij een training buiten "Licht tot 17.12" als de training na zonsondergang zou eindigen, en in de weerregel van de dag. Eén notatie voor tijden (zie de backlog: "13.05" en "06:11").
+- Hoogte van een plek: de hoogte van je locatie of vakantieadres, voor de heuvelplekken hieronder en bij een tocht.
+- Alles uit de bestaande koppeling (`src/integrations/openMeteo.ts`, daily `uv_index_max`, `sunrise`, `sunset`; de elevation-API), zonder sleutel, met een tijdgrens en een nette stilte zonder netwerk. Verandert de planning nooit. Sherpa op sonnet.
+
+## Heuvels en trappen in de buurt via OpenStreetMap (akkoord eigenaar 7 november, bouwen)
+
+- Overpass-API (OpenStreetMap, gratis, zonder sleutel): zoek binnen een straal (standaard 3 km) heuvels en hellingen, trappen (`highway=steps`), onverharde paden en sportvelden of een atletiekbaan, en met de hoogtes uit Open-Meteo het hoogteverschil.
+- Waar je het ziet: bij een heuveltraining, een trap- of bergconditietraining en in een periode "Zonder sportschool" een regel als "Op 1,2 km een helling van 60 m" met een link naar de kaart (openstreetmap.org, buiten de app). Op je eigen locatie of het adres van een vakantie.
+- Privacy: alleen een afgeronde positie naar Overpass (zoals het weer), niets bewaard behalve het resultaat per plek op dit toestel, geen adres in de repo of de back-up tenzij je dat kiest. Instelbaar, standaard aan na een eerste vraag.
+- Koppelen aan het onderzoek naar trainingsplekken en aan de periode "Zonder sportschool". Adapter in `src/integrations/`, engine kiest wat geschikt is, component toont. Sherpa op sonnet voor de adapter en het scherm, opus alleen als het de planning raakt (dat doet het niet: alleen een regel).
+
+## Voor de GR5 en de bergen (akkoord eigenaar 7 november)
+
+- Weerwaarschuwingen (Meteoalarm, open feeds per land): onweer, hitte, storm op de dag van een tocht of lange training, als regel met het droge feit eerst. Nooit stil iets aan de planning; hoogstens een voorstel.
+- Hutten langs de GR5 via refuges.info (gratis, zonder sleutel): plaatsen, water, open of dicht, bij de etappes op de Ascend-tab. Hangt samen met de coördinaten van de 36 etappes (GPX van de eigenaar, zie Android en web).
+- Lawinebulletins (EAWS, open formaat): alleen als een tocht in het sneeuwseizoen valt; anders niet tonen.
+- Volgorde: na de twee punten hierboven.
+
 ## Geparkeerd
 
 - Spierindex stap 3.
