@@ -722,7 +722,9 @@ function ForgeWorkoutInner({
     const tickedEx = result.workout.find((e) => e.slot === slot);
     const adjustCtx = { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights };
     const live = !!ticked && !!tickedEx && strength.enabled && strength.adjustLive && !readOnly;
-    const proposal = live ? suggestLighter(tickedEx, rowId, adjustCtx) : undefined;
+    // Stelde Forge de volgende set al zelf bij (Forge rekent mee), dan geen tweede vraag om lichter.
+    const reckonedHere = reckoned.find((e) => e.slot === slot) !== raw.workout.find((e) => e.slot === slot);
+    const proposal = live && !reckonedHere ? suggestLighter(tickedEx, rowId, adjustCtx) : undefined;
     // Past er geen enkel gewicht, dan vraagt Forge of je de gewichten van het toestel invult.
     const fit = live && !proposal ? suggestOwnWeights(tickedEx, rowId, adjustCtx) : undefined;
     setLighter((l) => {

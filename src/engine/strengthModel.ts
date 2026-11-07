@@ -584,6 +584,8 @@ export interface DoneBefore {
 
 // A cold full ladder for a heavy top set has this many steps (20, 60 and 80 before 105 kg).
 export const TOP_SET_LADDER = 3;
+// A warm-up set is at least this share of the first working weight heavier than the one before it.
+export const WARMUP_MIN_STEP = 0.15;
 // Already on about the weight of the top set in the same movement: no warm-up set.
 const SAME_WEIGHT_SHARE = 0.9;
 
@@ -633,6 +635,9 @@ function buildWarmups(plan: WarmStep[], exercise: Exercise, candidates: Candidat
     const rounded = candidates[nearestIndex(candidates, external)].externalKg;
     if (rounded >= firstWeightKg * 0.92) continue;
     if (out.length > 0 && rounded <= out[out.length - 1].weightKg) continue;
+    // A step that barely adds weight warms nothing more up (the empty bar of 20, then 25 before 50 kg): skip it,
+    // so a light top set gets two warm-up sets, as MacroFactor does (owner, 7 November).
+    if (out.length > 0 && rounded - out[out.length - 1].weightKg < WARMUP_MIN_STEP * firstWeightKg - 1e-9) continue;
     // Never more reps than the set before it, whatever the plan above says.
     const reps = out.length > 0 ? Math.min(p.reps, out[out.length - 1].reps) : p.reps;
     out.push({ weightKg: rounded, reps });

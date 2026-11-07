@@ -159,6 +159,13 @@ describe('opwarmen voor een zware topset', () => {
     expect(warm(dl).map((r) => r.reps)).toEqual([8, 5, 3]);
   });
 
+  it('koud bij een lichte topset van 50 kg: geen stap van 20 naar 25, dus twee opwarmsets (zoals MacroFactor)', () => {
+    const ex = exerciseById('barbell-row');
+    const candidates = candidatesFor(ex, settings.profile, { lastExternalKg: 50, bodyKg: 80 })!;
+    const sets = topSetWarmups(settings, ex, candidates, 50, undefined, 80).map((w) => w.weightKg);
+    expect(sets).toEqual([20, 37.5]);
+  });
+
   it('in hetzelfde patroon al op ongeveer het gewicht van de topset: geen opwarmset; lager: alleen de stappen erboven', () => {
     const profile = settings.profile;
     const ex = exerciseById('deadlift');

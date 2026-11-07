@@ -312,3 +312,15 @@ describe('uit de review', () => {
     expect(after.rows[1].reps).toBe(13);
   });
 });
+
+describe('tot falen: na een zware set zakt het gewicht één stap', () => {
+  it('52,5 x 7 tot falen bij een doel van 9+: de volgende set wordt 47,5 kg, niet 45 (zoals MacroFactor)', () => {
+    const fail = (i: number, over: Partial<WorkoutRow> = {}): WorkoutRow => ({ id: `r${i}`, kind: 'work', target: { weightKg: 50, repsLow: 9, repsHigh: 9, rir: 0, open: true }, weightKg: 50, reps: 9, forgeReps: 9, done: false, ...over });
+    const ex: WorkoutExercise = { slot: 's', exerciseId: 'barbell-row', name: 'Barbell Row', known: true, rows: [fail(0), fail(1), fail(2)], restSec: 120, timed: false, fatiguePerSet: 0.05 };
+    const done = { ...ex, rows: ex.rows.map((r) => (r.id === 'r0' ? { ...r, weightKg: 52.5, reps: 7, rir: 0, done: true, edited: true } : r)) };
+    const after = reckonAfterTick(done, 'r0', ctx());
+    const next = after.rows[1];
+    expect(next.weightKg).toBe(47.5);
+    expect(next.reps).toBe(8);
+  });
+});
