@@ -223,6 +223,19 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Een leesbare grafiek: elke meting als stip, het weekgemiddelde als lijn, een as met tempo's en "sneller" omhoog erbij, de hoogste en laagste week benoemd. Korte tekst: één zin wat het betekent, het hoe achter de i.
 - Scout eerst kort (welke drempels voor stabiel en hoe lang, warmtecorrectie), dan Sherpa: engine op opus (afgeleid, append-only, raakt de planning niet), grafiek en tekst op sonnet.
 
+## Calisthenics, los of naast krachttraining (wens 7 november, grondig)
+
+Doel: calisthenics als volwaardige manier van trainen in ASCEND, los of samen met krachttraining. Het moet echt goed in elkaar zitten; eerst onderzoek, dan ontwerp, dan bouwen.
+
+- Stap 1, onderzoek (Scout op opus, twee delen):
+  - Apps: hoe Thenx, Calimove, Madbarz, Caliverse, Freeletics en de Recommended Routine van r/bodyweightfitness het doen. Progressies (ladders als knie-push-up, push-up, archer, one-arm), vaardigheden (pull-up, dip, muscle-up, handstand, L-sit, front lever), hoe ze vooruitgang meten zonder kilo's, hoe ze het combineren met gewichten.
+  - Wetenschap: progressie via hefboom, tempo en herhalingen in plaats van gewicht; RIR bij oefeningen met je eigen gewicht; houdingen in seconden; vaardigheid tegenover kracht; combineren met kracht en hardlopen voor de berg (benen, rug, grip).
+  - Lees eerst `docs/onderzoek/` en `docs/visie/` (geen dubbel werk).
+- Stap 2, ontwerp (Cartographer en coördinator): hoe het in ASCEND past. Voorstel om te toetsen: een eigen doelsoort "Vaardigheid" met mijlpalen als ladder (zoals de GR5 en de rugzakladder), een vaardigheid als tussendoel naast een hoofddoel, en per training de keuze kracht, calisthenics of samen. Forge kent dan ook stappen in een progressie in plaats van alleen kilo's, houdingen in seconden, extra gewicht en hulp met een band.
+- Stap 3, bouwen in stukken van hoogstens een uur: data (progressies en vaardigheden), engine (vooruitgang zonder kilo's, planner-rollen), Forge (rij voor een progressiestap en een houding), Ascend-tab (de ladder), instellingen.
+- Moment: na de Forge-punten die hetzelfde oefeningenmodel raken (RIR bij afvinken, toestel, echte vervanger, uitleg bij oefeningen), want calisthenics bouwt daarop. Het onderzoek (stap 1) kan eerder, het staat los.
+- Schatting: onderzoek 300k tot 500k tokens, ontwerp 150k tot 250k, bouwen vijf tot acht rondes met review, samen ongeveer 2,5 tot 3,5 miljoen tokens, verdeeld over drie tot vijf bouwmomenten (twee tot drie weken).
+
 ## Geparkeerd
 
 - Spierindex stap 3.
