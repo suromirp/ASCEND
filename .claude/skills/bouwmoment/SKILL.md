@@ -10,7 +10,7 @@ in `## Inbox` bovenaan `docs/backlog.md`, met de datum en zijn woorden kort. Een
 komt bij het eerste punt. Zo wordt er één keer gebouwd, met alle wensen erin.
 
 1. Lees `docs/backlog.md` (Inbox eerst), `docs/onderhoud/2026-11-06-kosten-voor-maandag.md` en de skill `werkverdeling`.
-2. Groepeer de Inbox per onderwerp (werkbriefje). Kies wat past in deze ronde: eerst fouten, dan klein, dan één groter punt.
+2. Groepeer de Inbox per onderwerp (werkbriefje) en bouw die eerst. Daarna het eerstvolgende open blok uit "Rooster voor de bouwmomenten" in de backlog (hoogstens één groter punt plus kleine dingen). Een blok dat niet af komt, staat er de volgende keer weer, met wat al gedaan is.
 3. Zelfstandig: de eigenaar start het bouwmoment niet en beantwoordt geen vragen. Kies bij elke keuze het advies,
    en zet elke keuze in de melding aan het eind. Een punt waar je echt niet zonder hem kunt (een doel dat zou
    veranderen, iets wat zijn woorden tegenspreekt) bouw je niet: het blijft in de Inbox met je vraag erbij, en die

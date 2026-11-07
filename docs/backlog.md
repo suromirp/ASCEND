@@ -12,6 +12,27 @@ Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: ie
 - 7 november, Forge en de tijdsgrens: bij Cable Rope High Row gaf Forge 2 sets, het programma (en MacroFactor) 3. Waarschijnlijk haalde de tijdsgrens (Hoogstens per krachttraining, 60 minuten) een set bijwerk weg. Nagaan of dat zo is; zo ja, het bij de oefening zelf zeggen ("1 set weg door je tijdsgrens") met een tik om hem terug te zetten, en kijken of 60 minuten met 2:00 rust en drie opwarmsets wel past bij een programma van vier oefeningen met 3 tot 4 sets.
 - 7 november, Forge had gelijk bij de Pull-Up met hulp: na drie sets tot falen haalde de eigenaar 6 herhalingen met 27 kg hulp, MacroFactor verwachtte 10. Vermoeidheid na sets tot falen telt in Forge mee; zo houden. Wel: de sprong naar 35 kg hulp (blok in stappen van 7) is opgelost (JUMP_ROOM), de echte oplossing is het toestel met zijn eigen standen (zie Forge: gewicht op een toestel).
 
+## Rooster voor de bouwmomenten
+
+Per bouwmoment eerst de Inbox, daarna het volgende blok hieronder dat nog open staat. Een blok is hoogstens één groter punt plus kleine dingen. Afgerond: naar "Live op" en uit dit rooster. Volgorde: wat stuk of met voorrang is, dan Forge (je traint er nu elke week mee), dan buiten, dan groot.
+
+1. De planner en de 48 uur (met voorrang), en de weekcontrole die heen en weer schuift. Opus.
+2. Onderzoek RIR en RPE in de beste apps, met vermoeidheid tussen oefeningen (Scout). Daarnaast klein: tijdsgrens en sets (Inbox), Spieren voor de berg ook in Forge.
+3. Forge: afvinken is de RIR van het doel (ook oude workouts) en vermoeidheid tussen oefeningen, op basis van stap 2.
+4. Forge: gewicht op een toestel (de standen van het blok leren).
+5. Forge: ruilen met een echte vervanger.
+6. Buiten klein: UV, zon, hoogte, regen in het komende uur, maanstand. Sonnet.
+7. Heuvels en trappen in de buurt (OpenStreetMap).
+8. Periode "Zonder sportschool", en feestdagen als voorstel. Opus voor de planning.
+9. Tempo bij zone 2 beter maken (Scout kort, dan bouwen).
+10. Gewicht uit Health Connect als trend, en de kleine punten daarvan.
+11. Onderzoek calisthenics en uitleg bij oefeningen (Scout), proef met vijf uitlegteksten (Scribe).
+12. Uitleg bij oefeningen, de rest.
+13. Calisthenics ontwerp, daarna bouwen over drie tot vijf bouwmomenten.
+14. Voor de GR5: weerwaarschuwingen, hutten, lawines.
+15. Alle teksten herschrijven en Engels erbij (groot, in stukken per tab).
+16. De oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten) waar ze passen.
+
 ## Loopt nu
 
 
