@@ -11,7 +11,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - `src/engine/sourcePrecedence.ts#isSameMoment` dezelfde training van twee bronnen is één moment
 - `src/engine/sourceWatch.ts#sourceSilence` Vangnet: stil na drie dagen zonder data terwijl de koppeling werkt
 - `src/engine/morningBackup.ts#archiveToClear` ochtendgetallen in de back-up, archief en opruimen
-- `src/engine/liveUpdate.ts#updateDecision` bijwerken zonder nieuwe APK, `minNative` in `app-versie.json`
+- `src/engine/liveUpdate.ts#updateDecision` bijwerken zonder nieuwe APK, `minNative` in `app-versie.json` (gemaakt bij de build door `scripts/app-versie.mjs`, niet in de repo)
 - `src/engine/signalSettings.ts` instellingen van de signalen uit je gegevens, allemaal aan en geen verandert de planning
 - `src/engine/activityText.ts#activityText` Strava-tekst om te kopiëren
 

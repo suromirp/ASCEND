@@ -3,7 +3,7 @@
 Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen, scheduler, de planningsronde, vrije dagen, tochten en zonder doel.
 
 ## Bestanden
-- `src/engine/planPass.ts#planPass` de ronde die elke planning afsluit: raceblok, dan weekcontrole
+- `src/engine/planPass.ts#planPass` de ronde die elke planning afsluit: vaste sporten en hoeveel per soort, dan tot 4 keer raceblok, vrije-dagenblokken en weekcontrole tot niets meer verandert (`MAX_TURNS`)
 - `src/engine/weekValidator.ts#lockLevel` wie een sessie mag aanraken, en `repairWeeks` voor de reparaties
 - `src/engine/scheduler.ts#legSpacingDays` de 48 uur tussen zware beendagen
 - `src/engine/mainGoal.ts#mainGoal` het hoofddoel, op één plek

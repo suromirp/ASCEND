@@ -114,6 +114,33 @@ schermen anders zijn en controleert de invarianten (getallen die overal gelijk m
 - Tokens en duur weet een helper zelf niet: de coördinator haalt ze uit de melding na afloop
   (`subagent_tokens`, `duration_ms`) voor het logboek.
 
+## Het opdrachtsjabloon
+
+Elke opdracht aan Sherpa (en zo nodig Cartographer) volgt deze kopjes, kort, in deze volgorde. Wat leeg blijft
+zeg je ("geen instelling nodig: geen keuze voor de gebruiker").
+
+1. **Doel**: één of twee zinnen, met het symptoom van de eigenaar als het een fout is (gemeten, niet vermoed).
+2. **Briefje**: `docs/werkbriefjes/<onderwerp>.md`, en welke valkuilen daaruit hier gelden.
+3. **Eisen**: controleerbaar, als punten (wat de gebruiker ziet, welke tekst, welke maat op 360 en 390 px).
+4. **Randgevallen, elk met een test**: kies uit de vaste lijst wat geldt: de dag zelf (vandaag telt nog niet als
+   voorbij), een week- of maandgrens en middernacht in Europe/Amsterdam, een vakantie of tocht in de week, een rij
+   die de gebruiker zelf vastzette, een test of wedstrijd, een fout halverwege (alles of niets, Ongedaan maken blijft),
+   een koppeling die kapot of verlopen is, een oude back-up zonder het nieuwe veld (migratie of defensief lezen),
+   Rustig en Uit bij Beweging. Noem welke niet gelden en waarom.
+5. **Mag niet bewegen**: `planGolden.test.ts`, historie, de scheduler, en wat het briefje onder Nooit noemt.
+6. **Instelling**: welke, met het advies als standaard, in settingsIndex, settingsLayout, settingsSummary en de groep.
+7. **Opleveren**: kort, Nederlands, per eis gedaan of waarom niet; elke eigen keuze buiten de opdracht; de uitslag
+   van tsc, lint, de gerichte tests en de volle set; wat niet gecontroleerd is; de branch.
+
+## Sneller testen tijdens het werk
+
+- Tijdens het bouwen: alleen de tests die bij je wijziging horen, `npx vitest related --run <gewijzigde bestanden>`
+  of het filter uit het briefje (`npx vitest run src/engine/forge`). Dat duurt seconden in plaats van ruim een minuut.
+- De volle set draait de commit-hook zelf (`.claude/hooks/commit-controle.sh`); voor de squash naar main draait de
+  coördinator hem nog één keer na de laatste merge, want `git commit-tree` gaat niet door de hook.
+- De tekstkaart alleen als een scherm verandert, en lees eerst de samenvatting (`npm run kaart:vergelijk`
+  meldt per scherm "gelijk" of het aantal gewijzigde regels); de details per scherm pas als je ze nodig hebt.
+
 ## Lange sessies
 
 Een sessie die lang loopt wordt bij elke beurt duurder. Begin na een groot onderwerp of na een

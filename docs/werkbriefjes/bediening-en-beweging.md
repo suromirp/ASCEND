@@ -8,7 +8,7 @@ Hoe de app bedient wordt en beweegt: terugknop en bladen, scrollen en hervatten,
 - `src/utils/useBackToClose.ts#useBackToClose` voor een menu of weergave die geen blad is
 - `src/components/ui.tsx#SheetGrip` het greepje bovenaan elk blad
 - `src/components/usePageState.ts#usePageState` toestand die een bezoek aan een andere pagina overleeft
-- `src/components/useScrollRestoration.ts#useScrollRestoration` scrollhoogte per geschiedenisstap in `#app-scroll`
+- `src/components/useScrollRestoration.ts#useScrollRestoration` scrollhoogte per geschiedenisstap van de meegegeven scroller (de pagina is `#app-scroll`)
 - `src/utils/sheetGrowDom.ts#installSheetOrigin` een blad groeit uit een rij met `data-sheet-from`
 - `src/utils/flipDom.ts#armFlip` een verplaatste training schuift naar zijn dag
 - `src/utils/haptics.ts#haptics` de tik, achter de instelling Trillen

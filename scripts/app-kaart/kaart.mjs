@@ -1,6 +1,7 @@
 // Tekstuele kaart van de app. Zie docs/app-kaart/README.md en docs/beslissingen/2026-10-31-app-kaart.md.
 //   node scripts/app-kaart/kaart.mjs                    maakt docs/app-kaart/ opnieuw
 //   node scripts/app-kaart/kaart.mjs --vergelijk        vergelijkt met docs/app-kaart/ (exit 0 gelijk, 1 verschil)
+//   node scripts/app-kaart/kaart.mjs --vergelijk --details   idem, met de gelijke schermen bij naam en tot 60 regels per verschil
 //   node scripts/app-kaart/kaart.mjs --foto <scherm>    afdruk van een heel scherm
 //   node scripts/app-kaart/kaart.mjs --foto <scherm> --markeer "<tekst>"   idem, met een rand om die tekst
 // Een afdruk toont de hele pagina, ook wat onder de vouw staat (volleAfdruk). Bij --vergelijk krijgt
@@ -18,6 +19,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const KAART = join(ROOT, 'docs', 'app-kaart');
 const args = process.argv.slice(2);
 const vergelijk = args.includes('--vergelijk');
+// Kort (standaard): gelijke schermen als één regel en per verschil de eerste 8 regels. --details toont tot 60.
+const details = args.includes('--details');
 const fotoAt = args.indexOf('--foto');
 const fotoScherm = fotoAt >= 0 ? args[fotoAt + 1] : null;
 const markeerAt = args.indexOf('--markeer');
@@ -366,12 +369,13 @@ try {
       for (const id of Object.keys(SCHERMEN)) console.log(`${id}: ${readFileSync(join(KAART, id + '.md'), 'utf8').split('\n').length} regels`);
     } else {
       let verschil = 0;
+      const gelijk = [];
       mkdirSync(process.env.LOOKOUT_SHOTS, { recursive: true });
       for (const id of Object.keys(SCHERMEN)) {
         const oud = existsSync(join(KAART, id + '.md')) ? readFileSync(join(KAART, id + '.md'), 'utf8').split('\n') : [];
         const nieuw = readFileSync(join(uit, id + '.md'), 'utf8').split('\n');
         const d = diff(oud, nieuw);
-        if (d.length === 0) { console.log(`${id}: gelijk`); continue; }
+        if (d.length === 0) { gelijk.push(id); continue; }
         verschil++;
         // Alleen een gewijzigd scherm krijgt een afdruk: opnieuw openen, met een rand om de eerste nieuwe regel.
         const eerste = d.find((r) => r.startsWith('+ ') && zoekterm(r.slice(2)));
@@ -381,9 +385,11 @@ try {
         const foto = join(process.env.LOOKOUT_SHOTS, `kaart-${id}.png`);
         copyFileSync(join(fotos, id + '.png'), foto);
         console.log(`${id}: ${d.length} gewijzigde regels (foto: ${foto}${gemarkeerd ? `, rand om "${eerste.slice(2, 62)}"` : ''})`);
-        for (const r of d.slice(0, 60)) console.log('  ' + r);
-        if (d.length > 60) console.log(`  ... en nog ${d.length - 60} regels`);
+        const max = details ? 60 : 8;
+        for (const r of d.slice(0, max)) console.log('  ' + r);
+        if (d.length > max) console.log(`  ... en nog ${d.length - max} regels${details ? '' : ' (alles: --details)'}`);
       }
+      if (gelijk.length) console.log(`Gelijk: ${gelijk.length} schermen${details ? ` (${gelijk.join(', ')})` : ''}.`);
       if (verschil) code = 1;
       else console.log('Geen verschil met docs/app-kaart/.');
     }
