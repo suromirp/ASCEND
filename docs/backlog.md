@@ -9,7 +9,8 @@ Bijgewerkt op 1 november 2026.
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
 Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
-(leeg)
+- 7 november, Forge en de tijdsgrens: bij Cable Rope High Row gaf Forge 2 sets, het programma (en MacroFactor) 3. Waarschijnlijk haalde de tijdsgrens (Hoogstens per krachttraining, 60 minuten) een set bijwerk weg. Nagaan of dat zo is; zo ja, het bij de oefening zelf zeggen ("1 set weg door je tijdsgrens") met een tik om hem terug te zetten, en kijken of 60 minuten met 2:00 rust en drie opwarmsets wel past bij een programma van vier oefeningen met 3 tot 4 sets.
+- 7 november, Forge had gelijk bij de Pull-Up met hulp: na drie sets tot falen haalde de eigenaar 6 herhalingen met 27 kg hulp, MacroFactor verwachtte 10. Vermoeidheid na sets tot falen telt in Forge mee; zo houden. Wel: de sprong naar 35 kg hulp (blok in stappen van 7) is opgelost (JUMP_ROOM), de echte oplossing is het toestel met zijn eigen standen (zie Forge: gewicht op een toestel).
 
 ## Loopt nu
 
