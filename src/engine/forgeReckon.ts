@@ -29,6 +29,9 @@ import { r2 } from '../utils/round';
 // Een redelijk bereik voor een geschat aantal: daarbuiten zegt de omrekening niets meer.
 export const RECKON_MIN_REPS = 1;
 export const RECKON_MAX_REPS = 30;
+// Tot falen of open: een lichtere stand die meer dan zoveel herhalingen boven de onderkant uitkomt is te grote sprong;
+// dan blijft het gewicht staan zolang je er niet meer dan zoveel onder zit.
+export const JUMP_ROOM = 2;
 
 // `on`: de instelling "Forge rekent mee". Uit doet niets van dit alles.
 export type ReckonContext = AdjustContext & { on: boolean };
@@ -210,13 +213,20 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   let reps = expectedReps(strength, now, rir);
   // Tot falen of een open doel (9+): na een zware set mag de volgende één herhaling onder de onderkant zitten, zodat
   // het gewicht maar één stap zakt in plaats van twee (47,5 x 8 na 52,5 x 7, zoals MacroFactor; eigenaar 7 november).
-  const floor = next.target.failure || next.target.open ? Math.max(1, low - 1) : low;
+  const open = !!(next.target.failure || next.target.open);
+  const floor = open ? Math.max(1, low - 1) : low;
+  let keepFewer = false;
   if (reps < floor || reps > high) {
     const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: next.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), ...(row.weightKg !== undefined ? [row.weightKg] : [])], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
     if (candidates) {
       if (reps < floor) {
         const c = lighterPick(strength, candidates, { ...next.target, repsLow: floor }, rir, now);
-        if (c) weightKg = c.externalKg;
+        // Tot falen of open: is de volgende stand een grote sprong (een blok van 7 kg, de hulp van 28 naar 35 kg) die
+        // ruim boven het doel uitkomt, dan blijft het gewicht en verwacht Forge een paar herhalingen minder, zoals
+        // MacroFactor (eigenaar, 7 november). Niet bij een gewoon bereik.
+        const bigJump = c && open && expectedReps(strength, c.loadKg, rir) > low + JUMP_ROOM && reps >= low - 2 * JUMP_ROOM;
+        if (c && !bigJump) weightKg = c.externalKg;
+        else if (bigJump) keepFewer = true;
       } else {
         const c = candidates.find((x) => x.loadKg > now + 1e-9 && expectedReps(strength, x.loadKg, rir) <= high && expectedReps(strength, x.loadKg, rir) >= low);
         if (c) weightKg = c.externalKg;
@@ -232,7 +242,7 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   }
   // Past er geen gewicht en haal je de onderkant toch niet: de set blijft staan. "Lichter" en de melding
   // dat geen gewicht past doen hun eigen voorstel; een vak met 1 of 2 herhalingen helpt niemand.
-  if (reps < floor) return ex;
+  if (reps < floor && !keepFewer) return ex;
   const fixed = clampReps(reps);
   weightKg = Math.min(MAX_ROW_KG, r2(weightKg));
   if (fixed === next.reps && weightKg === next.weightKg) return ex;
