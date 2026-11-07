@@ -12,6 +12,27 @@ Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: ie
 - 7 november, Forge en de tijdsgrens: bij Cable Rope High Row gaf Forge 2 sets, het programma (en MacroFactor) 3. Waarschijnlijk haalde de tijdsgrens (Hoogstens per krachttraining, 60 minuten) een set bijwerk weg. Nagaan of dat zo is; zo ja, het bij de oefening zelf zeggen ("1 set weg door je tijdsgrens") met een tik om hem terug te zetten, en kijken of 60 minuten met 2:00 rust en drie opwarmsets wel past bij een programma van vier oefeningen met 3 tot 4 sets.
 - 7 november, Forge had gelijk bij de Pull-Up met hulp: na drie sets tot falen haalde de eigenaar 6 herhalingen met 27 kg hulp, MacroFactor verwachtte 10. Vermoeidheid na sets tot falen telt in Forge mee; zo houden. Wel: de sprong naar 35 kg hulp (blok in stappen van 7) is opgelost (JUMP_ROOM), de echte oplossing is het toestel met zijn eigen standen (zie Forge: gewicht op een toestel).
 
+## Rooster voor de bouwmomenten
+
+Per bouwmoment eerst de Inbox, daarna het volgende blok hieronder dat nog open staat. Een blok is hoogstens één groter punt plus kleine dingen. Afgerond: naar "Live op" en uit dit rooster. Volgorde: wat stuk of met voorrang is, dan Forge (je traint er nu elke week mee), dan buiten, dan groot.
+
+1. De planner en de 48 uur (met voorrang), en de weekcontrole die heen en weer schuift. Opus.
+2. Onderzoek RIR en RPE in de beste apps, met vermoeidheid tussen oefeningen (Scout). Daarnaast klein: tijdsgrens en sets (Inbox), Spieren voor de berg ook in Forge.
+3. Forge: afvinken is de RIR van het doel (ook oude workouts) en vermoeidheid tussen oefeningen, op basis van stap 2.
+4. Forge: gewicht op een toestel (de standen van het blok leren).
+5. Forge: ruilen met een echte vervanger.
+6. Buiten klein: UV, zon, hoogte, regen in het komende uur, maanstand. Sonnet.
+7. Heuvels en trappen in de buurt (OpenStreetMap).
+8. Periode "Zonder sportschool", en feestdagen als voorstel. Opus voor de planning.
+9. Tempo bij zone 2 beter maken (Scout kort, dan bouwen).
+10. Gewicht uit Health Connect als trend, en de kleine punten daarvan.
+11. Onderzoek calisthenics en uitleg bij oefeningen (Scout), proef met vijf uitlegteksten (Scribe).
+12. Uitleg bij oefeningen, de rest.
+13. Calisthenics ontwerp, daarna bouwen over drie tot vijf bouwmomenten.
+14. Voor de GR5: weerwaarschuwingen, hutten, lawines.
+15. Alle teksten herschrijven en Engels erbij (groot, in stukken per tab).
+16. De oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten) waar ze passen.
+
 ## Loopt nu
 
 
@@ -169,6 +190,7 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 
 - Snel leren van de beste krachtapps (MacroFactor Workouts, RP Hypertrophy, Hevy, Strong, JuggernautAI, Boostcamp): hoe vragen ze RIR of RPE (wanneer, hoe vaak, met hoeveel tikken), wat doen ze ermee (gewicht en herhalingen voor de volgende set of training), en hoe leggen ze het uit.
 - Plus wat onderzoek zegt over hoe goed mensen hun RIR schatten en hoe je dat beter maakt.
+- Ook (eigenaar, 7 november): vermoeidheid tussen oefeningen. Forge rekent nu alleen binnen een oefening met vermoeidheid (`fatigueFactor`); wat je eerder in de training voor dezelfde spieren deed telt niet, alleen indirect via je historie als de volgorde gelijk blijft. Voorstel: de harde sets voor dezelfde hoofdspieren eerder in de training tellen, afgezet tegen wat je daar normaal voor deed, en de eerste set daarop bijstellen; hoeveel per set leren uit je eigen trainingen. Uitzoeken hoe MacroFactor en anderen dit doen en wat onderzoek zegt over voorvermoeidheid.
 - Uitkomst: een kort verslag in `docs/onderzoek/` met wat Forge kan overnemen, als punten naast wat Forge nu al doet (Hoeveel over?, aangenomen RIR, rekent mee).
 - Scout op opus. Kan vóór de grote Forge-onderdelen (vervanger, uitleg, toestel) omdat het die richting geeft.
 
@@ -233,6 +255,9 @@ Doel: calisthenics als volwaardige manier van trainen in ASCEND, los of samen me
   - Lees eerst `docs/onderzoek/` en `docs/visie/` (geen dubbel werk).
 - Stap 2, ontwerp (Cartographer en coördinator): hoe het in ASCEND past. Voorstel om te toetsen: een eigen doelsoort "Vaardigheid" met mijlpalen als ladder (zoals de GR5 en de rugzakladder), een vaardigheid als tussendoel naast een hoofddoel, en per training de keuze kracht, calisthenics of samen. Forge kent dan ook stappen in een progressie in plaats van alleen kilo's, houdingen in seconden, extra gewicht en hulp met een band.
 - Stap 3, bouwen in stukken van hoogstens een uur: data (progressies en vaardigheden), engine (vooruitgang zonder kilo's, planner-rollen), Forge (rij voor een progressiestap en een houding), Ascend-tab (de ladder), instellingen.
+- Vaardigheidsdoelen (eigenaar, 7 november): doelen voor houdingen en vaardigheden met je eigen gewicht, zoals een handstand, een push-up in handstand, een L-sit, een front lever, een muscle-up. Elk doel is een ladder van progressies met een duidelijke toets per stap (bijvoorbeeld 3 x 10 seconden vasthouden), en een vaardigheid kan een eigen doel of een tussendoel zijn.
+- Een database van vaardigheden en progressies, liefst open en zonder sleutel. Uitzoeken: free-exercise-db (yuhonas, publiek domein, JSON met foto's), wger (open source, CC-BY-SA, ook lichaamsgewicht), de tekeningen die ASCEND al gebruikt (Workout Guide en Everkinetic, CC BY-SA, `public/exercise-art/ATTRIBUTION.md`) en de progressies van r/bodyweightfitness. Betaalde of sleutel-API's (zoals ExerciseDB via RapidAPI) niet: geen sleutels in de app. Een bron wordt eenmalig ingelezen en herschreven (geen koppeling in de app), met licentie en naamsvermelding zoals bij de tekeningen.
+- Plaatjes: elke oefening en elke progressiestap heeft een tekening in dezelfde stijl als nu (lijntekening, kleur uit de tokens). Ontbreekt een houding in de open bronnen, dan uitzoeken of we hem in dezelfde stijl kunnen tekenen.
 - Moment: na de Forge-punten die hetzelfde oefeningenmodel raken (RIR bij afvinken, toestel, echte vervanger, uitleg bij oefeningen), want calisthenics bouwt daarop. Het onderzoek (stap 1) kan eerder, het staat los.
 - Schatting: onderzoek 300k tot 500k tokens, ontwerp 150k tot 250k, bouwen vijf tot acht rondes met review, samen ongeveer 2,5 tot 3,5 miljoen tokens, verdeeld over drie tot vijf bouwmomenten (twee tot drie weken).
 
