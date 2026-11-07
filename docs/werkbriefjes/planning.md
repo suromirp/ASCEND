@@ -22,6 +22,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - Twee beenzware sessies binnen 48 uur; 72 uur na een bergtocht met afdalen.
 - Bij het starten een programma of planning maken: eerst vragen, dan een voorstel (`src/engine/firstPlan.ts`).
 - Weken opslaan: ze zijn afgeleid. Zonder doel geen bergtocht, wandeldag of rugzakladder.
+- Een ziekmelding, vrije periode of tocht opslaan voordat de gebruiker Akkoord geeft.
 
 ## Valkuilen
 - Een fout die alleen met echte data opduikt speel je na met `primePlanningRegisters()` (`src/state/planningSync.ts#primePlanningRegisters`) en `TZ=Europe/Amsterdam`; zie de skill naspelen. Zonder de registers rekent de planning met andere duren dan de app.
