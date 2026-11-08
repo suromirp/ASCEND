@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { missionFacts } from './missionFacts';
+import { distanceLine, missionFacts } from './missionFacts';
 import { buildSessionBrief } from './sessionBrief';
 import { racePaces } from './racePaces';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -50,5 +50,12 @@ describe('missionFacts', () => {
   it('geeft een getal zijn uitleg mee', () => {
     const f = missionFacts('tpl_hill_intervals', brief('tpl_hill_intervals'), undefined);
     expect(f.chips[1].text).toMatch(/× .* min hard bergop$/);
+  });
+});
+
+describe('afstand bij een rustige loop', () => {
+  it('75 minuten tussen 6:40 en 7:35 per km is ongeveer 10 tot 11 km', () => {
+    expect(distanceLine(75, { fast: 400, slow: 455 })).toBe('Dat is ongeveer 10 tot 11 km.');
+    expect(distanceLine(undefined, { fast: 400, slow: 455 })).toBeUndefined();
   });
 });

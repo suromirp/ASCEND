@@ -54,7 +54,17 @@ function kindOf(fact: BriefFact, index: number): MissionChipKind {
   return 'overig';
 }
 
-export function missionFacts(templateId: string, brief: SessionBrief, paces: RacePaces | undefined): MissionFacts {
+// "Dat is ongeveer 10 tot 11 km." Alleen voor een doorlopende rustige loop (rustig of lang), waar duur en tempo
+// samen een afstand geven; bij intervallen of een tempoloop zegt een afstand weinig.
+export function distanceLine(minutes: number | undefined, range: PaceRange): string | undefined {
+  if (!minutes || minutes <= 0 || range.fast <= 0 || range.slow <= 0) return undefined;
+  const near = Math.round((minutes * 60) / range.slow);
+  const far = Math.round((minutes * 60) / range.fast);
+  if (far <= 0) return undefined;
+  return near === far ? `Dat is ongeveer ${far} km.` : `Dat is ongeveer ${near} tot ${far} km.`;
+}
+
+export function missionFacts(templateId: string, brief: SessionBrief, paces: RacePaces | undefined, minutes?: number): MissionFacts {
   const chips: MissionChip[] = brief.facts.map((f, i) => ({ text: factText(f), kind: kindOf(f, i) }));
   const range = paces ? paceFor(templateId, paces) : undefined;
   if (!paces || !range) return { chips };
@@ -65,5 +75,7 @@ export function missionFacts(templateId: string, brief: SessionBrief, paces: Rac
   // blijft dat staan en komt het tempo erbij.
   if (last >= 1 && !startsWithNumber(brief.facts[last].value)) chips[last] = pace;
   else chips.push(pace);
-  return { chips, paceNote: `Tempo uit je testloop van ${formatDateNL(paces.test.date)}.` };
+  const continuous = idHasRole(templateId, 'easy_pace');
+  const km = continuous ? distanceLine(minutes, range) : undefined;
+  return { chips, paceNote: `Tempo uit je testloop van ${formatDateNL(paces.test.date)}.${km ? ` ${km}` : ''}` };
 }
