@@ -20,13 +20,15 @@ import type { SessionTemplate } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isForecastStale, isWeatherSensitive, updatedLabel, weatherForTraining } from '../engine/weather';
-import { showBestMoment, showClothingAdvice, showWeatherLine } from '../engine/overviewSettings';
+import { showBestMoment, showClothingAdvice, showMoonLine, showWeatherLine } from '../engine/overviewSettings';
 import { bestMomentForTraining } from '../engine/bestMoment';
 import { weatherLineForTraining } from '../engine/clothing';
 import { adjustFor } from '../engine/clothingFeedback';
 import { templateSport } from '../engine/sports';
 import { heatPace } from '../engine/heatPace';
 import { useAirQualityNote } from './useAirQualityNote';
+import { useRainSoonNote } from './useRainSoonNote';
+import { eveningMoonNote } from '../engine/moon';
 import { signalOn } from '../engine/signalSettings';
 import { Icon } from './icons';
 
@@ -39,6 +41,9 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen }:
   const w = weatherForTraining({ forecast: weather.forecast, template, logs: sessionLogs, date, durationMinutes, now });
   // Slechte lucht bij een harde training buiten (engine/airQuality.ts); de hook vraagt zelf of het ertoe doet.
   const air = useAirQualityNote({ template, date, startHour: w?.startHour, durationMinutes, settings });
+
+  // Regen in het komende uur, vlak voor een training buiten (engine/rainSoon.ts).
+  const rain = useRainSoonNote({ template, date, startHour: w?.startHour, durationMinutes, settings });
 
   // Nog geen plaats: een buitentraining wijst de weg naar de pagina Weer.
   if (onOpen && !settings.homeLocation && isWeatherSensitive(template) && (showWeatherLine(settings.overviews) || showClothingAdvice(settings.overviews))) {
@@ -70,13 +75,19 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen }:
     : undefined;
   // Warm of vochtig bij een loop: loop op hartslag, met een band voor het tempo (engine/heatPace.ts).
   const heat = templateSport(template) === 'running' && signalOn(settings, 'heatPace') ? heatPace(w) : undefined;
+  // Een wandeling of tocht die na zonsondergang eindigt: bij volle of nieuwe maan één regel (engine/moon.ts).
+  const moon = showMoonLine(settings.overviews) && templateSport(template) === 'hiking'
+    ? eveningMoonNote(date, { endsAfterSunset: w.daylight?.endsAfterSunset === true, overnight: false })
+    : undefined;
   const text = (
     <>
       {lead}{line}
       {stale && <span style={{ color: 'var(--color-ink-dim)' }}> · {updatedLabel(weather.forecast.fetchedAt)}</span>}
+      {rain && <span className="mt-0.5 block" style={{ color: 'var(--color-ink)' }}>{rain}</span>}
       {best && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{best.text}</span>}
       {heat && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{heat.text}</span>}
       {air && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{air.text}</span>}
+      {moon && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{moon.text}</span>}
     </>
   );
   if (onOpen) {

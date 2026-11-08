@@ -1316,7 +1316,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   bundelWeer: {
     title: 'Weer en kleding',
-    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, kleding, en een regel bij hitte of slechte lucht.',
+    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, regen in het komende uur, de maanstand bij een avondtocht, kleding, en een regel bij hitte of slechte lucht.',
     points: [
       { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
       { head: 'Je plaats', text: 'het weer volgt de plaats die je bij Plaats koos.' },

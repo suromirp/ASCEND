@@ -377,6 +377,62 @@ export async function fetchAirQuality(place: WeatherPlace, options: FetchOptions
   return mapAirQuality(body, place, (options.now ?? new Date()).toISOString());
 }
 
+// --- rain in the coming hours (engine/rainSoon.ts) ------------------------------------------
+//
+//   GET https://api.open-meteo.com/v1/forecast?latitude=..&longitude=..
+//       &minutely_15=precipitation&forecast_minutely_15=16&timezone=auto
+//
+// The same endpoint and the same rounded place as the forecast, no key. A slot holds the rain of
+// the 15 minutes before its time. `utc_offset_seconds` tells what the clock is at the place, so
+// "now" can be read there. Asked only shortly before an outdoor training today, and kept in
+// memory only (storage/rainSoon.ts).
+
+export const RAIN_SLOTS = 16;
+
+export interface RainSlot {
+  time: string; // 'YYYY-MM-DDTHH:MM', local time of the place, the END of the 15 minutes
+  mm: number;
+}
+
+export interface RainSoonForecast {
+  fetchedAt: string;
+  place: WeatherPlace;
+  utcOffsetSec: number;
+  slots: RainSlot[];
+}
+
+export function rainSoonUrl(place: WeatherPlace): string {
+  const query = new URLSearchParams({
+    latitude: String(roundCoordinate(place.lat)),
+    longitude: String(roundCoordinate(place.lon)),
+    minutely_15: 'precipitation',
+    forecast_minutely_15: String(RAIN_SLOTS),
+    timezone: 'auto',
+  });
+  return `${OPEN_METEO_FORECAST_URL}?${query.toString().replace(/%2C/g, ',')}`;
+}
+
+// A slot without a usable time or amount is left out; an answer without any slot is an error,
+// so nobody shows a rain line on nothing.
+export function mapRainSoon(raw: unknown, place: WeatherPlace, fetchedAt: string): RainSoonForecast {
+  const body = raw as { minutely_15?: Record<string, unknown>; utc_offset_seconds?: unknown } | null;
+  const m = body?.minutely_15;
+  const offset = num(body?.utc_offset_seconds);
+  if (!m || !Array.isArray(m.time) || !Array.isArray(m.precipitation) || offset === undefined) throw new OpenMeteoError('response', MESSAGES.response);
+  const slots: RainSlot[] = [];
+  (m.time as unknown[]).forEach((time, i) => {
+    const mm = num((m.precipitation as unknown[])[i]);
+    if (isLocalTime(time) && mm !== undefined) slots.push({ time, mm: Math.max(0, mm) });
+  });
+  if (slots.length === 0) throw new OpenMeteoError('response', MESSAGES.response);
+  return { fetchedAt, place: roundedPlace(place), utcOffsetSec: offset, slots };
+}
+
+export async function fetchRainSoon(place: WeatherPlace, options: FetchOptions & { now?: Date } = {}): Promise<RainSoonForecast> {
+  const body = await getJson(rainSoonUrl(place), options);
+  return mapRainSoon(body, place, (options.now ?? new Date()).toISOString());
+}
+
 // --- mountain weather at a height (engine/mountainWeather.ts) ------------------------------
 //
 //   GET https://api.open-meteo.com/v1/forecast?latitude=..&longitude=..&elevation=2500

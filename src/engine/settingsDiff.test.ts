@@ -50,7 +50,7 @@ const everything: AppSettings = {
   intensityCounting: 'plan',
   overviews: {
     morningCheckIn: false, morningCard: false, legsAfterEffort: false, morningCardFrom: '7', weekReview: false, weekReviewDay: 'sunday', weeklyQuestion: false,
-    weatherLine: false, weatherSwap: false, bestMoment: false, clothingAdvice: false, completionMoment: false,
+    weatherLine: false, weatherSwap: false, bestMoment: false, rainSoon: false, moonLine: false, clothingAdvice: false, completionMoment: false,
   },
   askShortNight: false,
   askDoubtTest: false,

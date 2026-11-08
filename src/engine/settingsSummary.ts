@@ -444,7 +444,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bundel-signalen':
       return { value: `${signalsOnCount(s)} van ${SIGNAL_KEYS.length} aan` };
     case 'bundel-weer':
-      return { value: `${countOn([o.weatherLine, o.bestMoment, o.weatherSwap, o.clothingAdvice])} van 4 aan` };
+      return { value: `${countOn([o.weatherLine, o.bestMoment, o.rainSoon, o.moonLine, o.weatherSwap, o.clothingAdvice])} van 6 aan` };
     case 'bundel-run-detail': {
       const d = resolveRunInsight(s.runInsight).detail;
       return d.show ? { value: 'Aan', sub: `Loopvorm: ${formSwitchesLine(d.form)}` } : { value: 'Uit', dim: true };
@@ -851,6 +851,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return place ? { value: place.name } : { value: 'Niet gekozen', dim: true };
     case 'weerregel':
       return { checked: o.weatherLine };
+    case 'regen-uur':
+      return { checked: o.rainSoon };
+    case 'maanstand':
+      return { checked: o.moonLine };
     case 'weerruil':
       return { checked: o.weatherSwap };
     case 'beste-moment':
