@@ -182,3 +182,7 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-08, Forge tijdsgrens en bergspieren, Sherpa, sonnet (ontwikkelaar), 105k, 14 min, 0
 - 2026-11-08, Tempo zone 2 en afstand, Sherpa, sonnet (ontwikkelaar), 68k, 10 min, 0
 - 2026-11-08, Review ronde 1, Warden, opus (reviewer), 95k, 6 min, 5 punten: 3 door coördinator, 2 naar Inbox
+- 2026-11-08, Forge Lichter-telling en opsplitsen ronde 1, Sherpa, sonnet (ontwikkelaar), 51k, 14 min, 0
+- 2026-11-08, Hulpfuncties, exports en afstandszin, Sherpa, sonnet (ontwikkelaar), 55k, 10 min, 0
+- 2026-11-08, Buiten klein (regen, maan), Sherpa, sonnet (ontwikkelaar), 139k, 15 min, 0
+- 2026-11-08, Review bouwmoment, Warden, sonnet (reviewer), 59k, 4 min, geen blokkade, 4 kleine punten naar Inbox

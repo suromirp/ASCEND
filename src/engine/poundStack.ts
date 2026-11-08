@@ -9,6 +9,7 @@
 import { exerciseOf, type WorkoutExercise } from './forgeWorkout';
 import { hasStack, ownWeightsFor } from './machineWeights';
 import { RANGE_LIMITS, type GymProfile, type WeightRange } from './strengthSettings';
+import { joinNL } from '../utils/joinNL';
 
 const KG_PER_LB = 0.45359237;
 // Een ingetypt gewicht is op 0,1 kg afgerond: zo dicht ligt het dan bij een heel pond.
@@ -46,8 +47,6 @@ export function poundStackProposal(ex: WorkoutExercise, profile: GymProfile): Po
   const end = Math.min(maxLb, Math.max(END_MIN_LB, Math.ceil((pounds[pounds.length - 1] * END_ROOM) / step) * step));
   return { pounds, range: { startKg: step, endKg: end, stepKg: step, unit: 'lb' } };
 }
-
-const joinNL = (items: string[]) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} en ${items[items.length - 1]}`);
 
 // "Dit toestel lijkt in ponden te werken: je vulde 161, 210 en 230 lb in. Opslaan als 10 tot 300 lb per 10?"
 export function poundStackText(p: PoundStack): string {

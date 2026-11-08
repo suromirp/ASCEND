@@ -28,7 +28,7 @@ export function weightDue(entries: WeightEntry[] | undefined, snoozedAt: string 
 // Een weging uit Health Connect heeft een eigen plek naast wat je zelf invulde of uit MacroFactor
 // inlas (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md): per dag hoogstens één van elk.
 export const isHealthConnectWeight = (e: Pick<WeightEntry, 'source'>): boolean => e.source === 'health-connect';
-export const sameWeightPlace = (a: Pick<WeightEntry, 'date' | 'source'>, b: Pick<WeightEntry, 'date' | 'source'>): boolean => a.date === b.date && isHealthConnectWeight(a) === isHealthConnectWeight(b);
+const sameWeightPlace = (a: Pick<WeightEntry, 'date' | 'source'>, b: Pick<WeightEntry, 'date' | 'source'>): boolean => a.date === b.date && isHealthConnectWeight(a) === isHealthConnectWeight(b);
 
 // One entry per day: a second entry the same day replaces the first. A weighing
 // from Health Connect that day stays, on its own place.

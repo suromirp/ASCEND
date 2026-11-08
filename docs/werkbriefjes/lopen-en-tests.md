@@ -9,7 +9,7 @@ Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5
 - `src/storage/activityDetail.ts#ensureRecentTestEfforts` leest recente tests op de achtergrond bij het openen
 - `src/engine/runDetail.ts#buildRunDetail` kilometers, rondes en lijn van een run; oordelen in `runDetailRules.ts`
 - `src/engine/watchHeartRate.ts#resolveWatchHr` hartslagbereik op het horloge, naar de drempel van intervals.icu
-- `src/engine/aerobicTrend.ts#aerobicTrend` tempo bij zone 2 (vlak tempo `gapSecKm`, eigen stijging bij afwijkend horloge); `recentRunPace.ts` echt tempo voor de afstand op Vandaag
+- `src/engine/aerobicTrend.ts#aerobicTrend` tempo bij zone 2 (vlak tempo `gapSecKm`, eigen stijging bij afwijkend horloge); `recentRunPace.ts` echt tempo voor de afstand op Vandaag (`missionFacts.ts#distanceLine`: "je laatste loop" bij één loop, "lopen" bij meer; zonder testloop geen afstandszin, ook niet met lopen; geef het aantal lopen mee)
 - `src/engine/heartRateZones.ts#zoneBpm` de zones van ASCEND
 - `src/engine/zoneUpdate.ts#zoneOffer` nieuwe drempel na de laatste test, voorstel met Akkoord
 - `src/engine/testRest.ts#resolveTestRest` 72 of 48 uur rust voor een test; regel in `scheduler.ts` (`testPairConflict`, niet geëxporteerd, en `tooCloseBeforeTest`) en in de weekcontrole (`TEST-REST`, alleen voor Week)

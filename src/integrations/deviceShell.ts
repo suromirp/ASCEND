@@ -63,7 +63,7 @@ function browserVibrate(pattern: number | number[]): void {
   if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(pattern);
 }
 
-export const browserShell: DeviceShell = {
+const browserShell: DeviceShell = {
   vibrate: browserVibrate,
   holdScreen: browserHoldScreen,
 };
