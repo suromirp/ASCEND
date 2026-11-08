@@ -44,6 +44,60 @@ describe('aerobicTrend', () => {
   });
 });
 
+describe('aerobicTrend: vlak tempo en stijging', () => {
+  // Nagemaakt: 8,84 km in 80 minuten, 133 m stijging volgens het horloge (15,04 m per km).
+  const hilly = (over: Partial<SessionLog> = {}, withDetail = true, gapFactor = 0.95): SessionLog => {
+    const base = run('h', 'tpl_long_run', '2026-10-18', 8.84, 80, 152, 133);
+    const kms = Array.from({ length: 9 }, (_, i) => ({ index: i + 1, startM: i * 1000, endM: (i + 1) * 1000, distanceM: i < 8 ? 1000 : 840, sec: 540, paceSecKm: 543, gapSecKm: 543 * gapFactor, gainM: 15 }));
+    return { ...base, ...(withDetail ? { runDetail: { version: 1 as const, wholeKm: 8.84, wholeMinutes: 80, builtAt: '', totalM: 8840, movingSec: 4800, pauseSec: 0, kms, line: { n: 0, distM: [], timeSec: [], paceSecKm: [], hr: [], altitudeM: [] } } } : {}), ...over };
+  };
+  const pace = (l: SessionLog) => aerobicTrend([l], templates, program, hr, '2026-10-19');
+
+  it('laat een loop net boven 15 m per km zonder run in detail weg', () => {
+    expect(pace(hilly({}, false)).runs).toBe(0);
+  });
+
+  it('telt dezelfde loop mee met het vlakke tempo per km', () => {
+    const t = pace(hilly());
+    expect(t.runs).toBe(1);
+    const plain = pace(run('p', 'tpl_long_run', '2026-10-18', 8.84, 80, 152, 0));
+    expect(t.points[0].paceSec / plain.points[0].paceSec).toBeCloseTo(0.95, 2);
+  });
+
+  it('rekent met het gewone tempo als geen km een gecorrigeerd tempo heeft (geen hoogtedata)', () => {
+    const l = hilly();
+    l.runDetail!.kms = l.runDetail!.kms.map(({ gapSecKm: _g, gainM: _m, ...k }) => k);
+    l.cardioData!.elevationGainM = 0;
+    const t = pace(l);
+    const plain = pace(run('p', 'tpl_long_run', '2026-10-18', 8.84, 80, 152, 0));
+    expect(t.points[0].paceSec).toBeCloseTo(plain.points[0].paceSec, 5);
+  });
+
+  it('neemt de eigen optelling als het horloge niet te vertrouwen is', () => {
+    // Horloge meldt 133 m, eigen optelling 20 m: 15 procent, ver buiten de marge. Eigen 2 m per km telt.
+    const l = hilly();
+    l.detail = { version: 1, source: 'import', sliceCount: 0, slices: [], stretches: [], movingSec: 4800, quality: { heartRateCoveragePct: 100, gainAgreementPct: 15 } };
+    l.cardioData!.elevationGainM = 400; // het horloge zegt 45 m per km: eruit zonder eigen optelling
+    l.runDetail!.kms = l.runDetail!.kms.map((k) => ({ ...k, gainM: 2 }));
+    expect(pace(l).runs).toBe(1);
+    // Zonder die afwijking blijft het horloge gelden.
+    l.detail.quality.gainAgreementPct = 100;
+    expect(pace(l).runs).toBe(0);
+  });
+
+  it('zonder run in detail bij een afwijkend horloge blijft de stijging van het horloge', () => {
+    const l = hilly({}, false);
+    l.detail = { version: 1, source: 'import', sliceCount: 0, slices: [], stretches: [], movingSec: 4800, quality: { heartRateCoveragePct: 100, gainAgreementPct: 15 } };
+    expect(pace(l).runs).toBe(0);
+  });
+
+  it('negeert een run in detail die bij andere totalen hoort', () => {
+    const l = hilly();
+    l.runDetail!.wholeKm = 9.5;
+    expect(pace(l).runs).toBe(0);
+  });
+});
+
 describe('progressMoment: hearing about it', () => {
   const trend = (changeSec?: number, bpmChange?: number) => ({ referenceHr: 151, points: [], runs: 8, outsideZone: 0, changeSec, bpmChange });
 

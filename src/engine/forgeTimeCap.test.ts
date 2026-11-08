@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { ExercisePrescription, SessionLog, SessionTemplate } from '../models/training';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { learnedMinutesPerSet } from './durationLearning';
-import { capForTemplate, capLineFor, capSlots, prescribedSets, resolveTimeCap, servesMountainMuscle, timeCapLine } from './forgeTimeCap';
+import { estimatedRest } from './forgeWorkout';
+import { exerciseKey } from './strengthHistory';
+import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, prescribedSets, resolveTimeCap, servesMountainMuscle, timeCapLine } from './forgeTimeCap';
 
 // Nagemaakte trainingen: geen ingebouwd sjabloon, zodat de beendag alleen uit de belasting komt.
 const slot = (id: string, priority: ExercisePrescription['priority'], sets: number): ExercisePrescription => ({ id, exerciseName: id, sets, reps: '8-10', priority });
@@ -230,5 +232,59 @@ describe('ronde met echte namen uit de ingebouwde beendag', () => {
     expect(r.coreOver).toBe(true);
     expect(r.slots.every((s) => s.priority === 'core')).toBe(true);
     expect(timeCapLine(r)).toMatch(/^Ingekort tot ongeveer 65 minuten: .* De kernsets blijven staan, ook al kom je dan boven de 60\.$/);
+  });
+});
+
+describe('Cable Rope High Row met 3 sets in het programma (inbox 7 november)', () => {
+  // Vier oefeningen van 3 tot 4 sets, zoals een programma van MacroFactor ze geeft; de high row is bijwerk.
+  const named = (id: string, exerciseName: string, priority: ExercisePrescription['priority'], sets: number, reps = '8-10'): ExercisePrescription => ({ id, exerciseName, sets, reps, priority });
+  const program = [
+    named('a', 'Barbell Bench Press', 'core', 4, '6-8'),
+    named('b', 'Chest-Supported Dumbbell Row', 'core', 4),
+    named('c', 'Cable Rope High Row', 'accessory', 3, '10-12'),
+    named('d', 'Standing Dumbbell Lateral Raise', 'accessory', 3, '12-15'),
+  ];
+
+  it('de tijdsgrens haalt er een set af: 3 wordt 2, en de oefening zegt het', () => {
+    // 14 sets in een geplande training van 66 minuten: 4,7 minuten per set, boven de 60.
+    const r = capSlots({ slots: program, fullMinutes: 66, cap: 60 });
+    const row = r.slots.find((s) => s.id === 'c')!;
+    expect(prescribedSets(row)).toBe(2);
+    expect(r.setsRemoved).toBe(2);
+    const fresh = (s: ExercisePrescription) => ({ slot: s.id, rows: Array.from({ length: prescribedSets(s) }, () => ({ kind: 'work' })) });
+    expect(capRemovedFor(r, fresh(row))).toBe(1);
+    expect(capRemovedLine(1)).toBe('1 set weg door je tijdsgrens');
+    expect(capRemovedLine(2)).toBe('2 sets weg door je tijdsgrens');
+    // De kern en een oefening die niet inkortte zeggen niets.
+    expect(capRemovedFor(r, fresh(r.slots[0]))).toBe(0);
+    expect(capRemovedFor(r, { slot: 'bestaat-niet', rows: [] })).toBe(0);
+  });
+
+  it('een set terugzetten (Set toevoegen) telt af, en een set die jij weghaalde telt niet als tijdsgrens', () => {
+    const r = capSlots({ slots: program, fullMinutes: 66, cap: 60 });
+    const work = (n: number) => Array.from({ length: n }, () => ({ kind: 'work' }));
+    expect(capRemovedFor(r, { slot: 'c', rows: [{ kind: 'warmup' }, ...work(2)] })).toBe(1);
+    expect(capRemovedFor(r, { slot: 'c', rows: work(3) })).toBe(0);
+    // Jij haalde een set weg uit wat er stond: die staat bij "Terugzetten" van jou, niet bij de tijdsgrens.
+    expect(capRemovedFor(r, { slot: 'c', rows: work(1), dropped: [{}] })).toBe(1);
+  });
+
+  it('60 minuten past van onderaf gerekend net: 2:00 rust en drie opwarmsets bij 14 sets', () => {
+    // Per werkset ongeveer 45 seconden werk plus de rust van Forge (estimatedRest), per eerste zware oefening drie
+    // opwarmsets van een halve minuut met 90 seconden rust, bij de andere oefeningen een opwarmset (al warm).
+    const SET_SEC = 45;
+    const seconds = program.reduce((sum, s, i) => {
+      const ex = exerciseKey(s.id, s.exerciseName).exercise;
+      const high = Number(s.reps.split('-').at(-1));
+      const warm = i === 0 ? 3 : 1;
+      return sum + prescribedSets(s) * (SET_SEC + estimatedRest(ex, high)) + warm * (30 + 90);
+    }, 0);
+    const minutes = seconds / 60;
+    // Ongeveer 53 minuten: het past, maar met weinig lucht (een vierde set bij elke oefening zou erboven komen).
+    expect(minutes).toBeGreaterThan(45);
+    expect(minutes).toBeLessThan(60);
+    // De grens grijpt dus niet in door de rust, maar door de duur per set uit de geplande duur of je logs:
+    // 14 sets in 60 minuten is 4,3 minuten per set, boven de ongeveer 3,8 minuten die de rust en de opwarmsets vragen.
+    expect(minutes / 14).toBeLessThan(4);
   });
 });

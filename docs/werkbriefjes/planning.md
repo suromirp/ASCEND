@@ -26,7 +26,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 
 ## Valkuilen
 - Een fout die alleen met echte data opduikt speel je na met `primePlanningRegisters()` (`src/state/planningSync.ts#primePlanningRegisters`) en `TZ=Europe/Amsterdam`; zie de skill naspelen. Zonder de registers rekent de planning met andere duren dan de app.
-- De weekcontrole kan binnen één ronde een rij verplaatsen en terugzetten. Alleen een netto verandering is nieuws (`src/storage/databaseHorizon.ts#changedNet`), anders komt "Planning bijgewerkt" bij elke opening terug (5 november).
+- De weekcontrole kan binnen één ronde een rij verplaatsen en terugzetten. Alleen een netto verandering is nieuws (`src/storage/databaseHorizon.ts#changedNet`), anders komt "Planning bijgewerkt" bij elke opening terug (5 november). Het raceblok draait in elke beurt opnieuw: zet een regel daar terug wat de weekcontrole deed, dan schuiven ze om de beurt (`src/engine/raceBlock.ts#restoreLegSwaps` met een korte beendag voor een test, 8 november). Toets een nieuwe regel met twee keer `planPass` achter elkaar.
 - `src/state/planningSync.ts#horizonKey` bepaalt of de ronde opnieuw draait: een vingerafdruk van de geplande sessies hoort erin, anders blijft een nieuwe verandering liggen.
 - Opstartwerk wacht nooit op de sync; wat de planning wijzigt wacht wel op de wachtrij en leest dan het opgeslagen plan.
 - Een teruggezette rij krijgt geen slot en geen vaste lengte, anders blijft hij vastgezet staan.

@@ -21,6 +21,7 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { progressionTarget } from './programLayout';
 import { logSport, SPORT_LABEL, type Sport } from './sports';
 import { weekChanges } from './changeLog';
+import { weekPositionLabel } from './weekLabel';
 import { durationLabel } from './sessionBrief';
 import type { PlannedById } from './logDay';
 import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
@@ -83,7 +84,7 @@ interface ReviewInputs {
 
 function weekTitle(program: Program | null | undefined, weekStart: string): string {
   const position = program ? resolveProgramWeek(program, weekStart) : null;
-  return position ? `Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}` : 'Deze week';
+  return position ? weekPositionLabel(position) : 'Deze week';
 }
 
 // "RPE 3-4" -> 4: the top of the planned effort.
