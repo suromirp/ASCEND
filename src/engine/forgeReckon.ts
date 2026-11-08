@@ -27,11 +27,11 @@ import { candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
 import { r2 } from '../utils/round';
 
 // Een redelijk bereik voor een geschat aantal: daarbuiten zegt de omrekening niets meer.
-export const RECKON_MIN_REPS = 1;
+const RECKON_MIN_REPS = 1;
 export const RECKON_MAX_REPS = 30;
 // Tot falen of open: een lichtere stand die meer dan zoveel herhalingen boven de onderkant uitkomt is te grote sprong;
 // dan blijft het gewicht staan zolang je er niet meer dan zoveel onder zit.
-export const JUMP_ROOM = 2;
+const JUMP_ROOM = 2;
 
 // `on`: de instelling "Forge rekent mee". Uit doet niets van dit alles.
 export type ReckonContext = AdjustContext & { on: boolean };
@@ -42,7 +42,7 @@ const rirAim = (t: RowTarget): number => t.rir ?? (t.failure ? 0 : DEFAULT_RIR);
 const clampReps = (n: number) => Math.min(RECKON_MAX_REPS, Math.max(RECKON_MIN_REPS, Math.floor(n)));
 
 // Zijn de herhalingen van deze rij van Forge (nog niet door jou getypt)?
-export const repsAreForge = (r: WorkoutRow): boolean => !r.edited || !!r.repsEstimated;
+const repsAreForge = (r: WorkoutRow): boolean => !r.edited || !!r.repsEstimated;
 
 const measuredRir = (r: WorkoutRow): boolean => r.rir !== undefined && !r.rirAssumed;
 
@@ -51,7 +51,7 @@ const measuredRir = (r: WorkoutRow): boolean => r.rir !== undefined && !r.rirAss
 // vak zette, dan rekent Forge voorzichtig met zoveel minder over (niet onder 0): meer dan gevraagd op 0 of 1
 // over is vaak dichter bij falen, en zo zet een gok de terugsets niet zwaarder dan je aankan. Kies je je RIR
 // ("Hoeveel over?"), dan telt die. Bij gewone sets blijft de aangenomen RIR het doel.
-export function readRir(r: WorkoutRow): number | undefined {
+function readRir(r: WorkoutRow): number | undefined {
   if (r.rir === undefined || !r.rirAssumed || r.forgeReps === undefined || r.reps === undefined) return r.rir;
   return Math.max(0, r.rir - Math.max(0, r.reps - r.forgeReps));
 }
@@ -100,7 +100,7 @@ export function strengthFor(ex: WorkoutExercise, rowId: string, ctx: ReckonConte
 
 // Is deze rij een zware topset voor een terugset (0 of 1 over of tot falen, en de volgende werkset vraagt
 // meer over)? Dan zegt hij hoe sterk je vandaag bent, en de terugsets erna volgen hem samen.
-export function isTopSetRow(ex: WorkoutExercise, rowId: string): boolean {
+function isTopSetRow(ex: WorkoutExercise, rowId: string): boolean {
   const ids = workIds(ex);
   const at = ids.indexOf(rowId);
   if (at < 0 || at + 1 >= ids.length) return false;

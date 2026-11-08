@@ -19,6 +19,7 @@
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays } from '../utils/dates';
 import { baselineValues, dayRecord, MIN_BASELINE_DAYS } from './wellnessCheck';
+import { mean, stdev } from '../utils/stats';
 
 const ILLNESS_RHR_RISE = 6;
 const ILLNESS_MIN_MORNINGS = 2;
@@ -40,15 +41,6 @@ export interface IllnessSignInput {
   // Ochtenden waar je zelf iets bij vastlegde, of die je niet liet meetellen.
   explained?: ReadonlySet<string>;
   ill?: boolean;
-}
-
-function mean(values: number[]): number {
-  return values.reduce((a, b) => a + b, 0) / values.length;
-}
-
-function stdev(values: number[]): number {
-  const m = mean(values);
-  return Math.sqrt(values.reduce((a, b) => a + (b - m) ** 2, 0) / values.length);
 }
 
 // De stijging van de rusthartslag op deze ochtend als beide signalen afwijken, anders undefined.

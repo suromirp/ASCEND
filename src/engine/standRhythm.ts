@@ -35,7 +35,7 @@ export interface Rhythm {
 const VERDICT = { on: 'Op koers', nearly: 'Bijna op koers', behind: 'Achter op schema' } as const;
 
 // "Op rij" komt pas in beeld vanaf drie trainingsdagen: bij 0, 1 of 2 is er niets te vieren.
-export const STREAK_FROM = 3;
+const STREAK_FROM = 3;
 
 export function buildRhythm(input: { adherence: Adherence; thisWeek: WeekReview | null; streak: number }): Rhythm {
   const { adherence, thisWeek, streak } = input;

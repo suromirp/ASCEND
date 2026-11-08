@@ -9,7 +9,7 @@ import { logsInRange, type PlannedById } from './logDay';
 import { addDays, monthBounds, parseISODate, shiftMonthAnchor, toISODate } from '../utils/dates';
 
 // Vanaf deze dag van de lopende maand zegt een vergelijking iets.
-export const COMPARE_FROM_DAY = 7;
+const COMPARE_FROM_DAY = 7;
 
 export interface MonthTotals { minutes: number; count: number }
 

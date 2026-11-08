@@ -34,6 +34,8 @@ import {
   type Unavailable,
 } from './runMetrics';
 import { addDays } from '../utils/dates';
+import { median } from '../utils/stats';
+export { median };
 
 export type InsightTopic = 'efficiency' | 'drift' | 'climb' | 'descent' | 'form';
 
@@ -115,12 +117,6 @@ export interface Comparison {
 }
 
 // --- small helpers -------------------------------------------------------------------------------------
-
-export function median(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-}
 
 // The middle of the latest few values (newest first), when there are enough.
 export function baselineOf(values: number[], min = MIN_BASELINE, max = MAX_BASELINE): { median: number; n: number } | undefined {

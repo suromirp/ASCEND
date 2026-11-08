@@ -21,6 +21,7 @@ import { mondayOfWeek } from '../utils/dates';
 import { matchExercise, normalizeExerciseName } from './exerciseMatch';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession } from './macrofactorSets';
+import { joinNL } from '../utils/joinNL';
 
 type Kind = 'legs' | 'upper' | 'full';
 
@@ -109,10 +110,6 @@ const KIND_PHRASE: Record<Kind, string> = { legs: 'een beendag', upper: 'een bov
 // Exercise names stay as MacroFactor writes them (English), only tidied.
 function tidy(name: string): string {
   return name.replace(/\s+/g, ' ').trim();
-}
-
-function joinNL(items: string[]): string {
-  return items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} en ${items[items.length - 1]}`;
 }
 
 // "Back Squat (Barbell), Romanian Deadlift en Leg Press: een beendag"

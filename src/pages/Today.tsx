@@ -231,8 +231,9 @@ function TodayContent() {
   const concurrentTrainingTip = dayOrderAdvice ? null : suggestSameDayOrder(todaySessions, templateById);
   // The mission's three key numbers; the pace comes from the latest test run.
   const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
+  const recentPaceOfRuns = primaryTemplate ? recentRunPace(sessionLogs, primaryTemplate.id, today) : undefined;
   const mission = primary && primaryTemplate
-    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program), recentRunPace(sessionLogs, primaryTemplate.id, today)?.range)
+    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program), recentPaceOfRuns?.range, recentPaceOfRuns?.runs)
     : undefined;
   const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;

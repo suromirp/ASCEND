@@ -18,8 +18,8 @@ import { isLegHeavyTemplate } from './scheduler';
 
 export const TIME_CAP_OPTIONS = [0, 45, 60, 75, 90] as const;
 export type TimeCap = (typeof TIME_CAP_OPTIONS)[number];
-export const TIME_CAP_ADVICE_STRENGTH: TimeCap = 60;
-export const TIME_CAP_ADVICE_LEGS: TimeCap = 75;
+const TIME_CAP_ADVICE_STRENGTH: TimeCap = 60;
+const TIME_CAP_ADVICE_LEGS: TimeCap = 75;
 
 // Een oefening houdt minstens zoveel sets voordat hij helemaal wegvalt.
 const KEEP_SETS = 2;
