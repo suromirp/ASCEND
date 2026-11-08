@@ -225,6 +225,13 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
       const test = sessionById(concern.finding.subjectId);
       const near = input.sessions.filter((s) => level(s) === 1 && test && s.scheduledDate < test.scheduledDate && s.scheduledDate >= addDays(test.scheduledDate, -7)).map((s) => s.id);
       push(viaCheck(near));
+      // When nothing before the test can change (the planning already tried what is its own), the test itself to a
+      // day of the same week with fresh legs, as for TEST-REST. Only a test, never a race; only with your Akkoord.
+      const testTemplate = test && templateOf(test);
+      const testMay = !!test && !!testTemplate && level(test) !== 0 && hasRole(testTemplate, 'test') && !hasRole(testTemplate, 'race');
+      if (candidates.length === 0 && testMay) push(viaScan(test.id));
+      // A full week: the test to a day a training of the system's own makes room on.
+      if (candidates.length === 0 && testMay) push(viaRoom(test.id));
       break;
     }
     case 'TEST-REST': {
