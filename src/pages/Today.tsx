@@ -230,7 +230,7 @@ function TodayContent() {
   // The mission's three key numbers; the pace comes from the latest test run.
   const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
   const mission = primary && primaryTemplate
-    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces)
+    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program))
     : undefined;
   const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
