@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { wipeAllData } from './database';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 import { getNearbyTerrain, grantTerrainConsent, hasTerrainConsent, refreshNearbyTerrain, terrainKey, TERRAIN_FETCH_DAYS } from './nearbyTerrain';
 
 // Nagemaakte plekken en antwoorden: geen netwerk.
