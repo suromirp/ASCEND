@@ -60,7 +60,7 @@ export function SweatBeforeRow({ template, className = '' }: { template: Session
   const when = suggestion?.date === today ? 'van vandaag' : 'van gisteren';
   return (
     <div className={`flex flex-col gap-2 ${className}`} aria-label="Gewicht voor de training">
-      <NumberField tall label="Gewicht voor (kg)" value={value} onChange={setValue} unit="kg" decimals={1} helper="Zonder kleren, na het plassen. Na afloop vraagt ASCEND naar je gewicht erna." />
+      <NumberField tall label="Gewicht voor (kg)" value={value} onChange={setValue} unit="kg" decimals={1} helper="Na het plassen, zonder schoenen. Je loopkleding mag aan, als je erna in dezelfde kleding weegt. Na afloop vraagt ASCEND naar je gewicht erna." />
       {suggestion && value === undefined && (
         <div>
           <TextButton onClick={() => setValue(suggestion.kg)}>Gebruik {kgLabel(suggestion.kg)} {when}</TextButton>

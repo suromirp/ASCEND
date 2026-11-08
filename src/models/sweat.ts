@@ -14,7 +14,7 @@ export interface SweatEntry {
   activity: SweatActivity;
   // Zo lang als de training duurde, toen je hem invulde (minuten).
   durationMinutes: number;
-  // Je gewicht voor en na, in kilo, zonder kleren en na het plassen.
+  // Je gewicht voor en na, in kilo, na het plassen, voor en na in dezelfde kleding (zonder kleren is iets preciezer).
   weightBeforeKg?: number;
   weightAfterKg?: number;
   // Wat je onderweg dronk en plaste, in milliliter. Plassen tijdens de training
