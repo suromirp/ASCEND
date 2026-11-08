@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
+import { weekPositionLabel } from '../engine/weekLabel';
 import { waveHeader } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
@@ -70,6 +71,7 @@ import { Card, Eyebrow } from '../components/ui';
 import { DayRow, YourDay } from '../components/vandaag/DayRow';
 import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard';
 import { missionFacts } from '../engine/missionFacts';
+import { recentRunPace } from '../engine/recentRunPace';
 import { tomorrowEntry, tomorrowText, trainingRowState } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
@@ -230,7 +232,7 @@ function TodayContent() {
   // The mission's three key numbers; the pace comes from the latest test run.
   const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
   const mission = primary && primaryTemplate
-    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program))
+    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program), recentRunPace(sessionLogs, primaryTemplate.id, today)?.range)
     : undefined;
   const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
@@ -440,7 +442,7 @@ function TodayContent() {
           <Eyebrow>{weekdayShortNL(today)} {formatDateNL(today)}</Eyebrow>
           {position && (
             <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              {waveHeader(position) ?? `Week ${position.weekInProgram} van de ${position.phase.name.replace(/fase$/i, '').trim().toLowerCase() || position.phase.name.toLowerCase()}`}{restHeader ? ' · rustdag' : ''}
+              {waveHeader(position) ?? weekPositionLabel(position)}{restHeader ? ' · rustdag' : ''}
             </p>
           )}
         </header>

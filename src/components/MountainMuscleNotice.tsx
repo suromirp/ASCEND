@@ -16,7 +16,9 @@ import { Eyebrow, SecondaryButton } from './ui';
 // toont hij het als gelukt.
 const SAVE_LIMIT_MS = 8000;
 
-export function MountainMuscleNotice({ weekStart }: { weekStart: string }) {
+// In de weekterugblik staat hij onder de rest; in Forge (`onlyFor`) alleen in de training waar de oefening bij zou
+// komen, met dezelfde engine-functie en dezelfde Akkoord.
+export function MountainMuscleNotice({ weekStart, onlyFor, className = 'mt-5' }: { weekStart: string; onlyFor?: string; className?: string }) {
   const { sessionLogs, templates, program, trainingGoals, goalMilestones, settings, updateSettings } = useAppData();
   const [declines] = useState(readMuscleDeclines);
   const [state, setState] = useState<'open' | 'busy' | 'done' | 'declined' | 'failed'>('open');
@@ -36,7 +38,7 @@ export function MountainMuscleNotice({ weekStart }: { weekStart: string }) {
     const strength = resolveStrengthSettings(settings.strengthModel);
     const today = todayISO();
     const templateIds = templates.map((t) => t.id);
-    return mountainMuscleProposal({
+    const found = mountainMuscleProposal({
       on: strength.enabled && strength.mountainMuscles,
       weekStart,
       today,
@@ -50,7 +52,8 @@ export function MountainMuscleNotice({ weekStart }: { weekStart: string }) {
       profile: strength.profile,
       declined: declines,
     });
-  }, [weekStart, sessionLogs, templates, program, trainingGoals, goalMilestones, settings.strengthModel, declines]);
+    return found && onlyFor !== undefined && found.templateId !== onlyFor ? null : found;
+  }, [weekStart, onlyFor, sessionLogs, templates, program, trainingGoals, goalMilestones, settings.strengthModel, declines]);
   const proposal = accepted ?? live;
   if (!proposal || state === 'declined') return null;
   const text = muscleNoticeText(proposal);
@@ -92,7 +95,7 @@ export function MountainMuscleNotice({ weekStart }: { weekStart: string }) {
   }
 
   return (
-    <div className="mt-5" role="group" aria-label="Kracht voor de berg">
+    <div className={className} role="group" aria-label="Kracht voor de berg">
       <Eyebrow>Kracht voor de berg</Eyebrow>
       <div className="mt-2 flex flex-col gap-1.5">
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{text.fact} {text.care}</p>

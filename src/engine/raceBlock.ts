@@ -371,6 +371,10 @@ function restoreLegSwaps(open: PlannedSession[], update: Map<string, PlannedSess
     if (!partner) continue;
     const needed = runs.some((r) => { const d = daysBetween(partner.scheduledDate, r.scheduledDate); return d >= 0 && d < needFor(r); });
     if (needed) continue;
+    // In the week before a test or race the week check makes the leg day short for fresh legs (rule TEST-FRESH);
+    // that looks the same as an old swap. Putting it back full and later would undo that, and the week check would
+    // make it short again: the two took turns on every run (backlog, 5 November). There it stays as it is.
+    if (beforeTestOrRace(legs, partner, sessions, byId)) continue;
     const { plannedMinutes: _short, ...rest } = legs;
     void _short;
     update.set(legs.id, { ...rest, scheduledDate: partner.scheduledDate, weekStartDate: mondayOfWeek(partner.scheduledDate) });
@@ -403,6 +407,17 @@ function restoreLegSwaps(open: PlannedSession[], update: Map<string, PlannedSess
       update.set(m.id, restored);
     }
   }
+}
+
+// How far before a test or race a leg day counts for its fresh legs: the same 7 days as
+// engine/scheduler.ts#findHeavyConflicts looks back for TEST-FRESH.
+const FRESH_LEGS_DAYS = 7;
+// A test or race (by role) after the leg day and at most FRESH_LEGS_DAYS after the day it would go back to.
+function beforeTestOrRace(legs: PlannedSession, backTo: PlannedSession, sessions: PlannedSession[], byId: Map<string, SessionTemplate>): boolean {
+  return sessions.some((s) => {
+    if (s.status === 'skipped' || !(idHasRole(s.templateId, 'test', byId) || idHasRole(s.templateId, 'race', byId))) return false;
+    return daysBetween(legs.scheduledDate, s.scheduledDate) >= 1 && daysBetween(backTo.scheduledDate, s.scheduledDate) <= FRESH_LEGS_DAYS;
+  });
 }
 
 // The days a hard run keeps from heavy leg strength before it: 2 for a tempo run (48 hours), and for a test the rest
