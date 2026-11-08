@@ -7,7 +7,7 @@ Bijgewerkt op 1 november 2026.
 ## Inbox
 
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
-Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
+Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
 - 8 november, uit het onderhoud (ging verloren, de sessie kon niet pushen): `src/integrations/manual.ts` is weg (8 november, coördinator); dubbele hulpfuncties samenbrengen in utils/ (mean en stdev, median, joinNL, hoofdletter eerst, afronden; 2 tot 3 rondes); 9 functies en 26 consts niet meer exporteren (1 ronde); ForgeWorkout.tsx opsplitsen (2 rondes). AdventureCard.tsx en LessonCard.tsx blijven (besluit 2 november).
 - 8 november, twee weektellers: Vandaag zegt "Week 6 van de opbouw", Stand zegt "Week 2 van 18, opbouw". Nagaan welke telling klopt (week van het programma of van de fase) en overal dezelfde gebruiken; een invariant in de tekstkaart erbij.
