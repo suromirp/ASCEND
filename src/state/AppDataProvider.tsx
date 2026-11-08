@@ -207,12 +207,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const id = makeId('plancheck');
       const why = 'Na elke wijziging controleert ASCEND je weken op vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat het systeem zelf plande, zet het dan recht. Wat jij zelf zette en je test of wedstrijd verschuift het nooit; daarvoor krijg je een voorstel.';
       const now = new Date().toISOString();
-      const consequences = repaired.lines.join('; ');
-      // Dezelfde rechtzetting die de laatste twee weken al gemeld werd: niet nog eens als melding (eigenaar, 8 november:
-      // twee delen van de planning zetten elkaar bij elke opening terug; de oorzaak staat in de backlog).
-      const seenBefore = proposals.some((p) => p.trigger === 'plan_check' && p.consequences === consequences && Date.now() - Date.parse(p.createdAt) < 14 * 86_400_000);
-      await PlanChangeProposalsRepo.put({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences, explanation: why, createdAt: now, resolvedAt: now, resolution: 'accepted' });
-      if (!seenBefore) setRecentChange((prev) => {
+      await PlanChangeProposalsRepo.put({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences: repaired.lines.join('; '), explanation: why, createdAt: now, resolvedAt: now, resolution: 'accepted' });
+      setRecentChange((prev) => {
         // Right after a change of yours (a move, an Akkoord): the repairs
         // join that notice, so its undo still works and puts everything
         // back as it was before your change.
