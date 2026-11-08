@@ -6,7 +6,7 @@ import { LegFatigueInfoSheet } from './LegFatigueInfoSheet';
 import { legSorenessList } from '../engine/legSoreness';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { currentBodyKg } from '../engine/bodyWeight';
-import { formatWeekdayDayMonthNL, todayISO } from '../utils/dates';
+import { addDays, formatWeekdayDayMonthNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { Card, InfoButton } from './ui';
 
@@ -42,6 +42,10 @@ export function LegFatigueCard() {
   const [info, setInfo] = useState(false);
   const today = inputs.today;
   const now = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
+  // De index is je stand van vanochtend: een training van vandaag telt pas vanaf morgen. Staat er vandaag al iets
+  // gedaan dat je benen belast, dan zegt de kaart wat dat morgen betekent (eigenaar, 8 november).
+  const tomorrow = useMemo(() => legFatigueOn(addDays(today, 1), inputs), [today, inputs]);
+  const doneToday = tomorrow.contributions.filter((c) => c.date === today && c.logged);
 
   // The next test or race in the coming 2 weeks, as it is planned now.
   const upcoming = useMemo(() => nextTestOrRace(plannedSessions, sessionLogs, today, templates), [plannedSessions, sessionLogs, today, templates]);
@@ -92,6 +96,12 @@ export function LegFatigueCard() {
             </div>
           ))}
         </div>
+      )}
+
+      {doneToday.length > 0 && (
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+          {doneToday.map((c) => c.name).join(' en ')} van vandaag {doneToday.length === 1 ? 'telt' : 'tellen'} vanaf morgen mee: morgen ongeveer <span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(tomorrow.index, 1)}</span>, {fatigueWord(tomorrow.index).word.toLowerCase()}.
+        </p>
       )}
 
       {next && nextResult && nextStatus && (
