@@ -15,7 +15,7 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 - `src/engine/prescriptionCheck.ts#checkRow` de stille toets "raak" tegen MacroFactor
 - `src/engine/forgeTimeCap.ts#resolveTimeCap` hoogstens 60 of 75 minuten, alleen de inhoud van het scherm
 - `src/components/forge/parts.tsx#ForgeSheet` het blad in Forge
-- `src/components/forge/forgeDraft.ts#WorkoutDraft` het concept; `OtherSessionRunning.tsx` het blad bij een andere lopende training
+- `src/components/forge/forgeDraft.ts#WorkoutDraft` het concept; `OtherSessionRunning.tsx` het blad bij een andere lopende training; het scherm is opgesplitst in `ForgeMenus.tsx#ExerciseMenuSheet`, `ForgeHeader.tsx`, `ForgeIntro.tsx`, `LegEasePanel.tsx` (alleen tonen), `useForgeClock.ts`, `useForgeDraft.ts`, `useForgePager.ts`, `useRestAlert.ts` en `forgeFinishLog.ts#forgeLogInput`
 
 ## Nooit
 - Een bestaand log beschrijven; Afronden maakt een nieuw log (hoogstens één Forge-sessie).
