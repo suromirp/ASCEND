@@ -14,24 +14,14 @@ Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: ie
 
 ## Rooster voor de bouwmomenten
 
-Per bouwmoment eerst de Inbox, daarna het volgende blok hieronder dat nog open staat. Een blok is hoogstens één groter punt plus kleine dingen. Afgerond: naar "Live op" en uit dit rooster. Volgorde: wat stuk of met voorrang is, dan Forge (je traint er nu elke week mee), dan buiten, dan groot.
+Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden). Afgerond: naar "Live op" en uit dit rooster.
 
-1. De planner en de 48 uur (met voorrang), en de weekcontrole die heen en weer schuift. Opus.
-2. Onderzoek RIR en RPE in de beste apps, met vermoeidheid tussen oefeningen (Scout). Daarnaast klein: tijdsgrens en sets (Inbox), Spieren voor de berg ook in Forge.
-3. Forge: afvinken is de RIR van het doel (ook oude workouts) en vermoeidheid tussen oefeningen, op basis van stap 2.
-4. Forge: gewicht op een toestel (de standen van het blok leren).
-5. Forge: ruilen met een echte vervanger.
-6. Buiten klein: UV, zon, hoogte, regen in het komende uur, maanstand. Sonnet.
-7. Heuvels en trappen in de buurt (OpenStreetMap).
-8. Periode "Zonder sportschool", en feestdagen als voorstel. Opus voor de planning.
-9. Tempo bij zone 2 beter maken (Scout kort, dan bouwen).
-10. Gewicht uit Health Connect als trend, en de kleine punten daarvan.
-11. Onderzoek calisthenics en uitleg bij oefeningen (Scout), proef met vijf uitlegteksten (Scribe).
-12. Uitleg bij oefeningen, de rest.
-13. Calisthenics ontwerp, daarna bouwen over drie tot vijf bouwmomenten.
-14. Voor de GR5: weerwaarschuwingen, hutten, lawines.
-15. Alle teksten herschrijven en Engels erbij (groot, in stukken per tab).
-16. De oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten) waar ze passen.
+1. Planner en 48 uur, plus de weekcontrole die heen en weer schuift (opus) ‖ Scout: RIR en RPE in de beste apps, met vermoeidheid tussen oefeningen ‖ Buiten klein: UV, zon, hoogte, regen in het komende uur, maanstand (sonnet). Erbij, klein: tijdsgrens en sets (Inbox), Spieren voor de berg ook in Forge.
+2. Forge: afvinken is de RIR van het doel (ook oude workouts) en vermoeidheid tussen oefeningen ‖ Heuvels en trappen in de buurt (OpenStreetMap) ‖ Scout: calisthenics en uitleg bij oefeningen (apps, wetenschap, open databases).
+3. Forge: gewicht op een toestel ‖ Periode "Zonder sportschool" en feestdagen als voorstel (opus) ‖ Tempo bij zone 2 (Scout kort, dan bouwen).
+4. Forge: ruilen met een echte vervanger ‖ Gewicht uit Health Connect als trend ‖ Uitleg bij oefeningen: proef met vijf teksten (Scribe).
+5. Uitleg bij oefeningen, de rest ‖ Calisthenics ontwerp ‖ Voor de GR5: waarschuwingen, hutten, lawines.
+6. tot 8. Calisthenics bouwen ‖ Alle teksten herschrijven en Engels, per tab ‖ Oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten).
 
 ## Loopt nu
 
