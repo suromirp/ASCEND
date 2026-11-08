@@ -12,7 +12,8 @@ import {
 } from './externalActivities';
 import { applyAlignments, restoreAlignments } from './watchAlign';
 import { recordClearedMilestones } from './milestoneClearing';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { migrateLogManualMeasured, migrateManualMeasured } from './migrations';
 import { planAlignment } from '../engine/watchAlign';
 import { pendingProposals, type ExternalActivity } from '../engine/activityImport';

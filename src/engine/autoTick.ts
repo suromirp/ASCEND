@@ -24,8 +24,6 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import {
-  DURATION_MARGIN_MIN,
-  DURATION_MARGIN_RATIO,
   activityDate,
   candidatePlanned,
   durationIsClose,
@@ -39,10 +37,6 @@ import {
 import { RACE_TEMPLATE_ID, TEST_TEMPLATE_ID } from './raceBlock';
 import { todayISO } from '../utils/dates';
 
-// "Duration in the neighbourhood" lives in activityImport.ts (a typed-in log is
-// matched with the same margin); re-exported here for the callers that know it
-// from this file.
-export { DURATION_MARGIN_MIN, DURATION_MARGIN_RATIO, durationIsClose };
 
 // How long after the tick-off "Hoe ging het?" stays open and "Klopt niet" works.
 export const QUESTION_HOURS = 72;

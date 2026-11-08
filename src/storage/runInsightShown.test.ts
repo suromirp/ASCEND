@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MetaRepo, wipeAllData } from './database';
 import { getShownInsights, recordShownInsights } from './runInsightShown';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 
 describe('what the loopinzicht showed, for the brake', () => {
   beforeEach(async () => {

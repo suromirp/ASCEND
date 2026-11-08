@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SettingsRepo, wipeAllData } from './database';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 
 // "Loslaten op een training" (AppSettings.dropOnTraining) en de back-up.
 describe('loslaten op een training en de back-up', () => {

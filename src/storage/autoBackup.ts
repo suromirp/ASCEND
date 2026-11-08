@@ -29,7 +29,7 @@ import {
 } from '../engine/autoBackup';
 import { APP_BACKUP_LABEL, appBackupFolder, type AutoBackupTarget } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 import { toISODate } from '../utils/dates';
 import { webBackupFileAdapter, webFolderTarget } from './backupFileAdapter';
 import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo } from './database';

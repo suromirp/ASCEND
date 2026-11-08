@@ -18,6 +18,7 @@ import { conflictsForGoals } from './goalConflicts';
 import { isMarathonGoal, mainGoal } from './mainGoal';
 import { RACE_KM } from './goalDraft';
 import { goalTiming } from './goalRoute';
+import { capitalize } from '../utils/capitalize';
 
 export interface ListedGoal {
   goal: TrainingGoal;
@@ -149,7 +150,6 @@ export const PRIORITY_RULE: Record<GoalPriority, string> = {
 };
 
 const WORDS = ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // "Vier dagen", "twee weken": woorden tot tien, daarboven cijfers.
 function spanWords(days: number): string {
@@ -164,7 +164,7 @@ function spanWords(days: number): string {
 export function labelLine(goal: TrainingGoal, priority: GoalPriority): string {
   if (priority === 'verkenning') return `${PRIORITY_RULE.verkenning} Geen rust ervoor.`;
   const taper = goalTaperDays(goal, priority);
-  return taper > 0 ? `${PRIORITY_RULE[priority]} ${cap(spanWords(taper))} rustiger ervoor.` : PRIORITY_RULE[priority];
+  return taper > 0 ? `${PRIORITY_RULE[priority]} ${capitalize(spanWords(taper))} rustiger ervoor.` : PRIORITY_RULE[priority];
 }
 
 // "Voor jouw 10 km": wat dit label voor dit doel doet, in dagen. `now` is het label dat het doel nu

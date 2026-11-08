@@ -21,6 +21,7 @@ import type { SessionTemplate } from '../models/training';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, Num, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
+import { capitalize } from '../utils/capitalize';
 
 const NOT_READ = '__niet_inlezen';
 const NONE = '';
@@ -46,7 +47,6 @@ const suggestionValue = (row: LinkRow): Choice =>
   row.suggestion ? (row.suggestion.loose ? LOOSE : PLAN) + row.suggestion.templateId : NONE;
 
 const countText = (n: number) => (n === 1 ? '1 training' : `${n} trainingen`);
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function MacroFactorLinkCard({ primary }: { primary: boolean }) {
   const { templates } = useAppData();

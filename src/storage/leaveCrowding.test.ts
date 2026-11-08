@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SettingsRepo, wipeAllData } from './database';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 
 // "Opzij voor een vakantie" (AppSettings.leaveCrowding) en de back-up.
 describe('opzij voor een vakantie en de back-up', () => {

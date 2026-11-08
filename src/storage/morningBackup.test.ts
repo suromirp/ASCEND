@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { RecoveryMetricsRepo, SettingsRepo, wipeAllData } from './database';
 import { setWatchUse } from './externalActivities';
-import { applyImportPlan, buildBackupEnvelope, buildImportPreview, createImportPlan, createPreImportSnapshot, defaultActionsForMode, defaultPlanPolicyForMode, listSnapshots, normalizeBackupToCurrentModel } from './backup';
+import { applyImportPlan, createImportPlan, createPreImportSnapshot, listSnapshots } from './backupApply';
+import { buildBackupEnvelope } from './backupExport';
+import { buildImportPreview } from './backupPreview';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { migrateMornings } from './migrations';
 import type { RecoveryMetric } from '../models/metrics';
 

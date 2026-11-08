@@ -3,7 +3,11 @@ import { ActivityStreamsRepo, MetaRepo, SessionLogsRepo, SettingsRepo, wipeAllDa
 import { saveConnection } from './externalActivities';
 import { attachActivityDetail, ensureOutcomeText, ensureRunDetail, forgetFailures, needsOf } from './activityDetail';
 import { resetAllDataAndAgenda } from './watchWorkouts';
-import { applyImportPlan, buildBackupEnvelope, buildImportPreview, createImportPlan, createPreImportSnapshot, defaultActionsForMode, defaultPlanPolicyForMode, listSnapshots, normalizeBackupToCurrentModel, parseBackupText } from './backup';
+import { applyImportPlan, createImportPlan, createPreImportSnapshot, listSnapshots } from './backupApply';
+import { buildBackupEnvelope } from './backupExport';
+import { buildImportPreview } from './backupPreview';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
+import { normalizeBackupToCurrentModel, parseBackupText } from './backupNormalize';
 import { migrateActivityStreams, migrateLogRunDetail } from './migrations';
 import { asFullAnswer, fastStartTest } from '../engine/fixtures/testRun';
 import { streamsBytes, unpackStreams } from '../engine/streamPack';

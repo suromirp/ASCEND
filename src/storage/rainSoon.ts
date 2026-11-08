@@ -10,19 +10,24 @@ export const RAIN_FETCH_MINUTES = 10;
 export const RAIN_FETCH_LIMIT_MS = 10_000;
 
 let cached: RainSoonForecast | undefined;
-let inFlight: Promise<RainSoonForecast | undefined> | undefined;
+// Per plek (afgeronde positie), zodat een tweede plek niet het antwoord van de eerste krijgt.
+const inFlight = new Map<string, Promise<RainSoonForecast | undefined>>();
+
+const placeKey = (place: WeatherPlace) => `${roundCoordinate(place.lat)},${roundCoordinate(place.lon)}`;
 
 const samePlace = (a: WeatherPlace, b: WeatherPlace) => roundCoordinate(a.lat) === roundCoordinate(b.lat) && roundCoordinate(a.lon) === roundCoordinate(b.lon);
 
 export function clearRainSoonCache(): void {
   cached = undefined;
-  inFlight = undefined;
+  inFlight.clear();
 }
 
 export function refreshRainSoon(place: WeatherPlace, options: FetchOptions & { now?: Date; limitMs?: number } = {}): Promise<RainSoonForecast | undefined> {
   const now = options.now ?? new Date();
   if (cached && samePlace(cached.place, place) && now.getTime() - Date.parse(cached.fetchedAt) < RAIN_FETCH_MINUTES * 60_000) return Promise.resolve(cached);
-  if (inFlight) return inFlight;
+  const key = placeKey(place);
+  const running = inFlight.get(key);
+  if (running) return running;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const limit = new Promise<undefined>((resolve) => { timer = setTimeout(() => resolve(undefined), options.limitMs ?? RAIN_FETCH_LIMIT_MS); });
   const fetching = (async () => {
@@ -34,9 +39,10 @@ export function refreshRainSoon(place: WeatherPlace, options: FetchOptions & { n
       return undefined;
     }
   })();
-  inFlight = Promise.race([fetching, limit]).finally(() => {
+  const pending: Promise<RainSoonForecast | undefined> = Promise.race([fetching, limit]).finally(() => {
     clearTimeout(timer);
-    inFlight = undefined;
+    if (inFlight.get(key) === pending) inFlight.delete(key);
   });
-  return inFlight;
+  inFlight.set(key, pending);
+  return pending;
 }

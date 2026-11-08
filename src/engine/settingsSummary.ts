@@ -74,6 +74,7 @@ import { resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 import { formatClock } from '../utils/clock';
+import { capitalize } from '../utils/capitalize';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
 export const SUB_MAX_LENGTH = 40;
@@ -244,7 +245,6 @@ const monthIndex = (iso: string) => Number(iso.slice(5, 7)) - 1;
 export const longDate = (iso: string): string => `${dayOf(iso)} ${LONG_MONTHS[monthIndex(iso)]}`;
 
 const num = (n: number, decimals = 2) => formatNumberNL(n, decimals);
-const capitalize = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 const lower = (text: string) => text.toLowerCase();
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 

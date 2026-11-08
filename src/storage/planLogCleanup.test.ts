@@ -9,7 +9,11 @@ import {
   ProgramsRepo,
 } from './database';
 import { mergeDuplicateWeeklyPrescriptionLines } from './planLogCleanup';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
+import { buildImportPreview } from './backupPreview';
+import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './backupApply';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { SessionLog } from '../models/training';
 

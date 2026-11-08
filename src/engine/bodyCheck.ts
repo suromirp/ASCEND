@@ -18,11 +18,11 @@ import { FATIGUE_THRESHOLDS, POLES_DESCENT_FACTOR } from './legFatigue';
 import { significantPain } from './pain';
 import { logSport } from './sports';
 import type { BodyCheckMode } from './bodyCheckSettings';
-import { careForSpot, spotById, spotForComplaint, spotsForInjury, stretchesForSpot, stretchMinutes, type BodySpot } from './bodyMap';
+import { careForSpot, spotById, spotForComplaint, spotsForInjury, stretchesForSpot, stretchMinutes } from './bodyMap';
+import type { BodySpot } from '../data/bodySpots';
 
 // ---- de instelling ----------------------------------------------------------------------
 
-export { BODY_CHECK_MODES, DEFAULT_BODY_CHECK, resolveBodyCheck, type BodyCheckMode } from './bodyCheckSettings';
 
 // ---- afgeleide drempels -----------------------------------------------------------------
 

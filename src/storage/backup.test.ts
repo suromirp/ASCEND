@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, SettingsRepo, MetaRepo, PlannedSessionsRepo, StrengthProgramStrategiesRepo, PlanChangeProposalsRepo, BackupSnapshotsRepo, wipeAllData } from './database';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode, parseBackupText, backupErrorText, listSnapshots, restoreSnapshot } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel, parseBackupText } from './backupNormalize';
+import { buildImportPreview } from './backupPreview';
+import { createImportPlan, createPreImportSnapshot, applyImportPlan, listSnapshots, restoreSnapshot } from './backupApply';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
+import { backupErrorText } from './backupMessage';
 import type { SessionLog, PlannedSession } from '../models/training';
 import { migrateInfluences, migrateLegEaseDays, migrateNightJudgments } from './migrations';
 import type { InfluenceEntry } from '../models/influence';

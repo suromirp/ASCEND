@@ -13,7 +13,7 @@ vi.mock('../../storage/watchWorkouts', () => ({ getWatchWorkoutState: async () =
 vi.mock('../../storage/macrofactor', () => ({ getMacroFactorState: async () => ({ leads: true }), onMacroFactorChange: () => () => undefined }));
 vi.mock('../../storage/persistence', () => ({ getPersistenceStatus: async () => 'protected' }));
 vi.mock('../../storage/storageEstimate', () => ({ estimateStorage: () => new Promise<never>(() => undefined) }));
-vi.mock('../../storage/backup', () => ({ listSnapshots: () => new Promise<never>(() => undefined) }));
+vi.mock('../../storage/backupApply', () => ({ listSnapshots: () => new Promise<never>(() => undefined) }));
 vi.mock('../../storage/backupFileAdapter', () => ({
   webBackupFileAdapter: { supportsPreferredDirectory: () => false },
   webFolderTarget: { where: async () => ({ kind: 'folder', label: 'x' }) },

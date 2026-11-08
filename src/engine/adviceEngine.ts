@@ -23,4 +23,4 @@ export type { ForcedTestMove } from './adviceTestRun';
 export { legEaseMoveAdvice, laterMoveAdvice, legCardSessionOf, previewLegCard, previewMorningAdvice, describeMorningPreview } from './adviceMorning';
 export type { LaterMoveSpec } from './adviceMorning';
 export { carryTargetTimeAnswers } from './adviceBlock';
-export { retryTestRows, computeAdvice, adviceForLog } from './adviceCompute';
+export { retryTestRows, computeAdvice } from './adviceCompute';

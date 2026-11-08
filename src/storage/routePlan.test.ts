@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { wipeAllData } from './database';
 import { RoutePlanRepo, SoloPlanRepo } from './routePlan';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
+import { buildImportPreview } from './backupPreview';
+import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './backupApply';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { EMPTY_ROUTE_PLAN, EMPTY_SOLO_PLAN, type RoutePlan, type SoloPlan } from '../models/routePlan';
 
 // Nagemaakte gegevens: niets hier hoort bij een echt persoon.
