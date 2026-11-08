@@ -19,6 +19,7 @@
 import { formatDateNL, mondayOfWeek, resolveProgramWeek, weekdayLongNL } from '../utils/dates';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
+import { weekPositionLabel } from './weekLabel';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isWorkSet } from './workSets';
 
@@ -77,7 +78,7 @@ export function sessionSheetActions({ date, today, skipped, canComeBack, kind, w
 export function previewDayLine(date: string, program: Program | null | undefined): string {
   const day = weekdayLongNL(date);
   const position = program ? resolveProgramWeek(program, date) : null;
-  const week = position ? `Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}` : undefined;
+  const week = position ? weekPositionLabel(position) : undefined;
   return [`${day.charAt(0).toUpperCase()}${day.slice(1)} ${formatDateNL(date)}`, week].filter(Boolean).join(' · ');
 }
 
