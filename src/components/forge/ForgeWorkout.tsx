@@ -92,7 +92,7 @@ import { useGuardedSave, useLegEase } from '../useLegEase';
 import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_KEPT_LINE, EASE_STARTED_LINE } from '../../engine/legDayEase';
 import { resolveLegEaseHow } from '../../engine/legEaseSettings';
 import { asksReserve, reckonAfterTick, reckonWeight, undoRaise } from '../../engine/forgeReckon';
-import { poundStackProposal, poundStackText } from '../../engine/poundStack';
+import { poundStackProposal } from '../../engine/poundStack';
 import { adjustText, applyLighter, fitStillOpen, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { hasStack, ownWeightsFor, withMachineSetup } from '../../engine/machineWeights';
 import { appendEvents, cleanForgeLog, deriveChanges, noFitEvent, setCountEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
@@ -100,7 +100,7 @@ import { SPOTTER_EXPLAIN, SPOTTER_HOW, SPOTTER_SIGN } from '../../engine/spotter
 import { makeId } from '../../utils/id';
 import { activeSeconds, sessionIsDead, breakAsPause, breakCounts, cleanPauses, formatAway, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
 import { useSessionWorld } from './useForgeSession';
-import { clearSessionPointer, notifySession, readSession, registerForgeOpen, requestOpenSession, writeSessionPointer } from '../../utils/forgeSessionStore';
+import { clearSessionPointer, notifySession, readSession, registerForgeOpen, writeSessionPointer } from '../../utils/forgeSessionStore';
 import { ExerciseAddOnForgeSheet } from './AddOnWeights';
 import { ForgeLogSheet } from './ForgeLogSheet';
 import { MachineWeightsForgeSheet } from './MachineWeights';
@@ -111,41 +111,16 @@ import { useRestNotice } from './useRestNotice';
 import { resolveDeviceNotices } from '../../engine/deviceNotices';
 import { type Rest, clock, isAssisted, type BlockActions, dockRowLabel, addOnMenuSub } from './forgeWorkoutHelpers';
 import { ExerciseBlock } from './ExerciseBlock';
+import { OtherSessionRunning } from './OtherSessionRunning';
+import { DRAFT_VERSION, lastActionOfDraft, poundLine, type WorkoutDraft } from './forgeDraft';
 import { ElapsedClock, RestBar, RestStepper } from './ForgeTimers';
 import { SwapList, NoteSheet } from './ExerciseSheets';
 import { FinishSheet } from './FinishSheet';
 
-const DRAFT_VERSION = 1;
 // Na afloop blijft de balk nog even staan, dan verdwijnt hij.
 const REST_DONE_LINGER_MS = 8000;
 // Een reden die ouder is dan dit hoort niet meer bij de volgende verandering van de rijen.
 const CAUSE_MAX_AGE_MS = 2000;
-
-interface WorkoutDraft {
-  v: number;
-  savedAt: number;
-  startedAt: number;
-  exercises: WorkoutExercise[];
-  rest?: Rest;
-  column: 'target' | 'previous';
-  // Of de rijen met Lichter gepland zijn; een concept van voor deze keuze heeft het niet.
-  eased?: boolean;
-  // Het verloop van de training (engine/forgeLog.ts) en het moment dat je het voor het laatst opende.
-  // Optioneel: een concept van voor het verloop heeft ze niet.
-  log?: ForgeEvent[];
-  seen?: number;
-  // De sessie (engine/forgeSession.ts): de klok is nu min startedAt min de pauzes. Optioneel: een concept van
-  // voor de sessie heeft ze niet en werkt gewoon.
-  pauses?: Pause[];
-  lastActionAt?: number;
-}
-
-// Het laatste moment van handelen in een concept: het bewaarde moment, of de laatst afgevinkte set, of het wegschrijven.
-function lastActionOfDraft(d: Partial<WorkoutDraft>, startedAt: number): number {
-  const ticks = (d.exercises ?? []).flatMap((e) => e.rows.map((r) => r.doneAt)).filter((t): t is number => typeof t === 'number' && Number.isFinite(t));
-  const saved = typeof d.lastActionAt === 'number' ? d.lastActionAt : typeof d.savedAt === 'number' ? d.savedAt : startedAt;
-  return Math.max(saved, ...ticks);
-}
 
 interface ForgeWorkoutProps {
   template: SessionTemplate;
@@ -176,29 +151,6 @@ export function ForgeWorkout(props: ForgeWorkoutProps) {
   });
   if (other) return <OtherSessionRunning name={other.pointer.name} onClose={props.onClose} />;
   return <ForgeWorkoutInner {...props} />;
-}
-
-function OtherSessionRunning({ name, onClose }: { name: string; onClose: () => void }) {
-  const goTo = useRef(false);
-  return (
-    <ForgeSheet
-      title="Er loopt nog een training"
-      onClose={() => {
-        onClose();
-        if (goTo.current) requestOpenSession();
-      }}
-    >
-      {(close) => (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Er loopt nog een training: {name}. Eerst afronden of verwijderen?</p>
-          <div className="flex flex-col gap-3">
-            <PrimaryButton onClick={() => { goTo.current = true; close(); }}>Naar de training</PrimaryButton>
-            <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
-          </div>
-        </div>
-      )}
-    </ForgeSheet>
-  );
 }
 
 function ForgeWorkoutInner({
@@ -1044,7 +996,7 @@ function ForgeWorkoutInner({
               swipeOn={swipeDeleteOn(settings)}
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
               quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId) ? quickRir.rowId : undefined}
-              capText={capRemovedFor(capped, ex) > 0 ? capRemovedLine(capRemovedFor(capped, ex)) : undefined}
+              capText={capRemovedFor(capped, ex, effSlots) > 0 ? capRemovedLine(capRemovedFor(capped, ex, effSlots)) : undefined}
               poundText={!readOnly && !poundKept[ex.slot] && ex.rows.some((r) => r.done) ? poundLine(ex, strength.profile) : undefined}
               act={actions}
             />
@@ -1458,10 +1410,4 @@ function ForgeWorkoutInner({
       )}
     </Portal>
   );
-}
-
-// De regel van het voorstel "toestel in ponden", of undefined.
-function poundLine(ex: WorkoutExercise, profile: Parameters<typeof poundStackProposal>[1]): string | undefined {
-  const p = poundStackProposal(ex, profile);
-  return p ? poundStackText(p) : undefined;
 }

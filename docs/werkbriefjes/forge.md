@@ -15,9 +15,10 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 - `src/engine/prescriptionCheck.ts#checkRow` de stille toets "raak" tegen MacroFactor
 - `src/engine/forgeTimeCap.ts#resolveTimeCap` hoogstens 60 of 75 minuten, alleen de inhoud van het scherm
 - `src/components/forge/parts.tsx#ForgeSheet` het blad in Forge
+- `src/components/forge/forgeDraft.ts#WorkoutDraft` het concept; `OtherSessionRunning.tsx` het blad bij een andere lopende training
 
 ## Nooit
-- Een bestaand log beschrijven; Afronden maakt een nieuw log. Er is hoogstens één Forge-sessie.
+- Een bestaand log beschrijven; Afronden maakt een nieuw log (hoogstens één Forge-sessie).
 - Sets tellen zonder `isWorkSet`; een opwarmset wordt bewaard maar telt niet.
 - De planning of een template wijzigen vanuit Forge; de tijdsgrens en Lichter raken alleen het scherm. Uitzondering: het voorstel Spieren voor de berg mag met Akkoord een oefening toevoegen; de lopende sessie verandert niet.
 - Een training herkennen aan een template-id: gebruik `src/engine/scheduler.ts#isLegHeavyTemplate` en rollen.
@@ -27,7 +28,8 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 - Een open doel (11+) of tot falen heeft geen bovenkant: `OPEN_ROOM` in `src/engine/forgeAdjust.ts` houdt een veel lichter gewicht met veel meer herhalingen eruit.
 - `rirAssumed` (een set afgevinkt zonder aan de RIR te komen) telt niet mee voor kracht, vermoeidheid en stap, niet in `learnFatigue` en niet in "Forge rekent mee".
 - Tot falen of een open doel: na een zware set mag de volgende set één herhaling onder de onderkant (`floor` in `reckonAfterTick`), zodat het gewicht één stap zakt, maar nooit een grote stap van het blok die ruim boven het doel uitkomt (`JUMP_ROOM`); een opwarmset is minstens `WARMUP_MIN_STEP` (15%) zwaarder dan de vorige. Stelde Forge al bij, dan geen tweede vraag om Lichter.
-- Rust per oefening komt uit `estimatedRest` in `src/engine/forgeWorkout.ts`; geen tweede tabel in een component.
+- "Weg door je tijdsgrens" telt tegen `effSlots` (na Lichter) in `capRemovedFor`.
+- Rust per oefening komt uit `estimatedRest`; geen tweede tabel in een component.
 - Elk blad in Forge heeft `ref={sheetRef}` en `<SheetGrip />`, zoals `ForgeSheet` in `src/components/forge/parts.tsx`; bladen sluiten met `forge-down`, en `sheetDrag.scan.test.ts` kijkt mee.
 - Een rustmelding van een vorige keer wordt bij het openen geschrapt (`src/state/boot.ts`); een lopende rust plant Forge zelf opnieuw.
 - Een sessie begint pas bij de eerste echte handeling, niet bij het openen; een wijzer zonder template of met een gelogde sessie is dood en wordt opgeruimd.
@@ -35,10 +37,8 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 
 ## Testen
 - Tijdens het werk: `npx vitest run src/engine/forge src/engine/strengthModel src/engine/spotter src/engine/prescriptionCheck src/components/forge`
-- Altijd mee: `src/components/sheetDrag.scan.test.ts`. Nooit laten bewegen: `src/storage/planGolden.test.ts`.
-- Tekstkaart (`npm run kaart:vergelijk`) als een Forge-scherm of de rij op Je stand verandert.
+- Altijd mee: `src/components/sheetDrag.scan.test.ts`. Nooit laten bewegen: `src/storage/planGolden.test.ts`. Tekstkaart (`npm run kaart:vergelijk`) als een Forge-scherm of de rij op Je stand verandert.
 
 ## Lees verder
 - `docs/architectuur/forge.md`
-- `docs/beslissingen/2026-10-29-forge-als-sessie.md`, `docs/beslissingen/2026-11-02-forge-herinrichting.md`
-- `docs/beslissingen/2026-10-25-bijsturen-in-forge.md`, `docs/beslissingen/2026-11-03-forge-rekent-mee.md`
+- `docs/beslissingen/2026-10-29-forge-als-sessie.md`, `docs/beslissingen/2026-11-02-forge-herinrichting.md`, `docs/beslissingen/2026-10-25-bijsturen-in-forge.md`, `docs/beslissingen/2026-11-03-forge-rekent-mee.md`
