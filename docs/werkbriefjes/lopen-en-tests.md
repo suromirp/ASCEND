@@ -9,6 +9,7 @@ Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5
 - `src/storage/activityDetail.ts#ensureRecentTestEfforts` leest recente tests op de achtergrond bij het openen
 - `src/engine/runDetail.ts#buildRunDetail` kilometers, rondes en lijn van een run; oordelen in `runDetailRules.ts`
 - `src/engine/watchHeartRate.ts#resolveWatchHr` hartslagbereik op het horloge, naar de drempel van intervals.icu
+- `src/engine/aerobicTrend.ts#aerobicTrend` tempo bij zone 2 (vlak tempo `gapSecKm`, eigen stijging bij afwijkend horloge); `recentRunPace.ts` echt tempo voor de afstand op Vandaag
 - `src/engine/heartRateZones.ts#zoneBpm` de zones van ASCEND
 - `src/engine/zoneUpdate.ts#zoneOffer` nieuwe drempel na de laatste test, voorstel met Akkoord
 - `src/engine/testRest.ts#resolveTestRest` 72 of 48 uur rust voor een test; regel in `scheduler.ts` (`testPairConflict`, niet geëxporteerd, en `tooCloseBeforeTest`) en in de weekcontrole (`TEST-REST`, alleen voor Week)
@@ -31,11 +32,10 @@ Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5
 - Het wedstrijdblok geeft zijn eigen melding bij rust voor een test; voeg geen tweede melding toe.
 - De reeksen staan standaard in de back-up (grote bestanden); de kopieën vóór een import (`backupSnapshots`) bevatten ze nooit.
 - `sessionLoad` kent de splitsing (`split`), maar geen aanroeper geeft hem nog mee (de enige, `SportFeltBlock`, rekent zonder); de weeklast en beenindex lezen `LoadItem.split`.
-- De weekbalk sprak zichzelf tegen bij de RPE van een test (review 2 november): laat getal en tekst uit dezelfde berekening komen.
+- De weekbalk sprak zichzelf tegen bij de RPE van een test (review 2 november): laat getal en tekst uit dezelfde berekening komen. `aerobicTrend` leest `runDetail` alleen als het past bij het log; grens 15 m per km, met vlak tempo 30 m.
 
 ## Testen
 - Tijdens het werk: `npx vitest run src/engine/racePrediction src/engine/testJudgment src/engine/bestEffort src/engine/runDetail src/engine/watchHeartRate src/engine/testRest src/storage/activityDetail src/storage/testloop`
-- Nooit laten bewegen: `src/storage/planGolden.test.ts`.
 - Tekstkaart (`npm run kaart:vergelijk`) als de testkaart, het logblad of Vandaag verandert.
 
 ## Lees verder
