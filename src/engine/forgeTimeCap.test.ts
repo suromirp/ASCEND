@@ -269,6 +269,37 @@ describe('Cable Rope High Row met 3 sets in het programma (inbox 7 november)', (
     expect(capRemovedFor(r, { slot: 'c', rows: work(1), dropped: [{}] })).toBe(1);
   });
 
+  describe('Lichter met minder sets telt niet als weg door je tijdsgrens', () => {
+    const work = (n: number) => Array.from({ length: n }, () => ({ kind: 'work' }));
+    // Lichter nam van elke oefening met 2 of meer sets er een weg; de tijdsgrens alleen waar het inkortte.
+    const eased = (slots: ExercisePrescription[]) => slots.map((s) => ({ ...s, sets: prescribedSets(s) - 1, setTargets: undefined }));
+
+    it('Lichter zonder tijdsgrens: er viel niets door de grens weg', () => {
+      const r = capSlots({ slots: program, fullMinutes: 40, cap: 60 });
+      expect(r.setsRemoved).toBe(0);
+      expect(capRemovedFor(r, { slot: 'c', rows: work(2) }, eased(r.slots))).toBe(0);
+    });
+
+    it('tijdsgrens zonder Lichter: de set die de grens nam telt', () => {
+      const r = capSlots({ slots: program, fullMinutes: 66, cap: 60 });
+      expect(capRemovedFor(r, { slot: 'c', rows: work(2) }, r.slots)).toBe(1);
+      expect(capRemovedFor(r, { slot: 'c', rows: work(2) })).toBe(1);
+    });
+
+    it('beide samen: alleen de set van de grens telt, en Set toevoegen telt af', () => {
+      const r = capSlots({ slots: program, fullMinutes: 66, cap: 60 });
+      const eff = eased(r.slots);
+      expect(capRemovedFor(r, { slot: 'c', rows: work(1) }, eff)).toBe(1);
+      expect(capRemovedFor(r, { slot: 'c', rows: work(2) }, eff)).toBe(0);
+    });
+
+    it('geen sets over: de oefening houdt de set van de grens, niet die van Lichter erbij', () => {
+      const r = capSlots({ slots: program, fullMinutes: 66, cap: 60 });
+      expect(capRemovedFor(r, { slot: 'c', rows: [] }, eased(r.slots))).toBe(1);
+      expect(capRemovedFor(r, { slot: 'c', rows: [], dropped: [{}] }, eased(r.slots))).toBe(1);
+    });
+  });
+
   it('60 minuten past van onderaf gerekend net: 2:00 rust en drie opwarmsets bij 14 sets', () => {
     // Per werkset ongeveer 45 seconden werk plus de rust van Forge (estimatedRest), per eerste zware oefening drie
     // opwarmsets van een halve minuut met 90 seconden rust, bij de andere oefeningen een opwarmset (al warm).

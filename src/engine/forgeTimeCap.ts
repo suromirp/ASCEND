@@ -178,13 +178,16 @@ export function capLineFor(r: TimeCapResult, workout: readonly { slot: string; r
 // en wat het inkorten overliet, min wat jij er sindsdien bij zette (werksets nu in de sessie, plus de sets die
 // jij zelf weghaalde en kunt terugzetten). Zo zegt de oefening zelf wat er wegviel, en Set toevoegen telt mee.
 // De kern wordt nooit ingekort, dus daar is het altijd 0.
-export function capRemovedFor(r: Pick<TimeCapResult, 'from' | 'slots'>, ex: { slot: string; rows: readonly { kind: string }[]; dropped?: readonly unknown[] }): number {
+// `effSlots` zijn de voorschriften na Lichter (legDayEase.ts#easeSlots): een set die Lichter wegnam telt niet als
+// "weg door je tijdsgrens", dus het nu-aantal wordt tegen de voorschriften van het scherm gehouden.
+export function capRemovedFor(r: Pick<TimeCapResult, 'from' | 'slots'>, ex: { slot: string; rows: readonly { kind: string }[]; dropped?: readonly unknown[] }, effSlots?: readonly ExercisePrescription[]): number {
   const before = r.from.find((s) => s.id === ex.slot);
   const after = r.slots.find((s) => s.id === ex.slot);
+  const shown = effSlots?.find((s) => s.id === ex.slot) ?? after;
   if (!before || !after || before.priority === 'core') return 0;
   const removed = prescribedSets(before) - prescribedSets(after);
   const now = ex.rows.filter((row) => row.kind === 'work').length + (ex.dropped?.length ?? 0);
-  return Math.max(0, removed - Math.max(0, now - prescribedSets(after)));
+  return Math.max(0, removed - Math.max(0, now - prescribedSets(shown ?? after)));
 }
 
 // "1 set weg door je tijdsgrens", bij de oefening zelf.
