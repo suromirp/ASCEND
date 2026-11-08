@@ -63,6 +63,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   undoText,
   quickRirRow,
   poundText,
+  capText,
   act,
 }: {
   ex: WorkoutExercise;
@@ -94,6 +95,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   quickRirRow?: string;
   // Het voorstel om dit toestel als ponden op te slaan (engine/poundStack.ts), als er een is.
   poundText?: string;
+  // "1 set weg door je tijdsgrens", zolang er door de grens sets van deze oefening ontbreken (engine/forgeTimeCap.ts).
+  capText?: string;
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
@@ -339,6 +342,12 @@ export const ExerciseBlock = memo(function ExerciseBlock({
             <p className="mt-1 flex min-h-[44px] items-center gap-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               <span>{droppedLine(droppedCount(ex))}</span>
               <TextButton onClick={() => act.restore(ex.slot)}>Terugzetten</TextButton>
+            </p>
+          )}
+          {!readOnly && !ex.timed && capText && (
+            <p className="mt-1 flex min-h-[44px] items-center gap-3 text-xs" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-grens-set">
+              <span>{capText}</span>
+              <TextButton onClick={() => act.add(ex.slot)}>Terugzetten</TextButton>
             </p>
           )}
           {!readOnly && !ex.timed && (
