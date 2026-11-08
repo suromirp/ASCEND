@@ -13,7 +13,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - `src/engine/morningBackup.ts#archiveToClear` ochtendgetallen in de back-up, archief en opruimen
 - `src/engine/liveUpdate.ts#updateDecision` bijwerken zonder nieuwe APK, `minNative` in `app-versie.json` (gemaakt bij de build door `scripts/app-versie.mjs`, niet in de repo)
 - `src/engine/signalSettings.ts` instellingen van de signalen uit je gegevens, allemaal aan en geen verandert de planning
-- `src/engine/rainSoon.ts#rainSoonNote` regen in het komende uur uit `minutely_15`, alleen tekst; `src/engine/moon.ts#moonNote` maanstand zonder API
+- `src/engine/rainSoon.ts#rainSoonNote` regen in het komende uur uit `minutely_15`, alleen tekst; `src/engine/moon.ts#moonNote` maanstand zonder API; `src/integrations/overpass.ts#fetchNearbyTerrain` + `src/storage/nearbyTerrain.ts` + `src/engine/nearbyTerrain.ts#terrainLine` heuvels en trappen in de buurt (OpenStreetMap), één regel
 - `src/engine/activityText.ts#activityText` Strava-tekst om te kopiëren
 
 ## Nooit
@@ -30,7 +30,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - Een Capacitor-plugin is een Proxy met een `then`: geef hem nooit terug als waarde van een belofte (`src/integrations/pluginPatroon.scan.test.ts`).
 - Bij Health Connect telde bewegingstijd tegen totale tijd een tocht dubbel (review 2 november); vergelijk dezelfde tijd.
 - De ochtenden in de back-up zijn een archief dat blijft na ontkoppelen; uitzetten vraagt eerst en biedt Ongedaan maken, want het ging bijna fout met dataverlies (review 1 november).
-- De locatie heeft een grens van tien seconden en geeft altijd een plek of een reden; het weer volgt alleen je plek als dat aan staat. Kwartierregen (`rainSoon`) leest "nu" op de klok van de plek, staat alleen in het geheugen en zwijgt bij oude of lege data.
+- De locatie heeft een grens van tien seconden en geeft altijd een plek of een reden; het weer volgt alleen je plek als dat aan staat. Kwartierregen (`rainSoon`) leest "nu" op de klok van de plek, staat alleen in het geheugen en zwijgt bij oude of lege data. Heuvels in de buurt: alleen een plek op twee decimalen, zonder naam, pas na ja op de eerste vraag; de cache staat niet in de back-up.
 - Een nieuwe bron krijgt een regel in `settingsParts` (`src/components/settings/settingsFactsParts.ts`) en een eigen grens in tijd; een trage bron houdt geen andere rij tegen.
 
 ## Testen

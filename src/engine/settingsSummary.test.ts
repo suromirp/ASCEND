@@ -896,8 +896,10 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
-    expect(rowSummary('bundel-weer', facts()).value).toBe('6 van 6 aan');
-    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('4 van 6 aan');
+    expect(rowSummary('bundel-weer', facts()).value).toBe('7 van 7 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('5 van 7 aan');
+    expect(rowSummary('heuvels-buurt', facts())).toEqual({ checked: true });
+    expect(rowSummary('heuvels-buurt', withSettings({ overviews: { hillsNearby: false } }))).toEqual({ checked: false });
     expect(rowSummary('bundel-inzicht', facts())).toEqual({ value: 'Aan', sub: '4 van 4 onderwerpen' });
     expect(rowSummary('bundel-inzicht', withSettings({ runInsight: { enabled: false } }))).toEqual({ value: 'Uit', dim: true });
     expect(rowSummary('bundel-run-detail', facts())).toEqual({ value: 'Aan', sub: 'Loopvorm: cadans en nog 3' });
