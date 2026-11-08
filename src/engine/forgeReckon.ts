@@ -25,6 +25,8 @@ import { underBar } from './barCheck';
 import { DEFAULT_RIR, estimateSet, expectedReps, FATIGUE_PER_SET, fatigueFactor, isHardPair } from './strengthModel';
 import { candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
 import { r2 } from '../utils/round';
+import { DOUBT_FIRST_TRAININGS, DOUBT_OVER_TOP_REPS } from './assumedSets';
+import { isWorkSet } from './workSets';
 
 // Een redelijk bereik voor een geschat aantal: daarbuiten zegt de omrekening niets meer.
 const RECKON_MIN_REPS = 1;
@@ -301,7 +303,10 @@ export const quickRirLabel = (n: number): string => (n >= 3 ? '3+' : String(n));
 // Vraagt Forge na het afvinken van deze set hoeveel je over had? Alleen bij een afgevinkte werkset waarvan
 // je de RIR niet zelf invulde, en alleen bij de sets die het meest zeggen: de eerste werkset (de topset), een
 // zware set (0 of 1 over of tot falen) en de laatste werkset van de oefening. Niet bij een set op tijd.
-export function asksReserve(ex: WorkoutExercise, rowId: string): boolean {
+// Met "Afvinken telt als het doel" (`doubt`) ook bij twijfel (regel 2 van het verslag RIR en RPE):
+// minder herhalingen dan gevraagd, 2 of meer boven de bovenkant, de eerste werkset op een gewicht dat
+// zwaarder is dan vorige keer, en elke werkset in de eerste drie trainingen van een oefening.
+export function asksReserve(ex: WorkoutExercise, rowId: string, doubt = false): boolean {
   if (ex.timed) return false;
   const work = ex.rows.filter((r) => r.kind === 'work');
   const at = work.findIndex((r) => r.id === rowId);
@@ -309,5 +314,23 @@ export function asksReserve(ex: WorkoutExercise, rowId: string): boolean {
   if (!row || !row.done || row.target.timedSec !== undefined) return false;
   if (row.rir !== undefined && !row.rirAssumed) return false;
   const hard = !!row.target.failure || (row.target.rir ?? DEFAULT_RIR) <= 1;
-  return at === 0 || at === work.length - 1 || hard;
+  if (at === 0 || at === work.length - 1 || hard) return true;
+  return doubt && doubtful(ex, work, at);
+}
+
+// Regel 2: twijfel bij een afgevinkte werkset zonder eigen RIR.
+function doubtful(ex: WorkoutExercise, work: WorkoutRow[], at: number): boolean {
+  const row = work[at];
+  const reps = row.reps ?? 0;
+  const asked = row.forgeReps ?? row.target.repsLow;
+  if (reps < asked) return true;
+  if (!row.target.failure && !row.target.open && reps >= row.target.repsHigh + DOUBT_OVER_TOP_REPS) return true;
+  if (ex.trainings !== undefined && ex.trainings < DOUBT_FIRST_TRAININGS) return true;
+  const before = (ex.previous ?? []).filter(isWorkSet).map((s) => s.weightKg).filter((w): w is number => w !== undefined);
+  const kg = row.weightKg;
+  if (kg !== undefined && before.length > 0 && kg > Math.max(...before) + 1e-6) {
+    // Alleen de eerste werkset op dat zwaardere gewicht.
+    return !work.slice(0, at).some((r) => r.weightKg !== undefined && r.weightKg >= kg - 1e-6);
+  }
+  return false;
 }

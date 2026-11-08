@@ -240,6 +240,10 @@ export interface StrengthSettings {
   // die anders ging dan gevraagd wordt de volgende open set bijgesteld, en wie de bovenkant van het bereik
   // haalde met de gevraagde RIR krijgt de volgende keer meteen de kleinste stap zwaarder.
   reckon?: boolean;
+  // "Afvinken telt als het doel" (default on, docs/beslissingen/2026-11-08-forge-afvinken-doel.md): een
+  // werkset die je afvinkte zonder RIR en die ging zoals gevraagd, telt met de RIR van het doel
+  // (engine/assumedSets.ts). Bij twijfel vraagt Forge "Hoeveel over?". Uit: zoals voor 8 november.
+  assumedCounts?: boolean;
   // Zonder spotter: Forge schrijft bij een stangoefening waar falen gevaarlijk is minstens 1 herhaling
   // in reserve voor, tenzij de sportschool veiligheidsarmen heeft (default on). Nooit een blokkade:
   // 0 invullen kan altijd (engine/spotter.ts).
@@ -294,6 +298,7 @@ export interface ResolvedStrengthSettings {
   checkFrom: string;
   adjustLive: boolean;
   reckon: boolean;
+  assumedCounts: boolean;
   noSpotter: boolean;
   rirPrefill: RirPrefill;
   mountainMuscles: boolean;
@@ -503,6 +508,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (fatigue) out.fatigue = fatigue;
   if (typeof raw.adjustLive === 'boolean') out.adjustLive = raw.adjustLive;
   if (typeof raw.reckon === 'boolean') out.reckon = raw.reckon;
+  if (typeof raw.assumedCounts === 'boolean') out.assumedCounts = raw.assumedCounts;
   if (typeof raw.noSpotter === 'boolean') out.noSpotter = raw.noSpotter;
   if (typeof raw.mountainMuscles === 'boolean') out.mountainMuscles = raw.mountainMuscles;
   const added = normalizeAddedExercises(raw.addedExercises);
@@ -562,6 +568,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     checkFrom: s.checkFrom ?? DEFAULT_CHECK_FROM,
     adjustLive: s.adjustLive ?? true,
     reckon: s.reckon ?? true,
+    assumedCounts: s.assumedCounts ?? true,
     noSpotter: s.noSpotter ?? true,
     rirPrefill: s.rirPrefill ?? 'hint',
     mountainMuscles: s.mountainMuscles ?? true,
@@ -631,6 +638,6 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
 // them on a settings page does not recount the whole strength history.
 export function checkModelKey(raw: StrengthSettings | undefined): string {
   const r = normalizeStrengthSettings(raw) ?? {};
-  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, stackWeights: r.stackWeights, lighterAfterBreak: r.lighterAfterBreak, dumbbellLog: r.dumbbellLog, fatigue: r.fatigue, noSpotter: r.noSpotter, reckon: r.reckon, program: r.program, checkFrom: r.checkFrom };
+  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, stackWeights: r.stackWeights, lighterAfterBreak: r.lighterAfterBreak, dumbbellLog: r.dumbbellLog, fatigue: r.fatigue, noSpotter: r.noSpotter, reckon: r.reckon, assumedCounts: r.assumedCounts, program: r.program, checkFrom: r.checkFrom };
   return JSON.stringify(keep);
 }

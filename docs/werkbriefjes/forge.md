@@ -9,7 +9,7 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 - `src/utils/forgeSessionStore.ts#readSession` wijzer en concept in localStorage, de sessie overleeft sluiten
 - `src/engine/forgeAdjust.ts#suggestLighter` "Lichter" of "Liever niet", `OPEN_ROOM` voor open doelen
 - `src/engine/forgeLog.ts#cleanForgeLog` het afgeleide verloop, naar het log pas bij Afronden
-- `src/engine/strengthModel.ts#learnFatigue` leert vermoeidheid per set uit eigen sets
+- `src/engine/strengthModel.ts#learnFatigue` leert vermoeidheid per set uit eigen sets; `src/engine/assumedSets.ts#confirmedAssumed` "Afvinken telt als het doel" (bevestigd, drempels bij elkaar)
 - `src/engine/forgeReckon.ts#reckonWeight` rekent mee bij een getypt gewicht, met dezelfde regel als het voorschrift
 - `src/engine/spotter.ts#spotterSlot` minstens 1 over bij een stang zonder spotter
 - `src/engine/prescriptionCheck.ts#checkRow` de stille toets "raak" tegen MacroFactor
@@ -26,7 +26,7 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 
 ## Valkuilen
 - Een open doel (11+) of tot falen heeft geen bovenkant: `OPEN_ROOM` in `src/engine/forgeAdjust.ts` houdt een veel lichter gewicht met veel meer herhalingen eruit.
-- `rirAssumed` (een set afgevinkt zonder aan de RIR te komen) telt niet mee voor kracht, vermoeidheid en stap, niet in `learnFatigue` en niet in "Forge rekent mee".
+- `rirAssumed` (afgevinkt zonder eigen RIR): `estimateSet` kijkt er niet naar, dus zo'n set telt altijd mee in `sessionStrength`, de gladgestreken kracht en `shortfall`; nooit in `learnFatigue`, `learnAfterHard` en klaar voor je doel. Met "Afvinken telt als het doel" houdt een bevestigde set de kracht vast (extra herhalingen half) en telt hij strenger voor de stap; dat leest alleen `analyseSessions` via `LoadContext.confirm`, het log verandert niet. Nieuwe logs dragen `repsAsked` en `weightKgAsked`; oude lezen met de onderkant van het bereik.
 - Tot falen of een open doel: na een zware set mag de volgende set één herhaling onder de onderkant (`floor` in `reckonAfterTick`), zodat het gewicht één stap zakt, maar nooit een grote stap van het blok die ruim boven het doel uitkomt (`JUMP_ROOM`); een opwarmset is minstens `WARMUP_MIN_STEP` (15%) zwaarder dan de vorige. Stelde Forge al bij, dan geen tweede vraag om Lichter.
 - "Weg door je tijdsgrens" telt tegen `effSlots` (na Lichter) in `capRemovedFor`.
 - Rust per oefening komt uit `estimatedRest`; geen tweede tabel in een component.
