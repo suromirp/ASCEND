@@ -6,7 +6,7 @@
 // - Koppelen zet alleen de verwijzing op een log die nergens aan hing, na je Akkoord. Ongedaan maken
 //   haalt precies die verwijzing weer weg (`unlinkLog`).
 // - Wat dit toestel van je antwoorden onthoudt staat in de meta-opslag, niet in je planning. Het gaat mee
-//   in de back-up (`payload.missedTraining`, storage/backup.ts), zoals de antwoorden op adviezen.
+//   in de back-up (`payload.missedTraining`, storage/backupNormalize.ts), zoals de antwoorden op adviezen.
 
 import type { PlanLock, PlannedSession } from '../models/training';
 import { linkLog, resolveMissedMemory, unlinkLog, MISSED_MEMORY_KEY, type MissedMemory } from '../engine/missedTraining';

@@ -4,7 +4,7 @@
 // fetch (so Today still shows the weather offline, with "bijgewerkt om ...")
 // and what the last attempt said when it failed. It is a cache of someone
 // else's data, so none of it is part of the export; buildBackupEnvelope
-// (storage/backup.ts) names what it exports one by one and never reads this
+// (storage/backupExport.ts) names what it exports one by one and never reads this
 // key (tested in weather.test.ts). The place itself is AppSettings.homeLocation,
 // the same one Trainingsplekken uses, and follows the existing rules for that.
 

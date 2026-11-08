@@ -52,7 +52,7 @@ function isLeaveKind(v: unknown): v is LeaveKind {
 }
 
 // A stored or imported record is only used when it is complete and sane;
-// anything else is dropped by the caller (storage/backup.ts counts it).
+// anything else is dropped by the caller (storage/backupNormalize.ts counts it).
 export function isLeavePeriod(v: unknown): v is LeavePeriod {
   if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
   const p = v as Record<string, unknown>;
