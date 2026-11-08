@@ -27,6 +27,7 @@ import { isWorkSet } from './workSets';
 import type { ResolvedStrengthSettings } from './strengthSettings';
 import { countsForProfile, ownWeightsFor } from './machineWeights';
 import { candidatesFor, dumbbellsAsTotal, externalFromLoad, loadFromExternal, nearestIndex, profileFor, stepAt, usedOnlyWeights, usedWeights, type Candidate } from './strengthWeights';
+import { median } from '../utils/stats';
 
 // --- constants -------------------------------------------------------------------------
 
@@ -365,12 +366,6 @@ export function analyseSessions(sessions: SessionInput[], ctx: LoadContext): Ses
 
 // --- rep range and RIR, derived ------------------------------------------------------------
 
-function median(values: number[]): number {
-  const s = [...values].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
-
 export interface RepRange {
   low: number;
   high: number;
@@ -585,7 +580,7 @@ export interface DoneBefore {
 // A cold full ladder for a heavy top set has this many steps (20, 60 and 80 before 105 kg).
 export const TOP_SET_LADDER = 3;
 // A warm-up set is at least this share of the first working weight heavier than the one before it.
-export const WARMUP_MIN_STEP = 0.15;
+const WARMUP_MIN_STEP = 0.15;
 // Already on about the weight of the top set in the same movement: no warm-up set.
 const SAME_WEIGHT_SHARE = 0.9;
 
@@ -724,7 +719,7 @@ export function raisedText(raised: NonNullable<Prescription['raised']>, assisted
 
 // "Forge rekent mee" with a RIR you did not fill in (rirAssumed, or a set to failure): only a clear sign
 // counts, this many reps or more over the top of the range. The top of "7+" is 7, so 10 is the sign.
-export const ASSUMED_RAISE_REPS = 3;
+const ASSUMED_RAISE_REPS = 3;
 
 // Did this set of last time go so far over the top of its range that the weight may go up without a RIR?
 export function assumedRaise(set: Pick<SetLog, 'reps' | 'rir' | 'rirAssumed'>, target: { repsHigh: number; failure?: boolean }): boolean {

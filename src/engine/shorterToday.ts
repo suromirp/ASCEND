@@ -13,6 +13,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { Advice } from './adviceEngine';
 import { hasRole, isTestOrRace } from './templateRoles';
+import { joinNL } from '../utils/joinNL';
 
 export type ShorterHow = 'kern' | 'volume';
 export type ShorterSetting = ShorterHow | 'off';
@@ -39,11 +40,6 @@ export type ShorterPlan =
   | { kind: 'test' }
   | { kind: 'none' }
   | { kind: 'ok'; minutes: number; from: number; how: ShorterHow; lines: string[] };
-
-function joinNL(names: string[]): string {
-  if (names.length <= 1) return names.join('');
-  return `${names.slice(0, -1).join(', ')} en ${names.at(-1)}`;
-}
 
 export function planShorter(args: { template: SessionTemplate; fullMinutes: number; available: number; how: ShorterHow }): ShorterPlan {
   const { template, fullMinutes, available } = args;

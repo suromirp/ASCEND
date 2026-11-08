@@ -12,7 +12,7 @@
 import { Capacitor } from '@capacitor/core';
 import { AutoBackupError, NameTakenError, type BackupWhere } from '../engine/autoBackup';
 
-export const APP_BACKUP_DIR = 'ASCEND';
+const APP_BACKUP_DIR = 'ASCEND';
 // Zoals de bestandsbeheerder het toont (Samsung: Mijn bestanden, Interne opslag, Documents, ASCEND).
 export const APP_BACKUP_LABEL = 'Interne opslag > Documents > ASCEND';
 

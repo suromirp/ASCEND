@@ -245,7 +245,7 @@ const READ_MS = 15_000;
 const ASK_MS = 120_000;
 const MAX_ROWS = 2_000;
 
-export const browserHealthPort: HealthConnectPort = {
+const browserHealthPort: HealthConnectPort = {
   inApp: false,
   availability: async () => 'web',
   granted: async () => [],

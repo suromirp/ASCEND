@@ -11,6 +11,7 @@
 
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { isWorkSet } from './workSets';
+import { median } from '../utils/stats';
 
 // Logs needed before the learned value replaces the estimate, and how many
 // of the most recent ones count. The median, so one session where you
@@ -22,12 +23,6 @@ export interface DurationPrediction {
   minutes: number;
   source: 'learned' | 'estimate' | 'default';
   basedOn: number; // logs used, 0 when not learned
-}
-
-function median(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
 // The full trainings of this template with a duration that makes sense, newest first.
@@ -66,7 +61,7 @@ export function learnedStrengthDurations(templates: SessionTemplate[], logs: Ses
 // drie. Een log telt vanaf MIN_SETS_PER_LOG werksets, zodat een log met maar een paar sets erin de tijd per set
 // niet opblaast. Een training die Forge inkortte (engine/forgeTimeCap.ts) telt zo eerlijk mee: minder sets in
 // minder tijd, dezelfde tijd per set. Undefined zolang er te weinig is.
-export const MIN_SETS_PER_LOG = 6;
+const MIN_SETS_PER_LOG = 6;
 export function learnedMinutesPerSet(template: SessionTemplate, logs: SessionLog[]): number | undefined {
   const rates = logs
     .filter((l) => l.templateId === template.id && l.durationMinutes >= 10 && l.durationMinutes <= 240)

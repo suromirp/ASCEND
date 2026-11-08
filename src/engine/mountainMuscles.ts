@@ -27,10 +27,10 @@ import { isRestWeekAt } from './weekLoadChange';
 
 export const MOUNTAIN_MUSCLES: readonly MuscleGroup[] = ['calves', 'tibialis', 'glutes'];
 // Onder dit gemiddelde per week is het te weinig om op peil te blijven (afgeleid, nog te ijken).
-export const MOUNTAIN_FLOOR_SETS = 4;
-export const MOUNTAIN_WINDOW_WEEKS = 4;
+const MOUNTAIN_FLOOR_SETS = 4;
+const MOUNTAIN_WINDOW_WEEKS = 4;
 // Na "Liever niet" blijft het voor die spier zo lang stil.
-export const DECLINE_QUIET_WEEKS = 8;
+const DECLINE_QUIET_WEEKS = 8;
 
 const MOUNTAIN_KINDS: ReadonlySet<GoalKindId> = new Set(['trek_hut', 'trek_tent', 'day_hike', 'mountaineering']);
 

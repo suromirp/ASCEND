@@ -20,3 +20,5 @@ briefje te lang wordt.
 
 De briefjes: `planning.md`, `week.md`, `forge.md`, `doelen.md`, `lichaam-en-herstel.md`, `lopen-en-tests.md`,
 `koppelingen-en-data.md`, `historie-en-logs.md`, `bediening-en-beweging.md`.
+
+Gedeelde hulpjes: `src/utils/stats.ts` (mean, stdev, median) en `src/utils/joinNL.ts`; maak geen eigen kopie in een engine-bestand.

@@ -17,6 +17,7 @@ import type { RecoveryMetric } from '../models/metrics';
 import type { EnergyFeeling, SleepFeeling } from '../models/checkIn';
 import { addDays } from '../utils/dates';
 import { ignoredNightDates, judgmentFor, nightInfo, type NightInfo, type NightOptions } from './shortNight';
+import { mean, stdev } from '../utils/stats';
 
 // Your own average: the 28 days before today, and at least 7 of them with a value.
 export const BASELINE_DAYS = 28;
@@ -59,15 +60,6 @@ export interface WellnessReading {
 export const WELLNESS_FOOTNOTE = 'Je horloge schat dit, het is een hint en geen oordeel. Hoe je benen voelen weet alleen jij.';
 
 // --- small helpers ---------------------------------------------------------------
-
-function mean(values: number[]): number {
-  return values.reduce((a, b) => a + b, 0) / values.length;
-}
-
-function stdev(values: number[]): number {
-  const m = mean(values);
-  return Math.sqrt(values.reduce((a, b) => a + (b - m) ** 2, 0) / values.length);
-}
 
 export function sleepLabel(minutes: number): string {
   const total = Math.round(minutes);
