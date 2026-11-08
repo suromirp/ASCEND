@@ -107,7 +107,8 @@ export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], p
     const rd = l.runDetail && !isStaleRunDetail(l.runDetail, km, minutes) ? l.runDetail : undefined;
     const climb = climbPerKm(d?.elevationGainM ?? 0, km, l, rd);
     // Met het vlakke tempo per km telt een heuvelachtige loop mee; zonder blijft de oude grens.
-    const flat = rd ? flatFactor(rd) : undefined;
+    // Alleen boven de oude grens het vlakke tempo, zodat lopen met en zonder run in detail vergelijkbaar blijven.
+    const flat = rd && climb > MAX_CLIMB_PER_KM ? flatFactor(rd) : undefined;
     if (climb > (flat !== undefined ? MAX_CLIMB_PER_KM_FLAT : MAX_CLIMB_PER_KM)) return [];
     return [{ date: l.completedDate, km, paceSec: ((minutes * 60) / km) * (flat ?? 1), bpm }];
   });

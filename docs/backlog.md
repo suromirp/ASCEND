@@ -10,16 +10,14 @@ Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensda
 Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
 - 8 november, uit het onderhoud (ging verloren, de sessie kon niet pushen): `src/integrations/manual.ts` is weg (8 november, coördinator); dubbele hulpfuncties samenbrengen in utils/ (mean en stdev, median, joinNL, hoofdletter eerst, afronden; 2 tot 3 rondes); 9 functies en 26 consts niet meer exporteren (1 ronde); ForgeWorkout.tsx opsplitsen (2 rondes). AdventureCard.tsx en LessonCard.tsx blijven (besluit 2 november).
-- 8 november, twee weektellers: Vandaag zegt "Week 6 van de opbouw", Stand zegt "Week 2 van 18, opbouw". Nagaan welke telling klopt (week van het programma of van de fase) en overal dezelfde gebruiken; een invariant in de tekstkaart erbij.
-- 8 november, Tempo bij zone 2 en heuvels: run in detail rekent per km al een vlak tempo (`gapSecKm`), maar `aerobicTrend.ts` gebruikt het niet en laat een loop boven 15 m stijging per km helemaal weg (de lange duurloop van 8 november: 133 m op 8,84 km, net erboven). Bij het blok Tempo bij zone 2: met het vlakke tempo per km rekenen, en de stijging uit ASCEND's eigen optelling nemen als die van het horloge niet te vertrouwen is (`gainAgreementPct`). Ook: de geschatte afstand op Vandaag uit het echte tempo van de laatste lange lopen.
-- 7 november, Forge en de tijdsgrens: bij Cable Rope High Row gaf Forge 2 sets, het programma (en MacroFactor) 3. Waarschijnlijk haalde de tijdsgrens (Hoogstens per krachttraining, 60 minuten) een set bijwerk weg. Nagaan of dat zo is; zo ja, het bij de oefening zelf zeggen ("1 set weg door je tijdsgrens") met een tik om hem terug te zetten, en kijken of 60 minuten met 2:00 rust en drie opwarmsets wel past bij een programma van vier oefeningen met 3 tot 4 sets.
-- 7 november, Forge had gelijk bij de Pull-Up met hulp: na drie sets tot falen haalde de eigenaar 6 herhalingen met 27 kg hulp, MacroFactor verwachtte 10. Vermoeidheid na sets tot falen telt in Forge mee; zo houden. Wel: de sprong naar 35 kg hulp (blok in stappen van 7) is opgelost (JUMP_ROOM), de echte oplossing is het toestel met zijn eigen standen (zie Forge: gewicht op een toestel).
+- 8 november, uit het bouwmoment (Warden): bij Lichter met minder sets telt een set van Lichter mee als "weg door je tijdsgrens" (`ForgeWorkout.tsx` rond regel 1047 met `legDayEase.ts`; tellen tegen `effSlots`, met test); de afstandszin op Vandaag zegt "je laatste lopen" ook bij één loop en komt niet zonder testloop (`missionFacts.ts`); de Forge-melding Spieren voor de berg heeft geen eigen schakelaar (Forge zit op het maximum van 6 rijen).
+- 8 november, uit het onderhoud (ging verloren, de sessie kon niet pushen): dubbele hulpfuncties samenbrengen in utils/ (mean en stdev, median, joinNL, hoofdletter eerst, afronden; 2 tot 3 rondes); 9 functies en 26 consts niet meer exporteren (1 ronde); ForgeWorkout.tsx opsplitsen (2 rondes). AdventureCard.tsx en LessonCard.tsx blijven (besluit 2 november).
 
 ## Rooster voor de bouwmomenten
 
 Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden). Afgerond: naar "Live op" en uit dit rooster.
 
-1. Planner en 48 uur, plus de weekcontrole die heen en weer schuift (opus) ‖ Scout: RIR en RPE in de beste apps, met vermoeidheid tussen oefeningen ‖ Buiten klein: UV, zon, hoogte, regen in het komende uur, maanstand (sonnet). Erbij, klein: tijdsgrens en sets (Inbox), Spieren voor de berg ook in Forge.
+1. Nog open uit ronde 1: Scout: RIR en RPE in de beste apps, met vermoeidheid tussen oefeningen ‖ Buiten klein: UV, zon, hoogte, regen in het komende uur, maanstand (sonnet). Planner, tijdsgrens en Spieren voor de berg zijn af (8 november).
 2. Forge: afvinken is de RIR van het doel (ook oude workouts) en vermoeidheid tussen oefeningen ‖ Heuvels en trappen in de buurt (OpenStreetMap) ‖ Scout: calisthenics en uitleg bij oefeningen (apps, wetenschap, open databases).
 3. Forge: gewicht op een toestel ‖ Periode "Zonder sportschool" en feestdagen als voorstel (opus) ‖ Tempo bij zone 2 (Scout kort, dan bouwen).
 4. Forge: ruilen met een echte vervanger ‖ Gewicht uit Health Connect als trend ‖ Uitleg bij oefeningen: proef met vijf teksten (Scribe).
@@ -27,6 +25,8 @@ Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde hee
 6. tot 8. Calisthenics bouwen ‖ Alle teksten herschrijven en Engels, per tab ‖ Oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten).
 
 ## Loopt nu
+
+Live op 8 november: één weektelling (week binnen de fase) op Vandaag en Stand, de weekcontrole die niet meer heen en weer schuift (en een testverplaatsing als laatste keuze van het voorstel), de tijdsgrens zegt het bij de oefening met Terugzetten, Spieren voor de berg ook in Forge, Tempo bij zone 2 op vlak tempo en de afstand op Vandaag uit je echte lopen. De 48 uur na de lange duurloop stond al op main sinds 2 november.
 
 
 Ronde 2 van `docs/onderhoud/2026-11-01-aanpak-backlog.md` (ronde 1 is af, terugblik in `docs/onderhoud/reflectie-2026-11-01.md`).

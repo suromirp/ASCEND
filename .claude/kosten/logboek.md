@@ -178,3 +178,7 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-06, Werkbriefjes (negen onderwerpen), Sherpa, sonnet (ontwikkelaar), 152k, 7 min, 0
 - 2026-11-07, CLAUDE.md korter (28 naar 12 KB), Sherpa, sonnet (ontwikkelaar), 43k, 2 min, 0
 - 2026-11-07, Werkbriefjes nalezen, Warden, sonnet (reviewer), 84k, 3 min, 6 kleine punten door coördinator
+- 2026-11-08, Planner testweek, Sherpa, opus (ontwikkelaar), 167k, 20 min, 0
+- 2026-11-08, Forge tijdsgrens en bergspieren, Sherpa, sonnet (ontwikkelaar), 105k, 14 min, 0
+- 2026-11-08, Tempo zone 2 en afstand, Sherpa, sonnet (ontwikkelaar), 68k, 10 min, 0
+- 2026-11-08, Review ronde 1, Warden, opus (reviewer), 95k, 6 min, 5 punten: 3 door coördinator, 2 naar Inbox
