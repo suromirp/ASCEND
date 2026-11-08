@@ -15,7 +15,7 @@ import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { canRemoveRow, reasonWithOwnCount, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn, type DroppedRow } from '../../engine/forgeRows';
 import { canSwap, isAddedSlot, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
 import { learnedMinutesPerSet } from '../../engine/durationLearning';
-import { capForTemplate, capLineFor, capSlots, resolveTimeCap, servesMountainMuscle } from '../../engine/forgeTimeCap';
+import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, resolveTimeCap, servesMountainMuscle } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { hasMountainGoal, swapPreference, swapReason } from '../../engine/mountainMuscles';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
@@ -76,7 +76,8 @@ import { getTrainingGuide, guideDayLabel } from '../../data/trainingGuide';
 import type { Program } from '../../models/program';
 import type { SessionTemplate, SessionVariant } from '../../models/training';
 import { useAppData } from '../../state/AppDataContext';
-import { todayISO } from '../../utils/dates';
+import { addDays, mondayOfWeek, todayISO } from '../../utils/dates';
+import { MountainMuscleNotice } from '../MountainMuscleNotice';
 import { haptics } from '../../utils/haptics';
 import { reducedMotion } from '../../utils/motion';
 import { clearDraft, draftKey, loadDraft, saveDraft } from '../../utils/loggerDraft';
@@ -1007,8 +1008,12 @@ function ForgeWorkoutInner({
   const rirRow = rirFor ? workout.find((e) => e.slot === rirFor.slot)?.rows.find((r) => r.id === rirFor.rowId) : undefined;
 
   const bottomPad = dockH > 0 ? dockH + (rest && !readOnly ? 70 : 0) + 16 : rest ? 120 : 48;
-  const intro = (legLine || readOnly || capLine) && (
+  // Het voorstel van Spieren voor de berg, één keer rustig bij het openen van de training waar de oefening bij
+  // zou komen (zelfde melding en zelfde Akkoord als in de weekterugblik). Niet bij kijken en niet na de eerste set.
+  const mountainNotice = !readOnly && !startedAt;
+  const intro = (legLine || readOnly || capLine || mountainNotice) && (
             <div className="flex flex-col gap-1 px-4 pt-3">
+              {mountainNotice && <MountainMuscleNotice weekStart={addDays(mondayOfWeek(today), -7)} onlyFor={template.id} className="mb-2" />}
               {capLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-ingekort">{capLine}</p>}
               {preview && <p className="text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{previewDayLine(date, program)}</p>}
               {preview ? (
@@ -1039,6 +1044,7 @@ function ForgeWorkoutInner({
               swipeOn={swipeDeleteOn(settings)}
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
               quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId) ? quickRir.rowId : undefined}
+              capText={capRemovedFor(capped, ex) > 0 ? capRemovedLine(capRemovedFor(capped, ex)) : undefined}
               poundText={!readOnly && !poundKept[ex.slot] && ex.rows.some((r) => r.done) ? poundLine(ex, strength.profile) : undefined}
               act={actions}
             />
