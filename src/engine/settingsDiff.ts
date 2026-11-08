@@ -292,6 +292,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('beste-moment', 'Beste moment tonen', 'bestMoment'),
   overviewFlag('weerruil', 'Ruilen bij slecht weer', 'weatherSwap'),
   overviewFlag('regen-uur', 'Regen in het komende uur', 'rainSoon'),
+  overviewFlag('heuvels-buurt', 'Heuvels en trappen in de buurt', 'hillsNearby'),
   overviewFlag('maanstand', 'Maanstand bij een avondtocht', 'moonLine'),
   overviewFlag('kledingadvies', 'Kledingadvies', 'clothingAdvice'),
   overviewFlag('citaten', 'Citaat', 'completionMoment'),
