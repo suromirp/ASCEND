@@ -7,7 +7,9 @@
 // comparable runs: flat and easy, since hills, heat and a pack blur it.
 //
 // So: easy and long runs (planned at most RPE 4) with distance, time and
-// average heart rate, at most 15 m climb per km, and, once your own heart
+// average heart rate, at most 15 m climb per km (30 m when run in detail has
+// the flat pace per km, which is then the pace used; if the watch's climb
+// disagrees with ASCEND's own count, the own count is used), and, once your own heart
 // rate values are set, an average inside zone 2. Each run's pace is
 // converted to one reference heart rate (the middle of your zone 2) by
 // simple proportion: a rough correction for running a few beats higher or
@@ -21,6 +23,8 @@
 
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
+import type { RunDetail } from '../models/runDetail';
+import { isStaleRunDetail } from './runDetail';
 import { logSport } from './sports';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
@@ -47,7 +51,37 @@ export interface AerobicTrend {
 
 const WEEKS = 12;
 const MAX_CLIMB_PER_KM = 15;
+// Met het vlakke tempo per km (run in detail) is meer helling te corrigeren (eigen aanname).
+const MAX_CLIMB_PER_KM_FLAT = 30;
 const BELOW_ZONE_BPM = 15;
+// Eigen stijging tegen die van het horloge: verder uit elkaar dan dit en de hoogte van het horloge geldt niet (zoals runMetrics.ts).
+const GAIN_AGREEMENT_RANGE: [number, number] = [60, 140];
+
+// Meters stijging per km. De stijging van het horloge, tenzij die niet te vertrouwen is
+// (gainAgreementPct buiten de marge): dan ASCEND's eigen optelling per km. Zonder hoogtegegevens
+// valt er niets te zeggen en geldt wat het horloge meldt (0 als dat ook niets zegt).
+function climbPerKm(watchGainM: number, km: number, log: SessionLog, rd: RunDetail | undefined): number {
+  const agree = log.detail?.quality.gainAgreementPct;
+  const untrusted = agree !== undefined && (agree < GAIN_AGREEMENT_RANGE[0] || agree > GAIN_AGREEMENT_RANGE[1]);
+  if (untrusted && rd) {
+    const own = rd.kms.reduce((n, k) => n + (k.gainM ?? 0), 0);
+    if (rd.kms.some((k) => k.gainM !== undefined)) return own / km;
+  }
+  return watchGainM / km;
+}
+
+// Het vlakke tempo tegen het echte tempo, over de afstand van elke km. Een km zonder
+// gecorrigeerd tempo (minder dan 10 m op of neer, of geen hoogte) telt met zijn gewone tempo.
+function flatFactor(rd: RunDetail): number | undefined {
+  if (!rd.kms.some((k) => k.gapSecKm !== undefined)) return undefined;
+  let real = 0;
+  let flat = 0;
+  for (const k of rd.kms) {
+    real += k.paceSecKm * k.distanceM;
+    flat += (k.gapSecKm ?? k.paceSecKm) * k.distanceM;
+  }
+  return real > 0 ? flat / real : undefined;
+}
 // Below this a change is within the normal day-to-day noise.
 export const MEANINGFUL_CHANGE_SEC = 5;
 
@@ -70,8 +104,12 @@ export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], p
     const minutes = d?.durationMinutes || l.durationMinutes;
     const bpm = d?.avgHeartRate ?? 0;
     if (km <= 0 || minutes <= 0 || bpm <= 0) return [];
-    if ((d?.elevationGainM ?? 0) / km > MAX_CLIMB_PER_KM) return [];
-    return [{ date: l.completedDate, km, paceSec: (minutes * 60) / km, bpm }];
+    const rd = l.runDetail && !isStaleRunDetail(l.runDetail, km, minutes) ? l.runDetail : undefined;
+    const climb = climbPerKm(d?.elevationGainM ?? 0, km, l, rd);
+    // Met het vlakke tempo per km telt een heuvelachtige loop mee; zonder blijft de oude grens.
+    const flat = rd ? flatFactor(rd) : undefined;
+    if (climb > (flat !== undefined ? MAX_CLIMB_PER_KM_FLAT : MAX_CLIMB_PER_KM)) return [];
+    return [{ date: l.completedDate, km, paceSec: ((minutes * 60) / km) * (flat ?? 1), bpm }];
   });
   // A little under zone 2 still counts (production feedback: two easy long
   // runs at 137 bpm, run with the watch on the old max-HR zones, left the

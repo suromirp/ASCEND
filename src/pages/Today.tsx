@@ -71,6 +71,7 @@ import { Card, Eyebrow } from '../components/ui';
 import { DayRow, YourDay } from '../components/vandaag/DayRow';
 import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard';
 import { missionFacts } from '../engine/missionFacts';
+import { recentRunPace } from '../engine/recentRunPace';
 import { tomorrowEntry, tomorrowText, trainingRowState } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
@@ -231,7 +232,7 @@ function TodayContent() {
   // The mission's three key numbers; the pace comes from the latest test run.
   const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
   const mission = primary && primaryTemplate
-    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program))
+    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program), recentRunPace(sessionLogs, primaryTemplate.id, today)?.range)
     : undefined;
   const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
