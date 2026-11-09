@@ -135,7 +135,11 @@ export interface SetEstimate {
   weight: number;
 }
 
+// Een houding (`seconds`) heeft geen fractie en een set met een band geen bekende last: geen van beide zegt iets
+// over je kracht, dus ze tellen niet voor de 1RM, de vermoeidheid per set of het voorschrift
+// (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md).
 export function estimateSet(set: SetLog, ctx: LoadContext): SetEstimate | undefined {
+  if (set.seconds !== undefined || set.band !== undefined) return undefined;
   if (!isWorkSet(set) || set.rir === undefined || set.reps <= 0) return undefined;
   if (set.rir >= NO_ESTIMATE_FROM_RIR || set.rir < 0) return undefined;
   const toFailure = set.reps + set.rir;

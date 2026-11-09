@@ -483,6 +483,31 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waarom', text: 'een RIR die je zelf kiest telt mee voor je geschatte kracht en voor de stap zwaarder; een aangenomen RIR niet.' },
     ],
   },
+  forgeStappen: {
+    title: 'Stappen bij calisthenics',
+    lead: 'Forge toont bij een oefening op een ladder de stap, de toets en een tik naar een lichtere of zwaardere stap.',
+    points: [
+      { head: 'De toets', text: 'drie sets op de bovenkant met nette vorm, bijvoorbeeld 3 keer 8. Haal je dat, dan kan de volgende stap.' },
+      { head: 'Stap lichter of zwaarder', text: 'wisselt de oefening alleen in deze training, zoals Ruilen. Je planning en je training blijven zoals ze zijn.' },
+      { head: 'Uit', text: 'geen regels en geen tik. Seconden voor een houding blijven werken.' },
+    ],
+  },
+  forgeNetjes: {
+    title: 'Ging het netjes?',
+    lead: 'Na een set op een ladderstap vraagt Forge of je vorm netjes was. Een Nee telt die set niet voor de stap.',
+    points: [
+      { head: 'Wanneer', text: 'alleen als de set de onderkant haalt: 5 herhalingen of 10 seconden. Eronder verandert het antwoord niets.' },
+      { head: 'Niets kiezen', text: 'dan blijft het onbekend, en dat telt als netjes. Achteraf wijzigen kan door de set lang in te drukken.' },
+    ],
+  },
+  forgeBand: {
+    title: 'Band bij optrekken en dip',
+    lead: 'Bij Pull-Up en Dip kies je de band die je gebruikt: geen, licht, middel of zwaar.',
+    points: [
+      { head: 'Telt niet voor de stap', text: 'met hulp haal je de stap nog niet. Je werkt door tot je de onderkant zonder band haalt.' },
+      { head: 'Je vorige keer', text: 'Forge zet de band van je vorige keer klaar. Een keuze geldt voor de open sets.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',

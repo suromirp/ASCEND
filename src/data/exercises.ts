@@ -50,6 +50,9 @@ const FAILURE_RISK = new Set([
 // een archer push-up per kant. De plek op een ladder komt uit data/skillLadders.ts.
 const HOLD = new Set(['dead-hang', 'support-hold']);
 const PER_SIDE = new Set(['archer-push-up']);
+// Een band helpt alleen bij Pull-Up en Dip: daar zit de sprong naar de volle stap
+// (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md). Hoe sterk de band was staat in het log (SetLog.band).
+const BAND = new Set(['pull-up', 'dip']);
 
 function ex(
   id: string,
@@ -63,7 +66,7 @@ function ex(
   cues: string[],
   bodyweightFraction?: number,
 ): Exercise {
-  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(FAMILY.has(id) ? { family: FAMILY.get(id) } : {}), ...(EXERCISE_GUIDES[id] ? { guide: EXERCISE_GUIDES[id] } : {}), ...(NUANCE.has(id) ? { nuance: [...NUANCE.get(id)!] } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}), ...(HOLD.has(id) ? { measure: 'hold' as const } : {}), ...(PER_SIDE.has(id) ? { perSide: true } : {}), ...(LADDER_PLACE.has(id) ? { ladder: { ...LADDER_PLACE.get(id)! } } : {}) };
+  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(FAMILY.has(id) ? { family: FAMILY.get(id) } : {}), ...(EXERCISE_GUIDES[id] ? { guide: EXERCISE_GUIDES[id] } : {}), ...(NUANCE.has(id) ? { nuance: [...NUANCE.get(id)!] } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}), ...(HOLD.has(id) ? { measure: 'hold' as const } : {}), ...(PER_SIDE.has(id) ? { perSide: true } : {}), ...(BAND.has(id) ? { assist: 'band' as const } : {}), ...(LADDER_PLACE.has(id) ? { ladder: { ...LADDER_PLACE.get(id)! } } : {}) };
 }
 
 export const EXERCISES: Exercise[] = [

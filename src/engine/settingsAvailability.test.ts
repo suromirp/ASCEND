@@ -105,6 +105,15 @@ describe('rowAvailability', () => {
     expect(rowAvailability('forge-opwarmen', external)).toEqual({ available: true });
   });
 
+  it('calisthenics: Ging het netjes? en de band staan er zodra Stappen bij calisthenics aan staat', () => {
+    const on = withSettings({});
+    for (const id of ['forge-stappen', 'forge-netjes', 'forge-band']) expect(rowAvailability(id, on), id).toEqual({ available: true });
+    const off = withSettings({ strengthModel: { ladderRow: false } });
+    expect(rowAvailability('forge-stappen', off)).toEqual({ available: true });
+    for (const id of ['forge-netjes', 'forge-band']) expect(rowAvailability(id, off), id).toMatchObject({ available: false, parent: 'forge-stappen' });
+    for (const id of ['forge-stappen', 'forge-netjes', 'forge-band']) expect(rowAvailability(id, facts({ strengthExternal: true })), id).toMatchObject({ available: false, parent: 'kracht' });
+  });
+
   it('de rusttimer uit: het signaal en het geluid verdwijnen, bij geen signaal ook het geluid', () => {
     const noTimer = withSettings({ strengthModel: { restAuto: false } });
     expect(rowAvailability('forge-signaal', noTimer)).toMatchObject({ available: false, parent: 'forge-rust' });

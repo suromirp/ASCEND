@@ -4,6 +4,7 @@
 import { useCallback, useLayoutEffect, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import {
   applyReps,
+  applySeconds,
   applyWeight,
   carryChange,
   makeLight,
@@ -20,6 +21,7 @@ import {
   type RowRef,
 } from '../../engine/forgeInput';
 import { exerciseOf, type WorkoutExercise } from '../../engine/forgeWorkout';
+import { SECONDS_STEP, secondsBounds } from '../../engine/forgeLadder';
 import { reckonWeight, type ReckonContext } from '../../engine/forgeReckon';
 import { profileFor } from '../../engine/strengthWeights';
 import type { ForgeCause } from '../../engine/forgeLog';
@@ -98,6 +100,10 @@ export function useForgeDock({ workout, setWorkout, setActiveRef, begin, markCau
         // tussenstand (een leeg veld tijdens het typen) de andere sets niet losmaakt.
         if (baseRef.current?.key !== key) baseRef.current = { key, ex: e };
         const base = baseRef.current.ex;
+        if (d.field === 'seconds') {
+          const changed = applySeconds(base, d.rowId, v);
+          return strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'seconds') : changed;
+        }
         if (d.field === 'reps') {
           const changed = applyReps(base, d.rowId, v);
           return strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'reps') : changed;
@@ -115,6 +121,12 @@ export function useForgeDock({ workout, setWorkout, setActiveRef, begin, markCau
     const ex = d ? workout.find((e) => e.slot === d.slot) : undefined;
     const row = ex?.rows.find((r) => r.id === d?.rowId);
     if (!d || !ex || !row) return 0;
+    // Een houding: Minder en Meer in stappen van 5 seconden.
+    if (d.field === 'seconds') {
+      const next = stepNumber(row.seconds ?? 0, direction, SECONDS_STEP, secondsBounds.min, secondsBounds.max);
+      changeValue(next);
+      return next;
+    }
     const isWeight = d.field === 'weightKg';
     const current = isWeight ? (row.weightKg ?? row.target.weightKg) : (row.reps ?? 0);
     const step = isWeight ? weightStepFor(exerciseOf(ex), profileFor(strength.profile, ex.dumbbellTotal), current) : REPS_STEP;

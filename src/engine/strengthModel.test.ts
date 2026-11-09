@@ -42,6 +42,16 @@ describe('KR-1 geschatte kracht per set', () => {
     expect(estimateSet(work(11, 60, 2), ctx)).toBeUndefined();
     expect(estimateSet(work(0, 60, 2), ctx)).toBeUndefined();
   });
+  it('een houding (seconden) en een set met band tellen niet voor kracht, 1RM of vermoeidheid', () => {
+    const pullUp = { exercise: ex('pull-up'), bodyKg: 80 };
+    expect(estimateSet(work(8, 0, 2), pullUp)).toBeDefined();
+    expect(estimateSet({ ...work(8, 0, 2), band: 'licht' }, pullUp)).toBeUndefined();
+    expect(estimateSet({ reps: 1, seconds: 30, rir: 0 }, { exercise: ex('dead-hang'), bodyKg: 80 })).toBeUndefined();
+    expect(sessionStrength([{ ...work(8, 0, 2), band: 'zwaar' }], pullUp)).toBeUndefined();
+    // Een houding tussen twee sets breekt het paar: er wordt niets uit geleerd.
+    const holds = [{ date: '2026-11-01', sets: [{ reps: 1, seconds: 30, rir: 1 }, { reps: 1, seconds: 25, rir: 0 }] }] as unknown as SessionInput[];
+    expect(learnFatigue(holds, { exercise: ex('dead-hang'), bodyKg: 80 }, false).pairs).toBe(0);
+  });
   it('RIR 4 en 5 tellen half, RIR 6 en meer niet', () => {
     expect(estimateSet(work(5, 60, 3), ctx)!.weight).toBe(1);
     expect(estimateSet(work(5, 60, 4), ctx)!.weight).toBe(0.5);
