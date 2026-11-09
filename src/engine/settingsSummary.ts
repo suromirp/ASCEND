@@ -136,7 +136,9 @@ export interface SettingsFacts {
   // Wat ASCEND nu doet met je ambitie: terugvallen op Standaard bij pijn.
   ambition: { chosen: 'rustig' | 'standaard' | 'stevig'; effective: 'rustig' | 'standaard' | 'stevig'; reason?: string };
   // Het gewicht in gebruik.
-  weight: { kg: number; source: string; date: string } | null;
+  // De nieuwste weging die telt; `trendKg` is de trend als Gewichtstrend aan staat en er genoeg
+  // wegingen zijn (engine/weightTrend.ts#weightShown).
+  weight: { kg: number; source: string; date: string; trendKg?: number } | null;
   // Zijn er weegmetingen met een vetpercentage (engine/bodyFat.ts)? Zonder is de schakelaar er niet.
   hasBodyFat?: boolean;
   // De koppeling met het horloge; null als er (nog) niet gekeken is.
@@ -650,10 +652,14 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Lichaam
     case 'lichaamsgewicht':
       return f.weight
-        ? { value: kgLabel(f.weight.kg, 1), auto: f.weight.source === 'macrofactor' || f.weight.source === 'health-connect', sub: weightWords(f.weight) }
+        ? f.weight.trendKg !== undefined
+          ? { value: `Trend ${kgLabel(f.weight.trendKg, 1)}`, auto: f.weight.source === 'macrofactor' || f.weight.source === 'health-connect', sub: `Laatste weging ${kgLabel(f.weight.kg, 1)}, ${formatDayMonthNL(f.weight.date)}` }
+          : { value: kgLabel(f.weight.kg, 1), auto: f.weight.source === 'macrofactor' || f.weight.source === 'health-connect', sub: weightWords(f.weight) }
         : { value: 'Niet ingevuld', dim: true };
     case 'vetpercentage':
       return { checked: s.showBodyFat !== false };
+    case 'gewichtstrend':
+      return { checked: s.weightTrend !== false };
     case 'hartslag': {
       const hr = s.heartRate ?? {};
       if (hr.lthr) return { value: `Drempel ${hr.lthr}`, sub: 'Zones in bpm, zoals op je horloge' };

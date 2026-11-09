@@ -100,6 +100,7 @@ const everything: AppSettings = {
   watchCalmRun: false,
   weightFromMacroFactor: false,
   weightFromHealthConnect: false,
+  weightTrend: false,
   stravaText: false,
   keepStreams: false,
   tempoStablePieces: false,
