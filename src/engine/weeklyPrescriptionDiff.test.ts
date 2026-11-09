@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { diffWeeklyPrescriptionPlan, realPlanChanges, changesTheRoundKeeps } from './weeklyPrescriptionDiff';
+import { diffWeeklyPrescriptionPlan, realPlanChanges, changesTheRoundKeeps, changesOnAllowedDays } from './weeklyPrescriptionDiff';
 import type { PlannedSession } from '../models/training';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
 import type { TrainingPrescription } from '../models/prescription';
@@ -155,5 +155,89 @@ describe('changesTheRoundKeeps', () => {
     const r = replace('sat', 'tp1');
     const remove: PlanChangeItem = { plannedSessionId: 'sun', action: 'remove', fromDate: '2027-03-07', toDate: '2027-03-07', reason: 'r' };
     expect(changesTheRoundKeeps([r, remove], before, [before[0]])).toEqual([r, remove]);
+  });
+});
+
+// Review van Melding bij elke opening (9 november): in een week zonder vrije dag haalt de weekindeling een training
+// weg en zet de nieuwe op die dag (engine/weekReconciliation.ts). Valt de toevoeging weg, dan valt de weghaling mee;
+// anders verliest de week een training zonder vervanging. Alleen nagemaakte rijen.
+describe('een weghaling valt mee met haar toevoeging', () => {
+  const WEEK = '2027-03-01';
+  const days = ['2027-03-01', '2027-03-02', '2027-03-03', '2027-03-04', '2027-03-05', '2027-03-06', '2027-03-07'];
+  const row = (id: string, templateId: string, scheduledDate: string, weekStartDate = WEEK): PlannedSession =>
+    ({ id, templateId, scheduledDate, weekStartDate, status: 'planned', order: 0 });
+  // Een volle week: op elke dag een training.
+  const fullWeek = days.map((d, i) => row(`d${i}`, i === 2 ? 'tpl_bergconditie' : 'tpl_easy_run', d));
+  const remove = (id: string, day: string): PlanChangeItem => ({ plannedSessionId: id, action: 'remove', fromDate: day, toDate: day, reason: 'r' });
+  const addFor = (templateId: string, day: string, replaces: string | undefined, weekStartDate = WEEK): PlanChangeItem =>
+    ({ action: 'add', newSessionDraft: { templateId, scheduledDate: day, weekStartDate }, reason: 'r', ...(replaces ? { replacesSessionId: replaces } : {}) });
+  // De ronde zoals hij na de wijzigingen uitkomt: de weggehaalde rij overgeslagen, plus de nieuwe rijen die blijven.
+  const roundAfter = (before: PlannedSession[], skipped: string[], fresh: PlannedSession[]) =>
+    [...before.map((s) => (skipped.includes(s.id) ? { ...s, status: 'skipped' as const } : s)), ...fresh];
+
+  it('volle week: de ronde laat de nieuwe training niet staan, dus de weggehaalde blijft ook', () => {
+    const changes = [remove('d2', '2027-03-03'), addFor('tpl_hike_day_one', '2027-03-03', 'd2')];
+    expect(changesTheRoundKeeps(changes, fullWeek, roundAfter(fullWeek, ['d2'], []))).toEqual([]);
+    // Ook als de ronde de nieuwe rij omzet naar een andere training.
+    const turned = roundAfter(fullWeek, ['d2'], [row('n1', 'tpl_hill_intervals', '2027-03-03')]);
+    expect(changesTheRoundKeeps(changes, fullWeek, turned)).toEqual([]);
+  });
+
+  it('een toevoeging die blijft houdt haar weghaling', () => {
+    const changes = [remove('d2', '2027-03-03'), addFor('tpl_hike_day_one', '2027-03-03', 'd2')];
+    const after = roundAfter(fullWeek, ['d2'], [row('n1', 'tpl_hike_day_one', '2027-03-03')]);
+    expect(changesTheRoundKeeps(changes, fullWeek, after)).toEqual(changes);
+  });
+
+  it('twee weghalingen op één dag: alleen die van de weggevallen toevoeging valt mee', () => {
+    const before = [...fullWeek, row('d2b', 'tpl_easy_run', '2027-03-03')];
+    const changes = [
+      remove('d2', '2027-03-03'), addFor('tpl_hike_day_one', '2027-03-03', 'd2'),
+      remove('d2b', '2027-03-03'), addFor('tpl_tempo_run', '2027-03-03', 'd2b'),
+    ];
+    const after = roundAfter(before, ['d2', 'd2b'], [row('n2', 'tpl_tempo_run', '2027-03-03')]);
+    expect(changesTheRoundKeeps(changes, before, after)).toEqual([changes[2], changes[3]]);
+  });
+
+  it('een weghaling zonder koppeling blijft, ook als op die dag een toevoeging wegvalt', () => {
+    const before = [...fullWeek, row('d2b', 'tpl_easy_run', '2027-03-03')];
+    const offTarget = remove('d2b', '2027-03-03');
+    const changes = [offTarget, remove('d2', '2027-03-03'), addFor('tpl_hike_day_one', '2027-03-03', 'd2')];
+    expect(changesTheRoundKeeps(changes, before, roundAfter(before, ['d2', 'd2b'], []))).toEqual([offTarget]);
+  });
+
+  it('over de week- en maandgrens en de nacht van de zomertijd: elk paar volgt alleen zijn eigen toevoeging', () => {
+    // Zondag 28 maart 2027 gaat in Europe/Amsterdam de klok om 02:00 een uur vooruit; donderdag 1 april ligt in de
+    // volgende week en de volgende maand.
+    const before = [row('zo', 'tpl_easy_run', '2027-03-28', '2027-03-22'), row('do', 'tpl_easy_run', '2027-04-01', '2027-03-29')];
+    const changes = [
+      remove('zo', '2027-03-28'), addFor('tpl_tempo_run', '2027-03-28', 'zo', '2027-03-22'),
+      remove('do', '2027-04-01'), addFor('tpl_tempo_run', '2027-04-01', 'do', '2027-03-29'),
+    ];
+    const after = roundAfter(before, ['zo', 'do'], [row('n', 'tpl_tempo_run', '2027-03-28', '2027-03-22')]);
+    expect(changesTheRoundKeeps(changes, before, after)).toEqual([changes[0], changes[1]]);
+  });
+});
+
+describe('changesOnAllowedDays', () => {
+  const remove = (id: string, day: string): PlanChangeItem => ({ plannedSessionId: id, action: 'remove', fromDate: day, toDate: day, reason: 'r' });
+  const addFor = (templateId: string, day: string, replaces?: string): PlanChangeItem =>
+    ({ action: 'add', newSessionDraft: { templateId, scheduledDate: day, weekStartDate: '2027-05-03' }, reason: 'r', ...(replaces ? { replacesSessionId: replaces } : {}) });
+
+  it('een vakantie of tocht in de week: de toevoeging op die dag gaat eruit en haar weghaling ook', () => {
+    const holiday = new Set(['2027-05-05', '2027-05-06']);
+    const changes = [
+      remove('wo', '2027-05-05'), addFor('tpl_tempo_run', '2027-05-05', 'wo'),
+      remove('vr', '2027-05-07'), addFor('tpl_tempo_run', '2027-05-07', 'vr'),
+      remove('do', '2027-05-06'),
+    ];
+    // Een weghaling zonder toevoeging (een training die niet meer bij de week hoort) blijft, ook op een vakantiedag.
+    expect(changesOnAllowedDays(changes, (d) => holiday.has(d))).toEqual([changes[2], changes[3], changes[4]]);
+  });
+
+  it('een wedstrijddag of de dag van het hoofddoel: hetzelfde', () => {
+    const changes = [remove('za', '2027-05-08'), addFor('tpl_tempo_run', '2027-05-08', 'za')];
+    expect(changesOnAllowedDays(changes, (d) => d === '2027-05-08')).toEqual([]);
+    expect(changesOnAllowedDays(changes, (d) => d >= '2027-05-09')).toEqual(changes);
   });
 });

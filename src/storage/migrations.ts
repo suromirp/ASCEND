@@ -14,6 +14,9 @@
 // The goal Vaardigheid (calisthenics F4e, 2026-11-09) lives in its own optional `skillGoals` (goals and the
 // append-only cleared steps), like `missedTraining`: optional and additive, so the version stays.
 // migrateSkillGoals drops a damaged goal or row (unknown ladder, step outside it) and never throws.
+//
+// PlanChangeItem.replacesSessionId (2026-11-09, weghaling met toevoeging) needs no step: optional and additive, only
+// on an 'add' in a proposal, never read by applyPlanChangeItems. An older proposal without it reads the same.
 
 export { CURRENT_SCHEMA_VERSION, migrateV1toV2, migrateExport } from './migrationsSchema';
 export type { AscendExport } from './migrationsSchema';

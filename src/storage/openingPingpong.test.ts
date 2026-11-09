@@ -128,6 +128,23 @@ describe('opening na opening: geen pingpong tussen voorschrift en planningsronde
     expect(second.repairs).toBeUndefined();
   });
 
+  // Review van Melding bij elke opening: in een week zonder vrije dag haalt het voorschrift een training weg en zet
+  // de nieuwe op die dag. Laat de ronde de nieuwe niet staan, dan blijft de oude ook staan.
+  it('volle week: valt de Wandeldag weg, dan blijft de zaterdagtraining die hij zou vervangen', async () => {
+    const planned = await PlannedSessionsRepo.getAll();
+    const saturday = planned.find((s) => s.scheduledDate === '2027-03-06' && s.status !== 'skipped')!;
+    const remove: PlanChangeItem = { plannedSessionId: saturday.id, action: 'remove', fromDate: '2027-03-06', toDate: '2027-03-06', reason: 'nagemaakt' };
+    const wandeldag: PlanChangeItem = {
+      action: 'add', newSessionDraft: { templateId: 'tpl_hike_day_one', scheduledDate: '2027-03-06', weekStartDate: '2027-03-01' }, reason: 'nagemaakt', replacesSessionId: saturday.id,
+    };
+    const replace: PlanChangeItem = { action: 'replace', plannedSessionId: planned.find((s) => s.scheduledDate === '2027-03-02' && s.status !== 'skipped')!.id, newPrescriptionId: 'tp_nagemaakt', reason: 'nagemaakt' };
+    // De opslag wordt één keer gelezen: de planning komt van de aanroeper.
+    const reads = vi.spyOn(PlannedSessionsRepo, 'getAll');
+    expect(await keptByPlanningRound([remove, wandeldag, replace], planned)).toEqual([replace]);
+    expect(reads).not.toHaveBeenCalled();
+    reads.mockRestore();
+  });
+
   it('een training die de ronde laat staan blijft in het voorschrift', async () => {
     const planned = await PlannedSessionsRepo.getAll();
     const free = freeDay(planned, '2027-03-01');

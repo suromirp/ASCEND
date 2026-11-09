@@ -118,7 +118,42 @@ export function changesTheRoundKeeps(changes: PlanChangeItem[], before: PlannedS
     return true;
   });
   // Een ruil is altijd een paar: valt de ene helft weg, dan de andere ook.
-  return kept.filter((c) => c.action !== 'swap' || kept.some((o) => o.action === 'swap' && o.plannedSessionId === c.pairedWithSessionId));
+  const pairs = kept.filter((c) => c.action !== 'swap' || kept.some((o) => o.action === 'swap' && o.plannedSessionId === c.pairedWithSessionId));
+  // Een weghaling hoort bij de toevoeging die haar plaats inneemt: valt die weg, dan blijft de rij staan.
+  return withoutOrphanedRemovals(pairs, changes);
+}
+
+// Een week zonder vrije dag: de weekindeling (engine/weekReconciliation.ts) haalt dan een training weg en zet de
+// nieuwe op die dag, in die week (`replacesSessionId` op de toevoeging). De twee horen bij elkaar. Valt de
+// toevoeging weg (de planningsronde laat hem niet staan, of de dag is een vakantiedag), dan valt de weghaling mee;
+// anders verliest de week een training zonder vervanging (review van Melding bij elke opening, 9 november).
+// `kept`: wat overblijft na een filter over `all`. Een weghaling zonder koppeling (een training die niet meer bij
+// de samenstelling hoort) blijft gewoon staan, ook als er op die dag een andere toevoeging wegvalt.
+export function withoutOrphanedRemovals(kept: PlanChangeItem[], all: PlanChangeItem[]): PlanChangeItem[] {
+  const stays = new Set(kept);
+  // Per weggevallen toevoeging: de rij die ze zou vervangen en haar dag (die ligt in de week van de toevoeging).
+  const letGo = new Map<string, string>();
+  for (const c of all) {
+    if (c.action !== 'add' || !c.replacesSessionId || !c.newSessionDraft || stays.has(c)) continue;
+    letGo.set(c.replacesSessionId, c.newSessionDraft.scheduledDate);
+  }
+  if (letGo.size === 0) return kept;
+  return kept.filter((c) => {
+    if (c.action !== 'remove' || !c.plannedSessionId) return true;
+    // Dezelfde rij, op dezelfde dag.
+    const day = letGo.get(c.plannedSessionId);
+    return !(day && (c.fromDate ?? c.toDate) === day);
+  });
+}
+
+// Geen toevoeging of verplaatsing op een dag die niet mag (de dag van het hoofddoel en later, een wedstrijddag, een
+// vakantie of tocht); een weghaling die bij zo'n toevoeging hoort valt mee (`withoutOrphanedRemovals`).
+export function changesOnAllowedDays(changes: PlanChangeItem[], blockedDay: (date: string) => boolean): PlanChangeItem[] {
+  const allowed = changes.filter((c) => {
+    const day = c.action === 'add' ? c.newSessionDraft?.scheduledDate : c.action === 'move' ? c.toDate : undefined;
+    return !day || !blockedDay(day);
+  });
+  return withoutOrphanedRemovals(allowed, changes);
 }
 
 export const samePlannedSession = (a: PlannedSession, b: PlannedSession) => JSON.stringify(a) === JSON.stringify(b);

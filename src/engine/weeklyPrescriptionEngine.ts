@@ -303,7 +303,7 @@ export function computeWeeklyPrescriptionPlan(
     alternatives,
     // De stem van ASCEND (docs/beslissingen/2026-11-09-stem-van-ascend.md): het droge feit eerst, zonder vaktaal.
     consequences: `Geldt over twee weken. Deze en volgende week blijven zoals ze zijn.${unplaceableNote}`,
-    explanation: 'Gebaseerd op actieve doelen, voortgang, herstel en de MacroFactor-krachtbezetting, MacroFactor blijft de inhoud van elke krachtsessie bepalen; dit bestand raakt kracht nooit inhoudelijk.',
+    explanation: 'De oefeningen van je krachttrainingen blijven zoals ze zijn.',
     createdAt: new Date().toISOString(),
   };
 

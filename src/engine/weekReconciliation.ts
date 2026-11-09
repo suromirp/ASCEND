@@ -69,9 +69,13 @@ function pickSwapCandidate(
   dailyTimeBudget: TrainingAvailability['dailyTimeBudget'] | undefined,
   sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] | undefined,
   keepInPlace?: ReconciliationTarget['keepInPlace'],
+  // Today counts, a day before it does not: a session of a day that has
+  // passed is never given up for a new one on that same day.
+  asOf?: string,
 ): SwapCandidate | null {
   const candidates = weekSessions.filter((s) => {
     if (s.status === 'skipped' || protectedSessionIds.has(s.id) || targetTemplateIds.includes(s.templateId)) return false;
+    if (asOf && s.scheduledDate < asOf) return false;
     const template = templateById.get(s.templateId);
     return !!template && !protectedTypes.has(template.type) && !keepInPlace?.(s, template);
   });
@@ -548,6 +552,7 @@ export function reconcileWeekComposition(
       availability.dailyTimeBudget,
       sameDayPairingPreference,
       target.keepInPlace,
+      asOf,
     );
 
     if (!swapCandidate) {
@@ -569,11 +574,14 @@ export function reconcileWeekComposition(
     });
     weekSessions = weekSessions.map((s) => (s.id === swapCandidate.session.id ? { ...s, status: 'skipped' as const } : s));
 
+    // The add names the row it replaces: whoever lets the add go, lets this
+    // remove go with it (engine/weeklyPrescriptionDiff.ts#withoutOrphanedRemovals).
     items.push({
       action: 'add',
       newSessionDraft: { templateId, scheduledDate: swapCandidate.session.scheduledDate, weekStartDate: weekStart },
       reason: target.addReason(template),
       generatedBy: [target.source],
+      replacesSessionId: swapCandidate.session.id,
     });
     weekSessions = [
       ...weekSessions,

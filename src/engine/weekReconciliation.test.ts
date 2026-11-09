@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { reconcileWeekComposition, reconcileWeeksComposition, type ReconciliationTarget } from './weekReconciliation';
+import { keepsInPlace } from './weeklyPrescriptionEngine';
+import { todayISO } from '../utils/dates';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { TrainingAvailability } from '../models/goalEngineConfig';
 
@@ -133,6 +135,57 @@ describe('reconcileWeekComposition — generic, non-strength ReconciliationTarge
     const result = reconcileWeekComposition(FORECAST_MONDAY, target, sessions, byId, availability(), new Set(), [], [], null, undefined);
     expect(result.items.find((i) => i.action === 'add')).toBeUndefined();
     expect(result.noFreeDay).toBe(true);
+  });
+});
+
+// Review van Melding bij elke opening (9 november): de terugval van een volle week haalt een training weg en zet de
+// nieuwe op die dag. De toevoeging noemt de rij die ze vervangt (`replacesSessionId`), zodat wie de toevoeging laat
+// vallen de weghaling meeneemt (engine/weeklyPrescriptionDiff.ts#withoutOrphanedRemovals). Nagemaakte week.
+describe('reconcileWeekComposition: de terugval van een volle week', () => {
+  const heavy: SessionTemplate = { id: 'tpl_heavy_a', name: 'Zware Sessie A', type: 'strength', durationVariants: { full: 60 }, baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'light', intensity: 'high' } };
+  const filler: SessionTemplate = { id: 'tpl_filler', name: 'Vulling', type: 'cardio', durationVariants: { full: 30 } };
+  const testRun: SessionTemplate = { id: 'tpl_fake_test', name: 'Testloop', type: 'cardio', durationVariants: { full: 30 }, roles: ['test'] };
+  const race: SessionTemplate = { id: 'tpl_fake_race', name: 'Wedstrijd', type: 'cardio', durationVariants: { full: 90 }, roles: ['race'] };
+  const byId = new Map([heavy, filler, testRun, race].map((t) => [t.id, t]));
+  const days = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27'];
+  // De echte regel van het weekvoorschrift: wat jij vastzette, een periode, een test of wedstrijd blijft staan.
+  const target = cardioFamilyTarget({ isInFamily: (_s, t) => t.id === heavy.id, targetTemplateIds: [heavy.id], keepInPlace: (s, t) => keepsInPlace(t, s) });
+  const fullWeek = (over: Record<number, Partial<PlannedSession>> = {}) => days.map((d, i) => ({ ...session(`d${i}`, filler.id, d, FORECAST_MONDAY), ...over[i] }));
+  const run = (sessions: PlannedSession[], asOf?: string) =>
+    reconcileWeekComposition(FORECAST_MONDAY, target, sessions, byId, availability(), new Set(), [], [], null, undefined, asOf);
+
+  it('volle week: de toevoeging noemt de weggehaalde rij, op dezelfde dag en in dezelfde week', () => {
+    const { items, noFreeDay } = run(fullWeek());
+    const remove = items.find((i) => i.action === 'remove')!;
+    const add = items.find((i) => i.action === 'add')!;
+    expect(noFreeDay).toBe(false);
+    expect(add.replacesSessionId).toBe(remove.plannedSessionId);
+    expect(add.newSessionDraft).toEqual({ templateId: heavy.id, scheduledDate: remove.fromDate, weekStartDate: FORECAST_MONDAY });
+  });
+
+  it('een rij die jij vastzette, een test en een wedstrijd gaan er nooit uit', () => {
+    const { items } = run(fullWeek({ 0: { lock: { by: 'user', at: '2026-09-01T10:00:00' }, status: 'moved' }, 1: { templateId: testRun.id }, 2: { templateId: race.id } }));
+    const remove = items.find((i) => i.action === 'remove');
+    expect(remove?.plannedSessionId).toBe('d3');
+    expect(items.find((i) => i.action === 'add')?.replacesSessionId).toBe('d3');
+  });
+
+  it('de dag zelf telt mee, een dag ervoor niet', () => {
+    const { items } = run(fullWeek(), '2026-09-23');
+    expect(items.find((i) => i.action === 'remove')?.plannedSessionId).toBe('d2');
+    expect(items.find((i) => i.action === 'add')?.newSessionDraft?.scheduledDate).toBe('2026-09-23');
+  });
+
+  it('rond middernacht: vandaag is de kalenderdag van het toestel', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date(2026, 8, 22, 23, 59, 30));
+      expect(run(fullWeek(), todayISO()).items.find((i) => i.action === 'remove')?.plannedSessionId).toBe('d1');
+      vi.setSystemTime(new Date(2026, 8, 23, 0, 0, 30));
+      expect(run(fullWeek(), todayISO()).items.find((i) => i.action === 'remove')?.plannedSessionId).toBe('d2');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
