@@ -11,6 +11,7 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 - `src/engine/catchUp.ts#catchUpRows` gemiste training naar later: nieuwe rij plus overgeslagen oude
 - `src/storage/catchUpApply.ts#writeCatchUp` schrijft die twee rijen
 - `src/engine/replanWeek.ts#replanWeek` week opnieuw plannen, `src/storage/weekReplan.ts#planWeekReplan` voor het voorstel
+- `src/engine/leaveWeek.ts#leaveWeek` de band van een periode in de weeklijst: één per periode per week, boven de eerste dag, de rijen eronder gewone rijen met een lijn links (`data-period-rail`), een lege dag "Wo 18 · vrij"; `components/LeaveWeekBand.tsx`, besluit `docs/beslissingen/2026-11-09-week-band.md`
 - `src/engine/weekReview.ts#buildWeekReview` de weekterugblik
 - `src/storage/undoPlanChange.ts#undoPlanChangeNow` Ongedaan maken uit de melding
 - `src/engine/todayCards.ts#arrangeToday` de vaste rang van kaarten boven de missie op Vandaag
@@ -18,7 +19,7 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 ## Nooit
 - Een probleem in de week stil oplossen: altijd een voorstel met Akkoord. Liever niet laat de kaart staan, het probleem verberg je niet.
 - Slepen buiten `moveTo` en `decideMove` om, of een verplaatsing zonder slot (`movedFromDate`, Ongedaan maken).
-- Historie, voorbije of gelogde rijen, overgeslagen, rust, race of vakantie verplaatsen of een handvat geven.
+- Historie, voorbije of gelogde rijen, overgeslagen, rust of race verplaatsen of een handvat geven. Een training die een periode neerzette of opzij schoof mag wel slepen, altijd met Akkoord en met het merkteken van de periode erop (`dragEligibility`). `askAlways` geldt ook voor Verplaatsen in het actieblad (`Week.tsx` `onMove`).
 - Een test of race verplaatsen of ruilen zonder Akkoord.
 - Een log herschrijven om de dag te tonen: `src/engine/logDay.ts` is alleen weergave.
 - `src/storage/planGolden.test.ts` laten bewegen door iets in Week; REST-DAY met jouw slot meldt alleen onder `reportYours` (standaard uit).
@@ -30,11 +31,10 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 - Een mislukte ruil of verplaatsing moet een zichtbare uitkomst geven (review van 2 november); een verouderd voorstel zegt dat het veranderd is.
 - Een notitie bij een vakantie slaat meteen op (`saveLeaveNote`), andere dagen of soort gaan als voorstel met Akkoord.
 - Kaarten boven de missie hebben een vaste volgorde in `TODAY_CARD_RANK`; een nieuwe kaart krijgt daar een plek, niet in de pagina.
-
 - Of de grepen te zien zijn en of je mag slepen zijn twee dingen. De grepen hangen alleen aan de instelling en het jaaroverzicht (`components/weekDragShown.ts`); een open of sluitend blad zet alleen het slepen uit (`enabled`). Anders flitsen de grepen kort naar lege cirkels. Het sluitvlak van een blad (`growOpacity`, sluiten) eindigt op niets, anders staat er een lege rechthoek op de rij.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/engine/week src/engine/catchUp src/engine/replanWeek src/storage/week src/storage/catchUp`
+- Tijdens het werk: `npx vitest run src/engine/week src/engine/leaveWeek src/engine/catchUp src/engine/replanWeek src/storage/week src/storage/catchUp`
 - Nooit laten bewegen: `src/storage/planGolden.test.ts`.
 - Tekstkaart (`npm run kaart:vergelijk`) als een scherm verandert, met elk verschil verklaard.
 

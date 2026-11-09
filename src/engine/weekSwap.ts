@@ -13,11 +13,12 @@ import { hasRole } from './templateRoles';
 import { weekConcerns } from './weekConcerns';
 import type { CheckInput } from './weekValidator';
 import { dayOrder } from './dayOrder';
-import { dayTitle, dragEligibility, type DayVerdict, type DragContext, type MoveDecision } from './weekDrag';
+import { dayTitle, dragEligibility, PLACED_ASK_REASON, type DayVerdict, type DragContext, type MoveDecision } from './weekDrag';
 import { addDays, formatDateNL, mondayOfWeek, weekdayLongNL, weekdayOf } from '../utils/dates';
 
 export const SWAP_TEST = 'Een testloop ruil je alleen met Akkoord.';
 const SWAP_LEAVE = 'Deze training schoof opzij voor je vakantie. Ruil je hem, dan blijft hij op de nieuwe dag staan.';
+const SWAP_PLACED = 'Je periode zette deze training hier neer. Ruil je hem, dan blijft hij bij je periode horen: haal je die weg, dan gaat hij mee.';
 export const SWAP_LEGS = 'Twee zware beendagen achter elkaar.';
 const SWAP_ASK_TAIL = 'Als je loslaat, vraagt ASCEND eerst of je dat echt wilt.';
 const CHIP_MAX = 28;
@@ -122,7 +123,7 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   }
   for (const leg of legs) {
     if (leg.ask === true) { if (!asks.includes(SWAP_TEST)) asks.push(SWAP_TEST); }
-    else if (leg.ask) { if (!asks.includes(SWAP_LEAVE)) asks.push(SWAP_LEAVE); }
+    else if (leg.ask) { const text = leg.ask === PLACED_ASK_REASON ? SWAP_PLACED : SWAP_LEAVE; if (!asks.includes(text)) asks.push(text); }
   }
 
   const proposal: ScheduleProposal = {
