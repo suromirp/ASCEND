@@ -6,7 +6,7 @@ import { isUsableBestEffort } from '../engine/bestEffort';
 import { cleanForgeLog } from '../engine/forgeLog';
 import { validLinkedLater } from '../engine/missedTraining';
 import { capTestJudgments } from '../engine/testJudgment';
-import type { BestEffort, ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SetLog } from '../models/training';
+import { SET_BANDS, type BestEffort, type ExerciseSetLog, type ManualMeasured, type ManualStrength, type MeasuredField, type MetricSource, type SessionLog, type SetBand, type SetLog } from '../models/training';
 import { isObj, ISO_DAY } from './migrationsShared';
 
 // --- Garmin is leidend: SessionLog.manualMeasured -----------------------------
@@ -342,6 +342,46 @@ export function migrateLogSetAsked(log: SessionLog): SessionLog {
   if (data !== log.strengthData) next = { ...next, strengthData: data };
   const kept = log.manualMeasured?.strength?.strengthData;
   const keptNext = cleanSetAsked(kept);
+  if (keptNext !== kept && log.manualMeasured?.strength) {
+    next = { ...next, manualMeasured: { ...log.manualMeasured, strength: { ...log.manualMeasured.strength, strengthData: keptNext } } };
+  }
+  return next;
+}
+
+// --- SetLog.seconds, SetLog.band en SetLog.clean (calisthenics) ----------------------------------
+// De houding in seconden, de band die hielp en "Ging het netjes?" (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md).
+// Optioneel en aanvullend, met dezelfde regel als `repsAsked`: een oud bestand heeft ze niet en leest gelijk;
+// alleen een geldige waarde blijft, een beschadigde valt weg en de set houdt zijn herhalingen en gewicht.
+const okSeconds = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0 && n <= 3600;
+const okBand = (b: unknown): b is SetBand => typeof b === 'string' && (SET_BANDS as readonly string[]).includes(b);
+const okClean = (c: unknown): c is boolean => typeof c === 'boolean';
+
+function cleanSetSkill<T extends ExerciseSetLog[] | null | undefined>(data: T): T {
+  if (!Array.isArray(data)) return data;
+  let changed = false;
+  const next = data.map((e) => {
+    if (!e || !Array.isArray(e.sets)) return e;
+    const sets = e.sets.map((s) => {
+      if (!s || typeof s !== 'object' || (!('seconds' in s) && !('band' in s) && !('clean' in s))) return s;
+      const secondsOk = !('seconds' in s) || okSeconds(s.seconds);
+      const bandOk = !('band' in s) || okBand(s.band);
+      const cleanOk = !('clean' in s) || okClean(s.clean);
+      if (secondsOk && bandOk && cleanOk) return s;
+      const { seconds, band, clean, ...rest } = s;
+      changed = true;
+      return { ...rest, ...(okSeconds(seconds) ? { seconds } : {}), ...(okBand(band) ? { band } : {}), ...(okClean(clean) ? { clean } : {}) } as SetLog;
+    });
+    return sets.every((s, i) => s === e.sets[i]) ? e : { ...e, sets };
+  });
+  return (changed ? next : data) as T;
+}
+
+export function migrateLogSetSkill(log: SessionLog): SessionLog {
+  let next = log;
+  const data = cleanSetSkill(log.strengthData);
+  if (data !== log.strengthData) next = { ...next, strengthData: data };
+  const kept = log.manualMeasured?.strength?.strengthData;
+  const keptNext = cleanSetSkill(kept);
   if (keptNext !== kept && log.manualMeasured?.strength) {
     next = { ...next, manualMeasured: { ...log.manualMeasured, strength: { ...log.manualMeasured.strength, strengthData: keptNext } } };
   }

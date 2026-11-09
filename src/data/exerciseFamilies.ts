@@ -7,7 +7,7 @@
 
 export type Nuance =
   | 'pause' | 'wide' | 'low' | 'front' | 'light' | 'single' | 'underhand' | 'preacher' | 'floor' | 'step'
-  | 'walking' | 'elevated' | 'trap' | 'sumo' | 'quad' | 'hinged' | 'legs' | 'negative' | 'lying' | 'frog' | 'y';
+  | 'walking' | 'elevated' | 'trap' | 'sumo' | 'quad' | 'hinged' | 'legs' | 'negative' | 'lying' | 'frog' | 'y' | 'added';
 
 // Eén regel per familie: een id, of [id, ...nuances].
 const FAMILIES: Record<string, (string | [string, ...Nuance[]])[]> = {
@@ -36,15 +36,19 @@ const FAMILIES: Record<string, (string | [string, ...Nuance[]])[]> = {
   flat_press: ['bench-press', 'dumbbell-bench-press', 'machine-chest-press', ['wide-grip-bench-press', 'wide'], ['pause-dumbbell-bench-press', 'pause']],
   incline_press: ['incline-bench-press', 'incline-dumbbell-press', ['low-incline-barbell-press', 'low'], ['low-incline-dumbbell-press', 'low']],
   close_press: ['close-grip-bench-press'],
-  dip: ['dip'],
-  push_up: ['push-up'],
+  dip: ['dip', ['negative-dip', 'negative'], ['weighted-dip', 'added']],
+  support_hold: ['support-hold'],
+  push_up: ['push-up', ['incline-push-up', 'light'], ['decline-push-up', 'elevated'], ['knee-push-up', 'light'], ['incline-push-up-high', 'light'], ['archer-push-up', 'single']],
+  close_push_up: ['diamond-push-up'],
   chest_fly: ['cable-fly', 'pec-deck-fly', ['low-incline-dumbbell-fly', 'low'], ['low-to-high-cable-fly', 'low']],
   overhead_press: ['overhead-press', 'dumbbell-shoulder-press', 'machine-shoulder-press', ['push-press', 'legs']],
   lateral_raise: ['lateral-raise', ['single-arm-cable-lateral-raise', 'single']],
   rear_delt: ['rear-delt-fly', 'face-pull', ['chest-supported-dumbbell-y-raise', 'y']],
   shrug: ['shrug', ['snatch-grip-shrug', 'wide']],
   kelso: ['kelso-shrug'],
-  vertical_pull: ['pull-up', ['chin-up', 'underhand'], 'assisted-pull-up', 'lat-pulldown', ['single-arm-cable-lat-pulldown', 'single'], ['negative-chin-up', 'underhand', 'negative']],
+  vertical_pull: ['pull-up', ['chin-up', 'underhand'], 'assisted-pull-up', 'lat-pulldown', ['single-arm-cable-lat-pulldown', 'single'], ['negative-chin-up', 'underhand', 'negative'], ['weighted-pull-up', 'added']],
+  scapular_pull: ['scapular-pull-up'],
+  hang: ['dead-hang'],
   row: [['barbell-row', 'hinged'], ['dumbbell-row', 'single'], 'chest-supported-row', 'seated-cable-row', 'machine-row', 'machine-row-plates', 'inverted-row'],
   high_row: ['cable-high-row', 'chest-supported-dumbbell-high-row', ['bent-over-barbell-high-row', 'hinged']],
   lat_isolation: ['straight-arm-pulldown', 'dumbbell-pullover'],
@@ -53,6 +57,14 @@ const FAMILIES: Record<string, (string | [string, ...Nuance[]])[]> = {
   triceps_pushdown: ['triceps-pushdown'],
   triceps_overhead: ['overhead-triceps-extension'],
 };
+
+// Stappen van een calisthenicsladder (data/skillLadders.ts) die Ruilen alleen binnen hun eigen familie
+// aanbiedt, nooit in "Zelfde spier, anders": anders duwen zes push-upvarianten Dips en Push-Up uit de lijst
+// bij bankdrukken. Push-Up, Dips, Pull-Up en Negative Chin-Up staan er niet in en blijven waar ze waren.
+export const FAMILY_ONLY: ReadonlySet<string> = new Set([
+  'incline-push-up', 'decline-push-up', 'knee-push-up', 'incline-push-up-high', 'diamond-push-up', 'archer-push-up',
+  'negative-dip', 'weighted-dip', 'support-hold', 'weighted-pull-up', 'scapular-pull-up', 'dead-hang',
+]);
 
 export const FAMILY = new Map<string, string>();
 export const NUANCE = new Map<string, readonly Nuance[]>();

@@ -141,6 +141,15 @@ export interface Exercise {
   // Heeft een oefening hem, dan toont het blad hem in plaats van de drie oude regels in `cues`.
   guide?: ExerciseGuide;
   videoUrl?: string;
+  // Calisthenics (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md); all optional and additive.
+  // How a set is measured: in reps or as a hold in seconds. Absent means reps.
+  measure?: 'reps' | 'hold';
+  // The place on a ladder of data/skillLadders.ts (step counts from 1, light to heavy).
+  ladder?: { id: string; step: number };
+  // Reps count per side (archer push-up).
+  perSide?: boolean;
+  // Done with the help of a band; how strong the band was is in the log (SetLog.band), not in the id.
+  assist?: 'band';
 }
 
 // "In het kort" (precies drie regels) altijd zichtbaar, de rest achter "Lees verder".
