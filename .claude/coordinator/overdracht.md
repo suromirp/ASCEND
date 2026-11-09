@@ -24,7 +24,7 @@ Volgorde:
 7. Feestdagen als voorstel (planner, niet tegelijk met andere planner-sessies).
 8. Wat het bouwmoment van vanavond liet liggen uit de Inbox (Health Connect-rest, kleine punten).
 9. Routeplanner fase 3 (delen naar Garmin Connect) en 4.
-Niet: Engels (wacht), herinrichting Forge (groot, apart besluit), MF-code verwijderen (pas als het moment er is).
+Niet: Engels (wacht), MF-code verwijderen (pas als het moment er is).
 Na elke melding: archiveren, merge, kort melden, volgende starten. Weeklimiet Fable in de gaten: meldt een sessie een limiet, stoppen en melden.
 10. Forge herinrichting, de rest (na 4).
 
