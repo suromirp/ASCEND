@@ -700,6 +700,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.weightCard !== false };
     case 'gewicht-eigen':
       return { value: choiceShort('gewichtEigen', s.weightForLoad ?? 'trend') };
+    case 'gewicht-periode':
+      return { value: choiceShort('gewichtPeriode', s.weightRange ?? '4w') };
     case 'gewichtstrend':
       return { checked: s.weightTrend !== false };
     case 'hartslag': {
