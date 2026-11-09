@@ -544,9 +544,3 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     .filter((a) => !inputs.respondedIds.has(a.id))
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
 }
-
-// Advice tied to one specific log — what the debrief right after logging
-// shows.
-export function adviceForLog(inputs: AdviceInputs, logId: string): Advice[] {
-  return computeAdvice(inputs).filter((a) => a.relatedLogId === logId);
-}

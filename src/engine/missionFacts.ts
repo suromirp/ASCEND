@@ -54,10 +54,27 @@ function kindOf(fact: BriefFact, index: number): MissionChipKind {
   return 'overig';
 }
 
-export function missionFacts(templateId: string, brief: SessionBrief, paces: RacePaces | undefined): MissionFacts {
+// "Dat is ongeveer 10 tot 11 km." Alleen voor een doorlopende rustige loop (rustig of lang), waar duur en tempo
+// samen een afstand geven; bij intervallen of een tempoloop zegt een afstand weinig.
+// `fromRuns`: het aantal lopen waarop het tempo rust (true telt als meerdere); bij één loop staat er enkelvoud.
+export function distanceLine(minutes: number | undefined, range: PaceRange, fromRuns: boolean | number = false): string | undefined {
+  if (!minutes || minutes <= 0 || range.fast <= 0 || range.slow <= 0) return undefined;
+  const near = Math.round((minutes * 60) / range.slow);
+  const far = Math.round((minutes * 60) / range.fast);
+  if (far <= 0) return undefined;
+  const tail = fromRuns === 1 ? ', op het tempo van je laatste loop' : fromRuns ? ', op het tempo van je laatste lopen' : '';
+  return near === far ? `Dat is ongeveer ${far} km${tail}.` : `Dat is ongeveer ${near} tot ${far} km${tail}.`;
+}
+
+export function missionFacts(templateId: string, brief: SessionBrief, paces: RacePaces | undefined, minutes?: number, recentPace?: PaceRange, recentRuns?: number): MissionFacts {
   const chips: MissionChip[] = brief.facts.map((f, i) => ({ text: factText(f), kind: kindOf(f, i) }));
   const range = paces ? paceFor(templateId, paces) : undefined;
-  if (!paces || !range) return { chips };
+  // Zonder testloop komt de afstand uit het echte tempo van je laatste lopen, als die er zijn. Er komt dan geen
+  // tempoblok of testregel bij, alleen de afstandszin.
+  if (!paces || !range) {
+    const own = !paces && recentPace && idHasRole(templateId, 'easy_pace') ? distanceLine(minutes, recentPace, recentRuns ?? true) : undefined;
+    return own ? { chips, paceNote: own } : { chips };
+  }
   const pace: MissionChip = { text: formatPaceChip(range), kind: 'tempo' };
   const last = brief.facts.length - 1;
   // Het laatste feit is een losse aanwijzing ("Praten kan", "Zone 3"): het
@@ -65,5 +82,8 @@ export function missionFacts(templateId: string, brief: SessionBrief, paces: Rac
   // blijft dat staan en komt het tempo erbij.
   if (last >= 1 && !startsWithNumber(brief.facts[last].value)) chips[last] = pace;
   else chips.push(pace);
-  return { chips, paceNote: `Tempo uit je testloop van ${formatDateNL(paces.test.date)}.` };
+  const continuous = idHasRole(templateId, 'easy_pace');
+  // De afstand rekent met het echte tempo van je laatste lopen als dat er is, anders met het tempo uit de test.
+  const km = continuous ? distanceLine(minutes, recentPace ?? range, recentPace ? (recentRuns ?? true) : false) : undefined;
+  return { chips, paceNote: `Tempo uit je testloop van ${formatDateNL(paces.test.date)}.${km ? ` ${km}` : ''}` };
 }

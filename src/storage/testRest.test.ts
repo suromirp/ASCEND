@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SettingsRepo, wipeAllData } from './database';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { resolveTestRest } from '../engine/testRest';
 
 // "Rust voor een test" (AppSettings.testRest) en de back-up. Geen migratiestap: het veld is optioneel en een

@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { formatDateNL } from './dates';
-import { backupFileName } from '../storage/backup';
+import { backupFileName } from '../storage/backupExport';
 import { declinedRules, type StoredResponse } from '../engine/learning';
 import { shouldOfferRestore } from '../engine/freshStart';
 import { buildChangeLog } from '../engine/changeLog';

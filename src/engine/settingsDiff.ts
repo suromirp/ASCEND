@@ -179,6 +179,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('water-per-etappe', 'Water per etappe tonen', 'doel', 'showStageWater'),
   choice('rust-na-tocht', 'Rust na een bergtocht', 'doel', 'trekLegRest', 'soft', 'rustNaTocht', true),
   choice('vakantie-opzij', 'Opzij voor een vakantie', 'planning', 'leaveCrowding', 'drop', 'vakantieOpzij', true),
+  choice('zonder-sportschool', 'Kracht zonder sportschool', 'planning', 'noGymStrength', 'bodyweight', 'zonderSportschool'),
   {
     id: 'bergschoenen', title: 'Bergschoenen inlopen', page: 'doel',
     differs: (s) => bootGoalKm(s.bootBreakInKm) !== bootGoalKm(undefined),
@@ -196,6 +197,9 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthChoice('forge-vermoeidheid', 'Vermoeidheid per set', 'fatigue', 'vermoeidheid'),
   strengthFlag('forge-pauze', 'Na een pauze lichter beginnen', 'lighterAfterBreak'),
   strengthFlag('forge-rekent-mee', 'Forge rekent mee', 'reckon'),
+  strengthFlag('standen-onthouden', 'Standen onthouden', 'learnStands'),
+  strengthFlag('forge-afvinken-doel', 'Afvinken telt als het doel', 'assumedCounts'),
+  strengthFlag('forge-tussen-oefeningen', 'Vermoeidheid tussen oefeningen', 'crossFatigue'),
   strengthFlag('forge-bereik', 'Bereik verbreden', 'widenRange'),
   strengthChoice('forge-schatting', 'Sets die meetellen', 'estimateUpTo', 'schatting'),
   strengthChoice('forge-leren', 'Gewichten van toestellen', 'stackWeights', 'forgeLeren', ['learnStacks']),
@@ -211,6 +215,9 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthChoice('forge-doorvoeren', 'Wijzigingen doorvoeren', 'carryMode', 'doorvoeren', ['carryWeights']),
   strengthFlag('forge-schijven', 'Schijven bij de set tonen', 'showPlates'),
   strengthFlag('forge-rir-snel', 'Hoeveel over na een set', 'quickRir'),
+  strengthFlag('forge-stappen', 'Stappen bij calisthenics', 'ladderRow'),
+  strengthFlag('forge-netjes', 'Ging het netjes?', 'askClean'),
+  strengthFlag('forge-band', 'Band bij optrekken en dip', 'askBand'),
   strengthFlag('forge-1rm', 'Geschatte 1RM tonen', 'showOneRm'),
   strengthChoice('forge-weergave', 'Forge toont', 'oneRmView', 'forgeWeergave'),
   strengthFlag('forge-1rm-macrofactor', 'MacroFactor-1RM erbij tonen', 'showMacroFactorOneRm'),
@@ -222,6 +229,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
 
   // Lichaam
   flag('vetpercentage', 'Vetpercentage tonen', 'lichaam', 'showBodyFat'),
+  flag('gewichtstrend', 'Gewichtstrend gebruiken', 'lichaam', 'weightTrend'),
   {
     id: 'figuur', title: 'Figuur', page: 'lichaam',
     differs: (s) => resolveFigureSetting(s) !== 'auto',
@@ -282,6 +290,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('weekterugblik', 'Weekterugblik', 'weekReview'),
   overviewSpec('weekterugblik-dag', 'Dag van de terugblik', 'weekReviewDay', (v: string) => choiceShort('terugblikDag', v)),
   choice('forge-plaatjes', 'Plaatjes bij oefeningen', 'forge', 'exerciseArt', 'beide', 'plaatjes'),
+  flag('forge-uitleg-open', 'Uitleg standaard uitgeklapt', 'forge', 'guideOpen', { fallback: false }),
   choice('lijfvraag', 'Hoe voelt je lijf?', 'vandaag', 'bodyCheck', 'reden', 'lijfvraag'),
   choice('korter-vandaag', 'Minder tijd vandaag', 'vandaag', 'shorterToday', 'kern', 'korterVandaag'),
   flag('zones-na-test', 'Zones bijwerken na een test', 'planning', 'zonesAfterTest'),
@@ -291,6 +300,11 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('weerregel', 'Weer bij je training', 'weatherLine'),
   overviewFlag('beste-moment', 'Beste moment tonen', 'bestMoment'),
   overviewFlag('weerruil', 'Ruilen bij slecht weer', 'weatherSwap'),
+  flag('weeralarm', 'Weerwaarschuwingen', 'vandaag', 'weatherWarnings'),
+  flag('lawinegevaar', 'Lawinegevaar', 'vandaag', 'avalancheBulletin'),
+  overviewFlag('regen-uur', 'Regen in het komende uur', 'rainSoon'),
+  overviewFlag('heuvels-buurt', 'Heuvels en trappen in de buurt', 'hillsNearby'),
+  overviewFlag('maanstand', 'Maanstand bij een avondtocht', 'moonLine'),
   overviewFlag('kledingadvies', 'Kledingadvies', 'clothingAdvice'),
   overviewFlag('citaten', 'Citaat', 'completionMoment'),
   flag('geluid', 'Geluid', 'vandaag', 'introSoundEnabled', { resetTo: true }),
@@ -370,6 +384,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('macrofactor-gewicht', 'Gewicht gebruiken', 'koppelingen', 'weightFromMacroFactor'),
   flag('health-connect-gewicht', 'Gewicht uit Health Connect', 'lichaam', 'weightFromHealthConnect'),
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
+  flag('tempo-stukken', 'Tempo uit stabiele stukken', 'lichaam', 'tempoStablePieces'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
   {
     id: 'locatie', title: 'Je locatie', page: 'gegevens',

@@ -28,6 +28,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Man of vrouw', text: 'het silhouet verschilt een beetje in schouders, heupen en borst. De plekken en de oefeningen blijven hetzelfde.' },
     ],
   },
+  tempoStukken: {
+    title: 'Tempo uit stabiele stukken',
+    lead: 'Tempo bij zone 2 rekent met de stukken van minstens 5 minuten waarin je hartslag en tempo vast lagen, op vlak terrein, uit elke buitenloop.',
+    points: [
+      { head: 'Aan', text: 'standaard: meer en zuiverdere metingen, ook uit het inlopen van een intervaltraining. De eerste 10 minuten, heuvels en warme lopen tellen niet mee.' },
+      { head: 'Uit', text: 'de gemiddelde hartslag van elke geplande rustige of lange loop, zoals eerder.' },
+      { head: 'Je planning', text: 'verandert hier nooit door; het is alleen een meting.' },
+    ],
+  },
   intensiteit: {
     title: 'Intensiteit tellen',
     lead: 'De kaart Intensiteit op Je stand laat zien hoeveel van je loop- en wandelminuten rustig waren. Hier kies je waar ze op gebaseerd is.',
@@ -53,6 +62,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Alleen spierkaart', text: 'de spieren en de uitleg, zonder tekening. Er wordt niets geladen.' },
       { head: 'Uit', text: 'geen kaartje bij een oefening. Het menu van een oefening houdt de uitleg.' },
       { head: 'Een andere variant', text: 'staat er een tekening van bijna dezelfde oefening, dan zegt een regel eronder wat anders is.' },
+    ],
+  },
+  forgeUitlegOpen: {
+    title: 'Uitleg standaard uitgeklapt',
+    lead: 'In het blad van een oefening staat eerst In het kort, drie regels. Hier kies je of Lees verder ook al open staat.',
+    points: [
+      { head: 'Uit', text: 'het advies. Je ziet de drie regels en tikt op Lees verder als je meer wilt weten.' },
+      { head: 'Aan', text: 'de beginstand, de beweging, het tempo en de veelgemaakte fouten staan meteen open. Je kunt ze nog steeds dichtklappen.' },
+      { head: 'Niet elke oefening', text: 'heeft al een uitleg. Zonder uitleg zie je de oude drie regels.' },
     ],
   },
   lijfvraag: {
@@ -193,10 +211,11 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Bergop en bergaf met een rugzak vragen veel van je kuiten, je scheenspier en je bilspieren, en juist die slaat een gewoon krachtschema vaak over. Bij een bergdoel let ASCEND daar rustig op.',
     points: [
       { head: 'De melding', text: 'krijgt een van die spieren de laatste vier weken gemiddeld minder dan 4 harde sets per week, dan staat dat één keer in de weekterugblik, met een voorstel voor één oefening. Een rustweek telt niet mee.' },
+      { head: 'In Forge', text: 'hetzelfde voorstel staat ook rustig bovenaan de training waar de oefening bij zou komen, zolang je nog geen set afvinkte.' },
       { head: 'Pas na Akkoord', text: 'de oefening komt in je krachttraining met het meeste beenwerk. In het blad van de oefening haal je hem weer weg. Liever niet laat die spier acht weken met rust.' },
       { head: 'Bij Ruilen', text: 'is de keuze verder gelijk, dan staat een oefening voor zo’n spier voorop, met een korte reden. Forge ruilt nooit zelf.' },
       { head: 'Wat telt', text: 'werksets met hoogstens 4 herhalingen over, ook zonder RIR. Een oefening die ASCEND niet kent telt niet; dat staat er dan eerlijk bij.' },
-      { head: 'Uit', text: 'geen melding en de gewone volgorde bij Ruilen.' },
+      { head: 'Uit', text: 'geen melding, in de weekterugblik noch in Forge, en de gewone volgorde bij Ruilen.' },
     ],
   },
   forgeSpotter: {
@@ -294,12 +313,23 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     ],
   },
   toestelgewichten: {
-    title: 'Gewichten per toestel',
-    lead: 'Staan de gewichten van een kabel of toestel in je hoofd, vul ze dan een keer in. ASCEND stelt er dan alleen gewichten uit voor.',
+    title: 'Standen per toestel',
+    lead: 'Een stand is een gewicht dat een kabel of toestel in jouw sportschool heeft. Forge onthoudt ze zelf; hier zie je ze en pas je ze aan.',
     points: [
-      { head: 'Invullen', text: 'typ de gewichten met een spatie ertussen, bijvoorbeeld 4,5 9 13,5 18. Je kunt ze ook tijdens een training invullen, in het menu van de oefening.' },
-      { head: 'Per sportschool', text: 'dezelfde kabel heeft in een andere sportschool andere gewichten, dus de lijst hoort bij de sportschool die je koos.' },
-      { head: 'Aanpassen of wissen', text: 'een lijst kun je altijd veranderen. Wis je hem, dan leert en schat ASCEND weer zoals je bij Gewichten van toestellen koos.' },
+      { head: 'Weghalen', text: 'tik op een stand om hem door te strepen, bijvoorbeeld een typefout. Een weggehaalde stand komt niet vanzelf terug. Tik nog eens om hem terug te zetten.' },
+      { head: 'Veel tegelijk', text: 'heeft het blok vaste stappen, dan vul je ze in één keer in als lijst of als bereik, bijvoorbeeld 4,5 tot 113 per 7.' },
+      { head: 'Alleen deze standen', text: 'dan stelt Forge nooit een gewicht voor dat je niet zelf intikte. Anders schat Forge ook tussen en boven je standen.' },
+      { head: 'Per sportschool', text: 'dezelfde kabel heeft in een andere sportschool andere standen, dus ze horen bij de sportschool die je koos.' },
+      { head: 'Alles wissen', text: 'met Standen wissen begint het toestel weer leeg. Wat je al trainde blijft in je logboek staan.' },
+    ],
+  },
+  standenOnthouden: {
+    title: 'Standen onthouden',
+    lead: 'Forge onthoudt de gewichten die je op een kabel of toestel met blok afvinkt. Minder en Meer springen dan van stand naar stand.',
+    points: [
+      { head: 'Zonder vraag', text: 'na het afvinken staat er een regel met Terugdraaien. Dat haalt alleen die stand weg, niet je set.' },
+      { head: 'Eerste keer', text: 'bij een toestel dat Forge nog niet kent neemt het de gewichten over uit je eerdere trainingen in deze sportschool. Een oude typefout streep je weg bij Standen per toestel.' },
+      { head: 'Uit', text: 'dan komen er geen standen bij en leest Forge niets in. Wat er al staat blijft werken, en zonder standen gaan Minder en Meer met de stap uit je sportschool.' },
     ],
   },
   tussengewichten: {
@@ -331,6 +361,29 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Na een topset', text: 'ging je topset anders dan gevraagd en weet Forge hoeveel je over had, dan volgen de terugsets erna samen je kracht van die dag.' },
       { head: 'Jouw getallen', text: 'wat Forge zo invult ziet eruit als elk ander voorstel. Wat je zelf typt blijft van jou, en wat je al deed verandert nooit.' },
       { head: 'Uit', text: 'dan blijven de vakken staan zoals Forge ze voorstelde, en gaat het gewicht pas omhoog als je geschatte kracht dat vraagt.' },
+    ],
+  },
+  forgeAfvinkenDoel: {
+    title: 'Afvinken telt als het doel',
+    lead: 'Vink je een set af zonder te kiezen, dan telt het doel als wat je over had, behalve bij twijfel.',
+    points: [
+      { head: 'Wanneer het telt', text: 'je deed minstens de herhalingen die Forge vroeg, met minstens het gewicht van het voorschrift, en de set erna viel niet 2 of meer tekort.' },
+      { head: 'Je geschatte kracht', text: 'precies wat gevraagd was houdt je kracht vast. Meer herhalingen tellen voor de helft mee.' },
+      { head: 'Een stap zwaarder', text: 'pas als al je werksets de bovenkant van het bereik halen, of je topset twee keer achter elkaar.' },
+      { head: 'Bij twijfel', text: 'vraagt Forge na de set hoeveel je over had: minder dan gevraagd, 2 of meer boven het bereik, de eerste set op een zwaarder gewicht, en je eerste drie trainingen van een oefening.' },
+      { head: 'Oudere trainingen', text: 'tellen ook mee, met de onderkant van het bereik als gevraagd aantal. Je log zelf verandert niet.' },
+      { head: 'Uit', text: 'dan telt een set zonder eigen RIR zoals voorheen, en vraagt Forge alleen na de eerste, een zware en de laatste set.' },
+    ],
+  },
+  forgeTussenOefeningen: {
+    title: 'Vermoeidheid tussen oefeningen',
+    lead: 'Staan er meer harde sets voor dezelfde spieren voor een oefening dan je normaal deed, dan begint de eerste set iets lichter.',
+    points: [
+      { head: 'Wat telt', text: 'werksets met 3 of minder over, die je zelf invulde of afvinkte zoals gevraagd. Een gedeelde hoofdspier telt een hele set, een hulpspier een halve.' },
+      { head: 'Alleen het verschil', text: 'je gewone volgorde zit al in je geschatte kracht. Pas als er meer voor staat dan normaal, gaat de eerste set omlaag: eerst in herhalingen, anders een stap lichter.' },
+      { head: 'Hoeveel', text: 'ongeveer 2% kracht per harde set meer, nooit meer dan 10%. Met Vermoeidheid per set op Geleerd leert Forge het per oefening uit je eigen trainingen, vanaf zes keer.' },
+      { head: 'Wat je zelf doet', text: 'blijft van jou. Het gaat alleen om het voorschrift, en je log verandert niet.' },
+      { head: 'Uit', text: 'dan telt alleen de vermoeidheid binnen een oefening, zoals voorheen.' },
     ],
   },
   forgePauze: {
@@ -430,6 +483,31 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waarom', text: 'een RIR die je zelf kiest telt mee voor je geschatte kracht en voor de stap zwaarder; een aangenomen RIR niet.' },
     ],
   },
+  forgeStappen: {
+    title: 'Stappen bij calisthenics',
+    lead: 'Forge toont bij een oefening op een ladder de stap, de toets en een tik naar een lichtere of zwaardere stap.',
+    points: [
+      { head: 'De toets', text: 'drie sets op de bovenkant met nette vorm, bijvoorbeeld 3 keer 8. Haal je dat, dan kan de volgende stap.' },
+      { head: 'Stap lichter of zwaarder', text: 'wisselt de oefening alleen in deze training, zoals Ruilen. Je planning en je training blijven zoals ze zijn.' },
+      { head: 'Uit', text: 'geen regels en geen tik. Seconden voor een houding blijven werken.' },
+    ],
+  },
+  forgeNetjes: {
+    title: 'Ging het netjes?',
+    lead: 'Na een set op een ladderstap vraagt Forge of je vorm netjes was. Een Nee telt die set niet voor de stap.',
+    points: [
+      { head: 'Wanneer', text: 'alleen als de set de onderkant haalt: 5 herhalingen of 10 seconden. Eronder verandert het antwoord niets.' },
+      { head: 'Niets kiezen', text: 'dan blijft het onbekend, en dat telt als netjes. Achteraf wijzigen kan door de set lang in te drukken.' },
+    ],
+  },
+  forgeBand: {
+    title: 'Band bij optrekken en dip',
+    lead: 'Bij Pull-Up en Dip kies je de band die je gebruikt: geen, licht, middel of zwaar.',
+    points: [
+      { head: 'Telt niet voor de stap', text: 'met hulp haal je de stap nog niet. Je werkt door tot je de onderkant zonder band haalt.' },
+      { head: 'Je vorige keer', text: 'Forge zet de band van je vorige keer klaar. Een keuze geldt voor de open sets.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',
@@ -447,6 +525,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Op dezelfde dag', text: 'gaat wat je zelf invult of uit MacroFactor inleest voor de weging uit Health Connect. Daarna telt de nieuwste dag.' },
       { head: 'Waarvoor', text: 'je rugzak als deel van je lichaamsgewicht, de beenindex en eiwit per kilo.' },
       { head: 'Zelf invullen', text: 'een globaal getal is genoeg.' },
+    ],
+  },
+  gewichtstrend: {
+    title: 'Gewichtstrend gebruiken',
+    lead: 'Weeg je je vaak, dan zie je bij Lichaamsgewicht een rustig gemiddelde in plaats van alleen de laatste weging. Het advies is aan.',
+    points: [
+      { head: 'Hoe', text: 'een gemiddelde van je wegingen van de laatste 14 dagen, waarin een weging van een week oud half zo zwaar telt als je laatste weging.' },
+      { head: 'Uitschieter', text: 'een weging die meer dan 3 procent afwijkt van de middelste weging telt niet mee.' },
+      { head: 'Te weinig', text: 'onder de drie wegingen in twee weken, of met een trendgewicht uit MacroFactor, zie je de laatste weging.' },
+      { head: 'Nog niet', text: 'je rugzak, de beenindex en Forge rekenen voorlopig met je laatste weging.' },
+      { head: 'Uit', text: 'je ziet de laatste weging, zoals voorheen. Er verdwijnt niets.' },
     ],
   },
   vetpercentage: {
@@ -1255,6 +1344,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geldt voor', text: 'nieuwe en gewijzigde periodes. Je ziet het altijd eerst in het voorstel.' },
     ],
   },
+  zonderSportschool: {
+    title: 'Kracht zonder sportschool',
+    lead: 'De eerste keuze voor kracht als je in Week een periode zonder sportschool toevoegt. Per periode kun je het nog anders kiezen.',
+    points: [
+      { head: 'Eigen gewicht', text: 'een krachttraining in de sportschool wordt op dezelfde dag een korte sessie met je eigen gewicht: squats, lunges, push-ups en kuitheffingen, 15 tot 20 minuten.' },
+      { head: 'Laten vervallen', text: 'kracht vervalt in die periode. Lopen blijft.' },
+      { head: 'Altijd', text: 'je ziet eerst een voorstel. Een periode die al staat, houdt zijn eigen keuze.' },
+    ],
+  },
   seizoensstrook: {
     title: 'Seizoensstrook',
     lead: 'Bovenaan Ascend staat je seizoen als een strook van nu tot je laatste doel, met een vlag per doel.',
@@ -1315,10 +1413,29 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   bundelWeer: {
     title: 'Weer en kleding',
-    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, kleding, en een regel bij hitte of slechte lucht.',
+    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, waarschuwingen voor onweer, storm, hitte en lawines, regen in het komende uur, een helling of trap in de buurt, de maanstand bij een avondtocht, kleding, en een regel bij hitte of slechte lucht.',
     points: [
       { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
       { head: 'Je plaats', text: 'het weer volgt de plaats die je bij Plaats koos.' },
+    ],
+  },
+  weeralarm: {
+    title: 'Weerwaarschuwingen',
+    lead: 'Op de dag van een tocht of een lange training buiten, en de dag ervoor, een regel bovenaan Vandaag als er onweer, zware windstoten of hitte verwacht wordt. Het advies is aan.',
+    points: [
+      { head: 'Wat je ziet', text: 'het feit, de tijd en de plek, zoals: onweer verwacht vanaf 15:00 in Chamonix. De regel staat er altijd helemaal, je hoeft niets open te tikken.' },
+      { head: 'Wanneer', text: 'onweer, windstoten vanaf 75 km per uur of 30 graden en warmer, tussen 6 en 22 uur. Bij een tocht voor de plek van de tocht, of waar je bent als het weer je locatie volgt; bij een lange training voor de plek van je weer.' },
+      { head: 'Waar het vandaan komt', text: 'het weermodel van Open-Meteo, met de afgeronde plek, hoogstens eens per uur. Het is geen officiële waarschuwing: die van de weerdienst kan een webapp niet lezen. Kijk voor je vertrekt ook op Meteoalarm.' },
+      { head: 'Je planning', text: 'verandert er niet door. Wat je doet, kies je zelf.' },
+    ],
+  },
+  lawinegevaar: {
+    title: 'Lawinegevaar',
+    lead: 'Bij een tocht in de bergen of de sneeuw in het sneeuwseizoen, van november tot en met mei (bij terrein sneeuw het hele jaar), het lawinegevaar uit het bulletin rond de plek van je tocht. Het advies is aan.',
+    points: [
+      { head: 'Wat je ziet', text: 'een regel als: lawinegevaar aanzienlijk, 3 van 5, morgen rond Val d\'Isère. Op een dag van je tocht, of de dag ervoor als je tocht een eigen plek heeft.' },
+      { head: 'Waar het vandaan komt', text: 'het open bulletin van de Europese lawinediensten (EAWS). Welk gebied bij je plek hoort rekent je telefoon zelf uit; alleen een datum en welke lawinedienst gaan naar buiten. De Alpen en de Pyreneeën.' },
+      { head: 'Alleen informatie', text: 'ASCEND zegt niet of je moet gaan; lees het hele bulletin bij de dienst van het land. Je planning verandert er niet door.' },
     ],
   },
   geluid: {

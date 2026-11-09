@@ -8,6 +8,7 @@ import { addDays } from '../utils/dates';
 import { legRestHours, stressProfileOf } from './sportStress';
 import { parseSportHandling, resolveSportCounting, sportRole, type FixedSlot, type RoleSettings } from './sportRole';
 import { templateSport } from './sports';
+import { capitalize } from '../utils/capitalize';
 
 // De vaste volgorde: eerst wat ASCEND plant, dan wat alleen kan meetellen.
 const SPORT_ORDER: readonly AnySportId[] = ALL_SPORT_IDS;
@@ -41,7 +42,6 @@ export function roleChoices(sport: AnySportId): SportRole[] {
 
 const DAY_NAME = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
 export const dayName = (day: number): string => DAY_NAME[day - 1] ?? '';
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function joinDays(days: number[]): string {
   const names = days.map(dayName);
@@ -77,7 +77,7 @@ export function sportCardLine(sport: AnySportId, role: SportRole | undefined, se
     const slots = parseSportHandling(settings.sportHandling).value?.[sport]?.fixed ?? [];
     if (slots.length === 0) return 'Nog geen dag gekozen.';
     const heavy = slots.filter((s) => slotRestHours(sport, s, settings) >= 72);
-    const days = cap(joinDays(slots.map((s) => s.day)));
+    const days = capitalize(joinDays(slots.map((s) => s.day)));
     if (heavy.length > 0) return `${days}. De ${joinDays(heavy.map((s) => s.day))} telt als zwaar: de 72 uur erna blijven je benen vrij van zware kracht.`;
     if (slots.some((s) => slotRestHours(sport, s, settings) >= 48)) return `${days}. De dag erna blijft lichter voor je benen.`;
     return `${days}. ASCEND plant de rest eromheen.`;
@@ -106,7 +106,7 @@ export function sportsRowSummary(settings: RoleSettings): { value: string; sub?:
   const parts = [n.plan > 0 && `${n.plan} gepland`, n.fixed > 0 && `${n.fixed} vaste dag`, n.count > 0 && `${n.count} telt mee`].filter(Boolean) as string[];
   if (parts.length === 0) return { value: 'Niets gekozen' };
   const [first, ...rest] = parts;
-  return rest.length > 0 ? { value: first, sub: cap(rest.join(', ')) } : { value: first };
+  return rest.length > 0 ? { value: first, sub: capitalize(rest.join(', ')) } : { value: first };
 }
 
 // --- de weekstrook -------------------------------------------------------------------------
@@ -152,7 +152,7 @@ export function weekDotsLabel(dots: readonly WeekDot[]): string {
   const parts: string[] = [];
   for (const kind of ['fixed', 'planned', 'rest'] as const) {
     const days = dots.flatMap((d, i) => (d === kind ? [i + 1] : []));
-    if (days.length > 0) parts.push(`${cap(joinDays(days))}: ${DOT_WORD[kind]}`);
+    if (days.length > 0) parts.push(`${capitalize(joinDays(days))}: ${DOT_WORD[kind]}`);
   }
   return parts.length > 0 ? `Deze week. ${parts.join('. ')}.` : 'Deze week niets.';
 }

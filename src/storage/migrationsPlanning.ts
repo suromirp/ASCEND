@@ -10,6 +10,7 @@ import { parseDirection, parseDirectionStart } from '../engine/direction';
 import { resolveWeekBudget } from '../engine/weekBudget';
 import type { LeavePeriod } from '../models/leave';
 import { isRecord } from '../utils/guards';
+import { isNoGymDetails } from '../engine/noGymDetails';
 
 // --- vrije dagen en vakanties (backup schema 5) ------------------------------
 // A period of free days, a holiday or a trek lives in `settings.leavePeriods`
@@ -24,7 +25,10 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
   // A tocht (`trek`, models/leave.ts) is optional and additive: a file from
   // before it has none. One whose details are damaged stays a plain trek
   // period (the walking days are still true); only the details are dropped.
-  const valid = raw.filter((p) => isLeavePeriod(p) || (isRecord(p) && isLeavePeriod({ ...p, trek: undefined })));
+  // A period without a gym (`no_gym`, 9 november) is new and additive in the same way: an older
+  // file has none and reads as before. Damaged choices are dropped and counted; the period stays
+  // and reads as the advice (engine/noGymDetails.ts#resolveNoGym).
+  const valid = raw.filter((p) => isLeavePeriod(p) || (isRecord(p) && isLeavePeriod({ ...p, trek: undefined, noGym: undefined })));
   // Damaged details are lost, so they are counted: you hear that they are gone.
   let lostDetails = 0;
   const periods = valid.map((p) => {
@@ -36,10 +40,14 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
     if (height !== undefined && !(isTrekHeight(height) && (trek?.terrain === 'mountain' || trek?.terrain === 'snow'))) lostDetails++;
     // Een kapotte eigen plek voor het bergweer valt weg en telt mee; de tocht zelf blijft.
     const place = parseTrekPlace(trek?.place);
+    // Choices only on a period without a gym; a damaged one falls away and is counted.
+    const noGym = rec.kind === 'no_gym' && isNoGymDetails(rec.noGym) ? rec.noGym : undefined;
+    if (rec.kind === 'no_gym' && rec.noGym !== undefined && !noGym) lostDetails++;
     if (trek?.place !== undefined && !(place && (trek.terrain === 'mountain' || trek.terrain === 'snow'))) lostDetails++;
     return {
       id: rec.id, kind: rec.kind, startDate: rec.startDate, endDate: rec.endDate,
       ...(rec.note ? { note: rec.note } : {}),
+      ...(noGym ? { noGym: { amount: noGym.amount, strength: noGym.strength, hills: noGym.hills } } : {}),
       ...(trek ? { trek: { name: trek.name.trim(), terrain: trek.terrain, ...(trek.packKg ? { packKg: trek.packKg } : {}), ...(isTrekHeight(trek.highestM) && (trek.terrain === 'mountain' || trek.terrain === 'snow') ? { highestM: Math.round(trek.highestM) } : {}), ...(place && (trek.terrain === 'mountain' || trek.terrain === 'snow') ? { place } : {}), tent: trek.tent, importance: trek.importance } } : {}),
     };
   });

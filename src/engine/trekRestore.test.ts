@@ -135,6 +135,15 @@ describe('alleen een sessie die de tocht verkortte gaat terug naar vol', () => {
     const full = accept(change('remove', t1, [t1], s1), s1);
     expect(row(full, LEG_WEEK_A).plannedMinutes).toBeUndefined();
   });
+  it('zelf verplaatst na de tocht: de lengte komt terug met de reden van de rust na de tocht', () => {
+    const t1 = trek('2026-11-15');
+    const base = planPass(WEEKS.flatMap(week), context([])).sessions;
+    const s1 = accept(change('add', t1, [], base), base);
+    const yours = s1.map((s) => (s.id === LEG_WEEK_A ? { ...s, lock: { by: 'user' as const, at: 'x' } } : s));
+    const keep = change('remove', t1, [t1], yours).proposal.changes.find((c) => c.plannedSessionId === LEG_WEEK_A);
+    expect(keep).toMatchObject({ action: 'keep', restore: true });
+    expect(keep?.reason).toMatch(/De korte versie hoorde bij de 72 uur rust na de tocht\.$/);
+  });
 });
 
 describe('een meerdaagse heuveltocht met rugzak', () => {

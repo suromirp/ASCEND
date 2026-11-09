@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { exerciseById } from '../data/exercises';
+import { EXERCISES, exerciseById } from '../data/exercises';
+import { FAMILY_ONLY } from '../data/exerciseFamilies';
 import type { ExercisePrescription } from '../models/training';
 import { demoStrengthLogs, demoWeights } from './fixtures/strengthLogs';
 import {
@@ -20,6 +21,7 @@ import {
   progress,
   removeLastRow,
   restFor,
+  swapGroups,
   swapOptions,
   swapScore,
   targetText,
@@ -346,12 +348,12 @@ describe('ruilen', () => {
   it('een oefening die de lijst niet kent heeft geen ruilopties', () => {
     expect(swapOptions(undefined, profile)).toEqual([]);
   });
-  it('bij gelijke score een oefening voorop die een spier met te weinig sets bedient, nooit boven een betere', () => {
+  it("bij gelijke score in de groep Zelfde spier, anders een oefening voorop die een spier met te weinig sets bedient, nooit boven een betere", () => {
     const serves = (e: { primary: string[]; secondary: string[] }) => [...e.primary, ...e.secondary].includes('calves');
     for (const id of ['bulgarian-split-squat', 'walking-lunge', 'goblet-squat', 'step-down', 'back-squat', 'leg-press']) {
       const current = exerciseById(id)!;
-      const plain = swapOptions(current, profile, [], 50);
-      const preferred = swapOptions(current, profile, [], 50, ['calves']);
+      const plain = swapGroups(current, profile, [], 50).other;
+      const preferred = swapGroups(current, profile, [], 50, ['calves']).other;
       // Dezelfde keuzes, alleen anders op volgorde.
       expect([...preferred].map((e) => e.id).sort()).toEqual(plain.map((e) => e.id).sort());
       for (let i = 1; i < preferred.length; i++) {
@@ -364,9 +366,58 @@ describe('ruilen', () => {
     // Er is minstens één geval waarin de volgorde echt verandert.
     const changed = ['bulgarian-split-squat', 'walking-lunge', 'goblet-squat', 'step-down', 'back-squat', 'leg-press'].some((id) => {
       const current = exerciseById(id)!;
-      return swapOptions(current, profile, [], 50).map((e) => e.id).join() !== swapOptions(current, profile, [], 50, ['calves']).map((e) => e.id).join();
+      return swapGroups(current, profile, [], 50).other.map((e) => e.id).join() !== swapGroups(current, profile, [], 50, ['calves']).other.map((e) => e.id).join();
     });
     expect(changed).toBe(true);
+  });
+  it('Barbell Bench Press: Dumbbell Bench Press is de eerste echte vervanger en Dips staat niet in die groep', () => {
+    const g = swapGroups(exerciseById('bench-press'), profile);
+    expect(g.same[0].exercise.id).toBe('dumbbell-bench-press');
+    expect(g.same[0].reason).toBe('Zelfde beweging en spieren, met dumbbells.');
+    expect(g.same.map((s) => s.exercise.id)).not.toContain('dip');
+    expect(g.same.map((s) => s.exercise.id)).not.toContain('push-up');
+    expect(g.other.map((e) => e.id)).toEqual(expect.arrayContaining(['dip', 'push-up']));
+    expect(swapOptions(exerciseById('bench-press'), profile).slice(0, g.same.length).map((e) => e.id)).toEqual(g.same.map((s) => s.exercise.id));
+  });
+  it('Dips heeft alleen zijn eigen varianten van de ladder als echte vervanger', () => {
+    const g = swapGroups(exerciseById('dip'), profile);
+    expect(g.same.map((s) => s.exercise.id)).toEqual(['negative-dip', 'weighted-dip']);
+    expect(g.other.length).toBeGreaterThan(0);
+  });
+  it('een ladderstap uit FAMILY_ONLY staat nooit in Zelfde spier, anders', () => {
+    for (const ex of EXERCISES) {
+      for (const e of swapGroups(ex, profile, [], 50).other) expect(FAMILY_ONLY.has(e.id), `${ex.id}: ${e.id}`).toBe(false);
+    }
+    expect(swapGroups(exerciseById('push-up'), profile).same[0].exercise.id).toBe('incline-push-up');
+  });
+  it('Hack Squat is een echte vervanger van de back squat; bij het rek bezet geen stangoefening zonder stang', () => {
+    expect(swapGroups(exerciseById('back-squat'), profile).same.map((s) => s.exercise.id)).toContain('hack-squat');
+    const g = swapGroups(exerciseById('back-squat'), { ...profile, barsKg: [] });
+    expect([...g.same.map((s) => s.exercise), ...g.other].every((e) => e.resistance !== 'barbell')).toBe(true);
+  });
+  it('elke echte vervanger heeft een reden en geen gedachtestreepje', () => {
+    for (const ex of EXERCISES) {
+      for (const s of swapGroups(ex, profile, [], 50).same) {
+        expect(s.reason).toMatch(/^Zelfde beweging en spieren/);
+        expect(s.reason).not.toMatch(/[–—]/);
+      }
+    }
+  });
+  it('een oefening zonder familie valt terug op de oude lijst: geen echte vervangers, de rest op swapScore', () => {
+    const { family: _family, ...bare } = exerciseById('bench-press')!;
+    const g = swapGroups(bare, profile, [], 50);
+    expect(g.same).toEqual([]);
+    for (let i = 1; i < g.other.length; i++) expect(swapScore(bare, g.other[i - 1])).toBeGreaterThanOrEqual(swapScore(bare, g.other[i]));
+    expect(g.other.map((e) => e.id)).toContain('dumbbell-bench-press');
+  });
+  it('elke oefening heeft een familie, en elke familie deelt een hoofdspier', () => {
+    expect(EXERCISES.filter((e) => !e.family).map((e) => e.id)).toEqual([]);
+    const byFamily = new Map<string, typeof EXERCISES>();
+    for (const e of EXERCISES) byFamily.set(e.family!, [...(byFamily.get(e.family!) ?? []), e]);
+    for (const [family, members] of byFamily) {
+      const shared = members[0].primary.filter((m) => members.every((x) => x.primary.includes(m)));
+      expect(shared.length, family).toBeGreaterThan(0);
+    }
   });
 });
 
@@ -431,5 +482,14 @@ describe('de regel op een beendag met een loop eerder vandaag', () => {
   it('met spierpijn staat het in de regel', () => {
     const sore = { injuries: [{ id: 'n1', date: '2026-09-17', bodyPart: 'Kuit rechts', severity: 'licht' as const, kind: 'spierpijn' as const }], checkIns: [] };
     expect(legDayLine('2026-09-17', { logs: [], templates, program, bodyKg: BODY, sore })).toBe('Je benen zijn nog moe van spierpijn. Zelfde gewicht, een herhaling minder is normaal.');
+  });
+});
+
+describe('ladderstappen in Ruilen', () => {
+  const profile = { barsKg: [20] } as unknown as Parameters<typeof swapGroups>[1];
+  it('een ladderstap is alleen een echte vervanger voor wie op dezelfde ladder staat', () => {
+    const ids = (from: string) => swapGroups(exerciseById(from), profile, [], 50).same.map((s) => s.exercise.id);
+    expect(ids('pull-up')).toContain('weighted-pull-up');
+    for (const from of ['chin-up', 'assisted-pull-up', 'lat-pulldown']) expect(ids(from)).not.toContain('weighted-pull-up');
   });
 });

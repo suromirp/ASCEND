@@ -6,7 +6,7 @@ import { isUsableBestEffort } from '../engine/bestEffort';
 import { cleanForgeLog } from '../engine/forgeLog';
 import { validLinkedLater } from '../engine/missedTraining';
 import { capTestJudgments } from '../engine/testJudgment';
-import type { BestEffort, ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SetLog } from '../models/training';
+import { SET_BANDS, type BestEffort, type ExerciseSetLog, type ManualMeasured, type ManualStrength, type MeasuredField, type MetricSource, type SessionLog, type SetBand, type SetLog } from '../models/training';
 import { isObj, ISO_DAY } from './migrationsShared';
 
 // --- Garmin is leidend: SessionLog.manualMeasured -----------------------------
@@ -303,6 +303,89 @@ function cleanSetTimes<T extends ExerciseSetLog[] | null | undefined>(data: T): 
     return sets.every((s, i) => s === e.sets[i]) ? e : { ...e, sets };
   });
   return (changed ? next : data) as T;
+}
+
+// --- SetLog.repsAsked, SetLog.weightKgAsked en SetLog.forgeKg ------------------------------------
+// `forgeKg` (het gewicht dat Forge na een bijstelling in de rij zette) kwam op 9 november 2026 erbij, met
+// dezelfde regel: docs/beslissingen/2026-11-09-forge-review-afvinken.md.
+// Wat Forge vroeg bij een set zonder eigen RIR ("Afvinken telt als het doel",
+// docs/beslissingen/2026-11-08-forge-afvinken-doel.md). Optioneel en aanvullend: oudere bestanden hebben
+// ze niet en lezen zoals altijd (met de onderkant van het bereik). Alleen een geldig getal blijft, en
+// alleen naast `rirAssumed`; een beschadigd veld valt weg en de set houdt zijn herhalingen en gewicht.
+const okAskedReps = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n > 0 && n <= 100;
+const okAskedKg = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1000;
+
+function cleanSetAsked<T extends ExerciseSetLog[] | null | undefined>(data: T): T {
+  if (!Array.isArray(data)) return data;
+  let changed = false;
+  const next = data.map((e) => {
+    if (!e || !Array.isArray(e.sets)) return e;
+    const sets = e.sets.map((s) => {
+      if (!s || typeof s !== 'object' || (!('repsAsked' in s) && !('weightKgAsked' in s) && !('forgeKg' in s))) return s;
+      const keep = s.rirAssumed === true;
+      const repsOk = keep && (!('repsAsked' in s) || okAskedReps(s.repsAsked));
+      const kgOk = keep && (!('weightKgAsked' in s) || okAskedKg(s.weightKgAsked));
+      const forgeOk = keep && (!('forgeKg' in s) || okAskedKg(s.forgeKg));
+      if (repsOk && kgOk && forgeOk) return s;
+      const { repsAsked, weightKgAsked, forgeKg, ...rest } = s;
+      changed = true;
+      return { ...rest, ...(keep && okAskedReps(repsAsked) ? { repsAsked } : {}), ...(keep && okAskedKg(weightKgAsked) ? { weightKgAsked } : {}), ...(keep && okAskedKg(forgeKg) ? { forgeKg } : {}) } as SetLog;
+    });
+    return sets.every((s, i) => s === e.sets[i]) ? e : { ...e, sets };
+  });
+  return (changed ? next : data) as T;
+}
+
+export function migrateLogSetAsked(log: SessionLog): SessionLog {
+  let next = log;
+  const data = cleanSetAsked(log.strengthData);
+  if (data !== log.strengthData) next = { ...next, strengthData: data };
+  const kept = log.manualMeasured?.strength?.strengthData;
+  const keptNext = cleanSetAsked(kept);
+  if (keptNext !== kept && log.manualMeasured?.strength) {
+    next = { ...next, manualMeasured: { ...log.manualMeasured, strength: { ...log.manualMeasured.strength, strengthData: keptNext } } };
+  }
+  return next;
+}
+
+// --- SetLog.seconds, SetLog.band en SetLog.clean (calisthenics) ----------------------------------
+// De houding in seconden, de band die hielp en "Ging het netjes?" (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md).
+// Optioneel en aanvullend, met dezelfde regel als `repsAsked`: een oud bestand heeft ze niet en leest gelijk;
+// alleen een geldige waarde blijft, een beschadigde valt weg en de set houdt zijn herhalingen en gewicht.
+const okSeconds = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0 && n <= 3600;
+const okBand = (b: unknown): b is SetBand => typeof b === 'string' && (SET_BANDS as readonly string[]).includes(b);
+const okClean = (c: unknown): c is boolean => typeof c === 'boolean';
+
+function cleanSetSkill<T extends ExerciseSetLog[] | null | undefined>(data: T): T {
+  if (!Array.isArray(data)) return data;
+  let changed = false;
+  const next = data.map((e) => {
+    if (!e || !Array.isArray(e.sets)) return e;
+    const sets = e.sets.map((s) => {
+      if (!s || typeof s !== 'object' || (!('seconds' in s) && !('band' in s) && !('clean' in s))) return s;
+      const secondsOk = !('seconds' in s) || okSeconds(s.seconds);
+      const bandOk = !('band' in s) || okBand(s.band);
+      const cleanOk = !('clean' in s) || okClean(s.clean);
+      if (secondsOk && bandOk && cleanOk) return s;
+      const { seconds, band, clean, ...rest } = s;
+      changed = true;
+      return { ...rest, ...(okSeconds(seconds) ? { seconds } : {}), ...(okBand(band) ? { band } : {}), ...(okClean(clean) ? { clean } : {}) } as SetLog;
+    });
+    return sets.every((s, i) => s === e.sets[i]) ? e : { ...e, sets };
+  });
+  return (changed ? next : data) as T;
+}
+
+export function migrateLogSetSkill(log: SessionLog): SessionLog {
+  let next = log;
+  const data = cleanSetSkill(log.strengthData);
+  if (data !== log.strengthData) next = { ...next, strengthData: data };
+  const kept = log.manualMeasured?.strength?.strengthData;
+  const keptNext = cleanSetSkill(kept);
+  if (keptNext !== kept && log.manualMeasured?.strength) {
+    next = { ...next, manualMeasured: { ...log.manualMeasured, strength: { ...log.manualMeasured.strength, strengthData: keptNext } } };
+  }
+  return next;
 }
 
 // A log as it comes out of a file, with every set read by migrateSetLog (also

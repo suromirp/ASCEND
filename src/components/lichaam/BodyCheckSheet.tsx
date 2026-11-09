@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../state/AppDataContext';
 import { SEVERITY_CHOICES } from '../../data/bodyCare';
 import { answerWeek, KIND_CHOICES, suggestionFor } from '../../engine/bodyCheck';
-import { BODY_VIEWS, injuryNameFor, SIDE_LABEL, sideChoicesFor, spotTitle, type BodySpot, type BodyView, type SideChoice } from '../../engine/bodyMap';
+import { BODY_VIEWS, injuryNameFor, SIDE_LABEL, sideChoicesFor, spotTitle, type SideChoice } from '../../engine/bodyMap';
+import type { BodySpot, BodyView } from '../../data/bodySpots';
 import { resolveFigure } from '../../engine/figureSettings';
 import type { InjuryKind, InjurySeverity } from '../../models/injury';
 import { todayISO } from '../../utils/dates';
@@ -18,6 +19,7 @@ import { TextButton } from '../TextButton';
 import { Card, Eyebrow, PrimaryButton, Segmented, SheetGrip } from '../ui';
 import { BodyFigure, SpotThumb } from './BodyFigure';
 import { REPORT_TIMEOUT_MS } from './reportConfig';
+import { capitalize } from '../../utils/capitalize';
 
 // Het blad van de kaart "Hoe voelt je lijf?" (docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md), in
 // drie stappen in hetzelfde blad: een plek aanwijzen (alleen bij "Iets anders aanwijzen"), kiezen wat
@@ -237,7 +239,7 @@ function Suggestion({
               {s.direct && <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{s.direct}</p>}
               <ul className="flex flex-col gap-1.5">
                 {s.fysio.map((line) => (
-                  <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line.charAt(0).toUpperCase() + line.slice(1)}</li>
+                  <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{capitalize(line)}</li>
                 ))}
               </ul>
             </div>

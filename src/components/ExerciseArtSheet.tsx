@@ -13,7 +13,8 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { useAppData } from '../state/AppDataContext';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
-import { TextLink } from './TextButton';
+import { TextButton, TextLink } from './TextButton';
+import { ExerciseGuideBlock } from './ExerciseGuide';
 import { Card, Eyebrow, SheetGrip } from './ui';
 import { MuscleFigure } from './MuscleFigure';
 import { useMotionMode } from './motion';
@@ -94,9 +95,16 @@ function Movement({ drawing, name, note }: { drawing: ExerciseDrawing; name: str
   );
 }
 
-export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; onClose: () => void }) {
+// De inhoud van het blad voor één oefening. Het blad zelf (de rand, het greepje, sluiten) staat in ExerciseArtSheet,
+// zodat een tik op Lichter of Zwaarder de inhoud wisselt zonder dat het blad opnieuw openschuift.
+function ArtBody({ exerciseId, requestClose, onOpen, backName, onBack }: {
+  exerciseId: string;
+  requestClose: () => void;
+  onOpen: (id: string) => void;
+  backName: string | null;
+  onBack: () => void;
+}) {
   const { settings } = useAppData();
-  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const exercise = exerciseById(exerciseId);
   const link = exerciseArt(exerciseId);
   const wantsDrawing = !!link && showsDrawing(resolveExerciseArt(settings));
@@ -138,71 +146,116 @@ export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; 
   const cues = splitCues(exercise.cues);
 
   return (
+    <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-8">
+      <SheetHeader eyebrow={PATTERN_LABEL[exercise.pattern]} title={exercise.name} onClose={requestClose} />
+      {backName && (
+        <div>
+          <TextButton tone="dim" onClick={onBack}>{`Terug naar ${backName}`}</TextButton>
+        </div>
+      )}
+
+      {hasDrawing && link && drawing && <Movement drawing={drawing} name={exercise.name} note={link.match === 'variant' ? link.note : undefined} />}
+      {loading && <div className="ea-vlak" aria-hidden="true" />}
+
+      <div className="ea-licht rounded-2xl border p-3.5" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }} role="group" aria-label="Werkt op">
+        <div className={big ? 'flex flex-col items-stretch gap-3.5' : 'flex items-center gap-4'}>
+          <div className={`flex shrink-0 items-start gap-1.5 ${big ? 'justify-center gap-4' : ''}`}>
+            {sides.map((side) => (
+              <div key={side} className="ea-fig flex flex-col items-center gap-1">
+                <MuscleFigure marks={marks} side={side} crop={crop} width={w} height={h} figure={figure} />
+                {sides.length > 1 && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{side === 'front' ? 'Voor' : 'Achter'}</span>}
+              </div>
+            ))}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="mb-2"><Eyebrow tone="var(--color-sport-strength)">Werkt op</Eyebrow></div>
+            <div className="flex items-start gap-2.5">
+              <span aria-hidden="true" className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'var(--color-sport-strength)' }} />
+              <div>
+                <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoofdspier</span>
+                <span className="block text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{muscleNames(primary)}</span>
+              </div>
+            </div>
+            {secondary.length > 0 && (
+              <div className="mt-2 flex items-start gap-2.5">
+                <span aria-hidden="true" className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'var(--color-sport-strength)', opacity: 0.4 }} />
+                <div>
+                  <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>Helpt mee</span>
+                  <span className="block text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{muscleNames(secondary)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <span className="sr-only">{`${primary.map((g) => MUSCLE_LABEL[g]).join(', ')} werken het hardst.`}</span>
+      </div>
+
+      {exercise.guide ? (
+        <div className="pt-1">
+          <ExerciseGuideBlock exercise={exercise} onOpen={onOpen} />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3.5 pt-1">
+          {cues.map((c) => (
+            <div key={c.text} className="flex flex-col gap-0.5">
+              {c.label && <Eyebrow>{c.label}</Eyebrow>}
+              <p className="text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{c.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {hasDrawing && (
+        <div className="flex flex-col items-start">
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Tekening: Everkinetic en Bryl Lim, CC BY-SA 4.0, aangepast.</p>
+          <TextLink tone="dim" size="xs" href="https://creativecommons.org/licenses/by-sa/4.0/deed.nl">Licentie CC BY-SA 4.0</TextLink>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; onClose: () => void }) {
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  // Een tik op Lichter of Zwaarder legt de volgende oefening op het spoor; Terug haalt hem er weer af.
+  const [trail, setTrail] = useState<string[]>([exerciseId]);
+  const shownId = trail[trail.length - 1];
+  // Bij een wissel (Lichter, Zwaarder, Terug) begint de nieuwe uitleg bovenaan en de focus staat op het blad,
+  // niet op een knop die uit de DOM verdween.
+  const firstId = useRef(shownId);
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (firstId.current === shownId) return;
+    firstId.current = shownId;
+    const sheet = anchorRef.current?.closest<HTMLElement>('[role="dialog"]');
+    if (!sheet) return;
+    sheet.scrollTop = 0;
+    sheet.focus({ preventScroll: true });
+  }, [shownId]);
+  if (!exerciseById(shownId)) return null;
+  const previous = trail.length > 1 ? exerciseById(trail[trail.length - 2]) : undefined;
+
+  return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div
           ref={sheetRef}
-          className={`relative max-h-[92vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          tabIndex={-1}
+          className={`relative max-h-[92vh] w-full max-w-md overflow-y-auto outline-none ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
-          aria-label={`Uitleg van ${exercise.name}`}
+          aria-label={`Uitleg van ${exerciseById(shownId)?.name ?? ''}`}
         >
           <SheetGrip />
-          <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-8">
-            <SheetHeader eyebrow={PATTERN_LABEL[exercise.pattern]} title={exercise.name} onClose={requestClose} />
-
-            {hasDrawing && link && drawing && <Movement drawing={drawing} name={exercise.name} note={link.match === 'variant' ? link.note : undefined} />}
-            {loading && <div className="ea-vlak" aria-hidden="true" />}
-
-            <div className="ea-licht rounded-2xl border p-3.5" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }} role="group" aria-label="Werkt op">
-              <div className={big ? 'flex flex-col items-stretch gap-3.5' : 'flex items-center gap-4'}>
-                <div className={`flex shrink-0 items-start gap-1.5 ${big ? 'justify-center gap-4' : ''}`}>
-                  {sides.map((side) => (
-                    <div key={side} className="ea-fig flex flex-col items-center gap-1">
-                      <MuscleFigure marks={marks} side={side} crop={crop} width={w} height={h} figure={figure} />
-                      {sides.length > 1 && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{side === 'front' ? 'Voor' : 'Achter'}</span>}
-                    </div>
-                  ))}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-2"><Eyebrow tone="var(--color-sport-strength)">Werkt op</Eyebrow></div>
-                  <div className="flex items-start gap-2.5">
-                    <span aria-hidden="true" className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'var(--color-sport-strength)' }} />
-                    <div>
-                      <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoofdspier</span>
-                      <span className="block text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{muscleNames(primary)}</span>
-                    </div>
-                  </div>
-                  {secondary.length > 0 && (
-                    <div className="mt-2 flex items-start gap-2.5">
-                      <span aria-hidden="true" className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'var(--color-sport-strength)', opacity: 0.4 }} />
-                      <div>
-                        <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>Helpt mee</span>
-                        <span className="block text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{muscleNames(secondary)}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <span className="sr-only">{`${primary.map((g) => MUSCLE_LABEL[g]).join(', ')} werken het hardst.`}</span>
-            </div>
-
-            <div className="flex flex-col gap-3.5 pt-1">
-              {cues.map((c) => (
-                <div key={c.text} className="flex flex-col gap-0.5">
-                  {c.label && <Eyebrow>{c.label}</Eyebrow>}
-                  <p className="text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{c.text}</p>
-                </div>
-              ))}
-            </div>
-
-            {hasDrawing && (
-              <div className="flex flex-col items-start">
-                <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Tekening: Everkinetic en Bryl Lim, CC BY-SA 4.0, aangepast.</p>
-                <TextLink tone="dim" size="xs" href="https://creativecommons.org/licenses/by-sa/4.0/deed.nl">Licentie CC BY-SA 4.0</TextLink>
-              </div>
-            )}
-          </Card>
+          <div ref={anchorRef} className="contents" />
+          <ArtBody
+            key={shownId}
+            exerciseId={shownId}
+            requestClose={requestClose}
+            onOpen={(id) => setTrail([...trail, id])}
+            backName={previous?.name ?? null}
+            onBack={() => setTrail(trail.slice(0, -1))}
+          />
         </div>
       </div>
     </Portal>

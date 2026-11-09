@@ -300,8 +300,7 @@ html[data-sky='night'] {
 
 /* Een kaart op de nachtlucht heeft een haarlijn in plaats van een witte schaduw. */
 html[data-sky='night'] .sky-band .ui-card,
-html[data-sky='night'] .light-card,
-html[data-sky='night'] .sky-panel {
+html[data-sky='night'] .light-card {
   box-shadow: inset 0 0 0 1px var(--color-light-border);
 }
 
@@ -397,30 +396,6 @@ html[data-sky='night'] .sky-band::before {
 .sky-band > :not(.sky-ridge) {
   position: relative;
   z-index: 1;
-}
-
-/* Een vlak lucht halverwege een pagina (SkyPanel): het verloop van de lucht, met een
-   smalle rand bergen onderaan. Geen animatie. */
-.sky-panel {
-  position: relative;
-  overflow: hidden;
-  border-radius: 16px;
-  padding: 16px 16px 44px;
-  background: linear-gradient(180deg, var(--color-sky-top) 0%, var(--color-sky-bottom) 100%);
-}
-.sky-panel > :not(.sky-panel-ridge) {
-  position: relative;
-  z-index: 1;
-}
-.sky-panel > .sky-panel-ridge {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  width: 100%;
-  height: 34px;
-  display: block;
-  pointer-events: none;
 }
 
 /* Het bewegende logo (components/AscendAnimatedLogo.tsx, ook het openingsscherm):
@@ -946,6 +921,12 @@ html[data-motion='calm'] .mx-unfold-arrow {
   transition: width 0.4s ease-out;
 }
 
+/* Een vraag die in een rij van Forge verschijnt ("Ging het netjes?"): zacht erin, een keer. Rustig, Uit en
+   beperkte beweging: meteen op de eindstand (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md). */
+.mx-row-in {
+  animation: ascend-fade-in 0.24s ease-out both;
+}
+
 /* De pil van een lopende training (components/forge/SessionPill.tsx): schuift in, de stip erin ademt zacht
    zolang de klok loopt. Rustig: wel inschuiven, geen adem. Uit en beperkte beweging: meteen de eindstand. */
 .mx-pill-in {
@@ -1129,7 +1110,8 @@ html[data-motion='calm'] .mx-pic-1,
 html[data-motion='calm'] .mx-pic-2,
 html[data-motion='calm'] .mx-pic-3,
 html[data-motion='calm'] .mx-attention,
-html[data-motion='calm'] .mx-chart-in {
+html[data-motion='calm'] .mx-chart-in,
+html[data-motion='calm'] .mx-row-in {
   animation: none;
 }
 

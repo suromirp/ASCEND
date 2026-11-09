@@ -191,7 +191,8 @@ function historyDumbbellTotal(history: ExerciseHistory, settings: ResolvedStreng
 }
 
 export function exerciseView(history: ExerciseHistory, settings: ResolvedStrengthSettings, bodyKg: number | undefined, today: string, tiredNow?: LegsTired, strengthDates?: string[]): ExerciseView {
-  const ctx = { exercise: history.exercise, bodyKg, maxToFailure: settings.estimateUpTo, dumbbellTotal: historyDumbbellTotal(history, settings) };
+  // "Afvinken telt als het doel": de lijn leest de sets zoals het voorstel (engine/assumedSets.ts).
+  const ctx = { exercise: history.exercise, bodyKg, maxToFailure: settings.estimateUpTo, dumbbellTotal: historyDumbbellTotal(history, settings), ...(settings.assumedCounts ? { confirm: {} } : {}) };
   const points = analyseSessions(history.sessions, ctx);
   const range = deriveRange(points);
   const line: LinePoint[] = [];

@@ -3,7 +3,8 @@ import { GoalMilestoneProgressRepo, GoalMilestonesRepo, SessionLogsRepo, Session
 import { applyStrengthTakeovers, restoreStrengthTakeovers } from './macrofactorLead';
 import { getMacroFactorState, setMacroFactorLeads, setMappings, getMapping, importMacroFactorText } from './macrofactor';
 import { recordClearedMilestones } from './milestoneClearing';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { migrateLogManualMeasured, migrateManualMeasured } from './migrations';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { readMacroFactorCsv } from '../engine/macrofactorImport';

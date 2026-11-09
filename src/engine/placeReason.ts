@@ -13,6 +13,7 @@ import type { PlannedSession } from '../models/training';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { LeavePeriod } from '../models/leave';
 import { formatWeekdayDayMonthNL, isoWeekday, localDateOf, weekdayLongNL } from '../utils/dates';
+import { capitalize } from '../utils/capitalize';
 
 type PlaceReasonKind = 'catchUp' | 'proposal' | 'yours' | 'leave' | 'rule' | 'pattern' | 'unknown';
 
@@ -81,14 +82,12 @@ function leaveName(period: LeavePeriod | undefined): string {
   return 'je vrije dagen';
 }
 
-const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-
 // De plek zonder slot: wat de planningsronde zelf op de rij zette, of het weekpatroon.
 function systemReason(s: PlannedSession, input: PlaceReasonInput): PlaceReason {
   const fromLine = s.movedFromDate && moved(s) ? ` Hij stond op ${day(s.movedFromDate)}.` : '';
   if (s.leave) {
     const period = input.leavePeriods?.find((p) => p.id === s.leave!.periodId);
-    if (s.leave.role === 'placed') return { kind: 'leave', text: `${capital(leaveName(period))} zette hem hier.` };
+    if (s.leave.role === 'placed') return { kind: 'leave', text: `${capitalize(leaveName(period))} zette hem hier.` };
     if (s.leave.role === 'moved') return { kind: 'leave', text: `Hij schoof hierheen voor ${leaveName(period)}.${fromLine}` };
   }
   if (s.raceBlock && s.raceBlock.from !== s.scheduledDate) {

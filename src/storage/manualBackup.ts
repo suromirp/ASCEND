@@ -9,7 +9,7 @@ import type { BackupFileAdapter } from './backupTypes';
 import type { AppBackupFolder } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
-export const MANUAL_BACKUP_LIMIT_MS = 20_000;
+const MANUAL_BACKUP_LIMIT_MS = 20_000;
 // Het geheel, inclusief het klaarmaken van de tekst; langer dan het schrijven zelf.
 const RUN_LIMIT_MS = 30_000;
 const MAX_NAMES = 20;

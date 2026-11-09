@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { wipeAllData } from './database';
 import { getAirQuality, refreshAirQuality } from './airQuality';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 
 // Nagemaakte plek en antwoorden: geen netwerk.
 const place = { name: 'Ergens', lat: 52.1, lon: 5.1 };

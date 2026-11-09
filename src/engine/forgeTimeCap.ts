@@ -15,11 +15,12 @@ import { cleanExerciseName } from './exerciseMatch';
 import { MOUNTAIN_MUSCLES } from './mountainMuscles';
 import { exerciseKey } from './strengthHistory';
 import { isLegHeavyTemplate } from './scheduler';
+import { joinNL } from '../utils/joinNL';
 
 export const TIME_CAP_OPTIONS = [0, 45, 60, 75, 90] as const;
 export type TimeCap = (typeof TIME_CAP_OPTIONS)[number];
-export const TIME_CAP_ADVICE_STRENGTH: TimeCap = 60;
-export const TIME_CAP_ADVICE_LEGS: TimeCap = 75;
+const TIME_CAP_ADVICE_STRENGTH: TimeCap = 60;
+const TIME_CAP_ADVICE_LEGS: TimeCap = 75;
 
 // Een oefening houdt minstens zoveel sets voordat hij helemaal wegvalt.
 const KEEP_SETS = 2;
@@ -128,11 +129,6 @@ export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: Exer
 
 const roundTo5 = (m: number) => Math.max(5, Math.round(m / 5) * 5);
 
-function joinNL(names: string[]): string {
-  if (names.length <= 1) return names.join('');
-  return `${names.slice(0, -1).join(', ')} en ${names.at(-1)}`;
-}
-
 // De ene rustige regel in Forge, alleen als er iets wegviel.
 // "Ingekort tot ongeveer 60 minuten: 2 sets bijwerk vallen weg."
 export function timeCapLine(r: TimeCapResult): string | undefined {
@@ -173,6 +169,25 @@ export function capLineFor(r: TimeCapResult, workout: readonly { slot: string; r
   // Alleen als de kern zelf al boven de grens komt; een oefening die je zelf liet staan is geen kern.
   return timeCapLine({ ...r, setsRemoved, dropped, minutes: r.perSet * sets, coreOver: r.perSet * coreSets > r.cap });
 }
+
+// Hoeveel sets van deze oefening de tijdsgrens wegnam en die nog weg zijn: het verschil tussen het voorschrift
+// en wat het inkorten overliet, min wat jij er sindsdien bij zette (werksets nu in de sessie, plus de sets die
+// jij zelf weghaalde en kunt terugzetten). Zo zegt de oefening zelf wat er wegviel, en Set toevoegen telt mee.
+// De kern wordt nooit ingekort, dus daar is het altijd 0.
+// `effSlots` zijn de voorschriften na Lichter (legDayEase.ts#easeSlots): een set die Lichter wegnam telt niet als
+// "weg door je tijdsgrens", dus het nu-aantal wordt tegen de voorschriften van het scherm gehouden.
+export function capRemovedFor(r: Pick<TimeCapResult, 'from' | 'slots'>, ex: { slot: string; rows: readonly { kind: string }[]; dropped?: readonly unknown[] }, effSlots?: readonly ExercisePrescription[]): number {
+  const before = r.from.find((s) => s.id === ex.slot);
+  const after = r.slots.find((s) => s.id === ex.slot);
+  const shown = effSlots?.find((s) => s.id === ex.slot) ?? after;
+  if (!before || !after || before.priority === 'core') return 0;
+  const removed = prescribedSets(before) - prescribedSets(after);
+  const now = ex.rows.filter((row) => row.kind === 'work').length + (ex.dropped?.length ?? 0);
+  return Math.max(0, removed - Math.max(0, now - prescribedSets(shown ?? after)));
+}
+
+// "1 set weg door je tijdsgrens", bij de oefening zelf.
+export const capRemovedLine = (n: number): string => `${n === 1 ? '1 set' : `${n} sets`} weg door je tijdsgrens`;
 
 // Een oefening die als hoofdspier een bergspier traint (kuit, scheen, bilspieren; engine/mountainMuscles.ts).
 // Alleen bij een bergdoel met "Spieren voor de berg" aan geeft Forge dit als `keep` aan capSlots.

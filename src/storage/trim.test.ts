@@ -4,7 +4,8 @@ import { clearConnection, saveConnection, syncWatchActivities } from './external
 import { applyAlignments, restoreAlignments } from './watchAlign';
 import { attachDetailToStoredLog } from './activityDetail';
 import { fetchTrimStreams, trimStoredLog, TrimUnavailableError, undoTrimStoredLog } from './trim';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { migrateLogTrim, migrateSessionTrim } from './migrations';
 import { buildActivityDetail } from '../engine/activityDetail';
 import { trimActivity } from '../engine/activityTrim';

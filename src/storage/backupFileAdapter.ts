@@ -6,7 +6,7 @@
 // picks once and are read back the same way. Firefox and iOS Safari have
 // no such API at all — there the only options are the existing
 // blob-download/`<a download>` trick and a plain `<input type=file>` picker.
-// Core/application code (storage/backup.ts) never branches on browser here;
+// Core/application code (storage/backupNormalize.ts) never branches on browser here;
 // it only ever calls the BackupFileAdapter interface from backupTypes.ts.
 
 import { MetaRepo } from './database';

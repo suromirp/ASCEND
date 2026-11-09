@@ -138,6 +138,25 @@ export function cleanWeightRanges(raw: unknown): WeightRange[] | undefined {
   return list.length > 0 ? list : undefined;
 }
 
+// De standen van een toestel: oplopend, zonder dubbele, hoogstens 40, elk tussen 0,25 en 500 kg.
+export interface MachineStandList {
+  kg: number[];
+  only?: boolean;
+}
+
+export const STAND_LIMITS = { minKg: 0.25, maxKg: 500, maxCount: 40, maxExercises: 100 };
+
+// De standen van een toestel zoals ze opgeslagen mogen worden, of undefined bij rommel. Een lege lijst
+// blijft een lijst: dat is een toestel dat al ingelezen is. Meer dan 40: de lichtste 40.
+export function cleanStandList(raw: unknown): MachineStandList | undefined {
+  if (!isRecord(raw) || !Array.isArray(raw.kg)) return undefined;
+  const { minKg, maxKg, maxCount } = STAND_LIMITS;
+  const kg = [...new Set(raw.kg.filter((n): n is number => isNum(n) && n >= minKg && n <= maxKg).map(r2n))].sort((a, b) => a - b).slice(0, maxCount);
+  // Een lijst die niet leeg was en helemaal wegvalt is beschadigd: geen stil lege lijst, het toestel wordt opnieuw ingelezen.
+  if (kg.length === 0 && raw.kg.length > 0) return undefined;
+  return { kg, ...(raw.only === true ? { only: true } : {}) };
+}
+
 export interface GymProfile {
   id: string;
   name: string;
@@ -163,6 +182,11 @@ export interface GymProfile {
   addOnKg?: number[];
   // Own choice per machine, over the gym's: a list replaces it, an empty list means none.
   exerciseAddOnKg?: Record<string, number[]>;
+  // De standen per toestel (oefening-id): gewichten die op dat blok in deze sportschool bestaan omdat je ze
+  // gebruikte (docs/beslissingen/2026-11-09-forge-toestelstanden.md, engine/toestelStanden.ts). Een sleutel,
+  // ook met een lege lijst, betekent "ingelezen": wat je weghaalde komt niet terug. `only`: alleen deze
+  // standen, de oude gesloten lijst. Afwezig: de oude stand van zaken (lijst en bereik hierboven).
+  exerciseStandsKg?: Record<string, MachineStandList>;
   // Er zijn veiligheidsarmen of een rek met vangers: tot het uiterste gaan mag dan, ook met een stang
   // op je borst of schouders (engine/spotter.ts). Absent: er zijn er geen.
   spotterRack?: boolean;
@@ -200,6 +224,13 @@ export interface StrengthSettings {
   // After ticking a top set or the last set of an exercise, the quick question "Hoeveel over?" (0, 1, 2, 3+)
   // in the row (decision 2026-11-03-forge-na-de-eerste-vergelijking.md). Absent = on.
   quickRir?: boolean;
+  // Calisthenics in Forge (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md), all absent = on.
+  // "Stappen bij calisthenics": the step, the test and Stap lichter / Stap zwaarder on a ladder exercise.
+  ladderRow?: boolean;
+  // "Ging het netjes?" after a working set on a ladder step that reaches the floor (SetLog.clean).
+  askClean?: boolean;
+  // "Band bij optrekken en dip": the band choice on Pull-Up and Dip (SetLog.band).
+  askBand?: boolean;
   // The block "Geschatte 1RM" with a trend on the Forge page.
   showOneRm?: boolean;
   // The choice between the 1RM and the working weight on the cards of Forge, one
@@ -240,6 +271,18 @@ export interface StrengthSettings {
   // die anders ging dan gevraagd wordt de volgende open set bijgesteld, en wie de bovenkant van het bereik
   // haalde met de gevraagde RIR krijgt de volgende keer meteen de kleinste stap zwaarder.
   reckon?: boolean;
+  // "Standen onthouden" (default on, docs/beslissingen/2026-11-09-forge-toestelstanden.md): Forge onthoudt de
+  // gewichten die je op een kabel of toestel met blok afvinkt als standen (engine/toestelStanden.ts). Uit: er
+  // komen geen standen bij en er wordt niets ingelezen; bestaande standen blijven werken.
+  learnStands?: boolean;
+  // "Afvinken telt als het doel" (default on, docs/beslissingen/2026-11-08-forge-afvinken-doel.md): een
+  // werkset die je afvinkte zonder RIR en die ging zoals gevraagd, telt met de RIR van het doel
+  // (engine/assumedSets.ts). Bij twijfel vraagt Forge "Hoeveel over?". Uit: zoals voor 8 november.
+  assumedCounts?: boolean;
+  // "Vermoeidheid tussen oefeningen" (default on, docs/beslissingen/2026-11-09-forge-vermoeidheid-tussen-oefeningen.md):
+  // staan er meer harde sets voor dezelfde spieren voor een oefening dan je normaal deed, dan begint de eerste set
+  // iets lichter (engine/forgeCrossFatigue.ts). Uit: alleen de vermoeidheid binnen een oefening telt.
+  crossFatigue?: boolean;
   // Zonder spotter: Forge schrijft bij een stangoefening waar falen gevaarlijk is minstens 1 herhaling
   // in reserve voor, tenzij de sportschool veiligheidsarmen heeft (default on). Nooit een blokkade:
   // 0 invullen kan altijd (engine/spotter.ts).
@@ -275,6 +318,9 @@ export interface ResolvedStrengthSettings {
   carryMode: CarryMode;
   showPlates: boolean;
   quickRir: boolean;
+  ladderRow: boolean;
+  askClean: boolean;
+  askBand: boolean;
   showOneRm: boolean;
   oneRmView: OneRmView;
   showMacroFactorOneRm: boolean;
@@ -294,6 +340,9 @@ export interface ResolvedStrengthSettings {
   checkFrom: string;
   adjustLive: boolean;
   reckon: boolean;
+  learnStands: boolean;
+  assumedCounts: boolean;
+  crossFatigue: boolean;
   noSpotter: boolean;
   rirPrefill: RirPrefill;
   mountainMuscles: boolean;
@@ -381,6 +430,15 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
       .slice(0, 100);
     if (entries.length > 0) exerciseWeightRanges = Object.fromEntries(entries);
   }
+  let exerciseStandsKg: Record<string, MachineStandList> | undefined;
+  if (isRecord(raw.exerciseStandsKg)) {
+    const entries = Object.entries(raw.exerciseStandsKg)
+      .filter(([id]) => id.length > 0 && id.length <= 60)
+      .map(([id, v]): [string, MachineStandList | undefined] => [id, cleanStandList(v)])
+      .filter((e): e is [string, MachineStandList] => !!e[1])
+      .slice(0, STAND_LIMITS.maxExercises);
+    if (entries.length > 0) exerciseStandsKg = Object.fromEntries(entries);
+  }
   const addOnKg = cleanAddOns(raw.addOnKg);
   let exerciseAddOnKg: Record<string, number[]> | undefined;
   if (isRecord(raw.exerciseAddOnKg)) {
@@ -401,6 +459,7 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
     ...(exerciseStepKg ? { exerciseStepKg } : {}),
     ...(exerciseWeightsKg ? { exerciseWeightsKg } : {}),
     ...(exerciseWeightRanges ? { exerciseWeightRanges } : {}),
+    ...(exerciseStandsKg ? { exerciseStandsKg } : {}),
     ...(addOnKg ? { addOnKg } : {}),
     ...(exerciseAddOnKg ? { exerciseAddOnKg } : {}),
     ...(raw.spotterRack === true ? { spotterRack: true } : {}),
@@ -483,6 +542,9 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (carryMode) out.carryMode = carryMode;
   if (typeof raw.showPlates === 'boolean') out.showPlates = raw.showPlates;
   if (typeof raw.quickRir === 'boolean') out.quickRir = raw.quickRir;
+  if (typeof raw.ladderRow === 'boolean') out.ladderRow = raw.ladderRow;
+  if (typeof raw.askClean === 'boolean') out.askClean = raw.askClean;
+  if (typeof raw.askBand === 'boolean') out.askBand = raw.askBand;
   if (typeof raw.showOneRm === 'boolean') out.showOneRm = raw.showOneRm;
   const oneRmView = ONE_RM_VIEWS.find((v) => v === raw.oneRmView);
   if (oneRmView) out.oneRmView = oneRmView;
@@ -503,6 +565,9 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (fatigue) out.fatigue = fatigue;
   if (typeof raw.adjustLive === 'boolean') out.adjustLive = raw.adjustLive;
   if (typeof raw.reckon === 'boolean') out.reckon = raw.reckon;
+  if (typeof raw.learnStands === 'boolean') out.learnStands = raw.learnStands;
+  if (typeof raw.assumedCounts === 'boolean') out.assumedCounts = raw.assumedCounts;
+  if (typeof raw.crossFatigue === 'boolean') out.crossFatigue = raw.crossFatigue;
   if (typeof raw.noSpotter === 'boolean') out.noSpotter = raw.noSpotter;
   if (typeof raw.mountainMuscles === 'boolean') out.mountainMuscles = raw.mountainMuscles;
   const added = normalizeAddedExercises(raw.addedExercises);
@@ -544,6 +609,9 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     carryMode: s.carryMode ?? (s.carryWeights === false ? 'off' : 'equal'),
     showPlates: s.showPlates ?? true,
     quickRir: s.quickRir ?? true,
+    ladderRow: s.ladderRow ?? true,
+    askClean: s.askClean ?? true,
+    askBand: s.askBand ?? true,
     showOneRm: s.showOneRm ?? true,
     oneRmView: s.oneRmView ?? 'one_rm',
     showMacroFactorOneRm: s.showMacroFactorOneRm ?? true,
@@ -562,6 +630,9 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     checkFrom: s.checkFrom ?? DEFAULT_CHECK_FROM,
     adjustLive: s.adjustLive ?? true,
     reckon: s.reckon ?? true,
+    learnStands: s.learnStands ?? true,
+    assumedCounts: s.assumedCounts ?? true,
+    crossFatigue: s.crossFatigue ?? true,
     noSpotter: s.noSpotter ?? true,
     rirPrefill: s.rirPrefill ?? 'hint',
     mountainMuscles: s.mountainMuscles ?? true,
@@ -631,6 +702,6 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
 // them on a settings page does not recount the whole strength history.
 export function checkModelKey(raw: StrengthSettings | undefined): string {
   const r = normalizeStrengthSettings(raw) ?? {};
-  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, stackWeights: r.stackWeights, lighterAfterBreak: r.lighterAfterBreak, dumbbellLog: r.dumbbellLog, fatigue: r.fatigue, noSpotter: r.noSpotter, reckon: r.reckon, program: r.program, checkFrom: r.checkFrom };
+  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, stackWeights: r.stackWeights, lighterAfterBreak: r.lighterAfterBreak, dumbbellLog: r.dumbbellLog, fatigue: r.fatigue, noSpotter: r.noSpotter, reckon: r.reckon, learnStands: r.learnStands, assumedCounts: r.assumedCounts, program: r.program, checkFrom: r.checkFrom };
   return JSON.stringify(keep);
 }

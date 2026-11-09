@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { GoalMilestonesRepo, TrainingGoalsRepo, wipeAllData } from './database';
 import { RoutePlanRepo } from './routePlan';
 import { migrateGoalKinds } from './goalMigration';
-import { normalizeBackupToCurrentModel } from './backup';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { migrateTrainingGoal, migrateTrainingGoals, priorityFromPlanRole, readGoalDetails, readGoalKind, readGoalPriority, routePlanUsesTent } from './migrations';
 import type { GoalMilestone, GoalRequirement, TrainingGoal } from '../models/goals';
 import { computeMainGoalReadiness } from '../engine/gr5Readiness';

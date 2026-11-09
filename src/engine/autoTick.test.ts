@@ -1,13 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import type { ExternalActivity } from './activityImport';
+import { durationIsClose, type ExternalActivity } from './activityImport';
 import {
   QUESTION_HOURS,
   applyFeedback,
   autoTickMatch,
   canRejectAutoLog,
-  durationIsClose,
   pendingQuestions,
   planAutoTicks,
   upsertAutoLogged,

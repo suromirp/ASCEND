@@ -10,6 +10,7 @@ import { adherenceStatus } from './onCourse';
 import type { WeekReview } from './weekReview';
 import { LOAD_JUMP, loadVersusBefore, type WeekLoad } from './standing';
 import { formatNumberNL } from '../utils/number';
+import { capitalize } from '../utils/capitalize';
 
 export interface RhythmWeek {
   weekStart: string;
@@ -35,7 +36,7 @@ export interface Rhythm {
 const VERDICT = { on: 'Op koers', nearly: 'Bijna op koers', behind: 'Achter op schema' } as const;
 
 // "Op rij" komt pas in beeld vanaf drie trainingsdagen: bij 0, 1 of 2 is er niets te vieren.
-export const STREAK_FROM = 3;
+const STREAK_FROM = 3;
 
 export function buildRhythm(input: { adherence: Adherence; thisWeek: WeekReview | null; streak: number }): Rhythm {
   const { adherence, thisWeek, streak } = input;
@@ -87,7 +88,7 @@ export function standSentence(input: { legLevel: 0 | 1 | 2 | undefined; load?: L
     parts.push(rhythm.status === 'on' ? 'je houdt je ritme vast' : rhythm.status === 'nearly' ? 'je ritme zit er bijna in' : 'je ritme is er even uit');
   }
   const joined = parts.length === 0 ? '' : `${parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1]}`}.`;
-  const sentence = joined ? joined.charAt(0).toUpperCase() + joined.slice(1) : '';
+  const sentence = joined ? capitalize(joined) : '';
   const rest = restWeek ? 'Deze week is een rustweek, zodat de weken ervoor binnenkomen.' : '';
   return [sentence, rest].filter(Boolean).join(' ');
 }

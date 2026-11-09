@@ -16,6 +16,7 @@ import type { PlanChangeItem } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { isDateInForecastRange } from './planningHorizon';
 import { weekdayShortNL, formatDateNL } from '../utils/dates';
+import { capitalize } from '../utils/capitalize';
 
 export type ChangeImpactLevel = 'hint' | 'notice' | 'decision';
 export type ChangeApplyMode = 'always_ask' | 'auto_small' | 'auto_all';
@@ -97,7 +98,7 @@ export function describeChanges(items: PlanChangeItem[], sessions: PlannedSessio
       case 'keep':
         // A training you moved yourself loses the mark of a period (engine/leaveProposal.ts):
         // say that it stays, so the notice after Akkoord is never empty.
-        if (item.leave === null && session) lines.push(`${name} op ${shortDate(session.scheduledDate)} blijft staan`);
+        if (item.leave === null && session) lines.push(`${name} op ${shortDate(session.scheduledDate)} blijft staan${item.restore ? ', weer op gewone lengte' : ''}`);
         break;
       default:
         break;
@@ -117,7 +118,7 @@ export function prescriptionSummary(items: PlanChangeItem[]): string {
   if (structural > 0) parts.push(`${structural} ${structural === 1 ? 'training verplaatst, toegevoegd of vervallen' : 'trainingen verplaatst, toegevoegd of vervallen'}`);
   if (content > 0) parts.push(`${content === 1 ? 'de inhoud van 1 training' : `de inhoud van ${content} trainingen`} in de komende weken bijgesteld`);
   const text = parts.join(', ');
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  return capitalize(text);
 }
 
 // The earliest day a proposal changes (moved from or to), skipping what it only keeps.

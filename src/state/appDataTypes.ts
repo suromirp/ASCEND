@@ -333,7 +333,8 @@ export interface AppData {
   applyLeave: (plan: LeavePlan) => Promise<'applied' | 'stale'>;
   // Only another note on a period: the planning does not change, so it is stored
   // at once, with Ongedaan maken in the notice (engine/leaveEdit.ts).
-  saveLeaveNote: (periodId: string, note: string) => Promise<void>;
+  // The words of a period only: its note and, without a gym, Heuvels in de buurt. Saved at once.
+  saveLeaveNote: (periodId: string, note: string, hills?: boolean) => Promise<void>;
   respondToAdvice: (advice: Advice, response: 'accepted' | 'declined') => Promise<void>;
   debriefLogId: string | null;
   dismissDebrief: () => void;

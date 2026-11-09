@@ -160,6 +160,11 @@ export interface AppSettings {
   // the advice) lets it go rather than put it right before or after its own next time, 'shift' moves
   // it to any day of that week that fits. Optional and additive, so no migration step.
   leaveCrowding?: 'drop' | 'shift';
+  // A new period without a gym (engine/noGym.ts): 'bodyweight' (absent = bodyweight, the advice)
+  // puts a short session with your own weight in place of a gym session, 'drop' lets it go. Only
+  // the starting choice in the sheet: the period keeps its own choice, so changing this never
+  // changes a plan. Optional and additive, so no migration step.
+  noGymStrength?: 'bodyweight' | 'drop';
   // How fast the long run grows toward a running race (engine/runGrowth.ts): 'weekly' (absent =
   // weekly, the advice), 'biweekly' or 'wave' (per block of four weeks, as before). Optional, additive.
   longRunGrowth?: 'weekly' | 'biweekly' | 'wave' | 'firm' | 'fast';
@@ -318,6 +323,10 @@ export interface AppSettings {
   // (activityStreams). Absent = on. Off keeps only the derived profile and kilometres.
   // Optional and additive.
   keepStreams?: boolean;
+  // "Tempo uit stabiele stukken": tempo bij zone 2 reads the stable pieces of every outdoor run
+  // (engine/aerobicTrend.ts#tempoPiecesOn). Absent = on; off is the old average per easy run.
+  // Optional and additive.
+  tempoStablePieces?: boolean;
   // "Reeksen in back-up": the full series travel in the backup file (base64). Absent = on,
   // because the source may stop giving them out; off makes a small backup. The copies taken
   // before an import never hold them. Optional and additive.
@@ -328,7 +337,7 @@ export interface AppSettings {
   streamsBackup?: 'twoYears' | 'all' | 'none';
   // "Ochtendgetallen in back-up" (engine/morningBackup.ts): the date, resting heart rate, HRV,
   // sleep duration and sleep score of each morning travel in the backup (payload.mornings).
-  // Absent = on. Optional and additive; checked on import like the other switches (storage/backup.ts).
+  // Absent = on. Optional and additive; checked on import like the other switches (storage/backupNormalize.ts).
   morningInBackup?: boolean;
   // "Melden als je horloge stilvalt" (engine/sourceWatch.ts): one quiet line on Vandaag when
   // nothing comes in from the watch for three days while the link works. Absent = on.
@@ -356,6 +365,13 @@ export interface AppSettings {
   // point, while the weather follows your location, the weather at that height on Vandaag. Asks Open-Meteo with the same rounded place as
   // the forecast, at most once an hour. Absent = on. Optional and additive.
   mountainWeather?: boolean;
+  // "Weerwaarschuwingen" (engine/weatherWarnings.ts): onweer, zware windstoten of hitte op de dag van een tocht of
+  // een lange training buiten, of de dag ervoor, als regel op Vandaag. Asks Open-Meteo with the rounded place of the
+  // tocht or the weather, at most once an hour. Absent = on. Optional and additive; never changes the planning.
+  weatherWarnings?: boolean;
+  // "Lawinegevaar" (engine/avalanche.ts): the EAWS danger level near a tocht in the mountains or the snow in the snow
+  // season, when the tocht has a place. Absent = on. Optional and additive; never changes the planning.
+  avalancheBulletin?: boolean;
   // "Wennen aan warmte" (engine/heatAcclimation.ts): one line in the reisplanner in the last three weeks before
   // a departure from June to September. Absent = on. Optional and additive.
   heatAcclimation?: boolean;
@@ -418,6 +434,11 @@ export interface AppSettings {
   // Health Connect reads your weighings and they count, false = nothing is read and what is
   // stored is not used. Optional and additive; travels with the settings in an export.
   weightFromHealthConnect?: boolean;
+  // "Gewichtstrend gebruiken" (engine/weightTrend.ts, docs/beslissingen/2026-11-09-gewichtstrend.md):
+  // absent or true = the sheet and row Lichaamsgewicht show the trend over your weighings of the
+  // last 14 days, false = the latest weighing. Only what is shown; the rucksack share, leg index
+  // and Forge still read the latest weighing. Optional and additive, so no schema step.
+  weightTrend?: boolean;
   // "Vetpercentage tonen" (engine/bodyFat.ts): absent or true = the fat percentage and the
   // fat-free mass from the weigh-ins are shown under Lichaamsgewicht, false = they stay stored
   // but are not shown. Optional and additive, so older settings and backups need no step.
@@ -432,7 +453,7 @@ export interface AppSettings {
   // "Forge" / Kracht meerekenen (engine/strengthSettings.ts): the switch, the
   // choices and the gym profile. Absent or missing keys = the advice. Optional
   // and additive; travels with the settings in a backup, where only valid
-  // values are kept (storage/backup.ts).
+  // values are kept (storage/backupNormalize.ts).
   strengthModel?: StrengthSettings;
   // What you told ASCEND about the clothing advice: degrees to dress lighter
   // (plus) or heavier (minus), per sport, plus or minus 4 at most
@@ -468,6 +489,9 @@ export interface AppSettings {
   // Forge ('beide', het advies), alleen het spierkaartje, of niets. Optional and additive; read defensively, so no
   // migration step is needed.
   exerciseArt?: 'beide' | 'spierkaart' | 'uit';
+  // "Uitleg standaard uitgeklapt" (engine/exerciseArtSettings.ts#resolveGuideOpen): staat "Lees verder" in de uitleg van
+  // een oefening bij het openen al open. Afwezig is uit. Optional and additive; no migration step is needed.
+  guideOpen?: boolean;
   // Wat je koos op een dag met vermoeide benen, per datum en training (models/legEase.ts). Een lijst naast de
   // logs; de laatste 60. Optional and additive; read defensively on import
   // (storage/migrations.ts#migrateLegEaseDays) and merged per date and session.
@@ -488,7 +512,7 @@ export interface AppSettings {
   // "Loopinzicht" (engine/runInsightSettings.ts): the two lines after a run or
   // tocht, the weather lookup and the chest strap. Absent or missing keys = the
   // advice. Optional and additive; travels with the settings in a backup, where
-  // only valid values are kept (storage/backup.ts).
+  // only valid values are kept (storage/backupNormalize.ts).
   runInsight?: RunInsightSettings;
   // "Ochtendmelding" (engine/morningNotice.ts): a notice in the morning with the
   // question how you feel, shown by the service worker on a periodic sync. Absent
@@ -499,7 +523,7 @@ export interface AppSettings {
   // De meldingen van de Android-app (engine/deviceNotices.ts, docs/beslissingen/2026-11-01-android-app.md):
   // "Einde van de rust" (een melding op de eindtijd van de rust in Forge, ook met het scherm uit) en
   // "Weekmelding op zondag" met zijn tijd. Absent = aan, om 19:00. In de browser doen ze niets.
-  // Optional and additive, so no migration step; a backup keeps only valid values (storage/backup.ts).
+  // Optional and additive, so no migration step; a backup keeps only valid values (storage/backupNormalize.ts).
   restNotice?: boolean;
   weekNotice?: boolean;
   weekNoticeTime?: '18:00' | '19:00' | '20:00' | '21:00';

@@ -16,6 +16,7 @@ import { INTENSITY } from '../data/workoutStructure';
 import { isLegHeavyTemplate } from './scheduler';
 import { addDays } from '../utils/dates';
 import { hasRole } from './templateRoles';
+import { joinNL } from '../utils/joinNL';
 
 // The top of the planned effort, e.g. 4 for "RPE 3-4".
 export function plannedRpeTop(template: SessionTemplate, date: string, program: Program | null | undefined): number | undefined {
@@ -99,10 +100,6 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
 
 // Days back in which the same sore spot counts as "again".
 const PAIN_WINDOW_DAYS = 14;
-
-function joinNL(items: string[]): string {
-  return items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} en ${items.at(-1)}`;
-}
 
 // Pain comes first: it decides what tomorrow looks like. The same spot
 // twice in two weeks is a pattern, worth writing down under Lichaam,

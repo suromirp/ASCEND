@@ -20,11 +20,11 @@ describe('de koppeling van oefeningen aan tekeningen', () => {
     }
   });
 
-  it('telt 76 exacte, 32 varianten en 12 oefeningen zonder tekening', () => {
+  it('telt 76 exacte, 32 varianten en 24 oefeningen zonder tekening (12 van de calisthenicsladders)', () => {
     const links = Object.values(EXERCISE_ART);
     expect(links.filter((l) => l.match === 'zeker')).toHaveLength(76);
     expect(links.filter((l) => l.match === 'variant')).toHaveLength(32);
-    expect(EXERCISES.filter((e) => !EXERCISE_ART[e.id])).toHaveLength(12);
+    expect(EXERCISES.filter((e) => !EXERCISE_ART[e.id])).toHaveLength(24);
     expect(new Set(links.map((l) => l.slug)).size).toBe(89);
   });
 

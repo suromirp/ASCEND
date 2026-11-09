@@ -10,7 +10,7 @@ import { getMacroFactorState, type MacroFactorState } from '../../storage/macrof
 import { getPersistenceStatus, type PersistenceStatus } from '../../storage/persistence';
 import { estimateStorage } from '../../storage/storageEstimate';
 import type { StorageEstimate } from '../../engine/storageUse';
-import { listSnapshots } from '../../storage/backup';
+import { listSnapshots } from '../../storage/backupApply';
 import { webBackupFileAdapter, webFolderTarget } from '../../storage/backupFileAdapter';
 import { autoBackupTarget, readAutoBackupState } from '../../storage/autoBackup';
 import { noticeSupport } from '../../engine/morningNotice';

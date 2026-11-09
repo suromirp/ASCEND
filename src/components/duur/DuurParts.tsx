@@ -18,6 +18,7 @@ import { EFFORT_COLOR } from '../effortColor';
 import { firstSentence, restAfterFirstSentence } from './text';
 import { StretchItems } from '../StretchList';
 import { Icon, type IconName } from '../icons';
+import { capitalize } from '../../utils/capitalize';
 
 // Een niveau van het plan in de kleur van zijn zone: heel rustig is Z1, rustig
 // Z2, stevig Z3 en hard Z4 (het plan zegt "zone 4-5"). Een stap zonder doel
@@ -181,7 +182,7 @@ function splitLabel(label: string): { name: string; sport?: string } {
   const i = label.indexOf(', ');
   if (i < 0) return { name: label };
   const rest = label.slice(i + 2);
-  return { name: rest.charAt(0).toUpperCase() + rest.slice(1), sport: label.slice(0, i) };
+  return { name: capitalize(rest), sport: label.slice(0, i) };
 }
 
 

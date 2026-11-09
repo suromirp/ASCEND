@@ -14,6 +14,7 @@
 import type { SessionTemplate, SetLog } from '../models/training';
 import type { OneRmReading } from '../models/metrics';
 import { addDays, daysBetween } from '../utils/dates';
+import { r1 } from '../utils/round';
 import { normalizeExerciseName } from './exerciseMatch';
 import type { ExerciseView } from './strengthHistory';
 import type { ForgeSort, OneRmView } from './strengthSettings';
@@ -52,7 +53,6 @@ export function volumeOf(sets: SetLog[]): number | undefined {
   return counted > 0 ? Math.round(total) : undefined;
 }
 
-const round1 = (n: number) => Math.round(n * 10) / 10;
 
 // Een oefening die je op herhalingen doet: er staat in geen enkele werkset een gewicht
 // (Hanging Leg Raise), of het is een oefening met eigen gewicht waar hooguit af en toe
@@ -129,7 +129,7 @@ export function bestEver(points: ForgePoint[]): ForgePoint | undefined {
 // Het verschil in getal, op een tiende afgerond. Positief is vooruit, ook bij hulp
 // (daar is minder hulp een hoger getal).
 export const valueChange = (now: ForgePoint | undefined, then: ForgePoint | undefined): number | undefined =>
-  now && then ? round1(now.value - then.value) : undefined;
+  now && then ? r1(now.value - then.value) : undefined;
 
 type ChangeKind = 'top_weight' | 'reps_same_weight' | 'volume' | 'total_reps';
 
@@ -155,12 +155,12 @@ export function extraChanges(now: ForgePoint | undefined, then: ForgePoint | und
   const out: ExtraChange[] = [];
   if (now.unit === 'reps') {
     if (now.totalReps !== undefined && then.totalReps !== undefined) out.push({ kind: 'total_reps', delta: now.totalReps - then.totalReps });
-    const dw = round1((now.topWeightKg ?? 0) - (then.topWeightKg ?? 0));
+    const dw = r1((now.topWeightKg ?? 0) - (then.topWeightKg ?? 0));
     if (dw !== 0) out.push({ kind: 'top_weight', delta: dw });
     return out;
   }
   if (now.topWeightKg !== undefined && then.topWeightKg !== undefined && now.topWeightKg > 0 && then.topWeightKg > 0) {
-    const d = round1(now.topWeightKg - then.topWeightKg);
+    const d = r1(now.topWeightKg - then.topWeightKg);
     if (d !== 0) out.push({ kind: 'top_weight', delta: d });
     else {
       const a = mostRepsAt(now.workSets, now.topWeightKg);

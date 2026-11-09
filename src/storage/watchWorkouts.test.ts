@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo, seedIfEmpty, wipeAllData, ProgramsRepo } from './database';
 import { saveConnection } from './externalActivities';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 import {
   cleanUpWatchWorkouts,
   getWatchWorkoutState,

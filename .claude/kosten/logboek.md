@@ -178,3 +178,42 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-06, Werkbriefjes (negen onderwerpen), Sherpa, sonnet (ontwikkelaar), 152k, 7 min, 0
 - 2026-11-07, CLAUDE.md korter (28 naar 12 KB), Sherpa, sonnet (ontwikkelaar), 43k, 2 min, 0
 - 2026-11-07, Werkbriefjes nalezen, Warden, sonnet (reviewer), 84k, 3 min, 6 kleine punten door coördinator
+- 2026-11-08, Planner testweek, Sherpa, opus (ontwikkelaar), 167k, 20 min, 0
+- 2026-11-08, Forge tijdsgrens en bergspieren, Sherpa, sonnet (ontwikkelaar), 105k, 14 min, 0
+- 2026-11-08, Tempo zone 2 en afstand, Sherpa, sonnet (ontwikkelaar), 68k, 10 min, 0
+- 2026-11-08, Review ronde 1, Warden, opus (reviewer), 95k, 6 min, 5 punten: 3 door coördinator, 2 naar Inbox
+- 2026-11-08, Forge Lichter-telling en opsplitsen ronde 1, Sherpa, sonnet (ontwikkelaar), 51k, 14 min, 0
+- 2026-11-08, Hulpfuncties, exports en afstandszin, Sherpa, sonnet (ontwikkelaar), 55k, 10 min, 0
+- 2026-11-08, Buiten klein (regen, maan), Sherpa, sonnet (ontwikkelaar), 139k, 15 min, 0
+- 2026-11-08, Review bouwmoment, Warden, sonnet (reviewer), 59k, 4 min, geen blokkade, 4 kleine punten naar Inbox
+- 2026-11-09, Cartographer Forge-toestel, Cartographer, sonnet (ontwerper), 117k, 4 min, 0 (geen shell: coördinator committe)
+- 2026-11-09, Scout Tempo zone 2, Scout, opus (sportwetenschapper), 76k, 4 min, 0
+- 2026-11-09, Forge toestelstanden engine, Sherpa, opus (ontwikkelaar), 146k, 13 min, 0
+- 2026-11-09, Forge toestelstanden scherm en herstel, Sherpa, sonnet (ontwikkelaar), 273k, 26 en 9 min, 1 blokkade en 2 belangrijke punten (tijdgrens wachtrij, stil vervuilen)
+- 2026-11-09, Zonder sportschool met twee herstelrondes, Sherpa, opus (ontwikkelaar), 245k, 26, 8 en 7 min, 1 blokkade (lengte terugzetten) en 6 punten
+- 2026-11-09, Tempo stabiele stukken met herstel, Sherpa, opus (ontwikkelaar), 257k, 26 en 24 min, 0 blokkades, 2 belangrijke punten (budget opstartstap, achterhaalde tekst)
+- 2026-11-09, Warden ronde 3 (vier reviews), Warden, opus (reviewer), 82k+100k+74k+105k, 7 tot 9 min per stuk, zie boven
+- 2026-11-09, Lookout ronde 3, Lookout, sonnet (tester), 128k, 19 min, 0 rood
+Les ronde 3: één bouwer die twee keer herstelt kost 100k tot 150k extra; geef bij planning de randgevallen van een terugzet-regel vooraf mee (verplaatst door de gebruiker, periode wijzigen) en vraag bij elke achtergrondstap bij het opstarten om venster, budget en tijdgrens.
+- 2026-11-09, lijn Forge F1: Sherpa Inbox-punten (opus, 208k, 20 min, 0), Scout echte vervangers (opus, 130k, 7 min), Sherpa ruilen (sonnet, 92k, 13 min, 0), Warden (opus, 91k, 5 min, 2 belangrijke punten door coördinator hersteld), Lookout (sonnet, 54k, 5 min, 0 rood)
+- 2026-11-09, Lijn rest R1 Inbox-rest, Sherpa, opus (ontwikkelaar), 148k, 26 min, 0 blokkades
+- 2026-11-09, Lijn rest R1 gewichtstrend, Sherpa, opus (ontwikkelaar), 102k, 9 min, 1 belangrijk punt (herinnering vulde de trend in)
+- 2026-11-09, Lijn rest R1 review, Warden, opus (reviewer), 93k, 5 min, 1 belangrijk en 4 kleine punten
+- 2026-11-09, Lijn rest R1 Lookout (kit, vandaag/week/stand op 360 en 390), coördinator zelf, 0 rood
+- 2026-11-09, lijn Forge F2: Sherpa vermoeidheid (opus, 200k+221k herstel, 16 en 6 min), Sherpa opsplitsen (sonnet, 111k, 10 min, 0), Warden (opus, 135k, 10 min, 3 belangrijke punten: dubbele telling, Terugzetten, stille kracht), Lookout (sonnet, 0 rood)
+- 2026-11-09, Lijn rest R2 GR5-waarschuwingen, Sherpa, opus (ontwikkelaar), 191k, 19 min, 0 blokkades
+- 2026-11-09, Lijn rest R2 Tempo grafiek, Sherpa, opus (ontwikkelaar), 109k, 10 min, 0 blokkades
+- 2026-11-09, Lijn rest R2 review, Warden, opus (reviewer), 114k, 4 min, 2 belangrijk en 8 klein
+- 2026-11-09, Lijn rest R2 Lookout (kit) en tekstkaart, coördinator zelf, 0 rood, kaart: 1 verklaard verschil per stand
+Les R2: zeg bij een cache met 'geen antwoord' in de opdracht dat een fout nooit een nee is.
+- 2026-11-09, Lijn rest R3, coördinator zelf (sonnet), geen helpers: lawineregel, opruimen, tempolijn. R4 niet gebouwd (vraagt keuze van de eigenaar over de stemgids).
+- 2026-11-09, Lijn Forge F3 uitleg bij oefeningen, Sherpa, sonnet (ontwikkelaar), 165k, 19 min, 1 herstelronde (door coördinator zelf)
+- 2026-11-09, Lijn Forge F3 techniektoets, Scout, opus (sportwetenschapper), 66k, 5 min, 2 tekstwijzigingen
+- 2026-11-09, Lijn Forge F3 review, Warden, sonnet (reviewer), 43k, 2 min, 2 belangrijk en 4 klein
+- 2026-11-09, Lijn Forge F4a calisthenics, Sherpa, opus (ontwikkelaar), 203k, 21 min
+- 2026-11-09, Lijn Forge F4a review, Warden, opus (reviewer), 99k, 4 min, 1 belangrijk en 5 klein (door coördinator zelf hersteld)
+Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande familie de ruillijsten van alle leden raakt (test op swapGroups per bestaand lid), en dat een wissel in een blad de scroll en focus terugzet.
+- 2026-11-09, Lijn Forge F4b/F4c ontwerp, Cartographer, sonnet (ontwerper), 86k, 3 min
+- 2026-11-09, Lijn Forge F4b/F4c bouw, Sherpa, opus (ontwikkelaar), 322k, 26 min
+- 2026-11-09, Lijn Forge F4b/F4c review, Warden, opus (reviewer), 158k, 11 min, 1 blokkerend en 11 belangrijk of klein (door Sherpa hersteld, +354k)
+- 2026-11-09, Lijn Forge F4b/F4c doorloop, Lookout, sonnet (tester), 137k, 22 min, 2 punten (al door Sherpa hersteld)

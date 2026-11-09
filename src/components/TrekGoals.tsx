@@ -306,7 +306,7 @@ function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; on
 
             <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: '14px' }}>
               <SecondaryButton onClick={requestClose} className="min-h-[46px]">Annuleren</SecondaryButton>
-              <PrimaryButton disabled={!!problem} fullWidth={false} onClick={() => onSubmit(trekToPeriod(d, existing?.id ?? makeId('trek')))}>Voorstel bekijken</PrimaryButton>
+              <PrimaryButton disabled={!!problem} fullWidth={false} className="whitespace-nowrap" onClick={() => onSubmit(trekToPeriod(d, existing?.id ?? makeId('trek')))}>Voorstel bekijken</PrimaryButton>
             </div>
           </Card>
         </div>

@@ -46,7 +46,7 @@ const inWeek = (date: string, weekStart: string) => date >= weekStart && date <=
 
 // Een rij terug naar het plan: de dag van het patroon, zonder slot, zonder vaste lengte en zonder de
 // merktekens van eerdere voorstellen. Of je met stokken loopt en de volgorde op de dag blijven.
-export function backToPlan(row: PlannedSession, slot: Pick<PlannedSession, 'templateId' | 'scheduledDate' | 'weekStartDate'>): PlannedSession {
+function backToPlan(row: PlannedSession, slot: Pick<PlannedSession, 'templateId' | 'scheduledDate' | 'weekStartDate'>): PlannedSession {
   const { lock: _l, movedFromDate: _m, plannedMinutes: _p, catchUp: _c, amount: _a, afterGoal: _g, raceBlock: _r, blockQuiet: _q, ...rest } = row;
   void _l; void _m; void _p; void _c; void _a; void _g; void _r; void _q;
   return { ...rest, templateId: slot.templateId, scheduledDate: slot.scheduledDate, weekStartDate: slot.weekStartDate, status: 'planned' };
@@ -194,7 +194,7 @@ export function betterTestDay(current: string, candidates: string[], score: (dat
 // De woorden van het voorstel (components/WeekReplanButton.tsx).
 export const REPLAN_TITLE = 'Week opnieuw plannen';
 export const REPLAN_NO_CHANGE = 'Je week staat al zoals het plan hem maakt.';
-export const REPLAN_YOURS = 'Ook wat je zelf verplaatste gaat terug naar het plan.';
+const REPLAN_YOURS = 'Ook wat je zelf verplaatste gaat terug naar het plan.';
 
 export function replanSummary(opts: { changes: number; testMove?: { name: string; toLabel: string }; caughtUp?: string[]; nextWeek?: boolean }): string | undefined {
   if (opts.changes === 0) return undefined;

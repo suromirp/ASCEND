@@ -214,6 +214,12 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-volgorde-lijst', withForge({ listSort: 'name' })).value).toBe('Op naam');
   });
 
+  it('Uitleg standaard uitgeklapt staat standaard uit', () => {
+    expect(rowSummary('forge-uitleg-open', facts()).checked).toBe(false);
+    expect(rowSummary('forge-uitleg-open', facts({ settings: { ...facts().settings, guideOpen: true } })).checked).toBe(true);
+    expect(rowSummary('forge-uitleg-open', facts({ settings: { ...facts().settings, guideOpen: 'ja' as unknown as boolean } })).checked).toBe(false);
+  });
+
   it('Bijsturen staat aan, RIR vooraf staat op hint, en een keuze verandert de rij', () => {
     const withForge = (strengthModel: object) => facts({ strengthExternal: false, settings: { ...facts().settings, strengthModel } });
     expect(rowSummary('forge-bijsturen', withForge({}))).toEqual({ checked: true, hidden: false });
@@ -229,6 +235,17 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-rir-vooraf', withForge({ rirPrefill: 'rommel' })).value).toBe('Als hint');
   });
 
+  it('calisthenics: drie schakelaars, standaard aan; een keuze telt bij Bij het invullen', () => {
+    const withForge = (strengthModel: object) => facts({ strengthExternal: false, settings: { ...facts().settings, strengthModel } });
+    for (const id of ['forge-stappen', 'forge-netjes', 'forge-band']) expect(rowSummary(id, withForge({})), id).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('forge-stappen', withForge({ ladderRow: false })).checked).toBe(false);
+    expect(rowSummary('forge-netjes', withForge({ askClean: false })).checked).toBe(false);
+    expect(rowSummary('forge-band', withForge({ askBand: false })).checked).toBe(false);
+    expect(rowSummary('forge-netjes', withForge({ ladderRow: false })).hidden).toBe(true);
+    expect(rowSummary('bundel-invullen', withForge({})).value).toBe('Advies');
+    expect(rowSummary('bundel-invullen', withForge({ askClean: false, askBand: false })).value).toBe('2 aangepast');
+  });
+
   it('Zonder spotter staat aan, en de veiligheidsarmen horen bij de sportschool', () => {
     const withForge = (strengthModel: object) => facts({ strengthExternal: false, settings: { ...facts().settings, strengthModel } });
     expect(rowSummary('forge-spotter', withForge({}))).toEqual({ checked: true, hidden: false });
@@ -238,6 +255,15 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('spotterrek', withForge({})).checked).toBe(false);
     const rack = { activeProfileId: 'a', profiles: [{ id: 'a', name: 'Sportschool A', barsKg: [20], platesKg: [5], dumbbells: { startKg: 2, stepKg: 2, upToKg: 10, thenStepKg: 2.5, maxKg: 50 }, stackStepKg: 5, spotterRack: true }] };
     expect(rowSummary('spotterrek', withForge(rack)).checked).toBe(true);
+  });
+
+  it('Standen onthouden staat standaard aan en volgt de keuze; Standen per toestel telt toestellen met standen', () => {
+    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('standen-onthouden', facts())).toEqual({ checked: true });
+    expect(rowSummary('standen-onthouden', withForge({ learnStands: false })).checked).toBe(false);
+    expect(rowSummary('toestelgewichten', facts()).value).toBe('Geen');
+    const profile = { id: 'a', name: 'Sportschool A', barsKg: [20], platesKg: [5], dumbbells: { startKg: 2, stepKg: 2, upToKg: 10, thenStepKg: 2.5, maxKg: 50 }, stackStepKg: 5, exerciseStandsKg: { 'leg-extension': { kg: [7, 14] } } };
+    expect(rowSummary('toestelgewichten', withForge({ activeProfileId: 'a', profiles: [profile] })).value).toBe('1 toestel');
   });
 
   it('Toestellen leren staat aan met het label auto, en ASCEND naast MacroFactor staat uit en toont de stand', () => {
@@ -344,6 +370,12 @@ describe('rowSummary: lichaam', () => {
     expect(rowSummary('health-connect-gewicht', facts({ healthConnect: { inApp: true, enabled: true } }))).toMatchObject({ checked: true, sub: 'Nog geen toestemming voor gewicht' });
     expect(rowSummary('health-connect-gewicht', facts({ healthConnect: { inApp: true, enabled: true, weightGranted: true } }))).toMatchObject({ checked: true });
     expect(rowSummary('health-connect-gewicht', facts({ settings: { strengthTrackedExternally: false, introSoundEnabled: true, weightFromHealthConnect: false } }))).toMatchObject({ checked: false });
+  });
+
+  it('met een trend staat de trend eerst en de laatste weging eronder', () => {
+    expect(rowSummary('lichaamsgewicht', facts({ weight: { kg: 79.1, source: 'health-connect', date: '2026-11-03', trendKg: 78.4 } }))).toEqual({ value: 'Trend 78,4 kg', auto: true, sub: 'Laatste weging 79,1 kg, 3 nov' });
+    expect(rowSummary('gewichtstrend', facts())).toMatchObject({ checked: true });
+    expect(rowSummary('gewichtstrend', facts({ settings: { strengthTrackedExternally: false, introSoundEnabled: true, weightTrend: false } }))).toMatchObject({ checked: false });
   });
 
   it('hartslag: drempel, maximum of niets', () => {
@@ -896,8 +928,15 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
-    expect(rowSummary('bundel-weer', facts()).value).toBe('4 van 4 aan');
-    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('2 van 4 aan');
+    expect(rowSummary('bundel-weer', facts()).value).toBe('9 van 9 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('7 van 9 aan');
+    // Weerwaarschuwingen en lawinegevaar tellen mee (docs/beslissingen/2026-11-09-gr5-waarschuwingen.md).
+    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('7 van 9 aan');
+    expect(rowSummary('weeralarm', facts()).checked).toBe(true);
+    expect(rowSummary('weeralarm', withSettings({ weatherWarnings: false })).checked).toBe(false);
+    expect(rowSummary('lawinegevaar', withSettings({ avalancheBulletin: false })).checked).toBe(false);
+    expect(rowSummary('heuvels-buurt', facts())).toEqual({ checked: true });
+    expect(rowSummary('heuvels-buurt', withSettings({ overviews: { hillsNearby: false } }))).toEqual({ checked: false });
     expect(rowSummary('bundel-inzicht', facts())).toEqual({ value: 'Aan', sub: '4 van 4 onderwerpen' });
     expect(rowSummary('bundel-inzicht', withSettings({ runInsight: { enabled: false } }))).toEqual({ value: 'Uit', dim: true });
     expect(rowSummary('bundel-run-detail', facts())).toEqual({ value: 'Aan', sub: 'Loopvorm: cadans en nog 3' });
