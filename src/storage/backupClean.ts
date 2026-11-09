@@ -190,8 +190,9 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     else s.externalOneRm = oneRm.series;
     skipped.n += oneRm.skipped;
   }
-  // The switches for weight from MacroFactor and from Health Connect: a yes or a no, or not there.
-  for (const key of ['weightFromMacroFactor', 'weightFromHealthConnect']) {
+  // The switches for weight from MacroFactor and from Health Connect, and "Gewichtstrend
+  // gebruiken": a yes or a no, or not there.
+  for (const key of ['weightFromMacroFactor', 'weightFromHealthConnect', 'weightTrend']) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;

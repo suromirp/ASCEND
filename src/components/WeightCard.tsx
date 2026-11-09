@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { addWeightEntry, freshLinkedWeight, latestWeight, weightDue, weightsInUse, WEIGHT_REMINDER_DAYS } from '../engine/bodyWeight';
 import { activeIllness } from '../engine/illness';
+import { weightShown } from '../engine/weightTrend';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { NumberField } from './NumberField';
 import { PrimaryButton, SecondaryButton } from './ui';
@@ -30,7 +31,8 @@ export function WeightReminder() {
   const save = useSaveWeight();
   const navigate = useNavigate();
   const entries = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
-  const [kg, setKg] = useState<number | undefined>(latestWeight(entries)?.kg);
+  // Vooraf ingevuld met wat Lichaamsgewicht laat zien: de trend als die aan staat (engine/weightTrend.ts).
+  const [kg, setKg] = useState<number | undefined>(weightShown(entries, settings.weightTrend)?.kg);
   const [open, setOpen] = useState(false);
   const today = todayISO();
   if (activeIllness(settings.illnessEpisodes) || !weightDue(entries, settings.weightReminderSnoozedAt, today, settings.weightReminderDays ?? WEIGHT_REMINDER_DAYS)) return null;
