@@ -30,7 +30,7 @@ Vanaf ronde 4 twee lijnen tegelijk, elk een eigen sessie en branch (`claude/lijn
 Lijn Forge (alles in `components/forge/`, `engine/forge*`, `strengthModel.ts`, oefeningen):
 
 F1. Af (9 november): de Forge-punten uit de Inbox (review afvinken, toestelstanden) ‖ Forge: ruilen met een echte vervanger.
-F2. Vermoeidheid tussen oefeningen (stap 6 tot 8 van het RIR-verslag) ‖ ForgeWorkout opsplitsen, ronde 3, met de lintwaarschuwingen.
+F2. Af (9 november): vermoeidheid tussen oefeningen (stap 6 tot 8 van het RIR-verslag) ‖ ForgeWorkout opsplitsen, ronde 3 (689 regels), met de lintwaarschuwingen.
 F3. Uitleg bij oefeningen: proef met vijf teksten (Scribe), daarna de rest.
 F4. Calisthenics: ontwerp, daarna bouwen.
 
@@ -41,6 +41,8 @@ R3. Oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinri
 R4. Alle teksten herschrijven en Engels, per tab; de Forge-tab pas als lijn Forge klaar is.
 
 ## Loopt nu
+
+Live op 9 november (lijn Forge, F2): vermoeidheid tussen oefeningen (harde sets voor dezelfde spieren eerder in de training stellen de eerste set bij, instelling Vermoeidheid tussen oefeningen, besluit `2026-11-09-forge-vermoeidheid-tussen-oefeningen.md`; de drempels zijn nog niet op echte trainingen getoetst), ForgeWorkout van 1038 naar 689 regels (zes nieuwe hooks en onderdelen) en de lintwaarschuwingen in Forge weg.
 
 Live op 9 november (lijn Forge, F1): de reviewpunten van Afvinken telt als het doel (`forgeKg` in het log, strengere `allAtTop`, regel 5 leest de bevestigde RIR, pauze, uitlegzin bij de bolletjes), Standen wissen met Terugdraaien en het strookje Ook schatten, en Ruilen met echte vervangers (twee groepen, Aanbevolen, reden per oefening). Open uit F1: pond, plaatjesnummers en optrekhulp bij de toestelstanden; het keuzestrookje en Terugdraaien zijn op 360 en 390 px gezien, Rustig niet.
 Live op 9 november (lijn rest, R1): Heuvels-alleen omzetten bewaart meteen, `isGymStrengthTemplate`, de heuvelregel ook in een periode Zonder sportschool, een vaste sport in zo'n periode blijft staan met een regel in het voorstel, duidelijker reden bij terugzetten van de lengte, hoofdletterhulp samengebracht, `.sky-panel` weg, 'Voorstel bekijken' op één regel, en de gewichtstrend (instelling Gewichtstrend gebruiken, alleen voor wat je ziet).
