@@ -25,6 +25,11 @@ Doel van de eigenaar (9 november 2026): MacroFactor Workouts overbodig maken, zo
 
 Een voorstel aan de eigenaar, met Akkoord: de laatste export van Workouts inlezen en het inlezen van krachtlogs uit MacroFactor verbergen in Instellingen (het gewicht uit de voedingsapp blijft) (niet de historie weghalen: logs blijven append-only). Pas daarna kan de eigenaar MacroFactor Workouts weghalen.
 
+## Twee stappen (inschatting coördinator, 9 november)
+
+1. Licht, eerst: het inlezen van Workouts-exports, "Leidend voor kracht", de MacroFactor-kaarten en het vergelijken met MacroFactor verbergen en uitzetten; oude logs blijven zichtbaar, het gewicht uit de voedingsapp blijft. Eén bouwer, 1 à 2 uur, klein risico (de code blijft, terug te zetten).
+2. Volledig, later (na een maand of twee zonder MacroFactor Workouts): de code voor inlezen, koppelen, namen en programma eruit (zo'n 15 eigen bestanden in `engine/`, `storage/`, `components/`, en verwijzingen in ruim 100 andere); oude logs blijven als gewone logs (migratiestap, oude back-ups blijven inleesbaar), tests en tekstkaart bij. 3 à 5 bouwers, risico middel (Forge en het krachtmodel). Als gewone onderhoudsklus, verdeeld over een paar bouwmomenten.
+
 ## Stand
 
 - 9 november 2026: gewicht uit Health Connect werkt (19 wegingen binnen na opnieuw aanzetten); de automatische ronde en de melding zijn nog open (Inbox). Forge is leidend voor kracht. Nog niet zover.
