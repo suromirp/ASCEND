@@ -63,7 +63,7 @@ export interface PageRows {
 
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
-    rows: ['bundel-dagen', 'meerdere', 'sporten', 'hoeveel-per-soort', 'bundel-sporten-tellen', 'wijzigingen', 'ambitie', 'bundel-testloop', 'rustdag-terug', 'weekvoorstel'],
+    rows: ['bundel-dagen', 'meerdere', 'sporten', 'hoeveel-per-soort', 'bundel-sporten-tellen', 'wijzigingen', 'ambitie', 'bundel-testloop', 'rustdag-terug', 'weekvoorstel', 'zonder-sportschool'],
     advanced: ['bundel-niet-doorgegaan', 'lange-loop-benen', 'bundel-slepen', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test'],
   },
   doel: {
@@ -74,7 +74,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     rows: ['forge', 'kracht', 'forge-programma', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-weergave', 'bundel-rusttimer', 'forge-scherm', 'forge-bijsturen', 'forge-spotter', 'bundel-sportschool'],
     advanced: ['trainingsduur', 'forge-tijdsgrens', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren'],
   },
-  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit'], advanced: [] },
+  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit', 'tempo-stukken'], advanced: [] },
   vandaag: {
     rows: ['kaarten', 'lichterbenen', 'korter-vandaag', 'bundel-meldingen', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
@@ -139,7 +139,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
-  ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'tussengewichten', 'spotterrek'),
+  ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'standen-onthouden', 'tussengewichten', 'spotterrek'),
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes'),
   ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid'),
   ...inSheet('bundel-rekenmodel', 'forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),

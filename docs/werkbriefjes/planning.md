@@ -9,7 +9,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - `src/engine/mainGoal.ts#mainGoal` het hoofddoel, op één plek
 - `src/engine/templateRoles.ts#hasRole` een training herken je aan een rol, nooit aan een id
 - `src/engine/workSets.ts#isWorkSet` alles wat sets telt gaat hierdoor
-- `src/engine/leaveProposal.ts#planLeaveChange` vrije dagen, vakanties en tochten als voorstel
+- `src/engine/leaveProposal.ts#planLeaveChange` vrije dagen, vakanties, tochten en zonder sportschool als voorstel; `src/engine/noGym.ts#applyNoGymDays` wat zonder sportschool verandert
 - `src/engine/programLayout.ts#layoutWaves` fases en golven, geteld vanaf het doel
 - `src/storage/databaseHorizon.ts#syncProgramHorizon` schrijft het plan weg, draait bij elke verandering
 - `src/storage/horizonPlan.ts#computeHorizonPlan` rekent een voorstel uit, `applyHorizonPlanNow` schrijft het
@@ -29,16 +29,16 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - De weekcontrole kan binnen één ronde een rij verplaatsen en terugzetten. Alleen een netto verandering is nieuws (`src/storage/databaseHorizon.ts#changedNet`), anders komt "Planning bijgewerkt" bij elke opening terug (5 november). Het raceblok draait in elke beurt opnieuw: zet een regel daar terug wat de weekcontrole deed, dan schuiven ze om de beurt (`src/engine/raceBlock.ts#restoreLegSwaps` met een korte beendag voor een test, 8 november). Toets een nieuwe regel met twee keer `planPass` achter elkaar.
 - `src/state/planningSync.ts#horizonKey` bepaalt of de ronde opnieuw draait: een vingerafdruk van de geplande sessies hoort erin, anders blijft een nieuwe verandering liggen.
 - Opstartwerk wacht nooit op de sync; wat de planning wijzigt wacht wel op de wachtrij en leest dan het opgeslagen plan.
-- Een teruggezette rij krijgt geen slot en geen vaste lengte, anders blijft hij vastgezet staan.
+- Een teruggezette rij krijgt geen slot en geen vaste lengte, anders blijft hij vastgezet staan. Ook een rij die een periode korter maakte en die je daarna zelf verplaatste, krijgt bij weghalen zijn lengte terug; alleen het merk eraf laat hem kort (`src/engine/leaveProposal.ts#planLeaveChange`, een `keep` met `restore`, 9 november). Een periode wijzigen draait `putBack` voor de oude periode; wat de nieuwe periode nog raakt, krijgt zijn lengte niet terug (`stillShort`).
 - De reparatie zet niets op de laatste vrije dag van een week, behalve in een week met vakantie, vrije dagen of tocht.
+- `tpl_bodyweight` (zonder sportschool) is een krachtsjabloon zonder vaste dag: een lijst van krachtsjablonen voor MacroFactor slaat hem over (`src/engine/noGymDetails.ts#BODYWEIGHT_TEMPLATE_ID`), anders raadt hij mee.
 - `PATTERN_SWAPS` werken alleen in fases van een plan met een doel; de golden scenario's A en C bewegen niet.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/engine/scheduler src/engine/weekValidator src/engine/planPass src/engine/leave src/storage/horizon`
+- Tijdens het werk: `npx vitest run src/engine/scheduler src/engine/weekValidator src/engine/planPass src/engine/leave src/engine/noGym src/storage/horizon`
 - `src/storage/planGolden.test.ts` mag alleen bewegen met de reden in de commit.
 - Tekstkaart (`npm run kaart:vergelijk`) alleen als een scherm verandert.
 
 ## Lees verder
 - `docs/architectuur/planning.md`
-- `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`, `docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md`
-- `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`, `docs/onderzoek/Planning op een lijn.md`
+- `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`, `docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md`, `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`, `docs/beslissingen/2026-11-09-zonder-sportschool.md`, `docs/onderzoek/Planning op een lijn.md`

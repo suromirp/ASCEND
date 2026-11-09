@@ -22,7 +22,7 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { TrendPoint } from './readiness';
-import { aerobicTrend, formatPace, MEANINGFUL_CHANGE_SEC } from './aerobicTrend';
+import { aerobicTrend, bandPhrase, formatPace, trendVerdict, zone2Criteria } from './aerobicTrend';
 import type { HeartRateSettings } from './heartRateZones';
 import { isIndoorLog, logSport } from './sports';
 import { isEasyPlanned, median } from './runComparison';
@@ -58,6 +58,8 @@ export interface RunTrendsInput {
   today: string;
   // Trainings set to "Niet meetellen voor hartslag": out of the heart rate trends (engine/influence.ts).
   excludedLogIds?: ReadonlySet<string>;
+  // "Tempo uit stabiele stukken" (engine/aerobicTrend.ts#AerobicTrendOptions); absent = on.
+  tempoPieces?: boolean;
 }
 
 const TREND_WEEKS = 12;
@@ -87,28 +89,30 @@ function lastThree<T>(items: T[]): { last: T[]; before: T[] } | undefined {
 // --- efficiency: aerobicTrend itself ------------------------------------------------------------
 
 function efficiencyRow(input: RunTrendsInput): TrendRow {
-  const trend = aerobicTrend(input.logs, input.templates, input.program, input.hr, input.today, input.excludedLogIds);
+  const trend = aerobicTrend(input.logs, input.templates, input.program, input.hr, input.today, input.excludedLogIds, { pieces: input.tempoPieces });
   const change = trend.changeSec;
-  const word: TrendWord = change === undefined ? 'Te weinig gegevens' : Math.abs(change) < MEANINGFUL_CHANGE_SEC ? 'Normaal' : change < 0 ? 'Beter' : 'Slechter';
+  // The word from the band of the same line as the card (engine/aerobicTrend.ts#zone2Statement).
+  const s = trend.statement?.kind === 'uitspraak' ? trend.statement : undefined;
+  const word: TrendWord = !s || s.verdict === 'te-veel-verschil' ? 'Te weinig gegevens' : s.verdict === 'geen-duidelijke-verandering' ? 'Normaal' : s.verdict === 'sneller' ? 'Beter' : 'Slechter';
   const points = trend.points.map((p) => ({ label: p.label, value: p.value }));
-  const criteria = [`${trend.runs} rustige en lange loopjes in de laatste ${TREND_WEEKS} weken`, 'vlak, hoogstens 15 meter stijging per km', trend.referenceHr > 0 ? `omgerekend naar ${trend.referenceHr} slagen per minuut` : 'in zone 2'];
+  const criteria = [...zone2Criteria(trend, input.tempoPieces !== false), `de laatste ${TREND_WEEKS} weken`];
   const model: SheetModel =
-    change === undefined || trend.recentSec === undefined || trend.earlierSec === undefined
-      ? empty('efficiency', 'Efficiëntie', 'pace', 'Voor een vergelijking zijn rustige loopjes nodig in de laatste twee weken en in de twee weken een maand eerder.', criteria)
+    !s || change === undefined || trend.recentSec === undefined || trend.earlierSec === undefined
+      ? empty('efficiency', 'Efficiëntie', 'pace', trendVerdict(trend) ?? 'Voor een uitspraak zijn minstens 8 lopen met een stuk in zone 2 nodig, over minstens 4 weken.', criteria)
       : {
           topic: 'efficiency',
           title: 'Efficiëntie',
           word,
           figures: {
-            todayLabel: 'Laatste 2 weken',
-            middleLabel: 'Een maand eerder',
+            todayLabel: 'Nu, op de lijn',
+            middleLabel: '4 weken eerder',
             today: `${formatPace(trend.recentSec)} per km`,
             middle: `${formatPace(trend.earlierSec)} per km`,
-            difference: `${rounded(Math.abs(change))} s per km ${change < 0 ? 'sneller' : 'trager'}`,
+            difference: `${bandPhrase(s)} per km`,
           },
           series: points,
           seriesFormat: 'pace',
-          strengthText: `Dit is dezelfde trend als de kaart Tempo bij zone 2: je tempo bij één hartslag, gemiddeld over twee weken tegen twee weken een maand eerder. Eén rustige loop schommelt zelf zo'n 3 procent, een echte verbetering is ongeveer 1 tot 2 procent per maand. Onder de ${MEANINGFUL_CHANGE_SEC} seconden per km noemt ASCEND het Normaal.`,
+          strengthText: `Dit is dezelfde trend als de kaart Tempo bij zone 2: je tempo bij één hartslag, als rechte lijn door je lopen van de laatste 8 weken, met een marge waar je voor 80 procent zeker van bent. Eén rustige loop schommelt zelf zo'n 3 procent, een echte verbetering is ongeveer 1 tot 2 procent per maand. Ligt de marge over nul, dan noemt ASCEND het Normaal.`,
           meaning:
             word === 'Beter'
               ? 'Je loopt bij dezelfde hartslag sneller dan een maand geleden. Dat is de vooruitgang die telt.'

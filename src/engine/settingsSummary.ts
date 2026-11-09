@@ -524,6 +524,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('rustNaTocht', s.trekLegRest ?? 'soft') };
     case 'vakantie-opzij':
       return { value: choiceShort('vakantieOpzij', s.leaveCrowding ?? 'drop') };
+    case 'zonder-sportschool':
+      return { value: choiceShort('zonderSportschool', s.noGymStrength ?? 'bodyweight') };
     case 'vrije-dagen':
       return f.vacations > 0 ? { value: `${f.vacations} gepland` } : { value: 'Geen', dim: true };
     case 'reisplanner':
@@ -605,6 +607,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.reckon };
     case 'forge-afvinken-doel':
       return { checked: forge.assumedCounts };
+    case 'standen-onthouden':
+      return { checked: forge.learnStands };
     case 'forge-dumbbells':
       return { value: choiceShort('dumbbellLog', forge.dumbbellLog) };
     case 'forge-naast': {
@@ -899,6 +903,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveRunInsight(s.runInsight).weather };
     case 'borstband':
       return { checked: resolveRunInsight(s.runInsight).chestStrap };
+    case 'tempo-stukken':
+      return { checked: s.tempoStablePieces !== false };
     case 'intensiteit':
       return { value: choiceShort('intensiteit', resolveIntensityCounting(s)) };
     case 'lucht':

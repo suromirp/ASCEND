@@ -8,6 +8,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { runTrends, type TrendRow } from '../../engine/runTrends';
+import { tempoPiecesOn } from '../../engine/aerobicTrend';
 import { useExcludedLogIds } from '../influence/useExcludedLogIds';
 import { todayISO } from '../../utils/dates';
 import { Card, Eyebrow } from '../ui';
@@ -20,9 +21,10 @@ export function RunTrendsCard() {
   const detailsOn = useDetailsOn();
   const excluded = useExcludedLogIds();
   const [open, setOpen] = useState<TrendRow | null>(null);
+  const tempoPieces = tempoPiecesOn(settings);
   const trends = useMemo(
-    () => runTrends({ logs: sessionLogs, templates, program, hr: settings.heartRate, settings: settings.runInsight, detailsOn, today: todayISO(), excludedLogIds: excluded }),
-    [sessionLogs, templates, program, settings.heartRate, settings.runInsight, excluded, detailsOn],
+    () => runTrends({ logs: sessionLogs, templates, program, hr: settings.heartRate, settings: settings.runInsight, detailsOn, today: todayISO(), excludedLogIds: excluded, tempoPieces }),
+    [sessionLogs, templates, program, settings.heartRate, settings.runInsight, excluded, detailsOn, tempoPieces],
   );
   if (trends.rows.length === 0) return null;
   // Zonder één rij met gegevens is er niets te laten zien. De kaart Tempo bij zone 2 eronder

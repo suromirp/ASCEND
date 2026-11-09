@@ -28,6 +28,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Man of vrouw', text: 'het silhouet verschilt een beetje in schouders, heupen en borst. De plekken en de oefeningen blijven hetzelfde.' },
     ],
   },
+  tempoStukken: {
+    title: 'Tempo uit stabiele stukken',
+    lead: 'Tempo bij zone 2 rekent met de stukken van minstens 5 minuten waarin je hartslag en tempo vast lagen, op vlak terrein, uit elke buitenloop.',
+    points: [
+      { head: 'Aan', text: 'standaard: meer en zuiverdere metingen, ook uit het inlopen van een intervaltraining. De eerste 10 minuten, heuvels en warme lopen tellen niet mee.' },
+      { head: 'Uit', text: 'de gemiddelde hartslag van elke geplande rustige of lange loop, zoals eerder.' },
+      { head: 'Je planning', text: 'verandert hier nooit door; het is alleen een meting.' },
+    ],
+  },
   intensiteit: {
     title: 'Intensiteit tellen',
     lead: 'De kaart Intensiteit op Je stand laat zien hoeveel van je loop- en wandelminuten rustig waren. Hier kies je waar ze op gebaseerd is.',
@@ -295,12 +304,23 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     ],
   },
   toestelgewichten: {
-    title: 'Gewichten per toestel',
-    lead: 'Staan de gewichten van een kabel of toestel in je hoofd, vul ze dan een keer in. ASCEND stelt er dan alleen gewichten uit voor.',
+    title: 'Standen per toestel',
+    lead: 'Een stand is een gewicht dat een kabel of toestel in jouw sportschool heeft. Forge onthoudt ze zelf; hier zie je ze en pas je ze aan.',
     points: [
-      { head: 'Invullen', text: 'typ de gewichten met een spatie ertussen, bijvoorbeeld 4,5 9 13,5 18. Je kunt ze ook tijdens een training invullen, in het menu van de oefening.' },
-      { head: 'Per sportschool', text: 'dezelfde kabel heeft in een andere sportschool andere gewichten, dus de lijst hoort bij de sportschool die je koos.' },
-      { head: 'Aanpassen of wissen', text: 'een lijst kun je altijd veranderen. Wis je hem, dan leert en schat ASCEND weer zoals je bij Gewichten van toestellen koos.' },
+      { head: 'Weghalen', text: 'tik op een stand om hem door te strepen, bijvoorbeeld een typefout. Een weggehaalde stand komt niet vanzelf terug. Tik nog eens om hem terug te zetten.' },
+      { head: 'Veel tegelijk', text: 'heeft het blok vaste stappen, dan vul je ze in één keer in als lijst of als bereik, bijvoorbeeld 4,5 tot 113 per 7.' },
+      { head: 'Alleen deze standen', text: 'dan stelt Forge nooit een gewicht voor dat je niet zelf intikte. Anders schat Forge ook tussen en boven je standen.' },
+      { head: 'Per sportschool', text: 'dezelfde kabel heeft in een andere sportschool andere standen, dus ze horen bij de sportschool die je koos.' },
+      { head: 'Alles wissen', text: 'met Standen wissen begint het toestel weer leeg. Wat je al trainde blijft in je logboek staan.' },
+    ],
+  },
+  standenOnthouden: {
+    title: 'Standen onthouden',
+    lead: 'Forge onthoudt de gewichten die je op een kabel of toestel met blok afvinkt. Minder en Meer springen dan van stand naar stand.',
+    points: [
+      { head: 'Zonder vraag', text: 'na het afvinken staat er een regel met Terugdraaien. Dat haalt alleen die stand weg, niet je set.' },
+      { head: 'Eerste keer', text: 'bij een toestel dat Forge nog niet kent neemt het de gewichten over uit je eerdere trainingen in deze sportschool. Een oude typefout streep je weg bij Standen per toestel.' },
+      { head: 'Uit', text: 'dan komen er geen standen bij en leest Forge niets in. Wat er al staat blijft werken, en zonder standen gaan Minder en Meer met de stap uit je sportschool.' },
     ],
   },
   tussengewichten: {
@@ -1266,6 +1286,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Toch verschuiven', text: 'de training gaat naar elke dag van die week die past, ook als hij dan kort voor zijn volgende keer staat.' },
       { head: 'Altijd', text: 'twee zware beendagen staan nooit binnen 48 uur, en wat je zelf vastzette blijft staan.' },
       { head: 'Geldt voor', text: 'nieuwe en gewijzigde periodes. Je ziet het altijd eerst in het voorstel.' },
+    ],
+  },
+  zonderSportschool: {
+    title: 'Kracht zonder sportschool',
+    lead: 'De eerste keuze voor kracht als je in Week een periode zonder sportschool toevoegt. Per periode kun je het nog anders kiezen.',
+    points: [
+      { head: 'Eigen gewicht', text: 'een krachttraining in de sportschool wordt op dezelfde dag een korte sessie met je eigen gewicht: squats, lunges, push-ups en kuitheffingen, 15 tot 20 minuten.' },
+      { head: 'Laten vervallen', text: 'kracht vervalt in die periode. Lopen blijft.' },
+      { head: 'Altijd', text: 'je ziet eerst een voorstel. Een periode die al staat, houdt zijn eigen keuze.' },
     ],
   },
   seizoensstrook: {

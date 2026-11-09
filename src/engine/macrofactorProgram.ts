@@ -30,6 +30,7 @@ import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerc
 import { isLegHeavyTemplate } from './scheduler';
 import { cellText, type Cell } from './sheetTable';
 import type { ProgramDay, ProgramExercise, StoredStrengthProgram } from './strengthProgramStore';
+import { BODYWEIGHT_TEMPLATE_ID } from './noGymDetails';
 
 export interface MacroFactorProgramDay {
   name: string;
@@ -212,7 +213,7 @@ export type ProgramMapping = Record<string, string | null>;
 // template and another day to an upper body template, the planned ones first.
 // A day without a fitting template gets nothing (null).
 export function proposeMapping(program: MacroFactorProgram, templates: SessionTemplate[], current?: StoredStrengthProgram): ProgramMapping {
-  const strength = templates.filter((t) => t.type === 'strength').sort((a, b) => Number(!a.defaultDayOfWeek) - Number(!b.defaultDayOfWeek) || (a.defaultDayOfWeek ?? 9) - (b.defaultDayOfWeek ?? 9));
+  const strength = templates.filter((t) => t.type === 'strength' && t.id !== BODYWEIGHT_TEMPLATE_ID).sort((a, b) => Number(!a.defaultDayOfWeek) - Number(!b.defaultDayOfWeek) || (a.defaultDayOfWeek ?? 9) - (b.defaultDayOfWeek ?? 9));
   const taken = new Set<string>();
   const mapping: ProgramMapping = {};
   // What you chose last time for a day with the same name comes first.

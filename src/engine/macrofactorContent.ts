@@ -22,6 +22,7 @@ import { matchExercise, normalizeExerciseName } from './exerciseMatch';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession } from './macrofactorSets';
 import { joinNL } from '../utils/joinNL';
+import { BODYWEIGHT_TEMPLATE_ID } from './noGymDetails';
 
 type Kind = 'legs' | 'upper' | 'full';
 
@@ -151,7 +152,7 @@ export function suggestByContent(
   planned: PlannedSession[],
   programStart?: string,
 ): Record<string, ContentSuggestion> {
-  const strength = templates.filter((t) => t.type === 'strength');
+  const strength = templates.filter((t) => t.type === 'strength' && t.id !== BODYWEIGHT_TEMPLATE_ID);
   if (strength.length === 0) return {};
   const tplProfiles = strength.map((t) => ({ template: t, profile: templateProfile(t) }));
   const strengthIds = new Set(strength.map((t) => t.id));

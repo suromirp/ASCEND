@@ -179,6 +179,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('water-per-etappe', 'Water per etappe tonen', 'doel', 'showStageWater'),
   choice('rust-na-tocht', 'Rust na een bergtocht', 'doel', 'trekLegRest', 'soft', 'rustNaTocht', true),
   choice('vakantie-opzij', 'Opzij voor een vakantie', 'planning', 'leaveCrowding', 'drop', 'vakantieOpzij', true),
+  choice('zonder-sportschool', 'Kracht zonder sportschool', 'planning', 'noGymStrength', 'bodyweight', 'zonderSportschool'),
   {
     id: 'bergschoenen', title: 'Bergschoenen inlopen', page: 'doel',
     differs: (s) => bootGoalKm(s.bootBreakInKm) !== bootGoalKm(undefined),
@@ -196,6 +197,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthChoice('forge-vermoeidheid', 'Vermoeidheid per set', 'fatigue', 'vermoeidheid'),
   strengthFlag('forge-pauze', 'Na een pauze lichter beginnen', 'lighterAfterBreak'),
   strengthFlag('forge-rekent-mee', 'Forge rekent mee', 'reckon'),
+  strengthFlag('standen-onthouden', 'Standen onthouden', 'learnStands'),
   strengthFlag('forge-afvinken-doel', 'Afvinken telt als het doel', 'assumedCounts'),
   strengthFlag('forge-bereik', 'Bereik verbreden', 'widenRange'),
   strengthChoice('forge-schatting', 'Sets die meetellen', 'estimateUpTo', 'schatting'),
@@ -374,6 +376,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('macrofactor-gewicht', 'Gewicht gebruiken', 'koppelingen', 'weightFromMacroFactor'),
   flag('health-connect-gewicht', 'Gewicht uit Health Connect', 'lichaam', 'weightFromHealthConnect'),
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
+  flag('tempo-stukken', 'Tempo uit stabiele stukken', 'lichaam', 'tempoStablePieces'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
   {
     id: 'locatie', title: 'Je locatie', page: 'gegevens',

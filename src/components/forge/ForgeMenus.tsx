@@ -6,7 +6,8 @@ import { canRemoveRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { canSwap, isAddedSlot } from '../../engine/addedExercises';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
 import { exerciseOf, swapOptions, type WorkoutExercise } from '../../engine/forgeWorkout';
-import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
+import { hasStack } from '../../engine/machineWeights';
+import { standCount } from '../../engine/toestelStanden';
 import { swapPreference, swapReason } from '../../engine/mountainMuscles';
 import { SPOTTER_EXPLAIN, SPOTTER_HOW, SPOTTER_SIGN } from '../../engine/spotter';
 import { formatAway } from '../../engine/forgeSession';
@@ -154,7 +155,7 @@ export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId,
             )}
             {!readOnly && !preview && hasStack(exercise) && (
               <SheetGroup title="Toestel">
-                <MenuRow icon="plus" title="Gewichten van dit toestel" sub={ownWeightsFor(strength.profile, exercise) ? `Je eigen lijst in ${strength.profile.name}.` : `Vul in wat er hangt in ${strength.profile.name}.`} onClick={() => { close(); onFill(); }} />
+                <MenuRow icon="plus" title="Standen van dit toestel" sub={standCount(strength.profile, exercise) > 0 ? `${standCount(strength.profile, exercise)} ${standCount(strength.profile, exercise) === 1 ? 'stand' : 'standen'} in ${strength.profile.name}.` : 'Nog geen standen. Tik een gewicht in en Forge onthoudt het.'} onClick={() => { close(); onFill(); }} />
                 <MenuRow icon="plus" title="Tussengewicht van dit toestel" sub={addOnMenuSub(strength.profile, exercise)} onClick={() => { close(); onAddOn(); }} />
               </SheetGroup>
             )}

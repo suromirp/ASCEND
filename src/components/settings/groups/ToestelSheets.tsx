@@ -9,14 +9,13 @@ import {
   addOnsFor,
   allProfiles,
   formatAddOns,
-  machineSummary,
   hasStack,
   MAX_GYM_PROFILES,
-  ownWeightsFor,
   profileNameProblem,
   withActiveProfile,
   withNewProfile,
 } from '../../../engine/machineWeights';
+import { standCount, standsFor, standsSummary } from '../../../engine/toestelStanden';
 import { normalizeStrengthSettings, resolveStrengthSettings, withProfile } from '../../../engine/strengthSettings';
 import { useAppData } from '../../../state/AppDataContext';
 import { ExerciseAddOnSheet, GymAddOnForm } from '../../forge/AddOnWeights';
@@ -28,26 +27,28 @@ import { ChoiceSheet, Sheet } from '../Sheet';
 
 const STACK_EXERCISES = EXERCISES.filter(hasStack).sort((a, b) => a.name.localeCompare(b.name));
 
-// Gewichten per toestel: de toestellen met een lijst in deze sportschool, om aan te passen of
-// te wissen, en een keuze om een toestel toe te voegen.
+// Standen per toestel: de toestellen met standen in deze sportschool, om aan te passen of te wissen,
+// en een keuze om een toestel toe te voegen (engine/toestelStanden.ts).
 export function MachineListSheet({ onClose }: { onClose: () => void }) {
   const { settings } = useAppData();
   const profile = resolveStrengthSettings(settings.strengthModel).profile;
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const withList = STACK_EXERCISES.filter((e) => ownWeightsFor(profile, e));
-  const without = STACK_EXERCISES.filter((e) => !ownWeightsFor(profile, e));
+  const withList = STACK_EXERCISES.filter((e) => standCount(profile, e) > 0);
+  const without = STACK_EXERCISES.filter((e) => standCount(profile, e) === 0);
   return (
     <>
-      <Sheet eyebrow="Je sportschool" title="Gewichten per toestel" line={`Voor ${profile.name}.`} onClose={onClose}>
+      <Sheet eyebrow="Je sportschool" title="Standen per toestel" line={`Voor ${profile.name}.`} onClose={onClose}>
+        <p className="st-hint" style={{ marginLeft: 0 }}>Forge onthoudt wat je op een toestel intikt. Hier zie je het en pas je het aan.</p>
         {withList.length > 0 ? (
           <div className="st-list">
-            {withList.map((e) => (
-              <SettingsRow key={e.id} id={`tg-${e.id}`} title={e.name} value={machineSummary(ownWeightsFor(profile, e) ?? [])} onClick={() => setEditing(e.id)} />
-            ))}
+            {withList.map((e) => {
+              const stands = standsFor(profile, e);
+              return <SettingsRow key={e.id} id={`tg-${e.id}`} title={e.name} value={standsSummary(stands?.kg ?? [], !!stands?.only)} onClick={() => setEditing(e.id)} />;
+            })}
           </div>
         ) : (
-          <p className="st-hint" style={{ marginLeft: 0 }}>Nog geen toestel met een eigen lijst. Voeg er een toe, of vul de gewichten in tijdens een training.</p>
+          <p className="st-hint" style={{ marginLeft: 0 }}>Nog geen toestel met standen. Voeg er een toe, of tik een gewicht in tijdens een training.</p>
         )}
         <div className="st-list" style={{ marginTop: 12 }}>
           <button type="button" className="st-more" onClick={() => setAdding(true)}>
@@ -58,7 +59,7 @@ export function MachineListSheet({ onClose }: { onClose: () => void }) {
       </Sheet>
       {adding && (
         <ChoiceSheet<string>
-          eyebrow="Gewichten per toestel"
+          eyebrow="Standen per toestel"
           title="Welk toestel?"
           options={without.map((e) => ({ value: e.id, label: e.name }))}
           value=""

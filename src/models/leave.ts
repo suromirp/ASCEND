@@ -10,7 +10,22 @@ import type { TerrainContext } from './goals';
 // - no_training: a holiday without training. No training on these days.
 // - trek: a block of walking days with a backpack (a multi-day tour). The
 //   day before and the day after stay light.
-export type LeaveKind = 'free_days' | 'no_training' | 'trek';
+// - no_gym: you are away and can run, but have no gym. Runs stay, shorter and
+//   easier; a gym session becomes a short one with your own weight, or goes
+//   (engine/noGym.ts).
+export type LeaveKind = 'free_days' | 'no_training' | 'trek' | 'no_gym';
+
+// The choices of a period without a gym (engine/noGym.ts). Optional and additive:
+// a period without them, or with damaged ones, reads as the advice
+// (engine/noGym.ts#resolveNoGym, storage/migrationsPlanning.ts#migrateLeavePeriods).
+export interface NoGymDetails {
+  // 'light': two runs a week (the advice). 'normal': what was planned, without the gym.
+  amount: 'light' | 'normal';
+  // 'bodyweight': a gym session becomes a short one with your own weight (the advice). 'drop': it goes.
+  strength: 'bodyweight' | 'drop';
+  // Hills nearby: a run goes easy up the hills and controlled down. Words only, it plans nothing.
+  hills: boolean;
+}
 
 export interface LeavePeriod {
   id: string;
@@ -20,6 +35,8 @@ export interface LeavePeriod {
   note?: string;
   // Set when this period is a tocht of your own (see TrekDetails).
   trek?: TrekDetails;
+  // Set on a period without a gym (see NoGymDetails).
+  noGym?: NoGymDetails;
 }
 
 // Written on a planned session that a period changed or placed, so that

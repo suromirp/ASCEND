@@ -35,7 +35,7 @@ import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { excludedLogIds } from '../engine/influence';
 import { coachReaction } from '../engine/coach';
-import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
+import { aerobicTrend, celebratedChange, progressMoment, tempoPiecesOn, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { showCompletionQuote } from '../engine/overviewSettings';
 import type { LogSessionInput } from './appDataTypes';
 import { bumpPlanRevision, planSettled } from './planningSync';
@@ -147,13 +147,15 @@ export function useLogActions(deps: {
         // an easy run (engine/aerobicTrend.ts#progressMoment).
         // A training set to "Niet meetellen voor hartslag" stays out of the trend (engine/influence.ts).
         const excluded = excludedLogIds((await SettingsRepo.get()).influences);
-        const trend = aerobicTrend(allLogs, allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded);
+        const pieces = { pieces: tempoPiecesOn({ tempoStablePieces: settings.tempoStablePieces }) };
+        const trend = aerobicTrend(allLogs, allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded, pieces);
         const lastProgress = await MetaRepo.get<ProgressCelebrated>('aerobicProgressCelebrated');
-        const counted = trend.runs > aerobicTrend(allLogs.filter((l) => l.id !== log.id), allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded).runs;
+        const counted = trend.runs > aerobicTrend(allLogs.filter((l) => l.id !== log.id), allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded, pieces).runs;
         const progress = counted ? progressMoment(trend, lastProgress, log.completedDate) : undefined;
-        if (progress && trend.changeSec !== undefined) {
+        const near = celebratedChange(trend);
+        if (progress && near !== undefined) {
           coachNote = `${coachNote} ${progress}`;
-          await MetaRepo.set('aerobicProgressCelebrated', { date: log.completedDate, changeSec: trend.changeSec });
+          await MetaRepo.set('aerobicProgressCelebrated', { date: log.completedDate, changeSec: near });
         }
         const moment: SavedMoment = { logId: log.id, recovery: log.type === 'recovery', clearedTitle, coachNote, auto: input.quiet };
         if (opts?.batch) opts.batch.push(moment);
@@ -166,7 +168,7 @@ export function useLogActions(deps: {
         if (plannedId) loggingInFlight.current.delete(plannedId);
       }
     },
-    [refresh, settings.heartRate, reportStorageError, announceSaved, loggingInFlight],
+    [refresh, settings.heartRate, settings.tempoStablePieces, reportStorageError, announceSaved, loggingInFlight],
   );
 
   // Undoing a log also removes any milestone auto-cleared by it (matched

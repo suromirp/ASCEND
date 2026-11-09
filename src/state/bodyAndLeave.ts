@@ -37,6 +37,7 @@ import { mainGoal } from '../engine/mainGoal';
 import type { CommitOutcome, UndoRestore } from './appDataTypes';
 import { bumpPlanRevision, planSettled } from './planningSync';
 import type { Dispatch, SetStateAction } from 'react';
+import { mainGoalIsMountain } from '../engine/mountainMuscles';
 
 export function useBodyAndLeave(deps: {
   program: Program | null;
@@ -199,6 +200,7 @@ export function useBodyAndLeave(deps: {
     const slotDays = patternDays(templates, settings, restDay);
     return planLeaveChange({
       mode, period, replaces, existing: settings.leavePeriods ?? [], sessions: plannedSessions, logs: sessionLogs, templates, today,
+      mountainGoal: mainGoalIsMountain(trainingGoals, ladder),
       context: (periods) => {
         let n = 0;
         return {
