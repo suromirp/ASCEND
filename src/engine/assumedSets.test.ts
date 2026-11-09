@@ -224,3 +224,11 @@ describe('het log: wat Forge vroeg, bij elke werkset uit Forge', () => {
     expect(badRir.strengthData![0].sets[0]).toEqual({ reps: 10, weightKg: 60, rir: 2, repsAsked: 10 });
   });
 });
+
+describe('regel 3 blijft hetzelfde bij een volgende set met eigen RIR die ook repsAsked draagt', () => {
+  it('leest dan het bereik, niet het gevraagde aantal', () => {
+    const first: SetLog = { reps: 10, weightKg: 60, rir: 2, rirAssumed: true, repsAsked: 10, weightKgAsked: 60, kind: 'work' };
+    const next: SetLog = { reps: 8, weightKg: 60, rir: 2, repsAsked: 10, weightKgAsked: 60, rirAsked: 2, kind: 'work' };
+    expect(confirmedAssumed(first, next, { rangeLow: 8 })).toBe(true);
+  });
+});

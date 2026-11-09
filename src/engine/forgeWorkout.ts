@@ -790,7 +790,7 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
         ...(r.kind === 'work' && r.rir !== undefined && r.rirAssumed && !ex.hold ? { rirAssumed: true } : {}),
         // Wat Forge vroeg, voor "Afvinken telt als het doel" (engine/assumedSets.ts) en voor "Hoe goed kent
         // Forge je" (engine/forgeCalibration.ts): bij elke werkset, niet alleen bij een afgevinkte.
-        ...(r.kind === 'work' && !ex.hold && r.target.timedSec === undefined ? askedFields(r) : {}),
+        ...(r.kind === 'work' && !ex.hold ? askedFields(r) : {}),
       }));
     if (sets.length > 0) out.push({ exerciseId: ex.exerciseId, exerciseName: ex.name, sets });
   }
@@ -801,7 +801,7 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
 // voorschrift afwijkt) en de RIR van het doel.
 function askedFields(r: WorkoutRow): Partial<SetLog> {
   return {
-    ...(r.forgeReps !== undefined && r.forgeReps > 0 ? { repsAsked: r.forgeReps } : {}),
+    ...(r.forgeReps !== undefined && r.forgeReps > 0 && r.target.timedSec === undefined ? { repsAsked: r.forgeReps } : {}),
     ...(r.target.weightKg !== undefined ? { weightKgAsked: r.target.weightKg } : {}),
     ...(typeof r.forgeKg === 'number' && Number.isFinite(r.forgeKg) && r.forgeKg !== r.target.weightKg ? { forgeKg: r.forgeKg } : {}),
     ...(r.target.rir !== undefined && !r.target.failure ? { rirAsked: r.target.rir } : {}),

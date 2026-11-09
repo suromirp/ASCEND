@@ -41,7 +41,7 @@ describe('Voorspelling', () => {
     const sets = Array.from({ length: 8 }, () => set({ repsAsked: 12 }));
     const c = calibrate({ logs: [log(3, 'bench-press', 'Bankdrukken', sets)], today: TODAY });
     expect(c.prediction).toMatchObject({ sets: 8, hit: 0, meanDeviation: -2, verdict: 'nog_niet' });
-    expect(c.lines.bias).toBe('Forge schreef gemiddeld 2 herhaling te zwaar voor.');
+    expect(c.lines.bias).toBe('Forge schreef gemiddeld 2 herhalingen te zwaar voor.');
     expect(c.allGood).toBe(false);
   });
 
@@ -100,8 +100,8 @@ describe('Genoeg data', () => {
     expect(c.perExercise.map((e) => e.enough)).toEqual([true, false]);
   });
 
-  it('oude logs zonder wat Forge vroeg, logs buiten het venster en MacroFactor-logs tellen niet', () => {
-    const oldSets: SetLog[] = Array.from({ length: 8 }, () => ({ reps: 10, weightKg: 60, rir: 2, kind: 'work' }));
+  it('oude logs zonder wat Forge vroeg (ook afgevinkte sets van voor rirAsked), logs buiten het venster en MacroFactor-logs tellen niet', () => {
+    const oldSets: SetLog[] = Array.from({ length: 8 }, () => ({ reps: 10, weightKg: 60, rir: 2, kind: 'work', rirAssumed: true, repsAsked: 10, weightKgAsked: 60 }));
     const outside = log(40, 'bench-press', 'Bankdrukken', Array.from({ length: 8 }, () => set()));
     const mf = { ...log(3, 'bench-press', 'Bankdrukken', Array.from({ length: 8 }, () => set())), source: 'macrofactor' as const };
     const c = calibrate({ logs: [log(3, 'bench-press', 'Bankdrukken', oldSets), outside, mf], today: TODAY });
@@ -164,7 +164,7 @@ describe('alles goed', () => {
 
   it('biasLine zwijgt bij een kleine scheefheid', () => {
     expect(biasLine(0.3)).toBeUndefined();
-    expect(biasLine(-1.5)).toBe('Forge schreef gemiddeld 1,5 herhaling te zwaar voor.');
+    expect(biasLine(-1.5)).toBe('Forge schreef gemiddeld 1,5 herhalingen te zwaar voor.');
     expect(biasLine(1)).toBe('Forge schreef gemiddeld 1 herhaling te licht voor.');
   });
 });

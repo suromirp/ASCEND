@@ -116,7 +116,9 @@ interface AskedSet {
 // Forge vroeg (alleen sets uit Forge dragen ze); een houding of een set met band zegt hier niets.
 function asked(set: SetLog): AskedSet | undefined {
   if (!isWorkSet(set) || set.reps <= 0 || set.seconds !== undefined || set.band !== undefined) return undefined;
-  if (set.repsAsked === undefined && set.weightKgAsked === undefined) return undefined;
+  // Zonder `rirAsked` is het log van voor 9 november: alleen afgevinkte sets droegen toen wat Forge vroeg, en dat
+  // zou een scheve steekproef geven.
+  if (set.rirAsked === undefined || (set.repsAsked === undefined && set.weightKgAsked === undefined)) return undefined;
   return { set, forgeKg: set.forgeKg ?? set.weightKgAsked };
 }
 
@@ -253,7 +255,8 @@ const nl = (n: number): string => String(Math.round(n * 10) / 10).replace('.', '
 export function biasLine(mean: number | undefined): string | undefined {
   if (mean === undefined || Math.abs(mean) < 0.5) return undefined;
   const reps = nl(Math.abs(mean));
-  return mean < 0 ? `Forge schreef gemiddeld ${reps} herhaling te zwaar voor.` : `Forge schreef gemiddeld ${reps} herhaling te licht voor.`;
+  const unit = reps === '1' ? 'herhaling' : 'herhalingen';
+  return mean < 0 ? `Forge schreef gemiddeld ${reps} ${unit} te zwaar voor.` : `Forge schreef gemiddeld ${reps} ${unit} te licht voor.`;
 }
 
 export function calibrate(input: CalibrationInput): Calibration {
@@ -304,7 +307,7 @@ export function calibrate(input: CalibrationInput): Calibration {
 // Een regel per oefening voor in het blad: het droge feit eerst, of dat er nog te weinig data is.
 export function exerciseLine(e: ExerciseCalibration, minSets = MIN_SETS): string {
   if (!e.enough) return `Nog te weinig data (${e.sets} van ${minSets} sets)`;
-  const p = e.prediction.sets >= 1 ? `${e.prediction.hit} van de ${e.prediction.sets} sets raak` : 'geen sets met eigen RIR';
+  const p = e.prediction.sets >= 1 ? `${e.prediction.hit} van de ${e.prediction.sets} sets raak` : 'geen meting op het gewicht van Forge';
   const a = e.adjust.adjusted === 0 ? 'niet bijgestuurd' : `${e.adjust.adjusted} bijgestuurd`;
   return `${p}, ${a}`;
 }

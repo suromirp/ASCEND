@@ -29,7 +29,7 @@ export function ForgeKnowsYou({ logs, today, bodyKg, estimateUpTo }: { logs: Ses
       )}
       {info && (
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Dit meet Forge aan je eigen trainingen van de laatste vier weken, niet aan wat MacroFactor zou voorschrijven; MacroFactor is hier geen scheidsrechter.
+          Dit meet Forge aan je eigen trainingen, voorspelling en bijsturen over vier weken en sterker over acht, niet aan wat MacroFactor zou voorschrijven; MacroFactor is geen scheidsrechter.
         </p>
       )}
       {any && <TextButton onClick={() => setOpen(true)} className="self-start" icon="verder">Per oefening bekijken</TextButton>}

@@ -22,6 +22,8 @@ De eigenaar wil MacroFactor Workouts overbodig maken. We weten niet hoe MacroFac
 ## Eigen keuzes buiten de opdracht
 
 - Nieuw veld `SetLog.rirAsked` (de RIR van het doel) en `repsAsked`, `weightKgAsked`, `forgeKg` voortaan bij elke Forge-werkset, niet alleen bij een afgevinkte set zonder eigen RIR. Zonder die velden weet het log niet wat Forge vroeg, en achteraf herrekenen zou de maat laten meebewegen met de engine. Oude logs hebben ze niet of alleen naast `rirAssumed`; die tellen voor de voorspelling niet mee en worden nooit geraden. De migratiestap `migrateLogSetAsked` houdt een geldig getal nu ook zonder `rirAssumed` en laat een beschadigd veld vallen. Geen nieuwe schemaversie: optioneel en aanvullend, zoals `repsAsked`. Historie blijft append-only.
+- Een set telt alleen als hij `rirAsked` draagt: afgevinkte sets van 8 en 9 november (zonder dat veld) zouden een scheve steekproef geven. Lichter telt niet als bijsturen: Forge zet dan zelf `forgeKg`, en een set op dat gewicht heet gevolgd. `askedReps` in `assumedSets.ts` leest `repsAsked` alleen bij een afgevinkte set zonder eigen RIR, zodat regel 3 van Afvinken telt als het doel niet verandert door de bredere schrijfregel.
+- Sterker heet goed zolang er geen hoofdoefening daalt (gelijk telt, zoals het visiedocument zegt).
 - Alleen logs uit Forge zelf (`logOrigin` is `forge`) tellen mee.
 - Eén zin uitleg achter de i; de grenzen en uitleg staan in het blad Per oefening.
 - Plek: op de Forge-pagina onder de lijst, boven "Voorstel en wat je deed", altijd zichtbaar bij de instelling aan (ook zonder "ASCEND naast MacroFactor").
