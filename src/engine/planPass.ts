@@ -14,6 +14,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { applyRaceBlocks, type RaceBlock } from './raceBlock';
 import { applyLeaveBlocks } from './leaveBlock';
+import { planAroundLeave } from './leaveAround';
 import { repairWeeks, type Finding, type Repair } from './weekValidator';
 import { arrangeWeekForRestDay, type RestWeekday } from './restDay';
 import { DEFAULT_ENABLED_SPORTS, parseWeekShape, weeklyPatternTemplates, type PatternSettings } from './sports';
@@ -50,6 +51,12 @@ export interface PlanPassContext {
   trekRest?: 'soft' | 'strict';
   // A training that moves for a holiday: let go rather than crowd its own next time (default), or shift.
   leaveCrowding?: 'drop' | 'shift';
+  // Around a holiday: 'wide' (the advice in the app) looks for the best arrangement over all workable days of the weeks
+  // around it, also over the week border (engine/leaveAround.ts); 'little' leaves it to the week check, which moves a
+  // training to the nearest day of its own week. Absent: 'little' (the engine tests), the app passes its setting.
+  leaveAround?: 'wide' | 'little';
+  // Adding a holiday without training (a proposal with Akkoord): the whole stretch is arranged again with the new one, also what an earlier holiday's Akkoord placed.
+  leaveReshuffle?: boolean;
   // The roles of the sports (AppSettings.sportHandling): a fixed appointment becomes a fixed row first
   // (engine/fixedSports.ts). Absent: fixed rows are left as they are.
   fixedSports?: SportHandlingMap | null;
@@ -120,13 +127,15 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
     // Walks on a trek, a long walk on a free day: what the periods put in.
     const placed = applyLeaveBlocks(afterRace, { check: checkInput, newId: ctx.newId, hikingEnabled: ctx.hikingEnabled });
     beforeCheck ??= placed.sessions;
-    const check = repairWeeks({ ...checkInput, sessions: placed.sessions });
-    repairs.push(...placed.repairs, ...check.repairs);
+    // The best arrangement around a holiday, before the week check repairs what is left.
+    const around = ctx.leaveAround === 'wide' ? planAroundLeave(placed.sessions, { check: checkInput, reshuffle: ctx.leaveReshuffle }) : { sessions: placed.sessions, repairs: [] };
+    const check = repairWeeks({ ...checkInput, sessions: around.sessions });
+    repairs.push(...placed.repairs, ...around.repairs, ...check.repairs);
     remaining = check.remaining;
     current = check.sessions;
     // The race block is stable on its own result; only a repair or a placement
     // can give it something new to act on.
-    if (check.repairs.length === 0 && placed.repairs.length === 0) break;
+    if (check.repairs.length === 0 && placed.repairs.length === 0 && around.repairs.length === 0) break;
   }
   return { sessions: current, repairs, remaining, beforeCheck: beforeCheck ?? all };
 }

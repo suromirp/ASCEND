@@ -421,6 +421,17 @@ export const CHOICES = {
       { value: 'shift', label: 'Toch verschuiven', note: 'Naar elke dag van die week die past', short: 'Verschuiven' },
     ],
   }),
+  vakantieSchuiven: def({
+    group: 'Planning',
+    title: 'Rond een vakantie schuiven',
+    line: 'Hoeveel ASCEND mag verschuiven om je weken rond een vakantie zo goed mogelijk in te delen.',
+    advice: 'wide' as 'wide' | 'little',
+    help: 'vakantieSchuiven',
+    options: [
+      { value: 'wide', label: 'Flink', note: 'De beste indeling over alle werkbare dagen, ook over de weekgrens', short: 'Flink' },
+      { value: 'little', label: 'Weinig', note: 'Een training schuift alleen naar de dichtstbijzijnde dag van zijn eigen week', short: 'Weinig' },
+    ],
+  }),
   zonderSportschool: def({
     group: 'Planning',
     title: 'Kracht zonder sportschool',

@@ -162,6 +162,14 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.wijzigingen} value={plan.applyMode} onPick={(v) => void updateSettings({ changeApplyMode: v })} onClose={close} />
       )}
       {sheet === 'volgorde-stand' && <OrderSheet onClose={close} />}
+      {sheet === 'vakantie-schuiven' && (
+        <ChoiceFromDef
+          def={CHOICES.vakantieSchuiven}
+          value={settings.leaveAround ?? 'wide'}
+          onPick={(v) => { if (v !== (settings.leaveAround ?? 'wide')) void plan.changeSetting(`Rond een vakantie schuiven: ${choiceShort('vakantieSchuiven', v)}`, { leaveAround: v }, 'Volgt je keuze voor hoeveel er rond een vakantie mag schuiven.'); }}
+          onClose={close}
+        />
+      )}
       {sheet === 'vakantie-opzij' && (
         <ChoiceFromDef
           def={CHOICES.vakantieOpzij}

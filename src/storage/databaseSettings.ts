@@ -160,6 +160,11 @@ export interface AppSettings {
   // the advice) lets it go rather than put it right before or after its own next time, 'shift' moves
   // it to any day of that week that fits. Optional and additive, so no migration step.
   leaveCrowding?: 'drop' | 'shift';
+  // Around a holiday (engine/leaveAround.ts): 'wide' (absent = wide, the advice) looks for the best
+  // arrangement over all workable days of the weeks around it, also over the week border; 'little'
+  // leaves it to the week check, which moves a training to the nearest day of its own week. Optional
+  // and additive, so no migration step.
+  leaveAround?: 'wide' | 'little';
   // A new period without a gym (engine/noGym.ts): 'bodyweight' (absent = bodyweight, the advice)
   // puts a short session with your own weight in place of a gym session, 'drop' lets it go. Only
   // the starting choice in the sheet: the period keeps its own choice, so changing this never
