@@ -247,6 +247,10 @@ export type SessionVariant = 'full' | 'short' | 'minimum' | 'custom';
 
 export type SetKind = 'warmup' | 'work';
 
+// How strong the band of a set was (SetLog.band).
+export const SET_BANDS = ['licht', 'middel', 'zwaar'] as const;
+export type SetBand = (typeof SET_BANDS)[number];
+
 export interface SetLog {
   reps: number;
   weightKg?: number;
@@ -272,6 +276,14 @@ export interface SetLog {
   // only when it differs from `weightKgAsked`. Only next to `rirAssumed`; absent on older logs, which then
   // compare with `weightKgAsked`. Decision: docs/beslissingen/2026-11-09-forge-review-afvinken.md.
   forgeKg?: number;
+  // Calisthenics (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md). Optional and additive: older logs
+  // have none and read as always; a damaged value is dropped on reading (migrations.ts#migrateLogSetSkill).
+  // `seconds`: how long a hold lasted (then `reps` is 1, so everything that counts reps keeps working).
+  seconds?: number;
+  // The band that helped; a band is never a negative weight.
+  band?: SetBand;
+  // "Ging het netjes?": false is not clean, absent is unknown (and counts as clean for the test).
+  clean?: boolean;
   // When the set was ticked, as an ISO time. Only on logs made after the session clock
   // (docs/beslissingen/2026-10-29-forge-als-sessie.md); absent on older logs, which read as always.
   at?: string;

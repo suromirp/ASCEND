@@ -287,6 +287,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('weekterugblik', 'Weekterugblik', 'weekReview'),
   overviewSpec('weekterugblik-dag', 'Dag van de terugblik', 'weekReviewDay', (v: string) => choiceShort('terugblikDag', v)),
   choice('forge-plaatjes', 'Plaatjes bij oefeningen', 'forge', 'exerciseArt', 'beide', 'plaatjes'),
+  flag('forge-uitleg-open', 'Uitleg standaard uitgeklapt', 'forge', 'guideOpen', { fallback: false }),
   choice('lijfvraag', 'Hoe voelt je lijf?', 'vandaag', 'bodyCheck', 'reden', 'lijfvraag'),
   choice('korter-vandaag', 'Minder tijd vandaag', 'vandaag', 'shorterToday', 'kern', 'korterVandaag'),
   flag('zones-na-test', 'Zones bijwerken na een test', 'planning', 'zonesAfterTest'),

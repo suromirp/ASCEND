@@ -214,6 +214,12 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-volgorde-lijst', withForge({ listSort: 'name' })).value).toBe('Op naam');
   });
 
+  it('Uitleg standaard uitgeklapt staat standaard uit', () => {
+    expect(rowSummary('forge-uitleg-open', facts()).checked).toBe(false);
+    expect(rowSummary('forge-uitleg-open', facts({ settings: { ...facts().settings, guideOpen: true } })).checked).toBe(true);
+    expect(rowSummary('forge-uitleg-open', facts({ settings: { ...facts().settings, guideOpen: 'ja' as unknown as boolean } })).checked).toBe(false);
+  });
+
   it('Bijsturen staat aan, RIR vooraf staat op hint, en een keuze verandert de rij', () => {
     const withForge = (strengthModel: object) => facts({ strengthExternal: false, settings: { ...facts().settings, strengthModel } });
     expect(rowSummary('forge-bijsturen', withForge({}))).toEqual({ checked: true, hidden: false });
