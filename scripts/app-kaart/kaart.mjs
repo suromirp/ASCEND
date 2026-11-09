@@ -129,6 +129,7 @@ const SCHERMEN = {
   'training-blad': { titel: 'Blad van een geplande training (Week)', pad: '#/week', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Lange duurloop")') },
   // De opslagrijen komen asynchroon uit de browser (storage.estimate); wacht tot ze er zijn.
   gegevens: { titel: 'Instellingen: Gegevens en back-up', pad: '#/more/gegevens', actie: (p) => p.waitForFunction(() => /die ASCEND mag gebruiken/.test(document.body.innerText) && /Ruimte van reeksen, /.test(document.body.innerText), null, { timeout: 15000 }).catch(() => {}) },
+  'datavelden': { titel: 'Datavelden voor je horloge (Zone 2, advies)', pad: '#/horloge/datavelden' },
   lichaam: { titel: 'Lichaam', pad: '#/lichaam' },
   'lichaam-plek': { titel: 'Lichaam: een plek (rechterknie)', pad: '#/lichaam/knie-r' },
   // De standen met horlogegegevens, een vakantie, zonder doel en ziek gemeld (scripts/app-kaart/maak-standen.mjs).

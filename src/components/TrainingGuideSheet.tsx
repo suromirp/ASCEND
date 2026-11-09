@@ -28,6 +28,7 @@ import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { getModalities } from '../data/modalities';
 import { filterForTraining } from '../engine/trainingSpots';
 import { Icon } from './icons';
+import { watchFieldsShown, watchKindOf } from '../engine/watchFields';
 
 // De vier niveaus lopen van rustig naar hard, dus op de inspanningsschaal van de
 // app (Z1 tot Z5, ook in de ZoneBar): bleekblauw, groen, geel, oranje. Bij elk
@@ -71,6 +72,8 @@ export function TrainingGuideSheet({
   // Spots for this training (Trainingsplekken, filtered on it), or any
   // climbing spot for a D+ session without its own filter.
   const spotFilter = filterForTraining(template?.id);
+  // Datavelden voor je horloge: alleen bij de soorten met advies en als de instelling aan staat.
+  const watchKind = watchFieldsShown(settings) ? watchKindOf(template) : undefined;
   const showSpots = !!spotFilter || !!plan?.keyTag?.includes('D+') || template?.type === 'hiking';
 
   return (
@@ -198,6 +201,16 @@ export function TrainingGuideSheet({
                 style={{ borderColor: 'var(--color-card-border)' }}
               >
                 <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Waar kun je dit doen?</span>
+                <span style={{ color: 'var(--color-action)' }}><Icon name="verder" size={16} /></span>
+              </button>
+            )}
+            {watchKind && (
+              <button
+                onClick={() => { onClose(); navigate(`/horloge/datavelden?soort=${watchKind}`); }}
+                className="flex min-h-[48px] w-full items-center justify-between border-b py-3 text-left"
+                style={{ borderColor: 'var(--color-card-border)' }}
+              >
+                <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Datavelden voor je horloge</span>
                 <span style={{ color: 'var(--color-action)' }}><Icon name="verder" size={16} /></span>
               </button>
             )}
