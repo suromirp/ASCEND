@@ -6,7 +6,6 @@ Bijgewerkt op 9 november 2026 (F5 en de kleine F4-punten).
 
 ## Inbox
 
-- 9 november, uit de doorloop van uitleg batch 3 en 4 (al eerder zo): in het blad van een oefening staat de zorgzin ("Doet het pijn, stop dan...") onder de tekening, op 412 px onder de vouw zolang de uitleg is ingeklapt; volgens de regel staat een zorgzin nooit achter een tik of ingeklapt. Ook: de vaste doorloop forge meldt 45 tikdoelen onder 44 px in de setrijen. En zes voorstellen voor de catalogus (support-hold, aliassen bij dead-hang, glute-bridge, face-pull, dumbbell-shoulder-press, negative-chin-up) in `docs/beslissingen/2026-11-09-uitleg-batch-3-en-4.md`.
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
 Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
