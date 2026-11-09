@@ -4,6 +4,7 @@ import { plannedEffort, weeklyLoad } from './standing';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { setLongRunThenLegs } from './scheduler';
 import type { PlannedSession, SessionLog } from '../models/training';
+import { leftOutOfCount } from './weekLogs';
 
 const { templates } = buildDefaultProgramData();
 const tpl = (id: string) => templates.find((t) => t.id === id)!;
@@ -170,5 +171,34 @@ describe('ridgeSentence', () => {
   it('een enkele beendag en een week zonder beendag', () => {
     expect(ridgeSentence(days([], [planned('tpl_long_run', '2026-10-25', { plannedMinutes: 60 })]), TODAY)).toContain('Eén zware beendag');
     expect(ridgeSentence(days([], [planned('tpl_easy_run', '2026-10-24')]), TODAY)).toMatch(/Geen zware beendag\.$/);
+  });
+});
+
+describe('weekProgress met een training die naar later is gezet', () => {
+  // Melding van de eigenaar (9 november): alles afgevinkt en toch "6/7 gedaan". De oude rij van een
+  // gemiste training die je naar een andere dag zette telde nog mee. Nagemaakte data.
+  const old = planned('tpl_upper_a', '2026-10-21', { status: 'skipped' });
+  const moved = planned('tpl_upper_a', '2026-10-22', { catchUp: { fromId: old.id, fromDate: '2026-10-21' } });
+  const run = planned('tpl_easy_run', '2026-10-20');
+  const all = [run, old, moved];
+
+  it('telt de oude rij niet als de nieuwe rij er staat', () => {
+    const logs = [log('tpl_easy_run', '2026-10-20', 40, { plannedSessionId: run.id }), log('tpl_upper_a', '2026-10-22', 50, { plannedSessionId: moved.id })];
+    expect(weekProgress(all, logs, byId, leftOutOfCount(all, [], undefined, TODAY))).toEqual({ done: 2, total: 2 });
+  });
+
+  it('telt de nieuwe rij als open zolang die geen log heeft', () => {
+    const logs = [log('tpl_easy_run', '2026-10-20', 40, { plannedSessionId: run.id })];
+    expect(weekProgress(all, logs, byId, leftOutOfCount(all, [], undefined, TODAY))).toEqual({ done: 1, total: 2 });
+  });
+
+  it('telt de oude rij weer als de nieuwe rij zelf is overgeslagen', () => {
+    const skippedAgain = [run, old, { ...moved, status: 'skipped' as const }];
+    expect(weekProgress(skippedAgain, [], byId, leftOutOfCount(skippedAgain, [], undefined, TODAY)).total).toBe(3);
+  });
+
+  it('een gewone overgeslagen training zonder nieuwe rij telt nog steeds als gepland en niet gedaan', () => {
+    const plain = [run, old];
+    expect(weekProgress(plain, [], byId, leftOutOfCount(plain, [], undefined, TODAY))).toEqual({ done: 0, total: 2 });
   });
 });

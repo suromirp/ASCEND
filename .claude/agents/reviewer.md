@@ -3,7 +3,7 @@ name: reviewer
 description: Beoordeelt een wijziging op de engine-regels, de ontwerptaal, de verboden uit CLAUDE.md, historie, migraties en tekstregels. Alleen lezen. Gebruik voordat een wijziging naar main gaat, vooral bij engine, opslag of planning.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
-model: opus
+model: fable
 effort: medium
 color: red
 ---
