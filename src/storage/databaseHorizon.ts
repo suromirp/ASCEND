@@ -396,6 +396,9 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   for (const s of swapped) {
     const was = stored.get(s.id);
     if (!was || was.templateId === s.templateId) continue;
+    // Only what stays: a row the week check then takes off is said by its own line ("eruit"), and a row that ends as
+    // it was stored is no news (9 November: "wordt Heuvelintervallen" and "eruit (stond dubbel)" for the same row).
+    if (!changedNet(s.id) || finalById.get(s.id)?.templateId !== s.templateId) continue;
     ownLines.push(`${byTemplate.get(was.templateId) ?? 'Training'} op ${dayNL(was.scheduledDate)} wordt ${byTemplate.get(s.templateId) ?? 'een andere training'} (past bij de fase van die week)`);
     ownIds.push(s.id);
   }
