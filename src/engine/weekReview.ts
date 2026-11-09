@@ -199,8 +199,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
       // Geen namen: die staan al onder "Blijven liggen" op de terugblik.
       `${missedNames.length === 1 ? 'Eén training is' : `${missedNames.length} trainingen zijn`} blijven liggen. ` +
       (keyMissed
-        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week; die haalt ASCEND in op een vrije dag als dat nog past. De rest laat je los, niet dubbel doen.`
-        : 'Laat het los: inhalen door te stapelen is geen goed idee. Volgende week weer gewoon volgens plan.'),
+        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die verplaatst ASCEND naar een vrije dag als dat past. De rest laat je los.`
+        : 'Laat los wat blijft liggen. Dubbel doen helpt niet. Volgende week volgt het plan.'),
     );
   }
   // The same training missing two weeks in a row: a pattern, not bad luck.
@@ -231,7 +231,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   }
   const checkAdvice = weeklyCheck && weeklyCheck.trouble !== 'geen' ? advice.find((a) => /klacht|pijn/i.test(a)) : undefined;
   if (heavier >= 2) {
-    advice.push('Twee of meer trainingen voelden zwaarder dan gepland. Voelt het volgende week weer zo, kies dan de korte versie of houd de minuten gelijk. Slaap en eten kunnen helpen.');
+    advice.push('Twee of meer trainingen voelden zwaarder dan gepland. Voelt het volgende week weer zo? Kies de korte versie of houd de minuten gelijk. Slaap en eten kunnen helpen.');
   } else if (lighter >= 2 && advice.length < 3) {
     advice.push('Een paar trainingen voelden lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. ASCEND bouwt rustig verder.');
   }
