@@ -157,3 +157,7 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 - welke soort taak het duurst was en of een lichter model het ook had gekund;
 - waar herstelrondes vandaan kwamen en welke eis vooraf die had voorkomen;
 - past de tabel hierboven aan als het logboek dat laat zien, met de reden in de commit.
+
+## Bouwers melden zich zelf (9 november)
+
+Elke bouwer die de coördinator met `create_session` start, krijgt als laatste regel van de opdracht: meld je als je klaar bent of vastloopt met `create_trigger` (claude-code-remote), `persistent_session_id` de sessie van de coördinator, `run_once_at` één à twee minuten vooruit, `initiation` `own_followup`, met in de prompt titel, sessie-id, wat live staat, de controles en vragen. De coördinator start dan meteen de volgende; een check elke twee uur is alleen nog een vangnet.
