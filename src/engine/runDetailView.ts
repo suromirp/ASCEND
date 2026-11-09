@@ -904,7 +904,7 @@ export function compareWithSimilar(rd: RunDetail, others: RunDetail[]): SimilarC
       label: 'Verdeling',
       value: `${Math.round(Math.abs(ownH.diffSec))} s tegen ${Math.round(theirSplit)} s`,
       word: d <= -COMPARE_SPLIT_SEC ? 'Beter' : d >= COMPARE_SPLIT_SEC ? 'Slechter' : 'Normaal',
-      note: 'het verschil tussen je twee helften. Kleiner is gelijkmatiger',
+      note: 'het verschil tussen je twee helften, kleiner is gelijkmatiger',
     });
   }
   const len = rd.kms.length;

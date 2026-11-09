@@ -133,7 +133,7 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
           <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow={templateName} title="Inkorten" onClose={requestClose} /></div>
-            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Haal een stuk aan het begin of het eind weg, bijvoorbeeld een autorit. Je maakt het in de training ongedaan.</p>
+            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Haal een stuk aan het begin of het eind weg, bijvoorbeeld een autorit. Je kunt het later in de training ongedaan maken.</p>
 
             {loaded.kind === 'loading' && (
               <p role="status" className="mt-4 text-sm" style={{ color: 'var(--color-ink-dim)' }}>De reeksen van deze training ophalen…</p>
