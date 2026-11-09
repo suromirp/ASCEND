@@ -202,6 +202,7 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Nieuwe rol: een copywriter (vaste naam Scribe) in `.claude/agents/`, op sonnet. Scribe schrijft of herschrijft, Scout controleert de techniek, Warden toetst aan de stem van ASCEND (`docs/beslissingen/2026-10-27-stem-van-ascend.md`).
 - Eerst Scout: hoe MacroFactor Workouts de uitleg opbouwt, wat goed werkt en wat niet. Daarna een proef met vijf oefeningen ter keuring door de eigenaar, pas dan de rest.
 - Scout zoekt per oefening ook op hoe je hem echt goed doet, liefst geverifieerd: onderzoek, erkende bonden of opleidingen (NSCA, ACSM) en ervaren coaches, met de bron in `docs/onderzoek/`.
+- Stand 9 november (lijn Forge 3): 28 oefeningen hebben nu uitleg (de vijf proeven, 23 ladderstappen, 20 uit het demoprogramma en Dip als batch 1, 8 als batch 2), techniek getoetst, bron per oefening in `docs/onderzoek/Bronnen bij de uitleg van oefeningen, batch 1.md` en `batch 2.md`. Nog te doen: de overige ongeveer 60 oefeningen in batches van 20 (Scribe, dan Scout). Open vraag voor de eigenaar, advies de lichte vorm laten: de uitleg bij Eccentric Squat is op twee benen, de alias Decline Squat is in het onderzoek op één been op een schuin vlak (`docs/beslissingen/2026-11-09-uitleg-eccentric-squat.md`).
 - Planning (eigenaar, 4 november): niet deze week. Deze week geen grote aanpassingen meer, het abonnement staat al op 60 tot 70 procent. Ruilen met een echte vervanger ook pas daarna.
 
 ## Forge: gewicht op een toestel makkelijk invullen (wens 5 november)

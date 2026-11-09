@@ -449,7 +449,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Schouderbladen samen, voeten stevig op de vloer.',
       'Stuiteren op je borst? Zak rustig en tik alleen aan.',
     ],
-    setup: 'Ga liggen met je ogen onder de stang. Schouderbladen naar elkaar en omlaag, voeten plat, billen op de bank. Pak de stang iets breder dan je schouders. Stel veiligheidsarmen in als je alleen traint.',
+    setup: 'Ga liggen met je ogen onder de stang. Schouderbladen naar elkaar en omlaag, voeten plat, billen op de bank. Pak de stang iets breder dan je schouders. Train je met een spotter of stel veiligheidsarmen in.',
     movement: 'Laat de stang zakken tot hij je borst licht raakt, ongeveer ter hoogte van je tepels. Je ellebogen staan schuin naar achteren en je polsen boven je ellebogen. Duw de stang terug tot je armen gestrekt zijn.',
     tempo: 'Twee tellen omlaag, krachtig omhoog. Adem in bij het zakken, uit bij het duwen.',
     mistakes: [
@@ -717,7 +717,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     short: [
       'Zak tot je bovenarmen waterpas zijn, duw terug omhoog.',
       'Schouders omlaag, weg van je oren.',
-      'Schouders pijnlijk? Zak minder diep.',
+      'Pijn in je schouder? Stop en zak minder diep.',
     ],
     setup: 'Steun op twee leuningen met gestrekte armen. Trek je schouders omlaag, weg van je oren. Kruis je benen of houd ze licht gebogen achter je.',
     movement: 'Zak gecontroleerd tot je bovenarmen ongeveer waterpas zijn, met je ellebogen schuin naar achteren. Duw jezelf terug omhoog tot je armen gestrekt zijn. Kom niet dieper dan je schouders prettig vinden.',
@@ -763,7 +763,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     short: [
       'Achterover op een schuine bank, duimen omhoog, buig.',
       'Je ellebogen blijven naast of iets achter je lichaam.',
-      'Ellebogen naar voren? Zet de bank schuiner.',
+      'Ellebogen naar voren? Leun verder achterover.',
     ],
     setup: 'Zet de bank op een flinke helling en leun achterover met je hoofd en rug tegen de bank. Laat je armen langs je lichaam hangen, handpalmen naar elkaar.',
     movement: 'Buig je ellebogen en breng de dumbbells omhoog met je duimen naar boven. Houd je bovenarmen stil. Zak daarna rustig tot je armen weer hangen.',
@@ -834,7 +834,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     short: [
       'Voeten op schouderbreedte, zak gecontroleerd, duw terug.',
       'Je billen en onderrug blijven tegen de zitting.',
-      'Knieën naar binnen? Zet je voeten iets verder naar buiten.',
+      'Knieën naar binnen? Duw ze naar buiten.',
     ],
     setup: 'Zit met je rug en hoofd tegen de leuning, voeten ongeveer op schouderbreedte op het plateau. Pak de handgrepen en ontgrendel de veiligheid.',
     movement: 'Zak tot je knieën ongeveer 90 graden zijn, of dieper zolang je billen op de zitting en je onderrug tegen de leuning blijven. Duw het plateau weg zonder je knieën te vergrendelen.',
