@@ -261,6 +261,12 @@ export interface SetLog {
   // Absent means measured (or no `rir` at all), so every log from before this
   // field reads as it always did. Decision: docs/beslissingen/2026-10-25-bijsturen-in-forge.md.
   rirAssumed?: boolean;
+  // What Forge asked for this set when you ticked it without a RIR of your own: the reps in the field
+  // and the weight of the prescription. Only next to `rirAssumed`, written once when the log is made
+  // (engine/assumedSets.ts reads it: "Afvinken telt als het doel"). Absent on older logs, which then
+  // read with the bottom of the range. Decision: docs/beslissingen/2026-11-08-forge-afvinken-doel.md.
+  repsAsked?: number;
+  weightKgAsked?: number;
   // When the set was ticked, as an ISO time. Only on logs made after the session clock
   // (docs/beslissingen/2026-10-29-forge-als-sessie.md); absent on older logs, which read as always.
   at?: string;

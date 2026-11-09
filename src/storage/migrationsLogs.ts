@@ -305,6 +305,46 @@ function cleanSetTimes<T extends ExerciseSetLog[] | null | undefined>(data: T): 
   return (changed ? next : data) as T;
 }
 
+// --- SetLog.repsAsked en SetLog.weightKgAsked ---------------------------------------------------
+// Wat Forge vroeg bij een set zonder eigen RIR ("Afvinken telt als het doel",
+// docs/beslissingen/2026-11-08-forge-afvinken-doel.md). Optioneel en aanvullend: oudere bestanden hebben
+// ze niet en lezen zoals altijd (met de onderkant van het bereik). Alleen een geldig getal blijft, en
+// alleen naast `rirAssumed`; een beschadigd veld valt weg en de set houdt zijn herhalingen en gewicht.
+const okAskedReps = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n > 0 && n <= 100;
+const okAskedKg = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1000;
+
+function cleanSetAsked<T extends ExerciseSetLog[] | null | undefined>(data: T): T {
+  if (!Array.isArray(data)) return data;
+  let changed = false;
+  const next = data.map((e) => {
+    if (!e || !Array.isArray(e.sets)) return e;
+    const sets = e.sets.map((s) => {
+      if (!s || typeof s !== 'object' || (!('repsAsked' in s) && !('weightKgAsked' in s))) return s;
+      const keep = s.rirAssumed === true;
+      const repsOk = keep && (!('repsAsked' in s) || okAskedReps(s.repsAsked));
+      const kgOk = keep && (!('weightKgAsked' in s) || okAskedKg(s.weightKgAsked));
+      if (repsOk && kgOk) return s;
+      const { repsAsked, weightKgAsked, ...rest } = s;
+      changed = true;
+      return { ...rest, ...(keep && okAskedReps(repsAsked) ? { repsAsked } : {}), ...(keep && okAskedKg(weightKgAsked) ? { weightKgAsked } : {}) } as SetLog;
+    });
+    return sets.every((s, i) => s === e.sets[i]) ? e : { ...e, sets };
+  });
+  return (changed ? next : data) as T;
+}
+
+export function migrateLogSetAsked(log: SessionLog): SessionLog {
+  let next = log;
+  const data = cleanSetAsked(log.strengthData);
+  if (data !== log.strengthData) next = { ...next, strengthData: data };
+  const kept = log.manualMeasured?.strength?.strengthData;
+  const keptNext = cleanSetAsked(kept);
+  if (keptNext !== kept && log.manualMeasured?.strength) {
+    next = { ...next, manualMeasured: { ...log.manualMeasured, strength: { ...log.manualMeasured.strength, strengthData: keptNext } } };
+  }
+  return next;
+}
+
 // A log as it comes out of a file, with every set read by migrateSetLog (also
 // the sets kept for putting back in `manualMeasured.strength`).
 export function migrateLogSets(log: SessionLog): SessionLog {

@@ -451,7 +451,7 @@ function ForgeWorkoutInner({
     setWorkout(result.workout);
     // Na het afvinken van de topset of de laatste set: één snelle vraag hoeveel je over had. Een andere tik haalt hem weg.
     const askEx = result.workout.find((e) => e.slot === slot);
-    setQuickRir(strength.quickRir && !readOnly && askEx && asksReserve(askEx, rowId) ? { slot, rowId } : null);
+    setQuickRir(strength.quickRir && !readOnly && askEx && asksReserve(askEx, rowId, strength.enabled && strength.assumedCounts) ? { slot, rowId } : null);
     // De focus schuift vloeiend naar de volgende open set; is de oefening af, dan
     // klapt hij zacht in en gaat het scherm naar de volgende oefening.
     const ticked = result.workout.find((e) => e.slot === slot)?.rows.find((r) => r.id === rowId)?.done;
@@ -763,7 +763,7 @@ function ForgeWorkoutInner({
               rirAsValue={strength.rirPrefill === 'target'}
               swipeOn={swipeDeleteOn(settings)}
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
-              quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId) ? quickRir.rowId : undefined}
+              quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId, strength.enabled && strength.assumedCounts) ? quickRir.rowId : undefined}
               capText={capRemoved > 0 ? capRemovedLine(capRemoved) : undefined}
               poundText={!readOnly && !poundKept[ex.slot] && ex.rows.some((r) => r.done) ? poundLine(ex, strength.profile) : undefined}
               act={actions}
