@@ -1,48 +1,60 @@
-// ASCEND: een korte, nette beschrijving van een gedane training, om zelf in
-// Strava te plakken (docs/beslissingen/2026-10-24-namen-en-strava-tekst.md).
+// ASCEND: de tekst voor Strava bij een gedane training, om zelf te plakken
+// (docs/beslissingen/2026-11-09-strava-tekst-soort-training.md, vervangt de tekst
+// uit docs/beslissingen/2026-10-24-namen-en-strava-tekst.md).
 //
-// Strava geeft een activiteit altijd een eigen naam ("Middagloop") en ASCEND
-// kan er niet naar schrijven (dat vraagt een server). De eigenaar schrijft dus
-// zelf een stukje in Strava; dit is dat stukje, klaargezet. Eén of twee regels,
-// geen opsomming van alle stappen:
+// Strava toont afstand, tijd en tempo al. Deze tekst zegt wat voor training het
+// was: een titel en hooguit één regel waarom.
 //
-//   Heuvelsprints en afdalen: 4× hard bergop, 4× rustig op en beheerst af.
-//   7,2 km · 52 min · 140 m stijgen
+//   Heuvelintervallen · 6 × 90 s
+//   Week 3 van de basis, richting GR5
 //
-// Het aantal herhalingen is wat er gedaan is (SessionLog.workout) of anders wat
-// de progressie van die week vraagt, via dezelfde buildWorkoutPlan als de
-// workout naar het horloge. De getallen onder de eerste regel zijn de gemeten
-// getallen van de log; wat er niet is, blijft weg, en wat de eerste regel al
-// zegt staat er niet nog een keer. Puur: geen React, geen opslag.
+// Daaronder een lege regel voor je eigen tekst. Nooit afstand, totale tijd of
+// tempo. Het aantal herhalingen is wat er gedaan is (SessionLog.workout) of
+// anders wat de progressie van die week vraagt, via dezelfde buildWorkoutPlan
+// als de workout naar het horloge. De regel waarom staat er alleen bij een
+// training uit je planning. Puur: geen React, geen opslag.
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import type { Program } from '../models/program';
+import { isLightWeekOf, phaseWaveLength, PHASE_TAPER, type Program } from '../models/program';
+import type { GoalMilestone, TrainingGoal } from '../models/goals';
 import { formatNumberNL } from '../utils/number';
+import { resolveProgramWeek } from '../utils/dates';
 import { buildWorkoutPlan, type PlanStep } from './workoutPlan';
-import { progressionTarget } from './programLayout';
-import { isWorkSet } from './workSets';
+import { PHASE_BASIS, PHASE_BERG, PHASE_EXPEDITIE, PHASE_GOLF, PHASE_GOLF_START, PHASE_ONDERHOUD, PHASE_OPBOUW, progressionTarget } from './programLayout';
 import { logSport, SPORT_LABEL } from './sports';
+import { mainGoal } from './mainGoal';
 import { kgLabel } from '../utils/kg';
 
 export interface ActivityTextInput {
   log: SessionLog;
-  // De training erachter; zonder dat staat er "Training".
+  // De training erachter; zonder dat heet hij naar zijn sport, of "Training".
   template?: SessionTemplate;
-  // De geplande training, voor de week waarin de herhalingen vallen.
+  // De geplande training, voor de week waarin de herhalingen vallen en de regel waarom.
   planned?: PlannedSession;
   program?: Program | null;
+  // De korte naam van je hoofddoel (stravaGoalName), voor "richting GR5".
+  goalName?: string;
 }
 
-interface Used { distance?: true; duration?: true }
-interface Described { line: string; used: Used }
+// De tekst voor Strava: een titel en hooguit één regel waarom.
+export interface StravaText {
+  title: string;
+  line?: string;
+}
 
-// "20 sec", "1 min", "90 sec", "2 min 30 sec".
+// Wat erin staat (AppSettings.stravaTextParts): alleen de titel, of de titel en de regel.
+export type StravaTextParts = 'title' | 'title-line';
+export const DEFAULT_STRAVA_TEXT_PARTS: StravaTextParts = 'title-line';
+export function resolveStravaTextParts(raw: unknown): StravaTextParts {
+  return raw === 'title' ? 'title' : DEFAULT_STRAVA_TEXT_PARTS;
+}
+
+// "20 s", "1 min", "90 s", "2 min 30 s": de lengte van één herhaling.
 export function spanText(seconds: number): string {
   const total = Math.max(1, Math.round(seconds));
-  if (total < 120) return total === 60 ? '1 min' : `${total} sec`;
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return s ? `${m} min ${s} sec` : `${m} min`;
+  if (total % 60 === 0) return `${total / 60} min`;
+  if (total < 120) return `${total} s`;
+  return `${Math.floor(total / 60)} min ${total % 60} s`;
 }
 
 // "52 min", "75 min", "2 u 30 min", "3 u".
@@ -54,108 +66,132 @@ export function minutesText(minutes: number): string {
   return m ? `${h} u ${m} min` : `${h} u`;
 }
 
-const kmText = (km: number): string => `${formatNumberNL(km, 1)} km`;
-
 const stepOf = (steps: PlanStep[] | undefined, kind: PlanStep['kind']): PlanStep | undefined => steps?.find((s) => s.kind === kind);
 
-// Hoe rustig een gewone, doorlopende training was.
-const STEADY_WORD: Record<string, string> = {
-  tpl_easy_run: 'rustig',
-  tpl_long_run: 'rustig',
-  tpl_recovery_run: 'heel rustig',
-  tpl_herstel: 'rustig',
+const lowerFirst = (text: string): string => text.charAt(0).toLowerCase() + text.slice(1);
+
+// Rustige, doorlopende trainingen: de zone of het gevoel staat voorop.
+const STEADY_TITLE: Record<string, string> = {
+  tpl_easy_run: 'Zone 2 · rustige duurloop',
+  tpl_hill_easy: 'Zone 2 · rustige heuvelloop',
+  tpl_recovery_run: 'Herstelloop · heel rustig',
+  tpl_herstel: 'Herstelwandeling · rustig',
 };
 
-// Trainingen met een rugzak: het gewicht hoort in de zin.
+// Trainingen met een rugzak: het gewicht hoort in de titel.
 const PACK_IDS = new Set(['tpl_ruck_walk', 'tpl_mountain_hike', 'tpl_hike_day_one']);
 
-function describe(input: ActivityTextInput, name: string): Described {
-  const { log, template, planned, program } = input;
+// Onder deze stijging zegt "hoogtemeters" niets over de training.
+const MIN_CLIMB_M = 50;
+
+// De gemeten stijging op tientallen, of niets: een schatting (loopband) telt niet.
+function climbText(log: SessionLog): string | undefined {
   const metric = log.outdoorData ?? log.cardioData;
+  const gain = metric?.elevationGainM;
+  if (!gain || metric?.estimatedElevation) return undefined;
+  const rounded = Math.round(gain / 10) * 10;
+  return rounded >= MIN_CLIMB_M ? `${formatNumberNL(rounded, 0)} hoogtemeters` : undefined;
+}
+
+// De titel: het soort training, met één kenmerk erachter als dat er is.
+function titleOf(input: ActivityTextInput): string {
+  const { log, template, planned, program } = input;
+  // Een losse activiteit zonder template heet naar zijn sport ("Hardlopen").
+  const sport = logSport(log);
+  const name = template?.name ?? (sport ? SPORT_LABEL[sport] : 'Training');
   const id = template?.id ?? log.templateId;
-  const minutes = log.durationMinutes;
-  // Zonder gemeten duur noemt de zin geen minuten (nooit "1 min" voor een lege duur).
-  const timed = minutes > 0;
   const date = planned?.scheduledDate ?? log.completedDate;
   const plan = template ? buildWorkoutPlan(template, date, program) : undefined;
   const repeat = plan?.items.find((i): i is { repeat: number; steps: PlanStep[] } => 'repeat' in i);
   // Het plan van de week zegt alleen iets als de log bij een geplande training hoort;
   // bij een losse of ingekorte training noemt de tekst geen herhalingen die misschien
   // niet gedaan zijn.
-  const planned_ = planned !== undefined;
-  const reps = log.workout?.reps ?? (planned_ ? repeat?.repeat : undefined);
-  const work = stepOf(repeat?.steps, 'work');
-  const recover = planned_ ? stepOf(repeat?.steps, 'recover') : undefined;
-  const workSec = log.workout?.repSeconds ?? (planned_ ? work?.seconds : undefined);
-  const rest = recover ? `, ${spanText(recover.seconds)} rustig` : '';
-  const none: Used = {};
+  const inPlan = planned !== undefined && log.variant === 'full';
+  const reps = log.workout?.reps ?? (inPlan ? repeat?.repeat : undefined);
+  const workSec = log.workout?.repSeconds ?? (inPlan ? stepOf(repeat?.steps, 'work')?.seconds : undefined);
+  const climb = climbText(log);
 
-  switch (id) {
+  if (template && STEADY_TITLE[id]) return STEADY_TITLE[id];
+
+  switch (template ? id : undefined) {
     case 'tpl_hills_descent':
-      if (reps) return { line: `${name}: ${reps}× hard bergop, ${reps}× rustig op en beheerst af.`, used: none };
-      break;
+      return reps ? `${name} · ${reps} × op en af` : name;
     case 'tpl_hill_intervals':
-      if (reps && workSec) return { line: `${name}: ${reps}× ${spanText(workSec)} hard bergop.`, used: none };
-      break;
     case 'tpl_intervals':
     case 'tpl_fartlek':
-      if (reps && workSec) return { line: `${name}: ${reps}× ${spanText(workSec)} hard${rest}.`, used: none };
-      break;
     case 'tpl_tempo_run':
-      if (reps && workSec) return { line: `${name}: ${reps}× ${spanText(workSec)} stevig${rest}.`, used: none };
-      break;
     case 'tpl_strides_run':
-      if (reps && workSec && timed) return { line: `${name}: ${minutesText(minutes)} rustig met ${reps}× ${spanText(workSec)} versnellen.`, used: { duration: true } };
-      if (reps && workSec) return { line: `${name}: ${reps}× ${spanText(workSec)} versnellen.`, used: none };
-      break;
+      return reps && workSec ? `${name} · ${reps} × ${spanText(workSec)}` : name;
     case 'tpl_progression_run': {
       const block = log.workout?.blockMinutes ?? (reps ? reps * 5 : undefined);
-      if (block && block < minutes) return { line: `${name}: ${minutesText(minutes)} rustig, de laatste ${block} min stevig.`, used: { duration: true } };
-      break;
+      return block ? `${name} · laatste ${block} min stevig` : name;
     }
-    case 'tpl_test_run':
-    case 'tpl_race':
-      return { line: `${name}.`, used: none };
+    case 'tpl_long_run':
+      return `${name} · ${climb ?? 'zone 2'}`;
     case 'tpl_bergconditie':
-      return timed ? { line: `${name}: ${minutesText(minutes)}.`, used: { duration: true } } : { line: `${name}.`, used: none };
+      return climb ? `${name} · ${climb}` : name;
     default:
       break;
   }
 
-  if (PACK_IDS.has(id)) {
+  if (template && PACK_IDS.has(id)) {
     const kg = log.outdoorData?.backpackWeightKg
-      ?? (template && planned_ ? progressionTarget(template, program ?? undefined, date)?.step.backpackKg : undefined)
-      ?? (planned_ ? template?.outdoorTarget?.backpackWeightKg : undefined);
-    const withKg = kg ? ` met ${kgLabel(kg)}` : '';
-    if (metric?.distanceKm && metric.distanceKm > 0) return { line: `${name}: ${kmText(metric.distanceKm)}${withKg}.`, used: { distance: true } };
-    if (timed) return { line: `${name}: ${minutesText(minutes)}${withKg}.`, used: { duration: true } };
-    return { line: `${name}${withKg}.`, used: none };
+      ?? (inPlan ? progressionTarget(template, program ?? undefined, date)?.step.backpackKg : undefined)
+      ?? (inPlan ? template.outdoorTarget?.backpackWeightKg : undefined);
+    return [name, climb, kg ? `rugzak ${kgLabel(kg)}` : undefined].filter(Boolean).join(' · ');
   }
 
-  if (STEADY_WORD[id] && timed) return { line: `${name}: ${minutesText(minutes)} ${STEADY_WORD[id]}.`, used: { duration: true } };
-
-  if (log.type === 'strength' || template?.type === 'strength') {
-    const done = (log.strengthData ?? []).map((e) => e.sets.filter(isWorkSet).length).filter((n) => n > 0);
-    if (done.length > 0) {
-      const sets = done.reduce((a, b) => a + b, 0);
-      return { line: `${name}: ${done.length} ${done.length === 1 ? 'oefening' : 'oefeningen'}, ${sets} ${sets === 1 ? 'set' : 'sets'}.`, used: none };
-    }
-  }
-  return { line: `${name}.`, used: none };
+  if (template?.type === 'strength') return `Kracht · ${lowerFirst(name)}`;
+  if (!template && log.type === 'strength') return 'Kracht';
+  return name;
 }
 
-// Eén of twee regels. Altijd een eerste regel; de tweede alleen als er gemeten
-// getallen zijn die de eerste nog niet noemt.
-export function activityText(input: ActivityTextInput): string {
-  const { log, template } = input;
-  // Een losse activiteit zonder template heet naar zijn sport ("Hardlopen").
-  const sport = logSport(log);
-  const name = template?.name ?? (sport ? SPORT_LABEL[sport] : 'Training');
-  const { line, used } = describe(input, name);
-  const metric = log.outdoorData ?? log.cardioData;
-  const facts: string[] = [];
-  if (!used.distance && metric?.distanceKm && metric.distanceKm > 0) facts.push(kmText(metric.distanceKm));
-  if (!used.duration && log.durationMinutes > 0) facts.push(minutesText(log.durationMinutes));
-  if (metric?.elevationGainM && metric.elevationGainM >= 1 && !metric.estimatedElevation) facts.push(`${formatNumberNL(metric.elevationGainM, 0)} m stijgen`);
-  return facts.length ? `${line}\n${facts.join(' · ')}` : line;
+// Hoe een fase in de regel heet: "Week 3 van de basis".
+const PHASE_WORD: Record<string, string> = {
+  [PHASE_BASIS]: 'de basis',
+  [PHASE_OPBOUW]: 'de opbouw',
+  [PHASE_BERG]: 'bergcapaciteit',
+  [PHASE_EXPEDITIE]: 'expeditieklaar',
+  [PHASE_GOLF_START]: 'rustig beginnen',
+  [PHASE_GOLF]: 'de golf',
+};
+
+// De regel waarom: waar deze training in je planning staat en waar je heen werkt.
+// Alleen bij een training uit je planning; een losse activiteit heeft geen regel.
+function lineOf(input: ActivityTextInput): string | undefined {
+  const { planned, program, goalName } = input;
+  if (!planned || !program) return undefined;
+  const position = resolveProgramWeek(program, planned.scheduledDate);
+  if (!position) return undefined;
+  const { phase } = position;
+  const toward = goalName ? `, richting ${goalName}` : '';
+  if (phase.id === PHASE_ONDERHOUD) return `Onderhoud${toward}`;
+  if (phase.id === PHASE_TAPER) return `Week ${position.weekInPhase} naar de start${toward}`;
+  const word = PHASE_WORD[phase.id] ?? phase.name.toLowerCase();
+  // In een golf telt de week binnen de golf, niet binnen de hele fase.
+  const week = phase.id === PHASE_GOLF ? ((position.weekInPhase - 1) % phaseWaveLength(phase)) + 1 : position.weekInPhase;
+  // De beginnersstart is vier makkelijke weken: daar heet geen week rustweek.
+  if (phase.id !== PHASE_GOLF_START && isLightWeekOf(phase, position.weekInPhase) && !position.restSkipped) return `Rustweek van ${word}${toward}`;
+  return `Week ${week} van ${word}${toward}`;
+}
+
+const MAX_GOAL_NAME = 32;
+
+// De naam van je hoofddoel zoals hij in de regel staat: "GR5 / ALPENKLAAR" wordt "GR5".
+export function stravaGoalName(goals: readonly TrainingGoal[], milestones: readonly GoalMilestone[]): string | undefined {
+  const name = mainGoal(goals, milestones)?.name.replace(/\s+/g, ' ').split(' / ')[0].trim();
+  // Een heel lange naam maakt de regel te lang: dan staat er geen doel in.
+  return name && name.length <= MAX_GOAL_NAME ? name : undefined;
+}
+
+export function stravaText(input: ActivityTextInput): StravaText {
+  const line = lineOf(input);
+  return line ? { title: titleOf(input), line } : { title: titleOf(input) };
+}
+
+// Wat er op het klembord komt. Alleen de titel: precies de titel, voor het titelveld
+// van Strava. Titel en regel: daaronder een lege regel voor je eigen tekst.
+export function stravaCopyText(text: StravaText, parts: StravaTextParts): string {
+  if (parts === 'title') return text.title;
+  return `${[text.title, text.line].filter(Boolean).join('\n')}\n`;
 }

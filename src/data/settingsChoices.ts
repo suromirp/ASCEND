@@ -723,6 +723,17 @@ export const CHOICES = {
       { value: 'intervals', label: 'Zones van intervals.icu', note: 'De zonenaam, intervals.icu rekent om', short: 'intervals.icu' },
     ],
   }),
+  stravaInhoud: def({
+    group: 'Koppelingen',
+    title: 'Wat erin staat',
+    line: 'Wat ASCEND bij een training voor Strava klaarzet.',
+    advice: 'title-line' as 'title' | 'title-line',
+    help: 'stravaTekst',
+    options: [
+      { value: 'title-line', label: 'Titel en regel', note: 'Het soort training en één regel waarom', short: 'Titel en regel' },
+      { value: 'title', label: 'Alleen de titel', note: 'Het soort training, zoals Zone 2 · rustige duurloop', short: 'Titel' },
+    ],
+  }),
   voorvoegsel: def({
     group: 'Koppelingen',
     title: 'Voorvoegsel voor de naam',

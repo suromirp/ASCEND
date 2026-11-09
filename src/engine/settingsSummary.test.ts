@@ -779,6 +779,22 @@ describe('rowSummary: tekst voor Strava', () => {
     const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
     expect(rowSummary('strava-tekst', unlinked).hidden).toBeFalsy();
   });
+
+  it('de rij op de pagina zegt wat erin staat, of Uit', () => {
+    expect(rowSummary('bundel-strava', facts()).value).toBe('Titel en regel');
+    expect(rowSummary('bundel-strava', withSettings({ stravaTextParts: 'title' })).value).toBe('Titel');
+    expect(rowSummary('bundel-strava', withSettings({ stravaText: false }))).toMatchObject({ value: 'Uit', dim: true });
+  });
+
+  it('wat erin staat is weg zodra de tekst uit staat', () => {
+    expect(rowSummary('strava-tekst-inhoud', withSettings({ stravaText: false })).hidden).toBe(true);
+  });
+
+  it('wat erin staat: standaard titel en regel', () => {
+    expect(rowSummary('strava-tekst-inhoud', facts()).value).toBe('Titel en regel');
+    expect(rowSummary('strava-tekst-inhoud', withSettings({ stravaTextParts: 'title' })).value).toBe('Titel');
+    expect(rowSummary('strava-tekst-inhoud', withSettings({ stravaTextParts: 'onzin' })).value).toBe('Titel en regel');
+  });
 });
 
 describe('rowSummary: loopinzicht en details van loopjes', () => {

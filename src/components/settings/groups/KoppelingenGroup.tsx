@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { DEFAULT_WATCH_NAME_PREFIX } from '../../../engine/watchWorkout';
+import { resolveStravaTextParts } from '../../../engine/activityText';
 import type { WatchUseKey } from '../../../engine/watchUse';
 import { getConnection, setAutoTick, setGarminLeads, setTakeCorrections, setWatchUse, syncWatchActivities } from '../../../storage/externalActivities';
 import { setMacroFactorLeads } from '../../../storage/macrofactor';
@@ -152,8 +153,19 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
       </SettingsSection>
 
       <SettingsSection title="Strava">
-        <SummaryRow id="strava-tekst" title="Tekst voor Strava" facts={facts} info="stravaTekst" onChange={(on) => void updateSettings({ stravaText: on })} />
+        <SummaryRow id="bundel-strava" title="Tekst voor Strava" facts={facts} info="stravaTekst" onClick={() => setSheet('bundel-strava')} />
       </SettingsSection>
+
+      {sheet === 'bundel-strava' && (
+        <BundleSheet eyebrow="Koppelingen" title="Tekst voor Strava" line="Bij een gedane training staat een titel klaar om in Strava te plakken." onClose={() => setSheet(null)}>
+          <SummaryRow id="strava-tekst" title="Tekst voor Strava" facts={facts} info="stravaTekst" onChange={(on) => void updateSettings({ stravaText: on })} />
+          <SummaryRow id="strava-tekst-inhoud" title="Wat erin staat" facts={facts} onClick={() => setInner('strava-tekst-inhoud')} />
+        </BundleSheet>
+      )}
+
+      {inner === 'strava-tekst-inhoud' && (
+        <ChoiceFromDef def={CHOICES.stravaInhoud} value={resolveStravaTextParts(settings.stravaTextParts)} onPick={(v) => void updateSettings({ stravaTextParts: v })} onClose={() => setInner(null)} />
+      )}
 
       {sheet === 'bundel-horloge-gebruik' && (
         <BundleSheet eyebrow="Koppelingen" title={usageTitle} line="Uit betekent: ASCEND haalt het niet meer op en bewaart het niet." onClose={() => setSheet(null)}>

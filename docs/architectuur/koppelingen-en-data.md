@@ -18,9 +18,10 @@ kilometres stay with Garmin.
 
 **Gewicht uit Health Connect** (decision `2026-11-04-gewicht-uit-health-connect.md`): the same round reads `weight` and `bodyFat` (first weighing of the day, 30 to 250 kg, 3 to 60 %) through `fetchBodyMetrics` into `AppSettings.weightEntries` with `source: 'health-connect'` (`engine/healthConnectWeight.ts`), in the same transaction. A weighing from Health Connect has its own place per day next to your own or MacroFactor's (`engine/bodyWeight.ts#sameWeightPlace`), and on the same day your own or MacroFactor's goes first (`weightsInUse`, whose switches for MacroFactor and Health Connect are both required arguments). Switch "Uit Health Connect" in the sheet Lichaamsgewicht; it travels in the backup like any weight. Native level 8 for `READ_WEIGHT` and `READ_BODY_FAT`.
 
-**Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
-need a server); it prepares a short text to copy. Planned numbers appear only when
-the log belongs to a planned session, and no minutes without a measured duration.
+**Strava text** (`engine/activityText.ts`, decision `2026-11-09-strava-tekst-soort-training.md`): ASCEND never
+writes to Strava (that would need a server); it prepares a title that says what kind of training it was and at most
+one line why (`stravaText`), never distance, total time or pace, because Strava shows those. Planned repeats and the
+line why appear only when the log belongs to a planned session. Setting "Wat erin staat" (`stravaTextParts`).
 
 **Vangnet voor de bron** (decision `2026-10-31-kansen-stap-0.md`). `engine/sourceWatch.ts` says in one quiet line on
 Vandaag when nothing comes in from the watch for three days while the link works (`storage/sourceWatch.ts`,
