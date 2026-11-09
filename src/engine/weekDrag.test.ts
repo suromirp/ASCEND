@@ -3,7 +3,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import type { DailyTimeBudget, Weekday } from '../models/goalEngineConfig';
 import { proposeMove } from './scheduler';
-import { dayAtY, decideMove, dayVerdicts, dragEligibility, nextDroppable, TEST_ASK_REASON, LEAVE_ASK_REASON, newConcernLines, type DragContext } from './weekDrag';
+import { dayAtY, decideMove, dayVerdicts, dragEligibility, nextDroppable, TEST_ASK_REASON, LEAVE_ASK_REASON, PLACED_ASK_REASON, newConcernLines, type DragContext } from './weekDrag';
 
 const { templates, program } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -41,9 +41,14 @@ describe('dragEligibility', () => {
   it('een test mag, maar vraagt altijd om Akkoord', () => {
     expect(dragEligibility(s('a', 'tpl_test_run', '2026-10-01'), t('tpl_test_run'), { logged: false, today })).toEqual({ ok: true, askAlways: true });
   });
-  it('een training die een vakantie of tocht neerzette niet', () => {
+  it('een training die een periode neerzette mag, met Akkoord en een eigen reden', () => {
     const placed = s('a', 'tpl_mountain_hike', '2026-10-01', { leave: { periodId: 'p', role: 'placed' } });
-    expect(dragEligibility(placed, t('tpl_mountain_hike'), { logged: false, today })).toEqual({ ok: false, reason: 'leave' });
+    expect(dragEligibility(placed, t('tpl_mountain_hike'), { logged: false, today })).toEqual({ ok: true, askAlways: PLACED_ASK_REASON });
+    expect(PLACED_ASK_REASON).not.toBe(LEAVE_ASK_REASON);
+  });
+  it('wat een periode liet vervallen heeft geen rij en geen greep', () => {
+    const dropped = s('a', 'tpl_hill_intervals', '2026-10-01', { status: 'skipped', leave: { periodId: 'p', role: 'dropped' } });
+    expect(dragEligibility(dropped, t('tpl_hill_intervals'), { logged: false, today })).toEqual({ ok: false, reason: 'skipped' });
   });
   it('een training die alleen opzij schoof voor een vakantie mag, met Akkoord', () => {
     const moved = s('a', 'tpl_hill_intervals', '2026-10-01', { leave: { periodId: 'p', role: 'moved' } });

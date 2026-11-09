@@ -40,7 +40,7 @@ import { WeekLoadCards } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { dragHandlesShown } from '../components/weekDragShown';
-import { decideMove, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
+import { decideMove, dragEligibility, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
 import { SWAP_STALE } from '../storage/weekSwap';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
@@ -67,6 +67,7 @@ export function WeekPage() {
   const [selected, setSelected] = useState<PlannedSession | null>(null);
   // Een tik op de greep opent het actieblad direct op de stap Verplaatsen.
   const [openOnMove, setOpenOnMove] = useState(false);
+  const [openPeriodId, setOpenPeriodId] = useState<string | null>(null);
   // A training done without a plan (a loose one), opened from its row: the same log sheet as the Logboek.
   const [openLog, setOpenLog] = useState<SessionLog | null>(null);
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant; atForm?: boolean } | null>(null);
@@ -349,6 +350,7 @@ export function WeekPage() {
             pairNotes={pairNotes}
             weekDrag={weekDrag}
             dragEnabled={dragHandles}
+            onOpenPeriod={setOpenPeriodId}
           />
         </>
       )}
@@ -389,7 +391,7 @@ export function WeekPage() {
       )}
 
       {!monthView && <ChangeLogCard weekStart={weekStart} />}
-      {!monthView && <LeavePeriodsCard />}
+      {!monthView && <LeavePeriodsCard openId={openPeriodId} onOpenHandled={() => setOpenPeriodId(null)} />}
 
       {selected && templateById.get(selected.templateId) && (
         <SessionActionSheet
@@ -419,7 +421,11 @@ export function WeekPage() {
             setSelected(null);
           }}
           onMove={(date) => {
-            void moveTo(selected.id, date);
+            // Dezelfde vraag om Akkoord als bij de greep (test, wat een periode neerzette of opzij schoof).
+            const sel = selected;
+            const tpl = templateById.get(sel.templateId);
+            const eligible = tpl ? dragEligibility(sel, tpl, { logged: !!selectedLog, today: todayISO() }) : undefined;
+            void moveTo(sel.id, date, eligible?.ok ? { askAlways: eligible.askAlways } : undefined);
             setSelected(null);
           }}
           swapOptions={swapOptionsFor(selected.id)}

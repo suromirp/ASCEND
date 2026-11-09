@@ -52,8 +52,8 @@ describe('de periode zelf', () => {
     expect(isLeavePeriod(p)).toBe(true);
     expect(resolveNoGym(p)).toEqual({ amount: 'light', strength: 'bodyweight', hills: false });
     expect(isLeavePeriod({ ...p, noGym: { amount: 'veel' } })).toBe(false);
-    expect(leaveLabelOn('2026-11-03', [p])).toMatchObject({ kind: 'nogym', title: 'Zonder sportschool', line: 'Lopen en eigen gewicht' });
-    expect(leaveLabelOn('2026-11-03', [noGym('2026-11-02', '2026-11-08', { hills: true })])?.line).toBe('Lopen, rustig heuvels op');
+    expect(leaveLabelOn('2026-11-03', [p])).toMatchObject({ kind: 'nogym', title: 'Zonder sportschool', line: 'Lopen, eigen gewicht' });
+    expect(leaveLabelOn('2026-11-03', [noGym('2026-11-02', '2026-11-08', { hills: true })])?.line).toBe('Lopen, eigen gewicht, rustig heuvels op');
   });
 
   it('een tocht, een vakantie en een vrije dag in dezelfde periode: de strengste telt', () => {

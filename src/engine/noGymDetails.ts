@@ -21,9 +21,9 @@ export function resolveNoGym(period: Pick<LeavePeriod, 'noGym'> | undefined): No
   return isNoGymDetails(period?.noGym) ? period.noGym : NO_GYM_ADVICE;
 }
 
-// What the day says in the week band.
+// What the days say in the week band: "Lopen, eigen gewicht, rustig heuvels op".
 export function noGymLine(period: Pick<LeavePeriod, 'noGym'>): string {
   const d = resolveNoGym(period);
-  if (d.hills) return 'Lopen, rustig heuvels op';
-  return d.strength === 'bodyweight' ? 'Lopen en eigen gewicht' : 'Alleen lopen';
+  if (d.strength === 'drop' && !d.hills) return 'Alleen lopen';
+  return ['Lopen', ...(d.strength === 'bodyweight' ? ['eigen gewicht'] : []), ...(d.hills ? ['rustig heuvels op'] : [])].join(', ');
 }
