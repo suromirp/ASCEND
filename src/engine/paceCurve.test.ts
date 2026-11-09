@@ -117,11 +117,11 @@ describe('paceCurveLine: de zin onder je testtempo', () => {
     if (fits?.state !== 'ready') throw new Error('klaar');
     expect(paceCurveLine(fits)).toBe('Je snelste 5 km in training sinds je test was 26:40, op 22 sep. Dat past bij je testtempo\'s.');
     expect(paceCurveLine({ ...fits, verdict: 'faster' })).toContain('Je trainingen wijzen op iets sneller dan je laatste test. Een nieuwe test over een paar weken zegt meer.');
-    expect(paceCurveLine({ ...fits, verdict: 'easier' })).toContain('in training loop je zelden voluit');
+    expect(paceCurveLine({ ...fits, verdict: 'easier' })).toContain('In training loop je zelden voluit');
   });
 
   it('zegt zolang het wacht vanaf wanneer en hoeveel loopjes er nog nodig zijn', () => {
-    expect(paceCurveWaitLine({ state: 'wait', test: TEST, runs: 1, readyFrom: '2026-09-22' }, '2026-09-10')).toBe('Je snelste stukken in training legt ASCEND vanaf 22 sep en na nog 2 loopjes met details naast je test.');
-    expect(paceCurveWaitLine({ state: 'wait', test: TEST, runs: 2, readyFrom: '2026-09-22' }, '2026-10-01')).toBe('Je snelste stukken in training legt ASCEND na nog 1 loop met details naast je test.');
+    expect(paceCurveWaitLine({ state: 'wait', test: TEST, runs: 1, readyFrom: '2026-09-22' }, '2026-09-10')).toBe('Vanaf 22 sep en na nog 2 loopjes met details legt ASCEND je snelste stukken in training naast je test.');
+    expect(paceCurveWaitLine({ state: 'wait', test: TEST, runs: 2, readyFrom: '2026-09-22' }, '2026-10-01')).toBe('Na nog 1 loop met details legt ASCEND je snelste stukken in training naast je test.');
   });
 });

@@ -144,7 +144,7 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
   const remainingLine = progress.minutes >= progress.target
     ? 'Je minuten voor deze week zijn gehaald.'
     : short > 0
-      ? `Met wat er nog staat kom je op ${reach}. Een extra wandeling van ${short} ${short === 1 ? 'minuut' : 'minuten'} brengt je op ${progress.target}.`
+      ? `Met wat er nog staat kom je op ${reach} minuten. Een extra wandeling van ${short} ${short === 1 ? 'minuut' : 'minuten'} brengt je op ${progress.target}.`
       : progress.minutes === 0
         ? 'Deze week nog niets. Elke training telt.'
         : `Nog ${progress.remaining} ${progress.remaining === 1 ? 'minuut' : 'minuten'} te gaan.`;

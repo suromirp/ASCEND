@@ -130,7 +130,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceSheet<number>
           eyebrow="Planning"
           title="Rustdag"
-          line="Je ziet eerst wat er verschuift."
+          line="Eerst een voorstel, pas na Akkoord verandert er iets."
           options={REST_DAY_OPTIONS.map((d) => ({ value: d, label: WEEKDAYS_NL[d - 1] }))}
           value={restDay}
           advice={1}

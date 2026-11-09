@@ -100,7 +100,7 @@ export function LegFatigueCard() {
 
       {doneToday.length > 0 && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          {doneToday.map((c) => c.name).join(' en ')} van vandaag {doneToday.length === 1 ? 'telt' : 'tellen'} vanaf morgen mee: morgen ongeveer <span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(tomorrow.index, 1)}</span>, {fatigueWord(tomorrow.index).word.toLowerCase()}.
+          {doneToday.map((c) => c.name).join(' en ')} van vandaag {doneToday.length === 1 ? 'telt' : 'tellen'} vanaf morgen mee. Morgen ongeveer <span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(tomorrow.index, 1)}</span>, {fatigueWord(tomorrow.index).word.toLowerCase()}.
         </p>
       )}
 
@@ -109,9 +109,9 @@ export function LegFatigueCard() {
           {purpose === 'race' ? 'Wedstrijd' : 'Testloop'} {formatWeekdayDayMonthNL(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
           {band && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(band.low, 0)} tot {formatNumberNL(band.high, 0)})</span>},{' '}
           <span style={{ color: nextStatus === 'fris' && !band?.nearLine ? 'var(--color-status)' : 'var(--color-warning)' }}>{band?.nearLine ? 'op de grens' : nextStatus}</span>
-          {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Beslis bij het inlopen: voelen je benen zwaarder dan normaal, dan een dag later.</span>}
+          {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Voelen je benen bij het inlopen zwaarder dan normaal, dan een dag later.</span>}
           {nextStatus !== 'fris' && nextResult.contributions[0] && (
-            <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {formatWeekdayDayMonthNL(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '' : ': korter, of naar na de ' + (purpose === 'race' ? 'wedstrijd' : 'test')}.</span>
+            <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {formatWeekdayDayMonthNL(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '.' : ': doe het korter, of na de ' + (purpose === 'race' ? 'wedstrijd' : 'test') + '.'}</span>
           )}
           {nextResult.painRecent && <span style={{ color: 'var(--color-ink-dim)' }}> Je meldde pijn, dus dit telt nooit vanzelf als fris.</span>}
         </p>

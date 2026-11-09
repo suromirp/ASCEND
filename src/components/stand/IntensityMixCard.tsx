@@ -57,15 +57,15 @@ export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
         {easyPct >= EASY_TARGET * 100 - 5
-          ? 'Goed verdeeld: het meeste rustig, een paar keer echt hard. Zo groeit je basis en blijf je fris voor de harde dagen.'
+          ? 'Goed verdeeld: het meeste rustig, een paar keer hard. Zo groeit je basis en blijf je fris.'
           : easyPct >= EASY_FLOOR * 100
-            ? 'Bijna goed. Nog iets meer rustig, of houd de rustige trainingen echt rustig.'
-            : 'Meer hard dan rustig voor duurtraining. Dat gaat een tijd goed, maar je basis groeit vooral van de rustige kilometers.'}
+            ? 'Bijna goed. Doe iets meer rustig, of houd rustige trainingen echt rustig.'
+            : 'Meer hard dan rustig. Dat gaat een tijd goed, maar je basis groeit vooral van rustige kilometers.'}
       </p>
 
       {mix.easyTooHard.length > 0 && (
         <div className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}>
-          <p>{mix.easyTooHard.length === 1 ? 'Eén rustige training ging harder dan rustig:' : `${mix.easyTooHard.length} rustige trainingen gingen harder dan rustig:`}</p>
+          <p>{mix.easyTooHard.length === 1 ? 'Eén rustige training was te hard:' : `${mix.easyTooHard.length} rustige trainingen waren te hard:`}</p>
           <p style={{ color: 'var(--color-ink-dim)' }}>
             {mix.easyTooHard.slice(0, 4).map((x) => `${x.name} ${formatWeekdayDayMonthNL(x.date)} (${x.why === 'hartslag' ? 'hartslag boven zone 2' : 'zwaarte 7 of meer'})`).join(' · ')}
           </p>

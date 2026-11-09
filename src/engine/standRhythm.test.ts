@@ -67,7 +67,7 @@ describe('loadVerdict', () => {
 describe('standSentence', () => {
   it('maakt één zin uit de oordelen', () => {
     const rhythm = buildRhythm({ adherence: adherenceOf([review('a', 5, 6), review('b', 5, 6)]), thisWeek: null, streak: 0 });
-    expect(standSentence({ legLevel: 0, load: { word: 'Rustig', level: 'rustig', fact: '' }, rhythm, restWeek: false })).toBe('Je benen zijn fris, je week is rustig en je houdt je ritme vast.');
+    expect(standSentence({ legLevel: 0, load: { word: 'Rustig', level: 'rustig', fact: '' }, rhythm, restWeek: false })).toBe('Je benen zijn fris, je week is rustig en je ritme houdt.');
     expect(standSentence({ legLevel: 0, rhythm, restWeek: true })).toContain('Deze week is een rustweek');
   });
   it('blijft leeg zonder oordelen', () => {
