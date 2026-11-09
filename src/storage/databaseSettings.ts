@@ -159,6 +159,12 @@ export interface AppSettings {
   // What the text for Strava holds (engine/activityText.ts): only the title, or the
   // title and one line why. Absent = title and line. Optional and additive.
   stravaTextParts?: 'title' | 'title-line';
+  // The button "Route voorstellen" on a running session (engine/routePlanner.ts).
+  // Absent = on. Optional and additive, so no migration step.
+  routeProposal?: boolean;
+  // Which loop comes first in the route proposal: one long loop past different
+  // hills ('adventure', absent = adventure) or the same hill up and down ('simple').
+  routeStyle?: 'simple' | 'adventure';
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';

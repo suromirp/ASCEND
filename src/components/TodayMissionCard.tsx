@@ -21,6 +21,7 @@ import { Icon } from './icons';
 import type { MissionChip } from '../engine/missionFacts';
 import { WeatherLine } from './WeatherLine';
 import { HillsNearbyLine } from './HillsNearbyLine';
+import { RouteProposalLine } from './RouteProposalLine';
 import { ClothingAdvice } from './ClothingAdvice';
 import { WatchStatusRow } from './WatchStatusRow';
 import { BootReminderLine } from './reis/BootReminderLine';
@@ -201,6 +202,7 @@ export function TodayMissionCard({
           )}
           {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-0.5" onOpen={() => navigate('/weer')} />}
           <HillsNearbyLine template={template} date={todayISO()} className="mt-1" />
+          <RouteProposalLine template={template} date={todayISO()} mode="sheet" />
           <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
           {session && <WatchStatusRow session={session} template={template} offer={false} className="mt-3" />}
         </div>

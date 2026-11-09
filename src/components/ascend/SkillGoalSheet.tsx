@@ -32,7 +32,7 @@ export function SkillGoalSheet({ logs, today, taken, starts, onSubmit, onClose }
   const step = picked[ladder.id] ?? freeTargetStep(ladder, defaultTargetStep(ladder, { current }, starts?.get(ladder.id)), taken);
 
   return (
-    <Sheet eyebrow="Doel toevoegen · stap 2 van 3" title="Vaardigheid" line="Kies een ladder en de stap die je wilt halen." onClose={onClose}>
+    <Sheet eyebrow="Doel toevoegen · stap 3 van 4" title="Vaardigheid" line="Kies een ladder en de stap die je wilt halen." onClose={onClose}>
       {(close) => (
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
