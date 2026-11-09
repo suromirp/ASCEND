@@ -41,6 +41,8 @@ export const CROSS_SHRINK = 8;
 // "Normaal": de mediaan van de laatste zoveel trainingen met een bekend aantal ervoor, en minstens zoveel.
 export const CROSS_NORMAL_WINDOW = 6;
 export const CROSS_NORMAL_MIN = 3;
+// Pas vanaf zoveel harde sets meer dan normaal stelt Forge bij.
+export const CROSS_MIN_EXTRA = 1;
 
 // --- spieren ---------------------------------------------------------------------------------------
 
@@ -80,6 +82,15 @@ export function hardSetsLogged(sets: SetLog[], confirmOn: boolean): number | und
 // Een rij van het voorschrift: telt als harde set als hij tot falen gaat of hoogstens 3 over vraagt.
 export function hardPlanned(rows: readonly { kind: string; target: { rir?: number; failure?: boolean; timedSec?: number } }[]): number {
   return rows.filter((r) => r.kind === 'work' && r.target.timedSec === undefined && (!!r.target.failure || (r.target.rir ?? DEFAULT_RIR) <= CROSS_HARD_MAX_RIR)).length;
+}
+
+// Vandaag en normaal tellen harde sets op dezelfde manier. Het voorschrift zegt hoeveel sets er staan, maar niet
+// hoe hard je ze echt doet: logde je bij deze oefening steeds RIR 4, of haalde je vaak een set weg, dan telt
+// vandaag wat je de laatste keren logde (de mediaan, met dezelfde regel als de historie), hoogstens het aantal van
+// het voorschrift (een set minder door Lichter of de tijdsgrens telt wel). Zonder bekende historie: het voorschrift.
+export function expectedHard(planned: number, logged: readonly (number | undefined)[]): number {
+  const known = logged.filter((c): c is number => typeof c === 'number' && Number.isFinite(c)).slice(-CROSS_NORMAL_WINDOW);
+  return known.length === 0 ? planned : Math.min(planned, median(known));
 }
 
 export interface EarlierWork {
@@ -196,11 +207,12 @@ export interface CrossFatigue {
   factor: number;
 }
 
-// Alleen het verschil met normaal telt, alleen omlaag, hoogstens 10%. Undefined: niets bijstellen.
+// Alleen het verschil met normaal telt, alleen omlaag, hoogstens 10%, en pas vanaf een hele harde set meer (een
+// dode zone, zodat een halve set of een mediaan tussen twee trainingen niets doet). Undefined: niets bijstellen.
 export function crossFatigue(today: number | undefined, normal: number | undefined, perSet: number): CrossFatigue | undefined {
   if (today === undefined || normal === undefined || !(perSet > 0)) return undefined;
   const extra = today - normal;
-  if (!(extra > 1e-9)) return undefined;
+  if (!(extra >= CROSS_MIN_EXTRA - 1e-9)) return undefined;
   return { today, normal, extra, perSet, factor: 1 - Math.min(CROSS_MAX_TOTAL, extra * perSet) };
 }
 
@@ -213,7 +225,7 @@ export interface FirstSet {
 // De eerste werkset van het voorschrift bij iets minder kracht. Haal je de onderkant nog op dit gewicht, dan
 // alleen minder herhalingen; anders het zwaarste lichtere gewicht waarmee je de onderkant haalt (dezelfde keuze
 // als forgeAdjust.ts#lighterPick, met de speling van raak); past er geen, dan de onderkant op dit gewicht.
-// Nooit zwaarder en nooit meer herhalingen. Tot falen, een open doel of een houding: niets.
+// Nooit zwaarder; op hetzelfde gewicht nooit meer herhalingen (op een lichter gewicht wel, binnen het bereik). Tot falen, een open doel of een houding: niets.
 export function adjustFirstSet(set: FirstSet, strengthKg: number, factor: number, loadOf: (kg: number) => number | undefined, candidates: readonly Candidate[] | undefined): { weightKg: number; reps: number } | undefined {
   const t = set.target;
   if (t.failure || t.open || t.timedSec !== undefined || !(factor < 1)) return undefined;
@@ -242,7 +254,7 @@ export function adjustFirstSet(set: FirstSet, strengthKg: number, factor: number
 // eerst. Een half telt mee ("1,5"), want een hulpspier telt een halve set.
 export function crossLine(c: CrossFatigue, change: { lighter: boolean; fewerReps: number }): string {
   const n = Math.round(c.extra * 2) / 2;
-  const count = n < 0.5 ? 'Iets meer harde sets' : `${formatNumberNL(n, 1)} ${n <= 1 ? 'harde set' : 'harde sets'} meer`;
+  const count = `${formatNumberNL(n, 1)} ${n <= 1 ? 'harde set' : 'harde sets'} meer`;
   const what = change.lighter ? 'iets lichter' : change.fewerReps === 1 ? 'een herhaling minder' : `${change.fewerReps} herhalingen minder`;
   return `${count} voor dezelfde spieren ervoor dan normaal, dus je eerste set ${what}.`;
 }

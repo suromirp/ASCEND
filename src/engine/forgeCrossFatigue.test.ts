@@ -10,6 +10,7 @@ import {
   crossHistory,
   crossLine,
   crossPoints,
+  expectedHard,
   hardPlanned,
   hardSetsLogged,
   learnCross,
@@ -18,7 +19,7 @@ import {
   setsBefore,
 } from './forgeCrossFatigue';
 import { planWorkout, planStateBefore, planExercise, type PlanContext, type WorkoutExercise } from './forgeWorkout';
-import { strengthFor } from './forgeReckon';
+import { strengthFor, undoRaise } from './forgeReckon';
 import { capSlots } from './forgeTimeCap';
 import { DEFAULT_PROFILE, resolveStrengthSettings } from './strengthSettings';
 import { expectedReps } from './strengthModel';
@@ -124,6 +125,19 @@ describe('normaal, leren en de factor', () => {
     expect(crossPoints(unknown, { exercise: bench, maxToFailure: 20 })).toHaveLength(0);
   });
 
+  it('vandaag telt wat je bij de eerdere oefening logde, hoogstens het voorschrift', () => {
+    expect(expectedHard(3, [])).toBe(3);
+    expect(expectedHard(3, [undefined, undefined])).toBe(3);
+    expect(expectedHard(3, [0, 0, 0])).toBe(0);
+    expect(expectedHard(3, [2, 2, 3])).toBe(2);
+    expect(expectedHard(1, [3, 3, 3])).toBe(1);
+  });
+
+  it('een dode zone: minder dan een hele harde set meer doet niets', () => {
+    expect(crossFatigue(3.5, 3, CROSS_PER_SET)).toBeUndefined();
+    expect(crossFatigue(4, 3, CROSS_PER_SET)?.factor).toBeCloseTo(0.98, 9);
+  });
+
   it('alleen het verschil telt, alleen omlaag, hoogstens 10%', () => {
     expect(crossFatigue(3, 3, CROSS_PER_SET)).toBeUndefined();
     expect(crossFatigue(1, 3, CROSS_PER_SET)).toBeUndefined();
@@ -202,6 +216,39 @@ describe('in het voorschrift van Forge', () => {
     expect(on[1].strengthKg).toBe(off[1].strengthKg);
   });
 
+  it('dezelfde volgorde met gelogde RIR 4 of een set minder bij de eerdere oefening: niets bijgesteld', () => {
+    for (const sets of [flySets(4), flySets().slice(0, 2)]) {
+      const history = DATES.map((d, i) => log(`l${i}`, d, [entry('pec-deck-fly', 'Pec Deck Fly', sets), entry('bench-press', 'Barbell Bench Press', benchSets())]));
+      const on = planWorkout(today, ctxOf(history));
+      const off = planWorkout(today, ctxOf(history, {}, { crossFatigue: false }));
+      expect(on.map(plain)).toEqual(off.map(plain));
+      expect(on[1].reason).toBe(off[1].reason);
+      expect(on[1].strengthKg).toBe(off[1].strengthKg);
+    }
+  });
+
+  it('Terugzetten na een stap omhoog houdt de bijstelling: latere sets niet zwaarder, de zin blijft', () => {
+    // 7 tot 8: vorige keer 8 met 2 over is de bovenkant, dus "Forge rekent mee" zet een stap omhoog.
+    const raised = [today[0], slot('b', 'Barbell Bench Press', 3, '7-8')];
+    const on = planWorkout(raised, ctxOf(benchFirst))[1];
+    expect(on.raise).toBeDefined();
+    expect(on.reason).toMatch(/^3 harde sets meer/);
+    const back = undoRaise(on);
+    const w = work(back);
+    for (const r of w) expect(r.weightKg!).toBeLessThanOrEqual(w[0].weightKg!);
+    expect(back.reason).toMatch(/dezelfde spieren ervoor dan normaal/);
+    const backOff = undoRaise(planWorkout(raised, ctxOf(benchFirst, {}, { crossFatigue: false }))[1]);
+    expect(w[0].weightKg!).toBeLessThan(work(backOff)[0].weightKg!);
+  });
+
+  it('niets aan de eerste set te doen (tot falen): de kracht blijft ook gelijk, geen stille bijstelling', () => {
+    const failing = [today[0], slot('b', 'Barbell Bench Press', 3, '6-8', { setTargets: [{ repsLow: 6, repsHigh: 8, rir: 0, failure: true }, { repsLow: 6, repsHigh: 8, rir: 2 }, { repsLow: 6, repsHigh: 8, rir: 2 }] })];
+    const on = planWorkout(failing, ctxOf(benchFirst, {}, { noSpotter: false }))[1];
+    const off = planWorkout(failing, ctxOf(benchFirst, {}, { noSpotter: false, crossFatigue: false }))[1];
+    expect(on.strengthKg).toBe(off.strengthKg);
+    expect(on.reason).toBe(off.reason);
+  });
+
   it('minder harde sets ervoor dan normaal: nooit zwaarder', () => {
     const on = planWorkout([slot('b', 'Barbell Bench Press', 3, '6-8')], ctxOf(flyThenBench));
     const off = planWorkout([slot('b', 'Barbell Bench Press', 3, '6-8')], ctxOf(flyThenBench, {}, { crossFatigue: false }));
@@ -272,7 +319,7 @@ describe('in het voorschrift van Forge', () => {
     const plan = [slot('a', 'Barbell Back Squat', 3, '6-8', { targetWeightKg: 80 }), slot('b', 'Pin-Loaded Leg Press', 3, '8-10')];
     const eased = planWorkout(plan, ctxOf(legFirst, { ease: { how: 'standaard', because: 'spierpijn' } }));
     const easedOff = planWorkout(plan, ctxOf(legFirst, { ease: { how: 'standaard', because: 'spierpijn' } }, { crossFatigue: false }));
-    expect(eased[1].reason).toMatch(/^Lichter door spierpijn/);
+    expect(eased[1].reason).toMatch(/^Lichter door spierpijn.*dezelfde spieren ervoor dan normaal/);
     expect(easedOff[1].reason).toMatch(/^Lichter door spierpijn/);
     expect(work(eased[1])[0].weightKg!).toBeLessThanOrEqual(work(easedOff[1])[0].weightKg!);
     expect(work(eased[1]).length).toBe(work(easedOff[1]).length);
