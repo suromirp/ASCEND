@@ -7,7 +7,8 @@
 // the whole stretch at once: all the weeks that hold a holiday (and the empty days of the week on
 // each side), all the trainings that are the system's own, and every workable day. It keeps the
 // arrangement with the fewest findings of the week check, then the fewest dropped trainings, then
-// the fewest double days, then the least shifting.
+// the fewest double days, then the least shifting. A second long run in a week (or within five days of the one
+// before) is hard as well and goes before leg strength does.
 //
 // Fixed rules, hard in the score: 48 hours between heavy leg days (the long run counts, also after
 // one you logged, and also the weekend pairing of hills and long run inside this stretch), fresh legs
@@ -56,6 +57,10 @@ const W_HEAVY_NEXT = 1000;
 const W_DROP = 100;
 // The training that gives the week its shape (the long run, hills, a hard run, blocks) is let go last.
 const W_DROP_KEY = 130;
+// A second long run in the same week or within five days of the one before (also one you logged): hard, so it is
+// let go before leg strength is (docs/beslissingen/2026-11-09-planner-vakantie-lange-duurloop.md).
+const W_LONG_NEAR = 1000;
+const LONG_GAP_DAYS = 5;
 const W_CROWD = 40;
 // The same task (the same training, or one with the same role) two days apart or closer.
 const CROWD_GAP_DAYS = 3;
@@ -170,7 +175,8 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
       const hit = cache.get(keyOf);
       if (hit !== undefined) return hit;
       if (cache.size >= MAX_JUDGED) return Infinity;
-      const list2 = build(state).filter((s) => s.scheduledDate >= scoreFrom && s.scheduledDate <= scoreTo);
+      const built = build(state);
+      const list2 = built.filter((s) => s.scheduledDate >= scoreFrom && s.scheduledDate <= scoreTo);
       let total = 0;
       total += validateWeeks({ ...input.check, sessions: list2 }, checkWeeks).length * W_FINDING;
       // Heavy leg days 48 hours apart, also across the weekend pairing and after a logged long run.
@@ -179,6 +185,21 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
         for (let j = i + 1; j < heavy.length; j++) {
           if (!partIds.has(heavy[i].id) && !partIds.has(heavy[j].id)) continue;
           if (Math.abs(daysBetween(heavy[i].scheduledDate, heavy[j].scheduledDate)) < 2) total += W_HEAVY_NEXT;
+        }
+      }
+      // At most one long run a week, and not within five days of the one before: the second one goes, not the leg strength.
+      // Only the long run: not a mountain hike (the role covers both), a short version or a day in a trek, as in ONE-LONG.
+      const isLongRun = (s: PlannedSession) => {
+        const t = byId.get(s.templateId);
+        return !!t && hasRole(t, 'long') && templateSport(t) !== 'hiking' && !s.plannedMinutes && days.get(s.scheduledDate)?.kind !== 'trek';
+      };
+      const longRuns = built.filter((s) => s.status !== 'skipped' && s.scheduledDate >= addDays(windowStart, -7) && s.scheduledDate <= addDays(windowEnd, 7) && isLongRun(s));
+      for (let i = 0; i < longRuns.length; i++) {
+        for (let j = i + 1; j < longRuns.length; j++) {
+          if (!partIds.has(longRuns[i].id) && !partIds.has(longRuns[j].id)) continue;
+          const a = longRuns[i].scheduledDate;
+          const b = longRuns[j].scheduledDate;
+          if (Math.abs(daysBetween(a, b)) <= LONG_GAP_DAYS || mondayOfWeek(a) === mondayOfWeek(b)) total += W_LONG_NEAR;
         }
       }
       // Dropped, double days, shifting.
