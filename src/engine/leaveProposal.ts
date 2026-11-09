@@ -269,7 +269,7 @@ function explain(mode: 'add' | 'remove', period: LeavePeriod, count: number, cha
   if (mode === 'remove') return 'Wat de periode verschoof of liet vervallen, staat weer op zijn plek.';
   if (period.kind === 'no_gym') return resolveNoGym(period).amount === 'light'
     ? 'Je loopt twee keer per week, korter en rustig, zonder opbouw. Kracht in de sportschool wordt een korte sessie met je eigen gewicht of vervalt, zoals je koos.'
-    : 'Je lopen blijven staan, korter en rustig, zonder opbouw. Kracht in de sportschool wordt een korte sessie met je eigen gewicht of vervalt, zoals je koos.';
+    : 'Je loopjes blijven staan, korter en rustig, zonder opbouw. Kracht in de sportschool wordt een korte sessie met je eigen gewicht of vervalt, zoals je koos.';
   if (period.kind === 'no_training') return 'Op je vakantiedagen staat geen training meer. Wat er stond, schuift naar een andere dag van die week of vervalt, binnen de gewone regels voor rust tussen zware dagen.';
   if (period.kind === 'trek' && period.trek?.importance === 'goal') return 'Elke tochtdag is een wandeldag met je rugzak. De dagen ervoor blijven licht, zodat je fris vertrekt, en de dag erna ook. Zware beendagen houden de gewone rust tot en na de tocht.';
   if (period.kind === 'trek') return 'Elke tochtdag is een wandeldag met je rugzak. De dag ervoor en erna blijft licht, en zware beendagen houden de gewone rust tot en na de tocht.';

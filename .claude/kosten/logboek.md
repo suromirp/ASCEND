@@ -227,3 +227,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Lijn rest R5 Week-tab, Scribe (ontwikkelaar, geen eigen rol), sonnet, 98k, 13 min
 - 2026-11-09, Lijn rest gewicht en Week review, Warden, sonnet (reviewer), 60k, 2 min, 0 blokkerend, 1 belangrijk (inhalen heet verplaatsen) en 6 klein (door de coördinator hersteld)
 - 2026-11-09, Lijn rest gewicht en Week doorloop, Lookout, sonnet (tester), 62k, 12 min, 3 bestaande tikdoelgaten gemeld (backlog) en 1 afgebroken datum (hersteld)
+- 2026-11-10, Lijn rest 2 R6 Ascend-tab, Scribe (ontwikkelaar, geen eigen rol), sonnet, 154k, 19 min
+- 2026-11-10, Lijn rest 2 R6 review, Warden, sonnet (reviewer), 51k, 6 min, 0 blokkerend, 1 klein (lopen/loopjes, hersteld)
