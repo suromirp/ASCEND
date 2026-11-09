@@ -186,3 +186,12 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-08, Hulpfuncties, exports en afstandszin, Sherpa, sonnet (ontwikkelaar), 55k, 10 min, 0
 - 2026-11-08, Buiten klein (regen, maan), Sherpa, sonnet (ontwikkelaar), 139k, 15 min, 0
 - 2026-11-08, Review bouwmoment, Warden, sonnet (reviewer), 59k, 4 min, geen blokkade, 4 kleine punten naar Inbox
+- 2026-11-09, Cartographer Forge-toestel, Cartographer, sonnet (ontwerper), 117k, 4 min, 0 (geen shell: coördinator committe)
+- 2026-11-09, Scout Tempo zone 2, Scout, opus (sportwetenschapper), 76k, 4 min, 0
+- 2026-11-09, Forge toestelstanden engine, Sherpa, opus (ontwikkelaar), 146k, 13 min, 0
+- 2026-11-09, Forge toestelstanden scherm en herstel, Sherpa, sonnet (ontwikkelaar), 273k, 26 en 9 min, 1 blokkade en 2 belangrijke punten (tijdgrens wachtrij, stil vervuilen)
+- 2026-11-09, Zonder sportschool met twee herstelrondes, Sherpa, opus (ontwikkelaar), 245k, 26, 8 en 7 min, 1 blokkade (lengte terugzetten) en 6 punten
+- 2026-11-09, Tempo stabiele stukken met herstel, Sherpa, opus (ontwikkelaar), 257k, 26 en 24 min, 0 blokkades, 2 belangrijke punten (budget opstartstap, achterhaalde tekst)
+- 2026-11-09, Warden ronde 3 (vier reviews), Warden, opus (reviewer), 82k+100k+74k+105k, 7 tot 9 min per stuk, zie boven
+- 2026-11-09, Lookout ronde 3, Lookout, sonnet (tester), 128k, 19 min, 0 rood
+Les ronde 3: één bouwer die twee keer herstelt kost 100k tot 150k extra; geef bij planning de randgevallen van een terugzet-regel vooraf mee (verplaatst door de gebruiker, periode wijzigen) en vraag bij elke achtergrondstap bij het opstarten om venster, budget en tijdgrens.

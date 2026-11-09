@@ -249,7 +249,7 @@ export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], p
   });
 
   const allBpm = candidates.flatMap((c) => c.parts.map((p) => p.bpm)).sort((a, b) => a - b);
-  const referenceHr = band ? Math.round((band[0] + band[1]) / 2) : allBpm[Math.floor(allBpm.length / 2)] ?? 0;
+  const referenceHr = band ? Math.round((band[0] + band[1]) / 2) : Math.round(allBpm[Math.floor(allBpm.length / 2)] ?? 0);
   const rest = hr?.restingHr !== undefined && hr.restingHr >= RESTING_RANGE[0] && hr.restingHr <= RESTING_RANGE[1] && hr.restingHr < referenceHr - 10 ? hr.restingHr : 0;
   // Pace at the reference heart rate, through the heart rate reserve: faster when you ran lower.
   const atReference = (paceSec: number, bpm: number) => (bpm > rest ? paceSec * ((bpm - rest) / (referenceHr - rest)) : paceSec);

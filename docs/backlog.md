@@ -14,20 +14,25 @@ Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde ui
 - 9 november, uit de doorloop: Heuvels en trappen: de echte Overpass-aanroep en de hoogte-aanroep zijn nog niet live gezien; de hoogteaanroep staat in `overpass.ts` en kan later samen met UV en zon in `openMeteo.ts`; vakantieadres en periode "Zonder sportschool" gebruiken de terreinregel nog niet; de afstandszin zonder testloop is alleen met engine-tests gezien, nog niet met een eigen stand in het scherm (zie Lookout r2).
 - 8 november, uit de review van het bouwmoment, nog open: de Forge-melding Spieren voor de berg heeft geen eigen schakelaar (Forge zit op het maximum van 6 rijen).
 
+- 9 november, uit de reviews van ronde 3: Zonder sportschool: Heuvels-alleen omzetten geeft een voorstel met nul wijzigingen (`leaveEdit.ts:328`, bewaar het meteen); `tpl_bodyweight` staat nog in lijsten van krachtsjablonen (`ProgramProposal.tsx`, `MacroFactorLinkCard.tsx`, `StrengthProgramWizard.tsx`, `mountainMuscles.ts`: één helper `isGymStrengthTemplate`); Reverse Lunge is in de catalogus een dumbbell-oefening (een lunge zonder gewicht kan de stand van die met gewicht omlaag trekken); de OpenStreetMap-regel bij de periode en op een vakantieadres; een vaste sport in een periode zonder sportschool (`fixedInLeave`); feestdagen als voorstel. Toestelstanden: Standen wissen zonder Terugdraaien; de formulier-`key` in `MachineWeights.tsx` bouwt het formulier opnieuw op als het inlezen later binnenkomt; standen in pond, plaatjesnummers en standen voor de optrekhulp; het keuzestrookje 'Ook tussenin en erboven schatten' breekt op 390 px over twee regels en staat strak tegen de rand. Tempo: de band en de lijn zijn nog niet gezien met 8 of meer lopen over 4 weken (de kit heeft geen stand daarvoor). Lookout: 'Voorstel bekijken' breekt op 360 px over twee regels; Minder bij een leeg gewichtsveld zegt 'naar 0 kilo'.
+- 9 november, aandacht voor de eigenaar bij het bouwen: standen onthouden werkt stil (met Terugdraaien); de periode Zonder sportschool geeft de 3 dagen na een tocht dezelfde lengteregel als de 72 uur rust; de grafiek en tekst achter de i van Tempo bij zone 2 zijn nog niet gebouwd.
+
 ## Rooster voor de bouwmomenten
 
 Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden). Afgerond: naar "Live op" en uit dit rooster.
 
 1. Af (8 en 9 november): Planner, tijdsgrens, Spieren voor de berg, Buiten klein, Scout RIR en RPE (`docs/onderzoek/RIR en RPE in krachtapps.md`).
 2. Af (9 november): Forge afvinken is de RIR van het doel (stap 1 tot 5; vermoeidheid tussen oefeningen blijft liggen als stap 6 tot 8) ‖ Heuvels en trappen in de buurt ‖ Scout calisthenics en uitleg bij oefeningen (twee verslagen in `docs/onderzoek/`).
-3. Forge: gewicht op een toestel ‖ Periode "Zonder sportschool" en feestdagen als voorstel (opus) ‖ Tempo bij zone 2 (Scout kort, dan bouwen).
+3. Af (9 november): Forge gewicht op een toestel (standen onthouden, blad, instelling) ‖ Periode "Zonder sportschool" (feestdagen als voorstel bleef liggen) ‖ Tempo bij zone 2 (Scout, engine en instelling; grafiek en tekst blijven).
 4. Forge: ruilen met een echte vervanger ‖ Gewicht uit Health Connect als trend ‖ Uitleg bij oefeningen: proef met vijf teksten (Scribe).
 5. Uitleg bij oefeningen, de rest ‖ Calisthenics ontwerp ‖ Voor de GR5: waarschuwingen, hutten, lawines.
 6. tot 8. Calisthenics bouwen ‖ Alle teksten herschrijven en Engels, per tab ‖ Oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten).
 
 ## Loopt nu
 
-Live op 9 november (derde bouwmoment): Forge afvinken telt als het doel (instelling in Rekenmodel, bevestigde sets, strengere stap, vragen bij twijfel, twee nieuwe logvelden met migratie), Heuvels en trappen in de buurt (OpenStreetMap, instelling), ForgeWorkout verder opgesplitst (993 regels), gedeelde hulpfuncties, re-exports en dode code weg, regen per plaats, de afstandszin op Vandaag ook zonder testloop, drie onderzoeksverslagen.
+Live op 9 november (derde bouwmoment, ronde 3): Forge toestelstanden (stil onthouden met Terugdraaien, Minder en Meer springen naar de vorige en volgende stand, blad Standen van dit toestel, instelling Standen onthouden), de periode Zonder sportschool (Eigen gewicht, Licht of Gewoon, Heuvels in de buurt als tekst, instelling Kracht zonder sportschool), Tempo bij zone 2 uit stabiele stukken (engine, oude lopen op de achtergrond bijgewerkt met een budget, instelling).
+
+Live op 9 november (eerste deel): Forge afvinken telt als het doel (instelling in Rekenmodel, bevestigde sets, strengere stap, vragen bij twijfel, twee nieuwe logvelden met migratie), Heuvels en trappen in de buurt (OpenStreetMap, instelling), ForgeWorkout verder opgesplitst (993 regels), gedeelde hulpfuncties, re-exports en dode code weg, regen per plaats, de afstandszin op Vandaag ook zonder testloop, drie onderzoeksverslagen.
 
 Live op 8 november (tweede bouwmoment): regen in het komende uur en maanstand (twee instellingen in Weer en kleding), de telling "weg door je tijdsgrens" klopt bij Lichter, ForgeWorkout een eerste keer opgesplitst, gedeelde mean, stdev, median en joinNL in utils, 27 exports privé, de afstandszin op Vandaag in het enkelvoud bij één loop.
 
@@ -237,12 +242,13 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 
 ## Tempo bij zone 2 beter maken (eigenaar 7 november: "wat matig")
 
+- Engine en instelling gebouwd op main (9 november) (stap 1 tot 5, besluit `2026-11-09-tempo-stabiele-stukken.md`). Nog open: stap 6, de grafiek (elke loop als stip, warme gedimd, de lijn met band, as met tempo's), en stap 7, de tekst achter de i met de bronnen. Klein: een oude `aerobicProgressCelebrated` (op het midden van de band) na 14 dagen negeren; het dauwpunt in het weer per loop; de regel voor benen die niet uitgerust zijn (hoofdstuk 5 van het verslag).
+
 - Nu (`src/engine/aerobicTrend.ts`): alleen geplande rustige en lange duurlopen, met de gemiddelde hartslag van de hele loop, per week één punt. Met twee of drie loopjes per week en twee die buiten zone 2 vallen geeft dat drie punten en een uitspraak ("17 seconden sneller") die sterker klinkt dan de data draagt.
 - Meer en betere data: uit de reeksen van het horloge (run in detail, `storage/activityDetail.ts`) de stukken van minstens 5 minuten stabiel in zone 2 op vlak terrein, uit elke loop (ook in- en uitlopen van intervallen en de lange duurloop), in plaats van één gemiddelde per loop. Gecorrigeerd voor helling (tempo naar vlak omgerekend) en warmte (`engine/heatPace.ts`), en hartslagdrift (alleen het stuk na de eerste 10 minuten).
 - Eerlijker zeggen: "eerste schatting" tot er minstens 8 metingen over 4 weken zijn, daarna de verandering met een marge ("ongeveer 10 tot 20 seconden sneller"). De cijfers in de tekst komen uit dezelfde functie als de grafiek.
 - Een leesbare grafiek: elke meting als stip, het weekgemiddelde als lijn, een as met tempo's en "sneller" omhoog erbij, de hoogste en laagste week benoemd. Korte tekst: één zin wat het betekent, het hoe achter de i.
 - Scout eerst kort (welke drempels voor stabiel en hoe lang, warmtecorrectie), dan Sherpa: engine op opus (afgeleid, append-only, raakt de planning niet), grafiek en tekst op sonnet.
-- Engine en instelling gebouwd op `claude/tempo-stukken` (stap 1 tot 5, besluit `2026-11-09-tempo-stabiele-stukken.md`). Nog open: stap 6, de grafiek (elke loop als stip, warme gedimd, de lijn met band, as met tempo's), en stap 7, de tekst achter de i met de bronnen. Klein: een oude `aerobicProgressCelebrated` (op het midden van de band) na 14 dagen negeren; het dauwpunt in het weer per loop; de regel voor benen die niet uitgerust zijn (hoofdstuk 5 van het verslag).
 
 ## Calisthenics, los of naast krachttraining (wens 7 november, grondig)
 
