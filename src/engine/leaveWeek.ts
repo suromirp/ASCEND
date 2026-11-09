@@ -7,7 +7,7 @@
 import type { LeaveKind, LeavePeriod } from '../models/leave';
 import { leaveDays, type LeaveDay } from './leave';
 import { noGymLine } from './noGymDetails';
-import { formatWeekdayDayMonthNL, weekdayShortNL } from '../utils/dates';
+import { formatDayMonthNL, formatWeekdayDayMonthNL, weekdayShortNL } from '../utils/dates';
 
 // De soort in een woord of twee, boven in de band.
 export const LEAVE_BAND_TITLE: Record<LeaveKind, string> = {
@@ -99,4 +99,11 @@ export function leaveWeek(weekDates: string[], periods: LeavePeriod[] | undefine
     inBand: new Set(bands.flatMap((b) => b.dates)),
     quietWord: new Map(bands.flatMap((b) => b.dates.map((d): [string, string] => [d, QUIET_WORD[b.period.kind]]))),
   };
+}
+
+// "14 t/m 18 nov", "28 nov t/m 2 dec", "14 nov".
+export function periodSpan(start: string, end: string): string {
+  if (start === end) return formatDayMonthNL(start);
+  const from = start.slice(5, 7) === end.slice(5, 7) ? String(Number(start.slice(8, 10))) : formatDayMonthNL(start);
+  return `${from} t/m ${formatDayMonthNL(end)}`;
 }

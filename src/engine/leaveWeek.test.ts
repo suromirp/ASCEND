@@ -65,3 +65,12 @@ describe('leaveWeek', () => {
     expect(describeBandRange(['2026-11-02'])).toBe('Ma 2');
   });
 });
+
+describe('periodSpan', () => {
+  it('zegt de dagen van de hele periode kort', async () => {
+    const { periodSpan } = await import('./leaveWeek');
+    expect(periodSpan('2026-11-14', '2026-11-18')).toBe('14 t/m 18 nov');
+    expect(periodSpan('2026-11-28', '2026-12-02')).toBe('28 nov t/m 2 dec');
+    expect(periodSpan('2026-11-14', '2026-11-14')).toBe('14 nov');
+  });
+});
