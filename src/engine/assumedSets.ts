@@ -37,7 +37,9 @@ export interface ConfirmContext {
 // Hoeveel herhalingen er gevraagd waren: wat Forge in het vak zette, of bij een oud log de onderkant
 // van het bereik.
 export function askedReps(set: SetLog, rangeLow: number | undefined): number | undefined {
-  return set.repsAsked ?? rangeLow;
+  // Alleen een afgevinkte set zonder eigen RIR draagt een gevraagd aantal dat telt; een set met eigen RIR heeft
+  // sinds 9 november ook `repsAsked` (Hoe goed kent Forge je), maar regel 3 leest hem zoals altijd met het bereik.
+  return set.rirAssumed ? (set.repsAsked ?? rangeLow) : rangeLow;
 }
 
 // Lichter dan dit gewicht (met lichaamsgewicht en hulp meegerekend als `loadOf` er is)?
