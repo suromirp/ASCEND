@@ -28,7 +28,9 @@ export function useForgePager(layoutPaged: boolean, workout: WorkoutExercise[], 
   // Bij het openen (en bij het aanzetten) meteen op de oefening die aan de beurt is, zonder te schuiven.
   const activeIndex = Math.max(0, workout.findIndex((e) => e.slot === activeRef?.slot));
   const activeIndexRef = useRef(activeIndex);
-  activeIndexRef.current = activeIndex;
+  useLayoutEffect(() => {
+    activeIndexRef.current = activeIndex;
+  });
   useLayoutEffect(() => {
     const el = pagerEl.current;
     if (!paged || !el) return;

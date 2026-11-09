@@ -272,6 +272,10 @@ export interface StrengthSettings {
   // werkset die je afvinkte zonder RIR en die ging zoals gevraagd, telt met de RIR van het doel
   // (engine/assumedSets.ts). Bij twijfel vraagt Forge "Hoeveel over?". Uit: zoals voor 8 november.
   assumedCounts?: boolean;
+  // "Vermoeidheid tussen oefeningen" (default on, docs/beslissingen/2026-11-09-forge-vermoeidheid-tussen-oefeningen.md):
+  // staan er meer harde sets voor dezelfde spieren voor een oefening dan je normaal deed, dan begint de eerste set
+  // iets lichter (engine/forgeCrossFatigue.ts). Uit: alleen de vermoeidheid binnen een oefening telt.
+  crossFatigue?: boolean;
   // Zonder spotter: Forge schrijft bij een stangoefening waar falen gevaarlijk is minstens 1 herhaling
   // in reserve voor, tenzij de sportschool veiligheidsarmen heeft (default on). Nooit een blokkade:
   // 0 invullen kan altijd (engine/spotter.ts).
@@ -328,6 +332,7 @@ export interface ResolvedStrengthSettings {
   reckon: boolean;
   learnStands: boolean;
   assumedCounts: boolean;
+  crossFatigue: boolean;
   noSpotter: boolean;
   rirPrefill: RirPrefill;
   mountainMuscles: boolean;
@@ -549,6 +554,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.reckon === 'boolean') out.reckon = raw.reckon;
   if (typeof raw.learnStands === 'boolean') out.learnStands = raw.learnStands;
   if (typeof raw.assumedCounts === 'boolean') out.assumedCounts = raw.assumedCounts;
+  if (typeof raw.crossFatigue === 'boolean') out.crossFatigue = raw.crossFatigue;
   if (typeof raw.noSpotter === 'boolean') out.noSpotter = raw.noSpotter;
   if (typeof raw.mountainMuscles === 'boolean') out.mountainMuscles = raw.mountainMuscles;
   const added = normalizeAddedExercises(raw.addedExercises);
@@ -610,6 +616,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     reckon: s.reckon ?? true,
     learnStands: s.learnStands ?? true,
     assumedCounts: s.assumedCounts ?? true,
+    crossFatigue: s.crossFatigue ?? true,
     noSpotter: s.noSpotter ?? true,
     rirPrefill: s.rirPrefill ?? 'hint',
     mountainMuscles: s.mountainMuscles ?? true,

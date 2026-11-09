@@ -366,6 +366,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'dan telt een set zonder eigen RIR zoals voorheen, en vraagt Forge alleen na de eerste, een zware en de laatste set.' },
     ],
   },
+  forgeTussenOefeningen: {
+    title: 'Vermoeidheid tussen oefeningen',
+    lead: 'Staan er meer harde sets voor dezelfde spieren voor een oefening dan je normaal deed, dan begint de eerste set iets lichter.',
+    points: [
+      { head: 'Wat telt', text: 'werksets met 3 of minder over, die je zelf invulde of afvinkte zoals gevraagd. Een gedeelde hoofdspier telt een hele set, een hulpspier een halve.' },
+      { head: 'Alleen het verschil', text: 'je gewone volgorde zit al in je geschatte kracht. Pas als er meer voor staat dan normaal, gaat de eerste set omlaag: eerst in herhalingen, anders een stap lichter.' },
+      { head: 'Hoeveel', text: 'ongeveer 2% kracht per harde set meer, nooit meer dan 10%. Met Vermoeidheid per set op Geleerd leert Forge het per oefening uit je eigen trainingen, vanaf zes keer.' },
+      { head: 'Wat je zelf doet', text: 'blijft van jou. Het gaat alleen om het voorschrift, en je log verandert niet.' },
+      { head: 'Uit', text: 'dan telt alleen de vermoeidheid binnen een oefening, zoals voorheen.' },
+    ],
+  },
   forgePauze: {
     title: 'Na een pauze lichter beginnen',
     lead: 'Na meer dan vier weken zonder krachttraining begint het voorstel iets lichter.',

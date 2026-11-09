@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 const read = (name: string): string => Object.entries(SOURCES).find(([p]) => p.endsWith(`/${name}`))?.[1] ?? '';
 const SOURCES = import.meta.glob<string>('./*.tsx', { query: '?raw', import: 'default', eager: true });
 
-describe('InputDock in ForgeWorkout', () => {
-  const src = read('ForgeWorkout.tsx');
+describe('InputDock in ForgeDock', () => {
+  const src = read('ForgeDock.tsx');
   const at = src.indexOf('<InputDock');
   const tag = src.slice(at, src.indexOf('/>', at));
 

@@ -14,7 +14,8 @@ export function useForgeClock(restored: WorkoutDraft | undefined, readOnly: bool
   const [startedAt, setStartedAt] = useState<number | null>(() => (restored ? restored.startedAt : null));
   const startedRef = useRef<number | null>(startedAt);
   // Het laatste moment dat jij iets deed: de lange onderbreking meet daarvandaan.
-  const lastAction = useRef<number>(restored ? lastActionOfDraft(restored, restored.startedAt as number) : 0);
+  const [firstAction] = useState<number>(() => (restored ? lastActionOfDraft(restored, restored.startedAt as number) : 0));
+  const lastAction = useRef<number>(firstAction);
   const begin = useCallback((): number => {
     if (startedRef.current !== null) return startedRef.current;
     const now = Date.now();
@@ -27,7 +28,7 @@ export function useForgeClock(restored: WorkoutDraft | undefined, readOnly: bool
   const paused = startedAt !== null && isPaused({ startedAt, pauses });
   const breakAfter = resolveBreakAsk(settings);
   // "Je was 22 uur weg. Telt die tijd mee?": één keer per terugkomst, alleen als de klok liep.
-  const [awayMs, setAwayMs] = useState<number | undefined>(() => (restored && !readOnly ? longBreakMs({ startedAt: restored.startedAt as number, pauses: cleanPauses(restored.pauses), lastActionAt: lastAction.current }, Date.now(), breakAfter) : undefined));
+  const [awayMs, setAwayMs] = useState<number | undefined>(() => (restored && !readOnly ? longBreakMs({ startedAt: restored.startedAt as number, pauses: cleanPauses(restored.pauses), lastActionAt: firstAction }, Date.now(), breakAfter) : undefined));
 
   // Pauzeren en verder gaan staan meteen in het concept.
   const togglePause = useCallback(() => {
@@ -40,7 +41,9 @@ export function useForgeClock(restored: WorkoutDraft | undefined, readOnly: bool
   }, [begin, pauses]);
   // Terug in de app terwijl dit scherm openstond: ook dan de vraag, als de klok liep.
   const clockNow = useRef<{ startedAt: number; pauses: Pause[] } | null>(null);
-  clockNow.current = startedAt === null ? null : { startedAt, pauses };
+  useEffect(() => {
+    clockNow.current = startedAt === null ? null : { startedAt, pauses };
+  });
   useEffect(() => {
     if (readOnly) return;
     const onVisible = () => {
