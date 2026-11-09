@@ -261,7 +261,7 @@ describe('computeWeeklyPrescriptionPlan: wat erbij staat', () => {
 
   it('zegt vanaf wanneer het geldt, in gewone woorden', () => {
     const text = run([session('anchor1', tplHike.id, '2026-09-16', ANCHOR_WEEK)]);
-    expect(text).toBe('Geldt vanaf over twee weken. Deze en volgende week blijven zoals ze zijn.');
+    expect(text).toBe('Geldt over twee weken. Deze en volgende week blijven zoals ze zijn.');
   });
 
   it('zegt het droog als een week vol is', () => {
