@@ -8,7 +8,7 @@ Bijgewerkt: 9 november 2026, 20:15 UTC, door de coördinator van 8 en 9 november
 - Datavelden voor je horloge (plan punt 3), session_01LnDpSmQ4BrFUPHMVa43uxV, branch claude/datavelden-horloge.
 - Uitleg bij oefeningen, batch 3 en 4 (plan punt 5), session_01LnDpSkoHfPpN2ZxKwwTAA9, branch claude/uitleg-batch-3-4.
 
-Live sinds de wissel: Overzicht Gewicht (b39130d), Calisthenics algemeen en Routeplanner fase 1 en 2 (8f5ba7e). Plan punten 0, 2 en 4 zijn dus af; hierna 6 (Buiten), 7 (Feestdagen), 8, 9, 10. Open vragen aan de eigenaar staan in de backlog bij de Live-regels van Calisthenics en de Inbox-regel van de routeplanner.
+Live sinds de wissel: Overzicht Gewicht (b39130d), Calisthenics algemeen en Routeplanner fase 1 en 2 (8f5ba7e). Plan punten 0, 2 en 4 zijn dus af; hierna 6 (Buiten), 7 (Feestdagen), 8, 9, 10. De eigenaar gaf akkoord (9 november avond) op twee nieuwe punten, in de Inbox van de backlog: 11. Startpunt van je lus (routeplanner, instelling Ongeveer of Precies); 12. voorstel dat squat op één been en L-sit in een training zet (planner, niet tegelijk met 7). Starten zodra er een plek vrij is, 11 eerst. De drie bouwers vielen om ongeveer 21:15 tot 22:50 UTC stil op de limiet van vijf uur en zijn om 23:04 UTC gewekt.
 
 Afhandelen als ze klaar zijn (get_session: status completed, of de branch staat er met een afdruk): branch fetchen, mergen in claude/ascend-modernize-ib0a34, alle controles (tsc, lint, vitest, build, kaart:vergelijk), afdruk bekijken (map afdrukken/ op de branch), squash naar main, sessie archiveren, de eigenaar een korte melding met wat live staat en wat hij kan nakijken. Staat een bouwer stil op een vraag om bevestiging: zelf afmaken (mergen en live zetten).
 
