@@ -171,3 +171,7 @@ Elke bouwer die de coördinator met `create_session` start, krijgt als laatste r
 - Vragen aan de eigenaar in gewone woorden met een voorbeeld en het advies erbij, nooit in vaktaal (de vragen over lichaamsgewicht en de ijkset waren onduidelijk).
 - Elke melding naar de eigenaar noemt wat hij zelf op zijn telefoon kan nakijken, want echte apparaten en echte netwerkaanroepen ziet geen helper.
 - Voor een ronde die een akkoord van de eigenaar nodig heeft (zoals een stemgids) eerst dat akkoord vragen, dan pas de sessie starten.
+
+## Afgeronde bouwers archiveren (eigenaar 9 november)
+
+Komt de melding "Bouwer klaar" binnen en staat het werk op main, dan archiveert de coördinator die sessie meteen met `archive_session` (claude-code-remote). Een bouwer die vastliep of nog een vraag heeft blijft open tot dat is opgelost. Nooit archiveren: de vaste sessie van het bouwmoment en het onderhoud, en de sessie van de coördinator zelf.

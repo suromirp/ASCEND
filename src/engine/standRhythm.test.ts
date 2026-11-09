@@ -56,6 +56,8 @@ describe('loadVerdict', () => {
   const before = [load(0, 500, 0), load(1, 520, 0), load(2, 540, 0), load(3, 540, 0)];
   it('zegt in lijn, zwaar of rustig met dezelfde grens als de weekbalken', () => {
     expect(loadVerdict([...before, load(4, 300, 200, { isCurrent: true })])?.word).toBe('In lijn');
+    // Op maandag, nog niets gedaan: het getal telt de hele geplande week mee, niet "0 van".
+    expect(loadVerdict([...before, load(4, 0, 500, { isCurrent: true })])?.fact).not.toMatch(/^0 /);
     expect(loadVerdict([...before, load(4, 300, 400, { isCurrent: true })])?.word).toBe('Zwaar');
     expect(loadVerdict([...before, load(4, 100, 100, { isCurrent: true })])?.word).toBe('Rustig');
   });

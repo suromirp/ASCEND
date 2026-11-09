@@ -27,7 +27,7 @@ const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--co
 // De tegel Vaardigheid: een stap op een calisthenicsladder (docs/beslissingen/2026-11-09-calisthenics-vaardigheidsdoel.md).
 // Hij hoort niet bij ADD_TILES, want een vaardigheid is geen TrainingGoal; Volgende sluit dit blad en opent het
 // blad van de vaardigheid.
-const SKILL_TILE = { label: 'Vaardigheid', summary: 'Een stap op de ladder van push-up, optrekken of dip.' } as const;
+const SKILL_TILE = { label: 'Calisthenics', summary: 'Een vaardigheid halen, zoals handstand, muscle-up of front lever.' } as const;
 
 export function GoalFormSheet({
   existing, mainGoalId, goal, initialTile, initialDetails, onSubmit, onSkill, onClose,
