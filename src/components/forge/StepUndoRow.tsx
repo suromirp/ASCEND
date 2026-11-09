@@ -31,7 +31,7 @@ export function StepUndoRow({ fromName, onUndo }: { fromName: string; onUndo: ()
     <MenuRow
       icon="ruilen"
       title={`Terug naar ${fromName} in je plan`}
-      sub={state === 'failed' ? 'Opslaan lukte niet op tijd. Probeer het nog eens.' : 'Je zette je plan op deze stap na een voorstel. Deze sessie blijft zoals hij is.'}
+      sub={state === 'failed' ? 'Opslaan lukte niet op tijd. Probeer het nog eens.' : 'Deze stap kwam via een voorstel in je plan. Deze sessie blijft zoals hij is.'}
       onClick={state === 'busy' ? undefined : () => void undo()}
     />
   );
