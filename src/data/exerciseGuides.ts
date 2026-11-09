@@ -530,16 +530,16 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
   },
   'back-squat': {
     short: [
-      'Zak tot je dijen waterpas zijn, kom met je hielen omhoog.',
+      'Zak tot je dijen waterpas zijn, duw met je hele voet omhoog.',
       'Je knieën volgen je tenen, je borst blijft hoog.',
-      'Heupen schieten omhoog? Duw je knieën naar buiten.',
+      'Heupen schieten omhoog? Breng je borst en heupen samen op.',
     ],
     setup: 'Leg de stang op je bovenrug, niet op je nek, en pak hem stevig vast. Voeten iets breder dan je heupen, tenen licht naar buiten. Zet veiligheidsarmen in het rek. Adem in en span je romp aan.',
     movement: 'Zak door je heupen en knieën tegelijk tot je dijen minstens waterpas zijn. Je knieën volgen je tenen en je borst blijft hoog. Duw met je hele voet vast op de grond omhoog.',
     tempo: 'Twee tellen omlaag, krachtig omhoog. Adem in bovenaan, uit als je de lastigste stand voorbij bent.',
     mistakes: [
       { fault: 'Je knieën vallen naar binnen.', fix: 'Duw ze naar buiten, boven je tenen.' },
-      { fault: 'Je heupen komen eerder omhoog dan je borst.', fix: 'Neem minder gewicht en duw je borst eerst omhoog.' },
+      { fault: 'Je heupen komen eerder omhoog dan je borst.', fix: 'Neem minder gewicht en laat borst en heupen samen stijgen.' },
     ],
     harder: 'pause-back-squat',
   },
