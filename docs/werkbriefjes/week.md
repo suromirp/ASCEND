@@ -29,6 +29,7 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 - `useVerticalDrag` is gedeeld met de doelen op Ascend: een wijziging daar verandert beide.
 - Een mislukte ruil of verplaatsing moet een zichtbare uitkomst geven (review van 2 november); een verouderd voorstel zegt dat het veranderd is.
 - Een notitie bij een vakantie slaat meteen op (`saveLeaveNote`), andere dagen of soort gaan als voorstel met Akkoord.
+- "Weekplanning bijgewerkt" of "Planning bijgewerkt" bij elke opening is bijna altijd een pingpong tussen het weekvoorschrift en de planningsronde, geen echte verandering. Het voorschrift houdt alleen wat de ronde laat staan (`src/storage/weeklyPrescriptionStep.ts#keptByPlanningRound`, 9 november); toets met drie openingen achter elkaar (`src/storage/openingPingpong.test.ts`).
 - Kaarten boven de missie hebben een vaste volgorde in `TODAY_CARD_RANK`; een nieuwe kaart krijgt daar een plek, niet in de pagina.
 
 ## Testen

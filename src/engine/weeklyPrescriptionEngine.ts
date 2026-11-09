@@ -292,7 +292,7 @@ export function computeWeeklyPrescriptionPlan(
   // it can never by itself make a week noFreeDay, so this is the only
   // genuine hard-capacity-exhaustion reason left to report.
   const unplaceableNote = noFreeDayWeekCount > 0
-    ? ` Let op: in ${noFreeDayWeekCount} ${noFreeDayWeekCount === 1 ? 'week' : 'weken'} staat er al op elke dag een training, dus niet alles uit de weekplanning past.`
+    ? ` In ${noFreeDayWeekCount} ${noFreeDayWeekCount === 1 ? 'week' : 'weken'} is elke dag al bezet, dus niet alles past.`
     : '';
 
   const proposal: PlanChangeProposal = {
@@ -301,7 +301,8 @@ export function computeWeeklyPrescriptionPlan(
     issue: items.length > 0 ? 'Weekplan bijgewerkt' : noFreeDayWeekCount > 0 ? ISSUE_NOT_ALL_PLACED : 'Geen aanpassingen nodig',
     changes: items,
     alternatives,
-    consequences: `Wordt toegepast op het forecast-bereik (week +2 en verder), nooit op de huidige of volgende week.${unplaceableNote}`,
+    // De stem van ASCEND (docs/beslissingen/2026-11-09-stem-van-ascend.md): het droge feit eerst, zonder vaktaal.
+    consequences: `Geldt vanaf over twee weken. Deze en volgende week blijven zoals ze zijn.${unplaceableNote}`,
     explanation: 'Gebaseerd op actieve doelen, voortgang, herstel en de MacroFactor-krachtbezetting, MacroFactor blijft de inhoud van elke krachtsessie bepalen; dit bestand raakt kracht nooit inhoudelijk.',
     createdAt: new Date().toISOString(),
   };

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { computeWeeklyPrescriptionPlan, keepsInPlace } from './weeklyPrescriptionEngine';
 import { keyId } from './capability';
+import { addDays } from '../utils/dates';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { CapabilityGap } from '../models/capability';
 import type { ProgressionDecision } from '../models/progression';
@@ -249,6 +250,28 @@ describe('computeWeeklyPrescriptionPlan', () => {
 // Production feedback: "hoe kan het dat in opkomende weken de lange
 // duurloop een kruis krijgt?" With the real default week, the prescription
 // must never take a pattern session out to put another candidate in.
+// De stem van ASCEND: het droge feit eerst, zonder vaktaal als "forecast-bereik" of "week +2".
+describe('computeWeeklyPrescriptionPlan: wat erbij staat', () => {
+  const run = (plannedSessions: PlannedSession[]) => computeWeeklyPrescriptionPlan(
+    [FORECAST_WEEK_1], [goal()], [overview()], new Map([[ASCENT_KEY_ID, decision({ state: 'progress' })]]),
+    plannedSessions, [tplHike, tplRest], availability(), null, [], [], undefined, undefined, ASOF,
+  ).proposal.consequences;
+  // Herstel schuift nooit opzij: een week met elke dag herstel is echt vol.
+  const tplRest: SessionTemplate = { id: 'tpl_rest', name: 'Herstel', type: 'recovery', durationVariants: { full: 30 } };
+
+  it('zegt vanaf wanneer het geldt, in gewone woorden', () => {
+    const text = run([session('anchor1', tplHike.id, '2026-09-16', ANCHOR_WEEK)]);
+    expect(text).toBe('Geldt vanaf over twee weken. Deze en volgende week blijven zoals ze zijn.');
+  });
+
+  it('zegt het droog als een week vol is', () => {
+    const full = Array.from({ length: 7 }, (_, i) => session(`s${i}`, 'tpl_rest', addDays(FORECAST_WEEK_1, i), FORECAST_WEEK_1));
+    const text = run([session('anchor1', tplHike.id, '2026-09-16', ANCHOR_WEEK), ...full]);
+    expect(text).toContain('In 1 week is elke dag al bezet, dus niet alles past.');
+    expect(text).not.toMatch(/forecast|week \+2|\u2013|\u2014/);
+  });
+});
+
 describe('computeWeeklyPrescriptionPlan — the default weekly pattern stays', () => {
   it('never removes the long run (or any pattern session) from a forecast week', async () => {
     const { buildDefaultProgramData } = await import('../data/defaultProgram');

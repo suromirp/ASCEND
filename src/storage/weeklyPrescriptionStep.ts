@@ -36,7 +36,8 @@ import { computeCapacity } from '../engine/capacity';
 import { targetPackWeightKg } from '../engine/demand';
 import { computeActiveGoalOverviews } from '../engine/goalOverview';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
-import { diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession } from '../engine/weeklyPrescriptionDiff';
+import { changesTheRoundKeeps, diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession } from '../engine/weeklyPrescriptionDiff';
+import { previewProgramHorizon } from './databaseHorizon';
 import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { askBeforeApplying } from '../engine/changeImpact';
@@ -52,6 +53,28 @@ export type WeeklyPrescriptionStepOutcome =
   | { kind: 'ask'; wrote: false; proposal: PlanChangeProposal; realChanges: PlanChangeItem[]; planned: PlannedSession[]; templates: SessionTemplate[] }
   // Toegepast en vastgelegd (met een regel in het wijzigingslogboek).
   | { kind: 'applied'; wrote: true; proposal: PlanChangeProposal; realChanges: PlanChangeItem[]; planned: PlannedSession[]; templates: SessionTemplate[]; updatedSessions: PlannedSession[] };
+
+// De wijzigingen van het voorschrift die de planningsronde laat staan. De ronde
+// draait in het geheugen over de planning met de wijzigingen erin (dezelfde
+// ronde als bij elke opening, met de fase-regel en de weekcontrole, zonder
+// iets te schrijven); wat zij omzet, terugzet of weghaalt valt eruit
+// (engine/weeklyPrescriptionDiff.ts#changesTheRoundKeeps). Zonder dit zette het
+// voorschrift bij elke opening een Wandeldag die de ronde meteen weer omzette en
+// weghaalde, met elke keer twee meldingen. Valt er iets weg, dan rekent de
+// ronde nog eens met de rest, tot hoogstens drie keer.
+const ROUND_CHECKS = 3;
+export async function keptByPlanningRound(changes: PlanChangeItem[], planned: PlannedSession[]): Promise<PlanChangeItem[]> {
+  let current = changes;
+  for (let i = 0; i < ROUND_CHECKS; i++) {
+    if (!current.some((c) => c.action === 'add' || c.action === 'move' || c.action === 'swap')) return current;
+    const { sessions } = applyPlanChangeItems(current, planned);
+    const round = await previewProgramHorizon({ sessions, releaseAnchors: false });
+    const kept = changesTheRoundKeeps(current, planned, round.after);
+    if (kept.length === current.length) return current;
+    current = kept;
+  }
+  return current;
+}
 
 export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Promise<WeeklyPrescriptionStepOutcome> {
   const [goals, logs, manualEvidence, planned, tpls, engineConfig, strategies, previousPrescriptions, programs, appSettings, storedTraining] = await Promise.all([
@@ -112,7 +135,9 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
     { prescriptions, newTrainingPrescriptions, changes: allowedChanges },
     { weekly: previousPrescriptions, training: storedTraining },
   );
-  proposal.changes = delta.changes;
+  // Alleen wat de planningsronde daarna laat staan: wat de fase-regel omzet of
+  // de weekcontrole weghaalt, komt er niet in (melding van 9 november).
+  proposal.changes = await keptByPlanningRound(delta.changes, planned);
 
   // Eerst uitrekenen wat de wijzigingen met de planning doen (puur, zonder
   // opslag), zodat de telling hieronder de uitkomst kan vergelijken.

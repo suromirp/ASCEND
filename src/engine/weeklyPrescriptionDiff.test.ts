@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { diffWeeklyPrescriptionPlan, realPlanChanges } from './weeklyPrescriptionDiff';
+import { diffWeeklyPrescriptionPlan, realPlanChanges, changesTheRoundKeeps } from './weeklyPrescriptionDiff';
 import type { PlannedSession } from '../models/training';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
 import type { TrainingPrescription } from '../models/prescription';
@@ -106,5 +106,54 @@ describe('realPlanChanges: wat telt als wijziging van de planning', () => {
     const before = [session('s1')];
     const keep: PlanChangeItem = { plannedSessionId: 's1', action: 'keep', reason: 'r' };
     expect(realPlanChanges([keep, reduce], { initialBuild: false, before, after: before })).toEqual([reduce]);
+  });
+});
+
+// Melding van 9 november: het voorschrift zette een Wandeldag, de planningsronde zette hem om of haalde hem weg, en
+// bij de volgende opening kwam hij weer. Wat de ronde niet laat staan, houdt het voorschrift niet.
+describe('changesTheRoundKeeps', () => {
+  const row = (id: string, templateId: string, scheduledDate: string, over: Partial<PlannedSession> = {}): PlannedSession =>
+    ({ id, templateId, scheduledDate, weekStartDate: '2027-03-01', status: 'planned', order: 0, ...over });
+  const add = (templateId: string, scheduledDate: string): PlanChangeItem =>
+    ({ action: 'add', newSessionDraft: { templateId, scheduledDate, weekStartDate: '2027-03-01' }, reason: 'r' });
+  const before = [row('sat', 'tpl_hill_intervals', '2027-03-06'), row('sun', 'tpl_long_run', '2027-03-07')];
+
+  it('laat een toevoeging vallen die de ronde omzet naar een andere training', () => {
+    const after = [...before, row('new', 'tpl_hill_intervals', '2027-03-06')];
+    expect(changesTheRoundKeeps([add('tpl_hike_day_one', '2027-03-06')], before, after)).toEqual([]);
+  });
+
+  it('laat een toevoeging vallen die de ronde weghaalt of overslaat', () => {
+    expect(changesTheRoundKeeps([add('tpl_hike_day_one', '2027-03-06')], before, before)).toEqual([]);
+    const skipped = [...before, row('new', 'tpl_hike_day_one', '2027-03-06', { status: 'skipped' })];
+    expect(changesTheRoundKeeps([add('tpl_hike_day_one', '2027-03-06')], before, skipped)).toEqual([]);
+  });
+
+  it('houdt een toevoeging die blijft staan, en twee van dezelfde alleen als er twee blijven', () => {
+    const one = add('tpl_recovery_run', '2027-03-04');
+    const after = [...before, row('n1', 'tpl_recovery_run', '2027-03-04')];
+    expect(changesTheRoundKeeps([one], before, after)).toEqual([one]);
+    expect(changesTheRoundKeeps([one, { ...one }], before, after)).toEqual([one]);
+  });
+
+  it('laat een verplaatsing vallen die de ronde terugzet, en houdt een die blijft', () => {
+    const move: PlanChangeItem = { plannedSessionId: 'sun', action: 'move', fromDate: '2027-03-07', toDate: '2027-03-05', reason: 'r' };
+    expect(changesTheRoundKeeps([move], before, before)).toEqual([]);
+    expect(changesTheRoundKeeps([move], before, [before[0], { ...before[1], scheduledDate: '2027-03-05' }])).toEqual([move]);
+  });
+
+  it('laat een ruil helemaal vallen als de ronde een helft terugzet', () => {
+    const a: PlanChangeItem = { plannedSessionId: 'sat', action: 'swap', fromDate: '2027-03-06', toDate: '2027-03-07', pairedWithSessionId: 'sun', reason: 'r' };
+    const b: PlanChangeItem = { plannedSessionId: 'sun', action: 'swap', fromDate: '2027-03-07', toDate: '2027-03-06', pairedWithSessionId: 'sat', reason: 'r' };
+    const halfBack = [{ ...before[0], scheduledDate: '2027-03-07' }, before[1]];
+    expect(changesTheRoundKeeps([a, b], before, halfBack)).toEqual([]);
+    const both = [{ ...before[0], scheduledDate: '2027-03-07' }, { ...before[1], scheduledDate: '2027-03-06' }];
+    expect(changesTheRoundKeeps([a, b], before, both)).toEqual([a, b]);
+  });
+
+  it('raakt een nieuw voorschrift of een weghaling niet aan', () => {
+    const r = replace('sat', 'tp1');
+    const remove: PlanChangeItem = { plannedSessionId: 'sun', action: 'remove', fromDate: '2027-03-07', toDate: '2027-03-07', reason: 'r' };
+    expect(changesTheRoundKeeps([r, remove], before, [before[0]])).toEqual([r, remove]);
   });
 });
