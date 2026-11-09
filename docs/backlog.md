@@ -21,6 +21,8 @@ Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde ui
 
 - 10 november, uit de review van R6 en R7 (Warden), nog open: de oude uitleg 'Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets' staat nog in `TrekGoals.tsx`, `settingsHelp.ts` (rond regel 967, 1074, 1105), `settingsIndex.ts` en `KindAmountPage.tsx` (volgen R9); 'loopjes' en 'hele run' staan nog in `runTrends.ts`, `runInsight.ts`, `runDetailView.ts` (R8); 'Loopsessies' bij de triatlon in `goalKinds.ts` laat 'lang' weg bij `long_run` (controleren in de triatlon-UI); de tak 'Geen trainingen in deze maand' heeft geen eigen test; de bladen Ritme en Benen en de componentteksten van Stand hebben geen test. Valkuil uit de review: haal bij het inkorten van uitleg geen zin weg die verklaart wat een getal of regel op het scherm betekent.
 
+- 9 november, uit de review van Planner rond vakantie 3 (klein, voor het bouwmoment): twee ontbrekende tests in `leavePlanAround.test.ts`: heuvels blijven staan als geen buurweek heuvels heeft; Benen B valt eerder dan een training met een eigen plek. De coördinator ging akkoord met week 2 als do Bovenlichaam A, vr Benen A, za Bovenlichaam B, zo Lange duurloop (twee bovenlichaamdagen na elkaar keurt de weekcontrole af).
+
 ## Rooster voor de bouwmomenten
 
 Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden). Afgerond: naar "Live op" en uit dit rooster.
