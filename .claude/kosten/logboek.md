@@ -246,3 +246,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Bouwmoment weekweghaling valt mee met toevoeging, Sherpa, opus (ontwikkelaar), 159k, 18 min, 0 herstel
 - 2026-11-09, Bouwmoment Week vakantierij en iconen (stond al live, alleen tests), Sherpa, sonnet (ontwikkelaar), 50k, 9 min, 0 herstel; les: lees eerst of een punt al gebouwd is
 - 2026-11-09, Bouwmoment review planning en Health Connect, Warden, opus (reviewer), 89k, 9 min, 0 blokkerend, 3 klein (2 hersteld door coördinator)
+- 2026-11-09, Tekst voor Strava (proef met Fable als bouwer in een eigen sessie), bouwer, fable, tokens niet door de sessie zelf te meten (zie het verbruik van de sessie), ongeveer 1 uur, 1 ronde kleine punten na review zelf hersteld
+- 2026-11-09, Tekst voor Strava review, Warden, sonnet (reviewer), 59k, 2 min, 0 blokkerend, 9 klein (7 hersteld, 2 als keuze in het besluit)
+- 2026-11-09, Tekst voor Strava doorloop 360, 390 en 412 px, Lookout, sonnet (tester), 79k, 21 min, 0, alles groen; maakte zelf een afgeleide stand voor de regel waarom
