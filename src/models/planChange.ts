@@ -37,6 +37,7 @@ export interface PlanChangeItem {
   // its own new toDate (the partner's original date).
   pairedWithSessionId?: string;
   // 'move': the session gets this fixed length at its new date. 'add': the new session's length.
+  // 'keep' with `restore`: the short length it has now; another length makes the item stale.
   plannedMinutes?: number;
   // 'move' only: the session goes back to how it stood by itself (a tocht
   // changed back or removed). It is not fixed in place and its length is not

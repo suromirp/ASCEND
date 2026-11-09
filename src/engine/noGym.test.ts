@@ -303,3 +303,50 @@ describe('na de review', () => {
     expect(hillLine(true)).toMatch(/Goed voor je benen in de bergen\./);
   });
 });
+
+describe('een periode wijzigen na de tweede review', () => {
+  const USER = { by: 'user' as const, at: '2026-10-21T08:00:00.000Z' };
+  const p = noGym(NEXT, addDays(NEXT, 6), { amount: 'normal' });
+  const EASY = `${NEXT}-0`;
+  // Toegevoegd, en daarna verplaatst jij de korter gemaakte loop van maandag naar dinsdag.
+  const setup = () => {
+    const added = accept(input('add', p, [], plan), plan).sessions;
+    return added.map((s) => (s.id === EASY ? { ...s, scheduledDate: addDays(NEXT, 1), status: 'moved' as const, lock: USER } : s));
+  };
+  const change = (next: LeavePeriod) => {
+    const moved = setup();
+    const proposal = input('add', next, [p], moved, {}, [], p);
+    return { proposal, applied: accept(proposal, moved).sessions.find((s) => s.id === EASY)! };
+  };
+
+  it('verlengen: de dag valt nog in de periode, de loop blijft kort en houdt het merk', () => {
+    const { proposal, applied } = change({ ...p, endDate: addDays(NEXT, 9) });
+    expect(applied.plannedMinutes).toBe(20);
+    expect(applied.leave).toMatchObject({ periodId: p.id, shortened: true });
+    expect(applied.lock?.by).toBe('user');
+    expect(proposal.proposal.changes.some((c) => c.plannedSessionId === EASY)).toBe(false);
+  });
+
+  it('verkorten: de dag valt er niet meer in, de loop krijgt zijn lengte terug op jouw dag', () => {
+    const { applied } = change({ ...p, startDate: addDays(NEXT, 3) });
+    expect(applied.plannedMinutes).toBeUndefined();
+    expect(applied.scheduledDate).toBe(addDays(NEXT, 1));
+    expect(applied.leave).toBeUndefined();
+    expect(applied.lock?.by).toBe('user');
+  });
+
+  it('andere soort: een vakantie maakt niets korter, de lengte komt terug', () => {
+    const { applied } = change({ id: p.id, kind: 'no_training', startDate: p.startDate, endDate: p.endDate });
+    expect(applied.plannedMinutes).toBeUndefined();
+    expect(applied.scheduledDate).toBe(addDays(NEXT, 1));
+  });
+
+  it('een lengte terug is verouderd als de loop intussen een andere lengte kreeg', () => {
+    const moved = setup();
+    const removal = input('remove', p, [p], moved);
+    const keep = removal.proposal.changes.find((c) => c.plannedSessionId === EASY)!;
+    expect(keep).toMatchObject({ action: 'keep', restore: true, plannedMinutes: 20 });
+    expect(staleItems(removal.proposal.changes, moved)).toEqual([]);
+    expect(staleItems(removal.proposal.changes, moved.map((s) => (s.id === EASY ? { ...s, plannedMinutes: 30 } : s)))).toEqual([keep]);
+  });
+});

@@ -19,9 +19,9 @@
 import type { LeavePeriod, PlannedLeaveMark } from '../models/leave';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import { addDays, mondayOfWeek } from '../utils/dates';
+import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, describePeriodDates, leaveLabelOn, sortPeriods } from './leave';
+import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, describePeriodDates, leaveDays, leaveLabelOn, sortPeriods } from './leave';
 import { trekLightDaysBefore } from './trekTaper';
 import { planPass, type PlanPassContext } from './planPass';
 import { fixedInLeave, fixedLeaveNote } from './fixedSports';
@@ -32,6 +32,8 @@ import { resolveNoGym } from './noGymDetails';
 
 const SOURCE = ['engine/leaveProposal.ts'];
 const AFTER_DAYS = 14;
+// The days after a tocht in which a heavy leg day may be short (72 hours, engine/weekValidator.ts).
+const TREK_REST_DAYS = 3;
 
 export interface LeavePlanInput {
   mode: 'add' | 'remove';
@@ -78,7 +80,15 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const windowEnd = addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, AFTER_DAYS);
 
   // What the planning looks like without the period's earlier work.
-  const start = mode === 'remove' ? putBack(sessions, period.id, today, logged, byId) : replaces ? putBack(sessions, replaces.id, today, logged, byId) : sessions;
+  // Changing a period: a training you moved yourself that the new period still makes short keeps
+  // its length and passes to the new period (Warden, tweede review punt 1).
+  const newDays = leaveDays([period]);
+  const stillShort = (s: PlannedSession): boolean => {
+    if (period.kind === 'no_gym') return newDays.get(s.scheduledDate)?.kind === 'nogym';
+    if (period.kind === 'trek') { const gap = daysBetween(period.endDate, s.scheduledDate); return gap >= 1 && gap <= TREK_REST_DAYS; }
+    return false;
+  };
+  const start = mode === 'remove' ? putBack(sessions, period.id, today, logged, byId) : replaces ? putBack(sessions, replaces.id, today, logged, byId, { stillShort, periodId: period.id }) : sessions;
   const base = new Map(start.map((s) => [s.id, s]));
   // New sessions get ids of their own here, so they can never be mistaken for a stored one.
   let drafts = 0;
@@ -143,7 +153,8 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     }
     // The same, made short by the period: it keeps your day and lock and gets its own length back.
     if (s.scheduledDate >= today && lengthBack(s, a)) {
-      items.push({ plannedSessionId: s.id, action: 'keep', fromDate: s.scheduledDate, toDate: s.scheduledDate, restore: true, reason: `${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} zette je zelf neer. Die blijft staan, weer op zijn gewone lengte.`, generatedBy: SOURCE, leave: null });
+      // `plannedMinutes`: the short length it has now; anything else makes the item stale (staleItems).
+      items.push({ plannedSessionId: s.id, action: 'keep', fromDate: s.scheduledDate, toDate: s.scheduledDate, restore: true, plannedMinutes: s.plannedMinutes, reason: `${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} zette je zelf neer. Die blijft staan, weer op zijn gewone lengte.`, generatedBy: SOURCE, leave: null });
       continue;
     }
     if (!inWindow(s.scheduledDate)) continue;
@@ -203,7 +214,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     changes: items,
     alternatives: [],
     consequences: explain(mode, period, moving, !!replaces),
-    explanation: 'Een vrije periode verandert je planning nooit ongemerkt. ASCEND laat zien wat er verschuift, vervalt of erbij komt, en past het pas toe na jouw akkoord. Wat je zelf vastzette, een geplande test of wedstrijd en alles wat al geweest is blijven zoals het is.',
+    explanation: 'Een vrije periode verandert je planning nooit ongemerkt. ASCEND laat zien wat er verschuift, vervalt of erbij komt, en past het pas toe na jouw akkoord. Wat je zelf vastzette blijft op zijn dag; een geplande test of wedstrijd en alles wat al geweest is blijven zoals het is.',
     createdAt: new Date().toISOString(),
   };
   const notes = notesFor(result.remaining, inWindow, mode);
@@ -274,7 +285,9 @@ function notesFor(remaining: Finding[], inWindow: (date: string) => boolean, mod
 // Removing a period: what it moved is moved back, what it let go of comes
 // back, what it placed goes. Never what is logged or past, and never what you
 // moved yourself after it.
-function putBack(sessions: PlannedSession[], periodId: string, today: string, logged: Set<string | undefined>, byId: Map<string, SessionTemplate>): PlannedSession[] {
+// `change`: the period is changed, not removed. What you moved yourself and the new period still
+// makes short keeps its length and gets the mark of the new period.
+function putBack(sessions: PlannedSession[], periodId: string, today: string, logged: Set<string | undefined>, byId: Map<string, SessionTemplate>, change?: { stillShort: (s: PlannedSession) => boolean; periodId: string }): PlannedSession[] {
   const out: PlannedSession[] = [];
   for (const s of sessions) {
     const mark = s.leave;
@@ -292,6 +305,10 @@ function putBack(sessions: PlannedSession[], periodId: string, today: string, lo
     // Shortened by the period (a run without a gym, a leg day after a tocht): its own length comes
     // back, also when you moved it since (Warden, blokkade 1).
     const shortBack = mark.role === 'moved' && !!mark.shortened && !!t && s.plannedMinutes !== undefined && s.plannedMinutes === t.durationVariants.short;
+    if (byYou && shortBack && change?.stillShort(s)) {
+      out.push({ ...s, leave: { ...mark, periodId: change.periodId } });
+      continue;
+    }
     if (byYou) {
       const yours: PlannedSession = { ...s };
       delete yours.leave;

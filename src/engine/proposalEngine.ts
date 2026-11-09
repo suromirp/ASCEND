@@ -298,6 +298,8 @@ export function staleItems(items: PlanChangeItem[], sessions: PlannedSession[]):
     if (!item.plannedSessionId || item.action === 'add' || item.action === 'replace' || item.action === 'reduce') return false;
     const s = byId.get(item.plannedSessionId);
     if (!s) return true;
+    // A training of yours that gets its own length back: only while it still has the short one.
+    if (item.action === 'keep' && item.restore && item.plannedMinutes !== undefined && s.plannedMinutes !== item.plannedMinutes) return true;
     return !!item.fromDate && s.scheduledDate !== item.fromDate;
   });
 }
