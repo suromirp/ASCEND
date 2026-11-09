@@ -545,6 +545,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Zelf invullen', text: 'een globaal getal is genoeg.' },
     ],
   },
+  gewichtKaart: {
+    title: 'Gewicht op Je stand',
+    lead: 'Je gewicht staat ook buiten Instellingen: een kaart op Je stand en je wegingen in het Logboek. Het advies is aan.',
+    points: [
+      { head: 'Kaart', text: 'je trend (of je laatste weging) groot, de laatste weging met datum klein en een lijn van de laatste weken. Een tik opent Lichaamsgewicht.' },
+      { head: 'Logboek', text: 'elke weging is een eigen regel tussen je trainingen, met datum, kilo en bron.' },
+      { head: 'Uit', text: 'de kaart en de regels verdwijnen. Je wegingen blijven bewaard en je planning verandert nooit door deze keuze.' },
+    ],
+  },
   gewichtstrend: {
     title: 'Gewichtstrend gebruiken',
     lead: 'Weeg je je vaak, dan zie je bij Lichaamsgewicht een rustig gemiddelde in plaats van alleen de laatste weging. Het advies is aan.',

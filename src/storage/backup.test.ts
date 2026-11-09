@@ -327,6 +327,17 @@ describe('backup envelope round-trip', () => {
     expect(broken.skippedInvalid).toBe(1);
   });
 
+  it('de schakelaar Gewicht op Je stand gaat mee, een kapotte valt weg', async () => {
+    await SettingsRepo.set({ weightCard: false });
+    const envelope = await buildBackupEnvelope();
+    await SettingsRepo.set({ weightCard: true });
+    await importEnvelope(envelope);
+    expect((await SettingsRepo.get()).weightCard).toBe(false);
+    const broken = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { weightCard: 'ja' } } });
+    expect(broken.settings && 'weightCard' in broken.settings).toBe(false);
+    expect(broken.skippedInvalid).toBe(1);
+  });
+
   it('een kapotte schakelaar voor gewicht uit Health Connect valt weg', async () => {
     const envelope = await buildBackupEnvelope();
     const backup = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { weightFromHealthConnect: 'ja' } } });

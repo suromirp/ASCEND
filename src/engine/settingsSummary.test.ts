@@ -374,6 +374,8 @@ describe('rowSummary: lichaam', () => {
 
   it('met een trend staat de trend eerst en de laatste weging eronder', () => {
     expect(rowSummary('lichaamsgewicht', facts({ weight: { kg: 79.1, source: 'health-connect', date: '2026-11-03', trendKg: 78.4 } }))).toEqual({ value: 'Trend 78,4 kg', auto: true, sub: 'Laatste weging 79,1 kg, 3 nov' });
+    expect(rowSummary('gewicht-kaart', facts())).toMatchObject({ checked: true });
+    expect(rowSummary('gewicht-kaart', facts({ settings: { strengthTrackedExternally: false, introSoundEnabled: true, weightCard: false } }))).toMatchObject({ checked: false });
     expect(rowSummary('gewichtstrend', facts())).toMatchObject({ checked: true });
     expect(rowSummary('gewichtstrend', facts({ settings: { strengthTrackedExternally: false, introSoundEnabled: true, weightTrend: false } }))).toMatchObject({ checked: false });
   });

@@ -17,6 +17,7 @@ import { YourWeekStandCard } from '../components/stand/YourWeekStandCard';
 import { useStandYourWeek } from '../components/stand/useStandYourWeek';
 import { TextButton } from '../components/TextButton';
 import { OrderSheet } from '../components/stand/OrderSheet';
+import { WeightStandCard } from '../components/stand/WeightStandCard';
 import { ForgeEntryCard } from '../components/stand/ForgeEntryCard';
 import { StrengthProgressionCard } from '../components/stand/StrengthProgressionCard';
 import { TrainingSplitRow } from '../components/stand/TrainingSplitRow';
@@ -177,6 +178,8 @@ export function StandingPage() {
       {order.map((id) => (
         <Fragment key={id}>{blocks[id]}</Fragment>
       ))}
+
+      <WeightStandCard />
 
       <div className="flex justify-center">
         <TextButton tone="dim" onClick={() => setOrdering(true)}>Volgorde aanpassen</TextButton>

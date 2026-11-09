@@ -62,8 +62,8 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
           fact: noneFree ? 'Op elke dag staat een training.' : `${nameOf(a)} staat op ${dayName(dateOf(a))}, je rustdag.`,
           title: noneFree ? 'Je week heeft geen rustdag' : 'Een training van je rustdag halen',
           why: level2
-            ? `Een rustdag is er om te herstellen. ${idHasRole(byId.get(a)?.templateId ?? '', 'race', input.templates) ? 'Je wedstrijd' : 'Je testloop'} staat op die dag en schuift niet zonder jouw Akkoord, daarom vraagt ASCEND het eerst.`
-            : 'Een rustdag is er om te herstellen. Deze training stond er door een voorstel dat je accepteerde of door jouw eigen keuze, daarom vraagt ASCEND het eerst.',
+            ? `Een rustdag is er om te herstellen. ${idHasRole(byId.get(a)?.templateId ?? '', 'race', input.templates) ? 'Je wedstrijd' : 'Je testloop'} schuift niet zonder jouw Akkoord, dus ASCEND vraagt het eerst.`
+            : 'Een rustdag is er om te herstellen. Je koos dit zelf of accepteerde het in een voorstel, dus ASCEND vraagt het eerst.',
           notes: { [a]: 'op je rustdag' },
         };
       }
@@ -77,8 +77,8 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
           fact: f.message,
           title: 'Een training van je vrije dag halen',
           why: test
-            ? `Een testloop of wedstrijd schuift niet zonder jouw Akkoord, en ASCEND verplaatst hem niet zelf. Je ziet hier alleen dat hij op een vrije dag staat.`
-            : 'Je bent die dag vrij of op tocht. Deze training stond er door een voorstel dat je accepteerde of door jouw eigen keuze, daarom vraagt ASCEND het eerst.',
+            ? `Een testloop of wedstrijd schuift niet zonder jouw Akkoord. Je ziet hier alleen dat hij op een vrije dag staat.`
+            : 'Je bent die dag vrij of op tocht. Je koos dit zelf of accepteerde het in een voorstel, dus ASCEND vraagt het eerst.',
           notes: { [a]: 'op een vrije dag' },
         };
       }
@@ -117,7 +117,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
             headline: 'Twee zware beendagen achter elkaar.',
             fact: `${nameOf(early)} op ${dayName(dateOf(early))} en ${nameOf(late)} op ${dayName(dateOf(late))}, zonder dag ertussen. Liefst ${need === 2 ? 72 : 48} uur ertussen.`,
             title: 'Zware beendagen verder uit elkaar',
-            why: `In je schema horen deze twee bewust bij elkaar, op hun eigen dagen. Op andere dagen houdt ASCEND liefst ${need === 2 ? 72 : 48} uur tussen zware beendagen, zodat je benen kunnen herstellen. Jij zette ze zo neer, daarom verschuift ASCEND niets zonder jouw Akkoord.`,
+            why: `Deze twee horen bewust bij elkaar, op hun eigen dagen. Op andere dagen houdt ASCEND liefst ${need === 2 ? 72 : 48} uur tussen zware beendagen. Jij zette ze zo neer, dus er verschuift niets zonder jouw Akkoord.`,
             notes: { [early]: `${days} voor ${nameOf(late)}`, [late]: `${days} na ${nameOf(early)}` },
           };
         }
@@ -136,7 +136,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
           headline: `Twee harde loopjes op ${dayName(f.date)}.`,
           fact: `${nameOf(a)} en ${nameOf(b)} staan op dezelfde dag.`,
           title: 'Niet twee harde loopjes op een dag',
-          why: 'Twee harde loopjes op een dag zijn te veel voor je benen. Eén per dag laat ze herstellen.',
+          why: 'Twee harde loopjes op een dag zijn veel voor je benen. Eén per dag laat ze herstellen.',
           notes: { [b]: 'tweede harde loop' },
         };
       case 'TEST-DAY': {
@@ -188,7 +188,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
           headline: `Je testloop staat ${rest.hours} uur na een zware dag.`,
           fact: `${heavyName} op ${dayName(rest.date)} en je testloop op ${dayName(dateOf(test))}. Liefst ${rest.limitHours} uur ertussen.`,
           title: 'Meer rust voor je testloop',
-          why: `Een test laat zien wat je kunt als je benen fris zijn. ASCEND houdt liefst ${rest.limitHours} uur tussen een zware loop- of beendag en een test. Bij Rust voor een test kun je ook ${rest.limitHours === 72 ? '48' : '72'} uur kiezen. ${f.subjectId === test ? 'De zware dag is al gedaan, dus alleen je testloop kan schuiven, en dat doet ASCEND niet zonder jouw Akkoord.' : 'Jij of een voorstel zette dit zo neer, daarom verschuift ASCEND niets zonder jouw Akkoord.'}`,
+          why: `Een test laat zien wat je kunt met frisse benen. ASCEND houdt liefst ${rest.limitHours} uur tussen een zware loop- of beendag en een test. Bij Rust voor een test kies je ook ${rest.limitHours === 72 ? '48' : '72'} uur. ${f.subjectId === test ? 'De zware dag is gedaan, dus alleen je testloop kan schuiven, niet zonder jouw Akkoord.' : 'Jij of een voorstel zette dit zo neer, dus er verschuift niets zonder jouw Akkoord.'}`,
           notes: { ...(heavy ? { [heavy]: `${rest.hours} uur voor je testloop` } : {}), [test]: `${rest.hours} uur na ${heavyName}` },
         };
       }
