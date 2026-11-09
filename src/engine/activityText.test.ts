@@ -5,7 +5,7 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import { minutesText, resolveStravaTextParts, spanText, stravaCopyText, stravaGoalName, stravaText } from './activityText';
 import type { GoalMilestone, TrainingGoal } from '../models/goals';
 import type { Program } from '../models/program';
-import { PHASE_BASIS, PHASE_GOLF, PHASE_ONDERHOUD } from './programLayout';
+import { PHASE_BASIS, PHASE_GOLF, PHASE_GOLF_START, PHASE_ONDERHOUD } from './programLayout';
 import { PHASE_TAPER } from '../models/program';
 import { REASON_CHIPS, REASON_LABEL } from '../data/influenceReasons';
 
@@ -91,13 +91,35 @@ describe('stravaText: de titel', () => {
   });
 
   it('noemt nooit afstand, totale tijd of tempo, en nooit een gedachtestreep', () => {
+    // Wat wel een getal mag zijn: de opbouw, de hoogtemeters, de rugzak, de week en de naam van de test.
+    const allowed = /\d+ × (\d+ min \d+ s|\d+ (s|min)|op en af)|laatste \d+ min|[\d.]+ hoogtemeters|rugzak [\d,]+ kg|Week \d+|Testloop 5 km|[Zz]one 2|GR5|Wandeldag 1 van 2/g;
     for (const t of templates) {
-      const result = text(t.id, { durationMinutes: 47, outdoorData: { durationMinutes: 47, distanceKm: 8.3, elevationGainM: 120, source: 'garmin' } });
-      const all = stravaCopyText(result, 'title-line');
-      expect(all).not.toMatch(/[–—]/);
-      expect(all).not.toMatch(/8,3|\bkm\b(?<!Testloop 5 km)|47|\/km|min\/km/);
-      expect(result.title.length).toBeLessThanOrEqual(60);
+      for (const variant of ['full', 'short'] as const) {
+        const result = text(t.id, { variant, durationMinutes: 83, outdoorData: { durationMinutes: 83, distanceKm: 13.7, elevationGainM: 120, source: 'garmin' } });
+        const all = stravaCopyText(result, 'title-line');
+        expect(all).not.toMatch(/[–—]/);
+        expect(all.replace(allowed, ''), all).not.toMatch(/\d/);
+        expect(all).not.toMatch(/\/km/);
+        expect(result.title.length).toBeLessThanOrEqual(60);
+      }
     }
+  });
+
+  it('een ingekorte training noemt geen geplande herhalingen', () => {
+    expect(title('tpl_hill_intervals', { variant: 'short' })).toBe('Heuvelintervallen');
+    expect(title('tpl_hill_intervals', { variant: 'short', workout: { reps: 3, repSeconds: 60 } })).toBe('Heuvelintervallen · 3 × 1 min');
+  });
+
+  it('hoogtemeters vanaf 50 m na afronden, en een schatting nooit', () => {
+    const climb = (m: number, estimated = false) => title('tpl_long_run', { cardioData: { durationMinutes: 75, elevationGainM: m, source: 'garmin', ...(estimated ? { estimatedElevation: true } : {}) } });
+    expect(climb(45)).toBe('Lange duurloop · 50 hoogtemeters');
+    expect(climb(44)).toBe('Lange duurloop · zone 2');
+    expect(climb(300, true)).toBe('Lange duurloop · zone 2');
+    expect(title('tpl_ruck_walk', { outdoorData: { durationMinutes: 90, elevationGainM: 300, estimatedElevation: true, backpackWeightKg: 8, source: 'manual' } })).toBe('Rugzakwandeling · rugzak 8 kg');
+  });
+
+  it('kracht zonder sjabloon heet Kracht', () => {
+    expect(stravaText({ log: log('tpl_upper_a', { templateId: 'weg' }) })).toEqual({ title: 'Kracht' });
   });
 
   // "Wat speelde er" is alleen voor jou (docs/beslissingen/2026-10-25-wat-speelde-er.md):
@@ -112,7 +134,7 @@ describe('stravaText: de titel', () => {
 });
 
 describe('stravaText: de regel waarom', () => {
-  const at = (phaseId: string, _week: number, over: Partial<Program> = {}, wave?: { length: number; light: boolean }): Program => ({
+  const at = (phaseId: string, over: Partial<Program> = {}, wave?: { length: number; light: boolean }): Program => ({
     id: 'p', name: 'P', startDate: program.startDate,
     phases: [{ id: phaseId, name: 'EIGEN FASE', order: 1, weekCount: 12, ...(wave ? { wave } : {}) }],
     ...over,
@@ -124,32 +146,44 @@ describe('stravaText: de regel waarom', () => {
   };
 
   it('de week van de fase en waar je heen werkt', () => {
-    expect(lineIn(at(PHASE_BASIS, 3), 3, 'GR5')).toBe('Week 3 van de basis, richting GR5');
-    expect(lineIn(at(PHASE_BASIS, 3), 3)).toBe('Week 3 van de basis');
+    expect(lineIn(at(PHASE_BASIS), 3, 'GR5')).toBe('Week 3 van de basis, richting GR5');
+    expect(lineIn(at(PHASE_BASIS), 3)).toBe('Week 3 van de basis');
   });
 
   it('de rustweek heet rustweek, tenzij je hem doortraint', () => {
-    const prog = at(PHASE_BASIS, 4);
+    const prog = at(PHASE_BASIS);
     expect(lineIn(prog, 4, 'GR5')).toBe('Rustweek van de basis, richting GR5');
     expect(lineIn({ ...prog, skippedRestWeeks: [addDays(prog.startDate, 21)] }, 4, 'GR5')).toBe('Week 4 van de basis, richting GR5');
   });
 
   it('de laatste weken, een golf zonder doel en onderhoud', () => {
-    expect(lineIn(at(PHASE_TAPER, 2), 2, 'GR5')).toBe('Week 2 naar de start, richting GR5');
-    expect(lineIn(at(PHASE_GOLF, 6), 6)).toBe('Week 2 van de golf');
-    expect(lineIn(at(PHASE_GOLF, 8), 8)).toBe('Rustweek van de golf');
-    expect(lineIn(at(PHASE_ONDERHOUD, 5), 5)).toBe('Onderhoud');
-    expect(lineIn(at('phase_eigen', 2), 2)).toBe('Week 2 van eigen fase');
+    expect(lineIn(at(PHASE_TAPER), 2, 'GR5')).toBe('Week 2 naar de start, richting GR5');
+    expect(lineIn(at(PHASE_GOLF), 6)).toBe('Week 2 van de golf');
+    expect(lineIn(at(PHASE_GOLF), 8)).toBe('Rustweek van de golf');
+    expect(lineIn(at(PHASE_ONDERHOUD), 5)).toBe('Onderhoud');
+    expect(lineIn(at('phase_eigen'), 2)).toBe('Week 2 van eigen fase');
+  });
+
+  it('de beginnersstart kent geen rustweek, en een vaste golf ook niet', () => {
+    expect(lineIn(at(PHASE_GOLF_START), 4)).toBe('Week 4 van rustig beginnen');
+    expect(lineIn(at(PHASE_GOLF, {}, { length: 3, light: true }), 3)).toBe('Rustweek van de golf');
+    expect(lineIn(at(PHASE_GOLF, {}, { length: 3, light: true }), 5)).toBe('Week 2 van de golf');
+    expect(lineIn(at(PHASE_GOLF, {}, { length: 4, light: false }), 4)).toBe('Week 4 van de golf');
+  });
+
+  it('een herhaalde week houdt de week van de kalender', () => {
+    const prog = at(PHASE_BASIS);
+    expect(lineIn({ ...prog, repeatedWeeks: [addDays(prog.startDate, 7)] }, 2, 'GR5')).toBe('Week 2 van de basis, richting GR5');
   });
 
   it('geen regel bij een losse training of een dag buiten het programma', () => {
     expect(stravaText({ log: log('tpl_easy_run'), template: tpl('tpl_easy_run'), program, goalName: 'GR5' }).line).toBeUndefined();
-    expect(lineIn(at(PHASE_BASIS, 1), 14, 'GR5')).toBeUndefined();
+    expect(lineIn(at(PHASE_BASIS), 14, 'GR5')).toBeUndefined();
     expect(stravaText({ log: log('tpl_easy_run'), template: tpl('tpl_easy_run'), planned: planned('tpl_easy_run'), program: null }).line).toBeUndefined();
   });
 
   it('de regel is één regel van hoogstens 60 tekens bij een gewone doelnaam', () => {
-    const line = lineIn(at(PHASE_BASIS, 3), 3, 'Marathon in de zomer')!;
+    const line = lineIn(at(PHASE_BASIS), 3, 'Marathon in de zomer')!;
     expect(line).not.toMatch(/\n|[–—]/);
     expect(line.length).toBeLessThanOrEqual(60);
   });
@@ -162,6 +196,12 @@ describe('stravaGoalName', () => {
   it('neemt het deel voor de schuine streep van je actieve hoofddoel', () => {
     expect(stravaGoalName([goal({})], ladder)).toBe('GR5');
     expect(stravaGoalName([goal({ name: 'Marathon in de zomer' })], ladder)).toBe('Marathon in de zomer');
+  });
+
+  it('witruimte wordt één spatie, en een heel lange naam valt weg', () => {
+    expect(stravaGoalName([goal({ name: 'Mont\nBlanc  rondje' })], ladder)).toBe('Mont Blanc rondje');
+    expect(stravaGoalName([goal({ name: 'Een hele lange naam van een doel die nergens past' })], ladder)).toBeUndefined();
+    expect(stravaGoalName([goal({ name: ' / ' })], ladder)).toBeUndefined();
   });
 
   it('geen naam zonder actief hoofddoel', () => {

@@ -26,6 +26,9 @@ De eigenaar noemde de oude tekst vrijwel nutteloos: hij herhaalde afstand, tijd 
 - Herhalingen uit het plan en de regel waarom staan er alleen bij een training uit je planning. Een losse activiteit heet naar zijn sport en heeft geen regel; dan is er ook maar één knop.
 - De regel telt de week binnen de fase, zoals Vandaag en Stand. In een golf zonder doel telt de week binnen de golf. De rustweek heet rustweek, tenzij je hem doortraint.
 - "richting" noemt je actieve hoofddoel met het deel van de naam voor een schuine streep ("GR5 / ALPENKLAAR" wordt "GR5"). Zonder actief hoofddoel valt dat deel weg.
+- Een herhaalde week houdt de week van de kalender, ook al is de belasting die van de week ervoor. De beginnersstart kent geen rustweek in de regel.
+- Een ingekorte training noemt alleen herhalingen die je zelf invulde, niet die van het plan.
+- Een doelnaam langer dan 32 tekens staat niet in de regel, zodat die op één regel blijft. "Testloop 5 km" is de naam van de training en blijft zo heten.
 - De twee rijen staan samen in een blad achter één rij op de pagina Koppelingen, omdat die pagina op haar plafond van twaalf rijen zit.
 - De knoppen zijn gedempt en niet mint: de kaart en het blad waar ze in staan hebben hun mint accent al.
 - `spanText` schrijft nu "s" in plaats van "sec", zoals de trainingsuitleg ("6 × 20 s").

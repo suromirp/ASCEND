@@ -106,7 +106,7 @@ function titleOf(input: ActivityTextInput): string {
   // Het plan van de week zegt alleen iets als de log bij een geplande training hoort;
   // bij een losse of ingekorte training noemt de tekst geen herhalingen die misschien
   // niet gedaan zijn.
-  const inPlan = planned !== undefined;
+  const inPlan = planned !== undefined && log.variant === 'full';
   const reps = log.workout?.reps ?? (inPlan ? repeat?.repeat : undefined);
   const workSec = log.workout?.repSeconds ?? (inPlan ? stepOf(repeat?.steps, 'work')?.seconds : undefined);
   const climb = climbText(log);
@@ -170,14 +170,18 @@ function lineOf(input: ActivityTextInput): string | undefined {
   const word = PHASE_WORD[phase.id] ?? phase.name.toLowerCase();
   // In een golf telt de week binnen de golf, niet binnen de hele fase.
   const week = phase.id === PHASE_GOLF ? ((position.weekInPhase - 1) % phaseWaveLength(phase)) + 1 : position.weekInPhase;
-  if (isLightWeekOf(phase, position.weekInPhase) && !position.restSkipped) return `Rustweek van ${word}${toward}`;
+  // De beginnersstart is vier makkelijke weken: daar heet geen week rustweek.
+  if (phase.id !== PHASE_GOLF_START && isLightWeekOf(phase, position.weekInPhase) && !position.restSkipped) return `Rustweek van ${word}${toward}`;
   return `Week ${week} van ${word}${toward}`;
 }
 
+const MAX_GOAL_NAME = 32;
+
 // De naam van je hoofddoel zoals hij in de regel staat: "GR5 / ALPENKLAAR" wordt "GR5".
 export function stravaGoalName(goals: readonly TrainingGoal[], milestones: readonly GoalMilestone[]): string | undefined {
-  const name = mainGoal(goals, milestones)?.name.split(' / ')[0].trim();
-  return name || undefined;
+  const name = mainGoal(goals, milestones)?.name.replace(/\s+/g, ' ').split(' / ')[0].trim();
+  // Een heel lange naam maakt de regel te lang: dan staat er geen doel in.
+  return name && name.length <= MAX_GOAL_NAME ? name : undefined;
 }
 
 export function stravaText(input: ActivityTextInput): StravaText {

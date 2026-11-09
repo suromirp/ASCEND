@@ -821,7 +821,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Tekst voor Strava',
     lead: 'ASCEND zet een titel klaar die zegt wat voor training het was. Je plakt hem zelf in Strava.',
     points: [
-      { head: 'Wat', text: 'een titel zoals Heuvelintervallen · 6 × 90 s, en als je wilt één regel waarom. Geen afstand, tijd of tempo: die toont Strava al.' },
+      { head: 'Wat', text: 'een titel zoals Heuvelintervallen · 6 × 90 s, en als je wilt één regel waarom. Geen afstand, totale tijd of tempo: die toont Strava al.' },
       { head: 'Waar', text: 'bij een gedane training in het logboek en in de vraag erna op Vandaag.' },
       { head: 'Zelf plakken', text: 'ASCEND schrijft niet naar Strava. Daar is een server voor nodig.' },
     ],
