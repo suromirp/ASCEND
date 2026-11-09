@@ -173,7 +173,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
     const others = c.logs.flatMap((l) => (l.runDetail ? [l.runDetail] : []));
     const result = c.enough ? compareWithSimilar(rd, others) : undefined;
     const reason = mainReason(c.reasons);
-    return { result, reason: reason ? reasonText(reason, 'lopen') : undefined };
+    return { result, reason: reason ? reasonText(reason, 'runs') : undefined };
   }, [rd, log, sessionLogs, templates, program, settings.heartRate, legs, screen.chestStrap, excluded]);
   const advice = useMemo(
     () => (rd && screen.detail.advice ? runAdvice(rd, kind, { pain: painReports(log).length > 0, feltWorse: log.subjectiveFeel === 'worse', indoor }) : undefined),
@@ -207,14 +207,14 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
     return (
       <div className="mt-3 flex flex-col gap-3">
         <Card texture>
-          <Eyebrow>Hoe de loop liep</Eyebrow>
+          <Eyebrow>Hoe de run liep</Eyebrow>
           <div className="mt-3 grid grid-cols-3 gap-3">
             <Stat label="Tijd" value={`${log.durationMinutes}`} unit="min" />
             {d?.distanceKm !== undefined && <Stat label="Afstand" value={formatNumberNL(d.distanceKm, 2)} unit="km" />}
             {pace !== undefined && <Stat label="Tempo" value={formatPace(pace)} unit="/km" />}
           </div>
           <p className="mt-3 text-sm leading-snug" style={dim}>
-            {fetching ? 'Details ophalen…' : text ?? 'Kilometer na kilometer komt van je horloge.'}
+            {fetching ? 'Details ophalen…' : text ?? 'Voor kilometer na kilometer heb je de gegevens van je horloge nodig.'}
           </p>
           {log.externalId && !fetching && outcome !== 'off' && outcome !== 'no-link' && (
             <div className="mt-1"><TextButton onClick={() => void fetchNow()}>{outcome === 'failed' || outcome === 'timeout' ? 'Opnieuw proberen' : 'Details ophalen'}</TextButton></div>
@@ -250,11 +250,11 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
 
   return (
     <div className="mt-3 flex flex-col gap-3">
-      {stale && <p className="text-sm leading-snug" style={dim}>De loop is gecorrigeerd bij intervals.icu. De kilometers hieronder horen bij de vorige getallen. Ze worden opnieuw gelezen.</p>}
+      {stale && <p className="text-sm leading-snug" style={dim}>De run is gecorrigeerd bij intervals.icu. De kilometers hieronder horen bij de vorige getallen en worden opnieuw gelezen.</p>}
 
       {/* 4.2: binnen twee seconden */}
       <Card texture>
-        <Eyebrow>Hoe de loop liep</Eyebrow>
+        <Eyebrow>Hoe de run liep</Eyebrow>
         {verdict && (
           <>
             <p className="mt-2 font-display text-2xl leading-tight" style={ink}>{verdict.word}</p>
@@ -302,7 +302,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
               <p className="font-sans text-xs tabular-nums" style={dim}>in {clock(layout.cool.sec)}</p>
             </div>
           </div>
-          <p className="mt-3 text-sm leading-snug" style={dim}>Je test telt met alleen het stuk in het midden. Inlopen en uitlopen tellen niet mee.</p>
+          <p className="mt-3 text-sm leading-snug" style={dim}>Je test telt met alleen het stuk in het midden. Het inlopen en uitlopen telden niet mee.</p>
           {testHalvesLine(layout.halves) && <p className="mt-2 font-sans text-sm tabular-nums leading-snug" style={ink}>{testHalvesLine(layout.halves)}</p>}
         </Card>
       )}
@@ -430,7 +430,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
           onClose={() => setInfo(null)}
           points={[
             { head: 'Een staaf', text: 'is een kilometer, of bij een training met blokken een ronde van je horloge. Hoger is sneller.' },
-            { head: 'De basis', text: 'is niet nul maar iets onder je traagste kilometer. Zo zie je de verschillen.' },
+            { head: 'De basis', text: 'is niet nul maar iets onder je traagste kilometer, zodat de verschillen te zien zijn.' },
             { head: 'Uitgerekend', text: 'uit de afstand en de tijd van je horloge, zonder de tijd dat je stilstond.' },
             { head: 'De laatste', text: 'is vaak korter dan een kilometer. Die staaf is smaller en het tempo staat er per kilometer bij.' },
             { head: 'Een amber stip', text: 'staat bij een kilometer die meer dan 5 procent van je gemiddelde af lag. Eén kilometer schommelt door de gps al zo\'n 3 procent.' },

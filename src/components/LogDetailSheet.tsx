@@ -164,11 +164,11 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     try {
       const n = await withTimeout(restoreFromWatch([log.id]), RESTORE_TIMEOUT_MS);
       setConfirmRestore(false);
-      if (n === 0) setRestoreNote('Niets terug te zetten. Je getallen staan al zo.');
+      if (n === 0) setRestoreNote('Er was niets terug te zetten; je getallen staan al zo.');
     } catch (err) {
       setRestoreNote(err instanceof TimeoutError
-        ? 'Terugzetten duurt langer dan verwacht. Kijk zo of je getallen terug staan. Zo niet, probeer het nog eens.'
-        : 'Terugzetten lukte niet. Er is niets veranderd. Probeer het zo nog eens.');
+        ? 'Terugzetten duurt langer dan verwacht. Kijk zo of je getallen terug staan; staan ze er niet, probeer het dan nog eens.'
+        : 'Terugzetten lukte niet. Er is niets veranderd; probeer het zo nog eens.');
     } finally {
       setRestoring(false);
     }
@@ -184,11 +184,11 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     setTrimNote(null);
     try {
       const done = await withTimeout(undoTrimWatchActivity(log.id), UNDO_TRIM_TIMEOUT_MS);
-      if (!done) setTrimNote('Niets terug te zetten. De training is al zoals hij was.');
+      if (!done) setTrimNote('Er was niets terug te zetten; de training is al zoals hij was.');
     } catch (err) {
       setTrimNote(err instanceof TimeoutError
-        ? 'Ongedaan maken duurt langer dan verwacht. Kijk zo of je getallen terug staan. Zo niet, probeer het nog eens.'
-        : 'Ongedaan maken lukte niet. Er is niets veranderd. Probeer het zo nog eens.');
+        ? 'Ongedaan maken duurt langer dan verwacht. Kijk zo of je getallen terug staan; staan ze er niet, probeer het dan nog eens.'
+        : 'Ongedaan maken lukte niet. Er is niets veranderd; probeer het zo nog eens.');
     } finally {
       setUndoingTrim(false);
     }
@@ -204,7 +204,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
       const done = await withTimeout(work(log.id), SOURCE_TIMEOUT_MS);
       if (!done) setSourceNote(nothing);
     } catch (err) {
-      setSourceNote(err instanceof TimeoutError ? 'Dit duurt langer dan verwacht. Kijk zo of de getallen kloppen. Zo niet, probeer het nog eens.' : failed);
+      setSourceNote(err instanceof TimeoutError ? 'Dit duurt langer dan verwacht. Kijk zo of de getallen kloppen; zo niet, probeer het dan nog eens.' : failed);
     } finally {
       setSourceBusy(false);
     }
@@ -274,8 +274,8 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
                 {fetching
                   ? 'Bij intervals.icu, hoogstens 15 seconden.'
                   : manualOutcome
-                    ? ensureOutcomeText(manualOutcome, true) ?? 'Niets nieuws op te halen.'
-                    : 'Kilometer na kilometer van deze loop, bij intervals.icu. Alleen deze loop.'}
+                    ? ensureOutcomeText(manualOutcome, true) ?? 'Er was niets nieuws op te halen.'
+                    : 'Kilometer na kilometer van deze run, bij intervals.icu. Alleen deze run.'}
               </p>
             </div>
           )}
@@ -321,7 +321,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
             </div>
           ) : (
             <div className="mt-3 flex flex-col gap-2">
-              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Een stuk dat niet van jou is, zoals een autorit? Haal het weg.</p>
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zat er een stuk bij dat niet van jou is, zoals een autorit? Haal het weg.</p>
               <div className="flex"><SecondaryButton onClick={() => setTrimming(true)}>Inkorten</SecondaryButton></div>
             </div>
           ))}
@@ -333,7 +333,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               {canRestoreSourceUpdate(log) && (
                 <div className="flex">
                   <TextButton
-                    onClick={() => void changeSourceNumbers(restoreSourceUpdate, 'Niets terug te zetten. De getallen staan al zo.', 'Terugzetten lukte niet. Er is niets veranderd. Probeer het zo nog eens.')}
+                    onClick={() => void changeSourceNumbers(restoreSourceUpdate, 'Er was niets terug te zetten; de getallen staan al zo.', 'Terugzetten lukte niet. Er is niets veranderd; probeer het zo nog eens.')}
                     disabled={sourceBusy}
                   >
                     {sourceBusy ? 'Bezig…' : 'Vorige getallen terugzetten'}
@@ -348,7 +348,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{offerLine}</p>
               <div className="flex">
                 <TextButton
-                  onClick={() => void changeSourceNumbers(takeOverSourceNumbers, 'Niets over te nemen.', 'Overnemen lukte niet. Er is niets veranderd. Probeer het zo nog eens.')}
+                  onClick={() => void changeSourceNumbers(takeOverSourceNumbers, 'Er was niets over te nemen.', 'Overnemen lukte niet. Er is niets veranderd; probeer het zo nog eens.')}
                   disabled={sourceBusy}
                 >
                   {sourceBusy ? 'Bezig…' : 'Cijfers overnemen'}
@@ -363,7 +363,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{keptLine}</p>
               {confirmRestore ? (
                 <>
-                  <p className="text-xs" style={{ color: 'var(--color-ink)' }}>Je eigen getallen terugzetten? De getallen van {sourceNoun(source)} tellen dan niet meer voor deze training.</p>
+                  <p className="text-xs" style={{ color: 'var(--color-ink)' }}>Je eigen getallen terugzetten? De getallen van {sourceNoun(source)} worden dan niet meer gebruikt voor deze training.</p>
                   <div className="flex gap-3">
                     <SecondaryButton onClick={() => setConfirmRestore(false)} disabled={restoring}>Annuleren</SecondaryButton>
                     <SecondaryButton onClick={() => void putBack()} disabled={restoring}>{restoring ? 'Bezig…' : 'Terugzetten'}</SecondaryButton>
@@ -438,7 +438,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               stay forever). Always behind a confirmation. */}
           {confirmDelete ? (
             <div className="mt-6 flex flex-col gap-2">
-              <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>Deze training uit je logboek verwijderen? Dat kan niet terug.</p>
+              <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>Deze training uit je logboek verwijderen?</p>
               <div className="flex gap-3">
                 <SecondaryButton onClick={() => setConfirmDelete(false)}>Annuleren</SecondaryButton>
                 <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-[44px] flex-1 rounded-xl px-3 py-2 text-sm font-medium" style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}>Verwijderen</button>

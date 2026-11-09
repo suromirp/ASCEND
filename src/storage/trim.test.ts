@@ -157,7 +157,7 @@ describe('fetching the series for the sheet', () => {
   it('refuses series that are no use: too short, or without speed or distance', async () => {
     await saveConnection({ athleteId: ATHLETE, apiKey: KEY });
     const heartOnly = vi.fn(async () => new Response(JSON.stringify([{ type: 'time', data: Array.from({ length: 200 }, (_, i) => i) }, { type: 'heartrate', data: Array.from({ length: 200 }, () => 140) }]), { status: 200 }));
-    await expect(fetchTrimStreams(watchLog(), { fetchImpl: asFetch(heartOnly) })).rejects.toThrow(/Inkorten kan niet/);
+    await expect(fetchTrimStreams(watchLog(), { fetchImpl: asFetch(heartOnly) })).rejects.toThrow(/Inkorten kan dan niet/);
     const empty = vi.fn(async () => new Response('[]', { status: 200 }));
     await expect(fetchTrimStreams(watchLog(), { fetchImpl: asFetch(empty) })).rejects.toThrow(TrimUnavailableError);
     const tiny = makeStreams({ minutes: 1.5, pace: 360, hr: 150 });

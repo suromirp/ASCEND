@@ -66,7 +66,7 @@ describe('an easy run: efficiency', () => {
     expect(r.watch!.topic).toBe('efficiency');
     expect(r.watch!.word).toBe('Let op');
     expect(r.watch!.text).toContain('trager');
-    expect(r.watch!.text).toContain('Kijk of je benen moe waren');
+    expect(r.watch!.text).toContain('kijk of je benen moe waren');
     expect(r.better).toBeUndefined();
   });
 
@@ -74,7 +74,7 @@ describe('an easy run: efficiency', () => {
     const r = insight(subjectOf({ ...EASY, pace: 355 }), earlierLogs(EASY));
     expect(r.better).toBeUndefined();
     expect(r.watch).toBeUndefined();
-    expect(r.note).toBe('Gelijk aan je laatste lopen.');
+    expect(r.note).toBe('Gelijk aan je laatste loopjes.');
   });
 
   it('is not moved by noise inside the spread of the measure: no false verdict', () => {
@@ -90,9 +90,9 @@ describe('an easy run: efficiency', () => {
   it('says why it cannot compare when there are too few earlier runs', () => {
     const r = insight(subjectOf(EASY), earlierLogs(EASY, {}, EARLIER_DATES.slice(0, 2)));
     expect(r.better).toBeUndefined();
-    expect(r.note).toBe('Niet te vergelijken met je laatste lopen: er zijn nog te weinig vergelijkbare lopen.');
+    expect(r.note).toBe('Niet te vergelijken met je laatste loopjes: er zijn nog te weinig vergelijkbare loopjes.');
     const none = insight(subjectOf(EASY), []);
-    expect(none.note).toBe('Niet te vergelijken met je laatste lopen: er zijn nog geen vergelijkbare lopen.');
+    expect(none.note).toBe('Niet te vergelijken met je laatste loopjes: er zijn nog geen vergelijkbare loopjes.');
   });
 });
 
@@ -103,14 +103,14 @@ describe('weather', () => {
   it('says how much warmer it was when that took the earlier runs out', () => {
     const hot = { tempC: 23, feelsC: 22, windKmh: 8, source: 'lookup' as const };
     const r = insight(subjectOf(EASY, { conditions: hot }), earlierLogs(EASY));
-    expect(r.note).toBe('Niet te vergelijken met je laatste lopen: het was 11 graden warmer.');
+    expect(r.note).toBe('Niet te vergelijken met je laatste loopjes: het was 11 graden warmer.');
   });
 
   it('gives no Let op when the warmth can explain a slower run, only the sentence about it', () => {
     const warm = { tempC: 18, feelsC: 18, windKmh: 8, source: 'lookup' as const };
     const r = insight(subjectOf(slower, { conditions: warm }), earlierLogs(EASY));
     expect(r.watch).toBeUndefined();
-    expect(r.note).toBe('Het was 7 graden warmer dan bij je laatste lopen. Dat kan het verschil verklaren.');
+    expect(r.note).toBe('Het was 7 graden warmer dan bij je laatste loopjes. Dat kan het verschil verklaren.');
   });
 
   it('keeps a Beter when it was faster in spite of the warmth, and a Let op when slower in the cold', () => {
@@ -123,7 +123,7 @@ describe('weather', () => {
   it('gives no verdict about pace on a windy day', () => {
     const r = insight(subjectOf(slower, { conditions: { ...cool, windKmh: 31 } }), earlierLogs(EASY));
     expect(r.watch).toBeUndefined();
-    expect(r.note).toBe('Niet te vergelijken met je laatste lopen: het woei veel.');
+    expect(r.note).toBe('Niet te vergelijken met je laatste loopjes: het woei veel.');
   });
 });
 

@@ -364,7 +364,7 @@ describe('against similar runs (4.9)', () => {
 
 describe('notes and lines', () => {
   it('says when there is no heart rate or too little', () => {
-    expect(heartNote(buildRunDetail(fastStartTest({ noHr: true }), OPTS)!, undefined)).toBe('Geen hartslag gemeten bij deze loop.');
+    expect(heartNote(buildRunDetail(fastStartTest({ noHr: true }), OPTS)!, undefined)).toBe('Geen hartslag gemeten bij deze run.');
     expect(heartNote(even(6, 330, 150), 62)).toMatch(/62 procent/);
     expect(heartNote(even(6, 330, 150), 98)).toBeUndefined();
   });
@@ -481,7 +481,7 @@ describe('a test with warm-up and cooling down (2026-11-03)', () => {
     // Halves equal, km 3 about 4,5 percent slower than the mean.
     const v = runVerdict(testOf([310, 310, 328, 310, 310]), 'test');
     expect(v.tone).toBe('near-even');
-    expect(v.sentence).toBe('Je helften waren even snel. Alleen km 3 van je test week iets meer af.');
+    expect(v.sentence).toBe('Je helften waren even snel; alleen km 3 van je test week iets meer af.');
     expect(v.sentence).not.toContain('eruit sprong');
   });
 
@@ -524,7 +524,7 @@ describe('standing still before the start and after the end (2026-11-03)', () =>
       expect(last.pauseSec ?? 0).toBeLessThan(1);
       expect(kmChips(last).some((c) => c.startsWith('stilgestaan'))).toBe(false);
       expect(Math.abs((shown.kms[0].pauseSec ?? 0) - 69)).toBeLessThanOrEqual(2);
-      expect(edgePauseLine(edge)).toMatch(/^Na afloop liep je horloge nog 9:\d\d door\. Die tijd telt nergens mee\.$/);
+      expect(edgePauseLine(edge)).toMatch(/^Na afloop liep je horloge nog 9:\d\d door; die tijd telt nergens mee\.$/);
     }
   });
 
@@ -541,7 +541,7 @@ describe('standing still before the start and after the end (2026-11-03)', () =>
     const { rd: shown, edge } = withoutEdgePauses(rd, edgePausesOfStreams(set));
     expect(Math.abs(edge.headSec - 90)).toBeLessThanOrEqual(5);
     expect(shown.pauseSec).toBeLessThanOrEqual(5);
-    expect(edgePauseLine(edge)).toMatch(/^Voor de start stond je horloge al 1:\d\d aan\. Die tijd telt nergens mee\.$/);
+    expect(edgePauseLine(edge)).toMatch(/^Voor de start stond je horloge al 1:\d\d aan; die tijd telt nergens mee\.$/);
   });
 
   it('changes nothing for a run without a tail', () => {
