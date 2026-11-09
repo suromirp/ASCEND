@@ -37,7 +37,7 @@ describe('free days, holidays and treks in the daily planning run', () => {
         return {
           today, logs: [], templates, program, blocks: [], restDay, slotDays: patternDays(templates, settings, restDay),
           minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program), newId: () => `leave-${n++}`,
-          until: addDays(period.endDate, 21), leave: periods,
+          until: addDays(period.endDate, 21), leave: periods, leaveAround: settings.leaveAround ?? 'wide',
         };
       },
     });
