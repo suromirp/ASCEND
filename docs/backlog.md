@@ -35,6 +35,8 @@ Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde ui
 
 - 9 november, doel van de eigenaar: MacroFactor Workouts overbodig maken (de voedingsapp blijft). De criteria en de stand staan in `docs/visie/Los van MacroFactor.md`; de weekbriefing meldt elke maandag hoe het ervoor staat. Niets bouwen tot het moment er is, behalve wat daar als open staat (Health Connect-ronde en melding, hierboven).
 
+- 9 november, wens van de eigenaar: de tekst voor Strava is "vrijwel nutteloos": hij herhaalt wat Strava al laat zien (afstand, tijd, tempo). Wat de eigenaar zelf schrijft is het soort training ("Zone 2", "Heuvelintervallen") en daarna een eigen tekstje. Advies coördinator: de tekst wordt kort en zegt wat voor training het was, zonder getallen die Strava al toont: een titel ("Zone 2 · rustige duurloop", "Heuvelintervallen · 6 × 90 s") en hooguit één regel waarom ("Week 3 van de basis, richting GR5"), met daaronder een lege regel voor je eigen tekst; een knop kopieert alleen de titel, een andere titel en regel. Instelbaar (wat erin staat), ook in settingsIndex, settingsLayout, settingsSummary en de groepspagina; stemgids van 9 november.
+
 ## Rooster voor de bouwmomenten
 
 Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden). Afgerond: naar "Live op" en uit dit rooster.
