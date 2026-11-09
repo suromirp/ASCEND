@@ -5,7 +5,7 @@
 import { canRemoveRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { canSwap, isAddedSlot } from '../../engine/addedExercises';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
-import { exerciseOf, swapOptions, type WorkoutExercise } from '../../engine/forgeWorkout';
+import { exerciseOf, swapGroups, type WorkoutExercise } from '../../engine/forgeWorkout';
 import { hasStack } from '../../engine/machineWeights';
 import { standCount } from '../../engine/toestelStanden';
 import { swapPreference, swapReason } from '../../engine/mountainMuscles';
@@ -190,10 +190,9 @@ export function SwapSheet({ ex, workout, strength, program, onPick, onClose }: {
       {(close) => {
         // Bij een bergdoel staat bij gelijke keuze een oefening voorop voor een spier die weinig kreeg (engine/mountainMuscles.ts).
         const prefer = swapPreference({ on: strength.mountainMuscles, goals: trainingGoals, milestones: goalMilestones, logs: sessionLogs, today: todayISO(), program });
-        const options = swapOptions(exerciseOf(ex), strength.profile, workout.map((e) => e.exerciseId), 8, prefer);
-        if (options.length > 0) return <SwapList options={options} reasonOf={(e) => swapReason(e, prefer)} onPick={(id) => { onPick(id); close(); }} />;
-        if (options.length === 0) return <p className="py-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze oefening niet goed genoeg om iets met dezelfde spieren voor te stellen.</p>;
-        return null;
+        const groups = swapGroups(exerciseOf(ex), strength.profile, workout.map((e) => e.exerciseId), 8, prefer);
+        if (groups.same.length + groups.other.length > 0) return <SwapList groups={groups} reasonOf={(e) => swapReason(e, prefer)} onPick={(id) => { onPick(id); close(); }} />;
+        return <p className="py-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze oefening niet goed genoeg om iets met dezelfde spieren voor te stellen.</p>;
       }}
     </ForgeSheet>
   );

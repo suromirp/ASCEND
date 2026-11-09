@@ -2,7 +2,7 @@
 
 import { Fragment, memo, useMemo } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
-import { QUICK_RIR, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
+import { QUICK_RIR, QUICK_RIR_HINT, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
 import { barNote } from '../../engine/barCheck';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
@@ -386,20 +386,24 @@ function rowLabel(ex: WorkoutExercise, rowId: string): string {
 // blijft het doel staan als aangenomen RIR (docs/beslissingen/2026-11-03-forge-na-de-eerste-vergelijking.md).
 function QuickRir({ label, onPick }: { label: string; onPick: (n: number) => void }) {
   return (
-    <div className="animate-fade-in flex items-center gap-1.5 pb-1 pl-1" role="group" aria-label={`Hoeveel had je over bij set ${label}?`}>
-      <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel over?</span>
-      {QUICK_RIR.map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onPick(n)}
-          aria-label={`${quickRirLabel(n)} over, set ${label}`}
-          className="flex h-11 w-11 items-center justify-center rounded-full border font-sans text-sm font-semibold tabular-nums"
-          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
-        >
-          {quickRirLabel(n)}
-        </button>
-      ))}
+    <div className="animate-fade-in flex flex-col gap-1 pb-1 pl-1" role="group" aria-label={`Hoeveel had je over bij set ${label}?`}>
+      <div className="flex items-center gap-1.5">
+        <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel over?</span>
+        {QUICK_RIR.map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onPick(n)}
+            aria-label={`${quickRirLabel(n)} over, set ${label}`}
+            className="flex h-11 w-11 items-center justify-center rounded-full border font-sans text-sm font-semibold tabular-nums"
+            style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+          >
+            {quickRirLabel(n)}
+          </button>
+        ))}
+      </div>
+      {/* Uit het verslag RIR en RPE (hoofdstuk 5): mensen houden meestal iets meer over dan ze denken. */}
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{QUICK_RIR_HINT}</p>
     </div>
   );
 }

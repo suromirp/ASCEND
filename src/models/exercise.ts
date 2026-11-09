@@ -130,6 +130,11 @@ export interface Exercise {
   // (engine/spotter.ts, docs/beslissingen/2026-10-28-zonder-spotter.md). Toestellen, kabels en
   // dumbbells hebben het niet.
   failureRisk?: boolean;
+  // De beweging (data/exerciseFamilies.ts): oefeningen in dezelfde familie zijn echte vervangers van
+  // elkaar bij het ruilen. Ontbreekt hij, dan valt het ruilen terug op de spieren alleen.
+  family?: string;
+  // Kenmerken die de beweging binnen de familie iets anders maken (een pauze, een brede greep).
+  nuance?: string[];
   // Three to five short points: what you do, what to watch, the most made mistake.
   cues: string[];
   videoUrl?: string;

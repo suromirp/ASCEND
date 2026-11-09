@@ -122,7 +122,7 @@ describe('regel 5: de stap zwaarder op bevestigde sets', () => {
   it('alle werksets aan de bovenkant: de kleinste stap zwaarder, met alleen de herhalingen in de regel', () => {
     const sessions: SessionInput[] = [
       { date: '2026-09-01', sets: [measured(9, 60), measured(9, 60), measured(9, 60)] },
-      { date: '2026-09-08', sets: [assumed(11, 60, { reps: 10, kg: 60 }), assumed(11, 60, { reps: 10, kg: 60 }), assumed(11, 60, { reps: 9, kg: 60 })] },
+      { date: '2026-09-08', sets: [assumed(11, 60, { reps: 10, kg: 60 }), assumed(11, 60, { reps: 10, kg: 60 }), assumed(11, 60, { reps: 10, kg: 60 })] },
     ];
     const p = prescribe(input(sessions))!;
     expect(p.raised).toEqual({ fromKg: 60, stepKg: 2.5, reps: 11 });
@@ -154,10 +154,14 @@ describe('regel 5: de stap zwaarder op bevestigde sets', () => {
   });
   it('oude logs zonder gevraagd aantal tellen bij het lezen ook, met de onderkant van het bereik', () => {
     const sessions: SessionInput[] = [
-      { date: '2026-09-01', sets: [assumed(9, 60), assumed(9, 60), assumed(9, 60)] },
+      { date: '2026-09-01', sets: [assumed(10, 60), assumed(10, 60), assumed(10, 60)] },
       { date: '2026-09-08', sets: [assumed(11, 60), assumed(11, 60), assumed(11, 60)] },
     ];
-    expect(prescribe(input(sessions))!.raised?.stepKg).toBe(2.5);
+    // Bereik 10 tot 11: 11 is 1 boven de onderkant, dat telt met 2 over (regel 4), dus een stap.
+    expect(prescribe({ ...input(sessions), plan: { low: 10, high: 11, rir: 2 } })!.raised?.stepKg).toBe(2.5);
+    // Bereik 9 tot 11: 11 is 2 boven de onderkant, dat telt met 1 over, en regel 5 leest hetzelfde: geen stap.
+    expect(prescribe(input(sessions))!.raised).toBeUndefined();
+    // Het log zelf verandert niet.
     expect(sessions[1].sets[0]).toEqual({ reps: 11, weightKg: 60, rir: 2, rirAssumed: true });
   });
   it('vermoeidheid leren blijft zonder bevestigde sets (regel 6)', () => {

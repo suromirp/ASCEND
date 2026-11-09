@@ -151,7 +151,7 @@ function reckonBackOffs(ex: WorkoutExercise, row: WorkoutRow, ctx: ReckonContext
     const reps = clampReps(Math.min(high, expectedReps(strength, load, rir)));
     const weightKg = Math.min(MAX_ROW_KG, r2(pick.externalKg));
     if (weightKg === r.weightKg && reps === r.reps) continue;
-    rows[k] = { ...r, weightKg, reps, forgeReps: reps };
+    rows[k] = { ...r, weightKg, reps, forgeReps: reps, forgeKg: weightKg };
     changed = true;
   }
   return changed ? { ...ex, rows } : ex;
@@ -254,7 +254,7 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   // Zwaarder is meer belasting, niet een groter getal: bij een toestel met hulp is minder hulp zwaarder.
   const up = load > now + 1e-9 || (Math.abs(load - now) < 1e-9 && fixed > (next.reps ?? 0));
   if ((side > 0 && !up) || (side < 0 && up)) return ex;
-  return { ...ex, rows: ex.rows.map((r) => (r.id === next.id ? { ...r, weightKg, reps: fixed, forgeReps: fixed } : r)) };
+  return { ...ex, rows: ex.rows.map((r) => (r.id === next.id ? { ...r, weightKg, reps: fixed, forgeReps: fixed, forgeKg: weightKg } : r)) };
 }
 
 // Een open set die je niet aanraakte en waar nog het voorschrift met de stap staat (niet bijgesteld na een set).
@@ -285,7 +285,10 @@ export function undoRaise(ex: WorkoutExercise, snap: (kg: number) => number = r2
     const b = back.get(r.id);
     if (r.kind === 'work') {
       if (!b || !stillRaised(r)) return r;
-      return { ...r, ...(b.weightKg !== undefined ? { weightKg: b.weightKg } : {}), reps: b.reps, forgeReps: b.reps, target: { ...r.target, ...(b.weightKg !== undefined ? { weightKg: b.weightKg } : {}) } };
+      // Het voorschrift zelf gaat terug, dus er is geen bijstelling meer (`forgeKg` weg).
+      const { forgeKg: _was, ...plain } = r;
+      void _was;
+      return { ...plain, ...(b.weightKg !== undefined ? { weightKg: b.weightKg } : {}), reps: b.reps, forgeReps: b.reps, target: { ...r.target, ...(b.weightKg !== undefined ? { weightKg: b.weightKg } : {}) } };
     }
     if (!firstOpen || firstBack?.weightKg === undefined || r.done || r.edited || r.share === undefined) return r;
     const w = snap(r2(r.share * firstBack.weightKg));
@@ -299,6 +302,8 @@ export function undoRaise(ex: WorkoutExercise, snap: (kg: number) => number = r2
 // "Hoeveel over?" na het afvinken: de keuzes, 3 is "3+".
 export const QUICK_RIR = [0, 1, 2, 3] as const;
 export const quickRirLabel = (n: number): string => (n >= 3 ? '3+' : String(n));
+// De uitlegzin onder de bolletjes (verslag RIR en RPE, hoofdstuk 5): een schatting is genoeg.
+export const QUICK_RIR_HINT = 'Een schatting is genoeg. Twijfel je tussen twee, kies het lagere: dan rekent Forge voorzichtig.';
 
 // Vraagt Forge na het afvinken van deze set hoeveel je over had? Alleen bij een afgevinkte werkset waarvan
 // je de RIR niet zelf invulde, en alleen bij de sets die het meest zeggen: de eerste werkset (de topset), een

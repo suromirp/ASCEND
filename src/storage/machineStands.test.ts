@@ -5,7 +5,7 @@ import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { buildImportPreview } from './backupPreview';
 import { applyImportPlan, createImportPlan, createPreImportSnapshot } from './backupApply';
 import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
-import { clearStandsNow, forgetStandNow, rememberStand, saveStandsNow, seedStandsNow, type StandIo } from './machineStands';
+import { clearStandsNow, forgetStandNow, rememberStand, restoreStandsNow, saveStandsNow, seedStandsNow, type StandIo } from './machineStands';
 import { exerciseById } from '../data/exercises';
 import { DEFAULT_PROFILE, resolveStrengthSettings, type GymProfile, type StrengthSettings } from '../engine/strengthSettings';
 import { ownWeightsFor } from '../engine/machineWeights';
@@ -148,6 +148,19 @@ describe('het blad: opslaan en wissen', () => {
     expect((await clearStandsNow({ exercise: machine })).kind).toBe('saved');
     expect(await standsNow()).toEqual({ kg: [] });
     expect(await seedStandsNow({ exercise: machine, remember: true, usedKg: [7, 77] })).toEqual({ kind: 'none', reason: 'known' });
+  });
+
+  it('Standen wissen en dan Terugdraaien zet de standen terug; een mislukte poging laat alles zoals het was', async () => {
+    await saveStandsNow({ exercise: machine, kg: [7, 14], only: true });
+    const out = await clearStandsNow({ exercise: machine });
+    if (out.kind !== 'saved') throw new Error('wissen lukte niet');
+    expect(await standsNow()).toEqual({ kg: [] });
+    const wiped = await stored();
+    const failing: StandIo = { read: stored, write: () => Promise.reject(new Error('schijf vol')) };
+    expect(await restoreStandsNow({ before: out.before }, failing)).toEqual({ kind: 'failed' });
+    expect(await stored()).toEqual(wiped);
+    expect((await restoreStandsNow({ before: out.before })).kind).toBe('saved');
+    expect(await standsNow()).toEqual({ kg: [7, 14], only: true });
   });
 
   it('meer dan 40 standen wordt niet opgeslagen', async () => {
