@@ -73,7 +73,10 @@ fris en sportief op donker marine.
   van de omringende tekst. Sporten, rust en lichaam zijn kleine illustraties in
   stijl C in `src/components/pictograms.tsx` (`Pictogram`): drie tinten van de
   sportkleur, waarvan de volle vorm het silhouet draagt, met kleur uit de tokens
-  (`docs/beslissingen/2026-10-24-pictogrammen-in-stijl-c.md`). Geen losse tekens
+  (`docs/beslissingen/2026-10-24-pictogrammen-in-stijl-c.md`). Kracht zonder gewicht
+  (Eigen gewicht, calisthenics) heeft `eigengewicht` in plaats van de halter; de keuze staat op één plek,
+  `isBodyweightTemplate` en `isBodyweightLog` in `engine/sportKind.ts`
+  (`docs/beslissingen/2026-11-09-icoon-zonder-gewicht.md`). Geen losse tekens
   als ✓ of ↷ voor iets wat een icoon kan zijn.
 - Logo "Ring en pad" (`docs/beslissingen/2026-10-25-logo-ring-en-pad.md`): app-icoon in `public/`, `AppMark`, `AscendSplashLogo`, `AscendAnimatedLogo`, alleen de tokens `--color-logo-*`. Details in `docs/architectuur/bediening-en-beweging.md`.
 - Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in `src/App.tsx`), dekkend marine, labels in zinsletters, actieve tab in de tabkleur. Meer is het tandwiel rechtsboven (`SettingsGear`, 44 bij 44 px, op elke tab op dezelfde plek, opent `/more`); wat een pagina zelf rechtsboven nodig heeft gaat in `SkyBand` `actions`. Details in `docs/architectuur/bediening-en-beweging.md`.

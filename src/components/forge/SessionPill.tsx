@@ -3,9 +3,11 @@ import { activeMinutes, activeSeconds, formatSessionClock, isPaused } from '../.
 import { requestOpenSession, type SessionState } from '../../utils/forgeSessionStore';
 import { Icon } from '../icons';
 import { Pictogram } from '../pictograms';
+import { useAppData } from '../../state/AppDataContext';
+import { sportPictogram } from '../sportKind';
 
 // De pil boven de tabbalk (docs/beslissingen/2026-10-29-forge-als-sessie.md): zolang er een training loopt en
-// het volle scherm van Forge niet open is. Links het pictogram kracht en de naam, rechts de klok. Tik opent Forge
+// het volle scherm van Forge niet open is. Links het pictogram van de training (kracht, of eigen gewicht) en de naam, rechts de klok. Tik opent Forge
 // op de sessie. De klok loopt elke seconde, bij pauze staat hij stil en is hij gedempt.
 const nowMs = () => Date.now();
 
@@ -22,6 +24,8 @@ function useSecond(running: boolean): number {
 }
 
 export function SessionPill({ session }: { session: SessionState }) {
+  const { templates } = useAppData();
+  const template = templates.find((t) => t.id === session.pointer.templateId);
   const clock = { startedAt: session.startedAt, pauses: session.pauses };
   const paused = isPaused(clock);
   const now = useSecond(!paused);
@@ -41,7 +45,7 @@ export function SessionPill({ session }: { session: SessionState }) {
         style={{ background: 'var(--color-raised)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
         data-testid="session-pill"
       >
-        <span style={{ color: 'var(--color-sport-strength)' }}><Pictogram name="kracht" size={22} /></span>
+        <span style={{ color: 'var(--color-sport-strength)' }}><Pictogram name={template ? sportPictogram(template) : 'kracht'} size={22} /></span>
         <span className="min-w-0 flex-1 truncate font-display text-base leading-tight">{session.pointer.name}</span>
         {paused ? (
           <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="pauze" size={16} /></span>

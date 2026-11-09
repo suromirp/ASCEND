@@ -14,14 +14,14 @@ describe('leaveWeek', () => {
   it('geeft één band per periode, boven de eerste dag, met alle dagen eronder', () => {
     const w = leaveWeek(WEEK1, [noGym('2026-11-04', '2026-11-07', { note: 'Bij de familie' })]);
     expect(w.bands).toHaveLength(1);
-    expect(w.bands[0]).toMatchObject({ title: 'Zonder sportschool', range: 'wo 4 t/m za 7', line: 'Lopen, eigen gewicht, rustig heuvels op', note: 'Bij de familie' });
+    expect(w.bands[0]).toMatchObject({ title: 'Zonder sportschool', range: 'Wo 4 t/m za 7', line: 'Lopen, eigen gewicht, rustig heuvels op', note: 'Bij de familie' });
     expect(w.bands[0].extent).toBeUndefined();
     expect([...w.bandAbove.keys()]).toEqual(['2026-11-04']);
     expect([...w.inBand]).toEqual(['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07']);
   });
   it('een dag zonder training hoort bij de band (inBand), een dag buiten de periode niet', () => {
     const w = leaveWeek(WEEK1, [holiday('2026-11-05', '2026-11-05')]);
-    expect(w.bands[0]).toMatchObject({ title: 'Vakantie', range: 'do 5', line: 'Geen training' });
+    expect(w.bands[0]).toMatchObject({ title: 'Vakantie', range: 'Do 5', line: 'Geen training' });
     expect(w.inBand.has('2026-11-04')).toBe(false);
     expect(w.inBand.has('2026-11-05')).toBe(true);
   });
@@ -30,9 +30,9 @@ describe('leaveWeek', () => {
     const a = leaveWeek(WEEK1, [p]);
     const b = leaveWeek(WEEK2, [p]);
     expect(a.bands).toHaveLength(1);
-    expect(a.bands[0]).toMatchObject({ range: 'za 7 t/m zo 8', extent: 'loopt door tot wo 11 nov' });
+    expect(a.bands[0]).toMatchObject({ range: 'Za 7 t/m zo 8', extent: 'loopt door tot wo 11 nov' });
     expect(b.bands).toHaveLength(1);
-    expect(b.bands[0]).toMatchObject({ range: 'ma 9 t/m wo 11', extent: 'sinds za 7 nov' });
+    expect(b.bands[0]).toMatchObject({ range: 'Ma 9 t/m wo 11', extent: 'sinds za 7 nov' });
     expect(b.bandAbove.get('2026-11-09')).toBe(b.bands[0]);
   });
   it('een periode dwars door een week heeft sinds én loopt door', () => {
@@ -48,13 +48,13 @@ describe('leaveWeek', () => {
     expect(w.quietWord.get('2026-11-10')).toBe('tochtdag');
     expect(leaveWeek(WEEK1, [holiday('2026-11-05', '2026-11-05')]).quietWord.get('2026-11-05')).toBe('vakantie');
     expect(leaveWeek(WEEK1, [noGym('2026-11-05', '2026-11-05')]).quietWord.get('2026-11-05')).toBe('vrij');
-    expect(w.bands[0]).toMatchObject({ title: 'Weekend Ardennen', line: 'Wandelen met je rugzak', range: 'di 10 t/m do 12' });
+    expect(w.bands[0]).toMatchObject({ title: 'Weekend Ardennen', line: 'Wandelen met je rugzak', range: 'Di 10 t/m do 12' });
   });
   it('twee periodes naast elkaar krijgen elk een band; bij overlap telt de strengste en valt de andere in stukken', () => {
     const two = leaveWeek(WEEK1, [noGym('2026-11-02', '2026-11-03'), holiday('2026-11-05', '2026-11-06')]);
     expect(two.bands.map((b) => b.title)).toEqual(['Zonder sportschool', 'Vakantie']);
     const over = leaveWeek(WEEK1, [noGym('2026-11-02', '2026-11-08'), holiday('2026-11-04', '2026-11-05')]);
-    expect(over.bands.map((b) => `${b.title} ${b.range}`)).toEqual(['Zonder sportschool ma 2 t/m di 3', 'Vakantie wo 4 t/m do 5', 'Zonder sportschool vr 6 t/m zo 8']);
+    expect(over.bands.map((b) => `${b.title} ${b.range}`)).toEqual(['Zonder sportschool Ma 2 t/m di 3', 'Vakantie Wo 4 t/m do 5', 'Zonder sportschool Vr 6 t/m zo 8']);
     expect(over.bands[2].extent).toBe('sinds ma 2 nov');
   });
   it('de regels per soort', () => {
@@ -62,6 +62,6 @@ describe('leaveWeek', () => {
     expect(noGymLine({ noGym: { amount: 'normal', strength: 'drop', hills: false } })).toBe('Alleen lopen');
     expect(noGymLine({ noGym: { amount: 'normal', strength: 'drop', hills: true } })).toBe('Lopen, rustig heuvels op');
     expect(noGymLine({ noGym: { amount: 'normal', strength: 'bodyweight', hills: false } })).toBe('Lopen, eigen gewicht');
-    expect(describeBandRange(['2026-11-02'])).toBe('ma 2');
+    expect(describeBandRange(['2026-11-02'])).toBe('Ma 2');
   });
 });

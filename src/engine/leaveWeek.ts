@@ -34,7 +34,7 @@ export interface WeekLeaveBand {
   // De dagen van deze week waarop deze periode telt, aaneengesloten, op volgorde.
   dates: string[];
   title: string;
-  // "za 14 t/m wo 18", of "za 14" bij één dag.
+  // "Za 14 t/m wo 18", of "Za 14" bij één dag.
   range: string;
   // "sinds za 7 nov" en/of "loopt door tot ma 24 nov" als de periode buiten deze week doorloopt.
   extent?: string;
@@ -42,10 +42,14 @@ export interface WeekLeaveBand {
   note?: string;
 }
 
-const dayShort = (date: string) => `${weekdayShortNL(date).toLowerCase()} ${Number(date.slice(8, 10))}`;
+// Met hoofdletter aan het begin, zoals de rijen ("Ma 9"); de tweede dag na "t/m" blijft klein.
+const dayShort = (date: string, capital = false) => {
+  const w = weekdayShortNL(date).toLowerCase();
+  return `${capital ? w.charAt(0).toUpperCase() + w.slice(1) : w} ${Number(date.slice(8, 10))}`;
+};
 
 export function describeBandRange(dates: string[]): string {
-  return dates.length === 1 ? dayShort(dates[0]) : `${dayShort(dates[0])} t/m ${dayShort(dates[dates.length - 1])}`;
+  return dates.length === 1 ? dayShort(dates[0], true) : `${dayShort(dates[0], true)} t/m ${dayShort(dates[dates.length - 1])}`;
 }
 
 function bandOf(period: LeavePeriod, dates: string[]): WeekLeaveBand {
