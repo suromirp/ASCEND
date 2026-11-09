@@ -35,6 +35,11 @@ Wens van de eigenaar (9 november): de datapagina's zien zoals ze op zijn horloge
 - De tekstkaart "Dataschermen per activiteit" bij Je horloge instellen is vervangen door de rij naar de pagina. Die kaart noemde RPE als dataveld; dat bestaat niet.
 - Voor een test, een wedstrijd, kracht en fietsen is er geen advies. De pagina zegt dat en biedt de vijf soorten aan.
 - Een eigen training krijgt haar soort uit haar rollen (`watchKindOf`).
+- `GARMIN_DATA_SCREENS` blijft in `src/data/garminGuide.ts` staan, omdat de bronnenpagina er haar bronnen uit leest; alleen "RPE" is uit het rijtje velden gehaald en de kaart wordt niet meer getoond.
+- "Terug naar advies voor dit veld" uit het ontwerp is niet gebouwd: Terug naar advies voor de hele versie is de ene tik uit de opdracht.
+- Een versie die gelijk is aan het advies zegt dat: "Je versie is gelijk aan het advies."
+- Het horloge in de tekening is nooit smaller dan 256 px, zodat de kleinste tekst 12 px blijft.
+- De pagina staat in de tekstkaart als scherm `datavelden`.
 
 ## Alternatieven
 
@@ -48,7 +53,7 @@ Niet bevestigd: de ligging per indeling, of 6 velden en 8 indelingen kloppen, we
 
 ## Vervangt
 
-Niets. De kaart `GARMIN_DATA_SCREENS` in `src/data/garminGuide.ts` vervalt.
+Niets. De kaart `GARMIN_DATA_SCREENS` wordt bij Je horloge instellen niet meer getoond.
 
 ## Terugdraaien
 
