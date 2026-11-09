@@ -238,7 +238,7 @@ export function stepAvailability(listed: readonly ListedGoal[], id: string, dir:
   if (moveGoal(listed, id, dir).changed) return { can: true };
   if (dir === 'up' && from === 0) return { can: false, reason: 'Dit doel staat al bovenaan.' };
   if (dir === 'down' && from === listed.length - 1) return { can: false, reason: 'Dit doel staat al onderaan.' };
-  if (listed[from].isMain && dir === 'down') return { can: false, reason: 'Je hoofddoel blijft bij de Top-doelen, dus lager kan niet.' };
+  if (listed[from].isMain && dir === 'down') return { can: false, reason: 'Lager kan niet: je hoofddoel blijft bij de Top-doelen.' };
   return { can: false, reason: 'Hier kan dit doel niet naartoe.' };
 }
 

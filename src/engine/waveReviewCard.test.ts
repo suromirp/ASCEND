@@ -30,7 +30,7 @@ describe('waveReviewCard', () => {
     const card = waveReviewCard(base({ logs: weeks([60, 60, 60, 40]) }))!;
     expect(card.title).toBe('Een rustige golf');
     expect(card.againMinutes).toBeUndefined();
-    expect(card.againLine).toBe('Dezelfde golf nog eens is geen falen.');
+    expect(card.againLine).toBe('Nog een golf op hetzelfde niveau.');
     expect(card.easierMinutes).toBe(90);
   });
 

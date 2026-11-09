@@ -90,7 +90,7 @@ export function waveReviewCard(input: WaveReviewInput): WaveReviewCard | undefin
     ? 'Nog een golf begint bij wat je de laatste vier weken deed.'
     : againMinutes
       ? `Nog een golf op ${againMinutes} minuten per week.`
-      : 'Dezelfde golf nog eens is geen falen.';
+      : 'Nog een golf op hetzelfde niveau.';
   return {
     waveStart: reviewed,
     directionId: id,

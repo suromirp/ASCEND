@@ -140,7 +140,7 @@ export function GoalFormSheet({
     <Sheet
       eyebrow={editing ? 'Doel aanpassen' : 'Doel toevoegen · stap 2 van 3'}
       title={tile.label}
-      line={editing ? 'Eerst een voorstel, pas daarna verandert er iets.' : `${count === 0 ? 'Een paar keuzes' : count === 1 ? 'Eén vraag' : `${count} vragen`}, en alles kun je later nog aanpassen.`}
+      line={editing ? 'Eerst een voorstel, pas na Akkoord verandert er iets.' : `${count === 0 ? 'Een paar keuzes' : count === 1 ? 'Eén vraag' : `${count} vragen`}. Alles kun je later aanpassen.`}
       onClose={onClose}
     >
       {(close) => (
