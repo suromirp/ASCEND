@@ -215,3 +215,4 @@ Les R2: zeg bij een cache met 'geen antwoord' in de opdracht dat een fout nooit 
 Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande familie de ruillijsten van alle leden raakt (test op swapGroups per bestaand lid), en dat een wissel in een blad de scroll en focus terugzet.
 - 2026-11-09, Lijn Forge F4b/F4c ontwerp, Cartographer, sonnet (ontwerper), 86k, 3 min
 - 2026-11-09, Lijn Forge F4b/F4c bouw, Sherpa, opus (ontwikkelaar), 322k, 26 min
+- 2026-11-09, Lijn Forge F4b/F4c review, Warden, opus (reviewer), 158k, 11 min, 1 blokkerend en 11 belangrijk of klein (door Sherpa hersteld, +354k)
