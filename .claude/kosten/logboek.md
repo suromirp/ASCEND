@@ -237,3 +237,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-10, Lijn rest 3 R7 review, Warden, sonnet (reviewer), 47k, 3 min, 0 blokkerend, 4 klein (3 hersteld)
 - 2026-11-09, Lijn Forge F5 gewichtstrend en ijkset, coördinator zelf (geen Sherpa), 0 helpers voor bouwen, tests en Lookout zelf gedraaid
 - 2026-11-09, Lijn Forge F5 review, Warden, opus (reviewer), 104k, 8 min, 1 blokkerend (briefje 47 regels) en 6 hoort erbij, alles hersteld
+- 2026-11-10, Lijn rest 3 R8 Logboek teksten, Sherpa, sonnet (ontwikkelaar), 182k, 16 min, 25 bestanden, alleen strings
+- 2026-11-10, Lijn rest 3 R8 review, Warden, sonnet (reviewer), 55k, 6 min, 0 blokkerend, 6 klein (2 hersteld, rest R9)

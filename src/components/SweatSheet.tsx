@@ -53,7 +53,7 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
       await withTimeout(saveSweat(draft), SAVE_LIMIT_MS);
       requestClose();
     } catch (err) {
-      setNote(err instanceof TimeoutError ? 'Opslaan duurt langer dan verwacht. Kijk zo of je meting er staat; staat hij er niet, probeer het dan nog eens.' : 'Opslaan lukte niet. Probeer het zo nog eens.');
+      setNote(err instanceof TimeoutError ? 'Opslaan duurt langer dan verwacht. Kijk zo of je meting er staat. Zo niet, probeer het nog eens.' : 'Opslaan lukte niet. Probeer het zo nog eens.');
     } finally {
       setBusy(false);
     }
