@@ -508,6 +508,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je vorige keer', text: 'Forge zet de band van je vorige keer klaar. Een keuze geldt voor de open sets.' },
     ],
   },
+  forgeSoort: {
+    title: 'Calisthenics per training',
+    lead: 'Per krachttraining kies je kracht met gewicht, calisthenics met je eigen gewicht, of samen.',
+    points: [
+      { head: 'Calisthenics', text: 'duwen, optrekken, schouderdrukken en triceps gaan op hun ladder, op de stap waar je staat. Benen blijven met gewicht.' },
+      { head: 'Samen', text: 'de eerste helft blijft met gewicht, de rest gaat op een ladder.' },
+      { head: 'Akkoord', text: 'eerst een voorstel; je ziet het de volgende keer dat je de training opent. Je planning en je dagen blijven.' },
+    ],
+  },
   forgeStapVoorstel: {
     title: 'Stap voorstellen',
     lead: 'Haal je de toets van een ladderstap, dan stelt Forge de volgende stap voor. Haal je drie trainingen achter elkaar de onderkant niet, dan de lichtere stap.',

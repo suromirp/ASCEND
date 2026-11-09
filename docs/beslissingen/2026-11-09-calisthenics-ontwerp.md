@@ -75,3 +75,4 @@ Na F4f (de overige ladders, punt 5 van "Wat later komt"): zes ladders erbij als 
 - Het blad Vaardigheid kiest de ladder nu met Chips die wikkelen: negen ladders pasten niet in één `Segmented`. De rest (de rij, het stapvoorstel, het doel, de Ascend-tab) leest ladders uit de gegevens en kreeg geen extra code. Vier tests gebruikten `handstand`, `muscle-up` en `front-lever` als voorbeeld van een onbekende ladder en gebruiken nu `planche`.
 - De lijst oefeningen is van 132 naar 155 gegaan; de grens in de test van 150 is 170 geworden.
 
+Na F4g (de planner, punt 6 van "Wat later komt", `docs/beslissingen/2026-11-09-calisthenics-planner.md`): per krachttraining kracht, calisthenics of samen, als ladderstappen in `stepSwaps` met een voorstel en Akkoord. Geen nieuw opgeslagen veld, geen migratie; de planningsronde en `planGolden.test.ts` bewegen niet.

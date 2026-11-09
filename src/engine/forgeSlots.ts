@@ -10,11 +10,20 @@ import { programExercisesFor } from './macrofactorProgram';
 import { withStepSwaps, type StepSwaps } from './stepSwaps';
 import type { StoredStrengthProgram } from './strengthProgramStore';
 
+// De plekken van het programma of het sjabloon, voor stappen en toevoegingen: waar een stap (`from`) tegen klopt.
+export function baseSlotsFor(
+  template: Pick<SessionTemplate, 'id' | 'exercises'>,
+  model: { program?: StoredStrengthProgram; addedExercises?: AddedExercises; stepSwaps?: StepSwaps } | undefined,
+  date: string,
+): ExercisePrescription[] {
+  return programExercisesFor(model?.program, template.id, date) ?? template.exercises ?? [];
+}
+
 export function forgeSlotsFor(
   template: Pick<SessionTemplate, 'id' | 'exercises'>,
   model: { program?: StoredStrengthProgram; addedExercises?: AddedExercises; stepSwaps?: StepSwaps } | undefined,
   date: string,
 ): ExercisePrescription[] {
-  const base = withStepSwaps(programExercisesFor(model?.program, template.id, date) ?? template.exercises ?? [], model, template.id);
+  const base = withStepSwaps(baseSlotsFor(template, model, date), model, template.id);
   return [...base, ...addedSlotsFor(model, template.id, base)];
 }
