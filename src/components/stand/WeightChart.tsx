@@ -1,6 +1,6 @@
 import type { WeightOverview } from '../../engine/weightOverview';
 import { weightChartSummary } from '../../engine/weightOverview';
-import { formatDayMonthNL } from '../../utils/dates';
+import { formatDayMonthNL, formatShortDateNL } from '../../utils/dates';
 import { formatNumberNL } from '../../utils/number';
 
 // De grafiek van het overzicht Gewicht: je wegingen als stippen en de trend als lijn eroverheen.
@@ -41,7 +41,7 @@ export function WeightChart({ overview, trendOn }: { overview: WeightOverview; t
         ))}
         {line.length >= 2 && <path d={path} fill="none" stroke="var(--color-progress)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />}
         {line.length === 1 && <circle cx={x(line[0].x)} cy={y(line[0].kg)} r={3} fill="var(--color-progress)" />}
-        <text x={LEFT} y={H - 6} fontSize={12} fill="var(--color-ink-dim)">{formatDayMonthNL(overview.from)}</text>
+        <text x={LEFT} y={H - 6} fontSize={12} fill="var(--color-ink-dim)">{formatShortDateNL(overview.from, overview.to)}</text>
         <text x={LEFT + plotW} y={H - 6} textAnchor="end" fontSize={12} fill="var(--color-ink-dim)">vandaag</text>
       </svg>
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>

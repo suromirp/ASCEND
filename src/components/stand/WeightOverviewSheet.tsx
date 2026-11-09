@@ -4,7 +4,7 @@ import { bodyFatLines, bodyFatTrend } from '../../engine/bodyFat';
 import { addWeightEntry, latestWeight, weightsInUse } from '../../engine/bodyWeight';
 import { isWeightRange, weighingRowSource, weightChangeLines, weightOverview, WEIGHT_RANGE_ADVICE, type WeightRange } from '../../engine/weightOverview';
 import { realWeighings, weightShown } from '../../engine/weightTrend';
-import { formatDayMonthNL, todayISO } from '../../utils/dates';
+import { formatDayMonthNL, formatShortDateNL, todayISO } from '../../utils/dates';
 import { formatNumberNL } from '../../utils/number';
 import { NumberField } from '../NumberField';
 import { TextButton } from '../TextButton';
@@ -112,7 +112,7 @@ export function WeightOverviewSheet({ onClose }: { onClose: () => void }) {
             <ul className="mt-2 flex flex-col">
               {rows.map((row) => (
                 <li key={`${row.date}-${row.source}`} className="flex min-h-[44px] items-center justify-between gap-3 border-b text-sm" style={{ borderColor: 'var(--color-card-border)' }}>
-                  <span className="st-num shrink-0" style={{ color: 'var(--color-ink)' }}>{formatDayMonthNL(row.date)}</span>
+                  <span className="st-num shrink-0" style={{ color: 'var(--color-ink)' }}>{formatShortDateNL(row.date, today)}</span>
                   <span className="min-w-0 flex-1 truncate text-right text-xs" style={{ color: 'var(--color-ink-dim)' }}>{weighingRowSource(row)}</span>
                   <span className="st-num w-[68px] shrink-0 text-right" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(row.kg, 1)} kg</span>
                 </li>
