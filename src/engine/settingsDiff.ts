@@ -225,6 +225,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
 
   // Lichaam
   flag('vetpercentage', 'Vetpercentage tonen', 'lichaam', 'showBodyFat'),
+  flag('gewichtstrend', 'Gewichtstrend gebruiken', 'lichaam', 'weightTrend'),
   {
     id: 'figuur', title: 'Figuur', page: 'lichaam',
     differs: (s) => resolveFigureSetting(s) !== 'auto',

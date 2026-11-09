@@ -427,6 +427,11 @@ export interface AppSettings {
   // Health Connect reads your weighings and they count, false = nothing is read and what is
   // stored is not used. Optional and additive; travels with the settings in an export.
   weightFromHealthConnect?: boolean;
+  // "Gewichtstrend gebruiken" (engine/weightTrend.ts, docs/beslissingen/2026-11-09-gewichtstrend.md):
+  // absent or true = the sheet and row Lichaamsgewicht show the trend over your weighings of the
+  // last 14 days, false = the latest weighing. Only what is shown; the rucksack share, leg index
+  // and Forge still read the latest weighing. Optional and additive, so no schema step.
+  weightTrend?: boolean;
   // "Vetpercentage tonen" (engine/bodyFat.ts): absent or true = the fat percentage and the
   // fat-free mass from the weigh-ins are shown under Lichaamsgewicht, false = they stay stored
   // but are not shown. Optional and additive, so older settings and backups need no step.

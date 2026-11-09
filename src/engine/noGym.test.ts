@@ -346,6 +346,9 @@ describe('een periode wijzigen na de tweede review', () => {
     const removal = input('remove', p, [p], moved);
     const keep = removal.proposal.changes.find((c) => c.plannedSessionId === EASY)!;
     expect(keep).toMatchObject({ action: 'keep', restore: true, plannedMinutes: 20 });
+    // Its own reason, not that of the rest after a tocht.
+    expect(keep.reason).toMatch(/weer op zijn gewone lengte\. De korte versie hoorde bij je periode zonder sportschool\.$/);
+    expect(keep.reason).not.toContain('72 uur');
     expect(staleItems(removal.proposal.changes, moved)).toEqual([]);
     expect(staleItems(removal.proposal.changes, moved.map((s) => (s.id === EASY ? { ...s, plannedMinutes: 30 } : s)))).toEqual([keep]);
   });

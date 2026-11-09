@@ -20,7 +20,7 @@ import {
 import { proposeNoTimeToday, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
-import { withNote } from '../engine/leaveEdit';
+import { leaveWordsChange, withNote } from '../engine/leaveEdit';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
 import { applyRestDayInOrder, planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { staleItems } from '../engine/proposalEngine';
@@ -237,18 +237,21 @@ export function useBodyAndLeave(deps: {
     return 'applied';
   }, [commitPlanChangeOutcome, showStatusOnlyChange, setSettings]);
 
-  const saveLeaveNote = useCallback(async (periodId: string, note: string) => {
+  const saveLeaveNote = useCallback(async (periodId: string, note: string, hills?: boolean) => {
     await planSettled();
     const stored = await SettingsRepo.get();
     const current = stored.leavePeriods ?? [];
-    if (!current.some((p) => p.id === periodId)) return;
-    setSettings(await SettingsRepo.set({ leavePeriods: sortPeriods(withNote(current, periodId, note)) }));
+    const before = current.find((p) => p.id === periodId);
+    if (!before) return;
+    const next = withNote(current, periodId, note, hills);
+    const words = leaveWordsChange(before, next.find((p) => p.id === periodId) ?? before);
+    setSettings(await SettingsRepo.set({ leavePeriods: sortPeriods(next) }));
     setRecentChange({
       id: makeId('leavenote'),
       trigger: 'leave_note',
-      title: 'Notitie bewaard',
+      title: words.title,
       lines: ['Je planning blijft zoals ze was.'],
-      why: 'Alleen de notitie van je periode is anders.',
+      why: words.why,
       before: [],
       addedIds: [],
       written: [],

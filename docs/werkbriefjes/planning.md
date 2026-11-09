@@ -31,7 +31,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - Opstartwerk wacht nooit op de sync; wat de planning wijzigt wacht wel op de wachtrij en leest dan het opgeslagen plan.
 - Een teruggezette rij krijgt geen slot en geen vaste lengte, anders blijft hij vastgezet staan. Ook een rij die een periode korter maakte en die je daarna zelf verplaatste, krijgt bij weghalen zijn lengte terug; alleen het merk eraf laat hem kort (`src/engine/leaveProposal.ts#planLeaveChange`, een `keep` met `restore`, 9 november). Een periode wijzigen draait `putBack` voor de oude periode; wat de nieuwe periode nog raakt, krijgt zijn lengte niet terug (`stillShort`).
 - De reparatie zet niets op de laatste vrije dag van een week, behalve in een week met vakantie, vrije dagen of tocht.
-- `tpl_bodyweight` (zonder sportschool) is een krachtsjabloon zonder vaste dag: een lijst van krachtsjablonen voor MacroFactor slaat hem over (`src/engine/noGymDetails.ts#BODYWEIGHT_TEMPLATE_ID`), anders raadt hij mee.
+- `tpl_bodyweight` (zonder sportschool) is een krachtsjabloon zonder vaste dag: elke lijst van krachtsjablonen in de sportschool (MacroFactor, krachtprogramma, bergspieren) gaat door `src/engine/templateRoles.ts#isGymStrengthTemplate`, anders raadt hij mee. Alleen `src/components/forge/ProgramProposal.tsx` filtert nog zelf (9 november, Forge was bezet). Alleen Heuvels in de buurt anders is geen voorstel maar woorden, net als de notitie: meteen bewaard (`src/engine/leaveEdit.ts#leaveEditScope`).
 - `PATTERN_SWAPS` werken alleen in fases van een plan met een doel; de golden scenario's A en C bewegen niet.
 
 ## Testen

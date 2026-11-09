@@ -5,7 +5,7 @@ import type { LeavePeriod } from '../models/leave';
 import { addDays, daysBetween } from '../utils/dates';
 import { planPass, type PlanPassContext } from './planPass';
 import { withCountingSports } from './sportTemplate';
-import { fixedInLeave, fixedLeaveNote, fixedSessionsForWeek, keptFixedNote, reconcileFixedSessions } from './fixedSports';
+import { fixedInLeave, fixedKeptInNoGym, fixedLeaveNote, fixedNoGymNote, fixedSessionsForWeek, keptFixedNote, reconcileFixedSessions } from './fixedSports';
 import { isLegHeavyTemplate } from './scheduler';
 import { lockLevel, validateWeeks, hardDayLimit } from './weekValidator';
 import { raceBlocks } from './raceBlock';
@@ -202,6 +202,37 @@ describe('een tocht in dezelfde week', () => {
     expect(plan.proposal.changes.some((c) => c.plannedSessionId === sat.id && c.action === 'remove')).toBe(true);
     // Nog niets bewaard: de rij staat er nog.
     expect(rows.some((s) => s.id === sat.id)).toBe(true);
+  });
+});
+
+describe('een periode zonder sportschool', () => {
+  const away: LeavePeriod = { id: 'weg', kind: 'no_gym', startDate: '2026-11-09', endDate: '2026-11-15', noGym: { amount: 'light', strength: 'bodyweight', hills: false } };
+
+  it('de vaste afspraken blijven staan en de periode doet verder zijn werk', () => {
+    expect(fixedSessionsForWeek('2026-11-09', football, [away]).map((r) => r.date)).toEqual(['2026-11-10', '2026-11-14']);
+    expect(fixedInLeave(TODAY, '2026-11-15', football, [away])).toEqual([]);
+    const result = planPass(sessions, ctx({ leave: [away] }));
+    const inWeek = result.sessions.filter((s) => s.status !== 'skipped' && s.scheduledDate >= away.startDate && s.scheduledDate <= away.endDate);
+    for (const d of ['2026-11-10', '2026-11-14']) expect(inWeek.some((s) => s.fixed && s.scheduledDate === d), d).toBe(true);
+    // Geen sportschool: geen krachttraining in de sportschool, wel eigen gewicht; hoogstens twee keer lopen.
+    expect(inWeek.some((s) => s.templateId === 'tpl_lower_a' || s.templateId === 'tpl_upper_a')).toBe(false);
+    expect(inWeek.filter((s) => byId.get(s.templateId)?.type === 'cardio' && !s.fixed).length).toBeLessThanOrEqual(2);
+    // Een tweede ronde verandert niets meer.
+    expect(planPass(result.sessions, ctx({ leave: [away] })).repairs).toEqual([]);
+  });
+
+  it('het voorstel zegt welke afspraak blijft staan; een vakantie op die dag wint', () => {
+    const items = fixedKeptInNoGym(TODAY, '2026-11-15', football, [away]);
+    expect(items.map((i) => i.date)).toEqual(['2026-11-10', '2026-11-14']);
+    expect(fixedNoGymNote(items[0])).toBe('Voetbal op dinsdag 10 november blijft staan. Ben je er niet, sla hem dan over in Week.');
+    const holiday: LeavePeriod = { id: 'vak', kind: 'no_training', startDate: '2026-11-14', endDate: '2026-11-14' };
+    expect(fixedKeptInNoGym(TODAY, '2026-11-15', football, [away, holiday]).map((i) => i.date)).toEqual(['2026-11-10']);
+    const rows = planPass(sessions, ctx()).sessions;
+    const plan = planLeaveChange({ mode: 'add', period: away, existing: [], sessions: rows, logs: [], templates, today: TODAY, context: (periods) => ctx({ leave: periods }) });
+    expect(plan.notes).toContain('Voetbal op zaterdag 14 november blijft staan. Ben je er niet, sla hem dan over in Week.');
+    // De afspraken zelf raakt het voorstel niet aan.
+    const fixedIds = new Set(rows.filter((s) => s.fixed && s.scheduledDate >= away.startDate && s.scheduledDate <= away.endDate).map((s) => s.id));
+    expect(plan.proposal.changes.some((c) => 'plannedSessionId' in c && fixedIds.has(c.plannedSessionId as string))).toBe(false);
   });
 });
 

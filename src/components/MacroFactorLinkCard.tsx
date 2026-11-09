@@ -17,6 +17,7 @@ import { useAppData } from '../state/AppDataContext';
 import { useMacroFactor } from '../state/useMacroFactor';
 import { setMapping, setMappings } from '../storage/macrofactor';
 import { describeSuggestion, type LinkRow } from '../engine/macrofactorNames';
+import { isGymStrengthTemplate } from '../engine/templateRoles';
 import type { SessionTemplate } from '../models/training';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
@@ -56,7 +57,7 @@ export function MacroFactorLinkCard({ primary }: { primary: boolean }) {
   const [editing, setEditing] = useState<string | null>(null);
   if (rows.length === 0) return null;
 
-  const strength = templates.filter((t) => t.type === 'strength');
+  const strength = templates.filter(isGymStrengthTemplate);
   const templateName = (id: string) => strength.find((t) => t.id === id)?.name ?? 'deze training';
   const open = rows.filter((r) => r.linked === undefined);
   const chosen = (r: LinkRow) => draft[r.key] ?? NONE;

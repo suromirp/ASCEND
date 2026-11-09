@@ -316,6 +316,17 @@ describe('backup envelope round-trip', () => {
     expect(s.weightFromHealthConnect).toBe(false);
   });
 
+  it('de schakelaar Gewichtstrend gaat mee, een kapotte valt weg', async () => {
+    await SettingsRepo.set({ weightTrend: false });
+    const envelope = await buildBackupEnvelope();
+    await SettingsRepo.set({ weightTrend: true });
+    await importEnvelope(envelope);
+    expect((await SettingsRepo.get()).weightTrend).toBe(false);
+    const broken = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { weightTrend: 'ja' } } });
+    expect(broken.settings && 'weightTrend' in broken.settings).toBe(false);
+    expect(broken.skippedInvalid).toBe(1);
+  });
+
   it('een kapotte schakelaar voor gewicht uit Health Connect valt weg', async () => {
     const envelope = await buildBackupEnvelope();
     const backup = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { weightFromHealthConnect: 'ja' } } });
