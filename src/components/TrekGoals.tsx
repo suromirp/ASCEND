@@ -66,7 +66,7 @@ export function TrekGoalsCard() {
           <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             {shown.length === 0
               ? 'Een sneeuwhike over twee maanden, een weekend met tent: zet het hier als doel naast de GR5. Elke tocht telt ook als training voor de GR5.'
-              : 'Elke tocht telt ook als training voor de GR5. Een tocht maken, wijzigen of verwijderen laat je eerst zien en past pas iets aan na jouw akkoord.'}
+              : 'Elke tocht telt ook als training voor de GR5. Eerst een voorstel, pas na Akkoord verandert er iets.'}
           </p>
         </div>
 

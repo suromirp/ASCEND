@@ -53,14 +53,14 @@ export interface RaceFacts {
   weighted?: boolean;
   targetMinutes?: number;
   expectedMinutes?: number;
-  // "Verwacht nu 55:40. Doel 45:00: nog 10:40, ongeveer 1:04 per km."
+  // "Verwacht nu 55:40, doel 45:00. Nog 10:40, ongeveer 1:04 per km."
   nowLine?: string;
-  // Haalbaarheid als droog feit, uit dezelfde weken als de meter: "Bij gemiddelde groei rond 20 maart: ongeveer
-  // 50 minuten. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 21." De gebruiker oordeelt zelf.
+  // Haalbaarheid als droog feit, uit dezelfde weken als de meter: "Op 20 maart: ongeveer 50 minuten, bij gemiddelde
+  // groei. 45:00 vraagt ongeveer 39 weken, er zijn er 21." De gebruiker oordeelt zelf.
   bandLine?: string;
   // Weken werk bij gemiddelde groei van de verwachte tijd naar de doeltijd (0 als je er al onder zit).
   weeksOfWork?: number;
-  // "Uit je snelste 5 km van 12 okt (26:42)." of "Uit je hele run van 5 km op 12 okt (26:42)."
+  // "Uit je snelste 5 km van 12 okt (26:42)." of "Uit je hele loop van 5 km op 12 okt (26:42)."
   basisLine?: string;
   // Eén regel als er geen tijd te geven is: de test wacht op Akkoord, of er is geen test.
   statusLine?: string;
@@ -115,10 +115,10 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
   // Eerst afronden op hele seconden, dan splitsen: nooit "0:60".
   const perKmSeconds = Math.round((Math.abs(gap) * 60) / km);
   const perKmText = `${Math.floor(perKmSeconds / 60)}:${String(perKmSeconds % 60).padStart(2, '0')}`;
-  const nowBase = `Verwacht nu ${clock(expected)}.`;
+  const nowBase = `Verwacht nu ${clock(expected)}, doel ${clock(target)}.`;
   const nowLine = gap > 0.05
-    ? `${nowBase} Doel ${clock(target)}: nog ${clock(gap)}, ongeveer ${perKmText} per km.`
-    : `${nowBase} Doel ${clock(target)}: je zit er nu al onder.`;
+    ? `${nowBase} Nog ${clock(gap)}, ongeveer ${perKmText} per km.`
+    : `${nowBase} Je zit er al onder.`;
 
   // Eén rekening voor alles op de kaart: dezelfde gemiddelde groei en dezelfde weken als de meter, geteld vanaf vandaag.
   let bandLine: string | undefined;
@@ -127,21 +127,21 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
     if (left > 0) {
       const outlook = raceOutlook(expected, target, left, options.growth);
       const day = formatDateNL(goal.targetDate).replace(/ \d{4}$/, '');
-      const head = `Bij ${options.growth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei rond ${day}: ${outlookSaid(outlook, km)}`;
+      const head = `Op ${day}: ${outlookSaid(outlook, km)}, bij ${options.growth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei`;
       if (outlook.holds && !outlook.fits) {
         // Binnen de spreiding van de verwachting: de kaart zegt "past", ook de dag na een Akkoord op het voorstel.
-        bandLine = `${head}. Je doeltijd ligt binnen de spreiding van die verwachting.`;
+        bandLine = `${head}. Je doeltijd valt binnen de spreiding.`;
       }
       else if (outlook.fits) {
         // Het getal zegt waar je nu staat, deze zin waar je bij gemiddelde groei uitkomt: noem het werk erbij.
         const said = outlookWeeksSaid(outlook);
         bandLine = said.need > 0
-          ? `${head}. Je doeltijd past daarbinnen: nog ongeveer ${said.need} ${said.need === 1 ? 'week' : 'weken'} werk, en er zijn er ${said.left}.`
-          : `${head}. Je doeltijd past daarbinnen.`;
+          ? `${head}. Je doeltijd past: nog ongeveer ${said.need} ${said.need === 1 ? 'week' : 'weken'} werk, er zijn er ${said.left}.`
+          : `${head}. Je doeltijd past.`;
       }
       else {
         const said = outlookWeeksSaid(outlook);
-        bandLine = `${head}. ${clock(target)} vraagt ongeveer ${said.need} weken; tot ${day} zijn het er ${said.left}.`;
+        bandLine = `${head}. ${clock(target)} vraagt ongeveer ${said.need} weken, er zijn er ${said.left}.`;
       }
     }
   }
@@ -149,7 +149,7 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
   const kmText = formatNumberNL(paces.test.km, Number.isInteger(paces.test.km) ? 0 : 1);
   const basisLine = paces.test.basis === 'effort'
     ? `Uit je snelste ${kmText} km van ${formatShortDateNL(paces.test.date)} (${clock(paces.test.minutes)}).`
-    : `Uit je hele run van ${kmText} km op ${formatShortDateNL(paces.test.date)} (${clock(paces.test.minutes)}).`;
+    : `Uit je hele loop van ${kmText} km op ${formatShortDateNL(paces.test.date)} (${clock(paces.test.minutes)}).`;
 
   return {
     facts: { status: 'counted', targetMinutes: target, expectedMinutes: expected, nowLine, bandLine, basisLine, weeksOfWork: work },

@@ -74,7 +74,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
   const metersSheet = item.isMain && usesMilestoneReadiness(goal) && !!readiness && percent !== undefined && readiness.meters.length > 0;
   const sentence = readiness?.sentence ?? (kind
     ? 'Nog niets te meten. Dat komt met trainingen die meetellen.'
-    : 'Dit doel heeft nog geen soort, dus er valt niets te meten. Kies er een via Doel aanpassen.');
+    : 'Nog geen soort, dus niets te meten. Kies er een via Doel aanpassen.');
 
   return (
     <div

@@ -16,7 +16,7 @@ import { activeStrengthStrategy } from '../../engine/strengthProgram';
 import { readPointer } from '../../utils/forgeSessionStore';
 import { useHorizonChange } from '../useHorizonChange';
 
-const KEEP = 'Prima, alles blijft zoals het was.';
+const KEEP = 'Alles blijft zoals het was.';
 
 // Een richting kiezen zonder doel (docs/visie/Zonder doel.md, 2.3 en 3.5): met een plan altijd een
 // voorstel met Akkoord, dat de hele planningsronde laat zien. Akkoord bewaart de richting, de maandag
@@ -74,7 +74,7 @@ export function useDirectionChange(): {
       () => planHorizonChange({
         title: directionChangeTitle(id),
         why: 'Volgt je richting.',
-        explanation: 'Je richting bepaalt hoe ASCEND je weken plant als je geen doel hebt. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
+        explanation: 'Je richting bepaalt hoe ASCEND je weken plant als je geen doel hebt. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
         trigger: 'direction_changed',
         settings: { ...patch, ...kracht.settings },
         ...kracht.block,
@@ -100,7 +100,7 @@ export function useDirectionChange(): {
       () => planHorizonChange({
         title: 'Je weekbudget',
         why: 'Volgt je weekbudget.',
-        explanation: 'Je plan volgt je richting, dus je weekbudget bepaalt hoe lang je trainingen zijn. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets.',
+        explanation: 'Je plan volgt je richting, dus je weekbudget bepaalt hoe lang je trainingen zijn. Eerst een voorstel, pas na Akkoord verandert er iets.',
         trigger: 'direction_changed',
         settings: { weekBudget, ...kracht.settings },
         ...kracht.block,
@@ -122,13 +122,13 @@ export function useDirectionChange(): {
       () => planHorizonChange({
         title: choice === 'easier' ? 'Rustiger aan na je golf' : 'Nog een golf, een stap hoger',
         why: 'Volgt je keuze na je golf.',
-        explanation: 'Je koos wat er na je golf komt. Je ziet eerst wat er in je planning verandert; pas na jouw Akkoord gebeurt er iets.',
+        explanation: 'Je koos wat er na je golf komt. Eerst een voorstel, pas na Akkoord verandert er iets.',
         trigger: 'wave_review',
         settings: { ...patch, ...kracht.settings },
         ...kracht.block,
         notes: [...directionChangeLines(id, { weekBudget: patch.weekBudget }).slice(0, 2), ...kracht.lines],
       }),
-      { eyebrow: 'Na je golf', ask: 'always', alwaysAsk: true, notesTitle: 'Je volgende golf', declined: 'Prima, alles blijft zoals het was. De kaart blijft nog even staan.' },
+      { eyebrow: 'Na je golf', ask: 'always', alwaysAsk: true, notesTitle: 'Je volgende golf', declined: 'Alles blijft zoals het was. De kaart blijft nog even staan.' },
     );
   }
 
