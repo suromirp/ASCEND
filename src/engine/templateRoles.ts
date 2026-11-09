@@ -30,8 +30,8 @@ export function idHasRole(templateId: string, role: TemplateRole, templates?: It
 
 // Een krachttraining in de sportschool: elk krachtsjabloon behalve Eigen gewicht
 // (`tpl_bodyweight`), dat alleen een periode zonder sportschool neerzet. Elke
-// lijst met krachtsjablonen voor MacroFactor, Forge of het krachtprogramma gaat
-// hierdoor, zodat Eigen gewicht daar nooit als gewone krachttraining meetelt.
+// lijst met krachtsjablonen voor MacroFactor of het krachtprogramma gaat
+// hierdoor (Forge, `ProgramProposal.tsx`, volgt nog), zodat Eigen gewicht daar nooit als gewone krachttraining meetelt.
 export function isGymStrengthTemplate(template: Pick<SessionTemplate, 'id' | 'type'>): boolean {
   return template.type === 'strength' && template.id !== BODYWEIGHT_TEMPLATE_ID;
 }

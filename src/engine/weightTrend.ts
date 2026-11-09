@@ -3,7 +3,7 @@
 //
 // Wie zich elke dag weegt (bijvoorbeeld via Health Connect) ziet het getal een kilo op en neer
 // gaan met water, zout en eten. De trend is een gewogen gemiddelde van de wegingen van de laatste
-// 14 dagen, waarbij een weging van een week oud half zo zwaar telt als die van vandaag. Een
+// 14 dagen, waarbij een weging van een week oud half zo zwaar telt als de nieuwste. Een
 // uitschieter (meer dan 3 % van de middelste weging af) telt niet mee. Zijn er minder dan drie
 // wegingen over, dan is er geen trend en telt de nieuwste weging, zoals voorheen.
 //

@@ -30,7 +30,7 @@ Het lichaamsfiguur, hoe voelt je lijf, een zware beendag op vermoeide benen, een
 - "Alleen bovenlichaam" telt niet als beenspierpijn voor MORNING-CHECK, de kaart en de beenindex.
 - De RPE van een test telt in de beenindex als 10 en een testloop met warming-up en cooling-down in twee delen; alles dat de index na een test leest, leest dus een lager getal (`src/engine/freshnessAfterTest.test.ts`).
 - Feiten die ASCEND zelf weet (warmte, korte nacht, ziek) tellen vanzelf mee en worden nooit bewaard (`derivedFactEntries`).
-- De gewichtstrend (`src/engine/weightTrend.ts#weightTrend`, alleen voor wat Lichaamsgewicht laat zien; rekenen gaat via `currentBodyKg`) leest wat `weightsInUse` teruggeeft, nooit de ruwe lijst: anders tellen een eigen gewicht en een weging uit Health Connect op dezelfde dag dubbel. Een trendgewicht uit MacroFactor wordt niet nog eens afgevlakt (`src/engine/weightTrend.test.ts`).
+- De gewichtstrend (`src/engine/weightTrend.ts#weightTrend`, alleen voor wat Lichaamsgewicht laat zien; rekenen gaat via `currentBodyKg`) leest wat `weightsInUse` teruggeeft, nooit de ruwe lijst: anders tellen een eigen gewicht en een weging uit Health Connect op dezelfde dag dubbel. Een trendgewicht uit MacroFactor wordt niet nog eens afgevlakt (`src/engine/weightTrend.test.ts`). Een veld dat een weging bewaart vul je nooit vooraf met de trend.
 - Een nieuw veld in een opgeslagen vorm (`nightJudgments`, `influences`, `legEaseDays`) krijgt een leesbare migratie in `src/storage/migrationsBody.ts` en gaat mee in de back-up.
 
 ## Testen

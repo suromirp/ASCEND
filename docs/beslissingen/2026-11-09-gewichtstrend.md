@@ -15,7 +15,7 @@ Te weinig. Onder de drie wegingen in het venster (na het weglaten van uitschiete
 
 MacroFactor. Is de nieuwste dag een trendgewicht uit MacroFactor (`basis: 'trend'`), dan is er al een trend en rekent ASCEND hem niet nog eens af. Een trenddag eerder in het venster telt met de weging van die dag (`scaleKg`), of anders niet.
 
-Laten zien. In het blad Lichaamsgewicht staat de trend groot, daaronder "Trend 78,4 kg, laatste weging 79,1 kg", de bron van de laatste weging ("Uit Health Connect, 3 nov") en "Gemiddelde van 9 wegingen sinds 21 okt". De rij zegt "Trend 78,4 kg" met "Laatste weging 79,1 kg, 3 nov". De herinnering op Vandaag vult het veld vooraf in met hetzelfde getal.
+Laten zien. In het blad Lichaamsgewicht staat de trend groot, daaronder "Trend 78,4 kg, laatste weging 79,1 kg", de bron van de laatste weging ("Uit Health Connect, 3 nov") en "Gemiddelde van 9 wegingen sinds 21 okt". De rij zegt "Trend 78,4 kg" met "Laatste weging 79,1 kg, 3 nov". De herinnering op Vandaag vult het veld vooraf met je laatste weging, nooit met de trend: wat je daar bewaart wordt een echte weging.
 
 De plekken. `data/settingsIndex.ts` (`gewichtstrend`, groep Lichaam), `data/settingsLayout.ts` (in het blad van Lichaamsgewicht), `engine/settingsSummary.ts` (aan of uit, en de trend in de rij Lichaamsgewicht), `engine/settingsDiff.ts` (verschil met het advies), de uitleg `gewichtstrend` in `data/settingsHelp.ts` en de rij in `components/settings/groups/LichaamSheets.tsx`.
 

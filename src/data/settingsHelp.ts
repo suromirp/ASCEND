@@ -486,8 +486,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Gewichtstrend gebruiken',
     lead: 'Weeg je je vaak, dan zie je bij Lichaamsgewicht een rustig gemiddelde in plaats van alleen de laatste weging. Het advies is aan.',
     points: [
-      { head: 'Hoe', text: 'een gemiddelde van je wegingen van de laatste 14 dagen, waarin een weging van een week oud half zo zwaar telt als die van vandaag.' },
-      { head: 'Uitschieter', text: 'een weging die meer dan 3 procent afwijkt van de rest telt niet mee.' },
+      { head: 'Hoe', text: 'een gemiddelde van je wegingen van de laatste 14 dagen, waarin een weging van een week oud half zo zwaar telt als je laatste weging.' },
+      { head: 'Uitschieter', text: 'een weging die meer dan 3 procent afwijkt van de middelste weging telt niet mee.' },
       { head: 'Te weinig', text: 'onder de drie wegingen in twee weken, of met een trendgewicht uit MacroFactor, zie je de laatste weging.' },
       { head: 'Nog niet', text: 'je rugzak, de beenindex en Forge rekenen voorlopig met je laatste weging.' },
       { head: 'Uit', text: 'je ziet de laatste weging, zoals voorheen. Er verdwijnt niets.' },
