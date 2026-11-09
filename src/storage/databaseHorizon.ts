@@ -365,7 +365,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     slotDays: patternDays(templates, settings, restDay),
     minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),
     newId: () => makeId('planned'),
-    leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
+    leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide',
     fixedSports: settings.sportHandling ?? null,
     kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
   })))));
