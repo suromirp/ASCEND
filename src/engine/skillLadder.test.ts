@@ -263,3 +263,42 @@ describe('na de review van F4a', () => {
     expect(ladderState(pull, [real, warmupOnly], TODAY).current).not.toBeNull();
   });
 });
+
+describe('band en extra gewicht (F4c)', () => {
+  it('een set met band telt niet voor de onderkant of de toets van die stap', () => {
+    const test = pull.steps[3].test;
+    const band = (r: number): SetLog => ({ reps: r, band: 'licht' });
+    expect(stepResult([band(8), band(8), band(8)], test)).toEqual({ attempted: false, floorMet: false, passed: false });
+    expect(stepResult([band(8), { reps: 8 }, { reps: 8 }], test)).toMatchObject({ floorMet: false, passed: false });
+    expect(stepResult([{ reps: 8 }, { reps: 8 }, { reps: 8 }], test)).toMatchObject({ floorMet: true, passed: true });
+    // Een houding met band telt ook niet.
+    expect(stepResult([{ reps: 1, seconds: 30, band: 'zwaar' }], pull.steps[0].test).attempted).toBe(false);
+  });
+
+  it('met band op Pull-Up blijf je op de stap eronder tot je zonder band haalt', () => {
+    const logs = [log('2026-11-10', { 'negative-chin-up': reps(8, 8, 8), 'pull-up': [{ reps: 8, band: 'licht' }, { reps: 8, band: 'licht' }, { reps: 8, band: 'licht' }] })];
+    expect(ladderState(pull, logs, TODAY)).toMatchObject({ current: 3, passed: true, proposal: { kind: 'harder', step: 4 } });
+  });
+
+  it('een set Pull-Up met 5 kg telt voor stap 5, met 2 kg niet, met band niet', () => {
+    const with5 = [log('2026-11-10', { 'pull-up': [{ reps: 8, weightKg: 5 }, { reps: 8, weightKg: 5 }, { reps: 8, weightKg: 5 }] })];
+    expect(ladderState(pull, with5, TODAY)).toMatchObject({ current: 5, currentExerciseId: 'weighted-pull-up', passed: true, proposal: null });
+    const with2 = [log('2026-11-10', { 'pull-up': [{ reps: 8, weightKg: 2 }, { reps: 8, weightKg: 2 }, { reps: 8, weightKg: 2 }] })];
+    expect(ladderState(pull, with2, TODAY)).toMatchObject({ current: 4, passed: true, proposal: { kind: 'harder', step: 5 } });
+    const banded = [log('2026-11-10', { 'pull-up': [{ reps: 8, weightKg: 5, band: 'licht' }, { reps: 8, weightKg: 5, band: 'licht' }, { reps: 8, weightKg: 5, band: 'licht' }] })];
+    expect(ladderState(pull, banded, TODAY).current).toBeNull();
+  });
+
+  it('een import "Weighted Dip" met 10 kg op dip telt voor de stap met gewicht; het log verandert niet', () => {
+    const dip = skillLadderById('dip')!;
+    const logs = [log('2024-03-01', { dip: [{ reps: 6, weightKg: 10 }, { reps: 6, weightKg: 10 }, { reps: 5, weightKg: 10 }] })];
+    const copy = JSON.parse(JSON.stringify(logs));
+    expect(ladderState(dip, logs, TODAY)).toMatchObject({ current: 4, currentExerciseId: 'weighted-dip', passed: false });
+    expect(logs).toEqual(copy);
+  });
+
+  it('per set: zonder gewicht blijft een set op zijn eigen stap', () => {
+    const logs = [log('2026-11-10', { 'pull-up': [{ reps: 8 }, { reps: 8 }, { reps: 8 }, { reps: 6, weightKg: 5 }] })];
+    expect(ladderState(pull, logs, TODAY)).toMatchObject({ current: 4, passed: true });
+  });
+});

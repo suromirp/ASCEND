@@ -3,7 +3,7 @@
 
 import type { Dispatch, SetStateAction } from 'react';
 import { copyRow } from '../../engine/forgeInput';
-import { removeLastRow, updateRow, type WorkoutExercise } from '../../engine/forgeWorkout';
+import { exerciseOf, removeLastRow, updateRow, type WorkoutExercise } from '../../engine/forgeWorkout';
 import { refitAfterFill, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import type { ForgeCause, ForgeEvent } from '../../engine/forgeLog';
 import { activeSeconds, type Pause } from '../../engine/forgeSession';
@@ -58,6 +58,9 @@ interface ForgeSheetsProps {
   addSetLogged: (slot: string, kind: 'work' | 'warmup') => void;
   tickAll: (slot: string) => void;
   swap: (slot: string, exerciseId: string | null) => void;
+  // "Ging het netjes?" achteraf in het setmenu (alleen op een ladderstap, met de instelling aan).
+  cleanOn: boolean;
+  chooseClean: (slot: string, rowId: string, clean: boolean | undefined) => void;
   removeAddedExercise: (slot: string) => void;
   saveStrength: (next: ReturnType<typeof useAppData>['settings']['strengthModel']) => void;
   startedAt: number | null;
@@ -98,6 +101,7 @@ export function ForgeSheets(p: ForgeSheetsProps) {
           onTake={() => p.take(rowMenuEx.slot, rowMenuRow.id)}
           onCopy={() => setExercise(rowMenuEx.slot, (e) => copyRow(e, rowMenuRow.id))}
           onRemove={() => p.removeSetLogged(rowMenuEx.slot, rowMenuRow.id)}
+          {...(p.cleanOn && rowMenuRow.kind === 'work' && rowMenuRow.done && exerciseOf(rowMenuEx)?.ladder ? { onClean: (v: boolean | undefined) => p.chooseClean(rowMenuEx.slot, rowMenuRow.id, v) } : {})}
           onClose={() => sh.setRowMenu(null)}
         />
       )}

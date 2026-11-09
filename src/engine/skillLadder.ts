@@ -6,7 +6,11 @@
 // - Een training is het laatste log van een dag met sets op deze ladder (`completedDate`, dan `completedAt`).
 //   Een log van na `today` telt niet.
 // - Alleen werksets tellen (`isWorkSet`). Een houding telt in seconden; een set zonder seconden telt niet.
-//   Een stap met extra gewicht telt alleen sets met minstens `addedKg`.
+//   Een stap met extra gewicht telt alleen sets met minstens `addedKg`. Een set met een band telt niet voor de
+//   onderkant of de toets: met hulp haal je de stap nog niet (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md).
+// - Een set op Pull-Up of Dip (je eigen gewicht, zonder band) met minstens `addedKg` erbij telt voor de stap met
+//   extra gewicht erboven. Dat leest de engine alleen af; het log blijft zoals het is (een import "Weighted Pull-Up"
+//   staat op `pull-up` en telt zo toch voor de stap met gewicht).
 // - De onderkant is gehaald met `sets` sets op minstens 5 herhalingen (of 10 seconden), de toets met `sets`
 //   sets op de bovenkant. Een set met `clean: false` telt voor geen van beide; onbekend telt mee.
 // - De huidige stap is de zwaarste stap waarop je de onderkant haalde, in de laatste training waarin je
@@ -17,6 +21,7 @@
 //   training van vandaag is geen misser, maar haalt hij de onderkant op die stap, dan vervalt het voorstel.
 
 import { SKILL_FLOOR_REPS, SKILL_FLOOR_SECONDS, SKILL_LADDERS, LADDER_PLACE, skillLadderById, type SkillLadder, type SkillTest } from '../data/skillLadders';
+import { exerciseById } from '../data/exercises';
 import type { SessionLog, SetLog } from '../models/training';
 import { isWorkSet } from './workSets';
 
@@ -51,6 +56,7 @@ export interface LadderState {
 // Wat een set meet voor deze toets: herhalingen, of seconden bij een houding. Undefined als hij niet telt.
 function setValue(set: SetLog, test: SkillTest): number | undefined {
   if (!set || typeof set !== 'object' || !isWorkSet(set)) return undefined;
+  if (set.band !== undefined) return undefined;
   if (test.kind === 'hold') {
     return typeof set.seconds === 'number' && Number.isFinite(set.seconds) && set.seconds > 0 ? set.seconds : undefined;
   }
@@ -101,7 +107,11 @@ function trainingsOn(ladder: SkillLadder, logs: readonly SessionLog[], today: st
     for (const e of log.strengthData) {
       const step = e ? stepOf.get(e.exerciseId) : undefined;
       if (step === undefined || !Array.isArray(e.sets)) continue;
-      byStep.set(step, [...(byStep.get(step) ?? []), ...e.sets]);
+      const up = addedStepAbove(ladder, step, e.exerciseId);
+      for (const set of e.sets) {
+        const at = up !== undefined && countsWithAdded(set, up.addedKg) ? up.step : step;
+        byStep.set(at, [...(byStep.get(at) ?? []), set]);
+      }
     }
     const steps = new Map<number, StepResult>();
     for (const [step, sets] of byStep) {
@@ -114,6 +124,19 @@ function trainingsOn(ladder: SkillLadder, logs: readonly SessionLog[], today: st
   }
   const out: Training[] = [...lastPerDay.entries()].map(([date, v]) => ({ date, steps: v.steps }));
   return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+// De stap met extra gewicht direct boven deze stap, als de oefening je eigen gewicht is (Pull-Up, Dip).
+function addedStepAbove(ladder: SkillLadder, step: number, exerciseId: string): { step: number; addedKg: number } | undefined {
+  const next = ladder.steps[step];
+  if (!next || next.test.kind !== 'reps' || next.test.addedKg === undefined) return undefined;
+  if (exerciseById(exerciseId)?.resistance !== 'bodyweight') return undefined;
+  return { step: step + 1, addedKg: next.test.addedKg };
+}
+
+// Een set die met zijn extra gewicht bij de stap erboven hoort: zonder band en minstens `addedKg` erbij.
+export function countsWithAdded(set: SetLog, addedKg: number): boolean {
+  return !!set && typeof set === 'object' && set.band === undefined && typeof set.weightKg === 'number' && Number.isFinite(set.weightKg) && set.weightKg >= addedKg;
 }
 
 // Het latere van twee logs op dezelfde dag: de tijd, dan het id (zodat de volgorde van de lijst niet telt).

@@ -4,6 +4,7 @@ import type { FieldName } from '../../engine/forgeInput';
 import { exerciseOf, type WorkoutExercise } from '../../engine/forgeWorkout';
 import type { GymProfile } from '../../engine/strengthSettings';
 import type { Exercise } from '../../models/exercise';
+import type { SetBand } from '../../models/training';
 import { addOnsFor, formatAddOns } from '../../engine/machineWeights';
 
 export interface Rest {
@@ -51,6 +52,11 @@ export interface BlockActions {
   spotter: () => void;
   // Terugdraaien van de stand die net onthouden werd (alleen die stand, niet de set).
   standUndo: () => void;
+  // Stap lichter of Stap zwaarder: naar die stap van de ladder, via dezelfde weg als Ruilen.
+  step: (slot: string, exerciseId: string) => void;
+  // De band voor de open sets (null is geen band), en "Ging het netjes?" (undefined is onbekend).
+  band: (slot: string, band: SetBand | null) => void;
+  clean: (slot: string, rowId: string, clean: boolean | undefined) => void;
   // Een set weghalen (vegen of het setmenu), terugzetten wat je van het programma weghaalde, de melding terugdraaien.
   remove: (slot: string, rowId: string) => void;
   restore: (slot: string) => void;

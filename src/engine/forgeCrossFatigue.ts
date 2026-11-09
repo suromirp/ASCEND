@@ -67,7 +67,8 @@ export function muscleShare(earlier: Exercise | undefined, later: Exercise | und
 export function hardSetsLogged(sets: SetLog[], confirmOn: boolean): number | undefined {
   let n = 0;
   for (const [i, s] of sets.entries()) {
-    if (!isWorkSet(s) || !(s.reps > 0)) continue;
+    // Een houding (seconden) is geen harde set: telt als 0.
+    if (!isWorkSet(s) || !(s.reps > 0) || s.seconds !== undefined) continue;
     if (typeof s.rir !== 'number' || !Number.isFinite(s.rir)) return undefined;
     if (!s.rirAssumed) {
       if (s.rir <= CROSS_HARD_MAX_RIR) n++;
