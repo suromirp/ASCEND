@@ -161,3 +161,13 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 ## Bouwers melden zich zelf (9 november)
 
 Elke bouwer die de coördinator met `create_session` start, krijgt als laatste regel van de opdracht: meld je als je klaar bent of vastloopt met `create_trigger` (claude-code-remote), `persistent_session_id` de sessie van de coördinator, `run_once_at` één à twee minuten vooruit, `initiation` `own_followup`, met in de prompt titel, sessie-id, wat live staat, de controles en vragen. De coördinator start dan meteen de volgende; een check elke twee uur is alleen nog een vangnet.
+
+## Lessen van de nacht van 9 november
+
+- Uitkomst tonen, niet alleen groene tests: een planner-bouwer sluit af met de echte weekindeling van zijn voorbeeld, per dag. Tests toetsten de regels, maar niet of de week verstandig was (beenkracht viel twee weken weg).
+- Een sessie per één of twee rondes: een sessie die lang doorloopt wordt duur doordat de context groeit; een verse sessie per ronde is goedkoper.
+- Elke bouwer merget main terug in de werkbranch en pusht die; anders loopt de werkbranch achter en botst alles bij de volgende start.
+- Elke bouwer zet zelf naar main en meldt de commit; de coördinator controleert in de melding of dat echt gebeurde.
+- Vragen aan de eigenaar in gewone woorden met een voorbeeld en het advies erbij, nooit in vaktaal (de vragen over lichaamsgewicht en de ijkset waren onduidelijk).
+- Elke melding naar de eigenaar noemt wat hij zelf op zijn telefoon kan nakijken, want echte apparaten en echte netwerkaanroepen ziet geen helper.
+- Voor een ronde die een akkoord van de eigenaar nodig heeft (zoals een stemgids) eerst dat akkoord vragen, dan pas de sessie starten.
