@@ -26,8 +26,8 @@ export function TrainingSplitSheet({ onClose }: { onClose: () => void }) {
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow="Trainingsverdeling" title="Je week richting de GR5" onClose={requestClose} /></div>
             <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-              Hardlopen blijft in het schema: het is een goede aerobe aanvulling en gaat niet ten koste van kracht.
-              De verhouding verschuift wel steeds meer richting echt bergwandelen naarmate de GR5 dichterbij komt.
+              Hardlopen blijft in het schema. Het is een goede aerobe aanvulling en gaat niet ten koste van kracht.
+              Hoe dichter de GR5 komt, hoe meer bergwandelen.
             </p>
             <ul className="mt-3 flex flex-col gap-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
               {PARTS.map((p) => (

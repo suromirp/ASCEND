@@ -26,7 +26,7 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
     return (
       <Card className="flex flex-col gap-1">
         <Eyebrow>Dalen</Eyebrow>
-        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen dalingen gemeten. Je doel vraagt bergaf, dus je lijn komt hier zodra een tocht of loop er een meet.</p>
+        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen dalingen gemeten. Je doel vraagt bergaf. Je lijn komt hier zodra een tocht of loop een daling meet.</p>
       </Card>
     );
   }
@@ -35,7 +35,7 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
       <div>
         <Eyebrow>Dalen</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Meters bergaf per week. Dalen geeft de meeste spierpijn op een bergtocht; je benen wennen eraan door het te blijven doen.
+          Meters bergaf per week. Dalen geeft de meeste spierpijn op een bergtocht. Je benen wennen eraan door het te blijven doen.
         </p>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Meters bergaf de laatste ${weeks.length} weken, samen ${formatNumberNL(weeks.reduce((n, w) => n + w.metres, 0), 0)}`}>
@@ -57,11 +57,11 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
         {last4 === 0
           ? 'De laatste vier weken geen meters bergaf vastgelegd.'
-          : <>De laatste vier weken <span className="tabular-nums">{formatNumberNL(last4, 0)}</span> meter bergaf, het meest op één dag <span className="tabular-nums">{formatNumberNL(biggest, 0)}</span> meter.</>}
+          : <>De laatste vier weken <span className="tabular-nums">{formatNumberNL(last4, 0)}</span> meter bergaf. Het meest op één dag: <span className="tabular-nums">{formatNumberNL(biggest, 0)}</span> meter.</>}
         {routeDayDescent ? <> Een gewone dag van je hoofddoel gaat zo'n <span className="tabular-nums">{formatNumberNL(routeDayDescent, 0)}</span> meter omlaag.</> : null}
       </p>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        In Nederland zijn dalen schaars. De trap, de training Heuvelsprints en afdalen en elke heuvel tellen allemaal. Op de loopband daal je niet.
+        In Nederland zijn dalen schaars. De trap, de training Heuvelsprints en afdalen en elke heuvel tellen mee. Op de loopband daal je niet.
       </p>
     </Card>
   );

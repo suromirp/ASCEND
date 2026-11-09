@@ -38,7 +38,7 @@ export function DeviationBlock({ deviation }: { deviation: HeartRateDeviation })
       <div className="mt-2"><Chart d={deviation} /></div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         <span className="flex items-center gap-1.5"><span className="h-2.5 w-4 rounded-[3px]" style={{ background: 'color-mix(in srgb, var(--color-ink-dim) 14%, transparent)' }} aria-hidden />je normaal</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-ink-dim)' }} aria-hidden />vorige loopjes</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-ink-dim)' }} aria-hidden />vorige lopen</span>
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-warning)' }} aria-hidden />deze loop</span>
       </div>
       <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{deviation.basisText}</p>

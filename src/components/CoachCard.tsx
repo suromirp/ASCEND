@@ -146,7 +146,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
         eyebrow: weekLoad.kind === 'rest' ? 'Rustweek' : 'Deze week nog een keer',
         ask: 'always',
         alwaysAsk: true,
-        declined: 'Prima, je week blijft zoals hij was.',
+        declined: 'Je week blijft zoals hij was.',
         onStored: () => void respondToAdvice(advice, 'accepted'),
       });
       return;
@@ -156,7 +156,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
         () => planHorizonChange({
           title: NO_GOAL_WAVES_TITLE,
           why: 'Je plant zonder doel in neutrale golven.',
-          explanation: 'Zonder doel plant ASCEND je weken in neutrale golven, zonder bergtocht en zonder rugzak. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
+          explanation: 'Zonder doel plant ASCEND je weken in neutrale golven, zonder bergtocht en zonder rugzak. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
           trigger: 'direction_changed',
           settings: wavesConsentPatch,
           notes: noGoalWavesLines(),
@@ -166,7 +166,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
           ask: 'always',
           alwaysAsk: true,
           notesTitle: 'Wat er verandert',
-          declined: 'Prima, je plan blijft zoals het is. ASCEND vraagt er niet meer naar.',
+          declined: 'Je plan blijft zoals het is. ASCEND vraagt er niet meer naar.',
           onStored: () => void respondToAdvice(advice, 'accepted'),
           onDeclined: () => void respondToAdvice(advice, 'declined'),
         },
