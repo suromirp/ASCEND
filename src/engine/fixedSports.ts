@@ -44,6 +44,23 @@ export function fixedSessionsForWeek(weekStart: string, handling: SportHandlingM
 
 // De vaste afspraken die in een vrije periode of tocht vallen en dus vervallen, voor een noot in het voorstel.
 export function fixedInLeave(from: string, until: string, handling: SportHandlingMap | undefined, leave: readonly LeavePeriod[] | undefined): { sport: CountedSportId; date: string; period: LeavePeriod }[] {
+  return fixedOnDays(from, until, handling, leave, leaveBlocks);
+}
+
+// Een dag zonder sportschool (en niet strenger, zoals een vakantie of tocht): daar blijft een vaste afspraak
+// staan. Sport bij een club is geen sportschool en ASCEND weet niet of je er bent.
+function noGymKeeps(date: string, leave: readonly LeavePeriod[] | undefined): LeavePeriod | undefined {
+  if (leaveBlocks(date, leave)) return undefined;
+  return (leave ?? []).find((p) => p.kind === 'no_gym' && date >= p.startDate && date <= p.endDate);
+}
+
+// De vaste afspraken die in een periode zonder sportschool vallen en blijven staan, voor een noot in het
+// voorstel: zo zie je ze voor je Akkoord geeft en kun je er een overslaan in Week.
+export function fixedKeptInNoGym(from: string, until: string, handling: SportHandlingMap | undefined, leave: readonly LeavePeriod[] | undefined): { sport: CountedSportId; date: string; period: LeavePeriod }[] {
+  return fixedOnDays(from, until, handling, leave, noGymKeeps);
+}
+
+function fixedOnDays(from: string, until: string, handling: SportHandlingMap | undefined, leave: readonly LeavePeriod[] | undefined, pick: (date: string, leave: readonly LeavePeriod[] | undefined) => LeavePeriod | undefined): { sport: CountedSportId; date: string; period: LeavePeriod }[] {
   const out: { sport: CountedSportId; date: string; period: LeavePeriod }[] = [];
   const read = parseSportHandling(handling).value ?? {};
   for (let w = mondayOfWeek(from); w <= until; w = addDays(w, 7)) {
@@ -52,7 +69,7 @@ export function fixedInLeave(from: string, until: string, handling: SportHandlin
       if (h?.role !== 'fixed') continue;
       for (const slot of h.fixed ?? []) {
         const date = addDays(w, slot.day - 1);
-        const period = date >= from && date <= until ? leaveBlocks(date, leave) : undefined;
+        const period = date >= from && date <= until ? pick(date, leave) : undefined;
         if (period) out.push({ sport: s.id, date, period });
       }
     }
@@ -147,6 +164,11 @@ export function fixedLeaveNote(item: { sport: CountedSportId; date: string; peri
   const day = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'][(new Date(`${item.date}T00:00:00Z`).getUTCDay() + 6) % 7];
   const where = item.period.kind === 'trek' ? 'op je tocht' : 'in je vakantie';
   return `${anySportDefinition(item.sport).label} op ${day} ${Number(item.date.slice(8, 10))} ${MONTHS[Number(item.date.slice(5, 7)) - 1]} valt ${where} en vervalt.`;
+}
+
+export function fixedNoGymNote(item: { sport: CountedSportId; date: string }): string {
+  const day = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'][(new Date(`${item.date}T00:00:00Z`).getUTCDay() + 6) % 7];
+  return `${anySportDefinition(item.sport).label} op ${day} ${Number(item.date.slice(8, 10))} ${MONTHS[Number(item.date.slice(5, 7)) - 1]} blijft staan. Ben je er niet, sla hem dan over in Week.`;
 }
 
 const MONTHS = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
