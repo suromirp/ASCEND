@@ -38,6 +38,7 @@ import type { CommitOutcome, UndoRestore } from './appDataTypes';
 import { bumpPlanRevision, planSettled } from './planningSync';
 import type { Dispatch, SetStateAction } from 'react';
 import { mainGoalIsMountain } from '../engine/mountainMuscles';
+import { legComplaintOpen } from '../engine/legSpots';
 
 export function useBodyAndLeave(deps: {
   program: Program | null;
@@ -209,12 +210,13 @@ export function useBodyAndLeave(deps: {
           slotDays,
           minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
           newId: () => `leave-${n++}`,
+          noGymLegComplaint: legComplaintOpen(injuryNotes, today),
           until: addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, 21),
           leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
         };
       },
     });
-  }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
+  }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig, injuryNotes]);
 
   const applyLeave = useCallback(async (plan: LeavePlan): Promise<'applied' | 'stale'> => {
     await planSettled();

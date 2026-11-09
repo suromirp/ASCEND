@@ -243,7 +243,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                       <Segmented tall label="Hoeveel" value={noGym.amount} onChange={(v) => setGym({ amount: v })} options={[{ value: 'light', label: 'Licht' }, { value: 'normal', label: 'Gewoon' }]} />
                     </div>
                     <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                      {noGym.amount === 'light' ? 'Twee keer lopen per week, korter en rustig. Het advies.' : 'Je looptrainingen blijven staan, korter en rustig.'}
+                      {noGym.amount === 'light' ? 'Twee keer lopen per week, korter en rustig. Het advies.' : 'Je looptrainingen zoals gepland, alleen zonder sportschool.'}
                     </p>
                   </div>
                   <div>
@@ -258,7 +258,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                   <div className="flex items-center gap-3">
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Heuvels in de buurt</span>
-                      <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Loop rustig heuvels op en beheerst af.{mountainGoal ? ' Goed voor je bergdoel.' : ''}</span>
+                      <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Eén loop per week wordt een heuveltraining. Heb je een klacht aan je knie of been, dan een rustige heuvelloop.{mountainGoal ? ' Goed voor je bergdoel.' : ''}</span>
                     </span>
                     <Toggle checked={noGym.hills} onChange={(on) => setGym({ hills: on })} label="Heuvels in de buurt" />
                   </div>

@@ -498,6 +498,21 @@ function buildTemplates(): SessionTemplate[] {
         { id: 'bw4', exerciseName: 'Bodyweight Calf Raise', sets: 3, reps: '15-20', priority: 'accessory' },
       ],
     },
+    // Zonder sportschool met Heuvels in de buurt (engine/noGym.ts): een rustige loop met een heuvel erin,
+    // voor de weken waarin sprints niet passen. Geen vaste dag: alleen een periode zet hem neer.
+    {
+      id: 'tpl_hill_easy',
+      name: 'Rustige heuvelloop',
+      type: 'cardio',
+      focus: 'Rustig lopen met een heuvel erin',
+      durationVariants: { full: 35, short: 25 },
+      cardioTarget: { zone: 'RPE 3-4, ook bergop' },
+      notes:
+        'Een rustige loop met een heuvel of een trap erin. Bergop in je eigen rustige tempo, bergaf wandelend of in kleine pasjes. Geen afdalen in tempo en geen sprints.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'light', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'moderate' },
+    },
     {
       id: 'tpl_ruck_walk',
       name: 'Rugzakwandeling',

@@ -71,22 +71,16 @@ describe('what an edit of a period touches', () => {
     expect(withNote([holiday], holiday.id, '   ')[0]).toEqual({ id: 'vakantie', kind: 'no_training', startDate: '2026-10-27', endDate: '2026-10-29' });
   });
 
-  it('only Heuvels in de buurt on a period without a gym is saved at once, not an empty proposal', () => {
+  it('Heuvels in de buurt on a period without a gym changes the planning, so it is a proposal (one run per week is a hill training)', () => {
     const away: LeavePeriod = { id: 'weg', kind: 'no_gym', startDate: '2026-10-27', endDate: '2026-10-29', noGym: { amount: 'light', strength: 'bodyweight', hills: false } };
     const hillsOn = editedPeriod(away, { kind: 'no_gym', startDate: away.startDate, endDate: away.endDate, note: '', noGym: { amount: 'light', strength: 'bodyweight', hills: true } });
-    expect(leaveEditScope(away, hillsOn)).toBe('note');
-    expect(leaveWordsChange(away, hillsOn).title).toBe('Heuvels in de buurt aan');
-    expect(leaveWordsChange(away, hillsOn).line).toBe('Alleen Heuvels in de buurt is anders. Dat bewaar je meteen; je planning blijft zoals ze is.');
-    expect(leaveWordsChange(hillsOn, away).title).toBe('Heuvels in de buurt uit');
-    expect(leaveWordsChange(away, { ...hillsOn, note: 'Bergen' }).title).toBe('Periode bijgewerkt');
+    expect(leaveEditScope(away, hillsOn)).toBe('plan');
+    expect(JSON.stringify(leaveKey([hillsOn]))).not.toBe(JSON.stringify(leaveKey([away])));
+    expect(leaveEditScope(away, { ...away, note: 'Bergen' })).toBe('note');
     expect(leaveWordsChange(away, { ...away, note: 'Bergen' }).title).toBe('Notitie bewaard');
-    // How much or the strength still goes through a proposal.
-    expect(leaveEditScope(away, { ...hillsOn, noGym: { amount: 'normal', strength: 'bodyweight', hills: true } })).toBe('plan');
+    // How much or the strength goes through a proposal too.
+    expect(leaveEditScope(away, { ...away, noGym: { amount: 'normal', strength: 'bodyweight', hills: false } })).toBe('plan');
     expect(leaveEditScope(away, { ...away, noGym: { amount: 'light', strength: 'drop', hills: false } })).toBe('plan');
-    // Saved: the hills on the same period, the rest as it was, the key of the planning the same.
-    const saved = withNote([away], away.id, '', true);
-    expect(saved).toEqual([{ ...away, noGym: { amount: 'light', strength: 'bodyweight', hills: true } }]);
-    expect(JSON.stringify(leaveKey(saved))).toBe(JSON.stringify(leaveKey([away])));
     // A period of another kind gets no choices for hills.
     expect(withNote([holiday], holiday.id, 'Weekje weg', true)).toEqual([holiday]);
   });

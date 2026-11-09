@@ -33,7 +33,7 @@ import { findingKey, lockLevel, validateWeeks, type CheckInput, type Repair } fr
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { templateSport } from './sports';
 import { restWeekState } from './restWeek';
-import { PHASE_TAPER } from './programLayout';
+import { PHASE_BASIS, PHASE_TAPER } from './programLayout';
 import { hasRole, idHasRole, idIsTestOrRace } from './templateRoles';
 import { applyNoGymDays } from './noGym';
 
@@ -47,6 +47,8 @@ export interface LeaveStepInput {
   newId: () => string;
   // Hiking switched off (Instellingen, Sporten): no extra walk on a free day.
   hikingEnabled?: boolean;
+  // A knee or leg complaint at Matig or worse: no hill sprints in a period without a gym.
+  legComplaint?: boolean;
 }
 
 export interface LeaveStepResult {
@@ -65,7 +67,16 @@ export function applyLeaveBlocks(all: PlannedSession[], input: LeaveStepInput): 
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const days = leaveDays(periods);
   // Without a gym first: what it lets go is no longer in the way of a walk.
-  const noGym = applyNoGymDays({ sessions: all, days, today, goalDay, templates, logged, newId: input.newId });
+  // A week for gentle hills: the base phase, the taper or a rest week (engine/noGym.ts).
+  const gentleWeek = (week: string) => {
+    if (!program) return false;
+    const position = resolveProgramWeek(program, week);
+    if (!position) return false;
+    if (position.phase.id === PHASE_BASIS || position.phase.id === PHASE_TAPER) return true;
+    const rest = restWeekState(program, week, [], today);
+    return rest.isRestWeek && !rest.skipped;
+  };
+  const noGym = applyNoGymDays({ sessions: all, days, today, goalDay, templates, logged, newId: input.newId, gentleWeek, legComplaint: input.legComplaint, restDay });
   let sessions = noGym.sessions;
   const repairs: Repair[] = [...noGym.repairs];
 

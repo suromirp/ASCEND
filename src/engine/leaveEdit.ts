@@ -11,8 +11,7 @@
 import type { LeaveKind, LeavePeriod, NoGymDetails } from '../models/leave';
 import { resolveNoGym } from './noGymDetails';
 
-// 'note': only the words of the period (its note, and of a period without a gym
-// the hills) are different; they are saved at once.
+// 'note': only the words of the period (its note) are different; they are saved at once.
 export type LeaveEditScope = 'none' | 'note' | 'plan';
 
 export interface LeaveEditDraft {
@@ -24,33 +23,27 @@ export interface LeaveEditDraft {
   noGym?: NoGymDetails;
 }
 
-// What the planning reads of a period without a gym: how much and the strength.
-// The hills are words only (models/leave.ts#NoGymDetails).
+// What the planning reads of a period without a gym: how much, the strength and the hills (since
+// docs/beslissingen/2026-11-09-zonder-sportschool-beter.md one run per week is a hill training).
 const sameNoGym = (a: LeavePeriod, b: LeavePeriod) => {
   if (a.kind !== 'no_gym') return true;
   const x = resolveNoGym(a);
   const y = resolveNoGym(b);
-  return x.amount === y.amount && x.strength === y.strength;
+  return x.amount === y.amount && x.strength === y.strength && x.hills === y.hills;
 };
-const hillsOf = (p: LeavePeriod) => p.kind === 'no_gym' && resolveNoGym(p).hills;
 
 const cleanNote = (note: string | undefined) => (note ?? '').trim();
 
 // What the edit touches: nothing, only the note, or the planning.
 export function leaveEditScope(before: LeavePeriod, after: LeavePeriod): LeaveEditScope {
   if (before.kind !== after.kind || before.startDate !== after.startDate || before.endDate !== after.endDate || !sameNoGym(before, after)) return 'plan';
-  return cleanNote(before.note) === cleanNote(after.note) && hillsOf(before) === hillsOf(after) ? 'none' : 'note';
+  return cleanNote(before.note) === cleanNote(after.note) ? 'none' : 'note';
 }
 
 // The words of an edit that only changes words: the line in the sheet, and the
 // title and reason of the message after saving.
-export function leaveWordsChange(before: LeavePeriod, after: LeavePeriod): { line: string; title: string; why: string } {
-  const note = cleanNote(before.note) !== cleanNote(after.note);
-  const hills = hillsOf(before) !== hillsOf(after);
-  const kept = 'Dat bewaar je meteen; je planning blijft zoals ze is.';
-  if (note && hills) return { line: `Alleen de notitie en Heuvels in de buurt zijn anders. ${kept}`, title: 'Periode bijgewerkt', why: 'Alleen de notitie en Heuvels in de buurt van je periode zijn anders.' };
-  if (hills) return { line: `Alleen Heuvels in de buurt is anders. ${kept}`, title: `Heuvels in de buurt ${hillsOf(after) ? 'aan' : 'uit'}`, why: 'Alleen Heuvels in de buurt van je periode is anders.' };
-  return { line: `Alleen de notitie is anders. ${kept}`, title: 'Notitie bewaard', why: 'Alleen de notitie van je periode is anders.' };
+export function leaveWordsChange(_before: LeavePeriod, _after: LeavePeriod): { line: string; title: string; why: string } {
+  return { line: 'Alleen de notitie is anders. Dat bewaar je meteen; je planning blijft zoals ze is.', title: 'Notitie bewaard', why: 'Alleen de notitie van je periode is anders.' };
 }
 
 // The period as it will be: the same id, so what it moved, let go or placed is
@@ -66,15 +59,15 @@ export function editedPeriod(before: LeavePeriod, draft: LeaveEditDraft): LeaveP
 
 // The part of the periods the planning reads, for the key that decides whether
 // the planning runs again: id, kind, days, and of a tocht its terrain and
-// importance, and of a period without a gym how much and the strength. The note,
-// the name and the hills are words only, so they are left out.
+// importance, and of a period without a gym how much, the strength and the hills. The note
+// and the name are words only, so they are left out.
 export function leaveKey(periods: LeavePeriod[] | undefined): unknown[] {
-  return (periods ?? []).map((p) => [p.id, p.kind, p.startDate, p.endDate, p.trek?.terrain ?? null, p.trek?.importance ?? null, ...(p.kind === 'no_gym' ? [resolveNoGym(p).amount, resolveNoGym(p).strength] : [])]);
+  return (periods ?? []).map((p) => [p.id, p.kind, p.startDate, p.endDate, p.trek?.terrain ?? null, p.trek?.importance ?? null, ...(p.kind === 'no_gym' ? [resolveNoGym(p).amount, resolveNoGym(p).strength, resolveNoGym(p).hills] : [])]);
 }
 
 // The stored list with a new note on one period. An empty note goes. With
 // `hills`, a period without a gym gets that choice too; how much and the
-// strength stay as they were.
+// strength stay as they were. (Only a note is saved this way now: the hills go through a proposal.)
 export function withNote(periods: LeavePeriod[], periodId: string, note: string, hills?: boolean): LeavePeriod[] {
   const clean = cleanNote(note);
   return periods.map((p) => {

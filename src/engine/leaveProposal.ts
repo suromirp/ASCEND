@@ -25,7 +25,7 @@ import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, de
 import { trekLightDaysBefore } from './trekTaper';
 import { planPass, type PlanPassContext } from './planPass';
 import { fixedInLeave, fixedKeptInNoGym, fixedLeaveNote, fixedNoGymNote } from './fixedSports';
-import { lockLevel, type Finding } from './weekValidator';
+import { REPAIR_REASON, lockLevel, type Finding } from './weekValidator';
 import { isNoGymRun, isNoGymStrength } from './noGym';
 import { idIsTestOrRace } from './templateRoles';
 import { resolveNoGym } from './noGymDetails';
@@ -92,8 +92,8 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const base = new Map(start.map((s) => [s.id, s]));
   // New sessions get ids of their own here, so they can never be mistaken for a stored one.
   let drafts = 0;
-  const result = planPass(start, { ...input.context(periodsAfter), newId: () => `leave-draft-${++drafts}`, leaveReshuffle: mode === 'add' && period.kind === 'no_training', leaveLimit: windowEnd });
-
+  const passContext = { ...input.context(periodsAfter), newId: () => `leave-draft-${++drafts}`, leaveReshuffle: mode === 'add' && period.kind === 'no_training', leaveLimit: windowEnd };
+  const result = planPass(start, passContext);
   const reasonFor = (session: PlannedSession | undefined, date: string, what: 'remove' | 'move' | 'add', back = false): string => {
     if (back) return what === 'remove' ? `Hoorde bij ${former} zoals die was: ${dayText(date)} vervalt.` : `Terug naar ${dayText(date)}, ${former} ligt nu anders.`;
     if (mode === 'remove') return what === 'remove' ? `Hoorde bij ${LEAVE_KIND_LABEL[period.kind].toLowerCase()}: ${dayText(date)} vervalt.` : `Terug naar ${dayText(date)}, je periode is weg.`;
@@ -104,6 +104,9 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     if (label?.kind === 'off') return `Vakantie: geen training op ${dayText(date)}.`;
     if (label?.kind === 'trek') return `Tocht: op ${dayText(date)} alleen de wandeling.`;
     if (label?.kind === 'light') return `${label.title}: ${dayText(date)} blijft licht.`;
+    // A repair of the week check on a day of no period: say what the check found, not that the period did it.
+    const found = session ? result.repairs.filter((r) => r.sessionId === session.id && r.rule !== 'LEAVE-PLACE' && r.rule !== 'LEAVE-AROUND').pop() : undefined;
+    if (found && !label) return `${nameOf(session!.templateId)} op ${dayText(date)}: ${REPAIR_REASON[found.rule]}.`;
     return session ? `${nameOf(session.templateId)} past niet meer op ${dayText(date)} door je periode.` : 'Past bij je periode.';
   };
 
@@ -246,7 +249,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
       if (isNoGymStrength(t)) notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} staat vast. Die blijft staan, ook zonder sportschool.`);
       else if (isNoGymRun(t)) notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} staat vast. Die blijft staan${light ? ' en telt mee voor je twee keer lopen' : ''}.`);
     }
-    if (resolveNoGym(period).hills) notes.push(`Heuvels in de buurt: neem bij een rustige loop de heuvels rustig op en beheerst af.${input.mountainGoal ? ' Goed voor je benen in de bergen.' : ''}`);
+    if (resolveNoGym(period).hills) notes.push(`Heuvels in de buurt: één loop per week is een heuveltraining. Neem bij je andere loopjes de heuvels rustig op en beheerst af.${input.mountainGoal ? ' Goed voor je benen in de bergen.' : ''}`);
   }
   // A fixed appointment of a sport (engine/fixedSports.ts) in a holiday or on a tocht lapses, the advice: say
   // which, so it is never silent. In a period without a gym it stays, and the proposal says that too.
@@ -267,9 +270,12 @@ function explain(mode: 'add' | 'remove', period: LeavePeriod, count: number, cha
       : 'De periode is verwijderd.';
   }
   if (mode === 'remove') return 'Wat de periode verschoof of liet vervallen, staat weer op zijn plek.';
-  if (period.kind === 'no_gym') return resolveNoGym(period).amount === 'light'
-    ? 'Je loopt twee keer per week, korter en rustig, zonder opbouw. Kracht in de sportschool wordt een korte sessie met je eigen gewicht of vervalt, zoals je koos.'
-    : 'Je loopjes blijven staan, korter en rustig, zonder opbouw. Kracht in de sportschool wordt een korte sessie met je eigen gewicht of vervalt, zoals je koos.';
+  if (period.kind === 'no_gym') {
+    const d = resolveNoGym(period);
+    const runs = d.amount === 'light' ? 'Je loopt twee keer per week, korter en rustig.' : 'Je looptrainingen blijven zoals gepland, alleen zonder sportschool.';
+    const hills = d.hills ? ' Eén loop per week is een heuveltraining.' : '';
+    return `${runs}${hills} Kracht in de sportschool wordt een korte sessie met je eigen gewicht of vervalt, zoals je koos. Tussen twee krachtsessies zit minstens 48 uur.`;
+  }
   if (period.kind === 'no_training') return 'Op je vakantiedagen staat geen training meer. Wat er stond, schuift naar een andere dag van die week of vervalt, binnen de gewone regels voor rust tussen zware dagen.';
   if (period.kind === 'trek' && period.trek?.importance === 'goal') return 'Elke tochtdag is een wandeldag met je rugzak. De dagen ervoor blijven licht, zodat je fris vertrekt, en de dag erna ook. Zware beendagen houden de gewone rust tot en na de tocht.';
   if (period.kind === 'trek') return 'Elke tochtdag is een wandeldag met je rugzak. De dag ervoor en erna blijft licht, en zware beendagen houden de gewone rust tot en na de tocht.';
