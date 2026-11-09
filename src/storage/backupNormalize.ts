@@ -11,7 +11,7 @@ import type { AppSettings } from './database';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
-import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
+import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSetSkill, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
 import { sanitizeRoutePlan, sanitizeSoloPlan } from '../engine/routePlan';
 import { CURRENT_BACKUP_SCHEMA_VERSION, type NormalizedBackupData } from './backupTypes';
 import { BackupMessageError } from './backupMessage';
@@ -63,7 +63,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped)?.map(cleanPlannedCatchUp).map(migratePlannedFixed).map(migratePlannedAmount);
-  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogSetAsked).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogZone2Pieces).map(migrateLogRpeAssumed).map(migrateLogCountedSport).map(migrateLogCustomSport).map(migrateLogLinkedLater);
+  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogSetAsked).map(migrateLogSetSkill).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogZone2Pieces).map(migrateLogRpeAssumed).map(migrateLogCountedSport).map(migrateLogCustomSport).map(migrateLogLinkedLater);
   const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped)?.map(migrateInjuryNote);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;
   const settings = cleanSettings(raw.settings, skipped);

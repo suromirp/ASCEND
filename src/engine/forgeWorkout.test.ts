@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { EXERCISES, exerciseById } from '../data/exercises';
+import { FAMILY_ONLY } from '../data/exerciseFamilies';
 import type { ExercisePrescription } from '../models/training';
 import { demoStrengthLogs, demoWeights } from './fixtures/strengthLogs';
 import {
@@ -378,10 +379,16 @@ describe('ruilen', () => {
     expect(g.other.map((e) => e.id)).toEqual(expect.arrayContaining(['dip', 'push-up']));
     expect(swapOptions(exerciseById('bench-press'), profile).slice(0, g.same.length).map((e) => e.id)).toEqual(g.same.map((s) => s.exercise.id));
   });
-  it('Dips heeft geen echte vervanger', () => {
+  it('Dips heeft alleen zijn eigen varianten van de ladder als echte vervanger', () => {
     const g = swapGroups(exerciseById('dip'), profile);
-    expect(g.same).toEqual([]);
+    expect(g.same.map((s) => s.exercise.id)).toEqual(['negative-dip', 'weighted-dip']);
     expect(g.other.length).toBeGreaterThan(0);
+  });
+  it('een ladderstap uit FAMILY_ONLY staat nooit in Zelfde spier, anders', () => {
+    for (const ex of EXERCISES) {
+      for (const e of swapGroups(ex, profile, [], 50).other) expect(FAMILY_ONLY.has(e.id), `${ex.id}: ${e.id}`).toBe(false);
+    }
+    expect(swapGroups(exerciseById('push-up'), profile).same[0].exercise.id).toBe('incline-push-up');
   });
   it('Hack Squat is een echte vervanger van de back squat; bij het rek bezet geen stangoefening zonder stang', () => {
     expect(swapGroups(exerciseById('back-squat'), profile).same.map((s) => s.exercise.id)).toContain('hack-squat');

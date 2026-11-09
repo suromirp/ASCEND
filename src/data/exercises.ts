@@ -14,6 +14,7 @@
 import type { Exercise, MovementPattern, MuscleGroup, Resistance } from '../models/exercise';
 import { FAMILY, NUANCE } from './exerciseFamilies';
 import { EXERCISE_GUIDES } from './exerciseGuides';
+import { LADDER_PLACE } from './skillLadders';
 
 type M = MuscleGroup;
 
@@ -45,6 +46,11 @@ const FAILURE_RISK = new Set([
   'pause-back-squat',
 ]);
 
+// Calisthenics (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md): een houding telt in seconden,
+// een archer push-up per kant. De plek op een ladder komt uit data/skillLadders.ts.
+const HOLD = new Set(['dead-hang', 'support-hold']);
+const PER_SIDE = new Set(['archer-push-up']);
+
 function ex(
   id: string,
   name: string,
@@ -57,7 +63,7 @@ function ex(
   cues: string[],
   bodyweightFraction?: number,
 ): Exercise {
-  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(FAMILY.has(id) ? { family: FAMILY.get(id) } : {}), ...(EXERCISE_GUIDES[id] ? { guide: EXERCISE_GUIDES[id] } : {}), ...(NUANCE.has(id) ? { nuance: [...NUANCE.get(id)!] } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}) };
+  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(FAMILY.has(id) ? { family: FAMILY.get(id) } : {}), ...(EXERCISE_GUIDES[id] ? { guide: EXERCISE_GUIDES[id] } : {}), ...(NUANCE.has(id) ? { nuance: [...NUANCE.get(id)!] } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}), ...(HOLD.has(id) ? { measure: 'hold' as const } : {}), ...(PER_SIDE.has(id) ? { perSide: true } : {}), ...(LADDER_PLACE.has(id) ? { ladder: { ...LADDER_PLACE.get(id)! } } : {}) };
 }
 
 export const EXERCISES: Exercise[] = [
@@ -340,6 +346,38 @@ export const EXERCISES: Exercise[] = [
     'Let op: ellebogen schuin naar achteren, niet wijd.',
     'Vaak fout: je heupen laten zakken.',
   ], 0.65),
+  // De push-upladder (data/skillLadders.ts). Het deel van je gewicht komt uit de meting van Wurm en Ebben
+  // (2010), één congresstudie, dus een schatting; diamond en archer zijn niet gemeten en staan op de push-up.
+  ex('incline-push-up', 'Incline Push-Up', ['Low Incline Push-Up', 'Bench Push-Up', 'Push-up met handen op een bank'], ['chest'], ['front_delts', 'core', 'triceps'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: handen op een bank van ongeveer 30 cm, zak met je borst naar de rand en duw terug.',
+    'Let op: je lichaam blijft een rechte lijn van hiel tot hoofd.',
+    'Vaak fout: met je heupen eerst omhoog komen.',
+  ], 0.55),
+  ex('decline-push-up', 'Decline Push-Up', ['Feet Elevated Push-Up', 'Push-up met voeten hoog'], ['chest'], ['front_delts', 'core', 'triceps'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: voeten op een bank van ongeveer 30 cm, handen op de grond, zak en duw terug.',
+    'Let op: buik en billen aan, zodat je rug niet doorzakt.',
+    'Vaak fout: je hoofd naar de grond steken in plaats van je borst.',
+  ], 0.7),
+  ex('knee-push-up', 'Knee Push-Up', ['Kneeling Push-Up', 'Push-up op de knieën'], ['chest'], ['front_delts', 'core', 'triceps'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: op je knieën, handen onder je schouders, zak tot je borst bijna de grond raakt.',
+    'Let op: recht van knie tot hoofd, je billen niet achter je.',
+    'Vaak fout: alleen je hoofd laten zakken en je borst hoog houden.',
+  ], 0.49),
+  ex('incline-push-up-high', 'High Incline Push-Up', ['Counter Push-Up', 'Push-up met handen hoog'], ['chest'], ['front_delts', 'core', 'triceps'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: handen op een aanrecht of hoge bank van ongeveer 60 cm, zak naar de rand en duw terug.',
+    'Let op: hoe verder je voeten naar achteren, hoe zwaarder.',
+    'Vaak fout: je ellebogen wijd laten uitvallen.',
+  ], 0.41),
+  ex('diamond-push-up', 'Diamond Push-Up', ['Close Grip Push-Up', 'Triangle Push-Up'], ['chest', 'triceps'], ['front_delts', 'core'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: duimen en wijsvingers raken elkaar onder je borst, zak en duw terug.',
+    'Let op: ellebogen blijven langs je lichaam.',
+    'Vaak fout: je polsen laten knikken door je handen te ver naar voren te zetten.',
+  ], 0.65),
+  ex('archer-push-up', 'Archer Push-Up', ['Archer Pushup'], ['chest'], ['front_delts', 'core', 'triceps'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: handen wijd, zak naar één hand terwijl de andere arm gestrekt opzij blijft.',
+    'Let op: tel per kant, en wissel na elke set.',
+    'Vaak fout: je heupen laten draaien naar de kant waar je zakt.',
+  ], 0.65),
   ex('machine-chest-press', 'Pin-Loaded Machine Chest Press', ['Chest Press (Machine)', 'Seated Chest Press', 'Borstpers op de machine', 'Machine Chest Press'], ['chest'], ['front_delts', 'triceps'], 'machine_stack', 'push_horizontal', false, [
     'Doen: duw de handgrepen naar voren en laat rustig terugkomen.',
     'Let op: stel de zitting zo in dat de handgrepen op borsthoogte zijn.',
@@ -355,6 +393,21 @@ export const EXERCISES: Exercise[] = [
     'Let op: kom niet dieper dan je schouders prettig vinden.',
     'Vaak fout: te diep zakken met opgetrokken schouders.',
   ], 1),
+  ex('negative-dip', 'Negative Dip', ['Eccentric Dip', 'Negatieve dip'], ['chest'], ['front_delts', 'triceps'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: begin boven op de leuningen en zak in ongeveer 5 seconden tot je bovenarmen waterpas zijn.',
+    'Let op: stap of spring terug naar boven, duw niet omhoog.',
+    'Vaak fout: het laatste stuk laten vallen.',
+  ], 1),
+  ex('weighted-dip', 'Dip With Added Weight', ['Belt Dip', 'Dip met extra gewicht'], ['chest'], ['front_delts', 'triceps'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: de dip met een gewicht aan een riem of in een vest.',
+    'Let op: begin met 2,5 kg en houd dezelfde diepte als zonder gewicht.',
+    'Vaak fout: ondieper gaan zodra het gewicht erbij komt.',
+  ], 1),
+  ex('support-hold', 'Parallel Bar Support Hold', ['Dip Support Hold', 'Support Hold', 'Steunhouding'], ['triceps'], ['chest', 'front_delts', 'core'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: steun met gestrekte armen boven twee leuningen en houd stil.',
+    'Let op: schouders laag, weg van je oren.',
+    'Vaak fout: je schouders laten optrekken en je ellebogen op slot drukken.',
+  ]),
   ex('overhead-press', 'Barbell Overhead Press', ['Overhead Press', 'Overhead Press (Barbell)', 'Standing Barbell Shoulder Press', 'Military Press', 'Barbell Shoulder Press', 'Schouderpers met stang'], ['front_delts'], ['side_delts', 'core', 'upper_back', 'triceps'], 'barbell', 'push_vertical', false, [
     'Doen: stang op je sleutelbeen, duw recht omhoog en je hoofd een stukje naar voren.',
     'Let op: bil en buik aanspannen, ribben naar beneden.',
@@ -574,6 +627,21 @@ export const EXERCISES: Exercise[] = [
     'Let op: zak helemaal tot je armen gestrekt zijn.',
     'Vaak fout: laten vallen in de laatste helft.',
   ], 1),
+  ex('weighted-pull-up', 'Pull-Up With Added Weight', ['Belt Pull-Up', 'Optrekken met extra gewicht'], ['lats'], ['upper_back', 'forearms', 'core', 'biceps'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: de pull-up met een gewicht aan een riem of in een vest.',
+    'Let op: begin met 2,5 kg en houd elke herhaling vanuit een volle hang.',
+    'Vaak fout: korter gaan trekken zodra het gewicht erbij komt.',
+  ], 1),
+  ex('scapular-pull-up', 'Scapular Pull-Up', ['Scap Pull-Up', 'Scapula Pull-Up'], ['lats'], ['upper_back', 'traps', 'forearms'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: hang met gestrekte armen en trek alleen je schouderbladen omlaag, je lichaam komt een stukje omhoog.',
+    'Let op: je ellebogen buigen niet.',
+    'Vaak fout: toch een halve pull-up maken met je armen.',
+  ], 1),
+  ex('dead-hang', 'Dead Hang', ['Bar Hang', 'Passive Hang', 'Hangen aan de stang'], ['forearms'], ['lats', 'upper_back'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: hang stil aan de stang met je handen op schouderbreedte, voeten van de grond.',
+    'Let op: houd je schouders een beetje actief, niet helemaal tegen je oren.',
+    'Vaak fout: gaan zwaaien of je benen optrekken.',
+  ]),
   ex('dumbbell-preacher-curl', 'Dumbbell Preacher Curl', ['Preacher Curl (Dumbbell)', 'Single Arm Dumbbell Preacher Curl'], ['biceps'], ['forearms'], 'dumbbell', 'isolation_arm', false, [
     'Doen: bovenarm op het schuine kussen, buig de elleboog en laat rustig helemaal zakken.',
     'Let op: je bovenarm blijft op het kussen liggen.',
