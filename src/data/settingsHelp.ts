@@ -1351,7 +1351,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Flink', text: 'ASCEND kijkt naar alle werkbare dagen van de weken rond je vakantie, ook over de weekgrens, en kiest de indeling met genoeg rust tussen zware beendagen en zo min mogelijk dubbele dagen. Wat niet past, vervalt met één zin erbij.' },
       { head: 'Weinig', text: 'een training schuift alleen naar de dichtstbijzijnde dag van zijn eigen week die past, of vervalt.' },
       { head: 'Altijd', text: 'twee zware beendagen staan nooit binnen 48 uur, de lange duurloop telt mee, en wat je zelf vastzette blijft staan.' },
-      { head: 'Geldt voor', text: 'vakanties zonder training. Je ziet het altijd eerst in het voorstel.' },
+      { head: 'Geldt voor', text: 'een vakantie zonder training die je hierna toevoegt of wijzigt. Je ziet het altijd eerst in het voorstel; een vakantie die al staat, schuift niet om.' },
     ],
   },
   zonderSportschool: {

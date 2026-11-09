@@ -131,3 +131,31 @@ describe('the same two holidays, one after the other, each a proposal with Akkoo
     expect(planPass(afterSecond, context(both)).repairs).toEqual([]);
   });
 });
+
+describe('what the arrangement never touches', () => {
+  const mine = (id: string, templateId: string, date: string, extra: Partial<PlannedSession> = {}): PlannedSession => ({ id, templateId, scheduledDate: date, weekStartDate: '2026-11-09', status: 'planned', order: 0, ...extra });
+  const guarded: PlannedSession[] = [
+    mine('yours', 'tpl_lower_a', '2026-11-11', { lock: { by: 'user', at: 'x' } as never }),
+    mine('race-block', 'tpl_easy_run', '2026-11-10', { raceBlock: true } as never),
+    mine('skipped-by-you', 'tpl_upper_a', '2026-11-13', { status: 'skipped', lock: { by: 'user', at: 'x' } as never }),
+    mine('other-proposal', 'tpl_upper_b', '2026-11-10', { lock: { by: 'proposal', proposalId: 'p-ander', at: 'x' } as never, leave: { periodId: 'ander', role: 'moved', from: '2026-11-12' } }),
+  ];
+  for (const reshuffle of [true, false]) {
+    it(`a lock of yours, a race block, a skip of yours and another proposal's row stay (reshuffle ${reshuffle})`, () => {
+      const r = planPass([...plan, ...guarded], context(both, { leaveReshuffle: reshuffle, leaveLimit: '2026-11-30' }));
+      expect(r.repairs.filter((x) => guarded.some((g) => g.id === x.sessionId) && x.rule === 'LEAVE-AROUND')).toEqual([]);
+      for (const g of guarded) expect(r.sessions.find((s) => s.id === g.id)).toEqual(g);
+    });
+  }
+  it('stays inside the window of the proposal', () => {
+    const edge = planPass(plan, context(both, { leaveReshuffle: true, leaveLimit: '2026-11-22' }));
+    const after = edge.sessions.filter((s) => s.scheduledDate > '2026-11-22');
+    expect(after).toEqual(plan.filter((s) => s.scheduledDate > '2026-11-22'));
+  });
+  it('a long plan up to the goal day stays fast', () => {
+    const weeks = Array.from({ length: 37 }, (_, i) => mk(addDays('2026-11-09', i * 7), WEEK_A)).flat();
+    const started = Date.now();
+    planPass([...plan.filter((s) => s.scheduledDate < TODAY), ...weeks], context(both, { leaveReshuffle: true, leaveLimit: '2026-12-02' }));
+    expect(Date.now() - started).toBeLessThan(4000);
+  });
+});

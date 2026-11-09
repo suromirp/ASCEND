@@ -16,13 +16,13 @@ De indeling kiest in deze volgorde:
 
 Een rustdag die de planner koos (de Herstelwandeling) blokkeert geen dag; een rustdag die jij instelde wel.
 
-Wat vervalt, krijgt één zin: "Rond je vakantie is er geen dag over met 48 uur rust tot de volgende zware beendag." voor een beenzware training, en "Rond je vakantie is er geen dag meer waarop deze erbij past." voor de rest. Die zin staat in het voorstel en in de regel van Planning bijgewerkt. Wat verschuift krijgt "Past hier het best rond je vakantie, met genoeg rust tussen zware beendagen."
+Wat vervalt, krijgt één zin: "Rond je vakantie is er geen dag meer waarop deze past." Wat verschuift: "Past hier het best rond je vakantie." De zinnen zijn bewust neutraal, want wat de doorslag gaf (rust tussen zware dagen, een volle dag, de week) verschilt per training. Ze staan in het voorstel en in de regel van Planning bijgewerkt.
 
 Wat het voorstel mag veranderen: bij Akkoord voor een nieuwe vakantie zonder training deelt de planner de hele reeks opnieuw in, ook wat een eerdere vakantie na Akkoord neerzette (die trainingen dragen het merk van die vakantie) en wat die liet vervallen. De dagelijkse ronde zonder voorstel zoekt alleen een andere dag voor wat op een vakantiedag staat, nooit meer; dat is wat de weekcontrole al deed.
 
 Instelling "Rond een vakantie schuiven" (Planning, `AppSettings.leaveAround`): Flink (advies) is de indeling hierboven, Weinig laat het aan de weekcontrole, die een training naar de dichtstbijzijnde dag van zijn eigen week zet of laat vervallen. Een achtergebleven sleutel of onbekende waarde leest als Flink.
 
-De zoektocht is deterministisch: de score hangt alleen af van de indeling, de zoektocht begint zowel vanuit wat er staat als vanuit niets, en wat er staat blijft staan tenzij de nieuwe indeling minstens een heel punt beter is. Zo schuift een plan dat al goed is niet opnieuw.
+De zoektocht is deterministisch: de score hangt alleen af van de indeling, de zoektocht begint zowel vanuit wat er staat als vanuit niets, en wat er staat blijft staan tenzij de nieuwe indeling minstens een heel punt beter is. Zo schuift een plan dat al goed is niet opnieuw. De zoektocht rekent alleen over het venster van het voorstel (einde van de vakantie plus 14 dagen), zodat wat het voorstel toont de hele eindstand is, en draait alleen in de eerste beurt van de ronde en met een grens in aantal proeven, zodat een tik niet seconden wacht.
 
 ## Reden
 

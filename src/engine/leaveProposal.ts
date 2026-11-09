@@ -92,7 +92,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const base = new Map(start.map((s) => [s.id, s]));
   // New sessions get ids of their own here, so they can never be mistaken for a stored one.
   let drafts = 0;
-  const result = planPass(start, { ...input.context(periodsAfter), newId: () => `leave-draft-${++drafts}`, leaveReshuffle: mode === 'add' && period.kind === 'no_training' });
+  const result = planPass(start, { ...input.context(periodsAfter), newId: () => `leave-draft-${++drafts}`, leaveReshuffle: mode === 'add' && period.kind === 'no_training', leaveLimit: windowEnd });
 
   const reasonFor = (session: PlannedSession | undefined, date: string, what: 'remove' | 'move' | 'add', back = false): string => {
     if (back) return what === 'remove' ? `Hoorde bij ${former} zoals die was: ${dayText(date)} vervalt.` : `Terug naar ${dayText(date)}, ${former} ligt nu anders.`;

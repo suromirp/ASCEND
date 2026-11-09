@@ -16,9 +16,9 @@
 //
 // Deterministic and idempotent: the score depends on the arrangement alone (a whole number, plus a
 // tie-break of a thousandth for staying close to where things stand), and the search starts from
-// nothing placed and takes only strict improvements in a fixed order. So the result does not depend
-// on where the trainings stood before, and a second run, or the next turn of the planning run,
-// finds nothing better. Nothing here is stored: it is a step
+// nothing placed and takes only strict improvements in a fixed order. The search also starts from what stands,
+// and what stands is kept unless the fresh arrangement is a whole point better. A second run, or the next
+// turn of the planning run, finds nothing better. Nothing here is stored: it is a step
 // of the planning run (engine/planPass.ts), so it is a proposal with Akkoord when you add a
 // holiday, and the Planning bijgewerkt line when the daily run does it.
 //
@@ -40,6 +40,9 @@ export interface LeaveAroundInput {
   // Adding a holiday (a proposal with Akkoord): the whole stretch is arranged again, also what an earlier holiday's
   // Akkoord put somewhere. Absent (the daily run): only what stands on a holiday day gets another day or goes.
   reshuffle?: boolean;
+  // The last day the arrangement may touch: the end of the proposal's window, so what a proposal shows is the whole
+  // result (docs/beslissingen/2026-10-28-voorstel-eindstand.md). Absent: no limit.
+  limit?: string;
 }
 
 export interface LeaveAroundResult {
@@ -65,9 +68,9 @@ const MAX_PASSES = 8;
 // different arrangements judged the search keeps the best it has.
 const MAX_JUDGED = 2500;
 
-const MOVE_REASON = 'Past hier het best rond je vakantie, met genoeg rust tussen zware beendagen.';
-const DROP_LEG_REASON = 'Rond je vakantie is er geen dag over met 48 uur rust tot de volgende zware beendag.';
-const DROP_REASON = 'Rond je vakantie is er geen dag meer waarop deze erbij past.';
+// Neutral on purpose: what decided it (rest between heavy days, a full day, the week) differs per training.
+const MOVE_REASON = 'Past hier het best rond je vakantie.';
+const DROP_REASON = 'Rond je vakantie is er geen dag meer waarop deze past.';
 
 export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput): LeaveAroundResult {
   const none = { sessions: all, repairs: [] };
@@ -78,7 +81,7 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
   const byId = new Map(templates.map((t) => [t.id, t]));
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const raceDays = new Set(input.check.raceDays ?? []);
-  const until = [goalDay ? addDays(goalDay, -1) : addDays(today, 365), input.check.until].filter((d): d is string => !!d).sort()[0];
+  const until = [goalDay ? addDays(goalDay, -1) : addDays(today, 365), input.check.until, input.limit].filter((d): d is string => !!d).sort()[0];
   const off = [...days.entries()].filter(([d, v]) => v.kind === 'off' && d >= today && d <= until).map(([d]) => d).sort();
   if (off.length === 0) return none;
 
@@ -126,7 +129,7 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
     // The weekday a training has in the week (its own place), the weekday of its day when it has none.
     const slotOf = (s: PlannedSession): number => {
       const t = byId.get(s.templateId);
-      return input.check.slotDays?.get(s.templateId) ?? input.check.slotDays?.get(patternSlotOf(s.templateId)) ?? t?.defaultDayOfWeek ?? isoWeekday(s.scheduledDate);
+      return input.check.slotDays?.get(s.templateId) ?? input.check.slotDays?.get(patternSlotOf(s.templateId)) ?? t?.defaultDayOfWeek ?? 4;
     };
     // The key tasks first, then by their place in the week: where things stood before only breaks a tie.
     const parts = list.filter(mine).sort((a, b) =>
@@ -157,6 +160,9 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
     const build = (state: Map<string, string | null>) =>
       [...others, ...parts.filter((s) => state.get(s.id)).map((s) => placed(s, state.get(s.id)!))];
 
+    // The score looks at the stretch and a few days around it, never at the whole plan.
+    const scoreFrom = addDays(windowStart, -4);
+    const scoreTo = addDays(windowEnd, 4);
     const checkWeeks = new Set(Array.from({ length: weeks.length + 2 }, (_, i) => addDays(first, (i - 1) * 7)));
     const cache = new Map<string, number>();
     const score = (state: Map<string, string | null>): number => {
@@ -164,7 +170,7 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
       const hit = cache.get(keyOf);
       if (hit !== undefined) return hit;
       if (cache.size >= MAX_JUDGED) return Infinity;
-      const list2 = build(state);
+      const list2 = build(state).filter((s) => s.scheduledDate >= scoreFrom && s.scheduledDate <= scoreTo);
       let total = 0;
       total += validateWeeks({ ...input.check, sessions: list2 }, checkWeeks).length * W_FINDING;
       // Heavy leg days 48 hours apart, also across the weekend pairing and after a logged long run.
@@ -285,13 +291,14 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
     };
     // Two starts: from what stands (a training on a workable day stays there, the rest has to find a day) and from
     // nothing placed. What stands is kept unless the fresh arrangement is better by a whole point, so a plan that is
-    // already good is not shuffled again, and the result does not depend on where things stood.
+    // already good is not shuffled again, so a plan that stands is not shuffled again. Only the tie-breaks and the order of ties look at where things stood.
     const standing = new Map<string, string | null>(parts.map((s) => [s.id, s.status !== 'skipped' && candidateDays.includes(s.scheduledDate) ? s.scheduledDate : null]));
     const asIs = { state: standing, score: score(standing) };
     const worked = search(standing);
-    const fresh = search(new Map(parts.map((s) => [s.id, null])));
+    // The fresh start is only worth its time in a proposal; the daily run only finds a day for what stands on a holiday day.
+    const candidatesToJudge = input.reshuffle ? [worked, search(new Map(parts.map((s) => [s.id, null])))] : [worked];
     let chosen = asIs;
-    for (const c of [worked, fresh]) if (c.score < chosen.score - 0.5) chosen = c;
+    for (const c of candidatesToJudge) if (c.score < chosen.score - 0.5) chosen = c;
     state = chosen.state;
 
     // Only a change from what stands: a training on its own day with nothing else done stays untouched.
@@ -307,8 +314,7 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
         continue;
       }
       if (!to) {
-        const t = byId.get(s.templateId);
-        repairs.push({ sessionId: s.id, rule: 'LEAVE-AROUND', from: s.scheduledDate, to: s.scheduledDate, removed: true, reason: legHeavy(t) ? DROP_LEG_REASON : DROP_REASON });
+        repairs.push({ sessionId: s.id, rule: 'LEAVE-AROUND', from: s.scheduledDate, to: s.scheduledDate, removed: true, reason: DROP_REASON });
         continue;
       }
       if (to === s.scheduledDate) { out.push(s); continue; }
