@@ -36,6 +36,13 @@ export interface PlanChangeItem {
   // always two items, each naming the other via this field, each carrying
   // its own new toDate (the partner's original date).
   pairedWithSessionId?: string;
+  // 'add' only: this new row takes the place of the session a 'remove' in the
+  // same list takes off, on the same day and in the same week (the fallback of
+  // engine/weekReconciliation.ts when a week has no free day). The two go
+  // together: when the add is let go, the remove goes too, or the week loses a
+  // training without a replacement (engine/weeklyPrescriptionDiff.ts
+  // #withoutOrphanedRemovals). Never read by applyPlanChangeItems. Optional, additive.
+  replacesSessionId?: string;
   // 'move': the session gets this fixed length at its new date. 'add': the new session's length.
   // 'keep' with `restore`: the short length it has now; another length makes the item stale.
   plannedMinutes?: number;

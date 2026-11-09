@@ -123,8 +123,8 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
     issue: items.length > 0 ? 'Aanpassingen in de vervolgweken' : 'Geen aanpassingen nodig',
     changes: items,
     alternatives: [],
-    consequences: 'Wordt vanaf over twee weken automatisch toegepast, nooit op deze of volgende week.',
-    explanation: 'Gebaseerd op de tijd die je hebt ingesteld. Deze en volgende week blijven zoals ze zijn.',
+    consequences: 'Geldt vanzelf vanaf over twee weken. Deze en volgende week blijven zoals ze zijn.',
+    explanation: 'Volgt de dagen en de tijd die je hebt ingesteld.',
     createdAt: new Date().toISOString(),
   };
 

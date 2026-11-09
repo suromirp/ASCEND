@@ -139,8 +139,8 @@ function buildPlan(
     : '';
 
   const zoneNote = zoneLabel === 'forecast'
-    ? 'Wordt na je bevestiging toegepast vanaf over twee weken, nooit op deze of volgende week.'
-    : 'Past ook deze week en de volgende aan. Krachttrainingen die niet bij het nieuwe krachtblok horen, worden verplaatst of geschrapt. Wat je al hebt afgevinkt, blijft staan.';
+    ? 'Geldt vanaf over twee weken, na je Akkoord. Deze en volgende week blijven zoals ze zijn.'
+    : 'Ook deze en volgende week veranderen. Een krachttraining die niet bij het nieuwe blok hoort, schuift of vervalt. Wat je al deed, blijft staan.';
 
   return {
     id: makeId('planchange'),
@@ -153,7 +153,7 @@ function buildPlan(
       : unplaceableCount > 0
         ? unplaceableNote.trim()
         : 'Die weken kloppen al met je krachtblok.',
-    explanation: `Gebaseerd op het actieve krachtblok (${strategy.sessionsPerWeek}x/week, ${strategy.splitType}), MacroFactor Workouts blijft de inhoud van elke sessie bepalen.`,
+    explanation: `Volgt je krachtblok: ${strengthBlockLabel(strategy.sessionsPerWeek, strategy.splitType)}. De oefeningen per training komen uit MacroFactor Workouts.`,
     createdAt: new Date().toISOString(),
   };
 }

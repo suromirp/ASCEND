@@ -76,6 +76,7 @@ import { calisthenicsTrainings } from './trainingStyle';
 import type { SessionTemplate } from '../models/training';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 import { formatClock } from '../utils/clock';
+import { fetchedWhen } from './healthConnectRound';
 import { capitalize } from '../utils/capitalize';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
@@ -206,6 +207,8 @@ export interface HealthConnectFacts {
   errorKind?: HealthConnectErrorKind;
   // Mag ASCEND je gewicht lezen (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md)?
   weightGranted?: boolean;
+  // Een regel per soort wat de laatste ronde opleverde (engine/healthConnectRound.ts).
+  roundLines?: string[];
 }
 
 const deviceOf = (f: SettingsFacts): DevicePermissions | undefined => (f.device && f.device !== 'unknown' ? f.device : undefined);
@@ -277,8 +280,9 @@ function healthConnectRow(f: SettingsFacts): RowSummary {
   if (!h.enabled) return { checked: false, sub: 'Trainingen, slaap, rusthartslag, HRV en gewicht' };
   if (h.errorKind) return { checked: true, sub: HEALTH_ERROR_LINE[h.errorKind] };
   if (!h.fetchedAt) return { checked: true, sub: 'Nog niets opgehaald' };
-  const day = localDateOf(h.fetchedAt);
-  return { checked: true, sub: day === f.today ? `Opgehaald om ${clock(h.fetchedAt)}` : `Opgehaald op ${formatDayMonthNL(day)}` };
+  // Dag en tijd: "gisteren om 19:07", zodat een ronde van gisteravond niet voor een van vandaag doorgaat.
+  const when = fetchedWhen(h.fetchedAt, f.today);
+  return { checked: true, sub: when ? `Opgehaald ${when}` : 'Opgehaald' };
 }
 
 // "14:02", in de tijd van het toestel.

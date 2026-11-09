@@ -51,6 +51,7 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
   // aanzette voordat ASCEND ook gewicht las): dan kun je het hier alsnog toestaan.
   // Pas vragen als de stand geladen is: zolang weightGranted nog onbekend is, niets tonen.
   const askWeight = health?.enabled === true && hcOn && health.weightGranted === false;
+  const gewichtLine = health?.roundLines?.find((l) => l.startsWith('Gewicht'));
   const [hcNote, setHcNote] = useState<{ text: string; open?: boolean } | null>(null);
   const hcBusy = useRef(false);
 
@@ -178,6 +179,11 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
                   )}
                 </div>
               </div>
+            )}
+
+            {/* Wat de laatste ronde aan gewicht opleverde, ook na Gewicht toestaan. */}
+            {!askWeight && health?.enabled === true && hcOn && gewichtLine && (
+              <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }} role="status">{gewichtLine}</p>
             )}
 
             <div className="st-btns">

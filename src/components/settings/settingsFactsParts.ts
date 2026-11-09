@@ -3,6 +3,7 @@ import type { IntervalsHrBasis } from '../../engine/watchHeartRate';
 import type { HealthConnectFacts, SettingsFacts } from '../../engine/settingsSummary';
 import type { SettingsSource } from '../../engine/settingsPending';
 import { getHealthConnectState } from '../../storage/healthConnect';
+import { healthRoundLines } from '../../engine/healthConnectRound';
 import { healthConnectPort } from '../../integrations/healthConnect';
 import { getConnection, getWatchState, type WatchActivityState } from '../../storage/externalActivities';
 import { getWatchWorkoutState } from '../../storage/watchWorkouts';
@@ -52,6 +53,7 @@ async function readHealthConnectFacts(): Promise<HealthConnectFacts> {
     ...(state.fetchedAt ? { fetchedAt: state.fetchedAt } : {}),
     ...(state.lastError ? { errorKind: state.lastError.kind } : {}),
     weightGranted: state.granted.includes('weight'),
+    ...(state.lastRound ? { roundLines: healthRoundLines(state.lastRound) } : {}),
   };
 }
 

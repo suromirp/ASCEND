@@ -14,12 +14,11 @@ import {
   dismissActivity,
   getWatchState,
   onWatchChange,
-  syncWatchActivities,
   recordAutoTicked,
   setAutoLoggedStatus,
   type WatchActivityState,
 } from '../storage/externalActivities';
-import { getHealthConnectState, onHealthConnectChange, syncHealthConnect } from '../storage/healthConnect';
+import { getHealthConnectState, onHealthConnectChange } from '../storage/healthConnect';
 import { offeredActivities } from '../engine/sourcePrecedence';
 import { canRejectAutoLog, pendingQuestions, planAutoTicks, type FeedbackPatch } from '../engine/autoTick';
 import { isTrimmable } from '../engine/trimLog';
@@ -72,22 +71,12 @@ export function WatchActivityCard() {
     const loadHealth = () => void getHealthConnectState().then((s) => alive && setFromHealth(s.enabled ? s.activities : [])).catch(() => undefined);
     loadHealth();
     const stopHealth = onHealthConnectChange(loadHealth);
-    // Back in the app (after a training, with the app still open): look again
-    // at intervals.icu. The sync itself keeps to once per 15 minutes.
-    const onVisible = () => {
-      if (document.visibilityState !== 'visible') return;
-      // Health Connect na intervals.icu, zodat het de trainingen van intervals.icu al kent.
-      void syncWatchActivities()
-        .catch(() => undefined)
-        .then(() => syncHealthConnect())
-        .catch(() => undefined);
-    };
-    document.addEventListener('visibilitychange', onVisible);
+    // Terug in de app kijkt state/boot.ts#useResumeSync opnieuw bij intervals.icu en Health Connect,
+    // op elk tabblad; deze kaart leest daarna via de signalen hierboven.
     return () => {
       alive = false;
       stop();
       stopHealth();
-      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
 
