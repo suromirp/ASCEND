@@ -24,9 +24,21 @@ Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde hee
 1. Af (8 en 9 november): Planner, tijdsgrens, Spieren voor de berg, Buiten klein, Scout RIR en RPE (`docs/onderzoek/RIR en RPE in krachtapps.md`).
 2. Af (9 november): Forge afvinken is de RIR van het doel (stap 1 tot 5; vermoeidheid tussen oefeningen blijft liggen als stap 6 tot 8) ‖ Heuvels en trappen in de buurt ‖ Scout calisthenics en uitleg bij oefeningen (twee verslagen in `docs/onderzoek/`).
 3. Af (9 november): Forge gewicht op een toestel (standen onthouden, blad, instelling) ‖ Periode "Zonder sportschool" (feestdagen als voorstel bleef liggen) ‖ Tempo bij zone 2 (Scout, engine en instelling; grafiek en tekst blijven).
-4. Forge: ruilen met een echte vervanger ‖ Gewicht uit Health Connect als trend ‖ Uitleg bij oefeningen: proef met vijf teksten (Scribe).
-5. Uitleg bij oefeningen, de rest ‖ Calisthenics ontwerp ‖ Voor de GR5: waarschuwingen, hutten, lawines.
-6. tot 8. Calisthenics bouwen ‖ Alle teksten herschrijven en Engels, per tab ‖ Oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten).
+Vanaf ronde 4 twee lijnen tegelijk, elk een eigen sessie en branch (`claude/lijn-forge`, `claude/lijn-rest`). Een lijn raakt in deze backlog alleen haar eigen rondes en eigen Inbox-punten aan, haalt voor elke push `origin/main` en de werkbranch binnen en lost botsingen in gedeelde bestanden (instellingen, logboek, backlog) op door beide kanten te houden.
+
+Lijn Forge (alles in `components/forge/`, `engine/forge*`, `strengthModel.ts`, oefeningen):
+
+F1. De Forge-punten uit de Inbox (review afvinken is het doel, toestelstanden) ‖ Forge: ruilen met een echte vervanger.
+F2. Vermoeidheid tussen oefeningen (stap 6 tot 8 van het RIR-verslag) ‖ ForgeWorkout opsplitsen, ronde 3, met de lintwaarschuwingen.
+F3. Uitleg bij oefeningen: proef met vijf teksten (Scribe), daarna de rest.
+F4. Calisthenics: ontwerp, daarna bouwen.
+
+Lijn rest (alles buiten Forge):
+
+R1. De overige Inbox-punten (Zonder sportschool uit de reviews, onderhoud, tekstbreuken van Lookout) ‖ Gewicht uit Health Connect als trend.
+R2. Voor de GR5: waarschuwingen, hutten, lawines ‖ Tempo bij zone 2: grafiek en tekst achter de i.
+R3. Oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten, buiten Forge).
+R4. Alle teksten herschrijven en Engels, per tab; de Forge-tab pas als lijn Forge klaar is.
 
 ## Loopt nu
 
