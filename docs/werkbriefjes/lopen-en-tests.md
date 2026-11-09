@@ -10,7 +10,7 @@ Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5
 - `src/engine/runDetail.ts#buildRunDetail` kilometers, rondes en lijn van een run; oordelen in `runDetailRules.ts`
 - `src/engine/watchHeartRate.ts#resolveWatchHr` hartslagbereik op het horloge, naar de drempel van intervals.icu
 - `src/engine/aerobicTrend.ts#aerobicTrend` tempo bij zone 2 (vlak tempo `gapSecKm`, eigen stijging bij afwijkend horloge); `recentRunPace.ts` echt tempo voor de afstand op Vandaag (`missionFacts.ts#distanceLine`: "je laatste loop" bij één loop, "lopen" bij meer; zonder testloop komt de afstandszin uit het tempo van de laatste rustige of lange lopen (met lopen gaat dat voor de test); geef het aantal lopen mee)
-- `src/engine/heartRateZones.ts#zoneBpm` de zones van ASCEND
+- `src/engine/heartRateZones.ts#zoneBpm` de zones van ASCEND; `src/engine/zone2Pieces.ts#stablePieces` stabiele, vlakke stukken uit de reeks (`kmPieces` grof uit de kilometers), zonder zones, drempels alleen in `zone2Rules.ts`, op het log via `src/storage/zone2Pieces.ts#ensureZone2Pieces`
 - `src/engine/zoneUpdate.ts#zoneOffer` nieuwe drempel na de laatste test, voorstel met Akkoord
 - `src/engine/testRest.ts#resolveTestRest` 72 of 48 uur rust voor een test; regel in `scheduler.ts` (`testPairConflict`, niet geëxporteerd, en `tooCloseBeforeTest`) en in de weekcontrole (`TEST-REST`, alleen voor Week)
 - `src/engine/testEffortSplit.ts` een test met warming-up en cooling-down telt in twee delen
@@ -32,13 +32,13 @@ Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5
 - Het wedstrijdblok geeft zijn eigen melding bij rust voor een test; voeg geen tweede melding toe.
 - De reeksen staan standaard in de back-up (grote bestanden); de kopieën vóór een import (`backupSnapshots`) bevatten ze nooit.
 - `sessionLoad` kent de splitsing (`split`), maar geen aanroeper geeft hem nog mee (de enige, `SportFeltBlock`, rekent zonder); de weeklast en beenindex lezen `LoadItem.split`.
-- De weekbalk sprak zichzelf tegen bij de RPE van een test (review 2 november): laat getal en tekst uit dezelfde berekening komen. `aerobicTrend` leest `runDetail` alleen als het past bij het log; grens 15 m per km, met vlak tempo 30 m.
+- De weekbalk sprak zichzelf tegen bij de RPE van een test (review 2 november): laat getal en tekst uit dezelfde berekening komen. `aerobicTrend` leest `runDetail` alleen als het past bij het log; grens 15 m per km, met vlak tempo 30 m (alleen het oude pad, lopen zonder stukken). Tempo bij zone 2: zones pas bij het lezen, één meting per loop; tekst, cijfers en `progressMoment` lezen alleen `zone2Statement` (onder 8 lopen of 4 weken een eerste schatting). De hoogte na de dode band laat een glooiing te laat zien: de helling per 30 s komt uit de hoogte zonder dode band.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/engine/racePrediction src/engine/testJudgment src/engine/bestEffort src/engine/runDetail src/engine/watchHeartRate src/engine/testRest src/storage/activityDetail src/storage/testloop`
+- Tijdens het werk: `npx vitest run src/engine/racePrediction src/engine/testJudgment src/engine/bestEffort src/engine/runDetail src/engine/zone2Pieces src/engine/aerobicTrend src/engine/runTrends src/storage/zone2Pieces src/engine/watchHeartRate src/engine/testRest src/storage/activityDetail src/storage/testloop`
 - Tekstkaart (`npm run kaart:vergelijk`) als de testkaart, het logblad of Vandaag verandert.
 
 ## Lees verder
 - `docs/architectuur/lopen-en-tests.md`
 - `docs/beslissingen/2026-10-27-testloop-lezen.md`, `docs/beslissingen/2026-10-27-run-in-detail-gegevens.md`
-- `docs/beslissingen/2026-11-02-rust-voor-een-test.md`, `docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md`
+- `docs/beslissingen/2026-11-02-rust-voor-een-test.md`, `docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md`, `docs/beslissingen/2026-11-09-tempo-stabiele-stukken.md`, `docs/onderzoek/Tempo bij zone 2, stabiele stukken.md`

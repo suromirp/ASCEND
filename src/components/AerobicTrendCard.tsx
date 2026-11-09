@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { aerobicTrend, formatPace, MEANINGFUL_CHANGE_SEC } from '../engine/aerobicTrend';
+import { aerobicTrend, formatPace, trendVerdict } from '../engine/aerobicTrend';
 import { useExcludedLogIds } from './influence/useExcludedLogIds';
 import { todayISO } from '../utils/dates';
 import { Card, Eyebrow } from './ui';
@@ -16,15 +16,8 @@ export function AerobicTrendCard() {
   const latest = trend.points.at(-1);
   const hasZones = !!(settings.heartRate?.lthr || settings.heartRate?.maxHr);
 
-  let verdict: string | undefined;
-  if (trend.changeSec !== undefined) {
-    const sec = Math.round(Math.abs(trend.changeSec));
-    verdict = Math.abs(trend.changeSec) < MEANINGFUL_CHANGE_SEC
-      ? 'Gelijk aan een maand geleden. Normaal: vooruitgang gaat in weken, niet per loop.'
-      : trend.changeSec < 0
-        ? `${sec} seconden per km sneller dan een maand geleden, bij dezelfde hartslag${trend.bpmChange !== undefined && Math.round(-trend.bpmChange) >= 1 ? `. Anders gezegd: hetzelfde tempo kost je ongeveer ${Math.round(-trend.bpmChange)} slagen minder` : ''}. Dat past bij fitter worden.`
-        : `${sec} seconden per km langzamer dan een maand geleden. Moe, warm of weinig geslapen? Kijk hoe het de komende weken gaat.`;
-  }
+  // One sentence from the same line as the chart (engine/aerobicTrend.ts#trendVerdict).
+  const verdict = trendVerdict(trend);
 
   return (
     <Card className="flex flex-col gap-3">

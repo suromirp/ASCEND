@@ -18,33 +18,36 @@ const row = (logs: SessionLog[], key: string, over: Partial<RunTrendsInput> = {}
 const easyRun = (id: string, date: string, spec: RunSpec = EASY) => runLog({ id, date, spec: { ...spec, seed: id.length * 7 + date.length }, conditions: cool, strap: true });
 
 describe('efficiency: the same trend as the card Tempo bij zone 2', () => {
-  const earlier = ['2026-09-16', '2026-09-23'].map((d, i) => easyRun(`a${i}`, d, { ...EASY, pace: 380 }));
-  const recent = ['2026-10-13', '2026-10-16'].map((d, i) => easyRun(`b${i}`, d, { ...EASY, pace: 350 }));
+  // Tien rustige loopjes over acht weken, elke zes dagen; het tempo loopt rechtlijnig van `from` naar `to`.
+  const DATES = ['2026-08-27', '2026-09-02', '2026-09-08', '2026-09-14', '2026-09-20', '2026-09-26', '2026-10-02', '2026-10-08', '2026-10-14', '2026-10-20'];
+  const series = (prefix: string, from: number, to: number) => DATES.map((d, i) => easyRun(`${prefix}${i}`, d, { ...EASY, pace: from + ((to - from) * i) / (DATES.length - 1) }));
+  const better = series('a', 380, 350);
 
   it('reads aerobicTrend and gives the same line and the same change', () => {
-    const logs = [...earlier, ...recent];
-    const r = row(logs, 'efficiency');
-    const trend = aerobicTrend(logs, TEMPLATES, null, HR, TODAY);
+    const r = row(better, 'efficiency');
+    const trend = aerobicTrend(better, TEMPLATES, null, HR, TODAY);
     expect(r.points.map((p) => p.value)).toEqual(trend.points.map((p) => p.value));
     expect(r.word).toBe('Beter');
-    expect(r.model.figures.difference).toBe(`${Math.round(Math.abs(trend.changeSec!))} s per km sneller`);
+    const s = trend.statement!;
+    expect(s.kind).toBe('uitspraak');
+    if (s.kind !== 'uitspraak') return;
+    expect(r.model.figures.difference).toBe(`ongeveer ${-s.roundedHigh} tot ${-s.roundedLow} s per km sneller`);
     expect(r.model.figures.today).toBe(`${Math.floor(trend.recentSec! / 60)}:${String(Math.round(trend.recentSec! % 60)).padStart(2, '0')} per km`);
     expect(r.model.strengthText).toContain('dezelfde trend als de kaart Tempo bij zone 2');
   });
 
-  it('is Normaal for a small change, Slechter for a clearly slower one and has too little data otherwise', () => {
-    const same = [...earlier, ...['2026-10-13', '2026-10-16'].map((d, i) => easyRun(`c${i}`, d, { ...EASY, pace: 378 }))];
-    expect(row(same, 'efficiency').word).toBe('Normaal');
-    const worse = [...earlier, ...['2026-10-13', '2026-10-16'].map((d, i) => easyRun(`d${i}`, d, { ...EASY, pace: 410 }))];
-    expect(row(worse, 'efficiency').word).toBe('Slechter');
-    const few = row(recent, 'efficiency');
+  it('is Normaal when the band lies over zero, Slechter for a clearly slower line and has too little data otherwise', () => {
+    expect(row(series('c', 378, 378), 'efficiency').word).toBe('Normaal');
+    expect(row(series('d', 380, 410), 'efficiency').word).toBe('Slechter');
+    const few = row(better.slice(-4), 'efficiency');
     expect(few.word).toBe('Te weinig gegevens');
     expect(few.model.figures.today).toBe('nog niet');
+    expect(few.model.strengthText).toContain('Eerste schatting');
     expect(row([], 'efficiency').word).toBe('Te weinig gegevens');
   });
 
   it('works without the details switch: it does not need a profile', () => {
-    const logs = [...earlier, ...recent].map((l) => ({ ...l, detail: undefined }));
+    const logs = better.map((l) => ({ ...l, detail: undefined }));
     expect(row(logs, 'efficiency', { detailsOn: false }).word).toBe('Beter');
   });
 });

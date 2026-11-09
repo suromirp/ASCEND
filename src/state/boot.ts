@@ -11,6 +11,7 @@ import { resolveMotion, splashMinimumMs } from '../engine/motionSettings';
 import { syncWatchActivities } from '../storage/externalActivities';
 import { syncHealthConnect } from '../storage/healthConnect';
 import { ensureRecentTestEfforts } from '../storage/activityDetail';
+import { ensureZone2Pieces } from '../storage/zone2Pieces';
 import { syncWatchWorkouts } from '../storage/watchWorkouts';
 import { bootLockChoice, runBoot, type BootStep } from '../engine/bootWatch';
 import { requestPersistentStorage } from '../storage/persistence';
@@ -134,7 +135,11 @@ export function useBoot(deps: {
         const readRecentTestEfforts = async () => {
           if (await ensureRecentTestEfforts()) await refresh();
         };
-        for (const [name, step] of [['planning sync', () => refresh()], ['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['health connect', () => syncHealthConnect()], ['best 5 km of recent tests', readRecentTestEfforts], ['watch workouts', syncWatchWorkouts]] as const) {
+        // Older runs with a kept series get their stable pieces for tempo bij zone 2 (derived, added once).
+        const readZone2Pieces = async () => {
+          if (await ensureZone2Pieces()) await refresh();
+        };
+        for (const [name, step] of [['planning sync', () => refresh()], ['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['health connect', () => syncHealthConnect()], ['best 5 km of recent tests', readRecentTestEfforts], ['stable pieces of runs', readZone2Pieces], ['watch workouts', syncWatchWorkouts]] as const) {
           try {
             await step();
           } catch (err) {

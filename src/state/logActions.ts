@@ -35,7 +35,7 @@ import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { excludedLogIds } from '../engine/influence';
 import { coachReaction } from '../engine/coach';
-import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
+import { aerobicTrend, celebratedChange, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { showCompletionQuote } from '../engine/overviewSettings';
 import type { LogSessionInput } from './appDataTypes';
 import { bumpPlanRevision, planSettled } from './planningSync';
@@ -151,9 +151,10 @@ export function useLogActions(deps: {
         const lastProgress = await MetaRepo.get<ProgressCelebrated>('aerobicProgressCelebrated');
         const counted = trend.runs > aerobicTrend(allLogs.filter((l) => l.id !== log.id), allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded).runs;
         const progress = counted ? progressMoment(trend, lastProgress, log.completedDate) : undefined;
-        if (progress && trend.changeSec !== undefined) {
+        const near = celebratedChange(trend);
+        if (progress && near !== undefined) {
           coachNote = `${coachNote} ${progress}`;
-          await MetaRepo.set('aerobicProgressCelebrated', { date: log.completedDate, changeSec: trend.changeSec });
+          await MetaRepo.set('aerobicProgressCelebrated', { date: log.completedDate, changeSec: near });
         }
         const moment: SavedMoment = { logId: log.id, recovery: log.type === 'recovery', clearedTitle, coachNote, auto: input.quiet };
         if (opts?.batch) opts.batch.push(moment);

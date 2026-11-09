@@ -162,7 +162,9 @@ describe('fetching the series with the profile', () => {
     expect(text).not.toContain('52.0');
     expect(text).not.toContain('geheime');
     // The measured numbers of the log are as they were.
-    expect({ ...log, detail: undefined, runDetail: undefined, bestEffort: undefined }).toEqual({ ...logFor(), detail: undefined, runDetail: undefined, bestEffort: undefined });
+    expect({ ...log, detail: undefined, runDetail: undefined, bestEffort: undefined, zone2Pieces: undefined }).toEqual({ ...logFor(), detail: undefined, runDetail: undefined, bestEffort: undefined, zone2Pieces: undefined });
+    // The stable pieces for tempo bij zone 2 come with the series (derived, zones applied when read).
+    expect(log.zone2Pieces?.version).toBe(1);
     expect(log.detail).toBeDefined();
   });
 
