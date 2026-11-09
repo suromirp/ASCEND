@@ -15,6 +15,11 @@
 // append-only cleared steps), like `missedTraining`: optional and additive, so the version stays.
 // migrateSkillGoals drops a damaged goal or row (unknown ladder, step outside it) and never throws.
 //
+// SkillGoal.general (2026-11-09, het doel Algemeen sterk met eigen gewicht) needs no step either: optional and
+// additive, on a goal with ladderId 'algemeen' that an older app hides and keeps unchanged. A goal without it reads
+// exactly as before; migrationsSkill.ts#readGeneral cleans the ladder list and the baseline, keeps unknown ladders
+// and newer fields, and drops the goal (counted as skipped) when `general` is broken.
+//
 // PlanChangeItem.replacesSessionId (2026-11-09, weghaling met toevoeging) needs no step: optional and additive, only
 // on an 'add' in a proposal, never read by applyPlanChangeItems. An older proposal without it reads the same.
 

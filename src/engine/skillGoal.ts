@@ -53,7 +53,9 @@ export function clearedSkillSteps(ladder: SkillLadder, logs: readonly SessionLog
   return cleared;
 }
 
-export const liveSkillGoals = (store: SkillGoalStore): SkillGoal[] => store.goals.filter((g) => !g.removedAt && !!skillLadderById(g.ladderId));
+// Een algemeen doel valt hier uitdrukkelijk buiten, ook als er ooit een ladder 'algemeen' komt: het volgt meerdere
+// ladders, dus de sleutel `goalId|stap` van newSkillStepProgress zou tussen ladders botsen; het krijgt nooit rijen.
+export const liveSkillGoals = (store: SkillGoalStore): SkillGoal[] => store.goals.filter((g) => !g.removedAt && !g.general && !!skillLadderById(g.ladderId));
 
 // De rijen die erbij komen: een gehaalde stap van een doel die nog geen rij heeft. Bestaande rijen blijven zoals
 // ze zijn; een stap met een rij krijgt nooit een tweede.
@@ -145,3 +147,66 @@ export function mergeSkillStores(current: SkillGoalStore, incoming: SkillGoalSto
 }
 
 export const SKILL_LADDER_CHOICES = SKILL_LADDERS.map((l) => ({ id: l.id, name: l.name }));
+
+// --- algemeen sterk met eigen gewicht ----------------------------------------------------------------
+// De tweede vorm van het doel Calisthenics: vijf basisladders tegelijk, zonder doelstap en zonder datum. Het plant
+// niets en schrijft geen SkillStepProgress (zie liveSkillGoals). "Hoger" telt tegen de stap bij de start.
+
+// Bewust geen bestaande ladder: een oudere app verbergt het doel dan (liveSkillGoals) en bewaart het ongewijzigd.
+export const GENERAL_LADDER_ID = 'algemeen';
+export const GENERAL_GOAL_NAME = 'Algemeen sterk met eigen gewicht';
+export const GENERAL_LADDER_IDS: readonly string[] = ['push-up', 'pull-up', 'dip', 'pistol', 'l-sit'];
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const isPlainObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+
+// Een doel met een `general` van een geldige vorm: ladders als tekst (minstens één), een dag en een baseline.
+export function isGeneralGoal(goal: SkillGoal): boolean {
+  const g: unknown = goal.general;
+  if (!isPlainObject(g)) return false;
+  return Array.isArray(g.ladderIds) && g.ladderIds.some((id) => typeof id === 'string' && id.length > 0)
+    && typeof g.startDate === 'string' && ISO_DAY.test(g.startDate) && isPlainObject(g.baseline);
+}
+
+// Het ene levende algemene doel; bij meer dan één het oudste (createdAt, dan id). Undefined als er geen is.
+export function liveGeneralGoal(store: SkillGoalStore): SkillGoal | undefined {
+  const live = store.goals.filter((g) => !g.removedAt && isGeneralGoal(g));
+  live.sort((a, b) => (a.createdAt !== b.createdAt ? (a.createdAt < b.createdAt ? -1 : 1) : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  return live[0];
+}
+
+export interface GeneralGoalInput {
+  id: string;
+  now: string;
+  // De lokale dag van Akkoord.
+  today: string;
+  logs: readonly SessionLog[];
+}
+
+// Het algemene doel, met per ladder de stap van nu als baseline (0 als er nog geen training op die ladder is).
+export function buildGeneralGoal(input: GeneralGoalInput): SkillGoal {
+  const baseline: Record<string, number> = {};
+  for (const id of GENERAL_LADDER_IDS) {
+    const ladder = skillLadderById(id);
+    baseline[id] = ladder ? ladderState(ladder, input.logs, input.today).current ?? 0 : 0;
+  }
+  return {
+    id: input.id, name: GENERAL_GOAL_NAME, ladderId: GENERAL_LADDER_ID, targetStep: 1, createdAt: input.now, updatedAt: input.now,
+    general: { ladderIds: [...GENERAL_LADDER_IDS], startDate: input.today, baseline },
+  };
+}
+
+// De stap waartegen "hoger" telt. Een bewaarde stap van minstens 1: die. Bij 0 of zonder: de stap van de eerste
+// trainingsdag tot en met `today` waarop de ladder een stap gaf (gelezen zoals clearedSkillSteps een dag leest),
+// zodat een eerste Pull-Up op stap 4 niet meteen "een stap hoger" is. Undefined zonder zo'n training.
+export function generalBaseline(goal: SkillGoal, ladder: SkillLadder, logs: readonly SessionLog[], today: string): number | undefined {
+  const stored = goal.general?.baseline?.[ladder.id];
+  if (typeof stored === 'number' && Number.isInteger(stored) && stored >= 1) return stored;
+  const own = logsOnLadder(ladder, logs);
+  const days = [...new Set(own.map((l) => l.completedDate).filter((d): d is string => typeof d === 'string' && d <= today))].sort();
+  for (const day of days) {
+    const current = ladderState(ladder, own, day).current;
+    if (current !== null) return current;
+  }
+  return undefined;
+}
