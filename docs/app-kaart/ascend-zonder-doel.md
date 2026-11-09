@@ -10,7 +10,7 @@ Ascend
 Geen doel, wel een richting: fit blijven.
 
 --- kaart 1 ---
-[knop: 56minJe week56 van 150 minutenKracht: 0 van 2 keerMet wat er nog staat kom je op 106. Een extra wandeling van 44 minuten brengt je op 150.] (aria: Je week bekijken)
+[knop: 56minJe week56 van 150 minutenKracht: 0 van 2 keerMet wat er nog staat kom je op 106 minuten. Een extra wandeling van 44 minuten brengt je op 150.] (aria: Je week bekijken)
 
 --- kaart 2 ---
 Je richting

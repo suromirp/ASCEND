@@ -213,7 +213,7 @@ export function stageOwnLine(estimate: StageTimeEstimate): string | undefined {
 export function goalDayOwnLine(estimate: StageTimeEstimate, day: HikeDay): string | undefined {
   if (estimate.kind !== 'own') return undefined;
   const route = `${formatNumberNL(day.km, 1)} km met ${formatNumberNL(day.up, 0)} m omhoog en ${formatNumberNL(day.down, 0)} m omlaag`;
-  return `Een gewone dag van je hoofddoel, ${route}, is voor jou dan ${hoursBandText(estimate.band)} lopen. De wandelnorm zegt ${formatHoursMinutesNL(estimate.norm)}.`;
+  return `Een gewone dag van je hoofddoel is voor jou ${hoursBandText(estimate.band)} lopen: ${route}. De wandelnorm zegt ${formatHoursMinutesNL(estimate.norm)}.`;
 }
 
 // Tot er genoeg zijn: hoeveel er nodig zijn en hoeveel er al zijn.

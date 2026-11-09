@@ -39,13 +39,13 @@ export function AerobicTrendCard() {
         )}
       </div>
       <p className="-mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        {trend.referenceHr > 0 ? `Je tempo bij ${trend.referenceHr} bpm.` : 'Je tempo bij één vaste hartslag.'} Word je fitter, dan loop je bij dezelfde hartslag sneller.
+        {trend.referenceHr > 0 ? `Je tempo bij ${trend.referenceHr} bpm.` : 'Je tempo bij één vaste hartslag.'} Word je fitter, dan loop je daarbij sneller.
       </p>
       {trend.points.length >= 2 ? (
         <TrendLineChart points={trend.points} color="var(--color-progress)" formatValue={(v) => formatPace(-v)} />
       ) : (
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-          {trend.runs === 0 ? 'Nog geen loopjes om te vergelijken.' : `${trend.runs === 1 ? 'Eén loopje' : `${trend.runs} loopjes`}, nog maar één week.`} Na twee weken met loopjes zie je hier je lijn.
+          {trend.runs === 0 ? 'Nog geen loopjes.' : `${trend.runs === 1 ? 'Eén loopje' : `${trend.runs} loopjes`}, nog maar één week.`} Na twee weken zie je hier je lijn.
         </p>
       )}
       {verdict && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict}</p>}

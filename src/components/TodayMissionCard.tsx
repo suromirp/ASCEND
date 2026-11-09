@@ -292,7 +292,7 @@ export function TodayMissionCard({
           ) : (
             <div className="flex flex-col gap-4">
               <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-                Hoeveel tijd heb je? Je ziet eerst wat er verandert; pas met Akkoord wordt je training van vandaag korter.
+                Hoeveel tijd heb je? Eerst een voorstel, pas na Akkoord wordt je training van vandaag korter.
               </p>
               <div className="flex gap-2" role="group" aria-label="Hoeveel tijd heb je?">
                 {shorterTimes.map((m) => (

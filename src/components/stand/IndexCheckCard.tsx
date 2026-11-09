@@ -16,7 +16,7 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
       <div>
         <Eyebrow>Index en je benen</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Na een harde loop of test vraagt ASCEND hoe je benen voelden bij het inlopen, en legt dat naast wat de index die ochtend zei.
+          Je benen bij het inlopen naast wat de index die ochtend zei. ASCEND vraagt ernaar na een harde loop of test.
         </p>
       </div>
       {checks.length === 0 ? (
@@ -27,8 +27,8 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
         <>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
             {agree} van {checks.length} keer {checks.length === 1 ? 'klopte' : 'klopten'} index en gevoel.
-            {tooLow > 0 && ` ${tooLow === 1 ? 'Eén keer voelden' : `${tooLow} keer voelden`} je benen zwaar terwijl de index fris zei: vertrouw dan op je gevoel bij het inlopen.`}
-            {checks.length < 5 && ' Na een paar metingen meer zegt dit pas echt iets.'}
+            {tooLow > 0 && ` ${tooLow === 1 ? 'Eén keer voelden' : `${tooLow} keer voelden`} je benen zwaar terwijl de index fris zei. Vertrouw dan op je gevoel bij het inlopen.`}
+            {checks.length < 5 && ' Met meer metingen zegt dit meer.'}
           </p>
           <div className="flex flex-col gap-1">
             {checks.slice(0, 5).map((c) => (

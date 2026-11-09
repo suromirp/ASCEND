@@ -48,7 +48,7 @@ export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; to
       <div>
         <Eyebrow>Frisheid</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Je beenvermoeidheid per dag. Lager is frisser. Vooruit is het een schatting uit je planning, met de marge eromheen.
+          Beenvermoeidheid per dag. Lager is frisser. Wat nog komt is een schatting, met marge.
         </p>
       </div>
 
@@ -119,13 +119,13 @@ function dayAdvice(p: FreshnessPoint): string {
     return 'Voor een wedstrijd wil je bijna helemaal fris zijn. Houd de dagen ervoor licht.';
   }
   if (marks.has('test')) {
-    if (near(FATIGUE_THRESHOLDS.test.fresh)) return 'Op de grens voor een test. Beslis bij het inlopen: voelen je benen zwaarder dan normaal, dan een dag later.';
-    if (p.index <= FATIGUE_THRESHOLDS.test.fresh) return 'Fris genoeg voor je test: die meet dan echt wat je kunt.';
+    if (near(FATIGUE_THRESHOLDS.test.fresh)) return 'Op de grens voor een test. Voelen je benen bij het inlopen zwaarder dan normaal, dan een dag later.';
+    if (p.index <= FATIGUE_THRESHOLDS.test.fresh) return 'Fris genoeg voor je test. Die meet dan echt wat je kunt.';
     return 'Te moe voor een eerlijke test. Iets lichter de dagen ervoor, of de test een dag later.';
   }
   if (marks.has('hard')) {
     if (p.index <= FATIGUE_THRESHOLDS.hard.fresh) return 'Fris genoeg voor een harde training.';
-    return 'Je benen zijn nog moe voor een harde training. Rustiger beginnen, of een dag later.';
+    return 'Je benen zijn nog moe voor een harde training. Begin rustiger, of doe het een dag later.';
   }
   if (p.index <= FATIGUE_THRESHOLDS.test.fresh) return 'Je benen zijn fris.';
   if (p.index <= FATIGUE_THRESHOLDS.hard.fresh) return 'Wat vermoeid. Rustig werk gaat prima.';
