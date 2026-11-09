@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { hasRole, idHasRole, idIsTestOrRace, isTestOrRace, templateRoles } from './templateRoles';
+import { hasRole, idHasRole, idIsTestOrRace, isGymStrengthTemplate, isTestOrRace, templateRoles } from './templateRoles';
 import type { TemplateRole } from '../models/training';
 
 describe('templateRoles', () => {
@@ -77,5 +77,17 @@ describe('rollen gelijk aan de oude id-lijsten', () => {
   it('negeert een kapot roles-veld uit een back-up', () => {
     expect(hasRole({ id: 'tpl_upper_a', roles: 'long' as unknown as TemplateRole[] }, 'long')).toBe(false);
     expect(hasRole({ id: 'tpl_long_run', roles: 3 as unknown as TemplateRole[] }, 'long')).toBe(true);
+  });
+});
+
+describe('isGymStrengthTemplate', () => {
+  const templates = buildDefaultProgramData().templates;
+  it('telt elke krachttraining in de sportschool, niet Eigen gewicht en geen loop', () => {
+    const gym = templates.filter(isGymStrengthTemplate).map((t) => t.id);
+    expect(gym).toEqual(templates.filter((t) => t.type === 'strength' && t.id !== 'tpl_bodyweight').map((t) => t.id));
+    expect(gym).toContain('tpl_upper_a');
+    expect(gym).not.toContain('tpl_bodyweight');
+    expect(templates.some((t) => t.id === 'tpl_bodyweight' && t.type === 'strength')).toBe(true);
+    expect(isGymStrengthTemplate({ id: 'tpl_easy_run', type: 'cardio' })).toBe(false);
   });
 });

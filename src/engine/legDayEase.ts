@@ -33,6 +33,7 @@ import { logSport } from './sports';
 import { exerciseKey, HARD_RUN_MINUTES, HARD_RUN_RPE } from './strengthHistory';
 import { hasRole, isTestOrRace } from './templateRoles';
 import { checkInFor, morningSignals } from './wellbeing';
+import { capitalize } from '../utils/capitalize';
 
 export { soreFromNotes } from './legSoreness';
 
@@ -382,7 +383,6 @@ function indexWords(s: LegDaySignals): string {
   return s.nearLine ? `Beenindex ongeveer ${number0(s.index)}` : `Beenindex ${number0(s.index)}`;
 }
 
-const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // De feitregel op Vandaag, met hoogstens twee redenen in de volgorde spierpijn, harde loop, index.
 export function easeFact(s: LegDaySignals): string {
@@ -396,7 +396,7 @@ export function easeFact(s: LegDaySignals): string {
   }
   const named = clauses.slice(0, 2);
   if (named.length === 0) return `${indexWords(s)}. Je benen dragen nog veel van de afgelopen dagen.`;
-  return `${capital(named.join(' en '))}. ${indexWords(s)}.`;
+  return `${capitalize(named.join(' en '))}. ${indexWords(s)}.`;
 }
 
 // Dezelfde reden in een korte zin voor Forge.
@@ -411,7 +411,7 @@ export function easeFactShort(s: LegDaySignals): string {
   }
   const named = parts.slice(0, 2);
   if (named.length === 0) return `${indexWords(s)}. Je benen dragen nog veel van de afgelopen dagen.`;
-  return `${capital(named.join(' en '))}. ${indexWords(s)}.`;
+  return `${capitalize(named.join(' en '))}. ${indexWords(s)}.`;
 }
 
 export const EASE_INDEX_EXPLAIN = 'Beenindex: wat je benen nog dragen van eerdere trainingen. Tot 12 kan een zware dag.';
@@ -446,7 +446,7 @@ export function easeForgeExplain(how: LegEaseHow, weightFollows = true): string 
   const rir = how === 'extra' ? EASE_RIR_EXTRA : EASE_RIR;
   const weight = weightFollows ? 'Minder gewicht, ' : '';
   const sets = how === 'alleen-gewicht' ? 'alle sets blijven staan.' : 'een set minder per oefening. Oefeningen die je als extra had gemarkeerd vervallen.';
-  return `${capital(`${weight}zeker ${rir} herhalingen over, ${sets}`)}`;
+  return `${capitalize(`${weight}zeker ${rir} herhalingen over, ${sets}`)}`;
 }
 
 // Wat Forge na Lichter klaar heeft staan, in de woorden van de gekozen manier (zoals easeExplain).

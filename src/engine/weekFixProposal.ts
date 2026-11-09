@@ -26,6 +26,7 @@ import { hasRole, idIsTestOrRace, isTestOrRace, templateRoles } from './template
 import { templateSport } from './sports';
 import { dayName, weekConcerns, type WeekConcern } from './weekConcerns';
 import { findingKey, lockLevel, repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
+import { capitalize } from '../utils/capitalize';
 
 const SOURCE = ['engine/weekFixProposal.ts'];
 const MAX_OPTIONS = 3;
@@ -36,7 +37,6 @@ const TASK_ROLES: readonly TemplateRole[] = ['long', 'key', 'hard_run', 'hard_lo
 // `keeps`: bij weghalen de sessie met dezelfde rol die in de week blijft staan.
 interface Change { id: string; from: string; to?: string; removed?: boolean; minutes?: number; keeps?: string }
 
-const capital = (s: string) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
 // A name like "GR5 duurloop" keeps its capitals; only an ordinary first word goes lower case.
 const lower = (s: string) => (s.charAt(1) && s.charAt(1) !== s.charAt(1).toLowerCase() ? s : `${s.charAt(0).toLowerCase()}${s.slice(1)}`);
 
@@ -278,7 +278,7 @@ export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: 
     const freeNow = (date: string) => !after.some((o) => o.scheduledDate === date && o.status !== 'skipped' && !isRecovery(o));
     const parts: string[] = [];
     for (const c of changes) {
-      const free = freeNow(c.from) ? ` ${capital(weekdayLongNL(c.from))} is dan vrij.` : '';
+      const free = freeNow(c.from) ? ` ${capitalize(weekdayLongNL(c.from))} is dan vrij.` : '';
       const kept = c.keeps ? sessionById(c.keeps) : undefined;
       const keep = kept ? ` Je houdt de ${lower(nameOf(kept.id))} op ${dayName(kept.scheduledDate)}.` : '';
       if (c.removed) parts.push(`Laat de ${lower(nameOf(c.id))} op ${dayName(c.from)} gaan.${freeNow(c.from) ? ` Dan heb je ${weekdayLongNL(c.from)} vrij.` : ''}${keep}`);

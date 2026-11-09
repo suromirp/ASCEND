@@ -27,7 +27,7 @@ import { mondayOfWeek } from '../utils/dates';
 import type { LeaveDay } from './leave';
 import { isHardRun } from './scheduler';
 import { templateSport } from './sports';
-import { hasRole, idIsTestOrRace } from './templateRoles';
+import { hasRole, idIsTestOrRace, isGymStrengthTemplate } from './templateRoles';
 import { lockLevel, type Repair } from './weekValidator';
 import { BODYWEIGHT_TEMPLATE_ID, resolveNoGym } from './noGymDetails';
 
@@ -47,7 +47,7 @@ export interface NoGymStepInput {
 }
 
 export const isNoGymRun = (t: SessionTemplate | undefined): boolean => !!t && t.type !== 'strength' && templateSport(t) === 'running';
-export const isNoGymStrength = (t: SessionTemplate | undefined): boolean => !!t && t.type === 'strength' && t.id !== BODYWEIGHT_TEMPLATE_ID;
+export const isNoGymStrength = (t: SessionTemplate | undefined): boolean => !!t && isGymStrengthTemplate(t);
 const isHard = (t: SessionTemplate) => isHardRun(t) || hasRole(t, 'hills') || hasRole(t, 'hard_load') || hasRole(t, 'blocks');
 
 export function applyNoGymDays(input: NoGymStepInput): { sessions: PlannedSession[]; repairs: Repair[] } {

@@ -24,7 +24,7 @@ import { makeId } from '../utils/id';
 import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, describePeriodDates, leaveDays, leaveLabelOn, sortPeriods } from './leave';
 import { trekLightDaysBefore } from './trekTaper';
 import { planPass, type PlanPassContext } from './planPass';
-import { fixedInLeave, fixedLeaveNote } from './fixedSports';
+import { fixedInLeave, fixedKeptInNoGym, fixedLeaveNote, fixedNoGymNote } from './fixedSports';
 import { lockLevel, type Finding } from './weekValidator';
 import { isNoGymRun, isNoGymStrength } from './noGym';
 import { idIsTestOrRace } from './templateRoles';
@@ -140,6 +140,11 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const ownedBefore = (s: PlannedSession) => !!s.leave && (s.leave.periodId === period.id || s.leave.periodId === replaces?.id);
   const markOnly = (s: PlannedSession, a: PlannedSession | undefined) =>
     s.lock?.by === 'user' && ownedBefore(s) && !!a && !a.leave && a.scheduledDate === s.scheduledDate && a.status === s.status && a.plannedMinutes === s.plannedMinutes;
+  // Why it was short, in its own words: the rest after a tocht and a period without a gym both make a
+  // training short, but for another reason (backlog 9 november).
+  const shortWhy = formerKind === 'trek'
+    ? 'De korte versie hoorde bij de 72 uur rust na de tocht.'
+    : formerKind === 'no_gym' ? 'De korte versie hoorde bij je periode zonder sportschool.' : 'De korte versie hoorde bij je periode.';
   const lengthBack = (s: PlannedSession, a: PlannedSession | undefined) =>
     s.lock?.by === 'user' && ownedBefore(s) && !!s.leave?.shortened && !!a && !a.leave && a.scheduledDate === s.scheduledDate && a.status === s.status && s.plannedMinutes !== undefined && a.plannedMinutes === undefined;
 
@@ -154,7 +159,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     // The same, made short by the period: it keeps your day and lock and gets its own length back.
     if (s.scheduledDate >= today && lengthBack(s, a)) {
       // `plannedMinutes`: the short length it has now; anything else makes the item stale (staleItems).
-      items.push({ plannedSessionId: s.id, action: 'keep', fromDate: s.scheduledDate, toDate: s.scheduledDate, restore: true, plannedMinutes: s.plannedMinutes, reason: `${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} zette je zelf neer. Die blijft staan, weer op zijn gewone lengte.`, generatedBy: SOURCE, leave: null });
+      items.push({ plannedSessionId: s.id, action: 'keep', fromDate: s.scheduledDate, toDate: s.scheduledDate, restore: true, plannedMinutes: s.plannedMinutes, reason: `${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} zette je zelf neer. Die blijft staan, weer op zijn gewone lengte. ${shortWhy}`, generatedBy: SOURCE, leave: null });
       continue;
     }
     if (!inWindow(s.scheduledDate)) continue;
@@ -244,10 +249,12 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     if (resolveNoGym(period).hills) notes.push(`Heuvels in de buurt: neem bij een rustige loop de heuvels rustig op en beheerst af.${input.mountainGoal ? ' Goed voor je benen in de bergen.' : ''}`);
   }
   // A fixed appointment of a sport (engine/fixedSports.ts) in a holiday or on a tocht lapses, the advice: say
-  // which, so it is never silent.
+  // which, so it is never silent. In a period without a gym it stays, and the proposal says that too.
   if (mode === 'add') {
     const fixedSports = input.context(periodsAfter).fixedSports ?? undefined;
     for (const item of fixedInLeave(input.today, period.endDate, fixedSports, [period])) notes.push(fixedLeaveNote(item));
+    // Without a gym it stays: say which, so it is never silent (and a stricter period on the same day wins).
+    if (period.kind === 'no_gym') for (const item of fixedKeptInNoGym(input.today, period.endDate, fixedSports, periodsAfter)) if (item.period.id === period.id) notes.push(fixedNoGymNote(item));
   }
   return { mode, period, ...(replaces ? { replaces } : {}), periodsAfter, proposal, notes: [...new Set(notes)] };
 }
