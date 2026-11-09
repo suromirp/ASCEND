@@ -5,7 +5,10 @@ import { readFileSync, appendFileSync } from 'node:fs';
 import { wipeAllData, syncProgramHorizon } from './database';
 import { runWeeklyPrescriptionStep } from './weeklyPrescriptionStep';
 import { runBootMigrations } from './bootMigrations';
-import { normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
+import { buildImportPreview } from './backupPreview';
+import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './backupApply';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { primePlanningRegisters } from '../state/planningSync';
 
 const out = (t: string) => appendFileSync(process.env.OUT!, t + '\n');
