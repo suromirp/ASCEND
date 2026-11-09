@@ -57,9 +57,11 @@ describe('growOpacity', () => {
     expect(k[3]).toEqual({ opacity: 0, offset: 1 });
   });
 
-  it('blijft bij sluiten tot het einde staan', () => {
+  it('staat bij sluiten meteen en is aan het einde weg, zodat er geen lege rechthoek op de rij blijft', () => {
     const k = growOpacity(240, 'close');
-    expect(k.at(-1)).toEqual({ opacity: 1, offset: 1 });
+    expect(k[1]).toMatchObject({ opacity: 1 });
+    expect(k.at(-1)).toEqual({ opacity: 0, offset: 1 });
+    expect(k.at(-2)?.offset).toBeCloseTo(180 / 240);
   });
 });
 
