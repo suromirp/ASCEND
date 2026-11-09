@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 // --pic-mid staan in index.css, op de lichte lucht wat sterker. De drie lagen komen
 // na elkaar op (mx-pic-1 tot en met mx-pic-3), alleen als het pictogram verschijnt.
 
-export type PictogramName = 'rust' | 'lichaam' | 'lopen' | 'kracht' | 'wandelen' | 'eigengewicht' | 'rekken' | 'bergtocht' | 'fietsen' | 'zwemmen' | 'padel' | 'voetbal';
+export type PictogramName = 'rust' | 'lichaam' | 'lopen' | 'kracht' | 'eigengewicht' | 'wandelen' | 'rekken' | 'bergtocht' | 'fietsen' | 'zwemmen' | 'padel' | 'voetbal';
 
 type Tone = 'light' | 'mid' | 'strong' | 'full' | 'cut';
 

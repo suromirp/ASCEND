@@ -1,9 +1,8 @@
 import type { SessionLog } from '../../models/training';
 import { customName, logSport } from '../../engine/sports';
 import type { PictogramName } from '../pictograms';
-import { isMountainTrip } from '../sportKind';
+import { BODYWEIGHT_PICTOGRAM, isMountainTrip } from '../sportKind';
 import { isBodyweightLog } from '../../engine/sportKind';
-import { BODYWEIGHT_PICTOGRAM } from '../sportKind';
 import { anySportDefinition, sportDefinition } from '../../data/sports';
 
 // Hoe een sport eruitziet in het Logboek: de kleur van het bolletje, het

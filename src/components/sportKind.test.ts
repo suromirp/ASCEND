@@ -59,6 +59,13 @@ describe('pictogram voor kracht zonder gewicht', () => {
     expect(sportPictogram(strength('leeg', []))).toBe('kracht');
   });
 
+  it('een log zonder sjabloon-id volgt zijn oefeningen', () => {
+    const sets = (id: string) => [{ exerciseId: id, exerciseName: id, sets: [] }];
+    expect(lookOfLog({ type: 'strength', strengthData: [...sets('pull-up'), ...sets('push-up')] }).icon).toBe('eigengewicht');
+    expect(lookOfLog({ type: 'strength', strengthData: [...sets('pull-up'), ...sets('barbell-bench-press')] }).icon).toBe('kracht');
+    expect(lookOfLog({ type: 'strength', strengthData: [] }).icon).toBe('kracht');
+  });
+
   it('een log volgt hetzelfde: sjabloon of alleen oefeningen met eigen lichaam', () => {
     expect(lookOfLog({ type: 'strength', templateId: 'tpl_bodyweight' }).icon).toBe('eigengewicht');
     expect(lookOfLog({ type: 'strength', templateId: 'tpl_upper_a' }).icon).toBe('kracht');
