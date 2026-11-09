@@ -71,7 +71,8 @@ export function loadVerdict(weeks: WeekLoad[]): LoadVerdict | undefined {
   if (!current) return undefined;
   const jump = loadVersusBefore(weeks);
   if (!jump) return current.isRestWeek ? { word: 'Rustig', level: 'rustig', fact: 'rustweek' } : undefined;
-  const fact = `${formatNumberNL(current.doneTotal, 0)} van ${formatNumberNL(jump.before, 0)} gewoonlijk`;
+  // Het oordeel kijkt naar de hele week (gedaan plus gepland), dus het getal ook; anders staat er "0 van 1.718" op maandag.
+  const fact = `${formatNumberNL(jump.now, 0)} gepland, gewoonlijk ${formatNumberNL(jump.before, 0)}`;
   if (current.isRestWeek) return { word: 'Rustig', level: 'rustig', fact };
   if (jump.doneRatio > LOAD_JUMP || jump.ratio > LOAD_JUMP) return { word: 'Zwaar', level: 'zwaar', fact };
   if (jump.ratio < 0.7) return { word: 'Rustig', level: 'rustig', fact };
