@@ -61,7 +61,7 @@ import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 import { runManualBackup } from '../storage/manualBackup';
 import { AppDataContext } from './useAppData';
 import type { AdviceResponse, AppData } from './appDataTypes';
-import { bootMigrationListeners, currentBootMigration, useBoot } from './boot';
+import { bootMigrationListeners, currentBootMigration, useBoot, useResumeSync } from './boot';
 import {
   clearPendingRepairs,
   takeSyncTouched,
@@ -248,6 +248,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => onHealthWeightChange(() => void loadState().catch(() => undefined)), [loadState]);
   const { commitPlanChangeOutcome, commitPlanChange, respondToAdvice, undoRecentChange } = usePlanChangeActions({ setGoalEngineConfig, setSettings, setRecentChange, recentChange, setAdviceResponses, refresh });
   const { runForecastReplan, runWeeklyPrescriptionBuild, activateStrengthProgram, applyStrengthPlacementToCommittedRange, applyScheduleAnomalyFix, reportStrengthSchemaEnded, resolveStrengthRecommendation, runStrengthReviewCheck, rebuildRecommendations } = useStrengthAndReplan({ setForecastSummary, setRecentChange, setPlannerAdvice, refresh });
+  useResumeSync();
   useBoot({ setLoading, setBootError, setBootStep, loadState, refresh, runForecastReplan, runWeeklyPrescriptionBuild, runStrengthReviewCheck });
 
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);

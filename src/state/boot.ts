@@ -82,6 +82,28 @@ function runBootMigrationsOnce(): Promise<void> {
   return bootMigrations;
 }
 
+// Terug in de app (de app bleef open op de achtergrond, dus er is geen nieuw openen): kijk opnieuw
+// bij intervals.icu en daarna bij Health Connect. Beide houden zelf hun eigen ritme aan (drie uur,
+// na een fout een half uur), dus dit is goedkoop. Staat op app-niveau: het hing eerst aan de kaart
+// op Vandaag, zodat een ronde bij het terugkomen op een ander tabblad nooit draaide.
+export function resumeSync(): Promise<void> {
+  return bootSettled
+    .then(() => syncWatchActivities())
+    .catch(() => undefined)
+    .then(() => syncHealthConnect())
+    .then(() => undefined, () => undefined);
+}
+
+export function useResumeSync() {
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void resumeSync();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+}
+
 // Het openen zelf: eerst de gegevens, dan de app, dan de planning op de achtergrond.
 export function useBoot(deps: {
   setLoading: Dispatch<SetStateAction<boolean>>;

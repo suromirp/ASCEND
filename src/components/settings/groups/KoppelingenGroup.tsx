@@ -138,6 +138,12 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
           )}
         </div>
       )}
+      {/* Na elke ronde een regel per soort wat er binnenkwam, ook als de ronde niets nieuws had. */}
+      {facts.healthConnect?.enabled && facts.healthConnect.roundLines && (
+        <div role="status">
+          {facts.healthConnect.roundLines.map((line) => <p key={line} className="st-hint" style={{ marginTop: 0 }}>{line}</p>)}
+        </div>
+      )}
 
       <SettingsSection title="MacroFactor">
         <SummaryRow id="macrofactor" title="Laatste export" facts={facts} info="macrofactorExport" onClick={() => navigate('/koppelen/macrofactor')} />

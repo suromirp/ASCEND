@@ -5,7 +5,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 ## Bestanden
 - `src/integrations/types.ts#DataSourceAdapter` de enige vorm waarachter een bron komt; geen veld met een leveranciersnaam
 - `src/integrations/intervalsIcu.ts#ACTIVITY_FIELDS` welke velden de aanvraag vraagt; een veld dat je leest hoort erin
-- `src/integrations/healthConnect.ts#mapHealthWorkout` het enige bestand dat de plugin kent
+- `src/integrations/healthConnect.ts#mapHealthWorkout` het enige bestand dat de plugin kent; `src/engine/healthConnectRound.ts` de dag en tijd van de laatste ronde en een regel per soort wat er binnenkwam (`lastRound`); `src/state/boot.ts#useResumeSync` een ronde bij terugkomen
 - `src/storage/externalActivities.ts` activiteiten van buiten, op dit toestel en niet in de back-up
 - `src/storage/macrofactor.ts#importMacroFactorWorkouts` MacroFactor-training erin, `getMacroFactorState` leest
 - `src/engine/sourcePrecedence.ts#isSameMoment` dezelfde training van twee bronnen is één moment
@@ -28,7 +28,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - Een native wijziging (plugin, rechten, manifest) bouw je eerst als proefbouw door de Android-workflow (`.github/workflows/android.yml`, "ASCEND proef") voordat het op main komt.
 - Staat `minNative` in `app-versie.json` hoger dan het niveau van de geïnstalleerde app, dan vraagt dat een nieuwe APK (`needs-app`). Gaat `DB_VERSION` omhoog, dan gaat `android/native-level.txt` mee; een nieuwe plugin vraagt een nieuwe APK (`src/storage/nativeLevel.test.ts`).
 - Een Capacitor-plugin is een Proxy met een `then`: geef hem nooit terug als waarde van een belofte (`src/integrations/pluginPatroon.scan.test.ts`).
-- Bij Health Connect telde bewegingstijd tegen totale tijd een tocht dubbel (review 2 november); vergelijk dezelfde tijd.
+- Bij Health Connect telde bewegingstijd tegen totale tijd een tocht dubbel (review 2 november); vergelijk dezelfde tijd. Een ronde bij terugkomen hoort op app-niveau (`useResumeSync`), niet in een kaart: aan de kaart op Vandaag hangend draaide hij nooit op een ander tabblad.
 - De ochtenden in de back-up zijn een archief dat blijft na ontkoppelen; uitzetten vraagt eerst en biedt Ongedaan maken, want het ging bijna fout met dataverlies (review 1 november).
 - De locatie heeft een grens van tien seconden en geeft altijd een plek of een reden; het weer volgt alleen je plek als dat aan staat. Kwartierregen (`rainSoon`) leest "nu" op de klok van de plek, staat alleen in het geheugen en zwijgt bij oude of lege data. Heuvels in de buurt: alleen een plek op twee decimalen, zonder naam, pas na ja op de eerste vraag; de cache staat niet in de back-up. Meteoalarm stuurt geen CORS-kop, dus waarschuwingen komen uit drempels op Open-Meteo; bij de Mont Blanc overlappen de grenzen van vier lawinediensten, dus `regionFilesAt` probeert het lichtste bestand eerst en hoogstens vier.
 - Een nieuwe bron krijgt een regel in `settingsParts` (`src/components/settings/settingsFactsParts.ts`) en een eigen grens in tijd; een trage bron houdt geen andere rij tegen. Een negatief antwoord (geen gebied, geen plek) onthoud je alleen als elke bron antwoordde; een fout of time-out is nooit een nee.

@@ -437,8 +437,78 @@ describe('gewicht uit Health Connect', () => {
     await enableHealthConnect({ port, now: NOW });
     expect(await askHealthConnectWeight({ port, now: later(1) })).toEqual({ status: 'denied' });
     const allowed = fake({ samples: { weight: [weighing(21, 7, 82.2)] } });
-    expect(await askHealthConnectWeight({ port: allowed, now: later(1) })).toEqual({ status: 'ok' });
+    expect(await askHealthConnectWeight({ port: allowed, now: later(1) })).toEqual({ status: 'ok', found: { activities: 0, mornings: 0, weight: 1 } });
     expect((await getHealthConnectState()).granted).toContain('weight');
     expect((await SettingsRepo.get()).weightEntries).toHaveLength(1);
+  });
+});
+
+describe('wat een ronde per soort opleverde', () => {
+  it('een antwoord zoals de weegschaalapp het schrijft: gewicht met vetpercentage komt goed binnen', async () => {
+    const port = fake({ samples: { weight: [weighing(20, 7, 82.4)], bodyFat: [fatSample(20, 7, 18.4)] } });
+    await enableHealthConnect({ port, now: NOW });
+    const [entry] = (await SettingsRepo.get()).weightEntries ?? [];
+    expect(entry).toMatchObject({ date: '2026-10-20', kg: 82.4, source: 'health-connect', fatPct: 18.4 });
+  });
+
+  it('onthoudt per soort wat er binnenkwam, met het gewicht als dagen met een weging', async () => {
+    const port = fake({ workouts: [workout('w1', 21, 7, 40)], samples: { restingHeartRate: [rhr(21, 50)], weight: [weighing(20, 7, 82.4), weighing(20, 21, 83.6), weighing(21, 7, 82.2)] } });
+    const result = await enableHealthConnect({ port, now: NOW });
+    expect(result).toMatchObject({ status: 'on', sync: { status: 'ok', found: { activities: 1, mornings: 1, weight: 2 } } });
+    expect((await getHealthConnectState()).lastRound).toEqual({ activities: 1, mornings: 1, weight: 2 });
+  });
+
+  it('een ronde zonder nieuwe wegingen telt toch wat er stond', async () => {
+    const port = fake({ samples: { weight: [weighing(21, 7, 82.2)] } });
+    await enableHealthConnect({ port, now: NOW });
+    expect(await syncHealthConnect({ port, now: later(4) })).toMatchObject({ status: 'ok', weights: 0, found: { weight: 1 } });
+  });
+
+  it('niets gevonden is 0, geen toestemming is denied, schakelaar uit is off', async () => {
+    await enableHealthConnect({ port: fake(), now: NOW });
+    expect((await getHealthConnectState()).lastRound).toEqual({ activities: 0, mornings: 0, weight: 0 });
+
+    const noWeight = fake({ granted: ['workouts', 'sleep'], samples: { weight: [weighing(21, 7, 82.2)] } });
+    await syncHealthConnect({ port: noWeight, now: later(4) });
+    expect((await getHealthConnectState()).lastRound?.weight).toBe('denied');
+
+    await SettingsRepo.set({ weightFromHealthConnect: false });
+    await syncHealthConnect({ port: fake(), now: later(8) });
+    expect((await getHealthConnectState()).lastRound?.weight).toBe('off');
+  });
+
+  it('een plugin die halverwege faalt laat de vorige ronde en de wegingen staan', async () => {
+    await enableHealthConnect({ port: fake({ samples: { weight: [weighing(21, 7, 82.2)] } }), now: NOW });
+    const broken = fake({
+      samples: {
+        weight: async () => {
+          throw new Error('kapot');
+        },
+      },
+    });
+    expect((await syncHealthConnect({ port: broken, now: later(4) })).status).toBe('error');
+    const state = await getHealthConnectState();
+    expect(state.lastRound).toEqual({ activities: 0, mornings: 0, weight: 1 });
+    expect(state.lastError).toBeDefined();
+    expect((await SettingsRepo.get()).weightEntries).toHaveLength(1);
+  });
+
+  it('uitzetten wist de regels', async () => {
+    await enableHealthConnect({ port: fake(), now: NOW });
+    await disableHealthConnect();
+    expect((await getHealthConnectState()).lastRound).toBeUndefined();
+  });
+
+  it('een oude stand zonder het veld, of met een kapot veld, leest zonder regels', () => {
+    expect(migrateHealthConnectState({ enabled: true, granted: ['weight'], activities: [] }).lastRound).toBeUndefined();
+    expect(migrateHealthConnectState({ enabled: true, granted: [], activities: [], lastRound: { activities: 'veel', mornings: 1, weight: 2 } }).lastRound).toBeUndefined();
+    expect(migrateHealthConnectState({ enabled: true, granted: [], activities: [], lastRound: { activities: 1, mornings: 2, weight: 'denied' } }).lastRound).toEqual({ activities: 1, mornings: 2, weight: 'denied' });
+  });
+
+  it('zonder de Android-app (browser) blijft het stil', async () => {
+    const web = { ...fake(), inApp: false };
+    await MetaRepo.set(HEALTH_CONNECT_KEY, { enabled: true, granted: [], activities: [] });
+    expect(await syncHealthConnect({ port: web, now: NOW })).toEqual({ status: 'web' });
+    expect((await getHealthConnectState()).lastRound).toBeUndefined();
   });
 });
