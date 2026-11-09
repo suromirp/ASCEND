@@ -30,6 +30,9 @@
   --color-action-muted: #1f5f63;
   /* Status: waar je bent (vandaag in de week, de dag van vandaag). */
   --color-status: #93ccff;
+  /* Een periode in de weeklijst: de tint van het paneel en zijn rand (docs/beslissingen/2026-11-09-week-paneel.md). */
+  --color-period-tint: color-mix(in srgb, var(--color-status) 7%, transparent);
+  --color-period-edge: color-mix(in srgb, var(--color-status) 24%, transparent);
   --color-on-status: #06152a;
   /* Voortgang en gedaan: mint (ring, vinkjes, meters). */
   --color-progress: #5eead4;

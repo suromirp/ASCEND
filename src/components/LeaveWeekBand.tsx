@@ -1,11 +1,9 @@
 import type { ReactNode } from 'react';
 import type { LeaveKind } from '../models/leave';
-import type { WeekLeaveBand } from '../engine/leaveWeek';
-import { Icon } from './icons';
+import { periodSpan, type WeekLeaveBand } from '../engine/leaveWeek';
 
-// Eén band voor een periode in de weeklijst (engine/leaveWeek.ts): een rond pictogram links in de
-// maat en stijl van de trainingsschijven, de soort, de dagen van deze week, je notitie en één regel
-// wat het betekent. IJsblauw, want het is status; geen mint. Een tik opent het blad van de periode.
+// Een periode in de weeklijst (engine/leaveWeek.ts). IJsblauw, want het is status; geen mint. Een tik op de kop opent
+// het blad van de periode.
 
 const SIZE = 44;
 
@@ -35,28 +33,44 @@ export function LeaveKindDisc({ kind, size = SIZE }: { kind: LeaveKind; size?: n
   );
 }
 
-export function LeaveWeekBand({ band, onOpen }: { band: WeekLeaveBand; onOpen: (periodId: string) => void }) {
+// De periode als eigen paneel in de weeklijst (variant A, gekozen door de eigenaar, docs/beslissingen/2026-11-09-week-paneel.md):
+// een afgerond vlak met een lichte ijsblauwe tint, een kop op één regel (pictogram, soort, de dagen van de hele periode)
+// met je notitie klein eronder, en de dagen van deze week erin. Waar het paneel stopt, stopt de periode; loopt hij door
+// naar de vorige of volgende week, dan blijft die kant open. De uitleg staat in het blad dat een tik op de kop opent.
+export function LeaveWeekPanel({ band, onOpen, children }: { band: WeekLeaveBand; onOpen: (periodId: string) => void; children: ReactNode }) {
   const { period } = band;
+  const span = periodSpan(period.startDate, period.endDate);
+  const before = period.startDate < band.dates[0];
+  const after = period.endDate > band.dates[band.dates.length - 1];
+  const corners = before && after ? '' : before ? 'rounded-b-2xl' : after ? 'rounded-t-2xl' : 'rounded-2xl';
   return (
-    <button
-      type="button"
-      data-sheet-from
-      data-week-band={band.key}
-      onClick={() => onOpen(period.id)}
-      aria-label={`${band.title}, ${band.range}${band.extent ? `, ${band.extent}` : ''}, bijwerken`}
-      className="flex min-h-[64px] w-full items-center gap-3 border-t px-3 py-2 text-left transition-colors active:opacity-75 first:border-t-0"
-      style={{ borderColor: 'var(--color-card-border)', background: 'color-mix(in srgb, var(--color-status) 6%, transparent)' }}
+    <div
+      data-week-panel={band.key}
+      className={`mx-2 overflow-hidden border ${corners} ${before ? 'border-t-0' : 'mt-2'} ${after ? 'border-b-0' : 'mb-2'}`}
+      style={{ background: 'var(--color-period-tint)', borderColor: 'var(--color-period-edge)' }}
     >
-      <LeaveKindDisc kind={period.kind} />
-      <span className="min-w-0 flex-1">
-        <span className="block break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{band.title}</span>
-        <span className="mt-0.5 block text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-          {band.range}{band.extent ? ` · ${band.extent}` : ''}
+      <button
+        type="button"
+        data-sheet-from
+        data-week-band={band.key}
+        onClick={() => onOpen(period.id)}
+        aria-label={`${band.title}, ${span}${band.note ? `, ${band.note}` : ''}, bijwerken`}
+        className="flex min-h-[44px] w-full items-center gap-2.5 px-3 pt-2 pb-1 text-left active:opacity-75"
+      >
+        <span style={{ color: 'var(--color-status)' }}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            {GLYPH[period.kind]}
+          </svg>
         </span>
-        {band.note && <span className="mt-0.5 block break-words text-xs leading-4" style={{ color: 'var(--color-ink)' }}>{band.note}</span>}
-        <span className="block break-words text-xs leading-4" style={{ color: 'var(--color-ink-dim)' }}>{band.line}</span>
-      </span>
-      <span className="flex shrink-0 items-center" style={{ color: 'var(--color-ink-dim)' }} aria-hidden="true"><Icon name="verder" size={16} /></span>
-    </button>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-baseline justify-between gap-3">
+            <span className="min-w-0 break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{band.title}</span>
+            <span className="shrink-0 text-[13px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{span}</span>
+          </span>
+          {band.note && <span className="block break-words text-xs leading-4" style={{ color: 'var(--color-ink-dim)' }}>{band.note}</span>}
+        </span>
+      </button>
+      <div className="pl-2">{children}</div>
+    </div>
   );
 }
