@@ -33,6 +33,8 @@ import { useMissedTraining } from '../components/useMissedTraining';
 import { SourceSilenceLine } from '../components/SourceSilenceLine';
 import { IllnessSignCard } from '../components/IllnessSignCard';
 import { useIllnessSign } from '../components/useIllnessSign';
+import { WeatherWarningCard } from '../components/WeatherWarningCard';
+import { useWeatherWarnings } from '../components/useWeatherWarnings';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { DailyStretchCard } from '../components/DailyStretchCard';
@@ -100,6 +102,7 @@ function TodayContent() {
   const morningCardVisible = useMorningCardVisible();
   useSleepRefetch();
   const illnessSignState = useIllnessSign();
+  const weatherWarnings = useWeatherWarnings();
   const freshStart = useFreshStart();
   const missed = useMissedTraining();
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
@@ -377,6 +380,7 @@ function TodayContent() {
   const presentCards: TodayCardId[] = [
     ...(illness ? (['ill'] as const) : []),
     ...(illnessSignState.shown ? (['illnessSign'] as const) : []),
+    ...(weatherWarnings.shown ? (['weatherWarning'] as const) : []),
     ...(morningCardVisible ? (['morning'] as const) : []),
     ...(!illness && recoveryRamp(settings.illnessEpisodes, today) ? (['ramp'] as const) : []),
     ...(advice.length > 0 ? (['advice'] as const) : []),
@@ -402,6 +406,8 @@ function TodayContent() {
     ramp: <IllnessStatusCard />,
     // Rusthartslag en HRV wijken een paar ochtenden samen af: een vraag, geen waarschuwing.
     illnessSign: <IllnessSignCard state={illnessSignState} />,
+    // Onweer, storm, hitte of lawinegevaar bij een tocht of een lange training buiten: het feit, altijd helemaal.
+    weatherWarning: <WeatherWarningCard state={weatherWarnings} />,
     // De ochtendvraag: wat je antwoordt kan de dag veranderen.
     morning: <MorningCard />,
     advice: <CoachCard />,

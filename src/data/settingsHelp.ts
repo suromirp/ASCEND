@@ -1368,10 +1368,29 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   bundelWeer: {
     title: 'Weer en kleding',
-    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, regen in het komende uur, een helling of trap in de buurt, de maanstand bij een avondtocht, kleding, en een regel bij hitte of slechte lucht.',
+    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, waarschuwingen voor onweer, storm, hitte en lawines, regen in het komende uur, een helling of trap in de buurt, de maanstand bij een avondtocht, kleding, en een regel bij hitte of slechte lucht.',
     points: [
       { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
       { head: 'Je plaats', text: 'het weer volgt de plaats die je bij Plaats koos.' },
+    ],
+  },
+  weeralarm: {
+    title: 'Weerwaarschuwingen',
+    lead: 'Op de dag van een tocht of een lange training buiten, en de dag ervoor, een regel bovenaan Vandaag als er onweer, zware windstoten of hitte verwacht wordt. Het advies is aan.',
+    points: [
+      { head: 'Wat je ziet', text: 'het feit, de tijd en de plek, zoals: onweer verwacht vanaf 15:00 in Chamonix. De regel staat er altijd helemaal, je hoeft niets open te tikken.' },
+      { head: 'Wanneer', text: 'onweer, windstoten vanaf 75 km per uur of 30 graden en warmer, tussen 6 en 22 uur. Bij een tocht voor de plek van de tocht, of waar je bent als het weer je locatie volgt; bij een lange training voor de plek van je weer.' },
+      { head: 'Waar het vandaan komt', text: 'het weermodel van Open-Meteo, met de afgeronde plek, hoogstens eens per uur. Het is geen officiële waarschuwing: die van de weerdienst kan een webapp niet lezen. Kijk voor je vertrekt ook op Meteoalarm.' },
+      { head: 'Je planning', text: 'verandert er niet door. Wat je doet, kies je zelf.' },
+    ],
+  },
+  lawinegevaar: {
+    title: 'Lawinegevaar',
+    lead: 'Bij een tocht in de bergen of de sneeuw in het sneeuwseizoen, van november tot en met mei (bij terrein sneeuw het hele jaar), het lawinegevaar uit het bulletin rond de plek van je tocht. Het advies is aan.',
+    points: [
+      { head: 'Wat je ziet', text: 'een regel als: lawinegevaar aanzienlijk, 3 van 5, morgen rond Val d\'Isère. Op een dag van je tocht, of de dag ervoor als je tocht een eigen plek heeft.' },
+      { head: 'Waar het vandaan komt', text: 'het open bulletin van de Europese lawinediensten (EAWS). Welk gebied bij je plek hoort rekent je telefoon zelf uit; alleen een datum en welke lawinedienst gaan naar buiten. De Alpen en de Pyreneeën.' },
+      { head: 'Alleen informatie', text: 'ASCEND zegt niet of je moet gaan; lees het hele bulletin bij de dienst van het land. Je planning verandert er niet door.' },
     ],
   },
   geluid: {

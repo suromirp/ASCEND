@@ -138,7 +138,7 @@ export interface FetchOptions {
   fetchImpl?: typeof fetch;
 }
 
-async function getJson(url: string, options: FetchOptions): Promise<unknown> {
+export async function getJson(url: string, options: FetchOptions): Promise<unknown> {
   const doFetch = options.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);

@@ -135,6 +135,7 @@ Een controle, geen nieuw getal: de test blijft de bron voor je tempo's.
 
 --- kaart 12 ---
 Tempo bij zone 2
+[knop: Wat tempo bij zone 2 zegt]
 Je tempo bij één vaste hartslag. Word je fitter, dan loop je bij dezelfde hartslag sneller.
 Nog geen loopjes om te vergelijken. Na twee weken met loopjes zie je hier je lijn.
 Telt mee: stukken van minstens 5 minuten stabiel op vlak terrein, uit elke buitenloop. Warme lopen, boven 25 graden gevoelstemperatuur, tellen niet mee. Vul bij Instellingen, Lichaam je hartslag in, dan telt alleen zone 2.

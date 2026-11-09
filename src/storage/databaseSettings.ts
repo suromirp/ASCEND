@@ -365,6 +365,13 @@ export interface AppSettings {
   // point, while the weather follows your location, the weather at that height on Vandaag. Asks Open-Meteo with the same rounded place as
   // the forecast, at most once an hour. Absent = on. Optional and additive.
   mountainWeather?: boolean;
+  // "Weerwaarschuwingen" (engine/weatherWarnings.ts): onweer, zware windstoten of hitte op de dag van een tocht of
+  // een lange training buiten, of de dag ervoor, als regel op Vandaag. Asks Open-Meteo with the rounded place of the
+  // tocht or the weather, at most once an hour. Absent = on. Optional and additive; never changes the planning.
+  weatherWarnings?: boolean;
+  // "Lawinegevaar" (engine/avalanche.ts): the EAWS danger level near a tocht in the mountains or the snow in the snow
+  // season, when the tocht has a place. Absent = on. Optional and additive; never changes the planning.
+  avalancheBulletin?: boolean;
   // "Wennen aan warmte" (engine/heatAcclimation.ts): one line in the reisplanner in the last three weeks before
   // a departure from June to September. Absent = on. Optional and additive.
   heatAcclimation?: boolean;
