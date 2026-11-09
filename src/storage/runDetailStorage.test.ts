@@ -158,7 +158,8 @@ describe('fetching the series with the profile', () => {
     expect(rd.windKnown).toBe(true);
     expect(rd.bestFive!.kms[2].headwindKmh).toBeCloseTo(19.5, 0);
     // No coordinates and no key anywhere in what is kept on the log.
-    const text = JSON.stringify(log);
+    // The moments of reading (builtAt, completedAt) are clock times and can hold "52.0" by chance.
+    const text = JSON.stringify(log).replace(/"(builtAt|completedAt)":"[^"]*"/g, '');
     expect(text).not.toContain('52.0');
     expect(text).not.toContain('geheime');
     // The measured numbers of the log are as they were.

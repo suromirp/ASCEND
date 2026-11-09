@@ -37,6 +37,7 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       </SettingsSection>
       <SettingsSection title="Je stand">
         <SummaryRow id="intensiteit" title="Intensiteit tellen" facts={facts} info="intensiteit" onClick={() => setSheet('intensiteit')} />
+        <SummaryRow id="tempo-stukken" title="Tempo uit stabiele stukken" facts={facts} info="tempoStukken" onChange={(on) => void updateSettings({ tempoStablePieces: on })} />
       </SettingsSection>
       {sheet === 'lichaamsgewicht' && <WeightSheet health={facts.healthConnect} reload={reload} onClose={close} />}
       {sheet === 'hartslag' && <HeartRateSheet onClose={close} />}

@@ -101,6 +101,7 @@ const everything: AppSettings = {
   weightFromHealthConnect: false,
   stravaText: false,
   keepStreams: false,
+  tempoStablePieces: false,
   morningInBackup: false,
   watchSilence: false,
   illnessSigns: false,

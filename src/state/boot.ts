@@ -135,11 +135,12 @@ export function useBoot(deps: {
         const readRecentTestEfforts = async () => {
           if (await ensureRecentTestEfforts()) await refresh();
         };
-        // Older runs with a kept series get their stable pieces for tempo bij zone 2 (derived, added once).
+        // Older runs with a kept series get their stable pieces for tempo bij zone 2 (derived, added once):
+        // after the syncs, only the 12 weeks the trend reads, newest first, with a budget per opening.
         const readZone2Pieces = async () => {
           if (await ensureZone2Pieces()) await refresh();
         };
-        for (const [name, step] of [['planning sync', () => refresh()], ['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['health connect', () => syncHealthConnect()], ['best 5 km of recent tests', readRecentTestEfforts], ['stable pieces of runs', readZone2Pieces], ['watch workouts', syncWatchWorkouts]] as const) {
+        for (const [name, step] of [['planning sync', () => refresh()], ['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['health connect', () => syncHealthConnect()], ['best 5 km of recent tests', readRecentTestEfforts], ['watch workouts', syncWatchWorkouts], ['stable pieces of runs', readZone2Pieces]] as const) {
           try {
             await step();
           } catch (err) {

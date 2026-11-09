@@ -318,6 +318,10 @@ export interface AppSettings {
   // (activityStreams). Absent = on. Off keeps only the derived profile and kilometres.
   // Optional and additive.
   keepStreams?: boolean;
+  // "Tempo uit stabiele stukken": tempo bij zone 2 reads the stable pieces of every outdoor run
+  // (engine/aerobicTrend.ts#tempoPiecesOn). Absent = on; off is the old average per easy run.
+  // Optional and additive.
+  tempoStablePieces?: boolean;
   // "Reeksen in back-up": the full series travel in the backup file (base64). Absent = on,
   // because the source may stop giving them out; off makes a small backup. The copies taken
   // before an import never hold them. Optional and additive.

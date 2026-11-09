@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { aerobicTrend, formatPace, progressMoment, trendVerdict, celebratedChange, type AerobicTrend } from './aerobicTrend';
+import { aerobicTrend, bandPhrase, formatPace, progressMoment, tempoPiecesOn, trendHeadline, trendVerdict, celebratedChange, zone2Criteria, type AerobicTrend } from './aerobicTrend';
 import { zoneBpm } from './heartRateZones';
 import type { Zone2Piece } from '../models/zone2Pieces';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -194,8 +194,8 @@ describe('aerobicTrend: stabiele stukken', () => {
     expect(t.changeSec).toBe(s.changeSec);
     expect(t.recentSec! - t.earlierSec!).toBeCloseTo(s.changeSec, 9);
     const text = trendVerdict(t)!;
-    expect(text).toContain(`${-s.roundedHigh} tot ${-s.roundedLow} seconden per km sneller`);
-    expect(progressMoment(t, undefined, TODAY)).toContain(`ongeveer ${-s.roundedHigh} tot ${-s.roundedLow} seconden per km sneller`);
+    expect(text).toContain(`${-s.roundedHigh} tot ${-s.roundedLow} seconden sneller per km`);
+    expect(progressMoment(t, undefined, TODAY)).toContain(`ongeveer ${-s.roundedHigh} tot ${-s.roundedLow} seconden sneller per km`);
   });
 
   it('band over nul: nog geen duidelijke verandering, geen viering', () => {
@@ -224,7 +224,7 @@ describe('progressMoment: hearing about it', () => {
 
   it('reads the side of the band closest to zero and says it is a trend', () => {
     const msg = progressMoment(trend(-19, -11), undefined, '2026-12-01')!;
-    expect(msg).toContain('ongeveer 10 tot 20 seconden per km sneller');
+    expect(msg).toContain('ongeveer 10 tot 20 seconden sneller per km');
     expect(msg).toContain('de trend over weken');
     expect(celebratedChange(trend(-19, -11))).toBe(-11);
     // Het midden is 8 seconden sneller, maar de kant bij nul maar 3: nog niet.
@@ -238,5 +238,44 @@ describe('progressMoment: hearing about it', () => {
     expect(progressMoment(trend(-28, -20), last, '2026-12-10')).toBeUndefined();
     expect(progressMoment(trend(-21, -13), last, '2026-12-20')).toBeUndefined();
     expect(progressMoment(trend(-24, -16), last, '2026-12-20')).toBeDefined();
+  });
+});
+
+describe('één manier om de band te zeggen', () => {
+  it('formuleert elke afgeronde band op één manier, ook de randgevallen', () => {
+    expect(bandPhrase({ roundedLow: -20, roundedHigh: -10 })).toBe('ongeveer 10 tot 20 seconden sneller');
+    expect(bandPhrase({ roundedLow: -10, roundedHigh: 0 })).toBe('tot ongeveer 10 seconden sneller');
+    expect(bandPhrase({ roundedLow: 0, roundedHigh: 5 })).toBe('tot ongeveer 5 seconden langzamer');
+    expect(bandPhrase({ roundedLow: 0, roundedHigh: 0 })).toBe('gelijk');
+    expect(bandPhrase({ roundedLow: -10, roundedHigh: -10 })).toBe('ongeveer 10 seconden sneller');
+    expect(bandPhrase({ roundedLow: -5, roundedHigh: 10 })).toBe('tussen 5 seconden sneller en 10 seconden langzamer');
+  });
+});
+
+describe('de instelling Tempo uit stabiele stukken', () => {
+  const piece: Zone2Piece = { from: 'stream', startSec: 700, endSec: 1900, sec: 1200, distanceM: 3600, hr: 152, paceSecKm: 333, flat: true, gradePct: 0 };
+  const withPieces = (id: string, templateId: string) => {
+    const l = run(id, templateId, '2026-10-15', 8, 48, 150);
+    l.zone2Pieces = { version: 1, wholeKm: 8, wholeMinutes: 48, builtAt: '', pieces: [piece] };
+    return l;
+  };
+
+  it('uit: elke loop gaat het oude pad, een intervaltraining telt dan niet', () => {
+    const logs = [withPieces('e', 'tpl_easy_run'), withPieces('i', 'tpl_hill_intervals')];
+    const on = aerobicTrend(logs, templates, program, hr, '2026-10-19');
+    const off = aerobicTrend(logs, templates, program, hr, '2026-10-19', undefined, { pieces: false });
+    expect(on.measurements.map((m) => m.from)).toEqual(['stream', 'stream']);
+    expect(off.measurements.map((m) => [m.logId, m.from])).toEqual([['e', 'whole']]);
+    expect(trendVerdict(off)).toMatch(/^Eerste schatting/);
+    expect(zone2Criteria(off, false)[0]).toContain('gemiddelde hartslag van de hele loop');
+    expect(zone2Criteria(on, true)[0]).toContain('stabiel in zone 2 op vlak terrein');
+    expect(tempoPiecesOn(undefined)).toBe(true);
+    expect(tempoPiecesOn({ tempoStablePieces: false })).toBe(false);
+  });
+
+  it('het grote getal zegt wat het is: de lijn, de eerste schatting of de laatste week', () => {
+    const one = aerobicTrend([withPieces('e', 'tpl_easy_run')], templates, program, hr, '2026-10-19');
+    expect(trendHeadline(one)?.label).toBe('eerste schatting');
+    expect(trendHeadline({ statement: undefined, points: [{ label: '', value: -300, paceSec: 300, runs: 1 }] })).toEqual({ paceSec: 300, label: 'laatste week' });
   });
 });

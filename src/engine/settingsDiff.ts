@@ -374,6 +374,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('macrofactor-gewicht', 'Gewicht gebruiken', 'koppelingen', 'weightFromMacroFactor'),
   flag('health-connect-gewicht', 'Gewicht uit Health Connect', 'lichaam', 'weightFromHealthConnect'),
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
+  flag('tempo-stukken', 'Tempo uit stabiele stukken', 'lichaam', 'tempoStablePieces'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
   {
     id: 'locatie', title: 'Je locatie', page: 'gegevens',

@@ -585,6 +585,9 @@ export interface SessionLog {
   // (models/zone2Pieces.ts, engine/zone2Pieces.ts). Derived and append-only like `runDetail`,
   // tied to the totals it was read for; zones are applied when it is read, never stored.
   zone2Pieces?: Zone2Pieces;
+  // The totals whose kept series could not be read into pieces, so the opening does not try
+  // again for the same numbers (engine/runDetail.ts#runDetailFingerprint). Derived, optional.
+  zone2PiecesTried?: string;
   // Gekoppeld na je Akkoord: een log van het horloge of MacroFactor die nergens aan hing, kreeg
   // later zijn geplande training (`plannedSessionId`). Alleen het moment; de log zelf is niet
   // veranderd, en Ongedaan maken haalt precies de verwijzing en dit veld weg

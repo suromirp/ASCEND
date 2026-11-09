@@ -899,6 +899,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveRunInsight(s.runInsight).weather };
     case 'borstband':
       return { checked: resolveRunInsight(s.runInsight).chestStrap };
+    case 'tempo-stukken':
+      return { checked: s.tempoStablePieces !== false };
     case 'intensiteit':
       return { value: choiceShort('intensiteit', resolveIntensityCounting(s)) };
     case 'lucht':

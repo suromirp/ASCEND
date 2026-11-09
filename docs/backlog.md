@@ -242,6 +242,7 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - Eerlijker zeggen: "eerste schatting" tot er minstens 8 metingen over 4 weken zijn, daarna de verandering met een marge ("ongeveer 10 tot 20 seconden sneller"). De cijfers in de tekst komen uit dezelfde functie als de grafiek.
 - Een leesbare grafiek: elke meting als stip, het weekgemiddelde als lijn, een as met tempo's en "sneller" omhoog erbij, de hoogste en laagste week benoemd. Korte tekst: één zin wat het betekent, het hoe achter de i.
 - Scout eerst kort (welke drempels voor stabiel en hoe lang, warmtecorrectie), dan Sherpa: engine op opus (afgeleid, append-only, raakt de planning niet), grafiek en tekst op sonnet.
+- Engine en instelling gebouwd op `claude/tempo-stukken` (stap 1 tot 5, besluit `2026-11-09-tempo-stabiele-stukken.md`). Nog open: stap 6, de grafiek (elke loop als stip, warme gedimd, de lijn met band, as met tempo's), en stap 7, de tekst achter de i met de bronnen. Klein: een oude `aerobicProgressCelebrated` (op het midden van de band) na 14 dagen negeren; het dauwpunt in het weer per loop; de regel voor benen die niet uitgerust zijn (hoofdstuk 5 van het verslag).
 
 ## Calisthenics, los of naast krachttraining (wens 7 november, grondig)
 

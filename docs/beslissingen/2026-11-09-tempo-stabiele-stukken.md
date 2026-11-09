@@ -15,6 +15,10 @@ Wat er gebouwd is:
 - Migratie: `migrateLogZone2Pieces` in `storage/migrationsLogDetail.ts`. Het veld is optioneel, dus het schemanummer van de back-up blijft gelijk en een oude back-up importeert zoals hij was. Een beschadigd veld valt als geheel weg; het log houdt de rest.
 - `engine/aerobicTrend.ts` leest de stukken, zet ze om naar één hartslag via de hartslagreserve, en maakt per loop één meting. `zone2Statement` geeft de eerste schatting of de lijn met band; `trendVerdict` (de zin op de kaart), de figuren in Je stand (`runTrends.ts`) en `progressMoment` lezen die ene uitkomst.
 
+- Instelling "Tempo uit stabiele stukken" (`AppSettings.tempoStablePieces`), standaard aan, op de pagina Lichaam onder Je stand naast Intensiteit tellen (9 van de 12 rijen). Uit gaat elke loop weer het oude pad (de gemiddelde hartslag van een geplande rustige of lange loop); de uitspraak blijft uit dezelfde lijn met band komen, zodat de kaart nooit leeg is en niet sterker spreekt dan de data.
+- De achtergrondstap bij het openen staat na de syncs en het ophalen van horlogetrainingen, leest alleen de 12 weken van de trend, nieuwste eerst, hoogstens 20 lopen of 3 seconden per opening, met een pauze voor de app tussen de lopen. Een reeks die niet te lezen is krijgt `zone2PiecesTried` (de afdruk van de totalen) en wordt niet bij elke opening opnieuw gerekend; die wordt bij import gelezen zoals `runDetailTried`.
+- Eén formulering van de afgeronde band (`bandPhrase`) voor de kaart, Je stand en het moment dat je het hoort. Het grote getal op de kaart is de lijn van vandaag, de eerste schatting of de laatste week, met dat woord eronder.
+
 Dit is geen uitzondering op de regel over historie: er wordt geen gemeten getal en geen bestaand veld omgeschreven, alleen een afgeleid veld toegevoegd.
 
 ## Eigen keuzes
@@ -45,9 +49,10 @@ De backlog (eigenaar, 7 november: "wat matig"): drie punten en een uitspraak als
 
 ## Wat nog niet gebouwd is
 
-- Stap 5, instelling "Tempo bij zone 2" (bijvoorbeeld warme lopen meetellen, stukken uit intervaltrainingen) in een groepspagina en `settingsIndex.ts`, `settingsLayout.ts`, `settingsSummary.ts`. Tot dan gelden de drempels in `zone2Rules.ts` vast.
+- Fijnere keuzes binnen de instelling (warme lopen meetellen, stukken uit intervaltrainingen). Tot dan gelden de drempels in `zone2Rules.ts` vast.
 - Stap 6, de grafiek met elke loop als stip, de lijn met band en de as met tempo's.
-- Stap 7, de tekst achter de i met de bronnen in `data/researchSources.ts`, en de uitleg op de kaart die nog over "rustige en lange duurlopen" spreekt.
+- Stap 7, de tekst achter de i met de bronnen in `data/researchSources.ts`.
+- Een oude viering (op het midden van de band) na 14 dagen negeren.
 - Benen niet uitgerust (hoofdstuk 5): nog niet; de loop telt nu gewoon mee.
 - Het dauwpunt in het weer per loop.
 

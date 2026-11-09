@@ -22,7 +22,7 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { TrendPoint } from './readiness';
-import { aerobicTrend, formatPace, trendVerdict } from './aerobicTrend';
+import { aerobicTrend, bandPhrase, formatPace, trendVerdict, zone2Criteria } from './aerobicTrend';
 import type { HeartRateSettings } from './heartRateZones';
 import { isIndoorLog, logSport } from './sports';
 import { isEasyPlanned, median } from './runComparison';
@@ -58,6 +58,8 @@ export interface RunTrendsInput {
   today: string;
   // Trainings set to "Niet meetellen voor hartslag": out of the heart rate trends (engine/influence.ts).
   excludedLogIds?: ReadonlySet<string>;
+  // "Tempo uit stabiele stukken" (engine/aerobicTrend.ts#AerobicTrendOptions); absent = on.
+  tempoPieces?: boolean;
 }
 
 const TREND_WEEKS = 12;
@@ -86,23 +88,14 @@ function lastThree<T>(items: T[]): { last: T[]; before: T[] } | undefined {
 
 // --- efficiency: aerobicTrend itself ------------------------------------------------------------
 
-// The band as the figure says it: "ongeveer 10 tot 20 s per km sneller", or both sides when it lies over zero.
-function bandDifference(s: { roundedLow: number; roundedHigh: number; verdict: string }): string {
-  const { roundedLow: lo, roundedHigh: hi } = s;
-  if (lo < 0 && hi > 0) return `tussen ${-lo} s sneller en ${hi} s trager per km`;
-  const [near, far] = hi <= 0 ? [-hi, -lo] : [lo, hi];
-  const word = hi <= 0 ? 'sneller' : 'trager';
-  return near === far ? `ongeveer ${far} s per km ${word}` : `ongeveer ${near} tot ${far} s per km ${word}`;
-}
-
 function efficiencyRow(input: RunTrendsInput): TrendRow {
-  const trend = aerobicTrend(input.logs, input.templates, input.program, input.hr, input.today, input.excludedLogIds);
+  const trend = aerobicTrend(input.logs, input.templates, input.program, input.hr, input.today, input.excludedLogIds, { pieces: input.tempoPieces });
   const change = trend.changeSec;
   // The word from the band of the same line as the card (engine/aerobicTrend.ts#zone2Statement).
   const s = trend.statement?.kind === 'uitspraak' ? trend.statement : undefined;
   const word: TrendWord = !s || s.verdict === 'te-veel-verschil' ? 'Te weinig gegevens' : s.verdict === 'geen-duidelijke-verandering' ? 'Normaal' : s.verdict === 'sneller' ? 'Beter' : 'Slechter';
   const points = trend.points.map((p) => ({ label: p.label, value: p.value }));
-  const criteria = [`${trend.runs} rustige en lange loopjes in de laatste ${TREND_WEEKS} weken`, 'vlak, hoogstens 15 meter stijging per km', trend.referenceHr > 0 ? `omgerekend naar ${trend.referenceHr} slagen per minuut` : 'in zone 2'];
+  const criteria = [...zone2Criteria(trend, input.tempoPieces !== false), `de laatste ${TREND_WEEKS} weken`];
   const model: SheetModel =
     !s || change === undefined || trend.recentSec === undefined || trend.earlierSec === undefined
       ? empty('efficiency', 'Efficiëntie', 'pace', trendVerdict(trend) ?? 'Voor een uitspraak zijn minstens 8 lopen met een stuk in zone 2 nodig, over minstens 4 weken.', criteria)
@@ -115,7 +108,7 @@ function efficiencyRow(input: RunTrendsInput): TrendRow {
             middleLabel: '4 weken eerder',
             today: `${formatPace(trend.recentSec)} per km`,
             middle: `${formatPace(trend.earlierSec)} per km`,
-            difference: bandDifference(s),
+            difference: `${bandPhrase(s)} per km`,
           },
           series: points,
           seriesFormat: 'pace',

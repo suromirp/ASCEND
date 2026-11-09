@@ -189,7 +189,17 @@ interface Candidate {
   wholeBpm?: number;
 }
 
-export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, hr: HeartRateSettings | undefined, today: string, excludedLogIds?: ReadonlySet<string>): AerobicTrend {
+// The setting "Tempo uit stabiele stukken": absent is on (the advice).
+export const tempoPiecesOn = (s: { tempoStablePieces?: boolean } | undefined): boolean => s?.tempoStablePieces !== false;
+
+export interface AerobicTrendOptions {
+  // "Tempo uit stabiele stukken" (AppSettings.tempoStablePieces). Off: every run goes the old
+  // path, the average heart rate of a planned easy or long run, as before 2026-11-09.
+  pieces?: boolean;
+}
+
+export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, hr: HeartRateSettings | undefined, today: string, excludedLogIds?: ReadonlySet<string>, options: AerobicTrendOptions = {}): AerobicTrend {
+  const usePieces = options.pieces !== false;
   const byId = new Map(templates.map((t) => [t.id, t]));
   const band = zoneBpm(2, hr);
   const hardTop = zoneBpm(R.hardZone, hr)?.[1];
@@ -205,7 +215,7 @@ export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], p
     const rd = l.runDetail && !isStaleRunDetail(l.runDetail, km, minutes) ? l.runDetail : undefined;
     const heat = warmth(l);
     const t = byId.get(l.templateId);
-    const pieces = d?.environment === 'treadmill' ? undefined : piecesOfLog(l, km, minutes, rd);
+    const pieces = !usePieces || d?.environment === 'treadmill' ? undefined : piecesOfLog(l, km, minutes, rd);
     if (pieces) {
       // Any outdoor run with pieces, except a test or race (no easy effort).
       if (t ? isTestOrRace(t) : idIsTestOrRace(l.templateId, byId)) return [];
@@ -331,7 +341,34 @@ export function zone2Statement(counted: Zone2Measurement[], today: string): Zone
   };
 }
 
-const secText = (n: number) => `${n} ${n === 1 ? 'seconde' : 'seconden'}`;
+// The rounded band in words, the same in every place that says it (the card, Je stand, the
+// moment you hear about it): "ongeveer 10 tot 20 seconden sneller". Negative is faster.
+export function bandPhrase(s: { roundedLow: number; roundedHigh: number }): string {
+  const { roundedLow: lo, roundedHigh: hi } = s;
+  if (lo === 0 && hi === 0) return 'gelijk';
+  if (lo < 0 && hi > 0) return `tussen ${-lo} seconden sneller en ${hi} seconden langzamer`;
+  const faster = hi <= 0;
+  const [near, far] = faster ? [-hi, -lo] : [lo, hi];
+  const word = faster ? 'sneller' : 'langzamer';
+  if (near === far) return `ongeveer ${far} seconden ${word}`;
+  if (near === 0) return `tot ongeveer ${far} seconden ${word}`;
+  return `ongeveer ${near} tot ${far} seconden ${word}`;
+}
+
+// What counts, in two short lines, the same on the card and in Je stand.
+// Without zones there is no zone 2 to name (the card then asks for your heart rate).
+export function zone2Criteria(trend: Pick<AerobicTrend, 'runs' | 'referenceHr'>, pieces: boolean, zones = true): string[] {
+  const runs = trend.runs > 0 ? ` (${trend.runs} ${trend.runs === 1 ? 'loop' : 'lopen'})` : '';
+  const what = pieces
+    ? `Telt mee: stukken van minstens 5 minuten stabiel${zones ? ' in zone 2' : ''} op vlak terrein, uit elke buitenloop${runs}`
+    : `Telt mee: vlakke rustige en lange duurlopen, met de gemiddelde hartslag van de hele loop${runs}`;
+  return [
+    trend.referenceHr > 0 ? `${what}, omgerekend naar ${trend.referenceHr} slagen per minuut.` : `${what}.`,
+    `Warme lopen, boven ${R.heatOutC} graden gevoelstemperatuur, tellen niet mee.`,
+  ];
+}
+
+const capital = (t: string) => `${t[0].toUpperCase()}${t.slice(1)}`;
 
 // One sentence on what the trend says, from the same statement as the chart and the figures.
 export function trendVerdict(trend: Pick<AerobicTrend, 'statement' | 'referenceHr'>): string | undefined {
@@ -340,18 +377,23 @@ export function trendVerdict(trend: Pick<AerobicTrend, 'statement' | 'referenceH
   if (s.kind === 'eerste-schatting') {
     return `Eerste schatting: rond ${formatPace(s.paceSec)} per km${trend.referenceHr > 0 ? ` bij ${trend.referenceHr} slagen` : ''}. Of het verandert, zie je na ${R.firstRuns} lopen over minstens 4 weken.`;
   }
-  const { roundedLow: lo, roundedHigh: hi } = s;
   if (s.verdict === 'te-veel-verschil') return 'Nog te veel verschil tussen je lopen om iets te zeggen. Vooruitgang gaat in weken, niet per loop.';
-  if (s.verdict === 'geen-duidelijke-verandering') {
-    if (lo === 0 && hi === 0) return 'Gelijk aan een maand geleden. Normaal: vooruitgang gaat in weken, niet per loop.';
-    if (lo === 0 || hi === 0) return 'Nog geen duidelijke verandering ten opzichte van een maand geleden. Vooruitgang gaat in weken, niet per loop.';
-    return `Nog geen duidelijke verandering: ergens tussen ${secText(Math.abs(lo))} sneller en ${secText(hi)} langzamer per km dan een maand geleden.`;
-  }
-  const [near, far] = s.verdict === 'sneller' ? [-hi, -lo] : [lo, hi];
-  const amount = near === far ? `ongeveer ${secText(far)}` : near <= 0 ? `tot ongeveer ${secText(far)}` : `ongeveer ${near} tot ${secText(far)}`;
+  const phrase = bandPhrase(s);
+  if (phrase === 'gelijk') return 'Gelijk aan een maand geleden. Normaal: vooruitgang gaat in weken, niet per loop.';
+  if (s.verdict === 'geen-duidelijke-verandering') return `Nog geen duidelijke verandering: ${phrase} per km dan een maand geleden.`;
   return s.verdict === 'sneller'
-    ? `${amount[0].toUpperCase()}${amount.slice(1)} per km sneller dan een maand geleden, bij dezelfde hartslag. Dat past bij fitter worden.`
-    : `${amount[0].toUpperCase()}${amount.slice(1)} per km langzamer dan een maand geleden. Moe, warm of weinig geslapen? Kijk hoe het de komende weken gaat.`;
+    ? `${capital(phrase)} per km dan een maand geleden, bij dezelfde hartslag. Dat past bij fitter worden.`
+    : `${capital(phrase)} per km dan een maand geleden. Moe, warm of weinig geslapen? Kijk hoe het de komende weken gaat.`;
+}
+
+// The big number on the card: the line today once there is one, else the first estimate, else
+// the last week. The label says which, so the number never seems to be something else.
+export function trendHeadline(trend: Pick<AerobicTrend, 'statement' | 'recentSec' | 'points'>): { paceSec: number; label: string } | undefined {
+  const s = trend.statement;
+  if (s?.kind === 'uitspraak' && trend.recentSec !== undefined) return { paceSec: trend.recentSec, label: 'nu, op de lijn' };
+  if (s?.kind === 'eerste-schatting') return { paceSec: s.paceSec, label: 'eerste schatting' };
+  const last = trend.points.at(-1);
+  return last ? { paceSec: last.paceSec, label: 'laatste week' } : undefined;
 }
 
 // --- the moment you hear about it ------------------------------------------
@@ -378,8 +420,5 @@ export function progressMoment(trend: Pick<AerobicTrend, 'statement'>, last: Pro
   const s = trend.statement;
   if (near === undefined || s?.kind !== 'uitspraak' || near > -R.celebrateSec) return undefined;
   if (last && (today < addDays(last.date, CELEBRATE_EVERY_DAYS) || near > last.changeSec - CELEBRATE_FURTHER_SEC)) return undefined;
-  const lo = -s.roundedHigh;
-  const hi = -s.roundedLow;
-  const amount = lo === hi ? `ongeveer ${hi}` : `ongeveer ${lo} tot ${hi}`;
-  return `Een goed teken: bij dezelfde hartslag loop je ${amount} seconden per km sneller dan een maand geleden. Dat is de trend over weken, niet één loopje.`;
+  return `Een goed teken: bij dezelfde hartslag loop je ${bandPhrase(s)} per km dan een maand geleden. Dat is de trend over weken, niet één loopje.`;
 }

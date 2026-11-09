@@ -28,6 +28,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Man of vrouw', text: 'het silhouet verschilt een beetje in schouders, heupen en borst. De plekken en de oefeningen blijven hetzelfde.' },
     ],
   },
+  tempoStukken: {
+    title: 'Tempo uit stabiele stukken',
+    lead: 'Tempo bij zone 2 rekent met de stukken van minstens 5 minuten waarin je hartslag en tempo vast lagen, op vlak terrein, uit elke buitenloop.',
+    points: [
+      { head: 'Aan', text: 'standaard: meer en zuiverdere metingen, ook uit het inlopen van een intervaltraining. De eerste 10 minuten, heuvels en warme lopen tellen niet mee.' },
+      { head: 'Uit', text: 'de gemiddelde hartslag van elke geplande rustige of lange loop, zoals eerder.' },
+      { head: 'Je planning', text: 'verandert hier nooit door; het is alleen een meting.' },
+    ],
+  },
   intensiteit: {
     title: 'Intensiteit tellen',
     lead: 'De kaart Intensiteit op Je stand laat zien hoeveel van je loop- en wandelminuten rustig waren. Hier kies je waar ze op gebaseerd is.',

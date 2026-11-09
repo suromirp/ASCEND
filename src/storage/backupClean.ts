@@ -218,7 +218,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md): een oude
   // waarde wordt stil genegeerd, het is geen fout in het bestand.
   delete s.forgeQuickButtons;
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'heatAcclimation', 'paceCurve', 'stageOwnPace', 'climbPace', 'zonesAfterTest'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'heatAcclimation', 'paceCurve', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;

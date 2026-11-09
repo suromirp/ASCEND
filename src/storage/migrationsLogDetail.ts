@@ -148,8 +148,18 @@ export function migrateLogRunDetail(log: SessionLog): SessionLog {
 // damaged field is dropped as a whole and the log keeps everything else; fields the reader does
 // not know are not kept.
 export function migrateLogZone2Pieces(log: SessionLog): SessionLog {
-  if (!('zone2Pieces' in log)) return log;
-  const { zone2Pieces: raw, ...rest } = log;
+  let out = log;
+  // `zone2PiecesTried` must be a short text, like `runDetailTried`.
+  if ('zone2PiecesTried' in out) {
+    const tried = (out as { zone2PiecesTried?: unknown }).zone2PiecesTried;
+    if (typeof tried !== 'string' || tried.length === 0 || tried.length > 40) {
+      const { zone2PiecesTried: _t, ...rest } = out;
+      void _t;
+      out = rest;
+    }
+  }
+  if (!('zone2Pieces' in out)) return out;
+  const { zone2Pieces: raw, ...rest } = out;
   const read = readZone2Pieces(raw);
   return read ? { ...rest, zone2Pieces: read } : rest;
 }

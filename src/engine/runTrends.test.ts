@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runTrends, type RunTrendsInput } from './runTrends';
-import { aerobicTrend } from './aerobicTrend';
+import { aerobicTrend, bandPhrase } from './aerobicTrend';
 import { EASY, TEMPLATES, runLog } from './fixtures/runLogs';
 import type { RunSpec } from './fixtures/runStreams';
 import type { SessionLog } from '../models/training';
@@ -31,7 +31,8 @@ describe('efficiency: the same trend as the card Tempo bij zone 2', () => {
     const s = trend.statement!;
     expect(s.kind).toBe('uitspraak');
     if (s.kind !== 'uitspraak') return;
-    expect(r.model.figures.difference).toBe(`ongeveer ${-s.roundedHigh} tot ${-s.roundedLow} s per km sneller`);
+    expect(r.model.figures.difference).toBe(`${bandPhrase(s)} per km`);
+    expect(r.model.figures.difference).toBe(`ongeveer ${-s.roundedHigh} tot ${-s.roundedLow} seconden sneller per km`);
     expect(r.model.figures.today).toBe(`${Math.floor(trend.recentSec! / 60)}:${String(Math.round(trend.recentSec! % 60)).padStart(2, '0')} per km`);
     expect(r.model.strengthText).toContain('dezelfde trend als de kaart Tempo bij zone 2');
   });

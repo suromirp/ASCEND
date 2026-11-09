@@ -74,7 +74,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     rows: ['forge', 'kracht', 'forge-programma', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-weergave', 'bundel-rusttimer', 'forge-scherm', 'forge-bijsturen', 'forge-spotter', 'bundel-sportschool'],
     advanced: ['trainingsduur', 'forge-tijdsgrens', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren'],
   },
-  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit'], advanced: [] },
+  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit', 'tempo-stukken'], advanced: [] },
   vandaag: {
     rows: ['kaarten', 'lichterbenen', 'korter-vandaag', 'bundel-meldingen', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
