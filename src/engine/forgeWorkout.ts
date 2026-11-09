@@ -296,7 +296,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   // A swapped exercise is another exercise: the range of the template is not its
   // own (squat 5 to 8 is not leg extension 5 to 8). The reps in reserve stay.
   const plan = swapTo ? (fromSlot?.rir !== undefined ? { rir: fromSlot.rir } : undefined) : fromSlot;
-  const learned = usedBefore({ sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings });
+  const learned = usedBefore({ sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings, exercise });
   let rx: Prescription | undefined;
   let rxInput: Parameters<typeof prescribe>[0] | undefined;
   if (ctx.modelOn && history && history.sessions.length > 0) {

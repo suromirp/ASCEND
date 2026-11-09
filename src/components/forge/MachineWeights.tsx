@@ -1,11 +1,18 @@
-// ASCEND: de gewichten van een toestel invullen. Eén formulier, twee bladen: in Forge (het menu
-// van een oefening en de regel als geen gewicht past) en in de instellingen. Geen rekenwerk;
-// dat staat in engine/machineWeights.ts. Besluit: docs/beslissingen/2026-10-26-gewichten-per-toestel.md.
+// ASCEND: de standen van een toestel invullen. Eén formulier, twee bladen: in Forge (het menu van een
+// oefening en de regel als geen gewicht past) en in de instellingen. Geen rekenwerk; dat staat in
+// engine/toestelStanden.ts en engine/machineWeights.ts. Opslaan gaat alles of niets, met een grens in tijd
+// (storage/machineStands.ts). Besluit: docs/beslissingen/2026-11-09-forge-toestelstanden.md.
+//
+// Van boven naar beneden: de uitleg, de standen als chips die je wegstreept, Stand toevoegen, "Veel tegelijk"
+// (de bestaande Lijst en Bereik, wat eruit komt wordt bij de standen gevoegd), de keuze wat Forge voorstelt,
+// Annuleren en Opslaan, en Standen wissen.
 
 import { useId, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
-import { MACHINE_LIST_LIMITS, addOnsFor, cleanMachineList, formatAddOns, formatMachineWeights, ownWeightsFor, parseMachineWeights, rangeProblem, poundRangeFor, rangeWeights, rangesFor, weightsFromRange, withMachineSetup, type ParsedList, type WeightRange } from '../../engine/machineWeights';
-import { RANGE_LIMITS, type RangeUnit, normalizeStrengthSettings, resolveStrengthSettings, type GymProfile, type StrengthSettings } from '../../engine/strengthSettings';
+import { addOnsFor, formatAddOns, formatMachineWeights, parseMachineWeights, rangeProblem, poundRangeFor, rangeWeights, weightsFromRange, type ParsedList, type WeightRange } from '../../engine/machineWeights';
+import { standsFor, mergeStands, STAND_LIMITS } from '../../engine/toestelStanden';
+import { RANGE_LIMITS, type RangeUnit, resolveStrengthSettings, type GymProfile, type StrengthSettings } from '../../engine/strengthSettings';
+import { clearStandsNow, saveStandsNow } from '../../storage/machineStands';
 import { useAppData } from '../../state/AppDataContext';
 import { formatNumberNL } from '../../utils/number';
 import { Sheet } from '../settings/Sheet';
@@ -13,17 +20,7 @@ import { ChoiceStrip } from '../ChoiceStrip';
 import { TextButton } from '../TextButton';
 import { PrimaryButton, SecondaryButton } from '../ui';
 import { ForgeSheet } from './parts';
-
-// Zet of wist de losse gewichten en bereiken van één toestel in het actieve profiel. Geeft de nieuwe
-// instellingen terug, zodat de aanroeper er meteen mee kan rekenen.
-function useSaveMachineWeights() {
-  const { settings, updateSettings } = useAppData();
-  return (exerciseId: string, setup: { list?: number[]; ranges?: WeightRange[] }): StrengthSettings => {
-    const next = normalizeStrengthSettings(withMachineSetup(settings.strengthModel, exerciseId, setup)) ?? {};
-    void updateSettings({ strengthModel: next });
-    return next;
-  };
-}
+import { useSeedStands, useStandIo } from './useForgeStands';
 
 type RangeDraft = { start: string; end: string; step: string; removed: number[]; unit: RangeUnit };
 
@@ -34,7 +31,6 @@ function toKg(text: string): number | undefined {
 }
 
 const kgText = (n: number) => formatNumberNL(n, 2);
-const draftOf = (r: WeightRange): RangeDraft => ({ start: String(r.startKg).replace('.', ','), end: String(r.endKg).replace('.', ','), step: String(r.stepKg).replace('.', ','), removed: r.removedKg ?? [], unit: r.unit ?? 'kg' });
 const EMPTY_DRAFT: RangeDraft = { start: '', end: '', step: '', removed: [], unit: 'kg' };
 const isBlank = (d: RangeDraft) => d.start.trim() === '' && d.end.trim() === '' && d.step.trim() === '';
 
@@ -82,6 +78,9 @@ function KgField({ label, value, onChange, placeholder, unit = 'kg' }: { label: 
   );
 }
 
+const SAVE_FAILED = 'Opslaan lukte niet. Probeer het nog eens.';
+const FULL = `Dit toestel heeft al ${STAND_LIMITS.maxCount} standen. Haal er een weg.`;
+
 function MachineWeightsForm({
   exerciseId,
   exerciseName,
@@ -96,18 +95,25 @@ function MachineWeightsForm({
   onDone: () => void;
   onSaved?: (next: StrengthSettings) => void;
 }) {
-  const save = useSaveMachineWeights();
+  const io = useStandIo();
   const exercise = exerciseById(exerciseId);
-  const existing = ownWeightsFor(profile, exercise);
-  const existingList = cleanMachineList(profile.exerciseWeightsKg?.[exerciseId]);
-  const existingRanges = rangesFor(profile, exercise);
-  const [mode, setMode] = useState<'list' | 'range'>(existingRanges.length > 0 ? 'range' : 'list');
-  const [text, setText] = useState(existingList ? formatMachineWeights(existingList) : '');
-  const [drafts, setDrafts] = useState<RangeDraft[]>(existingRanges.length > 0 ? existingRanges.map(draftOf) : [EMPTY_DRAFT]);
+  const now = standsFor(profile, exercise);
+  const [added, setAdded] = useState<number[]>([]);
+  const [removed, setRemoved] = useState<number[]>([]);
+  const [only, setOnly] = useState<boolean>(now?.only ?? false);
+  const [mode, setMode] = useState<'list' | 'range'>('list');
+  const [text, setText] = useState('');
+  const [drafts, setDrafts] = useState<RangeDraft[]>([EMPTY_DRAFT]);
   const [extra, setExtra] = useState('');
   const [touched, setTouched] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   const id = useId();
   const addOns = addOnsFor(profile, exercise);
+
+  // De standen die er zijn plus wat je er in dit blad bij zette, oplopend. Een doorgestreepte staat er nog, maar telt niet mee.
+  const shown = mergeStands(now?.kg ?? [], added).kg;
+  const kept = shown.filter((w) => !removed.includes(w));
 
   const parsed: ParsedList = text.trim() === '' ? { ok: true, list: [] } : parseMachineWeights(text);
   const loose = parsed.ok ? parsed.list : [];
@@ -116,9 +122,11 @@ function MachineWeightsForm({
   const used = drafts.map((d, i) => ({ d, r: reads[i] })).filter(({ d }) => !isBlank(d));
   const ranges = used.map(({ r }) => r.range).filter((r): r is WeightRange => !!r);
   const badRead = used.find(({ r }) => !r.range);
-  const anyWeights = loose.length > 0 || ranges.some((r) => rangeWeights(r).length > 0);
-  const problem = !parsed.ok ? parsed.reason : badRead ? badRead.r.problem : !anyWeights ? 'Vul de gewichten in, als lijst of als bereik.' : undefined;
+  const bulk = [...loose, ...ranges.flatMap(rangeWeights)];
+  const problem = !parsed.ok ? parsed.reason : badRead ? badRead.r.problem : undefined;
   const showError = touched && !!problem;
+  // Wat er na Opslaan staat: de standen die overblijven plus wat je bij Veel tegelijk invulde.
+  const result = mergeStands(kept, bulk);
 
   const setDraft = (i: number, patch: Partial<RangeDraft>) => {
     setTouched(true);
@@ -129,11 +137,95 @@ function MachineWeightsForm({
     setLoose([...loose, kg]);
   };
   const extraKg = toKg(extra);
+  const extraOk = extraKg !== undefined && extraKg >= STAND_LIMITS.minKg && extraKg <= STAND_LIMITS.maxKg;
+  const full = kept.length >= STAND_LIMITS.maxCount;
+
+  async function save() {
+    if (problem) return setTouched(true);
+    if (result.tooMany) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      const out = await saveStandsNow({ exercise, kg: result.kg, only }, io);
+      if (out.kind === 'saved') {
+        onSaved?.(out.settings);
+        onDone();
+        return;
+      }
+      if (out.kind === 'failed') setFailed(true);
+    } catch {
+      setFailed(true);
+    }
+    setBusy(false);
+  }
+
+  async function wipe() {
+    setBusy(true);
+    setFailed(false);
+    try {
+      const out = await clearStandsNow({ exercise }, io);
+      if (out.kind === 'saved') {
+        onSaved?.(out.settings);
+        onDone();
+        return;
+      }
+      setFailed(true);
+    } catch {
+      setFailed(true);
+    }
+    setBusy(false);
+  }
 
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        De gewichten van {exerciseName} in {profile.name}. Dan stelt ASCEND hier alleen gewichten uit deze opgave voor, en ze leert daarnaast van wat je echt gebruikt.
+        Dit zijn de gewichten die je op dit toestel in {profile.name} gebruikte. Minder en Meer springen van stand naar stand.
+      </p>
+      {shown.length > 0 ? (
+        <div className="flex flex-wrap gap-2" role="group" aria-label={`Standen van ${exerciseName}, tik om er een weg te halen`}>
+          {shown.map((w) => {
+            const on = !removed.includes(w);
+            return (
+              <WeightChip
+                key={w}
+                kg={w}
+                on={on}
+                label={`${kgText(w)} kg, ${on ? 'tik om weg te halen' : 'weggehaald, tik om terug te zetten'}`}
+                onClick={() => {
+                  setTouched(true);
+                  setRemoved((r) => (on ? [...r, w] : r.filter((x) => x !== w)));
+                }}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          Nog geen standen. Tik tijdens een training het getal dat op het blok staat; Forge onthoudt het.
+        </p>
+      )}
+      <div className="flex items-end gap-2">
+        <KgField label="Stand toevoegen" value={extra} placeholder="20" onChange={setExtra} />
+        <SecondaryButton
+          disabled={!extraOk || full}
+          onClick={() => {
+            if (extraKg === undefined) return;
+            setTouched(true);
+            setAdded((a) => [...a, extraKg]);
+            setRemoved((r) => r.filter((x) => x !== extraKg));
+            setExtra('');
+          }}
+        >
+          Toevoegen
+        </SecondaryButton>
+      </div>
+      {full && (
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{FULL}</p>
+      )}
+
+      <h3 className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Veel tegelijk</h3>
+      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        Heeft het blok vaste stappen, vul ze dan in één keer in. Ze komen bij de standen hierboven.
       </p>
       <ChoiceStrip
         label="Hoe vul je de gewichten in"
@@ -273,19 +365,6 @@ function MachineWeightsForm({
                 ))}
               </div>
             )}
-            <div className="flex items-end gap-2">
-              <KgField label="Gewicht" value={extra} placeholder="113" onChange={setExtra} />
-              <SecondaryButton
-                disabled={extraKg === undefined || extraKg < MACHINE_LIST_LIMITS.minKg || extraKg > MACHINE_LIST_LIMITS.maxKg}
-                onClick={() => {
-                  if (extraKg === undefined) return;
-                  addExtra(extraKg);
-                  setExtra('');
-                }}
-              >
-                Gewicht toevoegen
-              </SecondaryButton>
-            </div>
           </div>
           {showError && (
             <p className="text-xs leading-snug" role="alert" style={{ color: 'var(--color-danger-text)' }}>
@@ -294,31 +373,33 @@ function MachineWeightsForm({
           )}
         </>
       )}
+      <ChoiceStrip
+        label="Wat Forge voorstelt"
+        options={[
+          { value: 'estimate', label: 'Ook tussenin en erboven schatten' },
+          { value: 'only', label: 'Alleen deze standen' },
+        ]}
+        value={only ? 'only' : 'estimate'}
+        onChange={(v) => v && setOnly(v === 'only')}
+      />
+      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        Bij alleen deze standen stelt Forge nooit een gewicht voor dat je niet intikte.
+      </p>
+      {result.tooMany && (
+        <p className="text-xs leading-snug" role="alert" style={{ color: 'var(--color-danger-text)' }}>{FULL}</p>
+      )}
+      {failed && (
+        <p className="text-xs leading-snug" role="alert" style={{ color: 'var(--color-danger-text)' }}>{SAVE_FAILED}</p>
+      )}
       <div className="flex gap-3">
         <SecondaryButton onClick={onDone}>Annuleren</SecondaryButton>
-        <PrimaryButton
-          fullWidth={false}
-          disabled={!!problem && touched}
-          onClick={() => {
-            if (problem) return setTouched(true);
-            const next = save(exerciseId, { list: loose, ranges });
-            onSaved?.(next);
-            onDone();
-          }}
-        >
+        <PrimaryButton fullWidth={false} disabled={busy || result.tooMany || (!!problem && touched)} onClick={() => void save()}>
           Opslaan
         </PrimaryButton>
       </div>
-      {existing && (
-        <TextButton
-          tone="danger"
-          onClick={() => {
-            const next = save(exerciseId, {});
-            onSaved?.(next);
-            onDone();
-          }}
-        >
-          Gewichten wissen
+      {shown.length > 0 && (
+        <TextButton tone="danger" disabled={busy} onClick={() => void wipe()}>
+          Standen wissen
         </TextButton>
       )}
     </div>
@@ -333,10 +414,11 @@ function useActiveProfile(): GymProfile {
 // In de instellingen.
 export function MachineWeightsSheet({ exerciseId, onClose }: { exerciseId: string; onClose: () => void }) {
   const profile = useActiveProfile();
+  useSeedStands(exerciseId);
   const name = exerciseById(exerciseId)?.name ?? exerciseId;
   return (
-    <Sheet eyebrow="Je sportschool" title={name} onClose={onClose}>
-      {(close) => <MachineWeightsForm exerciseId={exerciseId} exerciseName={name} profile={profile} onDone={close} />}
+    <Sheet eyebrow="Je sportschool" title={name} line={profile.name} onClose={onClose}>
+      {(close) => <MachineWeightsForm key={String(standsFor(profile, exerciseById(exerciseId))?.stored)} exerciseId={exerciseId} exerciseName={name} profile={profile} onDone={close} />}
     </Sheet>
   );
 }
@@ -344,10 +426,11 @@ export function MachineWeightsSheet({ exerciseId, onClose }: { exerciseId: strin
 // In Forge, met `onSaved` om meteen opnieuw te kijken of er een lichter gewicht past.
 export function MachineWeightsForgeSheet({ exerciseId, onSaved, onClose }: { exerciseId: string; onSaved?: (next: StrengthSettings) => void; onClose: () => void }) {
   const profile = useActiveProfile();
+  useSeedStands(exerciseId);
   const name = exerciseById(exerciseId)?.name ?? exerciseId;
   return (
-    <ForgeSheet title={`Gewichten van ${name}`} sub={profile.name} onClose={onClose}>
-      {(close) => <MachineWeightsForm exerciseId={exerciseId} exerciseName={name} profile={profile} onDone={close} onSaved={onSaved} />}
+    <ForgeSheet title={name} sub={profile.name} onClose={onClose}>
+      {(close) => <MachineWeightsForm key={String(standsFor(profile, exerciseById(exerciseId))?.stored)} exerciseId={exerciseId} exerciseName={name} profile={profile} onDone={close} onSaved={onSaved} />}
     </ForgeSheet>
   );
 }

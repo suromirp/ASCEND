@@ -607,6 +607,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.reckon };
     case 'forge-afvinken-doel':
       return { checked: forge.assumedCounts };
+    case 'standen-onthouden':
+      return { checked: forge.learnStands };
     case 'forge-dumbbells':
       return { value: choiceShort('dumbbellLog', forge.dumbbellLog) };
     case 'forge-naast': {

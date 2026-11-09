@@ -159,7 +159,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="dumbbells" title="Dumbbells" facts={facts} onClick={() => setInner('dumbbells')} />
           <SummaryRow id="forge-dumbbells" title="Dumbbells in je log" facts={facts} info="forgeDumbbells" onClick={() => setInner('forge-dumbbells')} />
           <SummaryRow id="kabels" title="Kabels en toestellen" facts={facts} onClick={() => setInner('kabels')} />
-          <SummaryRow id="toestelgewichten" title="Gewichten per toestel" facts={facts} info="toestelgewichten" onClick={() => setInner('toestelgewichten')} />
+          <SummaryRow id="toestelgewichten" title="Standen per toestel" facts={facts} info="toestelgewichten" onClick={() => setInner('toestelgewichten')} />
+          <SummaryRow id="standen-onthouden" title="Standen onthouden" facts={facts} info="standenOnthouden" onChange={(on) => save({ learnStands: on })} />
           <SummaryRow id="tussengewichten" title="Tussengewichten" facts={facts} info="tussengewichten" onClick={() => setInner('tussengewichten')} />
         </BundleSheet>
       )}

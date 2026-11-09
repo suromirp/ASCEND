@@ -24,8 +24,8 @@ import { daysBetween } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { kgLabel } from '../utils/kg';
 import { isWorkSet } from './workSets';
-import type { ResolvedStrengthSettings } from './strengthSettings';
-import { countsForProfile, ownWeightsFor } from './machineWeights';
+import { cleanStandList, type ResolvedStrengthSettings } from './strengthSettings';
+import { countsForProfile, hasStack, ownWeightsFor } from './machineWeights';
 import { candidatesFor, dumbbellsAsTotal, externalFromLoad, loadFromExternal, nearestIndex, profileFor, stepAt, usedOnlyWeights, usedWeights, type Candidate } from './strengthWeights';
 import { median } from '../utils/stats';
 import { askedReps, CONFIRMED_TOP_TRAININGS, confirmedFlags, confirmedRir, type ConfirmContext } from './assumedSets';
@@ -698,8 +698,12 @@ export const WEIGHT_MISMATCH_TEXT = 'Dit gewicht past niet bij je sportschool. K
 // it is never refused.
 // The weights used on this exercise before the day of the proposal, for a stack
 // that learns (the setting "Gewichten van toestellen leren").
-export function usedBefore(input: { sessions: SessionInput[]; date: string; settings: ResolvedStrengthSettings }): number[] | undefined {
+// A cable or stack with stands in this gym (engine/toestelStanden.ts) gives its stands instead of the raw
+// log: a stand you struck out (a typo of 77) is not proposed again, even though the log keeps it.
+export function usedBefore(input: { sessions: SessionInput[]; date: string; settings: ResolvedStrengthSettings; exercise?: Exercise }): number[] | undefined {
   if (input.settings.stackWeights === 'profile') return undefined;
+  const stands = hasStack(input.exercise) && input.exercise ? cleanStandList(input.settings.profile.exerciseStandsKg?.[input.exercise.id]) : undefined;
+  if (stands) return stands.kg;
   // Only what was used in this gym: the same cable weighs differently in another one.
   return usedWeights(input.sessions.filter((s) => s.date < input.date && countsForProfile(s.gymProfileId, input.settings.profile.id)).flatMap((s) => s.sets));
 }

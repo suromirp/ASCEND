@@ -11,7 +11,7 @@
 import type { Exercise } from '../models/exercise';
 import { dumbbellWeights } from './gymProfileEdit';
 import { addOnsFor, blockPredicate, hasStack, ownWeightsFor, splitAddOn, withAddOnWeights } from './machineWeights';
-import type { DumbbellLog, DumbbellRack, GymProfile, StackWeights } from './strengthSettings';
+import { cleanStandList, type DumbbellLog, type DumbbellRack, type GymProfile, type StackWeights } from './strengthSettings';
 import { r2, r1 } from '../utils/round';
 
 export interface Candidate {
@@ -111,7 +111,15 @@ export function looksLikePounds(kg: number): boolean {
 // weights that occurs at least twice and is not under half the profile step;
 // otherwise the profile step. Weights that look like converted pounds and weights
 // with more than one decimal are left out. Undefined when nothing usable was used.
-export function learnedStack(usedKg: number[], profileStepKg: number): number[] | undefined {
+// `fillGaps: false` is for the stands of a machine (engine/toestelStanden.ts): inside
+// the range exactly the stands, never a weight in between (7, 14, 23, 32 gets no 9,5);
+// below with the first gap between stands, above with the last one.
+export function learnedStack(usedKg: number[], profileStepKg: number, opts: { fillGaps?: boolean } = {}): number[] | undefined {
+  // Stands are already checked when they were kept (a pound range in kilos stays), so no filter here.
+  if (opts.fillGaps === false) {
+    const stands = [...new Set(usedKg.filter((w) => Number.isFinite(w) && w > 0).map(r2))].sort((a, b) => a - b);
+    return stands.length > 0 ? standsStack(stands, profileStepKg) : undefined;
+  }
   const used = [...new Set(usedKg.filter((w) => Number.isFinite(w) && w > 0).map(r2))]
     .filter((w) => hasOneDecimalAtMost(w) && !looksLikePounds(w))
     .sort((a, b) => a - b);
@@ -143,6 +151,27 @@ export function learnedStack(usedKg: number[], profileStepKg: number): number[] 
     above.push(w);
   }
   return [...below, ...inside, ...above];
+}
+
+// The stands as they are, with steps below the lightest and above the heaviest: the first and the last gap
+// between stands (never under half the profile step), with one stand the profile step.
+function standsStack(stands: number[], profileStepKg: number): number[] {
+  const sane = (gap: number) => (gap >= profileStepKg / 2 - 1e-9 ? gap : profileStepKg);
+  const first = stands.length > 1 ? sane(r2(stands[1] - stands[0])) : profileStepKg;
+  const last = stands.length > 1 ? sane(r2(stands[stands.length - 1] - stands[stands.length - 2])) : profileStepKg;
+  const below: number[] = [];
+  for (let k = 1; ; k++) {
+    const w = r2(stands[0] - k * first);
+    if (w < 0.25 - 1e-9 || w < first - 1e-9) break;
+    below.unshift(w);
+  }
+  const above: number[] = [];
+  for (let k = 1; ; k++) {
+    const w = r2(stands[stands.length - 1] + k * last);
+    if (w > LEARNED_CEILING_KG + 1e-9) break;
+    above.push(w);
+  }
+  return [...below, ...stands, ...above];
 }
 
 // The weights you really used, cleaned the same way as for a learned stack
@@ -222,7 +251,15 @@ function blockWeights(exercise: Exercise | undefined, profile: GymProfile, ctx: 
       return [0, ...multiples(Math.min(...profile.platesKg) * 2, Math.min(...profile.platesKg) * 2, 100)];
     case 'assisted_bodyweight':
       return multiples(stepFor(exercise, profile), 0, 200);
-    default:
+    default: {
+      // A cable or a stack with stands (engine/toestelStanden.ts): the stands, never filled in between.
+      // "Stappen van je profiel" still ignores them (a closed list `only` came in through `own` above).
+      const stands = (res === 'cable' || res === 'machine_stack') && exercise ? cleanStandList(profile.exerciseStandsKg?.[exercise.id]) : undefined;
+      if (stands && stands.kg.length > 0 && ctx.stackWeights !== 'profile') {
+        if (ctx.stackWeights === 'used_only') return stands.kg;
+        const fromStands = learnedStack(stands.kg, stepFor(exercise, profile), { fillGaps: false });
+        if (fromStands) return fromStands;
+      }
       // A cable or a stack that was used before: the weights it really has.
       if ((res === 'cable' || res === 'machine_stack') && ctx.stackWeights === 'used_only') {
         const only = usedOnlyWeights(ctx.usedKg);
@@ -233,6 +270,7 @@ function blockWeights(exercise: Exercise | undefined, profile: GymProfile, ctx: 
       }
       // Cable, machine with a stack, and an exercise the list does not know.
       return multiples(stepFor(exercise, profile), stepFor(exercise, profile), 400);
+    }
   }
 }
 

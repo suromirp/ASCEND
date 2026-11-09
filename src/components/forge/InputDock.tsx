@@ -50,6 +50,8 @@ export interface DockProps {
   plate?: PlateStep;
   plateOn: boolean;
   onTogglePlates: () => void;
+  // Op een toestel met standen: het gewicht waar Minder en Meer heen springen, klein onder de toets.
+  stepHints?: { down?: number; up?: number };
 }
 
 const DIGITS: PadKey[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -72,7 +74,7 @@ function Key({ children, onPress, label, className = '', style, disabled }: { ch
 }
 
 export function InputDock(props: DockProps) {
-  const { label, fieldKey, value, decimals, onChange, onStep, onSelected, onNext, onClose, onClosing, onHeight, plate, plateOn, onTogglePlates } = props;
+  const { label, fieldKey, value, decimals, onChange, onStep, onSelected, onNext, onClose, onClosing, onHeight, plate, plateOn, onTogglePlates, stepHints } = props;
   const { closing, requestClose } = useSheetClose(onClose, 200);
   useEffect(() => {
     if (closing) onClosing?.();
@@ -216,8 +218,14 @@ export function InputDock(props: DockProps) {
               </Key>
             </div>
             <div className="col-start-4 row-start-3 grid grid-cols-2 gap-1.5">
-              <Key label="Minder" onPress={() => step(-1)} className={sideKey} style={{ color: 'var(--color-ink)' }}><Icon name="min" size={22} /></Key>
-              <Key label="Meer" onPress={() => step(1)} className={sideKey} style={{ color: 'var(--color-ink)' }}><Icon name="plus" size={22} /></Key>
+              <Key label={stepHints?.down !== undefined ? `Minder, naar ${formatNumberNL(stepHints.down, 2)} kilo` : 'Minder'} onPress={() => step(-1)} className={`${sideKey} flex-col gap-0.5`} style={{ color: 'var(--color-ink)' }}>
+                <Icon name="min" size={22} />
+                {stepHints?.down !== undefined && <span className="text-xs leading-none tabular-nums" style={{ color: 'var(--color-ink-dim)' }} aria-hidden="true">{formatNumberNL(stepHints.down, 2)}</span>}
+              </Key>
+              <Key label={stepHints?.up !== undefined ? `Meer, naar ${formatNumberNL(stepHints.up, 2)} kilo` : 'Meer'} onPress={() => step(1)} className={`${sideKey} flex-col gap-0.5`} style={{ color: 'var(--color-ink)' }}>
+                <Icon name="plus" size={22} />
+                {stepHints?.up !== undefined && <span className="text-xs leading-none tabular-nums" style={{ color: 'var(--color-ink-dim)' }} aria-hidden="true">{formatNumberNL(stepHints.up, 2)}</span>}
+              </Key>
             </div>
             <div className="col-start-4 row-start-4 flex">
               <Key label="Volgende" onPress={() => { haptics.tap(); onNext(requestClose); }} className="w-full" style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}><Icon name="pijlrechts" size={26} /></Key>
