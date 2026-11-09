@@ -819,11 +819,11 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   stravaTekst: {
     title: 'Tekst voor Strava',
-    lead: 'Strava geeft elke activiteit een eigen naam. ASCEND zet een korte beschrijving klaar die je zelf in Strava plakt.',
+    lead: 'ASCEND zet een titel klaar die zegt wat voor training het was. Je plakt hem zelf in Strava.',
     points: [
-      { head: 'Waar', text: 'een kleine knop bij een gedane training in het logboek en in de vraag erna op Vandaag.' },
-      { head: 'Wat', text: 'één of twee regels, zoals 4× hard bergop, 4× rustig op en beheerst af, met afstand, tijd en stijging als je horloge ze had.' },
-      { head: 'Zelf plakken', text: 'ASCEND schrijft niet naar Strava, want daar is een server voor nodig en die heeft ASCEND bewust niet.' },
+      { head: 'Wat', text: 'een titel zoals Heuvelintervallen · 6 × 90 s, en als je wilt één regel waarom. Geen afstand, tijd of tempo: die toont Strava al.' },
+      { head: 'Waar', text: 'bij een gedane training in het logboek en in de vraag erna op Vandaag.' },
+      { head: 'Zelf plakken', text: 'ASCEND schrijft niet naar Strava. Daar is een server voor nodig.' },
     ],
   },
   healthConnect: {

@@ -107,6 +107,7 @@ const everything: AppSettings = {
   weightForLoad: 'latest',
   weightCard: false,
   stravaText: false,
+  stravaTextParts: 'title',
   keepStreams: false,
   tempoStablePieces: false,
   morningInBackup: false,

@@ -311,6 +311,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.intensityCounting;
     skipped.n++;
   }
+  // Tekst voor Strava: alleen de titel, of titel en regel; iets anders is niet van ASCEND.
+  if ('stravaTextParts' in s && s.stravaTextParts !== 'title' && s.stravaTextParts !== 'title-line') {
+    delete s.stravaTextParts;
+    skipped.n++;
+  }
   if ('watchNamePrefix' in s && s.watchNamePrefix !== 'short' && s.watchNamePrefix !== 'long' && s.watchNamePrefix !== 'none') {
     delete s.watchNamePrefix;
     skipped.n++;

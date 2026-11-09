@@ -18,6 +18,7 @@ import type { Weekday } from '../models/goalEngineConfig';
 import type { HealthConnectErrorKind } from '../models/healthConnect';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
+import { resolveStravaTextParts } from './activityText';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { countDifferences } from './settingsDiff';
@@ -476,6 +477,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       if (f.watch?.linked !== true) return { ...title, value: `${countOn(flags)} van 4 aan` };
       return { ...title, value: `${countOn([...flags, use?.details !== false && use?.activities !== false])} van 5 aan` };
     }
+    case 'bundel-strava':
+      return s.stravaText !== false ? { value: choiceShort('stravaInhoud', resolveStravaTextParts(s.stravaTextParts)) } : { value: 'Uit', dim: true };
     case 'bundel-horloge-sturen':
       return f.watch?.sendEnabled ? { value: 'Aan' } : { value: 'Uit', dim: true };
 
@@ -1021,6 +1024,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.weightFromMacroFactor !== false };
     case 'strava-tekst':
       return { checked: s.stravaText !== false };
+    case 'strava-tekst-inhoud':
+      return { value: choiceShort('stravaInhoud', resolveStravaTextParts(s.stravaTextParts)) };
     case 'health-connect':
       return healthConnectRow(f);
     case 'health-connect-gewicht':

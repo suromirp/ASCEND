@@ -14,7 +14,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - `src/engine/liveUpdate.ts#updateDecision` bijwerken zonder nieuwe APK, `minNative` in `app-versie.json` (gemaakt bij de build door `scripts/app-versie.mjs`, niet in de repo)
 - `src/engine/signalSettings.ts` instellingen van de signalen uit je gegevens, allemaal aan en geen verandert de planning
 - `src/engine/rainSoon.ts#rainSoonNote` regen in het komende uur uit `minutely_15`, alleen tekst; `src/engine/moon.ts#moonNote` maanstand zonder API; `src/integrations/overpass.ts#fetchNearbyTerrain` + `src/storage/nearbyTerrain.ts` + `src/engine/nearbyTerrain.ts#terrainLine` heuvels en trappen in de buurt (OpenStreetMap), één regel; `src/engine/weatherWarnings.ts#warningLines` onweer, storm en hitte bij een tocht of lange training buiten (`src/integrations/openMeteoWarnings.ts`), `src/engine/avalanche.ts#avalancheLine` lawinegevaar uit het EAWS-bulletin (`src/integrations/eaws.ts`, `src/storage/avalanche.ts`); alleen tekst, kaart `weatherWarning` bovenaan Vandaag
-- `src/engine/activityText.ts#activityText` Strava-tekst om te kopiëren
+- `src/engine/activityText.ts#stravaText` de tekst voor Strava: een titel (soort training) en hooguit één regel waarom, nooit afstand, tijd of tempo; `stravaCopyText` wat er op het klembord komt, `resolveStravaTextParts` de instelling Wat erin staat; `src/components/StravaTextButton.tsx` rendert alleen
 
 ## Nooit
 - Een veld met een leveranciersnaam in het domein (`garminElevation`): bronnen vullen dezelfde vormen met `source`.

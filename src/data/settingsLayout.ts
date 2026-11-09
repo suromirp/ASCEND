@@ -80,7 +80,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {
-    rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'health-connect', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
+    rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'health-connect', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'bundel-strava'],
     advanced: [],
   },
   gegevens: { rows: ['backup', 'auto-backup', 'backupmap', 'toestemmingen', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'aangepast', 'wissen'], advanced: ['auto-bijwerken', 'voorstellen-opruimen', 'herbouwen', 'startniveau'], footer: ['versie'] },
@@ -167,6 +167,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('auto-backup', 'backup-bewaren'),
   // Koppelingen
   ...inSheet('bundel-horloge-gebruik', 'horloge-gebruik', 'garmin-trainingen', 'horloge-details', 'slaap', 'rusthartslag', 'hrv'),
+  ...inSheet('bundel-strava', 'strava-tekst', 'strava-tekst-inhoud'),
   ...inSheet('bundel-horloge-sturen', 'naar-horloge', 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-rustige-loop', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
 };
 
@@ -239,6 +240,7 @@ const B = {
   restAlert: { ok: (s) => strength(s).restAlert !== 'off', reason: 'Zichtbaar zodra de rusttimer een signaal geeft', parent: 'forge-signaal' },
   mf: { ok: (_s, c) => c.macroFactorExport, reason: 'Zichtbaar zodra je een MacroFactor-export hebt ingelezen', parent: 'macrofactor' },
   garmin: { ok: (_s, c) => c.garmin, reason: 'Zichtbaar zodra Garmin is gekoppeld', parent: 'garmin' },
+  strava: { ok: (s) => s.stravaText !== false, reason: 'Zichtbaar zodra Tekst voor Strava aan staat', parent: 'strava-tekst' },
   hc: { ok: (_s, c) => c.healthConnect, reason: 'Zichtbaar zodra Health Connect aan staat', parent: 'health-connect' },
   // Slaap, rusthartslag, HRV en trainingen komen van Garmin of uit Health Connect: de keuzes gelden voor beide.
   watchData: { ok: (_s, c) => c.garmin || c.healthConnect, reason: 'Zichtbaar zodra Garmin is gekoppeld of Health Connect aan staat', parent: 'garmin' },
@@ -316,6 +318,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.garmin, B.send, B.ascendHr], 'horloge-rustige-loop'),
   ...rule([B.mf], 'macrofactor-leidend', 'macrofactor-gewicht'),
   ...rule([B.hc], 'health-connect-gewicht'),
+  ...rule([B.strava], 'strava-tekst-inhoud'),
   // Gegevens en back-up
   ...rule([B.folder], 'backupmap'),
   ...rule([B.liveUpdate], 'auto-bijwerken'),
