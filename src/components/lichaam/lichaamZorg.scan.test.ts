@@ -14,6 +14,7 @@ describe('zorg op Lichaam staat nooit achter een tik', () => {
       expect(text, file).not.toMatch(/mx-unfold/);
       expect(text, file).not.toMatch(/\binert=/);
       expect(text, file).not.toMatch(/fysioOpen/);
+      expect(text, file).not.toMatch(/<details|<summary/);
     }
   });
 

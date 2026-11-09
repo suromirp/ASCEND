@@ -26,9 +26,12 @@ De teksten van Lichaam stonden er al grotendeels goed voor: kort, je/jij, "kan h
 
 In het blad "Hoe voelt je lijf?" stond de spoedtekst van een plek (bijvoorbeeld "bel direct je huisarts of 112" bij de borst) binnen de ingeklapte regel "Wanneer laat je het nakijken?". Bij lichte of matige pijn zag je hem dus pas na een tik. Hij staat nu altijd zichtbaar boven die regel, zoals op de plekpagina al zo was. De woorden zijn gelijk. Dit volgt de vaste regel dat een spoedtekst nooit achter een tik staat.
 
+## Na het besluit van de coördinator
+
+De lijst "Naar een fysio of je huisarts bij" staat nu altijd open, op de plekpagina en in het blad. De knop met het pijltje is weg, de kop "Wanneer laat je het nakijken?" en de woorden zijn gebleven. Zorg staat nooit achter een tik (`src/components/lichaam/lichaamZorg.scan.test.ts`).
+
 ## Bewust niet aangeraakt
 
-- De lijst "Naar een fysio of je huisarts bij" staat op de plekpagina en in het blad nog achter een tik, tenzij je zelf iets meldde dat erbij hoort of ernstige pijn koos. Dat openklappen is gedrag en indeling, geen tekst. Vraag voor de coördinator: moet die lijst altijd open staan?
 - "Twee harde loopjes" in `weekConcerns.ts` en `weekValidator.ts` (Week, met test) en `GarminLink.tsx`: buiten Lichaam.
 - De Forge-kant van de zware beendag (`components/forge/LegEasePanel.tsx`): daar loopt een andere bouwer.
 - De teksten van de kaart "zware beendag" en van de beenindex in `legDayEase.ts`: die volgen de stemgids al.

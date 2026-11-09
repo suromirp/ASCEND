@@ -44,3 +44,7 @@ Teruggezet omdat ze een getal, het bewijs of je privacy uitleggen: "Alcohol, een
 - Tekst voor Strava (net herschreven).
 - "Loopinzicht: ..." in de zoekindex tegenover het blad "Inzicht na een training".
 - De waarden, standaarden, volgorde en indeling van de instellingen.
+
+## Na het besluit van de coördinator
+
+Een zin moet altijd kloppen met de code. Trainingstijd per dag, Aangepaste instellingen, Alles terugzetten, Beginnersstart, Golven, Sporten en Beenkracht de dag na de lange duurloop volgen je keuze bij Wijzigingen (`changeSetting` zonder `alwaysAsk`, of `route`, in `src/components/settings/usePlanSettingChange.tsx`). Daar staat nu dat je planning verandert zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken. De vaste Akkoord-zin staat alleen nog waar altijd een voorstel volgt. Warden heeft die plekken in de tweede review aan de code getoetst. Bij Twee van drie staat "Je planning verandert er niet vanzelf door", en de zoekregel van Blessures zegt niet meer dat ASCEND er rekening mee houdt.

@@ -763,7 +763,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Twee van drie',
     lead: 'Onder rusthartslag, HRV en slaap staat een woord tegen jouw gewone van de laatste vier weken: normaal, hoger, lager, korter of langer. Wat aandacht vraagt staat in amber.',
     points: [
-      { head: 'Twee van drie', text: 'wijken er twee af, dan vraagt de kaart of je moe bent. Ja of Nee wordt je energie van die ochtend. Eerst een voorstel, pas na Akkoord verandert er iets.' },
+      { head: 'Twee van drie', text: 'wijken er twee af, dan vraagt de kaart of je moe bent. Ja of Nee wordt je energie van die ochtend. Je planning verandert er niet vanzelf door.' },
       { head: 'Hoe zeker', text: 'een vuistregel, geen meting. Het bewijs is matig.' },
     ],
   },
