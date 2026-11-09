@@ -165,7 +165,7 @@ export function pacingSentence(p: Pacing | undefined): string | undefined {
   const firstSec = Math.round(p.meanPace - p.firstPace);
   switch (p.word) {
     case 'gelijkmatig':
-      return 'Je tempo bleef gelijk: de tweede helft wijkt minder dan 2 procent af van de eerste.';
+      return 'Je tempo bleef gelijk. De tweede helft wijkt minder dan 2 procent af van de eerste.';
     case 'te snel begonnen':
       return `Je eerste kilometer was ${secs(Math.abs(firstSec))} per km sneller dan je gemiddelde en de tweede helft ging ${Math.round(p.halfSlowPct)} procent trager dan de eerste.`;
     case 'ingezakt':

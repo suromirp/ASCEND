@@ -8,9 +8,9 @@ Run in detail
 23 oktober · 6 km · 39:00
 
 --- kaart 1 ---
-Hoe de run liep
+Hoe de loop liep
 Gelijkmatig
-Je tempo bleef gelijk: de tweede helft wijkt minder dan 2 procent af van de eerste.
+Je tempo bleef gelijk. De tweede helft wijkt minder dan 2 procent af van de eerste.
 Tempo
 6:30/km
 gemiddeld, zonder stilstaan
@@ -58,16 +58,16 @@ Cadans per kilometer, in stappen/min
 170
 km 1
 km 6
-Hoeveel stappen je per minuut zet. Hij verandert weinig met je tempo; wat bij jou past hangt af van je eigen gemiddelde, niet van een vaste norm als 180.
+Hoeveel stappen je per minuut zet. Hij verandert weinig met je tempo. Wat bij jou past hangt af van je eigen gemiddelde, niet van een vaste norm als 180.
 Je cadans bleef binnen 2 stappen per minuut.
 
 --- kaart 6 ---
 Wat opvalt
-Niets dat opvalt. Een gelijkmatige run.
+Niets dat opvalt. Een gelijkmatige loop.
 
 --- kaart 7 ---
-Tegen je eerdere runs
-Niet te vergelijken: er zijn nog geen vergelijkbare runs.
+Tegen je eerdere lopen
+Niet te vergelijken: er zijn nog geen vergelijkbare lopen.
 Je trend over weken staat op Stand, onder Lopen.
 Gegevens van je horloge via intervals.icu.
 [knop: Begrepen]
