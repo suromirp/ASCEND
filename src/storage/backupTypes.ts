@@ -1,4 +1,5 @@
 import type { MissedMemory } from '../engine/missedTraining';
+import type { SkillGoalStore } from '../models/skillGoals';
 // ASCEND — Backup / Import / Restore domain types
 //
 // Implements ASCEND Technical Architecture v0.3.2's backup/import/restore
@@ -114,6 +115,9 @@ export interface AscendBackupPayloadV5 extends Omit<AscendBackupPayloadV4, 'vers
   // itself; engine/missedTraining.ts#MissedMemory). Optional and additive, so the version stays 5: a
   // file without it imports as before and the device keeps its own.
   missedTraining?: MissedMemory;
+  // Het doel Vaardigheid: de doelen en de gehaalde stappen (models/skillGoals.ts). Optional and additive, so the
+  // version stays 5: a file without it imports as before and the device keeps its own.
+  skillGoals?: SkillGoalStore;
 }
 
 type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4 | AscendBackupPayloadV5;
@@ -172,6 +176,9 @@ export interface NormalizedBackupData {
   // The answers on "Training die niet doorging", read through resolveMissedMemory; undefined means
   // "not in this backup".
   missedTraining?: MissedMemory;
+  // Het doel Vaardigheid, read through storage/migrations.ts#migrateSkillGoals; undefined means "not in this
+  // backup". Travels with the category objectives_and_milestones.
+  skillGoals?: SkillGoalStore;
 }
 
 // --- Data categories ---------------------------------------------------------
@@ -254,6 +261,8 @@ export interface ImportPreview {
     skippedInvalid: number;
     // De back-up heeft vaste afspraken van een sport (engine/fixedSports.ts): wat er na het terugzetten mee gebeurt.
     fixedSportNote?: string;
+    // De back-up heeft vaardigheden (models/skillGoals.ts): wat er bij het terugzetten mee gebeurt.
+    skillGoalNote?: string;
   };
   diffByCategory: ImportDiffEntry[];
   settingsChanges: { key: string; current: unknown; incoming: unknown }[];

@@ -11,7 +11,7 @@ import type { AppSettings } from './database';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
-import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSetSkill, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, type AscendExport } from './migrations';
+import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSetSkill, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, migrateSkillGoals, type AscendExport } from './migrations';
 import { sanitizeRoutePlan, sanitizeSoloPlan } from '../engine/routePlan';
 import { CURRENT_BACKUP_SCHEMA_VERSION, type NormalizedBackupData } from './backupTypes';
 import { BackupMessageError } from './backupMessage';
@@ -142,6 +142,14 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
     const mornings = migrateMornings(raw.mornings);
     if (mornings.list) normalized.mornings = mornings.list;
     skipped.n += mornings.skipped;
+  }
+
+  // Het doel Vaardigheid (storage/migrations.ts#migrateSkillGoals): a file from before it has none; a damaged
+  // goal or row is dropped and counted.
+  {
+    const skill = migrateSkillGoals(raw.skillGoals);
+    if (skill.store) normalized.skillGoals = skill.store;
+    skipped.n += skill.skipped;
   }
 
   // Soort, gegevens en belangrijkheid van elk doel (ronde 2a): een back-up van voor deze

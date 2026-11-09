@@ -396,7 +396,7 @@ const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
-const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-doorvoeren', 'forge-schijven'];
+const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-doorvoeren', 'forge-schijven'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
   return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
@@ -418,6 +418,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       if (n > 0) return { value: plural(n, 'dag', 'dagen'), dim: false, sub: `Rust op ${lower(WEEKDAYS[restDayIndex(f)])}` };
       // Geen tijden per dag, wel een rustdag: zeg wat er staat.
       return { value: `Rust ${lower(WEEKDAYS_SHORT[restDayIndex(f)])}`, dim: false };
+    }
+    case 'bundel-ascend': {
+      const shown = [s.showSeasonStrip !== false, s.showSkillGoals !== false].filter(Boolean).length;
+      return shown === 2 ? { value: 'Alles' } : shown === 0 ? { value: 'Niets extra', dim: true } : { value: s.showSeasonStrip !== false ? 'Seizoensstrook' : 'Vaardigheden' };
     }
     case 'bundel-tochten':
       if (f.treks > 0) return { value: plural(f.treks, 'tocht', 'tochten') };
@@ -518,6 +522,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('naHoofddoel', s.afterMainGoal ?? 'stop') };
     case 'seizoensstrook':
       return { checked: s.showSeasonStrip !== false };
+    case 'vaardigheidsdoelen':
+      return { checked: s.showSkillGoals !== false };
     case 'volgende-tocht':
       return { checked: s.showNextTrek !== false };
     case 'water-per-etappe':
@@ -633,6 +639,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.askClean };
     case 'forge-band':
       return { checked: forge.askBand };
+    case 'forge-stapvoorstel':
+      return { checked: forge.stepProposal };
     case 'forge-programma':
       return s.strengthModel?.program ? { value: s.strengthModel.program.name } : { value: 'Van ASCEND', dim: true };
     case 'stangen':

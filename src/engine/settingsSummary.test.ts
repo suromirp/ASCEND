@@ -893,6 +893,15 @@ describe('rowSummary: rijen met een blad', () => {
     expect(rowSummary('bundel-tochten', facts({ goal: null, treks: 1 })).hidden).toBe(false);
   });
 
+  it('Op de Ascend-tab zegt wat er aan staat, en Vaardigheidsdoelen tonen staat standaard aan', () => {
+    expect(rowSummary('bundel-ascend', facts()).value).toBe('Alles');
+    expect(rowSummary('vaardigheidsdoelen', facts()).checked).toBe(true);
+    const off = facts({ settings: { ...facts().settings, showSkillGoals: false } });
+    expect(rowSummary('vaardigheidsdoelen', off).checked).toBe(false);
+    expect(rowSummary('bundel-ascend', off).value).toBe('Seizoensstrook');
+    expect(rowSummary('bundel-ascend', facts({ settings: { ...facts().settings, showSkillGoals: false, showSeasonStrip: false } }))).toMatchObject({ value: 'Niets extra', dim: true });
+  });
+
   it('Tochten zegt bij een tocht als hoofddoel dat er geen andere zijn', () => {
     const trek = facts({ treks: 0, mainIsTrek: true });
     expect(rowSummary('bundel-tochten', trek)).toMatchObject({ value: 'Geen andere', dim: true, sub: 'GR5 is je doel' });
