@@ -1,7 +1,7 @@
 # Uitleg bij oefeningen, batch 3 en 4
 
 Datum: 2026-11-09
-Status: voorlopig, ter keuring
+Status: voorgesteld
 
 ## Besluit
 

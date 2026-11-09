@@ -996,7 +996,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Elke herhaling uit een volledige hang.',
       'Wordt je beweging korter? Neem minder gewicht.',
     ],
-    setup: 'Hang het gewicht aan een riem om je heupen of draag een vest. Begin met 2,5 kilo. Pak de stang overhands, iets breder dan je schouders, en hang met gestrekte armen.',
+    setup: 'Hang het gewicht aan een riem om je middel of draag een vest. Begin met 2,5 kilo. Pak de stang overhands, iets breder dan je schouders, en hang met gestrekte armen.',
     movement: 'Trek je ellebogen naar je heupen tot je kin boven de stang is. Zak gecontroleerd tot je armen weer gestrekt zijn. Het gewicht hangt stil.',
     tempo: 'Rustig omhoog, twee tellen omlaag.',
     mistakes: [
@@ -1026,7 +1026,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Stop als je bovenarmen waterpas zijn, stap terug omhoog.',
       'Pijn in je schouder? Stop en zak minder diep.',
     ],
-    setup: 'Zet een bank of opstap bij de leuningen. Steun met gestrekte armen en trek je schouders omlaag, weg van je oren.',
+    setup: 'Zet een bank of box bij de leuningen. Steun met gestrekte armen en trek je schouders omlaag, weg van je oren.',
     movement: 'Zak zo gelijkmatig als je kunt, in ongeveer vijf seconden, met je ellebogen schuin naar achteren, tot je bovenarmen ongeveer waterpas zijn. Zet je voeten neer en stap terug naar boven. Je duwt jezelf niet op.',
     tempo: 'Vijf tellen omlaag. Adem in bij het zakken.',
     mistakes: [
@@ -1042,7 +1042,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Dezelfde diepte als zonder: bovenarmen waterpas.',
       'Pijn in je schouder? Stop en neem minder gewicht.',
     ],
-    setup: 'Hang het gewicht aan een riem om je heupen of draag een vest. Begin met 2,5 kilo. Steun op de leuningen met gestrekte armen en je schouders omlaag.',
+    setup: 'Hang het gewicht aan een riem om je middel of draag een vest. Begin met 2,5 kilo. Steun op de leuningen met gestrekte armen en je schouders omlaag.',
     movement: 'Zak gecontroleerd tot je bovenarmen ongeveer waterpas zijn, met je ellebogen schuin naar achteren. Duw jezelf terug omhoog tot je armen gestrekt zijn. Het gewicht hangt stil.',
     tempo: 'Twee tellen omlaag, krachtig omhoog. Adem in bij het zakken.',
     mistakes: [
@@ -1055,7 +1055,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     short: [
       'Op één been op een trede, kom hoog op je tenen.',
       'Zak onderaan zo diep als je kunt.',
-      'Hand aan de muur voor balans, niet voor kracht.',
+      'Trek je je op aan je hand? Alleen vingertoppen.',
     ],
     setup: 'Zet de voorvoet van één been op de rand van een trede, met je hiel erover. Je andere voet houd je los van de grond. Eén hand aan de muur of leuning voor balans.',
     movement: 'Duw je op tot je zo hoog mogelijk op je tenen staat en houd dat even vast. Zak langzaam zo diep als je kunt, met je knie gestrekt. Doe alle herhalingen aan één kant en wissel dan.',
@@ -1100,7 +1100,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     short: [
       'De step-down met rugzak of vest, drie tellen omlaag.',
       'Je knie volgt de richting van je tweede teen.',
-      'Pijn in je knie? Stop en ga terug naar zonder gewicht.',
+      'Pijn in je knie? Stop en doe hem zonder gewicht.',
     ],
     setup: 'Trek de rugzak of het vest strak aan, zodat hij niet schommelt. Begin met een paar kilo. Sta met je werkbeen op een stevige verhoging van 15 tot 20 centimeter, de andere voet over de rand.',
     movement: 'Buig je knie en zak in drie tellen tot de voet van je andere been de grond licht aantikt. Leg er geen gewicht op. Duw met het werkbeen terug omhoog. Houd je bekken recht en je romp rechtop.',
@@ -1143,12 +1143,12 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
   },
   'pause-back-squat': {
     short: [
-      'Een back squat met een tot twee tellen stil onderaan.',
+      'Een back squat met één tot twee tellen stil onderaan.',
       'In de pauze blijf je strak: romp aan, borst hoog.',
       'Stuiter je eruit? Neem minder gewicht.',
     ],
     setup: 'Als bij de back squat: de stang op je bovenrug, voeten iets breder dan je heupen, veiligheidsarmen in het rek. Neem minder gewicht dan bij je gewone squat.',
-    movement: 'Zak tot je dijen minstens waterpas zijn en blijf daar een tot twee seconden stil, met je romp aangespannen. Duw daarna zonder te veren met je hele voet omhoog.',
+    movement: 'Zak tot je dijen minstens waterpas zijn en blijf daar één tot twee seconden stil, met je romp aangespannen. Duw daarna zonder te veren met je hele voet omhoog.',
     tempo: 'Twee tellen omlaag, even stil, krachtig omhoog. Adem in bovenaan, uit op weg omhoog.',
     mistakes: [
       { fault: 'Je ontspant in de pauze.', fix: 'Houd je romp aangespannen en je borst hoog.' },

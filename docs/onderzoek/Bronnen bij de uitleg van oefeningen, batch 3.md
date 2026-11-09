@@ -94,7 +94,7 @@ Welke twintig, en waarom deze: de dertien stappen van de ladders push-up, optrek
 
 - Rust op: de step-down uit de proef (15 tot 20 centimeter, drie tellen omlaag, knie boven de tweede teen, bekken recht) en de oude regel (rugzak of vest, begin licht).
 - Twijfel: "Begin met een paar kilo" heeft geen bron.
-- Waarschuwing in In het kort: "Pijn in je knie? Stop en ga terug naar zonder gewicht."
+- Waarschuwing in In het kort: "Pijn in je knie? Stop en doe hem zonder gewicht."
 
 ## Dumbbell Romanian Deadlift (`dumbbell-rdl`)
 
