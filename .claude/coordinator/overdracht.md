@@ -44,4 +44,4 @@ Als je helemaal klaar bent (of vastloopt): meld het de coördinator met de tool 
 - Doel: MacroFactor Workouts overbodig maken (docs/visie/Los van MacroFactor.md); de weekbriefing meldt de stand.
 - Weeklimiet "Alle modellen" stond op 30 procent (9 november avond), Fable 6 procent; de eigenaar heeft een gratis Fable-reset tot 9 maart.
 - Vaste bouwmoment ma, wo, vr 19:43 staat aan (trig_01JDroCyzgfatU8c7MiK26Ei).
-- 9 november avond, eigenaar: alleen in de chat van de coördinator van 9 november draaien Warden en Scout op Fable (hij kreeg extra Fable-tokens); de rolbestanden blijven zoals ze zijn en de volgende coördinator begint weer met de gewone tabel, tenzij de eigenaar het opnieuw vraagt.
+- 9 november avond, eigenaar: zwaar werk draait voortaan op Fable in plaats van Opus (Warden, Scout, en een Sherpa die planning, opslag of migraties raakt), licht werk blijft op Sonnet. Vastgelegd in de rolbestanden en de skill werkverdeling.

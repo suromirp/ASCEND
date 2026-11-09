@@ -2,7 +2,7 @@
 name: sportwetenschapper
 description: Doet onderzoek naar training, herstel en belasting voor bergtochten met rugzak, dalen, hardlopen tot 10 km en bivak. Gebruik voor lastige onderzoeksvragen en voor controle van formules in de engine. Schrijft alleen in docs/onderzoek.
 tools: Read, Grep, Glob, Write, Edit, WebSearch, WebFetch
-model: opus
+model: fable
 effort: medium
 color: green
 ---
