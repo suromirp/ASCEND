@@ -1,3 +1,4 @@
+import { DEFAULT_WATCH_MODEL_ID, WATCH_MODELS } from './watchModels';
 // ASCEND: de keuzes in de instellingen, op één plek. Een keuze heeft een titel, één
 // regel erboven, het advies en per optie een naam, één regel eronder en soms
 // een kortere waarde voor in de rij. Het keuzeblad (ChoiceSheet) en de samenvatting
@@ -755,6 +756,14 @@ export const CHOICES = {
       { value: 'title-line', label: 'Titel en regel', note: 'Het soort training en één regel waarom', short: 'Titel en regel' },
       { value: 'title', label: 'Alleen de titel', note: 'Het soort training, zoals Zone 2 · rustige duurloop', short: 'Titel' },
     ],
+  }),
+  horlogeModel: def({
+    group: 'Koppelingen',
+    title: 'Model',
+    line: 'Voor welk horloge ASCEND de datapagina\'s tekent.',
+    advice: DEFAULT_WATCH_MODEL_ID as string,
+    help: 'datavelden',
+    options: Object.values(WATCH_MODELS).map((m) => ({ value: m.id, label: m.name, note: `Velden en indelingen van de ${m.name}`, short: m.name })),
   }),
   voorvoegsel: def({
     group: 'Koppelingen',

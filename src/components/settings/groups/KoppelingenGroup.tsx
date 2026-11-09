@@ -4,6 +4,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { DEFAULT_WATCH_NAME_PREFIX } from '../../../engine/watchWorkout';
 import { resolveStravaTextParts } from '../../../engine/activityText';
+import { resolveWatchModel } from '../../../engine/watchFields';
 import type { WatchUseKey } from '../../../engine/watchUse';
 import { getConnection, setAutoTick, setGarminLeads, setTakeCorrections, setWatchUse, syncWatchActivities } from '../../../storage/externalActivities';
 import { setMacroFactorLeads } from '../../../storage/macrofactor';
@@ -156,11 +157,28 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
         <SummaryRow id="bundel-strava" title="Tekst voor Strava" facts={facts} info="stravaTekst" onClick={() => setSheet('bundel-strava')} />
       </SettingsSection>
 
+      {/* Datavelden voor je horloge: de pagina zelf staat bij Je horloge instellen en bij een training. */}
+      <SettingsSection
+        advancedTitles="Datavelden voor je horloge, Model"
+        advanced={
+          <>
+            <SummaryRow id="datavelden" title="Datavelden voor je horloge" facts={facts} info="datavelden" onChange={(on) => void updateSettings({ watchFieldsShown: on })} />
+            <SummaryRow id="datavelden-model" title="Model" facts={facts} onClick={() => setSheet('datavelden-model')} />
+          </>
+        }
+      >
+        {null}
+      </SettingsSection>
+
       {sheet === 'bundel-strava' && (
         <BundleSheet eyebrow="Koppelingen" title="Tekst voor Strava" line="Bij een gedane training staat een titel klaar om in Strava te plakken." onClose={() => setSheet(null)}>
           <SummaryRow id="strava-tekst" title="Tekst voor Strava" facts={facts} info="stravaTekst" onChange={(on) => void updateSettings({ stravaText: on })} />
           <SummaryRow id="strava-tekst-inhoud" title="Wat erin staat" facts={facts} onClick={() => setInner('strava-tekst-inhoud')} />
         </BundleSheet>
+      )}
+
+      {sheet === 'datavelden-model' && (
+        <ChoiceFromDef def={CHOICES.horlogeModel} value={resolveWatchModel(settings.watchModel).id} onPick={(v) => void updateSettings({ watchModel: v })} onClose={() => setSheet(null)} />
       )}
 
       {inner === 'strava-tekst-inhoud' && (

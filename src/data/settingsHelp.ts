@@ -837,6 +837,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Wat de deur uit gaat', text: 'je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Geen naam, geen adres. De route wordt niet bewaard.' },
     ],
   },
+  datavelden: {
+    title: 'Datavelden voor je horloge',
+    lead: 'ASCEND tekent per soort training welke datapagina\'s je op je horloge zet. Er verandert niets aan je planning.',
+    points: [
+      { head: 'Wat', text: 'per pagina de velden, met één zin waarom. Het veld waar je op stuurt staat groot.' },
+      { head: 'Zelf kiezen', text: 'tik een veld aan en kies een ander. Je versie staat naast het advies, dat zelf blijft zoals het is.' },
+      { head: 'Zelf instellen', text: 'ASCEND stuurt niets naar je horloge. De stappen staan onder de tekening.' },
+    ],
+  },
   stravaTekst: {
     title: 'Tekst voor Strava',
     lead: 'ASCEND zet een titel klaar die zegt wat voor training het was. Je plakt hem zelf in Strava.',

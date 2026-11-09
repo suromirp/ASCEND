@@ -108,6 +108,7 @@ const everything: AppSettings = {
   weightRange: '1y',
   weightCard: false,
   stravaText: false,
+  watchFieldsShown: false,
   stravaTextParts: 'title',
   routeProposal: false,
   routeStyle: 'simple',
