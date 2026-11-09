@@ -195,3 +195,4 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-09, Warden ronde 3 (vier reviews), Warden, opus (reviewer), 82k+100k+74k+105k, 7 tot 9 min per stuk, zie boven
 - 2026-11-09, Lookout ronde 3, Lookout, sonnet (tester), 128k, 19 min, 0 rood
 Les ronde 3: één bouwer die twee keer herstelt kost 100k tot 150k extra; geef bij planning de randgevallen van een terugzet-regel vooraf mee (verplaatst door de gebruiker, periode wijzigen) en vraag bij elke achtergrondstap bij het opstarten om venster, budget en tijdgrens.
+- 2026-11-09, lijn Forge F1: Sherpa Inbox-punten (opus, 208k, 20 min, 0), Scout echte vervangers (opus, 130k, 7 min), Sherpa ruilen (sonnet, 92k, 13 min, 0), Warden (opus, 91k, 5 min, 2 belangrijke punten door coördinator hersteld), Lookout (sonnet, 54k, 5 min, 0 rood)

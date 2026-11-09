@@ -9,7 +9,7 @@ Bijgewerkt op 9 november 2026.
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
 Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
-- 9 november, uit de review van het bouwmoment (Forge afvinken is het doel): `forgeWorkout.ts` `weightKgAsked` volgt `target`, niet het gewicht dat Forge na een bijstelling in de rij zette (een lichter voorstel dat je afvinkt telt niet als bevestigd; bewaar een `forgeKg` naast `forgeReps` of beschrijf het); `strengthModel.ts` `allAtTop` telt ook niet-bevestigde en te lage sets; regel 4 (kracht) en regel 5 (stap) lezen de RIR verschillend (zeggen in het besluit of gelijktrekken); na een pauze houdt een bevestigde set op een lichter voorschrift de kracht vast; `forgeInput.ts` `mergeDraft`: `trainings: d.trainings ?? f.trainings` voor een oud concept; een kleine test voor de drie takken van `refitAfterFill`; de ijkset eens per vier weken en een uitlegzin bij de bolletjes ("Twijfel je tussen twee, kies het lagere") van het RIR-verslag. Stappen 6 tot 8 van het verslag (vermoeidheid tussen oefeningen) is het volgende Forge-spoor.
+- 9 november, uit de review van het bouwmoment (Forge afvinken), nog open: de ijkset eens per vier weken is een eigen spoor (KR-12: verandert het voorschrift, uitzonderingen rond tochten en tests, eigen instelling); regel 4 en 5 lezen nu gelijk (zie besluit `2026-11-09-forge-review-afvinken.md`). Stappen 6 tot 8 van het RIR-verslag (vermoeidheid tussen oefeningen) zijn F2.
 - 9 november, uit het onderhoud, nog open: de hoofdletterkopieën in `placeReason`, `weekDrag`, `weekProfile`, `sportsScreen`, `weatherSwap`, `weekFixProposal`, `legDayEase` en `forgeHistory.ts` (`round1`); de ongebruikte CSS voor `.sky-panel` in `index.css`; `ForgeWorkout.tsx` is nog 993 regels (ronde 3 van het opsplitsen, nooit naast een ander Forge-spoor); lintwaarschuwingen `react(refs)` in `useForgeClock.ts` en `useForgePager.ts` en `scrollToRow` in `ForgeWorkout.tsx`.
 - 9 november, uit de doorloop: Heuvels en trappen: de echte Overpass-aanroep en de hoogte-aanroep zijn nog niet live gezien; de hoogteaanroep staat in `overpass.ts` en kan later samen met UV en zon in `openMeteo.ts`; vakantieadres en periode "Zonder sportschool" gebruiken de terreinregel nog niet; de afstandszin zonder testloop is alleen met engine-tests gezien, nog niet met een eigen stand in het scherm (zie Lookout r2).
 - 8 november, uit de review van het bouwmoment, nog open: de Forge-melding Spieren voor de berg heeft geen eigen schakelaar (Forge zit op het maximum van 6 rijen).
@@ -28,7 +28,7 @@ Vanaf ronde 4 twee lijnen tegelijk, elk een eigen sessie en branch (`claude/lijn
 
 Lijn Forge (alles in `components/forge/`, `engine/forge*`, `strengthModel.ts`, oefeningen):
 
-F1. De Forge-punten uit de Inbox (review afvinken is het doel, toestelstanden) ‖ Forge: ruilen met een echte vervanger.
+F1. Af (9 november): de Forge-punten uit de Inbox (review afvinken, toestelstanden) ‖ Forge: ruilen met een echte vervanger.
 F2. Vermoeidheid tussen oefeningen (stap 6 tot 8 van het RIR-verslag) ‖ ForgeWorkout opsplitsen, ronde 3, met de lintwaarschuwingen.
 F3. Uitleg bij oefeningen: proef met vijf teksten (Scribe), daarna de rest.
 F4. Calisthenics: ontwerp, daarna bouwen.
@@ -41,6 +41,8 @@ R3. Oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinri
 R4. Alle teksten herschrijven en Engels, per tab; de Forge-tab pas als lijn Forge klaar is.
 
 ## Loopt nu
+
+Live op 9 november (lijn Forge, F1): de reviewpunten van Afvinken telt als het doel (`forgeKg` in het log, strengere `allAtTop`, regel 5 leest de bevestigde RIR, pauze, uitlegzin bij de bolletjes), Standen wissen met Terugdraaien en het strookje Ook schatten, en Ruilen met echte vervangers (twee groepen, Aanbevolen, reden per oefening). Open uit F1: pond, plaatjesnummers en optrekhulp bij de toestelstanden; het keuzestrookje en Terugdraaien zijn op 360 en 390 px gezien, Rustig niet.
 
 Live op 9 november (derde bouwmoment, ronde 3): Forge toestelstanden (stil onthouden met Terugdraaien, Minder en Meer springen naar de vorige en volgende stand, blad Standen van dit toestel, instelling Standen onthouden), de periode Zonder sportschool (Eigen gewicht, Licht of Gewoon, Heuvels in de buurt als tekst, instelling Kracht zonder sportschool), Tempo bij zone 2 uit stabiele stukken (engine, oude lopen op de achtergrond bijgewerkt met een budget, instelling).
 
