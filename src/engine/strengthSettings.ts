@@ -13,6 +13,7 @@
 import { normalizeStrengthProgram, type StoredStrengthProgram } from './strengthProgramStore';
 import { isRecord, isNum } from '../utils/guards';
 import { normalizeAddedExercises, type AddedExercises } from './addedExercises';
+import { normalizeStepSwaps, type StepSwaps } from './stepSwaps';
 
 type ProgressionFirst = 'weight_first' | 'reps_first';
 export type WorkSetsMode = 'descending' | 'equal';
@@ -231,6 +232,9 @@ export interface StrengthSettings {
   askClean?: boolean;
   // "Band bij optrekken en dip": the band choice on Pull-Up and Dip (SetLog.band).
   askBand?: boolean;
+  // "Stap voorstellen" (docs/beslissingen/2026-11-09-calisthenics-stapvoorstel.md): a step up or down on a ladder as a
+  // proposal with Akkoord in Forge. Absent = on. Never plans anything by itself.
+  stepProposal?: boolean;
   // The block "Geschatte 1RM" with a trend on the Forge page.
   showOneRm?: boolean;
   // The choice between the 1RM and the working weight on the cards of Forge, one
@@ -298,6 +302,8 @@ export interface StrengthSettings {
   mountainMuscles?: boolean;
   // Oefeningen die je na zo'n voorstel met Akkoord aan een training toevoegde (engine/addedExercises.ts).
   addedExercises?: AddedExercises;
+  // Ladderstappen die je na zo'n voorstel met Akkoord in een training zette (engine/stepSwaps.ts).
+  stepSwaps?: StepSwaps;
 }
 
 export interface ResolvedStrengthSettings {
@@ -321,6 +327,7 @@ export interface ResolvedStrengthSettings {
   ladderRow: boolean;
   askClean: boolean;
   askBand: boolean;
+  stepProposal: boolean;
   showOneRm: boolean;
   oneRmView: OneRmView;
   showMacroFactorOneRm: boolean;
@@ -545,6 +552,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.ladderRow === 'boolean') out.ladderRow = raw.ladderRow;
   if (typeof raw.askClean === 'boolean') out.askClean = raw.askClean;
   if (typeof raw.askBand === 'boolean') out.askBand = raw.askBand;
+  if (typeof raw.stepProposal === 'boolean') out.stepProposal = raw.stepProposal;
   if (typeof raw.showOneRm === 'boolean') out.showOneRm = raw.showOneRm;
   const oneRmView = ONE_RM_VIEWS.find((v) => v === raw.oneRmView);
   if (oneRmView) out.oneRmView = oneRmView;
@@ -572,6 +580,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.mountainMuscles === 'boolean') out.mountainMuscles = raw.mountainMuscles;
   const added = normalizeAddedExercises(raw.addedExercises);
   if (added) out.addedExercises = added;
+  const stepSwaps = normalizeStepSwaps(raw.stepSwaps);
+  if (stepSwaps) out.stepSwaps = stepSwaps;
   const rirPrefill = RIR_PREFILLS.find((v) => v === raw.rirPrefill);
   if (rirPrefill) out.rirPrefill = rirPrefill;
   if (typeof raw.showComparison === 'boolean') out.showComparison = raw.showComparison;
@@ -612,6 +622,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     ladderRow: s.ladderRow ?? true,
     askClean: s.askClean ?? true,
     askBand: s.askBand ?? true,
+    stepProposal: s.stepProposal ?? true,
     showOneRm: s.showOneRm ?? true,
     oneRmView: s.oneRmView ?? 'one_rm',
     showMacroFactorOneRm: s.showMacroFactorOneRm ?? true,

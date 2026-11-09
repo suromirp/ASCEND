@@ -62,6 +62,7 @@ interface ForgeSheetsProps {
   cleanOn: boolean;
   chooseClean: (slot: string, rowId: string, clean: boolean | undefined) => void;
   removeAddedExercise: (slot: string) => void;
+  undoStepSwap: (slot: string) => Promise<unknown>;
   saveStrength: (next: ReturnType<typeof useAppData>['settings']['strengthModel']) => void;
   startedAt: number | null;
   pauses: Pause[];
@@ -122,6 +123,7 @@ export function ForgeSheets(p: ForgeSheetsProps) {
           onFill={() => sh.setFillFor(menuEx.slot)}
           onAddOn={() => sh.setAddOnFor(menuEx.slot)}
           onRemoveAdded={() => p.removeAddedExercise(menuEx.slot)}
+          onUndoStep={() => p.undoStepSwap(menuEx.slot)}
           onAddSet={(kind) => p.addSetLogged(menuEx.slot, kind)}
           onTickAll={() => p.tickAll(menuEx.slot)}
           onRemoveLast={() => setExercise(menuEx.slot, removeLastRow)}

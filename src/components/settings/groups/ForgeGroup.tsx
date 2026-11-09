@@ -139,6 +139,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-stappen" title="Stappen bij calisthenics" facts={facts} info="forgeStappen" onChange={(on) => save({ ladderRow: on })} />
           <SummaryRow id="forge-netjes" title="Ging het netjes?" facts={facts} info="forgeNetjes" onChange={(on) => save({ askClean: on })} />
           <SummaryRow id="forge-band" title="Band bij optrekken en dip" facts={facts} info="forgeBand" onChange={(on) => save({ askBand: on })} />
+          <SummaryRow id="forge-stapvoorstel" title="Stap voorstellen" facts={facts} info="forgeStapVoorstel" onChange={(on) => save({ stepProposal: on })} />
           <SummaryRow id="forge-doorvoeren" title="Wijzigingen doorvoeren" facts={facts} info="forgeDoorvoeren" onClick={() => setInner('forge-doorvoeren')} />
           <SummaryRow id="forge-schijven" title="Schijven bij de set tonen" facts={facts} info="forgeSchijven" onChange={(on) => save({ showPlates: on })} />
         </BundleSheet>

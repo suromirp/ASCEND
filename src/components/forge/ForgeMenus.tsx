@@ -4,6 +4,8 @@
 
 import { canRemoveRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { canSwap, isAddedSlot } from '../../engine/addedExercises';
+import { stepSwapAt } from '../../engine/stepSwaps';
+import { exerciseById } from '../../data/exercises';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
 import { exerciseOf, swapGroups, type WorkoutExercise } from '../../engine/forgeWorkout';
 import { hasStack } from '../../engine/machineWeights';
@@ -21,6 +23,7 @@ import { ExerciseGuideInline } from '../ExerciseGuide';
 import { PrimaryButton, SecondaryButton, Toggle } from '../ui';
 import { ForgeSheet, MenuRow, RirBubble, SheetGroup } from './parts';
 import { SwapList } from './ExerciseSheets';
+import { StepUndoRow } from './StepUndoRow';
 import { RestStepper } from './ForgeTimers';
 import { addOnMenuSub } from './forgeWorkoutHelpers';
 
@@ -73,7 +76,7 @@ export function RowMenuSheet({ ex, rowId, onTake, onCopy, onRemove, onClean, onC
 // Het blad Oefening (docs/beslissingen/2026-11-02-forge-herinrichting.md): bovenaan Waarom zo, dan vier
 // groepen onder elkaar. Wat eerst als snelknop onder de naam stond (Ruilen, Opwarmset, Notitie) en de kolom
 // Alles staan hier, elk één keer.
-export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId, settings, strength, onSwapBack, onPickSwap, onNote, onArt, onFill, onAddOn, onRemoveAdded, onAddSet, onTickAll, onRemoveLast, onRestSeconds, onStartRest, onClose }: {
+export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId, settings, strength, onSwapBack, onPickSwap, onNote, onArt, onFill, onAddOn, onRemoveAdded, onUndoStep, onAddSet, onTickAll, onRemoveLast, onRestSeconds, onStartRest, onClose }: {
   ex: WorkoutExercise;
   effSlots: readonly ExercisePrescription[];
   readOnly: boolean;
@@ -88,6 +91,8 @@ export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId,
   onFill: () => void;
   onAddOn: () => void;
   onRemoveAdded: () => void;
+  // Een ladderstap die je na een voorstel koos weer terug naar de oefening van het sjabloon (StepUndoRow.tsx).
+  onUndoStep: () => Promise<unknown>;
   onAddSet: (kind: 'work' | 'warmup') => void;
   onTickAll: () => void;
   onRemoveLast: () => void;
@@ -103,6 +108,9 @@ export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId,
         const art = ex.known && !!exercise && showsExerciseArt(resolveExerciseArt(settings));
         const allDone = ex.rows.length > 0 && ex.rows.every((r) => r.done);
         const added = !readOnly && !preview && isAddedSlot(settings.strengthModel, templateId, ex.slot);
+        // Alleen als deze oefening de stap is die nu in je plan staat; Ruilen in deze training telt niet.
+        const step = readOnly || preview ? undefined : stepSwapAt(settings.strengthModel, templateId, ex.slot);
+        const stepFrom = step && step.to === ex.exerciseId && !ex.swappedFrom ? exerciseById(step.from)?.name : undefined;
         return (
           <div className="flex flex-col">
             {why && (
@@ -128,6 +136,7 @@ export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId,
               {added && (
                 <MenuRow icon="min" title="Uit deze training halen" sub={ex.rows.some((r) => r.done) ? 'Vanaf je volgende training. Wat je vandaag afvinkte blijft staan.' : 'Je voegde hem toe na een voorstel. Je sets van eerder blijven staan.'} onClick={() => { close(); onRemoveAdded(); }} />
               )}
+              {stepFrom && <StepUndoRow fromName={stepFrom} onUndo={onUndoStep} />}
             </SheetGroup>
             {!readOnly && (
               <SheetGroup title="Sets">

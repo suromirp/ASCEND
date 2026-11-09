@@ -17,6 +17,7 @@ import { canSwap, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } f
 import { learnedMinutesPerSet } from '../../engine/durationLearning';
 import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, resolveTimeCap, servesMountainMuscle } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
+import { withoutStepSwap } from '../../engine/stepSwaps';
 import { hasMountainGoal } from '../../engine/mountainMuscles';
 import { resolveForgeLayout } from '../../engine/forgeLayout';
 import { currentBodyKg } from '../../engine/bodyWeight';
@@ -153,7 +154,10 @@ function ForgeWorkoutInner({
   const reckonCtx = { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights, on: strength.enabled && strength.reckon && !readOnly };
   // A program from MacroFactor gives the exercises of the week of this training, and an exercise you added after a
   // proposal with Akkoord comes behind them (engine/forgeSlots.ts, the same list the week review reads).
-  const allSlots = useMemo(() => forgeSlotsFor(template, settings.strengthModel, date), [template, settings.strengthModel, date]);
+  // Een ladderstap die je in deze sessie met Akkoord koos (StepProposalNotice.tsx) geldt vanaf de volgende training:
+  // deze sessie houdt de stappen van het openen.
+  const [sessionStepSwaps] = useState(() => settings.strengthModel?.stepSwaps);
+  const allSlots = useMemo(() => forgeSlotsFor(template, { ...settings.strengthModel, stepSwaps: sessionStepSwaps }, date), [template, settings.strengthModel, sessionStepSwaps, date]);
   // Hoogstens per krachttraining (engine/forgeTimeCap.ts): met de geleerde tijd per set gaat er eerst bijwerk af
   // als de training langer zou duren dan de grens. Alleen de inhoud van deze sessie; de planning blijft zoals hij is.
   const estimate = settings.sessionDurationEstimates?.[template.id];
@@ -599,6 +603,11 @@ function ForgeWorkoutInner({
     setWorkout((w) => workoutWithoutAdded(w, slot));
   }
 
+  // "Terug naar ... in je plan": de ladderstap gaat uit je plan, vanaf je volgende training. Deze sessie blijft zoals hij is.
+  function undoStepSwap(slot: string) {
+    return updateSettings({ strengthModel: withoutStepSwap(settings.strengthModel, template.id, slot) });
+  }
+
 
   // De stand van de ladder van elke oefening op een ladder, uit je logs tot de dag van deze training (engine/skillLadder.ts).
   const ladderIds = workout.map((e) => e.exerciseId).join('|');
@@ -613,7 +622,10 @@ function ForgeWorkoutInner({
   // Het voorstel van Spieren voor de berg, één keer rustig bij het openen van de training waar de oefening bij
   // zou komen (zelfde melding en zelfde Akkoord als in de weekterugblik). Niet bij kijken en niet na de eerste set.
   const mountainNotice = !readOnly && !startedAt;
-  const intro = <ForgeIntro templateId={template.id} today={today} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
+  // Het voorstel voor een stap op een ladder (StepProposalNotice.tsx): zelfde moment als Spieren voor de berg. Akkoord
+  // geldt vanaf de volgende training; deze sessie is al gepland (`workout` is één keer opgebouwd) en verandert niet.
+  const stepNotice = !readOnly && !startedAt && strength.stepProposal;
+  const intro = <ForgeIntro templateId={template.id} today={today} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} stepNotice={stepNotice} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
   const exerciseBlock = (ex: WorkoutExercise, i: number) => {
     const capRemoved = capRemovedFor(capped, ex, effSlots);
     const lines = stepsOn && ex.known ? ladderLines(exerciseOf(ex)) : undefined;
@@ -739,6 +751,7 @@ function ForgeWorkoutInner({
         cleanOn={cleanOn}
         chooseClean={chooseClean}
         removeAddedExercise={removeAddedExercise}
+        undoStepSwap={undoStepSwap}
         saveStrength={saveStrength}
         startedAt={startedAt}
         pauses={pauses}
