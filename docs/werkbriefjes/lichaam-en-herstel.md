@@ -13,6 +13,7 @@ Het lichaamsfiguur, hoe voelt je lijf, een zware beendag op vermoeide benen, een
 - `src/engine/shortNight.ts#isDoubtfulShortNight` een twijfelachtige korte nacht wordt een vraag
 - `src/engine/influence.ts#affectedMorning` wat speelde er: de ene regel voor welke ochtend een notitie raakt
 - `src/engine/influenceProposal.ts#influenceMove` een test na veel glazen als voorstel met Akkoord
+- `src/engine/weightCard.ts#weightCardData` de kaart Gewicht op Je stand en de wegingen in het Logboek (`logbookWeeks`); instelling `weightCard`
 - `src/state/bodyAndLeave.ts#useBodyAndLeave` waar meldingen en notities worden geschreven
 
 ## Nooit

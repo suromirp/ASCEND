@@ -442,6 +442,10 @@ export interface AppSettings {
   // last 14 days, false = the latest weighing. Only what is shown; the rucksack share, leg index
   // and Forge still read the latest weighing. Optional and additive, so no schema step.
   weightTrend?: boolean;
+  // "Gewicht op Je stand" (engine/weightCard.ts, docs/beslissingen/2026-11-09-gewicht-buiten-instellingen.md):
+  // absent = aan zodra er een weging is, false = geen kaart Gewicht op Je stand en geen wegingen in het
+  // Logboek. Alleen wat je ziet. Optioneel en additief, dus geen migratiestap.
+  weightCard?: boolean;
   // "Vetpercentage tonen" (engine/bodyFat.ts): absent or true = the fat percentage and the
   // fat-free mass from the weigh-ins are shown under Lichaamsgewicht, false = they stay stored
   // but are not shown. Optional and additive, so older settings and backups need no step.

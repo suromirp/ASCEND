@@ -674,6 +674,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
         : { value: 'Niet ingevuld', dim: true };
     case 'vetpercentage':
       return { checked: s.showBodyFat !== false };
+    case 'gewicht-kaart':
+      return { checked: s.weightCard !== false };
     case 'gewichtstrend':
       return { checked: s.weightTrend !== false };
     case 'hartslag': {
