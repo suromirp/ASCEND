@@ -5,7 +5,8 @@
 // sjablonen worden bij elke start gelijkgezet met hun definitie (storage/databaseSeed.ts). Hij staat als voorkeur in
 // `StrengthSettings.stepSwaps`: per sjabloon-id per plek (`ExercisePrescription.id`) de oefening van het sjabloon
 // (`from`) en de stap die er nu staat (`to`). Forge leest hem in engine/forgeSlots.ts. Geldt alleen zolang de plek in
-// het sjabloon nog `from` is; verandert het sjabloon of het programma, dan valt de stap stil weg en geldt het sjabloon.
+// het sjabloon nog `from` is; verandert het sjabloon of het programma, dan wordt de stap niet gebruikt en geldt het
+// sjabloon (de opgeslagen stap blijft staan; ruimen is niet nodig).
 // Optioneel, defensief gelezen, zonder migratie; een oude back-up heeft het veld niet. Logs veranderen nooit.
 // Puur: geen React, geen opslag.
 
@@ -72,6 +73,13 @@ export function slotExerciseId(slot: Pick<ExercisePrescription, 'id' | 'exercise
   return exerciseById(slot.id)?.id ?? matchExercise(slot.exerciseName);
 }
 
+// Of een stap op deze plek kan staan. Een plek waarvan het id zelf een oefening-id is ('push-up'), herkent Forge aan
+// dat id en niet aan de naam (strengthHistory.ts#exerciseKey): een andere naam erop zou daar niet aankomen. Zo'n plek
+// krijgt dus geen stap en geen voorstel.
+export function canHoldStep(slot: Pick<ExercisePrescription, 'id'>): boolean {
+  return !exerciseById(slot.id);
+}
+
 // De plekken van een training met de stappen erin. Een plek die niet meer `from` is, blijft zoals het sjabloon zegt.
 export function withStepSwaps(base: readonly ExercisePrescription[], model: { stepSwaps?: StepSwaps } | undefined, templateId: string): ExercisePrescription[] {
   const swaps = normalizeStepSwaps(model?.stepSwaps)?.[templateId];
@@ -79,7 +87,7 @@ export function withStepSwaps(base: readonly ExercisePrescription[], model: { st
   return base.map((slot) => {
     const swap = swaps[slot.id];
     const to = swap ? exerciseById(swap.to) : undefined;
-    if (!swap || !to || slotExerciseId(slot) !== swap.from) return slot;
+    if (!swap || !to || !canHoldStep(slot) || slotExerciseId(slot) !== swap.from) return slot;
     const out: ExercisePrescription = { id: slot.id, exerciseName: to.name, sets: swap.sets ?? slot.sets, reps: swap.reps ?? slot.reps, priority: slot.priority };
     // Het doel per set van een programma (herhalingen en RIR) blijft, behalve als de stap zijn eigen onderkant kreeg.
     if (slot.setTargets && swap.reps === undefined) out.setTargets = slot.setTargets;

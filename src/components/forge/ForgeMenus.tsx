@@ -4,8 +4,7 @@
 
 import { canRemoveRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { canSwap, isAddedSlot } from '../../engine/addedExercises';
-import { stepSwapAt } from '../../engine/stepSwaps';
-import { exerciseById } from '../../data/exercises';
+import { useState } from 'react';
 import { resolveExerciseArt, showsExerciseArt } from '../../engine/exerciseArtSettings';
 import { exerciseOf, swapGroups, type WorkoutExercise } from '../../engine/forgeWorkout';
 import { hasStack } from '../../engine/machineWeights';
@@ -24,6 +23,7 @@ import { PrimaryButton, SecondaryButton, Toggle } from '../ui';
 import { ForgeSheet, MenuRow, RirBubble, SheetGroup } from './parts';
 import { SwapList } from './ExerciseSheets';
 import { StepUndoRow } from './StepUndoRow';
+import { stepUndoFrom } from './stepUndo';
 import { RestStepper } from './ForgeTimers';
 import { addOnMenuSub } from './forgeWorkoutHelpers';
 
@@ -100,6 +100,9 @@ export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId,
   onStartRest: () => void;
   onClose: () => void;
 }) {
+  // "Terug naar ... in je plan": vastgelegd bij het openen van het blad. Na de opslag is de stap weg, en de rij moet
+  // dan blijven staan om zijn uitkomst te tonen.
+  const [stepFrom] = useState(() => (readOnly || preview ? undefined : stepUndoFrom(settings.strengthModel, templateId, ex)));
   return (
     <ForgeSheet title={ex.name} sub={ex.swappedFrom ? `In plaats van ${ex.swappedFrom}, alleen deze training` : undefined} onClose={onClose}>
       {(close) => {
@@ -108,9 +111,6 @@ export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId,
         const art = ex.known && !!exercise && showsExerciseArt(resolveExerciseArt(settings));
         const allDone = ex.rows.length > 0 && ex.rows.every((r) => r.done);
         const added = !readOnly && !preview && isAddedSlot(settings.strengthModel, templateId, ex.slot);
-        // Alleen als deze oefening de stap is die nu in je plan staat; Ruilen in deze training telt niet.
-        const step = readOnly || preview ? undefined : stepSwapAt(settings.strengthModel, templateId, ex.slot);
-        const stepFrom = step && step.to === ex.exerciseId && !ex.swappedFrom ? exerciseById(step.from)?.name : undefined;
         return (
           <div className="flex flex-col">
             {why && (

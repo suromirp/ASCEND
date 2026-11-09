@@ -201,6 +201,14 @@ describe('Akkoord, houding en Ongedaan maken', () => {
     expect(Object.keys(next.stepSwaps ?? {}).sort()).toEqual(['tpl_push', 'tpl_upper']);
   });
 
+  it('een plek met een oefening-id als id krijgt geen voorstel en geen stap: Forge herkent hem aan dat id', () => {
+    const byId = tpl('tpl_id', 'Op id', [['push-up', 'Push-Up', 3, '8']]);
+    expect(proposals([byId], passedPushUp)).toEqual([]);
+    expect(proposals([byId, PUSH], passedPushUp)[0].targets.map((t) => t.slot)).toEqual(['p1']);
+    const model = { stepSwaps: { tpl_id: { 'push-up': { from: 'push-up', to: 'decline-push-up' } } } };
+    expect(withStepSwaps(byId.exercises!, model, 'tpl_id')[0].exerciseName).toBe('Push-Up');
+  });
+
   it('een plek waarvan het sjabloon intussen een andere oefening heeft, volgt het sjabloon', () => {
     const model = { stepSwaps: { tpl_push: { p1: { from: 'push-up', to: 'knee-push-up' } } } };
     const changed = tpl('tpl_push', 'Duwen', [['p1', 'Dips', 3, '8']]);

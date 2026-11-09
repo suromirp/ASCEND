@@ -35,6 +35,6 @@ describe('het stapvoorstel in Forge', () => {
   it('staat in Forge bovenaan, alleen voor het eerste afvinken en niet bij alleen kijken', () => {
     const forge = read('ForgeWorkout.tsx');
     expect(forge).toMatch(/const stepNotice = !readOnly && !startedAt && strength\.stepProposal;/);
-    expect(read('ForgeIntro.tsx')).toContain('<StepProposalNotice templateId={templateId} />');
+    expect(read('ForgeIntro.tsx')).toContain('<StepProposalNotice templateId={templateId} date={date} />');
   });
 });

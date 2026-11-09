@@ -13,7 +13,7 @@ import { exerciseById } from '../data/exercises';
 import { SKILL_FLOOR_REPS, SKILL_FLOOR_SECONDS, SKILL_LADDERS, type SkillLadder } from '../data/skillLadders';
 import type { ExercisePrescription, SessionLog, SessionTemplate } from '../models/training';
 import { ladderState } from './skillLadder';
-import { slotExerciseId, stepSwapAt, withStepSwapsSet, type StepSwap, type StepSwaps } from './stepSwaps';
+import { canHoldStep, slotExerciseId, stepSwapAt, withStepSwapsSet, type StepSwap, type StepSwaps } from './stepSwaps';
 import { hasRole } from './templateRoles';
 
 export interface StepTarget {
@@ -76,7 +76,7 @@ function proposalFor(ladder: SkillLadder, input: StepProposalInput): StepProposa
     // Staat de stap er al in, dan zou Akkoord hem dubbel zetten: deze training niet.
     if (ids.includes(to)) continue;
     slots.forEach((s, i) => {
-      if (ids[i] === from && !s.id.startsWith(ADDED_PREFIX)) targets.push({ templateId: t.id, templateName: t.name, slot: s.id });
+      if (ids[i] === from && !s.id.startsWith(ADDED_PREFIX) && canHoldStep(s)) targets.push({ templateId: t.id, templateName: t.name, slot: s.id });
     });
   }
   if (targets.length === 0) return null;
@@ -94,12 +94,19 @@ export function stepProposals(input: StepProposalInput): StepProposal[] {
 export function stepProposalText(p: StepProposal): { fact: string; question: string; where: string; keeps: string } {
   const names = [...new Set(p.targets.map((t) => t.templateName))];
   const where = names.length === 1 ? `In ${names[0]}.` : `In ${names.slice(0, -1).join(', ')} en ${names[names.length - 1]}.`;
+  const sets = floorSets(p);
   const keeps = isHold(p.fromExerciseId) === isHold(p.toExerciseId)
     ? 'Sets en herhalingen blijven.'
-    : isHold(p.toExerciseId) ? `Je begint op 3 keer ${SKILL_FLOOR_SECONDS} seconden.` : `Je begint op 3 keer ${SKILL_FLOOR_REPS}.`;
+    : isHold(p.toExerciseId) ? `Je begint op ${sets} keer ${SKILL_FLOOR_SECONDS} seconden.` : `Je begint op ${sets} keer ${SKILL_FLOOR_REPS}.`;
   return p.kind === 'harder'
     ? { fact: `Je toets op ${p.fromName} is gehaald. Volgende stap: ${p.toName}.`, question: `Zet je plan op ${p.toName}?`, where, keeps }
     : { fact: `Drie trainingen onder de onderkant van ${p.fromName}.`, question: `Zet je plan op de lichtere stap ${p.toName}?`, where, keeps };
+}
+
+// Het aantal sets van de onderkant: dat van de toets van de nieuwe stap, zoals withStepAccepted het schrijft.
+function floorSets(p: Pick<StepProposal, 'ladderId' | 'toExerciseId'>): number {
+  const ladder = SKILL_LADDERS.find((l) => l.id === p.ladderId);
+  return ladder?.steps.find((s) => s.exerciseId === p.toExerciseId)?.test.sets ?? 3;
 }
 
 function isHold(exerciseId: string): boolean {
@@ -111,15 +118,13 @@ function isHold(exerciseId: string): boolean {
 // overgang tussen herhalingen en een houding komt de onderkant van de nieuwe stap (3 keer 5, of 3 keer 10 seconden).
 // Wordt de stap weer de oefening van het sjabloon, dan gaat de stap weg.
 export function withStepAccepted<M extends { stepSwaps?: StepSwaps }>(model: M | undefined, p: StepProposal): M {
-  const ladder = SKILL_LADDERS.find((l) => l.id === p.ladderId);
-  const test = ladder?.steps.find((s) => s.exerciseId === p.toExerciseId)?.test;
   const changes = p.targets.map((t) => {
     const before = stepSwapAt(model, t.templateId, t.slot);
     const from = before?.from ?? p.fromExerciseId;
     if (from === p.toExerciseId) return { templateId: t.templateId, slot: t.slot, swap: undefined };
     const swap: StepSwap = { from, to: p.toExerciseId };
     if (isHold(p.fromExerciseId) !== isHold(p.toExerciseId)) {
-      swap.sets = test?.sets ?? 3;
+      swap.sets = floorSets(p);
       swap.reps = isHold(p.toExerciseId) ? `${SKILL_FLOOR_SECONDS}s` : `${SKILL_FLOOR_REPS}`;
     } else if (before?.reps !== undefined && before.sets !== undefined) {
       // Een eerdere overgang gaf al de onderkant; die blijft bij een stap met dezelfde meting.

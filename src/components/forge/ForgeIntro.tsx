@@ -26,7 +26,7 @@ export function ForgeIntro({ templateId, today, date, program, preview, readOnly
   return (
     <div className="flex flex-col gap-1 px-4 pt-3">
       {mountainNotice && <MountainMuscleNotice weekStart={addDays(mondayOfWeek(today), -7)} onlyFor={templateId} className="mb-2" />}
-      {stepNotice && <StepProposalNotice templateId={templateId} />}
+      {stepNotice && <StepProposalNotice templateId={templateId} date={date} />}
       {capLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-ingekort">{capLine}</p>}
       {preview && <p className="text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{previewDayLine(date, program)}</p>}
       {preview ? (

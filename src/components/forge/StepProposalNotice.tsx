@@ -1,6 +1,7 @@
 // Het voorstel voor een stap omhoog of omlaag op een calisthenicsladder, bovenaan de training waar de oefening in
 // staat (engine/skillStepProposal.ts). Pas na Akkoord verandert er iets: de plek in je krachttraining wordt de nieuwe
-// stap (engine/stepSwaps.ts), vanaf je volgende training; deze training blijft zoals hij is. Liever niet laat precies
+// stap (engine/stepSwaps.ts), te zien de volgende keer dat je die training opent; een begonnen sessie houdt zijn
+// stappen (forgeDraft.ts#sessionStepSwaps). Liever niet laat precies
 // deze stap met rust. Na Akkoord kan Ongedaan maken. Besluit: docs/beslissingen/2026-11-09-calisthenics-stapvoorstel.md.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -9,7 +10,6 @@ import { stepProposals, stepProposalText, withStepAccepted, withStepUndone, type
 import type { StepSwaps } from '../../engine/stepSwaps';
 import { resolveStrengthSettings } from '../../engine/strengthSettings';
 import { useAppData } from '../../state/AppDataContext';
-import { todayISO } from '../../utils/dates';
 import { readStepDeclines, rememberStepDecline } from '../../utils/stepDeclines';
 import { TextButton } from '../TextButton';
 import { Eyebrow, SecondaryButton } from '../ui';
@@ -19,7 +19,8 @@ const SAVE_LIMIT_MS = 8000;
 
 type State = 'open' | 'busy' | 'done' | 'failed' | 'undoing' | 'undone' | 'undoFailed';
 
-export function StepProposalNotice({ templateId, className = 'mb-2' }: { templateId: string; className?: string }) {
+// `date`: de dag van de training in Forge; tot en met die dag tellen je logs (engine/skillLadder.ts).
+export function StepProposalNotice({ templateId, date, className = 'mb-2' }: { templateId: string; date: string; className?: string }) {
   const { sessionLogs, templates, settings, updateSettings } = useAppData();
   const [declines, setDeclines] = useState(readStepDeclines);
   const [state, setState] = useState<State>('open');
@@ -36,16 +37,15 @@ export function StepProposalNotice({ templateId, className = 'mb-2' }: { templat
   }, []);
   const live = useMemo(() => {
     const strength = resolveStrengthSettings(settings.strengthModel);
-    const today = todayISO();
     return stepProposals({
       on: strength.stepProposal,
       logs: sessionLogs,
-      today,
+      today: date,
       templates,
-      exercisesOf: (t) => forgeSlotsFor(t, settings.strengthModel, today),
+      exercisesOf: (t) => forgeSlotsFor(t, settings.strengthModel, date),
       declined: declines,
     }).find((p) => p.targets.some((t) => t.templateId === templateId)) ?? null;
-  }, [templateId, sessionLogs, templates, settings.strengthModel, declines]);
+  }, [templateId, date, sessionLogs, templates, settings.strengthModel, declines]);
   const proposal = accepted?.proposal ?? live;
   if (!proposal) return null;
   const text = stepProposalText(proposal);
@@ -110,7 +110,7 @@ export function StepProposalNotice({ templateId, className = 'mb-2' }: { templat
         ) : decided ? (
           <>
             <p role="status" className="text-sm leading-relaxed" style={ink}>
-              Je plan staat op {proposal.toName}. Je ziet het vanaf je volgende training; deze training blijft zoals hij is.
+              Je plan staat op {proposal.toName}. Je ziet het de volgende keer dat je deze training opent.
             </p>
             {state === 'undoFailed' && <p role="status" className="text-xs" style={{ color: 'var(--color-warning)' }}>Ongedaan maken lukte niet op tijd. Probeer het nog eens.</p>}
             <div className="-mb-1">

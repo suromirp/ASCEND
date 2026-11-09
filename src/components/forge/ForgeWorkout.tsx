@@ -75,7 +75,7 @@ import { resolveDeviceNotices } from '../../engine/deviceNotices';
 import { type Rest, clock, type BlockActions } from './forgeWorkoutHelpers';
 import { ExerciseBlock } from './ExerciseBlock';
 import { OtherSessionRunning } from './OtherSessionRunning';
-import { DRAFT_VERSION, initialForgeLog, poundLine, type WorkoutDraft } from './forgeDraft';
+import { DRAFT_VERSION, initialForgeLog, poundLine, sessionStepSwaps, type WorkoutDraft } from './forgeDraft';
 import { useForgeDraft } from './useForgeDraft';
 import { useForgeClock } from './useForgeClock';
 import { useForgeStands } from './useForgeStands';
@@ -154,10 +154,26 @@ function ForgeWorkoutInner({
   const reckonCtx = { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights, on: strength.enabled && strength.reckon && !readOnly };
   // A program from MacroFactor gives the exercises of the week of this training, and an exercise you added after a
   // proposal with Akkoord comes behind them (engine/forgeSlots.ts, the same list the week review reads).
-  // Een ladderstap die je in deze sessie met Akkoord koos (StepProposalNotice.tsx) geldt vanaf de volgende training:
-  // deze sessie houdt de stappen van het openen.
-  const [sessionStepSwaps] = useState(() => settings.strengthModel?.stepSwaps);
-  const allSlots = useMemo(() => forgeSlotsFor(template, { ...settings.strengthModel, stepSwaps: sessionStepSwaps }, date), [template, settings.strengthModel, sessionStepSwaps, date]);
+  const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
+  const [restored] = useState(() => {
+    // Alleen kijken raakt het concept van de dag zelf niet aan.
+    if (preview) return undefined;
+    const d = loadDraft<WorkoutDraft>(key, 'local');
+    if (!d || d.v !== DRAFT_VERSION || !Array.isArray(d.exercises) || typeof d.startedAt !== 'number') return undefined;
+    // Een sessie eindigt met Afronden of Verwijderen, niet met de tijd; alleen een training die al in je logboek staat is klaar.
+    const logged = !!plannedSessionId && sessionLogs.some((l) => l.plannedSessionId === plannedSessionId);
+    if (logged) {
+      clearDraft(key, 'local');
+      return undefined;
+    }
+    return d as WorkoutDraft;
+  });
+
+  // Een ladderstap die je in deze sessie met Akkoord koos (StepProposalNotice.tsx) geldt vanaf de volgende sessie:
+  // deze sessie houdt de stappen van het openen, ook in het concept (forgeDraft.ts#sessionStepSwaps), anders wisselt
+  // mergeDraft na herladen een onaangeraakte plek midden in de sessie.
+  const [sessionSwaps] = useState(() => sessionStepSwaps(restored, settings.strengthModel?.stepSwaps));
+  const allSlots = useMemo(() => forgeSlotsFor(template, { ...settings.strengthModel, stepSwaps: sessionSwaps }, date), [template, settings.strengthModel, sessionSwaps, date]);
   // Hoogstens per krachttraining (engine/forgeTimeCap.ts): met de geleerde tijd per set gaat er eerst bijwerk af
   // als de training langer zou duren dan de grens. Alleen de inhoud van deze sessie; de planning blijft zoals hij is.
   const estimate = settings.sessionDurationEstimates?.[template.id];
@@ -178,21 +194,6 @@ function ForgeWorkoutInner({
     ...(mountainGoal ? { keep: servesMountainMuscle } : {}),
   }), [template, allSlots, initialVariant, fullMinutes, minutesPerSet, capStrength, capLegs, mountainGoal]);
   const slots = capped.slots;
-
-  const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
-  const [restored] = useState(() => {
-    // Alleen kijken raakt het concept van de dag zelf niet aan.
-    if (preview) return undefined;
-    const d = loadDraft<WorkoutDraft>(key, 'local');
-    if (!d || d.v !== DRAFT_VERSION || !Array.isArray(d.exercises) || typeof d.startedAt !== 'number') return undefined;
-    // Een sessie eindigt met Afronden of Verwijderen, niet met de tijd; alleen een training die al in je logboek staat is klaar.
-    const logged = !!plannedSessionId && sessionLogs.some((l) => l.plannedSessionId === plannedSessionId);
-    if (logged) {
-      clearDraft(key, 'local');
-      return undefined;
-    }
-    return d as WorkoutDraft;
-  });
 
   // De planning van de rijen, één keer: de geschiedenis per oefening uit de logs.
   const [baseCtx] = useState<PlanContext>(() => ({ logs: sessionLogs, templates, program, bodyKg, settings: strength, date, modelOn: strength.enabled, sore: { injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [] } }));
@@ -273,7 +274,7 @@ function ForgeWorkoutInner({
   }, [openSlot]);
 
   // Het concept en de wijzer van de sessie (useForgeDraft.ts).
-  const { dropDraft } = useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant: initialVariant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt });
+  const { dropDraft } = useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant: initialVariant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps: sessionSwaps });
   // Jouw handelingen zetten het laatste moment van handelen: een set afvinken, typen, een oefening ruilen.
   const firstWorkout = useRef(workout);
   useEffect(() => {
@@ -603,7 +604,8 @@ function ForgeWorkoutInner({
     setWorkout((w) => workoutWithoutAdded(w, slot));
   }
 
-  // "Terug naar ... in je plan": de ladderstap gaat uit je plan, vanaf je volgende training. Deze sessie blijft zoals hij is.
+  // "Terug naar ... in je plan": de ladderstap gaat uit je plan, de volgende keer dat je de training opent. Deze sessie
+  // blijft zoals hij is.
   function undoStepSwap(slot: string) {
     return updateSettings({ strengthModel: withoutStepSwap(settings.strengthModel, template.id, slot) });
   }
@@ -623,7 +625,7 @@ function ForgeWorkoutInner({
   // zou komen (zelfde melding en zelfde Akkoord als in de weekterugblik). Niet bij kijken en niet na de eerste set.
   const mountainNotice = !readOnly && !startedAt;
   // Het voorstel voor een stap op een ladder (StepProposalNotice.tsx): zelfde moment als Spieren voor de berg. Akkoord
-  // geldt vanaf de volgende training; deze sessie is al gepland (`workout` is één keer opgebouwd) en verandert niet.
+  // geldt de volgende keer dat je de training opent; dit scherm houdt `sessionSwaps` en `workout` is één keer opgebouwd.
   const stepNotice = !readOnly && !startedAt && strength.stepProposal;
   const intro = <ForgeIntro templateId={template.id} today={today} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} stepNotice={stepNotice} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
   const exerciseBlock = (ex: WorkoutExercise, i: number) => {
