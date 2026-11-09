@@ -207,7 +207,7 @@ function ArtBody({ exerciseId, requestClose, onOpen, backName, onBack }: {
 
       {hasDrawing && (
         <div className="flex flex-col items-start">
-          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Tekening: Everkinetic en Bryl Lim, CC BY-SA 4.0, aangepast.</p>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{link?.own ? 'Tekening: ASCEND, CC BY-SA 4.0.' : 'Tekening: Everkinetic en Bryl Lim, CC BY-SA 4.0, aangepast.'}</p>
           <TextLink tone="dim" size="xs" href="https://creativecommons.org/licenses/by-sa/4.0/deed.nl">Licentie CC BY-SA 4.0</TextLink>
         </div>
       )}

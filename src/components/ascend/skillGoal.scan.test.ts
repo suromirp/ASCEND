@@ -38,6 +38,12 @@ describe('de vaardigheid op de Ascend-tab', () => {
     expect(card).toContain('readiness.line');
   });
 
+  it('de keuze van de ladder wikkelt over meerdere regels (negen ladders passen niet in één strook)', () => {
+    expect(sheet).toContain('<Chip');
+    expect(sheet).toContain('flex-wrap');
+    expect(sheet).not.toContain('<Segmented');
+  });
+
   it('tikdoelen van minstens 44 px: de stappen in het blad en de rijen van de trap', () => {
     expect(sheet).toContain('min-h-[52px]');
     expect(card).toContain('min-h-[44px]');

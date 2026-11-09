@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { skillLadderById, type SkillLadder } from '../data/skillLadders';
+import { exerciseById } from '../data/exercises';
+import { SKILL_LADDERS, skillLadderById, type SkillLadder } from '../data/skillLadders';
 import type { SessionLog, SetLog } from '../models/training';
 import type { SkillGoal, SkillGoalStore, SkillStepProgress } from '../models/skillGoals';
-import { buildSkillGoal, clearedSkillSteps, freeTargetStep, takenSkillSteps, defaultTargetStep, liveSkillGoals, mergeSkillStores, newSkillStepProgress, skillStepMilestones } from './skillGoal';
+import { buildSkillGoal, clearedSkillSteps, freeTargetStep, takenSkillSteps, defaultTargetStep, liveSkillGoals, mergeSkillStores, newSkillStepProgress, skillStepMilestones, SKILL_LADDER_CHOICES, skillStepName } from './skillGoal';
 import { skillReadinessFor } from './goalReadinessFor';
 import { ladderState } from './skillLadder';
 
@@ -33,7 +34,7 @@ describe('de mijlpalen van een vaardigheid (skillStep)', () => {
   });
 
   it('een onbekende ladder heeft er geen, een doelstap boven de ladder stopt bij de laatste stap', () => {
-    expect(skillStepMilestones(goal({ ladderId: 'handstand' }))).toEqual([]);
+    expect(skillStepMilestones(goal({ ladderId: 'planche' }))).toEqual([]);
     expect(skillStepMilestones(goal({ targetStep: 99 }))).toHaveLength(pull.steps.length);
   });
 });
@@ -88,8 +89,8 @@ describe('newSkillStepProgress: alleen toevoegen', () => {
   it('een weggehaald doel of een onbekende ladder krijgt niets', () => {
     const logs = [log('2026-11-02', { 'pull-up': reps(8, 8, 8) })];
     expect(newSkillStepProgress({ goals: [goal({ removedAt: '2026-11-03T00:00:00.000Z' })], progress: [] }, logs, TODAY, newId)).toEqual([]);
-    expect(newSkillStepProgress({ goals: [goal({ ladderId: 'muscle-up' })], progress: [] }, logs, TODAY, newId)).toEqual([]);
-    expect(liveSkillGoals({ goals: [goal({ ladderId: 'muscle-up' }), goal({ id: 'b' })], progress: [] }).map((g) => g.id)).toEqual(['b']);
+    expect(newSkillStepProgress({ goals: [goal({ ladderId: 'planche' })], progress: [] }, logs, TODAY, newId)).toEqual([]);
+    expect(liveSkillGoals({ goals: [goal({ ladderId: 'planche' }), goal({ id: 'b' })], progress: [] }).map((g) => g.id)).toEqual(['b']);
   });
 });
 
@@ -152,7 +153,7 @@ describe('skillReadinessFor: de trap, het werk en één droge regel', () => {
   });
 
   it('een onbekende ladder geeft niets in plaats van een fout', () => {
-    expect(skillReadinessFor(goal({ ladderId: 'front-lever' }), [], TODAY, [])).toBeUndefined();
+    expect(skillReadinessFor(goal({ ladderId: 'planche' }), [], TODAY, [])).toBeUndefined();
   });
 });
 
@@ -204,5 +205,27 @@ describe('een vaardigheid stuurt de planning niet', () => {
   it('alleen skillGoal.ts en goalReadinessFor.ts kennen het model; de planner, mainGoal en goalConflicts niet', () => {
     const users = Object.entries(ENGINE).filter(([, src]) => src.includes('models/skillGoals') || src.includes("from './skillGoal'")).map(([p]) => p).sort();
     expect(users).toEqual(['./goalReadinessFor.ts', './skillGoal.ts']);
+  });
+});
+
+describe('de overige ladders als vaardigheid (F4f)', () => {
+  it('elke ladder is te kiezen, met een mijlpaal per stap tot de laatste', () => {
+    for (const l of SKILL_LADDERS) {
+      const last = l.steps.length;
+      const g = buildSkillGoal({ id: `skill_${l.id}`, now: '2026-11-01T08:00:00.000Z', ladderId: l.id, targetStep: last });
+      expect(g, l.id).toBeDefined();
+      expect(skillStepMilestones(g!).map((x) => x.step), l.id).toEqual(l.steps.map((_, i) => i + 1));
+      expect(buildSkillGoal({ id: 'x', now: '2026-11-01T08:00:00.000Z', ladderId: l.id, targetStep: last + 1 }), l.id).toBeUndefined();
+    }
+    expect(SKILL_LADDER_CHOICES.map((c) => c.id)).toEqual(SKILL_LADDERS.map((l) => l.id));
+    expect(SKILL_LADDER_CHOICES.map((c) => c.name)).toEqual(['Push-up', 'Optrekken', 'Dip', 'Squat op één been', 'Handstand', 'Handstand push-up', 'L-sit', 'Front lever', 'Muscle-up']);
+  });
+  it('de naam van een stap is de naam van zijn oefening, in elke ladder', () => {
+    for (const l of SKILL_LADDERS) l.steps.forEach((s, i) => expect(skillStepName(l, i + 1), s.exerciseId).toBe(exerciseById(s.exerciseId)!.name));
+  });
+  it('een houding telt in de stand van het doel: de L-sit op stap 2 geeft stap 3 als volgende', () => {
+    const l = skillLadderById('l-sit')!;
+    const logs = [log('2026-11-05', { 'one-leg-l-sit': [{ reps: 1, seconds: 30 }, { reps: 1, seconds: 30 }, { reps: 1, seconds: 31 }] })];
+    expect(ladderState(l, logs, TODAY)).toMatchObject({ current: 2, passed: true, proposal: { kind: 'harder', step: 3, exerciseId: 'l-sit' } });
   });
 });
