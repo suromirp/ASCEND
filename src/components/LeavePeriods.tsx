@@ -15,7 +15,7 @@ import type { LeavePlan } from '../engine/leaveProposal';
 import {
   LEAVE_KINDS, LEAVE_KIND_HINT, LEAVE_KIND_LABEL, describeDayCount, describePeriodDates, validateLeaveDraft,
 } from '../engine/leave';
-import { editedPeriod, leaveEditScope } from '../engine/leaveEdit';
+import { editedPeriod, leaveEditScope, leaveWordsChange } from '../engine/leaveEdit';
 import { NO_GYM_ADVICE, resolveNoGym } from '../engine/noGymDetails';
 import { mainGoalIsMountain } from '../engine/mountainMuscles';
 import { addDays, todayISO } from '../utils/dates';
@@ -127,7 +127,7 @@ export function LeavePeriodsCard() {
             const before = editing;
             setEditing(null);
             const scope = leaveEditScope(before, period);
-            if (scope === 'note') void saveLeaveNote(before.id, period.note ?? '');
+            if (scope === 'note') void saveLeaveNote(before.id, period.note ?? '', period.noGym?.hills);
             else if (scope === 'plan') setPlan(planLeave('add', period, before));
           }}
           onRemove={() => {
@@ -313,8 +313,8 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                 />
               </label>
               <p className="mt-3 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} aria-live="polite">
-                {scope === 'note'
-                  ? 'Alleen de notitie is anders. Die bewaar je meteen; je planning blijft zoals ze is.'
+                {scope === 'note' && editing && draft
+                  ? leaveWordsChange(editing, draft).line
                   : scope === 'none'
                     ? 'Je hebt nog niets veranderd.'
                     : editing
