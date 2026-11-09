@@ -531,6 +531,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showStageWater !== false };
     case 'rust-na-tocht':
       return { value: choiceShort('rustNaTocht', s.trekLegRest ?? 'soft') };
+    case 'vakantie-schuiven':
+      return { value: choiceShort('vakantieSchuiven', s.leaveAround ?? 'wide') };
     case 'vakantie-opzij':
       return { value: choiceShort('vakantieOpzij', s.leaveCrowding ?? 'drop') };
     case 'zonder-sportschool':

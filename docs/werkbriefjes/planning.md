@@ -9,7 +9,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - `src/engine/mainGoal.ts#mainGoal` het hoofddoel, op één plek
 - `src/engine/templateRoles.ts#hasRole` een training herken je aan een rol, nooit aan een id
 - `src/engine/workSets.ts#isWorkSet` alles wat sets telt gaat hierdoor
-- `src/engine/leaveProposal.ts#planLeaveChange` vrije dagen, vakanties, tochten en zonder sportschool als voorstel; `src/engine/noGym.ts#applyNoGymDays` wat zonder sportschool verandert
+- `src/engine/leaveProposal.ts#planLeaveChange` vrije dagen, vakanties, tochten en zonder sportschool als voorstel, met `src/engine/leaveAround.ts#planAroundLeave` voor de beste indeling rond een vakantie (ook over de weekgrens); `src/engine/noGym.ts#applyNoGymDays` wat zonder sportschool verandert
 - `src/engine/programLayout.ts#layoutWaves` fases en golven, geteld vanaf het doel
 - `src/storage/databaseHorizon.ts#syncProgramHorizon` schrijft het plan weg, draait bij elke verandering
 - `src/storage/horizonPlan.ts#computeHorizonPlan` rekent een voorstel uit, `applyHorizonPlanNow` schrijft het
@@ -30,15 +30,15 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - `src/state/planningSync.ts#horizonKey` bepaalt of de ronde opnieuw draait: een vingerafdruk van de geplande sessies hoort erin, anders blijft een nieuwe verandering liggen.
 - Opstartwerk wacht nooit op de sync; wat de planning wijzigt wacht wel op de wachtrij en leest dan het opgeslagen plan.
 - Een teruggezette rij krijgt geen slot en geen vaste lengte, anders blijft hij vastgezet staan. Ook een rij die een periode korter maakte en die je daarna zelf verplaatste, krijgt bij weghalen zijn lengte terug; alleen het merk eraf laat hem kort (`src/engine/leaveProposal.ts#planLeaveChange`, een `keep` met `restore`, 9 november). Een periode wijzigen draait `putBack` voor de oude periode; wat de nieuwe periode nog raakt, krijgt zijn lengte niet terug (`stillShort`).
-- De reparatie zet niets op de laatste vrije dag van een week, behalve in een week met vakantie, vrije dagen of tocht.
+- De reparatie zet niets op de laatste vrije dag van een week, behalve in een week met vakantie, vrije dagen of tocht. De score van `planAroundLeave` is een heel getal dat alleen van de indeling afhangt (plus een duizendste voor dicht bij de oude dag) en de zoektocht start ook vanuit niets: zet er geen term in die afhangt van waar een training vóór de ronde stond, anders schuift de volgende ronde weer. De dagelijkse ronde zonder voorstel (`leaveReshuffle` uit) zoekt alleen een dag voor wat op een vakantiedag staat (9 november).
 - `tpl_bodyweight` (zonder sportschool) is een krachtsjabloon zonder vaste dag: elke lijst van krachtsjablonen in de sportschool (MacroFactor, krachtprogramma, bergspieren) gaat door `src/engine/templateRoles.ts#isGymStrengthTemplate`, anders raadt hij mee. Alleen `src/components/forge/ProgramProposal.tsx` filtert nog zelf (9 november, Forge was bezet). Alleen Heuvels in de buurt anders is geen voorstel maar woorden, net als de notitie: meteen bewaard (`src/engine/leaveEdit.ts#leaveEditScope`).
 - `PATTERN_SWAPS` werken alleen in fases van een plan met een doel; de golden scenario's A en C bewegen niet. Calisthenics per training (`src/engine/trainingStyle.ts#styleChange`) verandert alleen de oefeningen van een krachttraining, nooit een geplande sessie, sjabloon of `baseStressProfile`: de ronde leest het niet en hoeft het niet te lezen.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/engine/scheduler src/engine/weekValidator src/engine/planPass src/engine/leave src/engine/noGym src/storage/horizon`
+- Tijdens het werk: `npx vitest run src/engine/scheduler src/engine/weekValidator src/engine/planPass src/engine/leave src/engine/leavePlanAround src/engine/noGym src/storage/horizon`
 - `src/storage/planGolden.test.ts` mag alleen bewegen met de reden in de commit.
 - Tekstkaart (`npm run kaart:vergelijk`) alleen als een scherm verandert.
 
 ## Lees verder
 - `docs/architectuur/planning.md`
-- `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`, `docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md`, `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`, `docs/beslissingen/2026-11-09-zonder-sportschool.md`, `docs/onderzoek/Planning op een lijn.md`
+- `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`, `docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md`, `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`, `docs/beslissingen/2026-11-09-zonder-sportschool.md`, `docs/beslissingen/2026-11-09-planner-rond-vakantie.md`, `docs/onderzoek/Planning op een lijn.md`

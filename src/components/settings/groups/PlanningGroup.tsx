@@ -90,6 +90,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="rustdag-terug" title="Rustdag terugzetten voorstellen" facts={facts} info="rustdagTerug" onChange={(on) => void updateSettings({ restDayBack: on })} />
         <SummaryRow id="weekvoorstel" title="Voorstel bij een probleem in de week" facts={facts} info="weekVoorstel" onChange={(on) => void updateSettings({ weekFixProposal: on })} />
         <SummaryRow id="zonder-sportschool" title="Kracht zonder sportschool" facts={facts} info="zonderSportschool" onClick={() => setSheet('zonder-sportschool')} />
+        <SummaryRow id="vakantie-schuiven" title="Rond een vakantie schuiven" facts={facts} info="vakantieSchuiven" onClick={() => setSheet('vakantie-schuiven')} />
       </SettingsSection>
 
       {sheet === 'bundel-dagen' && (
@@ -162,6 +163,14 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.wijzigingen} value={plan.applyMode} onPick={(v) => void updateSettings({ changeApplyMode: v })} onClose={close} />
       )}
       {sheet === 'volgorde-stand' && <OrderSheet onClose={close} />}
+      {sheet === 'vakantie-schuiven' && (
+        <ChoiceFromDef
+          def={CHOICES.vakantieSchuiven}
+          value={settings.leaveAround ?? 'wide'}
+          onPick={(v) => { if (v !== (settings.leaveAround ?? 'wide')) void plan.changeSetting(`Rond een vakantie schuiven: ${choiceShort('vakantieSchuiven', v)}`, { leaveAround: v }, 'Volgt je keuze voor hoeveel er rond een vakantie mag schuiven.'); }}
+          onClose={close}
+        />
+      )}
       {sheet === 'vakantie-opzij' && (
         <ChoiceFromDef
           def={CHOICES.vakantieOpzij}
