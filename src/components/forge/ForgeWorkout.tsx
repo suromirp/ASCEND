@@ -9,64 +9,42 @@
 // dezelfde tabel zonder invulvelden: het voorschrift om in de sportschool mee
 // te kijken, en één knop om de training af te vinken.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
-import { canRemoveRow, reinsertRow, removeSet, restoreDropped, rowLabel, swipeDeleteOn, type DroppedRow } from '../../engine/forgeRows';
+import { restoreDropped, swipeDeleteOn } from '../../engine/forgeRows';
 import { canSwap, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
 import { learnedMinutesPerSet } from '../../engine/durationLearning';
 import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, resolveTimeCap, servesMountainMuscle } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { hasMountainGoal } from '../../engine/mountainMuscles';
-import { ExerciseArtSheet } from '../ExerciseArtSheet';
 import { resolveForgeLayout } from '../../engine/forgeLayout';
 import { currentBodyKg } from '../../engine/bodyWeight';
 import {
   activeRow,
-  applyReps,
-  applyWeight,
-  carryChange,
   resumeDraft,
-  copyRow,
-  dockFieldKey,
   exerciseComplete,
-  makeLight,
   makeSnap,
-  nextField,
-  repsBounds,
-  standJump,
-  standHints,
-  stepNumber,
   takeTarget,
-  weightBounds,
-  weightStepFor,
-  REPS_STEP,
-  type FieldName,
-  type FieldRef,
   type RowRef,
 } from '../../engine/forgeInput';
 import {
-  addRow,
   exerciseOf,
   legDayLine,
   planExercise,
   planStateBefore,
   planWorkout,
-  plateSteps,
   progress,
-  removeLastRow,
   tickAllRows,
   tickRow,
   updateRow,
-  usesPlates,
   type PlanContext,
   type WorkoutExercise,
 } from '../../engine/forgeWorkout';
 import { profileFor } from '../../engine/strengthWeights';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
-import { durationForVariant, exercisesForVariant, resolveVariantDuration } from '../../engine/substitutions';
-import { EXERCISE_NOTE_MAX, resolveStrengthSettings, withExerciseValue } from '../../engine/strengthSettings';
-import { getTrainingGuide, guideDayLabel } from '../../data/trainingGuide';
+import { exercisesForVariant } from '../../engine/substitutions';
+import { resolveStrengthSettings } from '../../engine/strengthSettings';
 import type { Program } from '../../models/program';
 import type { SessionTemplate, SessionVariant } from '../../models/training';
 import { useAppData } from '../../state/AppDataContext';
@@ -77,44 +55,41 @@ import { clearDraft, draftKey, loadDraft } from '../../utils/loggerDraft';
 import { primeAudio } from '../../utils/sound';
 import { useBackToClose } from '../../utils/useBackToClose';
 import { Portal } from '../Portal';
-import { TrainingGuideSheet } from '../TrainingGuideSheet';
 import { useGuardedSave, useLegEase } from '../useLegEase';
 import { decisionFor, easeBecause, easeSlots } from '../../engine/legDayEase';
 import { resolveLegEaseHow } from '../../engine/legEaseSettings';
-import { asksReserve, reckonAfterTick, reckonWeight, undoRaise } from '../../engine/forgeReckon';
+import { asksReserve, reckonAfterTick, undoRaise } from '../../engine/forgeReckon';
 import { poundStackProposal } from '../../engine/poundStack';
-import { adjustText, applyLighter, fitStillOpen, noFitText as noFitLine, refitAfterFill, stillOpen, suggestLighter, suggestOwnWeights, tooHeavy, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
+import { adjustText, applyLighter, fitStillOpen, noFitText as noFitLine, stillOpen, suggestLighter, suggestOwnWeights, tooHeavy, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { ownWeightsFor, withMachineSetup } from '../../engine/machineWeights';
-import { appendEvents, deriveChanges, noFitEvent, setCountEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
+import { appendEvents, deriveChanges, noFitEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
 import { makeId } from '../../utils/id';
-import { activeSeconds, sessionIsDead } from '../../engine/forgeSession';
+import { sessionIsDead } from '../../engine/forgeSession';
 import { useSessionWorld } from './useForgeSession';
 import { readSession } from '../../utils/forgeSessionStore';
-import { ExerciseAddOnForgeSheet } from './AddOnWeights';
-import { ForgeLogSheet } from './ForgeLogSheet';
-import { MachineWeightsForgeSheet } from './MachineWeights';
-import { InputDock } from './InputDock';
 import { useWakeLock } from './useWakeLock';
 import { useRestNotice } from './useRestNotice';
 import { resolveDeviceNotices } from '../../engine/deviceNotices';
-import { type Rest, clock, isAssisted, type BlockActions, dockRowLabel } from './forgeWorkoutHelpers';
+import { type Rest, clock, type BlockActions } from './forgeWorkoutHelpers';
 import { ExerciseBlock } from './ExerciseBlock';
 import { OtherSessionRunning } from './OtherSessionRunning';
 import { DRAFT_VERSION, initialForgeLog, poundLine, type WorkoutDraft } from './forgeDraft';
-import { forgeLogInput } from './forgeFinishLog';
 import { useForgeDraft } from './useForgeDraft';
 import { useForgeClock } from './useForgeClock';
 import { useForgeStands } from './useForgeStands';
+import { useForgeSheets } from './useForgeSheets';
+import { useForgeDock } from './useForgeDock';
+import { useForgeScroll } from './useForgeScroll';
+import { useForgeRowEdits } from './useForgeRowEdits';
+import { ForgeDock } from './ForgeDock';
+import { ForgeSheets } from './ForgeSheets';
 import { ownWeightsTickedAll } from '../../engine/toestelStanden';
 import { REST_DONE_LINGER_MS, useRestAlert } from './useRestAlert';
 import { restNameAfter, useForgePager, useLater } from './useForgePager';
 import { RestBar } from './ForgeTimers';
-import { NoteSheet } from './ExerciseSheets';
-import { FinishSheet } from './FinishSheet';
 import { ForgeIntro } from './ForgeIntro';
 import { ForgeHeader } from './ForgeHeader';
 import { LegEasePanel } from './LegEasePanel';
-import { AwaySheet, DiscardSheet, ExerciseMenuSheet, RirSheet, RowMenuSheet, SpotterSheet, SwapSheet, WorkoutMenuSheet } from './ForgeMenus';
 
 // Een reden die ouder is dan dit hoort niet meer bij de volgende verandering van de rijen.
 const CAUSE_MAX_AGE_MS = 2000;
@@ -160,7 +135,7 @@ function ForgeWorkoutInner({
   preview = false,
   onClose,
 }: ForgeWorkoutProps) {
-  const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs, injuryNotes, plannedSessions, trainingGoals, goalMilestones } = useAppData();
+  const { settings, updateSettings, strengthExternal, templates, sessionLogs, injuryNotes, trainingGoals, goalMilestones } = useAppData();
   const today = todayISO();
   const date = scheduledDate ?? today;
   // Met MacroFactor als bron en bij alleen kijken is dit het voorschrift zonder invulvelden.
@@ -237,12 +212,8 @@ function ForgeWorkoutInner({
   const later = useLater();
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
   const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
-  const [menuFor, setMenuFor] = useState<string | null>(null);
-  const [swapFor, setSwapFor] = useState<string | null>(null);
-  const [noteFor, setNoteFor] = useState<string | null>(null);
-  // Uitleg en tekening vanuit het blad Oefening: hetzelfde blad als het kaartje in de kop.
-  const [artFor, setArtFor] = useState<string | null>(null);
-  const [rirFor, setRirFor] = useState<{ slot: string; rowId: string } | null>(null);
+  // Welk blad open staat (useForgeSheets.ts, getoond door ForgeSheets.tsx).
+  const sh = useForgeSheets(startAtForm && !preview);
   // "Hoeveel over?" onder de set die je net afvinkte (alleen de topset en de laatste set, asksReserve).
   const [quickRir, setQuickRir] = useState<{ slot: string; rowId: string } | null>(null);
   // Oefeningen waarvan je het voorstel "toestel in ponden" liet liggen, deze training.
@@ -251,96 +222,39 @@ function ForgeWorkoutInner({
   const [lighter, setLighter] = useState<Record<string, Adjustment>>({});
   // Geen gewicht van dit toestel past: de regel die vraagt of je de gewichten invult, per oefening.
   const [noFit, setNoFit] = useState<Record<string, NoFit>>({});
-  const [fillFor, setFillFor] = useState<string | null>(null);
-  const [addOnFor, setAddOnFor] = useState<string | null>(null);
   // Een stille tip na het invullen van de gewichten, als er dan nog steeds niets past.
   const [heavyTip, setHeavyTip] = useState<Record<string, { text: string; rowId?: string; weightKg?: number }>>({});
   // Het verloop van de training: wat Forge bijstuurde, wat doorgevoerd werd en wat jij zelf aanpaste.
   const [forgeLog, setForgeLog] = useState<ForgeEvent[]>(() => initialForgeLog(workout, restored, readOnly));
   const [seenAt, setSeenAt] = useState<number>(() => (restored && typeof restored.seen === 'number' ? restored.seen : 0));
-  const [logOpen, setLogOpen] = useState(false);
-  const [spotterInfo, setSpotterInfo] = useState(false);
   // Waardoor de volgende verandering van de rijen kwam; zonder opgave is het geen gebeurtenis.
   // Met een tijdstempel: een handeling die niets veranderde (dezelfde rijen) laat geen reden achter voor
   // een latere, onafhankelijke verandering.
   const cause = useRef<{ why: ForgeCause; at: number }>({ why: { kind: 'negeer' }, at: 0 });
   const markCause = (why: ForgeCause) => { cause.current = { why, at: Date.now() }; };
   const prevWorkout = useRef(workout);
-  const [workoutMenu, setWorkoutMenu] = useState(false);
   // De tekeningen van de oefeningen van deze training, voor de kaartjes in de kop.
   useDrawingsFor(useMemo(() => workout.map((e) => e.exerciseId), [workout]), !preview);
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const [finishing, setFinishing] = useState(startAtForm && !preview);
-  const [showGuide, setShowGuide] = useState(false);
-  // Het invoerpaneel en wat er rond de tabel meebeweegt.
-  const [dock, setDock] = useState<FieldRef | null>(null);
-  // Telt de tikken op een veld: ook dezelfde plek opnieuw aantikken begint opnieuw (dockFieldKey).
-  const [dockTaps, setDockTaps] = useState(0);
-  // Een blok dat al aan het sluiten is wordt bij een nieuwe tik op een veld vervangen (nieuwe epoch);
-  // het sluiten van het oude blok mag het nieuwe dan niet meer dichtdoen.
-  const [dockEpoch, setDockEpoch] = useState(0);
-  const dockClosing = useRef(false);
-  const epochRef = useRef(0);
-  epochRef.current = dockEpoch;
-  const onDockClosing = useCallback(() => {
-    dockClosing.current = true;
-  }, []);
-  const renewDockIfClosing = () => {
-    if (!dockClosing.current) return;
-    dockClosing.current = false;
-    setDockEpoch((n) => n + 1);
-  };
-  const [selected, setSelected] = useState(true);
-  const [dockH, setDockH] = useState(0);
-  const [platesOn, setPlatesOn] = useState(true);
-  const [rowMenu, setRowMenu] = useState<RowRef | null>(null);
   // De set die nu aan de beurt is, en de oefeningen die zijn ingeklapt.
   const [activeRef, setActiveRef] = useState<RowRef | undefined>(() => activeRow(workout));
   const [folded, setFolded] = useState<Record<string, boolean>>(() => Object.fromEntries(workout.filter(exerciseComplete).map((e) => [e.slot, true])));
-  const scrollEl = useRef<HTMLDivElement>(null);
-  const headerEl = useRef<HTMLElement>(null);
   const { paged, pagerEl, page, pageRef, onPagerScroll, jumpTo, pageToOpen } = useForgePager(resolveForgeLayout(settings) === 'scherm', workout, activeRef, later);
   // De oefening zoals hij was toen je dit veld begon te bewerken (zie applyWeight).
   const baseRef = useRef<{ key: string; ex: WorkoutExercise } | null>(null);
-  const layout = useRef({ dockH: 0, restH: 0 });
+  // Het invoerpaneel (useForgeDock.ts) en een set in beeld (useForgeScroll.ts).
+  const dockApi = useForgeDock({ workout, setWorkout, setActiveRef, begin, markCause, baseRef, strength, bodyKg, readOnly, reckonCtx });
+  const { dock, dockH, closeDock, openField } = dockApi;
+  const { scrollEl, headerEl, scrollToRow } = useForgeScroll(pageRef, dock, dockH, rest && !readOnly ? 70 : 0);
 
   useWakeLock(strength.keepScreenOn && !preview);
 
-  const onDockHeight = useCallback((h: number) => setDockH(h), []);
-  useEffect(() => {
-    layout.current = { dockH, restH: rest && !readOnly ? 70 : 0 };
-  });
-
-  // Een set in beeld: net boven het paneel als dat openstaat, anders in het midden.
-  // Alleen als hij niet al helemaal te zien is, zodat het scherm niet onnodig beweegt.
-  function scrollToRow(rowId: string) {
-    const el = scrollEl.current?.querySelector(`[data-row-id="${CSS.escape(rowId)}"]`);
-    // Met een oefening per scherm scrolt de pagina van die oefening, en alleen als die in beeld is:
-    // Forge schuift nooit zelf naar een andere oefening.
-    const pageEl = el?.closest<HTMLElement>('[data-forge-page]');
-    if (pageEl && Number(pageEl.dataset.forgePage) !== pageRef.current) return;
-    const root = pageEl ?? scrollEl.current;
-    if (!root || !el) return;
-    const r = el.getBoundingClientRect();
-    const top = pageEl ? pageEl.getBoundingClientRect().top + 8 : (headerEl.current?.offsetHeight ?? 90) + 8;
-    const bottom = window.innerHeight - layout.current.dockH - layout.current.restH - 8;
-    if (r.top >= top && r.bottom <= bottom) return;
-    const target = layout.current.dockH > 0 ? bottom - r.height : top + Math.max(0, (bottom - top - r.height) / 2);
-    root.scrollTo({ top: root.scrollTop + r.top - target, behavior: reducedMotion() ? 'auto' : 'smooth' });
-  }
   // Een toestel dat je opent (een veld of het menu): de eerste keer neemt Forge de gewichten uit je logs over.
-  const openSlot = menuFor ?? dock?.slot;
+  const openSlot = sh.menuFor ?? dock?.slot;
   useEffect(() => {
     const ex = openSlot ? workout.find((e) => e.slot === openSlot) : undefined;
     if (ex) stands.onOpen(ex.exerciseId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openSlot]);
-  const dockKey = dock ? `${dock.slot}:${dock.rowId}` : '';
-  const dockRowId = dock?.rowId;
-  useEffect(() => {
-    if (!dockRowId || dockH === 0) return;
-    scrollToRow(dockRowId);
-  }, [dockKey, dockH, dockRowId]);
 
   // Het concept en de wijzer van de sessie (useForgeDraft.ts).
   const { dropDraft } = useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant: initialVariant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt });
@@ -364,18 +278,16 @@ function ForgeWorkoutInner({
   }, [workout, readOnly]);
 
   const alerted = useRestAlert(rest, setRest, strength.restAlert, strength.restSound);
+  const startRest = (next: Rest) => {
+    alerted.current = null;
+    setRest(next);
+  };
 
   // Dezelfde eindtijd als melding van de telefoon, voor als het scherm uit is (useRestNotice.ts).
   useRestNotice(readOnly ? undefined : rest, resolveDeviceNotices(settings).rest, strength.restAlert);
 
   // Terug laat de training staan (het concept blijft); weggooien gaat via het menu.
   useBackToClose(true, onClose);
-
-  // De schijven van de oefening bij het invoerpaneel (de tabel rekent de zijne zelf, per oefening).
-  const dockPlates = useMemo(() => {
-    const ex = dock ? workout.find((e) => e.slot === dock.slot) : undefined;
-    return ex && usesPlates(exerciseOf(ex)) ? plateSteps(ex, strength.profile) : undefined;
-  }, [dock, workout, strength.profile]);
 
   const legDay = isLegHeavyTemplate(template);
   const checkIns = settings.morningCheckIns;
@@ -405,51 +317,7 @@ function ForgeWorkoutInner({
   const { done, total } = progress(workout);
   // Iets nieuws in het verloop: wat Forge deed of zag sinds je het voor het laatst opende, zonder opgeloste meldingen.
   const news = unseenCount(forgeLog, seenAt, workout);
-  const guide = getTrainingGuide(template.id);
-
-  function setExercise(slot: string, update: (ex: WorkoutExercise) => WorkoutExercise) {
-    if (!readOnly) begin();
-    baseRef.current = null;
-    setWorkout((w) => w.map((e) => (e.slot === slot ? update(e) : e)));
-  }
-
-  // Een set die jij toevoegt of weghaalt: in het verloop, en met een korte melding om het terug te draaien.
-  const [undo, setUndo] = useState<{ slot: string; removed: DroppedRow; label: string; eventId: string } | null>(null);
-  useEffect(() => {
-    if (!undo) return;
-    const t = window.setTimeout(() => setUndo(null), 10000);
-    return () => window.clearTimeout(t);
-  }, [undo]);
-
-  function addSetLogged(slot: string, kind: 'work' | 'warmup') {
-    const ex = workout.find((e) => e.slot === slot);
-    if (!ex) return;
-    setUndo(null);
-    const next = addRow(ex, kind);
-    const made = next.rows.find((r) => !ex.rows.some((o) => o.id === r.id));
-    setExercise(slot, () => next);
-    if (made && !readOnly) setForgeLog((l) => appendEvents(l, [setCountEvent('toegevoegd', ex, made, rowLabel(next, made.id), Date.now(), makeId('fe'))]));
-  }
-
-  function removeSetLogged(slot: string, rowId: string) {
-    const ex = workout.find((e) => e.slot === slot);
-    if (!ex || !canRemoveRow(ex, rowId)) return;
-    const r = removeSet(ex, rowId);
-    if (!r.removed) return;
-    haptics.tap();
-    const eventId = makeId('fe');
-    setExercise(slot, () => r.ex);
-    if (!readOnly) setForgeLog((l) => appendEvents(l, [setCountEvent('weggehaald', ex, r.removed!.row, r.label, Date.now(), eventId)]));
-    setUndo({ slot, removed: r.removed, label: r.label, eventId });
-  }
-
-  function undoRemove() {
-    if (!undo) return;
-    const { slot, removed, eventId } = undo;
-    setExercise(slot, (e) => reinsertRow(e, removed));
-    setForgeLog((l) => l.filter((ev) => ev.id !== eventId));
-    setUndo(null);
-  }
+  const { setExercise, undo, addSetLogged, removeSetLogged, undoRemove } = useForgeRowEdits({ workout, setWorkout, setForgeLog, begin, baseRef, readOnly });
 
   function tick(slot: string, rowId: string) {
     if (!readOnly) begin();
@@ -510,7 +378,7 @@ function ForgeWorkoutInner({
       setActiveRef(next);
       const after = result.workout.find((e) => e.slot === slot);
       if (after && exerciseComplete(after)) {
-        if (dock?.slot === slot) { dockClosing.current = false; setDock(null); }
+        if (dock?.slot === slot) closeDock();
         const calm = reducedMotion();
         pageToOpen(result.workout, calm ? 0 : 700);
         later(() => {
@@ -555,7 +423,7 @@ function ForgeWorkoutInner({
     }
     const after = result.workout.find((e) => e.slot === slot);
     if (after && exerciseComplete(after)) {
-      if (dock?.slot === slot) { dockClosing.current = false; setDock(null); }
+      if (dock?.slot === slot) closeDock();
       const next = activeRow(result.workout);
       setActiveRef(next);
       const calm = reducedMotion();
@@ -570,84 +438,6 @@ function ForgeWorkoutInner({
       alerted.current = null;
       setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? '') });
     }
-  }
-
-  function openField(slot: string, rowId: string, field: FieldName) {
-    if (readOnly) return;
-    baseRef.current = null;
-    renewDockIfClosing();
-    setDockTaps((n) => n + 1);
-    setDock({ slot, rowId, field });
-    setSelected(true);
-    setActiveRef({ slot, rowId });
-  }
-
-  function changeValue(v: number | undefined) {
-    const d = dock;
-    if (!d) return;
-    if (!readOnly) begin();
-    const key = `${d.slot}:${d.rowId}:${d.field}`;
-    markCause({ kind: 'eigen', edited: { slot: d.slot, rowId: d.rowId } });
-    setWorkout((w) =>
-      w.map((e) => {
-        if (e.slot !== d.slot) return e;
-        // Wijzigingen doorvoeren (carryChange) vervangt het oude doorgeven van het verschil.
-        // Doorvoeren rekent vanaf de stand van toen je het veld opende, zodat een
-        // tussenstand (een leeg veld tijdens het typen) de andere sets niet losmaakt.
-        if (baseRef.current?.key !== key) baseRef.current = { key, ex: e };
-        const base = baseRef.current.ex;
-        if (d.field === 'reps') {
-          const changed = applyReps(base, d.rowId, v);
-          return strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'reps') : changed;
-        }
-        const changed = applyWeight(base, d.rowId, v, strength.carryMode === 'shift', makeSnap(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal), bodyKg, v, e.dumbbellTotal), weightBounds(exerciseOf(e)).min, makeLight(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal)));
-        const carried = strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'weightKg') : changed;
-        // Forge rekent mee: een ander gewicht krijgt de herhalingen die je daarbij waarschijnlijk haalt.
-        return reckonWeight(base, carried, d.rowId, reckonCtx);
-      }),
-    );
-  }
-
-  function stepDock(direction: 1 | -1): number {
-    const d = dock;
-    const ex = d ? workout.find((e) => e.slot === d.slot) : undefined;
-    const row = ex?.rows.find((r) => r.id === d?.rowId);
-    if (!d || !ex || !row) return 0;
-    const isWeight = d.field === 'weightKg';
-    const current = isWeight ? (row.weightKg ?? row.target.weightKg) : (row.reps ?? 0);
-    const step = isWeight ? weightStepFor(exerciseOf(ex), profileFor(strength.profile, ex.dumbbellTotal), current) : REPS_STEP;
-    // Een toestel met standen: Minder en Meer springen naar de vorige en volgende stand.
-    if (isWeight && !isAssisted(ex)) {
-      const jump = standJump(exerciseOf(ex), profileFor(strength.profile, ex.dumbbellTotal), current ?? 0, direction, strength.learnStands);
-      if (jump !== undefined) {
-        const bounded = Math.min(weightBounds(exerciseOf(ex)).max, Math.max(weightBounds(exerciseOf(ex)).min, jump));
-        changeValue(bounded);
-        return bounded;
-      }
-    }
-    // Hulp van een toestel: het blok werkt met de hoeveelheid hulp (+ is meer hulp), opgeslagen als negatief.
-    if (isWeight && isAssisted(ex)) {
-      const help = stepNumber(Math.abs(current ?? 0), direction, step, 0, weightBounds(undefined).max);
-      changeValue(-help);
-      return help;
-    }
-    const bounds = isWeight ? weightBounds(exerciseOf(ex)) : repsBounds;
-    const next = stepNumber(current, direction, step, bounds.min, bounds.max);
-    changeValue(next);
-    return next;
-  }
-
-  function goNext(close: () => void) {
-    const n = dock ? nextField(workout, dock) : undefined;
-    if (!n) {
-      close();
-      return;
-    }
-    baseRef.current = null;
-    renewDockIfClosing();
-    setDock(n);
-    setSelected(true);
-    setActiveRef({ slot: n.slot, rowId: n.rowId });
   }
 
   function take(slot: string, rowId: string) {
@@ -701,6 +491,7 @@ function ForgeWorkoutInner({
   useEffect(() => {
     latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir, savePounds, standUndo: stands.undo };
   });
+  const { setMenuFor, setRowMenu, setRirFor, setFillFor, setSpotterInfo } = sh;
   const actions = useMemo<BlockActions>(
     () => ({
       column: () => setColumn((c) => (c === 'target' ? 'previous' : 'target')),
@@ -726,7 +517,7 @@ function ForgeWorkoutInner({
       spotter: () => setSpotterInfo(true),
       standUndo: () => latest.current.standUndo(),
     }),
-    [],
+    [setMenuFor, setRowMenu, setRirFor, setFillFor, setSpotterInfo],
   );
 
   function swap(slot: string, exerciseId: string | null) {
@@ -758,23 +549,6 @@ function ForgeWorkoutInner({
     setWorkout((w) => workoutWithoutAdded(w, slot));
   }
 
-  const menuEx = workout.find((e) => e.slot === menuFor);
-  const swapEx = workout.find((e) => e.slot === swapFor);
-  const noteEx = workout.find((e) => e.slot === noteFor);
-  const fillEx = workout.find((e) => e.slot === fillFor);
-  const addOnEx = workout.find((e) => e.slot === addOnFor);
-  const dockEx = dock ? workout.find((e) => e.slot === dock.slot) : undefined;
-  const dockIndex = dockEx && dock ? dockEx.rows.findIndex((r) => r.id === dock.rowId) : -1;
-  const dockRow = dockEx && dockIndex >= 0 ? dockEx.rows[dockIndex] : undefined;
-  // Op een toestel met standen: waar Minder en Meer heen springen, klein onder de toets.
-  const dockStepHints = (() => {
-    if (!dock || dock.field !== 'weightKg' || !dockEx || !dockRow || isAssisted(dockEx)) return undefined;
-    // Een leeg veld zegt bij Minder niets (standHints), nooit "naar 0 kilo".
-    return standHints(exerciseOf(dockEx), profileFor(strength.profile, dockEx.dumbbellTotal), dockRow.weightKg ?? dockRow.target.weightKg, strength.learnStands);
-  })();
-  const rowMenuEx = rowMenu ? workout.find((e) => e.slot === rowMenu.slot) : undefined;
-  const rowMenuRow = rowMenuEx?.rows.find((r) => r.id === rowMenu?.rowId);
-  const rirRow = rirFor ? workout.find((e) => e.slot === rirFor.slot)?.rows.find((r) => r.id === rirFor.rowId) : undefined;
 
   const bottomPad = dockH > 0 ? dockH + (rest && !readOnly ? 70 : 0) + 16 : rest ? 120 : 48;
   // Het voorstel van Spieren voor de berg, één keer rustig bij het openen van de training waar de oefening bij
@@ -794,7 +568,7 @@ function ForgeWorkoutInner({
               note={strength.exerciseNotes[ex.exerciseId]}
               active={activeRef?.slot === ex.slot ? activeRef.rowId : undefined}
               field={dock?.slot === ex.slot ? dock : null}
-              selected={dock?.slot === ex.slot && selected}
+              selected={dock?.slot === ex.slot && dockApi.selected}
               folded={!paged && !!folded[ex.slot] && exerciseComplete(ex)}
               profile={strength.profile}
               showPlates={strength.showPlates}
@@ -832,9 +606,9 @@ function ForgeWorkoutInner({
             workout={workout}
             page={page}
             onClose={onClose}
-            onMenu={() => setWorkoutMenu(true)}
-            onFinish={() => setFinishing(true)}
-            onLog={() => { setLogOpen(true); setSeenAt(Date.now()); }}
+            onMenu={() => sh.setWorkoutMenu(true)}
+            onFinish={() => sh.setFinishing(true)}
+            onLog={() => { sh.setLogOpen(true); setSeenAt(Date.now()); }}
             onResume={togglePause}
             onJump={jumpTo}
           />
@@ -867,170 +641,49 @@ function ForgeWorkoutInner({
         )}
       </div>
 
-      {dock && !readOnly && dockEx && dockRow && (
-        <InputDock
-          // Geen key per veld: het blok blijft staan van veld naar veld (fieldKey zet de waarde opnieuw).
-          key={dockEpoch}
-          label={`${dock.field === 'weightKg' ? (isAssisted(dockEx) ? 'Hulp' : 'Gewicht') : 'Herhalingen'}, set ${dockRowLabel(dockEx, dockIndex)}, ${dockEx.name}`}
-          fieldKey={dockFieldKey(dock, dockTaps)}
-          value={dock.field === 'weightKg' ? (isAssisted(dockEx) && dockRow.weightKg !== undefined ? Math.abs(dockRow.weightKg) : dockRow.weightKg) : dockRow.reps}
-          decimals={dock.field === 'weightKg' ? 2 : 0}
-          onChange={(v) => changeValue(dock.field === 'weightKg' && isAssisted(dockEx) && v !== undefined ? -v : v)}
-          onStep={stepDock}
-          onSelected={setSelected}
-          onNext={goNext}
-          onClose={() => {
-            if (epochRef.current === dockEpoch) {
-              dockClosing.current = false;
-              setDock(null);
-            }
-          }}
-          onClosing={onDockClosing}
-          onHeight={onDockHeight}
-          stepHints={dockStepHints}
-          plate={dockPlates?.[dockIndex]}
-          plateOn={platesOn}
-          onTogglePlates={() => setPlatesOn((v) => !v)}
-        />
-      )}
+      <ForgeDock api={dockApi} workout={workout} strength={strength} readOnly={readOnly} />
 
-      {logOpen && <ForgeLogSheet events={forgeLog} workout={workout} onClose={() => setLogOpen(false)} />}
-
-      {spotterInfo && <SpotterSheet onClose={() => setSpotterInfo(false)} />}
-
-      {rowMenu && rowMenuEx && rowMenuRow && (
-        <RowMenuSheet
-          ex={rowMenuEx}
-          rowId={rowMenuRow.id}
-          onTake={() => take(rowMenuEx.slot, rowMenuRow.id)}
-          onCopy={() => setExercise(rowMenuEx.slot, (e) => copyRow(e, rowMenuRow.id))}
-          onRemove={() => removeSetLogged(rowMenuEx.slot, rowMenuRow.id)}
-          onClose={() => setRowMenu(null)}
-        />
-      )}
-
-      {menuEx && (
-        <ExerciseMenuSheet
-          ex={menuEx}
-          effSlots={effSlots}
-          readOnly={readOnly}
-          preview={preview}
-          templateId={template.id}
-          settings={settings}
-          strength={strength}
-          onSwapBack={() => swap(menuEx.slot, null)}
-          onPickSwap={() => setSwapFor(menuEx.slot)}
-          onNote={() => setNoteFor(menuEx.slot)}
-          onArt={() => setArtFor(menuEx.exerciseId)}
-          onFill={() => setFillFor(menuEx.slot)}
-          onAddOn={() => setAddOnFor(menuEx.slot)}
-          onRemoveAdded={() => removeAddedExercise(menuEx.slot)}
-          onAddSet={(kind) => addSetLogged(menuEx.slot, kind)}
-          onTickAll={() => tickAll(menuEx.slot)}
-          onRemoveLast={() => setExercise(menuEx.slot, removeLastRow)}
-          onRestSeconds={(s) => {
-            setWorkout((w) => w.map((e) => (e.exerciseId === menuEx.exerciseId ? { ...e, restSec: s } : e)));
-            saveStrength(withExerciseValue(settings.strengthModel, 'restSeconds', menuEx.exerciseId, s));
-          }}
-          onStartRest={() => {
-            alerted.current = null;
-            setRest({ endsAt: clock() + menuEx.restSec * 1000, total: menuEx.restSec, name: menuEx.name });
-          }}
-          onClose={() => setMenuFor(null)}
-        />
-      )}
-
-      {artFor && <ExerciseArtSheet exerciseId={artFor} onClose={() => setArtFor(null)} />}
-
-      {swapEx && <SwapSheet ex={swapEx} workout={workout} strength={strength} program={program} onPick={(id) => swap(swapEx.slot, id)} onClose={() => setSwapFor(null)} />}
-
-      {noteEx && !preview && (
-        <NoteSheet
-          name={noteEx.name}
-          value={strength.exerciseNotes[noteEx.exerciseId] ?? ''}
-          onSave={(text) => saveStrength(withExerciseValue(settings.strengthModel, 'exerciseNotes', noteEx.exerciseId, text.trim() === '' ? undefined : text.trim().slice(0, EXERCISE_NOTE_MAX)))}
-          onClose={() => setNoteFor(null)}
-        />
-      )}
-
-      {fillEx && (
-        <MachineWeightsForgeSheet
-          exerciseId={fillEx.exerciseId}
-          onSaved={(next) => {
-            // Met de nieuwe lijst opnieuw kijken of er een lichter gewicht past.
-            const fit = noFit[fillEx.slot];
-            setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== fillEx.slot)));
-            if (!fit) return;
-            const profile = resolveStrengthSettings(next).profile;
-            const ctx = { bodyKg, profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights };
-            const result = refitAfterFill(fillEx, fit, ctx);
-            if (!result) return;
-            if ('lighter' in result) setLighter((l) => ({ ...l, [fillEx.slot]: result.lighter }));
-            else setHeavyTip((l) => ({ ...l, [fillEx.slot]: result.tip }));
-          }}
-          onClose={() => setFillFor(null)}
-        />
-      )}
-
-      {addOnEx && <ExerciseAddOnForgeSheet exerciseId={addOnEx.exerciseId} onClose={() => setAddOnFor(null)} />}
-
-      {rirFor && rirRow && (
-        <RirSheet
-          target={rirRow.target.rir}
-          current={rirRow.rir}
-          assumed={rirRow.rirAssumed}
-          onPick={(n) => { markCause({ kind: 'eigen', edited: { slot: rirFor.slot, rowId: rirFor.rowId } }); setExercise(rirFor.slot, (e) => updateRow(e, rirFor.rowId, { rir: n })); }}
-          onClose={() => setRirFor(null)}
-        />
-      )}
-
-      {workoutMenu && (
-        <WorkoutMenuSheet
-          name={template.name}
-          readOnly={readOnly}
-          preview={preview}
-          paused={paused}
-          hasGuide={!!guide}
-          layoutPaged={resolveForgeLayout(settings) === 'scherm'}
-          onTogglePause={togglePause}
-          onMinimize={onClose}
-          onFinish={() => setFinishing(true)}
-          onLayout={(on) => void updateSettings({ forgeLayout: on ? 'scherm' : 'lijst' })}
-          onGuide={() => setShowGuide(true)}
-          onDiscard={() => later(() => setConfirmDiscard(true), 230)}
-          onClose={() => setWorkoutMenu(false)}
-        />
-      )}
-
-      {confirmDiscard && <DiscardSheet onDiscard={() => { dropDraft(); setConfirmDiscard(false); onClose(); }} onClose={() => setConfirmDiscard(false)} />}
-
-      {awayMs !== undefined && !readOnly && <AwaySheet awayMs={awayMs} onAnswer={answerBreak} onClose={() => setAwayMs(undefined)} />}
-
-      {showGuide && guide && (
-        <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={date} dayLabel={guideDayLabel(template, date)} onClose={() => setShowGuide(false)} />
-      )}
-
-      {finishing && (
-        <FinishSheet
-          template={template}
-          readOnly={readOnly}
-          workout={workout}
-          elapsedSeconds={startedAt === null ? 0 : activeSeconds({ startedAt, pauses }, clock())}
-          defaultMinutes={scheduledDate ? resolveVariantDuration(template, initialVariant, scheduledDate, program) : durationForVariant(template, initialVariant)}
-          plannedSessionId={plannedSessionId}
-          scheduledDate={scheduledDate}
-          onClose={() => setFinishing(false)}
-          onSave={async (extra) => {
-            // Een geplande sessie die niet meer bestaat (planning vervangen): dan is het een losse training.
-            const plannedStill = !!plannedSessionId && plannedSessions.some((p) => p.id === plannedSessionId);
-            const saved = await logSession(forgeLogInput({ template, variant: initialVariant, extra, workout, readOnly, plannedSessionId, plannedStill, gymProfileId: strength.profile.id, forgeLog }));
-            // Niet opgeslagen betekent: deze training staat al in je logboek. Het concept is dan klaar.
-            dropDraft();
-            if (saved) onClose();
-            return saved;
-          }}
-        />
-      )}
+      <ForgeSheets
+        sh={sh}
+        template={template}
+        plannedSessionId={plannedSessionId}
+        scheduledDate={scheduledDate}
+        date={date}
+        program={program}
+        initialVariant={initialVariant}
+        readOnly={readOnly}
+        preview={preview}
+        strength={strength}
+        bodyKg={bodyKg}
+        workout={workout}
+        effSlots={effSlots}
+        forgeLog={forgeLog}
+        noFit={noFit}
+        setWorkout={setWorkout}
+        setNoFit={setNoFit}
+        setLighter={setLighter}
+        setHeavyTip={setHeavyTip}
+        startRest={startRest}
+        markCause={markCause}
+        setExercise={setExercise}
+        take={take}
+        removeSetLogged={removeSetLogged}
+        addSetLogged={addSetLogged}
+        tickAll={tickAll}
+        swap={swap}
+        removeAddedExercise={removeAddedExercise}
+        saveStrength={saveStrength}
+        startedAt={startedAt}
+        pauses={pauses}
+        paused={paused}
+        togglePause={togglePause}
+        awayMs={awayMs}
+        setAwayMs={setAwayMs}
+        answerBreak={answerBreak}
+        later={later}
+        dropDraft={dropDraft}
+        onClose={onClose}
+      />
     </Portal>
   );
 }
