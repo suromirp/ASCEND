@@ -169,7 +169,7 @@ export function useWeekDrag({ weekStart, enabled, moveTo, onOpenMove }: {
       onPointerDown: startPointer,
       onKeyDown: keyDown,
       // Een tik (en een dubbele tik met TalkBack, die een klik stuurt): het blad op Verplaatsen.
-      onClick: () => { if (Date.now() >= blockClickUntil.current) live.current.onOpenMove(id); },
+      onClick: () => { if (enabled && Date.now() >= blockClickUntil.current) live.current.onOpenMove(id); },
       onBlur: () => { if (live.current.drag?.id === id && live.current.drag.mode === 'key') setDrag(null); },
     };
   };
