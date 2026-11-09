@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import { DEFAULT_PROFILE, normalizeProfile, resolveStrengthSettings, type GymProfile, type StrengthSettings } from './strengthSettings';
-import { forgetStand, learnStand, mergeStands, seedOnOpen, seedStands, ownWeightsTickedAll, standAfterTick, standsFor, standsSummary, standNoteText, usedKgFromLogs, withStandForgotten, withStandsCleared, withStandsSet } from './toestelStanden';
+import { forgetStand, learnStand, mergeStands, seedOnOpen, seedStands, ownWeightsTickedAll, standAfterTick, standsFor, standsSummary, standNoteText, standsBefore, usedKgFromLogs, withStandForgotten, withStandsCleared, withStandsRestored, withStandsSet } from './toestelStanden';
 import { candidatesFor, learnedStack } from './strengthWeights';
 import { machineListCount, ownWeightsFor, withMachineSetup, withNewProfile } from './machineWeights';
 import type { SessionLog } from '../models/training';
@@ -268,6 +268,23 @@ describe('het blad: standen zetten, wissen en tonen', () => {
     const p = active(next);
     expect(p.exerciseStandsKg).toEqual({ [machine.id]: { kg: [] } });
     expect(seedStands(p, machine, [7, 14])).toBeUndefined();
+  });
+  it('Terugdraaien na Standen wissen zet precies terug wat er stond, ook een oude lijst of geen sleutel', () => {
+    const withOld = raw(gym({ exerciseWeightsKg: { [machine.id]: [10, 20], [cable.id]: [5] }, exerciseWeightRanges: { [machine.id]: [{ startKg: 30, endKg: 40, stepKg: 5 }] } }));
+    const before = standsBefore(withOld, machine)!;
+    const wiped = withStandsCleared(withOld, machine)!;
+    expect(active(wiped).exerciseWeightsKg).toEqual({ [cable.id]: [5] });
+    const back = withStandsRestored(wiped, before)!;
+    expect(active(back).exerciseWeightsKg).toEqual({ [machine.id]: [10, 20], [cable.id]: [5] });
+    expect(active(back).exerciseWeightRanges).toEqual({ [machine.id]: [{ startKg: 30, endKg: 40, stepKg: 5 }] });
+    expect(active(back).exerciseStandsKg).toBeUndefined();
+    // Met standen: de standen en de keuze komen terug.
+    const stands = raw(withStands([7, 14]));
+    const b2 = standsBefore(stands, machine)!;
+    expect(standsFor(active(withStandsRestored(withStandsCleared(stands, machine)!, b2)!), machine)).toEqual(standsFor(active(stands), machine));
+    // Een andere sportschool actief: Terugdraaien raakt niets.
+    expect(withStandsRestored({ ...wiped, activeProfileId: 'ander', profiles: [...(wiped.profiles ?? []), { ...gym(), id: 'ander', name: 'Andere zaal' }] }, before)).toBeUndefined();
+    expect(standsBefore(withOld, bar)).toBeUndefined();
   });
   it('de rij telt toestellen met standen, ook een oude lijst, en niet een lege sleutel', () => {
     expect(machineListCount(gym())).toBe(0);

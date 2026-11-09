@@ -45,6 +45,26 @@ describe('het scherm van de toestelstanden', () => {
     expect(src).toContain('act.standUndo()');
   });
 
+  it('Standen wissen heeft Terugdraaien, het formulier heeft geen key, en het keuzestrookje heeft korte woorden', () => {
+    const src = read('./MachineWeights.tsx');
+    expect(src).toContain('Terugdraaien');
+    expect(src).toContain('restoreStandsNow');
+    expect(src).not.toMatch(/<MachineWeightsForm key=/);
+    expect(src).toContain("label: 'Ook schatten'");
+    expect(src).not.toContain('Ook tussenin en erboven schatten');
+  });
+
+  it('Rustig en Uit bij Beweging: de nieuwe regels in het blad en onder de bolletjes hebben geen eigen beweging', () => {
+    // Beweging komt alleen uit de klassen in index.css, die bij Rustig en Uit op de eindstand staan.
+    const sheet = read('./MachineWeights.tsx');
+    expect(sheet).not.toMatch(/animate-|transition/);
+    const block = read('./ExerciseBlock.tsx');
+    const quick = block.slice(block.indexOf('function QuickRir'), block.indexOf('function PrescriptionText'));
+    expect(quick).toContain('QUICK_RIR_HINT');
+    expect(quick.match(/animate-/g) ?? []).toHaveLength(1);
+    expect(quick).not.toMatch(/text-\[(\d|1[01])px\]/);
+  });
+
   it('de regel met Terugdraaien blijft staan bij een volgende tik; alleen een foutregel of Terugdraaien zelf haalt hem weg', () => {
     const src = read('./useForgeStands.ts');
     const tick = src.slice(src.indexOf('const onTick'), src.indexOf('const onOpen'));

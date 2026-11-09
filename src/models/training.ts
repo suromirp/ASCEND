@@ -268,6 +268,10 @@ export interface SetLog {
   // read with the bottom of the range. Decision: docs/beslissingen/2026-11-08-forge-afvinken-doel.md.
   repsAsked?: number;
   weightKgAsked?: number;
+  // The weight Forge put in the row after an adjustment during the training ("Forge rekent mee", Lichter),
+  // only when it differs from `weightKgAsked`. Only next to `rirAssumed`; absent on older logs, which then
+  // compare with `weightKgAsked`. Decision: docs/beslissingen/2026-11-09-forge-review-afvinken.md.
+  forgeKg?: number;
   // When the set was ticked, as an ISO time. Only on logs made after the session clock
   // (docs/beslissingen/2026-10-29-forge-als-sessie.md); absent on older logs, which read as always.
   at?: string;

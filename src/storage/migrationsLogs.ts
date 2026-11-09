@@ -305,7 +305,9 @@ function cleanSetTimes<T extends ExerciseSetLog[] | null | undefined>(data: T): 
   return (changed ? next : data) as T;
 }
 
-// --- SetLog.repsAsked en SetLog.weightKgAsked ---------------------------------------------------
+// --- SetLog.repsAsked, SetLog.weightKgAsked en SetLog.forgeKg ------------------------------------
+// `forgeKg` (het gewicht dat Forge na een bijstelling in de rij zette) kwam op 9 november 2026 erbij, met
+// dezelfde regel: docs/beslissingen/2026-11-09-forge-review-afvinken.md.
 // Wat Forge vroeg bij een set zonder eigen RIR ("Afvinken telt als het doel",
 // docs/beslissingen/2026-11-08-forge-afvinken-doel.md). Optioneel en aanvullend: oudere bestanden hebben
 // ze niet en lezen zoals altijd (met de onderkant van het bereik). Alleen een geldig getal blijft, en
@@ -319,14 +321,15 @@ function cleanSetAsked<T extends ExerciseSetLog[] | null | undefined>(data: T): 
   const next = data.map((e) => {
     if (!e || !Array.isArray(e.sets)) return e;
     const sets = e.sets.map((s) => {
-      if (!s || typeof s !== 'object' || (!('repsAsked' in s) && !('weightKgAsked' in s))) return s;
+      if (!s || typeof s !== 'object' || (!('repsAsked' in s) && !('weightKgAsked' in s) && !('forgeKg' in s))) return s;
       const keep = s.rirAssumed === true;
       const repsOk = keep && (!('repsAsked' in s) || okAskedReps(s.repsAsked));
       const kgOk = keep && (!('weightKgAsked' in s) || okAskedKg(s.weightKgAsked));
-      if (repsOk && kgOk) return s;
-      const { repsAsked, weightKgAsked, ...rest } = s;
+      const forgeOk = keep && (!('forgeKg' in s) || okAskedKg(s.forgeKg));
+      if (repsOk && kgOk && forgeOk) return s;
+      const { repsAsked, weightKgAsked, forgeKg, ...rest } = s;
       changed = true;
-      return { ...rest, ...(keep && okAskedReps(repsAsked) ? { repsAsked } : {}), ...(keep && okAskedKg(weightKgAsked) ? { weightKgAsked } : {}) } as SetLog;
+      return { ...rest, ...(keep && okAskedReps(repsAsked) ? { repsAsked } : {}), ...(keep && okAskedKg(weightKgAsked) ? { weightKgAsked } : {}), ...(keep && okAskedKg(forgeKg) ? { forgeKg } : {}) } as SetLog;
     });
     return sets.every((s, i) => s === e.sets[i]) ? e : { ...e, sets };
   });

@@ -5,14 +5,15 @@
 //
 // Van boven naar beneden: de uitleg, de standen als chips die je wegstreept, Stand toevoegen, "Veel tegelijk"
 // (de bestaande Lijst en Bereik, wat eruit komt wordt bij de standen gevoegd), de keuze wat Forge voorstelt,
-// Annuleren en Opslaan, en Standen wissen.
+// Annuleren en Opslaan, en Standen wissen (met Terugdraaien). Er is geen `key` op het formulier: komt het
+// inlezen later binnen, dan staan de standen er vanzelf bij en blijft wat je al invulde staan.
 
 import { useId, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { addOnsFor, formatAddOns, formatMachineWeights, parseMachineWeights, rangeProblem, poundRangeFor, rangeWeights, weightsFromRange, type ParsedList, type WeightRange } from '../../engine/machineWeights';
-import { standsFor, mergeStands, STAND_LIMITS } from '../../engine/toestelStanden';
+import { standsFor, mergeStands, STAND_LIMITS, STANDS_WIPED_TEXT, type StandsBefore } from '../../engine/toestelStanden';
 import { RANGE_LIMITS, type RangeUnit, resolveStrengthSettings, type GymProfile, type StrengthSettings } from '../../engine/strengthSettings';
-import { clearStandsNow, saveStandsNow } from '../../storage/machineStands';
+import { clearStandsNow, restoreStandsNow, saveStandsNow } from '../../storage/machineStands';
 import { useAppData } from '../../state/AppDataContext';
 import { formatNumberNL } from '../../utils/number';
 import { Sheet } from '../settings/Sheet';
@@ -100,7 +101,11 @@ function MachineWeightsForm({
   const now = standsFor(profile, exercise);
   const [added, setAdded] = useState<number[]>([]);
   const [removed, setRemoved] = useState<number[]>([]);
-  const [only, setOnly] = useState<boolean>(now?.only ?? false);
+  // Jouw keuze in dit blad; zolang je niets koos geldt wat er staat (ook als het inlezen later binnenkomt).
+  const [onlyChoice, setOnly] = useState<boolean | undefined>(undefined);
+  const only = onlyChoice ?? now?.only ?? false;
+  // Na Standen wissen: wat er stond, voor Terugdraaien. Het blad blijft open zodat de regel te zien is.
+  const [wiped, setWiped] = useState<StandsBefore | null>(null);
   const [mode, setMode] = useState<'list' | 'range'>('list');
   const [text, setText] = useState('');
   const [drafts, setDrafts] = useState<RangeDraft[]>([EMPTY_DRAFT]);
@@ -166,10 +171,28 @@ function MachineWeightsForm({
       const out = await clearStandsNow({ exercise }, io);
       if (out.kind === 'saved') {
         onSaved?.(out.settings);
-        onDone();
-        return;
-      }
+        setAdded([]);
+        setRemoved([]);
+        setOnly(undefined);
+        setWiped(out.before);
+      } else setFailed(true);
+    } catch {
       setFailed(true);
+    }
+    setBusy(false);
+  }
+
+  // Terugdraaien: precies wat er stond komt terug, alles of niets.
+  async function undoWipe() {
+    if (!wiped) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      const out = await restoreStandsNow({ before: wiped }, io);
+      if (out.kind === 'saved') {
+        onSaved?.(out.settings);
+        setWiped(null);
+      } else setFailed(true);
     } catch {
       setFailed(true);
     }
@@ -376,14 +399,14 @@ function MachineWeightsForm({
       <ChoiceStrip
         label="Wat Forge voorstelt"
         options={[
-          { value: 'estimate', label: 'Ook tussenin en erboven schatten' },
+          { value: 'estimate', label: 'Ook schatten' },
           { value: 'only', label: 'Alleen deze standen' },
         ]}
         value={only ? 'only' : 'estimate'}
         onChange={(v) => v && setOnly(v === 'only')}
       />
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Bij alleen deze standen stelt Forge nooit een gewicht voor dat je niet intikte.
+        Met ook schatten stelt Forge ook gewichten tussen en boven je standen voor. Bij alleen deze standen nooit een gewicht dat je niet intikte.
       </p>
       {result.tooMany && (
         <p className="text-xs leading-snug" role="alert" style={{ color: 'var(--color-danger-text)' }}>{FULL}</p>
@@ -397,10 +420,19 @@ function MachineWeightsForm({
           Opslaan
         </PrimaryButton>
       </div>
-      {shown.length > 0 && (
-        <TextButton tone="danger" disabled={busy} onClick={() => void wipe()}>
-          Standen wissen
-        </TextButton>
+      {wiped ? (
+        <div className="flex items-center justify-between gap-3" role="status">
+          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{STANDS_WIPED_TEXT}</p>
+          <TextButton disabled={busy} onClick={() => void undoWipe()}>
+            Terugdraaien
+          </TextButton>
+        </div>
+      ) : (
+        shown.length > 0 && (
+          <TextButton tone="danger" disabled={busy} onClick={() => void wipe()}>
+            Standen wissen
+          </TextButton>
+        )
       )}
     </div>
   );
@@ -418,7 +450,7 @@ export function MachineWeightsSheet({ exerciseId, onClose }: { exerciseId: strin
   const name = exerciseById(exerciseId)?.name ?? exerciseId;
   return (
     <Sheet eyebrow="Je sportschool" title={name} line={profile.name} onClose={onClose}>
-      {(close) => <MachineWeightsForm key={String(standsFor(profile, exerciseById(exerciseId))?.stored)} exerciseId={exerciseId} exerciseName={name} profile={profile} onDone={close} />}
+      {(close) => <MachineWeightsForm exerciseId={exerciseId} exerciseName={name} profile={profile} onDone={close} />}
     </Sheet>
   );
 }
@@ -430,7 +462,7 @@ export function MachineWeightsForgeSheet({ exerciseId, onSaved, onClose }: { exe
   const name = exerciseById(exerciseId)?.name ?? exerciseId;
   return (
     <ForgeSheet title={name} sub={profile.name} onClose={onClose}>
-      {(close) => <MachineWeightsForm key={String(standsFor(profile, exerciseById(exerciseId))?.stored)} exerciseId={exerciseId} exerciseName={name} profile={profile} onDone={close} onSaved={onSaved} />}
+      {(close) => <MachineWeightsForm exerciseId={exerciseId} exerciseName={name} profile={profile} onDone={close} onSaved={onSaved} />}
     </ForgeSheet>
   );
 }

@@ -13,7 +13,7 @@
 
 import type { Exercise } from '../models/exercise';
 import type { WorkoutExercise } from './forgeWorkout';
-import { addOnsFor, cleanMachineList, cleanWeightRanges, countsForProfile, hasStack, rangeWeights, splitAddOn } from './machineWeights';
+import { addOnsFor, cleanMachineList, cleanWeightRanges, countsForProfile, hasStack, rangeWeights, splitAddOn, type WeightRange } from './machineWeights';
 import { exerciseKey } from './strengthHistory';
 import type { SessionLog } from '../models/training';
 import { formatNumberNL } from '../utils/number';
@@ -229,6 +229,44 @@ export function withStandsSet(raw: StrengthSettings | undefined, exercise: Exerc
 // wordt ingelezen. Wat je trainde blijft in je logboek staan.
 export const withStandsCleared = (raw: StrengthSettings | undefined, exercise: Exercise | undefined): StrengthSettings | undefined => withStandsSet(raw, exercise, [], false);
 
+// Wat er voor Standen wissen bij dit toestel stond, precies zoals het was: de sleutel met standen, de oude
+// lijst en het oude bereik (alle drie kunnen ontbreken). Voor Terugdraaien.
+export interface StandsBefore {
+  exerciseId: string;
+  profileId: string;
+  stands?: MachineStandList;
+  weights?: number[];
+  ranges?: WeightRange[];
+}
+
+export function standsBefore(raw: StrengthSettings | undefined, exercise: Exercise | undefined): StandsBefore | undefined {
+  if (!exercise || !hasStack(exercise)) return undefined;
+  const profile = resolveStrengthSettings(raw).profile;
+  const stands = profile.exerciseStandsKg?.[exercise.id];
+  const weights = profile.exerciseWeightsKg?.[exercise.id];
+  const ranges = profile.exerciseWeightRanges?.[exercise.id];
+  return { exerciseId: exercise.id, profileId: profile.id, ...(stands ? { stands } : {}), ...(weights ? { weights } : {}), ...(ranges ? { ranges } : {}) };
+}
+
+// Terugdraaien na Standen wissen: dit toestel krijgt precies terug wat er stond, ook "geen sleutel" (dan
+// leest Forge het weer in uit je logs). De andere toestellen en sportscholen blijven zoals ze nu zijn.
+// Undefined als een andere sportschool actief is dan bij het wissen (dan raakt Terugdraaien niets).
+export function withStandsRestored(raw: StrengthSettings | undefined, before: StandsBefore): StrengthSettings | undefined {
+  const profile = resolveStrengthSettings(raw).profile;
+  if (profile.id !== before.profileId) return undefined;
+  const { exerciseWeightsKg, exerciseWeightRanges, exerciseStandsKg, ...rest } = profile;
+  const put = <T,>(all: Record<string, T> | undefined, value: T | undefined): Record<string, T> | undefined => {
+    const next = { ...(all ?? {}) };
+    if (value === undefined) delete next[before.exerciseId];
+    else next[before.exerciseId] = value;
+    return Object.keys(next).length > 0 ? next : undefined;
+  };
+  const lists = put(exerciseWeightsKg, before.weights);
+  const ranges = put(exerciseWeightRanges, before.ranges);
+  const stands = put(exerciseStandsKg, before.stands);
+  return withActive(raw, { ...rest, ...(lists ? { exerciseWeightsKg: lists } : {}), ...(ranges ? { exerciseWeightRanges: ranges } : {}), ...(stands ? { exerciseStandsKg: stands } : {}) });
+}
+
 // --- woorden ------------------------------------------------------------------------------------
 
 const kgNl = (n: number) => formatNumberNL(n, 2);
@@ -237,6 +275,7 @@ const kgNl = (n: number) => formatNumberNL(n, 2);
 export const standNoteText = (kg: number, exerciseName: string): string => `Stand ${kgNl(kg)} kg onthouden voor ${exerciseName}.`;
 export const STAND_FIRST_TEXT = 'Tik het getal dat op het blok staat. Forge onthoudt het.';
 export const STAND_FAILED_TEXT = 'Opslaan duurde te lang of lukte niet. Kijk bij Standen per toestel.';
+export const STANDS_WIPED_TEXT = 'Standen gewist.';
 
 // De waarde in de rij van een toestel: "7, 14, 23, 32", bij meer dan zes "7 tot 109 kg", met ", alleen deze" erachter.
 export function standsSummary(kg: number[], only: boolean): string {

@@ -8,7 +8,7 @@
 
 import type { Exercise } from '../models/exercise';
 import type { StrengthSettings } from '../engine/strengthSettings';
-import { seedOnOpen, standAfterTick, withStandForgotten, withStandsCleared, withStandsSet, type StandSkip } from '../engine/toestelStanden';
+import { seedOnOpen, standAfterTick, standsBefore, withStandForgotten, withStandsCleared, withStandsRestored, withStandsSet, type StandsBefore, type StandSkip } from '../engine/toestelStanden';
 import { SettingsRepo } from './databaseSettings';
 
 export interface StandIo {
@@ -123,6 +123,26 @@ export function saveStandsNow(input: { exercise: Exercise | undefined; kg: numbe
   return serial(() => saveWith((raw) => withStandsSet(raw, input.exercise, input.kg, input.only), io)).catch((): StandsSave => ({ kind: 'failed' }));
 }
 
-export function clearStandsNow(input: { exercise: Exercise | undefined }, io: StandIo = repoIo): Promise<StandsSave> {
-  return serial(() => saveWith((raw) => withStandsCleared(raw, input.exercise), io)).catch((): StandsSave => ({ kind: 'failed' }));
+// Standen wissen. Bij `saved` staat in `before` wat er stond, gelezen in dezelfde beurt als het schrijven,
+// zodat Terugdraaien precies dat terugzet.
+export type StandsClear = { kind: 'saved'; settings: StrengthSettings; before: StandsBefore } | { kind: 'failed' } | { kind: 'too_many' };
+
+export function clearStandsNow(input: { exercise: Exercise | undefined }, io: StandIo = repoIo): Promise<StandsClear> {
+  return serial(async (): Promise<StandsClear> => {
+    let raw: StrengthSettings | undefined;
+    try {
+      raw = await readWithin(io);
+    } catch {
+      return { kind: 'failed' };
+    }
+    const before = standsBefore(raw, input.exercise);
+    const next = withStandsCleared(raw, input.exercise);
+    if (!next || !before) return { kind: 'too_many' };
+    return (await apply(next, io)) ? { kind: 'saved', settings: next, before } : { kind: 'failed' };
+  }).catch((): StandsClear => ({ kind: 'failed' }));
+}
+
+// Terugdraaien na Standen wissen: alles of niets, met dezelfde grens in tijd.
+export function restoreStandsNow(input: { before: StandsBefore }, io: StandIo = repoIo): Promise<StandsSave> {
+  return serial(() => saveWith((raw) => withStandsRestored(raw, input.before), io)).catch((): StandsSave => ({ kind: 'failed' }));
 }

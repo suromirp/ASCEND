@@ -40,17 +40,30 @@ export function askedReps(set: SetLog, rangeLow: number | undefined): number | u
   return set.repsAsked ?? rangeLow;
 }
 
-// Was het gewicht lichter dan voorgeschreven? Zonder voorschrift in het log: nee (een oud log).
-function lighterThanAsked(set: SetLog, ctx: ConfirmContext): boolean {
-  if (set.weightKgAsked === undefined) return false;
-  const asked: SetLog = { ...set, weightKg: set.weightKgAsked };
+// Lichter dan dit gewicht (met lichaamsgewicht en hulp meegerekend als `loadOf` er is)?
+function lighterThan(set: SetLog, kg: number, ctx: ConfirmContext): boolean {
+  const asked: SetLog = { ...set, weightKg: kg };
   const done = ctx.loadOf ? ctx.loadOf(set) : set.weightKg;
-  const want = ctx.loadOf ? ctx.loadOf(asked) : set.weightKgAsked;
+  const want = ctx.loadOf ? ctx.loadOf(asked) : kg;
   if (done === undefined || want === undefined) return true;
   return done < want - KG_EPS;
 }
 
-// Regel 1 en 3. Bevestigd: een werkset, afgevinkt zonder eigen RIR, niet lichter dan voorgeschreven, met
+// Was het gewicht lichter dan Forge vroeg? Wat Forge in de rij zette na een bijstelling (`forgeKg`, ook na
+// Lichter), anders het voorschrift. Zonder beide in het log: nee (een oud log).
+function lighterThanAsked(set: SetLog, ctx: ConfirmContext): boolean {
+  const kg = set.forgeKg ?? set.weightKgAsked;
+  return kg !== undefined && lighterThan(set, kg, ctx);
+}
+
+// Was het gewicht lichter dan het voorschrift zelf (Forge zette het tijdens de training lager)? Dan is een
+// bevestigde set geen bewijs dat je kracht gelijk bleef: hij telt als meting, niet als ondergrens.
+// Zonder voorschrift in het log: nee (een oud log).
+export function belowPrescription(set: SetLog, ctx: ConfirmContext): boolean {
+  return set.weightKgAsked !== undefined && lighterThan(set, set.weightKgAsked, ctx);
+}
+
+// Regel 1 en 3. Bevestigd: een werkset, afgevinkt zonder eigen RIR, niet lichter dan Forge vroeg, met
 // minstens de gevraagde herhalingen, en de volgende werkset van de oefening viel niet 2 of meer tekort.
 export function confirmedAssumed(set: SetLog, next: SetLog | undefined, ctx: ConfirmContext): boolean {
   if (!isWorkSet(set) || !set.rirAssumed || set.rir === undefined || set.reps <= 0) return false;

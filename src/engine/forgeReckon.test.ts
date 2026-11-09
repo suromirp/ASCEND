@@ -297,8 +297,13 @@ describe('uit de review', () => {
     const p = prescribe(input(true))!;
     expect(p.raised).toBeUndefined();
     expect(p.reason).not.toContain('over.');
-    // Aan (het advies): alle werksets haalden de bovenkant zoals gevraagd, dus wel een stap, zonder "met 2 over".
-    const confirmed = prescribe(input(true, true))!;
+    // Aan (het advies), een oud log zonder gevraagd aantal: 11 tegen de onderkant 9 telt met 1 over (regel 4,
+    // en regel 5 leest hetzelfde; besluit 2026-11-09-forge-review-afvinken.md), dus geen stap.
+    expect(prescribe(input(true, true))!.raised).toBeUndefined();
+    // Vroeg Forge 11 en haalde je 11 in elke werkset, dan wel een stap, zonder "met 2 over".
+    const asked = input(true, true);
+    asked.sessions[1].sets = asked.sessions[1].sets.map((s) => ({ ...s, repsAsked: 11, weightKgAsked: 60 }));
+    const confirmed = prescribe(asked)!;
     expect(confirmed.raised).toBeDefined();
     expect(confirmed.reason).not.toContain('over.');
   });
