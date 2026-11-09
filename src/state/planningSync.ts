@@ -156,6 +156,8 @@ export async function horizonKey(): Promise<string> {
       settings.trekLegRest,
       // Let go or shift a training that moves for a holiday (engine/leaveSpacing.ts).
       settings.leaveCrowding,
+      // How far the planning may shift around a holiday (engine/leaveAround.ts).
+      settings.leaveAround ?? 'wide',
       // How fast the long run grows toward a race (engine/runGrowth.ts).
       settings.longRunGrowth,
       // Planning after the main goal (engine/programLayout.ts#planEndDay).
