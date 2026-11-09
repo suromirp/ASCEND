@@ -45,9 +45,9 @@ export const SEVERITY_CHOICES = [
   { value: 'ernstig', label: 'Ernstig', line: 'Het hindert ook in het gewone leven.' },
 ] as const;
 
-const KNAPIK = 'Roeien en optrekken helpen bij rugzakdragen (Knapik e.a. 2012, bewijs: matig, in het onderzoek “Aanvullend onderzoek GR5 voorbereiding”).';
+const KNAPIK = 'Roeien en optrekken kunnen helpen bij rugzakdragen (Knapik e.a. 2012, bewijs: matig, in het onderzoek “Aanvullend onderzoek GR5 voorbereiding”).';
 const ROMP = 'Rompoefeningen horen bij de krachtoefeningen voor de GR5 in het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert).';
-const NIETS_APART = 'Voor deze plek staat in het onderzoek achter ASCEND niets apart. Dit is een rustige, algemene aanpak; krachttraining verlaagt over sporten heen het aantal blessures (Lauersen e.a. 2014, bewijs: matig tot sterk).';
+const NIETS_APART = 'Voor deze plek staat in het onderzoek achter ASCEND niets apart. Dit is een rustige, algemene aanpak. Krachttraining verlaagde over sporten heen het aantal blessures (Lauersen e.a. 2014, bewijs: matig tot sterk).';
 
 export const BODY_CARE: Record<string, BodyCare> = {
   nek: {
@@ -144,7 +144,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Step-up op een tree', dose: '3 × 8 per been', note: 'Later met een rugzak' },
         { name: 'Bilbrug', dose: '3 × 12', note: 'Boven even aanspannen' },
       ],
-      basis: 'Heupabductie en step-ups horen bij de krachtoefeningen voor de GR5 in het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert; heupkracht bij kniepijn voorin: bewijs matig, als behandeling). De bilbrug is afgeleid.',
+      basis: 'Heupabductie en step-ups horen bij de krachtoefeningen voor de GR5 in het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert). Heupkracht bij kniepijn voorin: bewijs matig, als behandeling. De bilbrug is afgeleid.',
     },
   },
   dij: {
@@ -176,7 +176,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Langzaam zakkende squat', dose: '3 × 8' },
         { name: 'Heup zijwaarts heffen', dose: '2 × 12 per kant' },
       ],
-      basis: 'Langzaam zakken en step-downs: het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert voor afdalen). Heupkracht naast kniewerk helpt bij pijn voorin de knie (JOSPT 2018, bewijs: matig, als behandeling en niet als voorkomen).',
+      basis: 'Langzaam zakken en step-downs: het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert voor afdalen). Heupkracht naast kniewerk kan helpen bij pijn voorin de knie (JOSPT 2018, bewijs: matig, als behandeling en niet als voorkomen).',
     },
   },
   scheen: {
@@ -273,7 +273,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Romeense deadlift', dose: '3 × 8' },
         { name: 'Bilbrug', dose: '3 × 12' },
       ],
-      basis: 'De Nordic curl halveert hamstringblessures bijna, maar dat bewijs komt uit teamsporten met sprints (van Dyk e.a. 2019, bewijs: sterk daar). Voor wandelaars en lopers is het niet apart onderzocht.',
+      basis: 'De Nordic curl halveerde hamstringblessures bijna. Dat bewijs komt uit teamsporten met sprints (van Dyk e.a. 2019, bewijs: sterk daar). Voor wandelaars en lopers is het niet apart onderzocht.',
     },
   },
   kuit: {

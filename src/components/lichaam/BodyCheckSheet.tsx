@@ -227,16 +227,18 @@ function Suggestion({
         <StretchItems stretches={s.stretches} className="mt-1 flex flex-col" />
       </div>
 
+      {/* De spoedtekst staat altijd zichtbaar, buiten de inklap (zoals op de plekpagina). */}
+      {s.direct && <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{s.direct}</p>}
+
       {s.fysio.length > 0 && (
         <div className="border-t" style={{ borderColor: 'var(--color-card-border)' }}>
           <button type="button" onClick={onToggleFysio} aria-expanded={fysioOpen} className="flex min-h-[52px] w-full items-center gap-3 text-left">
             <span style={{ color: 'var(--color-warning)' }}><Icon name="letOp" size={20} /></span>
-            <span className="min-w-0 flex-1 text-base" style={{ color: 'var(--color-ink)' }}>Wanneer naar een fysio of huisarts?</span>
+            <span className="min-w-0 flex-1 text-base" style={{ color: 'var(--color-ink)' }}>Wanneer laat je het nakijken?</span>
             <span className="shrink-0 transition-transform" style={{ color: 'var(--color-ink-dim)', transform: fysioOpen ? 'rotate(180deg)' : undefined }}><Icon name="omlaag" size={18} /></span>
           </button>
           {fysioOpen && (
             <div className="flex flex-col gap-2 pb-2 pl-8">
-              {s.direct && <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{s.direct}</p>}
               <ul className="flex flex-col gap-1.5">
                 {s.fysio.map((line) => (
                   <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{capitalize(line)}</li>

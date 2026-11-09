@@ -77,7 +77,7 @@ export const MEASURE_LABEL: Record<InfluenceMeasure, string> = {
 export const MEASURE_SUBTITLE: Record<InfluenceMeasure, string> = {
   restingHr: 'Rusthartslag de ochtend erna, in slagen boven of onder je gemiddelde.',
   hrv: 'HRV de ochtend erna, in milliseconden boven of onder je gemiddelde.',
-  paceHr: 'Hartslag bij een rustig tempo op die dag, in slagen boven of onder je gewone loopjes.',
+  paceHr: 'Hartslag bij een rustig tempo op die dag, in slagen boven of onder je gewone lopen.',
   sleep: 'Slaap in de nacht naar die ochtend, in minuten meer of minder dan je gemiddelde.',
   effort: 'Hoe zwaar trainingen voelden op die dag, in punten boven of onder wat gepland stond.',
 };
@@ -536,7 +536,7 @@ export function countLine(e: ReasonEffect): string {
   return `${e.count} keer \u00b7 ${tail}`;
 }
 
-const SLEEP_NOTE = 'Je horloge schat slaap ruw; de duur is betrouwbaarder dan de fasen.';
+const SLEEP_NOTE = 'Je horloge schat slaap ruw. De duur is betrouwbaarder dan de fasen.';
 
 // Eén feitelijke zin (of twee) onder de strook van een meting in het blad. Geen oordeel.
 export function factSentence(e: ReasonEffect): string {
@@ -550,7 +550,7 @@ export function factSentence(e: ReasonEffect): string {
     case 'sleep':
       return `Gemiddeld ${hoursMinutes(e.meanValue)} tegen ${hoursMinutes(e.meanCenter)}. ${outside} ${SLEEP_NOTE}`;
     case 'paceHr':
-      return `Op ${e.count} rustige loopjes, vergeleken met je eerdere rustige loopjes bij hetzelfde tempo. ${outside}`;
+      return `Op ${e.count} rustige loopjes, vergeleken met je eerdere rustige lopen bij hetzelfde tempo. ${outside}`;
     case 'effort':
       return `${outside} Gemeten tegen wat er gepland stond.`;
     default:
@@ -745,7 +745,7 @@ export function looksLike(input: LooksLikeInput): LooksLike | undefined {
 export function looksLikeText(l: LooksLike): { title: string; line: string } {
   const name = l.group.label ? l.group.name : l.group.name.charAt(0).toLowerCase() + l.group.name.slice(1);
   return {
-    title: `Lijkt op je loopjes bij ${name}`,
+    title: `Lijkt op je lopen bij ${name}`,
     line: `Uit ${l.times} keer met die reden en ${l.otherTimes} keer zonder. Zeker weten doet ASCEND het niet.`,
   };
 }

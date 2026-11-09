@@ -123,7 +123,7 @@ export function BodyPage() {
       <section className="flex flex-col gap-3" aria-label="Klachten">
         <Eyebrow>{open.length > 0 ? `Open klachten (${open.length})` : 'Open klachten'}</Eyebrow>
         {open.length === 0 && (
-          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Geen open klachten. Heb je last van iets, tik dan de plek aan en meld het.</p>
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Geen open klachten. Last van iets? Tik de plek aan en meld het.</p>
         )}
         {open.map((n) => (
           <OpenComplaint key={n.id} note={n} onResolve={(id) => void resolveInjury(id)} onDelete={(id) => void deleteInjury(id)} />

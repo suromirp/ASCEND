@@ -50,7 +50,7 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
       await withTimeout(updateSettings(patch), SAVE_LIMIT_MS, 'Opslaan');
     } catch (err) {
       // Na een time-out loopt het opslaan door en kan het nog lukken: dan verdwijnt deze regel vanzelf.
-      if (alive.current) setFailure({ key: stateKey, text: err instanceof TimeoutError ? 'Nog niet bevestigd, kijk zo of het staat.' : 'Opslaan lukte niet. Probeer het nog eens.' });
+      if (alive.current) setFailure({ key: stateKey, text: err instanceof TimeoutError ? 'Nog niet bevestigd. Kijk zo of het staat.' : 'Opslaan lukte niet. Probeer het nog eens.' });
     } finally {
       if (alive.current) setBusy(false);
     }
@@ -78,7 +78,7 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
   } else if (night.state === 'klopt') {
     body = (
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs leading-snug" style={dim}>Goed, die nacht telt gewoon mee.</p>
+        <p className="text-xs leading-snug" style={dim}>Die nacht telt gewoon mee.</p>
         {undo}
       </div>
     );

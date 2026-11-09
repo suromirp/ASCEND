@@ -212,7 +212,7 @@ function ReportForm({ spot, hasOpen }: { spot: BodySpot; hasOpen: boolean }) {
         />
       </div>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Melden legt de klacht vast, meer niet: je planning verandert er niet door. Bij een klacht aan been of voet toont Vandaag een hint bij zware beentrainingen; jij kiest per training. Je week pas je zelf aan op Week.
+        Melden legt de klacht vast. Je planning verandert er niet door. Bij een klacht aan been of voet zie je op Vandaag een hint bij zware beentrainingen. Jij kiest per training. Je week pas je zelf aan op Week.
       </p>
       <PrimaryButton onClick={() => void report()} disabled={busy || !isValidReportDate(date, todayISO())}>{busy ? 'Bezig…' : 'Melden'}</PrimaryButton>
       {state === 'done' && (
