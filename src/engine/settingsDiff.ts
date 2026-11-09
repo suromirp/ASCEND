@@ -218,6 +218,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthFlag('forge-stappen', 'Stappen bij calisthenics', 'ladderRow'),
   strengthFlag('forge-netjes', 'Ging het netjes?', 'askClean'),
   strengthFlag('forge-band', 'Band bij optrekken en dip', 'askBand'),
+  strengthFlag('forge-stapvoorstel', 'Stap voorstellen', 'stepProposal'),
   strengthFlag('forge-1rm', 'Geschatte 1RM tonen', 'showOneRm'),
   strengthChoice('forge-weergave', 'Forge toont', 'oneRmView', 'forgeWeergave'),
   strengthFlag('forge-1rm-macrofactor', 'MacroFactor-1RM erbij tonen', 'showMacroFactorOneRm'),

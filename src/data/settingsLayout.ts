@@ -145,7 +145,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes', 'forge-uitleg-open'),
   ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid'),
   ...inSheet('bundel-rekenmodel', 'forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),
-  ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-doorvoeren', 'forge-schijven'),
+  ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-doorvoeren', 'forge-schijven'),
   ...inSheet('bundel-toets', 'forge-naast', 'forge-sinds'),
   ...inSheet('forge-tijdsgrens', 'forge-grens-kracht', 'forge-grens-been'),
   // Lichaam
@@ -286,7 +286,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.forge, B.oneRm, B.mf], 'forge-1rm-macrofactor'),
   ...rule([B.forge, B.inApp], 'forge-bijsturen', 'forge-spotter', 'spotterrek'),
   ...rule([B.inApp], 'forge-tijdsgrens', 'forge-grens-kracht', 'forge-grens-been'),
-  ...rule([B.inApp], 'bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-doorvoeren', 'forge-schijven', 'bundel-rusttimer', 'forge-rust'),
+  ...rule([B.inApp], 'bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-stapvoorstel', 'forge-doorvoeren', 'forge-schijven', 'bundel-rusttimer', 'forge-rust'),
   ...rule([B.inApp, B.ladderRow], 'forge-netjes', 'forge-band'),
   ...rule([B.inApp, B.restAuto], 'forge-signaal'),
   ...rule([B.inApp, B.restAuto, B.restAlert], 'forge-geluid'),

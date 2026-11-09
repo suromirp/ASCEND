@@ -6,6 +6,7 @@ import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 import { layoutPhases } from '../engine/programLayout';
 import { clearForgeSessions } from '../utils/forgeSessionStore';
 import { clearMuscleDeclines } from '../utils/muscleDeclines';
+import { clearStepDeclines } from '../utils/stepDeclines';
 import { MetaRepo, putAll, ProgramsRepo, PlannedSessionsRepo, SessionLogsRepo, SessionTemplatesRepo, clearStore, replacePlannedSessions } from './databaseRepos';
 import { SCHEMA_VERSION } from './databaseSchema';
 import { patternContext, defaultPatternSelector, patternSessions, withPackTarget } from './databaseHorizon';
@@ -196,6 +197,8 @@ export async function resetToDemoData(): Promise<void> {
   clearForgeSessions();
   // Wat dit toestel onthield van Liever niet bij Spieren voor de berg gaat ook weg.
   clearMuscleDeclines();
+  // En van Liever niet bij een stapvoorstel op een ladder.
+  clearStepDeclines();
   await Promise.all([
     clearStore('programs'),
     clearStore('sessionTemplates'),

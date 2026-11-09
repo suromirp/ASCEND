@@ -396,7 +396,7 @@ const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
-const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-doorvoeren', 'forge-schijven'];
+const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-doorvoeren', 'forge-schijven'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
   return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
@@ -633,6 +633,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.askClean };
     case 'forge-band':
       return { checked: forge.askBand };
+    case 'forge-stapvoorstel':
+      return { checked: forge.stepProposal };
     case 'forge-programma':
       return s.strengthModel?.program ? { value: s.strengthModel.program.name } : { value: 'Van ASCEND', dim: true };
     case 'stangen':
