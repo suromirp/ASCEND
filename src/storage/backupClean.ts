@@ -196,6 +196,10 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.weightForLoad;
     skipped.n++;
   }
+  if ('weightRange' in s && s.weightRange !== '4w' && s.weightRange !== '3m' && s.weightRange !== '1y') {
+    delete s.weightRange;
+    skipped.n++;
+  }
   for (const key of ['weightFromMacroFactor', 'weightFromHealthConnect', 'weightTrend', 'guideOpen']) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
