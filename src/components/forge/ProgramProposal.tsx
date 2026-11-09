@@ -9,6 +9,7 @@ import type { StoredStrengthProgram } from '../../engine/strengthProgramStore';
 import { exerciseById } from '../../data/exercises';
 import { matchExercise } from '../../engine/exerciseMatch';
 import type { SessionTemplate } from '../../models/training';
+import { isGymStrengthTemplate } from '../../engine/templateRoles';
 import { todayISO } from '../../utils/dates';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from '../ui';
 import { ForgeSheet } from './parts';
@@ -47,7 +48,7 @@ export function ProgramProposalSheet({
   onClose: () => void;
 }) {
   const today = todayISO();
-  const strength = templates.filter((t) => t.type === 'strength').sort((a, b) => (a.defaultDayOfWeek ?? 9) - (b.defaultDayOfWeek ?? 9));
+  const strength = templates.filter(isGymStrengthTemplate).sort((a, b) => (a.defaultDayOfWeek ?? 9) - (b.defaultDayOfWeek ?? 9));
   const [mapping, setMapping] = useState<ProgramMapping>(() => proposeMapping(program, templates, current));
   // Welke week van het programma deze week is: verder waar je was bij hetzelfde programma.
   const [week, setWeek] = useState(() => (current && current.name === program.name ? Math.min(program.cycleCount, programCycle(current, today) + 1) : 1));

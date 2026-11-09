@@ -207,3 +207,9 @@ Les ronde 3: één bouwer die twee keer herstelt kost 100k tot 150k extra; geef 
 - 2026-11-09, Lijn rest R2 Lookout (kit) en tekstkaart, coördinator zelf, 0 rood, kaart: 1 verklaard verschil per stand
 Les R2: zeg bij een cache met 'geen antwoord' in de opdracht dat een fout nooit een nee is.
 - 2026-11-09, Lijn rest R3, coördinator zelf (sonnet), geen helpers: lawineregel, opruimen, tempolijn. R4 niet gebouwd (vraagt keuze van de eigenaar over de stemgids).
+- 2026-11-09, Lijn Forge F3 uitleg bij oefeningen, Sherpa, sonnet (ontwikkelaar), 165k, 19 min, 1 herstelronde (door coördinator zelf)
+- 2026-11-09, Lijn Forge F3 techniektoets, Scout, opus (sportwetenschapper), 66k, 5 min, 2 tekstwijzigingen
+- 2026-11-09, Lijn Forge F3 review, Warden, sonnet (reviewer), 43k, 2 min, 2 belangrijk en 4 klein
+- 2026-11-09, Lijn Forge F4a calisthenics, Sherpa, opus (ontwikkelaar), 203k, 21 min
+- 2026-11-09, Lijn Forge F4a review, Warden, opus (reviewer), 99k, 4 min, 1 belangrijk en 5 klein (door coördinator zelf hersteld)
+Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande familie de ruillijsten van alle leden raakt (test op swapGroups per bestaand lid), en dat een wissel in een blad de scroll en focus terugzet.

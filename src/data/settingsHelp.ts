@@ -64,6 +64,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Een andere variant', text: 'staat er een tekening van bijna dezelfde oefening, dan zegt een regel eronder wat anders is.' },
     ],
   },
+  forgeUitlegOpen: {
+    title: 'Uitleg standaard uitgeklapt',
+    lead: 'In het blad van een oefening staat eerst In het kort, drie regels. Hier kies je of Lees verder ook al open staat.',
+    points: [
+      { head: 'Uit', text: 'het advies. Je ziet de drie regels en tikt op Lees verder als je meer wilt weten.' },
+      { head: 'Aan', text: 'de beginstand, de beweging, het tempo en de veelgemaakte fouten staan meteen open. Je kunt ze nog steeds dichtklappen.' },
+      { head: 'Niet elke oefening', text: 'heeft al een uitleg. Zonder uitleg zie je de oude drie regels.' },
+    ],
+  },
   lijfvraag: {
     title: 'Hoe voelt je lijf?',
     lead: 'Een korte kaart op Vandaag: voel je iets van je week? Je tikt op een plek, kiest spierpijn, stijf of pijn, en krijgt wat kan helpen. Je planning verandert er niet door.',

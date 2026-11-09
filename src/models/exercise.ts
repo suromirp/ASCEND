@@ -137,5 +137,32 @@ export interface Exercise {
   nuance?: string[];
   // Three to five short points: what you do, what to watch, the most made mistake.
   cues: string[];
+  // De uitleg met twee lagen (data/exerciseGuides.ts, docs/beslissingen/2026-11-09-uitleg-bij-oefeningen.md).
+  // Heeft een oefening hem, dan toont het blad hem in plaats van de drie oude regels in `cues`.
+  guide?: ExerciseGuide;
   videoUrl?: string;
+  // Calisthenics (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md); all optional and additive.
+  // How a set is measured: in reps or as a hold in seconds. Absent means reps.
+  measure?: 'reps' | 'hold';
+  // The place on a ladder of data/skillLadders.ts (step counts from 1, light to heavy).
+  ladder?: { id: string; step: number };
+  // Reps count per side (archer push-up).
+  perSide?: boolean;
+  // Done with the help of a band; how strong the band was is in the log (SetLog.band), not in the id.
+  assist?: 'band';
+}
+
+// "In het kort" (precies drie regels) altijd zichtbaar, de rest achter "Lees verder".
+export interface ExerciseGuide {
+  short: [string, string, string];
+  setup: string;
+  movement: string;
+  // In gewone woorden ("twee tellen omlaag"), geen code als 3010.
+  tempo: string;
+  mistakes: { fault: string; fix: string }[];
+  // Id's van andere oefeningen; de tik verschijnt alleen als het id in de lijst staat.
+  easier?: string;
+  harder?: string;
+  // Alleen als de tekst op een open bron met licentie is gebaseerd.
+  source?: { name: string; license: string; url?: string };
 }
