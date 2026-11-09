@@ -18,7 +18,7 @@
 // - what is stored: only ticked rows, as SetLog with kind, kg, reps and RIR.
 
 import { EXERCISES, exerciseById } from '../data/exercises';
-import type { Exercise, MovementPattern, MuscleGroup } from '../models/exercise';
+import type { Exercise, MovementPattern, MuscleGroup, Resistance } from '../models/exercise';
 import type { Program } from '../models/program';
 import type { ExercisePrescription, ExerciseSetLog, SessionLog, SessionTemplate, SetKind, SetLog, SetTarget } from '../models/training';
 import { formatNumberNL } from '../utils/number';
@@ -868,24 +868,109 @@ export function swapScore(current: Exercise, e: Exercise): number {
   return primary * 3 + secondary + (e.pattern === current.pattern ? 4 : 0) + (e.loadsLegs === current.loadsLegs ? 1 : 0);
 }
 
-// Exercises that can take the place of this one: the same main muscles (at
-// least one in common), in the gym you have (a barbell needs a bar), the same
-// movement first. Never the exercise itself or one that is already in the training.
-// `prefer`: muscles that got too little (engine/mountainMuscles.ts#swapPreference). Only at an equal score an
-// exercise that works one of them comes first; the choice stays yours, Forge never swaps by itself.
-export function swapOptions(current: Exercise | undefined, profile: GymProfile, inTraining: string[] = [], limit = 8, prefer: readonly MuscleGroup[] = []): Exercise[] {
-  if (!current) return [];
+// Een echte vervanger: dezelfde beweging (familie, data/exerciseFamilies.ts), met een korte reden.
+export interface SwapChoice {
+  exercise: Exercise;
+  // Het droge feit eerst: wat is hetzelfde, dan wat anders is.
+  reason: string;
+}
+
+export interface SwapGroups {
+  // Doet hetzelfde: de eerste is de aanbevolen keuze.
+  same: SwapChoice[];
+  // Zelfde spier, anders: dezelfde hoofdspier, een andere beweging.
+  other: Exercise[];
+}
+
+const EQUIPMENT_TEXT: Record<Resistance, string> = {
+  barbell: 'met een stang',
+  dumbbell: 'met dumbbells',
+  cable: 'aan de kabel',
+  machine_stack: 'op een toestel',
+  machine_plates: 'op een toestel met schijven',
+  bodyweight: 'met je eigen gewicht',
+  assisted_bodyweight: 'met hulp',
+  pack_or_vest: 'met een rugzak of vest',
+};
+
+// Wat de nuance zegt als de vervanger hem heeft (`on`) of juist mist (`off`).
+const NUANCE_TEXT: Record<string, { on: string; off: string }> = {
+  pause: { on: 'met een pauze', off: 'zonder pauze' },
+  wide: { on: 'met een brede greep', off: 'zonder brede greep' },
+  low: { on: 'op een lage helling', off: 'zonder lage helling' },
+  front: { on: 'met de last voor', off: 'met de last op je rug' },
+  light: { on: 'met een lichtere last', off: 'met een zwaardere last' },
+  single: { on: 'op één arm of been', off: 'op twee armen of benen' },
+  underhand: { on: 'met onderhandse greep', off: 'met bovenhandse greep' },
+  preacher: { on: 'met je armen op een steun', off: 'zonder steun voor je armen' },
+  floor: { on: 'met een kleiner bereik', off: 'met een groter bereik' },
+  step: { on: 'met een stap', off: 'zonder stap' },
+  walking: { on: 'al lopend', off: 'op één plek' },
+  elevated: { on: 'met je voet verhoogd', off: 'met je voet op de grond' },
+  trap: { on: 'met een trapbar', off: 'met een rechte stang' },
+  sumo: { on: 'met brede stand', off: 'met smalle stand' },
+  quad: { on: 'meer voor je quadriceps', off: 'minder voor je quadriceps' },
+  hinged: { on: 'met je romp voorovergebogen', off: 'met je romp ondersteund' },
+  legs: { on: 'met hulp van je benen', off: 'zonder hulp van je benen' },
+  negative: { on: 'alleen het zakken', off: 'het hele bereik' },
+  lying: { on: 'liggend', off: 'zittend' },
+  frog: { on: 'met je voeten tegen elkaar', off: 'met je voeten naast elkaar' },
+  y: { on: 'met je armen in een Y', off: 'met je armen langs je zij' },
+};
+
+const nuancesOf = (e: Exercise): string[] => e.nuance ?? [];
+
+// Hoe ver `e` van `current` afligt binnen één familie: 1 voor andere uitrusting, 1 als de een je eigen
+// gewicht is en de ander een last die je kiest, 1 per kenmerk dat maar één van beide heeft.
+export function swapDistance(current: Exercise, e: Exercise): number {
+  const ownWeight = (x: Exercise) => x.resistance === 'bodyweight';
+  const cn = nuancesOf(current);
+  const en = nuancesOf(e);
+  const differing = cn.filter((n) => !en.includes(n)).length + en.filter((n) => !cn.includes(n)).length;
+  return (e.resistance !== current.resistance ? 1 : 0) + (ownWeight(e) !== ownWeight(current) ? 1 : 0) + differing;
+}
+
+// "Zelfde beweging en spieren, met dumbbells." Het droge feit eerst, dan wat anders is.
+export function swapReasonSame(current: Exercise, e: Exercise): string {
+  const parts: string[] = [];
+  if (e.resistance !== current.resistance) parts.push(EQUIPMENT_TEXT[e.resistance]);
+  const cn = nuancesOf(current);
+  const en = nuancesOf(e);
+  for (const n of en) if (!cn.includes(n) && NUANCE_TEXT[n]) parts.push(NUANCE_TEXT[n].on);
+  for (const n of cn) if (!en.includes(n) && NUANCE_TEXT[n]) parts.push(NUANCE_TEXT[n].off);
+  return parts.length === 0 ? 'Zelfde beweging en spieren.' : `Zelfde beweging en spieren, ${parts.join(', ')}.`;
+}
+
+// Twee groepen om te ruilen. Eerst de echte vervangers (zelfde familie, de kleinste afstand eerst, bij
+// gelijke afstand de volgorde in de lijst); de eerste is de aanbevolen keuze. Dan de rest die dezelfde
+// hoofdspier raakt (swapScore boven 0), met de voorkeur voor bergspieren bij gelijke score
+// (engine/mountainMuscles.ts#swapPreference; Forge ruilt nooit zelf). Een oefening zonder familie heeft
+// geen echte vervangers en valt terug op de oude lijst. Nooit de oefening zelf of een die al in de
+// training zit, en geen stangoefening zonder stang. `limit` telt over beide groepen.
+export function swapGroups(current: Exercise | undefined, profile: GymProfile, inTraining: string[] = [], limit = 8, prefer: readonly MuscleGroup[] = []): SwapGroups {
+  if (!current) return { same: [], other: [] };
   const taken = new Set([current.id, ...inTraining]);
   const serves = (e: Exercise) => (prefer.some((m) => e.primary.includes(m) || e.secondary.includes(m)) ? 0 : 1);
-  const scored: { e: Exercise; score: number }[] = [];
-  for (const e of EXERCISES) {
-    if (taken.has(e.id)) continue;
-    if (e.resistance === 'barbell' && profile.barsKg.length === 0) continue;
+  const same: { e: Exercise; distance: number; order: number }[] = [];
+  const other: { e: Exercise; score: number }[] = [];
+  EXERCISES.forEach((e, order) => {
+    if (taken.has(e.id)) return;
+    if (e.resistance === 'barbell' && profile.barsKg.length === 0) return;
     const score = swapScore(current, e);
-    if (score === 0) continue;
-    scored.push({ e, score });
-  }
-  return scored.sort((a, b) => b.score - a.score || serves(a.e) - serves(b.e) || a.e.name.localeCompare(b.e.name)).slice(0, limit).map((s) => s.e);
+    if (score === 0) return;
+    if (current.family && e.family === current.family) same.push({ e, distance: swapDistance(current, e), order });
+    else other.push({ e, score });
+  });
+  same.sort((a, b) => a.distance - b.distance || a.order - b.order);
+  other.sort((a, b) => b.score - a.score || serves(a.e) - serves(b.e) || a.e.name.localeCompare(b.e.name));
+  const first = same.slice(0, limit).map((s) => ({ exercise: s.e, reason: swapReasonSame(current, s.e) }));
+  return { same: first, other: other.slice(0, Math.max(0, limit - first.length)).map((s) => s.e) };
+}
+
+// De twee groepen achter elkaar, voor wie maar één lijst wil.
+export function swapOptions(current: Exercise | undefined, profile: GymProfile, inTraining: string[] = [], limit = 8, prefer: readonly MuscleGroup[] = []): Exercise[] {
+  const g = swapGroups(current, profile, inTraining, limit, prefer);
+  return [...g.same.map((s) => s.exercise), ...g.other];
 }
 
 // --- the legs ---------------------------------------------------------------------------------
