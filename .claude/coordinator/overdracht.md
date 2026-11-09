@@ -2,12 +2,13 @@
 
 Bijgewerkt: 9 november 2026, 20:15 UTC, door de coördinator van 8 en 9 november.
 
-## Lopende bouwers (Fable 5.2, melden zich bij de vorige coördinator session_013ZuQA6MkeoKDCxdu4uMmEd)
+## Lopende bouwers (Fable 5.2, melden zich bij de coördinator van 9 november avond, session_01LnDpSmhnJLwMd9LxhwhgLB)
 
-- Overzicht Gewicht: live op main (b39130d), sessie gearchiveerd.
-- Teksten Lichaam en Instellingen (R9, plan punt 1), session_01LnDpSmxgVMGeBEVSvd52Lk, branch claude/teksten-lichaam-instellingen; meldt zich bij session_01LnDpSmhnJLwMd9LxhwhgLB (coördinator sinds 9 november 20:18 UTC).
-- Calisthenics als algemeen doel, session_01LnDpSnqskFn7mJs7MeBHXT, branch claude/calisthenics-algemeen.
-- Routeplanner fase 1 en 2, session_01LnDpSnYUz5KXGGxNwWNP4y, branch claude/routeplanner.
+- Teksten Lichaam en Instellingen (R9, plan punt 1), session_01LnDpSmxgVMGeBEVSvd52Lk, branch claude/teksten-lichaam-instellingen.
+- Datavelden voor je horloge (plan punt 3), session_01LnDpSmQ4BrFUPHMVa43uxV, branch claude/datavelden-horloge.
+- Uitleg bij oefeningen, batch 3 en 4 (plan punt 5), session_01LnDpSkoHfPpN2ZxKwwTAA9, branch claude/uitleg-batch-3-4.
+
+Live sinds de wissel: Overzicht Gewicht (b39130d), Calisthenics algemeen en Routeplanner fase 1 en 2 (8f5ba7e). Plan punten 0, 2 en 4 zijn dus af; hierna 6 (Buiten), 7 (Feestdagen), 8, 9, 10. Open vragen aan de eigenaar staan in de backlog bij de Live-regels van Calisthenics en de Inbox-regel van de routeplanner.
 
 Afhandelen als ze klaar zijn (get_session: status completed, of de branch staat er met een afdruk): branch fetchen, mergen in claude/ascend-modernize-ib0a34, alle controles (tsc, lint, vitest, build, kaart:vergelijk), afdruk bekijken (map afdrukken/ op de branch), squash naar main, sessie archiveren, de eigenaar een korte melding met wat live staat en wat hij kan nakijken. Staat een bouwer stil op een vraag om bevestiging: zelf afmaken (mergen en live zetten).
 
