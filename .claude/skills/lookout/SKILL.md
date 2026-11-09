@@ -1,6 +1,6 @@
 ---
 name: lookout
-description: Vaste doorloop van Lookout voor ASCEND in Chromium op 360 en 390 px met vertraagde processor en echte touch. Gebruik bij elke UI-controle voor een push naar main, in plaats van zelf scripts te schrijven.
+description: Vaste doorloop van Lookout voor ASCEND in Chromium op 360, 390 en 412 px (412 is de telefoon van de eigenaar) met vertraagde processor en echte touch. Gebruik bij elke UI-controle voor een push naar main, in plaats van zelf scripts te schrijven.
 ---
 
 # Lookout: de vaste doorloop

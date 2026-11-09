@@ -10,7 +10,7 @@ Je benen zijn fris en je week is in lijn.
 
 --- kaart 1 ---
 [knop: BenenFrisindex 0,1] (aria: Benen: Fris, index 0,1. Naar de kaart.)
-[knop: BelastingIn lijn224 van 540 gewoonlijk] (aria: Belasting: In lijn, 224 van 540 gewoonlijk. Naar de kaart.)
+[knop: BelastingIn lijn424 gepland, gewoonlijk 540] (aria: Belasting: In lijn, 424 gepland, gewoonlijk 540. Naar de kaart.)
 [knop: RitmeNog nietsna twee weken] (aria: Ritme: Nog niets, na twee weken. Naar de kaart.)
 [knop: 56minJe week56 van 150 minutenKracht: 0 van 2 keerMet wat er nog staat kom je op 106 minuten. Een extra wandeling van 44 minuten brengt je op 150.] (aria: Je week bekijken)
 
