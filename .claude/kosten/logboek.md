@@ -242,3 +242,7 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-10, Lijn rest 3 R8 Logboek teksten, Sherpa, sonnet (ontwikkelaar), 182k, 16 min, 25 bestanden, alleen strings
 - 2026-11-10, Lijn rest 3 R8 review, Warden, sonnet (reviewer), 55k, 6 min, 0 blokkerend, 6 klein (2 hersteld, rest R9)
 - 2026-11-09, Melding bij elke opening, Sherpa opus ~180k, Warden opus ~80k, Lookout sonnet ~22k; nagespeeld door de coördinator met de back-up: drie openingen zonder melding.
+- 2026-11-09, Bouwmoment Health Connect gewicht (dag en tijd, regels, ronde bij terugkomen), Sherpa, sonnet (ontwikkelaar), 105k, 13 min, 0 herstel
+- 2026-11-09, Bouwmoment weekweghaling valt mee met toevoeging, Sherpa, opus (ontwikkelaar), 159k, 18 min, 0 herstel
+- 2026-11-09, Bouwmoment Week vakantierij en iconen (stond al live, alleen tests), Sherpa, sonnet (ontwikkelaar), 50k, 9 min, 0 herstel; les: lees eerst of een punt al gebouwd is
+- 2026-11-09, Bouwmoment review planning en Health Connect, Warden, opus (reviewer), 89k, 9 min, 0 blokkerend, 3 klein (2 hersteld door coördinator)

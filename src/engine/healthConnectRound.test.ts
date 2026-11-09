@@ -29,7 +29,7 @@ describe('fetchedWhen', () => {
 
 describe('healthRoundLines', () => {
   it('een regel per soort', () => {
-    expect(healthRoundLines({ activities: 6, mornings: 22, weight: 3 })).toEqual(['Trainingen: 6', 'Ochtenden: 22', 'Gewicht: 3 wegingen']);
+    expect(healthRoundLines({ activities: 6, mornings: 22, weight: 3 })).toEqual(['Trainingen: 6 gevonden', 'Ochtenden: 22 gevonden', 'Gewicht: 3 wegingen']);
     expect(healthRoundLines({ activities: 1, mornings: 1, weight: 1 })[2]).toBe('Gewicht: 1 weging');
   });
 
