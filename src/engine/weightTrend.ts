@@ -14,12 +14,12 @@
 // De invoer is wat `engine/bodyWeight.ts#weightsInUse` teruggeeft: één gewicht per dag, met de
 // schakelaars van MacroFactor en Health Connect al toegepast. Puur: geen React, geen opslag.
 //
-// Alleen het blad en de rij Lichaamsgewicht lezen de trend. Rugzak, beenindex, zweten en Forge
-// lezen nog `currentBodyKg`, de nieuwste weging; zie het besluit.
+// Het blad en de rij Lichaamsgewicht lezen de trend; Forge, rugzak en beenindex rekenen met `loadBodyKg`
+// (docs/beslissingen/2026-11-09-gewicht-bij-eigen-gewicht.md).
 
 import type { WeightEntry } from '../models/metrics';
 import { addDays, daysBetween } from '../utils/dates';
-import { latestWeight } from './bodyWeight';
+import { latestWeight, weightsInUse } from './bodyWeight';
 
 export const TREND_WINDOW_DAYS = 14;
 export const TREND_HALF_LIFE_DAYS = 7;
@@ -89,4 +89,35 @@ export function weightShown(entries: WeightEntry[] | undefined, trendOn: boolean
   if (!latest) return undefined;
   const trend = trendOn === false ? undefined : weightTrend(entries);
   return trend ? { kg: trend.kg, latest, trend } : { kg: latest.kg, latest };
+}
+
+// Het gewicht waarmee ASCEND rekent (docs/beslissingen/2026-11-09-gewicht-bij-eigen-gewicht.md): Forge (eigen
+// gewicht, optrekhulp, dips), het rugzakaandeel en de beenindex. Met "Gewicht bij eigen gewicht" op Trend
+// (afwezig is Trend, het advies) is dat de gewichtstrend; met te weinig wegingen, een trendgewicht uit
+// MacroFactor of de keuze Laatste weging is het de laatste weging, zoals `currentBodyKg`.
+export interface LoadWeightSettings {
+  weightEntries?: WeightEntry[];
+  weightFromMacroFactor?: boolean;
+  weightFromHealthConnect?: boolean;
+  weightForLoad?: 'trend' | 'latest';
+}
+
+export interface LoadWeight {
+  kg: number;
+  // Is het de trend (en dus niet de laatste weging)?
+  isTrend: boolean;
+  // De laatste weging zelf, ook als de trend telt.
+  latest: WeightEntry;
+}
+
+export function loadWeight(s: LoadWeightSettings): LoadWeight | undefined {
+  const used = weightsInUse(s.weightEntries, s.weightFromMacroFactor, s.weightFromHealthConnect);
+  const latest = latestWeight(used);
+  if (!latest) return undefined;
+  const trend = s.weightForLoad === 'latest' ? undefined : weightTrend(used);
+  return trend ? { kg: trend.kg, isTrend: true, latest } : { kg: latest.kg, isTrend: false, latest };
+}
+
+export function loadBodyKg(s: LoadWeightSettings): number | undefined {
+  return loadWeight(s)?.kg;
 }

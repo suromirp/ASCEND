@@ -3,8 +3,8 @@ import { useAppData } from '../../state/AppDataContext';
 import { isOpenOn, isSoreness } from '../../engine/injuryKind';
 import { effectiveAmbition } from '../../engine/ambition';
 import { hasBodyFat } from '../../engine/bodyFat';
-import { currentBodyKg, weightsInUse } from '../../engine/bodyWeight';
-import { weightShown } from '../../engine/weightTrend';
+import { weightsInUse } from '../../engine/bodyWeight';
+import { loadBodyKg, weightShown } from '../../engine/weightTrend';
 import { predictDuration } from '../../engine/durationLearning';
 import { usableSweatEntries } from '../../engine/sweat';
 import { journeyProgress, normalizeJourneyState, withBootsDone, withDerivedDone } from '../../engine/journey';
@@ -61,7 +61,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   // memo hangt aan een vingerafdruk van de inhoud (checkDataKey) en van de instelling
   // (checkModelKey).
   const checkKey = checkModelKey(settings.strengthModel);
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  const bodyKg = loadBodyKg(settings);
   // Spierpijn en een gekozen Lichter horen erbij: ze bepalen of een training telt (engine/legDayEase.ts).
   const easeKey = JSON.stringify([settings.legEaseDays, settings.morningCheckIns?.filter((c) => c.legs).map((c) => [c.date, c.legs, c.soreWhere]), injuryNotes.filter((n) => n.kind === 'spierpijn').map((n) => [n.date, n.bodyPart, n.resolvedDate])]);
   const dataKey = checkDataKey(sessionLogs, templates, program, bodyKg) + easeKey;
@@ -94,6 +94,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     return {
       today,
       settings,
+      templates,
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
       pairing: goalEngineConfig.strategy.sameDayPairingPreference,
       position: position ? { weekInProgram: position.weekInProgram, totalWeeks: position.totalWeeksInProgram, phaseName: position.phase.name } : null,

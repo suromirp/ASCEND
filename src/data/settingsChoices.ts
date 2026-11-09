@@ -293,6 +293,16 @@ export const CHOICES = {
       { value: 'gong', label: 'Gong', note: 'Eén lage, rustige gong met lange uitklank', short: 'Gong' },
     ],
   }),
+  gewichtEigen: def({
+    group: 'Lichaam',
+    title: 'Gewicht bij eigen gewicht',
+    line: 'Voor Forge, je rugzak en de beenindex.',
+    advice: 'trend' as 'trend' | 'latest',
+    options: [
+      { value: 'trend', label: 'Trend', note: 'Het rustige gemiddelde van je wegingen; met te weinig wegingen je laatste', short: 'Trend' },
+      { value: 'latest', label: 'Laatste weging', note: 'Het getal van je laatste weging, ook als dat een slechte dag was', short: 'Laatste weging' },
+    ],
+  }),
   herinnering: def({
     group: 'Lichaam',
     title: 'Herinnering',

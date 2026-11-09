@@ -20,7 +20,11 @@ import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { withoutStepSwap } from '../../engine/stepSwaps';
 import { hasMountainGoal } from '../../engine/mountainMuscles';
 import { resolveForgeLayout } from '../../engine/forgeLayout';
-import { currentBodyKg } from '../../engine/bodyWeight';
+import { calibrationBlock, calibrationSlot, withCalibrationTarget } from '../../engine/calibration';
+import { bodyLoadView } from '../../engine/bodyLoad';
+import { WeightSheet } from '../settings/groups/LichaamSheets';
+import { BodyLoadSheet } from './BodyLoad';
+import { loadBodyKg, loadWeight } from '../../engine/weightTrend';
 import {
   activeRow,
   resumeDraft,
@@ -141,13 +145,19 @@ function ForgeWorkoutInner({
   preview = false,
   onClose,
 }: ForgeWorkoutProps) {
-  const { settings, updateSettings, strengthExternal, templates, sessionLogs, injuryNotes, trainingGoals, goalMilestones } = useAppData();
+  const { settings, updateSettings, strengthExternal, templates, plannedSessions, sessionLogs, injuryNotes, trainingGoals, goalMilestones } = useAppData();
   const today = todayISO();
   const date = scheduledDate ?? today;
   // Met MacroFactor als bron en bij alleen kijken is dit het voorschrift zonder invulvelden.
   const readOnly = strengthExternal || preview;
   const strength = useMemo(() => resolveStrengthSettings(settings.strengthModel), [settings.strengthModel]);
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  const bodyKg = loadBodyKg(settings);
+  // Eigen gewicht: het gewicht en het aandeel dat meetelt (BodyLoad.tsx); het blad en Gewicht aanpassen.
+  const loadW = loadWeight(settings);
+  const [bodyLoadSlot, setBodyLoadSlot] = useState<string | null>(null);
+  const [weightOpen, setWeightOpen] = useState(false);
+  const [calLater, setCalLater] = useState(false);
+  const [calState, setCalState] = useState<{ phase: 'open' | 'added' | 'failed'; name: string }>({ phase: 'open', name: '' });
   // De standen van een toestel (engine/toestelStanden.ts): onthouden bij het afvinken, met Terugdraaien.
   const stands = useForgeStands({ remember: strength.learnStands, readOnly, profile: strength.profile, logs: sessionLogs });
   // "Forge rekent mee" (engine/forgeReckon.ts): dezelfde rekening als het bijsturen.
@@ -566,10 +576,11 @@ function ForgeWorkoutInner({
       spotter: () => setSpotterInfo(true),
       standUndo: () => latest.current.standUndo(),
       step: (slot, exerciseId) => latest.current.stepTo(slot, exerciseId),
+      bodyLoad: (slot) => setBodyLoadSlot(slot),
       band: (slot, band) => latest.current.chooseBand(slot, band),
       clean: (slot, rowId, clean) => latest.current.chooseClean(slot, rowId, clean),
     }),
-    [setMenuFor, setRowMenu, setRirFor, setFillFor, setSpotterInfo],
+    [setMenuFor, setRowMenu, setRirFor, setFillFor, setSpotterInfo, setBodyLoadSlot],
   );
 
   // `opts.ladderStep`: de ruil komt van Stap lichter of Stap zwaarder; alleen dan krijgt een ladderstap de rijen van
@@ -627,7 +638,29 @@ function ForgeWorkoutInner({
   // Het voorstel voor een stap op een ladder (StepProposalNotice.tsx): zelfde moment als Spieren voor de berg. Akkoord
   // geldt de volgende keer dat je de training opent; dit scherm houdt `sessionSwaps` en `workout` is één keer opgebouwd.
   const stepNotice = !readOnly && !startedAt && strength.stepProposal;
-  const intro = <ForgeIntro templateId={template.id} today={today} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} stepNotice={stepNotice} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
+  // De ijkset (CalibrationNotice.tsx): eens per vier weken, alleen vóór de eerste handeling en nooit in een week met een
+  // tocht of test. Akkoord zet een werkset bij de hoofdoefening en onthoudt de dag.
+  const calSlot = !readOnly && !startedAt && !calLater && strength.calibration
+    && !calibrationBlock({ date, lastAt: strength.calibratedAt, planned: plannedSessions, templates })
+    ? calibrationSlot(workout) : undefined;
+  const calEx = calSlot ? workout.find((w) => w.slot === calSlot) : undefined;
+  const calibration = calState.phase !== 'open' ? { name: calState.name, phase: calState.phase, onAccept: async () => undefined, onLater: () => undefined }
+    : calEx ? {
+      name: calEx.name,
+      phase: 'open' as const,
+      onAccept: async () => {
+        setCalState({ phase: 'added', name: calEx.name });
+        addSetLogged(calEx.slot, 'work');
+        setExercise(calEx.slot, withCalibrationTarget);
+        try {
+          await updateSettings({ strengthModel: { ...settings.strengthModel, calibratedAt: today } });
+        } catch {
+          setCalState({ phase: 'failed', name: calEx.name });
+        }
+      },
+      onLater: () => setCalLater(true),
+    } : undefined;
+  const intro = <ForgeIntro templateId={template.id} today={today} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} stepNotice={stepNotice} calibration={calibration} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
   const exerciseBlock = (ex: WorkoutExercise, i: number) => {
     const capRemoved = capRemovedFor(capped, ex, effSlots);
     const lines = stepsOn && ex.known ? ladderLines(exerciseOf(ex)) : undefined;
@@ -656,6 +689,7 @@ function ForgeWorkoutInner({
               capText={capRemoved > 0 ? capRemovedLine(capRemoved) : undefined}
               standLine={stands.lineFor(ex, exerciseComplete(ex))}
               ladderLines={lines}
+              bodyLoad={bodyLoadView(exerciseOf(ex), loadW, settings.weightForLoad)?.chip}
               ladderHint={lines ? ladderHint(exerciseOf(ex), ladderStates.get(ex.exerciseId)) : undefined}
               canStep={!!lines && !readOnly && canSwap(effSlots, ex)}
               bandOn={bandOn}
@@ -766,6 +800,12 @@ function ForgeWorkoutInner({
         dropDraft={dropDraft}
         onClose={onClose}
       />
+      {bodyLoadSlot && (() => {
+        const ex = workout.find((w) => w.slot === bodyLoadSlot);
+        const view = ex ? bodyLoadView(exerciseOf(ex), loadW, settings.weightForLoad) : undefined;
+        return ex && view ? <BodyLoadSheet name={ex.name} view={view} onAdjust={() => setWeightOpen(true)} onClose={() => setBodyLoadSlot(null)} /> : null;
+      })()}
+      {weightOpen && <WeightSheet onClose={() => setWeightOpen(false)} />}
     </Portal>
   );
 }

@@ -132,7 +132,7 @@ export interface HikeDay {
 }
 
 export interface PackOptions {
-  // Het rugzakgewicht van de dag of het doel, en je lichaamsgewicht (bodyWeight.ts#currentBodyKg).
+  // Het rugzakgewicht van de dag of het doel, en je lichaamsgewicht (weightTrend.ts#loadBodyKg).
   packKg?: number;
   bodyKg?: number;
 }

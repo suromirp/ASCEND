@@ -61,6 +61,20 @@ describe('planning around two holidays', () => {
     expect(open(wide.sessions).filter((s) => (s.scheduledDate >= '2026-11-14' && s.scheduledDate <= '2026-11-18'))).toEqual([]);
   });
 
+  it('has one long run a week and none within five days of the one you logged; leg strength is not dropped for a second one', () => {
+    const longs = open(wide.sessions).filter((s) => hasRole(byTemplate.get(s.templateId)!, 'long')).map((s) => s.scheduledDate).sort();
+    expect(longs.filter((d) => d >= TODAY && d <= '2026-11-22')).toEqual(['2026-11-22']);
+    for (const d of longs) expect(daysBetween('2026-11-08', d) > 5 || d === '2026-11-08').toBe(true);
+    const week1 = (id: string) => open(wide.sessions).some((s) => s.templateId === id && s.scheduledDate >= TODAY && s.scheduledDate <= '2026-11-13');
+    expect(week1('tpl_lower_a')).toBe(true);
+    // Leg strength stays in the week after the holidays too.
+    expect(open(wide.sessions).some((s) => s.templateId === 'tpl_lower_a' && s.scheduledDate >= '2026-11-19')).toBe(true);
+    const lowerDays = open(wide.sessions).filter((s) => s.templateId === 'tpl_lower_a').map((s) => s.scheduledDate);
+    expect(lowerDays).toContain('2026-11-11');
+    const dropped = wide.repairs.filter((r) => r.removed && r.rule === 'LEAVE-AROUND').map((r) => plan.find((s) => s.id === r.sessionId)!.templateId);
+    expect(dropped).toContain('tpl_long_run');
+  });
+
   it('puts two trainings on one day only when no workable day is empty', () => {
     expect(workableEmpty(wide.sessions).length === 0 || doubleDays(wide.sessions).length === 0).toBe(true);
   });

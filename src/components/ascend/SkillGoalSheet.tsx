@@ -14,8 +14,10 @@ import { Sheet } from '../settings/Sheet';
 // Een vaardigheid heeft geen datum en verandert je planning niet. Een stap die al een vaardigheid is, kun je niet
 // nog eens kiezen.
 
-export function SkillGoalSheet({ logs, today, taken, onSubmit, onClose }: {
+export function SkillGoalSheet({ logs, today, taken, starts, onSubmit, onClose }: {
   logs: readonly SessionLog[];
+  // De stap waar je plan per ladder al op staat (engine/skillGoal.ts#planStartSteps), voor een ladder zonder logs.
+  starts?: ReadonlyMap<string, number>;
   today: string;
   // "ladder|stap" van de vaardigheden die er al zijn (engine/skillGoal.ts#takenSkillSteps).
   taken: ReadonlySet<string>;
@@ -27,7 +29,7 @@ export function SkillGoalSheet({ logs, today, taken, onSubmit, onClose }: {
   const ladder = skillLadderById(ladderId) ?? SKILL_LADDERS[0];
   const current = states.get(ladder.id)?.current ?? null;
   const [picked, setPicked] = useState<Record<string, number>>({});
-  const step = picked[ladder.id] ?? freeTargetStep(ladder, defaultTargetStep(ladder, { current }), taken);
+  const step = picked[ladder.id] ?? freeTargetStep(ladder, defaultTargetStep(ladder, { current }, starts?.get(ladder.id)), taken);
 
   return (
     <Sheet eyebrow="Doel toevoegen · stap 2 van 3" title="Vaardigheid" line="Kies een ladder en de stap die je wilt halen." onClose={onClose}>
@@ -43,7 +45,7 @@ export function SkillGoalSheet({ logs, today, taken, onSubmit, onClose }: {
           </div>
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Doelstap">
             <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              {current === null ? 'Nog geen training op deze ladder.' : `Je traint nu op ${skillStepName(ladder, current)}.`}
+              {current === null ? (starts?.has(ladder.id) ? `Nog geen training gelogd. Je plan staat op ${skillStepName(ladder, starts.get(ladder.id)!)}.` : 'Nog geen training op deze ladder.') : `Je traint nu op ${skillStepName(ladder, current)}.`}
             </p>
             {ladder.steps.map((s, i) => {
               const n = i + 1;

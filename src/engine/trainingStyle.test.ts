@@ -125,6 +125,19 @@ describe('zonder keuze is alles zoals het was', () => {
   });
 });
 
+describe('Calisthenics per training telt alleen wat nog geldt', () => {
+  it('een stap met een verouderde plek (het sjabloon veranderde) of een training die er niet meer is, telt niet', () => {
+    const model = accept(UPPER_A, 'calisthenics');
+    expect(calisthenicsTrainings(model)).toBe(1);
+    expect(calisthenicsTrainings(model, templates, TODAY)).toBe(1);
+    // De plek heeft een andere oefening gekregen dan waar de stap vandaan kwam.
+    const changed = { ...UPPER_A, exercises: UPPER_A.exercises!.map((e) => ({ ...e, exerciseName: 'Goblet Squat' })) };
+    expect(calisthenicsTrainings(model, [changed], TODAY)).toBe(0);
+    // De training bestaat niet meer.
+    expect(calisthenicsTrainings(model, [], TODAY)).toBe(0);
+  });
+});
+
 describe('het voorstel', () => {
   it('calisthenics zonder training op de ladder: elke plek begint op stap 1', () => {
     const c = change(UPPER_A, 'calisthenics')!;

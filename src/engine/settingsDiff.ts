@@ -221,6 +221,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthFlag('forge-netjes', 'Ging het netjes?', 'askClean'),
   strengthFlag('forge-band', 'Band bij optrekken en dip', 'askBand'),
   strengthFlag('forge-stapvoorstel', 'Stap voorstellen', 'stepProposal'),
+  strengthFlag('forge-ijkset', 'IJkset voorstellen', 'calibration'),
   strengthFlag('forge-1rm', 'Geschatte 1RM tonen', 'showOneRm'),
   strengthChoice('forge-weergave', 'Forge toont', 'oneRmView', 'forgeWeergave'),
   strengthFlag('forge-1rm-macrofactor', 'MacroFactor-1RM erbij tonen', 'showMacroFactorOneRm'),
@@ -233,6 +234,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   // Lichaam
   flag('vetpercentage', 'Vetpercentage tonen', 'lichaam', 'showBodyFat'),
   flag('gewicht-kaart', 'Gewicht op Je stand', 'lichaam', 'weightCard'),
+  choice('gewicht-eigen', 'Gewicht bij eigen gewicht', 'lichaam', 'weightForLoad', 'trend', 'gewichtEigen'),
   flag('gewichtstrend', 'Gewichtstrend gebruiken', 'lichaam', 'weightTrend'),
   {
     id: 'figuur', title: 'Figuur', page: 'lichaam',

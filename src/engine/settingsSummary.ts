@@ -73,6 +73,7 @@ import { resolveMissedSettings } from './missedTraining';
 import { resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
 import { calisthenicsTrainings } from './trainingStyle';
+import type { SessionTemplate } from '../models/training';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 import { formatClock } from '../utils/clock';
 import { capitalize } from '../utils/capitalize';
@@ -119,6 +120,8 @@ function gapText(icu: number, mine: number): string {
 export interface SettingsFacts {
   today: string;
   settings: AppSettings;
+  // De trainingen, voor wat alleen telt zolang de plek in het sjabloon nog klopt (Calisthenics per training).
+  templates?: SessionTemplate[];
   // Minuten per weekdag zoals ze bij de planning staan.
   dailyTimeBudget: Partial<Record<Weekday, { preferredMinutes: number }>>;
   pairing: 'automatic' | 'always' | 'only_if_useful' | 'never';
@@ -397,7 +400,7 @@ const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
-const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-doorvoeren', 'forge-schijven'];
+const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-doorvoeren', 'forge-schijven'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
   return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
@@ -644,9 +647,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.askBand };
     case 'forge-stapvoorstel':
       return { checked: forge.stepProposal };
+    case 'forge-ijkset':
+      return { checked: forge.calibration };
     case 'forge-soort': {
       // Afgeleid uit de stappen in je trainingen (engine/trainingStyle.ts); zonder keuze is alles kracht.
-      const n = calisthenicsTrainings(s.strengthModel);
+      const n = calisthenicsTrainings(s.strengthModel, f.templates, f.today);
       return n === 0 ? { value: 'Alles kracht', dim: true } : { value: `${plural(n, 'training', 'trainingen')} met calisthenics` };
     }
     case 'forge-programma':
@@ -684,6 +689,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showBodyFat !== false };
     case 'gewicht-kaart':
       return { checked: s.weightCard !== false };
+    case 'gewicht-eigen':
+      return { value: choiceShort('gewichtEigen', s.weightForLoad ?? 'trend') };
     case 'gewichtstrend':
       return { checked: s.weightTrend !== false };
     case 'hartslag': {

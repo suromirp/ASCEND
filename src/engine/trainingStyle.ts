@@ -203,9 +203,22 @@ export function withStyleUndone<M extends { stepSwaps?: StepSwaps }>(model: M | 
 // Hoeveel trainingen calisthenics hebben (helemaal of samen), voor de rij in de instellingen. Een stap waarvan de
 // oefening van het sjabloon zelf geen ladder heeft, kan alleen uit deze keuze komen; het stapvoorstel zet alleen een
 // plek die al op een ladder stond.
-export function calisthenicsTrainings(model: { stepSwaps?: StepSwaps } | undefined): number {
+// Met `templates` telt een stap alleen als hij nog geldt: de plek staat nog in het sjabloon met dezelfde oefening als
+// `from` (een verouderde stap geldt niet meer, zie `withStepSwaps`) en de training bestaat nog.
+export function calisthenicsTrainings(model: { program?: StoredStrengthProgram; stepSwaps?: StepSwaps } | undefined, templates?: readonly SessionTemplate[], date?: string): number {
   const all = normalizeStepSwaps(model?.stepSwaps) ?? {};
-  return Object.values(all).filter((slots) => Object.values(slots).some((s) => !LADDER_PLACE.has(s.from))).length;
+  const byId = templates ? new Map(templates.map((t) => [t.id, t])) : undefined;
+  return Object.entries(all).filter(([templateId, slots]) => {
+    const template = byId?.get(templateId);
+    if (byId && !template) return false;
+    const base = template ? baseSlotsFor(template, model, date ?? '9999-12-31') : undefined;
+    return Object.entries(slots).some(([slotId, s]) => {
+      if (LADDER_PLACE.has(s.from)) return false;
+      if (!base) return true;
+      const slot = base.find((b) => b.id === slotId);
+      return !!slot && slotExerciseId(slot) === s.from;
+    });
+  }).length;
 }
 
 export interface StyleTraining {
