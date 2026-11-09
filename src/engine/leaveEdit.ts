@@ -7,7 +7,8 @@
 //
 // Pure: no React, no IndexedDB.
 
-import type { LeaveKind, LeavePeriod } from '../models/leave';
+import type { LeaveKind, LeavePeriod, NoGymDetails } from '../models/leave';
+import { resolveNoGym } from './noGymDetails';
 
 export type LeaveEditScope = 'none' | 'note' | 'plan';
 
@@ -16,13 +17,17 @@ export interface LeaveEditDraft {
   startDate: string;
   endDate: string;
   note: string;
+  // Only for a period without a gym: its choices (models/leave.ts#NoGymDetails).
+  noGym?: NoGymDetails;
 }
+
+const sameNoGym = (a: LeavePeriod, b: LeavePeriod) => a.kind !== 'no_gym' || JSON.stringify(resolveNoGym(a)) === JSON.stringify(resolveNoGym(b));
 
 const cleanNote = (note: string | undefined) => (note ?? '').trim();
 
 // What the edit touches: nothing, only the note, or the planning.
 export function leaveEditScope(before: LeavePeriod, after: LeavePeriod): LeaveEditScope {
-  if (before.kind !== after.kind || before.startDate !== after.startDate || before.endDate !== after.endDate) return 'plan';
+  if (before.kind !== after.kind || before.startDate !== after.startDate || before.endDate !== after.endDate || !sameNoGym(before, after)) return 'plan';
   return cleanNote(before.note) === cleanNote(after.note) ? 'none' : 'note';
 }
 
@@ -33,14 +38,16 @@ export function editedPeriod(before: LeavePeriod, draft: LeaveEditDraft): LeaveP
   const next: LeavePeriod = { id: before.id, kind: draft.kind, startDate: draft.startDate, endDate: draft.endDate };
   if (note) next.note = note;
   if (draft.kind === 'trek' && before.trek) next.trek = before.trek;
+  if (draft.kind === 'no_gym') next.noGym = draft.noGym ?? resolveNoGym(before);
   return next;
 }
 
 // The part of the periods the planning reads, for the key that decides whether
 // the planning runs again: id, kind, days, and of a tocht its terrain and
-// importance. The note and the name are words only, so they are left out.
+// importance, and of a period without a gym how much and the strength. The note,
+// the name and the hills are words only, so they are left out.
 export function leaveKey(periods: LeavePeriod[] | undefined): unknown[] {
-  return (periods ?? []).map((p) => [p.id, p.kind, p.startDate, p.endDate, p.trek?.terrain ?? null, p.trek?.importance ?? null]);
+  return (periods ?? []).map((p) => [p.id, p.kind, p.startDate, p.endDate, p.trek?.terrain ?? null, p.trek?.importance ?? null, ...(p.kind === 'no_gym' ? [resolveNoGym(p).amount, resolveNoGym(p).strength] : [])]);
 }
 
 // The stored list with a new note on one period. An empty note goes.

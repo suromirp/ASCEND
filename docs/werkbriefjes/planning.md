@@ -9,7 +9,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - `src/engine/mainGoal.ts#mainGoal` het hoofddoel, op één plek
 - `src/engine/templateRoles.ts#hasRole` een training herken je aan een rol, nooit aan een id
 - `src/engine/workSets.ts#isWorkSet` alles wat sets telt gaat hierdoor
-- `src/engine/leaveProposal.ts#planLeaveChange` vrije dagen, vakanties en tochten als voorstel
+- `src/engine/leaveProposal.ts#planLeaveChange` vrije dagen, vakanties, tochten en zonder sportschool als voorstel; `src/engine/noGym.ts#applyNoGymDays` wat zonder sportschool verandert
 - `src/engine/programLayout.ts#layoutWaves` fases en golven, geteld vanaf het doel
 - `src/storage/databaseHorizon.ts#syncProgramHorizon` schrijft het plan weg, draait bij elke verandering
 - `src/storage/horizonPlan.ts#computeHorizonPlan` rekent een voorstel uit, `applyHorizonPlanNow` schrijft het
@@ -31,14 +31,14 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - Opstartwerk wacht nooit op de sync; wat de planning wijzigt wacht wel op de wachtrij en leest dan het opgeslagen plan.
 - Een teruggezette rij krijgt geen slot en geen vaste lengte, anders blijft hij vastgezet staan.
 - De reparatie zet niets op de laatste vrije dag van een week, behalve in een week met vakantie, vrije dagen of tocht.
+- `tpl_bodyweight` (zonder sportschool) is een krachtsjabloon zonder vaste dag: een lijst van krachtsjablonen voor MacroFactor slaat hem over (`src/engine/noGymDetails.ts#BODYWEIGHT_TEMPLATE_ID`), anders raadt hij mee.
 - `PATTERN_SWAPS` werken alleen in fases van een plan met een doel; de golden scenario's A en C bewegen niet.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/engine/scheduler src/engine/weekValidator src/engine/planPass src/engine/leave src/storage/horizon`
+- Tijdens het werk: `npx vitest run src/engine/scheduler src/engine/weekValidator src/engine/planPass src/engine/leave src/engine/noGym src/storage/horizon`
 - `src/storage/planGolden.test.ts` mag alleen bewegen met de reden in de commit.
 - Tekstkaart (`npm run kaart:vergelijk`) alleen als een scherm verandert.
 
 ## Lees verder
 - `docs/architectuur/planning.md`
-- `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`, `docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md`
-- `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`, `docs/onderzoek/Planning op een lijn.md`
+- `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`, `docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md`, `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`, `docs/beslissingen/2026-11-09-zonder-sportschool.md`, `docs/onderzoek/Planning op een lijn.md`

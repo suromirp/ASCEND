@@ -76,7 +76,8 @@ export interface KindAmountContext {
 const findingKey = (f: { rule: string; sessionIds: string[] }) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
 
 function blockedByLeave(date: string, leave: readonly LeavePeriod[] | undefined): boolean {
-  return (leave ?? []).some((p) => (p.kind === 'no_training' || p.kind === 'trek') && date >= p.startDate && date <= p.endDate);
+  // Without a gym you train less on purpose (engine/noGym.ts): nothing is added there either.
+  return (leave ?? []).some((p) => (p.kind === 'no_training' || p.kind === 'trek' || p.kind === 'no_gym') && date >= p.startDate && date <= p.endDate);
 }
 
 export function applyKindAmounts(all: readonly PlannedSession[], amounts: KindAmountMap | undefined, ctx: KindAmountContext): { sessions: PlannedSession[]; repairs: Repair[] } {

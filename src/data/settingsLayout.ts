@@ -63,7 +63,7 @@ export interface PageRows {
 
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
-    rows: ['bundel-dagen', 'meerdere', 'sporten', 'hoeveel-per-soort', 'bundel-sporten-tellen', 'wijzigingen', 'ambitie', 'bundel-testloop', 'rustdag-terug', 'weekvoorstel'],
+    rows: ['bundel-dagen', 'meerdere', 'sporten', 'hoeveel-per-soort', 'bundel-sporten-tellen', 'wijzigingen', 'ambitie', 'bundel-testloop', 'rustdag-terug', 'weekvoorstel', 'zonder-sportschool'],
     advanced: ['bundel-niet-doorgegaan', 'lange-loop-benen', 'bundel-slepen', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test'],
   },
   doel: {

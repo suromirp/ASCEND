@@ -16,6 +16,9 @@
 //   and no more findings than before: otherwise nothing changes. Never in a
 //   rest week or the taper, never on the rest day, never where hiking is off.
 //
+// - Without a gym: runs shorter and easier, a gym session with your own weight
+//   or let go (engine/noGym.ts), before the two steps above.
+//
 // Everything is deterministic and idempotent: a second run finds the walks
 // there and changes nothing. What is logged, past or locked by you is never
 // moved here.
@@ -32,6 +35,7 @@ import { templateSport } from './sports';
 import { restWeekState } from './restWeek';
 import { PHASE_TAPER } from './programLayout';
 import { hasRole, idHasRole, idIsTestOrRace } from './templateRoles';
+import { applyNoGymDays } from './noGym';
 
 const TREK_TEMPLATE_ID = 'tpl_mountain_hike';
 const FREE_DAY_WALK_TEMPLATE_ID = 'tpl_ruck_walk';
@@ -60,8 +64,10 @@ export function applyLeaveBlocks(all: PlannedSession[], input: LeaveStepInput): 
   const byId = new Map(templates.map((t) => [t.id, t]));
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const days = leaveDays(periods);
-  let sessions = all;
-  const repairs: Repair[] = [];
+  // Without a gym first: what it lets go is no longer in the way of a walk.
+  const noGym = applyNoGymDays({ sessions: all, days, today, goalDay, templates, logged, newId: input.newId });
+  let sessions = noGym.sessions;
+  const repairs: Repair[] = [...noGym.repairs];
 
   const usable = (date: string) => date >= today && (!goalDay || date < goalDay) && !raceDays.has(date);
   const open = (s: PlannedSession) => s.status !== 'skipped';

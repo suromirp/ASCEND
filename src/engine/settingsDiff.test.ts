@@ -26,6 +26,7 @@ const everything: AppSettings = {
   askSweat: false,
   trekLegRest: 'strict',
   leaveCrowding: 'shift',
+  noGymStrength: 'drop',
   longRunGrowth: 'wave',
   bootBreakInKm: 150,
   bootBreakInReminder: false,

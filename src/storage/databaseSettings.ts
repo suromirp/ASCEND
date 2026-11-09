@@ -160,6 +160,11 @@ export interface AppSettings {
   // the advice) lets it go rather than put it right before or after its own next time, 'shift' moves
   // it to any day of that week that fits. Optional and additive, so no migration step.
   leaveCrowding?: 'drop' | 'shift';
+  // A new period without a gym (engine/noGym.ts): 'bodyweight' (absent = bodyweight, the advice)
+  // puts a short session with your own weight in place of a gym session, 'drop' lets it go. Only
+  // the starting choice in the sheet: the period keeps its own choice, so changing this never
+  // changes a plan. Optional and additive, so no migration step.
+  noGymStrength?: 'bodyweight' | 'drop';
   // How fast the long run grows toward a running race (engine/runGrowth.ts): 'weekly' (absent =
   // weekly, the advice), 'biweekly' or 'wave' (per block of four weeks, as before). Optional, additive.
   longRunGrowth?: 'weekly' | 'biweekly' | 'wave' | 'firm' | 'fast';

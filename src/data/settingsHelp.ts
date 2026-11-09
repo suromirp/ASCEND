@@ -1268,6 +1268,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geldt voor', text: 'nieuwe en gewijzigde periodes. Je ziet het altijd eerst in het voorstel.' },
     ],
   },
+  zonderSportschool: {
+    title: 'Kracht zonder sportschool',
+    lead: 'De eerste keuze voor kracht als je in Week een periode zonder sportschool toevoegt. Per periode kun je het nog anders kiezen.',
+    points: [
+      { head: 'Eigen gewicht', text: 'een krachttraining in de sportschool wordt op dezelfde dag een korte sessie met je eigen gewicht: squats, lunges, push-ups en kuitheffingen, 15 tot 20 minuten.' },
+      { head: 'Laten vervallen', text: 'kracht vervalt in die periode. Lopen blijft.' },
+      { head: 'Altijd', text: 'je ziet eerst een voorstel. Een periode die al staat, houdt zijn eigen keuze.' },
+    ],
+  },
   seizoensstrook: {
     title: 'Seizoensstrook',
     lead: 'Bovenaan Ascend staat je seizoen als een strook van nu tot je laatste doel, met een vlag per doel.',

@@ -230,6 +230,8 @@ export function applyPlanChangeItems(
           order: next.length,
           // The system's own layout (restore): no lock, a later run may move it.
           ...(item.restore ? {} : locked),
+          // A length of its own (a short easy run in a period without a gym, engine/noGym.ts).
+          ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}),
           ...(item.leave ? { leave: item.leave } : {}),
         };
         next = [...next, created];

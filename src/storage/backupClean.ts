@@ -331,6 +331,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.leaveCrowding;
     skipped.n++;
   }
+  // Kracht zonder sportschool: eigen gewicht of laten vervallen, of niet aanwezig (het advies).
+  if ('noGymStrength' in s && s.noGymStrength !== 'bodyweight' && s.noGymStrength !== 'drop') {
+    delete s.noGymStrength;
+    skipped.n++;
+  }
   // Loslaten op een training in Week: ruilen of samen, of niet aanwezig (het advies).
   if ('dropOnTraining' in s && s.dropOnTraining !== 'swap' && s.dropOnTraining !== 'together') {
     delete s.dropOnTraining;

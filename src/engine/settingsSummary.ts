@@ -524,6 +524,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('rustNaTocht', s.trekLegRest ?? 'soft') };
     case 'vakantie-opzij':
       return { value: choiceShort('vakantieOpzij', s.leaveCrowding ?? 'drop') };
+    case 'zonder-sportschool':
+      return { value: choiceShort('zonderSportschool', s.noGymStrength ?? 'bodyweight') };
     case 'vrije-dagen':
       return f.vacations > 0 ? { value: `${f.vacations} gepland` } : { value: 'Geen', dim: true };
     case 'reisplanner':
