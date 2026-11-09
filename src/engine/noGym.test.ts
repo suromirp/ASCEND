@@ -417,6 +417,49 @@ describe('Heuvels in de buurt: één loop per week is een heuveltraining', () =>
     expect(r.repairs).toEqual([]);
   });
 
+  describe('geen loop die een heuveltraining kan worden: één rustige heuvelloop erbij', () => {
+    const p = noGym(NEXT, addDays(NEXT, 2), { amount: 'normal', hills: true });
+    const longOnly = [S('l1', 'tpl_long_run', NEXT)];
+
+    it('komt op de vrije dag met 48 uur van de lange duurloop, met één zin waarom, en een tweede ronde doet niets', () => {
+      const r = step(longOnly, p);
+      expect(placed(r).map((s) => [s.templateId, s.scheduledDate])).toEqual([['tpl_hill_easy', addDays(NEXT, 2)]]);
+      expect(r.repairs.find((x) => x.added)?.reason).toBe('Heuvels in de buurt: een rustige heuvelloop erbij, er staat in je periode geen loop die een heuveltraining kan worden.');
+      expect(step(r.sessions, p).repairs).toEqual([]);
+    });
+
+    it('zonder Heuvels aan komt er niets bij', () => {
+      expect(step(longOnly, noGym(NEXT, addDays(NEXT, 2), { amount: 'normal' })).repairs).toEqual([]);
+    });
+
+    it('overslaan of verplaatsen van wat het voorstel zelf neerzette geeft geen nieuwe heuvelloop', () => {
+      const r = step(longOnly, p);
+      const skipped = r.sessions.map((s) => (s.leave?.role === 'placed' ? { ...s, status: 'skipped' as const } : s));
+      expect(step(skipped, p).repairs).toEqual([]);
+      const moved = r.sessions.map((s) => (s.leave?.role === 'placed' ? { ...s, scheduledDate: addDays(NEXT, 10) } : s));
+      expect(step(moved, p).repairs).toEqual([]);
+      // Ook heuvelsprints die het voorstel zelf neerzette en die je oversloeg.
+      const sprint = step(base, p);
+      const sprintSkipped = sprint.sessions.map((s) => (s.leave?.role === 'placed' ? { ...s, status: 'skipped' as const } : s));
+      expect(step(sprintSkipped, p).repairs).toEqual([]);
+    });
+
+    it('een heuveltraining die je zelf oversloeg levert geen heuvelloop op, ook niet op die dag', () => {
+      const r = step([{ ...S('h1', 'tpl_hill_intervals', NEXT), status: 'skipped' }, S('l1', 'tpl_long_run', addDays(NEXT, 2))], p);
+      expect(r.repairs).toEqual([]);
+    });
+
+    it('niet vlak voor een test of wedstrijd', () => {
+      const r = step([...longOnly, S('r1', 'tpl_race', addDays(NEXT, 3))], p);
+      expect(placed(r)).toEqual([]);
+    });
+
+    it('met een klacht aan een knie of been noemt de zin beide', () => {
+      const r = step(longOnly, p, { legComplaint: true });
+      expect(r.repairs.find((x) => x.added)?.reason).toBe('Heuvels in de buurt: een rustige heuvelloop erbij, want er staat in je periode geen loop die een heuveltraining kan worden, en je klacht aan een knie of been is Matig of erger, dus zonder afdalen in tempo.');
+    });
+  });
+
   it('zonder Heuvels in de buurt blijft het bij de tip, niets verandert', () => {
     expect(step(base, noGym(NEXT, addDays(NEXT, 2), { amount: 'normal' })).repairs).toEqual([]);
   });

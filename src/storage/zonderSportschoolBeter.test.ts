@@ -61,11 +61,15 @@ describe('periode Zonder sportschool, het nagemaakte voorbeeld', () => {
     expect(applied.unsupported).toEqual([]);
     const after = applied.sessions.filter((s) => s.status !== 'skipped');
     // Het voorstel per dag, Gewoon met Heuvels in de buurt aan: de lange duurloop en de rustige loopjes blijven zoals gepland.
-    // Er staat geen loop in de periode die een heuveltraining kan worden (alleen de lange duurloop), dus ASCEND zet er geen bij.
+    // Er staat geen loop in de periode die een heuveltraining kan worden (alleen de lange duurloop), dus komt er één rustige heuvelloop bij op de vrije dag wo 18.
     expect(dayList(templates, after, '2026-11-12', '2026-11-22')).toEqual([
-      '12 Rustige duurloop', '13 Heuvelintervallen', '14 Eigen gewicht', '15 Lange duurloop', '16 Herstelwandeling', '17 Eigen gewicht',
+      '12 Rustige duurloop', '13 Heuvelintervallen', '14 Eigen gewicht', '15 Lange duurloop', '16 Herstelwandeling', '17 Eigen gewicht', '18 Rustige heuvelloop',
       '19 Rustige duurloop', '20 Bovenlichaam B', '21 Heuvelsprints en afdalen', '22 Lange duurloop',
     ]);
+    // Eén rustige heuvelloop, met één zin waarom.
+    const added = plan.proposal.changes.filter((c) => c.action === 'add' && c.newSessionDraft?.templateId === 'tpl_hill_easy');
+    expect(added.map((c) => c.toDate)).toEqual(['2026-11-18']);
+    expect(added[0].reason).toBe('Heuvels in de buurt: een rustige heuvelloop erbij, er staat in je periode geen loop die een heuveltraining kan worden.');
     // Wat vóór de periode staat, blijft staan.
     expect(plan.proposal.changes.filter((c) => (c.fromDate && c.fromDate < PERIOD.startDate) || (c.toDate && c.toDate < PERIOD.startDate))).toEqual([]);
     expect(after.some((s) => s.scheduledDate === '2026-11-13' && s.templateId === 'tpl_hill_intervals')).toBe(true);
@@ -83,6 +87,18 @@ describe('periode Zonder sportschool, het nagemaakte voorbeeld', () => {
     expect(plan.proposal.changes.every((c) => !!c.reason && c.reason.length > 10)).toBe(true);
     const gone = plan.proposal.changes.filter((c) => c.action === 'remove' && !/eigen gewicht\./.test(c.reason ?? ''));
     expect(gone.map((c) => c.reason).every((r) => /48 uur|vervalt|wordt/.test(r ?? ''))).toBe(true);
+  });
+
+  it('met een klacht aan knie of been (Matig of erger) zegt de zin dat er niet in tempo wordt afgedaald', async () => {
+    const { sessions: stored, templates, context } = await setup();
+    const swap: Record<string, string> = { '2026-11-13': '2026-11-14', '2026-11-14': '2026-11-13' };
+    const sessions = stored.map((s) => (swap[s.scheduledDate] && (s.templateId === 'tpl_upper_b' || s.templateId === 'tpl_hill_intervals') ? { ...s, scheduledDate: swap[s.scheduledDate] } : s));
+    const ctx = (periods: LeavePeriod[]) => ({ ...context(PERIOD)(periods), noGymLegComplaint: true });
+    const plan = planLeaveChange({ mode: 'add', period: PERIOD, existing: [], sessions, logs: [], templates, today: TODAY, context: ctx });
+    const added = plan.proposal.changes.filter((c) => c.action === 'add' && c.newSessionDraft?.templateId === 'tpl_hill_easy');
+    expect(added).toHaveLength(1);
+    expect(added[0].reason).toBe('Heuvels in de buurt: een rustige heuvelloop erbij, want er staat in je periode geen loop die een heuveltraining kan worden, en je klacht aan een knie of been is Matig of erger, dus zonder afdalen in tempo.');
+    expect(plan.proposal.changes.some((c) => c.action === 'add' && c.newSessionDraft?.templateId === 'tpl_hills_descent')).toBe(false);
   });
 
   it('drie openingen na Akkoord zeggen niets meer en veranderen niets (pingpong)', async () => {
