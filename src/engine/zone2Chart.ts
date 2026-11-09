@@ -34,6 +34,8 @@ export interface Zone2Chart {
   dots: Zone2ChartDot[];
   // De lijn van de uitspraak, van de eerste loop tot vandaag.
   line?: { x1: number; x2: number; sec1: number; sec2: number };
+  // Bij 'geen duidelijke verandering' is de lijn geen uitspraak: de grafiek tekent hem gestippeld en gedimd.
+  lineUnclear?: boolean;
   // De waaier: hoe schuin de lijn met de band van 80 procent kan lopen, rond het zwaartepunt van
   // de lopen. Per rand twee punten (bij x1 en x2), in seconden per km.
   fan?: { x1: number; x2: number; fast1: number; fast2: number; slow1: number; slow2: number };
@@ -75,10 +77,12 @@ export function zone2Chart(trend: Pick<AerobicTrend, 'measurements' | 'statement
 
   let line: Zone2Chart['line'];
   let fan: Zone2Chart['fan'];
+  let lineUnclear = false;
   if (state === 'uitspraak' && s?.kind === 'uitspraak') {
     const x1 = xOf(s.line.fromDate);
     const x2 = xOf(s.line.toDate);
     line = { x1, x2, sec1: s.line.fromSec, sec2: s.line.toSec };
+    lineUnclear = s.verdict === 'geen-duidelijke-verandering';
     // Het zwaartepunt: het gewogen gemiddelde van de dagen, zoals in zone2Statement. Daar draait
     // de lijn om als de helling binnen de band verschuift.
     const totalW = counted.reduce((n, m) => n + m.weight, 0);
@@ -100,6 +104,7 @@ export function zone2Chart(trend: Pick<AerobicTrend, 'measurements' | 'statement
     toDate: today,
     dots,
     ...(line ? { line } : {}),
+    ...(lineUnclear ? { lineUnclear } : {}),
     ...(fan ? { fan } : {}),
     fastSec,
     slowSec,

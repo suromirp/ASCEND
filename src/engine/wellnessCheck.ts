@@ -18,6 +18,7 @@ import type { EnergyFeeling, SleepFeeling } from '../models/checkIn';
 import { addDays } from '../utils/dates';
 import { ignoredNightDates, judgmentFor, nightInfo, type NightInfo, type NightOptions } from './shortNight';
 import { mean, stdev } from '../utils/stats';
+import { capitalize } from '../utils/capitalize';
 
 // Your own average: the 28 days before today, and at least 7 of them with a value.
 export const BASELINE_DAYS = 28;
@@ -245,7 +246,7 @@ export function watchSummaryLine(reading: WellnessReading | undefined, options: 
   // Een nacht die je niet goed gemeten noemde, toont de gemeten slaap nergens.
   const ignored = reading.night?.state === 'ignored';
   const text = reading.lines.filter((l) => !(ignored && l.key === 'sleep')).map((l) => l.short).join(' · ');
-  const capital = text.charAt(0).toUpperCase() + text.slice(1);
+  const capital = capitalize(text);
   const hasSleep = ignored || reading.lines.some((l) => l.key === 'sleep');
   return hasSleep || !sleepExpected ? capital : `${NO_SLEEP_TEXT} · ${text}`;
 }

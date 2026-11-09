@@ -77,7 +77,7 @@ fris en sportief op donker marine.
   als ✓ of ↷ voor iets wat een icoon kan zijn.
 - Logo "Ring en pad" (`docs/beslissingen/2026-10-25-logo-ring-en-pad.md`): app-icoon in `public/`, `AppMark`, `AscendSplashLogo`, `AscendAnimatedLogo`, alleen de tokens `--color-logo-*`. Details in `docs/architectuur/bediening-en-beweging.md`.
 - Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in `src/App.tsx`), dekkend marine, labels in zinsletters, actieve tab in de tabkleur. Meer is het tandwiel rechtsboven (`SettingsGear`, 44 bij 44 px, op elke tab op dezelfde plek, opent `/more`); wat een pagina zelf rechtsboven nodig heeft gaat in `SkyBand` `actions`. Details in `docs/architectuur/bediening-en-beweging.md`.
-- Lange donkere pagina's krijgen hoogstens één `SkyPanel`, nooit als eerste kaart (zie `docs/architectuur/bediening-en-beweging.md`).
+- Lucht staat alleen bovenaan in `SkyBand`; een `SkyPanel` halverwege een pagina bestaat niet meer (zie `docs/architectuur/bediening-en-beweging.md`).
 - Instellingen (`/more`, acht groepen): elke instelling is één `SettingsRow`, uitleg achter de InfoButton (`src/data/settingsHelp.ts`), waarde uit `engine/settingsSummary.ts`. Details in `docs/architectuur/bediening-en-beweging.md`.
 
 ## Stem

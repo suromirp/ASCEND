@@ -40,7 +40,7 @@ export function Zone2PaceChart({ chart }: { chart: Zone2Chart }) {
         ))}
         <line x1={LEFT} x2={LEFT + plotW} y1={TOP + plotH} y2={TOP + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
         {fanPath && <path d={fanPath} fill="var(--color-progress)" opacity={0.12} />}
-        {line && <line x1={x(line.x1)} y1={y(line.sec1)} x2={x(line.x2)} y2={y(line.sec2)} stroke="var(--color-progress)" strokeWidth={2} strokeLinecap="round" />}
+        {line && <line x1={x(line.x1)} y1={y(line.sec1)} x2={x(line.x2)} y2={y(line.sec2)} stroke="var(--color-progress)" strokeWidth={2} strokeLinecap="round" {...(chart.lineUnclear ? { strokeDasharray: '2 5', opacity: 0.5 } : {})} />}
         {chart.dots.map((d) => (
           <circle
             key={d.logId}
