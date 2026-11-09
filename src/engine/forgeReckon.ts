@@ -63,7 +63,8 @@ function readRir(r: WorkoutRow): number | undefined {
 // afvinkte zoals hij er stond zegt niets nieuws over je kracht (de herhalingen waren een vraag, geen
 // grens), dus daarmee blijft de schatting van het voorschrift staan.
 export function wentOtherwise(r: WorkoutRow): boolean {
-  if (r.kind !== 'work' || !r.done || !r.reps || r.reps <= 0 || r.weightKg === undefined || r.target.timedSec !== undefined) return false;
+  // Een set met een band zegt niets over je kracht (een onbekend deel hulp): die rekent nooit mee.
+  if (r.kind !== 'work' || !r.done || !r.reps || r.reps <= 0 || r.weightKg === undefined || r.target.timedSec !== undefined || r.band !== undefined) return false;
   if (measuredRir(r) && r.rir !== rirAim(r.target)) return true;
   if (r.forgeReps === undefined) return measuredRir(r);
   return r.reps !== r.forgeReps;
@@ -91,7 +92,7 @@ export function strengthFor(ex: WorkoutExercise, rowId: string, ctx: ReckonConte
     const r = ex.rows.find((x) => x.id === ids[i])!;
     // Een set onder de lege stang (een tikfout als 10 bij de squat) telt niet stil mee als je kracht van vandaag.
     if (!wentOtherwise(r) || r.rir === undefined || underBar(ex, r.id, ctx.profile) !== undefined) continue;
-    const est = estimateSet({ reps: r.reps!, weightKg: r.weightKg, rir: isTopSetRow(ex, r.id) ? readRir(r) : r.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
+    const est = estimateSet({ reps: r.reps!, weightKg: r.weightKg, rir: isTopSetRow(ex, r.id) ? readRir(r) : r.rir, kind: 'work', ...(r.band ? { band: r.band } : {}) }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
     if (est) base = { kg: est.strengthKg, from: i };
   }
   if (!base && ex.strengthKg !== undefined) base = { kg: ex.strengthKg, from: 0 };

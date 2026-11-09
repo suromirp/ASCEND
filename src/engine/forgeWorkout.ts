@@ -123,6 +123,9 @@ export interface WorkoutExercise {
   restSec: number;
   // The name of the exercise this one replaced, for this training only.
   swappedFrom?: string;
+  // De ruil kwam van Stap lichter of Stap zwaarder (niet van Ruilen): de rijen zijn die van de stap zelf. Staat in
+  // het concept naast `swappedFrom`; een heropend concept houdt een geruilde oefening zoals hij was (mergeDraft).
+  ladderStep?: boolean;
   timed: boolean;
   // Een houding met seconden die je invult (Exercise.measure 'hold'); geen RIR (forgeLadder.ts#ladderRows).
   hold?: boolean;
@@ -273,7 +276,8 @@ export function planStateBefore(ctx: PlanContext, workout: WorkoutExercise[], sl
   const state = planState(ctx);
   for (const ex of workout) {
     if (ex.slot === slot) break;
-    if (!ex.timed) {
+    // Zelfde regel als planExercise: een timed oefening en een houding keren daar vroeg terug en tellen niet mee.
+    if (!ex.timed && !ex.hold) {
       noteWorked(state.warm, exerciseOf(ex), ex.rows.some((r) => r.kind === 'warmup'));
       noteDone(state, exerciseOf(ex), ex.rows);
       state.before?.push({ exercise: exerciseOf(ex), hard: expectedHard(hardPlanned(ex.rows), loggedHard(state.histories.get(exerciseKey(ex.exerciseId, ex.name).key), ctx)) });
@@ -286,8 +290,13 @@ function lastSession(history: ExerciseHistory | undefined, date: string) {
   return history?.sessions.filter((s) => s.date < date).sort((a, b) => a.date.localeCompare(b.date)).at(-1);
 }
 
-// One exercise of the training. `swapTo` puts another exercise in the slot.
-export function planExercise(planned: ExercisePrescription, ctx: PlanContext, state: PlanState, swapTo?: Exercise): WorkoutExercise {
+// One exercise of the training. `swapTo` puts another exercise in the slot. `opts.ladderStep`: the swap came from
+// Stap lichter or Stap zwaarder (not from Ruilen); only then a ladder step gets the rows of the step itself.
+export interface PlanExerciseOptions {
+  ladderStep?: boolean;
+}
+
+export function planExercise(planned: ExercisePrescription, ctx: PlanContext, state: PlanState, swapTo?: Exercise, opts: PlanExerciseOptions = {}): WorkoutExercise {
   const found = swapTo ? { key: swapTo.id, exercise: swapTo } : exerciseKey(planned.id, planned.exerciseName);
   const exercise = found.exercise;
   // Zonder spotter: bij een oefening waar falen gevaarlijk is vraagt het voorschrift minstens 1 over
@@ -305,10 +314,12 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   const last = lastSession(history, ctx.date);
   const baseRir = slot.rpe !== undefined ? Math.max(0, Math.min(5, 10 - slot.rpe)) : DEFAULT_RIR;
 
-  // Een houding, of een stap van een ladder waar je naartoe tikte: de rijen komen van die stap zelf, niet van het
-  // model (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md). Het aantal werksets blijft.
+  // Een houding, of een stap van een ladder waar je met Stap lichter of Stap zwaarder naartoe tikte (en Stappen bij
+  // calisthenics staat aan): de rijen komen van die stap zelf, niet van het model
+  // (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md). Gewoon Ruilen naar een ladderstap blijft bij het model.
   const bandOn = ctx.settings.ladderRow && ctx.settings.askBand;
-  if (exercise && (exercise.measure === 'hold' || (swapTo && exercise.ladder))) {
+  const ladderStep = !!swapTo && !!opts.ladderStep && ctx.settings.ladderRow && !!exercise?.ladder;
+  if (exercise && (exercise.measure === 'hold' || ladderStep)) {
     const made = ladderRows({ slotId: slot.id, exercise, setCount, previous: last?.sets, ...(exercise.measure === 'hold' ? {} : { rir: fromSlotRir(targets, baseRir) }), band: bandOn });
     return {
       slot: slot.id,
@@ -322,6 +333,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
       timed: false,
       ...(made.hold ? { hold: true } : {}),
       ...(swapTo ? { swappedFrom: cleanExerciseName(slot.exerciseName) } : {}),
+      ...(ladderStep ? { ladderStep: true } : {}),
     };
   }
 
@@ -765,10 +777,10 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
     if (ex.timed) continue;
     // Een houding gaat als seconden met reps 1, zodat alles wat herhalingen telt blijft werken; zonder RIR.
     const sets: SetLog[] = ex.rows
-      .filter((r) => r.done && (ex.hold ? (r.seconds ?? 0) > 0 : (r.reps ?? 0) > 0))
+      .filter((r) => r.done && (ex.hold ? holdSeconds(r) !== undefined : (r.reps ?? 0) > 0))
       .map((r) => ({
         reps: ex.hold ? 1 : r.reps!,
-        ...(ex.hold ? { seconds: r.seconds! } : {}),
+        ...(ex.hold ? { seconds: holdSeconds(r)! } : {}),
         ...(r.weightKg !== undefined ? { weightKg: r.weightKg } : {}),
         ...(r.kind === 'work' && r.rir !== undefined && !ex.hold ? { rir: r.rir } : {}),
         ...(r.band !== undefined ? { band: r.band } : {}),
@@ -789,6 +801,12 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
     if (sets.length > 0) out.push({ exerciseId: ex.exerciseId, exerciseName: ex.name, sets });
   }
   return out.length > 0 ? out : undefined;
+}
+
+// De seconden van een gedane houding: wat je invulde als dat een geldig getal boven 0 is, anders het voorschrift.
+function holdSeconds(r: WorkoutRow): number | undefined {
+  const ok = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
+  return ok(r.seconds) ? r.seconds : ok(r.target.holdSec) ? r.target.holdSec : undefined;
 }
 
 // The reps in reserve of the hardest working set on the legs, for the leg index.

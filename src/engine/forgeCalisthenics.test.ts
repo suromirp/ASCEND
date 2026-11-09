@@ -4,9 +4,14 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import { FAMILY } from '../data/exerciseFamilies';
+import { SETTINGS_INDEX } from '../data/settingsIndex';
+import { SETTINGS_HELP } from '../data/settingsHelp';
 import type { ExercisePrescription, SessionLog, SetLog } from '../models/training';
-import { applySeconds, exerciseSummary, firstField, nextField, takeTarget, weightStepFor } from './forgeInput';
-import { addRow, planExercise, planState, previousText, swapGroups, swapReasonSame, targetText, tickRow, toStrengthData, type PlanContext, type WorkoutExercise } from './forgeWorkout';
+import { applySeconds, exerciseSummary, firstField, mergeDraft, nextField, takeTarget, weightStepFor } from './forgeInput';
+import { strengthFor, wentOtherwise } from './forgeReckon';
+import { suggestLighter, tooHeavy } from './forgeAdjust';
+import { hardSetsLogged } from './forgeCrossFatigue';
+import { addRow, planExercise, planState, planStateBefore, previousText, swapGroups, swapReasonSame, targetText, tickRow, toStrengthData, type PlanContext, type WorkoutExercise } from './forgeWorkout';
 import { resolveStrengthSettings } from './strengthSettings';
 
 const settings = resolveStrengthSettings(undefined);
@@ -31,7 +36,10 @@ function log(date: string, sets: Record<string, SetLog[]>): SessionLog {
 
 const ctx = (logs: SessionLog[] = [], over: Partial<PlanContext> = {}): PlanContext => ({ logs, templates: [], program: null, bodyKg: 75, settings, date: '2026-11-20', modelOn: true, ...over });
 const slot = (id: string, exerciseName: string, sets: number, reps: string): ExercisePrescription => ({ id, exerciseName, sets, reps, priority: 'core' });
-const plan = (s: ExercisePrescription, c: PlanContext, swapTo?: string) => planExercise(s, c, planState(c), swapTo ? ex(swapTo) : undefined);
+// Een tik op Stap lichter of Stap zwaarder: de route `ladderStep`, zoals ForgeWorkout.tsx#stepTo hem meegeeft.
+const plan = (s: ExercisePrescription, c: PlanContext, swapTo?: string) => planExercise(s, c, planState(c), swapTo ? ex(swapTo) : undefined, { ladderStep: true });
+// Gewoon Ruilen: zonder die route.
+const ruil = (s: ExercisePrescription, c: PlanContext, swapTo: string) => planExercise(s, c, planState(c), ex(swapTo));
 
 describe('een houding in Forge', () => {
   it('Dead Hang krijgt een eigen houdingsrij: seconden, geen RIR, geen timed', () => {
@@ -99,7 +107,7 @@ describe('een houding in Forge', () => {
   });
 });
 
-describe('een tik naar een andere stap (Ruilen)', () => {
+describe('een tik naar een andere stap (via de weg van Ruilen)', () => {
   it('Push-Up naar Diamond: het aantal sets blijft, het doel is 5, de kop zegt voor Push-Up', () => {
     const s = slot('p', 'Push-Up', 3, '8-12');
     const e = plan(s, ctx(), 'diamond-push-up');
@@ -177,5 +185,85 @@ describe('de nuance van de decline push-up', () => {
       if (decline) expect(decline.reason, id).toContain('met je voeten verhoogd');
       for (const s of same) expect(s.reason, `${id} naar ${s.exercise.id}`).not.toMatch(/met je voet (verhoogd|op de grond)/);
     }
+  });
+});
+
+describe('na de review van Warden', () => {
+  const tenKgDips = [
+    log('2026-11-01', { dip: [{ reps: 8, weightKg: 10, rir: 2 }, { reps: 8, weightKg: 10, rir: 2 }, { reps: 7, weightKg: 10, rir: 1 }] }),
+    log('2026-11-08', { dip: [{ reps: 8, weightKg: 10, rir: 2 }, { reps: 8, weightKg: 10, rir: 2 }, { reps: 8, weightKg: 10, rir: 1 }] }),
+  ];
+  const bench = slot('b', 'Barbell Bench Press', 3, '6-8');
+
+  it('1: gewoon Ruilen naar een ladderstap houdt het voorschrift van het model (Bench Press naar Dips met 10 kg)', () => {
+    const e = ruil(bench, ctx(tenKgDips), 'dip');
+    expect(e.ladderStep).toBeUndefined();
+    expect(e.rows.find((r) => r.kind === 'work')!.weightKg).toBeGreaterThan(0);
+    expect(e.reason).toBeDefined();
+  });
+
+  it('1: met Stappen bij calisthenics uit kiest ook een tik op een stap de route van het model', () => {
+    const off = ctx(tenKgDips, { settings: resolveStrengthSettings({ ladderRow: false }) });
+    const e = planExercise(slot('n', 'Negative Dip', 3, '5-8'), off, planState(off), ex('dip'), { ladderStep: true });
+    expect(e.ladderStep).toBeUndefined();
+    expect(e.rows.find((r) => r.kind === 'work')!.weightKg).toBeGreaterThan(0);
+    const on = plan(slot('n', 'Negative Dip', 3, '5-8'), ctx(tenKgDips), 'dip');
+    expect(on.ladderStep).toBe(true);
+    // Het concept onthoudt de route: een heropend concept houdt de geruilde oefening zoals hij was.
+    expect(mergeDraft([on], [plan(slot('n', 'Negative Dip', 3, '5-8'), ctx(tenKgDips))])[0]).toBe(on);
+  });
+
+  it('2: een stap met extra gewicht neemt de topset: het zwaarste gewicht, daarbij de meeste herhalingen', () => {
+    const logs = [log('2026-11-10', { 'weighted-pull-up': [{ reps: 8, weightKg: 2.5 }, { reps: 5, weightKg: 7.5 }, { reps: 6, weightKg: 7.5 }, { reps: 4, weightKg: 5 }] })];
+    expect(plan(slot('pu', 'Pull-Up', 3, '5-8'), ctx(logs), 'weighted-pull-up').rows[0]).toMatchObject({ weightKg: 7.5, reps: 6 });
+  });
+
+  it('3: een houding telt in planStateBefore niet mee, net als bij openen', () => {
+    const c = ctx();
+    const workout = [plan(slot('h', 'Dead Hang', 3, '30s'), c), plan(slot('p', 'Push-Up', 3, '8-12'), c)];
+    const before = planStateBefore(c, workout, 'p');
+    const fresh = planState(c);
+    expect(before.done).toEqual(fresh.done);
+    expect(before.before).toEqual(fresh.before);
+  });
+
+  it('4: een rij met band rekent niet mee, stelt niet bij en is nooit te zwaar', () => {
+    const base = plan(slot('pu', 'Pull-Up', 3, '5-8'), ctx());
+    const rows = base.rows.map((r, i) => (i === 0 ? { ...r, weightKg: 0, reps: 2, rir: 0, done: true, forgeReps: 6, band: 'licht' as const } : r));
+    const e: WorkoutExercise = { ...base, rows, strengthKg: 90 };
+    const banded = e.rows[0];
+    expect(wentOtherwise(banded)).toBe(false);
+    expect(tooHeavy(banded)).toBe(false);
+    const rc = { bodyKg: 75, profile, workSets: settings.workSets, maxToFailure: settings.estimateUpTo, stackWeights: settings.stackWeights, on: true };
+    expect(strengthFor(e, e.rows[1].id, rc)).toBeCloseTo(strengthFor({ ...e, rows: e.rows.map((r, i) => (i === 0 ? { ...r, done: false } : r)) }, e.rows[1].id, rc)!, 6);
+    expect(suggestLighter(e, banded.id, { bodyKg: 75, profile, workSets: settings.workSets, maxToFailure: settings.estimateUpTo, stackWeights: settings.stackWeights })).toBeUndefined();
+    const plain = { ...banded, band: undefined };
+    expect(wentOtherwise(plain)).toBe(true);
+  });
+
+  it('8: een band die jij koos telt als aangeraakt; de band van je vorige keer niet', () => {
+    const logs = [log('2026-11-10', { 'pull-up': [{ reps: 6, band: 'middel' }] })];
+    const fresh = plan(slot('pu', 'Pull-Up', 2, '5-8'), ctx(logs));
+    expect(mergeDraft([fresh], [fresh])[0]).toBe(fresh);
+    const chosen: WorkoutExercise = { ...fresh, rows: fresh.rows.map((r) => (r.kind === 'work' ? { ...r, band: 'zwaar' as const } : r)) };
+    const freshAgain = plan(slot('pu', 'Pull-Up', 2, '5-8'), ctx(logs));
+    expect(mergeDraft([chosen], [freshAgain])[0]).toBe(chosen);
+  });
+
+  it('9: een gedane houding zonder geldige seconden valt terug op het voorschrift', () => {
+    const e = plan(slot('h', 'Dead Hang', 2, '30s'), ctx());
+    const broken: WorkoutExercise = { ...e, rows: e.rows.map((r, i) => ({ ...r, done: true, seconds: i === 0 ? Number.NaN : Number.POSITIVE_INFINITY })) };
+    expect(toStrengthData([broken])![0].sets.map((s) => s.seconds)).toEqual([10, 10]);
+  });
+
+  it('7: een Nee telt die set niet voor de stap, in de index en in de uitleg', () => {
+    expect(SETTINGS_INDEX.find((i) => i.id === 'forge-netjes')!.note).toContain('Een Nee telt die set niet voor de stap.');
+    expect(SETTINGS_HELP.forgeNetjes.lead).toContain('Een Nee telt die set niet voor de stap.');
+    expect(JSON.stringify(SETTINGS_INDEX)).not.toContain('niet voor de toets');
+  });
+
+  it('10: een houding is geen harde set', () => {
+    expect(hardSetsLogged([{ reps: 1, seconds: 30, rir: 0 }, { reps: 8, rir: 2 }], true)).toBe(1);
+    expect(hardSetsLogged([{ reps: 1, seconds: 30 }], true)).toBe(0);
   });
 });

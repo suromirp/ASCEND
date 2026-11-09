@@ -39,6 +39,7 @@ import {
   tickRow,
   updateRow,
   type PlanContext,
+  type PlanExerciseOptions,
   type WorkoutExercise,
 } from '../../engine/forgeWorkout';
 import { profileFor } from '../../engine/strengthWeights';
@@ -515,7 +516,7 @@ function ForgeWorkoutInner({
     haptics.tap();
     setCleanAsk((c) => (c?.slot === slot ? null : c));
     const own = exerciseKey(prescription.id, prescription.exerciseName).exercise?.id;
-    swap(slot, exerciseId === own ? null : exerciseId);
+    swap(slot, exerciseId === own ? null : exerciseId, { ladderStep: true });
   }
 
   // Het toestel als ponden opslaan in je sportschool: alleen na een tik op Opslaan.
@@ -566,7 +567,9 @@ function ForgeWorkoutInner({
     [setMenuFor, setRowMenu, setRirFor, setFillFor, setSpotterInfo],
   );
 
-  function swap(slot: string, exerciseId: string | null) {
+  // `opts.ladderStep`: de ruil komt van Stap lichter of Stap zwaarder; alleen dan krijgt een ladderstap de rijen van
+  // de stap zelf (forgeWorkout.ts#planExercise). Gewoon Ruilen houdt het voorschrift van het model.
+  function swap(slot: string, exerciseId: string | null, opts: PlanExerciseOptions = {}) {
     const current = workout.find((e) => e.slot === slot);
     // Vangnet: met een afgevinkte set wordt nooit geruild, want ruilen zet nieuwe rijen neer.
     if (!current || !canSwap(effSlots, current)) return;
@@ -577,7 +580,7 @@ function ForgeWorkoutInner({
     clearHints(slot);
     stands.dismiss(slot);
     setCleanAsk((c) => (c?.slot === slot ? null : c));
-    const swapped = planExercise(prescription, ctx, state, to);
+    const swapped = planExercise(prescription, ctx, state, to, opts);
     if (!readOnly) {
       const found = spotterEvents([swapped], Date.now(), () => makeId('fe'));
       if (found.length > 0) setForgeLog((l) => appendEvents(l, found));

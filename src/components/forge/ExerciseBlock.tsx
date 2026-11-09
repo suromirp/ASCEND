@@ -287,9 +287,10 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   <Icon name="ruilen" size={12} />
                 </button>
               )}
-              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : added ? 'extra kg' : 'kg'}</span>
+              {/* Een houding heeft geen kg (behalve met extra gewicht) en geen RIR: de koppen blijven dan leeg. */}
+              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : added ? 'extra kg' : ex.hold ? '' : 'kg'}</span>
               <span role="columnheader" className="text-center">{ex.timed || ex.hold ? 'sec' : 'Herh.'}</span>
-              <span role="columnheader" className="text-center">RIR</span>
+              <span role="columnheader" className="text-center">{ex.hold ? '' : 'RIR'}</span>
               {/* Alle sets afvinken staat in het blad Oefening, groep Sets (docs/beslissingen/2026-11-02-forge-herinrichting.md). */}
               <span role="columnheader" className="flex justify-center"><span className="sr-only">Gedaan</span></span>
             </div>

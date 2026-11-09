@@ -50,7 +50,8 @@ export interface Adjustment {
 // Haalde je de onderkant niet bij het gevraagde RIR? Een aangenomen RIR is het doel
 // zelf, dan beslissen de herhalingen alleen: onder de onderkant is te zwaar.
 export function tooHeavy(row: WorkoutRow): boolean {
-  if (row.kind !== 'work' || !row.done || row.rir === undefined) return false;
+  // Een set met een band zegt niets over het gewicht: geen voorstel om lichter te gaan.
+  if (row.kind !== 'work' || !row.done || row.rir === undefined || row.band !== undefined) return false;
   const t = row.target;
   if (t.timedSec !== undefined || t.rir === undefined || !row.reps || row.reps <= 0) return false;
   return row.reps + row.rir < t.repsLow + t.rir;
@@ -63,7 +64,7 @@ export function suggestLighter(ex: WorkoutExercise, rowId: string, ctx: AdjustCo
   const row = ex.rows[index];
   if (!row || !tooHeavy(row) || row.weightKg === undefined) return undefined;
   const exercise = exerciseOf(ex);
-  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
+  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work', ...(row.band ? { band: row.band } : {}) }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
   if (!est) return undefined;
   // Begin bij het gewicht dat je echt gebruikte, ook als het toestel het nog niet kent.
   const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
@@ -136,7 +137,7 @@ export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: Adjus
   const index = ex.rows.findIndex((r) => r.id === rowId);
   const row = ex.rows[index];
   if (!row || !tooHeavy(row) || row.weightKg === undefined) return undefined;
-  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
+  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work', ...(row.band ? { band: row.band } : {}) }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
   if (!est) return undefined;
   const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
   if (!candidates) return undefined;
@@ -210,7 +211,7 @@ export function suggestTooBigStep(ex: WorkoutExercise, rowId: string, ctx: Adjus
   const row = ex.rows[index];
   if (!row || !tooHeavy(row) || row.weightKg === undefined) return undefined;
   const exercise = exerciseOf(ex);
-  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
+  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work', ...(row.band ? { band: row.band } : {}) }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
   if (!est) return undefined;
   const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
   if (!candidates) return undefined;

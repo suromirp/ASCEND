@@ -156,10 +156,18 @@ export function ladderRows(input: LadderRowsInput): { rows: WorkoutRow[]; hold: 
     target = { repsLow: 1, repsHigh: 1, holdSec: seconds };
     row = { reps: 1, seconds };
   } else {
-    const counted = added !== undefined ? work.filter((s) => finite(s.weightKg) && s.weightKg >= added) : work;
-    const done = counted.map((s) => s.reps).filter((n) => finite(n) && n > 0);
-    const reps = done.length > 0 ? Math.max(...done) : SKILL_FLOOR_REPS;
-    const weightKg = added !== undefined ? Math.max(added, ...counted.map((s) => s.weightKg).filter(finite)) : undefined;
+    const counted = (added !== undefined ? work.filter((s) => finite(s.weightKg) && s.weightKg >= added) : work).filter((s) => finite(s.reps) && s.reps > 0);
+    let reps = SKILL_FLOOR_REPS;
+    let weightKg: number | undefined;
+    if (added !== undefined) {
+      // Extra gewicht: de topset van je laatste keer (het zwaarste gewicht, daarbij de meeste herhalingen), gewicht en
+      // herhalingen van die ene set; zonder zo'n set het extra gewicht van de stap en de onderkant.
+      const top = [...counted].sort((a, b) => b.weightKg! - a.weightKg! || b.reps - a.reps)[0];
+      weightKg = top ? top.weightKg! : added;
+      if (top) reps = top.reps;
+    } else if (counted.length > 0) {
+      reps = Math.max(...counted.map((s) => s.reps));
+    }
     target = { ...(weightKg !== undefined ? { weightKg } : {}), repsLow: reps, repsHigh: reps, ...(rir !== undefined ? { rir } : {}) };
     row = { ...(weightKg !== undefined ? { weightKg } : {}), reps };
   }

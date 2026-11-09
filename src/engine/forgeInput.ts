@@ -448,8 +448,14 @@ export function plateChange(step: Pick<PlateStep, 'add' | 'remove'>): string | u
 // geruild, een set erbij of eraf. Een oefening zonder iets van jou krijgt altijd het plan van nu, ook als
 // de naam gelijk bleef: anders blijft een voorschrift van voor een nieuwe regel (Zonder spotter) staan in
 // een training die je opende maar nog niet begon (de klok begint dan opnieuw, het concept niet).
+// Een band die jij koos: anders dan wat het plan van nu op die werkset klaarzet (de band van je vorige keer).
+function bandChosen(e: WorkoutExercise, f: WorkoutExercise): boolean {
+  const planned = f.rows.filter((r) => r.kind === 'work');
+  return e.rows.filter((r) => r.kind === 'work').some((r, i) => r.band !== planned[i]?.band);
+}
+
 function touchedInDraft(e: WorkoutExercise, f: WorkoutExercise): boolean {
-  return !!e.swappedFrom || !!e.raiseUndone || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || (r.rir !== undefined && r.rirAssumed === false) || isOwnRow(r));
+  return !!e.swappedFrom || !!e.raiseUndone || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || (r.rir !== undefined && r.rirAssumed === false) || r.clean !== undefined || isOwnRow(r)) || bandChosen(e, f);
 }
 
 // A training opened before its exercises changed (a renamed exercise, another

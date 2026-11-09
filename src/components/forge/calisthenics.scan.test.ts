@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 // tekst; de regel voor `.mx-row-in` in Rustig staat in src/index.css bij de andere klassen zonder beweging.
 const SOURCES = import.meta.glob<string>(['./*.tsx'], { query: '?raw', import: 'default', eager: true });
 const read = (f: string): string => SOURCES[f] ?? '';
+const GROUPS = import.meta.glob<string>(['../settings/groups/ForgeGroup.tsx'], { query: '?raw', import: 'default', eager: true });
 
 describe('calisthenics in het workoutscherm', () => {
   const block = read('./ExerciseBlock.tsx');
@@ -36,6 +37,16 @@ describe('calisthenics in het workoutscherm', () => {
     expect(ask).toMatch(/h-11 min-w-\[44px\][^"]*rounded-full border/);
     expect(ask).toContain('mx-row-in');
     expect(ask).not.toMatch(/animate-/);
+  });
+
+  it('na de review: lege koppen kg en RIR bij een houding, Netjes-rijen uitgelijnd, Extra gewicht in het cijferblok, uitleg bij de instellingen', () => {
+    expect(block).toContain("added ? 'extra kg' : ex.hold ? '' : 'kg'");
+    expect(block).toContain("{ex.hold ? '' : 'RIR'}");
+    const netjes = menus.slice(menus.indexOf("'Netjes: ja'"), menus.indexOf('Set verwijderen'));
+    expect(netjes).toContain('lead={<span className="h-5 w-5 shrink-0" aria-hidden="true" />}');
+    expect(read('./ForgeDock.tsx')).toContain("'Extra gewicht'");
+    const group = GROUPS['../settings/groups/ForgeGroup.tsx'] ?? '';
+    for (const key of ['forgeStappen', 'forgeNetjes', 'forgeBand']) expect(group).toContain(`info="${key}"`);
   });
 
   it('achteraf in het setmenu: drie keuzes', () => {
