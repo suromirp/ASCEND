@@ -198,7 +198,7 @@ describe('regel 2: twijfel, dan Hoeveel over?', () => {
   });
 });
 
-describe('het log: wat Forge vroeg, alleen bij een set zonder eigen RIR', () => {
+describe('het log: wat Forge vroeg, bij elke werkset uit Forge', () => {
   it('toStrengthData schrijft repsAsked en weightKgAsked naast rirAssumed', () => {
     const rows: WorkoutRow[] = [
       { id: 'a', kind: 'work', target: { weightKg: 60, repsLow: 9, repsHigh: 11, rir: 2 }, weightKg: 60, reps: 10, forgeReps: 10, rir: 2, rirAssumed: true, done: true },
@@ -206,8 +206,9 @@ describe('het log: wat Forge vroeg, alleen bij een set zonder eigen RIR', () => 
     ];
     const data = toStrengthData([{ slot: 's', exerciseId: 'bench-press', name: 'Bankdrukken', known: true, rows, restSec: 120, timed: false }])!;
     expect(data[0].sets[0]).toMatchObject({ reps: 10, rirAssumed: true, repsAsked: 10, weightKgAsked: 60 });
-    expect(data[0].sets[1].repsAsked).toBeUndefined();
-    expect(data[0].sets[1].weightKgAsked).toBeUndefined();
+    // Sinds 9 november ook bij een set met eigen RIR (Hoe goed kent Forge je), maar dan zonder rirAssumed.
+    expect(data[0].sets[1]).toMatchObject({ repsAsked: 10, weightKgAsked: 60, rirAsked: 2 });
+    expect(data[0].sets[1].rirAssumed).toBeUndefined();
   });
   it('de migratiestap houdt geldige velden, laat een beschadigd veld vallen en laat oude logs staan', () => {
     const log = (sets: unknown[]): SessionLog => ({ id: 'x', templateId: 't', type: 'strength', completedDate: '2026-09-01', completedAt: '2026-09-01T18:00:00.000Z', variant: 'custom', durationMinutes: 50, source: 'manual', strengthData: [{ exerciseId: 'bench-press', exerciseName: 'Bankdrukken', sets: sets as SetLog[] }] });
@@ -217,7 +218,9 @@ describe('het log: wat Forge vroeg, alleen bij een set zonder eigen RIR', () => 
     expect(migrateLogSetAsked(good)).toBe(good);
     const bad = migrateLogSetAsked(log([{ reps: 10, weightKg: 60, rir: 2, rirAssumed: true, repsAsked: 'tien', weightKgAsked: 60 }]));
     expect(bad.strengthData![0].sets[0]).toEqual({ reps: 10, weightKg: 60, rir: 2, rirAssumed: true, weightKgAsked: 60 });
-    const loose = migrateLogSetAsked(log([{ reps: 10, weightKg: 60, rir: 2, repsAsked: 10 }]));
-    expect(loose.strengthData![0].sets[0]).toEqual({ reps: 10, weightKg: 60, rir: 2 });
+    const loose = log([{ reps: 10, weightKg: 60, rir: 2, repsAsked: 10, rirAsked: 2 }]);
+    expect(migrateLogSetAsked(loose)).toBe(loose);
+    const badRir = migrateLogSetAsked(log([{ reps: 10, weightKg: 60, rir: 2, repsAsked: 10, rirAsked: 'twee' }]));
+    expect(badRir.strengthData![0].sets[0]).toEqual({ reps: 10, weightKg: 60, rir: 2, repsAsked: 10 });
   });
 });

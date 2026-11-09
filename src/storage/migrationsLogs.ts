@@ -305,15 +305,18 @@ function cleanSetTimes<T extends ExerciseSetLog[] | null | undefined>(data: T): 
   return (changed ? next : data) as T;
 }
 
-// --- SetLog.repsAsked, SetLog.weightKgAsked en SetLog.forgeKg ------------------------------------
+// --- SetLog.repsAsked, SetLog.weightKgAsked, SetLog.forgeKg en SetLog.rirAsked ------------------
 // `forgeKg` (het gewicht dat Forge na een bijstelling in de rij zette) kwam op 9 november 2026 erbij, met
 // dezelfde regel: docs/beslissingen/2026-11-09-forge-review-afvinken.md.
-// Wat Forge vroeg bij een set zonder eigen RIR ("Afvinken telt als het doel",
-// docs/beslissingen/2026-11-08-forge-afvinken-doel.md). Optioneel en aanvullend: oudere bestanden hebben
-// ze niet en lezen zoals altijd (met de onderkant van het bereik). Alleen een geldig getal blijft, en
-// alleen naast `rirAssumed`; een beschadigd veld valt weg en de set houdt zijn herhalingen en gewicht.
+// Wat Forge vroeg bij een set ("Afvinken telt als het doel", docs/beslissingen/2026-11-08-forge-afvinken-doel.md).
+// Sinds 9 november 2026 staat het bij elke werkset uit Forge, met `rirAsked` (de RIR van het doel) erbij, voor
+// "Hoe goed kent Forge je" (docs/beslissingen/2026-11-09-hoe-goed-kent-forge-je.md). Optioneel en aanvullend:
+// oudere bestanden hebben ze niet, of alleen naast `rirAssumed`, en lezen zoals altijd (met de onderkant van
+// het bereik). Alleen een geldig getal blijft; een beschadigd veld valt weg en de set houdt zijn herhalingen en
+// gewicht.
 const okAskedReps = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n > 0 && n <= 100;
 const okAskedKg = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1000;
+const okAskedRir = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 10;
 
 function cleanSetAsked<T extends ExerciseSetLog[] | null | undefined>(data: T): T {
   if (!Array.isArray(data)) return data;
@@ -321,15 +324,15 @@ function cleanSetAsked<T extends ExerciseSetLog[] | null | undefined>(data: T): 
   const next = data.map((e) => {
     if (!e || !Array.isArray(e.sets)) return e;
     const sets = e.sets.map((s) => {
-      if (!s || typeof s !== 'object' || (!('repsAsked' in s) && !('weightKgAsked' in s) && !('forgeKg' in s))) return s;
-      const keep = s.rirAssumed === true;
-      const repsOk = keep && (!('repsAsked' in s) || okAskedReps(s.repsAsked));
-      const kgOk = keep && (!('weightKgAsked' in s) || okAskedKg(s.weightKgAsked));
-      const forgeOk = keep && (!('forgeKg' in s) || okAskedKg(s.forgeKg));
-      if (repsOk && kgOk && forgeOk) return s;
-      const { repsAsked, weightKgAsked, forgeKg, ...rest } = s;
+      if (!s || typeof s !== 'object' || (!('repsAsked' in s) && !('weightKgAsked' in s) && !('forgeKg' in s) && !('rirAsked' in s))) return s;
+      const repsOk = !('repsAsked' in s) || okAskedReps(s.repsAsked);
+      const kgOk = !('weightKgAsked' in s) || okAskedKg(s.weightKgAsked);
+      const forgeOk = !('forgeKg' in s) || okAskedKg(s.forgeKg);
+      const rirOk = !('rirAsked' in s) || okAskedRir(s.rirAsked);
+      if (repsOk && kgOk && forgeOk && rirOk) return s;
+      const { repsAsked, weightKgAsked, forgeKg, rirAsked, ...rest } = s;
       changed = true;
-      return { ...rest, ...(keep && okAskedReps(repsAsked) ? { repsAsked } : {}), ...(keep && okAskedKg(weightKgAsked) ? { weightKgAsked } : {}), ...(keep && okAskedKg(forgeKg) ? { forgeKg } : {}) } as SetLog;
+      return { ...rest, ...(okAskedReps(repsAsked) ? { repsAsked } : {}), ...(okAskedKg(weightKgAsked) ? { weightKgAsked } : {}), ...(okAskedKg(forgeKg) ? { forgeKg } : {}), ...(okAskedRir(rirAsked) ? { rirAsked } : {}) } as SetLog;
     });
     return sets.every((s, i) => s === e.sets[i]) ? e : { ...e, sets };
   });
