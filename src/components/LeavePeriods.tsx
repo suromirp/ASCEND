@@ -17,6 +17,7 @@ import {
 } from '../engine/leave';
 import { editedPeriod, leaveEditScope } from '../engine/leaveEdit';
 import { NO_GYM_ADVICE, resolveNoGym } from '../engine/noGymDetails';
+import { mainGoalIsMountain } from '../engine/mountainMuscles';
 import { addDays, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -170,7 +171,8 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
   onClose: () => void;
 }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
-  const { settings } = useAppData();
+  const { settings, trainingGoals, goalMilestones } = useAppData();
+  const mountainGoal = useMemo(() => mainGoalIsMountain(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))), [trainingGoals, goalMilestones]);
   const today = todayISO();
   const [kind, setKind] = useState<LeaveKind>(editing?.kind ?? 'no_training');
   // Zonder sportschool: de keuzes van de periode, met het advies (en je instelling voor kracht) als begin.
@@ -256,7 +258,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                   <div className="flex items-center gap-3">
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Heuvels in de buurt</span>
-                      <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Loop rustig heuvels op en beheerst af. Goed voor een bergdoel.</span>
+                      <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Loop rustig heuvels op en beheerst af.{mountainGoal ? ' Goed voor je bergdoel.' : ''}</span>
                     </span>
                     <Toggle checked={noGym.hills} onChange={(on) => setGym({ hills: on })} label="Heuvels in de buurt" />
                   </div>

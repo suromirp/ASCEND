@@ -26,6 +26,12 @@ Eigen keuzes:
 - Opslag: `LeavePeriod.noGym` (`amount`, `strength`, `hills`), optioneel. Een oudere back-up heeft het soort niet en leest zoals voorheen; kapotte keuzes vallen weg bij import en tellen mee, de periode blijft met het advies (`storage/migrationsPlanning.ts#migrateLeavePeriods`).
 - Instelling Kracht zonder sportschool (Planning, `AppSettings.noGymStrength`, advies Eigen gewicht): alleen de eerste keuze in het blad voor een nieuwe periode. Elke periode bewaart zijn eigen keuze, dus de instelling verandert nooit een plan en wordt meteen bewaard.
 - Het sjabloon gebruikt alleen oefeningen die de catalogus al kent (Eccentric Squat, Reverse Lunge zonder gewicht, Push-Up, Bodyweight Calf Raise). MacroFactor-koppelingen slaan het over, anders raadt een beendag uit MacroFactor op Eigen gewicht.
+- Na de review (Warden, 9 november):
+  - Een loop die de periode korter maakte en die je daarna zelf verplaatste, houdt bij weghalen of wijzigen van de periode jouw dag en jouw slot en krijgt zijn eigen lengte terug. In het voorstel is dat een `keep` met `leave: null` en `restore`; dat haalt naast het merk ook de lengte weg, zodat de fase de lengte weer bepaalt. Dit geldt ook voor een beendag die een tocht korter maakte.
+  - Een krachttraining of loop in de periode die vaststaat (door jou of door een eerder voorstel), blijft staan. Het voorstel zegt dat per sessie, en bij Licht dat een vastgezette loop meetelt voor de twee keer lopen.
+  - Bij Licht telt een dag van de periode die al voorbij is alleen mee met een log. Een geplande loop die niet gelopen is, telt niet.
+  - Staat er op de dag van een harde loop al een rustige loop, dan vervalt de harde loop zonder tweede rustige loop, en de reden zegt dat.
+  - "Goed voor je benen in de bergen" (voorstel) en "Goed voor je bergdoel" (blad) staan er alleen als het hoofddoel een bergdoel is (`engine/mountainMuscles.ts#mainGoalIsMountain`: een tocht, bergtocht of mountaineering, of een hoofddoel zonder soort).
 - Een vakantie omzetten in zonder sportschool gaat via het bestaande bijwerken in Week: een andere soort is één voorstel met `replaces`.
 
 ## Reden

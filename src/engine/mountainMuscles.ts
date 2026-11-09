@@ -41,14 +41,18 @@ const NAMED: Record<string, { your: string; got: string; work: string; why: stri
   glutes: { your: 'je bilspieren', got: 'kregen', work: 'werk voor je bilspieren', why: 'klimmen met een rugzak' },
 };
 
+// Alleen het hoofddoel: een tocht, een bergtocht of mountaineering (zonder soort: de oude tocht).
+export function mainGoalIsMountain(goals: readonly TrainingGoal[], milestones: Ladder): boolean {
+  const main = mainGoal(goals, milestones, 'active');
+  if (!main) return false;
+  const kind = goalKindOf(main);
+  return kind === undefined || MOUNTAIN_KINDS.has(kind);
+}
+
 // Een bergdoel: het hoofddoel is een tocht, een bergtocht of mountaineering (een hoofddoel zonder soort is de
 // oude tocht), of er is een ander actief doel van die soort.
 export function hasMountainGoal(goals: readonly TrainingGoal[], milestones: Ladder): boolean {
-  const main = mainGoal(goals, milestones, 'active');
-  if (main) {
-    const kind = goalKindOf(main);
-    if (kind === undefined || MOUNTAIN_KINDS.has(kind)) return true;
-  }
+  if (mainGoalIsMountain(goals, milestones)) return true;
   return goals.some((g) => g.status === 'active' && !!g.kind && MOUNTAIN_KINDS.has(g.kind));
 }
 

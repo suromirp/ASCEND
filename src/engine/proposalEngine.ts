@@ -157,7 +157,9 @@ export function applyPlanChangeItems(
         // Only the mark of a period goes (engine/leaveProposal.ts): a training
         // you moved yourself keeps its day and your own lock.
         if (item.leave === null && item.plannedSessionId) {
-          next = next.map((s) => (s.id === item.plannedSessionId ? withLeave(s, item) : s));
+          // With `restore`: the length the period gave it goes too (engine/leaveProposal.ts#putBack).
+          const own = (s: PlannedSession) => { const next = withLeave(s, item); if (item.restore) delete next.plannedMinutes; return next; };
+          next = next.map((s) => (s.id === item.plannedSessionId ? own(s) : s));
           break;
         }
         // A session the proposal shows unchanged ("Benen A erna") is part

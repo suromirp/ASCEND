@@ -46,8 +46,8 @@ export interface NoGymStepInput {
   newId: () => string;
 }
 
-const isRun = (t: SessionTemplate | undefined): boolean => !!t && t.type !== 'strength' && templateSport(t) === 'running';
-const isGym = (t: SessionTemplate | undefined): boolean => !!t && t.type === 'strength' && t.id !== BODYWEIGHT_TEMPLATE_ID;
+export const isNoGymRun = (t: SessionTemplate | undefined): boolean => !!t && t.type !== 'strength' && templateSport(t) === 'running';
+export const isNoGymStrength = (t: SessionTemplate | undefined): boolean => !!t && t.type === 'strength' && t.id !== BODYWEIGHT_TEMPLATE_ID;
 const isHard = (t: SessionTemplate) => isHardRun(t) || hasRole(t, 'hills') || hasRole(t, 'hard_load') || hasRole(t, 'blocks');
 
 export function applyNoGymDays(input: NoGymStepInput): { sessions: PlannedSession[]; repairs: Repair[] } {
@@ -71,11 +71,11 @@ export function applyNoGymDays(input: NoGymStepInput): { sessions: PlannedSessio
     repairs.push({ sessionId: s.id, rule: 'LEAVE-PLACE', from: s.scheduledDate, to: s.scheduledDate, removed: true, reason });
   };
   // Placed once per day and template: also when you skipped or moved it since.
+  const served = (period: LeavePeriod, date: string, templateId: string) => sessions.some((s) =>
+    (s.leave?.periodId === period.id && s.leave.role === 'placed' && (s.leave.from ?? s.scheduledDate) === date && s.templateId === templateId) ||
+    (s.scheduledDate === date && open(s) && s.templateId === templateId));
   const place = (period: LeavePeriod, date: string, templateId: string, reason: string, minutes?: number) => {
-    const served = sessions.some((s) =>
-      (s.leave?.periodId === period.id && s.leave.role === 'placed' && (s.leave.from ?? s.scheduledDate) === date && s.templateId === templateId) ||
-      (s.scheduledDate === date && open(s) && s.templateId === templateId));
-    if (served) return;
+    if (served(period, date, templateId)) return;
     const added: PlannedSession = {
       id: input.newId(), templateId, scheduledDate: date, weekStartDate: mondayOfWeek(date), status: 'planned', order: 0,
       ...(minutes ? { plannedMinutes: minutes } : {}),
@@ -89,7 +89,9 @@ export function applyNoGymDays(input: NoGymStepInput): { sessions: PlannedSessio
   const groups = new Map<string, PlannedSession[]>();
   for (const s of sessions) {
     const p = periodOn(s.scheduledDate);
-    if (!p || !open(s) || !isRun(byId.get(s.templateId)) || resolveNoGym(p).amount !== 'light') continue;
+    if (!p || !open(s) || !isNoGymRun(byId.get(s.templateId)) || resolveNoGym(p).amount !== 'light') continue;
+    // The past of the period counts only with a log: a run that did not happen is not one of the two.
+    if (s.scheduledDate < today && !logged.has(s.id)) continue;
     const key = `${p.id}|${mondayOfWeek(s.scheduledDate)}`;
     groups.set(key, [...(groups.get(key) ?? []), s]);
   }
@@ -110,14 +112,19 @@ export function applyNoGymDays(input: NoGymStepInput): { sessions: PlannedSessio
     const period = periodOn(s.scheduledDate)!;
     const t = byId.get(s.templateId);
     if (!t) continue;
-    if (isGym(t)) {
+    if (isNoGymStrength(t)) {
       const bodyweight = resolveNoGym(period).strength === 'bodyweight' && byId.has(BODYWEIGHT_TEMPLATE_ID);
       drop(s, period, bodyweight ? `Geen sportschool: ${t.name} wordt een korte sessie met je eigen gewicht.` : `Geen sportschool: ${t.name} vervalt.`);
       if (bodyweight) place(period, s.scheduledDate, BODYWEIGHT_TEMPLATE_ID, `Geen sportschool: een korte sessie met je eigen gewicht in plaats van ${t.name}.`);
-    } else if (isRun(t) && isHard(t) && easy && isRun(easy)) {
+    } else if (isNoGymRun(t) && isHard(t) && easy && isNoGymRun(easy)) {
+      // A rustige loop already on that day: the hard run goes without a second one.
+      if (served(period, s.scheduledDate, easy.id)) {
+        drop(s, period, `Weg van huis: ${t.name} vervalt, er staat die dag al een rustige loop.`);
+        continue;
+      }
       drop(s, period, `Weg van huis: ${t.name} wordt een rustige loop.`);
       place(period, s.scheduledDate, easy.id, `Weg van huis: een korte rustige loop in plaats van ${t.name}.`, easy.durationVariants.short);
-    } else if (isRun(t) && s.plannedMinutes === undefined && !s.leave && t.durationVariants.short && t.durationVariants.short < t.durationVariants.full) {
+    } else if (isNoGymRun(t) && s.plannedMinutes === undefined && !s.leave && t.durationVariants.short && t.durationVariants.short < t.durationVariants.full) {
       const minutes = t.durationVariants.short;
       sessions = sessions.map((o) => (o.id === s.id ? { ...o, plannedMinutes: minutes, leave: { periodId: period.id, role: 'moved' as const, from: s.scheduledDate, shortened: true } } : o));
       repairs.push({ sessionId: s.id, rule: 'LEAVE-PLACE', from: s.scheduledDate, to: s.scheduledDate, plannedMinutes: minutes, reason: `Weg van huis: ${t.name} korter en rustig, ${minutes} minuten.` });

@@ -29,7 +29,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - De weekcontrole kan binnen één ronde een rij verplaatsen en terugzetten. Alleen een netto verandering is nieuws (`src/storage/databaseHorizon.ts#changedNet`), anders komt "Planning bijgewerkt" bij elke opening terug (5 november). Het raceblok draait in elke beurt opnieuw: zet een regel daar terug wat de weekcontrole deed, dan schuiven ze om de beurt (`src/engine/raceBlock.ts#restoreLegSwaps` met een korte beendag voor een test, 8 november). Toets een nieuwe regel met twee keer `planPass` achter elkaar.
 - `src/state/planningSync.ts#horizonKey` bepaalt of de ronde opnieuw draait: een vingerafdruk van de geplande sessies hoort erin, anders blijft een nieuwe verandering liggen.
 - Opstartwerk wacht nooit op de sync; wat de planning wijzigt wacht wel op de wachtrij en leest dan het opgeslagen plan.
-- Een teruggezette rij krijgt geen slot en geen vaste lengte, anders blijft hij vastgezet staan.
+- Een teruggezette rij krijgt geen slot en geen vaste lengte, anders blijft hij vastgezet staan. Ook een rij die een periode korter maakte en die je daarna zelf verplaatste, krijgt bij weghalen zijn lengte terug; alleen het merk eraf laat hem kort (`src/engine/leaveProposal.ts#planLeaveChange`, een `keep` met `restore`, 9 november).
 - De reparatie zet niets op de laatste vrije dag van een week, behalve in een week met vakantie, vrije dagen of tocht.
 - `tpl_bodyweight` (zonder sportschool) is een krachtsjabloon zonder vaste dag: een lijst van krachtsjablonen voor MacroFactor slaat hem over (`src/engine/noGymDetails.ts#BODYWEIGHT_TEMPLATE_ID`), anders raadt hij mee.
 - `PATTERN_SWAPS` werken alleen in fases van een plan met een doel; de golden scenario's A en C bewegen niet.

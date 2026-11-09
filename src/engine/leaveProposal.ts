@@ -25,7 +25,8 @@ import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, de
 import { trekLightDaysBefore } from './trekTaper';
 import { planPass, type PlanPassContext } from './planPass';
 import { fixedInLeave, fixedLeaveNote } from './fixedSports';
-import type { Finding } from './weekValidator';
+import { lockLevel, type Finding } from './weekValidator';
+import { isNoGymRun, isNoGymStrength } from './noGym';
 import { idIsTestOrRace } from './templateRoles';
 import { resolveNoGym } from './noGymDetails';
 
@@ -46,6 +47,9 @@ export interface LeavePlanInput {
   logs: SessionLog[];
   templates: SessionTemplate[];
   today: string;
+  // The main goal is a mountain goal (engine/mountainMuscles.ts#mainGoalIsMountain): only then does
+  // the line about hills say it is good for the mountains.
+  mountainGoal?: boolean;
   // The planning run for a set of periods: its context (engine/planPass.ts).
   context: (periods: LeavePeriod[]) => PlanPassContext;
 }
@@ -126,6 +130,8 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const ownedBefore = (s: PlannedSession) => !!s.leave && (s.leave.periodId === period.id || s.leave.periodId === replaces?.id);
   const markOnly = (s: PlannedSession, a: PlannedSession | undefined) =>
     s.lock?.by === 'user' && ownedBefore(s) && !!a && !a.leave && a.scheduledDate === s.scheduledDate && a.status === s.status && a.plannedMinutes === s.plannedMinutes;
+  const lengthBack = (s: PlannedSession, a: PlannedSession | undefined) =>
+    s.lock?.by === 'user' && ownedBefore(s) && !!s.leave?.shortened && !!a && !a.leave && a.scheduledDate === s.scheduledDate && a.status === s.status && s.plannedMinutes !== undefined && a.plannedMinutes === undefined;
 
   for (const s of sessions) {
     if (logged.has(s.id)) continue;
@@ -133,6 +139,11 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     // Wherever you put it: the mark goes with the period, also outside the window.
     if (s.scheduledDate >= today && markOnly(s, a)) {
       items.push({ plannedSessionId: s.id, action: 'keep', fromDate: s.scheduledDate, toDate: s.scheduledDate, reason: `${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} zette je zelf neer. Die blijft staan.`, generatedBy: SOURCE, leave: null });
+      continue;
+    }
+    // The same, made short by the period: it keeps your day and lock and gets its own length back.
+    if (s.scheduledDate >= today && lengthBack(s, a)) {
+      items.push({ plannedSessionId: s.id, action: 'keep', fromDate: s.scheduledDate, toDate: s.scheduledDate, restore: true, reason: `${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} zette je zelf neer. Die blijft staan, weer op zijn gewone lengte.`, generatedBy: SOURCE, leave: null });
       continue;
     }
     if (!inWindow(s.scheduledDate)) continue;
@@ -209,7 +220,17 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
       if (s.status === 'skipped' || !idIsTestOrRace(s.templateId, byId) || s.scheduledDate < period.startDate || s.scheduledDate > period.endDate || s.scheduledDate < today) continue;
       notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt in je periode zonder sportschool. Die verplaatst ASCEND niet zomaar. Kies zelf een andere dag als je hem thuis wilt lopen.`);
     }
-    if (resolveNoGym(period).hills) notes.push('Heuvels in de buurt: neem bij een rustige loop de heuvels rustig op en beheerst af. Goed voor je benen in de bergen.');
+    // What is fixed in place stays a gym session or a run as it is: say so, never silent (Warden punt 2).
+    const light = resolveNoGym(period).amount === 'light';
+    for (const s of result.sessions) {
+      const t = byId.get(s.templateId);
+      if (s.status === 'skipped' || logged.has(s.id) || s.scheduledDate < today || s.scheduledDate < period.startDate || s.scheduledDate > period.endDate) continue;
+      if (lockLevel(s, logged, today) !== 1 || idIsTestOrRace(s.templateId, byId) || leaveLabelOn(s.scheduledDate, periodsAfter)?.kind !== 'nogym') continue;
+      if (s.leave && (s.leave.periodId === period.id || s.leave.periodId === replaces?.id)) continue;
+      if (isNoGymStrength(t)) notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} staat vast. Die blijft staan, ook zonder sportschool.`);
+      else if (isNoGymRun(t)) notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} staat vast. Die blijft staan${light ? ' en telt mee voor je twee keer lopen' : ''}.`);
+    }
+    if (resolveNoGym(period).hills) notes.push(`Heuvels in de buurt: neem bij een rustige loop de heuvels rustig op en beheerst af.${input.mountainGoal ? ' Goed voor je benen in de bergen.' : ''}`);
   }
   // A fixed appointment of a sport (engine/fixedSports.ts) in a holiday or on a tocht lapses, the advice: say
   // which, so it is never silent.
@@ -267,9 +288,14 @@ function putBack(sessions: PlannedSession[], periodId: string, today: string, lo
     // Moved by you since: it stays where you put it, but the period no longer
     // owns it. Its mark goes, so it does not keep pointing at a period that is
     // gone or changed (and keep asking for Akkoord when you drag it).
+    const t = byId.get(s.templateId);
+    // Shortened by the period (a run without a gym, a leg day after a tocht): its own length comes
+    // back, also when you moved it since (Warden, blokkade 1).
+    const shortBack = mark.role === 'moved' && !!mark.shortened && !!t && s.plannedMinutes !== undefined && s.plannedMinutes === t.durationVariants.short;
     if (byYou) {
       const yours: PlannedSession = { ...s };
       delete yours.leave;
+      if (shortBack) delete yours.plannedMinutes;
       out.push(yours);
       continue;
     }
@@ -278,11 +304,8 @@ function putBack(sessions: PlannedSession[], periodId: string, today: string, lo
     delete back.lock;
     delete back.leave;
     delete back.movedFromDate;
-    // A heavy leg day the tocht made short (rest after a tocht) is full again.
-    const t = byId.get(s.templateId);
-    // Only when the mark says the tocht shortened it, not when it was short for another reason.
-    // A tocht shortens a heavy leg day, a period without a gym a run (engine/noGym.ts).
-    if (mark.role === 'moved' && mark.shortened && t && back.plannedMinutes !== undefined && back.plannedMinutes === t.durationVariants.short) delete back.plannedMinutes;
+    // Only when the mark says the period shortened it, not when it was short for another reason.
+    if (shortBack) delete back.plannedMinutes;
     out.push(back);
   }
   return out;

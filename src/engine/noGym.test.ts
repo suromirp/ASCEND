@@ -39,8 +39,8 @@ const on = (list: PlannedSession[], date: string) => open(list).filter((s) => s.
 const runsIn = (list: PlannedSession[], from: string, to: string) =>
   open(list).filter((s) => s.scheduledDate >= from && s.scheduledDate <= to && templateSport(templates.find((t) => t.id === s.templateId)!) === 'running');
 
-const input = (mode: 'add' | 'remove', p: LeavePeriod, existing: LeavePeriod[], sessions: PlannedSession[], over: Partial<PlanPassContext> = {}, logs: SessionLog[] = [], replaces?: LeavePeriod) =>
-  planLeaveChange({ mode, period: p, existing, sessions, logs, templates, today: over.today ?? TODAY, ...(replaces ? { replaces } : {}), context: (periods) => context(periods, { logs, ...over }) });
+const input = (mode: 'add' | 'remove', p: LeavePeriod, existing: LeavePeriod[], sessions: PlannedSession[], over: Partial<PlanPassContext> = {}, logs: SessionLog[] = [], replaces?: LeavePeriod, mountainGoal?: boolean) =>
+  planLeaveChange({ mode, period: p, existing, sessions, logs, templates, today: over.today ?? TODAY, ...(replaces ? { replaces } : {}), ...(mountainGoal ? { mountainGoal } : {}), context: (periods) => context(periods, { logs, ...over }) });
 let accepted = 0;
 const accept = (p: LeavePlan, sessions: PlannedSession[]) =>
   applyPlanChangeItems(p.proposal.changes, sessions, () => `accepted-${accepted++}`, { by: 'proposal', proposalId: p.proposal.id, at: '2026-10-21T08:00:00.000Z' });
@@ -247,5 +247,59 @@ describe('bijwerken', () => {
     // Een vakantie die zonder sportschool wordt, krijgt het advies.
     const holiday: LeavePeriod = { id: 'h', kind: 'no_training', startDate: NEXT, endDate: NEXT };
     expect(editedPeriod(holiday, { kind: 'no_gym', startDate: NEXT, endDate: NEXT, note: '' }).noGym).toEqual(NO_GYM_ADVICE);
+  });
+});
+
+describe('na de review', () => {
+  const USER = { by: 'user' as const, at: '2026-10-21T08:00:00.000Z' };
+
+  it('een korter gemaakte loop die je zelf verplaatste krijgt bij weghalen zijn eigen lengte terug, ook de lange duurloop', () => {
+    const p = noGym(NEXT, addDays(NEXT, 6), { amount: 'normal' });
+    const added = accept(input('add', p, [], plan), plan).sessions;
+    const easy = added.find((s) => s.id === `${NEXT}-0`)!;
+    const long = added.find((s) => s.id === `${NEXT}-6`)!;
+    expect(easy.plannedMinutes).toBe(20);
+    expect(long.leave?.shortened).toBe(true);
+    // Jij verplaatst ze daarna zelf.
+    const moved = added.map((s) => (s.id === easy.id ? { ...s, scheduledDate: addDays(NEXT, 1), status: 'moved' as const, lock: USER } : s.id === long.id ? { ...s, scheduledDate: addDays(NEXT, 5), status: 'moved' as const, lock: USER } : s));
+    const removal = input('remove', p, [p], moved);
+    const removed = accept(removal, moved).sessions;
+    for (const [sid, day] of [[easy.id, addDays(NEXT, 1)], [long.id, addDays(NEXT, 5)]] as const) {
+      const s = removed.find((o) => o.id === sid)!;
+      expect(s.scheduledDate).toBe(day);
+      expect(s.plannedMinutes).toBeUndefined();
+      expect(s.leave).toBeUndefined();
+      expect(s.lock?.by).toBe('user');
+    }
+    expect(removal.proposal.changes.filter((c) => c.action === 'keep' && c.restore).length).toBe(2);
+  });
+
+  it('wat vaststaat in de periode staat als regel in het voorstel', () => {
+    const locked = plan.map((s) => (s.id === `${NEXT}-1` || s.id === `${NEXT}-0` ? { ...s, lock: USER } : s));
+    const proposal = input('add', noGym(NEXT, addDays(NEXT, 6)), [], locked);
+    const upper = templates.find((t) => t.id === 'tpl_upper_a')!.name;
+    expect(proposal.notes.some((n) => n.startsWith(`${upper} op `) && n.endsWith('staat vast. Die blijft staan, ook zonder sportschool.'))).toBe(true);
+    expect(proposal.notes.some((n) => n.includes('staat vast. Die blijft staan en telt mee voor je twee keer lopen.'))).toBe(true);
+  });
+
+  it('een loop in het verleden van de periode zonder log telt niet mee voor de twee keer lopen', () => {
+    const today = addDays(NEXT, 2); // woensdag; maandag liep je niet
+    const result = run(plan, [noGym(NEXT, addDays(NEXT, 6))], { today });
+    expect(runsIn(result.sessions, today, addDays(NEXT, 6)).length).toBe(2);
+    expect(on(result.sessions, addDays(NEXT, 5))).toEqual(['tpl_easy_run']);
+  });
+
+  it('staat er al een rustige loop op die dag, dan vervalt de harde loop en zegt de reden dat', () => {
+    const extra: PlannedSession = { id: 'extra-easy', templateId: 'tpl_easy_run', scheduledDate: addDays(NEXT, 5), weekStartDate: NEXT, status: 'planned', order: 9 };
+    const r = applyNoGymDays({ sessions: [...plan, extra], days: leaveDays([noGym(NEXT, addDays(NEXT, 6), { amount: 'normal' })]), today: TODAY, goalDay: GOAL_DAY, templates, logged: new Set(), newId: () => 'x' });
+    expect(r.repairs.find((x) => x.sessionId === `${NEXT}-5`)?.reason).toMatch(/vervalt, er staat die dag al een rustige loop/);
+    expect(r.repairs.some((x) => x.added && x.from === addDays(NEXT, 5) && r.sessions.find((s) => s.id === x.sessionId)?.templateId === 'tpl_easy_run')).toBe(false);
+  });
+
+  it('heuvels: goed voor de bergen alleen met een bergdoel als hoofddoel', () => {
+    const p = noGym(NEXT, addDays(NEXT, 6), { hills: true });
+    const hillLine = (mountain: boolean) => input('add', p, [], plan, {}, [], undefined, mountain).notes.find((n) => n.startsWith('Heuvels in de buurt'));
+    expect(hillLine(false)).not.toMatch(/bergen/);
+    expect(hillLine(true)).toMatch(/Goed voor je benen in de bergen\./);
   });
 });
