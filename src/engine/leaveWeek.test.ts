@@ -74,3 +74,21 @@ describe('periodSpan', () => {
     expect(periodSpan('2026-11-14', '2026-11-14')).toBe('14 nov');
   });
 });
+
+describe('leaveWeek: randgevallen van vakantiedagen', () => {
+  it('twee vakantiedagen die niet op elkaar volgen zijn twee rijen', () => {
+    const w = leaveWeek(WEEK1, [holiday('2026-11-03', '2026-11-03', 'a'), holiday('2026-11-06', '2026-11-07', 'b')]);
+    expect(w.bands.map((b) => b.range)).toEqual(['Di 3', 'Vr 6 t/m za 7']);
+  });
+  it('over een maandgrens heen is het één rij, zonder notitie blijft de notitie leeg', () => {
+    const week = weekDates('2026-11-30');
+    const w = leaveWeek(week, [holiday('2026-11-30', '2026-12-02')]);
+    expect(w.bands).toHaveLength(1);
+    expect(w.bands[0]).toMatchObject({ range: 'Ma 30 t/m wo 2', note: undefined });
+  });
+  it('een notitie van alleen spaties telt niet, een lange notitie blijft heel (de rij breekt af)', () => {
+    expect(leaveWeek(WEEK1, [{ ...holiday('2026-11-05', '2026-11-05'), note: '   ' }]).bands[0].note).toBeUndefined();
+    const long = 'Naar de familie en dan nog een lange wandeling langs de kust met een tussenstop bij de vuurtoren';
+    expect(leaveWeek(WEEK1, [{ ...holiday('2026-11-05', '2026-11-05'), note: long }]).bands[0].note).toBe(long);
+  });
+});
