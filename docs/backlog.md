@@ -39,6 +39,8 @@ Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde ui
 
 - 9 november, bouwmoment, nog open: Health Connect: een ronde start alleen als je terugkomt in de app (niet na urenlang zichtbaar openstaan); het blad Lichaamsgewicht kan heel even "Gewicht: staat uit" tonen na weer aanzetten; de vaste voorstelzin in `strengthScheduling.ts` ("Geldt vanaf over twee weken, na je Akkoord.") volgt de stemgids niet letterlijk; een dag met vakantie én training in het vakantiepaneel is niet getest; de punten uit de Inbox "Stand toont Belasting Zwaar, 0 van 475" en "Calisthenics: algemeen sterk" bleven liggen (eerst naspelen, en een model met migratie); de rest van het rooster (R9, F4 en verder) is dit bouwmoment niet gestart.
 
+- 9 november, Forge herinrichting, de rest (eigenaar dacht dat het al af was: deel 1 is live sinds 2 november, besluit `2026-11-02-forge-herinrichting.md`). Nog open uit `docs/visie/Ontwerprapport Forge.md`: de kolom Voorschrift weg (herhaalt de vakken), RIR-bolletje en vinkvak naar minstens 44 px (de 45 kleine tikdoelen in de Lookout-doorloop), Kleiner maken en Afronden niet meer dubbel in het menu van de training, de naam van een oefening in Marcellus, het blad Set (lang drukken zichtbaar maken). Eén bouwer, na "Hoe goed kent Forge je" en Calisthenics als algemeen doel (zelfde bestanden).
+
 ## Rooster voor de bouwmomenten
 
 Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden). Afgerond: naar "Live op" en uit dit rooster.
