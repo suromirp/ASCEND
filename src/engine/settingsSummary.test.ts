@@ -1110,3 +1110,16 @@ describe('rowSummary: golven en beginnersstart', () => {
     }
   });
 });
+
+describe('rowSummary: Health Connect, dag en tijd', () => {
+  // De tijd komt uit de lokale klok van het toestel, dus we bouwen hem lokaal.
+  const local = (d: number, h: number, m: number) => new Date(2026, 10, d, h, m).toISOString();
+  const row = (fetchedAt: string | undefined) => rowSummary('health-connect', facts({ today: '2026-11-09', healthConnect: { inApp: true, enabled: true, ...(fetchedAt ? { fetchedAt } : {}) } }));
+
+  it('zegt vandaag, gisteren of de datum, met de tijd', () => {
+    expect(row(local(9, 8, 5))).toMatchObject({ sub: 'Opgehaald vandaag om 08:05' });
+    expect(row(local(8, 19, 7))).toMatchObject({ sub: 'Opgehaald gisteren om 19:07' });
+    expect(row(local(2, 19, 7))).toMatchObject({ sub: 'Opgehaald 2 nov om 19:07' });
+    expect(row(undefined)).toMatchObject({ sub: 'Nog niets opgehaald' });
+  });
+});

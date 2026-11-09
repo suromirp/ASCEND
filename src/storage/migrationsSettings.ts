@@ -8,7 +8,7 @@ import { AUTO_BACKUP_CHOICES, AUTO_BACKUP_KEEP_CHOICES, type AutoBackupFrequency
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import { isRecord } from '../utils/guards';
 import type { ExternalActivity } from '../engine/activityImport';
-import type { HealthConnectErrorKind, HealthKind } from '../models/healthConnect';
+import type { HealthConnectErrorKind, HealthKind, HealthRoundFound } from '../models/healthConnect';
 import type { HealthConnectState } from './healthConnect';
 
 // --- terugknop en hervatten (optionele instellingen) ---------------------------
@@ -119,6 +119,13 @@ export function migrateHealthConnectState(raw: unknown): HealthConnectState {
   const granted = Array.isArray(r.granted) ? HC_KINDS.filter((k) => (r.granted as unknown[]).includes(k)) : [];
   const err = isRecord(r.lastError) ? r.lastError : undefined;
   const lastError = err && HC_ERROR_KINDS.includes(err.kind as HealthConnectErrorKind) && typeof err.message === 'string' ? { kind: err.kind as HealthConnectErrorKind, message: err.message } : undefined;
+  // Wat de laatste ronde per soort opleverde: een oude back-up of stand heeft het niet, dan blijft het weg.
+  const lr = isRecord(r.lastRound) ? r.lastRound : undefined;
+  const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : undefined);
+  const weightFound: HealthRoundFound['weight'] | undefined = lr ? (lr.weight === 'off' || lr.weight === 'denied' ? lr.weight : count(lr.weight)) : undefined;
+  const lastRound = lr && count(lr.activities) !== undefined && count(lr.mornings) !== undefined && weightFound !== undefined
+    ? { activities: count(lr.activities)!, mornings: count(lr.mornings)!, weight: weightFound }
+    : undefined;
   const seen = new Set<string>();
   const activities: ExternalActivity[] = [];
   for (const item of Array.isArray(r.activities) ? r.activities : []) {
@@ -133,6 +140,7 @@ export function migrateHealthConnectState(raw: unknown): HealthConnectState {
     ...(isMoment(r.fetchedAt) ? { fetchedAt: r.fetchedAt } : {}),
     ...(isMoment(r.attemptAt) ? { attemptAt: r.attemptAt } : {}),
     ...(lastError ? { lastError } : {}),
+    ...(lastRound ? { lastRound } : {}),
     activities,
   };
 }

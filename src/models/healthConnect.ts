@@ -8,13 +8,21 @@ export type HealthKind = 'workouts' | 'distance' | 'sleep' | 'restingHeartRate' 
 
 export type HealthConnectErrorKind = 'web' | 'not-installed' | 'needs-update' | 'denied' | 'timeout' | 'failed';
 
+// Wat een ronde per soort opleverde. `weight`: een aantal dagen met een weging, of waarom er niets
+// gelezen werd ('off': de schakelaar Gewicht uit Health Connect staat uit, 'denied': Android liet het niet toe).
+export interface HealthRoundFound {
+  activities: number;
+  mornings: number;
+  weight: number | 'off' | 'denied';
+}
+
 // De uitkomst van een ronde.
 export type HealthSyncResult =
   | { status: 'off' }
   | { status: 'web' }
   | { status: 'too-soon' }
   // `weights`: hoeveel dagen gewicht nieuw of anders binnenkwamen (docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md).
-  | { status: 'ok'; activities: number; mornings: number; weights: number }
+  | { status: 'ok'; activities: number; mornings: number; weights: number; found?: HealthRoundFound }
   | { status: 'error'; kind: HealthConnectErrorKind; message: string };
 
 // De uitkomst van aanzetten.

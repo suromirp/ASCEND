@@ -28,6 +28,7 @@ import { getWatchState } from './externalActivities';
 import type { ExternalActivity } from '../engine/activityImport';
 import type { BodyMetric, RecoveryMetric, WeightEntry } from '../models/metrics';
 import type { AppSettings } from './databaseSettings';
+import { HEALTH_ACTIVITY_DAYS, HEALTH_MORNING_DAYS } from '../engine/healthConnectRound';
 import { mergeHealthWeights, weightEntryFromBody } from '../engine/healthConnectWeight';
 import {
   HEALTH_CONNECT_ADAPTER_ID,
@@ -37,7 +38,7 @@ import {
   healthConnectPort,
   type HealthConnectPort,
 } from '../integrations/healthConnect';
-import type { HealthConnectErrorKind, HealthEnableResult, HealthKind, HealthSyncResult } from '../models/healthConnect';
+import type { HealthConnectErrorKind, HealthEnableResult, HealthKind, HealthRoundFound, HealthSyncResult } from '../models/healthConnect';
 
 export type { HealthEnableResult, HealthSyncResult } from '../models/healthConnect';
 import { addDays, toISODate } from '../utils/dates';
@@ -51,8 +52,8 @@ const PREFIX = `${HEALTH_CONNECT_ADAPTER_ID}:`;
 // Hoe ver een ronde terugkijkt: de trainingen zoals bij intervals.icu, de ochtenden vier weken
 // (het gemiddelde van de ochtendcheck). Health Connect geeft zonder extra toestemming toch niet
 // meer dan dertig dagen terug.
-const HC_ACTIVITY_DAYS = 7;
-const HC_MORNING_DAYS = 28;
+const HC_ACTIVITY_DAYS = HEALTH_ACTIVITY_DAYS;
+const HC_MORNING_DAYS = HEALTH_MORNING_DAYS;
 // Bij openen van de app, en dan hoogstens eens per drie uur. Na een fout een half uur rust.
 export const HC_FETCH_HOURS = 3;
 export const HC_RETRY_MINUTES = 30;
@@ -70,6 +71,8 @@ export interface HealthConnectState {
   lastError?: { kind: HealthConnectErrorKind; message: string };
   // De trainingen van de laatste ronde, nog geen log.
   activities: ExternalActivity[];
+  // Wat de laatste geslaagde ronde per soort opleverde (de regels onder de rij); een oude stand heeft het niet.
+  lastRound?: HealthRoundFound;
 }
 
 export async function getHealthConnectState(): Promise<HealthConnectState> {
@@ -223,10 +226,15 @@ async function runRound(options: HealthSyncOptions): Promise<HealthSyncResult> {
     // tegen wat er dan staat).
     const incoming = settings.weightFromHealthConnect === false ? [] : fetched.body.flatMap((m) => weightEntryFromBody(m) ?? []);
     let weights = 0;
+    const found: HealthRoundFound = {
+      activities: fetched.activities.length,
+      mornings: mornings.length,
+      weight: settings.weightFromHealthConnect === false ? 'off' : !fetched.granted.includes('weight') ? 'denied' : incoming.length,
+    };
     const today = toISODate(now);
     // Uitgezet terwijl de ronde liep: dan wordt er niets bewaard (binnen de transactie gelezen).
     const stored = await commitHealthRound(
-      (latest) => (latest.enabled ? { ...latest, granted: fetched.granted, activities: fetched.activities, fetchedAt: now.toISOString(), attemptAt: now.toISOString(), lastError: undefined } : undefined),
+      (latest) => (latest.enabled ? { ...latest, granted: fetched.granted, activities: fetched.activities, fetchedAt: now.toISOString(), attemptAt: now.toISOString(), lastError: undefined, lastRound: found } : undefined),
       [...retire.put, ...mornings],
       retire.remove,
       (current) => {
@@ -238,7 +246,7 @@ async function runRound(options: HealthSyncOptions): Promise<HealthSyncResult> {
     if (!stored) return { status: 'off' };
     notifyHealthConnectChange();
     if (weights > 0) notifyHealthWeightChange();
-    return { status: 'ok', activities: fetched.activities.length, mornings: mornings.length, weights };
+    return { status: 'ok', activities: fetched.activities.length, mornings: mornings.length, weights, found };
   } catch (err) {
     const e = healthConnectErrorOf(err);
     try {
@@ -281,7 +289,7 @@ export async function enableHealthConnect(options: { port?: HealthConnectPort; n
     const granted = await port.request();
     if (granted.length === 0) return { status: 'denied' };
     const state = await getHealthConnectState();
-    await putState({ ...state, enabled: true, granted, lastError: undefined, fetchedAt: undefined, attemptAt: undefined });
+    await putState({ ...state, enabled: true, granted, lastError: undefined, lastRound: undefined, fetchedAt: undefined, attemptAt: undefined });
     return { status: 'on', granted, sync: await syncHealthConnect({ force: true, port, now: options.now }) };
   } catch (err) {
     return { status: 'error', message: healthConnectErrorOf(err).message };
@@ -295,7 +303,7 @@ export async function enableHealthConnect(options: { port?: HealthConnectPort; n
 export async function disableHealthConnect(): Promise<void> {
   const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(PREFIX));
   const plan = planRetire(ours, resolveMorningBackup(await SettingsRepo.get()));
-  await commitHealthRound((current) => ({ ...current, enabled: false, granted: [], activities: [], fetchedAt: undefined, attemptAt: undefined, lastError: undefined }), plan.put, plan.remove);
+  await commitHealthRound((current) => ({ ...current, enabled: false, granted: [], activities: [], fetchedAt: undefined, attemptAt: undefined, lastError: undefined, lastRound: undefined }), plan.put, plan.remove);
   notifyHealthConnectChange();
 }
 
@@ -303,7 +311,7 @@ export async function disableHealthConnect(): Promise<void> {
 // toont alleen wat nog niet mocht. Daarna meteen een ronde. De uitkomst zegt of het gewicht nu mag;
 // vraagt Android het niet meer (na twee keer nee), dan blijft het 'denied' en is Health Connect
 // openen de weg.
-export type HealthAskResult = { status: 'ok' | 'denied' | 'web' } | { status: 'error'; message: string };
+export type HealthAskResult = { status: 'ok'; found?: HealthRoundFound } | { status: 'denied' | 'web' } | { status: 'error'; message: string };
 export async function askHealthConnectWeight(options: { port?: HealthConnectPort; now?: Date } = {}): Promise<HealthAskResult> {
   const port = options.port ?? healthConnectPort();
   if (!port.inApp) return { status: 'web' };
@@ -312,8 +320,9 @@ export async function askHealthConnectWeight(options: { port?: HealthConnectPort
     await commitHealthRound((latest) => (latest.enabled ? { ...latest, granted } : undefined));
     notifyHealthConnectChange();
     if (!granted.includes('weight')) return { status: 'denied' };
-    await syncHealthConnect({ force: true, port, now: options.now });
-    return { status: 'ok' };
+    const sync = await syncHealthConnect({ force: true, port, now: options.now });
+    if (sync.status === 'error') return { status: 'error', message: sync.message };
+    return { status: 'ok', ...(sync.status === 'ok' && sync.found ? { found: sync.found } : {}) };
   } catch (err) {
     return { status: 'error', message: healthConnectErrorOf(err).message };
   }
