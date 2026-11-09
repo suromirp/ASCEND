@@ -5,7 +5,7 @@
 // docs/onderzoek/Bronnen bij de uitleg van oefeningen.md.
 //
 // Regels: In het kort is precies drie regels van hoogstens 60 tekens; Lees verder samen hoogstens 130 woorden
-// (src/data/exerciseGuides.test.ts). Je en jij, het droge feit eerst, elke aanwijzing te zien of te voelen, geen
+// (src/engine/exerciseGuide.test.ts). Je en jij, het droge feit eerst, elke aanwijzing te zien of te voelen, geen
 // gedachtestreepjes. `easier` en `harder` alleen als de oefening in de lijst bestaat; anders weglaten.
 
 import type { ExerciseGuide } from '../models/exercise';
@@ -13,7 +13,7 @@ import type { ExerciseGuide } from '../models/exercise';
 export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
   'push-up': {
     short: [
-      'Zak tot je borst bijna de vloer raakt, duw terug.',
+      'Zak tot je borst een vuist boven de vloer is, duw terug.',
       'Lichaam als een plank, van hoofd tot hielen.',
       'Hangen je heupen? Span je billen en buik aan.',
     ],
@@ -22,7 +22,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     tempo: 'Twee tellen omlaag, rustig omhoog. Adem in bij het zakken, uit bij het duwen.',
     mistakes: [
       { fault: 'Je ellebogen staan recht opzij.', fix: 'Zet ze schuiner naar achteren.' },
-      { fault: 'Je hoofd steekt vooruit.', fix: 'Kijk naar een punt een halve meter voor je handen.' },
+      { fault: 'Je hoofd steekt vooruit.', fix: 'Houd je hoofd in lijn met je rug en kijk naar de vloer vlak voor je handen.' },
     ],
   },
   'pull-up': {
@@ -46,7 +46,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Je knie volgt de richting van je tweede teen.',
       'Neerploffen? Tel drie tellen omlaag.',
     ],
-    setup: 'Sta met je werkbeen op een lage, stevige verhoging. De andere voet hangt over de rand. Houd je bekken recht.',
+    setup: 'Sta met je werkbeen op een stevige verhoging van 15 tot 20 centimeter. De andere voet hangt over de rand. Houd je bekken recht.',
     movement: 'Buig je knie en zak langzaam tot de voet van je andere been de grond licht aantikt. Leg er geen gewicht op. Duw dan met het werkbeen terug omhoog tot je weer rechtop staat.',
     tempo: 'Drie tellen omlaag, rustig omhoog. Adem in bij het zakken.',
     mistakes: [
@@ -57,7 +57,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
   },
   'romanian-deadlift': {
     short: [
-      'Heupen naar achteren, stang langs je benen omlaag.',
+      'Heupen terug, stang langs je benen tot onder de knie.',
       'Knieën licht gebogen en vast, je rug blijft recht.',
       'Door je knieën zakken? Duw je heupen verder terug.',
     ],

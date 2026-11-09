@@ -47,3 +47,7 @@ Niets. De oude regels in `cues` blijven voor elke oefening zonder uitleg.
 ## Terugdraaien
 
 Haal een oefening uit `src/data/exerciseGuides.ts` en hij valt terug op zijn drie oude regels. Het hele veld weghalen kan zonder migratie; een oude back-up met `guideOpen` wordt door `storage/backupClean.ts` schoon gelezen.
+
+## Stand na de review
+
+Bij een wissel (Lichter, Zwaarder, Terug naar) springt het blad naar boven en staat de focus op het blad zelf. De terugknop van het toestel sluit het hele blad, ook na een wissel; alleen Terug naar gaat één stap terug. Gekozen om het blad één stap in de historie te houden (zoals elk blad); een stap terug via de terugknop kan later als dat in gebruik hinderlijk blijkt.

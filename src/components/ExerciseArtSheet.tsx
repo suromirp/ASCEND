@@ -220,6 +220,18 @@ export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; 
   // Een tik op Lichter of Zwaarder legt de volgende oefening op het spoor; Terug haalt hem er weer af.
   const [trail, setTrail] = useState<string[]>([exerciseId]);
   const shownId = trail[trail.length - 1];
+  // Bij een wissel (Lichter, Zwaarder, Terug) begint de nieuwe uitleg bovenaan en de focus staat op het blad,
+  // niet op een knop die uit de DOM verdween.
+  const firstId = useRef(shownId);
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (firstId.current === shownId) return;
+    firstId.current = shownId;
+    const sheet = anchorRef.current?.closest<HTMLElement>('[role="dialog"]');
+    if (!sheet) return;
+    sheet.scrollTop = 0;
+    sheet.focus({ preventScroll: true });
+  }, [shownId]);
   if (!exerciseById(shownId)) return null;
   const previous = trail.length > 1 ? exerciseById(trail[trail.length - 2]) : undefined;
 
@@ -228,12 +240,14 @@ export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; 
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div
           ref={sheetRef}
-          className={`relative max-h-[92vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          tabIndex={-1}
+          className={`relative max-h-[92vh] w-full max-w-md overflow-y-auto outline-none ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-label={`Uitleg van ${exerciseById(shownId)?.name ?? ''}`}
         >
           <SheetGrip />
+          <div ref={anchorRef} className="contents" />
           <ArtBody
             key={shownId}
             exerciseId={shownId}

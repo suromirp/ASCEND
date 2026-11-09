@@ -322,7 +322,7 @@ export const EXERCISES: Exercise[] = [
   ]),
   ex('incline-bench-press', '45° Incline Barbell Press', ['45° Incline Barbell Bench Press', 'Incline Bench Press', 'Incline Bench Press (Barbell)', 'Schuin bankdrukken met stang', 'Incline Barbell Bench Press'], ['chest', 'front_delts'], ['triceps'], 'barbell', 'push_horizontal', false, [
     'Doen: bank op 45 graden, stang naar je bovenste borst en weer omhoog.',
-    'Let op: steiler dan 45 graden wordt een schouderpers.',
+    'Let op: steiler dan 45 graden neemt je voorste schouder het over.',
     'Vaak fout: de stang naar je nek laten zakken.',
   ]),
   ex('dumbbell-bench-press', 'Dumbbell Bench Press', ['Bench Press (Dumbbell)', 'DB Bench Press', 'Flat Dumbbell Press', 'Bankdrukken met dumbbells'], ['chest'], ['front_delts', 'triceps'], 'dumbbell', 'push_horizontal', false, [
@@ -336,7 +336,7 @@ export const EXERCISES: Exercise[] = [
     'Vaak fout: de bank te steil zetten.',
   ]),
   ex('push-up', 'Push-Up', ['Pushup', 'Push Up', 'Push-Ups', 'Pushups', 'Push Ups'], ['chest'], ['front_delts', 'core', 'triceps'], 'bodyweight', 'push_horizontal', false, [
-    'Doen: handen onder je schouders, lichaam recht, zak tot je borst bijna de grond raakt.',
+    'Doen: handen iets breder dan je schouders, lichaam recht, zak tot je borst bijna de grond raakt.',
     'Let op: ellebogen schuin naar achteren, niet wijd.',
     'Vaak fout: je heupen laten zakken.',
   ], 0.65),
