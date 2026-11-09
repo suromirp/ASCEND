@@ -50,18 +50,20 @@ async function regionFor(place: WeatherPlace, date: string, now: Date, options: 
   const memo = memos.find((m) => m.key === key);
   if (memo && age(memo.checkedAt, now) < REGION_KEEP_DAYS * 86_400_000) return memo.region ?? undefined;
   let region: string | undefined;
-  let answered = false;
-  for (const file of regionFilesAt(place.lat, place.lon)) {
+  const files = regionFilesAt(place.lat, place.lon);
+  let answered = 0;
+  for (const file of files) {
     try {
       region = regionAt(await fetchRegions(file, options), place.lat, place.lon, date);
-      answered = true;
+      answered += 1;
     } catch {
       // Dit bestand kwam niet binnen; het volgende kan het gebied ook bevatten.
     }
     if (region) break;
   }
   // Alleen onthouden wat zeker is: een gebied, of een plek waar alle bestanden antwoordden zonder gebied.
-  if (region || answered || regionFilesAt(place.lat, place.lon).length === 0) {
+  // Een fout of time-out is nooit een nee.
+  if (region || answered === files.length) {
     await write(REGION_KEY, [{ key, region: region ?? null, checkedAt: now.toISOString() }, ...memos.filter((m) => m.key !== key)].slice(0, MAX_REGIONS));
   }
   return region;

@@ -31,7 +31,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - Bij Health Connect telde bewegingstijd tegen totale tijd een tocht dubbel (review 2 november); vergelijk dezelfde tijd.
 - De ochtenden in de back-up zijn een archief dat blijft na ontkoppelen; uitzetten vraagt eerst en biedt Ongedaan maken, want het ging bijna fout met dataverlies (review 1 november).
 - De locatie heeft een grens van tien seconden en geeft altijd een plek of een reden; het weer volgt alleen je plek als dat aan staat. Kwartierregen (`rainSoon`) leest "nu" op de klok van de plek, staat alleen in het geheugen en zwijgt bij oude of lege data. Heuvels in de buurt: alleen een plek op twee decimalen, zonder naam, pas na ja op de eerste vraag; de cache staat niet in de back-up. Meteoalarm stuurt geen CORS-kop, dus waarschuwingen komen uit drempels op Open-Meteo; bij de Mont Blanc overlappen de grenzen van vier lawinediensten, dus `regionFilesAt` probeert het lichtste bestand eerst en hoogstens vier.
-- Een nieuwe bron krijgt een regel in `settingsParts` (`src/components/settings/settingsFactsParts.ts`) en een eigen grens in tijd; een trage bron houdt geen andere rij tegen.
+- Een nieuwe bron krijgt een regel in `settingsParts` (`src/components/settings/settingsFactsParts.ts`) en een eigen grens in tijd; een trage bron houdt geen andere rij tegen. Een negatief antwoord (geen gebied, geen plek) onthoud je alleen als elke bron antwoordde; een fout of time-out is nooit een nee.
 
 ## Testen
 - Tijdens het werk: `npx vitest run src/integrations src/engine/sourcePrecedence src/engine/sourceWatch src/engine/liveUpdate src/storage/macrofactor src/storage/nativeLevel`

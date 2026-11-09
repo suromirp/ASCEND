@@ -3,6 +3,7 @@ import { SettingsRepo, wipeAllData } from './database';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { getWarningForecast, refreshWarningForecast } from './weatherWarnings';
 import { refreshAvalancheLevel } from './avalanche';
+import { regionFilesAt } from '../engine/avalanche';
 import { buildBackupEnvelope } from './backupExport';
 
 // Nagemaakte plekken en antwoorden: geen netwerk.
@@ -36,7 +37,7 @@ describe('weerwaarschuwingen in de opslag', () => {
     expect(await refreshWarningForecast({ name: 'Elders', lat: 46, lon: 7 }, { fetchImpl: asFetch(fail), now: new Date('2027-07-01T21:00:00Z') })).toBeUndefined();
     const backup = JSON.stringify(await buildBackupEnvelope());
     expect(backup).not.toContain('Bergdorp');
-    expect(backup).not.toContain('weatherWarnings');
+    expect(backup).not.toContain('weatherWarningCache');
   });
 
   it('stopt na de grens in tijd zonder fout', async () => {
@@ -84,5 +85,15 @@ describe('lawinegevaar in de opslag', () => {
     expect(f).not.toHaveBeenCalled();
     const offline = vi.fn(async () => { throw new TypeError('offline'); });
     expect(await refreshAvalancheLevel({ name: 'Ander dorp', lat: 45.3, lon: 6.8 }, '2027-02-10', { fetchImpl: asFetch(offline) })).toBeUndefined();
+  });
+
+  it('onthoudt geen "geen gebied" als een ander bestand niet antwoordde', async () => {
+    const spot = { name: 'Grensplek', lat: 45.3, lon: 6.8 };
+    expect(regionFilesAt(spot.lat, spot.lon).length).toBeGreaterThan(1);
+    let n = 0;
+    const flaky = vi.fn(async () => { n += 1; if (n === 1) return new Response(JSON.stringify({ type: 'FeatureCollection', features: [] }), { status: 200 }); throw new TypeError('time-out'); });
+    expect(await refreshAvalancheLevel(spot, '2027-02-10', { fetchImpl: asFetch(flaky), now: new Date('2027-02-09T18:00:00Z') })).toBeUndefined();
+    // Een fout is geen nee: de volgende keer wordt het gebied opnieuw gezocht.
+    expect(await refreshAvalancheLevel(spot, '2027-02-10', { fetchImpl: asFetch(eaws()), now: new Date('2027-02-09T19:00:00Z') })).toBe(3);
   });
 });

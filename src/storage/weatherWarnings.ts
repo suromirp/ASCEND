@@ -8,7 +8,7 @@ import { roundCoordinate, type FetchOptions } from '../integrations/openMeteo';
 import { fetchWarningForecast, type WarningForecast } from '../integrations/openMeteoWarnings';
 import type { WeatherPlace } from '../models/weather';
 
-const KEY = 'weatherWarnings';
+const KEY = 'weatherWarningCache';
 export const WARNING_FETCH_MINUTES = 60;
 export const WARNING_FETCH_LIMIT_MS = 10_000;
 // Hoogstens zoveel plekken bewaard: thuis, de tocht en een reserve.

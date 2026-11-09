@@ -143,7 +143,7 @@ export function zone2Explanation(chart: Zone2Chart, statement: AerobicTrend['sta
   // Wat de uitspraak draagt, en wanneer hij zwijgt.
   const runs = plural(chart.runs, 'loop', 'lopen');
   const carried = o.pieces && chart.pieces > 0 ? `${runs} met samen ${plural(chart.pieces, 'stuk', 'stukken')}` : runs;
-  const whole = o.pieces && chart.wholeRuns > 0 ? ` ${chart.wholeRuns === 1 ? 'Eén loop telt' : `${chart.wholeRuns} lopen tellen`} met de hele loop, omdat er geen stukken uit te halen waren.` : '';
+  const whole = o.pieces && chart.wholeRuns > 0 ? ` ${chart.wholeRuns === 1 ? 'Eén loop telt' : `${chart.wholeRuns} lopen tellen`} met de hele loop, omdat er geen reeks van de loop is of hij op de loopband was.` : '';
   const oneMeasurement = o.pieces && chart.pieces > chart.runs ? ' Stukken uit dezelfde loop tellen samen als één meting, want ze delen dezelfde dag, slaap en weer.' : '';
   const need = `Voor een uitspraak over sneller of trager zijn minstens ${R.firstRuns} lopen nodig, verspreid over minstens ${R.firstSpanDays / 7} weken en ${R.firstWeeks} verschillende weken.`;
   if (chart.state === 'leeg') {
@@ -156,7 +156,7 @@ export function zone2Explanation(chart: Zone2Chart, statement: AerobicTrend['sta
       out.push(`${base} Je lopen verschillen nog te veel: de band rond de verandering is breder dan ${R.tooWideSec} seconden. Dan zegt ASCEND niets over sneller of trager, en staat er geen lijn in de grafiek.`);
     } else {
       const phrase = bandPhrase(statement);
-      const band = phrase === 'gelijk' ? 'Afgerond op 5 seconden is de verandering per 4 weken nul.' : `De verandering per 4 weken ligt waarschijnlijk tussen twee grenzen: ${phrase} per km, afgerond op ${R.roundSec} seconden.`;
+      const band = phrase === 'gelijk' ? `Afgerond op ${R.roundSec} seconden is de verandering per ${R.firstSpanDays / 7} weken nul.` : `De verandering per ${R.firstSpanDays / 7} weken ligt waarschijnlijk tussen twee grenzen: ${phrase} per km, afgerond op ${R.roundSec} seconden.`;
       const unclear = statement.verdict === 'geen-duidelijke-verandering' && phrase !== 'gelijk' ? ' Die band ligt aan beide kanten van nul, dus ASCEND noemt het nog geen duidelijke verandering.' : '';
       out.push(`${base} ${band} Waarschijnlijk betekent hier: in ongeveer 8 van de 10 gevallen valt de echte verandering binnen die band. De lichte waaier in de grafiek laat zien hoe schuin de lijn daarmee kan lopen.${unclear}`);
     }

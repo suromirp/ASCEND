@@ -1379,17 +1379,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Op de dag van een tocht of een lange training buiten, en de dag ervoor, een regel bovenaan Vandaag als er onweer, zware windstoten of hitte verwacht wordt. Het advies is aan.',
     points: [
       { head: 'Wat je ziet', text: 'het feit, de tijd en de plek, zoals: onweer verwacht vanaf 15:00 in Chamonix. De regel staat er altijd helemaal, je hoeft niets open te tikken.' },
-      { head: 'Wanneer', text: 'onweer, windstoten vanaf 75 km per uur of 30 graden en warmer, tussen 6 en 22 uur. Bij een tocht met een eigen plek voor die plek, anders voor de plek van je weer.' },
+      { head: 'Wanneer', text: 'onweer, windstoten vanaf 75 km per uur of 30 graden en warmer, tussen 6 en 22 uur. Bij een tocht voor de plek van de tocht, of waar je bent als het weer je locatie volgt; bij een lange training voor de plek van je weer.' },
       { head: 'Waar het vandaan komt', text: 'het weermodel van Open-Meteo, met de afgeronde plek, hoogstens eens per uur. Het is geen officiële waarschuwing: die van de weerdienst kan een webapp niet lezen. Kijk voor je vertrekt ook op Meteoalarm.' },
       { head: 'Je planning', text: 'verandert er niet door. Wat je doet, kies je zelf.' },
     ],
   },
   lawinegevaar: {
     title: 'Lawinegevaar',
-    lead: 'Bij een tocht in de bergen of de sneeuw in het sneeuwseizoen, van november tot en met mei, het lawinegevaar uit het bulletin rond de plek van je tocht. Het advies is aan.',
+    lead: 'Bij een tocht in de bergen of de sneeuw in het sneeuwseizoen, van november tot en met mei (bij terrein sneeuw het hele jaar), het lawinegevaar uit het bulletin rond de plek van je tocht. Het advies is aan.',
     points: [
       { head: 'Wat je ziet', text: 'een regel als: lawinegevaar aanzienlijk, 3 van 5, morgen rond Val d\'Isère. Op een dag van je tocht, of de dag ervoor als je tocht een eigen plek heeft.' },
-      { head: 'Waar het vandaan komt', text: 'het open bulletin van de Europese lawinediensten (EAWS). Welk gebied bij je plek hoort rekent je telefoon zelf uit; alleen een datum gaat naar buiten. De Alpen en de Pyreneeën.' },
+      { head: 'Waar het vandaan komt', text: 'het open bulletin van de Europese lawinediensten (EAWS). Welk gebied bij je plek hoort rekent je telefoon zelf uit; alleen een datum en welke lawinedienst gaan naar buiten. De Alpen en de Pyreneeën.' },
       { head: 'Alleen informatie', text: 'ASCEND zegt niet of je moet gaan; lees het hele bulletin bij de dienst van het land. Je planning verandert er niet door.' },
     ],
   },
