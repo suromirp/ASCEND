@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
-import { distanceText, mapLink, pickTerrain, terrainLine, terrainWish } from './nearbyTerrain';
+import type { LeavePeriod } from '../models/leave';
+import { buildDefaultProgramData } from '../data/defaultProgram';
+import { distanceText, mapLink, pickTerrain, terrainLine, terrainWish, terrainWishOn } from './nearbyTerrain';
 
 const terrain = (features: TerrainFeature[]): NearbyTerrain => ({ source: 'osm', fetchedAt: '2026-11-08T10:00:00.000Z', place: { name: '', lat: 52.12, lon: 5.65 }, radiusM: 3000, features });
 const hill = (distanceM: number, heightM?: number): TerrainFeature => ({ kind: 'hill', lat: 52.13, lon: 5.66, distanceM, ...(heightM !== undefined ? { heightM } : {}) });
@@ -20,6 +22,31 @@ describe('welke training een regel krijgt', () => {
 
   it('een andere training krijgt nooit een regel, ook met heuvels in de buurt', () => {
     expect(terrainLine({ id: 'tpl_easy_run' }, terrain([hill(500, 80)]))).toBeUndefined();
+  });
+});
+
+describe('een dag zonder sportschool met Heuvels in de buurt', () => {
+  const byId = new Map(buildDefaultProgramData().templates.map((t) => [t.id, t]));
+  const tpl = (id: string) => byId.get(id)!;
+  const away = (hills: boolean): LeavePeriod => ({ id: 'weg', kind: 'no_gym', startDate: '2026-11-16', endDate: '2026-11-20', noGym: { amount: 'light', strength: 'bodyweight', hills } });
+
+  it('een loop krijgt dan de regel van een heuveltraining, alleen op de dagen van de periode', () => {
+    expect(terrainWishOn(tpl('tpl_easy_run'), '2026-11-17', [away(true)])).toBe('hills');
+    expect(terrainWishOn(tpl('tpl_long_run'), '2026-11-20', [away(true)])).toBe('hills');
+    expect(terrainWishOn(tpl('tpl_easy_run'), '2026-11-21', [away(true)])).toBeUndefined();
+    expect(terrainWishOn(tpl('tpl_easy_run'), '2026-11-17', [away(false)])).toBeUndefined();
+    expect(terrainWishOn(tpl('tpl_easy_run'), '2026-11-17', undefined)).toBeUndefined();
+    const line = terrainLine(tpl('tpl_easy_run'), terrain([hill(800, 40)]), terrainWishOn(tpl('tpl_easy_run'), '2026-11-17', [away(true)]));
+    expect(line?.text).toBe('Op 800 m een helling van 40 m.');
+  });
+
+  it('kracht met eigen gewicht en een vakantie krijgen niets; een eigen heuveltraining houdt zijn regel', () => {
+    expect(terrainWishOn(tpl('tpl_bodyweight'), '2026-11-17', [away(true)])).toBeUndefined();
+    const holiday: LeavePeriod = { id: 'vak', kind: 'no_training', startDate: '2026-11-16', endDate: '2026-11-20' };
+    expect(terrainWishOn(tpl('tpl_easy_run'), '2026-11-17', [holiday])).toBeUndefined();
+    // Een vakantie over dezelfde dagen is strenger: dan geen loop en geen regel.
+    expect(terrainWishOn(tpl('tpl_easy_run'), '2026-11-17', [away(true), holiday])).toBeUndefined();
+    expect(terrainWishOn(tpl('tpl_bergconditie'), '2026-11-17', [away(true)])).toBe('stairs_or_climb');
   });
 });
 
