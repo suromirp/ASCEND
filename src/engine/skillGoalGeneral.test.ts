@@ -67,6 +67,13 @@ describe('generalBaseline: waartegen "hoger" telt', () => {
     expect(later.rows.find((x) => x.ladderId === 'pull-up')).toMatchObject({ current: 5, higher: true });
   });
 
+  it('bij 0 met logs van voor de start die later binnenkomen: de stap op de startdag, niet de eerste dag ooit', () => {
+    // Nagemaakt: twee oude logs komen na Akkoord binnen (een import). Op de startdag stond je al op stap 4.
+    const logs = [log('2026-10-20', { 'scapular-pull-up': reps(6, 6, 6) }), log('2026-11-02', { 'pull-up': reps(6, 6, 6) })];
+    expect(generalBaseline(general(), pull, logs, '2026-11-20')).toBe(4);
+    expect(generalReadinessFor(general(), logs, '2026-11-20')!.rows.find((x) => x.ladderId === 'pull-up')).toMatchObject({ current: 4, higher: false });
+  });
+
   it('zonder training: geen baseline', () => {
     expect(generalBaseline(general(), pull, [], '2026-11-20')).toBeUndefined();
     const g = general();

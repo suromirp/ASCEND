@@ -409,7 +409,7 @@ export function AscendPage() {
           eyebrow="Doel toevoegen · stap 3 van 3"
           title={`${generalProposal.name}?`}
           lines={['Ascend volgt vijf ladders: push-up, optrekken, dip, squat op één been en L-sit.', 'Je planning blijft zoals ze is.']}
-          why="Dit doel heeft geen datum en wordt nooit je hoofddoel. Staat een ladder in je trainingen, dan stelt Forge de volgende stap voor zodra je de toets haalt. Dat gaat altijd met Akkoord."
+          why="Dit doel heeft geen datum en wordt nooit je hoofddoel. Staat je stap van een ladder in een krachttraining, dan stelt Forge een zwaardere of lichtere stap voor (Stap voorstellen in Forge). Altijd met Akkoord."
           primaryLabel="Akkoord"
           secondaryLabel="Liever niet"
           onPrimary={() => { const g = generalProposal; skillWrite(() => skills.add(g), `${g.name} staat op Ascend.`, () => setGeneralProposal(null)); }}
@@ -432,7 +432,7 @@ export function AscendPage() {
 
       {skillProposal && (
         <ImpactSheet
-          eyebrow="Doel toevoegen · stap 3 van 3"
+          eyebrow="Doel toevoegen · stap 4 van 4"
           title={`${skillProposal.name} als vaardigheid?`}
           lines={[`Ladder ${skillLadderName(skillProposal.ladderId)}, doelstap ${skillProposal.targetStep}: ${skillProposal.name}.`, 'Je planning blijft zoals ze is.']}
           why="Een vaardigheid heeft geen datum en wordt nooit je hoofddoel. Ascend toont de ladder en wat je al haalde."
@@ -450,7 +450,7 @@ export function AscendPage() {
           eyebrow={skillRemoving.general ? 'Doel weghalen' : 'Vaardigheid weghalen'}
           title={`${skillRemoving.name} weghalen?`}
           lines={[]}
-          why="De kaart verdwijnt van Ascend. Je trainingen en de stappen die je haalde blijven bewaard."
+          why={skillRemoving.general ? 'De kaart verdwijnt van Ascend. Je trainingen blijven bewaard.' : 'De kaart verdwijnt van Ascend. Je trainingen en de stappen die je haalde blijven bewaard.'}
           primaryLabel="Weghalen"
           secondaryLabel="Annuleren"
           onPrimary={() => { const g = skillRemoving; skillWrite(() => skills.remove(g.id), `${g.name} is weggehaald.`, () => setSkillRemoving(null)); }}

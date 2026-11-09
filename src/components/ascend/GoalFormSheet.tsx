@@ -43,7 +43,7 @@ export function GoalFormSheet({
   initialDetails?: GoalDetails;
   // Sluit het blad en opent het voorstel voor dit doel.
   onSubmit: (result: TrainingGoal, close: () => void) => void;
-  // Alleen bij een nieuw doel en met Vaardigheidsdoelen tonen aan: de tegel Vaardigheid.
+  // Alleen bij een nieuw doel en met Calisthenicsdoelen tonen aan: de tegel Vaardigheid.
   onSkill?: (close: () => void) => void;
   onClose: () => void;
 }) {

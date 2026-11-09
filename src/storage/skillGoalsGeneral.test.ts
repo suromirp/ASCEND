@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { migrateSkillGoals, readSkillGoalStore } from './migrations';
 import { addSkillGoal, removeSkillGoal, type SkillGoalsMeta } from './skillGoals';
-import { buildGeneralGoal, liveGeneralGoal } from '../engine/skillGoal';
+import { buildGeneralGoal, liveGeneralGoal, liveSkillGoals } from '../engine/skillGoal';
 import type { SkillGoal, SkillGoalStore } from '../models/skillGoals';
 
 // Alles nagemaakt.
@@ -75,18 +75,10 @@ describe('migrateSkillGoals met een algemeen doel', () => {
     expect(read).toEqual({ store: { goals: [g], progress: [] }, skipped: 0 });
   });
 
-  it('de lijst: alleen tekst, geen dubbelen, hoogstens 12, elk hoogstens 60 tekens', () => {
-    const long = 'x'.repeat(61);
+  it('de migratie schoont general niet op: een vreemde lijst of baseline blijft ongewijzigd staan', () => {
     const many = Array.from({ length: 14 }, (_, i) => `ladder-${i}`);
-    const g = { ...general(), general: { ladderIds: ['push-up', 7, 'push-up', '', long, null, 'planche'], startDate: TODAY, baseline: {} } };
-    expect(migrateSkillGoals({ goals: [g], progress: [] }).store!.goals[0].general!.ladderIds).toEqual(['push-up', 'planche']);
-    const g2 = { ...general(), general: { ladderIds: many, startDate: TODAY, baseline: {} } };
-    expect(migrateSkillGoals({ goals: [g2], progress: [] }).store!.goals[0].general!.ladderIds).toEqual(many.slice(0, 12));
-  });
-
-  it('de baseline: alleen gehele getallen van 0 tot 50 met een ladder uit de lijst', () => {
-    const g = { ...general(), general: { ladderIds: ['push-up', 'pull-up', 'dip', 'pistol', 'l-sit', 'planche'], startDate: TODAY, baseline: { 'push-up': 4, 'pull-up': 0, dip: -1, pistol: 2.5, 'l-sit': 51, planche: 50, onbekend: 3, extra: 'twee' } } };
-    expect(migrateSkillGoals({ goals: [g], progress: [] }).store!.goals[0].general!.baseline).toEqual({ 'push-up': 4, 'pull-up': 0, planche: 50 });
+    const g = { ...general(), general: { ladderIds: ['push-up', 7, 'push-up', '', null, ...many], startDate: TODAY, baseline: { 'push-up': 4, dip: -1, pistol: 2.5, onbekend: 3, extra: 'twee' } } };
+    expect(migrateSkillGoals({ goals: [g], progress: [] })).toEqual({ store: { goals: [g], progress: [] }, skipped: 0 });
   });
 
   it('een onbekende ladder en velden van een nieuwere versie blijven staan', () => {
@@ -94,22 +86,26 @@ describe('migrateSkillGoals met een algemeen doel', () => {
     expect(migrateSkillGoals({ goals: [g], progress: [] })).toEqual({ store: { goals: [g], progress: [] }, skipped: 0 });
   });
 
-  it('een kapotte general: het doel valt weg en telt als overgeslagen, de rest blijft', () => {
+  it('een kapotte general: het doel blijft ongewijzigd bewaard en is verborgen', () => {
     const base = general();
     const broken = [
       { ...base, id: 'a', general: 'rommel' },
-      { ...base, id: 'b', general: null },
       { ...base, id: 'c', general: [] },
       { ...base, id: 'd', general: { ...base.general, ladderIds: [] } },
-      { ...base, id: 'e', general: { ...base.general, ladderIds: [3, ''] } },
+      { ...base, id: 'e', general: { ...base.general, ladderIds: [{ id: 'push-up' }] } },
       { ...base, id: 'f', general: { ...base.general, ladderIds: 'push-up' } },
       { ...base, id: 'g', general: { ...base.general, startDate: '2026-02-31' } },
       { ...base, id: 'h', general: { ...base.general, startDate: 'gisteren' } },
       { ...base, id: 'i', general: { ...base.general, baseline: [] } },
     ];
     const read = migrateSkillGoals({ goals: [skill(), ...broken, base], progress: [] });
-    expect(read.store!.goals.map((g) => g.id)).toEqual(['skill_a', 'alg_a']);
-    expect(read.skipped).toBe(broken.length);
+    expect(read.skipped).toBe(0);
+    expect(read.store!.goals).toEqual([skill(), ...broken, base]);
+    // Verborgen: geen van de kapotte is het algemene doel, en geen is een vaardigheid.
+    expect(liveGeneralGoal(read.store!)?.id).toBe(base.id);
+    const onlyBroken = { goals: broken as unknown as SkillGoal[], progress: [] };
+    expect(liveGeneralGoal(onlyBroken)).toBeUndefined();
+    expect(liveSkillGoals(onlyBroken)).toEqual([]);
   });
 
   it('heen en terug: lezen, schrijven en weer lezen geeft hetzelfde', () => {
@@ -127,7 +123,7 @@ describe('skillGoalImportNote met een algemeen doel', () => {
     const { skillGoalImportNote } = await import('./backupPreview');
     const general = { id: 'g1', name: 'Algemeen sterk met eigen gewicht', ladderId: 'algemeen', targetStep: 1, createdAt: '2026-10-20T08:00:00.000Z', updatedAt: '2026-10-20T08:00:00.000Z', general: { ladderIds: ['push-up'], startDate: '2026-10-20', baseline: {} } };
     const skill = { id: 's1', name: 'Pull-Up', ladderId: 'pull-up', targetStep: 4, createdAt: '2026-10-20T08:00:00.000Z', updatedAt: '2026-10-20T08:00:00.000Z' };
-    expect(skillGoalImportNote({ goals: [general], progress: [] }, 'merge')).toBe('Deze back-up heeft één calisthenicsdoel. Het komt erbij; wat op dit toestel staat blijft.');
-    expect(skillGoalImportNote({ goals: [general, skill], progress: [] }, 'replace')).toBe('Deze back-up heeft 2 calisthenicsdoelen. Ze komen erbij; wat op dit toestel staat blijft.');
+    expect(skillGoalImportNote({ goals: [general], progress: [] }, 'merge')).toBe('Deze back-up heeft één calisthenicsdoel. Het komt erbij; wat op dit toestel staat blijft. Ascend toont één algemeen doel tegelijk.');
+    expect(skillGoalImportNote({ goals: [general, skill], progress: [] }, 'replace')).toBe('Deze back-up heeft 2 calisthenicsdoelen. Ze komen erbij; wat op dit toestel staat blijft. Ascend toont één algemeen doel tegelijk.');
   });
 });

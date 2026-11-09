@@ -27,34 +27,10 @@ function readGoal(raw: unknown): SkillGoal | undefined {
   const { id, ladderId, targetStep } = raw;
   if (!isText(id) || !isText(ladderId, 60)) return undefined;
   if (typeof targetStep !== 'number' || !Number.isInteger(targetStep) || targetStep < 1) return undefined;
-  if (raw.general === undefined) return { ...raw } as unknown as SkillGoal;
-  const general = readGeneral(raw.general);
-  if (!general) return undefined;
-  return { ...raw, general } as unknown as SkillGoal;
-}
-
-// Een echte dag: JJJJ-MM-DD die als datum terugkomt (geen 31 februari).
-function isRealDate(v: unknown): v is string {
-  if (typeof v !== 'string' || !ISO_DATE.test(v)) return false;
-  const d = new Date(`${v}T00:00:00.000Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
-}
-
-// Het algemene doel (SkillGoal.general). Een lijst ladders met minstens één tekst (de eerste 12, elk hoogstens 60
-// tekens; iets anders en dubbelen vallen weg), een echte startdag en een baseline als object, waaruit elke waarde
-// wegvalt die geen geheel getal van 0 tot 50 is of geen ladder uit de lijst heeft. Een ladder die deze versie niet
-// kent en velden van een nieuwere versie blijven staan. Kapot (geen object, geen ladders, geen echte dag): undefined.
-function readGeneral(raw: unknown): Record<string, unknown> | undefined {
-  if (!isRecord(raw)) return undefined;
-  const { ladderIds, startDate, baseline } = raw;
-  if (!Array.isArray(ladderIds) || !isRealDate(startDate) || !isRecord(baseline)) return undefined;
-  const ids = [...new Set(ladderIds.filter((id): id is string => isText(id, 60)))].slice(0, 12);
-  if (ids.length === 0) return undefined;
-  const kept: Record<string, number> = {};
-  for (const [key, value] of Object.entries(baseline)) {
-    if (ids.includes(key) && typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 50) kept[key] = value;
-  }
-  return { ...raw, ladderIds: ids, startDate, baseline: kept };
+  // `general` (het algemene doel) blijft ongewijzigd staan, ook met een vorm die deze versie niet kent: een migratie
+  // van een optioneel veld valideert om te tonen, nooit om op te schonen. Het tonen toetst de vorm
+  // (engine/skillGoal.ts#isGeneralGoal) en verbergt wat niet klopt.
+  return { ...raw } as unknown as SkillGoal;
 }
 
 function readProgress(raw: unknown): SkillStepProgress | undefined {

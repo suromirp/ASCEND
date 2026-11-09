@@ -165,7 +165,14 @@ export function isGeneralGoal(goal: SkillGoal): boolean {
   const g: unknown = goal.general;
   if (!isPlainObject(g)) return false;
   return Array.isArray(g.ladderIds) && g.ladderIds.some((id) => typeof id === 'string' && id.length > 0)
-    && typeof g.startDate === 'string' && ISO_DAY.test(g.startDate) && isPlainObject(g.baseline);
+    && isRealDay(g.startDate) && isPlainObject(g.baseline);
+}
+
+// Een echte dag: JJJJ-MM-DD die als datum terugkomt (geen 31 februari).
+function isRealDay(v: unknown): v is string {
+  if (typeof v !== 'string' || !ISO_DAY.test(v)) return false;
+  const d = new Date(`${v}T00:00:00.000Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
 }
 
 // Het ene levende algemene doel; bij meer dan één het oudste (createdAt, dan id). Undefined als er geen is.
@@ -196,14 +203,20 @@ export function buildGeneralGoal(input: GeneralGoalInput): SkillGoal {
   };
 }
 
-// De stap waartegen "hoger" telt. Een bewaarde stap van minstens 1: die. Bij 0 of zonder: de stap van de eerste
-// trainingsdag tot en met `today` waarop de ladder een stap gaf (gelezen zoals clearedSkillSteps een dag leest),
-// zodat een eerste Pull-Up op stap 4 niet meteen "een stap hoger" is. Undefined zonder zo'n training.
+// De stap waartegen "hoger" telt. Een bewaarde stap van minstens 1: die. Bij 0 of zonder: de stap op de startdag
+// uit de logs van nu (een log van voor de start kan later binnenkomen, via een import of een koppeling), en anders
+// de stap van de eerste trainingsdag na de start tot en met `today` waarop de ladder een stap gaf. Zo is een eerste
+// Pull-Up op stap 4 niet meteen "een stap hoger". Undefined zonder zo'n training.
 export function generalBaseline(goal: SkillGoal, ladder: SkillLadder, logs: readonly SessionLog[], today: string): number | undefined {
   const stored = goal.general?.baseline?.[ladder.id];
   if (typeof stored === 'number' && Number.isInteger(stored) && stored >= 1) return stored;
   const own = logsOnLadder(ladder, logs);
-  const days = [...new Set(own.map((l) => l.completedDate).filter((d): d is string => typeof d === 'string' && d <= today))].sort();
+  const start = goal.general?.startDate;
+  if (typeof start === 'string' && start <= today) {
+    const atStart = ladderState(ladder, own, start).current;
+    if (atStart !== null) return atStart;
+  }
+  const days = [...new Set(own.map((l) => l.completedDate).filter((d): d is string => typeof d === 'string' && d <= today && (typeof start !== 'string' || d > start)))].sort();
   for (const day of days) {
     const current = ladderState(ladder, own, day).current;
     if (current !== null) return current;

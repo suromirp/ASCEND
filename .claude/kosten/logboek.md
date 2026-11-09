@@ -250,3 +250,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Tekst voor Strava review, Warden, sonnet (reviewer), 59k, 2 min, 0 blokkerend, 9 klein (7 hersteld, 2 als keuze in het besluit)
 - 2026-11-09, Tekst voor Strava doorloop 360, 390 en 412 px, Lookout, sonnet (tester), 79k, 21 min, 0, alles groen; maakte zelf een afgeleide stand voor de regel waarom
 - 2026-11-09, Calisthenics algemeen engine, opslag en migratie, Sherpa, opus (ontwikkelaar), 100k, 7 min, 0 herstel; een opdracht met de exacte teksten en vormen scheelde een ronde
+- 2026-11-09, Calisthenics algemeen review, Warden, opus (reviewer), 76k, 4 min, 1 blokkerend (migratie schoonde op), 7 klein; alles hersteld door de bouwer zelf
+- 2026-11-09, Calisthenics algemeen doorloop 360, 390 en 412 px, Lookout, sonnet (tester), 53k, 6 min, 0, alles groen; afdrukken van de kit tonen alleen het venster, de kaart zelf vraagt een afdruk van het element
+- 2026-11-09, Calisthenics algemeen (scherm, besluit, tekstkaart, herstel na review), bouwer, fable, tokens niet door de sessie zelf te meten, ongeveer 1 uur

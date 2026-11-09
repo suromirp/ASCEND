@@ -46,11 +46,12 @@ Volgende sleuteltraining · wo 4 nov. Benen A (zwaar), 75 minuten.
 Calisthenics · Algemeen
 ### Algemeen sterk met eigen gewicht
 Push-up
-Begin bij Push-Up.
-Nog geen training gelogd.
+Hoger
+Stap 4: Push-Up.
+Toets gehaald. Volgende stap: Decline Push-Up.
 Optrekken
-Begin bij Dead Hang.
-Staat nog niet in je trainingen.
+Stap 4: Pull-Up.
+Toets: 3 keer 8.
 Dip
 Begin bij Parallel Bar Support Hold.
 Staat nog niet in je trainingen.
@@ -60,7 +61,7 @@ Staat nog niet in je trainingen.
 L-sit
 Begin bij Tuck L-Sit.
 Staat nog niet in je trainingen.
-Nog geen training op deze ladders.
+Eén ladder een stap hoger dan op 20 okt.
 [knop: Weghalen]
 [knop: Doel toevoegen]
 
