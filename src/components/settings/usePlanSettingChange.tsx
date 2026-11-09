@@ -76,7 +76,7 @@ export function usePlanSettingChange(): {
   async function setPairing(value: TrainingStrategyProfile['sameDayPairingPreference']) {
     if (value === goalEngineConfig.strategy.sameDayPairingPreference) return;
     await updateGoalEngineConfig({ strategy: { ...goalEngineConfig.strategy, sameDayPairingPreference: value } });
-    const label = 'Meerdere trainingen op één dag';
+    const label = 'Twee trainingen per dag';
     await route(label, scheduleFitFor(label, goalEngineConfig.availability.dailyTimeBudget, value), { config: { strategy: goalEngineConfig.strategy } });
   }
 

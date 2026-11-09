@@ -79,14 +79,14 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Alleen als er reden is', text: 'een open pijnmelding, een zware week voor je benen, of twee dagen na een tocht of wedstrijd. Hoogstens een keer per week.' },
       { head: 'Elke week', text: 'ook zonder reden, op de dag van de weekterugblik.' },
-      { head: 'Uit', text: 'geen kaart. Op Lichaam meld je altijd zelf wat je voelt.' },
+      { head: 'Uit', text: 'geen kaart. Op Lichaam meld je altijd zelf wat je voelt. Pijn in je benen blijft een hint geven bij zware beentrainingen.' },
     ],
   },
   korterVandaag: {
     title: 'Minder tijd vandaag',
     lead: 'Minder tijd vandaag? Kies in het menu van je missie 30, 45 of 60 minuten. ASCEND stelt dezelfde training korter voor.',
     points: [
-      { head: 'Kernsets', text: 'bij kracht alleen de kernoefeningen. In Forge sla je de rest zelf over. Bij een tempoloop of intervallen blijft de kern en worden inlopen en uitlopen korter.' },
+      { head: 'Kernsets', text: 'bij kracht alleen de kernoefeningen. Past de kern niet in je tijd, dan wordt het minder van alles. In Forge sla je de rest zelf over. Bij een tempoloop of intervallen worden inlopen en uitlopen korter.' },
       { head: 'Minder van alles', text: 'bij kracht een set minder per oefening. Bij een loop met blokken minder herhalingen in hetzelfde tempo.' },
       { head: 'Altijd', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Ongedaan maken zet het terug. Een test of wedstrijd kan niet korter.' },
     ],
@@ -104,8 +104,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Lichter bij vermoeide benen',
     lead: 'Na spierpijn of een zware loop stelt ASCEND een lichtere beendag of een dag later voor. Jij kiest.',
     points: [
-      { head: 'Met een voorstel', text: 'een kaart op Vandaag bij een zware beendag met spierpijn, een harde loop eerder die dag of een hoge beenindex. Lichter, een dag later of Liever niet.' },
-      { head: 'Wat Lichter is', text: 'minder gewicht, zeker 3 herhalingen over en een set minder, alleen bij oefeningen die je benen belasten. In MacroFactor kies je zelf lichter.' },
+      { head: 'Met een voorstel', text: 'een kaart op Vandaag bij een zware beendag met spierpijn, een harde loop eerder die dag of een hoge beenindex. Lichter, een dag later of Liever niet. Bij een harde loop van vandaag alleen een dag later.' },
+      { head: 'Wat Lichter is', text: 'minder gewicht, zeker 3 herhalingen over en een set minder (niet bij Alleen gewicht), alleen bij oefeningen die je benen belasten. In MacroFactor kies je zelf lichter.' },
       { head: 'Alleen een regel of uit', text: 'de regel zegt wat ASCEND ziet, zonder knoppen. Uit zet ook de regel bij het verplaatsen van een beendag uit.' },
     ],
   },
@@ -167,7 +167,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Groei van de lange loop',
     lead: 'Hoe snel je lange loop groeit naar je hardloopwedstrijd. Het advies blijft binnen 110% van je langste loop. Daarboven vond het onderzoek geen veilige marge.',
     points: [
-      { head: 'Volgens het onderzoek', text: 'hoogstens 10% per week, met de lichtere week van de golf en de piek om de week. Bij Stevig mag de piek elke week staan.' },
+      { head: 'Volgens het onderzoek', text: 'hoogstens 10% per week, met de lichtere week van de golf en de piek om de week. Tot 30% per twee weken gaf geen hoger risico, boven 30% wel (Nielsen 2014, matig). Bij Stevig mag de piek elke week staan.' },
       { head: 'Rustiger en Heel rustig', text: 'een stap om de twee weken, of per blok van vier weken.' },
       { head: 'Sneller dan het onderzoek', text: 'onder Geavanceerd, wekelijks tot 120% van je langste loop van 30 dagen. Boven 10% gaf in het grootste onderzoek ongeveer 64% meer kans op een overbelastingsblessure (Frandsen 2025, matig).' },
     ],
@@ -666,7 +666,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Waarvoor', text: 'kilometer na kilometer, de rondes van je horloge en de grafieken van een loop. Verandert je drempel later, dan rekent ASCEND opnieuw zonder iets op te halen.' },
       { head: 'Ruimte', text: 'ongeveer 120 KB voor een uur lopen, enkele tientallen MB per jaar.' },
-      { head: 'Uit', text: 'alleen de samenvatting en de kilometers. Wat al bewaard is blijft staan. Je route wordt nooit bewaard.' },
+      { head: 'Uit', text: 'alleen de samenvatting en de kilometers. Wat al bewaard is blijft staan. Je route wordt nooit bewaard, alleen de richting per kilometer, voor de wind.' },
     ],
   },
   vroegZiek: {
@@ -674,7 +674,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Als je ziek wordt, kan je rusthartslag stijgen en je HRV dalen voor je iets merkt. ASCEND let daarop.',
     points: [
       { head: 'Wanneer', text: 'twee ochtenden op rij je rusthartslag minstens 6 slagen hoger en je HRV onder je gewone bereik van de laatste vier weken.' },
-      { head: 'Wat je ziet', text: 'een vraag op Vandaag: Voel me goed, Word ziek of Niet nu. Eerst een voorstel, pas na Akkoord verandert er iets. Het bewijs is zwak tot matig. Legde je bij Wat speelde er iets vast, dan vraagt ASCEND niets.' },
+      { head: 'Wat je ziet', text: 'een vraag op Vandaag: Voel me goed, Word ziek of Niet nu. Word ziek opent de gewone ziekmelding. Je planning verandert pas na Akkoord.' },
+      { head: 'Hoe zeker', text: 'het bewijs is zwak tot matig. Alcohol, een warme kamer of stress geven hetzelfde beeld. Legde je bij Wat speelde er iets vast, dan vraagt ASCEND niets.' },
       { head: 'Geen diagnose', text: 'bij hoge koorts, pijn op de borst of als je je echt slecht voelt: neem contact op met je huisarts.' },
     ],
   },
@@ -779,7 +780,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Ochtendgetallen in back-up',
     lead: 'Je slaap, rusthartslag en HRV komen van intervals.icu. Geeft die ze later niet meer, dan is je telefoon het enige exemplaar. Daarom gaan ze standaard mee in je back-up.',
     points: [
-      { head: 'Wat mee gaat', text: 'per ochtend de datum, je rusthartslag, je HRV, hoe lang je sliep en je slaapscore. Zolang dit aan staat blijven ze ook op je telefoon, ook na 400 dagen en als je ontkoppelt.' },
+      { head: 'Wat mee gaat', text: 'per ochtend de datum, je rusthartslag, je HRV, hoe lang je sliep en je slaapscore. Niets anders van je horloge. Zolang dit aan staat blijven ze op je telefoon, ook na 400 dagen en als je ontkoppelt.' },
       { head: 'Let op', text: 'het back-upbestand bevat dan ook gezondheidsgegevens. Bewaar het waar alleen jij erbij kunt.' },
       { head: 'Uit', text: 'een back-up zonder ochtendgetallen. Zet je dit uit zonder koppeling, dan vraagt ASCEND eerst, want de bewaarde ochtenden gaan dan van je telefoon.' },
     ],
@@ -790,7 +791,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'De laatste 2 jaar', text: 'ongeveer 100 KB per training, 15 tot 25 MB per jaar.' },
       { head: 'Alle of geen', text: 'alle reeksen geeft een back-up die elk jaar groeit. Geen reeksen geeft een kleine back-up. Na een herstel haalt ASCEND ze opnieuw op zolang dat kan.' },
-      { head: 'Altijd mee', text: 'de samenvatting per loop: kilometers, rondes en je beste stukken.' },
+      { head: 'Altijd mee', text: 'de samenvatting per loop: kilometers, rondes en je beste stukken. Kopieën van voor een import bevatten de reeksen nooit.' },
     ],
   },
   voorstellenOpruimen: {
@@ -937,7 +938,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   golven: {
     title: 'Golven',
-    lead: 'Zonder doel lopen je weken in golven: een paar weken opbouwen en dan een lichtere week. Eerst een voorstel, pas na Akkoord verandert er iets.',
+    lead: 'Zonder doel lopen je weken in golven: een paar weken opbouwen en dan een lichtere week. Een andere keuze verandert je planning, dus je ziet eerst wat er verandert.',
     points: [
       { head: 'Vier weken', text: 'het advies. Drie weken opbouwen, de vierde 35% lichter bij dezelfde intensiteit. Drie of zes weken kan ook.' },
       { head: 'Lichte week voorstellen', text: 'uit maakt elke week van de golf even zwaar. Dat kan, maar rust is waar je sterker van wordt.' },
@@ -950,7 +951,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Automatisch', text: 'het advies. Je begint rustig als je in de acht weken voor je richting gemiddeld minder dan twee keer per week sportte.' },
       { head: 'Rustig beginnen', text: 'de eerste vier weken geen harde training. De heuvelloop is dan een herstelloop. Wat jij vastzette blijft staan.' },
-      { head: 'Voorstel', text: 'eerst een voorstel, pas na Akkoord verandert er iets.' },
+      { head: 'Voorstel', text: 'een andere keuze verandert je planning, dus je ziet eerst wat er verandert.' },
     ],
   },
   richting: {
@@ -976,13 +977,13 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Stond je veel stil tijdens je testloop, dan stelt ASCEND een nieuwe poging voor.',
     points: [
       { head: 'Wanneer', text: 'meer dan een minuut stilstand of meer dan 3 keer stilstaan in je snelste 5 km, of een test die nog op je antwoord wacht.' },
-      { head: 'Wat er gebeurt', text: 'je eerstvolgende harde loop, minstens 3 dagen later, wordt een testloop van 5 km. Er komt geen training bij. Wat in de weg staat schuift mee in hetzelfde voorstel.' },
+      { head: 'Wat er gebeurt', text: 'je eerstvolgende harde loop, minstens 3 dagen later, wordt een testloop van 5 km. Er komt geen training bij. Wat in de weg staat schuift mee in hetzelfde voorstel. Een zware beendag of lange duurloop kan daarbij vervallen.' },
       { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet vraagt ASCEND het niet meer voor deze test. Is er binnen 10 dagen geen goede dag, dan zegt ASCEND niets.' },
     ],
   },
   sporten: {
     title: 'Sporten',
-    lead: 'Per sport kies je hoe ASCEND ermee omgaat. Verandert dat je planning: eerst een voorstel, pas na Akkoord verandert er iets.',
+    lead: 'Per sport kies je hoe ASCEND ermee omgaat. Verandert een keuze je planning, dan zie je eerst wat er verandert.',
     points: [
       { head: 'Plan dit voor mij', text: 'ASCEND zet het in je week, op dagen die bij je benen passen. Alleen voor hardlopen, wandelen en fietsen.' },
       { head: 'Telt mee als ik het doe', text: 'je plant het zelf. Wat je doet telt mee voor je benen en je week.' },
@@ -995,25 +996,25 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'De soorten', text: 'Kracht, Lange duur (je lange loop van de week), Harde training (de loop waarbij je hijgt, zoals intervallen of tempo) en Rustige duur.' },
       { head: 'Eerst de duur', text: '15 procent korter of langer, afgerond op 5 minuten. Nooit meer dan 110 procent van je langste training van die soort in de laatste 30 dagen.' },
-      { head: 'Dan het aantal', text: 'Meer zet er een training bij op een vrije dag, als de regels het toelaten. Minder laat er een weg als er meer dan één staat. De 48 uur tussen zware beendagen, de rust na een tocht of wedstrijd en je rustdag schuiven nooit.' },
+      { head: 'Dan het aantal', text: 'Meer zet er een training bij op een vrije dag, als de regels het toelaten. Minder laat er een weg als er meer dan één staat. De 48 uur tussen zware beendagen, de rust na een tocht of wedstrijd, je rustdag en het aantal harde dagen schuiven nooit.' },
     ],
   },
   sportenTellen: {
     title: 'Hoe sporten meetellen',
-    lead: 'Zwemmen, padel en voetbal plant ASCEND niet, maar ze kunnen meetellen voor je benen en je week.',
+    lead: 'Zwemmen, padel en voetbal plant ASCEND niet, maar ze kunnen meetellen voor je benen en je week. Wat een sport met je benen doet is afgeleid uit onderzoek en niet getoetst.',
     points: [
       { head: 'Vragen bij een nieuwe sport', text: 'komt er van je horloge een sport die je nog niet koos, dan vraagt Vandaag hoe hij telt. Tot je antwoordt telt hij niet mee. Uit: hij telt meteen mee.' },
       { head: 'Vragen hoe zwaar het was', text: 'Rustig, Pittig, Zwaar of Heel zwaar. Hoe zwaarder, hoe meer het telt voor je benen. Uit: ASCEND neemt de gebruikelijke zwaarte en rekent een tikje voorzichtiger.' },
-      { head: 'Rust na een zware sport', text: 'Ruim houdt na een voetbalwedstrijd 72 uur en na padel of een voetbaltraining 48 uur vrij van zware beenkracht. Korter maakt dat 48 en 24 uur. Het bewijs voor recreanten is matig. Staat een beendag te dicht na je sport, dan zie je in Week een voorstel.' },
+      { head: 'Rust na een zware sport', text: 'Ruim houdt na een voetbalwedstrijd 72 uur en na padel of een voetbaltraining 48 uur vrij van zware beenkracht. Korter maakt dat 48 en 24 uur. Het bewijs voor recreanten is matig. De 72 uur komt van onderzoek bij profs. Staat een beendag te dicht na je sport, dan zie je in Week een voorstel.' },
     ],
   },
   nietDoorgegaan: {
     title: 'Training die niet doorging',
     lead: 'Wat ASCEND doet met een training die een paar dagen voorbij is zonder log. ASCEND verzint nooit een log.',
     points: [
-      { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten.' },
+      { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten. Ouder dan twee weken vraagt ASCEND niet meer.' },
       { head: 'Zelf overslaan', text: 'ASCEND zet hem op overgeslagen en meldt het, met Ongedaan maken. Een test, een wedstrijd en wat je zelf vastzette krijgen toch de vraag.' },
-      { head: 'Niets doen', text: 'hij blijft als gemist in je week staan. Ouder dan twee weken vraagt ASCEND niet meer.' },
+      { head: 'Niets doen', text: 'hij blijft als gemist in je week staan.' },
     ],
   },
   rustdagTerug: {
@@ -1101,8 +1102,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Vragen bij een korte nacht',
     lead: 'Zag je horloge maar een deel van de nacht, dan vraagt ASCEND of dat klopt, in plaats van te denken dat je slecht sliep.',
     points: [
-      { head: 'Wanneer', text: 'minder dan 4 uur slaap, of minder dan de helft van jouw gemiddelde. Dat gebeurt als je horloge in de nacht van je pols gaat.' },
-      { head: 'Niet goed gemeten', text: 'die nacht telt niet mee voor een voorstel en niet in jouw gemiddelden van slaap en HRV. Je rusthartslag blijft meetellen. De getallen bij intervals.icu en Garmin blijven zoals ze zijn.' },
+      { head: 'Wanneer', text: 'minder dan 4 uur slaap, of minder dan de helft van jouw gemiddelde (na een week van je eigen nachten). Dat gebeurt als je horloge in de nacht van je pols gaat.' },
+      { head: 'Niet goed gemeten', text: 'die nacht telt niet mee voor een voorstel en niet in jouw gemiddelden van slaap en HRV. Je rusthartslag blijft meetellen. Je kunt zelf zeggen hoe lang je ongeveer sliep. Ongedaan maken zet alles terug.' },
       { head: 'Uit', text: 'een korte nacht is een let op, zoals altijd.' },
     ],
   },
@@ -1148,6 +1149,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Amber stip', text: 'een toestemming staat uit terwijl iets wat je aan hebt staan hem nodig heeft.' },
       { head: 'Exacte wekker', text: 'zonder kan een melding een paar minuten te laat komen. Voor het einde van je rust is dat te laat.' },
       { head: 'Back-up van Android', text: 'een kopie van je gegevens in je Google-back-up, versleuteld met je schermvergrendeling. Je eigen back-up blijft de echte. Boven ongeveer 25 MB slaat Android hem over.' },
+      { head: 'Widget', text: 'de widget Vandaag onthoudt alleen de naam en duur van je training van vandaag. Ben je ziek, dan staat er alleen Rust vandaag. Dat staat op deze telefoon en gaat nergens heen.' },
     ],
   },
   locatie: {
@@ -1155,8 +1157,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Alleen je plek van nu. Niets wordt bewaard of gedeeld, behalve de afgeronde plek die het weer nodig heeft.',
     points: [
       { head: 'Waarvoor', text: 'het weer op je plek, en op een tochtdag hoeveel kilometer je nog hebt tot het eind van je etappe.' },
-      { head: 'Wat blijft', text: 'het weer bewaart je plek afgerond op ongeveer een kilometer. Je plek op een etappe verdwijnt als je de app sluit. Geen route, geen spoor.' },
-      { head: 'Uit', text: 'ASCEND vraagt je plek niet meer. Het weer blijft op de laatste plek tot je zelf een andere kiest.' },
+      { head: 'Toestemming', text: 'je telefoon of browser vraagt die pas als je dit aanzet. Lukt het niet binnen tien seconden, dan blijft dit uit en zie je waarom.' },
+      { head: 'Wat blijft', text: 'het weer bewaart je plek afgerond op ongeveer een kilometer. Je plek op een etappe verdwijnt als je de app sluit. Geen route, geen spoor. Uit: het weer blijft op de laatste plek.' },
     ],
   },
   autoBijwerken: {
@@ -1549,7 +1551,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Alles staat alleen op deze telefoon. Met een wekelijkse back-up raak je hoogstens een week kwijt, met dagelijks hoogstens een dag.',
     points: [
       { head: 'Wanneer', text: 'zondagavond vanaf 18:00, of bij dagelijks elke avond. Is de app dan dicht, dan gebeurt het de eerstvolgende keer dat je hem opent.' },
-      { head: 'In de app en in de browser', text: 'de app maakt het bestand zelf in Interne opslag > Documents > ASCEND. In de browser staat er een kaart op Vandaag met Back-up maken, tenzij je browser je vaste map zonder vragen vrijgeeft.' },
+      { head: 'In de app en in de browser', text: 'de app maakt het bestand zelf in Interne opslag > Documents > ASCEND. Er gaat niets naar buiten. In de browser staat er een kaart op Vandaag met Back-up maken, tenzij je browser je vaste map zonder vragen vrijgeeft.' },
       { head: 'Bewaren', text: 'het aantal dat je kiest (het advies is 8) blijft staan, oudere ruimt ASCEND op. Wat je er zelf in zet blijft altijd staan. Lukt een back-up niet, dan zegt ASCEND dat hier en op Vandaag.' },
     ],
   },
@@ -1625,9 +1627,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   blessures: {
     title: 'Blessures',
-    lead: 'Waar je last van hebt, zodat ASCEND er rekening mee houdt, en wat je kunt rekken of versterken.',
+    lead: 'Waar je last van hebt, en wat je kunt rekken of versterken.',
     points: [
-      { head: 'Je planning', text: 'eerst een voorstel, pas na Akkoord verandert er iets.' },
+      { head: 'Je planning', text: 'verandert er niet door. Bij een klacht aan been of voet zie je een hint bij zware beentrainingen.' },
     ],
   },
   bundelWat: {

@@ -55,7 +55,7 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {sheet === 'bundel-signalen' && (
-        <BundleSheet eyebrow="Lichaam" title="Signalen uit je gegevens" line="Wat ASCEND opmerkt in je ochtenden, je trainingen en het weer. ASCEND zegt het alleen. Eerst een voorstel, pas na Akkoord verandert er iets." onClose={close}>
+        <BundleSheet eyebrow="Lichaam" title="Signalen uit je gegevens" line="Wat ASCEND opmerkt in je ochtenden, je trainingen en het weer. ASCEND zegt het. Je planning verandert alleen na Akkoord." onClose={close}>
           <SummaryRow id="vroeg-ziek" title="Vroeg ziek zien" facts={facts} info="vroegZiek" onChange={(on) => void updateSettings({ illnessSigns: on })} />
           <SummaryRow id="ochtendregel" title="Twee van drie" facts={facts} info="ochtendregel" onChange={(on) => void updateSettings({ morningRule: on })} />
           <SummaryRow id="weekdag-patroon" title="Patronen per weekdag" facts={facts} info="weekdagPatroon" onChange={(on) => void updateSettings({ weekdayPattern: on })} />
