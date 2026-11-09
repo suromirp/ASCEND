@@ -11,7 +11,14 @@ Doel van de eigenaar (9 november 2026): MacroFactor Workouts overbodig maken, zo
 
 ## Wanneer het moment er is (alle punten waar)
 
-- Kracht: minstens 4 weken alle krachttrainingen in Forge gelogd, geen enkele log alleen in MacroFactor, en geen open punt in de backlog waarbij Forge een duidelijk slechter voorschrift gaf dan MacroFactor.
+- Kracht: minstens 4 weken alle krachttrainingen in Forge gelogd, geen enkele log alleen in MacroFactor Workouts.
+- Forge bewijst zich aan je eigen trainingen, niet aan MacroFactor (eigenaar en coördinator, 9 november: we weten niet hoe MacroFactor rekent, en een ander advies is niet vanzelf fout). Over de laatste 4 weken, op oefeningen met genoeg data:
+  - Voorspelling: in minstens 70 procent van de werksets zit het gehaalde aantal herhalingen (bij de gevraagde RIR) hooguit 1 naast wat Forge voorspelde.
+  - Bijsturen: je past in minder dan 1 op de 10 werksets het gewicht of de herhalingen zelf aan.
+  - Sterker: het geschatte maximum op de hoofdoefeningen stijgt of blijft gelijk over 6 tot 8 weken (gelijk telt in een zware fase of rond een vakantie).
+  - Veilig: geen open fout in de backlog over sprongen, onmogelijke herhalingen of warming-ups.
+  - MacroFactor is alleen een tweede mening bij twijfel, geen scheidsrechter.
+  Forge houdt deze maten zelf bij en toont ze ("Hoe goed kent Forge je").
 - Historie: één laatste export van MacroFactor Workouts ingelezen, zodat alle krachttrainingen van daarvoor in ASCEND staan.
 
 ## Hoe het gaat als het zover is
@@ -22,3 +29,4 @@ Een voorstel aan de eigenaar, met Akkoord: de laatste export van Workouts inleze
 
 - 9 november 2026: gewicht uit Health Connect werkt (19 wegingen binnen na opnieuw aanzetten); de automatische ronde en de melding zijn nog open (Inbox). Forge is leidend voor kracht. Nog niet zover.
 - 9 november 2026, later: doel bijgesteld door de eigenaar: alleen MacroFactor Workouts overbodig maken, de voedingsapp blijft.
+- 9 november 2026, later: de maatstaf is Forge tegen je eigen trainingen (voorspelling, bijsturen, sterker, veilig), niet tegen MacroFactor; het blok "Hoe goed kent Forge je" wordt gebouwd.
