@@ -195,3 +195,7 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-09, Warden ronde 3 (vier reviews), Warden, opus (reviewer), 82k+100k+74k+105k, 7 tot 9 min per stuk, zie boven
 - 2026-11-09, Lookout ronde 3, Lookout, sonnet (tester), 128k, 19 min, 0 rood
 Les ronde 3: één bouwer die twee keer herstelt kost 100k tot 150k extra; geef bij planning de randgevallen van een terugzet-regel vooraf mee (verplaatst door de gebruiker, periode wijzigen) en vraag bij elke achtergrondstap bij het opstarten om venster, budget en tijdgrens.
+- 2026-11-09, Lijn rest R1 Inbox-rest, Sherpa, opus (ontwikkelaar), 148k, 26 min, 0 blokkades
+- 2026-11-09, Lijn rest R1 gewichtstrend, Sherpa, opus (ontwikkelaar), 102k, 9 min, 1 belangrijk punt (herinnering vulde de trend in)
+- 2026-11-09, Lijn rest R1 review, Warden, opus (reviewer), 93k, 5 min, 1 belangrijk en 4 kleine punten
+- 2026-11-09, Lijn rest R1 Lookout (kit, vandaag/week/stand op 360 en 390), coördinator zelf, 0 rood
