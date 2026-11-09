@@ -43,7 +43,7 @@ const MAX_WEIGHT_SEC = 10;
 
 // --- aligned points ---------------------------------------------------------------------
 
-interface Pt {
+export interface Pt {
   // Seconds since the start, as the series have it.
   t: number;
   // Metres from the first reading; never goes back.
@@ -86,7 +86,7 @@ export function alignedPoints(set: StreamSet): Pt[] {
 
 // Seconds of each segment (point k to k+1) that are a pause: standing still for more than
 // MAX_GAP_SEC in a row, or a hole in the series of that length without distance covered.
-function pausePerSegment(p: Pt[]): number[] {
+export function pausePerSegment(p: Pt[]): number[] {
   const out: number[] = new Array(Math.max(0, p.length - 1)).fill(0);
   let k = 0;
   while (k < out.length) {

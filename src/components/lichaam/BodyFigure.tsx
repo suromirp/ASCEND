@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { FIGURE_HEIGHT, FIGURE_SCALE, FIGURE_WIDTH, HEAD, SILHOUETTE, figureLines } from '../../data/bodyFigure';
-import { halfClip, hitBoxes, spotById, spotsForSide, spotsForView, type BodySpot, type BodyView, type SideChoice } from '../../engine/bodyMap';
+import { halfClip, hitBoxes, spotById, spotsForSide, spotsForView, type SideChoice } from '../../engine/bodyMap';
+import type { BodySpot, BodyView } from '../../data/bodySpots';
 import type { Figure } from '../../engine/figureSettings';
 
 // Het figuur van Lichaam in de lijnstijl van de iconen: een rustig silhouet met dunne

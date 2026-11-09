@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SettingsRepo, wipeAllData } from './database';
-import { applyImportPlan, buildBackupEnvelope, buildImportPreview, createImportPlan, createPreImportSnapshot, defaultActionsForMode, defaultPlanPolicyForMode, normalizeBackupToCurrentModel } from './backup';
+import { applyImportPlan, createImportPlan, createPreImportSnapshot } from './backupApply';
+import { buildBackupEnvelope } from './backupExport';
+import { buildImportPreview } from './backupPreview';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { CURRENT_BACKUP_SCHEMA_VERSION } from './backupTypes';
 import { migrateExternalOneRm } from './migrations';
 import type { ExternalOneRm } from '../models/metrics';

@@ -37,7 +37,7 @@ function Dots({ week }: { week: Rhythm['weeks'][number] }) {
   );
 }
 
-export function RhythmSheet({ onClose }: { onClose: () => void }) {
+function RhythmSheet({ onClose }: { onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>
@@ -47,10 +47,12 @@ export function RhythmSheet({ onClose }: { onClose: () => void }) {
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow="Ritme" title="Wat je hier ziet" onClose={requestClose} /></div>
             <div className="mt-2 flex flex-col gap-3 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-              <p>Elke kolom is een week, elk stipje een geplande training. Mint is gedaan, grijs is niet gedaan. Een open rondje is wat deze week nog komt.</p>
-              <p>Wat je oversloeg telt als niet gedaan. Ziek zijn en rustdagen tellen niet mee, en ook niet wat ASCEND zelf uit je plan haalde.</p>
-              <p>De coach op Ascend telt precies hetzelfde, over dezelfde vier weken. Deze week staat er wel bij, maar telt nog niet mee in het getal. Daarvoor kijk je op Week.</p>
-              <p>De regel met trainingsdagen op rij komt pas in beeld vanaf drie dagen. Het zijn dagen achter elkaar waarop je alles deed wat gepland stond. Dagen zonder training breken de reeks niet.</p>
+              <p>Elke kolom is een week, elk stipje een geplande training.</p>
+              <ul className="flex flex-col gap-1.5">
+                <li className="flex gap-2"><span aria-hidden>·</span><span>Mint is gedaan, grijs is niet gedaan, een open rondje komt deze week nog.</span></li>
+                <li className="flex gap-2"><span aria-hidden>·</span><span>Overslaan telt als niet gedaan. Ziek zijn, rustdagen en wat ASCEND uit je plan haalde tellen niet mee.</span></li>
+                <li className="flex gap-2"><span aria-hidden>·</span><span>De coach op Ascend telt dezelfde vier weken. Deze week telt nog niet mee. De reeks telt trainingsdagen op rij die je deed.</span></li>
+              </ul>
             </div>
           </Card>
         </div>
@@ -72,7 +74,7 @@ export function RhythmCard({ rhythm, mainPast }: { rhythm: Rhythm; mainPast: boo
         <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{rhythm.verdict}</p>
       ) : (
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          {mainPast ? 'Na je hoofddoel staat er niets meer gepland, dus er is niets om te tellen.' : 'Na twee volle weken zie je hier je ritme.'}
+          {mainPast ? 'Na je hoofddoel staat er niets meer gepland. Er is niets om te tellen.' : 'Na twee volle weken zie je hier je ritme.'}
         </p>
       )}
       {shown && (

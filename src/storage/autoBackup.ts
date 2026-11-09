@@ -29,7 +29,7 @@ import {
 } from '../engine/autoBackup';
 import { APP_BACKUP_LABEL, appBackupFolder, type AutoBackupTarget } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 import { toISODate } from '../utils/dates';
 import { webBackupFileAdapter, webFolderTarget } from './backupFileAdapter';
 import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo } from './database';
@@ -70,7 +70,7 @@ const isWhere = (v: unknown): v is BackupWhere => {
 // toont. Een oude staat wordt omgezet, zodat de bestanden die de automatische back-up al schreef eigen
 // blijven (en opgeruimd worden).
 const OLD_FOLDER_LABEL = 'Documenten/ASCEND';
-export function currentFolderLabel(label: string): string {
+function currentFolderLabel(label: string): string {
   return label === OLD_FOLDER_LABEL ? APP_BACKUP_LABEL : label === `In ${OLD_FOLDER_LABEL}` ? `In ${APP_BACKUP_LABEL}` : label;
 }
 

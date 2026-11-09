@@ -22,15 +22,15 @@ import { mainGoal, type Ladder } from './mainGoal';
 import { muscleVolumeByWeek } from './muscleVolume';
 import { exerciseKey } from './strengthHistory';
 import type { GymProfile } from './strengthSettings';
-import { hasRole } from './templateRoles';
+import { hasRole, isGymStrengthTemplate } from './templateRoles';
 import { isRestWeekAt } from './weekLoadChange';
 
 export const MOUNTAIN_MUSCLES: readonly MuscleGroup[] = ['calves', 'tibialis', 'glutes'];
 // Onder dit gemiddelde per week is het te weinig om op peil te blijven (afgeleid, nog te ijken).
-export const MOUNTAIN_FLOOR_SETS = 4;
-export const MOUNTAIN_WINDOW_WEEKS = 4;
+const MOUNTAIN_FLOOR_SETS = 4;
+const MOUNTAIN_WINDOW_WEEKS = 4;
 // Na "Liever niet" blijft het voor die spier zo lang stil.
-export const DECLINE_QUIET_WEEKS = 8;
+const DECLINE_QUIET_WEEKS = 8;
 
 const MOUNTAIN_KINDS: ReadonlySet<GoalKindId> = new Set(['trek_hut', 'trek_tent', 'day_hike', 'mountaineering']);
 
@@ -41,14 +41,18 @@ const NAMED: Record<string, { your: string; got: string; work: string; why: stri
   glutes: { your: 'je bilspieren', got: 'kregen', work: 'werk voor je bilspieren', why: 'klimmen met een rugzak' },
 };
 
+// Alleen het hoofddoel: een tocht, een bergtocht of mountaineering (zonder soort: de oude tocht).
+export function mainGoalIsMountain(goals: readonly TrainingGoal[], milestones: Ladder): boolean {
+  const main = mainGoal(goals, milestones, 'active');
+  if (!main) return false;
+  const kind = goalKindOf(main);
+  return kind === undefined || MOUNTAIN_KINDS.has(kind);
+}
+
 // Een bergdoel: het hoofddoel is een tocht, een bergtocht of mountaineering (een hoofddoel zonder soort is de
 // oude tocht), of er is een ander actief doel van die soort.
 export function hasMountainGoal(goals: readonly TrainingGoal[], milestones: Ladder): boolean {
-  const main = mainGoal(goals, milestones, 'active');
-  if (main) {
-    const kind = goalKindOf(main);
-    if (kind === undefined || MOUNTAIN_KINDS.has(kind)) return true;
-  }
+  if (mainGoalIsMountain(goals, milestones)) return true;
   return goals.some((g) => g.status === 'active' && !!g.kind && MOUNTAIN_KINDS.has(g.kind));
 }
 
@@ -142,7 +146,7 @@ function idsIn(slots: ExercisePrescription[]): Set<string> {
 // voegen, of als je de laatste weken "Liever niet" zei voor die spier.
 export function mountainMuscleProposal(input: MuscleProposalInput): MuscleProposal | null {
   if (!input.on || !hasMountainGoal(input.goals, input.milestones)) return null;
-  const strength = input.templates.filter((t) => t.type === 'strength' || hasRole(t, 'strength'));
+  const strength = input.templates.filter((t) => isGymStrengthTemplate(t) || hasRole(t, 'strength'));
   if (strength.length === 0) return null;
   const legWork = (t: SessionTemplate) => [...idsIn(input.exercisesOf(t))].filter((id) => exerciseById(id)?.loadsLegs).length;
   const target = [...strength].sort((a, b) => legWork(b) - legWork(a) || a.name.localeCompare(b.name))[0];

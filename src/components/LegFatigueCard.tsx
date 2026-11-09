@@ -5,8 +5,8 @@ import { fatigueBand, fatigueStatus, fatigueWord, FATIGUE_THRESHOLDS, legFatigue
 import { LegFatigueInfoSheet } from './LegFatigueInfoSheet';
 import { legSorenessList } from '../engine/legSoreness';
 import { resolveVariantDuration } from '../engine/substitutions';
-import { currentBodyKg } from '../engine/bodyWeight';
-import { formatWeekdayDayMonthNL, todayISO } from '../utils/dates';
+import { loadBodyKg } from '../engine/weightTrend';
+import { addDays, formatWeekdayDayMonthNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { Card, InfoButton } from './ui';
 
@@ -26,14 +26,14 @@ export function useLegFatigueInputs(): LegFatigueInputs {
   const today = todayISO();
   return useMemo(() => {
     // The same weight the planner reads (state/AppDataContext.tsx): MacroFactor's trend weight when it is switched on.
-    const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+    const bodyKg = loadBodyKg({ weightEntries: settings.weightEntries, weightFromMacroFactor: settings.weightFromMacroFactor, weightFromHealthConnect: settings.weightFromHealthConnect, weightForLoad: settings.weightForLoad });
     return {
       logs: sessionLogs, plannedSessions, templates, today, bodyKg, program,
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       // Spierpijn uit de ochtendcheck en een melding op een beenplek uit Hoe voelt je lijf? tellen even zwaar.
       soreness: legSorenessList(settings.morningCheckIns, injuryNotes),
     };
-  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, settings.morningCheckIns, injuryNotes, today]);
+  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, settings.weightForLoad, settings.morningCheckIns, injuryNotes, today]);
 }
 
 export function LegFatigueCard() {
@@ -42,6 +42,10 @@ export function LegFatigueCard() {
   const [info, setInfo] = useState(false);
   const today = inputs.today;
   const now = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
+  // De index is je stand van vanochtend: een training van vandaag telt pas vanaf morgen. Staat er vandaag al iets
+  // gedaan dat je benen belast, dan zegt de kaart wat dat morgen betekent (eigenaar, 8 november).
+  const tomorrow = useMemo(() => legFatigueOn(addDays(today, 1), inputs), [today, inputs]);
+  const doneToday = tomorrow.contributions.filter((c) => c.date === today && c.logged);
 
   // The next test or race in the coming 2 weeks, as it is planned now.
   const upcoming = useMemo(() => nextTestOrRace(plannedSessions, sessionLogs, today, templates), [plannedSessions, sessionLogs, today, templates]);
@@ -94,14 +98,20 @@ export function LegFatigueCard() {
         </div>
       )}
 
+      {doneToday.length > 0 && (
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+          {doneToday.map((c) => c.name).join(' en ')} van vandaag {doneToday.length === 1 ? 'telt' : 'tellen'} vanaf morgen mee. Morgen ongeveer <span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(tomorrow.index, 1)}</span>, {fatigueWord(tomorrow.index).word.toLowerCase()}.
+        </p>
+      )}
+
       {next && nextResult && nextStatus && (
         <p className="rounded-xl border px-3 py-2 text-xs leading-relaxed" style={{ borderColor: nextStatus === 'fris' ? 'var(--color-card-border)' : 'color-mix(in srgb, var(--color-warning) 55%, var(--color-card-border))', color: 'var(--color-ink)' }}>
           {purpose === 'race' ? 'Wedstrijd' : 'Testloop'} {formatWeekdayDayMonthNL(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
           {band && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(band.low, 0)} tot {formatNumberNL(band.high, 0)})</span>},{' '}
           <span style={{ color: nextStatus === 'fris' && !band?.nearLine ? 'var(--color-status)' : 'var(--color-warning)' }}>{band?.nearLine ? 'op de grens' : nextStatus}</span>
-          {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Beslis bij het inlopen: voelen je benen zwaarder dan normaal, dan een dag later.</span>}
+          {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Voelen je benen bij het inlopen zwaarder dan normaal, dan een dag later.</span>}
           {nextStatus !== 'fris' && nextResult.contributions[0] && (
-            <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {formatWeekdayDayMonthNL(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '' : ': korter, of naar na de ' + (purpose === 'race' ? 'wedstrijd' : 'test')}.</span>
+            <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {formatWeekdayDayMonthNL(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '.' : ': doe het korter, of na de ' + (purpose === 'race' ? 'wedstrijd' : 'test') + '.'}</span>
           )}
           {nextResult.painRecent && <span style={{ color: 'var(--color-ink-dim)' }}> Je meldde pijn, dus dit telt nooit vanzelf als fris.</span>}
         </p>

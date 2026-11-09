@@ -6,7 +6,7 @@ Adres: `#/`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 [knop: Lichaam: rekken en klachten]
 [link: Meer: instellingen, gegevens, koppelingen en gidsen]
 ZA 31 oktober
-Week 1 van de basis
+Week 1 van 4, basisfase
 
 --- kaart 1 ---
 
@@ -34,8 +34,8 @@ Morgen: Lange duurloop, 50 min
 --- kaart 4 ---
 Advies, planning
 [knop: nog 2]
-Doeltijd 10 km: 45:00 past nog niet bij je test
-Je testloop van za 10 oktober (snelste 5 km in 26:42) past bij een 10 km in ongeveer 56 minuten.
+Doeltijd 10 km: 45:00 vraagt meer dan je test laat zien
+10 km past nu bij ongeveer 56 minuten.
 [knop: Bekijk]
 
 --- kaart 5 ---

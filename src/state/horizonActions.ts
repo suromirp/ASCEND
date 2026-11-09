@@ -157,7 +157,7 @@ export function useHorizonActions(deps: {
     const goal = (await TrainingGoalsRepo.getAll()).find((g) => g.id === goalId);
     if (!goal) return null;
     const now = new Date().toISOString();
-    const explanation = 'Je doel bepaalt de fasen van je planning en de dag waarop het eindigt. Een andere datum of een gearchiveerd doel verandert je planning nooit ongemerkt: je ziet eerst wat er verschuift, omgaat of vervalt; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.';
+    const explanation = 'Je doel bepaalt de fasen van je planning en de dag waarop het eindigt. Een andere datum of een gearchiveerd doel verandert je planning nooit ongemerkt. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en zelf vastzette, blijft staan.';
     if (change.archive) {
       const archived: TrainingGoal = { ...goal, status: 'archived', targetDate: undefined, updatedAt: now };
       // The Marathon card reads its own settings: those go with it (see archiveGoal).
@@ -185,7 +185,7 @@ export function useHorizonActions(deps: {
     return planHorizonChangeImpl({
       title: `${goal.name || 'Je doel'}: ${role === 'secondary' ? 'tussendoel' : 'alleen volgen'}`,
       why: role === 'secondary' ? 'Je traint nu voor deze wedstrijd.' : 'Je volgt deze wedstrijd alleen.',
-      explanation: 'Een tussendoel krijgt een eigen blok in je planning: kwaliteitstrainingen, een testloop en een lichte wedstrijdweek. Alleen volgen haalt dat blok weg; de wedstrijd zelf komt dan als training op zijn dag in je planning, met de dag ervoor licht voor de benen. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord.',
+      explanation: 'Een tussendoel krijgt een eigen blok in je planning: kwaliteitstrainingen, een testloop en een lichte wedstrijdweek. Alleen volgen haalt dat blok weg; de wedstrijd zelf komt dan als training op zijn dag in je planning, met de dag ervoor licht voor de benen. Eerst een voorstel, pas na Akkoord verandert er iets.',
       trigger: 'goal_changed',
       // The main goal (Top) keeps its label: this choice is only for a race next to it.
       goals: [{ ...goal, planRole: role, priority: goal.priority === 'top' ? 'top' : role === 'secondary' ? 'voortop' : 'verkenning', ...(goal.priority === 'top' ? {} : { priorityChosen: true }), updatedAt: new Date().toISOString() }],
@@ -215,7 +215,7 @@ export function useHorizonActions(deps: {
     return planHorizonChangeImpl({
       title: `${name}: ${label}`,
       why: PRIORITY_RULE[priority],
-      explanation: 'Het label bepaalt hoeveel rust er voor een doel komt en of het een eigen opbouw krijgt. Je ziet eerst wat er in je planning verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
+      explanation: 'Het label bepaalt hoeveel rust er voor een doel komt en of het een eigen opbouw krijgt. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en zelf vastzette, blijft staan.',
       trigger: 'goal_changed',
       goals: changed,
     });
@@ -256,7 +256,7 @@ export function useHorizonActions(deps: {
         ? (patch.marathonTargetDate ? `Wedstrijddatum naar ${formatDateNL(patch.marathonTargetDate)}` : 'Marathon zonder datum')
         : 'Marathondoel: zo verandert je planning',
       why: dateChanged ? 'Volgt je nieuwe wedstrijddatum.' : 'Volgt je marathondoel.',
-      explanation: 'Je wedstrijd bepaalt een blok in je planning. Een andere datum of afstand verandert je planning nooit ongemerkt: je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
+      explanation: 'Je wedstrijd bepaalt een blok in je planning. Een andere datum of afstand verandert je planning nooit ongemerkt. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en zelf vastzette, blijft staan.',
       trigger: 'goal_changed',
       settings: nextSettings,
       ...(goal ? { goals: [goal] } : {}),
@@ -290,7 +290,7 @@ export function useHorizonActions(deps: {
         const proposal = await planHorizonChangeImpl({
           title: `${plan.goalDraft.name || 'Je doel'}: zo verandert je planning`,
           why: 'Volgt je doel.',
-          explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop het eindigt. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
+          explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop het eindigt. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en zelf vastzette, blijft staan.',
           trigger: plan.goalDraft.createdAt === plan.goalDraft.updatedAt ? 'goal_created' : 'goal_changed',
           goals: [plan.goalDraft],
         }).catch(() => null);

@@ -12,10 +12,11 @@ import { runWeeklyPrescriptionStep } from './weeklyPrescriptionStep';
 import {
   wipeAllData, syncProgramHorizon, SettingsRepo, TrainingGoalsRepo, PlannedSessionsRepo, ProgramsRepo, SessionLogsRepo,
 } from './database';
-import {
-  buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan,
-  defaultActionsForMode, defaultPlanPolicyForMode, parseBackupText,
-} from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel, parseBackupText } from './backupNormalize';
+import { buildImportPreview } from './backupPreview';
+import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './backupApply';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { canRepeatWeek, withWeekRepeated } from '../engine/repeatWeek';
 import type { PlannedSession } from '../models/training';

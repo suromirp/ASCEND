@@ -66,7 +66,7 @@ export function TrekGoalsCard() {
           <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             {shown.length === 0
               ? 'Een sneeuwhike over twee maanden, een weekend met tent: zet het hier als doel naast de GR5. Elke tocht telt ook als training voor de GR5.'
-              : 'Elke tocht telt ook als training voor de GR5. Een tocht maken, wijzigen of verwijderen laat je eerst zien en past pas iets aan na jouw akkoord.'}
+              : 'Elke tocht telt ook als training voor de GR5. Eerst een voorstel, pas na Akkoord verandert er iets.'}
           </p>
         </div>
 
@@ -306,7 +306,7 @@ function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; on
 
             <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: '14px' }}>
               <SecondaryButton onClick={requestClose} className="min-h-[46px]">Annuleren</SecondaryButton>
-              <PrimaryButton disabled={!!problem} fullWidth={false} onClick={() => onSubmit(trekToPeriod(d, existing?.id ?? makeId('trek')))}>Voorstel bekijken</PrimaryButton>
+              <PrimaryButton disabled={!!problem} fullWidth={false} className="whitespace-nowrap" onClick={() => onSubmit(trekToPeriod(d, existing?.id ?? makeId('trek')))}>Voorstel bekijken</PrimaryButton>
             </div>
           </Card>
         </div>

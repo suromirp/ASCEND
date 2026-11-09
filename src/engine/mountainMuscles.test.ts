@@ -121,6 +121,12 @@ describe('het voorstel in de weekterugblik', () => {
     expect(mountainMuscleProposal(input({ templates: [] }))).toBeNull();
   });
 
+  it('Eigen gewicht (zonder sportschool) krijgt nooit de oefening, ook niet met het meeste beenwerk', () => {
+    const bodyweight = tpl('tpl_bodyweight', 'Eigen gewicht', [slot('bw1', 'Eccentric Squat'), slot('bw2', 'Reverse Lunge')]);
+    expect(mountainMuscleProposal(input({ templates: [upper, lower, bodyweight] }))?.templateId).toBe('tpl_lower_a');
+    expect(mountainMuscleProposal(input({ templates: [bodyweight] }))).toBeNull();
+  });
+
   it('na Liever niet acht weken stil voor die spier, gerekend vanaf deze week', () => {
     const p = mountainMuscleProposal(input({ declined: [{ muscle: 'calves', weekStart: '2026-10-19' }] }));
     expect(p?.muscle).toBe('tibialis');

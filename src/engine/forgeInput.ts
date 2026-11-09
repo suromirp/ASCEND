@@ -25,8 +25,10 @@ import type { GymProfile } from './strengthSettings';
 import { isLightWeight } from './strengthModel';
 import { barFor, candidatesFor, nearestIndex, stepFor } from './strengthWeights';
 import { isOwnRow } from './forgeRows';
+import { standsFor } from './toestelStanden';
 import { r2 } from '../utils/round';
 import { kgLabel } from '../utils/kg';
+import { addedKgOf } from './forgeLadder';
 
 
 // --- steps ---------------------------------------------------------------------------------
@@ -37,6 +39,9 @@ import { kgLabel } from '../utils/kg';
 export function weightStepFor(exercise: Exercise | undefined, profile: GymProfile, currentKg?: number): number {
   const own = exercise && profile.exerciseStepKg?.[exercise.id];
   if (own) return own;
+  // Een stap met extra gewicht gaat in stappen van zijn eigen extra gewicht (2,5 kg).
+  const added = addedKgOf(exercise);
+  if (added !== undefined) return added;
   switch (exercise?.resistance) {
     case 'barbell':
     case 'machine_plates':
@@ -69,6 +74,56 @@ export function makeSnap(exercise: Exercise | undefined, profile: GymProfile, bo
   const candidates = candidatesFor(exercise, profile, { bodyKg, lastExternalKg: around, dumbbellTotal });
   const step = weightStepFor(exercise, profile, around) || 1;
   return (kg) => (candidates ? candidates[nearestIndex(candidates, kg)].externalKg : r2(Math.round(kg / step) * step));
+}
+
+// The weight a plus or minus key goes to on a machine with stands (engine/toestelStanden.ts): the next stand
+// up or down, also from a weight in between (20 between 14 and 23: plus goes to 23, minus to 14). Above the
+// highest stand it adds the last gap between two stands (32 after 23 gives 41), below the lowest it takes
+// off the first gap, never under 0,25. With one stand the gap is the step of your gym profile. A gap is
+// never smaller than half that step (the same rule as the model). No stands: the step, as before.
+const STAND_EPS = 1e-6;
+export function nextStand(stands: number[], current: number, direction: 1 | -1, fallbackStep: number): number {
+  const sorted = [...stands].sort((a, b) => a - b);
+  const floor = Math.max(0.25, r2(fallbackStep / 2));
+  const gap = (g: number) => Math.max(floor, r2(g));
+  if (sorted.length === 0) return Math.max(0, r2(current + direction * fallbackStep));
+  if (current < 0) return current;
+  if (direction === -1 && current <= STAND_EPS) return current;
+  if (direction === 1) {
+    const up = sorted.find((w) => w > current + STAND_EPS);
+    if (up !== undefined) return up;
+    const last = sorted.length > 1 ? gap(sorted[sorted.length - 1] - sorted[sorted.length - 2]) : fallbackStep;
+    return r2(current + last);
+  }
+  const down = [...sorted].reverse().find((w) => w < current - STAND_EPS);
+  if (down !== undefined) return down;
+  // Onder de laagste stand stopt het waar het model ook stopt (`standsStack`): niet onder 0,25 en niet onder één verschil.
+  const first = sorted.length > 1 ? gap(sorted[1] - sorted[0]) : fallbackStep;
+  const lower = r2(current - first);
+  return lower < 0.25 - STAND_EPS || lower < first - STAND_EPS ? current : lower;
+}
+
+// The small hints under Minder and Meer on a machine with stands. `currentKg` undefined is an empty field.
+// A key that would not move (Minder on an empty field, or under the lowest stand) gets no hint, so it never
+// says "naar 0 kilo". Undefined when the machine has no stands (then the keys carry no hint at all).
+export function standHints(exercise: Exercise | undefined, profile: GymProfile, currentKg: number | undefined, remember = true): { down?: number; up?: number } | undefined {
+  const now = currentKg ?? 0;
+  const up = standJump(exercise, profile, now, 1, remember);
+  const down = standJump(exercise, profile, now, -1, remember);
+  if (up === undefined || down === undefined) return undefined;
+  const moves = (to: number) => Math.abs(to - now) > STAND_EPS;
+  const hasDown = currentKg !== undefined && currentKg > STAND_EPS && moves(down) && down > STAND_EPS;
+  return { ...(hasDown ? { down } : {}), ...(moves(up) ? { up } : {}) };
+}
+
+// Where plus and minus go for this exercise and this weight, when it has stands; undefined when it has none
+// (then the step of the profile rules, as before). The label under the keys and the keys use this one function.
+// `remember` is the setting "Standen onthouden": off, an old list or range (no stands stored yet) works as before.
+export function standJump(exercise: Exercise | undefined, profile: GymProfile, currentKg: number, direction: 1 | -1, remember = true): number | undefined {
+  const stands = standsFor(profile, exercise);
+  if (!stands || stands.kg.length === 0) return undefined;
+  if (!remember && !stands.stored) return undefined;
+  return nextStand(stands.kg, currentKg, direction, weightStepFor(exercise, profile, currentKg));
 }
 
 // One step up (1) or down (-1), kept between min and max.
@@ -121,7 +176,8 @@ export function tapClosesDock(target: { closest: (selector: string) => unknown }
 
 // --- which field is next ------------------------------------------------------------------
 
-export type FieldName = 'weightKg' | 'reps';
+// `seconds`: een houding (WorkoutExercise.hold), in hetzelfde cijferblok.
+export type FieldName = 'weightKg' | 'reps' | 'seconds';
 export interface FieldRef {
   slot: string;
   rowId: string;
@@ -129,8 +185,10 @@ export interface FieldRef {
 }
 
 // Kg, then reps of the same set, then kg of the next set that is not ticked
-// yet (in the next exercise when this one is finished). Holds have no fields.
-// Undefined at the end of the training.
+// yet (in the next exercise when this one is finished). A hold (`hold`) goes from seconds to the seconds of the
+// next open set; a timed set has no fields. Undefined at the end of the training.
+export const firstField = (ex: Pick<WorkoutExercise, 'hold'>): FieldName => (ex.hold ? 'seconds' : 'weightKg');
+
 export function nextField(workout: WorkoutExercise[], at: FieldRef): FieldRef | undefined {
   if (at.field === 'weightKg') {
     const row = workout.find((e) => e.slot === at.slot)?.rows.find((r) => r.id === at.rowId);
@@ -144,7 +202,7 @@ export function nextField(workout: WorkoutExercise[], at: FieldRef): FieldRef | 
     if (ex.timed) continue;
     const from = i === exIndex ? rowIndex + 1 : 0;
     const row = ex.rows.slice(from).find((r) => !r.done);
-    if (row) return { slot: ex.slot, rowId: row.id, field: 'weightKg' };
+    if (row) return { slot: ex.slot, rowId: row.id, field: firstField(ex) };
   }
   return undefined;
 }
@@ -225,6 +283,12 @@ export function applyReps(ex: WorkoutExercise, rowId: string, reps: number | und
   return { ...changed, rows: changed.rows.map((r) => (r.id === rowId ? { ...withoutEstimate(r), edited: true } : r)) };
 }
 
+// De seconden van een houding: van jou, zoals getypte herhalingen.
+export function applySeconds(ex: WorkoutExercise, rowId: string, seconds: number | undefined): WorkoutExercise {
+  const changed = updateRow(ex, rowId, { seconds });
+  return { ...changed, rows: changed.rows.map((r) => (r.id === rowId ? { ...r, edited: true } : r)) };
+}
+
 // "Wijzigingen doorvoeren" (decision docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md):
 // you changed the weight or the reps of one working set. The working sets after it
 // that are not done, not changed by you and that had exactly the same weight AND
@@ -263,6 +327,12 @@ function targetReps(t: RowTarget): number {
 
 // A tap on the prescription: kg and reps as the prescription says. The RIR stays
 // what it is (empty with the aim as a hint): it is for you to say how it felt.
+// Taking the prescription puts the weight back to what was asked: Forge's own adjustment (forgeKg) goes too.
+function dropForgeKg<T extends { forgeKg?: number }>(r: T): T {
+  const { forgeKg: _gone, ...rest } = r;
+  return rest as T;
+}
+
 export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise {
   return {
     ...ex,
@@ -270,9 +340,10 @@ export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise 
       r.id !== rowId || r.done
         ? r
         : {
-            ...withoutEstimate(r),
+            ...withoutEstimate(dropForgeKg(r)),
             ...(r.target.weightKg !== undefined ? { weightKg: r.target.weightKg } : {}),
             reps: targetReps(r.target),
+            ...(r.target.holdSec !== undefined ? { seconds: r.target.holdSec } : {}),
             edited: true,
           },
     ),
@@ -307,7 +378,7 @@ export function exerciseSummary(ex: WorkoutExercise): string {
   const count = work.length;
   if (count === 0) return 'Klaar';
   const sets = count === 1 ? '1 set' : `${count} sets`;
-  if (ex.timed) return sets;
+  if (ex.timed || ex.hold) return sets;
   const top = [...work].sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0];
   if (top.weightKg !== undefined && top.weightKg !== 0) return `${sets}, zwaarste ${kgLabel(top.weightKg, 2)} × ${top.reps ?? 0}`;
   return `${sets}, ${top.reps ?? 0} herhalingen`;
@@ -377,8 +448,14 @@ export function plateChange(step: Pick<PlateStep, 'add' | 'remove'>): string | u
 // geruild, een set erbij of eraf. Een oefening zonder iets van jou krijgt altijd het plan van nu, ook als
 // de naam gelijk bleef: anders blijft een voorschrift van voor een nieuwe regel (Zonder spotter) staan in
 // een training die je opende maar nog niet begon (de klok begint dan opnieuw, het concept niet).
+// Een band die jij koos: anders dan wat het plan van nu op die werkset klaarzet (de band van je vorige keer).
+function bandChosen(e: WorkoutExercise, f: WorkoutExercise): boolean {
+  const planned = f.rows.filter((r) => r.kind === 'work');
+  return e.rows.filter((r) => r.kind === 'work').some((r, i) => r.band !== planned[i]?.band);
+}
+
 function touchedInDraft(e: WorkoutExercise, f: WorkoutExercise): boolean {
-  return !!e.swappedFrom || !!e.raiseUndone || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || (r.rir !== undefined && r.rirAssumed === false) || isOwnRow(r));
+  return !!e.swappedFrom || !!e.raiseUndone || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || (r.rir !== undefined && r.rirAssumed === false) || r.clean !== undefined || isOwnRow(r)) || bandChosen(e, f);
 }
 
 // A training opened before its exercises changed (a renamed exercise, another
@@ -389,7 +466,9 @@ export function mergeDraft(draft: WorkoutExercise[], fresh: WorkoutExercise[]): 
   const bySlot = new Map(draft.map((e) => [e.slot, e]));
   const merged = fresh.map((f) => {
     const d = bySlot.get(f.slot);
-    return d && touchedInDraft(d, f) ? d : f;
+    if (!d || !touchedInDraft(d, f)) return f;
+    // Een concept van voor `trainings` (de twijfelvragen in de eerste drie trainingen) krijgt het getal van nu.
+    return d.trainings === undefined && f.trainings !== undefined ? { ...d, trainings: f.trainings } : d;
   });
   const gone = draft.filter((d) => !fresh.some((f) => f.slot === d.slot) && d.rows.some((r) => r.done || r.edited));
   return [...merged, ...gone];

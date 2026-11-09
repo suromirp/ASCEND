@@ -66,7 +66,7 @@ describe('weekConcerns', () => {
     const rest = weekConcerns(input(sessions), MONDAY).find((c) => c.rule === 'REST-DAY')!;
     expect(rest.headline).toBe('Je rustdag heeft een training.');
     expect(rest.fact).toBe('Testloop 5 km staat op donderdag 29, je rustdag.');
-    expect(rest.why).toContain('Je testloop staat op die dag');
+    expect(rest.why).toContain('Je testloop schuift niet');
   });
 
   it('te dicht op elkaar: beide trainingen krijgen hun tekst', () => {

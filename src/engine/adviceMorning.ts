@@ -191,5 +191,5 @@ export function previewMorningAdvice(inputs: AdviceInputs): Advice[] {
 export function describeMorningPreview(advice: Advice[], legCard?: string): string {
   if (advice.length === 0 && !legCard) return 'Je planning blijft zoals hij is.';
   const shown = [...advice.map((a) => `"${a.title}"`), ...(legCard ? [`de kaart Benen voor ${legCard}`] : [])];
-  return `Op Vandaag verschijnt dan: ${shown.join(' en ')}. Niets verandert zonder jouw akkoord.`;
+  return `Op Vandaag verschijnt dan: ${shown.join(' en ')}. Eerst een voorstel, pas na Akkoord verandert er iets.`;
 }

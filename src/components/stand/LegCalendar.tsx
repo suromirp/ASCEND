@@ -24,12 +24,12 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
       <div>
         <Eyebrow>Beenkalender</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Wat elke dag in je benen stopt. Feller is zwaarder, gestippeld is nog gepland. Twee felle vakjes vlak na elkaar zijn zwaar voor je benen.
+          Wat je benen per dag krijgen. Fel is zwaar, gestippeld is gepland. Twee felle vakjes na elkaar zijn zwaar.
         </p>
       </div>
 
-      <div className="grid grid-cols-7 gap-1.5" role="grid" aria-label="Beenbelasting per dag">
-        {WEEKDAYS.map((d) => <span key={d} className="text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>{d}</span>)}
+      <div className="-mx-4 grid grid-cols-7" role="grid" aria-label="Beenbelasting per dag">
+        {WEEKDAYS.map((d) => <span key={d} className="pb-1.5 text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>{d}</span>)}
         {weeks.flatMap((week) => week.map((d) => {
           const i = days.indexOf(d);
           const isToday = d.date === today;
@@ -39,16 +39,21 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
               onClick={() => setSelected(i)}
               aria-label={`${formatWeekdayDayMonthNL(d.date)}: ${LEVEL_WORD[d.level]}${d.names.length ? `, ${d.names.join(', ')}` : ''}`}
               aria-pressed={i === selected}
-              className="relative h-11 min-w-0 rounded-md"
-              style={{
-                background: 'var(--color-charcoal)',
-                outline: i === selected ? '2px solid var(--color-action)' : isToday ? '1px solid var(--color-ink-dim)' : undefined,
-                outlineOffset: 1,
-              }}
+              className="relative h-11 min-w-0"
             >
+              {/* De knop vult het hele vak (minstens 44 bij 44 px, ook op 360 px); het vakje zelf staat er iets in. */}
+              <span
+                className="absolute inset-[3px] rounded-md"
+                style={{
+                  background: 'var(--color-charcoal)',
+                  outline: i === selected ? '2px solid var(--color-action)' : isToday ? '1px solid var(--color-ink-dim)' : undefined,
+                  outlineOffset: 1,
+                }}
+                aria-hidden
+              />
               {d.level > 0 && (
                 <span
-                  className="absolute inset-0 rounded-md"
+                  className="absolute inset-[3px] rounded-md"
                   style={{
                     background: 'var(--color-warning)',
                     opacity: LEVEL_OPACITY[d.level] * (d.planned ? 0.7 : 1),

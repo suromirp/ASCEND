@@ -3,7 +3,8 @@ import { useAppData } from '../../state/AppDataContext';
 import { isOpenOn, isSoreness } from '../../engine/injuryKind';
 import { effectiveAmbition } from '../../engine/ambition';
 import { hasBodyFat } from '../../engine/bodyFat';
-import { currentBodyKg, latestWeight, weightsInUse } from '../../engine/bodyWeight';
+import { weightsInUse } from '../../engine/bodyWeight';
+import { loadBodyKg, weightShown } from '../../engine/weightTrend';
 import { predictDuration } from '../../engine/durationLearning';
 import { usableSweatEntries } from '../../engine/sweat';
 import { journeyProgress, normalizeJourneyState, withBootsDone, withDerivedDone } from '../../engine/journey';
@@ -60,7 +61,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   // memo hangt aan een vingerafdruk van de inhoud (checkDataKey) en van de instelling
   // (checkModelKey).
   const checkKey = checkModelKey(settings.strengthModel);
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  const bodyKg = loadBodyKg(settings);
   // Spierpijn en een gekozen Lichter horen erbij: ze bepalen of een training telt (engine/legDayEase.ts).
   const easeKey = JSON.stringify([settings.legEaseDays, settings.morningCheckIns?.filter((c) => c.legs).map((c) => [c.date, c.legs, c.soreWhere]), injuryNotes.filter((n) => n.kind === 'spierpijn').map((n) => [n.date, n.bodyPart, n.resolvedDate])]);
   const dataKey = checkDataKey(sessionLogs, templates, program, bodyKg) + easeKey;
@@ -80,7 +81,8 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     const mainGoal = findMainGoal(trainingGoals, ladder);
     const mainIsTrek = !!mainGoal?.requirements.some((r) => r.discipline === 'hiking' || r.kind === 'elevationGain' || r.kind === 'elevationLoss');
     const periods = (settings.leavePeriods ?? []).filter((p) => p.endDate >= today);
-    const w = latestWeight(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect));
+    const shown = weightShown(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect), settings.weightTrend);
+    const w = shown?.latest;
     const estimates = settings.sessionDurationEstimates ?? {};
     const strength = templates.filter(
       (t) => t.type === 'strength' && !t.weeklyProgression && (t.defaultDayOfWeek || plannedSessions.some((s) => s.templateId === t.id && s.scheduledDate >= today)),
@@ -92,6 +94,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     return {
       today,
       settings,
+      templates,
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
       pairing: goalEngineConfig.strategy.sameDayPairingPreference,
       position: position ? { weekInProgram: position.weekInProgram, totalWeeks: position.totalWeeksInProgram, phaseName: position.phase.name } : null,
@@ -102,7 +105,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       strengthExternal,
       ambition: effectiveAmbition(settings.ambition, sessionLogs, templateById, program, today),
       hasBodyFat: hasBodyFat(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect)),
-      weight: w ? { kg: w.kg, source: w.source, date: w.date } : null,
+      weight: w ? { kg: w.kg, source: w.source, date: w.date, ...(shown?.trend ? { trendKg: shown.trend.kg } : {}) } : null,
       watch: loaded.watch
         ? { linked: loaded.linked, syncedAt: loaded.watch.fetchedAt, use, autoTick: loaded.watch.autoTick, leads: loaded.watch.garminLeads, corrections: loaded.watch.takeCorrections, sendEnabled: loaded.sendEnabled, hrBasis: loaded.hrBasis }
         : null,

@@ -8,6 +8,7 @@ import { WeeklyLoadChart } from '../components/stand/WeeklyLoadChart';
 import { IntensityMixCard } from '../components/stand/IntensityMixCard';
 import { DescentCard } from '../components/stand/DescentCard';
 import { ClimbPaceCard } from '../components/stand/ClimbPaceCard';
+import { weekPositionLabel } from '../engine/weekLabel';
 import type { HikeDay } from '../engine/climbPace';
 import { RunTrendsCard } from '../components/stand/RunTrendsCard';
 import { PaceCurveCard } from '../components/stand/PaceCurveCard';
@@ -16,6 +17,7 @@ import { YourWeekStandCard } from '../components/stand/YourWeekStandCard';
 import { useStandYourWeek } from '../components/stand/useStandYourWeek';
 import { TextButton } from '../components/TextButton';
 import { OrderSheet } from '../components/stand/OrderSheet';
+import { WeightStandCard } from '../components/stand/WeightStandCard';
 import { ForgeEntryCard } from '../components/stand/ForgeEntryCard';
 import { StrengthProgressionCard } from '../components/stand/StrengthProgressionCard';
 import { TrainingSplitRow } from '../components/stand/TrainingSplitRow';
@@ -164,7 +166,7 @@ export function StandingPage() {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
       <SkyBand>
         <div>
-          {position && <Eyebrow>{waveHeader(position) ?? `Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}`}</Eyebrow>}
+          {position && <Eyebrow>{waveHeader(position) ?? weekPositionLabel(position)}</Eyebrow>}
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
           {sentence && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{sentence}</p>}
         </div>
@@ -176,6 +178,8 @@ export function StandingPage() {
       {order.map((id) => (
         <Fragment key={id}>{blocks[id]}</Fragment>
       ))}
+
+      <WeightStandCard />
 
       <div className="flex justify-center">
         <TextButton tone="dim" onClick={() => setOrdering(true)}>Volgorde aanpassen</TextButton>

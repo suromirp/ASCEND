@@ -11,6 +11,9 @@
 //   rule LEAVE-OFF).
 // - trek: a block of walking days with a backpack. Every day is a mountain
 //   hike; the day before and the day after stay light (rule LEAVE-LIGHT).
+// - no_gym: you are away and can run, but have no gym. Runs stay, shorter and
+//   easier; a gym session becomes a short one with your own weight or goes
+//   (engine/noGym.ts).
 //
 // A period is a fact about your calendar. It is stored on its own and never
 // changes the planning by itself: adding or removing one produces a proposal
@@ -21,14 +24,16 @@
 
 import type { LeaveKind, LeavePeriod, TrekDetails } from '../models/leave';
 import { trekLightDaysBefore } from './trekTaper';
+import { isNoGymDetails, noGymLine } from './noGymDetails';
 import { addDays, daysBetween, formatWeekdayDateNL, formatWeekdayDayMonthNL } from '../utils/dates';
 
-export const LEAVE_KINDS: LeaveKind[] = ['no_training', 'trek', 'free_days'];
+export const LEAVE_KINDS: LeaveKind[] = ['no_training', 'no_gym', 'trek', 'free_days'];
 
 export const LEAVE_KIND_LABEL: Record<LeaveKind, string> = {
   free_days: 'Vrije dagen',
   no_training: 'Vakantie zonder training',
   trek: 'Tocht met rugzak',
+  no_gym: 'Zonder sportschool',
 };
 
 // Short, for the band in the week and the list.
@@ -36,11 +41,13 @@ export const LEAVE_KIND_SHORT: Record<LeaveKind, string> = {
   free_days: 'Vrije dag',
   no_training: 'Vakantie',
   trek: 'Tochtdag',
+  no_gym: 'Zonder sportschool',
 };
 
 export const LEAVE_KIND_HINT: Record<LeaveKind, string> = {
   no_training: 'Geen training op deze dagen. Wat er stond, schuift naar een andere dag of vervalt.',
   trek: 'Een tocht van meerdere dagen met je rugzak. Elke dag is een wandeldag. De dag ervoor en erna blijft licht.',
+  no_gym: 'Je bent weg en kunt lopen, maar er is geen sportschool. Lopen blijft, korter en rustiger. Kracht in de sportschool wordt een korte sessie met je eigen gewicht of vervalt.',
   free_days: 'Je hebt extra tijd. Er gaat niets uit je planning. Past er een lange wandeling, dan stelt ASCEND die voor.',
 };
 
@@ -48,11 +55,11 @@ const MAX_DAYS = 90;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function isLeaveKind(v: unknown): v is LeaveKind {
-  return v === 'free_days' || v === 'no_training' || v === 'trek';
+  return v === 'free_days' || v === 'no_training' || v === 'trek' || v === 'no_gym';
 }
 
 // A stored or imported record is only used when it is complete and sane;
-// anything else is dropped by the caller (storage/backup.ts counts it).
+// anything else is dropped by the caller (storage/backupNormalize.ts counts it).
 export function isLeavePeriod(v: unknown): v is LeavePeriod {
   if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
   const p = v as Record<string, unknown>;
@@ -63,7 +70,8 @@ export function isLeavePeriod(v: unknown): v is LeavePeriod {
     typeof p.endDate === 'string' && DATE_RE.test(p.endDate) &&
     p.endDate >= p.startDate &&
     (p.note === undefined || typeof p.note === 'string') &&
-    (p.trek === undefined || isTrekDetails(p.trek))
+    (p.trek === undefined || isTrekDetails(p.trek)) &&
+    (p.noGym === undefined || isNoGymDetails(p.noGym))
   );
 }
 
@@ -110,16 +118,16 @@ export function validateLeaveDraft(draft: { kind?: LeaveKind; startDate?: string
 }
 
 // --- which day is what ----------------------------------------------------------
-// 'off': no training. 'trek': a walking day. 'free': extra time. Where periods
-// overlap the strictest wins: a holiday without training beats a trek, a trek
-// beats free days.
-type LeaveDayKind = 'off' | 'trek' | 'free';
+// 'off': no training. 'trek': a walking day. 'nogym': runs, no gym. 'free': extra
+// time. Where periods overlap the strictest wins: a holiday without training
+// beats a trek, a trek beats a period without a gym, and that beats free days.
+type LeaveDayKind = 'off' | 'trek' | 'nogym' | 'free';
 export interface LeaveDay {
   kind: LeaveDayKind;
   period: LeavePeriod;
 }
-const RANK: Record<LeaveDayKind, number> = { off: 3, trek: 2, free: 1 };
-const DAY_KIND: Record<LeaveKind, LeaveDayKind> = { no_training: 'off', trek: 'trek', free_days: 'free' };
+const RANK: Record<LeaveDayKind, number> = { off: 4, trek: 3, nogym: 2, free: 1 };
+const DAY_KIND: Record<LeaveKind, LeaveDayKind> = { no_training: 'off', trek: 'trek', no_gym: 'nogym', free_days: 'free' };
 
 export function leaveDays(periods: LeavePeriod[] | undefined): Map<string, LeaveDay> {
   const map = new Map<string, LeaveDay>();
@@ -134,7 +142,7 @@ export function leaveDays(periods: LeavePeriod[] | undefined): Map<string, Leave
 }
 
 // The days before and the day after a trek: light, unless that day is itself
-// a holiday or a walking day. Before a tocht you want to be fresh for there
+// a holiday or a walking day (a free day or a day without a gym stays light). Before a tocht you want to be fresh for there
 // are more light days (engine/trekTaper.ts); the day after is always one.
 export interface LightDay { period: LeavePeriod; side: 'before' | 'after'; // Days from the light day to the tocht (before) or from the tocht (after).
   distance: number }
@@ -150,7 +158,7 @@ export function lightDays(periods: LeavePeriod[] | undefined, days: Map<string, 
     ];
     for (const [date, side, distance] of dates) {
       const day = days.get(date);
-      if (day && day.kind !== 'free') continue;
+      if (day && day.kind !== 'free' && day.kind !== 'nogym') continue;
       if (!map.has(date)) map.set(date, { period, side, distance });
     }
   }
@@ -189,6 +197,7 @@ export function leaveLabelOn(date: string, periods: LeavePeriod[] | undefined): 
     const note = day.period.note?.trim() || day.period.trek?.name || undefined;
     if (day.kind === 'off') return { kind: 'off', title: 'Vakantie', line: 'Geen training', note };
     if (day.kind === 'trek') return { kind: 'trek', title: 'Tochtdag', line: 'Wandelen met je rugzak', note };
+    if (day.kind === 'nogym') return { kind: 'nogym', title: 'Zonder sportschool', line: noGymLine(day.period), note };
     return { kind: 'free', title: 'Vrije dag', line: 'Extra tijd', note };
   }
   const light = lightDays(periods, days).get(date);

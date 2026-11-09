@@ -21,6 +21,8 @@ import { mondayOfWeek } from '../utils/dates';
 import { matchExercise, normalizeExerciseName } from './exerciseMatch';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession } from './macrofactorSets';
+import { joinNL } from '../utils/joinNL';
+import { isGymStrengthTemplate } from './templateRoles';
 
 type Kind = 'legs' | 'upper' | 'full';
 
@@ -111,10 +113,6 @@ function tidy(name: string): string {
   return name.replace(/\s+/g, ' ').trim();
 }
 
-function joinNL(items: string[]): string {
-  return items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} en ${items[items.length - 1]}`;
-}
-
 // "Back Squat (Barbell), Romanian Deadlift en Leg Press: een beendag"
 export function contentReason(profile: Profile): string {
   const names: string[] = [];
@@ -154,7 +152,7 @@ export function suggestByContent(
   planned: PlannedSession[],
   programStart?: string,
 ): Record<string, ContentSuggestion> {
-  const strength = templates.filter((t) => t.type === 'strength');
+  const strength = templates.filter((t) => isGymStrengthTemplate(t));
   if (strength.length === 0) return {};
   const tplProfiles = strength.map((t) => ({ template: t, profile: templateProfile(t) }));
   const strengthIds = new Set(strength.map((t) => t.id));

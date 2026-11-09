@@ -424,7 +424,7 @@ function lastHeavyBefore(test: PlannedSession, near: PlannedSession[], input: Ch
 // --- repairing what the system planned ----------------------------------------------
 // A repair is made for a rule of the check, or by the leave step that puts a
 // walk on a trek day or a free day (engine/leaveBlock.ts).
-type RepairRule = CheckRule | 'LEAVE-PLACE' | 'FIXED-SPORT' | 'KIND-AMOUNT';
+type RepairRule = CheckRule | 'LEAVE-PLACE' | 'LEAVE-AROUND' | 'FIXED-SPORT' | 'KIND-AMOUNT';
 
 export interface Repair {
   sessionId: string;
@@ -639,7 +639,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
         const easy = sessions.map((x) => (x.id === subject.id ? { ...x, templateId: EASY_ID, ...(mark.date ? { afterGoal: mark } : {}) } : x));
         if (judge([subject.scheduledDate])(easy)) {
           sessions = easy;
-          repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: 'je herstelt nog van je wedstrijd, daarom een rustig loopje in plaats van een harde training' });
+          repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: 'je herstelt nog van je wedstrijd, daarom een rustige loop in plaats van een harde training' });
         }
       }
       continue;
@@ -715,6 +715,7 @@ const REASON: Record<RepairRule, string> = {
   'LEAVE-OFF': 'je bent vrij of op tocht',
   'LEAVE-LIGHT': 'de dagen voor en na je tocht blijven licht',
   'LEAVE-PLACE': 'past bij je vrije periode',
+  'LEAVE-AROUND': 'het best rond je vakantie',
   'FIXED-SPORT': 'je vaste afspraak',
   'KIND-AMOUNT': 'hoeveel per soort',
   'REST-DAY': 'je rustdag blijft vrij',

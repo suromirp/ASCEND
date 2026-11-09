@@ -157,7 +157,9 @@ export function applyPlanChangeItems(
         // Only the mark of a period goes (engine/leaveProposal.ts): a training
         // you moved yourself keeps its day and your own lock.
         if (item.leave === null && item.plannedSessionId) {
-          next = next.map((s) => (s.id === item.plannedSessionId ? withLeave(s, item) : s));
+          // With `restore`: the length the period gave it goes too (engine/leaveProposal.ts#putBack).
+          const own = (s: PlannedSession) => { const next = withLeave(s, item); if (item.restore) delete next.plannedMinutes; return next; };
+          next = next.map((s) => (s.id === item.plannedSessionId ? own(s) : s));
           break;
         }
         // A session the proposal shows unchanged ("Benen A erna") is part
@@ -230,6 +232,8 @@ export function applyPlanChangeItems(
           order: next.length,
           // The system's own layout (restore): no lock, a later run may move it.
           ...(item.restore ? {} : locked),
+          // A length of its own (a short easy run in a period without a gym, engine/noGym.ts).
+          ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}),
           ...(item.leave ? { leave: item.leave } : {}),
         };
         next = [...next, created];
@@ -294,6 +298,8 @@ export function staleItems(items: PlanChangeItem[], sessions: PlannedSession[]):
     if (!item.plannedSessionId || item.action === 'add' || item.action === 'replace' || item.action === 'reduce') return false;
     const s = byId.get(item.plannedSessionId);
     if (!s) return true;
+    // A training of yours that gets its own length back: only while it still has the short one.
+    if (item.action === 'keep' && item.restore && item.plannedMinutes !== undefined && s.plannedMinutes !== item.plannedMinutes) return true;
     return !!item.fromDate && s.scheduledDate !== item.fromDate;
   });
 }

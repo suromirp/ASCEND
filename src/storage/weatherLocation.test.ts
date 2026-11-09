@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MetaRepo, SettingsRepo, wipeAllData } from './database';
 import { followLocation } from './weatherLocation';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { resolveOverviews } from '../engine/overviewSettings';
 import { LocateError } from '../utils/geolocation';
 

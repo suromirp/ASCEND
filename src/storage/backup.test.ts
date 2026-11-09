@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, SettingsRepo, MetaRepo, PlannedSessionsRepo, StrengthProgramStrategiesRepo, PlanChangeProposalsRepo, BackupSnapshotsRepo, wipeAllData } from './database';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode, parseBackupText, backupErrorText, listSnapshots, restoreSnapshot } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel, parseBackupText } from './backupNormalize';
+import { buildImportPreview } from './backupPreview';
+import { createImportPlan, createPreImportSnapshot, applyImportPlan, listSnapshots, restoreSnapshot } from './backupApply';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
+import { backupErrorText } from './backupMessage';
 import type { SessionLog, PlannedSession } from '../models/training';
 import { migrateInfluences, migrateLegEaseDays, migrateNightJudgments } from './migrations';
 import type { InfluenceEntry } from '../models/influence';
@@ -309,6 +314,28 @@ describe('backup envelope round-trip', () => {
     const s = await SettingsRepo.get();
     expect(s.weightEntries).toEqual([hc, { date: '2026-11-03', kg: 84, source: 'manual' }]);
     expect(s.weightFromHealthConnect).toBe(false);
+  });
+
+  it('de schakelaar Gewichtstrend gaat mee, een kapotte valt weg', async () => {
+    await SettingsRepo.set({ weightTrend: false });
+    const envelope = await buildBackupEnvelope();
+    await SettingsRepo.set({ weightTrend: true });
+    await importEnvelope(envelope);
+    expect((await SettingsRepo.get()).weightTrend).toBe(false);
+    const broken = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { weightTrend: 'ja' } } });
+    expect(broken.settings && 'weightTrend' in broken.settings).toBe(false);
+    expect(broken.skippedInvalid).toBe(1);
+  });
+
+  it('de schakelaar Gewicht op Je stand gaat mee, een kapotte valt weg', async () => {
+    await SettingsRepo.set({ weightCard: false });
+    const envelope = await buildBackupEnvelope();
+    await SettingsRepo.set({ weightCard: true });
+    await importEnvelope(envelope);
+    expect((await SettingsRepo.get()).weightCard).toBe(false);
+    const broken = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { weightCard: 'ja' } } });
+    expect(broken.settings && 'weightCard' in broken.settings).toBe(false);
+    expect(broken.skippedInvalid).toBe(1);
   });
 
   it('een kapotte schakelaar voor gewicht uit Health Connect valt weg', async () => {

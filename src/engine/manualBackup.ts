@@ -28,7 +28,7 @@ export function savedBackupText(folder: string, name: string): string {
   return `Back-up opgeslagen in ${folder} als ${name}.`;
 }
 
-export const DOWNLOADED_BACKUP_TEXT = 'Back-up gedownload.';
+const DOWNLOADED_BACKUP_TEXT = 'Back-up gedownload.';
 
 const REASON_TEXT: Record<AutoBackupFailureReason, string> = {
   permission: 'ASCEND mag niet in Documents schrijven. Geef toegang bij Vaste map en probeer het nog eens',

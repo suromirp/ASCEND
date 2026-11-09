@@ -22,22 +22,26 @@ const everything: AppSettings = {
   afterMainGoal: 'maintain',
   showNextTrek: false,
   showSeasonStrip: false,
+  showSkillGoals: false,
   showStageWater: false,
   askSweat: false,
   trekLegRest: 'strict',
   leaveCrowding: 'shift',
+  leaveAround: 'little',
+  noGymStrength: 'drop',
   longRunGrowth: 'wave',
   bootBreakInKm: 150,
   bootBreakInReminder: false,
   strengthModel: {
     enabled: false, progression: 'reps_first', workSets: 'equal', warmup: 'off', warmupScope: 'exercise', widenRange: false,
-    estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'gong', keepScreenOn: false, carryMode: 'off', showPlates: false, quickRir: false,
+    estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'gong', keepScreenOn: false, carryMode: 'off', showPlates: false, quickRir: false, ladderRow: false, askClean: false, askBand: false, stepProposal: false, calibration: false,
     showOneRm: false, oneRmView: 'work_weight', showMacroFactorOneRm: false, compareWeeks: '2_4', listSort: 'name', showExtras: false,
     showTrendLines: false, stackWeights: 'used_only', lighterAfterBreak: false, dumbbellLog: 'total', fatigue: 'fixed', showComparison: true,
-    adjustLive: false, reckon: false, noSpotter: false, mountainMuscles: false, rirPrefill: 'target',
+    adjustLive: false, reckon: false, learnStands: false, assumedCounts: false, crossFatigue: false, noSpotter: false, mountainMuscles: false, rirPrefill: 'target',
   },
   showBodyFat: false,
   exerciseArt: 'uit',
+  guideOpen: true,
   figure: 'vrouw',
   bodyCheck: 'uit',
   legEase: 'uit',
@@ -50,7 +54,7 @@ const everything: AppSettings = {
   intensityCounting: 'plan',
   overviews: {
     morningCheckIn: false, morningCard: false, legsAfterEffort: false, morningCardFrom: '7', weekReview: false, weekReviewDay: 'sunday', weeklyQuestion: false,
-    weatherLine: false, weatherSwap: false, bestMoment: false, clothingAdvice: false, completionMoment: false,
+    weatherLine: false, weatherSwap: false, bestMoment: false, rainSoon: false, hillsNearby: false, moonLine: false, clothingAdvice: false, completionMoment: false,
   },
   askShortNight: false,
   askDoubtTest: false,
@@ -99,8 +103,12 @@ const everything: AppSettings = {
   watchCalmRun: false,
   weightFromMacroFactor: false,
   weightFromHealthConnect: false,
+  weightTrend: false,
+  weightForLoad: 'latest',
+  weightCard: false,
   stravaText: false,
   keepStreams: false,
+  tempoStablePieces: false,
   morningInBackup: false,
   watchSilence: false,
   illnessSigns: false,
@@ -110,6 +118,8 @@ const everything: AppSettings = {
   morningRule: false,
   morningProposal: false,
   mountainWeather: false,
+  weatherWarnings: false,
+  avalancheBulletin: false,
   heatAcclimation: false,
   paceCurve: false,
   stageOwnPace: false,
@@ -155,7 +165,7 @@ describe('adviceDifferences', () => {
 
   it('alleen wat de planning raakt is gemarkeerd', () => {
     const planIds = adviceDifferences(everything).filter((d) => d.plan).map((d) => d.id).sort();
-    expect(planIds).toEqual(['ambitie', 'beginnersstart', 'golven', 'lange-loop', 'lange-loop-benen', 'lange-zondag', 'na-hoofddoel', 'rust-na-tocht', 'rustdag-doen', 'test-rust', 'vakantie-opzij', 'zware-dingen']);
+    expect(planIds).toEqual(['ambitie', 'beginnersstart', 'golven', 'lange-loop', 'lange-loop-benen', 'lange-zondag', 'na-hoofddoel', 'rust-na-tocht', 'rustdag-doen', 'test-rust', 'vakantie-opzij', 'vakantie-schuiven', 'zware-dingen']);
   });
 
   it('elke instelling in de lijst staat in de index en heeft een plek', () => {
@@ -179,8 +189,8 @@ describe('resetPatch', () => {
   it('zet alles terug op het advies, in twee delen: wat meteen kan en wat de planning raakt', () => {
     const all = adviceDifferences(everything).map((d) => d.id);
     const { now, plan, planTitles } = resetPatch(everything, all);
-    expect(Object.keys(plan).sort()).toEqual(['afterMainGoal', 'ambition', 'beginnerStart', 'hardSameDay', 'leaveCrowding', 'longRunGrowth', 'longRunThenLegs', 'longSundaySession', 'restDayMode', 'testRest', 'trekLegRest', 'waves']);
-    expect(planTitles).toHaveLength(12);
+    expect(Object.keys(plan).sort()).toEqual(['afterMainGoal', 'ambition', 'beginnerStart', 'hardSameDay', 'leaveAround', 'leaveCrowding', 'longRunGrowth', 'longRunThenLegs', 'longSundaySession', 'restDayMode', 'testRest', 'trekLegRest', 'waves']);
+    expect(planTitles).toHaveLength(13);
     expect(Object.keys(now)).not.toContain('ambition');
     const after = apply(apply(everything, now), plan);
     expect(adviceDifferences(after)).toEqual([]);
@@ -189,7 +199,7 @@ describe('resetPatch', () => {
   it('zonder het planningsdeel blijft de planning staan', () => {
     const { now } = resetPatch(everything, adviceDifferences(everything).map((d) => d.id));
     const half = apply(everything, now);
-    expect(adviceDifferences(half).map((d) => d.id).sort()).toEqual(['ambitie', 'beginnersstart', 'golven', 'lange-loop', 'lange-loop-benen', 'lange-zondag', 'na-hoofddoel', 'rust-na-tocht', 'rustdag-doen', 'test-rust', 'vakantie-opzij', 'zware-dingen']);
+    expect(adviceDifferences(half).map((d) => d.id).sort()).toEqual(['ambitie', 'beginnersstart', 'golven', 'lange-loop', 'lange-loop-benen', 'lange-zondag', 'na-hoofddoel', 'rust-na-tocht', 'rustdag-doen', 'test-rust', 'vakantie-opzij', 'vakantie-schuiven', 'zware-dingen']);
     expect(half.ambition).toBe('stevig');
   });
 

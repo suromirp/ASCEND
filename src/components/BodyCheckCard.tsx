@@ -3,7 +3,8 @@ import { useAppData } from '../state/AppDataContext';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { answerWeek, bodyCheckEvents, bodyCheckRows, bodyCheckState, isReviewDay, type CheckRow } from '../engine/bodyCheck';
 import { resolveBodyCheck } from '../engine/bodyCheckSettings';
-import { spotById, type BodySpot } from '../engine/bodyMap';
+import type { BodySpot } from '../data/bodySpots';
+import { spotById } from '../engine/bodyMap';
 import { resolveFigure } from '../engine/figureSettings';
 import { fatigueEvents, legFatigueOn, type FatigueEvent } from '../engine/legFatigue';
 import { resolveOverviews } from '../engine/overviewSettings';
@@ -134,7 +135,7 @@ export function BodyCheckCard() {
             ))}
           </div>
         ) : (
-          <p className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Niets viel deze week op. Voel je toch iets, tik dan op Iets anders aanwijzen.</p>
+          <p className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Niets viel deze week op. Voel je iets? Tik op Iets anders aanwijzen.</p>
         )}
       </div>
 

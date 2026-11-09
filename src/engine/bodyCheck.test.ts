@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { BODY_SPOTS } from '../data/bodySpots';
 import { careForSpot, spotById } from './bodyMap';
+import { resolveBodyCheck } from './bodyCheckSettings';
 import type { InjuryNote } from '../models/injury';
 import type { WeeklyHealthCheck } from '../models/checkIn';
 import type { SessionLog } from '../models/training';
 import {
-  answerWeek, bodyCheckEvents, bodyCheckReasons, isReviewDay, suggestionFor, bodyCheckRows, bodyCheckState, checkWeekStart, heavyWeekLine, resolveBodyCheck, weekHandled, weekHotSpots, weekLoad,
+  answerWeek, bodyCheckEvents, bodyCheckReasons, isReviewDay, suggestionFor, bodyCheckRows, bodyCheckState, checkWeekStart, heavyWeekLine, weekHandled, weekHotSpots, weekLoad,
   AFTER_EVENT_FROM_DAYS, DESCENT_LEVELS, HEAVY_LEG_INDEX, type BodyCheckInput,
 } from './bodyCheck';
 

@@ -76,7 +76,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-row.field { padding-top: 4px; padding-bottom: 4px; }
 .st-row.field .v { pointer-events: auto; }
 .st-row.field .t { pointer-events: none; }
-.st-row .info-slot { pointer-events: auto; position: relative; z-index: 1; display: inline-flex; }
+.st-row .info-slot { pointer-events: auto; position: relative; z-index: 1; display: inline-flex; flex: none; }
 .st-row.danger .t { color: var(--color-danger-text); }
 .st-row.off .t, .st-row.off .v { color: var(--color-ink-dim); }
 .st-row.flash { animation: st-flash 1.6s ease-out; }

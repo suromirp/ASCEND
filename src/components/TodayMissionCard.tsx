@@ -20,6 +20,7 @@ import { SportDisc } from './SportDisc';
 import { Icon } from './icons';
 import type { MissionChip } from '../engine/missionFacts';
 import { WeatherLine } from './WeatherLine';
+import { HillsNearbyLine } from './HillsNearbyLine';
 import { ClothingAdvice } from './ClothingAdvice';
 import { WatchStatusRow } from './WatchStatusRow';
 import { BootReminderLine } from './reis/BootReminderLine';
@@ -199,6 +200,7 @@ export function TodayMissionCard({
             </p>
           )}
           {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-0.5" onOpen={() => navigate('/weer')} />}
+          <HillsNearbyLine template={template} date={todayISO()} className="mt-1" />
           <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
           {session && <WatchStatusRow session={session} template={template} offer={false} className="mt-3" />}
         </div>
@@ -290,7 +292,7 @@ export function TodayMissionCard({
           ) : (
             <div className="flex flex-col gap-4">
               <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-                Hoeveel tijd heb je? Je ziet eerst wat er verandert; pas met Akkoord wordt je training van vandaag korter.
+                Hoeveel tijd heb je? Eerst een voorstel, pas na Akkoord wordt je training van vandaag korter.
               </p>
               <div className="flex gap-2" role="group" aria-label="Hoeveel tijd heb je?">
                 {shorterTimes.map((m) => (

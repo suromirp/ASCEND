@@ -190,8 +190,13 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     else s.externalOneRm = oneRm.series;
     skipped.n += oneRm.skipped;
   }
-  // The switches for weight from MacroFactor and from Health Connect: a yes or a no, or not there.
-  for (const key of ['weightFromMacroFactor', 'weightFromHealthConnect']) {
+  // The switches for weight from MacroFactor and from Health Connect, "Gewichtstrend
+  // gebruiken" and "Uitleg standaard uitgeklapt": a yes or a no, or not there.
+  if ('weightForLoad' in s && s.weightForLoad !== 'trend' && s.weightForLoad !== 'latest') {
+    delete s.weightForLoad;
+    skipped.n++;
+  }
+  for (const key of ['weightFromMacroFactor', 'weightFromHealthConnect', 'weightTrend', 'guideOpen']) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -207,6 +212,10 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.showSeasonStrip;
     skipped.n++;
   }
+  if ('showSkillGoals' in s && typeof s.showSkillGoals !== 'boolean') {
+    delete s.showSkillGoals;
+    skipped.n++;
+  }
   if ('bootBreakInKm' in s && !(BREAKIN_KM_OPTIONS as readonly unknown[]).includes(s.bootBreakInKm)) {
     delete s.bootBreakInKm;
     skipped.n++;
@@ -218,7 +227,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md): een oude
   // waarde wordt stil genegeerd, het is geen fout in het bestand.
   delete s.forgeQuickButtons;
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'heatAcclimation', 'paceCurve', 'stageOwnPace', 'climbPace', 'zonesAfterTest'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -329,6 +338,15 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   }
   if ('leaveCrowding' in s && s.leaveCrowding !== 'drop' && s.leaveCrowding !== 'shift') {
     delete s.leaveCrowding;
+    skipped.n++;
+  }
+  if ('leaveAround' in s && s.leaveAround !== 'wide' && s.leaveAround !== 'little') {
+    delete s.leaveAround;
+    skipped.n++;
+  }
+  // Kracht zonder sportschool: eigen gewicht of laten vervallen, of niet aanwezig (het advies).
+  if ('noGymStrength' in s && s.noGymStrength !== 'bodyweight' && s.noGymStrength !== 'drop') {
+    delete s.noGymStrength;
     skipped.n++;
   }
   // Loslaten op een training in Week: ruilen of samen, of niet aanwezig (het advies).

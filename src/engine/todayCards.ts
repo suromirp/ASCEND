@@ -10,7 +10,7 @@
 // over een training die niet doorging komen nooit boven de missie: die beantwoord je in een blad, en
 // de missie is waar Vandaag over gaat. Puur: geen React, geen opslag.
 
-export type TodayCardId = 'ill' | 'illnessSign' | 'morning' | 'ramp' | 'advice' | 'stagePosition' | 'missed' | 'sportAsk' | 'freshStart' | 'backup' | 'backupDue';
+export type TodayCardId = 'ill' | 'illnessSign' | 'weatherWarning' | 'morning' | 'ramp' | 'advice' | 'stagePosition' | 'missed' | 'sportAsk' | 'freshStart' | 'backup' | 'backupDue';
 type TodayCardGroup = 'safety' | 'morning' | 'recovery' | 'today' | 'yesterday' | 'upkeep';
 
 export interface TodayCardSpec {
@@ -31,6 +31,9 @@ export const TODAY_CARD_RANK: readonly TodayCardSpec[] = [
   { id: 'ill', group: 'safety', lead: true, always: true },
   // Rusthartslag en HRV wijken een paar ochtenden samen af.
   { id: 'illnessSign', group: 'safety', lead: true, always: true },
+  // Onweer, storm, hitte of lawinegevaar bij een tocht of een lange training buiten (engine/weatherWarnings.ts):
+  // veiligheid, dus altijd boven de missie en nooit achter een tik.
+  { id: 'weatherWarning', group: 'safety', lead: true, always: true },
   { id: 'morning', group: 'morning', lead: true },
   // Weer opbouwen na ziekte: alleen uitleg, geen vraag.
   { id: 'ramp', group: 'recovery', lead: true },

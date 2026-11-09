@@ -44,6 +44,7 @@ import { inferCapabilityKeysForTemplate } from './sessionContribution';
 import { computeSpecificityRampBand, computeSpecificityWeight } from './specificityRamp';
 import { daysBetween } from '../utils/dates';
 import { makeId } from '../utils/id';
+import { r1 } from '../utils/round';
 
 // --- Baseline coverage (real, observed composition — never fabricated) -----
 
@@ -216,14 +217,10 @@ const REVIEW_DUE_AFTER_CONSECUTIVE_KEEP_WEEKS = 4;
 // veld) is een eerlijk, ongevalideerd startpunt, geen gemeten spreiding.
 const RANGE_SPREAD = 0.1;
 
-function round1(n: number): number {
-  return Math.round(n * 10) / 10;
-}
-
 function rangeAround(amount: number, unit: MeasuredValue['unit']): { min: MeasuredValue; max: MeasuredValue } {
   return {
-    min: { amount: round1(amount * (1 - RANGE_SPREAD)), unit },
-    max: { amount: round1(amount * (1 + RANGE_SPREAD)), unit },
+    min: { amount: r1(amount * (1 - RANGE_SPREAD)), unit },
+    max: { amount: r1(amount * (1 + RANGE_SPREAD)), unit },
   };
 }
 
@@ -254,7 +251,7 @@ function numericBaselineRanges(
   // demand.ts#targetPackWeightKg.
   const packKg = template.outdoorTarget?.backpackWeightKg;
   if (packKg !== undefined && packKg > 0) {
-    result.packWeight = { amount: round1(packKg * multiplier), unit: 'kg' };
+    result.packWeight = { amount: r1(packKg * multiplier), unit: 'kg' };
   }
 
   return result;

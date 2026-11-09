@@ -29,6 +29,7 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { VERDICT_RANK, isWeatherSensitive, sessionWeather, usualStartHour, verdictLine, type SessionWeather } from './weather';
 import { addDays, daysBetween, formatDateNL, weekDates, weekdayLongNL } from '../utils/dates';
 import { makeId } from '../utils/id';
+import { capitalize } from '../utils/capitalize';
 
 const MAX_OPTIONS = 3;
 // A forecast further than three days ahead changes too often to move a
@@ -40,8 +41,6 @@ const GENERATED_BY = ['engine/weatherSwap.ts', RULE_ID];
 function shortDate(iso: string): string {
   return `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
 }
-
-const capital = (s: string) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
 
 interface Candidate {
   date: string;
@@ -133,7 +132,7 @@ export function weatherAdvice(inputs: AdviceInputs, templateById: Map<string, Se
     candidates.sort((a, b) => VERDICT_RANK[a.weather.verdict] - VERDICT_RANK[b.weather.verdict] || away(a) - away(b) || a.date.localeCompare(b.date));
     const top = candidates.slice(0, MAX_OPTIONS);
 
-    const title = `${capital(weekdayLongNL(session.scheduledDate))}: ${now.bad.join(' en ')} bij ${template.name}`;
+    const title = `${capitalize(weekdayLongNL(session.scheduledDate))}: ${now.bad.join(' en ')} bij ${template.name}`;
     const why = 'ASCEND kijkt naar het weer in de uren waarin je gewoonlijk traint: de tijd van je eerdere trainingen van dezelfde soort, anders 18:00 uur op werkdagen en 10:00 uur in het weekend. Slecht is onweer, ijzel, storm, zware regen, extreme hitte of strenge kou; dat is geen weer om buiten hard te werken of ver van huis te zijn. Dat doet ASCEND alleen voor de komende drie dagen, want een verwachting verder vooruit wisselt te vaak. Voorgesteld wordt alleen een dag in dezelfde week met beter weer waarop de training past volgens de gewone regels: genoeg tijd op die dag en genoeg rust tussen zware trainingen voor dezelfde spieren. Er verschuift niets zonder jouw Akkoord. Met Liever niet blijft de training staan en vraagt ASCEND er niet meer naar. Weergegevens van Open-Meteo.com.';
 
     const options: AdviceOption[] = top.map((c) => {
@@ -143,8 +142,8 @@ export function weatherAdvice(inputs: AdviceInputs, templateById: Map<string, Se
       if (c.partner) {
         items.push({ plannedSessionId: c.partner.session.id, action: 'move', fromDate: c.date, toDate: session.scheduledDate, reason: `Wisselt mee, zodat ${template.name} op de dag met beter weer kan.`, generatedBy: GENERATED_BY });
       }
-      const nowLine = `${capital(weekdayLongNL(session.scheduledDate))} om ongeveer ${now.startHour}.00 uur: ${now.line}.`;
-      const betterLine = `${capital(weekdayLongNL(c.date))}: ${c.weather.line}.`;
+      const nowLine = `${capitalize(weekdayLongNL(session.scheduledDate))} om ongeveer ${now.startHour}.00 uur: ${now.line}.`;
+      const betterLine = `${capitalize(weekdayLongNL(c.date))}: ${c.weather.line}.`;
       const move = c.partner
         ? `${template.name} naar ${shortDate(c.date)} en ${c.partner.template.name} naar ${shortDate(session.scheduledDate)}.`
         : `${template.name} naar ${shortDate(c.date)}.`;

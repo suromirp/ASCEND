@@ -8,7 +8,7 @@
 // goal system: after this runs, trainingGoals/goalMilestones/
 // goalMilestoneProgress are the live source of truth and the legacy
 // objectives/milestoneProgress stores are emptied (kept, not deleted, so a
-// pre-migration export still imports cleanly — see storage/backup.ts,
+// pre-migration export still imports cleanly — see storage/backupNormalize.ts,
 // which reuses the same pure transform below for that exact case).
 //
 // Pure transform logic lives in engine/goalMigration.ts — this file only

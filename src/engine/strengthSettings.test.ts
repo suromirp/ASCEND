@@ -168,6 +168,7 @@ describe('toetsen en toestellen leren', () => {
   it('de adviezen: leren aan, blok uit, startdatum van het stille meten', () => {
     const r = resolveStrengthSettings(undefined);
     expect(r.learnStacks).toBe(true);
+    expect(r.learnStands).toBe(true);
     expect(r.showComparison).toBe(false);
     expect(r.checkFrom).toBe(DEFAULT_CHECK_FROM);
   });
@@ -204,5 +205,17 @@ describe('bijsturen en RIR vooraf', () => {
     expect(r.adjustLive).toBe(false);
     expect(r.rirPrefill).toBe('target');
     expect(normalizeStrengthSettings({ adjustLive: 'nee', rirPrefill: 'altijd' })).toEqual({});
+  });
+});
+
+describe('Standen onthouden (learnStands)', () => {
+  it('staat standaard aan, volgt de keuze, en rommel valt weg', () => {
+    expect(resolveStrengthSettings(undefined).learnStands).toBe(true);
+    expect(resolveStrengthSettings({ learnStands: false }).learnStands).toBe(false);
+    expect(normalizeStrengthSettings({ learnStands: false })).toEqual({ learnStands: false });
+    expect(normalizeStrengthSettings({ learnStands: 'nee' as unknown as boolean })).toEqual({});
+  });
+  it('hoort bij wat het controle-model bepaalt', () => {
+    expect(checkModelKey({ learnStands: false })).not.toBe(checkModelKey({ learnStands: true }));
   });
 });

@@ -2,7 +2,7 @@
 
 import { Fragment, memo, useMemo } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
-import { QUICK_RIR, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
+import { QUICK_RIR, QUICK_RIR_HINT, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
 import { barNote } from '../../engine/barCheck';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
@@ -33,9 +33,13 @@ import { stepFor } from '../../engine/strengthWeights';
 import { formatNumberNL } from '../../utils/number';
 import { Icon } from '../icons';
 import { TextButton } from '../TextButton';
+import { BodyLoadChip } from './BodyLoad';
 import { addOnText } from '../../engine/machineWeights';
 import { SPOTTER_SIGN } from '../../engine/spotter';
 import { LongPressRow, RirBubble, TickBox, ValueCell } from './parts';
+import { Segmented } from '../ui';
+import { addedKgOf, BAND_LABEL, bandOf, countsForLine, type LadderLines } from '../../engine/forgeLadder';
+import { SET_BANDS, type SetBand } from '../../models/training';
 import type { BlockActions } from './forgeWorkoutHelpers';
 
 // Een uitleg onder de kop langer dan dit staat op één regel met "Waarom zo", dat het blad Oefening opent; daar
@@ -63,6 +67,14 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   undoText,
   quickRirRow,
   poundText,
+  capText,
+  standLine,
+  ladderLines,
+  ladderHint,
+  canStep = false,
+  bandOn = false,
+  cleanRow,
+  bodyLoad,
   act,
 }: {
   ex: WorkoutExercise;
@@ -94,6 +106,21 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   quickRirRow?: string;
   // Het voorstel om dit toestel als ponden op te slaan (engine/poundStack.ts), als er een is.
   poundText?: string;
+  // "1 set weg door je tijdsgrens", zolang er door de grens sets van deze oefening ontbreken (engine/forgeTimeCap.ts).
+  capText?: string;
+  // De regel over de standen van dit toestel: een nieuwe stand (met Terugdraaien), de eerste keer, of een mislukte schrijfactie.
+  standLine?: { kind: 'learned' | 'first' | 'failed'; text: string };
+  // Calisthenics (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md), alleen met Stappen bij calisthenics:
+  // de drie regels bij een oefening op een ladder, de stille regel met het voorstel van de ladder, of de tik naar
+  // een lichtere of zwaardere stap kan (dezelfde regel als Ruilen), en of de keuze van de band er staat.
+  ladderLines?: LadderLines;
+  ladderHint?: string;
+  canStep?: boolean;
+  bandOn?: boolean;
+  // De set waarna Forge vraagt of het netjes ging ("Ging het netjes?"), als er een is.
+  cleanRow?: string;
+  // Eigen gewicht (engine/bodyLoad.ts): het bolletje "84,2 kg · 50%"; een tik opent het blad.
+  bodyLoad?: string;
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
@@ -102,6 +129,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   const plates = useMemo(() => (usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined), [ex, profile]);
   const exercise = exerciseOf(ex);
   const assisted = exercise?.resistance === 'assisted_bodyweight';
+  // Een stap met extra gewicht: het gewone gewichtsveld is het extra gewicht.
+  const added = addedKgOf(exercise) !== undefined;
   const workDone = ex.rows.filter((r) => r.kind === 'work' && r.done).length;
   const workTotal = ex.rows.filter((r) => r.kind === 'work').length;
   const complete = !readOnly && exerciseComplete(ex);
@@ -154,6 +183,38 @@ export const ExerciseBlock = memo(function ExerciseBlock({
       </div>
       <div className="forge-fold" data-folded={folded} inert={folded}>
         <div>
+          {bodyLoad && <BodyLoadChip text={bodyLoad} name={ex.name} onOpen={() => act.bodyLoad(ex.slot)} />}
+          {ladderLines && (
+            <div className="mt-1" data-testid="forge-ladder">
+              <p className="font-sans text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{ladderLines.step}</p>
+              <p className="font-sans text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{ladderLines.test}</p>
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{ladderLines.explain}</p>
+              {!readOnly && canStep && (ladderLines.lighter || ladderLines.harder) && (
+                <div className="-mb-1 flex flex-wrap gap-x-4">
+                  {ladderLines.lighter && (
+                    <TextButton className="shrink-0 whitespace-nowrap" onClick={() => act.step(ex.slot, ladderLines.lighter!.exerciseId)} aria-label={`Stap lichter, naar ${ladderLines.lighter.name}`}>Stap lichter</TextButton>
+                  )}
+                  {ladderLines.harder && (
+                    <TextButton className="shrink-0 whitespace-nowrap" onClick={() => act.step(ex.slot, ladderLines.harder!.exerciseId)} aria-label={`Stap zwaarder, naar ${ladderLines.harder.name}`}>Stap zwaarder</TextButton>
+                  )}
+                </div>
+              )}
+              {!readOnly && bandOn && exercise?.assist === 'band' && (
+                <div className="mt-2">
+                  <Segmented<SetBand | 'geen'>
+                    tall
+                    label="Band"
+                    value={bandOf(ex) ?? 'geen'}
+                    options={[{ value: 'geen', label: 'Geen', aria: 'Band: geen' }, ...SET_BANDS.map((b) => ({ value: b, label: BAND_LABEL[b], aria: `Band: ${BAND_LABEL[b].toLowerCase()}` }))]}
+                    onChange={(v) => act.band(ex.slot, v === 'geen' ? null : v)}
+                  />
+                </div>
+              )}
+              {ladderHint && (
+                <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-sage)', color: 'var(--color-ink-dim)' }}>{ladderHint}</p>
+              )}
+            </div>
+          )}
           {note && (
             <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>
               <span className="mt-px shrink-0" style={{ color: 'var(--color-action)' }}><Icon name="notitie" size={14} /></span>
@@ -201,6 +262,15 @@ export const ExerciseBlock = memo(function ExerciseBlock({
             </div>
           )}
 
+          {standLine && !readOnly && (
+            <div className="mt-1.5 flex items-center gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-card-border)' }} role={standLine.kind === 'failed' ? 'alert' : 'status'}>
+              <p className="min-w-0 flex-1 text-xs leading-snug" style={{ color: standLine.kind === 'failed' ? 'var(--color-danger-text)' : 'var(--color-ink-dim)' }}>{standLine.text}</p>
+              {standLine.kind === 'learned' && (
+                <TextButton tone="dim" onClick={() => act.standUndo()} size="xs" className="shrink-0" aria-label={`Terugdraaien, ${standLine.text}`}>Terugdraaien</TextButton>
+              )}
+            </div>
+          )}
+
           {poundText && !readOnly && (
             <div className="mt-2 flex flex-col gap-0.5 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }} role="group" aria-label="Toestel in ponden">
               <p className="font-sans text-sm leading-snug tabular-nums" style={{ color: 'var(--color-ink)' }}>{poundText}</p>
@@ -222,9 +292,10 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   <Icon name="ruilen" size={12} />
                 </button>
               )}
-              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : 'kg'}</span>
-              <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Herh.'}</span>
-              <span role="columnheader" className="text-center">RIR</span>
+              {/* Een houding heeft geen kg (behalve met extra gewicht) en geen RIR: de koppen blijven dan leeg. */}
+              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : added ? 'extra kg' : ex.hold ? '' : 'kg'}</span>
+              <span role="columnheader" className="text-center">{ex.timed || ex.hold ? 'sec' : 'Herh.'}</span>
+              <span role="columnheader" className="text-center">{ex.hold ? '' : 'RIR'}</span>
               {/* Alle sets afvinken staat in het blad Oefening, groep Sets (docs/beslissingen/2026-11-02-forge-herinrichting.md). */}
               <span role="columnheader" className="flex justify-center"><span className="sr-only">Gedaan</span></span>
             </div>
@@ -275,7 +346,15 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                     {readOnly || ex.timed ? (
                       <>
                         <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? '' : row.target.weightKg !== undefined ? formatNumberNL(row.target.weightKg, 2) : ''}</span>
-                        <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? repsText(row.target) : row.reps}</span>
+                        <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : ex.hold ? row.target.holdSec : readOnly ? repsText(row.target) : row.reps}</span>
+                      </>
+                    ) : ex.hold ? (
+                      <>
+                        {/* Een houding: geen kg (geen stap met extra gewicht houdt), de seconden in het cijferblok. */}
+                        <span role="cell" />
+                        <span role="cell">
+                          <ValueCell value={row.seconds} decimals={0} label={`Seconden, set ${label}`} done={row.done} active={fieldOn('seconds')} selected={selected} onOpen={() => act.open(ex.slot, row.id, 'seconds')} />
+                        </span>
                       </>
                     ) : (
                       <>
@@ -288,7 +367,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                       </>
                     )}
                     <span role="cell" className="flex justify-center">
-                      {row.kind === 'work' && !ex.timed && (readOnly ? row.target.rir : row.rir ?? row.target.rir) !== undefined && (
+                      {row.kind === 'work' && !ex.timed && !ex.hold && (readOnly ? row.target.rir : row.rir ?? row.target.rir) !== undefined && (
                         <RirBubble
                           rir={(readOnly ? row.target.rir : row.rir ?? row.target.rir)!}
                           // Een RIR die je niet zelf invulde staat gedimd: het is een hint, geen meting. Met "RIR vooraf invullen: Met het doel" staat het doel er als gewone waarde.
@@ -310,6 +389,9 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   {!readOnly && row.kind === 'work' && addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg) && (
                     <p className="ml-9 h-5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg)} kg</p>
                   )}
+                  {!readOnly && ladderLines && countsForLine(exercise, { kind: row.kind, weightKg: row.weightKg ?? row.target.weightKg, band: row.band }) && (
+                    <p className="ml-9 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{countsForLine(exercise, { kind: row.kind, weightKg: row.weightKg ?? row.target.weightKg, band: row.band })}</p>
+                  )}
                   {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
                     <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
                   )}
@@ -317,6 +399,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                     <p role="note" className="ml-9 mt-0.5 border-l-2 pl-2 font-sans text-xs leading-snug tabular-nums" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>{barLine}</p>
                   )}
                   {!readOnly && !folded && row.id === quickRirRow && <QuickRir label={label} onPick={(n) => act.quickRir(ex.slot, row.id, n)} />}
+                  {!readOnly && !folded && row.id === cleanRow && <CleanAsk label={label} onPick={(v) => act.clean(ex.slot, row.id, v)} />}
                   {!readOnly && row.id === spotterRowId && (
                     <div className="ml-9 h-5">
                       <button type="button" onClick={act.spotter} aria-label={`${SPOTTER_SIGN}, set ${label}. Tik voor uitleg`} className="relative flex h-5 items-center gap-1.5 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
@@ -341,6 +424,12 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               <TextButton onClick={() => act.restore(ex.slot)}>Terugzetten</TextButton>
             </p>
           )}
+          {!readOnly && !ex.timed && capText && (
+            <p className="mt-1 flex min-h-[44px] items-center gap-3 text-xs" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-grens-set">
+              <span>{capText}</span>
+              <TextButton onClick={() => act.add(ex.slot)}>Terugzetten</TextButton>
+            </p>
+          )}
           {!readOnly && !ex.timed && (
             <button type="button" onClick={() => act.add(ex.slot)} className="mt-1 flex min-h-[44px] items-center gap-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               <Icon name="plus" size={16} /> Set toevoegen
@@ -350,6 +439,9 @@ export const ExerciseBlock = memo(function ExerciseBlock({
       </div>
       {!readOnly && folded && quickRirRow && (
         <QuickRir label={rowLabel(ex, quickRirRow)} onPick={(n) => act.quickRir(ex.slot, quickRirRow, n)} />
+      )}
+      {!readOnly && folded && cleanRow && (
+        <CleanAsk label={rowLabel(ex, cleanRow)} onPick={(v) => act.clean(ex.slot, cleanRow, v)} />
       )}
     </section>
   );
@@ -365,20 +457,24 @@ function rowLabel(ex: WorkoutExercise, rowId: string): string {
 // blijft het doel staan als aangenomen RIR (docs/beslissingen/2026-11-03-forge-na-de-eerste-vergelijking.md).
 function QuickRir({ label, onPick }: { label: string; onPick: (n: number) => void }) {
   return (
-    <div className="animate-fade-in flex items-center gap-1.5 pb-1 pl-1" role="group" aria-label={`Hoeveel had je over bij set ${label}?`}>
-      <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel over?</span>
-      {QUICK_RIR.map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onPick(n)}
-          aria-label={`${quickRirLabel(n)} over, set ${label}`}
-          className="flex h-11 w-11 items-center justify-center rounded-full border font-sans text-sm font-semibold tabular-nums"
-          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
-        >
-          {quickRirLabel(n)}
-        </button>
-      ))}
+    <div className="animate-fade-in flex flex-col gap-1 pb-1 pl-1" role="group" aria-label={`Hoeveel had je over bij set ${label}?`}>
+      <div className="flex items-center gap-1.5">
+        <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel over?</span>
+        {QUICK_RIR.map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onPick(n)}
+            aria-label={`${quickRirLabel(n)} over, set ${label}`}
+            className="flex h-11 w-11 items-center justify-center rounded-full border font-sans text-sm font-semibold tabular-nums"
+            style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+          >
+            {quickRirLabel(n)}
+          </button>
+        ))}
+      </div>
+      {/* Uit het verslag RIR en RPE (hoofdstuk 5): mensen houden meestal iets meer over dan ze denken. */}
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{QUICK_RIR_HINT}</p>
     </div>
   );
 }
@@ -396,8 +492,31 @@ function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise })
           </Fragment>
         ))}
       </span>
-      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && <span className="block text-xs">{row.target.rir} RIR</span>}
+      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && !ex.hold && <span className="block text-xs">{row.target.rir} RIR</span>}
     </>
+  );
+}
+
+// "Ging het netjes?" na een werkset op een ladderstap: Ja of Nee in één tik, in de rij en zonder blad, zoals
+// "Hoeveel over?". Kies je niets, dan blijft het onbekend (dat telt als netjes). Verschijnt met `mx-row-in`, dat in
+// Rustig en Uit meteen op de eindstand staat.
+function CleanAsk({ label, onPick }: { label: string; onPick: (clean: boolean) => void }) {
+  return (
+    <div className="mx-row-in flex items-center gap-1.5 pb-1 pl-1" role="group" aria-label={`Ging set ${label} netjes?`}>
+      <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Ging het netjes?</span>
+      {([['Ja', true], ['Nee', false]] as const).map(([text, value]) => (
+        <button
+          key={text}
+          type="button"
+          onClick={() => onPick(value)}
+          aria-label={`${text}, set ${label} ging ${value ? '' : 'niet '}netjes`}
+          className="flex h-11 min-w-[44px] items-center justify-center rounded-full border px-4 text-sm font-semibold"
+          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+        >
+          {text}
+        </button>
+      ))}
+    </div>
   );
 }
 

@@ -21,7 +21,7 @@ import { usePageState } from '../components/usePageState';
 import { Icon } from '../components/icons';
 import { mainGoal } from '../engine/mainGoal';
 import { climbPace, stageOwnLine, stageTimeEstimate, type ClimbPaceState } from '../engine/climbPace';
-import { currentBodyKg } from '../engine/bodyWeight';
+import { loadBodyKg } from '../engine/weightTrend';
 import { signalOn } from '../engine/signalSettings';
 import type { AppSettings } from '../storage/database';
 
@@ -36,7 +36,7 @@ function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): strin
 function ownStageTime(stage: Gr5Stage, climb: ClimbPaceState | undefined, settings: AppSettings, packKg: number | undefined): string | undefined {
   if (stage.km === null || stage.up === null || stage.down === null) return undefined;
   const on = signalOn(settings, 'stageOwnPace');
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  const bodyKg = loadBodyKg(settings);
   return stageOwnLine(stageTimeEstimate(climb, { km: stage.km, up: stage.up, down: stage.down }, { on, packKg, bodyKg }));
 }
 

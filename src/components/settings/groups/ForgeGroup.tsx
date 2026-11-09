@@ -13,6 +13,7 @@ import { SettingsEmpty, SettingsSection } from '../SettingsList';
 import { AddOnSheet, GymProfileSheet, MachineListSheet } from './ToestelSheets';
 import { BarsSheet, CheckFromSheet, DurationSheet, PlatesSheet, ProgramSheet, RackSheet, StackSheet } from './ForgeSheets';
 import { BundleSheet } from './BundleSheet';
+import { TrainingStyleSheet } from './TrainingStyleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
 import { anyShown, rowShown } from './rowShown';
@@ -113,13 +114,16 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-lijntjes" title="Lijntjes in de lijst" facts={facts} info="forgeLijntjes" onChange={(on) => save({ showTrendLines: on })} />
           <SummaryRow id="forge-volgorde-lijst" title="Volgorde van de oefeningen" facts={facts} onClick={() => setInner('forge-volgorde-lijst')} />
           <SummaryRow id="forge-plaatjes" title="Plaatjes bij oefeningen" facts={facts} info="plaatjes" onClick={() => setInner('forge-plaatjes')} />
+          <SummaryRow id="forge-uitleg-open" title="Uitleg standaard uitgeklapt" facts={facts} info="forgeUitlegOpen" onChange={(on) => void updateSettings({ guideOpen: on })} />
         </BundleSheet>
       )}
       {sheet === 'bundel-rekenmodel' && (
         <BundleSheet eyebrow="Forge" title="Rekenmodel" line="Hoe Forge rekent. Het advies is meestal goed." onClose={close}>
           <SummaryRow id="forge-rekent-mee" title="Forge rekent mee" facts={facts} info="forgeRekentMee" onChange={(on) => save({ reckon: on })} />
+          <SummaryRow id="forge-afvinken-doel" title="Afvinken telt als het doel" facts={facts} info="forgeAfvinkenDoel" onChange={(on) => save({ assumedCounts: on })} />
           <SummaryRow id="forge-sets" title="Werksets" facts={facts} onClick={() => setInner('forge-sets')} />
           <SummaryRow id="forge-vermoeidheid" title="Vermoeidheid per set" facts={facts} info="forgeVermoeidheid" onClick={() => setInner('forge-vermoeidheid')} />
+          <SummaryRow id="forge-tussen-oefeningen" title="Vermoeidheid tussen oefeningen" facts={facts} info="forgeTussenOefeningen" onChange={(on) => save({ crossFatigue: on })} />
           <SummaryRow id="forge-pauze" title="Na een pauze lichter beginnen" facts={facts} info="forgePauze" onChange={(on) => save({ lighterAfterBreak: on })} />
           <SummaryRow id="forge-bereik" title="Bereik verbreden" facts={facts} onChange={(on) => save({ widenRange: on })} />
           <SummaryRow id="forge-schatting" title="Sets die meetellen" facts={facts} onClick={() => setInner('forge-schatting')} />
@@ -133,6 +137,12 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-vegen" title="Vegen om te verwijderen" facts={facts} info="forgeVegen" onChange={(on) => void updateSettings({ forgeSwipeDelete: on })} />
           <SummaryRow id="forge-rir-vooraf" title="RIR vooraf invullen" facts={facts} info="forgeRirVooraf" onClick={() => setInner('forge-rir-vooraf')} />
           <SummaryRow id="forge-rir-snel" title="Hoeveel over na een set" facts={facts} info="forgeRirSnel" onChange={(on) => save({ quickRir: on })} />
+          <SummaryRow id="forge-stappen" title="Stappen bij calisthenics" facts={facts} info="forgeStappen" onChange={(on) => save({ ladderRow: on })} />
+          <SummaryRow id="forge-netjes" title="Ging het netjes?" facts={facts} info="forgeNetjes" onChange={(on) => save({ askClean: on })} />
+          <SummaryRow id="forge-band" title="Band bij optrekken en dip" facts={facts} info="forgeBand" onChange={(on) => save({ askBand: on })} />
+          <SummaryRow id="forge-stapvoorstel" title="Stap voorstellen" facts={facts} info="forgeStapVoorstel" onChange={(on) => save({ stepProposal: on })} />
+          <SummaryRow id="forge-ijkset" title="IJkset voorstellen" facts={facts} info="forgeIJkset" onChange={(on) => save({ calibration: on })} />
+          <SummaryRow id="forge-soort" title="Calisthenics per training" facts={facts} info="forgeSoort" onClick={() => setInner('forge-soort')} />
           <SummaryRow id="forge-doorvoeren" title="Wijzigingen doorvoeren" facts={facts} info="forgeDoorvoeren" onClick={() => setInner('forge-doorvoeren')} />
           <SummaryRow id="forge-schijven" title="Schijven bij de set tonen" facts={facts} info="forgeSchijven" onChange={(on) => save({ showPlates: on })} />
         </BundleSheet>
@@ -158,7 +168,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="dumbbells" title="Dumbbells" facts={facts} onClick={() => setInner('dumbbells')} />
           <SummaryRow id="forge-dumbbells" title="Dumbbells in je log" facts={facts} info="forgeDumbbells" onClick={() => setInner('forge-dumbbells')} />
           <SummaryRow id="kabels" title="Kabels en toestellen" facts={facts} onClick={() => setInner('kabels')} />
-          <SummaryRow id="toestelgewichten" title="Gewichten per toestel" facts={facts} info="toestelgewichten" onClick={() => setInner('toestelgewichten')} />
+          <SummaryRow id="toestelgewichten" title="Standen per toestel" facts={facts} info="toestelgewichten" onClick={() => setInner('toestelgewichten')} />
+          <SummaryRow id="standen-onthouden" title="Standen onthouden" facts={facts} info="standenOnthouden" onChange={(on) => save({ learnStands: on })} />
           <SummaryRow id="tussengewichten" title="Tussengewichten" facts={facts} info="tussengewichten" onClick={() => setInner('tussengewichten')} />
         </BundleSheet>
       )}
@@ -194,6 +205,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {inner === 'forge-leren' && <ChoiceFromDef def={CHOICES.forgeLeren} value={s.stackWeights} onPick={(v) => save({ stackWeights: v })} onClose={closeInner} />}
       {inner === 'forge-dumbbells' && <ChoiceFromDef def={CHOICES.dumbbellLog} value={s.dumbbellLog} onPick={(v) => save({ dumbbellLog: v })} onClose={closeInner} />}
       {inner === 'forge-sinds' && <CheckFromSheet onClose={closeInner} />}
+      {inner === 'forge-soort' && <TrainingStyleSheet onClose={closeInner} />}
       {inner === 'stangen' && <BarsSheet onClose={closeInner} />}
       {inner === 'schijven' && <PlatesSheet onClose={closeInner} />}
       {inner === 'dumbbells' && <RackSheet onClose={closeInner} />}

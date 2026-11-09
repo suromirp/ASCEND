@@ -11,7 +11,7 @@ import {
   syncWatchActivities,
 } from './externalActivities';
 import { clearWellness, getRecoveryMetrics, pruneWellness, syncWellness } from './wellness';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 import type { SessionLog } from '../models/training';
 import { addDays, todayISO } from '../utils/dates';
 

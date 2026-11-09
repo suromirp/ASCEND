@@ -24,6 +24,7 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
     <>
       <SettingsSection>
         <SummaryRow id="lichaamsgewicht" title="Lichaamsgewicht" facts={facts} info="gewicht" onClick={() => setSheet('lichaamsgewicht')} />
+        <SummaryRow id="gewicht-kaart" title="Gewicht op Je stand" facts={facts} info="gewichtKaart" onChange={(on) => void updateSettings({ weightCard: on })} />
         <SummaryRow id="vetpercentage" title="Vetpercentage tonen" facts={facts} info="vetpercentage" onChange={(on) => void updateSettings({ showBodyFat: on })} />
         <SummaryRow id="hartslag" title="Hartslag" facts={facts} info="drempel" onClick={() => setSheet('hartslag')} />
         <SummaryRow id="blessures" title="Blessures" facts={facts} info="blessures" onClick={() => navigate('/lichaam')} />
@@ -37,6 +38,7 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       </SettingsSection>
       <SettingsSection title="Je stand">
         <SummaryRow id="intensiteit" title="Intensiteit tellen" facts={facts} info="intensiteit" onClick={() => setSheet('intensiteit')} />
+        <SummaryRow id="tempo-stukken" title="Tempo uit stabiele stukken" facts={facts} info="tempoStukken" onChange={(on) => void updateSettings({ tempoStablePieces: on })} />
       </SettingsSection>
       {sheet === 'lichaamsgewicht' && <WeightSheet health={facts.healthConnect} reload={reload} onClose={close} />}
       {sheet === 'hartslag' && <HeartRateSheet onClose={close} />}

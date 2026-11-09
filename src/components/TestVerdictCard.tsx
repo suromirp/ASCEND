@@ -1,4 +1,4 @@
-// De test na afloop: wat er is gelezen (beste 5 km of hele run), de vraag bij een
+// De test na afloop: wat er is gelezen (beste 5 km of hele loop), de vraag bij een
 // twijfeltest en "Telt niet mee" achteraf. Geen rekenwerk hier: engine/testJudgment.ts
 // zegt hoe de test erbij staat en welke tempo's veranderen. Een antwoord dat tempo's
 // verandert, laat eerst de getallen zien (was en wordt) en wacht op Akkoord.
@@ -74,7 +74,7 @@ export function TestVerdictCard({ logId }: { logId: string }) {
       {offer && offerRows.length > 0 && !offerDismissed && (
         <div className="mb-4">
           <p className="text-sm" style={ink}>
-            Uit je run blijkt een beste {String(TEST_DISTANCE_KM).replace('.', ',')} km van <span className="tabular-nums">{formatRaceTime(offer.minutes)}</span>. {stopsSentence(offer) ? `${stopsSentence(offer)} ` : ''}{manyStops(offer) ? `${MANY_STOPS_SENTENCE} ` : ''}{offerReread(offer) ? `${REREAD_SENTENCE} ` : ''}{offer.reread && offer.prevMinutes ? <>Je tempo's rekenen nu met <span className="tabular-nums">{formatRaceTime(offer.prevMinutes)}</span>.</> : "Je tempo's rekenden met de hele run."}
+            Uit je loop blijkt een beste {String(TEST_DISTANCE_KM).replace('.', ',')} km van <span className="tabular-nums">{formatRaceTime(offer.minutes)}</span>. {stopsSentence(offer) ? `${stopsSentence(offer)} ` : ''}{manyStops(offer) ? `${MANY_STOPS_SENTENCE} ` : ''}{offerReread(offer) ? `${REREAD_SENTENCE} ` : ''}{offer.reread && offer.prevMinutes ? <>Je tempo's rekenen nu met <span className="tabular-nums">{formatRaceTime(offer.prevMinutes)}</span>.</> : "Je tempo's rekenden met de hele loop."}
           </p>
           <div className="mt-2">
             <PaceRows title="Dit worden je tempo's" rows={offerRows} busy={busy} onAkkoord={() => void acceptOffer()} onCancel={() => setOfferDismissed(true)} cancelLabel="Niet nu" />
@@ -85,7 +85,7 @@ export function TestVerdictCard({ logId }: { logId: string }) {
       {testStopsRemark(state.result) && <p className="text-xs" style={dim}>{testStopsRemark(state.result)}</p>}
       {testEffortRemark(log) && <p className="text-xs" style={dim}>{testEffortRemark(log)}</p>}
       {state.result.basis === 'whole' && !!log?.externalId && !log.bestEffort && !log.bestEffortTried && (
-        <p className="text-xs" style={dim}>Dit is de hele run. De beste {String(TEST_DISTANCE_KM).replace('.', ',')} km komt erbij zodra de reeks van je horloge binnen is.</p>
+        <p className="text-xs" style={dim}>Dit is de hele loop. De beste {String(TEST_DISTANCE_KM).replace('.', ',')} km komt erbij zodra de reeks van je horloge binnen is.</p>
       )}
       {state.standing === 'pending' && (
         <div className="mt-3">

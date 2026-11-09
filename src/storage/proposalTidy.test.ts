@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GoalMilestoneProgressRepo, PlanChangeProposalsRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
 import { tidyOldProposals } from './proposalTidy';
-import { normalizeBackupToCurrentModel } from './backup';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog } from '../models/training';
 

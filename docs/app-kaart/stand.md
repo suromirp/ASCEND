@@ -6,7 +6,7 @@ Adres: `#/stand`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 [link: Meer: instellingen, gegevens, koppelingen en gidsen]
 Week 1 van 4, basisfase
 ## Je stand
-Je benen zijn fris en je week is in lijn met de weken ervoor.
+Je benen zijn fris en je week is in lijn.
 
 --- kaart 1 ---
 [knop: BenenFrisindex 0,1] (aria: Benen: Fris, index 0,1. Naar de kaart.)
@@ -25,14 +25,14 @@ Rustige duurloop · ma 26 okt
 
 --- kaart 3 ---
 Frisheid
-Je beenvermoeidheid per dag. Lager is frisser. Vooruit is het een schatting uit je planning, met de marge eromheen.
+Beenvermoeidheid per dag. Lager is frisser. Wat nog komt is een schatting, met marge.
 test of wedstrijd
 harde loop
 benen
 
 --- kaart 4 ---
 Beenkalender
-Wat elke dag in je benen stopt. Feller is zwaarder, gestippeld is nog gepland. Twee felle vakjes vlak na elkaar zijn zwaar voor je benen.
+Wat je benen per dag krijgen. Fel is zwaar, gestippeld is gepland. Twee felle vakjes na elkaar zijn zwaar.
 [label: Beenbelasting per dag]
 ma
 di
@@ -80,7 +80,7 @@ Vandaag: geen training
 
 --- kaart 5 ---
 Belasting per week
-Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien. Bij een test met inlopen telt de rest als rustig.
+Minuten maal zwaarte, de 1 tot 10 die je invult. 45 minuten op zwaarte 6 is 270 punten. Vol is gedaan, licht is gepland. Tik op een week voor de telling. Bij een test met inlopen telt de rest als rustig.
 Lopen
 Kracht
 gemiddelde vier weken ervoor
@@ -94,8 +94,8 @@ ma 26 okt · 56 min · zwaarte ±4
 Lange duurloop
 zo 1 nov · 50 min · zwaarte 4
 200
-Punten per training: minuten maal zwaarte. Lichter: nog gepland. ±: geen zwaarte ingevuld, geteld met de geplande.
-Deze week is in lijn met de vier weken ervoor. Rustig opbouwen, zo hoort het.
+Punten per training: minuten maal zwaarte. Licht: gepland. ±: geen zwaarte ingevuld, telt met de geplande zwaarte.
+Deze week is in lijn met de vier weken ervoor. Je bouwt rustig op.
 Vul na een training de zwaarte in, dan klopt de balk beter.
 
 --- kaart 6 ---
@@ -106,7 +106,7 @@ Je loop- en wandelminuten van de laatste vier weken. Goede duursporters doen ong
 0% middel (0 min)
 11% hard (36 min)
 Naar het plan, niet naar je hartslag.
-Goed verdeeld: het meeste rustig, een paar keer echt hard. Zo groeit je basis en blijf je fris voor de harde dagen.
+Goed verdeeld: het meeste rustig, een paar keer hard. Zo groeit je basis en blijf je fris.
 
 --- kaart 7 ---
 [knop: Forge1 oefening ging omhoog in 8 weken. Voor je volgende training staat een voorstel klaar.]
@@ -119,7 +119,7 @@ Krachtprogressie
 21 oktober
 
 --- kaart 9 ---
-[knop: TrainingsverdelingHoe kracht, hardlopen en bergwerk zich in je week verhouden.]
+[knop: TrainingsverdelingKracht, hardlopen en bergwerk in je week.]
 
 --- kaart 10 ---
 Ritme
@@ -129,12 +129,13 @@ Na twee volle weken zie je hier je ritme.
 --- kaart 11 ---
 Tempo naast je test
 Je tempo's komen uit je test van 10 okt: 5 km in 26:42.
-Je snelste stukken in training legt ASCEND na nog 3 loopjes met details naast je test.
-Een controle, geen nieuw getal: de test blijft de bron voor je tempo's.
+Na nog 3 loopjes met details legt ASCEND je snelste stukken in training naast je test.
+Een controle, geen nieuw getal. De test blijft de bron voor je tempo's.
 
 --- kaart 12 ---
 Tempo bij zone 2
-Je rustige en lange duurlopen, omgerekend naar dezelfde hartslag. Word je fitter, dan loop je bij dezelfde hartslag sneller.
-Nog geen loopjes om te vergelijken. Na twee weken met loopjes zie je hier je lijn.
-Telt mee: vlakke rustige loopjes met afstand, tijd en gemiddelde hartslag ingevuld. Vul bij Instellingen, Lichaam je hartslag in, dan telt alleen zone 2.
+[knop: Wat tempo bij zone 2 zegt]
+Je tempo bij één vaste hartslag. Word je fitter, dan loop je daarbij sneller.
+Nog geen loopjes. Na twee weken zie je hier je lijn.
+Telt mee: stukken van minstens 5 minuten stabiel op vlak terrein, uit elke buitenloop. Een loop boven 25 graden gevoelstemperatuur telt niet mee. Vul bij Instellingen, Lichaam je hartslag in, dan telt alleen zone 2.
 [knop: Volgorde aanpassen]

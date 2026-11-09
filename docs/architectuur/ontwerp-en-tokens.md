@@ -77,17 +77,18 @@ fris en sportief op donker marine.
   als ✓ of ↷ voor iets wat een icoon kan zijn.
 - Logo "Ring en pad" (`docs/beslissingen/2026-10-25-logo-ring-en-pad.md`): app-icoon in `public/`, `AppMark`, `AscendSplashLogo`, `AscendAnimatedLogo`, alleen de tokens `--color-logo-*`. Details in `docs/architectuur/bediening-en-beweging.md`.
 - Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in `src/App.tsx`), dekkend marine, labels in zinsletters, actieve tab in de tabkleur. Meer is het tandwiel rechtsboven (`SettingsGear`, 44 bij 44 px, op elke tab op dezelfde plek, opent `/more`); wat een pagina zelf rechtsboven nodig heeft gaat in `SkyBand` `actions`. Details in `docs/architectuur/bediening-en-beweging.md`.
-- Lange donkere pagina's krijgen hoogstens één `SkyPanel`, nooit als eerste kaart (zie `docs/architectuur/bediening-en-beweging.md`).
+- Lucht staat alleen bovenaan in `SkyBand`; een `SkyPanel` halverwege een pagina bestaat niet meer (zie `docs/architectuur/bediening-en-beweging.md`).
 - Instellingen (`/more`, acht groepen): elke instelling is één `SettingsRow`, uitleg achter de InfoButton (`src/data/settingsHelp.ts`), waarde uit `engine/settingsSummary.ts`. Details in `docs/architectuur/bediening-en-beweging.md`.
 
 ## Stem
 
-De teksten klinken als een trainer die je kent: je/jij, kort en direct, met warmte in de toon en
-nooit in uitroepen. Waar duidelijkheid voorgaat (een getal of datum, een waarschuwing, wat een label
-of voorstel met je planning doet) komt het droge feit eerst en blijft het onaangetast, met liefst een
-zin in dezelfde toon eromheen. Humor is licht en zeldzaam, en de vaste woorden blijven overal gelijk.
-Eerst de Ascend-tab, daarna de hele app
-(`docs/beslissingen/2026-10-27-stem-van-ascend.md`).
+De teksten klinken als een trainer die je kent: je/jij, kort en direct, het droge feit eerst, één
+gedachte per zin. Eén laag per keer: de uitkomst op het scherm (ongeveer 60 tekens), de reden achter
+de i (hoogstens ongeveer 40 woorden). Een voorstel zegt wat er verandert, een waarschuwing staat nooit
+weggestopt, en humor is licht en zeldzaam. De vaste woorden blijven overal gelijk; in legenda's is gedaan
+vol en gepland gestippeld. De regels staan in `docs/beslissingen/2026-11-09-stem-van-ascend.md`
+(uitgewerkt in `docs/visie/stemgids-concept.md`); dat besluit vervangt
+`docs/beslissingen/2026-10-27-stem-van-ascend.md`. Per tab herschreven, Vandaag eerst.
 
 ## Beweging
 

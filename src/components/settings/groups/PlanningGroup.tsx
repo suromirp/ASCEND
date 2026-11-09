@@ -89,6 +89,8 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="bundel-testloop" title="Testloop" facts={facts} onClick={() => setSheet('bundel-testloop')} />
         <SummaryRow id="rustdag-terug" title="Rustdag terugzetten voorstellen" facts={facts} info="rustdagTerug" onChange={(on) => void updateSettings({ restDayBack: on })} />
         <SummaryRow id="weekvoorstel" title="Voorstel bij een probleem in de week" facts={facts} info="weekVoorstel" onChange={(on) => void updateSettings({ weekFixProposal: on })} />
+        <SummaryRow id="zonder-sportschool" title="Kracht zonder sportschool" facts={facts} info="zonderSportschool" onClick={() => setSheet('zonder-sportschool')} />
+        <SummaryRow id="vakantie-schuiven" title="Rond een vakantie schuiven" facts={facts} info="vakantieSchuiven" onClick={() => setSheet('vakantie-schuiven')} />
       </SettingsSection>
 
       {sheet === 'bundel-dagen' && (
@@ -128,7 +130,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceSheet<number>
           eyebrow="Planning"
           title="Rustdag"
-          line="Je ziet eerst wat er verschuift."
+          line="Eerst een voorstel, pas na Akkoord verandert er iets."
           options={REST_DAY_OPTIONS.map((d) => ({ value: d, label: WEEKDAYS_NL[d - 1] }))}
           value={restDay}
           advice={1}
@@ -161,6 +163,14 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.wijzigingen} value={plan.applyMode} onPick={(v) => void updateSettings({ changeApplyMode: v })} onClose={close} />
       )}
       {sheet === 'volgorde-stand' && <OrderSheet onClose={close} />}
+      {sheet === 'vakantie-schuiven' && (
+        <ChoiceFromDef
+          def={CHOICES.vakantieSchuiven}
+          value={settings.leaveAround ?? 'wide'}
+          onPick={(v) => { if (v !== (settings.leaveAround ?? 'wide')) void plan.changeSetting(`Rond een vakantie schuiven: ${choiceShort('vakantieSchuiven', v)}`, { leaveAround: v }, 'Volgt je keuze voor hoeveel er rond een vakantie mag schuiven.'); }}
+          onClose={close}
+        />
+      )}
       {sheet === 'vakantie-opzij' && (
         <ChoiceFromDef
           def={CHOICES.vakantieOpzij}
@@ -168,6 +178,10 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           onPick={(v) => { if (v !== (settings.leaveCrowding ?? 'drop')) void plan.changeSetting(`Opzij voor een vakantie: ${choiceShort('vakantieOpzij', v)}`, { leaveCrowding: v }, 'Volgt je keuze voor trainingen die moeten wijken voor een vakantie.'); }}
           onClose={close}
         />
+      )}
+      {/* Alleen de eerste keuze voor een nieuwe periode: verandert geen planning, dus meteen bewaard. */}
+      {sheet === 'zonder-sportschool' && (
+        <ChoiceFromDef def={CHOICES.zonderSportschool} value={settings.noGymStrength ?? 'bodyweight'} onPick={(v) => void updateSettings({ noGymStrength: v })} onClose={close} />
       )}
       {sheet === 'bundel-testloop' && (
         <BundleSheet eyebrow="Planning" title="Testloop" line="Hoe ASCEND een test leest en plant." onClose={close}>

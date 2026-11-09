@@ -33,7 +33,7 @@ import type { IntervalsHrBasis } from '../engine/watchHeartRate';
 import type { RunDynamics, StreamKind, StreamSet } from '../models/activityDetail';
 import type { StoredLap, StoredLapSource } from '../models/activityStreams';
 
-export const INTERVALS_BASE_URL = 'https://intervals.icu';
+const INTERVALS_BASE_URL = 'https://intervals.icu';
 export const INTERVALS_ADAPTER_ID = 'intervals.icu';
 
 export interface IntervalsConnection {

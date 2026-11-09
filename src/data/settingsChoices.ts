@@ -293,6 +293,16 @@ export const CHOICES = {
       { value: 'gong', label: 'Gong', note: 'Eén lage, rustige gong met lange uitklank', short: 'Gong' },
     ],
   }),
+  gewichtEigen: def({
+    group: 'Lichaam',
+    title: 'Gewicht bij eigen gewicht',
+    line: 'Voor Forge, je rugzak en de beenindex.',
+    advice: 'trend' as 'trend' | 'latest',
+    options: [
+      { value: 'trend', label: 'Trend', note: 'Het rustige gemiddelde van je wegingen; met te weinig wegingen je laatste', short: 'Trend' },
+      { value: 'latest', label: 'Laatste weging', note: 'Het getal van je laatste weging, ook als dat een slechte dag was', short: 'Laatste weging' },
+    ],
+  }),
   herinnering: def({
     group: 'Lichaam',
     title: 'Herinnering',
@@ -419,6 +429,28 @@ export const CHOICES = {
     options: [
       { value: 'drop', label: 'Liever laten vervallen', note: 'Als hij anders vlak voor of na zijn volgende keer komt', short: 'Laten vervallen' },
       { value: 'shift', label: 'Toch verschuiven', note: 'Naar elke dag van die week die past', short: 'Verschuiven' },
+    ],
+  }),
+  vakantieSchuiven: def({
+    group: 'Planning',
+    title: 'Rond een vakantie schuiven',
+    line: 'Hoeveel ASCEND mag verschuiven om je weken rond een vakantie zo goed mogelijk in te delen.',
+    advice: 'wide' as 'wide' | 'little',
+    help: 'vakantieSchuiven',
+    options: [
+      { value: 'wide', label: 'Flink', note: 'De beste indeling over alle werkbare dagen, ook over de weekgrens', short: 'Flink' },
+      { value: 'little', label: 'Weinig', note: 'Een training schuift alleen naar de dichtstbijzijnde dag van zijn eigen week', short: 'Weinig' },
+    ],
+  }),
+  zonderSportschool: def({
+    group: 'Planning',
+    title: 'Kracht zonder sportschool',
+    line: 'Wat er met kracht in de sportschool gebeurt als je een periode zonder sportschool toevoegt.',
+    advice: 'bodyweight' as 'bodyweight' | 'drop',
+    help: 'zonderSportschool',
+    options: [
+      { value: 'bodyweight', label: 'Eigen gewicht', note: 'Een korte sessie van 15 tot 20 minuten met squats, lunges, push-ups en kuitheffingen', short: 'Eigen gewicht' },
+      { value: 'drop', label: 'Laten vervallen', note: 'Geen kracht in die periode, alleen lopen', short: 'Laten vervallen' },
     ],
   }),
   bergschoenen: def({

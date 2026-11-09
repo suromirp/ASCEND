@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { MUSCLE_LABEL } from '../../models/exercise';
-import { swapOptions } from '../../engine/forgeWorkout';
+import type { Exercise } from '../../models/exercise';
+import type { SwapGroups } from '../../engine/forgeWorkout';
 import { EXERCISE_NOTE_MAX } from '../../engine/strengthSettings';
 import { Icon } from '../icons';
 import { PrimaryButton, SecondaryButton } from '../ui';
@@ -37,15 +38,24 @@ export function NoteSheet({ name, value, onSave, onClose }: { name: string; valu
   );
 }
 
-// De keuzes in het ruilblad, met links het kaartje. De tekeningen ervan worden opgehaald zodra het blad
-// opent, zodat de kaartjes de oefening laten zien en niet alleen de spieren.
-// Een korte reden (`reasonOf`) staat onder de spieren als een keuze voorop staat omdat hij een spier bedient die weinig kreeg.
-export function SwapList({ options, onPick, reasonOf }: { options: ReturnType<typeof swapOptions>; onPick: (id: string) => void; reasonOf?: (e: ReturnType<typeof swapOptions>[number]) => string | undefined }) {
-  useDrawingsFor(useMemo(() => options.map((o) => o.id), [options]));
+// De keuzes in het ruilblad in twee groepen, met links het kaartje. Eerst "Doet hetzelfde" (de eerste is
+// aanbevolen, elke keuze heeft een korte reden), dan "Zelfde spier, anders". Een lege groep laat ook
+// haar kop weg. De tekeningen worden opgehaald zodra het blad opent. Een korte reden (`reasonOf`) staat
+// onder de spieren van de tweede groep als een keuze voorop staat omdat hij een spier bedient die weinig kreeg.
+export function SwapList({ groups, onPick, reasonOf }: { groups: SwapGroups; onPick: (id: string) => void; reasonOf?: (e: Exercise) => string | undefined }) {
+  const ids = useMemo(() => [...groups.same.map((s) => s.exercise.id), ...groups.other.map((o) => o.id)], [groups]);
+  useDrawingsFor(ids);
+  const heading = (text: string) => <div className="pb-1 pt-3 text-xs font-semibold first:pt-0" style={{ color: 'var(--color-ink-dim)' }}>{text}</div>;
+  const arrow = <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>;
   return (
     <div className="flex flex-col">
-      {options.map((o) => (
-        <MenuRow key={o.id} lead={<ExerciseArtButton exerciseId={o.id} name={o.name} />} title={o.name} sub={[o.primary.map((m) => MUSCLE_LABEL[m]).join(', '), reasonOf?.(o)].filter(Boolean).join('. ')} onClick={() => onPick(o.id)} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />
+      {groups.same.length > 0 && heading('Doet hetzelfde')}
+      {groups.same.map((s, i) => (
+        <MenuRow key={s.exercise.id} lead={<ExerciseArtButton exerciseId={s.exercise.id} name={s.exercise.name} />} title={s.exercise.name} sub={i === 0 ? `Aanbevolen. ${s.reason}` : s.reason} onClick={() => onPick(s.exercise.id)} right={arrow} />
+      ))}
+      {groups.other.length > 0 && heading('Zelfde spier, anders')}
+      {groups.other.map((o) => (
+        <MenuRow key={o.id} lead={<ExerciseArtButton exerciseId={o.id} name={o.name} />} title={o.name} sub={[o.primary.map((m) => MUSCLE_LABEL[m]).join(', '), reasonOf?.(o)].filter(Boolean).join('. ')} onClick={() => onPick(o.id)} right={arrow} />
       ))}
     </div>
   );

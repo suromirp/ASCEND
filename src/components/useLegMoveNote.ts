@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { currentBodyKg } from '../engine/bodyWeight';
+import { loadBodyKg } from '../engine/weightTrend';
 import { moveLegNote } from '../engine/legDayEase';
 import { resolveLegEase } from '../engine/legEaseSettings';
 import { resolveVariantDuration } from '../engine/substitutions';
@@ -16,7 +16,7 @@ export function useLegMoveNotes(moves: { sessionId?: string; toDate?: string }[]
   const { sessionLogs, plannedSessions: storedSessions, templates, program, settings, injuryNotes } = useAppData();
   const plannedSessions = endState ?? storedSessions;
   const mode = resolveLegEase(settings);
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  const bodyKg = loadBodyKg(settings);
   const key = moves.map((m) => `${m.sessionId}:${m.toDate}`).join('|');
   return useMemo(() => {
     if (mode === 'uit') return [];

@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
-import { CHOICES } from '../../../data/settingsChoices';
+import { CHOICES, choiceShort } from '../../../data/settingsChoices';
 import { INTENSITY, type Intensity } from '../../../data/workoutStructure';
 import { addWeightEntry, freshLinkedWeight, hasHealthConnectWeight, latestWeight, weightsInUse, WEIGHT_REMINDER_DAYS } from '../../../engine/bodyWeight';
 import type { HealthConnectFacts } from '../../../engine/settingsSummary';
 import { askHealthConnectWeight, openHealthConnectSettings, syncHealthConnect } from '../../../storage/healthConnect';
 import { TextButton } from '../../TextButton';
 import { bodyFatLines, bodyFatTrend } from '../../../engine/bodyFat';
+import { weightShown } from '../../../engine/weightTrend';
 import { zoneBpm } from '../../../engine/heartRateZones';
 import { heartRateProblem, type HeartRateField } from '../../../engine/inputLimits';
 import { formatDayMonthNL } from '../../../utils/dates';
@@ -29,6 +30,7 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
   const [reminder, setReminder] = useState(false);
+  const [ownPick, setOwnPick] = useState(false);
   const [self, setSelf] = useState(false);
   const [help, setHelp] = useState(false);
   const [fatHelp, setFatHelp] = useState(false);
@@ -36,6 +38,10 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
   const today = todayISO();
   const entries = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
   const last = latestWeight(entries);
+  // Met Gewichtstrend aan en genoeg wegingen staat de trend groot, met de laatste weging erbij
+  // (engine/weightTrend.ts, docs/beslissingen/2026-11-09-gewichtstrend.md).
+  const shown = weightShown(entries, settings.weightTrend);
+  const trend = shown?.trend;
   const fresh = freshLinkedWeight(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, today);
   const fromMf = last?.source === 'macrofactor';
   const fromHc = last?.source === 'health-connect';
@@ -90,7 +96,12 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
           <>
             {last ? (
               <>
-                <div className="st-hero"><span className="n">{formatNumberNL(last.kg, 1)}</span><span className="u">kg</span></div>
+                <div className="st-hero"><span className="n">{formatNumberNL(shown?.kg ?? last.kg, 1)}</span><span className="u">kg</span></div>
+                {trend && (
+                  <div className="st-src" style={{ color: 'var(--color-ink)' }}>
+                    <span className="st-num">{`Trend ${formatNumberNL(trend.kg, 1)} kg, laatste weging ${formatNumberNL(trend.latestKg, 1)} kg`}</span>
+                  </div>
+                )}
                 <div className="st-src">
                   {(fromMf || fromHc) && <AutoTag />}
                   <span className="st-num">
@@ -102,6 +113,11 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
                   </span>
                   <InfoButton compact label="Uitleg: lichaamsgewicht" onClick={() => setHelp(true)} />
                 </div>
+                {trend && (
+                  <p className="st-fat-note st-num">
+                    {`Gemiddelde van ${trend.readings} wegingen sinds ${formatDayMonthNL(trend.from)}${trend.outliers > 0 ? `, ${trend.outliers === 1 ? 'een uitschieter' : `${trend.outliers} uitschieters`} niet meegeteld` : ''}`}
+                  </p>
+                )}
               </>
             ) : (
               <>
@@ -139,6 +155,15 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
                   onChange={(on) => void changeHc(on)}
                 />
               )}
+              <SettingsRow
+                id="gewichtstrend"
+                title="Gewichtstrend gebruiken"
+                kind="toggle"
+                info="gewichtstrend"
+                checked={settings.weightTrend !== false}
+                onChange={(on) => void updateSettings({ weightTrend: on })}
+              />
+              <SettingsRow id="gewicht-eigen" title="Gewicht bij eigen gewicht" info="gewichtEigen" value={choiceShort('gewichtEigen', settings.weightForLoad ?? 'trend')} onClick={() => setOwnPick(true)} />
               <SettingsRow id="gewicht-herinnering" title="Herinnering" value={CHOICES.herinnering.options.find((o) => o.value === days)?.label ?? 'Nooit'} onClick={() => setReminder(true)} />
             </SettingsList>
 
@@ -177,6 +202,14 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
           </>
         )}
       </Sheet>
+      {ownPick && (
+        <ChoiceFromDef
+          def={CHOICES.gewichtEigen}
+          value={settings.weightForLoad ?? 'trend'}
+          onPick={(v) => void updateSettings({ weightForLoad: v })}
+          onClose={() => setOwnPick(false)}
+        />
+      )}
       {reminder && (
         <ChoiceFromDef
           def={CHOICES.herinnering}

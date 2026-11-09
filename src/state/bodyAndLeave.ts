@@ -20,7 +20,7 @@ import {
 import { proposeNoTimeToday, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
-import { withNote } from '../engine/leaveEdit';
+import { leaveWordsChange, withNote } from '../engine/leaveEdit';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
 import { applyRestDayInOrder, planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { staleItems } from '../engine/proposalEngine';
@@ -37,6 +37,7 @@ import { mainGoal } from '../engine/mainGoal';
 import type { CommitOutcome, UndoRestore } from './appDataTypes';
 import { bumpPlanRevision, planSettled } from './planningSync';
 import type { Dispatch, SetStateAction } from 'react';
+import { mainGoalIsMountain } from '../engine/mountainMuscles';
 
 export function useBodyAndLeave(deps: {
   program: Program | null;
@@ -181,7 +182,7 @@ export function useBodyAndLeave(deps: {
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       newId: () => `preview-pass-${n++}`,
       until,
-      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
+      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
     });
   }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
 
@@ -199,6 +200,7 @@ export function useBodyAndLeave(deps: {
     const slotDays = patternDays(templates, settings, restDay);
     return planLeaveChange({
       mode, period, replaces, existing: settings.leavePeriods ?? [], sessions: plannedSessions, logs: sessionLogs, templates, today,
+      mountainGoal: mainGoalIsMountain(trainingGoals, ladder),
       context: (periods) => {
         let n = 0;
         return {
@@ -208,7 +210,7 @@ export function useBodyAndLeave(deps: {
           minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
           newId: () => `leave-${n++}`,
           until: addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, 21),
-          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
+          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
         };
       },
     });
@@ -235,18 +237,21 @@ export function useBodyAndLeave(deps: {
     return 'applied';
   }, [commitPlanChangeOutcome, showStatusOnlyChange, setSettings]);
 
-  const saveLeaveNote = useCallback(async (periodId: string, note: string) => {
+  const saveLeaveNote = useCallback(async (periodId: string, note: string, hills?: boolean) => {
     await planSettled();
     const stored = await SettingsRepo.get();
     const current = stored.leavePeriods ?? [];
-    if (!current.some((p) => p.id === periodId)) return;
-    setSettings(await SettingsRepo.set({ leavePeriods: sortPeriods(withNote(current, periodId, note)) }));
+    const before = current.find((p) => p.id === periodId);
+    if (!before) return;
+    const next = withNote(current, periodId, note, hills);
+    const words = leaveWordsChange(before, next.find((p) => p.id === periodId) ?? before);
+    setSettings(await SettingsRepo.set({ leavePeriods: sortPeriods(next) }));
     setRecentChange({
       id: makeId('leavenote'),
       trigger: 'leave_note',
-      title: 'Notitie bewaard',
+      title: words.title,
       lines: ['Je planning blijft zoals ze was.'],
-      why: 'Alleen de notitie van je periode is anders.',
+      why: words.why,
       before: [],
       addedIds: [],
       written: [],
@@ -271,7 +276,7 @@ export function useBodyAndLeave(deps: {
         slotDays: patternDays(templates, settings, restDay),
         minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
         newId: () => `restday-${n++}`,
-        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
+        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
       },
     });
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);

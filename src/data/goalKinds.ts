@@ -441,7 +441,7 @@ const RUN_RACE: GoalKindDefinition = {
       appliesWhen: { variant: ['5k', '10k', 'half'] },
       measure: 'De wedstrijdtijd uit je laatste testloop of wedstrijd (Riegel), naast je doeltijd.',
       full: 'Het gat tussen je verwachte tijd en je doeltijd, in weken werk bij de groei uit je instelling (advies gemiddeld): bij tien weken staat de meter op 50%. Gelijk aan of sneller dan je doeltijd is vol.',
-      why: 'Bij een doeltijd is snelheid wat je wedstrijd beslist; je testloop laat zien waar je nu staat. Snelheid groeit langzaam, dus een groot gat in tijd betekent veel weken werk en een lage meter.',
+      why: 'Bij een doeltijd beslist snelheid je wedstrijd; je testloop laat zien waar je staat. Snelheid groeit langzaam, dus een groot gat in tijd is veel weken werk en een lage meter.',
     },
     {
       id: 'langsteLoop', label: 'Langste loop', type: 'beste_dag', metric: 'langsteKm', unit: 'km', sports: ['running'], windowDays: WINDOW_42,

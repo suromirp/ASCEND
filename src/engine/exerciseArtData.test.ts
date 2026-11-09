@@ -20,12 +20,26 @@ describe('de koppeling van oefeningen aan tekeningen', () => {
     }
   });
 
-  it('telt 76 exacte, 32 varianten en 12 oefeningen zonder tekening', () => {
+  it('telt 99 exacte, 32 varianten en 24 oefeningen zonder tekening (12 van de calisthenicsladders; de 23 stappen van F4f hebben een eigen tekening)', () => {
     const links = Object.values(EXERCISE_ART);
-    expect(links.filter((l) => l.match === 'zeker')).toHaveLength(76);
+    expect(links.filter((l) => l.match === 'zeker')).toHaveLength(99);
     expect(links.filter((l) => l.match === 'variant')).toHaveLength(32);
-    expect(EXERCISES.filter((e) => !EXERCISE_ART[e.id])).toHaveLength(12);
-    expect(new Set(links.map((l) => l.slug)).size).toBe(89);
+    expect(EXERCISES.filter((e) => !EXERCISE_ART[e.id])).toHaveLength(24);
+    expect(new Set(links.map((l) => l.slug)).size).toBe(112);
+  });
+
+  it('de 23 stappen van de overige calisthenicsladders hebben een eigen tekening onder de naam van hun id, gemerkt als eigen werk', () => {
+    const own = Object.entries(EXERCISE_ART).filter(([, l]) => l.own);
+    expect(own).toHaveLength(23);
+    for (const [id, link] of own) {
+      expect(link.slug, id).toBe(id);
+      expect(link.match, id).toBe('zeker');
+      expect(files.has(`${id}.json`), id).toBe(true);
+    }
+    expect(EXERCISE_ART['pull-up']?.own).toBeUndefined();
+    // De uitleg bij de tekeningen noemt het eigen werk.
+    expect(docs.get('ATTRIBUTION.md')).toMatch(/Eigen tekeningen van ASCEND/);
+    expect(docs.get('LICENSE.md')).toMatch(/eigen werk van ASCEND/);
   });
 
   it('laat weg wat een verkeerd of vaag plaatje geeft', () => {

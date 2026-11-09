@@ -9,13 +9,15 @@
 
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import type { LeaveKind, LeavePeriod } from '../models/leave';
+import type { LeaveKind, LeavePeriod, NoGymDetails } from '../models/leave';
 import type { Advice } from '../engine/adviceEngine';
 import type { LeavePlan } from '../engine/leaveProposal';
 import {
   LEAVE_KINDS, LEAVE_KIND_HINT, LEAVE_KIND_LABEL, describeDayCount, describePeriodDates, validateLeaveDraft,
 } from '../engine/leave';
-import { editedPeriod, leaveEditScope } from '../engine/leaveEdit';
+import { editedPeriod, leaveEditScope, leaveWordsChange } from '../engine/leaveEdit';
+import { NO_GYM_ADVICE, resolveNoGym } from '../engine/noGymDetails';
+import { mainGoalIsMountain } from '../engine/mountainMuscles';
 import { addDays, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -23,7 +25,7 @@ import { Icon } from './icons';
 import { Portal } from './Portal';
 import { ProposalSheet } from './ProposalSheet';
 import { SettingsLinkRow } from './settings/SettingsLink';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, Segmented, SheetGrip, Toggle } from './ui';
 import { TextButton } from './TextButton';
 
 const STALE_TEXT = 'Je planning is intussen veranderd. Bekijk het voorstel opnieuw.';
@@ -31,6 +33,7 @@ const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}
 const KIND_COLOR: Record<LeaveKind, string> = {
   no_training: 'var(--color-success-text)',
   trek: 'var(--color-status)',
+  no_gym: 'var(--color-ink)',
   free_days: 'var(--color-ink-dim)',
 };
 
@@ -68,8 +71,8 @@ export function LeavePeriodsCard() {
           <Eyebrow>Vrije dagen en vakanties</Eyebrow>
           <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             {shown.length === 0
-              ? 'Heb je vrije dagen, een vakantie of een tocht op komst? Zet ze hier. Je ziet eerst hoe je weken eruit komen te zien; pas na jouw Akkoord verandert er iets.'
-              : 'ASCEND houdt hier rekening mee. Tik op een periode om hem bij te werken. Wat je planning raakt zie je eerst als voorstel; pas na jouw Akkoord verandert er iets.'}
+              ? 'Vrije dagen, vakantie of tocht op komst? Zet ze hier. Eerst een voorstel, pas na Akkoord verandert er iets.'
+              : 'Tik op een periode om hem bij te werken. Eerst een voorstel, pas na Akkoord verandert er iets.'}
           </p>
         </div>
 
@@ -124,7 +127,7 @@ export function LeavePeriodsCard() {
             const before = editing;
             setEditing(null);
             const scope = leaveEditScope(before, period);
-            if (scope === 'note') void saveLeaveNote(before.id, period.note ?? '');
+            if (scope === 'note') void saveLeaveNote(before.id, period.note ?? '', period.noGym?.hills);
             else if (scope === 'plan') setPlan(planLeave('add', period, before));
           }}
           onRemove={() => {
@@ -168,8 +171,13 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
   onClose: () => void;
 }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  const { settings, trainingGoals, goalMilestones } = useAppData();
+  const mountainGoal = useMemo(() => mainGoalIsMountain(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))), [trainingGoals, goalMilestones]);
   const today = todayISO();
   const [kind, setKind] = useState<LeaveKind>(editing?.kind ?? 'no_training');
+  // Zonder sportschool: de keuzes van de periode, met het advies (en je instelling voor kracht) als begin.
+  const [noGym, setNoGym] = useState<NoGymDetails>(() => editing?.kind === 'no_gym' ? resolveNoGym(editing) : { ...NO_GYM_ADVICE, strength: settings.noGymStrength ?? NO_GYM_ADVICE.strength });
+  const setGym = (patch: Partial<NoGymDetails>) => setNoGym((was) => ({ ...was, ...patch }));
   const [startDate, setStartDate] = useState(editing?.startDate ?? today);
   const [endDate, setEndDate] = useState(editing?.endDate ?? today);
   const [note, setNote] = useState(editing?.note ?? '');
@@ -177,7 +185,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
   const overlap = !problem ? existing.find((p) => p.id !== editing?.id && p.startDate <= endDate && p.endDate >= startDate) : undefined;
   // A tocht stays a tocht here: its name, terrain and importance live with Tochten on Ascend.
   const isTocht = !!editing?.trek;
-  const draft = editing ? editedPeriod(editing, { kind, startDate, endDate, note }) : undefined;
+  const draft = editing ? editedPeriod(editing, { kind, startDate, endDate, note, ...(kind === 'no_gym' ? { noGym } : {}) }) : undefined;
   const scope = editing && draft ? leaveEditScope(editing, draft) : 'plan';
   // An ongoing period may keep its first day in the past.
   const minStart = editing && editing.startDate < today ? editing.startDate : today;
@@ -199,7 +207,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
 
               {isTocht ? (
                 <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                  Dit is een tocht. Hier verschuif je de datums; de naam, het terrein en hoe belangrijk hij is, wijzig je bij Tochten op de Ascend-tab.
+                  Dit is een tocht. Hier verschuif je de datums. Naam, terrein en belang wijzig je bij Tochten op de Ascend-tab.
                 </p>
               ) : (
                 <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Soort periode">
@@ -224,6 +232,36 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                       </button>
                     );
                   })}
+                </div>
+              )}
+
+              {kind === 'no_gym' && !isTocht && (
+                <div className="mt-4 flex flex-col gap-3">
+                  <div>
+                    <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel</p>
+                    <div className="mt-1">
+                      <Segmented tall label="Hoeveel" value={noGym.amount} onChange={(v) => setGym({ amount: v })} options={[{ value: 'light', label: 'Licht' }, { value: 'normal', label: 'Gewoon' }]} />
+                    </div>
+                    <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                      {noGym.amount === 'light' ? 'Twee keer lopen per week, korter en rustig. Het advies.' : 'Je looptrainingen blijven staan, korter en rustig.'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Kracht</p>
+                    <div className="mt-1">
+                      <Segmented tall label="Kracht" value={noGym.strength} onChange={(v) => setGym({ strength: v })} options={[{ value: 'bodyweight', label: 'Eigen gewicht' }, { value: 'drop', label: 'Laten vervallen' }]} />
+                    </div>
+                    <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                      {noGym.strength === 'bodyweight' ? 'Squats, lunges, push-ups en kuitheffingen, 15 tot 20 minuten.' : 'Geen kracht in deze periode.'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Heuvels in de buurt</span>
+                      <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Loop rustig heuvels op en beheerst af.{mountainGoal ? ' Goed voor je bergdoel.' : ''}</span>
+                    </span>
+                    <Toggle checked={noGym.hills} onChange={(on) => setGym({ hills: on })} label="Heuvels in de buurt" />
+                  </div>
                 </div>
               )}
 
@@ -258,7 +296,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
               {problem && startDate && endDate && <p className="mt-2 text-xs" style={{ color: 'var(--color-danger-text)' }} role="alert">{problem}</p>}
               {overlap && (
                 <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                  Dit overlapt met {LEAVE_KIND_LABEL[overlap.kind].toLowerCase()} ({describePeriodDates(overlap)}). Op de dagen die allebei gelden telt de strengste: eerst vakantie, dan tocht, dan vrije dagen.
+                  Dit overlapt met {LEAVE_KIND_LABEL[overlap.kind].toLowerCase()} ({describePeriodDates(overlap)}). Op dagen die allebei gelden telt de strengste: vakantie, tocht, zonder sportschool, vrije dagen.
                 </p>
               )}
 
@@ -275,18 +313,19 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                 />
               </label>
               <p className="mt-3 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} aria-live="polite">
-                {scope === 'note'
-                  ? 'Alleen de notitie is anders. Die bewaar je meteen; je planning blijft zoals ze is.'
+                {scope === 'note' && editing && draft
+                  ? leaveWordsChange(editing, draft).line
                   : scope === 'none'
                     ? 'Je hebt nog niets veranderd.'
                     : editing
-                      ? 'Je ziet eerst wat er in je planning verandert: wat erbij komt, wat vervalt en wat schuift. Pas na jouw Akkoord worden de nieuwe datums bewaard.'
-                      : 'Je ziet eerst wat er in je planning verandert. Pas na jouw Akkoord wordt de periode bewaard.'}
+                      ? 'Eerst een voorstel, pas na Akkoord verandert er iets. Daarna worden de nieuwe datums bewaard.'
+                      : 'Eerst een voorstel, pas na Akkoord verandert er iets. Daarna wordt de periode bewaard.'}
               </p>
               {onRemove && (
                 <TextButton tone="dim" onClick={onRemove} className="-ml-1 mt-1 px-1">Periode verwijderen</TextButton>
               )}
               <SettingsLinkRow page="planning" row="vakantie-opzij" label="Trainingen die moeten wijken" />
+              {kind === 'no_gym' && <SettingsLinkRow page="planning" row="zonder-sportschool" label="Kracht zonder sportschool instellen" />}
               <SettingsLinkRow page="doel" row="rust-na-tocht" label="Rust na een bergtocht instellen" />
             </div>
 
@@ -295,7 +334,8 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
               <PrimaryButton
                 disabled={scope === 'none' || (scope === 'plan' && !!problem)}
                 fullWidth={false}
-                onClick={() => onSubmit(draft ?? { id: makeId('leave'), kind, startDate, endDate, ...(note.trim() ? { note: note.trim() } : {}) })}
+                className="whitespace-nowrap"
+                onClick={() => onSubmit(draft ?? { id: makeId('leave'), kind, startDate, endDate, ...(note.trim() ? { note: note.trim() } : {}), ...(kind === 'no_gym' ? { noGym } : {}) })}
               >{scope === 'plan' ? 'Voorstel bekijken' : 'Bewaren'}</PrimaryButton>
             </div>
           </Card>

@@ -24,8 +24,13 @@ import { finishStrengthTargets, type StrengthTargetInput } from '../../engine/st
 // van. Eén gevulde mint knop (Volgende), Annuleren als tekstknop.
 const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' };
 
+// De tegel Vaardigheid: een stap op een calisthenicsladder (docs/beslissingen/2026-11-09-calisthenics-vaardigheidsdoel.md).
+// Hij hoort niet bij ADD_TILES, want een vaardigheid is geen TrainingGoal; Volgende sluit dit blad en opent het
+// blad van de vaardigheid.
+const SKILL_TILE = { label: 'Vaardigheid', summary: 'Een stap op de ladder van push-up, optrekken of dip.' } as const;
+
 export function GoalFormSheet({
-  existing, mainGoalId, goal, initialTile, initialDetails, onSubmit, onClose,
+  existing, mainGoalId, goal, initialTile, initialDetails, onSubmit, onSkill, onClose,
 }: {
   // Alle doelen, voor het voorgestelde label en de volgorde van een nieuw doel.
   existing: TrainingGoal[];
@@ -37,6 +42,8 @@ export function GoalFormSheet({
   initialDetails?: GoalDetails;
   // Sluit het blad en opent het voorstel voor dit doel.
   onSubmit: (result: TrainingGoal, close: () => void) => void;
+  // Alleen bij een nieuw doel en met Vaardigheidsdoelen tonen aan: de tegel Vaardigheid.
+  onSkill?: (close: () => void) => void;
   onClose: () => void;
 }) {
   const today = todayISO();
@@ -50,6 +57,7 @@ export function GoalFormSheet({
   const [name, setName] = useState(goal?.name ?? '');
   const [strengthDraft, setStrengthDraft] = useState<StrengthTargetInput>({ exercise: '', kg: undefined, reps: undefined });
   const [picked, setPicked] = useState<GoalPriority | undefined>(undefined);
+  const [skillPicked, setSkillPicked] = useState(false);
   const live = existing.filter((g) => g.status !== 'archived');
   const tile = ADD_TILES.find((t) => t.id === tileId);
   const dateValue = date || undefined;
@@ -83,7 +91,7 @@ export function GoalFormSheet({
                     type="button"
                     role="radio"
                     aria-checked={on}
-                    onClick={() => { setTileId(t.id); setDetails((d) => ({ ...defaultDetails(t.id), ...d })); }}
+                    onClick={() => { setSkillPicked(false); setTileId(t.id); setDetails((d) => ({ ...defaultDetails(t.id), ...d })); }}
                     className="flex min-h-[108px] flex-col items-start gap-1.5 rounded-2xl border p-3 text-left"
                     style={{ borderColor: on ? 'var(--color-action)' : 'var(--color-card-border)', background: on ? 'var(--color-action-muted)' : 'var(--color-card)' }}
                   >
@@ -93,9 +101,23 @@ export function GoalFormSheet({
                   </button>
                 );
               })}
+              {onSkill && !editing && (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={skillPicked}
+                  onClick={() => { setSkillPicked(true); setTileId(undefined); }}
+                  className="flex min-h-[108px] flex-col items-start gap-1.5 rounded-2xl border p-3 text-left"
+                  style={{ borderColor: skillPicked ? 'var(--color-action)' : 'var(--color-card-border)', background: skillPicked ? 'var(--color-action-muted)' : 'var(--color-card)' }}
+                >
+                  <Pictogram name="kracht" size={28} />
+                  <span className="text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{SKILL_TILE.label}</span>
+                  <span className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SKILL_TILE.summary}</span>
+                </button>
+              )}
             </div>
             <div className="flex flex-col items-stretch gap-1">
-              <PrimaryButton onClick={() => setStep(2)} disabled={!tileId}>Volgende</PrimaryButton>
+              <PrimaryButton onClick={() => (skillPicked && onSkill ? onSkill(close) : setStep(2))} disabled={!tileId && !skillPicked}>Volgende</PrimaryButton>
               <TextButton tone="dim" onClick={close} className="self-center">Annuleren</TextButton>
             </div>
           </div>
@@ -118,7 +140,7 @@ export function GoalFormSheet({
     <Sheet
       eyebrow={editing ? 'Doel aanpassen' : 'Doel toevoegen · stap 2 van 3'}
       title={tile.label}
-      line={editing ? 'Eerst een voorstel, pas daarna verandert er iets.' : `${count === 0 ? 'Een paar keuzes' : count === 1 ? 'Eén vraag' : `${count} vragen`}, en alles kun je later nog aanpassen.`}
+      line={editing ? 'Eerst een voorstel, pas na Akkoord verandert er iets.' : `${count === 0 ? 'Een paar keuzes' : count === 1 ? 'Eén vraag' : `${count} vragen`}. Alles kun je later aanpassen.`}
       onClose={onClose}
     >
       {(close) => (

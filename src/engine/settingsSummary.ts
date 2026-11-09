@@ -39,7 +39,7 @@ import { resolveQuoteLanguage } from './quoteSettings';
 import { resolveReadinessWeighting } from './raceReadiness';
 import { resolveGrowthChoice, resolveLimitMargin } from '../data/goalGrowth';
 import { resolveBodyCheck } from './bodyCheckSettings';
-import { resolveExerciseArt } from './exerciseArtSettings';
+import { resolveExerciseArt, resolveGuideOpen } from './exerciseArtSettings';
 import { resolveLegEase, resolveLegEaseHow } from './legEaseSettings';
 import { resolveSky } from './skySettings';
 import { resolveLongRunGrowth } from './runGrowth';
@@ -72,8 +72,11 @@ import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
 import { resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
+import { calisthenicsTrainings } from './trainingStyle';
+import type { SessionTemplate } from '../models/training';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 import { formatClock } from '../utils/clock';
+import { capitalize } from '../utils/capitalize';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
 export const SUB_MAX_LENGTH = 40;
@@ -117,6 +120,8 @@ function gapText(icu: number, mine: number): string {
 export interface SettingsFacts {
   today: string;
   settings: AppSettings;
+  // De trainingen, voor wat alleen telt zolang de plek in het sjabloon nog klopt (Calisthenics per training).
+  templates?: SessionTemplate[];
   // Minuten per weekdag zoals ze bij de planning staan.
   dailyTimeBudget: Partial<Record<Weekday, { preferredMinutes: number }>>;
   pairing: 'automatic' | 'always' | 'only_if_useful' | 'never';
@@ -135,7 +140,9 @@ export interface SettingsFacts {
   // Wat ASCEND nu doet met je ambitie: terugvallen op Standaard bij pijn.
   ambition: { chosen: 'rustig' | 'standaard' | 'stevig'; effective: 'rustig' | 'standaard' | 'stevig'; reason?: string };
   // Het gewicht in gebruik.
-  weight: { kg: number; source: string; date: string } | null;
+  // De nieuwste weging die telt; `trendKg` is de trend als Gewichtstrend aan staat en er genoeg
+  // wegingen zijn (engine/weightTrend.ts#weightShown).
+  weight: { kg: number; source: string; date: string; trendKg?: number } | null;
   // Zijn er weegmetingen met een vetpercentage (engine/bodyFat.ts)? Zonder is de schakelaar er niet.
   hasBodyFat?: boolean;
   // De koppeling met het horloge; null als er (nog) niet gekeken is.
@@ -244,7 +251,6 @@ const monthIndex = (iso: string) => Number(iso.slice(5, 7)) - 1;
 export const longDate = (iso: string): string => `${dayOf(iso)} ${LONG_MONTHS[monthIndex(iso)]}`;
 
 const num = (n: number, decimals = 2) => formatNumberNL(n, decimals);
-const capitalize = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 const lower = (text: string) => text.toLowerCase();
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -393,8 +399,8 @@ function unsettledRow(rowId: string, f: SettingsFacts): 'Bezig…' | 'Onbekend' 
 const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title: base.title, auto: base.auto, value, dim: true });
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
-const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
-const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-doorvoeren', 'forge-schijven'];
+const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
+const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-doorvoeren', 'forge-schijven'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
   return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
@@ -416,6 +422,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       if (n > 0) return { value: plural(n, 'dag', 'dagen'), dim: false, sub: `Rust op ${lower(WEEKDAYS[restDayIndex(f)])}` };
       // Geen tijden per dag, wel een rustdag: zeg wat er staat.
       return { value: `Rust ${lower(WEEKDAYS_SHORT[restDayIndex(f)])}`, dim: false };
+    }
+    case 'bundel-ascend': {
+      const shown = [s.showSeasonStrip !== false, s.showSkillGoals !== false].filter(Boolean).length;
+      return shown === 2 ? { value: 'Alles' } : shown === 0 ? { value: 'Niets extra', dim: true } : { value: s.showSeasonStrip !== false ? 'Seizoensstrook' : 'Vaardigheden' };
     }
     case 'bundel-tochten':
       if (f.treks > 0) return { value: plural(f.treks, 'tocht', 'tochten') };
@@ -444,7 +454,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bundel-signalen':
       return { value: `${signalsOnCount(s)} van ${SIGNAL_KEYS.length} aan` };
     case 'bundel-weer':
-      return { value: `${countOn([o.weatherLine, o.bestMoment, o.weatherSwap, o.clothingAdvice])} van 4 aan` };
+      return { value: `${countOn([o.weatherLine, o.bestMoment, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, o.moonLine, o.weatherSwap, o.clothingAdvice])} van 9 aan` };
     case 'bundel-run-detail': {
       const d = resolveRunInsight(s.runInsight).detail;
       return d.show ? { value: 'Aan', sub: `Loopvorm: ${formSwitchesLine(d.form)}` } : { value: 'Uit', dim: true };
@@ -516,14 +526,20 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('naHoofddoel', s.afterMainGoal ?? 'stop') };
     case 'seizoensstrook':
       return { checked: s.showSeasonStrip !== false };
+    case 'vaardigheidsdoelen':
+      return { checked: s.showSkillGoals !== false };
     case 'volgende-tocht':
       return { checked: s.showNextTrek !== false };
     case 'water-per-etappe':
       return { checked: s.showStageWater !== false };
     case 'rust-na-tocht':
       return { value: choiceShort('rustNaTocht', s.trekLegRest ?? 'soft') };
+    case 'vakantie-schuiven':
+      return { value: choiceShort('vakantieSchuiven', s.leaveAround ?? 'wide') };
     case 'vakantie-opzij':
       return { value: choiceShort('vakantieOpzij', s.leaveCrowding ?? 'drop') };
+    case 'zonder-sportschool':
+      return { value: choiceShort('zonderSportschool', s.noGymStrength ?? 'bodyweight') };
     case 'vrije-dagen':
       return f.vacations > 0 ? { value: `${f.vacations} gepland` } : { value: 'Geen', dim: true };
     case 'reisplanner':
@@ -603,6 +619,12 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.lighterAfterBreak };
     case 'forge-rekent-mee':
       return { checked: forge.reckon };
+    case 'forge-afvinken-doel':
+      return { checked: forge.assumedCounts };
+    case 'forge-tussen-oefeningen':
+      return { checked: forge.crossFatigue };
+    case 'standen-onthouden':
+      return { checked: forge.learnStands };
     case 'forge-dumbbells':
       return { value: choiceShort('dumbbellLog', forge.dumbbellLog) };
     case 'forge-naast': {
@@ -617,6 +639,21 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.showPlates };
     case 'forge-rir-snel':
       return { checked: forge.quickRir };
+    case 'forge-stappen':
+      return { checked: forge.ladderRow };
+    case 'forge-netjes':
+      return { checked: forge.askClean };
+    case 'forge-band':
+      return { checked: forge.askBand };
+    case 'forge-stapvoorstel':
+      return { checked: forge.stepProposal };
+    case 'forge-ijkset':
+      return { checked: forge.calibration };
+    case 'forge-soort': {
+      // Afgeleid uit de stappen in je trainingen (engine/trainingStyle.ts); zonder keuze is alles kracht.
+      const n = calisthenicsTrainings(s.strengthModel, f.templates, f.today);
+      return n === 0 ? { value: 'Alles kracht', dim: true } : { value: `${plural(n, 'training', 'trainingen')} met calisthenics` };
+    }
     case 'forge-programma':
       return s.strengthModel?.program ? { value: s.strengthModel.program.name } : { value: 'Van ASCEND', dim: true };
     case 'stangen':
@@ -644,10 +681,18 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Lichaam
     case 'lichaamsgewicht':
       return f.weight
-        ? { value: kgLabel(f.weight.kg, 1), auto: f.weight.source === 'macrofactor' || f.weight.source === 'health-connect', sub: weightWords(f.weight) }
+        ? f.weight.trendKg !== undefined
+          ? { value: `Trend ${kgLabel(f.weight.trendKg, 1)}`, auto: f.weight.source === 'macrofactor' || f.weight.source === 'health-connect', sub: `Laatste weging ${kgLabel(f.weight.kg, 1)}, ${formatDayMonthNL(f.weight.date)}` }
+          : { value: kgLabel(f.weight.kg, 1), auto: f.weight.source === 'macrofactor' || f.weight.source === 'health-connect', sub: weightWords(f.weight) }
         : { value: 'Niet ingevuld', dim: true };
     case 'vetpercentage':
       return { checked: s.showBodyFat !== false };
+    case 'gewicht-kaart':
+      return { checked: s.weightCard !== false };
+    case 'gewicht-eigen':
+      return { value: choiceShort('gewichtEigen', s.weightForLoad ?? 'trend') };
+    case 'gewichtstrend':
+      return { checked: s.weightTrend !== false };
     case 'hartslag': {
       const hr = s.heartRate ?? {};
       if (hr.lthr) return { value: `Drempel ${hr.lthr}`, sub: 'Zones in bpm, zoals op je horloge' };
@@ -755,7 +800,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const off = [!c.askNew ? 'Nieuwe sport telt meteen' : '', !c.askFelt ? 'zwaarte aangenomen' : '', c.rest === 'korter' ? 'kortere rust' : ''].filter(Boolean);
       if (off.length === 0) return { value: 'Vragen', auto: true };
       const sub = off.join(', ');
-      return { value: 'Aangepast', sub: sub.charAt(0).toUpperCase() + sub.slice(1) };
+      return { value: 'Aangepast', sub: capitalize(sub) };
     }
     case 'sport-vragen':
       return { checked: resolveSportCounting(s.sportCounting).askNew };
@@ -832,6 +877,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.weekReview };
     case 'weekterugblik-dag':
       return { value: choiceShort('terugblikDag', o.weekReviewDay) };
+    case 'forge-uitleg-open':
+      return { checked: resolveGuideOpen(s) };
     case 'forge-plaatjes':
       return { value: choiceShort('plaatjes', resolveExerciseArt(s)) };
     case 'lijfvraag':
@@ -851,6 +898,16 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return place ? { value: place.name } : { value: 'Niet gekozen', dim: true };
     case 'weerregel':
       return { checked: o.weatherLine };
+    case 'weeralarm':
+      return { checked: s.weatherWarnings !== false };
+    case 'lawinegevaar':
+      return { checked: s.avalancheBulletin !== false };
+    case 'regen-uur':
+      return { checked: o.rainSoon };
+    case 'heuvels-buurt':
+      return { checked: o.hillsNearby };
+    case 'maanstand':
+      return { checked: o.moonLine };
     case 'weerruil':
       return { checked: o.weatherSwap };
     case 'beste-moment':
@@ -891,6 +948,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveRunInsight(s.runInsight).weather };
     case 'borstband':
       return { checked: resolveRunInsight(s.runInsight).chestStrap };
+    case 'tempo-stukken':
+      return { checked: s.tempoStablePieces !== false };
     case 'intensiteit':
       return { value: choiceShort('intensiteit', resolveIntensityCounting(s)) };
     case 'lucht':

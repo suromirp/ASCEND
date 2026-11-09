@@ -15,9 +15,10 @@ import {
   SettingsRepo,
   type AppSettings,
 } from '../storage/database';
-import { currentBodyKg } from '../engine/bodyWeight';
+import { loadBodyKg } from '../engine/weightTrend';
 import { packWeightOf } from '../engine/gr5Profile';
-import { resolveTestRest, setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, setTestRestHours } from '../engine/scheduler';
+import { resolveTestRest } from '../engine/testRest';
+import { setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, setTestRestHours } from '../engine/scheduler';
 import { leaveKey } from '../engine/leaveEdit';
 import { createSerialQueue } from '../utils/serialQueue';
 import { chainTouch, type SyncTouch } from '../engine/undoGuard';
@@ -94,7 +95,7 @@ export function setPlanningRegisters(program: Program | null, tpls: SessionTempl
   setLongRunThenLegs(!!loadedSettings.longRunThenLegs);
   setTestRestHours(resolveTestRest(loadedSettings.testRest));
   // The planner's leg index with the same inputs as the Benen card.
-  const lastWeight = currentBodyKg(loadedSettings.weightEntries, loadedSettings.weightFromMacroFactor, loadedSettings.weightFromHealthConnect);
+  const lastWeight = loadBodyKg(loadedSettings);
   setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
   setFixedSessionMinutes(planned);
   setAmbition(scope.ambition);
@@ -155,6 +156,8 @@ export async function horizonKey(): Promise<string> {
       settings.trekLegRest,
       // Let go or shift a training that moves for a holiday (engine/leaveSpacing.ts).
       settings.leaveCrowding,
+      // How far the planning may shift around a holiday (engine/leaveAround.ts).
+      settings.leaveAround ?? 'wide',
       // How fast the long run grows toward a race (engine/runGrowth.ts).
       settings.longRunGrowth,
       // Planning after the main goal (engine/programLayout.ts#planEndDay).

@@ -1,7 +1,7 @@
 import { Eyebrow } from './ui';
 import type { LeaveLabel, LeaveLabelKind } from '../engine/leave';
 
-// A quiet band for a day that belongs to a holiday, a trek or free days
+// A quiet band for a day that belongs to a holiday, a trek, a period without a gym or free days
 // (engine/leave.ts). Not a training: no status dot, no minutes. Used in the
 // week overview and in the proposal preview.
 
@@ -10,6 +10,8 @@ const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}
 const TONE: Record<LeaveLabelKind, { color: string; text: string }> = {
   off: { color: 'var(--color-sage)', text: 'var(--color-success-text)' },
   trek: { color: 'var(--color-status)', text: 'var(--color-status)' },
+  // Zonder sportschool: zelfde rust als een vakantie, de tekst in gewone inkt.
+  nogym: { color: 'var(--color-sage)', text: 'var(--color-ink)' },
   free: { color: 'var(--color-ink-dim)', text: 'var(--color-ink-dim)' },
   light: { color: 'var(--color-ink-dim)', text: 'var(--color-ink-dim)' },
 };

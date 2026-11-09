@@ -18,6 +18,7 @@ import { conflictsForGoals } from './goalConflicts';
 import { isMarathonGoal, mainGoal } from './mainGoal';
 import { RACE_KM } from './goalDraft';
 import { goalTiming } from './goalRoute';
+import { capitalize } from '../utils/capitalize';
 
 export interface ListedGoal {
   goal: TrainingGoal;
@@ -149,7 +150,6 @@ export const PRIORITY_RULE: Record<GoalPriority, string> = {
 };
 
 const WORDS = ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // "Vier dagen", "twee weken": woorden tot tien, daarboven cijfers.
 function spanWords(days: number): string {
@@ -164,7 +164,7 @@ function spanWords(days: number): string {
 export function labelLine(goal: TrainingGoal, priority: GoalPriority): string {
   if (priority === 'verkenning') return `${PRIORITY_RULE.verkenning} Geen rust ervoor.`;
   const taper = goalTaperDays(goal, priority);
-  return taper > 0 ? `${PRIORITY_RULE[priority]} ${cap(spanWords(taper))} rustiger ervoor.` : PRIORITY_RULE[priority];
+  return taper > 0 ? `${PRIORITY_RULE[priority]} ${capitalize(spanWords(taper))} rustiger ervoor.` : PRIORITY_RULE[priority];
 }
 
 // "Voor jouw 10 km": wat dit label voor dit doel doet, in dagen. `now` is het label dat het doel nu
@@ -238,7 +238,7 @@ export function stepAvailability(listed: readonly ListedGoal[], id: string, dir:
   if (moveGoal(listed, id, dir).changed) return { can: true };
   if (dir === 'up' && from === 0) return { can: false, reason: 'Dit doel staat al bovenaan.' };
   if (dir === 'down' && from === listed.length - 1) return { can: false, reason: 'Dit doel staat al onderaan.' };
-  if (listed[from].isMain && dir === 'down') return { can: false, reason: 'Je hoofddoel blijft bij de Top-doelen, dus lager kan niet.' };
+  if (listed[from].isMain && dir === 'down') return { can: false, reason: 'Lager kan niet: je hoofddoel blijft bij de Top-doelen.' };
   return { can: false, reason: 'Hier kan dit doel niet naartoe.' };
 }
 

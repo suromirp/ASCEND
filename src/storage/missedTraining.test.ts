@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from './database';
 import { linkLogNow, unlinkLogsNow } from './missedTraining';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
+import { buildImportPreview } from './backupPreview';
+import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './backupApply';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import type { PlannedSession, SessionLog } from '../models/training';
 
 // Alles nagemaakt.
