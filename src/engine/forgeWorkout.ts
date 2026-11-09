@@ -910,7 +910,7 @@ const NUANCE_TEXT: Record<string, { on: string; off: string }> = {
   trap: { on: 'met een trapbar', off: 'met een rechte stang' },
   sumo: { on: 'met brede stand', off: 'met smalle stand' },
   quad: { on: 'meer voor je quadriceps', off: 'minder voor je quadriceps' },
-  hinged: { on: 'met je romp voorovergebogen', off: 'met je romp ondersteund' },
+  hinged: { on: 'met je romp voorovergebogen', off: 'zonder voorovergebogen romp' },
   legs: { on: 'met hulp van je benen', off: 'zonder hulp van je benen' },
   negative: { on: 'alleen het zakken', off: 'het hele bereik' },
   lying: { on: 'liggend', off: 'zittend' },

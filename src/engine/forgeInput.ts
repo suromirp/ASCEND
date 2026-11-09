@@ -314,6 +314,12 @@ function targetReps(t: RowTarget): number {
 
 // A tap on the prescription: kg and reps as the prescription says. The RIR stays
 // what it is (empty with the aim as a hint): it is for you to say how it felt.
+// Taking the prescription puts the weight back to what was asked: Forge's own adjustment (forgeKg) goes too.
+function dropForgeKg<T extends { forgeKg?: number }>(r: T): T {
+  const { forgeKg: _gone, ...rest } = r;
+  return rest as T;
+}
+
 export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise {
   return {
     ...ex,
@@ -321,7 +327,7 @@ export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise 
       r.id !== rowId || r.done
         ? r
         : {
-            ...withoutEstimate(r),
+            ...withoutEstimate(dropForgeKg(r)),
             ...(r.target.weightKg !== undefined ? { weightKg: r.target.weightKg } : {}),
             reps: targetReps(r.target),
             edited: true,

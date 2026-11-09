@@ -158,7 +158,7 @@ describe('h: Minder en Meer op een toestel met standen', () => {
 
 describe('g: de uitlegzin bij de bolletjes', () => {
   it('kort, je/jij, zonder gedachtestreepje', () => {
-    expect(QUICK_RIR_HINT).toContain('Twijfel je tussen twee, kies het lagere.');
+    expect(QUICK_RIR_HINT).toContain('Twijfel je tussen twee, kies het lagere: dan rekent Forge voorzichtig.');
     expect(QUICK_RIR_HINT).not.toMatch(/[\u2013\u2014]/);
   });
 });

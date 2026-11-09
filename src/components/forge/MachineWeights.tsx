@@ -406,7 +406,7 @@ function MachineWeightsForm({
         onChange={(v) => v && setOnly(v === 'only')}
       />
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Met ook schatten stelt Forge ook gewichten tussen en boven je standen voor. Bij alleen deze standen nooit een gewicht dat je niet intikte.
+        Ook schatten: Forge stelt gewichten tussen en boven je standen voor. Alleen deze standen: nooit een gewicht dat je niet intikte.
       </p>
       {result.tooMany && (
         <p className="text-xs leading-snug" role="alert" style={{ color: 'var(--color-danger-text)' }}>{FULL}</p>

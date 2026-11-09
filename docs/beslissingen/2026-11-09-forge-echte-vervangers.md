@@ -41,3 +41,8 @@ Niets. Het gedrag van `swapScore` en de bergvoorkeur uit `docs/onderzoek/Spierin
 ## Terugdraaien
 
 Laat `ExerciseSheets.tsx#SwapList` en `ForgeMenus.tsx#SwapSheet` weer `swapOptions` als één lijst tonen en verwijder `exerciseFamilies.ts`; er is niets opgeslagen.
+
+## Na de review (Warden)
+
+- Kelso Shrug heeft een eigen familie (`kelso`): schouderbladen naar achter, geen optrekken, en je zit ondersteund. Zo krijgt de shrug geen vervanger met een verkeerde zin.
+- De tekst bij `hinged` zegt aan de andere kant "zonder voorovergebogen romp", zodat Barbell Row naar Inverted Row klopt. Een nuance moet in beide richtingen een kloppende zin geven; toets elke tekst ook omgekeerd.

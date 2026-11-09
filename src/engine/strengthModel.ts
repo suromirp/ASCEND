@@ -872,6 +872,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   // Every working set at the top, and each one counts: confirmed (read with rule 4) or with a RIR you chose
   // yourself, at least the aim. A set that was not confirmed (or under the range) stops the step.
   const allAtTop = last.workSets.length > 0 && last.workSets.every((x, i) => {
+    if (x.reps <= 0) return true; // an empty set (import, by hand) does not count, as before
     if (x.reps < high) return false;
     const own = last.workConfirmedRir?.[i];
     if (own !== undefined) return own >= rir;

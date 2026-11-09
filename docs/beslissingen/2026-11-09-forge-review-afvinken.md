@@ -46,3 +46,9 @@ Niets. Het besluit van 8 november blijft; dit vult het aan op de punten hierbove
 ## Terugdraaien
 
 `forgeKg` niet meer lezen in `lighterThanAsked` en `belowPrescription` niet meer in `sessionValue`; het veld mag in de logs blijven staan. Regel 5 terug naar de ruwe RIR: `readTopRir` en de leesregel in `allAtTop` weghalen. De pauzeregel: `afterBreak ? undefined : smoothed` terug naar `smoothed`. Terugdraaien na Standen wissen: het blad weer sluiten na wissen.
+
+## Na de review (Warden)
+
+- De zin onder de bolletjes is "Twijfel je tussen twee, kies het lagere: dan rekent Forge voorzichtig." Het lagere bolletje is de voorzichtige kant voor de geschatte kracht en de stap (minder over betekent minder kracht en geen stap). De bron in het RIR-verslag gaat over de lagere RPE, dat is de andere richting; de zin volgt dus de engine en niet het verslag.
+- Tik je op het voorschrift (`takeTarget`), dan gaat ook `forgeKg` weg: het gewicht is weer wat gevraagd was.
+- `allAtTop` slaat een werkset met 0 herhalingen over, zoals voorheen (een import of een handmatig log).

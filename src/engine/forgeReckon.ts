@@ -303,7 +303,7 @@ export function undoRaise(ex: WorkoutExercise, snap: (kg: number) => number = r2
 export const QUICK_RIR = [0, 1, 2, 3] as const;
 export const quickRirLabel = (n: number): string => (n >= 3 ? '3+' : String(n));
 // De uitlegzin onder de bolletjes (verslag RIR en RPE, hoofdstuk 5): een schatting is genoeg.
-export const QUICK_RIR_HINT = 'Een schatting is genoeg. Twijfel je tussen twee, kies het lagere.';
+export const QUICK_RIR_HINT = 'Een schatting is genoeg. Twijfel je tussen twee, kies het lagere: dan rekent Forge voorzichtig.';
 
 // Vraagt Forge na het afvinken van deze set hoeveel je over had? Alleen bij een afgevinkte werkset waarvan
 // je de RIR niet zelf invulde, en alleen bij de sets die het meest zeggen: de eerste werkset (de topset), een
