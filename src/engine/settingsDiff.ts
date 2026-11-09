@@ -236,6 +236,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('vetpercentage', 'Vetpercentage tonen', 'lichaam', 'showBodyFat'),
   flag('gewicht-kaart', 'Gewicht op Je stand', 'lichaam', 'weightCard'),
   choice('gewicht-eigen', 'Gewicht bij eigen gewicht', 'lichaam', 'weightForLoad', 'trend', 'gewichtEigen'),
+  choice('gewicht-periode', 'Overzicht Gewicht opent op', 'lichaam', 'weightRange', '4w', 'gewichtPeriode'),
   flag('gewichtstrend', 'Gewichtstrend gebruiken', 'lichaam', 'weightTrend'),
   {
     id: 'figuur', title: 'Figuur', page: 'lichaam',

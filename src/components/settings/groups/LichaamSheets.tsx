@@ -31,6 +31,7 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
   const { settings, updateSettings } = useAppData();
   const [reminder, setReminder] = useState(false);
   const [ownPick, setOwnPick] = useState(false);
+  const [rangePick, setRangePick] = useState(false);
   const [self, setSelf] = useState(false);
   const [help, setHelp] = useState(false);
   const [fatHelp, setFatHelp] = useState(false);
@@ -165,6 +166,7 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
                 onChange={(on) => void updateSettings({ weightTrend: on })}
               />
               <SettingsRow id="gewicht-eigen" title="Gewicht bij eigen gewicht" info="gewichtEigen" value={choiceShort('gewichtEigen', settings.weightForLoad ?? 'trend')} onClick={() => setOwnPick(true)} />
+              <SettingsRow id="gewicht-periode" title="Overzicht Gewicht opent op" value={choiceShort('gewichtPeriode', settings.weightRange ?? '4w')} onClick={() => setRangePick(true)} />
               <SettingsRow id="gewicht-herinnering" title="Herinnering" value={CHOICES.herinnering.options.find((o) => o.value === days)?.label ?? 'Nooit'} onClick={() => setReminder(true)} />
             </SettingsList>
 
@@ -214,6 +216,14 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
           value={settings.weightForLoad ?? 'trend'}
           onPick={(v) => void updateSettings({ weightForLoad: v })}
           onClose={() => setOwnPick(false)}
+        />
+      )}
+      {rangePick && (
+        <ChoiceFromDef
+          def={CHOICES.gewichtPeriode}
+          value={settings.weightRange ?? '4w'}
+          onPick={(v) => void updateSettings({ weightRange: v })}
+          onClose={() => setRangePick(false)}
         />
       )}
       {reminder && (

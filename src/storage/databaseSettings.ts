@@ -455,6 +455,10 @@ export interface AppSettings {
   // Afwezig of 'trend' = de gewichtstrend (met te weinig wegingen de laatste weging), 'latest' = de laatste weging.
   // Optioneel en additief, dus geen schemastap.
   weightForLoad?: 'trend' | 'latest';
+  // "Overzicht Gewicht opent op" (engine/weightOverview.ts, docs/beslissingen/2026-11-09-overzicht-gewicht.md):
+  // de periode waarmee het overzicht Gewicht achter de kaart op Je stand opent. Afwezig of '4w' = 4 weken
+  // (het advies), '3m' = 3 maanden, '1y' = een jaar. Alleen wat je ziet. Optioneel en additief, dus geen schemastap.
+  weightRange?: '4w' | '3m' | '1y';
   // "Gewicht op Je stand" (engine/weightCard.ts, docs/beslissingen/2026-11-09-gewicht-buiten-instellingen.md):
   // absent = aan zodra er een weging is, false = geen kaart Gewicht op Je stand en geen wegingen in het
   // Logboek. Alleen wat je ziet. Optioneel en additief, dus geen migratiestap.

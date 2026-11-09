@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Icon } from '../icons';
 import { Card, Eyebrow, Num } from '../ui';
 import { Sparkline } from './Sparkline';
-import { WeightSheet } from '../settings/groups/LichaamSheets';
+import { WeightOverviewSheet } from './WeightOverviewSheet';
 import { useAppData } from '../../state/AppDataContext';
 import { weightsInUse } from '../../engine/bodyWeight';
 import { weightCardData, weightCardOn } from '../../engine/weightCard';
@@ -10,7 +10,7 @@ import { formatDayMonthNL, todayISO } from '../../utils/dates';
 import { formatNumberNL } from '../../utils/number';
 
 // Je gewicht op Je stand: de trend groot, de laatste weging klein en een rustige lijn van de laatste
-// weken. Een tik opent het blad Lichaamsgewicht. Aan of uit met "Gewicht op Je stand" in Instellingen,
+// weken. Een tik opent het overzicht Gewicht (WeightOverviewSheet). Aan of uit met "Gewicht op Je stand" in Instellingen,
 // Lichaam (docs/beslissingen/2026-11-09-gewicht-buiten-instellingen.md).
 export function WeightStandCard() {
   const { settings } = useAppData();
@@ -26,7 +26,7 @@ export function WeightStandCard() {
   return (
     <>
       <Card>
-        <button onClick={() => setOpen(true)} data-sheet-from className="flex min-h-[56px] w-full items-center justify-between gap-3 text-left" aria-label="Gewicht, open Lichaamsgewicht">
+        <button onClick={() => setOpen(true)} data-sheet-from className="flex min-h-[56px] w-full items-center justify-between gap-3 text-left" aria-label="Gewicht, open het overzicht">
           <span className="min-w-0 flex-1">
             <Eyebrow as="span">{data.isTrend ? 'Gewicht, trend' : 'Gewicht'}</Eyebrow>
             <span className="mt-1 flex items-baseline gap-1.5">
@@ -43,7 +43,7 @@ export function WeightStandCard() {
           </span>
         </button>
       </Card>
-      {open && <WeightSheet onClose={() => setOpen(false)} />}
+      {open && <WeightOverviewSheet onClose={() => setOpen(false)} />}
     </>
   );
 }

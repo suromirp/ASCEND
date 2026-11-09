@@ -303,6 +303,17 @@ export const CHOICES = {
       { value: 'latest', label: 'Laatste weging', note: 'Het getal van je laatste weging, ook als dat een slechte dag was', short: 'Laatste weging' },
     ],
   }),
+  gewichtPeriode: def({
+    group: 'Lichaam',
+    title: 'Overzicht Gewicht opent op',
+    line: 'In het overzicht zelf kies je elke keer een andere periode.',
+    advice: '4w' as '4w' | '3m' | '1y',
+    options: [
+      { value: '4w', label: '4 weken', note: 'Je trend van nu, met elke weging als stip', short: '4 weken' },
+      { value: '3m', label: '3 maanden', note: 'De richting over een seizoen', short: '3 maanden' },
+      { value: '1y', label: 'Een jaar', note: 'Het hele jaar in één lijn', short: 'Een jaar' },
+    ],
+  }),
   herinnering: def({
     group: 'Lichaam',
     title: 'Herinnering',

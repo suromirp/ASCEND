@@ -8,14 +8,11 @@
 import type { WeightEntry } from '../models/metrics';
 import type { SessionLog } from '../models/training';
 import { groupByWeek, mondayKey } from './logbookMonth';
-import { addDays, daysBetween } from '../utils/dates';
-import { latestWeight } from './bodyWeight';
+import { addDays } from '../utils/dates';
 import type { TrendPoint } from './readiness';
-import { weightShown } from './weightTrend';
+import { weightLineAt, weightShown } from './weightTrend';
 
 export const WEIGHT_LINE_WEEKS = 6;
-// Een punt op de lijn zegt niets als de weging waar het op rust al ouder is dan dit.
-const POINT_MAX_AGE_DAYS = 14;
 
 // "Gewicht op Je stand": afwezig is aan zodra er een weging is, false is uit.
 export const weightCardOn = (setting: boolean | undefined, entries: WeightEntry[] | undefined): boolean =>
@@ -34,13 +31,12 @@ export interface WeightCardData {
 export function weightCardData(entries: WeightEntry[] | undefined, trendOn: boolean | undefined, today: string): WeightCardData | undefined {
   const shown = weightShown(entries, trendOn);
   if (!shown) return undefined;
+  // De lijn komt altijd uit echte wegingen (`weightLineAt`), zodat een trendgewicht uit MacroFactor
+  // en losse wegingen niet door elkaar lopen.
   const points: TrendPoint[] = [];
   for (let i = WEIGHT_LINE_WEEKS - 1; i >= 0; i--) {
     const day = addDays(today, -7 * i);
-    const upTo = (entries ?? []).filter((e) => e.date <= day);
-    const last = latestWeight(upTo);
-    if (!last || daysBetween(last.date, day) > POINT_MAX_AGE_DAYS) continue;
-    const at = weightShown(upTo, trendOn);
+    const at = weightLineAt(entries, day, trendOn);
     if (at) points.push({ label: day, value: at.kg });
   }
   return { kg: shown.kg, isTrend: shown.trend !== undefined, latest: { kg: shown.latest.kg, date: shown.latest.date, source: shown.latest.source }, points };
