@@ -72,6 +72,20 @@ export function newSkillStepProgress(store: SkillGoalStore, logs: readonly Sessi
   return out;
 }
 
+// De stappen die al een vaardigheid zijn ("ladder|stap"): een tweede doel met dezelfde ladder en doelstap kan niet.
+export function takenSkillSteps(store: SkillGoalStore): Set<string> {
+  return new Set(liveSkillGoals(store).map((g) => `${g.ladderId}|${g.targetStep}`));
+}
+
+// De doelstap die het blad voorstelt: `preferred` als die vrij is, anders de eerste vrije stap erboven, dan eronder.
+// Undefined als elke stap van de ladder al een vaardigheid is.
+export function freeTargetStep(ladder: SkillLadder, preferred: number, taken: ReadonlySet<string>): number | undefined {
+  const free = (n: number) => !taken.has(`${ladder.id}|${n}`);
+  for (let n = preferred; n <= ladder.steps.length; n++) if (free(n)) return n;
+  for (let n = preferred - 1; n >= 1; n--) if (free(n)) return n;
+  return undefined;
+}
+
 // De doelstap die het blad voorstelt: de stap boven je huidige, of de eerste stap zonder training.
 export function defaultTargetStep(ladder: SkillLadder, state: Pick<LadderState, 'current'>): number {
   if (state.current === null) return 1;

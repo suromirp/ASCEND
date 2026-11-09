@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { skillLadderById, type SkillLadder } from '../data/skillLadders';
 import type { SessionLog, SetLog } from '../models/training';
 import type { SkillGoal, SkillGoalStore, SkillStepProgress } from '../models/skillGoals';
-import { buildSkillGoal, clearedSkillSteps, defaultTargetStep, liveSkillGoals, mergeSkillStores, newSkillStepProgress, skillStepMilestones } from './skillGoal';
+import { buildSkillGoal, clearedSkillSteps, freeTargetStep, takenSkillSteps, defaultTargetStep, liveSkillGoals, mergeSkillStores, newSkillStepProgress, skillStepMilestones } from './skillGoal';
 import { skillReadinessFor } from './goalReadinessFor';
 import { ladderState } from './skillLadder';
 
@@ -132,10 +132,23 @@ describe('skillReadinessFor: de trap, het werk en één droge regel', () => {
     const r = skillReadinessFor(goal(), [], TODAY, kept)!;
     expect(r.steps.map((s) => s.status)).toEqual(['cleared', 'cleared', 'cleared', 'current']);
     expect(r.steps[0].clearedDate).toBe('2026-09-01');
+    // Zonder training in de logs zeggen trap en werk hetzelfde: begin bij de eerste open stap.
+    expect(r.work).toBe('Begin bij Pull-Up. Toets: 3 keer 8.');
+    expect(r.line).toBe('Je werkt aan je doelstap.');
     // Een ladder met een stap minder: wat gehaald is blijft gehaald, de doelstap schuift niet mee.
     const shorter: SkillLadder = { ...pull, steps: pull.steps.filter((s) => s.exerciseId !== 'scapular-pull-up') };
     expect(clearedSkillSteps(shorter, [], TODAY).size).toBe(0);
     expect(skillReadinessFor(goal(), [], TODAY, kept)!.steps.filter((s) => s.status === 'cleared')).toHaveLength(3);
+  });
+
+  it('na Stap lichter of een strengere toets: gehaald blijft gehaald op de trap, het werk volgt je laatste training', () => {
+    const kept: SkillStepProgress[] = [1, 2, 3].map((step) => ({ id: `p${step}`, goalId: 'skill_1', ladderId: 'pull-up', step, exerciseId: pull.steps[step - 1].exerciseId, clearedDate: '2026-10-01' }));
+    // De laatste training staat weer op stap 2.
+    const r = skillReadinessFor(goal(), [log('2026-11-05', { 'scapular-pull-up': reps(6, 6, 6) })], TODAY, kept)!;
+    expect(r.steps.map((s) => s.status)).toEqual(['cleared', 'cleared', 'cleared', 'current']);
+    expect(r.current).toBe(2);
+    expect(r.work).toBe('Nu: Scapular Pull-Up. Toets: 3 keer 8.');
+    expect(r.line).toBe('Je werkt aan je doelstap.');
   });
 
   it('een onbekende ladder geeft niets in plaats van een fout', () => {
@@ -156,6 +169,19 @@ describe('een doel maken en de standaard doelstap', () => {
     expect(buildSkillGoal({ id: 'g', now: 'x', ladderId: 'pull-up', targetStep: 6 })).toBeUndefined();
     expect(buildSkillGoal({ id: 'g', now: 'x', ladderId: 'pull-up', targetStep: 0 })).toBeUndefined();
     expect(buildSkillGoal({ id: 'g', now: 'x', ladderId: 'planche', targetStep: 1 })).toBeUndefined();
+  });
+});
+
+describe('een tweede doel met dezelfde ladder en doelstap', () => {
+  it('de stap is bezet; het blad stelt de eerste vrije stap voor', () => {
+    const store: SkillGoalStore = { goals: [goal(), goal({ id: 'weg', targetStep: 5, removedAt: '2026-11-02T00:00:00.000Z' })], progress: [] };
+    const taken = takenSkillSteps(store);
+    expect([...taken]).toEqual(['pull-up|4']);
+    expect(freeTargetStep(pull, 4, taken)).toBe(5);
+    expect(freeTargetStep(pull, 3, taken)).toBe(3);
+    const full = new Set(pull.steps.map((_, i) => `pull-up|${i + 1}`));
+    expect(freeTargetStep(pull, 2, full)).toBeUndefined();
+    expect(freeTargetStep(pull, 5, new Set(['pull-up|5']))).toBe(4);
   });
 });
 

@@ -249,13 +249,22 @@ export function fixedSportImportNote(backup: Pick<NormalizedBackupData, 'planned
   return `Deze back-up heeft vaste afspraken voor ${names(notFixed)}, maar op deze telefoon staat die sport niet op Vaste dag. Die keuze blijft; de volgende planningsronde haalt de open afspraken weg en zegt dat. Wat je verplaatste, oversloeg of logde blijft staan.`;
 }
 
+// Vaardigheden in de back-up: ze reizen mee met Doelen en mijlpalen en komen erbij, ook bij Vervangen; wat op dit
+// toestel staat blijft (engine/skillGoal.ts#mergeSkillStores).
+export function skillGoalImportNote(skillGoals: SkillGoalStore | undefined, goalsAction: CategoryAction): string | undefined {
+  if (!skillGoals || (goalsAction !== 'merge' && goalsAction !== 'replace')) return undefined;
+  const n = skillGoals.goals.filter((g) => !g.removedAt).length;
+  if (n === 0) return undefined;
+  return `Deze back-up heeft ${n === 1 ? 'één vaardigheid' : `${n} vaardigheden`}. Ze ${n === 1 ? 'komt' : 'komen'} erbij; vaardigheden en gehaalde stappen op dit toestel blijven staan.`;
+}
+
 export async function buildImportPreview(
   backup: NormalizedBackupData,
   categorySelections: Partial<Record<BackupDataCategory, CategoryAction>>,
   planPolicy: PlanPolicy | undefined,
 ): Promise<ImportPreview> {
   const current = await loadCurrentData();
-  const { diffByCategory, settingsChanges } = computeDiff(current, backup, categorySelections, planPolicy);
+  const { diffByCategory, settingsChanges, effective } = computeDiff(current, backup, categorySelections, planPolicy);
 
   const recordCounts: Partial<Record<BackupDataCategory, number>> = {
     program_and_templates: backup.templates.length,
@@ -274,6 +283,7 @@ export async function buildImportPreview(
       : undefined;
   const logsSinceBackup = current.sessionLogs.filter((l) => l.completedAt > backup.createdAt).length;
   const fixedSportNote = fixedSportImportNote(backup, current.settings);
+  const skillGoalNote = skillGoalImportNote(backup.skillGoals, effective.objectives_and_milestones);
 
   return {
     backupMeta: {
@@ -286,6 +296,7 @@ export async function buildImportPreview(
       logsSinceBackup,
       skippedInvalid: backup.skippedInvalid,
       ...(fixedSportNote ? { fixedSportNote } : {}),
+      ...(skillGoalNote ? { skillGoalNote } : {}),
     },
     diffByCategory,
     settingsChanges,

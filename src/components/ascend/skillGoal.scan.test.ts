@@ -49,7 +49,9 @@ describe('de vaardigheid op de Ascend-tab', () => {
     expect(page).toContain('secondaryLabel="Liever niet"');
     expect(page).toContain('secondaryLabel="Annuleren"');
     expect(sheet).toContain('>Annuleren</TextButton>');
-    expect(hook.match(/withTimeout\(/g)?.length).toBe(3);
+    expect(hook.match(/withTimeout\(/g)?.length).toBe(2);
+    expect(page).toContain("'Dat lukte niet op tijd.'");
+    expect(hook).toContain('reload()');
   });
 
   it('een vaardigheid gaat nooit door het voorstel van de planning', () => {

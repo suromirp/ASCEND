@@ -30,7 +30,7 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - Het voorstel is de kleinste hele minuut die bij de weken past (`wholeMinutes`), hetzelfde getal als "ongeveer" op de kaart; anders zegt de kaart na Akkoord nog steeds dat het niet past.
 - Een meter zonder gewicht mag nooit "het meeste te winnen" worden en houdt het getal niet onder 100.
 - Zonder test, of terwijl de snelste 5 km op Akkoord wacht, telt snelheid niet mee; dat zegt één regel.
-- Een mijlpaal die je haalde onder een eerdere eis blijft gehaald (`keepClearedMilestones`); `MilestoneProgress` herschrijf je nooit.
+- Een mijlpaal die je haalde onder een eerdere eis blijft gehaald (`keepClearedMilestones`); `MilestoneProgress` herschrijf je nooit. Wat deze versie niet kent (een ladder, een soort) bewaar je ongewijzigd en verberg je bij het tonen; een lees-en-terugschrijfroute mag het nooit laten vallen.
 - Seizoensstrook en lijst lezen dezelfde volgorde; elke verplaatsing schrijft de volgorde van de hele zichtbare lijst.
 
 ## Testen

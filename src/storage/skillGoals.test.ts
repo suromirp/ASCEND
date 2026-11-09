@@ -6,6 +6,9 @@ import { buildImportPreview } from './backupPreview';
 import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './backupApply';
 import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { migrateSkillGoals, readSkillGoalStore } from './migrations';
+import { resetToDemoData } from './databaseSeed';
+import { skillGoalImportNote } from './backupPreview';
+import { liveSkillGoals } from '../engine/skillGoal';
 import { SKILL_GOALS_KEY, addSkillGoal, loadSkillGoals, recordSkillSteps, removeSkillGoal, type SkillGoalsMeta } from './skillGoals';
 import type { SessionLog, SetLog } from '../models/training';
 import type { SkillGoal, SkillGoalStore } from '../models/skillGoals';
@@ -40,7 +43,7 @@ describe('migrateSkillGoals: defensief lezen', () => {
   it('een kapotte waarde valt weg zonder fout, de rest blijft', () => {
     expect(migrateSkillGoals('rommel')).toEqual({ store: undefined, skipped: 1 });
     const read = migrateSkillGoals({
-      goals: [goal(), goal({ id: 'b', ladderId: 'handstand' }), goal({ id: 'c', targetStep: 9 }), { id: 'd' }, 7, goal()],
+      goals: [goal(), goal({ id: 'b', ladderId: 'handstand' }), goal({ id: 'c', targetStep: 9 }), { id: 'd' }, 7, goal(), goal({ id: 'e', targetStep: 0 }), goal({ id: 'f', targetStep: 2.5 })],
       progress: [
         { id: 'p1', goalId: 'skill_a', ladderId: 'pull-up', step: 1, exerciseId: 'dead-hang', clearedDate: '2026-11-02' },
         { id: 'p2', goalId: 'skill_a', ladderId: 'pull-up', step: 1, exerciseId: 'dead-hang', clearedDate: '2026-11-03' },
@@ -49,10 +52,17 @@ describe('migrateSkillGoals: defensief lezen', () => {
         { id: 'p5', goalId: 'weg', ladderId: 'pull-up', step: 2, exerciseId: 'x', clearedDate: '2026-11-02' },
       ],
     });
-    expect(read.store!.goals.map((g) => g.id)).toEqual(['skill_a']);
+    // Een ladder die deze versie niet kent of een doelstap boven de ladder blijft ongewijzigd staan (verborgen bij het tonen).
+    expect(read.store!.goals.map((g) => g.id)).toEqual(['skill_a', 'b', 'c']);
+    expect(read.store!.goals[1]).toEqual(goal({ id: 'b', ladderId: 'handstand' }));
     // Een rij van een doel dat er niet meer is blijft: gehaalde stappen gaan nooit weg.
     expect(read.store!.progress.map((p) => p.id)).toEqual(['p1', 'p5']);
     expect(read.skipped).toBe(8);
+  });
+
+  it('een doel van een nieuwere versie blijft ongewijzigd, ook met velden die deze versie niet kent', () => {
+    const newer = { ...goal({ id: 'n', ladderId: 'front-lever', targetStep: 6 }), level: 'tuck' };
+    expect(migrateSkillGoals({ goals: [newer], progress: [] }).store!.goals).toEqual([newer]);
   });
 
   it('een lijst die geen lijst is, is leeg', () => {
@@ -107,6 +117,41 @@ describe('de opslag: alles of niets, alleen toevoegen', () => {
     expect(second.progress[0]).toEqual(first.progress[0]);
   });
 
+  it('een doel dat deze versie niet kent overleeft een schrijfactie op een ander doel', async () => {
+    const m = memory();
+    const unknown = { ...goal({ id: 'onbekend', ladderId: 'handstand', targetStep: 3 }), extra: true };
+    m.value = { goals: [goal(), unknown, goal({ id: 'hoog', targetStep: 9 })], progress: [] };
+    await removeSkillGoal('skill_a', '2026-11-09T09:00:00.000Z', m);
+    await addSkillGoal(goal({ id: 'nieuw', ladderId: 'dip', targetStep: 2 }), [], TODAY, m);
+    await recordSkillSteps([log('l1', '2026-11-02', 'pull-up', reps(8, 8, 8))], TODAY, m);
+    const stored = (m.value as SkillGoalStore).goals;
+    expect(stored.find((g) => g.id === 'onbekend')).toEqual(unknown);
+    expect(stored.find((g) => g.id === 'hoog')).toMatchObject({ targetStep: 9 });
+  });
+
+  it('twee gelijktijdige schrijfacties lopen achter elkaar: geen van beide valt weg', async () => {
+    const m = memory();
+    // Een trage opslag: elke get en set wacht even, zodat twee aanroepen zonder keten elkaars stand zouden overschrijven.
+    const slow: SkillGoalsMeta = {
+      get: async (k) => { const v = await m.get(k); await new Promise((r) => setTimeout(r, 15)); return v; },
+      set: async (k, v) => { await new Promise((r) => setTimeout(r, 15)); return m.set(k, v); },
+    };
+    const logs = [log('l1', '2026-11-02', 'scapular-pull-up', reps(5, 5, 5))];
+    await addSkillGoal(goal(), [], TODAY, slow);
+    await Promise.all([
+      addSkillGoal(goal({ id: 'tweede', ladderId: 'dip', targetStep: 2 }), [], TODAY, slow),
+      recordSkillSteps(logs, TODAY, slow),
+    ]);
+    const after = m.value as SkillGoalStore;
+    expect(after.goals.map((g) => g.id)).toEqual(['skill_a', 'tweede']);
+    expect(after.progress.map((p) => p.step)).toEqual([1]);
+    // Een mislukte schrijfactie houdt de keten niet tegen.
+    const failing: SkillGoalsMeta = { get: slow.get, set: async () => { throw new Error('schijf vol'); } };
+    await expect(addSkillGoal(goal({ id: 'mis' }), [], TODAY, failing)).rejects.toThrow();
+    await removeSkillGoal('tweede', '2026-11-09T10:00:00.000Z', slow);
+    expect((m.value as SkillGoalStore).goals.find((g) => g.id === 'tweede')!.removedAt).toBeDefined();
+  });
+
   it('een doel weghalen laat de gehaalde stappen en de logs ongemoeid', async () => {
     await wipeAllData();
     const logs = [log('l1', '2026-11-02', 'pull-up', reps(8, 8, 8))];
@@ -148,12 +193,30 @@ describe('het doel Vaardigheid in de back-up', () => {
     expect(await loadSkillGoals()).toEqual(own);
   });
 
-  it('een kapotte waarde in het bestand valt weg, het importeren gaat door', async () => {
+  it('een kapotte waarde in het bestand valt weg, een onbekende ladder blijft (verborgen), het importeren gaat door', async () => {
     const envelope = await buildBackupEnvelope();
-    const edited = { ...envelope, payload: { ...envelope.payload, skillGoals: { goals: [goal(), goal({ id: 'x', ladderId: 'onbekend' })], progress: [{ id: 'p', step: -1 }] } } };
+    const edited = { ...envelope, payload: { ...envelope.payload, skillGoals: { goals: [goal(), goal({ id: 'x', ladderId: 'onbekend' }), { id: 'y', ladderId: 'dip', targetStep: 'twee' }], progress: [{ id: 'p', step: -1 }] } } };
     const backup = await importEnvelope(edited);
     expect(backup.skippedInvalid).toBe(2);
-    expect((await loadSkillGoals()).goals.map((g) => g.id)).toEqual(['skill_a']);
+    const after = await loadSkillGoals();
+    expect(after.goals.map((g) => g.id)).toEqual(['skill_a', 'x']);
+    expect(liveSkillGoals(after).map((g) => g.id)).toEqual(['skill_a']);
+  });
+
+  it('de importpreview noemt de vaardigheden en zegt dat die op het toestel blijven', () => {
+    const store: SkillGoalStore = { goals: [goal(), goal({ id: 'b' })], progress: [] };
+    expect(skillGoalImportNote(store, 'merge')).toBe('Deze back-up heeft 2 vaardigheden. Ze komen erbij; vaardigheden en gehaalde stappen op dit toestel blijven staan.');
+    expect(skillGoalImportNote({ goals: [goal()], progress: [] }, 'replace')).toBe('Deze back-up heeft één vaardigheid. Ze komt erbij; vaardigheden en gehaalde stappen op dit toestel blijven staan.');
+    expect(skillGoalImportNote(store, 'keep_current')).toBeUndefined();
+    expect(skillGoalImportNote(undefined, 'merge')).toBeUndefined();
+  });
+
+  it('Alles wissen neemt de vaardigheden en de gehaalde stappen mee', async () => {
+    await addSkillGoal(goal(), [log('l1', '2026-11-02', 'pull-up', reps(8, 8, 8))], TODAY);
+    expect((await loadSkillGoals()).goals).toHaveLength(1);
+    await resetToDemoData();
+    expect(await MetaRepo.get(SKILL_GOALS_KEY)).toBeUndefined();
+    expect(await loadSkillGoals()).toEqual({ goals: [], progress: [] });
   });
 
   it('gehaalde stappen op het toestel gaan bij importeren nooit weg', async () => {

@@ -261,6 +261,8 @@ export interface ImportPreview {
     skippedInvalid: number;
     // De back-up heeft vaste afspraken van een sport (engine/fixedSports.ts): wat er na het terugzetten mee gebeurt.
     fixedSportNote?: string;
+    // De back-up heeft vaardigheden (models/skillGoals.ts): wat er bij het terugzetten mee gebeurt.
+    skillGoalNote?: string;
   };
   diffByCategory: ImportDiffEntry[];
   settingsChanges: { key: string; current: unknown; incoming: unknown }[];

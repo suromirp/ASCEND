@@ -31,7 +31,8 @@ import type { AddTileId } from '../engine/goalDraft';
 import { SkillGoalCard } from '../components/ascend/SkillGoalCard';
 import { SkillGoalSheet } from '../components/ascend/SkillGoalSheet';
 import { useSkillGoals } from '../components/ascend/useSkillGoals';
-import { liveSkillGoals } from '../engine/skillGoal';
+import { liveSkillGoals, takenSkillSteps } from '../engine/skillGoal';
+import { TimeoutError } from '../utils/withTimeout';
 import { skillLadderById } from '../data/skillLadders';
 import { skillReadinessFor } from '../engine/goalReadinessFor';
 import type { SkillGoal } from '../models/skillGoals';
@@ -120,7 +121,8 @@ export function AscendPage() {
     setSkillBusy(true);
     write()
       .then(() => setFlash(done))
-      .catch(() => setFlash('Dat lukte niet. Er is niets veranderd.'))
+      // Bij een time-out kan de put nog doorlopen; de hook leest de opslag daarna opnieuw.
+      .catch((err) => setFlash(err instanceof TimeoutError ? 'Dat lukte niet op tijd.' : 'Dat lukte niet. Er is niets veranderd.'))
       .finally(() => { setSkillBusy(false); close(); });
   };
   // Alleen de balk of de regel: na een voorstel dat is doorgevoerd laat de balk onderin zien wat er
@@ -256,7 +258,7 @@ export function AscendPage() {
       )}
 
       {skillViews.map(({ goal, readiness }) => (
-        <SkillGoalCard key={goal.id} name={goal.name} readiness={readiness} onRemove={() => { clearNotes(); setSkillRemoving(goal); }} />
+        <SkillGoalCard key={goal.id} name={goal.name || readiness.targetName} readiness={readiness} onRemove={() => { clearNotes(); setSkillRemoving(goal); }} />
       ))}
 
       {shownNote && (
@@ -376,6 +378,7 @@ export function AscendPage() {
         <SkillGoalSheet
           logs={sessionLogs}
           today={today}
+          taken={takenSkillSteps(skills.store)}
           onSubmit={(goal, close) => { close(); later(() => setSkillProposal(goal)); }}
           onClose={() => setSkillChoosing(false)}
         />

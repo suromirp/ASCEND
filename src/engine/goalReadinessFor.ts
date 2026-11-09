@@ -142,12 +142,16 @@ export function skillReadinessFor(goal: SkillGoal, logs: readonly SessionLog[], 
   const reached = firstOpen === undefined;
   const open = steps.filter((s) => s.status !== 'cleared').length;
 
+  // Zonder training in de logs maar met bewaarde stappen (een back-up, een andere ladder): begin bij de eerste open stap,
+  // zodat trap en werk hetzelfde zeggen.
+  const start = firstOpen ?? 1;
+  const anyCleared = steps.some((s) => s.status === 'cleared');
   const work = state.current === null
-    ? `Begin bij ${skillStepName(ladder, 1)}. Toets: ${testText(ladder.steps[0].test)}.`
+    ? `Begin bij ${skillStepName(ladder, start)}. Toets: ${testText(ladder.steps[start - 1].test)}.`
     : `Nu: ${skillStepName(ladder, state.current)}. Toets: ${testText(ladder.steps[state.current - 1].test)}.`;
   let line: string;
   if (reached) line = `Doelstap gehaald op ${formatDayMonthNL(steps[targetStep - 1].clearedDate!)}.`;
-  else if (state.current === null) line = 'Nog geen training op deze ladder.';
+  else if (state.current === null && !anyCleared) line = 'Nog geen training op deze ladder.';
   else if (state.proposal?.kind === 'harder') line = `Toets gehaald. Volgende stap: ${skillStepName(ladder, state.proposal.step)}.`;
   else if (state.proposal?.kind === 'lighter') line = `Drie trainingen onder de onderkant. Lichtere stap: ${skillStepName(ladder, state.proposal.step)}.`;
   else line = open === 1 ? 'Je werkt aan je doelstap.' : `Nog ${open} stappen tot ${targetName}.`;

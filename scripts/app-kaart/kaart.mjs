@@ -142,6 +142,7 @@ const SCHERMEN = {
   'stand-zonder-doel': { titel: 'Stand zonder doel (Fit blijven)', pad: '#/stand', stand: 'zonder-doel' },
   'vandaag-ziek': { titel: 'Vandaag, ziek gemeld', pad: '#/', stand: 'ziek' },
   'week-ziek': { titel: 'Week, ziek gemeld', pad: '#/week', stand: 'ziek' },
+  'ascend-vaardigheid': { titel: 'Ascend met een vaardigheid (Pull-Up)', pad: '#/ascend', stand: 'vaardigheid' },
 };
 
 // Van een regel van de kaart naar wat je op het scherm zoekt: de tekst van een knop, een kop, een kaart of gewone tekst.

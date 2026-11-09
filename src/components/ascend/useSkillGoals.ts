@@ -23,8 +23,19 @@ export function useSkillGoals(logs: readonly SessionLog[], today: string, enable
     return () => { live = false; };
   }, [logs, today, enabled]);
 
-  const add = useCallback(async (goal: SkillGoal) => setStore(await withTimeout(addSkillGoal(goal, logs, today), WRITE_MS)), [logs, today]);
-  const remove = useCallback(async (id: string) => setStore(await withTimeout(removeSkillGoal(id, new Date().toISOString()), WRITE_MS)), []);
+  // Na een fout of een time-out kan de put nog doorlopen: lees de opslag dan opnieuw, zodat de tab toont wat er staat.
+  const reload = useCallback(() => { void loadSkillGoals().then(setStore).catch(() => undefined); }, []);
+  const write = useCallback(async (work: Promise<SkillGoalStore>) => {
+    try {
+      setStore(await withTimeout(work, WRITE_MS));
+    } catch (err) {
+      reload();
+      void work.then(reload, () => undefined);
+      throw err;
+    }
+  }, [reload]);
+  const add = useCallback((goal: SkillGoal) => write(addSkillGoal(goal, logs, today)), [write, logs, today]);
+  const remove = useCallback((id: string) => write(removeSkillGoal(id, new Date().toISOString())), [write]);
 
   return { store, add, remove };
 }
