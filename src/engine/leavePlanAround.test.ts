@@ -75,6 +75,28 @@ describe('planning around two holidays', () => {
     expect(dropped).toContain('tpl_long_run');
   });
 
+  it('gives leg strength the place of the second week of hills or intervals, and never two weeks in a row without it', () => {
+    const day = (d: string) => open(wide.sessions).filter((s) => s.scheduledDate === d).map((s) => nameOf(s.templateId)).sort();
+    // Week 1 stays as it was.
+    expect(day('2026-11-09')).toEqual(['Herstelwandeling', 'Rustige duurloop']);
+    expect(day('2026-11-10')).toEqual(['Bovenlichaam A']);
+    expect(day('2026-11-11')).toEqual(['Benen A (zwaar)']);
+    expect(day('2026-11-12')).toEqual(['Bovenlichaam B']);
+    expect(day('2026-11-13')).toEqual(['Heuvelintervallen']);
+    // Week 2: the leg day before the hills, the hills of this week go with the fixed sentence.
+    // (Bovenlichaam A stays two days before Bovenlichaam B: the 48 hours between upper body days is a fixed rule too.)
+    expect(day('2026-11-19')).toEqual(['Bovenlichaam A']);
+    expect(day('2026-11-20')).toEqual(['Benen A (zwaar)']);
+    expect(day('2026-11-21')).toEqual(['Bovenlichaam B']);
+    expect(day('2026-11-22')).toEqual(['Lange duurloop']);
+    const hillsWeek2 = plan.find((s) => s.templateId === 'tpl_hill_intervals' && s.scheduledDate === '2026-11-21')!;
+    const drop = wide.repairs.find((r) => r.sessionId === hillsWeek2.id)!;
+    expect(drop.removed).toBe(true);
+    expect(drop.reason).toBe('Rond je vakantie is er geen dag meer waarop deze past.');
+    const legWeeks = [0, 7, 14].map((n) => open(wide.sessions).some((s) => byTemplate.get(s.templateId)!.type === 'strength' && isLegHeavyTemplate(byTemplate.get(s.templateId)!) && s.scheduledDate >= addDays(TODAY, n) && s.scheduledDate < addDays(TODAY, n + 7)));
+    expect(legWeeks).toEqual([true, true, true]);
+  });
+
   it('puts two trainings on one day only when no workable day is empty', () => {
     expect(workableEmpty(wide.sessions).length === 0 || doubleDays(wide.sessions).length === 0).toBe(true);
   });
