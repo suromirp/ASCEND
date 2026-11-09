@@ -4,7 +4,6 @@ Bijgewerkt: 9 november 2026, 20:15 UTC, door de coördinator van 8 en 9 november
 
 ## Lopende bouwers (Fable 5.2, melden zich bij de coördinator van 9 november avond, session_01LnDpSmhnJLwMd9LxhwhgLB)
 
-- Teksten Lichaam en Instellingen (R9, plan punt 1), session_01LnDpSmxgVMGeBEVSvd52Lk, branch claude/teksten-lichaam-instellingen.
 - Datavelden voor je horloge (plan punt 3), session_01LnDpSmQ4BrFUPHMVa43uxV, branch claude/datavelden-horloge.
 - Startpunt van je lus (punt 11, Sonnet), session_01LnDpSnpmm6ebGwgkgF9CeF, branch claude/startpunt-lus.
 - Uitleg bij oefeningen batch 3 en 4: klaar, wordt op main gezet na de controles (59 oefeningen nog zonder uitleg; een volgende batch op Sonnet).
