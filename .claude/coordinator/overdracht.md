@@ -4,7 +4,8 @@ Bijgewerkt: 9 november 2026, 20:15 UTC, door de coördinator van 8 en 9 november
 
 ## Lopende bouwers (Fable 5.2, melden zich bij de vorige coördinator session_013ZuQA6MkeoKDCxdu4uMmEd)
 
-- Overzicht Gewicht, session_01LnDpSjPX916UEKBXbypjaY, branch claude/gewicht-overzicht.
+- Overzicht Gewicht: live op main (b39130d), sessie gearchiveerd.
+- Teksten Lichaam en Instellingen (R9, plan punt 1), session_01LnDpSmxgVMGeBEVSvd52Lk, branch claude/teksten-lichaam-instellingen; meldt zich bij session_01LnDpSmhnJLwMd9LxhwhgLB (coördinator sinds 9 november 20:18 UTC).
 - Calisthenics als algemeen doel, session_01LnDpSnqskFn7mJs7MeBHXT, branch claude/calisthenics-algemeen.
 - Routeplanner fase 1 en 2, session_01LnDpSnYUz5KXGGxNwWNP4y, branch claude/routeplanner.
 
@@ -42,3 +43,4 @@ Als je helemaal klaar bent (of vastloopt): meld het de coördinator met de tool 
 - Doel: MacroFactor Workouts overbodig maken (docs/visie/Los van MacroFactor.md); de weekbriefing meldt de stand.
 - Weeklimiet "Alle modellen" stond op 30 procent (9 november avond), Fable 6 procent; de eigenaar heeft een gratis Fable-reset tot 9 maart.
 - Vaste bouwmoment ma, wo, vr 19:43 staat aan (trig_01JDroCyzgfatU8c7MiK26Ei).
+- 9 november avond, eigenaar: alleen in de chat van de coördinator van 9 november draaien Warden en Scout op Fable (hij kreeg extra Fable-tokens); de rolbestanden blijven zoals ze zijn en de volgende coördinator begint weer met de gewone tabel, tenzij de eigenaar het opnieuw vraagt.

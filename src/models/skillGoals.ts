@@ -16,6 +16,19 @@ export interface SkillGoal {
   updatedAt: string;
   // Weggehaald door jou. De gehaalde stappen blijven staan (append-only); de logs raakt dit nooit.
   removedAt?: string;
+  // Alleen bij het doel "Algemeen sterk met eigen gewicht": dan is `ladderId` 'algemeen' (bewust geen bestaande
+  // ladder, zodat een oudere app het doel verbergt en ongewijzigd bewaart) en `targetStep` 1.
+  general?: GeneralSkillGoal;
+}
+
+// Het algemene doel volgt een paar basisladders tegelijk, zonder doelstap. "Hoger" telt tegen de stap bij de start.
+export interface GeneralSkillGoal {
+  // De ladders die het doel volgt.
+  ladderIds: string[];
+  // JJJJ-MM-DD, de lokale dag van Akkoord.
+  startDate: string;
+  // Per ladder de stap bij de start (ladderState.current); 0 = toen nog geen training op die ladder.
+  baseline: Record<string, number>;
 }
 
 // De mijlpaalsoort van een vaardigheid: één per ladderstap tot en met de doelstap. Afgeleid uit het doel, nooit

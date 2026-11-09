@@ -109,6 +109,8 @@ const everything: AppSettings = {
   weightCard: false,
   stravaText: false,
   stravaTextParts: 'title',
+  routeProposal: false,
+  routeStyle: 'simple',
   keepStreams: false,
   tempoStablePieces: false,
   morningInBackup: false,

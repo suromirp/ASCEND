@@ -8,7 +8,7 @@
 
 import { MetaRepo } from './database';
 import { readSkillGoalStore } from './migrationsSkill';
-import { newSkillStepProgress } from '../engine/skillGoal';
+import { isGeneralGoal, liveGeneralGoal, newSkillStepProgress } from '../engine/skillGoal';
 import type { SessionLog } from '../models/training';
 import type { SkillGoal, SkillGoalStore } from '../models/skillGoals';
 import { makeId } from '../utils/id';
@@ -39,6 +39,8 @@ export async function loadSkillGoals(meta: SkillGoalsMeta = metaRepo): Promise<S
 export async function addSkillGoal(goal: SkillGoal, logs: readonly SessionLog[], today: string, meta: SkillGoalsMeta = metaRepo): Promise<SkillGoalStore> {
   return serial(async () => {
     const store = await loadSkillGoals(meta);
+    // Er is hoogstens één levend algemeen doel: een tweede verandert niets.
+    if (isGeneralGoal(goal) && liveGeneralGoal(store)) return store;
     const withGoal: SkillGoalStore = { goals: [...store.goals.filter((g) => g.id !== goal.id), goal], progress: store.progress };
     const next: SkillGoalStore = { ...withGoal, progress: [...withGoal.progress, ...newSkillStepProgress(withGoal, logs, today, () => makeId('skillstep'))] };
     await meta.set(SKILL_GOALS_KEY, next);

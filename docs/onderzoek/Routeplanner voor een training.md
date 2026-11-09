@@ -1,0 +1,79 @@
+# Routeplanner voor een training
+
+Scout Routeplanner, fase 1, 9 november 2026. Bronnenonderzoek voor het punt "routeplanner voor een training" in de Inbox van `docs/backlog.md`. Bouwt voort op `docs/beslissingen/2026-11-08-heuvels-osm.md` (heuvels via Overpass, hoogte via Open-Meteo). In `docs/onderzoek/` stond nog niets over routeplanners, hoogtemodellen of koersen op het horloge.
+
+Zekerheid staat bij elke bewering: zeker (eigen proef of primaire bron), goed (documentatie of broncode), waarschijnlijk (meerdere gebruikers), onzeker (één melding of eigen afleiding). Voorbeeldplek in de URL's: het Drielandenpunt op de Vaalserberg, een openbaar punt.
+
+## 1. BRouter
+
+**Eindpunt.** `https://brouter.de/brouter?lonlats=6.0207,50.7548|6.03,50.76|6.0207,50.7548&profile=hiking-mountain&alternativeidx=0&format=geojson`. Tussenpunten gaan met `|` in `lonlats` (lengte eerst). Een lus is gewoon begin en eind op hetzelfde punt. Met `format=gpx` komt er meteen een GPX 1.1 met `<trkpt lon lat><ele>`, zonder tijd en zonder `wpt` of `rtept` (zeker, eigen proefaanroepen op 9 november).
+
+**Hoogte in het antwoord.** Elke coördinaat in GeoJSON heeft een derde getal, de hoogte in meters (bijvoorbeeld `[6.0207, 50.7548, 320.0]`). De eigenschappen geven `track-length` (meters), `filtered ascend`, `plain-ascend`, `total-time` en `cost` (zeker, eigen proef). Let op: `plain-ascend` is in mijn proef bij een lus 0 en bij een rechte route gelijk aan eind min begin; het is dus het netto verschil, niet de som van alle klimmen (onzeker, afgeleid uit twee aanroepen). Het getal om te gebruiken is `filtered ascend`, volgens BRouter "the ascend without the noise and the small hills" (goed, https://brouter.de/brouter/elevation.html).
+
+**Profielen.** In https://brouter.de/brouter/profiles2/ staan 36 profielen, voor lopen onder meer `hiking-mountain`, `hiking-beta`, `trekking`, `trekking-steep`, `trekking-nosteps` en `shortest` (zeker). `hiking-mountain` is een sjabloon voor wandelen en bergwandelen; paden tot SAC-schaal 3 zijn toegestaan, `consider_elevation` staat standaard uit, dus het profiel ontwijkt geen hellingen (goed, https://brouter.de/brouter/profiles2/hiking-mountain.brf). `hiking-beta` zet hoogte juist aan (kosten voor klimmen en dalen) en geeft een lichte voorkeur aan wandelroutes (goed, https://brouter.de/brouter/profiles2/hiking-beta.brf). Voor een training die hellingen zoekt is ontwijken ongewenst; de planner kiest de hellingen zelf als tussenpunten.
+
+**CORS.** De server zet bij elk antwoord `Access-Control-Allow-Origin: *` (goed, broncode `RouteServer.java`, https://raw.githubusercontent.com/abrensch/brouter/master/brouter-server/src/main/java/btools/server/RouteServer.java). Dat geldt voor brouter.de als die deze code draait; een aanroep vanuit de PWA moet dat bevestigen.
+
+**Grenzen.** In de code: hoogstens 60 seconden rekentijd per aanroep, een vast aantal gelijktijdige aanroepen waarbij de oudste wordt gestopt, geen afstandsgrens en geen grens per IP-adres (goed, zelfde bron). Een gepubliceerde gebruiksregel voor brouter.de heb ik niet gevonden, ook niet in de README (https://github.com/abrensch/brouter). De beheerder schreef in 2022 dat de server een virtuele server van ongeveer 15 euro per maand is en garandeerde niet dat downloads onbeperkt blijven (waarschijnlijk, https://groups.google.com/g/osm-android-bikerouting/c/7Bi7nGAsCcs). Er is dus geen regel die een eigen server eist, maar ook geen toestemming voor apps van derden. Fatsoen: weinig aanroepen, geen herhaalpogingen in een lus.
+
+**Bron van de hoogte.** Volgens BRouter: SRTM, de opgevulde versie 4.1 van CGIAR, met lidar boven 60 graden noorderbreedte (goed, https://brouter.de/brouter/elevation.html). De resolutie noemt de pagina niet; CGIAR 4.1 is de 3-boogseconde-versie, ongeveer 90 m (onzeker of brouter.de inmiddels iets fijners gebruikt). Voor Nederland is niets beters genoemd. De hoogtes komen in stappen van een kwart meter terug, wat op interpolatie wijst (onzeker).
+
+## 2. Een tweede bron
+
+**Valhalla van FOSSGIS** (`valhalla1.openstreetmap.de`). Een route met `costing: pedestrian` en `elevation_interval: 30` geeft naast de vorm een reeks hoogtes om de 30 m langs de route (zeker, eigen proef). De vorm is een gecodeerde polyline met zes decimalen (onzeker, afgeleid). Er is ook `/height` voor losse punten (zeker, eigen proef). Hoogtebron van deze server is niet gedocumenteerd; de gangbare tegels (Terrain Tiles) gebruiken EU-DEM van 30 m voor Nederland (onzeker, https://github.com/tilezen/joerd/blob/master/docs/data-sources.md).
+
+**routing.openstreetmap.de** (OSRM met profiel foot). Werkt, geeft afstand en tijd, maar geen hoogte (zeker, eigen proef met `/routed-foot/route/v1/driving/...`).
+
+**OSRM-demo** (`router.project-osrm.org`). Draait volgens een beheerder alleen het autoprofiel; een voetroute daar is geen echte voetroute (waarschijnlijk, https://lists.openstreetmap.org/pipermail/osrm-talk/2016-October/001330.html). Valt af.
+
+**Regels van FOSSGIS** voor beide routeservers: naamsvermelding en een link "fix the map", een geldige user agent en waar van toepassing een juiste referrer, "One request per second max", "No scraping, no heavy usage" (goed, https://routing.openstreetmap.de/about.html). De volledige Duitse regels (https://fossgis.de/arbeitsgruppen/osm-server/nutzungsbedingungen) waren voor mij geblokkeerd; volgens zoekresultaten noemen ze dezelfde grens van één aanroep per seconde voor routing.openstreetmap.de en valhalla1.openstreetmap.de, geen garantie op beschikbaarheid, en sites met veel verkeer zijn in de regel niet toegestaan (waarschijnlijk). Eén gebruiker met een handvol aanroepen per voorstel en een pauze van een seconde ertussen valt daar ruim binnen (afgeleid).
+
+**CORS** bij FOSSGIS: openstreetmap.org gebruikt deze servers voor de routeplanner in de browser (waarschijnlijk, https://community.openstreetmap.org/t/neue-routing-engine-valhalla/7204), maar de koppen heb ik niet zelf gezien. Te toetsen in de bouwfase.
+
+**Advies:** Valhalla als tweede bron, omdat hij net als BRouter hoogte in hetzelfde antwoord geeft. Vorm: `https://valhalla1.openstreetmap.de/route?json={"locations":[{"lat":50.7548,"lon":6.0207},{"lat":50.76,"lon":6.03},{"lat":50.7548,"lon":6.0207}],"costing":"pedestrian","elevation_interval":30,"units":"kilometers"}` (de JSON URL-gecodeerd). routing.openstreetmap.de foot alleen als derde, met de hoogte uit Open-Meteo (hoogstens 100 punten per aanroep, https://open-meteo.com/en/docs/elevation-api).
+
+## 3. Hoe goed is de hoogte in Nederland
+
+Open-Meteo gebruikt Copernicus GLO-90, 90 m (goed, https://open-meteo.com/en/docs/elevation-api). Copernicus en SRTM zijn oppervlaktemodellen uit radar: in bos meten ze deels de kruinen. Tegen lidar is de gemiddelde absolute fout van Copernicus GLO-30 in bos 5,15 m en in bebouwing 1,61 m (goed, Hawker en anderen, https://meetingorganizer.copernicus.org/EGU22/EGU22-8994.html). Voor SRTM in bos noemt een Poolse studie een spreiding van 3,6 tot 5,2 m op flauwe hellingen en een Duitse vergelijking rond Keulen een verschil van ongeveer 7 m in bos (waarschijnlijk, via https://yadda.icm.edu.pl/baztech/element/bwmeta1.element.baztech-da868f80-60fd-48b3-930f-a5e03e87b431/c/GLL-1-3-2017.pdf en https://meetings.copernicus.org/www.cosis.net/abstracts/EGU05/09008/EGU05-J-09008.pdf). Een studie die SRTM of Copernicus direct met AHN in Nederlands bos vergelijkt heb ik niet gevonden.
+
+Wat dat betekent voor een helling van 20 tot 60 m (afgeleid): een fout van 3 tot 7 m is 10 tot 30 procent van een helling van 20 m en 5 tot 12 procent van een helling van 60 m. Ligt de top in bos en de voet in open veld, dan lijkt de helling hoger dan hij is. Een cel van 90 m vlakt een korte, steile helling bovendien af.
+
+Ruis telt op: wie elke kleine stijging optelt, krijgt te veel hoogtemeters. Strava telt een stijging pas mee bij meer dan 10 m zonder barometer en 2 m met barometer (goed, https://support.strava.com/hc/en-us/articles/115001294564-Elevation-on-Strava-FAQs). GPS Visualizer vond met een drempel van ongeveer 10 m op modelhoogtes een totaal dicht bij de werkelijkheid (waarschijnlijk, https://www.gpsvisualizer.com/tutorials/elevation_gain.html). Golden Cheetah gebruikt standaard 3 m (waarschijnlijk, https://groups.google.com/g/golden-cheetah-developers/c/uOyggV202qI). Het profiel `hiking-mountain` noemt buffers van 5 en 10 m (goed, profielbestand hierboven).
+
+**AHN.** AHN4 is lidar met 0,5 m rasters voor maaiveld (DTM) en oppervlak (DSM) en een hoogtenauwkeurigheid van ongeveer 5 cm (goed, https://developers.google.com/earth-engine/datasets/catalog/AHN_AHN4). PDOK biedt een WCS op `https://service.pdok.nl/rws/ahn/wcs/v1_0` zonder sleutel; een punt vraag je als klein uitsnede-raster (GeoTIFF) op (goed, https://github.com/jellest/rahnextract). CORS heb ik niet kunnen vaststellen. Voor de browser vraagt dat een GeoTIFF-lezer en per punt een aanroep: veel werk. Advies: later, en alleen als controle op de top en de voet van een gekozen helling.
+
+## 4. Forerunner 255 en een koers
+
+**Binnenkomst.** Een koers gaat van Garmin Connect naar het horloge (goed, handleiding, https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-5046014D-7ECC-4D01-9ED3-41E44055F579.html). Op Android kun je een GPX openen met de Connect-app, dan het soort koers kiezen en opslaan (waarschijnlijk, gebruikers en gidsen, https://forums.garmin.com/apps-software/mobile-apps-web/f/garmin-connect-mobile-andriod/224472/gpx-import-via-android-connect-app/1059379). Een officiële Garmin-pagina hierover was niet bereikbaar. Eén forumantwoord zegt dat GPX tijd moet bevatten; dat lijkt over activiteiten te gaan, niet over koersen (onzeker). Connect dunt bij import punten uit die niet nodig zijn voor navigatie, bijvoorbeeld van 6000 naar 1532 (waarschijnlijk, https://forums.garmin.com/apps-software/mobile-apps-web/f/garmin-connect-web/328885/importing-gpx-tracks-reduced-number-of-points). Een harde grens op trackpunten is niet gedocumenteerd; wel een grens van 50 of 200 koerspunten (de punten met aanwijzingen) per toestel (waarschijnlijk, https://forums.garmin.com/sports-fitness/running-multisport/f/forerunner-245-series/295162/50-course-point-max-exceeded-final-x-points-will-not-be-shown).
+
+**Op het horloge.** Bij een koers: Do Course, PacePro, Map, Do Course in Reverse, Elevation Plot (goed, handleiding, https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-63B647CE-1409-4BE9-8A8B-33EFEFCBF255.html). Er is dus een hoogteprofiel. De kaart is een lijn zonder ondergrond (waarschijnlijk, https://www.correrunamaraton.com/comparativa-diferencias-garmin-fr255-fr955/). ClimbPro staat niet in de lijst en zit volgens reviews niet op de 255 (waarschijnlijk). Navigatiemeldingen: Final Distance, Final ETE, Off Course en Turn Prompts (goed, https://www8.garmin.com/manuals-apac/webhelp/forerunner255series/EN-SG/GUID-E6EA0800-D015-4CF1-9AEE-289EDC2A4F2B-7837.html).
+
+**Afslagen.** Een kale GPX heeft geen aanwijzingen; Connect maakt bij import zelf koerspunten aan, en die geven op het horloge afslagmeldingen als Turn Prompts aan staat (waarschijnlijk, https://forums.garmin.com/sports-fitness/running-multisport/f/forerunner-255-series/310078/komoot-navigation-guide). Koerspunten in een GPX zelf negeert Connect (waarschijnlijk, https://forums.garmin.com/sports-fitness/sports-fitness/f/forerunner-735xt/112900/turn-by-turn-navigation/652837). Gebruikers noemen de meldingen wisselend betrouwbaar, ook Off Course (onzeker, https://forums.garmin.com/sports-fitness/running-multisport/f/forerunner-255-series/363968/how-are-off-course-notifications-for-255-supposed-to-work).
+
+**Herhalingen.** Het horloge weet niet goed waar je op een koers bent als stukken overlappen: het hecht zich aan het dichtstbijzijnde stuk, waardoor de afstand tot het einde kan springen of de koers te vroeg klaar lijkt bij een lus die over de start loopt (waarschijnlijk, https://forums.garmin.com/sports-fitness/running-multisport/f/forerunner-945/273657/navigating-past-the-same-path en https://forums.garmin.com/sports-fitness/sports-fitness/f/edge-820/140752/tbt-navigating-a-course). Bij "Simpel" (drie keer dezelfde helling) is dat te verwachten.
+
+**Minimale GPX.** `gpx` versie 1.1 met `trk`, `trkseg` en `trkpt lat lon` met `ele`; tijd niet nodig voor een koers (waarschijnlijk, BRouter levert zo en dat werkt bij gebruikers).
+
+## 5. Naamsvermelding
+
+OpenStreetMap vraagt "© OpenStreetMap contributors" of "© OpenStreetMap", liefst met een link naar https://www.openstreetmap.org/copyright. Bij een kaart in een hoek, anders naast de kaart, op een startscherm of in een pop-up; de licentie moet vindbaar blijven. Een app met een routeplanner "must credit OpenStreetMap"; aanwijzingen hoeven de vermelding niet zelf te dragen. Bij gegevensbestanden mag het in een leesmij of "within the data or metadata" (goed, https://osmfoundation.org/wiki/Licence/Attribution_Guidelines). FOSSGIS vraagt daarnaast een link "fix the map" (goed, about-pagina hierboven).
+
+## Wat het onderzoek zegt
+
+BRouter geeft zonder sleutel een route met hoogte per punt en een gefilterd totaal, met CORS in de code, maar zonder gepubliceerde gebruiksregels op een kleine server. Valhalla van FOSSGIS doet hetzelfde met één aanroep per seconde als harde regel. Hoogte uit SRTM of Copernicus wijkt in bos enkele meters af, genoeg om een helling van 20 m flink mis te schatten. De 255 volgt een GPX-koers als lijn met hoogteprofiel en meldt afslagen via punten die Connect zelf maakt, maar raakt in de war op stukken die je twee keer loopt.
+
+## Wat het betekent voor de app (voorstellen, geen besluit)
+
+- Profiel `hiking-mountain` (hellingen niet ontweken, onverharde paden toegestaan); de planner zet de hellingen als tussenpunten. `hiking-beta` als vergelijking in de bouwfase.
+- Per lus één aanroep met alle tussenpunten; hoogstens drie lussen per voorstel, dus hoogstens drie aanroepen bij BRouter, en bij een fout dezelfde drie bij Valhalla. Minstens een seconde tussen aanroepen, tijdgrens 15 s per aanroep, geen automatische herhaling.
+- Hoogtemeters: `filtered ascend` van BRouter; bij Valhalla zelf tellen met een dode band van 5 m over de reeks om de 30 m. Toon hoogtemeters afgerond op 10 m en mik op het doel met 15 procent speling.
+- GPX met `trk`, `ele`, een `metadata`-regel met "© OpenStreetMap contributors" en de link; in de app de vermelding onder het voorstel.
+- Bij "Simpel": zeg erbij dat het horloge bij herhalingen kan verspringen en dat de afstand op de koers dan niet klopt; "Avontuurlijk" zonder dubbele stukken past beter bij het horloge.
+- Alleen afgeronde plekken naar buiten waar dat kan; het startpunt van een lus is wel exact nodig, dus vraag eerst, zoals bij de heuvels.
+
+## Wat nog onzeker is
+
+- Of brouter.de app-verkeer van derden goed vindt; een vraag aan de beheerder is netjes.
+- CORS van FOSSGIS en PDOK in de praktijk, en of brouter.de nog fijnere hoogtegegevens gebruikt dan SRTM 90 m.
+- Hoe groot de hoogtefout in Nederlands bos echt is; een proef met één bekende helling tegen AHN zou het tonen.
+- Of de Android-app van Connect GPX zonder tijd als koers aanneemt, en hoe betrouwbaar de afslagmeldingen op de 255 zijn. Een proef met één korte lus op het horloge beslist dat.

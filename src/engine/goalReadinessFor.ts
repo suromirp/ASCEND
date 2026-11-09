@@ -10,6 +10,8 @@
 //   al het andere               computeGoalReadiness
 //   een vaardigheid (SkillGoal)  skillReadinessFor: de ladder als trap uit ladderState, geen percentage
 //     (docs/beslissingen/2026-11-09-calisthenics-vaardigheidsdoel.md)
+//   algemeen sterk met eigen gewicht (SkillGoal met `general`)  generalReadinessFor: per basisladder het werk
+//     en één zin hoeveel ladders een stap hoger staan dan bij de start
 //
 // Het verschil met vier weken terug (`since`): bij een hardloopwedstrijd, sterker worden, een dagtocht en een
 // trailrun telt het pas als het doel zelf al vier weken bestond en toen een waarde had (`since` is de dag
@@ -29,11 +31,11 @@ import { computeLimitReadiness } from './limitReadiness';
 import { computeRaceReadiness, resolveReadinessWeighting, type RaceReadiness } from './raceReadiness';
 import { computeStrengthReadiness } from './strengthReadiness';
 import type { SkillGoal, SkillStepProgress } from '../models/skillGoals';
-import { skillLadderById, type SkillTest } from '../data/skillLadders';
+import { skillLadderById, type SkillLadder, type SkillTest } from '../data/skillLadders';
 import { formatDayMonthNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
-import { ladderState } from './skillLadder';
-import { clearedSkillSteps, skillStepMilestones, skillStepName } from './skillGoal';
+import { ladderState, type LadderProposal } from './skillLadder';
+import { clearedSkillSteps, generalBaseline, isGeneralGoal, skillStepMilestones, skillStepName } from './skillGoal';
 
 // Hoe een doel in de zinnen heet ("die je tocht vraagt").
 const GOAL_NAMING: Record<GoalKindId, string> = {
@@ -124,6 +126,8 @@ function testText(test: SkillTest): string {
 }
 
 export function skillReadinessFor(goal: SkillGoal, logs: readonly SessionLog[], today: string, progress: readonly SkillStepProgress[]): SkillReadiness | undefined {
+  // Een algemeen doel heeft zijn eigen berekening (generalReadinessFor).
+  if (goal.general) return undefined;
   const ladder = skillLadderById(goal.ladderId);
   const milestones = skillStepMilestones(goal);
   if (!ladder || milestones.length === 0) return undefined;
@@ -152,9 +156,78 @@ export function skillReadinessFor(goal: SkillGoal, logs: readonly SessionLog[], 
   let line: string;
   if (reached) line = `Doelstap gehaald op ${formatDayMonthNL(steps[targetStep - 1].clearedDate!)}.`;
   else if (state.current === null && !anyCleared) line = 'Nog geen training op deze ladder.';
-  else if (state.proposal?.kind === 'harder') line = `Toets gehaald. Volgende stap: ${skillStepName(ladder, state.proposal.step)}.`;
-  else if (state.proposal?.kind === 'lighter') line = `Drie trainingen onder de onderkant. Lichtere stap: ${skillStepName(ladder, state.proposal.step)}.`;
+  else if (state.proposal) line = proposalLine(ladder, state.proposal);
   else line = open === 1 ? 'Je werkt aan je doelstap.' : `Nog ${open} stappen tot ${targetName}.`;
 
   return { goalId: goal.id, ladderId: ladder.id, ladderName: ladder.name, targetStep, targetName, steps, current: state.current, reached, work, line };
+}
+
+// De zin bij een stapvoorstel, zoals Forge: dezelfde voor een vaardigheid en een ladder van het algemene doel.
+function proposalLine(ladder: SkillLadder, proposal: LadderProposal): string {
+  return proposal.kind === 'harder'
+    ? `Toets gehaald. Volgende stap: ${skillStepName(ladder, proposal.step)}.`
+    : `Drie trainingen onder de onderkant. Lichtere stap: ${skillStepName(ladder, proposal.step)}.`;
+}
+
+// --- algemeen sterk met eigen gewicht ----------------------------------------------------------------
+// Het algemene doel volgt vijf basisladders. Per ladder het werk en één regel, en één zin hoeveel ladders een stap
+// hoger staan dan bij de start (generalBaseline). Geen percentage, geen x van y. Zakt een ladder later onder zijn
+// baseline (Stap lichter), dan telt hij gewoon niet als hoger; er wordt niets bewaard of herschreven.
+
+export interface GeneralLadderRow {
+  ladderId: string;
+  ladderName: string;
+  // ladderState.current
+  current: number | null;
+  // De ladder staat in een krachttraining (planStartSteps).
+  inPlan: boolean;
+  // current hoger dan generalBaseline.
+  higher: boolean;
+  work: string;
+  line: string;
+}
+
+export interface GeneralReadiness {
+  goalId: string;
+  startDate: string;
+  rows: GeneralLadderRow[];
+  higher: number;
+  line: string;
+}
+
+// `starts`: de uitkomst van planStartSteps. Een ladder die deze versie niet kent wordt overgeslagen (niet uit het
+// doel gehaald); zonder één bekende ladder of zonder geldige `general`: undefined.
+export function generalReadinessFor(goal: SkillGoal, logs: readonly SessionLog[], today: string, starts?: ReadonlyMap<string, number>): GeneralReadiness | undefined {
+  if (!isGeneralGoal(goal) || !goal.general) return undefined;
+  const { ladderIds, startDate } = goal.general;
+  const rows: GeneralLadderRow[] = [];
+  for (const id of new Set(ladderIds)) {
+    const ladder = typeof id === 'string' ? skillLadderById(id) : undefined;
+    if (!ladder) continue;
+    const state = ladderState(ladder, logs, today);
+    const inPlan = starts?.has(ladder.id) ?? false;
+    const base = generalBaseline(goal, ladder, logs, today);
+    const higher = state.current !== null && base !== undefined && state.current > base;
+    let work: string;
+    let line: string;
+    if (state.current === null) {
+      const start = Math.min(Math.max(1, starts?.get(ladder.id) ?? 1), ladder.steps.length);
+      work = `Begin bij ${skillStepName(ladder, start)}.`;
+      line = inPlan ? 'Nog geen training gelogd.' : 'Staat nog niet in je trainingen.';
+    } else {
+      work = `Stap ${state.current}: ${skillStepName(ladder, state.current)}.`;
+      if (state.proposal) line = proposalLine(ladder, state.proposal);
+      else if (state.passed && state.current === ladder.steps.length) line = 'Toets gehaald op de hoogste stap.';
+      else line = `Toets: ${testText(ladder.steps[state.current - 1].test)}.`;
+    }
+    rows.push({ ladderId: ladder.id, ladderName: ladder.name, current: state.current, inPlan, higher, work, line });
+  }
+  if (rows.length === 0) return undefined;
+  const higher = rows.filter((r) => r.higher).length;
+  const day = formatDayMonthNL(startDate);
+  const line = rows.every((r) => r.current === null) ? 'Nog geen training op deze ladders.'
+    : higher === 0 ? `Nog geen ladder een stap hoger dan op ${day}.`
+      : higher === 1 ? `Eén ladder een stap hoger dan op ${day}.`
+        : `${higher} ladders een stap hoger dan op ${day}.`;
+  return { goalId: goal.id, startDate, rows, higher, line };
 }
