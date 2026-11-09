@@ -158,7 +158,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd'),
   // Vandaag en meldingen
   ...inSheet('kaarten', 'boven-missie', 'ochtendcheck', 'benen-na-test', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'dagcitaat', 'geluid'),
-  ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weeralarm', 'lawinegevaar', 'regen-uur', 'heuvels-buurt', 'route-voorstel', 'route-soort', 'maanstand', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
+  ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weeralarm', 'lawinegevaar', 'regen-uur', 'heuvels-buurt', 'route-voorstel', 'route-soort', 'route-start', 'maanstand', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
   ...inSheet('bundel-run-detail', 'run-detail', 'run-detail-patronen', 'run-detail-advies', 'loopvorm-cadans', 'loopvorm-grondcontact', 'loopvorm-staplengte', 'loopvorm-oscillatie', 'loopvorm-balans'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),
@@ -322,7 +322,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.mf], 'macrofactor-leidend', 'macrofactor-gewicht'),
   ...rule([B.hc], 'health-connect-gewicht'),
   ...rule([B.strava], 'strava-tekst-inhoud'),
-  ...rule([B.route], 'route-soort'),
+  ...rule([B.route], 'route-soort', 'route-start'),
   // Gegevens en back-up
   ...rule([B.folder], 'backupmap'),
   ...rule([B.liveUpdate], 'auto-bijwerken'),

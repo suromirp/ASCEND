@@ -359,6 +359,10 @@ export const MetaRepo = {
     const db = await getDB();
     return db.put('meta', value, key);
   },
+  delete: async (key: string) => {
+    const db = await getDB();
+    return db.delete('meta', key);
+  },
 };
 
 // Delete-then-add in one transaction: an app closed halfway used to leave

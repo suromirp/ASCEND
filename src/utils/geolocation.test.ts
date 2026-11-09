@@ -21,6 +21,12 @@ describe('locateMe', () => {
     expect(found).toEqual({ lat: 52.1234, lon: 5.3478 });
   });
 
+  it('asks for a fine position only when told to', async () => {
+    const seen = vi.fn();
+    await locateMe({ fine: true, precise: true, geolocation: geo((ok, _f, opts) => { seen(opts); ok({ coords: { latitude: 52.1234, longitude: 5.3478 } }); }) });
+    expect(seen).toHaveBeenCalledWith({ timeout: 10_000, maximumAge: 600_000, enableHighAccuracy: true });
+  });
+
   it('says why it failed', async () => {
     await expect(locateMe({ geolocation: geo((_o, fail) => fail({ code: 1 })) })).rejects.toMatchObject({ reason: 'denied' });
     await expect(locateMe({ geolocation: geo((_o, fail) => fail({ code: 2 })) })).rejects.toMatchObject({ reason: 'unavailable' });

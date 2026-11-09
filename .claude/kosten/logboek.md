@@ -260,3 +260,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Routeplanner fase 2 (bouwer in een eigen sessie), bouwer, fable, tokens niet door de sessie zelf te meten (zie het verbruik van de sessie), ongeveer 1,5 uur
 - 2026-11-09, Routeplanner review, Warden, opus (reviewer), 100k, 4 min, 1 blokkerend (toestemmingstekst noemde de reservebron niet), 10 klein (alle hersteld door de bouwer); les: de eerste vraag noemt elke dienst, en een tijdgrens stopt ook het werk erachter
 - 2026-11-09, Routeplanner doorloop 360, 390 en 412 px, Lookout, sonnet (tester), 90k, 13 min, 0, alles groen; speelde het netwerk na met page.route, 1 cosmetisch punt (regelafstand voetregel) hersteld door de bouwer
+- 2026-11-09, Startpunt van je lus (instelling, eerste vraag, eigen punt op het toestel), bouwer, sonnet, tokens niet door de sessie zelf te meten, ongeveer 1 uur

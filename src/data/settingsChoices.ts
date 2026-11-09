@@ -745,6 +745,17 @@ export const CHOICES = {
       { value: 'simple', label: 'Simpel', note: 'Dezelfde helling op en af tot de hoogtemeters er zijn', short: 'Simpel' },
     ],
   }),
+  routeStart: def({
+    group: 'Vandaag en meldingen',
+    title: 'Startpunt van je lus',
+    line: 'Waar een voorgestelde lus begint.',
+    advice: 'approx' as 'approx' | 'exact',
+    help: 'routeStartpunt',
+    options: [
+      { value: 'approx', label: 'Ongeveer', note: 'Je plaats, binnen een kilometer', short: 'Ongeveer' },
+      { value: 'exact', label: 'Precies', note: 'Je eigen startpunt, alleen op dit toestel', short: 'Precies' },
+    ],
+  }),
   stravaInhoud: def({
     group: 'Koppelingen',
     title: 'Wat erin staat',

@@ -14,7 +14,7 @@ import { isOffline, routeWithFallback } from '../integrations/routing';
 import { proposeRoutes, type RoutePlans } from '../engine/routePlanner';
 import { roundStart } from '../engine/routeTarget';
 import type { NearbyTerrain } from '../models/nearbyTerrain';
-import type { RouteFn, RouteTarget } from '../models/route';
+import type { RouteFn, RoutePoint, RouteTarget } from '../models/route';
 import { withTimeout } from '../utils/withTimeout';
 
 const CONSENT_KEY = 'routeProposalAsked';
@@ -49,9 +49,13 @@ export interface RouteSearchDeps {
   limitMs?: number;
 }
 
-export async function findRoutes(place: { lat: number; lon: number }, target: RouteTarget, deps: RouteSearchDeps = {}): Promise<RouteSearch> {
+// `exactStart` (Startpunt van je lus, Precies) is het eigen punt van de gebruiker: alleen het
+// startpunt van de lus gaat er precies naar de routeplanner. De heuvels en paden bij OpenStreetMap
+// blijven op de afgeronde plek (van het punt zelf), en dus op de bestaande cache.
+export async function findRoutes(place: { lat: number; lon: number }, target: RouteTarget, deps: RouteSearchDeps = {}, exactStart?: RoutePoint): Promise<RouteSearch> {
   if ((deps.offline ?? isOffline)()) return { kind: 'offline' };
-  const start = roundStart(place);
+  const rounded = roundStart(exactStart ?? place);
+  const start = exactStart ?? rounded;
   // Na de tijdgrens of na sluiten stopt ook het werk erachter, niet alleen het wachten.
   let over = false;
   const stopped = () => over || deps.signal?.aborted === true;
@@ -60,7 +64,7 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
   const terrainOf = deps.terrain ?? ((p) => refreshNearbyTerrain(p).catch(() => getNearbyTerrain(p)));
   const search = (async (): Promise<RouteSearch> => {
     // Zonder heuvels en paden zoekt de planner nog steeds een lus, op punten rond het startpunt.
-    const terrain = await terrainOf({ name: '', ...start }).catch(() => undefined);
+    const terrain = await terrainOf({ name: '', ...rounded }).catch(() => undefined);
     const plans = await proposeRoutes({ start, target, terrain }, route);
     const reasons = [plans.simple, plans.adventure].map((o) => (o.ok ? undefined : o.reason));
     if (reasons.every((r) => r === 'offline')) return { kind: 'offline' };

@@ -837,6 +837,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Wat de deur uit gaat', text: 'je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Geen naam, geen adres. De route wordt niet bewaard.' },
     ],
   },
+  routeStartpunt: {
+    title: 'Startpunt van je lus',
+    lead: 'Waar een voorgestelde lus begint. Ongeveer is je plaats, binnen een kilometer. Precies is een startpunt dat je zelf zet.',
+    points: [
+      { head: 'Ongeveer', text: 'de lus begint bij het dichtstbijzijnde pad bij je plaats, tot ongeveer 700 m van huis.' },
+      { head: 'Precies', text: 'je kiest Gebruik waar ik nu ben, staand bij je deur. Het punt blijft op dit toestel, niet in een back-up of export.' },
+      { head: 'Wat de deur uit gaat', text: 'bij Precies alleen dat startpunt naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap op je afgeronde plek.' },
+      { head: 'Wissen', text: 'Wis startpunt haalt het punt van dit toestel. Daarna begint de lus weer bij je plaats.' },
+    ],
+  },
   stravaTekst: {
     title: 'Tekst voor Strava',
     lead: 'ASCEND zet een titel klaar die zegt wat voor training het was. Je plakt hem zelf in Strava.',

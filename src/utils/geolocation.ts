@@ -40,6 +40,8 @@ export interface LocateOptions {
   maximumAge?: number;
   // Zonder afronden: alleen voor je plek op een etappe, die in het geheugen blijft en nooit wordt bewaard.
   precise?: boolean;
+  // Een fijne plek (GPS) in plaats van een ruwe: alleen voor een eigen startpunt van een lus.
+  fine?: boolean;
 }
 
 export function locateMe(options: LocateOptions = {}): Promise<Position2> {
@@ -64,7 +66,7 @@ export function locateMe(options: LocateOptions = {}): Promise<Position2> {
       geo.getCurrentPosition(
         (pos) => finish(() => resolve(options.precise ? { lat: pos.coords.latitude, lon: pos.coords.longitude, ...(Number.isFinite(pos.coords.accuracy) ? { accuracyM: pos.coords.accuracy } : {}) } : { lat: roundCoordinate(pos.coords.latitude), lon: roundCoordinate(pos.coords.longitude) })),
         (err) => finish(() => reject(new LocateError(err.code === 1 ? 'denied' : err.code === 3 ? 'timeout' : 'unavailable'))),
-        { timeout: timeoutMs, maximumAge: options.maximumAge ?? LOCATE_MAX_AGE_MS },
+        { timeout: timeoutMs, maximumAge: options.maximumAge ?? LOCATE_MAX_AGE_MS, ...(options.fine ? { enableHighAccuracy: true } : {}) },
       );
     } catch {
       finish(() => reject(new LocateError('unavailable')));
