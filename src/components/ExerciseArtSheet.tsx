@@ -158,7 +158,7 @@ function ArtBody({ exerciseId, requestClose, onOpen, backName, onBack }: {
       {loading && <div className="ea-vlak" aria-hidden="true" />}
 
       <div className="ea-licht rounded-2xl border p-3.5" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }} role="group" aria-label="Werkt op">
-        <div className={big ? 'flex flex-col items-stretch gap-3.5' : 'flex items-center gap-4'}>
+        <div className={big ? 'flex flex-col items-stretch gap-3.5' : 'flex flex-wrap items-center gap-x-4 gap-y-3'}>
           <div className={`flex shrink-0 items-start gap-1.5 ${big ? 'justify-center gap-4' : ''}`}>
             {sides.map((side) => (
               <div key={side} className="ea-fig flex flex-col items-center gap-1">
@@ -167,11 +167,11 @@ function ArtBody({ exerciseId, requestClose, onOpen, backName, onBack }: {
               </div>
             ))}
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[12rem] flex-1">
             <div className="mb-2"><Eyebrow tone="var(--color-sport-strength)">Werkt op</Eyebrow></div>
             <div className="flex items-start gap-2.5">
               <span aria-hidden="true" className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'var(--color-sport-strength)' }} />
-              <div>
+              <div className="min-w-0">
                 <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoofdspier</span>
                 <span className="block text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{muscleNames(primary)}</span>
               </div>
@@ -179,7 +179,7 @@ function ArtBody({ exerciseId, requestClose, onOpen, backName, onBack }: {
             {secondary.length > 0 && (
               <div className="mt-2 flex items-start gap-2.5">
                 <span aria-hidden="true" className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'var(--color-sport-strength)', opacity: 0.4 }} />
-                <div>
+                <div className="min-w-0">
                   <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>Helpt mee</span>
                   <span className="block text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{muscleNames(secondary)}</span>
                 </div>
