@@ -81,7 +81,7 @@ describe('oefeningen zonder uitleg', () => {
       expect(e.guide, e.id).toBeUndefined();
       expect(e.cues.length, e.id).toBeGreaterThanOrEqual(3);
     }
-    expect(exerciseById('dumbbell-bench-press')!.guide).toBeUndefined();
+    expect(exerciseById('hack-squat')!.guide).toBeUndefined();
   });
   it('geen oefening met uitleg raakt zijn oude regels kwijt', () => {
     for (const id of Object.keys(EXERCISE_GUIDES)) {
@@ -106,14 +106,17 @@ describe('alle uitleg', () => {
   // Batch 3: de stappen van de ladders push-up, optrekken en dip, wat Spieren voor de berg kiest en waar bestaande
   // teksten naar verwijzen.
   const BATCH3 = ['archer-push-up', 'dead-hang', 'decline-push-up', 'diamond-push-up', 'dumbbell-rdl', 'glute-bridge', 'incline-push-up', 'incline-push-up-high', 'knee-push-up', 'negative-chin-up', 'negative-dip', 'pause-back-squat', 'scapular-pull-up', 'single-leg-calf-raise', 'split-squat', 'step-down-pack', 'support-hold', 'tibialis-raise', 'weighted-dip', 'weighted-pull-up'];
-  const NEW_BATCHES = [...BATCH3];
-  it('heeft de vijf proefteksten, de 23 stappen van de overige calisthenicsladders (F4f) en batch 1 tot en met 3', () => {
+  // Batch 4: wat verder bij de berg hoort en de gangbaarste oefeningen in een eigen programma.
+  const BATCH4 = ['back-extension', 'chin-up', 'dead-bug', 'deadlift', 'dumbbell-bench-press', 'dumbbell-curl', 'dumbbell-glute-bridge', 'dumbbell-row', 'dumbbell-shoulder-press', 'face-pull', 'hip-thrust', 'inverted-row', 'leg-extension', 'lying-leg-curl', 'nordic-curl', 'seated-cable-row', 'standing-calf-raise', 'step-up-pack', 'tibialis-raise-loaded', 'walking-lunge'];
+  const NEW_BATCHES = [...BATCH3, ...BATCH4];
+  it('heeft de vijf proefteksten, de 23 stappen van de overige calisthenicsladders (F4f) en batch 1 tot en met 4', () => {
     const f4f = SKILL_LADDERS.filter((l) => !['push-up', 'pull-up', 'dip'].includes(l.id)).flatMap((l) => l.steps.map((s) => s.exerciseId));
     expect(f4f).toHaveLength(23);
     expect(Object.keys(EXERCISE_GUIDES).sort()).toEqual([...['incline-bench-press', 'pull-up', 'push-up', 'romanian-deadlift', 'step-down'], ...f4f, ...BATCH1, ...BATCH2, ...NEW_BATCHES].sort());
   });
   it('elke batch is twintig oefeningen, zonder dubbele', () => {
     expect(BATCH3).toHaveLength(20);
+    expect(BATCH4).toHaveLength(20);
     expect(new Set(NEW_BATCHES).size).toBe(NEW_BATCHES.length);
   });
   it('elke stap van een ladder heeft uitleg', () => {

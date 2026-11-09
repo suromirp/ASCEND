@@ -658,6 +658,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       { fault: 'Je zet af met het been op de grond.', fix: 'Kies een lagere verhoging en duw alleen met het werkbeen.' },
       { fault: 'Je knie zakt naar binnen.', fix: 'Duw hem naar buiten, boven je tweede teen.' },
     ],
+    harder: 'step-up-pack',
   },
   'side-plank': {
     short: [
@@ -1155,5 +1156,297 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       { fault: 'Je stuitert uit het diepste punt.', fix: 'Tel de pauze hardop en neem minder gewicht.' },
     ],
     easier: 'back-squat',
+  },
+  // Batch 4 (docs/onderzoek/Bronnen bij de uitleg van oefeningen, batch 4.md): de rest van de oefeningen voor de berg
+  // (rugzak, scheenspier, bilspieren) en de gangbare oefeningen in een eigen programma.
+  'dumbbell-shoulder-press': {
+    short: [
+      'Duw de dumbbells van schouderhoogte recht omhoog.',
+      'Polsen boven je ellebogen, rug tegen de leuning.',
+      'Hol kruis? Span je buik aan en neem minder gewicht.',
+    ],
+    setup: 'Zet de rugleuning bijna rechtop en ga zitten met je voeten plat op de vloer. Breng de dumbbells naar schouderhoogte, met je ellebogen onder je polsen en iets voor je lichaam.',
+    movement: 'Duw de dumbbells recht omhoog tot je armen gestrekt zijn boven je schouders. Laat ze rustig zakken tot schouderhoogte. Ze hoeven elkaar bovenaan niet te raken.',
+    tempo: 'Krachtig omhoog, twee tellen omlaag. Adem uit bij het duwen.',
+    mistakes: [
+      { fault: 'Je maakt een hol kruis.', fix: 'Houd je ribben naar beneden en je rug tegen de leuning.' },
+      { fault: 'De dumbbells botsen bovenaan tegen elkaar.', fix: 'Duw ze recht omhoog, elk boven een schouder.' },
+    ],
+    harder: 'overhead-press',
+  },
+  'step-up-pack': {
+    short: [
+      'De step-up met de rugzak of het vest van je tocht.',
+      'Sta op met het been op de verhoging.',
+      'Pijn in je knie? Stop en doe hem zonder gewicht.',
+    ],
+    setup: 'Trek de rugzak of het vest strak aan, zodat hij niet schommelt. Begin licht. Zet je hele voet op een verhoging waarbij je knie ongeveer 90 graden krijgt.',
+    movement: 'Duw met het been op de verhoging jezelf omhoog tot je rechtop staat. Tik met je andere voet licht aan zonder je af te zetten. Zak langzaam terug. Doe alle herhalingen aan één kant en wissel dan.',
+    tempo: 'Krachtig omhoog, twee tot drie tellen terug. Adem uit bij het opstaan.',
+    mistakes: [
+      { fault: 'Je zet af met het been op de grond.', fix: 'Neem minder gewicht of een lagere verhoging.' },
+      { fault: 'Je knie zakt naar binnen.', fix: 'Duw hem naar buiten, boven je tweede teen.' },
+    ],
+    easier: 'step-up',
+  },
+  'tibialis-raise-loaded': {
+    short: [
+      'Zit op een bank, gewicht aan je voorvoet, tenen omhoog.',
+      'Beweeg vanuit je enkel, niet vanuit je knie.',
+      'Zwaai je het omhoog? Neem minder gewicht.',
+    ],
+    setup: 'Zit op een hoge bank met je onderbenen over de rand, zodat je voeten vrij hangen. Hang het gewicht aan je voorvoet, met een tibialisstang of een dumbbell tussen je voeten geklemd.',
+    movement: 'Trek je tenen zo hoog mogelijk naar je scheenbenen. Houd even vast en laat je voeten rustig zakken tot je enkels gestrekt zijn. Je bovenbenen blijven stil op de bank.',
+    tempo: 'Eén tel omhoog, even stil, twee tellen omlaag. Adem rustig door.',
+    mistakes: [
+      { fault: 'Je zwaait het gewicht omhoog met je benen.', fix: 'Neem minder gewicht en beweeg alleen je enkels.' },
+      { fault: 'Het gewicht glijdt van je voeten.', fix: 'Klem het steviger, of neem een lichter gewicht.' },
+    ],
+    easier: 'tibialis-raise',
+  },
+  'dumbbell-glute-bridge': {
+    short: [
+      'Dumbbell op je heupen, duw je heupen omhoog.',
+      'Bovenaan één lijn van schouders tot knieën.',
+      'Hol in je rug? Stop eerder en span je buik aan.',
+    ],
+    setup: 'Lig op je rug met gebogen knieën, je voeten plat op heupbreedte. Leg de dumbbell dwars op je heupen en houd hem met beide handen vast.',
+    movement: 'Duw door je hielen en til je heupen op tot je schouders, heupen en knieën één lijn zijn. Knijp je billen bovenaan even samen. Zak rustig terug tot je billen de vloer net raken.',
+    tempo: 'Eén tel omhoog, even stil, twee tellen omlaag. Adem uit bij het omhoog komen.',
+    mistakes: [
+      { fault: 'Je duwt door tot een holle rug.', fix: 'Stop op de rechte lijn en span je buik aan.' },
+      { fault: 'De dumbbell rolt naar je buik.', fix: 'Houd hem met beide handen op je heupen.' },
+    ],
+    easier: 'glute-bridge',
+    harder: 'hip-thrust',
+  },
+  'hip-thrust': {
+    short: [
+      'Bovenrug op een bank, stang op je heupen, duw op.',
+      'Bovenaan staan je scheenbenen verticaal.',
+      'Hol in je rug? Kijk recht vooruit, ribben omlaag.',
+    ],
+    setup: 'Zit met je bovenrug tegen de lange kant van een stevige bank. Rol de stang tot in je heupplooi, met een pad of handdoek ertussen. Voeten plat op heupbreedte.',
+    movement: 'Duw door je hielen en til je heupen op tot je romp waterpas is en je scheenbenen verticaal staan. Knijp je billen samen. Zak gecontroleerd terug. Je schouderbladen blijven op de bank.',
+    tempo: 'Krachtig omhoog, even stil, twee tellen omlaag. Adem uit bij het omhoog komen.',
+    mistakes: [
+      { fault: 'Je duwt door tot een holle rug.', fix: 'Stop als je romp waterpas is en houd je ribben omlaag.' },
+      { fault: 'De bank schuift weg.', fix: 'Zet hem tegen een muur of een rek.' },
+    ],
+    easier: 'dumbbell-glute-bridge',
+  },
+  'deadlift': {
+    short: [
+      'Stang boven het midden van je voet, duw de vloer weg.',
+      'De stang blijft tegen je benen, je rug blijft recht.',
+      'Ronde rug? Leg neer en neem minder gewicht.',
+    ],
+    setup: 'Sta op heupbreedte met de stang boven het midden van je voet. Pak de stang net buiten je benen, met gestrekte armen. Schenen tegen de stang, borst hoog, rug recht. Adem in en span je romp aan.',
+    movement: 'Duw de vloer weg en laat de stang langs je schenen en dijen omhoog glijden. Heupen en schouders komen samen omhoog tot je rechtop staat. Zet de stang langs dezelfde weg terug: eerst heupen naar achteren, dan knieën buigen.',
+    tempo: 'Krachtig omhoog, gecontroleerd omlaag. Elke herhaling begint stil vanaf de vloer.',
+    mistakes: [
+      { fault: 'Je heupen stijgen eerst en je rug rondt.', fix: 'Neem minder gewicht en laat borst en heupen samen stijgen.' },
+      { fault: 'De stang zwaait van je af.', fix: 'Houd hem de hele weg tegen je benen.' },
+    ],
+  },
+  'dumbbell-bench-press': {
+    short: [
+      'Duw de dumbbells omhoog, zak tot je borst rekt.',
+      'Schouderbladen samen, ellebogen schuin naar buiten.',
+      'Pijn in je schouder? Stop en zak minder diep.',
+    ],
+    setup: 'Zit op de bank met de dumbbells op je bovenbenen en neem ze mee als je gaat liggen. Schouderbladen naar elkaar en omlaag, voeten plat, de dumbbells naast je borst.',
+    movement: 'Duw de dumbbells omhoog tot je armen gestrekt zijn boven je schouders. Laat ze zakken tot ze naast je borst zijn en je een rek voelt. Je ellebogen staan schuin, niet recht opzij.',
+    tempo: 'Twee tellen omlaag, krachtig omhoog. Adem in bij het zakken, uit bij het duwen.',
+    mistakes: [
+      { fault: 'Je ellebogen staan recht opzij.', fix: 'Zet ze schuin naar achteren, dichter bij je lichaam.' },
+      { fault: 'De dumbbells zakken te ver naar buiten.', fix: 'Houd je polsen boven je ellebogen.' },
+    ],
+    harder: 'pause-dumbbell-bench-press',
+  },
+  'seated-cable-row': {
+    short: [
+      'Trek het handvat naar je buik, je rug rechtop.',
+      'Schouders omlaag, ellebogen langs je lichaam.',
+      'Schommel je mee? Neem minder gewicht.',
+    ],
+    setup: 'Zit met je voeten tegen de steunen en je knieën licht gebogen. Pak het handvat en ga rechtop zitten, met gestrekte armen en een vlakke rug.',
+    movement: 'Trek het handvat naar je buik, met je ellebogen dicht langs je lichaam. Knijp je schouderbladen even samen. Laat het handvat rustig terugkomen tot je armen gestrekt zijn.',
+    tempo: 'Eén tel naar je toe, twee tellen terug.',
+    mistakes: [
+      { fault: 'Je schommelt voor- en achterover.', fix: 'Houd je romp stil en neem minder gewicht.' },
+      { fault: 'Je rug rondt als het handvat teruggaat.', fix: 'Houd je borst hoog en strek alleen je armen.' },
+    ],
+  },
+  'dumbbell-row': {
+    short: [
+      'Een hand op de bank, trek de dumbbell naar je heup.',
+      'Je rug blijft vlak, je schouders blijven recht.',
+      'Draait je romp mee? Neem minder gewicht.',
+    ],
+    setup: 'Zet één hand en de knie aan dezelfde kant op een bank, je andere voet op de grond. Je rug is vlak. De dumbbell hangt met gestrekte arm onder je schouder.',
+    movement: 'Trek de dumbbell naar je heup, met je elleboog dicht langs je lichaam. Houd bovenaan even vast en laat hem gecontroleerd zakken tot je arm gestrekt is. Doe alle herhalingen aan één kant en wissel dan.',
+    tempo: 'Eén tel omhoog, twee tellen omlaag.',
+    mistakes: [
+      { fault: 'Je romp draait open om het gewicht te halen.', fix: 'Houd beide schouders even hoog en neem minder gewicht.' },
+      { fault: 'Je trekt je schouder naar je oor.', fix: 'Trek je elleboog naar je heup, niet naar je oor.' },
+    ],
+  },
+  'chin-up': {
+    short: [
+      'Onderhands, trek je kin boven de stang.',
+      'Zak elke keer tot je armen gestrekt zijn.',
+      'Zwaai je? Span je buik aan en houd je benen stil.',
+    ],
+    setup: 'Pak de stang onderhands op schouderbreedte, met je handpalmen naar je toe. Hang met gestrekte armen en trek je schouders licht omlaag, weg van je oren.',
+    movement: 'Trek je ellebogen omlaag langs je ribben tot je kin boven de stang is. Zak daarna gecontroleerd tot je armen weer gestrekt zijn.',
+    tempo: 'Rustig omhoog, twee tellen omlaag.',
+    mistakes: [
+      { fault: 'Je steekt je kin naar voren om de stang te halen.', fix: 'Houd je nek lang en trek je borst naar de stang.' },
+      { fault: 'Je begint met gebogen armen.', fix: 'Zak elke keer tot je armen gestrekt zijn.' },
+    ],
+    easier: 'negative-chin-up',
+  },
+  'leg-extension': {
+    short: [
+      'Strek je benen tot ze bijna recht zijn, zak rustig.',
+      'Kussen vlak boven je enkels, rug tegen de leuning.',
+      'Pijn in je knie? Stop en neem minder gewicht.',
+    ],
+    setup: 'Stel de leuning zo in dat je knieën naast de draaias zitten. Het kussen ligt vlak boven je enkels. Houd de handgrepen vast.',
+    movement: 'Strek je benen tot ze bijna recht zijn en houd even vast. Laat het kussen rustig zakken tot je knieën weer gebogen zijn. Je billen blijven op de zitting.',
+    tempo: 'Eén tel omhoog, even stil, twee tot drie tellen omlaag. Adem uit bij het strekken.',
+    mistakes: [
+      { fault: 'Je zwaait het gewicht omhoog.', fix: 'Neem minder gewicht en begin elke herhaling stil.' },
+      { fault: 'Je billen komen van de zitting.', fix: 'Houd de handgrepen vast en neem minder gewicht.' },
+    ],
+  },
+  'lying-leg-curl': {
+    short: [
+      'Lig op je buik, trek je hielen naar je billen.',
+      'Je heupen blijven op het kussen.',
+      'Heupen komen omhoog? Neem minder gewicht.',
+    ],
+    setup: 'Lig op je buik met je knieën net over de rand van het kussen, naast de draaias. De rol ligt vlak boven je hielen. Houd de handgrepen vast.',
+    movement: 'Buig je knieën en trek je hielen zo ver als je kunt naar je billen. Laat de rol rustig terugkomen tot je benen bijna gestrekt zijn.',
+    tempo: 'Eén tel omhoog, drie tellen terug. Adem uit bij het trekken.',
+    mistakes: [
+      { fault: 'Je heupen komen van het kussen.', fix: 'Druk je heupen in het kussen en neem minder gewicht.' },
+      { fault: 'Je laat het gewicht terugvallen.', fix: 'Tel drie tellen terug.' },
+    ],
+  },
+  'standing-calf-raise': {
+    short: [
+      'Voorvoet op de rand, kom hoog op je tenen, zak diep.',
+      'Je knieën blijven gestrekt.',
+      'Stuiteren? Pauzeer boven en onder even.',
+    ],
+    setup: 'Zet je schouders onder de kussens en je voorvoeten op de rand van de trede, op heupbreedte, met je hielen erover. Strek je benen om het gewicht van de steun te halen.',
+    movement: 'Duw je op tot je zo hoog mogelijk op je tenen staat en houd even vast. Zak langzaam tot je een rek in je kuiten voelt. Je knieën blijven gestrekt.',
+    tempo: 'Eén tel omhoog, even stil, twee tellen omlaag. Adem rustig door.',
+    mistakes: [
+      { fault: 'Je stuitert onderaan.', fix: 'Pauzeer een tel in de rek.' },
+      { fault: 'Je knieën buigen mee.', fix: 'Houd ze gestrekt, zodat je kuit het werk doet.' },
+    ],
+  },
+  'walking-lunge': {
+    short: [
+      'Stap naar voren, zak tot je achterste knie bijna tikt.',
+      'Stap meteen door, je romp blijft rechtop.',
+      'Wankel je? Zet je voeten op heupbreedte neer.',
+    ],
+    setup: 'Sta rechtop met je voeten op heupbreedte, eventueel met een dumbbell in elke hand. Zorg voor een vrije baan van een paar meter.',
+    movement: 'Stap naar voren en zak recht omlaag tot je achterste knie de vloer bijna raakt. Je voorste hiel blijft plat. Duw met je voorste been omhoog en stap met je achterste been meteen door in de volgende.',
+    tempo: 'Rustig omlaag, krachtig omhoog. Adem in bij het zakken.',
+    mistakes: [
+      { fault: 'Je stappen zijn zo kort dat je voorste hiel loskomt.', fix: 'Neem een langere stap en houd je hiel plat.' },
+      { fault: 'Je valt naar binnen of naar buiten.', fix: 'Zet je voeten op heupbreedte neer, niet op één lijn.' },
+    ],
+    easier: 'reverse-lunge',
+  },
+  'nordic-curl': {
+    short: [
+      'Kniel met je enkels vast, zak zo langzaam als je kunt.',
+      'Heupen gestrekt: één lijn van knie tot hoofd.',
+      'Steek achter in je bovenbeen? Stop de set.',
+    ],
+    setup: 'Kniel op een kussen en zet je enkels vast, onder een steun of bij een partner. Je lichaam is rechtop van knie tot hoofd, je handen voor je borst. Begin met weinig herhalingen.',
+    movement: 'Laat je zo langzaam mogelijk voorover zakken, met gestrekte heupen. Rem met je hamstrings zo lang als je kunt. Vang jezelf op met je handen, duw je terug en kom omhoog. Het zakken is de oefening.',
+    tempo: 'Zo langzaam omlaag als je kunt. Adem rustig door.',
+    mistakes: [
+      { fault: 'Je knikt in je heupen.', fix: 'Span je billen aan en houd de lijn van knie tot hoofd.' },
+      { fault: 'Je valt meteen.', fix: 'Zak tot waar je nog kunt remmen en vang je dan op.' },
+    ],
+  },
+  'face-pull': {
+    short: [
+      'Trek het touw naar je gezicht, handen uit elkaar.',
+      'Ellebogen hoog, schouders weg van je oren.',
+      'Leun je achterover? Neem minder gewicht.',
+    ],
+    setup: 'Zet de kabel op ooghoogte of iets hoger, met het touw eraan. Pak de uiteinden vast, stap terug tot je armen gestrekt zijn en zet één voet iets voor.',
+    movement: 'Trek het touw naar je gezicht en spreid je handen, tot ze naast je oren zijn en je ellebogen op schouderhoogte. Knijp je schouderbladen even samen. Laat rustig terugkomen tot je armen gestrekt zijn.',
+    tempo: 'Eén tel naar je toe, even stil, twee tellen terug. Adem uit tijdens het trekken.',
+    mistakes: [
+      { fault: 'Je leunt achterover en trekt met je rug.', fix: 'Neem minder gewicht en houd je romp stil.' },
+      { fault: 'Je ellebogen zakken en het wordt roeien.', fix: 'Houd ze op schouderhoogte.' },
+    ],
+  },
+  'dumbbell-curl': {
+    short: [
+      'Buig je ellebogen, draai je handpalmen naar boven.',
+      'Je ellebogen blijven naast je lichaam.',
+      'Zwaai je met je rug? Neem een lichter gewicht.',
+    ],
+    setup: 'Sta rechtop met een dumbbell in elke hand, je armen gestrekt naast je en je handpalmen naar je lichaam.',
+    movement: 'Buig je ellebogen en draai je handpalmen naar boven terwijl je de dumbbells naar je schouders brengt. Je bovenarmen blijven stil. Zak rustig tot je armen gestrekt zijn.',
+    tempo: 'Rustig omhoog, twee tellen omlaag. Adem uit tijdens het buigen.',
+    mistakes: [
+      { fault: 'Je zwaait met je rug of schouders.', fix: 'Neem een lichter gewicht en houd je bovenarmen stil.' },
+      { fault: 'Je zakt niet helemaal.', fix: 'Strek je armen onderaan elke herhaling.' },
+    ],
+  },
+  'back-extension': {
+    short: [
+      'Heupen op het kussen, zak voorover, kom terug.',
+      'Stop bovenaan op een rechte lijn.',
+      'Hol kruis bovenaan? Stop eerder.',
+    ],
+    setup: 'Stel het kussen zo in dat de rand net onder je heupen zit en je vrij kunt buigen. Haak je hielen onder de steun en kruis je armen voor je borst.',
+    movement: 'Zak voorover vanuit je heupen, zo ver als dat gaat met een rechte rug. Kom terug door je billen aan te spannen, tot je lichaam een rechte lijn is van hoofd tot hielen.',
+    tempo: 'Twee tellen omlaag, rustig omhoog. Adem uit bij het omhoog komen.',
+    mistakes: [
+      { fault: 'Je buigt bovenaan door in een hol kruis.', fix: 'Stop op de rechte lijn en knijp je billen samen.' },
+      { fault: 'Je zwaait omhoog.', fix: 'Begin elke herhaling stil onderaan.' },
+    ],
+    harder: 'weighted-roman-chair-back-extension',
+  },
+  'inverted-row': {
+    short: [
+      'Hang onder de stang, trek je borst ernaartoe.',
+      'Je lichaam blijft een rechte plank.',
+      'Te zwaar? Zet de stang hoger of buig je knieën.',
+    ],
+    setup: 'Zet een stang in een rek op ongeveer heuphoogte, of gebruik ringen. Hang eronder met een overhandse greep, iets breder dan je schouders, je armen gestrekt en je hielen op de grond.',
+    movement: 'Span je billen en buik aan, zodat je lichaam een rechte lijn is. Trek je borst naar de stang, met je ellebogen schuin langs je lichaam. Knijp je schouderbladen even samen en zak gecontroleerd terug.',
+    tempo: 'Eén tel omhoog, twee tellen omlaag.',
+    mistakes: [
+      { fault: 'Je heupen zakken.', fix: 'Span je billen aan, of zet de stang hoger.' },
+      { fault: 'Je steekt je kin naar de stang.', fix: 'Houd je nek lang en trek met je borst.' },
+    ],
+  },
+  'dead-bug': {
+    short: [
+      'Lig op je rug, strek tegenovergestelde arm en been.',
+      'Je onderrug blijft plat op de vloer.',
+      'Komt je rug los? Strek minder ver.',
+    ],
+    setup: 'Lig op je rug met je armen recht omhoog en je heupen en knieën 90 graden gebogen. Druk je onderrug licht in de vloer.',
+    movement: 'Strek langzaam één been en de arm aan de andere kant, tot ze vlak boven de vloer zijn. Je onderrug blijft op de vloer. Kom terug en wissel van kant.',
+    tempo: 'Drie tellen uit, drie tellen terug. Adem uit bij het strekken.',
+    mistakes: [
+      { fault: 'Je onderrug komt los van de vloer.', fix: 'Strek minder ver, of houd je knie gebogen.' },
+      { fault: 'Je gaat te snel.', fix: 'Tel drie tellen per kant.' },
+    ],
   },
 };

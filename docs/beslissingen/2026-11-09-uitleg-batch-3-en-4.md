@@ -27,7 +27,7 @@ De catalogus is niet veranderd. De uitleg volgt steeds wat de regels (`cues`) be
 - `glute-bridge`: de alias "Single Leg Glute Bridge" is een zwaardere oefening op één been. De uitleg beschrijft twee benen. Voorstel: de alias weghalen, na een controle of hij nodig is voor het herkennen van geïmporteerde namen.
 - `negative-chin-up`: de naam zegt onderhands, de alias "Negative Pull-Up" en de plek op de ladder voor de overhandse pull-up niet. De uitleg zegt onderhands; Scout noemt dat verdedigbaar.
 - `dumbbell-shoulder-press`: de alias "Standing Dumbbell Overhead Press" is staand; de uitleg beschrijft zittend, zoals de naam.
-- `face-pull`: de alias "Low Pulley Cable Face Pull" is een lage kabel; de uitleg zegt ooghoogte of iets hoger.
+- `face-pull`: de alias "Low Pulley Cable Face Pull" is een lage kabel; de uitleg zegt ooghoogte of iets hoger. Scout vond ooghoogte of hoger in beide geopende bronnen. Voorstel: de alias weghalen, na dezelfde controle.
 - De volgorde decline, diamond, archer op de ladder van de push-up is volgens Scout een keuze, geen meting: decline heeft meer last op de handen dan diamond.
 
 ## Alternatieven
