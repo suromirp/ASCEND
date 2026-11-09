@@ -224,7 +224,7 @@ export function reasonText(reason: NotComparable, noun: string): string {
     case 'noMatch':
       return 'er is geen eerdere klim op dezelfde helling en met hetzelfde rugzakgewicht';
     case 'otherDistance':
-      return 'je eerdere lopen van deze soort waren korter, langer of heuvelachtiger';
+      return 'je eerdere runs van deze soort waren korter, langer of heuvelachtiger';
     case 'unavailableMetric':
       switch (reason.metric) {
         case 'noSteadyBlock':
@@ -289,7 +289,7 @@ function weatherNote(subject: SessionLog, logs: SessionLog[]): string | undefine
   const theirs = logs.map((l) => l.detail?.conditions).map((c) => (c ? (c.feelsC ?? c.tempC) : undefined)).filter((v): v is number => v !== undefined);
   if (mine === undefined || theirs.length === 0) return undefined;
   const diff = rounded(mine - median(theirs));
-  return `Het was ${Math.abs(diff)} graden ${diff >= 0 ? 'warmer' : 'kouder'} dan bij je laatste lopen. Dat kan het verschil verklaren.`;
+  return `Het was ${Math.abs(diff)} graden ${diff >= 0 ? 'warmer' : 'kouder'} dan bij je laatste loopjes. Dat kan het verschil verklaren.`;
 }
 
 // --- one topic ----------------------------------------------------------------------------------------------
@@ -336,7 +336,7 @@ function efficiencyTopic(input: RunInsightInput, ctx: ComparisonContext): TopicR
     text:
       tone === 'better'
         ? `Bij dezelfde hartslag liep je ${seconds} seconden per km sneller dan je laatste ${count(n)} ${noun}.`
-        : `Bij dezelfde hartslag liep je ${seconds} seconden per km trager dan je laatste ${count(n)} ${noun}. Eén loop zegt weinig. Kijk of je benen moe waren.`,
+        : `Bij dezelfde hartslag liep je ${seconds} seconden per km trager dan je laatste ${count(n)} ${noun}. Eén loopje zegt weinig; kijk of je benen moe waren.`,
     change: -sec,
     unit: 'sPerKm',
     strength,
@@ -349,11 +349,11 @@ function efficiencyTopic(input: RunInsightInput, ctx: ComparisonContext): TopicR
     },
     series,
     seriesFormat: 'pace',
-    strengthText: `Eén loop schommelt zelf zo'n 3 tot 4 procent. Dit verschil is ${num(Math.abs(pct), 1)} procent, ${strengthWords(strength)}. Dat is de moeite waard. De trend op Je stand zegt meer.`,
+    strengthText: `Eén loopje schommelt zelf zo'n 3 tot 4 procent. Dit verschil is ${num(Math.abs(pct), 1)} procent, ${strengthWords(strength)}, dus de moeite waard, maar de trend op Je stand zegt meer.`,
     meaning:
       tone === 'better'
-        ? 'Bij hetzelfde tempo had je hart minder werk, of bij dezelfde hartslag ging je sneller. Eén loop is geen fitheid. Die zie je in de trend over weken.'
-        : 'Je hart had meer werk bij hetzelfde tempo. Dat gebeurt na slecht slapen, bij warmte of met moe gelopen benen. Eén loop zegt weinig. Neem de komende dagen rustig aan en kijk naar de trend.',
+        ? 'Bij hetzelfde tempo had je hart minder werk, of bij dezelfde hartslag ging je sneller. Eén loop is geen fitheid; die zie je pas in de trend over weken.'
+        : 'Je hart had meer werk bij hetzelfde tempo. Dat gebeurt na slecht slapen, bij warmte of met moe gelopen benen. Eén loopje zegt weinig; neem de komende dagen rustig aan en kijk naar de trend.',
     basis: basisFor(
       earlier.map((x) => x.l),
       noun,
@@ -401,7 +401,7 @@ function driftTopic(input: RunInsightInput, ctx: ComparisonContext): TopicResult
     title: TITLE.drift,
     text: better
       ? `Je tempo per hartslag zakte in de tweede helft ${num(Math.max(0, mine.percent), 1)} procent, tegen ${num(base.median, 1)} procent bij je laatste ${count(base.n)} lange loopjes.`
-      : `Je tempo per hartslag zakte in de tweede helft ${num(mine.percent, 1)} procent, meer dan de ${num(base.median, 1)} procent van je laatste ${count(base.n)} lange loopjes. Eet en drink bij een lange loop eerder of begin rustiger.`,
+      : `Je tempo per hartslag zakte in de tweede helft ${num(mine.percent, 1)} procent, meer dan de ${num(base.median, 1)} procent van je laatste ${count(base.n)} lange loopjes. Eet en drink bij een lange loop eerder, of begin wat rustiger.`,
     change: lower,
     unit: 'pctPoints',
     strength,
@@ -414,10 +414,10 @@ function driftTopic(input: RunInsightInput, ctx: ComparisonContext): TopicResult
     },
     series,
     seriesFormat: 'percent',
-    strengthText: `Drift schommelt per loop zo'n 3 procentpunten en verschilt sterk per persoon. Dit verschil is ${num(Math.abs(lower), 1)} procentpunten. Onder de 5 procent noemt een coach goed. Dat is een richtlijn, geen gemeten grens.`,
+    strengthText: `Drift schommelt per loop zo'n 3 procentpunten en verschilt sterk per persoon. Dit verschil is ${num(Math.abs(lower), 1)} procentpunten. Onder de 5 procent noemt een coach goed; dat is een richtlijn en geen gemeten grens.`,
     meaning: better
       ? 'Je hartslag bleef beter bij je tempo in de tweede helft. Dat past bij een dag waarop eten, drinken en tempo klopten.'
-      : 'Je hartslag liep in de tweede helft op bij hetzelfde tempo. Dat gebeurt bij warmte, te weinig eten en drinken of een te snel begin. Start de volgende lange loop rustiger en eet en drink eerder.',
+      : 'Je hartslag liep in de tweede helft op bij hetzelfde tempo. Dat gebeurt bij warmte, te weinig eten en drinken of een te snel begin. Probeer de volgende lange loop iets rustiger te starten en eerder te eten en te drinken.',
     basis: basisFor(earlier.map((x) => x.l), 'lange loopjes', ['vlak en rustig', 'minstens 45 minuten in een stuk'], cmp.verdict === 'explains-worse' || cmp.verdict === 'explains-better' ? [weatherNote(log, cmp.logs) ?? ''].filter(Boolean) : []),
   };
   return withWeather({ line }, cmp.verdict, log, cmp.logs);
@@ -483,7 +483,7 @@ function climbTopic(input: RunInsightInput, ctx: ComparisonContext): TopicResult
       seriesFormat: 'metresPerHour',
       strengthText: `Klimsnelheid schommelt zelf zo'n 8 procent en hangt sterk af van de helling en je rugzak. Daarom vergelijkt ASCEND alleen klimmen op ${c.gradeFrom} tot ${c.gradeFrom + 4} procent helling en met een rugzak binnen 2 kg. Dit verschil is ${num(Math.abs(speedPct), 1)} procent.`,
       meaning: better
-        ? 'Je klom efficiënter dan je laatste tochten op vergelijkbare helling. Dat heb je op de GR5 nodig: dezelfde hoogtemeters met minder werk.'
+        ? 'Je klom efficiënter dan je laatste tochten op vergelijkbare helling. Dat is wat je op de GR5 nodig hebt: dezelfde hoogtemeters met minder werk.'
         : 'Je klom langzamer terwijl je hartslag niet lager was. Dat gebeurt bij vermoeide benen, warmte of een zwaardere rugzak. Neem de volgende klim in een rustiger tempo.',
       basis: basisFor(earlier.map((x) => x.l), 'tochten', [`klim van ${c.gradeFrom} tot ${c.gradeFrom + 4} procent helling`, 'rugzak binnen 2 kg'], cmp.verdict === 'explains-worse' || cmp.verdict === 'explains-better' ? [weatherNote(log, cmp.logs) ?? ''].filter(Boolean) : []),
     };
@@ -612,7 +612,7 @@ export function runInsight(input: RunInsightInput): RunInsight {
   };
   const topics = topicsFor(input.log, ctx).filter((t) => s.topics[TOPIC_SWITCH[t]]);
   if (topics.length === 0) return pacing ? { pacing } : {};
-  const noun = logSport(input.log) === 'hiking' ? 'tochten' : 'lopen';
+  const noun = logSport(input.log) === 'hiking' ? 'tochten' : 'loopjes';
 
   const results = new Map<InsightTopic, TopicResult>();
   for (const t of topics) {

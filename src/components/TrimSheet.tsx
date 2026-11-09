@@ -61,7 +61,7 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
         // The suggestion is where the sliders start; without one, the whole training.
         const chart = chartSeries(got);
         if (!chart) {
-          setLoaded({ kind: 'error', message: 'Van deze training is geen snelheid over de tijd te tekenen. Inkorten kan niet.' });
+          setLoaded({ kind: 'error', message: 'Van deze training is geen snelheid over de tijd te tekenen. Inkorten kan dan niet.' });
           return;
         }
         const suggestion = suggestTrim(got, sportOf(opened));
@@ -106,11 +106,11 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
         requestClose();
         return;
       }
-      setNote('Er is niets ingekort. De training is al ingekort of niet meer te vinden.');
+      setNote('Er is niets ingekort: de training is al ingekort of niet meer te vinden.');
     } catch (err) {
       setNote(err instanceof TimeoutError
-        ? 'Inkorten duurt langer dan verwacht. Kijk zo in de training of het gelukt is. Zo niet, probeer het nog eens.'
-        : 'Inkorten lukte niet. Er is niets veranderd. Probeer het zo nog eens.');
+        ? 'Inkorten duurt langer dan verwacht. Kijk zo in de training of het gelukt is; zo niet, probeer het dan nog eens.'
+        : 'Inkorten lukte niet. Er is niets veranderd; probeer het zo nog eens.');
     }
     setSaving(false);
   }
@@ -133,7 +133,7 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
           <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow={templateName} title="Inkorten" onClose={requestClose} /></div>
-            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Haal een stuk aan het begin of het eind weg, bijvoorbeeld een autorit. Je kunt het later in de training ongedaan maken.</p>
+            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Haal een stuk aan het begin of het eind weg, bijvoorbeeld een autorit.</p>
 
             {loaded.kind === 'loading' && (
               <p role="status" className="mt-4 text-sm" style={{ color: 'var(--color-ink-dim)' }}>De reeksen van deze training ophalen…</p>
@@ -181,7 +181,7 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
                     onChange={(v) => setEndMin(Math.max(v, startMin + 1))}
                   />
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Tijden in uren en minuten sinds de start.</p>
+                    <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Tijden in uren en minuten sinds de start van je training.</p>
                     {(startMin !== 0 || endMin < maxMin) && (
                       <TextButton tone="dim" className="shrink-0" onClick={() => { setStartMin(0); setEndMin(maxMin); }}>Alles houden</TextButton>
                     )}
@@ -193,7 +193,7 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
                     <Numbers preview={preview} />
                   ) : (
                     <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-                      {whole ? 'Je houdt de hele training. Schuif het begin of het eind om in te korten.' : 'In dit stuk zit geen beweging. Kies een ander stuk.'}
+                      {whole ? 'Je houdt nu de hele training. Schuif het begin of het eind om in te korten.' : 'In dit stuk zit geen beweging. Kies een ander stuk.'}
                     </p>
                   )}
                 </div>

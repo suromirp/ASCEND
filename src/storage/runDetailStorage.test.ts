@@ -286,8 +286,8 @@ describe('an older run: filling in when its sheet opens', () => {
     expect(await ensureRunDetail('log_1', { fetchImpl: asFetch(tap), manual: true })).toBe('added');
     expect(tap).toHaveBeenCalled();
     expect(isUsableRunDetail((await SessionLogsRepo.getAll())[0].runDetail)).toBe(true);
-    expect(ensureOutcomeText('failed', true)).toBe('Het ophalen lukte niet. Er is niets veranderd. Probeer het later nog eens.');
-    expect(ensureOutcomeText('timeout', true)).toContain('Probeer het later nog eens');
+    expect(ensureOutcomeText('failed', true)).toBe('Het ophalen lukte niet. Er is niets veranderd; probeer het later nog eens.');
+    expect(ensureOutcomeText('timeout', true)).toContain('probeer het later nog eens');
     expect(ensureOutcomeText('added', true)).toBe('Opgehaald. Kilometer na kilometer staat nu bij Run in detail.');
   });
 

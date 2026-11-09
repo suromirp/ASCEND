@@ -152,7 +152,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
       {sheet === 'bundel-horloge-gebruik' && (
         <BundleSheet eyebrow="Koppelingen" title={usageTitle} line="Uit betekent: ASCEND haalt het niet meer op en bewaart het niet." onClose={() => setSheet(null)}>
           <SummaryRow id="garmin-trainingen" title="Trainingen" facts={facts} onChange={(on) => void changeUse('activities', on)} />
-          <SummaryRow id="horloge-details" title="Details van lopen" facts={facts} onChange={(on) => void changeUse('details', on)} />
+          <SummaryRow id="horloge-details" title="Details van loopjes" facts={facts} onChange={(on) => void changeUse('details', on)} />
           <SummaryRow id="slaap" title="Slaap" facts={facts} onChange={(on) => void changeUse('sleep', on)} />
           <SummaryRow id="rusthartslag" title="Rusthartslag" facts={facts} onChange={(on) => void changeUse('restingHeartRate', on)} />
           <SummaryRow id="hrv" title="HRV" facts={facts} onChange={(on) => void changeUse('hrv', on)} />

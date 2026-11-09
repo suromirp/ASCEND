@@ -300,7 +300,7 @@ function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; on
 
               {showProblem && <p className="mt-3 text-xs" style={{ color: 'var(--color-danger-text)' }} role="alert">{problem}</p>}
               <p className="mt-3 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                Eerst een voorstel, pas na Akkoord verandert er iets.
+                Je ziet eerst wat er in je planning verandert. Pas na jouw akkoord wordt de tocht bewaard.
               </p>
             </div>
 
