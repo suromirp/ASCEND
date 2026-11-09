@@ -40,7 +40,7 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
       <div>
         <Eyebrow>Belasting per week</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien.{weeks.some((w) => w.items.some((it) => it.split)) ? ` ${SPLIT_NOTE}` : ''}
+          Minuten maal zwaarte, de 1 tot 10 die je invult. 45 minuten op zwaarte 6 is 270 punten. Vol is gedaan, licht is gepland. Tik op een week voor de telling.{weeks.some((w) => w.items.some((it) => it.split)) ? ` ${SPLIT_NOTE}` : ''}
         </p>
       </div>
 
@@ -163,8 +163,8 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         Punten per training: minuten maal zwaarte.
         {week.items.some((it) => it.split) ? ` ${SPLIT_NOTE}` : ''}
-        {week.items.some((it) => it.planned) ? ' Lichter: nog gepland.' : ''}
-        {week.items.some((it) => it.estimated) ? ' ±: geen zwaarte ingevuld, geteld met de geplande.' : ''}
+        {week.items.some((it) => it.planned) ? ' Licht: gepland.' : ''}
+        {week.items.some((it) => it.estimated) ? ' ±: geen zwaarte ingevuld, telt met de geplande zwaarte.' : ''}
       </p>
     </div>
   );
@@ -172,11 +172,11 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
 
 function verdict(week: WeekLoad | undefined, jump: ReturnType<typeof loadVersusBefore>): string {
   if (!week) return '';
-  if (week.isRestWeek) return 'Rustweek: de balk hoort lager te zijn. Zo komt de training van de weken ervoor binnen.';
-  if (!jump) return 'Na een paar weken zie je hier of je week in lijn is met de weken ervoor.';
+  if (week.isRestWeek) return 'Rustweek: de balk is bewust lager. Zo komt de training van de weken ervoor binnen.';
+  if (!jump) return 'Na een paar weken zie je hier of je week in lijn is.';
   const pct = Math.round((jump.ratio - 1) * 100);
   if (jump.doneRatio > LOAD_JUMP) return `Deze week ligt al ${Math.round((jump.doneRatio - 1) * 100)}% boven je gemiddelde van de vier weken ervoor. Een flinke sprong gaat vaker samen met blessures. Let extra op je benen en je ochtendgevoel.`;
-  if (jump.ratio > LOAD_JUMP) return `Met wat er nog gepland staat komt deze week ${pct}% boven je gemiddelde van de vier weken ervoor. Mis je een training, haal hem dan niet in bovenop de rest. Doe je alles, let dan extra op je benen en je ochtendgevoel.`;
-  if (jump.ratio < 0.7) return 'Deze week is lichter dan je gemiddelde. Prima als dat zo bedoeld is; anders weet je waar je staat.';
-  return 'Deze week is in lijn met de vier weken ervoor. Rustig opbouwen, zo hoort het.';
+  if (jump.ratio > LOAD_JUMP) return `Met wat er nog gepland staat komt deze week ${pct}% boven je gemiddelde van de vier weken ervoor. Haal een gemiste training niet in bovenop de rest. Doe je alles, let dan extra op je benen en je ochtendgevoel.`;
+  if (jump.ratio < 0.7) return 'Deze week is lichter dan je gemiddelde. Is dat de bedoeling, dan klopt het.';
+  return 'Deze week is in lijn met de vier weken ervoor. Je bouwt rustig op.';
 }

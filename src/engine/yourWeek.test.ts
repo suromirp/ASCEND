@@ -88,7 +88,7 @@ describe('yourWeek', () => {
 describe('yourWeek: wat er nog staat', () => {
   it('zegt eerlijk dat het met de planning niet meer lukt, met wat het wel haalt', () => {
     const w = yourWeek(base({ logs: [log('a', '2026-10-27')], plannedRest: 90 }))!;
-    expect(w.remainingLine).toBe('Met wat er nog staat kom je op 130. Een extra wandeling van 20 minuten brengt je op 150.');
+    expect(w.remainingLine).toBe('Met wat er nog staat kom je op 130 minuten. Een extra wandeling van 20 minuten brengt je op 150.');
   });
 
   it('past het wel, dan wat er nog te gaan is', () => {

@@ -45,7 +45,7 @@ export function RunInsightSheet({ model, notCompared = [], onClose }: { model: S
               <div className="mt-4">
                 <TrendLineChart points={series} color="var(--color-action)" height={96} formatValue={formatter(model.seriesFormat)} />
                 <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {series.length > 3 ? 'Je vergelijkingsloopjes met de datum, de laatste is deze.' : 'Van begin tot eind.'}
+                  {series.length > 3 ? 'Je eerdere lopen met de datum, de laatste is deze.' : 'Van begin tot eind.'}
                 </p>
               </div>
             )}

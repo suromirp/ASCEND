@@ -14,7 +14,7 @@ import { haptics } from '../../utils/haptics';
 // laat de app leeg met het welkom
 // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
 
-const EXPLANATION = 'Je doel of richting, je dagen en je keuze voor krachttraining bepalen je weken. Je ziet eerst wat er komt; pas na jouw Akkoord gebeurt er iets.';
+const EXPLANATION = 'Je doel of richting, je dagen en je keuze voor krachttraining bepalen je weken. Eerst een voorstel, pas na Akkoord verandert er iets.';
 
 const DAY_LABELS = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
 
@@ -47,7 +47,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
         settings: { ...settings, ...(marathonRaceType ? { marathonRaceType, marathonTargetDate } : {}) },
         firstPlan: { milestones: setup.milestones, strategy: setup.strategy, allowedDays: setup.allowedDays, restDay: setup.settings.restDay },
       }),
-      { eyebrow: 'Je eerste week', notesTitle: 'Wat je koos', ask: 'always', alwaysAsk: true, declined: 'Prima, er is niets ingepland.', onStored: close, onDeclined: close },
+      { eyebrow: 'Je eerste week', notesTitle: 'Wat je koos', ask: 'always', alwaysAsk: true, declined: 'Er is niets ingepland.', onStored: close, onDeclined: close },
     );
   }
 

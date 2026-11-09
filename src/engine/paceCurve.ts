@@ -93,7 +93,7 @@ export function paceCurve(logs: readonly SessionLog[], test: TestResult | undefi
 export function paceCurveLine(curve: Extract<PaceCurve, { state: 'ready' }>): string {
   const fact = `Je snelste ${curve.best.km} km in training sinds je test was ${formatRaceTime(curve.best.minutes)}, op ${formatDayMonthNL(curve.best.date)}.`;
   if (curve.verdict === 'faster') return `${fact} Je trainingen wijzen op iets sneller dan je laatste test. Een nieuwe test over een paar weken zegt meer.`;
-  if (curve.verdict === 'easier') return `${fact} Dat is rustiger dan je test, en dat hoort zo: in training loop je zelden voluit.`;
+  if (curve.verdict === 'easier') return `${fact} Dat is rustiger dan je test. In training loop je zelden voluit.`;
   return `${fact} Dat past bij je testtempo's.`;
 }
 
@@ -101,7 +101,7 @@ export function paceCurveLine(curve: Extract<PaceCurve, { state: 'ready' }>): st
 export function paceCurveWaitLine(curve: Extract<PaceCurve, { state: 'wait' }>, today: string): string {
   const runs = Math.max(0, CURVE_MIN.runs - curve.runs);
   const parts: string[] = [];
-  if (today < curve.readyFrom) parts.push(`vanaf ${formatDayMonthNL(curve.readyFrom)}`);
-  if (runs > 0) parts.push(`na nog ${runs} ${runs === 1 ? 'loop' : 'loopjes'} met details`);
-  return `Je snelste stukken in training legt ASCEND ${parts.join(' en ')} naast je test.`;
+  if (today < curve.readyFrom) parts.push(`Vanaf ${formatDayMonthNL(curve.readyFrom)}`);
+  if (runs > 0) parts.push(`${parts.length > 0 ? 'na' : 'Na'} nog ${runs} ${runs === 1 ? 'loop' : 'loopjes'} met details`);
+  return `${parts.join(' en ')} legt ASCEND je snelste stukken in training naast je test.`;
 }
