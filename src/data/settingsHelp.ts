@@ -17,7 +17,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Hier staat wat jij anders instelde dan het advies.',
     points: [
       { head: 'Tikken', text: 'een regel opent de instelling zelf. Kies je het advies, dan staat het terug.' },
-      { head: 'Alles terugzetten', text: 'zet alles terug naar het advies. Raakt het je planning: eerst een voorstel, pas na Akkoord verandert er iets.' },
+      { head: 'Alles terugzetten', text: 'zet alles terug naar het advies. Raakt het je planning, dan verandert die zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken.' },
     ],
   },
   figuur: {
@@ -948,7 +948,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   golven: {
     title: 'Golven',
-    lead: 'Zonder doel lopen je weken in golven: een paar weken opbouwen en dan een lichtere week. Een andere keuze verandert je planning, dus je ziet eerst wat er verandert.',
+    lead: 'Zonder doel lopen je weken in golven: een paar weken opbouwen en dan een lichtere week. Bij een andere keuze verandert je planning zoals je bij Wijzigingen koos.',
     points: [
       { head: 'Vier weken', text: 'het advies. Drie weken opbouwen, de vierde 35% lichter bij dezelfde intensiteit. Drie of zes weken kan ook.' },
       { head: 'Lichte week voorstellen', text: 'uit maakt elke week van de golf even zwaar. Dat kan, maar rust is waar je sterker van wordt.' },
@@ -961,7 +961,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Automatisch', text: 'het advies. Je begint rustig als je in de acht weken voor je richting gemiddeld minder dan twee keer per week sportte.' },
       { head: 'Rustig beginnen', text: 'de eerste vier weken geen harde training. De heuvelloop is dan een herstelloop. Wat jij vastzette blijft staan.' },
-      { head: 'Voorstel', text: 'een andere keuze verandert je planning, dus je ziet eerst wat er verandert.' },
+      { head: 'Je planning', text: 'je planning verandert zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken.' },
     ],
   },
   richting: {
@@ -993,7 +993,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   sporten: {
     title: 'Sporten',
-    lead: 'Per sport kies je hoe ASCEND ermee omgaat. Verandert een keuze je planning, dan zie je eerst wat er verandert.',
+    lead: 'Per sport kies je hoe ASCEND ermee omgaat. Verandert een keuze je planning, dan gaat dat zoals je bij Wijzigingen koos.',
     points: [
       { head: 'Plan dit voor mij', text: 'ASCEND zet het in je week, op dagen die bij je benen passen. Alleen voor hardlopen, wandelen en fietsen.' },
       { head: 'Telt mee als ik het doe', text: 'je plant het zelf. Wat je doet telt mee voor je benen en je week.' },
@@ -1060,7 +1060,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Uit', text: 'het advies. 48 uur tussen de lange duurloop en een zware beendag, in beide volgordes.' },
       { head: 'Aan', text: 'beenkracht mag de dag na de lange duurloop, niet als de dag ervoor al zwaar was voor je benen. Drie zware beendagen op rij komen er nooit.' },
-      { head: 'Altijd', text: 'kracht de dag vóór de lange duurloop blijft 48 uur. Je ziet eerst wat er in je planning verschuift.' },
+      { head: 'Altijd', text: 'kracht de dag vóór de lange duurloop blijft 48 uur. Je planning verandert zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken.' },
     ],
   },
   slepenWeek: {
@@ -1212,7 +1212,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Een of twee suggesties voor de volgende keer, uit de verdeling van je loop of test.',
     points: [
       { head: 'Nooit', text: 'een tijd om te halen of een belofte. Na pijn of Slechter blijft het advies weg.' },
-      { head: 'Je planning', text: 'verandert er niet door. Eerst een voorstel, pas na Akkoord verandert er iets.' },
+      { head: 'Je planning', text: 'verandert er niet door.' },
     ],
   },
   runDetailLoopvorm: {
@@ -1409,7 +1409,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Trainingstijd per dag',
     lead: 'Hoeveel tijd je normaal per dag hebt. ASCEND kiest dagen waar de training in past en zet er geen tweede training bij als het niet past. Een beetje ruimte erboven mag.',
     points: [
-      { head: 'Veranderen', text: 'eerst een voorstel, pas na Akkoord verandert er iets.' },
+      { head: 'Veranderen', text: 'je planning verandert zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken.' },
     ],
   },
   rustdag: {
