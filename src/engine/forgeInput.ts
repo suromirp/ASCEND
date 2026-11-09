@@ -28,6 +28,7 @@ import { isOwnRow } from './forgeRows';
 import { standsFor } from './toestelStanden';
 import { r2 } from '../utils/round';
 import { kgLabel } from '../utils/kg';
+import { addedKgOf } from './forgeLadder';
 
 
 // --- steps ---------------------------------------------------------------------------------
@@ -38,6 +39,9 @@ import { kgLabel } from '../utils/kg';
 export function weightStepFor(exercise: Exercise | undefined, profile: GymProfile, currentKg?: number): number {
   const own = exercise && profile.exerciseStepKg?.[exercise.id];
   if (own) return own;
+  // Een stap met extra gewicht gaat in stappen van zijn eigen extra gewicht (2,5 kg).
+  const added = addedKgOf(exercise);
+  if (added !== undefined) return added;
   switch (exercise?.resistance) {
     case 'barbell':
     case 'machine_plates':
@@ -172,7 +176,8 @@ export function tapClosesDock(target: { closest: (selector: string) => unknown }
 
 // --- which field is next ------------------------------------------------------------------
 
-export type FieldName = 'weightKg' | 'reps';
+// `seconds`: een houding (WorkoutExercise.hold), in hetzelfde cijferblok.
+export type FieldName = 'weightKg' | 'reps' | 'seconds';
 export interface FieldRef {
   slot: string;
   rowId: string;
@@ -180,8 +185,10 @@ export interface FieldRef {
 }
 
 // Kg, then reps of the same set, then kg of the next set that is not ticked
-// yet (in the next exercise when this one is finished). Holds have no fields.
-// Undefined at the end of the training.
+// yet (in the next exercise when this one is finished). A hold (`hold`) goes from seconds to the seconds of the
+// next open set; a timed set has no fields. Undefined at the end of the training.
+export const firstField = (ex: Pick<WorkoutExercise, 'hold'>): FieldName => (ex.hold ? 'seconds' : 'weightKg');
+
 export function nextField(workout: WorkoutExercise[], at: FieldRef): FieldRef | undefined {
   if (at.field === 'weightKg') {
     const row = workout.find((e) => e.slot === at.slot)?.rows.find((r) => r.id === at.rowId);
@@ -195,7 +202,7 @@ export function nextField(workout: WorkoutExercise[], at: FieldRef): FieldRef | 
     if (ex.timed) continue;
     const from = i === exIndex ? rowIndex + 1 : 0;
     const row = ex.rows.slice(from).find((r) => !r.done);
-    if (row) return { slot: ex.slot, rowId: row.id, field: 'weightKg' };
+    if (row) return { slot: ex.slot, rowId: row.id, field: firstField(ex) };
   }
   return undefined;
 }
@@ -276,6 +283,12 @@ export function applyReps(ex: WorkoutExercise, rowId: string, reps: number | und
   return { ...changed, rows: changed.rows.map((r) => (r.id === rowId ? { ...withoutEstimate(r), edited: true } : r)) };
 }
 
+// De seconden van een houding: van jou, zoals getypte herhalingen.
+export function applySeconds(ex: WorkoutExercise, rowId: string, seconds: number | undefined): WorkoutExercise {
+  const changed = updateRow(ex, rowId, { seconds });
+  return { ...changed, rows: changed.rows.map((r) => (r.id === rowId ? { ...r, edited: true } : r)) };
+}
+
 // "Wijzigingen doorvoeren" (decision docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md):
 // you changed the weight or the reps of one working set. The working sets after it
 // that are not done, not changed by you and that had exactly the same weight AND
@@ -330,6 +343,7 @@ export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise 
             ...withoutEstimate(dropForgeKg(r)),
             ...(r.target.weightKg !== undefined ? { weightKg: r.target.weightKg } : {}),
             reps: targetReps(r.target),
+            ...(r.target.holdSec !== undefined ? { seconds: r.target.holdSec } : {}),
             edited: true,
           },
     ),
@@ -364,7 +378,7 @@ export function exerciseSummary(ex: WorkoutExercise): string {
   const count = work.length;
   if (count === 0) return 'Klaar';
   const sets = count === 1 ? '1 set' : `${count} sets`;
-  if (ex.timed) return sets;
+  if (ex.timed || ex.hold) return sets;
   const top = [...work].sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0];
   if (top.weightKg !== undefined && top.weightKg !== 0) return `${sets}, zwaarste ${kgLabel(top.weightKg, 2)} × ${top.reps ?? 0}`;
   return `${sets}, ${top.reps ?? 0} herhalingen`;

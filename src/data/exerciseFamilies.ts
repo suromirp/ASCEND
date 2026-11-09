@@ -7,7 +7,7 @@
 
 export type Nuance =
   | 'pause' | 'wide' | 'low' | 'front' | 'light' | 'single' | 'underhand' | 'preacher' | 'floor' | 'step'
-  | 'walking' | 'elevated' | 'trap' | 'sumo' | 'quad' | 'hinged' | 'legs' | 'negative' | 'lying' | 'frog' | 'y' | 'added';
+  | 'walking' | 'elevated' | 'feet' | 'trap' | 'sumo' | 'quad' | 'hinged' | 'legs' | 'negative' | 'lying' | 'frog' | 'y' | 'added';
 
 // Eén regel per familie: een id, of [id, ...nuances].
 const FAMILIES: Record<string, (string | [string, ...Nuance[]])[]> = {
@@ -38,7 +38,7 @@ const FAMILIES: Record<string, (string | [string, ...Nuance[]])[]> = {
   close_press: ['close-grip-bench-press'],
   dip: ['dip', ['negative-dip', 'negative'], ['weighted-dip', 'added']],
   support_hold: ['support-hold'],
-  push_up: ['push-up', ['incline-push-up', 'light'], ['decline-push-up', 'elevated'], ['knee-push-up', 'light'], ['incline-push-up-high', 'light'], ['archer-push-up', 'single']],
+  push_up: ['push-up', ['incline-push-up', 'light'], ['decline-push-up', 'feet'], ['knee-push-up', 'light'], ['incline-push-up-high', 'light'], ['archer-push-up', 'single']],
   close_push_up: ['diamond-push-up'],
   chest_fly: ['cable-fly', 'pec-deck-fly', ['low-incline-dumbbell-fly', 'low'], ['low-to-high-cable-fly', 'low']],
   overhead_press: ['overhead-press', 'dumbbell-shoulder-press', 'machine-shoulder-press', ['push-press', 'legs']],

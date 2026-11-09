@@ -41,12 +41,14 @@ export function SpotterSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function RowMenuSheet({ ex, rowId, onTake, onCopy, onRemove, onClose }: {
+export function RowMenuSheet({ ex, rowId, onTake, onCopy, onRemove, onClean, onClose }: {
   ex: WorkoutExercise;
   rowId: string;
   onTake: () => void;
   onCopy: () => void;
   onRemove: () => void;
+  // "Ging het netjes?" achteraf: alleen bij een gedane werkset op een ladderstap.
+  onClean?: (clean: boolean | undefined) => void;
   onClose: () => void;
 }) {
   const row = ex.rows.find((r) => r.id === rowId);
@@ -57,6 +59,9 @@ export function RowMenuSheet({ ex, rowId, onTake, onCopy, onRemove, onClose }: {
         <div className="flex flex-col">
           {!row.done && <MenuRow icon="vinkje" title="Voorschrift overnemen" sub="Kilo's en herhalingen zoals het voorschrift ze vraagt." onClick={() => { onTake(); close(); }} />}
           <MenuRow icon="plus" title="Set kopiëren" sub="Een kopie van deze set eronder." onClick={() => { onCopy(); close(); }} />
+          {onClean && ([['Netjes: ja', true], ['Netjes: nee', false], ['Netjes: weet ik niet', undefined]] as const).map(([title, value]) => (
+            <MenuRow key={title} title={title} right={row.clean === value ? <span style={{ color: 'var(--color-action)' }}><Icon name="vinkje" size={18} /><span className="sr-only">gekozen</span></span> : undefined} onClick={() => { onClean(value); close(); }} />
+          ))}
           {canRemoveRow(ex, row.id) && <MenuRow icon="min" title="Set verwijderen" danger onClick={() => { onRemove(); close(); }} />}
         </div>
       )}

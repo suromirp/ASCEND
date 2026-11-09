@@ -921,6 +921,12 @@ html[data-motion='calm'] .mx-unfold-arrow {
   transition: width 0.4s ease-out;
 }
 
+/* Een vraag die in een rij van Forge verschijnt ("Ging het netjes?"): zacht erin, een keer. Rustig, Uit en
+   beperkte beweging: meteen op de eindstand (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md). */
+.mx-row-in {
+  animation: ascend-fade-in 0.24s ease-out both;
+}
+
 /* De pil van een lopende training (components/forge/SessionPill.tsx): schuift in, de stip erin ademt zacht
    zolang de klok loopt. Rustig: wel inschuiven, geen adem. Uit en beperkte beweging: meteen de eindstand. */
 .mx-pill-in {
@@ -1104,7 +1110,8 @@ html[data-motion='calm'] .mx-pic-1,
 html[data-motion='calm'] .mx-pic-2,
 html[data-motion='calm'] .mx-pic-3,
 html[data-motion='calm'] .mx-attention,
-html[data-motion='calm'] .mx-chart-in {
+html[data-motion='calm'] .mx-chart-in,
+html[data-motion='calm'] .mx-row-in {
   animation: none;
 }
 

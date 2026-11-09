@@ -36,6 +36,9 @@ import { TextButton } from '../TextButton';
 import { addOnText } from '../../engine/machineWeights';
 import { SPOTTER_SIGN } from '../../engine/spotter';
 import { LongPressRow, RirBubble, TickBox, ValueCell } from './parts';
+import { Segmented } from '../ui';
+import { addedKgOf, BAND_LABEL, bandOf, countsForLine, type LadderLines } from '../../engine/forgeLadder';
+import { SET_BANDS, type SetBand } from '../../models/training';
 import type { BlockActions } from './forgeWorkoutHelpers';
 
 // Een uitleg onder de kop langer dan dit staat op één regel met "Waarom zo", dat het blad Oefening opent; daar
@@ -65,6 +68,11 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   poundText,
   capText,
   standLine,
+  ladderLines,
+  ladderHint,
+  canStep = false,
+  bandOn = false,
+  cleanRow,
   act,
 }: {
   ex: WorkoutExercise;
@@ -100,6 +108,15 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   capText?: string;
   // De regel over de standen van dit toestel: een nieuwe stand (met Terugdraaien), de eerste keer, of een mislukte schrijfactie.
   standLine?: { kind: 'learned' | 'first' | 'failed'; text: string };
+  // Calisthenics (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md), alleen met Stappen bij calisthenics:
+  // de drie regels bij een oefening op een ladder, de stille regel met het voorstel van de ladder, of de tik naar
+  // een lichtere of zwaardere stap kan (dezelfde regel als Ruilen), en of de keuze van de band er staat.
+  ladderLines?: LadderLines;
+  ladderHint?: string;
+  canStep?: boolean;
+  bandOn?: boolean;
+  // De set waarna Forge vraagt of het netjes ging ("Ging het netjes?"), als er een is.
+  cleanRow?: string;
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
@@ -108,6 +125,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   const plates = useMemo(() => (usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined), [ex, profile]);
   const exercise = exerciseOf(ex);
   const assisted = exercise?.resistance === 'assisted_bodyweight';
+  // Een stap met extra gewicht: het gewone gewichtsveld is het extra gewicht.
+  const added = addedKgOf(exercise) !== undefined;
   const workDone = ex.rows.filter((r) => r.kind === 'work' && r.done).length;
   const workTotal = ex.rows.filter((r) => r.kind === 'work').length;
   const complete = !readOnly && exerciseComplete(ex);
@@ -160,6 +179,37 @@ export const ExerciseBlock = memo(function ExerciseBlock({
       </div>
       <div className="forge-fold" data-folded={folded} inert={folded}>
         <div>
+          {ladderLines && (
+            <div className="mt-1" data-testid="forge-ladder">
+              <p className="font-sans text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{ladderLines.step}</p>
+              <p className="font-sans text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{ladderLines.test}</p>
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{ladderLines.explain}</p>
+              {!readOnly && canStep && (ladderLines.lighter || ladderLines.harder) && (
+                <div className="-mb-1 flex flex-wrap gap-x-4">
+                  {ladderLines.lighter && (
+                    <TextButton className="shrink-0 whitespace-nowrap" onClick={() => act.step(ex.slot, ladderLines.lighter!.exerciseId)} aria-label={`Stap lichter, naar ${ladderLines.lighter.name}`}>Stap lichter</TextButton>
+                  )}
+                  {ladderLines.harder && (
+                    <TextButton className="shrink-0 whitespace-nowrap" onClick={() => act.step(ex.slot, ladderLines.harder!.exerciseId)} aria-label={`Stap zwaarder, naar ${ladderLines.harder.name}`}>Stap zwaarder</TextButton>
+                  )}
+                </div>
+              )}
+              {!readOnly && bandOn && exercise?.assist === 'band' && (
+                <div className="mt-2">
+                  <Segmented<SetBand | 'geen'>
+                    tall
+                    label="Band"
+                    value={bandOf(ex) ?? 'geen'}
+                    options={[{ value: 'geen', label: 'Geen', aria: 'Band: geen' }, ...SET_BANDS.map((b) => ({ value: b, label: BAND_LABEL[b], aria: `Band: ${BAND_LABEL[b].toLowerCase()}` }))]}
+                    onChange={(v) => act.band(ex.slot, v === 'geen' ? null : v)}
+                  />
+                </div>
+              )}
+              {ladderHint && (
+                <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-sage)', color: 'var(--color-ink-dim)' }}>{ladderHint}</p>
+              )}
+            </div>
+          )}
           {note && (
             <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>
               <span className="mt-px shrink-0" style={{ color: 'var(--color-action)' }}><Icon name="notitie" size={14} /></span>
@@ -237,8 +287,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   <Icon name="ruilen" size={12} />
                 </button>
               )}
-              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : 'kg'}</span>
-              <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Herh.'}</span>
+              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : added ? 'extra kg' : 'kg'}</span>
+              <span role="columnheader" className="text-center">{ex.timed || ex.hold ? 'sec' : 'Herh.'}</span>
               <span role="columnheader" className="text-center">RIR</span>
               {/* Alle sets afvinken staat in het blad Oefening, groep Sets (docs/beslissingen/2026-11-02-forge-herinrichting.md). */}
               <span role="columnheader" className="flex justify-center"><span className="sr-only">Gedaan</span></span>
@@ -290,7 +340,15 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                     {readOnly || ex.timed ? (
                       <>
                         <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? '' : row.target.weightKg !== undefined ? formatNumberNL(row.target.weightKg, 2) : ''}</span>
-                        <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? repsText(row.target) : row.reps}</span>
+                        <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : ex.hold ? row.target.holdSec : readOnly ? repsText(row.target) : row.reps}</span>
+                      </>
+                    ) : ex.hold ? (
+                      <>
+                        {/* Een houding: geen kg (geen stap met extra gewicht houdt), de seconden in het cijferblok. */}
+                        <span role="cell" />
+                        <span role="cell">
+                          <ValueCell value={row.seconds} decimals={0} label={`Seconden, set ${label}`} done={row.done} active={fieldOn('seconds')} selected={selected} onOpen={() => act.open(ex.slot, row.id, 'seconds')} />
+                        </span>
                       </>
                     ) : (
                       <>
@@ -303,7 +361,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                       </>
                     )}
                     <span role="cell" className="flex justify-center">
-                      {row.kind === 'work' && !ex.timed && (readOnly ? row.target.rir : row.rir ?? row.target.rir) !== undefined && (
+                      {row.kind === 'work' && !ex.timed && !ex.hold && (readOnly ? row.target.rir : row.rir ?? row.target.rir) !== undefined && (
                         <RirBubble
                           rir={(readOnly ? row.target.rir : row.rir ?? row.target.rir)!}
                           // Een RIR die je niet zelf invulde staat gedimd: het is een hint, geen meting. Met "RIR vooraf invullen: Met het doel" staat het doel er als gewone waarde.
@@ -325,6 +383,9 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   {!readOnly && row.kind === 'work' && addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg) && (
                     <p className="ml-9 h-5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg)} kg</p>
                   )}
+                  {!readOnly && ladderLines && countsForLine(exercise, { kind: row.kind, weightKg: row.weightKg ?? row.target.weightKg, band: row.band }) && (
+                    <p className="ml-9 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{countsForLine(exercise, { kind: row.kind, weightKg: row.weightKg ?? row.target.weightKg, band: row.band })}</p>
+                  )}
                   {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
                     <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
                   )}
@@ -332,6 +393,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                     <p role="note" className="ml-9 mt-0.5 border-l-2 pl-2 font-sans text-xs leading-snug tabular-nums" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>{barLine}</p>
                   )}
                   {!readOnly && !folded && row.id === quickRirRow && <QuickRir label={label} onPick={(n) => act.quickRir(ex.slot, row.id, n)} />}
+                  {!readOnly && !folded && row.id === cleanRow && <CleanAsk label={label} onPick={(v) => act.clean(ex.slot, row.id, v)} />}
                   {!readOnly && row.id === spotterRowId && (
                     <div className="ml-9 h-5">
                       <button type="button" onClick={act.spotter} aria-label={`${SPOTTER_SIGN}, set ${label}. Tik voor uitleg`} className="relative flex h-5 items-center gap-1.5 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
@@ -371,6 +433,9 @@ export const ExerciseBlock = memo(function ExerciseBlock({
       </div>
       {!readOnly && folded && quickRirRow && (
         <QuickRir label={rowLabel(ex, quickRirRow)} onPick={(n) => act.quickRir(ex.slot, quickRirRow, n)} />
+      )}
+      {!readOnly && folded && cleanRow && (
+        <CleanAsk label={rowLabel(ex, cleanRow)} onPick={(v) => act.clean(ex.slot, cleanRow, v)} />
       )}
     </section>
   );
@@ -421,8 +486,31 @@ function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise })
           </Fragment>
         ))}
       </span>
-      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && <span className="block text-xs">{row.target.rir} RIR</span>}
+      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && !ex.hold && <span className="block text-xs">{row.target.rir} RIR</span>}
     </>
+  );
+}
+
+// "Ging het netjes?" na een werkset op een ladderstap: Ja of Nee in één tik, in de rij en zonder blad, zoals
+// "Hoeveel over?". Kies je niets, dan blijft het onbekend (dat telt als netjes). Verschijnt met `mx-row-in`, dat in
+// Rustig en Uit meteen op de eindstand staat.
+function CleanAsk({ label, onPick }: { label: string; onPick: (clean: boolean) => void }) {
+  return (
+    <div className="mx-row-in flex items-center gap-1.5 pb-1 pl-1" role="group" aria-label={`Ging set ${label} netjes?`}>
+      <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Ging het netjes?</span>
+      {([['Ja', true], ['Nee', false]] as const).map(([text, value]) => (
+        <button
+          key={text}
+          type="button"
+          onClick={() => onPick(value)}
+          aria-label={`${text}, set ${label} ging ${value ? '' : 'niet '}netjes`}
+          className="flex h-11 min-w-[44px] items-center justify-center rounded-full border px-4 text-sm font-semibold"
+          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+        >
+          {text}
+        </button>
+      ))}
+    </div>
   );
 }
 

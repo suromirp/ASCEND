@@ -85,6 +85,10 @@ import { ForgeDock } from './ForgeDock';
 import { ForgeSheets } from './ForgeSheets';
 import { ownWeightsTickedAll } from '../../engine/toestelStanden';
 import { REST_DONE_LINGER_MS, useRestAlert } from './useRestAlert';
+import { asksClean, ladderHint, ladderLines, withBand, withClean } from '../../engine/forgeLadder';
+import { ladderStateFor } from '../../engine/skillLadder';
+import { exerciseKey } from '../../engine/strengthHistory';
+import type { SetBand } from '../../models/training';
 import { restNameAfter, useForgePager, useLater } from './useForgePager';
 import { RestBar } from './ForgeTimers';
 import { ForgeIntro } from './ForgeIntro';
@@ -216,6 +220,13 @@ function ForgeWorkoutInner({
   const sh = useForgeSheets(startAtForm && !preview);
   // "Hoeveel over?" onder de set die je net afvinkte (alleen de topset en de laatste set, asksReserve).
   const [quickRir, setQuickRir] = useState<{ slot: string; rowId: string } | null>(null);
+  // "Ging het netjes?" onder de werkset op een ladderstap die je net afvinkte; de volgende handeling in de oefening haalt hem weg.
+  const [cleanAsk, setCleanAsk] = useState<{ slot: string; rowId: string } | null>(null);
+  // Calisthenics (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md): de regels en de tik alleen met Stappen bij
+  // calisthenics; de vraag en de band horen daarbij en staan anders ook uit.
+  const stepsOn = strength.ladderRow;
+  const cleanOn = stepsOn && strength.askClean;
+  const bandOn = stepsOn && strength.askBand;
   // Oefeningen waarvan je het voorstel "toestel in ponden" liet liggen, deze training.
   const [poundKept, setPoundKept] = useState<Record<string, true>>({});
   // Het voorstel "Lichter?" per oefening, na een set die te zwaar was (engine/forgeAdjust.ts).
@@ -326,20 +337,22 @@ function ForgeWorkoutInner({
     baseRef.current = null;
     const raw = tickRow(workout, slot, rowId);
     // Forge rekent mee: ging de set anders dan gevraagd, dan stelt Forge de volgende open werkset bij.
-    const reckoned = raw.workout.map((e) => (e.slot === slot ? reckonAfterTick(e, rowId, reckonCtx) : e));
+    // Een houding heeft geen gewicht en geen reserve: Forge rekent daar niet mee.
+    const reckoned = raw.workout.map((e) => (e.slot === slot && !e.hold ? reckonAfterTick(e, rowId, reckonCtx) : e));
     const result = { ...raw, workout: reckoned };
     if (reckoned.some((e, i) => e !== raw.workout[i])) markCause({ kind: 'meegerekend' });
     setWorkout(result.workout);
     // Na het afvinken van de topset of de laatste set: één snelle vraag hoeveel je over had. Een andere tik haalt hem weg.
     const askEx = result.workout.find((e) => e.slot === slot);
-    setQuickRir(strength.quickRir && !readOnly && askEx && asksReserve(askEx, rowId, strength.enabled && strength.assumedCounts) ? { slot, rowId } : null);
+    setQuickRir(strength.quickRir && !readOnly && askEx && !askEx.hold && asksReserve(askEx, rowId, strength.enabled && strength.assumedCounts) ? { slot, rowId } : null);
+    setCleanAsk(cleanOn && !readOnly && askEx && asksClean(askEx, rowId, exerciseOf(askEx)) ? { slot, rowId } : null);
     // De focus schuift vloeiend naar de volgende open set; is de oefening af, dan
     // klapt hij zacht in en gaat het scherm naar de volgende oefening.
     const ticked = result.workout.find((e) => e.slot === slot)?.rows.find((r) => r.id === rowId)?.done;
     // Na een set die te zwaar was stelt Forge een lichter gewicht voor; een andere tik haalt een oud voorstel weg.
     const tickedEx = result.workout.find((e) => e.slot === slot);
     const adjustCtx = { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights };
-    const live = !!ticked && !!tickedEx && strength.enabled && strength.adjustLive && !readOnly;
+    const live = !!ticked && !!tickedEx && !tickedEx.hold && strength.enabled && strength.adjustLive && !readOnly;
     // Stelde Forge de volgende set al zelf bij (Forge rekent mee), dan geen tweede vraag om lichter.
     const reckonedHere = reckoned.find((e) => e.slot === slot) !== raw.workout.find((e) => e.slot === slot);
     const proposal = live && !reckonedHere ? suggestLighter(tickedEx, rowId, adjustCtx) : undefined;
@@ -413,6 +426,7 @@ function ForgeWorkoutInner({
     baseRef.current = null;
     clearHints(slot);
     setQuickRir(null);
+    setCleanAsk(null);
     const result = tickAllRows(workout, slot);
     setWorkout(result.workout);
     {
@@ -478,6 +492,32 @@ function ForgeWorkoutInner({
     setExercise(slot, () => after);
   }
 
+  // "Ging het netjes?": Ja, Nee, of achteraf in het setmenu ook "weet ik niet". Alleen de rij; het log komt bij Afronden.
+  function chooseClean(slot: string, rowId: string, clean: boolean | undefined) {
+    setCleanAsk(null);
+    haptics.tap();
+    setExercise(slot, (e) => withClean(e, rowId, clean));
+  }
+
+  // De band voor de open sets van deze oefening; een gedane set houdt zijn band.
+  function chooseBand(slot: string, band: SetBand | null) {
+    if (!readOnly) begin();
+    setCleanAsk((c) => (c?.slot === slot ? null : c));
+    setExercise(slot, (e) => withBand(e, band));
+  }
+
+  // Stap lichter of Stap zwaarder: dezelfde weg als Ruilen, alleen voor dit scherm. Terug naar de oefening van het
+  // plan is gewoon "Terug naar", zonder "voor ..." in de kop.
+  function stepTo(slot: string, exerciseId: string) {
+    const current = workout.find((e) => e.slot === slot);
+    const prescription = current ? sessionPrescription(effSlots, current) : undefined;
+    if (!prescription) return;
+    haptics.tap();
+    setCleanAsk((c) => (c?.slot === slot ? null : c));
+    const own = exerciseKey(prescription.id, prescription.exerciseName).exercise?.id;
+    swap(slot, exerciseId === own ? null : exerciseId);
+  }
+
   // Het toestel als ponden opslaan in je sportschool: alleen na een tik op Opslaan.
   function savePounds(slot: string) {
     const ex = workout.find((e) => e.slot === slot);
@@ -487,9 +527,9 @@ function ForgeWorkoutInner({
     saveStrength(withMachineSetup(settings.strengthModel, ex.exerciseId, { ranges: [p.range] }));
   }
 
-  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir, savePounds, standUndo: stands.undo });
+  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir, savePounds, standUndo: stands.undo, stepTo, chooseBand, chooseClean });
   useEffect(() => {
-    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir, savePounds, standUndo: stands.undo };
+    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir, savePounds, standUndo: stands.undo, stepTo, chooseBand, chooseClean };
   });
   const { setMenuFor, setRowMenu, setRirFor, setFillFor, setSpotterInfo } = sh;
   const actions = useMemo<BlockActions>(
@@ -498,7 +538,10 @@ function ForgeWorkoutInner({
       fold: (slot) => setFolded((f) => ({ ...f, [slot]: !f[slot] })),
       menu: (slot) => setMenuFor(slot),
       tick: (slot, rowId) => latest.current.tick(slot, rowId),
-      open: (slot, rowId, name) => latest.current.openField(slot, rowId, name),
+      open: (slot, rowId, name) => {
+        setCleanAsk((c) => (c?.slot === slot ? null : c));
+        latest.current.openField(slot, rowId, name);
+      },
       take: (slot, rowId) => latest.current.take(slot, rowId),
       rowMenu: (slot, rowId) => setRowMenu({ slot, rowId }),
       rir: (slot, rowId) => setRirFor({ slot, rowId }),
@@ -516,6 +559,9 @@ function ForgeWorkoutInner({
       keepFit: (slot) => setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
       spotter: () => setSpotterInfo(true),
       standUndo: () => latest.current.standUndo(),
+      step: (slot, exerciseId) => latest.current.stepTo(slot, exerciseId),
+      band: (slot, band) => latest.current.chooseBand(slot, band),
+      clean: (slot, rowId, clean) => latest.current.chooseClean(slot, rowId, clean),
     }),
     [setMenuFor, setRowMenu, setRirFor, setFillFor, setSpotterInfo],
   );
@@ -530,6 +576,7 @@ function ForgeWorkoutInner({
     const to = exerciseId ? exerciseById(exerciseId) : undefined;
     clearHints(slot);
     stands.dismiss(slot);
+    setCleanAsk((c) => (c?.slot === slot ? null : c));
     const swapped = planExercise(prescription, ctx, state, to);
     if (!readOnly) {
       const found = spotterEvents([swapped], Date.now(), () => makeId('fe'));
@@ -550,6 +597,15 @@ function ForgeWorkoutInner({
   }
 
 
+  // De stand van de ladder van elke oefening op een ladder, uit je logs tot de dag van deze training (engine/skillLadder.ts).
+  const ladderIds = workout.map((e) => e.exerciseId).join('|');
+  const ladderStates = useMemo(() => {
+    const out = new Map<string, ReturnType<typeof ladderStateFor>>();
+    if (!stepsOn) return out;
+    for (const id of ladderIds.split('|')) if (!out.has(id)) out.set(id, ladderStateFor(id, sessionLogs, date));
+    return out;
+  }, [ladderIds, sessionLogs, date, stepsOn]);
+
   const bottomPad = dockH > 0 ? dockH + (rest && !readOnly ? 70 : 0) + 16 : rest ? 120 : 48;
   // Het voorstel van Spieren voor de berg, één keer rustig bij het openen van de training waar de oefening bij
   // zou komen (zelfde melding en zelfde Akkoord als in de weekterugblik). Niet bij kijken en niet na de eerste set.
@@ -557,6 +613,7 @@ function ForgeWorkoutInner({
   const intro = <ForgeIntro templateId={template.id} today={today} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
   const exerciseBlock = (ex: WorkoutExercise, i: number) => {
     const capRemoved = capRemovedFor(capped, ex, effSlots);
+    const lines = stepsOn && ex.known ? ladderLines(exerciseOf(ex)) : undefined;
     return (
     <ExerciseBlock
               key={ex.slot}
@@ -581,6 +638,11 @@ function ForgeWorkoutInner({
               quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId, strength.enabled && strength.assumedCounts) ? quickRir.rowId : undefined}
               capText={capRemoved > 0 ? capRemovedLine(capRemoved) : undefined}
               standLine={stands.lineFor(ex, exerciseComplete(ex))}
+              ladderLines={lines}
+              ladderHint={lines ? ladderHint(exerciseOf(ex), ladderStates.get(ex.exerciseId)) : undefined}
+              canStep={!!lines && !readOnly && canSwap(effSlots, ex)}
+              bandOn={bandOn}
+              cleanRow={cleanAsk?.slot === ex.slot && cleanOn ? cleanAsk.rowId : undefined}
               poundText={!readOnly && !poundKept[ex.slot] && ex.rows.some((r) => r.done) ? poundLine(ex, strength.profile) : undefined}
               act={actions}
             />
@@ -671,6 +733,8 @@ function ForgeWorkoutInner({
         addSetLogged={addSetLogged}
         tickAll={tickAll}
         swap={swap}
+        cleanOn={cleanOn}
+        chooseClean={chooseClean}
         removeAddedExercise={removeAddedExercise}
         saveStrength={saveStrength}
         startedAt={startedAt}

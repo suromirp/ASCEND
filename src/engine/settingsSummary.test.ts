@@ -235,6 +235,17 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-rir-vooraf', withForge({ rirPrefill: 'rommel' })).value).toBe('Als hint');
   });
 
+  it('calisthenics: drie schakelaars, standaard aan; een keuze telt bij Bij het invullen', () => {
+    const withForge = (strengthModel: object) => facts({ strengthExternal: false, settings: { ...facts().settings, strengthModel } });
+    for (const id of ['forge-stappen', 'forge-netjes', 'forge-band']) expect(rowSummary(id, withForge({})), id).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('forge-stappen', withForge({ ladderRow: false })).checked).toBe(false);
+    expect(rowSummary('forge-netjes', withForge({ askClean: false })).checked).toBe(false);
+    expect(rowSummary('forge-band', withForge({ askBand: false })).checked).toBe(false);
+    expect(rowSummary('forge-netjes', withForge({ ladderRow: false })).hidden).toBe(true);
+    expect(rowSummary('bundel-invullen', withForge({})).value).toBe('Advies');
+    expect(rowSummary('bundel-invullen', withForge({ askClean: false, askBand: false })).value).toBe('2 aangepast');
+  });
+
   it('Zonder spotter staat aan, en de veiligheidsarmen horen bij de sportschool', () => {
     const withForge = (strengthModel: object) => facts({ strengthExternal: false, settings: { ...facts().settings, strengthModel } });
     expect(rowSummary('forge-spotter', withForge({}))).toEqual({ checked: true, hidden: false });

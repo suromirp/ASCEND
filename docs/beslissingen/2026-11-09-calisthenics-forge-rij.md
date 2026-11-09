@@ -71,3 +71,17 @@ Niets.
 ## Terugdraaien
 
 Zet de drie instellingen uit, of haal de regels en de houdingsrij uit `ExerciseBlock.tsx`. De logvelden `seconds`, `band` en `clean` zijn optioneel en blijven leesbaar.
+
+## Stand
+
+Gebouwd: F4b en F4c, met de drie instellingen en de twee kleine punten. De regels staan in `engine/forgeLadder.ts`; `ExerciseBlock.tsx` toont ze. Geen hogere schemaversie: `seconds`, `band` en `clean` bestonden al op `SetLog` en `migrateLogSetSkill` laat een kapotte waarde al vallen, dus daar hoefde niets bij. Eigen keuzes in deze stap:
+
+- De open vraag over gedane sets: Ruilen kan alleen zolang er in de oefening niets is afgevinkt (`canSwap`). Stap lichter en Stap zwaarder volgen dat: met een gedane set staan ze er niet. Een tik terug naar de oefening van het plan is gewoon Terug naar, zonder "voor ..." in de kop.
+- Ging het netjes? en de band werken alleen met Stappen bij calisthenics aan, zoals ze ook alleen dan zichtbaar zijn. Na een set met band komt de vraag niet: die set telt toch niet voor de stap.
+- `estimateSet` slaat naast een set met `seconds` ook een set met `band` over. Een band helpt een onbekend deel; zo'n set zou anders je kracht en 1RM te hoog schatten.
+- Het doel op een nieuwe stap is de hoogste werkset van je laatste training op die stap (met dezelfde band als nu klaarstaat), een houding hoogstens de toets. Die rijen komen niet uit het krachtmodel: geen opwarmsets en geen redenregel.
+- Een houding krijgt de houdingsrij altijd, ook als het sjabloon "30s" zegt. De seconden staan vooraf ingevuld zoals herhalingen; afvinken van een lege rij neemt het voorschrift over. Ingeklapt zegt een houding alleen het aantal sets.
+- In het setmenu staan Netjes: ja, nee en weet ik niet alleen bij een gedane werkset op een ladderstap; de huidige keuze heeft een vinkje.
+- De regel "Telt voor ..." staat er alleen met Stappen bij calisthenics aan. De stap met extra gewicht gaat met Minder en Meer per 2,5 kg, tenzij je een eigen stap voor de oefening hebt.
+- Een nieuwe klasse `mx-row-in` in `index.css` voor de vraag: `animate-fade-in` speelt in Rustig nog, deze staat daar meteen op de eindstand. "Hoeveel over?" gebruikt nog `animate-fade-in`; dat is niet aangeraakt.
+- Met MacroFactor als bron of bij alleen kijken staan de drie regels en de stille regel er wel, de knoppen en de band niet.
