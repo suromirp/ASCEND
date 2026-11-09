@@ -76,7 +76,7 @@ const empty = (topic: SheetModel['topic'], title: string, seriesFormat: SheetMod
   series: [],
   seriesFormat,
   strengthText: why,
-  meaning: 'Zodra er genoeg vergelijkbare trainingen zijn, zie je hier of het beter, normaal of slechter gaat. Eén training zegt weinig; het gaat om de lijn over weken.',
+  meaning: 'Zodra er genoeg vergelijkbare trainingen zijn, zie je hier of het beter, normaal of slechter gaat. Eén training zegt weinig. Het gaat om de lijn over weken.',
   basis: { logIds: [], criteria, notes: [] },
 });
 
@@ -112,14 +112,14 @@ function efficiencyRow(input: RunTrendsInput): TrendRow {
           },
           series: points,
           seriesFormat: 'pace',
-          strengthText: `Dit is dezelfde trend als de kaart Tempo bij zone 2: je tempo bij één hartslag, als rechte lijn door je lopen van de laatste 8 weken, met een marge waar je voor 80 procent zeker van bent. Eén rustige loop schommelt zelf zo'n 3 procent, een echte verbetering is ongeveer 1 tot 2 procent per maand. Ligt de marge over nul, dan noemt ASCEND het Normaal.`,
+          strengthText: `Dit is dezelfde trend als de kaart Tempo bij zone 2. Het is je tempo bij één hartslag, als rechte lijn door je lopen van de laatste 8 weken, met een marge waar je voor 80 procent zeker van bent. Eén rustige loop schommelt zelf zo'n 3 procent. Een echte verbetering is ongeveer 1 tot 2 procent per maand. Ligt de marge over nul, dan noemt ASCEND het Normaal.`,
           meaning:
             word === 'Beter'
               ? 'Je loopt bij dezelfde hartslag sneller dan een maand geleden. Dat is de vooruitgang die telt.'
               : word === 'Slechter'
                 ? 'Je loopt bij dezelfde hartslag trager dan een maand geleden. Moe, warm of weinig geslapen? Kijk hoe het de komende weken gaat.'
                 : 'Gelijk aan een maand geleden. Normaal: vooruitgang gaat in weken, niet per loop.',
-          basis: { logIds: [], criteria, notes: trend.outsideZone > 0 ? [`${trend.outsideZone} loopjes lagen te ver van zone 2 en tellen niet mee.`] : [] },
+          basis: { logIds: [], criteria, notes: trend.outsideZone > 0 ? [`${trend.outsideZone} ${trend.outsideZone === 1 ? 'loop lag' : 'lopen lagen'} te ver van zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.`] : [] },
         };
   return { key: 'efficiency', title: 'Efficiëntie', word, points, model };
 }
@@ -145,8 +145,8 @@ function usable(input: RunTrendsInput): SessionLog[] {
 
 function driftRow(input: RunTrendsInput): TrendRow {
   const title = 'Lange dagen';
-  const criteria = [`lange loopjes van een uur of meer in de laatste ${TREND_WEEKS} weken`, 'vlak, minstens 45 minuten in een stuk'];
-  if (!input.detailsOn) return { key: 'longDays', title, word: 'Te weinig gegevens', points: [], model: empty('drift', title, 'percent', 'De details van loopjes en tochten staan uit. Zet ze aan bij Garmin koppelen.', criteria) };
+  const criteria = [`lange lopen van een uur of meer in de laatste ${TREND_WEEKS} weken`, 'vlak, minstens 45 minuten in een stuk'];
+  if (!input.detailsOn) return { key: 'longDays', title, word: 'Te weinig gegevens', points: [], model: empty('drift', title, 'percent', 'De details van lopen en tochten staan uit. Zet ze aan bij Garmin koppelen.', criteria) };
   const runs: Dated<number>[] = [];
   for (const l of usable(input)) {
     // Drift is a heart rate measure: a training set to "Niet meetellen voor hartslag" stays out.
@@ -157,7 +157,7 @@ function driftRow(input: RunTrendsInput): TrendRow {
   const points = runs.map((r) => ({ label: label(r.date), value: -r.v }));
   const split = lastThree(runs);
   if (!split) {
-    return { key: 'longDays', title, word: 'Te weinig gegevens', points, model: { ...empty('drift', title, 'percent', `Er zijn ${runs.length} lange loopjes met een bruikbare drift. Voor een vergelijking zijn er zes nodig: de laatste drie tegen de drie daarvoor.`, criteria), series: points } };
+    return { key: 'longDays', title, word: 'Te weinig gegevens', points, model: { ...empty('drift', title, 'percent', `Er zijn ${runs.length} lange loopjes met een bruikbare drift. Je hebt er zes nodig: de laatste drie tegen de drie daarvoor.`, criteria), series: points } };
   }
   const now = median(split.last.map((r) => r.v));
   const before = median(split.before.map((r) => r.v));
@@ -176,13 +176,13 @@ function driftRow(input: RunTrendsInput): TrendRow {
     },
     series: points,
     seriesFormat: 'percent',
-    strengthText: 'Drift is het zakken van je tempo per hartslag van de eerste naar de tweede helft. Het schommelt per loop zo\'n 3 procentpunten en verschilt sterk per persoon, dus ASCEND zegt pas iets vanaf 3 procentpunten verschil tussen het midden van de laatste drie en de drie daarvoor. Onder de 5 procent noemt een coach goed; dat is een richtlijn en geen gemeten grens.',
+    strengthText: 'Drift is het zakken van je tempo per hartslag van de eerste naar de tweede helft. Het schommelt per loop zo\'n 3 procentpunten en verschilt sterk per persoon, dus ASCEND zegt pas iets vanaf 3 procentpunten verschil tussen het midden van de laatste drie en de drie daarvoor. Onder de 5 procent noemt een coach goed. Dat is een richtlijn, geen gemeten grens.',
     meaning:
       word === 'Beter'
         ? 'Je hartslag blijft op lange dagen beter bij je tempo. Dat is wat een lange dag in de bergen vraagt.'
         : word === 'Slechter'
           ? 'Je hartslag loopt op lange dagen meer op dan eerst. Let op eten en drinken, warmte en een te snel begin.'
-          : 'Je drift is ongeveer gelijk aan die van de loopjes ervoor.',
+          : 'Je drift is ongeveer gelijk aan die van de lopen ervoor.',
     basis: { logIds: [...split.before, ...split.last].map((r) => r.log.id), criteria, notes: [] },
   };
   return { key: 'longDays', title, word, points, model };
@@ -193,7 +193,7 @@ function driftRow(input: RunTrendsInput): TrendRow {
 function climbingRow(input: RunTrendsInput): TrendRow {
   const title = 'Bergop en bergaf';
   const criteria = ['klimmen in dezelfde hellingklasse van vier procent', 'rugzak niet meegerekend in deze trend'];
-  if (!input.detailsOn) return { key: 'climbing', title, word: 'Te weinig gegevens', points: [], model: empty('climb', title, 'metresPerHour', 'De details van loopjes en tochten staan uit. Zet ze aan bij Garmin koppelen.', criteria) };
+  if (!input.detailsOn) return { key: 'climbing', title, word: 'Te weinig gegevens', points: [], model: empty('climb', title, 'metresPerHour', 'De details van lopen en tochten staan uit. Zet ze aan bij Garmin koppelen.', criteria) };
   const items: Dated<ClimbFact>[] = [];
   let descents = 0;
   let metresDown = 0;
@@ -214,10 +214,10 @@ function climbingRow(input: RunTrendsInput): TrendRow {
   const best = [...byClass.entries()].sort((a, b) => b[1].length - a[1].length || b[0] - a[0])[0];
   const series = best ? best[1] : [];
   const points = series.map((it) => ({ label: label(it.date), value: it.v.metresPerHour }));
-  const descentText = descents > 0 ? ` Bergaf: ${descents} ${descents === 1 ? 'daling' : 'dalingen'}, samen ${num(metresDown)} meter omlaag. Dat zijn alleen feiten; er is geen oordeel over dalen.` : '';
+  const descentText = descents > 0 ? ` Bergaf: ${descents} ${descents === 1 ? 'daling' : 'dalingen'}, samen ${num(metresDown)} meter omlaag. Dat zijn feiten. Er is geen oordeel over dalen.` : '';
   const split = lastThree(series);
   if (!best || !split) {
-    return { key: 'climbing', title, word: 'Te weinig gegevens', points, model: { ...empty('climb', title, 'metresPerHour', `Er zijn ${items.length} klimmen gevonden. Voor een vergelijking zijn er zes nodig in dezelfde hellingklasse, en in Nederland zijn dat er niet veel.${descentText}`, criteria), series: points } };
+    return { key: 'climbing', title, word: 'Te weinig gegevens', points, model: { ...empty('climb', title, 'metresPerHour', `Er zijn ${items.length} klimmen gevonden. Je hebt er zes nodig in dezelfde hellingklasse. In Nederland zijn dat er niet veel.${descentText}`, criteria), series: points } };
   }
   const mph = (xs: Dated<ClimbFact>[]) => median(xs.map((x) => x.v.metresPerHour));
   const hrOf = (xs: Dated<ClimbFact>[]) => {
@@ -291,8 +291,8 @@ const FORM_STANCE_MS = 10;
 
 function formRow(input: RunTrendsInput): TrendRow {
   const title = 'Pas en vorm';
-  const criteria = ['rustige loopjes met loopvorm van je borstband', 'tempo binnen 6 procent van elkaar'];
-  if (!input.detailsOn) return { key: 'form', title, word: 'Te weinig gegevens', points: [], model: empty('form', title, 'ms', 'De details van loopjes en tochten staan uit. Zet ze aan bij Garmin koppelen.', criteria) };
+  const criteria = ['rustige lopen met loopvorm van je borstband', 'tempo binnen 6 procent van elkaar'];
+  if (!input.detailsOn) return { key: 'form', title, word: 'Te weinig gegevens', points: [], model: empty('form', title, 'ms', 'De details van lopen en tochten staan uit. Zet ze aan bij Garmin koppelen.', criteria) };
   const runs: FormRun[] = [];
   for (const l of usable(input)) {
     if (logSport(l) !== 'running' || !isEasyPlanned(l, input)) continue;
@@ -300,7 +300,7 @@ function formRow(input: RunTrendsInput): TrendRow {
     if (r) runs.push(r);
   }
   const latest = runs.at(-1);
-  if (!latest) return { key: 'form', title, word: 'Te weinig gegevens', points: [], model: empty('form', title, 'ms', 'Er zijn nog geen loopjes met loopvorm in de laatste 12 weken. Die komen van je borstband, als je horloge ze aan intervals.icu geeft.', criteria) };
+  if (!latest) return { key: 'form', title, word: 'Te weinig gegevens', points: [], model: empty('form', title, 'ms', 'Er zijn nog geen lopen met loopvorm in de laatste 12 weken. Die komen van je borstband, als je horloge ze aan intervals.icu geeft.', criteria) };
   const sameSpeed = (of: FormRun, others: FormRun[]) => others.filter((o) => o !== of && o.log.completedAt < of.log.completedAt && (Math.abs(o.paceSec - of.paceSec) / of.paceSec) * 100 <= FORM_PACE_PCT);
   const verdict = (of: FormRun): 'better' | 'worse' | 'same' | undefined => {
     const earlier = sameSpeed(of, runs);
@@ -314,7 +314,7 @@ function formRow(input: RunTrendsInput): TrendRow {
   const points = comparable.map((r) => ({ label: label(r.log.completedDate), value: -r.stanceMs }));
   const first = verdict(latest);
   if (first === undefined) {
-    return { key: 'form', title, word: 'Te weinig gegevens', points, model: { ...empty('form', title, 'ms', `Voor een vergelijking zijn drie eerdere loopjes nodig op ongeveer hetzelfde tempo. Nu zijn er ${comparable.length - 1}.`, criteria), series: points } };
+    return { key: 'form', title, word: 'Te weinig gegevens', points, model: { ...empty('form', title, 'ms', `Je hebt drie eerdere loopjes nodig op ongeveer hetzelfde tempo. Nu zijn er ${comparable.length - 1}.`, criteria), series: points } };
   }
   const prev = runs.length >= 2 ? verdict(runs[runs.length - 2]) : undefined;
   const word: TrendWord = first !== 'same' && prev === first ? (first === 'better' ? 'Beter' : 'Slechter') : 'Normaal';
@@ -334,13 +334,13 @@ function formRow(input: RunTrendsInput): TrendRow {
     },
     series: points,
     seriesFormat: 'ms',
-    strengthText: `Grondcontacttijd verschilt van dag tot dag zo'n 1 tot 2 procent, en meer op een heuvelachtige of onregelmatige route. ASCEND zegt pas iets bij 4 procent of 10 ms verschil, en alleen als de laatste twee loopjes op rij hetzelfde laten zien. Dat zijn eigen aannames, te ijken op jouw gegevens.`,
+    strengthText: `Grondcontacttijd verschilt van dag tot dag zo'n 1 tot 2 procent, en meer op een heuvelachtige of onregelmatige route. ASCEND zegt pas iets bij 4 procent of 10 ms verschil, en alleen als de laatste twee lopen op rij hetzelfde laten zien. Dat zijn eigen aannames, te ijken op jouw gegevens.`,
     meaning:
       word === 'Slechter'
-        ? 'Je staat langer op de grond dan bij je eerdere loopjes op hetzelfde tempo. Dat past bij moe zijn. Het is geen diagnose; neem een paar dagen rustiger.'
+        ? 'Je staat langer op de grond dan bij je eerdere lopen op hetzelfde tempo. Dat past bij moe zijn. Het is geen diagnose. Neem een paar dagen rustiger.'
         : word === 'Beter'
           ? 'Je staat korter op de grond dan eerder bij hetzelfde tempo. Garmin noemt een lagere grondcontacttijd meestal beter.'
-          : 'Je loopvorm is ongeveer gelijk aan die van je eerdere loopjes op hetzelfde tempo.',
+          : 'Je loopvorm is ongeveer gelijk aan die van je eerdere lopen op hetzelfde tempo.',
     basis: { logIds: [...earlier.map((e) => e.log.id), latest.log.id], criteria, notes: [] },
   };
   return { key: 'form', title, word, points, model };
