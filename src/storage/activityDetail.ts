@@ -444,15 +444,15 @@ export function ensureOutcomeText(outcome: EnsureOutcome, manual = false): strin
     case 'added':
       return manual ? 'Opgehaald. Kilometer na kilometer staat nu bij Run in detail.' : undefined;
     case 'off':
-      return 'Details van loopjes en tochten staan uit, dus er zijn geen kilometers opgehaald.';
+      return 'Details van lopen en tochten staan uit. Er zijn geen kilometers opgehaald.';
     case 'no-link':
-      return 'Voor kilometer na kilometer heb je de gegevens van je horloge nodig, via intervals.icu.';
+      return 'Kilometer na kilometer komt van je horloge, via intervals.icu.';
     case 'no-series':
-      return 'Van deze training heeft intervals.icu geen reeks per moment. Er is niets veranderd.';
+      return 'intervals.icu heeft van deze training geen reeks per moment. Er is niets veranderd.';
     case 'failed':
-      return `Het ophalen lukte niet. Er is niets veranderd; ${manual ? 'probeer het later nog eens.' : 'de volgende keer dat je de app opent probeert hij het opnieuw.'}`;
+      return `Het ophalen lukte niet. Er is niets veranderd. ${manual ? 'Probeer het later nog eens.' : 'De volgende keer dat je de app opent, probeert hij het opnieuw.'}`;
     case 'timeout':
-      return `Het ophalen duurde te lang. Er is niets veranderd; ${manual ? 'probeer het later nog eens.' : 'de volgende keer dat je de app opent probeert hij het opnieuw.'}`;
+      return `Het ophalen duurde te lang. Er is niets veranderd. ${manual ? 'Probeer het later nog eens.' : 'De volgende keer dat je de app opent, probeert hij het opnieuw.'}`;
   }
 }
 

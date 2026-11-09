@@ -170,7 +170,7 @@ export function runVerdict(rd: RunDetail, kind: RunKind): RunVerdict {
       return {
         word: 'Niet goed gemeten',
         tone: 'measure',
-        sentence: `Km ${odd.index} in ${formatPace(odd.paceSecKm)} per km past niet bij de rest van je run; de gps zat er waarschijnlijk naast.`,
+        sentence: `Km ${odd.index} in ${formatPace(odd.paceSecKm)} per km past niet bij de rest van je loop. De gps zat er waarschijnlijk naast.`,
       };
     }
   }
@@ -215,7 +215,7 @@ export function runVerdict(rd: RunDetail, kind: RunKind): RunVerdict {
     }
   }
   if (p.word === 'gelijkmatig') {
-    return { word: 'Gelijkmatig', tone: 'even', sentence: 'Je tempo bleef gelijk: de tweede helft wijkt minder dan 2 procent af van de eerste.' };
+    return { word: 'Gelijkmatig', tone: 'even', sentence: 'Je tempo bleef gelijk. De tweede helft wijkt minder dan 2 procent af van de eerste.' };
   }
   // A test stretch that is just outside "gelijkmatig" but has no kilometre that sticks out is
   // not "op en neer": say how much the halves differ (2026-11-03-testloop-in-detail.md).
@@ -246,7 +246,7 @@ function nearEvenTest(kms: RunKm[], p: Pacing): RunVerdict | undefined {
     : `Je tweede helft ging ${secs(Math.abs(d))} per km ${d > 0 ? 'trager' : 'sneller'} dan je eerste`;
   if (worst <= PACING.evenKmPct) return { word: 'Vrij gelijkmatig', tone: 'near-even', sentence: `${halves}, zonder kilometer die eruit sprong.` };
   const odd = off.filter((x) => x.pct > PACING.evenKmPct).map((x) => x.k.index);
-  return { word: 'Vrij gelijkmatig', tone: 'near-even', sentence: `${halves}; ${odd.length === 1 ? `alleen km ${odd[0]} van je test week` : `alleen ${kmList(odd)} van je test weken`} iets meer af.` };
+  return { word: 'Vrij gelijkmatig', tone: 'near-even', sentence: `${halves}. ${odd.length === 1 ? `Alleen km ${odd[0]} van je test week` : `Alleen ${kmList(odd)} van je test weken`} iets meer af.` };
 }
 
 // The kilometres the top of a test is read on, when the run has a warm-up or cooling down
@@ -310,9 +310,9 @@ export function headlineStats(rd: RunDetail, kind: RunKind, totals?: RunTotals):
   }
   const gain = sum(rd.kms.map((k) => k.gainM ?? 0));
   const hasAltitude = rd.kms.some((k) => k.gainM !== undefined);
-  if (out.length < 3 && hasAltitude) out.push({ key: 'climb', label: 'Stijging', value: String(Math.round(gain)), unit: 'm', note: 'omhoog over de hele run' });
+  if (out.length < 3 && hasAltitude) out.push({ key: 'climb', label: 'Stijging', value: String(Math.round(gain)), unit: 'm', note: 'omhoog over de hele loop' });
   if (out.length < 3) out.push({ key: 'distance', label: 'Afstand', value: nl(rd.totalM / 1000, 2), unit: 'km', note: rd.pauseSec > 0 ? `met ${clock(rd.pauseSec)} stilstaan` : 'volgens je horloge' });
-  if (out.length < 3 && pace !== undefined && !out.some((s) => s.key === 'pace')) out.push({ key: 'pace', label: 'Tempo', value: formatPace(pace), unit: '/km', note: 'gemiddeld over de hele run' });
+  if (out.length < 3 && pace !== undefined && !out.some((s) => s.key === 'pace')) out.push({ key: 'pace', label: 'Tempo', value: formatPace(pace), unit: '/km', note: 'gemiddeld over de hele loop' });
   return out.slice(0, 3);
 }
 
@@ -437,7 +437,7 @@ export function kmBetween(rd: RunDetail, km: RunKm): string[] {
   if (a !== undefined && b !== undefined && Math.abs(pct(b, a)) >= PACING.sagPct && km.distanceM >= PACING.fullKmM) {
     out.push(`De eerste helft ging in ${formatPace(a)} per km, de tweede in ${formatPace(b)}.`);
   }
-  if ((km.pauseSec ?? 0) >= 1) out.push(`Je stond ${clock(km.pauseSec as number)} stil; die tijd telt niet mee in je tempo.`);
+  if ((km.pauseSec ?? 0) >= 1) out.push(`Je stond ${clock(km.pauseSec as number)} stil. Die tijd telt niet mee in je tempo.`);
   if (isNum(km.hrMax) && isNum(km.hrAvg) && km.hrMax - km.hrAvg >= 10) out.push(`Je hartslag piekte op ${km.hrMax}, ${beats(km.hrMax - km.hrAvg)} boven het gemiddelde van deze kilometer.`);
   return out.slice(0, 3);
 }
@@ -458,11 +458,11 @@ export type FormKey = 'cadence' | 'stanceTimeMs' | 'stepLengthM' | 'oscillationM
 const FORM_KEYS: FormKey[] = ['cadence', 'stanceTimeMs', 'stepLengthM', 'oscillationMm', 'stanceBalanceLeftPct'];
 
 export const FORM_INFO: Record<FormKey, { label: string; noun: string; unit: string; decimals: number; scale: number; meaning: string }> = {
-  cadence: { label: 'Cadans', noun: 'cadans', unit: 'stappen/min', decimals: 0, scale: 1, meaning: 'Hoeveel stappen je per minuut zet. Hij verandert weinig met je tempo; wat bij jou past hangt af van je eigen gemiddelde, niet van een vaste norm als 180.' },
-  stanceTimeMs: { label: 'Grondcontact', noun: 'grondcontact', unit: 'ms', decimals: 0, scale: 1, meaning: 'Hoe lang je voet bij elke stap op de grond is. Binnen één run kan een langer grondcontact bij hetzelfde tempo op vermoeidheid wijzen, maar dat verschilt per persoon.' },
+  cadence: { label: 'Cadans', noun: 'cadans', unit: 'stappen/min', decimals: 0, scale: 1, meaning: 'Hoeveel stappen je per minuut zet. Hij verandert weinig met je tempo. Wat bij jou past hangt af van je eigen gemiddelde, niet van een vaste norm als 180.' },
+  stanceTimeMs: { label: 'Grondcontact', noun: 'grondcontact', unit: 'ms', decimals: 0, scale: 1, meaning: 'Hoe lang je voet bij elke stap op de grond is. Binnen één loop kan een langer grondcontact bij hetzelfde tempo op vermoeidheid wijzen. Dat verschilt per persoon.' },
   stepLengthM: { label: 'Staplengte', noun: 'pas', unit: 'cm', decimals: 0, scale: 100, meaning: 'De afstand van één stap. Als je trager gaat, zit het verlies meestal in je pas en niet in je cadans.' },
-  oscillationMm: { label: 'Op en neer', noun: 'verticale oscillatie', unit: 'mm', decimals: 0, scale: 1, meaning: 'Hoeveel je bij elke stap op en neer gaat (verticale oscillatie). Na één run zegt het weinig; het is vooral een getal om je eigen lijn te volgen.' },
-  stanceBalanceLeftPct: { label: 'Balans', noun: 'balans', unit: '% links', decimals: 1, scale: 1, meaning: 'Hoe je grondcontact over links en rechts verdeeld is. Alleen een verdeling die over meerdere runs buiten ongeveer 52 tegen 48 blijft is het bekijken waard.' },
+  oscillationMm: { label: 'Op en neer', noun: 'verticale oscillatie', unit: 'mm', decimals: 0, scale: 1, meaning: 'Hoeveel je bij elke stap op en neer gaat (verticale oscillatie). Na één loop zegt het weinig. Het is vooral een getal om je eigen lijn te volgen.' },
+  stanceBalanceLeftPct: { label: 'Balans', noun: 'balans', unit: '% links', decimals: 1, scale: 1, meaning: 'Hoe je grondcontact over links en rechts verdeeld is. Alleen een verdeling die over meerdere lopen buiten ongeveer 52 tegen 48 blijft is het bekijken waard.' },
 };
 
 // The figures this run measured, of those that are switched on, in a fixed order.
@@ -555,8 +555,8 @@ function pacePattern(p: Pacing | undefined, inBest: boolean): RunPattern | undef
       text: `Je begon ${secs(s)} per kilometer te snel. De eerste kilometer${where} was ${Math.round(p.firstFastPct)} procent sneller dan je gemiddelde en de tweede helft trager dan de eerste.`,
       strength: p.firstFastPct / PACING.fastStartPct,
       why: {
-        compared: 'Je eerste kilometer tegen het gemiddelde van de hele run, en de twee helften tegen elkaar.',
-        strength: `${GPS_NOTE} Dit verschil is ${Math.round(p.firstFastPct)} procent; vanaf ${PACING.fastStartPct} procent noemt ASCEND het een snelle start.`,
+        compared: 'Je eerste kilometer tegen het gemiddelde van de hele loop, en de twee helften tegen elkaar.',
+        strength: `${GPS_NOTE} Dit verschil is ${Math.round(p.firstFastPct)} procent. Vanaf ${PACING.fastStartPct} procent noemt ASCEND het een snelle start.`,
         meaning: 'Een start die te snel is kost meestal meer dan hij oplevert. Gelijkmatig lopen is meestal het snelst. De grens is te ijken op jouw gegevens.',
       },
     };
@@ -567,8 +567,8 @@ function pacePattern(p: Pacing | undefined, inBest: boolean): RunPattern | undef
       text: `Vanaf km ${p.sag.km}${where} werd je ${Math.round(p.sag.pct)} procent trager dan je gemiddelde, zonder dat wind of een helling dat verklaart.`,
       strength: p.sag.pct / PACING.sagPct,
       why: {
-        compared: 'Elke kilometer vanaf de derde tegen het gemiddelde van de run.',
-        strength: `${GPS_NOTE} Dit verschil is ${Math.round(p.sag.pct)} procent; vanaf ${PACING.sagPct} procent noemt ASCEND het inzakken.`,
+        compared: 'Elke kilometer vanaf de derde tegen het gemiddelde van de loop.',
+        strength: `${GPS_NOTE} Dit verschil is ${Math.round(p.sag.pct)} procent. Vanaf ${PACING.sagPct} procent noemt ASCEND het inzakken.`,
         meaning: 'Inzakken kan van een te snelle start komen, maar ook van vermoeidheid van die dag.',
       },
     };
@@ -605,7 +605,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         strength: fade.slowerPct / 4,
         why: {
           compared: `Je laatste werkblok tegen je eerste, van ${fade.blocks} blokken.`,
-          strength: `${GPS_NOTE} Dit verschil is ${Math.round(fade.slowerPct)} procent; vanaf 4 procent noemt ASCEND het.`,
+          strength: `${GPS_NOTE} Dit verschil is ${Math.round(fade.slowerPct)} procent. Vanaf 4 procent noemt ASCEND het.`,
           meaning: 'Het laatste blok even snel als het eerste is het doel van een tempoloop.',
         },
       });
@@ -621,7 +621,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         strength: drift.percent / NOISE.driftPoints,
         why: {
           compared: `Je tempo per hartslag in de tweede helft tegen de eerste, over ${drift.blockMinutes} minuten zonder de eerste tien.`,
-          strength: `De drift is ${nl(drift.percent)} procent; vanaf ${NOISE.driftPoints} procent zegt ASCEND er iets over.`,
+          strength: `De drift is ${nl(drift.percent)} procent. Vanaf ${NOISE.driftPoints} procent zegt ASCEND er iets over.`,
           meaning: 'Een hartslag die oploopt bij gelijk tempo kan van warmte, te weinig drinken of vermoeidheid komen. De grens is een richtlijn van coaches, geen meting.',
         },
       });
@@ -638,7 +638,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         strength: pc / NOISE.stancePct,
         why: {
           compared: 'Je grondcontact in het eerste derde van de kilometers tegen het laatste derde, alleen als het tempo binnen 6 procent bleef.',
-          strength: `Het verschil is ${Math.round(pc)} procent; vanaf ${NOISE.stancePct} procent zegt ASCEND er iets over.`,
+          strength: `Het verschil is ${Math.round(pc)} procent. Vanaf ${NOISE.stancePct} procent zegt ASCEND er iets over.`,
           meaning: 'Een langer grondcontact bij hetzelfde tempo kan op vermoeidheid wijzen, maar dat verschilt sterk per persoon.',
         },
       });
@@ -650,7 +650,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         strength: -f.change / 0.03,
         why: {
           compared: 'Je staplengte in het eerste derde van de kilometers tegen het laatste derde, alleen als het tempo binnen 6 procent bleef.',
-          strength: `Het verschil is ${Math.round(-f.change * 100)} cm; vanaf 3 cm zegt ASCEND er iets over.`,
+          strength: `Het verschil is ${Math.round(-f.change * 100)} cm. Vanaf 3 cm zegt ASCEND er iets over.`,
           meaning: 'Een kortere pas bij hetzelfde tempo kan op vermoeide benen wijzen.',
         },
       });
@@ -686,7 +686,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         why: {
           compared: 'Je looprichting per kilometer tegen de wind van dat uur, omgerekend naar borsthoogte.',
           strength: `Vanaf ${PACING.windKmh} km/u kan tegenwind een kilometer merkbaar trager maken.`,
-          meaning: 'Harde tegenwind kost grofweg 5 tot 10 procent tempo; wind mee geeft maar ongeveer de helft terug. Een ruwe rekensom.',
+          meaning: 'Harde tegenwind kost grofweg 5 tot 10 procent tempo. Wind mee geeft maar ongeveer de helft terug. Een ruwe rekensom.',
         },
       });
     }
@@ -695,10 +695,10 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
   if (ctx.recurring) {
     out.push({
       topic: 'Gewoonte',
-      text: `Je begint vaak te snel: ${ctx.recurring.count} van je laatste ${ctx.recurring.of} harde loopjes.`,
+      text: `Je begint vaak te snel: ${ctx.recurring.count} van je laatste ${ctx.recurring.of} harde lopen.`,
       strength: 1 + ctx.recurring.count / 10,
       why: {
-        compared: 'De verdeling van je laatste tests, wedstrijden en loopjes met blokken.',
+        compared: 'De verdeling van je laatste tests, wedstrijden en lopen met blokken.',
         strength: `Vanaf 3 van de laatste 5 noemt ASCEND het een gewoonte.`,
         meaning: 'Een gewoonte is makkelijker te veranderen als je hem kent. De grens is een eigen aanname.',
       },
@@ -717,7 +717,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         why: {
           compared: 'Wat ASCEND van die dag weet: het weer, je benen, wat je meldde en de reeks zelf.',
           strength: 'Een feit, geen oordeel.',
-          meaning: 'Een test onder zwaardere omstandigheden geeft meestal tragere tempo\'s; dat is de veilige kant op.',
+          meaning: 'Een test onder zwaardere omstandigheden geeft meestal tragere tempo\'s. Dat is de veilige kant op.',
         },
       });
     }
@@ -775,7 +775,7 @@ export function runAdvice(rd: RunDetail, kind: RunKind, opts: { pain?: boolean; 
     if (!opts.indoor && km > 0 && climb / km > HILLY_M_PER_KM) lines.push(`Kies voor je volgende test een vlakkere route; deze had ${Math.round(climb / km)} meter stijging per kilometer.`);
     if (lines.length === 0 && a?.kind === 'even') lines.push('Gelijkmatig gelopen. Houd dezelfde aanpak bij je volgende test.');
     return lines.length > 0
-      ? { title: 'Voor de volgende test', lines: lines.slice(0, 2), why: 'Uit de verdeling van je test en wat ASCEND van die dag weet. Gelijkmatig lopen is meestal het snelst; hoeveel sneller jij dan bent, zegt niemand vooraf.' }
+      ? { title: 'Voor de volgende test', lines: lines.slice(0, 2), why: 'Uit de verdeling van je test en wat ASCEND van die dag weet. Gelijkmatig lopen is meestal het snelst. Hoeveel sneller jij dan bent, zegt niemand vooraf.' }
       : undefined;
   }
   if (kind === 'blocks') {
@@ -786,14 +786,14 @@ export function runAdvice(rd: RunDetail, kind: RunKind, opts: { pain?: boolean; 
     const p = kind === 'easy' ? undefined : pacingOf(rd.kms);
     if (p?.word === 'te snel begonnen') {
       const diff = Math.round(p.meanPace - p.firstPace);
-      if (diff >= ADVICE_MIN_SEC) lines.push(`Begin de eerste kilometer ${secs(Math.round(diff / 5) * 5)} per kilometer rustiger; dan blijft er meer over voor het eind.`);
+      if (diff >= ADVICE_MIN_SEC) lines.push(`Begin de eerste kilometer ${secs(Math.round(diff / 5) * 5)} per kilometer rustiger. Dan blijft er meer over voor het eind.`);
     }
     if (easyOrLong(kind)) {
       const drift = driftFromKms(rd, { easyOrLong: true });
-      if (!isUnavailable(drift) && drift.beyondNoise && drift.percent > 0) lines.push('Neem bij warm weer water mee en begin het eerste half uur rustig; dat kan helpen je hartslag laag te houden.');
+      if (!isUnavailable(drift) && drift.beyondNoise && drift.percent > 0) lines.push('Neem bij warm weer water mee en begin het eerste half uur rustig. Dat kan helpen je hartslag laag te houden.');
     }
   }
-  return lines.length > 0 ? { title: 'Voor de volgende keer', lines: lines.slice(0, 2), why: 'Uit de verdeling van je tempo en je hartslag in deze run. Een suggestie: je planning verandert er niet door.' } : undefined;
+  return lines.length > 0 ? { title: 'Voor de volgende keer', lines: lines.slice(0, 2), why: 'Uit de verdeling van je tempo en je hartslag in deze loop. Een suggestie: je planning verandert er niet door.' } : undefined;
 }
 
 // --- the test as a special case (6.2) --------------------------------------------------------------------
@@ -878,7 +878,7 @@ export function compareWithSimilar(rd: RunDetail, others: RunDetail[]): SimilarC
     label: 'Tempo',
     value: `${formatPace(own)} tegen ${formatPace(theirs)}`,
     word: dp <= -COMPARE_PACE_PCT ? 'Beter' : dp >= COMPARE_PACE_PCT ? 'Slechter' : 'Normaal',
-    note: 'je gemiddelde tempo tegen het midden van de eerdere runs',
+    note: 'je gemiddelde tempo tegen het midden van de eerdere lopen',
   });
   const ownHeart = heartOf(rd.kms);
   const theirHearts = others.map((o) => ({ h: heartOf(o.kms), p: paceOf(o) })).filter((x) => x.h && Number.isFinite(x.p));
@@ -892,7 +892,7 @@ export function compareWithSimilar(rd: RunDetail, others: RunDetail[]): SimilarC
       label: 'Hartslag bij je tempo',
       value: `${Math.round(ownHeart.mean)} bpm`,
       word: de >= COMPARE_PACE_PCT ? 'Beter' : de <= -COMPARE_PACE_PCT ? 'Slechter' : 'Normaal',
-      note: 'hoeveel tempo je per hartslag haalde, tegen de eerdere runs',
+      note: 'hoeveel tempo je per hartslag haalde, tegen de eerdere lopen',
     });
   }
   const ownH = halvesOf(rd.kms);
@@ -904,7 +904,7 @@ export function compareWithSimilar(rd: RunDetail, others: RunDetail[]): SimilarC
       label: 'Verdeling',
       value: `${Math.round(Math.abs(ownH.diffSec))} s tegen ${Math.round(theirSplit)} s`,
       word: d <= -COMPARE_SPLIT_SEC ? 'Beter' : d >= COMPARE_SPLIT_SEC ? 'Slechter' : 'Normaal',
-      note: 'het verschil tussen je twee helften; kleiner is gelijkmatiger',
+      note: 'het verschil tussen je twee helften. Kleiner is gelijkmatiger',
     });
   }
   const len = rd.kms.length;
@@ -978,7 +978,7 @@ export function edgePauseLine(edge: EdgePauses): string | undefined {
   const parts = [head, tail].filter((x): x is string => !!x);
   if (parts.length === 0) return undefined;
   const text = parts.join(' en ');
-  return `${text.charAt(0).toUpperCase()}${text.slice(1)}; die tijd telt nergens mee.`;
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}. Die tijd telt nergens mee.`;
 }
 
 // --- the screen as a whole ----------------------------------------------------------------------------
@@ -990,8 +990,8 @@ export function lapsForList(rd: RunDetail): RunLap[] {
 
 // The note under the charts when the heart rate is missing or thin (7).
 export function heartNote(rd: RunDetail, coveragePct: number | undefined): string | undefined {
-  if (!rd.kms.some((k) => isNum(k.hrAvg))) return 'Geen hartslag gemeten bij deze run.';
-  if (isNum(coveragePct) && coveragePct < 80) return `Hartslag over ${Math.round(coveragePct)} procent van de tijd gemeten; te weinig om iets over te zeggen.`;
+  if (!rd.kms.some((k) => isNum(k.hrAvg))) return 'Geen hartslag gemeten bij deze loop.';
+  if (isNum(coveragePct) && coveragePct < 80) return `Hartslag over ${Math.round(coveragePct)} procent van de tijd gemeten. Dat is te weinig om iets over te zeggen.`;
   return undefined;
 }
 
