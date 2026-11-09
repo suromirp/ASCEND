@@ -57,10 +57,17 @@ const W_HEAVY_NEXT = 1000;
 const W_DROP = 100;
 // The training that gives the week its shape (the long run, hills, a hard run, blocks) is let go last.
 const W_DROP_KEY = 130;
+// A training without a place of its own in the week (like Benen B, which the program no longer plans) goes before one with a place.
+const W_DROP_SPARE = 90;
 // A second long run in the same week or within five days of the one before (also one you logged): hard, so it is
 // let go before leg strength is (docs/beslissingen/2026-11-09-planner-vakantie-lange-duurloop.md).
 const W_LONG_NEAR = 1000;
 const LONG_GAP_DAYS = 5;
+// In a week where hills or intervals and a leg day do not both fit, the leg day goes first when the week before or
+// after has hills or intervals already; two weeks in a row without leg strength is avoided when it can be.
+const W_HARD_OVER_LEG = 50;
+const W_LEGLESS_PAIR = 300;
+const W_HARD_TWICE = 150;
 const W_CROWD = 40;
 // The same task (the same training, or one with the same role) two days apart or closer.
 const CROWD_GAP_DAYS = 3;
@@ -136,6 +143,10 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
       const t = byId.get(s.templateId);
       return input.check.slotDays?.get(s.templateId) ?? input.check.slotDays?.get(patternSlotOf(s.templateId)) ?? t?.defaultDayOfWeek ?? 4;
     };
+    const hasOwnPlace = (s: PlannedSession) => {
+      const t = byId.get(s.templateId);
+      return !!(input.check.slotDays?.get(s.templateId) ?? input.check.slotDays?.get(patternSlotOf(s.templateId)) ?? t?.defaultDayOfWeek);
+    };
     // The key tasks first, then by their place in the week: where things stood before only breaks a tie.
     const parts = list.filter(mine).sort((a, b) =>
       Number(keyTask(byId.get(b.templateId))) - Number(keyTask(byId.get(a.templateId))) || slotOf(a) - slotOf(b) || a.templateId.localeCompare(b.templateId) || a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id));
@@ -202,6 +213,29 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
           if (Math.abs(daysBetween(a, b)) <= LONG_GAP_DAYS || mondayOfWeek(a) === mondayOfWeek(b)) total += W_LONG_NEAR;
         }
       }
+      // Leg strength before a second week of hills or intervals, and no two weeks in a row without leg strength
+      // (docs/beslissingen/2026-11-09-planner-vakantie-beenkracht-voorrang.md).
+      const weekHas = (monday: string, pick: (t: SessionTemplate) => boolean) =>
+        built.some((s) => s.status !== 'skipped' && mondayOfWeek(s.scheduledDate) === monday && !!byId.get(s.templateId) && pick(byId.get(s.templateId)!));
+      const legStrength = (t: SessionTemplate) => t.type === 'strength' && isLegHeavyTemplate(t) && !hasRole(t, 'long');
+      const hardWeek = (t: SessionTemplate) => hasRole(t, 'hills') || hasRole(t, 'hard_run');
+      const thisMonday = mondayOfWeek(today);
+      const scored = [addDays(first, -7), ...weeks, addDays(last, 7)].filter((m) => m >= thisMonday);
+      const legless = (m: string) => !weekHas(m, legStrength);
+      for (let i = 0; i + 1 < scored.length; i++) if (legless(scored[i]) && legless(scored[i + 1])) total += W_LEGLESS_PAIR;
+      for (const m of weeks) {
+        if (weekHas(m, hardWeek) && legless(m) && (weekHas(addDays(m, -7), hardWeek) || weekHas(addDays(m, 7), hardWeek))) total += W_HARD_OVER_LEG;
+      }
+      // Hills (or a hard run) twice in one calendar week is no place for the one that does not fit: it goes.
+      for (const role of ['hills', 'hard_run'] as const) {
+        const same = built.filter((s) => s.status !== 'skipped' && s.scheduledDate >= scoreFrom && s.scheduledDate <= scoreTo && !!byId.get(s.templateId) && hasRole(byId.get(s.templateId)!, role));
+        for (let i = 0; i < same.length; i++) {
+          for (let j = i + 1; j < same.length; j++) {
+            if (!partIds.has(same[i].id) && !partIds.has(same[j].id)) continue;
+            if (mondayOfWeek(same[i].scheduledDate) === mondayOfWeek(same[j].scheduledDate)) total += W_HARD_TWICE;
+          }
+        }
+      }
       // Dropped, double days, shifting.
       const perDay = new Map<string, number>();
       for (const s of list2) {
@@ -211,7 +245,7 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
       for (const n of perDay.values()) if (n > 1) total += (n - 1) * W_DOUBLE;
       for (const s of parts) {
         const d = state.get(s.id);
-        if (!d) { total += keyTask(byId.get(s.templateId)) ? W_DROP_KEY : W_DROP; continue; }
+        if (!d) { total += keyTask(byId.get(s.templateId)) ? W_DROP_KEY : hasOwnPlace(s) ? W_DROP : W_DROP_SPARE; continue; }
         // Away from its place in the week, by weekdays around the week; a thousandth for every day away from where it stood.
         const away = Math.abs(isoWeekday(d) - slotOf(s));
         total += Math.min(away, 7 - away) * W_DAY + Math.abs(daysBetween(s.scheduledDate, d)) * W_STAY;
