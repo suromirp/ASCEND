@@ -115,7 +115,7 @@ export const SKILL_LADDERS: SkillLadder[] = [
     kind: 'strength',
     steps: [
       { exerciseId: 'tuck-l-sit', test: hold(), note: 'Steun op je handen, knieën naar je borst.' },
-      { exerciseId: 'one-leg-l-sit', test: hold(), note: 'Eén been gestrekt, het andere gebogen; wissel per set.' },
+      { exerciseId: 'one-leg-l-sit', test: hold(), note: 'Eén been gestrekt, het andere gebogen. Wissel per set en begin elke training met het andere been.' },
       { exerciseId: 'l-sit', test: hold(), note: 'Beide benen gestrekt voor je, op de vloer, parallettes of dip bars.' },
     ],
   },
@@ -126,7 +126,7 @@ export const SKILL_LADDERS: SkillLadder[] = [
     steps: [
       { exerciseId: 'tuck-front-lever', test: hold(), note: 'Knieën naar je borst, rug horizontaal, armen gestrekt.' },
       { exerciseId: 'advanced-tuck-front-lever', test: hold(), note: 'Heupen open, knieën op een rechte hoek, schenen parallel aan je romp.' },
-      { exerciseId: 'one-leg-front-lever', test: hold(), note: 'Eén been gestrekt, het andere gebogen; wissel per set.' },
+      { exerciseId: 'one-leg-front-lever', test: hold(), note: 'Eén been gestrekt, het andere gebogen. Wissel per set en begin elke training met het andere been.' },
       { exerciseId: 'straddle-front-lever', test: hold(), note: 'Beide benen gestrekt en gespreid, rug horizontaal.' },
     ],
   },

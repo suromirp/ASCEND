@@ -31,7 +31,7 @@ import type { AddTileId } from '../engine/goalDraft';
 import { SkillGoalCard } from '../components/ascend/SkillGoalCard';
 import { SkillGoalSheet } from '../components/ascend/SkillGoalSheet';
 import { useSkillGoals } from '../components/ascend/useSkillGoals';
-import { liveSkillGoals, takenSkillSteps } from '../engine/skillGoal';
+import { liveSkillGoals, planStartSteps, takenSkillSteps } from '../engine/skillGoal';
 import { TimeoutError } from '../utils/withTimeout';
 import { skillLadderById } from '../data/skillLadders';
 import { skillReadinessFor } from '../engine/goalReadinessFor';
@@ -379,6 +379,7 @@ export function AscendPage() {
           logs={sessionLogs}
           today={today}
           taken={takenSkillSteps(skills.store)}
+          starts={planStartSteps(templates, settings.strengthModel, today)}
           onSubmit={(goal, close) => { close(); later(() => setSkillProposal(goal)); }}
           onClose={() => setSkillChoosing(false)}
         />

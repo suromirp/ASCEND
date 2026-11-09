@@ -1,9 +1,10 @@
+import { buildDefaultProgramData } from '../data/defaultProgram';
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import { SKILL_LADDERS, skillLadderById, type SkillLadder } from '../data/skillLadders';
 import type { SessionLog, SetLog } from '../models/training';
 import type { SkillGoal, SkillGoalStore, SkillStepProgress } from '../models/skillGoals';
-import { buildSkillGoal, clearedSkillSteps, freeTargetStep, takenSkillSteps, defaultTargetStep, liveSkillGoals, mergeSkillStores, newSkillStepProgress, skillStepMilestones, SKILL_LADDER_CHOICES, skillStepName } from './skillGoal';
+import { buildSkillGoal, clearedSkillSteps, freeTargetStep, takenSkillSteps, defaultTargetStep, planStartSteps, liveSkillGoals, mergeSkillStores, newSkillStepProgress, skillStepMilestones, SKILL_LADDER_CHOICES, skillStepName } from './skillGoal';
 import { skillReadinessFor } from './goalReadinessFor';
 import { ladderState } from './skillLadder';
 
@@ -227,5 +228,19 @@ describe('de overige ladders als vaardigheid (F4f)', () => {
     const l = skillLadderById('l-sit')!;
     const logs = [log('2026-11-05', { 'one-leg-l-sit': [{ reps: 1, seconds: 30 }, { reps: 1, seconds: 30 }, { reps: 1, seconds: 31 }] })];
     expect(ladderState(l, logs, TODAY)).toMatchObject({ current: 2, passed: true, proposal: { kind: 'harder', step: 3, exerciseId: 'l-sit' } });
+  });
+});
+
+describe('planStartSteps', () => {
+  it('een ladder zonder logs begint bij de stap waar je plan al op staat', () => {
+    const { templates } = buildDefaultProgramData();
+    const model = { stepSwaps: { tpl_bodyweight: { bw3: { from: 'push-up', to: 'decline-push-up' } } } };
+    const starts = planStartSteps(templates, model, '2026-11-20');
+    const push = skillLadderById('push-up')!;
+    expect(starts.get('push-up')).toBeGreaterThan(0);
+    const start = starts.get('push-up')!;
+    expect(defaultTargetStep(push, { current: null }, start)).toBe(Math.min(start + 1, push.steps.length));
+    expect(defaultTargetStep(push, { current: null })).toBe(1);
+    expect(defaultTargetStep(push, { current: 2 }, start)).toBe(3);
   });
 });

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
-import { CHOICES } from '../../../data/settingsChoices';
+import { CHOICES, choiceShort } from '../../../data/settingsChoices';
 import { INTENSITY, type Intensity } from '../../../data/workoutStructure';
 import { addWeightEntry, freshLinkedWeight, hasHealthConnectWeight, latestWeight, weightsInUse, WEIGHT_REMINDER_DAYS } from '../../../engine/bodyWeight';
 import type { HealthConnectFacts } from '../../../engine/settingsSummary';
@@ -30,6 +30,7 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
   const [reminder, setReminder] = useState(false);
+  const [ownPick, setOwnPick] = useState(false);
   const [self, setSelf] = useState(false);
   const [help, setHelp] = useState(false);
   const [fatHelp, setFatHelp] = useState(false);
@@ -162,6 +163,7 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
                 checked={settings.weightTrend !== false}
                 onChange={(on) => void updateSettings({ weightTrend: on })}
               />
+              <SettingsRow id="gewicht-eigen" title="Gewicht bij eigen gewicht" info="gewichtEigen" value={choiceShort('gewichtEigen', settings.weightForLoad ?? 'trend')} onClick={() => setOwnPick(true)} />
               <SettingsRow id="gewicht-herinnering" title="Herinnering" value={CHOICES.herinnering.options.find((o) => o.value === days)?.label ?? 'Nooit'} onClick={() => setReminder(true)} />
             </SettingsList>
 
@@ -200,6 +202,14 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
           </>
         )}
       </Sheet>
+      {ownPick && (
+        <ChoiceFromDef
+          def={CHOICES.gewichtEigen}
+          value={settings.weightForLoad ?? 'trend'}
+          onPick={(v) => void updateSettings({ weightForLoad: v })}
+          onClose={() => setOwnPick(false)}
+        />
+      )}
       {reminder && (
         <ChoiceFromDef
           def={CHOICES.herinnering}

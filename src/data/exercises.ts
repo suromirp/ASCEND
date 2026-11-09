@@ -11,6 +11,7 @@
 // slow lowering squats, Bulgarian split squats, Nordic curls and the Copenhagen
 // plank. Primary muscles count 1, secondary 0.5 (engine/muscleVolume.ts).
 
+import { EXTRA_FRACTION } from './bodyweightShares';
 import type { Exercise, MovementPattern, MuscleGroup, Resistance } from '../models/exercise';
 import { FAMILY, NUANCE } from './exerciseFamilies';
 import { EXERCISE_GUIDES } from './exerciseGuides';
@@ -71,7 +72,7 @@ function ex(
   cues: string[],
   bodyweightFraction?: number,
 ): Exercise {
-  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(FAMILY.has(id) ? { family: FAMILY.get(id) } : {}), ...(EXERCISE_GUIDES[id] ? { guide: EXERCISE_GUIDES[id] } : {}), ...(NUANCE.has(id) ? { nuance: [...NUANCE.get(id)!] } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}), ...(HOLD.has(id) ? { measure: 'hold' as const } : {}), ...(PER_SIDE.has(id) ? { perSide: true } : {}), ...(BAND.has(id) ? { assist: 'band' as const } : {}), ...(LADDER_PLACE.has(id) ? { ladder: { ...LADDER_PLACE.get(id)! } } : {}) };
+  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(FAMILY.has(id) ? { family: FAMILY.get(id) } : {}), ...(EXERCISE_GUIDES[id] ? { guide: EXERCISE_GUIDES[id] } : {}), ...(NUANCE.has(id) ? { nuance: [...NUANCE.get(id)!] } : {}), ...((bodyweightFraction ?? EXTRA_FRACTION.get(id)) !== undefined ? { bodyweightFraction: (bodyweightFraction ?? EXTRA_FRACTION.get(id))! } : {}), ...(HOLD.has(id) ? { measure: 'hold' as const } : {}), ...(PER_SIDE.has(id) ? { perSide: true } : {}), ...(BAND.has(id) ? { assist: 'band' as const } : {}), ...(LADDER_PLACE.has(id) ? { ladder: { ...LADDER_PLACE.get(id)! } } : {}) };
 }
 
 export const EXERCISES: Exercise[] = [

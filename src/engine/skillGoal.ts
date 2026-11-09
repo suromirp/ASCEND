@@ -9,11 +9,14 @@
 // Dit bestand plant niets, verandert geen log en leest geen TrainingGoal: een vaardigheid stuurt de planning
 // niet en wordt nooit het hoofddoel. Puur: geen React, geen opslag.
 
-import { SKILL_LADDERS, skillLadderById, type SkillLadder } from '../data/skillLadders';
+import { LADDER_PLACE, SKILL_LADDERS, skillLadderById, type SkillLadder } from '../data/skillLadders';
 import { exerciseById } from '../data/exercises';
-import type { SessionLog } from '../models/training';
+import type { SessionLog, SessionTemplate } from '../models/training';
 import type { SkillGoal, SkillGoalStore, SkillStepMilestone, SkillStepProgress } from '../models/skillGoals';
+import { forgeSlotsFor } from './forgeSlots';
 import { ladderState, type LadderState } from './skillLadder';
+import { slotExerciseId, type StepSwaps } from './stepSwaps';
+import type { StoredStrengthProgram } from './strengthProgramStore';
 
 // De naam van een stap: de naam van de oefening, zoals Forge hem toont.
 export function skillStepName(ladder: SkillLadder, step: number): string {
@@ -87,9 +90,24 @@ export function freeTargetStep(ladder: SkillLadder, preferred: number, taken: Re
 }
 
 // De doelstap die het blad voorstelt: de stap boven je huidige, of de eerste stap zonder training.
-export function defaultTargetStep(ladder: SkillLadder, state: Pick<LadderState, 'current'>): number {
-  if (state.current === null) return 1;
+// Zonder logs op de ladder begint hij bij de stap waar je plan al op staat (`start`), anders bij de eerste.
+export function defaultTargetStep(ladder: SkillLadder, state: Pick<LadderState, 'current'>, start?: number): number {
+  if (state.current === null) return start === undefined ? 1 : Math.min(start + 1, ladder.steps.length);
   return Math.min(state.current + 1, ladder.steps.length);
+}
+
+// De hoogste stap per ladder waar je plan al op staat: een oefening van een ladder in een van je krachttrainingen
+// (met de stappen die je met Akkoord koos). Voor een ladder zonder logs is dat waar je begint.
+export function planStartSteps(templates: readonly SessionTemplate[], model: { program?: StoredStrengthProgram; stepSwaps?: StepSwaps } | undefined, date: string): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const template of templates) {
+    for (const slot of forgeSlotsFor(template, model, date)) {
+      const id = slotExerciseId(slot);
+      const place = id ? LADDER_PLACE.get(id) : undefined;
+      if (place && place.step > (out.get(place.id) ?? 0)) out.set(place.id, place.step);
+    }
+  }
+  return out;
 }
 
 export interface SkillGoalInput {
