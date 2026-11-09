@@ -77,6 +77,10 @@ export interface WorkoutRow {
   // "Forge rekent mee" (engine/forgeReckon.ts): the reps Forge last put in this row (the plan, or an
   // estimate), to see afterwards whether you did something else than asked. Draft only.
   forgeReps?: number;
+  // The weight Forge put in this row after an adjustment during the training ("Forge rekent mee" after a
+  // set, Lichter). Absent: the weight of the prescription (`target.weightKg`). A weight you type yourself
+  // never sets it. Goes onto the log as SetLog.forgeKg next to `rirAssumed`. Draft only otherwise.
+  forgeKg?: number;
   // The reps are Forge's estimate for a weight you typed (the row is `edited` for the weight, not for the
   // reps), so another weight may estimate them again. Typing reps yourself clears it. Draft only.
   repsEstimated?: boolean;
@@ -646,6 +650,8 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
               // Wat Forge vroeg, voor "Afvinken telt als het doel" (engine/assumedSets.ts).
               ...(r.forgeReps !== undefined && r.forgeReps > 0 && r.target.timedSec === undefined ? { repsAsked: r.forgeReps } : {}),
               ...(r.target.weightKg !== undefined ? { weightKgAsked: r.target.weightKg } : {}),
+              // Wat Forge na een bijstelling in de rij zette, alleen als het van het voorschrift afwijkt.
+              ...(typeof r.forgeKg === 'number' && Number.isFinite(r.forgeKg) && r.forgeKg !== r.target.weightKg ? { forgeKg: r.forgeKg } : {}),
             }
           : {}),
       }));

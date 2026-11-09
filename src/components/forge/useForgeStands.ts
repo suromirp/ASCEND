@@ -36,7 +36,8 @@ export function useStandIo(): StandIo {
 }
 
 // Het blad van een toestel gaat open: de eerste keer worden de gewichten uit je logs standen. Het blad toont de
-// standen meteen uit het geheugen; komt het inlezen later binnen, dan zet de sleutel van het formulier ze erbij.
+// standen meteen uit het geheugen; komt het inlezen later binnen, dan staan ze er vanzelf bij (het formulier
+// leest ze bij elke weergave en bouwt niet opnieuw op).
 export function useSeedStands(exerciseId: string) {
   const { settings, sessionLogs } = useAppData();
   const io = useStandIo();
