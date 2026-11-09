@@ -91,7 +91,7 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow={formatDateNL(log.completedDate)} title="Zweetverlies" onClose={requestClose} /></div>
             <p className="mt-0.5 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-              {templateName}, {log.durationMinutes} min. Weeg jezelf zonder kleren: vooraf na het plassen, na afloop afgedroogd en voor je plast. Een kilo minder is ongeveer een liter zweet.
+              {templateName}, {log.durationMinutes} min. Weeg jezelf vooraf na het plassen en na afloop voor je plast, beide keren in dezelfde kleding en zonder schoenen. Zonder kleren is iets preciezer, want natte kleding houdt wat zweet vast. Een kilo minder is ongeveer een liter zweet.
             </p>
 
             <div className="mt-4 flex flex-col gap-3">

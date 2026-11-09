@@ -37,7 +37,7 @@ function Dots({ week }: { week: Rhythm['weeks'][number] }) {
   );
 }
 
-export function RhythmSheet({ onClose }: { onClose: () => void }) {
+function RhythmSheet({ onClose }: { onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>

@@ -190,8 +190,9 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     else s.externalOneRm = oneRm.series;
     skipped.n += oneRm.skipped;
   }
-  // The switches for weight from MacroFactor and from Health Connect: a yes or a no, or not there.
-  for (const key of ['weightFromMacroFactor', 'weightFromHealthConnect']) {
+  // The switches for weight from MacroFactor and from Health Connect, and "Gewichtstrend
+  // gebruiken": a yes or a no, or not there.
+  for (const key of ['weightFromMacroFactor', 'weightFromHealthConnect', 'weightTrend']) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -218,7 +219,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md): een oude
   // waarde wordt stil genegeerd, het is geen fout in het bestand.
   delete s.forgeQuickButtons;
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'heatAcclimation', 'paceCurve', 'stageOwnPace', 'climbPace', 'zonesAfterTest'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -329,6 +330,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   }
   if ('leaveCrowding' in s && s.leaveCrowding !== 'drop' && s.leaveCrowding !== 'shift') {
     delete s.leaveCrowding;
+    skipped.n++;
+  }
+  // Kracht zonder sportschool: eigen gewicht of laten vervallen, of niet aanwezig (het advies).
+  if ('noGymStrength' in s && s.noGymStrength !== 'bodyweight' && s.noGymStrength !== 'drop') {
+    delete s.noGymStrength;
     skipped.n++;
   }
   // Loslaten op een training in Week: ruilen of samen, of niet aanwezig (het advies).

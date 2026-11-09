@@ -56,7 +56,7 @@ import { mondayOfWeek, todayISO } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
 import { withCountingSports } from '../engine/sportTemplate';
 import { makeId } from '../utils/id';
-import { buildBackupEnvelope, backupFileName } from '../storage/backup';
+import { buildBackupEnvelope, backupFileName } from '../storage/backupExport';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 import { runManualBackup } from '../storage/manualBackup';
 import { AppDataContext } from './useAppData';

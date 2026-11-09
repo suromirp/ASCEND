@@ -6,7 +6,7 @@ Adres: `#/`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 [knop: Lichaam: rekken en klachten]
 [link: Meer: instellingen, gegevens, koppelingen en gidsen]
 ZA 31 oktober
-Week 1 van de basis
+Week 1 van 4, basisfase
 
 --- kaart 1 ---
 

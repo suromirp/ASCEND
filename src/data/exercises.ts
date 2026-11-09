@@ -12,6 +12,7 @@
 // plank. Primary muscles count 1, secondary 0.5 (engine/muscleVolume.ts).
 
 import type { Exercise, MovementPattern, MuscleGroup, Resistance } from '../models/exercise';
+import { FAMILY, NUANCE } from './exerciseFamilies';
 
 type M = MuscleGroup;
 
@@ -55,7 +56,7 @@ function ex(
   cues: string[],
   bodyweightFraction?: number,
 ): Exercise {
-  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}) };
+  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(FAMILY.has(id) ? { family: FAMILY.get(id) } : {}), ...(NUANCE.has(id) ? { nuance: [...NUANCE.get(id)!] } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}) };
 }
 
 export const EXERCISES: Exercise[] = [

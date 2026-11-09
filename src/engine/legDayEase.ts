@@ -21,6 +21,7 @@ import type { MorningCheckIn } from '../models/checkIn';
 import { MAX_LEG_EASE_DAYS, type LegEaseChoice, type LegEaseDay, type LegEaseReason } from '../models/legEase';
 import { addDays, daysBetween, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
+import { r1 } from '../utils/round';
 import { cleanExerciseName } from './exerciseMatch';
 import { FATIGUE_BAND, FATIGUE_THRESHOLDS, fatigueEvents, fatigueWord, legFatigueOn, sessionImpulse, type LegFatigueInputs } from './legFatigue';
 import type { LegEaseHow, LegEaseMode } from './legEaseSettings';
@@ -32,6 +33,7 @@ import { logSport } from './sports';
 import { exerciseKey, HARD_RUN_MINUTES, HARD_RUN_RPE } from './strengthHistory';
 import { hasRole, isTestOrRace } from './templateRoles';
 import { checkInFor, morningSignals } from './wellbeing';
+import { capitalize } from '../utils/capitalize';
 
 export { soreFromNotes } from './legSoreness';
 
@@ -49,8 +51,6 @@ export const EASE_RIR_EXTRA = 4;
 // Een oefening met zoveel sets of meer verliest de laatste.
 const EASE_DROP_FROM_SETS = 3;
 export { MAX_LEG_EASE_DAYS };
-
-const round1 = (n: number) => Math.round(n * 10) / 10;
 
 // --- een loop eerder vandaag --------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ export function earlierTodayPoints(date: string, deps: EarlierDeps, hoursApart =
     if (log && startedBeforeNoon(log)) morning = true;
   }
   if (!any || points <= 0) return { points: 0 };
-  return { points: round1(points), label: test ? 'testloop' : 'loop', morning, ...(anyLogged ? {} : { planned: true }) };
+  return { points: r1(points), label: test ? 'testloop' : 'loop', morning, ...(anyLogged ? {} : { planned: true }) };
 }
 
 function isHardRunLog(log: SessionLog): boolean {
@@ -138,7 +138,7 @@ export interface LegDaySignals {
 
 // Het samenvoegen van de drie bronnen, los van de berekening zodat de grens te toetsen is.
 export function combineSignals(args: { date: string; sore?: Soreness; earlier: EarlierToday; baseIndex: number; pain?: boolean }): LegDaySignals {
-  const index = round1(args.baseIndex + args.earlier.points);
+  const index = r1(args.baseIndex + args.earlier.points);
   const reasons: LegEaseReason[] = [];
   if (args.sore) reasons.push(args.sore === 'flink' ? 'flink' : 'spierpijn');
   if (args.earlier.points > 0) reasons.push('harde-loop');
@@ -382,8 +382,6 @@ function indexWords(s: LegDaySignals): string {
   return s.nearLine ? `Beenindex ongeveer ${number0(s.index)}` : `Beenindex ${number0(s.index)}`;
 }
 
-const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
 // De feitregel op Vandaag, met hoogstens twee redenen in de volgorde spierpijn, harde loop, index.
 export function easeFact(s: LegDaySignals): string {
   const clauses: string[] = [];
@@ -396,7 +394,7 @@ export function easeFact(s: LegDaySignals): string {
   }
   const named = clauses.slice(0, 2);
   if (named.length === 0) return `${indexWords(s)}. Je benen dragen nog veel van de afgelopen dagen.`;
-  return `${capital(named.join(' en '))}. ${indexWords(s)}.`;
+  return `${capitalize(named.join(' en '))}. ${indexWords(s)}.`;
 }
 
 // Dezelfde reden in een korte zin voor Forge.
@@ -411,7 +409,7 @@ export function easeFactShort(s: LegDaySignals): string {
   }
   const named = parts.slice(0, 2);
   if (named.length === 0) return `${indexWords(s)}. Je benen dragen nog veel van de afgelopen dagen.`;
-  return `${capital(named.join(' en '))}. ${indexWords(s)}.`;
+  return `${capitalize(named.join(' en '))}. ${indexWords(s)}.`;
 }
 
 export const EASE_INDEX_EXPLAIN = 'Beenindex: wat je benen nog dragen van eerdere trainingen. Tot 12 kan een zware dag.';
@@ -446,7 +444,7 @@ export function easeForgeExplain(how: LegEaseHow, weightFollows = true): string 
   const rir = how === 'extra' ? EASE_RIR_EXTRA : EASE_RIR;
   const weight = weightFollows ? 'Minder gewicht, ' : '';
   const sets = how === 'alleen-gewicht' ? 'alle sets blijven staan.' : 'een set minder per oefening. Oefeningen die je als extra had gemarkeerd vervallen.';
-  return `${capital(`${weight}zeker ${rir} herhalingen over, ${sets}`)}`;
+  return `${capitalize(`${weight}zeker ${rir} herhalingen over, ${sets}`)}`;
 }
 
 // Wat Forge na Lichter klaar heeft staan, in de woorden van de gekozen manier (zoals easeExplain).
@@ -520,7 +518,7 @@ export function moveLegNote(args: { sessionId: string; toDate: string; deps: Sig
   const moved = deps.plannedSessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: toDate } : s));
   const base = legFatigueOn(toDate, fatigueInputsFor(deps, moved)).index;
   const earlier = earlierTodayPoints(toDate, { logs: deps.logs, templates: deps.templates, plannedSessions: moved, program: deps.program, bodyKg: deps.bodyKg, excludeId: sessionId });
-  const index = round1(base + earlier.points);
+  const index = r1(base + earlier.points);
   if (index <= LEG_EASE_INDEX) return undefined;
   const day = weekdayLongNL(toDate);
   const line = index <= LEG_EASE_INDEX + FATIGUE_BAND

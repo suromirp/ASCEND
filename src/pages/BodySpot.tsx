@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { SEVERITY_CHOICES } from '../data/bodyCare';
-import { breakableSpotName, careForSpot, fysioSignal, injuryNameFor, isValidReportDate, openComplaintsBySpot, spotById, stretchesForSpot, stretchMinutes, type BodySpot } from '../engine/bodyMap';
+import { breakableSpotName, careForSpot, fysioSignal, injuryNameFor, isValidReportDate, openComplaintsBySpot, spotById, stretchesForSpot, stretchMinutes } from '../engine/bodyMap';
+import type { BodySpot } from '../data/bodySpots';
 import { checkWeekStart } from '../engine/bodyCheck';
 import { resolveFigure } from '../engine/figureSettings';
 import type { InjurySeverity } from '../models/injury';
@@ -18,6 +19,7 @@ import { OpenComplaint } from '../components/lichaam/Complaints';
 import { ReportDateField } from '../components/lichaam/ReportSheet';
 import { REPORT_TIMEOUT_MS, reportInputStyle } from '../components/lichaam/reportConfig';
 import { StretchInfoSheet } from '../components/lichaam/StretchInfoSheet';
+import { capitalize } from '../utils/capitalize';
 
 const dot = <span aria-hidden="true" className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-action)' }} />;
 const inputStyle = reportInputStyle;
@@ -147,7 +149,7 @@ function FysioFold({ care, signal }: { care: SpotCare; signal: boolean }) {
             <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Naar een fysio of je huisarts bij</p>
             <ul className="flex flex-col gap-1.5 pl-4">
               {care.fysioAll.map((line) => (
-                <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line.charAt(0).toUpperCase() + line.slice(1)}</li>
+                <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{capitalize(line)}</li>
               ))}
             </ul>
           </div>

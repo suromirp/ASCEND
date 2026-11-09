@@ -89,6 +89,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="bundel-testloop" title="Testloop" facts={facts} onClick={() => setSheet('bundel-testloop')} />
         <SummaryRow id="rustdag-terug" title="Rustdag terugzetten voorstellen" facts={facts} info="rustdagTerug" onChange={(on) => void updateSettings({ restDayBack: on })} />
         <SummaryRow id="weekvoorstel" title="Voorstel bij een probleem in de week" facts={facts} info="weekVoorstel" onChange={(on) => void updateSettings({ weekFixProposal: on })} />
+        <SummaryRow id="zonder-sportschool" title="Kracht zonder sportschool" facts={facts} info="zonderSportschool" onClick={() => setSheet('zonder-sportschool')} />
       </SettingsSection>
 
       {sheet === 'bundel-dagen' && (
@@ -168,6 +169,10 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           onPick={(v) => { if (v !== (settings.leaveCrowding ?? 'drop')) void plan.changeSetting(`Opzij voor een vakantie: ${choiceShort('vakantieOpzij', v)}`, { leaveCrowding: v }, 'Volgt je keuze voor trainingen die moeten wijken voor een vakantie.'); }}
           onClose={close}
         />
+      )}
+      {/* Alleen de eerste keuze voor een nieuwe periode: verandert geen planning, dus meteen bewaard. */}
+      {sheet === 'zonder-sportschool' && (
+        <ChoiceFromDef def={CHOICES.zonderSportschool} value={settings.noGymStrength ?? 'bodyweight'} onPick={(v) => void updateSettings({ noGymStrength: v })} onClose={close} />
       )}
       {sheet === 'bundel-testloop' && (
         <BundleSheet eyebrow="Planning" title="Testloop" line="Hoe ASCEND een test leest en plant." onClose={close}>

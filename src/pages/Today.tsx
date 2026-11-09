@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
+import { weekPositionLabel } from '../engine/weekLabel';
 import { waveHeader } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
@@ -32,6 +33,8 @@ import { useMissedTraining } from '../components/useMissedTraining';
 import { SourceSilenceLine } from '../components/SourceSilenceLine';
 import { IllnessSignCard } from '../components/IllnessSignCard';
 import { useIllnessSign } from '../components/useIllnessSign';
+import { WeatherWarningCard } from '../components/WeatherWarningCard';
+import { useWeatherWarnings } from '../components/useWeatherWarnings';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { DailyStretchCard } from '../components/DailyStretchCard';
@@ -70,6 +73,7 @@ import { Card, Eyebrow } from '../components/ui';
 import { DayRow, YourDay } from '../components/vandaag/DayRow';
 import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard';
 import { missionFacts } from '../engine/missionFacts';
+import { recentRunPace } from '../engine/recentRunPace';
 import { tomorrowEntry, tomorrowText, trainingRowState } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
@@ -98,6 +102,7 @@ function TodayContent() {
   const morningCardVisible = useMorningCardVisible();
   useSleepRefetch();
   const illnessSignState = useIllnessSign();
+  const weatherWarnings = useWeatherWarnings();
   const freshStart = useFreshStart();
   const missed = useMissedTraining();
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
@@ -229,8 +234,9 @@ function TodayContent() {
   const concurrentTrainingTip = dayOrderAdvice ? null : suggestSameDayOrder(todaySessions, templateById);
   // The mission's three key numbers; the pace comes from the latest test run.
   const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
+  const recentPaceOfRuns = primaryTemplate ? recentRunPace(sessionLogs, primaryTemplate.id, today) : undefined;
   const mission = primary && primaryTemplate
-    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces)
+    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program), recentPaceOfRuns?.range, recentPaceOfRuns?.runs)
     : undefined;
   const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
@@ -374,6 +380,7 @@ function TodayContent() {
   const presentCards: TodayCardId[] = [
     ...(illness ? (['ill'] as const) : []),
     ...(illnessSignState.shown ? (['illnessSign'] as const) : []),
+    ...(weatherWarnings.shown ? (['weatherWarning'] as const) : []),
     ...(morningCardVisible ? (['morning'] as const) : []),
     ...(!illness && recoveryRamp(settings.illnessEpisodes, today) ? (['ramp'] as const) : []),
     ...(advice.length > 0 ? (['advice'] as const) : []),
@@ -399,6 +406,8 @@ function TodayContent() {
     ramp: <IllnessStatusCard />,
     // Rusthartslag en HRV wijken een paar ochtenden samen af: een vraag, geen waarschuwing.
     illnessSign: <IllnessSignCard state={illnessSignState} />,
+    // Onweer, storm, hitte of lawinegevaar bij een tocht of een lange training buiten: het feit, altijd helemaal.
+    weatherWarning: <WeatherWarningCard state={weatherWarnings} />,
     // De ochtendvraag: wat je antwoordt kan de dag veranderen.
     morning: <MorningCard />,
     advice: <CoachCard />,
@@ -440,7 +449,7 @@ function TodayContent() {
           <Eyebrow>{weekdayShortNL(today)} {formatDateNL(today)}</Eyebrow>
           {position && (
             <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              {waveHeader(position) ?? `Week ${position.weekInProgram} van de ${position.phase.name.replace(/fase$/i, '').trim().toLowerCase() || position.phase.name.toLowerCase()}`}{restHeader ? ' · rustdag' : ''}
+              {waveHeader(position) ?? weekPositionLabel(position)}{restHeader ? ' · rustdag' : ''}
             </p>
           )}
         </header>

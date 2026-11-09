@@ -12,7 +12,7 @@
 //
 // None of it is part of the export. The connection is a secret, and the rest
 // is a cache of someone else's data plus a reminder of a choice;
-// buildBackupEnvelope (storage/backup.ts) names what it exports one by one
+// buildBackupEnvelope (storage/backupExport.ts) names what it exports one by one
 // and never reads these keys (tested in externalActivities.test.ts).
 
 import { MetaRepo, SessionLogsRepo } from './database';

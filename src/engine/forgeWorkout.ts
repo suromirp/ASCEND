@@ -18,7 +18,7 @@
 // - what is stored: only ticked rows, as SetLog with kind, kg, reps and RIR.
 
 import { EXERCISES, exerciseById } from '../data/exercises';
-import type { Exercise, MovementPattern, MuscleGroup } from '../models/exercise';
+import type { Exercise, MovementPattern, MuscleGroup, Resistance } from '../models/exercise';
 import type { Program } from '../models/program';
 import type { ExercisePrescription, ExerciseSetLog, SessionLog, SessionTemplate, SetKind, SetLog, SetTarget } from '../models/training';
 import { formatNumberNL } from '../utils/number';
@@ -35,6 +35,7 @@ import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
 import { barFor, candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
 import { spotterApplies, spotterSlot } from './spotter';
 import { isWorkSet } from './workSets';
+import { adjustFirstSet, CROSS_PER_SET, crossFatigue, expectedHard, hardSetsLogged, crossHistory, crossLine, crossPoints, hardPlanned, learnCross, normalBefore, setsBefore, type CrossFatigue, type CrossHistory, type EarlierWork } from './forgeCrossFatigue';
 
 // --- the shapes ---------------------------------------------------------------------------
 
@@ -77,6 +78,10 @@ export interface WorkoutRow {
   // "Forge rekent mee" (engine/forgeReckon.ts): the reps Forge last put in this row (the plan, or an
   // estimate), to see afterwards whether you did something else than asked. Draft only.
   forgeReps?: number;
+  // The weight Forge put in this row after an adjustment during the training ("Forge rekent mee" after a
+  // set, Lichter). Absent: the weight of the prescription (`target.weightKg`). A weight you type yourself
+  // never sets it. Goes onto the log as SetLog.forgeKg next to `rirAssumed`. Draft only otherwise.
+  forgeKg?: number;
   // The reps are Forge's estimate for a weight you typed (the row is `edited` for the weight, not for the
   // reps), so another weight may estimate them again. Typing reps yourself clears it. Draft only.
   repsEstimated?: boolean;
@@ -101,6 +106,9 @@ export interface WorkoutExercise {
   reason?: string;
   // The sets of the last time, warm-up and work, in order.
   previous?: SetLog[];
+  // How many trainings with this exercise came before today ("Hoeveel over?" asks every set the first
+  // three times, engine/forgeReckon.ts#asksReserve). Absent in an old draft: not counted.
+  trainings?: number;
   restSec: number;
   // The name of the exercise this one replaced, for this training only.
   swappedFrom?: string;
@@ -215,6 +223,11 @@ export interface PlanState {
   warm: WarmState;
   // The compound exercises before this one and their heaviest working weight, for the warm-up of a top set.
   done: { exercise: Exercise; weightKg: number }[];
+  // Vermoeidheid tussen oefeningen (engine/forgeCrossFatigue.ts): de harde werksets van het voorschrift van de
+  // oefeningen hiervoor in deze training, en per log uit je historie hoeveel er normaal voor stonden.
+  // Afwezig zonder de instelling of zonder het model.
+  before?: EarlierWork[];
+  cross?: CrossHistory;
 }
 
 // Wat je eerder in deze training deed op de spieren van deze oefening (een gedeelde hoofdspier):
@@ -237,7 +250,8 @@ export function planState(ctx: PlanContext): PlanState {
   const strengthLogs = ctx.logs.filter((l) => l.strengthData && l.strengthData.length > 0);
   const deps = { logs: ctx.logs, templates: ctx.templates, program: ctx.program, bodyKg: ctx.bodyKg, ...(ctx.sore ? { sore: ctx.sore } : {}) };
   const histories = new Map(exerciseHistories(strengthLogs, ctx.templates, deps).map((h) => [h.key, h]));
-  return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), warm: newWarmState(), done: [] };
+  const crossOn = ctx.modelOn && ctx.settings.crossFatigue;
+  return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), warm: newWarmState(), done: [], ...(crossOn ? { before: [], cross: crossHistory(strengthLogs, ctx.settings.assumedCounts) } : {}) };
 }
 
 // The state for one exercise that is swapped: what is warm is what the exercises
@@ -249,6 +263,7 @@ export function planStateBefore(ctx: PlanContext, workout: WorkoutExercise[], sl
     if (!ex.timed) {
       noteWorked(state.warm, exerciseOf(ex), ex.rows.some((r) => r.kind === 'warmup'));
       noteDone(state, exerciseOf(ex), ex.rows);
+      state.before?.push({ exercise: exerciseOf(ex), hard: expectedHard(hardPlanned(ex.rows), loggedHard(state.histories.get(exerciseKey(ex.exerciseId, ex.name).key), ctx)) });
     }
   }
   return state;
@@ -293,7 +308,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   // A swapped exercise is another exercise: the range of the template is not its
   // own (squat 5 to 8 is not leg extension 5 to 8). The reps in reserve stay.
   const plan = swapTo ? (fromSlot?.rir !== undefined ? { rir: fromSlot.rir } : undefined) : fromSlot;
-  const learned = usedBefore({ sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings });
+  const learned = usedBefore({ sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings, exercise });
   let rx: Prescription | undefined;
   let rxInput: Parameters<typeof prescribe>[0] | undefined;
   if (ctx.modelOn && history && history.sessions.length > 0) {
@@ -364,10 +379,6 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   for (const [i, w] of emptyWarmups.entries()) {
     rows.push({ id: `${slot.id}:w${i}`, kind: 'warmup', target: { repsLow: w.reps, repsHigh: w.reps }, reps: w.reps, done: false, share: w.share });
   }
-  // The body part counts as warm only after an exercise that got warm-up sets.
-  noteWorked(state.warm, exercise, rows.length > 0 && rows.some((r) => r.kind === 'warmup'));
-  const workRowsDone: WorkoutRow[] = workWeights.map((w, i) => ({ id: `${i}`, kind: 'work', target: { repsLow: 0, repsHigh: 0, ...(w !== undefined ? { weightKg: w } : {}) }, done: false }));
-  noteDone(state, exercise, workRowsDone);
   const workRow = (r: Prescription | undefined, weightKg: number | undefined, i: number): { target: RowTarget; reps: number } => {
     let target: RowTarget;
     const t = targets?.[i];
@@ -398,6 +409,42 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     if (spot?.raised[i]) target = { ...target, spotter: true };
     rows.push({ id: `${slot.id}:s${i}`, kind: 'work', target, ...(target.weightKg !== undefined ? { weightKg: target.weightKg } : {}), reps, forgeReps: reps, ...(target.rir !== undefined && ctx.settings.rirPrefill === 'target' ? { rir: target.rir, rirAssumed: true } : {}), done: false });
   }
+  // Vermoeidheid tussen oefeningen: meer harde sets voor dezelfde spieren ervoor dan normaal maakt de eerste set
+  // iets lichter (engine/forgeCrossFatigue.ts). Alleen het voorschrift; er is hier nog niets ingevuld.
+  const cross = rx && history ? crossFor(exercise, found.key, history, ctx, state) : undefined;
+  let crossNote: string | undefined;
+  const crossAdjust = (r: Prescription, weightKg: number | undefined, reps: number, target: RowTarget) =>
+    cross && weightKg !== undefined
+      ? adjustFirstSet({ weightKg, reps, target }, r.strengthKg, cross.factor, (kg) => loadFromExternal(exercise, kg, ctx.bodyKg, dumbbellTotal), candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: weightKg, usedKg: learned, stackWeights: ctx.settings.stackWeights, dumbbellTotal }))
+      : undefined;
+  if (cross && rx) {
+    const fi = rows.findIndex((r) => r.kind === 'work');
+    const first = rows[fi];
+    const made = first ? crossAdjust(rx, first.weightKg, first.reps ?? 0, first.target) : undefined;
+    if (first && made && first.weightKg !== undefined) {
+      const lighter = made.weightKg < first.weightKg - 1e-9;
+      crossNote = crossLine(cross, { lighter, fewerReps: (first.reps ?? 0) - made.reps });
+      rows[fi] = { ...first, weightKg: made.weightKg, target: { ...first.target, weightKg: made.weightKg }, reps: made.reps, forgeReps: made.reps };
+      if (lighter) {
+        // Een latere werkset wordt nooit zwaarder dan de eerste; een opwarmset die nu te dicht bij het werkgewicht
+        // zit valt weg (zoals strengthModel.ts#buildWarmups), de rest volgt het nieuwe gewicht.
+        for (let k = fi + 1; k < rows.length; k++) {
+          const r = rows[k];
+          if (r.kind === 'work' && r.weightKg !== undefined && r.weightKg > made.weightKg) rows[k] = { ...r, weightKg: made.weightKg, target: { ...r.target, weightKg: made.weightKg } };
+        }
+        for (let k = fi - 1; k >= 0; k--) {
+          const r = rows[k];
+          if (r.kind !== 'warmup' || r.weightKg === undefined) continue;
+          if (r.weightKg >= made.weightKg * 0.92) rows.splice(k, 1);
+          else if (made.weightKg > 0) rows[k] = { ...r, share: r.weightKg / made.weightKg };
+        }
+      }
+    }
+  }
+  // The body part counts as warm only after an exercise that got warm-up sets. Na de bijstelling hierboven, zodat
+  // de volgende oefening het echte werkgewicht en de echte opwarmsets ziet.
+  noteWorked(state.warm, exercise, rows.some((r) => r.kind === 'warmup'));
+  noteDone(state, exercise, rows);
   // "Forge rekent mee" ging een stap omhoog: de sets zoals ze zonder die stap waren, voor Terugzetten.
   let raise: WorkoutExercise['raise'];
   const raisedBy = fromProgram?.raised ?? rx?.raised;
@@ -405,12 +452,31 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     const back = prescribe({ ...rxInput!, settings: { ...ctx.settings, reckon: false } });
     if (back) {
       const backProgram = targets ? programWeights(back, targets, exercise, { ...ctx, settings: { ...ctx.settings, reckon: false } }, lastTop?.weightKg, tired, warmKind, learned, dumbbellTotal, lastFirst, false) : undefined;
+      // Terugzetten houdt de vermoeidheid tussen oefeningen vast: dezelfde bijstelling op de eerste set, latere sets
+      // nooit zwaarder dan die, en de zin erbij in de reden die terugkomt.
+      const backSets = weightsOf(back, false).weights.map((w, i) => {
+        const made = workRow(back, w, i);
+        return { rowId: `${slot.id}:s${i}`, ...(made.target.weightKg !== undefined ? { weightKg: made.target.weightKg } : {}), reps: made.reps, target: made.target };
+      });
+      let backNote: string | undefined;
+      const b0 = backSets[0];
+      const eased = b0 ? crossAdjust(back, b0.weightKg, b0.reps, b0.target) : undefined;
+      if (b0 && eased && b0.weightKg !== undefined) {
+        const lighter = eased.weightKg < b0.weightKg - 1e-9;
+        backNote = crossLine(cross!, { lighter, fewerReps: b0.reps - eased.reps });
+        backSets[0] = { ...b0, weightKg: eased.weightKg, reps: eased.reps };
+        for (let k = 1; k < backSets.length; k++) {
+          const w = backSets[k].weightKg;
+          if (w !== undefined && w > eased.weightKg) backSets[k] = { ...backSets[k], weightKg: eased.weightKg };
+        }
+      }
+      const backReason = backProgram?.differs ? `Je programma vraagt nu ${programLine(targets!)}.` : back.reason;
       raise = {
         line: raisedText(raisedBy, exercise?.resistance === 'assisted_bodyweight'),
-        reason: backProgram?.differs ? `Je programma vraagt nu ${programLine(targets!)}.` : back.reason,
-        back: weightsOf(back, false).weights.map((w, i) => {
-          const made = workRow(back, w, i);
-          return { rowId: `${slot.id}:s${i}`, ...(made.target.weightKg !== undefined ? { weightKg: made.target.weightKg } : {}), reps: made.reps };
+        reason: backNote ? (backReason ? `${backNote} ${backReason}` : backNote) : backReason,
+        back: backSets.map(({ target: _t, ...b }) => {
+          void _t;
+          return b;
         }),
       };
     }
@@ -418,7 +484,9 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   const repsHigh = rows.find((r) => r.kind === 'work')?.target.repsHigh;
   const programRest = targets?.find((x) => x.restSec !== undefined)?.restSec;
   const why = rx ? (fromProgram?.differs ? `Je programma vraagt nu ${programLine(targets!)}.` : rx.reason) : undefined;
-  const reason = why && rx?.notice ? `${rx.notice} ${why}` : why;
+  const noticed = why && rx?.notice ? `${rx.notice} ${why}` : why;
+  const reason = crossNote ? (noticed ? `${crossNote} ${noticed}` : crossNote) : noticed;
+  state.before?.push({ exercise, hard: expectedHard(hardPlanned(rows), loggedHard(history, ctx)) });
   return {
     slot: slot.id,
     exerciseId,
@@ -428,13 +496,36 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     ...(learned && learned.length > 0 ? { usedKg: [...new Set(learned)] } : {}),
     ...(reason ? { reason } : {}),
     ...(last ? { previous: last.sets } : {}),
+    trainings: history?.sessions.filter((s) => s.date < ctx.date).length ?? 0,
     restSec: ctx.settings.restSeconds[exerciseId] ?? programRest ?? restFor(exerciseId, exercise, repsHigh, ctx.settings.restSeconds),
     timed: false,
     ...(dumbbellTotal ? { dumbbellTotal } : {}),
-    ...(rx ? { fatiguePerSet: rx.fatiguePerSet, fatigueAfterHard: rx.fatigueAfterHard, strengthKg: rx.strengthKg } : {}),
+    // Met vermoeidheid tussen oefeningen rekent "Forge rekent mee" in de training met de bijgestelde kracht
+    // (forgeReckon.ts#strengthFor), tot een set anders ging dan gevraagd.
+    ...(rx ? { fatiguePerSet: rx.fatiguePerSet, fatigueAfterHard: rx.fatigueAfterHard, strengthKg: cross && crossNote ? rx.strengthKg * cross.factor : rx.strengthKg } : {}),
     ...(raise ? { raise } : {}),
     ...(swapTo ? { swappedFrom: cleanExerciseName(slot.exerciseName) } : {}),
   };
+}
+
+// Wat je de laatste trainingen bij deze oefening als harde sets logde (zelfde regel als de historie), nieuwste laatst.
+function loggedHard(history: ExerciseHistory | undefined, ctx: PlanContext): (number | undefined)[] {
+  return (history?.sessions ?? []).filter((s) => s.date < ctx.date).map((s) => hardSetsLogged(s.sets, ctx.settings.assumedCounts));
+}
+
+// Vermoeidheid tussen oefeningen voor deze oefening: de harde sets ervoor vandaag (het voorschrift) tegen wat er
+// normaal voor stond in je historie van dezelfde oefening. De kost per set is geleerd of vast 2%, met de
+// instelling "Vermoeidheid per set". Undefined: niets bijstellen (uit, te weinig data, geen verschil).
+function crossFor(exercise: Exercise | undefined, key: string, history: ExerciseHistory, ctx: PlanContext, state: PlanState): CrossFatigue | undefined {
+  if (!state.before || !state.cross) return undefined;
+  const today = setsBefore(exercise, state.before);
+  if (today === undefined) return undefined;
+  const earlier = history.sessions.filter((s) => s.date < ctx.date).map((s) => ({ ...s, before: state.cross!.get(s.logId)?.get(key) }));
+  const normal = normalBefore(earlier.map((s) => s.before));
+  if (normal === undefined || today <= normal) return undefined;
+  const dumbbellTotal = dumbbellTotalFor({ exercise, sessions: history.sessions, date: ctx.date, settings: ctx.settings });
+  const perSet = ctx.settings.fatigue === 'learned' ? learnCross(crossPoints(earlier, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.settings.estimateUpTo, dumbbellTotal })).perSet : CROSS_PER_SET;
+  return crossFatigue(today, normal, perSet);
 }
 
 // What each set of a program asks, for the fatigue after a hard top set.
@@ -636,7 +727,16 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
         ...(r.kind === 'work' && r.rir !== undefined ? { rir: r.rir } : {}),
         kind: r.kind,
         ...(typeof r.doneAt === 'number' && Number.isFinite(r.doneAt) ? { at: new Date(r.doneAt).toISOString() } : {}),
-        ...(r.kind === 'work' && r.rir !== undefined && r.rirAssumed ? { rirAssumed: true } : {}),
+        ...(r.kind === 'work' && r.rir !== undefined && r.rirAssumed
+          ? {
+              rirAssumed: true,
+              // Wat Forge vroeg, voor "Afvinken telt als het doel" (engine/assumedSets.ts).
+              ...(r.forgeReps !== undefined && r.forgeReps > 0 && r.target.timedSec === undefined ? { repsAsked: r.forgeReps } : {}),
+              ...(r.target.weightKg !== undefined ? { weightKgAsked: r.target.weightKg } : {}),
+              // Wat Forge na een bijstelling in de rij zette, alleen als het van het voorschrift afwijkt.
+              ...(typeof r.forgeKg === 'number' && Number.isFinite(r.forgeKg) && r.forgeKg !== r.target.weightKg ? { forgeKg: r.forgeKg } : {}),
+            }
+          : {}),
       }));
     if (sets.length > 0) out.push({ exerciseId: ex.exerciseId, exerciseName: ex.name, sets });
   }
@@ -851,24 +951,109 @@ export function swapScore(current: Exercise, e: Exercise): number {
   return primary * 3 + secondary + (e.pattern === current.pattern ? 4 : 0) + (e.loadsLegs === current.loadsLegs ? 1 : 0);
 }
 
-// Exercises that can take the place of this one: the same main muscles (at
-// least one in common), in the gym you have (a barbell needs a bar), the same
-// movement first. Never the exercise itself or one that is already in the training.
-// `prefer`: muscles that got too little (engine/mountainMuscles.ts#swapPreference). Only at an equal score an
-// exercise that works one of them comes first; the choice stays yours, Forge never swaps by itself.
-export function swapOptions(current: Exercise | undefined, profile: GymProfile, inTraining: string[] = [], limit = 8, prefer: readonly MuscleGroup[] = []): Exercise[] {
-  if (!current) return [];
+// Een echte vervanger: dezelfde beweging (familie, data/exerciseFamilies.ts), met een korte reden.
+export interface SwapChoice {
+  exercise: Exercise;
+  // Het droge feit eerst: wat is hetzelfde, dan wat anders is.
+  reason: string;
+}
+
+export interface SwapGroups {
+  // Doet hetzelfde: de eerste is de aanbevolen keuze.
+  same: SwapChoice[];
+  // Zelfde spier, anders: dezelfde hoofdspier, een andere beweging.
+  other: Exercise[];
+}
+
+const EQUIPMENT_TEXT: Record<Resistance, string> = {
+  barbell: 'met een stang',
+  dumbbell: 'met dumbbells',
+  cable: 'aan de kabel',
+  machine_stack: 'op een toestel',
+  machine_plates: 'op een toestel met schijven',
+  bodyweight: 'met je eigen gewicht',
+  assisted_bodyweight: 'met hulp',
+  pack_or_vest: 'met een rugzak of vest',
+};
+
+// Wat de nuance zegt als de vervanger hem heeft (`on`) of juist mist (`off`).
+const NUANCE_TEXT: Record<string, { on: string; off: string }> = {
+  pause: { on: 'met een pauze', off: 'zonder pauze' },
+  wide: { on: 'met een brede greep', off: 'zonder brede greep' },
+  low: { on: 'op een lage helling', off: 'zonder lage helling' },
+  front: { on: 'met de last voor', off: 'met de last op je rug' },
+  light: { on: 'met een lichtere last', off: 'met een zwaardere last' },
+  single: { on: 'op één arm of been', off: 'op twee armen of benen' },
+  underhand: { on: 'met onderhandse greep', off: 'met bovenhandse greep' },
+  preacher: { on: 'met je armen op een steun', off: 'zonder steun voor je armen' },
+  floor: { on: 'met een kleiner bereik', off: 'met een groter bereik' },
+  step: { on: 'met een stap', off: 'zonder stap' },
+  walking: { on: 'al lopend', off: 'op één plek' },
+  elevated: { on: 'met je voet verhoogd', off: 'met je voet op de grond' },
+  trap: { on: 'met een trapbar', off: 'met een rechte stang' },
+  sumo: { on: 'met brede stand', off: 'met smalle stand' },
+  quad: { on: 'meer voor je quadriceps', off: 'minder voor je quadriceps' },
+  hinged: { on: 'met je romp voorovergebogen', off: 'zonder voorovergebogen romp' },
+  legs: { on: 'met hulp van je benen', off: 'zonder hulp van je benen' },
+  negative: { on: 'alleen het zakken', off: 'het hele bereik' },
+  lying: { on: 'liggend', off: 'zittend' },
+  frog: { on: 'met je voeten tegen elkaar', off: 'met je voeten naast elkaar' },
+  y: { on: 'met je armen in een Y', off: 'met je armen langs je zij' },
+};
+
+const nuancesOf = (e: Exercise): string[] => e.nuance ?? [];
+
+// Hoe ver `e` van `current` afligt binnen één familie: 1 voor andere uitrusting, 1 als de een je eigen
+// gewicht is en de ander een last die je kiest, 1 per kenmerk dat maar één van beide heeft.
+export function swapDistance(current: Exercise, e: Exercise): number {
+  const ownWeight = (x: Exercise) => x.resistance === 'bodyweight';
+  const cn = nuancesOf(current);
+  const en = nuancesOf(e);
+  const differing = cn.filter((n) => !en.includes(n)).length + en.filter((n) => !cn.includes(n)).length;
+  return (e.resistance !== current.resistance ? 1 : 0) + (ownWeight(e) !== ownWeight(current) ? 1 : 0) + differing;
+}
+
+// "Zelfde beweging en spieren, met dumbbells." Het droge feit eerst, dan wat anders is.
+export function swapReasonSame(current: Exercise, e: Exercise): string {
+  const parts: string[] = [];
+  if (e.resistance !== current.resistance) parts.push(EQUIPMENT_TEXT[e.resistance]);
+  const cn = nuancesOf(current);
+  const en = nuancesOf(e);
+  for (const n of en) if (!cn.includes(n) && NUANCE_TEXT[n]) parts.push(NUANCE_TEXT[n].on);
+  for (const n of cn) if (!en.includes(n) && NUANCE_TEXT[n]) parts.push(NUANCE_TEXT[n].off);
+  return parts.length === 0 ? 'Zelfde beweging en spieren.' : `Zelfde beweging en spieren, ${parts.join(', ')}.`;
+}
+
+// Twee groepen om te ruilen. Eerst de echte vervangers (zelfde familie, de kleinste afstand eerst, bij
+// gelijke afstand de volgorde in de lijst); de eerste is de aanbevolen keuze. Dan de rest die dezelfde
+// hoofdspier raakt (swapScore boven 0), met de voorkeur voor bergspieren bij gelijke score
+// (engine/mountainMuscles.ts#swapPreference; Forge ruilt nooit zelf). Een oefening zonder familie heeft
+// geen echte vervangers en valt terug op de oude lijst. Nooit de oefening zelf of een die al in de
+// training zit, en geen stangoefening zonder stang. `limit` telt over beide groepen.
+export function swapGroups(current: Exercise | undefined, profile: GymProfile, inTraining: string[] = [], limit = 8, prefer: readonly MuscleGroup[] = []): SwapGroups {
+  if (!current) return { same: [], other: [] };
   const taken = new Set([current.id, ...inTraining]);
   const serves = (e: Exercise) => (prefer.some((m) => e.primary.includes(m) || e.secondary.includes(m)) ? 0 : 1);
-  const scored: { e: Exercise; score: number }[] = [];
-  for (const e of EXERCISES) {
-    if (taken.has(e.id)) continue;
-    if (e.resistance === 'barbell' && profile.barsKg.length === 0) continue;
+  const same: { e: Exercise; distance: number; order: number }[] = [];
+  const other: { e: Exercise; score: number }[] = [];
+  EXERCISES.forEach((e, order) => {
+    if (taken.has(e.id)) return;
+    if (e.resistance === 'barbell' && profile.barsKg.length === 0) return;
     const score = swapScore(current, e);
-    if (score === 0) continue;
-    scored.push({ e, score });
-  }
-  return scored.sort((a, b) => b.score - a.score || serves(a.e) - serves(b.e) || a.e.name.localeCompare(b.e.name)).slice(0, limit).map((s) => s.e);
+    if (score === 0) return;
+    if (current.family && e.family === current.family) same.push({ e, distance: swapDistance(current, e), order });
+    else other.push({ e, score });
+  });
+  same.sort((a, b) => a.distance - b.distance || a.order - b.order);
+  other.sort((a, b) => b.score - a.score || serves(a.e) - serves(b.e) || a.e.name.localeCompare(b.e.name));
+  const first = same.slice(0, limit).map((s) => ({ exercise: s.e, reason: swapReasonSame(current, s.e) }));
+  return { same: first, other: other.slice(0, Math.max(0, limit - first.length)).map((s) => s.e) };
+}
+
+// De twee groepen achter elkaar, voor wie maar één lijst wil.
+export function swapOptions(current: Exercise | undefined, profile: GymProfile, inTraining: string[] = [], limit = 8, prefer: readonly MuscleGroup[] = []): Exercise[] {
+  const g = swapGroups(current, profile, inTraining, limit, prefer);
+  return [...g.same.map((s) => s.exercise), ...g.other];
 }
 
 // --- the legs ---------------------------------------------------------------------------------

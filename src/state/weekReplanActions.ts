@@ -19,7 +19,7 @@ const PLAN_TIMEOUT_MS = 20_000;
 const day = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
 
 // Een regel per wijziging, voor de melding.
-export function replanLines(plan: WeekReplanPlan, templates: SessionTemplate[]): string[] {
+function replanLines(plan: WeekReplanPlan, templates: SessionTemplate[]): string[] {
   const name = (id: string) => templates.find((t) => t.id === id)?.name ?? 'Training';
   const was = new Map(plan.diff.before.map((s) => [s.id, s]));
   const lines: string[] = [];

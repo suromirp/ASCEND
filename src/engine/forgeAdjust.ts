@@ -259,7 +259,8 @@ export function adjustText(adj: Adjustment, exercise: Exercise | undefined): str
 }
 
 // "Lichter": het gewicht erin, alleen in rijen die nog open en onaangeraakt zijn.
-// De herhalingen blijven binnen het bereik van het doel.
+// De herhalingen blijven binnen het bereik van het doel. Het gewicht is van Forge (`forgeKg`): vink je de
+// set af zoals hij staat, dan is hij bevestigd op dat gewicht (en telt hij als meting, niet als ondergrens).
 export function applyLighter(ex: WorkoutExercise, adj: Adjustment): WorkoutExercise {
   const byId = new Map(adj.items.map((i) => [i.rowId, i.weightKg]));
   return {
@@ -269,7 +270,7 @@ export function applyLighter(ex: WorkoutExercise, adj: Adjustment): WorkoutExerc
       if (kg === undefined || r.done || r.edited) return r;
       // Een open set ("7+") heeft geen bovenkant: een getypt aantal erboven blijft staan.
       const reps = r.reps === undefined || r.target.failure ? r.reps : r.target.open ? Math.min(MAX_ROW_REPS, Math.max(r.target.repsLow, r.reps)) : Math.min(MAX_ROW_REPS, Math.max(r.target.repsLow, Math.min(r.target.repsHigh, r.reps)));
-      return { ...r, weightKg: kg, ...(reps !== undefined ? { reps } : {}) };
+      return { ...r, weightKg: kg, forgeKg: kg, ...(reps !== undefined ? { reps } : {}) };
     }),
   };
 }
@@ -281,4 +282,18 @@ export function stillOpen(ex: WorkoutExercise, adj: Adjustment): Adjustment | un
     return !!r && !r.done && !r.edited && r.weightKg !== i.weightKg;
   });
   return items.length > 0 ? { ...adj, items } : undefined;
+}
+
+// Wat er na het invullen van de gewichten van een toestel verandert onder de oefening: een nieuw voorstel Lichter,
+// of anders een stille regel (nog steeds niets dat past, of het lichtere gewicht ligt er ver boven). Zonder iets
+// om te zeggen is het undefined.
+export type RefitResult = { lighter: Adjustment } | { tip: { text: string; rowId?: string; weightKg?: number } };
+export function refitAfterFill(ex: WorkoutExercise, fit: NoFit, ctx: AdjustContext): RefitResult | undefined {
+  const again = suggestLighter(ex, fit.fromRowId, ctx);
+  if (again) return { lighter: again };
+  const still = suggestOwnWeights(ex, fit.fromRowId, ctx);
+  if (still) return { tip: { text: stillHeavyTip(still), rowId: still.rowId, weightKg: still.weightKg } };
+  const big = suggestTooBigStep(ex, fit.fromRowId, ctx);
+  if (big) return { tip: { text: tooBigStepTip(big), rowId: big.rowId, weightKg: big.weightKg } };
+  return undefined;
 }

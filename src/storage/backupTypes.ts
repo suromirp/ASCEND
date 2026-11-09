@@ -129,7 +129,7 @@ export interface AscendBackupEnvelope {
 // the rest of the import pipeline (diff/preview/plan/apply) ever operates
 // on. A V1 backup's legacy objectives/milestoneProgress are migrated into
 // trainingGoals/goalMilestones/goalMilestoneProgress at normalization time
-// (storage/backup.ts, reusing the same transform storage/goalMigration.ts
+// (storage/backupNormalize.ts, reusing the same transform storage/goalMigration.ts
 // runs on-device) — restoring an old backup must not silently lose GR5/
 // marathon goal progress just because the on-disk shape has moved on.
 export interface NormalizedBackupData {

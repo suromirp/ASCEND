@@ -79,7 +79,7 @@ export const JOURNEY_TASKS: JourneyTask[] = [
   {
     id: 'meet-zweetverlies',
     title: 'Meet je zweetverlies',
-    why: 'Hoeveel je zweet verschilt sterk van mens tot mens, en op de GR5 loop je zomerdagen van 6 tot 8 uur waar bronnen soms uren uit elkaar liggen. Weeg jezelf zonder kleren en na het plassen, vlak voor en vlak na een lange wandeling of loop op een warme dag. Schrijf op wat je dronk, en wat je onderweg plaste. Open daarna de training in je Logboek en kies Zweetverlies. Een kilo minder is ongeveer een liter zweet. Met twee metingen weet ASCEND je tempo bij die temperatuur en rekent het water per etappe daarmee. Deze taak is af zodra je twee metingen hebt.',
+    why: 'Hoeveel je zweet verschilt sterk van mens tot mens, en op de GR5 loop je zomerdagen van 6 tot 8 uur waar bronnen soms uren uit elkaar liggen. Weeg jezelf na het plassen, voor en na in dezelfde kleding en zonder schoenen, vlak voor en vlak na een lange wandeling of loop op een warme dag. Schrijf op wat je dronk, en wat je onderweg plaste. Open daarna de training in je Logboek en kies Zweetverlies. Een kilo minder is ongeveer een liter zweet. Met twee metingen weet ASCEND je tempo bij die temperatuur en rekent het water per etappe daarmee. Deze taak is af zodra je twee metingen hebt.',
     window: [16, 4],
     link: { label: 'Water per etappe', to: '/etappes' },
   },

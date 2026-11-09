@@ -2,7 +2,7 @@
 //
 // Twee losse meta-sleutels, hetzelfde patroon als goalEngineConfig: kleine
 // eenheden die samen gelezen en geschreven worden, zonder indexen. Beide
-// zitten in de back-up (storage/backup.ts, schema v5).
+// zitten in de back-up (storage/backupNormalize.ts, schema v5).
 
 import { MetaRepo } from './database';
 import { sanitizeRoutePlan, sanitizeSoloPlan } from '../engine/routePlan';

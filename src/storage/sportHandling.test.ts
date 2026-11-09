@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PlannedSessionsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
-import { applyImportPlan, buildBackupEnvelope, buildImportPreview, createImportPlan, createPreImportSnapshot, defaultActionsForMode, defaultPlanPolicyForMode, normalizeBackupToCurrentModel } from './backup';
+import { applyImportPlan, createImportPlan, createPreImportSnapshot } from './backupApply';
+import { buildBackupEnvelope } from './backupExport';
+import { buildImportPreview } from './backupPreview';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import type { SessionLog } from '../models/training';
 
 // Sporten die meetellen stap 3 en 4: de rol per sport, hoe sporten meetellen en de sport van een log reizen

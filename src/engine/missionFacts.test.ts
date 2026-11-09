@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { missionFacts } from './missionFacts';
+import { distanceLine, missionFacts } from './missionFacts';
 import { buildSessionBrief } from './sessionBrief';
 import { racePaces } from './racePaces';
+import { recentRunPace } from './recentRunPace';
+import type { SessionLog } from '../models/training';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 
 const { templates, program } = buildDefaultProgramData();
@@ -50,5 +52,69 @@ describe('missionFacts', () => {
   it('geeft een getal zijn uitleg mee', () => {
     const f = missionFacts('tpl_hill_intervals', brief('tpl_hill_intervals'), undefined);
     expect(f.chips[1].text).toMatch(/× .* min hard bergop$/);
+  });
+});
+
+describe('afstand uit het echte tempo', () => {
+  const log = (id: string, date: string, km: number, minutes: number, templateId = 'tpl_long_run'): SessionLog => ({
+    id, templateId, type: 'cardio', completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: minutes, source: 'manual', sport: 'running',
+    cardioData: { durationMinutes: minutes, distanceKm: km, source: 'manual' },
+  });
+
+  it('neemt de laatste drie lopen van dezelfde training, met een kleine marge', () => {
+    const r = recentRunPace([log('a', '2026-11-01', 8.84, 80), log('b', '2026-10-25', 10, 95), log('c', '2026-10-18', 9, 80), log('old', '2026-09-01', 5, 20), log('other', '2026-11-02', 5, 20, 'tpl_easy_run')], 'tpl_long_run', '2026-11-08')!;
+    expect(r.runs).toBe(3);
+    expect(r.range.fast).toBeCloseTo((80 * 60 / 9) * 0.97, 5);
+    expect(r.range.slow).toBeCloseTo((95 * 60 / 10) * 1.03, 5);
+  });
+
+  it('geeft niets zonder lopen, of met alleen een heel korte', () => {
+    expect(recentRunPace([], 'tpl_long_run', '2026-11-08')).toBeUndefined();
+    expect(recentRunPace([log('a', '2026-11-01', 1.5, 12)], 'tpl_long_run', '2026-11-08')).toBeUndefined();
+  });
+
+  it('de afstand op Vandaag rekent met dat tempo en zegt waar het vandaan komt', () => {
+    const recent = { fast: 520, slow: 560 };
+    const f = missionFacts('tpl_easy_run', brief('tpl_easy_run'), paces, 75, recent);
+    expect(f.paceNote).toContain('op het tempo van je laatste lopen');
+    expect(f.chips.at(-1)).toEqual({ text: '7:15 tot 8:20 /km', kind: 'tempo' });
+    expect(distanceLine(75, recent, true)).toBe('Dat is ongeveer 8 tot 9 km, op het tempo van je laatste lopen.');
+  });
+
+  it('zonder eigen lopen blijft het tempo uit de test de afstand geven', () => {
+    expect(missionFacts('tpl_easy_run', brief('tpl_easy_run'), paces, 75).paceNote).toMatch(/Dat is ongeveer 9 tot 10 km\.$/);
+  });
+
+  it('zegt "je laatste loop" bij één loop en "je laatste lopen" bij twee of meer', () => {
+    const recent = { fast: 520, slow: 560 };
+    expect(distanceLine(75, recent, 1)).toBe('Dat is ongeveer 8 tot 9 km, op het tempo van je laatste loop.');
+    expect(distanceLine(75, recent, 2)).toBe('Dat is ongeveer 8 tot 9 km, op het tempo van je laatste lopen.');
+    expect(distanceLine(75, recent, 0)).toBe('Dat is ongeveer 8 tot 9 km.');
+    const one = recentRunPace([log('a', '2026-11-01', 9, 80)], 'tpl_long_run', '2026-11-08')!;
+    const two = recentRunPace([log('a', '2026-11-01', 9, 80), log('b', '2026-10-25', 10, 95)], 'tpl_long_run', '2026-11-08')!;
+    expect(missionFacts('tpl_easy_run', brief('tpl_easy_run'), paces, 75, one.range, one.runs).paceNote).toContain('je laatste loop.');
+    expect(missionFacts('tpl_easy_run', brief('tpl_easy_run'), paces, 75, two.range, two.runs).paceNote).toContain('je laatste lopen.');
+    expect(recentRunPace([], 'tpl_long_run', '2026-11-08')).toBeUndefined();
+  });
+
+  it('zonder testloop komt de afstand uit het tempo van je laatste lopen', () => {
+    const one = recentRunPace([log('a', '2026-11-01', 9, 80)], 'tpl_long_run', '2026-11-08')!;
+    const f = missionFacts('tpl_easy_run', brief('tpl_easy_run'), undefined, 75, one.range, one.runs);
+    expect(f.paceNote).toBe(distanceLine(75, one.range, 1));
+    expect(f.paceNote).toMatch(/^Dat is ongeveer .* km, op het tempo van je laatste loop\.$/);
+    expect(f.chips.some((c) => c.kind === 'tempo')).toBe(false);
+  });
+
+  it('zonder testloop en zonder lopen, of bij een niet rustige loop, staat er geen zin', () => {
+    const one = recentRunPace([log('a', '2026-11-01', 9, 80)], 'tpl_long_run', '2026-11-08')!;
+    expect(missionFacts('tpl_easy_run', brief('tpl_easy_run'), undefined, 75).paceNote).toBeUndefined();
+    expect(missionFacts('tpl_tempo_run', brief('tpl_tempo_run'), undefined, 75, one.range, one.runs).paceNote).toBeUndefined();
+  });
+});
+
+describe('afstand bij een rustige loop', () => {
+  it('75 minuten tussen 6:40 en 7:35 per km is ongeveer 10 tot 11 km', () => {
+    expect(distanceLine(75, { fast: 400, slow: 455 })).toBe('Dat is ongeveer 10 tot 11 km.');
+    expect(distanceLine(undefined, { fast: 400, slow: 455 })).toBeUndefined();
   });
 });

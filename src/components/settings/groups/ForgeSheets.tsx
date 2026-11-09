@@ -67,6 +67,7 @@ export function StackSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet eyebrow="Je sportschool" title="Kabels en toestellen" line="Hoeveel het blok per stand zwaarder wordt." onClose={onClose}>
       <StackStep value={profile.stackStepKg} onChange={(stackStepKg) => save({ stackStepKg })} />
+      <p className="st-hint" style={{ marginLeft: 0, marginTop: 12 }}>Alleen nodig voor een toestel waarvan Forge nog geen standen kent.</p>
     </Sheet>
   );
 }

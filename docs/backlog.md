@@ -2,16 +2,61 @@
 
 Wat nog op de lijst staat, zodat een nieuwe sessie het niet uit het gesprek hoeft te halen. De
 coördinator houdt dit bij: iets wat live staat gaat eruit, iets nieuws komt erbij met een regel uitleg.
-Bijgewerkt op 1 november 2026.
+Bijgewerkt op 9 november 2026.
 
 ## Inbox
 
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
-Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
+Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
-(leeg)
+- 9 november, uit de review van het bouwmoment (Forge afvinken), nog open: de ijkset eens per vier weken is een eigen spoor (KR-12: verandert het voorschrift, uitzonderingen rond tochten en tests, eigen instelling); regel 4 en 5 lezen nu gelijk (zie besluit `2026-11-09-forge-review-afvinken.md`). Stappen 6 tot 8 van het RIR-verslag (vermoeidheid tussen oefeningen) zijn F2.
+- 9 november, uit het onderhoud, nog open: de hoofdletterkopie in `forgeHistory.ts` (`round1`, Forge); `ForgeWorkout.tsx` is nog 993 regels (ronde 3 van het opsplitsen, nooit naast een ander Forge-spoor); lintwaarschuwingen `react(refs)` in `useForgeClock.ts` en `useForgePager.ts` en `scrollToRow` in `ForgeWorkout.tsx`.
+- 9 november, uit de doorloop: Heuvels en trappen: de echte Overpass-aanroep en de hoogte-aanroep zijn nog niet live gezien; de hoogteaanroep staat in `overpass.ts` en kan later samen met UV en zon in `openMeteo.ts`; vakantieadres en periode "Zonder sportschool" gebruiken de terreinregel nog niet; de afstandszin zonder testloop is alleen met engine-tests gezien, nog niet met een eigen stand in het scherm (zie Lookout r2).
+- 8 november, uit de review van het bouwmoment, nog open: de Forge-melding Spieren voor de berg heeft geen eigen schakelaar (Forge zit op het maximum van 6 rijen).
+
+- 9 november, uit de reviews van ronde 3, nog open: feestdagen als voorstel; Reverse Lunge is in de catalogus een dumbbell-oefening; `ProgramProposal.tsx` gebruikt nog niet `isGymStrengthTemplate` (Forge); de OpenStreetMap-regel op een vakantieadres (een periode heeft geen eigen plek, vraagt een nieuwe opgeslagen vorm). Toestelstanden (Forge): Standen wissen zonder Terugdraaien; de formulier-`key` in `MachineWeights.tsx`; standen in pond, plaatjesnummers en optrekhulp; het keuzestrookje 'Ook tussenin en erboven schatten' breekt op 390 px; Minder bij een leeg gewichtsveld zegt 'naar 0 kilo'. Tempo: de band en de lijn zijn nog niet gezien met 8 of meer lopen over 4 weken (de kit heeft geen stand daarvoor).
+- 9 november, uit R1: de gewichtstrend voedt alleen wat je ziet; Forge (lichaamsgewicht en hulp), rugzakaandeel en beenindex rekenen nog met de laatste weging (Forge via lijn Forge, de rest vraagt een eigen besluit want het raakt `planGolden`); de knop 'Voorstel bekijken' op één regel en het blad Lichaamsgewicht zijn op 360 px alleen beredeneerd, niet in beeld gezien.
+- 9 november, uit R2, nog open: hutten via refuges.info wachten op `coords` per etappe in `gr5Stages.ts` (de GPX van de eigenaar omzetten); de kaart Let op op Vandaag verschijnt na het ophalen en kan de ochtendkaart onder de missie schuiven (Lookout met trage processor en een tocht); mogelijk dubbel onweer met het bergweer; de stippen in de tempografiek zijn niet tikbaar; het blad Tempo gebruikt 8 weken, de kaart 12; Meteoalarm is niet leesbaar vanuit een webapp (geen CORS), daarom drempels op Open-Meteo; live netwerk (Open-Meteo-waarschuwing, EAWS) is niet in een echte browser of toestel gezien.
+- 9 november, aandacht voor de eigenaar bij het bouwen: standen onthouden werkt stil (met Terugdraaien); de periode Zonder sportschool geeft de 3 dagen na een tocht dezelfde lengteregel als de 72 uur rust; de grafiek en tekst achter de i van Tempo bij zone 2 zijn nog niet gebouwd.
+
+## Rooster voor de bouwmomenten
+
+Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden). Afgerond: naar "Live op" en uit dit rooster.
+
+1. Af (8 en 9 november): Planner, tijdsgrens, Spieren voor de berg, Buiten klein, Scout RIR en RPE (`docs/onderzoek/RIR en RPE in krachtapps.md`).
+2. Af (9 november): Forge afvinken is de RIR van het doel (stap 1 tot 5; vermoeidheid tussen oefeningen blijft liggen als stap 6 tot 8) ‖ Heuvels en trappen in de buurt ‖ Scout calisthenics en uitleg bij oefeningen (twee verslagen in `docs/onderzoek/`).
+3. Af (9 november): Forge gewicht op een toestel (standen onthouden, blad, instelling) ‖ Periode "Zonder sportschool" (feestdagen als voorstel bleef liggen) ‖ Tempo bij zone 2 (Scout, engine en instelling; grafiek en tekst blijven).
+Vanaf ronde 4 twee lijnen tegelijk, elk een eigen sessie en branch (`claude/lijn-forge`, `claude/lijn-rest`). Een lijn raakt in deze backlog alleen haar eigen rondes en eigen Inbox-punten aan, haalt voor elke push `origin/main` en de werkbranch binnen en lost botsingen in gedeelde bestanden (instellingen, logboek, backlog) op door beide kanten te houden.
+
+Lijn Forge (alles in `components/forge/`, `engine/forge*`, `strengthModel.ts`, oefeningen):
+
+F1. Af (9 november): de Forge-punten uit de Inbox (review afvinken, toestelstanden) ‖ Forge: ruilen met een echte vervanger.
+F2. Af (9 november): vermoeidheid tussen oefeningen (stap 6 tot 8 van het RIR-verslag) ‖ ForgeWorkout opsplitsen, ronde 3 (689 regels), met de lintwaarschuwingen.
+F3. Uitleg bij oefeningen: proef met vijf teksten (Scribe), daarna de rest.
+F4. Calisthenics: ontwerp, daarna bouwen.
+
+Lijn rest (alles buiten Forge):
+
+R3. Af (9 november): de lawineregel zonder bulletin, hoofdletterhulp overal, docs over `SkyPanel`, lege regels, de gestippelde tempolijn. De oudere punten bleken al gebouwd (RPE bij een testloop: `PLANNED_MAX_EFFORT_RPE`, `easyMinutes`, `testEffortRemark`, de ochtend na een test; Vandaag-volgorde: groepen in `todayCards.ts`). Open uit R3: de herinrichting uit de ontwerprapporten (Stand met Ritme, Logboek, Geavanceerd als eigen pagina, één notatie voor tijden), een eigen ronde van een uur of meer met Cartographer.
+R4. Alle teksten herschrijven en Engels, per tab, zonder de Forge-tab (die pas als lijn Forge klaar is). Niet gebouwd in dit bouwmoment: het is een reeks van stap 1 (alle teksten plat), stap 2 (Scout en nieuwe stemgids ter keuring door de eigenaar, een besluit dat niet zonder hem kan) tot stap 4 (vertaalbestanden). Volgende keer: begin met stap 1 en 2 en leg de stemgids voor.
 
 ## Loopt nu
+
+Live op 9 november (lijn rest, R3): de lawineregel bij een tocht in de sneeuw zonder bulletin ("Geen lawinebulletin gevonden voor je tocht. Kijk bij de lawinedienst." met de link, in `ink-dim`), `capitalize` in elf bestanden in plaats van eigen kopieën, de docs over `SkyPanel` rechtgezet, lege regels weg en de tempolijn gestippeld en gedimd bij 'geen duidelijke verandering'.
+Live op 9 november (lijn Forge, F2): vermoeidheid tussen oefeningen (harde sets voor dezelfde spieren eerder in de training stellen de eerste set bij, instelling Vermoeidheid tussen oefeningen, besluit `2026-11-09-forge-vermoeidheid-tussen-oefeningen.md`; de drempels zijn nog niet op echte trainingen getoetst), ForgeWorkout van 1038 naar 689 regels (zes nieuwe hooks en onderdelen) en de lintwaarschuwingen in Forge weg.
+Live op 9 november (lijn rest, R2): weerwaarschuwingen (onweer, windstoten, hitte) en lawinegevaar (EAWS) als kaart Let op op Vandaag, twee instellingen, alleen tekst; Tempo bij zone 2 met een i, een blad en een grafiek per loop.
+
+
+Live op 9 november (lijn Forge, F1): de reviewpunten van Afvinken telt als het doel (`forgeKg` in het log, strengere `allAtTop`, regel 5 leest de bevestigde RIR, pauze, uitlegzin bij de bolletjes), Standen wissen met Terugdraaien en het strookje Ook schatten, en Ruilen met echte vervangers (twee groepen, Aanbevolen, reden per oefening). Open uit F1: pond, plaatjesnummers en optrekhulp bij de toestelstanden; het keuzestrookje en Terugdraaien zijn op 360 en 390 px gezien, Rustig niet.
+Live op 9 november (lijn rest, R1): Heuvels-alleen omzetten bewaart meteen, `isGymStrengthTemplate`, de heuvelregel ook in een periode Zonder sportschool, een vaste sport in zo'n periode blijft staan met een regel in het voorstel, duidelijker reden bij terugzetten van de lengte, hoofdletterhulp samengebracht, `.sky-panel` weg, 'Voorstel bekijken' op één regel, en de gewichtstrend (instelling Gewichtstrend gebruiken, alleen voor wat je ziet).
+
+Live op 9 november (derde bouwmoment, ronde 3): Forge toestelstanden (stil onthouden met Terugdraaien, Minder en Meer springen naar de vorige en volgende stand, blad Standen van dit toestel, instelling Standen onthouden), de periode Zonder sportschool (Eigen gewicht, Licht of Gewoon, Heuvels in de buurt als tekst, instelling Kracht zonder sportschool), Tempo bij zone 2 uit stabiele stukken (engine, oude lopen op de achtergrond bijgewerkt met een budget, instelling).
+
+Live op 9 november (eerste deel): Forge afvinken telt als het doel (instelling in Rekenmodel, bevestigde sets, strengere stap, vragen bij twijfel, twee nieuwe logvelden met migratie), Heuvels en trappen in de buurt (OpenStreetMap, instelling), ForgeWorkout verder opgesplitst (993 regels), gedeelde hulpfuncties, re-exports en dode code weg, regen per plaats, de afstandszin op Vandaag ook zonder testloop, drie onderzoeksverslagen.
+
+Live op 8 november (tweede bouwmoment): regen in het komende uur en maanstand (twee instellingen in Weer en kleding), de telling "weg door je tijdsgrens" klopt bij Lichter, ForgeWorkout een eerste keer opgesplitst, gedeelde mean, stdev, median en joinNL in utils, 27 exports privé, de afstandszin op Vandaag in het enkelvoud bij één loop.
+
+Live op 8 november: één weektelling (week binnen de fase) op Vandaag en Stand, de weekcontrole die niet meer heen en weer schuift (en een testverplaatsing als laatste keuze van het voorstel), de tijdsgrens zegt het bij de oefening met Terugzetten, Spieren voor de berg ook in Forge, Tempo bij zone 2 op vlak tempo en de afstand op Vandaag uit je echte lopen. De 48 uur na de lange duurloop stond al op main sinds 2 november.
 
 
 Ronde 2 van `docs/onderhoud/2026-11-01-aanpak-backlog.md` (ronde 1 is af, terugblik in `docs/onderhoud/reflectie-2026-11-01.md`).
@@ -168,6 +213,7 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 
 - Snel leren van de beste krachtapps (MacroFactor Workouts, RP Hypertrophy, Hevy, Strong, JuggernautAI, Boostcamp): hoe vragen ze RIR of RPE (wanneer, hoe vaak, met hoeveel tikken), wat doen ze ermee (gewicht en herhalingen voor de volgende set of training), en hoe leggen ze het uit.
 - Plus wat onderzoek zegt over hoe goed mensen hun RIR schatten en hoe je dat beter maakt.
+- Ook (eigenaar, 7 november): vermoeidheid tussen oefeningen. Forge rekent nu alleen binnen een oefening met vermoeidheid (`fatigueFactor`); wat je eerder in de training voor dezelfde spieren deed telt niet, alleen indirect via je historie als de volgorde gelijk blijft. Voorstel: de harde sets voor dezelfde hoofdspieren eerder in de training tellen, afgezet tegen wat je daar normaal voor deed, en de eerste set daarop bijstellen; hoeveel per set leren uit je eigen trainingen. Uitzoeken hoe MacroFactor en anderen dit doen en wat onderzoek zegt over voorvermoeidheid.
 - Uitkomst: een kort verslag in `docs/onderzoek/` met wat Forge kan overnemen, als punten naast wat Forge nu al doet (Hoeveel over?, aangenomen RIR, rekent mee).
 - Scout op opus. Kan vóór de grote Forge-onderdelen (vervanger, uitleg, toestel) omdat het die richting geeft.
 
@@ -216,11 +262,29 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 
 ## Tempo bij zone 2 beter maken (eigenaar 7 november: "wat matig")
 
+- Engine en instelling gebouwd op main (9 november) (stap 1 tot 5, besluit `2026-11-09-tempo-stabiele-stukken.md`). Nog open: stap 6, de grafiek (elke loop als stip, warme gedimd, de lijn met band, as met tempo's), en stap 7, de tekst achter de i met de bronnen. Klein: een oude `aerobicProgressCelebrated` (op het midden van de band) na 14 dagen negeren; het dauwpunt in het weer per loop; de regel voor benen die niet uitgerust zijn (hoofdstuk 5 van het verslag).
+
 - Nu (`src/engine/aerobicTrend.ts`): alleen geplande rustige en lange duurlopen, met de gemiddelde hartslag van de hele loop, per week één punt. Met twee of drie loopjes per week en twee die buiten zone 2 vallen geeft dat drie punten en een uitspraak ("17 seconden sneller") die sterker klinkt dan de data draagt.
 - Meer en betere data: uit de reeksen van het horloge (run in detail, `storage/activityDetail.ts`) de stukken van minstens 5 minuten stabiel in zone 2 op vlak terrein, uit elke loop (ook in- en uitlopen van intervallen en de lange duurloop), in plaats van één gemiddelde per loop. Gecorrigeerd voor helling (tempo naar vlak omgerekend) en warmte (`engine/heatPace.ts`), en hartslagdrift (alleen het stuk na de eerste 10 minuten).
 - Eerlijker zeggen: "eerste schatting" tot er minstens 8 metingen over 4 weken zijn, daarna de verandering met een marge ("ongeveer 10 tot 20 seconden sneller"). De cijfers in de tekst komen uit dezelfde functie als de grafiek.
 - Een leesbare grafiek: elke meting als stip, het weekgemiddelde als lijn, een as met tempo's en "sneller" omhoog erbij, de hoogste en laagste week benoemd. Korte tekst: één zin wat het betekent, het hoe achter de i.
 - Scout eerst kort (welke drempels voor stabiel en hoe lang, warmtecorrectie), dan Sherpa: engine op opus (afgeleid, append-only, raakt de planning niet), grafiek en tekst op sonnet.
+
+## Calisthenics, los of naast krachttraining (wens 7 november, grondig)
+
+Doel: calisthenics als volwaardige manier van trainen in ASCEND, los of samen met krachttraining. Het moet echt goed in elkaar zitten; eerst onderzoek, dan ontwerp, dan bouwen.
+
+- Stap 1, onderzoek (Scout op opus, twee delen):
+  - Apps: hoe Thenx, Calimove, Madbarz, Caliverse, Freeletics en de Recommended Routine van r/bodyweightfitness het doen. Progressies (ladders als knie-push-up, push-up, archer, one-arm), vaardigheden (pull-up, dip, muscle-up, handstand, L-sit, front lever), hoe ze vooruitgang meten zonder kilo's, hoe ze het combineren met gewichten.
+  - Wetenschap: progressie via hefboom, tempo en herhalingen in plaats van gewicht; RIR bij oefeningen met je eigen gewicht; houdingen in seconden; vaardigheid tegenover kracht; combineren met kracht en hardlopen voor de berg (benen, rug, grip).
+  - Lees eerst `docs/onderzoek/` en `docs/visie/` (geen dubbel werk).
+- Stap 2, ontwerp (Cartographer en coördinator): hoe het in ASCEND past. Voorstel om te toetsen: een eigen doelsoort "Vaardigheid" met mijlpalen als ladder (zoals de GR5 en de rugzakladder), een vaardigheid als tussendoel naast een hoofddoel, en per training de keuze kracht, calisthenics of samen. Forge kent dan ook stappen in een progressie in plaats van alleen kilo's, houdingen in seconden, extra gewicht en hulp met een band.
+- Stap 3, bouwen in stukken van hoogstens een uur: data (progressies en vaardigheden), engine (vooruitgang zonder kilo's, planner-rollen), Forge (rij voor een progressiestap en een houding), Ascend-tab (de ladder), instellingen.
+- Vaardigheidsdoelen (eigenaar, 7 november): doelen voor houdingen en vaardigheden met je eigen gewicht, zoals een handstand, een push-up in handstand, een L-sit, een front lever, een muscle-up. Elk doel is een ladder van progressies met een duidelijke toets per stap (bijvoorbeeld 3 x 10 seconden vasthouden), en een vaardigheid kan een eigen doel of een tussendoel zijn.
+- Een database van vaardigheden en progressies, liefst open en zonder sleutel. Uitzoeken: free-exercise-db (yuhonas, publiek domein, JSON met foto's), wger (open source, CC-BY-SA, ook lichaamsgewicht), de tekeningen die ASCEND al gebruikt (Workout Guide en Everkinetic, CC BY-SA, `public/exercise-art/ATTRIBUTION.md`) en de progressies van r/bodyweightfitness. Betaalde of sleutel-API's (zoals ExerciseDB via RapidAPI) niet: geen sleutels in de app. Een bron wordt eenmalig ingelezen en herschreven (geen koppeling in de app), met licentie en naamsvermelding zoals bij de tekeningen.
+- Plaatjes: elke oefening en elke progressiestap heeft een tekening in dezelfde stijl als nu (lijntekening, kleur uit de tokens). Ontbreekt een houding in de open bronnen, dan uitzoeken of we hem in dezelfde stijl kunnen tekenen.
+- Moment: na de Forge-punten die hetzelfde oefeningenmodel raken (RIR bij afvinken, toestel, echte vervanger, uitleg bij oefeningen), want calisthenics bouwt daarop. Het onderzoek (stap 1) kan eerder, het staat los.
+- Schatting: onderzoek 300k tot 500k tokens, ontwerp 150k tot 250k, bouwen vijf tot acht rondes met review, samen ongeveer 2,5 tot 3,5 miljoen tokens, verdeeld over drie tot vijf bouwmomenten (twee tot drie weken).
 
 ## Geparkeerd
 

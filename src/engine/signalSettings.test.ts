@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SIGNAL_KEYS, signalOn, signalsOnCount } from './signalSettings';
 import { rowSummary } from './settingsSummary';
-import { normalizeBackupToCurrentModel } from '../storage/backup';
+import { normalizeBackupToCurrentModel } from '../storage/backupNormalize';
 
 describe('signalen uit je gegevens', () => {
   it('staan allemaal aan tot je er een uitzet', () => {

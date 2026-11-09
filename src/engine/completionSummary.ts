@@ -23,6 +23,7 @@ import { addDays, daysBetween, formatDateNL, formatHoursMinutesNL, mondayOfWeek,
 import { formatNumberNL } from '../utils/number';
 import { mainGoal } from './mainGoal';
 import { kgLabel } from '../utils/kg';
+import { joinNL } from '../utils/joinNL';
 
 export interface CompletionLine {
   id: 'goal' | 'week' | 'legs';
@@ -129,11 +130,6 @@ export function logFacts(log: SessionLog): CompletionFacts {
   if (data?.avgHeartRate !== undefined) extra.push(`hartslag ${data.avgHeartRate} gemiddeld${data.maxHeartRate !== undefined ? `, ${data.maxHeartRate} hoogst` : ''}`);
 
   return { main, extra, fromWatch: isWatchLog(log) };
-}
-
-function joinNL(items: string[]): string {
-  if (items.length <= 1) return items[0] ?? '';
-  return `${items.slice(0, -1).join(', ')} en ${items[items.length - 1]}`;
 }
 
 // --- de drie regels ---------------------------------------------------------------

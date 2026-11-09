@@ -24,6 +24,7 @@
 // Puur: geen React, geen IndexedDB.
 
 import { isWalkOrTripLog, logSport } from './sports';
+import { mean } from '../utils/stats';
 import type { SessionLog } from '../models/training';
 import type { SweatActivity, SweatEntry } from '../models/sweat';
 
@@ -124,7 +125,6 @@ export function defaultSweatRate(tempC: number, activity?: SweatActivity): numbe
   return Math.round((activity === 'walk' ? run * WALK_SWEAT_FACTOR : run) / 50) * 50;
 }
 
-const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 const round50 = (v: number) => Math.max(100, Math.round(v / 50) * 50);
 
 interface Point { rate: number; tempC?: number }

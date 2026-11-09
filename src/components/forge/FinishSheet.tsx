@@ -20,7 +20,7 @@ const SAVE_LIMIT_MS = 15_000;
 
 // --- afronden ---------------------------------------------------------------------------
 
-interface FinishExtra {
+export interface FinishExtra {
   minutes: number;
   rpe?: number;
   feel?: 'better' | 'normal' | 'worse';

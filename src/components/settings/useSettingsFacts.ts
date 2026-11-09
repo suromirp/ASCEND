@@ -3,7 +3,8 @@ import { useAppData } from '../../state/AppDataContext';
 import { isOpenOn, isSoreness } from '../../engine/injuryKind';
 import { effectiveAmbition } from '../../engine/ambition';
 import { hasBodyFat } from '../../engine/bodyFat';
-import { currentBodyKg, latestWeight, weightsInUse } from '../../engine/bodyWeight';
+import { currentBodyKg, weightsInUse } from '../../engine/bodyWeight';
+import { weightShown } from '../../engine/weightTrend';
 import { predictDuration } from '../../engine/durationLearning';
 import { usableSweatEntries } from '../../engine/sweat';
 import { journeyProgress, normalizeJourneyState, withBootsDone, withDerivedDone } from '../../engine/journey';
@@ -80,7 +81,8 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     const mainGoal = findMainGoal(trainingGoals, ladder);
     const mainIsTrek = !!mainGoal?.requirements.some((r) => r.discipline === 'hiking' || r.kind === 'elevationGain' || r.kind === 'elevationLoss');
     const periods = (settings.leavePeriods ?? []).filter((p) => p.endDate >= today);
-    const w = latestWeight(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect));
+    const shown = weightShown(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect), settings.weightTrend);
+    const w = shown?.latest;
     const estimates = settings.sessionDurationEstimates ?? {};
     const strength = templates.filter(
       (t) => t.type === 'strength' && !t.weeklyProgression && (t.defaultDayOfWeek || plannedSessions.some((s) => s.templateId === t.id && s.scheduledDate >= today)),
@@ -102,7 +104,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       strengthExternal,
       ambition: effectiveAmbition(settings.ambition, sessionLogs, templateById, program, today),
       hasBodyFat: hasBodyFat(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect)),
-      weight: w ? { kg: w.kg, source: w.source, date: w.date } : null,
+      weight: w ? { kg: w.kg, source: w.source, date: w.date, ...(shown?.trend ? { trendKg: shown.trend.kg } : {}) } : null,
       watch: loaded.watch
         ? { linked: loaded.linked, syncedAt: loaded.watch.fetchedAt, use, autoTick: loaded.watch.autoTick, leads: loaded.watch.garminLeads, corrections: loaded.watch.takeCorrections, sendEnabled: loaded.sendEnabled, hrBasis: loaded.hrBasis }
         : null,

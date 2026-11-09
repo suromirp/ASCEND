@@ -2,7 +2,7 @@
 
 import { Fragment, memo, useMemo } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
-import { QUICK_RIR, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
+import { QUICK_RIR, QUICK_RIR_HINT, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
 import { barNote } from '../../engine/barCheck';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { SwipeRow } from './SwipeRow';
@@ -63,6 +63,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   undoText,
   quickRirRow,
   poundText,
+  capText,
+  standLine,
   act,
 }: {
   ex: WorkoutExercise;
@@ -94,6 +96,10 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   quickRirRow?: string;
   // Het voorstel om dit toestel als ponden op te slaan (engine/poundStack.ts), als er een is.
   poundText?: string;
+  // "1 set weg door je tijdsgrens", zolang er door de grens sets van deze oefening ontbreken (engine/forgeTimeCap.ts).
+  capText?: string;
+  // De regel over de standen van dit toestel: een nieuwe stand (met Terugdraaien), de eerste keer, of een mislukte schrijfactie.
+  standLine?: { kind: 'learned' | 'first' | 'failed'; text: string };
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
@@ -198,6 +204,15 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                 <TextButton onClick={() => act.fill(ex.slot)}>{noFitText.endsWith('aanpassen?') ? 'Aanpassen' : 'Invullen'}</TextButton>
                 <TextButton tone="dim" onClick={() => act.keepFit(ex.slot)}>Liever niet</TextButton>
               </div>
+            </div>
+          )}
+
+          {standLine && !readOnly && (
+            <div className="mt-1.5 flex items-center gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-card-border)' }} role={standLine.kind === 'failed' ? 'alert' : 'status'}>
+              <p className="min-w-0 flex-1 text-xs leading-snug" style={{ color: standLine.kind === 'failed' ? 'var(--color-danger-text)' : 'var(--color-ink-dim)' }}>{standLine.text}</p>
+              {standLine.kind === 'learned' && (
+                <TextButton tone="dim" onClick={() => act.standUndo()} size="xs" className="shrink-0" aria-label={`Terugdraaien, ${standLine.text}`}>Terugdraaien</TextButton>
+              )}
             </div>
           )}
 
@@ -341,6 +356,12 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               <TextButton onClick={() => act.restore(ex.slot)}>Terugzetten</TextButton>
             </p>
           )}
+          {!readOnly && !ex.timed && capText && (
+            <p className="mt-1 flex min-h-[44px] items-center gap-3 text-xs" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-grens-set">
+              <span>{capText}</span>
+              <TextButton onClick={() => act.add(ex.slot)}>Terugzetten</TextButton>
+            </p>
+          )}
           {!readOnly && !ex.timed && (
             <button type="button" onClick={() => act.add(ex.slot)} className="mt-1 flex min-h-[44px] items-center gap-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               <Icon name="plus" size={16} /> Set toevoegen
@@ -365,20 +386,24 @@ function rowLabel(ex: WorkoutExercise, rowId: string): string {
 // blijft het doel staan als aangenomen RIR (docs/beslissingen/2026-11-03-forge-na-de-eerste-vergelijking.md).
 function QuickRir({ label, onPick }: { label: string; onPick: (n: number) => void }) {
   return (
-    <div className="animate-fade-in flex items-center gap-1.5 pb-1 pl-1" role="group" aria-label={`Hoeveel had je over bij set ${label}?`}>
-      <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel over?</span>
-      {QUICK_RIR.map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onPick(n)}
-          aria-label={`${quickRirLabel(n)} over, set ${label}`}
-          className="flex h-11 w-11 items-center justify-center rounded-full border font-sans text-sm font-semibold tabular-nums"
-          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
-        >
-          {quickRirLabel(n)}
-        </button>
-      ))}
+    <div className="animate-fade-in flex flex-col gap-1 pb-1 pl-1" role="group" aria-label={`Hoeveel had je over bij set ${label}?`}>
+      <div className="flex items-center gap-1.5">
+        <span className="mr-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel over?</span>
+        {QUICK_RIR.map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onPick(n)}
+            aria-label={`${quickRirLabel(n)} over, set ${label}`}
+            className="flex h-11 w-11 items-center justify-center rounded-full border font-sans text-sm font-semibold tabular-nums"
+            style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+          >
+            {quickRirLabel(n)}
+          </button>
+        ))}
+      </div>
+      {/* Uit het verslag RIR en RPE (hoofdstuk 5): mensen houden meestal iets meer over dan ze denken. */}
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{QUICK_RIR_HINT}</p>
     </div>
   );
 }

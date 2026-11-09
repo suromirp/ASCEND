@@ -63,7 +63,7 @@ export interface PageRows {
 
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
-    rows: ['bundel-dagen', 'meerdere', 'sporten', 'hoeveel-per-soort', 'bundel-sporten-tellen', 'wijzigingen', 'ambitie', 'bundel-testloop', 'rustdag-terug', 'weekvoorstel'],
+    rows: ['bundel-dagen', 'meerdere', 'sporten', 'hoeveel-per-soort', 'bundel-sporten-tellen', 'wijzigingen', 'ambitie', 'bundel-testloop', 'rustdag-terug', 'weekvoorstel', 'zonder-sportschool'],
     advanced: ['bundel-niet-doorgegaan', 'lange-loop-benen', 'bundel-slepen', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test'],
   },
   doel: {
@@ -74,7 +74,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     rows: ['forge', 'kracht', 'forge-programma', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-weergave', 'bundel-rusttimer', 'forge-scherm', 'forge-bijsturen', 'forge-spotter', 'bundel-sportschool'],
     advanced: ['trainingsduur', 'forge-tijdsgrens', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren'],
   },
-  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit'], advanced: [] },
+  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'bundel-signalen', 'intensiteit', 'tempo-stukken'], advanced: [] },
   vandaag: {
     rows: ['kaarten', 'lichterbenen', 'korter-vandaag', 'bundel-meldingen', 'weerplaats', 'bundel-weer', 'beweging', 'trillen', 'lucht', 'bundel-inzicht', 'bundel-run-detail', 'zweet-vragen'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
@@ -125,6 +125,8 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   rugzak: { row: 'doelen' },
   weervolgt: { row: 'weerplaats', sheet: true },
   'herinnering-gewicht': { row: 'lichaamsgewicht', sheet: true },
+  // Gewichtstrend gebruiken staat in het blad Lichaamsgewicht (docs/beslissingen/2026-11-09-gewichtstrend.md).
+  gewichtstrend: { row: 'lichaamsgewicht', sheet: true },
   // Gewicht uit Health Connect staat in het blad Lichaamsgewicht, naast Uit MacroFactor.
   'health-connect-gewicht': { row: 'lichaamsgewicht', sheet: true },
   // Planning
@@ -139,10 +141,10 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
-  ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'tussengewichten', 'spotterrek'),
+  ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'standen-onthouden', 'tussengewichten', 'spotterrek'),
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes'),
   ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid'),
-  ...inSheet('bundel-rekenmodel', 'forge-rekent-mee', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),
+  ...inSheet('bundel-rekenmodel', 'forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),
   ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-doorvoeren', 'forge-schijven'),
   ...inSheet('bundel-toets', 'forge-naast', 'forge-sinds'),
   ...inSheet('forge-tijdsgrens', 'forge-grens-kracht', 'forge-grens-been'),
@@ -151,7 +153,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd'),
   // Vandaag en meldingen
   ...inSheet('kaarten', 'boven-missie', 'ochtendcheck', 'benen-na-test', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'dagcitaat', 'geluid'),
-  ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
+  ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weeralarm', 'lawinegevaar', 'regen-uur', 'heuvels-buurt', 'maanstand', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
   ...inSheet('bundel-run-detail', 'run-detail', 'run-detail-patronen', 'run-detail-advies', 'loopvorm-cadans', 'loopvorm-grondcontact', 'loopvorm-staplengte', 'loopvorm-oscillatie', 'loopvorm-balans'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),
@@ -278,7 +280,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...rule([B.trainings], 'trainingsduur'),
-  ...rule([B.forge], 'forge-bergspieren', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-rekenmodel', 'forge-rekent-mee', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren', 'bundel-weergave', 'forge-1rm', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-dumbbells'),
+  ...rule([B.forge], 'forge-bergspieren', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-rekenmodel', 'forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren', 'bundel-weergave', 'forge-1rm', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-dumbbells'),
   ...rule([B.forge, B.oneRm], 'forge-weergave'),
   ...rule([B.forge, B.oneRm, B.mf], 'forge-1rm-macrofactor'),
   ...rule([B.forge, B.inApp], 'forge-bijsturen', 'forge-spotter', 'spotterrek'),

@@ -25,10 +25,15 @@ import { underBar } from './barCheck';
 import { DEFAULT_RIR, estimateSet, expectedReps, FATIGUE_PER_SET, fatigueFactor, isHardPair } from './strengthModel';
 import { candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
 import { r2 } from '../utils/round';
+import { DOUBT_FIRST_TRAININGS, DOUBT_OVER_TOP_REPS } from './assumedSets';
+import { isWorkSet } from './workSets';
 
 // Een redelijk bereik voor een geschat aantal: daarbuiten zegt de omrekening niets meer.
-export const RECKON_MIN_REPS = 1;
+const RECKON_MIN_REPS = 1;
 export const RECKON_MAX_REPS = 30;
+// Tot falen of open: een lichtere stand die meer dan zoveel herhalingen boven de onderkant uitkomt is te grote sprong;
+// dan blijft het gewicht staan zolang je er niet meer dan zoveel onder zit.
+const JUMP_ROOM = 2;
 
 // `on`: de instelling "Forge rekent mee". Uit doet niets van dit alles.
 export type ReckonContext = AdjustContext & { on: boolean };
@@ -39,7 +44,7 @@ const rirAim = (t: RowTarget): number => t.rir ?? (t.failure ? 0 : DEFAULT_RIR);
 const clampReps = (n: number) => Math.min(RECKON_MAX_REPS, Math.max(RECKON_MIN_REPS, Math.floor(n)));
 
 // Zijn de herhalingen van deze rij van Forge (nog niet door jou getypt)?
-export const repsAreForge = (r: WorkoutRow): boolean => !r.edited || !!r.repsEstimated;
+const repsAreForge = (r: WorkoutRow): boolean => !r.edited || !!r.repsEstimated;
 
 const measuredRir = (r: WorkoutRow): boolean => r.rir !== undefined && !r.rirAssumed;
 
@@ -48,7 +53,7 @@ const measuredRir = (r: WorkoutRow): boolean => r.rir !== undefined && !r.rirAss
 // vak zette, dan rekent Forge voorzichtig met zoveel minder over (niet onder 0): meer dan gevraagd op 0 of 1
 // over is vaak dichter bij falen, en zo zet een gok de terugsets niet zwaarder dan je aankan. Kies je je RIR
 // ("Hoeveel over?"), dan telt die. Bij gewone sets blijft de aangenomen RIR het doel.
-export function readRir(r: WorkoutRow): number | undefined {
+function readRir(r: WorkoutRow): number | undefined {
   if (r.rir === undefined || !r.rirAssumed || r.forgeReps === undefined || r.reps === undefined) return r.rir;
   return Math.max(0, r.rir - Math.max(0, r.reps - r.forgeReps));
 }
@@ -97,7 +102,7 @@ export function strengthFor(ex: WorkoutExercise, rowId: string, ctx: ReckonConte
 
 // Is deze rij een zware topset voor een terugset (0 of 1 over of tot falen, en de volgende werkset vraagt
 // meer over)? Dan zegt hij hoe sterk je vandaag bent, en de terugsets erna volgen hem samen.
-export function isTopSetRow(ex: WorkoutExercise, rowId: string): boolean {
+function isTopSetRow(ex: WorkoutExercise, rowId: string): boolean {
   const ids = workIds(ex);
   const at = ids.indexOf(rowId);
   if (at < 0 || at + 1 >= ids.length) return false;
@@ -146,7 +151,7 @@ function reckonBackOffs(ex: WorkoutExercise, row: WorkoutRow, ctx: ReckonContext
     const reps = clampReps(Math.min(high, expectedReps(strength, load, rir)));
     const weightKg = Math.min(MAX_ROW_KG, r2(pick.externalKg));
     if (weightKg === r.weightKg && reps === r.reps) continue;
-    rows[k] = { ...r, weightKg, reps, forgeReps: reps };
+    rows[k] = { ...r, weightKg, reps, forgeReps: reps, forgeKg: weightKg };
     changed = true;
   }
   return changed ? { ...ex, rows } : ex;
@@ -210,13 +215,20 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   let reps = expectedReps(strength, now, rir);
   // Tot falen of een open doel (9+): na een zware set mag de volgende één herhaling onder de onderkant zitten, zodat
   // het gewicht maar één stap zakt in plaats van twee (47,5 x 8 na 52,5 x 7, zoals MacroFactor; eigenaar 7 november).
-  const floor = next.target.failure || next.target.open ? Math.max(1, low - 1) : low;
+  const open = !!(next.target.failure || next.target.open);
+  const floor = open ? Math.max(1, low - 1) : low;
+  let keepFewer = false;
   if (reps < floor || reps > high) {
     const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: next.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), ...(row.weightKg !== undefined ? [row.weightKg] : [])], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
     if (candidates) {
       if (reps < floor) {
         const c = lighterPick(strength, candidates, { ...next.target, repsLow: floor }, rir, now);
-        if (c) weightKg = c.externalKg;
+        // Tot falen of open: is de volgende stand een grote sprong (een blok van 7 kg, de hulp van 28 naar 35 kg) die
+        // ruim boven het doel uitkomt, dan blijft het gewicht en verwacht Forge een paar herhalingen minder, zoals
+        // MacroFactor (eigenaar, 7 november). Niet bij een gewoon bereik.
+        const bigJump = c && open && expectedReps(strength, c.loadKg, rir) > low + JUMP_ROOM && reps >= low - 2 * JUMP_ROOM;
+        if (c && !bigJump) weightKg = c.externalKg;
+        else if (bigJump) keepFewer = true;
       } else {
         const c = candidates.find((x) => x.loadKg > now + 1e-9 && expectedReps(strength, x.loadKg, rir) <= high && expectedReps(strength, x.loadKg, rir) >= low);
         if (c) weightKg = c.externalKg;
@@ -232,7 +244,7 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   }
   // Past er geen gewicht en haal je de onderkant toch niet: de set blijft staan. "Lichter" en de melding
   // dat geen gewicht past doen hun eigen voorstel; een vak met 1 of 2 herhalingen helpt niemand.
-  if (reps < floor) return ex;
+  if (reps < floor && !keepFewer) return ex;
   const fixed = clampReps(reps);
   weightKg = Math.min(MAX_ROW_KG, r2(weightKg));
   if (fixed === next.reps && weightKg === next.weightKg) return ex;
@@ -242,7 +254,7 @@ export function reckonAfterTick(ex: WorkoutExercise, rowId: string, ctx: ReckonC
   // Zwaarder is meer belasting, niet een groter getal: bij een toestel met hulp is minder hulp zwaarder.
   const up = load > now + 1e-9 || (Math.abs(load - now) < 1e-9 && fixed > (next.reps ?? 0));
   if ((side > 0 && !up) || (side < 0 && up)) return ex;
-  return { ...ex, rows: ex.rows.map((r) => (r.id === next.id ? { ...r, weightKg, reps: fixed, forgeReps: fixed } : r)) };
+  return { ...ex, rows: ex.rows.map((r) => (r.id === next.id ? { ...r, weightKg, reps: fixed, forgeReps: fixed, forgeKg: weightKg } : r)) };
 }
 
 // Een open set die je niet aanraakte en waar nog het voorschrift met de stap staat (niet bijgesteld na een set).
@@ -273,7 +285,10 @@ export function undoRaise(ex: WorkoutExercise, snap: (kg: number) => number = r2
     const b = back.get(r.id);
     if (r.kind === 'work') {
       if (!b || !stillRaised(r)) return r;
-      return { ...r, ...(b.weightKg !== undefined ? { weightKg: b.weightKg } : {}), reps: b.reps, forgeReps: b.reps, target: { ...r.target, ...(b.weightKg !== undefined ? { weightKg: b.weightKg } : {}) } };
+      // Het voorschrift zelf gaat terug, dus er is geen bijstelling meer (`forgeKg` weg).
+      const { forgeKg: _was, ...plain } = r;
+      void _was;
+      return { ...plain, ...(b.weightKg !== undefined ? { weightKg: b.weightKg } : {}), reps: b.reps, forgeReps: b.reps, target: { ...r.target, ...(b.weightKg !== undefined ? { weightKg: b.weightKg } : {}) } };
     }
     if (!firstOpen || firstBack?.weightKg === undefined || r.done || r.edited || r.share === undefined) return r;
     const w = snap(r2(r.share * firstBack.weightKg));
@@ -287,11 +302,16 @@ export function undoRaise(ex: WorkoutExercise, snap: (kg: number) => number = r2
 // "Hoeveel over?" na het afvinken: de keuzes, 3 is "3+".
 export const QUICK_RIR = [0, 1, 2, 3] as const;
 export const quickRirLabel = (n: number): string => (n >= 3 ? '3+' : String(n));
+// De uitlegzin onder de bolletjes (verslag RIR en RPE, hoofdstuk 5): een schatting is genoeg.
+export const QUICK_RIR_HINT = 'Een schatting is genoeg. Twijfel je tussen twee, kies het lagere: dan rekent Forge voorzichtig.';
 
 // Vraagt Forge na het afvinken van deze set hoeveel je over had? Alleen bij een afgevinkte werkset waarvan
 // je de RIR niet zelf invulde, en alleen bij de sets die het meest zeggen: de eerste werkset (de topset), een
 // zware set (0 of 1 over of tot falen) en de laatste werkset van de oefening. Niet bij een set op tijd.
-export function asksReserve(ex: WorkoutExercise, rowId: string): boolean {
+// Met "Afvinken telt als het doel" (`doubt`) ook bij twijfel (regel 2 van het verslag RIR en RPE):
+// minder herhalingen dan gevraagd, 2 of meer boven de bovenkant, de eerste werkset op een gewicht dat
+// zwaarder is dan vorige keer, en elke werkset in de eerste drie trainingen van een oefening.
+export function asksReserve(ex: WorkoutExercise, rowId: string, doubt = false): boolean {
   if (ex.timed) return false;
   const work = ex.rows.filter((r) => r.kind === 'work');
   const at = work.findIndex((r) => r.id === rowId);
@@ -299,5 +319,23 @@ export function asksReserve(ex: WorkoutExercise, rowId: string): boolean {
   if (!row || !row.done || row.target.timedSec !== undefined) return false;
   if (row.rir !== undefined && !row.rirAssumed) return false;
   const hard = !!row.target.failure || (row.target.rir ?? DEFAULT_RIR) <= 1;
-  return at === 0 || at === work.length - 1 || hard;
+  if (at === 0 || at === work.length - 1 || hard) return true;
+  return doubt && doubtful(ex, work, at);
+}
+
+// Regel 2: twijfel bij een afgevinkte werkset zonder eigen RIR.
+function doubtful(ex: WorkoutExercise, work: WorkoutRow[], at: number): boolean {
+  const row = work[at];
+  const reps = row.reps ?? 0;
+  const asked = row.forgeReps ?? row.target.repsLow;
+  if (reps < asked) return true;
+  if (!row.target.failure && !row.target.open && reps >= row.target.repsHigh + DOUBT_OVER_TOP_REPS) return true;
+  if (ex.trainings !== undefined && ex.trainings < DOUBT_FIRST_TRAININGS) return true;
+  const before = (ex.previous ?? []).filter(isWorkSet).map((s) => s.weightKg).filter((w): w is number => w !== undefined);
+  const kg = row.weightKg;
+  if (kg !== undefined && before.length > 0 && kg > Math.max(...before) + 1e-6) {
+    // Alleen de eerste werkset op dat zwaardere gewicht.
+    return !work.slice(0, at).some((r) => r.weightKg !== undefined && r.weightKg >= kg - 1e-6);
+  }
+  return false;
 }

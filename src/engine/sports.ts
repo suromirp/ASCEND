@@ -6,6 +6,7 @@
 import type { SessionTemplate, SessionLog } from '../models/training';
 import { findModalityByKey, isCyclingModality, modalitySport } from '../data/modalities';
 import { SPORTS, SPORT_IDS, anySportDefinition, type SportId } from '../data/sports';
+import { capitalize } from '../utils/capitalize';
 
 export type Sport = SportId;
 export type EnabledSports = Record<Sport, boolean>;
@@ -55,7 +56,7 @@ export function logKindLabel(log: Pick<SessionLog, 'type' | 'sport' | 'cardioDat
 // "custom_rock_climbing" as a word: "Rock climbing".
 export function customName(id: string): string {
   const words = id.replace(/^custom_/, '').replace(/_/g, ' ').trim();
-  return words.charAt(0).toUpperCase() + words.slice(1);
+  return capitalize(words);
 }
 
 export function isSportEnabled(sport: Sport | undefined, enabled: Partial<EnabledSports> | undefined): boolean {

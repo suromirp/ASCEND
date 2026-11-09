@@ -286,17 +286,26 @@ describe('uit de review', () => {
     });
   });
 
-  it('een stap zwaarder alleen op een gemeten RIR', () => {
+  it('een stap zwaarder alleen op een gemeten RIR (met Afvinken telt als het doel uit)', () => {
     const work = (reps: number, rirAssumed = false): SetLog => ({ reps, weightKg: 60, rir: 2, ...(rirAssumed ? { rirAssumed: true } : {}) });
     const sessions = (assumed: boolean): SessionInput[] => [
       { date: '2026-09-01', sets: [work(9), work(9), work(9)] },
       { date: '2026-09-08', sets: [work(11, assumed), work(11, assumed), work(11, assumed)] },
     ];
-    const input = (assumed: boolean) => ({ exercise: exerciseById('bench-press')!, sessions: sessions(assumed), date: '2026-09-15', settings: resolveStrengthSettings({}), plan: { low: 9, high: 11, rir: 2 } });
+    const input = (assumed: boolean, assumedCounts = false) => ({ exercise: exerciseById('bench-press')!, sessions: sessions(assumed), date: '2026-09-15', settings: resolveStrengthSettings({ assumedCounts }), plan: { low: 9, high: 11, rir: 2 } });
     expect(prescribe(input(false))!.raised).toBeDefined();
     const p = prescribe(input(true))!;
     expect(p.raised).toBeUndefined();
     expect(p.reason).not.toContain('over.');
+    // Aan (het advies), een oud log zonder gevraagd aantal: 11 tegen de onderkant 9 telt met 1 over (regel 4,
+    // en regel 5 leest hetzelfde; besluit 2026-11-09-forge-review-afvinken.md), dus geen stap.
+    expect(prescribe(input(true, true))!.raised).toBeUndefined();
+    // Vroeg Forge 11 en haalde je 11 in elke werkset, dan wel een stap, zonder "met 2 over".
+    const asked = input(true, true);
+    asked.sessions[1].sets = asked.sessions[1].sets.map((s) => ({ ...s, repsAsked: 11, weightKgAsked: 60 }));
+    const confirmed = prescribe(asked)!;
+    expect(confirmed.raised).toBeDefined();
+    expect(confirmed.reason).not.toContain('over.');
   });
 
   it('past er geen gewicht en haal je de onderkant niet, dan blijft de volgende set staan (dumbbells, grove stap)', () => {
@@ -322,5 +331,22 @@ describe('tot falen: na een zware set zakt het gewicht één stap', () => {
     const next = after.rows[1];
     expect(next.weightKg).toBe(47.5);
     expect(next.reps).toBe(8);
+  });
+});
+
+describe('tot falen op een toestel met grote stappen', () => {
+  it('hulp 27 x 10 tot falen, blok in stappen van 7: set 3 springt niet naar 35 kg hulp en 13 herhalingen', () => {
+    const t = { weightKg: 28, repsLow: 9, repsHigh: 9, rir: 0, open: true };
+    const rows: WorkoutRow[] = [
+      { id: 'r0', kind: 'work', target: { ...t, weightKg: 21 }, weightKg: 23, reps: 11, rir: 0, done: true, edited: true },
+      { id: 'r1', kind: 'work', target: t, weightKg: 27, reps: 10, forgeReps: 11, rir: 0, done: true, edited: true },
+      { id: 'r2', kind: 'work', target: t, weightKg: 27, reps: 8, forgeReps: 8, done: false },
+      { id: 'r3', kind: 'work', target: { ...t, weightKg: 35 }, weightKg: 35, reps: 9, forgeReps: 9, done: false },
+    ];
+    const ex: WorkoutExercise = { slot: 's', exerciseId: 'assisted-pull-up', name: 'Pull-Up', known: true, rows, restSec: 120, timed: false, fatiguePerSet: 0.08 };
+    const c = ctx({ profile: { ...DEFAULT_PROFILE, stackStepKg: 7 }, bodyKg: 86 });
+    const next = reckonAfterTick(ex, 'r1', c).rows[2];
+    expect(next.weightKg).toBeLessThan(35);
+    expect(next.reps!).toBeLessThanOrEqual(11);
   });
 });

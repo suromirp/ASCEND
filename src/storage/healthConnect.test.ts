@@ -16,7 +16,7 @@ import { migrateHealthConnectState } from './migrations';
 import { setWatchUse } from './externalActivities';
 import type { HealthConnectState } from './healthConnect';
 import { getRecoveryMetrics } from './wellness';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 import { HEALTH_KINDS, type HealthConnectPort, type HealthKind, type HealthSampleKind } from '../integrations/healthConnect';
 import { offeredActivities } from '../engine/sourcePrecedence';
 import { pendingProposals, type ExternalActivity } from '../engine/activityImport';

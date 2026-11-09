@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { wipeAllData, seedIfEmpty, InjuryNotesRepo, SessionTemplatesRepo, ProgramsRepo, PlannedSessionsRepo, SettingsRepo, StrengthProgramStrategiesRepo } from './database';
 import { runBootMigrations } from './bootMigrations';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
+import { buildImportPreview } from './backupPreview';
+import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './backupApply';
+import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { restoreSafetyLines } from '../engine/freshStart';
 
 // Terugzetten op een lege app: er is niets om te verwijderen. Een back-up van

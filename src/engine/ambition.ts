@@ -22,7 +22,6 @@ import type { Program } from '../models/program';
 import { plannedRpeTop } from './coach';
 import { addDays } from '../utils/dates';
 
-export { AMBITION_FACTOR, ambitionFactor, type Ambition } from './ambitionLevels';
 import type { Ambition } from './ambitionLevels';
 
 const SIGNAL_DAYS = 14;

@@ -15,6 +15,7 @@ import type { DirectionId } from '../data/directions';
 import type { ProgramDirection } from '../models/program';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { mondayOfWeek } from '../utils/dates';
+import { r2 } from '../utils/round';
 import { budgetFor, recentAverage, resolveWeekBudget, HARD_RPE, type CountOptions } from './weekBudget';
 import { waveShapeFor, waveWeek as waveOfDate } from './waves';
 import { plannedEffort } from './standing';
@@ -71,12 +72,11 @@ export function waveBudgets(input: Omit<DirectionPlanInput, 'pattern'>): number[
   return Array.from({ length: shape.weeks }, (_, i) => budgetFor(input.id, { choice, history, shape, wave: { week: i + 1, light: i + 1 === shape.weeks } }).minutes);
 }
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
 
 // De factor per week van de golf; zonder iets wat telt in het patroon geen factoren.
 export function directionFactors(budgets: readonly number[], counted: number): number[] | undefined {
   if (!(counted > 0) || budgets.length === 0) return undefined;
-  return budgets.map((b) => round2(Math.min(FACTOR_MAX, Math.max(FACTOR_MIN, b / counted))));
+  return budgets.map((b) => r2(Math.min(FACTOR_MAX, Math.max(FACTOR_MIN, b / counted))));
 }
 
 // Wat het programma meekrijgt.

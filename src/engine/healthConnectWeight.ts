@@ -11,6 +11,7 @@
 import type { BodyMetric, WeightEntry } from '../models/metrics';
 import { isPlausibleFatPct } from './bodyFat';
 import { addDays } from '../utils/dates';
+import { r1 } from '../utils/round';
 
 // Een getal daarbuiten is geen lichaamsgewicht in kilo's, maar een fout van de bron.
 export const HC_MIN_KG = 30;
@@ -18,14 +19,13 @@ export const HC_MAX_KG = 250;
 // Hoe lang een weging uit Health Connect blijft staan, zoals bij MacroFactor.
 export const HC_WEIGHT_KEEP_DAYS = 365;
 
-const round1 = (n: number) => Math.round(n * 10) / 10;
 
 export function weightEntryFromBody(m: BodyMetric): WeightEntry | undefined {
   if (m.source !== 'health-connect') return undefined;
   const kg = m.weightKg;
   if (typeof kg !== 'number' || !Number.isFinite(kg) || kg < HC_MIN_KG || kg > HC_MAX_KG) return undefined;
-  const entry: WeightEntry = { date: m.date, kg: round1(kg), source: 'health-connect', basis: 'scale' };
-  if (isPlausibleFatPct(m.bodyFatPct)) entry.fatPct = round1(m.bodyFatPct);
+  const entry: WeightEntry = { date: m.date, kg: r1(kg), source: 'health-connect', basis: 'scale' };
+  if (isPlausibleFatPct(m.bodyFatPct)) entry.fatPct = r1(m.bodyFatPct);
   return entry;
 }
 

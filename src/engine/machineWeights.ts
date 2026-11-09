@@ -7,7 +7,7 @@
 // ASCEND over dat toestel leert of schat (`candidatesFor`).
 
 import type { Exercise } from '../models/exercise';
-import { ADD_ON_LIMITS, DEFAULT_PROFILE, cleanAddOnOverride, cleanAddOns, cleanWeightRanges, poundRangeFor, rangeProblem, resolveStrengthSettings, weightsFromRange, withProfile, type GymProfile, type StrengthSettings, type WeightRange } from './strengthSettings';
+import { ADD_ON_LIMITS, DEFAULT_PROFILE, cleanStandList, cleanAddOnOverride, cleanAddOns, cleanWeightRanges, poundRangeFor, rangeProblem, resolveStrengthSettings, weightsFromRange, withProfile, type GymProfile, type StrengthSettings, type WeightRange } from './strengthSettings';
 import { r2 } from '../utils/round';
 
 export { ADD_ON_LIMITS, cleanAddOnOverride, cleanAddOns, cleanWeightRanges, poundRangeFor, rangeProblem, weightsFromRange };
@@ -41,8 +41,14 @@ export function rangeWeights(range: WeightRange): number[] {
 export const rangesFor = (profile: GymProfile, exercise: Exercise | undefined): WeightRange[] => (exercise && hasStack(exercise) ? (cleanWeightRanges(profile.exerciseWeightRanges?.[exercise.id]) ?? []) : []);
 
 // Wat je voor dit toestel invulde, als lijst: de losse gewichten en de bereiken samen, oplopend en
-// zonder dubbele. Undefined als er niets staat.
+// zonder dubbele. Undefined als er niets staat. Heeft het toestel standen (engine/toestelStanden.ts), dan
+// tellen alleen die, en alleen als gesloten lijst bij "Alleen deze standen" (`only`).
 function ownWeightsOf(profile: GymProfile, exerciseId: string): number[] | undefined {
+  const stands = profile.exerciseStandsKg?.[exerciseId];
+  if (stands !== undefined) {
+    const clean = cleanStandList(stands);
+    if (clean) return clean.only && clean.kg.length > 0 ? clean.kg : undefined;
+  }
   const all = new Set<number>(cleanMachineList(profile.exerciseWeightsKg?.[exerciseId]) ?? []);
   for (const r of cleanWeightRanges(profile.exerciseWeightRanges?.[exerciseId]) ?? []) for (const w of rangeWeights(r)) all.add(w);
   return all.size > 0 ? [...all].sort((a, b) => a - b) : undefined;
@@ -54,11 +60,10 @@ export function ownWeightsFor(profile: GymProfile, exercise: Exercise | undefine
   return ownWeightsOf(profile, exercise.id);
 }
 
-// Voor hoeveel toestellen er in dit profiel iets is ingevuld.
+// Voor hoeveel toestellen er in dit profiel standen zijn: een lijst of bereik van vroeger telt mee, een
+// toestel met alleen een lege sleutel (ingelezen, niets over) niet.
 export const machineListCount = (profile: GymProfile): number =>
-  new Set([...Object.keys(profile.exerciseWeightsKg ?? {}), ...Object.keys(profile.exerciseWeightRanges ?? {})]).size === 0
-    ? 0
-    : [...new Set([...Object.keys(profile.exerciseWeightsKg ?? {}), ...Object.keys(profile.exerciseWeightRanges ?? {})])].filter((id) => ownWeightsOf(profile, id)).length;
+  [...new Set([...Object.keys(profile.exerciseWeightsKg ?? {}), ...Object.keys(profile.exerciseWeightRanges ?? {}), ...Object.keys(profile.exerciseStandsKg ?? {})])].filter((id) => (cleanStandList(profile.exerciseStandsKg?.[id])?.kg.length ?? 0) > 0 || ownWeightsOf(profile, id)).length;
 
 export type ParsedList = { ok: true; list: number[] } | { ok: false; reason: string };
 
@@ -84,7 +89,9 @@ export function parseMachineWeights(text: string): ParsedList {
 export const formatMachineWeights = (list: number[]): string => list.map((n) => String(n).replace('.', ',')).join(' ');
 
 // De instellingen met losse gewichten en bereiken van één toestel gezet, in het actieve profiel.
-// Een lege lijst en geen bereiken wissen het toestel.
+// Een lege lijst en geen bereiken wissen het toestel. Wat je zo opslaat is de waarheid voor dat toestel:
+// de standen ervan gaan weg, zodat het formulier van nu laat zien wat geldt. Het nieuwe blad (stap 5 van
+// docs/visie/Toestelstanden in Forge.md) schrijft straks naar de standen zelf.
 export function withMachineSetup(raw: StrengthSettings | undefined, exerciseId: string, setup: { list?: number[]; ranges?: WeightRange[] }): StrengthSettings {
   const profile = resolveStrengthSettings(raw).profile;
   const lists = { ...(profile.exerciseWeightsKg ?? {}) };
@@ -95,14 +102,17 @@ export function withMachineSetup(raw: StrengthSettings | undefined, exerciseId: 
   else delete lists[exerciseId];
   if (cleanRanges) ranges[exerciseId] = cleanRanges;
   else delete ranges[exerciseId];
+  const stands = { ...(profile.exerciseStandsKg ?? {}) };
+  delete stands[exerciseId];
   const out = withProfile(raw, {
     exerciseWeightsKg: Object.keys(lists).length > 0 ? lists : undefined,
     exerciseWeightRanges: Object.keys(ranges).length > 0 ? ranges : undefined,
+    exerciseStandsKg: Object.keys(stands).length > 0 ? stands : undefined,
   });
   out.profiles = out.profiles?.map((p) => {
     if (p.id !== profile.id) return p;
-    const { exerciseWeightsKg, exerciseWeightRanges, ...rest } = p;
-    return { ...rest, ...(exerciseWeightsKg ? { exerciseWeightsKg } : {}), ...(exerciseWeightRanges ? { exerciseWeightRanges } : {}) };
+    const { exerciseWeightsKg, exerciseWeightRanges, exerciseStandsKg, ...rest } = p;
+    return { ...rest, ...(exerciseWeightsKg ? { exerciseWeightsKg } : {}), ...(exerciseWeightRanges ? { exerciseWeightRanges } : {}), ...(exerciseStandsKg ? { exerciseStandsKg } : {}) };
   });
   return out;
 }
@@ -143,7 +153,8 @@ export function withNewProfile(raw: StrengthSettings | undefined, name: string):
   const base = resolveStrengthSettings(raw).profile ?? DEFAULT_PROFILE;
   let n = profiles.length + 1;
   while (profiles.some((p) => p.id === `gym-${n}`)) n++;
-  const { exerciseWeightsKg: _own, exerciseWeightRanges: _ownRanges, exerciseAddOnKg: _ownAdd, id: _id, ...rest } = base;
+  const { exerciseWeightsKg: _own, exerciseWeightRanges: _ownRanges, exerciseAddOnKg: _ownAdd, exerciseStandsKg: _stands, id: _id, ...rest } = base;
+  void _stands;
   void _own;
   void _ownRanges;
   void _ownAdd;
