@@ -71,8 +71,8 @@ export function LeavePeriodsCard() {
           <Eyebrow>Vrije dagen en vakanties</Eyebrow>
           <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             {shown.length === 0
-              ? 'Heb je vrije dagen, een vakantie of een tocht op komst? Zet ze hier. Je ziet eerst hoe je weken eruit komen te zien; pas na jouw Akkoord verandert er iets.'
-              : 'ASCEND houdt hier rekening mee. Tik op een periode om hem bij te werken. Wat je planning raakt zie je eerst als voorstel; pas na jouw Akkoord verandert er iets.'}
+              ? 'Vrije dagen, vakantie of tocht op komst? Zet ze hier. Eerst een voorstel, pas na Akkoord verandert er iets.'
+              : 'Tik op een periode om hem bij te werken. Eerst een voorstel, pas na Akkoord verandert er iets.'}
           </p>
         </div>
 
@@ -207,7 +207,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
 
               {isTocht ? (
                 <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                  Dit is een tocht. Hier verschuif je de datums; de naam, het terrein en hoe belangrijk hij is, wijzig je bij Tochten op de Ascend-tab.
+                  Dit is een tocht. Hier verschuif je de datums. Naam, terrein en belang wijzig je bij Tochten op de Ascend-tab.
                 </p>
               ) : (
                 <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Soort periode">
@@ -243,7 +243,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                       <Segmented tall label="Hoeveel" value={noGym.amount} onChange={(v) => setGym({ amount: v })} options={[{ value: 'light', label: 'Licht' }, { value: 'normal', label: 'Gewoon' }]} />
                     </div>
                     <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                      {noGym.amount === 'light' ? 'Twee keer lopen per week, korter en rustig. Het advies.' : 'Je loopjes blijven staan, korter en rustig.'}
+                      {noGym.amount === 'light' ? 'Twee keer lopen per week, korter en rustig. Het advies.' : 'Je lopen blijven staan, korter en rustig.'}
                     </p>
                   </div>
                   <div>
@@ -296,7 +296,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
               {problem && startDate && endDate && <p className="mt-2 text-xs" style={{ color: 'var(--color-danger-text)' }} role="alert">{problem}</p>}
               {overlap && (
                 <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                  Dit overlapt met {LEAVE_KIND_LABEL[overlap.kind].toLowerCase()} ({describePeriodDates(overlap)}). Op de dagen die allebei gelden telt de strengste: eerst vakantie, dan tocht, dan zonder sportschool, dan vrije dagen.
+                  Dit overlapt met {LEAVE_KIND_LABEL[overlap.kind].toLowerCase()} ({describePeriodDates(overlap)}). Op dagen die allebei gelden telt de strengste: vakantie, tocht, zonder sportschool, vrije dagen.
                 </p>
               )}
 
@@ -318,8 +318,8 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                   : scope === 'none'
                     ? 'Je hebt nog niets veranderd.'
                     : editing
-                      ? 'Je ziet eerst wat er in je planning verandert: wat erbij komt, wat vervalt en wat schuift. Pas na jouw Akkoord worden de nieuwe datums bewaard.'
-                      : 'Je ziet eerst wat er in je planning verandert. Pas na jouw Akkoord wordt de periode bewaard.'}
+                      ? 'Eerst een voorstel, pas na Akkoord verandert er iets. Daarna worden de nieuwe datums bewaard.'
+                      : 'Eerst een voorstel, pas na Akkoord verandert er iets. Daarna wordt de periode bewaard.'}
               </p>
               {onRemove && (
                 <TextButton tone="dim" onClick={onRemove} className="-ml-1 mt-1 px-1">Periode verwijderen</TextButton>

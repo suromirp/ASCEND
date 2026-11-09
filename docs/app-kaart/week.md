@@ -16,8 +16,8 @@ Tijd
 Belasting per dag
 zware beendag
 vorige week
-Maandag was je zwaarste dag. Eén zware beendag (Lange duurloop): je benen hebben alle ruimte.
-De hoogte is minuten maal hoe zwaar het was.
+Maandag was je zwaarste dag. Eén zware beendag: Lange duurloop. Je benen hebben ruimte.
+Hoogte: minuten maal zwaarte.
 
 --- kaart 2 ---
 [knop: Rustige duurloopMa 26·56 min·zonder planGedaan]
@@ -42,5 +42,5 @@ Za 31 · niets gepland
 
 --- kaart 4 ---
 Vrije dagen en vakanties
-Heb je vrije dagen, een vakantie of een tocht op komst? Zet ze hier. Je ziet eerst hoe je weken eruit komen te zien; pas na jouw Akkoord verandert er iets.
+Vrije dagen, vakantie of tocht op komst? Zet ze hier. Eerst een voorstel, pas na Akkoord verandert er iets.
 [knop: Periode toevoegen]

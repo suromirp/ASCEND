@@ -10,7 +10,7 @@ Week 1 van 4 · basisfase
 0 gedaan · 56 min · hardlopen 8,6 km
 56 min rustig
 Wat telt
-Benen A (zwaar) en Testloop 5 km bleven liggen. Laat los wat blijft liggen: inhalen door te stapelen is geen goed idee.
+Benen A (zwaar) en Testloop 5 km bleven liggen. Laat ze los. Stapelen helpt niet.
 Volgende week: basisfase, week 2 · opbouw
 3:50 uur gepland · lange duurloop 60 min
 

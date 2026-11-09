@@ -48,6 +48,6 @@ describe('weekSummaryLine', () => {
     expect(weekSummaryLine({ ...base, running: true, todayLeft: 1, minutes: 0, perSport: [] })).toBe('2 gedaan, vandaag staat er nog 1');
   });
   it('is vriendelijk bij een week zonder training', () => {
-    expect(weekSummaryLine({ ...base, done: 0, minutes: 0, perSport: [] })).toBe('Deze week kwam het er niet van. Volgende week begint gewoon volgens plan.');
+    expect(weekSummaryLine({ ...base, done: 0, minutes: 0, perSport: [] })).toBe('Geen trainingen deze week. Volgende week volgt het plan.');
   });
 });
