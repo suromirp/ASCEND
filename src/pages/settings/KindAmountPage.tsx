@@ -58,7 +58,7 @@ export function KindAmountPage() {
         </button>
         <h1 className="st-title">Hoeveel per soort</h1>
       </SkyBand>
-      <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }}>Minder of Meer maakt een training eerst korter of langer, daarna komt er waar het past een bij of gaat er een af. Je ziet eerst wat er verandert.</p>
+      <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }}>Minder of Meer maakt een training eerst korter of langer. Daarna komt er waar het past een bij of gaat er een af. Eerst een voorstel, pas na Akkoord verandert er iets.</p>
       {plan.note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{plan.note}</p>}
       <div className="mt-4 flex flex-col gap-3">
         {kinds.map((k) => {

@@ -68,7 +68,7 @@ export function PatternsCard({ patterns }: { patterns: RunPattern[] }) {
     <Card>
       <Eyebrow>Wat opvalt</Eyebrow>
       {patterns.length === 0 ? (
-        <p className="mt-2 text-sm leading-snug" style={ink}>Niets dat opvalt. Een gelijkmatige run.</p>
+        <p className="mt-2 text-sm leading-snug" style={ink}>Niets dat opvalt. Een gelijkmatige loop.</p>
       ) : (
         <div className="mt-1 flex flex-col">
           {patterns.map((p) => (
@@ -104,10 +104,10 @@ export function CompareCard({ rd, comparison, reason }: { rd: RunDetail; compari
   const median = comparison?.medianPerKm.flatMap((v, i) => (v === null || rd.kms[i]?.partial ? [] : [{ km: i + 1, value: v }])) ?? [];
   return (
     <Card>
-      <Eyebrow>Tegen je eerdere runs</Eyebrow>
+      <Eyebrow>Tegen je eerdere lopen</Eyebrow>
       {comparison ? (
         <>
-          <p className="mt-2 text-sm leading-snug" style={dim}>Vergeleken met je {comparison.n} laatste runs van dezelfde soort en ongeveer dezelfde afstand.</p>
+          <p className="mt-2 text-sm leading-snug" style={dim}>Vergeleken met je {comparison.n} laatste lopen van dezelfde soort en ongeveer dezelfde afstand.</p>
           <div className="mt-2 flex flex-col">
             {comparison.rows.map((r) => (
               <div key={r.label} className="border-t py-2.5 first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
@@ -121,7 +121,7 @@ export function CompareCard({ rd, comparison, reason }: { rd: RunDetail; compari
           </div>
           {median.length >= 2 && own.length >= 2 && (
             <div className="mt-3">
-              <p className="mb-1 text-xs" style={dim}>Tempo per kilometer: jij in mint, het midden van de eerdere runs gestippeld. Hoger is sneller.</p>
+              <p className="mb-1 text-xs" style={dim}>Tempo per kilometer: jij in mint, het midden van de eerdere lopen gestippeld. Hoger is sneller.</p>
               <KmLineChart points={own} compare={median} color="var(--color-action)" invert format={formatPace} />
             </div>
           )}
@@ -153,7 +153,7 @@ export function AdviceCard({ advice }: { advice: RunAdvice }) {
           onClose={() => setWhy(false)}
           points={[
             { head: 'Waar het op rust', text: advice.why },
-            { head: 'Je planning', text: 'verandert niet door dit advies. Wil je iets aanpassen, dan gaat dat zoals altijd via een voorstel met Akkoord.' },
+            { head: 'Je planning', text: 'verandert niet door dit advies. Eerst een voorstel, pas na Akkoord verandert er iets.' },
           ]}
         />
       )}

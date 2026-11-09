@@ -81,10 +81,10 @@ function rule(p: Pair, tomorrowHard: boolean): DayOrderAdvice | undefined {
   }
   // 2. Two runs.
   if (isRun(ra) && isRun(rb)) {
-    if (isHardRun(ra) && isHardRun(rb)) return { order: [a.id, b.id], avoid: true, headline: 'Twee harde loopjes op één dag', reason: 'Verplaats er één naar een andere dag.', why: 'Twee kwaliteitstrainingen op één dag laten de tweede niet meer goed lukken, en je herstel loopt achter.', evidence: 'expertopinie', sources: [] };
+    if (isHardRun(ra) && isHardRun(rb)) return { order: [a.id, b.id], avoid: true, headline: 'Twee harde lopen op één dag', reason: 'Verplaats er één naar een andere dag.', why: 'Twee kwaliteitstrainingen op één dag laten de tweede niet meer goed lukken, en je herstel loopt achter.', evidence: 'expertopinie', sources: [] };
     const x = pick(isHardRun);
     if (isHardRun(x.r)) return { order: [x.s.id, x.o.id], gapHours: 5, minGapHours: 3, headline: `Eerst ${x.t.name}, dan ${x.ot.name}`, reason: 'De rustige loop liefst 5 uur later, en kort.', why: 'De harde loop is de training die telt; die doe je fris. De rustige loop erna is herstel.', evidence: 'expertopinie', sources: [] };
-    return { order: [a.id, b.id], gapHours: 5, minGapHours: 3, headline: `Twee rustige loopjes`, reason: 'Liefst 5 uur ertussen, de tweede kort.', why: 'Twee keer rustig lopen kan, maar geeft meer klappen dan één langere loop.', evidence: 'expertopinie', sources: [] };
+    return { order: [a.id, b.id], gapHours: 5, minGapHours: 3, headline: 'Twee rustige lopen', reason: 'Liefst 5 uur ertussen, de tweede kort.', why: 'Twee keer rustig lopen kan, maar geeft meer klappen dan één langere loop.', evidence: 'expertopinie', sources: [] };
   }
   // 3. Long run + something.
   if (has('langeLoop')) {

@@ -140,8 +140,8 @@ export function MonthCalendar({
       </div>
       {(hasDone || hasPlanned) && (
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {hasDone && <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-ink-dim)' }} aria-hidden />Gedaan, in de kleur van je sport</span>}
-          {hasPlanned && <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-track)' }} aria-hidden />Gepland</span>}
+          {hasDone && <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-ink-dim)' }} aria-hidden />Gedaan: een stip in de kleur van je sport</span>}
+          {hasPlanned && <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-track)' }} aria-hidden />Gepland: omcirkeld</span>}
         </div>
       )}
     </div>

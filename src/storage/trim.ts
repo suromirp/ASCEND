@@ -42,10 +42,10 @@ function kindOfLog(log: SessionLog): ExternalActivityKind {
 // connection, the provider does not answer or the activity has no usable series.
 export async function fetchTrimStreams(log: SessionLog, options: FetchOptions = {}): Promise<StreamSet> {
   const externalId = log.externalId;
-  if (!externalId) throw new TrimUnavailableError('Deze training komt niet van je horloge, dus er zijn geen reeksen om in te korten.');
+  if (!externalId) throw new TrimUnavailableError('Deze training komt niet van je horloge. Er zijn geen reeksen om in te korten.');
   const connection = await getConnection();
   if (!connection) {
-    throw new TrimUnavailableError('Er is geen koppeling met intervals.icu. Koppel je horloge bij Instellingen, Koppelingen, dan kun je inkorten.');
+    throw new TrimUnavailableError('Er is geen koppeling met intervals.icu. Koppel je horloge bij Instellingen, Koppelingen. Dan kun je inkorten.');
   }
   // What is known of the activity from the last fetches; else everything ASCEND uses.
   const state = await getWatchState();
@@ -62,7 +62,7 @@ export async function fetchTrimStreams(log: SessionLog, options: FetchOptions = 
     throw new TrimUnavailableError(intervalsErrorMessage(err));
   }
   if (!streams || streams.timeSec.length < MIN_TRIM_SAMPLES || (!streams.speedMs && !streams.distanceM)) {
-    throw new TrimUnavailableError('Van deze training heeft intervals.icu geen tijd en snelheid of afstand per moment. Inkorten kan dan niet.');
+    throw new TrimUnavailableError('Van deze training heeft intervals.icu geen tijd en snelheid of afstand per moment. Inkorten kan niet.');
   }
   const zeroed = zeroBased(streams);
   if (zeroed.timeSec[zeroed.timeSec.length - 1] < MIN_TRIM_SEC) {
