@@ -267,3 +267,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Uitleg bij oefeningen batch 4 (twintig teksten, bouwer in een eigen sessie), bouwer, fable, tokens niet door de sessie zelf te meten
 - 2026-11-09, Uitleg batch 4 toets op techniek, Scout, fable (sportwetenschapper), 153k, 7 min, 4 correcties (nek bij de hip thrust, adem bij drie roeioefeningen, gestrekte armen bij de deadlift, knie bij de step-up met rugzak); teksten gelezen uit de scratchpad terwijl batch 3 in review was
 - 2026-11-09, Uitleg batch 4 review, Warden, fable (reviewer), 100k, 3 min, 0 blokkerend, 8 klein (alle hersteld); les: laat de bouwer voor de review zelf greppen op de woorden van de verwante tekst
+- 2026-11-09, Uitleg batch 4 doorloop 360 en 412 px, Lookout, sonnet (tester), 63k, 6 min, 0, drie teksten groen; hergebruikte de scripts van batch 3 uit de scratchpad
