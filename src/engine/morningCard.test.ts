@@ -132,7 +132,7 @@ describe('morningConsequence', () => {
     const c = morningConsequence(entry('spierpijn'), ctx(planned));
     expect(c.kind).toBe('voorstel');
     expect(c.line).toMatch(/^Voorstel: .*Benen A.*\.$/);
-    expect(c.detail).toContain('Niets verandert zonder jouw akkoord.');
+    expect(c.detail).toContain('Eerst een voorstel, pas na Akkoord verandert er iets.');
     expect(c.adviceId).toBe(`morning:${day}:legs`);
   });
 

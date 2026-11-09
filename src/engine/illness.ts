@@ -35,8 +35,8 @@ export const ILLNESS_HINT: Record<IllnessKind, string> = {
 };
 
 export const ILLNESS_GUIDANCE: Record<IllnessKind, string> = {
-  above_neck: 'Voel je je goed, dan mag een rustige training, zoals wandelen of een rustige duurloop. Zware trainingen zijn van je planning gehaald. Krijg je koorts of klachten op je borst, meld dat dan.',
-  below_neck: 'Rust. Je trainingen van vandaag en morgen zijn van je planning gehaald. Wat je mist terwijl je ziek bent, telt niet als gemist en hoef je niet in te halen.',
+  above_neck: 'Zware trainingen zijn van je planning gehaald. Rustig wandelen of een rustige loop mag als je je goed voelt. Krijg je koorts of klachten op je borst? Meld dat.',
+  below_neck: 'Rust. Je trainingen van vandaag en morgen zijn van je planning gehaald. Wat je mist, telt niet als gemist en hoef je niet in te halen.',
   stomach: 'Rust en drink genoeg. Je trainingen van vandaag en morgen zijn van je planning gehaald. Wat je mist, telt niet als gemist en hoef je niet in te halen.',
 };
 

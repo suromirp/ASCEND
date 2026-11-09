@@ -43,7 +43,9 @@ F5. Lichaamsgewicht als trend, overal (eigenaar 9 november: "een laatste gewicht
 Lijn rest (alles buiten Forge):
 
 R3. Af (9 november): de lawineregel zonder bulletin, hoofdletterhulp overal, docs over `SkyPanel`, lege regels, de gestippelde tempolijn. De oudere punten bleken al gebouwd (RPE bij een testloop: `PLANNED_MAX_EFFORT_RPE`, `easyMinutes`, `testEffortRemark`, de ochtend na een test; Vandaag-volgorde: groepen in `todayCards.ts`). Open uit R3: de herinrichting uit de ontwerprapporten (Stand met Ritme, Logboek, Geavanceerd als eigen pagina, één notatie voor tijden), een eigen ronde van een uur of meer met Cartographer.
-R4. Alle teksten herschrijven en Engels, per tab, zonder de Forge-tab (die pas als lijn Forge klaar is). Niet gebouwd in dit bouwmoment: het is een reeks van stap 1 (alle teksten plat), stap 2 (Scout en nieuwe stemgids ter keuring door de eigenaar, een besluit dat niet zonder hem kan) tot stap 4 (vertaalbestanden). Volgende keer: begin met stap 1 en 2 en leg de stemgids voor.
+R4. Stap 1 en 2 af (9 november): alle teksten plat (`docs/teksten/alle-teksten.md`) en de stemgids, goedgekeurd door de eigenaar en vastgelegd in `docs/beslissingen/2026-11-09-stem-van-ascend.md` (vervangt het besluit van 27 oktober). Stap 3 proef af (9 november): de Vandaag-tab herschreven door Scribe, getoetst door Warden en Lookout. Stap 4 (vertaalbestanden, Engels) volgt als alle tabs klaar zijn.
+R5. Stap 3 voor Week: waarschuwingen, slepen, inhalen, blad van een geplande training, weekterugblik, jaaroverzicht. Eén tab per keer, met `docs/teksten/alle-teksten.md` als lijst en de stemgids als maat. Eerst in `docs/werkbriefjes/week.md` kijken.
+R6. Stap 3 voor Ascend (doelen, klaar voor je doel, GR5, race; ook de kaart in `raceReadiness.ts` die nog de oude vorm van het doeltijdadvies heeft). R7: Stand (en Stand zonder doel). R8: Lichaam, Logboek en Run in detail. R9: Instellingen met de uitleg achter de i (hoogstens ongeveer 40 woorden per onderwerp; Vandaag-onderwerpen zitten op 45 tot 70). R10: de Forge-tab, pas als lijn Forge klaar is.
 
 ## Loopt nu
 
@@ -214,7 +216,7 @@ Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie wer
 - De app komt in twee talen: Nederlands en Engels, te kiezen in Instellingen.
 - Stap 1: alle teksten van de app plat in één document (schermen, knoppen, meldingen, uitleg achter de i, voorstellen), per scherm gegroepeerd, met waar ze in de code staan. Kan grotendeels uit de tekstkaart (`docs/app-kaart/`) en `src/data/settingsHelp.ts`. **Klaar (9 november, R4):** `docs/teksten/alle-teksten.md`, gemaakt met `node scripts/app-kaart/teksten-plat.mjs`; zonder Forge.
 - Stap 2: Scout kijkt hoe MacroFactor en twee of drie andere apps hun teksten schrijven (lengte, toon, wat achter een tik zit). Daarna een nieuwe stemgids die `docs/beslissingen/2026-10-27-stem-van-ascend.md` vervangt, eerst ter keuring door de eigenaar. **Klaar als concept (9 november, R4):** `docs/visie/stemgids-concept.md`, wacht op keuring door de eigenaar; de bron was dun (drie apps echt gelezen), dat staat erin. Er is nog niets in de app veranderd.
-- Stap 3: Scribe (de copywriter, zie de uitleg bij oefeningen) herschrijft per scherm, Warden toetst. Eerst één tab als proef.
+- Stap 3: Scribe (de copywriter, zie de uitleg bij oefeningen) herschrijft per scherm, Warden toetst. Eerst één tab als proef. **Proef af (9 november, R4):** Vandaag. Er is nog geen aparte Scribe-rol in `.claude/agents/`; de proef draaide als `ontwikkelaar` op sonnet met de stemgids in de opdracht. Verder per tab, zie R5 tot R10 in het rooster.
 - Stap 4: de teksten uit de code halen naar een vertaalbestand per taal, zodat Engels erbij kan. Groot werk in alle componenten; de engine geeft nu ook zinnen terug, die moeten mee. Sherpa op sonnet, per tab.
 - Samen met de uitleg bij oefeningen oppakken. Niet deze week.
 

@@ -31,7 +31,7 @@ Het volledige ontwerp (Zee en berg, Knoppen en tikdoelen, Stem, Beweging, alle t
 - Hergebruik de primitives in `src/components/ui.tsx`, `TextButton.tsx` en `SkyBand.tsx`; geen eigen kaart- of knopopmaak.
 - Elk blad gaat door `useSheetClose`, heeft `ref={sheetRef}` en `<SheetGrip />`.
 - Beweging 150 tot 400 ms, ease-out, geen lus; netjes op de eindstand in Rustig en Uit.
-- Teksten: je/jij, kort en direct, het droge feit eerst; geen gedachtestreepjes.
+- Teksten: je/jij, kort en direct, het droge feit eerst; geen gedachtestreepjes. De stem: `docs/beslissingen/2026-11-09-stem-van-ascend.md`.
 - Geen redesign van kleur, letter of indeling als bijwerking van een andere taak.
 
 ## Engineering
