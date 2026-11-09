@@ -43,10 +43,9 @@ app reopens where you were after `AppSettings.resumeMinutes` (`utils/launchRoute
   pictogram in mint, omdat de kleur van het tandwiel bij de instellingen hoort
   (`docs/beslissingen/2026-10-24-pictogrammen-in-stijl-c.md`).
 
-- Lange donkere pagina's krijgen hoogstens één vlak lucht halverwege (`SkyPanel`
-  in `SkyBand.tsx`: verloop van de lucht, smalle bergrand, `.on-light`, volgt de
-  nachtlucht), op een kaart die iets samenvat of aanwijst, nooit de eerste kaart
-  (`docs/beslissingen/2026-10-24-lucht-halverwege.md`).
+- Lange donkere pagina's krijgen geen losse luchtvlakken in de pagina: `SkyPanel` bestaat niet meer
+  (`.sky-panel` is in ronde R1 weggehaald); de lucht staat alleen bovenaan in `SkyBand`
+  (`docs/beslissingen/2026-10-24-lucht-halverwege.md` is daarmee achterhaald).
 
 - Instellingen (`/more`, `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`):
   een overzicht met de stand en acht groepen (`/more/:groep`: Planning, Doel en

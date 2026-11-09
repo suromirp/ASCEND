@@ -52,7 +52,6 @@ export const EASE_RIR_EXTRA = 4;
 const EASE_DROP_FROM_SETS = 3;
 export { MAX_LEG_EASE_DAYS };
 
-
 // --- een loop eerder vandaag --------------------------------------------------------------------
 
 export interface EarlierToday {
@@ -382,7 +381,6 @@ const number0 = (n: number) => formatNumberNL(n, 0);
 function indexWords(s: LegDaySignals): string {
   return s.nearLine ? `Beenindex ongeveer ${number0(s.index)}` : `Beenindex ${number0(s.index)}`;
 }
-
 
 // De feitregel op Vandaag, met hoogstens twee redenen in de volgorde spierpijn, harde loop, index.
 export function easeFact(s: LegDaySignals): string {

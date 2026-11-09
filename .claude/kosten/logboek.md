@@ -206,3 +206,4 @@ Les ronde 3: één bouwer die twee keer herstelt kost 100k tot 150k extra; geef 
 - 2026-11-09, Lijn rest R2 review, Warden, opus (reviewer), 114k, 4 min, 2 belangrijk en 8 klein
 - 2026-11-09, Lijn rest R2 Lookout (kit) en tekstkaart, coördinator zelf, 0 rood, kaart: 1 verklaard verschil per stand
 Les R2: zeg bij een cache met 'geen antwoord' in de opdracht dat een fout nooit een nee is.
+- 2026-11-09, Lijn rest R3, coördinator zelf (sonnet), geen helpers: lawineregel, opruimen, tempolijn. R4 niet gebouwd (vraagt keuze van de eigenaar over de stemgids).

@@ -82,7 +82,6 @@ function leaveName(period: LeavePeriod | undefined): string {
   return 'je vrije dagen';
 }
 
-
 // De plek zonder slot: wat de planningsronde zelf op de rij zette, of het weekpatroon.
 function systemReason(s: PlannedSession, input: PlaceReasonInput): PlaceReason {
   const fromLine = s.movedFromDate && moved(s) ? ` Hij stond op ${day(s.movedFromDate)}.` : '';

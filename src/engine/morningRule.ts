@@ -25,6 +25,7 @@
 import type { EnergyFeeling } from '../models/checkIn';
 import type { RecoveryMetric } from '../models/metrics';
 import { baselineValues, dayRecord, MIN_BASELINE_DAYS, SHORT_NIGHT_MINUTES, sleepLabel } from './wellnessCheck';
+import { capitalize } from '../utils/capitalize';
 
 const RHR_OFF = 5;
 const SLEEP_SHORTER_OFF = 60;
@@ -137,5 +138,5 @@ export function morningRule(today: string, metrics: readonly RecoveryMetric[], o
   if (signals.length < 2) return undefined;
   const offCount = signals.filter((s) => s.off).length;
   const text = signals.map((s) => s.text).join(' · ');
-  return { date: today, signals, offCount, askTired: offCount >= 2, line: text.charAt(0).toUpperCase() + text.slice(1) };
+  return { date: today, signals, offCount, askTired: offCount >= 2, line: capitalize(text) };
 }
