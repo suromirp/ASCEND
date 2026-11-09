@@ -81,7 +81,7 @@ describe('oefeningen zonder uitleg', () => {
       expect(e.guide, e.id).toBeUndefined();
       expect(e.cues.length, e.id).toBeGreaterThanOrEqual(3);
     }
-    expect(exerciseById('dip')!.guide).toBeUndefined();
+    expect(exerciseById('dumbbell-bench-press')!.guide).toBeUndefined();
   });
   it('geen oefening met uitleg raakt zijn oude regels kwijt', () => {
     for (const id of Object.keys(EXERCISE_GUIDES)) {
@@ -101,10 +101,11 @@ describe('oefeningen zonder uitleg', () => {
 describe('alle uitleg', () => {
   const entries = Object.entries(EXERCISE_GUIDES);
   const FORBIDDEN_DASH = /[–—]/;
-  it('heeft de vijf proefteksten en de 23 stappen van de overige calisthenicsladders (F4f)', () => {
+  const BATCH1 = ['back-squat', 'barbell-row', 'bench-press', 'bodyweight-calf-raise', 'bulgarian-split-squat', 'chest-supported-row', 'dip', 'eccentric-squat', 'goblet-squat', 'incline-dumbbell-press', 'lat-pulldown', 'lateral-raise', 'machine-chest-press', 'overhead-press', 'plank', 'reverse-lunge', 'seated-leg-curl', 'side-plank', 'step-up', 'triceps-pushdown'];
+  it('heeft de vijf proefteksten, de 23 stappen van de overige calisthenicsladders (F4f) en batch 1', () => {
     const f4f = SKILL_LADDERS.filter((l) => !['push-up', 'pull-up', 'dip'].includes(l.id)).flatMap((l) => l.steps.map((s) => s.exerciseId));
     expect(f4f).toHaveLength(23);
-    expect(Object.keys(EXERCISE_GUIDES).sort()).toEqual([...['incline-bench-press', 'pull-up', 'push-up', 'romanian-deadlift', 'step-down'], ...f4f].sort());
+    expect(Object.keys(EXERCISE_GUIDES).sort()).toEqual([...['incline-bench-press', 'pull-up', 'push-up', 'romanian-deadlift', 'step-down'], ...f4f, ...BATCH1].sort());
   });
   for (const [id, g] of entries) {
     it(`${id}: precies drie korte regels van hoogstens 60 tekens`, () => {
