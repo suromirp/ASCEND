@@ -76,6 +76,51 @@ export function diffWeeklyPrescriptionPlan(
   return { changes, trainingToWrite, weeklyToWrite };
 }
 
+// Alleen de wijzigingen die de planningsronde laat staan (melding van 9 november). Het voorschrift zette een
+// Wandeldag in een week waarin de fase geen wandeldag wil; de ronde (storage/databaseHorizon.ts#syncProgramHorizon)
+// zette hem om in Heuvelintervallen en de weekcontrole haalde hem weg omdat die er al stonden. Bij de volgende
+// opening zette het voorschrift hem er weer in, en zo kwamen beide meldingen elke keer terug. De ronde wint: wat zij
+// omzet, terugzet of weghaalt, houdt het voorschrift niet. Zo staat de fase-regel en de weekcontrole op één plek.
+// `before`: de opgeslagen planning; `after`: de uitkomst van de ronde over de planning met deze wijzigingen erin.
+// Een toevoeging blijft als de ronde een nieuwe rij met dezelfde training op dezelfde dag laat staan (elke rij telt
+// één keer), een verplaatsing als de rij op de nieuwe dag met dezelfde training blijft. De rest (een nieuw
+// voorschrift, een weghaling) verandert geen rij die de ronde kan omzetten en blijft zoals hij is.
+export function changesTheRoundKeeps(changes: PlanChangeItem[], before: PlannedSession[], after: PlannedSession[]): PlanChangeItem[] {
+  const beforeById = new Map(before.map((s) => [s.id, s]));
+  const afterById = new Map(after.map((s) => [s.id, s]));
+  const live = (s: PlannedSession | undefined): s is PlannedSession => !!s && s.status !== 'skipped';
+  // Nieuwe rijen die de ronde liet staan, per training en dag; een toevoeging neemt er één.
+  const fresh = new Map<string, number>();
+  for (const s of after) {
+    if (beforeById.has(s.id) || !live(s)) continue;
+    const key = `${s.templateId}|${s.scheduledDate}`;
+    fresh.set(key, (fresh.get(key) ?? 0) + 1);
+  }
+  const kept = changes.filter((c) => {
+    if (c.action === 'add' && c.newSessionDraft) {
+      const { templateId, scheduledDate } = c.newSessionDraft;
+      // Een rij die terugkomt (een add met de id van een overgeslagen rij).
+      if (c.plannedSessionId) {
+        const now = afterById.get(c.plannedSessionId);
+        return live(now) && now.templateId === templateId && now.scheduledDate === scheduledDate;
+      }
+      const key = `${templateId}|${scheduledDate}`;
+      const left = fresh.get(key) ?? 0;
+      if (left <= 0) return false;
+      fresh.set(key, left - 1);
+      return true;
+    }
+    if ((c.action === 'move' || c.action === 'swap') && c.plannedSessionId && c.toDate) {
+      const was = beforeById.get(c.plannedSessionId);
+      const now = afterById.get(c.plannedSessionId);
+      return live(now) && now.scheduledDate === c.toDate && (!was || now.templateId === was.templateId);
+    }
+    return true;
+  });
+  // Een ruil is altijd een paar: valt de ene helft weg, dan de andere ook.
+  return kept.filter((c) => c.action !== 'swap' || kept.some((o) => o.action === 'swap' && o.plannedSessionId === c.pairedWithSessionId));
+}
+
 export const samePlannedSession = (a: PlannedSession, b: PlannedSession) => JSON.stringify(a) === JSON.stringify(b);
 
 // De wijzigingen die als wijziging van de planning tellen (melding, vraag,
