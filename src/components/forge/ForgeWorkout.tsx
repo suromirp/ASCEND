@@ -35,6 +35,7 @@ import {
   nextField,
   repsBounds,
   standJump,
+  standHints,
   stepNumber,
   takeTarget,
   weightBounds,
@@ -768,11 +769,8 @@ function ForgeWorkoutInner({
   // Op een toestel met standen: waar Minder en Meer heen springen, klein onder de toets.
   const dockStepHints = (() => {
     if (!dock || dock.field !== 'weightKg' || !dockEx || !dockRow || isAssisted(dockEx)) return undefined;
-    const profile = profileFor(strength.profile, dockEx.dumbbellTotal);
-    const now = dockRow.weightKg ?? dockRow.target.weightKg ?? 0;
-    const down = standJump(exerciseOf(dockEx), profile, now, -1, strength.learnStands);
-    const up = standJump(exerciseOf(dockEx), profile, now, 1, strength.learnStands);
-    return down === undefined || up === undefined ? undefined : { down, up };
+    // Een leeg veld zegt bij Minder niets (standHints), nooit "naar 0 kilo".
+    return standHints(exerciseOf(dockEx), profileFor(strength.profile, dockEx.dumbbellTotal), dockRow.weightKg ?? dockRow.target.weightKg, strength.learnStands);
   })();
   const rowMenuEx = rowMenu ? workout.find((e) => e.slot === rowMenu.slot) : undefined;
   const rowMenuRow = rowMenuEx?.rows.find((r) => r.id === rowMenu?.rowId);

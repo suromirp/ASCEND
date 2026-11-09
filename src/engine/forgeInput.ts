@@ -99,6 +99,19 @@ export function nextStand(stands: number[], current: number, direction: 1 | -1, 
   return lower < 0.25 - STAND_EPS || lower < first - STAND_EPS ? current : lower;
 }
 
+// The small hints under Minder and Meer on a machine with stands. `currentKg` undefined is an empty field.
+// A key that would not move (Minder on an empty field, or under the lowest stand) gets no hint, so it never
+// says "naar 0 kilo". Undefined when the machine has no stands (then the keys carry no hint at all).
+export function standHints(exercise: Exercise | undefined, profile: GymProfile, currentKg: number | undefined, remember = true): { down?: number; up?: number } | undefined {
+  const now = currentKg ?? 0;
+  const up = standJump(exercise, profile, now, 1, remember);
+  const down = standJump(exercise, profile, now, -1, remember);
+  if (up === undefined || down === undefined) return undefined;
+  const moves = (to: number) => Math.abs(to - now) > STAND_EPS;
+  const hasDown = currentKg !== undefined && currentKg > STAND_EPS && moves(down) && down > STAND_EPS;
+  return { ...(hasDown ? { down } : {}), ...(moves(up) ? { up } : {}) };
+}
+
 // Where plus and minus go for this exercise and this weight, when it has stands; undefined when it has none
 // (then the step of the profile rules, as before). The label under the keys and the keys use this one function.
 // `remember` is the setting "Standen onthouden": off, an old list or range (no stands stored yet) works as before.
@@ -301,6 +314,12 @@ function targetReps(t: RowTarget): number {
 
 // A tap on the prescription: kg and reps as the prescription says. The RIR stays
 // what it is (empty with the aim as a hint): it is for you to say how it felt.
+// Taking the prescription puts the weight back to what was asked: Forge's own adjustment (forgeKg) goes too.
+function dropForgeKg<T extends { forgeKg?: number }>(r: T): T {
+  const { forgeKg: _gone, ...rest } = r;
+  return rest as T;
+}
+
 export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise {
   return {
     ...ex,
@@ -308,7 +327,7 @@ export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise 
       r.id !== rowId || r.done
         ? r
         : {
-            ...withoutEstimate(r),
+            ...withoutEstimate(dropForgeKg(r)),
             ...(r.target.weightKg !== undefined ? { weightKg: r.target.weightKg } : {}),
             reps: targetReps(r.target),
             edited: true,
@@ -427,7 +446,9 @@ export function mergeDraft(draft: WorkoutExercise[], fresh: WorkoutExercise[]): 
   const bySlot = new Map(draft.map((e) => [e.slot, e]));
   const merged = fresh.map((f) => {
     const d = bySlot.get(f.slot);
-    return d && touchedInDraft(d, f) ? d : f;
+    if (!d || !touchedInDraft(d, f)) return f;
+    // Een concept van voor `trainings` (de twijfelvragen in de eerste drie trainingen) krijgt het getal van nu.
+    return d.trainings === undefined && f.trainings !== undefined ? { ...d, trainings: f.trainings } : d;
   });
   const gone = draft.filter((d) => !fresh.some((f) => f.slot === d.slot) && d.rows.some((r) => r.done || r.edited));
   return [...merged, ...gone];

@@ -259,7 +259,8 @@ export function adjustText(adj: Adjustment, exercise: Exercise | undefined): str
 }
 
 // "Lichter": het gewicht erin, alleen in rijen die nog open en onaangeraakt zijn.
-// De herhalingen blijven binnen het bereik van het doel.
+// De herhalingen blijven binnen het bereik van het doel. Het gewicht is van Forge (`forgeKg`): vink je de
+// set af zoals hij staat, dan is hij bevestigd op dat gewicht (en telt hij als meting, niet als ondergrens).
 export function applyLighter(ex: WorkoutExercise, adj: Adjustment): WorkoutExercise {
   const byId = new Map(adj.items.map((i) => [i.rowId, i.weightKg]));
   return {
@@ -269,7 +270,7 @@ export function applyLighter(ex: WorkoutExercise, adj: Adjustment): WorkoutExerc
       if (kg === undefined || r.done || r.edited) return r;
       // Een open set ("7+") heeft geen bovenkant: een getypt aantal erboven blijft staan.
       const reps = r.reps === undefined || r.target.failure ? r.reps : r.target.open ? Math.min(MAX_ROW_REPS, Math.max(r.target.repsLow, r.reps)) : Math.min(MAX_ROW_REPS, Math.max(r.target.repsLow, Math.min(r.target.repsHigh, r.reps)));
-      return { ...r, weightKg: kg, ...(reps !== undefined ? { reps } : {}) };
+      return { ...r, weightKg: kg, forgeKg: kg, ...(reps !== undefined ? { reps } : {}) };
     }),
   };
 }
