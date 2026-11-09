@@ -769,7 +769,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const off = [!c.askNew ? 'Nieuwe sport telt meteen' : '', !c.askFelt ? 'zwaarte aangenomen' : '', c.rest === 'korter' ? 'kortere rust' : ''].filter(Boolean);
       if (off.length === 0) return { value: 'Vragen', auto: true };
       const sub = off.join(', ');
-      return { value: 'Aangepast', sub: sub.charAt(0).toUpperCase() + sub.slice(1) };
+      return { value: 'Aangepast', sub: capitalize(sub) };
     }
     case 'sport-vragen':
       return { checked: resolveSportCounting(s.sportCounting).askNew };

@@ -16,6 +16,8 @@ import { todayISO } from '../utils/dates';
 export interface WeatherWarningsState {
   lines: string[];
   avalanche?: string;
+  // Een tocht in de sneeuw, maar geen bulletin gevonden: de kaart zegt dat, in plaats van te zwijgen.
+  avalancheMissing?: boolean;
   // Wanneer de oudste gebruikte voorspelling is opgehaald, voor "bijgewerkt om".
   fetchedAt?: string;
   shown: boolean;
@@ -37,7 +39,7 @@ export function useWeatherWarnings(): WeatherWarningsState {
   // Een vaste sleutel, zodat het ophalen alleen opnieuw gaat als doel of plek echt verandert.
   const key = JSON.stringify([targets, snow ?? null]);
 
-  const [state, setState] = useState<{ key: string; lines: string[]; avalanche?: string; fetchedAt?: string }>({ key: '', lines: [] });
+  const [state, setState] = useState<{ key: string; lines: string[]; avalanche?: string; avalancheMissing?: boolean; fetchedAt?: string }>({ key: '', lines: [] });
   useEffect(() => {
     const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
     const [wanted, snowTarget] = JSON.parse(key) as [WarningTarget[], AvalancheTarget | null];
@@ -52,7 +54,8 @@ export function useWeatherWarnings(): WeatherWarningsState {
         lines.push(...warningLines(f, t, new Date()));
       }
       const avalanche = snowTarget ? avalancheLine(await refreshAvalancheLevel(snowTarget.place, snowTarget.date), snowTarget) : undefined;
-      if (alive) setState({ key, lines, ...(avalanche ? { avalanche } : {}), ...(lines.length > 0 && fetchedAt ? { fetchedAt } : {}) });
+      const avalancheMissing = !!snowTarget && !avalanche;
+      if (alive) setState({ key, lines, ...(avalanche ? { avalanche } : {}), ...(avalancheMissing ? { avalancheMissing } : {}), ...(lines.length > 0 && fetchedAt ? { fetchedAt } : {}) });
     })();
     return () => {
       alive = false;
@@ -61,5 +64,5 @@ export function useWeatherWarnings(): WeatherWarningsState {
 
   // Een antwoord voor een ander doel telt niet meer: dan liever even niets dan een verkeerde dag.
   if (state.key !== key) return { lines: [], shown: false };
-  return { lines: state.lines, avalanche: state.avalanche, fetchedAt: state.fetchedAt, shown: state.lines.length > 0 || !!state.avalanche };
+  return { lines: state.lines, avalanche: state.avalanche, avalancheMissing: state.avalancheMissing, fetchedAt: state.fetchedAt, shown: state.lines.length > 0 || !!state.avalanche || !!state.avalancheMissing };
 }

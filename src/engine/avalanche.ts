@@ -117,3 +117,7 @@ export function avalancheLine(level: number | undefined, target: AvalancheTarget
   const where = !name || isMyLocation(target.place) ? 'op je plek' : `rond ${name}`;
   return `Lawinegevaar ${word}, ${level} van 5, ${target.when === 'morgen' ? 'morgen ' : 'vandaag '}${where}.`;
 }
+
+// Geen bulletin gevonden bij een tocht in het sneeuwseizoen (fout, niet gevonden of onbekend gebied):
+// zeg dat, zodat stilte nooit klinkt als "veilig". Alleen tekst; de plek staat in de kaart zelf.
+export const AVALANCHE_MISSING_LINE = 'Geen lawinebulletin gevonden voor je tocht. Kijk bij de lawinedienst.';

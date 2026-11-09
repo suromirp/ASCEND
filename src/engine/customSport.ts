@@ -9,6 +9,7 @@ import type { SportTraits } from '../data/sports';
 import type { SessionTemplate } from '../models/training';
 import { stressProfileOf } from './sportStress';
 import { resolveSportCounting } from './sportRole';
+import { capitalize } from '../utils/capitalize';
 
 export type CustomFeel = 'legs' | 'arms' | 'whole';
 
@@ -44,7 +45,7 @@ export function customIdOf(type: string): string {
 // "VirtualRowing" of "Rock_Climbing" als woord: hoofdletters los, lage streepjes weg.
 export function customLabelOf(type: string): string {
   const words = type.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').trim().toLowerCase();
-  return words.charAt(0).toUpperCase() + words.slice(1);
+  return capitalize(words);
 }
 
 const MAX_CUSTOM = 20;

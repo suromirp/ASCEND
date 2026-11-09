@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVALANCHE_FILES, avalancheLine, avalancheTarget, dangerWord, regionAt, regionFilesAt } from './avalanche';
+import { AVALANCHE_FILES, AVALANCHE_MISSING_LINE, avalancheLine, avalancheTarget, dangerWord, regionAt, regionFilesAt } from './avalanche';
 import type { LeavePeriod, TrekDetails } from '../models/leave';
 import type { AvalancheRegion } from '../integrations/eaws';
 
@@ -72,5 +72,12 @@ describe('avalancheLine', () => {
     expect(avalancheLine(0, { date: '2027-02-10', when: 'vandaag', place: HUT })).toBeUndefined();
     expect(dangerWord(6)).toBeUndefined();
     expect(dangerWord(5)).toBe('zeer groot');
+  });
+});
+
+describe('AVALANCHE_MISSING_LINE', () => {
+  it('zegt dat er geen bulletin was, zonder gedachtestreepje', () => {
+    expect(AVALANCHE_MISSING_LINE).toBe('Geen lawinebulletin gevonden voor je tocht. Kijk bij de lawinedienst.');
+    expect(AVALANCHE_MISSING_LINE).not.toMatch(/[\u2013\u2014]/);
   });
 });

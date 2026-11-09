@@ -14,6 +14,7 @@ import { ALGORITHM_RULES } from '../data/algorithmRules';
 import { RESEARCH_SOURCES } from '../data/researchSources';
 import { TRAINING_SPOTS } from '../data/trainingSpots';
 import type { PublicationType } from '../models/evidence';
+import { capitalize } from '../utils/capitalize';
 
 export type SourceCategory = 'wetenschap' | 'garmin' | 'macrofactor' | 'bergsport' | 'training' | 'afbeeldingen';
 
@@ -69,7 +70,7 @@ function splitLabel(label: string): { publisher: string; title: string } {
   const [head, ...rest] = label.split(', ');
   if (rest.length === 0) return { publisher: '', title: label };
   const title = rest.join(', ');
-  return { publisher: head, title: title.charAt(0).toUpperCase() + title.slice(1) };
+  return { publisher: head, title: capitalize(title) };
 }
 
 // "HEURISTIC-RUNNING-PROGRESSION-BANDS" → "running progression bands".

@@ -42,7 +42,6 @@ function shortDate(iso: string): string {
   return `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
 }
 
-
 interface Candidate {
   date: string;
   weather: SessionWeather;
