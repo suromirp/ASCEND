@@ -264,3 +264,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Uitleg batch 3 toets op techniek, Scout, fable (sportwetenschapper), 112k, 7 min, 3 correcties (voetafstand tibialis raise, twee korte regels) en 3 voorstellen voor de catalogus; les: geef de twijfels per oefening mee, dan toetst hij gericht
 - 2026-11-09, Uitleg batch 3 review, Warden, fable (reviewer), 82k, 3 min, 0 blokkerend, 8 klein (6 hersteld); les: een review op de index breekt als je tussendoor vastlegt, geef een commit mee
 - 2026-11-09, Uitleg batch 3 doorloop 360 en 412 px, Lookout, sonnet (tester), 54k, 6 min, 0, drie teksten groen; de vaste doorloop forge meldt kleine tikdoelen in de setrijen, los van deze wijziging
+- 2026-11-09, Uitleg bij oefeningen batch 4 (twintig teksten, bouwer in een eigen sessie), bouwer, fable, tokens niet door de sessie zelf te meten
+- 2026-11-09, Uitleg batch 4 toets op techniek, Scout, fable (sportwetenschapper), 153k, 7 min, 4 correcties (nek bij de hip thrust, adem bij drie roeioefeningen, gestrekte armen bij de deadlift, knie bij de step-up met rugzak); teksten gelezen uit de scratchpad terwijl batch 3 in review was
+- 2026-11-09, Uitleg batch 4 review, Warden, fable (reviewer), 100k, 3 min, 0 blokkerend, 8 klein (alle hersteld); les: laat de bouwer voor de review zelf greppen op de woorden van de verwante tekst

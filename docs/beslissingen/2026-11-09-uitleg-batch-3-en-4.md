@@ -13,7 +13,7 @@ De oefeningen van het demoprogramma hadden na batch 2 allemaal uitleg. Daarna ko
 
 ## Eigen keuzes buiten de opdracht
 
-- De push-up kreeg Lichter (handen op een lage bank) en Zwaarder (voeten op een bank), de pull-up Zwaarder (met extra gewicht) en de step-up Zwaarder (met rugzak), zodat de tikken de ladder volgen. De teksten zelf zijn niet veranderd.
+- De push-up kreeg Lichter (handen op een lage bank) en Zwaarder (voeten op een bank), de pull-up Zwaarder (met extra gewicht) de step-up Zwaarder (met rugzak) en de reverse lunge Zwaarder (de walking lunge), zodat de tikken de ladder volgen. De teksten zelf zijn niet veranderd.
 - Een nieuwe test eist dat elke stap van elke ladder uitleg heeft, en dat een nieuwe uitleg binnen de lengte van de oudere teksten blijft (Lees verder en elk deel apart).
 - De lijn "Te licht? Neem een lager steunpunt." gebruikt "steunpunt", een woord dat al in de kennisteksten staat.
 - Batch 4 gebruikt "tibialisstang" voor het hulpmiddel uit de alias "Tibialis Bar Raise"; er is geen bestaand woord voor.

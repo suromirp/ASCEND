@@ -687,6 +687,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       { fault: 'Je zet je af met het achterste been.', fix: 'Duw door de hiel van je voorste been terug omhoog.' },
       { fault: 'Je valt naar voren of opzij.', fix: 'Stap iets verder terug en houd je romp rechtop.' },
     ],
+    harder: 'walking-lunge',
   },
   'eccentric-squat': {
     short: [
@@ -1165,7 +1166,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Polsen boven je ellebogen, rug tegen de leuning.',
       'Hol kruis? Span je buik aan en neem minder gewicht.',
     ],
-    setup: 'Zet de rugleuning bijna rechtop en ga zitten met je voeten plat op de vloer. Breng de dumbbells naar schouderhoogte, met je ellebogen onder je polsen en iets voor je lichaam.',
+    setup: 'Zet de leuning bijna rechtop en ga zitten met je voeten plat op de vloer. Breng de dumbbells naar schouderhoogte, met je ellebogen onder je polsen en iets voor je lichaam.',
     movement: 'Duw de dumbbells recht omhoog tot je armen gestrekt zijn boven je schouders. Laat ze rustig zakken tot schouderhoogte. Ze hoeven elkaar bovenaan niet te raken.',
     tempo: 'Krachtig omhoog, twee tellen omlaag. Adem uit bij het duwen.',
     mistakes: [
@@ -1222,15 +1223,15 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
   },
   'hip-thrust': {
     short: [
-      'Bovenrug op een bank, stang op je heupen, duw op.',
+      'Bovenrug op een bank, stang op je heupen, heupen omhoog.',
       'Bovenaan staan je scheenbenen verticaal.',
-      'Hol in je rug? Kijk recht vooruit, ribben omlaag.',
+      'Hol in je rug? Kijk recht vooruit, ribben naar beneden.',
     ],
     setup: 'Zit met je bovenrug tegen de lange kant van een stevige bank. Rol de stang tot in je heupplooi, met een pad of handdoek ertussen. Voeten plat op heupbreedte.',
     movement: 'Duw door je hielen en til je heupen op tot je romp waterpas is en je scheenbenen verticaal staan. Knijp je billen samen. Zak gecontroleerd terug. Je schouderbladen blijven op de bank.',
     tempo: 'Krachtig omhoog, even stil, twee tellen omlaag. Adem uit bij het omhoog komen.',
     mistakes: [
-      { fault: 'Je duwt door tot een holle rug.', fix: 'Stop als je romp waterpas is en houd je ribben omlaag.' },
+      { fault: 'Je duwt door tot een holle rug.', fix: 'Stop als je romp waterpas is en houd je ribben naar beneden.' },
       { fault: 'De bank schuift weg.', fix: 'Zet hem tegen een muur of een rek.' },
     ],
     easier: 'dumbbell-glute-bridge',
@@ -1239,7 +1240,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     short: [
       'Stang boven het midden van je voet, duw de vloer weg.',
       'De stang blijft tegen je benen, je rug blijft recht.',
-      'Ronde rug? Leg neer en neem minder gewicht.',
+      'Ronde rug? Zet de stang neer en neem minder gewicht.',
     ],
     setup: 'Sta op heupbreedte met de stang boven het midden van je voet. Pak de stang net buiten je benen, met gestrekte armen. Schenen tegen de stang, borst hoog, rug recht. Adem in en span je romp aan.',
     movement: 'Duw de vloer weg en laat de stang langs je schenen en dijen omhoog glijden. Heupen en schouders komen samen omhoog tot je rechtop staat. Zet de stang langs dezelfde weg terug: eerst heupen naar achteren, dan knieën buigen.',
@@ -1252,7 +1253,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
   'dumbbell-bench-press': {
     short: [
       'Duw de dumbbells omhoog, zak tot je borst rekt.',
-      'Schouderbladen samen, ellebogen schuin naar buiten.',
+      'Schouderbladen samen, ellebogen schuin naar achteren.',
       'Pijn in je schouder? Stop en zak minder diep.',
     ],
     setup: 'Zit op de bank met de dumbbells op je bovenbenen en neem ze mee als je gaat liggen. Schouderbladen naar elkaar en omlaag, voeten plat, de dumbbells naast je borst.',
@@ -1280,7 +1281,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
   },
   'dumbbell-row': {
     short: [
-      'Een hand op de bank, trek de dumbbell naar je heup.',
+      'Eén hand op de bank, trek de dumbbell naar je heup.',
       'Je rug blijft vlak, je schouders blijven recht.',
       'Draait je romp mee? Neem minder gewicht.',
     ],
@@ -1327,8 +1328,8 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Je heupen blijven op het kussen.',
       'Heupen komen omhoog? Neem minder gewicht.',
     ],
-    setup: 'Lig op je buik met je knieën net over de rand van het kussen, naast de draaias. De rol ligt vlak boven je hielen. Houd de handgrepen vast.',
-    movement: 'Buig je knieën en trek je hielen zo ver als je kunt naar je billen. Laat de rol rustig terugkomen tot je benen bijna gestrekt zijn.',
+    setup: 'Lig op je buik met je knieën net over de rand van het kussen, naast de draaias. Het beenkussen ligt vlak boven je hielen. Houd de handgrepen vast.',
+    movement: 'Buig je knieën en trek je hielen zo ver als je kunt naar je billen. Laat het rustig terugkomen tot je benen bijna gestrekt zijn.',
     tempo: 'Eén tel omhoog, drie tellen terug. Adem uit bij het trekken.',
     mistakes: [
       { fault: 'Je heupen komen van het kussen.', fix: 'Druk je heupen in het kussen en neem minder gewicht.' },

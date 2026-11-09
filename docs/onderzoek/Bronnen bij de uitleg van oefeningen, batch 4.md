@@ -346,3 +346,4 @@ Niet geopend, alleen als zoekresultaat gezien en daarom nergens als bewijs gebru
 - Correctie 4 (`step-up-pack`): de waarschuwing over de knie staat in In het kort, in de woorden die `step-down-pack` na de review kreeg: "Pijn in je knie? Stop en doe hem zonder gewicht."
 - Van de keuzes: bij `dumbbell-row` staat nu "niet naar je oor". Het wegleggen van de dumbbells bij `dumbbell-bench-press` staat er niet in (geen bron) en de ademzin bij `face-pull` blijft (gangbaar, niet tegengesproken).
 - Voorstel 5 gaat over de catalogus en staat als open punt in `docs/beslissingen/2026-11-09-uitleg-batch-3-en-4.md`.
+- Na de review door Warden zijn woorden gelijkgetrokken met de verwante teksten; de techniek is niet veranderd. De regels hierboven citeren de tekst van voor de review: het is nu "ribben naar beneden", "Zet de stang neer", "heupen omhoog", "leuning", "het beenkussen" en "ellebogen schuin naar achteren".
