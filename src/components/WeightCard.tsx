@@ -47,12 +47,12 @@ export function WeightReminder() {
             <div className="flex flex-col gap-2">
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
                 {last?.source === 'health-connect'
-                  ? `Je laatste weging uit Health Connect is van ${formatDateNL(last.date)}. Weeg je weer, dan komt het vanzelf binnen, of vul je gewicht hier zelf in; een globaal getal is genoeg.`
+                  ? `Je laatste weging uit Health Connect is van ${formatDateNL(last.date)}. Weeg je weer, dan komt het vanzelf binnen. Of vul je gewicht hier zelf in. Een globaal getal is genoeg.`
                   : last?.source === 'macrofactor'
-                  ? `Je laatste gewicht uit MacroFactor is van ${formatDateNL(last.date)}. Lees een nieuwe export in, of vul je trendgewicht zelf in; een globaal getal is genoeg.`
+                  ? `Je laatste gewicht uit MacroFactor is van ${formatDateNL(last.date)}. Lees een nieuwe export in of vul je trendgewicht zelf in. Een globaal getal is genoeg.`
                   : last
                   ? `Je laatste gewicht is van ${formatDateNL(last.date)}. Vul je trendgewicht uit MacroFactor in; een globaal getal is genoeg.`
-                  : 'Vul je trendgewicht in, bijvoorbeeld uit MacroFactor. ASCEND gebruikt het alleen voor rugzakgewicht en eiwit per kilo; een globaal getal is genoeg.'}
+                  : 'Vul je trendgewicht in, bijvoorbeeld uit MacroFactor. Een globaal getal is genoeg.'}
               </p>
               <NumberField label="Trendgewicht" unit="kg" decimals={1} compact value={kg} onChange={setKg} />
               {last?.source === 'macrofactor' && (

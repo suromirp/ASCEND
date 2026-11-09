@@ -67,7 +67,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     advanced: ['bundel-niet-doorgegaan', 'lange-loop-benen', 'bundel-slepen', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test'],
   },
   doel: {
-    rows: ['doelen', 'programma', 'bundel-zonder-doel', 'lange-zondag', 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge', 'doeltijd-voorstel', 'seizoensstrook', 'bundel-tochten', 'vrije-dagen'],
+    rows: ['doelen', 'programma', 'bundel-zonder-doel', 'lange-zondag', 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge', 'doeltijd-voorstel', 'bundel-ascend', 'bundel-tochten', 'vrije-dagen'],
     advanced: [],
   },
   forge: {
@@ -139,13 +139,15 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-sporten-tellen', 'sport-vragen', 'sport-zwaarte', 'sport-rust'),
   // Doel en tochten
   ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
+  // De seizoensstrook en de vaardigheden: wat de Ascend-tab laat zien (de pagina had al twaalf rijen).
+  ...inSheet('bundel-ascend', 'seizoensstrook', 'vaardigheidsdoelen'),
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'standen-onthouden', 'tussengewichten', 'spotterrek'),
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes', 'forge-uitleg-open'),
   ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid'),
   ...inSheet('bundel-rekenmodel', 'forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),
-  ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-doorvoeren', 'forge-schijven'),
+  ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-doorvoeren', 'forge-schijven'),
   ...inSheet('bundel-toets', 'forge-naast', 'forge-sinds'),
   ...inSheet('forge-tijdsgrens', 'forge-grens-kracht', 'forge-grens-been'),
   // Lichaam
@@ -286,7 +288,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.forge, B.oneRm, B.mf], 'forge-1rm-macrofactor'),
   ...rule([B.forge, B.inApp], 'forge-bijsturen', 'forge-spotter', 'spotterrek'),
   ...rule([B.inApp], 'forge-tijdsgrens', 'forge-grens-kracht', 'forge-grens-been'),
-  ...rule([B.inApp], 'bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-doorvoeren', 'forge-schijven', 'bundel-rusttimer', 'forge-rust'),
+  ...rule([B.inApp], 'bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-stapvoorstel', 'forge-doorvoeren', 'forge-schijven', 'bundel-rusttimer', 'forge-rust'),
   ...rule([B.inApp, B.ladderRow], 'forge-netjes', 'forge-band'),
   ...rule([B.inApp, B.restAuto], 'forge-signaal'),
   ...rule([B.inApp, B.restAuto, B.restAlert], 'forge-geluid'),

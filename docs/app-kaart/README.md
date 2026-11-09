@@ -11,6 +11,7 @@ Schermen op een eigen stand, met de stand in de naam:
 - vakantie (9 tot en met 13 november, zonder training): `vandaag-vakantie` en `week-vakantie`.
 - zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel`, `ascend-zonder-doel` en `stand-zonder-doel`.
 - ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek` en `week-ziek`.
+- vaardigheid (één vaardigheid, Pull-Up, met twee stappen gehaald): `ascend-vaardigheid`.
 
 ## De standen
 

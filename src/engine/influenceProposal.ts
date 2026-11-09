@@ -161,7 +161,7 @@ export function influenceMove(inputs: AdviceInputs, cause: InfluenceMoveCause | 
     sessionId: cause.session.id,
     id,
     title: `${TEST_NAME} verschuiven`,
-    why: 'De testloop is het meetpunt voor je tempo: ASCEND stelt je tempo\'s af op de uitkomst. Alleen jij beslist, dit is een voorstel.',
+    why: 'De testloop is het meetpunt voor je tempo: ASCEND stelt je tempo\'s af op de uitkomst. Eerst een voorstel, pas na Akkoord verandert er iets.',
   });
   if (!advice?.proposal) return undefined;
   const single = !advice.options || advice.options.length <= 1;

@@ -24,8 +24,8 @@ Morgen: Lange duurloop, 50 min
 --- kaart 4 ---
 Advies, planning
 [knop: nog 2]
-Doeltijd 10 km: 45:00 past nog niet bij je test
-Je testloop van za 10 oktober (snelste 5 km in 26:42) past bij een 10 km in ongeveer 56 minuten.
+Doeltijd 10 km: 45:00 vraagt meer dan je test laat zien
+10 km past nu bij ongeveer 56 minuten.
 [knop: Bekijk]
 
 --- kaart 5 ---

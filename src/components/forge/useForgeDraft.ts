@@ -10,6 +10,7 @@ import { clearSessionPointer, notifySession, registerForgeOpen, writeSessionPoin
 import { clearDraft, saveDraft } from '../../utils/loggerDraft';
 import { DRAFT_VERSION, type WorkoutDraft } from './forgeDraft';
 import type { Rest } from './forgeWorkoutHelpers';
+import type { StepSwaps } from '../../engine/stepSwaps';
 
 interface DraftInput {
   key: string;
@@ -27,9 +28,11 @@ interface DraftInput {
   column: 'target' | 'previous';
   forgeLog: ForgeEvent[];
   seenAt: number;
+  // De ladderstappen waarmee de sessie opende: ze gaan mee in het concept (forgeDraft.ts#sessionStepSwaps).
+  stepSwaps: StepSwaps | undefined;
 }
 
-export function useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt }: DraftInput) {
+export function useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps }: DraftInput) {
   const pendingDraft = useRef<WorkoutDraft | null>(null);
   const draftTimer = useRef<number | undefined>(undefined);
   const flushDraft = useCallback(() => {
@@ -52,9 +55,9 @@ export function useForgeDraft({ key, template, plannedSessionId, scheduledDate, 
   }, [key]);
   useEffect(() => {
     if (readOnly || startedAt === null) return;
-    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, pauses, lastActionAt: lastAction.current, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column, ...(forgeLog.length > 0 ? { log: forgeLog } : {}), seen: seenAt };
+    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, pauses, lastActionAt: lastAction.current, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column, ...(forgeLog.length > 0 ? { log: forgeLog } : {}), seen: seenAt, stepSwaps: stepSwaps ?? null };
     if (draftTimer.current === undefined) draftTimer.current = window.setTimeout(flushDraft, 300);
-  }, [readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, flushDraft]);
+  }, [readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps, flushDraft]);
   // Zolang dit scherm open is, staat de pil er niet.
   useEffect(() => {
     if (readOnly) return;

@@ -118,8 +118,8 @@ export function IllnessStatusCard() {
         <Eyebrow>Weer opbouwen</Eyebrow>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
           {heavyBack
-            ? `Zware trainingen mogen weer. Houd ze tot en met ${day(ramp.until)} wat korter en lichter dan normaal.`
-            : `Na ziekte rustig opbouwen: trainingen korter en rustiger, ongeveer de helft tot driekwart van normaal. Zware trainingen pas weer vanaf ${day(ramp.heavyFrom)}.`}
+            ? `Zware trainingen mogen weer. Houd ze tot en met ${day(ramp.until)} korter en lichter dan normaal.`
+            : `Rustig opbouwen na ziekte. Trainingen zijn korter en rustiger, ongeveer de helft tot driekwart van normaal. Zware trainingen mogen weer vanaf ${day(ramp.heavyFrom)}.`}
         </p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Gemiste trainingen hoef je niet in te halen.</p>
       </Card>
@@ -175,7 +175,7 @@ function IllnessSheet({ onPick, onClose }: { onPick: (kind: IllnessKind) => void
           <Card className="rounded-b-none border-b-0 pb-6">
             <Eyebrow>Niet fit?</Eyebrow>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              Kies wat het meest past. Je ziet eerst wat er in je planning verandert en beslist zelf. Met één tik meld je je later weer beter.
+              Kies wat het meest past. Eerst een voorstel, pas na Akkoord verandert er iets. Met één tik meld je je later weer beter.
             </p>
             <div className="mt-4 flex flex-col gap-2">
               {KINDS.map((kind) => (

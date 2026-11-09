@@ -508,6 +508,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je vorige keer', text: 'Forge zet de band van je vorige keer klaar. Een keuze geldt voor de open sets.' },
     ],
   },
+  forgeStapVoorstel: {
+    title: 'Stap voorstellen',
+    lead: 'Haal je de toets van een ladderstap, dan stelt Forge de volgende stap voor. Haal je drie trainingen achter elkaar de onderkant niet, dan de lichtere stap.',
+    points: [
+      { head: 'Akkoord', text: 'de oefening in je training wordt de nieuwe stap, vanaf je volgende training. Sets en herhalingen blijven.' },
+      { head: 'Liever niet', text: 'dan blijft je plan zoals het is en komt dit voorstel niet terug. Een voorstel voor een andere stap wel.' },
+      { head: 'Terug', text: 'Ongedaan maken op de kaart, of later in het blad van de oefening.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',
@@ -711,20 +720,18 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   ochtendVoorstel: {
     title: 'Voorstel bij een slechte ochtend',
-    lead: 'Wijken twee van de drie getallen van je horloge af op de ochtend van een zware training, dan kan het helpen om die training later in de week te doen.',
+    lead: 'Wijken twee van de drie horlogegetallen af op de ochtend van een zware training, dan kan een latere dag helpen.',
     points: [
-      { head: 'Wanneer', text: 'op de ochtend van een tempoloop, intervallen, een test of een zware beendag, als je rusthartslag, HRV of slaap op twee van de drie afwijken. Eén afwijkend getal blijft één woord op de ochtendkaart.' },
-      { head: 'Wat je ziet', text: 'een kaart op Vandaag met een voorstel om de training naar een goede latere dag te doen, met welke getallen afwijken. Alleen met jouw Akkoord verandert er iets; lichter doen kan ook, zonder iets te verschuiven.' },
-      { head: 'Niet', text: 'als je zei dat je niet moe bent, bij een wedstrijd, als je ziek bent gemeld of als er al een ander voorstel voor die training ligt. Werkt alleen als Twee van drie aan staat.' },
+      { head: 'Wanneer', text: 'bij een tempoloop, intervallen, een test of een zware beendag. Je ziet een kaart met een voorstel en de getallen die afwijken. Eerst een voorstel, pas na Akkoord verandert er iets. Lichter doen kan ook, zonder iets te verschuiven.' },
+      { head: 'Niet', text: 'bij een wedstrijd, als je zei dat je niet moe bent, als je ziek bent gemeld of als er al een voorstel voor die training ligt. Werkt alleen met Twee van drie aan.' },
     ],
   },
   ochtendregel: {
     title: 'Twee van drie',
-    lead: 'Eén getal van je horloge zegt weinig. Drie samen zeggen meer: je rusthartslag, je HRV en hoe lang je sliep, elk tegen jouw eigen gewone van de laatste vier weken.',
+    lead: 'Onder rusthartslag, HRV en slaap staat een woord tegen jouw gewone van de laatste vier weken: normaal, hoger, lager, korter of langer. Wat aandacht vraagt staat in amber.',
     points: [
-      { head: 'Wat je ziet', text: 'op de ochtendkaart onder elk getal van je horloge een woord: normaal, hoger, lager, korter of langer. Wat aandacht vraagt staat in amber.' },
-      { head: 'Twee van drie', text: 'wijken er twee af in de richting die aandacht vraagt, dan vraagt de ochtendkaart of je moe bent. Ja of Nee wordt je energie van die ochtend, zoals in de ochtendcheck; je planning verandert alleen met jouw Akkoord.' },
-      { head: 'Hoe zeker', text: 'bijsturen op meerdere signalen samen kan helpen om slechte dagen wat te verzachten (bewijs matig). Twee van drie is een vuistregel, geen meting.' },
+      { head: 'Twee van drie', text: 'wijken er twee af, dan vraagt de kaart of je moe bent. Ja of Nee wordt je energie van die ochtend. Eerst een voorstel, pas na Akkoord verandert er iets.' },
+      { head: 'Hoe zeker', text: 'een vuistregel, geen meting. Het bewijs is matig.' },
     ],
   },
   horlogeStil: {
@@ -853,13 +860,11 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   bovenMissie: {
     title: 'Kaarten boven de missie',
-    lead: 'Je missie hoort binnen twee seconden in beeld te staan. Daarom staat er normaal hoogstens één kaart boven, de belangrijkste.',
+    lead: 'Je missie staat binnen twee seconden in beeld. Daarom staat er normaal hoogstens één kaart boven.',
     points: [
-      { head: 'Volgorde', text: 'eerst ziek gemeld en de vraag of je ziek wordt (je ochtenden), dan de ochtendkaart, dan weer opbouwen na ziekte, dan een advies voor vandaag, dan een vraag over een training die niet doorging, dan Nieuw begonnen en als laatste de back-up.' },
-      { head: 'Altijd boven', text: 'ziek gemeld en de vraag of je ziek wordt. Die staan boven je missie, ook als er al een kaart boven staat.' },
-      { head: 'Altijd onder de missie', text: 'een advies over je planning en de vraag Niet gedaan?. Die beantwoord je rustig, je missie gaat voor.' },
-      { head: 'De rest', text: 'staat direct onder je missie, in dezelfde volgorde. Er verdwijnt niets.' },
-      { head: 'Alles', text: 'zet alles wat erboven mag boven je missie, ook als die dan uit beeld schuift.' },
+      { head: 'Altijd boven', text: 'ziek gemeld, de vraag of je ziek wordt en een weerwaarschuwing. Die staan er ook als er al een kaart boven staat.' },
+      { head: 'Altijd onder de missie', text: 'een advies over je planning en de vraag Niet gedaan? Die beantwoord je rustig.' },
+      { head: 'De rest', text: 'staat direct onder je missie, in vaste volgorde: ochtendkaart, weer opbouwen, Nieuw begonnen, back-up. Met Alles komt wat mag ook erboven.' },
     ],
   },
   kaarten: {
@@ -883,13 +888,11 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   ochtendkaart: {
     title: 'Ochtendkaart',
-    lead: 'Bovenaan Vandaag staat in de ochtend de vraag hoe je je voelt, zodat je hem niet hoeft te zoeken.',
+    lead: 'Bovenaan Vandaag staat in de ochtend de vraag hoe je je voelt.',
     points: [
-      { head: 'Alvast ingevuld', text: 'je slaap uit je horloge, en je benen volgens je beenindex. Bij elke keuze staat waar hij vandaan komt.' },
-      { head: 'Slaap', text: 'gaat via Garmin Connect naar intervals.icu en komt soms later binnen dan je rusthartslag. Staat hij er nog niet, tik dan op Opnieuw ophalen.' },
-      { head: 'Wanneer', text: 'vanaf het uur bij Ochtend begint om (standaard 5 uur), dus niet meteen na middernacht.' },
-      { head: 'Weg', text: 'zodra je hebt ingevuld, na twaalven of als je training van vandaag gelogd is.' },
-      { head: 'Uit', text: 'de vraag blijft staan als regel bij Je dag.' },
+      { head: 'Alvast ingevuld', text: 'je slaap uit je horloge en je benen volgens je beenindex, met de bron erbij.' },
+      { head: 'Slaap', text: 'komt soms later binnen dan je rusthartslag. Staat hij er nog niet, tik dan op Opnieuw ophalen.' },
+      { head: 'Wanneer', text: 'vanaf het uur bij Ochtend (standaard 5 uur) tot twaalven, of tot je invult of je training gelogd is. Staat de kaart uit, dan blijft de vraag een regel bij Je dag.' },
     ],
   },
   zweetVragen: {
@@ -1359,6 +1362,22 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Wat je ziet', text: 'de weken tussen je doelen en de afbouw voor een doel als een donkerder stuk. Een Top heeft een gevulde vlag.' },
       { head: 'Uit', text: 'de strook verdwijnt. Je doelen en je planning blijven precies zoals ze zijn.' },
+    ],
+  },
+  vaardigheidsdoelen: {
+    title: 'Vaardigheidsdoelen',
+    lead: 'Een vaardigheid is een stap op een ladder, zoals Pull-Up op de ladder Optrekken. Ascend toont de ladder als trap.',
+    points: [
+      { head: 'Wat je ziet', text: 'welke stappen je haalde, op welke stap je nu traint en de toets ervan. Een gehaalde stap blijft gehaald.' },
+      { head: 'Je planning', text: 'een vaardigheid plant niets en wordt nooit je hoofddoel.' },
+      { head: 'Uit', text: 'de kaarten en de keuze bij Doel toevoegen verdwijnen. Je vaardigheden en wat je haalde blijven bewaard.' },
+    ],
+  },
+  bundelAscend: {
+    title: 'Op de Ascend-tab',
+    lead: 'Wat Ascend naast je doelen laat zien: de seizoensstrook en je vaardigheden.',
+    points: [
+      { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
     ],
   },
   waterPerEtappe: {
