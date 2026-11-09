@@ -9,7 +9,7 @@
 // bewaarde versie komt er bij het lezen een veld voor in de plaats. De bewaarde vorm zelf verandert
 // daarbij niet: pas een wijziging van de gebruiker schrijft.
 
-import { DEFAULT_WATCH_MODEL_ID, WATCH_MODELS, type WatchFieldDef, type WatchModel } from '../data/watchModels';
+import { DEFAULT_WATCH_MODEL_ID, WATCH_MODELS, type WatchCell, type WatchFieldDef, type WatchModel } from '../data/watchModels';
 import type { SessionTemplate } from '../models/training';
 import { hasRole } from './templateRoles';
 
@@ -356,4 +356,114 @@ export function watchSteps(pages: readonly (readonly string[])[], model: WatchMo
   const notes = [fill(model.pathInApp), 'De tekening is een voorbeeld: je horloge kan een veld op een andere plek zetten.'];
   if (advice?.tip) notes.unshift(advice.tip);
   return { steps, notes };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Voor het scherm: alles wat de pagina nodig heeft maar niet zelf mag bedenken
+
+export type WatchPageState = 'off' | 'noAdvice' | 'ready';
+
+// Wat de pagina toont: de kaart "staan uit", de kaart "geen advies", of het horloge.
+export function watchPageState(settings: { watchFieldsShown?: boolean }, kind: unknown, model: WatchModel): WatchPageState {
+  if (!watchFieldsShown(settings)) return 'off';
+  return watchAdvice(kind, model) ? 'ready' : 'noAdvice';
+}
+
+// De regel in amber als bewaarde velden bij dit horloge niet bestaan.
+export function replacedLine(count: number): string | undefined {
+  if (!(count > 0)) return undefined;
+  return count === 1 ? '1 veld bestaat niet op dit horloge en is vervangen.' : `${count} velden bestaan niet op dit horloge en zijn vervangen.`;
+}
+
+// Het label van de tikknop op een plek in de tekening.
+export const cellAriaLabel = (page: number, cell: number, fieldName: string): string => `Pagina ${page + 1}, veld ${cell + 1}, ${fieldName}. Tik om te veranderen.`;
+export const pageDotLabel = (page: number, total: number): string => `Pagina ${page + 1} van ${total}`;
+
+// De regel onder een veld in het blad Veld kiezen: de uitleg, dan wat het veld vraagt of waar het bestaat.
+export function fieldHint(field: WatchFieldDef): string | undefined {
+  const parts: string[] = [];
+  if (field.note) parts.push(field.note);
+  if (field.needs === 'dynamics-accessory') parts.push('Vraagt een borstband met loopdynamiek of een pod.');
+  if (field.only === 'run') parts.push('Alleen bij hardlopen.');
+  if (field.only === 'workout') parts.push('Alleen in een gestuurde workout.');
+  return parts.length > 0 ? parts.join(' ') : undefined;
+}
+
+// Het wisselen van pagina via een puntje: vloeiend alleen als de beweging op Normaal staat.
+// Rustig, Uit en een systeem dat geen beweging wil springen naar de eindstand.
+export const pageScrollBehavior = (motion: 'full' | 'calm' | 'off'): 'smooth' | 'auto' => (motion === 'full' ? 'smooth' : 'auto');
+
+// ---------------------------------------------------------------------------------------------
+// De tekening van één plek, in eenheden van de tekening (288 bij 288)
+
+export const WATCH_LABEL_SIZE = 14;
+const LABEL_PAD = 8;
+// Een voorzichtige schatting van de breedte van een tekst in Inter: te groot is veilig, te klein loopt eruit.
+const LABEL_EM = 0.58;
+const VALUE_EM = 0.64;
+const MIN_VALUE_SIZE = 20;
+
+export const textWidth = (text: string, size: number, em = LABEL_EM): number => text.length * size * em;
+
+// Het label in één of twee regels die in de plek passen; breekt op een spatie, zo gelijk mogelijk.
+export function labelLines(label: string, width: number): string[] {
+  const max = width - LABEL_PAD * 2;
+  if (textWidth(label, WATCH_LABEL_SIZE) <= max) return [label];
+  const words = label.split(' ');
+  let best: string[] = [label];
+  let bestWorst = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const pair = [words.slice(0, i).join(' '), words.slice(i).join(' ')];
+    const worst = Math.max(...pair.map((l) => textWidth(l, WATCH_LABEL_SIZE)));
+    if (worst < bestWorst) {
+      best = pair;
+      bestWorst = worst;
+    }
+  }
+  return best;
+}
+
+export interface CellBar { x: number; y: number; w: number; h: number }
+export interface CellDrawing {
+  cx: number;
+  labelLines: string[];
+  labelY: number[];
+  // Per regel de breedte waarop de regel wordt ingekort (textLength), alleen voor een woord dat ook
+  // na het breken niet past; anders niet gezet.
+  labelFit: (number | undefined)[];
+  value?: string;
+  unit?: string;
+  valueSize: number;
+  valueY: number;
+  // Een meter of grafiek heeft geen voorbeeldwaarde: drie staafjes.
+  bars?: CellBar[];
+}
+
+const LINE = 16;
+const GAP = 4;
+
+export function cellDrawing(cell: WatchCell, field: WatchFieldDef | undefined, id = ''): CellDrawing {
+  const label = field ? (field.short ?? field.label) : id;
+  const lines = labelLines(label, cell.w);
+  const avail = cell.w - LABEL_PAD * 2;
+  const value = field?.sample;
+  const unit = field?.unit;
+  let size = cell.valueSize;
+  const valueWidth = (px: number) => textWidth(value ?? '', px, VALUE_EM) + (unit ? 4 + textWidth(unit, WATCH_LABEL_SIZE) : 0);
+  while (value && size > MIN_VALUE_SIZE && valueWidth(size) > avail) size -= 2;
+  // Een label op twee regels in een lage plek: het cijfer wordt iets kleiner zodat alles in de plek blijft.
+  while (size > MIN_VALUE_SIZE && lines.length * LINE + GAP + size > cell.h - 2) size -= 2;
+  const block = lines.length * LINE + GAP + size;
+  const top = cell.y + (cell.h - block) / 2;
+  const labelY = lines.map((_, i) => top + 12 + i * LINE);
+  const valueTop = top + lines.length * LINE + GAP;
+  const valueY = valueTop + size * 0.8;
+  const cx = cell.x + cell.w / 2;
+  const labelFit = lines.map((l) => (textWidth(l, WATCH_LABEL_SIZE) > avail ? avail : undefined));
+  const drawing: CellDrawing = { cx, labelLines: lines, labelY, labelFit, value, unit, valueSize: size, valueY };
+  if (!value) {
+    const h = [size * 0.4, size * 0.7, size];
+    drawing.bars = h.map((bh, i) => ({ x: cx - 21 + i * 16, y: valueTop + size - bh, w: 10, h: bh }));
+  }
+  return drawing;
 }
