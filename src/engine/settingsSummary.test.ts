@@ -797,6 +797,26 @@ describe('rowSummary: tekst voor Strava', () => {
   });
 });
 
+describe('rowSummary: route voorstellen', () => {
+  const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
+
+  it('staat standaard aan, met Avontuurlijk bovenaan', () => {
+    expect(rowSummary('route-voorstel', facts()).checked).toBe(true);
+    expect(rowSummary('route-soort', facts()).value).toBe('Avontuurlijk');
+  });
+
+  it('volgt de keuze, en een onbekende waarde is het advies', () => {
+    expect(rowSummary('route-soort', withSettings({ routeStyle: 'simple' })).value).toBe('Simpel');
+    expect(rowSummary('route-soort', withSettings({ routeStyle: 'onzin' })).value).toBe('Avontuurlijk');
+  });
+
+  it('uit: de rij zegt Uit en de keuze is weg', () => {
+    expect(rowSummary('route-voorstel', withSettings({ routeProposal: false })).checked).toBe(false);
+    expect(rowSummary('bundel-weer', withSettings({ routeProposal: false })).value).toBe('9 van 10 aan');
+    expect(rowSummary('route-soort', withSettings({ routeProposal: false })).hidden).toBe(true);
+  });
+});
+
 describe('rowSummary: loopinzicht en details van loopjes', () => {
   const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
 
@@ -955,10 +975,10 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
-    expect(rowSummary('bundel-weer', facts()).value).toBe('9 van 9 aan');
-    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('7 van 9 aan');
+    expect(rowSummary('bundel-weer', facts()).value).toBe('10 van 10 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('8 van 10 aan');
     // Weerwaarschuwingen en lawinegevaar tellen mee (docs/beslissingen/2026-11-09-gr5-waarschuwingen.md).
-    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('7 van 9 aan');
+    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('8 van 10 aan');
     expect(rowSummary('weeralarm', facts()).checked).toBe(true);
     expect(rowSummary('weeralarm', withSettings({ weatherWarnings: false })).checked).toBe(false);
     expect(rowSummary('lawinegevaar', withSettings({ avalancheBulletin: false })).checked).toBe(false);

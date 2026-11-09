@@ -734,6 +734,17 @@ export const CHOICES = {
       { value: 'intervals', label: 'Zones van intervals.icu', note: 'De zonenaam, intervals.icu rekent om', short: 'intervals.icu' },
     ],
   }),
+  routeSoort: def({
+    group: 'Vandaag en meldingen',
+    title: 'Welke lus eerst',
+    line: 'ASCEND stelt twee lussen voor. Deze staat bovenaan.',
+    advice: 'adventure' as 'simple' | 'adventure',
+    help: 'routeVoorstel',
+    options: [
+      { value: 'adventure', label: 'Avontuurlijk', note: 'Eén lange lus langs verschillende hellingen en paden', short: 'Avontuurlijk' },
+      { value: 'simple', label: 'Simpel', note: 'Dezelfde helling op en af tot de hoogtemeters er zijn', short: 'Simpel' },
+    ],
+  }),
   stravaInhoud: def({
     group: 'Koppelingen',
     title: 'Wat erin staat',
