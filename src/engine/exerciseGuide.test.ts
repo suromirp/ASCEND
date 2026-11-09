@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EXERCISES, exerciseById } from '../data/exercises';
 import { EXERCISE_GUIDES } from '../data/exerciseGuides';
+import { SKILL_LADDERS } from '../data/skillLadders';
 import { cleanSettings } from '../storage/backupClean';
 import { resolveGuideOpen } from './exerciseArtSettings';
 import { GUIDE_CARE, guideLinks, readMoreWords } from './exerciseGuide';
@@ -100,8 +101,10 @@ describe('oefeningen zonder uitleg', () => {
 describe('alle uitleg', () => {
   const entries = Object.entries(EXERCISE_GUIDES);
   const FORBIDDEN_DASH = /[–—]/;
-  it('heeft de vijf proefteksten', () => {
-    expect(Object.keys(EXERCISE_GUIDES).sort()).toEqual(['incline-bench-press', 'pull-up', 'push-up', 'romanian-deadlift', 'step-down']);
+  it('heeft de vijf proefteksten en de 23 stappen van de overige calisthenicsladders (F4f)', () => {
+    const f4f = SKILL_LADDERS.filter((l) => !['push-up', 'pull-up', 'dip'].includes(l.id)).flatMap((l) => l.steps.map((s) => s.exerciseId));
+    expect(f4f).toHaveLength(23);
+    expect(Object.keys(EXERCISE_GUIDES).sort()).toEqual([...['incline-bench-press', 'pull-up', 'push-up', 'romanian-deadlift', 'step-down'], ...f4f].sort());
   });
   for (const [id, g] of entries) {
     it(`${id}: precies drie korte regels van hoogstens 60 tekens`, () => {

@@ -224,3 +224,10 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Lijn rest R4 stap 3 Vandaag-proef, Scribe (ontwikkelaar, geen eigen rol), sonnet, 174k, 14 min
 - 2026-11-09, Lijn rest R4 stap 3 review, Warden, sonnet (reviewer), 56k, 2 min, 0 blokkerend, 5 kleine punten (door de coördinator hersteld)
 - 2026-11-09, Lijn rest R4 stap 3 doorloop, Lookout, sonnet (tester), 42k, 4 min, 1 tekstfout (hersteld)
+- 2026-11-09, Lijn rest R5 Week-tab, Scribe (ontwikkelaar, geen eigen rol), sonnet, 98k, 13 min
+- 2026-11-09, Lijn rest gewicht en Week review, Warden, sonnet (reviewer), 60k, 2 min, 0 blokkerend, 1 belangrijk (inhalen heet verplaatsen) en 6 klein (door de coördinator hersteld)
+- 2026-11-09, Lijn rest gewicht en Week doorloop, Lookout, sonnet (tester), 62k, 12 min, 3 bestaande tikdoelgaten gemeld (backlog) en 1 afgebroken datum (hersteld)
+- 2026-11-09, Lijn Forge F4f ladders, Sherpa, sonnet (ontwikkelaar), 213k, 20 min, 23 oefeningen met uitleg en tekening
+- 2026-11-09, Lijn Forge F4g planner, Sherpa, opus (ontwikkelaar), 222k, 22 min, geen planningsbestanden geraakt
+- 2026-11-09, Lijn Forge F4f en F4g review, Warden, opus (reviewer), 136k, 8 min, 0 blokkerend, 3 hoort erbij (hersteld) en 9 later
+- 2026-11-09, Lijn Forge F4f en F4g doorloop, Lookout, sonnet (tester), 111k, 20 min, 1 overloop in Werkt op bij 360 px (hersteld)

@@ -241,3 +241,26 @@ describe('de planning beweegt niet', () => {
     expect(lockLevel(sessions[5], new Set(), monday)).toBe(2);
   });
 });
+
+describe('de overige ladders in het voorstel (F4f)', () => {
+  const hold = (...s: number[]): SetLog[] => s.map((x) => ({ reps: 1, seconds: x }));
+  it('een houding: toets gehaald op de L-sit geeft het voorstel voor de volgende stap, met seconden', () => {
+    const LSIT = tpl('tpl_lsit', 'Romp', [['l1', 'Tuck L-Sit', 3, '20s']]);
+    const [p] = proposals([LSIT], [log(YESTERDAY, { 'tuck-l-sit': hold(30, 30, 30) })]);
+    expect(p).toMatchObject({ kind: 'harder', ladderId: 'l-sit', fromExerciseId: 'tuck-l-sit', toExerciseId: 'one-leg-l-sit', targets: [{ templateId: 'tpl_lsit', slot: 'l1' }] });
+    expect(stepProposalText(p).keeps).toBe('Sets en herhalingen blijven.');
+  });
+  it('herhalingen: toets gehaald op de pike push-up geeft de verhoogde pike push-up', () => {
+    const HS = tpl('tpl_hs', 'Schouders', [['h1', 'Pike Push-Up', 3, '8']]);
+    const [p] = proposals([HS], [log(YESTERDAY, { 'pike-push-up': reps(8, 8, 8) })]);
+    expect(p).toMatchObject({ ladderId: 'handstand-push-up', toExerciseId: 'elevated-pike-push-up' });
+  });
+  it('een training zonder een stap van deze ladders krijgt geen voorstel, ook niet met de bestaande oefeningen', () => {
+    const logs = [log(YESTERDAY, { 'pistol-squat': reps(8, 8, 8), 'muscle-up': reps(8, 8, 8) })];
+    expect(proposals([PUSH, PULLUP], logs)).toEqual([]);
+  });
+  it('de laatste stap van elke nieuwe ladder heeft geen voorstel omhoog', () => {
+    const LAST = tpl('tpl_last', 'Laatste', [['a', 'Muscle-Up', 3, '8']]);
+    expect(proposals([LAST], [log(YESTERDAY, { 'muscle-up': reps(8, 8, 8) })])).toEqual([]);
+  });
+});

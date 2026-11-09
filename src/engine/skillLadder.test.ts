@@ -302,3 +302,83 @@ describe('band en extra gewicht (F4c)', () => {
     expect(ladderState(pull, logs, TODAY)).toMatchObject({ current: 4, passed: true });
   });
 });
+
+// F4f: de overige ladders (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md, punt 5). Alle stappen zijn eigen
+// oefeningen; de toets is 3 keer 8 of 3 keer 30 seconden, de onderkant 3 keer 5 of 3 keer 10 seconden.
+describe('de overige ladders', () => {
+  const LADDERS: [string, string[], 'balance' | 'strength', 'reps' | 'hold'][] = [
+    ['pistol', ['assisted-pistol-squat', 'skater-squat', 'box-pistol-squat', 'pistol-squat'], 'strength', 'reps'],
+    ['handstand', ['wall-plank-hold', 'pike-hold', 'wall-handstand-hold', 'free-handstand-hold'], 'balance', 'hold'],
+    ['handstand-push-up', ['pike-push-up', 'elevated-pike-push-up', 'wall-hspu-negative', 'wall-hspu'], 'strength', 'reps'],
+    ['l-sit', ['tuck-l-sit', 'one-leg-l-sit', 'l-sit'], 'strength', 'hold'],
+    ['front-lever', ['tuck-front-lever', 'advanced-tuck-front-lever', 'one-leg-front-lever', 'straddle-front-lever'], 'strength', 'hold'],
+    ['muscle-up', ['chest-to-bar-pull-up', 'straight-bar-dip', 'negative-muscle-up', 'muscle-up'], 'strength', 'reps'],
+  ];
+  const sets = (kind: 'reps' | 'hold', top: boolean) => (kind === 'hold' ? holds(...(top ? [30, 30, 30] : [10, 10, 10])) : reps(...(top ? [8, 8, 8] : [5, 5, 5])));
+
+  it('heeft de zes ladders na de eerste drie, met 3 tot 5 stappen en de juiste aard', () => {
+    expect(SKILL_LADDERS.map((l) => l.id)).toEqual(['push-up', 'pull-up', 'dip', ...LADDERS.map(([id]) => id)]);
+    for (const [id, steps, kind, test] of LADDERS) {
+      const l = skillLadderById(id)!;
+      expect(l.steps.length, id).toBeGreaterThanOrEqual(3);
+      expect(l.steps.length, id).toBeLessThanOrEqual(5);
+      expect(l.steps.map((s) => s.exerciseId), id).toEqual(steps);
+      expect(l.kind, id).toBe(kind);
+      for (const s of l.steps) {
+        expect(s.test.kind, s.exerciseId).toBe(test);
+        expect(s.test.sets, s.exerciseId).toBe(3);
+        expect(s.test.kind === 'hold' ? s.test.seconds : s.test.kind === 'reps' ? s.test.reps : 0, s.exerciseId).toBe(test === 'hold' ? 30 : 8);
+      }
+    }
+  });
+
+  it('elke stap is een eigen oefening zonder deel van je gewicht (geen meting), per kant waar het per kant is', () => {
+    for (const [id, steps] of LADDERS) {
+      for (const ex of steps) {
+        const e = exerciseById(ex)!;
+        expect(e.ladder?.id, ex).toBe(id);
+        expect(e.bodyweightFraction, ex).toBeUndefined();
+        expect(e.guide, ex).toBeDefined();
+        expect(e.perSide === true, ex).toBe(id === 'pistol');
+      }
+    }
+  });
+
+  for (const [id, steps, , kind] of LADDERS) {
+    it(`${id}: zonder logs geen stap; de onderkant van stap 1 is stap 1; de toets geeft het voorstel voor stap 2`, () => {
+      const l = skillLadderById(id)!;
+      expect(ladderState(l, [], TODAY)).toMatchObject({ current: null, proposal: null });
+      const floor = ladderState(l, [log('2026-11-12', { [steps[0]]: sets(kind, false) })], TODAY);
+      expect(floor).toMatchObject({ current: 1, currentExerciseId: steps[0], passed: false, proposal: null });
+      const top = ladderState(l, [log('2026-11-12', { [steps[0]]: sets(kind, true) })], TODAY);
+      expect(top).toMatchObject({ current: 1, passed: true, proposal: { kind: 'harder', step: 2, exerciseId: steps[1] } });
+    });
+
+    it(`${id}: de laatste stap heeft geen voorstel omhoog, en drie missers geven de lichtere stap`, () => {
+      const l = skillLadderById(id)!;
+      const last = steps[steps.length - 1];
+      expect(ladderState(l, [log('2026-11-12', { [last]: sets(kind, true) })], TODAY)).toMatchObject({ current: steps.length, passed: true, proposal: null });
+      const below = kind === 'hold' ? holds(6, 6, 5) : reps(3, 3, 2);
+      const misses = [
+        log('2026-11-01', { [steps[1]]: sets(kind, false) }),
+        log('2026-11-05', { [steps[1]]: below }),
+        log('2026-11-09', { [steps[1]]: below }),
+        log('2026-11-13', { [steps[1]]: below }),
+      ];
+      expect(ladderState(l, misses, TODAY).proposal).toMatchObject({ kind: 'lighter', step: 1, exerciseId: steps[0] });
+    });
+
+    it(`${id}: een set met een band of zonder werkset telt niet`, () => {
+      const l = skillLadderById(id)!;
+      const withBand = sets(kind, true).map((s) => ({ ...s, band: 'licht' as const }));
+      expect(ladderState(l, [log('2026-11-12', { [steps[0]]: withBand })], TODAY).current).toBeNull();
+      const warm = sets(kind, true).map((s) => ({ ...s, kind: 'warmup' as const }));
+      expect(ladderState(l, [log('2026-11-12', { [steps[0]]: warm })], TODAY).current).toBeNull();
+    });
+  }
+
+  it('een houding zonder seconden telt niet, ook niet met herhalingen', () => {
+    const l = skillLadderById('l-sit')!;
+    expect(ladderState(l, [log('2026-11-12', { 'tuck-l-sit': reps(30, 30, 30) })], TODAY).current).toBeNull();
+  });
+});

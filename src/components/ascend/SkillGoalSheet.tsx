@@ -5,7 +5,7 @@ import { ladderStates } from '../../engine/skillLadder';
 import type { SessionLog } from '../../models/training';
 import type { SkillGoal } from '../../models/skillGoals';
 import { makeId } from '../../utils/id';
-import { PrimaryButton, Segmented } from '../ui';
+import { Chip, PrimaryButton } from '../ui';
 import { TextButton } from '../TextButton';
 import { Sheet } from '../settings/Sheet';
 
@@ -33,7 +33,14 @@ export function SkillGoalSheet({ logs, today, taken, onSubmit, onClose }: {
     <Sheet eyebrow="Doel toevoegen · stap 2 van 3" title="Vaardigheid" line="Kies een ladder en de stap die je wilt halen." onClose={onClose}>
       {(close) => (
         <div className="flex flex-col gap-5">
-          <Segmented tall label="Ladder" options={SKILL_LADDER_CHOICES.map((l) => ({ value: l.id, label: l.name }))} value={ladder.id} onChange={setLadderId} />
+          <div className="flex flex-col gap-2">
+            <p className="st-lab">Ladder</p>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Ladder">
+              {SKILL_LADDER_CHOICES.map((l) => (
+                <Chip key={l.id} selected={l.id === ladder.id} onClick={() => setLadderId(l.id)}>{l.name}</Chip>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Doelstap">
             <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
               {current === null ? 'Nog geen training op deze ladder.' : `Je traint nu op ${skillStepName(ladder, current)}.`}

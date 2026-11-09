@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { EXERCISES, exerciseById } from '../data/exercises';
 import { FAMILY_ONLY } from '../data/exerciseFamilies';
+import { LADDER_PLACE, SKILL_LADDERS } from '../data/skillLadders';
 import type { ExercisePrescription } from '../models/training';
 import { demoStrengthLogs, demoWeights } from './fixtures/strengthLogs';
 import {
@@ -491,5 +492,37 @@ describe('ladderstappen in Ruilen', () => {
     const ids = (from: string) => swapGroups(exerciseById(from), profile, [], 50).same.map((s) => s.exercise.id);
     expect(ids('pull-up')).toContain('weighted-pull-up');
     for (const from of ['chin-up', 'assisted-pull-up', 'lat-pulldown']) expect(ids(from)).not.toContain('weighted-pull-up');
+  });
+});
+
+describe('de overige calisthenicsladders in Ruilen (F4f)', () => {
+  const NEW_IDS = SKILL_LADDERS.filter((l) => !['push-up', 'pull-up', 'dip'].includes(l.id)).flatMap((l) => l.steps.map((s) => s.exerciseId));
+  it('elke nieuwe stap heeft een familie, staat in FAMILY_ONLY en komt uit zijn plek op de ladder', () => {
+    expect(NEW_IDS).toHaveLength(23);
+    for (const id of NEW_IDS) {
+      const e = exerciseById(id)!;
+      expect(e.family, id).toBeTruthy();
+      expect(FAMILY_ONLY.has(id), id).toBe(true);
+      expect(e.ladder, id).toEqual(LADDER_PLACE.get(id));
+    }
+  });
+  it('de squat op één been biedt alleen zijn eigen stappen als echte vervanger, en geen andere oefening biedt ze aan', () => {
+    const same = (id: string) => swapGroups(exerciseById(id), profile).same.map((s) => s.exercise.id);
+    expect(same('pistol-squat').sort()).toEqual(['assisted-pistol-squat', 'box-pistol-squat', 'skater-squat']);
+    expect(same('l-sit').sort()).toEqual(['one-leg-l-sit', 'tuck-l-sit']);
+    for (const id of ['back-squat', 'bulgarian-split-squat', 'push-up', 'dip', 'pull-up', 'overhead-press', 'hanging-leg-raise']) {
+      for (const g of [swapGroups(exerciseById(id), profile)]) {
+        const ids = [...g.same.map((s) => s.exercise.id), ...g.other.map((e) => e.id)];
+        for (const n of NEW_IDS) expect(ids, `${id} biedt ${n}`).not.toContain(n);
+      }
+    }
+  });
+  it('een houding of herhalingen: de oefening weet het zelf, per kant alleen bij de squat op één been', () => {
+    for (const id of NEW_IDS) {
+      const e = exerciseById(id)!;
+      const hold = /hold|l-sit|lever/.test(id);
+      expect(e.measure === 'hold', id).toBe(hold);
+      expect(e.perSide === true, id).toBe(/pistol|skater/.test(id));
+    }
   });
 });

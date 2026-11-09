@@ -43,7 +43,7 @@ describe('migrateSkillGoals: defensief lezen', () => {
   it('een kapotte waarde valt weg zonder fout, de rest blijft', () => {
     expect(migrateSkillGoals('rommel')).toEqual({ store: undefined, skipped: 1 });
     const read = migrateSkillGoals({
-      goals: [goal(), goal({ id: 'b', ladderId: 'handstand' }), goal({ id: 'c', targetStep: 9 }), { id: 'd' }, 7, goal(), goal({ id: 'e', targetStep: 0 }), goal({ id: 'f', targetStep: 2.5 })],
+      goals: [goal(), goal({ id: 'b', ladderId: 'planche' }), goal({ id: 'c', targetStep: 9 }), { id: 'd' }, 7, goal(), goal({ id: 'e', targetStep: 0 }), goal({ id: 'f', targetStep: 2.5 })],
       progress: [
         { id: 'p1', goalId: 'skill_a', ladderId: 'pull-up', step: 1, exerciseId: 'dead-hang', clearedDate: '2026-11-02' },
         { id: 'p2', goalId: 'skill_a', ladderId: 'pull-up', step: 1, exerciseId: 'dead-hang', clearedDate: '2026-11-03' },
@@ -54,14 +54,14 @@ describe('migrateSkillGoals: defensief lezen', () => {
     });
     // Een ladder die deze versie niet kent of een doelstap boven de ladder blijft ongewijzigd staan (verborgen bij het tonen).
     expect(read.store!.goals.map((g) => g.id)).toEqual(['skill_a', 'b', 'c']);
-    expect(read.store!.goals[1]).toEqual(goal({ id: 'b', ladderId: 'handstand' }));
+    expect(read.store!.goals[1]).toEqual(goal({ id: 'b', ladderId: 'planche' }));
     // Een rij van een doel dat er niet meer is blijft: gehaalde stappen gaan nooit weg.
     expect(read.store!.progress.map((p) => p.id)).toEqual(['p1', 'p5']);
     expect(read.skipped).toBe(8);
   });
 
   it('een doel van een nieuwere versie blijft ongewijzigd, ook met velden die deze versie niet kent', () => {
-    const newer = { ...goal({ id: 'n', ladderId: 'front-lever', targetStep: 6 }), level: 'tuck' };
+    const newer = { ...goal({ id: 'n', ladderId: 'planche', targetStep: 6 }), level: 'tuck' };
     expect(migrateSkillGoals({ goals: [newer], progress: [] }).store!.goals).toEqual([newer]);
   });
 
@@ -119,7 +119,7 @@ describe('de opslag: alles of niets, alleen toevoegen', () => {
 
   it('een doel dat deze versie niet kent overleeft een schrijfactie op een ander doel', async () => {
     const m = memory();
-    const unknown = { ...goal({ id: 'onbekend', ladderId: 'handstand', targetStep: 3 }), extra: true };
+    const unknown = { ...goal({ id: 'onbekend', ladderId: 'planche', targetStep: 3 }), extra: true };
     m.value = { goals: [goal(), unknown, goal({ id: 'hoog', targetStep: 9 })], progress: [] };
     await removeSkillGoal('skill_a', '2026-11-09T09:00:00.000Z', m);
     await addSkillGoal(goal({ id: 'nieuw', ladderId: 'dip', targetStep: 2 }), [], TODAY, m);
