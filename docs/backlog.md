@@ -27,7 +27,7 @@ Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde ui
 - 9 november, uit R7 en R8 (lijn rest), voor het bouwmoment: in Stand toont de samenvatting "Belasting Zwaar, 0 van 475" bij een zware geplande week (lijkt een fout in de telling, eerst naspelen); een regel in Intensiteit mist een bolletje; "Twee harde loopjes" nog in `weekConcerns.ts`, `weekValidator.ts`, `GarminLink.tsx`, `influence.ts`; "Loopsessies" bij long_run in `goalKinds` laat "lang" weg. Nog te herschrijven tabs: Lichaam, daarna R9 Instellingen (`settingsHelp.ts` en `settingsIndex.ts` gelijktrekken).
 
 - 9 november, wens van de eigenaar (lijn rest, na de sessie "Week: flits bij sluiten blad", zelfde bestand): een vakantiedag in de weeklijst krijgt dezelfde vorm als een training: een rond icoon links (iets als een koffer of zon, in de stijl van de bestaande iconen, statuskleur), titel "Vakantie", eronder de dag en de notitie ("Za 14 · Naar paps en mams"). Opeenvolgende vakantiedagen in één week als één rij ("Za 14 t/m zo 15"), met dezelfde tik naar het blad. Advies coördinator; geen redesign van de rest.
-- 9 november, klein: het doel Calisthenics (was Vaardigheid) heeft hetzelfde halter-icoon als Sterker worden; een eigen icoon (bijvoorbeeld een figuur aan een stang).
+- 9 november, klein (wens eigenaar): eigen iconen voor training zonder gewicht. Eigen gewicht en de calisthenics-trainingen in de weeklijst en op Vandaag, en het doel Calisthenics (was Vaardigheid), hebben nu hetzelfde halter-icoon als krachttraining in de sportschool; een eigen eenvoudig icoon in de stijl van de bestaande (bijvoorbeeld een figuur aan een stang of in een push-up), zelfde kleur als kracht.
 
 ## Rooster voor de bouwmomenten
 
