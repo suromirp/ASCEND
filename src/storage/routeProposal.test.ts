@@ -43,6 +43,26 @@ describe('findRoutes', () => {
     expect(await findRoutes(place, target, { route: never, terrain: async () => undefined, offline: () => false, limitMs: 30 })).toEqual({ kind: 'timeout' });
   });
 
+  it('na de tijdgrens of na sluiten gaat er geen aanroep meer de deur uit', async () => {
+    let calls = 0;
+    let release: () => void = () => undefined;
+    const slow: RouteFn = async () => {
+      calls++;
+      await new Promise<void>((r) => { release = r; });
+      return { ok: false, reason: 'error' };
+    };
+    expect(await findRoutes(place, target, { route: slow, terrain: async () => undefined, offline: () => false, limitMs: 20 })).toEqual({ kind: 'timeout' });
+    release();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(calls).toBe(1);
+
+    const stop = new AbortController();
+    stop.abort();
+    const route = vi.fn(straight);
+    await findRoutes(place, target, { route, terrain: async () => undefined, offline: () => false, signal: stop.signal });
+    expect(route).not.toHaveBeenCalled();
+  });
+
   it('valt het netwerk halverwege weg, dan is dat de uitkomst', async () => {
     const gone: RouteFn = async () => ({ ok: false, reason: 'offline' });
     expect(await findRoutes(place, target, { route: gone, terrain: async () => undefined, offline: () => false })).toEqual({ kind: 'offline' });

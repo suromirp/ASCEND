@@ -5,7 +5,7 @@ Status: aangenomen
 
 ## Besluit
 
-Bij een looptraining staat de knop Route voorstellen. ASCEND stelt twee lussen voor vanaf je plaats: Simpel (dezelfde helling op en af tot de hoogtemeters er zijn) en Avontuurlijk (één lange lus langs verschillende hellingen en onverharde paden). Elke lus heeft afstand, hoogtemeters en een GPX-bestand. Het advies is aan, met Avontuurlijk bovenaan. Het plant niets en bewaart niets.
+Bij een looptraining staat de knop Route voorstellen. ASCEND stelt twee lussen voor vanaf je plaats: Simpel (dezelfde helling op en af tot de hoogtemeters er zijn) en Avontuurlijk (één lange lus langs verschillende hellingen en onverharde paden). Elke lus heeft afstand, hoogtemeters en een GPX-bestand. Het advies is aan, met Avontuurlijk bovenaan. Het plant niets en bewaart geen route.
 
 ## Reden
 
@@ -33,7 +33,10 @@ Hoe het werkt:
 - Zonder iets op de kaart zet Avontuurlijk drie punten op een cirkel door het startpunt.
 - De rij staat in het blad Weer en kleding en niet als eigen rij op de pagina: die pagina mag hoogstens twaalf rijen hebben.
 - In de uitleg van een training (al een blad) klapt het paneel op zijn plek open; op Vandaag opent het een blad. Zo zijn er nooit twee lagen.
-- De route wordt nergens bewaard, ook niet in het geheugen na het sluiten: opnieuw openen zoekt opnieuw.
+- De route wordt nergens bewaard, ook niet in het geheugen na het sluiten: opnieuw openen zoekt opnieuw. Wel bewaard op het toestel: de heuvels en paden rond de afgeronde plek (de bestaande cache van Heuvels in de buurt, dertig dagen, niet in de back-up), ook als Heuvels in de buurt uit staat.
+- De eerste vraag noemt elke dienst waar de plek naartoe kan gaan, ook de reservebron (BRouter, anders Valhalla van FOSSGIS, en OpenStreetMap).
+- Na de tijdgrens of na het sluiten van het paneel gaat er geen aanroep meer de deur uit, en alle zoektochten delen één poort (een voor een, een seconde ertussen).
+- Bij Simpel met herhalingen staat de zin dat je horloge op dezelfde helling naar het verkeerde stuk kan springen (uit het onderzoek).
 
 ## Alternatieven
 

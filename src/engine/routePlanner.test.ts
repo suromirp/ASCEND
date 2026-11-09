@@ -3,7 +3,7 @@ import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFn, RoutePoint } from '../models/route';
 import { lineLength, metersBetween, offsetPoint } from './routeGeometry';
 import {
-  MAX_ROUTE_CALLS, MAX_VIAS, adventureVias, climbOnLine, composeSimple, cutAt, proposalFacts, proposalNotes, proposalTitle,
+  MAX_ROUTE_CALLS, MAX_VIAS, adventureVias, climbOnLine, composeOutAndBack, composeSimple, cutAt, tallestClimbLine, proposalFacts, proposalNotes, proposalTitle,
   proposeAdventure, proposeRoutes, proposeSimple, simpleCandidates,
 } from './routePlanner';
 
@@ -76,7 +76,29 @@ describe('Simpel: dezelfde helling op en af', () => {
     expect(metersBetween(p.points[0], p.points[p.points.length - 1])).toBeLessThan(1);
     expect(proposalTitle(p)).toBe('6 × de helling op en af');
     expect(proposalFacts(p)).toBe('8 km · 300 hoogtemeters');
-    expect(proposalNotes(p, { distanceKm: 9, ascentM: 300 })).toEqual(['De helling: 50 m omhoog over 500 m.']);
+    expect(proposalNotes(p, { distanceKm: 9, ascentM: 300 })).toEqual(['De helling: 50 m omhoog over 500 m.', 'Op dezelfde helling kan je horloge naar het verkeerde stuk springen.']);
+  });
+
+  it('een punt zonder hoogte telt nergens mee, ook niet als laag', () => {
+    const points = [0, 0, 0, undefined, 2, 10, 20, 30].map((ele, i) => ({ ...offsetPoint(START, 0, i * 100), ...(ele === undefined ? {} : { ele }) }));
+    const climb = climbOnLine(points);
+    expect(climb).toMatchObject({ foot: 2, top: 7, heightM: 30 });
+    const p = composeSimple({ source: 'valhalla', points }, { distanceKm: 6, ascentM: 120 });
+    expect(p?.repeats).toBe(4);
+    expect(Number.isFinite(p?.ascentM)).toBe(true);
+  });
+
+  it('een lege lijn of één punt geeft geen lus', () => {
+    expect(composeSimple({ source: 'brouter', points: [] }, { distanceKm: 6, ascentM: 100 })).toBeUndefined();
+    expect(composeSimple({ source: 'brouter', points: [{ ...START, ele: 5 }] }, { distanceKm: 6, ascentM: 100 })).toBeUndefined();
+    expect(composeOutAndBack({ source: 'brouter', points: [START] }, { distanceKm: 6, ascentM: 0 })).toBeUndefined();
+  });
+
+  it('de hoogste helling op een lijn kan lager liggen dan een eerdere top', () => {
+    const points = [100, 120, 60, 0, 30, 60].map((ele, i) => ({ ...offsetPoint(START, 0, i * 200), ele }));
+    const line = tallestClimbLine(points);
+    expect(line).toHaveLength(6);
+    expect(composeSimple({ source: 'brouter', points: line! }, { distanceKm: 8, ascentM: 200 })?.climbM).toBe(60);
   });
 
   it('een te lage heuvel (onder 10 m) doet niet mee', () => {
@@ -168,6 +190,8 @@ describe('Avontuurlijk: één lus langs verschillende hellingen', () => {
     expect(out.ok).toBe(true);
     expect(route.calls[1]).toHaveLength(route.calls[0].length - 1);
     expect(route.calls[1]).not.toContainEqual(route.calls[0][1]);
+    // Ook in een latere ronde, met een ander bereik, komt het punt niet terug.
+    for (const call of route.calls.slice(1)) expect(call).not.toContainEqual(route.calls[0][1]);
   });
 
   it('zonder iets in de buurt: drie punten op een cirkel door het startpunt', async () => {

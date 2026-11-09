@@ -41,6 +41,8 @@ export async function grantRouteConsent(): Promise<void> {
 export type RouteSearch = { kind: 'plans'; plans: RoutePlans } | { kind: 'offline' } | { kind: 'timeout' };
 
 export interface RouteSearchDeps {
+  // Sluit het paneel, dan stopt de zoektocht: er gaat geen aanroep meer de deur uit.
+  signal?: AbortSignal;
   route?: RouteFn;
   terrain?: (place: { name: string; lat: number; lon: number }) => Promise<NearbyTerrain | undefined>;
   offline?: () => boolean;
@@ -50,7 +52,11 @@ export interface RouteSearchDeps {
 export async function findRoutes(place: { lat: number; lon: number }, target: RouteTarget, deps: RouteSearchDeps = {}): Promise<RouteSearch> {
   if ((deps.offline ?? isOffline)()) return { kind: 'offline' };
   const start = roundStart(place);
-  const route = deps.route ?? routeWithFallback([brouterRoute(), valhallaRoute()]);
+  // Na de tijdgrens of na sluiten stopt ook het werk erachter, niet alleen het wachten.
+  let over = false;
+  const stopped = () => over || deps.signal?.aborted === true;
+  const inner = deps.route ?? routeWithFallback([brouterRoute(), valhallaRoute()], undefined, stopped);
+  const route: RouteFn = (waypoints) => (stopped() ? Promise.resolve({ ok: false, reason: 'timeout' }) : inner(waypoints));
   const terrainOf = deps.terrain ?? ((p) => refreshNearbyTerrain(p).catch(() => getNearbyTerrain(p)));
   const search = (async (): Promise<RouteSearch> => {
     // Zonder heuvels en paden zoekt de planner nog steeds een lus, op punten rond het startpunt.
@@ -63,6 +69,7 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
   try {
     return await withTimeout(search, deps.limitMs ?? PROPOSAL_LIMIT_MS);
   } catch {
+    over = true;
     return { kind: 'timeout' };
   }
 }

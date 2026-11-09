@@ -49,25 +49,41 @@ export function parseJson(text: string): unknown {
 // vrijwilligers en vragen hoogstens één aanroep per seconde.
 export const ROUTE_GAP_MS = 1_000;
 
-export function routeWithFallback(sources: RouteFn[], gapMs = ROUTE_GAP_MS): RouteFn {
-  let from = 0;
+// Een poort: wat erdoor gaat, gaat een voor een, met `gapMs` tussen twee starts. `skip`: is dat waar
+// als de beurt komt, dan gaat de vraag niet meer de deur uit.
+export type Gate = <T>(job: () => Promise<T>, skip?: () => T | undefined) => Promise<T>;
+
+export function createGate(gapMs = ROUTE_GAP_MS): Gate {
   let queue: Promise<unknown> = Promise.resolve();
   let lastStart = 0;
-  const ask = async (waypoints: Parameters<RouteFn>[0]): Promise<RouteAnswer> => {
-    let last: RouteAnswer = { ok: false, reason: 'error' };
-    for (let i = from; i < sources.length; i++) {
+  return (job, skip) => {
+    const next = queue.then(async () => {
+      const skipped = skip?.();
+      if (skipped !== undefined) return skipped;
       const wait = lastStart + gapMs - Date.now();
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
       lastStart = Date.now();
-      last = await sources[i](waypoints);
-      if (last.ok || last.reason === 'offline' || last.reason === 'unmapped') return last;
+      return job();
+    });
+    queue = next.catch(() => undefined);
+    return next;
+  };
+}
+
+// Eén poort voor de hele app: ook twee zoektochten na elkaar vragen nooit tegelijk.
+export const routeGate: Gate = createGate();
+
+// `stopped`: na de tijdgrens of na sluiten gaat er geen aanroep meer de deur uit.
+export function routeWithFallback(sources: RouteFn[], gate: Gate = routeGate, stopped: () => boolean = () => false): RouteFn {
+  let from = 0;
+  const halted = (): RouteAnswer | undefined => (stopped() ? { ok: false, reason: 'timeout' } : undefined);
+  return async (waypoints) => {
+    let last: RouteAnswer = { ok: false, reason: 'error' };
+    for (let i = from; i < sources.length; i++) {
+      last = await gate(() => sources[i](waypoints), halted);
+      if (last.ok || last.reason === 'offline' || last.reason === 'unmapped' || stopped()) return last;
       if (i + 1 < sources.length) from = i + 1;
     }
     return last;
-  };
-  return (waypoints) => {
-    const next = queue.then(() => ask(waypoints));
-    queue = next.catch(() => undefined);
-    return next;
   };
 }

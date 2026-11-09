@@ -9,14 +9,16 @@ import type { RouteProposal, RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { resolveRouteStyle, routeTarget, targetText } from '../engine/routeTarget';
-import { proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
+import { MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
 import { routeGpx } from '../engine/gpx';
 import { findRoutes, grantRouteConsent, hasRouteConsent, type RouteSearch } from '../storage/routeProposal';
 import { saveRouteGpx, type RouteFileResult } from '../storage/routeFile';
 import { OSM_COPYRIGHT } from '../integrations/overpass';
+import { withTimeout } from '../utils/withTimeout';
 import { TextButton } from './TextButton';
 import { Eyebrow } from './ui';
 
+const CONSENT_LIMIT_MS = 3000;
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
 const STYLE_LINE: Record<RouteStyle, string> = {
   simple: 'Dezelfde helling op en af.',
@@ -24,8 +26,8 @@ const STYLE_LINE: Record<RouteStyle, string> = {
 };
 const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
 
-function failureText(style: RouteStyle, outcome: Extract<PlanOutcome, { ok: false }>): string {
-  if (outcome.reason === 'nothing' || outcome.reason === 'unmapped') return style === 'simple' ? 'Geen helling gevonden die bij je training past.' : 'Geen lus gevonden vanaf je plek.';
+function failureText(style: RouteStyle, outcome: Extract<PlanOutcome, { ok: false }>, flat: boolean): string {
+  if (outcome.reason === 'nothing' || outcome.reason === 'unmapped') return style === 'simple' ? (flat ? 'Geen pad gevonden vanaf je plek.' : 'Geen helling gevonden die bij je training past.') : 'Geen lus gevonden vanaf je plek.';
   return 'De routeplanner antwoordde niet.';
 }
 
@@ -57,7 +59,7 @@ function RouteBlock({ style, outcome, primary, name, date, target }: { style: Ro
       ) : (
         <>
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{STYLE_LINE[style]}</p>
-          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{failureText(style, outcome)}</p>
+          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{failureText(style, outcome, target.ascentM < MIN_ASCENT_TARGET_M)}</p>
         </>
       )}
     </div>
@@ -78,7 +80,8 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
 
   useEffect(() => {
     let alive = true;
-    void hasRouteConsent().then((ok) => {
+    // Hangt de opslag, dan komt na een paar seconden gewoon de vraag.
+    void withTimeout(hasRouteConsent(), CONSENT_LIMIT_MS).catch(() => false).then((ok) => {
       if (alive) setConsent(ok);
     });
     return () => {
@@ -92,14 +95,13 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
 
   useEffect(() => {
     if (!consent || lat === undefined || lon === undefined) return;
-    let alive = true;
+    const stop = new AbortController();
     // findRoutes heeft zelf een grens in tijd en gooit nooit: de regel "Zoeken" blijft nooit staan.
-    void findRoutes({ lat, lon }, { distanceKm, ascentM }).then((result) => {
-      if (alive) setFound({ key, result });
+    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal }).then((result) => {
+      if (!stop.signal.aborted) setFound({ key, result });
     });
-    return () => {
-      alive = false;
-    };
+    // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
+    return () => stop.abort();
   }, [consent, lat, lon, distanceKm, ascentM, key]);
 
   const dim = { color: 'var(--color-ink-dim)' };
@@ -112,7 +114,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
     return (
       <div className="flex flex-col">
         <p className="text-sm leading-snug" style={dim}>
-          Een lus zoeken voor deze training? Daarvoor gaat je plek, afgerond op ongeveer een kilometer, naar de routeplanner BRouter en naar OpenStreetMap. Er gaat geen naam of adres mee.
+          Een lus zoeken voor deze training? Daarvoor gaat je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Er gaat geen naam of adres mee.
         </p>
         <div className="flex flex-wrap gap-x-5">
           <TextButton tone="dim" onClick={onDecline}>Liever niet</TextButton>

@@ -834,7 +834,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Simpel', text: 'dezelfde helling op en af tot de hoogtemeters er zijn. Bij een vlakke training heen en terug over hetzelfde pad.' },
       { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
       { head: 'Naar je horloge', text: 'je downloadt een GPX-bestand en opent dat als koers in de app van je horloge.' },
-      { head: 'Wat de deur uit gaat', text: 'je plek, afgerond op ongeveer een kilometer, naar de routeplanner BRouter en naar OpenStreetMap. Geen naam, geen adres. De route wordt niet bewaard.' },
+      { head: 'Wat de deur uit gaat', text: 'je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Geen naam, geen adres. De route wordt niet bewaard.' },
     ],
   },
   stravaTekst: {

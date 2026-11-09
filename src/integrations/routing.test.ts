@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { RouteAnswer, RouteFn, RoutePoint } from '../models/route';
 import { BROUTER_PROFILE, brouterRoute, brouterUrl, mapBrouter, unmappedWaypoint } from './brouter';
 import { decodePolyline6, mapValhalla, spreadElevation, valhallaRoute, valhallaUrl } from './valhalla';
-import { requestText, routeWithFallback } from './routing';
+import { createGate, requestText, routeWithFallback } from './routing';
 
 // Nagemaakte punten en antwoorden: geen netwerk, geen echte plek.
 const A: RoutePoint = { lat: 52.12, lon: 5.65 };
@@ -108,7 +108,7 @@ describe('routeWithFallback', () => {
   it('vraagt de tweede bron als de eerste niet antwoordt, en slaat de stille bron daarna over', async () => {
     const first = source({ ok: false, reason: 'timeout' });
     const second = source(line);
-    const route = routeWithFallback([first, second], 0);
+    const route = routeWithFallback([first, second], createGate(0));
     expect(await route([A, B])).toBe(line);
     expect(await route([A, B])).toBe(line);
     expect(first).toHaveBeenCalledTimes(1);
@@ -118,9 +118,22 @@ describe('routeWithFallback', () => {
   it('vraagt niet verder zonder netwerk of bij een punt zonder pad', async () => {
     for (const reason of ['offline', 'unmapped'] as const) {
       const second = source(line);
-      expect(await routeWithFallback([source({ ok: false, reason }), second], 0)([A, B])).toEqual({ ok: false, reason });
+      expect(await routeWithFallback([source({ ok: false, reason }), second], createGate(0))([A, B])).toEqual({ ok: false, reason });
       expect(second).not.toHaveBeenCalled();
     }
+  });
+
+  it('na stoppen gaat er geen aanroep meer de deur uit, ook niet wat al in de rij stond', async () => {
+    let stopped = false;
+    const first = source({ ok: false, reason: 'error' });
+    const second = source(line);
+    const route = routeWithFallback([first, second], createGate(0), () => stopped);
+    const waiting = route([A, B]);
+    stopped = true;
+    expect(await waiting).toEqual({ ok: false, reason: 'timeout' });
+    expect(await route([A, B])).toEqual({ ok: false, reason: 'timeout' });
+    expect(first).not.toHaveBeenCalled();
+    expect(second).not.toHaveBeenCalled();
   });
 
   it('stuurt de vragen een voor een, met een pauze ertussen', async () => {
@@ -134,8 +147,11 @@ describe('routeWithFallback', () => {
       running--;
       return line;
     };
-    const route = routeWithFallback([slow], 40);
-    await Promise.all([route([A, B]), route([A, B]), route([A, B])]);
+    // Twee zoektochten delen één poort: ook samen vragen ze een voor een.
+    const gate = createGate(40);
+    const route = routeWithFallback([slow], gate);
+    const other = routeWithFallback([slow], gate);
+    await Promise.all([route([A, B]), other([A, B]), route([A, B])]);
     expect(most).toBe(1);
     expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(38);
     expect(starts[2] - starts[1]).toBeGreaterThanOrEqual(38);

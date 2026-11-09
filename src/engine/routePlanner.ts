@@ -92,19 +92,23 @@ export interface Climb {
 }
 
 // De helling op een lijn van het startpunt naar een heuvel: van de voet (het laatste dal voor de
-// top) tot het hoogste punt. Zonder hoogte of met een te lage helling: undefined.
-export function climbOnLine(points: RoutePoint[]): Climb | undefined {
-  let top = -1;
-  for (let i = 0; i < points.length; i++) {
-    const e = points[i].ele;
-    if (e !== undefined && (top < 0 || e > (points[top].ele as number))) top = i;
+// top) tot de top. De top is het hoogste punt, of `topAt` als de aanroeper hem al weet. Een punt
+// zonder hoogte telt nergens mee. Zonder hoogte of met een te lage helling: undefined.
+export function climbOnLine(points: RoutePoint[], topAt?: number): Climb | undefined {
+  const eleAt = (i: number) => points[i]?.ele;
+  let top = topAt ?? -1;
+  if (topAt === undefined) {
+    for (let i = 0; i < points.length; i++) {
+      const e = eleAt(i);
+      if (e !== undefined && (top < 0 || e > (eleAt(top) as number))) top = i;
+    }
   }
-  if (top <= 0) return undefined;
-  const max = points[top].ele as number;
+  const max = eleAt(top);
+  if (top <= 0 || max === undefined) return undefined;
   let low = max;
   let foot = top;
   for (let i = top - 1; i >= 0; i--) {
-    const e = points[i].ele;
+    const e = eleAt(i);
     if (e === undefined) continue;
     if (e < low) {
       low = e;
@@ -113,27 +117,29 @@ export function climbOnLine(points: RoutePoint[]): Climb | undefined {
       break; // voorbij het dal: daar begint een andere helling
     }
   }
-  const rawHeight = max - low;
-  if (rawHeight < MIN_CLIMB_M) return undefined;
+  if (max - low < MIN_CLIMB_M) return undefined;
   // Een lange vlakke aanloop hoort niet bij de helling: de voet en de top schuiven naar waar het echt stijgt.
   const edge = 1;
   for (let i = foot; i < top; i++) {
-    if ((points[i].ele ?? low) <= low + edge) foot = i;
+    const e = eleAt(i);
+    if (e !== undefined && e <= low + edge) foot = i;
   }
   for (let i = foot + 1; i <= top; i++) {
-    if ((points[i].ele ?? low) >= max - edge) {
+    const e = eleAt(i);
+    if (e !== undefined && e >= max - edge) {
       top = i;
       break;
     }
   }
-  const heightM = (points[top].ele as number) - (points[foot].ele as number);
+  const heightM = (eleAt(top) as number) - (eleAt(foot) as number);
   const lengthM = lineLength(points.slice(foot, top + 1));
-  if (heightM < MIN_CLIMB_M || lengthM <= 0) return undefined;
+  if (!Number.isFinite(heightM) || heightM < MIN_CLIMB_M || !(lengthM > 0)) return undefined;
   return { foot, top, heightM, lengthM };
 }
 
 // De hoogste helling ergens op een lijn: elke top (een punt waarna het meer dan de dode band zakt,
-// en het eind) is een kandidaat, en de lijn tot die top geeft zijn helling. Bij gelijke hoogte de eerste.
+// en het eind) is een kandidaat, met zijn eigen voet. Bij gelijke hoogte de eerste. Geeft de lijn
+// tot die top.
 export function tallestClimbLine(points: RoutePoint[]): RoutePoint[] | undefined {
   const tops: number[] = [];
   let high = -1;
@@ -147,13 +153,12 @@ export function tallestClimbLine(points: RoutePoint[]): RoutePoint[] | undefined
     }
   }
   if (high >= 0) tops.push(high);
-  let best: { line: RoutePoint[]; height: number } | undefined;
+  let best: { top: number; height: number } | undefined;
   for (const top of tops) {
-    const line = points.slice(0, top + 1);
-    const climb = climbOnLine(line);
-    if (climb && (!best || climb.heightM > best.height)) best = { line, height: climb.heightM };
+    const climb = climbOnLine(points, top);
+    if (climb && (!best || climb.heightM > best.height)) best = { top: climb.top, height: climb.heightM };
   }
-  return best?.line;
+  return best ? points.slice(0, best.top + 1) : undefined;
 }
 
 // Het eerste stuk van een lijn tot `meters`, met een punt precies op die afstand.
@@ -177,7 +182,7 @@ function proposal(style: RouteProposal['style'], line: RoutedLine, points: Route
 // Van een lijn naar een heuvel een lus met herhalingen: heen naar de voet, zo vaak op en af als de
 // hoogtemeters vragen (en de afstand toelaat), en terug.
 export function composeSimple(line: RoutedLine, target: RouteTarget): RouteProposal | undefined {
-  const climb = climbOnLine(line.points);
+  const climb = climbOnLine(line.points, line.points.length - 1) ?? climbOnLine(line.points);
   if (!climb) return undefined;
   const approach = line.points.slice(0, climb.foot + 1);
   const up = line.points.slice(climb.foot, climb.top + 1);
@@ -225,8 +230,12 @@ export async function proposeSimple(input: PlanInput, route: RouteFn, spare?: Ro
     if (missScore(best, input.target) <= CLOSE_ENOUGH) break;
   }
   if (!best && !flat && spare) {
-    const line = tallestClimbLine(spare.points);
-    if (line) best = composeSimple({ source: spare.source, points: line }, input.target);
+    // De lus in beide richtingen: de helling met de kortste aanloop past meestal het best.
+    for (const points of [spare.points, reversed(spare.points)]) {
+      const line = tallestClimbLine(points);
+      const made = line ? composeSimple({ source: spare.source, points: line }, input.target) : undefined;
+      if (made && (!best || missScore(made, input.target) < missScore(best, input.target))) best = made;
+    }
   }
   if (best) return { ok: true, proposal: best };
   return { ok: false, reason: lastFailure ?? 'nothing' };
@@ -313,6 +322,9 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
   let vias = adventureVias(input, reach);
   let best: RouteProposal | undefined;
   let lastFailure: RouteFailure | undefined;
+  // Een punt zonder pad in de buurt komt in een volgende ronde niet terug.
+  const dropped: RoutePoint[] = [];
+  const kept = (list: Via[]) => list.filter((v) => !dropped.some((x) => x.lat === v.lat && x.lon === v.lon));
   for (let call = 0; call < MAX_ROUTE_CALLS && vias.length > 0; call++) {
     const answer = await route([input.start, ...vias, input.start]);
     if (failed(answer)) {
@@ -320,6 +332,7 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
       if (stops(answer.reason)) break;
       // Een punt zonder pad in de buurt valt weg; zegt de bron niet welk, dan het laatste.
       const i = answer.reason === 'unmapped' && answer.waypoint !== undefined && answer.waypoint >= 1 && answer.waypoint <= vias.length ? answer.waypoint - 1 : vias.length - 1;
+      dropped.push(vias[i]);
       vias = vias.filter((_, j) => j !== i);
       continue;
     }
@@ -328,7 +341,7 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
     const off = made.distanceM / d;
     if (Math.abs(off - 1) <= CLOSE_ENOUGH) break;
     reach = Math.min(0.6, Math.max(0.08, reach * Math.min(1.6, Math.max(0.6, 1 / off))));
-    const next = adventureVias(input, reach);
+    const next = kept(adventureVias(input, reach));
     // Dezelfde punten geven dezelfde lus: dan is er niets beters te halen.
     if (next.length === vias.length && next.every((v, i) => v.lat === vias[i].lat && v.lon === vias[i].lon)) break;
     vias = next;
@@ -363,12 +376,13 @@ export function proposalFacts(p: RouteProposal): string {
   return `${km(p.distanceM)} · ${climb >= MIN_ASCENT_TARGET_M ? `${formatNumberNL(climb, 0)} hoogtemeters` : 'vrijwel vlak'}`;
 }
 
-// Wat je over deze lus moet weten naast de getallen: het droge feit, hoogstens drie korte zinnen.
+// Wat je over deze lus moet weten naast de getallen: het droge feit, in korte zinnen.
 export function proposalNotes(p: RouteProposal, target: RouteTarget): string[] {
   const notes: string[] = [];
   if (p.style === 'simple' && p.climbM && p.climbLengthM) {
     notes.push(`De helling: ${formatNumberNL(Math.round(p.climbM), 0)} m omhoog over ${formatNumberNL(Math.round(p.climbLengthM / 10) * 10, 0)} m.`);
   }
+  if (p.style === 'simple' && (p.repeats ?? 0) > 1) notes.push('Op dezelfde helling kan je horloge naar het verkeerde stuk springen.');
   const d = target.distanceKm * 1000;
   if (p.distanceM < d * 0.85) notes.push(`Korter dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
   else if (p.distanceM > d * 1.15) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
