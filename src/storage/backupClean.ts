@@ -208,6 +208,10 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.showSeasonStrip;
     skipped.n++;
   }
+  if ('showSkillGoals' in s && typeof s.showSkillGoals !== 'boolean') {
+    delete s.showSkillGoals;
+    skipped.n++;
+  }
   if ('bootBreakInKm' in s && !(BREAKIN_KM_OPTIONS as readonly unknown[]).includes(s.bootBreakInKm)) {
     delete s.bootBreakInKm;
     skipped.n++;

@@ -13,6 +13,9 @@ import { ProgramsRepo, SessionTemplatesRepo, PlannedSessionsRepo, SessionLogsRep
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { ROUTE_PLAN_KEY, SOLO_PLAN_KEY } from './routePlan';
+import { SKILL_GOALS_KEY, loadSkillGoals } from './skillGoals';
+import { mergeSkillStores } from '../engine/skillGoal';
+import type { SkillGoalStore } from '../models/skillGoals';
 import { CURRENT_BACKUP_SCHEMA_VERSION, ALL_CATEGORIES, type NormalizedBackupData, type BackupDataCategory, type CategoryAction, type PlanPolicy, type ImportDiffEntry, type ImportPreview } from './backupTypes';
 import { type ResolvedListCategory, type Keyed, resolveListCategory, mergeSettingsHistory, shallowEqual } from './backupMerge';
 
@@ -36,6 +39,8 @@ interface CurrentData {
   strengthProgramStrategies: StrengthProgramStrategy[];
   strengthProgramRecommendations: StrengthProgramRecommendation[];
   planChangeProposals: PlanChangeProposal[];
+  // Het doel Vaardigheid; optional so a caller without it reads as "nothing on the device".
+  skillGoals?: SkillGoalStore;
 }
 
 export async function loadCurrentData(): Promise<CurrentData> {
@@ -54,7 +59,8 @@ export async function loadCurrentData(): Promise<CurrentData> {
     StrengthProgramRecommendationsRepo.getAll(),
     PlanChangeProposalsRepo.getAll(),
   ]);
-  return { program: programs[0] ?? null, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals };
+  const skillGoals = await loadSkillGoals();
+  return { program: programs[0] ?? null, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals, skillGoals };
 }
 
 interface DiffResult {
@@ -174,6 +180,11 @@ export function computeDiff(
   const settingsChanges: { key: string; current: unknown; incoming: unknown }[] = [];
   let resolvedSettings: AppSettings | undefined;
   const meta: Record<string, unknown> = {};
+  // Het doel Vaardigheid travels with the goals. The cleared steps only ever merge (append-only, like milestone
+  // progress); with Vervangen a goal of the file wins over the one on the device with the same id.
+  if (backup.skillGoals && (goalsAction === 'merge' || goalsAction === 'replace')) {
+    meta[SKILL_GOALS_KEY] = mergeSkillStores(current.skillGoals ?? { goals: [], progress: [] }, backup.skillGoals, goalsAction === 'replace');
+  }
   if (settingsAction === 'replace') {
     const incoming = mergeSettingsHistory(current.settings, backup.settings);
     resolvedSettings = { ...current.settings, ...incoming };

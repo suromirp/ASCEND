@@ -14,6 +14,7 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - `src/engine/onCourse.ts#recentAdherence` dezelfde telling voor de coach en Ritme
 - `src/engine/yourWeek.ts#yourWeek` Je week zonder doel, één ring
 - `src/state/goalActions.ts` waar doelen worden geschreven
+- `src/engine/skillGoal.ts#clearedSkillSteps` een Vaardigheid uit de logs; opslag `src/storage/skillGoals.ts#recordSkillSteps` (één put, alleen toevoegen), trap `src/components/ascend/SkillGoalCard.tsx`
 
 ## Nooit
 - Een nieuw label, een doel erbij of gewijzigd, "In hutten" of "Met tent" en een volgorde die een conflict verschuift zonder voorstel met Akkoord.
@@ -24,7 +25,7 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - Een richting, weekbudget of golfkeuze stil toepassen: dat is een voorstel met Akkoord (`src/components/ascend/useDirectionChange.tsx`).
 
 ## Valkuilen
-- Welk soort doel welke berekening krijgt staat in `goalReadinessFor`; alleen `trek_hut`, `trek_tent` of geen soort gebruikt de mijlpalen (`usesMilestoneReadiness`). Een component leest `usesMilestoneReadiness` hoogstens om een uitleg te tonen, nooit om een eigen percentage te kiezen.
+- Welk soort doel welke berekening krijgt staat in `goalReadinessFor`; alleen `trek_hut`, `trek_tent` of geen soort gebruikt de mijlpalen (`usesMilestoneReadiness`). Een component leest `usesMilestoneReadiness` hoogstens om een uitleg te tonen, nooit om een eigen percentage te kiezen. Een Vaardigheid is geen `TrainingGoal` en heeft geen `GoalMilestone` (anders telt hij in `mainGoal` en Je week); zijn voortgang is de trap uit `skillReadinessFor`, nooit een percentage, en een gehaalde stap blijft gehaald via `SkillStepProgress`.
 - Eén Liever niet op TARGET-TIME geldt voor elke latere test, want het id bevat de doeltijd; pas als de doeltijd verandert komt het voorstel terug.
 - Het voorstel is de kleinste hele minuut die bij de weken past (`wholeMinutes`), hetzelfde getal als "ongeveer" op de kaart; anders zegt de kaart na Akkoord nog steeds dat het niet past.
 - Een meter zonder gewicht mag nooit "het meeste te winnen" worden en houdt het getal niet onder 100.

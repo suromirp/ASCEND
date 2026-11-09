@@ -1361,6 +1361,22 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'de strook verdwijnt. Je doelen en je planning blijven precies zoals ze zijn.' },
     ],
   },
+  vaardigheidsdoelen: {
+    title: 'Vaardigheidsdoelen',
+    lead: 'Een vaardigheid is een stap op een ladder, zoals Pull-Up op de ladder Optrekken. Ascend toont de ladder als trap.',
+    points: [
+      { head: 'Wat je ziet', text: 'welke stappen je haalde, op welke stap je nu traint en de toets ervan. Een gehaalde stap blijft gehaald.' },
+      { head: 'Je planning', text: 'een vaardigheid plant niets en wordt nooit je hoofddoel.' },
+      { head: 'Uit', text: 'de kaarten en de keuze bij Doel toevoegen verdwijnen. Je vaardigheden en wat je haalde blijven bewaard.' },
+    ],
+  },
+  bundelAscend: {
+    title: 'Op de Ascend-tab',
+    lead: 'Wat Ascend naast je doelen laat zien: de seizoensstrook en je vaardigheden.',
+    points: [
+      { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
+    ],
+  },
   waterPerEtappe: {
     title: 'Water per etappe',
     lead: 'Bij elke etappe staat ongeveer hoeveel je onderweg zweet, uit je zweettempo en de uren van de etappe.',

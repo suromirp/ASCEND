@@ -125,6 +125,9 @@ export interface AppSettings {
   showNextTrek?: boolean;
   // The season strip on the Ascend tab (engine/goalList.ts#seasonStrip). Absent = on. Optional and additive.
   showSeasonStrip?: boolean;
+  // Vaardigheidsdoelen op de Ascend-tab (models/skillGoals.ts). Absent = on. Optional and additive; off hides the
+  // cards and the tile, the goals and their cleared steps stay.
+  showSkillGoals?: boolean;
   // Bergschoenen inlopen (engine/bootBreakIn.ts): het doel in kilometers (absent
   // = 100) en of een lange tocht ernaar herinnert (absent = aan). Optional and
   // additive; the date and name live in `journey.boots`.

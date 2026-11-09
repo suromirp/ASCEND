@@ -22,6 +22,7 @@ const everything: AppSettings = {
   afterMainGoal: 'maintain',
   showNextTrek: false,
   showSeasonStrip: false,
+  showSkillGoals: false,
   showStageWater: false,
   askSweat: false,
   trekLegRest: 'strict',

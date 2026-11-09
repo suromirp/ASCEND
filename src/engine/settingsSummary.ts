@@ -419,6 +419,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       // Geen tijden per dag, wel een rustdag: zeg wat er staat.
       return { value: `Rust ${lower(WEEKDAYS_SHORT[restDayIndex(f)])}`, dim: false };
     }
+    case 'bundel-ascend': {
+      const shown = [s.showSeasonStrip !== false, s.showSkillGoals !== false].filter(Boolean).length;
+      return shown === 2 ? { value: 'Alles' } : shown === 0 ? { value: 'Niets extra', dim: true } : { value: s.showSeasonStrip !== false ? 'Seizoensstrook' : 'Vaardigheden' };
+    }
     case 'bundel-tochten':
       if (f.treks > 0) return { value: plural(f.treks, 'tocht', 'tochten') };
       // Een tocht als hoofddoel is al een tocht: zeg dat er geen andere zijn.
@@ -518,6 +522,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('naHoofddoel', s.afterMainGoal ?? 'stop') };
     case 'seizoensstrook':
       return { checked: s.showSeasonStrip !== false };
+    case 'vaardigheidsdoelen':
+      return { checked: s.showSkillGoals !== false };
     case 'volgende-tocht':
       return { checked: s.showNextTrek !== false };
     case 'water-per-etappe':
