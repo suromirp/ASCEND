@@ -18,6 +18,8 @@
 // - Heuvels in de buurt: one run per week of the period is a real hill training, hill
 //   sprints or an easy hill run, by phase, by the 48 hours between heavy leg days and by
 //   a complaint of a knee or leg at Matig or worse.
+// - A period with Heuvels in de buurt and no run that can become a hill training gets one
+//   easy hill run on a free day, with 48 hours from heavy leg days.
 // - A test or race, what is logged, the past, what you fixed yourself, a race
 //   block session and a session another period moved: never touched here.
 //
@@ -220,6 +222,42 @@ export function applyNoGymDays(input: NoGymStepInput): { sessions: PlannedSessio
       const minutes = t.durationVariants.short;
       sessions = sessions.map((o) => (o.id === s.id ? { ...o, plannedMinutes: minutes, leave: { periodId: period.id, role: 'moved' as const, from: s.scheduledDate, shortened: true } } : o));
       repairs.push({ sessionId: s.id, rule: 'LEAVE-PLACE', from: s.scheduledDate, to: s.scheduledDate, plannedMinutes: minutes, reason: keepHill.has(s.id) ? `Heuvels in de buurt: ${t.name} blijft je heuveltraining van deze week, korter, ${minutes} minuten.` : `Weg van huis: ${t.name} korter en rustig, ${minutes} minuten.` });
+    }
+  }
+
+  // 4. A period with Heuvels in de buurt and no run that can become a hill training: one easy hill run
+  // on a free day of the period (docs/beslissingen/2026-11-09-zonder-sportschool-heuvelloop.md).
+  // After the day by day step, so the layout it must fit is final; a second run finds it standing.
+  const hillEasy = byId.get(HILL_EASY_TEMPLATE_ID);
+  if (hillEasy) {
+    const periods = new Map<string, LeavePeriod>();
+    for (const d of days.values()) if (d.kind === 'nogym' && resolveNoGym(d.period).hills) periods.set(d.period.id, d.period);
+    for (const period of periods.values()) {
+      const dates = [...days.keys()].filter((date) => periodOn(date)?.id === period.id).sort();
+      // Already there, or there was one: standing, placed by this period (also when you moved or skipped it),
+      // let go by this period, or skipped by you.
+      const hasHill = sessions.some((o) => {
+        if (!isHillTraining(byId.get(o.templateId))) return false;
+        if (o.leave?.periodId === period.id && (o.leave.role === 'placed' || o.leave.role === 'dropped')) return true;
+        return periodOn(o.scheduledDate)?.id === period.id;
+      });
+      if (hasHill) continue;
+      const light = resolveNoGym(period).amount === 'light';
+      const legHeavyNear = (date: string) => sessions.some((o) => { const ot = byId.get(o.templateId); return open(o) && !!ot && Math.abs(daysBetween(o.scheduledDate, date)) <= 1 && (isLegHeavyTemplate(ot) || hasRole(ot, 'long') || isHillTraining(ot)); });
+      const strengthClose = (date: string) => sessions.some((o) => open(o) && byId.get(o.templateId)?.type === 'strength' && Math.abs(daysBetween(o.scheduledDate, date)) <= 1);
+      // A test or race within two days (or the goal day) is no neighbour for an extra run; a day you emptied yourself stays empty.
+      const keyDayNear = (date: string) => (!!goalDay && Math.abs(daysBetween(goalDay, date)) <= 2) ||
+        sessions.some((o) => open(o) && idIsTestOrRace(o.templateId, byId) && Math.abs(daysBetween(o.scheduledDate, date)) <= 2);
+      const emptiedByYou = (date: string) => sessions.some((o) => o.scheduledDate === date && o.status === 'skipped' && o.leave?.role !== 'dropped');
+      const free = dates.filter((date) => usable(date) && isoWeekday(date) !== input.restDay && openOn(date).length === 0 && !emptiedByYou(date) && !keyDayNear(date) &&
+        // Light: no third run in that week.
+        !(light && sessions.filter((o) => open(o) && isNoGymRun(byId.get(o.templateId)) && periodOn(o.scheduledDate)?.id === period.id && weekOf(o.scheduledDate) === weekOf(date)).length >= LIGHT_RUNS_PER_WEEK));
+      const day = free.find((date) => !legHeavyNear(date) && !strengthClose(date)) ?? free.find((date) => !legHeavyNear(date));
+      if (day === undefined) continue;
+      const why = input.legComplaint
+        ? 'want er staat in je periode geen loop die een heuveltraining kan worden, en je klacht aan een knie of been is Matig of erger, dus zonder afdalen in tempo'
+        : 'er staat in je periode geen loop die een heuveltraining kan worden';
+      place(period, day, HILL_EASY_TEMPLATE_ID, `Heuvels in de buurt: een rustige heuvelloop erbij, ${why}.`, light ? hillEasy.durationVariants.short : undefined);
     }
   }
   return { sessions, repairs };
