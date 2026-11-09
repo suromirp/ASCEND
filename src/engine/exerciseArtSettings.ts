@@ -16,3 +16,9 @@ export function resolveExerciseArt(raw: { exerciseArt?: unknown } | undefined | 
 export const showsDrawing = (mode: ExerciseArtMode) => mode === 'beide';
 // Is er een kaartje en een blad?
 export const showsExerciseArt = (mode: ExerciseArtMode) => mode !== 'uit';
+
+// "Uitleg standaard uitgeklapt" (docs/beslissingen/2026-11-09-uitleg-bij-oefeningen.md): staat "Lees verder" bij het
+// openen van het blad al open? Optioneel en zonder migratie: afwezig of iets geks is uit.
+export function resolveGuideOpen(raw: { guideOpen?: unknown } | undefined | null): boolean {
+  return raw?.guideOpen === true;
+}

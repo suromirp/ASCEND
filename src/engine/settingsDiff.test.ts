@@ -39,6 +39,7 @@ const everything: AppSettings = {
   },
   showBodyFat: false,
   exerciseArt: 'uit',
+  guideOpen: true,
   figure: 'vrouw',
   bodyCheck: 'uit',
   legEase: 'uit',
