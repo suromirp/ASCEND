@@ -4,9 +4,9 @@ import { MOVEMENT_PATTERNS, MUSCLE_GROUPS, RESISTANCES } from '../models/exercis
 import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerciseMatch';
 
 describe('the exercise list itself', () => {
-  it('has 50 to 150 exercises with unique ids', () => {
+  it('has 50 to 170 exercises with unique ids', () => {
     expect(EXERCISES.length).toBeGreaterThanOrEqual(50);
-    expect(EXERCISES.length).toBeLessThanOrEqual(150);
+    expect(EXERCISES.length).toBeLessThanOrEqual(170);
     expect(new Set(EXERCISES.map((e) => e.id)).size).toBe(EXERCISES.length);
   });
 

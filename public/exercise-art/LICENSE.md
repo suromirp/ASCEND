@@ -4,6 +4,9 @@ De bestanden `*.json` in deze map zijn tekeningen van oefeningen. Ze zijn gemaak
 en Bryl Lim en worden gedeeld onder de licentie Creative Commons Naamsvermelding-GelijkDelen 4.0
 Internationaal (CC BY-SA 4.0).
 
+De 23 tekeningen van de overige calisthenicsladders zijn eigen werk van ASCEND en worden onder dezelfde
+licentie gedeeld (zie `ATTRIBUTION.md`).
+
 Deze map valt dus niet onder de licentie van de rest van de repository. Wie de tekeningen
 overneemt of aanpast, moet:
 

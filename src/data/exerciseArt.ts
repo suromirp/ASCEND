@@ -1,5 +1,6 @@
 // ASCEND: welke tekening bij welke oefening hoort. De tekeningen zijn van Workout Guide (de
-// vernieuwde Everkinetic-set, CC BY-SA 4.0), bewaard in public/exercise-art/<slug>.json.
+// vernieuwde Everkinetic-set, CC BY-SA 4.0), bewaard in public/exercise-art/<slug>.json; de 23 stappen van de
+// overige calisthenicsladders zijn eigen werk (zelfde formaat, zelfde licentie).
 // Eén slug kan bij meer oefeningen horen (een gewone en een pauze-squat). 'zeker' is dezelfde
 // oefening; 'variant' is dezelfde beweging met één verschil, dat in `note` staat en in het blad
 // onder de tekening verschijnt ("Op de tekening: ..."). Een oefening die hier niet staat heeft
@@ -11,10 +12,13 @@ export interface ExerciseArtLink {
   match: 'zeker' | 'variant';
   // Alleen bij een variant: wat er op de tekening anders is, als stukje na "Op de tekening: ".
   note?: string;
+  // Eigen werk van ASCEND (F4f), niet van Everkinetic: de naamsvermelding onder de tekening zegt dat.
+  own?: true;
 }
 
 const z = (slug: string): ExerciseArtLink => ({ slug, match: 'zeker' });
 const v = (slug: string, note: string): ExerciseArtLink => ({ slug, match: 'variant', note });
+const o = (slug: string): ExerciseArtLink => ({ slug, match: 'zeker', own: true });
 
 export const EXERCISE_ART: Record<string, ExerciseArtLink> = {
   // knie, squat en pers
@@ -134,6 +138,30 @@ export const EXERCISE_ART: Record<string, ExerciseArtLink> = {
   'dumbbell-preacher-curl': v('preacher-curl', 'op een toestel'),
   'incline-hammer-curl': v('incline-dumbbell-curl', 'een andere stand van de handen'),
   'snatch-grip-shrug': v('dumbbell-shrug', 'met dumbbells'),
+  // De overige calisthenicsladders (F4f): eigen schematische tekeningen, geen Everkinetic (zie ATTRIBUTION.md).
+  'assisted-pistol-squat': o('assisted-pistol-squat'),
+  'skater-squat': o('skater-squat'),
+  'box-pistol-squat': o('box-pistol-squat'),
+  'pistol-squat': o('pistol-squat'),
+  'wall-plank-hold': o('wall-plank-hold'),
+  'pike-hold': o('pike-hold'),
+  'wall-handstand-hold': o('wall-handstand-hold'),
+  'free-handstand-hold': o('free-handstand-hold'),
+  'pike-push-up': o('pike-push-up'),
+  'elevated-pike-push-up': o('elevated-pike-push-up'),
+  'wall-hspu-negative': o('wall-hspu-negative'),
+  'wall-hspu': o('wall-hspu'),
+  'tuck-l-sit': o('tuck-l-sit'),
+  'one-leg-l-sit': o('one-leg-l-sit'),
+  'l-sit': o('l-sit'),
+  'tuck-front-lever': o('tuck-front-lever'),
+  'advanced-tuck-front-lever': o('advanced-tuck-front-lever'),
+  'one-leg-front-lever': o('one-leg-front-lever'),
+  'straddle-front-lever': o('straddle-front-lever'),
+  'chest-to-bar-pull-up': o('chest-to-bar-pull-up'),
+  'straight-bar-dip': o('straight-bar-dip'),
+  'negative-muscle-up': o('negative-muscle-up'),
+  'muscle-up': o('muscle-up'),
 };
 
 // De volgorde van de drie beelden in een bestand is die van de bron en niet altijd die van de

@@ -49,6 +49,14 @@ const FAMILIES: Record<string, (string | [string, ...Nuance[]])[]> = {
   vertical_pull: ['pull-up', ['chin-up', 'underhand'], 'assisted-pull-up', 'lat-pulldown', ['single-arm-cable-lat-pulldown', 'single'], ['negative-chin-up', 'underhand', 'negative'], ['weighted-pull-up', 'added']],
   scapular_pull: ['scapular-pull-up'],
   hang: ['dead-hang'],
+  single_leg_squat: ['assisted-pistol-squat', 'skater-squat', 'box-pistol-squat', 'pistol-squat'],
+  handstand_hold: ['wall-plank-hold', 'pike-hold', 'wall-handstand-hold', 'free-handstand-hold'],
+  vertical_push_up: ['pike-push-up', 'elevated-pike-push-up', 'wall-hspu-negative', 'wall-hspu'],
+  l_sit: ['tuck-l-sit', 'one-leg-l-sit', 'l-sit'],
+  front_lever: ['tuck-front-lever', 'advanced-tuck-front-lever', 'one-leg-front-lever', 'straddle-front-lever'],
+  high_pull_up: ['chest-to-bar-pull-up'],
+  straight_bar_dip: ['straight-bar-dip'],
+  muscle_up: ['negative-muscle-up', 'muscle-up'],
   row: [['barbell-row', 'hinged'], ['dumbbell-row', 'single'], 'chest-supported-row', 'seated-cable-row', 'machine-row', 'machine-row-plates', 'inverted-row'],
   high_row: ['cable-high-row', 'chest-supported-dumbbell-high-row', ['bent-over-barbell-high-row', 'hinged']],
   lat_isolation: ['straight-arm-pulldown', 'dumbbell-pullover'],
@@ -61,9 +69,17 @@ const FAMILIES: Record<string, (string | [string, ...Nuance[]])[]> = {
 // Stappen van een calisthenicsladder (data/skillLadders.ts) die Ruilen alleen binnen hun eigen familie
 // aanbiedt, nooit in "Zelfde spier, anders": anders duwen zes push-upvarianten Dips en Push-Up uit de lijst
 // bij bankdrukken. Push-Up, Dips, Pull-Up en Negative Chin-Up staan er niet in en blijven waar ze waren.
+// De ladders van F4f hebben alleen eigen oefeningen, dus daar staat elke stap in.
 export const FAMILY_ONLY: ReadonlySet<string> = new Set([
   'incline-push-up', 'decline-push-up', 'knee-push-up', 'incline-push-up-high', 'diamond-push-up', 'archer-push-up',
   'negative-dip', 'weighted-dip', 'support-hold', 'weighted-pull-up', 'scapular-pull-up', 'dead-hang',
+  // F4f: de overige ladders, elke stap een eigen oefening.
+  'assisted-pistol-squat', 'skater-squat', 'box-pistol-squat', 'pistol-squat',
+  'wall-plank-hold', 'pike-hold', 'wall-handstand-hold', 'free-handstand-hold',
+  'pike-push-up', 'elevated-pike-push-up', 'wall-hspu-negative', 'wall-hspu',
+  'tuck-l-sit', 'one-leg-l-sit', 'l-sit',
+  'tuck-front-lever', 'advanced-tuck-front-lever', 'one-leg-front-lever', 'straddle-front-lever',
+  'chest-to-bar-pull-up', 'straight-bar-dip', 'negative-muscle-up', 'muscle-up',
 ]);
 
 export const FAMILY = new Map<string, string>();
