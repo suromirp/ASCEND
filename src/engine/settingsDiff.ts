@@ -199,6 +199,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthFlag('forge-rekent-mee', 'Forge rekent mee', 'reckon'),
   strengthFlag('standen-onthouden', 'Standen onthouden', 'learnStands'),
   strengthFlag('forge-afvinken-doel', 'Afvinken telt als het doel', 'assumedCounts'),
+  strengthFlag('forge-tussen-oefeningen', 'Vermoeidheid tussen oefeningen', 'crossFatigue'),
   strengthFlag('forge-bereik', 'Bereik verbreden', 'widenRange'),
   strengthChoice('forge-schatting', 'Sets die meetellen', 'estimateUpTo', 'schatting'),
   strengthChoice('forge-leren', 'Gewichten van toestellen', 'stackWeights', 'forgeLeren', ['learnStacks']),
