@@ -369,7 +369,7 @@ function TodayContent() {
         ? 'Vrij vandaag. Er staat niets op de planning.'
         : allTodayDone
           ? illness
-            ? 'Je bent ziek gemeld. Rust uit; wat je nu mist, hoef je niet in te halen.'
+            ? 'Je bent ziek gemeld. Rust uit. Wat je mist, hoef je niet in te halen.'
             : 'Je training van vandaag is van de planning gehaald. Rust is ook training.'
           : 'Vandaag staat er niets gepland.'}
       tomorrow={quietTomorrow}
@@ -497,7 +497,7 @@ function TodayContent() {
           <Eyebrow>Herstelsignaal</Eyebrow>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
             Je lange duurloop voelde de laatste twee weken slechter na de heuvelintervallen. Vandaag rustiger?
-            Minder herhalingen, een lagere helling of een kortere sessie kan helpen.
+            Minder herhalingen, een lagere helling of een kortere training kan helpen.
           </p>
         </Card>
       )}

@@ -73,7 +73,7 @@ export function morningProposalId(sessionId: string, today: string): string {
 
 const offText = (off: MorningSignal[]) => off.map((s) => s.text).join(off.length === 2 ? ' en ' : ', ');
 
-const WHY = 'Je rusthartslag, HRV en slaap samen zeggen meer dan één getal. Bij twee afwijkende kan het helpen om een zware training later in de week te doen; bijsturen op je ochtendgetallen gaf bij recreatieve lopers iets meer vooruitgang (Nuuttila e.a. 2022, matig bewijs). Twee van drie is een vuistregel, geen meting. Alleen jij beslist, dit is een voorstel.';
+const WHY = 'Je rusthartslag, HRV en slaap samen zeggen meer dan één getal. Bij twee afwijkende kan het helpen om een zware training later in de week te doen; bijsturen op je ochtendgetallen gaf bij recreatieve lopers iets meer vooruitgang (Nuuttila e.a. 2022, matig bewijs). Twee van drie is een vuistregel, geen meting. Eerst een voorstel, pas na Akkoord verandert er iets.';
 
 // Het voorstel, of niets: al beantwoord, er staat of stond al een ander voorstel voor deze sessie,
 // of er is deze week geen goede latere dag. Hetzelfde mechanisme als MORNING-CHECK en

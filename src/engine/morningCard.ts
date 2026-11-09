@@ -175,7 +175,7 @@ export function reviseCheckInSleep(checkIn: MorningCheckIn, judgment: { verdict:
 // --- wat je antwoord doet, in één regel -----------------------------------------------
 
 export const NOTHING_PLANNED_TEXT = 'Vandaag staat er niets gepland. Alles blijft zoals het is.';
-const NO_CHANGE_TEXT = 'Niets verandert zonder jouw akkoord.';
+const NO_CHANGE_TEXT = 'Eerst een voorstel, pas na Akkoord verandert er iets.';
 // Het id waarmee "Bekijk voorstel" naar de kaart Benen gaat (data-advice-ids op Vandaag).
 export const LEG_CARD_TARGET = 'kaart-benen';
 

@@ -14,7 +14,7 @@ Week 1 van 4, basisfase
 Ziek
 Verkouden, alleen boven de nek
 Sinds za 31 oktober
-Voel je je goed, dan mag een rustige training, zoals wandelen of een rustige duurloop. Zware trainingen zijn van je planning gehaald. Krijg je koorts of klachten op je borst, meld dat dan.
+Zware trainingen zijn van je planning gehaald. Rustig wandelen of een rustige loop mag als je je goed voelt. Krijg je koorts of klachten op je borst? Meld dat.
 [knop: Ik ben weer beter]
 [knop: Toch koorts of klachten onder de nek?]
 
@@ -30,8 +30,8 @@ Hoe voelen je benen?
 
 --- kaart 5 ---
 Advies, planning
-Doeltijd 10 km: 45:00 past nog niet bij je test
-Je testloop van za 10 oktober (snelste 5 km in 26:42) past bij een 10 km in ongeveer 56 minuten.
+Doeltijd 10 km: 45:00 vraagt meer dan je test laat zien
+10 km past nu bij ongeveer 56 minuten.
 [knop: Bekijk]
 
 --- kaart 6 ---
