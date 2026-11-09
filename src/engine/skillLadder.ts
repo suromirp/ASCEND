@@ -90,20 +90,15 @@ const level = (t: Training): number | null => {
 
 const heaviestAttempted = (t: Training): number => Math.max(...t.steps.keys());
 
-// Het laatste log per dag met sets op deze ladder, oud naar nieuw; alleen dagen met een geprobeerde stap.
+// Het laatste log per dag met een geprobeerde stap op deze ladder, oud naar nieuw. Een log met alleen opwarmsets of
+// een houding zonder seconden telt niet en haalt een eerder log van die dag er niet uit.
 function trainingsOn(ladder: SkillLadder, logs: readonly SessionLog[], today: string): Training[] {
   const stepOf = new Map(ladder.steps.map((s, i) => [s.exerciseId, i + 1]));
-  const lastPerDay = new Map<string, SessionLog>();
+  const lastPerDay = new Map<string, { log: SessionLog; steps: Map<number, StepResult> }>();
   for (const log of logs) {
     if (!log || typeof log.completedDate !== 'string' || log.completedDate > today || !Array.isArray(log.strengthData)) continue;
-    if (!log.strengthData.some((e) => e && stepOf.has(e.exerciseId))) continue;
-    const known = lastPerDay.get(log.completedDate);
-    if (!known || later(log, known)) lastPerDay.set(log.completedDate, log);
-  }
-  const out: Training[] = [];
-  for (const log of lastPerDay.values()) {
     const byStep = new Map<number, SetLog[]>();
-    for (const e of log.strengthData ?? []) {
+    for (const e of log.strengthData) {
       const step = e ? stepOf.get(e.exerciseId) : undefined;
       if (step === undefined || !Array.isArray(e.sets)) continue;
       byStep.set(step, [...(byStep.get(step) ?? []), ...e.sets]);
@@ -113,8 +108,11 @@ function trainingsOn(ladder: SkillLadder, logs: readonly SessionLog[], today: st
       const r = stepResult(sets, ladder.steps[step - 1].test);
       if (r.attempted) steps.set(step, r);
     }
-    if (steps.size > 0) out.push({ date: log.completedDate, steps });
+    if (steps.size === 0) continue;
+    const known = lastPerDay.get(log.completedDate);
+    if (!known || later(log, known.log)) lastPerDay.set(log.completedDate, { log, steps });
   }
+  const out: Training[] = [...lastPerDay.entries()].map(([date, v]) => ({ date, steps: v.steps }));
   return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }
 

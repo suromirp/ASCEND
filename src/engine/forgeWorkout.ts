@@ -1044,7 +1044,8 @@ export function swapGroups(current: Exercise | undefined, profile: GymProfile, i
     if (e.resistance === 'barbell' && profile.barsKg.length === 0) return;
     const score = swapScore(current, e);
     if (score === 0) return;
-    if (current.family && e.family === current.family) same.push({ e, distance: swapDistance(current, e), order });
+    // Een ladderstap in een bestaande familie is alleen een vervanger voor wie op dezelfde ladder staat.
+    if (current.family && e.family === current.family && (!FAMILY_ONLY.has(e.id) || current.ladder?.id === e.ladder?.id)) same.push({ e, distance: swapDistance(current, e), order });
     else if (!FAMILY_ONLY.has(e.id)) other.push({ e, score });
   });
   same.sort((a, b) => a.distance - b.distance || a.order - b.order);

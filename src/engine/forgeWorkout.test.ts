@@ -484,3 +484,12 @@ describe('de regel op een beendag met een loop eerder vandaag', () => {
     expect(legDayLine('2026-09-17', { logs: [], templates, program, bodyKg: BODY, sore })).toBe('Je benen zijn nog moe van spierpijn. Zelfde gewicht, een herhaling minder is normaal.');
   });
 });
+
+describe('ladderstappen in Ruilen', () => {
+  const profile = { barsKg: [20] } as unknown as Parameters<typeof swapGroups>[1];
+  it('een ladderstap is alleen een echte vervanger voor wie op dezelfde ladder staat', () => {
+    const ids = (from: string) => swapGroups(exerciseById(from), profile, [], 50).same.map((s) => s.exercise.id);
+    expect(ids('pull-up')).toContain('weighted-pull-up');
+    for (const from of ['chin-up', 'assisted-pull-up', 'lat-pulldown']) expect(ids(from)).not.toContain('weighted-pull-up');
+  });
+});

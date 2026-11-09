@@ -254,3 +254,12 @@ describe('ladderStateFor en ladderStates', () => {
     expect(ladderStates([], TODAY).map((s) => s.ladderId)).toEqual(SKILL_LADDERS.map((l) => l.id));
   });
 });
+
+describe('na de review van F4a', () => {
+  it('een later log van dezelfde dag zonder geprobeerde stap haalt het eerdere niet weg', () => {
+    const real = log('2026-11-10', { 'pull-up': reps(5, 5, 5) }, '09:00');
+    const warmupOnly = log('2026-11-10', { 'pull-up': [{ reps: 3, kind: 'warmup' }] }, '18:00');
+    expect(ladderState(pull, [real, warmupOnly], TODAY)).toEqual(ladderState(pull, [real], TODAY));
+    expect(ladderState(pull, [real, warmupOnly], TODAY).current).not.toBeNull();
+  });
+});

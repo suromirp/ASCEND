@@ -375,7 +375,7 @@ export const EXERCISES: Exercise[] = [
   ], 0.65),
   ex('archer-push-up', 'Archer Push-Up', ['Archer Pushup'], ['chest'], ['front_delts', 'core', 'triceps'], 'bodyweight', 'push_horizontal', false, [
     'Doen: handen wijd, zak naar één hand terwijl de andere arm gestrekt opzij blijft.',
-    'Let op: tel per kant, en wissel na elke set.',
+    'Let op: eerst de ene kant, dan de andere; samen is dat één set.',
     'Vaak fout: je heupen laten draaien naar de kant waar je zakt.',
   ], 0.65),
   ex('machine-chest-press', 'Pin-Loaded Machine Chest Press', ['Chest Press (Machine)', 'Seated Chest Press', 'Borstpers op de machine', 'Machine Chest Press'], ['chest'], ['front_delts', 'triceps'], 'machine_stack', 'push_horizontal', false, [
