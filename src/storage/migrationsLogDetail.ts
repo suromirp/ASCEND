@@ -3,6 +3,7 @@
 
 import { isUsableRunDetail } from '../engine/runDetail';
 import { deserializeStreams } from '../engine/streamPack';
+import { readZone2Pieces } from '../engine/zone2Pieces';
 import type { ActivityStreams } from '../models/activityStreams';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
 import type { MetricSource, SessionLog, SessionTrim, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
@@ -138,6 +139,29 @@ export function migrateLogRunDetail(log: SessionLog): SessionLog {
   const { runDetail: _damaged, ...rest } = out;
   void _damaged;
   return rest;
+}
+
+// --- tempo bij zone 2: SessionLog.zone2Pieces -------------------------------------------------
+// The stable pieces of a run (models/zone2Pieces.ts), derived from its full series. Optional and
+// additive, so the backup schema number does not move: a file from before them has none and
+// imports as it was (the pieces are read again from a kept series at the next opening). A
+// damaged field is dropped as a whole and the log keeps everything else; fields the reader does
+// not know are not kept.
+export function migrateLogZone2Pieces(log: SessionLog): SessionLog {
+  let out = log;
+  // `zone2PiecesTried` must be a short text, like `runDetailTried`.
+  if ('zone2PiecesTried' in out) {
+    const tried = (out as { zone2PiecesTried?: unknown }).zone2PiecesTried;
+    if (typeof tried !== 'string' || tried.length === 0 || tried.length > 40) {
+      const { zone2PiecesTried: _t, ...rest } = out;
+      void _t;
+      out = rest;
+    }
+  }
+  if (!('zone2Pieces' in out)) return out;
+  const { zone2Pieces: raw, ...rest } = out;
+  const read = readZone2Pieces(raw);
+  return read ? { ...rest, zone2Pieces: read } : rest;
 }
 
 // The full series in a backup file (payload.activityStreams, base64): read series by series.
