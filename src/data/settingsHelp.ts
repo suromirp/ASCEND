@@ -512,8 +512,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Calisthenics per training',
     lead: 'Per krachttraining kies je kracht met gewicht, calisthenics met je eigen gewicht, of samen.',
     points: [
-      { head: 'Calisthenics', text: 'duwen, optrekken, schouderdrukken en triceps gaan op hun ladder, op de stap waar je staat. Benen blijven met gewicht.' },
-      { head: 'Samen', text: 'de eerste helft blijft met gewicht, de rest gaat op een ladder.' },
+      { head: 'Calisthenics', text: 'duwen, optrekken en schouderdrukken gaan op hun ladder, op de stap waar je staat; elke ladder hoogstens één keer. Wat overblijft en je benen blijven met gewicht.' },
+      { head: 'Samen', text: 'van de plekken die een ladder kunnen worden blijft de eerste helft met gewicht, de rest gaat op een ladder.' },
       { head: 'Akkoord', text: 'eerst een voorstel; je ziet het de volgende keer dat je de training opent. Je planning en je dagen blijven.' },
     ],
   },

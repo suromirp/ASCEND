@@ -17,7 +17,7 @@ type State = 'open' | 'busy' | 'failed' | 'nofit' | 'done' | 'undoing' | 'undone
 
 const NOW_LINE: Record<TrainingStyle, string> = {
   strength: 'Met gewicht.',
-  calisthenics: 'Met je eigen gewicht, op je ladders.',
+  calisthenics: 'Duwen en optrekken op je ladders, de rest met gewicht.',
   mixed: 'Een deel met gewicht, een deel op je ladders.',
 };
 

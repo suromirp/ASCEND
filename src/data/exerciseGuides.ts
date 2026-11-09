@@ -166,7 +166,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     short: [
       'Heupen hoog, armen en benen gestrekt, houd stil.',
       'Je heupen staan boven je schouders.',
-      'Knieën gebogen? Loop je voeten wat dichter naar je handen.',
+      'Knieën gebogen? Zet je voeten iets verder van je handen.',
     ],
     setup: 'Zet je handen en voeten op de vloer en breng je heupen omhoog, tot je lichaam een omgekeerde V is. Je hoofd hangt tussen je armen.',
     movement: 'Duw de vloer weg met je schouders en houd je armen en benen gestrekt. Loop je voeten zo dicht naar je handen als je kunt, met je heupen boven je schouders.',
@@ -201,7 +201,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Doorvallen? Corrigeer met je vingers, niet met je rug.',
     ],
     setup: 'Kies een vrije plek met een zachte ondergrond. Zet je handen op schouderbreedte en breng je benen omhoog, desnoods met een schop of tegen de muur.',
-    movement: 'Duw de vloer weg met je schouders en houd je armen gestrekt. Span buik en billen aan. Je corrigeert je balans met je vingers: val je naar voren, druk dan je vingertoppen in de vloer.',
+    movement: 'Duw de vloer weg met je schouders en houd je armen gestrekt. Span buik en billen aan. Je corrigeert je balans met je vingers: helt je naar voren over, druk dan je vingertoppen in de vloer.',
     tempo: 'Adem rustig door. Leer eerst veilig vallen, door te kantelen of een rol te maken.',
     mistakes: [
       { fault: 'Je trekt je rug hol om te balanceren.', fix: 'Span je buik aan en houd je ribben naar binnen.' },
@@ -260,13 +260,13 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     short: [
       'Zak tot je hoofd de mat raakt en duw terug.',
       'Lichaam in één lijn, ellebogen schuin naar achteren.',
-      'Schoppen met je benen? Zak langzamer en duw met je armen.',
+      'Hoofd tegen de muur? Zet je handen verder weg.',
     ],
-    setup: 'Leg een opgevouwen handdoek of mat voor de muur. Ga met je buik naar de muur in een handstand staan, handen op schouderbreedte.',
+    setup: 'Leg een opgevouwen handdoek of mat voor de muur. Ga met je buik naar de muur in een handstand staan, handen op schouderbreedte en een flinke handbreedte van de muur.',
     movement: 'Zak met je ellebogen schuin naar achteren tot je hoofd de mat raakt. Duw je terug tot je armen gestrekt zijn. Je benen blijven tegen de muur en doen niet mee.',
     tempo: 'Twee tellen omlaag, rustig omhoog. Adem in bij het zakken.',
     mistakes: [
-      { fault: 'Je trekt je rug hol en schopt omhoog.', fix: 'Span je buik aan en duw met je armen.' },
+      { fault: 'Je handen staan te dicht bij de muur en je hoofd botst.', fix: 'Zet je handen een flinke handbreedte of meer van de muur, zodat je hoofd voor je handen landt.' },
       { fault: 'Je ellebogen gaan wijd.', fix: 'Houd ze schuin naar achteren.' },
     ],
     easier: 'wall-hspu-negative',

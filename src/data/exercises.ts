@@ -710,7 +710,7 @@ export const EXERCISES: Exercise[] = [
   ex('wall-hspu', 'Wall Handstand Push-Up', ['Handstand Push-Up', 'HSPU', 'Handstand pushup', 'Handstand push-up'], ['front_delts', 'triceps'], ['traps', 'core', 'chest'], 'bodyweight', 'push_vertical', false, [
     'Doen: sta in een handstand tegen de muur, zak tot je hoofd de mat raakt en duw terug.',
     'Let op: ellebogen schuin naar achteren, je lichaam blijft in een lijn.',
-    'Vaak fout: je rug hol trekken om je omhoog te schoppen.',
+    'Vaak fout: je handen te dicht bij de muur zetten, zodat je hoofd botst.',
   ]),
   ex('tuck-l-sit', 'Tuck L-Sit', ['Tuck Sit Hold', 'Tuck L Sit', 'Tuck L-sit'], ['core'], ['triceps', 'front_delts', 'forearms'], 'bodyweight', 'core', false, [
     'Doen: steun op je handen naast je heupen, til je knieën op naar je borst en houd stil.',

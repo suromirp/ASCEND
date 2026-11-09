@@ -143,7 +143,7 @@ export const SKILL_LADDERS: SkillLadder[] = [
   },
 ];
 
-const BY_ID =new Map(SKILL_LADDERS.map((l) => [l.id, l]));
+const BY_ID = new Map(SKILL_LADDERS.map((l) => [l.id, l]));
 
 export function skillLadderById(id: string): SkillLadder | undefined {
   return BY_ID.get(id);
