@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { Pictogram, type PictogramName } from './pictograms';
 import { ALL_SPORTS } from '../data/sports';
 
-const ALL: PictogramName[] = ['rust', 'lichaam', 'lopen', 'kracht', 'wandelen', 'rekken', 'bergtocht', 'fietsen', 'zwemmen', 'padel', 'voetbal'];
+const ALL: PictogramName[] = ['rust', 'lichaam', 'lopen', 'kracht', 'eigengewicht', 'wandelen', 'rekken', 'bergtocht', 'fietsen', 'zwemmen', 'padel', 'voetbal'];
 
 describe('pictogrammen in stijl C', () => {
   it('elk pictogram tekent drie lagen in currentColor, zonder eigen kleurwaarde', () => {

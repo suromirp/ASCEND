@@ -15,6 +15,7 @@ import { TextButton } from '../TextButton';
 import { Sheet } from '../settings/Sheet';
 import { LabelBars } from './GoalLabel';
 import { StrengthTargetsField } from './StrengthTargetsField';
+import { BODYWEIGHT_PICTOGRAM } from '../sportKind';
 import { finishStrengthTargets, type StrengthTargetInput } from '../../engine/strengthTargetsDraft';
 
 // Het blad om een doel toe te voegen (drie stappen: de soort, een paar vragen, en dan het voorstel
@@ -110,7 +111,7 @@ export function GoalFormSheet({
                   className="flex min-h-[108px] flex-col items-start gap-1.5 rounded-2xl border p-3 text-left"
                   style={{ borderColor: skillPicked ? 'var(--color-action)' : 'var(--color-card-border)', background: skillPicked ? 'var(--color-action-muted)' : 'var(--color-card)' }}
                 >
-                  <Pictogram name="kracht" size={28} />
+                  <Pictogram name={BODYWEIGHT_PICTOGRAM} size={28} />
                   <span className="text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{SKILL_TILE.label}</span>
                   <span className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SKILL_TILE.summary}</span>
                 </button>

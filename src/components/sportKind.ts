@@ -1,5 +1,5 @@
 import type { SessionTemplate } from '../models/training';
-import { sportKind, type SportKind } from '../engine/sportKind';
+import { isBodyweightTemplate, sportKind, type SportKind } from '../engine/sportKind';
 import type { PictogramName } from './pictograms';
 import { anySportDefinition, sportDefinition } from '../data/sports';
 
@@ -28,9 +28,13 @@ export const SPORT_PICTOGRAM: Record<SportKind, PictogramName> = {
   rest: 'rust',
 };
 
+// Kracht zonder gewicht: dezelfde sport en kleur als kracht, een eigen pictogram.
+export const BODYWEIGHT_PICTOGRAM: PictogramName = 'eigengewicht';
+
 export function sportPictogram(template: SessionTemplate): PictogramName {
   // A sport that only counts (zwemmen, padel, voetbal) has its own pictogram in sage.
   if (template.countedSport) return anySportDefinition(template.countedSport).pictogram ?? 'rekken';
+  if (isBodyweightTemplate(template)) return BODYWEIGHT_PICTOGRAM;
   return SPORT_PICTOGRAM[sportKind(template)];
 }
 

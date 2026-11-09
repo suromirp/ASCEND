@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 // --pic-mid staan in index.css, op de lichte lucht wat sterker. De drie lagen komen
 // na elkaar op (mx-pic-1 tot en met mx-pic-3), alleen als het pictogram verschijnt.
 
-export type PictogramName = 'rust' | 'lichaam' | 'lopen' | 'kracht' | 'wandelen' | 'rekken' | 'bergtocht' | 'fietsen' | 'zwemmen' | 'padel' | 'voetbal';
+export type PictogramName = 'rust' | 'lichaam' | 'lopen' | 'kracht' | 'wandelen' | 'eigengewicht' | 'rekken' | 'bergtocht' | 'fietsen' | 'zwemmen' | 'padel' | 'voetbal';
 
 type Tone = 'light' | 'mid' | 'strong' | 'full' | 'cut';
 
@@ -96,6 +96,22 @@ const SHAPES: Record<PictogramName, ReactNode> = {
       </Layer>
       <Layer n={3} tone="cut">
         <path d="M6.9 8v4M17.1 8v4" fill="none" stroke="var(--color-card)" strokeWidth="1" {...round} />
+      </Layer>
+    </>
+  ),
+  // Een figuur in een push-up op de grond: kracht zonder gewicht (Eigen gewicht, calisthenics).
+  eigengewicht: (
+    <>
+      <Layer n={1} tone="light">
+        <path d="M2.5 21.7h19" fill="none" stroke="currentColor" strokeWidth="1.4" {...round} />
+      </Layer>
+      <Layer n={2} tone="mid">
+        <path d="M8 11.6v8.6" fill="none" stroke="currentColor" strokeWidth="2.2" {...round} />
+      </Layer>
+      <Layer n={3} tone="full">
+        <circle cx="4.9" cy="8.6" r="2.2" fill="currentColor" />
+        <path d="M8.2 11.4l11.6 6.8" fill="none" stroke="currentColor" strokeWidth="3" {...round} />
+        <path d="M19.8 18.2l.6 2.6" fill="none" stroke="currentColor" strokeWidth="2.4" {...round} />
       </Layer>
     </>
   ),

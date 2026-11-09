@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionTemplate } from '../models/training';
-import { isMountainTrip, sportKind, sportPictogram } from './sportKind';
+import { isMountainTrip, sportColor, sportKind, sportPictogram } from './sportKind';
+import { lookOfLog } from './logbook/sportLook';
 
 function tpl(over: Partial<SessionTemplate>): SessionTemplate {
   return { id: 'tpl_x', name: 'Test', type: 'cardio', ...over } as SessionTemplate;
@@ -40,5 +41,27 @@ describe('sportKind en sportPictogram', () => {
     const t = tpl({ id: 'tpl_bike', type: 'cardio', sport: 'cycling' });
     expect(sportKind(t)).toBe('bike');
     expect(sportPictogram(t)).toBe('fietsen');
+  });
+});
+
+describe('pictogram voor kracht zonder gewicht', () => {
+  const strength = (id: string, names: string[]) =>
+    ({ id, name: id, type: 'strength', durationVariants: { full: 30, short: 20 }, exercises: names.map((n, i) => ({ id: `s${i}`, exerciseName: n, sets: 3, reps: '8', priority: 'core' })) }) as unknown as SessionTemplate;
+
+  it('Eigen gewicht en een training met alleen eigen lichaam krijgen het eigen pictogram, dezelfde kleur als kracht', () => {
+    expect(sportPictogram(strength('tpl_bodyweight', ['Push-Up']))).toBe('eigengewicht');
+    expect(sportPictogram(strength('eigen', ['Push-Up', 'Pull-Up']))).toBe('eigengewicht');
+    expect(sportColor(strength('tpl_bodyweight', []))).toBe(sportColor(strength('x', ['Bench Press'])));
+  });
+
+  it('een training met gewicht of zonder oefeningen houdt de halter', () => {
+    expect(sportPictogram(strength('tpl_upper_a', ['Bench Press', 'Push-Up']))).toBe('kracht');
+    expect(sportPictogram(strength('leeg', []))).toBe('kracht');
+  });
+
+  it('een log volgt hetzelfde: sjabloon of alleen oefeningen met eigen lichaam', () => {
+    expect(lookOfLog({ type: 'strength', templateId: 'tpl_bodyweight' }).icon).toBe('eigengewicht');
+    expect(lookOfLog({ type: 'strength', templateId: 'tpl_upper_a' }).icon).toBe('kracht');
+    expect(lookOfLog({ type: 'strength', templateId: 'tpl_bodyweight' }).label).toBe('Kracht');
   });
 });
