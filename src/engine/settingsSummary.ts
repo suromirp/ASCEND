@@ -395,7 +395,7 @@ function unsettledRow(rowId: string, f: SettingsFacts): 'Bezig…' | 'Onbekend' 
 const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title: base.title, auto: base.auto, value, dim: true });
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
-const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
+const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
 const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-doorvoeren', 'forge-schijven'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
@@ -609,6 +609,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.reckon };
     case 'forge-afvinken-doel':
       return { checked: forge.assumedCounts };
+    case 'forge-tussen-oefeningen':
+      return { checked: forge.crossFatigue };
     case 'standen-onthouden':
       return { checked: forge.learnStands };
     case 'forge-dumbbells':

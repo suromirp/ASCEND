@@ -35,6 +35,7 @@ import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
 import { barFor, candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
 import { spotterApplies, spotterSlot } from './spotter';
 import { isWorkSet } from './workSets';
+import { adjustFirstSet, CROSS_PER_SET, crossFatigue, crossHistory, crossLine, crossPoints, hardPlanned, learnCross, normalBefore, setsBefore, type CrossFatigue, type CrossHistory, type EarlierWork } from './forgeCrossFatigue';
 
 // --- the shapes ---------------------------------------------------------------------------
 
@@ -222,6 +223,11 @@ export interface PlanState {
   warm: WarmState;
   // The compound exercises before this one and their heaviest working weight, for the warm-up of a top set.
   done: { exercise: Exercise; weightKg: number }[];
+  // Vermoeidheid tussen oefeningen (engine/forgeCrossFatigue.ts): de harde werksets van het voorschrift van de
+  // oefeningen hiervoor in deze training, en per log uit je historie hoeveel er normaal voor stonden.
+  // Afwezig zonder de instelling of zonder het model.
+  before?: EarlierWork[];
+  cross?: CrossHistory;
 }
 
 // Wat je eerder in deze training deed op de spieren van deze oefening (een gedeelde hoofdspier):
@@ -244,7 +250,8 @@ export function planState(ctx: PlanContext): PlanState {
   const strengthLogs = ctx.logs.filter((l) => l.strengthData && l.strengthData.length > 0);
   const deps = { logs: ctx.logs, templates: ctx.templates, program: ctx.program, bodyKg: ctx.bodyKg, ...(ctx.sore ? { sore: ctx.sore } : {}) };
   const histories = new Map(exerciseHistories(strengthLogs, ctx.templates, deps).map((h) => [h.key, h]));
-  return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), warm: newWarmState(), done: [] };
+  const crossOn = ctx.modelOn && ctx.settings.crossFatigue;
+  return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), warm: newWarmState(), done: [], ...(crossOn ? { before: [], cross: crossHistory(strengthLogs, ctx.settings.assumedCounts) } : {}) };
 }
 
 // The state for one exercise that is swapped: what is warm is what the exercises
@@ -256,6 +263,7 @@ export function planStateBefore(ctx: PlanContext, workout: WorkoutExercise[], sl
     if (!ex.timed) {
       noteWorked(state.warm, exerciseOf(ex), ex.rows.some((r) => r.kind === 'warmup'));
       noteDone(state, exerciseOf(ex), ex.rows);
+      state.before?.push({ exercise: exerciseOf(ex), hard: hardPlanned(ex.rows) });
     }
   }
   return state;
@@ -405,6 +413,38 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     if (spot?.raised[i]) target = { ...target, spotter: true };
     rows.push({ id: `${slot.id}:s${i}`, kind: 'work', target, ...(target.weightKg !== undefined ? { weightKg: target.weightKg } : {}), reps, forgeReps: reps, ...(target.rir !== undefined && ctx.settings.rirPrefill === 'target' ? { rir: target.rir, rirAssumed: true } : {}), done: false });
   }
+  // Vermoeidheid tussen oefeningen: meer harde sets voor dezelfde spieren ervoor dan normaal maakt de eerste set
+  // iets lichter (engine/forgeCrossFatigue.ts). Alleen het voorschrift; er is hier nog niets ingevuld.
+  const cross = rx && history ? crossFor(exercise, found.key, history, ctx, state) : undefined;
+  let crossNote: string | undefined;
+  const crossAdjust = (r: Prescription, weightKg: number | undefined, reps: number, target: RowTarget) =>
+    cross && weightKg !== undefined
+      ? adjustFirstSet({ weightKg, reps, target }, r.strengthKg, cross.factor, (kg) => loadFromExternal(exercise, kg, ctx.bodyKg, dumbbellTotal), candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: weightKg, usedKg: learned, stackWeights: ctx.settings.stackWeights, dumbbellTotal }))
+      : undefined;
+  if (cross && rx) {
+    const fi = rows.findIndex((r) => r.kind === 'work');
+    const first = rows[fi];
+    const made = first ? crossAdjust(rx, first.weightKg, first.reps ?? 0, first.target) : undefined;
+    if (first && made && first.weightKg !== undefined) {
+      const lighter = made.weightKg < first.weightKg - 1e-9;
+      crossNote = crossLine(cross, { lighter, fewerReps: (first.reps ?? 0) - made.reps });
+      rows[fi] = { ...first, weightKg: made.weightKg, target: { ...first.target, weightKg: made.weightKg }, reps: made.reps, forgeReps: made.reps };
+      if (lighter) {
+        // Een latere werkset wordt nooit zwaarder dan de eerste; een opwarmset die nu te dicht bij het werkgewicht
+        // zit valt weg (zoals strengthModel.ts#buildWarmups), de rest volgt het nieuwe gewicht.
+        for (let k = fi + 1; k < rows.length; k++) {
+          const r = rows[k];
+          if (r.kind === 'work' && r.weightKg !== undefined && r.weightKg > made.weightKg) rows[k] = { ...r, weightKg: made.weightKg, target: { ...r.target, weightKg: made.weightKg } };
+        }
+        for (let k = fi - 1; k >= 0; k--) {
+          const r = rows[k];
+          if (r.kind !== 'warmup' || r.weightKg === undefined) continue;
+          if (r.weightKg >= made.weightKg * 0.92) rows.splice(k, 1);
+          else if (made.weightKg > 0) rows[k] = { ...r, share: r.weightKg / made.weightKg };
+        }
+      }
+    }
+  }
   // "Forge rekent mee" ging een stap omhoog: de sets zoals ze zonder die stap waren, voor Terugzetten.
   let raise: WorkoutExercise['raise'];
   const raisedBy = fromProgram?.raised ?? rx?.raised;
@@ -417,6 +457,9 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
         reason: backProgram?.differs ? `Je programma vraagt nu ${programLine(targets!)}.` : back.reason,
         back: weightsOf(back, false).weights.map((w, i) => {
           const made = workRow(back, w, i);
+          // Terugzetten houdt de vermoeidheid tussen oefeningen vast: dezelfde bijstelling op de eerste set.
+          const eased = i === 0 && crossNote ? crossAdjust(back, made.target.weightKg, made.reps, made.target) : undefined;
+          if (eased) return { rowId: `${slot.id}:s${i}`, weightKg: eased.weightKg, reps: eased.reps };
           return { rowId: `${slot.id}:s${i}`, ...(made.target.weightKg !== undefined ? { weightKg: made.target.weightKg } : {}), reps: made.reps };
         }),
       };
@@ -425,7 +468,9 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   const repsHigh = rows.find((r) => r.kind === 'work')?.target.repsHigh;
   const programRest = targets?.find((x) => x.restSec !== undefined)?.restSec;
   const why = rx ? (fromProgram?.differs ? `Je programma vraagt nu ${programLine(targets!)}.` : rx.reason) : undefined;
-  const reason = why && rx?.notice ? `${rx.notice} ${why}` : why;
+  const noticed = why && rx?.notice ? `${rx.notice} ${why}` : why;
+  const reason = crossNote ? (noticed ? `${crossNote} ${noticed}` : crossNote) : noticed;
+  state.before?.push({ exercise, hard: hardPlanned(rows) });
   return {
     slot: slot.id,
     exerciseId,
@@ -439,10 +484,27 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     restSec: ctx.settings.restSeconds[exerciseId] ?? programRest ?? restFor(exerciseId, exercise, repsHigh, ctx.settings.restSeconds),
     timed: false,
     ...(dumbbellTotal ? { dumbbellTotal } : {}),
-    ...(rx ? { fatiguePerSet: rx.fatiguePerSet, fatigueAfterHard: rx.fatigueAfterHard, strengthKg: rx.strengthKg } : {}),
+    // Met vermoeidheid tussen oefeningen rekent "Forge rekent mee" in de training met de bijgestelde kracht
+    // (forgeReckon.ts#strengthFor), tot een set anders ging dan gevraagd.
+    ...(rx ? { fatiguePerSet: rx.fatiguePerSet, fatigueAfterHard: rx.fatigueAfterHard, strengthKg: cross ? rx.strengthKg * cross.factor : rx.strengthKg } : {}),
     ...(raise ? { raise } : {}),
     ...(swapTo ? { swappedFrom: cleanExerciseName(slot.exerciseName) } : {}),
   };
+}
+
+// Vermoeidheid tussen oefeningen voor deze oefening: de harde sets ervoor vandaag (het voorschrift) tegen wat er
+// normaal voor stond in je historie van dezelfde oefening. De kost per set is geleerd of vast 2%, met de
+// instelling "Vermoeidheid per set". Undefined: niets bijstellen (uit, te weinig data, geen verschil).
+function crossFor(exercise: Exercise | undefined, key: string, history: ExerciseHistory, ctx: PlanContext, state: PlanState): CrossFatigue | undefined {
+  if (!state.before || !state.cross) return undefined;
+  const today = setsBefore(exercise, state.before);
+  if (today === undefined) return undefined;
+  const earlier = history.sessions.filter((s) => s.date < ctx.date).map((s) => ({ ...s, before: state.cross!.get(s.logId)?.get(key) }));
+  const normal = normalBefore(earlier.map((s) => s.before));
+  if (normal === undefined || today <= normal) return undefined;
+  const dumbbellTotal = dumbbellTotalFor({ exercise, sessions: history.sessions, date: ctx.date, settings: ctx.settings });
+  const perSet = ctx.settings.fatigue === 'learned' ? learnCross(crossPoints(earlier, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.settings.estimateUpTo, dumbbellTotal })).perSet : CROSS_PER_SET;
+  return crossFatigue(today, normal, perSet);
 }
 
 // What each set of a program asks, for the fatigue after a hard top set.
