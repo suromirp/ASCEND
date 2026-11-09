@@ -24,7 +24,7 @@ export type TerrainWish = 'hills' | 'stairs_or_climb';
 
 // Een heuveltraining herkennen we aan de rol; trap- of bergconditie bestaat in opgeslagen
 // programma's zonder eigen rol, dus daar telt het id van het ingebouwde sjabloon (zie het besluit).
-const HILL_IDS = new Set(['tpl_hill_intervals', 'tpl_hills_descent']);
+const HILL_IDS = new Set(['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_hill_easy']);
 const CLIMB_IDS = new Set(['tpl_bergconditie']);
 
 export function terrainWish(template: RoleCarrier & Pick<SessionTemplate, 'id'>): TerrainWish | undefined {

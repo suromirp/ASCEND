@@ -8,7 +8,7 @@ import { NO_GYM_ADVICE, resolveNoGym } from './noGymDetails';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { LeavePeriod, NoGymDetails } from '../models/leave';
 import type { PlannedSession, SessionLog } from '../models/training';
-import { addDays } from '../utils/dates';
+import { addDays, daysBetween } from '../utils/dates';
 import { templateSport } from './sports';
 import { migrateLeavePeriods } from '../storage/migrationsPlanning';
 import { editedPeriod, leaveEditScope, leaveKey } from './leaveEdit';
@@ -36,6 +36,7 @@ function context(leave: LeavePeriod[], over: Partial<PlanPassContext> = {}): Pla
 const run = (sessions: PlannedSession[], leave: LeavePeriod[], over: Partial<PlanPassContext> = {}) => planPass(sessions, context(leave, over));
 const open = (list: PlannedSession[]) => list.filter((s) => s.status !== 'skipped');
 const on = (list: PlannedSession[], date: string) => open(list).filter((s) => s.scheduledDate === date).map((s) => s.templateId).sort();
+const bodyweightDays = (list: PlannedSession[]) => open(list).filter((s) => s.templateId === BODYWEIGHT_TEMPLATE_ID).map((s) => s.scheduledDate).sort();
 const runsIn = (list: PlannedSession[], from: string, to: string) =>
   open(list).filter((s) => s.scheduledDate >= from && s.scheduledDate <= to && templateSport(templates.find((t) => t.id === s.templateId)!) === 'running');
 
@@ -90,20 +91,23 @@ describe('de planning in een periode zonder sportschool', () => {
     for (const s of runs) expect(s.plannedMinutes).toBe(templates.find((t) => t.id === s.templateId)!.durationVariants.short);
     // Geen sportschool: alle drie de krachttrainingen zijn eigen gewicht geworden.
     expect(open(result.sessions).filter((s) => s.scheduledDate >= NEXT && s.scheduledDate <= addDays(NEXT, 6) && ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'].includes(s.templateId))).toEqual([]);
-    expect(on(result.sessions, addDays(NEXT, 1))).toContain(BODYWEIGHT_TEMPLATE_ID);
-    expect(on(result.sessions, addDays(NEXT, 4))).toContain(BODYWEIGHT_TEMPLATE_ID);
+    // Eigen gewicht, nooit twee dagen na elkaar: Benen A en Bovenlichaam B krijgen een andere dag (48 uur ertussen).
+    const bw = bodyweightDays(result.sessions);
+    expect(bw.length).toBe(3);
+    expect(bw[0]).toBe(addDays(NEXT, 1));
+    for (let i = 1; i < bw.length; i++) expect(daysBetween(bw[i - 1], bw[i])).toBeGreaterThanOrEqual(2);
     // Geen wandeling of tocht erbij.
     expect(open(result.sessions).some((s) => ['tpl_mountain_hike', 'tpl_hike_day_one', 'tpl_ruck_walk'].includes(s.templateId))).toBe(false);
     // De weken eromheen blijven zoals ze waren.
     for (const m of [MONDAY, addDays(NEXT, 7)]) expect(result.sessions.filter((s) => s.weekStartDate === m)).toEqual(plan.filter((s) => s.weekStartDate === m));
   });
 
-  it('Gewoon: alle loopjes blijven, de harde wordt rustig; zonder eigen gewicht vervalt kracht', () => {
+  it('Gewoon: je looptrainingen blijven zoals gepland, ook de harde en zonder kortere versie; zonder eigen gewicht vervalt kracht', () => {
     const p = noGym(NEXT, addDays(NEXT, 6), { amount: 'normal', strength: 'drop' });
     const result = run(plan, [p]);
     const runs = runsIn(result.sessions, NEXT, addDays(NEXT, 6));
-    expect(runs.map((s) => s.templateId).sort()).toEqual(['tpl_easy_run', 'tpl_easy_run', 'tpl_long_run']);
-    expect(on(result.sessions, addDays(NEXT, 5))).toEqual(['tpl_easy_run']);
+    expect(runs.map((s) => s.templateId).sort()).toEqual(['tpl_easy_run', 'tpl_hill_intervals', 'tpl_long_run']);
+    for (const s of runs) { expect(s.plannedMinutes).toBeUndefined(); expect(s.leave).toBeUndefined(); }
     expect(open(result.sessions).some((s) => s.templateId === BODYWEIGHT_TEMPLATE_ID)).toBe(false);
     expect(open(result.sessions).filter((s) => s.scheduledDate >= NEXT && s.scheduledDate <= addDays(NEXT, 6) && templates.find((t) => t.id === s.templateId)?.type === 'strength')).toEqual([]);
   });
@@ -116,7 +120,9 @@ describe('de planning in een periode zonder sportschool', () => {
     expect(runsIn(result.sessions, '2026-11-02', '2026-11-03').length).toBe(1);
     // De heuvelintervallen van zaterdag worden een rustige loop.
     expect(on(result.sessions, '2026-10-31')).toEqual(['tpl_easy_run']);
-    expect(on(result.sessions, '2026-11-03')).toEqual([BODYWEIGHT_TEMPLATE_ID]);
+    // Bovenlichaam A van dinsdag past niet: Benen A staat woensdag weer in de sportschool, 48 uur ertussen. Eigen gewicht komt maandag.
+    expect(on(result.sessions, '2026-11-03')).toEqual([]);
+    expect(on(result.sessions, '2026-11-02')).toEqual([BODYWEIGHT_TEMPLATE_ID, 'tpl_easy_run']);
   });
 
   it('vandaag telt nog niet als voorbij; gisteren blijft zoals het was', () => {
@@ -198,8 +204,12 @@ describe('als voorstel met Akkoord', () => {
     const applied = accept(proposal, plan);
     expect(applied.unsupported).toEqual([]);
     // De korte rustige loop houdt zijn lengte na Akkoord.
-    const easy = applied.sessions.find((s) => s.scheduledDate === addDays(NEXT, 5) && s.status !== 'skipped');
-    expect(easy).toBeUndefined(); // Licht: de heuvelintervallen vallen weg
+    // Licht: de heuvelintervallen van zaterdag vallen weg (twee keer lopen). De rustige loop van maandag wordt de heuveltraining
+    // van de week: de lange duurloop van zondag ervoor ligt een dag eerder, dus een rustige heuvelloop in plaats van sprints.
+    expect(applied.sessions.find((s) => s.scheduledDate === addDays(NEXT, 5) && s.status !== 'skipped' && s.templateId === 'tpl_hill_intervals')).toBeUndefined();
+    const hill = applied.sessions.find((s) => s.scheduledDate === NEXT && s.status !== 'skipped' && s.leave?.role === 'placed');
+    expect(hill).toMatchObject({ templateId: 'tpl_hill_easy', plannedMinutes: 25 });
+    expect(proposal.proposal.changes.find((c) => c.action === 'add' && c.toDate === NEXT)?.reason).toMatch(/^Heuvels in de buurt: een rustige heuvelloop in plaats van Rustige duurloop, sprints hebben 48 uur nodig/);
     const again = run(applied.sessions, proposal.periodsAfter);
     expect(again.repairs).toEqual([]);
     expect(again.sessions).toEqual(applied.sessions);
@@ -241,9 +251,10 @@ describe('bijwerken', () => {
     const normal = editedPeriod(p, { kind: 'no_gym', startDate: p.startDate, endDate: p.endDate, note: '', noGym: { ...NO_GYM_ADVICE, amount: 'normal' } });
     expect(leaveEditScope(p, normal)).toBe('plan');
     expect(JSON.stringify(leaveKey([p]))).not.toBe(JSON.stringify(leaveKey([normal])));
-    // Alleen heuvels: woorden, de planning rekent niet anders.
+    // Heuvels in de buurt: één loop per week is een heuveltraining, dus ook een voorstel.
     const hills = editedPeriod(p, { kind: 'no_gym', startDate: p.startDate, endDate: p.endDate, note: '', noGym: { ...NO_GYM_ADVICE, hills: true } });
-    expect(JSON.stringify(leaveKey([p]))).toBe(JSON.stringify(leaveKey([hills])));
+    expect(leaveEditScope(p, hills)).toBe('plan');
+    expect(JSON.stringify(leaveKey([p]))).not.toBe(JSON.stringify(leaveKey([hills])));
     // Een vakantie die zonder sportschool wordt, krijgt het advies.
     const holiday: LeavePeriod = { id: 'h', kind: 'no_training', startDate: NEXT, endDate: NEXT };
     expect(editedPeriod(holiday, { kind: 'no_gym', startDate: NEXT, endDate: NEXT, note: '' }).noGym).toEqual(NO_GYM_ADVICE);
@@ -254,7 +265,7 @@ describe('na de review', () => {
   const USER = { by: 'user' as const, at: '2026-10-21T08:00:00.000Z' };
 
   it('een korter gemaakte loop die je zelf verplaatste krijgt bij weghalen zijn eigen lengte terug, ook de lange duurloop', () => {
-    const p = noGym(NEXT, addDays(NEXT, 6), { amount: 'normal' });
+    const p = noGym(NEXT, addDays(NEXT, 6));
     const added = accept(input('add', p, [], plan), plan).sessions;
     const easy = added.find((s) => s.id === `${NEXT}-0`)!;
     const long = added.find((s) => s.id === `${NEXT}-6`)!;
@@ -286,12 +297,12 @@ describe('na de review', () => {
     const today = addDays(NEXT, 2); // woensdag; maandag liep je niet
     const result = run(plan, [noGym(NEXT, addDays(NEXT, 6))], { today });
     expect(runsIn(result.sessions, today, addDays(NEXT, 6)).length).toBe(2);
-    expect(on(result.sessions, addDays(NEXT, 5))).toEqual(['tpl_easy_run']);
+    expect(on(result.sessions, addDays(NEXT, 5))).toContain('tpl_easy_run');
   });
 
   it('staat er al een rustige loop op die dag, dan vervalt de harde loop en zegt de reden dat', () => {
     const extra: PlannedSession = { id: 'extra-easy', templateId: 'tpl_easy_run', scheduledDate: addDays(NEXT, 5), weekStartDate: NEXT, status: 'planned', order: 9 };
-    const r = applyNoGymDays({ sessions: [...plan, extra], days: leaveDays([noGym(NEXT, addDays(NEXT, 6), { amount: 'normal' })]), today: TODAY, goalDay: GOAL_DAY, templates, logged: new Set(), newId: () => 'x' });
+    const r = applyNoGymDays({ sessions: [...plan, extra], days: leaveDays([noGym(addDays(NEXT, 5), addDays(NEXT, 5))]), today: TODAY, goalDay: GOAL_DAY, templates, logged: new Set(), newId: () => 'x' });
     expect(r.repairs.find((x) => x.sessionId === `${NEXT}-5`)?.reason).toMatch(/vervalt, er staat die dag al een rustige loop/);
     expect(r.repairs.some((x) => x.added && x.from === addDays(NEXT, 5) && r.sessions.find((s) => s.id === x.sessionId)?.templateId === 'tpl_easy_run')).toBe(false);
   });
@@ -306,7 +317,7 @@ describe('na de review', () => {
 
 describe('een periode wijzigen na de tweede review', () => {
   const USER = { by: 'user' as const, at: '2026-10-21T08:00:00.000Z' };
-  const p = noGym(NEXT, addDays(NEXT, 6), { amount: 'normal' });
+  const p = noGym(NEXT, addDays(NEXT, 6));
   const EASY = `${NEXT}-0`;
   // Toegevoegd, en daarna verplaatst jij de korter gemaakte loop van maandag naar dinsdag.
   const setup = () => {
@@ -351,5 +362,92 @@ describe('een periode wijzigen na de tweede review', () => {
     expect(keep.reason).not.toContain('72 uur');
     expect(staleItems(removal.proposal.changes, moved)).toEqual([]);
     expect(staleItems(removal.proposal.changes, moved.map((s) => (s.id === EASY ? { ...s, plannedMinutes: 30 } : s)))).toEqual([keep]);
+  });
+});
+
+// Zonder sportschool beter (docs/beslissingen/2026-11-09-zonder-sportschool-beter.md).
+describe('Heuvels in de buurt: één loop per week is een heuveltraining', () => {
+  const S = (id: string, templateId: string, date: string): PlannedSession => ({ id, templateId, scheduledDate: date, weekStartDate: mondayOf(date), status: 'planned', order: 0 });
+  const mondayOf = (d: string) => addDays(d, -((new Date(`${d}T12:00:00`).getDay() + 6) % 7));
+  const step = (sessions: PlannedSession[], p: LeavePeriod, over: Partial<Parameters<typeof applyNoGymDays>[0]> = {}) =>
+    applyNoGymDays({ sessions, days: leaveDays([p]), today: TODAY, goalDay: GOAL_DAY, templates, logged: new Set(), newId: (() => { let n = 0; return () => `h-${n++}`; })(), ...over });
+  const placed = (r: ReturnType<typeof step>) => r.sessions.filter((s) => s.leave?.role === 'placed' && s.status !== 'skipped');
+  // Maandag een rustige duurloop, de zondag ervoor is leeg: sprints passen.
+  const base = [S('e1', 'tpl_easy_run', NEXT)];
+
+  it('een rustige loop wordt heuvelsprints als de benen fris zijn, met de reden', () => {
+    const p = noGym(NEXT, addDays(NEXT, 2), { amount: 'normal', hills: true });
+    const r = step(base, p);
+    const hill = placed(r);
+    expect(hill.map((s) => s.templateId)).toEqual(['tpl_hills_descent']);
+    expect(hill[0].scheduledDate).toBe(NEXT);
+    expect(r.repairs.find((x) => x.added)?.reason).toBe('Heuvels in de buurt: heuvelsprints in plaats van Rustige duurloop, één heuveltraining per week.');
+    // Gewoon: de gewone lengte, geen korte versie.
+    expect(hill[0].plannedMinutes).toBeUndefined();
+    // Een tweede keer verandert niets.
+    expect(step(r.sessions, p).repairs).toEqual([]);
+  });
+
+  it('Licht: de heuveltraining is de korte versie', () => {
+    const hill = placed(step(base, noGym(NEXT, addDays(NEXT, 2), { hills: true })));
+    expect(hill[0]).toMatchObject({ templateId: 'tpl_hills_descent', plannedMinutes: templates.find((t) => t.id === 'tpl_hills_descent')!.durationVariants.short });
+  });
+
+  it('een klacht aan een knie of been op Matig of erger: de rustige heuvelloop, met één zin waarom', () => {
+    const r = step(base, noGym(NEXT, addDays(NEXT, 2), { amount: 'normal', hills: true }), { legComplaint: true });
+    expect(placed(r).map((s) => s.templateId)).toEqual(['tpl_hill_easy']);
+    expect(r.repairs.find((x) => x.added)?.reason).toBe('Heuvels in de buurt: een rustige heuvelloop in plaats van Rustige duurloop, je klacht aan een knie of been is Matig of erger, dus geen afdalen in tempo.');
+  });
+
+  it('een lichte week (basisfase, afbouw of rustweek): de rustige heuvelloop', () => {
+    const r = step(base, noGym(NEXT, addDays(NEXT, 2), { amount: 'normal', hills: true }), { gentleWeek: () => true });
+    expect(placed(r).map((s) => s.templateId)).toEqual(['tpl_hill_easy']);
+    expect(r.repairs.find((x) => x.added)?.reason).toMatch(/in deze week passen geen sprints\.$/);
+  });
+
+  it('48 uur na een beenzware dag: geen sprints, wel de rustige heuvelloop', () => {
+    // De lange duurloop van zondag ervoor ligt een dag voor de loop van maandag.
+    const r = step([...base, S('long0', 'tpl_long_run', addDays(NEXT, -1))], noGym(NEXT, addDays(NEXT, 2), { amount: 'normal', hills: true }));
+    expect(placed(r).map((s) => s.templateId)).toEqual(['tpl_hill_easy']);
+    expect(r.repairs.find((x) => x.added)?.reason).toMatch(/sprints hebben 48 uur nodig na een beenzware dag\.$/);
+  });
+
+  it('een heuveltraining die in de periode staat blijft de heuveltraining; er komt er geen tweede bij', () => {
+    const r = step([S('h1', 'tpl_hill_intervals', NEXT), S('e2', 'tpl_easy_run', addDays(NEXT, 1))], noGym(NEXT, addDays(NEXT, 2), { amount: 'normal', hills: true }));
+    expect(r.repairs).toEqual([]);
+  });
+
+  it('zonder Heuvels in de buurt blijft het bij de tip, niets verandert', () => {
+    expect(step(base, noGym(NEXT, addDays(NEXT, 2), { amount: 'normal' })).repairs).toEqual([]);
+  });
+});
+
+describe('Eigen gewicht nooit twee dagen na elkaar', () => {
+  const S = (id: string, templateId: string, date: string): PlannedSession => ({ id, templateId, scheduledDate: date, weekStartDate: NEXT, status: 'planned', order: 0 });
+  const step = (sessions: PlannedSession[], p: LeavePeriod, over: Partial<Parameters<typeof applyNoGymDays>[0]> = {}) =>
+    applyNoGymDays({ sessions, days: leaveDays([p]), today: TODAY, goalDay: GOAL_DAY, templates, logged: new Set(), newId: (() => { let n = 0; return () => `b-${n++}`; })(), ...over });
+
+  it('twee krachtdagen achter elkaar: de tweede krijgt een andere dag', () => {
+    const p = noGym(NEXT, addDays(NEXT, 6));
+    const r = step([S('u', 'tpl_upper_a', addDays(NEXT, 1)), S('l', 'tpl_lower_a', addDays(NEXT, 2))], p);
+    const bw = r.sessions.filter((s) => s.templateId === BODYWEIGHT_TEMPLATE_ID && s.status !== 'skipped').map((s) => s.scheduledDate).sort();
+    expect(bw).toEqual([addDays(NEXT, 1), addDays(NEXT, 3)]);
+    expect(r.repairs.find((x) => x.added && x.to === addDays(NEXT, 3))?.reason).toMatch(/een andere dag voor 48 uur tussen je krachtsessies\.$/);
+  });
+
+  it('past er geen dag, dan vervalt hij met die reden', () => {
+    const p = noGym(NEXT, addDays(NEXT, 2));
+    const r = step([S('u', 'tpl_upper_a', addDays(NEXT, 1)), S('l', 'tpl_lower_a', addDays(NEXT, 2))], p);
+    expect(r.sessions.filter((s) => s.templateId === BODYWEIGHT_TEMPLATE_ID && s.status !== 'skipped').length).toBe(1);
+    const gone = r.repairs.find((x) => x.sessionId === 'l' && x.removed);
+    expect(gone?.reason).toBe('Geen sportschool: Benen A (zwaar) vervalt. Een sessie met je eigen gewicht past niet, want tussen twee krachtsessies zit minstens 48 uur.');
+  });
+
+  it('een krachtsessie thuis in de sportschool de dag erna telt mee', () => {
+    // Periode eindigt dinsdag; woensdag staat Benen A weer in de sportschool: Eigen gewicht op dinsdag kan niet.
+    const p = noGym(addDays(NEXT, 1), addDays(NEXT, 1));
+    const r = step([S('u', 'tpl_upper_a', addDays(NEXT, 1)), S('l', 'tpl_lower_a', addDays(NEXT, 2))], p);
+    expect(r.sessions.filter((s) => s.templateId === BODYWEIGHT_TEMPLATE_ID && s.status !== 'skipped')).toEqual([]);
+    expect(r.repairs.find((x) => x.sessionId === 'u')?.reason).toMatch(/vervalt\. Een sessie met je eigen gewicht past niet/);
   });
 });

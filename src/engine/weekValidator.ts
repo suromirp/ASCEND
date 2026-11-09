@@ -710,7 +710,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
 }
 
 // --- what changed, in words ----------------------------------------------------------
-const REASON: Record<RepairRule, string> = {
+export const REPAIR_REASON: Record<RepairRule, string> = {
   'GOAL-DAY': 'niets op of na de dag van je doel',
   'LEAVE-OFF': 'je bent vrij of op tocht',
   'LEAVE-LIGHT': 'de dagen voor en na je tocht blijven licht',
@@ -737,7 +737,7 @@ export function describeRepair(r: Repair, name: string): string {
   const moved = r.from !== r.to ? `${day(r.from)} naar ${day(r.to)}` : '';
   const shorter = r.plannedMinutes ? `korter, ${r.plannedMinutes} minuten` : '';
   const what = r.added ? `erbij op ${day(r.to)}` : r.removed ? 'eruit' : [moved, shorter].filter(Boolean).join(', ') || 'aangepast';
-  return `${name}: ${what} (${r.reason ?? REASON[r.rule]})`;
+  return `${name}: ${what} (${r.reason ?? REPAIR_REASON[r.rule]})`;
 }
 
 // Only what you'd notice: a moved, shortened or removed session.

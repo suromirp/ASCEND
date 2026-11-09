@@ -57,6 +57,9 @@ export interface PlanPassContext {
   leaveAround?: 'wide' | 'little';
   // Adding a holiday without training (a proposal with Akkoord): the whole stretch is arranged again with the new one, also what an earlier holiday's Akkoord placed.
   leaveReshuffle?: boolean;
+  // A complaint of a knee or leg at Matig or worse is open (a proposal for a period without a gym asks for it): the hill
+  // training of that period is then the easy hill run (engine/noGym.ts). Only a proposal sets it; what is placed stays.
+  noGymLegComplaint?: boolean;
   // The last day that arrangement may touch (the window of a proposal).
   leaveLimit?: string;
   // The roles of the sports (AppSettings.sportHandling): a fixed appointment becomes a fixed row first
@@ -127,7 +130,7 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
       leave: ctx.leave, trekRest: ctx.trekRest, leaveCrowding: ctx.leaveCrowding,
     };
     // Walks on a trek, a long walk on a free day: what the periods put in.
-    const placed = applyLeaveBlocks(afterRace, { check: checkInput, newId: ctx.newId, hikingEnabled: ctx.hikingEnabled });
+    const placed = applyLeaveBlocks(afterRace, { check: checkInput, newId: ctx.newId, hikingEnabled: ctx.hikingEnabled, legComplaint: ctx.noGymLegComplaint });
     beforeCheck ??= placed.sessions;
     // The best arrangement around a holiday, before the week check repairs what is left.
     const around = ctx.leaveAround === 'wide' && turn === 0 ? planAroundLeave(placed.sessions, { check: checkInput, reshuffle: ctx.leaveReshuffle, limit: ctx.leaveLimit }) : { sessions: placed.sessions, repairs: [] };
