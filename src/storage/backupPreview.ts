@@ -255,6 +255,10 @@ export function skillGoalImportNote(skillGoals: SkillGoalStore | undefined, goal
   if (!skillGoals || (goalsAction !== 'merge' && goalsAction !== 'replace')) return undefined;
   const n = skillGoals.goals.filter((g) => !g.removedAt).length;
   if (n === 0) return undefined;
+  // Met een algemeen calisthenicsdoel erbij is "vaardigheid" niet waar: dan heet het een calisthenicsdoel.
+  if (skillGoals.goals.some((g) => !g.removedAt && g.general)) {
+    return `Deze back-up heeft ${n === 1 ? 'één calisthenicsdoel' : `${n} calisthenicsdoelen`}. ${n === 1 ? 'Het komt' : 'Ze komen'} erbij; wat op dit toestel staat blijft.`;
+  }
   return `Deze back-up heeft ${n === 1 ? 'één vaardigheid' : `${n} vaardigheden`}. Ze ${n === 1 ? 'komt' : 'komen'} erbij; vaardigheden en gehaalde stappen op dit toestel blijven staan.`;
 }
 

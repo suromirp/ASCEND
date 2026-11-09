@@ -120,3 +120,14 @@ describe('migrateSkillGoals met een algemeen doel', () => {
     expect(JSON.stringify(twice)).toBe(JSON.stringify(once));
   });
 });
+
+// De regel in de importpreview: met een algemeen doel heet het een calisthenicsdoel, niet een vaardigheid.
+describe('skillGoalImportNote met een algemeen doel', () => {
+  it('noemt het een calisthenicsdoel', async () => {
+    const { skillGoalImportNote } = await import('./backupPreview');
+    const general = { id: 'g1', name: 'Algemeen sterk met eigen gewicht', ladderId: 'algemeen', targetStep: 1, createdAt: '2026-10-20T08:00:00.000Z', updatedAt: '2026-10-20T08:00:00.000Z', general: { ladderIds: ['push-up'], startDate: '2026-10-20', baseline: {} } };
+    const skill = { id: 's1', name: 'Pull-Up', ladderId: 'pull-up', targetStep: 4, createdAt: '2026-10-20T08:00:00.000Z', updatedAt: '2026-10-20T08:00:00.000Z' };
+    expect(skillGoalImportNote({ goals: [general], progress: [] }, 'merge')).toBe('Deze back-up heeft één calisthenicsdoel. Het komt erbij; wat op dit toestel staat blijft.');
+    expect(skillGoalImportNote({ goals: [general, skill], progress: [] }, 'replace')).toBe('Deze back-up heeft 2 calisthenicsdoelen. Ze komen erbij; wat op dit toestel staat blijft.');
+  });
+});

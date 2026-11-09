@@ -14,7 +14,7 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - `src/engine/onCourse.ts#recentAdherence` dezelfde telling voor de coach en Ritme
 - `src/engine/yourWeek.ts#yourWeek` Je week zonder doel, één ring
 - `src/state/goalActions.ts` waar doelen worden geschreven
-- `src/engine/skillGoal.ts#clearedSkillSteps` een Vaardigheid uit de logs; opslag `src/storage/skillGoals.ts#recordSkillSteps` (één put, alleen toevoegen), trap `src/components/ascend/SkillGoalCard.tsx`
+- `src/engine/skillGoal.ts#clearedSkillSteps` een Vaardigheid uit de logs; opslag `src/storage/skillGoals.ts#recordSkillSteps` (één put, alleen toevoegen), trap `src/components/ascend/SkillGoalCard.tsx`; Algemeen sterk met eigen gewicht: `src/engine/goalReadinessFor.ts#generalReadinessFor`, de keuze `src/components/ascend/CalisthenicsChoiceSheet.tsx`, de kaart `src/components/ascend/GeneralStrengthCard.tsx`
 
 ## Nooit
 - Een nieuw label, een doel erbij of gewijzigd, "In hutten" of "Met tent" en een volgorde die een conflict verschuift zonder voorstel met Akkoord.

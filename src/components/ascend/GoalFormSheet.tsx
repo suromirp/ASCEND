@@ -25,10 +25,10 @@ import { finishStrengthTargets, type StrengthTargetInput } from '../../engine/st
 // van. Eén gevulde mint knop (Volgende), Annuleren als tekstknop.
 const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' };
 
-// De tegel Vaardigheid: een stap op een calisthenicsladder (docs/beslissingen/2026-11-09-calisthenics-vaardigheidsdoel.md).
-// Hij hoort niet bij ADD_TILES, want een vaardigheid is geen TrainingGoal; Volgende sluit dit blad en opent het
-// blad van de vaardigheid.
-const SKILL_TILE = { label: 'Calisthenics', summary: 'Een vaardigheid halen, zoals handstand, muscle-up of front lever.' } as const;
+// De tegel Calisthenics (docs/beslissingen/2026-11-09-calisthenics-vaardigheidsdoel.md en
+// 2026-11-09-calisthenics-algemeen.md). Hij hoort niet bij ADD_TILES, want een calisthenicsdoel is geen TrainingGoal;
+// Volgende sluit dit blad en opent de keuze tussen algemeen sterk en één vaardigheid.
+const SKILL_TILE = { label: 'Calisthenics', summary: 'Algemeen sterk met eigen gewicht, of één vaardigheid halen.' } as const;
 
 export function GoalFormSheet({
   existing, mainGoalId, goal, initialTile, initialDetails, onSubmit, onSkill, onClose,

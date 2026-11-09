@@ -104,6 +104,18 @@ function metVaardigheid(state) {
   w.records.push({ key: 'skillGoals', value: { goals: [goal], progress: [rij(1, 'dead-hang', '2026-10-14'), rij(2, 'scapular-pull-up', '2026-10-24')] } });
 }
 
+// Algemeen sterk met eigen gewicht: één doel dat vijf ladders volgt, gestart op 20 oktober zonder trainingen.
+function metAlgemeen(state) {
+  const goal = {
+    id: 'skill_kaart_algemeen', name: 'Algemeen sterk met eigen gewicht', ladderId: 'algemeen', targetStep: 1,
+    createdAt: '2026-10-20T08:00:00.000Z', updatedAt: '2026-10-20T08:00:00.000Z',
+    general: { ladderIds: ['push-up', 'pull-up', 'dip', 'pistol', 'l-sit'], startDate: '2026-10-20', baseline: { 'push-up': 0, 'pull-up': 0, dip: 0, pistol: 0, 'l-sit': 0 } },
+  };
+  const w = winkel(state, 'meta');
+  w.records = w.records.filter((r) => r.key !== 'skillGoals');
+  w.records.push({ key: 'skillGoals', value: { goals: [goal], progress: [] } });
+}
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
@@ -111,6 +123,7 @@ export const STANDEN = {
   'zonder-doel': zonderDoel,
   ziek,
   vaardigheid: metVaardigheid,
+  algemeen: metAlgemeen,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------
