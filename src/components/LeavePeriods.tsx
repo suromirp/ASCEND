@@ -37,10 +37,13 @@ const KIND_COLOR: Record<LeaveKind, string> = {
   free_days: 'var(--color-ink-dim)',
 };
 
-export function LeavePeriodsCard() {
+// `openId`: de band van een periode in de weeklijst vroeg om het blad; `onOpenHandled` meldt dat het blad weer dicht is.
+export function LeavePeriodsCard({ openId, onOpenHandled }: { openId?: string | null; onOpenHandled?: () => void } = {}) {
   const { leavePeriods, planLeave, applyLeave, planPreviewPass, saveLeaveNote } = useAppData();
   const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState<LeavePeriod | null>(null);
+  const [ownEditing, setEditing] = useState<LeavePeriod | null>(null);
+  const editing = ownEditing ?? (openId ? leavePeriods.find((p) => p.id === openId) ?? null : null);
+  const closeEditing = () => { setEditing(null); onOpenHandled?.(); };
   const [plan, setPlan] = useState<LeavePlan | null>(null);
   // The planning changed while the proposal was open: nothing was stored.
   const [stale, setStale] = useState(false);
@@ -122,17 +125,17 @@ export function LeavePeriodsCard() {
         <LeavePeriodSheet
           existing={leavePeriods}
           editing={editing}
-          onClose={() => setEditing(null)}
+          onClose={closeEditing}
           onSubmit={(period) => {
             const before = editing;
-            setEditing(null);
+            closeEditing();
             const scope = leaveEditScope(before, period);
             if (scope === 'note') void saveLeaveNote(before.id, period.note ?? '', period.noGym?.hills);
             else if (scope === 'plan') setPlan(planLeave('add', period, before));
           }}
           onRemove={() => {
             const before = editing;
-            setEditing(null);
+            closeEditing();
             setPlan(planLeave('remove', before));
           }}
         />

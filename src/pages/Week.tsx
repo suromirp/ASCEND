@@ -67,6 +67,7 @@ export function WeekPage() {
   const [selected, setSelected] = useState<PlannedSession | null>(null);
   // Een tik op de greep opent het actieblad direct op de stap Verplaatsen.
   const [openOnMove, setOpenOnMove] = useState(false);
+  const [openPeriodId, setOpenPeriodId] = useState<string | null>(null);
   // A training done without a plan (a loose one), opened from its row: the same log sheet as the Logboek.
   const [openLog, setOpenLog] = useState<SessionLog | null>(null);
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant; atForm?: boolean } | null>(null);
@@ -349,6 +350,7 @@ export function WeekPage() {
             pairNotes={pairNotes}
             weekDrag={weekDrag}
             dragEnabled={dragHandles}
+            onOpenPeriod={setOpenPeriodId}
           />
         </>
       )}
@@ -389,7 +391,7 @@ export function WeekPage() {
       )}
 
       {!monthView && <ChangeLogCard weekStart={weekStart} />}
-      {!monthView && <LeavePeriodsCard />}
+      {!monthView && <LeavePeriodsCard openId={openPeriodId} onOpenHandled={() => setOpenPeriodId(null)} />}
 
       {selected && templateById.get(selected.templateId) && (
         <SessionActionSheet

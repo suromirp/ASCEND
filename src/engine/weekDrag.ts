@@ -23,18 +23,18 @@ type DragRefusal = 'history' | 'skipped' | 'rest' | 'race' | 'leave';
 export type DragEligibility = { ok: true; askAlways: boolean | string } | { ok: false; reason: DragRefusal };
 
 // Nooit: wat gelogd of voorbij is (lockLevel 0), een overgeslagen training, een rustdag of
-// herstelwandeling, een wedstrijd (die gaat via het doel op Ascend) en wat een vakantie of tocht
-// neerzette. Een test mag, maar loslaten vraagt altijd om Akkoord.
+// herstelwandeling, een wedstrijd (die gaat via het doel op Ascend). Wat een periode neerzette mag wel, met Akkoord. Een test mag, maar loslaten vraagt altijd om Akkoord.
 export function dragEligibility(session: PlannedSession, template: SessionTemplate, args: { logged: boolean; today: string }): DragEligibility {
   const loggedIds = new Set<string | undefined>(args.logged ? [session.id] : []);
   if (lockLevel(session, loggedIds, args.today) === 0) return { ok: false, reason: 'history' };
   if (session.status === 'skipped') return { ok: false, reason: 'skipped' };
   if (template.type === 'recovery') return { ok: false, reason: 'rest' };
   if (hasRole(template, 'race')) return { ok: false, reason: 'race' };
-  // Wat een vakantie of tocht zelf neerzette blijft liggen; een training die alleen opzij schoof voor
-  // je vakantie mag je weer slepen, altijd met Akkoord (het blad toont wat er gebeurt).
-  if (session.leave && session.leave.role !== 'moved') return { ok: false, reason: 'leave' };
-  if (session.leave) return { ok: true, askAlways: LEAVE_ASK_REASON };
+  // Een training die je periode neerzette of die opzij schoof voor je vakantie mag je slepen, altijd met
+  // Akkoord (het blad toont wat er gebeurt). Het merkteken van de periode blijft staan: de periode blijft de
+  // reden en haalt hem weg als de periode weggaat. Alleen wat de periode liet vervallen heeft geen rij.
+  if (session.leave?.role === 'dropped') return { ok: false, reason: 'leave' };
+  if (session.leave) return { ok: true, askAlways: session.leave.role === 'placed' ? PLACED_ASK_REASON : LEAVE_ASK_REASON };
   return { ok: true, askAlways: hasRole(template, 'test') };
 }
 
@@ -208,6 +208,7 @@ export function dayAtY(rects: { date: string; top: number; bottom: number }[], y
 export type MoveDecision = { action: 'none' | 'apply' | 'ask'; proposal: ScheduleProposal };
 
 export const TEST_ASK_REASON = 'Een testloop verplaats je alleen met Akkoord.';
+export const PLACED_ASK_REASON = 'Je periode zette deze training hier neer. Verplaats je hem, dan blijft hij op de nieuwe dag staan.';
 export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Verplaats je hem, dan blijft hij op de nieuwe dag staan.';
 
 // Het ene besluit voor het slepen en het actieblad. Dezelfde dag: niets. Een schoon voorstel met één

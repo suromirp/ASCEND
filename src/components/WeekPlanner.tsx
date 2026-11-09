@@ -3,6 +3,7 @@ import type { PlannedSession, SessionTemplate, SessionLog } from '../models/trai
 import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import { leaveLabelOn } from '../engine/leave';
+import { leaveWeek } from '../engine/leaveWeek';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isLegHeavyTemplate } from '../engine/scheduler';
@@ -10,6 +11,7 @@ import { REST_DAY_COPY } from '../data/restDayCopy';
 import { emptyDayText } from '../engine/restDayBack';
 import { useAppData } from '../state/AppDataContext';
 import { LeaveBand } from './LeaveBand';
+import { LeaveWeekBand } from './LeaveWeekBand';
 import { WeekStatusIcon } from './WeekIcons';
 import { IconDisc, LogDisc, SportDisc } from './SportDisc';
 import { lookOfLog } from './logbook/sportLook';
@@ -23,7 +25,7 @@ import { EFFORT_COLOR } from './effortColor';
 import { HeartSign } from './influence/HeartSign';
 import { useDeviations } from './influence/useInfluence';
 import { entryForLog, signState, type SignState } from '../engine/influence';
-import { useMemo, type ReactNode } from 'react';
+import { Fragment, useMemo, type ReactNode } from 'react';
 import { dragEligibility } from '../engine/weekDrag';
 import { catchUpEligibility, catchUpNoteFor, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { WeekDragGhost } from './WeekDragGhost';
@@ -262,6 +264,7 @@ export function WeekPlanner({
   pairNotes,
   weekDrag,
   dragEnabled = false,
+  onOpenPeriod,
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
@@ -285,9 +288,12 @@ export function WeekPlanner({
   // Slepen naar een andere dag (components/useWeekDrag.ts). `dragEnabled`: de instelling staat aan en er is geen blad open.
   weekDrag?: ReturnType<typeof useWeekDrag>;
   dragEnabled?: boolean;
+  // Een tik op de band van een periode opent het blad om hem bij te werken (LeavePeriods.tsx).
+  onOpenPeriod?: (periodId: string) => void;
 }) {
   useFlipList();
   const days = weekDates(weekStartDate);
+  const periodWeek = useMemo(() => leaveWeek(weekDates(weekStartDate), leave), [weekStartDate, leave]);
   const today = todayISO();
   const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
   const { statusOf } = useWatchStatuses();
@@ -352,7 +358,11 @@ export function WeekPlanner({
         // Zonder advies houdt een dag zijn eigen volgorde (order), ook als een rij overgeslagen of ingehaald is.
         const daySessions = orderDay(sessions.filter((s) => s.scheduledDate === date).sort((a, b) => a.order - b.order), advice);
         const isToday = date === today;
-        const leaveLabel = leaveLabelOn(date, leave);
+        // Een dag in een periode krijgt geen eigen kaart: de band staat boven de eerste dag, de dag zelf is een
+        // gewone rij. Alleen de lichte dagen bij een tocht houden hun label per dag.
+        const inPeriod = periodWeek.inBand.has(date);
+        const bandAbove = periodWeek.bandAbove.get(date);
+        const leaveLabel = inPeriod ? undefined : leaveLabelOn(date, leave);
         const rows = daySessions.flatMap((s) => {
           // De oude rij van een gemiste training die je naar later sleepte: weg uit de week, zoals bij
           // gewoon verplaatsen. Hij blijft als overgeslagen bewaard, de historie verandert niet.
@@ -362,24 +372,37 @@ export function WeekPlanner({
         });
         // A day with a band (holiday, tocht, a light day around it) already shows its date there: no second row.
         const loose = looseLogs.filter((l) => l.completedDate === date);
-        const showEmpty = rows.length === 0 && !leaveLabel && loose.length === 0;
+        const showEmpty = rows.length === 0 && !leaveLabel && !inPeriod && loose.length === 0;
+        const quietDay = rows.length === 0 && inPeriod && loose.length === 0;
         // Op je vaste rustdag heet een lege dag Rustdag, met de hangmat; een andere lege dag is Vrij, net als
         // de vaste rustdag als de rust van deze week al op een andere dag staat. Is je vaste rustdag bezet, dan
         // heet de vrije dag die deze week je rust is "Rustdag deze week" (engine/restDayThisWeek.ts).
         const empty = emptyDayText(date, settings.restDay ?? 1, sessions, templateById, { logs, today, leave });
         return (
+          <Fragment key={date}>
+            {bandAbove && <LeaveWeekBand band={bandAbove} onOpen={(id) => onOpenPeriod?.(id)} />}
           <div
-            key={date}
             data-week-day={date}
             className="relative border-t first:border-t-0"
             style={{ borderColor: 'var(--color-card-border)', opacity: dragging && dragging.verdicts.some((v) => v.date === date && !v.droppable) ? 0.45 : 1 }}
           >
+            {inPeriod && <span aria-hidden="true" data-period-rail className="pointer-events-none absolute inset-y-0 left-0 w-0.5" style={{ background: 'color-mix(in srgb, var(--color-status) 45%, transparent)' }} />}
             {dragging && view?.target === date && <DropTarget tone={view.tone} chip={view.chip} />}
             {leaveLabel && (
               <div className="flex items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
                 <WeekStatusIcon status="rest" />
                 <span className="w-12 shrink-0 text-[13px] font-semibold tabular-nums" style={{ color: isToday ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{dayLabel(date)}</span>
                 <div className="min-w-0 flex-1"><LeaveBand label={leaveLabel} /></div>
+              </div>
+            )}
+            {quietDay && (
+              <div className="flex min-h-[40px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
+                <span className="min-w-0 flex-1 pl-14 text-[13px] leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{dayLabel(date)} · vrij</span>
+                {isToday && onAddFree && (
+                  <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-action)' }}>
+                    <Icon name="plus" size={20} />
+                  </button>
+                )}
               </div>
             )}
             {rows.map(({ s, template }) => rowFor(s, template, date))}
@@ -411,6 +434,7 @@ export function WeekPlanner({
               </p>
             )}
           </div>
+          </Fragment>
         );
       })}
     </div>
