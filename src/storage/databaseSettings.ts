@@ -489,6 +489,9 @@ export interface AppSettings {
   // Forge ('beide', het advies), alleen het spierkaartje, of niets. Optional and additive; read defensively, so no
   // migration step is needed.
   exerciseArt?: 'beide' | 'spierkaart' | 'uit';
+  // "Uitleg standaard uitgeklapt" (engine/exerciseArtSettings.ts#resolveGuideOpen): staat "Lees verder" in de uitleg van
+  // een oefening bij het openen al open. Afwezig is uit. Optional and additive; no migration step is needed.
+  guideOpen?: boolean;
   // Wat je koos op een dag met vermoeide benen, per datum en training (models/legEase.ts). Een lijst naast de
   // logs; de laatste 60. Optional and additive; read defensively on import
   // (storage/migrations.ts#migrateLegEaseDays) and merged per date and session.

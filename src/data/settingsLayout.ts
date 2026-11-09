@@ -142,7 +142,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'standen-onthouden', 'tussengewichten', 'spotterrek'),
-  ...inSheet('bundel-weergave', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes'),
+  ...inSheet('bundel-weergave', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes', 'forge-uitleg-open'),
   ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid'),
   ...inSheet('bundel-rekenmodel', 'forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),
   ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-doorvoeren', 'forge-schijven'),

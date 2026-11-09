@@ -137,5 +137,23 @@ export interface Exercise {
   nuance?: string[];
   // Three to five short points: what you do, what to watch, the most made mistake.
   cues: string[];
+  // De uitleg met twee lagen (data/exerciseGuides.ts, docs/beslissingen/2026-11-09-uitleg-bij-oefeningen.md).
+  // Heeft een oefening hem, dan toont het blad hem in plaats van de drie oude regels in `cues`.
+  guide?: ExerciseGuide;
   videoUrl?: string;
+}
+
+// "In het kort" (precies drie regels) altijd zichtbaar, de rest achter "Lees verder".
+export interface ExerciseGuide {
+  short: [string, string, string];
+  setup: string;
+  movement: string;
+  // In gewone woorden ("twee tellen omlaag"), geen code als 3010.
+  tempo: string;
+  mistakes: { fault: string; fix: string }[];
+  // Id's van andere oefeningen; de tik verschijnt alleen als het id in de lijst staat.
+  easier?: string;
+  harder?: string;
+  // Alleen als de tekst op een open bron met licentie is gebaseerd.
+  source?: { name: string; license: string; url?: string };
 }

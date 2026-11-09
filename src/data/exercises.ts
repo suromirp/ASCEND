@@ -13,6 +13,7 @@
 
 import type { Exercise, MovementPattern, MuscleGroup, Resistance } from '../models/exercise';
 import { FAMILY, NUANCE } from './exerciseFamilies';
+import { EXERCISE_GUIDES } from './exerciseGuides';
 
 type M = MuscleGroup;
 
@@ -56,7 +57,7 @@ function ex(
   cues: string[],
   bodyweightFraction?: number,
 ): Exercise {
-  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(FAMILY.has(id) ? { family: FAMILY.get(id) } : {}), ...(NUANCE.has(id) ? { nuance: [...NUANCE.get(id)!] } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}) };
+  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(FAILURE_RISK.has(id) ? { failureRisk: true } : {}), ...(FAMILY.has(id) ? { family: FAMILY.get(id) } : {}), ...(EXERCISE_GUIDES[id] ? { guide: EXERCISE_GUIDES[id] } : {}), ...(NUANCE.has(id) ? { nuance: [...NUANCE.get(id)!] } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}) };
 }
 
 export const EXERCISES: Exercise[] = [
@@ -320,8 +321,8 @@ export const EXERCISES: Exercise[] = [
     'Vaak fout: de stang laten stuiteren op je borst.',
   ]),
   ex('incline-bench-press', '45° Incline Barbell Press', ['45° Incline Barbell Bench Press', 'Incline Bench Press', 'Incline Bench Press (Barbell)', 'Schuin bankdrukken met stang', 'Incline Barbell Bench Press'], ['chest', 'front_delts'], ['triceps'], 'barbell', 'push_horizontal', false, [
-    'Doen: bank op een lichte helling, stang naar je bovenste borst en weer omhoog.',
-    'Let op: een kleine helling is genoeg, te steil wordt een schouderpers.',
+    'Doen: bank op 45 graden, stang naar je bovenste borst en weer omhoog.',
+    'Let op: steiler dan 45 graden wordt een schouderpers.',
     'Vaak fout: de stang naar je nek laten zakken.',
   ]),
   ex('dumbbell-bench-press', 'Dumbbell Bench Press', ['Bench Press (Dumbbell)', 'DB Bench Press', 'Flat Dumbbell Press', 'Bankdrukken met dumbbells'], ['chest'], ['front_delts', 'triceps'], 'dumbbell', 'push_horizontal', false, [
