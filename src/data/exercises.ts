@@ -48,8 +48,13 @@ const FAILURE_RISK = new Set([
 
 // Calisthenics (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md): een houding telt in seconden,
 // een archer push-up per kant. De plek op een ladder komt uit data/skillLadders.ts.
-const HOLD = new Set(['dead-hang', 'support-hold']);
-const PER_SIDE = new Set(['archer-push-up']);
+const HOLD = new Set([
+  'dead-hang', 'support-hold',
+  'wall-plank-hold', 'pike-hold', 'wall-handstand-hold', 'free-handstand-hold',
+  'tuck-l-sit', 'one-leg-l-sit', 'l-sit',
+  'tuck-front-lever', 'advanced-tuck-front-lever', 'one-leg-front-lever', 'straddle-front-lever',
+]);
+const PER_SIDE = new Set(['archer-push-up', 'assisted-pistol-squat', 'skater-squat', 'box-pistol-squat', 'pistol-squat']);
 // Een band helpt alleen bij Pull-Up en Dip: daar zit de sprong naar de volle stap
 // (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md). Hoe sterk de band was staat in het log (SetLog.band).
 const BAND = new Set(['pull-up', 'dip']);
@@ -644,6 +649,123 @@ export const EXERCISES: Exercise[] = [
     'Doen: hang stil aan de stang met je handen op schouderbreedte, voeten van de grond.',
     'Let op: houd je schouders een beetje actief, niet helemaal tegen je oren.',
     'Vaak fout: gaan zwaaien of je benen optrekken.',
+  ]),
+  // De overige ladders (data/skillLadders.ts): squat op één been, handstand, handstand push-up, L-sit,
+  // front lever en muscle-up. Geen `bodyweightFraction`: er is geen meting of redelijke schatting.
+  ex('assisted-pistol-squat', 'Assisted Pistol Squat', ['Supported Pistol Squat', 'Pistol squat met steun'], ['quadriceps', 'glutes'], ['hip_adductors', 'core'], 'bodyweight', 'squat', true, [
+    'Doen: houd je vast aan een paal of ring, zak op één been en duw terug omhoog.',
+    'Let op: je knie volgt je tweede teen en je hiel blijft op de grond.',
+    'Vaak fout: je aan de steun optrekken in plaats van met je been duwen.',
+  ]),
+  ex('skater-squat', 'Skater Squat', ['Skater Squats'], ['quadriceps', 'glutes'], ['hip_adductors', 'core'], 'bodyweight', 'lunge_step', true, [
+    'Doen: sta op één been, het andere been achter je, zak tot je achterknie bijna de grond raakt.',
+    'Let op: je romp leunt voorover en je knie van het standbeen blijft boven je voet.',
+    'Vaak fout: je achterknie hard op de grond laten vallen.',
+  ]),
+  ex('box-pistol-squat', 'Box Pistol Squat', ['Pistol Squat to Box', 'Pistol squat op een box'], ['quadriceps', 'glutes'], ['hip_adductors', 'core'], 'bodyweight', 'squat', true, [
+    'Doen: sta op één been voor een box, ga er rustig op zitten en sta weer op.',
+    'Let op: het vrije been blijft gestrekt voor je, de hiel van het standbeen blijft plat.',
+    'Vaak fout: op de box neerploffen of je met je vrije voet afzetten.',
+  ]),
+  ex('pistol-squat', 'Pistol Squat', ['Single Leg Squat', 'Pistol', 'Squat op één been'], ['quadriceps', 'glutes'], ['hip_adductors', 'core', 'calves'], 'bodyweight', 'squat', true, [
+    'Doen: zak diep op één been, het andere been gestrekt voor je, en kom zonder steun omhoog.',
+    'Let op: je hiel blijft plat en je knie volgt je tweede teen.',
+    'Vaak fout: achterover vallen onderaan.',
+  ]),
+  ex('wall-plank-hold', 'Wall Plank Hold', ['Feet Against Wall Plank', 'Plank met voeten tegen de muur'], ['front_delts', 'core'], ['triceps', 'chest'], 'bodyweight', 'push_vertical', false, [
+    'Doen: handen op de vloer, voeten tegen de muur, lichaam in één lijn en houd stil.',
+    'Let op: duw je schouders actief omhoog, weg van je oren.',
+    'Vaak fout: je buik laten zakken en hol in je rug staan.',
+  ]),
+  ex('pike-hold', 'Pike Hold', ['Pike Position Hold', 'Pike houding'], ['front_delts'], ['triceps', 'traps', 'core'], 'bodyweight', 'push_vertical', false, [
+    'Doen: handen en voeten op de vloer, heupen hoog, armen en benen gestrekt, houd stil.',
+    'Let op: je heupen staan boven je schouders en je schouders blijven actief.',
+    'Vaak fout: je knieën buigen in plaats van je heupen hoog te brengen.',
+  ]),
+  ex('wall-handstand-hold', 'Wall Handstand Hold', ['Chest To Wall Handstand', 'Handstand tegen de muur'], ['front_delts'], ['triceps', 'traps', 'core', 'forearms'], 'bodyweight', 'push_vertical', false, [
+    'Doen: loop met je voeten de muur op tot je buik naar de muur wijst en houd stil.',
+    'Let op: armen gestrekt, schouders omhoog gedrukt, lichaam in een lijn.',
+    'Vaak fout: hol in je rug staan, zodat je ribben naar voren komen.',
+  ]),
+  ex('free-handstand-hold', 'Freestanding Handstand Hold', ['Handstand Hold', 'Handstand', 'Vrije handstand'], ['front_delts'], ['triceps', 'traps', 'core', 'forearms'], 'bodyweight', 'push_vertical', false, [
+    'Doen: sta op je handen zonder steun, lichaam in één lijn, en houd stil.',
+    'Let op: je vingers corrigeren je balans, je schouders blijven omhoog gedrukt.',
+    'Vaak fout: je rug hol trekken om je evenwicht te houden.',
+  ]),
+  ex('pike-push-up', 'Pike Push-Up', ['Pike Pushup', 'Pike push-up'], ['front_delts', 'triceps'], ['traps', 'core', 'chest'], 'bodyweight', 'push_vertical', false, [
+    'Doen: heupen hoog, zak met je hoofd naar de vloer tussen je handen en duw terug.',
+    'Let op: je ellebogen wijzen schuin naar achteren, je heupen blijven hoog.',
+    'Vaak fout: je heupen laten zakken, waardoor het een gewone push-up wordt.',
+  ]),
+  ex('elevated-pike-push-up', 'Elevated Pike Push-Up', ['Feet Elevated Pike Push-Up', 'Decline Pike Push-Up', 'Pike push-up met voeten hoog'], ['front_delts', 'triceps'], ['traps', 'core', 'chest'], 'bodyweight', 'push_vertical', false, [
+    'Doen: voeten op een bank of box, heupen hoog, zak met je hoofd naar de vloer en duw terug.',
+    'Let op: hoe hoger je voeten, hoe zwaarder; je schouders blijven boven je handen.',
+    'Vaak fout: te ver naar voren zakken en je hoofd laten dragen.',
+  ]),
+  ex('wall-hspu-negative', 'Negative Wall Handstand Push-Up', ['Eccentric Wall Handstand Push-Up', 'Negatieve handstand push-up'], ['front_delts', 'triceps'], ['traps', 'core', 'chest'], 'bodyweight', 'push_vertical', false, [
+    'Doen: sta in een handstand tegen de muur en zak in ongeveer 5 seconden tot je hoofd de vloer raakt.',
+    'Let op: leg een opgevouwen handdoek of mat onder je hoofd.',
+    'Vaak fout: het laatste stuk laten vallen op je hoofd.',
+  ]),
+  ex('wall-hspu', 'Wall Handstand Push-Up', ['Handstand Push-Up', 'HSPU', 'Handstand pushup', 'Handstand push-up'], ['front_delts', 'triceps'], ['traps', 'core', 'chest'], 'bodyweight', 'push_vertical', false, [
+    'Doen: sta in een handstand tegen de muur, zak tot je hoofd de mat raakt en duw terug.',
+    'Let op: ellebogen schuin naar achteren, je lichaam blijft in een lijn.',
+    'Vaak fout: je handen te dicht bij de muur zetten, zodat je hoofd botst.',
+  ]),
+  ex('tuck-l-sit', 'Tuck L-Sit', ['Tuck Sit Hold', 'Tuck L Sit', 'Tuck L-sit'], ['core'], ['triceps', 'front_delts', 'forearms'], 'bodyweight', 'core', false, [
+    'Doen: steun op je handen naast je heupen, til je knieën op naar je borst en houd stil.',
+    'Let op: je armen blijven gestrekt en je schouders duw je omlaag.',
+    'Vaak fout: je schouders optrekken richting je oren.',
+  ]),
+  ex('one-leg-l-sit', 'One-Leg L-Sit', ['Single Leg L-Sit', 'One Leg L Sit', 'L-sit met één been'], ['core'], ['triceps', 'front_delts', 'forearms'], 'bodyweight', 'core', false, [
+    'Doen: steun op je handen, strek één been recht voor je en houd het andere been gebogen.',
+    'Let op: wissel van been tussen sets; je armen blijven gestrekt.',
+    'Vaak fout: het gestrekte been laten zakken onder je heupen.',
+  ]),
+  ex('l-sit', 'L-Sit', ['L Sit', 'L-Sit Hold', 'L-sit'], ['core'], ['triceps', 'front_delts', 'forearms', 'quadriceps'], 'bodyweight', 'core', false, [
+    'Doen: steun op parallettes, dip bars of de vloer, til beide benen gestrekt voor je en houd stil.',
+    'Let op: knieën gestrekt, je schouders duw je omlaag.',
+    'Vaak fout: je benen laten zakken of met gebogen knieën vasthouden.',
+  ]),
+  ex('tuck-front-lever', 'Tuck Front Lever', ['Tuck Front Lever Hold', 'Tuck FL'], ['lats', 'core'], ['upper_back', 'rear_delts', 'biceps', 'forearms'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: hang aan de stang, trek je knieën op en breng je rug horizontaal, houd stil.',
+    'Let op: armen gestrekt, schouders omlaag, je heupen op rughoogte.',
+    'Vaak fout: je heupen laten zakken of je armen buigen.',
+  ]),
+  ex('advanced-tuck-front-lever', 'Advanced Tuck Front Lever', ['Advanced Tuck FL', 'Advanced Tuck Front Lever Hold'], ['lats', 'core'], ['upper_back', 'rear_delts', 'biceps', 'forearms'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: een tuck front lever met je rug horizontaal en je heupen open, je knieën op een rechte hoek.',
+    'Let op: je schenen liggen parallel aan je romp.',
+    'Vaak fout: je rug laten doorzakken.',
+  ]),
+  ex('one-leg-front-lever', 'One-Leg Front Lever', ['Single Leg Front Lever', 'One Leg Front Lever'], ['lats', 'core'], ['upper_back', 'rear_delts', 'biceps', 'forearms'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: een front lever met één been gestrekt en het andere been gebogen.',
+    'Let op: wissel van been tussen sets; je rug blijft horizontaal.',
+    'Vaak fout: je heupen laten zakken zodra je het been strekt.',
+  ]),
+  ex('straddle-front-lever', 'Straddle Front Lever', ['Straddle FL', 'Straddle Front Lever Hold'], ['lats', 'core'], ['upper_back', 'rear_delts', 'biceps', 'forearms'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: hang aan de stang, til je lichaam horizontaal met je benen gestrekt en gespreid.',
+    'Let op: armen gestrekt, een rechte lijn van schouders tot enkels.',
+    'Vaak fout: in je heupen knikken om het lichter te maken.',
+  ]),
+  ex('chest-to-bar-pull-up', 'Chest-To-Bar Pull-Up', ['Chest To Bar Pull-Up', 'Chest to Bar', 'High Pull-Up', 'C2B Pull-Up'], ['lats'], ['upper_back', 'biceps', 'forearms', 'core'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: trek je op tot de stang je onderste borst raakt en zak tot je armen gestrekt zijn.',
+    'Let op: trek je ellebogen naar je heupen en leun een beetje achterover.',
+    'Vaak fout: je borst naar de stang zwaaien met een schop van je benen.',
+  ]),
+  ex('straight-bar-dip', 'Straight Bar Dip', ['Bar Dip', 'Dip on Straight Bar', 'Dip op een rechte stang'], ['triceps', 'chest'], ['front_delts', 'core'], 'bodyweight', 'push_horizontal', false, [
+    'Doen: steun boven een rechte stang op heuphoogte, zak met je borst over de stang en duw omhoog.',
+    'Let op: de stang raakt je bovenbenen en je schouders blijven omlaag.',
+    'Vaak fout: je borst niet voorover brengen, zodat de stang je buik raakt.',
+  ]),
+  ex('negative-muscle-up', 'Negative Muscle-Up', ['Eccentric Muscle-Up', 'Negatieve muscle-up'], ['lats', 'triceps'], ['chest', 'upper_back', 'biceps', 'forearms', 'core'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: begin in steun boven de stang en zak in ongeveer 5 seconden naar een volle hang.',
+    'Let op: kom met je borst over de stang terug naar beneden, niet er omheen.',
+    'Vaak fout: door je ellebogen vallen in plaats van gecontroleerd zakken.',
+  ]),
+  ex('muscle-up', 'Muscle-Up', ['Bar Muscle-Up', 'Muscle Up', 'Muscleup', 'Bar Muscle Up'], ['lats', 'triceps'], ['chest', 'upper_back', 'biceps', 'forearms', 'core'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: trek je explosief boven de stang, draai over de stang heen en strek je armen in steun.',
+    'Let op: trek de stang naar je onderbuik en breng je borst over de stang.',
+    'Vaak fout: de stang van je af laten zwaaien, zodat je de draai over de stang mist.',
   ]),
   ex('dumbbell-preacher-curl', 'Dumbbell Preacher Curl', ['Preacher Curl (Dumbbell)', 'Single Arm Dumbbell Preacher Curl'], ['biceps'], ['forearms'], 'dumbbell', 'isolation_arm', false, [
     'Doen: bovenarm op het schuine kussen, buig de elleboog en laat rustig helemaal zakken.',

@@ -72,6 +72,7 @@ import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
 import { resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
+import { calisthenicsTrainings } from './trainingStyle';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 import { formatClock } from '../utils/clock';
 import { capitalize } from '../utils/capitalize';
@@ -643,6 +644,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.askBand };
     case 'forge-stapvoorstel':
       return { checked: forge.stepProposal };
+    case 'forge-soort': {
+      // Afgeleid uit de stappen in je trainingen (engine/trainingStyle.ts); zonder keuze is alles kracht.
+      const n = calisthenicsTrainings(s.strengthModel);
+      return n === 0 ? { value: 'Alles kracht', dim: true } : { value: `${plural(n, 'training', 'trainingen')} met calisthenics` };
+    }
     case 'forge-programma':
       return s.strengthModel?.program ? { value: s.strengthModel.program.name } : { value: 'Van ASCEND', dim: true };
     case 'stangen':

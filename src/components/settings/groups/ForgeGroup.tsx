@@ -13,6 +13,7 @@ import { SettingsEmpty, SettingsSection } from '../SettingsList';
 import { AddOnSheet, GymProfileSheet, MachineListSheet } from './ToestelSheets';
 import { BarsSheet, CheckFromSheet, DurationSheet, PlatesSheet, ProgramSheet, RackSheet, StackSheet } from './ForgeSheets';
 import { BundleSheet } from './BundleSheet';
+import { TrainingStyleSheet } from './TrainingStyleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
 import { anyShown, rowShown } from './rowShown';
@@ -140,6 +141,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-netjes" title="Ging het netjes?" facts={facts} info="forgeNetjes" onChange={(on) => save({ askClean: on })} />
           <SummaryRow id="forge-band" title="Band bij optrekken en dip" facts={facts} info="forgeBand" onChange={(on) => save({ askBand: on })} />
           <SummaryRow id="forge-stapvoorstel" title="Stap voorstellen" facts={facts} info="forgeStapVoorstel" onChange={(on) => save({ stepProposal: on })} />
+          <SummaryRow id="forge-soort" title="Calisthenics per training" facts={facts} info="forgeSoort" onClick={() => setInner('forge-soort')} />
           <SummaryRow id="forge-doorvoeren" title="Wijzigingen doorvoeren" facts={facts} info="forgeDoorvoeren" onClick={() => setInner('forge-doorvoeren')} />
           <SummaryRow id="forge-schijven" title="Schijven bij de set tonen" facts={facts} info="forgeSchijven" onChange={(on) => save({ showPlates: on })} />
         </BundleSheet>
@@ -202,6 +204,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {inner === 'forge-leren' && <ChoiceFromDef def={CHOICES.forgeLeren} value={s.stackWeights} onPick={(v) => save({ stackWeights: v })} onClose={closeInner} />}
       {inner === 'forge-dumbbells' && <ChoiceFromDef def={CHOICES.dumbbellLog} value={s.dumbbellLog} onPick={(v) => save({ dumbbellLog: v })} onClose={closeInner} />}
       {inner === 'forge-sinds' && <CheckFromSheet onClose={closeInner} />}
+      {inner === 'forge-soort' && <TrainingStyleSheet onClose={closeInner} />}
       {inner === 'stangen' && <BarsSheet onClose={closeInner} />}
       {inner === 'schijven' && <PlatesSheet onClose={closeInner} />}
       {inner === 'dumbbells' && <RackSheet onClose={closeInner} />}

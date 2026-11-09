@@ -20,3 +20,12 @@ tekening een iets andere variant laat zien, zegt het blad van de oefening wat an
 
 In de app staat de naamsvermelding onder elke tekening, met een verwijzing naar de pagina Bronnen
 (Gidsen en kennis, soort Afbeeldingen).
+
+## Eigen tekeningen van ASCEND
+
+De 23 tekeningen van de stappen van de overige calisthenicsladders (squat op één been, handstand,
+handstand push-up, L-sit, front lever en muscle-up) zijn niet van Everkinetic of Workout Guide. ASCEND
+heeft ze zelf getekend als schematisch silhouet, met een eigen script, zonder een bestaande tekening over
+te nemen. Ze staan in hetzelfde formaat (drie standen, begin, midden, eind, in één bestand `<naam>.json`)
+en worden gedeeld onder dezelfde licentie, CC BY-SA 4.0. Welke tekeningen dit zijn, staat in
+`src/data/exerciseArt.ts` (`own: true`); onder zo'n tekening noemt de app ASCEND als maker.
