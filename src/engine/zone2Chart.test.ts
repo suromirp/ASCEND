@@ -92,6 +92,8 @@ describe('zone2Chart: wat de grafiek draagt', () => {
     expect(chart.line).toMatchObject({ sec1: s.line.fromSec, sec2: s.line.toSec, x2: 1 });
     // Sneller: de lijn zakt in seconden; de waaier ligt om de lijn en is aan de randen het breedst.
     expect(chart.line!.sec2).toBeLessThan(chart.line!.sec1);
+    // Een duidelijke uitspraak: de lijn is vol, niet gestippeld.
+    expect(chart.lineUnclear).toBeUndefined();
     const f = chart.fan!;
     expect(f.fast1).toBeLessThan(f.slow1);
     expect(f.fast2).toBeLessThan(f.slow2);

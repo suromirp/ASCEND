@@ -4,6 +4,7 @@
 // of in een ingeklapt deel. Geen knop die iets aan je planning doet; alleen twee vaste verwijzingen.
 
 import type { WeatherWarningsState } from './useWeatherWarnings';
+import { AVALANCHE_MISSING_LINE } from '../engine/avalanche';
 import { mountainUpdatedLabel } from '../engine/mountainWeather';
 import { EAWS_SITE } from '../integrations/eaws';
 import { todayISO } from '../utils/dates';
@@ -22,7 +23,7 @@ function Link({ href, children }: { href: string; children: string }) {
 
 export function WeatherWarningCard({ state }: { state: WeatherWarningsState }) {
   if (!state.shown) return null;
-  const { lines, avalanche, fetchedAt } = state;
+  const { lines, avalanche, avalancheMissing, fetchedAt } = state;
   return (
     <Card className="flex flex-col gap-2" role="status">
       <Eyebrow tone="var(--color-warning)">Let op</Eyebrow>
@@ -35,12 +36,13 @@ export function WeatherWarningCard({ state }: { state: WeatherWarningsState }) {
           Uit het weermodel van Open-Meteo{fetchedAt ? `, ${mountainUpdatedLabel(fetchedAt, todayISO())}` : ''}. Geen officiële waarschuwing; kijk ook bij de weerdienst.
         </p>
       )}
+      {avalancheMissing && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{AVALANCHE_MISSING_LINE}</p>}
       {avalanche && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Uit het bulletin van de Europese lawinediensten. Lees het hele bulletin voor je vertrekt.</p>
       )}
       <div className="flex flex-wrap gap-x-4">
         {lines.length > 0 && <Link href={METEOALARM}>Meteoalarm</Link>}
-        {avalanche && <Link href={EAWS_SITE}>Lawinebulletin</Link>}
+        {(avalanche || avalancheMissing) && <Link href={EAWS_SITE}>Lawinebulletin</Link>}
       </div>
     </Card>
   );
