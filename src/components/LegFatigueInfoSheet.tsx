@@ -31,41 +31,40 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow="Benen" title="Hoe fris zijn je benen?" onClose={requestClose} /></div>
             <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-              Het getal bij Benen is een schatting van wat er van je recente trainingen nog in je benen zit. ASCEND gebruikt het om je testloop en wedstrijd op een dag met frisse benen te zetten, en om te kiezen wat er schuift als dat niet zo is.
+              Het getal bij Benen is een schatting van wat er van je recente trainingen nog in je benen zit. ASCEND zet je testloop en wedstrijd op een dag met frisse benen en kiest wat schuift als dat niet kan.
             </p>
 
             <Section title="Drie soorten vermoeidheid">
-              <Bullet head="Intensiteit">Hard lopen, intervallen, je hartslag hoog. Halveert elke 12 uur: na een dag is driekwart weg.</Bullet>
+              <Bullet head="Intensiteit">Hard lopen en intervallen. Halveert elke 12 uur: na een dag is driekwart weg.</Bullet>
               <Bullet head="Kracht en klappen">Zware beenkracht en de klappen van lopen. Halveert per dag.</Bullet>
-              <Bullet head="Spierschade">Van bergaf en van het zakken in een squat of RDL. Blijft de eerste dag staan en halveert daarna elke anderhalve dag: 3 tot 5 dagen merkbaar. Dit raakt een snelle loop het meest.</Bullet>
-              <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Die drie tellen samen op. Een rustige loop van 40 minuten kost de dag erna nog geen 2 punten, een volle Benen A ruim 13.</p>
+              <Bullet head="Spierschade">Van bergaf en van zakken in een squat of RDL. Blijft de eerste dag staan, halveert daarna elke anderhalve dag en is 3 tot 5 dagen merkbaar. Een snelle loop merkt het meest.</Bullet>
+              <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Samen tellen ze op. Een rustige loop van 40 minuten kost de dag erna nog geen 2 punten, een volle Benen A ruim 13.</p>
             </Section>
 
             <Section title="De grenzen">
               <Bullet head="8 of lager">Fris genoeg voor een testloop.</Bullet>
               <Bullet head="Tot 12">Goed voor een harde training, zoals heuvels of intervallen.</Bullet>
               <Bullet head="3 tot 5">Wat je wilt op een wedstrijddag, met een rustige week ervoor.</Bullet>
-              <Bullet head="Je went eraan">Een tweede vergelijkbare training binnen drie weken telt minder zwaar. Na ongeveer zes weken zonder is die bescherming weg.</Bullet>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Je went eraan: een tweede vergelijkbare training binnen drie weken telt minder zwaar. Na ongeveer zes weken zonder is dat voorbij.</p>
             </Section>
 
             <Section title="Wat het zwaarst meetelt">
-              <Bullet head="Je beentraining">Hoe lang (tot 75 minuten) en hoe zwaar, en of je eraan gewend bent. Dit verschuift het getal de dag erna met 5 tot 12 punten. ASCEND weet van krachttraining alleen de duur en je RPE; zonder RPE rekent hij met 8.</Bullet>
-              <Bullet head="Bergaf">Per 1.000 m dalen 24 punten, anderhalf keer zoveel als je hardlopend daalt, meer met een rugzak. Op vlak terrein telt het weinig.</Bullet>
-              <Bullet head="Je gevoel">"Slechter dan normaal" telt een training een kwart zwaarder. Je RPE kan een training hooguit anderhalf keer zo zwaar of een kwart lichter maken.</Bullet>
-              <Bullet head="Pijn en spierpijn">Pijn in je benen telt 3 punten en maakt je nooit vanzelf fris. Gemelde spierpijn is een ondergrens. "Fris" in de ochtendvraag verlaagt het getal nooit.</Bullet>
-              <Bullet head="Wat nog gepland staat">Telt met je eigen gemiddelde hoogtemeters, of met het doel van de training als je die nog niet logde. Dat is het minst zeker.</Bullet>
+              <Bullet head="Je beentraining">Duur (tot 75 minuten), zwaarte en gewenning. Het getal schuift de dag erna 5 tot 12 punten. Van krachttraining weet ASCEND alleen duur en RPE; zonder RPE rekent hij met 8.</Bullet>
+              <Bullet head="Bergaf">24 punten per 1.000 m dalen, anderhalf keer zoveel als hardlopend dalen, meer met een rugzak. Op vlak terrein telt het weinig.</Bullet>
+              <Bullet head="Gevoel en pijn">"Slechter dan normaal" telt een training een kwart zwaarder. Je RPE maakt een training hooguit anderhalf keer zo zwaar of een kwart lichter. Pijn in je benen telt 3 punten en maakt je nooit vanzelf fris. Gemelde spierpijn is een ondergrens. "Fris" in de ochtendvraag verlaagt het getal nooit.</Bullet>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Wat nog gepland staat telt met je eigen gemiddelde hoogtemeters, of met het doel van de training. Dat is het minst zeker.</p>
             </Section>
 
             <Section title="Hoe betrouwbaar">
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Grote verschillen kloppen bijna altijd. Na een volle beentraining ben je de dag erna niet fris, en vier dagen later met een rustige dag ervoor meestal wel. Daar mag je op vertrouwen.</p>
-              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Rond de grens is het getal onzeker. Een index van 8,6 kan net zo goed 7 of 11 zijn: één punt meer inspanning, een kwartier langer trainen of een andere aanname over herstel laat de uitkomst daar omslaan. Daarom toont ASCEND bij je testloop een band, en noemt hij alles binnen 2 punten van de grens "op de grens".</p>
-              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Hoe snel je herstelt, komt uit studies bij andere mensen; jouw benen kunnen sneller of trager zijn. En één test kan het getal niet bewijzen: een 5 km schommelt al snel een halve minuut, ook als je even fris bent.</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Grote verschillen kloppen bijna altijd: na een volle beentraining ben je de dag erna niet fris.</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Rond de grens is het getal onzeker. Een 8,6 kan ook 7 of 11 zijn. Eén test bewijst het getal niet: een 5 km schommelt al een halve minuut. Daarom toont ASCEND bij je testloop een band en noemt hij alles binnen 2 punten van de grens "op de grens".</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Herstel komt uit studies bij andere mensen. Jouw benen kunnen sneller of trager zijn.</p>
             </Section>
 
             <Section title="Wat je zelf kunt doen">
-              <Bullet head="Loop in op je gewone tempo">Op je testdag eerst tien minuten rustig. Voelen je benen duidelijk zwaarder dan normaal, stel de test dan een dag uit, ook als het getal fris zegt. Dat gevoel meet jouw benen van vandaag.</Bullet>
-              <Bullet head="Vul je RPE in">Vooral na Benen A: zonder RPE gaat ASCEND uit van 8.</Bullet>
-              <Bullet head="Kracht na de test">Eerst lopen en daarna kracht doen, liefst 6 uur later en minstens 3, verstoort je volgende loop niet. Voel je je eerder fit, dan kan het eerder. Andersom wel.</Bullet>
+              <Bullet head="Loop in op je gewone tempo">Loop op je testdag eerst tien minuten rustig. Voelen je benen duidelijk zwaarder dan normaal, stel de test dan een dag uit, ook als het getal fris zegt. Dat gevoel meet jouw benen van vandaag.</Bullet>
+              <Bullet head="Vul je RPE in">Vooral na Benen A. Zonder RPE gaat ASCEND uit van 8.</Bullet>
+              <Bullet head="Kracht na de test">Loop eerst en doe daarna kracht, liefst 6 uur later en minstens 3. Dat verstoort je volgende loop niet. Voel je je eerder fit, dan kan het eerder. Kracht voor een loop verstoort hem wel.</Bullet>
             </Section>
 
             <Section title="Bronnen">

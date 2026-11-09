@@ -33,7 +33,7 @@ export function PaceCurveCard() {
         {curve.state === 'ready' ? paceCurveLine(curve) : paceCurveWaitLine(curve, today)}
       </p>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        Een controle, geen nieuw getal: de test blijft de bron voor je tempo's.
+        Een controle, geen nieuw getal. De test blijft de bron voor je tempo's.
       </p>
     </Card>
   );

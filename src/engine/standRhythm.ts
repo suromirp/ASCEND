@@ -83,12 +83,12 @@ export function standSentence(input: { legLevel: 0 | 1 | 2 | undefined; load?: L
   const { legLevel, load, rhythm, restWeek } = input;
   const parts: string[] = [];
   if (legLevel !== undefined) parts.push(legLevel === 0 ? 'je benen zijn fris' : legLevel === 1 ? 'je benen zijn wat vermoeid' : 'je benen zijn vermoeid');
-  if (load) parts.push(load.level === 'lijn' ? 'je week is in lijn met de weken ervoor' : load.level === 'zwaar' ? 'je week is zwaar' : 'je week is rustig');
+  if (load) parts.push(load.level === 'lijn' ? 'je week is in lijn' : load.level === 'zwaar' ? 'je week is zwaar' : 'je week is rustig');
   if (rhythm.enough && rhythm.status) {
-    parts.push(rhythm.status === 'on' ? 'je houdt je ritme vast' : rhythm.status === 'nearly' ? 'je ritme zit er bijna in' : 'je ritme is er even uit');
+    parts.push(rhythm.status === 'on' ? 'je ritme houdt' : rhythm.status === 'nearly' ? 'je ritme zit er bijna in' : 'je ritme loopt achter');
   }
   const joined = parts.length === 0 ? '' : `${parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1]}`}.`;
   const sentence = joined ? capitalize(joined) : '';
-  const rest = restWeek ? 'Deze week is een rustweek, zodat de weken ervoor binnenkomen.' : '';
+  const rest = restWeek ? 'Deze week is een rustweek. Zo komt de training van de weken ervoor binnen.' : '';
   return [sentence, rest].filter(Boolean).join(' ');
 }

@@ -363,8 +363,8 @@ export function zone2Criteria(trend: Pick<AerobicTrend, 'runs' | 'referenceHr'>,
     ? `Telt mee: stukken van minstens 5 minuten stabiel${zones ? ' in zone 2' : ''} op vlak terrein, uit elke buitenloop${runs}`
     : `Telt mee: vlakke rustige en lange duurlopen, met de gemiddelde hartslag van de hele loop${runs}`;
   return [
-    trend.referenceHr > 0 ? `${what}, omgerekend naar ${trend.referenceHr} slagen per minuut.` : `${what}.`,
-    `Warme lopen, boven ${R.heatOutC} graden gevoelstemperatuur, tellen niet mee.`,
+    trend.referenceHr > 0 ? `${what}. Omgerekend naar ${trend.referenceHr} slagen per minuut.` : `${what}.`,
+    `Een loop boven ${R.heatOutC} graden gevoelstemperatuur telt niet mee.`,
   ];
 }
 
@@ -379,7 +379,7 @@ export function trendVerdict(trend: Pick<AerobicTrend, 'statement' | 'referenceH
   }
   if (s.verdict === 'te-veel-verschil') return 'Nog te veel verschil tussen je lopen om iets te zeggen. Vooruitgang gaat in weken, niet per loop.';
   const phrase = bandPhrase(s);
-  if (phrase === 'gelijk') return 'Gelijk aan een maand geleden. Normaal: vooruitgang gaat in weken, niet per loop.';
+  if (phrase === 'gelijk') return 'Gelijk aan een maand geleden. Vooruitgang gaat in weken, niet per loop.';
   if (s.verdict === 'geen-duidelijke-verandering') return `Nog geen duidelijke verandering: ${phrase} per km dan een maand geleden.`;
   return s.verdict === 'sneller'
     ? `${capital(phrase)} per km dan een maand geleden, bij dezelfde hartslag. Dat past bij fitter worden.`
