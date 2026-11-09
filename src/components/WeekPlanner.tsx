@@ -3,7 +3,7 @@ import type { PlannedSession, SessionTemplate, SessionLog } from '../models/trai
 import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import { leaveLabelOn } from '../engine/leave';
-import { leaveWeek } from '../engine/leaveWeek';
+import { leaveWeek, type WeekLeaveBand } from '../engine/leaveWeek';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isLegHeavyTemplate } from '../engine/scheduler';
@@ -11,7 +11,7 @@ import { REST_DAY_COPY } from '../data/restDayCopy';
 import { emptyDayText } from '../engine/restDayBack';
 import { useAppData } from '../state/AppDataContext';
 import { LeaveBand } from './LeaveBand';
-import { LeaveWeekBand } from './LeaveWeekBand';
+import { WeekBandGroup } from './WeekBandVariants';
 import { WeekStatusIcon } from './WeekIcons';
 import { IconDisc, LogDisc, SportDisc } from './SportDisc';
 import { lookOfLog } from './logbook/sportLook';
@@ -248,6 +248,17 @@ function LooseRow({ log, template, isToday, onTap, sign }: { log: SessionLog; te
   );
 }
 
+// De dagen van de week in stukken: elke band met zijn dagen, de andere dagen los.
+function groupDays(days: string[], bands: WeekLeaveBand[]): { band?: WeekLeaveBand; dates: string[] }[] {
+  const out: { band?: WeekLeaveBand; dates: string[] }[] = [];
+  for (const d of days) {
+    const band = bands.find((b) => b.dates.includes(d));
+    if (band && out.length && out[out.length - 1].band === band) out[out.length - 1].dates.push(d);
+    else out.push({ band, dates: [d] });
+  }
+  return out;
+}
+
 export function WeekPlanner({
   weekStartDate,
   sessions,
@@ -355,7 +366,8 @@ export function WeekPlanner({
   return (
     <>
     <div className="mx-stagger overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
-      {days.map((date) => {
+      {groupDays(days, periodWeek.bands).map((g) => {
+        const nodes = g.dates.map((date) => {
         const advice = dayOrder(sessions.filter((s) => s.scheduledDate === date && !loggedIds.has(s.id)), sessions.filter((s) => s.scheduledDate === addDays(date, 1)), templateById);
         // Zonder advies houdt een dag zijn eigen volgorde (order), ook als een rij overgeslagen of ingehaald is.
         const daySessions = orderDay(sessions.filter((s) => s.scheduledDate === date).sort((a, b) => a.order - b.order), advice);
@@ -363,7 +375,6 @@ export function WeekPlanner({
         // Een dag in een periode krijgt geen eigen kaart: de band staat boven de eerste dag, de dag zelf is een
         // gewone rij. Alleen de lichte dagen bij een tocht houden hun label per dag.
         const inPeriod = periodWeek.inBand.has(date);
-        const bandAbove = periodWeek.bandAbove.get(date);
         const leaveLabel = inPeriod ? undefined : leaveLabelOn(date, leave);
         const rows = daySessions.flatMap((s) => {
           // De oude rij van een gemiste training die je naar later sleepte: weg uit de week, zoals bij
@@ -382,13 +393,11 @@ export function WeekPlanner({
         const empty = emptyDayText(date, settings.restDay ?? 1, sessions, templateById, { logs, today, leave });
         return (
           <Fragment key={date}>
-            {bandAbove && <LeaveWeekBand band={bandAbove} onOpen={(id) => onOpenPeriod?.(id)} />}
           <div
             data-week-day={date}
             className="relative border-t first:border-t-0"
             style={{ borderColor: 'var(--color-card-border)', opacity: dragging && dragging.verdicts.some((v) => v.date === date && !v.droppable) ? 0.45 : 1 }}
           >
-            {inPeriod && <span aria-hidden="true" data-period-rail className="pointer-events-none absolute inset-y-0 left-0 w-0.5" style={{ background: 'color-mix(in srgb, var(--color-status) 45%, transparent)' }} />}
             {dragging && view?.target === date && <DropTarget tone={view.tone} chip={view.chip} />}
             {leaveLabel && (
               <div className="flex items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
@@ -438,6 +447,8 @@ export function WeekPlanner({
           </div>
           </Fragment>
         );
+        });
+        return g.band ? <WeekBandGroup key={g.band.key} band={g.band} onOpen={(id) => onOpenPeriod?.(id)}>{nodes}</WeekBandGroup> : <Fragment key={g.dates[0]}>{nodes}</Fragment>;
       })}
     </div>
     {dragging?.ghost && ghostSession && ghostTemplate && (

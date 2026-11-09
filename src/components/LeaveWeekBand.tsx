@@ -21,6 +21,14 @@ const GLYPH: Record<LeaveKind, ReactNode> = {
   free_days: (<><rect x="4" y="5.5" width="16" height="14" rx="3" /><path d="M4 10.5h16M8.5 3.5v3M15.5 3.5v3" /></>),
 };
 
+export function LeaveGlyph({ kind, size }: { kind: LeaveKind; size: number }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      {GLYPH[kind]}
+    </svg>
+  );
+}
+
 export function LeaveKindDisc({ kind, size = SIZE }: { kind: LeaveKind; size?: number }) {
   return (
     <span
