@@ -95,12 +95,22 @@ function ziek(state) {
   verwijderPlanning(state, (d) => d >= VANDAAG && d <= '2026-11-01');
 }
 
+// Eén vaardigheid (F4e): Pull-Up op de ladder Optrekken, met de eerste twee stappen gehaald.
+function metVaardigheid(state) {
+  const goal = { id: 'skill_kaart_1', name: 'Pull-Up', ladderId: 'pull-up', targetStep: 4, createdAt: '2026-10-20T08:00:00.000Z', updatedAt: '2026-10-20T08:00:00.000Z' };
+  const rij = (step, exerciseId, clearedDate) => ({ id: `skillstep_kaart_${step}`, goalId: goal.id, ladderId: 'pull-up', step, exerciseId, clearedDate });
+  const w = winkel(state, 'meta');
+  w.records = w.records.filter((r) => r.key !== 'skillGoals');
+  w.records.push({ key: 'skillGoals', value: { goals: [goal], progress: [rij(1, 'dead-hang', '2026-10-14'), rij(2, 'scapular-pull-up', '2026-10-24')] } });
+}
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
   vakantie: metVakantie,
   'zonder-doel': zonderDoel,
   ziek,
+  vaardigheid: metVaardigheid,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------

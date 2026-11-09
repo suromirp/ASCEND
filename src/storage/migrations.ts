@@ -10,6 +10,10 @@
 //
 // SetLog.seconds, band and clean (calisthenics, 2026-11-09) follow repsAsked: optional and additive, so
 // the version stays; migrateLogSetSkill drops a damaged value on import and an older file reads the same.
+//
+// The goal Vaardigheid (calisthenics F4e, 2026-11-09) lives in its own optional `skillGoals` (goals and the
+// append-only cleared steps), like `missedTraining`: optional and additive, so the version stays.
+// migrateSkillGoals drops a damaged goal or row (unknown ladder, step outside it) and never throws.
 
 export { CURRENT_SCHEMA_VERSION, migrateV1toV2, migrateExport } from './migrationsSchema';
 export type { AscendExport } from './migrationsSchema';
@@ -21,3 +25,5 @@ export { migrateSportHandling, migrateSportCounting, migrateLogCountedSport, mig
 export { migrateActivityDetail, migrateLogDetail, migrateLogRunDetail, migrateActivityStreams, migrateSessionTrim, migrateLogTrim, migrateSourceSync, migrateLogSourceSync, migrateLogZone2Pieces } from './migrationsLogDetail';
 export { readGoalDetails, readGoalKind, readGoalPriority, priorityFromPlanRole, routePlanUsesTent, migrateTrainingGoal, readAcceptedConflicts, migrateTrainingGoals } from './migrationsGoals';
 export type { GoalKindContext } from './migrationsGoals';
+export { migrateSkillGoals, readSkillGoalStore } from './migrationsSkill';
+export type { SkillGoalsRead } from './migrationsSkill';

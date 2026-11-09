@@ -65,7 +65,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="klaar-groei" title="Groei bij het rekenen" facts={facts} info="klaarGroei" onClick={() => setSheet('klaar-groei')} />
         <SummaryRow id="klaar-marge" title="Marge bij een tijdslimiet" facts={facts} info="klaarMarge" onClick={() => setSheet('klaar-marge')} />
         <SummaryRow id="doeltijd-voorstel" title="Doeltijd aanpassen voorstellen" facts={facts} info="doeltijdVoorstel" onChange={(on) => void updateSettings({ proposeTargetTime: on })} />
-        <SummaryRow id="seizoensstrook" title="Seizoensstrook tonen" facts={facts} info="seizoensstrook" onChange={(on) => void updateSettings({ showSeasonStrip: on })} />
+        <SummaryRow id="bundel-ascend" title="Op de Ascend-tab" facts={facts} info="bundelAscend" onClick={() => setSheet('bundel-ascend')} />
       </SettingsSection>
 
       <SettingsSection title="Tochten">
@@ -80,6 +80,12 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="rust-na-tocht" title="Rust na een bergtocht" facts={facts} info="rustNaTocht" onClick={() => setInner('rust-na-tocht')} />
           <SummaryRow id="bergschoenen" title="Bergschoenen inlopen" facts={facts} info="bergschoenen" onClick={() => setInner('bergschoenen')} />
           <SummaryRow id="bergschoenen-herinnering" title="Herinnering bij lange tochten" facts={facts} info="bergschoenenHerinnering" onChange={(on) => void updateSettings({ bootBreakInReminder: on })} />
+        </BundleSheet>
+      )}
+      {sheet === 'bundel-ascend' && (
+        <BundleSheet eyebrow="Doel en tochten" title="Op de Ascend-tab" line="Wat Ascend naast je doelen laat zien." onClose={close}>
+          <SummaryRow id="seizoensstrook" title="Seizoensstrook tonen" facts={facts} info="seizoensstrook" onChange={(on) => void updateSettings({ showSeasonStrip: on })} />
+          <SummaryRow id="vaardigheidsdoelen" title="Vaardigheidsdoelen tonen" facts={facts} info="vaardigheidsdoelen" onChange={(on) => void updateSettings({ showSkillGoals: on })} />
         </BundleSheet>
       )}
       {sheet === 'programma' && <ProgramSheet onClose={close} onRestart={() => setSheet('opnieuw')} />}

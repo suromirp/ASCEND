@@ -13,6 +13,9 @@ import { ProgramsRepo, SessionTemplatesRepo, PlannedSessionsRepo, SessionLogsRep
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { ROUTE_PLAN_KEY, SOLO_PLAN_KEY } from './routePlan';
+import { SKILL_GOALS_KEY, loadSkillGoals } from './skillGoals';
+import { mergeSkillStores } from '../engine/skillGoal';
+import type { SkillGoalStore } from '../models/skillGoals';
 import { CURRENT_BACKUP_SCHEMA_VERSION, ALL_CATEGORIES, type NormalizedBackupData, type BackupDataCategory, type CategoryAction, type PlanPolicy, type ImportDiffEntry, type ImportPreview } from './backupTypes';
 import { type ResolvedListCategory, type Keyed, resolveListCategory, mergeSettingsHistory, shallowEqual } from './backupMerge';
 
@@ -36,6 +39,8 @@ interface CurrentData {
   strengthProgramStrategies: StrengthProgramStrategy[];
   strengthProgramRecommendations: StrengthProgramRecommendation[];
   planChangeProposals: PlanChangeProposal[];
+  // Het doel Vaardigheid; optional so a caller without it reads as "nothing on the device".
+  skillGoals?: SkillGoalStore;
 }
 
 export async function loadCurrentData(): Promise<CurrentData> {
@@ -54,7 +59,8 @@ export async function loadCurrentData(): Promise<CurrentData> {
     StrengthProgramRecommendationsRepo.getAll(),
     PlanChangeProposalsRepo.getAll(),
   ]);
-  return { program: programs[0] ?? null, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals };
+  const skillGoals = await loadSkillGoals();
+  return { program: programs[0] ?? null, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals, skillGoals };
 }
 
 interface DiffResult {
@@ -174,6 +180,11 @@ export function computeDiff(
   const settingsChanges: { key: string; current: unknown; incoming: unknown }[] = [];
   let resolvedSettings: AppSettings | undefined;
   const meta: Record<string, unknown> = {};
+  // Het doel Vaardigheid travels with the goals. The cleared steps only ever merge (append-only, like milestone
+  // progress); with Vervangen a goal of the file wins over the one on the device with the same id.
+  if (backup.skillGoals && (goalsAction === 'merge' || goalsAction === 'replace')) {
+    meta[SKILL_GOALS_KEY] = mergeSkillStores(current.skillGoals ?? { goals: [], progress: [] }, backup.skillGoals, goalsAction === 'replace');
+  }
   if (settingsAction === 'replace') {
     const incoming = mergeSettingsHistory(current.settings, backup.settings);
     resolvedSettings = { ...current.settings, ...incoming };
@@ -238,13 +249,22 @@ export function fixedSportImportNote(backup: Pick<NormalizedBackupData, 'planned
   return `Deze back-up heeft vaste afspraken voor ${names(notFixed)}, maar op deze telefoon staat die sport niet op Vaste dag. Die keuze blijft; de volgende planningsronde haalt de open afspraken weg en zegt dat. Wat je verplaatste, oversloeg of logde blijft staan.`;
 }
 
+// Vaardigheden in de back-up: ze reizen mee met Doelen en mijlpalen en komen erbij, ook bij Vervangen; wat op dit
+// toestel staat blijft (engine/skillGoal.ts#mergeSkillStores).
+export function skillGoalImportNote(skillGoals: SkillGoalStore | undefined, goalsAction: CategoryAction): string | undefined {
+  if (!skillGoals || (goalsAction !== 'merge' && goalsAction !== 'replace')) return undefined;
+  const n = skillGoals.goals.filter((g) => !g.removedAt).length;
+  if (n === 0) return undefined;
+  return `Deze back-up heeft ${n === 1 ? 'één vaardigheid' : `${n} vaardigheden`}. Ze ${n === 1 ? 'komt' : 'komen'} erbij; vaardigheden en gehaalde stappen op dit toestel blijven staan.`;
+}
+
 export async function buildImportPreview(
   backup: NormalizedBackupData,
   categorySelections: Partial<Record<BackupDataCategory, CategoryAction>>,
   planPolicy: PlanPolicy | undefined,
 ): Promise<ImportPreview> {
   const current = await loadCurrentData();
-  const { diffByCategory, settingsChanges } = computeDiff(current, backup, categorySelections, planPolicy);
+  const { diffByCategory, settingsChanges, effective } = computeDiff(current, backup, categorySelections, planPolicy);
 
   const recordCounts: Partial<Record<BackupDataCategory, number>> = {
     program_and_templates: backup.templates.length,
@@ -263,6 +283,7 @@ export async function buildImportPreview(
       : undefined;
   const logsSinceBackup = current.sessionLogs.filter((l) => l.completedAt > backup.createdAt).length;
   const fixedSportNote = fixedSportImportNote(backup, current.settings);
+  const skillGoalNote = skillGoalImportNote(backup.skillGoals, effective.objectives_and_milestones);
 
   return {
     backupMeta: {
@@ -275,6 +296,7 @@ export async function buildImportPreview(
       logsSinceBackup,
       skippedInvalid: backup.skippedInvalid,
       ...(fixedSportNote ? { fixedSportNote } : {}),
+      ...(skillGoalNote ? { skillGoalNote } : {}),
     },
     diffByCategory,
     settingsChanges,

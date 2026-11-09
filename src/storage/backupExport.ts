@@ -6,6 +6,7 @@ import { morningsForBackup, resolveMorningBackup } from '../engine/morningBackup
 import { MISSED_MEMORY_KEY, resolveMissedMemory } from '../engine/missedTraining';
 import { ProgramsRepo, SessionTemplatesRepo, PlannedSessionsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, InjuryNotesRepo, SettingsRepo, MetaRepo, PlanChangeProposalsRepo, ActivityStreamsRepo, RecoveryMetricsRepo, StrengthProgramStrategiesRepo, StrengthProgramRecommendationsRepo } from './database';
 import { serializeStreams } from '../engine/streamPack';
+import { loadSkillGoals } from './skillGoals';
 import { RoutePlanRepo, SoloPlanRepo } from './routePlan';
 import { CURRENT_BACKUP_SCHEMA_VERSION, type AscendBackupEnvelope, type AscendBackupPayloadV5 } from './backupTypes';
 
@@ -44,6 +45,7 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
     SoloPlanRepo.get(),
   ]);
   const missedMemory = await MetaRepo.get<unknown>(MISSED_MEMORY_KEY);
+  const skillGoals = await loadSkillGoals();
 
   const payload: AscendBackupPayloadV5 = {
     version: 5,
@@ -68,6 +70,8 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
     soloPlan: soloPlan.updatedAt ? soloPlan : null,
     // Your answers on "Training die niet doorging", only when there are any (engine/missedTraining.ts).
     ...(missedMemory !== undefined ? { missedTraining: resolveMissedMemory(missedMemory) } : {}),
+    // Het doel Vaardigheid, only when there is something (storage/skillGoals.ts).
+    ...(skillGoals.goals.length > 0 || skillGoals.progress.length > 0 ? { skillGoals } : {}),
   };
 
   // The full series of runs and tochten, as base64. They may not be fetchable again from the
