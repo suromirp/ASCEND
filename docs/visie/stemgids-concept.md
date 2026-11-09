@@ -115,6 +115,10 @@ Dit is de oude keuze (C met A waar het moet) in één zin. Humor hooguit één k
 3. Loopjes of lopen: nu staan loopjes, loop, buitenloop en testloop door elkaar. Eén woord voor een training die je loopt, en loopjes alleen als telling?
 4. Welke Engelse vakwoorden blijven? Voorstel: 1RM, RIR, tempo, fartlek, zone 2, step-down.
 
+## Antwoord van de eigenaar (9 november)
+
+Goedgekeurd, met het advies op elke vraag: de uitleg achter de i hoogstens ongeveer 40 woorden per onderwerp; "gedaan is vol, gepland is gestippeld" voor alle legenda's; "loop" voor een training die je loopt, "loopjes" alleen als telling; Engels blijven 1RM, RIR, tempo, fartlek, zone 2 en step-down. Stap 3 mag beginnen.
+
 ## Vervangt
 
 Na keuring `docs/beslissingen/2026-10-27-stem-van-ascend.md`. Tot die tijd geldt het oude besluit.
