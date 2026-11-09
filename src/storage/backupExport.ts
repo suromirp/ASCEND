@@ -1,4 +1,4 @@
-// Back-up maken: de envelop en de bestandsnaam (zie backup.ts voor de hele stroom).
+// Back-up maken: de envelop en de bestandsnaam (zie backupApply.ts voor de hele stroom).
 
 import { localDateOf, todayISO } from '../utils/dates';
 import { logIdsForBackup, resolveStreamsBackup, type StreamsBackup } from '../engine/streamsBackup';

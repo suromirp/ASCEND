@@ -2,28 +2,32 @@
 
 Wat nog op de lijst staat, zodat een nieuwe sessie het niet uit het gesprek hoeft te halen. De
 coördinator houdt dit bij: iets wat live staat gaat eruit, iets nieuws komt erbij met een regel uitleg.
-Bijgewerkt op 1 november 2026.
+Bijgewerkt op 9 november 2026.
 
 ## Inbox
 
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
 Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
-- 8 november, uit het onderhoud, wat na het bouwmoment van 8 november bleef: hulpfuncties samenbrengen, ronde 2 en 3 (hoofdletter eerst in `MacroFactorLinkCard`, `WeatherTodayCard`, `clothing`, `settingsSummary`, `goalList`; afronden `round1` en `round2`; `joinNL` en `median` in `weather.ts`, `clothing.ts`, `forgeTimeCap.ts`; `mean` in `sweat.ts`); de losse re-exportregels (`ambition.ts`, `autoTick.ts`, `bodyCheck.ts`, `bodyMap.ts`, `scheduler.ts`, `backup.ts`) en de dode code `SkyPanel` en `adviceForLog` opruimen; `ForgeWorkout.tsx` verder opsplitsen (ronde 1 is af: nog 1413 regels, ronde 2 is de volgende, nooit naast een ander Forge-spoor). AdventureCard.tsx en LessonCard.tsx blijven (besluit 2 november).
-- 8 november, uit de review van het bouwmoment: `ForgeWorkout.tsx` rond regel 999 rekent `capRemovedFor` twee keer uit (naar een const); de Forge-melding Spieren voor de berg heeft geen eigen schakelaar (Forge zit op het maximum van 6 rijen); de afstandszin op Vandaag blijft afhankelijk van een testloop (vraag aan de eigenaar: moeten eigen lopen de zin ook zonder testloop geven?); regen in het komende uur: `inFlight` in `storage/rainSoon.ts` hoort per plaats te zijn, en de echte Open-Meteo-aanroep (`minutely_15`) is nog niet live gezien.
+- 9 november, uit de review van het bouwmoment (Forge afvinken is het doel): `forgeWorkout.ts` `weightKgAsked` volgt `target`, niet het gewicht dat Forge na een bijstelling in de rij zette (een lichter voorstel dat je afvinkt telt niet als bevestigd; bewaar een `forgeKg` naast `forgeReps` of beschrijf het); `strengthModel.ts` `allAtTop` telt ook niet-bevestigde en te lage sets; regel 4 (kracht) en regel 5 (stap) lezen de RIR verschillend (zeggen in het besluit of gelijktrekken); na een pauze houdt een bevestigde set op een lichter voorschrift de kracht vast; `forgeInput.ts` `mergeDraft`: `trainings: d.trainings ?? f.trainings` voor een oud concept; een kleine test voor de drie takken van `refitAfterFill`; de ijkset eens per vier weken en een uitlegzin bij de bolletjes ("Twijfel je tussen twee, kies het lagere") van het RIR-verslag. Stappen 6 tot 8 van het verslag (vermoeidheid tussen oefeningen) is het volgende Forge-spoor.
+- 9 november, uit het onderhoud, nog open: de hoofdletterkopieën in `placeReason`, `weekDrag`, `weekProfile`, `sportsScreen`, `weatherSwap`, `weekFixProposal`, `legDayEase` en `forgeHistory.ts` (`round1`); de ongebruikte CSS voor `.sky-panel` in `index.css`; `ForgeWorkout.tsx` is nog 993 regels (ronde 3 van het opsplitsen, nooit naast een ander Forge-spoor); lintwaarschuwingen `react(refs)` in `useForgeClock.ts` en `useForgePager.ts` en `scrollToRow` in `ForgeWorkout.tsx`.
+- 9 november, uit de doorloop: Heuvels en trappen: de echte Overpass-aanroep en de hoogte-aanroep zijn nog niet live gezien; de hoogteaanroep staat in `overpass.ts` en kan later samen met UV en zon in `openMeteo.ts`; vakantieadres en periode "Zonder sportschool" gebruiken de terreinregel nog niet; de afstandszin zonder testloop is alleen met engine-tests gezien, nog niet met een eigen stand in het scherm (zie Lookout r2).
+- 8 november, uit de review van het bouwmoment, nog open: de Forge-melding Spieren voor de berg heeft geen eigen schakelaar (Forge zit op het maximum van 6 rijen).
 
 ## Rooster voor de bouwmomenten
 
 Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden). Afgerond: naar "Live op" en uit dit rooster.
 
-1. Nog open uit ronde 1: Scout: RIR en RPE in de beste apps, met vermoeidheid tussen oefeningen (onderzoek, geen bestandsconflict; liep mee zodra er ruimte is). Planner, tijdsgrens, Spieren voor de berg en Buiten klein (regen in het komende uur, maanstand; UV en zon bestonden al) zijn af (8 november).
-2. Forge: afvinken is de RIR van het doel (ook oude workouts) en vermoeidheid tussen oefeningen ‖ Heuvels en trappen in de buurt (OpenStreetMap) ‖ Scout: calisthenics en uitleg bij oefeningen (apps, wetenschap, open databases).
+1. Af (8 en 9 november): Planner, tijdsgrens, Spieren voor de berg, Buiten klein, Scout RIR en RPE (`docs/onderzoek/RIR en RPE in krachtapps.md`).
+2. Af (9 november): Forge afvinken is de RIR van het doel (stap 1 tot 5; vermoeidheid tussen oefeningen blijft liggen als stap 6 tot 8) ‖ Heuvels en trappen in de buurt ‖ Scout calisthenics en uitleg bij oefeningen (twee verslagen in `docs/onderzoek/`).
 3. Forge: gewicht op een toestel ‖ Periode "Zonder sportschool" en feestdagen als voorstel (opus) ‖ Tempo bij zone 2 (Scout kort, dan bouwen).
 4. Forge: ruilen met een echte vervanger ‖ Gewicht uit Health Connect als trend ‖ Uitleg bij oefeningen: proef met vijf teksten (Scribe).
 5. Uitleg bij oefeningen, de rest ‖ Calisthenics ontwerp ‖ Voor de GR5: waarschuwingen, hutten, lawines.
 6. tot 8. Calisthenics bouwen ‖ Alle teksten herschrijven en Engels, per tab ‖ Oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten).
 
 ## Loopt nu
+
+Live op 9 november (derde bouwmoment): Forge afvinken telt als het doel (instelling in Rekenmodel, bevestigde sets, strengere stap, vragen bij twijfel, twee nieuwe logvelden met migratie), Heuvels en trappen in de buurt (OpenStreetMap, instelling), ForgeWorkout verder opgesplitst (993 regels), gedeelde hulpfuncties, re-exports en dode code weg, regen per plaats, de afstandszin op Vandaag ook zonder testloop, drie onderzoeksverslagen.
 
 Live op 8 november (tweede bouwmoment): regen in het komende uur en maanstand (twee instellingen in Weer en kleding), de telling "weg door je tijdsgrens" klopt bij Lichter, ForgeWorkout een eerste keer opgesplitst, gedeelde mean, stdev, median en joinNL in utils, 27 exports privé, de afstandszin op Vandaag in het enkelvoud bij één loop.
 

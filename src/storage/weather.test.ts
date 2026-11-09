@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SettingsRepo, wipeAllData } from './database';
 import { clearWeather, getWeatherState, isFetchDue, onWeatherChange, syncWeather } from './weather';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 import { rawOpenMeteo } from '../engine/fixtures/weatherFixture';
 
 // Verzonnen plaatsen: de coördinaten wijzen nergens heen.

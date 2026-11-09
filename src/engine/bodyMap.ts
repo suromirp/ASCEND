@@ -14,8 +14,6 @@ import {
   COOLDOWN_LOWER, COOLDOWN_RECOVERY, COOLDOWN_RUN, COOLDOWN_UPPER, DYNAMIC_WARMUP, EVENING_ROUTINE, MORNING_ROUTINE, PROBLEM_AREAS,
 } from '../data/stretches';
 
-export type { BodySpot, BodyView, BodySide } from '../data/bodySpots';
-export { isSoreness, sorenessEnd } from './injuryKind';
 
 export const BODY_VIEWS: { value: BodyView; label: string }[] = [
   { value: 'front', label: 'Voorkant' },

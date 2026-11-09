@@ -215,7 +215,6 @@ function testPairConflict(test: SessionTemplate, testDate: string, other: Sessio
 // heavy leg day, the long run, hills or intervals that count as heavy for the legs, a hike. Read through the
 // roles and the stress profile, never through template ids. Setting "Rust voor een test": 72 hours (the
 // advice) or 48. Set from the settings on every refresh, like "Zware dingen op één dag".
-export { resolveTestRest, TEST_REST_ADVICE, type TestRestHours };
 let testRestDays = TEST_REST_ADVICE / 24;
 export function setTestRestHours(hours: TestRestHours | undefined): void {
   testRestDays = resolveTestRest(hours) / 24;
@@ -768,5 +767,3 @@ export function proposeNoTimeToday(
   }
   return proposals;
 }
-
-export { addDays };

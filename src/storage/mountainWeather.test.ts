@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { wipeAllData } from './database';
 import { getMountainWeather, refreshMountainWeather } from './mountainWeather';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 
 // Nagemaakte plek en antwoorden: geen netwerk.
 const place = { name: 'Bergdorp', lat: 45.1, lon: 6.9 };

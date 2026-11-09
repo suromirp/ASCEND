@@ -84,7 +84,7 @@ export function mayRetryAutoBackup(failedAt: string | undefined, now: Date): boo
 
 // ---- bestanden ---------------------------------------------------------------------------
 
-// De vorm van `storage/backup.ts#backupFileName`: ascend-JJJJ-MM-DD.ascend-backup.json. Staat er op die
+// De vorm van `storage/backupExport.ts#backupFileName`: ascend-JJJJ-MM-DD.ascend-backup.json. Staat er op die
 // dag al een bestand met die naam dat niet van de automatische back-up is, dan krijgt hij een volgnummer
 // (ascend-JJJJ-MM-DD-2.ascend-backup.json): een vreemd bestand wordt nooit overschreven.
 const NAME_RE = /^ascend-(\d{4}-\d{2}-\d{2})(?:-([2-9]|[1-9]\d+))?\.ascend-backup\.json$/;

@@ -21,6 +21,8 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import type { WeatherForecast } from '../models/weather';
 import { templateSport } from './sports';
 import { weatherForTraining, weatherLine, type SessionWeather } from './weather';
+import { capitalize } from '../utils/capitalize';
+import { joinNL } from '../utils/joinNL';
 
 // --- what kind of training ------------------------------------------------------
 
@@ -181,12 +183,7 @@ export interface ClothingAdvice {
   darkShown?: boolean;
 }
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-const sentence = (s: string) => `${cap(s)}.`;
-
-function joinNL(parts: string[]): string {
-  return parts.length <= 1 ? parts.join('') : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1]}`;
-}
+const sentence = (s: string) => `${capitalize(s)}.`;
 
 type Slot = 'body' | 'ext' | 'outer' | 'feet' | 'sun' | 'dark';
 

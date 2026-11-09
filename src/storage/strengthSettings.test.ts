@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SettingsRepo, wipeAllData } from './database';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { DEFAULT_PROFILE, resolveStrengthSettings } from '../engine/strengthSettings';
 
 // Made-up settings. The choices and the gym profile of Forge (Kracht meerekenen)

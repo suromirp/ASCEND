@@ -328,7 +328,7 @@ export interface AppSettings {
   streamsBackup?: 'twoYears' | 'all' | 'none';
   // "Ochtendgetallen in back-up" (engine/morningBackup.ts): the date, resting heart rate, HRV,
   // sleep duration and sleep score of each morning travel in the backup (payload.mornings).
-  // Absent = on. Optional and additive; checked on import like the other switches (storage/backup.ts).
+  // Absent = on. Optional and additive; checked on import like the other switches (storage/backupNormalize.ts).
   morningInBackup?: boolean;
   // "Melden als je horloge stilvalt" (engine/sourceWatch.ts): one quiet line on Vandaag when
   // nothing comes in from the watch for three days while the link works. Absent = on.
@@ -432,7 +432,7 @@ export interface AppSettings {
   // "Forge" / Kracht meerekenen (engine/strengthSettings.ts): the switch, the
   // choices and the gym profile. Absent or missing keys = the advice. Optional
   // and additive; travels with the settings in a backup, where only valid
-  // values are kept (storage/backup.ts).
+  // values are kept (storage/backupNormalize.ts).
   strengthModel?: StrengthSettings;
   // What you told ASCEND about the clothing advice: degrees to dress lighter
   // (plus) or heavier (minus), per sport, plus or minus 4 at most
@@ -488,7 +488,7 @@ export interface AppSettings {
   // "Loopinzicht" (engine/runInsightSettings.ts): the two lines after a run or
   // tocht, the weather lookup and the chest strap. Absent or missing keys = the
   // advice. Optional and additive; travels with the settings in a backup, where
-  // only valid values are kept (storage/backup.ts).
+  // only valid values are kept (storage/backupNormalize.ts).
   runInsight?: RunInsightSettings;
   // "Ochtendmelding" (engine/morningNotice.ts): a notice in the morning with the
   // question how you feel, shown by the service worker on a periodic sync. Absent
@@ -499,7 +499,7 @@ export interface AppSettings {
   // De meldingen van de Android-app (engine/deviceNotices.ts, docs/beslissingen/2026-11-01-android-app.md):
   // "Einde van de rust" (een melding op de eindtijd van de rust in Forge, ook met het scherm uit) en
   // "Weekmelding op zondag" met zijn tijd. Absent = aan, om 19:00. In de browser doen ze niets.
-  // Optional and additive, so no migration step; a backup keeps only valid values (storage/backup.ts).
+  // Optional and additive, so no migration step; a backup keeps only valid values (storage/backupNormalize.ts).
   restNotice?: boolean;
   weekNotice?: boolean;
   weekNoticeTime?: '18:00' | '19:00' | '20:00' | '21:00';

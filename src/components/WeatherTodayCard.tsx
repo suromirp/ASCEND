@@ -18,10 +18,10 @@ import { templateSport } from '../engine/sports';
 import { addDays, todayISO, weekdayLongNL } from '../utils/dates';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { Card, Eyebrow } from './ui';
+import { capitalize } from '../utils/capitalize';
 
 const TONE = { prima: 'var(--color-ink)', let_op: 'var(--color-warning)', slecht: 'var(--color-danger-text)' } as const;
 
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function dayLabel(date: string, today: string): string {
   if (date === today) return 'Vandaag';

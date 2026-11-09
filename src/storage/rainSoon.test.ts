@@ -32,4 +32,21 @@ describe('refreshRainSoon', () => {
     const fetchImpl = (() => Promise.resolve(new Response(JSON.stringify({ utc_offset_seconds: 0, minutely_15: { time: [], precipitation: [] } })))) as unknown as typeof fetch;
     expect(await refreshRainSoon(place, { fetchImpl })).toBeUndefined();
   });
+
+  it('twee plaatsen tegelijk halen elk hun eigen antwoord op', async () => {
+    const other = { name: 'Andere stad', lat: 47.4, lon: 8.5 };
+    const fetchImpl = vi.fn(ok) as unknown as typeof fetch;
+    const now = new Date('2026-11-08T16:40:00Z');
+    const [a, b] = await Promise.all([refreshRainSoon(place, { fetchImpl, now }), refreshRainSoon(other, { fetchImpl, now })]);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(a?.place.name).toBe('Teststad');
+    expect(b?.place.name).toBe('Andere stad');
+  });
+
+  it('dezelfde plaats tegelijk wordt maar een keer opgehaald', async () => {
+    const fetchImpl = vi.fn(ok) as unknown as typeof fetch;
+    const now = new Date('2026-11-08T16:40:00Z');
+    await Promise.all([refreshRainSoon(place, { fetchImpl, now }), refreshRainSoon({ ...place, lat: 52.1004 }, { fetchImpl, now })]);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
 });

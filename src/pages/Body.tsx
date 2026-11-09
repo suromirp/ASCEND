@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { BODY_VIEWS, breakableSpotName, noteTitle, openComplaints, openComplaintsBySpot, openSoreness, openSorenessBySpot, resolvedComplaints, spotById, type BodyView } from '../engine/bodyMap';
+import { BODY_VIEWS, breakableSpotName, noteTitle, openComplaints, openComplaintsBySpot, openSoreness, openSorenessBySpot, resolvedComplaints, spotById } from '../engine/bodyMap';
+import type { BodyView } from '../data/bodySpots';
 import { recurrenceRange, recurringSpots, RECURRENCE_WEEKS, type RecurringSpot } from '../engine/bodyRecurrence';
 import type { InjuryNote } from '../models/injury';
 import { kindOf } from '../engine/injuryKind';

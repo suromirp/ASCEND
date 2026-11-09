@@ -286,17 +286,21 @@ describe('uit de review', () => {
     });
   });
 
-  it('een stap zwaarder alleen op een gemeten RIR', () => {
+  it('een stap zwaarder alleen op een gemeten RIR (met Afvinken telt als het doel uit)', () => {
     const work = (reps: number, rirAssumed = false): SetLog => ({ reps, weightKg: 60, rir: 2, ...(rirAssumed ? { rirAssumed: true } : {}) });
     const sessions = (assumed: boolean): SessionInput[] => [
       { date: '2026-09-01', sets: [work(9), work(9), work(9)] },
       { date: '2026-09-08', sets: [work(11, assumed), work(11, assumed), work(11, assumed)] },
     ];
-    const input = (assumed: boolean) => ({ exercise: exerciseById('bench-press')!, sessions: sessions(assumed), date: '2026-09-15', settings: resolveStrengthSettings({}), plan: { low: 9, high: 11, rir: 2 } });
+    const input = (assumed: boolean, assumedCounts = false) => ({ exercise: exerciseById('bench-press')!, sessions: sessions(assumed), date: '2026-09-15', settings: resolveStrengthSettings({ assumedCounts }), plan: { low: 9, high: 11, rir: 2 } });
     expect(prescribe(input(false))!.raised).toBeDefined();
     const p = prescribe(input(true))!;
     expect(p.raised).toBeUndefined();
     expect(p.reason).not.toContain('over.');
+    // Aan (het advies): alle werksets haalden de bovenkant zoals gevraagd, dus wel een stap, zonder "met 2 over".
+    const confirmed = prescribe(input(true, true))!;
+    expect(confirmed.raised).toBeDefined();
+    expect(confirmed.reason).not.toContain('over.');
   });
 
   it('past er geen gewicht en haal je de onderkant niet, dan blijft de volgende set staan (dumbbells, grove stap)', () => {

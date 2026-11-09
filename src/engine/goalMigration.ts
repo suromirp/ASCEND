@@ -2,7 +2,7 @@
 //
 // Kept separate from storage/goalMigration.ts (which only orchestrates
 // reading/writing IndexedDB) so the exact same transform can also be used
-// by storage/backup.ts to correctly restore a pre-Phase-1 backup — without
+// by storage/backupNormalize.ts to correctly restore a pre-Phase-1 backup — without
 // this, restoring an old export would silently lose GR5/marathon goal data
 // migrated on the original device. Pure functions, no IndexedDB — matches
 // the platform-agnostic-core boundary (Technical Architecture v0.3.1

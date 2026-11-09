@@ -34,7 +34,7 @@ const everything: AppSettings = {
     estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'gong', keepScreenOn: false, carryMode: 'off', showPlates: false, quickRir: false,
     showOneRm: false, oneRmView: 'work_weight', showMacroFactorOneRm: false, compareWeeks: '2_4', listSort: 'name', showExtras: false,
     showTrendLines: false, stackWeights: 'used_only', lighterAfterBreak: false, dumbbellLog: 'total', fatigue: 'fixed', showComparison: true,
-    adjustLive: false, reckon: false, noSpotter: false, mountainMuscles: false, rirPrefill: 'target',
+    adjustLive: false, reckon: false, assumedCounts: false, noSpotter: false, mountainMuscles: false, rirPrefill: 'target',
   },
   showBodyFat: false,
   exerciseArt: 'uit',
@@ -50,7 +50,7 @@ const everything: AppSettings = {
   intensityCounting: 'plan',
   overviews: {
     morningCheckIn: false, morningCard: false, legsAfterEffort: false, morningCardFrom: '7', weekReview: false, weekReviewDay: 'sunday', weeklyQuestion: false,
-    weatherLine: false, weatherSwap: false, bestMoment: false, rainSoon: false, moonLine: false, clothingAdvice: false, completionMoment: false,
+    weatherLine: false, weatherSwap: false, bestMoment: false, rainSoon: false, hillsNearby: false, moonLine: false, clothingAdvice: false, completionMoment: false,
   },
   askShortNight: false,
   askDoubtTest: false,

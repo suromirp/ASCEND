@@ -334,6 +334,18 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'dan blijven de vakken staan zoals Forge ze voorstelde, en gaat het gewicht pas omhoog als je geschatte kracht dat vraagt.' },
     ],
   },
+  forgeAfvinkenDoel: {
+    title: 'Afvinken telt als het doel',
+    lead: 'Vink je een set af zonder te kiezen, dan telt het doel als wat je over had, behalve bij twijfel.',
+    points: [
+      { head: 'Wanneer het telt', text: 'je deed minstens de herhalingen die Forge vroeg, met minstens het gewicht van het voorschrift, en de set erna viel niet 2 of meer tekort.' },
+      { head: 'Je geschatte kracht', text: 'precies wat gevraagd was houdt je kracht vast. Meer herhalingen tellen voor de helft mee.' },
+      { head: 'Een stap zwaarder', text: 'pas als al je werksets de bovenkant van het bereik halen, of je topset twee keer achter elkaar.' },
+      { head: 'Bij twijfel', text: 'vraagt Forge na de set hoeveel je over had: minder dan gevraagd, 2 of meer boven het bereik, de eerste set op een zwaarder gewicht, en je eerste drie trainingen van een oefening.' },
+      { head: 'Oudere trainingen', text: 'tellen ook mee, met de onderkant van het bereik als gevraagd aantal. Je log zelf verandert niet.' },
+      { head: 'Uit', text: 'dan telt een set zonder eigen RIR zoals voorheen, en vraagt Forge alleen na de eerste, een zware en de laatste set.' },
+    ],
+  },
   forgePauze: {
     title: 'Na een pauze lichter beginnen',
     lead: 'Na meer dan vier weken zonder krachttraining begint het voorstel iets lichter.',
@@ -1316,7 +1328,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   bundelWeer: {
     title: 'Weer en kleding',
-    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, regen in het komende uur, de maanstand bij een avondtocht, kleding, en een regel bij hitte of slechte lucht.',
+    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, regen in het komende uur, een helling of trap in de buurt, de maanstand bij een avondtocht, kleding, en een regel bij hitte of slechte lucht.',
     points: [
       { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
       { head: 'Je plaats', text: 'het weer volgt de plaats die je bij Plaats koos.' },

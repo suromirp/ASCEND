@@ -2,7 +2,8 @@
 // Puur: geen React.
 
 import type { WorkoutExercise } from '../../engine/forgeWorkout';
-import type { ForgeEvent } from '../../engine/forgeLog';
+import { cleanForgeLog, spotterEvents, type ForgeEvent } from '../../engine/forgeLog';
+import { makeId } from '../../utils/id';
 import type { Pause } from '../../engine/forgeSession';
 import { poundStackProposal, poundStackText } from '../../engine/poundStack';
 import type { Rest } from './forgeWorkoutHelpers';
@@ -39,4 +40,14 @@ export function lastActionOfDraft(d: Partial<WorkoutDraft>, startedAt: number): 
 export function poundLine(ex: WorkoutExercise, profile: Parameters<typeof poundStackProposal>[1]): string | undefined {
   const p = poundStackProposal(ex, profile);
   return p ? poundStackText(p) : undefined;
+}
+
+// Het verloop bij het openen: leeg, of het bewaarde verloop, met het teken "Zonder spotter" van het plan van nu.
+export function initialForgeLog(workout: WorkoutExercise[], restored: WorkoutDraft | undefined, readOnly: boolean): ForgeEvent[] {
+  if (readOnly) return restored ? (cleanForgeLog(restored.log) ?? []) : [];
+  const fresh = spotterEvents(workout, Date.now(), () => makeId('fe'));
+  if (!restored) return fresh;
+  // Een concept van voor Zonder spotter krijgt het plan van nu (mergeDraft); het teken komt dan ook in het verloop.
+  const kept = cleanForgeLog(restored.log) ?? [];
+  return [...kept, ...fresh.filter((f) => !kept.some((k) => k.kind === 'spotter' && k.exerciseId === f.exerciseId))];
 }

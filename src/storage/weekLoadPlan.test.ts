@@ -14,7 +14,8 @@ import {
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type HorizonPlan } from './horizonPlan';
 import { undoPlanChangeNow } from './undoPlanChange';
 import { weekLoadInput } from './weekLoadPlan';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { isRestWeekAt } from '../engine/weekLoadChange';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { addDays, mondayOfWeek } from '../utils/dates';

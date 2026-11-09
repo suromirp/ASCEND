@@ -15,6 +15,7 @@ import { cleanExerciseName } from './exerciseMatch';
 import { MOUNTAIN_MUSCLES } from './mountainMuscles';
 import { exerciseKey } from './strengthHistory';
 import { isLegHeavyTemplate } from './scheduler';
+import { joinNL } from '../utils/joinNL';
 
 export const TIME_CAP_OPTIONS = [0, 45, 60, 75, 90] as const;
 export type TimeCap = (typeof TIME_CAP_OPTIONS)[number];
@@ -127,11 +128,6 @@ export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: Exer
 }
 
 const roundTo5 = (m: number) => Math.max(5, Math.round(m / 5) * 5);
-
-function joinNL(names: string[]): string {
-  if (names.length <= 1) return names.join('');
-  return `${names.slice(0, -1).join(', ')} en ${names.at(-1)}`;
-}
 
 // De ene rustige regel in Forge, alleen als er iets wegviel.
 // "Ingekort tot ongeveer 60 minuten: 2 sets bijwerk vallen weg."
