@@ -199,8 +199,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
       // Geen namen: die staan al onder "Blijven liggen" op de terugblik.
       `${missedNames.length === 1 ? 'Eén training is' : `${missedNames.length} trainingen zijn`} blijven liggen. ` +
       (keyMissed
-        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die haalt ASCEND in op een vrije dag als dat past. De rest laat je los.`
-        : 'Laat ze los. Stapelen helpt niet. Volgende week volgt het plan.'),
+        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die verplaatst ASCEND naar een vrije dag als dat past. De rest laat je los.`
+        : 'Laat los wat blijft liggen. Dubbel doen helpt niet. Volgende week volgt het plan.'),
     );
   }
   // The same training missing two weeks in a row: a pattern, not bad luck.

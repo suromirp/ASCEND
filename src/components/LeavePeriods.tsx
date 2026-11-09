@@ -243,7 +243,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                       <Segmented tall label="Hoeveel" value={noGym.amount} onChange={(v) => setGym({ amount: v })} options={[{ value: 'light', label: 'Licht' }, { value: 'normal', label: 'Gewoon' }]} />
                     </div>
                     <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                      {noGym.amount === 'light' ? 'Twee keer lopen per week, korter en rustig. Het advies.' : 'Je lopen blijven staan, korter en rustig.'}
+                      {noGym.amount === 'light' ? 'Twee keer lopen per week, korter en rustig. Het advies.' : 'Je looptrainingen blijven staan, korter en rustig.'}
                     </p>
                   </div>
                   <div>
