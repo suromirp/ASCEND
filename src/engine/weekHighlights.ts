@@ -27,12 +27,12 @@ export function weekHighlights(r: WeekReview): Highlight[] {
     out.push({
       tone: 'normal', icon: 'week',
       text: left + (r.keyMissedName
-        ? `De ${lower(r.keyMissedName)} is de belangrijkste van de week; die haalt ASCEND in op een vrije dag als dat nog past. De rest laat je los.`
-        : 'Laat los wat blijft liggen: inhalen door te stapelen is geen goed idee.'),
+        ? `De ${lower(r.keyMissedName)} is de belangrijkste van de week. Die verplaatst ASCEND naar een vrije dag als dat past. De rest laat je los.`
+        : 'Laat los wat blijft liggen. Dubbel doen helpt niet.'),
     });
   }
   if (r.heavier >= 2) {
-    out.push({ tone: 'normal', icon: 'info', text: 'Twee of meer trainingen voelden zwaarder dan gepland. Voelt het volgende week weer zo, kies dan de korte versie of houd de minuten gelijk.' });
+    out.push({ tone: 'normal', icon: 'info', text: 'Twee of meer trainingen voelden zwaarder dan gepland. Voelt het volgende week weer zo? Kies de korte versie of houd de minuten gelijk.' });
   } else if (r.lighter >= 2) {
     out.push({ tone: 'normal', icon: 'info', text: 'Een paar trainingen voelden lichter dan gepland. Dat kan een teken zijn dat je sterker wordt.' });
   }
@@ -43,7 +43,7 @@ export function weekHighlights(r: WeekReview): Highlight[] {
 
 // De ene feitregel onder de dagen.
 export function weekSummaryLine(r: WeekReview): string {
-  if (!r.running && r.done === 0 && r.minutes === 0) return 'Deze week kwam het er niet van. Volgende week begint gewoon volgens plan.';
+  if (!r.running && r.done === 0 && r.minutes === 0) return 'Geen trainingen deze week. Volgende week volgt het plan.';
   const time = r.minutes >= 60 ? `${hoursMinutes(r.minutes)} uur` : `${r.minutes} min`;
   const sports = r.perSport.map((p) => {
     const [name, rest] = p.split(': ');

@@ -7,7 +7,9 @@ import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
-import { groupByWeek, monthCompare } from '../engine/logbookMonth';
+import { monthCompare } from '../engine/logbookMonth';
+import { logbookWeeks, weighingsInRange, weightCardOn, weightSourceLabel } from '../engine/weightCard';
+import { weightsInUse } from '../engine/bodyWeight';
 import { DaySheet } from '../components/logbook/DaySheet';
 import { getModality } from '../data/modalities';
 import { LogDetailSheet } from '../components/LogDetailSheet';
@@ -87,7 +89,13 @@ export function HistoryPage() {
   // Wat je deed, tegen dezelfde dagen van vorige maand (engine/logbookMonth.ts). Geen noemer en geen "Gemist".
   const compare = useMemo(() => monthCompare({ anchor, today, logs: sessionLogs, plannedById }), [anchor, today, sessionLogs, plannedById]);
   const sportRows = useMemo(() => groupBySport(totalsLogs), [totalsLogs]);
-  const weeks = useMemo(() => groupByWeek(monthLogs), [monthLogs]);
+  // Een weging is een eigen regel tussen de trainingen (engine/weightCard.ts), met de schakelaar
+  // "Gewicht op Je stand".
+  const weighings = useMemo(() => {
+    const inUse = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+    return weightCardOn(settings.weightCard, inUse) ? weighingsInRange(inUse, start, end) : [];
+  }, [settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, settings.weightCard, start, end]);
+  const weeks = useMemo(() => logbookWeeks(monthLogs, weighings), [monthLogs, weighings]);
 
   const [selectedLog, setSelectedLog] = useState<SessionLog | null>(null);
   // "Wat speelde er": het teken bij een run met een opvallende hartslag, en een dag van de kalender.
@@ -201,7 +209,23 @@ export function HistoryPage() {
         <section key={w.weekStart} className="flex flex-col gap-2" aria-label={`Week van ${formatDateNL(w.weekStart)}`}>
           <WeekHeaderRow weekStart={w.weekStart} />
           <div className="flex flex-col gap-2">
-            {w.logs.map((log) => {
+            {w.items.map((item) => {
+              if (item.kind === 'weight') {
+                const [, day, month] = formatShortDayNL(item.entry.date).split(' ');
+                return (
+                  <div key={`weight-${item.entry.date}-${item.entry.source}`} className="flex min-h-[44px] items-center gap-3 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)' }}>
+                    <span className="h-5 w-1 shrink-0 rounded-full" style={{ background: 'var(--color-card-border)' }} aria-hidden />
+                    <span className="flex w-10 shrink-0 flex-col items-center leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }} aria-label={formatDateNL(item.entry.date)}>
+                      <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{day}</span>
+                      <span className="text-xs">{month}</span>
+                    </span>
+                    <p className="min-w-0 flex-1 break-words text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+                      <span style={{ color: 'var(--color-ink)' }}>Gewicht</span> · <Num>{formatNumberNL(item.entry.kg, 1)}</Num> kg · {weightSourceLabel(item.entry.source)}
+                    </p>
+                  </div>
+                );
+              }
+              const log = item.log;
               const template = templateById.get(log.templateId);
               const modalityKey = log.outdoorData?.modality ?? log.cardioData?.modality;
               const modalityLabel = modalityKey ? getModality(log.templateId, modalityKey)?.label : undefined;

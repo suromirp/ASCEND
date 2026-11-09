@@ -104,6 +104,7 @@ const everything: AppSettings = {
   weightFromMacroFactor: false,
   weightFromHealthConnect: false,
   weightTrend: false,
+  weightCard: false,
   stravaText: false,
   keepStreams: false,
   tempoStablePieces: false,

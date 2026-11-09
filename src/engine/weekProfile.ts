@@ -131,7 +131,7 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
 
   const legs = days.filter((d) => d.legTemplate);
   if (legs.length === 0) return `${heaviest} Geen zware beendag.`;
-  if (legs.length === 1) return `${heaviest} Eén zware beendag (${shortName(legs[0].legTemplate!)}): je benen hebben alle ruimte.`;
+  if (legs.length === 1) return `${heaviest} Eén zware beendag: ${shortName(legs[0].legTemplate!)}. Je benen hebben ruimte.`;
 
   // Per paar opeenvolgende beendagen: genoeg ruimte volgens de regel van de planner?
   interface Pair { first: DayLoad; second: DayLoad; gap: number; need: number; intended: boolean; trek: boolean }

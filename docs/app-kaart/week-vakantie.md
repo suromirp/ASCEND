@@ -16,8 +16,8 @@ Tijd
 Belasting per dag
 zware beendag
 vorige week
-Maandag was je zwaarste dag. Eén zware beendag (Lange duurloop): je benen hebben alle ruimte.
-De hoogte is minuten maal hoe zwaar het was.
+Maandag was je zwaarste dag. Eén zware beendag: Lange duurloop. Je benen hebben ruimte.
+Hoogte: minuten maal zwaarte.
 
 --- kaart 2 ---
 [knop: Rustige duurloopMa 26·56 min·zonder planGedaan]
@@ -42,6 +42,6 @@ Za 31 · niets gepland
 
 --- kaart 4 ---
 Vrije dagen en vakanties
-ASCEND houdt hier rekening mee. Tik op een periode om hem bij te werken. Wat je planning raakt zie je eerst als voorstel; pas na jouw Akkoord verandert er iets.
+Tik op een periode om hem bij te werken. Eerst een voorstel, pas na Akkoord verandert er iets.
 [knop: Vakantie zonder trainingma 9 nov t/m vr 13 nov · 5 dagen] (aria: Vakantie zonder training, ma 9 november t/m vr 13 november, bijwerken)
 [knop: Periode toevoegen]
