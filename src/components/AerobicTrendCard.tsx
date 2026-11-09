@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { aerobicTrend, formatPace, tempoPiecesOn, trendHeadline, trendVerdict, zone2Criteria } from '../engine/aerobicTrend';
 import { useExcludedLogIds } from './influence/useExcludedLogIds';
 import { todayISO } from '../utils/dates';
-import { Card, Eyebrow } from './ui';
+import { Card, Eyebrow, InfoButton } from './ui';
 import { TrendLineChart } from './TrendLineChart';
+import { Zone2InfoSheet } from './Zone2InfoSheet';
 
 // Je stand, sectie Lopen (moved here from Ascend): progress on easy runs, as pace at one zone 2 heart rate
 // (engine/aerobicTrend.ts). A line going up means faster at the same effort.
@@ -13,7 +14,9 @@ export function AerobicTrendCard() {
   // A training set to "Niet meetellen voor hartslag" stays out (engine/influence.ts).
   const excluded = useExcludedLogIds();
   const pieces = tempoPiecesOn(settings);
-  const trend = useMemo(() => aerobicTrend(sessionLogs, templates, program, settings.heartRate, todayISO(), excluded, { pieces }), [sessionLogs, templates, program, settings.heartRate, excluded, pieces]);
+  const today = todayISO();
+  const trend = useMemo(() => aerobicTrend(sessionLogs, templates, program, settings.heartRate, today, excluded, { pieces }), [sessionLogs, templates, program, settings.heartRate, today, excluded, pieces]);
+  const [info, setInfo] = useState(false);
   // The big number: the line today, the first estimate or the last week, with its label.
   const headline = trendHeadline(trend);
   const hasZones = !!(settings.heartRate?.lthr || settings.heartRate?.maxHr);
@@ -24,7 +27,10 @@ export function AerobicTrendCard() {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between">
-        <Eyebrow>Tempo bij zone 2</Eyebrow>
+        <span className="flex items-center gap-3">
+          <Eyebrow>Tempo bij zone 2</Eyebrow>
+          <InfoButton onClick={() => setInfo(true)} label="Wat tempo bij zone 2 zegt" />
+        </span>
         {headline && (
           <span className="flex flex-col items-end">
             <span className="font-sans text-2xl tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatPace(headline.paceSec)}<span className="text-sm"> /km</span></span>
@@ -48,6 +54,7 @@ export function AerobicTrendCard() {
         {trend.outsideZone > 0 ? ` ${trend.outsideZone} ${trend.outsideZone === 1 ? 'loopje zat' : 'loopjes zaten'} te ver van zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.` : ''}
         {!hasZones ? ' Vul bij Instellingen, Lichaam je hartslag in, dan telt alleen zone 2.' : ''}
       </p>
+      {info && <Zone2InfoSheet trend={trend} pieces={pieces} zones={hasZones} today={today} onClose={() => setInfo(false)} />}
     </Card>
   );
 }
