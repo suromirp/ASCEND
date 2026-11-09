@@ -175,3 +175,7 @@ Elke bouwer die de coördinator met `create_session` start, krijgt als laatste r
 ## Afgeronde bouwers archiveren (eigenaar 9 november)
 
 Komt de melding "Bouwer klaar" binnen en staat het werk op main, dan archiveert de coördinator die sessie meteen met `archive_session` (claude-code-remote). Een bouwer die vastliep of nog een vraag heeft blijft open tot dat is opgelost. Nooit archiveren: de vaste sessie van het bouwmoment en het onderhoud, en de sessie van de coördinator zelf.
+
+## Bouwers zetten niet zelf naar main (9 november)
+
+Bouwers bleven steeds vaker vlak voor main staan met de vraag om bevestiging, omdat ze de opdracht als doorgegeven zagen. Vanaf nu: een bouwer pusht alleen zijn eigen branch (met tests, review en afdrukken) en meldt zich; de coördinator merget, draait de controles en zet het naar main via de squash. In de opdracht staat dus geen squash naar main meer.

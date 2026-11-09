@@ -38,7 +38,7 @@ describe('a: het gewicht dat Forge na een bijstelling in de rij zette (forgeKg)'
     expect(undoRaise(raised as WorkoutExercise).rows[0].forgeKg).toBeUndefined();
   });
 
-  it('het log krijgt forgeKg alleen naast rirAssumed en alleen als het afwijkt van het voorschrift', () => {
+  it('het log krijgt forgeKg bij elke werkset, maar alleen als het afwijkt van het voorschrift', () => {
     const rows: WorkoutRow[] = [
       row(0, { done: true, weightKg: 55, forgeKg: 55, rir: 2, rirAssumed: true }),
       row(1, { done: true, weightKg: 60, forgeKg: 60, rir: 2, rirAssumed: true }),
@@ -47,7 +47,7 @@ describe('a: het gewicht dat Forge na een bijstelling in de rij zette (forgeKg)'
     const sets = toStrengthData([ex(rows)])![0].sets;
     expect(sets[0]).toMatchObject({ weightKg: 55, weightKgAsked: 60, forgeKg: 55, rirAssumed: true });
     expect(sets[1].forgeKg).toBeUndefined();
-    expect(sets[2].forgeKg).toBeUndefined();
+    expect(sets[2].forgeKg).toBe(55);
   });
 
   it('afgevinkt op het lichtere gewicht van Forge is bevestigd, maar onder het voorschrift', () => {
@@ -72,7 +72,7 @@ describe('a: het gewicht dat Forge na een bijstelling in de rij zette (forgeKg)'
     expect(analyseSessions([start, same], { ...ctx, confirm: { rangeLow: 9 } })[1].smoothed).toBeCloseTo(strength0, 9);
   });
 
-  it('de migratiestap: geldig forgeKg blijft, beschadigd of zonder rirAssumed valt weg, een oud log blijft hetzelfde', () => {
+  it('de migratiestap: geldig forgeKg blijft, beschadigd valt weg, een oud log blijft hetzelfde', () => {
     const log = (sets: unknown[]): SessionLog => ({ id: 'x', templateId: 't', type: 'strength', completedDate: '2026-09-01', completedAt: '2026-09-01T18:00:00.000Z', variant: 'custom', durationMinutes: 50, source: 'manual', strengthData: [{ exerciseId: 'bench-press', exerciseName: 'Bankdrukken', sets: sets as SetLog[] }] });
     const old = log([{ reps: 10, weightKg: 60, rir: 2, rirAssumed: true, repsAsked: 10, weightKgAsked: 60 }]);
     expect(migrateLogSetAsked(old)).toBe(old);
@@ -80,8 +80,8 @@ describe('a: het gewicht dat Forge na een bijstelling in de rij zette (forgeKg)'
     expect(migrateLogSetAsked(good)).toBe(good);
     const bad = migrateLogSetAsked(log([{ reps: 10, weightKg: 55, rir: 2, rirAssumed: true, weightKgAsked: 60, forgeKg: 'veel' }]));
     expect(bad.strengthData![0].sets[0]).toEqual({ reps: 10, weightKg: 55, rir: 2, rirAssumed: true, weightKgAsked: 60 });
-    const loose = migrateLogSetAsked(log([{ reps: 10, weightKg: 55, rir: 2, forgeKg: 55 }]));
-    expect(loose.strengthData![0].sets[0]).toEqual({ reps: 10, weightKg: 55, rir: 2 });
+    const loose = log([{ reps: 10, weightKg: 55, rir: 2, forgeKg: 55 }]);
+    expect(migrateLogSetAsked(loose)).toBe(loose);
   });
 });
 

@@ -535,6 +535,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Akkoord', text: 'pas dan komt de set erbij. Met Niet nu blijft je training zoals hij was en vraagt Forge het de volgende keer opnieuw.' },
     ],
   },
+  forgeKentJe: {
+    title: 'Hoe goed kent Forge je',
+    lead: 'Een blok op de Forge-pagina dat laat zien of Forge je goed inschat, gemeten aan je eigen trainingen van de laatste vier weken. MacroFactor is hier geen scheidsrechter.',
+    points: [
+      { head: 'Voorspelling', text: 'hoeveel sets binnen één herhaling lagen van wat Forge verwachtte. Dat telt alleen als je het voorgestelde gewicht pakte en zelf invulde hoeveel je over had.' },
+      { head: 'Bijgestuurd', text: 'hoe vaak je het gewicht (of afgevinkte herhalingen) zelf veranderde voor je afvinkte.' },
+      { head: 'Sterker', text: 'of je geschatte maximum op je hoofdoefeningen over zes tot acht weken stijgt, gelijk blijft of daalt.' },
+      { head: 'Alleen kijken', text: 'het blok verandert je plan en je logs nooit. Met te weinig sets staat er "nog te weinig data".' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',

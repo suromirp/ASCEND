@@ -107,6 +107,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'bundel-weergave' && (
         <BundleSheet eyebrow="Forge" title="Weergave op Forge" line="Wat de pagina Forge laat zien." onClose={close}>
           <SummaryRow id="forge-1rm" title="Geschatte 1RM tonen" facts={facts} info="forge1rm" onChange={(on) => save({ showOneRm: on })} />
+          <SummaryRow id="forge-kent-je" title="Hoe goed kent Forge je" facts={facts} info="forgeKentJe" onChange={(on) => save({ knowsYou: on })} />
           <SummaryRow id="forge-weergave" title="Forge toont" facts={facts} info="forgeWeergave" onClick={() => setInner('forge-weergave')} />
           <SummaryRow id="forge-1rm-macrofactor" title="MacroFactor-1RM erbij" facts={facts} info="forge1rmMacrofactor" onChange={(on) => save({ showMacroFactorOneRm: on })} />
           <SummaryRow id="forge-vergelijken" title="Vergelijken met" facts={facts} info="forgeVergelijken" onClick={() => setInner('forge-vergelijken')} />

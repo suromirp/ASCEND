@@ -276,6 +276,12 @@ export interface SetLog {
   // only when it differs from `weightKgAsked`. Only next to `rirAssumed`; absent on older logs, which then
   // compare with `weightKgAsked`. Decision: docs/beslissingen/2026-11-09-forge-review-afvinken.md.
   forgeKg?: number;
+  // The RIR Forge asked for this work set (the target of the row). Together with `repsAsked`, `weightKgAsked`
+  // and `forgeKg` it lets "Hoe goed kent Forge je" (engine/forgeCalibration.ts) compare the prescription with
+  // what happened. Since 9 November 2026 these four are written next to EVERY work set made in Forge, not only
+  // next to `rirAssumed`; older logs have them only on assumed sets. Optional and additive; a damaged value is
+  // dropped on reading (migrationsLogs.ts#migrateLogSetAsked). Decision: docs/beslissingen/2026-11-09-hoe-goed-kent-forge-je.md.
+  rirAsked?: number;
   // Calisthenics (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md). Optional and additive: older logs
   // have none and read as always; a damaged value is dropped on reading (migrations.ts#migrateLogSetSkill).
   // `seconds`: how long a hold lasted (then `reps` is 1, so everything that counts reps keeps working).

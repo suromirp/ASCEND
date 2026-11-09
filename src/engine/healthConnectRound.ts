@@ -35,8 +35,8 @@ export function healthRoundLines(found: HealthRoundFound): string[] {
           ? `niets gevonden in de laatste ${HEALTH_MORNING_DAYS} dagen`
           : count(found.weight, 'weging', 'wegingen');
   return [
-    `Trainingen: ${found.activities === 0 ? `niets gevonden in de laatste ${HEALTH_ACTIVITY_DAYS} dagen` : found.activities}`,
-    `Ochtenden: ${found.mornings === 0 ? `niets gevonden in de laatste ${HEALTH_MORNING_DAYS} dagen` : found.mornings}`,
+    `Trainingen: ${found.activities === 0 ? `niets gevonden in de laatste ${HEALTH_ACTIVITY_DAYS} dagen` : `${found.activities} gevonden`}`,
+    `Ochtenden: ${found.mornings === 0 ? `niets gevonden in de laatste ${HEALTH_MORNING_DAYS} dagen` : `${found.mornings} gevonden`}`,
     `Gewicht: ${weight}`,
   ];
 }

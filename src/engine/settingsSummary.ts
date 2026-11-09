@@ -656,6 +656,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.stepProposal };
     case 'forge-ijkset':
       return { checked: forge.calibration };
+    case 'forge-kent-je':
+      return { checked: forge.knowsYou };
     case 'forge-soort': {
       // Afgeleid uit de stappen in je trainingen (engine/trainingStyle.ts); zonder keuze is alles kracht.
       const n = calisthenicsTrainings(s.strengthModel, f.templates, f.today);
