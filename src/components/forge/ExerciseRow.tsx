@@ -27,9 +27,9 @@ const TONE: Record<DeltaTone, string> = { up: 'var(--color-progress)', flat: 'va
 
 // Wat er aan de sets ontbreekt, en hoe het erbij komt.
 const REFILL_TEXT: Record<MissingData, string> = {
-  rir: 'Deze sets staan hier nog zonder herhalingen in reserve (RIR); ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
-  help: 'Deze sets staan hier nog zonder de hulp van het apparaat; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
-  rir_and_help: 'Deze sets staan hier nog zonder herhalingen in reserve (RIR) en zonder de hulp van het apparaat; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
+  rir: 'Deze sets missen nog RIR, door een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken. Dan vult ASCEND ze aan.',
+  help: 'Deze sets missen nog de hulp van het apparaat, door een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken. Dan vult ASCEND ze aan.',
+  rir_and_help: 'Deze sets missen nog RIR en de hulp van het apparaat, door een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken. Dan vult ASCEND ze aan.',
 };
 
 export function ExerciseRow({
@@ -165,7 +165,7 @@ function ExerciseDetail({ view, kind, bodyKg, today, cmp, showExtras, onHistory 
       : refill
         ? REFILL_TEXT[refill]
         : bodyKg === undefined && exercise?.bodyweightFraction !== undefined
-          ? 'Vul je lichaamsgewicht in bij Instellingen, Lichaam, dan telt deze oefening mee.'
+          ? 'Deze oefening telt nog niet mee. Vul je lichaamsgewicht in bij Instellingen, Lichaam.'
           : strengthKg === undefined
             ? 'Bij deze sets kan ASCEND nog geen kracht schatten.'
             : 'Nog geen voorstel mogelijk.';

@@ -273,7 +273,7 @@ const kgNl = (n: number) => formatNumberNL(n, 2);
 
 // De regel na een nieuwe stand.
 export const standNoteText = (kg: number, exerciseName: string): string => `Stand ${kgNl(kg)} kg onthouden voor ${exerciseName}.`;
-export const STAND_FIRST_TEXT = 'Tik het getal dat op het blok staat. Forge onthoudt het.';
+export const STAND_FIRST_TEXT = 'Tik het getal op het blok. Forge onthoudt het.';
 export const STAND_FAILED_TEXT = 'Opslaan duurde te lang of lukte niet. Kijk bij Standen per toestel.';
 export const STANDS_WIPED_TEXT = 'Standen gewist.';
 

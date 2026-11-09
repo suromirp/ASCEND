@@ -13,8 +13,8 @@ export function CalibrationNotice({ name, phase: state, onAccept, onLater }: { n
       <div className="mt-2 flex flex-col gap-1.5">
         {state === 'open' ? (
           <>
-            <p className="text-sm leading-relaxed" style={ink}>Eens per vier weken ijk je je gevoel voor wat je over hebt. Een extra set bij {name}, zo ver als netjes gaat?</p>
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Er komt een set bij met nog één over als doel. Daarna kies je zoals altijd hoeveel je over had.</p>
+            <p className="text-sm leading-relaxed" style={ink}>Een extra set bij {name}, zo ver als netjes gaat? Zo ijk je eens per vier weken wat je over hebt.</p>
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Doel van de set: nog één over. Eerst een voorstel, pas na Akkoord verandert er iets.</p>
             <div className="mt-1 flex gap-3">
               <SecondaryButton onClick={onLater}>Niet nu</SecondaryButton>
               <SecondaryButton onClick={accept}>Akkoord</SecondaryButton>
@@ -22,7 +22,7 @@ export function CalibrationNotice({ name, phase: state, onAccept, onLater }: { n
           </>
         ) : (
           <p role="status" className="text-sm leading-relaxed" style={ink}>
-            {state === 'added' ? `Er staat een set bij ${name}. Wil je hem toch niet, haal hem dan weg.` : `De set staat erbij, maar onthouden lukte niet. Forge vraagt het de volgende keer opnieuw.`}
+            {state === 'added' ? `Er staat een set bij ${name}. Wil je hem niet, haal hem dan weg.` : `De set staat erbij, maar onthouden lukte niet. Forge vraagt het volgende keer opnieuw.`}
           </p>
         )}
       </div>
