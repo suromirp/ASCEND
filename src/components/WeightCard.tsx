@@ -30,6 +30,7 @@ export function WeightReminder() {
   const save = useSaveWeight();
   const navigate = useNavigate();
   const entries = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  // Vooraf je laatste weging, nooit de trend: wat je hier bewaart wordt een echte weging.
   const [kg, setKg] = useState<number | undefined>(latestWeight(entries)?.kg);
   const [open, setOpen] = useState(false);
   const today = todayISO();

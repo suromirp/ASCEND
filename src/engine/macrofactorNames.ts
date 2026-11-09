@@ -23,7 +23,7 @@ import { isLegSession } from './macrofactorSets';
 import type { NameMapping } from './macrofactorLink';
 import { suggestByContent } from './macrofactorContent';
 import { findSameWorkoutLog, logsOfWorkoutsInFile } from './macrofactorSame';
-import { BODYWEIGHT_TEMPLATE_ID } from './noGymDetails';
+import { isGymStrengthTemplate } from './templateRoles';
 
 // --- the exercises ------------------------------------------------------------------
 
@@ -90,7 +90,7 @@ export function suggestMappings(
   logs: SessionLog[],
   templates: SessionTemplate[],
 ): Record<string, MappingSuggestion> {
-  const strength = new Map(templates.filter((t) => t.type === 'strength' && t.id !== BODYWEIGHT_TEMPLATE_ID).map((t) => [t.id, t]));
+  const strength = new Map(templates.filter((t) => isGymStrengthTemplate(t)).map((t) => [t.id, t]));
   const byName = new Map<string, MacroFactorWorkout[]>();
   for (const w of workouts) {
     const key = nameKey(w.name);

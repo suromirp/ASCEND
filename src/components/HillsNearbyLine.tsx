@@ -1,6 +1,6 @@
 // ASCEND: één regel onder het weer bij een heuveltraining of trap- of bergconditie: "Op 1,2 km een
 // helling van 60 m", met een link naar de kaart op openstreetmap.org (buiten de app). Voor een andere
-// training en zonder plek, zonder netwerk of zonder antwoord staat er niets. De eerste keer vraagt
+// training en zonder plek (op een dag zonder sportschool met Heuvels in de buurt ook bij een loop), zonder netwerk of zonder antwoord staat er niets. De eerste keer vraagt
 // een korte kaart of ASCEND mag zoeken, met wat er naar OpenStreetMap gaat. De regel verandert de
 // planning nooit (engine/nearbyTerrain.ts).
 
@@ -8,17 +8,18 @@ import { useEffect, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { showHillsNearby } from '../engine/overviewSettings';
-import { terrainLine, terrainWish, type TerrainLine } from '../engine/nearbyTerrain';
+import { terrainLine, terrainWishOn, type TerrainLine } from '../engine/nearbyTerrain';
 import { getNearbyTerrain, grantTerrainConsent, hasTerrainConsent, refreshNearbyTerrain } from '../storage/nearbyTerrain';
 import { TextButton } from './TextButton';
 import { Icon } from './icons';
 
-export function HillsNearbyLine({ template, className = '' }: { template: SessionTemplate; className?: string }) {
+export function HillsNearbyLine({ template, date, className = '' }: { template: SessionTemplate; date: string; className?: string }) {
   const { settings, updateSettings } = useAppData();
   const place = settings.homeLocation;
   const lat = place?.lat;
   const lon = place?.lon;
-  const wanted = showHillsNearby(settings.overviews) && lat !== undefined && lon !== undefined && terrainWish(template) !== undefined;
+  const wish = terrainWishOn(template, date, settings.leavePeriods);
+  const wanted = showHillsNearby(settings.overviews) && lat !== undefined && lon !== undefined && wish !== undefined;
   const [consent, setConsent] = useState<boolean | undefined>();
   const [line, setLine] = useState<TerrainLine | undefined>();
 
@@ -40,12 +41,12 @@ export function HillsNearbyLine({ template, className = '' }: { template: Sessio
     // Offline blijft een eerder bewaard resultaat van deze plek gewoon bruikbaar.
     const found = offline ? getNearbyTerrain({ name: '', lat, lon }) : refreshNearbyTerrain({ name: '', lat, lon });
     void found.then((t) => {
-      if (alive) setLine(terrainLine(template, t));
+      if (alive) setLine(terrainLine(template, t, wish));
     });
     return () => {
       alive = false;
     };
-  }, [wanted, consent, lat, lon, template]);
+  }, [wanted, consent, lat, lon, template, wish]);
 
   if (!wanted || consent === undefined) return null;
 

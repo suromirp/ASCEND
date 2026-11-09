@@ -22,7 +22,7 @@ import { mainGoal, type Ladder } from './mainGoal';
 import { muscleVolumeByWeek } from './muscleVolume';
 import { exerciseKey } from './strengthHistory';
 import type { GymProfile } from './strengthSettings';
-import { hasRole } from './templateRoles';
+import { hasRole, isGymStrengthTemplate } from './templateRoles';
 import { isRestWeekAt } from './weekLoadChange';
 
 export const MOUNTAIN_MUSCLES: readonly MuscleGroup[] = ['calves', 'tibialis', 'glutes'];
@@ -146,7 +146,7 @@ function idsIn(slots: ExercisePrescription[]): Set<string> {
 // voegen, of als je de laatste weken "Liever niet" zei voor die spier.
 export function mountainMuscleProposal(input: MuscleProposalInput): MuscleProposal | null {
   if (!input.on || !hasMountainGoal(input.goals, input.milestones)) return null;
-  const strength = input.templates.filter((t) => t.type === 'strength' || hasRole(t, 'strength'));
+  const strength = input.templates.filter((t) => isGymStrengthTemplate(t) || hasRole(t, 'strength'));
   if (strength.length === 0) return null;
   const legWork = (t: SessionTemplate) => [...idsIn(input.exercisesOf(t))].filter((id) => exerciseById(id)?.loadsLegs).length;
   const target = [...strength].sort((a, b) => legWork(b) - legWork(a) || a.name.localeCompare(b.name))[0];

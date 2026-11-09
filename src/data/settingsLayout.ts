@@ -125,6 +125,8 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   rugzak: { row: 'doelen' },
   weervolgt: { row: 'weerplaats', sheet: true },
   'herinnering-gewicht': { row: 'lichaamsgewicht', sheet: true },
+  // Gewichtstrend gebruiken staat in het blad Lichaamsgewicht (docs/beslissingen/2026-11-09-gewichtstrend.md).
+  gewichtstrend: { row: 'lichaamsgewicht', sheet: true },
   // Gewicht uit Health Connect staat in het blad Lichaamsgewicht, naast Uit MacroFactor.
   'health-connect-gewicht': { row: 'lichaamsgewicht', sheet: true },
   // Planning

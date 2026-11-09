@@ -21,6 +21,7 @@ import { Portal } from './Portal';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Icon } from './icons';
 import { ISSUE_NOT_ALL_PLACED } from '../engine/proposalIssues';
+import { isGymStrengthTemplate } from '../engine/templateRoles';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -60,7 +61,7 @@ export function StrengthProgramWizard({
   const [step, setStep] = useState<Step>({ kind: 'sessions', draft: initialStrategy });
   const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, () => step.kind !== 'applying');
 
-  const strengthTemplates = useMemo(() => templates.filter((t) => t.type === 'strength'), [templates]);
+  const strengthTemplates = useMemo(() => templates.filter(isGymStrengthTemplate), [templates]);
 
   async function handleConfirm(draft: StrengthProgramStrategy) {
     setStep({ kind: 'applying' });

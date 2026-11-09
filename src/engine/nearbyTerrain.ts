@@ -5,11 +5,17 @@
 //
 // Wat bij de training past: een heuveltraining zoekt een helling van minstens 20 m (of een trap),
 // trap- of bergconditie neemt de dichtstbijzijnde trap of helling. Zonder hoogtegegevens telt een
-// helling toch mee, zonder maat. Pure: geen React, geen IndexedDB.
+// helling toch mee, zonder maat. Op een dag van een periode zonder sportschool met Heuvels in de
+// buurt aan krijgt elke loop dezelfde regel als een heuveltraining (terrainWishOn); ook dat plant
+// niets. Pure: geen React, geen IndexedDB.
 
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { SessionTemplate } from '../models/training';
+import type { LeavePeriod } from '../models/leave';
 import { hasRole, type RoleCarrier } from './templateRoles';
+import { leaveDays } from './leave';
+import { resolveNoGym } from './noGymDetails';
+import { isNoGymRun } from './noGym';
 
 export const MIN_HILL_HEIGHT_M = 20;
 export const OSM_SITE = 'https://www.openstreetmap.org/';
@@ -25,6 +31,15 @@ export function terrainWish(template: RoleCarrier & Pick<SessionTemplate, 'id'>)
   if (hasRole(template, 'hills') || HILL_IDS.has(template.id)) return 'hills';
   if (CLIMB_IDS.has(template.id)) return 'stairs_or_climb';
   return undefined;
+}
+
+// De wens op een dag: die van de training, of op een dag zonder sportschool met Heuvels in de buurt
+// aan voor elke loop een helling (docs/beslissingen/2026-11-09-zonder-sportschool.md).
+export function terrainWishOn(template: SessionTemplate, date: string, periods: LeavePeriod[] | undefined): TerrainWish | undefined {
+  const own = terrainWish(template);
+  if (own) return own;
+  const day = leaveDays(periods).get(date);
+  return day?.kind === 'nogym' && resolveNoGym(day.period).hills && isNoGymRun(template) ? 'hills' : undefined;
 }
 
 const usableHill = (f: TerrainFeature) => f.kind === 'hill' && (f.heightM === undefined || f.heightM >= MIN_HILL_HEIGHT_M);
@@ -53,8 +68,7 @@ export interface TerrainLine {
   linkLabel: string;
 }
 
-export function terrainLine(template: RoleCarrier & Pick<SessionTemplate, 'id'>, terrain: NearbyTerrain | undefined): TerrainLine | undefined {
-  const wish = terrainWish(template);
+export function terrainLine(template: RoleCarrier & Pick<SessionTemplate, 'id'>, terrain: NearbyTerrain | undefined, wish: TerrainWish | undefined = terrainWish(template)): TerrainLine | undefined {
   if (!wish || !terrain) return undefined;
   const f = pickTerrain(wish, terrain);
   if (!f) return undefined;
