@@ -209,17 +209,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Spieren voor de berg',
     lead: 'Bij een bergdoel let ASCEND op kuiten, scheenspier en bilspieren, die een gewoon schema vaak overslaat.',
     points: [
-      { head: 'De melding', text: 'krijgt een van die spieren vier weken gemiddeld minder dan 4 harde sets per week (werksets met hoogstens 4 herhalingen over), dan staat er één keer in de weekterugblik een voorstel voor één oefening. Een rustweek telt niet mee.' },
-      { head: 'Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. De oefening komt in je krachttraining met het meeste beenwerk en gaat in het blad van de oefening weer weg. Liever niet laat die spier acht weken met rust. In Forge staat het voorstel bovenaan de training, zolang je nog geen set afvinkte.' },
-      { head: 'Uit', text: 'geen melding, in de weekterugblik noch in Forge. Bij Ruilen staat zo een oefening dan niet voorop. Forge ruilt nooit zelf.' },
+      { head: 'De melding', text: 'krijgt een van die spieren vier weken gemiddeld minder dan 4 harde sets per week (werksets met hoogstens 4 herhalingen over), dan staat er één keer in de weekterugblik een voorstel voor één oefening. Een rustweek telt niet mee. Een oefening die ASCEND niet kent telt niet.' },
+      { head: 'Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. De oefening komt in je krachttraining met het meeste beenwerk en gaat in het blad van de oefening weer weg. Liever niet laat die spier acht weken met rust. In Forge staat het voorstel bovenaan de training, zolang je nog geen set afvinkte. Bij Ruilen staat zo\'n oefening voorop als de keuze verder gelijk is.' },
+      { head: 'Uit', text: 'geen melding, in de weekterugblik noch in Forge. Forge ruilt nooit zelf.' },
     ],
   },
   forgeSpotter: {
     title: 'Zonder spotter',
-    lead: 'Een stang op je borst of schouders kan je klem zetten. Daarom schrijft Forge hier minstens 1 herhaling in reserve voor.',
+    lead: 'Een stang op je borst of schouders kan je klem zetten als het zwaar wordt. Daarom schrijft Forge hier minstens 1 herhaling in reserve voor.',
     points: [
       { head: 'Welke oefeningen', text: 'bankdrukken en schuin bankdrukken met een stang, en squatten met de stang op je rug of voor je. Toestellen, kabels en dumbbells niet.' },
-      { head: 'Nooit een slot', text: 'je kunt altijd 0 invullen; het teken bij de set verdwijnt dan en het wordt bewaard zoals je het deed. Een bewuste 1 waar MacroFactor 0 voorschreef telt niet als misser.' },
+      { head: 'Nooit een slot', text: 'bij de eerste set staat één klein teken; een tik legt het uit. Je kunt altijd 0 invullen, het teken verdwijnt dan en het wordt bewaard zoals je het deed. Een bewuste 1 waar MacroFactor 0 voorschreef telt niet als misser.' },
       { head: 'Veiligheidsarmen', text: 'heeft je sportschool die of een rek met vangers, zet dat dan aan bij Je sportschool. Dan mag het 0 zijn.' },
     ],
   },
@@ -353,7 +353,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Wanneer het telt', text: 'je deed minstens de gevraagde herhalingen, met minstens het gewicht van het voorschrift, en de set erna viel niet 2 of meer tekort. Precies wat gevraagd was houdt je kracht vast; meer herhalingen tellen half mee.' },
       { head: 'Bij twijfel', text: 'Forge vraagt na de set hoeveel je over had: bij minder dan gevraagd, 2 of meer boven het bereik, de eerste set op een zwaarder gewicht, en je eerste drie trainingen van een oefening. Een stap zwaarder komt pas als al je werksets de bovenkant halen, of je topset twee keer achter elkaar.' },
-      { head: 'Uit', text: 'een set zonder eigen RIR telt zoals voorheen en Forge vraagt alleen na de eerste, een zware en de laatste set. Oudere trainingen tellen met de onderkant van het bereik als gevraagd aantal; je log verandert niet.' },
+      { head: 'Uit', text: 'een set zonder eigen RIR telt zoals voorheen en Forge vraagt alleen na de eerste, een zware en de laatste set. ' },
+      { head: 'Oudere trainingen', text: 'ze tellen ook mee, met de onderkant van het bereik als gevraagd aantal. Je log verandert niet.' },
     ],
   },
   forgeTussenOefeningen: {
@@ -361,8 +362,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Staan er meer harde sets voor dezelfde spieren voor een oefening dan je normaal deed, dan begint de eerste set iets lichter.',
     points: [
       { head: 'Wat telt', text: 'werksets met 3 of minder over, die je zelf invulde of afvinkte zoals gevraagd. Een gedeelde hoofdspier telt een hele set, een hulpspier een halve.' },
-      { head: 'Hoeveel', text: 'alleen het verschil met je gewone volgorde: ongeveer 2% kracht per harde set meer, nooit meer dan 10%. Eerst in herhalingen, anders een stap lichter. Met Vermoeidheid per set op Geleerd leert Forge het per oefening, vanaf zes keer.' },
-      { head: 'Uit', text: 'alleen de vermoeidheid binnen een oefening telt, zoals voorheen. Wat je zelf doet blijft van jou en je log verandert niet.' },
+      { head: 'Hoeveel', text: 'wat je zelf doet blijft van jou en je log verandert niet. Het gaat om het verschil met je gewone volgorde: ongeveer 2% kracht per harde set meer, nooit meer dan 10%. Eerst in herhalingen, anders een stap lichter. Met Vermoeidheid per set op Geleerd leert Forge het per oefening, vanaf zes keer.' },
+      { head: 'Uit', text: 'alleen de vermoeidheid binnen een oefening telt, zoals voorheen.' },
     ],
   },
   forgePauze: {

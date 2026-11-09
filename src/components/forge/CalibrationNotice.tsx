@@ -22,7 +22,7 @@ export function CalibrationNotice({ name, phase: state, onAccept, onLater }: { n
           </>
         ) : (
           <p role="status" className="text-sm leading-relaxed" style={ink}>
-            {state === 'added' ? `Er staat een set bij ${name}. Wil je hem niet, haal hem dan weg.` : `De set staat erbij, maar onthouden lukte niet. Forge vraagt het volgende keer opnieuw.`}
+            {state === 'added' ? `Er staat een set bij ${name}. Wil je hem niet, haal hem dan weg.` : `De set staat erbij, maar onthouden lukte niet. Forge vraagt het de volgende keer opnieuw.`}
           </p>
         )}
       </div>
