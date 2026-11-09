@@ -4,6 +4,7 @@ import { withHardSameDay, withLongRunThenLegs, withTestRestHours } from '../engi
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { TrainingGoal, GoalMilestone } from '../models/goals';
+import type { PlanChangeProposal } from '../models/planChange';
 import { addDays, formatDateNL, mondayOfWeek, resolveProgramWeek, todayISO, weekdayShortNL } from '../utils/dates';
 import { activeSwaps, directionSwaps, layoutPhases, patternForWeek, PHASE_GOLF, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { planDirection } from '../engine/direction';
@@ -74,7 +75,7 @@ export async function defaultPatternSelector(): Promise<((templates: SessionTemp
 export async function patternContext(
   templates: SessionTemplate[],
   selectPattern?: (templates: SessionTemplate[]) => SessionTemplate[],
-  given?: { settings: AppSettings; goals: TrainingGoal[]; milestones: GoalMilestone[] },
+  given?: { settings: AppSettings; goals: TrainingGoal[]; milestones: GoalMilestone[]; logs?: SessionLog[] },
   // Het plan zoals het nu staat: een plan dat nog niet in golven loopt blijft zonder Akkoord zoals het is
   // (engine/noGoalWaves.ts#wavesHeld).
   current?: Pick<Program, 'phases'> | null,
@@ -87,7 +88,7 @@ export async function patternContext(
   // Zonder doel neutrale golven: geen bergtocht, geen wandeldag, geen rugzak (docs/visie/Zonder doel.md, 3.2).
   const plan = planDirection(settings, goals, new Set(milestones.map((m) => m.goalId)), todayISO(), anchor, current);
   const byId = new Map(templates.map((t) => [t.id, t]));
-  const logs = plan.direction ? await SessionLogsRepo.getAll() : [];
+  const logs = plan.direction ? (given?.logs ?? await SessionLogsRepo.getAll()) : [];
   // De beginnersstart (engine/beginnerStart.ts): vier weken zonder harde training vanaf de start van je richting.
   const beginner = !!plan.direction && isBeginnerStart(settings.beginnerStart, logs, plan.waveStart);
   const freeSwaps = directionSwaps(plan.direction, beginner).filter((s) => { const to = byId.get(s.to); return !!to && isTemplatePlannable(to, enabledSports); });
@@ -203,6 +204,40 @@ export interface HorizonOverrides {
   // The ladder of a goal that is not stored yet (the first plan): added to the
   // stored milestones, so the preview knows which goal is the main one.
   milestones?: GoalMilestone[];
+  // What the run reads from storage, read once beforehand (readHorizonStore). Only for a preview: a caller that
+  // previews several times in a row (storage/weeklyPrescriptionStep.ts#keptByPlanningRound) reads it once.
+  store?: HorizonStore;
+}
+
+// Everything the planning run reads from storage. `sessions` is the plan the caller already has, so it is not read
+// again either.
+export interface HorizonStore {
+  programs: Program[];
+  sessions: PlannedSession[];
+  logs: SessionLog[];
+  templates: SessionTemplate[];
+  settings: AppSettings;
+  goals: TrainingGoal[];
+  milestones: GoalMilestone[];
+  proposals: PlanChangeProposal[];
+  appliedRestDay: number;
+  engineConfig: Awaited<ReturnType<typeof GoalEngineConfigRepo.get>>;
+}
+
+export async function readHorizonStore(sessions?: PlannedSession[]): Promise<HorizonStore> {
+  const [programs, stored, logs, templates, settings, goals, milestones, proposals, appliedRestDay, engineConfig] = await Promise.all([
+    ProgramsRepo.getAll(),
+    sessions ?? PlannedSessionsRepo.getAll(),
+    SessionLogsRepo.getAll(),
+    SessionTemplatesRepo.getAll(),
+    SettingsRepo.get(),
+    TrainingGoalsRepo.getAll(),
+    GoalMilestonesRepo.getAll(),
+    PlanChangeProposalsRepo.getAll(),
+    MetaRepo.get<number>('appliedRestDay'),
+    GoalEngineConfigRepo.get(),
+  ]);
+  return { programs, sessions: stored, logs, templates, settings, goals, milestones, proposals, appliedRestDay: appliedRestDay ?? 1, engineConfig };
 }
 
 export interface HorizonRun {
@@ -246,15 +281,19 @@ export async function previewProgramHorizon(overrides: HorizonOverrides = {}): P
 }
 
 async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): Promise<HorizonRun> {
-  const [programs, storedSessions, logs, templates, storedSettings, storedGoals, storedMilestones] = await Promise.all([
-    ProgramsRepo.getAll(),
-    PlannedSessionsRepo.getAll(),
-    SessionLogsRepo.getAll(),
-    SessionTemplatesRepo.getAll(),
-    SettingsRepo.get(),
-    TrainingGoalsRepo.getAll(),
-    GoalMilestonesRepo.getAll(),
-  ]);
+  // A preview may bring what it read once (HorizonOverrides.store); a write never does.
+  const given = dryRun ? overrides.store : undefined;
+  const [programs, storedSessions, logs, templates, storedSettings, storedGoals, storedMilestones] = given
+    ? [given.programs, given.sessions, given.logs, given.templates, given.settings, given.goals, given.milestones]
+    : await Promise.all([
+      ProgramsRepo.getAll(),
+      PlannedSessionsRepo.getAll(),
+      SessionLogsRepo.getAll(),
+      SessionTemplatesRepo.getAll(),
+      SettingsRepo.get(),
+      TrainingGoalsRepo.getAll(),
+      GoalMilestonesRepo.getAll(),
+    ]);
   const milestones = overrides.milestones ? [...storedMilestones, ...overrides.milestones.filter((m) => !storedMilestones.some((s) => s.id === m.id))] : storedMilestones;
   const sessions = [...(overrides.sessions ?? storedSessions)];
   const startedFrom = [...sessions];
@@ -267,7 +306,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const replaced = new Map((overrides.goals ?? []).map((g) => [g.id, g]));
   const goals = [...storedGoals.map((g) => replaced.get(g.id) ?? g), ...[...replaced.values()].filter((g) => !storedGoals.some((s) => s.id === g.id))];
   const today = todayISO();
-  const ctx = await patternContext(templates, undefined, { settings, goals, milestones }, program);
+  const ctx = await patternContext(templates, undefined, { settings, goals, milestones, ...(given ? { logs } : {}) }, program);
   const next: Program = withPackTarget({ ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides, { free: ctx.free, waveStart: ctx.waveStart, beginnerWeeks: ctx.beginnerWeeks, wave: ctx.wave }) }, ctx.packTarget, ctx.runBuild, ctx.direction);
   const phasesChanged = JSON.stringify(program.phases) !== JSON.stringify(next.phases);
   // The pack target of the goal travels with the phases (the ladder of the
@@ -275,7 +314,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   if (!dryRun && (phasesChanged || program.packTargetKg !== next.packTargetKg || JSON.stringify(program.runBuild) !== JSON.stringify(next.runBuild) || JSON.stringify(program.direction) !== JSON.stringify(next.direction))) await ProgramsRepo.put(next);
 
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
-  const proposals = await PlanChangeProposalsRepo.getAll();
+  const proposals = given ? given.proposals : await PlanChangeProposalsRepo.getAll();
   // Tochtdagen an older version left behind as skipped rows when a tocht was
   // changed or removed (engine/leaveStrays.ts): off the plan, never a logged one.
   const strays = new Set(strayTrekRows(sessions, proposals, logs));
@@ -318,7 +357,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   // makes it again where it is still needed. What you moved or skipped
   // yourself, logged sessions and anything an accepted proposal fixed stay
   // where they are. Only at the change itself.
-  const appliedRestDay = (await MetaRepo.get<number>('appliedRestDay')) ?? 1;
+  const appliedRestDay = given ? given.appliedRestDay : (await MetaRepo.get<number>('appliedRestDay')) ?? 1;
   const wantedRestDay = settings.restDay ?? 1;
   // Normally the rest day is laid out by its own proposal with Akkoord
   // (engine/restDayProposal.ts), which stores appliedRestDay with it; this is
@@ -354,7 +393,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     ...sessions.filter((s) => !removedNow.has(s.id)).map((s) => pending.get(s.id) ?? s),
     ...added,
   ];
-  const engineConfig = await GoalEngineConfigRepo.get();
+  const engineConfig = given ? given.engineConfig : await GoalEngineConfigRepo.get();
   const restDay = settings.restDay ?? 1;
   // A sport that counts has a derived template (engine/sportTemplate.ts): its fixed rows and its logs are
   // read by the week check like any training.

@@ -36,8 +36,8 @@ import { computeCapacity } from '../engine/capacity';
 import { targetPackWeightKg } from '../engine/demand';
 import { computeActiveGoalOverviews } from '../engine/goalOverview';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
-import { changesTheRoundKeeps, diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession } from '../engine/weeklyPrescriptionDiff';
-import { previewProgramHorizon } from './databaseHorizon';
+import { changesOnAllowedDays, changesTheRoundKeeps, diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession } from '../engine/weeklyPrescriptionDiff';
+import { previewProgramHorizon, readHorizonStore, type HorizonStore } from './databaseHorizon';
 import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { askBeforeApplying } from '../engine/changeImpact';
@@ -61,14 +61,17 @@ export type WeeklyPrescriptionStepOutcome =
 // (engine/weeklyPrescriptionDiff.ts#changesTheRoundKeeps). Zonder dit zette het
 // voorschrift bij elke opening een Wandeldag die de ronde meteen weer omzette en
 // weghaalde, met elke keer twee meldingen. Valt er iets weg, dan rekent de
-// ronde nog eens met de rest, tot hoogstens drie keer.
+// ronde nog eens met de rest, tot hoogstens drie keer. De opslag wordt één keer
+// gelezen, met `planned` als de planning; elke ronde rekent daarmee.
 const ROUND_CHECKS = 3;
 export async function keptByPlanningRound(changes: PlanChangeItem[], planned: PlannedSession[]): Promise<PlanChangeItem[]> {
   let current = changes;
+  let store: HorizonStore | undefined;
   for (let i = 0; i < ROUND_CHECKS; i++) {
     if (!current.some((c) => c.action === 'add' || c.action === 'move' || c.action === 'swap')) return current;
     const { sessions } = applyPlanChangeItems(current, planned);
-    const round = await previewProgramHorizon({ sessions, releaseAnchors: false });
+    store ??= await readHorizonStore(planned);
+    const round = await previewProgramHorizon({ sessions, releaseAnchors: false, store });
     const kept = changesTheRoundKeeps(current, planned, round.after);
     if (kept.length === current.length) return current;
     current = kept;
@@ -125,8 +128,9 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   const anchorDay = planEndDay(goals, await GoalMilestonesRepo.getAll(), asOf, appSettings.afterMainGoal);
   const raceDays = new Set(planned.filter((s) => s.templateId === 'tpl_race').map((s) => s.scheduledDate));
   // Nor on a day of a holiday or a trek (engine/leave.ts).
-  const blockedDay = (date: string | undefined) => !!date && ((!!anchorDay && date >= anchorDay) || raceDays.has(date) || isLeaveBlockedDay(appSettings.leavePeriods, date));
-  const allowedChanges = proposal.changes.filter((c) => !blockedDay(c.action === 'add' ? c.newSessionDraft?.scheduledDate : c.action === 'move' ? c.toDate : undefined));
+  // A remove that belongs to an add on such a day goes with it (engine/weeklyPrescriptionDiff.ts#changesOnAllowedDays).
+  const blockedDay = (date: string) => (!!anchorDay && date >= anchorDay) || raceDays.has(date) || isLeaveBlockedDay(appSettings.leavePeriods, date);
+  const allowedChanges = changesOnAllowedDays(proposal.changes, blockedDay);
 
   // Alleen wat inhoudelijk anders is dan wat er ligt. De engine geeft elke
   // keer verse id's en tijdstempels; zonder deze vergelijking schreef elke
