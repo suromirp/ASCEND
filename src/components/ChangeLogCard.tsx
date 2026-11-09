@@ -23,7 +23,7 @@ export function ChangeLogCard({ weekStart }: { weekStart: string }) {
 
   return (
     <Card>
-      <button onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={open}>
+      <button onClick={() => setOpen((v) => !v)} className="-my-3 flex min-h-[44px] w-full items-center justify-between gap-3 text-left" aria-expanded={open}>
         <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           {isCurrent ? 'Deze week' : 'In deze week'} door ASCEND aangepast · {changes.length}
         </span>

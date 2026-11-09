@@ -47,7 +47,7 @@ export function Gr5ReadinessSheet({ readiness, title = 'Klaar voor de GR5', mile
             </div>
 
             {milestone && <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-              Je hoeft er nu nog niet te zijn. De lange tochten in het voorjaar en de zomer maken het verschil; de planning bouwt daar naartoe. Het getal telt je beste van de laatste acht weken, dus het zakt als je lange tochten ouder worden.
+              Je hoeft er nu nog niet te zijn. De lange tochten in het voorjaar en de zomer maken het verschil, daar bouwt de planning naartoe. Het getal telt je beste van de laatste acht weken en zakt dus als je lange tochten ouder worden.
             </p>}
 
             <button onClick={requestClose} className="mt-4 min-h-[44px] w-full text-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>

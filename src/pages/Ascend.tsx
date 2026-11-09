@@ -45,7 +45,7 @@ import { todayISO } from '../utils/dates';
 // De enige gevulde mint knop is die van de lege staat ("Nieuw beginnen"); met doelen op de tab is het
 // de gevulde knop van het voorstel, en de tab zelf heeft er dan geen.
 
-const KEEP = 'Prima, alles blijft zoals het was.';
+const KEEP = 'Alles blijft zoals het was.';
 // Een blad sluit eerst (200 ms) voordat het voorstel opent, zodat de terugknop twee lagen niet door
 // elkaar haalt.
 const AFTER_SHEET_MS = 280;
@@ -53,8 +53,8 @@ const later = (fn: () => void) => { window.setTimeout(fn, AFTER_SHEET_MS); };
 // Een regel onderaan de tab blijft een paar seconden staan, net als de meldingsbalk, en gaat weg bij de
 // volgende handeling.
 const NOTE_MS = 8000;
-const RESTORED_NOTE = 'Teruggehaald, zonder datum. Geef het een datum als je ernaartoe wilt trainen.';
-const MAIN_STAYS_NOTE = 'Je hoofddoel blijft bij de Top-doelen, dus dat kon niet.';
+const RESTORED_NOTE = 'Teruggehaald, zonder datum. Geef het een datum om ernaartoe te trainen.';
+const MAIN_STAYS_NOTE = 'Dat kon niet: je hoofddoel blijft bij de Top-doelen.';
 
 const skillLadderName = (id: string) => skillLadderById(id)?.name ?? id;
 
@@ -167,7 +167,7 @@ export function AscendPage() {
         () => planHorizonChange({
           title: 'Volgorde van je doelen',
           why: 'Je koos een andere volgorde.',
-          explanation: 'Hebben twee doelen hetzelfde label, dan wijkt het doel dat lager in de lijst staat. Een andere volgorde verandert dus wat er bij een botsing gebeurt. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets.',
+          explanation: 'Hebben twee doelen hetzelfde label, dan wijkt het doel dat lager staat. Een andere volgorde verandert dus wat er bij een botsing gebeurt. Eerst een voorstel, pas na Akkoord verandert er iets.',
           trigger: 'goal_changed',
           goals: outcome.goals.map((g) => ({ ...g, updatedAt: now })),
         }),
@@ -216,7 +216,7 @@ export function AscendPage() {
         {plain && (
           <Card className="flex flex-col gap-3">
             {/* Alleen een lege installatie: de vragen staan op Vandaag, met een richting of een doel. */}
-            <p className="text-base" style={{ color: 'var(--color-ink)' }}>Nog niets gepland. Vertel eerst wat je wilt, een richting of een doel, en je ziet je eerste week.</p>
+            <p className="text-base" style={{ color: 'var(--color-ink)' }}>Nog niets gepland. Kies een richting of een doel, dan zie je je eerste week.</p>
             <PrimaryButton onClick={() => startAdd()}>Nieuw beginnen</PrimaryButton>
           </Card>
         )}
@@ -332,7 +332,7 @@ export function AscendPage() {
             // Een stap die niets verandert zegt dat, in plaats van stil te blijven.
             if (!result.changed) {
               const can = stepAvailability(listed, menuView.item.goal.id, dir);
-              setFlash(can.can ? 'De volgorde bleef zoals ze was.' : can.reason);
+              setFlash(can.can ? 'De volgorde is niet veranderd.' : can.reason);
             }
           }}
           onArchive={() => setArchiving(menuView.item.goal)}
@@ -363,11 +363,11 @@ export function AscendPage() {
               () => planHorizonChange({
                 title: `${draft.name || 'Je doel'}: zo verandert je planning`,
                 why: 'Volgt je nieuwe doel.',
-                explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop het eindigt. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
+                explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop het eindigt. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en zelf vastzette, blijft staan.',
                 trigger: 'goal_created',
                 goals: [draft],
               }),
-              { eyebrow: 'Doel toevoegen · stap 3 van 3', ask: 'always', alwaysAsk: true, declined: 'Prima, niets toegevoegd. Je planning blijft zoals ze was.' },
+              { eyebrow: 'Doel toevoegen · stap 3 van 3', ask: 'always', alwaysAsk: true, declined: 'Niets toegevoegd. Je planning blijft zoals ze was.' },
             ));
           }}
           onClose={() => setAdding(null)}
@@ -393,7 +393,7 @@ export function AscendPage() {
           primaryLabel="Akkoord"
           secondaryLabel="Liever niet"
           onPrimary={() => { const g = skillProposal; skillWrite(() => skills.add(g), `${g.name} staat op Ascend.`, () => setSkillProposal(null)); }}
-          onSecondary={() => { setSkillProposal(null); setFlash('Prima, niets toegevoegd.'); }}
+          onSecondary={() => { setSkillProposal(null); setFlash('Niets toegevoegd.'); }}
           onClose={() => setSkillProposal(null)}
           busy={skillBusy}
         />
@@ -437,7 +437,7 @@ export function AscendPage() {
               () => planHorizonChange({
                 title: `${next.name || 'Je doel'}: zo verandert je planning`,
                 why: 'Volgt wat je aanpaste.',
-                explanation: 'Een andere datum, soort of tent in plaats van hutten verandert je planning nooit ongemerkt. Jij ziet eerst wat er verschuift; pas na je Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
+                explanation: 'Een andere datum, soort of tent in plaats van hutten verandert je planning nooit ongemerkt. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en zelf vastzette, blijft staan.',
                 trigger: 'goal_changed',
                 goals: [next],
                 ...(settings ? { settings } : {}),
@@ -460,7 +460,7 @@ export function AscendPage() {
           eyebrow="Doel archiveren"
           title={`${archiving.name} archiveren?`}
           lines={[]}
-          why="Het doel telt dan niet meer mee in je planning. Raakt dat je trainingen, dan zie je eerst wat er verandert en beslis jij. Je kunt het terughalen, maar dan zonder datum."
+          why="Het doel telt dan niet meer mee in je planning. Raakt dat je trainingen, dan komt er eerst een voorstel. Terughalen kan, maar zonder datum."
           primaryLabel="Archiveren"
           secondaryLabel="Annuleren"
           onPrimary={() => archive(archiving)}

@@ -639,7 +639,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
         const easy = sessions.map((x) => (x.id === subject.id ? { ...x, templateId: EASY_ID, ...(mark.date ? { afterGoal: mark } : {}) } : x));
         if (judge([subject.scheduledDate])(easy)) {
           sessions = easy;
-          repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: 'je herstelt nog van je wedstrijd, daarom een rustig loopje in plaats van een harde training' });
+          repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: 'je herstelt nog van je wedstrijd, daarom een rustige loop in plaats van een harde training' });
         }
       }
       continue;

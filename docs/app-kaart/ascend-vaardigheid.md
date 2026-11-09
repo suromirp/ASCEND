@@ -27,8 +27,8 @@ A
 [knop: Voortop] (aria: Label Voortop, wijzigen)
 [knop: Verplaats Hardloopwedstrijd. Spatie pakt op, pijltjes verplaatsen, spatie laat los.]
 Klaar voor je doel
-Verwacht nu 55:40. Doel 45:00: nog 10:40, ongeveer 1:04 per km.
-Bij gemiddelde groei rond 20 maart: ongeveer 49:51. 45:00 vraagt ongeveer 39 weken; tot 20 maart zijn het er 20.
+Verwacht nu 55:40, doel 45:00. Nog 10:40, ongeveer 1:04 per km.
+Op 20 maart: ongeveer 49:51, bij gemiddelde groei. 45:00 vraagt ongeveer 39 weken, er zijn er 20.
 Snelheid
 55:40, doel 45:00
 [label: Snelheid]
