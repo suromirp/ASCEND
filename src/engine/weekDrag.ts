@@ -15,6 +15,7 @@ import { weekConcerns } from './weekConcerns';
 import type { CheckInput } from './weekValidator';
 import { hasRole } from './templateRoles';
 import { addDays, mondayOfWeek, weekdayLongNL, weekdayOf, formatDateNL, weekDates } from '../utils/dates';
+import { capitalize } from '../utils/capitalize';
 
 // --- wie mag slepen ----------------------------------------------------------------
 type DragRefusal = 'history' | 'skipped' | 'rest' | 'race' | 'leave';
@@ -73,8 +74,7 @@ export interface DragContext {
 const CHIP_MAX = 28;
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-export const dayTitle = (date: string) => `${cap(weekdayLongNL(date))} ${formatDateNL(date)}`;
+export const dayTitle = (date: string) => `${capitalize(weekdayLongNL(date))} ${formatDateNL(date)}`;
 const fit = (...options: string[]) => options.find((o) => o.length <= CHIP_MAX) ?? options[options.length - 1].slice(0, CHIP_MAX);
 const joinNames = (names: string[]) => names.join(' en ');
 
