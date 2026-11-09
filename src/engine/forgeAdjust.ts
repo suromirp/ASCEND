@@ -162,8 +162,8 @@ export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: Adjus
 export function noFitText(fit: NoFit, hasList = false): string {
   const reps = fit.repsLow === fit.repsHigh ? `${fit.repsLow}` : `${fit.repsLow} tot ${fit.repsHigh}`;
   const tail = `${hasList ? 'aanpassen' : 'invullen'}?`;
-  if (fit.setNo !== undefined) return `Set ${fit.setNo}: geen gewicht van dit toestel past bij ${reps} herhalingen. Gewichten van dit toestel ${tail}`;
-  return `Geen gewicht van dit toestel past bij ${reps} herhalingen. Gewichten van dit toestel ${tail}`;
+  if (fit.setNo !== undefined) return `Set ${fit.setNo}: geen gewicht van dit toestel past bij ${reps} herhalingen. Gewichten ${tail}`;
+  return `Geen gewicht van dit toestel past bij ${reps} herhalingen. Gewichten ${tail}`;
 }
 
 // Past de set nog steeds niet? Zodra je die set zelf aanpaste, afvinkte of weghaalde is de melding

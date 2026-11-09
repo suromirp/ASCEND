@@ -177,9 +177,9 @@ describe('suggestOwnWeights: geen gewicht past', () => {
     expect(fit.expectedReps).toBeLessThan(9);
     // De regel zegt welke set het is.
     expect(fit).toMatchObject({ rowId: 'r1', setNo: 2, weightKg: 40 });
-    expect(noFitText(fit)).toBe('Set 2: geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel invullen?');
-    expect(noFitText(fit, true)).toBe('Set 2: geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel aanpassen?');
-    expect(noFitText({ ...fit, setNo: undefined })).toBe('Geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel invullen?');
+    expect(noFitText(fit)).toBe('Set 2: geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten invullen?');
+    expect(noFitText(fit, true)).toBe('Set 2: geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten aanpassen?');
+    expect(noFitText({ ...fit, setNo: undefined })).toBe('Geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten invullen?');
   });
   it('de melding verdwijnt zodra die set is opgelost', () => {
     const ex = exercise('cable-fly', sets());
