@@ -31,7 +31,7 @@ const tplEasyRun: SessionTemplate = {
 function mondayOfWeek(weekNumber: number): string {
   // weekNumber is 1-indexed program week; START is week 1's Monday.
   const d = new Date(START);
-  d.setDate(d.getDate() + (weekNumber - 1) * 7);
+  d.setUTCDate(d.getUTCDate() + (weekNumber - 1) * 7);
   return d.toISOString().slice(0, 10);
 }
 
