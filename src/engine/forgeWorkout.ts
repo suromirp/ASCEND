@@ -18,6 +18,7 @@
 // - what is stored: only ticked rows, as SetLog with kind, kg, reps and RIR.
 
 import { EXERCISES, exerciseById } from '../data/exercises';
+import { FAMILY_ONLY } from '../data/exerciseFamilies';
 import type { Exercise, MovementPattern, MuscleGroup, Resistance } from '../models/exercise';
 import type { Program } from '../models/program';
 import type { ExercisePrescription, ExerciseSetLog, SessionLog, SessionTemplate, SetKind, SetLog, SetTarget } from '../models/training';
@@ -999,6 +1000,7 @@ const NUANCE_TEXT: Record<string, { on: string; off: string }> = {
   lying: { on: 'liggend', off: 'zittend' },
   frog: { on: 'met je voeten tegen elkaar', off: 'met je voeten naast elkaar' },
   y: { on: 'met je armen in een Y', off: 'met je armen langs je zij' },
+  added: { on: 'met extra gewicht', off: 'zonder extra gewicht' },
 };
 
 const nuancesOf = (e: Exercise): string[] => e.nuance ?? [];
@@ -1029,7 +1031,8 @@ export function swapReasonSame(current: Exercise, e: Exercise): string {
 // hoofdspier raakt (swapScore boven 0), met de voorkeur voor bergspieren bij gelijke score
 // (engine/mountainMuscles.ts#swapPreference; Forge ruilt nooit zelf). Een oefening zonder familie heeft
 // geen echte vervangers en valt terug op de oude lijst. Nooit de oefening zelf of een die al in de
-// training zit, en geen stangoefening zonder stang. `limit` telt over beide groepen.
+// training zit, en geen stangoefening zonder stang. Een ladderstap uit `FAMILY_ONLY` alleen in de eerste
+// groep (data/exerciseFamilies.ts). `limit` telt over beide groepen.
 export function swapGroups(current: Exercise | undefined, profile: GymProfile, inTraining: string[] = [], limit = 8, prefer: readonly MuscleGroup[] = []): SwapGroups {
   if (!current) return { same: [], other: [] };
   const taken = new Set([current.id, ...inTraining]);
@@ -1041,8 +1044,9 @@ export function swapGroups(current: Exercise | undefined, profile: GymProfile, i
     if (e.resistance === 'barbell' && profile.barsKg.length === 0) return;
     const score = swapScore(current, e);
     if (score === 0) return;
-    if (current.family && e.family === current.family) same.push({ e, distance: swapDistance(current, e), order });
-    else other.push({ e, score });
+    // Een ladderstap in een bestaande familie is alleen een vervanger voor wie op dezelfde ladder staat.
+    if (current.family && e.family === current.family && (!FAMILY_ONLY.has(e.id) || current.ladder?.id === e.ladder?.id)) same.push({ e, distance: swapDistance(current, e), order });
+    else if (!FAMILY_ONLY.has(e.id)) other.push({ e, score });
   });
   same.sort((a, b) => a.distance - b.distance || a.order - b.order);
   other.sort((a, b) => b.score - a.score || serves(a.e) - serves(b.e) || a.e.name.localeCompare(b.e.name));

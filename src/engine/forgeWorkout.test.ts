@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { EXERCISES, exerciseById } from '../data/exercises';
+import { FAMILY_ONLY } from '../data/exerciseFamilies';
 import type { ExercisePrescription } from '../models/training';
 import { demoStrengthLogs, demoWeights } from './fixtures/strengthLogs';
 import {
@@ -378,10 +379,16 @@ describe('ruilen', () => {
     expect(g.other.map((e) => e.id)).toEqual(expect.arrayContaining(['dip', 'push-up']));
     expect(swapOptions(exerciseById('bench-press'), profile).slice(0, g.same.length).map((e) => e.id)).toEqual(g.same.map((s) => s.exercise.id));
   });
-  it('Dips heeft geen echte vervanger', () => {
+  it('Dips heeft alleen zijn eigen varianten van de ladder als echte vervanger', () => {
     const g = swapGroups(exerciseById('dip'), profile);
-    expect(g.same).toEqual([]);
+    expect(g.same.map((s) => s.exercise.id)).toEqual(['negative-dip', 'weighted-dip']);
     expect(g.other.length).toBeGreaterThan(0);
+  });
+  it('een ladderstap uit FAMILY_ONLY staat nooit in Zelfde spier, anders', () => {
+    for (const ex of EXERCISES) {
+      for (const e of swapGroups(ex, profile, [], 50).other) expect(FAMILY_ONLY.has(e.id), `${ex.id}: ${e.id}`).toBe(false);
+    }
+    expect(swapGroups(exerciseById('push-up'), profile).same[0].exercise.id).toBe('incline-push-up');
   });
   it('Hack Squat is een echte vervanger van de back squat; bij het rek bezet geen stangoefening zonder stang', () => {
     expect(swapGroups(exerciseById('back-squat'), profile).same.map((s) => s.exercise.id)).toContain('hack-squat');
@@ -475,5 +482,14 @@ describe('de regel op een beendag met een loop eerder vandaag', () => {
   it('met spierpijn staat het in de regel', () => {
     const sore = { injuries: [{ id: 'n1', date: '2026-09-17', bodyPart: 'Kuit rechts', severity: 'licht' as const, kind: 'spierpijn' as const }], checkIns: [] };
     expect(legDayLine('2026-09-17', { logs: [], templates, program, bodyKg: BODY, sore })).toBe('Je benen zijn nog moe van spierpijn. Zelfde gewicht, een herhaling minder is normaal.');
+  });
+});
+
+describe('ladderstappen in Ruilen', () => {
+  const profile = { barsKg: [20] } as unknown as Parameters<typeof swapGroups>[1];
+  it('een ladderstap is alleen een echte vervanger voor wie op dezelfde ladder staat', () => {
+    const ids = (from: string) => swapGroups(exerciseById(from), profile, [], 50).same.map((s) => s.exercise.id);
+    expect(ids('pull-up')).toContain('weighted-pull-up');
+    for (const from of ['chin-up', 'assisted-pull-up', 'lat-pulldown']) expect(ids(from)).not.toContain('weighted-pull-up');
   });
 });

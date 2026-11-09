@@ -17,6 +17,7 @@ import type { Program } from '../../models/program';
 import { useAppData } from '../../state/AppDataContext';
 import { todayISO } from '../../utils/dates';
 import { Icon } from '../icons';
+import { ExerciseGuideInline } from '../ExerciseGuide';
 import { PrimaryButton, SecondaryButton, Toggle } from '../ui';
 import { ForgeSheet, MenuRow, RirBubble, SheetGroup } from './parts';
 import { SwapList } from './ExerciseSheets';
@@ -160,7 +161,12 @@ export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId,
               </SheetGroup>
             )}
             {/* De tips staan in Uitleg en tekening; alleen zonder dat blad staan ze hier. */}
-            {!art && exercise?.cues && (
+            {!art && exercise?.guide && (
+              <SheetGroup title="Uitleg">
+                <div className="pb-2"><ExerciseGuideInline exerciseId={exercise.id} /></div>
+              </SheetGroup>
+            )}
+            {!art && exercise && !exercise.guide && exercise.cues && (
               <SheetGroup title="Tips">
                 <div className="flex flex-col gap-1.5 pb-2">
                   {exercise.cues.map((c) => (

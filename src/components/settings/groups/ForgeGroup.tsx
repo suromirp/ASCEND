@@ -113,6 +113,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-lijntjes" title="Lijntjes in de lijst" facts={facts} info="forgeLijntjes" onChange={(on) => save({ showTrendLines: on })} />
           <SummaryRow id="forge-volgorde-lijst" title="Volgorde van de oefeningen" facts={facts} onClick={() => setInner('forge-volgorde-lijst')} />
           <SummaryRow id="forge-plaatjes" title="Plaatjes bij oefeningen" facts={facts} info="plaatjes" onClick={() => setInner('forge-plaatjes')} />
+          <SummaryRow id="forge-uitleg-open" title="Uitleg standaard uitgeklapt" facts={facts} info="forgeUitlegOpen" onChange={(on) => void updateSettings({ guideOpen: on })} />
         </BundleSheet>
       )}
       {sheet === 'bundel-rekenmodel' && (
