@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from '../icons';
 import { Card, SecondaryButton } from '../ui';
 import { useAppData } from '../../state/AppDataContext';
-import { currentBodyKg } from '../../engine/bodyWeight';
+import { loadBodyKg } from '../../engine/weightTrend';
 import { forgeEntryLine } from '../../engine/forgeEntry';
 import { forgePoints } from '../../engine/forgeHistory';
 import { exerciseHistories, exerciseViews, legsTiredAt } from '../../engine/strengthHistory';
@@ -18,7 +18,7 @@ export function ForgeEntryCard() {
   const navigate = useNavigate();
   const { sessionLogs, templates, program, settings, updateSettings, injuryNotes } = useAppData();
   const today = todayISO();
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  const bodyKg = loadBodyKg(settings);
   const strengthKey = strengthModelKey(settings.strengthModel);
 
   const entry = useMemo(() => {

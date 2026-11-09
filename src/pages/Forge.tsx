@@ -28,7 +28,7 @@ import { jumpRoute } from '../components/settings/jump';
 import { ExerciseRow } from '../components/forge/ExerciseRow';
 import { ExerciseHistorySheet } from '../components/forge/ExerciseHistorySheet';
 import { ForgeFilters } from '../components/forge/ForgeFilters';
-import { currentBodyKg } from '../engine/bodyWeight';
+import { loadBodyKg } from '../engine/weightTrend';
 import { isRepsBased, splitByRecency, trainingFilters, visibleViews } from '../engine/forgeHistory';
 import { checkSummary, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow } from '../engine/strengthHistory';
 import { easedLogIds } from '../engine/legDayEase';
@@ -53,7 +53,7 @@ export function ForgePage() {
   const forgeSettings = jumpRoute('forge', { jumpTo: 'forge' });
   const { sessionLogs, templates, program, settings, updateSettings, injuryNotes } = useAppData();
   const today = todayISO();
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  const bodyKg = loadBodyKg(settings);
   // "Deze oefening in Forge" in het logboek geeft de naam mee als zoekterm; anders begint het zoeken leeg.
   const location = useLocation();
   const startQuery = (location.state as { zoek?: unknown } | null)?.zoek;

@@ -5,7 +5,7 @@ import { fatigueBand, fatigueStatus, fatigueWord, FATIGUE_THRESHOLDS, legFatigue
 import { LegFatigueInfoSheet } from './LegFatigueInfoSheet';
 import { legSorenessList } from '../engine/legSoreness';
 import { resolveVariantDuration } from '../engine/substitutions';
-import { currentBodyKg } from '../engine/bodyWeight';
+import { loadBodyKg } from '../engine/weightTrend';
 import { addDays, formatWeekdayDayMonthNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { Card, InfoButton } from './ui';
@@ -26,14 +26,14 @@ export function useLegFatigueInputs(): LegFatigueInputs {
   const today = todayISO();
   return useMemo(() => {
     // The same weight the planner reads (state/AppDataContext.tsx): MacroFactor's trend weight when it is switched on.
-    const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+    const bodyKg = loadBodyKg({ weightEntries: settings.weightEntries, weightFromMacroFactor: settings.weightFromMacroFactor, weightFromHealthConnect: settings.weightFromHealthConnect, weightForLoad: settings.weightForLoad });
     return {
       logs: sessionLogs, plannedSessions, templates, today, bodyKg, program,
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       // Spierpijn uit de ochtendcheck en een melding op een beenplek uit Hoe voelt je lijf? tellen even zwaar.
       soreness: legSorenessList(settings.morningCheckIns, injuryNotes),
     };
-  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, settings.morningCheckIns, injuryNotes, today]);
+  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, settings.weightForLoad, settings.morningCheckIns, injuryNotes, today]);
 }
 
 export function LegFatigueCard() {

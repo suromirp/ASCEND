@@ -192,6 +192,10 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   }
   // The switches for weight from MacroFactor and from Health Connect, "Gewichtstrend
   // gebruiken" and "Uitleg standaard uitgeklapt": a yes or a no, or not there.
+  if ('weightForLoad' in s && s.weightForLoad !== 'trend' && s.weightForLoad !== 'latest') {
+    delete s.weightForLoad;
+    skipped.n++;
+  }
   for (const key of ['weightFromMacroFactor', 'weightFromHealthConnect', 'weightTrend', 'guideOpen']) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];

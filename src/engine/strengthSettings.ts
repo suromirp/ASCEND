@@ -235,6 +235,11 @@ export interface StrengthSettings {
   // "Stap voorstellen" (docs/beslissingen/2026-11-09-calisthenics-stapvoorstel.md): a step up or down on a ladder as a
   // proposal with Akkoord in Forge. Absent = on. Never plans anything by itself.
   stepProposal?: boolean;
+  // "Ijkset" (docs/beslissingen/2026-11-09-ijkset.md): eens per vier weken een kaart in Forge met een extra set bij
+  // één hoofdoefening, zo ver als netjes gaat. Absent = on. Pas na Akkoord komt er een set bij.
+  calibration?: boolean;
+  // De dag van de laatste Akkoord op een ijkset (yyyy-mm-dd); daarna vier weken niets.
+  calibratedAt?: string;
   // The block "Geschatte 1RM" with a trend on the Forge page.
   showOneRm?: boolean;
   // The choice between the 1RM and the working weight on the cards of Forge, one
@@ -328,6 +333,8 @@ export interface ResolvedStrengthSettings {
   askClean: boolean;
   askBand: boolean;
   stepProposal: boolean;
+  calibration: boolean;
+  calibratedAt?: string;
   showOneRm: boolean;
   oneRmView: OneRmView;
   showMacroFactorOneRm: boolean;
@@ -553,6 +560,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.askClean === 'boolean') out.askClean = raw.askClean;
   if (typeof raw.askBand === 'boolean') out.askBand = raw.askBand;
   if (typeof raw.stepProposal === 'boolean') out.stepProposal = raw.stepProposal;
+  if (typeof raw.calibration === 'boolean') out.calibration = raw.calibration;
+  if (typeof raw.calibratedAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.calibratedAt)) out.calibratedAt = raw.calibratedAt;
   if (typeof raw.showOneRm === 'boolean') out.showOneRm = raw.showOneRm;
   const oneRmView = ONE_RM_VIEWS.find((v) => v === raw.oneRmView);
   if (oneRmView) out.oneRmView = oneRmView;
@@ -623,6 +632,8 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     askClean: s.askClean ?? true,
     askBand: s.askBand ?? true,
     stepProposal: s.stepProposal ?? true,
+    calibration: s.calibration ?? true,
+    ...(s.calibratedAt ? { calibratedAt: s.calibratedAt } : {}),
     showOneRm: s.showOneRm ?? true,
     oneRmView: s.oneRmView ?? 'one_rm',
     showMacroFactorOneRm: s.showMacroFactorOneRm ?? true,

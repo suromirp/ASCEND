@@ -444,9 +444,14 @@ export interface AppSettings {
   weightFromHealthConnect?: boolean;
   // "Gewichtstrend gebruiken" (engine/weightTrend.ts, docs/beslissingen/2026-11-09-gewichtstrend.md):
   // absent or true = the sheet and row Lichaamsgewicht show the trend over your weighings of the
-  // last 14 days, false = the latest weighing. Only what is shown; the rucksack share, leg index
-  // and Forge still read the latest weighing. Optional and additive, so no schema step.
+  // last 14 days, false = the latest weighing. What Forge, the rucksack share and the leg index
+  // use is `weightForLoad`. Optional and additive, so no schema step.
   weightTrend?: boolean;
+  // "Gewicht bij eigen gewicht" (engine/weightTrend.ts#loadWeight, docs/beslissingen/2026-11-09-gewicht-bij-eigen-gewicht.md):
+  // het gewicht waarmee Forge (eigen gewicht, optrekhulp, dips), het rugzakaandeel en de beenindex rekenen.
+  // Afwezig of 'trend' = de gewichtstrend (met te weinig wegingen de laatste weging), 'latest' = de laatste weging.
+  // Optioneel en additief, dus geen schemastap.
+  weightForLoad?: 'trend' | 'latest';
   // "Gewicht op Je stand" (engine/weightCard.ts, docs/beslissingen/2026-11-09-gewicht-buiten-instellingen.md):
   // absent = aan zodra er een weging is, false = geen kaart Gewicht op Je stand en geen wegingen in het
   // Logboek. Alleen wat je ziet. Optioneel en additief, dus geen migratiestap.

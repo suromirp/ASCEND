@@ -54,6 +54,8 @@ export interface BlockActions {
   standUndo: () => void;
   // Stap lichter of Stap zwaarder: naar die stap van de ladder, via dezelfde weg als Ruilen.
   step: (slot: string, exerciseId: string) => void;
+  // Het blad bij het bolletje van eigen gewicht (BodyLoad.tsx).
+  bodyLoad: (slot: string) => void;
   // De band voor de open sets (null is geen band), en "Ging het netjes?" (undefined is onbekend).
   band: (slot: string, band: SetBand | null) => void;
   clean: (slot: string, rowId: string, clean: boolean | undefined) => void;

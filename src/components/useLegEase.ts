@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { legEaseMoveAdvice, type Advice } from '../engine/adviceEngine';
-import { currentBodyKg } from '../engine/bodyWeight';
+import { loadBodyKg } from '../engine/weightTrend';
 import { EASE_SAVE_FAILED, easeTarget, easeTargetOf, legDaySignals, makeDecision, morningRestDay, moveReason, recordDecision, removeDecision, shouldOfferEase, type EaseOffer, type EaseTarget, type LegDaySignals, type SignalDeps } from '../engine/legDayEase';
 import { resolveLegEase, resolveLegEaseHow, type LegEaseHow, type LegEaseMode } from '../engine/legEaseSettings';
 import type { LegEaseChoice } from '../models/legEase';
@@ -38,7 +38,7 @@ export function useLegEase(sessionId?: string | null): LegEaseApi {
   const mode = resolveLegEase(settings);
   const how = resolveLegEaseHow(settings);
   const today = todayISO();
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  const bodyKg = loadBodyKg(settings);
   const checkIns = settings.morningCheckIns;
 
   const state = useMemo<LegEaseState | undefined>(() => {

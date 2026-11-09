@@ -526,6 +526,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Terug', text: 'Ongedaan maken op de kaart, of later in het blad van de oefening.' },
     ],
   },
+  forgeIJkset: {
+    title: 'IJkset voorstellen',
+    lead: 'Een schatting van wat je over hebt is alleen goed als je hem af en toe controleert. Eens per vier weken stelt Forge daarom één extra set voor.',
+    points: [
+      { head: 'Wat', text: 'bij één hoofdoefening een set erbij, zo ver als netjes gaat. Daarna kies je zoals altijd hoeveel je over had.' },
+      { head: 'Wanneer', text: 'niet in een week met een tocht of test, en hooguit eens per vier weken.' },
+      { head: 'Akkoord', text: 'pas dan komt de set erbij. Met Niet nu blijft je training zoals hij was en vraagt Forge het de volgende keer opnieuw.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',
@@ -554,6 +563,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'de kaart en de regels verdwijnen. Je wegingen blijven bewaard en je planning verandert nooit door deze keuze.' },
     ],
   },
+  gewichtEigen: {
+    title: 'Gewicht bij eigen gewicht',
+    lead: 'Bij een push-up, optrekken of dip telt een deel van je lichaamsgewicht als last, en je rugzak en de beenindex rekenen ook met je gewicht. Het advies is Trend.',
+    points: [
+      { head: 'Trend', text: 'het rustige gemiddelde van je wegingen van de laatste twee weken. Eén weging schommelt een kilo met water en eten.' },
+      { head: 'Laatste weging', text: 'het getal van je laatste weging, zoals voorheen.' },
+      { head: 'Te weinig wegingen', text: 'onder de drie wegingen in twee weken, of met een trendgewicht uit MacroFactor, telt je laatste weging.' },
+    ],
+  },
   gewichtstrend: {
     title: 'Gewichtstrend gebruiken',
     lead: 'Weeg je je vaak, dan zie je bij Lichaamsgewicht een rustig gemiddelde in plaats van alleen de laatste weging. Het advies is aan.',
@@ -561,7 +579,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Hoe', text: 'een gemiddelde van je wegingen van de laatste 14 dagen, waarin een weging van een week oud half zo zwaar telt als je laatste weging.' },
       { head: 'Uitschieter', text: 'een weging die meer dan 3 procent afwijkt van de middelste weging telt niet mee.' },
       { head: 'Te weinig', text: 'onder de drie wegingen in twee weken, of met een trendgewicht uit MacroFactor, zie je de laatste weging.' },
-      { head: 'Nog niet', text: 'je rugzak, de beenindex en Forge rekenen voorlopig met je laatste weging.' },
+      { head: 'Rekenen', text: 'Forge, je rugzak en de beenindex rekenen met de trend, tenzij je bij Gewicht bij eigen gewicht Laatste weging kiest.' },
       { head: 'Uit', text: 'je ziet de laatste weging, zoals voorheen. Er verdwijnt niets.' },
     ],
   },

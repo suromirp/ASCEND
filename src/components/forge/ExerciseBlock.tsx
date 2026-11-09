@@ -33,6 +33,7 @@ import { stepFor } from '../../engine/strengthWeights';
 import { formatNumberNL } from '../../utils/number';
 import { Icon } from '../icons';
 import { TextButton } from '../TextButton';
+import { BodyLoadChip } from './BodyLoad';
 import { addOnText } from '../../engine/machineWeights';
 import { SPOTTER_SIGN } from '../../engine/spotter';
 import { LongPressRow, RirBubble, TickBox, ValueCell } from './parts';
@@ -73,6 +74,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   canStep = false,
   bandOn = false,
   cleanRow,
+  bodyLoad,
   act,
 }: {
   ex: WorkoutExercise;
@@ -117,6 +119,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   bandOn?: boolean;
   // De set waarna Forge vraagt of het netjes ging ("Ging het netjes?"), als er een is.
   cleanRow?: string;
+  // Eigen gewicht (engine/bodyLoad.ts): het bolletje "84,2 kg · 50%"; een tik opent het blad.
+  bodyLoad?: string;
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
@@ -179,6 +183,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
       </div>
       <div className="forge-fold" data-folded={folded} inert={folded}>
         <div>
+          {bodyLoad && <BodyLoadChip text={bodyLoad} name={ex.name} onOpen={() => act.bodyLoad(ex.slot)} />}
           {ladderLines && (
             <div className="mt-1" data-testid="forge-ladder">
               <p className="font-sans text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{ladderLines.step}</p>

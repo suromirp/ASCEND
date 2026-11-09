@@ -1,3 +1,4 @@
+import { EXTRA_FRACTION } from '../data/bodyweightShares';
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import { SKILL_LADDERS, skillLadderById, type SkillLadder } from '../data/skillLadders';
@@ -332,12 +333,13 @@ describe('de overige ladders', () => {
     }
   });
 
-  it('elke stap is een eigen oefening zonder deel van je gewicht (geen meting), per kant waar het per kant is', () => {
+  it('elke stap is een eigen oefening zonder deel van je gewicht (zonder bron geen aandeel), per kant waar het per kant is', () => {
     for (const [id, steps] of LADDERS) {
       for (const ex of steps) {
         const e = exerciseById(ex)!;
         expect(e.ladder?.id, ex).toBe(id);
-        expect(e.bodyweightFraction, ex).toBeUndefined();
+        // Alleen met een bron: de aanvullingen van `data/bodyweightShares.ts` (2026-11-09-gewicht-bij-eigen-gewicht.md).
+        expect(e.bodyweightFraction, ex).toBe(EXTRA_FRACTION.get(ex));
         expect(e.guide, ex).toBeDefined();
         expect(e.perSide === true, ex).toBe(id === 'pistol');
       }
