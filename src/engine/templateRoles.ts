@@ -1,5 +1,6 @@
 import type { SessionTemplate, TemplateRole } from '../models/training';
 import { defaultRolesOf } from '../data/templateRoles';
+import { BODYWEIGHT_TEMPLATE_ID } from './noGymDetails';
 
 // Rollen op sjablonen. Een regel vraagt naar een rol, niet naar een lijst met
 // sjabloon-id's. Een sjabloon zonder `roles` (opgeslagen voor dit veld bestond,
@@ -25,6 +26,14 @@ export function idHasRole(templateId: string, role: TemplateRole, templates?: It
     for (const t of templates as Iterable<RoleCarrier>) if (t.id === templateId) return hasRole(t, role);
   }
   return defaultRolesOf(templateId).includes(role);
+}
+
+// Een krachttraining in de sportschool: elk krachtsjabloon behalve Eigen gewicht
+// (`tpl_bodyweight`), dat alleen een periode zonder sportschool neerzet. Elke
+// lijst met krachtsjablonen voor MacroFactor, Forge of het krachtprogramma gaat
+// hierdoor, zodat Eigen gewicht daar nooit als gewone krachttraining meetelt.
+export function isGymStrengthTemplate(template: Pick<SessionTemplate, 'id' | 'type'>): boolean {
+  return template.type === 'strength' && template.id !== BODYWEIGHT_TEMPLATE_ID;
 }
 
 export function isTestOrRace(template: RoleCarrier): boolean {
