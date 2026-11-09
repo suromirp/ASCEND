@@ -186,3 +186,13 @@ Les van deze week: alle helpers draaiden als general-purpose op Opus. Vanaf nu a
 - 2026-11-08, Hulpfuncties, exports en afstandszin, Sherpa, sonnet (ontwikkelaar), 55k, 10 min, 0
 - 2026-11-08, Buiten klein (regen, maan), Sherpa, sonnet (ontwikkelaar), 139k, 15 min, 0
 - 2026-11-08, Review bouwmoment, Warden, sonnet (reviewer), 59k, 4 min, geen blokkade, 4 kleine punten naar Inbox
+- 2026-11-09, Hulpfuncties, opruimen, regen per plaats, afstandszin, Sherpa, sonnet (ontwikkelaar), 71k, 8 min, 0
+- 2026-11-09, Forge opsplitsen ronde 2, Sherpa, sonnet (ontwikkelaar), 138k, 16 min, 0
+- 2026-11-09, Scout RIR en RPE, Scout, opus (sportwetenschapper), 170k, 8 min, 0 (geen shell: coördinator committe)
+- 2026-11-09, Scout calisthenics en uitleg, Scout, opus (sportwetenschapper), 179k, 11 min, 0 (geen shell: coördinator committe)
+- 2026-11-09, Heuvels en trappen OSM, Sherpa, sonnet (ontwikkelaar), 114k, 14 min, 1 (test importeerde verwijderde backup.ts, door coördinator)
+- 2026-11-09, Forge afvinken telt als het doel, Sherpa, opus (ontwikkelaar), 161k, 21 min, 0
+- 2026-11-09, Review ronde 1, Warden, sonnet (reviewer), 35k, 7 min, 1 blokkade (al hersteld) en 4 kleine punten door coördinator
+- 2026-11-09, Review Forge afvinken, Warden, opus (reviewer), 100k, 8 min, geen blokkade, 5 kleine punten naar Inbox
+- 2026-11-09, Lookout ronde 1 en Forge RIR, Lookout, sonnet (tester), 105k en 86k, 23 en 10 min, 0
+Les: helpers in een worktree starten vanaf de standaardbasis (main), niet vanaf de werkbranch: geef altijd expliciet de basisbranch mee; en een lijst van verwijderde bestanden (backup.ts) hoort in de opdracht van parallelle sporen.
