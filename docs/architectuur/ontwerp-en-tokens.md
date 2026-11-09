@@ -82,12 +82,13 @@ fris en sportief op donker marine.
 
 ## Stem
 
-De teksten klinken als een trainer die je kent: je/jij, kort en direct, met warmte in de toon en
-nooit in uitroepen. Waar duidelijkheid voorgaat (een getal of datum, een waarschuwing, wat een label
-of voorstel met je planning doet) komt het droge feit eerst en blijft het onaangetast, met liefst een
-zin in dezelfde toon eromheen. Humor is licht en zeldzaam, en de vaste woorden blijven overal gelijk.
-Eerst de Ascend-tab, daarna de hele app
-(`docs/beslissingen/2026-10-27-stem-van-ascend.md`).
+De teksten klinken als een trainer die je kent: je/jij, kort en direct, het droge feit eerst, één
+gedachte per zin. Eén laag per keer: de uitkomst op het scherm (ongeveer 60 tekens), de reden achter
+de i (hoogstens ongeveer 40 woorden). Een voorstel zegt wat er verandert, een waarschuwing staat nooit
+weggestopt, en humor is licht en zeldzaam. De vaste woorden blijven overal gelijk; in legenda's is gedaan
+vol en gepland gestippeld. De regels staan in `docs/beslissingen/2026-11-09-stem-van-ascend.md`
+(uitgewerkt in `docs/visie/stemgids-concept.md`); dat besluit vervangt
+`docs/beslissingen/2026-10-27-stem-van-ascend.md`. Per tab herschreven, Vandaag eerst.
 
 ## Beweging
 

@@ -32,8 +32,8 @@ describe('TARGET-TIME', () => {
     expect(a.proposal).toBeUndefined(); // no session changes: the goal only
     expect(a.title).toContain('45:00');
     expect(a.effect).toContain('Liever niet');
-    expect(a.effect).toContain('in ongeveer 61 minuten');
-    expect(a.effect).toMatch(/Bij gemiddelde groei is dat rond .* ongeveer \d+:\d{2}, en 45:00 vraagt ongeveer \d+ weken; tot .* zijn het er \d+\./);
+    expect(a.effect).toContain('past nu bij ongeveer 61 minuten');
+    expect(a.effect).toMatch(/Rond .* haal je ongeveer \d+:\d{2}, bij gemiddelde groei\. Voor 45:00 heb je ongeveer \d+ (?:weken|week) nodig, er (?:zijn|is) er \d+\./);
     expect(a.effect).not.toContain('realistisch');
     // Plain words, no long dashes (the owner's rule for new copy).
     expect(`${a.title}${a.effect}${a.why}`).not.toMatch(/[–—]/);
@@ -44,7 +44,7 @@ describe('TARGET-TIME', () => {
     expect(a.id).toBe('goaltime:race:48');
     expect(a.title).toContain('47:45');
     expect(a.title).not.toContain('48 minuten');
-    expect(a.effect).toContain('en 47:45 vraagt ongeveer');
+    expect(a.effect).toContain('Voor 47:45 heb je ongeveer');
     expect(a.effect).toContain('Met Liever niet blijft 47:45 staan');
   });
 
@@ -63,7 +63,7 @@ describe('TARGET-TIME', () => {
   it('careful growth is said in the text and gives a slower proposal', () => {
     const [avg] = targetTime(inputs({ logs }));
     const [careful] = targetTime(inputs({ logs, goalGrowth: 'careful' }));
-    expect(careful.effect).toContain('Bij voorzichtige groei is dat rond');
+    expect(careful.effect).toContain('bij voorzichtige groei');
     expect(careful.goalTargetTime!.minutes).toBeGreaterThanOrEqual(avg.goalTargetTime!.minutes);
   });
 
@@ -141,12 +141,12 @@ describe('TARGET-TIME says what it counts on', () => {
   it('names the whole run when the best 5 km does not count', () => {
     const plain: SessionLog = { ...test('t1', '2026-10-29', 36), cardioData: { durationMinutes: 36, distanceKm: 6, source: 'manual' } };
     const [a] = targetTime(inputs({ logs: [plain] }));
-    expect(a.effect).toContain('(hele run: 6 km in 36:00)');
+    expect(a.effect).toContain(': 6 km in 36:00 (hele loop).');
   });
 
   it('names the best 5 km when that counts', () => {
     const [a] = targetTime(inputs({ logs: [withEffort(true)], raceGoals: [race(40)] }));
-    expect(a.effect).toContain('(snelste 5 km in 27:40)');
+    expect(a.effect).toContain(': snelste 5 km in 27:40');
   });
 
   it('gives no advice on a test whose best 5 km waits for Akkoord', () => {

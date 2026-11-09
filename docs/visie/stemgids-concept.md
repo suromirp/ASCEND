@@ -1,6 +1,6 @@
 # Stemgids van ASCEND (concept, ter keuring)
 
-Status: concept. Nog niets in de app is veranderd. Na keuring door de eigenaar vervangt dit `docs/beslissingen/2026-10-27-stem-van-ascend.md` als nieuw besluit (`docs/beslissingen/JJJJ-MM-DD-stem-van-ascend.md`, het oude blijft staan).
+Status: goedgekeurd door de eigenaar (9 november); vastgelegd als `docs/beslissingen/2026-11-09-stem-van-ascend.md`, dat vervangt `docs/beslissingen/2026-10-27-stem-van-ascend.md` als nieuw besluit (`docs/beslissingen/JJJJ-MM-DD-stem-van-ascend.md`, het oude blijft staan).
 
 Dit is stap 2 van "Alle teksten van ASCEND herschrijven, en Engels erbij" (`docs/backlog.md`). De teksten die hier staan komen uit de echte app, via `docs/teksten/alle-teksten.md` (stap 1). Het "na" is een voorstel, geen wijziging.
 
