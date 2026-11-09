@@ -89,11 +89,9 @@ export function stepProposals(input: StepProposalInput): StepProposal[] {
   return (input.ladders ?? SKILL_LADDERS).map((l) => proposalFor(l, input)).filter((p): p is StepProposal => p !== null);
 }
 
-const ALWAYS = 'Eerst een voorstel, pas na Akkoord verandert er iets.';
-
 // De woorden van de kaart: het droge feit eerst, dan de vraag.
 // `keeps` zegt wat er met sets en herhalingen gebeurt (zie withStepAccepted).
-export function stepProposalText(p: StepProposal): { fact: string; question: string; where: string; keeps: string; always: string } {
+export function stepProposalText(p: StepProposal): { fact: string; question: string; where: string; keeps: string } {
   const names = [...new Set(p.targets.map((t) => t.templateName))];
   const where = names.length === 1 ? `In ${names[0]}.` : `In ${names.slice(0, -1).join(', ')} en ${names[names.length - 1]}.`;
   const sets = floorSets(p);
@@ -101,8 +99,8 @@ export function stepProposalText(p: StepProposal): { fact: string; question: str
     ? 'Sets en herhalingen blijven.'
     : isHold(p.toExerciseId) ? `Je begint op ${sets} keer ${SKILL_FLOOR_SECONDS} seconden.` : `Je begint op ${sets} keer ${SKILL_FLOOR_REPS}.`;
   return p.kind === 'harder'
-    ? { fact: `Je toets op ${p.fromName} is gehaald. Volgende stap: ${p.toName}.`, question: `Zet je plan op ${p.toName}?`, where, keeps, always: ALWAYS }
-    : { fact: `Drie trainingen onder de onderkant van ${p.fromName}.`, question: `Zet je plan op de lichtere stap ${p.toName}?`, where, keeps, always: ALWAYS };
+    ? { fact: `Je toets op ${p.fromName} is gehaald. Volgende stap: ${p.toName}.`, question: `Zet je plan op ${p.toName}?`, where, keeps }
+    : { fact: `Drie trainingen onder de onderkant van ${p.fromName}.`, question: `Zet je plan op de lichtere stap ${p.toName}?`, where, keeps };
 }
 
 // Het aantal sets van de onderkant: dat van de toets van de nieuwe stap, zoals withStepAccepted het schrijft.

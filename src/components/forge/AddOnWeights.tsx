@@ -62,7 +62,7 @@ export function GymAddOnForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Een los plaatje of magneet voor bij het blok, bijvoorbeeld 2,3 kg. Het geldt voor alle kabels en toestellen met een gewichtstapel in {profile.name}. Per toestel kun je het aanpassen of uitzetten.
+        Een los plaatje of magneet dat je bij elk gewicht van het blok kunt leggen, bijvoorbeeld 2,3 kg. Het geldt voor alle kabels en toestellen met een gewichtstapel in {profile.name}. Per toestel kun je het overschrijven of uitzetten.
       </p>
       <AddOnField value={text} onChange={(v) => { setText(v); setTouched(true); }} touched={touched} />
       <div className="flex gap-3">

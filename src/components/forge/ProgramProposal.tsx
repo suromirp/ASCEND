@@ -26,7 +26,7 @@ export function ProgramOfferCard({ program, current, onOpen }: { program: MacroF
         </p>
       </div>
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Vul je krachttrainingen met dit programma, per week: oefeningen, sets, herhalingen en RIR. Je planning en wat je al deed blijven zoals ze zijn.
+        ASCEND kan je krachttrainingen vullen met de oefeningen, sets, herhalingen en RIR van dit programma, per week. Je planning en wat je al deed blijven zoals ze zijn.
         {current ? ` Het vervangt ${current.name}.` : ''}
       </p>
       <SecondaryButton onClick={onOpen}>Voorstel bekijken</SecondaryButton>
@@ -66,7 +66,7 @@ export function ProgramProposalSheet({
   }
 
   return (
-    <ForgeSheet title="Programma uit MacroFactor" sub={`${program.name}. Alleen de oefeningen van je krachttrainingen veranderen. Je planning en je logs blijven. Eerst een voorstel, pas na Akkoord verandert er iets.`} onClose={onClose}>
+    <ForgeSheet title="Programma uit MacroFactor" sub={`${program.name}. Alleen de oefeningen van je krachttrainingen veranderen; je planning en je logs blijven.`} onClose={onClose}>
       {(close) => (
         <div className="flex flex-col gap-5">
           <section className="flex flex-col gap-3">
