@@ -911,8 +911,13 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
-    expect(rowSummary('bundel-weer', facts()).value).toBe('7 van 7 aan');
-    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('5 van 7 aan');
+    expect(rowSummary('bundel-weer', facts()).value).toBe('9 van 9 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('7 van 9 aan');
+    // Weerwaarschuwingen en lawinegevaar tellen mee (docs/beslissingen/2026-11-09-gr5-waarschuwingen.md).
+    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('7 van 9 aan');
+    expect(rowSummary('weeralarm', facts()).checked).toBe(true);
+    expect(rowSummary('weeralarm', withSettings({ weatherWarnings: false })).checked).toBe(false);
+    expect(rowSummary('lawinegevaar', withSettings({ avalancheBulletin: false })).checked).toBe(false);
     expect(rowSummary('heuvels-buurt', facts())).toEqual({ checked: true });
     expect(rowSummary('heuvels-buurt', withSettings({ overviews: { hillsNearby: false } }))).toEqual({ checked: false });
     expect(rowSummary('bundel-inzicht', facts())).toEqual({ value: 'Aan', sub: '4 van 4 onderwerpen' });

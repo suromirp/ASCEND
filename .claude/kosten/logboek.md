@@ -201,3 +201,8 @@ Les ronde 3: één bouwer die twee keer herstelt kost 100k tot 150k extra; geef 
 - 2026-11-09, Lijn rest R1 review, Warden, opus (reviewer), 93k, 5 min, 1 belangrijk en 4 kleine punten
 - 2026-11-09, Lijn rest R1 Lookout (kit, vandaag/week/stand op 360 en 390), coördinator zelf, 0 rood
 - 2026-11-09, lijn Forge F2: Sherpa vermoeidheid (opus, 200k+221k herstel, 16 en 6 min), Sherpa opsplitsen (sonnet, 111k, 10 min, 0), Warden (opus, 135k, 10 min, 3 belangrijke punten: dubbele telling, Terugzetten, stille kracht), Lookout (sonnet, 0 rood)
+- 2026-11-09, Lijn rest R2 GR5-waarschuwingen, Sherpa, opus (ontwikkelaar), 191k, 19 min, 0 blokkades
+- 2026-11-09, Lijn rest R2 Tempo grafiek, Sherpa, opus (ontwikkelaar), 109k, 10 min, 0 blokkades
+- 2026-11-09, Lijn rest R2 review, Warden, opus (reviewer), 114k, 4 min, 2 belangrijk en 8 klein
+- 2026-11-09, Lijn rest R2 Lookout (kit) en tekstkaart, coördinator zelf, 0 rood, kaart: 1 verklaard verschil per stand
+Les R2: zeg bij een cache met 'geen antwoord' in de opdracht dat een fout nooit een nee is.

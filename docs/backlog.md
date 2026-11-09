@@ -16,6 +16,8 @@ Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde ui
 
 - 9 november, uit de reviews van ronde 3, nog open: feestdagen als voorstel; Reverse Lunge is in de catalogus een dumbbell-oefening; `ProgramProposal.tsx` gebruikt nog niet `isGymStrengthTemplate` (Forge); de OpenStreetMap-regel op een vakantieadres (een periode heeft geen eigen plek, vraagt een nieuwe opgeslagen vorm). Toestelstanden (Forge): Standen wissen zonder Terugdraaien; de formulier-`key` in `MachineWeights.tsx`; standen in pond, plaatjesnummers en optrekhulp; het keuzestrookje 'Ook tussenin en erboven schatten' breekt op 390 px; Minder bij een leeg gewichtsveld zegt 'naar 0 kilo'. Tempo: de band en de lijn zijn nog niet gezien met 8 of meer lopen over 4 weken (de kit heeft geen stand daarvoor).
 - 9 november, uit R1: de gewichtstrend voedt alleen wat je ziet; Forge (lichaamsgewicht en hulp), rugzakaandeel en beenindex rekenen nog met de laatste weging (Forge via lijn Forge, de rest vraagt een eigen besluit want het raakt `planGolden`); `docs/architectuur/ontwerp-en-tokens.md` regel 80 en `bediening-en-beweging.md` regel 46 noemen een `SkyPanel` die niet bestaat; dubbele lege regels in `legDayEase.ts`, `placeReason.ts`, `weatherSwap.ts`; hoofdletterkopie in `forgeHistory.ts` (Forge); de knop 'Voorstel bekijken' op één regel en het blad Lichaamsgewicht zijn op 360 px alleen beredeneerd, niet in beeld gezien.
+- 9 november, uit R2 (vraag met advies): bij een tocht in het sneeuwseizoen zonder lawineregel is niet te zien of het veilig is of dat het bulletin niet kwam (nu stil bij fout, 404 of onbekend gebied). Advies: een rustige regel in `ink-dim` "Geen lawinebulletin gevonden voor je tocht. Kijk bij de lawinedienst." met de link, op dezelfde plek als de kaart; bouwen bij R3 tenzij de eigenaar het stil wil houden.
+- 9 november, uit R2, nog open: hutten via refuges.info wachten op `coords` per etappe in `gr5Stages.ts` (de GPX van de eigenaar omzetten); de kaart Let op op Vandaag verschijnt na het ophalen en kan de ochtendkaart onder de missie schuiven (Lookout met trage processor en een tocht); mogelijk dubbel onweer met het bergweer; de lijn in de tempografiek is bij 'geen duidelijke verandering' een volle schuine lijn (gestippeld of gedimd maken) en de stippen zijn niet tikbaar; het blad Tempo gebruikt 8 weken, de kaart 12; Meteoalarm is niet leesbaar vanuit een webapp (geen CORS), daarom drempels op Open-Meteo; live netwerk (Open-Meteo-waarschuwing, EAWS) is niet in een echte browser of toestel gezien.
 - 9 november, aandacht voor de eigenaar bij het bouwen: standen onthouden werkt stil (met Terugdraaien); de periode Zonder sportschool geeft de 3 dagen na een tocht dezelfde lengteregel als de 72 uur rust; de grafiek en tekst achter de i van Tempo bij zone 2 zijn nog niet gebouwd.
 
 ## Rooster voor de bouwmomenten
@@ -36,13 +38,14 @@ F4. Calisthenics: ontwerp, daarna bouwen.
 
 Lijn rest (alles buiten Forge):
 
-R2. Voor de GR5: waarschuwingen, hutten, lawines ‖ Tempo bij zone 2: grafiek en tekst achter de i.
 R3. Oudere punten uit de ronden (RPE bij een testloop, Vandaag-volgorde, herinrichting uit de ontwerprapporten, buiten Forge).
 R4. Alle teksten herschrijven en Engels, per tab; de Forge-tab pas als lijn Forge klaar is.
 
 ## Loopt nu
 
 Live op 9 november (lijn Forge, F2): vermoeidheid tussen oefeningen (harde sets voor dezelfde spieren eerder in de training stellen de eerste set bij, instelling Vermoeidheid tussen oefeningen, besluit `2026-11-09-forge-vermoeidheid-tussen-oefeningen.md`; de drempels zijn nog niet op echte trainingen getoetst), ForgeWorkout van 1038 naar 689 regels (zes nieuwe hooks en onderdelen) en de lintwaarschuwingen in Forge weg.
+Live op 9 november (lijn rest, R2): weerwaarschuwingen (onweer, windstoten, hitte) en lawinegevaar (EAWS) als kaart Let op op Vandaag, twee instellingen, alleen tekst; Tempo bij zone 2 met een i, een blad en een grafiek per loop.
+
 
 Live op 9 november (lijn Forge, F1): de reviewpunten van Afvinken telt als het doel (`forgeKg` in het log, strengere `allAtTop`, regel 5 leest de bevestigde RIR, pauze, uitlegzin bij de bolletjes), Standen wissen met Terugdraaien en het strookje Ook schatten, en Ruilen met echte vervangers (twee groepen, Aanbevolen, reden per oefening). Open uit F1: pond, plaatjesnummers en optrekhulp bij de toestelstanden; het keuzestrookje en Terugdraaien zijn op 360 en 390 px gezien, Rustig niet.
 Live op 9 november (lijn rest, R1): Heuvels-alleen omzetten bewaart meteen, `isGymStrengthTemplate`, de heuvelregel ook in een periode Zonder sportschool, een vaste sport in zo'n periode blijft staan met een regel in het voorstel, duidelijker reden bij terugzetten van de lengte, hoofdletterhulp samengebracht, `.sky-panel` weg, 'Voorstel bekijken' op één regel, en de gewichtstrend (instelling Gewichtstrend gebruiken, alleen voor wat je ziet).

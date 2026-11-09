@@ -446,7 +446,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bundel-signalen':
       return { value: `${signalsOnCount(s)} van ${SIGNAL_KEYS.length} aan` };
     case 'bundel-weer':
-      return { value: `${countOn([o.weatherLine, o.bestMoment, o.rainSoon, o.hillsNearby, o.moonLine, o.weatherSwap, o.clothingAdvice])} van 7 aan` };
+      return { value: `${countOn([o.weatherLine, o.bestMoment, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, o.moonLine, o.weatherSwap, o.clothingAdvice])} van 9 aan` };
     case 'bundel-run-detail': {
       const d = resolveRunInsight(s.runInsight).detail;
       return d.show ? { value: 'Aan', sub: `Loopvorm: ${formSwitchesLine(d.form)}` } : { value: 'Uit', dim: true };
@@ -865,6 +865,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return place ? { value: place.name } : { value: 'Niet gekozen', dim: true };
     case 'weerregel':
       return { checked: o.weatherLine };
+    case 'weeralarm':
+      return { checked: s.weatherWarnings !== false };
+    case 'lawinegevaar':
+      return { checked: s.avalancheBulletin !== false };
     case 'regen-uur':
       return { checked: o.rainSoon };
     case 'heuvels-buurt':

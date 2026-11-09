@@ -113,6 +113,8 @@ const everything: AppSettings = {
   morningRule: false,
   morningProposal: false,
   mountainWeather: false,
+  weatherWarnings: false,
+  avalancheBulletin: false,
   heatAcclimation: false,
   paceCurve: false,
   stageOwnPace: false,
