@@ -138,6 +138,23 @@ export function cleanWeightRanges(raw: unknown): WeightRange[] | undefined {
   return list.length > 0 ? list : undefined;
 }
 
+// De standen van een toestel: oplopend, zonder dubbele, hoogstens 40, elk tussen 0,25 en 500 kg.
+export interface MachineStandList {
+  kg: number[];
+  only?: boolean;
+}
+
+export const STAND_LIMITS = { minKg: 0.25, maxKg: 500, maxCount: 40, maxExercises: 100 };
+
+// De standen van een toestel zoals ze opgeslagen mogen worden, of undefined bij rommel. Een lege lijst
+// blijft een lijst: dat is een toestel dat al ingelezen is. Meer dan 40: de lichtste 40.
+export function cleanStandList(raw: unknown): MachineStandList | undefined {
+  if (!isRecord(raw) || !Array.isArray(raw.kg)) return undefined;
+  const { minKg, maxKg, maxCount } = STAND_LIMITS;
+  const kg = [...new Set(raw.kg.filter((n): n is number => isNum(n) && n >= minKg && n <= maxKg).map(r2n))].sort((a, b) => a - b).slice(0, maxCount);
+  return { kg, ...(raw.only === true ? { only: true } : {}) };
+}
+
 export interface GymProfile {
   id: string;
   name: string;
@@ -163,6 +180,11 @@ export interface GymProfile {
   addOnKg?: number[];
   // Own choice per machine, over the gym's: a list replaces it, an empty list means none.
   exerciseAddOnKg?: Record<string, number[]>;
+  // De standen per toestel (oefening-id): gewichten die op dat blok in deze sportschool bestaan omdat je ze
+  // gebruikte (docs/beslissingen/2026-11-09-forge-toestelstanden.md, engine/toestelStanden.ts). Een sleutel,
+  // ook met een lege lijst, betekent "ingelezen": wat je weghaalde komt niet terug. `only`: alleen deze
+  // standen, de oude gesloten lijst. Afwezig: de oude stand van zaken (lijst en bereik hierboven).
+  exerciseStandsKg?: Record<string, MachineStandList>;
   // Er zijn veiligheidsarmen of een rek met vangers: tot het uiterste gaan mag dan, ook met een stang
   // op je borst of schouders (engine/spotter.ts). Absent: er zijn er geen.
   spotterRack?: boolean;
@@ -386,6 +408,15 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
       .slice(0, 100);
     if (entries.length > 0) exerciseWeightRanges = Object.fromEntries(entries);
   }
+  let exerciseStandsKg: Record<string, MachineStandList> | undefined;
+  if (isRecord(raw.exerciseStandsKg)) {
+    const entries = Object.entries(raw.exerciseStandsKg)
+      .filter(([id]) => id.length > 0 && id.length <= 60)
+      .map(([id, v]): [string, MachineStandList | undefined] => [id, cleanStandList(v)])
+      .filter((e): e is [string, MachineStandList] => !!e[1])
+      .slice(0, STAND_LIMITS.maxExercises);
+    if (entries.length > 0) exerciseStandsKg = Object.fromEntries(entries);
+  }
   const addOnKg = cleanAddOns(raw.addOnKg);
   let exerciseAddOnKg: Record<string, number[]> | undefined;
   if (isRecord(raw.exerciseAddOnKg)) {
@@ -406,6 +437,7 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
     ...(exerciseStepKg ? { exerciseStepKg } : {}),
     ...(exerciseWeightsKg ? { exerciseWeightsKg } : {}),
     ...(exerciseWeightRanges ? { exerciseWeightRanges } : {}),
+    ...(exerciseStandsKg ? { exerciseStandsKg } : {}),
     ...(addOnKg ? { addOnKg } : {}),
     ...(exerciseAddOnKg ? { exerciseAddOnKg } : {}),
     ...(raw.spotterRack === true ? { spotterRack: true } : {}),

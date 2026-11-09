@@ -11,14 +11,14 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 - `src/engine/forgeLog.ts#cleanForgeLog` het afgeleide verloop, naar het log pas bij Afronden
 - `src/engine/strengthModel.ts#learnFatigue` leert vermoeidheid per set uit eigen sets; `src/engine/assumedSets.ts#confirmedAssumed` "Afvinken telt als het doel" (bevestigd, drempels bij elkaar)
 - `src/engine/forgeReckon.ts#reckonWeight` rekent mee bij een getypt gewicht, met dezelfde regel als het voorschrift
-- `src/engine/spotter.ts#spotterSlot` minstens 1 over bij een stang zonder spotter
+- `src/engine/spotter.ts#spotterSlot` minstens 1 over bij een stang zonder spotter; `src/engine/toestelStanden.ts#standAfterTick` de standen per toestel (inlezen, onthouden, Terugdraaien), `src/storage/machineStands.ts#rememberStand` schrijft ze alles of niets
 - `src/engine/prescriptionCheck.ts#checkRow` de stille toets "raak" tegen MacroFactor
 - `src/engine/forgeTimeCap.ts#resolveTimeCap` hoogstens 60 of 75 minuten, alleen de inhoud van het scherm
 - `src/components/forge/parts.tsx#ForgeSheet` het blad in Forge
 - `src/components/forge/forgeDraft.ts#WorkoutDraft` het concept; `OtherSessionRunning.tsx` het blad bij een andere lopende training; het scherm is opgesplitst in `ForgeMenus.tsx#ExerciseMenuSheet`, `ForgeHeader.tsx`, `ForgeIntro.tsx`, `LegEasePanel.tsx` (alleen tonen), `useForgeClock.ts`, `useForgeDraft.ts`, `useForgePager.ts`, `useRestAlert.ts` en `forgeFinishLog.ts#forgeLogInput`
 
 ## Nooit
-- Een bestaand log beschrijven; Afronden maakt een nieuw log (hoogstens één Forge-sessie).
+- Een bestaand log beschrijven; Afronden maakt een nieuw log (hoogstens één Forge-sessie). Een stand staat alleen bij het sportschoolprofiel, nooit in een log.
 - Sets tellen zonder `isWorkSet`; een opwarmset wordt bewaard maar telt niet.
 - De planning of een template wijzigen vanuit Forge; de tijdsgrens en Lichter raken alleen het scherm. Uitzondering: het voorstel Spieren voor de berg mag met Akkoord een oefening toevoegen; de lopende sessie verandert niet.
 - Een training herkennen aan een template-id: gebruik `src/engine/scheduler.ts#isLegHeavyTemplate` en rollen.
@@ -33,12 +33,12 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 - Elk blad in Forge heeft `ref={sheetRef}` en `<SheetGrip />`, zoals `ForgeSheet` in `src/components/forge/parts.tsx`; bladen sluiten met `forge-down`, en `sheetDrag.scan.test.ts` kijkt mee.
 - Een rustmelding van een vorige keer wordt bij het openen geschrapt (`src/state/boot.ts`); een lopende rust plant Forge zelf opnieuw.
 - Een sessie begint pas bij de eerste echte handeling, niet bij het openen; een wijzer zonder template of met een gelogde sessie is dood en wordt opgeruimd.
-- Het eigen cijferblok sluit niet bij elke tik (`tapClosesDock`); `dockKey.scan.test.ts` bewaakt de key van `InputDock`.
+- Het eigen cijferblok sluit niet bij elke tik (`tapClosesDock`); `dockKey.scan.test.ts` bewaakt de key van `InputDock`. Standen: een sleutel in `exerciseStandsKg`, ook leeg, betekent ingelezen (een weggestreepte stand komt niet terug); zonder sleutel gelden de oude lijst en het bereik als gesloten lijst. `usedBefore` krijgt de `exercise` mee, anders ziet hij de standen niet.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/engine/forge src/engine/strengthModel src/engine/spotter src/engine/prescriptionCheck src/components/forge`
+- Tijdens het werk: `npx vitest run src/engine/forge src/engine/strengthModel src/engine/spotter src/engine/prescriptionCheck src/engine/toestelStanden src/storage/machineStands src/components/forge`
 - Altijd mee: `src/components/sheetDrag.scan.test.ts`. Nooit laten bewegen: `src/storage/planGolden.test.ts`. Tekstkaart (`npm run kaart:vergelijk`) als een Forge-scherm of de rij op Je stand verandert.
 
 ## Lees verder
 - `docs/architectuur/forge.md`
-- `docs/beslissingen/2026-10-29-forge-als-sessie.md`, `docs/beslissingen/2026-11-02-forge-herinrichting.md`, `docs/beslissingen/2026-10-25-bijsturen-in-forge.md`, `docs/beslissingen/2026-11-03-forge-rekent-mee.md`
+- `docs/beslissingen/2026-10-29-forge-als-sessie.md`, `docs/beslissingen/2026-11-02-forge-herinrichting.md`, `docs/beslissingen/2026-10-25-bijsturen-in-forge.md`, `docs/beslissingen/2026-11-03-forge-rekent-mee.md`, `docs/beslissingen/2026-11-09-forge-toestelstanden.md` met `docs/visie/Toestelstanden in Forge.md`
