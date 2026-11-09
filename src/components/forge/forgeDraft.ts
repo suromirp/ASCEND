@@ -6,6 +6,7 @@ import { cleanForgeLog, spotterEvents, type ForgeEvent } from '../../engine/forg
 import { makeId } from '../../utils/id';
 import type { Pause } from '../../engine/forgeSession';
 import { poundStackProposal, poundStackText } from '../../engine/poundStack';
+import { normalizeStepSwaps, type StepSwaps } from '../../engine/stepSwaps';
 import type { Rest } from './forgeWorkoutHelpers';
 
 export const DRAFT_VERSION = 1;
@@ -27,6 +28,15 @@ export interface WorkoutDraft {
   // voor de sessie heeft ze niet en werkt gewoon.
   pauses?: Pause[];
   lastActionAt?: number;
+  // De ladderstappen waarmee deze sessie opende (engine/stepSwaps.ts); `null` is: geen. Een Akkoord tijdens de sessie
+  // geldt vanaf de volgende sessie, ook na herladen. Optioneel: een concept van voor dit veld neemt de stappen van nu.
+  stepSwaps?: StepSwaps | null;
+}
+
+// De ladderstappen van een sessie: die van het concept als het ze heeft, anders die van nu.
+export function sessionStepSwaps(restored: Pick<WorkoutDraft, 'stepSwaps'> | undefined, current: StepSwaps | undefined): StepSwaps | undefined {
+  if (restored && restored.stepSwaps !== undefined) return normalizeStepSwaps(restored.stepSwaps);
+  return current;
 }
 
 // Het laatste moment van handelen in een concept: het bewaarde moment, of de laatst afgevinkte set, of het wegschrijven.

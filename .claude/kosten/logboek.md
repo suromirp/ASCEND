@@ -217,6 +217,10 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Lijn Forge F4b/F4c bouw, Sherpa, opus (ontwikkelaar), 322k, 26 min
 - 2026-11-09, Lijn Forge F4b/F4c review, Warden, opus (reviewer), 158k, 11 min, 1 blokkerend en 11 belangrijk of klein (door Sherpa hersteld, +354k)
 - 2026-11-09, Lijn Forge F4b/F4c doorloop, Lookout, sonnet (tester), 137k, 22 min, 2 punten (al door Sherpa hersteld)
+- 2026-11-09, Lijn Forge F4d bouw, Sherpa, opus (ontwikkelaar), 191k, 24 min
+- 2026-11-09, Lijn Forge F4d review, Warden, opus (reviewer), 112k, 8 min, 2 belangrijk en 5 klein (door Sherpa hersteld, +227k)
+- 2026-11-09, Lijn Forge F4e bouw, Sherpa, opus (ontwikkelaar), 261k, 31 min
+- 2026-11-09, Lijn Forge F4e review, Warden, opus (reviewer), 79k, 6 min, 2 belangrijk en 5 klein (door Sherpa hersteld, +305k)
 - 2026-11-09, Lijn rest R4 stap 3 Vandaag-proef, Scribe (ontwikkelaar, geen eigen rol), sonnet, 174k, 14 min
 - 2026-11-09, Lijn rest R4 stap 3 review, Warden, sonnet (reviewer), 56k, 2 min, 0 blokkerend, 5 kleine punten (door de coördinator hersteld)
 - 2026-11-09, Lijn rest R4 stap 3 doorloop, Lookout, sonnet (tester), 42k, 4 min, 1 tekstfout (hersteld)

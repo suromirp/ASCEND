@@ -508,6 +508,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je vorige keer', text: 'Forge zet de band van je vorige keer klaar. Een keuze geldt voor de open sets.' },
     ],
   },
+  forgeStapVoorstel: {
+    title: 'Stap voorstellen',
+    lead: 'Haal je de toets van een ladderstap, dan stelt Forge de volgende stap voor. Haal je drie trainingen achter elkaar de onderkant niet, dan de lichtere stap.',
+    points: [
+      { head: 'Akkoord', text: 'de oefening in je training wordt de nieuwe stap, vanaf je volgende training. Sets en herhalingen blijven.' },
+      { head: 'Liever niet', text: 'dan blijft je plan zoals het is en komt dit voorstel niet terug. Een voorstel voor een andere stap wel.' },
+      { head: 'Terug', text: 'Ongedaan maken op de kaart, of later in het blad van de oefening.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',
@@ -1353,6 +1362,22 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Wat je ziet', text: 'de weken tussen je doelen en de afbouw voor een doel als een donkerder stuk. Een Top heeft een gevulde vlag.' },
       { head: 'Uit', text: 'de strook verdwijnt. Je doelen en je planning blijven precies zoals ze zijn.' },
+    ],
+  },
+  vaardigheidsdoelen: {
+    title: 'Vaardigheidsdoelen',
+    lead: 'Een vaardigheid is een stap op een ladder, zoals Pull-Up op de ladder Optrekken. Ascend toont de ladder als trap.',
+    points: [
+      { head: 'Wat je ziet', text: 'welke stappen je haalde, op welke stap je nu traint en de toets ervan. Een gehaalde stap blijft gehaald.' },
+      { head: 'Je planning', text: 'een vaardigheid plant niets en wordt nooit je hoofddoel.' },
+      { head: 'Uit', text: 'de kaarten en de keuze bij Doel toevoegen verdwijnen. Je vaardigheden en wat je haalde blijven bewaard.' },
+    ],
+  },
+  bundelAscend: {
+    title: 'Op de Ascend-tab',
+    lead: 'Wat Ascend naast je doelen laat zien: de seizoensstrook en je vaardigheden.',
+    points: [
+      { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
     ],
   },
   waterPerEtappe: {

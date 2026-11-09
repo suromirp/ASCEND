@@ -28,6 +28,14 @@ import { countOptions, plannedRestFor, yourWeek } from '../engine/yourWeek';
 import { waveReviewCard } from '../engine/waveReviewCard';
 import { WaveReviewCard } from '../components/ascend/WaveReview';
 import type { AddTileId } from '../engine/goalDraft';
+import { SkillGoalCard } from '../components/ascend/SkillGoalCard';
+import { SkillGoalSheet } from '../components/ascend/SkillGoalSheet';
+import { useSkillGoals } from '../components/ascend/useSkillGoals';
+import { liveSkillGoals, takenSkillSteps } from '../engine/skillGoal';
+import { TimeoutError } from '../utils/withTimeout';
+import { skillLadderById } from '../data/skillLadders';
+import { skillReadinessFor } from '../engine/goalReadinessFor';
+import type { SkillGoal } from '../models/skillGoals';
 import { todayISO } from '../utils/dates';
 
 // Ascend is de plek van je doelen (docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md): op de
@@ -47,6 +55,8 @@ const later = (fn: () => void) => { window.setTimeout(fn, AFTER_SHEET_MS); };
 const NOTE_MS = 8000;
 const RESTORED_NOTE = 'Teruggehaald, zonder datum. Geef het een datum als je ernaartoe wilt trainen.';
 const MAIN_STAYS_NOTE = 'Je hoofddoel blijft bij de Top-doelen, dus dat kon niet.';
+
+const skillLadderName = (id: string) => skillLadderById(id)?.name ?? id;
 
 const START_CHIPS: { label: string; tile: AddTileId; details?: GoalDetails }[] = [
   { label: 'Trektocht', tile: 'trek' },
@@ -96,6 +106,25 @@ export function AscendPage() {
   const [archiving, setArchiving] = useState<TrainingGoal | null>(null);
   const [orderNote, setOrderNote] = useState<{ before: { id: string; order: number | undefined }[] } | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  // Vaardigheden (docs/beslissingen/2026-11-09-calisthenics-vaardigheidsdoel.md): geen TrainingGoal, plannen niets.
+  const skillsOn = settings.showSkillGoals !== false;
+  const skills = useSkillGoals(sessionLogs, today, skillsOn);
+  const skillViews = useMemo(
+    () => (skillsOn ? liveSkillGoals(skills.store).flatMap((g) => { const r = skillReadinessFor(g, sessionLogs, today, skills.store.progress); return r ? [{ goal: g, readiness: r }] : []; }) : []),
+    [skillsOn, skills.store, sessionLogs, today],
+  );
+  const [skillChoosing, setSkillChoosing] = useState(false);
+  const [skillProposal, setSkillProposal] = useState<SkillGoal | null>(null);
+  const [skillRemoving, setSkillRemoving] = useState<SkillGoal | null>(null);
+  const [skillBusy, setSkillBusy] = useState(false);
+  const skillWrite = (write: () => Promise<void>, done: string, close: () => void) => {
+    setSkillBusy(true);
+    write()
+      .then(() => setFlash(done))
+      // Bij een time-out kan de put nog doorlopen; de hook leest de opslag daarna opnieuw.
+      .catch((err) => setFlash(err instanceof TimeoutError ? 'Dat lukte niet op tijd.' : 'Dat lukte niet. Er is niets veranderd.'))
+      .finally(() => { setSkillBusy(false); close(); });
+  };
   // Alleen de balk of de regel: na een voorstel dat is doorgevoerd laat de balk onderin zien wat er
   // veranderde, dus dan blijft de regel erboven weg.
   const horizonNote = [horizon.note, direction.note].find((n) => n && n !== APPLIED_NOTE) ?? null;
@@ -228,6 +257,10 @@ export function AscendPage() {
         />
       )}
 
+      {skillViews.map(({ goal, readiness }) => (
+        <SkillGoalCard key={goal.id} name={goal.name || readiness.targetName} readiness={readiness} onRemove={() => { clearNotes(); setSkillRemoving(goal); }} />
+      ))}
+
       {shownNote && (
         <p className="flex items-center justify-between gap-3 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">
           {shownNote}
@@ -323,6 +356,7 @@ export function AscendPage() {
           mainGoalId={listed.find((l) => l.isMain)?.goal.id}
           initialTile={adding.tile}
           initialDetails={adding.details}
+          onSkill={skillsOn ? (close) => { close(); later(() => setSkillChoosing(true)); } : undefined}
           onSubmit={(draft, close) => {
             close();
             later(() => void horizon.propose(
@@ -337,6 +371,46 @@ export function AscendPage() {
             ));
           }}
           onClose={() => setAdding(null)}
+        />
+      )}
+
+      {skillChoosing && (
+        <SkillGoalSheet
+          logs={sessionLogs}
+          today={today}
+          taken={takenSkillSteps(skills.store)}
+          onSubmit={(goal, close) => { close(); later(() => setSkillProposal(goal)); }}
+          onClose={() => setSkillChoosing(false)}
+        />
+      )}
+
+      {skillProposal && (
+        <ImpactSheet
+          eyebrow="Doel toevoegen · stap 3 van 3"
+          title={`${skillProposal.name} als vaardigheid?`}
+          lines={[`Ladder ${skillLadderName(skillProposal.ladderId)}, doelstap ${skillProposal.targetStep}: ${skillProposal.name}.`, 'Je planning blijft zoals ze is.']}
+          why="Een vaardigheid heeft geen datum en wordt nooit je hoofddoel. Ascend toont de ladder en wat je al haalde."
+          primaryLabel="Akkoord"
+          secondaryLabel="Liever niet"
+          onPrimary={() => { const g = skillProposal; skillWrite(() => skills.add(g), `${g.name} staat op Ascend.`, () => setSkillProposal(null)); }}
+          onSecondary={() => { setSkillProposal(null); setFlash('Prima, niets toegevoegd.'); }}
+          onClose={() => setSkillProposal(null)}
+          busy={skillBusy}
+        />
+      )}
+
+      {skillRemoving && (
+        <ImpactSheet
+          eyebrow="Vaardigheid weghalen"
+          title={`${skillRemoving.name} weghalen?`}
+          lines={[]}
+          why="De kaart verdwijnt van Ascend. Je trainingen en de stappen die je haalde blijven bewaard."
+          primaryLabel="Weghalen"
+          secondaryLabel="Annuleren"
+          onPrimary={() => { const g = skillRemoving; skillWrite(() => skills.remove(g.id), `${g.name} is weggehaald.`, () => setSkillRemoving(null)); }}
+          onSecondary={() => setSkillRemoving(null)}
+          onClose={() => setSkillRemoving(null)}
+          busy={skillBusy}
         />
       )}
 
