@@ -146,11 +146,12 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
         <div><TextButton tone="dim" onClick={() => setAttempt((n) => n + 1)}>Opnieuw zoeken</TextButton></div>
       )}
       {plans && (
-        <p className="text-xs leading-snug" style={dim}>
-          Kaartgegevens van{' '}
-          <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center underline underline-offset-2" style={dim}>OpenStreetMap</a>
-          {sources.length > 0 ? `. Route van ${sources.join(' en ')}.` : '.'} Kijk zelf of een pad begaanbaar is.
-        </p>
+        <div>
+          <p className="text-xs leading-snug" style={dim}>
+            Kaartgegevens van OpenStreetMap{sources.length > 0 ? `. Route van ${sources.join(' en ')}.` : '.'} Kijk zelf of een pad begaanbaar is.
+          </p>
+          <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={dim}>Licentie van OpenStreetMap</a>
+        </div>
       )}
     </div>
   );
