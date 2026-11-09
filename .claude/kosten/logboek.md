@@ -249,6 +249,9 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Tekst voor Strava (proef met Fable als bouwer in een eigen sessie), bouwer, fable, tokens niet door de sessie zelf te meten (zie het verbruik van de sessie), ongeveer 1 uur, 1 ronde kleine punten na review zelf hersteld
 - 2026-11-09, Tekst voor Strava review, Warden, sonnet (reviewer), 59k, 2 min, 0 blokkerend, 9 klein (7 hersteld, 2 als keuze in het besluit)
 - 2026-11-09, Tekst voor Strava doorloop 360, 390 en 412 px, Lookout, sonnet (tester), 79k, 21 min, 0, alles groen; maakte zelf een afgeleide stand voor de regel waarom
+- 2026-11-09, Overzicht Gewicht (bouwer in een eigen sessie), bouwer, fable, tokens niet door de sessie zelf te meten (zie het verbruik van de sessie), ongeveer 1 uur, 1 ronde kleine punten na review zelf hersteld
+- 2026-11-09, Overzicht Gewicht review, Warden, sonnet (reviewer), 48k, 2 min, 0 blokkerend, 1 belangrijk (svg-tekst op 360 px, hersteld), 4 klein (3 hersteld)
+- 2026-11-09, Overzicht Gewicht doorloop 360, 390 en 412 px, Lookout, sonnet (tester), 45k, 4 min, 0, alles groen; stand en script stonden klaar, 1 twijfel hersteld (jaartal bij Een jaar)
 - 2026-11-09, Routeplanner fase 1 bronnen en horloge, Scout, opus (sportwetenschapper), 104k, 8 min, 0 herstel; verslag in docs/onderzoek, dode band en tweede bron overgenomen
 - 2026-11-09, Routeplanner fase 2 (bouwer in een eigen sessie), bouwer, fable, tokens niet door de sessie zelf te meten (zie het verbruik van de sessie), ongeveer 1,5 uur
 - 2026-11-09, Routeplanner review, Warden, opus (reviewer), 100k, 4 min, 1 blokkerend (toestemmingstekst noemde de reservebron niet), 10 klein (alle hersteld door de bouwer); les: de eerste vraag noemt elke dienst, en een tijdgrens stopt ook het werk erachter

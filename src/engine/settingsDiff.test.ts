@@ -105,6 +105,7 @@ const everything: AppSettings = {
   weightFromHealthConnect: false,
   weightTrend: false,
   weightForLoad: 'latest',
+  weightRange: '1y',
   weightCard: false,
   stravaText: false,
   stravaTextParts: 'title',

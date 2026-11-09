@@ -126,6 +126,8 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   weervolgt: { row: 'weerplaats', sheet: true },
   'herinnering-gewicht': { row: 'lichaamsgewicht', sheet: true },
   'gewicht-eigen': { row: 'lichaamsgewicht', sheet: true },
+  // De periode van het overzicht Gewicht staat in het blad Lichaamsgewicht (docs/beslissingen/2026-11-09-overzicht-gewicht.md).
+  'gewicht-periode': { row: 'lichaamsgewicht', sheet: true },
   // Gewichtstrend gebruiken staat in het blad Lichaamsgewicht (docs/beslissingen/2026-11-09-gewichtstrend.md).
   gewichtstrend: { row: 'lichaamsgewicht', sheet: true },
   // Gewicht uit Health Connect staat in het blad Lichaamsgewicht, naast Uit MacroFactor.
