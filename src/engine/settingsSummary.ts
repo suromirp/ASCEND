@@ -74,6 +74,7 @@ import { resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
 import { formatClock } from '../utils/clock';
+import { capitalize } from '../utils/capitalize';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
 export const SUB_MAX_LENGTH = 40;
@@ -244,7 +245,6 @@ const monthIndex = (iso: string) => Number(iso.slice(5, 7)) - 1;
 export const longDate = (iso: string): string => `${dayOf(iso)} ${LONG_MONTHS[monthIndex(iso)]}`;
 
 const num = (n: number, decimals = 2) => formatNumberNL(n, decimals);
-const capitalize = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 const lower = (text: string) => text.toLowerCase();
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -393,7 +393,7 @@ function unsettledRow(rowId: string, f: SettingsFacts): 'Bezig…' | 'Onbekend' 
 const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title: base.title, auto: base.auto, value, dim: true });
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
-const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
+const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
 const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-doorvoeren', 'forge-schijven'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
@@ -444,7 +444,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bundel-signalen':
       return { value: `${signalsOnCount(s)} van ${SIGNAL_KEYS.length} aan` };
     case 'bundel-weer':
-      return { value: `${countOn([o.weatherLine, o.bestMoment, o.rainSoon, o.moonLine, o.weatherSwap, o.clothingAdvice])} van 6 aan` };
+      return { value: `${countOn([o.weatherLine, o.bestMoment, o.rainSoon, o.hillsNearby, o.moonLine, o.weatherSwap, o.clothingAdvice])} van 7 aan` };
     case 'bundel-run-detail': {
       const d = resolveRunInsight(s.runInsight).detail;
       return d.show ? { value: 'Aan', sub: `Loopvorm: ${formSwitchesLine(d.form)}` } : { value: 'Uit', dim: true };
@@ -524,6 +524,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('rustNaTocht', s.trekLegRest ?? 'soft') };
     case 'vakantie-opzij':
       return { value: choiceShort('vakantieOpzij', s.leaveCrowding ?? 'drop') };
+    case 'zonder-sportschool':
+      return { value: choiceShort('zonderSportschool', s.noGymStrength ?? 'bodyweight') };
     case 'vrije-dagen':
       return f.vacations > 0 ? { value: `${f.vacations} gepland` } : { value: 'Geen', dim: true };
     case 'reisplanner':
@@ -603,6 +605,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.lighterAfterBreak };
     case 'forge-rekent-mee':
       return { checked: forge.reckon };
+    case 'forge-afvinken-doel':
+      return { checked: forge.assumedCounts };
+    case 'standen-onthouden':
+      return { checked: forge.learnStands };
     case 'forge-dumbbells':
       return { value: choiceShort('dumbbellLog', forge.dumbbellLog) };
     case 'forge-naast': {
@@ -853,6 +859,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.weatherLine };
     case 'regen-uur':
       return { checked: o.rainSoon };
+    case 'heuvels-buurt':
+      return { checked: o.hillsNearby };
     case 'maanstand':
       return { checked: o.moonLine };
     case 'weerruil':
@@ -895,6 +903,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveRunInsight(s.runInsight).weather };
     case 'borstband':
       return { checked: resolveRunInsight(s.runInsight).chestStrap };
+    case 'tempo-stukken':
+      return { checked: s.tempoStablePieces !== false };
     case 'intensiteit':
       return { value: choiceShort('intensiteit', resolveIntensityCounting(s)) };
     case 'lucht':

@@ -282,3 +282,17 @@ export function stillOpen(ex: WorkoutExercise, adj: Adjustment): Adjustment | un
   });
   return items.length > 0 ? { ...adj, items } : undefined;
 }
+
+// Wat er na het invullen van de gewichten van een toestel verandert onder de oefening: een nieuw voorstel Lichter,
+// of anders een stille regel (nog steeds niets dat past, of het lichtere gewicht ligt er ver boven). Zonder iets
+// om te zeggen is het undefined.
+export type RefitResult = { lighter: Adjustment } | { tip: { text: string; rowId?: string; weightKg?: number } };
+export function refitAfterFill(ex: WorkoutExercise, fit: NoFit, ctx: AdjustContext): RefitResult | undefined {
+  const again = suggestLighter(ex, fit.fromRowId, ctx);
+  if (again) return { lighter: again };
+  const still = suggestOwnWeights(ex, fit.fromRowId, ctx);
+  if (still) return { tip: { text: stillHeavyTip(still), rowId: still.rowId, weightKg: still.weightKg } };
+  const big = suggestTooBigStep(ex, fit.fromRowId, ctx);
+  if (big) return { tip: { text: tooBigStepTip(big), rowId: big.rowId, weightKg: big.weightKg } };
+  return undefined;
+}

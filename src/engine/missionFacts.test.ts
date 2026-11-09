@@ -97,11 +97,18 @@ describe('afstand uit het echte tempo', () => {
     expect(recentRunPace([], 'tpl_long_run', '2026-11-08')).toBeUndefined();
   });
 
-  it('zonder testloop staat er geen afstandszin, ook niet met lopen', () => {
+  it('zonder testloop komt de afstand uit het tempo van je laatste lopen', () => {
     const one = recentRunPace([log('a', '2026-11-01', 9, 80)], 'tpl_long_run', '2026-11-08')!;
     const f = missionFacts('tpl_easy_run', brief('tpl_easy_run'), undefined, 75, one.range, one.runs);
-    expect(f.paceNote).toBeUndefined();
+    expect(f.paceNote).toBe(distanceLine(75, one.range, 1));
+    expect(f.paceNote).toMatch(/^Dat is ongeveer .* km, op het tempo van je laatste loop\.$/);
     expect(f.chips.some((c) => c.kind === 'tempo')).toBe(false);
+  });
+
+  it('zonder testloop en zonder lopen, of bij een niet rustige loop, staat er geen zin', () => {
+    const one = recentRunPace([log('a', '2026-11-01', 9, 80)], 'tpl_long_run', '2026-11-08')!;
+    expect(missionFacts('tpl_easy_run', brief('tpl_easy_run'), undefined, 75).paceNote).toBeUndefined();
+    expect(missionFacts('tpl_tempo_run', brief('tpl_tempo_run'), undefined, 75, one.range, one.runs).paceNote).toBeUndefined();
   });
 });
 

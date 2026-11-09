@@ -17,7 +17,8 @@ import {
 } from '../storage/database';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf } from '../engine/gr5Profile';
-import { resolveTestRest, setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, setTestRestHours } from '../engine/scheduler';
+import { resolveTestRest } from '../engine/testRest';
+import { setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, setTestRestHours } from '../engine/scheduler';
 import { leaveKey } from '../engine/leaveEdit';
 import { createSerialQueue } from '../utils/serialQueue';
 import { chainTouch, type SyncTouch } from '../engine/undoGuard';

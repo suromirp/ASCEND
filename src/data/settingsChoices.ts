@@ -421,6 +421,17 @@ export const CHOICES = {
       { value: 'shift', label: 'Toch verschuiven', note: 'Naar elke dag van die week die past', short: 'Verschuiven' },
     ],
   }),
+  zonderSportschool: def({
+    group: 'Planning',
+    title: 'Kracht zonder sportschool',
+    line: 'Wat er met kracht in de sportschool gebeurt als je een periode zonder sportschool toevoegt.',
+    advice: 'bodyweight' as 'bodyweight' | 'drop',
+    help: 'zonderSportschool',
+    options: [
+      { value: 'bodyweight', label: 'Eigen gewicht', note: 'Een korte sessie van 15 tot 20 minuten met squats, lunges, push-ups en kuitheffingen', short: 'Eigen gewicht' },
+      { value: 'drop', label: 'Laten vervallen', note: 'Geen kracht in die periode, alleen lopen', short: 'Laten vervallen' },
+    ],
+  }),
   bergschoenen: def({
     group: 'Doel en tochten',
     title: 'Bergschoenen inlopen',

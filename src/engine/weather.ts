@@ -17,6 +17,8 @@ import { addDays, daysBetween, isoWeekday, toISODate } from '../utils/dates';
 import { deriveSessionStatus } from './sessionStatus';
 import { pad } from '../utils/pad';
 import { formatClock } from '../utils/clock';
+import { joinNL } from '../utils/joinNL';
+import { median } from '../utils/stats';
 
 // --- 1. when do you usually train ----------------------------------------------
 
@@ -41,12 +43,6 @@ export interface UsualStart {
 }
 
 const isWeekend = (date: string) => isoWeekday(date) >= 6;
-
-function median(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-}
 
 export function usualStartHour(template: SessionTemplate, logs: SessionLog[], date: string): UsualStart {
   const fallback: UsualStart = { hour: isWeekend(date) ? DEFAULT_WEEKEND_HOUR : DEFAULT_WEEKDAY_HOUR, basis: 'standaard' };
@@ -138,10 +134,6 @@ const minutesOfClock = (iso: string) => Number(iso.slice(11, 13)) * 60 + Number(
 // "18:12" stays "18:12", "8:05" becomes "08:05": the one notation for a time (utils/clock.ts).
 export function clockNL(hhmm: string): string {
   return `${pad(Number(hhmm.slice(0, 2)))}:${hhmm.slice(3, 5)}`;
-}
-
-function joinNL(parts: string[]): string {
-  return parts.length <= 1 ? parts.join('') : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1]}`;
 }
 
 export interface SessionWeatherInput {

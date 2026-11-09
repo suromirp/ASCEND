@@ -97,7 +97,7 @@ export function describeChanges(items: PlanChangeItem[], sessions: PlannedSessio
       case 'keep':
         // A training you moved yourself loses the mark of a period (engine/leaveProposal.ts):
         // say that it stays, so the notice after Akkoord is never empty.
-        if (item.leave === null && session) lines.push(`${name} op ${shortDate(session.scheduledDate)} blijft staan`);
+        if (item.leave === null && session) lines.push(`${name} op ${shortDate(session.scheduledDate)} blijft staan${item.restore ? ', weer op gewone lengte' : ''}`);
         break;
       default:
         break;

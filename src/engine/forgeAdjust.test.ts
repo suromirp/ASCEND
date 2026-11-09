@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adjustText, applyLighter, lighterPick, OPEN_ROOM, fitStillOpen, noFitText, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type AdjustContext } from './forgeAdjust';
+import { adjustText, applyLighter, lighterPick, OPEN_ROOM, fitStillOpen, noFitText, refitAfterFill, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type AdjustContext } from './forgeAdjust';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import { DEFAULT_PROFILE } from './strengthSettings';
 import { expectedReps } from './strengthModel';
@@ -306,5 +306,39 @@ describe('lighterPick bij een open doel (11+)', () => {
       const c = lighterPick(strength, cands, target, 0, 5);
       if (c) expect(expectedReps(strength, c.loadKg, 0)).toBeLessThanOrEqual(11 + OPEN_ROOM);
     }
+  });
+});
+
+describe('refitAfterFill: na het invullen van de gewichten van een toestel', () => {
+  const sets = (): WorkoutRow[] => [
+    row(0, { done: true, weightKg: 40, reps: 5, rir: 0 }, { weightKg: 40 }),
+    row(1, { weightKg: 40, reps: 9 }, { weightKg: 40 }),
+  ];
+  const fit = { fromRowId: 'r0', repsLow: 9, repsHigh: 11, lightestKg: 40, expectedReps: 6 };
+
+  it('geeft een nieuw voorstel Lichter als er nu een lichter gewicht past', () => {
+    const ex = exercise('bench-press', [
+      row(0, { done: true, weightKg: 70, reps: 7, rir: 1 }, { weightKg: 70 }),
+      row(1, { weightKg: 70, reps: 9 }, { weightKg: 70 }),
+    ]);
+    const result = refitAfterFill(ex, fit, ctx());
+    expect(result).toEqual({ lighter: suggestLighter(ex, 'r0', ctx()) });
+    expect(result).toHaveProperty('lighter.items');
+  });
+  it('geeft de stille regel als er nog steeds niets past', () => {
+    const ex = exercise('cable-fly', sets());
+    const profile = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [40, 45] } };
+    const still = suggestOwnWeights(ex, 'r0', ctx({ profile }))!;
+    expect(refitAfterFill(ex, fit, ctx({ profile }))).toEqual({ tip: { text: stillHeavyTip(still), rowId: 'r1', weightKg: 40 } });
+  });
+  it('geeft de stille regel als het lichtere gewicht een te grote stap is', () => {
+    const ex = exercise('cable-fly', sets());
+    const profile = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [10, 40, 45] } };
+    const big = suggestTooBigStep(ex, 'r0', ctx({ profile }))!;
+    expect(refitAfterFill(ex, fit, ctx({ profile }))).toEqual({ tip: { text: tooBigStepTip(big), rowId: 'r1', weightKg: big.weightKg } });
+  });
+  it('zegt niets als er niets te zeggen is', () => {
+    const ex = exercise('cable-fly', [row(0, { done: true, weightKg: 40, reps: 10, rir: 2 }, { weightKg: 40 }), row(1, { weightKg: 40, reps: 10 }, { weightKg: 40 })]);
+    expect(refitAfterFill(ex, fit, ctx())).toBeUndefined();
   });
 });

@@ -24,10 +24,11 @@ import { daysBetween } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { kgLabel } from '../utils/kg';
 import { isWorkSet } from './workSets';
-import type { ResolvedStrengthSettings } from './strengthSettings';
-import { countsForProfile, ownWeightsFor } from './machineWeights';
+import { cleanStandList, type ResolvedStrengthSettings } from './strengthSettings';
+import { countsForProfile, hasStack, ownWeightsFor } from './machineWeights';
 import { candidatesFor, dumbbellsAsTotal, externalFromLoad, loadFromExternal, nearestIndex, profileFor, stepAt, usedOnlyWeights, usedWeights, type Candidate } from './strengthWeights';
 import { median } from '../utils/stats';
+import { askedReps, CONFIRMED_TOP_TRAININGS, confirmedFlags, confirmedRir, type ConfirmContext } from './assumedSets';
 
 // --- constants -------------------------------------------------------------------------
 
@@ -114,6 +115,10 @@ export interface LoadContext {
   maxToFailure?: number;
   // The weight is logged as the total of two dumbbells (`dumbbellTotalFor`).
   dumbbellTotal?: boolean;
+  // "Afvinken telt als het doel" (engine/assumedSets.ts): present when the setting is on. `rangeLow` is the
+  // bottom of the range for old logs without the reps asked; absent, it is derived from the history.
+  // Only `analyseSessions` reads it; `estimateSet` and the learning of fatigue never do (rule 6).
+  confirm?: { rangeLow?: number };
 }
 
 // What moves in total with this set. Undefined when it cannot be known.
@@ -276,6 +281,8 @@ export interface TopSet {
   rir?: number;
   // The RIR was the aim, not felt (SetLog.rirAssumed): "Forge rekent mee" makes no step on it.
   rirAssumed?: true;
+  // An assumed set that went as asked ("bevestigd", engine/assumedSets.ts). Only with the setting on.
+  confirmed?: true;
   loadKg: number;
 }
 
@@ -296,17 +303,44 @@ export interface SessionPoint {
   shortfall?: number;
 }
 
-export function topSetOf(sets: SetLog[], ctx: LoadContext): TopSet | undefined {
+export function topSetOf(sets: SetLog[], ctx: LoadContext, confirmed?: boolean[]): TopSet | undefined {
   let best: TopSet | undefined;
-  for (const s of sets) {
+  for (const [i, s] of sets.entries()) {
     if (!isWorkSet(s) || s.reps <= 0) continue;
     const loadKg = setLoad(s, ctx);
     if (loadKg === undefined) continue;
     if (!best || loadKg > best.loadKg || (loadKg === best.loadKg && s.reps > best.reps)) {
-      best = { weightKg: s.weightKg ?? 0, reps: s.reps, ...(s.rir !== undefined ? { rir: s.rir } : {}), ...(s.rirAssumed ? { rirAssumed: true as const } : {}), loadKg };
+      best = { weightKg: s.weightKg ?? 0, reps: s.reps, ...(s.rir !== undefined ? { rir: s.rir } : {}), ...(s.rirAssumed ? { rirAssumed: true as const } : {}), ...(confirmed?.[i] ? { confirmed: true as const } : {}), loadKg };
     }
   }
   return best;
+}
+
+// The confirm context of a history: the bottom of the range from the caller, or derived from what was done.
+function confirmContext(sessions: SessionInput[], ctx: LoadContext): ConfirmContext | undefined {
+  if (!ctx.confirm) return undefined;
+  const rangeLow = ctx.confirm.rangeLow ?? deriveRange(analyseSessions(sessions, { ...ctx, confirm: undefined })).low;
+  return { rangeLow, loadOf: (s) => setLoad(s, ctx) };
+}
+
+// KR-2 with "Afvinken telt als het doel" (rule 4 of the report). Sets that are not confirmed count as
+// they always did. A confirmed set is a lower bound, not a new measurement: with exactly the reps asked
+// it holds the smoothed number (not down by rounding, not up); with more reps it counts with the RIR of
+// `confirmedRir` (half the extra reps), and only upward.
+function sessionValue(sets: SetLog[], ctx: LoadContext, flags: boolean[] | undefined, rangeLow: number | undefined, smoothed: number | undefined): number | undefined {
+  if (!flags || !flags.some(Boolean)) return sessionStrength(sets, ctx);
+  const plain = sessionStrength(sets.filter((_, i) => !flags[i]), ctx);
+  let held: number | undefined;
+  for (const [i, s] of sets.entries()) {
+    if (!flags[i]) continue;
+    const e = estimateSet({ ...s, rir: confirmedRir(s, rangeLow) }, ctx);
+    if (!e) continue;
+    const asked = askedReps(s, rangeLow) ?? s.reps;
+    const v = smoothed === undefined ? e.strengthKg : s.reps <= asked ? smoothed : Math.max(e.strengthKg, smoothed);
+    held = held === undefined ? v : Math.max(held, v);
+  }
+  if (plain === undefined) return held;
+  return held === undefined ? plain : Math.max(plain, held);
 }
 
 export function analyseSessions(sessions: SessionInput[], ctx: LoadContext): SessionPoint[] {
@@ -316,10 +350,12 @@ export function analyseSessions(sessions: SessionInput[], ctx: LoadContext): Ses
   let smoothed: number | undefined;
   let badInARow = 0;
   let previousDate: string | undefined;
+  const confirm = confirmContext(sessions, ctx);
   for (const s of sorted) {
     const workSets = s.sets.filter(isWorkSet);
-    const value = sessionStrength(s.sets, ctx);
-    const top = topSetOf(s.sets, ctx);
+    const flags = confirm ? confirmedFlags(s.sets, confirm) : undefined;
+    const value = sessionValue(s.sets, ctx, flags, confirm?.rangeLow, smoothed);
+    const top = topSetOf(s.sets, ctx, flags);
     const legsTired = !!s.legsTired && loadsLegs;
     const point: SessionPoint = { date: s.date, note: 'none', legsTired, workSets, ...(value !== undefined ? { value } : {}), ...(top ? { top } : {}) };
     if (smoothed !== undefined && top?.rir !== undefined) {
@@ -662,8 +698,12 @@ export const WEIGHT_MISMATCH_TEXT = 'Dit gewicht past niet bij je sportschool. K
 // it is never refused.
 // The weights used on this exercise before the day of the proposal, for a stack
 // that learns (the setting "Gewichten van toestellen leren").
-export function usedBefore(input: { sessions: SessionInput[]; date: string; settings: ResolvedStrengthSettings }): number[] | undefined {
+// A cable or stack with stands in this gym (engine/toestelStanden.ts) gives its stands instead of the raw
+// log: a stand you struck out (a typo of 77) is not proposed again, even though the log keeps it.
+export function usedBefore(input: { sessions: SessionInput[]; date: string; settings: ResolvedStrengthSettings; exercise?: Exercise }): number[] | undefined {
   if (input.settings.stackWeights === 'profile') return undefined;
+  const stands = hasStack(input.exercise) && input.exercise ? cleanStandList(input.settings.profile.exerciseStandsKg?.[input.exercise.id]) : undefined;
+  if (stands) return stands.kg;
   // Only what was used in this gym: the same cable weighs differently in another one.
   return usedWeights(input.sessions.filter((s) => s.date < input.date && countsForProfile(s.gymProfileId, input.settings.profile.id)).flatMap((s) => s.sets));
 }
@@ -730,7 +770,10 @@ export function assumedRaise(set: Pick<SetLog, 'reps' | 'rir' | 'rirAssumed'>, t
 export function prescribe(input: PrescribeInput): Prescription | undefined {
   const { exercise, settings } = input;
   const dumbbellTotal = dumbbellTotalFor(input);
-  const ctx: LoadContext = { exercise, bodyKg: input.bodyKg, maxToFailure: settings.estimateUpTo, dumbbellTotal };
+  // "Afvinken telt als het doel": old logs read with the bottom of the range of the plan (or the derived one).
+  const planBottom = input.plan?.low !== undefined && input.plan.low > 0 && input.plan.high !== undefined && input.plan.high >= input.plan.low ? input.plan.low : undefined;
+  const confirm = settings.assumedCounts ? { confirm: planBottom !== undefined ? { rangeLow: planBottom } : {} } : {};
+  const ctx: LoadContext = { exercise, bodyKg: input.bodyKg, maxToFailure: settings.estimateUpTo, dumbbellTotal, ...confirm };
   const points = analyseSessions(input.sessions.filter((s) => s.date < input.date), ctx);
   const last = points.filter((p) => p.top).at(-1);
   const rawStrength = [...points].reverse().find((p) => p.smoothed !== undefined)?.smoothed;
@@ -801,7 +844,16 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const topReached = last.top.reps >= high && last.top.rir !== undefined && !last.top.rirAssumed && last.top.rir >= rir && last.top.reps >= low && sameGoal && !lighter;
   // Without a RIR you filled in: only 3 or more reps over the top of the range is a clear enough sign.
   const assumedReached = !topReached && last.top.reps >= low && assumedRaise(last.top, { repsHigh: high }) && sameGoal && !lighter;
-  const reckonRaise = settings.reckon && settings.progression !== 'reps_first' && (topReached || assumedReached) && !legsTired;
+  // "Afvinken telt als het doel", rule 5 of the report: a confirmed top set counts, but stricter than a
+  // measured RIR: every working set reached the top of the range, or the top set did so twice in a row
+  // on the same weight. The next training on the new weight then asks "Hoeveel over?" (forgeReckon.ts).
+  const atTopBefore = (p: SessionPoint | undefined): boolean =>
+    !!p?.top && p.top.reps >= high && Math.abs(p.top.loadKg - last.top!.loadKg) < 1e-6 && p.top.rir !== undefined && p.top.rir >= rir && (!p.top.rirAssumed || !!p.top.confirmed);
+  const withTop = points.filter((p) => p.top);
+  const topTwice = withTop.slice(-CONFIRMED_TOP_TRAININGS).length === CONFIRMED_TOP_TRAININGS && withTop.slice(-CONFIRMED_TOP_TRAININGS).every(atTopBefore);
+  const allAtTop = last.workSets.filter((x) => x.reps > 0).every((x) => x.reps >= high);
+  const confirmedReached = settings.assumedCounts && !topReached && !!last.top.rirAssumed && !!last.top.confirmed && last.top.rir !== undefined && last.top.rir >= rir && last.top.reps >= high && last.top.reps >= low && (allAtTop || topTwice) && sameGoal && !lighter;
+  const reckonRaise = settings.reckon && settings.progression !== 'reps_first' && (topReached || assumedReached || confirmedReached) && !legsTired;
 
   // KR-4: the weight for the first set, for a given strength. `raise`: the step after the top of the range.
   const pick = (strengthKg: number, raise = true): number => {

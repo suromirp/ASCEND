@@ -478,6 +478,26 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 4, targetMinutes: 20, note: 'Rustweek' },
       ],
     },
+    // Zonder sportschool (engine/noGym.ts): een korte sessie met je eigen gewicht op de plek van
+    // een krachttraining in de sportschool. Geen vaste dag: alleen een periode zet hem neer.
+    {
+      id: 'tpl_bodyweight',
+      name: 'Eigen gewicht',
+      type: 'strength',
+      focus: 'Benen, borst en kuiten zonder toestel',
+      durationVariants: { full: 20, short: 15 },
+      notes:
+        'Een korte sessie zonder sportschool, 15 tot 20 minuten. Rustig tempo, twee herhalingen over aan het eind van elke set. Lunges zonder gewicht. Kuitheffingen op een trede of een stoeprand.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_LOWER,
+      baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'light', eccentricLoad: 'light', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'light' },
+      exercises: [
+        { id: 'bw1', exerciseName: 'Eccentric Squat', sets: 3, reps: '10-15', priority: 'core', notes: 'Zonder gewicht, langzaam naar beneden.' },
+        { id: 'bw2', exerciseName: 'Reverse Lunge', sets: 3, reps: '8-10 per been', priority: 'core', notes: 'Zonder gewicht.' },
+        { id: 'bw3', exerciseName: 'Push-Up', sets: 3, reps: '8-15', priority: 'core', notes: 'Te zwaar? Met je handen op een bank of tafel.' },
+        { id: 'bw4', exerciseName: 'Bodyweight Calf Raise', sets: 3, reps: '15-20', priority: 'accessory' },
+      ],
+    },
     {
       id: 'tpl_ruck_walk',
       name: 'Rugzakwandeling',

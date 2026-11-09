@@ -49,6 +49,8 @@ export interface BlockActions {
   keepFit: (slot: string) => void;
   // Uitleg bij "1 over, zonder spotter".
   spotter: () => void;
+  // Terugdraaien van de stand die net onthouden werd (alleen die stand, niet de set).
+  standUndo: () => void;
   // Een set weghalen (vegen of het setmenu), terugzetten wat je van het programma weghaalde, de melding terugdraaien.
   remove: (slot: string, rowId: string) => void;
   restore: (slot: string) => void;

@@ -45,6 +45,10 @@ export interface OverviewSettings {
   // Regen in het komende uur, vlak voor een training buiten (engine/rainSoon.ts): "Over 20 minuten
   // regen; nu gaan of om 18:30." Alleen tekst, op de dag zelf. Ontbreekt de sleutel, dan staat hij aan.
   rainSoon?: boolean;
+  // Heuvels en trappen in de buurt bij een heuvel- of trapconditietraining (engine/nearbyTerrain.ts):
+  // "Op 1,2 km een helling van 60 m". Een afgeronde plek gaat pas naar OpenStreetMap na de eerste
+  // vraag op dit toestel. Alleen tekst. Ontbreekt de sleutel, dan staat hij aan.
+  hillsNearby?: boolean;
   // De maanstand bij een avondtocht of een tocht met bivak (engine/moon.ts). Alleen tekst.
   // Ontbreekt de sleutel, dan staat hij aan.
   moonLine?: boolean;
@@ -72,6 +76,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   weatherSwap: true,
   bestMoment: true,
   rainSoon: true,
+  hillsNearby: true,
   moonLine: true,
   clothingAdvice: true,
   weatherFollowsLocation: true,
@@ -98,6 +103,7 @@ export function resolveOverviews(raw: OverviewSettings | undefined | null): Reso
     weatherSwap: flag('weatherSwap'),
     bestMoment: flag('bestMoment'),
     rainSoon: flag('rainSoon'),
+    hillsNearby: flag('hillsNearby'),
     moonLine: flag('moonLine'),
     clothingAdvice: flag('clothingAdvice'),
     weatherFollowsLocation: flag('weatherFollowsLocation'),
@@ -159,6 +165,7 @@ export const followsLocation = (raw: OverviewSettings | undefined) => resolveOve
 export const showWeatherSwap = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherSwap;
 export const showBestMoment = (raw: OverviewSettings | undefined) => resolveOverviews(raw).bestMoment;
 export const showRainSoon = (raw: OverviewSettings | undefined) => resolveOverviews(raw).rainSoon;
+export const showHillsNearby = (raw: OverviewSettings | undefined) => resolveOverviews(raw).hillsNearby;
 export const showMoonLine = (raw: OverviewSettings | undefined) => resolveOverviews(raw).moonLine;
 // Het scherm na een training blijft altijd (feiten, coachregel, doel, week en
 // benen). De schakelaar bepaalt alleen of het citaat erbij staat. Een behaalde

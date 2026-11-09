@@ -11,7 +11,7 @@ import {
   onMacroFactorChange,
   setMapping,
 } from './macrofactor';
-import { buildBackupEnvelope } from './backup';
+import { buildBackupEnvelope } from './backupExport';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { MacroFactorFormatError, readMacroFactorCsv } from '../engine/macrofactorImport';
 import type { SessionLog } from '../models/training';

@@ -37,6 +37,7 @@ import { isWalkOrTripLog, logSport } from '../engine/sports';
 import type { DetailConditions } from '../models/activityDetail';
 import { daysBetween, todayISO } from '../utils/dates';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
+import { attachZone2PiecesFromStreams } from './zone2Pieces';
 
 export type AttachResult = 'attached' | 'skipped' | 'failed';
 
@@ -255,12 +256,14 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
       }
     }
 
-    if (!detail && !bestEffort && !reread && !tried && !runDetail && !runTried) return streamsKept ? 'attached' : 'skipped';
+    // De stabiele stukken voor tempo bij zone 2 (engine/zone2Pieces.ts): de reeks is er nu toch.
+    const piecesAdded = activity.kind === 'run' && !activity.treadmill ? await attachZone2PiecesFromStreams(log, streams) : false;
+    if (!detail && !bestEffort && !reread && !tried && !runDetail && !runTried) return streamsKept || piecesAdded ? 'attached' : 'skipped';
     // Read and write in one transaction: the log may have changed while the
     // series were on their way (your feeling, a putting back), and this only
     // adds the derived fields, never writes back an older copy of the rest.
     const added = await attachDerivedToStoredLog(log.id, { detail, bestEffort, reread, supersede, tried, runDetail, runTried });
-    return added || streamsKept ? 'attached' : 'skipped';
+    return added || streamsKept || piecesAdded ? 'attached' : 'skipped';
   } catch {
     failedThisSession.add(log.id);
     return 'failed';

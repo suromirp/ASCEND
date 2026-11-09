@@ -7,19 +7,11 @@ import { formatDateNL, localDateOf } from '../utils/dates';
 import { isEmptyStart, restoreSafetyLines } from '../engine/freshStart';
 import { importDiffLine } from '../engine/importPreview';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
-import {
-  normalizeBackupToCurrentModel,
-  buildImportPreview,
-  createImportPlan,
-  createPreImportSnapshot,
-  applyImportPlan,
-  parseBackupText,
-  restoreSnapshot,
-  defaultActionsForMode,
-  defaultPlanPolicyForMode,
-  CATEGORY_SUPPORTED_ACTIONS,
-  backupErrorText,
-} from '../storage/backup';
+import { normalizeBackupToCurrentModel, parseBackupText } from '../storage/backupNormalize';
+import { buildImportPreview } from '../storage/backupPreview';
+import { createImportPlan, createPreImportSnapshot, applyImportPlan, restoreSnapshot } from '../storage/backupApply';
+import { defaultActionsForMode, defaultPlanPolicyForMode, CATEGORY_SUPPORTED_ACTIONS } from '../storage/backupMerge';
+import { backupErrorText } from '../storage/backupMessage';
 import {
   ALL_CATEGORIES,
   CATEGORY_LABEL,

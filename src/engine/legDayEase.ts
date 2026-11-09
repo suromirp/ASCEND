@@ -21,6 +21,7 @@ import type { MorningCheckIn } from '../models/checkIn';
 import { MAX_LEG_EASE_DAYS, type LegEaseChoice, type LegEaseDay, type LegEaseReason } from '../models/legEase';
 import { addDays, daysBetween, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
+import { r1 } from '../utils/round';
 import { cleanExerciseName } from './exerciseMatch';
 import { FATIGUE_BAND, FATIGUE_THRESHOLDS, fatigueEvents, fatigueWord, legFatigueOn, sessionImpulse, type LegFatigueInputs } from './legFatigue';
 import type { LegEaseHow, LegEaseMode } from './legEaseSettings';
@@ -50,7 +51,6 @@ export const EASE_RIR_EXTRA = 4;
 const EASE_DROP_FROM_SETS = 3;
 export { MAX_LEG_EASE_DAYS };
 
-const round1 = (n: number) => Math.round(n * 10) / 10;
 
 // --- een loop eerder vandaag --------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ export function earlierTodayPoints(date: string, deps: EarlierDeps, hoursApart =
     if (log && startedBeforeNoon(log)) morning = true;
   }
   if (!any || points <= 0) return { points: 0 };
-  return { points: round1(points), label: test ? 'testloop' : 'loop', morning, ...(anyLogged ? {} : { planned: true }) };
+  return { points: r1(points), label: test ? 'testloop' : 'loop', morning, ...(anyLogged ? {} : { planned: true }) };
 }
 
 function isHardRunLog(log: SessionLog): boolean {
@@ -138,7 +138,7 @@ export interface LegDaySignals {
 
 // Het samenvoegen van de drie bronnen, los van de berekening zodat de grens te toetsen is.
 export function combineSignals(args: { date: string; sore?: Soreness; earlier: EarlierToday; baseIndex: number; pain?: boolean }): LegDaySignals {
-  const index = round1(args.baseIndex + args.earlier.points);
+  const index = r1(args.baseIndex + args.earlier.points);
   const reasons: LegEaseReason[] = [];
   if (args.sore) reasons.push(args.sore === 'flink' ? 'flink' : 'spierpijn');
   if (args.earlier.points > 0) reasons.push('harde-loop');
@@ -520,7 +520,7 @@ export function moveLegNote(args: { sessionId: string; toDate: string; deps: Sig
   const moved = deps.plannedSessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: toDate } : s));
   const base = legFatigueOn(toDate, fatigueInputsFor(deps, moved)).index;
   const earlier = earlierTodayPoints(toDate, { logs: deps.logs, templates: deps.templates, plannedSessions: moved, program: deps.program, bodyKg: deps.bodyKg, excludeId: sessionId });
-  const index = round1(base + earlier.points);
+  const index = r1(base + earlier.points);
   if (index <= LEG_EASE_INDEX) return undefined;
   const day = weekdayLongNL(toDate);
   const line = index <= LEG_EASE_INDEX + FATIGUE_BAND

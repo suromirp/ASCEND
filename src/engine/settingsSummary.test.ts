@@ -240,6 +240,15 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('spotterrek', withForge(rack)).checked).toBe(true);
   });
 
+  it('Standen onthouden staat standaard aan en volgt de keuze; Standen per toestel telt toestellen met standen', () => {
+    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('standen-onthouden', facts())).toEqual({ checked: true });
+    expect(rowSummary('standen-onthouden', withForge({ learnStands: false })).checked).toBe(false);
+    expect(rowSummary('toestelgewichten', facts()).value).toBe('Geen');
+    const profile = { id: 'a', name: 'Sportschool A', barsKg: [20], platesKg: [5], dumbbells: { startKg: 2, stepKg: 2, upToKg: 10, thenStepKg: 2.5, maxKg: 50 }, stackStepKg: 5, exerciseStandsKg: { 'leg-extension': { kg: [7, 14] } } };
+    expect(rowSummary('toestelgewichten', withForge({ activeProfileId: 'a', profiles: [profile] })).value).toBe('1 toestel');
+  });
+
   it('Toestellen leren staat aan met het label auto, en ASCEND naast MacroFactor staat uit en toont de stand', () => {
     const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
     expect(rowSummary('forge-leren', facts())).toEqual({ value: 'Geleerd', hidden: false });
@@ -896,8 +905,10 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
-    expect(rowSummary('bundel-weer', facts()).value).toBe('6 van 6 aan');
-    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('4 van 6 aan');
+    expect(rowSummary('bundel-weer', facts()).value).toBe('7 van 7 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('5 van 7 aan');
+    expect(rowSummary('heuvels-buurt', facts())).toEqual({ checked: true });
+    expect(rowSummary('heuvels-buurt', withSettings({ overviews: { hillsNearby: false } }))).toEqual({ checked: false });
     expect(rowSummary('bundel-inzicht', facts())).toEqual({ value: 'Aan', sub: '4 van 4 onderwerpen' });
     expect(rowSummary('bundel-inzicht', withSettings({ runInsight: { enabled: false } }))).toEqual({ value: 'Uit', dim: true });
     expect(rowSummary('bundel-run-detail', facts())).toEqual({ value: 'Aan', sub: 'Loopvorm: cadans en nog 3' });

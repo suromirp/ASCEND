@@ -118,6 +118,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'bundel-rekenmodel' && (
         <BundleSheet eyebrow="Forge" title="Rekenmodel" line="Hoe Forge rekent. Het advies is meestal goed." onClose={close}>
           <SummaryRow id="forge-rekent-mee" title="Forge rekent mee" facts={facts} info="forgeRekentMee" onChange={(on) => save({ reckon: on })} />
+          <SummaryRow id="forge-afvinken-doel" title="Afvinken telt als het doel" facts={facts} info="forgeAfvinkenDoel" onChange={(on) => save({ assumedCounts: on })} />
           <SummaryRow id="forge-sets" title="Werksets" facts={facts} onClick={() => setInner('forge-sets')} />
           <SummaryRow id="forge-vermoeidheid" title="Vermoeidheid per set" facts={facts} info="forgeVermoeidheid" onClick={() => setInner('forge-vermoeidheid')} />
           <SummaryRow id="forge-pauze" title="Na een pauze lichter beginnen" facts={facts} info="forgePauze" onChange={(on) => save({ lighterAfterBreak: on })} />
@@ -158,7 +159,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="dumbbells" title="Dumbbells" facts={facts} onClick={() => setInner('dumbbells')} />
           <SummaryRow id="forge-dumbbells" title="Dumbbells in je log" facts={facts} info="forgeDumbbells" onClick={() => setInner('forge-dumbbells')} />
           <SummaryRow id="kabels" title="Kabels en toestellen" facts={facts} onClick={() => setInner('kabels')} />
-          <SummaryRow id="toestelgewichten" title="Gewichten per toestel" facts={facts} info="toestelgewichten" onClick={() => setInner('toestelgewichten')} />
+          <SummaryRow id="toestelgewichten" title="Standen per toestel" facts={facts} info="toestelgewichten" onClick={() => setInner('toestelgewichten')} />
+          <SummaryRow id="standen-onthouden" title="Standen onthouden" facts={facts} info="standenOnthouden" onChange={(on) => save({ learnStands: on })} />
           <SummaryRow id="tussengewichten" title="Tussengewichten" facts={facts} info="tussengewichten" onClick={() => setInner('tussengewichten')} />
         </BundleSheet>
       )}

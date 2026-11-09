@@ -11,7 +11,8 @@ import {
   saveConnection,
   syncWatchActivities,
 } from './externalActivities';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
+import { buildBackupEnvelope } from './backupExport';
+import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { CURRENT_SCHEMA_VERSION, migrateExport, migrateV1toV2, type AscendExport } from './migrations';
 import type { SessionLog } from '../models/training';
 import { todayISO } from '../utils/dates';

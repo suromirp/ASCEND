@@ -101,6 +101,9 @@ export interface WorkoutExercise {
   reason?: string;
   // The sets of the last time, warm-up and work, in order.
   previous?: SetLog[];
+  // How many trainings with this exercise came before today ("Hoeveel over?" asks every set the first
+  // three times, engine/forgeReckon.ts#asksReserve). Absent in an old draft: not counted.
+  trainings?: number;
   restSec: number;
   // The name of the exercise this one replaced, for this training only.
   swappedFrom?: string;
@@ -293,7 +296,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   // A swapped exercise is another exercise: the range of the template is not its
   // own (squat 5 to 8 is not leg extension 5 to 8). The reps in reserve stay.
   const plan = swapTo ? (fromSlot?.rir !== undefined ? { rir: fromSlot.rir } : undefined) : fromSlot;
-  const learned = usedBefore({ sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings });
+  const learned = usedBefore({ sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings, exercise });
   let rx: Prescription | undefined;
   let rxInput: Parameters<typeof prescribe>[0] | undefined;
   if (ctx.modelOn && history && history.sessions.length > 0) {
@@ -428,6 +431,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     ...(learned && learned.length > 0 ? { usedKg: [...new Set(learned)] } : {}),
     ...(reason ? { reason } : {}),
     ...(last ? { previous: last.sets } : {}),
+    trainings: history?.sessions.filter((s) => s.date < ctx.date).length ?? 0,
     restSec: ctx.settings.restSeconds[exerciseId] ?? programRest ?? restFor(exerciseId, exercise, repsHigh, ctx.settings.restSeconds),
     timed: false,
     ...(dumbbellTotal ? { dumbbellTotal } : {}),
@@ -636,7 +640,14 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
         ...(r.kind === 'work' && r.rir !== undefined ? { rir: r.rir } : {}),
         kind: r.kind,
         ...(typeof r.doneAt === 'number' && Number.isFinite(r.doneAt) ? { at: new Date(r.doneAt).toISOString() } : {}),
-        ...(r.kind === 'work' && r.rir !== undefined && r.rirAssumed ? { rirAssumed: true } : {}),
+        ...(r.kind === 'work' && r.rir !== undefined && r.rirAssumed
+          ? {
+              rirAssumed: true,
+              // Wat Forge vroeg, voor "Afvinken telt als het doel" (engine/assumedSets.ts).
+              ...(r.forgeReps !== undefined && r.forgeReps > 0 && r.target.timedSec === undefined ? { repsAsked: r.forgeReps } : {}),
+              ...(r.target.weightKg !== undefined ? { weightKgAsked: r.target.weightKg } : {}),
+            }
+          : {}),
       }));
     if (sets.length > 0) out.push({ exerciseId: ex.exerciseId, exerciseName: ex.name, sets });
   }

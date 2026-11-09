@@ -21,6 +21,7 @@ import type { PlannedLeaveMark } from './leave';
 import type { ActivityDetail, RunDynamics } from './activityDetail';
 import type { ForgeEvent } from './forgeLog';
 import type { RunDetail } from './runDetail';
+import type { Zone2Pieces } from './zone2Pieces';
 
 export type MetricSource = 'manual' | 'garmin' | 'health-connect' | 'macrofactor' | 'import';
 
@@ -261,6 +262,12 @@ export interface SetLog {
   // Absent means measured (or no `rir` at all), so every log from before this
   // field reads as it always did. Decision: docs/beslissingen/2026-10-25-bijsturen-in-forge.md.
   rirAssumed?: boolean;
+  // What Forge asked for this set when you ticked it without a RIR of your own: the reps in the field
+  // and the weight of the prescription. Only next to `rirAssumed`, written once when the log is made
+  // (engine/assumedSets.ts reads it: "Afvinken telt als het doel"). Absent on older logs, which then
+  // read with the bottom of the range. Decision: docs/beslissingen/2026-11-08-forge-afvinken-doel.md.
+  repsAsked?: number;
+  weightKgAsked?: number;
   // When the set was ticked, as an ISO time. Only on logs made after the session clock
   // (docs/beslissingen/2026-10-29-forge-als-sessie.md); absent on older logs, which read as always.
   at?: string;
@@ -574,6 +581,13 @@ export interface SessionLog {
   // The totals a run's series gave no usable `runDetail` for, so they are not fetched again
   // for the same numbers (engine/runDetail.ts#runDetailFingerprint). Derived, optional.
   runDetailTried?: string;
+  // The stable, flat pieces of a run for "tempo bij zone 2", read once from its full series
+  // (models/zone2Pieces.ts, engine/zone2Pieces.ts). Derived and append-only like `runDetail`,
+  // tied to the totals it was read for; zones are applied when it is read, never stored.
+  zone2Pieces?: Zone2Pieces;
+  // The totals whose kept series could not be read into pieces, so the opening does not try
+  // again for the same numbers (engine/runDetail.ts#runDetailFingerprint). Derived, optional.
+  zone2PiecesTried?: string;
   // Gekoppeld na je Akkoord: een log van het horloge of MacroFactor die nergens aan hing, kreeg
   // later zijn geplande training (`plannedSessionId`). Alleen het moment; de log zelf is niet
   // veranderd, en Ongedaan maken haalt precies de verwijzing en dit veld weg

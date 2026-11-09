@@ -36,13 +36,16 @@ export interface PlanChangeItem {
   // always two items, each naming the other via this field, each carrying
   // its own new toDate (the partner's original date).
   pairedWithSessionId?: string;
-  // 'move' only: the session gets this fixed length at its new date.
+  // 'move': the session gets this fixed length at its new date. 'add': the new session's length.
+  // 'keep' with `restore`: the short length it has now; another length makes the item stale.
   plannedMinutes?: number;
   // 'move' only: the session goes back to how it stood by itself (a tocht
   // changed back or removed). It is not fixed in place and its length is not
   // fixed either: the phase decides again, like the restore path does.
   // On an 'add' or 'remove': the system's own layout (a change of the goal
   // date or a planning setting, engine/horizonChange.ts): no lock either.
+  // On a 'keep' with `leave: null`: a training you moved yourself keeps its day
+  // and lock, and loses the length the period gave it (engine/leaveProposal.ts).
   restore?: boolean;
   // 'move' only: the session becomes this training on its (new) day, like a
   // long run that becomes a mountain hike in Bergcapaciteit. Optional, additive.
