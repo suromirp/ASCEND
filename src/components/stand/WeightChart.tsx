@@ -7,8 +7,10 @@ import { formatNumberNL } from '../../utils/number';
 // Alles komt uit engine/weightOverview.ts; hier alleen tekenen. Geen animatie: de grafiek staat
 // meteen op zijn eindstand, ook in Rustig en Uit.
 
-const W = 320;
-const H = 176;
+// Tekst in een svg schaalt mee met de breedte. Het blad is op 360 px ruim 320 px breed, dus met een
+// viewBox van 300 blijft de tekst van 12 overal 12 px of groter.
+const W = 300;
+const H = 168;
 const TOP = 10;
 const BOTTOM = 26;
 const LEFT = 8;

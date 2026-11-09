@@ -69,7 +69,7 @@ function axis(values: number[]): { minKg: number; maxKg: number; ticks: number[]
   if (values.length === 0) return { minKg: 0, maxKg: 1, ticks: [] };
   const lo = Math.min(...values);
   const hi = Math.max(...values);
-  // Een stap van een halve, één, twee of vijf kilo, zodat er hoogstens vijf strepen staan.
+  // Een stap van een halve, één, twee of vijf kilo, zodat er een handvol strepen staat (hoogstens zes).
   const step = [0.5, 1, 2, 5, 10, 20].find((s) => (hi - lo) / s <= 3) ?? 50;
   let minKg = Math.floor(lo / step) * step;
   let maxKg = Math.ceil(hi / step) * step;

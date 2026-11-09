@@ -3,7 +3,7 @@ import { useAppData } from '../../state/AppDataContext';
 import { bodyFatLines, bodyFatTrend } from '../../engine/bodyFat';
 import { addWeightEntry, latestWeight, weightsInUse } from '../../engine/bodyWeight';
 import { isWeightRange, weighingRowSource, weightChangeLines, weightOverview, WEIGHT_RANGE_ADVICE, type WeightRange } from '../../engine/weightOverview';
-import { weightShown } from '../../engine/weightTrend';
+import { realWeighings, weightShown } from '../../engine/weightTrend';
 import { formatDayMonthNL, todayISO } from '../../utils/dates';
 import { formatNumberNL } from '../../utils/number';
 import { NumberField } from '../NumberField';
@@ -42,6 +42,8 @@ export function WeightOverviewSheet({ onClose }: { onClose: () => void }) {
   const overview = useMemo(() => weightOverview(entries, range, settings.weightTrend, today), [entries, range, settings.weightTrend, today]);
   const shown = weightShown(entries, settings.weightTrend);
   const last = latestWeight(entries);
+  // Het voorbeeld in het veld is je laatste echte weging, nooit een trendgewicht.
+  const lastWeighed = realWeighings(entries).pop();
   const change = weightChangeLines(overview);
   const fat = settings.showBodyFat === false ? undefined : bodyFatTrend(entries);
   const fatText = fat ? bodyFatLines(fat) : undefined;
@@ -134,7 +136,7 @@ export function WeightOverviewSheet({ onClose }: { onClose: () => void }) {
             <SettingsList className="mt-4">
               <SettingsFieldRow id="gewicht-weging" title="Gewicht van vandaag">
                 <span style={{ width: 120 }}>
-                  <NumberField tall unit="kg" decimals={1} value={kgDraft} placeholder={last ? formatNumberNL(last.kg, 1) : '85,6'} onChange={setKgDraft} />
+                  <NumberField tall unit="kg" decimals={1} value={kgDraft} placeholder={lastWeighed ? formatNumberNL(lastWeighed.kg, 1) : '85,6'} onChange={setKgDraft} />
                 </span>
               </SettingsFieldRow>
             </SettingsList>

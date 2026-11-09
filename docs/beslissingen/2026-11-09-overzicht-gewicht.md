@@ -15,7 +15,7 @@ De lijn (`engine/weightTrend.ts#weightLineAt`). Op elke dag is de lijn het gewog
 
 De kaart (`engine/weightCard.ts#weightCardData`) tekent zijn zes weekpunten met dezelfde `weightLineAt`. De vreemde V kwam doordat de kaart per week het getal van `weightShown` nam: tot de overstap het trendgewicht van MacroFactor en daarna losse wegingen.
 
-De verandering (`engine/weightOverview.ts#weightOverview`). Het verschil tussen het laatste en het eerste punt van de lijn in de periode. Onder een week tussen die punten staat er geen verandering; per week staat er pas vanaf twee weken. Vult de lijn de periode voor minstens 85 procent, dan staat de periode erbij ("in 4 weken"), anders de echte duur ("in 9 dagen", "in 21 weken").
+De verandering (`engine/weightOverview.ts#weightOverview`). Het verschil tussen het laatste en het eerste punt van de lijn in de periode. Onder een week tussen die punten staat er geen verandering; per week staat er pas vanaf twee weken. Vult de lijn de periode voor minstens 85 procent, dan staat de periode erbij ("in 4 weken"), anders de echte duur: onder de 14 dagen in dagen ("in 9 dagen"), daarboven in afgeronde weken ("in 21 weken").
 
 De lijst. Per dag de weging. Een dag uit MacroFactor met alleen een trendgewicht staat erin als "MacroFactor, trendgewicht" en is geen stip in de grafiek. Eerst zeven regels, daarna Alle wegingen tonen.
 
