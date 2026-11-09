@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import { DEFAULT_PROFILE, normalizeProfile, resolveStrengthSettings, type GymProfile, type StrengthSettings } from './strengthSettings';
-import { forgetStand, learnStand, mergeStands, seedOnOpen, seedStands, standAfterTick, standsFor, standsSummary, standNoteText, usedKgFromLogs, withStandForgotten, withStandsCleared, withStandsSet } from './toestelStanden';
+import { forgetStand, learnStand, mergeStands, seedOnOpen, seedStands, ownWeightsTickedAll, standAfterTick, standsFor, standsSummary, standNoteText, usedKgFromLogs, withStandForgotten, withStandsCleared, withStandsSet } from './toestelStanden';
 import { candidatesFor, learnedStack } from './strengthWeights';
 import { machineListCount, ownWeightsFor, withMachineSetup, withNewProfile } from './machineWeights';
 import type { SessionLog } from '../models/training';
@@ -301,5 +301,26 @@ describe('Standen onthouden uit: het gedrag van nu', () => {
     expect(standAfterTick(start, machine, 20, { remember: false, usedKg: [7, 14, 20] })).toEqual({ kind: 'none', reason: 'off' });
     expect(seedOnOpen(start, machine, { remember: false, usedKg: [7] })).toBeUndefined();
     expect(standsFor(withStands([7, 14]), machine)?.kg).toEqual([7, 14]);
+  });
+});
+
+describe('een stand komt alleen uit een gewicht dat je zelf intikte of bevestigde', () => {
+  const rij = (id: string, over: object) => ({ id, kind: 'work', target: { weightKg: 50, repsLow: 8, repsHigh: 10 }, done: false, ...over }) as never;
+  const oefening = (rows: unknown[]) => ({ slot: 's', exerciseId: machine.id, name: 'x', known: true, rows, restSec: 90 }) as never;
+  it('Alles afvinken onthoudt een voorgesteld doelgewicht nooit', () => {
+    const voor = oefening([rij('a', { edited: true, weightKg: 23 }), rij('b', {}), rij('c', { weightKg: 50 })]);
+    const na = oefening([rij('a', { edited: true, weightKg: 23, done: true }), rij('b', { weightKg: 50, done: true }), rij('c', { weightKg: 50, done: true })]);
+    expect(ownWeightsTickedAll(voor, na)).toEqual([23]);
+    expect(ownWeightsTickedAll(undefined, na)).toEqual([]);
+  });
+  it('een beschadigde lijst blijft niet stil leeg: het toestel wordt opnieuw ingelezen', () => {
+    const kapot = gym({ exerciseStandsKg: { [machine.id]: { kg: ['x'] as unknown as number[] } } });
+    expect(standsFor(kapot, machine)?.stored).toBe(false);
+    expect(seedStands(kapot, machine, [7])?.exerciseStandsKg?.[machine.id]).toEqual({ kg: [7] });
+    expect(standsFor(withStands([]), machine)?.stored).toBe(true);
+  });
+  it('een oude lijst van meer dan 40 gewichten blijft zoals hij was bij Terugdraaien', () => {
+    const lang = gym({ exerciseWeightRanges: { [machine.id]: [{ startKg: 1, endKg: 60, stepKg: 1 }] } });
+    expect(forgetStand(lang, machine, 5)).toBeUndefined();
   });
 });

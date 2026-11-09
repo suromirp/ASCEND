@@ -60,15 +60,16 @@ export function useForgeStands({ remember, readOnly, profile, logs }: { remember
   // Een set is afgevinkt met dit gewicht.
   const onTick = (ex: WorkoutExercise, weightKg: number | undefined) => {
     if (readOnly) return;
-    const mine = ++seq.current;
-    setNote(null);
     const exercise = exerciseOf(ex);
     if (!exercise || !hasStack(exercise)) return;
+    // De regel met Terugdraaien blijft staan tot er een nieuwe stand bij komt, de oefening wisselt of je terugdraait;
+    // alleen een oude foutregel maakt plaats voor deze poging.
+    setNote((n) => (n?.failed ? null : n));
+    const mine = seq.current;
     const failed = () => {
       if (seq.current === mine) setNote({ slot: ex.slot, exerciseId: ex.exerciseId, name: ex.name, kg: weightKg ?? 0, failed: true });
     };
     rememberStand({ exercise, weightKg, remember, usedKg: used(ex.exerciseId) }, io).then((r) => {
-      if (seq.current !== mine) return;
       if (r.kind === 'learned') setNote({ slot: ex.slot, exerciseId: ex.exerciseId, name: ex.name, kg: r.kg, failed: false });
       else if (r.kind === 'failed') failed();
     }, failed);

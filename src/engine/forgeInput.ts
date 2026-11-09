@@ -93,15 +93,19 @@ export function nextStand(stands: number[], current: number, direction: 1 | -1, 
   }
   const down = [...sorted].reverse().find((w) => w < current - STAND_EPS);
   if (down !== undefined) return down;
+  // Onder de laagste stand stopt het waar het model ook stopt (`standsStack`): niet onder 0,25 en niet onder één verschil.
   const first = sorted.length > 1 ? gap(sorted[1] - sorted[0]) : fallbackStep;
-  return Math.max(0.25, r2(current - first));
+  const lower = r2(current - first);
+  return lower < 0.25 - STAND_EPS || lower < first - STAND_EPS ? current : lower;
 }
 
 // Where plus and minus go for this exercise and this weight, when it has stands; undefined when it has none
 // (then the step of the profile rules, as before). The label under the keys and the keys use this one function.
-export function standJump(exercise: Exercise | undefined, profile: GymProfile, currentKg: number, direction: 1 | -1): number | undefined {
+// `remember` is the setting "Standen onthouden": off, an old list or range (no stands stored yet) works as before.
+export function standJump(exercise: Exercise | undefined, profile: GymProfile, currentKg: number, direction: 1 | -1, remember = true): number | undefined {
   const stands = standsFor(profile, exercise);
   if (!stands || stands.kg.length === 0) return undefined;
+  if (!remember && !stands.stored) return undefined;
   return nextStand(stands.kg, currentKg, direction, weightStepFor(exercise, profile, currentKg));
 }
 

@@ -152,6 +152,8 @@ export function cleanStandList(raw: unknown): MachineStandList | undefined {
   if (!isRecord(raw) || !Array.isArray(raw.kg)) return undefined;
   const { minKg, maxKg, maxCount } = STAND_LIMITS;
   const kg = [...new Set(raw.kg.filter((n): n is number => isNum(n) && n >= minKg && n <= maxKg).map(r2n))].sort((a, b) => a - b).slice(0, maxCount);
+  // Een lijst die niet leeg was en helemaal wegvalt is beschadigd: geen stil lege lijst, het toestel wordt opnieuw ingelezen.
+  if (kg.length === 0 && raw.kg.length > 0) return undefined;
   return { kg, ...(raw.only === true ? { only: true } : {}) };
 }
 

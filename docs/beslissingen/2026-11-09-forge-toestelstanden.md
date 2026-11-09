@@ -62,3 +62,16 @@ Wat blijft liggen:
 - Standen in pond, plaatjesnummers en standen voor de hulp van een optrekstation blijven buiten bereik, zoals het ontwerp zegt.
 - Een stand die in Forge onthouden is telt direct mee in `checkModelKey` (het profiel verandert); dat telt de controle tegen MacroFactor opnieuw. Gewenst, maar niet apart gemeten.
 - `useForgeStands.onOpen` leest per toestel één keer per sessie; een mislukte inleesactie probeert het bij het volgende openen opnieuw.
+
+## Aanvulling na review van Warden
+
+- Elke beurt in de schrijfwachtrij (`serial`) heeft een grens in tijd, en het lezen heeft er een eigen: een hangende lezing of schrijfactie houdt Opslaan en Standen wissen niet meer vast. Een schrijfactie die na de grens alsnog slaagt kan niet worden uitgesloten; de foutregel in het blok zegt daarom "Opslaan duurde te lang of lukte niet. Kijk bij Standen per toestel." en de standen zelf zijn idempotent bij een nieuwe poging.
+- Een stand komt alleen uit een gewicht dat je zelf intikte of bevestigde (afvinken van één set); bij Alles afvinken telt alleen een gewicht dat je zelf intikte (`ownWeightsTickedAll`), nooit een voorgesteld doelgewicht.
+- De regel met Terugdraaien blijft staan tot er een nieuwe stand bij komt, je terugdraait of de oefening wisselt. Er is geen aparte knop om hem weg te tikken. Er is één regel tegelijk.
+- Een beschadigde opgeslagen lijst (niets bruikbaars in een lijst die niet leeg was) telt als niet opgeslagen, zodat het toestel opnieuw wordt ingelezen.
+- Minder onder de laagste stand stopt waar het model stopt (`standsStack`): niet onder 0,25 kg en niet onder één verschil; daaronder blijft het gewicht staan.
+- `standJump` neemt de instelling mee: uit betekent dat een oude lijst of bereik (nog geen sleutel) werkt als voor de standen, met de profielstap; opgeslagen standen blijven werken.
+- Een oude lijst of bereik met meer dan 40 gewichten past niet in de standen. Terugdraaien laat dan alles zoals het was (zoals het besluit zegt); in het blad geeft Opslaan de melding over 40 standen.
+- Een bereik in pond wordt bij omzetten de kilo's op 0,01 (zo staat het in het ontwerp); de standen kunnen daardoor twee decimalen hebben.
+
+Wat blijft liggen (Warden, klein): de sleutel van het formulier (`stored`) vernieuwt het formulier als het inlezen binnenkomt, en dat kan een half ingevulde bewerking wissen in de eerste milliseconden; Standen wissen heeft geen Terugdraaien (alleen Annuleren vooraf, de logs blijven).

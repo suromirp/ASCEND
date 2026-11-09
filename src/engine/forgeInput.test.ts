@@ -488,10 +488,10 @@ describe('nextStand: Minder en Meer springen van stand naar stand', () => {
     expect(nextStand(blok, 41, 1, 2.5)).toBe(50);
   });
   it('onder de laagste stand gaat Minder af met het eerste verschil, nooit onder 0,25', () => {
-    expect(nextStand(blok, 7, -1, 2.5)).toBe(0.25);
+    expect(nextStand(blok, 7, -1, 2.5)).toBe(7);
     expect(nextStand([10, 14], 10, -1, 2.5)).toBe(6);
-    expect(nextStand([10, 14], 6, -1, 2.5)).toBe(2);
-    expect(nextStand([10, 14], 2, -1, 2.5)).toBe(0.25);
+    expect(nextStand([10, 14], 6, -1, 2.5)).toBe(6);
+    expect(nextStand([1, 1.5], 1, -1, 2.5)).toBe(1);
   });
   it('één stand telt met de profielstap', () => {
     expect(nextStand([20], 20, 1, 5)).toBe(25);
@@ -519,6 +519,12 @@ describe('standJump en makeSnap volgen de standen van het toestel', () => {
     expect(standJump(machine, gym(), 20, 1)).toBeUndefined();
     expect(standJump(machine, gym({ exerciseStandsKg: { [machine.id]: { kg: [] } } }), 20, 1)).toBeUndefined();
     expect(standJump(exerciseById('back-squat'), met, 20, 1)).toBeUndefined();
+  });
+  it('met Standen onthouden uit werkt een oude lijst of bereik zoals nu, en bestaande standen blijven werken', () => {
+    const oud = gym({ exerciseWeightsKg: { [machine.id]: [10, 20] } });
+    expect(standJump(machine, oud, 10, 1)).toBe(20);
+    expect(standJump(machine, oud, 10, 1, false)).toBeUndefined();
+    expect(standJump(machine, met, 20, 1, false)).toBe(23);
   });
   it('makeSnap rondt op een stand, en op de stap zonder standen', () => {
     expect(makeSnap(machine, met, undefined, 20)(20)).toBe(23);

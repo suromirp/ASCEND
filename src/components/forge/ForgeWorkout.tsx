@@ -104,6 +104,7 @@ import { forgeLogInput } from './forgeFinishLog';
 import { useForgeDraft } from './useForgeDraft';
 import { useForgeClock } from './useForgeClock';
 import { useForgeStands } from './useForgeStands';
+import { ownWeightsTickedAll } from '../../engine/toestelStanden';
 import { REST_DONE_LINGER_MS, useRestAlert } from './useRestAlert';
 import { restNameAfter, useForgePager, useLater } from './useForgePager';
 import { RestBar } from './ForgeTimers';
@@ -485,7 +486,7 @@ function ForgeWorkoutInner({
     // Een afgevinkte set op een toestel met blok: het gewicht wordt een stand (alleen onthouden, nooit een vraag).
     if (ticked && tickedEx) {
       const doneRow = tickedEx.rows.find((r) => r.id === rowId);
-      stands.onTick(tickedEx, doneRow?.weightKg ?? doneRow?.target.weightKg);
+      stands.onTick(tickedEx, doneRow?.weightKg);
     }
     // Het verloop: een set onder het bereik, en een set waarvoor geen gewicht van het toestel past.
     if (ticked && tickedEx && !readOnly) {
@@ -548,7 +549,7 @@ function ForgeWorkoutInner({
     {
       const before = workout.find((e) => e.slot === slot);
       const after = result.workout.find((e) => e.slot === slot);
-      const weights = [...new Set((after?.rows ?? []).filter((r) => r.done && before?.rows.find((o) => o.id === r.id)?.done === false).map((r) => r.weightKg ?? r.target.weightKg))];
+      const weights = ownWeightsTickedAll(before, after);
       if (after) for (const w of weights) stands.onTick(after, w);
     }
     const after = result.workout.find((e) => e.slot === slot);
@@ -616,7 +617,7 @@ function ForgeWorkoutInner({
     const step = isWeight ? weightStepFor(exerciseOf(ex), profileFor(strength.profile, ex.dumbbellTotal), current) : REPS_STEP;
     // Een toestel met standen: Minder en Meer springen naar de vorige en volgende stand.
     if (isWeight && !isAssisted(ex)) {
-      const jump = standJump(exerciseOf(ex), profileFor(strength.profile, ex.dumbbellTotal), current ?? 0, direction);
+      const jump = standJump(exerciseOf(ex), profileFor(strength.profile, ex.dumbbellTotal), current ?? 0, direction, strength.learnStands);
       if (jump !== undefined) {
         const bounded = Math.min(weightBounds(exerciseOf(ex)).max, Math.max(weightBounds(exerciseOf(ex)).min, jump));
         changeValue(bounded);
@@ -769,8 +770,8 @@ function ForgeWorkoutInner({
     if (!dock || dock.field !== 'weightKg' || !dockEx || !dockRow || isAssisted(dockEx)) return undefined;
     const profile = profileFor(strength.profile, dockEx.dumbbellTotal);
     const now = dockRow.weightKg ?? dockRow.target.weightKg ?? 0;
-    const down = standJump(exerciseOf(dockEx), profile, now, -1);
-    const up = standJump(exerciseOf(dockEx), profile, now, 1);
+    const down = standJump(exerciseOf(dockEx), profile, now, -1, strength.learnStands);
+    const up = standJump(exerciseOf(dockEx), profile, now, 1, strength.learnStands);
     return down === undefined || up === undefined ? undefined : { down, up };
   })();
   const rowMenuEx = rowMenu ? workout.find((e) => e.slot === rowMenu.slot) : undefined;

@@ -44,4 +44,10 @@ describe('het scherm van de toestelstanden', () => {
     expect(src).toContain('Terugdraaien');
     expect(src).toContain('act.standUndo()');
   });
+
+  it('de regel met Terugdraaien blijft staan bij een volgende tik; alleen een foutregel of Terugdraaien zelf haalt hem weg', () => {
+    const src = read('./useForgeStands.ts');
+    const tick = src.slice(src.indexOf('const onTick'), src.indexOf('const onOpen'));
+    expect(tick).not.toContain('setNote(null)');
+  });
 });

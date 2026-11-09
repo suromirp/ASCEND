@@ -36,12 +36,20 @@ export type StandWrite =
 
 let queue: Promise<unknown> = Promise.resolve();
 
-// Eén schrijfactie tegelijk, in volgorde.
+// Een hele beurt (lezen en schrijven) duurt hoogstens zo lang; daarna komt de volgende aan de beurt.
+export const STAND_JOB_TIMEOUT_MS = 2 * STAND_WRITE_TIMEOUT_MS + 1000;
+
+// Eén schrijfactie tegelijk, in volgorde. Elke beurt heeft een grens in tijd, zodat een hangende lezing of
+// schrijfactie de wachtrij nooit voor altijd vasthoudt.
 function serial<T>(job: () => Promise<T>): Promise<T> {
-  const run = queue.then(job, job);
+  const bounded = () => withTimeout(job(), STAND_JOB_TIMEOUT_MS);
+  const run = queue.then(bounded, bounded);
   queue = run.catch(() => undefined);
   return run;
 }
+
+// Lezen met een grens in tijd; een lezing die niet lukt is "failed".
+const readWithin = (io: StandIo): Promise<StrengthSettings | undefined> => withTimeout(Promise.resolve(io.read()), STAND_WRITE_TIMEOUT_MS);
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -63,7 +71,9 @@ async function apply(next: StrengthSettings, io: StandIo): Promise<boolean> {
 // als het een nieuwe stand is. `usedKg`: de gewichten uit je trainingen in deze sportschool (`usedBefore`).
 export function rememberStand(input: { exercise: Exercise | undefined; weightKg: number | undefined; remember: boolean; usedKg?: number[] }, io: StandIo = repoIo): Promise<StandWrite> {
   return serial(async () => {
-    const out = standAfterTick(await io.read(), input.exercise, input.weightKg, { remember: input.remember, usedKg: input.usedKg });
+    let raw: StrengthSettings | undefined;
+    try { raw = await readWithin(io); } catch { return { kind: 'failed' }; }
+    const out = standAfterTick(raw, input.exercise, input.weightKg, { remember: input.remember, usedKg: input.usedKg });
     if (out.kind === 'none') return out;
     if (!(await apply(out.settings, io))) return { kind: 'failed' };
     return out.kind === 'learned' ? { kind: 'learned', kg: out.kg } : { kind: 'seeded' };
@@ -73,7 +83,9 @@ export function rememberStand(input: { exercise: Exercise | undefined; weightKg:
 // Bij het openen van een toestel in Forge of in het blad: één keer inlezen.
 export function seedStandsNow(input: { exercise: Exercise | undefined; remember: boolean; usedKg?: number[] }, io: StandIo = repoIo): Promise<StandWrite> {
   return serial(async () => {
-    const next = seedOnOpen(await io.read(), input.exercise, { remember: input.remember, usedKg: input.usedKg });
+    let raw: StrengthSettings | undefined;
+    try { raw = await readWithin(io); } catch { return { kind: 'failed' }; }
+    const next = seedOnOpen(raw, input.exercise, { remember: input.remember, usedKg: input.usedKg });
     if (!next) return { kind: 'none', reason: 'known' };
     return (await apply(next, io)) ? { kind: 'seeded' } : { kind: 'failed' };
   });
@@ -82,7 +94,9 @@ export function seedStandsNow(input: { exercise: Exercise | undefined; remember:
 // Terugdraaien: alleen die stand weg.
 export function forgetStandNow(input: { exercise: Exercise | undefined; weightKg: number }, io: StandIo = repoIo): Promise<StandWrite> {
   return serial(async () => {
-    const next = withStandForgotten(await io.read(), input.exercise, input.weightKg);
+    let raw: StrengthSettings | undefined;
+    try { raw = await readWithin(io); } catch { return { kind: 'failed' }; }
+    const next = withStandForgotten(raw, input.exercise, input.weightKg);
     if (!next) return { kind: 'none', reason: 'gone' };
     return (await apply(next, io)) ? { kind: 'forgotten', kg: input.weightKg } : { kind: 'failed' };
   });
@@ -96,7 +110,7 @@ export type StandsSave = { kind: 'saved'; settings: StrengthSettings } | { kind:
 async function saveWith(make: (raw: StrengthSettings | undefined) => StrengthSettings | undefined, io: StandIo): Promise<StandsSave> {
   let raw: StrengthSettings | undefined;
   try {
-    raw = await withTimeout(Promise.resolve(io.read()), STAND_WRITE_TIMEOUT_MS);
+    raw = await readWithin(io);
   } catch {
     return { kind: 'failed' };
   }
@@ -106,9 +120,9 @@ async function saveWith(make: (raw: StrengthSettings | undefined) => StrengthSet
 }
 
 export function saveStandsNow(input: { exercise: Exercise | undefined; kg: number[]; only: boolean }, io: StandIo = repoIo): Promise<StandsSave> {
-  return serial(() => saveWith((raw) => withStandsSet(raw, input.exercise, input.kg, input.only), io));
+  return serial(() => saveWith((raw) => withStandsSet(raw, input.exercise, input.kg, input.only), io)).catch((): StandsSave => ({ kind: 'failed' }));
 }
 
 export function clearStandsNow(input: { exercise: Exercise | undefined }, io: StandIo = repoIo): Promise<StandsSave> {
-  return serial(() => saveWith((raw) => withStandsCleared(raw, input.exercise), io));
+  return serial(() => saveWith((raw) => withStandsCleared(raw, input.exercise), io)).catch((): StandsSave => ({ kind: 'failed' }));
 }

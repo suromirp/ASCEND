@@ -156,6 +156,22 @@ describe('het blad: opslaan en wissen', () => {
     expect(await stored()).toEqual(before);
   });
 
+  it('een lezing die blijft hangen houdt de wachtrij niet vast: Opslaan en Standen wissen komen daarna aan de beurt', async () => {
+    vi.useFakeTimers();
+    try {
+      const hangingRead: StandIo = { read: () => new Promise(() => undefined), write: () => Promise.resolve() };
+      const first = rememberStand({ exercise: machine, weightKg: 20, remember: true }, hangingRead);
+      const second = saveStandsNow({ exercise: machine, kg: [7, 14], only: false });
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(await first).toEqual({ kind: 'failed' });
+      await vi.advanceTimersByTimeAsync(100);
+      expect((await second).kind).toBe('saved');
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(await standsNow()).toEqual({ kg: [7, 14] });
+  });
+
   it('een mislukte schrijfactie, of een schrijfactie die blijft hangen, geeft een duidelijke uitkomst en laat alles zoals het was', async () => {
     await saveStandsNow({ exercise: machine, kg: [7, 14], only: false });
     const before = await stored();

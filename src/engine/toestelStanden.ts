@@ -12,6 +12,7 @@
 // dan gaat het in één keer om naar standen met `only`.
 
 import type { Exercise } from '../models/exercise';
+import type { WorkoutExercise } from './forgeWorkout';
 import { addOnsFor, cleanMachineList, cleanWeightRanges, countsForProfile, hasStack, rangeWeights, splitAddOn } from './machineWeights';
 import { exerciseKey } from './strengthHistory';
 import type { SessionLog } from '../models/training';
@@ -137,6 +138,8 @@ export function forgetStand(profile: GymProfile, exercise: Exercise | undefined,
   if (!exercise || !now) return undefined;
   const w = r2(weightKg);
   if (!now.kg.includes(w)) return undefined;
+  // Een oude lijst of bereik met meer dan 40 gewichten past niet in de standen: dan blijft alles zoals het was.
+  if (now.kg.length - 1 > STAND_LIMITS.maxCount) return undefined;
   return withStandList(profile, exercise.id, { kg: now.kg.filter((x) => x !== w), only: now.only });
 }
 
@@ -233,7 +236,7 @@ const kgNl = (n: number) => formatNumberNL(n, 2);
 // De regel na een nieuwe stand.
 export const standNoteText = (kg: number, exerciseName: string): string => `Stand ${kgNl(kg)} kg onthouden voor ${exerciseName}.`;
 export const STAND_FIRST_TEXT = 'Tik het getal dat op het blok staat. Forge onthoudt het.';
-export const STAND_FAILED_TEXT = 'Opslaan lukte niet. De standen staan nog zoals ze waren.';
+export const STAND_FAILED_TEXT = 'Opslaan duurde te lang of lukte niet. Kijk bij Standen per toestel.';
 
 // De waarde in de rij van een toestel: "7, 14, 23, 32", bij meer dan zes "7 tot 109 kg", met ", alleen deze" erachter.
 export function standsSummary(kg: number[], only: boolean): string {
@@ -243,3 +246,14 @@ export function standsSummary(kg: number[], only: boolean): string {
 
 // Het aantal standen van een toestel in een profiel, 0 als er geen zijn.
 export const standCount = (profile: GymProfile, exercise: Exercise | undefined): number => standsFor(profile, exercise)?.kg.length ?? 0;
+
+// Bij Alles afvinken: de gewichten die je zelf intikte in sets die nu afgevinkt zijn. Een voorgesteld doelgewicht
+// dat Forge alleen invulde wordt nooit een stand; alleen wat je zelf intikte of bij één set afvinkte telt.
+export function ownWeightsTickedAll(before: WorkoutExercise | undefined, after: WorkoutExercise | undefined): number[] {
+  if (!before || !after) return [];
+  const out = after.rows.flatMap((r) => {
+    const was = before.rows.find((o) => o.id === r.id);
+    return r.done && was && !was.done && was.edited && r.weightKg !== undefined ? [r.weightKg] : [];
+  });
+  return [...new Set(out)];
+}
