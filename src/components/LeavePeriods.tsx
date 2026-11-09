@@ -334,6 +334,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
               <PrimaryButton
                 disabled={scope === 'none' || (scope === 'plan' && !!problem)}
                 fullWidth={false}
+                className="whitespace-nowrap"
                 onClick={() => onSubmit(draft ?? { id: makeId('leave'), kind, startDate, endDate, ...(note.trim() ? { note: note.trim() } : {}), ...(kind === 'no_gym' ? { noGym } : {}) })}
               >{scope === 'plan' ? 'Voorstel bekijken' : 'Bewaren'}</PrimaryButton>
             </div>
