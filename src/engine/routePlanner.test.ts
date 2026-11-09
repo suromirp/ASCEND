@@ -231,7 +231,7 @@ describe('proposeRoutes', () => {
     for (const o of [plans.simple, plans.adventure]) {
       if (!o.ok) continue;
       const all = [proposalTitle(o.proposal), proposalFacts(o.proposal), ...proposalNotes(o.proposal, { distanceKm: 20, ascentM: 900 })].join(' ');
-      expect(all).not.toMatch(/[–—]/);
+      expect(all).not.toMatch(/[\u2013\u2014]/);
     }
   });
 });
