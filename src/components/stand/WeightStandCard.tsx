@@ -34,7 +34,7 @@ export function WeightStandCard() {
               <span className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>kg</span>
             </span>
             <span className="mt-1 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              <Num>{`Laatste weging ${formatNumberNL(latest.kg, 1)} kg, ${formatDayMonthNL(latest.date)}`}</Num>
+              <Num>{`Laatste weging ${formatNumberNL(latest.kg, 1)} kg, ${formatDayMonthNL(latest.date).replace(' ', '\u00a0')}`}</Num>
             </span>
           </span>
           <span className="flex shrink-0 items-center gap-3">
