@@ -50,35 +50,76 @@ function median(values: number[]): number {
   return s.length % 2 === 1 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
-export function weightTrend(entries: WeightEntry[] | undefined): WeightTrend | undefined {
-  const latest = latestWeight(entries);
-  if (!latest || latest.basis === 'trend') return undefined;
-  const anchor = addDays(latest.date, -TREND_WINDOW_DAYS);
-  const window = (entries ?? [])
-    .filter((e) => e.date > anchor && e.date <= latest.date)
+// Een echte weging: één per dag, het getal van de weegschaal. Een dag met een trendgewicht uit
+// MacroFactor telt met de weging van die dag (`scaleKg`); zonder die weging is het geen weging.
+export interface Weighing {
+  date: string;
+  kg: number;
+}
+
+export function realWeighings(entries: WeightEntry[] | undefined): Weighing[] {
+  return (entries ?? [])
     .flatMap((e) => {
       const kg = weighed(e);
       return kg === undefined ? [] : [{ date: e.date, kg }];
-    });
-  if (window.length < TREND_MIN_WEIGHINGS) return undefined;
-  const mid = median(window.map((r) => r.kg));
-  const kept = window.filter((r) => Math.abs(r.kg - mid) <= mid * OUTLIER_SHARE);
-  if (kept.length < TREND_MIN_WEIGHINGS) return undefined;
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// Het gewogen gemiddelde van de echte wegingen in de 14 dagen tot en met `asOf`. Met drie of meer
+// wegingen valt een uitschieter weg; blijven er dan minder dan `min` over, dan is er geen uitkomst.
+function averageUpTo(real: Weighing[], asOf: string, min: number): { kg: number; raw: number; readings: number; outliers: number; from: string } | undefined {
+  const anchor = addDays(asOf, -TREND_WINDOW_DAYS);
+  const window = real.filter((r) => r.date > anchor && r.date <= asOf);
+  if (window.length < min) return undefined;
+  let kept = window;
+  if (window.length >= TREND_MIN_WEIGHINGS) {
+    const mid = median(window.map((r) => r.kg));
+    kept = window.filter((r) => Math.abs(r.kg - mid) <= mid * OUTLIER_SHARE);
+    // Te weinig over na de uitschieters: voor de trend is er dan geen uitkomst, de lijn houdt alles.
+    if (kept.length < TREND_MIN_WEIGHINGS) {
+      if (min >= TREND_MIN_WEIGHINGS) return undefined;
+      kept = window;
+    }
+  }
   let sum = 0;
   let weights = 0;
   for (const r of kept) {
-    const w = 0.5 ** (daysBetween(r.date, latest.date) / TREND_HALF_LIFE_DAYS);
+    const w = 0.5 ** (daysBetween(r.date, asOf) / TREND_HALF_LIFE_DAYS);
     sum += w * r.kg;
     weights += w;
   }
-  return {
-    kg: Math.round((sum / weights) * 10) / 10,
-    readings: kept.length,
-    outliers: window.length - kept.length,
-    from: kept.map((r) => r.date).sort()[0],
-    asOf: latest.date,
-    latestKg: latest.kg,
-  };
+  return { kg: Math.round((sum / weights) * 10) / 10, raw: sum / weights, readings: kept.length, outliers: window.length - kept.length, from: kept[0].date };
+}
+
+export function weightTrend(entries: WeightEntry[] | undefined): WeightTrend | undefined {
+  const latest = latestWeight(entries);
+  if (!latest || latest.basis === 'trend') return undefined;
+  const avg = averageUpTo(realWeighings(entries), latest.date, TREND_MIN_WEIGHINGS);
+  return avg ? { kg: avg.kg, readings: avg.readings, outliers: avg.outliers, from: avg.from, asOf: latest.date, latestKg: latest.kg } : undefined;
+}
+
+// De lijn van je gewicht op één dag, voor de kaart op Je stand en het overzicht Gewicht
+// (docs/beslissingen/2026-11-09-overzicht-gewicht.md). Altijd uit echte wegingen: het gewogen
+// gemiddelde van de wegingen in de 14 dagen tot en met die dag, ook met één of twee wegingen, zodat
+// de lijn niet springt op de dag dat de derde weging binnenkomt. Met Gewichtstrend uit is het de
+// laatste weging in dat venster. Een trendgewicht uit MacroFactor telt nooit als losse weging; alleen
+// als er in het venster geen enkele echte weging is, staat dat trendgewicht zelf op de lijn
+// (`own: false`), want het is al een trend.
+export function weightLineAt(entries: WeightEntry[] | undefined, day: string, trendOn: boolean | undefined): { kg: number; own: boolean } | undefined {
+  const real = realWeighings(entries);
+  if (trendOn === false) {
+    const anchor = addDays(day, -TREND_WINDOW_DAYS);
+    const last = real.filter((r) => r.date > anchor && r.date <= day).pop();
+    if (last) return { kg: last.kg, own: true };
+  } else {
+    const avg = averageUpTo(real, day, 1);
+    // Op twee decimalen: op één decimaal wordt de lijn een trap.
+    if (avg) return { kg: Math.round(avg.raw * 100) / 100, own: true };
+  }
+  const anchor = addDays(day, -TREND_WINDOW_DAYS);
+  const source = latestWeight((entries ?? []).filter((e) => e.basis === 'trend' && e.date > anchor && e.date <= day));
+  return source ? { kg: source.kg, own: false } : undefined;
 }
 
 // Het gewicht dat het blad Lichaamsgewicht groot laat zien: de trend als "Gewichtstrend
