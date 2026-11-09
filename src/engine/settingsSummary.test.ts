@@ -911,7 +911,7 @@ describe('rowSummary: rijen met een blad', () => {
     expect(rowSummary('bundel-tochten', facts({ goal: null, treks: 1 })).hidden).toBe(false);
   });
 
-  it('Op de Ascend-tab zegt wat er aan staat, en Vaardigheidsdoelen tonen staat standaard aan', () => {
+  it('Op de Ascend-tab zegt wat er aan staat, en Calisthenicsdoelen tonen staat standaard aan', () => {
     expect(rowSummary('bundel-ascend', facts()).value).toBe('Alles');
     expect(rowSummary('vaardigheidsdoelen', facts()).checked).toBe(true);
     const off = facts({ settings: { ...facts().settings, showSkillGoals: false } });

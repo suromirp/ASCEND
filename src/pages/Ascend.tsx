@@ -30,12 +30,15 @@ import { WaveReviewCard } from '../components/ascend/WaveReview';
 import type { AddTileId } from '../engine/goalDraft';
 import { SkillGoalCard } from '../components/ascend/SkillGoalCard';
 import { SkillGoalSheet } from '../components/ascend/SkillGoalSheet';
+import { CalisthenicsChoiceSheet } from '../components/ascend/CalisthenicsChoiceSheet';
+import { GeneralStrengthCard } from '../components/ascend/GeneralStrengthCard';
 import { useSkillGoals } from '../components/ascend/useSkillGoals';
-import { liveSkillGoals, planStartSteps, takenSkillSteps } from '../engine/skillGoal';
+import { buildGeneralGoal, liveGeneralGoal, liveSkillGoals, planStartSteps, takenSkillSteps } from '../engine/skillGoal';
 import { TimeoutError } from '../utils/withTimeout';
 import { skillLadderById } from '../data/skillLadders';
-import { skillReadinessFor } from '../engine/goalReadinessFor';
+import { generalReadinessFor, skillReadinessFor } from '../engine/goalReadinessFor';
 import type { SkillGoal } from '../models/skillGoals';
+import { makeId } from '../utils/id';
 import { todayISO } from '../utils/dates';
 
 // Ascend is de plek van je doelen (docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md): op de
@@ -113,6 +116,15 @@ export function AscendPage() {
     () => (skillsOn ? liveSkillGoals(skills.store).flatMap((g) => { const r = skillReadinessFor(g, sessionLogs, today, skills.store.progress); return r ? [{ goal: g, readiness: r }] : []; }) : []),
     [skillsOn, skills.store, sessionLogs, today],
   );
+  // Algemeen sterk met eigen gewicht (docs/beslissingen/2026-11-09-calisthenics-algemeen.md): één doel, vijf ladders.
+  const generalGoal = skillsOn ? liveGeneralGoal(skills.store) : undefined;
+  const ladderStarts = useMemo(() => planStartSteps(templates, settings.strengthModel, today), [templates, settings.strengthModel, today]);
+  const generalView = useMemo(
+    () => (generalGoal ? generalReadinessFor(generalGoal, sessionLogs, today, ladderStarts) : undefined),
+    [generalGoal, sessionLogs, today, ladderStarts],
+  );
+  const [calisthenicsChoosing, setCalisthenicsChoosing] = useState(false);
+  const [generalProposal, setGeneralProposal] = useState<SkillGoal | null>(null);
   const [skillChoosing, setSkillChoosing] = useState(false);
   const [skillProposal, setSkillProposal] = useState<SkillGoal | null>(null);
   const [skillRemoving, setSkillRemoving] = useState<SkillGoal | null>(null);
@@ -257,6 +269,10 @@ export function AscendPage() {
         />
       )}
 
+      {generalGoal && generalView && (
+        <GeneralStrengthCard name={generalGoal.name} readiness={generalView} onRemove={() => { clearNotes(); setSkillRemoving(generalGoal); }} />
+      )}
+
       {skillViews.map(({ goal, readiness }) => (
         <SkillGoalCard key={goal.id} name={goal.name || readiness.targetName} readiness={readiness} onRemove={() => { clearNotes(); setSkillRemoving(goal); }} />
       ))}
@@ -356,7 +372,7 @@ export function AscendPage() {
           mainGoalId={listed.find((l) => l.isMain)?.goal.id}
           initialTile={adding.tile}
           initialDetails={adding.details}
-          onSkill={skillsOn ? (close) => { close(); later(() => setSkillChoosing(true)); } : undefined}
+          onSkill={skillsOn ? (close) => { close(); later(() => setCalisthenicsChoosing(true)); } : undefined}
           onSubmit={(draft, close) => {
             close();
             later(() => void horizon.propose(
@@ -374,12 +390,41 @@ export function AscendPage() {
         />
       )}
 
+      {calisthenicsChoosing && (
+        <CalisthenicsChoiceSheet
+          generalTaken={!!liveGeneralGoal(skills.store)}
+          onSubmit={(choice, close) => {
+            close();
+            later(() => {
+              if (choice === 'skill') setSkillChoosing(true);
+              else setGeneralProposal(buildGeneralGoal({ id: makeId('skill'), now: new Date().toISOString(), today, logs: sessionLogs }));
+            });
+          }}
+          onClose={() => setCalisthenicsChoosing(false)}
+        />
+      )}
+
+      {generalProposal && (
+        <ImpactSheet
+          eyebrow="Doel toevoegen · stap 3 van 3"
+          title={`${generalProposal.name}?`}
+          lines={['Ascend volgt vijf ladders: push-up, optrekken, dip, squat op één been en L-sit.', 'Je planning blijft zoals ze is.']}
+          why="Dit doel heeft geen datum en wordt nooit je hoofddoel. Staat je stap van een ladder in een krachttraining, dan stelt Forge een zwaardere of lichtere stap voor (Stap voorstellen in Forge). Altijd met Akkoord."
+          primaryLabel="Akkoord"
+          secondaryLabel="Liever niet"
+          onPrimary={() => { const g = generalProposal; skillWrite(() => skills.add(g), `${g.name} staat op Ascend.`, () => setGeneralProposal(null)); }}
+          onSecondary={() => { setGeneralProposal(null); setFlash('Niets toegevoegd.'); }}
+          onClose={() => setGeneralProposal(null)}
+          busy={skillBusy}
+        />
+      )}
+
       {skillChoosing && (
         <SkillGoalSheet
           logs={sessionLogs}
           today={today}
           taken={takenSkillSteps(skills.store)}
-          starts={planStartSteps(templates, settings.strengthModel, today)}
+          starts={ladderStarts}
           onSubmit={(goal, close) => { close(); later(() => setSkillProposal(goal)); }}
           onClose={() => setSkillChoosing(false)}
         />
@@ -387,7 +432,7 @@ export function AscendPage() {
 
       {skillProposal && (
         <ImpactSheet
-          eyebrow="Doel toevoegen · stap 3 van 3"
+          eyebrow="Doel toevoegen · stap 4 van 4"
           title={`${skillProposal.name} als vaardigheid?`}
           lines={[`Ladder ${skillLadderName(skillProposal.ladderId)}, doelstap ${skillProposal.targetStep}: ${skillProposal.name}.`, 'Je planning blijft zoals ze is.']}
           why="Een vaardigheid heeft geen datum en wordt nooit je hoofddoel. Ascend toont de ladder en wat je al haalde."
@@ -402,10 +447,10 @@ export function AscendPage() {
 
       {skillRemoving && (
         <ImpactSheet
-          eyebrow="Vaardigheid weghalen"
+          eyebrow={skillRemoving.general ? 'Doel weghalen' : 'Vaardigheid weghalen'}
           title={`${skillRemoving.name} weghalen?`}
           lines={[]}
-          why="De kaart verdwijnt van Ascend. Je trainingen en de stappen die je haalde blijven bewaard."
+          why={skillRemoving.general ? 'De kaart verdwijnt van Ascend. Je trainingen blijven bewaard.' : 'De kaart verdwijnt van Ascend. Je trainingen en de stappen die je haalde blijven bewaard.'}
           primaryLabel="Weghalen"
           secondaryLabel="Annuleren"
           onPrimary={() => { const g = skillRemoving; skillWrite(() => skills.remove(g.id), `${g.name} is weggehaald.`, () => setSkillRemoving(null)); }}

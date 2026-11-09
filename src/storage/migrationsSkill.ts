@@ -8,6 +8,9 @@
 // - een rij van een gehaalde stap zonder id, doel, geldige stap of echte datum valt weg; een tweede rij voor
 //   dezelfde stap van hetzelfde doel ook (een stap is één keer gehaald).
 // Een rij van een doel dat weg is, blijft staan: gehaalde stappen worden nooit weggegooid.
+//
+// `SkillGoal.general` (het doel Algemeen sterk met eigen gewicht) is ook optioneel en aanvullend: een doel zonder
+// leest precies als voorheen. Met een kapotte `general` valt het doel weg (geteld als overgeslagen); zie readGeneral.
 
 import type { SkillGoal, SkillGoalStore, SkillStepProgress } from '../models/skillGoals';
 
@@ -24,6 +27,9 @@ function readGoal(raw: unknown): SkillGoal | undefined {
   const { id, ladderId, targetStep } = raw;
   if (!isText(id) || !isText(ladderId, 60)) return undefined;
   if (typeof targetStep !== 'number' || !Number.isInteger(targetStep) || targetStep < 1) return undefined;
+  // `general` (het algemene doel) blijft ongewijzigd staan, ook met een vorm die deze versie niet kent: een migratie
+  // van een optioneel veld valideert om te tonen, nooit om op te schonen. Het tonen toetst de vorm
+  // (engine/skillGoal.ts#isGeneralGoal) en verbergt wat niet klopt.
   return { ...raw } as unknown as SkillGoal;
 }
 
