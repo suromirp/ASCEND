@@ -213,7 +213,7 @@ export function SwapSheet({ ex, workout, strength, program, onPick, onClose }: {
         const prefer = swapPreference({ on: strength.mountainMuscles, goals: trainingGoals, milestones: goalMilestones, logs: sessionLogs, today: todayISO(), program });
         const groups = swapGroups(exerciseOf(ex), strength.profile, workout.map((e) => e.exerciseId), 8, prefer);
         if (groups.same.length + groups.other.length > 0) return <SwapList groups={groups} reasonOf={(e) => swapReason(e, prefer)} onPick={(id) => { onPick(id); close(); }} />;
-        return <p className="py-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze oefening niet goed genoeg om een ruil voor te stellen.</p>;
+        return <p className="py-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze oefening niet goed genoeg om iets met dezelfde spieren voor te stellen.</p>;
       }}
     </ForgeSheet>
   );
@@ -277,12 +277,12 @@ export function WorkoutMenuSheet({ name, readOnly, preview, paused, hasGuide, la
           )}
           <MenuRow
             title="Een oefening per scherm"
-            sub="Veeg opzij naar de volgende oefening. Uit zet ze onder elkaar."
+            sub="Opzij vegen van oefening naar oefening. Uit zet ze onder elkaar."
             right={<Toggle checked={layoutPaged} onChange={onLayout} label="Een oefening per scherm" />}
           />
           {hasGuide && <MenuRow title="Uitleg bij deze training" onClick={() => { close(); onGuide(); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />}
           {!readOnly && (
-            <MenuRow icon="sluiten" title="Training verwijderen" sub="De sets gaan weg. De training blijft gepland." danger onClick={() => { close(); onDiscard(); }} />
+            <MenuRow icon="sluiten" title="Training verwijderen" sub="De sets van deze training gaan weg; de training blijft gepland." danger onClick={() => { close(); onDiscard(); }} />
           )}
         </div>
       )}

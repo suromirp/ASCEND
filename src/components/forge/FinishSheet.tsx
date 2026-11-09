@@ -75,9 +75,9 @@ export function FinishSheet({
     try {
       const ok = await withTimeout(onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn }), SAVE_LIMIT_MS);
       if (ok === true) return;
-      setOutcome('Deze training staat al in je logboek. Niets dubbel opgeslagen.');
+      setOutcome('Deze training staat al in je logboek. Er is niets dubbel opgeslagen.');
     } catch (err) {
-      setOutcome(err instanceof TimeoutError ? 'Opslaan duurt langer dan normaal. Je sets blijven bewaard. Probeer het zo nog eens.' : 'Opslaan lukte niet. Je sets blijven bewaard. Probeer het zo nog eens.');
+      setOutcome(err instanceof TimeoutError ? 'Opslaan duurt langer dan normaal. Je sets blijven bewaard; probeer het zo nog eens.' : 'Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.');
     }
     busy.current = false;
     setSaving(false);
@@ -92,7 +92,7 @@ export function FinishSheet({
       {(close) => (
         <div className="flex flex-col gap-4">
           {!readOnly && !anyTicked && (
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>Nog geen set afgevinkt. Dan wordt alleen de training afgevinkt, zonder sets.</p>
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>Je hebt nog geen set afgevinkt. Dan wordt alleen de training afgevinkt, zonder sets.</p>
           )}
           {!readOnly && anyTicked && dur.clamped && (
             <p className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>De klok zegt {dur.clockSaid}. Klopt dat niet, dan staat hier je gewone duur.</p>

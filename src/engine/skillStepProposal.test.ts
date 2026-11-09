@@ -52,7 +52,7 @@ describe('het voorstel per ladder', () => {
     const [p] = proposals([PUSH], passedPushUp);
     expect(p).toMatchObject({ kind: 'harder', ladderId: 'push-up', fromExerciseId: 'push-up', toExerciseId: 'decline-push-up', targets: [{ templateId: 'tpl_push', slot: 'p1' }] });
     expect(p.id).toBe(stepProposalId('push-up', 'push-up', 'decline-push-up'));
-    expect(stepProposalText(p)).toEqual({ fact: 'Je toets op Push-Up is gehaald. Volgende stap: Decline Push-Up.', question: 'Zet je plan op Decline Push-Up?', where: 'In Duwen.', keeps: 'Sets en herhalingen blijven.', always: 'Eerst een voorstel, pas na Akkoord verandert er iets.' });
+    expect(stepProposalText(p)).toEqual({ fact: 'Je toets op Push-Up is gehaald. Volgende stap: Decline Push-Up.', question: 'Zet je plan op Decline Push-Up?', where: 'In Duwen.', keeps: 'Sets en herhalingen blijven.' });
   });
 
   it('drie voorbije trainingen onder de onderkant: de lichtere stap', () => {

@@ -202,7 +202,7 @@ function MachineWeightsForm({
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Gewichten die je op dit toestel in {profile.name} gebruikte. Minder en Meer springen van stand naar stand.
+        Dit zijn de gewichten die je op dit toestel in {profile.name} gebruikte. Minder en Meer springen van stand naar stand.
       </p>
       {shown.length > 0 ? (
         <div className="flex flex-wrap gap-2" role="group" aria-label={`Standen van ${exerciseName}, tik om er een weg te halen`}>
@@ -224,7 +224,7 @@ function MachineWeightsForm({
         </div>
       ) : (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Nog geen standen. Tik tijdens een training het getal op het blok, dan onthoudt Forge het.
+          Nog geen standen. Tik tijdens een training het getal dat op het blok staat; Forge onthoudt het.
         </p>
       )}
       <div className="flex items-end gap-2">
@@ -342,7 +342,7 @@ function MachineWeightsForm({
                     {offStep && endKg !== undefined && stepKg !== undefined && (
                       <div className="flex flex-col items-start gap-1">
                         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                          {kgText(endKg)} ligt niet op een stap van {kgText(stepKg)}. Het hoogste is {kgText(top)}. Voeg {kgText(endKg)} toe als het blok daar eindigt.
+                          {kgText(endKg)} ligt niet op een stap van {kgText(stepKg)}; het hoogste is {kgText(top)}. Voeg {kgText(endKg)} toe als het blok daar eindigt.
                         </p>
                         {d.unit === 'kg' && !loose.includes(endKg) && <TextButton onClick={() => addExtra(endKg)}>{kgText(endKg)} toevoegen</TextButton>}
                       </div>

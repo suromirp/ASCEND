@@ -41,4 +41,4 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 
 ## Lees verder
 - `docs/architectuur/planning.md`
-- `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`, `docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md`, `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`, `docs/beslissingen/2026-11-09-zonder-sportschool.md`, `docs/beslissingen/2026-11-09-planner-rond-vakantie.md`, `docs/beslissingen/2026-11-09-planner-vakantie-lange-duurloop.md`, `docs/onderzoek/Planning op een lijn.md`
+- `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`, `docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md`, `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`, `docs/beslissingen/2026-11-09-zonder-sportschool.md`, `docs/beslissingen/2026-11-09-planner-rond-vakantie.md`, `docs/beslissingen/2026-11-09-planner-vakantie-lange-duurloop.md`, `docs/beslissingen/2026-11-09-planner-vakantie-beenkracht-voorrang.md`, `docs/onderzoek/Planning op een lijn.md`
