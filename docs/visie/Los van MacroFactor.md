@@ -35,3 +35,4 @@ Een voorstel aan de eigenaar, met Akkoord: de laatste export van Workouts inleze
 - 9 november 2026: gewicht uit Health Connect werkt (19 wegingen binnen na opnieuw aanzetten); de automatische ronde en de melding zijn nog open (Inbox). Forge is leidend voor kracht. Nog niet zover.
 - 9 november 2026, later: doel bijgesteld door de eigenaar: alleen MacroFactor Workouts overbodig maken, de voedingsapp blijft.
 - 9 november 2026, later: de maatstaf is Forge tegen je eigen trainingen (voorspelling, bijsturen, sterker, veilig), niet tegen MacroFactor; het blok "Hoe goed kent Forge je" wordt gebouwd.
+- 9 november 2026, later: de functie is gebouwd (`engine/forgeCalibration.ts`, blok op de Forge-pagina). Logs van voor die dag dragen niet wat Forge vroeg, dus de maat begint te tellen vanaf de eerste trainingen in Forge erna; vier weken daarna is er een eerlijke eerste stand.

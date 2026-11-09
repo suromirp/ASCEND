@@ -26,6 +26,7 @@ import { Card, Eyebrow, InfoButton, PageHeader, PrimaryButton, SecondaryButton, 
 import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { jumpRoute } from '../components/settings/jump';
 import { ExerciseRow } from '../components/forge/ExerciseRow';
+import { ForgeKnowsYou } from '../components/forge/ForgeKnowsYou';
 import { ExerciseHistorySheet } from '../components/forge/ExerciseHistorySheet';
 import { ForgeFilters } from '../components/forge/ForgeFilters';
 import { loadBodyKg } from '../engine/weightTrend';
@@ -218,6 +219,7 @@ export function ForgePage() {
             )}
           </Card>
 
+          {choices.knowsYou && <ForgeKnowsYou logs={sessionLogs} today={today} bodyKg={bodyKg} estimateUpTo={choices.estimateUpTo} />}
           {choices.showComparison && <ComparisonSection rows={model.rows} from={choices.checkFrom} />}
           <TextButton onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="self-start text-left" icon="verder">
             Instellingen van Forge: sportschool, opwarmen en meer

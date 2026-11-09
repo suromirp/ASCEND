@@ -787,20 +787,25 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
         ...(typeof r.clean === 'boolean' ? { clean: r.clean } : {}),
         kind: r.kind,
         ...(typeof r.doneAt === 'number' && Number.isFinite(r.doneAt) ? { at: new Date(r.doneAt).toISOString() } : {}),
-        ...(r.kind === 'work' && r.rir !== undefined && r.rirAssumed && !ex.hold
-          ? {
-              rirAssumed: true,
-              // Wat Forge vroeg, voor "Afvinken telt als het doel" (engine/assumedSets.ts).
-              ...(r.forgeReps !== undefined && r.forgeReps > 0 && r.target.timedSec === undefined ? { repsAsked: r.forgeReps } : {}),
-              ...(r.target.weightKg !== undefined ? { weightKgAsked: r.target.weightKg } : {}),
-              // Wat Forge na een bijstelling in de rij zette, alleen als het van het voorschrift afwijkt.
-              ...(typeof r.forgeKg === 'number' && Number.isFinite(r.forgeKg) && r.forgeKg !== r.target.weightKg ? { forgeKg: r.forgeKg } : {}),
-            }
-          : {}),
+        ...(r.kind === 'work' && r.rir !== undefined && r.rirAssumed && !ex.hold ? { rirAssumed: true } : {}),
+        // Wat Forge vroeg, voor "Afvinken telt als het doel" (engine/assumedSets.ts) en voor "Hoe goed kent
+        // Forge je" (engine/forgeCalibration.ts): bij elke werkset, niet alleen bij een afgevinkte.
+        ...(r.kind === 'work' && !ex.hold ? askedFields(r) : {}),
       }));
     if (sets.length > 0) out.push({ exerciseId: ex.exerciseId, exerciseName: ex.name, sets });
   }
   return out.length > 0 ? out : undefined;
+}
+
+// Wat Forge bij deze set vroeg: herhalingen, gewicht, het gewicht na een bijstelling (alleen als dat van het
+// voorschrift afwijkt) en de RIR van het doel.
+function askedFields(r: WorkoutRow): Partial<SetLog> {
+  return {
+    ...(r.forgeReps !== undefined && r.forgeReps > 0 && r.target.timedSec === undefined ? { repsAsked: r.forgeReps } : {}),
+    ...(r.target.weightKg !== undefined ? { weightKgAsked: r.target.weightKg } : {}),
+    ...(typeof r.forgeKg === 'number' && Number.isFinite(r.forgeKg) && r.forgeKg !== r.target.weightKg ? { forgeKg: r.forgeKg } : {}),
+    ...(r.target.rir !== undefined && !r.target.failure ? { rirAsked: r.target.rir } : {}),
+  };
 }
 
 // De seconden van een gedane houding: wat je invulde als dat een geldig getal boven 0 is, anders het voorschrift.

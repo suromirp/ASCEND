@@ -240,6 +240,9 @@ export interface StrengthSettings {
   calibration?: boolean;
   // De dag van de laatste Akkoord op een ijkset (yyyy-mm-dd); daarna vier weken niets.
   calibratedAt?: string;
+  // "Hoe goed kent Forge je" (docs/beslissingen/2026-11-09-hoe-goed-kent-forge-je.md): het blok op de Forge-pagina met
+  // hoe goed de voorspelling klopte, hoe vaak je bijstuurde en of je sterker wordt. Absent = on. Alleen tekst.
+  knowsYou?: boolean;
   // The block "Geschatte 1RM" with a trend on the Forge page.
   showOneRm?: boolean;
   // The choice between the 1RM and the working weight on the cards of Forge, one
@@ -335,6 +338,7 @@ export interface ResolvedStrengthSettings {
   stepProposal: boolean;
   calibration: boolean;
   calibratedAt?: string;
+  knowsYou: boolean;
   showOneRm: boolean;
   oneRmView: OneRmView;
   showMacroFactorOneRm: boolean;
@@ -561,6 +565,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.askBand === 'boolean') out.askBand = raw.askBand;
   if (typeof raw.stepProposal === 'boolean') out.stepProposal = raw.stepProposal;
   if (typeof raw.calibration === 'boolean') out.calibration = raw.calibration;
+  if (typeof raw.knowsYou === 'boolean') out.knowsYou = raw.knowsYou;
   if (typeof raw.calibratedAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.calibratedAt)) out.calibratedAt = raw.calibratedAt;
   if (typeof raw.showOneRm === 'boolean') out.showOneRm = raw.showOneRm;
   const oneRmView = ONE_RM_VIEWS.find((v) => v === raw.oneRmView);
@@ -634,6 +639,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     stepProposal: s.stepProposal ?? true,
     calibration: s.calibration ?? true,
     ...(s.calibratedAt ? { calibratedAt: s.calibratedAt } : {}),
+    knowsYou: s.knowsYou ?? true,
     showOneRm: s.showOneRm ?? true,
     oneRmView: s.oneRmView ?? 'one_rm',
     showMacroFactorOneRm: s.showMacroFactorOneRm ?? true,
