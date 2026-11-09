@@ -39,6 +39,7 @@ import { formatNumberNL } from '../utils/number';
 import { WeekLoadCards } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
+import { dragHandlesShown } from '../components/weekDragShown';
 import { decideMove, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
 import { SWAP_STALE } from '../storage/weekSwap';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
@@ -203,6 +204,9 @@ export function WeekPage() {
 
   // Slepen (components/useWeekDrag.ts): niet in het jaaroverzicht en niet terwijl er een blad of scherm open is.
   const dragOn = settings.dragWeek !== false && !monthView && !selected && !openLog && !logging && !pendingProposal && !adHocOpen && !adHocTemplate && !reviewOpen;
+  // De grepen blijven staan terwijl een blad open is of sluit: alleen het oppakken is dan uit
+  // (`enabled`). Zo wisselen ze niet kort naar lege cirkels bij het sluiten (components/weekDragShown.ts).
+  const dragHandles = dragHandlesShown({ setting: settings.dragWeek !== false, monthView });
   const weekDrag = useWeekDrag({
     weekStart,
     enabled: dragOn,
@@ -344,7 +348,7 @@ export function WeekPage() {
             concernNotes={concernNotes}
             pairNotes={pairNotes}
             weekDrag={weekDrag}
-            dragEnabled={dragOn}
+            dragEnabled={dragHandles}
           />
         </>
       )}

@@ -68,10 +68,14 @@ export function growKeyframes(from: Rect, to: Rect, phase: GrowPhase = 'open'): 
 
 // De dekking van het vlak: in de eerste 60 ms erbij (de tekst van de rij verdwijnt niet in een beeld) en
 // bij openen in de laatste 100 ms weer weg (het blad eronder is dan zichtbaar). Bij sluiten staat het
-// vlak er meteen en blijft tot het einde.
+// vlak er meteen en gaat in de laatste 60 ms weg: de rij eronder is dan weer te zien, dus er blijft geen
+// lege rechthoek op de rij staan terwijl het blad nog uit beeld loopt (de flits in Week, 9 november).
 export function growOpacity(durationMs: number, phase: GrowPhase = 'open'): { opacity: number; offset: number }[] {
   const fadeIn = Math.min(60 / durationMs, 0.5);
-  if (phase === 'close') return [{ opacity: 0, offset: 0 }, { opacity: 1, offset: fadeIn }, { opacity: 1, offset: 1 }];
+  if (phase === 'close') {
+    const fadeOutClose = Math.max(1 - 60 / durationMs, fadeIn);
+    return [{ opacity: 0, offset: 0 }, { opacity: 1, offset: fadeIn }, { opacity: 1, offset: fadeOutClose }, { opacity: 0, offset: 1 }];
+  }
   const fadeOut = Math.max(1 - 100 / durationMs, fadeIn);
   return [{ opacity: 0, offset: 0 }, { opacity: 1, offset: fadeIn }, { opacity: 1, offset: fadeOut }, { opacity: 0, offset: 1 }];
 }
