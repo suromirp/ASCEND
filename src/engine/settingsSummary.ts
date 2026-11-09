@@ -19,6 +19,7 @@ import type { HealthConnectErrorKind } from '../models/healthConnect';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
 import { resolveStravaTextParts } from './activityText';
+import { resolveRouteStyle } from './routeTarget';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { countDifferences } from './settingsDiff';
@@ -459,7 +460,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bundel-signalen':
       return { value: `${signalsOnCount(s)} van ${SIGNAL_KEYS.length} aan` };
     case 'bundel-weer':
-      return { value: `${countOn([o.weatherLine, o.bestMoment, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, o.moonLine, o.weatherSwap, o.clothingAdvice])} van 9 aan` };
+      return { value: `${countOn([o.weatherLine, o.bestMoment, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, s.routeProposal !== false, o.moonLine, o.weatherSwap, o.clothingAdvice])} van 10 aan` };
     case 'bundel-run-detail': {
       const d = resolveRunInsight(s.runInsight).detail;
       return d.show ? { value: 'Aan', sub: `Loopvorm: ${formSwitchesLine(d.form)}` } : { value: 'Uit', dim: true };
@@ -917,6 +918,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.hillsNearby };
     case 'maanstand':
       return { checked: o.moonLine };
+    case 'route-voorstel':
+      return { checked: s.routeProposal !== false };
+    case 'route-soort':
+      return { value: choiceShort('routeSoort', resolveRouteStyle(s.routeStyle)) };
     case 'weerruil':
       return { checked: o.weatherSwap };
     case 'beste-moment':

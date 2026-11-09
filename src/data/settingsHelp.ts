@@ -827,6 +827,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Ongeveer', text: 'de browser geeft een schatting, geen exact getal.' },
     ],
   },
+  routeVoorstel: {
+    title: 'Route voorstellen',
+    lead: 'Bij een looptraining stelt ASCEND twee lussen voor die passen bij de afstand en de hoogtemeters. Het advies is aan, met Avontuurlijk bovenaan.',
+    points: [
+      { head: 'Simpel', text: 'dezelfde helling op en af tot de hoogtemeters er zijn. Bij een vlakke training heen en terug over hetzelfde pad.' },
+      { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
+      { head: 'Naar je horloge', text: 'je downloadt een GPX-bestand en opent dat als koers in de app van je horloge.' },
+      { head: 'Wat de deur uit gaat', text: 'je plek, afgerond op ongeveer een kilometer, naar de routeplanner BRouter en naar OpenStreetMap. Geen naam, geen adres. De route wordt niet bewaard.' },
+    ],
+  },
   stravaTekst: {
     title: 'Tekst voor Strava',
     lead: 'ASCEND zet een titel klaar die zegt wat voor training het was. Je plakt hem zelf in Strava.',
@@ -1488,7 +1498,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   bundelWeer: {
     title: 'Weer en kleding',
-    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, waarschuwingen voor onweer, storm, hitte en lawines, regen in het komende uur, een helling of trap in de buurt, de maanstand bij een avondtocht, kleding, en een regel bij hitte of slechte lucht.',
+    lead: 'Wat het weer bij je training laat zien: het weer zelf, het beste moment, waarschuwingen voor onweer, storm, hitte en lawines, regen in het komende uur, een helling of trap in de buurt, een route voor je loop, de maanstand bij een avondtocht, kleding, en een regel bij hitte of slechte lucht.',
     points: [
       { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
       { head: 'Je plaats', text: 'het weer volgt de plaats die je bij Plaats koos.' },

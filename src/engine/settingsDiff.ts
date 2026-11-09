@@ -311,6 +311,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('lawinegevaar', 'Lawinegevaar', 'vandaag', 'avalancheBulletin'),
   overviewFlag('regen-uur', 'Regen in het komende uur', 'rainSoon'),
   overviewFlag('heuvels-buurt', 'Heuvels en trappen in de buurt', 'hillsNearby'),
+  flag('route-voorstel', 'Route voorstellen', 'vandaag', 'routeProposal'),
+  choice('route-soort', 'Welke lus eerst', 'vandaag', 'routeStyle', 'adventure', 'routeSoort'),
   overviewFlag('maanstand', 'Maanstand bij een avondtocht', 'moonLine'),
   overviewFlag('kledingadvies', 'Kledingadvies', 'clothingAdvice'),
   overviewFlag('citaten', 'Citaat', 'completionMoment'),

@@ -156,7 +156,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd'),
   // Vandaag en meldingen
   ...inSheet('kaarten', 'boven-missie', 'ochtendcheck', 'benen-na-test', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'dagcitaat', 'geluid'),
-  ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weeralarm', 'lawinegevaar', 'regen-uur', 'heuvels-buurt', 'maanstand', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
+  ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weeralarm', 'lawinegevaar', 'regen-uur', 'heuvels-buurt', 'route-voorstel', 'route-soort', 'maanstand', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
   ...inSheet('bundel-run-detail', 'run-detail', 'run-detail-patronen', 'run-detail-advies', 'loopvorm-cadans', 'loopvorm-grondcontact', 'loopvorm-staplengte', 'loopvorm-oscillatie', 'loopvorm-balans'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),
@@ -240,6 +240,7 @@ const B = {
   restAlert: { ok: (s) => strength(s).restAlert !== 'off', reason: 'Zichtbaar zodra de rusttimer een signaal geeft', parent: 'forge-signaal' },
   mf: { ok: (_s, c) => c.macroFactorExport, reason: 'Zichtbaar zodra je een MacroFactor-export hebt ingelezen', parent: 'macrofactor' },
   garmin: { ok: (_s, c) => c.garmin, reason: 'Zichtbaar zodra Garmin is gekoppeld', parent: 'garmin' },
+  route: { ok: (s) => s.routeProposal !== false, reason: 'Zichtbaar zodra Route voorstellen aan staat', parent: 'route-voorstel' },
   strava: { ok: (s) => s.stravaText !== false, reason: 'Zichtbaar zodra Tekst voor Strava aan staat', parent: 'strava-tekst' },
   hc: { ok: (_s, c) => c.healthConnect, reason: 'Zichtbaar zodra Health Connect aan staat', parent: 'health-connect' },
   // Slaap, rusthartslag, HRV en trainingen komen van Garmin of uit Health Connect: de keuzes gelden voor beide.
@@ -319,6 +320,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.mf], 'macrofactor-leidend', 'macrofactor-gewicht'),
   ...rule([B.hc], 'health-connect-gewicht'),
   ...rule([B.strava], 'strava-tekst-inhoud'),
+  ...rule([B.route], 'route-soort'),
   // Gegevens en back-up
   ...rule([B.folder], 'backupmap'),
   ...rule([B.liveUpdate], 'auto-bijwerken'),
