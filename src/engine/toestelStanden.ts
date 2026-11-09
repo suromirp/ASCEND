@@ -12,7 +12,10 @@
 // dan gaat het in één keer om naar standen met `only`.
 
 import type { Exercise } from '../models/exercise';
-import { addOnsFor, cleanMachineList, cleanWeightRanges, hasStack, rangeWeights, splitAddOn } from './machineWeights';
+import { addOnsFor, cleanMachineList, cleanWeightRanges, countsForProfile, hasStack, rangeWeights, splitAddOn } from './machineWeights';
+import { exerciseKey } from './strengthHistory';
+import type { SessionLog } from '../models/training';
+import { formatNumberNL } from '../utils/number';
 import { looksLikePounds } from './strengthWeights';
 import { STAND_LIMITS, cleanStandList, resolveStrengthSettings, type GymProfile, type MachineStandList, type StrengthSettings } from './strengthSettings';
 import { r2 } from '../utils/round';
@@ -179,3 +182,64 @@ export function withStandForgotten(raw: StrengthSettings | undefined, exercise: 
   const next = forgetStand(resolveStrengthSettings(raw).profile, exercise, weightKg);
   return next ? withActive(raw, next) : undefined;
 }
+
+
+// --- uit je logs, voor het inlezen ---------------------------------------------------------------
+
+// De gewichten die je in deze sportschool op dit toestel gebruikte, uit je logs (werk- en opwarmsets).
+// Logs van een andere sportschool tellen niet, logs zonder sportschool tellen mee. Alleen lezen: een
+// log wordt hier nooit veranderd. Leeg als het geen toestel met blok is.
+export function usedKgFromLogs(logs: SessionLog[], exercise: Exercise | undefined, profileId: string): number[] {
+  if (!exercise || !hasStack(exercise)) return [];
+  const out: number[] = [];
+  for (const log of logs) {
+    if (!countsForProfile(log.gymProfileId, profileId)) continue;
+    for (const entry of log.strengthData ?? []) {
+      if (exerciseKey(entry.exerciseId, entry.exerciseName).key !== exercise.id) continue;
+      for (const set of entry.sets) if (typeof set.weightKg === 'number' && set.weightKg > 0) out.push(set.weightKg);
+    }
+  }
+  return out;
+}
+
+// --- het blad: standen zetten en wissen ---------------------------------------------------------
+
+// De losse standen bij elkaar: wat er al is plus wat erbij komt (een stand, een lijst of een bereik),
+// oplopend en zonder dubbele op 0,01. `tooMany`: meer dan 40, dan wordt er niets samengevoegd.
+export function mergeStands(now: number[], extra: number[]): { kg: number[]; tooMany: boolean } {
+  const kg = [...new Set([...now, ...extra].filter((w) => Number.isFinite(w) && w >= STAND_LIMITS.minKg && w <= STAND_LIMITS.maxKg).map(r2))].sort((a, b) => a - b);
+  return kg.length > STAND_LIMITS.maxCount ? { kg: now, tooMany: true } : { kg, tooMany: false };
+}
+
+// De standen van één toestel gezet in het actieve profiel (het blad bij Opslaan). Een oude lijst of een
+// oud bereik van dat toestel gaat daarbij weg; de sleutel blijft, ook met een lege lijst. Undefined als
+// het geen toestel met blok is of als het er meer dan 40 zijn.
+export function withStandsSet(raw: StrengthSettings | undefined, exercise: Exercise | undefined, kg: number[], only: boolean): StrengthSettings | undefined {
+  if (!exercise || !hasStack(exercise)) return undefined;
+  const merged = mergeStands([], kg);
+  if (merged.tooMany) return undefined;
+  const profile = resolveStrengthSettings(raw).profile;
+  return withActive(raw, withStandList(profile, exercise.id, { kg: merged.kg, only: only && merged.kg.length > 0 }));
+}
+
+// Standen wissen: het toestel begint weer leeg, maar de sleutel blijft zodat het niet opnieuw uit je logs
+// wordt ingelezen. Wat je trainde blijft in je logboek staan.
+export const withStandsCleared = (raw: StrengthSettings | undefined, exercise: Exercise | undefined): StrengthSettings | undefined => withStandsSet(raw, exercise, [], false);
+
+// --- woorden ------------------------------------------------------------------------------------
+
+const kgNl = (n: number) => formatNumberNL(n, 2);
+
+// De regel na een nieuwe stand.
+export const standNoteText = (kg: number, exerciseName: string): string => `Stand ${kgNl(kg)} kg onthouden voor ${exerciseName}.`;
+export const STAND_FIRST_TEXT = 'Tik het getal dat op het blok staat. Forge onthoudt het.';
+export const STAND_FAILED_TEXT = 'Opslaan lukte niet. De standen staan nog zoals ze waren.';
+
+// De waarde in de rij van een toestel: "7, 14, 23, 32", bij meer dan zes "7 tot 109 kg", met ", alleen deze" erachter.
+export function standsSummary(kg: number[], only: boolean): string {
+  const text = kg.length <= 6 ? kg.map(kgNl).join(', ') : `${kgNl(kg[0])} tot ${kgNl(kg[kg.length - 1])} kg`;
+  return only ? `${text}, alleen deze` : text;
+}
+
+// Het aantal standen van een toestel in een profiel, 0 als er geen zijn.
+export const standCount = (profile: GymProfile, exercise: Exercise | undefined): number => standsFor(profile, exercise)?.kg.length ?? 0;

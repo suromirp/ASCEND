@@ -34,6 +34,7 @@ import {
   makeSnap,
   nextField,
   repsBounds,
+  standJump,
   stepNumber,
   takeTarget,
   weightBounds,
@@ -102,6 +103,7 @@ import { DRAFT_VERSION, initialForgeLog, poundLine, type WorkoutDraft } from './
 import { forgeLogInput } from './forgeFinishLog';
 import { useForgeDraft } from './useForgeDraft';
 import { useForgeClock } from './useForgeClock';
+import { useForgeStands } from './useForgeStands';
 import { REST_DONE_LINGER_MS, useRestAlert } from './useRestAlert';
 import { restNameAfter, useForgePager, useLater } from './useForgePager';
 import { RestBar } from './ForgeTimers';
@@ -163,6 +165,8 @@ function ForgeWorkoutInner({
   const readOnly = strengthExternal || preview;
   const strength = useMemo(() => resolveStrengthSettings(settings.strengthModel), [settings.strengthModel]);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect);
+  // De standen van een toestel (engine/toestelStanden.ts): onthouden bij het afvinken, met Terugdraaien.
+  const stands = useForgeStands({ remember: strength.learnStands, readOnly, profile: strength.profile, logs: sessionLogs });
   // "Forge rekent mee" (engine/forgeReckon.ts): dezelfde rekening als het bijsturen.
   const reckonCtx = { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights, on: strength.enabled && strength.reckon && !readOnly };
   // A program from MacroFactor gives the exercises of the week of this training, and an exercise you added after a
@@ -322,6 +326,13 @@ function ForgeWorkoutInner({
     const target = layout.current.dockH > 0 ? bottom - r.height : top + Math.max(0, (bottom - top - r.height) / 2);
     root.scrollTo({ top: root.scrollTop + r.top - target, behavior: reducedMotion() ? 'auto' : 'smooth' });
   }
+  // Een toestel dat je opent (een veld of het menu): de eerste keer neemt Forge de gewichten uit je logs over.
+  const openSlot = menuFor ?? dock?.slot;
+  useEffect(() => {
+    const ex = openSlot ? workout.find((e) => e.slot === openSlot) : undefined;
+    if (ex) stands.onOpen(ex.exerciseId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openSlot]);
   const dockKey = dock ? `${dock.slot}:${dock.rowId}` : '';
   const dockRowId = dock?.rowId;
   useEffect(() => {
@@ -471,6 +482,11 @@ function ForgeWorkoutInner({
       return proposal ? { ...others, [slot]: proposal } : others;
     });
     setHeavyTip((l) => (slot in l ? Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot)) : l));
+    // Een afgevinkte set op een toestel met blok: het gewicht wordt een stand (alleen onthouden, nooit een vraag).
+    if (ticked && tickedEx) {
+      const doneRow = tickedEx.rows.find((r) => r.id === rowId);
+      stands.onTick(tickedEx, doneRow?.weightKg ?? doneRow?.target.weightKg);
+    }
     // Het verloop: een set onder het bereik, en een set waarvoor geen gewicht van het toestel past.
     if (ticked && tickedEx && !readOnly) {
       const tickedRow = tickedEx.rows.find((r) => r.id === rowId);
@@ -529,6 +545,12 @@ function ForgeWorkoutInner({
     setQuickRir(null);
     const result = tickAllRows(workout, slot);
     setWorkout(result.workout);
+    {
+      const before = workout.find((e) => e.slot === slot);
+      const after = result.workout.find((e) => e.slot === slot);
+      const weights = [...new Set((after?.rows ?? []).filter((r) => r.done && before?.rows.find((o) => o.id === r.id)?.done === false).map((r) => r.weightKg ?? r.target.weightKg))];
+      if (after) for (const w of weights) stands.onTick(after, w);
+    }
     const after = result.workout.find((e) => e.slot === slot);
     if (after && exerciseComplete(after)) {
       if (dock?.slot === slot) { dockClosing.current = false; setDock(null); }
@@ -592,6 +614,15 @@ function ForgeWorkoutInner({
     const isWeight = d.field === 'weightKg';
     const current = isWeight ? (row.weightKg ?? row.target.weightKg) : (row.reps ?? 0);
     const step = isWeight ? weightStepFor(exerciseOf(ex), profileFor(strength.profile, ex.dumbbellTotal), current) : REPS_STEP;
+    // Een toestel met standen: Minder en Meer springen naar de vorige en volgende stand.
+    if (isWeight && !isAssisted(ex)) {
+      const jump = standJump(exerciseOf(ex), profileFor(strength.profile, ex.dumbbellTotal), current ?? 0, direction);
+      if (jump !== undefined) {
+        const bounded = Math.min(weightBounds(exerciseOf(ex)).max, Math.max(weightBounds(exerciseOf(ex)).min, jump));
+        changeValue(bounded);
+        return bounded;
+      }
+    }
     // Hulp van een toestel: het blok werkt met de hoeveelheid hulp (+ is meer hulp), opgeslagen als negatief.
     if (isWeight && isAssisted(ex)) {
       const help = stepNumber(Math.abs(current ?? 0), direction, step, 0, weightBounds(undefined).max);
@@ -664,9 +695,9 @@ function ForgeWorkoutInner({
     saveStrength(withMachineSetup(settings.strengthModel, ex.exerciseId, { ranges: [p.range] }));
   }
 
-  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir, savePounds });
+  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir, savePounds, standUndo: stands.undo });
   useEffect(() => {
-    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir, savePounds };
+    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter, takeBack, addSetLogged, removeSetLogged, undoRemove, chooseQuickRir, savePounds, standUndo: stands.undo };
   });
   const actions = useMemo<BlockActions>(
     () => ({
@@ -691,6 +722,7 @@ function ForgeWorkoutInner({
       fill: (slot) => setFillFor(slot),
       keepFit: (slot) => setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
       spotter: () => setSpotterInfo(true),
+      standUndo: () => latest.current.standUndo(),
     }),
     [],
   );
@@ -704,6 +736,7 @@ function ForgeWorkoutInner({
     const state = planStateBefore(ctx, workout, slot);
     const to = exerciseId ? exerciseById(exerciseId) : undefined;
     clearHints(slot);
+    stands.dismiss(slot);
     const swapped = planExercise(prescription, ctx, state, to);
     if (!readOnly) {
       const found = spotterEvents([swapped], Date.now(), () => makeId('fe'));
@@ -731,6 +764,15 @@ function ForgeWorkoutInner({
   const dockEx = dock ? workout.find((e) => e.slot === dock.slot) : undefined;
   const dockIndex = dockEx && dock ? dockEx.rows.findIndex((r) => r.id === dock.rowId) : -1;
   const dockRow = dockEx && dockIndex >= 0 ? dockEx.rows[dockIndex] : undefined;
+  // Op een toestel met standen: waar Minder en Meer heen springen, klein onder de toets.
+  const dockStepHints = (() => {
+    if (!dock || dock.field !== 'weightKg' || !dockEx || !dockRow || isAssisted(dockEx)) return undefined;
+    const profile = profileFor(strength.profile, dockEx.dumbbellTotal);
+    const now = dockRow.weightKg ?? dockRow.target.weightKg ?? 0;
+    const down = standJump(exerciseOf(dockEx), profile, now, -1);
+    const up = standJump(exerciseOf(dockEx), profile, now, 1);
+    return down === undefined || up === undefined ? undefined : { down, up };
+  })();
   const rowMenuEx = rowMenu ? workout.find((e) => e.slot === rowMenu.slot) : undefined;
   const rowMenuRow = rowMenuEx?.rows.find((r) => r.id === rowMenu?.rowId);
   const rirRow = rirFor ? workout.find((e) => e.slot === rirFor.slot)?.rows.find((r) => r.id === rirFor.rowId) : undefined;
@@ -765,6 +807,7 @@ function ForgeWorkoutInner({
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
               quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId, strength.enabled && strength.assumedCounts) ? quickRir.rowId : undefined}
               capText={capRemoved > 0 ? capRemovedLine(capRemoved) : undefined}
+              standLine={stands.lineFor(ex, exerciseComplete(ex))}
               poundText={!readOnly && !poundKept[ex.slot] && ex.rows.some((r) => r.done) ? poundLine(ex, strength.profile) : undefined}
               act={actions}
             />
@@ -845,6 +888,7 @@ function ForgeWorkoutInner({
           }}
           onClosing={onDockClosing}
           onHeight={onDockHeight}
+          stepHints={dockStepHints}
           plate={dockPlates?.[dockIndex]}
           plateOn={platesOn}
           onTogglePlates={() => setPlatesOn((v) => !v)}

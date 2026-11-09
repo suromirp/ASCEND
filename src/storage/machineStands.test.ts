@@ -5,7 +5,7 @@ import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { buildImportPreview } from './backupPreview';
 import { applyImportPlan, createImportPlan, createPreImportSnapshot } from './backupApply';
 import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
-import { forgetStandNow, rememberStand, seedStandsNow, type StandIo } from './machineStands';
+import { clearStandsNow, forgetStandNow, rememberStand, saveStandsNow, seedStandsNow, type StandIo } from './machineStands';
 import { exerciseById } from '../data/exercises';
 import { DEFAULT_PROFILE, resolveStrengthSettings, type GymProfile, type StrengthSettings } from '../engine/strengthSettings';
 import { ownWeightsFor } from '../engine/machineWeights';
@@ -128,5 +128,49 @@ describe('standen in de back-up', () => {
     expect(profile.stackStepKg).toBe(2.5);
     expect(ownWeightsFor(profile, machine)).toEqual([4.5, 9]);
     expect(ownWeightsFor(profile, exerciseById('cable-fly'))).toEqual([4.5, 9.1, 13.6]);
+  });
+});
+
+describe('het blad: opslaan en wissen', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+    await SettingsRepo.set({ strengthModel: { activeProfileId: 'g', profiles: [gym()] } });
+  });
+
+  it('slaat de standen op en geeft de nieuwe instellingen mee', async () => {
+    const out = await saveStandsNow({ exercise: machine, kg: [23, 7, 14], only: true });
+    expect(out.kind).toBe('saved');
+    expect(await standsNow()).toEqual({ kg: [7, 14, 23], only: true });
+  });
+
+  it('Standen wissen laat een lege lijst, en inlezen uit je logs komt niet terug', async () => {
+    await saveStandsNow({ exercise: machine, kg: [7, 14], only: false });
+    expect((await clearStandsNow({ exercise: machine })).kind).toBe('saved');
+    expect(await standsNow()).toEqual({ kg: [] });
+    expect(await seedStandsNow({ exercise: machine, remember: true, usedKg: [7, 77] })).toEqual({ kind: 'none', reason: 'known' });
+  });
+
+  it('meer dan 40 standen wordt niet opgeslagen', async () => {
+    const before = await stored();
+    expect(await saveStandsNow({ exercise: machine, kg: Array.from({ length: 41 }, (_, i) => i + 1), only: false })).toEqual({ kind: 'too_many' });
+    expect(await stored()).toEqual(before);
+  });
+
+  it('een mislukte schrijfactie, of een schrijfactie die blijft hangen, geeft een duidelijke uitkomst en laat alles zoals het was', async () => {
+    await saveStandsNow({ exercise: machine, kg: [7, 14], only: false });
+    const before = await stored();
+    const failing: StandIo = { read: stored, write: () => Promise.reject(new Error('schijf vol')) };
+    expect(await saveStandsNow({ exercise: machine, kg: [7], only: false }, failing)).toEqual({ kind: 'failed' });
+    expect(await clearStandsNow({ exercise: machine }, failing)).toEqual({ kind: 'failed' });
+    vi.useFakeTimers();
+    try {
+      const hanging: StandIo = { read: stored, write: () => new Promise(() => undefined) };
+      const pending = saveStandsNow({ exercise: machine, kg: [7], only: false }, hanging);
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(await pending).toEqual({ kind: 'failed' });
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(await stored()).toEqual(before);
   });
 });

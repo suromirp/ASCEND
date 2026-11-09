@@ -11,6 +11,8 @@ import {
   dockFieldKey,
   tapClosesDock,
   makeSnap,
+  nextStand,
+  standJump,
   plateClosest,
   plateShortText,
   exerciseComplete,
@@ -30,7 +32,7 @@ import {
   weightStepFor,
 } from './forgeInput';
 import { plateLoad, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
-import { DEFAULT_PROFILE } from './strengthSettings';
+import { DEFAULT_PROFILE, type GymProfile } from './strengthSettings';
 
 const row = (id: string, over: Partial<WorkoutRow> = {}): WorkoutRow => ({
   id,
@@ -466,5 +468,61 @@ describe('tapClosesDock: het cijferblok sluit alleen bij een tik buiten de velde
   });
   it('sluit niet zonder doel', () => {
     expect(tapClosesDock(null)).toBe(false);
+  });
+});
+
+describe('nextStand: Minder en Meer springen van stand naar stand', () => {
+  const blok = [7, 14, 23, 32];
+  it('een blok van 7, 14, 23, 32 springt van stand naar stand', () => {
+    expect(nextStand(blok, 14, 1, 2.5)).toBe(23);
+    expect(nextStand(blok, 23, 1, 2.5)).toBe(32);
+    expect(nextStand(blok, 23, -1, 2.5)).toBe(14);
+    expect(nextStand(blok, 14, -1, 2.5)).toBe(7);
+  });
+  it('vanaf een gewicht tussen twee standen gaat Meer naar de volgende en Minder naar de vorige', () => {
+    expect(nextStand(blok, 20, 1, 2.5)).toBe(23);
+    expect(nextStand(blok, 20, -1, 2.5)).toBe(14);
+  });
+  it('boven de hoogste stand telt Meer het laatste verschil op', () => {
+    expect(nextStand(blok, 32, 1, 2.5)).toBe(41);
+    expect(nextStand(blok, 41, 1, 2.5)).toBe(50);
+  });
+  it('onder de laagste stand gaat Minder af met het eerste verschil, nooit onder 0,25', () => {
+    expect(nextStand(blok, 7, -1, 2.5)).toBe(0.25);
+    expect(nextStand([10, 14], 10, -1, 2.5)).toBe(6);
+    expect(nextStand([10, 14], 6, -1, 2.5)).toBe(2);
+    expect(nextStand([10, 14], 2, -1, 2.5)).toBe(0.25);
+  });
+  it('één stand telt met de profielstap', () => {
+    expect(nextStand([20], 20, 1, 5)).toBe(25);
+    expect(nextStand([20], 20, -1, 5)).toBe(15);
+  });
+  it('zonder standen werkt het met de profielstap, en een gewicht van 0 of hulp blijft buiten bereik', () => {
+    expect(nextStand([], 20, 1, 2.5)).toBe(22.5);
+    expect(nextStand([], 1, -1, 2.5)).toBe(0);
+    expect(nextStand(blok, 0, -1, 2.5)).toBe(0);
+    expect(nextStand(blok, 0, 1, 2.5)).toBe(7);
+    expect(nextStand(blok, -10, 1, 2.5)).toBe(-10);
+  });
+  it('een verschil wordt nooit kleiner dan de helft van de profielstap', () => {
+    expect(nextStand([20, 20.5], 20.5, 1, 5)).toBe(23);
+  });
+});
+
+describe('standJump en makeSnap volgen de standen van het toestel', () => {
+  const machine = exerciseById('leg-extension')!;
+  const gym = (p: Partial<GymProfile> = {}): GymProfile => ({ ...DEFAULT_PROFILE, id: 'g', name: 'Proefzaal', stackStepKg: 2.5, ...p });
+  const met = gym({ exerciseStandsKg: { [machine.id]: { kg: [7, 14, 23, 32] } } });
+  it('standJump geeft de stand waar de toets heen gaat, en niets zonder standen', () => {
+    expect(standJump(machine, met, 20, 1)).toBe(23);
+    expect(standJump(machine, met, 20, -1)).toBe(14);
+    expect(standJump(machine, gym(), 20, 1)).toBeUndefined();
+    expect(standJump(machine, gym({ exerciseStandsKg: { [machine.id]: { kg: [] } } }), 20, 1)).toBeUndefined();
+    expect(standJump(exerciseById('back-squat'), met, 20, 1)).toBeUndefined();
+  });
+  it('makeSnap rondt op een stand, en op de stap zonder standen', () => {
+    expect(makeSnap(machine, met, undefined, 20)(20)).toBe(23);
+    expect(makeSnap(machine, met, undefined, 12)(12)).toBe(14);
+    expect(makeSnap(machine, gym(), undefined, 21)(21)).toBe(20);
   });
 });

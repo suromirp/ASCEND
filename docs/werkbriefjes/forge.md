@@ -11,7 +11,7 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 - `src/engine/forgeLog.ts#cleanForgeLog` het afgeleide verloop, naar het log pas bij Afronden
 - `src/engine/strengthModel.ts#learnFatigue` leert vermoeidheid per set uit eigen sets; `src/engine/assumedSets.ts#confirmedAssumed` "Afvinken telt als het doel" (bevestigd, drempels bij elkaar)
 - `src/engine/forgeReckon.ts#reckonWeight` rekent mee bij een getypt gewicht, met dezelfde regel als het voorschrift
-- `src/engine/spotter.ts#spotterSlot` minstens 1 over bij een stang zonder spotter; `src/engine/toestelStanden.ts#standAfterTick` de standen per toestel (inlezen, onthouden, Terugdraaien), `src/storage/machineStands.ts#rememberStand` schrijft ze alles of niets
+- `src/engine/spotter.ts#spotterSlot` minstens 1 over bij een stang zonder spotter; `src/engine/toestelStanden.ts#standAfterTick` de standen per toestel (inlezen, onthouden, Terugdraaien), `src/storage/machineStands.ts#rememberStand` schrijft ze alles of niets; `src/components/forge/useForgeStands.ts` (afvinken, inlezen, de regel met Terugdraaien) en `MachineWeights.tsx` (het blad met chips, Veel tegelijk, Standen wissen); Minder en Meer: `forgeInput.ts#nextStand`
 - `src/engine/prescriptionCheck.ts#checkRow` de stille toets "raak" tegen MacroFactor
 - `src/engine/forgeTimeCap.ts#resolveTimeCap` hoogstens 60 of 75 minuten, alleen de inhoud van het scherm
 - `src/components/forge/parts.tsx#ForgeSheet` het blad in Forge
@@ -33,7 +33,7 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 - Elk blad in Forge heeft `ref={sheetRef}` en `<SheetGrip />`, zoals `ForgeSheet` in `src/components/forge/parts.tsx`; bladen sluiten met `forge-down`, en `sheetDrag.scan.test.ts` kijkt mee.
 - Een rustmelding van een vorige keer wordt bij het openen geschrapt (`src/state/boot.ts`); een lopende rust plant Forge zelf opnieuw.
 - Een sessie begint pas bij de eerste echte handeling, niet bij het openen; een wijzer zonder template of met een gelogde sessie is dood en wordt opgeruimd.
-- Het eigen cijferblok sluit niet bij elke tik (`tapClosesDock`); `dockKey.scan.test.ts` bewaakt de key van `InputDock`. Standen: een sleutel in `exerciseStandsKg`, ook leeg, betekent ingelezen (een weggestreepte stand komt niet terug); zonder sleutel gelden de oude lijst en het bereik als gesloten lijst. `usedBefore` krijgt de `exercise` mee, anders ziet hij de standen niet.
+- Het eigen cijferblok sluit niet bij elke tik (`tapClosesDock`); `dockKey.scan.test.ts` bewaakt de key van `InputDock`. Standen: een sleutel in `exerciseStandsKg`, ook leeg, betekent ingelezen (een weggestreepte stand komt niet terug); zonder sleutel gelden de oude lijst en het bereik als gesloten lijst. `usedBefore` krijgt de `exercise` mee, anders ziet hij de standen niet. Schrijf standen via `updateSettings` (`useStandIo`), nooit rechtstreeks naar `SettingsRepo`, anders loopt de app achter; instelling `learnStands` (Standen onthouden) uit betekent niets inlezen en niets onthouden. `withMachineSetup` blijft de oude lijst en het bereik schrijven (pondbereik); het blad schrijft via `withStandsSet`.
 
 ## Testen
 - Tijdens het werk: `npx vitest run src/engine/forge src/engine/strengthModel src/engine/spotter src/engine/prescriptionCheck src/engine/toestelStanden src/storage/machineStands src/components/forge`

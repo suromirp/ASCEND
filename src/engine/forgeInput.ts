@@ -25,6 +25,7 @@ import type { GymProfile } from './strengthSettings';
 import { isLightWeight } from './strengthModel';
 import { barFor, candidatesFor, nearestIndex, stepFor } from './strengthWeights';
 import { isOwnRow } from './forgeRows';
+import { standsFor } from './toestelStanden';
 import { r2 } from '../utils/round';
 import { kgLabel } from '../utils/kg';
 
@@ -69,6 +70,39 @@ export function makeSnap(exercise: Exercise | undefined, profile: GymProfile, bo
   const candidates = candidatesFor(exercise, profile, { bodyKg, lastExternalKg: around, dumbbellTotal });
   const step = weightStepFor(exercise, profile, around) || 1;
   return (kg) => (candidates ? candidates[nearestIndex(candidates, kg)].externalKg : r2(Math.round(kg / step) * step));
+}
+
+// The weight a plus or minus key goes to on a machine with stands (engine/toestelStanden.ts): the next stand
+// up or down, also from a weight in between (20 between 14 and 23: plus goes to 23, minus to 14). Above the
+// highest stand it adds the last gap between two stands (32 after 23 gives 41), below the lowest it takes
+// off the first gap, never under 0,25. With one stand the gap is the step of your gym profile. A gap is
+// never smaller than half that step (the same rule as the model). No stands: the step, as before.
+const STAND_EPS = 1e-6;
+export function nextStand(stands: number[], current: number, direction: 1 | -1, fallbackStep: number): number {
+  const sorted = [...stands].sort((a, b) => a - b);
+  const floor = Math.max(0.25, r2(fallbackStep / 2));
+  const gap = (g: number) => Math.max(floor, r2(g));
+  if (sorted.length === 0) return Math.max(0, r2(current + direction * fallbackStep));
+  if (current < 0) return current;
+  if (direction === -1 && current <= STAND_EPS) return current;
+  if (direction === 1) {
+    const up = sorted.find((w) => w > current + STAND_EPS);
+    if (up !== undefined) return up;
+    const last = sorted.length > 1 ? gap(sorted[sorted.length - 1] - sorted[sorted.length - 2]) : fallbackStep;
+    return r2(current + last);
+  }
+  const down = [...sorted].reverse().find((w) => w < current - STAND_EPS);
+  if (down !== undefined) return down;
+  const first = sorted.length > 1 ? gap(sorted[1] - sorted[0]) : fallbackStep;
+  return Math.max(0.25, r2(current - first));
+}
+
+// Where plus and minus go for this exercise and this weight, when it has stands; undefined when it has none
+// (then the step of the profile rules, as before). The label under the keys and the keys use this one function.
+export function standJump(exercise: Exercise | undefined, profile: GymProfile, currentKg: number, direction: 1 | -1): number | undefined {
+  const stands = standsFor(profile, exercise);
+  if (!stands || stands.kg.length === 0) return undefined;
+  return nextStand(stands.kg, currentKg, direction, weightStepFor(exercise, profile, currentKg));
 }
 
 // One step up (1) or down (-1), kept between min and max.

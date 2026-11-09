@@ -39,3 +39,26 @@ Niets.
 ## Terugdraaien
 
 Het veld weglaten: zonder `exerciseStandsKg` werkt alles zoals voor dit besluit. De code leest het veld alleen via `cleanStandList`.
+
+## Aanvulling: het scherm (stap 3, 5 en 6, ook stap 4 aangesloten)
+
+Datum: 2026-11-09. Status: aangenomen, gebouwd door Sherpa Forge-toestelstanden scherm. Hierboven blijft staan zoals het was.
+
+Eigen keuzes van de bouwer:
+
+- De instelling heet in de opslag `learnStands` (Standen onthouden, standaard aan) en staat in het blad Je sportschool naast Standen per toestel, zodat de Forge-pagina binnen het plafond van rijen blijft. Ze hoort in `checkModelKey`. Uit betekent: niets inlezen en niets onthouden; bestaande standen blijven werken, Minder en Meer gebruiken ze, en zonder standen geldt de profielstap. Een aparte instelling heet `learnStacks` (oud); de twee zijn niet hetzelfde.
+- `withMachineSetup` en `withMachineWeights` blijven de oude lijst en het oude bereik schrijven. De ontwerptekst liet ze naar de standen schrijven, maar een bereik in pond moet pond blijven bij opslaan en lezen (bestaande tests) en `poundStackProposal` slaat het toestel nog als pondbereik op. Het nieuwe blad schrijft via `withStandsSet` en `withStandsCleared` (engine) en `saveStandsNow` en `clearStandsNow` (opslag). `poundStack.ts` is niet veranderd: een toestel met een gesloten lijst krijgt geen voorstel, zoals voorheen.
+- Minder en Meer springen via `nextStand` en `standJump` (`forgeInput.ts`). Een gewicht van 0 of lager verandert bij Minder niet; een verschil tussen standen is nooit kleiner dan de helft van de profielstap en nooit onder 0,25 kg, zoals het model. Het doelgewicht staat klein (12 px) onder de toets en in het label voor schermlezers ("Minder, naar 14 kilo"), alleen op een toestel met minstens één stand. `makeSnap` kreeg geen nieuwe code: `candidatesFor` leest de standen al sinds stap 2, en een test bewijst dat hij op een stand afrondt.
+- Inlezen uit je logs gebeurt bij het eerste afvinken, bij het openen van een veld of het menu van een toestel, en bij het openen van het blad (`usedKgFromLogs`, alleen lezen). Het blad toont wat er is; komt het inlezen later binnen, dan zet het formulier de standen er zelf bij.
+- De regel in het blok heeft alleen Terugdraaien. Een mislukte schrijfactie (of een grens van 4 seconden) laat een regel in `--color-danger-text` zien en niets half. De eerste-keerregel ("Tik het getal dat op het blok staat. Forge onthoudt het.") staat bij een toestel met blok zonder standen, zolang de instelling aan staat.
+- Alles afvinken in het menu onthoudt elk gewicht dat daarbij afgevinkt wordt; de regel toont de laatste.
+- Het blad: chips van 44 bij 44 px (de bestaande `WeightChip`, doorgestreept als weggehaald), Stand toevoegen, Veel tegelijk met de bestaande Lijst en Bereik (wat daaruit komt wordt bij de standen gevoegd), de keuzestrook "Wat Forge voorstelt", Annuleren en Opslaan, en Standen wissen. Standen wissen laat een lege sleutel staan, zodat het toestel niet opnieuw uit je logs wordt ingelezen.
+- Standen per toestel telt toestellen met minstens één stand (ook een oude lijst of bereik); een lege sleutel telt niet. De waarde in het blad is "7, 14, 23, 32" of "7 tot 109 kg", met ", alleen deze".
+
+Wat blijft liggen:
+
+- Lookout (Chromium op 360 en 390 px, vertraagde processor) en Warden zijn nog niet geweest; de screenshots zijn nog niet bekeken.
+- De uitleg bij Exporteren is niet veranderd (een oudere app laat `exerciseStandsKg` weg).
+- Standen in pond, plaatjesnummers en standen voor de hulp van een optrekstation blijven buiten bereik, zoals het ontwerp zegt.
+- Een stand die in Forge onthouden is telt direct mee in `checkModelKey` (het profiel verandert); dat telt de controle tegen MacroFactor opnieuw. Gewenst, maar niet apart gemeten.
+- `useForgeStands.onOpen` leest per toestel één keer per sessie; een mislukte inleesactie probeert het bij het volgende openen opnieuw.

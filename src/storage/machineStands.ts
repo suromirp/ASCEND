@@ -8,7 +8,7 @@
 
 import type { Exercise } from '../models/exercise';
 import type { StrengthSettings } from '../engine/strengthSettings';
-import { seedOnOpen, standAfterTick, withStandForgotten, type StandSkip } from '../engine/toestelStanden';
+import { seedOnOpen, standAfterTick, withStandForgotten, withStandsCleared, withStandsSet, type StandSkip } from '../engine/toestelStanden';
 import { SettingsRepo } from './databaseSettings';
 
 export interface StandIo {
@@ -20,6 +20,9 @@ const repoIo: StandIo = {
   read: async () => (await SettingsRepo.get()).strengthModel,
   write: (next) => SettingsRepo.set({ strengthModel: next }),
 };
+
+// Wat er nu echt is opgeslagen; de app leest hier vlak voor het schrijven.
+export const readStandSettings = repoIo.read;
 
 // Hoe lang een schrijfactie mag duren voor de uitkomst "niet gelukt" is (een knop die wacht heeft een grens).
 export const STAND_WRITE_TIMEOUT_MS = 4000;
@@ -83,4 +86,29 @@ export function forgetStandNow(input: { exercise: Exercise | undefined; weightKg
     if (!next) return { kind: 'none', reason: 'gone' };
     return (await apply(next, io)) ? { kind: 'forgotten', kg: input.weightKg } : { kind: 'failed' };
   });
+}
+
+
+// Het blad Standen van dit toestel: opslaan en wissen. Zelfde regels als hierboven: alles of niets, met een
+// grens in tijd, achter elkaar. De uitkomst geeft de nieuwe instellingen mee, zodat het scherm er meteen mee kan rekenen.
+export type StandsSave = { kind: 'saved'; settings: StrengthSettings } | { kind: 'failed' } | { kind: 'too_many' };
+
+async function saveWith(make: (raw: StrengthSettings | undefined) => StrengthSettings | undefined, io: StandIo): Promise<StandsSave> {
+  let raw: StrengthSettings | undefined;
+  try {
+    raw = await withTimeout(Promise.resolve(io.read()), STAND_WRITE_TIMEOUT_MS);
+  } catch {
+    return { kind: 'failed' };
+  }
+  const next = make(raw);
+  if (!next) return { kind: 'too_many' };
+  return (await apply(next, io)) ? { kind: 'saved', settings: next } : { kind: 'failed' };
+}
+
+export function saveStandsNow(input: { exercise: Exercise | undefined; kg: number[]; only: boolean }, io: StandIo = repoIo): Promise<StandsSave> {
+  return serial(() => saveWith((raw) => withStandsSet(raw, input.exercise, input.kg, input.only), io));
+}
+
+export function clearStandsNow(input: { exercise: Exercise | undefined }, io: StandIo = repoIo): Promise<StandsSave> {
+  return serial(() => saveWith((raw) => withStandsCleared(raw, input.exercise), io));
 }

@@ -60,9 +60,10 @@ export function ownWeightsFor(profile: GymProfile, exercise: Exercise | undefine
   return ownWeightsOf(profile, exercise.id);
 }
 
-// Voor hoeveel toestellen er in dit profiel iets is ingevuld.
+// Voor hoeveel toestellen er in dit profiel standen zijn: een lijst of bereik van vroeger telt mee, een
+// toestel met alleen een lege sleutel (ingelezen, niets over) niet.
 export const machineListCount = (profile: GymProfile): number =>
-  [...new Set([...Object.keys(profile.exerciseWeightsKg ?? {}), ...Object.keys(profile.exerciseWeightRanges ?? {}), ...Object.keys(profile.exerciseStandsKg ?? {})])].filter((id) => ownWeightsOf(profile, id)).length;
+  [...new Set([...Object.keys(profile.exerciseWeightsKg ?? {}), ...Object.keys(profile.exerciseWeightRanges ?? {}), ...Object.keys(profile.exerciseStandsKg ?? {})])].filter((id) => (cleanStandList(profile.exerciseStandsKg?.[id])?.kg.length ?? 0) > 0 || ownWeightsOf(profile, id)).length;
 
 export type ParsedList = { ok: true; list: number[] } | { ok: false; reason: string };
 

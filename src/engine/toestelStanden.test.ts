@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import { DEFAULT_PROFILE, normalizeProfile, resolveStrengthSettings, type GymProfile, type StrengthSettings } from './strengthSettings';
-import { forgetStand, learnStand, seedOnOpen, seedStands, standAfterTick, standsFor, withStandForgotten } from './toestelStanden';
+import { forgetStand, learnStand, mergeStands, seedOnOpen, seedStands, standAfterTick, standsFor, standsSummary, standNoteText, usedKgFromLogs, withStandForgotten, withStandsCleared, withStandsSet } from './toestelStanden';
 import { candidatesFor, learnedStack } from './strengthWeights';
-import { ownWeightsFor, withMachineSetup, withNewProfile } from './machineWeights';
+import { machineListCount, ownWeightsFor, withMachineSetup, withNewProfile } from './machineWeights';
+import type { SessionLog } from '../models/training';
 import { usedBefore, type SessionInput } from './strengthModel';
 
 // Nagemaakte sportscholen en gewichten. Het blok van 7, 14, 23, 32 is het voorbeeld uit het ontwerp
@@ -238,5 +239,67 @@ describe('opslag van de standen', () => {
     expect(p.exerciseWeightsKg).toEqual({ [machine.id]: [10, 20] });
     expect(p.exerciseStandsKg).toEqual({ [cable.id]: { kg: [5] } });
     expect(ownWeightsFor(p, machine)).toEqual([10, 20]);
+  });
+});
+
+describe('het blad: standen zetten, wissen en tonen', () => {
+  const raw = (p: GymProfile): StrengthSettings => ({ activeProfileId: 'g', profiles: [p] });
+  const active = (s: StrengthSettings | undefined) => resolveStrengthSettings(s).profile;
+  it('mergeStands voegt samen, oplopend, op 0,01, en weigert meer dan 40', () => {
+    expect(mergeStands([14, 7], [23, 7.004, 0, 600])).toEqual({ kg: [7, 14, 23], tooMany: false });
+    const veel = Array.from({ length: 41 }, (_, i) => i + 1);
+    expect(mergeStands([5], veel)).toEqual({ kg: [5], tooMany: true });
+  });
+  it('withStandsSet schrijft de standen met de sleutel, en een oude lijst van alleen dat toestel gaat weg', () => {
+    const start = raw(gym({ exerciseWeightsKg: { [machine.id]: [10, 20], [cable.id]: [5] } }));
+    const next = withStandsSet(start, machine, [20, 14, 7], true)!;
+    const p = active(next);
+    expect(p.exerciseStandsKg).toEqual({ [machine.id]: { kg: [7, 14, 20], only: true } });
+    expect(p.exerciseWeightsKg).toEqual({ [cable.id]: [5] });
+    expect(standsFor(p, machine)).toEqual({ kg: [7, 14, 20], only: true, stored: true });
+  });
+  it('alleen deze standen zonder standen is niet gesloten, en een stang krijgt niets', () => {
+    expect(active(withStandsSet(raw(gym()), machine, [], true))!.exerciseStandsKg).toEqual({ [machine.id]: { kg: [] } });
+    expect(withStandsSet(raw(gym()), bar, [20], false)).toBeUndefined();
+    expect(withStandsSet(raw(gym()), machine, Array.from({ length: 41 }, (_, i) => i + 1), false)).toBeUndefined();
+  });
+  it('Standen wissen laat een lege sleutel staan: wat je wiste komt niet terug uit je logs', () => {
+    const next = withStandsCleared(raw(withStands([7, 14])), machine)!;
+    const p = active(next);
+    expect(p.exerciseStandsKg).toEqual({ [machine.id]: { kg: [] } });
+    expect(seedStands(p, machine, [7, 14])).toBeUndefined();
+  });
+  it('de rij telt toestellen met standen, ook een oude lijst, en niet een lege sleutel', () => {
+    expect(machineListCount(gym())).toBe(0);
+    expect(machineListCount(withStands([7]))).toBe(1);
+    expect(machineListCount(withStands([]))).toBe(0);
+    expect(machineListCount(gym({ exerciseWeightsKg: { [machine.id]: [10, 20] } }))).toBe(1);
+  });
+  it('de woorden: de regel, en de waarde in de rij', () => {
+    expect(standNoteText(20, 'Kabel roeien')).toBe('Stand 20 kg onthouden voor Kabel roeien.');
+    expect(standsSummary([7, 14, 23, 32], false)).toBe('7, 14, 23, 32');
+    expect(standsSummary([7, 14, 23, 32], true)).toBe('7, 14, 23, 32, alleen deze');
+    expect(standsSummary([7, 14, 23, 32, 41, 50, 59], false)).toBe('7 tot 59 kg');
+  });
+  it('usedKgFromLogs leest werk- en opwarmsets van deze sportschool en logs zonder sportschool, en verandert niets', () => {
+    const log = (id: string, gymProfileId: string | undefined, kg: number[]): SessionLog => ({
+      id, templateId: 't', type: 'strength', completedDate: '2026-11-01', completedAt: '2026-11-01T10:00:00.000Z', variant: 'full', durationMinutes: 50, source: 'manual',
+      ...(gymProfileId ? { gymProfileId } : {}),
+      strengthData: [{ exerciseName: 'Leg Extension', exerciseId: machine.id, sets: kg.map((w) => ({ reps: 10, weightKg: w })) }],
+    }) as SessionLog;
+    const logs = [log('a', 'g', [7, 14]), log('b', 'andere', [99]), log('c', undefined, [23, 0])];
+    const before = JSON.stringify(logs);
+    expect(usedKgFromLogs(logs, machine, 'g')).toEqual([7, 14, 23]);
+    expect(usedKgFromLogs(logs, bar, 'g')).toEqual([]);
+    expect(JSON.stringify(logs)).toBe(before);
+  });
+});
+
+describe('Standen onthouden uit: het gedrag van nu', () => {
+  it('niets inlezen en niets onthouden, bestaande standen blijven werken', () => {
+    const start: StrengthSettings = { activeProfileId: 'g', profiles: [withStands([7, 14])] };
+    expect(standAfterTick(start, machine, 20, { remember: false, usedKg: [7, 14, 20] })).toEqual({ kind: 'none', reason: 'off' });
+    expect(seedOnOpen(start, machine, { remember: false, usedKg: [7] })).toBeUndefined();
+    expect(standsFor(withStands([7, 14]), machine)?.kg).toEqual([7, 14]);
   });
 });

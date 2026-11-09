@@ -64,6 +64,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   quickRirRow,
   poundText,
   capText,
+  standLine,
   act,
 }: {
   ex: WorkoutExercise;
@@ -97,6 +98,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   poundText?: string;
   // "1 set weg door je tijdsgrens", zolang er door de grens sets van deze oefening ontbreken (engine/forgeTimeCap.ts).
   capText?: string;
+  // De regel over de standen van dit toestel: een nieuwe stand (met Terugdraaien), de eerste keer, of een mislukte schrijfactie.
+  standLine?: { kind: 'learned' | 'first' | 'failed'; text: string };
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
@@ -201,6 +204,15 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                 <TextButton onClick={() => act.fill(ex.slot)}>{noFitText.endsWith('aanpassen?') ? 'Aanpassen' : 'Invullen'}</TextButton>
                 <TextButton tone="dim" onClick={() => act.keepFit(ex.slot)}>Liever niet</TextButton>
               </div>
+            </div>
+          )}
+
+          {standLine && !readOnly && (
+            <div className="mt-1.5 flex items-center gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-card-border)' }} role={standLine.kind === 'failed' ? 'alert' : 'status'}>
+              <p className="min-w-0 flex-1 text-xs leading-snug" style={{ color: standLine.kind === 'failed' ? 'var(--color-danger-text)' : 'var(--color-ink-dim)' }}>{standLine.text}</p>
+              {standLine.kind === 'learned' && (
+                <TextButton tone="dim" onClick={() => act.standUndo()} size="xs" className="shrink-0" aria-label={`Terugdraaien, ${standLine.text}`}>Terugdraaien</TextButton>
+              )}
             </div>
           )}
 
