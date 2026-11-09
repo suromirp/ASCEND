@@ -59,7 +59,7 @@ describe('guideLinks', () => {
   it('geeft een tik naar een oefening die bestaat', () => {
     const links = guideLinks(guide, exerciseById);
     expect(links.easier).toEqual({ id: 'negative-chin-up', name: exerciseById('negative-chin-up')!.name });
-    expect(links.harder).toBeNull();
+    expect(links.harder).toEqual({ id: 'weighted-pull-up', name: exerciseById('weighted-pull-up')!.name });
   });
   it('geeft geen tik als het id niet bestaat', () => {
     const links = guideLinks({ ...guide, easier: 'bestaat-niet', harder: 'ook-niet' }, exerciseById);
@@ -103,10 +103,40 @@ describe('alle uitleg', () => {
   const FORBIDDEN_DASH = /[–—]/;
   const BATCH1 = ['back-squat', 'barbell-row', 'bench-press', 'bodyweight-calf-raise', 'bulgarian-split-squat', 'chest-supported-row', 'dip', 'eccentric-squat', 'goblet-squat', 'incline-dumbbell-press', 'lat-pulldown', 'lateral-raise', 'machine-chest-press', 'overhead-press', 'plank', 'reverse-lunge', 'seated-leg-curl', 'side-plank', 'step-up', 'triceps-pushdown'];
   const BATCH2 = ['assisted-pull-up', 'dumbbell-preacher-curl', 'incline-hammer-curl', 'leg-press', 'leg-press-calf-raise', 'overhead-triceps-extension', 'seated-calf-raise', 'seated-single-leg-curl'];
-  it('heeft de vijf proefteksten, de 23 stappen van de overige calisthenicsladders (F4f), batch 1 en batch 2', () => {
+  // Batch 3: de stappen van de ladders push-up, optrekken en dip, wat Spieren voor de berg kiest en waar bestaande
+  // teksten naar verwijzen.
+  const BATCH3 = ['archer-push-up', 'dead-hang', 'decline-push-up', 'diamond-push-up', 'dumbbell-rdl', 'glute-bridge', 'incline-push-up', 'incline-push-up-high', 'knee-push-up', 'negative-chin-up', 'negative-dip', 'pause-back-squat', 'scapular-pull-up', 'single-leg-calf-raise', 'split-squat', 'step-down-pack', 'support-hold', 'tibialis-raise', 'weighted-dip', 'weighted-pull-up'];
+  const NEW_BATCHES = [...BATCH3];
+  it('heeft de vijf proefteksten, de 23 stappen van de overige calisthenicsladders (F4f) en batch 1 tot en met 3', () => {
     const f4f = SKILL_LADDERS.filter((l) => !['push-up', 'pull-up', 'dip'].includes(l.id)).flatMap((l) => l.steps.map((s) => s.exerciseId));
     expect(f4f).toHaveLength(23);
-    expect(Object.keys(EXERCISE_GUIDES).sort()).toEqual([...['incline-bench-press', 'pull-up', 'push-up', 'romanian-deadlift', 'step-down'], ...f4f, ...BATCH1, ...BATCH2].sort());
+    expect(Object.keys(EXERCISE_GUIDES).sort()).toEqual([...['incline-bench-press', 'pull-up', 'push-up', 'romanian-deadlift', 'step-down'], ...f4f, ...BATCH1, ...BATCH2, ...NEW_BATCHES].sort());
+  });
+  it('elke batch is twintig oefeningen, zonder dubbele', () => {
+    expect(BATCH3).toHaveLength(20);
+    expect(new Set(NEW_BATCHES).size).toBe(NEW_BATCHES.length);
+  });
+  it('elke stap van een ladder heeft uitleg', () => {
+    for (const step of SKILL_LADDERS.flatMap((l) => l.steps)) expect(EXERCISE_GUIDES[step.exerciseId], step.exerciseId).toBeDefined();
+  });
+  it('een nieuwe uitleg heeft elk verplicht deel en blijft binnen de lengte van de teksten die er al waren', () => {
+    const older = entries.filter(([id]) => !NEW_BATCHES.includes(id));
+    const words = older.map(([, g]) => readMoreWords(g));
+    const part = (pick: (g: (typeof entries)[number][1]) => string) => older.map(([, g]) => pick(g).length);
+    const within = (n: number, list: number[], what: string) => {
+      expect(n, what).toBeGreaterThanOrEqual(Math.min(...list));
+      expect(n, what).toBeLessThanOrEqual(Math.max(...list));
+    };
+    for (const id of NEW_BATCHES) {
+      const g = EXERCISE_GUIDES[id];
+      expect(g, id).toBeDefined();
+      for (const line of g.short) expect(line.trim().length, id).toBeGreaterThan(0);
+      within(readMoreWords(g), words, `${id}: Lees verder`);
+      within(g.setup.length, part((o) => o.setup), `${id}: setup`);
+      within(g.movement.length, part((o) => o.movement), `${id}: movement`);
+      within(g.tempo.length, part((o) => o.tempo), `${id}: tempo`);
+      expect(g.source, id).toBeUndefined();
+    }
   });
   for (const [id, g] of entries) {
     it(`${id}: precies drie korte regels van hoogstens 60 tekens`, () => {
