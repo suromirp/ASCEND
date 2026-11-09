@@ -21,7 +21,7 @@ Doel: elke maandag één pagina die de eigenaar op zijn Android-telefoon in een 
 - Wat wacht en op wie of wat.
 - Drie punten voor de week, elk met één zin uitleg.
 - Eén regel over de stand van de controles.
-- Eén regel "Los van MacroFactor": welke punten uit `docs/visie/Los van MacroFactor.md` al waar zijn en welke nog niet (zonder gewicht of andere persoonsgegevens). Zijn ze allemaal waar, zet het dan als eerste van de drie punten, en werk de Stand onderaan dat bestand bij.
+- Eén regel "Los van MacroFactor Workouts": welke punten uit `docs/visie/Los van MacroFactor.md` al waar zijn en welke nog niet (zonder gewicht of andere persoonsgegevens). Zijn ze allemaal waar, zet het dan als eerste van de drie punten, en werk de Stand onderaan dat bestand bij.
 
 ## Stijl
 
