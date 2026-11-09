@@ -64,8 +64,14 @@ describe('periode Zonder sportschool, het nagemaakte voorbeeld', () => {
     // Er staat geen loop in de periode die een heuveltraining kan worden (alleen de lange duurloop), dus komt er één rustige heuvelloop bij op de vrije dag wo 18.
     expect(dayList(templates, after, '2026-11-12', '2026-11-22')).toEqual([
       '12 Rustige duurloop', '13 Heuvelintervallen', '14 Eigen gewicht', '15 Lange duurloop', '16 Herstelwandeling', '17 Eigen gewicht', '18 Rustige heuvelloop',
-      '19 Rustige duurloop', '20 Bovenlichaam B', '21 Heuvelsprints en afdalen', '22 Lange duurloop',
+      '19 Rustige duurloop', '20 Heuvelsprints en afdalen', '21 Bovenlichaam B', '22 Lange duurloop',
     ]);
+    // Rond Zonder sportschool geldt de indeling rond een vakantie ook (docs/beslissingen/2026-11-09-rond-zonder-sportschool.md):
+    // nooit twee beenzware dagen naast elkaar, ook niet heuvelsprints op zaterdag en de lange duurloop op zondag.
+    const heavy = after.filter((s) => s.scheduledDate >= '2026-11-12' && s.scheduledDate <= '2026-11-24')
+      .filter((s) => { const t = templates.find((o) => o.id === s.templateId)!; return isLegHeavyTemplate(t) || (t.roles ?? []).includes('long' as never); })
+      .map((s) => s.scheduledDate).sort();
+    for (let i = 1; i < heavy.length; i++) expect(daysBetween(heavy[i - 1], heavy[i]), `${heavy[i - 1]} ${heavy[i]}`).toBeGreaterThanOrEqual(2);
     // Eén rustige heuvelloop, met één zin waarom.
     const added = plan.proposal.changes.filter((c) => c.action === 'add' && c.newSessionDraft?.templateId === 'tpl_hill_easy');
     expect(added.map((c) => c.toDate)).toEqual(['2026-11-18']);

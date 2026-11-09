@@ -86,7 +86,9 @@ const DROP_REASON = 'Rond je vakantie is er geen dag meer waarop deze past.';
 
 export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput): LeaveAroundResult {
   const none = { sessions: all, repairs: [] };
-  const periods = (input.check.leave ?? []).filter((p) => p.kind === 'no_training');
+  // Without training and without a gym: around both the weeks are arranged again; the days of a period without a gym keep
+  // what that period put there (engine/noGym.ts), as a given (docs/beslissingen/2026-11-09-rond-zonder-sportschool.md).
+  const periods = (input.check.leave ?? []).filter((p) => p.kind === 'no_training' || p.kind === 'no_gym');
   if (periods.length === 0) return none;
   const { today, goalDay, templates, logs, restDay } = input.check;
   const days = leaveDays(input.check.leave);
@@ -94,7 +96,8 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const raceDays = new Set(input.check.raceDays ?? []);
   const until = [goalDay ? addDays(goalDay, -1) : addDays(today, 365), input.check.until, input.limit].filter((d): d is string => !!d).sort()[0];
-  const off = [...days.entries()].filter(([d, v]) => v.kind === 'off' && d >= today && d <= until).map(([d]) => d).sort();
+  const off = [...days.entries()].filter(([d, v]) => (v.kind === 'off' || v.kind === 'nogym') && d >= today && d <= until).map(([d]) => d).sort();
+  const fixedDay = (date: string) => days.get(date)?.kind === 'nogym';
   if (off.length === 0) return none;
 
   // The weeks that hold a holiday day, joined when only one week lies between them.
@@ -121,12 +124,17 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
     const first = weeks[0];
     const last = weeks[weeks.length - 1];
     const inCluster = (date: string) => date >= first && date <= addDays(last, 6);
+    // Around a period without a gym alone, what stands before its first day stays where it is: you can still train
+    // as planned until then, so only the period and the weeks after it are arranged again.
+    const clusterDays = off.filter(inCluster);
+    const onlyNoGym = clusterDays.length > 0 && clusterDays.every(fixedDay);
+    const keepBefore = (date: string) => onlyNoGym && date < clusterDays[0];
     const markedByHoliday = (s: PlannedSession) =>
       !!input.reshuffle && s.lock?.by === 'proposal' && !!s.leave && s.leave.role !== 'placed' && periods.some((p) => p.id === s.leave!.periodId);
     const revivable = (s: PlannedSession) => markedByHoliday(s) && s.leave!.role === 'dropped' && s.status === 'skipped';
     // The system's own trainings in these weeks (and, adding a holiday, those an earlier holiday placed).
     const mine = (s: PlannedSession) => {
-      if (!inCluster(s.scheduledDate) || s.scheduledDate < today || logged.has(s.id) || s.raceBlock) return false;
+      if (!inCluster(s.scheduledDate) || s.scheduledDate < today || logged.has(s.id) || s.raceBlock || fixedDay(s.scheduledDate) || keepBefore(s.scheduledDate)) return false;
       if (s.status === 'skipped' ? !revivable(s) : false) return false;
       if (s.leave?.role === 'placed') return false;
       const t = byId.get(s.templateId);
@@ -167,7 +175,7 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
     const windowEnd = addDays(last, 13);
     const empty = (date: string) => !openOthers.some((s) => s.scheduledDate === date);
     const candidateDays = Array.from({ length: daysBetween(windowStart, windowEnd) + 1 }, (_, i) => addDays(windowStart, i))
-      .filter((d) => d >= today && d <= until && !(goalDay && d >= goalDay) && !raceDays.has(d) && days.get(d)?.kind !== 'off' && days.get(d)?.kind !== 'trek' && !(restDay && isoWeekday(d) === restDay))
+      .filter((d) => d >= today && d <= until && !(goalDay && d >= goalDay) && !raceDays.has(d) && days.get(d)?.kind !== 'off' && days.get(d)?.kind !== 'trek' && !fixedDay(d) && !keepBefore(d) && !(restDay && isoWeekday(d) === restDay))
       .filter((d) => inCluster(d) || empty(d))
       .filter((d) => !others.some((s) => s.scheduledDate === d && (logged.has(s.id) || idIsTestOrRace(s.templateId, byId))));
 
