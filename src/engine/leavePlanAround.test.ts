@@ -97,6 +97,17 @@ describe('planning around two holidays', () => {
     expect(legWeeks).toEqual([true, true, true]);
   });
 
+  it('keeps the hills when no neighbour week has any: they move, they do not drop', () => {
+    const NO_HILLS = WEEK_A.filter(([, id]) => id !== 'tpl_hill_intervals');
+    const alone = [...mk('2026-11-09', NO_HILLS), ...mk('2026-11-16', WEEK_A), ...mk('2026-11-23', NO_HILLS)];
+    const r = planPass(alone, context(both, { leaveReshuffle: true }));
+    const hills = alone.find((s) => s.templateId === 'tpl_hill_intervals')!;
+    const after = r.sessions.filter((s) => s.templateId === 'tpl_hill_intervals' && s.status !== 'skipped');
+    expect(after).toHaveLength(1);
+    expect(r.repairs.find((x) => x.sessionId === hills.id)?.removed).not.toBe(true);
+    expect(r.repairs.some((x) => x.reason === 'Rond je vakantie is er geen dag meer waarop deze past.')).toBe(false);
+  });
+
   it('puts two trainings on one day only when no workable day is empty', () => {
     expect(workableEmpty(wide.sessions).length === 0 || doubleDays(wide.sessions).length === 0).toBe(true);
   });
