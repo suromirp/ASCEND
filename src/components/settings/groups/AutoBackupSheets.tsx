@@ -85,7 +85,7 @@ export function AppFolderSheet({ facts, onChanged, onClose }: { facts: SettingsF
   return (
     <Sheet eyebrow="Gegevens en back-up" title="Vaste map" line={`De automatische back-up gaat naar ${label} op je telefoon.`} onClose={onClose}>
       <p className="st-hint" style={{ marginLeft: 0, marginTop: 0 }}>
-        {needsTap ? 'Op deze telefoon heeft ASCEND eerst toestemming nodig om in die map te schrijven.' : 'In de app is de map vast; je hoeft niets te doen.'}
+        {needsTap ? 'Op deze telefoon heeft ASCEND eerst toestemming nodig om in die map te schrijven.' : 'In de app is de map vast. Je hoeft niets te doen.'}
         {' '}Die map zie je in je bestandsbeheerder. Wil je hem ook in Google Drive, laat dan een app die mappen kopieert deze map meenemen.
       </p>
       <p className="st-hint" style={{ marginLeft: 0 }}>{lastAutoBackupLine(facts.autoBackup?.lastAutoAt, label)}</p>

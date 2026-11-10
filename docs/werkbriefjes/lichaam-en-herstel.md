@@ -17,7 +17,7 @@ Het lichaamsfiguur, hoe voelt je lijf, een zware beendag op vermoeide benen, een
 
 ## Nooit
 - Een melding de planning laten veranderen zonder voorstel met Akkoord.
-- Zorgteksten met "voorkomt"; het woord is "kan helpen", met de sterkte van het bewijs uit `docs/onderzoek/`.
+- Zorgteksten met "voorkomt"; het woord is "kan helpen", met de sterkte van het bewijs uit `docs/onderzoek/`. De spoedtekst van een plek (`direct` in `src/data/bodyCare.ts`) of de lijst "Naar een fysio of je huisarts bij" in een inklap zetten: ze staan altijd zichtbaar, op de plekpagina en in het blad Hoe voelt je lijf (`src/components/lichaam/lichaamZorg.scan.test.ts`).
 - `legFatigueOn` of de planner aanpassen vanuit een kaart; `src/storage/planGolden.test.ts` beweegt niet.
 - Een log omschrijven om een notitie of beoordeling te verwerken: wat speelde er is een lijst naast de historie.
 - Alcohol of wiet zelf noemen of afleiden; een reden komt nooit in een lijst, melding of Strava-tekst.

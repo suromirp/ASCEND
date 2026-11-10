@@ -29,6 +29,6 @@ Tik op de spier of het gewricht.
 [knop: Rechterenkel en voet]
 [knop: Linkerenkel en voet]
 Open klachten
-Geen open klachten. Heb je last van iets, tik dan de plek aan en meld het.
+Geen open klachten. Last van iets? Tik de plek aan en meld het.
 [knop: Iets anders melden]
 Algemene uitleg, geen diagnose. Twijfel je, vraag het een fysio of je huisarts.

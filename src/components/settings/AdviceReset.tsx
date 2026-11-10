@@ -74,7 +74,7 @@ export function AdjustedSheet({ facts, advice, onClose }: { facts: SettingsFacts
               <>
                 <p className="st-hint" style={{ marginLeft: 0 }}>
                   {diffs.length === 1 ? 'Deze instelling gaat terug naar het advies.' : `Deze ${diffs.length} instellingen gaan terug naar het advies.`}
-                  {diffs.some((d) => d.plan) ? ' Wat je planning raakt, zie je eerst als voorstel. Pas na Akkoord verandert het.' : ''}
+                  {diffs.some((d) => d.plan) ? ' Raakt het je planning, dan verandert die zoals je bij Wijzigingen koos.' : ''}
                 </p>
                 <div className="st-btns">
                   <button type="button" className="st-btn" onClick={() => setConfirm(false)}>Annuleren</button>
@@ -127,7 +127,7 @@ export function GroupReset({ page, facts }: { page: SettingsPageId; facts: Setti
                 {diffs.map((d) => <DifferenceLine key={d.id} d={d} facts={facts} />)}
               </SettingsList>
               {diffs.some((d) => d.plan) && (
-                <p className="st-hint" style={{ marginLeft: 0 }}>Wat je planning raakt, zie je eerst als voorstel. Pas na Akkoord verandert het.</p>
+                <p className="st-hint" style={{ marginLeft: 0 }}>Raakt het je planning, dan verandert die zoals je bij Wijzigingen koos.</p>
               )}
               <div className="st-btns">
                 <button type="button" className="st-btn" onClick={close}>Annuleren</button>

@@ -13,7 +13,7 @@ Voorkant, rond de knieschijf
 Wat je doet bij last
 Pijn rond de knieschijf na veel dalen is meestal overbelasting. Doe een paar dagen minder trap en afdalen. Fietsen en vlak wandelen gaan vaak wel.
 Houd de pijn tijdens het bewegen op 2 van 10 of lager en kijk de ochtend erna. Is het dan erger dan gisteren, dan was het te veel.
-[knop: Wanneer laat je het nakijken?]
+Wanneer laat je het nakijken?
 Naar een fysio of je huisarts bij
 Een flinke zwelling
 De plek niet kunnen belasten
@@ -62,7 +62,7 @@ Langzaam zakkende squat
 3 × 8
 Heup zijwaarts heffen
 2 × 12 per kant
-Langzaam zakken en step-downs: het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert voor afdalen). Heupkracht naast kniewerk helpt bij pijn voorin de knie (JOSPT 2018, bewijs: matig, als behandeling en niet als voorkomen).
+Langzaam zakken en step-downs: het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert voor afdalen). Heupkracht naast kniewerk kan helpen bij pijn voorin de knie (JOSPT 2018, bewijs: matig, als behandeling en niet als voorkomen).
 
 --- kaart 4 ---
 Melden
@@ -76,6 +76,6 @@ Sinds wanneer?
 [veld: date = 2026-10-31]
 Wat merk je? (mag leeg)
 [veld: textarea]
-Melden legt de klacht vast, meer niet: je planning verandert er niet door. Bij een klacht aan been of voet toont Vandaag een hint bij zware beentrainingen; jij kiest per training. Je week pas je zelf aan op Week.
+Melden legt de klacht vast. Je planning verandert er niet door. Bij een klacht aan been of voet zie je op Vandaag een hint bij zware beentrainingen. Jij kiest per training. Je week pas je zelf aan op Week.
 [knop: Melden]
 Algemene uitleg, geen diagnose. Twijfel je, vraag het een fysio of je huisarts.

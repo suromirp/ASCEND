@@ -189,7 +189,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {sheet === 'bundel-run-detail' && (
-        <BundleSheet eyebrow="Vandaag en meldingen" title="Run in detail" line="Je run kilometer na kilometer, vanuit het logblad." onClose={close}>
+        <BundleSheet eyebrow="Vandaag en meldingen" title="Run in detail" line="Je loop kilometer na kilometer, vanuit het logblad." onClose={close}>
           <SummaryRow id="run-detail" title="Run in detail tonen" facts={facts} info="runDetail" onChange={(on) => setDetail({ show: on })} />
           <SummaryRow id="run-detail-patronen" title="Patronen tonen" facts={facts} info="runDetailPatronen" onChange={(on) => setDetail({ patterns: on })} />
           <SummaryRow id="run-detail-advies" title="Advies tonen" facts={facts} info="runDetailAdvies" onChange={(on) => setDetail({ advice: on })} />

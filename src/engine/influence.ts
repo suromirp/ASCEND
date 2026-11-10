@@ -431,4 +431,4 @@ export function chipsWithout(chips: readonly InfluenceReason[], facts: readonly 
 }
 
 // "Niet meetellen voor hartslag" on a training: what that does, one sentence, said only when on.
-export const EXCLUDE_LOG_EXPLAIN = 'Deze training telt niet mee in Tempo bij zone 2 en niet als vergelijking voor je volgende loopjes.';
+export const EXCLUDE_LOG_EXPLAIN = 'Deze training telt niet mee in Tempo bij zone 2 en niet als vergelijking voor je volgende lopen.';

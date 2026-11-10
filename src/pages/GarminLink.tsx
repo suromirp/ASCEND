@@ -331,8 +331,8 @@ export function GarminLinkPage() {
           note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
         />
         <UseRow
-          title="Details van loopjes en tochten"
-          text="ASCEND haalt per loop of tocht hartslag, tempo, hoogte en loopvorm op en bewaart alleen een korte samenvatting. Daarmee vergelijkt ASCEND je loopjes eerlijk. Uit betekent: niet ophalen, niet tonen en niet meetellen."
+          title="Details van lopen en tochten"
+          text="ASCEND haalt per loop of tocht hartslag, tempo, hoogte en loopvorm op en bewaart alleen een korte samenvatting. Daarmee vergelijkt ASCEND je lopen eerlijk. Uit betekent: niet ophalen, niet tonen en niet meetellen."
           checked={watch?.use.details !== false && watch?.use.activities !== false}
           onChange={(on) => void changeUse('details', on)}
           note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
