@@ -1062,6 +1062,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Liever niet of uit', text: 'je week blijft zoals hij is en de melding blijft staan. Uit haalt alleen de knop met het voorstel weg.' },
     ],
   },
+  weekNaKeuze: {
+    title: 'Melding na jouw keuze',
+    lead: 'Koos je op Vandaag Benen fris en blijft een zware beendag staan, dan zegt Week dat jij dat koos.',
+    points: [
+      { head: 'Met jouw keuze', text: 'de melding blijft, met jouw keuze erbij. Het voorstel staat nog achter een gewone tekstknop.' },
+      { head: 'Gewone melding', text: 'Week meldt het zoals altijd, met Bekijk voorstel als hoofdknop.' },
+      { head: 'Alleen vandaag', text: 'je antwoord geldt voor vandaag en voor die ene training. Er verandert niets in je planning.' },
+    ],
+  },
   volgordeStand: {
     title: 'Volgorde van Je stand',
     lead: 'Kies de volgorde van de blokken op Je stand. Je planning en je cijfers veranderen er niet door.',
