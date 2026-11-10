@@ -50,4 +50,4 @@ Pagina 1: 3 velden. Hartslagzone, Hartslag, Timer.
 Pagina 2: 3 velden. Rondetempo, Afstand, Gemiddeld tempo.
 8.
 Pagina 3: 2 velden. Cadans, Tijd.
-Het kan ook in Garmin Connect, bij je toestel onder Activiteiten en apps. De namen kunnen daar anders zijn. Bewaart de app het niet, doe het dan op het horloge.
+Het kan ook in Garmin Connect, bij de instellingen van je toestel. Bewaart de app het niet, doe het dan op het horloge.
