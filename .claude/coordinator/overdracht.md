@@ -67,3 +67,4 @@ Als je helemaal klaar bent (of vastloopt): meld het de coördinator met de tool 
 - 10 november is een dinsdag: het vaste bouwmoment is pas woensdag 19:43. De eigenaar vroeg om een nieuwe chat voor het bouwmoment; die is vandaag gestart (zie de sessielijst, titel "Bouwmoment ASCEND 10 november") met de Inbox van vandaag.
 - Vandaag zelf op main gezet: de regel bij te dicht op elkaar in Week (besluit 2026-11-10-beendagen-afstand-tekst.md).
 - Open vraag aan de eigenaar: de melding in Week nadat hij op Vandaag "Benen fris, blijft staan" koos (wegblijven, of zeggen dat hij koos). Advies: het tweede.
+- Eigenaar, 10 november middag: met de weeklimiet hoef je geen rekening te houden. De modelkeuze per taak blijft.
