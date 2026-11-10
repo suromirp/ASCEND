@@ -76,6 +76,7 @@ import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
 import { resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
+import { resolveWeekAfterChoice } from './weekKept';
 import { calisthenicsTrainings } from './trainingStyle';
 import type { SessionTemplate } from '../models/training';
 import { formatDateNL, formatDayMonthNL, localDateOf } from '../utils/dates';
@@ -828,6 +829,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.haptics !== false };
     case 'locatie':
       return locationSummary(s);
+    case 'bundel-weekmelding':
+      return { value: s.weekFixProposal === false ? 'Zonder voorstel' : 'Met voorstel', sub: `Melding: ${choiceShort('weekNaKeuze', resolveWeekAfterChoice(s)).toLowerCase()}` };
+    case 'week-na-keuze':
+      return { value: choiceShort('weekNaKeuze', resolveWeekAfterChoice(s)) };
     case 'weekvoorstel':
       return { checked: s.weekFixProposal !== false };
     case 'volgorde-stand':
@@ -1037,6 +1042,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.weightFromMacroFactor !== false };
     case 'datavelden':
       return { checked: watchFieldsShown(s) };
+    case 'datavelden-bekijken':
+      return { sub: 'Welke pagina\'s je op je horloge zet' };
     case 'datavelden-model':
       return { value: resolveWatchModel(s.watchModel).name };
     case 'strava-tekst':

@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { RouteFn, RoutePoint } from '../models/route';
 import { cleanSettings } from './backupClean';
 import { findRoutes } from './routeProposal';
+import { MAX_ROUTE_CALLS } from '../engine/routePlanner';
+import type { NearbyTerrain } from '../models/nearbyTerrain';
 import { saveRouteGpx } from './routeFile';
 import { NameTakenError } from '../engine/autoBackup';
 import type { AppBackupFolder } from '../integrations/backupFolder';
@@ -80,6 +82,23 @@ describe('findRoutes', () => {
     const route = vi.fn(straight);
     await findRoutes(place, target, { route, terrain: async () => undefined, offline: () => false, signal: stop.signal });
     expect(route).not.toHaveBeenCalled();
+  });
+
+  it('geeft door wat er op de kaart lag, zonder een aanroep extra', async () => {
+    const hills: NearbyTerrain = { source: 'osm', fetchedAt: '2026-11-01T08:00:00.000Z', place: { name: '', lat: 52.12, lon: 5.65 }, radiusM: 3000, features: [
+      { kind: 'hill', lat: 52.13, lon: 5.66, distanceM: 1300, heightM: 24 },
+      { kind: 'hill', lat: 52.11, lon: 5.64, distanceM: 1300, heightM: 6 },
+    ] };
+    const route = vi.fn(straight);
+    const terrain = vi.fn(async () => hills);
+    const found = await findRoutes(place, { distanceKm: 10.5, ascentM: 300 }, { route, terrain, offline: () => false });
+    expect(found.kind === 'plans' && found.plans.found).toEqual({ hills: 1, tallestM: 24 });
+    expect(terrain).toHaveBeenCalledTimes(1);
+    expect(route.mock.calls.length).toBeLessThanOrEqual(2 * MAX_ROUTE_CALLS);
+    // Zonder netwerk of na de grens: geen plannen, dus ook geen telling.
+    expect(await findRoutes(place, target, { route, terrain, offline: () => true })).toEqual({ kind: 'offline' });
+    const never: RouteFn = () => new Promise(() => undefined);
+    expect(await findRoutes(place, target, { route: never, terrain, offline: () => false, limitMs: 30 })).toEqual({ kind: 'timeout' });
   });
 
   it('valt het netwerk halverwege weg, dan is dat de uitkomst', async () => {

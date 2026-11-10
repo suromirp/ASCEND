@@ -59,3 +59,17 @@ export const WATCH_STEPS: string[] = [
   'Stuur de koers in Garmin Connect naar je horloge en synchroniseer.',
   'Op je horloge: kies Hardlopen, dan Navigatie, Koersen.',
 ];
+
+// Wat er van een bestand terugkomt (storage/routeFile.ts): opgeslagen in een map, gedownload, of niet.
+export type RouteFileLine = { ok: true; where: 'download' | 'folder'; name: string; label?: string } | { ok: false };
+
+// De ene regel onder de twee knoppen. Voor een tik zegt hij wat je doet; na een tik staat de
+// uitkomst op dezelfde plek, zodat er nooit twee regels onder elkaar staan. Na opslaan of
+// downloaden komt de stap erachter, want het bestand moet nog naar Garmin Connect.
+export function routeActionLine(hasSender: boolean, done?: { send: RouteSendOutcome } | { file: RouteFileLine }): SendLine {
+  if (!done) return { text: hasSender ? SEND_HINT : SAVE_HINT, warn: false };
+  if ('send' in done) return sendLine(done.send);
+  if (!done.file.ok) return { text: 'Opslaan lukte niet. Probeer het nog eens.', warn: true };
+  const saved = done.file.where === 'folder' ? `Opgeslagen als ${done.file.name} in ${done.file.label}.` : `Gedownload als ${done.file.name}.`;
+  return { text: `${saved} ${SAVE_HINT}`, warn: false };
+}
