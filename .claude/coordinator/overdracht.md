@@ -51,3 +51,12 @@ Als je helemaal klaar bent (of vastloopt): meld het de coördinator met de tool 
 - Ochtendrapport (maandag 10 november, om 07:43 Amsterdamse tijd, of zodra wat loopt is afgehandeld als dat later is): de skill weekbriefing (het is maandag), met daarin wat vannacht live ging, wat de eigenaar op zijn telefoon moet nakijken, elke keuze die de coördinator zelf nam, wat bleef liggen en waarom, en de stand van de limieten. Daarna een pushmelding met de link. De coördinator die dan draait doet dit.
 - 10 november 01:27 UTC: release apk-158 (native niveau 9) staat; eigenaar heeft een pushmelding gekregen. Weeklimiet Fable gaf een waarschuwing (allowed_warning, reset rond 15 november) bij de laatste bouwer: meenemen in het ochtendrapport.
 - 10 november 06:45 UTC: ochtendrapport gepubliceerd op de vaste pagina Weekbriefing (https://claude.ai/artifact/JfGAHMLVZdSgC6LkT8jmb4). Geen bouwers lopen. Tot de weeklimiet van Fable zaterdag 15 november opengaat: Fable alleen voor werk aan de planner, de rest op Sonnet.
+
+## Wissel 10 november ochtend (eigenaar vroeg om een nieuwe coördinator op Fable)
+
+- Alles op Fable: coördinator, bouwers en helpers (rolbestanden en skill werkverdeling bijgewerkt). Weeklimiet Fable gaf op 10 november 01:10 UTC al een waarschuwing en gaat zaterdag 15 november rond 15:00 weer open: zuinig, één bouwer tegelijk zolang de waarschuwing staat, en bij een limiet stoppen en melden.
+- Er lopen geen bouwers. Alles van de nacht staat op main (laatste: ddd21bd, startpuntvraag ook voor wie al eerder ja zei).
+- Ochtendrapport staat op https://claude.ai/artifact/JfGAHMLVZdSgC6LkT8jmb4.
+- Inbox heeft nieuw: kaartje met beide lussen in het paneel Route voorstellen (eigenaar 10 november). Niet starten zonder dat de eigenaar het vraagt of het bouwmoment het oppakt.
+- Wat de eigenaar vandaag nakijkt: APK 158 installeren, Precies, vanaf je deur kiezen, datavelden naast zijn Forerunner leggen. Antwoorden daarop eerst afhandelen.
+- Vorige coördinator: session_01LnDpSmhnJLwMd9LxhwhgLB (blijft open, niet archiveren zonder de eigenaar).
