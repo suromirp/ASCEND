@@ -42,6 +42,9 @@ Wens van de eigenaar (9 november): de datapagina's zien zoals ze op zijn horloge
 - De pagina staat in de tekstkaart als scherm `datavelden`.
 - Na de review: wat een tik doet staat in de engine (`pickField`, `canPickField`, `restoreVersion`), niet in de pagina. Ongedaan maken na Terug naar advies zet nooit iets terug over een versie die er intussen bij kwam, en vervalt bij elke nieuwe opslag. Er is één opslag tegelijk: een tweede tik voordat de eerste bewaard is doet niets.
 - De regel over Garmin Connect noemt geen menunamen: die zijn gemeld, niet bevestigd.
+- Een opslag die langer dan vijf seconden duurt zegt "Opslaan duurt langer dan normaal. Even geduld." en wacht op het schrijven zelf; "Opslaan lukte niet" staat er alleen als het schrijven faalde. Wat na een opslag gebeurt (de versie in beeld, de nieuwe pagina, de regel) hangt aan de uitslag en aan de soort van de tik.
+- Elke geslaagde opslag laat een open Ongedaan maken vervallen, ook een wijziging in een andere soort: ruimer dan nodig, maar er kan zo niets overschreven worden.
+- Na de tweede review bewust blijven staan: een tweede tik tijdens een lopende opslag doet niets, zonder dat de bediening grijs wordt (lokaal duurt een opslag milliseconden); een schrijven dat nooit eindigt houdt de pagina op slot met de regel "duurt langer dan normaal" tot je de pagina verlaat.
 - De stappen zeggen "Pagina 1", zoals de rest van de pagina; het menu van het horloge zegt Gegevensschermen, en dat woord staat alleen in het pad.
 - De terugknop van de pagina valt zonder geschiedenis terug op Garmin koppelen.
 - Eén mint accent: de gekozen chip en het gekozen segment zijn de bestaande opmaak van `Chip` en `Segmented`; er staat geen hoofdknop op de pagina. Lookout telde ze wel als meer dan één mint element.

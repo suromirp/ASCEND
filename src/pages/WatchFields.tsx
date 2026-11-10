@@ -155,15 +155,16 @@ function WatchFieldsInner({ asked }: { asked: string | null }) {
       if (pick.notice) setNotice(pick.notice);
       return;
     }
+    // Na het wachten hoort de versie en de regel bij de soort van de tik: is de gebruiker intussen naar een
+    // andere soort gegaan, dan gaat de pagina mee terug naar waar de keuze is geland.
     if (await save(pick.store)) {
+      setKind(kind);
       setTab(pick.tab);
       setNotice(pick.notice);
     }
   };
 
-  const edit = (next: WatchVersion) => {
-    if (kind && slot) void save(storeWith(store, kind, slot, next));
-  };
+  const edit = (next: WatchVersion): Promise<boolean> => (kind && slot ? save(storeWith(store, kind, slot, next)) : Promise.resolve(false));
 
   const resetToAdvice = async () => {
     if (!kind || !slot) return;
@@ -181,12 +182,21 @@ function WatchFieldsInner({ asked }: { asked: string | null }) {
 
   const undoReset = async () => {
     if (!undo) return;
-    window.clearTimeout(undoTimer.current);
     const back = restoreVersion(store, undo.kind, undo.slot, undo.version);
-    setUndo(undefined);
-    if (back.ok && (await save(back.store))) {
+    // De plek is intussen weer gevuld: het ongedaan maken vervalt.
+    if (!back.ok) {
+      window.clearTimeout(undoTimer.current);
+      setUndo(undefined);
+      return;
+    }
+    // De knop blijft staan tot het terugzetten bewaard is (save haalt hem dan weg); mislukt het, dan
+    // krijgt hij opnieuw zes seconden, zodat "Probeer het opnieuw" ook kan.
+    window.clearTimeout(undoTimer.current);
+    if (await save(back.store)) {
       setKind(undo.kind);
       setTab(undo.slot);
+    } else {
+      undoTimer.current = window.setTimeout(() => setUndo(undefined), UNDO_MS);
     }
   };
 
@@ -255,18 +265,22 @@ function WatchFieldsInner({ asked }: { asked: string | null }) {
                 tall
                 label="Aantal velden"
                 value={resolved.version.pages[shownPage]?.length}
-                onChange={(n) => edit(withFieldCount(resolved.version, shownPage, n, model, advice))}
+                onChange={(n) => void edit(withFieldCount(resolved.version, shownPage, n, model, advice))}
                 options={[1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))}
               />
               <div className="flex items-center justify-between gap-3">
                 <SecondaryButton
                   disabled={resolved.version.pages.length >= model.maxPages}
-                  onClick={() => { edit(withPageAdded(resolved.version, model)); setPage(resolved.version.pages.length); }}
+                  onClick={() => {
+                    const added = resolved.version.pages.length;
+                    // De nieuwe pagina komt pas in beeld als ze bewaard is.
+                    void edit(withPageAdded(resolved.version, model)).then((ok) => ok && setPage(added));
+                  }}
                 >
                   Pagina erbij
                 </SecondaryButton>
                 {resolved.version.pages.length > 1 && (
-                  <TextButton tone="dim" onClick={() => edit(withPageRemoved(resolved.version, shownPage))}>Pagina weghalen</TextButton>
+                  <TextButton tone="dim" onClick={() => void edit(withPageRemoved(resolved.version, shownPage))}>Pagina weghalen</TextButton>
                 )}
               </div>
               {diff.length > 0 ? (

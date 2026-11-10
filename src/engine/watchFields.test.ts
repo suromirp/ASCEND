@@ -75,7 +75,7 @@ describe('de datalijst per model', () => {
     // Een meter hoort bij dezelfde activiteit als zijn getal.
     for (const group of ['power', 'runningDynamics'] as const) expect(m.fields.filter((f) => f.group === group).every((f) => f.only === 'run')).toBe(true);
     expect(m.fields.find((f) => f.id === 'powerGauge')?.only).toBe('run');
-    expect(m.pathInApp).not.toContain('Gegevensschermen');
+    expect(m.pathInApp).not.toMatch(/Gegevensschermen|Activiteiten en apps/);
   });
 
   it('een onbekend of kapot model valt terug op het eerste model', () => {
@@ -138,6 +138,8 @@ describe('watchAdvice', () => {
         const main = model.fields.find((f) => f.id === page.fields[layout.main])!;
         expect(main.label, page.why).toBe(named);
         const biggest = Math.max(...layout.cells.map((c) => c.valueSize));
+        expect(layout.cells[layout.main].valueSize, page.why).toBe(biggest);
+        // Bij twee velden zijn beide plekken even groot: een pagina van twee velden mag dus geen veld groot noemen.
         expect(layout.cells.filter((c) => c.valueSize === biggest), page.why).toHaveLength(1);
       }
     }

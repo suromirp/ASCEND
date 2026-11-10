@@ -231,7 +231,7 @@ const FR255_FIELDS: WatchFieldDef[] = [
   { id: 'groundContactTimeGauge', group: 'graphs', label: 'Grondcontacttijd-meter', short: 'GCT-meter', only: 'run' },
   { id: 'verticalOscillationGauge', group: 'graphs', label: 'Meter voor verticale oscillatie', short: 'Meter vert. oscillatie', only: 'run' },
   { id: 'verticalRatioGauge', group: 'graphs', label: 'Verticale ratio-meter', only: 'run' },
-  { id: 'gctBalanceGauge', group: 'graphs', label: 'Balans GCT-meter', needs: 'dynamics-accessory' },
+  { id: 'gctBalanceGauge', group: 'graphs', label: 'Balans GCT-meter', needs: 'dynamics-accessory', only: 'run' },
   { id: 'heartRateChart', group: 'graphs', label: 'Hartslaggrafiek' },
   { id: 'paceChart', group: 'graphs', label: 'Tempografiek' },
   { id: 'elevationChart', group: 'graphs', label: 'Hoogtegrafiek' },
@@ -257,7 +257,7 @@ const FR255: WatchModel = {
     'Kies Voeg nieuw toe voor een extra scherm.',
   ],
   // De namen in de app zijn gemeld, niet bevestigd: de tekst belooft ze dus niet.
-  pathInApp: 'Het kan ook in Garmin Connect, bij je toestel onder Activiteiten en apps. De namen kunnen daar anders zijn. Bewaart de app het niet, doe het dan op het horloge.',
+  pathInApp: 'Het kan ook in Garmin Connect, bij de instellingen van je toestel. Bewaart de app het niet, doe het dan op het horloge.',
 };
 
 export const DEFAULT_WATCH_MODEL_ID = 'fr255';

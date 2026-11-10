@@ -88,7 +88,7 @@ describe('de tekening van een plek', () => {
             const est = textWidth(l, WATCH_LABEL_SIZE);
             const fit = d.labelFit[i];
             if (fit === undefined) expect(est, where).toBeLessThanOrEqual(cell.w - 16);
-            // Een woord dat niet breekt wordt ingekort, maar nooit tot minder dan twee derde.
+            // Een woord dat niet breekt wordt ingekort, maar nooit tot minder dan drie kwart.
             else expect(fit / est, where).toBeGreaterThanOrEqual(0.75);
           });
           if (d.value) {
