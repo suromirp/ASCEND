@@ -5,7 +5,7 @@ Bijgewerkt: 9 november 2026, 20:15 UTC, door de coördinator van 8 en 9 november
 ## Lopende bouwers (Fable 5.2, melden zich bij de coördinator van 9 november avond, session_01LnDpSmhnJLwMd9LxhwhgLB)
 
 - Teksten Lichaam en Instellingen: live 10 november (na herstel), sessie gearchiveerd.
-- Datavelden voor je horloge (plan punt 3), session_01LnDpSmQ4BrFUPHMVa43uxV, branch claude/datavelden-horloge.
+- Datavelden voor je horloge: live 10 november, sessie gearchiveerd.
 - Startpunt van je lus: live 10 november, sessie gearchiveerd.
 - Routeplanner fase 3, naar Garmin Connect (Fable), session_01LnDpSjVK9hSe1mHL4RF8RK, branch claude/routeplanner-garmin. Mogelijk een native wijziging: eerst proefbouw Android-workflow, pas live met een APK als die groen is.
 - Uitleg bij oefeningen batch 3 en 4: klaar, wordt op main gezet na de controles (59 oefeningen nog zonder uitleg; een volgende batch op Sonnet).
