@@ -5,7 +5,10 @@
 // (usePageState).
 
 import { useEffect, useRef } from 'react';
-import { GARMIN_DATA_SCREENS, GARMIN_METRICS, GARMIN_STRAP_USAGE, GARMIN_ZONE_SETUP, type GuideCard } from '../data/garminGuide';
+import { useNavigate } from 'react-router-dom';
+import { watchFieldsShown } from '../engine/watchFields';
+import { useAppData } from '../state/AppDataContext';
+import { GARMIN_METRICS, GARMIN_STRAP_USAGE, GARMIN_ZONE_SETUP, type GuideCard } from '../data/garminGuide';
 import { DisclosureRow } from './DisclosureRow';
 import { Icon } from './icons';
 import { usePageState } from './usePageState';
@@ -14,9 +17,11 @@ import { Card, Eyebrow } from './ui';
 const CARDS: { id: string; card: GuideCard }[] = [
   { id: 'zones', card: GARMIN_ZONE_SETUP },
   { id: 'borstband', card: GARMIN_STRAP_USAGE },
-  { id: 'schermen', card: GARMIN_DATA_SCREENS },
   { id: 'cijfers', card: GARMIN_METRICS },
 ];
+
+// De rij Datavelden staat waar de ingeklapte dataschermen stonden: voor Metrics interpreteren.
+const DATA_FIELDS_AT = 2;
 
 // De koppen in de gegevens staan in hoofdletters; hier zinsletters.
 const sentenceCase = (heading: string) => heading.charAt(0) + heading.slice(1).toLowerCase();
@@ -26,6 +31,10 @@ const isIdList = (v: unknown) => Array.isArray(v) && v.every((x) => typeof x ===
 export function WatchSetupGuide({ scrollIntoView = false }: { scrollIntoView?: boolean }) {
   const [openIds, setOpenIds] = usePageState<string[]>('horloge-instellen', [], isIdList);
   const root = useRef<HTMLElement>(null);
+  const navigate = useNavigate();
+  const { settings } = useAppData();
+  // De dataschermen hebben een eigen pagina; staat de instelling uit, dan is de rij weg.
+  const showFields = watchFieldsShown(settings);
 
   // Wie vanuit een training hierheen komt voor de uitleg, ziet meteen het kopje.
   useEffect(() => {
@@ -42,6 +51,17 @@ export function WatchSetupGuide({ scrollIntoView = false }: { scrollIntoView?: b
       <Card className="flex flex-col py-1">
         {CARDS.map(({ id, card }, i) => (
           <div key={id} className={i === 0 ? '' : 'border-t'} style={{ borderColor: 'var(--color-card-border)' }}>
+            {showFields && i === DATA_FIELDS_AT && (
+              <button
+                type="button"
+                onClick={() => navigate('/horloge/datavelden')}
+                className="flex min-h-[48px] w-full items-center justify-between border-b py-3 text-left"
+                style={{ borderColor: 'var(--color-card-border)' }}
+              >
+                <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Datavelden</span>
+                <span style={{ color: 'var(--color-action)' }}><Icon name="verder" size={16} /></span>
+              </button>
+            )}
             <DisclosureRow title={sentenceCase(card.heading)} open={openIds.includes(id)} onToggle={() => toggle(id)}>
               <GuideBody card={card} />
             </DisclosureRow>

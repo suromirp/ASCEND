@@ -81,7 +81,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   koppelingen: {
     rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'health-connect', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'bundel-strava'],
-    advanced: [],
+    advanced: ['datavelden', 'datavelden-model'],
   },
   gegevens: { rows: ['backup', 'auto-backup', 'backupmap', 'toestemmingen', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'aangepast', 'wissen'], advanced: ['auto-bijwerken', 'voorstellen-opruimen', 'herbouwen', 'startniveau'], footer: ['versie'] },
   gidsen: { rows: ['weer-gids', 'kennisbank', 'plekken', 'bronnen'], advanced: [] },
@@ -243,6 +243,7 @@ const B = {
   mf: { ok: (_s, c) => c.macroFactorExport, reason: 'Zichtbaar zodra je een MacroFactor-export hebt ingelezen', parent: 'macrofactor' },
   garmin: { ok: (_s, c) => c.garmin, reason: 'Zichtbaar zodra Garmin is gekoppeld', parent: 'garmin' },
   route: { ok: (s) => s.routeProposal !== false, reason: 'Zichtbaar zodra Route voorstellen aan staat', parent: 'route-voorstel' },
+  watchFields: { ok: (s) => s.watchFieldsShown !== false, reason: 'Zichtbaar zodra Datavelden voor je horloge aan staat', parent: 'datavelden' },
   strava: { ok: (s) => s.stravaText !== false, reason: 'Zichtbaar zodra Tekst voor Strava aan staat', parent: 'strava-tekst' },
   hc: { ok: (_s, c) => c.healthConnect, reason: 'Zichtbaar zodra Health Connect aan staat', parent: 'health-connect' },
   // Slaap, rusthartslag, HRV en trainingen komen van Garmin of uit Health Connect: de keuzes gelden voor beide.
@@ -322,6 +323,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.mf], 'macrofactor-leidend', 'macrofactor-gewicht'),
   ...rule([B.hc], 'health-connect-gewicht'),
   ...rule([B.strava], 'strava-tekst-inhoud'),
+  ...rule([B.watchFields], 'datavelden-model'),
   ...rule([B.route], 'route-soort'),
   // Gegevens en back-up
   ...rule([B.folder], 'backupmap'),

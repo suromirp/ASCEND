@@ -830,6 +830,14 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'OpenStreetMap', text: 'heuvels en paden zoekt het altijd op je afgeronde plek.' },
     ],
   },
+  datavelden: {
+    title: 'Datavelden voor je horloge',
+    lead: 'ASCEND tekent per soort training welke datapagina\'s je op je horloge zet. Er verandert niets aan je planning.',
+    points: [
+      { head: 'Zelf kiezen', text: 'tik een veld aan en kies een ander. Het advies zelf blijft staan.' },
+      { head: 'Zelf instellen', text: 'ASCEND stuurt niets naar je horloge.' },
+    ],
+  },
   stravaTekst: {
     title: 'Tekst voor Strava',
     lead: 'ASCEND zet een titel klaar die zegt wat voor training het was. Je plakt hem zelf in Strava.',
