@@ -136,3 +136,12 @@ function placementsByRow(): Record<string, string> {
     return p ? [[i.id, p.row]] : [];
   }));
 }
+
+describe('datavelden bekijken', () => {
+  it('zoeken op "datavelden" vindt de rij die naar de pagina gaat, onder Geavanceerd van Koppelingen', () => {
+    const found = searchSettings('datavelden', SETTINGS_INDEX).map((r) => r.item.id);
+    expect(found).toContain('datavelden-bekijken');
+    expect(isAdvancedRow('koppelingen', 'datavelden-bekijken')).toBe(true);
+    expect(SETTINGS_INDEX.find((i) => i.id === 'datavelden-bekijken')?.route).toBe('/horloge/datavelden');
+  });
+});
