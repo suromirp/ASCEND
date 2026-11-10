@@ -163,6 +163,9 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   }, []);
 
   const mode = resolveRouteStart(settings.routeStart);
+  // Wie al ja zei voor er een keuze voor het startpunt was, krijgt de vraag nog één keer: zonder keuze
+  // zou de lus stil op Ongeveer blijven en zie je Precies, vanaf je deur nooit.
+  const asked = consent === true && settings.routeStart !== undefined;
   const choice = saved === undefined ? undefined : chooseStart(mode, saved);
   // Precies zonder punt vraagt eerst om een punt, tenzij dit paneel op Ongeveer terugviel.
   const waitingForPoint = choice?.kind === 'needs-point' && !fellBack && !declinedExact;
@@ -175,7 +178,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   const search: RouteSearch | 'busy' = found?.key === key ? found.result : 'busy';
 
   useEffect(() => {
-    if (!consent || !startReady || lat === undefined || lon === undefined) return;
+    if (!asked || !startReady || lat === undefined || lon === undefined) return;
     const stop = new AbortController();
     // findRoutes heeft zelf een grens in tijd en gooit nooit: de regel "Zoeken" blijft nooit staan.
     void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
@@ -184,7 +187,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
     // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
     return () => stop.abort();
     // De sleutel bevat het punt; de afhankelijkheden zijn dezelfde getallen.
-  }, [consent, startReady, lat, lon, exactLat, exactLon, distanceKm, ascentM, key]);
+  }, [asked, startReady, lat, lon, exactLat, exactLon, distanceKm, ascentM, key]);
 
   // Gebruik waar ik nu ben: één keer, met een grens in tijd. Lukt het niet, dan zoekt het paneel ongeveer.
   async function startHere() {
@@ -214,7 +217,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
     return <p className="text-sm leading-snug" style={dim}>Kies eerst een plaats bij Instellingen, Vandaag en meldingen, Plaats. Daar begint de lus.</p>;
   }
   if (consent === undefined) return <p role="status" className="min-h-[20px] text-sm" style={dim} />;
-  if (!consent) {
+  if (!asked) {
     return (
       <div className="flex flex-col">
         <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
