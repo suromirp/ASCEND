@@ -7,6 +7,7 @@ Bijgewerkt: 9 november 2026, 20:15 UTC, door de coördinator van 8 en 9 november
 - Teksten Lichaam en Instellingen: live 10 november (na herstel), sessie gearchiveerd.
 - Datavelden voor je horloge (plan punt 3), session_01LnDpSmQ4BrFUPHMVa43uxV, branch claude/datavelden-horloge.
 - Startpunt van je lus: live 10 november, sessie gearchiveerd.
+- Routeplanner fase 3, naar Garmin Connect (Fable), session_01LnDpSjVK9hSe1mHL4RF8RK, branch claude/routeplanner-garmin. Mogelijk een native wijziging: eerst proefbouw Android-workflow, pas live met een APK als die groen is.
 - Uitleg bij oefeningen batch 3 en 4: klaar, wordt op main gezet na de controles (59 oefeningen nog zonder uitleg; een volgende batch op Sonnet).
 
 Live sinds de wissel: Overzicht Gewicht (b39130d), Calisthenics algemeen en Routeplanner fase 1 en 2 (8f5ba7e). Plan punten 0, 2 en 4 zijn dus af; hierna 6 (Buiten), 7 (Feestdagen), 8, 9, 10. De eigenaar gaf akkoord (9 november avond) op twee nieuwe punten, in de Inbox van de backlog: 11. Startpunt van je lus (routeplanner, instelling Ongeveer of Precies); 12. voorstel dat squat op één been en L-sit in een training zet (planner, niet tegelijk met 7). Starten zodra er een plek vrij is, 11 eerst. De drie bouwers vielen om ongeveer 21:15 tot 22:50 UTC stil op de limiet van vijf uur en zijn om 23:04 UTC gewekt.
