@@ -83,7 +83,7 @@ function RouteBlock({ style, outcome, primary, date, target, sender }: { style: 
             <TextButton tone={primary && !sender ? 'action' : 'dim'} disabled={done === 'busy'} onClick={() => void download(outcome.proposal)}>GPX downloaden</TextButton>
           </div>
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sender ? SEND_HINT : SAVE_HINT}</p>
-          <p role="status" className="min-h-[18px] text-xs leading-snug" style={{ color: line?.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line?.text ?? ''}</p>
+          <p role="status" className="min-h-[34px] text-xs leading-snug" style={{ color: line?.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line?.text ?? ''}</p>
         </>
       ) : (
         <>

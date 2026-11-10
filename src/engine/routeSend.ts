@@ -37,7 +37,7 @@ export function sendLine(outcome: RouteSendOutcome): SendLine {
   switch (outcome.kind) {
     case 'offered':
     case 'waiting':
-      return { text: 'Het venster is geopend. Staat Garmin Connect er niet bij, kies dan GPX downloaden en open het bestand met Garmin Connect.', warn: false };
+      return { text: 'Het venster is geopend. Geen Garmin Connect in de lijst? Kies GPX downloaden en open het bestand ermee.', warn: false };
     case 'shared':
       return { text: 'Gedeeld. Sla de lus in Garmin Connect op als koers.', warn: false };
     case 'cancelled':
