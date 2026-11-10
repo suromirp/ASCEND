@@ -77,6 +77,20 @@ describe('weekConcerns', () => {
     expect(spacing.notes).toEqual({ 'w-0': '1 dag voor Heuvelsprints en afdalen', 'w-1': '1 dag na Benen A (zwaar)' });
   });
 
+  it('een zware lange duurloop: de tekst vraagt dezelfde dag extra als de controle', () => {
+    // Zondag een lange duurloop met RPE 9, dinsdag zware benen: 1 dag ertussen is dan te weinig.
+    const sunday = addDays(MONDAY, -1);
+    const long: PlannedSession = { id: 'long', templateId: 'tpl_long_run', scheduledDate: sunday, weekStartDate: addDays(MONDAY, -7), status: 'planned', order: 0 };
+    const legs: PlannedSession = { id: 'legs', templateId: 'tpl_lower_a', scheduledDate: addDays(MONDAY, 1), weekStartDate: MONDAY, status: 'planned', order: 0 };
+    const log = { id: 'log-long', plannedSessionId: 'long', templateId: 'tpl_long_run', completedDate: sunday, durationMinutes: 90, rpe: 9 } as CheckInput['logs'][number];
+    const heavy = weekConcerns(input([long, legs], { logs: [log], today: MONDAY }), MONDAY).find((c) => c.rule === 'LEG-SPACING')!;
+    expect(heavy.fact).toBe('Er zit 1 dag tussen, liefst 2 dagen ertussen (72 uur). Lange duurloop was zwaarder dan normaal, daarom een dag extra.');
+    expect(heavy.why).toContain('72 uur');
+    // Zonder dat zware logboek is 1 dag ertussen genoeg en is er geen melding.
+    const calm = weekConcerns(input([long, legs], { logs: [{ ...log, rpe: 6 }], today: MONDAY }), MONDAY);
+    expect(calm.some((c) => c.rule === 'LEG-SPACING')).toBe(false);
+  });
+
   it('een eigen training op de rustdag met een vrije dag elders is geen melding', () => {
     const sessions = fullWeek().filter((s) => s.id !== 'w-1').map((s) => ({ ...s, lock: { by: 'proposal' as const, at: '2026-10-28T08:00:00Z' } }));
     expect(weekConcerns(input(sessions), MONDAY).find((c) => c.rule === 'REST-DAY')).toBeUndefined();

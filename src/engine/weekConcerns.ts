@@ -14,7 +14,7 @@
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { daysBetween, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { idHasRole, idIsTestOrRace } from './templateRoles';
-import { isIntentionalBackToBack, legSpacingDays } from './scheduler';
+import { isIntentionalBackToBack, legHeavyDayBefore, legSpacingDays, requiredSpacingDays } from './scheduler';
 import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
 import { intensityOfLog, isSportLogSession, restHoursFor, sportDoneLine, sportLogIdOf } from './sportDays';
 import { anySportDefinition } from '../data/sports';
@@ -121,12 +121,25 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
             notes: { [early]: `${days} voor ${nameOf(late)}`, [late]: `${days} na ${nameOf(early)}` },
           };
         }
+        // The same sum as the check itself (findHeavyConflicts in engine/scheduler.ts): a day more after a
+        // session whose own log was unusually heavy, so the text never asks for less than the check does.
+        const recentLogs = input.logs.filter((l) => daysBetween(l.completedDate, input.today) <= 56);
+        const heavyId = [early, late].find((id) => requiredSpacingDays(id, recentLogs) > 1);
+        const templateMap = new Map(input.templates.map((t) => [t.id, t]));
+        const raw = tEarly && tLate ? legSpacingDays(tEarly, tLate) : 1;
+        const bumped = raw === 0 && legHeavyDayBefore(dateOf(early), input.sessions, templateMap, [early, late]) ? 1 : raw;
+        const wanted = Math.max(1, bumped + (heavyId ? 1 : 0));
+        const betweenText = between === 0 ? 'geen dag' : plural(between, 'dag', 'dagen');
+        // Enough days between and still reported: the session between them is heavy for the legs too.
+        const three = between >= wanted;
         return {
           ...base,
           headline: `${nameOf(early)} en ${nameOf(late)} liggen te dicht op elkaar.`,
-          fact: `Er zit ${between === 0 ? 'geen dag' : plural(between, 'dag', 'dagen')} tussen, liefst ${need === 2 ? '2 dagen' : '1 dag'} ertussen (${need === 2 ? 72 : 48} uur).`,
+          fact: three
+            ? `Er zit ${betweenText} tussen, maar de training ertussen is ook zwaar voor je benen. Dat zijn drie zware beendagen achter elkaar.`
+            : `Er zit ${betweenText} tussen, liefst ${plural(wanted, 'dag', 'dagen')} ertussen (${(wanted + 1) * 24} uur).${heavyId ? ` ${nameOf(heavyId)} was zwaarder dan normaal, daarom een dag extra.` : ''}`,
           title: 'Zware beendagen verder uit elkaar',
-          why: `Zware beendagen hebben tijd nodig om te herstellen. ASCEND houdt er liefst ${need === 2 ? 72 : 48} uur tussen.`,
+          why: `Zware beendagen hebben tijd nodig om te herstellen. ASCEND houdt er liefst ${(wanted + 1) * 24} uur tussen.`,
           notes: { [early]: `${days} voor ${nameOf(late)}`, [late]: `${days} na ${nameOf(early)}` },
         };
       }

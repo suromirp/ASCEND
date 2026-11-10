@@ -90,7 +90,7 @@ export function isIntentionalBackToBack(templateA: SessionTemplate, templateB: S
 // its own prior baseline); otherwise the original 1-day minimum applies. A
 // session with no log yet (nothing has happened there) always uses the
 // conservative 1-day default — never assumed heavy in advance.
-function requiredSpacingDays(sessionId: string, recentLogs: SessionLog[]): number {
+export function requiredSpacingDays(sessionId: string, recentLogs: SessionLog[]): number {
   const ownLog = recentLogs.find((l) => l.plannedSessionId === sessionId);
   if (!ownLog) return 1;
   if (ownLog.rpe !== undefined && ownLog.rpe >= 9) return 2;
