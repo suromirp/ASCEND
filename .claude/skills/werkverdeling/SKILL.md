@@ -160,6 +160,13 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 - waar herstelrondes vandaan kwamen en welke eis vooraf die had voorkomen;
 - past de tabel hierboven aan als het logboek dat laat zien, met de reden in de commit.
 
+## Modellen per laag (eigenaar, 9 november avond)
+
+- De coördinator draait op Opus (claude-opus-5-5).
+- Zwaar werk op Fable (claude-fable-5-2): een bouwer-sessie die planning, opslag, migraties of een nieuwe engine raakt, Warden, Scout.
+- Licht werk op Sonnet (claude-sonnet-5-5): een bouwer-sessie die alleen teksten, uitleg bij oefeningen of een klein scherm doet, Lookout, Cartographer, een gewone Sherpa.
+- Geef bij `create_session` altijd `model` mee: zonder dat erft een bouwer het model van de coördinator (Opus).
+
 ## Bouwers melden zich zelf (9 november)
 
 Elke bouwer die de coördinator met `create_session` start, krijgt als laatste regel van de opdracht: meld je als je klaar bent of vastloopt met `create_trigger` (claude-code-remote), `persistent_session_id` de sessie van de coördinator, `run_once_at` één à twee minuten vooruit, `initiation` `own_followup`, met in de prompt titel, sessie-id, wat live staat, de controles en vragen. De coördinator start dan meteen de volgende; een check elke twee uur is alleen nog een vangnet.
