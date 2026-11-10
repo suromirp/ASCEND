@@ -753,7 +753,7 @@ export const CHOICES = {
     help: 'routeStartpunt',
     options: [
       { value: 'approx', label: 'Ongeveer', note: 'Je plaats, binnen een kilometer', short: 'Ongeveer' },
-      { value: 'exact', label: 'Precies', note: 'Je eigen startpunt, alleen op dit toestel', short: 'Precies' },
+      { value: 'exact', label: 'Precies', note: 'Je eigen startpunt gaat naar de routeplanner', short: 'Precies' },
     ],
   }),
   stravaInhoud: def({

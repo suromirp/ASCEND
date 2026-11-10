@@ -330,6 +330,8 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeStart;
     skipped.n++;
   }
+  // Precies hoort bij het punt op dit toestel: een import zet het nooit aan, dan ging er zonder vraag een punt de deur uit.
+  if (s.routeStart === 'exact') s.routeStart = 'approx';
   if ('routeStartPoint' in s) {
     delete s.routeStartPoint;
     skipped.n++;

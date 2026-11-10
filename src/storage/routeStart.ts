@@ -49,26 +49,28 @@ export type StartLocation = { ok: true; point: RoutePoint } | { ok: false; reaso
 
 export interface UseMyPlaceDeps {
   locate?: () => Promise<Position2>;
+  // Geeft undefined in de browser; in de app de uitkomst van het venster van Android.
   askPermission?: () => Promise<unknown>;
   limitMs?: number;
+  // Sluit het paneel, dan wordt er niets meer bewaard.
+  signal?: AbortSignal;
 }
 
-// Gebruik waar ik nu ben: één keer de plek van het toestel, fijn, met een grens in tijd. Slaat het
-// punt op bij een goede plek. Een ruwe plek (nauwkeurigheid boven de 250 m) telt niet.
+const PERMISSION_LIMIT_MS = 60_000;
+
+// Gebruik waar ik nu ben: één keer de plek van het toestel, fijn, met een grens in tijd. Het venster
+// van Android heeft een eigen ruime grens; de 15 seconden gelden voor de plek zelf. Slaat het punt
+// op bij een goede plek. Een ruwe plek, of een plek zonder nauwkeurigheid, telt niet.
 export async function locateStartHere(deps: UseMyPlaceDeps = {}): Promise<StartLocation> {
   try {
+    const perm = await withTimeout((deps.askPermission ?? requestFineAppLocationPermission)(), PERMISSION_LIMIT_MS).catch(() => undefined);
+    if (perm !== undefined && perm !== 'granted') return { ok: false, reason: 'coarse' };
     const locate = deps.locate ?? (() => locateMe({ timeoutMs: 10_000, maximumAge: 30_000, precise: true, fine: true }));
-    const found = await withTimeout(
-      (async () => {
-        // In de Android-app de fijne toestemming; in de browser komt het venster bij de plek zelf.
-        await (deps.askPermission ?? requestFineAppLocationPermission)().catch(() => undefined);
-        return locate();
-      })(),
-      deps.limitMs ?? START_LOCATE_LIMIT_MS,
-    );
-    if (found.accuracyM !== undefined && found.accuracyM > MAX_START_ACCURACY_M) return { ok: false, reason: 'coarse' };
+    const found = await withTimeout(locate(), deps.limitMs ?? START_LOCATE_LIMIT_MS);
+    if (found.accuracyM === undefined || found.accuracyM > MAX_START_ACCURACY_M) return { ok: false, reason: 'coarse' };
     const point = validStartPoint(found);
     if (!point) return { ok: false, reason: 'unavailable' };
+    if (deps.signal?.aborted) return { ok: false, reason: 'timeout' };
     const saved = await saveRouteStartPoint(point);
     if (!saved) return { ok: false, reason: 'unavailable' };
     return { ok: true, point: roundExact(point) };

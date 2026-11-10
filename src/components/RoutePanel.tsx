@@ -83,10 +83,13 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   const [fellBack, setFellBack] = useState<StartFailure | undefined>();
   const [declinedExact, setDeclinedExact] = useState(false);
   const mounted = useRef(true);
+  const locateStop = useRef(new AbortController());
   useEffect(() => {
     mounted.current = true;
+    const stop = locateStop.current;
     return () => {
       mounted.current = false;
+      stop.abort();
     };
   }, []);
   const first = resolveRouteStyle(settings.routeStyle);
@@ -106,8 +109,11 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
 
   useEffect(() => {
     let alive = true;
-    void withTimeout(getRouteStartPoint(), CONSENT_LIMIT_MS).catch(() => undefined).then((p) => {
+    void withTimeout(getRouteStartPoint(), CONSENT_LIMIT_MS).then((p) => {
       if (alive) setSaved(p ?? null);
+    }, () => {
+      // Trage opslag: niet raden dat er geen punt is, dit paneel zoekt ongeveer.
+      if (alive) { setSaved(null); setDeclinedExact(true); }
     });
     return () => {
       alive = false;
@@ -141,7 +147,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   // Gebruik waar ik nu ben: één keer, met een grens in tijd. Lukt het niet, dan zoekt het paneel ongeveer.
   async function startHere() {
     setLocating(true);
-    const found = await locateStartHere();
+    const found = await locateStartHere({ signal: locateStop.current.signal });
     if (!mounted.current) return;
     setLocating(false);
     if (found.ok) setSaved(found.point);
@@ -149,8 +155,12 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   }
 
   async function choose(next: 'approx' | 'exact') {
-    await grantRouteConsent();
-    await updateSettings({ routeStart: next });
+    try {
+      await withTimeout(grantRouteConsent(), CONSENT_LIMIT_MS);
+      await withTimeout(updateSettings({ routeStart: next }), CONSENT_LIMIT_MS);
+    } catch {
+      // Niet bewaard: de keuze geldt dan niet en het paneel zoekt ongeveer.
+    }
     if (mounted.current) setConsent(true);
   }
 
@@ -166,7 +176,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
         <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
         <TextButton onClick={() => void choose('exact')}>Precies (advies)</TextButton>
         <p className="text-xs leading-snug" style={dim}>
-          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap op je plek, afgerond op ongeveer een kilometer. Het punt blijft op dit toestel.
+          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap op je plek, afgerond op ongeveer een kilometer. Het punt wordt alleen op dit toestel bewaard.
         </p>
         <TextButton tone="dim" onClick={() => void choose('approx')}>Ongeveer</TextButton>
         <p className="text-xs leading-snug" style={dim}>
@@ -183,7 +193,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   if (waitingForPoint) {
     return (
       <div className="flex flex-col">
-        <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. Sta bij je deur en kies Gebruik waar ik nu ben. Dat punt blijft op dit toestel.</p>
+        <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. Sta bij je deur en kies Gebruik waar ik nu ben. Dat punt gaat als start van je lus naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt alleen op dit toestel bewaard.</p>
         <div className="flex flex-wrap gap-x-5">
           <TextButton disabled={locating} onClick={() => void startHere()}>Gebruik waar ik nu ben</TextButton>
           <TextButton tone="dim" disabled={locating} onClick={() => setDeclinedExact(true)}>Ongeveer</TextButton>

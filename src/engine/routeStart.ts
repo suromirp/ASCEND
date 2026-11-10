@@ -41,18 +41,20 @@ export function chooseStart(mode: RouteStartMode, saved: unknown): StartChoice {
 
 export type StartFailure = 'denied' | 'unavailable' | 'timeout' | 'unsupported' | 'coarse';
 
-export function startFailureLine(reason: StartFailure): string {
+export function startFailureReason(reason: StartFailure): string {
   switch (reason) {
     case 'denied':
-      return 'ASCEND mag je locatie niet gebruiken. De lus begint bij je plek, afgerond op ongeveer een kilometer.';
+      return 'ASCEND mag je locatie niet gebruiken.';
     case 'timeout':
-      return 'Je locatie kwam niet op tijd. De lus begint bij je plek, afgerond op ongeveer een kilometer.';
+      return 'Je locatie kwam niet op tijd.';
     case 'coarse':
-      return 'Je telefoon geeft maar een ruwe plek. De lus begint bij je plek, afgerond op ongeveer een kilometer.';
+      return 'ASCEND krijgt je precieze plek niet.';
     default:
-      return 'Je locatie is nu niet beschikbaar. De lus begint bij je plek, afgerond op ongeveer een kilometer.';
+      return 'Je locatie is nu niet beschikbaar.';
   }
 }
+
+export const startFailureLine = (reason: StartFailure): string => `${startFailureReason(reason)} De lus begint bij je plek, afgerond op ongeveer een kilometer.`;
 
 // De regel bovenaan het paneel Route voorstellen.
 export const START_LINE_EXACT = 'De lus begint bij je startpunt.';

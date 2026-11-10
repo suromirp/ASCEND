@@ -4,7 +4,7 @@
 // altijd lussen, "zonder netwerk" of "te lang". Een route wordt niet bewaard.
 //
 // De eerste vraag ("mag ASCEND een route zoeken?") is een eigen sleutel op dit toestel: pas na een
-// ja gaat de afgeronde plek naar de routeplanner en naar OpenStreetMap.
+// ja gaat de afgeronde plek (of bij Precies het eigen startpunt, alleen naar de routeplanner) de deur uit.
 
 import { MetaRepo } from './database';
 import { grantTerrainConsent, getNearbyTerrain, refreshNearbyTerrain } from './nearbyTerrain';
