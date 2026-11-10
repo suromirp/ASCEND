@@ -19,12 +19,21 @@ export type SendResult = 'offered' | 'shared' | 'cancelled';
 
 export interface FileSender {
   platform: 'app' | 'browser';
-  send(name: string, text: string, mimeType: string, title: string): Promise<SendResult>;
+  // `signal`: de grens van de aanroeper. Is die voorbij, dan gaat er geen venster meer open.
+  send(name: string, text: string, mimeType: string, title: string, signal?: AbortSignal): Promise<SendResult>;
 }
 
 const SHARE_DIR = 'delen';
 
 // Wat de weg in de app nodig heeft, los te testen (fileSender.test.ts).
+// De aanroeper wacht niet meer (grens in tijd): er is niets aangeboden.
+export class SendStoppedError extends Error {
+  constructor() {
+    super('Aanbieden gestopt');
+    this.name = 'SendStoppedError';
+  }
+}
+
 export interface CacheShare {
   fs: TempFs;
   // Haalt eerdere bestanden uit de map weg; er staat er nooit meer dan één.
@@ -37,10 +46,12 @@ export interface CacheShare {
 export function cacheSender(share: CacheShare): FileSender {
   return {
     platform: 'app',
-    async send(name, text, mimeType, title) {
+    async send(name, text, mimeType, title, signal) {
       await share.clear().catch(() => undefined);
       const attemptId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
       await writeThroughTemp(share.fs, name, text, attemptId);
+      // Een grens in tijd stopt ook het werk erachter: na de grens opent de keuzelijst niet meer.
+      if (signal?.aborted) throw new SendStoppedError();
       await share.open(name, mimeType, title);
       return 'offered';
     },
@@ -51,8 +62,10 @@ interface FileOpenPlugin {
   open(options: { path: string; mimeType: string; title: string }): Promise<void>;
 }
 
+// Eén keer registreren voor de hele app; een tweede keer geeft een waarschuwing van Capacitor.
+let opener: FileOpenPlugin | undefined;
+
 function androidSender(): FileSender {
-  let opener: FileOpenPlugin | undefined;
   const load = () => import('@capacitor/filesystem');
   const path = (name: string) => `${SHARE_DIR}/${name}`;
   return cacheSender({

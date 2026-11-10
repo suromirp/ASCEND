@@ -9,9 +9,9 @@ export const SEND_LABEL = 'Naar Garmin Connect';
 // De titel boven de keuzelijst van Android en van het deelvenster.
 export const SEND_TITLE = 'Koers openen met';
 // Eén regel onder de knoppen: wat er gebeurt.
-export const SEND_HINT = 'Kies Garmin Connect in het venster en sla hem op als koers.';
+export const SEND_HINT = 'Kies Garmin Connect in het venster en sla de lus op als koers.';
 // Waar aanbieden niet kan: het bestand zelf openen.
-export const SAVE_HINT = 'Open het bestand met Garmin Connect en sla hem op als koers.';
+export const SAVE_HINT = 'Open het bestand met Garmin Connect en sla de lus op als koers.';
 
 export type RouteSendOutcome =
   // Het venster stond open; wat er gekozen is weet ASCEND niet.
@@ -23,8 +23,9 @@ export type RouteSendOutcome =
   | { kind: 'waiting' }
   // Er is geen weg op dit toestel (meer): de download blijft.
   | { kind: 'unavailable' }
-  // 'file': het bestand klaarzetten lukte niet, er is niets aangeboden.
-  | { kind: 'failed'; step: 'file' | 'open' };
+  // 'file': het bestand klaarzetten lukte niet, er is niets aangeboden. 'slow': in de app duurde
+  // klaarzetten of openen langer dan de grens; er gaat daarna geen venster meer open.
+  | { kind: 'failed'; step: 'file' | 'open' | 'slow' };
 
 export interface SendLine {
   text: string;
@@ -36,15 +37,17 @@ export function sendLine(outcome: RouteSendOutcome): SendLine {
   switch (outcome.kind) {
     case 'offered':
     case 'waiting':
-      return { text: 'Het venster is geopend. Staat Garmin Connect er niet bij, kies dan GPX downloaden.', warn: false };
+      return { text: 'Het venster is geopend. Staat Garmin Connect er niet bij, kies dan GPX downloaden en open het bestand met Garmin Connect.', warn: false };
     case 'shared':
-      return { text: 'Gedeeld. Sla hem in Garmin Connect op als koers.', warn: false };
+      return { text: 'Gedeeld. Sla de lus in Garmin Connect op als koers.', warn: false };
     case 'cancelled':
       return { text: 'Niets gedeeld.', warn: false };
     case 'unavailable':
       return { text: 'Delen kan hier niet. Kies GPX downloaden.', warn: true };
     case 'failed':
-      return { text: outcome.step === 'file' ? 'Het bestand klaarzetten lukte niet. Probeer het nog eens.' : 'Het venster openen lukte niet. Kies GPX downloaden.', warn: true };
+      if (outcome.step === 'file') return { text: 'Het bestand klaarzetten lukte niet. Probeer het nog eens.', warn: true };
+      if (outcome.step === 'slow') return { text: 'Het duurde te lang. Probeer het nog eens of kies GPX downloaden.', warn: true };
+      return { text: 'Het venster openen lukte niet. Kies GPX downloaden.', warn: true };
   }
 }
 

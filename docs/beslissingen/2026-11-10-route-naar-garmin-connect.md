@@ -17,10 +17,10 @@ De eigenaar wil een lus met zo min mogelijk tikken op zijn Forerunner 255. Tot n
 - In de browser: het deelvenster van de browser, alleen als die een GPX-bestand wil delen (`canShare`). Anders is er geen knop Naar Garmin Connect en blijft GPX downloaden, met de regel dat je het bestand met Garmin Connect opent.
 - Een oudere Android-app zonder het nieuwe deel houdt alleen GPX downloaden (opslaan in Documenten/ASCEND), met dezelfde regel. Er verandert daar niets.
 - Onder de knoppen staat één regel wat er gebeurt, en daaronder de uitkomst. Het venster wegtikken is geen fout ("Niets gedeeld."). In de app weet ASCEND niet wat er in de lijst gekozen is; de regel zegt dan dat het venster geopend is en wat je doet als Garmin Connect er niet bij staat.
-- Grens in tijd: in de app 15 seconden voor het klaarzetten en openen, daarna een fout; in de browser is de knop na een minuut weer vrij, zonder fout, ook als het deelvenster nog open staat.
+- Grens in tijd: in de app 15 seconden voor het klaarzetten en openen, daarna een fout en gaat er geen keuzelijst meer open; in de browser is de knop na een minuut weer vrij, zonder fout, ook als het deelvenster nog open staat.
 - Schrijven gaat via een tijdelijk bestand en dan hernoemen (dezelfde weg als de back-up). Mislukt het halverwege, dan is er geen half bestand, opent er geen venster en staat er dat klaarzetten niet lukte.
 - Onder de lussen staat Zo komt hij op je horloge, drie stappen achter een tik: opslaan als koers (vraagt internet), in Garmin Connect naar je horloge sturen, op het horloge Hardlopen, Navigatie, Koersen. De zin dat het horloge bij Simpel met herhalingen kan verspringen blijft staan waar hij stond.
-- Het bestand is voor beide knoppen hetzelfde: GPX 1.1, één spoor, geen tijd, geen plek, geen naam van de gebruiker. De bestandsnaam heeft alleen de soort lus en de datum.
+- Het bestand is voor beide knoppen hetzelfde: GPX 1.1, één spoor, geen kloktijd, geen plaatsnaam, geen naam van de gebruiker; wel de punten van de lus, bij Precies ook het startpunt. De bestandsnaam heeft alleen de soort lus en de datum van de training.
 
 ## Geen instelling nodig
 

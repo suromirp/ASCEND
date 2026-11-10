@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AutoBackupError } from '../engine/autoBackup';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import { sendLine } from '../engine/routeSend';
-import type { FileSender, SendResult } from '../integrations/fileSender';
+import { cacheSender, type CacheShare, type FileSender, type SendResult } from '../integrations/fileSender';
 import { APP_LIMIT_MS, BROWSER_LIMIT_MS, sendRouteGpx } from './routeSend';
 
 function sender(platform: 'app' | 'browser', run: () => Promise<SendResult>) {
@@ -52,7 +52,49 @@ describe('sendRouteGpx', () => {
     vi.useFakeTimers();
     const pending = sendRouteGpx('<gpx/>', 'simple', '2026-11-10', sender('app', () => new Promise<SendResult>(() => undefined)).s);
     await vi.advanceTimersByTimeAsync(APP_LIMIT_MS + 1);
-    expect(await pending).toEqual({ kind: 'failed', step: 'file' });
+    expect(await pending).toEqual({ kind: 'failed', step: 'slow' });
+  });
+
+  // De hele keten met de echte weg van de app (cacheSender) op een nagemaakte cachemap.
+  function chain(writeFile: CacheShare['fs']['writeFile']) {
+    const files = new Map<string, string>();
+    const opened: string[] = [];
+    const s = cacheSender({
+      fs: {
+        exists: async (n) => files.has(n),
+        writeFile: (n, t) => writeFile(n, t).then(() => { files.set(n, t); }),
+        rename: async (from, to) => { files.set(to, files.get(from)!); files.delete(from); },
+        remove: async (n) => { files.delete(n); },
+      },
+      clear: async () => files.clear(),
+      open: async (name) => { opened.push(name); },
+    });
+    return { s, files, opened };
+  }
+
+  it('schrijven mislukt halverwege: geen bestand, geen venster, en dat staat er', async () => {
+    const { s, files, opened } = chain(async () => { throw new Error('schijf vol'); });
+    const outcome = await sendRouteGpx('<gpx/>', 'adventure', '2026-11-10', s);
+    expect(outcome).toEqual({ kind: 'failed', step: 'file' });
+    expect([...files.keys()]).toEqual([]);
+    expect(opened).toEqual([]);
+  });
+
+  it('schrijven dat pas na de grens klaar is, opent geen venster meer', async () => {
+    vi.useFakeTimers();
+    const { s, opened } = chain(() => new Promise<void>((resolve) => setTimeout(resolve, APP_LIMIT_MS + 5000)));
+    const pending = sendRouteGpx('<gpx/>', 'simple', '2026-11-10', s);
+    await vi.advanceTimersByTimeAsync(APP_LIMIT_MS + 1);
+    expect(await pending).toEqual({ kind: 'failed', step: 'slow' });
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(opened).toEqual([]);
+  });
+
+  it('de keten lukt: het bestand staat klaar en de keuzelijst opent één keer', async () => {
+    const { s, files, opened } = chain(async () => undefined);
+    expect(await sendRouteGpx('<gpx/>', 'simple', '2026-11-10', s)).toEqual({ kind: 'offered' });
+    expect([...files.keys()]).toEqual(['ascend-route-simpel-2026-11-10.gpx']);
+    expect(opened).toEqual(['ascend-route-simpel-2026-11-10.gpx']);
   });
 
   it('in de browser is de knop na de grens weer vrij, zonder fout', async () => {

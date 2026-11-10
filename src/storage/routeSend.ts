@@ -30,11 +30,16 @@ export function routeSender(): FileSender | null {
 export async function sendRouteGpx(text: string, style: RouteStyle, date: string, sender: FileSender | null = routeSender()): Promise<RouteSendOutcome> {
   if (!sender) return { kind: 'unavailable' };
   const app = sender.platform === 'app';
+  // Na de grens gaat er in de app geen keuzelijst meer open (het werk erachter stopt mee).
+  const stop = new AbortController();
   try {
-    const result = await withTimeout(sender.send(gpxFileName(style, date), text, GPX_MIME, SEND_TITLE), app ? APP_LIMIT_MS : BROWSER_LIMIT_MS);
+    const result = await withTimeout(sender.send(gpxFileName(style, date), text, GPX_MIME, SEND_TITLE, stop.signal), app ? APP_LIMIT_MS : BROWSER_LIMIT_MS);
     return { kind: result };
   } catch (err) {
-    if (err instanceof TimeoutError) return app ? { kind: 'failed', step: 'file' } : { kind: 'waiting' };
+    if (err instanceof TimeoutError) {
+      stop.abort();
+      return app ? { kind: 'failed', step: 'slow' } : { kind: 'waiting' };
+    }
     // Schrijven mislukt (ook halverwege): er is niets aangeboden.
     if (err instanceof AutoBackupError || err instanceof NameTakenError) return { kind: 'failed', step: 'file' };
     return { kind: 'failed', step: 'open' };
