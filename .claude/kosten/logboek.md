@@ -287,3 +287,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-10, Routeplanner naar Garmin Connect review, Warden, fable (reviewer), 80k, 3 min, 0 blokkerend, 3 geel (grens stopte het openen niet, verkeerde stap bij time-out, uitweg te zwak; alle hersteld), 8 klein (6 hersteld)
 - 2026-11-10, Routeplanner naar Garmin Connect doorloop 360, 390 en 412 px, Lookout, sonnet (tester), 81k samen met de herhaling, 9 min, 1 herstel (statusregel van twee regels verschoof 15 px; hersteld en opnieuw gemeten, groen); mockte zelf BRouter en Overpass
 - 2026-11-10, Uitlegblad training ontwerp (bouwmoment), Cartographer, sonnet (ontwerper), 58k, 2 min, 0
+- 2026-11-10, Kaartje bij Route voorstellen, bron kiezen (bouwmoment), Scout, opus (sportwetenschapper), 98k, 5,5 min, 0, advies eigen SVG zonder tegels
