@@ -2,7 +2,7 @@
 name: ontwerper
 description: Doet ontwerpvoorstellen voor schermen en onderdelen binnen de bestaande ontwerptaal van ASCEND. Gebruik voor nieuwe of gewijzigde UI, voordat de ontwikkelaar bouwt.
 tools: Read, Grep, Glob, Write, Edit
-model: fable
+model: sonnet
 effort: medium
 color: purple
 ---

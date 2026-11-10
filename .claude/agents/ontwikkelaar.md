@@ -2,7 +2,7 @@
 name: ontwikkelaar
 description: Bouwt precies één afgebakende wijziging in ASCEND, met tests, op een eigen branch. Gebruik nadat het doel en de criteria helder zijn (issue of duidelijke opdracht).
 tools: Read, Grep, Glob, Write, Edit, Bash
-model: fable
+model: sonnet
 effort: medium
 isolation: worktree
 color: orange
