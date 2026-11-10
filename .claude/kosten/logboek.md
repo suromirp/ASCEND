@@ -261,3 +261,11 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-09, Routeplanner review, Warden, opus (reviewer), 100k, 4 min, 1 blokkerend (toestemmingstekst noemde de reservebron niet), 10 klein (alle hersteld door de bouwer); les: de eerste vraag noemt elke dienst, en een tijdgrens stopt ook het werk erachter
 - 2026-11-09, Routeplanner doorloop 360, 390 en 412 px, Lookout, sonnet (tester), 90k, 13 min, 0, alles groen; speelde het netwerk na met page.route, 1 cosmetisch punt (regelafstand voetregel) hersteld door de bouwer
 - 2026-11-09, Startpunt van je lus (instelling, eerste vraag, eigen punt op het toestel), bouwer, sonnet, tokens niet door de sessie zelf te meten, ongeveer 1 uur
+- 2026-11-09, Uitleg bij oefeningen batch 3 (twintig teksten, bouwer in een eigen sessie), bouwer, fable, tokens niet door de sessie zelf te meten
+- 2026-11-09, Uitleg batch 3 toets op techniek, Scout, fable (sportwetenschapper), 112k, 7 min, 3 correcties (voetafstand tibialis raise, twee korte regels) en 3 voorstellen voor de catalogus; les: geef de twijfels per oefening mee, dan toetst hij gericht
+- 2026-11-09, Uitleg batch 3 review, Warden, fable (reviewer), 82k, 3 min, 0 blokkerend, 8 klein (6 hersteld); les: een review op de index breekt als je tussendoor vastlegt, geef een commit mee
+- 2026-11-09, Uitleg batch 3 doorloop 360 en 412 px, Lookout, sonnet (tester), 54k, 6 min, 0, drie teksten groen; de vaste doorloop forge meldt kleine tikdoelen in de setrijen, los van deze wijziging
+- 2026-11-09, Uitleg bij oefeningen batch 4 (twintig teksten, bouwer in een eigen sessie), bouwer, fable, tokens niet door de sessie zelf te meten
+- 2026-11-09, Uitleg batch 4 toets op techniek, Scout, fable (sportwetenschapper), 153k, 7 min, 4 correcties (nek bij de hip thrust, adem bij drie roeioefeningen, gestrekte armen bij de deadlift, knie bij de step-up met rugzak); teksten gelezen uit de scratchpad terwijl batch 3 in review was
+- 2026-11-09, Uitleg batch 4 review, Warden, fable (reviewer), 100k, 3 min, 0 blokkerend, 8 klein (alle hersteld); les: laat de bouwer voor de review zelf greppen op de woorden van de verwante tekst
+- 2026-11-09, Uitleg batch 4 doorloop 360 en 412 px, Lookout, sonnet (tester), 63k, 6 min, 0, drie teksten groen; hergebruikte de scripts van batch 3 uit de scratchpad
