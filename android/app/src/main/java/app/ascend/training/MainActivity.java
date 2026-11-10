@@ -9,6 +9,8 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         // De eigen brug naar de widget (src/integrations/widgetBridge.ts); vóór super, zoals Capacitor vraagt.
         registerPlugin(WidgetBridgePlugin.class);
+        // Een bestand aanbieden aan een andere app (src/integrations/fileSender.ts).
+        registerPlugin(FileOpenPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

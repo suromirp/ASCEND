@@ -817,7 +817,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Simpel', text: 'dezelfde helling op en af tot de hoogtemeters er zijn. Bij een vlakke training heen en terug over hetzelfde pad.' },
       { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
-      { head: 'Naar je horloge', text: 'je downloadt een GPX-bestand en opent dat als koers in de app van je horloge.' },
+      { head: 'Naar je horloge', text: 'met Naar Garmin Connect kies je de app van je horloge en sla je de lus op als koers; anders download je het GPX-bestand.' },
       { head: 'Wat de deur uit gaat', text: 'standaard je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Kies je bij Startpunt van je lus Precies, dan gaat alleen je startpunt precies naar de routeplanner; OpenStreetMap houdt de afgeronde plek. Geen naam, geen adres. De route wordt niet bewaard.' },
     ],
   },
