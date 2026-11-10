@@ -1037,6 +1037,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.weightFromMacroFactor !== false };
     case 'datavelden':
       return { checked: watchFieldsShown(s) };
+    case 'datavelden-bekijken':
+      return { sub: 'Welke pagina\'s je op je horloge zet' };
     case 'datavelden-model':
       return { value: resolveWatchModel(s.watchModel).name };
     case 'strava-tekst':

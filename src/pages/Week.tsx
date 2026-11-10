@@ -6,6 +6,7 @@ import { validWeekStart } from '../utils/pageMemory';
 import { useBackToClose } from '../utils/useBackToClose';
 import { scrollMainToTop } from '../utils/scrollMain';
 import { buildWeekReview } from '../engine/weekReview';
+import { weekHeading } from '../engine/weekLabel';
 import { dayLoads, weekProgress } from '../engine/weekProfile';
 import { plannedByIdOf } from '../engine/logDay';
 import { leftOutOfCount, looseLogsOfWeek, weekLogsOf, weekTime } from '../engine/weekLogs';
@@ -126,7 +127,7 @@ export function WeekPage() {
   const weekKm = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.distanceKm ?? 0), 0);
   const weekGain = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.elevationGainM ?? 0), 0);
   const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings) }) : null;
-  const phaseName = position ? position.phase.name.replace(/fase$/i, '') || position.phase.name : '';
+  const heading = weekHeading(position);
 
   // A completed session is still selectable — SessionActionSheet shows an
   // "ongedaan maken" (undo) view for it instead of the start/move/skip one.
@@ -239,8 +240,8 @@ export function WeekPage() {
               </div>
             ) : (
               <h1 className="font-display text-[32px] leading-tight" style={{ color: 'var(--color-ink)' }}>
-                {position ? <>Week <Num>{position.weekInProgram}</Num></> : 'Week'}
-                {phaseName && <span className="ml-2 font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{phaseName.trim().toLowerCase()}</span>}
+                {heading.title}{heading.number !== undefined && <> <Num>{heading.number}</Num></>}
+                {heading.line && <span className="ml-2 font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{heading.line}</span>}
               </h1>
             )}
           </div>

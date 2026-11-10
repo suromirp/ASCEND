@@ -4,7 +4,7 @@ Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 
 [link: ASCEND] (aria: ASCEND, naar Vandaag)
 [link: Meer: instellingen, gegevens, koppelingen en gidsen]
-## Week 1basis
+## Week 1van 4, basisfase
 [knop: Vorige week]
 [knop: Volgende week]
 

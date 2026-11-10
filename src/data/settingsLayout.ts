@@ -81,7 +81,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   koppelingen: {
     rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'health-connect', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'bundel-strava'],
-    advanced: ['datavelden', 'datavelden-model'],
+    advanced: ['datavelden', 'datavelden-bekijken', 'datavelden-model'],
   },
   gegevens: { rows: ['backup', 'auto-backup', 'backupmap', 'toestemmingen', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'aangepast', 'wissen'], advanced: ['auto-bijwerken', 'voorstellen-opruimen', 'herbouwen', 'startniveau'], footer: ['versie'] },
   gidsen: { rows: ['weer-gids', 'kennisbank', 'plekken', 'bronnen'], advanced: [] },
