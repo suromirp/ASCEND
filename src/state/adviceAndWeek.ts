@@ -180,8 +180,16 @@ export function useAdviceAndWeek(deps: {
   // Koos je vandaag Benen fris, dan zegt de melding in Week dat jij koos (engine/weekKept.ts). Alleen tekst.
   const keptNotice = useCallback((n: WeekNotice): WeekNotice => ({
     ...n,
-    concerns: markKept(n.concerns, { today: todayISO(), checkIns: settings.morningCheckIns, sessions: plannedSessions, templates, setting: resolveWeekAfterChoice(settings) }),
-  }), [settings, plannedSessions, templates]);
+    concerns: markKept(n.concerns, { today: todayISO(), checkIns: settings.morningCheckIns, sessions: plannedSessions, templates, setting: resolveWeekAfterChoice(settings), answeredAdviceIds,
+      inputs: {
+        logs: sessionLogs, plannedSessions, templates, injuries: injuryNotes, program,
+        dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
+        sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+        respondedIds: answeredAdviceIds, asOf: todayISO(), legEase: resolveLegEase({ legEase: settings.legEase }),
+        checkIns: settings.morningCheckIns,
+      },
+    }),
+  }), [settings, plannedSessions, templates, sessionLogs, injuryNotes, program, goalEngineConfig, answeredAdviceIds]);
   const weekNoticeState = useCallback((): NonNullable<typeof weekNoticeCache.current> => {
     const key = [weekCheckInput, advice, keptNotice];
     if (!weekNoticeCache.current || weekNoticeCache.current.key.some((v, i) => v !== key[i])) weekNoticeCache.current = { key, quick: new Map(), full: new Map() };

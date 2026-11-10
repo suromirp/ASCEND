@@ -11,6 +11,9 @@ import type { MorningCheckIn } from '../models/checkIn';
 import type { AppSettings } from '../storage/database';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { WeekConcern } from './weekConcerns';
+import type { AdviceInputs } from './adviceEngine';
+import { morningConsequence } from './morningCard';
+import { easeTargetOf } from './legDayEase';
 
 export type WeekAfterChoice = NonNullable<AppSettings['weekAfterChoice']>;
 const WEEK_AFTER_CHOICE_ADVICE: WeekAfterChoice = 'mine';
@@ -32,16 +35,29 @@ export interface KeptContext {
   sessions: readonly PlannedSession[];
   templates: readonly SessionTemplate[];
   setting: WeekAfterChoice;
+  // Wat Vandaag zegt (morningConsequence). Alleen 'blijft' telt: bij een voorstel of de kaart Benen
+  // staat Vandaag niet te zeggen dat de training blijft staan.
+  inputs: AdviceInputs;
+  answeredAdviceIds: ReadonlySet<string>;
 }
 
 // Zet `kept` op de beenmeldingen waar een training van vandaag in zit, als je vandaag koos dat de
 // benen fris zijn. Droog feit eerst; de oorspronkelijke melding blijft als tweede regel staan.
 export function markKept(concerns: WeekConcern[], ctx: KeptContext): WeekConcern[] {
   if (ctx.setting === 'plain' || !freshLegsToday(ctx.checkIns, ctx.today)) return concerns;
+  const entry = (ctx.checkIns ?? []).find((c) => c.date === ctx.today)!;
+  // Dezelfde uitkomst als de zin op Vandaag, niet het ruwe antwoord.
+  if (morningConsequence(entry, { inputs: ctx.inputs, answeredAdviceIds: ctx.answeredAdviceIds }).kind !== 'blijft') return concerns;
   const byId = new Map(ctx.sessions.map((s) => [s.id, s]));
+  const logged = new Set(ctx.inputs.logs.map((l) => l.plannedSessionId));
   return concerns.map((c) => {
     if (c.rule !== 'LEG-SPACING' || c.kept) return c;
-    const mine = c.finding.sessionIds.map((id) => byId.get(id)).find((s) => s?.scheduledDate === ctx.today);
+    // De training die Vandaag laat staan: van vandaag, nog open en de zware beendag waar Vandaag over sprak.
+    const mine = c.finding.sessionIds.map((id) => byId.get(id)).find((s) => {
+      if (!s || s.scheduledDate !== ctx.today || s.status === 'skipped' || logged.has(s.id)) return false;
+      // De beendag van de beendagvraag (kracht, zwaar voor de benen), niet elke zware training.
+      return easeTargetOf(s, ctx.templates.find((x) => x.id === s.templateId))?.kind === 'beendag';
+    });
     if (!mine) return c;
     const name = ctx.templates.find((t) => t.id === mine.templateId)?.name ?? 'je training';
     return { ...c, kept: true, headline: `Benen fris, je liet ${name} staan.`, fact: `${c.headline} ${c.fact}` };
