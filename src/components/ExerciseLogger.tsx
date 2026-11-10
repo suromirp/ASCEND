@@ -425,7 +425,7 @@ function GeneralLogger({
             {template.cooldown && template.cooldown.length > 0 && (
               <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
             )}
-            {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} mode="inline" className="py-1" />}
+            {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} mode="inline" row />}
             {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="py-2" plain />}
           </div>
         ) : plannedSession && !preview ? (
