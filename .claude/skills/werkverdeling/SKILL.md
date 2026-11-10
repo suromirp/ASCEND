@@ -7,7 +7,7 @@ description: Kiest voor elke taak in ASCEND welke helper, welk model en hoeveel 
 
 De coördinator kiest met deze tabel, niet op gevoel en niet met een aparte keuze-agent (die kost zelf
 weer tokens). Start een helper altijd als zijn rol (`subagent_type`), nooit als `general-purpose`:
-die erft het model van de coördinator en draait dan op Opus.
+die erft het model van de coördinator.
 
 ## De tabel
 
@@ -15,14 +15,16 @@ die erft het model van de coördinator en draait dan op Opus.
 |---|---|---|---|
 | Een tekst, een label, een kleur, één regel | coördinator zelf | (eigen) | laag |
 | Bouwen van een afgebakende wijziging | `ontwikkelaar` (Sherpa) | sonnet | medium |
-| Bouwen dat planning, opslag of migraties raakt | `ontwikkelaar` (Sherpa) | opus | medium |
+| Bouwen dat planning, opslag of migraties raakt | `ontwikkelaar` (Sherpa) | fable | medium |
 | Ontwerpvoorstel voor een scherm | `ontwerper` (Cartographer) | sonnet | medium |
 | Idee naar issue met criteria | `productmanager` | sonnet | laag |
 | Doorloop in Chromium (skill `lookout`) | `tester` (Lookout) | sonnet | laag |
 | Review van UI, tekst of stijl | `reviewer` (Warden) | sonnet | medium |
-| Review van engine, planning, opslag, migraties | `reviewer` (Warden) | opus | medium |
-| Lastig onderzoek, formules in de engine | `sportwetenschapper` (Scout) | opus | medium |
+| Review van engine, planning, opslag, migraties | `reviewer` (Warden) | fable | medium |
+| Lastig onderzoek, formules in de engine | `sportwetenschapper` (Scout) | fable | medium |
 | Iets zoeken in de code | `Explore` | haiku | laag |
+
+Zwaar werk op Fable in plaats van Opus (eigenaar, 9 november): waar deze skill of een oudere les "opus" zegt, lees Fable. Licht werk blijft op Sonnet. Meldt een sessie dat de limiet van Fable dichtbij is, maak dan alleen af wat loopt en meld het de eigenaar.
 
 Tabellen staan hier omdat dit een werkinstructie is; in teksten voor de eigenaar en in de app geen tabellen.
 
@@ -157,6 +159,13 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 - welke soort taak het duurst was en of een lichter model het ook had gekund;
 - waar herstelrondes vandaan kwamen en welke eis vooraf die had voorkomen;
 - past de tabel hierboven aan als het logboek dat laat zien, met de reden in de commit.
+
+## Modellen per laag (eigenaar, 9 november avond)
+
+- De coördinator draait op Opus (claude-opus-5-5).
+- Zwaar werk op Fable (claude-fable-5-2): een bouwer-sessie die planning, opslag, migraties of een nieuwe engine raakt, Warden, Scout.
+- Licht werk op Sonnet (claude-sonnet-5-5): een bouwer-sessie die alleen teksten, uitleg bij oefeningen of een klein scherm doet, Lookout, Cartographer, een gewone Sherpa.
+- Geef bij `create_session` altijd `model` mee: zonder dat erft een bouwer het model van de coördinator (Opus).
 
 ## Bouwers melden zich zelf (9 november)
 

@@ -93,7 +93,7 @@ export function weekTime(
 // planning), zoals de reeks. Wat jij overgeslagen hebt, of liet vallen na het
 // missen, telt wel mee.
 export function leftOutOfCount(
-  plannedSessions: readonly Pick<PlannedSession, 'id' | 'scheduledDate' | 'status'>[],
+  plannedSessions: readonly Pick<PlannedSession, 'id' | 'scheduledDate' | 'status' | 'catchUp'>[],
   planChangeLog: readonly PlanChangeProposal[],
   illnessEpisodes: IllnessEpisode[] | undefined,
   asOf: string,
@@ -105,12 +105,18 @@ export function leftOutOfCount(
     for (const c of p.changes) if (c.action === 'remove' && c.plannedSessionId) removedBy.set(c.plannedSessionId, p.trigger);
   }
   const byId = new Map(plannedSessions.map((s) => [s.id, s]));
+  // De oude rij van een gemiste training die je naar later zette telt niet: de nieuwe rij telt
+  // (docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md). Zo zegt de ring bovenaan Week hetzelfde
+  // als de weekterugblik.
+  const movedOn = new Set<string>();
+  for (const s of plannedSessions) if (s.catchUp?.fromId && s.status !== 'skipped') movedOn.add(s.catchUp.fromId);
   return (id) => {
     const s = byId.get(id);
     if (!s) return false;
     if (programStart && s.scheduledDate < programStart) return true;
     if (illnessEpisodes && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
     if (s.status !== 'skipped') return false;
+    if (movedOn.has(id)) return true;
     const trigger = removedBy.get(id);
     return !!trigger && trigger !== 'session_skipped' && trigger !== 'session_missed';
   };

@@ -2,12 +2,14 @@
 
 Bijgewerkt: 9 november 2026, 20:15 UTC, door de coördinator van 8 en 9 november.
 
-## Lopende bouwers (Fable 5.2, melden zich bij de vorige coördinator session_013ZuQA6MkeoKDCxdu4uMmEd)
+## Lopende bouwers (Fable 5.2, melden zich bij de coördinator van 9 november avond, session_01LnDpSmhnJLwMd9LxhwhgLB)
 
-- Overzicht Gewicht: live op main (b39130d), sessie gearchiveerd.
-- Teksten Lichaam en Instellingen (R9, plan punt 1), session_01LnDpSmxgVMGeBEVSvd52Lk, branch claude/teksten-lichaam-instellingen; meldt zich bij session_01LnDpSmhnJLwMd9LxhwhgLB (coördinator sinds 9 november 20:18 UTC).
-- Calisthenics als algemeen doel, session_01LnDpSnqskFn7mJs7MeBHXT, branch claude/calisthenics-algemeen.
-- Routeplanner fase 1 en 2, session_01LnDpSnYUz5KXGGxNwWNP4y, branch claude/routeplanner.
+- Teksten Lichaam en Instellingen (R9, plan punt 1), session_01LnDpSmxgVMGeBEVSvd52Lk, branch claude/teksten-lichaam-instellingen.
+- Datavelden voor je horloge (plan punt 3), session_01LnDpSmQ4BrFUPHMVa43uxV, branch claude/datavelden-horloge.
+- Startpunt van je lus (punt 11, Sonnet), session_01LnDpSnpmm6ebGwgkgF9CeF, branch claude/startpunt-lus.
+- Uitleg bij oefeningen batch 3 en 4: klaar, wordt op main gezet na de controles (59 oefeningen nog zonder uitleg; een volgende batch op Sonnet).
+
+Live sinds de wissel: Overzicht Gewicht (b39130d), Calisthenics algemeen en Routeplanner fase 1 en 2 (8f5ba7e). Plan punten 0, 2 en 4 zijn dus af; hierna 6 (Buiten), 7 (Feestdagen), 8, 9, 10. De eigenaar gaf akkoord (9 november avond) op twee nieuwe punten, in de Inbox van de backlog: 11. Startpunt van je lus (routeplanner, instelling Ongeveer of Precies); 12. voorstel dat squat op één been en L-sit in een training zet (planner, niet tegelijk met 7). Starten zodra er een plek vrij is, 11 eerst. De drie bouwers vielen om ongeveer 21:15 tot 22:50 UTC stil op de limiet van vijf uur en zijn om 23:04 UTC gewekt.
 
 Afhandelen als ze klaar zijn (get_session: status completed, of de branch staat er met een afdruk): branch fetchen, mergen in claude/ascend-modernize-ib0a34, alle controles (tsc, lint, vitest, build, kaart:vergelijk), afdruk bekijken (map afdrukken/ op de branch), squash naar main, sessie archiveren, de eigenaar een korte melding met wat live staat en wat hij kan nakijken. Staat een bouwer stil op een vraag om bevestiging: zelf afmaken (mergen en live zetten).
 
@@ -43,4 +45,4 @@ Als je helemaal klaar bent (of vastloopt): meld het de coördinator met de tool 
 - Doel: MacroFactor Workouts overbodig maken (docs/visie/Los van MacroFactor.md); de weekbriefing meldt de stand.
 - Weeklimiet "Alle modellen" stond op 30 procent (9 november avond), Fable 6 procent; de eigenaar heeft een gratis Fable-reset tot 9 maart.
 - Vaste bouwmoment ma, wo, vr 19:43 staat aan (trig_01JDroCyzgfatU8c7MiK26Ei).
-- 9 november avond, eigenaar: alleen in de chat van de coördinator van 9 november draaien Warden en Scout op Fable (hij kreeg extra Fable-tokens); de rolbestanden blijven zoals ze zijn en de volgende coördinator begint weer met de gewone tabel, tenzij de eigenaar het opnieuw vraagt.
+- 9 november avond, eigenaar: de coördinator draait op Opus (claude-opus-5-5); zwaar werk op Fable (bouwers die planning, opslag, migraties of een nieuwe engine raken, Warden, Scout), licht werk op Sonnet (bouwers voor teksten en uitleg, Lookout, Cartographer). Geef bij create_session altijd model mee. Staat in de skills werkverdeling en coordinator-wissel.
