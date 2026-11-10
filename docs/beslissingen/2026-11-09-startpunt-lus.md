@@ -34,6 +34,8 @@ De eigenaar wil dat de lus bij zijn deur begint, zeker bij een rustige duurloop;
 - Het GPX-bestand dat de gebruiker zelf downloadt begint wel bij het startpunt. Dat bestand is van hem en staat op zijn toestel.
 - De uitleg achter de i heeft een eigen onderwerp `routeStartpunt` in `settingsHelp`. De bestaande tekst van `routeVoorstel` ("je plek, afgerond op ongeveer een kilometer") is niet aangepast en klopt niet meer helemaal bij Precies; die aanpassing laat ik aan de bouwer die in `settingsHelp` werkt. Hetzelfde geldt voor de noot van `route-voorstel` in `settingsIndex`.
 
+- Op verzoek van de eigenaar staat Route voorstellen ook als rij op de trainingspagina van een looptraining ("Waar train je?", Eerst opwarmen, Daarna rekken; `ExerciseLogger`), onder Daarna rekken in dezelfde kaart. Dezelfde regel als op Vandaag (`wantsRoute` en de schakelaar Route voorstellen) en de datum van die training. Gekozen: het paneel klapt op zijn plek open (mode inline), niet als blad, want deze pagina is zelf al een blad en er komt nooit een blad op een blad.
+
 ## Alternatieven
 
 - Een adres typen of een punt op een kaart kiezen: vraagt een geocoder of een kaart, een nieuwe dienst en meer wat de deur uit gaat. Niet nu.
