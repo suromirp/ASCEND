@@ -160,12 +160,17 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 - waar herstelrondes vandaan kwamen en welke eis vooraf die had voorkomen;
 - past de tabel hierboven aan als het logboek dat laat zien, met de reden in de commit.
 
-## Modellen (eigenaar, 10 november ochtend)
+## Modellen per taak (eigenaar, 10 november middag)
 
-- Alles op Fable (claude-fable-5-2): de coördinator, elke bouwer-sessie en elke helper (Sherpa, Warden, Scout, Lookout, Cartographer, productmanager). De eigenaar vindt Fable merkbaar nauwkeuriger. De kolom Model in de tabel hierboven geldt daarom niet meer; de kolom Denkwerk wel.
-- Geef bij `create_session` en bij een helper altijd `model` mee.
-- Let op de weeklimiet van Fable: geeft een sessie een waarschuwing of een limiet, maak dan alleen af wat loopt, start niets nieuws en meld het de eigenaar met de dag waarop de limiet weer opengaat.
-- Vervangt "Modellen per laag" van 9 november (coördinator Opus, licht werk Sonnet).
+De eigenaar: "efficiënt gebruik van de modellen per taak en agent; we hebben de keuze uit Fable, Sonnet, Haiku en Opus". Dit vervangt "Alles op Fable" van 10 november ochtend. De kolom Model in de tabel bovenaan lees je zo:
+
+- Haiku (claude-haiku-5-5): zoeken in de code (`Explore`), een lijst of telling maken, het kostenlogboek, een idee naar een issue als het doel al helder is.
+- Sonnet (claude-sonnet-5-5): de standaard. Bouwen van een scherm, een tekst, een instelling of een afgebakende wijziging; Cartographer; Lookout; review van UI, tekst of stijl; een bouwer-sessie voor zulk werk.
+- Opus (claude-opus-5-5): de coördinator en de sessie van het bouwmoment; review van engine en opslag; lastig onderzoek (Scout); een keuze tussen bronnen of aanpakken; bouwen in de engine dat de planning niet raakt.
+- Fable (claude-fable-5-2): alleen bouwen en review die de planning, de scheduler, opslag met migraties of historie raken, en een fout die Opus na één ronde niet vond. Fable heeft een weeklimiet: geeft een sessie een waarschuwing of een limiet, maak dan alleen af wat loopt, start niets nieuws op Fable en meld het de eigenaar met de dag waarop de limiet weer opengaat. Tot zaterdag 15 november staat die waarschuwing er al: hooguit één helper of sessie op Fable tegelijk.
+- Kies op wat de taak raakt, niet op de omvang, en begin zo licht als kan. Opschalen gaat één stap (Haiku, Sonnet, Opus, Fable) en alleen met een reden uit "Opschalen en afschalen".
+- De rolbestanden in `.claude/agents/` hebben het lichtste model dat voor die rol gewoon is. Geef bij een helper (`model`) en bij `create_session` altijd het model mee als de taak zwaarder is dan dat.
+- Knip een onderwerp zo dat het zware deel klein is: de regel in de engine op Opus of Fable, het scherm, de tekst en de instelling eromheen op Sonnet.
 
 ## Bouwers melden zich zelf (9 november)
 

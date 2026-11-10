@@ -3,7 +3,7 @@ name: tester
 description: Draait de controles (typecontrole, lint, tests, build) en bekijkt schermen op telefoonformaat. Meldt per stap groen of rood. Wijzigt niets. Gebruik na elke bouwtaak en voor elke push naar main.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
-model: fable
+model: sonnet
 effort: medium
 color: cyan
 ---

@@ -2,7 +2,7 @@
 name: productmanager
 description: Maakt van een idee een helder GitHub-issue met doel, afbakening en controleerbare criteria. Gebruik proactief als de eigenaar een idee of wens noemt, voordat er gebouwd wordt. Beslist zelf niets.
 tools: Read, Grep, Glob, mcp__github__search_issues, mcp__github__issue_read, mcp__github__issue_write
-model: fable
+model: haiku
 effort: medium
 color: blue
 ---

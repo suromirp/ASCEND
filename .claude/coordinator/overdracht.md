@@ -60,3 +60,10 @@ Als je helemaal klaar bent (of vastloopt): meld het de coördinator met de tool 
 - Inbox heeft nieuw: kaartje met beide lussen in het paneel Route voorstellen (eigenaar 10 november). Niet starten zonder dat de eigenaar het vraagt of het bouwmoment het oppakt.
 - Wat de eigenaar vandaag nakijkt: APK 158 installeren, Precies, vanaf je deur kiezen, datavelden naast zijn Forerunner leggen. Antwoorden daarop eerst afhandelen.
 - Vorige coördinator: session_01LnDpSmhnJLwMd9LxhwhgLB (blijft open, niet archiveren zonder de eigenaar).
+
+## 10 november middag (dinsdag)
+
+- Modellen per taak (eigenaar): Haiku, Sonnet, Opus, Fable volgens de skill werkverdeling; "Alles op Fable" geldt niet meer. De coördinator zelf: Opus bij de volgende wissel.
+- 10 november is een dinsdag: het vaste bouwmoment is pas woensdag 19:43. De eigenaar vroeg om een nieuwe chat voor het bouwmoment; die is vandaag gestart (zie de sessielijst, titel "Bouwmoment ASCEND 10 november") met de Inbox van vandaag.
+- Vandaag zelf op main gezet: de regel bij te dicht op elkaar in Week (besluit 2026-11-10-beendagen-afstand-tekst.md).
+- Open vraag aan de eigenaar: de melding in Week nadat hij op Vandaag "Benen fris, blijft staan" koos (wegblijven, of zeggen dat hij koos). Advies: het tweede.
