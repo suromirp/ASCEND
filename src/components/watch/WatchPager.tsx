@@ -30,7 +30,8 @@ export function WatchPager({
   const strip = useRef<HTMLDivElement>(null);
   const settle = useRef<number | undefined>(undefined);
   const pageNow = useRef(page);
-  useEffect(() => {
+  // Een layout-effect, en vóór het springen hieronder: na Pagina erbij moet de sprong de nieuwe pagina kennen.
+  useLayoutEffect(() => {
     pageNow.current = page;
   }, [page]);
 

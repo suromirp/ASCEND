@@ -4,7 +4,11 @@ import {
   WATCH_KINDS,
   cleanWatchFieldStore,
   copyOfAdvice,
+  WATCH_BOTH_TAKEN,
+  canPickField,
   firstFreeSlot,
+  pickField,
+  restoreVersion,
   resolveVersion,
   resolveWatchModel,
   storeWith,
@@ -53,6 +57,24 @@ describe('de datalijst per model', () => {
       // Het stuurveld heeft het grootste cijfer.
       expect(layout.cells[layout.main].valueSize).toBe(Math.max(...layout.cells.map((c) => c.valueSize)));
     }
+  });
+
+  it.each(Object.values(WATCH_MODELS))('$name: elke naam en uitleg is een hele tekst', (m) => {
+    for (const f of m.fields) {
+      // Geen afgekapte naam ("Gem") en geen uitleg die midden in een zin begint.
+      expect(f.label.length, f.id).toBeGreaterThanOrEqual(3);
+      expect(f.label, f.id).not.toMatch(/^(Gem|Max|Min)\.?$/);
+      if (f.note !== undefined) {
+        expect(f.note, f.id).toMatch(/^[A-Z0-9]/);
+        expect(f.note.endsWith('.'), f.id).toBe(true);
+        expect(f.note, f.id).not.toMatch(/Alleen (bij )?hardlopen|intervaltraining/);
+      }
+      expect(f.short ?? f.label, f.id).not.toMatch(/[\u2013\u2014]/);
+    }
+    // Een meter hoort bij dezelfde activiteit als zijn getal.
+    for (const group of ['power', 'runningDynamics'] as const) expect(m.fields.filter((f) => f.group === group).every((f) => f.only === 'run')).toBe(true);
+    expect(m.fields.find((f) => f.id === 'powerGauge')?.only).toBe('run');
+    expect(m.pathInApp).not.toContain('Gegevensschermen');
   });
 
   it('een onbekend of kapot model valt terug op het eerste model', () => {
@@ -106,8 +128,18 @@ describe('watchAdvice', () => {
     expect(watchAdvice('zone2', none)).toBeUndefined();
   });
 
-  it('is deterministisch', () => {
-    expect(watchAdvice('hills', model)).toEqual(watchAdvice('hills', model));
+  it('het veld dat een zin groot noemt staat op de plek met het grootste cijfer en heet zo op het horloge', () => {
+    for (const { id } of WATCH_KINDS) {
+      for (const page of watchAdvice(id, model)!.pages) {
+        const named = /^(.+) groot,/.exec(page.why)?.[1];
+        if (!named) continue;
+        const layout = model.layouts[page.fields.length];
+        const main = model.fields.find((f) => f.id === page.fields[layout.main])!;
+        expect(main.label, page.why).toBe(named);
+        const biggest = Math.max(...layout.cells.map((c) => c.valueSize));
+        expect(layout.cells.filter((c) => c.valueSize === biggest), page.why).toHaveLength(1);
+      }
+    }
   });
 });
 
@@ -133,6 +165,9 @@ describe('watchKindOf', () => {
     expect(watchKindOf({ id: 'eigen_3', type: 'cardio', roles: ['hard_run'] })).toBe('intervals');
     expect(watchKindOf({ id: 'eigen_4', type: 'hiking', roles: ['long'] })).toBe('packHike');
     expect(watchKindOf({ id: 'eigen_5', type: 'cardio', roles: ['race'] })).toBeUndefined();
+    // Een id dat toevallig een ingebouwde sleutel is geeft geen soort.
+    expect(watchKindOf({ id: 'constructor', type: 'strength' })).toBeUndefined();
+    expect(watchKindOf({ id: '__proto__', type: 'strength' })).toBeUndefined();
   });
 });
 
@@ -252,12 +287,64 @@ describe('bewerken', () => {
     const hike = watchAdvice('packHike', model)!;
     const out = watchSteps(hike.pages.map((p) => p.fields), model, hike);
     expect(out.steps[1]).toBe('Kies Hiken of Wandelen en dan de activiteitinstellingen.');
-    expect(out.steps).toContain('Scherm 3: 3 velden. Tijd, Zon onder, Batterijniveau.');
-    expect(out.steps.at(-1)).toBe('Kies Voeg nieuw toe voor een extra scherm.');
+    expect(out.steps).toContain('Pagina 3: 3 velden. Tijd, Zon onder, Batterijniveau.');
+    // Eerst het hele pad op het horloge, ook een scherm erbij, dan pas de pagina's.
+    expect(out.steps.indexOf('Kies Voeg nieuw toe voor een extra scherm.')).toBeLessThan(out.steps.indexOf('Pagina 1: 4 velden. Totale stijging, Afstand, Timer, Tijd.'));
+    expect(out.steps.at(-1)).toBe('Pagina 3: 3 velden. Tijd, Zon onder, Batterijniveau.');
     expect(out.steps.join(' ')).not.toContain('{activiteit}');
     expect(out.notes.join(' ')).not.toContain('{activiteit}');
     const hills = watchAdvice('hills', model)!;
     expect(watchSteps([['timer']], model, hills).notes[0]).toContain('rondeknop');
-    expect(watchSteps([['timer']], model, hills).steps).toContain('Scherm 1: 1 veld. Timer.');
+    expect(watchSteps([['timer']], model, hills).steps).toContain('Pagina 1: 1 veld. Timer.');
+  });
+});
+
+describe('een veld kiezen en ongedaan maken', () => {
+  const advice = watchAdvice('zone2', model)!;
+
+  it('in het advies: de keuze komt als kopie in Versie 2, daarna in Versie 3, en het advies blijft', () => {
+    const first = pickField(undefined, 'zone2', 'advice', 0, 2, 'cadence', model);
+    expect(first).toMatchObject({ changed: true, tab: 'v2', notice: 'Dit staat nu in Versie 2. Het advies blijft zoals het was.' });
+    expect(first.store?.zone2?.v2?.pages[0]).toEqual(['hrZone', 'heartRate', 'cadence']);
+    expect(first.store?.zone2?.v2?.pages.slice(1)).toEqual(advice.pages.slice(1).map((p) => p.fields));
+    const second = pickField(first.store, 'zone2', 'advice', 1, 0, 'steps', model);
+    expect(second).toMatchObject({ changed: true, tab: 'v3', notice: 'Dit staat nu in Versie 3. Het advies blijft zoals het was.' });
+    expect(second.store?.zone2?.v2).toEqual(first.store?.zone2?.v2);
+    expect(watchAdvice('zone2', model)).toEqual(advice);
+  });
+
+  it('beide versies bezet: er verandert niets en de regel zegt waarom', () => {
+    const full = { zone2: { v2: { pages: [['timer']] }, v3: { pages: [['distance']] } } };
+    expect(canPickField(full, 'zone2', 'advice')).toBe(false);
+    expect(canPickField(full, 'zone2', 'v2')).toBe(true);
+    expect(canPickField(full, 'hills', 'advice')).toBe(true);
+    expect(pickField(full, 'zone2', 'advice', 0, 0, 'cadence', model)).toEqual({ changed: false, tab: 'advice', notice: WATCH_BOTH_TAKEN });
+  });
+
+  it('hetzelfde veld, een onbekend veld of een plek die niet bestaat doet niets', () => {
+    expect(pickField(undefined, 'zone2', 'advice', 0, 1, 'heartRate', model).changed).toBe(false);
+    expect(pickField(undefined, 'zone2', 'advice', 0, 1, 'bestaatNiet', model).changed).toBe(false);
+    expect(pickField(undefined, 'zone2', 'advice', 9, 0, 'cadence', model).changed).toBe(false);
+    const own = { zone2: { v2: { pages: [['timer', 'distance']] } } };
+    expect(pickField(own, 'zone2', 'v2', 0, 0, 'timer', model).changed).toBe(false);
+    expect(pickField(own, 'zone2', 'v3', 0, 0, 'cadence', model).changed).toBe(false);
+  });
+
+  it('in een versie: alleen die versie verandert', () => {
+    const own = { zone2: { v2: { pages: [['timer', 'distance']] }, v3: { pages: [['steps']] } }, hills: { v2: { pages: [['laps']] } } };
+    const out = pickField(own, 'zone2', 'v2', 0, 1, 'cadence', model);
+    expect(out).toMatchObject({ changed: true, tab: 'v2' });
+    expect(out.notice).toBeUndefined();
+    expect(out.store).toEqual({ ...own, zone2: { v2: { pages: [['timer', 'cadence']] }, v3: own.zone2.v3 } });
+  });
+
+  it('ongedaan maken zet de oude versie terug, maar nooit over iets nieuws heen', () => {
+    const old = { pages: [['timer', 'cadence']] };
+    const emptied = storeWith({ zone2: { v2: old } }, 'zone2', 'v2', undefined);
+    expect(restoreVersion(emptied, 'zone2', 'v2', old)).toEqual({ ok: true, store: { zone2: { v2: old } } });
+    // Na Terug naar advies koos de gebruiker opnieuw een veld in het advies: dat kwam in dezelfde plek.
+    const again = pickField(emptied, 'zone2', 'advice', 0, 0, 'steps', model).store;
+    expect(again?.zone2?.v2).toBeDefined();
+    expect(restoreVersion(again, 'zone2', 'v2', old)).toEqual({ ok: false });
   });
 });

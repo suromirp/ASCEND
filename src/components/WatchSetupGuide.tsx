@@ -54,7 +54,6 @@ export function WatchSetupGuide({ scrollIntoView = false }: { scrollIntoView?: b
             {showFields && i === DATA_FIELDS_AT && (
               <button
                 type="button"
-                data-sheet-from
                 onClick={() => navigate('/horloge/datavelden')}
                 className="flex min-h-[48px] w-full items-center justify-between border-b py-3 text-left"
                 style={{ borderColor: 'var(--color-card-border)' }}

@@ -89,7 +89,7 @@ describe('de tekening van een plek', () => {
             const fit = d.labelFit[i];
             if (fit === undefined) expect(est, where).toBeLessThanOrEqual(cell.w - 16);
             // Een woord dat niet breekt wordt ingekort, maar nooit tot minder dan twee derde.
-            else expect(fit / est, where).toBeGreaterThanOrEqual(0.66);
+            else expect(fit / est, where).toBeGreaterThanOrEqual(0.75);
           });
           if (d.value) {
             expect(d.valueSize, where).toBeGreaterThanOrEqual(20);
@@ -109,8 +109,9 @@ describe('de tekening van een plek', () => {
   it('een veld met een voorbeeld tekent een getal, een meter drie staafjes', () => {
     const cell = model.layouts[1].cells[0];
     const withSample = model.fields.find((f) => f.sample)!;
-    const without = model.fields.find((f) => !f.sample);
+    const without = model.fields.find((f) => !f.sample)!;
+    expect(without).toBeDefined();
     expect(cellDrawing(cell, withSample).bars).toBeUndefined();
-    if (without) expect(cellDrawing(cell, without).bars).toHaveLength(3);
+    expect(cellDrawing(cell, without).bars).toHaveLength(3);
   });
 });

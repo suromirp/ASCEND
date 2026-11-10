@@ -12,11 +12,15 @@ import { TextButton } from '../components/TextButton';
 import { Card, Chip, Eyebrow, PageHeader, SecondaryButton, Segmented } from '../components/ui';
 import { settingsAdvancedRoute } from '../data/settingsLayout';
 import {
+  WATCH_BOTH_TAKEN,
   WATCH_KINDS,
+  WATCH_SLOT_NAME,
+  canPickField,
   cleanWatchFieldStore,
   copyOfAdvice,
-  firstFreeSlot,
   isWatchKind,
+  pickField,
+  restoreVersion,
   replacedLine,
   resolveVersion,
   resolveWatchModel,
@@ -24,28 +28,33 @@ import {
   versionDiff,
   watchAdvice,
   watchPageState,
-  withField,
   withFieldCount,
   withPageAdded,
   withPageRemoved,
   type WatchKindId,
   type WatchSlot,
+  type WatchTab,
   type WatchVersion,
 } from '../engine/watchFields';
 import { useAppData } from '../state/AppDataContext';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
-type Tab = 'advice' | WatchSlot;
-const SLOT_NAME: Record<WatchSlot, string> = { v2: 'Versie 2', v3: 'Versie 3' };
+type Tab = WatchTab;
+const SLOT_NAME = WATCH_SLOT_NAME;
 const UNDO_MS = 6000;
 const SAVE_MS = 5000;
 
+// Een andere ?soort= in het adres is een nieuwe start van de pagina, ook als ze al open staat.
 export function WatchFieldsPage() {
+  const [params] = useSearchParams();
+  const asked = params.get('soort');
+  return <WatchFieldsInner key={asked ?? ''} asked={asked} />;
+}
+
+function WatchFieldsInner({ asked }: { asked: string | null }) {
   const { settings, updateSettings } = useAppData();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
   const model = resolveWatchModel(settings.watchModel);
-  const asked = params.get('soort');
   // Zonder ?soort= opent de pagina op Zone 2; een soort die niet bestaat geeft de lege stand.
   const [kind, setKind] = useState<WatchKindId | undefined>(() => (asked === null ? 'zone2' : isWatchKind(asked) ? asked : undefined));
   const [tab, setTab] = useState<Tab>('advice');
@@ -55,6 +64,7 @@ export function WatchFieldsPage() {
   const [saveFailed, setSaveFailed] = useState(false);
   const [undo, setUndo] = useState<{ kind: WatchKindId; slot: WatchSlot; version: WatchVersion }>();
   const undoTimer = useRef<number | undefined>(undefined);
+  const busy = useRef(false);
   useEffect(() => () => window.clearTimeout(undoTimer.current), []);
 
   const state = watchPageState(settings, kind, model);
@@ -64,7 +74,7 @@ export function WatchFieldsPage() {
   if (state === 'off') {
     return (
       <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-        <PageHeader eyebrow="Je horloge" title="Datavelden" />
+        <PageHeader eyebrow="Je horloge" title="Datavelden" fallback="/koppelen/garmin" />
         <Card className="flex flex-col gap-3">
           <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Datavelden staan uit.</p>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Zet ze aan bij Instellingen.</p>
@@ -80,15 +90,26 @@ export function WatchFieldsPage() {
   const shownPage = Math.min(page, Math.max(0, pages.length - 1));
   const replaced = replacedLine(resolved?.replaced ?? 0);
 
-  const save = async (next: ReturnType<typeof storeWith>): Promise<boolean> => {
+  // Eén opslag tegelijk: een tweede tik voordat de eerste bewaard is zou rekenen met de oude stand en
+  // de eerste wijziging overschrijven. Elke geslaagde opslag laat een open Ongedaan maken vervallen:
+  // de plek kan intussen opnieuw beschreven zijn.
+  const save = async (next: ReturnType<typeof storeWith>, keepUndo = false): Promise<boolean> => {
+    if (busy.current) return false;
+    busy.current = true;
     try {
       await withTimeout(updateSettings({ watchFieldVersions: next }), SAVE_MS);
       setSaveFailed(false);
+      if (!keepUndo) {
+        window.clearTimeout(undoTimer.current);
+        setUndo(undefined);
+      }
       return true;
     } catch (e) {
       setSaveFailed(true);
       if (!(e instanceof TimeoutError)) console.warn('Datavelden opslaan lukte niet', e);
       return false;
+    } finally {
+      busy.current = false;
     }
   };
 
@@ -98,6 +119,7 @@ export function WatchFieldsPage() {
     setPage(0);
     setNotice(undefined);
     setSheet(null);
+    setSaveFailed(false);
   };
   const changeTab = (next: Tab) => {
     setTab(next);
@@ -107,8 +129,8 @@ export function WatchFieldsPage() {
 
   const openCell = (p: number, cell: number) => {
     if (!kind) return;
-    if (!slot && !firstFreeSlot(store, kind)) {
-      setNotice('Het advies blijft zoals het is. Pas Versie 2 of 3 aan, of zet er een terug naar advies.');
+    if (!canPickField(store, kind, tab)) {
+      setNotice(WATCH_BOTH_TAKEN);
       return;
     }
     setNotice(undefined);
@@ -116,17 +138,15 @@ export function WatchFieldsPage() {
   };
 
   const applyField = async (fieldId: string) => {
-    if (!kind || !sheet || !advice) return;
-    if (slot && resolved) {
-      await save(storeWith(store, kind, slot, withField(resolved.version, sheet.page, sheet.cell, fieldId)));
+    if (!kind || !sheet) return;
+    const pick = pickField(store, kind, tab, sheet.page, sheet.cell, fieldId, model);
+    if (!pick.changed) {
+      if (pick.notice) setNotice(pick.notice);
       return;
     }
-    const free = firstFreeSlot(store, kind);
-    if (!free || advice.pages[sheet.page]?.fields[sheet.cell] === fieldId) return;
-    const copy = withField(copyOfAdvice(advice), sheet.page, sheet.cell, fieldId);
-    if (await save(storeWith(store, kind, free, copy))) {
-      setTab(free);
-      setNotice(`Dit staat nu in ${SLOT_NAME[free]}. Het advies blijft zoals het was.`);
+    if (await save(pick.store)) {
+      setTab(pick.tab);
+      setNotice(pick.notice);
     }
   };
 
@@ -151,10 +171,11 @@ export function WatchFieldsPage() {
   const undoReset = async () => {
     if (!undo) return;
     window.clearTimeout(undoTimer.current);
-    if (await save(storeWith(store, undo.kind, undo.slot, undo.version))) {
+    const back = restoreVersion(store, undo.kind, undo.slot, undo.version);
+    setUndo(undefined);
+    if (back.ok && (await save(back.store))) {
       setKind(undo.kind);
       setTab(undo.slot);
-      setUndo(undefined);
     }
   };
 
@@ -164,7 +185,7 @@ export function WatchFieldsPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <PageHeader eyebrow="Je horloge" title="Datavelden" />
+      <PageHeader eyebrow="Je horloge" title="Datavelden" fallback="/koppelen/garmin" />
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Soort training">
         {WATCH_KINDS.map((k) => (
@@ -174,7 +195,7 @@ export function WatchFieldsPage() {
 
       {state === 'noAdvice' || !advice ? (
         <Card className="flex flex-col gap-2">
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Voor deze training heb ik geen advies.</p>
+          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Voor deze training is er geen advies.</p>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Kies een soort die erop lijkt.</p>
         </Card>
       ) : (
@@ -209,7 +230,7 @@ export function WatchFieldsPage() {
                 onPick={openCell}
                 contentKey={`${kind}-${tab}`}
               />
-              <p className="text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>De cijfers zijn voorbeelden.</p>
+              <p className="text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>De cijfers zijn voorbeelden. Je horloge kan een veld op een andere plek zetten.</p>
               {replaced && <p className="text-sm" style={{ color: 'var(--color-warning)' }}>{replaced}</p>}
             </section>
           )}

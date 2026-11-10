@@ -841,9 +841,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Datavelden voor je horloge',
     lead: 'ASCEND tekent per soort training welke datapagina\'s je op je horloge zet. Er verandert niets aan je planning.',
     points: [
-      { head: 'Wat', text: 'per pagina de velden, met één zin waarom. Het veld waar je op stuurt staat groot.' },
-      { head: 'Zelf kiezen', text: 'tik een veld aan en kies een ander. Je versie staat naast het advies, dat zelf blijft zoals het is.' },
-      { head: 'Zelf instellen', text: 'ASCEND stuurt niets naar je horloge. De stappen staan onder de tekening.' },
+      { head: 'Zelf kiezen', text: 'tik een veld aan en kies een ander. Het advies zelf blijft staan.' },
+      { head: 'Zelf instellen', text: 'ASCEND stuurt niets naar je horloge.' },
     ],
   },
   stravaTekst: {

@@ -97,7 +97,7 @@ const ADVICE: Record<WatchKindId, AdviceSpec> = {
   longRun: {
     pages: [
       { main: 'heartRate', rest: ['lapPace', 'distance'], why: 'Hartslag groot, want die loopt op als je te hard begint.' },
-      { main: 'timer', rest: ['averagePace', 'averageHeartRate'], why: 'Tijd groot, want de lange loop telt in minuten.' },
+      { main: 'timer', rest: ['averagePace', 'averageHeartRate'], why: 'Timer groot, want de lange loop telt in minuten.' },
       { main: 'timeOfDay', rest: ['totalAscent'], why: 'De klok, zodat je weet wanneer je moet eten en keren.' },
     ],
     tip: 'Zet Auto Lap op 1 km: het rondetempo is dan het tempo van de kilometer waar je in zit.',
@@ -169,7 +169,7 @@ const KIND_BY_TEMPLATE: Record<string, WatchKindId> = {
 
 export function watchKindOf(template: Pick<SessionTemplate, 'id' | 'type' | 'roles'> | undefined): WatchKindId | undefined {
   if (!template) return undefined;
-  const byId = KIND_BY_TEMPLATE[template.id];
+  const byId = Object.hasOwn(KIND_BY_TEMPLATE, template.id) ? KIND_BY_TEMPLATE[template.id] : undefined;
   if (byId) return byId;
   if (template.type === 'strength' || hasRole(template, 'test') || hasRole(template, 'race')) return undefined;
   if (hasRole(template, 'ruck') || template.type === 'hiking') return 'packHike';
@@ -350,10 +350,9 @@ export interface WatchSteps {
 export function watchSteps(pages: readonly (readonly string[])[], model: WatchModel, advice?: WatchAdvice): WatchSteps {
   const activity = advice?.activity ?? model.activityRun;
   const fill = (text: string) => text.replace('{activiteit}', activity);
-  const perPage = pages.map((fields, p) => `Scherm ${p + 1}: ${fields.length} ${fields.length === 1 ? 'veld' : 'velden'}. ${fields.map((id) => fieldLabel(model, id)).join(', ')}.`);
-  const [addNew, ...before] = [...model.pathOnWatch].reverse();
-  const steps = [...before.reverse().map(fill), ...perPage, fill(addNew)];
-  const notes = [fill(model.pathInApp), 'De tekening is een voorbeeld: je horloge kan een veld op een andere plek zetten.'];
+  const perPage = pages.map((fields, p) => `Pagina ${p + 1}: ${fields.length} ${fields.length === 1 ? 'veld' : 'velden'}. ${fields.map((id) => fieldLabel(model, id)).join(', ')}.`);
+  const steps = [...model.pathOnWatch.map(fill), ...perPage];
+  const notes = [fill(model.pathInApp)];
   if (advice?.tip) notes.unshift(advice.tip);
   return { steps, notes };
 }
@@ -387,6 +386,53 @@ export function fieldHint(field: WatchFieldDef): string | undefined {
   if (field.only === 'run') parts.push('Alleen bij hardlopen.');
   if (field.only === 'workout') parts.push('Alleen in een gestuurde workout.');
   return parts.length > 0 ? parts.join(' ') : undefined;
+}
+
+// ---------------------------------------------------------------------------------------------
+// De handelingen van de pagina: wat een tik doet, beslist hier
+
+export type WatchTab = 'advice' | WatchSlot;
+export const WATCH_SLOT_NAME: Record<WatchSlot, string> = { v2: 'Versie 2', v3: 'Versie 3' };
+export const WATCH_BOTH_TAKEN = 'Het advies blijft zoals het is. Pas Versie 2 of 3 aan, of zet er een terug naar advies.';
+
+// Mag het blad Veld kiezen open? In het advies alleen als er nog een versie vrij is voor de kopie.
+export function canPickField(store: unknown, kind: WatchKindId, tab: WatchTab): boolean {
+  return tab !== 'advice' || firstFreeSlot(store, kind) !== undefined;
+}
+
+export interface FieldPick {
+  // Niets te bewaren: het veld stond er al, of er is geen plek.
+  changed: boolean;
+  store?: WatchFieldStore;
+  // De versie die daarna in beeld hoort.
+  tab: WatchTab;
+  notice?: string;
+}
+
+// Een veld gekozen op een plek. In een versie verandert die versie. In het advies blijft het advies het
+// advies: de keuze komt als kopie in de eerste vrije versie; zijn beide bezet, dan verandert er niets.
+export function pickField(store: unknown, kind: WatchKindId, tab: WatchTab, page: number, cell: number, fieldId: string, model: WatchModel): FieldPick {
+  const same: FieldPick = { changed: false, tab };
+  if (!fieldOf(model, fieldId)) return same;
+  if (tab !== 'advice') {
+    const current = resolveVersion(store, kind, tab, model)?.version;
+    if (!current || current.pages[page]?.[cell] === undefined || current.pages[page][cell] === fieldId) return same;
+    return { changed: true, store: storeWith(store, kind, tab, withField(current, page, cell, fieldId)), tab };
+  }
+  const advice = watchAdvice(kind, model);
+  const advised = advice?.pages[page]?.fields[cell];
+  if (!advice || advised === undefined || advised === fieldId) return same;
+  const free = firstFreeSlot(store, kind);
+  if (!free) return { ...same, notice: WATCH_BOTH_TAKEN };
+  const copy = withField(copyOfAdvice(advice), page, cell, fieldId);
+  return { changed: true, store: storeWith(store, kind, free, copy), tab: free, notice: `Dit staat nu in ${WATCH_SLOT_NAME[free]}. Het advies blijft zoals het was.` };
+}
+
+// Ongedaan maken na Terug naar advies: de oude versie komt terug op haar plek, maar alleen als die plek
+// nog leeg is. Staat er intussen iets nieuws, dan vervalt het ongedaan maken en blijft het nieuwe staan.
+export function restoreVersion(store: unknown, kind: WatchKindId, slot: WatchSlot, version: WatchVersion): { ok: boolean; store?: WatchFieldStore } {
+  if (cleanWatchFieldStore(store).store?.[kind]?.[slot]) return { ok: false };
+  return { ok: true, store: storeWith(store, kind, slot, version) };
 }
 
 // Het wisselen van pagina via een puntje: vloeiend alleen als de beweging op Normaal staat.

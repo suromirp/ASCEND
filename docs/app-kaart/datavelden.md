@@ -30,7 +30,7 @@ Hartslag groot, want daar stuur je op.
 [knop: Pagina 2 van 3]
 [knop: Pagina 3 van 3]
 Pagina 1 van 3
-De cijfers zijn voorbeelden.
+De cijfers zijn voorbeelden. Je horloge kan een veld op een andere plek zetten.
 
 --- kaart 1 ---
 Zo zet je het op je horloge
@@ -43,12 +43,11 @@ Kies Gegevensschermen en het scherm dat je wilt aanpassen.
 4.
 Kies Indeling voor het aantal velden en Gegevensvelden voor wat elk veld toont.
 5.
-Scherm 1: 3 velden. Hartslagzone, Hartslag, Timer.
-6.
-Scherm 2: 3 velden. Rondetempo, Afstand, Gemiddeld tempo.
-7.
-Scherm 3: 2 velden. Cadans, Tijd.
-8.
 Kies Voeg nieuw toe voor een extra scherm.
-Het kan ook in Garmin Connect: je toestel, Activiteiten en apps, Hardlopen, Gegevensschermen. Bewaart de app het niet, doe het dan op het horloge.
-De tekening is een voorbeeld: je horloge kan een veld op een andere plek zetten.
+6.
+Pagina 1: 3 velden. Hartslagzone, Hartslag, Timer.
+7.
+Pagina 2: 3 velden. Rondetempo, Afstand, Gemiddeld tempo.
+8.
+Pagina 3: 2 velden. Cadans, Tijd.
+Het kan ook in Garmin Connect, bij je toestel onder Activiteiten en apps. De namen kunnen daar anders zijn. Bewaart de app het niet, doe het dan op het horloge.

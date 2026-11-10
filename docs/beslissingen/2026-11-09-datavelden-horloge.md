@@ -40,6 +40,11 @@ Wens van de eigenaar (9 november): de datapagina's zien zoals ze op zijn horloge
 - Een versie die gelijk is aan het advies zegt dat: "Je versie is gelijk aan het advies."
 - Het horloge in de tekening is nooit smaller dan 256 px, zodat de kleinste tekst 12 px blijft.
 - De pagina staat in de tekstkaart als scherm `datavelden`.
+- Na de review: wat een tik doet staat in de engine (`pickField`, `canPickField`, `restoreVersion`), niet in de pagina. Ongedaan maken na Terug naar advies zet nooit iets terug over een versie die er intussen bij kwam, en vervalt bij elke nieuwe opslag. Er is één opslag tegelijk: een tweede tik voordat de eerste bewaard is doet niets.
+- De regel over Garmin Connect noemt geen menunamen: die zijn gemeld, niet bevestigd.
+- De stappen zeggen "Pagina 1", zoals de rest van de pagina; het menu van het horloge zegt Gegevensschermen, en dat woord staat alleen in het pad.
+- De terugknop van de pagina valt zonder geschiedenis terug op Garmin koppelen.
+- Eén mint accent: de gekozen chip en het gekozen segment zijn de bestaande opmaak van `Chip` en `Segmented`; er staat geen hoofdknop op de pagina. Lookout telde ze wel als meer dan één mint element.
 
 ## Alternatieven
 
