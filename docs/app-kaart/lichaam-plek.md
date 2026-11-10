@@ -13,7 +13,7 @@ Voorkant, rond de knieschijf
 Wat je doet bij last
 Pijn rond de knieschijf na veel dalen is meestal overbelasting. Doe een paar dagen minder trap en afdalen. Fietsen en vlak wandelen gaan vaak wel.
 Houd de pijn tijdens het bewegen op 2 van 10 of lager en kijk de ochtend erna. Is het dan erger dan gisteren, dan was het te veel.
-[knop: Wanneer laat je het nakijken?]
+Wanneer laat je het nakijken?
 Naar een fysio of je huisarts bij
 Een flinke zwelling
 De plek niet kunnen belasten

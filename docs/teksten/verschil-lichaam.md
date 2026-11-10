@@ -35,3 +35,5 @@ De lijst "Naar een fysio of je huisarts bij" staat nu altijd open, op de plekpag
 - "Twee harde loopjes" in `weekConcerns.ts` en `weekValidator.ts` (Week, met test) en `GarminLink.tsx`: buiten Lichaam.
 - De Forge-kant van de zware beendag (`components/forge/LegEasePanel.tsx`): daar loopt een andere bouwer.
 - De teksten van de kaart "zware beendag" en van de beenindex in `legDayEase.ts`: die volgen de stemgids al.
+
+Op de kaart gaf dit één verschil, op Lichaam: een plek: "knop: Wanneer laat je het nakijken?" is de kop "Wanneer laat je het nakijken?" geworden. De lijst eronder stond al op de kaart. De andere 23 schermen bleven gelijk, zonder schendingen van de invarianten.
