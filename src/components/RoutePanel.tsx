@@ -10,11 +10,14 @@ import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { resolveRouteStyle, routeTarget, targetText } from '../engine/routeTarget';
 import { MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
-import { routeGpx } from '../engine/gpx';
+import { gpxCourseName, routeGpx } from '../engine/gpx';
+import { SAVE_HINT, SEND_HINT, SEND_LABEL, WATCH_STEPS, WATCH_STEPS_TITLE, sendLine, type RouteSendOutcome } from '../engine/routeSend';
 import { findRoutes, grantRouteConsent, hasRouteConsent, type RouteSearch } from '../storage/routeProposal';
 import { chooseStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, startFailureLine, type StartFailure } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere } from '../storage/routeStart';
 import { saveRouteGpx, type RouteFileResult } from '../storage/routeFile';
+import { routeSender, sendRouteGpx } from '../storage/routeSend';
+import type { FileSender } from '../integrations/fileSender';
 import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { withTimeout } from '../utils/withTimeout';
 import { TextButton } from './TextButton';
@@ -33,13 +36,37 @@ function failureText(style: RouteStyle, outcome: Extract<PlanOutcome, { ok: fals
   return 'De routeplanner antwoordde niet.';
 }
 
-function RouteBlock({ style, outcome, primary, name, date, target }: { style: RouteStyle; outcome: PlanOutcome; primary: boolean; name: string; date: string; target: Parameters<typeof proposalNotes>[1] }) {
-  const [saved, setSaved] = useState<RouteFileResult | 'busy' | undefined>();
+function RouteBlock({ style, outcome, primary, date, target, sender }: { style: RouteStyle; outcome: PlanOutcome; primary: boolean; date: string; target: Parameters<typeof proposalNotes>[1]; sender: FileSender | null }) {
+  // De laatste uitkomst van een van de twee knoppen; 'busy' zolang er een loopt (beide hebben een grens in tijd).
+  const [done, setDone] = useState<{ send: RouteSendOutcome } | { file: RouteFileResult } | 'busy' | undefined>();
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const gpx = (p: RouteProposal) => routeGpx(p.points, gpxCourseName(style, p.distanceM));
 
   async function download(p: RouteProposal) {
-    setSaved('busy');
-    setSaved(await saveRouteGpx(routeGpx(p.points, `${name} · ${STYLE_NAME[style]}`), style, date));
+    setDone('busy');
+    const file = await saveRouteGpx(gpx(p), style, date);
+    if (mounted.current) setDone({ file });
   }
+
+  async function send(p: RouteProposal) {
+    setDone('busy');
+    const result = await sendRouteGpx(gpx(p), style, date, sender);
+    if (mounted.current) setDone({ send: result });
+  }
+
+  const line = done === undefined || done === 'busy'
+    ? undefined
+    : 'send' in done
+      ? sendLine(done.send)
+      : !done.file.ok
+        ? { text: 'Opslaan lukte niet. Probeer het nog eens.', warn: true }
+        : { text: done.file.where === 'folder' ? `Opgeslagen als ${done.file.name} in ${done.file.label}.` : `Gedownload als ${done.file.name}.`, warn: false };
 
   return (
     <div className="flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
@@ -51,18 +78,33 @@ function RouteBlock({ style, outcome, primary, name, date, target }: { style: Ro
           {proposalNotes(outcome.proposal, target).map((note) => (
             <p key={note} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
           ))}
-          <div>
-            <TextButton tone={primary ? 'action' : 'dim'} disabled={saved === 'busy'} onClick={() => void download(outcome.proposal)}>GPX downloaden</TextButton>
+          <div className="flex flex-wrap gap-x-5">
+            {sender && <TextButton tone={primary ? 'action' : 'dim'} disabled={done === 'busy'} onClick={() => void send(outcome.proposal)}>{SEND_LABEL}</TextButton>}
+            <TextButton tone={primary && !sender ? 'action' : 'dim'} disabled={done === 'busy'} onClick={() => void download(outcome.proposal)}>GPX downloaden</TextButton>
           </div>
-          <p role="status" className="text-xs leading-snug" style={{ color: saved && saved !== 'busy' && !saved.ok ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>
-            {saved === undefined || saved === 'busy' ? '' : !saved.ok ? 'Opslaan lukte niet. Probeer het nog eens.' : saved.where === 'folder' ? `Opgeslagen als ${saved.name} in ${saved.label}.` : `Gedownload als ${saved.name}.`}
-          </p>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sender ? SEND_HINT : SAVE_HINT}</p>
+          <p role="status" className="min-h-[18px] text-xs leading-snug" style={{ color: line?.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line?.text ?? ''}</p>
         </>
       ) : (
         <>
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{STYLE_LINE[style]}</p>
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{failureText(style, outcome, target.ascentM < MIN_ASCENT_TARGET_M)}</p>
         </>
+      )}
+    </div>
+  );
+}
+
+// Van Garmin Connect naar het horloge: drie stappen achter een tik, onder de lussen.
+function WatchSteps() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <TextButton tone="dim" icon="omlaag" flipped={open} aria-expanded={open} onClick={() => setOpen((v) => !v)}>{WATCH_STEPS_TITLE}</TextButton>
+      {open && (
+        <ol className="flex list-decimal flex-col gap-1 pl-5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          {WATCH_STEPS.map((step) => <li key={step}>{step}</li>)}
+        </ol>
       )}
     </div>
   );
@@ -164,6 +206,8 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
     if (mounted.current) setConsent(true);
   }
 
+  // De weg naar de app van je horloge op dit toestel; null: alleen GPX downloaden.
+  const [sender] = useState(routeSender);
   const dim = { color: 'var(--color-ink-dim)' };
 
   if (lat === undefined || lon === undefined) {
@@ -220,7 +264,8 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
               ? 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.'
               : ''}
       </p>
-      {plans && order.map((s, i) => <RouteBlock key={s} style={s} outcome={plans[s]} primary={i === 0} name={template.name} date={date} target={target} />)}
+      {plans && order.map((s, i) => <RouteBlock key={s} style={s} outcome={plans[s]} primary={i === 0} date={date} target={target} sender={sender} />)}
+      {plans && order.some((s) => plans[s].ok) && <WatchSteps />}
       {search !== 'busy' && (search.kind !== 'plans' || anyFailed) && (
         <div><TextButton tone="dim" onClick={() => setAttempt((n) => n + 1)}>Opnieuw zoeken</TextButton></div>
       )}
