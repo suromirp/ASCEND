@@ -27,7 +27,7 @@ function errorCode(err: unknown): 1 | 2 | 3 {
 const appGeolocation: Pick<Geolocation, 'getCurrentPosition'> = {
   getCurrentPosition(success: Callback[0], failure?: Callback[1], options?: Callback[2]) {
     void load()
-      .then((m) => m.Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: options?.timeout, maximumAge: options?.maximumAge }))
+      .then((m) => m.Geolocation.getCurrentPosition({ enableHighAccuracy: options?.enableHighAccuracy === true, timeout: options?.timeout, maximumAge: options?.maximumAge }))
       .then(
         (pos) => success({ coords: pos.coords, timestamp: pos.timestamp } as unknown as GeolocationPosition),
         (err) => failure?.({ code: errorCode(err), message: String((err as Error | undefined)?.message ?? '') } as unknown as GeolocationPositionError),
@@ -60,6 +60,19 @@ export async function requestAppLocationPermission(): Promise<LocationPermission
   try {
     const status = await (await load()).Geolocation.requestPermissions({ permissions: ['coarseLocation'] });
     return mapState(status.coarseLocation === 'granted' ? 'granted' : status.location);
+  } catch {
+    return 'unknown';
+  }
+}
+
+// Voor een eigen startpunt (Startpunt van je lus, Precies) is een ruwe plek te grof: dan vraagt de
+// app de fijne plek, eenmalig en alleen op een tik van de gebruiker. Het manifest heeft beide rechten
+// al. Kiest de gebruiker "ongeveer", dan geeft de telefoon een ruwe plek en zegt ASCEND dat.
+export async function requestFineAppLocationPermission(): Promise<LocationPermission | undefined> {
+  if (!isApp()) return undefined;
+  try {
+    const status = await (await load()).Geolocation.requestPermissions({ permissions: ['location'] });
+    return mapState(status.location);
   } catch {
     return 'unknown';
   }

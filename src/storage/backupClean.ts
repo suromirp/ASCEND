@@ -325,6 +325,17 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeStyle;
     skipped.n++;
   }
+  // Startpunt van je lus: Ongeveer of Precies. Het punt zelf staat nooit in een back-up.
+  if ('routeStart' in s && s.routeStart !== 'approx' && s.routeStart !== 'exact') {
+    delete s.routeStart;
+    skipped.n++;
+  }
+  // Precies hoort bij het punt op dit toestel: een import zet het nooit aan, dan ging er zonder vraag een punt de deur uit.
+  if (s.routeStart === 'exact') s.routeStart = 'approx';
+  if ('routeStartPoint' in s) {
+    delete s.routeStartPoint;
+    skipped.n++;
+  }
   if ('watchNamePrefix' in s && s.watchNamePrefix !== 'short' && s.watchNamePrefix !== 'long' && s.watchNamePrefix !== 'none') {
     delete s.watchNamePrefix;
     skipped.n++;

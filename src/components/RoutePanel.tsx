@@ -3,15 +3,17 @@
 // zoeken, met wat er de deur uit gaat. Zoeken heeft een grens in tijd; zonder netwerk staat er één
 // rustige regel. Het paneel rekent zelf niets en plant niets: een route is alleen om te lopen.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
-import type { RouteProposal, RouteStyle } from '../models/route';
+import type { RoutePoint, RouteProposal, RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { resolveRouteStyle, routeTarget, targetText } from '../engine/routeTarget';
 import { MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
 import { routeGpx } from '../engine/gpx';
 import { findRoutes, grantRouteConsent, hasRouteConsent, type RouteSearch } from '../storage/routeProposal';
+import { chooseStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, startFailureLine, type StartFailure } from '../engine/routeStart';
+import { getRouteStartPoint, locateStartHere } from '../storage/routeStart';
 import { saveRouteGpx, type RouteFileResult } from '../storage/routeFile';
 import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { withTimeout } from '../utils/withTimeout';
@@ -67,13 +69,29 @@ function RouteBlock({ style, outcome, primary, name, date, target }: { style: Ro
 }
 
 export function RoutePanel({ template, date, onDecline }: { template: SessionTemplate; date: string; onDecline: () => void }) {
-  const { settings, program, sessionLogs } = useAppData();
+  const { settings, program, sessionLogs, updateSettings } = useAppData();
   const place = settings.homeLocation;
   const lat = place?.lat;
   const lon = place?.lon;
   const [consent, setConsent] = useState<boolean | undefined>();
   const [found, setFound] = useState<{ key: string; result: RouteSearch } | undefined>();
   const [attempt, setAttempt] = useState(0);
+  // Het eigen startpunt (alleen op dit toestel): undefined zolang we lezen, null als er geen is.
+  const [saved, setSaved] = useState<RoutePoint | null | undefined>();
+  const [locating, setLocating] = useState(false);
+  // Lukte de locatie niet, dan zoekt dit paneel ongeveer, met de reden in één regel.
+  const [fellBack, setFellBack] = useState<StartFailure | undefined>();
+  const [declinedExact, setDeclinedExact] = useState(false);
+  const mounted = useRef(true);
+  const locateStop = useRef(new AbortController());
+  useEffect(() => {
+    mounted.current = true;
+    const stop = locateStop.current;
+    return () => {
+      mounted.current = false;
+      stop.abort();
+    };
+  }, []);
   const first = resolveRouteStyle(settings.routeStyle);
   const target = routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy });
   const { distanceKm, ascentM } = target;
@@ -89,20 +107,62 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    void withTimeout(getRouteStartPoint(), CONSENT_LIMIT_MS).then((p) => {
+      if (alive) setSaved(p ?? null);
+    }, () => {
+      // Trage opslag: niet raden dat er geen punt is, dit paneel zoekt ongeveer.
+      if (alive) { setSaved(null); setDeclinedExact(true); }
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const mode = resolveRouteStart(settings.routeStart);
+  const choice = saved === undefined ? undefined : chooseStart(mode, saved);
+  // Precies zonder punt vraagt eerst om een punt, tenzij dit paneel op Ongeveer terugviel.
+  const waitingForPoint = choice?.kind === 'needs-point' && !fellBack && !declinedExact;
+  const exactLat = choice?.kind === 'exact' ? choice.point.lat : undefined;
+  const exactLon = choice?.kind === 'exact' ? choice.point.lon : undefined;
+  const startReady = choice !== undefined && !waitingForPoint;
+
   // Eén zoektocht per plek, training en poging; zolang het antwoord van deze sleutel er niet is, zoekt het paneel.
-  const key = `${attempt}|${lat}|${lon}|${distanceKm}|${ascentM}`;
+  const key = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${distanceKm}|${ascentM}`;
   const search: RouteSearch | 'busy' = found?.key === key ? found.result : 'busy';
 
   useEffect(() => {
-    if (!consent || lat === undefined || lon === undefined) return;
+    if (!consent || !startReady || lat === undefined || lon === undefined) return;
     const stop = new AbortController();
     // findRoutes heeft zelf een grens in tijd en gooit nooit: de regel "Zoeken" blijft nooit staan.
-    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal }).then((result) => {
+    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
       if (!stop.signal.aborted) setFound({ key, result });
     });
     // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
     return () => stop.abort();
-  }, [consent, lat, lon, distanceKm, ascentM, key]);
+    // De sleutel bevat het punt; de afhankelijkheden zijn dezelfde getallen.
+  }, [consent, startReady, lat, lon, exactLat, exactLon, distanceKm, ascentM, key]);
+
+  // Gebruik waar ik nu ben: één keer, met een grens in tijd. Lukt het niet, dan zoekt het paneel ongeveer.
+  async function startHere() {
+    setLocating(true);
+    const found = await locateStartHere({ signal: locateStop.current.signal });
+    if (!mounted.current) return;
+    setLocating(false);
+    if (found.ok) setSaved(found.point);
+    else setFellBack(found.reason);
+  }
+
+  async function choose(next: 'approx' | 'exact') {
+    try {
+      await withTimeout(grantRouteConsent(), CONSENT_LIMIT_MS);
+      await withTimeout(updateSettings({ routeStart: next }), CONSENT_LIMIT_MS);
+    } catch {
+      // Niet bewaard: de keuze geldt dan niet en het paneel zoekt ongeveer.
+    }
+    if (mounted.current) setConsent(true);
+  }
 
   const dim = { color: 'var(--color-ink-dim)' };
 
@@ -113,13 +173,32 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   if (!consent) {
     return (
       <div className="flex flex-col">
-        <p className="text-sm leading-snug" style={dim}>
-          Een lus zoeken voor deze training? Daarvoor gaat je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Er gaat geen naam of adres mee.
+        <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
+        <TextButton onClick={() => void choose('exact')}>Precies, vanaf je deur</TextButton>
+        <p className="text-xs leading-snug" style={dim}>
+          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap op je plek, afgerond op ongeveer een kilometer. Het punt wordt alleen op dit toestel bewaard.
+        </p>
+        <TextButton tone="dim" onClick={() => void choose('approx')}>Ongeveer</TextButton>
+        <p className="text-xs leading-snug" style={dim}>
+          Je plek, afgerond op ongeveer een kilometer, gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. De lus begint dan tot ongeveer 700 m van je deur.
         </p>
         <div className="flex flex-wrap gap-x-5">
           <TextButton tone="dim" onClick={onDecline}>Liever niet</TextButton>
-          <TextButton onClick={() => { void grantRouteConsent().then(() => setConsent(true)); }}>Ja, zoek</TextButton>
         </div>
+      </div>
+    );
+  }
+
+  if (saved === undefined) return <p role="status" className="min-h-[20px] text-sm" style={dim} />;
+  if (waitingForPoint) {
+    return (
+      <div className="flex flex-col">
+        <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. Sta bij je deur en kies Gebruik waar ik nu ben. Dat punt gaat als start van je lus naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt alleen op dit toestel bewaard.</p>
+        <div className="flex flex-wrap gap-x-5">
+          <TextButton disabled={locating} onClick={() => void startHere()}>Gebruik waar ik nu ben</TextButton>
+          <TextButton tone="dim" disabled={locating} onClick={() => setDeclinedExact(true)}>Ongeveer</TextButton>
+        </div>
+        <p role="status" className="min-h-[20px] text-xs leading-snug" style={dim}>{locating ? 'Je locatie wordt bepaald. Dat duurt hoogstens 15 seconden.' : ''}</p>
       </div>
     );
   }
@@ -131,7 +210,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. De lus begint bij je plek, afgerond op ongeveer een kilometer.</p>
+      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. {fellBack ? startFailureLine(fellBack) : exactLat !== undefined ? START_LINE_EXACT : START_LINE_APPROX}</p>
       <p role="status" className="text-sm leading-snug" style={dim}>
         {search === 'busy'
           ? 'Zoeken naar een lus. Dat duurt hoogstens een halve minuut.'

@@ -33,6 +33,25 @@ describe('findRoutes', () => {
     expect(seen[0]).toEqual({ lat: 52.12, lon: 5.65 });
   });
 
+  it('met Precies gaat alleen het startpunt precies naar de routeplanner, de kaart blijft op de afgeronde plek', async () => {
+    const exact = { lat: 52.12789, lon: 5.65123 };
+    const seen: RoutePoint[] = [];
+    const route: RouteFn = async (w) => { seen.push(...w); return straight(w); };
+    const terrain = vi.fn(async () => undefined);
+    const found = await findRoutes({ lat: 50.5, lon: 4.5 }, target, { route, terrain, offline: () => false }, exact);
+    expect(found.kind).toBe('plans');
+    expect(seen[0]).toEqual(exact);
+    expect(terrain).toHaveBeenCalledWith({ name: '', lat: 52.13, lon: 5.65 });
+    expect(terrain).toHaveBeenCalledTimes(1);
+  });
+
+  it('zonder Precies blijft het startpunt afgerond, ook als er een ander punt is', async () => {
+    const seen: RoutePoint[] = [];
+    const route: RouteFn = async (w) => { seen.push(...w); return straight(w); };
+    await findRoutes(place, target, { route, terrain: async () => undefined, offline: () => false });
+    expect(seen[0]).toEqual({ lat: 52.12, lon: 5.65 });
+  });
+
   it('zonder heuvels en paden zoekt hij toch, en een fout bij de kaart is geen fout van de route', async () => {
     const found = await findRoutes(place, target, { route: straight, terrain: async () => { throw new Error('kaart stuk'); }, offline: () => false });
     expect(found.kind === 'plans' && found.plans.adventure.ok).toBe(true);

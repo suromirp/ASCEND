@@ -1,3 +1,5 @@
+import { RouteProposalLine } from './RouteProposalLine';
+import { wantsRoute } from '../engine/routeTarget';
 import { useEffect, useRef, useState } from 'react';
 import { NumberField } from './NumberField';
 import { templateSport } from '../engine/sports';
@@ -128,6 +130,8 @@ function GeneralLogger({
   // day defaults to that day; a loose training can be logged for a past
   // day too (production bug: everything landed on today).
   const today = todayISO();
+  // Route voorstellen (looptraining): dezelfde regel als op Vandaag. Dit scherm is zelf al een blad, dus het paneel klapt op zijn plek open.
+  const showRoute = settings.routeProposal !== false && wantsRoute(template);
   const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
   const [doneOn, setDoneOn] = useState<string>(typeof restored?.doneOn === 'string' ? restored.doneOn : plannedInPast ? scheduledDate! : today);
   // The exact same plan the guide shows for this day: steps, minutes,
@@ -413,7 +417,7 @@ function GeneralLogger({
           </Card>
         )}
 
-        {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length) ? (
+        {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length || showRoute) ? (
           <div className="mt-4 flex flex-col divide-y divide-[var(--color-card-border)] rounded-2xl border px-4" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
             {template.warmup && template.warmup.length > 0 && (
               <StretchRow icon="rekken" title="Eerst opwarmen" line={`${template.warmup.length} oefeningen`} stretches={template.warmup} />
@@ -421,6 +425,7 @@ function GeneralLogger({
             {template.cooldown && template.cooldown.length > 0 && (
               <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
             )}
+            {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} mode="inline" row />}
             {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="py-2" plain />}
           </div>
         ) : plannedSession && !preview ? (
