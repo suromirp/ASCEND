@@ -241,7 +241,7 @@ export function WeekPage() {
             ) : (
               <h1 className="font-display text-[32px] leading-tight" style={{ color: 'var(--color-ink)' }}>
                 {heading.title}{heading.number !== undefined && <> <Num>{heading.number}</Num></>}
-                {heading.line && <span className="ml-2 font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{heading.line}</span>}
+                {heading.line && <>{' '}<span className="ml-2 font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{heading.line}</span></>}
               </h1>
             )}
           </div>

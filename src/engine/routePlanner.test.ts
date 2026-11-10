@@ -280,13 +280,13 @@ describe('Wat er gevonden is', () => {
   it('hellingen gevonden maar geen bruikbaar voorstel: de telling, de hoogste en de vervanger', async () => {
     const plans = await proposeRoutes({ start: START, target: hilly, terrain: terrain(feature('hill', 40, 1500, 24), feature('hill', 160, 1400, 14), feature('hill', 300, 600, 8)) }, fakeRoute());
     expect(plans.simple).toEqual({ ok: false, reason: 'nothing' });
-    expect(searchLines(plans, hilly)).toEqual(['2 hellingen in de buurt op de kaart, de hoogste 24 m.', SUBSTITUTE_LINE]);
+    expect(searchLines(plans, hilly)).toEqual(['2 hellingen in de buurt op de kaart, de hoogste 24 m boven je plek.', SUBSTITUTE_LINE]);
   });
 
   it('een lus die de hoogte haalt: alleen de telling, geen vervanger', async () => {
     const plans = await proposeRoutes({ start: START, target: { distanceKm: 9, ascentM: 300 }, terrain: terrain(feature('hill', 40, 1500, 50)) }, fakeRoute({ height: 50 }));
     expect(plans.simple.ok).toBe(true);
-    expect(searchLines(plans, { distanceKm: 9, ascentM: 300 })).toEqual(['Eén helling in de buurt op de kaart, 50 m hoog.']);
+    expect(searchLines(plans, { distanceKm: 9, ascentM: 300 })).toEqual(['Eén helling in de buurt op de kaart, 50 m boven je plek.']);
   });
 
   it('een vlakke training krijgt geen uitleg over hellingen', async () => {

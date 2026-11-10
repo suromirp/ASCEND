@@ -46,3 +46,9 @@ Niets. Uit het besluit over Garmin Connect vervalt alleen dat de uitleg en de ui
 ## Terugdraaien
 
 `searchLines` niet meer aanroepen in `RoutePanel.tsx` (de regel is dan weer leeg) en in `proposalNotes` de korter-zin weghalen en 0.85 terugzetten. Voor de regel onder de knoppen: de commit van deze wijziging terugdraaien in `RoutePanel.tsx` en `routeSend.ts`. Er is geen opgeslagen vorm om op te ruimen.
+
+## Na de review (10 november)
+
+- De vervangzin zegt nu "Hoogtemeters bergop": een loopband traint alleen bergop (`FLAT_COUNTRY_TIPS`), dus bij een training met afdalen beloofde de oude zin te veel. De woorden komen uit `modalities.ts` ("loopband op helling") en de tips bij plekken in `trainingSpots.ts` (bruggen); niet uit "Geen heuvel in de buurt".
+- De hoogte in de telling is hoeveel hoger dan je plek (`heightM`), dus de zin zegt "boven je plek". Een helling zonder bekende hoogte telt mee in het aantal maar niet voor de hoogste.
+- "Tot 12 procent verschil is goed genoeg" gaat alleen over afstand; Simpel weegt bij het stoppen ook de hoogte mee (`missScore`).

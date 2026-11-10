@@ -292,3 +292,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-10, Route voorstellen legt uit (telling hellingen, vervanger, korter-zin, één statusregel; bouwmoment), Sherpa, opus (ontwikkelaar), 157k, 21 min, 0
 - 2026-11-10, Melding in Week na 'blijft staan' met instelling (bouwmoment), Sherpa, sonnet (ontwikkelaar), 112k, 20 min, 0
 - 2026-11-10, Uitlegblad training bouwen (drie groepen, één soort rij; bouwmoment), Sherpa, sonnet (ontwikkelaar), 89k, 16 min, 0
+- 2026-11-10, Review bouwmoment (route, weekKept, instellingen, Week-kop), Warden, opus (reviewer), 107k, 5 min, 0 blokkerend, 2 geel, 8 klein

@@ -416,7 +416,7 @@ export function proposalNotes(p: RouteProposal, target: RouteTarget): string[] {
   return notes;
 }
 
-export const SUBSTITUTE_LINE = 'Hoogtemeters haal je ook op een trap, een brug of de loopband op helling.';
+export const SUBSTITUTE_LINE = 'Hoogtemeters bergop haal je ook op een trap, een brug of de loopband op helling.';
 
 // Wat er in de buurt gevonden is, in één regel, en zonder genoeg hoogte waar je die anders haalt
 // (de vervangers die de app al noemt bij Geen heuvel in de buurt). Alleen bij een training met
@@ -434,8 +434,8 @@ export function searchLines(plans: RoutePlans, target: RouteTarget): string[] {
   if (f) {
     const tallest = f.tallestM === undefined ? undefined : `${formatNumberNL(Math.round(f.tallestM), 0)} m`;
     if (f.hills === 0) lines.push('Geen helling in de buurt op de kaart.');
-    else if (f.hills === 1) lines.push(tallest ? `Eén helling in de buurt op de kaart, ${tallest} hoog.` : 'Eén helling in de buurt op de kaart.');
-    else lines.push(tallest ? `${f.hills} hellingen in de buurt op de kaart, de hoogste ${tallest}.` : `${f.hills} hellingen in de buurt op de kaart.`);
+    else if (f.hills === 1) lines.push(tallest ? `Eén helling in de buurt op de kaart, ${tallest} boven je plek.` : 'Eén helling in de buurt op de kaart.');
+    else lines.push(tallest ? `${f.hills} hellingen in de buurt op de kaart, de hoogste ${tallest} boven je plek.` : `${f.hills} hellingen in de buurt op de kaart.`);
   }
   if (!made.some((p) => p.ascentM >= target.ascentM * SHORT_ASCENT)) lines.push(SUBSTITUTE_LINE);
   return lines;

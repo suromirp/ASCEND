@@ -830,7 +830,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'locatie':
       return locationSummary(s);
     case 'bundel-weekmelding':
-      return { value: s.weekFixProposal === false ? 'Zonder voorstel' : 'Met voorstel', sub: `Na jouw keuze: ${choiceShort('weekNaKeuze', resolveWeekAfterChoice(s)).toLowerCase()}` };
+      return { value: s.weekFixProposal === false ? 'Zonder voorstel' : 'Met voorstel', sub: `Melding: ${choiceShort('weekNaKeuze', resolveWeekAfterChoice(s)).toLowerCase()}` };
     case 'week-na-keuze':
       return { value: choiceShort('weekNaKeuze', resolveWeekAfterChoice(s)) };
     case 'weekvoorstel':
