@@ -53,7 +53,7 @@ export function VastgelegdSheet({ onClose }: { onClose: () => void }) {
       await withTimeout(clearInfluences(), WIPE_LIMIT_MS, 'Wissen');
       setConfirming(false);
     } catch (err) {
-      setNote(err instanceof TimeoutError ? 'Wissen is nog niet bevestigd. Kijk zo of de lijst leeg is.' : 'Wissen lukte niet. Er is niets veranderd; probeer het zo nog eens.');
+      setNote(err instanceof TimeoutError ? 'Wissen is nog niet bevestigd. Kijk zo of de lijst leeg is.' : 'Wissen lukte niet. Er is niets veranderd. Probeer het zo nog eens.');
     } finally {
       setBusy(false);
     }

@@ -299,7 +299,7 @@ export const CHOICES = {
     line: 'Voor Forge, je rugzak en de beenindex.',
     advice: 'trend' as 'trend' | 'latest',
     options: [
-      { value: 'trend', label: 'Trend', note: 'Het rustige gemiddelde van je wegingen; met te weinig wegingen je laatste', short: 'Trend' },
+      { value: 'trend', label: 'Trend', note: 'Het rustige gemiddelde van je wegingen. Met te weinig wegingen je laatste', short: 'Trend' },
       { value: 'latest', label: 'Laatste weging', note: 'Het getal van je laatste weging, ook als dat een slechte dag was', short: 'Laatste weging' },
     ],
   }),
@@ -359,7 +359,7 @@ export const CHOICES = {
     advice: 'speed' as 'speed' | 'equal',
     help: 'klaarWeging',
     options: [
-      { value: 'speed', label: 'Snelheid weegt het zwaarst', note: 'Snelheid 60%, langste loop en weekvolume 20% elk; bij Sterker worden kracht 60% en harde sets 40%', short: 'Snelheid' },
+      { value: 'speed', label: 'Snelheid weegt het zwaarst', note: 'Snelheid 60%, langste loop en weekvolume 20% elk. Bij Sterker worden kracht 60% en harde sets 40%', short: 'Snelheid' },
       { value: 'equal', label: 'Gelijk', note: 'Elke meter telt even zwaar mee', short: 'Gelijk' },
     ],
   }),

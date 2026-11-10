@@ -61,7 +61,6 @@ export function BodyCheckSheet({
   const [side, setSide] = useState<SideChoice>('beide');
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [fysioOpen, setFysioOpen] = useState(false);
 
   const choices = spot ? sideChoicesFor(spot) : [];
   const chosenSide: SideChoice | undefined = choices.length > 0 ? side : undefined;
@@ -80,7 +79,6 @@ export function BodyCheckSheet({
         REPORT_TIMEOUT_MS,
       );
       onSaved(spot);
-      setFysioOpen(kind === 'pijn' && level === 'ernstig');
       setStep('done');
     } catch {
       setFailed(true);
@@ -183,7 +181,7 @@ export function BodyCheckSheet({
                   </>
                 )}
 
-                {step === 'done' && <Suggestion spot={spot} kind={kind} severity={kind === 'pijn' ? severity : undefined} fysioOpen={fysioOpen} onToggleFysio={() => setFysioOpen((o) => !o)} onAll={() => { goto.current = `/lichaam/${spot.id}`; requestClose(); }} onDone={requestClose} />}
+                {step === 'done' && <Suggestion spot={spot} kind={kind} severity={kind === 'pijn' ? severity : undefined} onAll={() => { goto.current = `/lichaam/${spot.id}`; requestClose(); }} onDone={requestClose} />}
               </>
             )}
           </Card>
@@ -197,16 +195,12 @@ function Suggestion({
   spot,
   kind,
   severity,
-  fysioOpen,
-  onToggleFysio,
   onAll,
   onDone,
 }: {
   spot: BodySpot;
   kind: InjuryKind;
   severity?: InjurySeverity;
-  fysioOpen: boolean;
-  onToggleFysio: () => void;
   onAll: () => void;
   onDone: () => void;
 }) {
@@ -227,23 +221,21 @@ function Suggestion({
         <StretchItems stretches={s.stretches} className="mt-1 flex flex-col" />
       </div>
 
+      {/* Zorg staat nooit achter een tik: de spoedtekst en de lijst zijn altijd zichtbaar (lichaamZorg.scan.test.ts). */}
+      {s.direct && <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{s.direct}</p>}
+
       {s.fysio.length > 0 && (
-        <div className="border-t" style={{ borderColor: 'var(--color-card-border)' }}>
-          <button type="button" onClick={onToggleFysio} aria-expanded={fysioOpen} className="flex min-h-[52px] w-full items-center gap-3 text-left">
+        <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+          <p className="flex items-center gap-3 text-base" style={{ color: 'var(--color-ink)' }}>
             <span style={{ color: 'var(--color-warning)' }}><Icon name="letOp" size={20} /></span>
-            <span className="min-w-0 flex-1 text-base" style={{ color: 'var(--color-ink)' }}>Wanneer naar een fysio of huisarts?</span>
-            <span className="shrink-0 transition-transform" style={{ color: 'var(--color-ink-dim)', transform: fysioOpen ? 'rotate(180deg)' : undefined }}><Icon name="omlaag" size={18} /></span>
-          </button>
-          {fysioOpen && (
-            <div className="flex flex-col gap-2 pb-2 pl-8">
-              {s.direct && <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{s.direct}</p>}
-              <ul className="flex flex-col gap-1.5">
-                {s.fysio.map((line) => (
-                  <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{capitalize(line)}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+            Wanneer laat je het nakijken?
+          </p>
+          <p className="pl-8 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Naar een fysio of je huisarts bij</p>
+          <ul className="flex flex-col gap-1.5 pb-2 pl-12">
+            {s.fysio.map((line) => (
+              <li key={line} className="list-disc text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{capitalize(line)}</li>
+            ))}
+          </ul>
         </div>
       )}
 

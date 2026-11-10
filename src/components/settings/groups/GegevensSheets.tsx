@@ -132,7 +132,7 @@ export function StreamsSheet({ onChanged, onClose }: { onChanged: () => void; on
       await ActivityStreamsRepo.clear();
       setSize({ bytes: 0, rows: 0 });
       setConfirm(false);
-      setMessage('De reeksen zijn verwijderd. De kilometers van je runs staan er nog.');
+      setMessage('De reeksen zijn verwijderd. De kilometers van je lopen staan er nog.');
       onChanged();
     } catch {
       setMessage('Verwijderen lukte niet. Er is niets veranderd.');
@@ -145,7 +145,7 @@ export function StreamsSheet({ onChanged, onClose }: { onChanged: () => void; on
     <Sheet
       eyebrow="Gegevens en back-up"
       title="Ruimte van reeksen"
-      line={size === null ? 'Even tellen.' : size.rows === 0 ? 'Er zijn nog geen reeksen bewaard.' : `${formatBytes(size.bytes)} voor ${size.rows} ${size.rows === 1 ? 'run of tocht' : 'runs en tochten'}.`}
+      line={size === null ? 'Even tellen.' : size.rows === 0 ? 'Er zijn nog geen reeksen bewaard.' : `${formatBytes(size.bytes)} voor ${size.rows} ${size.rows === 1 ? 'loop of tocht' : 'lopen en tochten'}.`}
       onClose={onClose}
     >
       {message && <p className="st-hint" role="status" style={{ marginLeft: 0 }}>{message}</p>}
@@ -188,7 +188,7 @@ export function SnapshotsSheet({ onChanged, onClose }: { onChanged: () => void; 
       setSnapshots(await listSnapshots());
       onChanged();
     } catch (err) {
-      setMessage(backupErrorText(err, 'Terugzetten lukte niet. Er is niets veranderd; probeer het nog eens.'));
+      setMessage(backupErrorText(err, 'Terugzetten lukte niet. Er is niets veranderd. Probeer het nog eens.'));
     } finally {
       setBusy(false);
       setConfirmId(null);

@@ -34,7 +34,7 @@ export function useMorningBackupOff() {
     try {
       found = await withTimeout(archivedMornings(), LIMIT_MS);
     } catch {
-      setNote({ text: 'Dat lukte niet. Er is niets veranderd; probeer het zo nog eens.', warn: true });
+      setNote({ text: 'Dat lukte niet. Er is niets veranderd. Probeer het zo nog eens.', warn: true });
       return;
     }
     if (found.list.length === 0) await updateSettings({ morningInBackup: false });

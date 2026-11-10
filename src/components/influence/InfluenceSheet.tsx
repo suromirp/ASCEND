@@ -50,7 +50,7 @@ export function InfluenceSheet({
       await withTimeout(removeInfluence(entry.id), REMOVE_LIMIT_MS, 'Weghalen');
       requestClose();
     } catch (err) {
-      setNote(err instanceof TimeoutError ? 'Weghalen is nog niet bevestigd. Kijk zo of het weg is.' : 'Weghalen lukte niet. Er is niets veranderd; probeer het zo nog eens.');
+      setNote(err instanceof TimeoutError ? 'Weghalen is nog niet bevestigd. Kijk zo of het weg is.' : 'Weghalen lukte niet. Er is niets veranderd. Probeer het zo nog eens.');
     } finally {
       setBusy(false);
     }
