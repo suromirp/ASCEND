@@ -160,12 +160,12 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 - waar herstelrondes vandaan kwamen en welke eis vooraf die had voorkomen;
 - past de tabel hierboven aan als het logboek dat laat zien, met de reden in de commit.
 
-## Modellen per laag (eigenaar, 9 november avond)
+## Modellen (eigenaar, 10 november ochtend)
 
-- De coördinator draait op Opus (claude-opus-5-5).
-- Zwaar werk op Fable (claude-fable-5-2): een bouwer-sessie die planning, opslag, migraties of een nieuwe engine raakt, Warden, Scout.
-- Licht werk op Sonnet (claude-sonnet-5-5): een bouwer-sessie die alleen teksten, uitleg bij oefeningen of een klein scherm doet, Lookout, Cartographer, een gewone Sherpa.
-- Geef bij `create_session` altijd `model` mee: zonder dat erft een bouwer het model van de coördinator (Opus).
+- Alles op Fable (claude-fable-5-2): de coördinator, elke bouwer-sessie en elke helper (Sherpa, Warden, Scout, Lookout, Cartographer, productmanager). De eigenaar vindt Fable merkbaar nauwkeuriger. De kolom Model in de tabel hierboven geldt daarom niet meer; de kolom Denkwerk wel.
+- Geef bij `create_session` en bij een helper altijd `model` mee.
+- Let op de weeklimiet van Fable: geeft een sessie een waarschuwing of een limiet, maak dan alleen af wat loopt, start niets nieuws en meld het de eigenaar met de dag waarop de limiet weer opengaat.
+- Vervangt "Modellen per laag" van 9 november (coördinator Opus, licht werk Sonnet).
 
 ## Bouwers melden zich zelf (9 november)
 
