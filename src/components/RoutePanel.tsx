@@ -1,7 +1,8 @@
 // ASCEND: twee lussen voor een looptraining (engine/routePlanner.ts): Simpel en Avontuurlijk, elk
 // met afstand, hoogtemeters en een GPX-bestand. De eerste keer vraagt het paneel of ASCEND mag
 // zoeken, met wat er de deur uit gaat. Zoeken heeft een grens in tijd; zonder netwerk staat er één
-// rustige regel. Het paneel rekent zelf niets en plant niets: een route is alleen om te lopen.
+// rustige regel. Na het zoeken zegt één regel wat er op de kaart lag (engine/routePlanner.ts#searchLines).
+// Het paneel rekent zelf niets en plant niets: een route is alleen om te lopen.
 
 import { useEffect, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
@@ -9,9 +10,9 @@ import type { RoutePoint, RouteProposal, RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { resolveRouteStyle, routeTarget, targetText } from '../engine/routeTarget';
-import { MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
+import { MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle, searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
-import { SAVE_HINT, SEND_HINT, SEND_LABEL, WATCH_STEPS, WATCH_STEPS_TITLE, sendLine, type RouteSendOutcome } from '../engine/routeSend';
+import { SEND_LABEL, WATCH_STEPS, WATCH_STEPS_TITLE, routeActionLine, type RouteSendOutcome } from '../engine/routeSend';
 import { findRoutes, grantRouteConsent, hasRouteConsent, type RouteSearch } from '../storage/routeProposal';
 import { chooseStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, startFailureLine, type StartFailure } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere } from '../storage/routeStart';
@@ -60,13 +61,8 @@ function RouteBlock({ style, outcome, primary, date, target, sender }: { style: 
     if (mounted.current) setDone({ send: result });
   }
 
-  const line = done === undefined || done === 'busy'
-    ? undefined
-    : 'send' in done
-      ? sendLine(done.send)
-      : !done.file.ok
-        ? { text: 'Opslaan lukte niet. Probeer het nog eens.', warn: true }
-        : { text: done.file.where === 'folder' ? `Opgeslagen als ${done.file.name} in ${done.file.label}.` : `Gedownload als ${done.file.name}.`, warn: false };
+  // Eén regel onder de knoppen: eerst wat je doet, na een tik de uitkomst op dezelfde plek.
+  const line = routeActionLine(!!sender, done === 'busy' ? undefined : done);
 
   return (
     <div className="flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
@@ -82,8 +78,8 @@ function RouteBlock({ style, outcome, primary, date, target, sender }: { style: 
             {sender && <TextButton tone={primary ? 'action' : 'dim'} disabled={done === 'busy'} onClick={() => void send(outcome.proposal)}>{SEND_LABEL}</TextButton>}
             <TextButton tone={primary && !sender ? 'action' : 'dim'} disabled={done === 'busy'} onClick={() => void download(outcome.proposal)}>GPX downloaden</TextButton>
           </div>
-          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sender ? SEND_HINT : SAVE_HINT}</p>
-          <p role="status" className="min-h-[34px] text-xs leading-snug" style={{ color: line?.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line?.text ?? ''}</p>
+          {/* Plaats voor drie regels: een langere uitkomst duwt niets weg. */}
+          <p role="status" className="min-h-[50px] text-xs leading-snug" style={{ color: line.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line.text}</p>
         </>
       ) : (
         <>
@@ -265,7 +261,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
             ? 'Zonder netwerk is er geen route. Probeer het later nog eens.'
             : search.kind === 'timeout'
               ? 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.'
-              : ''}
+              : searchLines(search.plans, target).join(' ')}
       </p>
       {plans && order.map((s, i) => <RouteBlock key={s} style={s} outcome={plans[s]} primary={i === 0} date={date} target={target} sender={sender} />)}
       {plans && order.some((s) => plans[s].ok) && <WatchSteps />}
