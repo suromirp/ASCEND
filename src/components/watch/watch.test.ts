@@ -84,7 +84,6 @@ describe('de bestanden van de datavelden', () => {
       'Voor deze training is er geen advies.',
       'Kies een soort die erop lijkt.',
       'Begin met een kopie van het advies',
-      'Opslaan lukte niet. Probeer het opnieuw.',
       'Teruggezet.',
       'De cijfers zijn voorbeelden.',
       'Anders dan het advies',

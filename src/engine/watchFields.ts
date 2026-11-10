@@ -435,6 +435,15 @@ export function restoreVersion(store: unknown, kind: WatchKindId, slot: WatchSlo
   return { ok: true, store: storeWith(store, kind, slot, version) };
 }
 
+// Wat de pagina over het opslaan zegt. "Duurt lang" is geen mislukking: het schrijven loopt dan nog en
+// de melding verdwijnt zodra het klaar is. "Lukte niet" staat er alleen als het schrijven zelf faalde.
+export type WatchSaveState = 'idle' | 'slow' | 'failed';
+export function saveLine(state: WatchSaveState): string | undefined {
+  if (state === 'slow') return 'Opslaan duurt langer dan normaal. Even geduld.';
+  if (state === 'failed') return 'Opslaan lukte niet. Probeer het opnieuw.';
+  return undefined;
+}
+
 // Het wisselen van pagina via een puntje: vloeiend alleen als de beweging op Normaal staat.
 // Rustig, Uit en een systeem dat geen beweging wil springen naar de eindstand.
 export const pageScrollBehavior = (motion: 'full' | 'calm' | 'off'): 'smooth' | 'auto' => (motion === 'full' ? 'smooth' : 'auto');

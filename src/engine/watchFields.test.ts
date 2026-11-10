@@ -9,6 +9,7 @@ import {
   firstFreeSlot,
   pickField,
   restoreVersion,
+  saveLine,
   resolveVersion,
   resolveWatchModel,
   storeWith,
@@ -346,5 +347,14 @@ describe('een veld kiezen en ongedaan maken', () => {
     const again = pickField(emptied, 'zone2', 'advice', 0, 0, 'steps', model).store;
     expect(again?.zone2?.v2).toBeDefined();
     expect(restoreVersion(again, 'zone2', 'v2', old)).toEqual({ ok: false });
+  });
+});
+
+describe('saveLine', () => {
+  it('zegt alleen dat opslaan mislukte als het schrijven zelf faalde', () => {
+    expect(saveLine('idle')).toBeUndefined();
+    expect(saveLine('slow')).toBe('Opslaan duurt langer dan normaal. Even geduld.');
+    expect(saveLine('slow')).not.toContain('lukte niet');
+    expect(saveLine('failed')).toBe('Opslaan lukte niet. Probeer het opnieuw.');
   });
 });

@@ -23,6 +23,7 @@ import {
   restoreVersion,
   replacedLine,
   resolveVersion,
+  saveLine,
   resolveWatchModel,
   storeWith,
   versionDiff,
@@ -32,6 +33,7 @@ import {
   withPageAdded,
   withPageRemoved,
   type WatchKindId,
+  type WatchSaveState,
   type WatchSlot,
   type WatchTab,
   type WatchVersion,
@@ -61,7 +63,7 @@ function WatchFieldsInner({ asked }: { asked: string | null }) {
   const [page, setPage] = useState(0);
   const [sheet, setSheet] = useState<{ page: number; cell: number } | null>(null);
   const [notice, setNotice] = useState<string>();
-  const [saveFailed, setSaveFailed] = useState(false);
+  const [saveState, setSaveState] = useState<WatchSaveState>('idle');
   const [undo, setUndo] = useState<{ kind: WatchKindId; slot: WatchSlot; version: WatchVersion }>();
   const undoTimer = useRef<number | undefined>(undefined);
   const busy = useRef(false);
@@ -96,17 +98,26 @@ function WatchFieldsInner({ asked }: { asked: string | null }) {
   const save = async (next: ReturnType<typeof storeWith>, keepUndo = false): Promise<boolean> => {
     if (busy.current) return false;
     busy.current = true;
+    // De tijdgrens geeft na vijf seconden een zichtbare uitkomst ("duurt lang"), maar zegt nooit dat het
+    // mislukte terwijl het schrijven nog loopt: de echte uitslag komt van het schrijven zelf.
+    const write = updateSettings({ watchFieldVersions: next });
     try {
-      await withTimeout(updateSettings({ watchFieldVersions: next }), SAVE_MS);
-      setSaveFailed(false);
+      try {
+        await withTimeout(write, SAVE_MS);
+      } catch (e) {
+        if (!(e instanceof TimeoutError)) throw e;
+        setSaveState('slow');
+        await write;
+      }
+      setSaveState('idle');
       if (!keepUndo) {
         window.clearTimeout(undoTimer.current);
         setUndo(undefined);
       }
       return true;
     } catch (e) {
-      setSaveFailed(true);
-      if (!(e instanceof TimeoutError)) console.warn('Datavelden opslaan lukte niet', e);
+      setSaveState('failed');
+      console.warn('Datavelden opslaan lukte niet', e);
       return false;
     } finally {
       busy.current = false;
@@ -119,7 +130,7 @@ function WatchFieldsInner({ asked }: { asked: string | null }) {
     setPage(0);
     setNotice(undefined);
     setSheet(null);
-    setSaveFailed(false);
+    setSaveState((s) => (s === 'failed' ? 'idle' : s));
   };
   const changeTab = (next: Tab) => {
     setTab(next);
@@ -276,7 +287,7 @@ function WatchFieldsInner({ asked }: { asked: string | null }) {
               <TextButton tone="dim" onClick={() => void undoReset()}>Ongedaan maken</TextButton>
             </p>
           )}
-          {saveFailed && <p role="alert" className="text-sm" style={{ color: 'var(--color-warning)' }}>Opslaan lukte niet. Probeer het opnieuw.</p>}
+          {saveLine(saveState) && <p role="alert" className="text-sm" style={{ color: 'var(--color-warning)' }}>{saveLine(saveState)}</p>}
 
           {pages.length > 0 && <WatchStepsCard pages={pages} model={model} advice={advice} />}
         </>
