@@ -19,6 +19,7 @@ import type { HealthConnectErrorKind } from '../models/healthConnect';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
 import { resolveStravaTextParts } from './activityText';
+import { resolveWatchModel, watchFieldsShown } from './watchFields';
 import { resolveRouteStyle } from './routeTarget';
 import { resolveRouteStart } from './routeStart';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
@@ -1034,6 +1035,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: f.macroFactor?.leads !== false };
     case 'macrofactor-gewicht':
       return { checked: s.weightFromMacroFactor !== false };
+    case 'datavelden':
+      return { checked: watchFieldsShown(s) };
+    case 'datavelden-model':
+      return { value: resolveWatchModel(s.watchModel).name };
     case 'strava-tekst':
       return { checked: s.stravaText !== false };
     case 'strava-tekst-inhoud':

@@ -797,6 +797,22 @@ describe('rowSummary: tekst voor Strava', () => {
   });
 });
 
+describe('rowSummary: datavelden voor je horloge', () => {
+  const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
+
+  it('staat standaard aan, ook zonder koppeling met je horloge', () => {
+    expect(rowSummary('datavelden', facts()).checked).toBe(true);
+    expect(rowSummary('datavelden', withSettings({ watchFieldsShown: false })).checked).toBe(false);
+    const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
+    expect(rowSummary('datavelden', unlinked).hidden).toBeFalsy();
+  });
+
+  it('model: een onbekend model valt terug, en de rij is weg zodra het uit staat', () => {
+    expect(rowSummary('datavelden-model', withSettings({ watchModel: 'onzin' })).value).toBe('Forerunner 255');
+    expect(rowSummary('datavelden-model', withSettings({ watchFieldsShown: false })).hidden).toBe(true);
+  });
+});
+
 describe('rowSummary: route voorstellen', () => {
   const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
 

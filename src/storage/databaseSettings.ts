@@ -1,5 +1,6 @@
 // De instellingen (AppSettings) met hun standaard, en of de rekoefeningen van vandaag zijn afgevinkt.
 
+import type { WatchFieldStore } from '../engine/watchFields';
 import type { ZoneAnswer } from '../models/zoneAnswer';
 import type { AboveMission } from '../engine/todayCards';
 import type { IllnessEpisode } from '../models/illness';
@@ -159,6 +160,15 @@ export interface AppSettings {
   // What the text for Strava holds (engine/activityText.ts): only the title, or the
   // title and one line why. Absent = title and line. Optional and additive.
   stravaTextParts?: 'title' | 'title-line';
+  // Datavelden voor je horloge (engine/watchFields.ts): the page that draws which data
+  // pages to put on the watch per kind of training. Absent = on. Optional and additive.
+  watchFieldsShown?: boolean;
+  // Which watch the data pages are drawn for: an id from data/watchModels.ts. Absent or
+  // unknown = the first model. Optional and additive.
+  watchModel?: string;
+  // The user's own versions next to the advice, per kind of training (at most two).
+  // Read defensively (cleanWatchFieldStore, resolveVersion); absent = only the advice.
+  watchFieldVersions?: WatchFieldStore;
   // The button "Route voorstellen" on a running session (engine/routePlanner.ts).
   // Absent = on. Optional and additive, so no migration step.
   routeProposal?: boolean;

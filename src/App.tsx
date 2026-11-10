@@ -48,6 +48,7 @@ const StretchAreaRedirect = lazy(() => import('./pages/StretchAreaRedirect').the
 const BodyPage = lazy(() => import('./pages/Body').then((m) => ({ default: m.BodyPage })));
 const BodySpotPage = lazy(() => import('./pages/BodySpot').then((m) => ({ default: m.BodySpotPage })));
 const GarminLinkPage = lazy(() => import('./pages/GarminLink').then((m) => ({ default: m.GarminLinkPage })));
+const WatchFieldsPage = lazy(() => import('./pages/WatchFields').then((m) => ({ default: m.WatchFieldsPage })));
 const MacroFactorImportPage = lazy(() => import('./pages/MacroFactorImport').then((m) => ({ default: m.MacroFactorImportPage })));
 const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default: m.SourcesPage })));
 const WeatherPage = lazy(() => import('./pages/Weather').then((m) => ({ default: m.WeatherPage })));
@@ -358,6 +359,7 @@ function AppShell() {
             <Route path="/gids" element={<Navigate to="/week" replace />} />
             <Route path="/garmin" element={<Navigate to="/koppelen/garmin" replace />} />
             <Route path="/koppelen/garmin" element={<GarminLinkPage />} />
+            <Route path="/horloge/datavelden" element={<WatchFieldsPage />} />
             <Route path="/koppelen/macrofactor" element={<MacroFactorImportPage />} />
             <Route path="/bronnen" element={<SourcesPage />} />
             <Route path="/plekken" element={<TrainingSpotsPage />} />
