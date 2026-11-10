@@ -27,8 +27,12 @@ De eigenaar wil dat de lus bij zijn deur begint, zeker bij een rustige duurloop;
 - Kiest de gebruiker Precies in de eerste vraag, dan wordt de instelling Precies; kiest hij Ongeveer, dan wordt die instelling Ongeveer. Wie al eerder ja zei op de oude vraag krijgt de keuze niet opnieuw, maar kan hem in de instellingen zetten.
 - Gebruik waar ik nu ben in de instellingen bewaart alleen het punt en zet de keuze niet om; de regel zegt dat Precies het gebruikt.
 - Het punt staat nooit op het scherm, ook niet als getal.
+- Een import zet Precies nooit aan: `routeStart: 'exact'` in een back-up wordt `approx`, want zonder vraag zou er een punt de deur uit gaan. Het punt komt nooit mee.
+- De rij Startpunt van je lus blijft zichtbaar ook als Route voorstellen uit staat, zodat Wis startpunt altijd bereikbaar is.
+- Het venster van Android heeft een eigen grens van een minuut; de 15 seconden gelden voor de plek zelf. Geen fijne toestemming of een plek zonder nauwkeurigheid telt als ruw. Sluit je het paneel tijdens het bepalen, dan wordt er niets bewaard.
+- De opdracht vroeg "Precies (advies)" in de eerste vraag, terwijl de standaard in de instellingen Ongeveer is (privacyzuinig tot de gebruiker kiest). Daardoor toont het keuzeblad Ongeveer als Advies en de eerste vraag Precies. Dat verschil is bewust; de coördinator beslist of het gelijk moet.
 - Het GPX-bestand dat de gebruiker zelf downloadt begint wel bij het startpunt. Dat bestand is van hem en staat op zijn toestel.
-- De uitleg achter de i heeft een eigen onderwerp `routeStartpunt` in `settingsHelp`. De bestaande tekst van `routeVoorstel` ("je plek, afgerond op ongeveer een kilometer") is niet aangepast en klopt niet meer helemaal bij Precies; die aanpassing laat ik aan de bouwer die in `settingsHelp` werkt.
+- De uitleg achter de i heeft een eigen onderwerp `routeStartpunt` in `settingsHelp`. De bestaande tekst van `routeVoorstel` ("je plek, afgerond op ongeveer een kilometer") is niet aangepast en klopt niet meer helemaal bij Precies; die aanpassing laat ik aan de bouwer die in `settingsHelp` werkt. Hetzelfde geldt voor de noot van `route-voorstel` in `settingsIndex`.
 
 ## Alternatieven
 
