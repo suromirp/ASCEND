@@ -198,3 +198,7 @@ Acht rijen worden drie groepen met korte koppen (twee, vier, twee), allemaal dez
 2. Wil je ook de vier delen bovenaan (Waarom, Je tempo, Zo voelt elk tempo, Wat het vraagt van je lichaam) naar het menu verhuizen, zodat het blad boven de vouw rustiger is? Dat is meer verandering dan je vroeg.
 3. Moet je na een pagina (plekken, datavelden) terugkomen in het uitlegblad, of is het goed dat je op Vandaag of Week landt zoals nu?
 4. Eyebrow van de onderbladen: "Uitleg" of de dag van de training?
+
+## Gebouwd op 10 november
+
+Gebouwd zoals ontworpen, met de beslissingen: Deze fase staat onder Achtergrond, de vier bovenste delen blijven staan, de eyebrow van de onderbladen is "Uitleg", terug komt op het scherm eronder. Afwijkingen: een eigen `GuideRow` (`src/components/GuideRow.tsx`) in plaats van `SettingsRow`, want die zet een anker `instelling-<id>` en kent geen `data-sheet-from`; de rijen zelf zijn hetzelfde (`st-row`). De voorwaarden en regels staan in `src/engine/guideMenu.ts`. "Achtergrond en bronnen" verdwijnt nu als er niets te lezen is (eerder altijd aanwezig). De groepskop staat links uitgelijnd met de andere kopjes in het blad, niet ingesprongen zoals in de Instellingen. Alle onderbladen gaan door `Sheet`; de sluitknop onderaan blijft.

@@ -4,7 +4,7 @@
 // workout to rebuild, what it loads and builds, the weeks of this phase.
 // The full original text stays one tap away under "Meer uitleg".
 
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { TrainingDayGuide } from '../data/trainingGuide';
 import type { SessionTemplate } from '../models/training';
@@ -28,6 +28,9 @@ import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { getModalities } from '../data/modalities';
 import { filterForTraining } from '../engine/trainingSpots';
 import { Icon } from './icons';
+import { Sheet } from './settings/Sheet';
+import { GuideGroupList } from './GuideRow';
+import { guideMenu, type GuideRowId, type GuideRowSpec } from '../engine/guideMenu';
 import { watchFieldsShown, watchKindOf } from '../engine/watchFields';
 
 // De vier niveaus lopen van rustig naar hard, dus op de inspanningsschaal van de
@@ -75,6 +78,31 @@ export function TrainingGuideSheet({
   // Datavelden voor je horloge: alleen bij de soorten met advies en als de instelling aan staat.
   const watchKind = watchFieldsShown(settings) ? watchKindOf(template) : undefined;
   const showSpots = !!spotFilter || !!plan?.keyTag?.includes('D+') || template?.type === 'hiking';
+  // Het menu onder de delen: drie groepen, elke rij een onderblad of (plekken, datavelden) een pagina.
+  const groups = guideMenu({
+    plan,
+    easeOffCount: easeOff.length,
+    modalityCount: hasModalities && template ? (getModalities(template.id)?.length ?? 0) : 0,
+    showSpots,
+    watchKind,
+    backgroundCount: background.length,
+    hasGear: guide.gear.length > 0,
+    hasGarminNote: !!guide.garminNote,
+    sourceCount: guide.sources.length,
+  });
+  const [sub, setSub] = useState<GuideRowId | null>(null);
+  const closeSub = () => setSub(null);
+  function openRow(row: GuideRowSpec) {
+    if (row.id === 'plekken') {
+      onClose();
+      navigate(spotFilter ? `/plekken?training=${template!.id}` : '/plekken');
+    } else if (row.id === 'datavelden') {
+      onClose();
+      navigate(`/horloge/datavelden?soort=${watchKind}`);
+    } else {
+      setSub(row.id);
+    }
+  }
 
   return (
     <Portal>
@@ -149,104 +177,13 @@ export function TrainingGuideSheet({
             </>
           )}
 
-          <div className="mt-6 flex flex-col border-t" style={{ borderColor: 'var(--color-card-border)' }}>
-            {plan && (
-              <Fold title="De stappen, zoals op je trainingsscherm">
-                <WorkoutSteps plan={plan} compact intro={false} />
-              </Fold>
-            )}
-            {plan?.garmin && (
-              <Fold title="Stappen voor je Garmin">
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-                  Maak in Garmin Connect een nieuwe workout van het type {plan.garmin.sport}, met deze stappen. Stuur hem naar je horloge en start hem als je begint.
-                </p>
-                <div className="mt-2.5 flex flex-col gap-1">
-                  {plan.garmin.lines.map((line, i) => (
-                    <p key={i} className="whitespace-pre text-xs tabular-nums" style={{ color: line.startsWith('Herhaal') ? 'var(--color-action)' : 'var(--color-ink)' }}>{line}</p>
-                  ))}
-                </div>
-              </Fold>
-            )}
-            {plan && plan.weeks.length > 0 && (
-              <Fold title="Deze fase, week voor week">
-                <div className="grid grid-cols-4 gap-1.5">
-                  {plan.weeks.map((w) => (
-                    <div
-                      key={w.week}
-                      className="rounded-lg border px-1.5 py-2 text-center"
-                      style={{ borderColor: w.current ? 'var(--color-action)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
-                    >
-                      <p className="text-xs" style={{ color: w.current ? 'var(--color-action)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
-                      <p className="mt-0.5 text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{w.minutes}′</p>
-                      <p className="mt-0.5 text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/, | \(/)[0]}</p>
-                    </div>
-                  ))}
-                </div>
-              </Fold>
-            )}
-            {easeOff.length > 0 && (
-              <Fold title="Te zwaar? Zo pas je het aan">
-                <Sections sections={easeOff} />
-              </Fold>
-            )}
-            {hasModalities && template && (
-              <Fold title="Waar train je het best?">
-                <ModalityGuide templateId={template.id} />
-              </Fold>
-            )}
-            {showSpots && (
-              <button
-                onClick={() => { onClose(); navigate(spotFilter ? `/plekken?training=${template!.id}` : '/plekken'); }}
-                className="flex min-h-[48px] w-full items-center justify-between border-b py-3 text-left"
-                style={{ borderColor: 'var(--color-card-border)' }}
-              >
-                <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Waar kun je dit doen?</span>
-                <span style={{ color: 'var(--color-action)' }}><Icon name="verder" size={16} /></span>
-              </button>
-            )}
-            {watchKind && (
-              <button
-                onClick={() => { onClose(); navigate(`/horloge/datavelden?soort=${watchKind}`); }}
-                className="flex min-h-[48px] w-full items-center justify-between border-b py-3 text-left"
-                style={{ borderColor: 'var(--color-card-border)' }}
-              >
-                <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Datavelden voor je horloge</span>
-                <span style={{ color: 'var(--color-action)' }}><Icon name="verder" size={16} /></span>
-              </button>
-            )}
-            <Fold title="Achtergrond en bronnen">
-              <Sections sections={background} />
-              {guide.gear.length > 0 && (
-                <div className="mt-4">
-                  <Eyebrow>Materiaal</Eyebrow>
-                  <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{guide.gear.join(' · ')}</p>
-                </div>
-              )}
-              {guide.garminNote && (
-                <button
-                  onClick={() => { onClose(); navigate('/koppelen/garmin', { state: { section: 'horloge-instellen' } }); }}
-                  className="mt-4 w-full rounded-xl border p-3 text-left text-xs"
-                  style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-status)' }}
-                >
-                  {guide.garminNote}<Icon name="verder" size={14} className="ml-1 inline align-[-2px]" />
-                </button>
-              )}
-              {guide.sources.length > 0 && (
-                <div className="mt-4">
-                  <Eyebrow>Bronnen</Eyebrow>
-                  <div className="mt-2 flex flex-col gap-1.5">
-                    {guide.sources.map((src) =>
-                      src.url ? (
-                        <a key={src.label} href={src.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
-                      ) : (
-                        <span key={src.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{src.label}</span>
-                      ),
-                    )}
-                  </div>
-                </div>
-              )}
-            </Fold>
-          </div>
+          {groups.length > 0 && (
+            <div className="mt-2">
+              {groups.map((group) => (
+                <GuideGroupList key={group.id} group={group} onPick={openRow} />
+              ))}
+            </div>
+          )}
 
           <button onClick={requestClose} className="mt-6 min-h-[44px] w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Sluiten
@@ -254,21 +191,85 @@ export function TrainingGuideSheet({
         </Card>
         </div>
       </div>
+      {sub === 'stappen' && plan && (
+        <Sheet eyebrow="Uitleg" title="De stappen" onClose={closeSub}>
+          <WorkoutSteps plan={plan} compact intro={false} />
+        </Sheet>
+      )}
+      {sub === 'teZwaar' && (
+        <Sheet eyebrow="Uitleg" title="Te zwaar? Zo pas je het aan" onClose={closeSub}>
+          <Sections sections={easeOff} />
+        </Sheet>
+      )}
+      {sub === 'varianten' && template && (
+        <Sheet eyebrow="Uitleg" title="Waar train je het best?" onClose={closeSub}>
+          <ModalityGuide templateId={template.id} />
+        </Sheet>
+      )}
+      {sub === 'garmin' && plan?.garmin && (
+        <Sheet eyebrow="Uitleg" title="Stappen voor je Garmin" onClose={closeSub}>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+            Maak in Garmin Connect een nieuwe workout van het type {plan.garmin.sport}, met deze stappen. Stuur hem naar je horloge en start hem als je begint.
+          </p>
+          <div className="mt-2.5 flex flex-col gap-1">
+            {plan.garmin.lines.map((line, i) => (
+              <p key={i} className="whitespace-pre text-xs tabular-nums" style={{ color: line.startsWith('Herhaal') ? 'var(--color-action)' : 'var(--color-ink)' }}>{line}</p>
+            ))}
+          </div>
+        </Sheet>
+      )}
+      {sub === 'weken' && plan && (
+        <Sheet eyebrow="Uitleg" title="Deze fase, week voor week" onClose={closeSub}>
+          <div className="grid grid-cols-4 gap-1.5">
+            {plan.weeks.map((w) => (
+              <div
+                key={w.week}
+                className="rounded-lg border px-1.5 py-2 text-center"
+                style={{ borderColor: w.current ? 'var(--color-action)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
+              >
+                <p className="text-xs" style={{ color: w.current ? 'var(--color-action)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
+                <p className="mt-0.5 text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{w.minutes}′</p>
+                <p className="mt-0.5 text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/, | \(/)[0]}</p>
+              </div>
+            ))}
+          </div>
+        </Sheet>
+      )}
+      {sub === 'achtergrond' && (
+        <Sheet eyebrow="Uitleg" title="Achtergrond en bronnen" onClose={closeSub}>
+          <Sections sections={background} />
+          {guide.gear.length > 0 && (
+            <div className="mt-4">
+              <Eyebrow>Materiaal</Eyebrow>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{guide.gear.join(' · ')}</p>
+            </div>
+          )}
+          {guide.garminNote && (
+            <button
+              onClick={() => { onClose(); navigate('/koppelen/garmin', { state: { section: 'horloge-instellen' } }); }}
+              className="mt-4 w-full rounded-xl border p-3 text-left text-xs"
+              style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-status)' }}
+            >
+              {guide.garminNote}<Icon name="verder" size={14} className="ml-1 inline align-[-2px]" />
+            </button>
+          )}
+          {guide.sources.length > 0 && (
+            <div className="mt-4">
+              <Eyebrow>Bronnen</Eyebrow>
+              <div className="mt-2 flex flex-col gap-1.5">
+                {guide.sources.map((src) =>
+                  src.url ? (
+                    <a key={src.label} href={src.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
+                  ) : (
+                    <span key={src.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{src.label}</span>
+                  ),
+                )}
+              </div>
+            </div>
+          )}
+        </Sheet>
+      )}
     </Portal>
-  );
-}
-
-// One foldable row on the info screen.
-function Fold({ title, children }: { title: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-b" style={{ borderColor: 'var(--color-card-border)' }}>
-      <button onClick={() => setOpen((o) => !o)} className="flex min-h-[48px] w-full items-center justify-between py-3 text-left" aria-expanded={open}>
-        <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{title}</span>
-        <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{open ? 'sluiten' : 'openen'}</span>
-      </button>
-      {open && <div className="pb-4">{children}</div>}
-    </div>
   );
 }
 
