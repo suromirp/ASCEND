@@ -289,3 +289,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-10, Uitlegblad training ontwerp (bouwmoment), Cartographer, sonnet (ontwerper), 58k, 2 min, 0
 - 2026-11-10, Kaartje bij Route voorstellen, bron kiezen (bouwmoment), Scout, opus (sportwetenschapper), 98k, 5,5 min, 0, advies eigen SVG zonder tegels
 - 2026-11-10, Datavelden bekijken en weeknummer in Week (bouwmoment), Sherpa, sonnet (ontwikkelaar), 65k, 16 min, 0
+- 2026-11-10, Route voorstellen legt uit (telling hellingen, vervanger, korter-zin, één statusregel; bouwmoment), Sherpa, opus (ontwikkelaar), 157k, 21 min, 0
