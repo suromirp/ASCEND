@@ -63,7 +63,7 @@ export interface PageRows {
 
 export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   planning: {
-    rows: ['bundel-dagen', 'meerdere', 'sporten', 'hoeveel-per-soort', 'bundel-sporten-tellen', 'wijzigingen', 'ambitie', 'bundel-testloop', 'rustdag-terug', 'weekvoorstel', 'zonder-sportschool', 'vakantie-schuiven'],
+    rows: ['bundel-dagen', 'meerdere', 'sporten', 'hoeveel-per-soort', 'bundel-sporten-tellen', 'wijzigingen', 'ambitie', 'bundel-testloop', 'rustdag-terug', 'bundel-weekmelding', 'zonder-sportschool', 'vakantie-schuiven'],
     advanced: ['bundel-niet-doorgegaan', 'lange-loop-benen', 'bundel-slepen', 'volgorde-stand', 'vakantie-opzij', 'zones-na-test'],
   },
   doel: {
@@ -137,6 +137,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('meerdere', 'zware-dingen'),
   ...inSheet('ambitie', 'lange-loop'),
   ...inSheet('bundel-slepen', 'slepen-week', 'loslaten-training'),
+  ...inSheet('bundel-weekmelding', 'weekvoorstel', 'week-na-keuze'),
   ...inSheet('bundel-testloop', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'test-rust'),
   ...inSheet('bundel-niet-doorgegaan', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'log-koppelen'),
   ...inSheet('bundel-sporten-tellen', 'sport-vragen', 'sport-zwaarte', 'sport-rust'),

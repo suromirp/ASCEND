@@ -34,6 +34,8 @@ export interface WeekConcern {
   // De korte tekst per training in de rij.
   notes: Record<string, string>;
   finding: Finding;
+  // Je koos op Vandaag dat deze training blijft staan (engine/weekKept.ts). Afgeleid, nooit opgeslagen.
+  kept?: boolean;
 }
 
 export const dayName = (iso: string) => `${weekdayLongNL(iso)} ${Number(iso.slice(8, 10))}`;

@@ -394,6 +394,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.dropOnTraining;
     skipped.n++;
   }
+  // Melding na jouw keuze in Week: jouw keuze of gewoon, of niet aanwezig (het advies).
+  if ('weekAfterChoice' in s && s.weekAfterChoice !== 'mine' && s.weekAfterChoice !== 'plain') {
+    delete s.weekAfterChoice;
+    skipped.n++;
+  }
   // Back button and resuming after a restart: known values stay, the rest goes.
   if ('tabBack' in s || 'resumeMinutes' in s) {
     const nav = cleanNavigationSettings({ tabBack: s.tabBack, resumeMinutes: s.resumeMinutes });

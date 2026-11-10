@@ -24,6 +24,7 @@ import type { GoalOverview } from '../engine/goalOverview';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { patternDays } from '../engine/planPass';
+import { markKept, resolveWeekAfterChoice } from '../engine/weekKept';
 import { adviceSessionIds, weekNotice, weekNoticeConcerns, type WeekNotice } from '../engine/weekFixProposal';
 import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine/learning';
 import { planEndDay } from '../engine/programLayout';
@@ -176,32 +177,37 @@ export function useAdviceAndWeek(deps: {
       leave: settings.leavePeriods, trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
     };
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
+  // Koos je vandaag Benen fris, dan zegt de melding in Week dat jij koos (engine/weekKept.ts). Alleen tekst.
+  const keptNotice = useCallback((n: WeekNotice): WeekNotice => ({
+    ...n,
+    concerns: markKept(n.concerns, { today: todayISO(), checkIns: settings.morningCheckIns, sessions: plannedSessions, templates, setting: resolveWeekAfterChoice(settings) }),
+  }), [settings, plannedSessions, templates]);
   const weekNoticeState = useCallback((): NonNullable<typeof weekNoticeCache.current> => {
-    const key = [weekCheckInput, advice];
+    const key = [weekCheckInput, advice, keptNotice];
     if (!weekNoticeCache.current || weekNoticeCache.current.key.some((v, i) => v !== key[i])) weekNoticeCache.current = { key, quick: new Map(), full: new Map() };
     return weekNoticeCache.current;
-  }, [weekCheckInput, advice]);
+  }, [weekCheckInput, advice, keptNotice]);
   const weekNoticeFor = useCallback((weekStart: string): WeekNotice => {
     const state = weekNoticeState();
     const cached = state.quick.get(weekStart);
     if (cached) return cached;
     try {
-      const result = weekNoticeConcerns(weekCheckInput(), weekStart, adviceSessionIds(advice));
+      const result = keptNotice(weekNoticeConcerns(weekCheckInput(), weekStart, adviceSessionIds(advice)));
       state.quick.set(weekStart, result);
       return result;
     } catch (err) {
       console.error('De weekmelding kon niet worden berekend:', err);
       return { concerns: [], fixes: {}, covered: [] };
     }
-  }, [weekNoticeState, weekCheckInput, advice]);
+  }, [weekNoticeState, weekCheckInput, advice, keptNotice]);
   const weekFixesFor = useCallback((weekStart: string): WeekNotice => {
     const state = weekNoticeState();
     const cached = state.full.get(weekStart);
     if (cached) return cached;
-    const result = weekNotice(weekCheckInput(), weekStart, settings.weekFixProposal !== false, adviceSessionIds(advice));
+    const result = keptNotice(weekNotice(weekCheckInput(), weekStart, settings.weekFixProposal !== false, adviceSessionIds(advice)));
     state.full.set(weekStart, result);
     return result;
-  }, [weekNoticeState, weekCheckInput, advice, settings.weekFixProposal]);
+  }, [weekNoticeState, weekCheckInput, advice, settings.weekFixProposal, keptNotice]);
 
   // The new concerns of the week check when a training lands on a day, for the line while dragging.
   // Never throws: a failure leaves the line with only what the day itself says.

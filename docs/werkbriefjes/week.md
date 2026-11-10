@@ -5,7 +5,7 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 ## Bestanden
 - `src/pages/Week.tsx#moveTo` elke verplaatsing (slepen en blad) loopt hierdoor
 - `src/engine/weekDrag.ts#decideMove` schoon meteen toepassen, anders Akkoord via `RescheduleDialog`
-- `src/engine/weekConcerns.ts#weekConcerns` de waarschuwingen ("Let op") en de rijtekst per regel
+- `src/engine/weekConcerns.ts#weekConcerns` de waarschuwingen ("Let op") en de rijtekst per regel; `weekKept.ts#markKept`: na Benen fris op Vandaag zegt de beenmelding dat jij koos, het voorstel wordt een tekstknop (afgeleid, alleen vandaag, instelling `weekAfterChoice`)
 - `src/engine/weekFixProposal.ts#planWeekFix` een oplossing is een voorstel met Akkoord
 - `src/engine/weekSwap.ts#checkSwap` ruilen van twee trainingen, `src/storage/weekSwap.ts#writeSwap` schrijft
 - `src/engine/catchUp.ts#catchUpRows` gemiste training naar later: nieuwe rij plus overgeslagen oude

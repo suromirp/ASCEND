@@ -23,6 +23,7 @@ import { REST_DAY_OPTIONS } from '../../../engine/restDay';
 import { resolveMissedSettings } from '../../../engine/missedTraining';
 import { ChoiceList, ChoiceSheet } from '../Sheet';
 import { resolveDropOnTraining } from '../../../engine/dropOnTraining';
+import { resolveWeekAfterChoice } from '../../../engine/weekKept';
 
 const WEEKDAYS_NL = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag'];
 
@@ -88,7 +89,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="ambitie" title="Ambitie" facts={facts} info="ambitie" onClick={() => setSheet('ambitie')} />
         <SummaryRow id="bundel-testloop" title="Testloop" facts={facts} onClick={() => setSheet('bundel-testloop')} />
         <SummaryRow id="rustdag-terug" title="Rustdag terugzetten voorstellen" facts={facts} info="rustdagTerug" onChange={(on) => void updateSettings({ restDayBack: on })} />
-        <SummaryRow id="weekvoorstel" title="Voorstel bij een probleem in de week" facts={facts} info="weekVoorstel" onChange={(on) => void updateSettings({ weekFixProposal: on })} />
+        <SummaryRow id="bundel-weekmelding" title="Meldingen in Week" facts={facts} onClick={() => setSheet('bundel-weekmelding')} />
         <SummaryRow id="zonder-sportschool" title="Kracht zonder sportschool" facts={facts} info="zonderSportschool" onClick={() => setSheet('zonder-sportschool')} />
         <SummaryRow id="vakantie-schuiven" title="Rond een vakantie schuiven" facts={facts} info="vakantieSchuiven" onClick={() => setSheet('vakantie-schuiven')} />
       </SettingsSection>
@@ -117,6 +118,9 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.loslaten} value={resolveDropOnTraining(settings)} onPick={(v) => void updateSettings({ dropOnTraining: v })} onClose={closeInner} />
       )}
       {sheet === 'bundel-sporten-tellen' && <SportCountingSheet facts={facts} plan={plan} onClose={close} />}
+      {inner === 'week-na-keuze' && (
+        <ChoiceFromDef def={CHOICES.weekNaKeuze} value={resolveWeekAfterChoice(settings)} onPick={(v) => void updateSettings({ weekAfterChoice: v })} onClose={closeInner} />
+      )}
       {inner === 'niet-doorgegaan' && (
         <ChoiceFromDef def={CHOICES.nietDoorgegaan} value={missed.choice} onPick={(v) => void updateSettings({ missedTraining: v })} onClose={closeInner} />
       )}
@@ -182,6 +186,12 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
       {/* Alleen de eerste keuze voor een nieuwe periode: verandert geen planning, dus meteen bewaard. */}
       {sheet === 'zonder-sportschool' && (
         <ChoiceFromDef def={CHOICES.zonderSportschool} value={settings.noGymStrength ?? 'bodyweight'} onPick={(v) => void updateSettings({ noGymStrength: v })} onClose={close} />
+      )}
+      {sheet === 'bundel-weekmelding' && (
+        <BundleSheet eyebrow="Planning" title="Meldingen in Week" line="Wat Week zegt als er iets niet klopt." onClose={close}>
+          <SummaryRow id="weekvoorstel" title="Voorstel bij een probleem in de week" facts={facts} info="weekVoorstel" onChange={(on) => void updateSettings({ weekFixProposal: on })} />
+          <SummaryRow id="week-na-keuze" title="Melding na jouw keuze" facts={facts} info="weekNaKeuze" onClick={() => setInner('week-na-keuze')} />
+        </BundleSheet>
       )}
       {sheet === 'bundel-testloop' && (
         <BundleSheet eyebrow="Planning" title="Testloop" line="Hoe ASCEND een test leest en plant." onClose={close}>
