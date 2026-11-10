@@ -5,7 +5,7 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 ## Bestanden
 - `src/pages/Week.tsx#moveTo` elke verplaatsing (slepen en blad) loopt hierdoor
 - `src/engine/weekDrag.ts#decideMove` schoon meteen toepassen, anders Akkoord via `RescheduleDialog`
-- `src/engine/weekConcerns.ts#weekConcerns` de waarschuwingen ("Let op") en de rijtekst per regel
+- `src/engine/weekConcerns.ts#weekConcerns` de waarschuwingen ("Let op") en de rijtekst per regel; `weekKept.ts#markKept`: na Benen fris op Vandaag zegt de beenmelding dat jij koos, het voorstel wordt een tekstknop (afgeleid, alleen vandaag, instelling `weekAfterChoice`)
 - `src/engine/weekFixProposal.ts#planWeekFix` een oplossing is een voorstel met Akkoord
 - `src/engine/weekSwap.ts#checkSwap` ruilen van twee trainingen, `src/storage/weekSwap.ts#writeSwap` schrijft
 - `src/engine/catchUp.ts#catchUpRows` gemiste training naar later: nieuwe rij plus overgeslagen oude
@@ -32,10 +32,10 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 - Een notitie bij een vakantie slaat meteen op (`saveLeaveNote`), andere dagen of soort gaan als voorstel met Akkoord.
 - Kaarten boven de missie hebben een vaste volgorde in `TODAY_CARD_RANK`; een nieuwe kaart krijgt daar een plek, niet in de pagina.
 - Of de grepen te zien zijn en of je mag slepen zijn twee dingen. De grepen hangen alleen aan de instelling en het jaaroverzicht (`components/weekDragShown.ts`); een open of sluitend blad zet alleen het slepen uit (`enabled`). Anders flitsen de grepen kort naar lege cirkels. Het sluitvlak van een blad (`growOpacity`, sluiten) eindigt op niets, anders staat er een lege rechthoek op de rij.
+- Wat Week als jouw keuze toont, leid je af uit dezelfde uitkomst als de zin op Vandaag (`morningConsequence`), niet uit het ruwe antwoord.
 
 ## Testen
 - Tijdens het werk: `npx vitest run src/engine/week src/engine/leaveWeek src/engine/catchUp src/engine/replanWeek src/storage/week src/storage/catchUp`
-- Nooit laten bewegen: `src/storage/planGolden.test.ts`.
 - Tekstkaart (`npm run kaart:vergelijk`) als een scherm verandert, met elk verschil verklaard.
 
 ## Lees verder

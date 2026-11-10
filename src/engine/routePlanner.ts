@@ -23,7 +23,9 @@ export const MAX_VIAS = 8;
 // Een lus over paden is langer dan hemelsbreed: een schatting, de routeplanner geeft de echte lengte.
 const DETOUR = 1.3;
 // Binnen deze afwijking van de afstand is een lus goed genoeg en vraagt de planner niets meer op.
-const CLOSE_ENOUGH = 0.12;
+export const CLOSE_ENOUGH = 0.12;
+// Onder dit deel van de hoogtemeters van de training haalt een lus de hoogte niet.
+export const SHORT_ASCENT = 0.75;
 const NEAR_START_M = 250;
 const SAME_SPOT_M = 200;
 
@@ -35,9 +37,18 @@ export interface PlanInput {
 
 export type PlanOutcome = { ok: true; proposal: RouteProposal } | { ok: false; reason: RouteFailure | 'nothing' };
 
+// Wat er in het zoekgebied op de kaart ligt: het aantal hellingen waar de planner mee werkt, en de
+// hoogste (hoeveel hoger dan de plek). Alleen in het geheugen, voor de uitleg in het paneel.
+export interface TerrainFound {
+  hills: number;
+  tallestM?: number;
+}
+
 export interface RoutePlans {
   simple: PlanOutcome;
   adventure: PlanOutcome;
+  // Ontbreekt als de kaart niet antwoordde: dan is er niets geteld, ook geen nul.
+  found?: TerrainFound;
 }
 
 const usableHill = (f: TerrainFeature) => f.kind === 'hill' && (f.heightM === undefined || f.heightM >= MIN_CLIMB_M);
@@ -350,6 +361,14 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
   return { ok: false, reason: lastFailure ?? 'nothing' };
 }
 
+// De hellingen op de kaart die de planner bruikbaar vindt. Zonder kaart: undefined.
+export function terrainFound(terrain: NearbyTerrain | undefined): TerrainFound | undefined {
+  if (!terrain) return undefined;
+  const hills = terrain.features.filter(usableHill);
+  const heights = hills.flatMap((f) => (f.heightM === undefined ? [] : [f.heightM]));
+  return heights.length > 0 ? { hills: hills.length, tallestM: Math.max(...heights) } : { hills: hills.length };
+}
+
 // Beide lussen, de avontuurlijke eerst (zijn lijn is de reserve voor Simpel). Gooit nooit: elke
 // uitkomst is een lus of een reden.
 export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<RoutePlans> {
@@ -357,7 +376,8 @@ export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<R
   const adventure = await safe(proposeAdventure(input, route));
   const spare: RoutedLine | undefined = adventure.ok ? { source: adventure.proposal.source, points: adventure.proposal.points } : undefined;
   const simple = await safe(proposeSimple(input, route, spare));
-  return { simple, adventure };
+  const found = terrainFound(input.terrain);
+  return found ? { simple, adventure, found } : { simple, adventure };
 }
 
 // ---------- Tekst ----------
@@ -384,11 +404,39 @@ export function proposalNotes(p: RouteProposal, target: RouteTarget): string[] {
   }
   if (p.style === 'simple' && (p.repeats ?? 0) > 1) notes.push('Op dezelfde helling kan je horloge naar het verkeerde stuk springen.');
   const d = target.distanceKm * 1000;
-  if (p.distanceM < d * 0.85) notes.push(`Korter dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
+  // Korter op de getallen die je ziet (op 100 m): 10,5 km tegen 10,5 km is niet korter.
+  const shortBy = Math.round(d / 100) - Math.round(p.distanceM / 100);
+  if (p.distanceM < d * (1 - CLOSE_ENOUGH)) notes.push(`Korter dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
+  else if (shortBy > 0) notes.push(`${km(shortBy * 100)} korter dan je training. Tot ${formatNumberNL(Math.round(CLOSE_ENOUGH * 100), 0)} procent verschil is goed genoeg.`);
   else if (p.distanceM > d * 1.15) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
-  if (target.ascentM >= MIN_ASCENT_TARGET_M && p.ascentM < target.ascentM * 0.75) {
+  if (target.ascentM >= MIN_ASCENT_TARGET_M && p.ascentM < target.ascentM * SHORT_ASCENT) {
     notes.push(`Minder dan de ${formatNumberNL(round10(target.ascentM), 0)} hoogtemeters van je training.`);
   }
   if (p.style === 'adventure' && p.repeatedShare > 0.15) notes.push('Een deel loop je twee keer.');
   return notes;
+}
+
+export const SUBSTITUTE_LINE = 'Hoogtemeters bergop haal je ook op een trap, een brug of de loopband op helling.';
+
+// Wat er in de buurt gevonden is, in één regel, en zonder genoeg hoogte waar je die anders haalt
+// (de vervangers die de app al noemt bij Geen heuvel in de buurt). Alleen bij een training met
+// hoogtemeters; zonder kaart geen telling. Alleen tekst: het plant niets. Zie
+// docs/beslissingen/2026-11-10-route-uitleg.md.
+export function searchLines(plans: RoutePlans, target: RouteTarget): string[] {
+  if (target.ascentM < MIN_ASCENT_TARGET_M) return [];
+  const outcomes = [plans.simple, plans.adventure];
+  const made = outcomes.flatMap((o) => (o.ok ? [o.proposal] : []));
+  // Antwoordde de routeplanner niet (geen netwerk, te laat, een fout), dan blijft de rustige regel
+  // van het paneel alleen: geen telling en geen vervanger.
+  if (made.length === 0 && outcomes.some((o) => !o.ok && o.reason !== 'nothing' && o.reason !== 'unmapped')) return [];
+  const lines: string[] = [];
+  const f = plans.found;
+  if (f) {
+    const tallest = f.tallestM === undefined ? undefined : `${formatNumberNL(Math.round(f.tallestM), 0)} m`;
+    if (f.hills === 0) lines.push('Geen helling in de buurt op de kaart.');
+    else if (f.hills === 1) lines.push(tallest ? `Eén helling in de buurt op de kaart, ${tallest} boven je plek.` : 'Eén helling in de buurt op de kaart.');
+    else lines.push(tallest ? `${f.hills} hellingen in de buurt op de kaart, de hoogste ${tallest} boven je plek.` : `${f.hills} hellingen in de buurt op de kaart.`);
+  }
+  if (!made.some((p) => p.ascentM >= target.ascentM * SHORT_ASCENT)) lines.push(SUBSTITUTE_LINE);
+  return lines;
 }

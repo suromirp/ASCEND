@@ -275,6 +275,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('weekmelding-tijd', 'Tijd van de weekmelding', 'vandaag', 'weekNoticeTime', '19:00', 'weekmeldingTijd'),
   flag('auto-bijwerken', 'Automatisch bijwerken', 'gegevens', 'autoUpdate'),
   flag('weekvoorstel', 'Voorstel bij een probleem in de week', 'planning', 'weekFixProposal'),
+  choice('week-na-keuze', 'Melding na jouw keuze', 'planning', 'weekAfterChoice', 'mine', 'weekNaKeuze'),
   {
     id: 'volgorde-stand', title: 'Volgorde van Je stand', page: 'planning',
     differs: (s) => !isDefaultOrder('stand', resolveCardOrder('stand', s.cardOrder)),

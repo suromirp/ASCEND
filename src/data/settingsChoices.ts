@@ -432,6 +432,17 @@ export const CHOICES = {
       { value: 'together', label: 'Samen', note: 'Ze staan samen op die dag', short: 'Samen' },
     ],
   }),
+  weekNaKeuze: def({
+    group: 'Planning',
+    title: 'Melding na jouw keuze',
+    line: 'Wat Week zegt als je op Vandaag koos dat een beendag blijft staan.',
+    advice: 'mine' as 'mine' | 'plain',
+    help: 'weekNaKeuze',
+    options: [
+      { value: 'mine', label: 'Met jouw keuze', note: 'De melding zegt dat jij koos, het voorstel is een gewone tekstknop', short: 'Met jouw keuze' },
+      { value: 'plain', label: 'Gewone melding', note: 'Zoals altijd, met Bekijk voorstel als hoofdknop', short: 'Gewone melding' },
+    ],
+  }),
   vakantieOpzij: def({
     group: 'Planning',
     title: 'Opzij voor een vakantie',

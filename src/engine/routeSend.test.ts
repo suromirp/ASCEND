@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SAVE_HINT, SEND_HINT, SEND_LABEL, WATCH_STEPS, sendLine, type RouteSendOutcome } from './routeSend';
+import { SAVE_HINT, SEND_HINT, SEND_LABEL, WATCH_STEPS, routeActionLine, sendLine, type RouteSendOutcome } from './routeSend';
 
 describe('de teksten bij Naar Garmin Connect', () => {
   const all: RouteSendOutcome[] = [{ kind: 'offered' }, { kind: 'shared' }, { kind: 'cancelled' }, { kind: 'waiting' }, { kind: 'unavailable' }, { kind: 'failed', step: 'file' }, { kind: 'failed', step: 'open' }, { kind: 'failed', step: 'slow' }];
@@ -22,5 +22,22 @@ describe('de teksten bij Naar Garmin Connect', () => {
     expect(SAVE_HINT).toContain('Garmin Connect');
     expect(WATCH_STEPS).toHaveLength(3);
     expect(WATCH_STEPS[2]).toContain('Navigatie, Koersen');
+  });
+});
+
+describe('de ene regel onder de knoppen', () => {
+  it('voor een tik: wat je doet, met of zonder Naar Garmin Connect', () => {
+    expect(routeActionLine(true)).toEqual({ text: SEND_HINT, warn: false });
+    expect(routeActionLine(false)).toEqual({ text: SAVE_HINT, warn: false });
+  });
+
+  it('na een tik staat de uitkomst op dezelfde plek', () => {
+    expect(routeActionLine(true, { send: { kind: 'shared' } })).toEqual(sendLine({ kind: 'shared' }));
+    expect(routeActionLine(true, { file: { ok: false } })).toEqual({ text: 'Opslaan lukte niet. Probeer het nog eens.', warn: true });
+  });
+
+  it('na opslaan of downloaden volgt de stap naar Garmin Connect in dezelfde regel', () => {
+    expect(routeActionLine(true, { file: { ok: true, where: 'download', name: 'ascend-route-simpel-2026-11-15.gpx' } }).text).toBe(`Gedownload als ascend-route-simpel-2026-11-15.gpx. ${SAVE_HINT}`);
+    expect(routeActionLine(false, { file: { ok: true, where: 'folder', name: 'a.gpx', label: 'Documenten/ASCEND' } }).text).toBe(`Opgeslagen als a.gpx in Documenten/ASCEND. ${SAVE_HINT}`);
   });
 });

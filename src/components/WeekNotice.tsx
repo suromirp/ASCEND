@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { TAKEN_LINE, weekFixId, type WeekNotice as WeekNoticeData } from '../engine/weekFixProposal';
 import { noticeHeadline } from '../engine/weekConcerns';
+import { onlyKept } from '../engine/weekKept';
 import { useAppData } from '../state/AppDataContext';
 import { ProposalSheet } from './ProposalSheet';
 import { Sheet } from './settings/Sheet';
@@ -40,6 +41,8 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
   const answeredCount = askable.filter((c) => answeredAdviceIds.has(idOf(c))).length;
   const quiet = askable.length > 0 && answeredCount === askable.length;
   const openCount = askable.length - answeredCount;
+  // Jij koos op Vandaag dat de training blijft staan: de melding blijft, het voorstel is dan een gewone tekstknop.
+  const kept = !quiet && onlyKept(concerns, new Set(askable.map((c) => c.key)));
   const stillOpen = answeredCount > 0 && openCount > 0;
   const shown = concerns.slice(0, SHOWN);
   const rest = concerns.length - shown.length;
@@ -73,7 +76,7 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
 
   return (
     <Card className="flex flex-col gap-3">
-      <Eyebrow tone={quiet ? 'var(--color-ink-dim)' : 'var(--color-warning)'}>Let op</Eyebrow>
+      <Eyebrow tone={quiet || kept ? 'var(--color-ink-dim)' : 'var(--color-warning)'}>Let op</Eyebrow>
       {concerns.length === 1 ? (
         <div className="flex flex-col gap-1">
           <p className="text-base font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{concerns[0].headline}</p>
@@ -93,8 +96,9 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
       {stillOpen && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{`Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} open.`}</p>
       )}
-      {proposalsOn && !noFix && askable.length > 0 && !quiet && <PrimaryButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</PrimaryButton>}
+      {proposalsOn && !noFix && askable.length > 0 && !quiet && !kept && <PrimaryButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</PrimaryButton>}
       {proposalsOn && !noFix && quiet && <TextButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Toch een voorstel'}</TextButton>}
+      {proposalsOn && !noFix && kept && <TextButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</TextButton>}
       {current.outcome === 'failed' && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Het voorstel lukte nu niet. Probeer het straks nog eens.</p>
       )}

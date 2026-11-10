@@ -286,3 +286,12 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-10, Routeplanner naar Garmin Connect onderzoek (deelvenster of Openen met, plugins, webweergave), Scout, fable (sportwetenschapper), 47k, 2,5 min, 0, advies Openen met; bepaalde de keuze voor een eigen native deel
 - 2026-11-10, Routeplanner naar Garmin Connect review, Warden, fable (reviewer), 80k, 3 min, 0 blokkerend, 3 geel (grens stopte het openen niet, verkeerde stap bij time-out, uitweg te zwak; alle hersteld), 8 klein (6 hersteld)
 - 2026-11-10, Routeplanner naar Garmin Connect doorloop 360, 390 en 412 px, Lookout, sonnet (tester), 81k samen met de herhaling, 9 min, 1 herstel (statusregel van twee regels verschoof 15 px; hersteld en opnieuw gemeten, groen); mockte zelf BRouter en Overpass
+- 2026-11-10, Uitlegblad training ontwerp (bouwmoment), Cartographer, sonnet (ontwerper), 58k, 2 min, 0
+- 2026-11-10, Kaartje bij Route voorstellen, bron kiezen (bouwmoment), Scout, opus (sportwetenschapper), 98k, 5,5 min, 0, advies eigen SVG zonder tegels
+- 2026-11-10, Datavelden bekijken en weeknummer in Week (bouwmoment), Sherpa, sonnet (ontwikkelaar), 65k, 16 min, 0
+- 2026-11-10, Route voorstellen legt uit (telling hellingen, vervanger, korter-zin, één statusregel; bouwmoment), Sherpa, opus (ontwikkelaar), 157k, 21 min, 0
+- 2026-11-10, Melding in Week na 'blijft staan' met instelling (bouwmoment), Sherpa, sonnet (ontwikkelaar), 112k, 20 min, 0
+- 2026-11-10, Uitlegblad training bouwen (drie groepen, één soort rij; bouwmoment), Sherpa, sonnet (ontwikkelaar), 89k, 16 min, 0
+- 2026-11-10, Review bouwmoment (route, weekKept, instellingen, Week-kop), Warden, opus (reviewer), 107k, 5 min, 0 blokkerend, 2 geel, 8 klein
+- 2026-11-10, Herstel melding in Week na review (volgt morningConsequence, alleen beendag van vandaag), Sherpa, sonnet (ontwikkelaar), 16k extra (128k totaal), 6 min, 1 herstelronde
+- 2026-11-10, Doorloop bouwmoment 360, 390 en 412 px (Week-kop, datavelden, meldingen in Week, uitlegblad, route op 412), Lookout, sonnet (tester), 61k, 13 min, 0, alles groen
