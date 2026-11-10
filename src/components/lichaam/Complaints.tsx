@@ -30,7 +30,7 @@ function DeleteComplaintSheet({ note, onConfirm, onClose }: { note: InjuryNote; 
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <SheetHeader eyebrow="Klacht" title="Verwijderen?" onClose={requestClose} />
             <p className="text-base leading-snug" style={{ color: 'var(--color-ink)' }}>
-              {note.bodyPart} van <span className="tabular-nums">{formatDateNL(note.date)}</span> verdwijnt uit je lijst. Dat kun je niet terugzetten.
+              {note.bodyPart} van <span className="tabular-nums">{formatDateNL(note.date)}</span> verdwijnt uit je lijst. Dat kan niet terug.
             </p>
             <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Is het over? Kies dan liever Opgelost, dan blijft het bewaard.</p>
             <PrimaryButton onClick={() => onConfirm(note.id)}>Verwijderen</PrimaryButton>

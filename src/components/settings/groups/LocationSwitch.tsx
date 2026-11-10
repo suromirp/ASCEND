@@ -22,7 +22,7 @@ export function useLocationSwitch() {
     setNote(null);
     if (!on) {
       await updateSettings({ locationOn: false });
-      setNote({ text: 'Uit. ASCEND vraagt je plek niet meer; het weer blijft op de laatste plek.' });
+      setNote({ text: 'Uit. ASCEND vraagt je plek niet meer. Het weer blijft op de laatste plek.' });
       return;
     }
     running.current = true;

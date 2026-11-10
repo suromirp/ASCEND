@@ -15,6 +15,8 @@ import { matchTodayProfile, todayProfilePatch, type TodayProfileChoice } from '.
 import { Eyebrow } from '../../ui';
 import { SettingsList, SettingsSection } from '../SettingsList';
 import { resolveRouteStyle } from '../../../engine/routeTarget';
+import { resolveRouteStart } from '../../../engine/routeStart';
+import { RouteStartFooter } from './RouteStartFooter';
 import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
@@ -170,6 +172,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="heuvels-buurt" title="Heuvels en trappen in de buurt" facts={facts} onChange={(on) => set({ hillsNearby: on })} />
           <SummaryRow id="route-voorstel" title="Route voorstellen" facts={facts} info="routeVoorstel" onChange={(on) => void updateSettings({ routeProposal: on })} />
           <SummaryRow id="route-soort" title="Welke lus eerst" facts={facts} onClick={() => setInner('route-soort')} />
+          <SummaryRow id="route-start" title="Startpunt van je lus" facts={facts} onClick={() => setInner('route-start')} />
           <SummaryRow id="maanstand" title="Maanstand bij een avondtocht" facts={facts} onChange={(on) => set({ moonLine: on })} />
           <SummaryRow id="weerruil" title="Ruilen bij slecht weer" facts={facts} onChange={(on) => set({ weatherSwap: on })} />
           <SummaryRow id="kledingadvies" title="Kledingadvies" facts={facts} onChange={(on) => set({ clothingAdvice: on })} />
@@ -177,6 +180,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {inner === 'route-soort' && <ChoiceFromDef def={CHOICES.routeSoort} value={resolveRouteStyle(settings.routeStyle)} onPick={(v) => void updateSettings({ routeStyle: v })} onClose={closeInner} />}
+      {inner === 'route-start' && <ChoiceFromDef def={CHOICES.routeStart} value={resolveRouteStart(settings.routeStart)} onPick={(v) => void updateSettings({ routeStart: v })} onClose={closeInner} keepOpen footer={<RouteStartFooter mode={resolveRouteStart(settings.routeStart)} />} />}
       {sheet === 'bundel-inzicht' && (
         <BundleSheet eyebrow="Vandaag en meldingen" title="Inzicht na een training" line="Hoogstens twee regels over wat beter ging en waar je op moet letten." onClose={close}>
           <SummaryRow id="loopinzicht" title="Inzicht na een training" facts={facts} info="loopinzicht" onChange={(on) => setInsight({ enabled: on })} />
@@ -189,7 +193,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {sheet === 'bundel-run-detail' && (
-        <BundleSheet eyebrow="Vandaag en meldingen" title="Run in detail" line="Je run kilometer na kilometer, vanuit het logblad." onClose={close}>
+        <BundleSheet eyebrow="Vandaag en meldingen" title="Run in detail" line="Je loop kilometer na kilometer, vanuit het logblad." onClose={close}>
           <SummaryRow id="run-detail" title="Run in detail tonen" facts={facts} info="runDetail" onChange={(on) => setDetail({ show: on })} />
           <SummaryRow id="run-detail-patronen" title="Patronen tonen" facts={facts} info="runDetailPatronen" onChange={(on) => setDetail({ patterns: on })} />
           <SummaryRow id="run-detail-advies" title="Advies tonen" facts={facts} info="runDetailAdvies" onChange={(on) => setDetail({ advice: on })} />

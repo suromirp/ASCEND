@@ -117,44 +117,26 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
   );
 }
 
-// "Wanneer laat je het nakijken?": ingeklapt en rustig, tenzij je zelf iets meldde dat erbij hoort
-// (`fysioSignal`): dan staat hij open en in amber. De inhoud is altijd dezelfde. De spoedtekst (`direct`)
-// staat altijd zichtbaar, buiten de inklap.
+// "Wanneer laat je het nakijken?": altijd open, want zorg staat nooit achter een tik
+// (lichaamZorg.scan.test.ts). Meldde je zelf iets dat erbij hoort (`fysioSignal`), dan staat de kop in
+// amber met een teken. De spoedtekst (`direct`) staat erboven.
 function FysioFold({ care, signal }: { care: SpotCare; signal: boolean }) {
-  const [chosen, setChosen] = useState<boolean | undefined>(undefined);
-  const open = chosen ?? signal;
   const tone = signal ? 'var(--color-warning)' : 'var(--color-ink)';
   return (
     <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
       {care.direct && (
         <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-danger-text)' }}>{care.direct}</p>
       )}
-      <button
-        type="button"
-        onClick={() => setChosen(!open)}
-        aria-expanded={open}
-        aria-controls="fysio-regel"
-        className="flex min-h-[44px] w-full items-center justify-between gap-3 text-left text-sm font-medium"
-        style={{ color: tone }}
-      >
-        <span className="flex items-center gap-2">
-          {signal && <Icon name="letOp" size={18} />}
-          Wanneer laat je het nakijken?
-        </span>
-        <span className="mx-unfold-arrow shrink-0" style={{ transform: open ? 'rotate(180deg)' : undefined, color: 'var(--color-ink-dim)' }} aria-hidden="true"><Icon name="omlaag" size={18} /></span>
-      </button>
-      <div id="fysio-regel" className="mx-unfold" data-shown={open} inert={!open}>
-        <div>
-          <div className="flex flex-col gap-2 pb-1 pt-1">
-            <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Naar een fysio of je huisarts bij</p>
-            <ul className="flex flex-col gap-1.5 pl-4">
-              {care.fysioAll.map((line) => (
-                <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{capitalize(line)}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
+      <p className="flex items-center gap-2 text-sm font-medium" style={{ color: tone }}>
+        {signal && <Icon name="letOp" size={18} />}
+        Wanneer laat je het nakijken?
+      </p>
+      <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Naar een fysio of je huisarts bij</p>
+      <ul className="flex flex-col gap-1.5 pb-1 pl-4">
+        {care.fysioAll.map((line) => (
+          <li key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{capitalize(line)}</li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -212,7 +194,7 @@ function ReportForm({ spot, hasOpen }: { spot: BodySpot; hasOpen: boolean }) {
         />
       </div>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Melden legt de klacht vast, meer niet: je planning verandert er niet door. Bij een klacht aan been of voet toont Vandaag een hint bij zware beentrainingen; jij kiest per training. Je week pas je zelf aan op Week.
+        Melden legt de klacht vast. Je planning verandert er niet door. Bij een klacht aan been of voet zie je op Vandaag een hint bij zware beentrainingen. Jij kiest per training. Je week pas je zelf aan op Week.
       </p>
       <PrimaryButton onClick={() => void report()} disabled={busy || !isValidReportDate(date, todayISO())}>{busy ? 'Bezig…' : 'Melden'}</PrimaryButton>
       {state === 'done' && (

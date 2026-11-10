@@ -125,7 +125,7 @@ export function NoticeInfoSheet({ support, failure, onClose }: { support: Notice
   }, []);
   const text = noticeProblemText(live, failure);
   return (
-    <Sheet eyebrow="Vandaag en meldingen" title="Ochtendmelding" onClose={onClose}>
+    <Sheet eyebrow="Vandaag en meldingen" title="Ochtendvraag" onClose={onClose}>
       {(close) => (
         <>
           <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{text}</p>

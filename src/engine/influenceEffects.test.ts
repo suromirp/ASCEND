@@ -355,7 +355,7 @@ describe('de zinnen onder de strook', () => {
     expect(factSentence(pick('restingHr'))).toBe('Alle 4 keer buiten je schommeling.');
     expect(factSentence(pick('hrv'))).toMatch(/^Alle 4 keer buiten je schommeling\. Dat is \d+% onder je gemiddelde van \d+ ms\.$/);
     expect(factSentence(pick('sleep'))).toContain('Gemiddeld 6 u 25 tegen');
-    expect(factSentence(pick('sleep'))).toContain('de duur is betrouwbaarder dan de fasen');
+    expect(factSentence(pick('sleep'))).toContain('De duur is betrouwbaarder dan de fasen');
     for (const m of ['restingHr', 'hrv', 'sleep']) expect(factSentence(pick(m))).not.toMatch(/helaas|[\u2013\u2014]/);
   });
 
@@ -380,13 +380,13 @@ describe('de schaal van een meting', () => {
 describe('lijkt op, de zinnen', () => {
   it('noemt de reden in kleine letters en het aantal keer, zonder percentage', () => {
     const t = looksLikeText({ group: groupOf({ reason: 'alcohol', amount: 'matig' }), measure: 'paceHr', times: 4, otherTimes: 6 });
-    expect(t.title).toBe('Lijkt op je loopjes bij alcohol, 3 tot 5 glazen');
+    expect(t.title).toBe('Lijkt op je lopen bij alcohol, 3 tot 5 glazen');
     expect(t.line).toBe('Uit 4 keer met die reden en 6 keer zonder. Zeker weten doet ASCEND het niet.');
     expect(`${t.title} ${t.line}`).not.toMatch(/%|waarschijnlijk/);
   });
 
   it('laat een eigen woord zoals je het schreef', () => {
     const t = looksLikeText({ group: groupOf({ reason: 'anders', label: 'Verjaardag' }), measure: 'paceHr', times: 4, otherTimes: 4 });
-    expect(t.title).toBe('Lijkt op je loopjes bij Verjaardag');
+    expect(t.title).toBe('Lijkt op je lopen bij Verjaardag');
   });
 });

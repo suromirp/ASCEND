@@ -112,6 +112,7 @@ const everything: AppSettings = {
   stravaTextParts: 'title',
   routeProposal: false,
   routeStyle: 'simple',
+  routeStart: 'exact',
   keepStreams: false,
   tempoStablePieces: false,
   morningInBackup: false,

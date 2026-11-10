@@ -87,7 +87,7 @@ export function WeekBudgetSheet({ onClose, onPropose }: { onClose: () => void; o
       )}
       <p className="st-hint" style={{ marginLeft: 0 }}>
         {follows
-          ? 'Je plan volgt je richting, dus het budget bepaalt hoe lang je duurtrainingen zijn. Het aantal krachttrainingen dat in je week staat verandert hier niet door; de teller op de kaart volgt wel je keuze.'
+          ? 'Je plan volgt je richting, dus het budget bepaalt hoe lang je duurtrainingen zijn. Het aantal krachttrainingen dat in je week staat verandert hier niet door. De teller op de kaart volgt wel je keuze.'
           : 'Het budget telt wat je deed. Zolang je geen richting koos, verandert je planning er niet van.'}
       </p>
       {changed && <TextButton onClick={() => save({ doubleHard: true })}>Terug naar het advies</TextButton>}

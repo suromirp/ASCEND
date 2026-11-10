@@ -76,7 +76,7 @@ export function usePlanSettingChange(): {
   async function setPairing(value: TrainingStrategyProfile['sameDayPairingPreference']) {
     if (value === goalEngineConfig.strategy.sameDayPairingPreference) return;
     await updateGoalEngineConfig({ strategy: { ...goalEngineConfig.strategy, sameDayPairingPreference: value } });
-    const label = 'Meerdere trainingen op één dag';
+    const label = 'Twee trainingen per dag';
     await route(label, scheduleFitFor(label, goalEngineConfig.availability.dailyTimeBudget, value), { config: { strategy: goalEngineConfig.strategy } });
   }
 
@@ -104,7 +104,7 @@ export function usePlanSettingChange(): {
     return horizon.propose(
       () => planHorizonChange({
         title, why, trigger: 'availability_changed', settings: patch, ...(opts.notes?.length ? { notes: opts.notes } : {}),
-        explanation: 'Deze instelling bepaalt hoe ASCEND je weken plant. Ze verandert je planning nooit ongemerkt: je ziet eerst wat er verschuift, omgaat of vervalt. Wat je al deed en wat je zelf vastzette blijft staan.',
+        explanation: 'Deze instelling bepaalt hoe ASCEND je weken plant. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
       }),
       { eyebrow: 'Planning aanpassen', ask: opts.alwaysAsk ? 'always' : 'setting', declined: 'Je instelling en je planning blijven zoals ze waren.', ...(opts.alwaysAsk ? { alwaysAsk: true } : {}), ...(opts.onStored ? { onStored: opts.onStored } : {}) },
     );
@@ -138,7 +138,7 @@ export function usePlanSettingChange(): {
       () => planHorizonChange({
         title,
         why: start?.consequences ?? 'Volgt je sporten.',
-        explanation: start?.explanation ?? 'Je sporten bepalen wat ASCEND plant. Een sport aan of uit verandert je planning nooit ongemerkt: je ziet eerst wat er verandert.',
+        explanation: start?.explanation ?? 'Je sporten bepalen wat ASCEND plant. Eerst een voorstel, pas na Akkoord verandert er iets.',
         trigger: 'availability_changed',
         settings: { enabledSports: nextEnabled, ...extra },
         ...(start && start.changes.length > 0 ? { startItems: start.changes } : {}),
@@ -151,7 +151,7 @@ export function usePlanSettingChange(): {
     const restore: UndoRestore = { settings: { sportFrequency: frequency } };
     await updateSettings({ sportFrequency: { ...frequency, [sport]: perWeek } });
     if (perWeek === undefined) {
-      setNote(`${SPORT_LABEL[sport]} staat op Automatisch. Je huidige planning blijft staan; voortaan bepaalt je weekschema hoe vaak.`);
+      setNote(`${SPORT_LABEL[sport]} staat op Automatisch. Je huidige planning blijft staan. Voortaan bepaalt je weekschema hoe vaak.`);
       return;
     }
     await route(`${SPORT_LABEL[sport]}: ${perWeek}x per week`, frequencyPlan(sport, perWeek), restore);
