@@ -1,10 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import * as morningCard from './morningCard';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { MorningCheckIn } from '../models/checkIn';
 import type { PlannedSession } from '../models/training';
 import { addDays } from '../utils/dates';
 import { weekConcerns } from './weekConcerns';
 import { freshLegsToday, markKept, onlyKept, resolveWeekAfterChoice } from './weekKept';
+import type { AdviceInputs } from './adviceEngine';
 import type { CheckInput } from './weekValidator';
 
 const { templates } = buildDefaultProgramData();
@@ -22,7 +24,10 @@ function run(over: { today?: string; checkIns?: MorningCheckIn[]; setting?: 'min
   const today = over.today ?? MONDAY;
   const sessions = over.sessions ?? week(MONDAY, 'a');
   const concerns = weekConcerns(input(sessions, today), over.monday ?? MONDAY);
-  return markKept(concerns, { today, checkIns: over.checkIns, sessions, templates, setting: over.setting ?? 'mine' });
+  return markKept(concerns, {
+    today, checkIns: over.checkIns, sessions, templates, setting: over.setting ?? 'mine', answeredAdviceIds: new Set(),
+    inputs: { logs: [], plannedSessions: sessions, templates, injuries: [], program: null, checkIns: over.checkIns, asOf: today } as unknown as AdviceInputs,
+  });
 }
 
 describe('markKept', () => {
@@ -32,7 +37,7 @@ describe('markKept', () => {
     expect(c.headline).toBe('Benen fris, je liet Benen A (zwaar) staan.');
     expect(c.fact).toBe('Benen A (zwaar) en Heuvelsprints en afdalen liggen te dicht op elkaar. Er zit geen dag tussen, liefst 1 dag ertussen (48 uur).');
     expect(c.notes).toEqual({ 'a-0': '1 dag voor Heuvelsprints en afdalen', 'a-1': '1 dag na Benen A (zwaar)' });
-    expect(`${c.headline}${c.fact}`).not.toMatch(/[–—]/);
+    expect(`${c.headline}${c.fact}`).not.toMatch(/[\u2013\u2014]/);
   });
 
   it('zonder antwoord van vandaag, na Ongedaan maken, blijft de gewone melding', () => {
@@ -88,6 +93,26 @@ describe('markKept', () => {
     const list = run({ checkIns: [fresh(MONDAY)] }).filter((x) => x.rule === 'LEG-SPACING');
     expect(onlyKept(list, new Set(list.map((c) => c.key)))).toBe(true);
     expect(onlyKept(list, new Set())).toBe(false);
+  });
+});
+
+describe('markKept volgt de zin op Vandaag', () => {
+  const other = (kind: 'voorstel' | 'kaart-benen') => vi.spyOn(morningCard, 'morningConsequence').mockReturnValue({ kind } as morningCard.MorningConsequence);
+  it('bij een voorstel op Vandaag zegt Week niet dat jij koos', () => {
+    const spy = other('voorstel');
+    expect(run({ checkIns: [fresh(MONDAY)] }).find((x) => x.rule === 'LEG-SPACING')!.kept).toBeUndefined();
+    spy.mockRestore();
+  });
+  it('bij de kaart Benen op Vandaag zegt Week niet dat jij koos', () => {
+    const spy = other('kaart-benen');
+    expect(run({ checkIns: [fresh(MONDAY)] }).find((x) => x.rule === 'LEG-SPACING')!.kept).toBeUndefined();
+    spy.mockRestore();
+  });
+  it('is vandaag een andere training en morgen Benen A, dan is die melding niet van jou', () => {
+    const swapped: PlannedSession[] = week(MONDAY, 'a').map((s) => (s.id === 'a-0' ? { ...s, templateId: 'tpl_hills_descent' } : s.id === 'a-1' ? { ...s, templateId: 'tpl_lower_a' } : s));
+    const c = run({ sessions: swapped, checkIns: [fresh(MONDAY)] }).find((x) => x.rule === 'LEG-SPACING')!;
+    expect(c).toBeDefined();
+    expect(c.kept).toBeUndefined();
   });
 });
 

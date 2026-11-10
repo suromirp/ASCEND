@@ -14,7 +14,8 @@ Vandaag zei "Benen fris. Benen A (zwaar) blijft staan." terwijl Week dezelfde tr
 ## Keuzes
 
 - Afgeleid uit het bestaande ochtendantwoord (`morningCheckIns`, legs = fris, niet alleen bovenlichaam, niet "Gaat goed"). Er wordt niets nieuws opgeslagen, dus geen migratie. Ongedaan maken op Vandaag haalt het antwoord weg en zet daarmee de gewone melding terug.
-- Alleen voor vandaag en alleen voor het paar waar een training van vandaag in zit (`engine/weekKept.ts`). Een antwoord van gisteren telt niet; dezelfde training volgende week waarschuwt gewoon.
+- Afgeleid uit dezelfde uitkomst als de zin op Vandaag (`morningConsequence` in `engine/morningCard.ts`), niet uit het ruwe antwoord: alleen bij `blijft` zegt Week dat jij koos. Bij een voorstel of de kaart Benen op Vandaag blijft de gewone melding, anders spreken de schermen elkaar andersom tegen.
+- Alleen voor vandaag en alleen voor het paar waar de zware beendag van vandaag in zit (kracht, zwaar voor de benen, nog open; `easeTargetOf`). Een andere training van vandaag, zoals Heuvelsprints met Benen A morgen, telt niet. Een antwoord van gisteren telt niet; dezelfde training volgende week waarschuwt gewoon.
 - Alleen de regel te dicht op elkaar (LEG-SPACING). De andere waarschuwingen en de planning bewegen niet.
 - Staat er in dezelfde week nog een ander paar open, dan blijft de hoofdknop (alleen als elke open melding gekozen is, wordt het een tekstknop). Het oude feit blijft als tweede regel staan, zodat niets weggepoetst wordt.
 - De instelling staat in een nieuw blad "Meldingen in Week" naast "Voorstel bij een probleem in de week", omdat de pagina Planning al op het plafond van twaalf rijen zat. De schakelaar voor het weekvoorstel is dus verhuisd, niet veranderd.
