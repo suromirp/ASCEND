@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gpxFileName, routeGpx } from './gpx';
+import { gpxCourseName, gpxFileName, routeGpx } from './gpx';
 
 // Nagemaakte punten, geen echte plek.
 const points = [{ lat: 52.1, lon: 5.9, ele: 21.26 }, { lat: 52.1001234, lon: 5.9004321 }, { lat: 52.1, lon: 5.9, ele: 21 }];
@@ -39,5 +39,13 @@ describe('gpxFileName', () => {
   it('heeft de soort en de dag, en een volgnummer als de naam bezet is', () => {
     expect(gpxFileName('simple', '2026-11-09')).toBe('ascend-route-simpel-2026-11-09.gpx');
     expect(gpxFileName('adventure', '2026-11-09', 3)).toBe('ascend-route-avontuurlijk-2026-11-09-3.gpx');
+  });
+});
+
+describe('gpxCourseName', () => {
+  it('noemt alleen de soort lus en de afstand, nooit een training of een plek', () => {
+    expect(gpxCourseName('simple', 6040)).toBe('ASCEND Simpel 6 km');
+    expect(gpxCourseName('adventure', 8249)).toBe('ASCEND Avontuurlijk 8,2 km');
+    expect(gpxCourseName('adventure', -5)).toBe('ASCEND Avontuurlijk 0 km');
   });
 });

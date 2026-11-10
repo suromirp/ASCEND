@@ -3,7 +3,8 @@
 // alleen de punten van de lus, met hoogte als de bron die gaf. Pure: geen React, geen netwerk.
 // Kaartgegevens van OpenStreetMap (ODbL); dat staat in het bestand.
 
-import type { RoutePoint } from '../models/route';
+import type { RoutePoint, RouteStyle } from '../models/route';
+import { formatNumberNL } from '../utils/number';
 
 const escapeXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -37,4 +38,12 @@ export function routeGpx(points: RoutePoint[], name: string): string {
 export function gpxFileName(style: 'simple' | 'adventure', date: string, n = 1): string {
   const kind = style === 'simple' ? 'simpel' : 'avontuurlijk';
   return n <= 1 ? `ascend-route-${kind}-${date}.gpx` : `ascend-route-${kind}-${date}-${n}.gpx`;
+}
+
+// De naam in het bestand, die Garmin Connect als naam van de koers toont: alleen de soort lus en de
+// afstand. Nooit de naam van een training (die kiest de gebruiker zelf en kan een plek noemen), nooit
+// een plek, een adres of een naam van de gebruiker.
+export function gpxCourseName(style: RouteStyle, distanceM: number): string {
+  const km = Math.max(0, distanceM) / 1000;
+  return `ASCEND ${style === 'simple' ? 'Simpel' : 'Avontuurlijk'} ${formatNumberNL(Math.round(km * 10) / 10, 1)} km`;
 }

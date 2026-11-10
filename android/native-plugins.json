@@ -1,5 +1,5 @@
 {
-  "nativeLevel": 8,
+  "nativeLevel": 9,
   "dbVersion": 9,
   "packages": {
     "@capacitor-community/keep-awake": "^8.0.1",
