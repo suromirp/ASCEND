@@ -26,6 +26,18 @@ const DETOUR = 1.3;
 export const CLOSE_ENOUGH = 0.12;
 // Onder dit deel van de hoogtemeters van de training haalt een lus de hoogte niet.
 export const SHORT_ASCENT = 0.75;
+// De afstand van de training is het doel: een lus die er meer dan dit deel onder blijft telt als
+// mislukt, en de planner zoekt verder. Langer mag tot CLOSE_ENOUGH.
+export const SHORT_LIMIT = 0.1;
+// Ligt het eerste punt van de lijn verder dan dit van het startpunt (de routeplanner begint op het
+// dichtstbijzijnde pad), dan krijgt de lus een recht stukje van en naar het startpunt.
+export const START_SNAP_M = 10;
+// Vanaf deze afstand tot het dichtstbijzijnde pad zegt de lus het erbij.
+export const START_GAP_NOTE_M = 100;
+// Een helling zonder bekende hoogte: de planner rekent met deze schatting en zet hem achteraan.
+const UNKNOWN_HILL_M = 20;
+// Na een lus die niet past mikt de volgende poging hier (deel van de afstand): net erboven.
+const AIM_LONG = 1.03;
 const NEAR_START_M = 250;
 const SAME_SPOT_M = 200;
 
@@ -33,15 +45,24 @@ export interface PlanInput {
   start: RoutePoint;
   target: RouteTarget;
   terrain?: NearbyTerrain;
+  // Het startpunt is een echt punt van de gebruiker (Precies): de lus begint en eindigt er precies.
+  anchor?: boolean;
 }
 
-export type PlanOutcome = { ok: true; proposal: RouteProposal } | { ok: false; reason: RouteFailure | 'nothing' };
+// `at: 'start'`: bij het startpunt zelf ligt geen pad; een andere lus proberen heeft dan geen zin.
+export type PlanOutcome = { ok: true; proposal: RouteProposal } | { ok: false; reason: RouteFailure | 'nothing'; at?: 'start' };
 
 // Wat er in het zoekgebied op de kaart ligt: het aantal hellingen waar de planner mee werkt, en de
 // hoogste (hoeveel hoger dan de plek). Alleen in het geheugen, voor de uitleg in het paneel.
 export interface TerrainFound {
+  // Hellingen met een bekende hoogte van minstens MIN_CLIMB_M.
   hills: number;
+  // Hellingen waarvan de kaart de hoogte niet kent: ze tellen niet mee als helling.
+  unknown: number;
+  // Hellingen met een bekende hoogte die lager liggen dan MIN_CLIMB_M boven de plek (ook onder de plek).
+  lower: number;
   tallestM?: number;
+  radiusM: number;
 }
 
 export interface RoutePlans {
@@ -49,9 +70,13 @@ export interface RoutePlans {
   adventure: PlanOutcome;
   // Ontbreekt als de kaart niet antwoordde: dan is er niets geteld, ook geen nul.
   found?: TerrainFound;
+  // Een melding over de hele zoektocht (bijvoorbeeld geen pad bij het startpunt).
+  notice?: string;
 }
 
-const usableHill = (f: TerrainFeature) => f.kind === 'hill' && (f.heightM === undefined || f.heightM >= MIN_CLIMB_M);
+const knownHill = (f: TerrainFeature) => f.kind === 'hill' && f.heightM !== undefined && f.heightM >= MIN_CLIMB_M;
+const unknownHill = (f: TerrainFeature) => f.kind === 'hill' && f.heightM === undefined;
+const usableHill = (f: TerrainFeature) => knownHill(f) || unknownHill(f);
 const reversed = (points: RoutePoint[]) => [...points].reverse();
 
 // Hoe ver een lus van de training af zit: afstand en, als de training hoogtemeters vraagt, de stijging.
@@ -60,6 +85,32 @@ export function missScore(p: Pick<RouteProposal, 'distanceM' | 'ascentM'>, targe
   const dist = d > 0 ? Math.abs(p.distanceM - d) / d : 0;
   const asc = target.ascentM >= MIN_ASCENT_TARGET_M ? Math.abs(p.ascentM - target.ascentM) / target.ascentM : 0;
   return dist + asc;
+}
+
+export const tooShort = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarget): boolean => p.distanceM < target.distanceKm * 1000 * (1 - SHORT_LIMIT);
+// De afstand past: niet meer dan SHORT_LIMIT korter en niet meer dan CLOSE_ENOUGH langer.
+export const fitsDistance = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarget): boolean => !tooShort(p, target) && p.distanceM <= target.distanceKm * 1000 * (1 + CLOSE_ENOUGH);
+
+// Een lus waarvan de afstand past gaat voor op een die niet past; daarna telt de score (lager is beter).
+function better(a: RouteProposal, b: RouteProposal | undefined, target: RouteTarget, score: (p: RouteProposal) => number): boolean {
+  if (!b) return true;
+  const fa = fitsDistance(a, target);
+  if (fa !== fitsDistance(b, target)) return fa;
+  return score(a) < score(b);
+}
+
+// De lijn van de routeplanner begint op het dichtstbijzijnde pad, niet bij het startpunt zelf. Met
+// een recht stukje ervoor (en erachter als de lijn bij het startpunt eindigt) begint en eindigt de
+// lus bij het startpunt. Geeft ook hoe ver het pad van het startpunt ligt.
+export function anchorLine(points: RoutePoint[], start: RoutePoint, both: boolean): { points: RoutePoint[]; gapM: number } {
+  if (points.length === 0) return { points, gapM: 0 };
+  const stub = (near: RoutePoint): RoutePoint => (near.ele === undefined ? { lat: start.lat, lon: start.lon } : { lat: start.lat, lon: start.lon, ele: near.ele });
+  const first = points[0];
+  const last = points[points.length - 1];
+  const gapM = metersBetween(start, first);
+  const out = gapM > START_SNAP_M ? [stub(first), ...points] : [...points];
+  if (both && metersBetween(start, last) > START_SNAP_M) out.push(stub(last));
+  return { points: out, gapM };
 }
 
 // ---------- Simpel ----------
@@ -72,27 +123,32 @@ export function simpleCandidates(input: PlanInput): RoutePoint[] {
   if (target.ascentM < MIN_ASCENT_TARGET_M) return flatCandidates(input);
   const hills = (terrain?.features ?? []).filter(usableHill).map((f) => {
     const crow = metersBetween(start, f);
-    const height = f.heightM ?? 20;
+    const height = f.heightM ?? UNKNOWN_HILL_M;
     const repeats = Math.max(1, Math.round(target.ascentM / height));
     const estimate = 2 * DETOUR * crow + 2 * repeats * (height / 0.06);
-    return { f, crow, miss: Math.abs(estimate - d) / d };
+    return { f, crow, known: f.heightM !== undefined, miss: Math.abs(estimate - d) / d };
   });
+  // Een helling met een bekende hoogte gaat altijd voor op een zonder: die kost anders een van de
+  // drie aanroepen aan een plek die misschien vlak is.
   return hills
-    .sort((a, b) => a.miss - b.miss || a.crow - b.crow || a.f.lat - b.f.lat || a.f.lon - b.f.lon)
+    .sort((a, b) => Number(b.known) - Number(a.known) || a.miss - b.miss || a.crow - b.crow || a.f.lat - b.f.lat || a.f.lon - b.f.lon)
     .slice(0, MAX_ROUTE_CALLS)
     .map(({ f }) => ({ lat: f.lat, lon: f.lon }));
 }
 
-// Vlak: een keerpunt op de helft van de afstand, liefst op een onverhard pad.
+// Vlak: een keerpunt op de helft van de afstand, liefst op een onverhard pad. Het laatste keerpunt
+// ligt hemelsbreed op de volle helft: de weg ernaartoe is dan nooit korter dan de helft, en de lus
+// wordt op de helft afgeknipt.
 function flatCandidates({ start, target, terrain }: PlanInput): RoutePoint[] {
-  const half = (target.distanceKm * 1000) / 2 / DETOUR;
+  const full = (target.distanceKm * 1000) / 2;
+  const half = full / DETOUR;
   const paths = (terrain?.features ?? [])
     .filter((f) => f.kind === 'dirt_path')
     .map((f) => ({ f, off: Math.abs(metersBetween(start, f) - half) }))
     .sort((a, b) => a.off - b.off || a.f.lat - b.f.lat || a.f.lon - b.f.lon)
     .slice(0, MAX_ROUTE_CALLS - 1)
     .map(({ f }) => ({ lat: f.lat, lon: f.lon }));
-  return [...paths, offsetPoint(start, 0, half)];
+  return [...paths, offsetPoint(start, 0, full)];
 }
 
 export interface Climb {
@@ -226,6 +282,7 @@ const stops = (reason: RouteFailure) => reason === 'offline' || reason === 'time
 // komt de helling uit die lijn: het stuk van het startpunt tot het hoogste punt, zonder nieuwe aanroep.
 export async function proposeSimple(input: PlanInput, route: RouteFn, spare?: RoutedLine): Promise<PlanOutcome> {
   const flat = input.target.ascentM < MIN_ASCENT_TARGET_M;
+  const score = (p: RouteProposal) => missScore(p, input.target);
   let best: RouteProposal | undefined;
   let lastFailure: RouteFailure | undefined;
   for (const candidate of simpleCandidates(input)) {
@@ -233,19 +290,25 @@ export async function proposeSimple(input: PlanInput, route: RouteFn, spare?: Ro
     if (failed(answer)) {
       lastFailure = answer.reason;
       if (stops(answer.reason)) break;
+      // Geen pad bij het startpunt zelf: een andere helling verandert daar niets aan.
+      if (answer.reason === 'unmapped' && answer.waypoint === 0) return { ok: false, reason: 'unmapped', at: 'start' };
       continue;
     }
-    const made = flat ? composeOutAndBack(answer.line, input.target) : composeSimple(answer.line, input.target);
+    const anchored = input.anchor ? anchorLine(answer.line.points, input.start, false) : { points: answer.line.points, gapM: 0 };
+    const line: RoutedLine = { source: answer.line.source, points: anchored.points };
+    const made = flat ? composeOutAndBack(line, input.target) : composeSimple(line, input.target);
     if (!made) continue;
-    if (!best || missScore(made, input.target) < missScore(best, input.target)) best = made;
-    if (missScore(best, input.target) <= CLOSE_ENOUGH) break;
+    if (anchored.gapM >= START_GAP_NOTE_M) made.startGapM = anchored.gapM;
+    if (better(made, best, input.target, score)) best = made;
+    // Past de afstand en zit de lus dicht genoeg bij de training, dan vraagt de planner niets meer.
+    if (best && fitsDistance(best, input.target) && score(best) <= CLOSE_ENOUGH) break;
   }
   if (!best && !flat && spare) {
     // De lus in beide richtingen: de helling met de kortste aanloop past meestal het best.
     for (const points of [spare.points, reversed(spare.points)]) {
       const line = tallestClimbLine(points);
       const made = line ? composeSimple({ source: spare.source, points: line }, input.target) : undefined;
-      if (made && (!best || missScore(made, input.target) < missScore(best, input.target))) best = made;
+      if (made && better(made, best, input.target, score)) best = made;
     }
   }
   if (best) return { ok: true, proposal: best };
@@ -269,23 +332,27 @@ const perimeter = (start: RoutePoint, vias: RoutePoint[]) => lineLength([start, 
 export function adventureVias(input: PlanInput, reach = 0.25): Via[] {
   const { start, target, terrain } = input;
   const d = target.distanceKm * 1000;
+  // De lengte waar de schatting op mikt: de afstand van de training, na een te korte of te lange
+  // lus naar verhouding meer of minder.
+  const aim = d * (reach / 0.25);
   const all: Via[] = (terrain?.features ?? [])
     .filter((f) => usableHill(f) || f.kind === 'dirt_path')
     .filter((f) => {
       const crow = metersBetween(start, f);
       return crow >= NEAR_START_M && crow <= d * reach;
     })
-    .map((f) => ({ lat: f.lat, lon: f.lon, hill: f.kind === 'hill', value: f.kind === 'hill' ? 2 + (f.heightM ?? 20) / 20 : 1, angle: bearing(start, f) }))
+    // Een helling zonder bekende hoogte weegt net boven een pad, niet als een helling van twintig meter.
+    .map((f) => ({ lat: f.lat, lon: f.lon, hill: knownHill(f), value: knownHill(f) ? 2 + (f.heightM as number) / 20 : unknownHill(f) ? 1.5 : 1, angle: bearing(start, f) }))
     .sort((a, b) => b.value - a.value || a.lat - b.lat || a.lon - b.lon);
   // Twee dingen op dezelfde plek: de waardevolste blijft.
   const spread: Via[] = [];
   for (const v of all) {
     if (!spread.some((s) => metersBetween(s, v) < SAME_SPOT_M)) spread.push(v);
   }
-  if (spread.length === 0) return ring(start, d * (reach / 0.25));
+  if (spread.length === 0) return ring(start, aim);
 
   let vias = spread.sort((a, b) => a.angle - b.angle || a.lat - b.lat);
-  const tooLong = () => vias.length > MAX_VIAS || DETOUR * perimeter(start, vias) > d;
+  const tooLong = () => vias.length > MAX_VIAS || DETOUR * perimeter(start, vias) > aim;
   while (vias.length > 1 && tooLong()) {
     const whole = perimeter(start, vias);
     let drop = 0;
@@ -300,7 +367,49 @@ export function adventureVias(input: PlanInput, reach = 0.25): Via[] {
     });
     vias = vias.filter((_, i) => i !== drop);
   }
-  return startAtWidestGap(vias);
+  return startAtWidestGap(padVias(start, vias, aim));
+}
+
+// Liggen de punten te dicht bij het startpunt om de afstand te halen, dan komen er in het grootste
+// gat tussen twee richtingen een of twee punten bij, zo ver weg dat de geschatte lengte past. Zonder
+// dit bleef een lus met alleen dichtbije hellingen te kort, hoe vaak de planner ook zocht.
+function padVias(start: RoutePoint, vias: Via[], aim: number): Via[] {
+  const estimate = (list: RoutePoint[]) => DETOUR * perimeter(start, list);
+  if (vias.length === 0 || estimate(vias) >= aim * (1 - SHORT_LIMIT)) return vias;
+  // Een volle lijst van dichtbije punten laat geen plek voor een aanvulpunt, en dan bleef de lus te
+  // kort. De punten met de laagste waarde (bij gelijke waarde het dichtst bij het startpunt) maken plek.
+  if (vias.length > MAX_VIAS - 2) {
+    const keep = [...vias]
+      .sort((a, b) => b.value - a.value || metersBetween(start, b) - metersBetween(start, a) || a.lat - b.lat || a.lon - b.lon)
+      .slice(0, MAX_VIAS - 2);
+    vias = vias.filter((v) => keep.includes(v));
+  }
+  let from = vias[vias.length - 1].angle;
+  let gap = 360;
+  if (vias.length > 1) {
+    gap = -1;
+    vias.forEach((v, i) => {
+      const prev = vias[(i - 1 + vias.length) % vias.length];
+      const g = (v.angle - prev.angle + 360) % 360;
+      if (g > gap) {
+        gap = g;
+        from = prev.angle;
+      }
+    });
+  }
+  const count = gap >= 180 ? 2 : 1;
+  const angles = Array.from({ length: count }, (_, i) => (from + (gap * (i + 1)) / (count + 1)) % 360);
+  const withPad = (radius: number): Via[] =>
+    [...vias, ...angles.map((angle) => ({ ...offsetPoint(start, angle, radius), hill: false, value: 1, angle }))].sort((a, b) => a.angle - b.angle || a.lat - b.lat);
+  // De straal waarbij de schatting op de afstand uitkomt, door halveren (vast aantal stappen).
+  let lo = NEAR_START_M;
+  let hi = Math.max(NEAR_START_M, aim / 2);
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    if (estimate(withPad(mid)) < aim) lo = mid;
+    else hi = mid;
+  }
+  return withPad((lo + hi) / 2);
 }
 
 // De lus begint na het grootste gat tussen twee richtingen: zo liggen heen- en terugweg uit elkaar.
@@ -341,17 +450,22 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
     if (failed(answer)) {
       lastFailure = answer.reason;
       if (stops(answer.reason)) break;
+      // Geen pad bij het startpunt zelf: een punt weglaten verandert daar niets aan.
+      if (answer.reason === 'unmapped' && (answer.waypoint === 0 || answer.waypoint === vias.length + 1)) return { ok: false, reason: 'unmapped', at: 'start' };
       // Een punt zonder pad in de buurt valt weg; zegt de bron niet welk, dan het laatste.
       const i = answer.reason === 'unmapped' && answer.waypoint !== undefined && answer.waypoint >= 1 && answer.waypoint <= vias.length ? answer.waypoint - 1 : vias.length - 1;
       dropped.push(vias[i]);
       vias = vias.filter((_, j) => j !== i);
       continue;
     }
-    const made = proposal('adventure', answer.line, answer.line.points, { hills: vias.filter((v) => v.hill).length });
-    if (!best || score(made) < score(best)) best = made;
+    const anchored = input.anchor ? anchorLine(answer.line.points, input.start, true) : { points: answer.line.points, gapM: 0 };
+    const made = proposal('adventure', answer.line, anchored.points, { hills: vias.filter((v) => v.hill).length });
+    if (anchored.gapM >= START_GAP_NOTE_M) made.startGapM = anchored.gapM;
+    if (better(made, best, input.target, score)) best = made;
+    if (fitsDistance(made, input.target)) break;
+    // Iets boven de afstand mikken: te kort telt als mislukt, iets te lang niet.
     const off = made.distanceM / d;
-    if (Math.abs(off - 1) <= CLOSE_ENOUGH) break;
-    reach = Math.min(0.6, Math.max(0.08, reach * Math.min(1.6, Math.max(0.6, 1 / off))));
+    reach = Math.min(0.6, Math.max(0.08, reach * Math.min(1.6, Math.max(0.6, AIM_LONG / off))));
     const next = kept(adventureVias(input, reach));
     // Dezelfde punten geven dezelfde lus: dan is er niets beters te halen.
     if (next.length === vias.length && next.every((v, i) => v.lat === vias[i].lat && v.lon === vias[i].lon)) break;
@@ -361,23 +475,36 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
   return { ok: false, reason: lastFailure ?? 'nothing' };
 }
 
-// De hellingen op de kaart die de planner bruikbaar vindt. Zonder kaart: undefined.
+// De hellingen op de kaart: met een bekende hoogte (daar werkt de planner mee) en zonder. Zonder kaart: undefined.
 export function terrainFound(terrain: NearbyTerrain | undefined): TerrainFound | undefined {
   if (!terrain) return undefined;
-  const hills = terrain.features.filter(usableHill);
-  const heights = hills.flatMap((f) => (f.heightM === undefined ? [] : [f.heightM]));
-  return heights.length > 0 ? { hills: hills.length, tallestM: Math.max(...heights) } : { hills: hills.length };
+  const heights = terrain.features.filter(knownHill).map((f) => f.heightM as number);
+  const lower = terrain.features.filter((f) => f.kind === 'hill' && f.heightM !== undefined && f.heightM < MIN_CLIMB_M).length;
+  const base = { hills: heights.length, unknown: terrain.features.filter(unknownHill).length, lower, radiusM: terrain.radiusM };
+  return heights.length > 0 ? { ...base, tallestM: Math.max(...heights) } : base;
 }
+
+export const NO_PATH_AT_START = 'Bij je startpunt ligt geen pad of weg die de routeplanner kent. Kies een startpunt aan een weg.';
 
 // Beide lussen, de avontuurlijke eerst (zijn lijn is de reserve voor Simpel). Gooit nooit: elke
 // uitkomst is een lus of een reden.
 export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<RoutePlans> {
   const safe = (p: Promise<PlanOutcome>) => p.catch((): PlanOutcome => ({ ok: false, reason: 'error' }));
-  const adventure = await safe(proposeAdventure(input, route));
-  const spare: RoutedLine | undefined = adventure.ok ? { source: adventure.proposal.source, points: adventure.proposal.points } : undefined;
-  const simple = await safe(proposeSimple(input, route, spare));
   const found = terrainFound(input.terrain);
-  return found ? { simple, adventure, found } : { simple, adventure };
+  const noted = (o: PlanOutcome): PlanOutcome => {
+    if (!o.ok) return o;
+    const notice = ascentNotice(o.proposal, input.target, found);
+    return notice ? { ok: true, proposal: { ...o.proposal, notice } } : o;
+  };
+  const adventure = await safe(proposeAdventure(input, route));
+  // Geen pad bij het startpunt: Simpel vraagt hetzelfde punt en krijgt hetzelfde antwoord.
+  const noStart = !adventure.ok && adventure.at === 'start';
+  const spare: RoutedLine | undefined = adventure.ok ? { source: adventure.proposal.source, points: adventure.proposal.points } : undefined;
+  const simple = noStart ? adventure : await safe(proposeSimple(input, route, spare));
+  const plans: RoutePlans = { simple: noted(simple), adventure: noted(adventure) };
+  if (found) plans.found = found;
+  if (noStart || (!simple.ok && simple.at === 'start' && !adventure.ok)) plans.notice = NO_PATH_AT_START;
+  return plans;
 }
 
 // ---------- Tekst ----------
@@ -403,17 +530,48 @@ export function proposalNotes(p: RouteProposal, target: RouteTarget): string[] {
     notes.push(`De helling: ${formatNumberNL(Math.round(p.climbM), 0)} m omhoog over ${formatNumberNL(Math.round(p.climbLengthM / 10) * 10, 0)} m.`);
   }
   if (p.style === 'simple' && (p.repeats ?? 0) > 1) notes.push('Op dezelfde helling kan je horloge naar het verkeerde stuk springen.');
+  if (p.startGapM !== undefined) notes.push(`Het dichtstbijzijnde pad ligt ${formatNumberNL(round10(p.startGapM), 0)} m van je startpunt; dat stuk is een rechte lijn.`);
   const d = target.distanceKm * 1000;
   // Korter op de getallen die je ziet (op 100 m): 10,5 km tegen 10,5 km is niet korter.
   const shortBy = Math.round(d / 100) - Math.round(p.distanceM / 100);
-  if (p.distanceM < d * (1 - CLOSE_ENOUGH)) notes.push(`Korter dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
-  else if (shortBy > 0) notes.push(`${km(shortBy * 100)} korter dan je training. Tot ${formatNumberNL(Math.round(CLOSE_ENOUGH * 100), 0)} procent verschil is goed genoeg.`);
-  else if (p.distanceM > d * 1.15) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
-  if (target.ascentM >= MIN_ASCENT_TARGET_M && p.ascentM < target.ascentM * SHORT_ASCENT) {
-    notes.push(`Minder dan de ${formatNumberNL(round10(target.ascentM), 0)} hoogtemeters van je training.`);
-  }
+  if (tooShort(p, target)) notes.push(`${km(p.distanceM)}, korter dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
+  else if (shortBy > 0) notes.push(`${km(shortBy * 100)} korter dan je training. Tot ${formatNumberNL(Math.round(SHORT_LIMIT * 100), 0)} procent korter is goed genoeg.`);
+  else if (p.distanceM > d * (1 + CLOSE_ENOUGH)) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
+  if (p.notice) notes.push(p.notice);
   if (p.style === 'adventure' && p.repeatedShare > 0.15) notes.push('Een deel loop je twee keer.');
   return notes;
+}
+
+const radiusText = (radiusM: number) => `${formatNumberNL(Math.round(radiusM / 100) / 10, 1)} km`;
+
+// Wat de kaart zegt als er geen bruikbare helling is. "Geen heuvels" alleen als de kaart er geen
+// enkele gaf: wie op een heuvel woont heeft hellingen onder zijn plek, en die zijn er wel.
+function noHillLine(found: TerrainFound): string {
+  const within = `binnen ${radiusText(found.radiusM)}`;
+  if (found.lower > 0) return `Geen helling dichtbij die ${MIN_CLIMB_M} m of meer boven je plek ligt.`;
+  if (found.unknown > 0) return `Geen helling met een bekende hoogte ${within}.`;
+  return `Geen heuvels ${within}.`;
+}
+
+// De melding bij een lus die de hoogtemeters van de training niet haalt (onder SHORT_ASCENT): het
+// droge feit over de buurt als de kaart antwoordde, en wat deze lus wel heeft, op tien meter zoals
+// de feiten van de lus. Zonder hoogtemeters in de training, of bij een lus die ze haalt: geen
+// melding. "Dichtbij" en niet "binnen 3 km": alleen de dichtstbijzijnde heuvels krijgen een hoogte.
+export function ascentNotice(p: Pick<RouteProposal, 'ascentM'>, target: RouteTarget, found?: TerrainFound): string | undefined {
+  if (target.ascentM < MIN_ASCENT_TARGET_M || p.ascentM >= target.ascentM * SHORT_ASCENT) return undefined;
+  const m = (v: number) => `${formatNumberNL(round10(v), 0)} m`;
+  const loop = `Deze lus stijgt ${m(p.ascentM)}; de training vraagt ${m(target.ascentM)}.`;
+  if (!found) return loop;
+  if (found.hills > 0 && found.tallestM !== undefined) return `De hoogste helling dichtbij ligt ${formatNumberNL(Math.round(found.tallestM), 0)} m boven je plek. ${loop}`;
+  return `${noHillLine(found)} ${loop}`;
+}
+
+// De zin in het blok van een lus die er niet kwam. Zonder pad bij het startpunt zegt de regel
+// bovenaan het al (NO_PATH_AT_START): dan hier geen zin over hellingen, want Simpel is niet gezocht.
+export function failureLine(style: RouteProposal['style'], outcome: Extract<PlanOutcome, { ok: false }>, flat: boolean): string {
+  if (outcome.at === 'start') return 'Geen lus zonder pad bij je startpunt.';
+  if (outcome.reason === 'nothing' || outcome.reason === 'unmapped') return style === 'simple' ? (flat ? 'Geen pad gevonden vanaf je plek.' : 'Geen helling gevonden die bij je training past.') : 'Geen lus gevonden vanaf je plek.';
+  return 'De routeplanner antwoordde niet.';
 }
 
 export const SUBSTITUTE_LINE = 'Hoogtemeters bergop haal je ook op een trap, een brug of de loopband op helling.';
@@ -423,6 +581,7 @@ export const SUBSTITUTE_LINE = 'Hoogtemeters bergop haal je ook op een trap, een
 // hoogtemeters; zonder kaart geen telling. Alleen tekst: het plant niets. Zie
 // docs/beslissingen/2026-11-10-route-uitleg.md.
 export function searchLines(plans: RoutePlans, target: RouteTarget): string[] {
+  if (plans.notice) return [plans.notice];
   if (target.ascentM < MIN_ASCENT_TARGET_M) return [];
   const outcomes = [plans.simple, plans.adventure];
   const made = outcomes.flatMap((o) => (o.ok ? [o.proposal] : []));
@@ -431,9 +590,10 @@ export function searchLines(plans: RoutePlans, target: RouteTarget): string[] {
   if (made.length === 0 && outcomes.some((o) => !o.ok && o.reason !== 'nothing' && o.reason !== 'unmapped')) return [];
   const lines: string[] = [];
   const f = plans.found;
-  if (f) {
+  // Zegt een lus zelf al wat er in de buurt ligt (de melding), dan staat de telling er niet nog eens.
+  if (f && !made.some((p) => p.notice)) {
     const tallest = f.tallestM === undefined ? undefined : `${formatNumberNL(Math.round(f.tallestM), 0)} m`;
-    if (f.hills === 0) lines.push('Geen helling in de buurt op de kaart.');
+    if (f.hills === 0) lines.push(f.lower > 0 ? noHillLine(f) : f.unknown > 0 ? 'Geen helling met een bekende hoogte in de buurt op de kaart.' : 'Geen helling in de buurt op de kaart.');
     else if (f.hills === 1) lines.push(tallest ? `Eén helling in de buurt op de kaart, ${tallest} boven je plek.` : 'Eén helling in de buurt op de kaart.');
     else lines.push(tallest ? `${f.hills} hellingen in de buurt op de kaart, de hoogste ${tallest} boven je plek.` : `${f.hills} hellingen in de buurt op de kaart.`);
   }

@@ -10,7 +10,7 @@ import type { RoutePoint, RouteProposal, RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { resolveRouteStyle, routeTarget, targetText } from '../engine/routeTarget';
-import { MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle, searchLines, type PlanOutcome } from '../engine/routePlanner';
+import { MIN_ASCENT_TARGET_M, failureLine, proposalFacts, proposalNotes, proposalTitle, searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import { SEND_LABEL, WATCH_STEPS, WATCH_STEPS_TITLE, routeActionLine, type RouteSendOutcome } from '../engine/routeSend';
 import { findRoutes, grantRouteConsent, hasRouteConsent, type RouteSearch } from '../storage/routeProposal';
@@ -34,11 +34,6 @@ const STYLE_LINE: Record<RouteStyle, string> = {
   adventure: 'Eén lus langs verschillende hellingen en paden.',
 };
 const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
-
-function failureText(style: RouteStyle, outcome: Extract<PlanOutcome, { ok: false }>, flat: boolean): string {
-  if (outcome.reason === 'nothing' || outcome.reason === 'unmapped') return style === 'simple' ? (flat ? 'Geen pad gevonden vanaf je plek.' : 'Geen helling gevonden die bij je training past.') : 'Geen lus gevonden vanaf je plek.';
-  return 'De routeplanner antwoordde niet.';
-}
 
 function RouteBlock({ style, outcome, primary, date, target, sender }: { style: RouteStyle; outcome: PlanOutcome; primary: boolean; date: string; target: Parameters<typeof proposalNotes>[1]; sender: FileSender | null }) {
   // De laatste uitkomst van een van de twee knoppen; 'busy' zolang er een loopt (beide hebben een grens in tijd).
@@ -87,7 +82,7 @@ function RouteBlock({ style, outcome, primary, date, target, sender }: { style: 
       ) : (
         <>
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{STYLE_LINE[style]}</p>
-          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{failureText(style, outcome, target.ascentM < MIN_ASCENT_TARGET_M)}</p>
+          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{failureLine(style, outcome, target.ascentM < MIN_ASCENT_TARGET_M)}</p>
         </>
       )}
     </div>
@@ -227,7 +222,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
         <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
         <TextButton onClick={() => void choose('exact')}>Precies, vanaf je deur</TextButton>
         <p className="text-xs leading-snug" style={dim}>
-          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap op je plek, afgerond op ongeveer een kilometer. Het punt wordt alleen op dit toestel bewaard.
+          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap om hetzelfde punt, en de hoogte van heuvels komt van Open-Meteo, ook om dat punt. Het punt wordt alleen op dit toestel bewaard.
         </p>
         <TextButton tone="dim" onClick={() => void choose('approx')}>Ongeveer</TextButton>
         <p className="text-xs leading-snug" style={dim}>

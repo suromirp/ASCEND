@@ -29,6 +29,13 @@ describe('de Overpass-vraag', () => {
     expect(q).toContain(`around:${DEFAULT_RADIUS_M}`);
   });
 
+  it('met exact (het eigen startpunt van een lus) ligt het zoekgebied om het punt zelf, op vier decimalen', () => {
+    const q = overpassQuery(place, DEFAULT_RADIUS_M, true);
+    expect(q).toContain('52.1235,5.6543');
+    expect(q).not.toContain('52.123456');
+    expect(q).not.toContain('Ergens');
+  });
+
   it('de hoogte-aanroep krijgt ook alleen afgeronde of kaartpunten', () => {
     expect(elevationUrl([{ lat: 52.12, lon: 5.65 }, { lat: 52.13, lon: 5.65 }])).toBe('https://api.open-meteo.com/v1/elevation?latitude=52.12,52.13&longitude=5.65,5.65');
   });
@@ -79,6 +86,17 @@ describe('fetchNearbyTerrain', () => {
     expect(init.method).toBe('POST');
     expect(String(init.body)).not.toContain('52.123456');
     expect(JSON.stringify(t)).not.toContain('Ergens');
+  });
+
+  it('met exact: afstand en hoogteverschil tellen vanaf het punt zelf, niet vanaf de afgeronde plek', async () => {
+    const f = route(async () => json(answer), async () => json({ elevation: [40, 70] }));
+    const t = await fetchNearbyTerrain(place, { fetchImpl: f as unknown as typeof fetch, exact: true });
+    expect(t?.place).toEqual({ name: '', lat: 52.1235, lon: 5.6543 });
+    const hill = t?.features.find((x) => x.kind === 'hill');
+    expect(hill?.heightM).toBe(30);
+    expect(hill?.distanceM).toBe(distanceMeters(52.1235, 5.6543, 52.13, 5.65));
+    // De hoogte van het punt zelf is de eerste in de hoogte-aanroep.
+    expect(String(f.mock.calls[1][0])).toContain('latitude=52.1235,');
   });
 
   it('een mislukte hoogte laat de heuvel staan zonder maat', async () => {

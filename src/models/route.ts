@@ -50,4 +50,8 @@ export interface RouteProposal {
   hills?: number;
   // Welk deel van de lus je twee keer loopt (0 tot 1).
   repeatedShare: number;
+  // Hoe ver het dichtstbijzijnde pad van het startpunt ligt, als dat ver is; dat stuk is een rechte lijn.
+  startGapM?: number;
+  // Een melding bij deze lus: het droge feit en wat wel kan (bijvoorbeeld geen heuvels in de buurt).
+  notice?: string;
 }
