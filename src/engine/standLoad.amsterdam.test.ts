@@ -1,11 +1,12 @@
 (globalThis as unknown as { process: { env: Record<string, string> } }).process.env.TZ = 'Europe/Amsterdam';
 import { describe, it, expect } from 'vitest';
-import { plannedEffort, weeklyLoad } from './standing';
+import { loadVersusBefore, plannedEffort, weeklyLoad } from './standing';
+import { dayLoads } from './weekProfile';
 import { loadVerdict } from './standRhythm';
 import { planPass } from './planPass';
 import type { LeavePeriod } from '../models/leave';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import type { PlannedSession, SessionLog } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 
 // Naspelen van "Belasting Zwaar, 0 van 475" (backlog, Klein deel 1) met nagemaakte data: een zware
 // geplande week, op maandag nog niets gedaan. De telling klopt: het oordeel kijkt naar gedaan plus wat
@@ -83,26 +84,74 @@ describe('Belasting op Je stand, nagespeeld', () => {
   });
 });
 
-describe('een los horlogelog op de dag van een geplande training', () => {
+describe('een losse log op de dag van een open training (zelfde maatstaf als de koppeling achteraf)', () => {
+  // Nagemaakt, nagespeeld zoals Warden: vandaag een open lange duurloop van 95 minuten (95 x 4 = 380 punten).
   const today = '2026-11-04';
-  it('telt één keer, als gedaan, en niet ook nog als gepland', () => {
-    const run = planned('tpl_easy_run', today, { plannedMinutes: 45 });
-    const watch = log('tpl_easy_run', today, 50, { rpe: 4, source: 'garmin' });
-    const week = weeklyLoad({ logs: [...before, watch], plannedSessions: [run], templates, today }, 4, 0)[4];
-    expect(week).toMatchObject({ doneTotal: 200, plannedTotal: 0 });
-    // Het log zelf verandert niet: het blijft los.
+  const longRun = () => planned('tpl_long_run', today, { plannedMinutes: 95 });
+  const LONG = 95 * plannedEffort(tpl('tpl_long_run'));
+  // Een log van het horloge draagt zijn sport mee (de lange duurloop is als template een 'hiking' met sport running).
+  const garmin = { source: 'garmin' as const, externalId: 'g1', sport: 'running' as const };
+  const week = (logs: SessionLog[], sessions: PlannedSession[], extraTemplates: SessionTemplate[] = []) =>
+    weeklyLoad({ logs: [...before, ...logs], plannedSessions: sessions, templates: [...templates, ...extraTemplates], today }, 4, 0)[4];
+
+  it('een log van het horloge staat in voor de training: één keer, als gedaan; de log blijft los', () => {
+    const watch = log('tpl_long_run', today, 100, { rpe: 4, ...garmin });
+    expect(week([watch], [longRun()])).toMatchObject({ doneTotal: 400, plannedTotal: 0 });
     expect(watch.plannedSessionId).toBeUndefined();
   });
-  it('een los log van een andere soort laat de geplande training staan, en één los log dekt één training', () => {
-    const run = planned('tpl_easy_run', today, { plannedMinutes: 45 });
-    const legs = planned('tpl_lower_a', today, { plannedMinutes: 60 });
-    const second = planned('tpl_easy_run', today, { plannedMinutes: 30 });
-    const watch = log('tpl_easy_run', today, 50, { rpe: 4 });
-    const week = weeklyLoad({ logs: [...before, watch], plannedSessions: [run, legs, second], templates, today }, 4, 0)[4];
-    const left = week.items.filter((i) => i.planned).map((i) => `${i.sport} ${i.minutes}`).sort();
-    // De kracht blijft; van de twee lopen dekt het log er één (de eerste op id), de andere blijft gepland.
-    expect(left).toHaveLength(2);
-    expect(left).toContain('kracht 60');
-    expect(left.filter((x) => x.startsWith('lopen'))).toHaveLength(1);
+
+  it('een handlog is altijd extra: een losse rustige loop van 20 minuten laat de lange duurloop staan', () => {
+    const hand = log('tpl_easy_run', today, 20, { rpe: 3 });
+    const w = week([hand], [longRun()]);
+    expect(w.doneTotal + w.plannedTotal).toBe(60 + LONG);
+    expect(w.plannedTotal).toBe(LONG);
+  });
+
+  it('fietsen dekt geen zwemtraining: de precieze soort, niet de emmer "overig"', () => {
+    const swimTpl = { ...tpl('tpl_bike'), id: 'tpl_swim_test', name: 'Zwemmen', sport: undefined, countedSport: 'swimming' } as SessionTemplate;
+    const swim = planned('tpl_swim_test', today, { plannedMinutes: 45 });
+    const ride = log('tpl_bike', today, 60, { rpe: 4, ...garmin, sport: 'cycling' });
+    const w = week([ride], [swim], [swimTpl]);
+    expect(w.items.filter((i) => i.planned).map((i) => i.name)).toEqual(['Zwemmen']);
+  });
+
+  it('een test of wedstrijd alleen tegen een test of wedstrijd', () => {
+    const test = planned('tpl_test_run', today, { plannedMinutes: 45 });
+    const easy = log('tpl_easy_run', today, 45, { rpe: 4, ...garmin });
+    expect(week([easy], [test]).items.filter((i) => i.planned).map((i) => i.name)).toEqual([tpl('tpl_test_run').name]);
+  });
+
+  it('een log die naar een verdwenen training wijst telt als los en mag instaan als hij van een bron is', () => {
+    const orphan = log('tpl_long_run', today, 95, { rpe: 4, plannedSessionId: 'weg-na-herplanning', ...garmin });
+    expect(week([orphan], [longRun()]).plannedTotal).toBe(0);
+    // Met de hand ingevuld en verweesd: extra, de training blijft staan.
+    const handOrphan = log('tpl_long_run', today, 95, { rpe: 4, plannedSessionId: 'weg-na-herplanning' });
+    expect(week([handOrphan], [longRun()]).plannedTotal).toBe(LONG);
+  });
+
+  it('twee losse logs bij één training: één staat in, de tweede is extra', () => {
+    const a = log('tpl_long_run', today, 50, { rpe: 4, ...garmin, completedAt: `${today}T08:00:00Z` });
+    const b = log('tpl_long_run', today, 45, { rpe: 4, source: 'garmin', externalId: 'g2', sport: 'running', completedAt: `${today}T17:00:00Z` });
+    const w = week([a, b], [longRun()]);
+    expect(w).toMatchObject({ doneTotal: 50 * 4 + 45 * 4, plannedTotal: 0 });
+  });
+
+  it('twee trainingen van dezelfde soort: de log dekt die met de dichtstbijzijnde duur', () => {
+    const short = planned('tpl_easy_run', today, { plannedMinutes: 30, id: 'a-kort' } as Partial<PlannedSession>);
+    const long = planned('tpl_easy_run', today, { plannedMinutes: 70, id: 'b-lang' } as Partial<PlannedSession>);
+    const watch = log('tpl_easy_run', today, 65, { rpe: 4, ...garmin });
+    const left = week([watch], [short, long]).items.filter((i) => i.planned).map((i) => i.minutes);
+    expect(left).toEqual([30]);
+  });
+
+  it('dayLoads (Week) en het weekgetal (Vandaag, Stand) bewegen mee', () => {
+    const watch = log('tpl_long_run', today, 100, { rpe: 4, ...garmin });
+    const days = dayLoads({ logs: [...before, watch], plannedSessions: [longRun()], templates, today, weekStart: today });
+    expect(days.find((d) => d.date === today)?.load).toBe(400);
+    const hand = log('tpl_easy_run', today, 20, { rpe: 3 });
+    const handDays = dayLoads({ logs: [...before, hand], plannedSessions: [longRun()], templates, today, weekStart: today });
+    expect(handDays.find((d) => d.date === today)?.load).toBe(60 + LONG);
+    // StandSummaryCard rekent loadVersusBefore op weeklyLoad: dezelfde telling.
+    expect(loadVersusBefore(weeklyLoad({ logs: [...before, watch], plannedSessions: [longRun()], templates, today }, 4, 0))?.now).toBe(400);
   });
 });

@@ -17,8 +17,8 @@ import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay } from './illness';
 import { isTestOrRace } from './templateRoles';
 import { lockLevel } from './weekValidator';
-import { logSport, templateSport } from './sports';
 import { isHandLog } from './activityImport';
+import { isLooseSourceLog, sameLinkKind, templateKind } from './looseLog';
 import { daysBetween, formatDateNL, weekdayLongNL } from '../utils/dates';
 
 type MissedChoice = 'ask' | 'auto' | 'off';
@@ -116,21 +116,8 @@ export interface MissedPlan {
   autoSkip: MissedSession[];
 }
 
-// De soort van een training: kracht, of de sport (data/sports.ts). Een rustdag heeft geen soort.
-type Kind = string;
-function templateKind(t: SessionTemplate): Kind | undefined {
-  if (t.type === 'recovery') return undefined;
-  if (t.type === 'strength') return 'strength';
-  return templateSport(t);
-}
-function logKind(l: SessionLog): Kind | undefined {
-  if (l.type === 'recovery') return undefined;
-  if (l.type === 'strength') return 'strength';
-  return logSport(l);
-}
-
 // Een log van het horloge of MacroFactor (niet met de hand ingevuld) die nog nergens aan hangt.
-const looseSourceLog = (l: SessionLog) => !l.plannedSessionId && !isHandLog(l);
+const looseSourceLog = (l: SessionLog) => isLooseSourceLog(l);
 
 // Vanzelf overslaan mag alleen wat de automatische planning ook zelf mag aanraken: geen test of
 // wedstrijd, niets wat jij of een voorstel vastzette en niets van een vakantie of tocht. Gelezen zoals op
@@ -165,12 +152,9 @@ export function linkCandidates(input: LinkInput): Map<string, SessionLog> {
   const links = new Map<string, SessionLog>();
   const loose = input.logs.filter((l) => looseSourceLog(l) && l.completedDate <= today && daysBetween(l.completedDate, today) <= MISSED_MAX_AGE_DAYS + LINK_WINDOW_DAYS);
   for (const log of [...loose].sort((a, b) => a.completedAt.localeCompare(b.completedAt))) {
-    const kind = logKind(log);
-    if (!kind) continue;
     const logTemplate = templateById.get(log.templateId);
-    const logIsTest = !!logTemplate && isTestOrRace(logTemplate);
     const near = unlogged
-      .filter((m) => templateKind(m.template) === kind && isTestOrRace(m.template) === logIsTest)
+      .filter((m) => sameLinkKind(log, logTemplate, m.template))
       .map((m) => ({ m, d: Math.abs(daysBetween(log.completedDate, m.session.scheduledDate)) }))
       .filter((x) => x.d <= LINK_WINDOW_DAYS && !links.has(x.m.session.id))
       .sort((a, b) => a.d - b.d || a.m.session.scheduledDate.localeCompare(b.m.session.scheduledDate));

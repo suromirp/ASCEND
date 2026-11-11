@@ -25,6 +25,7 @@ import { minutesByZone } from './intensityMinutes';
 import type { IntensityCounting } from './intensitySettings';
 import { estimatedHikingMinutes, typicalDayValue } from './goalRoute';
 import { hasRole } from './templateRoles';
+import { looseStandIns } from './looseLog';
 import { EASY_PART_RPE, testEffortSplit, type EffortSplit } from './testEffortSplit';
 import { formatNumberNL } from '../utils/number';
 
@@ -109,8 +110,8 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
   const byId = new Map(inputs.templates.map((t) => [t.id, t]));
   const current = mondayOfWeek(inputs.today);
   const logged = new Set(inputs.logs.map((l) => l.plannedSessionId).filter(Boolean));
-  const plannedIds = new Set(inputs.plannedSessions.map((s) => s.id));
-  const byDate = [...inputs.plannedSessions].sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id));
+  const plannedMinutesOf = (s: PlannedSession, t: SessionTemplate) => s.plannedMinutes ?? inputs.minutesOf?.(s, t) ?? t.durationVariants.full;
+  const standIns = looseStandIns({ plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, minutesOf: plannedMinutesOf });
   const weeks: WeekLoad[] = [];
   for (let w = -weeksBack; w <= weeksAhead; w++) {
     const weekStart = addDays(current, 7 * w);
@@ -128,24 +129,14 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
       week.doneTotal += load;
       if (l.rpe === undefined) week.estimated += load;
     }
-    // A loose log (from the watch, not linked to a plan) on the day of an open training of the same sport stands in for it:
-    // counted once as done, not also as still planned. Each loose log covers one training. Only counting; the logs stay as they are.
-    const loose = new Map<string, number>();
-    for (const l of inputs.logs) {
-      if (l.completedDate < weekStart || l.completedDate >= weekEnd || l.type === 'recovery') continue;
-      if (l.plannedSessionId && plannedIds.has(l.plannedSessionId)) continue;
-      const key = `${l.completedDate}|${sportOfLog(l, byId.get(l.templateId))}`;
-      loose.set(key, (loose.get(key) ?? 0) + 1);
-    }
-    for (const s of byDate) {
+    for (const s of inputs.plannedSessions) {
       if (s.scheduledDate < weekStart || s.scheduledDate >= weekEnd || s.scheduledDate < inputs.today) continue;
       if (s.status === 'skipped' || logged.has(s.id)) continue;
       const t = byId.get(s.templateId);
       if (!t || t.type === 'recovery') continue;
-      const key = `${s.scheduledDate}|${sportOfTemplate(t)}`;
-      const free = loose.get(key) ?? 0;
-      if (free > 0) { loose.set(key, free - 1); continue; }
-      const minutes = s.plannedMinutes ?? inputs.minutesOf?.(s, t) ?? t.durationVariants.full;
+      // A loose log from a source stands in for it (engine/looseLog.ts): counted once, as done.
+      if (standIns.has(s.id)) continue;
+      const minutes = plannedMinutesOf(s, t);
       const load = minutes * plannedEffort(t);
       week.items.push({ date: s.scheduledDate, name: t.name, sport: sportOfTemplate(t), minutes, effort: plannedEffort(t), load, planned: true, estimated: false });
       week.planned[sportOfTemplate(t)] += load;

@@ -25,6 +25,7 @@ import { logDay, plannedByIdOf } from './logDay';
 import { countsAsTraining } from './weekLogs';
 import { isIntentionalBackToBack, isLegHeavyTemplate, legSpacingDays } from './scheduler';
 import { weeklyLoad, type LoadInputs } from './standing';
+import { looseStandIns } from './looseLog';
 import { capitalize } from '../utils/capitalize';
 
 export interface DayLoad {
@@ -65,10 +66,14 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
   const byId = new Map(inputs.templates.map((t) => [t.id, t]));
   const logged = new Set(inputs.logs.map((l) => l.plannedSessionId).filter(Boolean));
   const end = addDays(monday, 7);
+  const standIns = looseStandIns({ plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, minutesOf: (s, t) => s.plannedMinutes ?? inputs.minutesOf?.(s, t) ?? t.durationVariants.full });
 
   // Welke templates op welke dag staan (voor de beendagen), met dezelfde
   // keuze als weeklyLoad: wat gedaan is op de dag van doen, wat nog komt op
-  // de geplande dag, en niets wat gemist of overgeslagen is.
+  // de geplande dag, en niets wat gemist of overgeslagen is. Een open training
+  // waar een losse log van een bron voor instaat (engine/looseLog.ts, dezelfde
+  // maatstaf als de koppeling achteraf) telt één keer, als die log; een handlog
+  // is altijd extra.
   const templatesByDate = new Map<string, SessionTemplate[]>();
   const add = (date: string, t: SessionTemplate | undefined) => {
     if (!t || t.type === 'recovery') return;
@@ -77,7 +82,7 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
   for (const l of shown) if (l.completedDate >= monday && l.completedDate < end) add(l.completedDate, byId.get(l.templateId));
   for (const s of inputs.plannedSessions) {
     if (s.scheduledDate < monday || s.scheduledDate >= end || s.scheduledDate < inputs.today) continue;
-    if (s.status === 'skipped' || logged.has(s.id)) continue;
+    if (s.status === 'skipped' || logged.has(s.id) || standIns.has(s.id)) continue;
     add(s.scheduledDate, byId.get(s.templateId));
   }
 
