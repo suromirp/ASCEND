@@ -229,6 +229,15 @@ export const exerciseComplete = (ex: WorkoutExercise): boolean => {
   return rows.length > 0 && rows.every((r) => r.done);
 };
 
+// Komt er na deze rust een nieuwe oefening (de oefening van `slot` is af en er staat nog iets open)?
+// Dan klinkt de rustbel anders dan voor de volgende set (engine/restSounds.ts#restCue).
+export function restBeforeNewExercise(list: WorkoutExercise[], slot: string): boolean {
+  const done = list.find((e) => e.slot === slot);
+  if (!done || !exerciseComplete(done)) return false;
+  const next = activeRow(list);
+  return !!next && next.slot !== slot;
+}
+
 // --- what you change ----------------------------------------------------------------------
 
 // A new weight for one set. With `carry` the sets after it that are still

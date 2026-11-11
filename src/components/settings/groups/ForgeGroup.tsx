@@ -1,7 +1,4 @@
 import { useState } from 'react';
-import { playRestSound } from '../../../utils/sound';
-import { haptics } from '../../../utils/haptics';
-import { restAlertChannels, restVibrationPattern } from '../../../engine/restVibration';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveExerciseArt } from '../../../engine/exerciseArtSettings';
@@ -16,6 +13,7 @@ import { BarsSheet, CheckFromSheet, DurationSheet, PlatesSheet, ProgramSheet, Ra
 import { BundleSheet } from './BundleSheet';
 import { TrainingStyleSheet } from './TrainingStyleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
+import { RestSoundSheet } from './RestSoundSheet';
 import { SummaryRow } from './SummaryRow';
 import { anyShown, rowShown } from './rowShown';
 import type { GroupProps } from './types';
@@ -34,13 +32,6 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
   const [inner, setInner] = useState<string | null>(null);
   const close = () => setSheet(null);
   const closeInner = () => setInner(null);
-  // Tapping a sound lets you hear it and, when vibrating is on, feel its rhythm: as the
-  // signal at the end of the rest will do it (nothing of what is switched off).
-  const tryRestSound = (sound: Parameters<typeof playRestSound>[0]) => {
-    const channels = restAlertChannels(s.restAlert);
-    if (channels.sound) playRestSound(sound);
-    if (channels.vibrate) haptics.pattern(restVibrationPattern(sound));
-  };
   const advancedTitles = [
     rowShown('bundel-rekenmodel', facts) && 'Rekenmodel',
     rowShown('bundel-invullen', facts) && 'Bij het invullen',
@@ -103,6 +94,9 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-rust" title="Rusttimer vanzelf" facts={facts} onChange={(on) => save({ restAuto: on })} />
           <SummaryRow id="forge-signaal" title="Signaal als de rust om is" facts={facts} onClick={() => setInner('forge-signaal')} />
           <SummaryRow id="forge-geluid" title="Geluid na de rust" facts={facts} onClick={() => setInner('forge-geluid')} />
+          <SummaryRow id="forge-volume" title="Volume van de rustbel" facts={facts} onClick={() => setInner('forge-volume')} />
+          <SummaryRow id="forge-vooraf" title="Vooraankondiging" facts={facts} onChange={(on) => save({ restPreTick: on })} />
+          <SummaryRow id="forge-oefening-klank" title="Klank bij nieuwe oefening" facts={facts} onChange={(on) => save({ restNextExercise: on })} />
         </BundleSheet>
       )}
       {sheet === 'bundel-weergave' && (
@@ -210,8 +204,9 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {inner === 'forge-vermoeidheid' && <ChoiceFromDef def={CHOICES.vermoeidheid} value={s.fatigue} onPick={(v) => save({ fatigue: v })} onClose={closeInner} />}
       {inner === 'forge-schatting' && <ChoiceFromDef def={CHOICES.schatting} value={s.estimateUpTo as 12 | 15 | 20} onPick={(v) => save({ estimateUpTo: v })} onClose={closeInner} />}
       {inner === 'forge-geluid' && (
-        <ChoiceFromDef def={CHOICES.rustgeluid} value={s.restSound} onPick={(v) => { tryRestSound(v); save({ restSound: v }); }} onClose={closeInner} />
+        <RestSoundSheet value={s.restSound} volume={s.restVolume} alert={s.restAlert} onPick={(v) => save({ restSound: v })} onClose={closeInner} />
       )}
+      {inner === 'forge-volume' && <ChoiceFromDef def={CHOICES.rustvolume} value={s.restVolume} onPick={(v) => save({ restVolume: v })} onClose={closeInner} />}
       {inner === 'forge-signaal' && <ChoiceFromDef def={CHOICES.restsignaal} value={s.restAlert} onPick={(v) => save({ restAlert: v })} onClose={closeInner} />}
       {inner === 'forge-leren' && <ChoiceFromDef def={CHOICES.forgeLeren} value={s.stackWeights} onPick={(v) => save({ stackWeights: v })} onClose={closeInner} />}
       {inner === 'forge-dumbbells' && <ChoiceFromDef def={CHOICES.dumbbellLog} value={s.dumbbellLog} onPick={(v) => save({ dumbbellLog: v })} onClose={closeInner} />}

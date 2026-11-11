@@ -115,7 +115,8 @@ export default defineConfig({
         },
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // mp3: een opname van de rustbel in public/sounds/ werkt ook offline (utils/restBell.ts).
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,mp3}'],
         // The generated service worker keeps everything it does (precache,
         // offline fallback); two small scripts are added to it: one answers
         // the share POST, the other shows the morning notice on a periodic
