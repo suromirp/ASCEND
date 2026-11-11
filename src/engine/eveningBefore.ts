@@ -33,6 +33,7 @@ import { templateSport } from './sports';
 import { sweatRateAt } from './sweat';
 import { litersText } from './stageWater';
 import { routeTarget, targetText, wantsRoute } from './routeTarget';
+import { fuelEveningLine, fuelForTraining, fuelForTrekDay, trekEveningLine } from './fuelOnTheGo';
 
 // ---- de instelling ---------------------------------------------------------------------------
 
@@ -115,6 +116,8 @@ export interface EveningInput {
   // Instelling Route voorstellen, en het rustige tempo uit je test voor de afstand.
   routeOn: boolean;
   easyPace?: PaceRange;
+  // Instelling Eten onderweg (engine/fuelOnTheGo.ts). Afwezig is hier uit; de hook geeft de instelling door.
+  fuelOn?: boolean;
 }
 
 export interface EveningTrainingView {
@@ -144,9 +147,11 @@ export function tomorrowPrep(input: EveningInput): EveningTrainingView | undefin
   if (leave?.kind === 'off') return undefined;
   if (leave?.kind === 'trek') {
     const kg = leave.period.trek?.packKg;
-    if (!kg) return undefined;
+    const fuel = input.fuelOn ? fuelForTrekDay() : undefined;
+    const lines = [...(kg ? [packLine(kg)] : []), ...(fuel ? [trekEveningLine(fuel)] : [])];
+    if (lines.length === 0) return undefined;
     const name = leave.period.trek?.name?.trim() || 'Tochtdag';
-    return { kind: 'trek', date, title: `Morgen: ${name}`, lines: [packLine(kg)] };
+    return { kind: 'trek', date, title: `Morgen: ${name}`, lines };
   }
 
   const sessions = input.planned
@@ -210,11 +215,12 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   const kg = progressionTarget(template, input.program, date)?.step.backpackKg ?? template.outdoorTarget?.backpackWeightKg;
   if (kg && kg > 0) lines.push(packLine(kg));
 
-  // 4. De stand op je horloge, alleen als de training via de koppeling loopt.
-  if (input.showWatchStatus) {
-    const watch = watchLine(input.watchStatus?.(session, template));
-    if (watch) lines.push(watch);
-  }
+  // 4. De stand op je horloge, alleen als de training via de koppeling loopt. Een probleem (nog niet,
+  // wijziging nog niet, lukte niet) staat hier; "Staat op je horloge." is alleen geruststelling en
+  // komt na het eten (docs/beslissingen/2026-11-11-eten-onderweg.md).
+  const watchKind = input.showWatchStatus ? input.watchStatus?.(session, template) : undefined;
+  const watch = watchLine(watchKind);
+  if (watch && watchKind !== 'sent') lines.push(watch);
 
   // 5. Drinken bij een lange training buiten: wat je ongeveer kwijtraakt, uit je eigen zweettempo.
   if (outside && minutes >= LONG_MINUTES) {
@@ -230,7 +236,16 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
     }
   }
 
-  // 6. De route, als Route voorstellen aan staat. Een route wordt niet bewaard: je vraagt hem op bij de training.
+  // 6. Eten mee bij een loop of wandeling vanaf 90 minuten (engine/fuelOnTheGo.ts), naast het drinken.
+  if (input.fuelOn) {
+    const fuel = fuelForTraining(template, minutes);
+    if (fuel) lines.push(fuelEveningLine(fuel));
+  }
+
+  // 7. Staat op je horloge: na het eten, want het blad Je horloge zegt het ook.
+  if (watch && watchKind === 'sent') lines.push(watch);
+
+  // 8. De route, als Route voorstellen aan staat. Een route wordt niet bewaard: je vraagt hem op bij de training.
   if (input.routeOn && wantsRoute(template)) {
     const target = routeTarget({ template, date, program: input.program, logs: input.logs, testPace: input.easyPace });
     lines.push(`Route ${targetText(target)}: vraag een lus op bij de training.`);

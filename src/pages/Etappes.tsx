@@ -16,6 +16,7 @@ import { SLEEP_KINDS, SLEEP_LABEL } from '../models/routePlan';
 import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { stageWater, stageWaterShort } from '../engine/stageWater';
+import { fuelForTrekDay, fuelOn } from '../engine/fuelOnTheGo';
 import { sweatRateAt, usableSweatEntries } from '../engine/sweat';
 import { usePageState } from '../components/usePageState';
 import { Icon } from '../components/icons';
@@ -199,6 +200,7 @@ export function EtappesPage() {
           logs={sessionLogs}
           today={today}
           water={showWater ? stageWater(open, sweat) : undefined}
+          fuel={fuelOn(settings) && open.minutes ? fuelForTrekDay(open.minutes) : undefined}
           ownTime={ownStageTime(open, climb, settings, goalPack)}
           onChoose={choose}
           onClose={() => setOpenId(null)}

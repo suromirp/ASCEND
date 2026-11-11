@@ -28,6 +28,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Man of vrouw', text: 'het silhouet verschilt in schouders, heupen en borst. De plekken en de oefeningen blijven hetzelfde.' },
     ],
   },
+  etenOnderweg: {
+    title: 'Eten onderweg',
+    lead: 'Vanaf anderhalf uur lopen of wandelen, en per dag op een tocht, staat erbij hoeveel koolhydraten je ongeveer meeneemt, met wat dat is in gels, bananen of krentenbollen.',
+    points: [
+      { head: 'Waar', text: 'in De avond ervoor als één regel, in de uitleg van de training, bij je tochten en bij elke etappe.' },
+      { head: 'Waarop', text: 'duur, soort en zwaarte: 30 tot 60 gram per uur bij lopen, 30 tot 40 bij wandelen. Geen gewicht, geen registratie.' },
+      { head: 'Geen advies', text: 'een indicatie, geen medisch advies. Oefen het op lange trainingen.' },
+      { head: 'Uit', text: 'nergens een regel over eten. Drinken blijft staan.' },
+    ],
+  },
   tempoStukken: {
     title: 'Tempo uit stabiele stukken',
     lead: 'Tempo bij zone 2 rekent met vlakke stukken van minstens 5 minuten waarin je hartslag en tempo vast lagen.',

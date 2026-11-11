@@ -31,6 +31,8 @@ import { Icon } from './icons';
 import { Sheet } from './settings/Sheet';
 import { GuideGroupList } from './GuideRow';
 import { guideMenu, type GuideRowId, type GuideRowSpec } from '../engine/guideMenu';
+import { fuelForTraining, fuelGuideLines, fuelOn, NOT_MEDICAL } from '../engine/fuelOnTheGo';
+import { resolveEffectiveFullDuration } from '../engine/substitutions';
 
 // De vier niveaus lopen van rustig naar hard, dus op de inspanningsschaal van de
 // app (Z1 tot Z5, ook in de ZoneBar): bleekblauw, groen, geel, oranje. Bij elk
@@ -51,6 +53,7 @@ export function TrainingGuideSheet({
   onClose,
   template,
   dateIso,
+  plannedMinutes,
 }: {
   title: string;
   guide: TrainingDayGuide;
@@ -58,6 +61,8 @@ export function TrainingGuideSheet({
   onClose: () => void;
   template?: SessionTemplate;
   dateIso?: string;
+  // De minuten van de geplande sessie zelf (Korter vandaag, een eigen duur), zoals De avond ervoor ze leest.
+  plannedMinutes?: number;
 }) {
   const navigate = useNavigate();
   const { program, templates, settings, sessionLogs } = useAppData();
@@ -66,6 +71,9 @@ export function TrainingGuideSheet({
   // Tempo run and intervals: your pace, from your latest test run.
   const myPace = template ? paceLine(template.id, pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces) : undefined;
   const brief = template ? buildSessionBrief(template, dateIso, program, { templates }) : undefined;
+  // Eten onderweg vanaf 90 minuten lopen of wandelen (engine/fuelOnTheGo.ts); de duur is die van de
+  // geplande sessie, anders die van de dag, net als De avond ervoor.
+  const fuel = template && fuelOn(settings) ? fuelForTraining(template, plannedMinutes ?? (dateIso ? resolveEffectiveFullDuration(template, dateIso, program) : plan?.totalMinutes)) : undefined;
   // "Te zwaar?" are the guide's own when-to-ease-off sections; the rest is
   // background.
   const easeOff = guide.sections.filter((sec) => /ZWAAR|TE HARD|TE VEEL/i.test(sec.heading));
@@ -134,6 +142,18 @@ export function TrainingGuideSheet({
             <>
               <SectionTitle>Je tempo</SectionTitle>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{myPace}</p>
+            </>
+          )}
+
+          {fuel && (
+            <>
+              <SectionTitle>Eten onderweg</SectionTitle>
+              <div className="mt-2 flex flex-col gap-1.5">
+                {fuelGuideLines(fuel).map((line, i) => (
+                  <p key={line} className={i === 0 ? 'text-sm leading-relaxed' : 'text-xs leading-relaxed'} style={{ color: i === 0 ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{line}</p>
+                ))}
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{NOT_MEDICAL}</p>
+              </div>
             </>
           )}
 

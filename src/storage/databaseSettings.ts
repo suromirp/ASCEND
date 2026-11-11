@@ -364,6 +364,10 @@ export interface AppSettings {
   // (engine/aerobicTrend.ts#tempoPiecesOn). Absent = on; off is the old average per easy run.
   // Optional and additive.
   tempoStablePieces?: boolean;
+  // "Eten onderweg" (engine/fuelOnTheGo.ts, docs/beslissingen/2026-11-11-eten-onderweg.md): een indicatie
+  // van wat je aan eten meeneemt vanaf 90 minuten lopen of wandelen en per tochtdag. Absent = aan.
+  // Optional and additive, so no migration step; a backup keeps only a boolean (storage/backupClean.ts).
+  fuelOnTheGo?: boolean;
   // "Reeksen in back-up": the full series travel in the backup file (base64). Absent = on,
   // because the source may stop giving them out; off makes a small backup. The copies taken
   // before an import never hold them. Optional and additive.

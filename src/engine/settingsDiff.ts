@@ -404,6 +404,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
   choice('strava-tekst-inhoud', 'Wat erin staat', 'koppelingen', 'stravaTextParts', 'title-line', 'stravaInhoud'),
   flag('tempo-stukken', 'Tempo uit stabiele stukken', 'lichaam', 'tempoStablePieces'),
+  flag('eten-onderweg', 'Eten onderweg', 'lichaam', 'fuelOnTheGo'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
   {
     id: 'locatie', title: 'Je locatie', page: 'gegevens',
