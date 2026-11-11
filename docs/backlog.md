@@ -11,8 +11,11 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
 Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
-- 10 november, eigenaar (routeplanner fase 4): "het zou vet zijn als hier al gelijk een kaart wordt weergegeven met de mogelijke routes". Een kaartje met beide lussen in het paneel Route voorstellen. Klaar om te bouwen: besluit `2026-11-10-kaartje-route-bron.md` (voorgesteld) en `docs/onderzoek/Kaartje bij Route voorstellen.md`: eigen tekening (SVG) zonder tegels, instelling "Kaartje bij de lussen" standaard aan, tegels later als eigen besluit. Sonnet. Vraag aan de eigenaar staat onder Wacht op de eigenaar (startpunt als stip).
-- 10 november, eigenaar, bij hetzelfde: "zelf kiezen vanaf waar, of je huidige locatie, en dat het wat interactiever wordt; nu is het nog vooral een black box". Na het kaartje: startpunt zelf kiezen (tik op de kaart of een adres) of je huidige locatie (alleen na toestemming, niets bewaren zonder dat je het vraagt), en de lus bijsturen (andere kant op, langer of korter, een stuk vermijden). De uitleg waarom de lus zo loopt staat live (besluit `2026-11-10-route-uitleg.md`); per stuk afstand en hoogtemeters nog niet.
+- Route voorstellen met een echte kaart (eigenaar 10 en 11 november, besluit `2026-11-11-locatie-en-kaart.md`, dat de privacygrenzen van eerdere besluiten vervangt). "Het liefst heb ik gewoon een duidelijke kaart waar ik op zie waar ik nu ben, wat mijn route is en zelfs wat de optionele andere routes zijn." Eisen: kaart met ondergrond (tegels, bron uit `docs/onderzoek/Kaartbron voor Route voorstellen.md` van Scout, zonder API-sleutel), je huidige locatie als stip, de gekozen lus duidelijk en de andere lussen ernaast, startpunt kiezen met een tik op de kaart of je huidige locatie. Daarna de lus bijsturen (andere kant op, langer of korter, een stuk vermijden). Privacy is geen grens meer, behalve: nooit een echte locatie in de repo, testdata nagemaakt.
+- Route voorstellen verfijnen (eigenaar 11 november, na proef met APK 158: "hij doet het en ik heb er wel al wat aan"). De lus begint ongeveer bij de deur, maar mag preciezer. Hij kiest niet altijd de juiste route. Er komt geen melding als er in de buurt geen hellingen of heuvels zijn en de gevraagde hoogtemeters dus niet kunnen: dan één duidelijke regel met wat wel kan. Soms is de lus te kort: de afstand van de training is het doel, een lus die er meer dan 10 procent onder blijft telt als mislukt en wordt verder gezocht of eerlijk gemeld. Engine (`engine/routePlanner.ts`), met tests op nagemaakte plekken zonder heuvels en met te korte uitkomsten.
+- Het Info-blad van een training opnieuw (eigenaar 11 november: "dat infomenu is kut en moet een hele refactor krijgen, een hele UI en UX verandering"). Het blad achter de knop Info (`components/TrainingGuideSheet.tsx`, menu in drie groepen). De Datavelden bekijken waren daar nauwelijks te vinden. Eerst een ontwerpvoorstel van Cartographer (`docs/visie/Ontwerp Info-blad.md`, gestart 11 november) dat de hele app bekijkt en zegt waar wat logisch hoort; daarna bouwen.
+- GR5: coördinaten van de 36 etappes uit OpenStreetMap halen (eigenaar 11 november: mag zelf, geen GPX van hem nodig), met de naamsvermelding van OpenStreetMap, in `src/data/gr5Stages.ts`. Daarna de regel op je etappe en hutten via refuges.info.
+- Week: de band van een periode blijft tikbaar, ook als de periode meer dan twee weken voorbij is (eigenaar 11 november, advies gevolgd). Nagaan of dat al zo is; zo niet, de grens weghalen.
 
 ## Rooster voor de bouwmomenten
 
@@ -25,6 +28,8 @@ Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde hee
 5. Forge: herhalingen schatten bij een ander gewicht en de volgende set bijstellen.
 
 ## Pas live
+
+Beantwoord op 11 november (eigenaar): APK 158, Precies, vanaf je deur en de datavelden werken; Eccentric Squat blijft de lichte vorm; de vier tekstpunten zonder screenshot vervallen.
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
@@ -94,13 +99,7 @@ Twijfel of het af is; eerst kijken, dan schrappen of bouwen.
 
 ## Wacht op de eigenaar
 
-- Mag het startpunt als stip op het kaartje, ook bij Precies, vanaf je deur? Het besluit over het startpunt zegt dat het punt nooit op het scherm staat; zonder ondergrond is het alleen een stip naast twee lijnen. Advies: ja, zonder tegels. Open sinds 10 november.
-- Nakijken op de telefoon (gevraagd 10 november): APK 158 installeren, Precies, vanaf je deur kiezen, de datavelden naast de Forerunner leggen (de ligging van de velden is een tekening van ASCEND; biedt Hiken dezelfde velden?). En de punten die het bouwmoment van 10 november live zette.
-- Routeplanner: blijft de instelling in het blad Weer en kleding? De beheerder van BRouter vragen of app-verkeer goed is (advies Scout).
-- Eccentric Squat: de uitleg is op twee benen, de alias Decline Squat in het onderzoek op één been op een schuin vlak. Advies: de lichte vorm laten (`docs/beslissingen/2026-11-09-uitleg-eccentric-squat.md`).
-- Week: moet de band van een periode die meer dan twee weken voorbij is nog tikbaar zijn? Vraag uit de bouwer Week: periode als band (9 november); niet teruggevonden of hij beantwoord is.
-- GPX van de GR5: coördinaten voor de 36 etappes (`src/data/gr5Stages.ts`), daarna de regel op je etappe en hutten via refuges.info. Eigenaar 9 november: nog geen GPX.
-- Vier tekstpunten uit eerdere Lookout-rondes die zonder screenshot niet terug te vinden zijn.
+Niets open (11 november).
 
 ## Later
 
