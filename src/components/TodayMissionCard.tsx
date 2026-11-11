@@ -163,7 +163,7 @@ export function TodayMissionCard({
           <button
             type="button"
             onClick={() => setShowMenu(true)}
-            aria-label="Meer over deze training"
+            aria-label="Meer keuzes"
             aria-haspopup="dialog"
             className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
             style={{ color: 'var(--color-ink-dim)' }}
@@ -295,7 +295,7 @@ export function TodayMissionCard({
               <div className="flex flex-col">
                 {guide && (
                   <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => setShowGuide(true))}>
-                    <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>Meer over deze training</span>
+                    <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>Waarom deze training</span>
                     <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
                   </button>
                 )}

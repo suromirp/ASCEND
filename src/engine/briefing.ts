@@ -60,7 +60,7 @@ export const BRIEFING_TEXT = {
   watchPending: 'Nog niet erop',
   watchLater: 'Gaat later erop',
   watchFailed: 'Versturen lukte niet',
-  watchManual: 'Zelf nabouwen',
+  watchManual: 'Workout zelf instellen',
   watchFields: 'Datavelden',
   noWeather: 'Nog geen weer',
   // "1,5 liter en 2 tot 4 gels mee"; zonder weer is de hoeveelheid drinken onbekend.
@@ -110,7 +110,8 @@ export interface BriefingTile {
   tone?: 'warn';
 }
 
-export type BriefingFooter = { kind: 'route' | 'manual' | 'close'; label: string };
+// `fallback`: wat de knop is zolang er (nog) geen lus is, bij een knop Route.
+export type BriefingFooter = { kind: 'route' | 'manual' | 'close'; label: string; fallback?: { kind: 'manual' | 'close'; label: string } };
 
 // Instelling Lus zoeken (spoor 5): engine/routeSearchSetting.ts.
 export { resolveRouteSearch, type RouteSearchSetting } from './routeSearchSetting';
@@ -216,14 +217,26 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
 
   // Zelf invullen kan pas op de dag zelf (of later); vooraf is de knop Sluiten.
   const due = input.date <= today;
-  const footer: BriefingFooter =
-    stand.kind === 'manual' && due
-      ? { kind: 'manual', label: BRIEFING_TEXT.manual }
-      : stand.kind === 'watch' && map.kind === 'route'
-        ? { kind: 'route', label: BRIEFING_TEXT.sendRoute }
-        : { kind: 'close', label: BRIEFING_TEXT.close };
+  // Met een lus is de route naar je horloge de hoofdknop, ook als je zelf invult (dan een tekstknop
+  // onderaan); zonder lus Zelf invullen of Sluiten.
+  const rest: { kind: 'manual' | 'close'; label: string } =
+    stand.kind === 'manual' && due ? { kind: 'manual', label: BRIEFING_TEXT.manual } : { kind: 'close', label: BRIEFING_TEXT.close };
+  const footer: BriefingFooter = map.kind === 'route' ? { kind: 'route', label: BRIEFING_TEXT.sendRoute, fallback: rest } : rest;
 
   return { stand, places, place, map, tiles, footer };
+}
+
+// De regel onder de rij Briefing in Week: wat er echt in staat. "Route, horloge, weer en eten";
+// zonder vak eten (een korte loop) ook zonder eten.
+export function briefingRowLine(view: BriefingView): string {
+  const parts: string[] = [];
+  if (view.map.kind === 'route') parts.push('route');
+  if (view.map.kind === 'place') parts.push('loopband');
+  const word: Partial<Record<BriefingTileId, string>> = { watch: 'horloge', weather: 'weer', fuel: 'eten' };
+  for (const t of view.tiles) if (word[t.id]) parts.push(word[t.id]!);
+  if (parts.length === 0) return BRIEFING_TEXT.run;
+  const text = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1]}`;
+  return upperFirst(text);
 }
 
 // ---- de stand --------------------------------------------------------------------------------

@@ -134,7 +134,7 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
   tpl_long_run: {
     styleLabel: 'lang',
     purpose: 'De langste loop van de week, rustig en op vermoeide benen, voor uithouding en hoogtemeters.',
-    stopSignals: ['de laatste kwartier voelt als een wedstrijd in plaats van rustig', 'je geen hele zinnen meer kunt praten: wandel een stuk'],
+    stopSignals: ['het laatste kwartier voelt als een wedstrijd in plaats van rustig', 'je geen hele zinnen meer kunt praten: wandel een stuk'],
     facts: 'long',
   },
   tpl_mountain_hike: {

@@ -47,7 +47,7 @@ export interface SheetActions {
   rows: SheetAction[];
 }
 
-export function sessionSheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting = false, canSwap = false, briefing = false }: {
+export function sessionSheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting = false, canSwap = false, briefing = false, watchTicks = false }: {
   date: string;
   today: string;
   skipped: boolean;
@@ -59,13 +59,21 @@ export function sessionSheetActions({ date, today, skipped, canComeBack, kind, w
   // Week has another training of this week to trade days with: "Ruilen" right after moving.
   canSwap?: boolean;
   // Een training buiten te voet (engine/briefing.ts#briefingEntry): de rij heet Briefing en vervangt
-  // "Hoe je het doet", op de dag zelf en vooraf. Al het andere houdt het oude scherm.
+  // "Hoe je het doet", op de dag zelf en vooraf. Al het andere houdt het oude scherm, ook een training
+  // op een dag die voorbij is (er valt niets meer voor te bereiden).
   briefing?: boolean;
+  // Je horloge vinkt deze training af (engine/briefing.ts#missionButton): dan is Briefing op de dag
+  // zelf de hoofdknop, zoals op Vandaag, en Gedaan wordt een rij (Zelf invullen).
+  watchTicks?: boolean;
 }): SheetActions {
   const actions = sheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting, canSwap });
-  if (!briefing) return actions;
+  if (!briefing || date < today) return actions;
   const swapIn = (a: SheetAction): SheetAction => (a === 'start' || a === 'preview' ? 'briefing' : a);
-  return { main: swapIn(actions.main), rows: actions.rows.map(swapIn) };
+  const swapped = { main: swapIn(actions.main), rows: actions.rows.map(swapIn) };
+  if (watchTicks && swapped.main === 'done') {
+    return { main: 'briefing', rows: swapped.rows.map((a) => (a === 'briefing' ? 'done' : a)) };
+  }
+  return swapped;
 }
 
 function sheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting, canSwap }: {

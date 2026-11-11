@@ -19,20 +19,16 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
-import { briefing, placeTransition, BRIEFING_TEXT, type BriefingTile, type BriefingView } from '../engine/briefing';
-import { showClothingAdvice, showWeatherLine } from '../engine/overviewSettings';
-import { adjustFor } from '../engine/clothingFeedback';
-import { isSportEnabled, sessionKindLabel, templateSport } from '../engine/sports';
-import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
+import { placeTransition, BRIEFING_TEXT, type BriefingTile, type BriefingView } from '../engine/briefing';
+import { isSportEnabled, sessionKindLabel } from '../engine/sports';
 import { fuelCardLines, fuelForTraining, fuelOn } from '../engine/fuelOnTheGo';
 import { drinkLine } from '../engine/eveningBefore';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { buildSessionBrief } from '../engine/sessionBrief';
-import { watchFieldsShown, resolveWatchModel } from '../engine/watchFields';
 import { modalitySport } from '../data/modalities';
 import { failureLine, MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle } from '../engine/routePlanner';
-import { BRIEFING_MAP_HEIGHT, NO_PLACE_LINE, loopLines, routeOutcomeLine } from '../engine/routeSheet';
+import { BRIEFING_MAP_HEIGHT, loopLines, routeOutcomeLine } from '../engine/routeSheet';
 import { durationLabel } from '../engine/sessionBrief';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import type { RouteSendOutcome } from '../engine/routeSend';
@@ -52,8 +48,7 @@ import { TodaySheet } from './vandaag/TodaySheet';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
-import { useWatchStatuses } from './useWatchStatus';
-import { useWatchLink } from './useWatchLink';
+import { useBriefingView } from './useBriefingView';
 import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
 import { RouteSearching } from './RouteSearching';
@@ -69,6 +64,9 @@ const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'A
 // Groter: het blad Route met de volle kaart en de lange tekst.
 const BIGGER = 'Groter';
 const SEARCH_LOOP = 'Zoek een lus';
+// Zonder plaats: geen doodlopende zin, maar de weg naar de plaatskeuze op de pagina Weer.
+export const NO_PLACE_BRIEFING = 'Een lus begint bij je plaats. Die heb je nog niet gekozen.';
+export const CHOOSE_PLACE = 'Kies je plaats';
 
 function dayWord(date: string, today: string): string {
   if (date === today) return 'Vandaag';
@@ -96,12 +94,11 @@ export function TrainingBriefing({
   // Sluit de lagen onder dit scherm (het blad in Week) voordat een vak naar een pagina gaat.
   onLeave?: () => void;
 }) {
-  const { settings, sessionLogs, weather } = useAppData();
+  const { settings } = useAppData();
   const navigate = useNavigate();
   const motion = useMotionMode();
   const { closing, requestClose } = useSheetClose(onClose);
   const today = todayISO();
-  const [now] = useState(() => new Date());
 
   // Waar train je? voor deze ene geplande training (storage/trainingPlace.ts); de engine zegt of hij geldt.
   const [stored, setStored] = useState<unknown>(() => (session ? peekTrainingPlaces()?.[session.id] : undefined));
@@ -116,35 +113,10 @@ export function TrainingBriefing({
     };
   }, [session]);
 
-  const { watchLink, watchSource } = useWatchLink();
-  const { statusOf, ready } = useWatchStatuses();
   const guide = getTrainingGuide(template.id);
   const plan = buildWorkoutPlan(template, date, program);
   const watchView = useWatchSheet({ template, garmin: plan?.garmin, session, hasZonesNote: !!guide?.garminNote });
-  const easyPace = pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy;
-
-  const view = briefing({
-    template,
-    session,
-    date,
-    now,
-    program,
-    logs: sessionLogs,
-    storedPlace: stored,
-    routeOn: settings.routeProposal !== false,
-    routeSearch: settings.routeSearch,
-    easyPace,
-    watchLink,
-    watchSource,
-    watch: { showStatus: settings.showWatchStatus !== false, fieldsShown: watchFieldsShown(settings), model: resolveWatchModel(settings.watchModel), store: settings.watchFieldVersions, hasZonesNote: !!guide?.garminNote },
-    watchStatus: session && ready ? statusOf(session, template) : undefined,
-    forecast: weather.forecast ?? undefined,
-    weatherOn: showWeatherLine(settings.overviews),
-    clothingOn: showClothingAdvice(settings.overviews),
-    clothingAdjust: adjustFor(settings.clothingAdjust, templateSport(template)),
-    sweatEntries: settings.sweatEntries,
-    fuelOn: fuelOn(settings),
-  });
+  const view = useBriefingView({ template, session, date, program, storedPlace: stored });
 
   // De zoektocht: alleen bij Buiten met een route, bij het openen of na een tik; Liever niet zet hem stil.
   const [tapped, setTapped] = useState(false);
@@ -221,7 +193,7 @@ export function TrainingBriefing({
 
             {/* De plek van de kaart: verschijnt of verdwijnt bij een andere keuze, in Vol met een korte overgang. */}
             <div key={view.map.kind} style={{ animation: placeTransition(motion) }}>
-              <MapPlace view={view} model={model} searchOn={searchOn} declined={declined} onTap={() => { setDeclined(false); setTapped(true); }} onDecline={() => setDeclined(true)} onBigger={() => setSheet('route')} />
+              <MapPlace view={view} model={model} searchOn={searchOn} declined={declined} onTap={() => { setDeclined(false); setTapped(true); }} onDecline={() => setDeclined(true)} onBigger={() => setSheet('route')} onPlace={() => toPage('/weer')} />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -258,6 +230,8 @@ export function TrainingBriefing({
               {view.stand.kind === 'watch' && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{view.stand.line}</p>}
               {view.stand.kind === 'watch' && manual && <TextButton tone="dim" onClick={manual}>{view.stand.manualLabel}</TextButton>}
               {view.stand.kind !== 'watch' && view.stand.line && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{view.stand.line}</p>}
+              {/* Zelf invullen zonder horloge: met een lus is de knop onderaan de route, dan staat het hier. */}
+              {view.stand.kind === 'manual' && manual && routeReady && <TextButton tone="dim" onClick={manual}>{BRIEFING_TEXT.manual}</TextButton>}
             </div>
           </div>
         </div>
@@ -273,8 +247,8 @@ export function TrainingBriefing({
               )}
               {routeReady && picked ? (
                 <PrimaryButton disabled={send.busy} onClick={() => void send.go(picked.style, picked.proposal)}>{model.sender ? view.footer.label : 'GPX downloaden'}</PrimaryButton>
-              ) : view.footer.kind === 'manual' && manual ? (
-                <PrimaryButton onClick={manual}>{view.footer.label}</PrimaryButton>
+              ) : (view.footer.kind === 'route' ? view.footer.fallback?.kind : view.footer.kind) === 'manual' && manual ? (
+                <PrimaryButton onClick={manual}>{BRIEFING_TEXT.manual}</PrimaryButton>
               ) : (
                 <PrimaryButton onClick={requestClose}>{BRIEFING_TEXT.close}</PrimaryButton>
               )}
@@ -307,7 +281,7 @@ export function TrainingBriefing({
 }
 
 // Op de plek van de kaart, per stand van de engine en van de zoektocht.
-export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, onBigger }: {
+export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, onBigger, onPlace }: {
   view: BriefingView;
   model: RouteSearchModel;
   searchOn: boolean;
@@ -315,6 +289,8 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
   onTap: () => void;
   onDecline: () => void;
   onBigger: () => void;
+  // Nog geen plaats: naar de pagina Weer, waar je hem kiest (dezelfde weg als op de missiekaart).
+  onPlace?: () => void;
 }) {
   const dim = { color: 'var(--color-ink-dim)' };
   const map = view.map;
@@ -337,7 +313,14 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
     </div>
   );
   const { stage } = model;
-  if (stage === 'no-place') return <p className="text-sm leading-snug" style={dim}>{NO_PLACE_LINE}</p>;
+  if (stage === 'no-place') {
+    return (
+      <div className="flex flex-col items-start">
+        <p className="text-sm leading-snug" style={dim}>{NO_PLACE_BRIEFING}</p>
+        {onPlace && <TextButton tone="dim" icon="verder" onClick={onPlace}>{CHOOSE_PLACE}</TextButton>}
+      </div>
+    );
+  }
   if (stage === 'reading') return <div className="min-h-[44px]" />;
   // Na Liever niet, na een tik (later dan morgen, of de instelling Na een tik): eerst Zoek een lus,
   // en pas daarna de eerste vraag; zo is één tik genoeg en gaat er tot dan niets de deur uit.

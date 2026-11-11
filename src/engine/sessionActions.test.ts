@@ -146,3 +146,22 @@ describe('de rij Briefing voor een training buiten te voet (spoor 5)', () => {
     expect(sessionSheetActions({ ...base, date: '2026-11-13' }).rows).toContain('preview');
   });
 });
+
+describe('Week met een horloge dat afvinkt (herstel spoor 5 en 6)', () => {
+  const base = { today: '2026-11-11', skipped: false, canComeBack: false, kind: 'log' as const, briefing: true };
+  it('op de dag zelf: Briefing is de hoofdknop, zoals op Vandaag, en Gedaan een rij', () => {
+    expect(sessionSheetActions({ ...base, date: '2026-11-11', watchTicks: true })).toEqual({ main: 'briefing', rows: ['done', 'move', 'skip'] });
+  });
+  it('zonder koppeling blijft Gedaan de hoofdknop', () => {
+    expect(sessionSheetActions({ ...base, date: '2026-11-11' }).main).toBe('done');
+  });
+  it('vooraf blijft Verplaatsen de hoofdknop: in Week plan je', () => {
+    expect(sessionSheetActions({ ...base, date: '2026-11-13', watchTicks: true }).main).toBe('move');
+  });
+  it('een dag die voorbij is: geen Briefing, het oude scherm', () => {
+    const past = sessionSheetActions({ ...base, date: '2026-11-09', watchTicks: true });
+    expect(past.main).toBe('done');
+    expect(past.rows).toContain('start');
+    expect(past.rows).not.toContain('briefing');
+  });
+});

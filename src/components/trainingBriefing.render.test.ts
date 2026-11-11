@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import type { RouteProposal, RouteTarget } from '../models/route';
 import type { BriefingView } from '../engine/briefing';
 import type { RouteSearchModel } from './useRouteSearch';
-import { MapPlace } from './TrainingBriefing';
+import { CHOOSE_PLACE, MapPlace, NO_PLACE_BRIEFING } from './TrainingBriefing';
 import { BRIEFING_MAP_HEIGHT, NO_PLACE_LINE, OFFLINE_LINE } from '../engine/routeSheet';
 
 // De beweging leest de instellingen van de app; hier staat hij vast op Vol.
@@ -61,8 +61,11 @@ describe('de plek van de kaart in de Briefing', () => {
     expect(declined).toContain('Zoek een lus');
     expect(declined).not.toContain('Liever niet');
   });
-  it('geen plaats: de bestaande regel', () => {
-    expect(render(routeView(), model({ stage: 'no-place' }))).toContain(NO_PLACE_LINE);
+  it('geen plaats: geen doodlopende zin, maar de weg naar de plaatskeuze', () => {
+    const html = renderToStaticMarkup(createElement(MapPlace, { view: routeView(), model: model({ stage: 'no-place' }), searchOn: true, declined: false, onTap: () => undefined, onDecline: () => undefined, onBigger: () => undefined, onPlace: () => undefined }));
+    expect(html).toContain(NO_PLACE_BRIEFING);
+    expect(html).toContain(`>${CHOOSE_PLACE}`);
+    expect(html).not.toContain(NO_PLACE_LINE);
   });
   it('een lus: de soort, titel en feiten, de andere als één regel met Kies, en Groter', () => {
     const a = loop();

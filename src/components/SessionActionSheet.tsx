@@ -23,7 +23,10 @@ import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { ExerciseLogger } from './ExerciseLogger';
 import { TrainingBriefing } from './TrainingBriefing';
-import { briefingEntry } from '../engine/briefing';
+import { briefingEntry, briefingRowLine, missionButton } from '../engine/briefing';
+import { useBriefingView } from './useBriefingView';
+import { useWatchLink } from './useWatchLink';
+import { useTrainingPlaces } from './useTrainingPlaces';
 import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
 import { WATCH_SHEET_TEXT } from '../engine/watchSheet';
@@ -205,10 +208,16 @@ export function SessionActionSheet({
     return () => { live = false; };
   }, [quickComplete, completedLog]);
   const waiting = quickComplete && !completedLog ? pendingMacroFactorWorkout(session.scheduledDate, template.id, macroFactor, sessionLogs) : undefined;
-  const actions = sessionSheetActions({ date: session.scheduledDate, today, skipped, canComeBack, kind, workoutWaiting: !!waiting, canSwap: !!onSwap && swapOptions.length > 0, briefing: briefingEntry(template) });
+  // De Briefing: dezelfde stand als op Vandaag (engine/briefing.ts#missionButton). Vinkt je horloge
+  // af, dan is Briefing op de dag zelf de hoofdknop en Gedaan de rij Zelf invullen.
+  const places = useTrainingPlaces();
+  const briefingView = useBriefingView({ template, session, date: session.scheduledDate, program, storedPlace: places?.[session.id] });
+  const { watchLink, watchSource } = useWatchLink();
+  const watchTicks = missionButton({ template, session, logs: sessionLogs, watchLink, watchSource }) === 'briefing';
+  const actions = sessionSheetActions({ date: session.scheduledDate, today, skipped, canComeBack, kind, workoutWaiting: !!waiting, canSwap: !!onSwap && swapOptions.length > 0, briefing: briefingEntry(template), watchTicks });
   const duration = strengthDoneDuration({ scheduledDate: doneToday ? today : session.scheduledDate }, template, fullDuration, macroFactor, sessionLogs);
 
-  const info = guide ? <InfoButton onClick={() => setShowGuide(true)} label="Meer over deze training" /> : undefined;
+  const info = guide ? <InfoButton onClick={() => setShowGuide(true)} label="Waarom deze training" /> : undefined;
   const guideSheet = showGuide && guide
     ? <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={session.scheduledDate} dayLabel={guideDayLabel(template, session.scheduledDate)} onClose={() => setShowGuide(false)} />
     : null;
@@ -344,7 +353,7 @@ export function SessionActionSheet({
     }
   };
   const label: Record<SheetAction, string> = {
-    done: skipped ? 'Toch gedaan' : 'Gedaan',
+    done: skipped ? 'Toch gedaan' : actions.main === 'briefing' ? 'Zelf invullen' : 'Gedaan',
     // Kracht start je in de app (Forge); een loop of tocht doe je met je horloge, dus
     // hier opent het alleen de uitleg en opbouw, naast Gedaan.
     start: template.type === 'strength' ? 'Training starten' : 'Hoe je het doet',
@@ -358,7 +367,9 @@ export function SessionActionSheet({
     saveWorkout: saving ? 'Bezig…' : 'Opslaan',
   };
   const due = session.scheduledDate <= today;
-  const showWatchRow = watchView.hasWatchSheet && !skipped && session.scheduledDate >= today;
+  // Met de Briefing erbij staat het horloge al in de Briefing (het vak Horloge): geen eigen rij.
+  const withBriefing = actions.main === 'briefing' || actions.rows.includes('briefing');
+  const showWatchRow = watchView.hasWatchSheet && !skipped && session.scheduledDate >= today && !withBriefing;
   // De rij Je horloge staat direct na Hoe je het doet, of bovenaan als die er niet is.
   const afterRow = actions.rows.findIndex((a) => a === 'start' || a === 'preview' || a === 'briefing');
   const watchRow = showWatchRow ? <SheetRow key="horloge" title={WATCH_SHEET_TEXT.row} sub={watchView.rowSub} sheetFrom onClick={() => setShowWatch(true)} /> : null;
@@ -454,7 +465,7 @@ export function SessionActionSheet({
           <SheetRows label="Andere keuzes">
             {afterRow < 0 && watchRow}
             {actions.rows.flatMap((a, i) => {
-              const row = <SheetRow key={a} title={label[a]} sub={a === 'briefing' ? 'Route, horloge, weer en eten' : undefined} onClick={run(a)} />;
+              const row = <SheetRow key={a} title={label[a]} sub={a === 'briefing' && briefingView ? briefingRowLine(briefingView) : undefined} onClick={run(a)} />;
               return i === afterRow && watchRow ? [row, watchRow] : [row];
             })}
           </SheetRows>

@@ -37,3 +37,12 @@ Niets.
 ## Terugdraaien
 
 Week: `briefing: briefingEntry(template)` uit `SessionActionSheet.tsx` halen. Vandaag: `briefingButton` op false. Het oude scherm is ongewijzigd.
+
+## Herstelronde (Pathfinder, zelfde dag)
+
+- Week volgt Vandaag: vinkt je horloge af, dan is Briefing op de dag zelf de mint hoofdknop en Gedaan de rij Zelf invullen; de rij Je horloge valt weg naast de Briefing. Een dag die voorbij is krijgt geen Briefing.
+- Met een lus is de route naar je horloge altijd de mint knop, ook zonder koppeling; Zelf invullen is dan een tekstknop onderaan.
+- Zonder plaats wijst de Briefing de weg naar de pagina Weer (Kies je plaats).
+- Eén naam: Waarom deze training. Het rondje met drie puntjes op de missiekaart heet Meer keuzes.
+- De avond ervoor zegt "je lus staat in de briefing". De regel wordt geen tik: de kaart krijgt geen knop (besluit 2026-11-11-briefing.md).
+- De laatst gelezen koppeling staat op het toestel (localStorage), zodat een koude start niet verspringt.

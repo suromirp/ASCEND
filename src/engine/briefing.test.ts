@@ -7,7 +7,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { makeForecast } from './fixtures/weatherFixture';
 import { resolveWatchModel } from './watchFields';
-import { BRIEFING_TEXT, briefing, briefingEntry, hasBriefing, missionButton, placeTransition, resolveRouteSearch, type BriefingInput } from './briefing';
+import { BRIEFING_TEXT, briefing, briefingEntry, briefingRowLine, hasBriefing, missionButton, placeTransition, resolveRouteSearch, type BriefingInput } from './briefing';
 import { drinkLine } from './eveningBefore';
 import { fuelForTraining, fuelShortText } from './fuelOnTheGo';
 import { routeTarget, targetText } from './routeTarget';
@@ -62,7 +62,7 @@ describe('een loop met gekoppeld horloge', () => {
   const view = briefing(input());
   it('je horloge vinkt af, de knop stuurt de route naar Garmin Connect', () => {
     expect(view?.stand).toEqual({ kind: 'watch', line: BRIEFING_TEXT.watchTicks, manualLabel: 'Zelf invullen' });
-    expect(view?.footer).toEqual({ kind: 'route', label: 'Route naar Garmin Connect' });
+    expect(view?.footer).toEqual({ kind: 'route', label: 'Route naar Garmin Connect', fallback: { kind: 'close', label: 'Sluiten' } });
   });
   it('Buiten is gekozen en op de plek van de kaart staat de route, die vandaag bij het openen zoekt', () => {
     expect(view?.place).toBe('run_outdoor');
@@ -86,13 +86,13 @@ describe('een loop met gekoppeld horloge', () => {
 });
 
 describe('zonder koppeling', () => {
-  it('zelf invullen, en de knop in de onderbalk is Zelf invullen', () => {
+  it('zelf invullen; met een lus blijft de route naar je horloge de knop, zonder lus Zelf invullen', () => {
     const view = briefing(input({ watchLink: { linked: false, autoTick: true, activities: true }, watchStatus: { kind: 'unlinked' } }));
     expect(view?.stand).toEqual({ kind: 'manual', reason: 'unlinked' });
-    expect(view?.footer).toEqual({ kind: 'manual', label: 'Zelf invullen' });
+    expect(view?.footer).toEqual({ kind: 'route', label: 'Route naar Garmin Connect', fallback: { kind: 'manual', label: 'Zelf invullen' } });
     // De route blijft: de kaart hoort bij Buiten, niet bij de koppeling.
     expect(view?.map.kind).toBe('route');
-    expect(tile(view, 'watch')?.line).toBe('Zelf nabouwen');
+    expect(tile(view, 'watch')?.line).toBe('Workout zelf instellen');
   });
   it('zolang de koppeling gelezen wordt: de veilige kant, zelf invullen', () => {
     expect(briefing(input({ watchLink: undefined }))?.stand).toEqual({ kind: 'manual', reason: 'unknown' });
@@ -120,7 +120,7 @@ describe('een stille koppeling', () => {
     const view = briefing(input({ watchSource }));
     expect(view?.stand).toMatchObject({ kind: 'manual', reason: 'silent' });
     expect(view?.stand.kind === 'manual' && view.stand.line).toMatch(/^Sinds /);
-    expect(view?.footer.kind).toBe('manual');
+    expect(view?.footer.fallback?.kind).toBe('manual');
   });
   it('alleen stille ochtenden: het horloge vinkt nog gewoon af', () => {
     const mornings = { ...watchSource, activitiesOn: false, morningsOn: true, morningDays: ['2026-11-06'], activityDays: [] };
@@ -149,7 +149,7 @@ describe('testloop en wedstrijd', () => {
   it('een testloop vul je zelf in, ook met gekoppeld horloge', () => {
     const view = briefing(input({ template: TEST, session: plan('tpl_test_run') }));
     expect(view?.stand).toEqual({ kind: 'manual', reason: 'testOrRace', line: 'Een testloop vul je zelf in.' });
-    expect(view?.footer.kind).toBe('manual');
+    expect(view?.footer.fallback?.kind).toBe('manual');
   });
   it('een wedstrijd ook', () => {
     expect(briefing(input({ template: RACE, session: plan('tpl_race') }))?.stand).toMatchObject({ reason: 'testOrRace', line: 'Een wedstrijd vul je zelf in.' });
@@ -252,7 +252,7 @@ describe('Zelf invullen vooraf', () => {
   it('een training van morgen zonder koppeling: de knop is Sluiten, invullen kan op de dag zelf', () => {
     const view = briefing(input({ date: '2026-11-12', session: plan('tpl_easy_run', '2026-11-12'), watchLink: { linked: false, autoTick: true, activities: true } }));
     expect(view?.stand.kind).toBe('manual');
-    expect(view?.footer).toEqual({ kind: 'close', label: 'Sluiten' });
+    expect(view?.footer).toEqual({ kind: 'route', label: 'Route naar Garmin Connect', fallback: { kind: 'close', label: 'Sluiten' } });
   });
 });
 
@@ -301,5 +301,17 @@ describe('het vak weer en kleding is kort', () => {
     const line = tile(cold, 'weather')?.line ?? '';
     expect(line).toMatch(/^4 graden, /);
     expect(line).not.toContain('.');
+  });
+});
+
+describe('de regel onder de rij Briefing in Week', () => {
+  it('wat er echt in staat: geen eten bij een korte loop', () => {
+    expect(briefingRowLine(briefing(input())!)).toBe('Route, horloge en weer');
+  });
+  it('een lange loop: ook eten', () => {
+    expect(briefingRowLine(briefing(input({ template: LONG, session: { ...plan('tpl_long_run'), plannedMinutes: 100 } }))!)).toMatch(/^Route, horloge, weer en eten$/);
+  });
+  it('loopband: geen route en geen weer', () => {
+    expect(briefingRowLine(briefing(input({ storedPlace: 'run_treadmill' }))!)).toBe('Loopband en horloge');
   });
 });
