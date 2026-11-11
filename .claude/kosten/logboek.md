@@ -343,3 +343,7 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Review Briefing A, Warden, sonnet (reviewer), 52k, 10 min, akkoord (Pathfinder vond 3 moet)
 - 2026-11-11, Review Afdaalklok herreview, Warden, sonnet (reviewer), 224k, niet akkoord (1 blokkerend, door coördinator hersteld in dc54e13)
 - 2026-11-11, Pathfinder doorloop Afdaalklok, pathfinder, sonnet, 98k, 10 min, 1 moet (Trap af zonder eigen uitleg), 5 mag naar backlog
+- 2026-11-11, Warden herreview Briefing A, reviewer, sonnet, 33k, 4 min, akkoord (2 mag)
+- 2026-11-11, Pathfinder herdoorloop Briefing A, pathfinder, sonnet, 58k, 7 min, 3 moet opgelost
+- 2026-11-11, Warden review Afdaalklok herstel, reviewer, sonnet, 37k, 4 min, akkoord (mag-punten)
+- 2026-11-11, Pathfinder herdoorloop Afdaalklok, pathfinder, sonnet, 104k (totaal), 2 min, moet opgelost, 2 mag
