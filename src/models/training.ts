@@ -124,7 +124,8 @@ export type TemplateRole =
   | 'extra' // an extra session the planner may add to a week
   | 'counted_sport' // a sport ASCEND does not plan but that counts (engine/sportTemplate.ts), never stored
   | 'strength' // a strength training (Hoeveel per soort, data/trainingKinds.ts)
-  | 'ruck'; // a walk with a backpack (Hoeveel per soort)
+  | 'ruck' // a walk with a backpack (Hoeveel per soort)
+  | 'descent'; // the session itself is a descent stimulus (engine/descentClock.ts)
 
 // The reusable definition of a workout — "what" a session is, independent of
 // when it happens.

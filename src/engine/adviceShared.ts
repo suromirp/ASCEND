@@ -22,6 +22,7 @@ import type { RaceBlock } from './raceBlock';
 import type { WeatherForecast } from '../models/weather';
 import type { TestJudgment } from '../models/testJudgment';
 import type { LeavePeriod } from '../models/leave';
+import type { DescentClockContext } from './descentClock';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -114,6 +115,8 @@ export interface AdviceInputs {
   // The forecast for your place and the moment it is read at (engine/weather.ts,
   // rule WEATHER-SWAP). Absent without a place or before the first fetch.
   weather?: { forecast: WeatherForecast; now: Date; leave?: LeavePeriod[] };
+  // De afdaalklok (engine/descentClock.ts): aan, met de tochten die nog komen. Absent = uit.
+  descentClock?: DescentClockContext;
   // Your rest day, 1 to 7 (rule REST-BACK). Absent: the rest day of the extra training, if any.
   restDay?: number;
   // "Rustdag terugzetten voorstellen" (rule REST-BACK, engine/restDayBack.ts). Absent = on.

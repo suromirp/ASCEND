@@ -21,6 +21,7 @@ const IDS_BY_ROLE: Record<TemplateRole, string[]> = {
   counted_sport: [],
   strength: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b', 'tpl_lower_b'],
   ruck: ['tpl_ruck_walk'],
+  descent: ['tpl_hills_descent', 'tpl_stairs_down'],
   extra: ['tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_bergconditie', 'tpl_ruck_walk'],
 };
 

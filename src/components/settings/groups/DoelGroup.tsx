@@ -20,6 +20,7 @@ import { DirectionSheet } from '../../ascend/YourWeek';
 import { useDirectionChange } from '../../ascend/useDirectionChange';
 import { parseDirection } from '../../../engine/direction';
 import { parseBeginnerStart } from '../../../engine/beginnerStart';
+import { resolveDescentClock } from '../../../engine/descentClock';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
 
@@ -78,6 +79,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="volgende-tocht" title="Volgende tocht op Vandaag" facts={facts} onChange={(on) => void updateSettings({ showNextTrek: on })} />
           <SummaryRow id="water-per-etappe" title="Water per etappe tonen" facts={facts} info="waterPerEtappe" onChange={(on) => void updateSettings({ showStageWater: on })} />
           <SummaryRow id="rust-na-tocht" title="Rust na een bergtocht" facts={facts} info="rustNaTocht" onClick={() => setInner('rust-na-tocht')} />
+          <SummaryRow id="afdaalklok" title="Afdaalklok" facts={facts} info="afdaalklok" onClick={() => setInner('afdaalklok')} />
           <SummaryRow id="bergschoenen" title="Bergschoenen inlopen" facts={facts} info="bergschoenen" onClick={() => setInner('bergschoenen')} />
           <SummaryRow id="bergschoenen-herinnering" title="Herinnering bij lange tochten" facts={facts} info="bergschoenenHerinnering" onChange={(on) => void updateSettings({ bootBreakInReminder: on })} />
         </BundleSheet>
@@ -166,6 +168,9 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {inner === 'bergschoenen' && (
         <ChoiceFromDef def={CHOICES.bergschoenen} value={bootGoalKm(settings.bootBreakInKm) as 50 | 75 | 100 | 150} onPick={(v) => void updateSettings({ bootBreakInKm: v })} onClose={closeInner} />
+      )}
+      {inner === 'afdaalklok' && (
+        <ChoiceFromDef def={CHOICES.afdaalklok} value={resolveDescentClock(settings.descentClock)} onPick={(v) => void updateSettings({ descentClock: v })} onClose={closeInner} />
       )}
       {inner === 'rust-na-tocht' && (
         <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => { if (v !== (settings.trekLegRest ?? 'soft')) { setNote(null); void plan.changeSetting(`Rust na een bergtocht: ${choiceShort('rustNaTocht', v)}`, { trekLegRest: v }, 'Volgt je keuze voor rust na een bergtocht.'); } }} onClose={closeInner} />

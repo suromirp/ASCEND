@@ -25,6 +25,7 @@ import { missedAdvice, skippedKeyAdvice, restSwapAdvice, restPullAdvice, extraSe
 import { tooHardAdvice, tooLightAdvice, injuryAdvice, strengthAdvice, spacingAdvice } from './adviceLoad';
 import { restWeekSkipAdvice, repeatWeekAdvice, tentPackAdvice, targetTimeAdvice } from './adviceBlock';
 import { morningAdvice } from './adviceMorning';
+import { descentAdvice } from './descentClock';
 
 // --- Rule TEST-RETRY ---------------------------------------------------------
 // Trigger: the last test run (the last 21 days) has a fastest 5 km with more standing still than
@@ -523,6 +524,15 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const catchUpDays = new Set(fresh([...missed, ...skippedKey, ...testRoom, ...retry]).flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])])
     .flatMap((p) => p?.changes.filter((c) => c.action !== 'remove').map((c) => c.toDate ?? c.newSessionDraft?.scheduledDate) ?? []));
   const restBackLeft = restBack.filter((a) => !a.proposal?.changes.some((c) => c.toDate && catchUpDays.has(c.toDate)));
+  // De afdaalklok komt als laatste en wijkt voor alles: geen trapsessie op of naast een dag waar een ander
+  // voorstel van vandaag iets neerzet (twee voorstellen die elk kloppen, maar samen botsen).
+  const others = fresh([...missed, ...skippedKey, ...testRoom, ...restSwap, ...restPull, ...tooHard, ...tooLight, ...injury, ...strength, ...spacing, ...extraSession, ...weather, ...morning, ...retry, ...restBackLeft]);
+  const takenDays = new Set(others.flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])])
+    .flatMap((p) => p?.changes.filter((c) => c.action !== 'remove').map((c) => c.toDate ?? c.newSessionDraft?.scheduledDate) ?? []).filter((d): d is string => !!d));
+  const descent = descentAdvice({
+    today: inputs.asOf, logs: inputs.logs, plannedSessions: inputs.plannedSessions, templates: inputs.templates, context: inputs.descentClock,
+    respondedIds: inputs.respondedIds, leave: inputs.leave, illnessEpisodes: inputs.illnessEpisodes, restDay: inputs.restDay ?? inputs.extraSession?.restDay, taken: takenDays,
+  });
   return [
     ...missed,
     ...skippedKey,
@@ -543,6 +553,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...weather,
     ...morning,
     ...restBackLeft,
+    ...descent,
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));

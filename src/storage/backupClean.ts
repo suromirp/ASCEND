@@ -373,6 +373,9 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.longRunGrowth;
     skipped.n++;
   }
+  if ('descentClock' in s && s.descentClock !== 'advies' && s.descentClock !== 'altijd' && s.descentClock !== 'uit') {
+    delete s.descentClock;
+  }
   if ('trekLegRest' in s && s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
     delete s.trekLegRest;
     skipped.n++;

@@ -26,6 +26,7 @@ const everything: AppSettings = {
   showStageWater: false,
   askSweat: false,
   trekLegRest: 'strict',
+  descentClock: 'uit',
   leaveCrowding: 'shift',
   leaveAround: 'little',
   noGymStrength: 'drop',

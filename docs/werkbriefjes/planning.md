@@ -13,7 +13,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - `src/engine/programLayout.ts#layoutWaves` fases en golven, geteld vanaf het doel
 - `src/storage/databaseHorizon.ts#syncProgramHorizon` schrijft het plan weg, draait bij elke verandering
 - `src/storage/horizonPlan.ts#computeHorizonPlan` rekent een voorstel uit, `applyHorizonPlanNow` schrijft het
-- `src/storage/databaseSeed.ts#seedIfEmpty` een nieuwe installatie plant niets
+- `src/storage/databaseSeed.ts#seedIfEmpty` een nieuwe installatie plant niets; `src/engine/descentClock.ts#descentAdvice` de afdaalklok: 21 dagen zonder afdaling of een tocht over 8 tot 14 dagen geeft een voorstel voor Trap af op een vrije dag (`findDescentDay`), binnen 7 dagen alleen een zin; rekent als laatste in `computeAdvice` en wijkt voor elk ander voorstel (`docs/beslissingen/2026-11-11-afdaalklok.md`)
 
 ## Nooit
 - Een verandering van de planning zonder voorstel met Akkoord; ook doelen, labels, richting, golven, ziek, vakantie, tocht.
@@ -35,7 +35,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - `PATTERN_SWAPS` werken alleen in fases van een plan met een doel; de golden scenario's A en C bewegen niet. Calisthenics per training (`src/engine/trainingStyle.ts#styleChange`) verandert alleen de oefeningen van een krachttraining, nooit een geplande sessie, sjabloon of `baseStressProfile`: de ronde leest het niet en hoeft het niet te lezen.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/engine/scheduler src/engine/weekValidator src/engine/planPass src/engine/leave src/engine/leavePlanAround src/engine/noGym src/storage/horizon src/storage/openingPingpong`
+- Tijdens het werk: `npx vitest run src/engine/scheduler src/engine/weekValidator src/engine/planPass src/engine/leave src/engine/leavePlanAround src/engine/noGym src/storage/horizon src/storage/openingPingpong`; voor de afdaalklok `src/engine/descentClock`
 - `src/storage/planGolden.test.ts` mag alleen bewegen met de reden in de commit.
 - Tekstkaart (`npm run kaart:vergelijk`) alleen als een scherm verandert.
 
