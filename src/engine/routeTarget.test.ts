@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { DEFAULT_PACE_SEC_KM, resolveRouteStyle, roundStart, routeTarget, targetText, wantsRoute } from './routeTarget';
+import { DEFAULT_PACE_SEC_KM, resolveRouteStyle, roundStart, routeTarget, targetText, wantsRoute, wantsRouteAt } from './routeTarget';
 
 const { templates } = buildDefaultProgramData();
 const byId = (id: string) => templates.find((t) => t.id === id) as SessionTemplate;
@@ -64,5 +64,25 @@ describe('wantsRoute, roundStart, resolveRouteStyle, targetText', () => {
   it('zegt de training in woorden', () => {
     expect(targetText({ distanceKm: 9, ascentM: 300 })).toBe('9 km, 300 hoogtemeters');
     expect(targetText({ distanceKm: 5.5, ascentM: 0 })).toBe('5,5 km');
+  });
+});
+
+describe('wantsRouteAt: een route alleen buiten en te voet', () => {
+  it('Loopband: geen route; Buiten: wel', () => {
+    expect(wantsRouteAt(easy, 'run_treadmill')).toBe(false);
+    expect(wantsRouteAt(easy, 'run_outdoor')).toBe(true);
+    expect(wantsRouteAt(easy, 'run_walk')).toBe(true);
+  });
+  it('binnen en op de fiets: geen looplus', () => {
+    expect(wantsRouteAt(easy, 'bike_indoor')).toBe(false);
+    expect(wantsRouteAt(easy, 'bike_outdoor')).toBe(false);
+  });
+  it('zonder keuze of met een sleutel die de training niet kent: de training zelf, zoals voorheen', () => {
+    expect(wantsRouteAt(easy, undefined)).toBe(true);
+    expect(wantsRouteAt(easy, 'bestaat_niet')).toBe(true);
+  });
+  it('kracht en een wandeling krijgen nooit een looplus', () => {
+    expect(wantsRouteAt(byId('tpl_upper_a'), 'run_outdoor')).toBe(false);
+    expect(wantsRouteAt(byId('tpl_ruck_walk'), 'loaded_hike')).toBe(false);
   });
 });

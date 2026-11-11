@@ -5,7 +5,8 @@
 import { useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
-import { wantsRoute } from '../engine/routeTarget';
+import { plannedOn, placeHasRoute, routeShownFor } from '../engine/trainingPlace';
+import { useTrainingPlaces } from './useTrainingPlaces';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
@@ -31,10 +32,22 @@ function RouteSheet({ template, date, onClose }: { template: SessionTemplate; da
   );
 }
 
-export function RouteProposalLine({ template, date, mode, className = '', row = false }: { template: SessionTemplate; date: string; mode: 'sheet' | 'inline'; className?: string; row?: boolean }) {
-  const { settings } = useAppData();
+// Alleen buiten en te voet: de bewaarde keuze Waar train je? van de geplande training op die dag telt
+// (engine/trainingPlace.ts#routeShownFor), zodat Vandaag, het blad achter de i en het trainingsscherm
+// hetzelfde zeggen. Het trainingsscherm geeft zijn eigen keuze mee als `place` (null: geen keuze, alleen
+// de training). Zolang de keuzes nog niet gelezen zijn staat er niets: nooit eerst een route bij Loopband.
+export function RouteProposalLine({ template, date, mode, className = '', row = false, place }: { template: SessionTemplate; date: string; mode: 'sheet' | 'inline'; className?: string; row?: boolean; place?: string | null }) {
+  const { settings, plannedSessions } = useAppData();
+  const places = useTrainingPlaces();
   const [open, setOpen] = useState(false);
-  if (settings.routeProposal === false || !wantsRoute(template)) return null;
+  if (settings.routeProposal === false) return null;
+  if (place !== undefined) {
+    if (!placeHasRoute(template, place ?? undefined)) return null;
+  } else {
+    if (!places) return null;
+    const planned = plannedOn(plannedSessions, template.id, date);
+    if (!routeShownFor(template, planned ? places[planned.id] : undefined)) return null;
+  }
   if (row) {
     // Een lijstrij zoals Eerst opwarmen en Daarna rekken (op de trainingspagina), met het paneel eronder.
     return (

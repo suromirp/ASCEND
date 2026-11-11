@@ -11,11 +11,13 @@ import { templateSport } from '../engine/sports';
 import { sunPlace } from '../engine/sun';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { fuelOn } from '../engine/fuelOnTheGo';
+import { useTrainingPlaces } from './useTrainingPlaces';
 
 // De bronnen voor een moment: nu voor de kaart, het moment van de melding voor de melding.
 export function useEveningInput(now: Date): EveningInput {
   const { plannedSessions, sessionLogs, templateById, program, leavePeriods, settings, weather } = useAppData();
   const { statusOf, ready } = useWatchStatuses();
+  const trainingPlaces = useTrainingPlaces();
   const easyPace = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, [sessionLogs, settings]);
   return {
     now,
@@ -38,6 +40,7 @@ export function useEveningInput(now: Date): EveningInput {
     routeOn: settings.routeProposal !== false,
     easyPace,
     fuelOn: fuelOn(settings),
+    trainingPlaces,
   };
 }
 

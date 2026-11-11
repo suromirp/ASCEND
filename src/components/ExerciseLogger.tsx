@@ -1,5 +1,6 @@
 import { RouteProposalLine } from './RouteProposalLine';
-import { wantsRoute } from '../engine/routeTarget';
+import { placeHasRoute, resolvePlace } from '../engine/trainingPlace';
+import { getTrainingPlace, saveTrainingPlace } from '../storage/trainingPlace';
 import { useEffect, useRef, useState } from 'react';
 import { NumberField } from './NumberField';
 import { templateSport } from '../engine/sports';
@@ -7,7 +8,7 @@ import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingE
 import type { Program } from '../models/program';
 import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
-import { getModalities, getModality, defaultModality, modalitySport } from '../data/modalities';
+import { getModalities, getModality, modalitySport } from '../data/modalities';
 import { GARMIN_SUGGESTED_TYPES, GARMIN_TYPE_LABEL, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
@@ -136,8 +137,6 @@ function GeneralLogger({
   // day defaults to that day; a loose training can be logged for a past
   // day too (production bug: everything landed on today).
   const today = todayISO();
-  // Route voorstellen (looptraining): dezelfde regel als op Vandaag. Dit scherm is zelf al een blad, dus het paneel klapt op zijn plek open.
-  const showRoute = settings.routeProposal !== false && wantsRoute(template);
   const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
   const [doneOn, setDoneOn] = useState<string>(typeof restored?.doneOn === 'string' ? restored.doneOn : plannedInPast ? scheduledDate! : today);
   // The exact same plan the guide shows for this day: steps, minutes,
@@ -172,7 +171,27 @@ function GeneralLogger({
   const [guidanceMode, setGuidanceMode] = useState<GuidanceMode>(restored?.guidanceMode ?? 'ascend_guided');
   // On a rest day the screen only opens to log a walk.
   const [modalityKey, setModalityKey] = useState<string | undefined>(() =>
-    restored?.modalityKey ?? (template.type === 'recovery' && getModality(template.id, 'recovery_walk') ? 'recovery_walk' : defaultModality(template.id)));
+    restored?.modalityKey ?? resolvePlace(template, undefined));
+  // Waar train je? geldt voor deze ene geplande training en blijft op dit toestel (storage/trainingPlace.ts):
+  // de bewaarde keuze is de beginwaarde, tenzij het concept of een tik van jou al iets zegt.
+  const placeTouched = useRef(restored?.modalityKey !== undefined);
+  useEffect(() => {
+    if (!plannedSessionId || placeTouched.current) return;
+    let live = true;
+    void getTrainingPlace(plannedSessionId).then((stored) => {
+      if (live && stored !== undefined && !placeTouched.current) setModalityKey(resolvePlace(template, stored));
+    });
+    return () => {
+      live = false;
+    };
+  }, [plannedSessionId, template]);
+  const choosePlace = (key: string) => {
+    placeTouched.current = true;
+    setModalityKey(key);
+    if (plannedSessionId) void saveTrainingPlace(plannedSessionId, scheduledDate ?? today, key);
+  };
+  // Route voorstellen: alleen buiten en te voet (engine/trainingPlace.ts#placeHasRoute). Dit scherm is zelf al een blad, dus het paneel klapt op zijn plek open.
+  const showRoute = settings.routeProposal !== false && placeHasRoute(template, guidanceMode === 'ascend_guided' ? modalityKey : undefined);
   const [garminSuggestedType, setGarminSuggestedType] = useState<string>(restored?.garminSuggestedType ?? '');
   const selectedModality = modalityKey ? getModality(template.id, modalityKey) : undefined;
   const compatibility = garminSuggestedType ? getCompatibility(template.id, garminSuggestedType) : undefined;
@@ -219,7 +238,9 @@ function GeneralLogger({
   useEffect(() => {
     if (preview) return;
     const snapshot: LoggerDraft = {
-      variant, duration, rpe, notes, subjectiveFeel, legsAtStart, painReports, doneOn, workout, setLogs, guidanceMode, modalityKey,
+      variant, duration, rpe, notes, subjectiveFeel, legsAtStart, painReports, doneOn, workout, setLogs, guidanceMode,
+      // Alleen een keuze die je zelf tikte: anders verdringt een oud concept een nieuwere bewaarde keuze.
+      modalityKey: placeTouched.current ? modalityKey : undefined,
       garminSuggestedType, reachedForm, distanceKm, elevationGainM, elevationLossM, avgHeartRate, backpackWeightKg, poles, cadence, power,
       steps, machineVerticalM, terrain, inclinePercent,
     };
@@ -440,7 +461,7 @@ function GeneralLogger({
           <Card className="mt-4">
             <Eyebrow>{template.type === 'recovery' ? 'Wat doe je vandaag?' : 'Waar train je?'}</Eyebrow>
             <div className="mt-3">
-              <ModalityChoice templateId={template.id} selectedKey={modalityKey} onSelect={setModalityKey} enabledSports={settings.enabledSports} label={template.type === 'recovery' ? 'Wat doe je vandaag?' : 'Waar train je?'} />
+              <ModalityChoice templateId={template.id} selectedKey={modalityKey} onSelect={choosePlace} enabledSports={settings.enabledSports} label={template.type === 'recovery' ? 'Wat doe je vandaag?' : 'Waar train je?'} />
             </div>
           </Card>
         )}
@@ -453,7 +474,7 @@ function GeneralLogger({
             {template.cooldown && template.cooldown.length > 0 && (
               <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
             )}
-            {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} mode="inline" row />}
+            {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} mode="inline" row place={guidanceMode === 'ascend_guided' ? (modalityKey ?? null) : null} />}
             {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={closeSheet} className="py-2" plain />}
           </div>
         ) : plannedSession && !preview ? (
