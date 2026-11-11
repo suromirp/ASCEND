@@ -18,7 +18,7 @@ import { EFFORT_COLOR } from '../effortColor';
 import { firstSentence, restAfterFirstSentence } from './text';
 import { StretchItems } from '../StretchList';
 import { Icon, type IconName } from '../icons';
-import { capitalize } from '../../utils/capitalize';
+import { splitPlaceLabel } from '../../engine/trainingPlace';
 
 // Een niveau van het plan in de kleur van zijn zone: heel rustig is Z1, rustig
 // Z2, stevig Z3 en hard Z4 (het plan zegt "zone 4-5"). Een stap zonder doel
@@ -176,14 +176,9 @@ export function StepList({ plan }: { plan: WorkoutPlan }) {
   );
 }
 
-// "Hardlopen, buiten op een heuvel" -> "Buiten op een heuvel" met "Hardlopen"
-// klein ernaast; een naam zonder komma blijft zoals hij is.
-function splitLabel(label: string): { name: string; sport?: string } {
-  const i = label.indexOf(', ');
-  if (i < 0) return { name: label };
-  const rest = label.slice(i + 2);
-  return { name: capitalize(rest), sport: label.slice(0, i) };
-}
+// "Hardlopen, buiten op een heuvel" -> "Buiten op een heuvel" met "Hardlopen" klein ernaast
+// (engine/trainingPlace.ts#splitPlaceLabel, ook voor de keuzes in de Briefing).
+const splitLabel = splitPlaceLabel;
 
 
 // "Waar train je?": een rij per plek, de plek groot en eronder hoe goed die

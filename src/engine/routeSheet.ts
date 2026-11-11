@@ -14,6 +14,9 @@ import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLi
 // Laag genoeg dat op 360 px (een scherm van 640 px hoog) de gekozen lus en de hoofdknop eronder nog in
 // beeld staan; nooit hoger dan 340 px.
 export const ROUTE_MAP_HEIGHT = 'clamp(180px, 34vh, 340px)';
+// De lagere stand in de Briefing (spoor 5): kaart, lus en de vier vakken boven de vouw op 390 en 412 px
+// (een scherm van ongeveer 800 px hoog); nooit hoger dan 240 px. Groter opent het blad met de volle kaart.
+export const BRIEFING_MAP_HEIGHT = 'clamp(150px, 28vh, 240px)';
 
 export const OFFLINE_LINE = 'Zonder netwerk is er geen route. Probeer het later nog eens.';
 export const TIMEOUT_LINE = 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.';

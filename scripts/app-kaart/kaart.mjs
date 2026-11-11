@@ -35,6 +35,8 @@ process.env.LOOKOUT_SHOTS ??= join(ROOT, 'shots');
 const { open, BASE } = await import('../../.claude/skills/lookout/kit/lib.mjs');
 
 const KLOK = '2026-10-31T08:00:00+01:00';
+// De klok van een scherm met een eigen klok, zoals in de kop van de kaart: "1 november 2026, 08:00".
+const klokTekst = (iso) => new Date(iso).toLocaleString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' om ', ', ');
 const WACHT = 3000;
 
 // Eén in-page functie die de pagina (of het open blad) naar Markdown schrijft.
@@ -126,6 +128,9 @@ const SCHERMEN = {
   instellingen: { titel: 'Instellingen (overzicht)', pad: '#/more' },
   weekterugblik: { titel: 'Weekterugblik (blad in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Weekterugblik")') },
   jaaroverzicht: { titel: 'Jaaroverzicht (in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Jaaroverzicht")') },
+  // Een dag later (zondag 1 november), zodat er een looptraining op Vandaag staat: de missiekaart met Gedaan en de
+  // routerij (zonder koppeling met je horloge; met koppeling staat er Briefing, engine/briefing.ts#missionButton).
+  'vandaag-loop': { titel: 'Vandaag met een looptraining (Lange duurloop)', pad: '#/', klok: '2026-11-01T08:00:00+01:00' },
   'training-blad': { titel: 'Blad van een geplande training (Week)', pad: '#/week', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Lange duurloop")') },
   // De opslagrijen komen asynchroon uit de browser (storage.estimate); wacht tot ze er zijn.
   gegevens: { titel: 'Instellingen: Gegevens en back-up', pad: '#/more/gegevens', actie: (p) => p.waitForFunction(() => /die ASCEND mag gebruiken/.test(document.body.innerText) && /Ruimte van reeksen, /.test(document.body.innerText), null, { timeout: 15000 }).catch(() => {}) },
@@ -240,7 +245,7 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
   const s = SCHERMEN[id];
   const o = await open(390, { timezoneId: 'Europe/Amsterdam', locale: 'nl-NL', serviceWorkers: 'block', stand: s.stand });
   try {
-    await o.page.clock.setFixedTime(new Date(KLOK));
+    await o.page.clock.setFixedTime(new Date(s.klok ?? KLOK));
     await o.page.goto(BASE + s.pad);
     await o.page.waitForTimeout(WACHT);
     // Een zware tab (Stand) rendert onder de vertraagde processor later: wacht op echte inhoud.
@@ -311,7 +316,7 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
     await o.page.setViewportSize({ width: 390, height: hoogteNu });
     await o.page.waitForTimeout(300);
     const fouten = o.errs.filter((e) => !/favicon|manifest|Service Worker/i.test(e)).map((e) => `[console: ${e.slice(0, 160)}]`);
-    const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.\n\n${tekst}${mintRegel}${bovenRegel}${breedteRegel}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
+    const md = `# ${s.titel}\n\nAdres: \`${s.pad}\`. Klok: ${s.klok ? klokTekst(s.klok) : '31 oktober 2026, 08:00'}. Breedte: 390 px.\n\n${tekst}${mintRegel}${bovenRegel}${breedteRegel}${fouten.length ? '\n## Console\n\n' + [...new Set(fouten)].join('\n') + '\n' : ''}`;
     writeFileSync(join(uitMap, id + '.md'), md);
     if (fotoMap) return await volleAfdruk(o.page, join(fotoMap, id + '.png'), markeer);
     return false;

@@ -239,10 +239,11 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   // 7. Staat op je horloge: na het eten, want het blad Je horloge zegt het ook.
   if (watch && watchKind === 'sent') lines.push(watch);
 
-  // 8. De route, als Route voorstellen aan staat. Een route wordt niet bewaard: je vraagt hem op bij de training.
+  // 8. De route, als Route voorstellen aan staat: de lus staat in de Briefing van morgen (spoor 5). De kaart
+  // krijgt geen knop (besluit 2026-11-11-briefing.md); de rij Morgen in Je dag opent het blad met Briefing.
   if (input.routeOn && routeShownFor(template, input.trainingPlaces?.[session.id])) {
     const target = routeTarget({ template, date, program: input.program, logs: input.logs, testPace: input.easyPace });
-    lines.push(`Route ${targetText(target)}: vraag een lus op bij de training.`);
+    lines.push(`Route ${targetText(target)}: je lus staat in de Briefing.`);
   }
 
   return { label, lines };

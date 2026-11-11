@@ -183,6 +183,9 @@ export interface AppSettings {
   // What lies under the loops on the route map (engine/routeMap.ts): a dark street map in the
   // app's colours ('dark', absent = dark), a light one ('light'), or nothing ('none': no tiles).
   routeMapBase?: 'dark' | 'light' | 'none';
+  // Lus zoeken in de Briefing: bij het openen (vandaag en morgen; het advies) of pas na een tik.
+  // Afwezig is het advies (engine/briefing.ts#resolveRouteSearch).
+  routeSearch?: 'open' | 'tap';
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';

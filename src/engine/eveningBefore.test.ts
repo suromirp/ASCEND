@@ -128,7 +128,7 @@ describe('de regels', () => {
 
   it('de route als Route voorstellen aan staat', () => {
     const view = eveningBefore(input({ planned: [plan('p1', 'tpl_easy_run')], routeOn: true, forecast: undefined }))!;
-    expect(view.lines.some((l) => /^Route [\d,]+ km: vraag een lus op bij de training\.$/.test(l))).toBe(true);
+    expect(view.lines.some((l) => /^Route [\d,]+ km: je lus staat in de Briefing\.$/.test(l))).toBe(true);
   });
   it('rugzak met gewicht bij een rugzaktraining', () => {
     const view = eveningBefore(input({ planned: [plan('p1', 'tpl_ruck_walk')] }))!;

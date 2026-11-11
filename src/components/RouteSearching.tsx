@@ -9,7 +9,8 @@ import { ROUTE_MAP_HEIGHT } from '../engine/routeSheet';
 import { useMotionMode } from './motion';
 import { Icon } from './icons';
 
-export function RouteSearching({ steps, current, limitLine }: { steps: SearchStep[]; current: SearchStep; limitLine: string }) {
+// `height`: een lagere vaste hoogte (de Briefing); anders die van het blad.
+export function RouteSearching({ steps, current, limitLine, height }: { steps: SearchStep[]; current: SearchStep; limitLine: string; height?: string }) {
   const motion = useMotionMode();
   const at = steps.indexOf(current);
   return (
@@ -17,7 +18,7 @@ export function RouteSearching({ steps, current, limitLine }: { steps: SearchSte
       role="status"
       aria-live="polite"
       className="flex w-full flex-col justify-center gap-2.5 overflow-hidden rounded-xl border px-5 py-3"
-      style={{ height: ROUTE_MAP_HEIGHT, borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
+      style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
     >
       <p className="text-base font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>Lussen zoeken…</p>
       <div className="h-1 w-full overflow-hidden rounded-full" style={{ background: 'var(--color-track)' }}>

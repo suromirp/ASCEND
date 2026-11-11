@@ -46,7 +46,7 @@ function MapButton({ icon, label, onClick, disabled }: { icon: 'locatie' | 'inbe
   );
 }
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offerHere = true, onNoMap }: {
+export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offerHere = true, onNoMap, height }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
@@ -59,6 +59,8 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
   offerHere?: boolean;
   // De kaart kan niet tekenen of laden: dan staan de lussen alleen als tekst en zeggen de rijen niet hoe ze op de kaart staan.
   onNoMap?: () => void;
+  // De lagere stand in de Briefing (engine/routeSheet.ts#BRIEFING_MAP_HEIGHT); anders die van het blad.
+  height?: string;
 }) {
   const motion = useMotionMode();
   const box = useRef<HTMLDivElement>(null);
@@ -177,7 +179,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
     <div className="flex flex-col gap-1">
       {/* Slepen en knijpen horen bij de kaart: niet bij het blad en niet bij de pagina. Een vaste hoogte
           (engine/routeSheet.ts), zodat de gekozen lus en de hoofdknop eronder op 360 px nog in beeld staan. */}
-      <div data-no-sheet-drag="" className="relative w-full overflow-hidden rounded-xl border" style={{ height: ROUTE_MAP_HEIGHT, borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: 'none', overscrollBehavior: 'contain' }}>
+      <div data-no-sheet-drag="" className="relative w-full overflow-hidden rounded-xl border" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: 'none', overscrollBehavior: 'contain' }}>
         {/* MapLibre zet zelf position: relative op dit vak; daarom de volle maat, niet absolute. */}
         <div ref={box} style={{ width: '100%', height: '100%' }} />
         {state.kind === 'loading' && <p role="status" className="absolute bottom-1 left-2 text-xs" style={dim}>De kaart wordt geladen.</p>}

@@ -33,7 +33,9 @@ import { isWorkSet } from './workSets';
 // - preview: the training screen of a later day to read, without ticking off
 // - saveWorkout: the MacroFactor workout of that day is in the last file read
 //   but not saved yet; one tap saves it, ticking off is not needed
-export type SheetAction = 'done' | 'start' | 'move' | 'swap' | 'skip' | 'backOnPlan' | 'doToday' | 'preview' | 'saveWorkout';
+// - briefing: de Briefing (components/TrainingBriefing.tsx) voor een training buiten te voet
+//   (engine/briefing.ts#briefingEntry); hij staat op de plek van "Hoe je het doet" (start en preview)
+export type SheetAction = 'done' | 'start' | 'move' | 'swap' | 'skip' | 'backOnPlan' | 'doToday' | 'preview' | 'saveWorkout' | 'briefing';
 
 // How a training is ticked off: strength kept in MacroFactor (one short step
 // in the sheet), strength kept in ASCEND (the training screen), or anything
@@ -45,7 +47,7 @@ export interface SheetActions {
   rows: SheetAction[];
 }
 
-export function sessionSheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting = false, canSwap = false }: {
+export function sessionSheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting = false, canSwap = false, briefing = false, watchTicks = false }: {
   date: string;
   today: string;
   skipped: boolean;
@@ -56,6 +58,32 @@ export function sessionSheetActions({ date, today, skipped, canComeBack, kind, w
   workoutWaiting?: boolean;
   // Week has another training of this week to trade days with: "Ruilen" right after moving.
   canSwap?: boolean;
+  // Een training buiten te voet (engine/briefing.ts#briefingEntry): de rij heet Briefing en vervangt
+  // "Hoe je het doet", op de dag zelf en vooraf. Al het andere houdt het oude scherm, ook een training
+  // op een dag die voorbij is (er valt niets meer voor te bereiden).
+  briefing?: boolean;
+  // Je horloge vinkt deze training af (engine/briefing.ts#missionButton): dan is Briefing op de dag
+  // zelf de hoofdknop, zoals op Vandaag, en Gedaan wordt een rij (Zelf invullen).
+  watchTicks?: boolean;
+}): SheetActions {
+  const actions = sheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting, canSwap });
+  if (!briefing || date < today) return actions;
+  const swapIn = (a: SheetAction): SheetAction => (a === 'start' || a === 'preview' ? 'briefing' : a);
+  const swapped = { main: swapIn(actions.main), rows: actions.rows.map(swapIn) };
+  if (watchTicks && swapped.main === 'done') {
+    return { main: 'briefing', rows: swapped.rows.map((a) => (a === 'briefing' ? 'done' : a)) };
+  }
+  return swapped;
+}
+
+function sheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting, canSwap }: {
+  date: string;
+  today: string;
+  skipped: boolean;
+  canComeBack: boolean;
+  kind: DoneKind;
+  workoutWaiting: boolean;
+  canSwap: boolean;
 }): SheetActions {
   const swap: SheetAction[] = canSwap && !skipped ? ['swap'] : [];
   const due = date <= today;
