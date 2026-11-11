@@ -8,6 +8,7 @@
 import type { RouteProposal, RouteTarget } from '../models/route';
 import { formatNumberNL } from '../utils/number';
 import { tooShort } from './routePlanner';
+import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLine } from './routeSend';
 
 // De kaart en de zoekstand hebben dezelfde vaste hoogte, zodat er niets verspringt als de lussen er zijn.
 // Laag genoeg dat op 360 px (een scherm van 640 px hoog) de gekozen lus en de hoofdknop eronder nog in
@@ -57,8 +58,8 @@ export function routeSheetStage(i: StageInput): RouteSheetStage {
 }
 
 // De delen onder de kop, van boven naar onder. De kaart (of wat op haar plek staat) altijd eerst, dan
-// de gekozen lus met de hoofdknop: dat staat boven de vouw. Daarna de lussen als rijen om te kiezen,
-// wat er op de kaart lag, Opnieuw zoeken en de bronnen. Nergens een uitklap.
+// de lussen als rijen om te kiezen en de hoofdknop voor de gekozen lus: dat staat boven de vouw op 390
+// en 412 px. Daarna wat er op de kaart lag, Opnieuw zoeken en de bronnen. Nergens een uitklap.
 export type RouteSheetPart = 'searching' | 'failure' | 'map' | 'chosen' | 'loops' | 'found' | 'retry' | 'sources';
 
 export function routeSheetParts(stage: RouteSheetStage, plans?: { anyOk: boolean; anyFailed: boolean }): RouteSheetPart[] {
@@ -66,9 +67,11 @@ export function routeSheetParts(stage: RouteSheetStage, plans?: { anyOk: boolean
   // De regel en Opnieuw zoeken staan in een vak op de plek van de kaart.
   if (stage === 'offline' || stage === 'timeout') return ['failure'];
   if (stage !== 'plans' || !plans) return [];
-  const parts: RouteSheetPart[] = ['map'];
+  // Kaart, dan de rijen (de gekozen met vinkje), dan de hoofdknop direct eronder: titel en feiten van
+  // een lus staan alleen in zijn rij (Pathfinder, 11 november).
+  const parts: RouteSheetPart[] = ['map', 'loops'];
   if (plans.anyOk) parts.push('chosen');
-  parts.push('loops', 'found');
+  parts.push('found');
   if (plans.anyFailed) parts.push('retry');
   parts.push('sources');
   return parts;
@@ -96,3 +99,13 @@ export function loopLines(p: RouteProposal, target: RouteTarget, notes: string[]
 // Een andere lus kiezen: in Vol een overgang van 150 ms, in Rustig en Uit meteen op de eindstand.
 export const pickTransition = (motion: 'full' | 'calm' | 'off'): string =>
   motion === 'full' ? 'border-color 150ms ease-out, background-color 150ms ease-out' : 'none';
+
+// Onder de hoofdknop alleen de uitkomst van een tik; voor een tik niets. Wat je daarna in Garmin
+// Connect doet (SEND_HINT, SAVE_HINT) staat achter de i, niet nog eens onder de knop.
+export function routeOutcomeLine(hasSender: boolean, done?: { send: RouteSendOutcome } | { file: RouteFileLine }): SendLine | undefined {
+  if (!done) return undefined;
+  if ('file' in done && done.file.ok) {
+    return { text: done.file.where === 'folder' ? `Opgeslagen als ${done.file.name} in ${done.file.label}.` : `Gedownload als ${done.file.name}.`, warn: false };
+  }
+  return routeActionLine(hasSender, done);
+}

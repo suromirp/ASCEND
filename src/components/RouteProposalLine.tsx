@@ -15,7 +15,8 @@ import { Card, InfoButton, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
 import { Icon } from './icons';
 import { RoutePanel } from './RoutePanel';
-import { WATCH_STEPS, WATCH_STEPS_TITLE } from '../engine/routeSend';
+import { SAVE_HINT, SEND_HINT, WATCH_STEPS, WATCH_STEPS_TITLE } from '../engine/routeSend';
+import { routeSender } from '../storage/routeSend';
 import { MAP_HINT, PICK_HINT } from '../engine/routeSheet';
 
 // Achter de i van het blad Route: hoe de kaart werkt en hoe een lus op je horloge komt. Stond eerder
@@ -23,6 +24,8 @@ import { MAP_HINT, PICK_HINT } from '../engine/routeSheet';
 function RouteInfoSheet({ onClose }: { onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const dim = { color: 'var(--color-ink-dim)' };
+  // Dezelfde weg als de hoofdknop: Naar Garmin Connect, of het bestand openen.
+  const [sender] = useState(routeSender);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
@@ -33,6 +36,7 @@ function RouteInfoSheet({ onClose }: { onClose: () => void }) {
             <p className="text-sm leading-relaxed" style={dim}>{PICK_HINT}</p>
             <p className="text-sm leading-relaxed" style={dim}>{MAP_HINT}</p>
             <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{WATCH_STEPS_TITLE}</p>
+            <p className="text-sm leading-relaxed" style={dim}>{sender ? SEND_HINT : SAVE_HINT}</p>
             <ol className="flex list-decimal flex-col gap-1 pl-5 text-sm leading-snug" style={dim}>
               {WATCH_STEPS.map((step) => <li key={step}>{step}</li>)}
             </ol>

@@ -53,9 +53,9 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
   start: RoutePoint;
   base: MapBase;
   onChoose: (style: RouteStyle) => void;
-  // Start hier (een getikt punt) of Gebruik waar ik nu ben ('here'); heeft zelf een grens in tijd.
+  // Start hier (een getikt punt) of Zet mijn plek als start ('here'); heeft zelf een grens in tijd.
   onStart: (from: { tap: RoutePoint } | 'here') => Promise<StartAnswer>;
-  // Gebruik waar ik nu ben als vast punt; niet bij Waar je nu bent, daar is de lus al vanaf je plek.
+  // Zet mijn plek als start (als vast punt); niet bij Waar je nu bent, daar is de lus al vanaf je plek.
   offerHere?: boolean;
   // De kaart kan niet tekenen of laden: dan staan de lussen alleen als tekst en zeggen de rijen niet hoe ze op de kaart staan.
   onNoMap?: () => void;
@@ -195,7 +195,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
       {(pick || offerHere) && (
         <div className="flex flex-wrap gap-x-5">
           {pick && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}
-          {offerHere && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt('here')}>Gebruik waar ik nu ben</TextButton>}
+          {offerHere && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt('here')}>Zet mijn plek als start</TextButton>}
         </div>
       )}
       {status && <p role="status" className="text-xs leading-snug" style={dim}>{status}</p>}

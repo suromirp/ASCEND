@@ -17,7 +17,7 @@ import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { resolveRouteStyle, routeTarget, targetText } from '../engine/routeTarget';
 import { MIN_ASCENT_TARGET_M, failureLine, proposalFacts, proposalNotes, proposalTitle, searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
-import { SEND_LABEL, routeActionLine, type RouteSendOutcome } from '../engine/routeSend';
+import { SEND_LABEL, type RouteSendOutcome } from '../engine/routeSend';
 import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
 import { chooseStart, hereStart, hereStartLine, resolveRouteStart, roundHere, START_LINE_APPROX, START_LINE_EXACT, START_LINE_HERE, startFailureLine, startFailureReason, type RouteStartMode, type StartFailure } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
@@ -32,7 +32,7 @@ import { withTimeout } from '../utils/withTimeout';
 import { TextButton } from './TextButton';
 import { RouteMap } from './RouteMap';
 import { resolveMapBase } from '../engine/routeMap';
-import { NO_PLACE_LINE, OFFLINE_LINE, ROUTE_MAP_HEIGHT, TIMEOUT_LINE, loopLines, pickTransition, routeSheetParts, routeSheetStage, type RouteSheetPart } from '../engine/routeSheet';
+import { NO_PLACE_LINE, OFFLINE_LINE, ROUTE_MAP_HEIGHT, TIMEOUT_LINE, loopLines, pickTransition, routeOutcomeLine, routeSheetParts, routeSheetStage, type RouteSheetPart } from '../engine/routeSheet';
 import { useMotionMode } from './motion';
 import { Icon } from './icons';
 import { roundStart } from '../engine/routeTarget';
@@ -46,8 +46,9 @@ const STYLE_LINE: Record<RouteStyle, string> = {
 };
 const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
 
-// De gekozen lus, onder de kaart: soort en titel, afstand en hoogtemeters, een melding in amber in een
-// eigen regel, en de hoofdknop. Elke lus heeft zijn eigen uitkomst (`key` op de soort).
+// De hoofdknop voor de gekozen lus, direct onder de rijen. Titel en feiten staan alleen in de rij
+// (Pathfinder: dezelfde zin nooit twee keer). Onder de knop alleen de uitkomst van een tik; wat je in
+// Garmin Connect doet staat achter de i. Elke lus heeft zijn eigen uitkomst (`key` op de soort).
 export function ChosenLoop({ style, proposal, date, target, sender }: { style: RouteStyle; proposal: RouteProposal; date: string; target: RouteTarget; sender: FileSender | null }) {
   // De laatste uitkomst van een van de twee knoppen; 'busy' zolang er een loopt (beide hebben een grens in tijd).
   const [done, setDone] = useState<{ send: RouteSendOutcome } | { file: RouteFileResult } | 'busy' | undefined>();
@@ -72,25 +73,20 @@ export function ChosenLoop({ style, proposal, date, target, sender }: { style: R
     if (mounted.current) setDone({ send: result });
   }
 
-  // Eén regel onder de knoppen: eerst wat je doet, na een tik de uitkomst op dezelfde plek.
-  const line = routeActionLine(!!sender, done === 'busy' ? undefined : done);
-  const { warn, info } = loopLines(proposal, target, proposalNotes(proposal, target));
+  // Eén regel onder de knoppen: leeg tot je tikt, dan de uitkomst.
+  const line = routeOutcomeLine(!!sender, done === 'busy' ? undefined : done);
+  const { info } = loopLines(proposal, target, proposalNotes(proposal, target));
 
   return (
     <div className="flex flex-col gap-1">
-      <p className="text-base font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{STYLE_NAME[style]} · {proposalTitle(proposal)}</p>
-      <p className="text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalFacts(proposal)}</p>
-      {warn.map((note) => (
-        <p key={note} className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</p>
-      ))}
-      <div className="mt-2">
+      <div>
         {sender
           ? <PrimaryButton disabled={done === 'busy'} onClick={() => void send()}>{SEND_LABEL}</PrimaryButton>
           : <PrimaryButton disabled={done === 'busy'} onClick={() => void download()}>GPX downloaden</PrimaryButton>}
       </div>
       {sender && <div><TextButton tone="dim" disabled={done === 'busy'} onClick={() => void download()}>GPX downloaden</TextButton></div>}
       {/* Plaats voor drie regels: een langere uitkomst duwt niets weg. */}
-      <p role="status" className="min-h-[50px] text-xs leading-snug" style={{ color: line.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line.text}</p>
+      <p role="status" className="min-h-[50px] text-xs leading-snug" style={{ color: line?.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line?.text ?? ''}</p>
       {info.map((note) => (
         <p key={note} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
       ))}
@@ -110,9 +106,9 @@ export function RouteFailure({ kind, onRetry }: { kind: 'offline' | 'timeout'; o
 }
 
 // Een lus als rij om te kiezen: geen uitklap. De gekozen rij heeft een rand in inkt; het mint accent
-// is de lus op de kaart. Een lus die er niet kwam is een rij tekst die je niet kunt kiezen.
-function LoopRow({ style, outcome, picked, onMap, target, onChoose }: { style: RouteStyle; outcome: PlanOutcome; picked: boolean; onMap: boolean; target: RouteTarget; onChoose: () => void }) {
-  const motion = useMotionMode();
+// is de lus op de kaart. Een melding (te kort, te weinig hoogtemeters) staat in amber in een eigen regel
+// in de rij. Een lus die er niet kwam is een rij tekst die je niet kunt kiezen.
+export function LoopRow({ style, outcome, picked, onMap, target, motion, onChoose }: { style: RouteStyle; outcome: PlanOutcome; picked: boolean; onMap: boolean; target: RouteTarget; motion: 'full' | 'calm' | 'off'; onChoose: () => void }) {
   const dim = { color: 'var(--color-ink-dim)' };
   if (!outcome.ok) {
     return (
@@ -135,6 +131,9 @@ function LoopRow({ style, outcome, picked, onMap, target, onChoose }: { style: R
         <span className="block"><Eyebrow as="span" tone="var(--color-ink-dim)">{onMap ? `${STYLE_NAME[style]} · ${picked ? 'doorgetrokken' : 'gestreept'}` : STYLE_NAME[style]}</Eyebrow></span>
         <span className="block text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(outcome.proposal)}</span>
         <span className="block text-sm tabular-nums leading-snug" style={dim}>{proposalFacts(outcome.proposal)}</span>
+        {loopLines(outcome.proposal, target, proposalNotes(outcome.proposal, target)).warn.map((note) => (
+          <span key={note} className="block text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</span>
+        ))}
       </span>
       {picked && <span className="shrink-0" style={{ color: 'var(--color-ink)' }} aria-hidden><Icon name="vinkje" size={18} /></span>}
     </button>
@@ -145,6 +144,7 @@ function LoopRow({ style, outcome, picked, onMap, target, onChoose }: { style: R
 // paneel weg is: na de tik op sluiten gaat er geen aanroep meer de deur uit.
 export function RoutePanel({ template, date, onDecline, closing = false }: { template: SessionTemplate; date: string; onDecline: () => void; closing?: boolean }) {
   const { settings, program, sessionLogs, updateSettings } = useAppData();
+  const motion = useMotionMode();
   const place = settings.homeLocation;
   const lat = place?.lat;
   const lon = place?.lon;
@@ -392,7 +392,7 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
       case 'loops':
         return plans ? (
           <div key={p} className="flex flex-col gap-2">
-            {order.map((s) => <LoopRow key={s} style={s} outcome={plans[s]} picked={s === picked} onMap={!noMap && okStyles.length > 1} target={target} onChoose={() => setChosen(s)} />)}
+            {order.map((s) => <LoopRow key={s} style={s} outcome={plans[s]} picked={s === picked} onMap={!noMap && okStyles.length > 1} target={target} motion={motion} onChoose={() => setChosen(s)} />)}
           </div>
         ) : null;
       case 'found':

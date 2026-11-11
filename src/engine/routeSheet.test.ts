@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { RouteProposal, RouteTarget } from '../models/route';
 import { proposalNotes } from './routePlanner';
-import { ROUTE_MAP_HEIGHT, loopLines, mapFallbackLine, pickTransition, routeSheetParts, routeSheetStage, type StageInput } from './routeSheet';
+import { ROUTE_MAP_HEIGHT, loopLines, mapFallbackLine, pickTransition, routeOutcomeLine, routeSheetParts, routeSheetStage, type StageInput } from './routeSheet';
+import { SAVE_HINT, SEND_HINT } from './routeSend';
 
 const base: StageInput = { hasPlace: true, consent: true, asked: true, savedKnown: true, waitingForPoint: false, search: { kind: 'plans' } };
 const target: RouteTarget = { distanceKm: 10, ascentM: 200 };
@@ -31,9 +32,9 @@ describe('het blad Route: de stand', () => {
 });
 
 describe('het blad Route: de volgorde', () => {
-  it('de kaart bovenaan, dan de gekozen lus met de hoofdknop, dan de lussen als rijen', () => {
+  it('de kaart bovenaan, dan de lussen als rijen, dan de hoofdknop direct eronder (Pathfinder)', () => {
     const parts = routeSheetParts('plans', { anyOk: true, anyFailed: false });
-    expect(parts.slice(0, 3)).toEqual(['map', 'chosen', 'loops']);
+    expect(parts.slice(0, 3)).toEqual(['map', 'loops', 'chosen']);
     expect(parts).not.toContain('retry');
     expect(parts.at(-1)).toBe('sources');
   });
@@ -91,5 +92,24 @@ describe('het blad Route: Beweging', () => {
     expect(pickTransition('full')).toContain('150ms ease-out');
     expect(pickTransition('calm')).toBe('none');
     expect(pickTransition('off')).toBe('none');
+  });
+});
+
+describe('het blad Route: onder de hoofdknop alleen de uitkomst', () => {
+  it('voor een tik niets; de uitleg staat achter de i', () => {
+    expect(routeOutcomeLine(true)).toBeUndefined();
+    expect(routeOutcomeLine(false)).toBeUndefined();
+  });
+  it('na downloaden of opslaan alleen waar het bestand staat', () => {
+    expect(routeOutcomeLine(false, { file: { ok: true, where: 'download', name: 'lus.gpx' } })).toEqual({ text: 'Gedownload als lus.gpx.', warn: false });
+    expect(routeOutcomeLine(false, { file: { ok: true, where: 'folder', name: 'lus.gpx', label: 'Downloads' } })?.text).toBe('Opgeslagen als lus.gpx in Downloads.');
+    for (const out of [routeOutcomeLine(false, { file: { ok: true, where: 'download', name: 'x.gpx' } }), routeOutcomeLine(true, { send: { kind: 'shared' } })]) {
+      expect(out?.text).not.toContain(SAVE_HINT);
+      expect(out?.text).not.toContain(SEND_HINT);
+    }
+  });
+  it('een fout blijft een fout, in amber', () => {
+    expect(routeOutcomeLine(false, { file: { ok: false } })).toEqual({ text: 'Opslaan lukte niet. Probeer het nog eens.', warn: true });
+    expect(routeOutcomeLine(true, { send: { kind: 'unavailable' } })?.warn).toBe(true);
   });
 });

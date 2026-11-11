@@ -50,6 +50,15 @@ describe('het blad Route', () => {
   it('het blad heeft een vaste hoogte: het springt niet als de lussen er zijn', () => {
     expect(line).toContain('relative h-[90vh] w-full');
   });
+  it('de tekstknop bij de kaart zegt dat hij de start verandert (Pathfinder)', () => {
+    expect(map).toContain('>Zet mijn plek als start<');
+    expect(map).not.toContain('>Gebruik waar ik nu ben<');
+  });
+  it('de uitleg na de knop staat achter de i, niet onder de knop', () => {
+    expect(panel).toContain('routeOutcomeLine(');
+    expect(panel).not.toContain('routeActionLine(');
+    expect(line).toContain('{sender ? SEND_HINT : SAVE_HINT}');
+  });
   it('een andere lus kiezen volgt Beweging', () => {
     expect(panel).toContain('transition: pickTransition(motion)');
   });
