@@ -352,3 +352,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Pathfinder doorloop Briefing spoor 2, pathfinder, sonnet, 101k, 8 min, 2 moet (1 herstel, 1 spoor 6), 6 mag
 - 2026-11-11, Briefing spoor 2 (2 rondes), Sherpa, opus (sessie), zie sessie, 1 herstelronde plus Garmin-uitleg door coördinator
 - 2026-11-11, Pathfinder herdoorloop Briefing spoor 2, pathfinder, sonnet, 110k (totaal), 2 min, 1 moet (360x640) naar backlog, 1 klein door coördinator
+- 2026-11-11, Pathfinder vooraf plekken en routes, pathfinder, sonnet, 31k, 1 min, plek en volgorde (2 voor 1)
