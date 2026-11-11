@@ -35,7 +35,7 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
   - Vaste ijktocht elke zes tot acht weken als kompas voor de berg, inplannen via Akkoord. Planning, Fable.
   - De beenindex leert van je ochtendantwoorden (`learning.ts#indexChecks`), begrensd, veiligheidsregels nooit soepeler, met migratiestap. Fable.
   - Routes ook voor wandelen en rugzaktraining, met klimtempo. Na de twee route-bouwers. Opus, engine op Fable.
-- Info-blad bouwen volgens richting A van `docs/visie/Ontwerp Info-blad.md`, met het advies op alle vijf vragen (eigenaar 11 november: "alle punten vind ik goed"). In sporen: eerst blad Je horloge met de knop Horloge, dan de rijen in Week en op Vandaag, dan Uitleg opschonen, dan Datavelden bekijken naar Gidsen. Opus.
+- Info-blad, spoor 3 en 4 (spoor 1 en 2 live op 11 november): Uitleg opschonen (De stappen eruit, namen gelijk: "Meer over deze training" en de i), daarna Datavelden bekijken naar Gidsen. Plus van Warden: de rij Je horloge op Vandaag met de stand eronder zoals in Week; garmin in useWatchSheet zelf ophalen in plaats van buildWorkoutPlan in drie componenten. Opus.
 
 ## Rooster voor de bouwmomenten
 
@@ -53,6 +53,7 @@ Beantwoord op 11 november (eigenaar): APK 158, Precies, vanaf je deur en de data
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Je horloge (knop Horloge op het trainingsscherm, rij in Week en op Vandaag; workout en datavelden op één plek; besluiten `2026-11-11-info-blad-horloge.md` en `-spoor-2.md`).
 - Live op 11 november: Route voorstellen verfijnd (te korte lus bij veel punten dichtbij, melding zonder heuvels, startpunt preciezer, helling zonder hoogte telt niet mee; besluit `2026-11-11-route-verfijnen.md`).
 
 ## Groot
