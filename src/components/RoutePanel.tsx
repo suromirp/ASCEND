@@ -219,7 +219,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
         <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
         <TextButton onClick={() => void choose('exact')}>Precies, vanaf je deur</TextButton>
         <p className="text-xs leading-snug" style={dim}>
-          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap op je plek, afgerond op ongeveer een kilometer. Het punt wordt alleen op dit toestel bewaard.
+          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap om hetzelfde punt. Het punt wordt alleen op dit toestel bewaard.
         </p>
         <TextButton tone="dim" onClick={() => void choose('approx')}>Ongeveer</TextButton>
         <p className="text-xs leading-snug" style={dim}>

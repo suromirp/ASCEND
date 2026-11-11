@@ -818,7 +818,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Simpel', text: 'dezelfde helling op en af tot de hoogtemeters er zijn. Bij een vlakke training heen en terug over hetzelfde pad.' },
       { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
       { head: 'Naar je horloge', text: 'met Naar Garmin Connect kies je de app van je horloge en sla je de lus op als koers; anders download je het GPX-bestand.' },
-      { head: 'Wat de deur uit gaat', text: 'standaard je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Kies je bij Startpunt van je lus Precies, dan gaat alleen je startpunt precies naar de routeplanner; OpenStreetMap houdt de afgeronde plek. Geen naam, geen adres. De route wordt niet bewaard.' },
+      { head: 'Wat de deur uit gaat', text: 'standaard je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Kies je bij Startpunt van je lus Precies, dan gaat je startpunt precies naar de routeplanner, en zoekt OpenStreetMap heuvels en paden om dat punt. Geen naam, geen adres. De route wordt niet bewaard.' },
     ],
   },
   routeStartpunt: {
@@ -827,7 +827,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Ongeveer', text: 'je plaats, binnen een kilometer. De lus begint tot ongeveer 700 m van huis.' },
       { head: 'Precies', text: 'je kiest Gebruik waar ik nu ben, bij je deur. Dat punt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt alleen op dit toestel bewaard. Wis startpunt haalt het weg.' },
-      { head: 'OpenStreetMap', text: 'heuvels en paden zoekt het altijd op je afgeronde plek.' },
+      { head: 'OpenStreetMap', text: 'heuvels en paden zoekt het bij Precies om je startpunt, bij Ongeveer om je afgeronde plek.' },
+      { head: 'Het dichtstbijzijnde pad', text: 'de routeplanner begint op het pad of de weg het dichtst bij je startpunt. Het stukje ernaartoe is een rechte lijn.' },
     ],
   },
   datavelden: {

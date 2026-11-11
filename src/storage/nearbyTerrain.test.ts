@@ -34,6 +34,19 @@ describe('heuvels in de buurt in de opslag', () => {
     expect(await refreshNearbyTerrain(other, { fetchImpl: as(fail) })).toBeUndefined();
   });
 
+  it('een eigen startpunt (exact) heeft een eigen plek in de cache, naast de afgeronde plek', async () => {
+    const f = ok();
+    const point = { name: '', lat: 52.1235, lon: 5.6543 };
+    const exact = await refreshNearbyTerrain(point, { fetchImpl: as(f), exact: true });
+    expect(exact?.place).toEqual(point);
+    expect(terrainKey(point, true)).toBe('52.1235,5.6543');
+    expect(await getNearbyTerrain(point, true)).toEqual(exact);
+    // De afgeronde plek is een andere sleutel: die is er nog niet.
+    expect(await getNearbyTerrain(point)).toBeUndefined();
+    await refreshNearbyTerrain(point, { fetchImpl: as(f), exact: true });
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+
   it('bewaart hoogstens zes plekken', async () => {
     for (let i = 0; i < 8; i++) await refreshNearbyTerrain({ name: '', lat: 50 + i, lon: 5 }, { fetchImpl: as(ok()), now: new Date(Date.UTC(2026, 10, 1 + i)) });
     expect(await getNearbyTerrain({ name: '', lat: 50, lon: 5 })).toBeUndefined();

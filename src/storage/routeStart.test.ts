@@ -105,6 +105,12 @@ describe('Gebruik waar ik nu ben', () => {
     expect(await getRouteStartPoint()).toBeUndefined();
   });
 
+  it('een plek die een paar straten naast je deur kan liggen telt ook niet: de grens is 50 m', async () => {
+    expect(await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 51 }) })).toEqual({ ok: false, reason: 'coarse' });
+    expect(await getRouteStartPoint()).toBeUndefined();
+    expect((await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 50 }) })).ok).toBe(true);
+  });
+
   it('een browser zonder locatie en een kapot antwoord geven een reden', async () => {
     expect(await locateStartHere({ askPermission: noAsk, locate: async () => { throw new LocateError('unsupported'); } })).toEqual({ ok: false, reason: 'unsupported' });
     expect(await locateStartHere({ askPermission: noAsk, locate: async () => ({ lat: NaN, lon: 1, accuracyM: 5 }) })).toEqual({ ok: false, reason: 'unavailable' });

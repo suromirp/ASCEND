@@ -1,6 +1,7 @@
 // ASCEND: wat er rond een plek ligt voor heuvels en trappen (engine/nearbyTerrain.ts), per plek op
 // dit toestel bewaard onder een eigen sleutel. Een cache van kaartgegevens: hij gaat nooit mee in de
-// back-up en bevat alleen afgeronde posities, geen adres en geen naam. Per plek hoogstens eens per
+// back-up en bevat geen adres en geen naam; alleen bij een eigen startpunt van een lus (`exact`)
+// staat dat punt erin op vier decimalen, anders alleen de afgeronde plek. Per plek hoogstens eens per
 // dertig dagen opgehaald; hoogstens zes plekken bewaard. Gooit nooit: zonder antwoord is er gewoon
 // geen regel.
 //
@@ -18,7 +19,9 @@ const ASKED_KEY = 'nearbyTerrainAsked';
 export const TERRAIN_FETCH_DAYS = 30;
 export const TERRAIN_MAX_PLACES = 6;
 
-export const terrainKey = (place: WeatherPlace): string => `${roundCoordinate(place.lat).toFixed(2)},${roundCoordinate(place.lon).toFixed(2)}`;
+// `exact` (het eigen startpunt van een lus): een eigen sleutel op vier decimalen, naast de afgeronde plek.
+export const terrainKey = (place: WeatherPlace, exact = false): string =>
+  exact ? `${place.lat.toFixed(4)},${place.lon.toFixed(4)}` : `${roundCoordinate(place.lat).toFixed(2)},${roundCoordinate(place.lon).toFixed(2)}`;
 
 function valid(t: unknown): t is NearbyTerrain {
   const x = t as NearbyTerrain | undefined;
@@ -35,8 +38,8 @@ async function readAll(): Promise<Record<string, NearbyTerrain>> {
   }
 }
 
-export async function getNearbyTerrain(place: WeatherPlace): Promise<NearbyTerrain | undefined> {
-  return (await readAll())[terrainKey(place)];
+export async function getNearbyTerrain(place: WeatherPlace, exact = false): Promise<NearbyTerrain | undefined> {
+  return (await readAll())[terrainKey(place, exact)];
 }
 
 // Of de gebruiker op dit toestel ja zei op de eerste vraag. Een nee wordt niet bewaard: dat zet de
@@ -62,7 +65,7 @@ const inFlight = new Map<string, Promise<NearbyTerrain | undefined>>();
 // Wat er bewaard is als het vers genoeg is, anders een nieuwe zoektocht. Bij een fout blijft het
 // oude resultaat van dezelfde plek staan, zonder het te vernieuwen.
 export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptions = {}): Promise<NearbyTerrain | undefined> {
-  const key = terrainKey(place);
+  const key = terrainKey(place, options.exact);
   const running = inFlight.get(key);
   if (running) return running;
   const job = (async () => {

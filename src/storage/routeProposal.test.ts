@@ -29,13 +29,13 @@ describe('findRoutes', () => {
     const terrain = vi.fn(async () => undefined);
     const found = await findRoutes(place, target, { route, terrain, offline: () => false });
     expect(found.kind).toBe('plans');
-    expect(terrain).toHaveBeenCalledWith({ name: '', lat: 52.12, lon: 5.65 });
+    expect(terrain).toHaveBeenCalledWith({ name: '', lat: 52.12, lon: 5.65 }, false);
     expect(JSON.stringify(seen)).not.toContain('52.123456');
     expect(JSON.stringify(seen)).not.toContain('5.654321');
     expect(seen[0]).toEqual({ lat: 52.12, lon: 5.65 });
   });
 
-  it('met Precies gaat alleen het startpunt precies naar de routeplanner, de kaart blijft op de afgeronde plek', async () => {
+  it('met Precies gaat het startpunt precies naar de routeplanner, en de kaart zoekt om dat punt', async () => {
     const exact = { lat: 52.12789, lon: 5.65123 };
     const seen: RoutePoint[] = [];
     const route: RouteFn = async (w) => { seen.push(...w); return straight(w); };
@@ -43,7 +43,7 @@ describe('findRoutes', () => {
     const found = await findRoutes({ lat: 50.5, lon: 4.5 }, target, { route, terrain, offline: () => false }, exact);
     expect(found.kind).toBe('plans');
     expect(seen[0]).toEqual(exact);
-    expect(terrain).toHaveBeenCalledWith({ name: '', lat: 52.13, lon: 5.65 });
+    expect(terrain).toHaveBeenCalledWith({ name: '', ...exact }, true);
     expect(terrain).toHaveBeenCalledTimes(1);
   });
 
@@ -92,7 +92,7 @@ describe('findRoutes', () => {
     const route = vi.fn(straight);
     const terrain = vi.fn(async () => hills);
     const found = await findRoutes(place, { distanceKm: 10.5, ascentM: 300 }, { route, terrain, offline: () => false });
-    expect(found.kind === 'plans' && found.plans.found).toEqual({ hills: 1, tallestM: 24 });
+    expect(found.kind === 'plans' && found.plans.found).toEqual({ hills: 1, unknown: 0, tallestM: 24, radiusM: 3000 });
     expect(terrain).toHaveBeenCalledTimes(1);
     expect(route.mock.calls.length).toBeLessThanOrEqual(2 * MAX_ROUTE_CALLS);
     // Zonder netwerk of na de grens: geen plannen, dus ook geen telling.
