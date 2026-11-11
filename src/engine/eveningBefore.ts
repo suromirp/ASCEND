@@ -243,7 +243,7 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   // krijgt geen knop (besluit 2026-11-11-briefing.md); de rij Morgen in Je dag opent het blad met Briefing.
   if (input.routeOn && routeShownFor(template, input.trainingPlaces?.[session.id])) {
     const target = routeTarget({ template, date, program: input.program, logs: input.logs, testPace: input.easyPace });
-    lines.push(`Route ${targetText(target)}: je lus staat in de briefing.`);
+    lines.push(`Route ${targetText(target)}: je lus staat in de Briefing.`);
   }
 
   return { label, lines };
