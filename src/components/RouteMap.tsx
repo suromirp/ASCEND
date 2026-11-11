@@ -1,13 +1,14 @@
 // ASCEND: de kaart bij Route voorstellen. Alle voorgestelde lussen (de gekozen doorgetrokken in mint,
 // de andere licht gestreept op een donkere rand), het startpunt als ring en je plek als ijsblauwe stip.
 // Tik op een lus kiest hem; tik op de kaart zet een ring neer en Start hier maakt dat punt je vaste
-// punt en zoekt opnieuw. Rendert alleen: de regie staat in routeMapView.ts, de stijlen en vormen in
+// punt en zoekt opnieuw. De uitleg daarover staat achter de i van het blad. Rendert alleen: de regie staat in routeMapView.ts, de stijlen en vormen in
 // engine/routeMap.ts, het bewaren van het punt in storage/routeStart.ts#startFromMap.
 // Docs: docs/beslissingen/2026-11-11-route-kaart.md.
 
 import { useEffect, useRef, useState } from 'react';
 import type { RoutePoint, RouteStyle } from '../models/route';
 import { readMapColors, type MapBase, type MapRoute } from '../engine/routeMap';
+import { ROUTE_MAP_HEIGHT, mapFallbackLine } from '../engine/routeSheet';
 import { hasWebGL2, loadMapLibre } from '../integrations/mapLibre';
 import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { withTimeout } from '../utils/withTimeout';
@@ -45,7 +46,7 @@ function MapButton({ icon, label, onClick, disabled }: { icon: 'locatie' | 'inbe
   );
 }
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offerHere = true }: {
+export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offerHere = true, onNoMap }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
@@ -56,6 +57,8 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
   onStart: (from: { tap: RoutePoint } | 'here') => Promise<StartAnswer>;
   // Gebruik waar ik nu ben als vast punt; niet bij Waar je nu bent, daar is de lus al vanaf je plek.
   offerHere?: boolean;
+  // De kaart kan niet tekenen of laden: dan staan de lussen alleen als tekst en zeggen de rijen niet hoe ze op de kaart staan.
+  onNoMap?: () => void;
 }) {
   const motion = useMotionMode();
   const box = useRef<HTMLDivElement>(null);
@@ -154,19 +157,27 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
     if (from === 'here') setMe(found.point);
   }
 
+  const noMap = state.kind === 'unsupported' || state.kind === 'failed';
+  const onNoMapRef = useRef(onNoMap);
+  useEffect(() => {
+    onNoMapRef.current = onNoMap;
+  });
+  useEffect(() => {
+    if (noMap) onNoMapRef.current?.();
+  }, [noMap]);
+
   const dim = { color: 'var(--color-ink-dim)' };
   if (state.kind === 'unsupported' || state.kind === 'failed') {
-    const first = state.kind === 'unsupported' ? 'Deze telefoon kan de kaart niet tekenen.' : 'De kaart kon niet laden.';
-    return <p role="status" className="text-sm leading-snug" style={dim}>{routes.length > 0 ? `${first} De lussen staan hieronder.` : first}</p>;
+    return <p role="status" className="text-sm leading-snug" style={dim}>{mapFallbackLine(state.kind, routes.length > 0)}</p>;
   }
 
   const status = busy === 'here' ? 'Je locatie wordt bepaald. Dat duurt hoogstens 15 seconden.' : busy === 'me' ? 'Je locatie wordt bepaald.' : line;
 
   return (
     <div className="flex flex-col gap-1">
-      {/* Slepen en knijpen horen bij de kaart: niet bij het blad en niet bij de pagina. Ongeveer vierkant,
-          maar nooit zo hoog dat de knoppen eronder op een kleine telefoon uit beeld vallen. */}
-      <div data-no-sheet-drag="" className="relative w-full overflow-hidden rounded-xl border" style={{ aspectRatio: '1 / 1', maxHeight: '58vh', borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: 'none', overscrollBehavior: 'contain' }}>
+      {/* Slepen en knijpen horen bij de kaart: niet bij het blad en niet bij de pagina. Een vaste hoogte
+          (engine/routeSheet.ts), zodat de gekozen lus en de hoofdknop eronder op 360 px nog in beeld staan. */}
+      <div data-no-sheet-drag="" className="relative w-full overflow-hidden rounded-xl border" style={{ height: ROUTE_MAP_HEIGHT, borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: 'none', overscrollBehavior: 'contain' }}>
         {/* MapLibre zet zelf position: relative op dit vak; daarom de volle maat, niet absolute. */}
         <div ref={box} style={{ width: '100%', height: '100%' }} />
         {state.kind === 'loading' && <p role="status" className="absolute bottom-1 left-2 text-xs" style={dim}>De kaart wordt geladen.</p>}
@@ -180,13 +191,13 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
           </a>
         )}
       </div>
-      <p className="text-xs leading-snug" style={dim}>
-        De ring is de start. Tik op de kaart voor een ander startpunt; Start hier bewaart dat punt als je vaste punt en zet Startpunt van je lus op Vast punt.
-      </p>
-      <div className="flex flex-wrap gap-x-5">
-        {pick && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}
-        {offerHere && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt('here')}>Gebruik waar ik nu ben</TextButton>}
-      </div>
+      {/* De uitleg over de ring en Start hier staat achter de i van het blad (MAP_HINT). */}
+      {(pick || offerHere) && (
+        <div className="flex flex-wrap gap-x-5">
+          {pick && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}
+          {offerHere && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt('here')}>Gebruik waar ik nu ben</TextButton>}
+        </div>
+      )}
       {status && <p role="status" className="text-xs leading-snug" style={dim}>{status}</p>}
     </div>
   );

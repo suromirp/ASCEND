@@ -213,7 +213,7 @@ export function TodayMissionCard({
           )}
           {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-0.5" onOpen={() => navigate('/weer')} />}
           <HillsNearbyLine template={template} date={todayISO()} className="mt-1" />
-          <RouteProposalLine template={template} date={todayISO()} mode="sheet" />
+          <RouteProposalLine template={template} date={todayISO()} />
           <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
           {session && <WatchStatusRow session={session} template={template} offer={false} className="mt-3" />}
         </div>

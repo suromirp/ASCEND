@@ -474,7 +474,7 @@ function GeneralLogger({
             {template.cooldown && template.cooldown.length > 0 && (
               <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
             )}
-            {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} mode="inline" row place={guidanceMode === 'ascend_guided' ? (modalityKey ?? null) : null} />}
+            {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} row place={guidanceMode === 'ascend_guided' ? (modalityKey ?? null) : null} />}
             {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={closeSheet} className="py-2" plain />}
           </div>
         ) : plannedSession && !preview ? (

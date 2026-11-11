@@ -3,18 +3,21 @@
 // zoeken, met wat er de deur uit gaat. Zoeken heeft een grens in tijd; zonder netwerk staat er één
 // rustige regel. Na het zoeken zegt één regel wat er op de kaart lag (engine/routePlanner.ts#searchLines).
 // Het paneel rekent zelf niets en plant niets: een route is alleen om te lopen. Zolang er gezocht
-// wordt, staat RouteSearching op de plek van de kaart en de blokken; de kaart komt pas met de lussen,
-// zodat hij ze bij het openen meteen allemaal in beeld heeft (besluit 2026-11-11-route-kaart-2.md).
+// wordt, staat RouteSearching op de plek van de kaart, met dezelfde vaste hoogte; de kaart komt pas met
+// de lussen, zodat hij ze bij het openen meteen allemaal in beeld heeft (besluit 2026-11-11-route-kaart-2.md).
+// De volgende delen (engine/routeSheet.ts#routeSheetParts): de kaart bovenaan, de gekozen lus met de
+// hoofdknop eronder, dan elke lus als rij om te kiezen. Nergens een uitklap; de lange uitleg staat
+// achter de i van het blad (RouteProposalLine.tsx#RouteInfoSheet). Spoor 2 van de Briefing.
 
 import { useEffect, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
-import type { RoutePoint, RouteProposal, RouteStyle } from '../models/route';
+import type { RoutePoint, RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { resolveRouteStyle, routeTarget, targetText } from '../engine/routeTarget';
 import { MIN_ASCENT_TARGET_M, failureLine, proposalFacts, proposalNotes, proposalTitle, searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
-import { SEND_LABEL, WATCH_STEPS, WATCH_STEPS_TITLE, routeActionLine, type RouteSendOutcome } from '../engine/routeSend';
+import { SEND_LABEL, routeActionLine, type RouteSendOutcome } from '../engine/routeSend';
 import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
 import { chooseStart, hereStart, hereStartLine, resolveRouteStart, roundHere, START_LINE_APPROX, START_LINE_EXACT, START_LINE_HERE, startFailureLine, startFailureReason, type RouteStartMode, type StartFailure } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
@@ -28,9 +31,12 @@ import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { withTimeout } from '../utils/withTimeout';
 import { TextButton } from './TextButton';
 import { RouteMap } from './RouteMap';
-import { mapLegendLine, resolveMapBase } from '../engine/routeMap';
+import { resolveMapBase } from '../engine/routeMap';
+import { NO_PLACE_LINE, OFFLINE_LINE, ROUTE_MAP_HEIGHT, TIMEOUT_LINE, loopLines, pickTransition, routeSheetParts, routeSheetStage, type RouteSheetPart } from '../engine/routeSheet';
+import { useMotionMode } from './motion';
+import { Icon } from './icons';
 import { roundStart } from '../engine/routeTarget';
-import { Eyebrow } from './ui';
+import { Eyebrow, PrimaryButton } from './ui';
 
 const CONSENT_LIMIT_MS = 3000;
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
@@ -40,8 +46,9 @@ const STYLE_LINE: Record<RouteStyle, string> = {
 };
 const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
 
-// `onMap`: hoe de lus op de kaart staat als er meer dan één is; dezelfde woorden als de regel boven de kaart.
-function RouteBlock({ style, outcome, primary, date, target, sender, onMap, onChoose }: { style: RouteStyle; outcome: PlanOutcome; primary: boolean; date: string; target: Parameters<typeof proposalNotes>[1]; sender: FileSender | null; onMap?: 'doorgetrokken' | 'gestreept'; onChoose?: () => void }) {
+// De gekozen lus, onder de kaart: soort en titel, afstand en hoogtemeters, een melding in amber in een
+// eigen regel, en de hoofdknop. Elke lus heeft zijn eigen uitkomst (`key` op de soort).
+function ChosenLoop({ style, proposal, date, target, sender }: { style: RouteStyle; proposal: RouteProposal; date: string; target: RouteTarget; sender: FileSender | null }) {
   // De laatste uitkomst van een van de twee knoppen; 'busy' zolang er een loopt (beide hebben een grens in tijd).
   const [done, setDone] = useState<{ send: RouteSendOutcome } | { file: RouteFileResult } | 'busy' | undefined>();
   const mounted = useRef(true);
@@ -51,63 +58,75 @@ function RouteBlock({ style, outcome, primary, date, target, sender, onMap, onCh
       mounted.current = false;
     };
   }, []);
-  const gpx = (p: RouteProposal) => routeGpx(p.points, gpxCourseName(style, p.distanceM));
+  const gpx = routeGpx(proposal.points, gpxCourseName(style, proposal.distanceM));
 
-  async function download(p: RouteProposal) {
+  async function download() {
     setDone('busy');
-    const file = await saveRouteGpx(gpx(p), style, date);
+    const file = await saveRouteGpx(gpx, style, date);
     if (mounted.current) setDone({ file });
   }
 
-  async function send(p: RouteProposal) {
+  async function send() {
     setDone('busy');
-    const result = await sendRouteGpx(gpx(p), style, date, sender);
+    const result = await sendRouteGpx(gpx, style, date, sender);
     if (mounted.current) setDone({ send: result });
   }
 
   // Eén regel onder de knoppen: eerst wat je doet, na een tik de uitkomst op dezelfde plek.
   const line = routeActionLine(!!sender, done === 'busy' ? undefined : done);
+  const { warn, info } = loopLines(proposal, target, proposalNotes(proposal, target));
 
   return (
-    <div className="flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-      <Eyebrow tone="var(--color-ink-dim)">{onMap ? `${STYLE_NAME[style]} · ${onMap}` : STYLE_NAME[style]}</Eyebrow>
-      {outcome.ok ? (
-        <>
-          <p className="text-base font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(outcome.proposal)}</p>
-          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalFacts(outcome.proposal)}</p>
-          {proposalNotes(outcome.proposal, target).map((note) => (
-            <p key={note} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
-          ))}
-          <div className="flex flex-wrap gap-x-5">
-            {sender && <TextButton tone={primary ? 'action' : 'dim'} disabled={done === 'busy'} onClick={() => void send(outcome.proposal)}>{SEND_LABEL}</TextButton>}
-            <TextButton tone={primary && !sender ? 'action' : 'dim'} disabled={done === 'busy'} onClick={() => void download(outcome.proposal)}>GPX downloaden</TextButton>
-            {onChoose && <TextButton tone="dim" onClick={onChoose}>Op de kaart kiezen</TextButton>}
-          </div>
-          {/* Plaats voor drie regels: een langere uitkomst duwt niets weg. */}
-          <p role="status" className="min-h-[50px] text-xs leading-snug" style={{ color: line.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line.text}</p>
-        </>
-      ) : (
-        <>
-          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{STYLE_LINE[style]}</p>
-          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{failureLine(style, outcome, target.ascentM < MIN_ASCENT_TARGET_M)}</p>
-        </>
-      )}
+    <div className="flex flex-col gap-1">
+      <p className="text-base font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{STYLE_NAME[style]} · {proposalTitle(proposal)}</p>
+      <p className="text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalFacts(proposal)}</p>
+      {warn.map((note) => (
+        <p key={note} className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</p>
+      ))}
+      <div className="mt-2">
+        {sender
+          ? <PrimaryButton disabled={done === 'busy'} onClick={() => void send()}>{SEND_LABEL}</PrimaryButton>
+          : <PrimaryButton disabled={done === 'busy'} onClick={() => void download()}>GPX downloaden</PrimaryButton>}
+      </div>
+      {sender && <div><TextButton tone="dim" disabled={done === 'busy'} onClick={() => void download()}>GPX downloaden</TextButton></div>}
+      {/* Plaats voor drie regels: een langere uitkomst duwt niets weg. */}
+      <p role="status" className="min-h-[50px] text-xs leading-snug" style={{ color: line.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line.text}</p>
+      {info.map((note) => (
+        <p key={note} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
+      ))}
     </div>
   );
 }
 
-// Van Garmin Connect naar het horloge: drie stappen achter een tik, onder de lussen.
-function WatchSteps() {
-  const [open, setOpen] = useState(false);
+// Een lus als rij om te kiezen: geen uitklap. De gekozen rij heeft een rand in inkt; het mint accent
+// is de lus op de kaart. Een lus die er niet kwam is een rij tekst die je niet kunt kiezen.
+function LoopRow({ style, outcome, picked, onMap, target, onChoose }: { style: RouteStyle; outcome: PlanOutcome; picked: boolean; onMap: boolean; target: RouteTarget; onChoose: () => void }) {
+  const motion = useMotionMode();
+  const dim = { color: 'var(--color-ink-dim)' };
+  if (!outcome.ok) {
+    return (
+      <div className="flex min-h-[56px] flex-col justify-center rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)' }}>
+        <Eyebrow tone="var(--color-ink-dim)">{STYLE_NAME[style]}</Eyebrow>
+        <p className="text-sm leading-snug" style={dim}>{STYLE_LINE[style]}</p>
+        <p className="text-sm leading-snug" style={dim}>{failureLine(style, outcome, target.ascentM < MIN_ASCENT_TARGET_M)}</p>
+      </div>
+    );
+  }
   return (
-    <div>
-      <TextButton tone="dim" icon="omlaag" flipped={open} aria-expanded={open} onClick={() => setOpen((v) => !v)}>{WATCH_STEPS_TITLE}</TextButton>
-      {open && (
-        <ol className="flex list-decimal flex-col gap-1 pl-5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          {WATCH_STEPS.map((step) => <li key={step}>{step}</li>)}
-        </ol>
-      )}
-    </div>
+    <button
+      type="button"
+      aria-pressed={picked}
+      onClick={onChoose}
+      className="flex min-h-[56px] w-full items-center gap-3 rounded-xl border px-3 py-2 text-left"
+      style={{ borderColor: picked ? 'var(--color-ink)' : 'var(--color-card-border)', background: picked ? 'var(--color-raised)' : 'transparent', transition: pickTransition(motion) }}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block"><Eyebrow as="span" tone="var(--color-ink-dim)">{onMap ? `${STYLE_NAME[style]} · ${picked ? 'doorgetrokken' : 'gestreept'}` : STYLE_NAME[style]}</Eyebrow></span>
+        <span className="block text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(outcome.proposal)}</span>
+        <span className="block text-sm tabular-nums leading-snug" style={dim}>{proposalFacts(outcome.proposal)}</span>
+      </span>
+      {picked && <span className="shrink-0" style={{ color: 'var(--color-ink)' }} aria-hidden><Icon name="vinkje" size={18} /></span>}
+    </button>
   );
 }
 
@@ -135,6 +154,8 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
   const [here, setHere] = useState<{ attempt: number; found: StartLocation } | undefined>();
   // De stap die nu loopt, voor RouteSearching; hoort bij één zoektocht (de sleutel).
   const [step, setStep] = useState<{ key: string; step: RouteSearchStep } | undefined>();
+  // De kaart kon niet tekenen: de rijen zeggen dan niet doorgetrokken of gestreept.
+  const [noMap, setNoMap] = useState(false);
   const mounted = useRef(true);
   const locateStop = useRef(new AbortController());
   useEffect(() => {
@@ -277,11 +298,20 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
   const [sender] = useState(routeSender);
   const dim = { color: 'var(--color-ink-dim)' };
 
-  if (lat === undefined || lon === undefined) {
-    return <p className="text-sm leading-snug" style={dim}>Kies eerst een plaats bij Instellingen, Vandaag en meldingen, Plaats. Daar begint de lus.</p>;
+  const stage = routeSheetStage({
+    hasPlace: lat !== undefined && lon !== undefined,
+    consent,
+    asked,
+    savedKnown: saved !== undefined,
+    waitingForPoint: waitingForPoint && !mapStart,
+    search,
+  });
+
+  if (stage === 'no-place' || lat === undefined || lon === undefined) {
+    return <p className="text-sm leading-snug" style={dim}>{NO_PLACE_LINE}</p>;
   }
-  if (consent === undefined) return <p role="status" className="min-h-[20px] text-sm" style={dim} />;
-  if (!asked) {
+  if (stage === 'reading') return <p role="status" className="min-h-[20px] text-sm" style={dim} />;
+  if (stage === 'first-question') {
     return (
       <div className="flex flex-col">
         <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
@@ -303,9 +333,7 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
       </div>
     );
   }
-
-  if (saved === undefined) return <p role="status" className="min-h-[20px] text-sm" style={dim} />;
-  if (waitingForPoint && !mapStart) {
+  if (stage === 'needs-point') {
     return (
       <div className="flex flex-col">
         <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. Sta bij je deur en kies Gebruik waar ik nu ben. Dat punt gaat als start van je lus naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt alleen op dit toestel bewaard.</p>
@@ -321,60 +349,67 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
   const order: RouteStyle[] = first === 'simple' ? ['simple', 'adventure'] : ['adventure', 'simple'];
   const plans = search !== 'busy' && search.kind === 'plans' ? search.plans : undefined;
   const sources = plans ? [...new Set(order.flatMap((s) => { const o = plans[s]; return o.ok ? [SOURCE_NAME[o.proposal.source]] : []; }))] : [];
-  const anyFailed = plans ? order.some((s) => !plans[s].ok) : false;
   const okStyles = plans ? order.filter((s) => plans[s].ok) : [];
   const picked = chosen && okStyles.includes(chosen) ? chosen : okStyles[0];
+  const pickedOutcome = plans && picked ? plans[picked] : undefined;
   const mapRoutes = plans ? okStyles.flatMap((s) => { const o = plans[s]; return o.ok ? [{ style: s, points: o.proposal.points }] : []; }) : [];
   const pickedRoute = mapRoutes.find((r) => r.style === picked);
   const mapStartPoint = pickedRoute?.points[0] ?? exactPoint ?? roundStart({ lat, lon });
-  const legend = mapLegendLine(okStyles, picked, STYLE_NAME);
   const steps = searchSteps(hereMode);
   const currentStep = locatingHere ? 'locate' : step?.key === key ? step.step : 'terrain';
-  const after = search === 'busy'
-    ? ''
-    : search.kind === 'offline'
-      ? 'Zonder netwerk is er geen route. Probeer het later nog eens.'
-      : search.kind === 'timeout'
-        ? 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.'
-        : searchLines(search.plans, target).join(' ');
+  const foundLines = plans ? searchLines(plans, target) : [];
+  const parts = routeSheetParts(stage, plans ? { anyOk: okStyles.length > 0, anyFailed: order.some((s) => !plans[s].ok) } : undefined);
+  const retry = <TextButton tone="dim" onClick={() => setAttempt((n) => n + 1)}>Opnieuw zoeken</TextButton>;
+
+  // De delen in de volgorde van engine/routeSheet.ts#routeSheetParts: de kaart bovenaan, dan de
+  // gekozen lus met de hoofdknop, dan de lussen als rijen. Geen uitklap.
+  const part = (p: RouteSheetPart) => {
+    switch (p) {
+      case 'searching':
+        return <RouteSearching key={p} steps={steps} current={currentStep} limitLine={searchLimitLine(hereMode ? START_LOCATE_LIMIT_MS : undefined, PROPOSAL_LIMIT_MS)} />;
+      case 'failure':
+        // Op de plek van de kaart, met dezelfde hoogte: de regel en Opnieuw zoeken.
+        return (
+          <div key={p} className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+            <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{stage === 'offline' ? OFFLINE_LINE : TIMEOUT_LINE}</p>
+            {retry}
+          </div>
+        );
+      case 'map':
+        return (
+          <div key={p} className="flex flex-col gap-1">
+            <RouteMap routes={mapRoutes} chosen={picked} start={mapStartPoint} base={resolveMapBase(settings.routeMapBase)} onChoose={setChosen} onStart={startOnMap} offerHere={!hereMode} onNoMap={() => setNoMap(true)} />
+            <p className="text-xs leading-snug" style={dim}>{startLine}</p>
+          </div>
+        );
+      case 'chosen':
+        return picked && pickedOutcome?.ok ? <ChosenLoop key={`chosen-${picked}`} style={picked} proposal={pickedOutcome.proposal} date={date} target={target} sender={sender} /> : null;
+      case 'loops':
+        return plans ? (
+          <div key={p} className="flex flex-col gap-2">
+            {order.map((s) => <LoopRow key={s} style={s} outcome={plans[s]} picked={s === picked} onMap={!noMap && okStyles.length > 1} target={target} onChoose={() => setChosen(s)} />)}
+          </div>
+        ) : null;
+      case 'found':
+        return foundLines.length > 0 ? <p key={p} role="status" className="text-sm leading-snug" style={dim}>{foundLines.join(' ')}</p> : null;
+      case 'retry':
+        return <div key={p}>{retry}</div>;
+      case 'sources':
+        return (
+          <div key={p}>
+            <p className="text-xs leading-snug" style={dim}>
+              Kaartgegevens van OpenStreetMap{sources.length > 0 ? `. Route van ${sources.join(' en ')}.` : '.'} Kijk zelf of een pad begaanbaar is.
+            </p>
+            <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={dim}>Licentie van OpenStreetMap</a>
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. {startLine}</p>
-      {search === 'busy' ? (
-        <RouteSearching steps={steps} current={currentStep} limitLine={searchLimitLine(hereMode ? START_LOCATE_LIMIT_MS : undefined, PROPOSAL_LIMIT_MS)} />
-      ) : (
-        <>
-          {after && <p role="status" className="text-sm leading-snug" style={dim}>{after}</p>}
-          {legend && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{legend}</p>}
-          <RouteMap routes={mapRoutes} chosen={picked} start={mapStartPoint} base={resolveMapBase(settings.routeMapBase)} onChoose={setChosen} onStart={startOnMap} offerHere={!hereMode} />
-        </>
-      )}
-      {plans && order.map((s) => (
-        <RouteBlock
-          key={s}
-          style={s}
-          outcome={plans[s]}
-          primary={s === (picked ?? order[0])}
-          date={date}
-          target={target}
-          sender={sender}
-          onMap={legend && plans[s].ok ? (s === picked ? 'doorgetrokken' : 'gestreept') : undefined}
-          onChoose={legend && plans[s].ok && s !== picked ? () => setChosen(s) : undefined}
-        />
-      ))}
-      {plans && order.some((s) => plans[s].ok) && <WatchSteps />}
-      {search !== 'busy' && (search.kind !== 'plans' || anyFailed) && (
-        <div><TextButton tone="dim" onClick={() => setAttempt((n) => n + 1)}>Opnieuw zoeken</TextButton></div>
-      )}
-      {plans && (
-        <div>
-          <p className="text-xs leading-snug" style={dim}>
-            Kaartgegevens van OpenStreetMap{sources.length > 0 ? `. Route van ${sources.join(' en ')}.` : '.'} Kijk zelf of een pad begaanbaar is.
-          </p>
-          <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={dim}>Licentie van OpenStreetMap</a>
-        </div>
-      )}
+      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}.</p>
+      {parts.map(part)}
     </div>
   );
 }
