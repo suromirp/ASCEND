@@ -52,6 +52,10 @@ describe('placeNeed', () => {
     expect(placeNeed(missing, { distanceKm: 8, ascentM: 0 }).kind).toBe('none');
     expect(placeNeed(none, { distanceKm: 20, ascentM: 0 }, 100).kind).toBe('long');
   });
+  it('een doel dat geen getal is vraagt niets', () => {
+    expect(placeNeed(longRun, { distanceKm: 18, ascentM: Number.NaN }).kind).toBe('none');
+    expect(placeNeed(hills, { distanceKm: Number.NaN, ascentM: 200 }).kind).toBe('none');
+  });
   it('90 minuten precies is lang', () => {
     expect(placeNeed({ id: 'x', durationVariants: { full: 90 } }, { distanceKm: 14, ascentM: 0 }).kind).toBe('long');
     expect(placeNeed({ id: 'x', durationVariants: { full: 89 } }, { distanceKm: 14, ascentM: 0 }).kind).toBe('none');
@@ -125,6 +129,10 @@ describe('nearestPlace', () => {
     const twinA = place('a', 'Noord', north(0.1));
     expect(nearestPlace(START, [twinB, twinA])?.id).toBe('a');
   });
+  it('een punt dat geen getal is geeft geen plek', () => {
+    expect(nearestPlace({ lat: Number.NaN, lon: 5 }, [place('n', 'Bos', north(0.2))])).toBeUndefined();
+    expect(nearestPlace(START, [place('n', 'Bos', north(0.2))], Number.NaN)).toBeUndefined();
+  });
   it('precies op 300 m telt mee', () => {
     const edge = place('e', 'Rand', north(NEAR_PLACE_M / 1000));
     const m = metersBetween(START, edge);
@@ -144,10 +152,10 @@ describe('suggestPlace', () => {
     expect(s?.route.id).toBe('t1');
     expect(s?.line).toBe('Heuveltop haalt 240 van je 250 hoogtemeters, hier 60. 14 km hemelsbreed.');
   });
-  it('lang: de route past precies', () => {
+  it('lang: de route past', () => {
     const duin = place('d', 'Duinpad', north(9));
     const s = suggestPlace({ kind: 'long', distanceKm: 18, ascentM: 0, minutes: 120 }, [duin], [route('d1', 'd', 18000, 0)], START, 75);
-    expect(s?.line).toBe('Je route van 18 km bij Duinpad past precies. 9 km hemelsbreed.');
+    expect(s?.line).toBe('Je route van 18 km bij Duinpad past. 9 km hemelsbreed.');
   });
   it('geen plekken, geen routes of een training die niets vraagt: niets', () => {
     expect(suggestPlace(need, [], [topRoute], START, 25)).toBeUndefined();
@@ -193,6 +201,34 @@ describe('suggestPlace', () => {
     expect(suggestPlace(need, [top], [route('lang', 'top', 40000, 250)], START, 25)).toBeUndefined();
     const duin = place('d', 'Duinpad', north(9));
     expect(suggestPlace({ kind: 'long', distanceKm: 10, ascentM: 0, minutes: 95 }, [duin], [route('d1', 'd', 30000, 0)], START, 75)).toBeUndefined();
+  });
+  it('lang met hoogtemeters: een vlakke route past niet, ook niet als de afstand klopt', () => {
+    const duin = place('d', 'Duinpad', north(9));
+    const need: PlaceNeed = { kind: 'long', distanceKm: 20, ascentM: 80, minutes: 120 };
+    expect(suggestPlace(need, [duin], [route('vlak', 'd', 20000, 0)], START, 75)).toBeUndefined();
+    expect(rankSavedRoutes([route('vlak', 'd', 20000, 0)], { distanceKm: 20, ascentM: 80 })[0].fits).toBe(false);
+    expect(suggestPlace(need, [duin], [route('ok', 'd', 20000, 80)], START, 75)?.route.id).toBe('ok');
+  });
+  it('veel meer hoogtemeters dan gevraagd past niet: 900 voor 300', () => {
+    const need300: PlaceNeed = { kind: 'ascent', ascentM: 300, distanceKm: 8, minutes: 60 };
+    expect(suggestPlace(need300, [top], [route('steil', 'top', 8000, 900)], START, 25)).toBeUndefined();
+    expect(suggestPlace(need300, [top], [route('ruim', 'top', 8000, 375)], START, 25)?.route.id).toBe('ruim');
+    expect(rankSavedRoutes([route('steil', 'top', 8000, 900)], { distanceKm: 8, ascentM: 300 })[0].line.startsWith('Wijkt af')).toBe(true);
+  });
+  it('een grens die geen getal is geeft geen voorstel', () => {
+    expect(suggestPlace(need, [top], [topRoute], START, Number.NaN)).toBeUndefined();
+    expect(suggestPlace(need, [top], [topRoute], START, Infinity)?.place.id).toBe('top');
+  });
+  it('wat hier kan telt alleen als eindig getal van minstens nul', () => {
+    expect(suggestPlace(need, [top], [topRoute], START, 25, { ascentM: Number.NaN })?.line).toBe('Heuveltop haalt 240 van je 250 hoogtemeters. 14 km hemelsbreed.');
+    expect(suggestPlace(need, [top], [topRoute], START, 25, { ascentM: -40 })?.line).toBe('Heuveltop haalt 240 van je 250 hoogtemeters. 14 km hemelsbreed.');
+    expect(suggestPlace(need, [top], [topRoute], START, 25, { ascentM: 0 })?.line).toBe('Heuveltop haalt 240 van je 250 hoogtemeters, hier 0. 14 km hemelsbreed.');
+  });
+  it('een route van 40 km bij het startpunt houdt geen voorstel voor 8 km tegen', () => {
+    const home = place(HOME_PLACE_ID, 'Thuis', START, true);
+    const s = suggestPlace(need, [home, top], [topRoute, route('lang', HOME_PLACE_ID, 40000, 260)], START, 25);
+    expect(s?.place.id).toBe('top');
+    expect(s?.line).toBe('Heuveltop haalt 240 van je 250 hoogtemeters. 14 km hemelsbreed.');
   });
   it('een route van A naar B mag', () => {
     const ab = route('ab', 'top', 8000, 240, { points: [north(14), north(18)] });
@@ -257,6 +293,30 @@ describe('simplifyTrack en trackFacts', () => {
   it('een bult van 10 m in een rechte weg blijft in de hoogtemeters', () => {
     const road = [{ lat: 50, lon: 5, ele: 10 }, { lat: 50.001, lon: 5, ele: 20 }, { lat: 50.002, lon: 5, ele: 10 }];
     expect(simplifyTrack(road)).toHaveLength(3);
+  });
+  it('20.000 zigzagpunten blijven 800 punten, verspreid over het hele spoor', () => {
+    const big: RoutePoint[] = Array.from({ length: 20000 }, (_, i) => ({ lat: 50 + i * 0.00001, lon: 5 + (i % 2) * 0.0003 }));
+    const out = simplifyTrack(big);
+    expect(out).toHaveLength(800);
+    expect(out[0]).toEqual(big[0]);
+    expect(out[799]).toEqual(big[19999]);
+    // Geen gat van meer dan een kwart van het spoor.
+    let gap = 0;
+    for (let i = 1; i < out.length; i++) gap = Math.max(gap, out[i].lat - out[i - 1].lat);
+    expect(gap).toBeLessThan((big[19999].lat - big[0].lat) / 4);
+  });
+  it('een hoogte die geen getal is telt als geen hoogte', () => {
+    const track: RoutePoint[] = Array.from({ length: 5000 }, (_, i) => ({ lat: 50 + i * 0.0001, lon: 5 + (i % 2) * 0.0003, ele: 100 }));
+    track[0] = { ...track[0], ele: Number.NaN };
+    const out = simplifyTrack(track);
+    expect(out.length).toBe(800);
+    expect('ele' in out[0]).toBe(false);
+  });
+  it('trackFacts slaat een punt dat geen getal is over', () => {
+    const loop = [{ lat: 50, lon: 5, ele: 100 }, { lat: Number.NaN, lon: 5 }, { lat: 50.01, lon: 5, ele: 160 }, { lat: 50.0005, lon: 5, ele: Number.NaN }];
+    const facts = trackFacts(loop);
+    expect(Number.isFinite(facts.distanceM)).toBe(true);
+    expect(facts).toEqual({ distanceM: 2168, ascentM: 60, loop: true });
   });
   it('leeg en één punt', () => {
     expect(simplifyTrack([])).toEqual([]);

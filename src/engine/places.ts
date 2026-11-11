@@ -65,6 +65,8 @@ export const PLACE_REACH_DEFAULT_KM = 75;
 export const SHORT_TRAINING_REACH_KM = 25;
 // Een bewaarde route komt pas in een voorstel als hij minstens dit deel haalt van wat de training vraagt.
 export const SUGGEST_SHARE = 0.8;
+// En hoogstens dit veelvoud van de gevraagde hoogtemeters: 900 voor een training van 300 past niet.
+export const MAX_ASCENT_SHARE = 1.25;
 // Bij welke plek een route hoort: binnen 300 m van zijn begin.
 export const NEAR_PLACE_M = 300;
 // Ligt de gekozen plek verder dan 10 km van huis, dan toont de Briefing het weer daar (punt 5).
@@ -83,6 +85,8 @@ const knownMinutes = (raw: unknown): number | undefined => (typeof raw === 'numb
 // Hoogte gaat voor lang: een lange heuveltraining zoekt eerst hoogtemeters.
 export function placeNeed(template: Pick<SessionTemplate, 'id' | 'roles' | 'durationVariants'>, target: RouteTarget, minutes?: number): PlaceNeed {
   const mins = knownMinutes(minutes) ?? knownMinutes(template.durationVariants?.full);
+  // Een doel dat geen getal is vraagt niets: zo komt een NaN nooit in een zin of een grens.
+  if (!Number.isFinite(target.ascentM) || !Number.isFinite(target.distanceKm)) return { kind: 'none', minutes: mins };
   const ascentM = Math.max(0, target.ascentM);
   if (ascentM >= PLACE_ASCENT_NEED_M || (hasRole(template, 'hills') && ascentM >= MIN_ASCENT_TARGET_M)) {
     return { kind: 'ascent', ascentM, distanceKm: target.distanceKm, minutes: mins };
@@ -124,11 +128,13 @@ export interface RankedRoute {
   line: string;
 }
 
-// Of een route past: de afstand past (routePlanner.ts#fitsDistance) en hij haalt de hoogtemeters
-// voor minstens SUGGEST_SHARE, als de training hoogtemeters vraagt.
+// Of een route past: de afstand past (routePlanner.ts#fitsDistance) en, als de training hoogtemeters
+// vraagt, ligt de stijging tussen SUGGEST_SHARE en MAX_ASCENT_SHARE daarvan. Getoetst als
+// !(x <= grens), zodat een NaN nooit past.
 function routeFits(route: SavedRoute, target: RouteTarget): boolean {
-  if (!fitsDistance(route, target)) return false;
-  return target.ascentM < MIN_ASCENT_TARGET_M || route.ascentM >= target.ascentM * SUGGEST_SHARE;
+  if (!fitsDistance(route, target) || !Number.isFinite(route.distanceM)) return false;
+  if (target.ascentM < MIN_ASCENT_TARGET_M) return true;
+  return route.ascentM >= target.ascentM * SUGGEST_SHARE && route.ascentM <= target.ascentM * MAX_ASCENT_SHARE;
 }
 
 function routeLine(route: SavedRoute, fits: boolean, runs: number): string {
@@ -162,7 +168,7 @@ export function nearestPlace(point: RoutePoint, places: readonly Place[], within
   let best: { place: Place; m: number } | undefined;
   for (const place of places) {
     const m = metersBetween(point, placePoint(place));
-    if (m > withinM) continue;
+    if (!(m <= withinM)) continue;
     if (!best || m < best.m || (m === best.m && (byText(place.name, best.place.name) || byText(place.id, best.place.id)) < 0)) best = { place, m };
   }
   return best?.place;
@@ -187,18 +193,24 @@ export interface PlaceSuggestion {
 const wholeKm = (meters: number) => `${formatNumberNL(Math.max(1, Math.round(meters / 1000)), 0)} km`;
 
 // Hoeveel een route haalt van wat de training vraagt (0 tot ruim 1), op de maat van de vraag.
+// Alleen een eindig getal van minstens nul telt als bekend.
+const known = (x: number | undefined): x is number => typeof x === 'number' && Number.isFinite(x) && x >= 0;
+
+// Hoeveel een route haalt van wat de training vraagt (0 tot ruim 1), op de maat van de vraag; of
+// onbekend.
 function share(need: Extract<PlaceNeed, { kind: 'ascent' | 'long' }>, value: { ascentM?: number; distanceM?: number }): number | undefined {
-  if (need.kind === 'ascent') return value.ascentM === undefined ? undefined : value.ascentM / need.ascentM;
-  return value.distanceM === undefined || need.distanceKm <= 0 ? undefined : value.distanceM / (need.distanceKm * 1000);
+  if (need.kind === 'ascent') return known(value.ascentM) && need.ascentM > 0 ? value.ascentM / need.ascentM : undefined;
+  return known(value.distanceM) && need.distanceKm > 0 ? value.distanceM / (need.distanceKm * 1000) : undefined;
 }
 
 // Hoogstens één plek met zijn beste route, de afstand hemelsbreed en één zin waarom, of niets.
 // - Alleen als de training iets vraagt (placeNeed) en de plek binnen `maxKm` ligt (op de grens telt mee).
-// - Alleen een route waarvan de afstand past (routePlanner.ts#fitsDistance): 40 km voor een training
-//   van 8 km is geen voorstel, ook niet met genoeg hoogtemeters.
-// - Alleen als de beste route daar minstens SUGGEST_SHARE haalt van wat de training vraagt, en het
-//   startpunt van nu daar ruim onder blijft: onder SUGGEST_SHARE. Wat het startpunt kan is het beste van
-//   `here` en de routes van een plek binnen NEAR_PLACE_M van het startpunt. Onbekend telt als niet genoeg.
+// - Alleen een route die past (routeFits, dezelfde regel als Past in rankSavedRoutes): de afstand past,
+//   en gevraagde hoogtemeters haalt hij tussen SUGGEST_SHARE en MAX_ASCENT_SHARE. 40 km voor een
+//   training van 8 km, of 900 hoogtemeters voor 300, is geen voorstel.
+// - Alleen als het startpunt van nu ruim onder blijft: onder SUGGEST_SHARE. Wat het startpunt kan is het
+//   beste van `here` en de routes met een passende afstand van een plek binnen NEAR_PLACE_M van het
+//   startpunt. Onbekend telt als niet genoeg; de zin noemt dan niets over hier.
 // - Een plek bij het startpunt zelf wordt nooit voorgesteld: daar begin je al.
 // - Van de plekken die passen komt de dichtstbijzijnde eerst; bij gelijke afstand de beste route
 //   (missScore), dan de naam, dan het id.
@@ -214,25 +226,30 @@ export function suggestPlace(
   if (need.kind === 'none' || places.length === 0 || routes.length === 0) return undefined;
   const target: RouteTarget = { distanceKm: need.distanceKm, ascentM: need.ascentM };
   const atStart = nearestPlace(start, places);
-  let hereShare = share(need, here) ?? 0;
+  let hereShare = share(need, here);
   if (atStart) {
-    for (const r of routes) if (r.placeId === atStart.id) hereShare = Math.max(hereShare, share(need, r) ?? 0);
+    for (const r of routes) {
+      if (r.placeId !== atStart.id || !fitsDistance(r, target)) continue;
+      const s = share(need, r);
+      if (s !== undefined) hereShare = Math.max(hereShare ?? 0, s);
+    }
   }
-  if (hereShare >= SUGGEST_SHARE) return undefined;
+  if (hereShare !== undefined && hereShare >= SUGGEST_SHARE) return undefined;
   const maxM = maxKm * 1000;
   const candidates: { place: Place; route: SavedRoute; distanceM: number; score: number }[] = [];
   for (const place of places) {
     if (atStart && place.id === atStart.id) continue;
     const distanceM = metersBetween(start, placePoint(place));
-    if (distanceM <= NEAR_PLACE_M || distanceM > maxM) continue;
-    const own = routes.filter((r) => r.placeId === place.id && fitsDistance(r, target) && (share(need, r) ?? 0) >= SUGGEST_SHARE);
+    // Een grens die geen getal is, is geen grens maar geen voorstel.
+    if (!(distanceM > NEAR_PLACE_M) || !(distanceM <= maxM)) continue;
+    const own = routes.filter((r) => r.placeId === place.id && routeFits(r, target));
     const best = rankSavedRoutes(own, target, logs)[0];
     if (best) candidates.push({ place, route: best.route, distanceM, score: best.score });
   }
   candidates.sort((a, b) => a.distanceM - b.distanceM || a.score - b.score || byText(a.place.name, b.place.name) || byText(a.place.id, b.place.id));
   const pick = candidates[0];
   if (!pick) return undefined;
-  return { ...pick, line: suggestLine(need, pick, here.ascentM !== undefined || hereShare > 0 ? hereShare : undefined) };
+  return { ...pick, line: suggestLine(need, pick, hereShare) };
 }
 
 function suggestLine(need: Extract<PlaceNeed, { kind: 'ascent' | 'long' }>, pick: { place: Place; route: SavedRoute; distanceM: number }, hereShare: number | undefined): string {
@@ -243,9 +260,7 @@ function suggestLine(need: Extract<PlaceNeed, { kind: 'ascent' | 'long' }>, pick
     const hereText = hereShare === undefined ? '' : `, hier ${formatNumberNL(round10(hereShare * need.ascentM), 0)}`;
     return `${pick.place.name} haalt ${got} van je ${asked} hoogtemeters${hereText}. ${away}`;
   }
-  const target: RouteTarget = { distanceKm: need.distanceKm, ascentM: need.ascentM };
-  const fit = fitsDistance(pick.route, target) ? 'past precies' : `haalt ${kmText(pick.route.distanceM)} van je ${kmText(need.distanceKm * 1000)}`;
-  return `Je route van ${kmText(pick.route.distanceM)} bij ${pick.place.name} ${fit}. ${away}`;
+  return `Je route van ${kmText(pick.route.distanceM)} bij ${pick.place.name} past. ${away}`;
 }
 
 // Of het weer-vak het weer bij de gekozen plek toont: verder dan 10 km van Thuis. Zonder Thuis telt de
@@ -295,7 +310,7 @@ function offsetFromSegment(p: RoutePoint, a: RoutePoint, b: RoutePoint): number 
   const toXY = (q: RoutePoint) => [(q.lon - a.lon) * 111_320 * k, (q.lat - a.lat) * 110_574] as const;
   const [bx, by] = toXY(b);
   const [px, py] = toXY(p);
-  const withEle = p.ele !== undefined && a.ele !== undefined && b.ele !== undefined;
+  const withEle = Number.isFinite(p.ele) && Number.isFinite(a.ele) && Number.isFinite(b.ele);
   const bz = withEle ? b.ele! - a.ele! : 0;
   const pz = withEle ? p.ele! - a.ele! : 0;
   const len2 = bx * bx + by * by + bz * bz;
@@ -303,47 +318,101 @@ function offsetFromSegment(p: RoutePoint, a: RoutePoint, b: RoutePoint): number 
   return Math.hypot(px - t * bx, py - t * by, pz - t * bz);
 }
 
-// Douglas-Peucker zonder recursie: welke punten blijven bij deze tolerantie.
-function keepMask(points: readonly RoutePoint[], tolerance: number): boolean[] {
-  const keep = new Array<boolean>(points.length).fill(false);
-  keep[0] = true;
-  keep[points.length - 1] = true;
-  const stack: [number, number][] = [[0, points.length - 1]];
-  while (stack.length > 0) {
-    const [from, to] = stack.pop()!;
-    let worst = -1;
-    let at = -1;
-    for (let i = from + 1; i < to; i++) {
-      const d = offsetFromSegment(points[i], points[from], points[to]);
-      if (d > worst) {
-        worst = d;
-        at = i;
-      }
-    }
-    if (at !== -1 && worst > tolerance) {
-      keep[at] = true;
-      stack.push([from, at], [at, to]);
+// Het verste punt van het stuk from-to, en hoe ver het ligt. Liggen er meer even ver (op hele meters),
+// dan het punt het dichtst bij het midden: anders pelt een zigzag alleen de uiteinden af.
+function worstOf(points: readonly RoutePoint[], from: number, to: number): { at: number; d: number } {
+  const mid = (from + to) / 2;
+  let at = -1;
+  let d = -1;
+  for (let i = from + 1; i < to; i++) {
+    const di = offsetFromSegment(points[i], points[from], points[to]);
+    const ri = Math.round(di);
+    const rd = Math.round(d);
+    if (ri > rd || (ri === rd && Math.abs(i - mid) < Math.abs(at - mid))) {
+      d = di;
+      at = i;
     }
   }
-  return keep;
+  return { at, d };
 }
 
-// Een spoor dun maken: eerst tot ongeveer vijf meter nauwkeurig; zijn het dan nog meer dan `maxPoints`
-// punten, dan wordt de tolerantie verdubbeld tot het past. Begin en eind blijven altijd. Leeg blijft
-// leeg, één punt blijft één punt. Het spoor zelf verandert niet.
+interface Piece {
+  from: number;
+  to: number;
+  at: number;
+  d: number;
+}
+
+// Een kleine heap: het stuk met de grootste afwijking bovenaan, afgerond op hele meters. Bij gelijke
+// afwijking het langste stuk, dan het eerste: anders komen bij een zigzag (overal dezelfde afwijking)
+// alle punten aan het begin en blijft de rest van het spoor een rechte lijn.
+const above = (a: Piece, b: Piece) => {
+  const da = Math.round(a.d);
+  const db = Math.round(b.d);
+  if (da !== db) return da > db;
+  const span = a.to - a.from - (b.to - b.from);
+  return span !== 0 ? span > 0 : a.from < b.from;
+};
+function push(heap: Piece[], piece: Piece) {
+  heap.push(piece);
+  let i = heap.length - 1;
+  while (i > 0) {
+    const up = (i - 1) >> 1;
+    if (!above(heap[i], heap[up])) break;
+    [heap[i], heap[up]] = [heap[up], heap[i]];
+    i = up;
+  }
+}
+function pop(heap: Piece[]): Piece {
+  const top = heap[0];
+  const last = heap.pop()!;
+  if (heap.length > 0) {
+    heap[0] = last;
+    let i = 0;
+    for (;;) {
+      const l = 2 * i + 1;
+      const r = l + 1;
+      let m = i;
+      if (l < heap.length && above(heap[l], heap[m])) m = l;
+      if (r < heap.length && above(heap[r], heap[m])) m = r;
+      if (m === i) break;
+      [heap[i], heap[m]] = [heap[m], heap[i]];
+      i = m;
+    }
+  }
+  return top;
+}
+
+// Een spoor dun maken: Douglas-Peucker die steeds het stuk met de grootste afwijking eerst splitst. Hij
+// stopt als elke afwijking binnen ongeveer vijf meter ligt, of bij `maxPoints` punten; dan blijven de
+// punten met de grootste afwijking, verspreid over het hele spoor. Begin en eind blijven altijd. Punten
+// zonder geldige breedte of lengte vallen weg; een hoogte die geen getal is telt als geen hoogte. Leeg
+// blijft leeg, één punt blijft één punt. Het spoor zelf verandert niet.
 export function simplifyTrack(points: readonly RoutePoint[], maxPoints = ROUTE_MAX_POINTS): RoutePoint[] {
   const max = Number.isFinite(maxPoints) ? Math.max(2, Math.floor(maxPoints)) : ROUTE_MAX_POINTS;
-  const clean = points.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
-  if (clean.length <= 2) return clean.map((p) => ({ ...p }));
-  let tolerance = SIMPLIFY_TOLERANCE_M;
-  for (let round = 0; round < 40; round++) {
-    const keep = keepMask(clean, tolerance);
-    const out = clean.filter((_, i) => keep[i]);
-    if (out.length <= max) return out.map((p) => ({ ...p }));
-    tolerance *= 2;
+  const clean = points
+    .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon))
+    .map((p): RoutePoint => (Number.isFinite(p.ele) ? { lat: p.lat, lon: p.lon, ele: p.ele } : { lat: p.lat, lon: p.lon }));
+  if (clean.length <= 2) return clean;
+  const keep = new Array<boolean>(clean.length).fill(false);
+  keep[0] = true;
+  keep[clean.length - 1] = true;
+  let count = 2;
+  const heap: Piece[] = [];
+  const add = (from: number, to: number) => {
+    if (to - from < 2) return;
+    const { at, d } = worstOf(clean, from, to);
+    if (at !== -1 && d > SIMPLIFY_TOLERANCE_M) push(heap, { from, to, at, d });
+  };
+  add(0, clean.length - 1);
+  while (heap.length > 0 && count < max) {
+    const piece = pop(heap);
+    keep[piece.at] = true;
+    count++;
+    add(piece.from, piece.at);
+    add(piece.at, piece.to);
   }
-  // Komt in de praktijk niet voor; dan begin en eind.
-  return [{ ...clean[0] }, { ...clean[clean.length - 1] }];
+  return clean.filter((_, i) => keep[i]);
 }
 
 export interface TrackFacts {
@@ -353,7 +422,10 @@ export interface TrackFacts {
 }
 
 // Afstand en hoogtemeters (met de dode band van routeGeometry.ts#ascentOf) en of het een lus is.
+// Een punt zonder geldige breedte of lengte telt niet mee; een hoogte die geen getal is telt als geen hoogte.
 export function trackFacts(points: readonly RoutePoint[]): TrackFacts {
-  const list = [...points];
+  const list = points
+    .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon))
+    .map((p): RoutePoint => (Number.isFinite(p.ele) ? { lat: p.lat, lon: p.lon, ele: p.ele } : { lat: p.lat, lon: p.lon }));
   return { distanceM: Math.round(lineLength(list)), ascentM: Math.round(ascentOf(list)), loop: isLoopRoute({ points: list }) };
 }
