@@ -22,7 +22,7 @@ Hoe voelen je benen?
 --- kaart 3 ---
 Vandaag · hardlopen
 Wennen, rustig tempo
-[knop: Meer over deze training]
+[knop: Meer keuzes]
 ### Lange duurloop
 50
 minuten
