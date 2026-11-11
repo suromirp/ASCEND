@@ -339,11 +339,11 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
   const { stage } = model;
   if (stage === 'no-place') return <p className="text-sm leading-snug" style={dim}>{NO_PLACE_LINE}</p>;
   if (stage === 'reading') return <div className="min-h-[44px]" />;
-  if (declined) return searchRow;
+  // Na Liever niet, na een tik (later dan morgen, of de instelling Na een tik): eerst Zoek een lus,
+  // en pas daarna de eerste vraag; zo is één tik genoeg en gaat er tot dan niets de deur uit.
+  if (declined || !searchOn) return searchRow;
   if (stage === 'first-question') return <RouteFirstQuestion model={model} onDecline={onDecline} />;
   if (stage === 'needs-point') return <RouteNeedsPoint model={model} />;
-  // Na een tik (later dan morgen, of de instelling Na een tik): nog niets de deur uit.
-  if (!searchOn) return searchRow;
   if (stage === 'searching') {
     return (
       <div className="flex flex-col gap-2">

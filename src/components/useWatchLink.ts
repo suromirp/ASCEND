@@ -35,8 +35,11 @@ export function useWatchLink(): Link {
           last = { watchLink: r.link, watchSource: r.source };
           if (alive) setFound(last);
         },
-        // Niet gelezen: wat er al stond blijft; was er niets, dan de veilige kant.
-        () => undefined,
+        // Niet gelezen of te traag: de veilige kant, Gedaan en Zelf invullen.
+        () => {
+          last = undefined;
+          if (alive) setFound({});
+        },
       );
     };
     load();

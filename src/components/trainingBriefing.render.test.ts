@@ -50,6 +50,11 @@ describe('de plek van de kaart in de Briefing', () => {
     expect(html).toContain('Zoek een lus');
     expect(html).not.toContain('Lussen zoeken');
   });
+  it('Na een tik en nog geen ja: eerst Zoek een lus, nog niet de eerste vraag', () => {
+    const html = render(routeView('tap'), model({ stage: 'first-question' }), { searchOn: false });
+    expect(html).toContain('Zoek een lus');
+    expect(html).not.toContain('Liever niet');
+  });
   it('de eerste keer: de eerste vraag ongewijzigd; na Liever niet één rij Zoek een lus', () => {
     expect(render(routeView(), model({ stage: 'first-question' }))).toContain('>Liever niet<');
     const declined = render(routeView(), model({ stage: 'first-question' }), { declined: true });

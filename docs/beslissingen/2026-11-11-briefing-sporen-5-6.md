@@ -14,6 +14,8 @@ Eigen keuzes van de bouwer, binnen het ontwerp:
 - Vooraf (een dag die nog komt) is de knop zonder koppeling Sluiten, niet Zelf invullen: afvinken kan pas op de dag zelf, zoals in Week.
 - De lus wordt nog niet onthouden: opnieuw openen zoekt opnieuw (bij het openen alleen vandaag en morgen). Onthouden tot middernacht is spoor 9.
 - Het vak Weer en kleding houdt alleen de eerste zin van de kleding; de rest staat op de weerpagina.
+- Met Route voorstellen uit blijft de knop Briefing (met horloge dat afvinkt): de vier vakken blijven nuttig, de kaart is weg en de onderbalk zegt Sluiten.
+- Lukt het lezen van de koppeling niet binnen 3 seconden, dan geldt de veilige kant (Gedaan), ook als eerder Briefing gold.
 - De vakken hebben een gedempt kopje: het mint accent is de gekozen plek, de lus op de kaart en de knop onderaan.
 
 ## Reden

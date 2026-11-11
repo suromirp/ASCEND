@@ -338,3 +338,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Route-kaart 2, Sherpa, opus (sessie), 270k context, $6,30, 0 herstelrondes
 - 2026-11-11, Onderzoek werkwijze autonome agents, Scout, opus (sportwetenschapper), 97k, 5 min, 0 herstelrondes
 - 2026-11-11, Herreview Eten onderweg, Warden, sonnet (reviewer), 66k, 3 min, akkoord (plek door coördinator aangepast)
+- 2026-11-11, Review Briefing spoor 5 en 6, Warden, sonnet (reviewer), 100k, 4 min, akkoord (vijf kan-punten, vier verwerkt)
