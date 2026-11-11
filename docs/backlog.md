@@ -2,356 +2,140 @@
 
 Wat nog op de lijst staat, zodat een nieuwe sessie het niet uit het gesprek hoeft te halen. De
 coördinator houdt dit bij: iets wat live staat gaat eruit, iets nieuws komt erbij met een regel uitleg.
-Bijgewerkt op 9 november 2026 (F5 en de kleine F4-punten).
+Opnieuw opgebouwd op 11 november 2026 tegen main (2a333d5): alles wat live staat is eruit, wat eruit ging
+en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschiedenis staat in git en in
+`docs/beslissingen/`.
 
 ## Inbox
 
-- 10 november, wens van de eigenaar (routeplanner fase 4): "het zou vet zijn als hier al gelijk een kaart wordt weergegeven met de mogelijke routes". In het paneel Route voorstellen, boven of bij de twee lussen, een kaartje met beide lussen (en het startpunt), zodat je ze kunt vergelijken voor je er een naar Garmin Connect stuurt. Eerst Scout: kaarttegels zonder sleutel die de CSP en de privacyregels toelaten (OpenStreetMap-tegels en hun gebruiksregels), of een eigen tekening van de lijn zonder tegels. Fable voor de keuze van de bron, Sonnet voor het scherm. De eerste echte lus van de eigenaar werkte (10 november). Erbij, eigenaar 10 november: "het lijkt me vet om zelf te kiezen vanaf waar, of je huidige locatie, en dat het wat interactiever wordt; nu is het nog vooral een black box". Dus bij Route voorstellen: het startpunt zelf kiezen (tik op de kaart of een adres) of je huidige locatie nemen (alleen na toestemming, niets bewaren zonder dat je het vraagt), naast Ongeveer en Precies, vanaf je deur. En laten zien waarom de lus zo loopt (welke hellingen en paden hij pakt, afstand en hoogtemeters per stuk) en hem kunnen bijsturen (andere kant op, langer of korter, een stuk vermijden), met de kaart hierboven als basis. Stand 10 november (bouwmoment): Scout koos de bron, besluit `2026-11-10-kaartje-route-bron.md` (voorgesteld) en verslag `docs/onderzoek/Kaartje bij Route voorstellen.md`: eerst een eigen tekening (SVG) zonder tegels, instelling "Kaartje bij de lussen" standaard aan, tegels later als eigen besluit. Bouwen het volgende bouwmoment (Sonnet). Open vraag voor de eigenaar: mag het startpunt als stip op het kaartje, ook bij Precies (het besluit over het startpunt zegt dat het punt nooit op het scherm staat; zonder ondergrond is het alleen een stip naast twee lijnen; advies: ja zonder tegels). Startpunt kiezen, huidige locatie en bijsturen komen na het kaartje.
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
 Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
-- 9 november, uit de review van het bouwmoment (Forge afvinken), nog open: regel 4 en 5 lezen nu gelijk (zie besluit `2026-11-09-forge-review-afvinken.md`). Stappen 6 tot 8 van het RIR-verslag (vermoeidheid tussen oefeningen) zijn F2. De ijkset (KR-12) staat live (F5).
-- 9 november, uit de doorloop: Heuvels en trappen: de echte Overpass-aanroep en de hoogte-aanroep zijn nog niet live gezien; de hoogteaanroep staat in `overpass.ts` en kan later samen met UV en zon in `openMeteo.ts`; vakantieadres en periode "Zonder sportschool" gebruiken de terreinregel nog niet; de afstandszin zonder testloop is alleen met engine-tests gezien, nog niet met een eigen stand in het scherm (zie Lookout r2).
-- 8 november, uit de review van het bouwmoment, nog open: de Forge-melding Spieren voor de berg heeft geen eigen schakelaar (Forge zit op het maximum van 6 rijen).
+Leeg: alles van 11 november staat in de Bouwrij hieronder, die de coördinator deze week zelf bouwt.
 
-- 9 november, uit de reviews van ronde 3, nog open: feestdagen als voorstel; Reverse Lunge is in de catalogus een dumbbell-oefening; de OpenStreetMap-regel op een vakantieadres (een periode heeft geen eigen plek, vraagt een nieuwe opgeslagen vorm). Toestelstanden (Forge): Standen wissen zonder Terugdraaien; de formulier-`key` in `MachineWeights.tsx`; standen in pond, plaatjesnummers en optrekhulp; het keuzestrookje 'Ook tussenin en erboven schatten' breekt op 390 px; Minder bij een leeg gewichtsveld zegt 'naar 0 kilo'. Tempo: de band en de lijn zijn nog niet gezien met 8 of meer lopen over 4 weken (de kit heeft geen stand daarvoor).
-- 9 november, uit R1: de gewichtstrend voedt alleen wat je ziet; Forge (lichaamsgewicht en hulp), rugzakaandeel en beenindex rekenen nog met de laatste weging (Forge via lijn Forge, de rest vraagt een eigen besluit want het raakt `planGolden`); de knop 'Voorstel bekijken' op één regel en het blad Lichaamsgewicht zijn op 360 px alleen beredeneerd, niet in beeld gezien.
-- 9 november, uit R2, nog open: hutten via refuges.info wachten op `coords` per etappe in `gr5Stages.ts` (de GPX van de eigenaar omzetten); de kaart Let op op Vandaag verschijnt na het ophalen en kan de ochtendkaart onder de missie schuiven (Lookout met trage processor en een tocht); mogelijk dubbel onweer met het bergweer; de stippen in de tempografiek zijn niet tikbaar; het blad Tempo gebruikt 8 weken, de kaart 12; Meteoalarm is niet leesbaar vanuit een webapp (geen CORS), daarom drempels op Open-Meteo; live netwerk (Open-Meteo-waarschuwing, EAWS) is niet in een echte browser of toestel gezien. Eigenaar (9 november): nog geen GPX van de GR5; hutten wachten tot die er is.
-- 9 november, uit F3 en F4a (lijn Forge), nog open: De terugknop van het toestel sluit het uitlegblad ook na Lichter of Zwaarder; alleen Terug naar gaat een stap terug. De rest van de uitlegteksten en de handboeken van de NSCA zelf zijn niet nagelezen (alleen webbronnen). Reverse Lunge staat als dumbbell-oefening in de catalogus; een eigen-gewichtvariant is niet gebouwd.
-- 9 november, aandacht voor de eigenaar bij het bouwen: standen onthouden werkt stil (met Terugdraaien); de periode Zonder sportschool geeft de 3 dagen na een tocht dezelfde lengteregel als de 72 uur rust; de grafiek en tekst achter de i van Tempo bij zone 2 zijn nog niet gebouwd.
+## Bouwrij deze week (coördinator, tot en met 15 november)
 
-- 10 november, uit de review van R6 en R7 (Warden), nog open: de oude uitleg 'Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets' staat nog in `TrekGoals.tsx`, `settingsHelp.ts` (rond regel 967, 1074, 1105), `settingsIndex.ts` en `KindAmountPage.tsx` (volgen R9); 'loopjes' en 'hele run' staan nog in `runTrends.ts`, `runInsight.ts`, `runDetailView.ts` (R8); 'Loopsessies' bij de triatlon in `goalKinds.ts` laat 'lang' weg bij `long_run` (controleren in de triatlon-UI); de tak 'Geen trainingen in deze maand' heeft geen eigen test; de bladen Ritme en Benen en de componentteksten van Stand hebben geen test. Valkuil uit de review: haal bij het inkorten van uitleg geen zin weg die verklaart wat een getal of regel op het scherm betekent.
+Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouwers zelf, hoogstens drie tegelijk, nooit twee aan dezelfde bestanden, model volgens skill werkverdeling "Deze week". Volgorde is de volgorde van starten zodra er plek is.
 
-- 9 november, uit de review van Planner rond vakantie 3 (klein): nog een test in `leavePlanAround.test.ts`: Benen B valt eerder dan een training met een eigen plek (de test voor heuvels bij buurweken zonder heuvels staat sinds 9 november; het precieze verwachte gedrag van Benen B stond niet scherp genoeg om blind te toetsen). De coördinator ging akkoord met week 2 als do Bovenlichaam A, vr Benen A, za Bovenlichaam B, zo Lange duurloop.
-
-- 9 november, uit R7 en R8 (lijn rest), voor het bouwmoment: in Stand toont de samenvatting "Belasting Zwaar, 0 van 475" bij een zware geplande week (lijkt een fout in de telling, eerst naspelen); een regel in Intensiteit mist een bolletje; "Twee harde loopjes" nog in `weekConcerns.ts`, `weekValidator.ts`, `GarminLink.tsx`, `influence.ts`; "Loopsessies" bij long_run in `goalKinds` laat "lang" weg. Nog te herschrijven tabs: Lichaam, daarna R9 Instellingen (`settingsHelp.ts` en `settingsIndex.ts` gelijktrekken).
-
-
-
-
-- 9 november, doel van de eigenaar: MacroFactor Workouts overbodig maken (de voedingsapp blijft). De criteria en de stand staan in `docs/visie/Los van MacroFactor.md`; de weekbriefing meldt elke maandag hoe het ervoor staat. Niets bouwen tot het moment er is, behalve wat daar als open staat (Health Connect-ronde en melding, hierboven).
-
-- 9 november, routeplanner, nog open na fase 1 en 2 (live): fase 4 (kaartje); fase 3 is live op 10 november. Vragen aan de eigenaar: mag een exact startpunt naar de routeplanner als eigen instelling die standaard uit staat (nu begint de lus tot ongeveer 700 m van huis); blijft de instelling in het blad Weer en kleding; de beheerder van BRouter vragen of app-verkeer goed is (advies Scout). Niet gezien: opslaan in Documenten/ASCEND op een toestel, een GPX als koers in Garmin Connect en op het horloge, lussen boven ongeveer 18 km (de heuvelcache is 3 km), de herstelde code na de review door Warden. In de afdruk waren beide lussen korter dan de training (4,2 en 4,6 km bij 6 km): nakijken met echte lussen van de eigenaar.
-- 9 november avond, akkoord eigenaar (Calisthenics algemeen): een voorstel met Akkoord dat de squat op één been en de L-sit in een training zet als ze nergens staan (één keer, kort na het kiezen van het doel; raakt de planning, dus zwaar werk en niet tegelijk met een andere planner-sessie). De kaart onthoudt geen hoogste stap: zo laten.
-
-
-- 9 november, bouwmoment, nog open: Health Connect: een ronde start alleen als je terugkomt in de app (niet na urenlang zichtbaar openstaan); het blad Lichaamsgewicht kan heel even "Gewicht: staat uit" tonen na weer aanzetten; de vaste voorstelzin in `strengthScheduling.ts` ("Geldt vanaf over twee weken, na je Akkoord.") volgt de stemgids niet letterlijk; een dag met vakantie én training in het vakantiepaneel is niet getest; de punten uit de Inbox "Stand toont Belasting Zwaar, 0 van 475" en "Calisthenics: algemeen sterk" bleven liggen (eerst naspelen, en een model met migratie); de rest van het rooster (R9, F4 en verder) is dit bouwmoment niet gestart.
-
-- 9 november, Forge herinrichting, de rest (eigenaar dacht dat het al af was: deel 1 is live sinds 2 november, besluit `2026-11-02-forge-herinrichting.md`). Nog open uit `docs/visie/Ontwerprapport Forge.md`: de kolom Voorschrift weg (herhaalt de vakken), RIR-bolletje en vinkvak naar minstens 44 px (de 45 kleine tikdoelen in de Lookout-doorloop), Kleiner maken en Afronden niet meer dubbel in het menu van de training, de naam van een oefening in Marcellus, het blad Set (lang drukken zichtbaar maken). Eén bouwer, na "Hoe goed kent Forge je" en Calisthenics als algemeen doel (zelfde bestanden).
-
+- In aanbouw 11 november (Sherpa Route-kaart, session_01LnDpSn5hAWFpmYVbjZVfp7, branch claude/route-kaart): Route voorstellen met een echte kaart (eigenaar 10 en 11 november, besluit `2026-11-11-locatie-en-kaart.md`, dat de privacygrenzen van eerdere besluiten vervangt). "Het liefst heb ik gewoon een duidelijke kaart waar ik op zie waar ik nu ben, wat mijn route is en zelfs wat de optionele andere routes zijn." Eisen: kaart met ondergrond (tegels, bron uit `docs/onderzoek/Kaartbron voor Route voorstellen.md` van Scout, zonder API-sleutel), je huidige locatie als stip, de gekozen lus duidelijk en de andere lussen ernaast, startpunt kiezen met een tik op de kaart of je huidige locatie. Daarna de lus bijsturen (andere kant op, langer of korter, een stuk vermijden). Privacy is geen grens meer, behalve: nooit een echte locatie in de repo, testdata nagemaakt.
+- In aanbouw 11 november (Sherpa Route-verfijnen, session_01LnDpSim88CxchjWSHQ6Pbj, branch claude/route-verfijnen): Route voorstellen verfijnen (eigenaar 11 november, na proef met APK 158: "hij doet het en ik heb er wel al wat aan"). De lus begint ongeveer bij de deur, maar mag preciezer. Hij kiest niet altijd de juiste route. Er komt geen melding als er in de buurt geen hellingen of heuvels zijn en de gevraagde hoogtemeters dus niet kunnen: dan één duidelijke regel met wat wel kan. Soms is de lus te kort: de afstand van de training is het doel, een lus die er meer dan 10 procent onder blijft telt als mislukt en wordt verder gezocht of eerlijk gemeld. Engine (`engine/routePlanner.ts`), met tests op nagemaakte plekken zonder heuvels en met te korte uitkomsten.
+- Het Info-blad van een training opnieuw (eigenaar 11 november: "dat infomenu is kut en moet een hele refactor krijgen, een hele UI en UX verandering"). Het blad achter de knop Info (`components/TrainingGuideSheet.tsx`, menu in drie groepen). De Datavelden bekijken waren daar nauwelijks te vinden. Ontwerpvoorstel klaar (`docs/visie/Ontwerp Info-blad.md`, richting A: blad Je horloge, Uitleg korter); wacht op vijf antwoorden van de eigenaar dat de hele app bekijkt en zegt waar wat logisch hoort; daarna bouwen.
+- GR5: coördinaten van de 36 etappes uit OpenStreetMap halen (eigenaar 11 november: mag zelf, geen GPX van hem nodig), met de naamsvermelding van OpenStreetMap, in `src/data/gr5Stages.ts`. Daarna de regel op je etappe en hutten via refuges.info.
+- Week: de band van een periode blijft tikbaar, ook als de periode meer dan twee weken voorbij is (eigenaar 11 november, advies gevolgd). Nagaan of dat al zo is; zo niet, de grens weghalen.
+- Losse training telt niet mee: Week zegt "0 van 3 gedaan" en de terugblik "0 gedaan · 56 min" (Cartographer Kansen). Een verkeerd getal: eerst naspelen met nagemaakte data. Opus.
+- Kansen 11 november, door de eigenaar gekozen (alle met het advies; bronnen in `docs/visie/Kansen 11 november app.md` en `docs/onderzoek/Kansen 11 november training.md`):
+  - De sleuteltraining past bij je doel (`engine/goalList.ts#nextKeySession`, `engine/adviceWeek.ts`). Opus.
+  - Afdaalklok: na 21 dagen zonder afdaling één regel en een voorstel met Akkoord voor een trapsessie; 7 tot 14 dagen voor een tocht om een verse afdaling vragen. Planning, Fable.
+  - Enkel en evenwicht als rij binnen Spieren voor de berg (Forge zit op zes rijen). Opus.
+  - De avond ervoor: vanaf 20:00 (instelbaar) kijkt Vandaag naar morgen, hoogstens vier regels klaarleggen; melding als instelling, advies uit. Alleen tekst. Opus.
+  - Eten onderweg: een indicatie wat je meeneemt, voor lange trainingen (lopen vanaf ongeveer anderhalf uur: gels en alternatieven) en voor tochten (per dag en per etappe). Geen dagelijkse voedingsregistratie (eigenaar 11 november: "te gecompliceerd voor nu"). Scout heeft de getallen (30 tot 60 g koolhydraten per uur, wandelen 30 tot 40). Opus, de rekenregel op Fable als hij de tochtplanning raakt.
+  - Racedag voor de 10 km: blad in de laatste week met weer bij de start, inlopen, tempo per km voor doeltijd en verwachte tijd; de dag erna een terugblik. Opus.
+  - Vaste ijktocht elke zes tot acht weken als kompas voor de berg, inplannen via Akkoord. Planning, Fable.
+  - De beenindex leert van je ochtendantwoorden (`learning.ts#indexChecks`), begrensd, veiligheidsregels nooit soepeler, met migratiestap. Fable.
+  - Routes ook voor wandelen en rugzaktraining, met klimtempo. Na de twee route-bouwers. Opus, engine op Fable.
+- Info-blad bouwen volgens richting A van `docs/visie/Ontwerp Info-blad.md`, met het advies op alle vijf vragen (eigenaar 11 november: "alle punten vind ik goed"). In sporen: eerst blad Je horloge met de knop Horloge, dan de rijen in Week en op Vandaag, dan Uitleg opschonen, dan Datavelden bekijken naar Gidsen. Opus.
 
 ## Rooster voor de bouwmomenten
 
-Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden). Afgerond: naar "Live op" en uit dit rooster.
+Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het bouwmoment slaat het over. Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden), nooit twee planner-sporen tegelijk. Afgerond: uit dit rooster en uit de groepen hieronder, met een regel onder Pas live.
 
-1. Af (8 en 9 november): Planner, tijdsgrens, Spieren voor de berg, Buiten klein, Scout RIR en RPE (`docs/onderzoek/RIR en RPE in krachtapps.md`).
-2. Af (9 november): Forge afvinken is de RIR van het doel (stap 1 tot 5; vermoeidheid tussen oefeningen blijft liggen als stap 6 tot 8) ‖ Heuvels en trappen in de buurt ‖ Scout calisthenics en uitleg bij oefeningen (twee verslagen in `docs/onderzoek/`).
-3. Af (9 november): Forge gewicht op een toestel (standen onthouden, blad, instelling) ‖ Periode "Zonder sportschool" (feestdagen als voorstel bleef liggen) ‖ Tempo bij zone 2 (Scout, engine en instelling; grafiek en tekst blijven).
-Vanaf ronde 4 twee lijnen tegelijk, elk een eigen sessie en branch (`claude/lijn-forge`, `claude/lijn-rest`). Een lijn raakt in deze backlog alleen haar eigen rondes en eigen Inbox-punten aan, haalt voor elke push `origin/main` en de werkbranch binnen en lost botsingen in gedeelde bestanden (instellingen, logboek, backlog) op door beide kanten te houden.
+1. In aanbouw 11 november: Klein en fouten, deel 1 (Sherpa Klein deel 1, session_01LnDpSjTi9hxdJEtwACNb4G, branch claude/klein-deel-1) ‖ Buiten: UV, licht tot, hoogte van je plek.
+2. Voorstel squat op één been en L-sit (planner) ‖ Uitleg bij oefeningen, batch 5 (Forge-data).
+3. Feestdagen als voorstel (planner) ‖ Forge herinrichting, de rest.
+4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
+5. Forge: herhalingen schatten bij een ander gewicht en de volgende set bijstellen.
 
-Lijn Forge (alles in `components/forge/`, `engine/forge*`, `strengthModel.ts`, oefeningen):
+## Pas live
 
-F1. Af (9 november): de Forge-punten uit de Inbox (review afvinken, toestelstanden) ‖ Forge: ruilen met een echte vervanger.
-F2. Af (9 november): vermoeidheid tussen oefeningen (stap 6 tot 8 van het RIR-verslag) ‖ ForgeWorkout opsplitsen, ronde 3 (689 regels), met de lintwaarschuwingen.
-F3. Af (9 november): uitleg bij oefeningen, de proef met vijf teksten (model, blad, instelling; Scout en Warden hebben ze getoetst). De rest van de teksten wacht op het oordeel van de eigenaar over lengte en toon; advies: in batches van twintig, elk met een Scout-toets op de techniek.
-F4. Calisthenics. Af (9 november): het ontwerp (`docs/beslissingen/2026-11-09-calisthenics-ontwerp.md`) en F4a: modelvelden, drie ladders (push-up, optrekken, dip) met twaalf nieuwe oefeningen, de engine `skillLadder.ts`. F4b en F4c af (9 november): de rij voor een stap met Stap lichter en Stap zwaarder, seconden voor een houding, Ging het netjes, band en extra gewicht (`docs/beslissingen/2026-11-09-calisthenics-forge-rij.md`). F4d en F4e af (9 november): het voorstel voor een stap met Akkoord (`docs/beslissingen/2026-11-09-calisthenics-stapvoorstel.md`) en het doel Vaardigheid met de ladder als trap op Ascend (`docs/beslissingen/2026-11-09-calisthenics-vaardigheidsdoel.md`). F4f en F4g af (9 november): zes extra ladders (squat op één been, handstand, handstand push-up, L-sit, front lever, muscle-up) met 23 oefeningen, uitleg en eigen tekeningen; per krachttraining de keuze Kracht, Calisthenics of Samen met voorstel en Akkoord (`docs/beslissingen/2026-11-09-calisthenics-planner.md`). Open uit de review: de toets van de straddle front lever is hoog; Ongedaan maken verdwijnt na Akkoord op een andere training; de overige 17 nieuwe tekeningen zijn niet allemaal bekeken. F5 bleef staan (de lijn rest heeft er al delen van).
+Beantwoord op 11 november (eigenaar): APK 158, Precies, vanaf je deur en de datavelden werken; Eccentric Squat blijft de lichte vorm; de vier tekstpunten zonder screenshot vervallen.
 
-F5. Af (9 november): lichaamsgewicht als trend overal (Forge, rugzakaandeel, beenindex; instelling Gewicht bij eigen gewicht), het bolletje met gewicht en aandeel in Forge, het aandeel voor alle oefeningen met eigen gewicht met bron, en de ijkset eens per vier weken (`docs/beslissingen/2026-11-09-gewicht-bij-eigen-gewicht.md`, `docs/beslissingen/2026-11-09-ijkset.md`).
+Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
-Lijn rest (alles buiten Forge):
+## Groot
 
-R3. Af (9 november): de lawineregel zonder bulletin, hoofdletterhulp overal, docs over `SkyPanel`, lege regels, de gestippelde tempolijn. De oudere punten bleken al gebouwd (RPE bij een testloop: `PLANNED_MAX_EFFORT_RPE`, `easyMinutes`, `testEffortRemark`, de ochtend na een test; Vandaag-volgorde: groepen in `todayCards.ts`). Open uit R3: de herinrichting uit de ontwerprapporten (Stand met Ritme, Logboek, Geavanceerd als eigen pagina, één notatie voor tijden), een eigen ronde van een uur of meer met Cartographer.
-R4. Stap 1 en 2 af (9 november): alle teksten plat (`docs/teksten/alle-teksten.md`) en de stemgids, goedgekeurd door de eigenaar en vastgelegd in `docs/beslissingen/2026-11-09-stem-van-ascend.md` (vervangt het besluit van 27 oktober). Stap 3 proef af (9 november): de Vandaag-tab herschreven door Scribe, getoetst door Warden en Lookout. Stap 4 (vertaalbestanden, Engels) volgt als alle tabs klaar zijn.
-R5. Af (9 november, lijn rest): de Week-tab herschreven volgens de stemgids (Scribe, Warden, Lookout, tekstkaart verklaard). Was: Stap 3 voor Week: waarschuwingen, slepen, inhalen, blad van een geplande training, weekterugblik, jaaroverzicht. Eén tab per keer, met `docs/teksten/alle-teksten.md` als lijst en de stemgids als maat. Eerst in `docs/werkbriefjes/week.md` kijken.
-R6. Af (10 november): Stap 3 voor Ascend (doelen, klaar voor je doel, GR5, race; ook de kaart in `raceReadiness.ts` die nog de oude vorm van het doeltijdadvies heeft). R7 af (10 november): Stand (en Stand zonder doel). R8 af (10 november): Logboek en Run in detail (Lichaam blijft over, met R9 en R10 erna). R9: Instellingen met de uitleg achter de i (hoogstens ongeveer 40 woorden per onderwerp; Vandaag-onderwerpen zitten op 45 tot 70). R10: de Forge-tab, pas als lijn Forge klaar is.
+- Herinrichting uit de ontwerprapporten (`docs/visie/Ontwerprapport gegevens.md`, `instellingen.md`): Stand met Ritme, de weekterugblik, het Logboek, Geavanceerd als eigen pagina, één notatie voor tijden ("13.05" bij het weer tegenover "06:11" in Instellingen). Een eigen ronde van een uur of meer met Cartographer. De keuzes uit de rapporten maakt de coördinator met het advies.
+- Forge herinrichting, de rest (deel 1 live sinds 2 november, besluit `2026-11-02-forge-herinrichting.md`; uit `docs/visie/Ontwerprapport Forge.md`): de kolom Voorschrift weg, RIR-bolletje en vinkvak naar minstens 44 px (45 kleine tikdoelen in de Lookout-doorloop), Kleiner maken en Afronden niet dubbel in het menu, de naam van een oefening in Marcellus, het blad Set met lang drukken zichtbaar, de regel "per kant ..." onder elke set en het percentage van je maximum. `components/forge/`. Eén bouwer.
+- Teksten stap 4: de teksten uit de code naar een vertaalbestand per taal, daarna Engels, te kiezen in Instellingen. Groot werk in alle componenten; de engine geeft ook zinnen terug. Pas na R10. Wacht: "Engels wacht" (plan van de coördinator, 9 november).
+- Routeplanner na het kaartje: startpunt kiezen, huidige locatie en bijsturen (zie Inbox). `engine/route*`, `integrations/`.
 
-## Loopt nu
+## Middelgroot
 
-Live op 10 november (bouwmoment, buiten het rooster): de Inbox-punten van 10 november. Instellingen, Koppelingen, Geavanceerd heeft een rij Datavelden bekijken naar de pagina. Week zegt hetzelfde weeknummer als Vandaag ("Week 3 van 4, basisfase"; `weekHeading`). Route voorstellen zegt hoeveel hellingen er op de kaart liggen en hoe hoog de hoogste boven je plek is, wijst bij te weinig hoogte naar trap, brug of loopband op helling, zegt waarom een kortere lus mag (tot 12 procent), en heeft onder de knoppen één statusregel (besluit `2026-11-10-route-uitleg.md`). Het uitlegblad van een training heeft drie groepen met één soort rij en onderbladen (`docs/ontwerp/uitlegblad-training.md`). De melding in Week na "Benen fris, ... blijft staan" op Vandaag zegt dat jij koos om hem te laten staan, zonder de mintknop; instelling Melding na jouw keuze in het blad Meldingen in Week (besluit `2026-11-10-week-melding-na-keuze.md`). Open: het kaartje (zie Inbox); de info-knop van een instellingsrij meet 20 bij 20 px (gedeeld, niet nieuw); een golf-kop in Week is alleen in een test gezien; een helling zonder bekende hoogte telt mee in het aantal maar niet voor de hoogste.
+- Buiten (akkoord eigenaar 7 november): UV-index als regel bij een lange loop of tocht vanaf UV 6 (de waarde zit al in `engine/weather.ts`, de regel niet), "Licht tot 17.12" als een training buiten na zonsondergang eindigt (`engine/sun.ts` bestaat), en de hoogte van je plek of vakantieadres (de hoogteaanroep staat nu in `integrations/overpass.ts`, kan naar `openMeteo.ts`). Instelbaar, alleen tekst. Sonnet.
+- Feestdagen als voorstel (akkoord 7 november, bleef liggen in ronde 3): Nager.Date, Nederland en het land van een vakantie, eens per jaar ophalen, een feestdag is een voorstel met Akkoord. Raakt de planning: engine op Fable, niet tegelijk met een andere planner-sessie.
+- Voorstel squat op één been en L-sit (akkoord eigenaar 9 november avond): bij Calisthenics algemeen één keer een voorstel met Akkoord dat ze in een training zet als ze nergens staan; de kaart zegt nu "Staat nog niet in je trainingen." Planner, Fable, niet tegelijk met een andere planner-sessie. De kaart onthoudt geen hoogste stap: zo laten.
+- Uitleg bij oefeningen: nog 59 oefeningen zonder uitleg, in batches van twintig (Scribe schrijft, Scout toetst de techniek, bron in `docs/onderzoek/`). `src/data/exercises.ts`. Sonnet.
+- R10: de teksten van de Forge-tab volgens de stemgids. Daarna de uitleg in Instellingen inkorten (nu gemiddeld ongeveer 66 woorden, doel ongeveer 40).
+- Forge, wens 3 november: (1) herhalingen schatten bij een ander gewicht dat je zelf invult (uit je geschatte kracht en de gevraagde RIR, alleen een voorstel in het vak); (2) na afvinken de volgende open werkset bijstellen naar wat Forge nu verwacht, beide kanten op, instelbaar. Nu stelt `engine/forgeAdjust.ts` alleen lichter voor, met een tik; `forgeInput.ts#carryChange` schuift alleen een gelijke waarde door.
+- Heuvels en de periode: de OpenStreetMap-regel op een vakantieadres of in een periode Zonder sportschool. Een periode heeft geen eigen plek; vraagt een nieuwe opgeslagen vorm met migratie (Fable).
+- Health Connect, de rest: een ronde start alleen als je terugkomt in de app (niet na urenlang open staan); het blad Lichaamsgewicht toont heel even "Gewicht: staat uit" na weer aanzetten.
+- Zonder doel: de vorm van de week veranderen bij een andere richting (de kaart Je week op Je stand staat er al, `components/stand/YourWeekStandCard.tsx`).
 
-Live op 9 november (proef met Fable, tekst voor Strava): de tekst zegt wat voor training het was en niet wat Strava al toont. Een titel ("Zone 2 · rustige duurloop", "Heuvelintervallen · 6 × 90 s", "Lange duurloop · 300 hoogtemeters") en hooguit één regel waarom ("Week 3 van de basis, richting GR5"), met een lege regel eronder voor je eigen tekst; geen afstand, tijd of tempo. Twee knoppen: Titel kopiëren en Titel en regel kopiëren. Instelling Wat erin staat (Titel en regel als advies, of Alleen de titel) in het nieuwe blad Tekst voor Strava bij Koppelingen. Besluit `2026-11-09-strava-tekst-soort-training.md`. Open: plakken in de echte Strava-app is niet gezien; de regel waarom staat er alleen bij een training uit je planning.
+## Klein en fouten
 
-Live op 10 november (lijn rest, R8): de teksten van het Logboek en Run in detail volgens de stemgids (legenda 'Gedaan: een stip', 'Gepland: omcirkeld', 'Hoe de loop liep', 'hele loop', 'Dat kan niet terug' vooraf bij verwijderen, Inkorten met 'later in de training ongedaan maken', de vaste Akkoord-zin ook in TrekGoals en KindAmountPage). Elk kaartverschil staat verklaard in `docs/teksten/verschil-r8-logboek.md`. Open: R9 trekt `settingsHelp.ts` en `settingsIndex.ts` gelijk ('Details van loopjes' wordt 'Details van lopen'; de oude Akkoord-uitleg rond regel 985, 1092, 1123); 'Twee harde loopjes' staat nog in `weekConcerns.ts` (met test), `weekValidator.ts`, `GarminLink.tsx`, `influence.ts`, `influenceEffects.ts`; Lichaam is nog niet herschreven. Volgende tab: Lichaam, dan R9 (Instellingen).
+Deel 1 (teksten en dode code):
+- "Twee harde loopjes" staat nog in `engine/weekConcerns.ts` (met test) en `engine/weekValidator.ts`; "loopjes" nog in `engine/runTrends.ts` en `runInsight.ts` (R8).
+- "Loopsessies" bij `long_run` in `src/data/goalKinds.ts` laat "lang" weg; nakijken in de triatlon-UI.
+- `openFysio` in `engine/bodyCheck.ts` is dode code.
+- De vaste voorstelzin in `engine/strengthScheduling.ts` ("Geldt vanaf over twee weken, na je Akkoord.") volgt de stemgids niet letterlijk.
+- Ontbrekende tests: de tak "Geen trainingen in deze maand", de bladen Ritme en Benen en de componentteksten van Stand, een dag met vakantie én training in het vakantiepaneel, Benen B tegenover een training met een eigen plek in `leavePlanAround.test.ts`.
+- In Stand toont de samenvatting "Belasting Zwaar, 0 van 475" bij een zware geplande week; lijkt een fout in de telling, eerst naspelen (skill `naspelen`).
+- Een regel in Intensiteit (Stand) mist een bolletje.
+- Valkuil bij inkorten: haal geen zin weg die verklaart wat een getal of regel op het scherm betekent.
 
-Live op 10 november (lijn rest, R7): de teksten van de tab Stand, met en zonder doel, volgens de stemgids (kortere uitleg bij Belasting, Frisheid, Beenkalender, Intensiteit, Tempo; de bladen Ritme en Benen in drie punten met de zorgzinnen volledig; 'Prima,' weg uit de coach, weekkaarten en startwizard; de vaste zin 'Eerst een voorstel, pas na Akkoord verandert er iets.' in de coach, startwizard, missiekaart en planninginstellingen; 'hele loop' bij het testoordeel; 'Loopsessies' bij de triatlon). Elk kaartverschil staat verklaard in `docs/teksten/verschil-r7-stand.md`. Volgende tab: R8 (Logboek).
+Deel 2 (Forge en Calisthenics):
+- Regel 4 en 5 van de afvinkregels lezen gelijk (besluit `2026-11-09-forge-review-afvinken.md`).
+- Spieren voor de berg heeft in Forge geen eigen schakelaar (Forge zit op het maximum van 6 rijen).
+- Toestelstanden: de formulier-`key` in `components/forge/MachineWeights.tsx`; standen in pond, plaatjesnummers en optrekhulp; het strookje "Ook tussenin en erboven schatten" breekt op 390 px; Rustig niet gezien.
+- Reverse Lunge staat als dumbbell-oefening in de catalogus; een variant met eigen gewicht ontbreekt.
+- De terugknop van het toestel sluit het uitlegblad ook na Lichter of Zwaarder; alleen Terug naar gaat een stap terug.
+- Calisthenics: de toets van de straddle front lever is hoog; Ongedaan maken verdwijnt na Akkoord op een andere training; bij het maximum van 20 trainingen meldt Akkoord gelukt terwijl de stap niet geldt; een back-up uit een nieuwere versie met een onbekende ladder bewaart die vaardigheid verborgen; Liever niet bij een stapvoorstel staat alleen in localStorage; 17 nieuwe tekeningen niet allemaal bekeken; een stopwatch bij een houding.
+- IJkset: de rij van de extra set heet nog "eigen set" (`engine/forgeRows.ts`, `ExerciseBlock.tsx`); Niet nu geldt alleen voor deze keer.
+- Toevoegingen van Spieren voor de berg gaan nog niet mee in het concept van een lopende sessie; Ruilen op een toegevoegde bergspieroefening die na Uit deze training halen met afgevinkte sets blijft, doet stil niets.
+- Tempo: de stippen in de tempografiek zijn niet tikbaar; het blad gebruikt 8 weken, de kaart 12.
 
-Live op 10 november (melding eigenaar): wie Route voorstellen al had toegestaan voor Startpunt van je lus bestond, kreeg de keuze Precies, vanaf je deur nooit en zocht stil op Ongeveer. Het paneel stelt de vraag nu nog één keer zolang er geen keuze is opgeslagen.
+Overig:
+- De info-knop van een instellingsrij meet 20 bij 20 px (gedeeld onderdeel).
+- Een helling zonder bekende hoogte telt mee in het aantal maar niet voor de hoogste (Route voorstellen).
+- De kaart Let op op Vandaag verschijnt na het ophalen en kan de ochtendkaart onder de missie schuiven; mogelijk dubbel onweer met het bergweer.
+- De periode Zonder sportschool geeft de 3 dagen na een tocht dezelfde lengteregel als de 72 uur rust.
+- Overzicht Gewicht: met precies twee wegingen in twee weken kan het eind van de lijn een paar tienden afwijken van het grote getal.
+- Nagekomen uit ronde 2b: een eigen sport telt niet in de weekcheck; "Laten staan" bij een vakantie en "laten rusten?" rond een Top-race voor vaste sporten; de waarde "Alles normaal" valt af in de rij Hoeveel per soort op 360 px; een test die alle Android-XML vooraf leest (een dubbel streepje in commentaar brak de APK-bouw).
 
-Live op 10 november (Routeplanner fase 3, naar Garmin Connect): onder elke lus Naar Garmin Connect naast GPX downloaden; in de Android-app opent de keuzelijst van Android (Openen met en delen samen, eigen klein native deel `FileOpenPlugin.java`, geen nieuw recht), in de browser het deelvenster als dat kan, anders de download; uitklapper Zo komt hij op je horloge; de GPX heet "ASCEND Avontuurlijk 6 km" (`docs/beslissingen/2026-11-10-route-naar-garmin-connect.md`). Native niveau 9, dus de app vraagt zelf om de nieuwe APK. Niet gezien: Garmin Connect, het horloge, de keuzelijst op een echt toestel.
+## Nakijken
 
-Live op 10 november (Datavelden voor je horloge): een pagina met per soort training (Zone 2, Heuvels, Intervallen, Lange duurloop, Tocht met rugzak) de datapagina's op het ronde scherm van de Forerunner 255, met één zin waarom, Advies plus Versie 2 en 3 om zelf in te vullen (blad Veld kiezen, 126 velden), Terug naar advies met Ongedaan maken, en de stappen op het horloge. Te vinden bij Instellingen, Koppelingen, Garmin, Je horloge instellen, en in de uitleg van een training; instellingen Datavelden voor je horloge en Model onder Koppelingen, Geavanceerd (`docs/beslissingen/2026-11-09-datavelden-horloge.md`, `docs/onderzoek/Datavelden voor je horloge.md`). Niet bevestigd: de ligging van de velden op het scherm (tekening van ASCEND) en of Hiken dezelfde velden biedt; de eigenaar kijkt op zijn horloge.
+Twijfel of het af is; eerst kijken, dan schrappen of bouwen.
+- Rustdag terug: een training die je zelf oversloeg of waarvan je het inhaalvoorstel afwees, kan de rustdag tot zeven dagen tegenhouden. `trainedOn` volgt nu `dayLoads` (af), maar `catchUpFits` in `engine/restDayBack.ts` kijkt niet naar een afgewezen inhaalvoorstel.
+- Tempo bij zone 2, kleine rest: een oude `aerobicProgressCelebrated` na 14 dagen negeren; het dauwpunt per loop (`dewPoint` zit in `heatPace.ts` en het weer); de regel voor benen die niet uitgerust zijn (hoofdstuk 5 van het verslag). Niet in de code teruggevonden of bevestigd.
+- Geavanceerd als eigen pagina in Instellingen (akkoord eigenaar 2 november): er is een Geavanceerd per groep (bijvoorbeeld Koppelingen, Geavanceerd); of dat de bedoelde pagina is, is niet nagegaan.
+- Eén notatie voor tijden: niet nagegaan of "13.05" en "06:11" nog naast elkaar staan.
+- Jaaroverzicht: "Testloop 5 km: 14 jan en 15 jan", twee dagen voor één test. Fout in de gegevens of in de telling?
+- De vaste doorloop van Lookout gaf Stand helemaal leeg; een eigen afdruk was vol. Drukt de kit te vroeg af?
+- Startvragen: standaard is "Een tocht of wedstrijd"; is "Fit blijven" logischer voor iemand zonder plan?
+- Op een toestel of in een echte browser nog niet gezien: de echte Overpass- en hoogteaanroep, live Open-Meteo-waarschuwing en EAWS, opslaan in Documenten/ASCEND, een GPX als koers in Garmin Connect en op het horloge, de keuzelijst van Android, lussen boven ongeveer 18 km (de heuvelcache is 3 km), de locatievraag bij Precies, plakken in de echte Strava-app, de tempoband met 8 of meer lopen over 4 weken, het bolletje gewicht en aandeel met een echte weging, 34 van de 40 uitlegteksten van batch 3 en 4.
+- Routeplanner: in de afdruk waren beide lussen korter dan de training (4,2 en 4,6 km bij 6 km); nakijken met echte lussen van de eigenaar.
+- Feiten om te toetsen (Scout): de factor 0,98 voor de drempelhartslag na een 5 km; Sporten lezen echte intervals.icu-types (Swim, Padel, Soccer, Yoga) alleen met nagemaakte data getest; de drempels van vermoeidheid tussen oefeningen niet op echte trainingen getoetst.
 
-Live op 10 november (Startpunt van je lus): de eerste vraag van Route voorstellen biedt "Precies, vanaf je deur" en Ongeveer; bij Precies kies je Gebruik waar ik nu ben, het punt staat alleen op het toestel (niet in export of back-up) en is te wissen; alleen het startpunt gaat precies naar de routeplanner, heuvels en paden blijven op de afgeronde plek. Instelling Startpunt van je lus (standaard Ongeveer tot je kiest). Route voorstellen staat nu ook op de pagina van een looptraining, in de kaart met Eerst opwarmen (`docs/beslissingen/2026-11-09-startpunt-lus.md`). Keuze coördinator: de standaard blijft Ongeveer omdat er zonder punt niets precies kan; de knop heet "Precies, vanaf je deur" in plaats van "Precies (advies)", zodat het keuzeblad en het paneel niet twee verschillende adviezen geven. Niet gezien: een echt toestel met de locatievraag van Android, een echte lus vanaf de deur.
+## Wacht op de eigenaar
 
-Live op 10 november (R9, teksten Lichaam en Instellingen): Lichaam en de uitleg achter de i in Instellingen volgens de stemgids; zoeken en uitleg gebruiken dezelfde namen; de spoedtekst en de lijst "Naar een fysio of je huisarts bij" staan altijd open op de plekpagina en in het lijfblad; de Akkoord-zin alleen waar hij klopt, anders "zoals je bij Wijzigingen koos" (`docs/beslissingen/2026-11-09-teksten-lichaam-en-instellingen.md`). Zoeken op "vaardigheidsdoelen" vindt de rij Calisthenicsdoelen tonen weer. Open: de uitleg is gemiddeld ongeveer 66 woorden in plaats van 40; `openFysio` in `engine/bodyCheck.ts` is dode code; "Loopinzicht" in de zoekindex tegenover het blad "Inzicht na een training"; R10 (Forge-uitleg). Niet gezien: 390 px in de tweede meting, andere plekken dan de borst.
+Niets open (11 november).
 
-Live op 9 november (uitleg bij oefeningen, batch 3 en 4): veertig oefeningen kregen uitleg in twee lagen (de ladderstappen van push-up, optrekken en dip, Spieren voor de berg, en de gangbaarste oefeningen), elk getoetst door Scout met bron in `docs/onderzoek/Bronnen bij de uitleg van oefeningen, batch 3.md` en `batch 4.md`; Lichter en Zwaarder volgen nu ook de ladder bij push-up, pull-up, step-up en reverse lunge. Nog 59 oefeningen zonder uitleg. Niet gezien: 34 van de 40 teksten in het blad, 390 px.
+## Later
 
-Live op 9 november (melding eigenaar): de ring bovenaan Week telde de oude rij van een gemiste training die naar een andere dag was gezet nog mee ("6/7" terwijl alles gedaan was). De gedeelde telling (`engine/weekLogs.ts#leftOutOfCount`) slaat die rij nu over, zoals de weekterugblik al deed; geldt ook voor de reeks op Stand en het seizoensoverzicht.
-
-Live op 9 november (Routeplanner fase 1 en 2): bij een looptraining de knop Route voorstellen met twee lussen vanaf je plaats, Simpel en Avontuurlijk, elk met afstand, hoogtemeters en een GPX; eerst een vraag of ASCEND mag zoeken (je plek afgerond op ongeveer een kilometer naar BRouter, anders Valhalla van FOSSGIS, en OpenStreetMap); plant niets en bewaart geen route; instellingen Route voorstellen (aan) en Welke lus eerst (Avontuurlijk) in het blad Weer en kleding (`docs/beslissingen/2026-11-09-routeplanner.md`, `docs/onderzoek/Routeplanner voor een training.md`).
-
-Live op 9 november (Calisthenics algemeen): bij Doel toevoegen, Calisthenics kies je Algemeen sterk met eigen gewicht (advies) of Eén vaardigheid; algemeen volgt vijf ladders (push-up, optrekken, dip, squat op één been, L-sit) zonder datum, met een kaart op Ascend en één zin ("Eén ladder een stap hoger dan op 20 okt."); je planning verandert er niet door (`docs/beslissingen/2026-11-09-calisthenics-algemeen.md`). Open, vraag aan de eigenaar: squat op één been en L-sit komen niet vanzelf in een training, de kaart zegt dan "Staat nog niet in je trainingen."; een voorstel met Akkoord dat ze toevoegt is een eigen stap (raakt de planning). Het algemene doel bewaart geen gehaalde stappen: de kaart toont de huidige stap uit de logs en zakt mee na Stap lichter. De doorloop van Lookout was voor het laatste tekstherstel.
-
-Live op 9 november (Overzicht Gewicht): een tik op de kaart Gewicht op Je stand opent een eigen overzicht (trend als lijn, wegingen als stippen, 4 weken, 3 maanden of Een jaar, verandering per week en over de periode, vetpercentage, lijst van wegingen met bron, Weging toevoegen, link naar de instellingen); de lijn op de kaart komt alleen uit echte wegingen; instelling Overzicht Gewicht opent op (`docs/beslissingen/2026-11-09-overzicht-gewicht.md`). Open: met precies twee wegingen in twee weken kan het eind van de lijn een paar tienden afwijken van het grote getal.
-
-Live op 9 november (bouwmoment): Health Connect zegt wanneer de laatste ronde liep ("gisteren om 19:07") en per soort wat er binnenkwam (Trainingen, Ochtenden, Gewicht: aantal, niets gevonden of geen toestemming), ook na Gewicht toestaan; een ronde draait nu ook als je op een ander tabblad terugkomt in de app (`useResumeSync`). Een weghaling uit het weekvoorschrift valt mee als haar toevoeging wegvalt, zodat een week geen training verliest zonder vervanging (`withoutOrphanedRemovals`, `replacesSessionId`; besluit `2026-11-09-weghaling-met-toevoeging.md`). Het vakantiepaneel en het icoon zonder gewicht stonden al live; er kwamen tests bij. De test `substitutions.test.ts` rekent in UTC, zodat de zomertijd hem niet breekt.
-
-Live op 9 november (lijn Forge, F5): Forge, het rugzakaandeel en de beenindex rekenen met je gewichtstrend (instelling Gewicht bij eigen gewicht in het blad Lichaamsgewicht: Trend, het advies, of Laatste weging; met minder dan drie wegingen in twee weken telt de laatste). Bij een oefening met eigen gewicht staat in Forge een klein bolletje "84,2 kg · 50%"; een tik opent een blad met je gewicht, het aandeel in kilo en procent, de bron, één zin uitleg en Gewicht aanpassen. Het aandeel is aangevuld voor Hanging Leg Raise, de pistol-varianten, Skater Squat en de muscle-up-ladder, elk met een bron (`data/bodyweightShares.ts`); houdingen, balans en pike- en handstand push-ups hebben er geen. De ijkset (KR-12): eens per vier weken een kaart bovenaan een krachttraining met een extra set bij één hoofdoefening (Niet nu of Akkoord), niet in een week met een tocht, test of wedstrijd, instelling IJkset voorstellen. Kleine F4-punten: Calisthenics per training telt alleen stappen die nog gelden, het doel Vaardigheid begint zonder logs bij de stap waar je plan al op staat, de one-leg-stappen zeggen dat je per training met het andere been begint, het info-icoon in een instellingenrij krimpt niet meer. Open: de bolletjes zijn niet met een echte weging in beeld gezien (de nagemaakte stand heeft geen wegingen); de ijkset staat pas na drie trainingen met de oefening; de rij van de extra set heet nog "eigen set"; Niet nu op de ijkset geldt alleen voor deze keer; het info-icoon is niet op 360 px bij een lange titel met waarde vergeleken.
-Live op 10 november (lijn rest, R6 en kleine punten): de teksten van de tab Ascend volgens de stemgids (doeltijdadvies met het getal eerst, 'Eerst een voorstel, pas na Akkoord verandert er iets' in de uitleg achter de i, 'Prima,' weg, 'Lager kan niet: je hoofddoel blijft bij de Top-doelen', 'Nog een golf op hetzelfde niveau'), de beenkalender en 'Deze week door ASCEND aangepast' met een tikdoel van minstens 44 px, 'Geen trainingen in deze maand' als er alleen wegingen zijn, 'loopjes' alleen als telling in vakantie en weekcontrole. Volgende tab: R7 (Stand en Stand zonder doel).
-
-Live op 9 november (lijn Forge, F4d en F4e): in Forge een kaart met het voorstel voor een stap omhoog (toets gehaald) of omlaag (drie trainingen onder de onderkant), met Liever niet en Akkoord; Akkoord zet de oefening in je krachttraining op de nieuwe stap vanaf de volgende keer dat je die training opent, met Ongedaan maken op de kaart en Terug naar in het blad van de oefening; instelling Stap voorstellen. Op Ascend een kaart Vaardigheid met de ladder als trap (doel toevoegen via de tegel Vaardigheid, een stap op de ladder van push-up, optrekken of dip), gehaalde stappen blijven gehaald, instelling Vaardigheidsdoelen tonen (in het nieuwe blad Op de Ascend-tab met de Seizoensstrook). Een vaardigheid is een eigen model met eigen opslag (`skillGoals` in meta) en geen TrainingGoal: zo stuurt hij de planning nooit en wordt hij nooit het hoofddoel; geen hogere schemaversie, wel `migrateSkillGoals` in de back-upketen. Open: de Vaardigheidskaart met gehaalde stappen is niet met echte logs in beeld gezien; Liever niet bij een stapvoorstel staat alleen in localStorage (niet in de back-up); toevoegingen van Spieren voor de berg gaan nog niet mee in het concept van een lopende sessie; bij het maximum van 20 trainingen toont Akkoord gelukt terwijl de stap niet geldt; een back-up uit een nieuwere versie met een onbekende ladder bewaart die vaardigheid verborgen; de planner (F4g) en de overige ladders (F4f) volgen.
-
-Live op 9 november (lijn Forge, F4b en F4c): in Forge heeft een oefening op een ladder de regels Stap x van y, Toets en een uitleg, met Stap lichter en Stap zwaarder (alleen het scherm, zoals Ruilen; na een afgevinkte set weg); een houding (Dead hang, Steunhouding) heeft seconden in het cijferblok zonder RIR; Ging het netjes? na een set vanaf de onderkant (achteraf te wijzigen in het setmenu); een band (Licht, Middel, Zwaar) bij Pull-Up en Dip, een set met band telt niet voor de stap; extra kg bij de stappen met gewicht; de decline push-up zegt "met je voeten verhoogd"; een set Pull-Up of Dip met minstens 2,5 kg telt bij het lezen voor de stap met extra gewicht. Drie instellingen (Stappen bij calisthenics, Ging het netjes?, Band bij optrekken en dip). Open: een stopwatch bij een houding; een stap omhoog of omlaag als voorstel is F4d.
-
-Live op 9 november (lijn Forge, F3 en F4a): uitleg bij oefeningen (In het kort in drie regels, Lees verder, Lichter en Zwaarder, instelling Uitleg standaard uitgeklapt; vijf teksten getoetst door Scout, de incline press en de push-up kregen een correctie), en de grond voor calisthenics (ladders van push-up, optrekken en dip, `skillLadder.ts`, drie optionele logvelden `seconds`, `band` en `clean`; nog niets zichtbaar in Forge). Ruilen biedt een ladderstap alleen bij dezelfde ladder aan. Gezien: de uitleg op 360 en 390 px met Beweging Volledig, Rustig en Uit op een testoefening; niet gezien: de echte vijf teksten in beeld en de ruilbladen.
-
-Live op 9 november (lijn rest, R3): de lawineregel bij een tocht in de sneeuw zonder bulletin ("Geen lawinebulletin gevonden voor je tocht. Kijk bij de lawinedienst." met de link, in `ink-dim`), `capitalize` in elf bestanden in plaats van eigen kopieën, de docs over `SkyPanel` rechtgezet, lege regels weg en de tempolijn gestippeld en gedimd bij 'geen duidelijke verandering'.
-Live op 9 november (lijn Forge, F2): vermoeidheid tussen oefeningen (harde sets voor dezelfde spieren eerder in de training stellen de eerste set bij, instelling Vermoeidheid tussen oefeningen, besluit `2026-11-09-forge-vermoeidheid-tussen-oefeningen.md`; de drempels zijn nog niet op echte trainingen getoetst), ForgeWorkout van 1038 naar 689 regels (zes nieuwe hooks en onderdelen) en de lintwaarschuwingen in Forge weg.
-Live op 9 november (lijn rest, R2): weerwaarschuwingen (onweer, windstoten, hitte) en lawinegevaar (EAWS) als kaart Let op op Vandaag, twee instellingen, alleen tekst; Tempo bij zone 2 met een i, een blad en een grafiek per loop.
-
-
-Live op 9 november (lijn Forge, F1): de reviewpunten van Afvinken telt als het doel (`forgeKg` in het log, strengere `allAtTop`, regel 5 leest de bevestigde RIR, pauze, uitlegzin bij de bolletjes), Standen wissen met Terugdraaien en het strookje Ook schatten, en Ruilen met echte vervangers (twee groepen, Aanbevolen, reden per oefening). Open uit F1: pond, plaatjesnummers en optrekhulp bij de toestelstanden; het keuzestrookje en Terugdraaien zijn op 360 en 390 px gezien, Rustig niet.
-Live op 9 november (lijn rest, vierde bouwmoment): kaart Gewicht op Je stand (trend groot, laatste weging klein, lijn van zes weken, tik opent Lichaamsgewicht), wegingen als eigen regel in het Logboek, instelling Gewicht op Je stand (`docs/beslissingen/2026-11-09-gewicht-buiten-instellingen.md`); de Week-tab volgens de stemgids (R5), inhalen heet nu ook in de terugblik verplaatsen.
-
-Live op 9 november (lijn rest, R1): Heuvels-alleen omzetten bewaart meteen, `isGymStrengthTemplate`, de heuvelregel ook in een periode Zonder sportschool, een vaste sport in zo'n periode blijft staan met een regel in het voorstel, duidelijker reden bij terugzetten van de lengte, hoofdletterhulp samengebracht, `.sky-panel` weg, 'Voorstel bekijken' op één regel, en de gewichtstrend (instelling Gewichtstrend gebruiken, alleen voor wat je ziet).
-
-Live op 9 november (derde bouwmoment, ronde 3): Forge toestelstanden (stil onthouden met Terugdraaien, Minder en Meer springen naar de vorige en volgende stand, blad Standen van dit toestel, instelling Standen onthouden), de periode Zonder sportschool (Eigen gewicht, Licht of Gewoon, Heuvels in de buurt als tekst, instelling Kracht zonder sportschool), Tempo bij zone 2 uit stabiele stukken (engine, oude lopen op de achtergrond bijgewerkt met een budget, instelling).
-
-Live op 9 november (eerste deel): Forge afvinken telt als het doel (instelling in Rekenmodel, bevestigde sets, strengere stap, vragen bij twijfel, twee nieuwe logvelden met migratie), Heuvels en trappen in de buurt (OpenStreetMap, instelling), ForgeWorkout verder opgesplitst (993 regels), gedeelde hulpfuncties, re-exports en dode code weg, regen per plaats, de afstandszin op Vandaag ook zonder testloop, drie onderzoeksverslagen.
-
-Live op 8 november (tweede bouwmoment): regen in het komende uur en maanstand (twee instellingen in Weer en kleding), de telling "weg door je tijdsgrens" klopt bij Lichter, ForgeWorkout een eerste keer opgesplitst, gedeelde mean, stdev, median en joinNL in utils, 27 exports privé, de afstandszin op Vandaag in het enkelvoud bij één loop.
-
-Live op 8 november: één weektelling (week binnen de fase) op Vandaag en Stand, de weekcontrole die niet meer heen en weer schuift (en een testverplaatsing als laatste keuze van het voorstel), de tijdsgrens zegt het bij de oefening met Terugzetten, Spieren voor de berg ook in Forge, Tempo bij zone 2 op vlak tempo en de afstand op Vandaag uit je echte lopen. De 48 uur na de lange duurloop stond al op main sinds 2 november.
-
-
-Ronde 2 van `docs/onderhoud/2026-11-01-aanpak-backlog.md` (ronde 1 is af, terugblik in `docs/onderhoud/reflectie-2026-11-01.md`).
-
-Live op 2 november: de eerste ondertekende Android-app (release apk-23, sleutel in de environment android-release1), het opsplitsen van AppDataContext en ForgeWorkout, trainingen ruilen in een week, het opsplitsen van opslag en adviezen, Health Connect als bron in de Android-app (alleen lezen, nog niet op een toestel gezien), een plugin blijft niet meer hangen in de Android-app (automatisch bijwerken, meldingen, trillen, terugknop, locatie), Sporten die meetellen (zwemmen, padel, voetbal, vaste dagen, rust na een zware sport, hoeveel per soort, eigen sporten), Waarom staat dit hier, Minder tijd vandaag, zones na een test, details ophalen voor oudere runs, snelkoppelingen en een widget in de Android-app, je locatie (weer op je plek, plek per tocht voor het bergweer) (native niveau 3, nog niet op een toestel gezien), de 48 uur tussen beenzware dagen ook na de lange duurloop, de automatische back-up naar een bestand (Android: Documenten/ASCEND).
-
-Live op 1 november: Stand schuift niet meer zijwaarts, het cijferblok van Forge blijft open, de ochtendkaart na je antwoord, de rustdag die terugkomt, de rustiger fysioregel, de kortere voorschriftregel, het citaat in het Engels, een vakantie bijwerken, trainingen die niet doorgingen, ochtenden in de back-up veilig uitzetten, opmaak samengebracht, de tekstkaart met 21 schermen, drie ontwerprapporten in `docs/visie/`.
-
-Live op 31 oktober: data op lange termijn, run in detail, ochtendkaart vernieuwd met twee van drie, kansen stap 0, zonder doel stap 4 tot 10, onderhoud punt 2 en 3.
-
-## Kan nu, na wat loopt
-
-- Kansen met gegevens, het middelgrote werk (kans A en F, de etappeschatting als band) en het kleine werk dat over was (kans C, D en I): gebouwd op `claude/kansen-middelgroot`, wacht op de poorten (`docs/beslissingen/2026-11-01-kansen-middelgroot.md`). De bestandsroute voor FIT-bestanden als vangnet (stap 0c van het onderzoek) is later.
-- Vier tekstpunten uit eerdere Lookout-rondes die zonder screenshot niet terug te vinden waren. Wachten op een screenshot van de eigenaar.
-
-- Zonder doel: de kaart Je week op Je stand (ontwerp 2.8) en de vorm van de week later veranderen bij een andere richting.
-
-## Forge, wens van de eigenaar (3 november)
-
-- Herhalingen schatten bij een ander gewicht: vul je in een werkset zelf een ander gewicht in, dan rekent Forge het aantal herhalingen uit dat je bij dat gewicht waarschijnlijk haalt (uit je geschatte kracht en de gevraagde RIR, dezelfde rekenregel als het voorschrift), zoals MacroFactor dat doet. Alleen een voorstel in het vak, nooit over iets wat je zelf invulde. Nu bestaat alleen `forgeInput.ts#carryChange`, dat een gelijke waarde doorschuift, geen schatting.
-- Na afvinken de volgende set bijstellen: vink je een set af met meer of minder herhalingen (of een andere RIR) dan gevraagd, dan stelt Forge de herhalingen (en zo nodig het gewicht) van de volgende, nog open werkset bij naar wat hij nu verwacht. Niet bij een set die je zelf al aanpaste of afvinkte; een bestaand log blijft onaangeroerd. Instelbaar (standaard aan), met besluit en tests; past bij de herinrichting van Forge in ronde 3.
-
-## Forge naast MacroFactor, training van 3 november (Benen A)
-
-Live op 3 november: lichtere terugsets na een zware topset, opwarmen naar de sprong toe, "Hoeveel over?" na een set, een stap zwaarder ruim boven het bereik, de regel onder de lege stang en het voorstel voor een toestel in ponden (besluit `2026-11-03-forge-na-de-eerste-vergelijking.md`). Nog open: de regel "per kant ..." onder elke set en het percentage van je maximum horen bij het ontwerprapport Forge.
-
-## Met voorrang: de planner en de 48 uur (gevonden 2 november)
-
-- De planner zelf zet een lange duurloop en een zware beendag (Benen A) op twee dagen achter elkaar: `scheduler.ts#legSpacingDays` telt een loop met `intensity: 'low'` als rustig volume, terwijl `tpl_long_run` `lowerBodyLoad: 'heavy'` heeft. Dat botst met CLAUDE.md ("twee beenzware sessies niet binnen 48 uur"). Onderzoek klaar (`docs/onderzoek/Lange duurloop en een zware beendag.md`): 48 uur tussen zware beenkracht en de lange duurloop in beide volgordes; het weekendblok (heuvels zaterdag, lange duurloop zondag) blijft vrijgesteld; een instelling, standaard uit, die beenkracht de dag na de lange duurloop toestaat. Bouwen bij de eerstvolgende vrije plek (Sherpa en Warden op opus), met een nieuw besluit dat het 24-uursdeel van `2026-10-27-groei-tot-de-wedstrijdpiek.md` vervangt en de golden die beweegt met de reden in de commit.
-
-## Uit de review van rustdag na rust (voor de terugblik van ronde 2)
-
-- Een training die je zelf oversloeg of waarvan je het inhaalvoorstel afwees, houdt de rustdag tot zeven dagen tegen, ook als er nooit een inhaalvoorstel komt. Dan blijft de dag leeg. `catchUpFits` laat afgewezen inhaalvoorstellen negeren. En `trainedOn` telt een log op `completedDate`, `dayLoads` op de geplande dag (`logDay`); gelijktrekken.
-
-## RPE bij een testloop (onderzoek 2 november, `docs/onderzoek/RPE bij een testloop.md`), ronde 2
-
-Op vraag van de eigenaar. Bouwen bij de eerstvolgende vrije plek (Sherpa, opus; Warden op opus):
-- `rpeFactor` in `engine/legFatigue.ts`: de geplande RPE van een test of wedstrijd is 10 (via de rol), zodat een 10 niet als 25 procent zwaarder dan gepland telt.
-- `effortFactor` geldt alleen voor kracht; vastleggen met een test.
-- Nagaan of een gekoppelde test met inlopen en uitlopen als één blok op RPE 10 binnenkomt; zo ja de belasting splitsen (de 5 km maal de RPE, de rest maal 3).
-- Bij een test met RPE 7 of lager in `testJudgment` melden dat hij waarschijnlijk niet maximaal was.
-- De ochtend na een test of wedstrijd de vraag "Hoe voelen je benen?" actief aanbieden.
-- "gem. zwaarte" in de weekterugblik wordt minuten rustig en hard: gaat mee met de herinrichting van de gegevens in ronde 3.
-
-## Uit de terugblik op ronde 1 (vijf nieuwe punten)
-
-- Vandaag: een vaste volgorde en een maximum voor kaarten boven de missie (ochtendkaart, Niet gedaan?, koppelvoorstel, rustdag terug, back-up). Op een slechte ochtend staan er nu vier boven de missie. Ronde 2.
-- Vragen als Niet gedaan? wachten tijdens een ziekmelding, en komen pas terug als je beter bent. Ronde 2.
-- Eerst koppelen, dan inhalen: MISSED-CATCH-UP kijkt eerst of er een losse log te koppelen is. Ronde 2.
-- Ontwerprapport instellingen, de kleine delen: betere waarden en uitleg in de rijen, de bundel De ochtend, Weer en kleding. Ronde 2.
-- Ontwerprapporten gegevens en Forge, de grote herinrichting (Stand met Ritme, weekterugblik, Logboek, Forge zonder snelknoppen en met Alles in het blad Oefening). Ronde 3, na het opsplitsen.
-- Geavanceerd in Instellingen wordt een eigen pagina (eigenaar akkoord, 2 november): Planning en Geavanceerd zitten op hun plafond van rijen. Ronde 3, bij de herinrichting.
-
-## Android en web, wens van de eigenaar (1 november)
-
-Eis bij alles: de webapp zonder Android blijft volledig werken. Elke functie werkt los en samen; in de browser een webweg of een nette stilte. De Android-app werkt zichzelf bij (live update) en gebruikt een vaste sleutel, zodat je gegevens bij een update blijven.
-- In de Android-opdracht zelf: de terugknop, scherm aan tijdens Forge (in de browser met Wake Lock), trillen, statusbalk en startscherm.
-- Gebruikerstest met vier nagemaakte personen (ronde 4) en de herstelronde erna: niet in de sessie van 2 november (eigenaar); later, in een eigen sessie.
-- Back-up naar een map die de eigenaar zelf koos (Interne opslag/Ascend_backup) in de Android-app: eenmalig Map kiezen via de mappenkiezer van Android (Storage Access Framework, blijvende toestemming), daarna schrijven Back-up maken en de automatische back-up daarheen, met terugval op Documents/ASCEND en een melding. Vraagt een nieuwe plugin en APK. Op verzoek van de eigenaar later (2 november).
-- Forge: Ruilen op een toegevoegde bergspieroefening die na Uit deze training halen met afgevinkte sets in de sessie blijft, doet stil niets (ForgeWorkout swap). Verbergen of de prescriptie van de sessie gebruiken. Klein.
-- Eén notatie voor tijden in de hele app (nu "13.05" bij het weer en "06:11" in Instellingen). Ronde 3.
-- Nagekomen uit de terugblik op ronde 2: de nieuwe regels op Vandaag (Hoe telt dit?, Minder tijd vandaag, de etappe-regel) in de vaste volgorde en het maximum van kaarten; een doorloop op de telefoon van de eigenaar zodra de Android-sleutel er is (snelkoppelingen, widget, locatie, back-upmap); een opzet voor de spierindex door Scout voordat er iets gebouwd wordt (opdracht loopt; de eigenaar laat de keuze daarna aan de coördinator).
-- Nagekomen uit ronde 2b: de factor 0,98 voor de drempelhartslag na een 5 km toetsen (Scout); Sporten lezen echte intervals.icu-types (Swim, Padel, Soccer, Yoga) alleen met nagemaakte data getest; een eigen sport telt niet in de weekcheck; "Laten staan" bij een vakantie en "laten rusten?" rond een Top-race voor vaste sporten; de waarde "Alles normaal" valt af in de rij Hoeveel per soort op 360 px; een test die alle Android-XML vooraf leest (een dubbel streepje in commentaar brak de APK-bouw).
-- Coördinaten voor de 36 GR5-etappes uit een GPX die de eigenaar aanlevert (ja, 2 november), zodat de regel op je etappe iets toont. Een fijne plek op Android: nu niet, grof met een eerlijke tekst (keuze aan de coördinator gelaten, 2 november).
-- De back-up van Android (naar Google) staat aan, keuze van de eigenaar (2 november), naast de eigen back-up; alleen de opslag van de webview, zonder caches.
-- Niet: hartslagband via Bluetooth (eigenaar). Niet gebouwd tenzij de eigenaar het vraagt: camera en een gps-route of spoor van tochten (afgeraden om batterij en privacy; de eigenaar wil alleen weten waar hij is).
-
-## Voor de eigenaar
-
-- Beantwoord (1 november): de snelknoppen in Forge gaan weg; de kolom Alles gebruikt de eigenaar nooit en verhuist naar het blad Oefening. Bouwen met het Forge-ontwerprapport.
-- Helemaal aan het eind, als alles klaar is (toestemming van de eigenaar, 1 november): de vakantiedata van de eigenaar uit de geschiedenis van git halen (oude commits van `docs/onderhoud/2026-11-01-aanpak-backlog.md` en de commit c305cb1 die nooit op main kwam). Dat herschrijft geschiedenis op main en de werkbranch; eerst alle helpers stoppen, daarna de deploy controleren.
-- De overige vragen uit de drie ontwerprapporten (`docs/visie/Ontwerprapport gegevens.md`, `instellingen.md`, `Forge.md`) kiest de coördinator met het advies; elke keuze staat in de terugblik van de ronde waarin hij gebouwd wordt. Het citaat onderaan Vandaag wordt Engels, zoals de eigenaar al vroeg.
-
-## Uit de ontwerprapporten
-
-- Jaaroverzicht: "Testloop 5 km: 14 jan en 15 jan", twee dagen voor één test. Nakijken of dat een fout in de gegevens of de telling is.
-- De vaste doorloop van Lookout gaf Stand helemaal leeg (zonder lucht of titel); een eigen afdruk was wel vol. Nagaan of de kit te vroeg afdrukt.
-
+- Los van MacroFactor Workouts (doel eigenaar 9 november; de voedingsapp blijft): criteria en stand in `docs/visie/Los van MacroFactor.md`, de weekbriefing meldt elke maandag hoe het ervoor staat. De MacroFactor-code pas weg als het moment er is.
+- Helemaal aan het eind, als alles klaar is (toestemming eigenaar, 1 november): de vakantiedata van de eigenaar uit de geschiedenis van git halen (oude commits van `docs/onderhoud/2026-11-01-aanpak-backlog.md` en c305cb1). Herschrijft geschiedenis op main en de werkbranch; eerst alle helpers stoppen, daarna de deploy controleren.
+- Gebruikerstest met vier nagemaakte personen en de herstelronde erna, in een eigen sessie (eigenaar, 2 november).
+- Kansen: de bestandsroute voor FIT-bestanden als vangnet (stap 0c van het onderzoek).
+- Ochtendkaart: de kaart leert van jou (hoe ging de training na "moe" of "slecht geslapen"); een melding op de telefoon met de vier keuzes, zodat je de app niet hoeft te openen.
+- Oefeningendatabase wger (CC-BY-SA) als bron bij het schrijven van uitleg en vervangers; nooit letterlijk, met bron in `ATTRIBUTION.md`. Geen koppeling in de app.
+- Na de Android-app, nog niet (eigenaar, 1 november): trainingen in je agenda inplannen met kaders voor ochtend, middag en avond; gesproken signalen, vergrendelen met vingerafdruk, 's nachts horlogegegevens ophalen, delen met één tik.
 
 ## Bewust niet
 
 - Voeding naast gewicht en kracht (kans E): de eigenaar laat dit liggen (1 november).
-
-## Ochtendkaart, later
-
-- De kaart leert van jou: hoe ging de training na "moe" of "slecht geslapen", en het advies past zich daarop aan. Hoort bij Kansen (slaap tegenover prestatie).
-- Een melding op de telefoon met de vier keuzes, zodat je de app niet hoeft te openen. Na de Android-app.
-
-## Na het herstel van het abonnement (zondag 1 november)
-
-- Spierindex in de kleinste vorm (besluit `2026-11-02-spierindex-klein.md`): melding als een bergspier ontbreekt bij een bergdoel, met voorstel, en de volgorde in `swapOptions`. Ronde 3, met de herinrichting van Forge.
-- Grote bestanden opsplitsen: AppDataContext, ForgeWorkout, adviceEngine, database, backup, migrations.
-- Android-app (Capacitor), als een van de grote nieuwe features van deze ronde. Lokale meldingen komen daarmee (een PWA zonder server kan geen melding sturen als de app dicht is).
-- Android-meldingen met het scherm uit en trillen: het einde van de rust in Forge, de ochtendvraag en de weekmelding (ronde 2b, bij de Android-app). Toestemmingen direct na de installatie, in een korte welkomstreeks met per toestemming één scherm en "Niet nu".
-- Korte weekmelding op zondagavond: wat er gebeurde, wat er komt, één tip. Als melding via de Android-app; in de PWA als kaart op Vandaag bij het openen.
-- Startvragen: standaardkeuze is nu "Een tocht of wedstrijd"; nagaan of "Fit blijven" logischer is voor iemand zonder plan.
-
-## Na de Android-app
-
-- Trainingen in je agenda inplannen en afstemmen, met kaders voor ochtend, middag en avond. Nog niet (eigenaar, 1 november): niet in deze ronde bouwen.
-- Ook nog niet (eigenaar, 1 november): gesproken signalen, vergrendelen met vingerafdruk, 's nachts horlogegegevens ophalen, delen met één tik. Spraakloggen en een getal op het icoon afgeraden.
-
-## Gewicht uit Health Connect, verder (live 4 november)
-
-- Een trend over de wegingen uit Health Connect in plaats van de nieuwste weging: dagelijks wegen schommelt en Forge rekent ermee.
-- Zoeken: "Uit Health Connect" vindbaar maken met de reden waarom de rij soms niet zichtbaar is.
-- Na "Gewicht toestaan" de uitkomst van de ronde tonen (gelukt, geen wegingen gevonden).
-- Vraag aan de eigenaar: je gewicht met trend op Stand? Meenemen in het ontwerprapport voor Stand.
-
-## Forge: ruilen met een echte vervanger (wens 4 november)
-
-- Bij Ruilen eerst de oefeningen die echt hetzelfde doen: dezelfde beweging, dezelfde hoofdspieren en dezelfde hoek (Barbell Bench Press naar Dumbbell Bench Press, Smith Machine Bench Press, Machine Chest Press). Bovenaan, met een korte reden, en de beste als aanbevolen.
-- Daaronder, apart, de rest die dezelfde spier raakt maar anders (dips, incline, close grip, push-up).
-- Nu (`engine/forgeWorkout.ts#swapScore`) telt alleen gedeelde spieren en het bewegingspatroon, waardoor dips boven de dumbbell bench press staat. Nodig: per oefening een fijnere beschrijving (hoek vlak, schuin of dalend, grip, bereik, stabiliteit) of een lijst met echte vervangers per oefening.
-- Eerst Scout: hoe MacroFactor Workouts vervangers kiest en toont, en wat de literatuur zegt over welke oefeningen elkaar echt vervangen. Daarna Cartographer voor het blad, Sherpa (sonnet, geen planning) voor de engine.
-
-## Forge: uitleg bij oefeningen (wens 4 november)
-
-- Eén overzicht per oefening: wat het is, hoe de beweging gaat, welke spieren, waar je op let. Bovenaan "In het kort" met de twee of drie belangrijkste punten, daaronder "Lees verder" voor wie meer wil.
-- Nu heeft elke oefening (120 in `src/data/exercises.ts`) drie korte regels (Doen, Let op, Vaak fout). Te kaal, en soms klopt het niet: bij de 45° Incline Barbell Press staat "een lichte helling".
-- Taal: fijn om te lezen, concreet, duidelijk, niet te lang. Geen letterlijke vertaling uit het Engels; Engelse vaktermen alleen waar een sporter ze zo gebruikt.
-- Nieuwe rol: een copywriter (vaste naam Scribe) in `.claude/agents/`, op sonnet. Scribe schrijft of herschrijft, Scout controleert de techniek, Warden toetst aan de stem van ASCEND (`docs/beslissingen/2026-10-27-stem-van-ascend.md`).
-- Eerst Scout: hoe MacroFactor Workouts de uitleg opbouwt, wat goed werkt en wat niet. Daarna een proef met vijf oefeningen ter keuring door de eigenaar, pas dan de rest.
-- Scout zoekt per oefening ook op hoe je hem echt goed doet, liefst geverifieerd: onderzoek, erkende bonden of opleidingen (NSCA, ACSM) en ervaren coaches, met de bron in `docs/onderzoek/`.
-- Stand 9 november (lijn Forge 3): 28 oefeningen hebben nu uitleg (de vijf proeven, 23 ladderstappen, 20 uit het demoprogramma en Dip als batch 1, 8 als batch 2), techniek getoetst, bron per oefening in `docs/onderzoek/Bronnen bij de uitleg van oefeningen, batch 1.md` en `batch 2.md`. Nog te doen: de overige ongeveer 60 oefeningen in batches van 20 (Scribe, dan Scout). Open vraag voor de eigenaar, advies de lichte vorm laten: de uitleg bij Eccentric Squat is op twee benen, de alias Decline Squat is in het onderzoek op één been op een schuin vlak (`docs/beslissingen/2026-11-09-uitleg-eccentric-squat.md`).
-- Planning (eigenaar, 4 november): niet deze week. Deze week geen grote aanpassingen meer, het abonnement staat al op 60 tot 70 procent. Ruilen met een echte vervanger ook pas daarna.
-
-## Forge: gewicht op een toestel makkelijk invullen (wens 5 november)
-
-- Nu: een toestel heeft een vaste stap (1,25, 2,5, 5 of Anders), of een eigen lijst die je per toestel via een lange lijst toevoegt. Een blok dat niet in gelijke stappen oploopt (bijvoorbeeld 7, 14, 23, 32) krijg je zo niet goed ingesteld, en het is te veel tikken.
-- Gewenst: een andere manier. Richting om uit te zoeken: in Forge gewoon het getal intikken dat op het blok staat, en Forge onthoudt per toestel welke standen er zijn en biedt die daarna aan (vorige en volgende stand). Geen instelling vooraf nodig.
-- Eerst Cartographer voor het invullen in Forge en het blad in Je sportschool, dan Sherpa. Raakt Forge en opslag van het sportschoolprofiel (opus).
-
-## Spieren voor de berg: ook buiten de weekterugblik (vraag 5 november)
-
-- Het voorstel (bijvoorbeeld Tibialis Raise erbij in Benen B) staat nu alleen in de weekterugblik, met opzet rustig. De eigenaar vond het daar pas laat te vinden.
-- Richting: ook laten zien in Forge bij het openen van de training waar de oefening bij zou komen, of één keer op Vandaag. Nog kiezen.
-
-## Weekcontrole die heen en weer schuift (gevonden 5 november)
-
-- In een week met een test botsen twee regels: "frisse benen voor de test" zet de zware beendag eerder, "genoeg ruimte tussen zware dagen" zet hem terug. Binnen één ronde eindigt alles weer waar het stond. De melding is opgelost (alleen een echte verandering telt), de botsing zelf nog niet.
-- Nodig: de planner kiest in zo'n week één oplossing die beide regels haalt, of laat het als zorg in Week staan met een voorstel. Planning, dus Sherpa en Warden op opus; `planGolden.test.ts` beweegt niet.
-
-## Alle teksten van ASCEND herschrijven, en Engels erbij (wens 5 november)
-
-- Doel: natuurlijker en korter, zoals goede apps het doen (MacroFactor en andere als voorbeeld). Makkelijk te lezen, nooit te veel uitleg in één keer. Engelse vaktermen mogen Engels blijven waar sporters ze zo gebruiken (1RM, RIR, tempo, fartlek), de rest gewoon Nederlands.
-- De app komt in twee talen: Nederlands en Engels, te kiezen in Instellingen.
-- Stap 1: alle teksten van de app plat in één document (schermen, knoppen, meldingen, uitleg achter de i, voorstellen), per scherm gegroepeerd, met waar ze in de code staan. Kan grotendeels uit de tekstkaart (`docs/app-kaart/`) en `src/data/settingsHelp.ts`. **Klaar (9 november, R4):** `docs/teksten/alle-teksten.md`, gemaakt met `node scripts/app-kaart/teksten-plat.mjs`; zonder Forge.
-- Stap 2: Scout kijkt hoe MacroFactor en twee of drie andere apps hun teksten schrijven (lengte, toon, wat achter een tik zit). Daarna een nieuwe stemgids die `docs/beslissingen/2026-10-27-stem-van-ascend.md` vervangt, eerst ter keuring door de eigenaar. **Klaar als concept (9 november, R4):** `docs/visie/stemgids-concept.md`, wacht op keuring door de eigenaar; de bron was dun (drie apps echt gelezen), dat staat erin. Er is nog niets in de app veranderd.
-- Stap 3: Scribe (de copywriter, zie de uitleg bij oefeningen) herschrijft per scherm, Warden toetst. Eerst één tab als proef. **Proef af (9 november, R4):** Vandaag. Er is nog geen aparte Scribe-rol in `.claude/agents/`; de proef draaide als `ontwikkelaar` op sonnet met de stemgids in de opdracht. Verder per tab, zie R5 tot R10 in het rooster.
-- Stap 4: de teksten uit de code halen naar een vertaalbestand per taal, zodat Engels erbij kan. Groot werk in alle componenten; de engine geeft nu ook zinnen terug, die moeten mee. Sherpa op sonnet, per tab.
-- Samen met de uitleg bij oefeningen oppakken. Niet deze week.
-
-## Onderzoek: hoe de beste apps RIR en RPE bijhouden (wens 5 november)
-
-- Snel leren van de beste krachtapps (MacroFactor Workouts, RP Hypertrophy, Hevy, Strong, JuggernautAI, Boostcamp): hoe vragen ze RIR of RPE (wanneer, hoe vaak, met hoeveel tikken), wat doen ze ermee (gewicht en herhalingen voor de volgende set of training), en hoe leggen ze het uit.
-- Plus wat onderzoek zegt over hoe goed mensen hun RIR schatten en hoe je dat beter maakt.
-- Ook (eigenaar, 7 november): vermoeidheid tussen oefeningen. Forge rekent nu alleen binnen een oefening met vermoeidheid (`fatigueFactor`); wat je eerder in de training voor dezelfde spieren deed telt niet, alleen indirect via je historie als de volgorde gelijk blijft. Voorstel: de harde sets voor dezelfde hoofdspieren eerder in de training tellen, afgezet tegen wat je daar normaal voor deed, en de eerste set daarop bijstellen; hoeveel per set leren uit je eigen trainingen. Uitzoeken hoe MacroFactor en anderen dit doen en wat onderzoek zegt over voorvermoeidheid.
-- Uitkomst: een kort verslag in `docs/onderzoek/` met wat Forge kan overnemen, als punten naast wat Forge nu al doet (Hoeveel over?, aangenomen RIR, rekent mee).
-- Scout op opus. Kan vóór de grote Forge-onderdelen (vervanger, uitleg, toestel) omdat het die richting geeft.
-
-## Forge: afvinken is de RIR van het doel (wens 5 november)
-
-- Nu: vink je een set af zonder RIR te kiezen, dan bewaart Forge het doel als aangenomen RIR (`rirAssumed`). Die telt niet mee voor je geschatte kracht en voor de stap zwaarder, met opzet: anders bevestigt de voorspelling zichzelf.
-- Gewenst: afvinken betekent "gedaan zoals gepland". Haal je de herhalingen van het doel, dan telt de RIR van het doel als echt. Alleen bij twijfel komt de vraag met bolletjes (Hoeveel over?): minder herhalingen dan het doel, ruim meer dan het bereik, of een eerste keer op een nieuw gewicht.
-- Ook voor eerdere workouts (eigenaar): als regel bij het lezen, niet door logs te herschrijven. Een oude set met `rirAssumed` en de herhalingen van het doel telt dan ook mee; het log zelf blijft zoals het is (append-only).
-- Uitzoeken: of dat de schatting en de stap zwaarder te snel laat lopen (een set met precies de voorspelde herhalingen is geen nieuw bewijs). Koppelen aan het onderzoek naar RIR en RPE in de beste apps. Forge-engine, dus Sherpa en Warden op opus.
-
-## Periode "Zonder sportschool" (wens 6 november)
-
-- Een vierde soort periode naast Vakantie zonder training, Tocht met rugzak en Vrije dagen: je bent weg, kunt wel lopen, maar hebt geen sportschool.
-- Lopen blijft staan, korter en rustiger dan thuis (vakantie: geen opbouw, geen test). Kracht in de sportschool wordt een korte sessie met je eigen gewicht (squats, lunges, push-ups, kuitheffingen; 15 tot 20 minuten), of vervalt als je dat kiest.
-- Twee keuzes bij de periode: "Heuvels in de buurt" (een loop wordt rustig heuvels op en beheerst af, goed voor een bergdoel) en "Hoeveel": Licht (2 keer lopen, het advies) of Gewoon (wat er stond, zonder sportschool).
-- Zoals de andere periodes: een voorstel met Akkoord, de periode pas bij Akkoord opgeslagen (`engine/leave.ts`, `engine/leaveBlock.ts`, `engine/leaveProposal.ts`). Een bestaande vakantie kun je omzetten in dit soort.
-- Planning, dus Sherpa en Warden op opus; `planGolden.test.ts` beweegt niet. Instelling en uitleg in de gewone plekken.
-
-## Buiten: UV, zon en hoogte uit Open-Meteo (akkoord eigenaar 7 november, bouwen)
-
-- UV-index: bij een lange loop of tocht op een dag met UV 6 of hoger één korte regel ("UV 7 rond het middaguur: zonnebrand en een pet kunnen helpen"). Bij de weerregel, niet als eigen kaart. Instelbaar, standaard aan.
-- Zonsopkomst en zonsondergang: bij een training buiten "Licht tot 17.12" als de training na zonsondergang zou eindigen, en in de weerregel van de dag. Eén notatie voor tijden (zie de backlog: "13.05" en "06:11").
-- Hoogte van een plek: de hoogte van je locatie of vakantieadres, voor de heuvelplekken hieronder en bij een tocht.
-- Alles uit de bestaande koppeling (`src/integrations/openMeteo.ts`, daily `uv_index_max`, `sunrise`, `sunset`; de elevation-API), zonder sleutel, met een tijdgrens en een nette stilte zonder netwerk. Verandert de planning nooit. Sherpa op sonnet.
-
-## Heuvels en trappen in de buurt via OpenStreetMap (akkoord eigenaar 7 november, bouwen)
-
-- Overpass-API (OpenStreetMap, gratis, zonder sleutel): zoek binnen een straal (standaard 3 km) heuvels en hellingen, trappen (`highway=steps`), onverharde paden en sportvelden of een atletiekbaan, en met de hoogtes uit Open-Meteo het hoogteverschil.
-- Waar je het ziet: bij een heuveltraining, een trap- of bergconditietraining en in een periode "Zonder sportschool" een regel als "Op 1,2 km een helling van 60 m" met een link naar de kaart (openstreetmap.org, buiten de app). Op je eigen locatie of het adres van een vakantie.
-- Privacy: alleen een afgeronde positie naar Overpass (zoals het weer), niets bewaard behalve het resultaat per plek op dit toestel, geen adres in de repo of de back-up tenzij je dat kiest. Instelbaar, standaard aan na een eerste vraag.
-- Koppelen aan het onderzoek naar trainingsplekken en aan de periode "Zonder sportschool". Adapter in `src/integrations/`, engine kiest wat geschikt is, component toont. Sherpa op sonnet voor de adapter en het scherm, opus alleen als het de planning raakt (dat doet het niet: alleen een regel).
-
-## Voor de GR5 en de bergen (akkoord eigenaar 7 november)
-
-- Weerwaarschuwingen (Meteoalarm, open feeds per land): onweer, hitte, storm op de dag van een tocht of lange training, als regel met het droge feit eerst. Nooit stil iets aan de planning; hoogstens een voorstel.
-- Hutten langs de GR5 via refuges.info (gratis, zonder sleutel): plaatsen, water, open of dicht, bij de etappes op de Ascend-tab. Hangt samen met de coördinaten van de 36 etappes (GPX van de eigenaar, zie Android en web).
-- Lawinebulletins (EAWS, open formaat): alleen als een tocht in het sneeuwseizoen valt; anders niet tonen.
-- Volgorde: na de twee punten hierboven.
-
-## Regen in het komende uur, feestdagen, oefeningendatabase, maanstand (akkoord eigenaar 7 november)
-
-- Regen in het komende uur: Open-Meteo `minutely_15` (zelfde koppeling als het weer). Vlak voor een training buiten één regel: "Over 20 minuten regen; nu gaan of om 18.30." Alleen op de dag zelf en alleen als de training binnen twee uur begint. Instelbaar, standaard aan. Klein, Sherpa op sonnet, samen met UV en zon.
-- Feestdagen: Nager.Date (gratis, zonder sleutel), voor Nederland en voor het land van een vakantie. Een feestdag is een voorstel, nooit stil: "Donderdag is Hemelvaart: zet je de lange training daar neer?" Liever niet laat alles staan. Eén keer per jaar ophalen, op dit toestel bewaren, zonder netwerk niets. Raakt de planning via een voorstel: de engine-regel op opus, tekst en instelling op sonnet.
-- Oefeningendatabase: wger (open source, CC-BY-SA) als bron bij de uitleg bij oefeningen, de echte vervangers en de Engelse versie. Nooit letterlijk overnemen: herschrijven door Scribe, techniek getoetst door Scout, licentie en bron vermeld zoals bij de tekeningen (`ATTRIBUTION.md`). Geen koppeling in de app, alleen bij het schrijven.
-- Maanstand: zonder API uit te rekenen. Bij een avondtocht of bivak één regel ("Volle maan, je ziet het pad zonder lamp"). Klein, bij de bergpunten.
-
-## Tempo bij zone 2 beter maken (eigenaar 7 november: "wat matig")
-
-- Engine en instelling gebouwd op main (9 november) (stap 1 tot 5, besluit `2026-11-09-tempo-stabiele-stukken.md`). Nog open: stap 6, de grafiek (elke loop als stip, warme gedimd, de lijn met band, as met tempo's), en stap 7, de tekst achter de i met de bronnen. Klein: een oude `aerobicProgressCelebrated` (op het midden van de band) na 14 dagen negeren; het dauwpunt in het weer per loop; de regel voor benen die niet uitgerust zijn (hoofdstuk 5 van het verslag).
-
-- Nu (`src/engine/aerobicTrend.ts`): alleen geplande rustige en lange duurlopen, met de gemiddelde hartslag van de hele loop, per week één punt. Met twee of drie loopjes per week en twee die buiten zone 2 vallen geeft dat drie punten en een uitspraak ("17 seconden sneller") die sterker klinkt dan de data draagt.
-- Meer en betere data: uit de reeksen van het horloge (run in detail, `storage/activityDetail.ts`) de stukken van minstens 5 minuten stabiel in zone 2 op vlak terrein, uit elke loop (ook in- en uitlopen van intervallen en de lange duurloop), in plaats van één gemiddelde per loop. Gecorrigeerd voor helling (tempo naar vlak omgerekend) en warmte (`engine/heatPace.ts`), en hartslagdrift (alleen het stuk na de eerste 10 minuten).
-- Eerlijker zeggen: "eerste schatting" tot er minstens 8 metingen over 4 weken zijn, daarna de verandering met een marge ("ongeveer 10 tot 20 seconden sneller"). De cijfers in de tekst komen uit dezelfde functie als de grafiek.
-- Een leesbare grafiek: elke meting als stip, het weekgemiddelde als lijn, een as met tempo's en "sneller" omhoog erbij, de hoogste en laagste week benoemd. Korte tekst: één zin wat het betekent, het hoe achter de i.
-- Scout eerst kort (welke drempels voor stabiel en hoe lang, warmtecorrectie), dan Sherpa: engine op opus (afgeleid, append-only, raakt de planning niet), grafiek en tekst op sonnet.
-
-## Calisthenics, los of naast krachttraining (wens 7 november, grondig)
-
-Doel: calisthenics als volwaardige manier van trainen in ASCEND, los of samen met krachttraining. Het moet echt goed in elkaar zitten; eerst onderzoek, dan ontwerp, dan bouwen.
-
-- Stap 1, onderzoek (Scout op opus, twee delen):
-  - Apps: hoe Thenx, Calimove, Madbarz, Caliverse, Freeletics en de Recommended Routine van r/bodyweightfitness het doen. Progressies (ladders als knie-push-up, push-up, archer, one-arm), vaardigheden (pull-up, dip, muscle-up, handstand, L-sit, front lever), hoe ze vooruitgang meten zonder kilo's, hoe ze het combineren met gewichten.
-  - Wetenschap: progressie via hefboom, tempo en herhalingen in plaats van gewicht; RIR bij oefeningen met je eigen gewicht; houdingen in seconden; vaardigheid tegenover kracht; combineren met kracht en hardlopen voor de berg (benen, rug, grip).
-  - Lees eerst `docs/onderzoek/` en `docs/visie/` (geen dubbel werk).
-- Stap 2, ontwerp (Cartographer en coördinator): hoe het in ASCEND past. Voorstel om te toetsen: een eigen doelsoort "Vaardigheid" met mijlpalen als ladder (zoals de GR5 en de rugzakladder), een vaardigheid als tussendoel naast een hoofddoel, en per training de keuze kracht, calisthenics of samen. Forge kent dan ook stappen in een progressie in plaats van alleen kilo's, houdingen in seconden, extra gewicht en hulp met een band.
-- Stap 3, bouwen in stukken van hoogstens een uur: data (progressies en vaardigheden), engine (vooruitgang zonder kilo's, planner-rollen), Forge (rij voor een progressiestap en een houding), Ascend-tab (de ladder), instellingen.
-- Vaardigheidsdoelen (eigenaar, 7 november): doelen voor houdingen en vaardigheden met je eigen gewicht, zoals een handstand, een push-up in handstand, een L-sit, een front lever, een muscle-up. Elk doel is een ladder van progressies met een duidelijke toets per stap (bijvoorbeeld 3 x 10 seconden vasthouden), en een vaardigheid kan een eigen doel of een tussendoel zijn.
-- Een database van vaardigheden en progressies, liefst open en zonder sleutel. Uitzoeken: free-exercise-db (yuhonas, publiek domein, JSON met foto's), wger (open source, CC-BY-SA, ook lichaamsgewicht), de tekeningen die ASCEND al gebruikt (Workout Guide en Everkinetic, CC BY-SA, `public/exercise-art/ATTRIBUTION.md`) en de progressies van r/bodyweightfitness. Betaalde of sleutel-API's (zoals ExerciseDB via RapidAPI) niet: geen sleutels in de app. Een bron wordt eenmalig ingelezen en herschreven (geen koppeling in de app), met licentie en naamsvermelding zoals bij de tekeningen.
-- Plaatjes: elke oefening en elke progressiestap heeft een tekening in dezelfde stijl als nu (lijntekening, kleur uit de tokens). Ontbreekt een houding in de open bronnen, dan uitzoeken of we hem in dezelfde stijl kunnen tekenen.
-- Moment: na de Forge-punten die hetzelfde oefeningenmodel raken (RIR bij afvinken, toestel, echte vervanger, uitleg bij oefeningen), want calisthenics bouwt daarop. Het onderzoek (stap 1) kan eerder, het staat los.
-- Schatting: onderzoek 300k tot 500k tokens, ontwerp 150k tot 250k, bouwen vijf tot acht rondes met review, samen ongeveer 2,5 tot 3,5 miljoen tokens, verdeeld over drie tot vijf bouwmomenten (twee tot drie weken).
+- Hartslagband via Bluetooth (eigenaar).
+- Camera en een gps-route of spoor van tochten, tenzij de eigenaar het vraagt (afgeraden om batterij en privacy).
+- Spraakloggen en een getal op het icoon (afgeraden).
+- Meteoalarm: niet leesbaar vanuit een webapp (geen CORS); de waarschuwingen draaien op drempels van Open-Meteo.
 
 ## Geparkeerd
 
@@ -360,7 +144,8 @@ Doel: calisthenics als volwaardige manier van trainen in ASCEND, los of samen me
 ## Werkwijze, voor de coördinator
 
 - Een controle op echte data: een script dat een back-up van de eigenaar (alleen in de scratchpad, nooit in de repo) door de engine haalt en dezelfde invarianten toetst. Draaien zodra de eigenaar een back-up stuurt.
-- Afspraken die nu alleen in het gesprek staan: de eigenaar stuurt elke zondag een verse back-up, en start na 1 november elke paar dagen een nieuwe chat ("lees docs/backlog.md en ga verder").
+- Afspraken die nu alleen in het gesprek staan: de eigenaar stuurt elke zondag een verse back-up; de coördinator wisselt dagelijks (skill `coordinator-wissel`), de overdracht staat in `.claude/coordinator/overdracht.md`.
+- Bij een opruiming als deze: een punt is pas af als de code het doet, niet omdat een tekst het zegt; twijfel gaat onder Nakijken.
 
 ## Werkwijze, overig
 
