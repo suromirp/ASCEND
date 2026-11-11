@@ -20,10 +20,11 @@ export function GuideGroupList({ group, onPick }: { group: GuideGroup; onPick: (
   );
 }
 
-function GuideRow({ row, onClick }: { row: GuideRowSpec; onClick: () => void }) {
+// Ook gebruikt door het blad Je horloge (WatchSheet.tsx), met een eigen voorvoegsel voor `data-row`.
+export function GuideRow({ row, onClick, prefix = 'uitleg' }: { row: Pick<GuideRowSpec, 'title' | 'sub' | 'page'> & { id: string }; onClick: () => void; prefix?: string }) {
   const label = row.page ? `${row.title}, pagina` : row.sub ? `${row.title}, ${row.sub}` : row.title;
   return (
-    <div className={`st-row go${row.sub ? ' two' : ''}`} data-row={`uitleg-${row.id}`} data-sheet-from={row.page ? undefined : ''}>
+    <div className={`st-row go${row.sub ? ' two' : ''}`} data-row={`${prefix}-${row.id}`} data-sheet-from={row.page ? undefined : ''}>
       <button type="button" className="st-hit" aria-label={label} onClick={onClick} />
       <span className="t"><span className="st-title-text">{row.title}</span></span>
       {row.sub && <span className="s st-num">{row.sub}</span>}

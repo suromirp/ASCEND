@@ -11,7 +11,7 @@ import { getModalities, getModality, defaultModality, modalitySport } from '../d
 import { GARMIN_SUGGESTED_TYPES, GARMIN_TYPE_LABEL, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, Chip, Eyebrow, PrimaryButton, SecondaryButton, Segmented, Toggle, ZoneBar } from './ui';
+import { Card, Chip, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, Segmented, Toggle, ZoneBar } from './ui';
 import { CountdownTimer } from './CountdownTimer';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
@@ -19,6 +19,8 @@ import { cleanDetails, detailForm, plannedDetails } from '../engine/workoutDetai
 import { asksLegs, type LegsAtStart } from '../engine/learning';
 import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
+import { WatchSheet } from './WatchSheet';
+import { useWatchSheet } from './useWatchSheet';
 import { StopSignals } from './SessionHeader';
 import { SkyBand } from './SkyBand';
 import { CheckGlyph } from './vandaag/glyphs';
@@ -146,6 +148,7 @@ function GeneralLogger({
   const [reachedForm, setReachedForm] = useState(startAtForm || restored?.reachedForm === true);
   const [otherOpen, setOtherOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showWatch, setShowWatch] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (startAtForm) formRef.current?.scrollIntoView({ block: 'start' });
@@ -324,6 +327,9 @@ function GeneralLogger({
     templates,
   });
   const guide = getTrainingGuide(template.id);
+  // Het blad Je horloge (engine/watchSheet.ts): de knop onderaan heet Horloge als het blad iets te tonen
+  // heeft, anders Uitleg als er een gids is, anders Annuleren. Uitleg staat ook achter de i in de lucht.
+  const watchView = useWatchSheet({ template, garmin: plan?.garmin, session: plannedSession, hasZonesNote: !!guide?.garminNote });
   const restChosen = selectedModality?.environment === 'rest';
   const planRpe = peak ? rpeRange(INTENSITY[peak].rpe) : undefined;
   const weekday = weekdayShortNL(scheduledDate ?? today);
@@ -351,7 +357,10 @@ function GeneralLogger({
             </button>
             <div className="min-w-0 flex-1 pt-1">
               <Eyebrow>{brief.headline}</Eyebrow>
-              <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
+                {guide && <div className="mt-2 shrink-0" data-sheet-from=""><InfoButton label="Uitleg bij deze training" onClick={() => setShowInfo(true)} /></div>}
+              </div>
               {brief.purpose && <MoreText text={brief.purpose} className="mt-1" color="var(--color-ink)" />}
               <p className="mt-1 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{[dateLabel, brief.weekLabel].filter(Boolean).join(' · ')}</p>
               {preview && <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zo staat hij klaar. Afvinken kan op de dag zelf.</p>}
@@ -701,7 +710,11 @@ function GeneralLogger({
       >
         {preview ? (
           <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
-            {guide && <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Info</SecondaryButton>}
+            {watchView.hasWatchSheet ? (
+              <SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton>
+            ) : guide ? (
+              <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Uitleg</SecondaryButton>
+            ) : null}
             <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
           </div>
         ) : confirmLong ? (
@@ -715,8 +728,10 @@ function GeneralLogger({
           </div>
         ) : (
         <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
-          {guide ? (
-            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Info</SecondaryButton>
+          {watchView.hasWatchSheet ? (
+            <SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton>
+          ) : guide ? (
+            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Uitleg</SecondaryButton>
           ) : (
             <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">Annuleren</SecondaryButton>
           )}
@@ -734,6 +749,19 @@ function GeneralLogger({
 
       {showInfo && guide && (
         <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={scheduledDate ?? today} dayLabel={guideDayLabel(template, scheduledDate ?? today)} onClose={() => setShowInfo(false)} />
+      )}
+
+      {showWatch && watchView.hasWatchSheet && (
+        <WatchSheet
+          view={watchView}
+          template={template}
+          session={plannedSession}
+          garmin={plan?.garmin}
+          dayLabel={guideDayLabel(template, scheduledDate ?? today)}
+          onClose={() => setShowWatch(false)}
+          // Naar een pagina: eerst het trainingsscherm dicht. Het concept blijft bewaard (geen clearDraft).
+          onLeave={closeSheet}
+        />
       )}
 
       {restTimerFor && (

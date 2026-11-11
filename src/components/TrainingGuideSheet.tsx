@@ -31,7 +31,6 @@ import { Icon } from './icons';
 import { Sheet } from './settings/Sheet';
 import { GuideGroupList } from './GuideRow';
 import { guideMenu, type GuideRowId, type GuideRowSpec } from '../engine/guideMenu';
-import { watchFieldsShown, watchKindOf } from '../engine/watchFields';
 
 // De vier niveaus lopen van rustig naar hard, dus op de inspanningsschaal van de
 // app (Z1 tot Z5, ook in de ZoneBar): bleekblauw, groen, geel, oranje. Bij elk
@@ -75,19 +74,16 @@ export function TrainingGuideSheet({
   // Spots for this training (Trainingsplekken, filtered on it), or any
   // climbing spot for a D+ session without its own filter.
   const spotFilter = filterForTraining(template?.id);
-  // Datavelden voor je horloge: alleen bij de soorten met advies en als de instelling aan staat.
-  const watchKind = watchFieldsShown(settings) ? watchKindOf(template) : undefined;
   const showSpots = !!spotFilter || !!plan?.keyTag?.includes('D+') || template?.type === 'hiking';
-  // Het menu onder de delen: drie groepen, elke rij een onderblad of (plekken, datavelden) een pagina.
+  // Het menu onder de delen: drie groepen, elke rij een onderblad of (plekken) een pagina. De
+  // Garmin-stappen, de datavelden en de zones-opmerking staan sinds 11 november in Je horloge (WatchSheet).
   const groups = guideMenu({
     plan,
     easeOffCount: easeOff.length,
     modalityCount: hasModalities && template ? (getModalities(template.id)?.length ?? 0) : 0,
     showSpots,
-    watchKind,
     backgroundCount: background.length,
     hasGear: guide.gear.length > 0,
-    hasGarminNote: !!guide.garminNote,
     sourceCount: guide.sources.length,
   });
   const [sub, setSub] = useState<GuideRowId | null>(null);
@@ -96,9 +92,6 @@ export function TrainingGuideSheet({
     if (row.id === 'plekken') {
       onClose();
       navigate(spotFilter ? `/plekken?training=${template!.id}` : '/plekken');
-    } else if (row.id === 'datavelden') {
-      onClose();
-      navigate(`/horloge/datavelden?soort=${watchKind}`);
     } else {
       setSub(row.id);
     }
@@ -206,18 +199,6 @@ export function TrainingGuideSheet({
           <ModalityGuide templateId={template.id} />
         </Sheet>
       )}
-      {sub === 'garmin' && plan?.garmin && (
-        <Sheet eyebrow="Uitleg" title="Stappen voor je Garmin" onClose={closeSub}>
-          <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-            Maak in Garmin Connect een nieuwe workout van het type {plan.garmin.sport}, met deze stappen. Stuur hem naar je horloge en start hem als je begint.
-          </p>
-          <div className="mt-2.5 flex flex-col gap-1">
-            {plan.garmin.lines.map((line, i) => (
-              <p key={i} className="whitespace-pre text-xs tabular-nums" style={{ color: line.startsWith('Herhaal') ? 'var(--color-action)' : 'var(--color-ink)' }}>{line}</p>
-            ))}
-          </div>
-        </Sheet>
-      )}
       {sub === 'weken' && plan && (
         <Sheet eyebrow="Uitleg" title="Deze fase, week voor week" onClose={closeSub}>
           <div className="grid grid-cols-4 gap-1.5">
@@ -243,15 +224,6 @@ export function TrainingGuideSheet({
               <Eyebrow>Materiaal</Eyebrow>
               <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{guide.gear.join(' · ')}</p>
             </div>
-          )}
-          {guide.garminNote && (
-            <button
-              onClick={() => { onClose(); navigate('/koppelen/garmin', { state: { section: 'horloge-instellen' } }); }}
-              className="mt-4 w-full rounded-xl border p-3 text-left text-xs"
-              style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-status)' }}
-            >
-              {guide.garminNote}<Icon name="verder" size={14} className="ml-1 inline align-[-2px]" />
-            </button>
           )}
           {guide.sources.length > 0 && (
             <div className="mt-4">
