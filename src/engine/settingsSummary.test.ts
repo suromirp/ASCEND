@@ -211,6 +211,8 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-vegen', facts({ settings: { ...facts().settings, forgeSwipeDelete: false } })).checked).toBe(false);
     expect(rowSummary('forge-oefeningen', facts()).value).toBe('Een per scherm');
     expect(rowSummary('forge-oefeningen', facts({ settings: { ...facts().settings, forgeLayout: 'lijst' } })).value).toBe('Onder elkaar');
+    expect(rowSummary('forge-verloop', facts()).value).toBe('Wijzigingen');
+    expect(rowSummary('forge-verloop', facts({ settings: { ...facts().settings, forgeLogView: 'alle' } })).value).toBe('Alle sets');
     expect(rowSummary('forge-onderbreking', facts()).value).toBe('45 minuten');
     expect(rowSummary('forge-onderbreking', facts({ settings: { ...facts().settings, forgeLongBreak: 0 } })).value).toBe('Uit');
     expect(rowSummary('forge-onderbreking', facts({ settings: { ...facts().settings, forgeLongBreak: 90 } })).value).toBe('90 minuten');

@@ -556,6 +556,17 @@ export const CHOICES = {
       { value: 'lijst', label: 'Onder elkaar', note: 'Alle oefeningen op een pagina, naar beneden scrollen', short: 'Onder elkaar' },
     ],
   }),
+  forgeVerloop: def({
+    group: 'Forge',
+    title: 'Verloop toont',
+    line: 'Wat het blad Verloop van de training laat zien.',
+    advice: 'wijzigingen' as 'wijzigingen' | 'alle',
+    help: 'forgeVerloop',
+    options: [
+      { value: 'wijzigingen', label: 'Wijzigingen', note: 'Alleen de sets waar iets mee gebeurde, met de reden', short: 'Wijzigingen' },
+      { value: 'alle', label: 'Alle sets', note: 'Ook de sets volgens schema, met de zwaarste set erbij', short: 'Alle sets' },
+    ],
+  }),
   grensKracht: def({
     group: 'Forge',
     title: 'Gewone krachttraining',

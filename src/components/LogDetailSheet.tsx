@@ -454,7 +454,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
       </div>
     </Portal>
     {/* Next to the sheet, not inside it: a tap in this one must not close that one. */}
-    {forgeLogOpen && log.forgeLog && <ForgeLogSheet events={log.forgeLog} eyebrow={formatDateNL(log.completedDate)} title={templateName} onClose={() => setForgeLogOpen(false)} />}
+    {forgeLogOpen && log.forgeLog && <ForgeLogSheet events={log.forgeLog} logged={log.strengthData} eyebrow={formatDateNL(log.completedDate)} title={templateName} onClose={() => setForgeLogOpen(false)} />}
     {detailOpen && <RunDetailScreen logId={log.id} templateName={templateName} onClose={() => setDetailOpen(false)} />}
     {trimming && <TrimSheet log={log} templateName={templateName} onClose={() => setTrimming(false)} />}
     {sweatOpen && <SweatSheet log={log} templateName={templateName} onClose={() => setSweatOpen(false)} />}

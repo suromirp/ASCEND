@@ -288,6 +288,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     reset: () => ({ cardOrder: undefined }),
   },
   choice('forge-oefeningen', 'Oefeningen in een training', 'forge', 'forgeLayout', 'scherm', 'forgeOefeningen'),
+  choice('forge-verloop', 'Verloop toont', 'forge', 'forgeLogView', 'wijzigingen', 'forgeVerloop'),
   choice('forge-onderbreking', 'Lange onderbreking vragen na', 'forge', 'forgeLongBreak', 45, 'forgeOnderbreking'),
   choice('forge-grens-kracht', 'Gewone krachttraining', 'forge', 'forgeCapStrength', 60, 'grensKracht'),
   choice('forge-grens-been', 'Beendag', 'forge', 'forgeCapLegs', 75, 'grensBeen'),
