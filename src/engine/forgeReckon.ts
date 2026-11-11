@@ -306,13 +306,18 @@ export const quickRirLabel = (n: number): string => (n >= 3 ? '3+' : String(n));
 // De uitlegzin onder de bolletjes (verslag RIR en RPE, hoofdstuk 5): een schatting is genoeg.
 export const QUICK_RIR_HINT = 'Een schatting is genoeg. Twijfel je tussen twee, kies het lagere: dan rekent Forge voorzichtig.';
 
-// Vraagt Forge na het afvinken van deze set hoeveel je over had? Alleen bij een afgevinkte werkset waarvan
-// je de RIR niet zelf invulde, en alleen bij de sets die het meest zeggen: de eerste werkset (de topset), een
-// zware set (0 of 1 over of tot falen) en de laatste werkset van de oefening. Niet bij een set op tijd.
-// Met "Afvinken telt als het doel" (`doubt`) ook bij twijfel (regel 2 van het verslag RIR en RPE):
-// minder herhalingen dan gevraagd, 2 of meer boven de bovenkant, de eerste werkset op een gewicht dat
-// zwaarder is dan vorige keer, en elke werkset in de eerste drie trainingen van een oefening.
-export function asksReserve(ex: WorkoutExercise, rowId: string, doubt = false): boolean {
+// Vraagt Forge na het afvinken van deze set hoeveel je over had? Alleen bij een afgevinkte werkset waarvan je de
+// RIR niet zelf invulde, en niet bij een set op tijd. Wat niet gevraagd wordt houdt het doel als RIR met
+// `rirAssumed` (forgeWorkout.ts#fillTicked), dus telt niet in learnFatigue, learnAfterHard en klaar voor je doel.
+// - 'twijfel' (het advies, docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md): alleen als het anders ging of zwaar
+//   was: een zware set (0 of 1 over of tot falen) en de twijfel van regel 2 van het verslag RIR en RPE (minder
+//   herhalingen dan gevraagd, 2 of meer boven de bovenkant, de eerste werkset op een gewicht dat zwaarder is dan
+//   vorige keer, elke werkset in de eerste drie trainingen van een oefening). Een set volgens schema, ook de eerste
+//   en de laatste, krijgt geen vraag.
+//   Zonder "Afvinken telt als het doel" (`doubt` false) ook bij de eerste werkset die de bovenkant haalt.
+// - 'vaker' (de oude regel, uitgebreid): ook altijd bij de eerste werkset (de topset) en de laatste werkset; altijd
+//   een bovenverzameling van het advies.
+export function asksReserve(ex: WorkoutExercise, rowId: string, doubt = false, mode: 'twijfel' | 'vaker' = 'twijfel'): boolean {
   if (ex.timed) return false;
   const work = ex.rows.filter((r) => r.kind === 'work');
   const at = work.findIndex((r) => r.id === rowId);
@@ -320,8 +325,20 @@ export function asksReserve(ex: WorkoutExercise, rowId: string, doubt = false): 
   if (!row || !row.done || row.target.timedSec !== undefined) return false;
   if (row.rir !== undefined && !row.rirAssumed) return false;
   const hard = !!row.target.failure || (row.target.rir ?? DEFAULT_RIR) <= 1;
-  if (at === 0 || at === work.length - 1 || hard) return true;
-  return doubt && doubtful(ex, work, at);
+  if (hard) return true;
+  // Zonder "Afvinken telt als het doel" telt alleen een eigen RIR op de topset voor de stap zwaarder bij precies de
+  // bovenkant (strengthModel.ts#topReached): vraag dan ook bij de eerste werkset die de bovenkant haalt, anders komt
+  // die stap stil niet meer.
+  const advice = doubtful(ex, work, at) || (!doubt && firstAtTop(work, at));
+  if (mode === 'twijfel') return advice;
+  // Vaker vragen is altijd een bovenverzameling van het advies.
+  return at === 0 || at === work.length - 1 || advice;
+}
+
+// De eerste werkset die de bovenkant van het bereik haalt (geen open doel, niet tot falen).
+function firstAtTop(work: WorkoutRow[], at: number): boolean {
+  const atTop = (r: WorkoutRow) => !r.target.failure && !r.target.open && (r.reps ?? 0) >= r.target.repsHigh;
+  return atTop(work[at]) && !work.slice(0, at).some(atTop);
 }
 
 // Regel 2: twijfel bij een afgevinkte werkset zonder eigen RIR.

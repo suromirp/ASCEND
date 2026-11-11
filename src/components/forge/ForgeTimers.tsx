@@ -6,6 +6,8 @@ import { REST_LIMITS } from '../../engine/strengthSettings';
 import { animateEl, reducedMotion } from '../../utils/motion';
 import { Icon } from '../icons';
 import { activeSeconds, formatSessionClock, isPaused, type Pause } from '../../engine/forgeSession';
+import { overTimeLine } from '../../engine/forgeTimeCap';
+import type { ExercisePriority } from '../../models/training';
 import { clock, type Rest } from './forgeWorkoutHelpers';
 
 // Een klok die zichzelf ververst: alleen dit stukje, nooit de hele tabel.
@@ -22,6 +24,23 @@ export function ElapsedClock({ startedAt, pauses }: { startedAt: number | null; 
   const paused = startedAt !== null && isPaused({ startedAt, pauses });
   const now = useNow(1000);
   return <span className="font-sans tabular-nums" aria-label="Verstreken tijd" style={paused ? { opacity: 0.7 } : undefined}>{formatSessionClock(startedAt === null ? 0 : activeSeconds({ startedAt, pauses }, now))}</span>;
+}
+
+// "Je zit op 64 minuten. Wat nog komt is bijwerk en extra; stoppen kan." De gedempte regel onder de klok
+// (engine/forgeTimeCap.ts#overTimeLine), op de actieve tijd: pauzes tellen niet, en tijdens een pauze staat hij er niet.
+// Ververst elke 15 seconden, alleen dit stukje.
+export function OverTimeNote({ startedAt, pauses, reference, exercises, priorityOf }: {
+  startedAt: number | null;
+  pauses: Pause[];
+  reference: number;
+  exercises: readonly { slot: string; rows: readonly { kind: string; done: boolean }[] }[];
+  priorityOf: (slot: string) => ExercisePriority;
+}) {
+  const now = useNow(15000);
+  if (startedAt === null || isPaused({ startedAt, pauses })) return null;
+  const line = overTimeLine({ activeSec: activeSeconds({ startedAt, pauses }, now), reference, exercises, priorityOf });
+  if (!line) return null;
+  return <p className="mx-row-in px-2 pb-2 text-xs leading-snug" role="status" data-testid="forge-over-tijd" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>;
 }
 
 // --- de rusttimer ----------------------------------------------------------------------

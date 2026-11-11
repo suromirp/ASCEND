@@ -4,12 +4,13 @@
 import type { Ref } from 'react';
 import type { WorkoutExercise } from '../../engine/forgeWorkout';
 import type { Pause } from '../../engine/forgeSession';
+import type { ExercisePriority } from '../../models/training';
 import { Icon } from '../icons';
 import { TextButton } from '../TextButton';
 import { ForgeStrip } from './ForgeStrip';
-import { ElapsedClock } from './ForgeTimers';
+import { ElapsedClock, OverTimeNote } from './ForgeTimers';
 
-export function ForgeHeader({ headerRef, title, preview, readOnly, startedAt, pauses, paused, done, total, news, paged, workout, page, onClose, onMenu, onFinish, onLog, onResume, onJump }: {
+export function ForgeHeader({ headerRef, title, preview, readOnly, startedAt, pauses, paused, done, total, news, paged, workout, page, reference, priorityOf, onClose, onMenu, onFinish, onLog, onResume, onJump }: {
   headerRef: Ref<HTMLElement>;
   title: string;
   preview: boolean;
@@ -23,6 +24,9 @@ export function ForgeHeader({ headerRef, title, preview, readOnly, startedAt, pa
   paged: boolean;
   workout: WorkoutExercise[];
   page: number;
+  // De referentie in minuten voor de regel onder de klok (engine/forgeTimeCap.ts#referenceMinutes) en de rol per plek.
+  reference: number;
+  priorityOf: (slot: string) => ExercisePriority;
   onClose: () => void;
   onMenu: () => void;
   onFinish: () => void;
@@ -63,6 +67,7 @@ export function ForgeHeader({ headerRef, title, preview, readOnly, startedAt, pa
           </button>
         </div>
       )}
+      {!readOnly && !preview && !paused && <OverTimeNote startedAt={startedAt} pauses={pauses} reference={reference} exercises={workout} priorityOf={priorityOf} />}
       {!readOnly && paused && (
         <div className="animate-fade-in flex items-center gap-2 px-2 pb-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           <Icon name="pauze" size={16} />
