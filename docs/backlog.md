@@ -70,8 +70,8 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 ## De Briefing (eigenaar akkoord 11 november, besluit `2026-11-11-briefing.md`)
 
 Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, allemaal Opus, geen planning. Volgorde:
-- In aanbouw 11 november: spoor 1 (geen route bij Loopband of binnen), 3 (waar je traint onthouden bij de geplande training), 4 (`engine/briefing.ts`).
-- Spoor 2 (blad Route met de kaart bovenaan), na Eten onderweg (zelfde scherm).
+- Live 11 november: spoor 1, 3 en 4 (Briefing A).
+- In aanbouw 11 november: spoor 2 (Sherpa, opus, branch claude/briefing-spoor-2).
 - Spoor 5 (scherm Briefing vanuit Week, instelling Lus zoeken), 6 (knop Briefing op Vandaag), 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
 - Het oude Info-blad spoor 3 en 4 vervallen: spoor 7 hier vervangt ze.
 
