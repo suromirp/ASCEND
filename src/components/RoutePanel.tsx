@@ -14,8 +14,8 @@ import { MIN_ASCENT_TARGET_M, failureLine, proposalFacts, proposalNotes, proposa
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import { SEND_LABEL, WATCH_STEPS, WATCH_STEPS_TITLE, routeActionLine, type RouteSendOutcome } from '../engine/routeSend';
 import { findRoutes, grantRouteConsent, hasRouteConsent, type RouteSearch } from '../storage/routeProposal';
-import { chooseStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, startFailureLine, type StartFailure } from '../engine/routeStart';
-import { getRouteStartPoint, locateStartHere } from '../storage/routeStart';
+import { chooseStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, startFailureLine, startFailureReason, type StartFailure } from '../engine/routeStart';
+import { getRouteStartPoint, locateStartHere, startFromMap } from '../storage/routeStart';
 import { saveRouteGpx, type RouteFileResult } from '../storage/routeFile';
 import { routeSender, sendRouteGpx } from '../storage/routeSend';
 import type { FileSender } from '../integrations/fileSender';
@@ -118,7 +118,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   // Lukte de locatie niet, dan zoekt dit paneel ongeveer, met de reden in één regel.
   const [fellBack, setFellBack] = useState<StartFailure | undefined>();
   const [declinedExact, setDeclinedExact] = useState(false);
-  // Een startpunt van de kaart (tik en Start hier, of Gebruik waar ik nu ben): alleen voor dit paneel.
+  // Een startpunt van de kaart, alleen voor dit paneel als de keuze Precies niet bewaard kon worden.
   const [mapStart, setMapStart] = useState<RoutePoint | undefined>();
   // De lus die je op de kaart koos; zonder keuze de eerste.
   const [chosen, setChosen] = useState<RouteStyle | undefined>();
@@ -198,6 +198,25 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
     else setFellBack(found.reason);
   }
 
+  // Start hier of Gebruik waar ik nu ben op de kaart: het punt wordt je Precies-startpunt en de keuze
+  // gaat op Precies, net als in de instelling. Een plek die te grof is telt niet (zelfde grens).
+  async function startOnMap(from: { tap: RoutePoint } | 'here'): Promise<{ ok: true; point: RoutePoint } | { ok: false; line: string }> {
+    const found = await startFromMap(from, { signal: locateStop.current.signal });
+    if (!found.ok) return { ok: false, line: startFailureReason(found.reason) };
+    if (!mounted.current) return found;
+    setSaved(found.point);
+    setFellBack(undefined);
+    setDeclinedExact(false);
+    try {
+      await withTimeout(updateSettings({ routeStart: 'exact' }), CONSENT_LIMIT_MS);
+      if (mounted.current) setMapStart(undefined);
+    } catch {
+      // Niet bewaard: dan geldt het punt alleen nu.
+      if (mounted.current) setMapStart(found.point);
+    }
+    return found;
+  }
+
   async function choose(next: 'approx' | 'exact') {
     try {
       await withTimeout(grantRouteConsent(), CONSENT_LIMIT_MS);
@@ -222,11 +241,11 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
         <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
         <TextButton onClick={() => void choose('exact')}>Precies, vanaf je deur</TextButton>
         <p className="text-xs leading-snug" style={dim}>
-          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap om hetzelfde punt, en de hoogte van heuvels komt van Open-Meteo, ook om dat punt. Het punt wordt alleen op dit toestel bewaard.
+          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap om hetzelfde punt, en de hoogte van heuvels komt van Open-Meteo, ook om dat punt. Het punt wordt alleen op dit toestel bewaard. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap.
         </p>
         <TextButton tone="dim" onClick={() => void choose('approx')}>Ongeveer</TextButton>
         <p className="text-xs leading-snug" style={dim}>
-          Je plek, afgerond op ongeveer een kilometer, gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. De lus begint dan tot ongeveer 700 m van je deur.
+          Je plek, afgerond op ongeveer een kilometer, gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. De lus begint dan tot ongeveer 700 m van je deur. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap.
         </p>
         <div className="flex flex-wrap gap-x-5">
           <TextButton tone="dim" onClick={onDecline}>Liever niet</TextButton>
@@ -271,7 +290,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
               ? 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.'
               : searchLines(search.plans, target).join(' ')}
       </p>
-      <RouteMap routes={mapRoutes} chosen={picked} start={mapStartPoint} base={resolveMapBase(settings.routeMapBase)} onChoose={setChosen} onPickStart={setMapStart} />
+      <RouteMap routes={mapRoutes} chosen={picked} start={mapStartPoint} base={resolveMapBase(settings.routeMapBase)} onChoose={setChosen} onStart={startOnMap} />
       {plans && order.map((s) => <RouteBlock key={s} style={s} outcome={plans[s]} primary={s === (picked ?? order[0])} date={date} target={target} sender={sender} />)}
       {plans && order.some((s) => plans[s].ok) && <WatchSteps />}
       {search !== 'busy' && (search.kind !== 'plans' || anyFailed) && (

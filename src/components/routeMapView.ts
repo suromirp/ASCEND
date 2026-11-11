@@ -19,7 +19,7 @@ import { withTimeout } from '../utils/withTimeout';
 type Listener = (e: never) => void;
 export interface MapLike {
   on(type: string, listener: Listener): unknown;
-  setStyle(style: string | StyleSpec, options?: { diff?: boolean; transformStyle?: (prev: unknown, next: StyleSpec) => StyleSpec }): unknown;
+  setStyle(style: StyleSpec, options?: { diff?: boolean }): unknown;
   getSource(id: string): { setData?: (data: unknown) => unknown } | undefined;
   fitBounds(bounds: [[number, number], [number, number]], options?: Record<string, unknown>): unknown;
   easeTo(options: Record<string, unknown>): unknown;
@@ -54,6 +54,14 @@ export interface MapViewDeps {
   motion: () => 'full' | 'calm' | 'off';
   setTimer?: (fn: () => void, ms: number) => unknown;
   clearTimer?: (id: unknown) => void;
+  // Het stijlbestand van OpenFreeMap; standaard fetch. Gooit bij een fout of een stop.
+  fetchStyle?: (url: string, signal: AbortSignal) => Promise<unknown>;
+}
+
+async function fetchJson(url: string, signal: AbortSignal): Promise<unknown> {
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }
 
 export interface MapViewEvents {
@@ -83,6 +91,9 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
   let timer: unknown;
   let latest = data;
   let colors: MapColors | undefined;
+  let loadTimer: unknown;
+  let styleStop: AbortController | undefined;
+  const fetchStyle = deps.fetchStyle ?? fetchJson;
   const stages = stagesFor(base, deps.online());
 
   const overlay = () => ({ routes: routeFeatures(latest.routes, latest.chosen), dots: dotFeatures(latest.dots) });
@@ -93,6 +104,10 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
   const stopTimer = () => {
     if (timer !== undefined) clearTimer(timer);
     timer = undefined;
+  };
+  const stopStyleFetch = () => {
+    styleStop?.abort();
+    styleStop = undefined;
   };
 
   function settle() {
@@ -112,6 +127,7 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
   function show(stage: MapStage) {
     if (destroyed || !map || !colors) return;
     stopTimer();
+    stopStyleFetch();
     current = stage;
     settled = false;
     const c = colors;
@@ -123,7 +139,20 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
       }
       timer = setTimer(fallBack, MAP_SOURCE_LIMIT_MS);
       if (stage === 'raster') map.setStyle(rasterStyle(c, base, overlay()), { diff: false });
-      else map.setStyle(OPENFREEMAP_STYLE[base === 'light' ? 'light' : 'dark'], { diff: false, transformStyle: (_prev, next) => paintOpenFreeMap(next, c, base, overlay()) });
+      else {
+        // Het stijlbestand zelf ophalen (binnen dezelfde grens): een adres aan setStyle haalt de oude
+        // stijl meteen weg, en dan staan de lussen en de ring even nergens.
+        const stop = new AbortController();
+        styleStop = stop;
+        const m = map;
+        fetchStyle(OPENFREEMAP_STYLE[base === 'light' ? 'light' : 'dark'], stop.signal).then((json) => {
+          if (destroyed || stop.signal.aborted || current !== 'vector') return;
+          if (!json || typeof json !== 'object' || !Array.isArray((json as StyleSpec).layers)) throw new Error('geen stijl');
+          m.setStyle(paintOpenFreeMap(json as StyleSpec, c, base, overlay()), { diff: false });
+        }).catch(() => {
+          if (!stop.signal.aborted && current === 'vector') fallBack();
+        });
+      }
     } catch {
       fallBack();
     }
@@ -151,8 +180,9 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
     let lib: MapLib;
     try {
       lib = await new Promise<MapLib>((resolve, reject) => {
-        const t = setTimer(() => reject(new Error('timeout')), MAP_LOAD_LIMIT_MS);
-        deps.load().then((l) => { clearTimer(t); resolve(l); }, (err: unknown) => { clearTimer(t); reject(err); });
+        loadTimer = setTimer(() => reject(new Error('timeout')), MAP_LOAD_LIMIT_MS);
+        const done = () => { clearTimer(loadTimer); loadTimer = undefined; };
+        deps.load().then((l) => { done(); resolve(l); }, (err: unknown) => { done(); reject(err); });
       });
     } catch {
       report({ kind: 'failed' });
@@ -194,16 +224,24 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
       if (e.sourceId && !baseSourcesOf(current).includes(e.sourceId)) return;
       fallBack();
     }) as Listener);
-    m.on('click', ((e: { point: unknown; lngLat: { lat: number; lng: number } }) => {
+    m.on('click', ((e: { point: unknown; lngLat: { lat: number; lng: number; wrap?: () => { lat: number; lng: number } } }) => {
       let hit: RouteStyle | undefined;
       try {
-        const style = m.queryRenderedFeatures(e.point, { layers: [ROUTE_HIT_LAYER] })[0]?.properties?.style;
-        if (style === 'simple' || style === 'adventure') hit = style;
+        // Raakt de tik twee lussen (waar ze dicht bij elkaar lopen), dan wint de lus die nog niet gekozen is:
+        // wie op een lus tikt, wil wisselen.
+        const styles = m.queryRenderedFeatures(e.point, { layers: [ROUTE_HIT_LAYER] })
+          .map((f) => f.properties?.style)
+          .filter((st): st is RouteStyle => st === 'simple' || st === 'adventure');
+        hit = styles.find((st) => st !== latest.chosen) ?? styles[0];
       } catch {
         // De laag is er even niet (de stijl wisselt): dan is het een tik op de kaart.
       }
       if (hit) events.onRouteTap(hit);
-      else events.onMapTap({ lat: e.lngLat.lat, lon: e.lngLat.lng });
+      else {
+        // Een tik na een paar keer rond de aarde slepen: terug naar -180 tot 180.
+        const p = typeof e.lngLat.wrap === 'function' ? e.lngLat.wrap() : e.lngLat;
+        events.onMapTap({ lat: p.lat, lon: p.lng });
+      }
     }) as Listener);
     fit(false);
     show(stages[0]);
@@ -235,6 +273,9 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
     destroy() {
       destroyed = true;
       stopTimer();
+      stopStyleFetch();
+      if (loadTimer !== undefined) clearTimer(loadTimer);
+      loadTimer = undefined;
       const m = map;
       map = undefined;
       try {
@@ -248,10 +289,11 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
 
 export const MAP_LOCATE_LIMIT_MS = 15_000;
 
-// Je plek voor de kaart (stip, Naar mijn plek, Gebruik waar ik nu ben): fijn, met een grens in tijd.
-// Gooit nooit: een plek of een regel die zegt waarom niet. Wordt niet bewaard.
+// Je plek voor de stip en Naar mijn plek: een grove plek is genoeg, zonder de vraag om je precieze plek,
+// met een grens in tijd. Gooit nooit: een plek of een regel. Wordt niet bewaard. Een startpunt loopt
+// niet hierlangs maar via storage/routeStart.ts#startFromMap, met de strengere grens.
 export async function whereAmI(
-  locate: () => Promise<Position2> = () => locateMe({ precise: true, fine: true, timeoutMs: 10_000, maximumAge: 30_000 }),
+  locate: () => Promise<Position2> = () => locateMe({ precise: true, timeoutMs: 10_000, maximumAge: 30_000 }),
   limitMs = MAP_LOCATE_LIMIT_MS,
 ): Promise<{ ok: true; point: RoutePoint } | { ok: false; line: string }> {
   try {

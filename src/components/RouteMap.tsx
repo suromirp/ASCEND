@@ -1,20 +1,22 @@
-// ASCEND: de kaart bij Route voorstellen. Alle voorgestelde lussen (de gekozen in mint, de andere
-// gedempt en gestreept), het startpunt als ring en je plek als ijsblauwe stip. Tik op een lus kiest
-// hem; tik op de kaart zet een ring neer en Start hier zoekt opnieuw vanaf dat punt. Rendert alleen:
-// de regie staat in routeMapView.ts, de stijlen en vormen in engine/routeMap.ts.
+// ASCEND: de kaart bij Route voorstellen. Alle voorgestelde lussen (de gekozen doorgetrokken, de
+// andere gedempt en gestreept), het startpunt als ring en je plek als ijsblauwe stip. Tik op een lus
+// kiest hem; tik op de kaart zet een ring neer en Start hier maakt dat punt je startpunt (Precies) en
+// zoekt opnieuw. Rendert alleen: de regie staat in routeMapView.ts, de stijlen en vormen in
+// engine/routeMap.ts, het bewaren van het punt in storage/routeStart.ts#startFromMap.
 // Docs: docs/beslissingen/2026-11-11-route-kaart.md.
 
 import { useEffect, useRef, useState } from 'react';
 import type { RoutePoint, RouteStyle } from '../models/route';
 import { readMapColors, type MapBase, type MapRoute } from '../engine/routeMap';
 import { hasWebGL2, loadMapLibre } from '../integrations/mapLibre';
+import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { withTimeout } from '../utils/withTimeout';
 import { createRouteMapView, whereAmI, type MapViewState, type RouteMapView } from './routeMapView';
 import { useMotionMode } from './motion';
 import { TextButton } from './TextButton';
 import { Icon } from './icons';
 
-const MAP_HEIGHT = 280;
+type StartAnswer = { ok: true; point: RoutePoint } | { ok: false; line: string };
 
 // Weet de browser al dat je plek mag, dan staat je stip er meteen. Anders pas na een tik.
 async function placeAllowed(): Promise<boolean> {
@@ -26,6 +28,7 @@ async function placeAllowed(): Promise<boolean> {
   }
 }
 
+// Een ronde knop op de kaart (uitzondering op de primitives, zie het besluit): 44 bij 44, woord als label.
 function MapButton({ icon, label, onClick, disabled }: { icon: 'locatie' | 'inbeeld'; label: string; onClick: () => void; disabled?: boolean }) {
   return (
     <button
@@ -42,14 +45,15 @@ function MapButton({ icon, label, onClick, disabled }: { icon: 'locatie' | 'inbe
   );
 }
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onPickStart }: {
+export function RouteMap({ routes, chosen, start, base, onChoose, onStart }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
   start: RoutePoint;
   base: MapBase;
   onChoose: (style: RouteStyle) => void;
-  onPickStart: (point: RoutePoint) => void;
+  // Start hier (een getikt punt) of Gebruik waar ik nu ben ('here'); heeft zelf een grens in tijd.
+  onStart: (from: { tap: RoutePoint } | 'here') => Promise<StartAnswer>;
 }) {
   const motion = useMotionMode();
   const box = useRef<HTMLDivElement>(null);
@@ -57,7 +61,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onPickStart }:
   const [state, setState] = useState<MapViewState>({ kind: 'loading' });
   const [pick, setPick] = useState<RoutePoint | undefined>();
   const [me, setMe] = useState<RoutePoint | undefined>();
-  const [locating, setLocating] = useState<'me' | 'start' | undefined>();
+  const [busy, setBusy] = useState<'me' | 'here' | 'tap' | undefined>();
   const [line, setLine] = useState('');
   const alive = useRef(true);
   // Wat de kaart nodig heeft, ook binnen de callbacks van de kaart zelf.
@@ -106,6 +110,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onPickStart }:
     if (ready) view.current?.fitAll();
   }, [fitKey, ready]);
 
+  // Je stip: een grove plek is genoeg, zonder de vraag om je precieze plek.
   useEffect(() => {
     let on = true;
     void placeAllowed().then(async (ok) => {
@@ -118,57 +123,69 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onPickStart }:
     };
   }, []);
 
-  async function locate(then: 'me' | 'start') {
-    setLocating(then);
-    setLine(then === 'start' ? 'Je locatie wordt bepaald. Dat duurt hoogstens 15 seconden.' : '');
+  async function goToMe() {
+    setBusy('me');
+    setLine('');
     const found = await whereAmI();
     if (!alive.current) return;
-    setLocating(undefined);
+    setBusy(undefined);
     if (!found.ok) {
       setLine(found.line);
       return;
     }
     setMe(found.point);
+    view.current?.goTo(found.point);
+  }
+
+  // Een startpunt telt alleen met een precieze plek (dezelfde grens als in de instelling).
+  async function startAt(from: { tap: RoutePoint } | 'here') {
+    setBusy(from === 'here' ? 'here' : 'tap');
     setLine('');
-    if (then === 'me') view.current?.goTo(found.point);
-    else {
-      setPick(undefined);
-      onPickStart(found.point);
+    const found = await onStart(from);
+    if (!alive.current) return;
+    setBusy(undefined);
+    if (!found.ok) {
+      setLine(found.line);
+      return;
     }
+    setPick(undefined);
+    if (from === 'here') setMe(found.point);
   }
 
   const dim = { color: 'var(--color-ink-dim)' };
   if (state.kind === 'unsupported' || state.kind === 'failed') {
-    return (
-      <p role="status" className="text-sm leading-snug" style={dim}>
-        {state.kind === 'unsupported' ? 'Deze telefoon kan de kaart niet tekenen. De lussen staan hieronder.' : 'De kaart kon niet laden. De lussen staan hieronder.'}
-      </p>
-    );
+    const first = state.kind === 'unsupported' ? 'Deze telefoon kan de kaart niet tekenen.' : 'De kaart kon niet laden.';
+    return <p role="status" className="text-sm leading-snug" style={dim}>{routes.length > 0 ? `${first} De lussen staan hieronder.` : first}</p>;
   }
+
+  const status = busy === 'here' ? 'Je locatie wordt bepaald. Dat duurt hoogstens 15 seconden.' : busy === 'me' ? 'Je locatie wordt bepaald.' : line;
 
   return (
     <div className="flex flex-col gap-1">
-      {/* Slepen en knijpen horen bij de kaart: niet bij het blad en niet bij de pagina. */}
-      <div data-no-sheet-drag="" className="relative w-full overflow-hidden rounded-xl border" style={{ height: MAP_HEIGHT, borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: 'none', overscrollBehavior: 'contain' }}>
+      {/* Slepen en knijpen horen bij de kaart: niet bij het blad en niet bij de pagina. Ongeveer vierkant,
+          maar nooit zo hoog dat de knoppen eronder op een kleine telefoon uit beeld vallen. */}
+      <div data-no-sheet-drag="" className="relative w-full overflow-hidden rounded-xl border" style={{ aspectRatio: '1 / 1', maxHeight: '58vh', borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: 'none', overscrollBehavior: 'contain' }}>
         {/* MapLibre zet zelf position: relative op dit vak; daarom de volle maat, niet absolute. */}
         <div ref={box} style={{ width: '100%', height: '100%' }} />
-        {state.kind === 'loading' && <p role="status" className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm" style={dim}>De kaart wordt geladen.</p>}
+        {state.kind === 'loading' && <p role="status" className="absolute bottom-1 left-2 text-xs" style={dim}>De kaart wordt geladen.</p>}
         <div className="absolute right-2 top-2 flex flex-col gap-2">
-          <MapButton icon="locatie" label="Naar mijn plek" disabled={locating !== undefined} onClick={() => void locate('me')} />
+          <MapButton icon="locatie" label="Naar mijn plek" disabled={busy !== undefined} onClick={() => void goToMe()} />
           <MapButton icon="inbeeld" label="Alles in beeld" onClick={() => view.current?.fitAll()} />
         </div>
         {state.kind === 'ready' && state.attribution && (
-          <p className="absolute bottom-0 right-0 rounded-tl-md bg-bg/80 px-1.5 text-xs leading-5" style={dim}>{state.attribution}</p>
+          <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 inline-flex min-h-[44px] items-end">
+            <span className="rounded-tl-md bg-bg/80 px-1.5 text-xs leading-5 underline-offset-2 hover:underline" style={dim}>{state.attribution}</span>
+          </a>
         )}
       </div>
       <p className="text-xs leading-snug" style={dim}>
-        {routes.length > 1 ? 'Mint is de gekozen lus; tik een gestreepte lus om hem te kiezen. ' : ''}De ring is de start. Tik op de kaart voor een ander startpunt.
+        {routes.length > 1 ? 'De doorgetrokken lijn is de gekozen lus; tik een gestreepte lus om hem te kiezen. ' : ''}De ring is de start. Tik op de kaart voor een ander startpunt.
       </p>
       <div className="flex flex-wrap gap-x-5">
-        {pick && <TextButton disabled={locating !== undefined} onClick={() => { setPick(undefined); onPickStart(pick); }}>Start hier</TextButton>}
-        <TextButton tone="dim" disabled={locating !== undefined} onClick={() => void locate('start')}>Gebruik waar ik nu ben</TextButton>
+        {pick && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}
+        <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt('here')}>Gebruik waar ik nu ben</TextButton>
       </div>
-      <p role="status" className="min-h-[20px] text-xs leading-snug" style={dim}>{locating === 'me' ? 'Je locatie wordt bepaald.' : line}</p>
+      {status && <p role="status" className="text-xs leading-snug" style={dim}>{status}</p>}
     </div>
   );
 }

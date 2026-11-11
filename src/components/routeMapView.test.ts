@@ -16,7 +16,7 @@ class FakeMap implements MapLike {
   fits: unknown[] = [];
   eases: Record<string, unknown>[] = [];
   removed = false;
-  hit: string | undefined;
+  hit: string | string[] | undefined;
   rotationOff = 0;
   data: Record<string, unknown> = {};
   options: Record<string, unknown>;
@@ -45,7 +45,7 @@ class FakeMap implements MapLike {
     this.eases.push(o);
   }
   queryRenderedFeatures() {
-    return this.hit ? [{ properties: { style: this.hit } }] : [];
+    return (Array.isArray(this.hit) ? this.hit : this.hit ? [this.hit] : []).map((style) => ({ properties: { style } }));
   }
   remove() {
     this.removed = true;
@@ -73,7 +73,10 @@ function clock() {
 const lib: MapLib = { Map: FakeMap as unknown as MapLib['Map'] };
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
-function setup(opts: { base?: MapBase; online?: boolean; webgl?: boolean; load?: () => Promise<MapLib>; routes?: number } = {}) {
+// Het stijlbestand van OpenFreeMap, nagemaakt en klein.
+const OFM_STYLE = { version: 8, sources: { openmaptiles: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' } }, layers: [{ id: 'background', type: 'background', paint: {} }] };
+
+function setup(opts: { base?: MapBase; online?: boolean; webgl?: boolean; load?: () => Promise<MapLib>; routes?: number; fetchStyle?: MapViewDeps['fetchStyle'] } = {}) {
   FakeMap.made = [];
   const c = clock();
   const states: MapViewState[] = [];
@@ -87,6 +90,7 @@ function setup(opts: { base?: MapBase; online?: boolean; webgl?: boolean; load?:
     motion: () => 'off',
     setTimer: c.setTimer,
     clearTimer: c.clearTimer,
+    fetchStyle: vi.fn(opts.fetchStyle ?? (async () => OFM_STYLE)),
   };
   const routes = [{ style: 'adventure' as const, points: [A, B] }, { style: 'simple' as const, points: [B, A] }].slice(0, opts.routes ?? 2);
   const view = createRouteMapView({} as HTMLElement, opts.base ?? 'dark', { routes, chosen: routes[0]?.style, dots: { start: A } }, {
@@ -94,7 +98,7 @@ function setup(opts: { base?: MapBase; online?: boolean; webgl?: boolean; load?:
     onRouteTap: (s) => taps.route.push(s),
     onMapTap: (p) => taps.map.push(p),
   }, deps);
-  return { view, states, taps, c, load, map: () => FakeMap.made[0] };
+  return { view, states, taps, c, load, deps, map: () => FakeMap.made[0] };
 }
 
 describe('de kaart laden', () => {
@@ -108,7 +112,11 @@ describe('de kaart laden', () => {
     expect(m.options.attributionControl).toBe(false);
     expect(m.rotationOff).toBe(2);
     expect((m.options.style as { sources: object }).sources).not.toHaveProperty('openmaptiles');
-    expect(m.styles).toEqual([OPENFREEMAP_STYLE.dark]);
+    expect(t.deps.fetchStyle).toHaveBeenCalledWith(OPENFREEMAP_STYLE.dark, expect.anything());
+    // De stijl gaat als object naar de kaart, met de lussen erin: zo verdwijnen ze nooit even.
+    const given = m.styles[0] as { sources: Record<string, unknown>; layers: { id: string }[] };
+    expect(given.sources).toHaveProperty('openmaptiles');
+    expect(given.layers.map((l) => l.id)).toContain('ascend-route-chosen');
     // Nog geen tegel: nog niet klaar.
     expect(t.states.at(-1)).toEqual({ kind: 'loading' });
     m.emit('sourcedata', { sourceId: 'openmaptiles', tile: {} });
@@ -185,6 +193,28 @@ describe('de kaart laden', () => {
   });
 });
 
+describe('het stijlbestand', () => {
+  it('komt het niet of is het kapot: meteen OSM-raster, en de oude stijl met de lussen bleef staan', async () => {
+    const t = setup({ fetchStyle: async () => { throw new Error('offline'); } });
+    await flush();
+    const m = t.map();
+    expect(m.styles).toHaveLength(1);
+    expect((m.styles[0] as { sources: object }).sources).toHaveProperty('osm-raster');
+    const broken = setup({ fetchStyle: async () => ({ nee: true }) });
+    await flush();
+    expect((broken.map().styles[0] as { sources: object }).sources).toHaveProperty('osm-raster');
+  });
+
+  it('hangt het: na de grens wordt het afgebroken en komt het raster', async () => {
+    let signal: AbortSignal | undefined;
+    const t = setup({ fetchStyle: (_url, s) => { signal = s; return new Promise(() => {}); } });
+    await flush();
+    t.c.advance(MAP_SOURCE_LIMIT_MS);
+    expect(signal?.aborted).toBe(true);
+    expect((t.map().styles[0] as { sources: object }).sources).toHaveProperty('osm-raster');
+  });
+});
+
 describe('het paneel sluiten', () => {
   it('tijdens het laden: geen kaart, geen tegels, geen melding meer', async () => {
     let resolve: (l: MapLib) => void = () => {};
@@ -195,6 +225,20 @@ describe('het paneel sluiten', () => {
     await flush();
     expect(FakeMap.made).toHaveLength(0);
     expect(t.states).toHaveLength(before);
+    // Ook de grens van het laden loopt niet meer.
+    expect(t.c.pending()).toBe(0);
+  });
+
+  it('terwijl het stijlbestand onderweg is: afgebroken, en een laat antwoord doet niets', async () => {
+    let signal: AbortSignal | undefined;
+    let answer: (v: unknown) => void = () => {};
+    const t = setup({ fetchStyle: (_url, s) => { signal = s; return new Promise((r) => { answer = r; }); } });
+    await flush();
+    t.view.destroy();
+    expect(signal?.aborted).toBe(true);
+    answer(OFM_STYLE);
+    await flush();
+    expect(t.map().styles).toHaveLength(0);
   });
 
   it('terwijl de bron laadt: de kaart gaat weg en de grens loopt niet meer af', async () => {
@@ -218,8 +262,21 @@ describe('tikken en camera', () => {
     m.emit('click', { point: {}, lngLat: { lat: 1, lng: 2 } });
     m.hit = undefined;
     m.emit('click', { point: {}, lngLat: { lat: 50.75, lng: 6.02 } });
+    // Na een paar keer rond de aarde: terug binnen -180 tot 180.
+    m.emit('click', { point: {}, lngLat: { lat: 50.75, lng: 366.02, wrap: () => ({ lat: 50.75, lng: 6.02 }) } });
     expect(t.taps.route).toEqual(['simple']);
-    expect(t.taps.map).toEqual([{ lat: 50.75, lon: 6.02 }]);
+    expect(t.taps.map).toEqual([{ lat: 50.75, lon: 6.02 }, { lat: 50.75, lon: 6.02 }]);
+  });
+
+  it('raakt een tik twee lussen, dan wint de lus die nog niet gekozen is', async () => {
+    const t = setup();
+    await flush();
+    // De gekozen lus (Avontuurlijk) ligt bovenop en komt als eerste terug.
+    t.map().hit = ['adventure', 'simple'];
+    t.map().emit('click', { point: {}, lngLat: { lat: 1, lng: 2 } });
+    t.map().hit = ['adventure'];
+    t.map().emit('click', { point: {}, lngLat: { lat: 1, lng: 2 } });
+    expect(t.taps.route).toEqual(['simple', 'adventure']);
   });
 
   it('nieuwe lussen gaan naar de kaart; Alles in beeld past ze erin, zonder beweging in Uit', async () => {

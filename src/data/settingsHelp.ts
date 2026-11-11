@@ -818,7 +818,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Simpel', text: 'dezelfde helling op en af tot de hoogtemeters er zijn. Bij een vlakke training heen en terug over hetzelfde pad.' },
       { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
       { head: 'Naar je horloge', text: 'met Naar Garmin Connect kies je de app van je horloge en sla je de lus op als koers; anders download je het GPX-bestand.' },
-      { head: 'Wat de deur uit gaat', text: 'standaard je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Kies je bij Startpunt van je lus Precies, dan gaat je startpunt precies naar de routeplanner, en zoekt OpenStreetMap heuvels en paden om dat punt; de hoogte van heuvels komt van Open-Meteo, ook om dat punt. Geen naam, geen adres. De route wordt niet bewaard.' },
+      { head: 'Wat de deur uit gaat', text: 'standaard je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Kies je bij Startpunt van je lus Precies, dan gaat je startpunt precies naar de routeplanner, en zoekt OpenStreetMap heuvels en paden om dat punt; de hoogte van heuvels komt van Open-Meteo, ook om dat punt. Geen naam, geen adres. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. De route wordt niet bewaard.' },
     ],
   },
   routeKaart: {
@@ -828,7 +828,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Donker', text: 'straten, paden en water van OpenFreeMap, in de kleuren van ASCEND. Het advies.' },
       { head: 'Licht', text: 'dezelfde kaart in lichte kleuren.' },
       { head: 'Geen', text: 'alleen de lussen en je plek op een effen vlak. Er worden geen kaarttegels opgehaald.' },
-      { head: 'Valt de kaart weg', text: 'dan neemt ASCEND na ongeveer zes seconden de kaart van OpenStreetMap, en anders het effen vlak. Tegels worden nooit vooraf opgehaald of bewaard.' },
+      { head: 'Valt de kaart weg', text: 'dan neemt ASCEND na ongeveer zes seconden de kaart van OpenStreetMap, en anders het effen vlak. Tegels worden nooit vooraf opgehaald of door ASCEND bewaard.' },
     ],
   },
   routeStartpunt: {
