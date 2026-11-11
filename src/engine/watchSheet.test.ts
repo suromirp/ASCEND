@@ -100,6 +100,6 @@ describe('watchSheet', () => {
   });
 
   it('geen gedachtestreepjes in de teksten', () => {
-    expect(Object.values(WATCH_SHEET_TEXT).join(' ')).not.toMatch(/[–—]/);
+    expect(Object.values(WATCH_SHEET_TEXT).join(' ')).not.toMatch(/[\u2013\u2014]/);
   });
 });
