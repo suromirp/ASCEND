@@ -454,6 +454,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Onder elkaar', text: 'alle oefeningen op een pagina, zoals eerst. Je kunt dit ook in het menu van de training zelf zetten.' },
     ],
   },
+  forgeVerloop: {
+    title: 'Verloop toont',
+    lead: 'Het blad Verloop van de training zet per set een regel: het gewicht, de herhalingen en je RIR zoals de set uiteindelijk is, met alle redenen in een zin.',
+    points: [
+      { head: 'Alleen wijzigingen', text: 'het advies. Alleen de sets waar jij of Forge iets aan veranderde, of die onder het bereik bleven.' },
+      { head: 'Alle sets', text: 'ook de sets volgens schema, met de zwaarste set per oefening. Een gedempt bolletje is een RIR die je niet zelf koos.' },
+      { head: 'In het blad', text: 'je kunt ook wisselen in het blad zelf; die keuze blijft staan.' },
+    ],
+  },
   forgeOnderbreking: {
     title: 'Lange onderbreking vragen na',
     lead: 'Een training in Forge blijft open tot je afrondt of verwijdert, ook als je de app sluit. Kom je terug na een lange stilte, dan vraagt Forge eenmaal of die tijd meetelt.',
@@ -491,10 +500,12 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   forgeRirSnel: {
     title: 'Hoeveel over na een set',
-    lead: 'Na het afvinken van je topset, van een zware set en van de laatste set van een oefening vraagt Forge in de rij hoeveel je nog over had: 0, 1, 2 of 3+.',
+    lead: 'Afvinken geeft het doel als RIR. Alleen als het anders ging vraagt Forge in de rij hoeveel je nog over had: 0, 1, 2 of 3+.',
     points: [
-      { head: 'Eén tik', text: 'je kiest in de rij zelf, zonder blad. Kies je niets, dan blijft het doel staan als aangenomen RIR.' },
-      { head: 'Waarom', text: 'een RIR die je zelf kiest telt mee voor je geschatte kracht en voor de stap zwaarder; een aangenomen RIR niet.' },
+      { head: 'Als het anders ging', text: 'het advies: na een zware set (0 of 1 over, of tot falen), minder herhalingen dan gevraagd, ruim boven het bereik, de eerste set op een zwaarder gewicht en in je eerste drie trainingen van een oefening. Staat Afvinken telt als het doel uit, dan ook bij de eerste set die de bovenkant haalt, zodat de stap zwaarder kan komen.' },
+      { head: 'Vaker vragen', text: 'ook na je eerste en je laatste werkset, ook als alles volgens schema ging, en verder alles wat het advies vraagt.' },
+      { head: 'Eén tik', text: 'je kiest in de rij zelf, zonder blad. Het doel staat gedempt voorgekozen; kies je niets, dan blijft het staan als aangenomen RIR.' },
+      { head: 'Waarom', text: 'van een RIR die je zelf kiest leert Forge hoe snel je moe wordt, en hij telt voor de stap zwaarder en voor klaar voor je doel. Een aangenomen RIR telt alleen als het doel mee in je geschatte kracht.' },
     ],
   },
   forgeStappen: {
@@ -542,7 +553,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   forgeIJkset: {
     title: 'IJkset voorstellen',
-    lead: 'Een schatting van wat je over hebt is alleen goed als je hem af en toe controleert. Eens per vier weken stelt Forge daarom één extra set voor.',
+    lead: 'Een schatting van wat je over hebt is alleen goed als je hem af en toe controleert. Eens per vier weken stelt Forge daarom één set erbij voor.',
     points: [
       { head: 'Wat', text: 'bij één hoofdoefening een set erbij, zo ver als netjes gaat. Daarna kies je zoals altijd hoeveel je over had.' },
       { head: 'Wanneer', text: 'niet in een week met een tocht of test, en hooguit eens per vier weken.' },
@@ -561,8 +572,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   forgeSchijven: {
     title: 'Schijven bij de set',
-    lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',
+    lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt. Standaard uit: het cijferblok toont ze als je het gewicht intikt.',
     points: [
+      { head: 'Altijd', text: 'past een gewicht niet precies met je schijven, dan staat dat onder de set, ook met deze instelling uit.' },
       { head: 'Tik erop', text: 'dan opent het invoerpaneel met de stang erbij getekend.' },
       { head: 'Je sportschool', text: 'de schijven en stangen komen uit je sportschoolprofiel.' },
     ],
@@ -1335,13 +1347,13 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   forgeTijdsgrens: {
     title: 'Hoogstens per krachttraining',
-    lead: 'Een krachttraining duurt hoogstens zo lang: 60 minuten, en een beendag 75. Zou hij langer duren, dan haalt Forge eerst sets bijwerk weg.',
+    lead: 'Het advies is Tonen, niet inkorten: de hele training staat er, en bij elke oefening staat of het kern, bijwerk of extra is. Kies je een grens, dan haalt Forge eerst sets bijwerk weg.',
     points: [
-      { head: 'Hoe het rekent', text: 'met de tijd per set uit je eigen trainingen. Ken je die nog niet, dan met de verwachte duur van de training.' },
-      { head: 'Wat eerst gaat', text: 'een set van de extra oefeningen, dan van het bijwerk, tot elke oefening er nog twee heeft. Pas daarna een hele oefening. De kernsets blijven altijd staan.' },
-      { head: 'Al korter', text: 'dan verandert er niets. Je planning en je logboek blijven zoals ze zijn; het gaat alleen om wat Forge vandaag klaarzet.' },
+      { head: 'Tonen', text: 'zit je over de 60 minuten (een beendag 75) en is de kern af, dan staat onder de klok dat wat nog komt bijwerk of extra is. Stoppen kan; een keertje niet is geen probleem. Pauzes tellen niet mee.' },
+      { head: 'Afronden', text: 'met bijwerk of extra open telt de training gewoon als gedaan, nooit als gemist.' },
+      { head: 'Een grens', text: 'met 45, 60, 75 of 90 minuten rekent Forge met de tijd per set uit je eigen trainingen. Eerst gaat een set van de extra oefeningen, dan van het bijwerk, tot elke oefening er nog twee heeft. Pas daarna een hele oefening. De kernsets blijven altijd staan, en bij de oefening staat wat wegviel.' },
+      { head: 'Je planning', text: 'en je logboek blijven zoals ze zijn; het gaat alleen om wat Forge vandaag klaarzet.' },
       { head: 'Beendag', text: 'een training die je benen zwaar belast, zoals de planner die ook leest.' },
-      { head: 'Uit', text: 'Forge zet de hele training klaar, hoe lang hij ook duurt.' },
     ],
   },
   trainingsduur: {

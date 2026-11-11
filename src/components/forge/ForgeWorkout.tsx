@@ -9,13 +9,13 @@
 // dezelfde tabel zonder invulvelden: het voorschrift om in de sportschool mee
 // te kijken, en één knop om de training af te vinken.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { restoreDropped, swipeDeleteOn } from '../../engine/forgeRows';
 import { canSwap, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
 import { learnedMinutesPerSet } from '../../engine/durationLearning';
-import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, resolveTimeCap, servesMountainMuscle } from '../../engine/forgeTimeCap';
+import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, referenceMinutes, resolveTimeCap, roleLabel, servesMountainMuscle } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { withoutStepSwap } from '../../engine/stepSwaps';
 import { hasMountainGoal } from '../../engine/mountainMuscles';
@@ -195,15 +195,22 @@ function ForgeWorkoutInner({
   const mountainGoal = useMemo(() => strength.mountainMuscles && hasMountainGoal(trainingGoals, goalMilestones), [strength.mountainMuscles, trainingGoals, goalMilestones]);
   const capStrength = settings.forgeCapStrength;
   const capLegs = settings.forgeCapLegs;
+  const capSetting = useMemo(() => resolveTimeCap({ forgeCapStrength: capStrength, forgeCapLegs: capLegs }), [capStrength, capLegs]);
+  // De referentie voor de regel onder de klok (ForgeHeader.tsx): een gekozen grens, anders 60 of op een beendag 75.
+  const reference = referenceMinutes(template, capSetting);
+  // De rol per plek (Kern, Bijwerk, Extra), uit het voorschrift; een geruilde oefening houdt de rol van zijn plek.
+  const priorityBySlot = useMemo(() => new Map(allSlots.map((s) => [s.id, s.priority])), [allSlots]);
+  const priorityOf = useCallback((slot: string) => priorityBySlot.get(slot) ?? 'core', [priorityBySlot]);
   const capped = useMemo(() => capSlots({
     slots: exercisesForVariant({ ...template, exercises: allSlots }, initialVariant),
     fullSlots: allSlots,
     fullMinutes,
     minutesPerSet,
-    cap: capForTemplate(template, resolveTimeCap({ forgeCapStrength: capStrength, forgeCapLegs: capLegs })),
+    // Met de standaard "Tonen, niet inkorten" is dit 0: capSlots laat dan alles staan.
+    cap: capForTemplate(template, capSetting),
     // Bij een bergdoel (zoals Spieren voor de berg het leest) vallen kuit, scheen en bilspieren als laatste weg.
     ...(mountainGoal ? { keep: servesMountainMuscle } : {}),
-  }), [template, allSlots, initialVariant, fullMinutes, minutesPerSet, capStrength, capLegs, mountainGoal]);
+  }), [template, allSlots, initialVariant, fullMinutes, minutesPerSet, capSetting, mountainGoal]);
   const slots = capped.slots;
 
   // De planning van de rijen, één keer: de geschiedenis per oefening uit de logs.
@@ -235,7 +242,7 @@ function ForgeWorkoutInner({
   const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
   // Welk blad open staat (useForgeSheets.ts, getoond door ForgeSheets.tsx).
   const sh = useForgeSheets(startAtForm && !preview);
-  // "Hoeveel over?" onder de set die je net afvinkte (alleen de topset en de laatste set, asksReserve).
+  // "Hoeveel over?" onder de set die je net afvinkte (alleen als het anders ging, of met Vaker vragen ook de topset en de laatste set; asksReserve).
   const [quickRir, setQuickRir] = useState<{ slot: string; rowId: string } | null>(null);
   // "Ging het netjes?" onder de werkset op een ladderstap die je net afvinkte; de volgende handeling in de oefening haalt hem weg.
   const [cleanAsk, setCleanAsk] = useState<{ slot: string; rowId: string } | null>(null);
@@ -357,11 +364,11 @@ function ForgeWorkoutInner({
     // Een houding heeft geen gewicht en geen reserve: Forge rekent daar niet mee.
     const reckoned = raw.workout.map((e) => (e.slot === slot && !e.hold ? reckonAfterTick(e, rowId, reckonCtx) : e));
     const result = { ...raw, workout: reckoned };
-    if (reckoned.some((e, i) => e !== raw.workout[i])) markCause({ kind: 'meegerekend' });
+    if (reckoned.some((e, i) => e !== raw.workout[i])) markCause({ kind: 'meegerekend', via: { slot, rowId } });
     setWorkout(result.workout);
     // Na het afvinken van de topset of de laatste set: één snelle vraag hoeveel je over had. Een andere tik haalt hem weg.
     const askEx = result.workout.find((e) => e.slot === slot);
-    setQuickRir(strength.quickRir && !readOnly && askEx && !askEx.hold && asksReserve(askEx, rowId, strength.enabled && strength.assumedCounts) ? { slot, rowId } : null);
+    setQuickRir(strength.quickRir && !readOnly && askEx && !askEx.hold && asksReserve(askEx, rowId, strength.enabled && strength.assumedCounts, strength.quickRirMode === 'vaker' ? 'vaker' : 'twijfel') ? { slot, rowId } : null);
     setCleanAsk(cleanOn && !readOnly && askEx && asksClean(askEx, rowId, exerciseOf(askEx)) ? { slot, rowId } : null);
     // De focus schuift vloeiend naar de volgende open set; is de oefening af, dan
     // klapt hij zacht in en gaat het scherm naar de volgende oefening.
@@ -505,7 +512,7 @@ function ForgeWorkoutInner({
     haptics.tap();
     const mine = updateRow(ex, rowId, { rir });
     const after = reckonAfterTick(mine, rowId, reckonCtx);
-    markCause(after !== mine ? { kind: 'meegerekend' } : { kind: 'eigen', edited: { slot, rowId } });
+    markCause(after !== mine ? { kind: 'meegerekend', via: { slot, rowId } } : { kind: 'eigen', edited: { slot, rowId } });
     setExercise(slot, () => after);
   }
 
@@ -669,6 +676,7 @@ function ForgeWorkoutInner({
     <ExerciseBlock
               key={ex.slot}
               ex={ex}
+              role={roleLabel(priorityOf(ex.slot))}
               first={paged || i === 0}
               paged={paged}
               readOnly={readOnly}
@@ -686,7 +694,7 @@ function ForgeWorkoutInner({
               rirAsValue={strength.rirPrefill === 'target'}
               swipeOn={swipeDeleteOn(settings)}
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
-              quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId, strength.enabled && strength.assumedCounts) ? quickRir.rowId : undefined}
+              quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId, strength.enabled && strength.assumedCounts, strength.quickRirMode === 'vaker' ? 'vaker' : 'twijfel') ? quickRir.rowId : undefined}
               capText={capRemoved > 0 ? capRemovedLine(capRemoved) : undefined}
               standLine={stands.lineFor(ex, exerciseComplete(ex))}
               ladderLines={lines}
@@ -719,6 +727,8 @@ function ForgeWorkoutInner({
             paged={paged}
             workout={workout}
             page={page}
+            reference={reference}
+            priorityOf={priorityOf}
             onClose={onClose}
             onMenu={() => sh.setWorkoutMenu(true)}
             onFinish={() => sh.setFinishing(true)}

@@ -169,7 +169,11 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-geluid', facts()).value).toBe('Koebel');
     expect(rowSummary('forge-geluid', facts({ settings: { ...facts().settings, strengthModel: { restSound: 'lyre' } } })).value).toBe('Lier');
     expect(rowSummary('forge-scherm', facts()).checked).toBe(true);
-    expect(rowSummary('forge-schijven', facts()).checked).toBe(true);
+    // Besluit 2026-11-11-forge-kern-zichtbaar: schijven per set standaard uit, Hoeveel over alleen als het anders ging.
+    expect(rowSummary('forge-schijven', facts()).checked).toBe(false);
+    expect(rowSummary('forge-rir-snel', facts()).value).toBe('Als het anders ging');
+    expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRir: false } } }))).toMatchObject({ value: 'Uit', dim: true });
+    expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRirMode: 'vaker' } } })).value).toBe('Vaker vragen');
     expect(rowSummary('forge-1rm', facts()).checked).toBe(true);
     expect(rowSummary('forge-1rm', facts({ settings: { ...facts().settings, strengthModel: { showOneRm: false } } })).checked).toBe(false);
     expect(rowSummary('forge-doorvoeren', facts()).value).toBe('Gelijke sets');
@@ -212,6 +216,8 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-vegen', facts({ settings: { ...facts().settings, forgeSwipeDelete: false } })).checked).toBe(false);
     expect(rowSummary('forge-oefeningen', facts()).value).toBe('Een per scherm');
     expect(rowSummary('forge-oefeningen', facts({ settings: { ...facts().settings, forgeLayout: 'lijst' } })).value).toBe('Onder elkaar');
+    expect(rowSummary('forge-verloop', facts()).value).toBe('Alleen wijzigingen');
+    expect(rowSummary('forge-verloop', facts({ settings: { ...facts().settings, forgeLogView: 'alle' } })).value).toBe('Alle sets');
     expect(rowSummary('forge-onderbreking', facts()).value).toBe('45 minuten');
     expect(rowSummary('forge-onderbreking', facts({ settings: { ...facts().settings, forgeLongBreak: 0 } })).value).toBe('Uit');
     expect(rowSummary('forge-onderbreking', facts({ settings: { ...facts().settings, forgeLongBreak: 90 } })).value).toBe('90 minuten');
@@ -337,12 +343,15 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('trainingsduur', facts({ strengthDurations: [] })).hidden).toBe(true);
   });
 
-  it('hoogstens per krachttraining: het advies 60 en 75, een keuze en uit', () => {
+  // Besluit 2026-11-11-forge-kern-zichtbaar: het advies is tonen, niet inkorten (0, ook zonder veld).
+  it('hoogstens per krachttraining: het advies niet inkorten, een keuze houdt het inkorten', () => {
     const inApp = (extra: object = {}) => facts({ strengthExternal: false, settings: { ...facts().settings, ...extra } });
-    expect(rowSummary('forge-tijdsgrens', inApp())).toMatchObject({ value: '60 en 75 min', sub: 'Kracht en beendag' });
+    expect(rowSummary('forge-tijdsgrens', inApp())).toEqual({ value: 'Niet inkorten', hidden: false });
+    expect(rowSummary('forge-grens-kracht', inApp()).value).toBe('Niet inkorten');
     expect(rowSummary('forge-grens-been', inApp({ forgeCapLegs: 90 })).value).toBe('90 min');
-    expect(rowSummary('forge-tijdsgrens', inApp({ forgeCapStrength: 0 }))).toMatchObject({ value: '75 min', sub: 'Alleen een beendag' });
-    expect(rowSummary('forge-tijdsgrens', inApp({ forgeCapStrength: 0, forgeCapLegs: 0 }))).toMatchObject({ value: 'Uit', dim: true });
+    expect(rowSummary('forge-tijdsgrens', inApp({ forgeCapStrength: 60, forgeCapLegs: 75 }))).toMatchObject({ value: '60 en 75 min', sub: 'Kracht en beendag' });
+    expect(rowSummary('forge-tijdsgrens', inApp({ forgeCapLegs: 75 }))).toMatchObject({ value: '75 min', sub: 'Alleen een beendag' });
+    expect(rowSummary('forge-tijdsgrens', inApp({ forgeCapStrength: 0, forgeCapLegs: 0 }))).toMatchObject({ value: 'Niet inkorten' });
     // Met kracht in MacroFactor zet Forge niets klaar om in te korten.
     expect(rowSummary('forge-tijdsgrens', facts()).hidden).toBe(true);
   });

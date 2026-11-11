@@ -290,6 +290,10 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.forgeLayout;
     skipped.n++;
   }
+  if ('forgeLogView' in s && s.forgeLogView !== 'wijzigingen' && s.forgeLogView !== 'alle') {
+    delete s.forgeLogView;
+    skipped.n++;
+  }
   if ('forgeLongBreak' in s && !(BREAK_ASK_OPTIONS as readonly number[]).includes(s.forgeLongBreak as number)) {
     delete s.forgeLongBreak;
     skipped.n++;

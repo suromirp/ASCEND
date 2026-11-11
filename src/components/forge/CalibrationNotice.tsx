@@ -13,7 +13,7 @@ export function CalibrationNotice({ name, phase: state, onAccept, onLater }: { n
       <div className="mt-2 flex flex-col gap-1.5">
         {state === 'open' ? (
           <>
-            <p className="text-sm leading-relaxed" style={ink}>Eens per vier weken ijk je je gevoel voor wat je over hebt. Een extra set bij {name}, zo ver als netjes gaat?</p>
+            <p className="text-sm leading-relaxed" style={ink}>Eens per vier weken ijk je je gevoel voor wat je over hebt. Nog één set bij {name}, zo ver als netjes gaat?</p>
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Er komt een set bij met nog één over als doel. Daarna kies je zoals altijd hoeveel je over had.</p>
             <div className="mt-1 flex gap-3">
               <SecondaryButton onClick={onLater}>Niet nu</SecondaryButton>

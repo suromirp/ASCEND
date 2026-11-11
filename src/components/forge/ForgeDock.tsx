@@ -32,7 +32,7 @@ export function ForgeDock({ api, workout, strength, readOnly }: { api: ForgeDock
     <InputDock
       // Geen key per veld: het blok blijft staan van veld naar veld (fieldKey zet de waarde opnieuw).
       key={dockEpoch}
-      label={`${dock.field === 'weightKg' ? (isAssisted(dockEx) ? 'Hulp' : addedKgOf(exerciseOf(dockEx)) !== undefined ? 'Extra gewicht' : 'Gewicht') : dock.field === 'seconds' ? 'Seconden' : 'Herhalingen'}, set ${dockRowLabel(dockEx, dockIndex)}, ${dockEx.name}`}
+      label={`${dock.field === 'weightKg' ? (isAssisted(dockEx) ? 'Hulp' : addedKgOf(exerciseOf(dockEx)) !== undefined ? 'Gewicht erbij' : 'Gewicht') : dock.field === 'seconds' ? 'Seconden' : 'Herhalingen'}, set ${dockRowLabel(dockEx, dockIndex)}, ${dockEx.name}`}
       fieldKey={dockFieldKey(dock, dockTaps)}
       value={dock.field === 'weightKg' ? (isAssisted(dockEx) && dockRow.weightKg !== undefined ? Math.abs(dockRow.weightKg) : dockRow.weightKg) : dock.field === 'seconds' ? dockRow.seconds : dockRow.reps}
       decimals={dock.field === 'weightKg' ? 2 : 0}
