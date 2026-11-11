@@ -321,7 +321,8 @@ export function joinReasons(parts: string[]): string {
   return `${text[0].toUpperCase()}${text.slice(1)}.`;
 }
 
-// De nummers van een spotterregel: "1 tot 3" is 1, 2 en 3; "2" is 2.
+// De nummers van een spotterregel: "1 tot 3" is 1, 2 en 3; "2" is 2. Dat klopt omdat spotterEvents alleen
+// aaneengesloten werksets in een bereik zet; verandert dat, koppel dan via de rij-id's.
 function spotterLabels(set: string): string[] {
   const m = /^(\d+) tot (\d+)$/.exec(set);
   if (!m) return [set];
@@ -428,11 +429,21 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
 
   // Weggehaald en daarna weer een set met hetzelfde nummer toegevoegd: een regel, die van de nieuwe set.
   const readded = new Set<string>();
+  // Elke toegevoegde set hoort bij hoogstens een weggehaalde; de koppeling naar de rij gaat via zijn eigen rij-id.
+  const backOf = new Map<string, string>();
+  const backFor = new Map<string, ForgeEvent>();
   for (const ev of sorted) {
     if (ev.kind !== 'weggehaald') continue;
-    const back = sorted.find((x) => x.kind === 'toegevoegd' && x.exerciseId === ev.exerciseId && x.set === ev.set && x.at >= ev.at);
-    if (back) readded.add(ev.id);
+    const back = sorted.find((x) => x.kind === 'toegevoegd' && x.exerciseId === ev.exerciseId && x.set === ev.set && x.at >= ev.at && !backOf.has(x.id));
+    if (back) {
+      readded.add(ev.id);
+      backOf.set(back.id, ev.id);
+      backFor.set(ev.id, back);
+    }
   }
+
+  // Een teruggezette set die daarna zelf weer werd weggehaald (een tussenstap in een keten).
+  const gone = (added: ForgeEvent) => sorted.some((x) => x.kind === 'weggehaald' && x.exerciseId === added.exerciseId && x.rowId === added.rowId && x.at >= added.at);
 
   // Een set die alleen nog in het verloop staat (weggehaald, of een oefening die niet meer in de training staat).
   const loose = new Map<string, Draft>();
@@ -451,8 +462,12 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
     if (ev.kind === 'weggehaald') {
       if (readded.has(ev.id)) {
         // De regel van de set die terugkwam krijgt deze reden erbij.
-        const back = sorted.find((x) => x.kind === 'toegevoegd' && x.exerciseId === ev.exerciseId && x.set === ev.set && x.at >= ev.at)!;
-        const d = (opts.workout ? byRow.get(`${back.exerciseId}\u0000${back.rowId}`) : undefined) ?? byLabel.get(labelKey(back.exerciseId, back.set)) ?? looseFor(back, back.set, false);
+        const back = backFor.get(ev.id)!;
+        // Is de teruggezette set later zelf weer weggehaald, dan gaat de keten verder bij die weghaling.
+        if (gone(back)) continue;
+        const d = opts.workout
+          ? (byRow.get(`${back.exerciseId}\u0000${back.rowId}`) ?? looseFor(back, back.set, false))
+          : (byLabel.get(labelKey(back.exerciseId, back.set)) ?? looseFor(back, back.set, false));
         d.readded = true;
         d.events.push(ev);
         continue;
@@ -462,6 +477,7 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
       (still ?? looseFor(ev, ev.set, true)).events.push(ev);
       continue;
     }
+    if (ev.kind === 'toegevoegd' && backOf.has(ev.id) && gone(ev)) continue;
     const labels = ev.kind === 'spotter' ? spotterLabels(ev.set) : [ev.set];
     for (const [i, label] of labels.entries()) {
       const d =
@@ -489,7 +505,7 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
     }
     // De zwaarste werkset: het hoogste gewicht, bij gelijk gewicht de meeste herhalingen; alleen gedane sets en
     // alleen als er minstens twee zijn om te vergelijken.
-    const work = all.filter((d) => !d.line.warmup && !d.line.removed && d.line.done !== false && d.line.kg !== undefined);
+    const work = all.filter((d) => !d.loose && !d.line.warmup && d.line.done !== false && d.line.kg !== undefined);
     if (work.length >= 2) {
       const best = work.reduce((a, b) => ((b.line.kg! > a.line.kg! || (b.line.kg === a.line.kg && (b.line.reps ?? 0) > (a.line.reps ?? 0))) ? b : a));
       best.line.heaviest = true;

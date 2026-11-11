@@ -22,7 +22,7 @@ Bij Benen A stond set 3 er twee keer (eigen en onder) en miste set 1 de 0 RIR, o
 - De zwaarste set: per oefening de gedane werkset met het hoogste gewicht, bij gelijk gewicht de meeste herhalingen, alleen als er minstens twee zijn. Vet met de woorden "zwaarste set" in gedimd grijs; geen tweede mint accent.
 - De klok per gebeurtenis is weg uit het blad; de volgorde is die van de training.
 - De instelling staat in het blad Bij het invullen (onder Geavanceerd), naast Oefeningen in een training. Zo komt er onder Geavanceerd geen zevende rij bij (besluit 8 november).
-- Leg press met pinnen (84,7, 105,5, 91,6 en 89,4 kg): met opgeslagen standen zet Forge alleen standen (voorschrift, opwarmen, doorvoeren, Minder en Meer; `legPressStands.test.ts`). Zulke getallen zijn dus standen van het toestel of zelf getypt. Zonder standen leert Forge uit gebruikte gewichten: 91,6 lijkt op 202 pond en valt weg, en een groot gat wordt gevuld met de stap van het profiel (94,4, 99,4, 104,4), gewichten die op zo'n toestel niet bestaan. Dat is bestaand gedrag, geen fout in de standen; met echte data na te gaan.
+- Bijvangst, los van het blad: leg press met pinnen (84,7, 105,5, 91,6 en 89,4 kg): met opgeslagen standen zet Forge alleen standen (voorschrift, opwarmen, doorvoeren, Minder en Meer; `legPressStands.test.ts`). Zulke getallen zijn dus standen van het toestel of zelf getypt. Zonder standen leert Forge uit gebruikte gewichten: 91,6 lijkt op 202 pond en valt weg, en een groot gat wordt gevuld met de stap van het profiel (94,4, 99,4, 104,4), gewichten die op zo'n toestel niet bestaan. Dat is bestaand gedrag, geen fout in de standen; met echte data na te gaan.
 
 ## Alternatieven
 
@@ -39,4 +39,4 @@ Het deel "de tijdlijn, nieuwste bovenaan" van `2026-10-28-forge-logboek.md`. Het
 
 ## Terugdraaien
 
-`ForgeLogSheet.tsx` terug naar de tijdlijn (git); `linesPerSet` en de instelling `forgeLogView` kunnen blijven staan, een oude waarde wordt genegeerd.
+`ForgeLogSheet.tsx` terug naar de tijdlijn (git); `linesPerSet` en de instelling `forgeLogView` kunnen blijven staan, een oude waarde wordt genegeerd. De leg press-test (`legPressStands.test.ts`) legt alleen bestaand gedrag vast en kan los blijven staan.

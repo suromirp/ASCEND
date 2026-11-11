@@ -116,6 +116,37 @@ describe('linesPerSet', () => {
     expect(g.lines.map((l) => l.reason)).toEqual(['Zonder spotter minstens 1 over.', 'Zonder spotter minstens 1 over.']);
   });
 
+  it('een set die alleen in het verloop staat, telt niet als zwaarste set', () => {
+    const logged: ExerciseSetLog[] = [{ exerciseId: 'leg-press', exerciseName: 'Leg Press', sets: [{ reps: 10, weightKg: 80, kind: 'work' }, { reps: 10, weightKg: 82.5, kind: 'work' }] }];
+    const events = [ev({ kind: 'eigen', rowId: 'x', set: '3', from: { kg: 80 }, to: { kg: 100, reps: 5 } })];
+    const [g] = linesPerSet(events, { logged, view: 'alle' });
+    expect(g.lines.find((l) => l.heaviest)?.set).toBe('2');
+  });
+
+  it('twee keer weghalen en een keer toevoegen: een regel terug, een blijft weggehaald', () => {
+    const back = row('s3c', { weightKg: 70, rir: 2 });
+    const ex = exercise([row('s1'), row('s2'), back]);
+    const events = [
+      setCountEvent('weggehaald', ex, row('s3'), '3', T0, 'e1'),
+      setCountEvent('toegevoegd', ex, row('s3b'), '3', T0 + 1000, 'e2'),
+      setCountEvent('weggehaald', ex, row('s3b'), '3', T0 + 2000, 'e3'),
+      setCountEvent('toegevoegd', ex, back, '3', T0 + 3000, 'e4'),
+    ];
+    const [g] = linesPerSet(events, { workout: [ex], view: 'wijzigingen' });
+    expect(g.lines.filter((l) => l.set === '3' && !l.removed)).toHaveLength(1);
+    expect(g.lines.find((l) => l.key.endsWith('s3c'))).toMatchObject({ kg: 70, reason: 'Weggehaald en weer toegevoegd.' });
+  });
+
+  it('in het logboek koppelt een regel op nummer: een open gelaten set laat de nummers schuiven (bekende grens)', () => {
+    // Set 2 werd niet afgevinkt, dus de gelogde set 2 is in de training set 3.
+    const logged: ExerciseSetLog[] = [{ exerciseId: 'leg-press', exerciseName: 'Leg Press', sets: [{ reps: 10, weightKg: 80, kind: 'work' }, { reps: 8, weightKg: 85, kind: 'work' }] }];
+    const events = [ev({ kind: 'eigen', rowId: 's3', set: '3', from: { kg: 80 }, to: { kg: 85 } })];
+    const [g] = linesPerSet(events, { logged, view: 'wijzigingen' });
+    expect(g.lines).toHaveLength(1);
+    expect(g.lines[0]).toMatchObject({ set: '3', kg: 85 });
+    expect(g.lines[0].done).toBeUndefined();
+  });
+
   it('dezelfde reden twee keer staat er een keer', () => {
     expect(joinReasons(['zelf aangepast', 'zelf aangepast'])).toBe('Zelf aangepast.');
     expect(joinReasons(['a', 'b', 'c'])).toBe('A, b en c.');
