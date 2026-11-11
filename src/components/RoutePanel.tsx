@@ -9,6 +9,7 @@
 // hoofdknop eronder, dan elke lus als rij om te kiezen. Nergens een uitklap; de lange uitleg staat
 // achter de i van het blad (RouteProposalLine.tsx#RouteInfoSheet). Spoor 2 van de Briefing.
 
+import { PHOTO_SOURCES_LINE } from '../integrations/aerialImagery';
 import { useEffect, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
@@ -138,7 +139,7 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
       <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
       <TextButton onClick={() => void model.choose('here')}>Waar je nu bent</TextButton>
       <p className="text-xs leading-snug" style={dim}>
-        Bij elke zoektocht vraagt ASCEND één keer je plek. Die gaat precies naar de routeplanner (BRouter, anders Valhalla van FOSSGIS); heuvels en paden zoekt OpenStreetMap om je plek op ongeveer 100 m, en de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Je plek wordt niet als startpunt bewaard. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap.
+        Bij elke zoektocht vraagt ASCEND één keer je plek. Die gaat precies naar de routeplanner (BRouter, anders Valhalla van FOSSGIS); heuvels en paden zoekt OpenStreetMap om je plek op ongeveer 100 m, en de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Je plek wordt niet als startpunt bewaard. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. {PHOTO_SOURCES_LINE}
       </p>
       <TextButton tone="dim" onClick={() => void model.choose('exact')}>Vast punt, je deur</TextButton>
       <p className="text-xs leading-snug" style={dim}>
@@ -204,7 +205,7 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
       case 'map':
         return model.mapStartPoint ? (
           <div key={p} className="flex flex-col gap-1">
-            <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} offerHere={!model.hereMode} onNoMap={model.markNoMap} />
+            <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} offerHere={!model.hereMode} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} />
           </div>
         ) : null;
       case 'chosen':

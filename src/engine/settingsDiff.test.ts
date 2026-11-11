@@ -120,6 +120,7 @@ const everything: AppSettings = {
   routeStyle: 'simple',
   routeStart: 'exact',
   routeMapBase: 'none',
+  routeMapPhoto: 'photo',
   routeSearch: 'tap',
   keepStreams: false,
   tempoStablePieces: false,

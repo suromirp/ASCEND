@@ -18,7 +18,7 @@ function model(over: Partial<RouteSearchModel> = {}): RouteSearchModel {
   return {
     stage: 'searching', lat: 52, lon: 5, target, startLine: '', choose: async () => undefined, startHere: async () => undefined, locating: false,
     declineExact: () => undefined, order: ['adventure', 'simple'], plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined,
-    setChosen: () => undefined, mapRoutes: [], mapStartPoint: undefined, base: 'none', hereMode: false, noMap: false, markNoMap: () => undefined,
+    setChosen: () => undefined, mapRoutes: [], mapStartPoint: undefined, base: 'none', photo: 'map', setPhoto: () => undefined, hereMode: false, noMap: false, markNoMap: () => undefined,
     startOnMap: async () => ({ ok: false, line: '' }), steps: ['terrain', 'routes'], currentStep: 'terrain', limitLine: 'Hoogstens een halve minuut.',
     foundLines: [], sources: [], parts: [], retry: () => undefined, sender: null, ...over,
   };

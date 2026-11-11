@@ -76,7 +76,7 @@ const flush = () => new Promise((r) => setTimeout(r, 0));
 // Het stijlbestand van OpenFreeMap, nagemaakt en klein.
 const OFM_STYLE = { version: 8, sources: { openmaptiles: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' } }, layers: [{ id: 'background', type: 'background', paint: {} }] };
 
-function setup(opts: { base?: MapBase; online?: boolean; webgl?: boolean; load?: () => Promise<MapLib>; routes?: number; fetchStyle?: MapViewDeps['fetchStyle'] } = {}) {
+function setup(opts: { base?: MapBase; online?: boolean; webgl?: boolean; load?: () => Promise<MapLib>; routes?: number; fetchStyle?: MapViewDeps['fetchStyle']; photo?: boolean; points?: { lat: number; lon: number }[] } = {}) {
   FakeMap.made = [];
   const c = clock();
   const states: MapViewState[] = [];
@@ -92,12 +92,13 @@ function setup(opts: { base?: MapBase; online?: boolean; webgl?: boolean; load?:
     clearTimer: c.clearTimer,
     fetchStyle: vi.fn(opts.fetchStyle ?? (async () => OFM_STYLE)),
   };
-  const routes = [{ style: 'adventure' as const, points: [A, B] }, { style: 'simple' as const, points: [B, A] }].slice(0, opts.routes ?? 2);
-  const view = createRouteMapView({} as HTMLElement, opts.base ?? 'dark', { routes, chosen: routes[0]?.style, dots: { start: A } }, {
+  const pts = opts.points ?? [A, B];
+  const routes = [{ style: 'adventure' as const, points: pts }, { style: 'simple' as const, points: [...pts].reverse() }].slice(0, opts.routes ?? 2);
+  const view = createRouteMapView({} as HTMLElement, opts.base ?? 'dark', { routes, chosen: routes[0]?.style, dots: { start: pts[0] } }, {
     onState: (s) => states.push(s),
     onRouteTap: (s) => taps.route.push(s),
     onMapTap: (p) => taps.map.push(p),
-  }, deps);
+  }, deps, opts.photo ?? false);
   return { view, states, taps, c, load, deps, map: () => FakeMap.made[0] };
 }
 
@@ -287,7 +288,7 @@ describe('tikken en camera', () => {
     expect((m.data['ascend-routes'] as { features: unknown[] }).features).toEqual([]);
     expect((m.data['ascend-dots'] as { features: unknown[] }).features).toHaveLength(2);
     t.view.fitAll();
-    expect(m.fits.at(-1)).toEqual([[[A.lon, A.lat], [B.lon, B.lat]], { padding: { top: 36, bottom: 36, left: 36, right: 60 }, maxZoom: 16, duration: 0 }]);
+    expect(m.fits.at(-1)).toEqual([[[A.lon, A.lat], [B.lon, B.lat]], { padding: { top: 60, bottom: 36, left: 36, right: 60 }, maxZoom: 16, duration: 0 }]);
     t.view.goTo(B);
     expect(m.eases.at(-1)).toMatchObject({ center: [B.lon, B.lat], duration: 0 });
   });
@@ -312,5 +313,119 @@ describe('je plek voor de kaart', () => {
 
   it('komt niet op tijd: een regel na de grens', async () => {
     expect(await whereAmI(() => new Promise(() => {}), 5)).toEqual({ ok: false, line: 'Je locatie kwam niet op tijd.' });
+  });
+});
+
+// Nagemaakte lussen rond openbare stadscentra.
+const UTRECHT = [{ lat: 52.09, lon: 5.12 }, { lat: 52.1, lon: 5.13 }];
+const ANNECY = [{ lat: 45.9, lon: 6.12 }, { lat: 45.91, lon: 6.13 }];
+const sourcesOf = (style: unknown) => (style as { sources: Record<string, { tiles?: string[]; attribution?: string; maxzoom?: number }> }).sources;
+
+describe('Luchtfoto', () => {
+  it('in Nederland PDOK, met de lussen erop; klaar bij de eerste tegel, met de naamsvermelding van PDOK', async () => {
+    const t = setup({ photo: true, points: UTRECHT });
+    await flush();
+    const m = t.map();
+    const src = sourcesOf(m.styles[0])['ascend-aerial'];
+    expect(src.tiles?.[0]).toContain('service.pdok.nl');
+    expect(src.maxzoom).toBe(19);
+    expect((m.styles[0] as { layers: { id: string }[] }).layers.map((l) => l.id)).toContain('ascend-route-chosen');
+    // Niet eerst OpenFreeMap: de kaart haalt alleen de luchtfoto.
+    expect(t.deps.fetchStyle).not.toHaveBeenCalled();
+    m.emit('sourcedata', { sourceId: 'ascend-aerial', tile: {} });
+    expect(t.states.at(-1)).toEqual({ kind: 'ready', stage: 'aerial', attribution: 'Luchtfoto: Beeldmateriaal Nederland, via PDOK, CC BY 4.0', aerial: 'pdok' });
+    expect(t.c.pending()).toBe(0);
+  });
+
+  it('in Frankrijk IGN, elders EOX', async () => {
+    const fr = setup({ photo: true, points: ANNECY });
+    await flush();
+    expect(sourcesOf(fr.map().styles[0])['ascend-aerial'].tiles?.[0]).toContain('data.geopf.fr');
+    const eox = setup({ photo: true });
+    await flush();
+    expect(sourcesOf(eox.map().styles[0])['ascend-aerial'].tiles?.[0]).toContain('tiles.maps.eox.at');
+  });
+
+  it('een tegelfout (CORS, 404): terug naar de kaart, met photoFailed voor de regel; nooit een lege kaart', async () => {
+    const t = setup({ photo: true, points: UTRECHT });
+    await flush();
+    const m = t.map();
+    m.emit('error', { sourceId: 'ascend-aerial' });
+    expect(t.deps.fetchStyle).toHaveBeenCalledTimes(1);
+    await flush();
+    m.emit('sourcedata', { sourceId: 'openmaptiles', tile: {} });
+    expect(t.states.at(-1)).toMatchObject({ kind: 'ready', stage: 'vector', photoFailed: true });
+    expect(t.states.at(-1)).not.toHaveProperty('aerial');
+  });
+
+  it('de luchtfoto antwoordt niet binnen de grens: ook terug naar de kaart', async () => {
+    const t = setup({ photo: true, points: UTRECHT });
+    await flush();
+    t.c.advance(MAP_SOURCE_LIMIT_MS);
+    await flush();
+    t.map().emit('sourcedata', { sourceId: 'openmaptiles', tile: {} });
+    expect(t.states.at(-1)).toMatchObject({ stage: 'vector', photoFailed: true });
+  });
+
+  it('offline met een lege cache: hij probeert de luchtfoto (de cache kan tegels hebben), valt dan naar het effen vlak, met de regel', async () => {
+    const t = setup({ photo: true, points: UTRECHT, online: false });
+    await flush();
+    const m = t.map();
+    expect(sourcesOf(m.styles[0])).toHaveProperty('ascend-aerial');
+    m.emit('error', { sourceId: 'ascend-aerial' });
+    expect(t.states.at(-1)).toEqual({ kind: 'ready', stage: 'plain', attribution: '', photoFailed: true });
+    // Geen OpenFreeMap zonder netwerk, en daarna stil.
+    expect(t.deps.fetchStyle).not.toHaveBeenCalled();
+    expect(t.c.pending()).toBe(0);
+  });
+
+  it('wisselen houdt dezelfde kaart; een tik op Luchtfoto na een fout probeert het opnieuw, zonder de oude regel', async () => {
+    const t = setup({ points: UTRECHT });
+    await flush();
+    const m = t.map();
+    m.emit('sourcedata', { sourceId: 'openmaptiles', tile: {} });
+    t.view.setPhoto(true);
+    expect(FakeMap.made).toHaveLength(1);
+    expect(sourcesOf(m.styles.at(-1))).toHaveProperty('ascend-aerial');
+    m.emit('error', { sourceId: 'ascend-aerial' });
+    await flush();
+    m.emit('sourcedata', { sourceId: 'openmaptiles', tile: {} });
+    expect(t.states.at(-1)).toMatchObject({ photoFailed: true });
+    t.view.setPhoto(true);
+    m.emit('sourcedata', { sourceId: 'ascend-aerial', tile: {} });
+    expect(t.states.at(-1)).toEqual(expect.objectContaining({ stage: 'aerial', aerial: 'pdok' }));
+    expect(t.states.at(-1)).not.toHaveProperty('photoFailed');
+    t.view.setPhoto(false);
+    await flush();
+    m.emit('sourcedata', { sourceId: 'openmaptiles', tile: {} });
+    expect(t.states.at(-1)).toEqual({ kind: 'ready', stage: 'vector', attribution: '© OpenMapTiles © OpenStreetMap contributors' });
+  });
+
+  it('Geen: ook met Luchtfoto nooit een tegel', async () => {
+    const t = setup({ photo: true, base: 'none', points: UTRECHT });
+    await flush();
+    t.view.setPhoto(true);
+    expect(JSON.stringify(t.map().styles)).not.toContain('http');
+  });
+
+  it('een nieuw startpunt in een ander land: de bron die daar past', async () => {
+    const t = setup({ photo: true, points: UTRECHT });
+    await flush();
+    const m = t.map();
+    t.view.update({ routes: [], chosen: undefined, dots: { start: ANNECY[0] } });
+    expect(sourcesOf(m.styles.at(-1))['ascend-aerial'].tiles?.[0]).toContain('data.geopf.fr');
+    // Dezelfde bron: geen nieuwe stijl, alleen nieuwe lussen.
+    const n = m.styles.length;
+    t.view.update({ routes: [], chosen: undefined, dots: { start: ANNECY[1] } });
+    expect(m.styles).toHaveLength(n);
+  });
+
+  it('na sluiten: geen stijl en geen tegel meer', async () => {
+    const t = setup({ points: UTRECHT });
+    await flush();
+    const m = t.map();
+    t.view.destroy();
+    t.view.setPhoto(true);
+    expect(JSON.stringify(m.styles)).not.toContain('pdok');
   });
 });
