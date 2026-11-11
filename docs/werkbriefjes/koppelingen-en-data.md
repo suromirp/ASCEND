@@ -37,8 +37,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - Een nieuwe bron krijgt een regel in `settingsParts` (`src/components/settings/settingsFactsParts.ts`) en een eigen grens in tijd; een trage bron houdt geen andere rij tegen. Een negatief antwoord (geen gebied, geen plek) onthoud je alleen als elke bron antwoordde; een fout of time-out is nooit een nee.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/integrations src/engine/sourcePrecedence src/engine/sourceWatch src/engine/liveUpdate src/storage/macrofactor src/storage/nativeLevel`; route: `npx vitest run src/engine/route src/components/routeMapView src/engine/gpx src/integrations/routing src/integrations/fileSender src/storage/routeProposal src/storage/routeSend src/storage/places src/storage/routeStart` Nooit laten bewegen: `src/storage/planGolden.test.ts`.
-- Tekstkaart (`npm run kaart:vergelijk`) alleen als een scherm verandert; native werk controleer je op een toestel.
+- Tijdens het werk: `npx vitest run src/integrations src/engine/sourcePrecedence src/engine/sourceWatch src/engine/liveUpdate src/storage/macrofactor src/storage/nativeLevel`; route: `npx vitest run src/engine/route src/components/routeMapView src/engine/gpx src/integrations/routing src/integrations/fileSender src/storage/routeProposal src/storage/routeSend src/storage/places src/storage/routeStart` Nooit laten bewegen: `src/storage/planGolden.test.ts`. Tekstkaart (`npm run kaart:vergelijk`) alleen als een scherm verandert; native werk controleer je op een toestel.
 
 ## Lees verder
 - `docs/architectuur/koppelingen-en-data.md`
