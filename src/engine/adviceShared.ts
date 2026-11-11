@@ -153,12 +153,27 @@ export function proposal(issue: string, items: PlanChangeItem[], consequences: s
 // A free day for `session` from `fromDate` to the end of its week: room
 // under the user's time budget/pairing preference, and no second
 // leg-heavy session within 48 hours of it (the one hard scheduling rule).
+// Catching up a key session that is a hard run (a tempo run or intervals for a 10 km,
+// engine/keySession.ts): never the day before or after another hard run, and not on
+// the same day. A missed session in the past carries no load; a logged one does.
+// Opt-in (`hardApart`), so the morning and load rules that also use these dates keep their own checks.
+export function hardRunApart(date: string, session: PlannedSession, template: SessionTemplate, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, ignore: readonly string[] = []): boolean {
+  if (!isHardRun(template)) return true;
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const near = new Set([addDays(date, -1), date, addDays(date, 1)]);
+  const plannedHard = inputs.plannedSessions.some((o) => o.id !== session.id && !ignore.includes(o.id) && o.status !== 'skipped' && near.has(o.scheduledDate)
+    && (o.scheduledDate >= inputs.asOf || loggedIds.has(o.id)) && (() => { const t = templateById.get(o.templateId); return !!t && isHardRun(t); })());
+  const loggedHard = inputs.logs.some((l) => near.has(l.completedDate) && l.plannedSessionId !== session.id && (() => { const t = templateById.get(l.templateId); return !!t && isHardRun(t); })());
+  return !plannedHard && !loggedHard;
+}
+
 export function findCatchUpDate(
   session: PlannedSession,
   template: SessionTemplate,
   inputs: AdviceInputs,
   templateById: Map<string, SessionTemplate>,
   fromDate: string,
+  opts: { hardApart?: boolean } = {},
 ): string | undefined {
   const week = inputs.plannedSessions.filter((s) => s.weekStartDate === session.weekStartDate && s.id !== session.id && s.status !== 'skipped');
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
@@ -169,6 +184,7 @@ export function findCatchUpDate(
     // a session that was itself missed carries no load.
     const withLoad = week.filter((other) => other.scheduledDate >= inputs.asOf || loggedIds.has(other.id));
     if (!respectsHeavySpacing(date, template, withLoad, templateById, inputs.logs, session.id)) continue;
+    if (opts.hardApart && !hardRunApart(date, session, template, inputs, templateById)) continue;
     return date;
   }
   return undefined;
@@ -176,10 +192,10 @@ export function findCatchUpDate(
 
 // Every good day for `session` from `fromDate` on in its week, nearest first
 // (the same checks as findCatchUpDate), optionally filtered further.
-export function catchUpDates(session: PlannedSession, template: SessionTemplate, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, fromDate: string, accept: (date: string) => boolean = () => true): string[] {
+export function catchUpDates(session: PlannedSession, template: SessionTemplate, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, fromDate: string, accept: (date: string) => boolean = () => true, opts: { hardApart?: boolean } = {}): string[] {
   const out: string[] = [];
   for (let from = fromDate, n = 0; n < 7; n++) {
-    const found = findCatchUpDate(session, template, inputs, templateById, from);
+    const found = findCatchUpDate(session, template, inputs, templateById, from, opts);
     if (!found) break;
     if (accept(found)) out.push(found);
     from = addDays(found, 1);
@@ -208,6 +224,7 @@ export function findRestDayToUse(
   template: SessionTemplate,
   inputs: AdviceInputs,
   templateById: Map<string, SessionTemplate>,
+  opts: { hardApart?: boolean } = {},
 ): PlannedSession | undefined {
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const isRest = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
@@ -222,6 +239,7 @@ export function findRestDayToUse(
     if (sameDay.length > 0) continue;
     const around = inputs.plannedSessions.filter((s) => s.id !== session.id && s.id !== rest.id && s.status !== 'skipped' && (s.scheduledDate >= inputs.asOf || loggedIds.has(s.id)));
     if (!respectsHeavySpacing(date, template, around, templateById, inputs.logs, session.id)) continue;
+    if (opts.hardApart && !hardRunApart(date, session, template, inputs, templateById, [rest.id])) continue;
     return rest;
   }
   return undefined;

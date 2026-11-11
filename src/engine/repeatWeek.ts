@@ -49,7 +49,7 @@ import { phaseWaveLength } from '../models/program';
 import { activeIllness, recoveryRamp } from './illness';
 import { buildWeekReview } from './weekReview';
 import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
-import { idHasRole } from './templateRoles';
+import { isKeyTemplateId, weekKeySession, type KeyFocus } from './keySession';
 import { kgLabel } from '../utils/kg';
 
 // Below this share of the planned trainings (rest sessions not counted) a
@@ -66,7 +66,7 @@ const OFFER_DAYS = 2;
 export interface WeekOutcome {
   planned: number; // trainings that counted: no rest sessions, no ill days
   done: number;
-  keyPlanned: number; // long run or mountain hike
+  keyPlanned: number; // sleuteltrainingen (engine/keySession.ts)
   keyDone: number;
 }
 
@@ -155,11 +155,11 @@ function loadAt(template: SessionTemplate, program: Program, date: string): Load
   return { minutes: Math.round(target.minutes), ...(elevationGainM ? { elevationGainM } : {}), ...(backpackKg ? { backpackKg } : {}) };
 }
 
-// The key session of the week (long run or mountain hike) before and after
+// The key session of the week (engine/keySession.ts) before and after
 // the repeat: this week, and the heaviest week of the wave.
-function keyImpact(program: Program, weekStart: string, plannedSessions: PlannedSession[], templates: SessionTemplate[]): KeyImpact | undefined {
+function keyImpact(program: Program, weekStart: string, plannedSessions: PlannedSession[], templates: SessionTemplate[], focus?: KeyFocus): KeyImpact | undefined {
   const monday = mondayOfWeek(weekStart);
-  const key = plannedSessions.find((s) => s.scheduledDate >= monday && s.scheduledDate <= addDays(monday, 6) && s.status !== 'skipped' && idHasRole(s.templateId, 'key', templates));
+  const key = weekKeySession(plannedSessions.filter((s) => s.scheduledDate >= monday && s.scheduledDate <= addDays(monday, 6) && s.status !== 'skipped'), templates, focus);
   const template = key && templates.find((t) => t.id === key.templateId);
   const position = resolveProgramWeek(program, monday);
   if (!key || !template || !position) return undefined;
@@ -203,6 +203,8 @@ export interface RepeatWeekInputs {
   // after a race.
   raceWeeks?: string[];
   respondedIds: Set<string>;
+  // Wat de sleuteltraining is (engine/keySession.ts). Zonder: de lange duurloop of de bergtocht.
+  keyFocus?: KeyFocus;
 }
 
 function repeatWeekId(weekStart: string): string {
@@ -231,17 +233,17 @@ export function proposeRepeatWeek(inputs: RepeatWeekInputs): RepeatWeekProposal 
 
   const review = buildWeekReview({
     weekStart: previousWeek, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, program,
-    planChangeLog: inputs.planChangeLog ?? [], asOf: today, illnessEpisodes,
+    planChangeLog: inputs.planChangeLog ?? [], asOf: today, illnessEpisodes, keyFocus: inputs.keyFocus,
   });
   if (!review) return undefined;
   const verdict = judgeWeek(review);
   if (!verdict.fellShort) return undefined;
 
   const names = new Map(inputs.templates.map((t) => [t.id, t.name]));
-  const missedKey = [...new Set(review.missedTemplateIds.filter((t) => idHasRole(t, 'key', inputs.templates)))].map((t) => names.get(t) ?? 'de lange training');
+  const missedKey = [...new Set(review.missedTemplateIds.filter((t) => isKeyTemplateId(t, inputs.templates, inputs.keyFocus)))].map((t) => names.get(t) ?? 'de sleuteltraining');
   return {
     id, weekStart, previousWeek, done: review.done, planned: review.planned, verdict, missedKey,
-    impact: keyImpact(program, weekStart, inputs.plannedSessions, inputs.templates),
+    impact: keyImpact(program, weekStart, inputs.plannedSessions, inputs.templates, inputs.keyFocus),
   };
 }
 

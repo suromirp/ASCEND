@@ -55,8 +55,8 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   for (const { s, template } of missed) {
     const key = isKeySession(template, inputs.keyFocus);
     const plannable = key && isTemplatePlannable(template, inputs.enabledSports);
-    const catchUp = plannable ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf) : undefined;
-    const restDay = plannable && !catchUp && !usedRest ? findRestDayToUse(s, template, inputs, templateById) : undefined;
+    const catchUp = plannable ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf, { hardApart: true }) : undefined;
+    const restDay = plannable && !catchUp && !usedRest ? findRestDayToUse(s, template, inputs, templateById, { hardApart: true }) : undefined;
     if (restDay) {
       usedRest = true;
       const minutes = catchUpMinutes(s, template, restDay.scheduledDate, inputs, templateById);
@@ -83,7 +83,7 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   let options: AdviceOption[] | undefined;
   const single = items.length === 1 && items[0].action === 'move' && !usedRest ? missed[0] : undefined;
   if (single) {
-    const dates = catchUpDates(single.s, single.template, inputs, templateById, inputs.asOf);
+    const dates = catchUpDates(single.s, single.template, inputs, templateById, inputs.asOf, undefined, { hardApart: true });
     if (dates.length > 1) options = moveOptions(title, items[0], dates, single.template.name, rule, (d) => `${single.template.name} haal je in op ${formatWeekdayDateNL(d)}.`).options;
   }
   return [{
@@ -154,7 +154,7 @@ export function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string,
     .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && isKeySession(m.template, inputs.keyFocus) && isTemplatePlannable(m.template, inputs.enabledSports))
     .sort((a, b) => b.s.scheduledDate.localeCompare(a.s.scheduledDate));
   for (const { s, template } of skipped) {
-    const rest = findRestDayToUse(s, template, inputs, templateById);
+    const rest = findRestDayToUse(s, template, inputs, templateById, { hardApart: true });
     if (!rest || usedIds.has(rest.id)) continue;
     const when = rest.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen';
     const before = rest.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag';
@@ -232,7 +232,7 @@ export function extraSessionAdvice(inputs: AdviceInputs, templateById: Map<strin
   const found = proposeExtraSession({
     ...inputs.extraSession,
     today: inputs.asOf, program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs,
-    templates: inputs.templates, illnessEpisodes: inputs.illnessEpisodes, respondedIds: inputs.respondedIds,
+    templates: inputs.templates, illnessEpisodes: inputs.illnessEpisodes, respondedIds: inputs.respondedIds, keyFocus: inputs.keyFocus,
   });
   if (!found) return [];
   const template = templateById.get(found.choice.templateId)!;

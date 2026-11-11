@@ -42,7 +42,7 @@ export function repeatWeekAdvice(inputs: AdviceInputs): Advice[] {
       ...(inputs.raceGoals ?? []).map((r) => r.raceWeek),
       ...inputs.plannedSessions.filter((s) => s.templateId === RACE_TEMPLATE_ID).map((s) => mondayOfWeek(s.scheduledDate)),
       ...inputs.logs.filter((l) => l.templateId === RACE_TEMPLATE_ID).map((l) => mondayOfWeek(l.completedDate)),
-    ])], respondedIds: inputs.respondedIds,
+    ])], respondedIds: inputs.respondedIds, keyFocus: inputs.keyFocus,
   });
   if (!found) return [];
   const title = 'Deze week nog een keer?';

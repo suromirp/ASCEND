@@ -165,3 +165,37 @@ export function nextKeySession(
   }
   return best && { sessionId: best.sessionId, date: best.date, name: best.name, minutes: best.minutes };
 }
+
+// Voor plekken die alleen een sjabloon-id hebben (de weekterugblik, Herhaal de week). Zonder het sjabloon
+// in de lijst gelden de rollen van het id, zoals in engine/templateRoles.ts#idHasRole.
+export function isKeyTemplateId(
+  templateId: string,
+  templates: Iterable<SessionTemplate> | ReadonlyMap<string, SessionTemplate>,
+  focus: KeyFocus = DEFAULT_KEY_FOCUS,
+): boolean {
+  const t = templates instanceof Map ? templates.get(templateId) : [...(templates as Iterable<SessionTemplate>)].find((x) => x.id === templateId);
+  return isKeyFor(t ?? { id: templateId, name: '', type: 'cardio' }, focus);
+}
+
+// De sleuteltraining onder deze trainingen (bijvoorbeeld die van één week): de beste trede, dan de langste,
+// dan de vroegste, dan een vaste volgorde op id. Dezelfde volgorde als `nextKeySession` binnen een week.
+export function weekKeySession<S extends Pick<PlannedSession, 'id' | 'templateId' | 'scheduledDate' | 'plannedMinutes'>>(
+  sessions: readonly S[],
+  templates: Iterable<SessionTemplate> | ReadonlyMap<string, SessionTemplate>,
+  focus: KeyFocus = DEFAULT_KEY_FOCUS,
+): S | undefined {
+  const byId = templates instanceof Map ? templates as ReadonlyMap<string, SessionTemplate> : new Map([...(templates as Iterable<SessionTemplate>)].map((t) => [t.id, t]));
+  let best: { s: S; rank: number; minutes: number } | undefined;
+  for (const s of sessions) {
+    const t = byId.get(s.templateId);
+    const rank = t ? keyRank(t, focus) : undefined;
+    if (!t || rank === undefined) continue;
+    const minutes = s.plannedMinutes ?? t.durationVariants?.full ?? 0;
+    const better = !best
+      || rank < best.rank
+      || (rank === best.rank && (minutes > best.minutes
+        || (minutes === best.minutes && (s.scheduledDate < best.s.scheduledDate || (s.scheduledDate === best.s.scheduledDate && s.id < best.s.id)))));
+    if (better) best = { s, rank, minutes };
+  }
+  return best?.s;
+}

@@ -5,7 +5,7 @@ Status: aangenomen
 
 ## Besluit
 
-De sleuteltraining heeft één definitie, per soort doel of per richting zonder doel, als pure functie in `src/engine/keySession.ts`. De regel "Volgende sleuteltraining" op Ascend (`nextKeySession`) en het inhalen van een gemiste training (`engine/adviceWeek.ts`, de regels MISSED-CATCH-UP en SKIPPED-KEY-TO-REST, en de korte versie in `adviceShared.ts#catchUpMinutes`) gebruiken dezelfde functie en dezelfde focus. Dit plant niets: het bepaalt alleen welke geplande training het woord krijgt. Wat het inhalen ermee doet blijft een voorstel met Akkoord.
+De sleuteltraining heeft één definitie, per soort doel of per richting zonder doel, als pure functie in `src/engine/keySession.ts`. De regel "Volgende sleuteltraining" op Ascend (`nextKeySession`) en het inhalen van een gemiste training (`engine/adviceWeek.ts`, de regels MISSED-CATCH-UP en SKIPPED-KEY-TO-REST, en de korte versie in `adviceShared.ts#catchUpMinutes`), de weekterugblik, Je stand en Herhaal de week gebruiken dezelfde functie en dezelfde focus. Dit plant niets: het bepaalt alleen welke geplande training het woord krijgt. Wat het inhalen ermee doet blijft een voorstel met Akkoord.
 
 ## Hoe het kiest
 
@@ -43,9 +43,15 @@ Deze weken staan als tests in `src/engine/keySession.test.ts`.
 
 Ascend noemde bij een 10 km met doeltijd "Benen A (zwaar), 75 minuten" als volgende sleuteltraining, terwijl de kaart erboven zei dat snelheid het meeste te winnen had: `nextKeySession` koos gewoon de langste training. Het inhalen gebruikte hetzelfde woord voor iets anders (de lange duurloop of de bergtocht). Twee betekenissen voor één woord is wat de eigenaar eerder "te vaag" noemde (`docs/visie/Kansen 11 november app.md`, voorstel 3, gekozen op 11 november).
 
-## Wat niet meegaat
+## Overal hetzelfde woord
 
-De weekterugblik, Je stand en "Herhaal de week" (`weekReview.ts`, `repeatWeek.ts`, `weekHighlights.ts`) tellen de sleuteltraining nog met de rol `key` op het sjabloon: de lange duurloop of de bergtocht. Dat is hetzelfde als de focus zonder doel, maar niet als die van een 10 km. Zeven aanroepen van `buildWeekReview` zouden de focus mee moeten krijgen; dat is een aparte stap. Het kostenzinnetje bij Minder in Instellingen (`kindAmount.ts#kindCostLine`) gaat over een soort training, niet over één training, en blijft zoals het is.
+Ook de weekterugblik, Week, Je stand, de melding van de week, de coach op Ascend, Herhaal de week en de extra training (`weekReview.ts`, `repeatWeek.ts`, `onCourse.ts`, `extraRun.ts`) lezen dezelfde focus, via `components/useKeyFocus.ts` op de schermen en `AdviceInputs.keyFocus` in de voorstellen. De sleuteltraining van een week (de volgende week op de terugblik, die van Herhaal de week, de belangrijkste die bleef liggen) kiest `weekKeySession`, met dezelfde volgorde als de regel op Ascend. De telling `keyPlanned` en `keyDone` telt elke trede. Daarom heet de coachzin nu "sleuteltraining 3 van 4" in plaats van "lange training 3 van 4", en ook de zinnen van de coach en de extra training zeggen "sleuteltraining". Zonder doelsoort telt hij wat hij altijd telde, op één verschil na: "Wandeldag 1 van 2" telt nu ook als sleuteltraining, zoals het inhalen hem al behandelde.
+
+Het kostenzinnetje bij Minder in Instellingen (`kindAmount.ts#kindCostLine`) gaat over een soort training, niet over één training, en blijft zoals het is.
+
+## Gedragswijziging in de voorstellen
+
+Bij een hardloopwedstrijd tot en met de halve marathon haalt het inhalen nu ook een gemiste tempoloop, intervaltraining of heuvelintervaltraining in. Akkoord van de eigenaar via de coördinator op 11 november. Het blijft een voorstel met Akkoord; de engine verandert de planning niet zelf. De 48-uursregel voor zware beendagen geldt zoals altijd (`respectsHeavySpacing`). Nieuw, omdat tot nu toe alleen de lange duurloop en de bergtocht werden ingehaald: een harde loop gaat nooit op de dag voor of na een andere harde loop, en niet op dezelfde dag (`adviceShared.ts#hardRunApart`, alleen voor het inhalen van de sleuteltraining, zodat de ochtend- en belastingsregels die dezelfde datums gebruiken niet stil veranderen). Zonder die regel stelde het inhalen in een test een tempoloop op woensdag voor, de dag voor de intervallen. Past er geen dag, dan vervalt de training, zoals bij elke gemiste training. Tests: `src/engine/keySessionAdvice.test.ts`.
 
 ## Alternatieven
 
