@@ -1,5 +1,6 @@
 import type { MissedMemory } from '../engine/missedTraining';
 import type { SkillGoalStore } from '../models/skillGoals';
+import type { Place, SavedRoute } from '../models/place';
 // ASCEND — Backup / Import / Restore domain types
 //
 // Implements ASCEND Technical Architecture v0.3.2's backup/import/restore
@@ -118,6 +119,10 @@ export interface AscendBackupPayloadV5 extends Omit<AscendBackupPayloadV4, 'vers
   // Het doel Vaardigheid: de doelen en de gehaalde stappen (models/skillGoals.ts). Optional and additive, so the
   // version stays 5: a file without it imports as before and the device keeps its own.
   skillGoals?: SkillGoalStore;
+  // Plekken en bewaarde routes (models/place.ts). Optional and additive, so the version stays 5: a file
+  // without them imports as before and the device keeps its own. Only written when there is something.
+  places?: Place[];
+  savedRoutes?: SavedRoute[];
 }
 
 type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4 | AscendBackupPayloadV5;
@@ -179,6 +184,10 @@ export interface NormalizedBackupData {
   // Het doel Vaardigheid, read through storage/migrations.ts#migrateSkillGoals; undefined means "not in this
   // backup". Travels with the category objectives_and_milestones.
   skillGoals?: SkillGoalStore;
+  // Plekken en bewaarde routes, read through storage/migrationsPlaces.ts; undefined means "not in this
+  // backup" (the device keeps its own). Travel with the category app_settings and replace the list.
+  places?: Place[];
+  savedRoutes?: SavedRoute[];
 }
 
 // --- Data categories ---------------------------------------------------------
