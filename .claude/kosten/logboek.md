@@ -335,3 +335,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Ontwerp Route en trainingsscherm (Briefing), Cartographer, fable (ontwerper), 189k, 10 min
 - 2026-11-11, Review Route-kaart 2, Warden, sonnet (reviewer), 48k, 5 min, akkoord
 - 2026-11-11, Doorloop Route-kaart 2, Lookout, sonnet (tester), 115k, 15 min, groen
+- 2026-11-11, Route-kaart 2, Sherpa, opus (sessie), 270k context, $6,30, 0 herstelrondes
