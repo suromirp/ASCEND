@@ -85,8 +85,8 @@ export function ChosenLoop({ style, proposal, date, target, sender }: { style: R
           : <PrimaryButton disabled={done === 'busy'} onClick={() => void download()}>GPX downloaden</PrimaryButton>}
       </div>
       {sender && <div><TextButton tone="dim" disabled={done === 'busy'} onClick={() => void download()}>GPX downloaden</TextButton></div>}
-      {/* Plaats voor drie regels: een langere uitkomst duwt niets weg. */}
-      <p role="status" className="min-h-[50px] text-xs leading-snug" style={{ color: line?.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line?.text ?? ''}</p>
+      {/* Voor een tik leeg en zonder hoogte, zodat de rest direct onder de knop staat; na een tik plaats voor drie regels. */}
+      <p role="status" className={`${line ? 'min-h-[50px] ' : ''}text-xs leading-snug`} style={{ color: line?.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line?.text ?? ''}</p>
       {info.map((note) => (
         <p key={note} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
       ))}
