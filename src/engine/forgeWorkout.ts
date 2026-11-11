@@ -786,6 +786,7 @@ export function toStrengthData(workout: WorkoutExercise[]): ExerciseSetLog[] | u
         ...(r.band !== undefined ? { band: r.band } : {}),
         ...(typeof r.clean === 'boolean' ? { clean: r.clean } : {}),
         kind: r.kind,
+        rowId: r.id,
         ...(typeof r.doneAt === 'number' && Number.isFinite(r.doneAt) ? { at: new Date(r.doneAt).toISOString() } : {}),
         ...(r.kind === 'work' && r.rir !== undefined && r.rirAssumed && !ex.hold ? { rirAssumed: true } : {}),
         // Wat Forge vroeg, voor "Afvinken telt als het doel" (engine/assumedSets.ts) en voor "Hoe goed kent

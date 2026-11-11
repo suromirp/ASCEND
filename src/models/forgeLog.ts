@@ -26,6 +26,6 @@ export interface ForgeEvent {
   to?: ForgeSetState;
   // Een korte zin met het feit erbij ("Geen gewicht van dit toestel past bij 8 tot 10 herhalingen.").
   fact?: string;
-  // Bij doorgevoerd: de set waar je wijziging vandaan kwam.
+  // Bij doorgevoerd: de set waar je wijziging vandaan kwam. Bij meegerekend: de set die Forge liet meerekenen.
   via?: string;
 }
