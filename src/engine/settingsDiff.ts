@@ -316,6 +316,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('route-voorstel', 'Route voorstellen', 'vandaag', 'routeProposal'),
   choice('route-soort', 'Welke lus eerst', 'vandaag', 'routeStyle', 'adventure', 'routeSoort'),
   choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'approx', 'routeStart'),
+  choice('route-kaart', 'Ondergrond van de kaart', 'vandaag', 'routeMapBase', 'dark', 'routeKaart'),
   overviewFlag('maanstand', 'Maanstand bij een avondtocht', 'moonLine'),
   overviewFlag('kledingadvies', 'Kledingadvies', 'clothingAdvice'),
   overviewFlag('citaten', 'Citaat', 'completionMoment'),

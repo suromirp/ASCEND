@@ -179,6 +179,9 @@ export interface AppSettings {
   // ('approx', absent = approx) or your own start point ('exact'). The point itself is never a
   // setting: it lives only on this device, outside the backup (storage/routeStart.ts).
   routeStart?: 'approx' | 'exact';
+  // What lies under the loops on the route map (engine/routeMap.ts): a dark street map in the
+  // app's colours ('dark', absent = dark), a light one ('light'), or nothing ('none': no tiles).
+  routeMapBase?: 'dark' | 'light' | 'none';
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';

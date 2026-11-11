@@ -16,6 +16,7 @@ import { Eyebrow } from '../../ui';
 import { SettingsList, SettingsSection } from '../SettingsList';
 import { resolveRouteStyle } from '../../../engine/routeTarget';
 import { resolveRouteStart } from '../../../engine/routeStart';
+import { resolveMapBase } from '../../../engine/routeMap';
 import { RouteStartFooter } from './RouteStartFooter';
 import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -173,6 +174,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="route-voorstel" title="Route voorstellen" facts={facts} info="routeVoorstel" onChange={(on) => void updateSettings({ routeProposal: on })} />
           <SummaryRow id="route-soort" title="Welke lus eerst" facts={facts} onClick={() => setInner('route-soort')} />
           <SummaryRow id="route-start" title="Startpunt van je lus" facts={facts} onClick={() => setInner('route-start')} />
+          <SummaryRow id="route-kaart" title="Ondergrond van de kaart" facts={facts} info="routeKaart" onClick={() => setInner('route-kaart')} />
           <SummaryRow id="maanstand" title="Maanstand bij een avondtocht" facts={facts} onChange={(on) => set({ moonLine: on })} />
           <SummaryRow id="weerruil" title="Ruilen bij slecht weer" facts={facts} onChange={(on) => set({ weatherSwap: on })} />
           <SummaryRow id="kledingadvies" title="Kledingadvies" facts={facts} onChange={(on) => set({ clothingAdvice: on })} />
@@ -180,6 +182,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {inner === 'route-soort' && <ChoiceFromDef def={CHOICES.routeSoort} value={resolveRouteStyle(settings.routeStyle)} onPick={(v) => void updateSettings({ routeStyle: v })} onClose={closeInner} />}
+      {inner === 'route-kaart' && <ChoiceFromDef def={CHOICES.routeKaart} value={resolveMapBase(settings.routeMapBase)} onPick={(v) => void updateSettings({ routeMapBase: v })} onClose={closeInner} />}
       {inner === 'route-start' && <ChoiceFromDef def={CHOICES.routeStart} value={resolveRouteStart(settings.routeStart)} onPick={(v) => void updateSettings({ routeStart: v })} onClose={closeInner} keepOpen footer={<RouteStartFooter mode={resolveRouteStart(settings.routeStart)} />} />}
       {sheet === 'bundel-inzicht' && (
         <BundleSheet eyebrow="Vandaag en meldingen" title="Inzicht na een training" line="Hoogstens twee regels over wat beter ging en waar je op moet letten." onClose={close}>
