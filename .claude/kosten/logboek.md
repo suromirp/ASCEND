@@ -347,3 +347,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Pathfinder herdoorloop Briefing A, pathfinder, sonnet, 58k, 7 min, 3 moet opgelost
 - 2026-11-11, Warden review Afdaalklok herstel, reviewer, sonnet, 37k, 4 min, akkoord (mag-punten)
 - 2026-11-11, Pathfinder herdoorloop Afdaalklok, pathfinder, sonnet, 104k (totaal), 2 min, moet opgelost, 2 mag
+- 2026-11-11, Afdaalklok (3 rondes), Sherpa, fable (sessie), 515k context, $23,74, 2 herstelrondes plus crash en coachzin door coördinator
