@@ -48,6 +48,10 @@ export type ForgeSort = 'most' | 'recent' | 'name';
 // doel als gedimde hint ('hint'), of het doel zelf als waarde ('target'). In beide
 // gevallen krijgt een set die je niet aanraakte het merkje `rirAssumed`.
 type RirPrefill = 'hint' | 'target';
+// "Hoeveel over na een set" (engine/forgeReckon.ts#asksReserve): alleen als het anders ging dan gevraagd ('twijfel',
+// het advies, docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md), ook na de eerste en de laatste werkset ('vaker',
+// de oude regel), of nooit ('uit').
+export type QuickRirMode = 'twijfel' | 'vaker' | 'uit';
 
 export interface DumbbellRack {
   // The lightest dumbbell, the step up to `upToKg`, the step above that and the heaviest.
@@ -220,11 +224,14 @@ export interface StrengthSettings {
   // same take the new value ('equal', the advice), the weights shift by the same
   // difference ('shift', the old behaviour), or nothing ('off').
   carryMode?: CarryMode;
-  // A small line "per kant 15 + 2,5" under a working set of a barbell exercise.
+  // A small line "per kant 15 + 2,5" under a working set of a barbell exercise. Absent = off (decision
+  // 2026-11-11-forge-kern-zichtbaar.md); the line that a weight does not fit exactly stays regardless.
   showPlates?: boolean;
   // After ticking a top set or the last set of an exercise, the quick question "Hoeveel over?" (0, 1, 2, 3+)
   // in the row (decision 2026-11-03-forge-na-de-eerste-vergelijking.md). Absent = on.
   quickRir?: boolean;
+  // When the question comes (QuickRirMode); absent: 'twijfel', or 'uit' when quickRir is false (old back-ups).
+  quickRirMode?: QuickRirMode;
   // Calisthenics in Forge (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md), all absent = on.
   // "Stappen bij calisthenics": the step, the test and Stap lichter / Stap zwaarder on a ladder exercise.
   ladderRow?: boolean;
@@ -335,6 +342,7 @@ export interface ResolvedStrengthSettings {
   carryMode: CarryMode;
   showPlates: boolean;
   quickRir: boolean;
+  quickRirMode: QuickRirMode;
   ladderRow: boolean;
   askClean: boolean;
   askBand: boolean;
@@ -498,6 +506,7 @@ const FORGE_SORTS: ForgeSort[] = ['most', 'recent', 'name'];
 type CarryMode = 'equal' | 'shift' | 'off';
 const CARRY_MODES: CarryMode[] = ['equal', 'shift', 'off'];
 const RIR_PREFILLS: RirPrefill[] = ['hint', 'target'];
+const QUICK_RIR_MODES: QuickRirMode[] = ['twijfel', 'vaker', 'uit'];
 const DUMBBELL_LOGS: DumbbellLog[] = ['auto', 'each', 'total'];
 const FATIGUE_MODES: FatigueMode[] = ['learned', 'fixed'];
 const STACK_WEIGHTS: StackWeights[] = ['learned', 'used_only', 'profile'];
@@ -564,6 +573,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (carryMode) out.carryMode = carryMode;
   if (typeof raw.showPlates === 'boolean') out.showPlates = raw.showPlates;
   if (typeof raw.quickRir === 'boolean') out.quickRir = raw.quickRir;
+  const quickRirMode = QUICK_RIR_MODES.find((v) => v === raw.quickRirMode);
+  if (quickRirMode) out.quickRirMode = quickRirMode;
   if (typeof raw.ladderRow === 'boolean') out.ladderRow = raw.ladderRow;
   if (typeof raw.askClean === 'boolean') out.askClean = raw.askClean;
   if (typeof raw.askBand === 'boolean') out.askBand = raw.askBand;
@@ -636,8 +647,9 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     restSound: s.restSound ?? 'chime',
     keepScreenOn: s.keepScreenOn ?? true,
     carryMode: s.carryMode ?? (s.carryWeights === false ? 'off' : 'equal'),
-    showPlates: s.showPlates ?? true,
-    quickRir: s.quickRir ?? true,
+    showPlates: s.showPlates ?? false,
+    quickRir: (s.quickRirMode ?? (s.quickRir === false ? 'uit' : 'twijfel')) !== 'uit',
+    quickRirMode: s.quickRirMode ?? (s.quickRir === false ? 'uit' : 'twijfel'),
     ladderRow: s.ladderRow ?? true,
     askClean: s.askClean ?? true,
     askBand: s.askBand ?? true,

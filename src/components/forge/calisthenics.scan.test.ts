@@ -25,10 +25,10 @@ describe('calisthenics in het workoutscherm', () => {
     expect(block).not.toMatch(/\buppercase\b/);
   });
 
-  it('een houding heeft de kolom sec en de seconden in het cijferblok; extra gewicht heet extra kg', () => {
+  it('een houding heeft de kolom sec en de seconden in het cijferblok; extra gewicht heet + kg (Extra is de rol van een oefening, besluit 2026-11-11-forge-kern-zichtbaar)', () => {
     expect(block).toContain("ex.timed || ex.hold ? 'sec' : 'Herh.'");
     expect(block).toContain("act.open(ex.slot, row.id, 'seconds')");
-    expect(block).toContain("'extra kg'");
+    expect(block).toContain("'+ kg'");
   });
 
   it('Ging het netjes?: Ja en Nee van 44 px hoog, met een eigen verschijning die in Rustig stil staat', () => {
@@ -39,12 +39,12 @@ describe('calisthenics in het workoutscherm', () => {
     expect(ask).not.toMatch(/animate-/);
   });
 
-  it('na de review: lege koppen kg en RIR bij een houding, Netjes-rijen uitgelijnd, Extra gewicht in het cijferblok, uitleg bij de instellingen', () => {
-    expect(block).toContain("added ? 'extra kg' : ex.hold ? '' : 'kg'");
+  it('na de review: lege koppen kg en RIR bij een houding, Netjes-rijen uitgelijnd, Gewicht erbij in het cijferblok, uitleg bij de instellingen', () => {
+    expect(block).toContain("added ? '+ kg' : ex.hold ? '' : 'kg'");
     expect(block).toContain("{ex.hold ? '' : 'RIR'}");
     const netjes = menus.slice(menus.indexOf("'Netjes: ja'"), menus.indexOf('Set verwijderen'));
     expect(netjes).toContain('lead={<span className="h-5 w-5 shrink-0" aria-hidden="true" />}');
-    expect(read('./ForgeDock.tsx')).toContain("'Extra gewicht'");
+    expect(read('./ForgeDock.tsx')).toContain("'Gewicht erbij'");
     const group = GROUPS['../settings/groups/ForgeGroup.tsx'] ?? '';
     for (const key of ['forgeStappen', 'forgeNetjes', 'forgeBand']) expect(group).toContain(`info="${key}"`);
   });

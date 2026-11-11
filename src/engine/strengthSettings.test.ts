@@ -112,12 +112,19 @@ describe('het workoutscherm', () => {
     expect(clean.restSeconds).toEqual({ 'back-squat': 240 });
     expect(clean.exerciseNotes).toEqual({ 'leg-press': 'stoel op 4' });
   });
-  it('schijven tonen staat standaard aan en valt terug bij rommel', () => {
-    expect(resolveStrengthSettings(undefined)).toMatchObject({ showPlates: true });
+  // Besluit 2026-11-11-forge-kern-zichtbaar: schijven per set standaard uit.
+  it('schijven tonen staat standaard uit en valt terug bij rommel', () => {
+    expect(resolveStrengthSettings(undefined)).toMatchObject({ showPlates: false });
+    expect(resolveStrengthSettings({ showPlates: true })).toMatchObject({ showPlates: true });
     expect(resolveStrengthSettings({ showPlates: false })).toMatchObject({ showPlates: false });
     const clean = normalizeStrengthSettings({ carryWeights: 'nee', showPlates: 0 })!;
     expect(clean.carryWeights).toBeUndefined();
     expect(clean.showPlates).toBeUndefined();
+    // Hoeveel over na een set: zonder veld het advies, een oude uit blijft uit, rommel valt weg.
+    expect(resolveStrengthSettings(undefined)).toMatchObject({ quickRir: true, quickRirMode: 'twijfel' });
+    expect(resolveStrengthSettings({ quickRir: false })).toMatchObject({ quickRir: false, quickRirMode: 'uit' });
+    expect(resolveStrengthSettings({ quickRirMode: 'vaker' })).toMatchObject({ quickRir: true, quickRirMode: 'vaker' });
+    expect(normalizeStrengthSettings({ quickRirMode: 'soms' } as never)?.quickRirMode).toBeUndefined();
     expect(resolveStrengthSettings(undefined).showOneRm).toBe(true);
     expect(resolveStrengthSettings({ showOneRm: false }).showOneRm).toBe(false);
     expect(normalizeStrengthSettings({ showOneRm: 'nee' })!.showOneRm).toBeUndefined();
