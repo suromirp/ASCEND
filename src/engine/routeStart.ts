@@ -1,14 +1,18 @@
-// ASCEND: waar een voorgestelde lus begint. Twee keuzes: Ongeveer (je plaats, afgerond op twee
-// decimalen, ongeveer een kilometer; de standaard) en Precies (een eigen startpunt dat alleen op dit
-// toestel staat). Bij Precies gaat het startpunt precies naar de routeplanner, en ook de zoektocht
-// naar heuvels en paden bij OpenStreetMap ligt om dat punt (besluit 2026-11-11-route-verfijnen.md).
-// Puur: de opslag en de locatievraag staan in storage/routeStart.ts. Docs: docs/beslissingen/2026-11-09-startpunt-lus.md.
+// ASCEND: waar een voorgestelde lus begint. Drie keuzes: Waar je nu bent (bij elke zoektocht één keer
+// de plek van het toestel; de standaard), Vast punt (een eigen startpunt dat alleen op dit toestel
+// staat, zoals je deur; in de opslag heet het nog 'exact') en Ongeveer (je plaats, afgerond op twee
+// decimalen, ongeveer een kilometer). Bij een precies punt ligt ook de zoektocht naar heuvels en paden
+// bij OpenStreetMap om dat punt (besluit 2026-11-11-route-verfijnen.md).
+// Puur: de opslag en de locatievraag staan in storage/routeStart.ts. Docs: docs/beslissingen/2026-11-09-startpunt-lus.md,
+// docs/beslissingen/2026-11-11-route-kaart-2.md.
 
 import type { RoutePoint } from '../models/route';
 
-export type RouteStartMode = 'approx' | 'exact';
+export type RouteStartMode = 'here' | 'exact' | 'approx';
 
-export const resolveRouteStart = (raw: unknown): RouteStartMode => (raw === 'exact' ? 'exact' : 'approx');
+// Wie nooit zelf koos, of een onbekende waarde heeft, krijgt Waar je nu bent.
+export const ROUTE_START_DEFAULT: RouteStartMode = 'here';
+export const resolveRouteStart = (raw: unknown): RouteStartMode => (raw === 'exact' || raw === 'approx' || raw === 'here' ? raw : ROUTE_START_DEFAULT);
 
 // Een punt dat bruikbaar is: twee eindige getallen binnen de grenzen van de aarde. Alles anders (een
 // kapotte of oude waarde op het toestel) telt als geen punt.
@@ -30,11 +34,14 @@ export const roundExact = (p: RoutePoint): RoutePoint => ({ lat: Math.round(p.la
 
 export type StartChoice =
   | { kind: 'approx' }
+  // Waar je nu bent: het paneel vraagt bij elke zoektocht eerst de plek.
+  | { kind: 'here' }
   | { kind: 'exact'; point: RoutePoint }
   // Precies gekozen, maar er is nog geen punt op dit toestel.
   | { kind: 'needs-point' };
 
 export function chooseStart(mode: RouteStartMode, saved: unknown): StartChoice {
+  if (mode === 'here') return { kind: 'here' };
   if (mode !== 'exact') return { kind: 'approx' };
   const point = validStartPoint(saved);
   return point ? { kind: 'exact', point } : { kind: 'needs-point' };
@@ -58,5 +65,29 @@ export function startFailureReason(reason: StartFailure): string {
 export const startFailureLine = (reason: StartFailure): string => `${startFailureReason(reason)} De lus begint bij je plek, afgerond op ongeveer een kilometer.`;
 
 // De regel bovenaan het paneel Route voorstellen.
-export const START_LINE_EXACT = 'De lus begint bij je startpunt.';
+export const START_LINE_HERE = 'De lus begint waar je nu bent.';
+export const START_LINE_EXACT = 'De lus begint bij je vaste punt.';
 export const START_LINE_APPROX = 'De lus begint bij je plek, afgerond op ongeveer een kilometer.';
+
+// Waar je nu bent, na de ene vraag om de plek: die plek, of terug op je vaste punt als dat er is, en
+// anders op Ongeveer. Een terugval draagt de reden, voor één regel.
+export type HereStart =
+  | { kind: 'here'; point: RoutePoint }
+  | { kind: 'fixed'; point: RoutePoint; reason: StartFailure }
+  | { kind: 'approx'; reason: StartFailure };
+
+export function hereStart(found: { ok: true; point: RoutePoint } | { ok: false; reason: StartFailure }, saved: unknown): HereStart {
+  if (found.ok) return { kind: 'here', point: found.point };
+  const fixed = validStartPoint(saved);
+  return fixed ? { kind: 'fixed', point: fixed, reason: found.reason } : { kind: 'approx', reason: found.reason };
+}
+
+export function hereStartLine(start: HereStart): string {
+  if (start.kind === 'here') return START_LINE_HERE;
+  if (start.kind === 'fixed') return `${startFailureReason(start.reason)} ${START_LINE_EXACT}`;
+  return startFailureLine(start.reason);
+}
+
+// Heuvels en paden rond je plek van nu: op drie decimalen (ongeveer 100 m), zodat dezelfde plek de
+// bewaarde heuvels terugvindt en niet elke zoektocht een nieuwe vraag aan OpenStreetMap is.
+export const roundHere = (p: RoutePoint): RoutePoint => ({ lat: Math.round(p.lat * 1e3) / 1e3, lon: Math.round(p.lon * 1e3) / 1e3 });

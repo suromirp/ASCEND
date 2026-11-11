@@ -30,7 +30,7 @@ export function RouteStartFooter({ mode }: { mode: RouteStartMode }) {
     setBusy(false);
     if (found.ok) {
       setSaved(true);
-      setNote(mode === 'exact' ? 'Je startpunt staat op dit toestel.' : 'Je startpunt staat op dit toestel. Kies Precies om het te gebruiken.');
+      setNote(mode === 'exact' ? 'Je startpunt staat op dit toestel.' : 'Je startpunt staat op dit toestel. Kies Vast punt om het te gebruiken.');
     } else {
       setNote(startFailureReason(found.reason));
     }

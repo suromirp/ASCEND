@@ -7,7 +7,7 @@ import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './ba
 import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { cleanSettings } from './backupClean';
 import { clearRouteStartPoint, getRouteStartPoint, saveRouteStartPoint, locateStartHere, startFromMap } from './routeStart';
-import { startFailureReason } from '../engine/routeStart';
+import { resolveRouteStart, startFailureReason } from '../engine/routeStart';
 import { LocateError } from '../utils/geolocation';
 import { getNearbyTerrain, refreshNearbyTerrain } from './nearbyTerrain';
 
@@ -91,8 +91,15 @@ describe('het eigen startpunt op het toestel', () => {
     const cleaned = cleanSettings({ routeStart: 'ergens', routeStartPoint: { lat: 1, lon: 2 } }, skipped) as Record<string, unknown>;
     expect(cleaned.routeStart).toBeUndefined();
     expect(cleaned.routeStartPoint).toBeUndefined();
-    expect((cleanSettings({ routeStart: 'exact' }, { n: 0 }) as Record<string, unknown>).routeStart).toBe('approx');
-    expect((cleanSettings({ routeStart: 'approx' }, { n: 0 }) as Record<string, unknown>).routeStart).toBe('approx');
+  });
+
+  it('een oude back-up houdt zijn eigen keuze; zonder veld geldt Waar je nu bent', () => {
+    const clean = (v: Record<string, unknown>) => cleanSettings(v, { n: 0 }) as Record<string, unknown>;
+    expect(clean({ routeStart: 'exact' }).routeStart).toBe('exact');
+    expect(clean({ routeStart: 'approx' }).routeStart).toBe('approx');
+    expect(clean({ routeStart: 'here' }).routeStart).toBe('here');
+    expect(resolveRouteStart(clean({}).routeStart)).toBe('here');
+    expect(resolveRouteStart(clean({ routeStart: 'ergens' }).routeStart)).toBe('here');
   });
 });
 
@@ -208,3 +215,24 @@ describe('Ondergrond van de kaart in een back-up', () => {
     expect((cleanSettings({ routeMapBase: 'light' }, { n: 0 }) as Record<string, unknown>).routeMapBase).toBe('light');
   });
 });
+
+describe('Waar je nu bent: de plek van nu wordt niet bewaard', () => {
+  it('een goede plek komt terug zonder het vaste punt te raken', async () => {
+    await saveRouteStartPoint(fake);
+    const out = await locateStartHere({ persist: false, askPermission: noAsk, locate: async () => ({ lat: 52.2, lon: 5.2, accuracyM: 10 }) });
+    expect(out).toEqual({ ok: true, point: { lat: 52.2, lon: 5.2 } });
+    expect(await getRouteStartPoint()).toEqual({ lat: 52.12346, lon: 5.65432 });
+  });
+
+  it('een plek ruwer dan 50 m telt niet, ook niet bij Waar je nu bent', async () => {
+    const out = await locateStartHere({ persist: false, askPermission: noAsk, locate: async () => ({ lat: 52.2, lon: 5.2, accuracyM: 51 }) });
+    expect(out).toEqual({ ok: false, reason: 'coarse' });
+    expect(await getRouteStartPoint()).toBeUndefined();
+  });
+
+  it('locatie geweigerd: een reden', async () => {
+    const out = await locateStartHere({ persist: false, askPermission: noAsk, locate: async () => { throw new LocateError('denied'); } });
+    expect(out).toEqual({ ok: false, reason: 'denied' });
+  });
+});
+

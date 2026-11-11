@@ -319,7 +319,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('heuvels-buurt', 'Heuvels en trappen in de buurt', 'hillsNearby'),
   flag('route-voorstel', 'Route voorstellen', 'vandaag', 'routeProposal'),
   choice('route-soort', 'Welke lus eerst', 'vandaag', 'routeStyle', 'adventure', 'routeSoort'),
-  choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'approx', 'routeStart'),
+  choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'here', 'routeStart'),
   choice('route-kaart', 'Ondergrond van de kaart', 'vandaag', 'routeMapBase', 'dark', 'routeKaart'),
   overviewFlag('maanstand', 'Maanstand bij een avondtocht', 'moonLine'),
   overviewFlag('kledingadvies', 'Kledingadvies', 'clothingAdvice'),

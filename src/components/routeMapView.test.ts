@@ -287,7 +287,7 @@ describe('tikken en camera', () => {
     expect((m.data['ascend-routes'] as { features: unknown[] }).features).toEqual([]);
     expect((m.data['ascend-dots'] as { features: unknown[] }).features).toHaveLength(2);
     t.view.fitAll();
-    expect(m.fits.at(-1)).toEqual([[[A.lon, A.lat], [B.lon, B.lat]], { padding: 36, maxZoom: 16, duration: 0 }]);
+    expect(m.fits.at(-1)).toEqual([[[A.lon, A.lat], [B.lon, B.lat]], { padding: { top: 36, bottom: 36, left: 36, right: 60 }, maxZoom: 16, duration: 0 }]);
     t.view.goTo(B);
     expect(m.eases.at(-1)).toMatchObject({ center: [B.lon, B.lat], duration: 0 });
   });
