@@ -132,3 +132,17 @@ describe('a MacroFactor workout that is already there', () => {
     expect(macroFactorLine({ ...log, externalId: undefined, source: 'manual' } as SessionLog)).toBeUndefined();
   });
 });
+
+describe('de rij Briefing voor een training buiten te voet (spoor 5)', () => {
+  const base = { today: '2026-11-11', skipped: false, canComeBack: false, kind: 'log' as const };
+  it('op de dag zelf: Briefing op de plek van Hoe je het doet, Gedaan blijft de hoofdknop', () => {
+    expect(sessionSheetActions({ ...base, date: '2026-11-11', briefing: true })).toEqual({ main: 'done', rows: ['briefing', 'move', 'skip'] });
+  });
+  it('vooraf: Briefing op de plek van Hoe je het doet, Verplaatsen blijft de hoofdknop', () => {
+    expect(sessionSheetActions({ ...base, date: '2026-11-13', briefing: true })).toEqual({ main: 'move', rows: ['briefing', 'doToday', 'skip'] });
+  });
+  it('al het andere houdt het oude scherm', () => {
+    expect(sessionSheetActions({ ...base, date: '2026-11-11' }).rows).toContain('start');
+    expect(sessionSheetActions({ ...base, date: '2026-11-13' }).rows).toContain('preview');
+  });
+});

@@ -22,6 +22,8 @@ import { availableVariants, resolveEffectiveFullDuration, resolveVariantDuration
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { ExerciseLogger } from './ExerciseLogger';
+import { TrainingBriefing } from './TrainingBriefing';
+import { briefingEntry } from '../engine/briefing';
 import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
 import { WATCH_SHEET_TEXT } from '../engine/watchSheet';
@@ -157,6 +159,8 @@ export function SessionActionSheet({
   const [showGuide, setShowGuide] = useState(false);
   // "Hoe je het doet" for a day still to come: the training screen of that day, to read only.
   const [showPreview, setShowPreview] = useState(false);
+  // De Briefing (spoor 5): voor een training buiten te voet op de plek van "Hoe je het doet".
+  const [showBriefing, setShowBriefing] = useState(false);
   const [step, setStep] = useState<'main' | 'done' | 'move' | 'swap'>(startStep ?? 'main');
   const [whyOpen, setWhyOpen] = useState(false);
   // The "Gedaan" step for a training of a later day, done today.
@@ -201,7 +205,7 @@ export function SessionActionSheet({
     return () => { live = false; };
   }, [quickComplete, completedLog]);
   const waiting = quickComplete && !completedLog ? pendingMacroFactorWorkout(session.scheduledDate, template.id, macroFactor, sessionLogs) : undefined;
-  const actions = sessionSheetActions({ date: session.scheduledDate, today, skipped, canComeBack, kind, workoutWaiting: !!waiting, canSwap: !!onSwap && swapOptions.length > 0 });
+  const actions = sessionSheetActions({ date: session.scheduledDate, today, skipped, canComeBack, kind, workoutWaiting: !!waiting, canSwap: !!onSwap && swapOptions.length > 0, briefing: briefingEntry(template) });
   const duration = strengthDoneDuration({ scheduledDate: doneToday ? today : session.scheduledDate }, template, fullDuration, macroFactor, sessionLogs);
 
   const info = guide ? <InfoButton onClick={() => setShowGuide(true)} label="Meer over deze training" /> : undefined;
@@ -326,6 +330,7 @@ export function SessionActionSheet({
       case 'move': return setStep('move');
       case 'swap': return setStep('swap');
       case 'preview': return setShowPreview(true);
+      case 'briefing': return setShowBriefing(true);
       case 'skip': return onSkip();
       case 'backOnPlan': return onBackOnPlan?.();
       case 'doToday':
@@ -344,6 +349,7 @@ export function SessionActionSheet({
     // hier opent het alleen de uitleg en opbouw, naast Gedaan.
     start: template.type === 'strength' ? 'Training starten' : 'Hoe je het doet',
     preview: 'Hoe je het doet',
+    briefing: 'Briefing',
     move: 'Verplaatsen',
     swap: 'Ruilen',
     skip: 'Overslaan',
@@ -354,7 +360,7 @@ export function SessionActionSheet({
   const due = session.scheduledDate <= today;
   const showWatchRow = watchView.hasWatchSheet && !skipped && session.scheduledDate >= today;
   // De rij Je horloge staat direct na Hoe je het doet, of bovenaan als die er niet is.
-  const afterRow = actions.rows.findIndex((a) => a === 'start' || a === 'preview');
+  const afterRow = actions.rows.findIndex((a) => a === 'start' || a === 'preview' || a === 'briefing');
   const watchRow = showWatchRow ? <SheetRow key="horloge" title={WATCH_SHEET_TEXT.row} sub={watchView.rowSub} sheetFrom onClick={() => setShowWatch(true)} /> : null;
   const facts = [skipped ? 'Overgeslagen' : null, sessionKindLabel(template), `${minutes} min`, note].filter(Boolean).join(' · ');
   // Short and minimum versions (when switched on): one strip that the gold
@@ -372,6 +378,18 @@ export function SessionActionSheet({
           garmin={garmin}
           dayLabel={guideDayLabel(template, session.scheduledDate)}
           onClose={() => setShowWatch(false)}
+          onLeave={requestClose}
+        />
+      )}
+      {showBriefing && (
+        <TrainingBriefing
+          template={template}
+          session={session}
+          date={session.scheduledDate}
+          program={program}
+          onClose={() => setShowBriefing(false)}
+          // Zelf invullen: het bestaande scherm met het formulier, zoals Gedaan.
+          onManual={() => (onLog ?? onStart)('full')}
           onLeave={requestClose}
         />
       )}
@@ -436,7 +454,7 @@ export function SessionActionSheet({
           <SheetRows label="Andere keuzes">
             {afterRow < 0 && watchRow}
             {actions.rows.flatMap((a, i) => {
-              const row = <SheetRow key={a} title={label[a]} onClick={run(a)} />;
+              const row = <SheetRow key={a} title={label[a]} sub={a === 'briefing' ? 'Route, horloge, weer en eten' : undefined} onClick={run(a)} />;
               return i === afterRow && watchRow ? [row, watchRow] : [row];
             })}
           </SheetRows>

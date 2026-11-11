@@ -28,7 +28,7 @@ import { watchSheet, type WatchSheetInput } from './watchSheet';
 import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
 import { routeTarget, targetText } from './routeTarget';
-import { placeChoices, placeHasRoute, resolvePlace, type PlaceChoice } from './trainingPlace';
+import { placeChoices, placeHasRoute, resolvePlace, routeShownFor, type PlaceChoice } from './trainingPlace';
 import { weatherForTraining } from './weather';
 import { clothingForTraining } from './clothing';
 import { drinkAmount } from './eveningBefore';
@@ -41,6 +41,7 @@ import { durationLabel } from './sessionBrief';
 import { progressionTarget } from './programLayout';
 import { templateSport } from './sports';
 import { RACE_TEMPLATE_ID } from './raceBlock';
+import { resolveRouteSearch } from './routeSearchSetting';
 import { getModality, modalitySport } from '../data/modalities';
 import { INTENSITY, type Intensity } from '../data/workoutStructure';
 import { addDays, toISODate } from '../utils/dates';
@@ -109,6 +110,14 @@ export interface BriefingTile {
 
 export type BriefingFooter = { kind: 'route' | 'manual' | 'close'; label: string };
 
+// Instelling Lus zoeken (spoor 5): engine/routeSearchSetting.ts.
+export { resolveRouteSearch, type RouteSearchSetting } from './routeSearchSetting';
+
+// De kaart verschijnt of verdwijnt als je van plek wisselt. In Vol een overgang van 200 ms, in Rustig en
+// Uit (en bij prefers-reduced-motion, dat de app als Uit leest) direct op de eindstand.
+export const placeTransition = (motion: 'full' | 'calm' | 'off'): string | undefined =>
+  motion === 'full' ? 'ascend-fade-in 200ms ease-out both' : undefined;
+
 export interface BriefingView {
   stand: BriefingStand;
   // De keuzes Waar train je?; leeg of één keuze: geen rij, en dan geldt die ene of Buiten.
@@ -132,6 +141,8 @@ export interface BriefingInput {
   storedPlace?: unknown;
   // Instelling Route voorstellen, en het rustige tempo uit je test voor de afstand.
   routeOn: boolean;
+  // Instelling Lus zoeken (ongelezen); afwezig is het advies, zoeken bij het openen.
+  routeSearch?: unknown;
   easyPace?: PaceRange;
   // De koppeling: afwezig zolang hij gelezen wordt. Dan de veilige kant: zelf invullen.
   watchLink?: { linked: boolean; autoTick: boolean; activities: boolean };
@@ -155,6 +166,26 @@ export function hasBriefing(template: SessionTemplate | undefined): boolean {
   if (!template || template.type === 'strength' || template.type === 'recovery') return false;
   const sport = templateSport(template);
   return sport === 'running' || sport === 'hiking';
+}
+
+// De ingang (spoor 5 en 6): Week en Vandaag openen de Briefing voor een training waar een route bij
+// hoort op zijn standaardplek (engine/trainingPlace.ts#routeShownFor zonder bewaarde keuze). Een keuze
+// Loopband voor die ene training haalt de ingang niet weg: die keuze maak je in de Briefing zelf, en
+// daar verdwijnt dan de kaart. Wandelen en rugzak krijgen de ingang met de routes voor wandelen
+// (spoor 11); tot dan houden ze het oude scherm.
+export function briefingEntry(template: SessionTemplate | undefined): boolean {
+  return hasBriefing(template) && routeShownFor(template, undefined);
+}
+
+// De mint knop op Vandaag (spoor 6): Briefing als je horloge deze training afvinkt, anders Gedaan.
+// Eén regel met de stand van de Briefing; zolang de koppeling gelezen wordt (geen `watchLink`) of bij
+// twijfel: Gedaan, de veilige kant. Een training die al gedaan is: ook Gedaan (de kaart is dan weg).
+export type MissionButton = 'briefing' | 'done';
+
+export function missionButton(input: Pick<BriefingInput, 'template' | 'session' | 'logs' | 'watchLink' | 'watchSource'>): MissionButton {
+  if (!briefingEntry(input.template)) return 'done';
+  if (input.session && deriveSessionStatus(input.session, input.logs).status === 'completed') return 'done';
+  return standOf(input).kind === 'watch' ? 'briefing' : 'done';
 }
 
 export function briefing(input: BriefingInput): BriefingView | undefined {
@@ -181,8 +212,10 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
   const fuel = fuelTile(input, minutes, outdoor);
   if (fuel) tiles.push(fuel);
 
+  // Zelf invullen kan pas op de dag zelf (of later); vooraf is de knop Sluiten.
+  const due = input.date <= today;
   const footer: BriefingFooter =
-    stand.kind === 'manual'
+    stand.kind === 'manual' && due
       ? { kind: 'manual', label: BRIEFING_TEXT.manual }
       : stand.kind === 'watch' && map.kind === 'route'
         ? { kind: 'route', label: BRIEFING_TEXT.sendRoute }
@@ -193,7 +226,7 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
 
 // ---- de stand --------------------------------------------------------------------------------
 
-function standOf(input: BriefingInput): BriefingStand {
+function standOf(input: Pick<BriefingInput, 'template' | 'session' | 'watchLink' | 'watchSource'>): BriefingStand {
   const { template } = input;
   if (!mayAutoTick(template.id) || (input.session && !mayAutoTick(input.session.templateId))) {
     return { kind: 'manual', reason: 'testOrRace', line: template.id === RACE_TEMPLATE_ID ? BRIEFING_TEXT.race : BRIEFING_TEXT.testRun };
@@ -223,7 +256,8 @@ function mapOf(
   if (placeHasRoute(input.template, place)) {
     const target = routeTarget({ template: input.template, date: input.date, program: input.program, logs: input.logs, testPace: input.easyPace });
     const soon = input.date === today || input.date === addDays(today, 1);
-    return { kind: 'route', target, line: targetText(target), search: soon ? 'open' : 'tap' };
+    const onOpen = soon && resolveRouteSearch(input.routeSearch) === 'open';
+    return { kind: 'route', target, line: targetText(target), search: onOpen ? 'open' : 'tap' };
   }
   // Wandelen of rugzak buiten: nog geen lus van de planner, wel plekken in de buurt. Fietsen: niets.
   const sport = (place ? modalitySport(place) : undefined) ?? templateSport(input.template);
@@ -282,7 +316,8 @@ function weatherTile(input: BriefingInput, minutes: number): BriefingTile | unde
   if (input.weatherOn) parts.push(`${Math.round(w.tempC)} ${Math.abs(Math.round(w.tempC)) === 1 ? 'graad' : 'graden'}`);
   if (input.clothingOn) {
     const first = clothingForTraining({ ...base, adjustC: input.clothingAdjust })?.lines[0];
-    if (first) parts.push(lowerFirst(first.replace(/\.$/, '')));
+    // Alleen de eerste zin: een vak is smal; de rest staat op de weerpagina erachter.
+    if (first) parts.push(lowerFirst(firstSentence(first)));
   }
   if (parts.length === 0) return undefined;
   const tone = input.weatherOn && w.verdict !== 'prima' ? ('warn' as const) : undefined;
@@ -305,6 +340,11 @@ function fuelTile(input: BriefingInput, minutes: number, outdoor: boolean): Brie
 
 function upperFirst(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function firstSentence(s: string): string {
+  const end = s.search(/\.(\s|$)/);
+  return end < 0 ? s : s.slice(0, end);
 }
 
 function lowerFirst(s: string): string {

@@ -3,6 +3,8 @@ import line from './RouteProposalLine.tsx?raw';
 import panel from './RoutePanel.tsx?raw';
 import map from './RouteMap.tsx?raw';
 import searching from './RouteSearching.tsx?raw';
+// De regie van het blad staat sinds spoor 5 in een hook die de Briefing deelt.
+import search from './useRouteSearch.ts?raw';
 
 // Spoor 2 van de Briefing (docs/beslissingen/2026-11-11-briefing.md): het blad Route met de kaart
 // bovenaan, één tik vanaf de ingang en nergens meer uitklappen.
@@ -29,7 +31,7 @@ describe('het blad Route', () => {
     expect(line).toContain('--rand-onder');
   });
   it('de delen volgen de volgorde van de engine; de kaart en de zoekstand hebben dezelfde vaste hoogte', () => {
-    expect(panel).toContain('routeSheetParts(');
+    expect(search).toContain('routeSheetParts(');
     expect(panel).toContain('{parts.map(part)}');
     expect(map).toContain('height: ROUTE_MAP_HEIGHT');
     expect(searching).toContain('height: ROUTE_MAP_HEIGHT');
@@ -45,7 +47,8 @@ describe('het blad Route', () => {
   });
   it('kaart kan niet tekenen: de lussen als tekst, zonder doorgetrokken of gestreept', () => {
     expect(map).toContain('mapFallbackLine(state.kind');
-    expect(panel).toContain('onNoMap={() => setNoMapKey(key)}');
+    expect(search).toContain('markNoMap: () => setNoMapKey(key)');
+    expect(panel).toContain('onNoMap={model.markNoMap}');
     expect(panel).toContain('onMap={!noMap && okStyles.length > 1}');
   });
   it('het blad heeft een vaste hoogte: het springt niet als de lussen er zijn', () => {

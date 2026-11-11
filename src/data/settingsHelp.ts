@@ -852,6 +852,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Valt de kaart weg', text: 'dan neemt ASCEND na ongeveer zes seconden de kaart van OpenStreetMap, en anders het effen vlak. Tegels worden nooit vooraf opgehaald of door ASCEND bewaard.' },
     ],
   },
+  routeZoeken: {
+    title: 'Lus zoeken',
+    lead: 'De Briefing is het scherm vooraf voor een loop buiten. Dit kiest wanneer hij een lus zoekt.',
+    points: [
+      { head: 'Bij het openen van de briefing', text: 'het advies. Voor een training van vandaag of morgen zoekt de Briefing meteen een lus, zodat de kaart klaarstaat als je hem opent. Verder weg zoekt hij pas na een tik. Er gaat alleen iets de deur uit als je bij Route voorstellen eerst ja zei.' },
+      { head: 'Na een tik', text: 'de Briefing zoekt pas als je op Zoek een lus tikt. Dat scheelt netwerk en je plek bij het openen.' },
+      { head: 'Wat het kost', text: 'één zoektocht duurt hoogstens een halve minuut: één vraag aan OpenStreetMap en Open-Meteo en hoogstens drie aanroepen van de routeplanner per soort lus. Bij Waar je nu bent ook één keer je plek.' },
+    ],
+  },
   routeStartpunt: {
     title: 'Startpunt van je lus',
     lead: 'Waar een voorgestelde lus begint.',
