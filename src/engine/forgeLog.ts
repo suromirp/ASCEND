@@ -55,8 +55,9 @@ export type ForgeCause =
   // Jij veranderde iets. `edited` is de set die je aanraakte; wat daarna in andere werksets veranderde is doorgevoerd.
   | { kind: 'eigen'; edited?: { slot: string; rowId: string } }
   | { kind: 'bijgestuurd' }
-  // Forge rekende mee na het afvinken: de volgende open set kreeg wat Forge nu verwacht.
-  | { kind: 'meegerekend' }
+  // Forge rekende mee na het afvinken: de volgende open set kreeg wat Forge nu verwacht. `via` is de set die je
+  // afvinkte of waar je de RIR koos (de oorzaak); zonder `via` (een oud concept) zegt de zin "je vorige set".
+  | { kind: 'meegerekend'; via?: { slot: string; rowId: string } }
   // Een verandering die geen gebeurtenis is: een nieuwe planning, een geruilde oefening, afvinken.
   | { kind: 'negeer' };
 
@@ -95,6 +96,7 @@ export function deriveChanges(before: WorkoutExercise[], after: WorkoutExercise[
         from,
         to,
         ...(kind === 'doorgevoerd' && editedRow ? { via: setLabel(ex, editedRow) } : {}),
+        ...(cause.kind === 'meegerekend' && cause.via?.slot === ex.slot && ex.rows.some((r) => r.id === cause.via!.rowId) ? { via: setLabel(ex, cause.via.rowId) } : {}),
       });
     }
   }
@@ -300,9 +302,10 @@ function reasonPart(ev: ForgeEvent): string {
     case 'meegerekend': {
       const from = ev.from?.kg;
       const to = ev.to?.kg;
-      if (from !== undefined && to !== undefined && to < from) return 'lichter gezet omdat je vorige set zwaarder ging dan gepland';
-      if (from !== undefined && to !== undefined && to > from) return 'zwaarder gezet omdat je vorige set makkelijker ging dan gepland';
-      return 'herhalingen aangepast aan je vorige set';
+      const cause = ev.via ? `set ${ev.via}` : 'je vorige set';
+      if (from !== undefined && to !== undefined && to < from) return `lichter gezet omdat ${cause} zwaarder ging dan gepland`;
+      if (from !== undefined && to !== undefined && to > from) return `zwaarder gezet omdat ${cause} makkelijker ging dan gepland`;
+      return `herhalingen aangepast aan ${cause}`;
     }
     case 'onder':
       return ev.fact ? lowerFirst(noPeriod(ev.fact)) : 'onder het bereik';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { joinReasons, linesPerSet, resolveForgeLogView, setCountEvent, spotterEvents, underRangeEvent, type ForgeEvent } from './forgeLog';
+import { deriveChanges, joinReasons, linesPerSet, resolveForgeLogView, setCountEvent, spotterEvents, underRangeEvent, type ForgeEvent } from './forgeLog';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import type { ExerciseSetLog } from '../models/training';
 
@@ -190,6 +190,31 @@ describe('linesPerSet', () => {
     const events = [ev({ kind: 'meegerekend', rowId: 's3', set: '3', from: { kg: 80 }, to: { kg: 77.5 } })];
     const [g] = linesPerSet(events, { workout: [ex], view: 'alle' });
     expect(g.lines.map((l) => l.set)).toEqual(['1', '3']);
+  });
+
+  it('meegerekend noemt de set die de oorzaak was, als de gebeurtenis die weet', () => {
+    const before = [exercise([row('s1', { weightKg: 80, reps: 10, done: true }), row('s2', { weightKg: 77.5, done: false }), row('s3', { weightKg: 80, done: false })])];
+    const after = [exercise([row('s1', { weightKg: 80, reps: 10, done: true }), row('s2', { weightKg: 77.5, done: false }), row('s3', { weightKg: 75, done: false })])];
+    const [made] = deriveChanges(before, after, { kind: 'meegerekend', via: { slot: 'lp', rowId: 's1' } }, T0, () => 'm1');
+    expect(made).toMatchObject({ kind: 'meegerekend', set: '3', via: '1' });
+    const [g] = linesPerSet([made], { workout: after, view: 'wijzigingen' });
+    expect(g.lines[0].reason).toBe('Lichter gezet omdat set 1 zwaarder ging dan gepland.');
+    const reps = { ...made, id: 'm2', from: { kg: 75, reps: 10 }, to: { kg: 75, reps: 8 } };
+    expect(linesPerSet([reps], { workout: after, view: 'wijzigingen' })[0].lines[0].reason).toBe('Herhalingen aangepast aan set 1.');
+  });
+
+  it('Lookout: set 4 (72,5 kg × 6) die Forge bijstelde maar niet is afgevinkt, staat na afloop als niet gedaan', () => {
+    const logged: ExerciseSetLog[] = [{ exerciseId: 'leg-press', exerciseName: 'Leg Press', sets: [
+      { reps: 6, weightKg: 80, rir: 0, kind: 'work', rowId: 's1' },
+      { reps: 6, weightKg: 75, rir: 1, kind: 'work', rowId: 's2' },
+      { reps: 6, weightKg: 72.5, rir: 1, kind: 'work', rowId: 's3' },
+    ] }];
+    const events = [ev({ kind: 'meegerekend', rowId: 's4', set: '4', via: '3', from: { kg: 75, reps: 8 }, to: { kg: 72.5, reps: 6 } })];
+    const [g] = linesPerSet(events, { logged, view: 'alle' });
+    const four = g.lines.find((l) => l.set === '4')!;
+    expect(four).toMatchObject({ kg: 72.5, reps: 6, skipped: true, done: false });
+    expect(four.heaviest).toBeUndefined();
+    expect(g.lines.find((l) => l.heaviest)?.set).toBe('1');
   });
 
   it('dezelfde reden twee keer staat er een keer', () => {
