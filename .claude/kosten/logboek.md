@@ -339,3 +339,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Onderzoek werkwijze autonome agents, Scout, opus (sportwetenschapper), 97k, 5 min, 0 herstelrondes
 - 2026-11-11, Herreview Eten onderweg, Warden, sonnet (reviewer), 66k, 3 min, akkoord (plek door coördinator aangepast)
 - 2026-11-11, Eten onderweg (2 rondes), Sherpa, opus (sessie), 323k context, $9,07, 1 herstelronde plus plek door coördinator
+- 2026-11-11, Pathfinder doorloop Briefing A (eerste poort), pathfinder, sonnet, 57k, 5 min, 3 moet (route-regel alleen op het trainingsscherm)
