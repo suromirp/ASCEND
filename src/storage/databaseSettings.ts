@@ -186,6 +186,11 @@ export interface AppSettings {
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';
+  // De afdaalklok (engine/descentClock.ts, docs/beslissingen/2026-11-11-afdaalklok.md): na 21 dagen zonder
+  // afdaling een regel en een voorstel voor een korte trapsessie, en één bekende afdaling voor een bergtocht.
+  // 'advies' (absent): aan bij een bergdoel of bergtocht. 'altijd': bij elk doel. 'uit': nooit. Elke andere
+  // waarde leest als het advies (resolveDescentClock), dus er is geen migratiestap nodig. Optional and additive.
+  descentClock?: 'advies' | 'altijd' | 'uit';
   // A training that moves for a holiday or a tocht (engine/leaveSpacing.ts): 'drop' (absent = drop,
   // the advice) lets it go rather than put it right before or after its own next time, 'shift' moves
   // it to any day of that week that fits. Optional and additive, so no migration step.

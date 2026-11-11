@@ -8,6 +8,7 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 
 ## Inbox
 
+- 11 november, wens van de eigenaar (brainstorm routes, drie delen, in deze volgorde). Eén: bij een training een plek voorstellen uit je eigen plekken die past bij wat de training vraagt (veel hoogtemeters: de plek met de heuvel), ook als je erheen moet rijden; alleen een voorstel, met een instelling voor hoe ver. Twee: een route bewaren bij een plek (uit een voorstel of uit een loop van je horloge), zodat hij de volgende keer wordt voorgesteld bij een training die past; nieuwe opgeslagen vorm, dus migratie, export en import. Drie: vooraf een pin zetten op een plek waar je nog heen moet reizen; de app zoekt vanaf die pin zelf de beste lus voor de training, die je bewaart en alvast naar Garmin Connect stuurt, zodat je ter plekke niets meer hoeft te zoeken. Geen vrij tekenen van een route. Een pin kan een plek worden. Eerst Pathfinder vooraf (de plek van dit alles: bij de training, bij Plekken, of beide) en Cartographer.
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
 Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 

@@ -73,3 +73,9 @@ export function routeActionLine(hasSender: boolean, done?: { send: RouteSendOutc
   const saved = done.file.where === 'folder' ? `Opgeslagen als ${done.file.name} in ${done.file.label}.` : `Gedownload als ${done.file.name}.`;
   return { text: `${saved} ${SAVE_HINT}`, warn: false };
 }
+
+/** De stappen achter de i. Stap 1 zegt hoe het bestand in Garmin Connect komt (venster of bestand openen),
+ *  zodat de uitleg één keer in het blad staat en niet als losse regel boven de stappen. */
+export function watchSteps(hasSender: boolean): string[] {
+  return [`${hasSender ? SEND_HINT : SAVE_HINT} Dat vraagt internet.`, ...WATCH_STEPS.slice(1)];
+}

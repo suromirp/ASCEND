@@ -50,6 +50,7 @@ export interface PreviewMove {
   to?: string;
   // For 'change': the training it becomes.
   newName?: string;
+  // Bij een nieuwe rij (`isNew`) staat in `minutes` hoe lang de training duurt, voor de regel in het voorstel.
   // De rij van deze regel; bij een nieuwe rij het id dat het voorbeeld hem gaf.
   sessionId?: string;
   // Een rij die er nog niet was.
@@ -104,6 +105,12 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
 export function previewBetween(sessions: PlannedSession[], after: PlannedSession[], templates: SessionTemplate[], leave?: LeavePeriod[], alsoWeeks: string[] = []): ProposalPreviewData {
   const byId = new Map(templates.map((t) => [t.id, t]));
   const info = (s: PlannedSession) => ({ name: byId.get(s.templateId)?.name ?? 'Training', type: byId.get(s.templateId)?.type ?? ('cardio' as SessionType), templateId: s.templateId, plannedMinutes: s.plannedMinutes });
+  // De lengte van een nieuwe rij, alleen als die vaststaat: een eigen lengte op de rij, of een sjabloon zonder
+  // weekopbouw. Bij een weekopbouw hangt de lengte van de week af en zegt het voorstel liever niets dan iets dat niet klopt.
+  const newMinutes = (s: PlannedSession): number | undefined => {
+    const t = byId.get(s.templateId);
+    return s.plannedMinutes ?? (t && !t.weeklyProgression?.length ? t.durationVariants.full : undefined);
+  };
   const before = new Map(sessions.map((s) => [s.id, s]));
   const afterIds = new Set(after.map((s) => s.id));
 
@@ -123,7 +130,7 @@ export function previewBetween(sessions: PlannedSession[], after: PlannedSession
     if (!was) {
       if (s.status === 'skipped') continue;
       added.add(s.id);
-      moves.push({ name: info(s).name, action: 'add', to: s.scheduledDate, sessionId: s.id, isNew: true });
+      moves.push({ name: info(s).name, action: 'add', to: s.scheduledDate, sessionId: s.id, isNew: true, minutes: newMinutes(s) });
     } else if (was.status === 'skipped' && s.status !== 'skipped') {
       // A session that was let go and comes back on the plan.
       added.add(s.id);

@@ -55,7 +55,7 @@ const MOUNTAIN_WINDOW_WEEKS = 4;
 // Na "Liever niet" blijft het voor die spier zo lang stil.
 const DECLINE_QUIET_WEEKS = 8;
 
-const MOUNTAIN_KINDS: ReadonlySet<GoalKindId> = new Set(['trek_hut', 'trek_tent', 'day_hike', 'mountaineering']);
+export const MOUNTAIN_KINDS: ReadonlySet<GoalKindId> = new Set(['trek_hut', 'trek_tent', 'day_hike', 'mountaineering']);
 
 // Hoe de spier in een zin heet.
 const NAMED: Record<string, { your: string; got: string; work: string; why: string }> = {

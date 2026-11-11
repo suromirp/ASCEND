@@ -151,6 +151,12 @@ const gramsText = (g: [number, number]) => `${range(g)} g koolhydraten`;
 // Lopen leunt op gels, wandelen en een tocht op echt eten.
 const MAIN_ITEM: Record<FuelActivity, FuelItemId> = { run: 'gel', walk: 'krentenbol' };
 
+// Het kortste: het hoofdstuk, voor een smal vak op de Briefing (engine/briefing.ts). "2 tot 4 gels".
+export function fuelShortText(est: FuelEstimate): string {
+  const item = FUEL_ITEMS[MAIN_ITEM[est.activity]];
+  return countText(countFor(est.grams, item), item);
+}
+
 // De regel voor De avond ervoor: kort, één zin.
 // "Eten mee: 60 tot 90 g koolhydraten, 2 tot 4 gels of bananen."
 export function fuelEveningLine(est: FuelEstimate): string {

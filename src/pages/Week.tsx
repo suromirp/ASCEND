@@ -47,6 +47,7 @@ import { SWAP_STALE } from '../storage/weekSwap';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
 import { REST_BACK_RULE } from '../engine/restDayBack';
+import { descentRowNotes } from '../engine/descentClock';
 import { SkyBand } from '../components/SkyBand';
 import { Icon } from '../components/icons';
 import { hoursMinutes } from '../utils/hoursMinutes';
@@ -85,7 +86,9 @@ export function WeekPage() {
   const concernNotes = useMemo(() => rowNotes(notice.concerns), [notice]);
   // Een rustige loop en beenkracht op twee dagen achter elkaar is bewust toegestaan: een stille tekst, geen melding.
   const pairs = useMemo(() => allowedPairs(plannedSessions, templates, sessionLogs), [plannedSessions, templates, sessionLogs]);
-  const pairNotes = useMemo(() => new Map([...pairs].map(([id, p]) => [id, p.rowNote])), [pairs]);
+  // Ook de trapsessie achter een rustige training zegt kort wat je doet (engine/descentClock.ts). Trap af is nooit
+  // de tweede van een toegestaan paar (dat is kracht of een loop), dus de twee lijsten delen geen id.
+  const pairNotes = useMemo(() => new Map([...[...pairs].map(([id, p]): [string, string] => [id, p.rowNote]), ...descentRowNotes(plannedSessions, templates)]), [pairs, plannedSessions, templates]);
 
   // A rest day ASCEND gave up for a catch-up is simply gone, not "skipped".
   // Rest-day proposals show up right where you just moved a training.

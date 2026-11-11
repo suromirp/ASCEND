@@ -399,6 +399,18 @@ export const CHOICES = {
       { value: 'nee', label: 'Nee', note: 'Meteen het gewone ritme van je richting', short: 'Nee' },
     ],
   }),
+  afdaalklok: def({
+    group: 'Doel en tochten',
+    title: 'Afdaalklok',
+    line: 'Na drie weken zonder afdaling stelt ASCEND een korte trapsessie voor.',
+    advice: 'advies' as 'advies' | 'altijd' | 'uit',
+    help: 'afdaalklok',
+    options: [
+      { value: 'advies', label: 'Bij een bergdoel', note: 'Alleen als je traint voor een tocht of trail met hoogtemeters', short: 'Bij een bergdoel' },
+      { value: 'altijd', label: 'Altijd', note: 'Bij elk doel, ook zonder bergen', short: 'Altijd' },
+      { value: 'uit', label: 'Uit', note: 'Geen regel en geen voorstel', short: 'Uit' },
+    ],
+  }),
   rustNaTocht: def({
     group: 'Doel en tochten',
     title: 'Rust na een bergtocht',

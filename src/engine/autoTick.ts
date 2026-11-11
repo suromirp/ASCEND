@@ -61,6 +61,11 @@ export interface AutoTick {
 
 const NOT_AUTOMATIC = new Set([TEST_TEMPLATE_ID, RACE_TEMPLATE_ID]);
 
+// Een testloop en een wedstrijd vink je altijd zelf af. Ook de Briefing leest dit (engine/briefing.ts).
+export function mayAutoTick(templateId: string): boolean {
+  return !NOT_AUTOMATIC.has(templateId);
+}
+
 // The one planned training this activity unmistakably belongs to, or
 // undefined when there is any doubt.
 export function autoTickMatch(
@@ -76,7 +81,7 @@ export function autoTickMatch(
   const candidates = candidatePlanned(activity, planned, templates, logs, { sameDayOnly: true });
   if (candidates.length !== 1) return undefined;
   const [match] = candidates;
-  if (NOT_AUTOMATIC.has(match.template.id) || NOT_AUTOMATIC.has(match.session.templateId)) return undefined;
+  if (!mayAutoTick(match.template.id) || !mayAutoTick(match.session.templateId)) return undefined;
   if (!durationIsClose(activity.durationSec / 60, plannedMinutes(match))) return undefined;
   if (findSimilarLog(activity, logs)) return undefined;
   // The same training typed in by hand, even when its length is further off.
