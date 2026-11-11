@@ -160,6 +160,8 @@ Overig:
 
 ## Nakijken
 
+- Forge RIR (Warden, 11 november, mag): `firstAtTop` vraagt bij de eerste set op de bovenkant, `topSetOf` leest de zwaarste set; bij een lichtere eerste set of een bijgesteld gewicht kan de stap zwaarder een keer gemist worden. Test met ongelijke gewichten en zo nodig dezelfde set kiezen.
+
 - Leg press zonder opgeslagen standen (Sherpa Forge verloop, 11 november): Forge leert de stappen uit gebruikte gewichten, laat 91,6 vallen omdat het op 202 pond lijkt, en vult het gat met 94,4, 99,4 en 104,4 kg die niet op het toestel staan. Bestaand gedrag. Nagaan met de back-up (skill naspelen) of dat toestel standen heeft; zo niet, mag Forge dan gewichten voorstellen die niet op het toestel staan?
 
 Twijfel of het af is; eerst kijken, dan schrappen of bouwen.
