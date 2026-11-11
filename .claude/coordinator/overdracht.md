@@ -81,3 +81,13 @@ Dit deel geldt; wat hierboven staat is geschiedenis.
 - Open vraag aan de eigenaar: mag het startpunt als stip op het kaartje, ook bij Precies, vanaf je deur? Advies: ja. Nog geen antwoord.
 - Les van 10 november: "start voor het bouwmoment een nieuwe chat" betekende klaarzetten, niet nu beginnen. Begin een bouwronde buiten het rooster alleen als de eigenaar dat met zoveel woorden vraagt. En 10 november was een dinsdag: reken de weekdag na voor je een bouwmoment belooft.
 - De sessie Bouwmoment ASCEND 10 november (session_01LnDpSjJpcTeC5mjFvMz3GX) is klaar; de eigenaar praatte er zelf in, dus niet archiveren zonder hem. Vorige coördinatoren: session_01LnDpSj5xhvz93hRnJrHyF8 (10 november) en session_01LnDpSmhnJLwMd9LxhwhgLB blijven open.
+
+## Aanvulling 11 november ochtend (coördinator 11 november)
+
+- Modellen deze week tot en met 15 november: zie skill werkverdeling, "Deze week". Bouwen buiten het bouwmoment mag deze week (eigenaar).
+- Wat de eigenaar in de coördinator-chat zelf zegt gaat voor doorgestuurde berichten van een oude chat.
+- Locatie en kaart: besluit 2026-11-11-locatie-en-kaart.md (privacy geen grens, behalve nooit in de repo).
+- Lopende bouwers (melden zich bij session_01LnDpSkFKoLuAUnLCXKbA1G): Sherpa Route-kaart (session_01LnDpSn5hAWFpmYVbjZVfp7, opus, claude/route-kaart), Sherpa Route-verfijnen (session_01LnDpSim88CxchjWSHQ6Pbj, fable, claude/route-verfijnen), Sherpa Klein deel 1 (session_01LnDpSjTi9hxdJEtwACNb4G, opus, claude/klein-deel-1). RoutePanel.tsx wordt door beide routebouwers licht geraakt: let bij het mergen op.
+- Info-blad: ontwerp in docs/visie/Ontwerp Info-blad.md, wacht op vijf antwoorden van de eigenaar.
+- Brainstorms "wat missen we": docs/visie/Kansen 11 november app.md en docs/onderzoek/Kansen 11 november training.md; daarna één overzicht met top vijf voor de eigenaar.
+- Daarna: GR5 uit OpenStreetMap (eigenaar: mag zelf), Buiten (ronde 1, tweede spoor).
