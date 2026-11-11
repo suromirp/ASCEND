@@ -21,7 +21,7 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
-import { addDays, daysBetween, formatWeekdayDateNL, isoWeekday, mondayOfWeek, weekDates, weekdayOf } from '../utils/dates';
+import { addDays, daysBetween, formatWeekdayDateNL, isoWeekday, localDateOf, mondayOfWeek, weekDates, weekdayOf } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { goalKindOf } from './goalLabels';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
@@ -362,4 +362,15 @@ export function descentAdvice(input: DescentAdviceInput): Advice[] {
   const effect = `Met Akkoord staat ${template.name} (${minutes} minuten) op ${when}${slot.after ? '' : ', een vrije dag'}. Met Liever niet blijft je week zoals hij is en vraagt ASCEND het op zijn vroegst op ${again} weer.`;
   const proposal = addProposal(title, slot.day, template, 'Een korte afdaalprikkel: je laatste afdaling is drie weken of langer geleden.', DESCENT_CLOCK_RULE, WHY);
   return [{ id, trigger: 'plan_update', ruleId: DESCENT_CLOCK_RULE, title, effect, lead, brief, why: WHY, priority: 2, proposal }];
+}
+
+/** De dag van elk antwoord op een advies, voor `answeredOn`. Een antwoord zonder tijdstip (een oude of
+ *  geïmporteerde back-up) slaat hij over in plaats van te crashen; zo'n id houdt de klok stil tot je weer
+ *  een afdaling logt (zie het besluit). */
+export function answeredDays(responses: Readonly<Record<string, { at?: unknown } | null | undefined>>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [id, r] of Object.entries(responses ?? {})) {
+    if (r && typeof r.at === 'string' && r.at) out[id] = localDateOf(r.at);
+  }
+  return out;
 }

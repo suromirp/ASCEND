@@ -79,6 +79,7 @@ Wanneer de klok aan staat:
 - Zonder doel en zonder tocht gebeurt er niets, ook met Altijd. De golden scenario's bewegen niet: `computeAdvice` zonder het veld `descentClock` geeft geen afdaaladvies.
 - De instelling is een optioneel veld (`AppSettings.descentClock`). Een oude back-up zonder het veld leest als het advies, een beschadigde waarde valt bij import weg en telt mee als overgeslagen. Er is geen migratiestap nodig.
 - De instelling staat in het blad Tochten: Planning en Doel en tochten zitten beide op het plafond van 12 rijen.
+- Een antwoord op het advies zonder datum (uit een oude of geïmporteerde back-up) telt niet als antwoord van een bepaalde dag; de klok blijft dan stil tot je volgende afdaling. Liever even stil dan een crash of een verkeerde dag.
 
 ## Voorbeeldperiode van zes weken (nagemaakt)
 

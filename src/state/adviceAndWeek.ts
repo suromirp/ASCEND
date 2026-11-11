@@ -21,7 +21,7 @@ import { widgetSummary } from '../engine/widgetSummary';
 import { writeWidgetSummary } from '../integrations/widgetBridge';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { GoalOverview } from '../engine/goalOverview';
-import { localDateOf, mondayOfWeek, todayISO } from '../utils/dates';
+import { mondayOfWeek, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { patternDays } from '../engine/planPass';
 import { markKept, resolveWeekAfterChoice } from '../engine/weekKept';
@@ -35,7 +35,7 @@ import { raceBlocks, afterGoalWindows } from '../engine/raceBlock';
 import { needsWeather, showWeatherSwap } from '../engine/overviewSettings';
 import { mainGoal } from '../engine/mainGoal';
 import { keyFocusOf } from '../engine/keySession';
-import { descentClockContext } from '../engine/descentClock';
+import { answeredDays, descentClockContext } from '../engine/descentClock';
 
 export function useAdviceAndWeek(deps: {
   loading: boolean;
@@ -144,7 +144,7 @@ export function useAdviceAndWeek(deps: {
         restDay: settings.restDay ?? 1,
         restDayBack: settings.restDayBack !== false,
         descentClock: descentClockContext(settings.descentClock, trainingGoals, goalMilestones, settings.leavePeriods, todayISO()),
-        answeredOn: Object.fromEntries(Object.entries(adviceResponses).map(([id, r]) => [id, localDateOf(r.at)])),
+        answeredOn: answeredDays(adviceResponses),
         // Eerst koppelen, dan inhalen (engine/missedTraining.ts#linkCandidates).
         missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn },
         leave: settings.leavePeriods,

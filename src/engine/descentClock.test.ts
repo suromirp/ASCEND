@@ -607,3 +607,12 @@ describe('voorbeeldperiode van zes weken', () => {
     expect(skipped.lead).toBe('Vogezen begint over 4 dagen. Een nieuwe afdaalprikkel geeft nu spierpijn op de tocht zelf.');
   });
 });
+
+describe('answeredDays (Warden, herreview)', () => {
+  it('slaat een antwoord zonder tijdstip of null over in plaats van te crashen', async () => {
+    const { answeredDays } = await import('./descentClock');
+    const out = answeredDays({ a1: { response: 'accepted' } as never, a2: null, a3: { at: '2026-11-11T10:00:00.000Z' } });
+    expect(Object.keys(out)).toEqual(['a3']);
+    expect(out.a3).toMatch(/^2026-11-1[01]$/);
+  });
+});
