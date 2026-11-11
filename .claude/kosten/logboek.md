@@ -328,3 +328,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Review Enkel en evenwicht, Warden, sonnet (reviewer), 51k, 5 min, akkoord (1 klein punt door coördinator)
 - 2026-11-11, Enkel en evenwicht, Sherpa, opus (sessie), 280k context, $6,37, 0 herstelrondes
 - 2026-11-11, Review GR5 uit OSM, Warden, sonnet (reviewer), 38k, 4 min, akkoord
+- 2026-11-11, GR5 uit OSM, Sherpa, opus (sessie), 228k context, $5,15, 0 herstelrondes
+- 2026-11-11, Review Eten onderweg, Warden, sonnet (reviewer), 46k, 5 min, niet akkoord (aanname 6 uur verborgen, eten in Uitleg tegen ontwerp)
+- 2026-11-11, Pathfinder (rol, skill, besluit), coördinator zelf, opus, geen helper

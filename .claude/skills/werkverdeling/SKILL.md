@@ -23,6 +23,8 @@ die erft het model van de coördinator.
 | Review van engine, planning, opslag, migraties | `reviewer` (Warden) | fable | medium |
 | Lastig onderzoek, formules in de engine | `sportwetenschapper` (Scout) | fable | medium |
 | Iets zoeken in de code | `Explore` | haiku | laag |
+| Samenhang en UX: plek vooraf, doorloop van de dag voor main | `pathfinder` (Pathfinder) | sonnet | medium |
+| Samenhang wekelijks, het totaalplaatje | `pathfinder` (Pathfinder) | fable | medium |
 
 Zwaar werk op Fable in plaats van Opus (eigenaar, 9 november): waar deze skill of een oudere les "opus" zegt, lees Fable. Licht werk blijft op Sonnet. Meldt een sessie dat de limiet van Fable dichtbij is, maak dan alleen af wat loopt en meld het de eigenaar.
 
@@ -123,6 +125,7 @@ zeg je ("geen instelling nodig: geen keuze voor de gebruiker").
 
 1. **Doel**: één of twee zinnen, met het symptoom van de eigenaar als het een fout is (gemeten, niet vermoed).
 2. **Briefje**: `docs/werkbriefjes/<onderwerp>.md`, en welke valkuilen daaruit hier gelden.
+2b. **Plek** (bij alles wat zichtbaar is, skill `pathfinder`, moment 1): op welk moment van de dag en bij welke training heb je dit nodig en wanneer juist niet; waar staat het en hoeveel tikken van Vandaag; wat staat er al dat hetzelfde zegt en wat gebeurt daarmee; wat verdwijnt of verhuist.
 3. **Eisen**: controleerbaar, als punten (wat de gebruiker ziet, welke tekst, welke maat op 360 en 390 px).
 4. **Randgevallen, elk met een test**: kies uit de vaste lijst wat geldt: de dag zelf (vandaag telt nog niet als
    voorbij), een week- of maandgrens en middernacht in Europe/Amsterdam, een vakantie of tocht in de week, een rij

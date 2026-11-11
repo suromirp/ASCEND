@@ -34,3 +34,7 @@ zelf alleen wat veilig en klein is; al het andere wordt een voorstel.
 8. Schrijf een regel in `.claude/kosten/logboek.md` met de tokens van de helpers.
 
 Geen persoonsgegevens, nooit een back-up van de eigenaar lezen, nooit `.claude/settings.json` wijzigen.
+
+## Samenhang (Pathfinder, wekelijks)
+
+In dezelfde wekelijkse ronde start de coördinator Pathfinder op Fable voor het totaalplaatje (skill `pathfinder`, moment 3). Het rapport gaat naar `docs/onderhoud/JJJJ-MM-DD-pathfinder.md`, de punten naar de kop Samenhang in de backlog.
