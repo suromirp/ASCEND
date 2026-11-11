@@ -91,3 +91,11 @@ Dit deel geldt; wat hierboven staat is geschiedenis.
 - Info-blad: ontwerp in docs/visie/Ontwerp Info-blad.md, wacht op vijf antwoorden van de eigenaar.
 - Brainstorms "wat missen we": docs/visie/Kansen 11 november app.md en docs/onderzoek/Kansen 11 november training.md; daarna één overzicht met top vijf voor de eigenaar.
 - Daarna: GR5 uit OpenStreetMap (eigenaar: mag zelf), Buiten (ronde 1, tweede spoor).
+
+## Stand 11 november, 11:00 (coördinator 11 november)
+
+- Live vandaag: Route verfijnd, Je horloge, Klein en fouten deel 1, Route-kaart, Sleuteltraining, De avond ervoor, Enkel en evenwicht (main bd4e48f).
+- Er lopen geen bouwers. Alle bouwer-sessies zijn gearchiveerd.
+- De weeklimiet geeft een waarschuwing (allowed_warning, reset zondag 15 november 19:00). Start geen nieuwe bouwer zonder "ga door" van de eigenaar.
+- Open vraag aan de eigenaar: ga door met de bouwrij, of sparen tot zondag. Verder: vindt hij de avondkaart, en laadt de kaart in de Android-app.
+- Volgende in de bouwrij: Eten onderweg, de afdaalklok (Fable), de testtocht (Fable), de beenindex (Fable), de racedag, routes voor wandelen, GR5 uit OpenStreetMap, Buiten, Info-blad spoor 3 en 4.
