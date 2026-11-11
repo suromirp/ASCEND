@@ -39,7 +39,8 @@ describe('het blad Route', () => {
   it('de lange uitleg staat achter de i, niet weg', () => {
     expect(line).toContain('{MAP_HINT}');
     expect(line).toContain('{PICK_HINT}');
-    expect(line).toContain('WATCH_STEPS.map');
+    expect(line).toContain('watchSteps(sender !== null).map');
+    expect(line).not.toContain('SAVE_HINT}');
     expect(map).not.toContain('De ring is de start.');
   });
   it('kaart kan niet tekenen: de lussen als tekst, zonder doorgetrokken of gestreept', () => {
@@ -57,7 +58,7 @@ describe('het blad Route', () => {
   it('de uitleg na de knop staat achter de i, niet onder de knop', () => {
     expect(panel).toContain('routeOutcomeLine(');
     expect(panel).not.toContain('routeActionLine(');
-    expect(line).toContain('{sender ? SEND_HINT : SAVE_HINT}');
+    expect(line).toContain('watchSteps(sender !== null).map');
   });
   it('een andere lus kiezen volgt Beweging', () => {
     expect(panel).toContain('transition: pickTransition(motion)');
