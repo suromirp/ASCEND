@@ -153,6 +153,7 @@ export function TrainingBriefing({
   const picked = model.picked && model.pickedOutcome?.ok ? { style: model.picked, proposal: model.pickedOutcome.proposal } : undefined;
   const routeReady = view.footer.kind === 'route' && !!picked && searchOn;
   const places = view.places.filter((p) => !p.locked && (p.key === view.place || isSportEnabled(modalitySport(p.key), settings.enabledSports)));
+  const shortLabels = shortPlaceLabels(places.map((p) => p.label));
   const brief = buildSessionBrief(template, date, program, { modalityKey: view.place });
   const minutes = session?.plannedMinutes ?? resolveEffectiveFullDuration(template, date, program);
 
@@ -179,10 +180,10 @@ export function TrainingBriefing({
             {places.length > 1 && (
               // Eén rij keuzes met korte namen (de volle naam staat in de regel eronder); past hij niet, dan
               // schuift hij zijwaarts met een zachte vervaging aan de rand. Nooit twee regels hoog.
-              <PlaceRow>
+              <PlaceRow count={places.length}>
                 {places.map((p, i) => (
                   <span key={p.key} className="shrink-0 whitespace-nowrap">
-                    <Chip selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}>{shortPlaceLabels(places.map((o) => o.label))[i]}</Chip>
+                    <Chip selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}>{shortLabels[i]}</Chip>
                   </span>
                 ))}
               </PlaceRow>
@@ -279,7 +280,7 @@ export function TrainingBriefing({
 
 // De rij Waar train je?: zijwaarts schuiven, en aan de kant waar nog iets staat een zachte vervaging naar
 // de achtergrond (alleen tokens). Zonder meer keuzes buiten beeld geen vervaging.
-function PlaceRow({ children }: { children: ReactNode }) {
+function PlaceRow({ children, count }: { children: ReactNode; count: number }) {
   const row = useRef<HTMLDivElement>(null);
   const [more, setMore] = useState({ left: false, right: false });
   useEffect(() => {
@@ -296,7 +297,7 @@ function PlaceRow({ children }: { children: ReactNode }) {
       el.removeEventListener('scroll', measure);
       window.removeEventListener('resize', measure);
     };
-  }, []);
+  }, [count]);
   const fade = (side: 'left' | 'right') => (
     <span aria-hidden className={`pointer-events-none absolute inset-y-0 w-8 ${side === 'left' ? 'left-0' : 'right-0'}`} style={{ background: `linear-gradient(to ${side}, transparent, var(--color-bg))` }} />
   );

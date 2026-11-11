@@ -116,7 +116,10 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const askedFor = useRef<number | undefined>(undefined);
   useEffect(() => {
     mounted.current = true;
-    const stop = locateStop.current;
+    // Een nieuwe controller per mount: in StrictMode draait dit twee keer, en een afgebroken signaal van de
+    // eerste ronde zou elke locatievraag en Start hier daarna weggooien (Warden).
+    const stop = new AbortController();
+    locateStop.current = stop;
     return () => {
       mounted.current = false;
       stop.abort();

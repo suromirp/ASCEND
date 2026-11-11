@@ -132,6 +132,8 @@ export function planStart(i: StartPlanInput): StartPlan {
   // Thuis gekozen in de instelling, maar er is geen Thuis: dat zegt de regel, nooit stil.
   const noHome = i.mode === 'exact' && !home && i.picked === undefined;
   if (i.found.ok) return { kind: 'here', chip, point: i.found.point, line: noHome ? START_LINE_NO_HOME : '' };
+  // Thuis gekozen maar er is geen Thuis, en je plek lukte niet: de regel noemt beide.
+  if (noHome) return { kind: 'approx', chip, line: `Je hebt nog geen Thuis. ${startFailureLine(i.found.reason)}` };
   const back = hereStart(i.found, home);
   return back.kind === 'fixed'
     ? { kind: 'home', chip, point: back.point, line: hereStartLine(back) }

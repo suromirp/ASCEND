@@ -52,6 +52,10 @@ describe('geen Thuis', () => {
     expect(planStart({ mode: 'exact', home: undefined })).toEqual({ kind: 'locate', chip: 'here', line: '' });
     expect(planStart({ mode: 'exact', home: null, found: { ok: true, point: here } }).line).toBe(START_LINE_NO_HOME);
   });
+  it('instelling Thuis zonder Thuis en je plek lukt niet: de regel noemt beide', () => {
+    const p = planStart({ mode: 'exact', home: undefined, found: fail('denied') });
+    expect(p).toEqual({ kind: 'approx', chip: 'here', line: `Je hebt nog geen Thuis. ${startFailureLine('denied')}` });
+  });
   it('een tik op Thuis zonder Thuis kiest Waar je nu bent', () => {
     expect(planStart({ mode: 'here', home: undefined, picked: 'home' }).chip).toBe('here');
   });
