@@ -242,7 +242,7 @@ export interface StrengthSettings {
   // "Stap voorstellen" (docs/beslissingen/2026-11-09-calisthenics-stapvoorstel.md): a step up or down on a ladder as a
   // proposal with Akkoord in Forge. Absent = on. Never plans anything by itself.
   stepProposal?: boolean;
-  // "Ijkset" (docs/beslissingen/2026-11-09-ijkset.md): eens per vier weken een kaart in Forge met een extra set bij
+  // "Ijkset" (docs/beslissingen/2026-11-09-ijkset.md): eens per vier weken een kaart in Forge die een set voorstelt bij
   // één hoofdoefening, zo ver als netjes gaat. Absent = on. Pas na Akkoord komt er een set bij.
   calibration?: boolean;
   // De dag van de laatste Akkoord op een ijkset (yyyy-mm-dd); daarna vier weken niets.

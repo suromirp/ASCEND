@@ -544,7 +544,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   forgeIJkset: {
     title: 'IJkset voorstellen',
-    lead: 'Een schatting van wat je over hebt is alleen goed als je hem af en toe controleert. Eens per vier weken stelt Forge daarom één extra set voor.',
+    lead: 'Een schatting van wat je over hebt is alleen goed als je hem af en toe controleert. Eens per vier weken stelt Forge daarom één set erbij voor.',
     points: [
       { head: 'Wat', text: 'bij één hoofdoefening een set erbij, zo ver als netjes gaat. Daarna kies je zoals altijd hoeveel je over had.' },
       { head: 'Wanneer', text: 'niet in een week met een tocht of test, en hooguit eens per vier weken.' },
