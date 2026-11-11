@@ -28,7 +28,7 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
 - Kansen 11 november, door de eigenaar gekozen (alle met het advies; bronnen in `docs/visie/Kansen 11 november app.md` en `docs/onderzoek/Kansen 11 november training.md`):
   - De sleuteltraining past bij je doel (`engine/goalList.ts#nextKeySession`, `engine/adviceWeek.ts`). Opus.
   - Afdaalklok: na 21 dagen zonder afdaling één regel en een voorstel met Akkoord voor een trapsessie; 7 tot 14 dagen voor een tocht om een verse afdaling vragen. Planning, Fable.
-  - Enkel en evenwicht als rij binnen Spieren voor de berg (Forge zit op zes rijen). Opus.
+  - In aanbouw 11 november (Sherpa Enkel en evenwicht, session_01LnDpSkHjA9h33Ess9yZKBv, claude/enkel-evenwicht): Enkel en evenwicht als rij binnen Spieren voor de berg (Forge zit op zes rijen). Opus.
   - In aanbouw 11 november (Sherpa Avond ervoor, session_01LnDpSjBy6xdu1sG7hRVCAS, claude/avond-ervoor): De avond ervoor: vanaf 20:00 (instelbaar) kijkt Vandaag naar morgen, hoogstens vier regels klaarleggen; melding als instelling, advies uit. Alleen tekst. Opus.
   - Eten onderweg: een indicatie wat je meeneemt, voor lange trainingen (lopen vanaf ongeveer anderhalf uur: gels en alternatieven) en voor tochten (per dag en per etappe). Geen dagelijkse voedingsregistratie (eigenaar 11 november: "te gecompliceerd voor nu"). Scout heeft de getallen (30 tot 60 g koolhydraten per uur, wandelen 30 tot 40). Opus, de rekenregel op Fable als hij de tochtplanning raakt.
   - Racedag voor de 10 km: blad in de laatste week met weer bij de start, inlopen, tempo per km voor doeltijd en verwachte tijd; de dag erna een terugblik. Opus.
