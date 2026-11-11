@@ -95,7 +95,7 @@ Dit deel geldt; wat hierboven staat is geschiedenis.
 ## Stand 11 november, 11:00 (coördinator 11 november)
 
 - Live vandaag: Route verfijnd, Je horloge, Klein en fouten deel 1, Route-kaart, Sleuteltraining, De avond ervoor, Enkel en evenwicht (main bd4e48f).
-- Er lopen geen bouwers. Alle bouwer-sessies zijn gearchiveerd.
+- Eigenaar 11 november 11:50: "Ga door" ondanks de waarschuwing over de weeklimiet. Lopende bouwers: Afdaalklok (fable, session_01LnDpSj2BVjJP3JFaXvSErk), Eten onderweg (opus, session_01LnDpSkt2AFdB4BEn94AKrc), GR5 uit OSM (opus, session_01LnDpSiJdvthQsKW9Su5a3N). Nooit twee planner-bouwers tegelijk: testtocht en beenindex pas na de afdaalklok.
 - De weeklimiet geeft een waarschuwing (allowed_warning, reset zondag 15 november 19:00). Start geen nieuwe bouwer zonder "ga door" van de eigenaar.
 - Open vraag aan de eigenaar: ga door met de bouwrij, of sparen tot zondag. Verder: vindt hij de avondkaart, en laadt de kaart in de Android-app.
 - Volgende in de bouwrij: Eten onderweg, de afdaalklok (Fable), de testtocht (Fable), de beenindex (Fable), de racedag, routes voor wandelen, GR5 uit OpenStreetMap, Buiten, Info-blad spoor 3 en 4.
