@@ -54,6 +54,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Afdaalklok (na 21 dagen zonder afdaling een voorstel met Akkoord voor Trap af, 20 min; instelbaar in Tochten; besluit `2026-11-11-afdaalklok.md`). Mag: plek als regel op de missiekaart staat nu in de coachzin.
 - Live op 11 november: Briefing A (route alleen bij buiten; Vandaag, het blad achter de i en De avond ervoor volgen Waar train je?, geen route bij Loopband).
 - Live op 11 november: Eten onderweg (koolhydraten per uur vanaf 90 minuten met stuks, per dag bij een tocht met de aanname erbij; kaart op het trainingsscherm onder de route, De avond ervoor, etappe en Tochten; besluit `2026-11-11-eten-onderweg.md`).
 - Live op 11 november: Route-kaart 2 (startpunt Waar je nu bent als standaard, Vast punt, Ongeveer; tweede lus duidelijk met een regel; Lussen zoeken met stappen; geen aanroep meer na sluiten; besluit `2026-11-11-route-kaart-2.md`).
