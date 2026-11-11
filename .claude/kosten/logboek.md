@@ -341,3 +341,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Eten onderweg (2 rondes), Sherpa, opus (sessie), 323k context, $9,07, 1 herstelronde plus plek door coördinator
 - 2026-11-11, Pathfinder doorloop Briefing A (eerste poort), pathfinder, sonnet, 57k, 5 min, 3 moet (route-regel alleen op het trainingsscherm)
 - 2026-11-11, Review Briefing A, Warden, sonnet (reviewer), 52k, 10 min, akkoord (Pathfinder vond 3 moet)
+- 2026-11-11, Review Afdaalklok herreview, Warden, sonnet (reviewer), 224k, niet akkoord (1 blokkerend, door coördinator hersteld in dc54e13)
+- 2026-11-11, Pathfinder doorloop Afdaalklok, pathfinder, sonnet, 98k, 10 min, 1 moet (Trap af zonder eigen uitleg), 5 mag naar backlog
