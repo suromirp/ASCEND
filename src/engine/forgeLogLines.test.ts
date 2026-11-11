@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveChanges, joinReasons, linesPerSet, resolveForgeLogView, setCountEvent, spotterEvents, underRangeEvent, type ForgeEvent } from './forgeLog';
+import { deriveChanges, forgeLogEmptyText, joinReasons, linesPerSet, resolveForgeLogView, setCountEvent, spotterEvents, underRangeEvent, type ForgeEvent } from './forgeLog';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import type { ExerciseSetLog } from '../models/training';
 
@@ -101,11 +101,25 @@ describe('linesPerSet', () => {
     expect(all[0].lines.map((l) => [l.set, l.rirAssumed ?? false])).toEqual([['W1', false], ['1', true], ['2', false]]);
   });
 
-  it('zonder workout en log: de stand komt uit het verloop zelf', () => {
+  it('zonder workout en log (afgerond zonder afgevinkte set): de stand komt uit het verloop en is niet gedaan', () => {
+    // Bewust meebewogen (Warden N3): eerst bleef done hier onbekend en stond de regel in gewone inkt.
     const events = [ev({ kind: 'eigen', rowId: 's1', set: '1', from: { kg: 80 }, to: { kg: 82.5, reps: 9, rir: 1 } })];
     const [g] = linesPerSet(events, { view: 'wijzigingen' });
-    expect(g.lines[0]).toMatchObject({ set: '1', kg: 82.5, reps: 9, rir: 1 });
-    expect(g.lines[0].done).toBeUndefined();
+    expect(g.lines[0]).toMatchObject({ set: '1', kg: 82.5, reps: 9, rir: 1, skipped: true, done: false });
+  });
+
+  it('na Hoeveel over krijgt de afgevinkte set zelf geen meegerekend-regel, de volgende set wel', () => {
+    const before = [exercise([row('s1', { weightKg: 80, reps: 10, rir: 2, done: true }), row('s2', { weightKg: 80, reps: 10, done: false })])];
+    const after = [exercise([row('s1', { weightKg: 80, reps: 10, rir: 0, done: true }), row('s2', { weightKg: 80, reps: 8, done: false })])];
+    const made = deriveChanges(before, after, { kind: 'meegerekend', via: { slot: 'lp', rowId: 's1' } }, T0, () => 'q1');
+    expect(made.map((e) => e.set)).toEqual(['2']);
+    expect(made[0]).toMatchObject({ kind: 'meegerekend', via: '1' });
+  });
+
+  it('de lege stand: voor het eerste afvinken nog niets, daarna alles volgens schema', () => {
+    expect(forgeLogEmptyText([exercise([row('s1', { done: false })])])).toBe('Nog niets veranderd.');
+    expect(forgeLogEmptyText([exercise([row('s1', { done: true }), row('s2', { done: false })])])).toBe('Geen wijzigingen, alles volgens schema.');
+    expect(forgeLogEmptyText(undefined)).toBe('Geen wijzigingen, alles volgens schema.');
   });
 
   it('de spotterregel hoort bij elke set uit het voorschrift, maar is geen wijziging', () => {

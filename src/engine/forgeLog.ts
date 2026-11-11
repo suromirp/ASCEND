@@ -73,6 +73,8 @@ export function deriveChanges(before: WorkoutExercise[], after: WorkoutExercise[
     for (const row of ex.rows) {
       const old = was.rows.find((r) => r.id === row.id);
       if (!old || old.done !== row.done) continue;
+      // De set die de oorzaak is van meegerekend (je koos daar de RIR) krijgt zelf geen meegerekend-regel.
+      if (cause.kind === 'meegerekend' && cause.via?.slot === ex.slot && cause.via.rowId === row.id) continue;
       const from = stateOf(old);
       const to = stateOf(row);
       if (sameState(from, to)) continue;
@@ -521,7 +523,7 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
       const evs = d.events;
       if (d.loose) Object.assign(d.line, stateLine(lastState(evs)));
       // Na afloop is een set die niet in het log staat nooit gedaan.
-      if (d.loose && opts.logged && !opts.workout && !d.line.removed) {
+      if (d.loose && !opts.workout && !d.line.removed) {
         d.line.skipped = true;
         d.line.done = false;
       }
