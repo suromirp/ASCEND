@@ -65,8 +65,8 @@ export async function requestAppLocationPermission(): Promise<LocationPermission
   }
 }
 
-// Voor een eigen startpunt (Startpunt van je lus, Precies) is een ruwe plek te grof: dan vraagt de
-// app de fijne plek, eenmalig en alleen op een tik van de gebruiker. Het manifest heeft beide rechten
+// Voor een startpunt van een lus (Waar je nu bent of Vast punt) is een ruwe plek te grof: dan vraagt de
+// app de fijne plek, alleen na een tik van de gebruiker (Route voorstellen of Gebruik waar ik nu ben). Het manifest heeft beide rechten
 // al. Kiest de gebruiker "ongeveer", dan geeft de telefoon een ruwe plek en zegt ASCEND dat.
 export async function requestFineAppLocationPermission(): Promise<LocationPermission | undefined> {
   if (!isApp()) return undefined;

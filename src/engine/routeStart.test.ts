@@ -1,14 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { chooseStart, resolveRouteStart, roundExact, startFailureLine, validStartPoint } from './routeStart';
+import { chooseStart, hereStart, hereStartLine, resolveRouteStart, roundExact, roundHere, START_LINE_EXACT, START_LINE_HERE, startFailureLine, startFailureReason, validStartPoint } from './routeStart';
 
 // Nagemaakt punt, geen echte plek.
 const fake = { lat: 52.123456, lon: 5.654321 };
 
 describe('routeStart', () => {
-  it('Ongeveer is de standaard, ook bij een onbekende waarde', () => {
-    expect(resolveRouteStart(undefined)).toBe('approx');
-    expect(resolveRouteStart('iets')).toBe('approx');
+  it('Waar je nu bent is de standaard, ook bij een onbekende waarde; een eigen keuze blijft', () => {
+    expect(resolveRouteStart(undefined)).toBe('here');
+    expect(resolveRouteStart('iets')).toBe('here');
     expect(resolveRouteStart('exact')).toBe('exact');
+    expect(resolveRouteStart('approx')).toBe('approx');
+    expect(resolveRouteStart('here')).toBe('here');
+  });
+
+  it('Waar je nu bent vraagt eerst de plek, ook als er een vast punt is', () => {
+    expect(chooseStart('here', fake)).toEqual({ kind: 'here' });
+    expect(chooseStart('here', undefined)).toEqual({ kind: 'here' });
   });
 
   it('Ongeveer gebruikt nooit het bewaarde punt', () => {
@@ -39,5 +46,35 @@ describe('routeStart', () => {
     for (const r of ['denied', 'unavailable', 'timeout', 'unsupported', 'coarse'] as const) {
       expect(startFailureLine(r)).toContain('afgerond op ongeveer een kilometer');
     }
+  });
+});
+
+describe('Waar je nu bent: terugval', () => {
+  const here = { lat: 52.11111, lon: 5.11111 };
+
+  it('een goede plek: de lus begint daar', () => {
+    const start = hereStart({ ok: true, point: here }, fake);
+    expect(start).toEqual({ kind: 'here', point: here });
+    expect(hereStartLine(start)).toBe(START_LINE_HERE);
+  });
+
+  it('locatie geweigerd met een vast punt: terug op het vaste punt, met de reden', () => {
+    const start = hereStart({ ok: false, reason: 'denied' }, fake);
+    expect(start).toEqual({ kind: 'fixed', point: fake, reason: 'denied' });
+    expect(hereStartLine(start)).toBe(`${startFailureReason('denied')} ${START_LINE_EXACT}`);
+  });
+
+  it('een te grove plek zonder vast punt: Ongeveer, met de reden', () => {
+    const start = hereStart({ ok: false, reason: 'coarse' }, undefined);
+    expect(start).toEqual({ kind: 'approx', reason: 'coarse' });
+    expect(hereStartLine(start)).toBe(startFailureLine('coarse'));
+  });
+
+  it('een kapot vast punt telt niet: Ongeveer', () => {
+    expect(hereStart({ ok: false, reason: 'timeout' }, { lat: 'x' }).kind).toBe('approx');
+  });
+
+  it('de heuvels rond je plek op drie decimalen', () => {
+    expect(roundHere({ lat: 52.123456, lon: 5.654321 })).toEqual({ lat: 52.123, lon: 5.654 });
   });
 });

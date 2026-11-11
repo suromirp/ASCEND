@@ -156,4 +156,16 @@ describe('routeWithFallback', () => {
     expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(38);
     expect(starts[2] - starts[1]).toBeGreaterThanOrEqual(38);
   });
+
+  it('stopt het zoeken tijdens de seconde ertussen, dan gaat de wachtende vraag niet meer de deur uit', async () => {
+    const calls: number[] = [];
+    const source: RouteFn = async () => { calls.push(Date.now()); return { ok: true, line: { source: 'brouter', points: [A, B] } }; };
+    let stopped = false;
+    const route = routeWithFallback([source], createGate(60), () => stopped);
+    await route([A, B]);
+    const waiting = route([A, B]);
+    setTimeout(() => { stopped = true; }, 10);
+    expect(await waiting).toEqual({ ok: false, reason: 'timeout' });
+    expect(calls).toHaveLength(1);
+  });
 });
