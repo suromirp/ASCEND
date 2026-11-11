@@ -4,7 +4,7 @@ Dit is een tekstuele kaart van wat ASCEND op elk scherm laat zien: kopjes, kaart
 
 De data is nagemaakt: de kaart komt uit het kracht-demoprogramma in `.claude/skills/lookout/kit/state-kracht.json` en uit vier varianten daarvan, nooit uit een back-up van een echte gebruiker. De klok staat vast op 31 oktober 2026, 08:00 (Europe/Amsterdam), de breedte is 390 px.
 
-Schermen op de gewone stand (kracht): vandaag, week, stand, ascend, logboek, instellingen (het overzicht op `/more`), weekterugblik, jaaroverzicht, training-blad (het blad van een geplande training in Week), gegevens (instellingen, groep Gegevens en back-up), lichaam (de pagina) en lichaam-plek (de rechterknie).
+Schermen op de gewone stand (kracht): vandaag, week, stand, ascend, logboek, instellingen (het overzicht op `/more`), weekterugblik, jaaroverzicht, training-blad (het blad van een geplande training in Week), gegevens (instellingen, groep Gegevens en back-up), lichaam (de pagina) en lichaam-plek (de rechterknie). Met een eigen klok (`klok` in `SCHERMEN`): vandaag-loop, Vandaag op zondag 1 november met de Lange duurloop als missie (zonder koppeling met je horloge: Gedaan en de routerij).
 
 Schermen op een eigen stand, met de stand in de naam:
 - horloge: `vandaag-horloge` (de ochtendkaart met slaap, rusthartslag en HRV van het horloge) en `run-in-detail` (het scherm Run in detail van een rustige duurloop van 6 km in 39 minuten).
