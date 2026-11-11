@@ -30,7 +30,6 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
 - Wis startpunt tijdens een lopende zoektocht: de zoektocht schrijft daarna het exacte punt terug in de cache van heuvels. Vlak voor het wegschrijven opnieuw lezen (Warden, 11 november). Klein.
 - Kansen 11 november, door de eigenaar gekozen (alle met het advies; bronnen in `docs/visie/Kansen 11 november app.md` en `docs/onderzoek/Kansen 11 november training.md`):
   - In aanbouw 11 november (Sherpa Afdaalklok, session_01LnDpSj2BVjJP3JFaXvSErk, fable, claude/afdaalklok): Afdaalklok: na 21 dagen zonder afdaling één regel en een voorstel met Akkoord voor een trapsessie; 7 tot 14 dagen voor een tocht om een verse afdaling vragen. Planning, Fable.
-  - In aanbouw 11 november (Sherpa Eten onderweg, session_01LnDpSkt2AFdB4BEn94AKrc, claude/eten-onderweg): Eten onderweg: een indicatie wat je meeneemt, voor lange trainingen (lopen vanaf ongeveer anderhalf uur: gels en alternatieven) en voor tochten (per dag en per etappe). Geen dagelijkse voedingsregistratie (eigenaar 11 november: "te gecompliceerd voor nu"). Scout heeft de getallen (30 tot 60 g koolhydraten per uur, wandelen 30 tot 40). Opus, de rekenregel op Fable als hij de tochtplanning raakt.
   - Racedag voor de 10 km: blad in de laatste week met weer bij de start, inlopen, tempo per km voor doeltijd en verwachte tijd; de dag erna een terugblik. Opus.
   - Vaste ijktocht elke zes tot acht weken als kompas voor de berg, inplannen via Akkoord. Planning, Fable.
   - De beenindex leert van je ochtendantwoorden (`learning.ts#indexChecks`), begrensd, veiligheidsregels nooit soepeler, met migratiestap. Fable.
@@ -55,6 +54,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Eten onderweg (koolhydraten per uur vanaf 90 minuten met stuks, per dag bij een tocht met de aanname erbij; kaart op het trainingsscherm onder de route, De avond ervoor, etappe en Tochten; besluit `2026-11-11-eten-onderweg.md`).
 - Live op 11 november: Route-kaart 2 (startpunt Waar je nu bent als standaard, Vast punt, Ongeveer; tweede lus duidelijk met een regel; Lussen zoeken met stappen; geen aanroep meer na sluiten; besluit `2026-11-11-route-kaart-2.md`).
 - Live op 11 november: GR5-etappes met spoor uit OpenStreetMap (546 km, Vanoise via de GR 55), engine/stageAt.ts, de regel Op je etappe op een GR5-wandeldag; besluit `2026-11-11-gr5-uit-osm.md`.
 - Live op 11 november: Enkel en evenwicht in Spieren voor de berg (vier oefeningen, voorstel met Akkoord, schakelaar Enkel en evenwicht; besluit `2026-11-11-enkel-evenwicht.md`).
