@@ -35,7 +35,7 @@ describe('de drie regels bij een stap', () => {
 
   it('extra gewicht staat in de toets; de laatste stap is de zwaarste, zonder zwaardere', () => {
     const l = ladderLines(ex('weighted-pull-up'))!;
-    expect(l.test).toBe('Toets: 3 keer 8 met 2,5 kg extra');
+    expect(l.test).toBe('Toets: 3 keer 8 met 2,5 kg erbij');
     expect(l.explain).toBe('Dit is de zwaarste stap.');
     expect(l.harder).toBeUndefined();
     expect(addedKgOf(ex('weighted-dip'))).toBe(2.5);

@@ -51,7 +51,7 @@ export interface LadderStepLink {
 export interface LadderLines {
   // "Stap 4 van 7": het tweede getal is het aantal stappen van de ladder.
   step: string;
-  // "Toets: 3 keer 8", "Toets: 3 keer 30 seconden", "Toets: 3 keer 8 met 2,5 kg extra".
+  // "Toets: 3 keer 8", "Toets: 3 keer 30 seconden", "Toets: 3 keer 8 met 2,5 kg erbij".
   test: string;
   // De uitleg bij die getallen.
   explain: string;
@@ -85,7 +85,7 @@ function makeLines(exercise: Pick<Exercise, 'id'>): LadderLines | undefined {
     t.kind === 'hold'
       ? `Toets: ${t.sets} keer ${t.seconds} seconden`
       : t.addedKg !== undefined
-        ? `Toets: ${t.sets} keer ${t.reps} met ${formatNumberNL(t.addedKg, 2)} kg extra`
+        ? `Toets: ${t.sets} keer ${t.reps} met ${formatNumberNL(t.addedKg, 2)} kg erbij`
         : `Toets: ${t.sets} keer ${t.reps}`;
   const last = step === total;
   const lighter = step > 1 ? linkAt(ladder, step - 1) : undefined;

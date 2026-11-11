@@ -27,7 +27,7 @@ export type MetricSource = 'manual' | 'garmin' | 'health-connect' | 'macrofactor
 
 export type SessionType = 'strength' | 'cardio' | 'hiking' | 'recovery' | 'adventure';
 
-type ExercisePriority = 'core' | 'accessory' | 'optional';
+export type ExercisePriority = 'core' | 'accessory' | 'optional';
 
 export interface ExercisePrescription {
   id: string;

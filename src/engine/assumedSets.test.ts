@@ -192,9 +192,39 @@ describe('regel 2: twijfel, dan Hoeveel over?', () => {
     expect(asksReserve(ex(four(), { trainings: 2 }), 'r1', true)).toBe(true);
     expect(asksReserve(ex(four(), { trainings: 3 }), 'r1', true)).toBe(false);
   });
-  it('instelling uit: alleen de eerste, een zware en de laatste set, zoals nu', () => {
+  // Warden (Fable): Vaker vragen is altijd een bovenverzameling van het advies, ook met Afvinken telt als het doel uit.
+  it('stand Vaker vragen: de eerste en de laatste set, en alles wat het advies vraagt', () => {
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(ex(four()), id, false, 'vaker'))).toEqual([true, false, false, true]);
     const e = ex(four({ reps: 5 }), { trainings: 0 });
-    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(e, id))).toEqual([true, false, false, true]);
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(e, id, false, 'vaker'))).toEqual([true, true, true, true]);
+    expect(asksReserve(ex(four({ reps: 8 })), 'r1', false, 'vaker')).toBe(true);
+    for (const doubt of [false, true]) for (const rows of [four(), four({ reps: 8 }), four({ reps: 11 }), four({ reps: 13 })]) for (const id of ['r0', 'r1', 'r2', 'r3']) {
+      if (asksReserve(ex(rows), id, doubt)) expect(asksReserve(ex(rows), id, doubt, 'vaker')).toBe(true);
+    }
+  });
+  it('advies met Afvinken telt als het doel uit: vraagt bij de eerste werkset die de bovenkant haalt, zodat de stap zwaarder kan komen', () => {
+    const top = [row(0, { reps: 11 }), row(1, { reps: 11 }), row(2), row(3)];
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(ex(top), id, false))).toEqual([true, false, false, false]);
+    const later = [row(0), row(1, { reps: 11 }), row(2, { reps: 11 }), row(3)];
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(ex(later), id, false))).toEqual([false, true, false, false]);
+    // Met Afvinken telt als het doel aan telt een bevestigde set (strenger: allAtTop of twee keer): geen vraag.
+    expect(asksReserve(ex(top), 'r0', true)).toBe(false);
+  });
+  // Besluit 2026-11-11-forge-kern-zichtbaar: het advies vraagt alleen als het anders ging.
+  it('advies: eerste en laatste set volgens schema geven geen vraag', () => {
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(ex(four()), id))).toEqual([false, false, false, false]);
+  });
+  it('advies: een zware set (1 over of tot falen) geeft wel een vraag, ook zonder Afvinken telt als het doel', () => {
+    const hard = [row(0, { target: { weightKg: 60, repsLow: 9, repsHigh: 11, rir: 1 }, rir: 1 }), row(1), row(2), row(3, { target: { weightKg: 60, repsLow: 9, repsHigh: 11, rir: 0, failure: true }, rir: 0 })];
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(ex(hard), id))).toEqual([true, false, false, true]);
+  });
+  it('advies: minder dan gevraagd of ruim boven het bereik vraagt bij elke set, ook zonder Afvinken telt als het doel', () => {
+    expect(asksReserve(ex(four({ reps: 8 })), 'r1')).toBe(true);
+    expect(asksReserve(ex([row(0), row(1), row(2), row(3, { reps: 13 })]), 'r3')).toBe(true);
+  });
+  it('advies: een set met een eigen RIR of nog niet afgevinkt geeft geen vraag', () => {
+    expect(asksReserve(ex(four({ reps: 8, rirAssumed: false })), 'r1')).toBe(false);
+    expect(asksReserve(ex(four({ reps: 8, done: false })), 'r1')).toBe(false);
   });
 });
 

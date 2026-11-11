@@ -122,7 +122,7 @@ export interface SkillReadiness {
 
 function testText(test: SkillTest): string {
   if (test.kind === 'hold') return `${test.sets} keer ${test.seconds} seconden`;
-  return `${test.sets} keer ${test.reps}${test.addedKg !== undefined ? ` met ${formatNumberNL(test.addedKg)} kg extra` : ''}`;
+  return `${test.sets} keer ${test.reps}${test.addedKg !== undefined ? ` met ${formatNumberNL(test.addedKg)} kg erbij` : ''}`;
 }
 
 export function skillReadinessFor(goal: SkillGoal, logs: readonly SessionLog[], today: string, progress: readonly SkillStepProgress[]): SkillReadiness | undefined {

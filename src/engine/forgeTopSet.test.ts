@@ -223,16 +223,18 @@ describe('Forge rekent mee bij een aangenomen RIR', () => {
 });
 
 describe('Hoeveel over? na het afvinken', () => {
-  it('na de topset en de laatste set, niet na een set ertussen of een set met een eigen RIR', () => {
+  it('stand Vaker vragen: na de topset en de laatste set, niet na een set ertussen of een set met een eigen RIR', () => {
     const [dl] = planWorkout([deadliftSlot], ctx());
     const ids = work(dl).map((r) => r.id);
-    const done = { ...dl, rows: dl.rows.map((r) => (r.kind === 'work' ? { ...r, done: true } : r)) };
-    expect(ids.map((id) => asksReserve(done, id))).toEqual([true, false, false, true]);
+    // Een bekende oefening (vijf trainingen): in de eerste drie vraagt Vaker vragen elke set, net als het advies.
+    const done = { ...dl, trainings: 5, rows: dl.rows.map((r) => (r.kind === 'work' ? { ...r, done: true } : r)) };
+    expect(ids.map((id) => asksReserve({ ...done, trainings: 1 }, id, false, 'vaker'))).toEqual([true, true, true, true]);
+    expect(ids.map((id) => asksReserve(done, id, false, 'vaker'))).toEqual([true, false, false, true]);
     // Nog niet afgevinkt: geen vraag.
-    expect(asksReserve(dl, ids[0])).toBe(false);
+    expect(asksReserve(dl, ids[0], false, 'vaker')).toBe(false);
     // Zelf gekozen: geen vraag meer.
     const chosen = { ...done, rows: done.rows.map((r) => (r.id === ids[0] ? { ...r, rir: 1, rirAssumed: false } : r)) };
-    expect(asksReserve(chosen, ids[0])).toBe(false);
+    expect(asksReserve(chosen, ids[0], false, 'vaker')).toBe(false);
     expect(QUICK_RIR.map(quickRirLabel)).toEqual(['0', '1', '2', '3+']);
   });
 
