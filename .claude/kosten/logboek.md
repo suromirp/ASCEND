@@ -298,3 +298,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Backlog opnieuw opgebouwd tegen main (alleen docs), aparte sessie, opus, 194k context, 6 min, $2,52, 0 herstelrondes; docs-werk had op sonnet gekund
 - 2026-11-11, Kaartbron voor Route voorstellen (onderzoek), Scout, opus (sportwetenschapper), 64k, 4 min, 0 herstelrondes
 - 2026-11-11, Ontwerp Info-blad, Cartographer, opus (ontwerper), 157k, 6 min, 0 herstelrondes
+- 2026-11-11, Kansen app (brainstorm), Cartographer, opus (ontwerper), 157k, 7 min, 0 herstelrondes
+- 2026-11-11, Kansen training (brainstorm), Scout, opus (sportwetenschapper), 185k, 7 min, 0 herstelrondes
