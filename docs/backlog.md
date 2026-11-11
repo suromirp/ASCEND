@@ -22,6 +22,7 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
 - GR5: coördinaten van de 36 etappes uit OpenStreetMap halen (eigenaar 11 november: mag zelf, geen GPX van hem nodig), met de naamsvermelding van OpenStreetMap, in `src/data/gr5Stages.ts`. Daarna de regel op je etappe en hutten via refuges.info.
 - Week: de band van een periode blijft tikbaar, ook als de periode meer dan twee weken voorbij is (eigenaar 11 november, advies gevolgd). Nagaan of dat al zo is; zo niet, de grens weghalen.
 - Weekterugblik met een losse training: "0 van 3 gedaan" klopt (een losse duurloop op een dag zonder geplande training telt niet als gedaan), maar leest tegenstrijdig naast "56 min". Voorstel: "0 van 3 gedaan, 1 los · 56 min" in WeekReview en weekHighlights (Sherpa Klein deel 1, 11 november). Opus.
+- De voorstelzin van het krachtblok noemt de knop "Blok activeren" in plaats van de vaste zin van de stemgids (regel 3); netter is de knop Akkoord in de wizard (Warden, 11 november). Klein.
 - Krachtscherm: setvinkjes 32 bij 32 px en "Toon vorige keer" 16 px hoog, onder de 44 px; op het trainingsscherm de tekstknop "Meer" 35 bij 19 px (Lookout, 11 november). Opus.
 - Wis startpunt tijdens een lopende zoektocht: de zoektocht schrijft daarna het exacte punt terug in de cache van heuvels. Vlak voor het wegschrijven opnieuw lezen (Warden, 11 november). Klein.
 - Kansen 11 november, door de eigenaar gekozen (alle met het advies; bronnen in `docs/visie/Kansen 11 november app.md` en `docs/onderzoek/Kansen 11 november training.md`):
@@ -34,7 +35,7 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
   - Vaste ijktocht elke zes tot acht weken als kompas voor de berg, inplannen via Akkoord. Planning, Fable.
   - De beenindex leert van je ochtendantwoorden (`learning.ts#indexChecks`), begrensd, veiligheidsregels nooit soepeler, met migratiestap. Fable.
   - Routes ook voor wandelen en rugzaktraining, met klimtempo. Na de twee route-bouwers. Opus, engine op Fable.
-- Info-blad bouwen volgens richting A van `docs/visie/Ontwerp Info-blad.md`, met het advies op alle vijf vragen (eigenaar 11 november: "alle punten vind ik goed"). In sporen: eerst blad Je horloge met de knop Horloge, dan de rijen in Week en op Vandaag, dan Uitleg opschonen, dan Datavelden bekijken naar Gidsen. Opus.
+- Info-blad, spoor 3 en 4 (spoor 1 en 2 live op 11 november): Uitleg opschonen (De stappen eruit, namen gelijk: "Meer over deze training" en de i), daarna Datavelden bekijken naar Gidsen. Plus van Warden: de rij Je horloge op Vandaag met de stand eronder zoals in Week; garmin in useWatchSheet zelf ophalen in plaats van buildWorkoutPlan in drie componenten. Opus.
 
 ## Rooster voor de bouwmomenten
 
@@ -52,6 +53,7 @@ Beantwoord op 11 november (eigenaar): APK 158, Precies, vanaf je deur en de data
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Je horloge (knop Horloge op het trainingsscherm, rij in Week en op Vandaag; workout en datavelden op één plek; besluiten `2026-11-11-info-blad-horloge.md` en `-spoor-2.md`).
 - Live op 11 november: Route voorstellen verfijnd (te korte lus bij veel punten dichtbij, melding zonder heuvels, startpunt preciezer, helling zonder hoogte telt niet mee; besluit `2026-11-11-route-verfijnen.md`).
 
 ## Groot
