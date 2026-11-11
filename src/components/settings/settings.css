@@ -155,6 +155,12 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-opt .ck { color: var(--color-action); }
 .st-opt[aria-checked="true"] .l { font-weight: 600; color: var(--color-action); }
 .st-opt[aria-checked="true"] { background: var(--chip-on); }
+/* Een keuze met een knop Luister ernaast (Geluid na de rust): de knop is minstens 44 bij 44 px. */
+.st-listen { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; }
+.st-listen + .st-listen::before { content: ''; position: absolute; top: 0; left: var(--s4); right: 0; height: 1px; background: var(--color-card-border); z-index: 1; }
+.st-listen .st-listen-btn { padding: 0 var(--s4) 0 var(--s2); }
+.st-listen:has(> .st-opt[aria-checked="true"]) { background: var(--chip-on); }
+.st-listen > .st-opt[aria-checked="true"] { background: transparent; }
 .st-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 var(--s2); border-radius: 10px; color: var(--color-action); background: color-mix(in srgb, var(--color-action) 12%, transparent); font-size: 12px; font-weight: 500; line-height: 1; }
 
 /* Knoppen in een blad */

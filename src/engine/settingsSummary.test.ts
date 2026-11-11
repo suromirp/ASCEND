@@ -145,7 +145,8 @@ describe('rowSummary: het geluid na de rust en het trillen', () => {
   it('bij alleen trillen kies je met het geluid het ritme: de rij blijft, met een feit eronder', () => {
     const r = rowSummary('forge-geluid', withForge({ restAlert: 'vibrate', restSound: 'boxing' }));
     expect(r.hidden).toBeFalsy();
-    expect(r.value).toBe('Boksbel');
+    // Boksbel van voor 11 november leest als Koebel.
+    expect(r.value).toBe('Koebel');
     expect(r.sub).toBe('Je voelt alleen het ritme');
   });
 
@@ -165,8 +166,8 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-schatting', facts()).value).toBe('Tot 20');
     expect(rowSummary('forge-rust', facts()).checked).toBe(true);
     expect(rowSummary('forge-signaal', facts()).value).toBe('Geluid en trillen');
-    expect(rowSummary('forge-geluid', facts()).value).toBe('Klokjes');
-    expect(rowSummary('forge-geluid', facts({ settings: { ...facts().settings, strengthModel: { restSound: 'whistle' } } })).value).toBe('Fluitje');
+    expect(rowSummary('forge-geluid', facts()).value).toBe('Koebel');
+    expect(rowSummary('forge-geluid', facts({ settings: { ...facts().settings, strengthModel: { restSound: 'lyre' } } })).value).toBe('Lier');
     expect(rowSummary('forge-scherm', facts()).checked).toBe(true);
     expect(rowSummary('forge-schijven', facts()).checked).toBe(true);
     expect(rowSummary('forge-1rm', facts()).checked).toBe(true);

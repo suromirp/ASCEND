@@ -149,7 +149,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Forge
   ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'standen-onthouden', 'tussengewichten', 'spotterrek'),
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-kent-je', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes', 'forge-uitleg-open'),
-  ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid'),
+  ...inSheet('bundel-rusttimer', 'forge-rust', 'forge-signaal', 'forge-geluid', 'forge-volume', 'forge-vooraf', 'forge-oefening-klank'),
   ...inSheet('bundel-rekenmodel', 'forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'),
   ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-soort', 'forge-doorvoeren', 'forge-schijven'),
   ...inSheet('bundel-toets', 'forge-naast', 'forge-sinds'),
@@ -303,7 +303,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.inApp], 'bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-stapvoorstel', 'forge-ijkset', 'forge-soort', 'forge-doorvoeren', 'forge-schijven', 'bundel-rusttimer', 'forge-rust'),
   ...rule([B.inApp, B.ladderRow], 'forge-netjes', 'forge-band'),
   ...rule([B.inApp, B.restAuto], 'forge-signaal'),
-  ...rule([B.inApp, B.restAuto, B.restAlert], 'forge-geluid'),
+  ...rule([B.inApp, B.restAuto, B.restAlert], 'forge-geluid', 'forge-volume', 'forge-vooraf', 'forge-oefening-klank'),
   ...rule([B.forge, B.mf], 'bundel-toets', 'forge-naast', 'forge-sinds'),
   ...rule([B.mf], 'forge-programma'),
   // Lichaam

@@ -45,4 +45,16 @@ describe('Forge-instellingen en de back-up', () => {
     expect(clean?.profiles?.[0].stackStepKg).toBe(5);
     expect(JSON.stringify(clean)).not.toContain('onzin');
   });
+
+  it('een oude back-up met een oud rustgeluid importeert en leest als de dichtstbijzijnde nieuwe klank (11 november)', async () => {
+    for (const [old, now] of [['gong', 'templebell'], ['boxing', 'cowbell'], ['chime', 'clearbell'], ['bell', 'clearbell'], ['whistle', 'clearbell'], ['beep', 'clearbell']] as const) {
+      const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+      envelope.payload.settings = { ...envelope.payload.settings, strengthModel: { restAlert: 'sound', restSound: old } };
+      const back = normalizeBackupToCurrentModel(envelope).settings?.strengthModel;
+      expect(back?.restAlert).toBe('sound');
+      expect(back?.restSound).toBe(now);
+      const resolved = resolveStrengthSettings(back);
+      expect([resolved.restVolume, resolved.restPreTick, resolved.restNextExercise]).toEqual(['normal', false, true]);
+    }
+  });
 });

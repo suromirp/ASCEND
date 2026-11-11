@@ -11,6 +11,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(WidgetBridgePlugin.class);
         // Een bestand aanbieden aan een andere app (src/integrations/fileSender.ts).
         registerPlugin(FileOpenPlugin.class);
+        // Andere audio even zachter terwijl de rustbel klinkt (src/integrations/deviceShell.ts).
+        registerPlugin(AudioFocusPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

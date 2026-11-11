@@ -9,6 +9,7 @@
 // React, geen browser.
 
 import type { RestAlert, RestSound } from './strengthSettings';
+import { readRestSound, type RestCue } from './restSounds';
 
 // Het vaste patroon van vroeger: drie duidelijke stoten, de laatste lang. Een
 // geluid dat hier geen eigen patroon heeft (of ontbreekt) houdt dit, en de
@@ -16,24 +17,40 @@ import type { RestAlert, RestSound } from './strengthSettings';
 export const REST_ALARM_PATTERN: readonly number[] = [250, 120, 250, 120, 400];
 
 const PATTERNS: Record<RestSound, readonly number[]> = {
-  // Drie zachte tonen omhoog, 160 ms uit elkaar, de laatste houdt aan.
-  chime: [90, 70, 90, 70, 260],
-  // Eén diepe, ronde toon.
-  bell: [450],
-  // De korte piepjes van eerst: vier, de laatste na een iets langere pauze.
-  beep: [150, 90, 150, 90, 150, 150, 220],
-  // Een ringbel, snel achter elkaar: drie snelle tikken.
-  boxing: [80, 90, 80, 90, 80],
-  // Een kort fluitje met triller: twee korte.
-  whistle: [140, 110, 140],
-  // Eén lage gong met lange uitklank: één lange.
-  gong: [900],
+  // Koebel: twee snelle tikken.
+  cowbell: [80, 90, 80],
+  // Pickel op rots: één droge klik.
+  pickaxe: [110],
+  // Cornu: één lange roep.
+  cornu: [700],
+  // Vikinghoorn: één lange, lage roep die uitklinkt.
+  vikinghorn: [900],
+  // Trommel: drie trage zware slagen.
+  drum: [160, 260, 160, 260, 220],
+  // Bronzen klokken: drie tonen.
+  bianzhong: [90, 140, 90, 140, 200],
+  // Hyōshigi: twee houten klappers.
+  hyoshigi: [80, 160, 80],
+  // Tempelbel: één diepe slag met lange uitklank.
+  templebell: [800],
+  // Heldere bel: twee korte hoge slagen.
+  clearbell: [90, 110, 90],
+  // Lier: één aangeslagen snaar.
+  lyre: [350],
 };
 
-// Het patroon bij een geluid; een onbekend of ontbrekend geluid houdt het vaste patroon.
+// Het patroon bij een geluid; een oude keuze leest als de nieuwe (engine/restSounds.ts), een onbekend
+// of ontbrekend geluid houdt het vaste patroon.
 export function restVibrationPattern(sound: RestSound | string | undefined): number[] {
-  const known = sound !== undefined && Object.prototype.hasOwnProperty.call(PATTERNS, sound);
-  return [...(known ? PATTERNS[sound as RestSound] : REST_ALARM_PATTERN)];
+  const known = readRestSound(sound);
+  return [...(known ? PATTERNS[known] : REST_ALARM_PATTERN)];
+}
+
+// Bij een volgende oefening: het patroon, een korte pauze en nog een keer, zoals de klank twee keer klinkt.
+export function restVibrationFor(sound: RestSound | string | undefined, cue: RestCue): number[] {
+  const one = restVibrationPattern(sound);
+  if (cue === 'pre') return [70];
+  return cue === 'exercise' ? [...one, 250, ...one] : one;
 }
 
 // Wat het signaal als de rust om is laat doen: geluid, trillen, allebei of niets.

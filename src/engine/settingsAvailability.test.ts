@@ -187,7 +187,7 @@ describe('adjustedRows', () => {
   });
 
   it('wijst de rij aan, ook als de instelling in het blad van een rij zit', () => {
-    const s = withSettings({ ambition: 'stevig', strengthModel: { restSound: 'bell' } }).settings;
+    const s = withSettings({ ambition: 'stevig', strengthModel: { restSound: 'lyre' } }).settings;
     const rows = adjustedRows(s);
     expect(rows.has('ambitie')).toBe(true);
     expect(rows.has('bundel-rusttimer')).toBe(true);

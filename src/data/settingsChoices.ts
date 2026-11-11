@@ -1,4 +1,5 @@
 import { DEFAULT_WATCH_MODEL_ID, WATCH_MODELS } from './watchModels';
+import type { RestSound, RestVolume } from '../engine/restSounds';
 // ASCEND: de keuzes in de instellingen, op één plek. Een keuze heeft een titel, één
 // regel erboven, het advies en per optie een naam, één regel eronder en soms
 // een kortere waarde voor in de rij. Het keuzeblad (ChoiceSheet) en de samenvatting
@@ -283,15 +284,30 @@ export const CHOICES = {
   rustgeluid: def({
     group: 'Forge',
     title: 'Geluid na de rust',
-    line: 'Tik om te horen. Trillen volgt het ritme.',
-    advice: 'chime' as 'chime' | 'bell' | 'beep' | 'boxing' | 'whistle' | 'gong',
+    line: 'Tik op Luister om te horen. Trillen volgt het ritme.',
+    advice: 'cowbell' as RestSound,
     options: [
-      { value: 'chime', label: 'Klokjes', note: 'Drie zachte tonen omhoog', short: 'Klokjes' },
-      { value: 'bell', label: 'Bel', note: 'Eén diepe, ronde toon', short: 'Bel' },
-      { value: 'beep', label: 'Piep', note: 'De korte piepjes van eerst', short: 'Piep' },
-      { value: 'boxing', label: 'Boksbel', note: 'Een korte ringbel, zoals bij een ronde', short: 'Boksbel' },
-      { value: 'whistle', label: 'Fluitje', note: 'Een kort sportfluitje met triller', short: 'Fluitje' },
-      { value: 'gong', label: 'Gong', note: 'Eén lage, rustige gong met lange uitklank', short: 'Gong' },
+      { value: 'cowbell', label: 'Koebel', note: 'Twee korte heldere tikken die door muziek snijden', short: 'Koebel' },
+      { value: 'pickaxe', label: 'Pickel op rots', note: 'Eén droge metalen klik', short: 'Pickel op rots' },
+      { value: 'cornu', label: 'Cornu', note: 'Een korte roep op de bronzen hoorn', short: 'Cornu' },
+      { value: 'vikinghorn', label: 'Vikinghoorn', note: 'Eén lage, ruwe roep die rustig uitklinkt', short: 'Vikinghoorn' },
+      { value: 'drum', label: 'Trommel', note: 'Drie trage, zware slagen', short: 'Trommel' },
+      { value: 'bianzhong', label: 'Bronzen klokken', note: 'Drie klokken in de vijftoonsladder', short: 'Bronzen klokken' },
+      { value: 'hyoshigi', label: 'Hyōshigi', note: 'Twee houten klappers', short: 'Hyōshigi' },
+      { value: 'templebell', label: 'Tempelbel', note: 'Eén diepe slag met lange uitklank', short: 'Tempelbel' },
+      { value: 'clearbell', label: 'Heldere bel', note: 'Twee korte hoge slagen', short: 'Heldere bel' },
+      { value: 'lyre', label: 'Lier', note: 'Eén aangeslagen snaar', short: 'Lier' },
+    ],
+  }),
+  rustvolume: def({
+    group: 'Forge',
+    title: 'Volume van de rustbel',
+    line: 'Een vaste grens houdt elke bel onder dezelfde piek. In de Android-app gaat je muziek even zachter; in de browser kan dat niet.',
+    advice: 'normal' as RestVolume,
+    options: [
+      { value: 'soft', label: 'Zacht', note: 'Voor stille muziek of zonder koptelefoon', short: 'Zacht' },
+      { value: 'normal', label: 'Normaal', note: 'Hoorbaar door muziek, niet schel', short: 'Normaal' },
+      { value: 'clear', label: 'Duidelijk', note: 'Voller, voor harde muziek; de piek blijft gelijk', short: 'Duidelijk' },
     ],
   }),
   gewichtEigen: def({
