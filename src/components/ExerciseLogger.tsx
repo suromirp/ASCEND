@@ -40,6 +40,7 @@ import { clearDraft, draftKey, draftNumber, loadDraft, saveDraft } from '../util
 import { ForgeWorkout } from './forge/ForgeWorkout';
 import { Icon } from './icons';
 import { TextButton } from './TextButton';
+import { fuelCardLines, fuelForTraining, fuelOn } from '../engine/fuelOnTheGo';
 
 const REST_TIMER_SECONDS = 90;
 
@@ -117,6 +118,9 @@ function GeneralLogger({
     if (!scheduledDate) return durationForVariant(template, v);
     return resolveVariantDuration(template, v, scheduledDate, program);
   }
+  // Eten onderweg (engine/fuelOnTheGo.ts): de minuten van de geplande sessie, zoals De avond ervoor ze
+  // leest, en anders die van de gekozen versie.
+  const fuel = fuelOn(settings) ? fuelForTraining(template, variant === 'full' ? plannedSession?.plannedMinutes ?? resolveDuration('full') : resolveDuration(variant)) : undefined;
 
   // Leeg mag: leeg of 0 is "geen duur" (utils: engine/inputLimits.ts).
   const [duration, setDuration] = useState<number | ''>(() => draftNumber(restored?.duration, resolveDuration(variant)));
@@ -422,6 +426,17 @@ function GeneralLogger({
             <Eyebrow>{template.type === 'recovery' ? 'Wat doe je vandaag?' : 'Waar train je?'}</Eyebrow>
             <div className="mt-3">
               <ModalityChoice templateId={template.id} selectedKey={modalityKey} onSelect={setModalityKey} enabledSports={settings.enabledSports} label={template.type === 'recovery' ? 'Wat doe je vandaag?' : 'Waar train je?'} />
+            </div>
+          </Card>
+        )}
+
+        {!restChosen && !quickComplete && fuel && (
+          <Card className="mt-4">
+            <Eyebrow>Eten onderweg</Eyebrow>
+            <div className="mt-2 flex flex-col gap-1">
+              {fuelCardLines(fuel).map((line, i) => (
+                <p key={line} className={i === 0 ? 'text-sm leading-relaxed' : 'text-xs leading-relaxed'} style={{ color: i === 0 ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{line}</p>
+              ))}
             </div>
           </Card>
         )}

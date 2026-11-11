@@ -206,7 +206,7 @@ export function SessionActionSheet({
 
   const info = guide ? <InfoButton onClick={() => setShowGuide(true)} label="Meer over deze training" /> : undefined;
   const guideSheet = showGuide && guide
-    ? <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={session.scheduledDate} plannedMinutes={session.plannedMinutes} dayLabel={guideDayLabel(template, session.scheduledDate)} onClose={() => setShowGuide(false)} />
+    ? <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={session.scheduledDate} dayLabel={guideDayLabel(template, session.scheduledDate)} onClose={() => setShowGuide(false)} />
     : null;
   const eyebrow = dayLabel(session.scheduledDate, today);
 

@@ -232,7 +232,7 @@ export function TodayMissionCard({
           onLeave={() => undefined}
         />
       )}
-      {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} plannedMinutes={session?.plannedMinutes} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
+      {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
 
       {quickComplete ? (
         <StrengthDoneElsewhere fullDuration={fullDuration} legs={isLegHeavyTemplate(template)} onDone={(feel, minutes, extra) => onStart('full', feel, minutes, extra)} />

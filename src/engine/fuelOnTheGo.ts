@@ -158,35 +158,34 @@ export function fuelEveningLine(est: FuelEstimate): string {
   return `Eten mee: ${gramsText(est.grams)}, ${countText(countFor(est.grams, item), item)} of bananen.`;
 }
 
-// De regel voor een tochtdag op De avond ervoor.
-// "Eten voor de dag: 180 tot 240 g koolhydraten, vooral echt eten."
-export function trekEveningLine(est: TrekFuel): string {
-  return `Eten voor de dag: ${gramsText(est.grams)}, vooral echt eten.`;
+// Waarop een tochtdag rust, kort: de looptijd van de etappe, of de aanname als die er niet is.
+function trekBasis(est: TrekFuel): string {
+  const hours = (est.minutes / 60).toLocaleString('nl-NL', { maximumFractionDigits: 1 });
+  return est.hoursAssumed ? `bij een aanname van ${hours} uur lopen` : `bij ${hours} uur lopen`;
 }
 
-// De korte vorm voor in een lijst: "eten ± 150 tot 200 g".
-export function fuelShort(est: FuelEstimate): string {
-  return `eten ± ${range(est.grams)} g`;
+// De regel voor een tochtdag op De avond ervoor. Een tocht heeft geen looptijd, dus de aanname staat erin.
+// "Eten voor de dag: 180 tot 240 g koolhydraten, bij een aanname van 6 uur lopen."
+export function trekEveningLine(est: TrekFuel): string {
+  return `Eten voor de dag: ${gramsText(est.grams)}, ${trekBasis(est)}.`;
 }
 
 export const PRACTICE_LINE = 'Oefen het onderweg op lange trainingen: je darmen wennen eraan, en op de dag zelf weet je wat je verdraagt.';
+const PRACTICE_SHORT = 'Oefen het onderweg op lange trainingen.';
 export const NOT_MEDICAL = 'Een indicatie, geen medisch advies en geen voorschrift.';
 
-// De uitleg bij een training: wat je meeneemt, waarop het rust, en hoe je het verdeelt.
-export function fuelGuideLines(est: FuelEstimate): string[] {
-  const perHour = `${range(est.perHour)} g per uur`;
-  const gel = FUEL_ITEMS.gel;
-  const lines: string[] = [];
-  lines.push(`Ongeveer ${gramsText(est.grams)} voor ${est.minutes} min: ${perHour}.`);
+// Het blok op het trainingsscherm: het bereik met een paar stuks, en de oefenzin. Kort, want de
+// uitleg van de training is geen plek voor praktische dingen (docs/visie/Ontwerp Info-blad.md).
+// Lopen: "60 tot 90 g koolhydraten voor 120 min: 2 tot 4 gels, of per gel een banaan, krentenbol of vijf dadels."
+// Wandelen: "120 tot 160 g koolhydraten voor 240 min: 4 tot 5 krentenbollen, of bananen, boterhammen of dadels."
+export function fuelCardLines(est: FuelEstimate): string[] {
+  const head = `${gramsText(est.grams)} voor ${est.minutes} min`;
   if (est.activity === 'run') {
-    lines.push(`Dat is ${countText(countFor(est.grams, gel), gel)} van ${gel.grams}\u00a0g. In plaats van een gel: een banaan (${FUEL_ITEMS.banaan.grams}\u00a0g), een krentenbol (${FUEL_ITEMS.krentenbol.grams}\u00a0g) of vijf dadels (${FUEL_ITEMS.dadels.grams}\u00a0g).`);
-    lines.push('Verdeel het over de training, vanaf ongeveer het eerste half uur, met een slok water erbij.');
-  } else {
-    lines.push(realFoodText(est.grams));
-    lines.push('Eet elke 45 tot 60 minuten iets, niet alles aan het eind.');
+    const gel = FUEL_ITEMS.gel;
+    return [`${head}: ${countText(countFor(est.grams, gel), gel)}, of per gel een banaan, krentenbol of vijf dadels.`, PRACTICE_SHORT];
   }
-  lines.push(PRACTICE_LINE);
-  return lines;
+  const bol = FUEL_ITEMS.krentenbol;
+  return [`${head}: ${countText(countFor(est.grams, bol), bol)}, of bananen, boterhammen of dadels.`, PRACTICE_SHORT];
 }
 
 function realFoodText(grams: [number, number]): string {
@@ -198,21 +197,17 @@ function realFoodText(grams: [number, number]): string {
 
 // Bij een tocht of etappe: per dag, echt eten voorop, en de oefenzin. Het water staat er apart naast.
 export function trekFuelLines(est: TrekFuel): string[] {
-  const hours = (est.minutes / 60).toLocaleString('nl-NL', { maximumFractionDigits: 1 });
-  const basis = est.hoursAssumed
-    ? `bij ongeveer ${hours} uur lopen (een aanname; de tocht heeft geen looptijd)`
-    : `bij ${hours} uur lopen`;
-  const lines = [`Per dag ongeveer ${gramsText(est.grams)}, ${basis}: ${range(est.perHour)} g per uur.`];
+  const lines = [`Per dag ongeveer ${gramsText(est.grams)}, ${trekBasis(est)}: ${range(est.perHour)} g per uur.`];
   lines.push(realFoodText(est.grams));
   if (est.days > 1) lines.push(`Voor ${est.days} dagen: ${gramsText([est.grams[0] * est.days, est.grams[1] * est.days])}, verdeeld over de dagen. Een ontbijt en avondeten komen erbij.`);
   lines.push(PRACTICE_LINE);
   return lines;
 }
 
-// Eén regel voor een tocht op de kaart Tochten, met de oefenzin kort erachter.
-// "Eten per dag ongeveer 180 tot 240 g koolhydraten, vooral echt eten. Oefen het onderweg op lange trainingen."
+// Eén regel voor een tocht op de kaart Tochten, met de aanname en de oefenzin kort erachter.
+// "Eten per dag ongeveer 180 tot 240 g koolhydraten bij een aanname van 6 uur lopen, vooral echt eten. Oefen het onderweg op lange trainingen."
 export function trekFuelSummary(est: TrekFuel): string {
-  return `Eten per dag ongeveer ${gramsText(est.grams)}, vooral echt eten. Oefen het onderweg op lange trainingen.`;
+  return `Eten per dag ongeveer ${gramsText(est.grams)} ${trekBasis(est)}, vooral echt eten. ${PRACTICE_SHORT}`;
 }
 
 // Een tocht uit Vrij en vakantie: per dag, met de aanname van zes uur lopen (een tocht kent geen looptijd).

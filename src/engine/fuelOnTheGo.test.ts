@@ -19,7 +19,7 @@ import {
   fuelForTraining,
   fuelForTrekDay,
   fuelForTrekPeriod,
-  fuelGuideLines,
+  fuelCardLines,
   fuelOn,
   trekEveningLine,
   trekFuelLines,
@@ -69,10 +69,11 @@ describe('de voorbeelden (nagemaakt)', () => {
     const est = fuelForTraining(LONG_RUN, 120)!;
     expect(est.grams).toEqual([60, 90]);
     expect(fuelEveningLine(est)).toBe('Eten mee: 60 tot 90 g koolhydraten, 2 tot 4 gels of bananen.');
-    const lines = fuelGuideLines(est);
-    expect(lines[0]).toBe('Ongeveer 60 tot 90 g koolhydraten voor 120 min: 30 tot 45 g per uur.');
-    expect(lines[1]).toContain('2 tot 4 gels van 25\u00a0g');
-    expect(lines).toContain(PRACTICE_LINE);
+    // Het blok op het trainingsscherm: bereik met een paar stuks, en de oefenzin. Kort.
+    expect(fuelCardLines(est)).toEqual([
+      '60 tot 90 g koolhydraten voor 120 min: 2 tot 4 gels, of per gel een banaan, krentenbol of vijf dadels.',
+      'Oefen het onderweg op lange trainingen.',
+    ]);
   });
   it('een tempoloop rekent hoger dan een rustige', () => {
     expect(fuelForTraining(TEMPO, 90)!.perHour).toEqual([45, 60]);
@@ -82,7 +83,8 @@ describe('de voorbeelden (nagemaakt)', () => {
     expect(est.perHour).toEqual([30, 40]);
     expect(est.grams).toEqual([120, 160]);
     expect(fuelEveningLine(est)).toBe('Eten mee: 120 tot 160 g koolhydraten, 4 tot 5 krentenbollen of bananen.');
-    expect(fuelGuideLines(est).some((l) => /gel/.test(l))).toBe(false);
+    expect(fuelCardLines(est)[0]).toBe('120 tot 160 g koolhydraten voor 240 min: 4 tot 5 krentenbollen, of bananen, boterhammen of dadels.');
+    expect(fuelCardLines(est).some((l: string) => /gel/.test(l))).toBe(false);
   });
   it('een GR5-etappe van 6 uur 10, met water ernaast en niet dubbel', () => {
     const stage = { section: 1 as const, minutes: 370 };
@@ -107,10 +109,12 @@ describe('een tocht', () => {
     expect(est.minutes).toBe(TREK_DAY_HOURS * 60);
     expect(est.grams).toEqual([180, 240]);
     const lines = trekFuelLines(est);
-    expect(lines[0]).toContain('een aanname');
+    expect(lines[0]).toBe('Per dag ongeveer 180 tot 240 g koolhydraten, bij een aanname van 6 uur lopen: 30 tot 40 g per uur.');
+    // De aanname staat overal waar het getal staat: in De avond ervoor, op de kaart Tochten en in de uitleg.
+    expect([trekEveningLine(est), trekFuelSummary(est), lines[0]].every((l) => l.includes('aanname van 6 uur'))).toBe(true);
     expect(lines).toContain('Voor 3 dagen: 540 tot 720 g koolhydraten, verdeeld over de dagen. Een ontbijt en avondeten komen erbij.');
-    expect(trekFuelSummary(est)).toBe('Eten per dag ongeveer 180 tot 240 g koolhydraten, vooral echt eten. Oefen het onderweg op lange trainingen.');
-    expect(trekEveningLine(est)).toBe('Eten voor de dag: 180 tot 240 g koolhydraten, vooral echt eten.');
+    expect(trekFuelSummary(est)).toBe('Eten per dag ongeveer 180 tot 240 g koolhydraten bij een aanname van 6 uur lopen, vooral echt eten. Oefen het onderweg op lange trainingen.');
+    expect(trekEveningLine(est)).toBe('Eten voor de dag: 180 tot 240 g koolhydraten, bij een aanname van 6 uur lopen.');
   });
   it('alleen een tocht, geen vrije dagen', () => {
     expect(fuelForTrekPeriod({ kind: 'free_days', startDate: '2026-11-20', endDate: '2026-11-22' })).toBeUndefined();
@@ -134,8 +138,8 @@ describe('de stuks', () => {
 describe('de teksten', () => {
   it('geen gedachtestreepjes, geen medisch advies', () => {
     const all = [
-      ...fuelGuideLines(fuelForTraining(LONG_RUN, 120)!),
-      ...fuelGuideLines(fuelForTraining(RUCK, 240)!),
+      ...fuelCardLines(fuelForTraining(LONG_RUN, 120)!),
+      ...fuelCardLines(fuelForTraining(RUCK, 240)!),
       ...trekFuelLines(fuelForTrekDay(undefined, 4)!),
       fuelEveningLine(fuelForTraining(LONG_RUN, 120)!),
       trekEveningLine(fuelForTrekDay()!),
@@ -262,9 +266,9 @@ describe('De avond ervoor', () => {
   });
   it('een tochtdag: rugzak en eten voor de dag; zonder gewicht toch een kaart met het eten', () => {
     const trek: LeavePeriod[] = [{ id: 't', kind: 'trek', startDate: TOMORROW, endDate: '2026-11-14', trek: { name: 'Veluwetocht', packKg: 11 } } as LeavePeriod];
-    expect(eveningBefore(input({ leavePeriods: trek }))!.lines).toEqual(['Rugzak 11 kg.', 'Eten voor de dag: 180 tot 240 g koolhydraten, vooral echt eten.']);
+    expect(eveningBefore(input({ leavePeriods: trek }))!.lines).toEqual(['Rugzak 11 kg.', 'Eten voor de dag: 180 tot 240 g koolhydraten, bij een aanname van 6 uur lopen.']);
     const bare: LeavePeriod[] = [{ id: 't', kind: 'trek', startDate: TOMORROW, endDate: '2026-11-14', trek: { name: 'Veluwetocht' } } as LeavePeriod];
-    expect(eveningBefore(input({ leavePeriods: bare }))!.lines).toEqual(['Eten voor de dag: 180 tot 240 g koolhydraten, vooral echt eten.']);
+    expect(eveningBefore(input({ leavePeriods: bare }))!.lines).toEqual(['Eten voor de dag: 180 tot 240 g koolhydraten, bij een aanname van 6 uur lopen.']);
     expect(eveningBefore(input({ leavePeriods: bare, fuelOn: false }))).toBeUndefined();
   });
 });

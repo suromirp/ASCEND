@@ -10,6 +10,7 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - `src/engine/goalReadinessFor.ts#goalReadinessFor` welke berekening bij welk soort doel hoort, op één plek
 - `src/engine/gr5Readiness.ts#computeMainGoalReadiness` het ene percentage voor een tocht
 - `src/engine/raceReadiness.ts` snelheid als hoofdmeter bij een race met doeltijd
+- `src/engine/fuelOnTheGo.ts#fuelFor` Eten onderweg: gram koolhydraten vanaf 90 minuten lopen of wandelen en per tochtdag; alleen tekst, geen registratie, geen gewicht (`docs/beslissingen/2026-11-11-eten-onderweg.md`)
 - `src/engine/racePaces.ts#raceOutlook` de ene berekening voor "past de doeltijd", ook voor TARGET-TIME
 - `src/engine/onCourse.ts#recentAdherence` dezelfde telling voor de coach en Ritme
 - `src/engine/yourWeek.ts#yourWeek` Je week zonder doel, één ring
@@ -40,5 +41,4 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - Tekstkaart (`npm run kaart:vergelijk`) als de tab of een kaart verandert.
 
 ## Lees verder
-- `docs/architectuur/doelen.md`, `docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md`, `docs/beslissingen/2026-10-22-gr5-voortgang-een-percentage.md`
-- `docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid.md`, `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`
+- `docs/architectuur/doelen.md`, `docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md`, `docs/beslissingen/2026-10-22-gr5-voortgang-een-percentage.md`, `docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid.md`, `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`
