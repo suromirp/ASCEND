@@ -793,6 +793,17 @@ export const CHOICES = {
       { value: 'none', label: 'Geen', note: 'Alleen de lussen en je plek op een effen vlak', short: 'Geen' },
     ],
   }),
+  routeLuchtfoto: def({
+    group: 'Vandaag en meldingen',
+    title: 'Kaart of luchtfoto',
+    line: 'Wat er onder je lussen ligt; je wisselt ook rechtsboven op de kaart zelf.',
+    advice: 'map' as 'map' | 'photo',
+    help: 'routeLuchtfoto',
+    options: [
+      { value: 'map', label: 'Kaart', note: 'Straten en paden, in de ondergrond die je bij Ondergrond van de kaart koos', short: 'Kaart' },
+      { value: 'photo', label: 'Luchtfoto', note: 'Bos, akker, rots en water zoals ze van boven zijn', short: 'Luchtfoto' },
+    ],
+  }),
   routeZoeken: def({
     group: 'Vandaag en meldingen',
     title: 'Lus zoeken',

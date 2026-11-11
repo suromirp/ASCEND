@@ -5,6 +5,8 @@
 // vetgedrukt begin ("Altijd: ...", "Waarom: ..."). Zo is lange uitleg toch snel
 // te lezen. Het begin van een punt is kort; de dubbele punt komt van de weergave.
 
+import { AERIAL_CACHE } from '../integrations/aerialImagery';
+
 export interface SettingsHelp {
   title: string;
   lead: string;
@@ -839,7 +841,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Simpel', text: 'dezelfde helling op en af tot de hoogtemeters er zijn. Bij een vlakke training heen en terug over hetzelfde pad.' },
       { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
       { head: 'Naar je horloge', text: 'met Naar Garmin Connect kies je de app van je horloge en sla je de lus op als koers; anders download je het GPX-bestand.' },
-      { head: 'Wat de deur uit gaat', text: 'standaard je plek van nu, precies, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS), en op ongeveer 100 m naar OpenStreetMap voor heuvels en paden; de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Bij Startpunt van je lus kies je ook een vast punt, of Ongeveer: dan gaat alleen je plek, afgerond op ongeveer een kilometer, de deur uit. Geen naam, geen adres. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. De route wordt niet bewaard.' },
+      { head: 'Wat de deur uit gaat', text: 'standaard je plek van nu, precies, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS), en op ongeveer 100 m naar OpenStreetMap voor heuvels en paden; de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Bij Startpunt van je lus kies je ook een vast punt, of Ongeveer: dan gaat alleen je plek, afgerond op ongeveer een kilometer, de deur uit. Geen naam, geen adres. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap; met Luchtfoto bij PDOK, IGN of EOX. De route wordt niet bewaard.' },
     ],
   },
   routeKaart: {
@@ -850,6 +852,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Licht', text: 'dezelfde kaart in lichte kleuren.' },
       { head: 'Geen', text: 'alleen de lussen en je plek op een effen vlak. Er worden geen kaarttegels opgehaald.' },
       { head: 'Valt de kaart weg', text: 'dan neemt ASCEND na ongeveer zes seconden de kaart van OpenStreetMap, en anders het effen vlak. Tegels worden nooit vooraf opgehaald of door ASCEND bewaard.' },
+    ],
+  },
+  routeLuchtfoto: {
+    title: 'Kaart of luchtfoto',
+    lead: 'Rechtsboven op de kaart in de Briefing en het blad Route wissel je tussen Kaart en Luchtfoto. ASCEND onthoudt wat je het laatst koos. Het advies is Kaart: daarop zie je paden en straten het best.',
+    points: [
+      { head: 'Waar de luchtfoto vandaan komt', text: 'in Nederland van PDOK (25 cm), in Frankrijk van IGN, en elders of over een grens van Sentinel-2 cloudless van EOX (10 m, waziger). Eén bron per kaart, gekozen op wat er in beeld staat, zodat de foto nooit half wit is.' },
+      { head: 'Wat de deur uit gaat', text: 'net als bij de kaart: tegels rond wat er in beeld staat, dus rond je lus en je plek. Geen naam, geen sleutel. Bij Ondergrond Geen haalt de kaart niets op en staat er geen schakelaar.' },
+      { head: 'Laadt hij niet', text: 'dan staat binnen zes seconden de kaart er, met één regel. Een tik op Luchtfoto probeert het opnieuw.' },
+      { head: 'Zonder netwerk', text: `tegels die je eerder zag bewaart de app hoogstens ${AERIAL_CACHE.maxAgeDays} dagen en hoogstens ${AERIAL_CACHE.maxEntries} per bron. Er wordt nooit vooraf iets opgehaald.` },
     ],
   },
   routeZoeken: {

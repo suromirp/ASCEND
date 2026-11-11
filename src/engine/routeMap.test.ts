@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   attributionFor, boundsOf, cameraDuration, dotFeatures, MAP_TOKENS, nextStage, overlayLayers, overlayColors, paintOpenFreeMap,
-  mapLegendLine, plainStyle, rasterStyle, readMapColors, resolveMapBase, ROUTE_HIT_LAYER, ROUTE_HIT_WIDTH, routeFeatures, stagesFor, type MapColors, type StyleSpec,
+  aerialStyle, mapLegendLine, photoFallbackLine, photoOffered, plainStyle, resolveMapPhoto, rasterStyle, readMapColors, resolveMapBase, ROUTE_HIT_LAYER, ROUTE_HIT_WIDTH, routeFeatures, stagesFor, type MapColors, type StyleSpec,
 } from './routeMap';
+import { AERIAL_SOURCES } from '../integrations/aerialImagery';
 
 // Nagemaakte punten bij het Drielandenpunt (een openbare plek), nooit een echte plek van de eigenaar.
 const A = { lat: 50.7548, lon: 6.0207 };
@@ -183,3 +184,47 @@ describe('de regel boven de kaart', () => {
   });
 });
 
+
+describe('Kaart of Luchtfoto', () => {
+  const pdok = AERIAL_SOURCES.pdok;
+  const overlay = { routes: routeFeatures([{ style: 'adventure', points: [A, B] }], 'adventure'), dots: dotFeatures({ start: A }) };
+
+  it('de trap: eerst de luchtfoto, dan dezelfde stappen als Kaart; zonder netwerk de luchtfoto (cache) en dan het effen vlak', () => {
+    expect(stagesFor('dark', true, true)).toEqual(['aerial', 'vector', 'raster', 'plain']);
+    expect(stagesFor('light', true, true)).toEqual(['aerial', 'vector', 'raster', 'plain']);
+    expect(stagesFor('dark', false, true)).toEqual(['aerial', 'plain']);
+    expect(stagesFor('none', true, true)).toEqual(['plain']);
+    expect(stagesFor('dark', true)).toEqual(['vector', 'raster', 'plain']);
+    expect(photoOffered('none')).toBe(false);
+    expect(photoOffered('light')).toBe(true);
+  });
+
+  it('een oude back-up zonder het veld, of onzin: Kaart', () => {
+    expect(resolveMapPhoto(undefined)).toBe('map');
+    expect(resolveMapPhoto('satelliet')).toBe('map');
+    expect(resolveMapPhoto('photo')).toBe('photo');
+  });
+
+  it('de stijl: één rasterbron met eigen maxzoom, grenzen en naamsvermelding; de lus mint op een donkere rand, ook bij Licht', () => {
+    const s = aerialStyle(colors, pdok, overlay);
+    const src = s.sources['ascend-aerial'] as { tiles: string[]; maxzoom: number; bounds: number[]; attribution: string };
+    expect(src.tiles).toEqual([pdok.tiles]);
+    expect(src.maxzoom).toBe(19);
+    expect(src.bounds).toEqual(pdok.bounds);
+    expect(src.attribution).toBe(pdok.attribution);
+    const chosen = s.layers.find((l) => l.id === 'ascend-route-chosen') as { paint: Record<string, string> };
+    const casing = s.layers.find((l) => l.id === 'ascend-route-casing') as { paint: Record<string, string> };
+    expect(chosen.paint['line-color']).toBe(colors.action);
+    expect(casing.paint['line-color']).toBe(colors.bg);
+    expect(overlayColors(colors, 'light', 'aerial').casing).toBe(colors.bg);
+    expect(JSON.stringify(s)).not.toMatch(/#[0-9a-f]{3,6}\b|rgba?\(/i);
+  });
+
+  it('de naamsvermelding en de regel bij terugvallen', () => {
+    expect(attributionFor('aerial', pdok)).toBe(pdok.attribution);
+    expect(attributionFor('aerial')).toBe('');
+    expect(photoFallbackLine(false, true)).toBe('');
+    expect(photoFallbackLine(true, true)).toBe('De luchtfoto laadt niet. Je ziet de kaart.');
+    expect(photoFallbackLine(true, false)).toContain('Zonder netwerk');
+  });
+});

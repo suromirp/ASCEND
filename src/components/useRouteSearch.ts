@@ -24,7 +24,7 @@ import { loadMapLibre } from '../integrations/mapLibre';
 import { routeSender } from '../storage/routeSend';
 import type { FileSender } from '../integrations/fileSender';
 import { withTimeout } from '../utils/withTimeout';
-import { resolveMapBase, type MapBase, type MapRoute } from '../engine/routeMap';
+import { resolveMapBase, resolveMapPhoto, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { routeSheetParts, routeSheetStage, type RouteSheetPart, type RouteSheetStage } from '../engine/routeSheet';
 
 const CONSENT_LIMIT_MS = 3000;
@@ -55,6 +55,9 @@ export interface RouteSearchModel {
   mapRoutes: MapRoute[];
   mapStartPoint: RoutePoint | undefined;
   base: MapBase;
+  // Kaart of Luchtfoto (instelling Kaart of luchtfoto); setPhoto bewaart de keuze van de schakelaar op de kaart.
+  photo: MapPhoto;
+  setPhoto: (v: MapPhoto) => void;
   hereMode: boolean;
   noMap: boolean;
   markNoMap: () => void;
@@ -274,6 +277,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     mapRoutes,
     mapStartPoint,
     base: resolveMapBase(settings.routeMapBase),
+    photo: resolveMapPhoto(settings.routeMapPhoto),
+    setPhoto: (v) => void updateSettings({ routeMapPhoto: v }).catch(() => undefined),
     hereMode,
     noMap: noMapKey === key,
     markNoMap: () => setNoMapKey(key),

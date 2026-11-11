@@ -357,6 +357,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeMapBase;
     skipped.n++;
   }
+  // Kaart of luchtfoto: iets anders valt weg en dan geldt het advies (Kaart).
+  if ('routeMapPhoto' in s && s.routeMapPhoto !== 'map' && s.routeMapPhoto !== 'photo') {
+    delete s.routeMapPhoto;
+    skipped.n++;
+  }
   // Vast punt blijft Vast punt: het was je eigen keuze. Staat er op dit toestel geen punt, dan vraagt
   // het paneel eerst om een punt (besluit 2026-11-11-route-kaart-2.md; je plek is geen ontwerpgrens meer).
   if ('routeStartPoint' in s) {

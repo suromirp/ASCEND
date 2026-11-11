@@ -183,6 +183,10 @@ export interface AppSettings {
   // What lies under the loops on the route map (engine/routeMap.ts): a dark street map in the
   // app's colours ('dark', absent = dark), a light one ('light'), or nothing ('none': no tiles).
   routeMapBase?: 'dark' | 'light' | 'none';
+  // Kaart of luchtfoto onder de lussen (engine/routeMap.ts#resolveMapPhoto): de kaart ('map', afwezig
+  // = map, het advies) of een luchtfoto ('photo'; PDOK, IGN of EOX, integrations/aerialImagery.ts).
+  // Optioneel: een oude back-up zonder dit veld leest als Kaart, dus geen migratie.
+  routeMapPhoto?: 'map' | 'photo';
   // Lus zoeken in de Briefing: bij het openen (vandaag en morgen; het advies) of pas na een tik.
   // Afwezig is het advies (engine/briefing.ts#resolveRouteSearch).
   routeSearch?: 'open' | 'tap';
