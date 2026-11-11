@@ -32,7 +32,8 @@ import { progressionTarget } from './programLayout';
 import { templateSport } from './sports';
 import { sweatRateAt } from './sweat';
 import { litersText } from './stageWater';
-import { routeTarget, targetText, wantsRoute } from './routeTarget';
+import { routeTarget, targetText } from './routeTarget';
+import { routeShownFor } from './trainingPlace';
 import { fuelEveningLine, fuelForTraining, fuelForTrekDay, trekEveningLine } from './fuelOnTheGo';
 
 // ---- de instelling ---------------------------------------------------------------------------
@@ -118,6 +119,9 @@ export interface EveningInput {
   easyPace?: PaceRange;
   // Instelling Eten onderweg (engine/fuelOnTheGo.ts). Afwezig is hier uit; de hook geeft de instelling door.
   fuelOn?: boolean;
+  // De bewaarde keuzes Waar train je? per geplande training (storage/trainingPlace.ts), ongelezen.
+  // Afwezig: de standaard. Bij Loopband of binnen geen route (engine/trainingPlace.ts#routeShownFor).
+  trainingPlaces?: Record<string, unknown>;
 }
 
 export interface EveningTrainingView {
@@ -236,7 +240,7 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   if (watch && watchKind === 'sent') lines.push(watch);
 
   // 8. De route, als Route voorstellen aan staat. Een route wordt niet bewaard: je vraagt hem op bij de training.
-  if (input.routeOn && wantsRoute(template)) {
+  if (input.routeOn && routeShownFor(template, input.trainingPlaces?.[session.id])) {
     const target = routeTarget({ template, date, program: input.program, logs: input.logs, testPace: input.easyPace });
     lines.push(`Route ${targetText(target)}: vraag een lus op bij de training.`);
   }

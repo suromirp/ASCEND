@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { MetaRepo, wipeAllData } from './database';
 import { buildBackupEnvelope } from './backupExport';
-import { TRAINING_PLACE_KEY, getTrainingPlace, saveTrainingPlace } from './trainingPlace';
+import { TRAINING_PLACE_KEY, getTrainingPlace, getTrainingPlaces, onTrainingPlaceChange, peekTrainingPlaces, resetTrainingPlaceCache, saveTrainingPlace } from './trainingPlace';
 
 beforeEach(async () => {
   await wipeAllData();
+  resetTrainingPlaceCache();
 });
 
 describe('de keuze Waar train je? op dit toestel', () => {
@@ -31,5 +32,21 @@ describe('de keuze Waar train je? op dit toestel', () => {
     const backup = JSON.stringify(await buildBackupEnvelope());
     expect(backup).not.toContain(TRAINING_PLACE_KEY);
     expect(backup).not.toContain('run_treadmill');
+  });
+});
+
+describe('andere schermen volgen een nieuwe keuze', () => {
+  it('voor het lezen is er niets; na een tik weten ze het meteen, ook voor het schrijven klaar is', async () => {
+    expect(peekTrainingPlaces()).toBeUndefined();
+    let heard = 0;
+    const off = onTrainingPlaceChange(() => { heard += 1; });
+    const pending = saveTrainingPlace('p1', '2026-11-12', 'run_treadmill', '2026-11-11');
+    expect(peekTrainingPlaces()).toEqual({ p1: 'run_treadmill' });
+    await pending;
+    off();
+    expect(heard).toBeGreaterThanOrEqual(1);
+    resetTrainingPlaceCache();
+    expect(await getTrainingPlaces()).toEqual({ p1: 'run_treadmill' });
+    expect(peekTrainingPlaces()).toEqual({ p1: 'run_treadmill' });
   });
 });

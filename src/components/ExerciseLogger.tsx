@@ -238,7 +238,9 @@ function GeneralLogger({
   useEffect(() => {
     if (preview) return;
     const snapshot: LoggerDraft = {
-      variant, duration, rpe, notes, subjectiveFeel, legsAtStart, painReports, doneOn, workout, setLogs, guidanceMode, modalityKey,
+      variant, duration, rpe, notes, subjectiveFeel, legsAtStart, painReports, doneOn, workout, setLogs, guidanceMode,
+      // Alleen een keuze die je zelf tikte: anders verdringt een oud concept een nieuwere bewaarde keuze.
+      modalityKey: placeTouched.current ? modalityKey : undefined,
       garminSuggestedType, reachedForm, distanceKm, elevationGainM, elevationLossM, avgHeartRate, backpackWeightKg, poles, cadence, power,
       steps, machineVerticalM, terrain, inclinePercent,
     };
@@ -457,7 +459,7 @@ function GeneralLogger({
             {template.cooldown && template.cooldown.length > 0 && (
               <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
             )}
-            {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} mode="inline" row />}
+            {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} mode="inline" row place={guidanceMode === 'ascend_guided' ? (modalityKey ?? null) : null} />}
             {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={closeSheet} className="py-2" plain />}
           </div>
         ) : plannedSession && !preview ? (

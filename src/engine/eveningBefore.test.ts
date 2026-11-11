@@ -117,6 +117,15 @@ describe('de regels', () => {
     expect(view.lines).toContain('Staat op je horloge.');
     expect(view.lines.some((l) => l.startsWith('Route'))).toBe(false);
   });
+  it('geen route als je voor morgen Loopband koos; een kapotte of onbekende keuze is Buiten', () => {
+    const treadmill = eveningBefore(input({ planned: [plan('p1', 'tpl_easy_run')], routeOn: true, forecast: undefined, trainingPlaces: { p1: 'run_treadmill' } }))!;
+    expect(treadmill.lines.some((l) => l.startsWith('Route '))).toBe(false);
+    for (const kapot of [{ p1: 42 }, { p1: 'bestaat_niet' }, { anders: 'run_treadmill' }]) {
+      const view = eveningBefore(input({ planned: [plan('p1', 'tpl_easy_run')], routeOn: true, forecast: undefined, trainingPlaces: kapot }))!;
+      expect(view.lines.some((l) => l.startsWith('Route '))).toBe(true);
+    }
+  });
+
   it('de route als Route voorstellen aan staat', () => {
     const view = eveningBefore(input({ planned: [plan('p1', 'tpl_easy_run')], routeOn: true, forecast: undefined }))!;
     expect(view.lines.some((l) => /^Route [\d,]+ km: vraag een lus op bij de training\.$/.test(l))).toBe(true);

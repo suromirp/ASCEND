@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionTemplate } from '../models/training';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { defaultPlace, placeChoices, placeHasRoute, resolvePlace } from './trainingPlace';
+import type { PlannedSession } from '../models/training';
+import { defaultPlace, placeChoices, placeHasRoute, plannedOn, resolvePlace, routeShownFor } from './trainingPlace';
 
 const { templates } = buildDefaultProgramData();
 const byId = (id: string) => templates.find((t) => t.id === id) as SessionTemplate;
@@ -27,5 +28,19 @@ describe('Waar train je? bij een geplande training', () => {
   it('een route hoort bij Buiten, niet bij Loopband', () => {
     expect(placeHasRoute(easy, 'run_outdoor')).toBe(true);
     expect(placeHasRoute(easy, 'run_treadmill')).toBe(false);
+  });
+});
+
+describe('routeShownFor: dezelfde regel op Vandaag, in het blad achter de i en in De avond ervoor', () => {
+  it('Loopband bewaard: geen route; Buiten, niets of iets kapots: wel', () => {
+    expect(routeShownFor(easy, 'run_treadmill')).toBe(false);
+    for (const stored of ['run_outdoor', undefined, null, 7, 'bestaat_niet']) expect(routeShownFor(easy, stored)).toBe(true);
+    expect(routeShownFor(undefined, 'run_outdoor')).toBe(false);
+    expect(routeShownFor(byId('tpl_upper_a'), undefined)).toBe(false);
+  });
+  it('plannedOn vindt de geplande training van die dag, overgeslagen telt niet', () => {
+    const p = (id: string, date: string, status: PlannedSession['status'] = 'planned', order = 0): PlannedSession => ({ id, templateId: 'tpl_easy_run', scheduledDate: date, weekStartDate: '2026-11-09', status, order });
+    expect(plannedOn([p('a', '2026-11-11', 'skipped'), p('b', '2026-11-11', 'planned', 1), p('c', '2026-11-12')], 'tpl_easy_run', '2026-11-11')?.id).toBe('b');
+    expect(plannedOn([p('c', '2026-11-12')], 'tpl_easy_run', '2026-11-11')).toBeUndefined();
   });
 });

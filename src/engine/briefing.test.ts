@@ -74,7 +74,7 @@ describe('een loop met gekoppeld horloge', () => {
     expect(tile(view, 'run')?.line).toMatch(/^\d+ min, zone 2$/);
     expect(tile(view, 'watch')?.line).toBe('Staat erop, 07:18');
     expect(tile(view, 'weather')?.line).toMatch(/^9 graden, /);
-    for (const t of view?.tiles ?? []) expect(t.line).not.toMatch(/[–—]/);
+    for (const t of view?.tiles ?? []) expect(t.line).not.toMatch(/[\u2013\u2014]/);
   });
   it('morgen zoekt hij ook bij het openen, verder weg pas na een tik', () => {
     expect(briefing(input({ date: '2026-11-12', session: plan('tpl_easy_run', '2026-11-12') }))?.map).toMatchObject({ search: 'open' });

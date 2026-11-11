@@ -6,7 +6,7 @@
 // beste keuze. Puur: geen React, geen IndexedDB. Het plant niets en komt niet in een log; wat er in
 // het log komt, bepaalt het formulier zoals altijd.
 
-import type { SessionTemplate } from '../models/training';
+import type { PlannedSession, SessionTemplate } from '../models/training';
 import { ROLE_LABEL, defaultModality, getModalities, type ModalityDefinition } from '../data/modalities';
 import { wantsRouteAt } from './routeTarget';
 
@@ -50,4 +50,20 @@ export function resolvePlace(template: Pick<SessionTemplate, 'id' | 'type'>, sto
 // Hoort er bij deze keuze een route? Eén regel voor elk scherm (engine/routeTarget.ts#wantsRouteAt).
 export function placeHasRoute(template: SessionTemplate | undefined, key: string | undefined): boolean {
   return wantsRouteAt(template, key);
+}
+
+// Staat de route er bij deze training, gegeven de bewaarde keuze (ongelezen)? De regel voor elke plek
+// waar Route voorstellen verschijnt: Vandaag, het blad achter de i, De avond ervoor en de Briefing.
+// Geen of een kapotte keuze: de standaard, meestal Buiten.
+export function routeShownFor(template: SessionTemplate | undefined, stored: unknown): boolean {
+  if (!template) return false;
+  return placeHasRoute(template, resolvePlace(template, stored));
+}
+
+// De geplande training achter een training op een dag, voor een scherm dat alleen de training en de
+// dag kent (Vandaag, het blad achter de i). Overgeslagen telt niet; bij twee dezelfde op een dag de eerste.
+export function plannedOn(planned: readonly PlannedSession[], templateId: string, date: string): PlannedSession | undefined {
+  return planned
+    .filter((p) => p.templateId === templateId && p.scheduledDate === date && p.status !== 'skipped')
+    .sort((a, b) => a.order - b.order)[0];
 }
