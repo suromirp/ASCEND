@@ -31,6 +31,7 @@ Het lichaamsfiguur, hoe voelt je lijf, een zware beendag op vermoeide benen, een
 - De RPE van een test telt in de beenindex als 10 en een testloop met warming-up en cooling-down in twee delen; alles dat de index na een test leest, leest dus een lager getal (`src/engine/freshnessAfterTest.test.ts`).
 - Feiten die ASCEND zelf weet (warmte, korte nacht, ziek) tellen vanzelf mee en worden nooit bewaard (`derivedFactEntries`).
 - De gewichtstrend (`src/engine/weightTrend.ts#weightTrend`, alleen voor wat Lichaamsgewicht laat zien; rekenen gaat via `currentBodyKg`) leest wat `weightsInUse` teruggeeft, nooit de ruwe lijst: anders tellen een eigen gewicht en een weging uit Health Connect op dezelfde dag dubbel. Een trendgewicht uit MacroFactor wordt niet nog eens afgevlakt (`src/engine/weightTrend.test.ts`). Een veld dat een weging bewaart vul je nooit vooraf met de trend. De kaart Gewicht op Je stand en de wegingen in het Logboek komen uit `src/engine/weightCard.ts` (instelling `weightCard`); beide lezen `weightsInUse` met `weightCardOn`, nooit `settings.weightEntries` rechtstreeks, en de kaart staat bewust niet in `cardOrder`. Een tik op de kaart opent het overzicht Gewicht (`src/components/stand/WeightOverviewSheet.tsx`, rekenen in `src/engine/weightOverview.ts`); de lijn van kaart en overzicht komt uit `src/engine/weightTrend.ts#weightLineAt`, alleen uit echte wegingen: een trendgewicht uit MacroFactor telt nooit als losse weging (`src/engine/weightOverview.test.ts`). Tekst in een svg schaalt mee met de breedte: kies de viewBox zo dat `fontSize` 12 op 360 px nog 12 px of meer is (`src/components/stand/WeightChart.tsx`).
+- Een los log staat alleen in voor een open training met dezelfde maatstaf als de koppeling achteraf (linkCandidates): van een bron, zelfde soort; een handlog is altijd extra (`src/engine/looseLog.ts`, gebruikt door `weeklyLoad` en `dayLoads`).
 - Een nieuw veld in een opgeslagen vorm (`nightJudgments`, `influences`, `legEaseDays`) krijgt een leesbare migratie in `src/storage/migrationsBody.ts` en gaat mee in de back-up.
 
 ## Testen
@@ -40,5 +41,4 @@ Het lichaamsfiguur, hoe voelt je lijf, een zware beendag op vermoeide benen, een
 
 ## Lees verder
 - `docs/architectuur/lichaam-en-herstel.md`
-- `docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`, `docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md`
-- `docs/beslissingen/2026-10-25-wat-speelde-er.md`, `docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md`
+- `docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`, `docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md`, `docs/beslissingen/2026-10-25-wat-speelde-er.md`, `docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md`

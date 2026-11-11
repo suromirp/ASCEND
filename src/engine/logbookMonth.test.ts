@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { monthCompare, groupByWeek, mondayKey } from './logbookMonth';
+import { emptyMonthTitle, monthCompare, groupByWeek, mondayKey } from './logbookMonth';
 import type { SessionLog } from '../models/training';
 
 const log = (id: string, date: string, minutes: number, type: SessionLog['type'] = 'cardio'): SessionLog => ({
@@ -80,5 +80,15 @@ describe('groupByWeek', () => {
   it('vindt de maandag, ook op zondag', () => {
     expect(mondayKey('2026-11-01')).toBe('2026-10-26');
     expect(mondayKey('2026-10-26')).toBe('2026-10-26');
+  });
+});
+
+describe('emptyMonthTitle', () => {
+  it('zegt "Geen trainingen in deze maand." als er alleen wegingen zijn', () => {
+    expect(emptyMonthTitle({ beforeFirst: false, weighings: 2 })).toBe('Geen trainingen in deze maand.');
+  });
+  it('zegt "Nog niets" zonder wegingen, en voor je eerste training dat je hier nog niet begon', () => {
+    expect(emptyMonthTitle({ beforeFirst: false, weighings: 0 })).toBe('Nog niets in deze maand.');
+    expect(emptyMonthTitle({ beforeFirst: true, weighings: 3 })).toBe('Hier begon je nog niet.');
   });
 });

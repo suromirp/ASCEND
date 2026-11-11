@@ -71,8 +71,9 @@ export function loadVerdict(weeks: WeekLoad[]): LoadVerdict | undefined {
   if (!current) return undefined;
   const jump = loadVersusBefore(weeks);
   if (!jump) return current.isRestWeek ? { word: 'Rustig', level: 'rustig', fact: 'rustweek' } : undefined;
-  // Het oordeel kijkt naar de hele week (gedaan plus gepland), dus het getal ook; anders staat er "0 van 1.718" op maandag.
-  const fact = `${formatNumberNL(jump.now, 0)} gepland, gewoonlijk ${formatNumberNL(jump.before, 0)}`;
+  // Het oordeel kijkt naar de hele week (gedaan plus wat vanaf vandaag nog komt), dus het getal ook; anders staat er
+  // "0 van 1.718" op maandag. "Wordt" en niet "gepland" of "nu": wat je al deed telt mee, wat nog komt ook, een gemiste training niet.
+  const fact = `wordt ${formatNumberNL(jump.now, 0)}, gewoonlijk ${formatNumberNL(jump.before, 0)}`;
   if (current.isRestWeek) return { word: 'Rustig', level: 'rustig', fact };
   if (jump.doneRatio > LOAD_JUMP || jump.ratio > LOAD_JUMP) return { word: 'Zwaar', level: 'zwaar', fact };
   if (jump.ratio < 0.7) return { word: 'Rustig', level: 'rustig', fact };

@@ -7,7 +7,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
-import { monthCompare } from '../engine/logbookMonth';
+import { emptyMonthTitle, monthCompare } from '../engine/logbookMonth';
 import { logbookWeeks, weighingsInRange, weightCardOn, weightSourceLabel } from '../engine/weightCard';
 import { weightsInUse } from '../engine/bodyWeight';
 import { DaySheet } from '../components/logbook/DaySheet';
@@ -148,7 +148,7 @@ export function HistoryPage() {
           </LightCard>
         ) : trainingCount === 0 ? (
           <LightCard>
-            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{beforeFirst ? 'Hier begon je nog niet.' : weighings.length > 0 ? 'Geen trainingen in deze maand.' : 'Nog niets in deze maand.'}</p>
+            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{emptyMonthTitle({ beforeFirst, weighings: weighings.length })}</p>
           </LightCard>
         ) : (
           <LightCard className="grid grid-cols-2 gap-4">

@@ -25,6 +25,7 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 - `src/storage/planGolden.test.ts` laten bewegen door iets in Week; REST-DAY met jouw slot meldt alleen onder `reportYours` (standaard uit).
 
 ## Valkuilen
+- Staat een losse log in voor een open training, dan telt de belasting van de log, maar de beendag blijft die van de geplande training (`weekProfile.ts#dayLoads`).
 - Een gemiste training naar later is geen verplaatste rij. Het is een inhaal: een nieuwe rij met jouw slot en `catchUp`, en de oude rij wordt overgeslagen (`engine/catchUp.ts`). Week verbergt de oude rij en de nieuwe zegt "verplaatst van"; de woorden zijn Verplaatsen en Toch verplaatsen.
 - De weekterugblik telt de overgeslagen oude rij van een inhaal niet mee als gemist (`buildWeekReview`, `movedOn`); anders staat dezelfde training twee keer in de lijst.
 - `useVerticalDrag` is gedeeld met de doelen op Ascend: een wijziging daar verandert beide.

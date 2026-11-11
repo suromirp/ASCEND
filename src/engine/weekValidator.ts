@@ -260,7 +260,7 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
         const ot = tpl(o);
         if (!ot || !isHardRun(ot) || o.id < s.id) continue;
         const subject = level(o) > level(s) ? o : s;
-        findings.push({ rule: 'TWO-HARD-RUNS', date: s.scheduledDate, sessionIds: [s.id, o.id], subjectId: subject.id, level: level(subject), message: `Twee harde loopjes op ${day(s.scheduledDate)}: ${name} en ${ot.name}.` });
+        findings.push({ rule: 'TWO-HARD-RUNS', date: s.scheduledDate, sessionIds: [s.id, o.id], subjectId: subject.id, level: level(subject), message: `Twee harde lopen op ${day(s.scheduledDate)}: ${name} en ${ot.name}.` });
       }
     }
     // The day over your time for it: reported once a day, on the session
@@ -719,7 +719,7 @@ export const REPAIR_REASON: Record<RepairRule, string> = {
   'FIXED-SPORT': 'je vaste afspraak',
   'KIND-AMOUNT': 'hoeveel per soort',
   'REST-DAY': 'je rustdag blijft vrij',
-  'TWO-HARD-RUNS': 'niet twee harde loopjes op één dag',
+  'TWO-HARD-RUNS': 'niet twee harde lopen op één dag',
   'HARD-DAYS': 'niet te veel harde dagen in een week',
   'TEST-DAY': 'niets zwaars op de dag van een test of wedstrijd',
   'AFTER-TEST': 'de dag na een test of wedstrijd niets zwaars',

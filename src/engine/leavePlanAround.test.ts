@@ -206,3 +206,25 @@ describe('what the arrangement never touches', () => {
     expect(Date.now() - started).toBeLessThan(4000);
   });
 });
+
+describe('Benen B against a training with a place of its own', () => {
+  // Benen B has no day of its own in the week (the program no longer plans it); Bovenlichaam A and B and the
+  // easy run do. When week 2 is short of days, Benen B goes first (docs/beslissingen/2026-11-09-planner-vakantie-beenkracht-voorrang.md).
+  const wide = planPass(plan, context(both, { leaveReshuffle: true }));
+  const week2 = (id: string) => plan.find((s) => s.templateId === id && s.weekStartDate === '2026-11-16')!;
+
+  it('drops Benen B with the fixed sentence', () => {
+    const r = wide.repairs.find((x) => x.sessionId === week2('tpl_lower_b').id)!;
+    expect(r.removed).toBe(true);
+    expect(r.reason).toBe('Rond je vakantie is er geen dag meer waarop deze past.');
+    expect(open(wide.sessions).some((s) => s.templateId === 'tpl_lower_b' && s.scheduledDate >= TODAY)).toBe(false);
+  });
+
+  it('keeps every training of that week with a place of its own that is not a key task', () => {
+    for (const id of ['tpl_upper_a', 'tpl_upper_b', 'tpl_easy_run']) {
+      const s = week2(id);
+      expect(wide.repairs.find((x) => x.sessionId === s.id)?.removed, id).not.toBe(true);
+      expect(wide.sessions.find((x) => x.id === s.id)?.status, id).not.toBe('skipped');
+    }
+  });
+});

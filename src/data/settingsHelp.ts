@@ -1059,7 +1059,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Voorstel bij een probleem in de week',
     lead: 'Klopt er iets niet in je week en mag ASCEND het niet zelf herstellen, omdat jij of een eerder voorstel de training vastzette, dan krijg je een voorstel.',
     points: [
-      { head: 'Wat telt als probleem', text: 'geen rustdag, zware beendagen te dicht op elkaar, twee harde loopjes op een dag, een zware training na een test, twee volle lange trainingen, benen niet fris voor een test.' },
+      { head: 'Wat telt als probleem', text: 'geen rustdag, zware beendagen te dicht op elkaar, twee harde lopen op een dag, een zware training na een test, twee volle lange trainingen, benen niet fris voor een test.' },
       { head: 'Nooit stil', text: 'eerst een voorstel, pas na Akkoord verandert er iets. In een volle week kan de lichtste training vervallen, nooit een lange duurloop, harde loop, test, wedstrijd of tocht.' },
       { head: 'Liever niet of uit', text: 'je week blijft zoals hij is en de melding blijft staan. Uit haalt alleen de knop met het voorstel weg.' },
     ],

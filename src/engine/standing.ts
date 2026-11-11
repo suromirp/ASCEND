@@ -25,6 +25,7 @@ import { minutesByZone } from './intensityMinutes';
 import type { IntensityCounting } from './intensitySettings';
 import { estimatedHikingMinutes, typicalDayValue } from './goalRoute';
 import { hasRole } from './templateRoles';
+import { looseStandIns } from './looseLog';
 import { EASY_PART_RPE, testEffortSplit, type EffortSplit } from './testEffortSplit';
 import { formatNumberNL } from '../utils/number';
 
@@ -109,6 +110,8 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
   const byId = new Map(inputs.templates.map((t) => [t.id, t]));
   const current = mondayOfWeek(inputs.today);
   const logged = new Set(inputs.logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const plannedMinutesOf = (s: PlannedSession, t: SessionTemplate) => s.plannedMinutes ?? inputs.minutesOf?.(s, t) ?? t.durationVariants.full;
+  const standIns = looseStandIns({ plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, minutesOf: plannedMinutesOf });
   const weeks: WeekLoad[] = [];
   for (let w = -weeksBack; w <= weeksAhead; w++) {
     const weekStart = addDays(current, 7 * w);
@@ -131,7 +134,9 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
       if (s.status === 'skipped' || logged.has(s.id)) continue;
       const t = byId.get(s.templateId);
       if (!t || t.type === 'recovery') continue;
-      const minutes = s.plannedMinutes ?? inputs.minutesOf?.(s, t) ?? t.durationVariants.full;
+      // A loose log from a source stands in for it (engine/looseLog.ts): counted once, as done.
+      if (standIns.has(s.id)) continue;
+      const minutes = plannedMinutesOf(s, t);
       const load = minutes * plannedEffort(t);
       week.items.push({ date: s.scheduledDate, name: t.name, sport: sportOfTemplate(t), minutes, effort: plannedEffort(t), load, planned: true, estimated: false });
       week.planned[sportOfTemplate(t)] += load;
@@ -259,6 +264,18 @@ export interface IntensityMix {
 // end up doing (Seiler 2010); below 70% the easy part is getting squeezed.
 export const EASY_TARGET = 0.8;
 export const EASY_FLOOR = 0.7;
+
+// Het oordeel onder de balk, uit het aandeel rustig. Zonder een harde training zegt het dat ook: geen "een paar keer hard"
+// als er niets hard was.
+export function intensityVerdict(amounts: { easy: number; middle: number; hard: number }, whole = amounts.easy + amounts.middle + amounts.hard): string {
+  const easyPct = whole ? Math.round((amounts.easy / whole) * 100) : 0;
+  if (easyPct >= EASY_TARGET * 100 - 5) {
+    if (amounts.hard > 0) return 'Goed verdeeld: het meeste rustig, een paar keer hard. Zo groeit je basis en blijf je fris.';
+    return amounts.middle > 0 ? 'Het meeste rustig, niets hard. Zo groeit je basis en blijf je fris.' : 'Alles rustig. Zo groeit je basis en blijf je fris.';
+  }
+  if (easyPct >= EASY_FLOOR * 100) return 'Bijna goed. Doe iets meer rustig, of houd rustige trainingen echt rustig.';
+  return 'Meer hard dan rustig. Dat gaat een tijd goed, maar je basis groeit vooral van rustige kilometers.';
+}
 
 // An easy run counts as too hard when clearly more than half of it was above zone 2.
 const TOO_HARD_SHARE = 0.55;
