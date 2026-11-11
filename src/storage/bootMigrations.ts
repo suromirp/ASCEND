@@ -17,6 +17,8 @@ import { syncGr5MilestoneDefinitions } from './goalMilestoneSync';
 import { mergeDuplicateWeeklyPrescriptionLines } from './planLogCleanup';
 import { releaseSystemMoves } from './systemMovesStep';
 import { tidyOldProposals } from './proposalTidy';
+import { migrateStartPointToHome } from './places';
+import { withTimeout } from '../utils/withTimeout';
 import type { BootRunResult } from './bootLock';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, BOOT_STEP_LIMIT_MS, migrationsToRun, recordAfter, type BootMigrationRecord } from '../engine/bootWatch';
 
@@ -121,6 +123,12 @@ export async function runBootMigrations(
     record = recordAfter(record, build, step);
     await MetaRepo.set(BOOT_MIGRATIONS_KEY, record);
   }
+  // Vast punt wordt Thuis (storage/places.ts#migrateStartPointToHome). Niet in de lijst van stappen: die
+  // onthoudt per versie wat gelopen heeft, en deze moet bij elke start opnieuw kijken tot het gelukt is.
+  // Hij is klaar zodra de oude sleutel weg is; daarna kost hij één leesactie. Gooit nooit, en een opslag
+  // die niet antwoordt houdt het openen niet langer tegen dan een herstelstap.
+  const home = await withTimeout(migrateStartPointToHome(), limit).catch(() => 'failed' as const);
+  if (home === 'failed') console.warn('Vast punt is nog niet Thuis geworden; de volgende start probeert het opnieuw.');
   return pending ? { skipped, pending } : { skipped };
 }
 

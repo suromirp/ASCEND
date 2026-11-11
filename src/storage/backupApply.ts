@@ -26,7 +26,7 @@ export async function listSnapshots(): Promise<PreImportSnapshot[]> {
 }
 
 export async function createPreImportSnapshot(): Promise<PreImportSnapshot> {
-  const envelope = await buildBackupEnvelope({ streams: false, mornings: false });
+  const envelope = await buildBackupEnvelope({ streams: false, mornings: false, wholeState: true });
   const snapshot: PreImportSnapshot = {
     id: makeId('snapshot'),
     createdAt: new Date().toISOString(),
