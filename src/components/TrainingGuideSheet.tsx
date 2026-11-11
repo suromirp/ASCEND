@@ -120,7 +120,7 @@ export function TrainingGuideSheet({
 
           {template && dateIso && <WeatherLine template={template} date={dateIso} className="mt-2" />}
           {template && dateIso && <HillsNearbyLine template={template} date={dateIso} className="mt-1.5" />}
-          {template && dateIso && <RouteProposalLine template={template} date={dateIso} mode="inline" />}
+          {template && dateIso && <RouteProposalLine template={template} date={dateIso} />}
           {template && dateIso && <ClothingAdvice template={template} date={dateIso} className="mt-1.5" />}
 
           {plan && plan.builds.length > 0 && (
