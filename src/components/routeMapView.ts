@@ -8,7 +8,7 @@
 // MapLibre en de klok komen binnen als deps, zodat de tests een nep-kaart geven.
 
 import {
-  aerialStyle, attributionFor, baseSourcesOf, boundsOf, cameraDuration, DOT_SOURCE, dotFeatures, MAP_LOAD_LIMIT_MS, MAP_SOURCE_LIMIT_MS,
+  AERIAL_LIMIT_MS, aerialStyle, attributionFor, baseSourcesOf, boundsOf, cameraDuration, DOT_SOURCE, dotFeatures, MAP_LOAD_LIMIT_MS, MAP_SOURCE_LIMIT_MS,
   nextStage, OPENFREEMAP_STYLE, paintOpenFreeMap, plainStyle, rasterStyle, ROUTE_HIT_LAYER, ROUTE_SOURCE, routeFeatures, stagesFor,
   type MapBase, type MapColors, type MapDot, type MapRoute, type MapStage, type StyleSpec,
 } from '../engine/routeMap';
@@ -153,7 +153,7 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
         settle();
         return;
       }
-      timer = setTimer(fallBack, MAP_SOURCE_LIMIT_MS);
+      timer = setTimer(fallBack, stage === 'aerial' ? AERIAL_LIMIT_MS : MAP_SOURCE_LIMIT_MS);
       if (stage === 'aerial') {
         aerial = aerialSourceFor(allPoints());
         map.setStyle(aerialStyle(c, aerial, overlay()), { diff: false });

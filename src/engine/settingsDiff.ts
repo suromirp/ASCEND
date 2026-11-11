@@ -12,6 +12,7 @@
 // frequentie, hartslagwaarden, de sportschool, de plaats van het weer) en wat buiten
 // AppSettings staat (de schakelaars van het horloge, tweemaal Garmin en MacroFactor).
 
+import { resolveMapGround } from './routeMap';
 import { isDefaultOrder, resolveCardOrder } from './cardOrder';
 import type { AppSettings } from '../storage/database';
 import { choiceShort, type ChoiceId } from '../data/settingsChoices';
@@ -322,8 +323,13 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('route-soort', 'Welke lus eerst', 'vandaag', 'routeStyle', 'adventure', 'routeSoort'),
   choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'here', 'routeStart'),
   choice('route-zoeken', 'Lus zoeken', 'vandaag', 'routeSearch', 'open', 'routeZoeken'),
-  choice('route-kaart', 'Ondergrond van de kaart', 'vandaag', 'routeMapBase', 'dark', 'routeKaart'),
-  choice('route-luchtfoto', 'Kaart of luchtfoto', 'vandaag', 'routeMapPhoto', 'map', 'routeLuchtfoto'),
+  {
+    // Eén instelling in twee velden (engine/routeMap.ts#resolveMapGround).
+    id: 'route-kaart', title: 'Ondergrond van de kaart', page: 'vandaag',
+    differs: (s) => resolveMapGround(s) !== 'dark',
+    value: (s) => choiceShort('routeKaart', resolveMapGround(s)),
+    reset: () => ({ routeMapBase: undefined, routeMapPhoto: undefined }),
+  },
   overviewFlag('maanstand', 'Maanstand bij een avondtocht', 'moonLine'),
   overviewFlag('kledingadvies', 'Kledingadvies', 'clothingAdvice'),
   overviewFlag('citaten', 'Citaat', 'completionMoment'),

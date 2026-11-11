@@ -11,9 +11,25 @@ import type { AerialSource } from '../integrations/aerialImagery';
 export type MapBase = 'dark' | 'light' | 'none';
 export const resolveMapBase = (raw: unknown): MapBase => (raw === 'light' || raw === 'none' ? raw : 'dark');
 
-// Kaart of Luchtfoto (instelling `routeMapPhoto`, onthouden van de schakelaar op de kaart). Afwezig is Kaart.
+// Kaart of Luchtfoto (veld `routeMapPhoto`, onthouden van de schakelaar op de kaart). Afwezig is Kaart.
 export type MapPhoto = 'map' | 'photo';
 export const resolveMapPhoto = (raw: unknown): MapPhoto => (raw === 'photo' ? 'photo' : 'map');
+
+// De instelling Ondergrond, met vier standen: Donker (advies), Licht, Luchtfoto, Geen. Bewaard in twee
+// velden: `routeMapBase` (welke kaart: Donker, Licht of Geen) en `routeMapPhoto` (Luchtfoto aan), zodat de
+// schakelaar op de kaart terug kan naar de kaart die je koos. Geen wint: dan geen tegels, ook geen foto.
+// Een oude back-up met alleen `routeMapPhoto` leest zo vanzelf als Luchtfoto; geen migratie nodig.
+export type MapGround = 'dark' | 'light' | 'photo' | 'none';
+export function resolveMapGround(s: { routeMapBase?: unknown; routeMapPhoto?: unknown }): MapGround {
+  const base = resolveMapBase(s.routeMapBase);
+  if (base === 'none') return 'none';
+  return resolveMapPhoto(s.routeMapPhoto) === 'photo' ? 'photo' : base;
+}
+// Wat er bewaard wordt bij een keuze in Ondergrond. Luchtfoto vanuit Geen zet de kaart terug op het advies.
+export function groundSettings(ground: MapGround, current: { routeMapBase?: unknown }): { routeMapBase?: 'dark' | 'light' | 'none'; routeMapPhoto?: 'photo' } {
+  if (ground === 'photo') return { routeMapPhoto: 'photo', ...(resolveMapBase(current.routeMapBase) === 'none' ? { routeMapBase: undefined } : {}) };
+  return { routeMapBase: ground, routeMapPhoto: undefined };
+}
 // Bij Ondergrond Geen haalt de kaart geen tegels op, dus ook geen luchtfoto: dan staat er geen schakelaar.
 export const photoOffered = (base: MapBase): boolean => base !== 'none';
 
@@ -32,7 +48,7 @@ export function stagesFor(base: MapBase, online: boolean, photo: boolean = false
 // De regel als de luchtfoto niet laadt en de kaart het overneemt; leeg als er niets te zeggen is.
 export function photoFallbackLine(photoFailed: boolean, online: boolean): string {
   if (!photoFailed) return '';
-  return online ? 'De luchtfoto laadt niet. Je ziet de kaart.' : 'Zonder netwerk is er geen luchtfoto. Je ziet de kaart.';
+  return online ? 'De luchtfoto laadt niet. Je ziet de kaart.' : 'Zonder netwerk is er geen luchtfoto.';
 }
 
 // De volgende stap na een bron die wegviel; undefined: er is geen volgende (het effen vlak blijft).
@@ -43,6 +59,8 @@ export function nextStage(stages: MapStage[], current: MapStage): MapStage | und
 
 // Antwoordt een bron niet binnen deze tijd, dan neemt de kaart de volgende stap.
 export const MAP_SOURCE_LIMIT_MS = 6_000;
+// De luchtfoto krijgt korter: valt hij weg, dan moet de kaart nog laden, en je wacht liever niet twee keer zes seconden.
+export const AERIAL_LIMIT_MS = 4_000;
 // Het losse stuk met MapLibre: laadt het niet binnen deze tijd, dan staat er een regel in plaats van de kaart.
 export const MAP_LOAD_LIMIT_MS = 15_000;
 

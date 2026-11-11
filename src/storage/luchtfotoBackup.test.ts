@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cleanSettings } from './backupClean';
-import { resolveMapPhoto } from '../engine/routeMap';
+import { groundSettings, resolveMapBase, resolveMapGround, resolveMapPhoto } from '../engine/routeMap';
 
 // Kaart of luchtfoto in een back-up: optioneel, dus geen migratie. Oud of kapot leest als Kaart.
 describe('Kaart of luchtfoto in een back-up', () => {
@@ -18,5 +18,25 @@ describe('Kaart of luchtfoto in een back-up', () => {
     const cleaned = cleanSettings({ routeMapPhoto: 'satelliet' }, skipped) as Record<string, unknown>;
     expect('routeMapPhoto' in cleaned).toBe(false);
     expect(skipped.n).toBe(1);
+  });
+});
+
+describe('Ondergrond: één instelling met vier standen in twee velden', () => {
+  it('leest elke oude back-up defensief', () => {
+    expect(resolveMapGround({})).toBe('dark');
+    expect(resolveMapGround({ routeMapBase: 'light' })).toBe('light');
+    // Een back-up van vóór de samenvoeging met Luchtfoto aan: Luchtfoto, en de kaart erachter blijft Licht.
+    expect(resolveMapGround({ routeMapBase: 'light', routeMapPhoto: 'photo' })).toBe('photo');
+    expect(resolveMapBase('light')).toBe('light');
+    // Geen wint: geen tegels, ook geen foto.
+    expect(resolveMapGround({ routeMapBase: 'none', routeMapPhoto: 'photo' })).toBe('none');
+    expect(resolveMapGround({ routeMapBase: 'kaartje', routeMapPhoto: 'satelliet' })).toBe('dark');
+  });
+
+  it('een keuze in Ondergrond bewaart beide velden', () => {
+    expect(groundSettings('light', {})).toEqual({ routeMapBase: 'light', routeMapPhoto: undefined });
+    expect(groundSettings('photo', { routeMapBase: 'light' })).toEqual({ routeMapPhoto: 'photo' });
+    expect(groundSettings('photo', { routeMapBase: 'none' })).toEqual({ routeMapPhoto: 'photo', routeMapBase: undefined });
+    expect(groundSettings('none', { routeMapBase: 'dark' })).toEqual({ routeMapBase: 'none', routeMapPhoto: undefined });
   });
 });

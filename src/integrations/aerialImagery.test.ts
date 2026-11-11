@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AERIAL_CACHE, AERIAL_HOSTS, AERIAL_SOURCES, aerialSourceFor, inRing } from './aerialImagery';
+import { AERIAL_CACHE, AERIAL_HOSTS, AERIAL_SOURCES, aerialMarginKm, aerialSourceFor, inRing } from './aerialImagery';
 
 // Nagemaakte lussen rond openbare plekken (stadscentra, toppen, grensovergangen), nooit een plek van de eigenaar.
 // Een lus van ongeveer 2 km rond een punt.
@@ -70,6 +70,34 @@ describe('welke luchtfoto: over of bij een grens, nooit half wit', () => {
 
   it('je plek ver weg in een ander land telt mee, want de kaart brengt hem in beeld', () => {
     expect(id([...loop(52.09, 5.12), { lat: 48.85, lon: 2.34 }])).toBe('eox');
+  });
+});
+
+describe('waar Warden wit vond (review 11 november, gemeten met echte tegels)', () => {
+  it('Frankrijk bij België, Saarland en de Jura: EOX', () => {
+    expect(id(line([49.95, 4.2], [49.978, 4.2]))).toBe('eox'); // Momignies
+    expect(id([{ lat: 49.182, lon: 6.75 }])).toBe('eox'); // Saarland
+    expect(id([{ lat: 46.934, lon: 6.468 }])).toBe('eox'); // Jura
+    expect(id([{ lat: 46.942, lon: 6.48 }])).toBe('eox');
+  });
+
+  it('zee bij de Franse kust: Nice geeft EOX', () => {
+    expect(id(loop(43.7, 7.26))).toBe('eox');
+  });
+
+  it('Nederland steekt niet meer in Duitsland of België', () => {
+    expect(id([{ lat: 52.5, lon: 6.8 }])).toBe('eox'); // Itterbeck
+    expect(id([{ lat: 52.04, lon: 6.83 }])).toBe('eox'); // Vreden
+    expect(id([{ lat: 51.45, lon: 4.79 }])).toBe('eox'); // Meersel-Dreef
+    expect(id([{ lat: 51.465, lon: 4.47 }])).toBe('eox'); // Essen
+  });
+
+  it('de rand groeit met de route: een lange smalle lijn kijkt verder opzij', () => {
+    expect(aerialMarginKm(loop(52.09, 5.12))).toBe(1);
+    // 20 km noord-zuid: 5 km opzij.
+    expect(aerialMarginKm(line([52.0, 5.12], [52.18, 5.12]))).toBeCloseTo(5, 0);
+    // Door Utrecht ligt dat ruim binnen het land.
+    expect(id(line([52.0, 5.12], [52.18, 5.12]))).toBe('pdok');
   });
 });
 

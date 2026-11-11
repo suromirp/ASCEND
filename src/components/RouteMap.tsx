@@ -49,11 +49,11 @@ function MapButton({ icon, label, onClick, disabled }: { icon: 'locatie' | 'inbe
 }
 
 // Kaart of Luchtfoto, op de kaart zelf (zelfde uitzondering als de ronde knoppen): twee woorden in één
-// strook van 44 px hoog. De gekozen kant is lichter en vet, zonder mint: dat blijft van de lus.
+// strook; elke knop is zelf 44 px hoog (de rand komt erbij). De gekozen kant is lichter en vet, zonder mint: dat blijft van de lus.
 function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto) => void }) {
   const options: { v: MapPhoto; label: string }[] = [{ v: 'map', label: 'Kaart' }, { v: 'photo', label: 'Luchtfoto' }];
   return (
-    <div role="group" aria-label="Kaart of luchtfoto" className="flex h-11 overflow-hidden rounded-full border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
+    <div role="group" aria-label="Kaart of luchtfoto" className="flex overflow-hidden rounded-full border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
       {options.map((o) => {
         const on = o.v === value;
         return (
@@ -62,7 +62,7 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
             type="button"
             aria-pressed={on}
             onClick={() => onPick(o.v)}
-            className={`min-w-[44px] px-3 text-sm ${on ? 'font-semibold' : ''}`}
+            className={`h-11 min-w-[44px] px-3 text-sm ${on ? 'font-semibold' : ''}`}
             style={on ? { background: 'var(--color-raised)', color: 'var(--color-ink)' } : { color: 'var(--color-ink-dim)' }}
           >
             {o.label}
@@ -260,7 +260,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
         {state.kind === 'ready' && state.attribution && (state.aerial && !fullCredit ? (
           // De luchtfoto: eerst de korte vorm (de volle van EOX is drie regels en bedekt de lus); een tik toont
           // de volle naamsvermelding met de link. Zo werkt de vermelding van MapLibre zelf ook.
-          <button type="button" aria-label={`Naamsvermelding: ${state.attribution}`} onClick={() => setFullCredit(true)} className="absolute bottom-0 right-0 inline-flex items-end">
+          <button type="button" aria-label={`Naamsvermelding: ${state.attribution}`} onClick={() => setFullCredit(true)} className="absolute bottom-0 right-0 inline-flex min-h-[44px] min-w-[44px] items-end justify-end">
             <span className="rounded-tl-md bg-bg/80 px-1.5 text-xs leading-5" style={dim}>© {AERIAL_SOURCES[state.aerial].short}</span>
           </button>
         ) : (
