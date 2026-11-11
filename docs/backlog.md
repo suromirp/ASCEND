@@ -8,6 +8,8 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 
 ## Inbox
 
+- Tempo bij zone 2 leest verkeerd (eigenaar 11 november, afdruk van Stand): de kop zegt 7:19 (eerste schatting, gemiddelde), de lijn eindigt op 7:28 en daalt, wat in deze grafiek trager betekent (sneller staat boven, `aerobicTrend.ts` plot min-seconden), terwijl de eigenaar het las als beter worden. Het eindlabel 7:28 staat rechtsboven los van de eindstip onderaan. Met 3 lopen zegt de kaart zelf "na 8 lopen zie je het", maar tekent toch een lijn die een richting suggereert. Voorstel: onder de 8 lopen alleen stippen per week zonder lijn; eindlabel naast de stip; één zin die zegt dat kop en lijn verschillen en waarom. Ook nagaan welk scherm "je wordt snel fitter" zegt en of dat klopt met deze kaart (dan een invariant in de tekstkaart). Eerst naspelen met de back-up. Pathfinder kijkt mee.
+
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
 Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
