@@ -204,3 +204,19 @@ describe('de weekterugblik en Herhaal de week gebruiken dezelfde sleuteltraining
     expect(extraRunEarned(base, '2026-11-30').reason ?? '').not.toContain('sleuteltraining');
   });
 });
+
+describe('één inhaal over beide regels (Warden, herreview)', () => {
+  it('tempoloop gemist en intervallen vandaag overgeslagen met morgen rust: nooit twee voorstellen die samen hard naast hard zetten', () => {
+    // Di tempoloop gemist, wo (vandaag) intervallen overgeslagen, do rustdag.
+    const planned = [
+      ps('tempo', 'tpl_tempo_run', '2026-11-17'),
+      { ...ps('int', 'tpl_intervals', '2026-11-18'), status: 'skipped' as const },
+      ps('rd', 'tpl_herstel', '2026-11-19'),
+      ps('lr', 'tpl_long_run', '2026-11-22'),
+    ];
+    const all = computeAdvice(inputs({ plannedSessions: planned, keyFocus: TEN_K }));
+    const moves = all.flatMap((a) => (a.ruleId === 'MISSED-CATCH-UP' || a.ruleId === 'SKIPPED-KEY-TO-REST' ? a.proposal?.changes ?? [] : []))
+      .filter((c) => c.action === 'move');
+    expect(moves.length).toBeLessThanOrEqual(1);
+  });
+});
