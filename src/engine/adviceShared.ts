@@ -1,6 +1,8 @@
 // De vormen van een advies en de hulpjes die meerdere regels delen
 // (zie adviceEngine.ts voor de uitgangspunten).
 
+import { hardRunApart } from './hardRunApart';
+import { isKeyFor, keyRank, type KeyFocus } from './keySession';
 import type { MorningCheckIn } from '../models/checkIn';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
@@ -123,6 +125,9 @@ export interface AdviceInputs {
   // Rows an accepted TEST-RETRY proposal made a test (`retryTestRows` of the stored proposals). A
   // retry that was skipped or missed is spoken for by TEST-RETRY once more, not by TEST-MAKE-ROOM.
   retryRows?: ReadonlySet<string>;
+  // What the key session is (engine/keySession.ts#keyFocusOf): the same as the line on Ascend.
+  // Absent: the long run or the mountain hike.
+  keyFocus?: KeyFocus;
   // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
   noRetry?: boolean;
 }
@@ -155,16 +160,19 @@ export function findCatchUpDate(
   inputs: AdviceInputs,
   templateById: Map<string, SessionTemplate>,
   fromDate: string,
+  opts: { hardApart?: boolean } = {},
 ): string | undefined {
   const week = inputs.plannedSessions.filter((s) => s.weekStartDate === session.weekStartDate && s.id !== session.id && s.status !== 'skipped');
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   for (const date of weekDates(session.weekStartDate)) {
     if (date < fromDate) continue;
     if (!dayHasRoomFor(date, template, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
-    // Same 48-hour rule as everywhere else, for legs and upper body alike;
-    // a session that was itself missed carries no load.
-    const withLoad = week.filter((other) => other.scheduledDate >= inputs.asOf || loggedIds.has(other.id));
+    // Same 48-hour rule as everywhere else, for legs and upper body alike, also across the
+    // week boundary (a Sunday catch-up before Monday's leg day); a session that was itself
+    // missed carries no load. The room on the day stays a matter of this week.
+    const withLoad = inputs.plannedSessions.filter((other) => other.id !== session.id && other.status !== 'skipped' && (other.scheduledDate >= inputs.asOf || loggedIds.has(other.id)));
     if (!respectsHeavySpacing(date, template, withLoad, templateById, inputs.logs, session.id)) continue;
+    if (opts.hardApart && !hardRunApart(date, session, template, inputs, templateById)) continue;
     return date;
   }
   return undefined;
@@ -172,10 +180,10 @@ export function findCatchUpDate(
 
 // Every good day for `session` from `fromDate` on in its week, nearest first
 // (the same checks as findCatchUpDate), optionally filtered further.
-export function catchUpDates(session: PlannedSession, template: SessionTemplate, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, fromDate: string, accept: (date: string) => boolean = () => true): string[] {
+export function catchUpDates(session: PlannedSession, template: SessionTemplate, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, fromDate: string, accept: (date: string) => boolean = () => true, opts: { hardApart?: boolean } = {}): string[] {
   const out: string[] = [];
   for (let from = fromDate, n = 0; n < 7; n++) {
-    const found = findCatchUpDate(session, template, inputs, templateById, from);
+    const found = findCatchUpDate(session, template, inputs, templateById, from, opts);
     if (!found) break;
     if (accept(found)) out.push(found);
     from = addDays(found, 1);
@@ -204,6 +212,7 @@ export function findRestDayToUse(
   template: SessionTemplate,
   inputs: AdviceInputs,
   templateById: Map<string, SessionTemplate>,
+  opts: { hardApart?: boolean } = {},
 ): PlannedSession | undefined {
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const isRest = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
@@ -218,6 +227,7 @@ export function findRestDayToUse(
     if (sameDay.length > 0) continue;
     const around = inputs.plannedSessions.filter((s) => s.id !== session.id && s.id !== rest.id && s.status !== 'skipped' && (s.scheduledDate >= inputs.asOf || loggedIds.has(s.id)));
     if (!respectsHeavySpacing(date, template, around, templateById, inputs.logs, session.id)) continue;
+    if (opts.hardApart && !hardRunApart(date, session, template, inputs, templateById, [rest.id])) continue;
     return rest;
   }
   return undefined;
@@ -236,13 +246,34 @@ export function catchUpMinutes(session: PlannedSession, template: SessionTemplat
     return o.id !== session.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === week && !!t && isKeySession(t);
   });
   if (!ownKey) return undefined;
-  return template.durationVariants.short ?? Math.max(15, Math.round((template.durationVariants.full * 0.75) / 5) * 5);
+  return shortOf(template);
 }
 
-// The long run and the mountain hike are the week's key sessions: the only
-// ones worth catching up.
-export function isKeySession(template: SessionTemplate): boolean {
-  return ['tpl_long_run', 'tpl_mountain_hike', 'tpl_hike_day_one'].includes(template.id) || /lange duurloop|bergtocht/i.test(template.name);
+const shortOf = (template: SessionTemplate) => template.durationVariants.short ?? Math.max(15, Math.round((template.durationVariants.full * 0.75) / 5) * 5);
+
+// Catching up the key session (rules MISSED-CATCH-UP and SKIPPED-KEY-TO-REST) into the NEXT week:
+// the short version only when that week has a key session of the same tier of its own
+// (engine/keySession.ts): two full long runs, or two full tempo runs, in one week is a jump.
+// A tempo run into a week with only a long run stays full. Gives the minutes and the name of
+// that week's own key session for the sentence, or undefined: the session keeps its length.
+export function keyCatchUpShort(session: PlannedSession, template: SessionTemplate, toDate: string, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): { minutes: number; own: string } | undefined {
+  const week = mondayOfWeek(toDate);
+  if (week === mondayOfWeek(session.scheduledDate)) return undefined;
+  const rank = keyRank(template, inputs.keyFocus);
+  if (rank === undefined) return undefined;
+  const own = inputs.plannedSessions.find((o) => {
+    const t = templateById.get(o.templateId);
+    return o.id !== session.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === week && !!t && keyRank(t, inputs.keyFocus) === rank;
+  });
+  const ownTemplate = own && templateById.get(own.templateId);
+  return ownTemplate ? { minutes: shortOf(template), own: ownTemplate.name } : undefined;
+}
+
+// The week's key sessions, the only ones worth catching up: the one definition of
+// engine/keySession.ts, for the goal on top of Ascend or the direction. Without a
+// focus: the long run or the mountain hike, as always.
+export function isKeySession(template: SessionTemplate, focus?: KeyFocus): boolean {
+  return isKeyFor(template, focus);
 }
 
 // Moved leg strength must not leave the next hard session in the two days after it too heavy

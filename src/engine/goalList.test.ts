@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { conflictGoalsFrom } from './goalConflicts';
 import type { TrainingGoal } from '../models/goals';
-import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import {
-  goalsSentence, labelEffectLines, labelLine, listedGoals, marathonSettingsFor, landingIndex, moveGoal, moveOutcome, nextKeySession, orderForRestored, orderPatch, stepAvailability, seasonStrip, weeksWord, PRIORITY_RULE,
+  goalsSentence, labelEffectLines, labelLine, listedGoals, marathonSettingsFor, landingIndex, moveGoal, moveOutcome, orderForRestored, orderPatch, stepAvailability, seasonStrip, weeksWord, PRIORITY_RULE,
 } from './goalList';
 
 const TODAY = '2026-10-26';
@@ -244,26 +243,5 @@ describe('het marathondoel en de instellingen', () => {
   it('geeft niets voor een doel dat geen marathondoel is', () => {
     const g = run10('a', '2027-03-14');
     expect(marathonSettingsFor(g, g)).toBeUndefined();
-  });
-});
-
-describe('de volgende stap', () => {
-  const tpl = (id: string, name: string, type: SessionTemplate['type'] = 'hiking'): SessionTemplate => ({ id, name, type } as SessionTemplate);
-  const sess = (id: string, templateId: string, date: string, minutes?: number): PlannedSession => ({ id, templateId, scheduledDate: date, status: 'planned', ...(minutes ? { plannedMinutes: minutes } : {}) } as PlannedSession);
-  const templates = [tpl('long', 'Lange loop', 'cardio'), tpl('str', 'Bovenlichaam', 'strength'), tpl('rest', 'Rustig', 'recovery')];
-
-  it('kiest de langste training van de komende twee weken die nog niet gedaan is', () => {
-    const sessions = [sess('1', 'str', '2026-10-27', 45), sess('2', 'long', '2026-11-01', 75), sess('3', 'long', '2026-11-08', 60), sess('4', 'rest', '2026-10-28', 120)];
-    expect(nextKeySession(sessions, templates, [], TODAY)).toMatchObject({ date: '2026-11-01', name: 'Lange loop', minutes: 75 });
-  });
-
-  it('slaat een training over die al een log heeft', () => {
-    const sessions = [sess('2', 'long', '2026-11-01', 75), sess('3', 'long', '2026-11-08', 60)];
-    const logs = [{ id: 'l', plannedSessionId: '2', completedDate: '2026-11-01' } as SessionLog];
-    expect(nextKeySession(sessions, templates, logs, TODAY)?.date).toBe('2026-11-08');
-  });
-
-  it('niets te plannen is geen stap', () => {
-    expect(nextKeySession([], templates, [], TODAY)).toBeUndefined();
   });
 });

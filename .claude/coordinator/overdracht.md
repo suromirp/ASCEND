@@ -87,7 +87,7 @@ Dit deel geldt; wat hierboven staat is geschiedenis.
 - Modellen deze week tot en met 15 november: zie skill werkverdeling, "Deze week". Bouwen buiten het bouwmoment mag deze week (eigenaar).
 - Wat de eigenaar in de coördinator-chat zelf zegt gaat voor doorgestuurde berichten van een oude chat.
 - Locatie en kaart: besluit 2026-11-11-locatie-en-kaart.md (privacy geen grens, behalve nooit in de repo).
-- Lopende bouwers (melden zich bij session_01LnDpSkFKoLuAUnLCXKbA1G): Sherpa Route-kaart (session_01LnDpSn5hAWFpmYVbjZVfp7, opus, claude/route-kaart), Sherpa Route-verfijnen (session_01LnDpSim88CxchjWSHQ6Pbj, fable, claude/route-verfijnen), Sherpa Klein deel 1 (session_01LnDpSjTi9hxdJEtwACNb4G, opus, claude/klein-deel-1). RoutePanel.tsx wordt door beide routebouwers licht geraakt: let bij het mergen op.
+- Live op 11 november: Route verfijnd (933a051), Je horloge (1559a89), Klein en fouten deel 1 (d687a1f), Route-kaart (276fd8a). Lopende bouwers (melden zich bij session_01LnDpSkFKoLuAUnLCXKbA1G): Sherpa Sleuteltraining (session_01LnDpSna3zG3vFrwCwJTJjN, claude/sleuteltraining, herstel klaar, wacht op herreview van Warden), Sherpa Avond ervoor (session_01LnDpSjBy6xdu1sG7hRVCAS), Sherpa Enkel en evenwicht (session_01LnDpSkHjA9h33Ess9yZKBv). Volgorde daarna: zie Bouwrij in de backlog. Merge van main in de werkbranch: altijd `git merge -s ours origin/main` (main is een squash van de werkbranch).
 - Info-blad: ontwerp in docs/visie/Ontwerp Info-blad.md, wacht op vijf antwoorden van de eigenaar.
 - Brainstorms "wat missen we": docs/visie/Kansen 11 november app.md en docs/onderzoek/Kansen 11 november training.md; daarna één overzicht met top vijf voor de eigenaar.
 - Daarna: GR5 uit OpenStreetMap (eigenaar: mag zelf), Buiten (ronde 1, tweede spoor).

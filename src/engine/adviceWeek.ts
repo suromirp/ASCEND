@@ -1,6 +1,8 @@
 // Regels voor gemiste trainingen en rustdagen: inhalen, ruilen, terugtrekken
 // en een extra training.
 
+import { keyPhrase, weekKeySession } from './keySession';
+
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem } from '../models/planChange';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
@@ -9,8 +11,11 @@ import { isTemplatePlannable } from './sports';
 import { addDays, daysBetween, formatWeekdayDateNL } from '../utils/dates';
 import { proposeExtraSession } from './extraRun';
 import { lastDeclinedOn, linkCandidates } from './missedTraining';
-import { type AdviceInputs, type Advice, isDone, inProgram, isKeySession, findCatchUpDate, findRestDayToUse, catchUpMinutes, type AdviceOption, catchUpDates, moveOptions, proposal } from './adviceShared';
+import { type AdviceInputs, type Advice, isDone, inProgram, isKeySession, findCatchUpDate, findRestDayToUse, keyCatchUpShort, type AdviceOption, catchUpDates, moveOptions, proposal } from './adviceShared';
 import { TEST_RUN_ID } from './adviceTestRun';
+
+// Een naam midden in een zin: "Tempoloop" wordt "tempoloop".
+const lower = (name: string) => `${name.charAt(0).toLowerCase()}${name.slice(1)}`;
 
 // --- Rule MISSED-CATCH-UP --------------------------------------------------
 // Trigger: a planned session in the last 3 days has no log and wasn't
@@ -32,11 +37,15 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !linkable.has(s.id),
   );
   // One advice for everything missed, not one each (production feedback:
-  // a stack of "gemist" cards). Only a key session (the long run or the
-  // mountain hike) is caught up, on a free day this week that keeps 48
+  // a stack of "gemist" cards). Only a key session (engine/keySession.ts:
+  // by default the long run or the mountain hike) is caught up, on a free day this week that keeps 48
   // hours from other heavy leg days; everything else is let go
   // (docs/onderzoek, rapport 2, rule C8: catching up is never stacking).
-  const rule = 'ASCEND haalt alleen de sleuteltraining van de week in, de lange duurloop of de bergtocht, op een vrije dag in dezelfde week en nooit binnen 48 uur van een andere zware beendag. Staat er vandaag of morgen een rustdag en deed je de dag ervoor niets, dan wordt die rustdag de inhaaldag: er is niets om van te herstellen. De rest vervalt: twee trainingen op één dag om bij te benen helpt niet.';
+  // The key session is the one of engine/keySession.ts, the same as the line on Ascend.
+  const phrase = keyPhrase(inputs.keyFocus);
+  const rule = phrase
+    ? `ASCEND haalt hoogstens één training in: de belangrijkste sleuteltraining die bleef liggen (${phrase}). Dat gebeurt op een vrije dag in dezelfde week, nooit binnen 48 uur van een andere zware beendag en nooit naast een andere harde loop. Staat er vandaag of morgen een rustdag en deed je de dag ervoor niets, dan wordt die rustdag de inhaaldag: er is niets om van te herstellen. De rest vervalt: twee trainingen op één dag om bij te benen helpt niet.`
+    : 'Met Rustig aan heeft je week geen sleuteltraining, dus ASCEND haalt niets in. Twee trainingen op één dag om bij te benen helpt niet.';
   const missed = recentMissed
     .map((s) => ({ s, template: templateById.get(s.templateId) }))
     .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && m.template.type !== 'recovery')
@@ -47,23 +56,33 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   const caughtUp: string[] = [];
   const dropped: string[] = [];
   let usedRest = false;
+  // At most one catch-up per proposal: the missed key session of the best tier (engine/keySession.ts).
+  // Two catch-ups could land on one day, or two hard runs on days next to each other.
+  const chosen = weekKeySession(
+    missed.filter((m) => isKeySession(m.template, inputs.keyFocus) && isTemplatePlannable(m.template, inputs.enabledSports)).map((m) => m.s),
+    templateById, inputs.keyFocus, inputs.program,
+  );
+  const otherKeys: string[] = [];
   for (const { s, template } of missed) {
-    const key = isKeySession(template);
-    const plannable = key && isTemplatePlannable(template, inputs.enabledSports);
-    const catchUp = plannable ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf) : undefined;
-    const restDay = plannable && !catchUp && !usedRest ? findRestDayToUse(s, template, inputs, templateById) : undefined;
+    const key = isKeySession(template, inputs.keyFocus);
+    const plannable = key && s.id === chosen?.id;
+    const catchUp = plannable ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf, { hardApart: true }) : undefined;
+    const restDay = plannable && !catchUp && !usedRest ? findRestDayToUse(s, template, inputs, templateById, { hardApart: true }) : undefined;
     if (restDay) {
       usedRest = true;
-      const minutes = catchUpMinutes(s, template, restDay.scheduledDate, inputs, templateById);
+      const short = keyCatchUpShort(s, template, restDay.scheduledDate, inputs, templateById);
+      const minutes = short?.minutes;
       items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: restDay.scheduledDate, plannedMinutes: minutes, reason: `Gemist op ${formatWeekdayDateNL(s.scheduledDate)}, ingehaald op je rustdag: de dag ervoor deed je geen training.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       items.push({ plannedSessionId: restDay.id, action: 'remove', reason: 'Rustdag niet nodig: de dag ervoor deed je geen training.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
-      caughtUp.push(`${template.name} doe je ${restDay.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen'} in plaats van je rustdag, want ${restDay.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag'} deed je geen training${minutes ? `. Korter, ${minutes} minuten: deze week staat er al een lange training, en twee volle in één week is te veel ineens` : ''}`);
+      caughtUp.push(`${template.name} doe je ${restDay.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen'} in plaats van je rustdag, want ${restDay.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag'} deed je geen training${short ? `. Korter, ${short.minutes} minuten: die week heeft al een ${lower(short.own)}, en twee volle in één week is te veel ineens` : ''}`);
     } else if (catchUp) {
       items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${formatWeekdayDateNL(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       caughtUp.push(`${template.name} haal je in op ${formatWeekdayDateNL(catchUp)}`);
     } else {
-      items.push({ plannedSessionId: s.id, action: 'remove', reason: key ? 'Gemist en deze week niet in te halen zonder te stapelen.' : 'Gemist; alleen de sleuteltraining van de week wordt ingehaald.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
+      const notChosen = key && !!chosen && s.id !== chosen.id;
+      items.push({ plannedSessionId: s.id, action: 'remove', reason: notChosen ? 'Gemist; ASCEND haalt er hoogstens één in, de belangrijkste.' : key ? 'Gemist en deze week niet in te halen zonder te stapelen.' : 'Gemist; alleen de sleuteltraining van de week wordt ingehaald.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       dropped.push(template.name);
+      if (notChosen) otherKeys.push(template.name);
     }
   }
   const names = missed.map((m) => m.template.name);
@@ -73,12 +92,13 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   const effect = [
     caughtUp.length > 0 ? `${caughtUp.join('; ')}.` : '',
     dropped.length > 0 ? `${list(dropped)} ${dropped.length === 1 ? 'vervalt' : 'vervallen'}. De rest van je week blijft zoals gepland.` : '',
+    otherKeys.length > 0 && chosen && !dropped.includes(templateById.get(chosen.templateId)!.name) ? `ASCEND haalt er hoogstens één in, de belangrijkste: ${lower(templateById.get(chosen.templateId)!.name)}. Twee inhalen in één week is stapelen.` : '',
   ].filter(Boolean).join(' ');
   // One training caught up on a free day: the other free days as options.
   let options: AdviceOption[] | undefined;
   const single = items.length === 1 && items[0].action === 'move' && !usedRest ? missed[0] : undefined;
   if (single) {
-    const dates = catchUpDates(single.s, single.template, inputs, templateById, inputs.asOf);
+    const dates = catchUpDates(single.s, single.template, inputs, templateById, inputs.asOf, undefined, { hardApart: true });
     if (dates.length > 1) options = moveOptions(title, items[0], dates, single.template.name, rule, (d) => `${single.template.name} haal je in op ${formatWeekdayDateNL(d)}.`).options;
   }
   return [{
@@ -146,17 +166,18 @@ export function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string,
     .filter((s) => s.status === 'skipped' && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program)
       && s.scheduledDate <= inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 1)
     .map((s) => ({ s, template: templateById.get(s.templateId) }))
-    .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && isKeySession(m.template) && isTemplatePlannable(m.template, inputs.enabledSports))
+    .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && isKeySession(m.template, inputs.keyFocus) && isTemplatePlannable(m.template, inputs.enabledSports))
     .sort((a, b) => b.s.scheduledDate.localeCompare(a.s.scheduledDate));
   for (const { s, template } of skipped) {
-    const rest = findRestDayToUse(s, template, inputs, templateById);
+    const rest = findRestDayToUse(s, template, inputs, templateById, { hardApart: true });
     if (!rest || usedIds.has(rest.id)) continue;
     const when = rest.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen';
     const before = rest.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag';
-    const rule = 'Een rustdag is er om te herstellen van wat je deed. Sla je de lange training over en deed je die dag verder niets, dan kan hij op de rustdag erna, zolang de afstand tussen zware trainingen klopt.';
+    const rule = 'Een rustdag is er om te herstellen van wat je deed. Sla je de sleuteltraining over en deed je die dag verder niets, dan kan hij op de rustdag erna, zolang de afstand tussen zware trainingen klopt en er geen andere harde loop naast ligt.';
     const title = `${template.name} overgeslagen`;
-    const minutes = catchUpMinutes(s, template, rest.scheduledDate, inputs, templateById);
-    const effect = `Doe hem ${when} in plaats van je rustdag: ${before} deed je geen training, dus die rust heb je niet nodig.${minutes ? ` Wel korter, ${minutes} minuten: deze week staat er al een lange training, en twee volle in één week is te veel ineens.` : ''}`;
+    const short = keyCatchUpShort(s, template, rest.scheduledDate, inputs, templateById);
+    const minutes = short?.minutes;
+    const effect = `Doe hem ${when} in plaats van je rustdag: ${before} deed je geen training, dus die rust heb je niet nodig.${short ? ` Wel korter, ${short.minutes} minuten: die week heeft al een ${lower(short.own)}, en twee volle in één week is te veel ineens.` : ''}`;
     const items: PlanChangeItem[] = [
       { plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: rest.scheduledDate, plannedMinutes: minutes, reason: `Overgeslagen op ${formatWeekdayDateNL(s.scheduledDate)}, gedaan op de rustdag erna.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
       { plannedSessionId: rest.id, action: 'remove', reason: `Rustdag niet nodig: ${before} geen training.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
@@ -227,7 +248,7 @@ export function extraSessionAdvice(inputs: AdviceInputs, templateById: Map<strin
   const found = proposeExtraSession({
     ...inputs.extraSession,
     today: inputs.asOf, program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs,
-    templates: inputs.templates, illnessEpisodes: inputs.illnessEpisodes, respondedIds: inputs.respondedIds,
+    templates: inputs.templates, illnessEpisodes: inputs.illnessEpisodes, respondedIds: inputs.respondedIds, keyFocus: inputs.keyFocus,
   });
   if (!found) return [];
   const template = templateById.get(found.choice.templateId)!;

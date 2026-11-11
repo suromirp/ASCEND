@@ -9,6 +9,7 @@
 //
 // Pure: no React, no IndexedDB.
 
+import type { KeyFocus } from './keySession';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -24,7 +25,7 @@ export type CourseStatus = 'early' | 'on' | 'nearly' | 'behind';
 export interface CourseAssessment {
   status: CourseStatus;
   headline: string;
-  summary?: string; // "Laatste 4 weken: 18 van 20 trainingen, lange training 4 van 4"
+  summary?: string; // "Laatste 4 weken: 18 van 20 trainingen, sleuteltraining 4 van 4"
   lines: string[];
 }
 
@@ -38,6 +39,8 @@ interface CourseInputs {
   templates: SessionTemplate[];
   planChangeLog: PlanChangeProposal[];
   illnessEpisodes?: IllnessEpisode[];
+  // Wat de sleuteltraining is (engine/keySession.ts), zoals op Ascend. Zonder: de lange duurloop of de bergtocht.
+  keyFocus?: KeyFocus;
 }
 
 const LOOKBACK_WEEKS = 4;
@@ -73,7 +76,7 @@ export interface Adherence {
 }
 
 type ReviewInputsLite = { heartRate: HeartRateSettings; intensityCounting: IntensityCounting };
-export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
+export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes' | 'keyFocus'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
 
 export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const { today, program, logs, templates, planChangeLog, illnessEpisodes } = inputs;
@@ -83,7 +86,7 @@ export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const thisMonday = mondayOfWeek(today);
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting, keyFocus: inputs.keyFocus });
     if (review && review.planned > 0) reviews.push(review);
   }
   return {
@@ -97,11 +100,11 @@ export function recentAdherence(inputs: AdherenceInputs): Adherence {
   };
 }
 
-// "Laatste 4 weken: 12 van 17 trainingen, lange training 3 van 4". Eén zin voor
+// "Laatste 4 weken: 12 van 17 trainingen, sleuteltraining 3 van 4". Eén zin voor
 // de coach en voor Je stand.
 export function adherenceSummary(a: Adherence): string {
   return `Laatste ${a.weeks} ${a.weeks === 1 ? 'week' : 'weken'}: ${a.done} van ${a.planned} trainingen` +
-    (a.keyPlanned > 0 ? `, lange training ${a.keyDone} van ${a.keyPlanned}` : '');
+    (a.keyPlanned > 0 ? `, sleuteltraining ${a.keyDone} van ${a.keyPlanned}` : '');
 }
 
 // Op koers, bijna of achter: dezelfde lat voor de coach op Ascend en Ritme op Stand.
@@ -142,10 +145,10 @@ export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
     lines.push(`Je doet wat er staat. Zo kom je goed voorbereid aan de start van ${goalName}.`);
   } else if (status === 'nearly') {
     lines.push(keyShare < 0.75
-      ? 'Bijna: de lange training viel een paar keer weg. Die telt het zwaarst, dus geef hem voorrang als je moet kiezen.'
+      ? 'Bijna: de sleuteltraining viel een paar keer weg. Die telt het zwaarst, dus geef hem voorrang als je moet kiezen.'
       : 'Bijna: er vielen een paar trainingen weg. Eén keer missen is niet erg, het gaat om het ritme.');
   } else {
-    lines.push('Er viel de laatste weken veel weg. Inhalen hoeft niet: pak deze week de draad weer op, te beginnen met de lange training.');
+    lines.push('Er viel de laatste weken veel weg. Inhalen hoeft niet: pak deze week de draad weer op, te beginnen met de sleuteltraining.');
   }
 
   // The same training missing again and again: a pattern, not bad luck.
@@ -162,7 +165,7 @@ export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
   } else if (status !== 'on' && weeksLeft > 16) {
     lines.push(`Er zijn nog ${weeksLeft} weken. Tijd genoeg, als het ritme terugkomt.`);
   } else if (status !== 'on' && weeksLeft > 0) {
-    lines.push(`Nog ${weeksLeft} ${weeksLeft === 1 ? 'week' : 'weken'}. De lange trainingen tellen nu het zwaarst.`);
+    lines.push(`Nog ${weeksLeft} ${weeksLeft === 1 ? 'week' : 'weken'}. De sleuteltrainingen tellen nu het zwaarst.`);
   }
   if (focus && phase?.id !== 'phase_taper') lines.push(focus);
 

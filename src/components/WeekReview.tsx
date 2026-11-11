@@ -1,4 +1,5 @@
 import { resolveIntensityCounting } from '../engine/intensitySettings';
+import { useKeyFocus } from './useKeyFocus';
 import { useState } from 'react';
 import { plannedByIdOf } from '../engine/logDay';
 import { useAppData } from '../state/AppDataContext';
@@ -30,7 +31,8 @@ import type { SessionLog } from '../models/training';
 
 function useWeekReviewFor(weekStart: string): WeekReview | null {
   const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
-  return buildWeekReview({ weekStart, plannedById: plannedByIdOf(plannedSessions), plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings) });
+  const keyFocus = useKeyFocus();
+  return buildWeekReview({ weekStart, plannedById: plannedByIdOf(plannedSessions), plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus });
 }
 
 // On Today, Sunday and Monday: the short version, with the coach's first

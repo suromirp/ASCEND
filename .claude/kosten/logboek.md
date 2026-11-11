@@ -319,3 +319,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Info-blad spoor 1 en 2, Sherpa, opus (sessie), 289k context, $7,30, 0 herstelrondes (spoor 2 als vervolg)
 - 2026-11-11, Nadoorloop Route-kaart na herstel, Lookout, sonnet (tester), 100k, 3 min, groen
 - 2026-11-11, Herreview Route-kaart, Warden, fable (reviewer), 149k, 5 min, niet akkoord (2 zinnen tekst): coördinator herstelde zelf
+- 2026-11-11, Route-kaart (MapLibre, 2 rondes), Sherpa, opus (sessie), 367k context, $11,60, 1 herstelronde plus 2 zinnen door coördinator
+- 2026-11-11, Herreview Sleuteltraining, Warden, fable (reviewer), 180k, 12 min, akkoord (1 moet, door coördinator hersteld)

@@ -485,7 +485,10 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   // A catch-up you declined leaves the rest day free for the swap.
   const missed = missedAdvice(inputs, templateById).filter((a) => !inputs.respondedIds.has(a.id));
   const usedIds = new Set(missed.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId).filter((id): id is string => !!id) ?? []));
-  const skippedKey = skippedKeyAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
+  // Eén inhaal per keer over beide regels: stelt MISSED-CATCH-UP al een inhaal voor, dan geen tweede via de rustdag
+  // (twee voorstellen die elk kloppen, maar samen hard naast hard zetten; Warden, 11 november).
+  const missedMoves = missed.some((a) => a.proposal?.changes.some((c) => c.action === 'move'));
+  const skippedKey = missedMoves ? [] : skippedKeyAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
   for (const id of skippedKey.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId) ?? [])) if (id) usedIds.add(id);
   const testRoom = testRunAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
   const fresh = (list: Advice[]) => list.filter((a) => !inputs.respondedIds.has(a.id));
@@ -507,7 +510,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const restBack = restBackAdvice({
     plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, today: inputs.asOf,
     restDay: inputs.restDay ?? inputs.extraSession?.restDay, anchor: inputs.extraSession?.anchor, leave: inputs.leave,
-    illnessEpisodes: inputs.illnessEpisodes, on: inputs.restDayBack,
+    illnessEpisodes: inputs.illnessEpisodes, on: inputs.restDayBack, keyFocus: inputs.keyFocus,
   });
   // TEST-RETRY touches no session that already stands in another proposal.
   const retryUsed = new Set(usedIds);

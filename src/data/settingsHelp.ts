@@ -1061,7 +1061,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Liet een voorstel je rustdag vervallen en is die dag later weer leeg, dan stelt ASCEND voor hem terug te zetten.',
     points: [
       { head: 'Wanneer', text: 'op je vaste rustdag, als er die dag niets gepland of gedaan is en de week zijn rust niet al op een andere dag heeft.' },
-      { head: 'Niet', text: 'als je de twee dagen ervoor niet trainde, als je de rustdag zelf oversloeg, of als een gemiste test of sleuteltraining op die dag past.' },
+      { head: 'Niet', text: 'als je de twee dagen ervoor niet trainde, als je de rustdag zelf oversloeg, of als een gemiste test of sleuteltraining van je doel op die dag past.' },
       { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft de dag leeg en vraagt ASCEND er niet meer naar.' },
     ],
   },

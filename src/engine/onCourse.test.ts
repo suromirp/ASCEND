@@ -38,18 +38,18 @@ describe('assessOnCourse', () => {
     expect(a.headline).toBe('Net begonnen');
   });
 
-  it('on course when almost everything and every long training was done', () => {
+  it('on course when almost everything and every key session was done', () => {
     const { planned, logs } = history(5, (w, t) => w === 1 && t === 'tpl_hill_intervals');
     const a = assessOnCourse({ ...base, today: '2026-10-07', plannedSessions: planned, logs });
     expect(a.status).toBe('on');
-    expect(a.summary).toBe('Laatste 4 weken: 23 van 24 trainingen, lange training 4 van 4');
+    expect(a.summary).toBe('Laatste 4 weken: 23 van 24 trainingen, sleuteltraining 4 van 4');
   });
 
-  it('nearly, and names the long training when that is what fell away', () => {
+  it('nearly, and names the key session when that is what fell away', () => {
     const { planned, logs } = history(5, (w, t) => (w === 1 || w === 2) && t === 'tpl_long_run');
     const a = assessOnCourse({ ...base, today: '2026-10-07', plannedSessions: planned, logs });
     expect(a.status).toBe('nearly');
-    expect(a.lines[0]).toContain('lange training');
+    expect(a.lines[0]).toContain('sleuteltraining');
     expect(a.lines.some((l) => l.startsWith('Lange duurloop viel 2 van de 4 weken weg'))).toBe(true);
   });
 
