@@ -29,6 +29,7 @@ import { countDifferences } from './settingsDiff';
 import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { noticesBundleSummary, noticesNeed, permissionRows, permissionsSummary, resolveDeviceNotices, type DevicePermissions } from './deviceNotices';
+import { resolveEveningBefore } from './eveningBefore';
 import { isMyLocation } from './weatherLocation';
 import { resolveStrengthSettings } from './strengthSettings';
 import { allProfiles, exerciseAddOnCount, formatAddOns, machineListCount } from './machineWeights';
@@ -882,6 +883,12 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveDeviceNotices(s).rest };
     case 'weekmelding':
       return { checked: resolveDeviceNotices(s).week };
+    case 'avond-ervoor':
+      return { checked: resolveEveningBefore(s).on };
+    case 'avond-ervoor-tijd':
+      return { value: choiceShort('avondVanaf', resolveEveningBefore(s).time) };
+    case 'avond-melding':
+      return { checked: resolveEveningBefore(s).notice };
     case 'weekmelding-tijd':
       return { value: choiceShort('weekmeldingTijd', resolveDeviceNotices(s).weekTime) };
     case 'toestemmingen':

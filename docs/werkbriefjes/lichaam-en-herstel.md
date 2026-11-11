@@ -24,6 +24,7 @@ Het lichaamsfiguur, hoe voelt je lijf, een zware beendag op vermoeide benen, een
 - Gemeten getallen bij Garmin of intervals.icu wijzigen voor "Niet goed gemeten".
 
 ## Valkuilen
+- De avond ervoor is alleen tekst: kaart en melding (id 4001) lezen, plannen niets en tonen nooit een lege kaart. Meldings-id's: 1001 rust, 2001 en hoger ochtend, 3001 week, 4001 avond; een nieuwe melding krijgt een eigen bereik.
 - Een klacht staat onder de naam uit `src/data/bodyAreas.ts` met de zijde erachter; anders herkent INJURY-LEGS hem niet.
 - MORNING-CHECK en de kaart doen dezelfde keuze (`legEaseCardSession`): één spierpijn geeft één kaart, niet twee.
 - Een spierpijnnotitie van dezelfde dag maakt een gelogde training niet "moe" (geen tijdstip); de ochtendcheck wel.
@@ -40,5 +41,4 @@ Het lichaamsfiguur, hoe voelt je lijf, een zware beendag op vermoeide benen, een
 - Tekstkaart (`npm run kaart:vergelijk`) als Lichaam of een kaart op Vandaag verandert.
 
 ## Lees verder
-- `docs/architectuur/lichaam-en-herstel.md`
-- `docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`, `docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md`, `docs/beslissingen/2026-10-25-wat-speelde-er.md`, `docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md`
+- `docs/architectuur/lichaam-en-herstel.md`, `docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`, `docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md`, `docs/beslissingen/2026-10-25-wat-speelde-er.md`, `docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md`
