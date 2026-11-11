@@ -148,10 +148,10 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
       case 'TWO-HARD-RUNS':
         return {
           ...base,
-          headline: `Twee harde loopjes op ${dayName(f.date)}.`,
+          headline: `Twee harde lopen op ${dayName(f.date)}.`,
           fact: `${nameOf(a)} en ${nameOf(b)} staan op dezelfde dag.`,
-          title: 'Niet twee harde loopjes op een dag',
-          why: 'Twee harde loopjes op een dag zijn veel voor je benen. Eén per dag laat ze herstellen.',
+          title: 'Niet twee harde lopen op een dag',
+          why: 'Twee harde lopen op een dag zijn veel voor je benen. Eén per dag laat ze herstellen.',
           notes: { [b]: 'tweede harde loop' },
         };
       case 'TEST-DAY': {

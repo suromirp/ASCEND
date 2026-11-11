@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { descentOf, loadItemText, SPLIT_NOTE, freshnessCurve, intensityMix, legCalendar, loadVersusBefore, plannedEffort, routeDayRows, weeklyDescent, weeklyLoad } from './standing';
+import { descentOf, intensityVerdict, loadItemText, SPLIT_NOTE, freshnessCurve, intensityMix, legCalendar, loadVersusBefore, plannedEffort, routeDayRows, weeklyDescent, weeklyLoad } from './standing';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { GoalRequirement } from '../models/goals';
@@ -256,5 +256,17 @@ describe('a route day next to your best', () => {
     expect(rows.find((r) => r.key === 'stijgen')).toMatchObject({ need: 1000, best: 400, bestDate: '2026-10-10' });
     expect(rows.find((r) => r.key === 'rugzak')).toMatchObject({ need: 10, best: 8 });
     expect(rows.find((r) => r.key === 'dagen')).toMatchObject({ need: 3, best: 2 });
+  });
+});
+
+describe('intensityVerdict', () => {
+  it('zegt alleen "een paar keer hard" als er iets hard was', () => {
+    expect(intensityVerdict({ easy: 300, middle: 40, hard: 30 })).toBe('Goed verdeeld: het meeste rustig, een paar keer hard. Zo groeit je basis en blijf je fris.');
+    expect(intensityVerdict({ easy: 296, middle: 40, hard: 0 })).toBe('Het meeste rustig, niets hard. Zo groeit je basis en blijf je fris.');
+    expect(intensityVerdict({ easy: 236, middle: 0, hard: 0 })).toBe('Alles rustig. Zo groeit je basis en blijf je fris.');
+  });
+  it('bijna goed tussen 70 en 75 procent rustig, daaronder meer hard dan rustig', () => {
+    expect(intensityVerdict({ easy: 72, middle: 20, hard: 8 })).toMatch(/^Bijna goed\./);
+    expect(intensityVerdict({ easy: 50, middle: 20, hard: 30 })).toMatch(/^Meer hard dan rustig\./);
   });
 });

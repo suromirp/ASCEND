@@ -22,6 +22,14 @@ const WEEK = '2026-10-19';
 const base = { templates, today: TODAY };
 
 describe('dayLoads', () => {
+  it('een los horlogelog dat instaat voor een open zware beendag laat de beendag staan', () => {
+    // Vandaag staat Heuvelsprints en afdalen open; een losse horlogeloop is op de rustige loop opgeslagen.
+    const hills = planned('tpl_hills_descent', TODAY);
+    const loose = log('tpl_easy_run', TODAY, 40, { rpe: 4, source: 'garmin', externalId: 'g-been', sport: 'running' });
+    const days = dayLoads({ ...base, weekStart: WEEK, logs: [loose], plannedSessions: [hills] });
+    expect(days[3].legTemplate?.id).toBe('tpl_hills_descent');
+  });
+
   it('geeft zeven dagen van maandag tot zondag', () => {
     const days = dayLoads({ ...base, weekStart: WEEK, logs: [], plannedSessions: [] });
     expect(days.map((d) => d.date)).toEqual(['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25']);

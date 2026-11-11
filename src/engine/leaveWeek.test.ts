@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LeavePeriod } from '../models/leave';
-import { leaveWeek, leavePeriodLine, describeBandRange } from './leaveWeek';
+import { groupDaysByBand, leaveWeek, leavePeriodLine, describeBandRange, quietWordOn } from './leaveWeek';
 import { weekDates } from '../utils/dates';
 import { noGymLine } from './noGymDetails';
 
@@ -90,5 +90,23 @@ describe('leaveWeek: randgevallen van vakantiedagen', () => {
     expect(leaveWeek(WEEK1, [{ ...holiday('2026-11-05', '2026-11-05'), note: '   ' }]).bands[0].note).toBeUndefined();
     const long = 'Naar de familie en dan nog een lange wandeling langs de kust met een tussenstop bij de vuurtoren';
     expect(leaveWeek(WEEK1, [{ ...holiday('2026-11-05', '2026-11-05'), note: long }]).bands[0].note).toBe(long);
+  });
+});
+
+describe('het vakantiepaneel: een dag met vakantie én training', () => {
+  // Nagemaakt: vakantie do 5 t/m za 7 november, met op vrijdag 6 toch een training (of een los log).
+  const w = leaveWeek(WEEK1, [holiday('2026-11-05', '2026-11-07')]);
+  it('de dag blijft in hetzelfde paneel als de rest van de vakantie', () => {
+    const groups = groupDaysByBand(WEEK1, w.bands);
+    expect(groups.map((g) => g.dates.length)).toEqual([1, 1, 1, 3, 1]);
+    expect(groups[3]).toMatchObject({ band: w.bands[0], dates: ['2026-11-05', '2026-11-06', '2026-11-07'] });
+  });
+  it('met een training staat alleen de trainingsrij er, zonder "vakantie"; de dagen ernaast blijven stil', () => {
+    expect(quietWordOn(w, '2026-11-06', 1)).toBeUndefined();
+    expect(quietWordOn(w, '2026-11-05', 0)).toBe('vakantie');
+    expect(quietWordOn(w, '2026-11-07', 0)).toBe('vakantie');
+  });
+  it('een dag buiten de periode krijgt nooit een stille regel', () => {
+    expect(quietWordOn(w, '2026-11-04', 0)).toBeUndefined();
   });
 });

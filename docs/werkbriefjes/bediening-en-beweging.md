@@ -32,6 +32,7 @@ Hoe de app bedient wordt en beweegt: terugknop en bladen, scrollen en hervatten,
 - Een mislukte actie heeft een zichtbare uitkomst en een grens in tijd; een terugval die liegt ging rood bij een review (2 november).
 - Elke instellingenbron laadt apart met eigen grens (`src/components/settings/settingsFactsParts.ts`); een trage bron mag een andere rij niet tegenhouden, en een wijziging van een bron leest alleen die bron.
 - Een tijd schrijf je met `formatClock` (`src/utils/clock.ts`), niet met de hand.
+- Bij inkorten van teksten haal je geen zin weg die verklaart wat een getal of regel op het scherm betekent.
 
 ## Testen
 - Tijdens het werk: `npx vitest run src/components/sheetDrag src/components/randOnder src/components/silentCatch src/utils src/engine/settingsSummary`
@@ -40,5 +41,4 @@ Hoe de app bedient wordt en beweegt: terugknop en bladen, scrollen en hervatten,
 
 ## Lees verder
 - `docs/architectuur/bediening-en-beweging.md`
-- `docs/beslissingen/2026-10-22-terugknop-en-hervatten.md`, `docs/beslissingen/2026-10-28-vloeiende-overgangen.md`
-- `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`, `docs/beslissingen/2026-11-02-rand-onderaan.md`
+- `docs/beslissingen/2026-10-22-terugknop-en-hervatten.md`, `docs/beslissingen/2026-10-28-vloeiende-overgangen.md`, `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`, `docs/beslissingen/2026-11-02-rand-onderaan.md`

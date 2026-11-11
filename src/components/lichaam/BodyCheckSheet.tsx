@@ -181,7 +181,7 @@ export function BodyCheckSheet({
                   </>
                 )}
 
-                {step === 'done' && <Suggestion spot={spot} kind={kind} severity={kind === 'pijn' ? severity : undefined} onAll={() => { goto.current = `/lichaam/${spot.id}`; requestClose(); }} onDone={requestClose} />}
+                {step === 'done' && <Suggestion spot={spot} kind={kind} onAll={() => { goto.current = `/lichaam/${spot.id}`; requestClose(); }} onDone={requestClose} />}
               </>
             )}
           </Card>
@@ -194,17 +194,15 @@ export function BodyCheckSheet({
 function Suggestion({
   spot,
   kind,
-  severity,
   onAll,
   onDone,
 }: {
   spot: BodySpot;
   kind: InjuryKind;
-  severity?: InjurySeverity;
   onAll: () => void;
   onDone: () => void;
 }) {
-  const s = suggestionFor(spot, kind, severity);
+  const s = suggestionFor(spot, kind);
   return (
     <>
       <div>

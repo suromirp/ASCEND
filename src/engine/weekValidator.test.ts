@@ -78,7 +78,8 @@ describe('the other rules', () => {
 
   it('two hard runs on one day', () => {
     const list = set(sessions, `${MONDAY}-0`, { templateId: 'tpl_tempo_run', scheduledDate: '2026-10-31' });
-    expect(validateWeeks(input(list)).some((f) => f.rule === 'TWO-HARD-RUNS')).toBe(true);
+    const f = validateWeeks(input(list)).find((x) => x.rule === 'TWO-HARD-RUNS');
+    expect(f?.message).toMatch(/^Twee harde lopen op /);
   });
 
   it('a second full long session in a week goes short; a duplicate goes', () => {

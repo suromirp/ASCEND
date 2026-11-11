@@ -222,17 +222,15 @@ describe('wat kan helpen', () => {
   const dij = spotById('dij-r')!;
 
   it('geeft bij pijn de zorgtekst van de plek, twee rekoefeningen en de fysioregels', () => {
-    const s = suggestionFor(onderrug, 'pijn', 'matig');
+    const s = suggestionFor(onderrug, 'pijn');
     expect(s.help).toBe(careForSpot(onderrug).bijLast[0]);
     expect(s.stretches).toHaveLength(2);
     expect(s.minutes).toBeGreaterThanOrEqual(1);
     expect(s.fysio.length).toBeGreaterThan(0);
-    expect(s.openFysio).toBe(false);
   });
 
-  it('klapt de fysioregel bij ernstige pijn open en houdt de rode vlag apart', () => {
-    expect(suggestionFor(onderrug, 'pijn', 'ernstig').openFysio).toBe(true);
-    expect(suggestionFor(spotById('nek')!, 'pijn', 'licht').direct).toBeTruthy();
+  it('houdt de rode vlag apart van de fysioregel', () => {
+    expect(suggestionFor(spotById('nek')!, 'pijn').direct).toBeTruthy();
   });
 
   it('geeft bij spierpijn en stijf een eigen zin met bron en geen fysioregels', () => {
@@ -246,7 +244,7 @@ describe('wat kan helpen', () => {
   });
 
   it('zegt overal kan helpen en nooit voorkomt', () => {
-    for (const spot of BODY_SPOTS) for (const kind of ['spierpijn', 'stijf', 'pijn'] as const) expect(suggestionFor(spot, kind, 'licht').help, `${spot.id} ${kind}`).not.toMatch(/voorkomt/i);
+    for (const spot of BODY_SPOTS) for (const kind of ['spierpijn', 'stijf', 'pijn'] as const) expect(suggestionFor(spot, kind).help, `${spot.id} ${kind}`).not.toMatch(/voorkomt/i);
   });
 });
 

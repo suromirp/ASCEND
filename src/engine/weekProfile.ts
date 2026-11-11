@@ -68,7 +68,10 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
 
   // Welke templates op welke dag staan (voor de beendagen), met dezelfde
   // keuze als weeklyLoad: wat gedaan is op de dag van doen, wat nog komt op
-  // de geplande dag, en niets wat gemist of overgeslagen is.
+  // de geplande dag, en niets wat gemist of overgeslagen is. Staat een losse log
+  // van een bron in voor een open training (engine/looseLog.ts), dan telt de
+  // belasting één keer (weeklyLoad), maar de beendag blijft die van de geplande
+  // training: haar template blijft hier staan.
   const templatesByDate = new Map<string, SessionTemplate[]>();
   const add = (date: string, t: SessionTemplate | undefined) => {
     if (!t || t.type === 'recovery') return;
