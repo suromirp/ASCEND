@@ -355,5 +355,10 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Pathfinder vooraf plekken en routes, pathfinder, sonnet, 31k, 1 min, plek en volgorde (2 voor 1)
 - 2026-11-11, Scout Garmin koers vooraf, sportwetenschapper (Scout), sonnet, 28k, 1 min, kan zonder sleutel: koers opslaan en syncen, geen datumkoppeling
 - 2026-11-11, Cartographer ontwerp Plekken en routes, ontwerper, opus, zie melding, 193 regels, 5 vragen
+- 2026-11-11, Warden review Briefing 5 en 6, reviewer, sonnet, 50k, 4 min, akkoord (1 moet klein)
+- 2026-11-11, Pathfinder doorloop Briefing 5 en 6, pathfinder, opus, 136k, 16 min, 1 blokkerend (Gedaan in Week), 4 moet, 9 mag
+- 2026-11-11, Cartographer ontwerp Plekken en routes, ontwerper, opus, 108k, 4 min
 - 2026-11-11, Review Briefing spoor 5 en 6, Warden, sonnet (reviewer), 100k, 4 min, akkoord (vijf kan-punten, vier verwerkt)
 - 2026-11-11, Herreview Briefing herstelronde, Warden, sonnet (reviewer), 53k, 6 min, akkoord (moet: tekstkaart, verwerkt)
+- 2026-11-11, Briefing spoor 5 en 6 (2 rondes), Sherpa, opus (sessie), 466k context, $19,38, 1 herstelronde (1 blokkerend, 4 moet) plus hoofdletter door coördinator
+- 2026-11-11, Pathfinder herdoorloop Briefing 5 en 6, pathfinder, opus, 151k (totaal), 3 min, akkoord

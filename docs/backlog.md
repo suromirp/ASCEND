@@ -17,6 +17,7 @@ Leeg: alles van 11 november staat in de Bouwrij hieronder, die de coördinator d
 
 Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouwers zelf, hoogstens drie tegelijk, nooit twee aan dezelfde bestanden, model volgens skill werkverdeling "Deze week". Volgorde is de volgorde van starten zodra er plek is.
 
+- Luchtfoto op de kaart (eigenaar 11 november): schakelaar Kaart of Luchtfoto op de kaart in de Briefing en het blad Route, keuze onthouden en instelbaar, standaard Kaart. Bronnen zonder sleutel: PDOK luchtfoto (Nederland, open licentie), IGN orthofoto (Frankrijk, GR5), daarbuiten Sentinel-2 cloudless of de gewone kaart; Scout bevestigt licentie en adressen eerst. Lus mint met donkere rand. Na Briefing 5 en 6, voor Plekken. Opus.
 - Plekken en routes (besluit `2026-11-11-plekken-en-routes.md`, eigenaar "Ja go" 11 november): na Briefing 5 en 6. Sporen volgen uit `docs/visie/Ontwerp Plekken en routes.md`; antwoorden van de eigenaar in `2026-11-11-plekken-antwoorden.md` (afstand hangt af van de training: 75 km, korter dan 90 min hoogstens 25 km). Eerst Plekken als opgeslagen vorm met migratie (Vast punt wordt Thuis), export en import, op Fable; dan route bewaren; dan plek voorstellen in de Briefing; dan Nieuwe plek vooraf (zoeken op plaatsnaam, pin op de kaart met tegels). Garmin vooraf: `docs/onderzoek/Garmin koers vooraf klaarzetten.md`. Niet door het bouwmoment.
 - Route-kaart, vervolg: de lus bijsturen (andere kant op, langer of korter, een stuk vermijden), per stuk afstand en hoogtemeters, een knop Groter (kaart op volle hoogte met terugknop), hoogtelijnen (maplibre-contour met sleutelvrije hoogtetegels). Plus van Warden: een regel tijdens het bewaren van een getikt punt. Opus.
 - Het Info-blad van een training opnieuw (eigenaar 11 november: "dat infomenu is kut en moet een hele refactor krijgen, een hele UI en UX verandering"). Het blad achter de knop Info (`components/TrainingGuideSheet.tsx`, menu in drie groepen). De Datavelden bekijken waren daar nauwelijks te vinden. Ontwerpvoorstel klaar (`docs/visie/Ontwerp Info-blad.md`, richting A: blad Je horloge, Uitleg korter); wacht op vijf antwoorden van de eigenaar dat de hele app bekijkt en zegt waar wat logisch hoort; daarna bouwen.
@@ -55,6 +56,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Briefing spoor 5 en 6 (met een horloge dat afvinkt is Briefing de hoofdknop op Vandaag en in Week; Zelf invullen in het menu; instelling Lus zoeken; overal Waarom deze training).
 - Live op 11 november: Briefing spoor 2 (blad Route: kaart, lussen als rijen, knop eronder, uitleg achter de i).
 - Live op 11 november: Afdaalklok (na 21 dagen zonder afdaling een voorstel met Akkoord voor Trap af, 20 min; instelbaar in Tochten; besluit `2026-11-11-afdaalklok.md`). Mag: plek als regel op de missiekaart staat nu in de coachzin.
 - Live op 11 november: Briefing A (route alleen bij buiten; Vandaag, het blad achter de i en De avond ervoor volgen Waar train je?, geen route bij Loopband).
@@ -74,7 +76,7 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, allemaal Opus, geen planning. Volgorde:
 - Live 11 november: spoor 1, 3 en 4 (Briefing A).
 - Live 11 november: spoor 2 (het blad Route met de kaart bovenaan).
-- In aanbouw 11 november: spoor 5 en 6 (Sherpa, opus, branch claude/briefing-spoor-5-6).
+- Live 11 november: spoor 5 en 6 (scherm Briefing, knop Briefing op Vandaag en in Week).
 - Daarna spoor 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
 - Het oude Info-blad spoor 3 en 4 vervallen: spoor 7 hier vervangt ze.
 
@@ -84,6 +86,11 @@ Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, al
 - Een Stop-hook die een bouwer pas laat stoppen als tsc en de gerichte tests groen zijn (instellingen van Claude Code: alleen met akkoord van de eigenaar).
 
 ## Samenhang (Pathfinder)
+
+- Briefing 5 en 6 (Pathfinder, mag): de knop op Vandaag staat onder de vouw doordat de ochtendkaart erboven staat; Vandaag zegt de missie niet in twee seconden als de ochtendvraag open is.
+- Briefing 5 en 6 (Pathfinder, mag): na de log staan twee getallen voor één loop op Vandaag (52 min in Zit erop, 50 min in Je dag).
+- Briefing 5 en 6 (Pathfinder, mag): de plekkeuzes heten per training anders (Hardlopen, buiten of Buiten); op 360 px is de tweede keuze afgesneden zonder schuifhint.
+- Briefing 5 en 6 (Warden, moet klein): Health Connect telt niet als horloge dat afvinkt; nagaan of Vanzelf afvinken Health Connect-activiteiten afvinkt, en zo ja meetellen.
 
 - Briefing spoor 2 (Pathfinder, moet op 360 bij 640): de hoofdknop van het blad Route valt daar net onder de vouw. Voorstel: rijen compacter (één regel per lus) of de knop als vaste onderrand van het blad. Op 412 (telefoon eigenaar) staat hij erboven.
 
