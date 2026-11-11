@@ -134,7 +134,7 @@ zeg je ("geen instelling nodig: geen keuze voor de gebruiker").
    Rustig en Uit bij Beweging. Noem welke niet gelden en waarom.
 5. **Mag niet bewegen**: `planGolden.test.ts`, historie, de scheduler, en wat het briefje onder Nooit noemt.
 6. **Instelling**: welke, met het advies als standaard, in settingsIndex, settingsLayout, settingsSummary en de groep.
-7. **Opleveren**: kort, Nederlands, per eis gedaan of waarom niet; elke eigen keuze buiten de opdracht; de uitslag
+7. **Opleveren**: begin met een blok **Bewijs**: wat je zelf zag (screenshots op 412 px als er een scherm verandert, de verschillen van de tekstkaart, bij planning de echte voorbeeldweek per dag). Daarna kort, Nederlands, per eis gedaan of waarom niet; elke eigen keuze buiten de opdracht; de uitslag
    van tsc, lint, de gerichte tests en de volle set; wat niet gecontroleerd is; de branch.
 
 ## Sneller testen tijdens het werk
@@ -173,6 +173,16 @@ Gaat voor "Modellen per taak" hieronder, tot en met 15 november of tot de eigena
 - Sonnet of Haiku: alleen licht werk (teksten, Lookout, zoeken).
 - Bouwen buiten het bouwmoment mag deze week (eigenaar 11 november: "in principe mag je nu gaan bouwen"); hoogstens drie bouwers tegelijk, nooit twee aan dezelfde bestanden, bouwers in een eigen chat (create_session) die zich bij de coördinator meldt. Kort onderzoek of ontwerp (onder een uur, alleen docs) mag als helper binnen de coördinator-chat.
 - Wat de eigenaar in de coördinator-chat zelf zegt, gaat voor een doorgestuurd bericht van een andere chat.
+
+
+## Lessen uit het onderzoek naar autonome agents (11 november, `docs/onderzoek/Werkwijze autonome agents.md`)
+
+- Zelfreview vóór Warden: elke bouwer laat voor hij zich meldt een frisse helper `reviewer` op sonnet zijn eigen diff naast de eisen van de opdracht leggen, en herstelt wat die vindt. Kost ongeveer $1, een herstelronde $3 tot $5. Zet dit in elke opdracht onder Opleveren.
+- Een bestaande test, `planGolden.test.ts` of een invariant aanpassen om groen te worden mag een bouwer nooit stil: dan stopt hij en meldt het, met de reden. Een test die bewust meebeweegt staat met naam in de melding. Zet dit in elke opdracht onder Mag niet bewegen.
+- Elke bevinding "blokkerend" of "moet" van Warden of Pathfinder wordt na het herstel een test, invariant, lintregel of valkuil in een briefje, zodat geen reviewer hem nog hoeft te vangen. De coördinator controleert dat bij de merge.
+- Knip klein: een opdracht raakt liefst één scherm of één regel in de engine. Kleine wijzigingen komen vaker in één keer door de review.
+- Drie getallen per week in het kostenlogboek, bij de maandagronde: het aandeel bouwers dat in één keer akkoord krijgt van Warden, de kosten per functie (bouwer plus reviews), en het aantal punten dat de eigenaar daarna nog vindt. Dat laatste is de echte maat voor "groen maar fout".
+- Niet doen: live zetten zonder mens, een AI als blokkerende poort voor UX (Pathfinder wijst aan, beslist niet alleen), een proefversie op hetzelfde adres als de echte app (IndexedDB en de service worker zijn per origin), meer bouwers of reviewers tegelijk dan de coördinator kan nakijken.
 
 ## Modellen per taak (eigenaar, 10 november middag)
 
