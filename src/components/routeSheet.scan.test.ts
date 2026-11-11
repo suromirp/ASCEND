@@ -44,7 +44,7 @@ describe('het blad Route', () => {
   });
   it('kaart kan niet tekenen: de lussen als tekst, zonder doorgetrokken of gestreept', () => {
     expect(map).toContain('mapFallbackLine(state.kind');
-    expect(panel).toContain('onNoMap={() => setNoMap(true)}');
+    expect(panel).toContain('onNoMap={() => setNoMapKey(key)}');
     expect(panel).toContain('onMap={!noMap && okStyles.length > 1}');
   });
   it('het blad heeft een vaste hoogte: het springt niet als de lussen er zijn', () => {

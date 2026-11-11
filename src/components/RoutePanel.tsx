@@ -48,7 +48,7 @@ const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
 
 // De gekozen lus, onder de kaart: soort en titel, afstand en hoogtemeters, een melding in amber in een
 // eigen regel, en de hoofdknop. Elke lus heeft zijn eigen uitkomst (`key` op de soort).
-function ChosenLoop({ style, proposal, date, target, sender }: { style: RouteStyle; proposal: RouteProposal; date: string; target: RouteTarget; sender: FileSender | null }) {
+export function ChosenLoop({ style, proposal, date, target, sender }: { style: RouteStyle; proposal: RouteProposal; date: string; target: RouteTarget; sender: FileSender | null }) {
   // De laatste uitkomst van een van de twee knoppen; 'busy' zolang er een loopt (beide hebben een grens in tijd).
   const [done, setDone] = useState<{ send: RouteSendOutcome } | { file: RouteFileResult } | 'busy' | undefined>();
   const mounted = useRef(true);
@@ -94,6 +94,17 @@ function ChosenLoop({ style, proposal, date, target, sender }: { style: RouteSty
       {info.map((note) => (
         <p key={note} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
       ))}
+    </div>
+  );
+}
+
+// Geen netwerk of een routeplanner die te laat was: op de plek van de kaart, met dezelfde hoogte, de
+// regel en Opnieuw zoeken.
+export function RouteFailure({ kind, onRetry }: { kind: 'offline' | 'timeout'; onRetry: () => void }) {
+  return (
+    <div className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+      <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{kind === 'offline' ? OFFLINE_LINE : TIMEOUT_LINE}</p>
+      <TextButton tone="dim" onClick={onRetry}>Opnieuw zoeken</TextButton>
     </div>
   );
 }
@@ -154,8 +165,8 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
   const [here, setHere] = useState<{ attempt: number; found: StartLocation } | undefined>();
   // De stap die nu loopt, voor RouteSearching; hoort bij één zoektocht (de sleutel).
   const [step, setStep] = useState<{ key: string; step: RouteSearchStep } | undefined>();
-  // De kaart kon niet tekenen: de rijen zeggen dan niet doorgetrokken of gestreept.
-  const [noMap, setNoMap] = useState(false);
+  // De kaart kon bij deze zoektocht niet tekenen: de rijen zeggen dan niet doorgetrokken of gestreept.
+  const [noMapKey, setNoMapKey] = useState<string | undefined>();
   const mounted = useRef(true);
   const locateStop = useRef(new AbortController());
   useEffect(() => {
@@ -355,6 +366,7 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
   const mapRoutes = plans ? okStyles.flatMap((s) => { const o = plans[s]; return o.ok ? [{ style: s, points: o.proposal.points }] : []; }) : [];
   const pickedRoute = mapRoutes.find((r) => r.style === picked);
   const mapStartPoint = pickedRoute?.points[0] ?? exactPoint ?? roundStart({ lat, lon });
+  const noMap = noMapKey === key;
   const steps = searchSteps(hereMode);
   const currentStep = locatingHere ? 'locate' : step?.key === key ? step.step : 'terrain';
   const foundLines = plans ? searchLines(plans, target) : [];
@@ -368,18 +380,11 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
       case 'searching':
         return <RouteSearching key={p} steps={steps} current={currentStep} limitLine={searchLimitLine(hereMode ? START_LOCATE_LIMIT_MS : undefined, PROPOSAL_LIMIT_MS)} />;
       case 'failure':
-        // Op de plek van de kaart, met dezelfde hoogte: de regel en Opnieuw zoeken.
-        return (
-          <div key={p} className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-            <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{stage === 'offline' ? OFFLINE_LINE : TIMEOUT_LINE}</p>
-            {retry}
-          </div>
-        );
+        return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={() => setAttempt((n) => n + 1)} />;
       case 'map':
         return (
           <div key={p} className="flex flex-col gap-1">
-            <RouteMap routes={mapRoutes} chosen={picked} start={mapStartPoint} base={resolveMapBase(settings.routeMapBase)} onChoose={setChosen} onStart={startOnMap} offerHere={!hereMode} onNoMap={() => setNoMap(true)} />
-            <p className="text-xs leading-snug" style={dim}>{startLine}</p>
+            <RouteMap routes={mapRoutes} chosen={picked} start={mapStartPoint} base={resolveMapBase(settings.routeMapBase)} onChoose={setChosen} onStart={startOnMap} offerHere={!hereMode} onNoMap={() => setNoMapKey(key)} />
           </div>
         );
       case 'chosen':
@@ -408,7 +413,8 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}.</p>
+      {/* Waar de lus begint staat er in elke stand, ook bij zoeken, een fout of zonder kaart (Warden). */}
+      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. {startLine}</p>
       {parts.map(part)}
     </div>
   );
