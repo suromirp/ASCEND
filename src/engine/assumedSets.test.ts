@@ -192,9 +192,23 @@ describe('regel 2: twijfel, dan Hoeveel over?', () => {
     expect(asksReserve(ex(four(), { trainings: 2 }), 'r1', true)).toBe(true);
     expect(asksReserve(ex(four(), { trainings: 3 }), 'r1', true)).toBe(false);
   });
-  it('stand Vaker vragen met Afvinken telt als het doel uit: alleen de eerste, een zware en de laatste set, de oude regel', () => {
+  // Warden (Fable): Vaker vragen is altijd een bovenverzameling van het advies, ook met Afvinken telt als het doel uit.
+  it('stand Vaker vragen: de eerste en de laatste set, en alles wat het advies vraagt', () => {
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(ex(four()), id, false, 'vaker'))).toEqual([true, false, false, true]);
     const e = ex(four({ reps: 5 }), { trainings: 0 });
-    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(e, id, false, 'vaker'))).toEqual([true, false, false, true]);
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(e, id, false, 'vaker'))).toEqual([true, true, true, true]);
+    expect(asksReserve(ex(four({ reps: 8 })), 'r1', false, 'vaker')).toBe(true);
+    for (const doubt of [false, true]) for (const rows of [four(), four({ reps: 8 }), four({ reps: 11 }), four({ reps: 13 })]) for (const id of ['r0', 'r1', 'r2', 'r3']) {
+      if (asksReserve(ex(rows), id, doubt)) expect(asksReserve(ex(rows), id, doubt, 'vaker')).toBe(true);
+    }
+  });
+  it('advies met Afvinken telt als het doel uit: vraagt bij de eerste werkset die de bovenkant haalt, zodat de stap zwaarder kan komen', () => {
+    const top = [row(0, { reps: 11 }), row(1, { reps: 11 }), row(2), row(3)];
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(ex(top), id, false))).toEqual([true, false, false, false]);
+    const later = [row(0), row(1, { reps: 11 }), row(2, { reps: 11 }), row(3)];
+    expect(['r0', 'r1', 'r2', 'r3'].map((id) => asksReserve(ex(later), id, false))).toEqual([false, true, false, false]);
+    // Met Afvinken telt als het doel aan telt een bevestigde set (strenger: allAtTop of twee keer): geen vraag.
+    expect(asksReserve(ex(top), 'r0', true)).toBe(false);
   });
   // Besluit 2026-11-11-forge-kern-zichtbaar: het advies vraagt alleen als het anders ging.
   it('advies: eerste en laatste set volgens schema geven geen vraag', () => {

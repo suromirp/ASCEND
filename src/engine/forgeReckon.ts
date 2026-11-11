@@ -314,8 +314,9 @@ export const QUICK_RIR_HINT = 'Een schatting is genoeg. Twijfel je tussen twee, 
 //   herhalingen dan gevraagd, 2 of meer boven de bovenkant, de eerste werkset op een gewicht dat zwaarder is dan
 //   vorige keer, elke werkset in de eerste drie trainingen van een oefening). Een set volgens schema, ook de eerste
 //   en de laatste, krijgt geen vraag.
-// - 'vaker' (de oude regel): ook altijd bij de eerste werkset (de topset) en de laatste werkset; de twijfel alleen met
-//   "Afvinken telt als het doel" (`doubt`).
+//   Zonder "Afvinken telt als het doel" (`doubt` false) ook bij de eerste werkset die de bovenkant haalt.
+// - 'vaker' (de oude regel, uitgebreid): ook altijd bij de eerste werkset (de topset) en de laatste werkset; altijd
+//   een bovenverzameling van het advies.
 export function asksReserve(ex: WorkoutExercise, rowId: string, doubt = false, mode: 'twijfel' | 'vaker' = 'twijfel'): boolean {
   if (ex.timed) return false;
   const work = ex.rows.filter((r) => r.kind === 'work');
@@ -325,9 +326,19 @@ export function asksReserve(ex: WorkoutExercise, rowId: string, doubt = false, m
   if (row.rir !== undefined && !row.rirAssumed) return false;
   const hard = !!row.target.failure || (row.target.rir ?? DEFAULT_RIR) <= 1;
   if (hard) return true;
-  if (mode === 'twijfel') return doubtful(ex, work, at);
-  if (at === 0 || at === work.length - 1) return true;
-  return doubt && doubtful(ex, work, at);
+  // Zonder "Afvinken telt als het doel" telt alleen een eigen RIR op de topset voor de stap zwaarder bij precies de
+  // bovenkant (strengthModel.ts#topReached): vraag dan ook bij de eerste werkset die de bovenkant haalt, anders komt
+  // die stap stil niet meer.
+  const advice = doubtful(ex, work, at) || (!doubt && firstAtTop(work, at));
+  if (mode === 'twijfel') return advice;
+  // Vaker vragen is altijd een bovenverzameling van het advies.
+  return at === 0 || at === work.length - 1 || advice;
+}
+
+// De eerste werkset die de bovenkant van het bereik haalt (geen open doel, niet tot falen).
+function firstAtTop(work: WorkoutRow[], at: number): boolean {
+  const atTop = (r: WorkoutRow) => !r.target.failure && !r.target.open && (r.reps ?? 0) >= r.target.repsHigh;
+  return atTop(work[at]) && !work.slice(0, at).some(atTop);
 }
 
 // Regel 2: twijfel bij een afgevinkte werkset zonder eigen RIR.

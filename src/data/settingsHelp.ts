@@ -493,10 +493,10 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Hoeveel over na een set',
     lead: 'Afvinken geeft het doel als RIR. Alleen als het anders ging vraagt Forge in de rij hoeveel je nog over had: 0, 1, 2 of 3+.',
     points: [
-      { head: 'Als het anders ging', text: 'het advies: na een zware set (0 of 1 over, of tot falen), minder herhalingen dan gevraagd, ruim boven het bereik, de eerste set op een zwaarder gewicht en in je eerste drie trainingen van een oefening.' },
-      { head: 'Vaker vragen', text: 'ook na je eerste en je laatste werkset, ook als alles volgens schema ging.' },
+      { head: 'Als het anders ging', text: 'het advies: na een zware set (0 of 1 over, of tot falen), minder herhalingen dan gevraagd, ruim boven het bereik, de eerste set op een zwaarder gewicht en in je eerste drie trainingen van een oefening. Staat Afvinken telt als het doel uit, dan ook bij de eerste set die de bovenkant haalt, zodat de stap zwaarder kan komen.' },
+      { head: 'Vaker vragen', text: 'ook na je eerste en je laatste werkset, ook als alles volgens schema ging, en verder alles wat het advies vraagt.' },
       { head: 'Eén tik', text: 'je kiest in de rij zelf, zonder blad. Het doel staat gedempt voorgekozen; kies je niets, dan blijft het staan als aangenomen RIR.' },
-      { head: 'Waarom', text: 'een RIR die je zelf kiest telt mee voor je geschatte kracht en voor de stap zwaarder; een aangenomen RIR niet.' },
+      { head: 'Waarom', text: 'van een RIR die je zelf kiest leert Forge hoe snel je moe wordt, en hij telt voor de stap zwaarder en voor klaar voor je doel. Een aangenomen RIR telt alleen als het doel mee in je geschatte kracht.' },
     ],
   },
   forgeStappen: {

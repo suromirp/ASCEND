@@ -575,7 +575,7 @@ export const CHOICES = {
     advice: 0 as 0 | 45 | 60 | 75 | 90,
     help: 'forgeTijdsgrens',
     options: [
-      { value: 0, label: 'Tonen, niet inkorten', note: 'Het advies. De hele training staat er; na 60 minuten zegt een regel dat de rest bijwerk is', short: 'Niet inkorten' },
+      { value: 0, label: 'Tonen, niet inkorten', note: 'Het advies. De hele training staat er; is de kern af, dan zegt een regel na 60 minuten wat nog open staat', short: 'Niet inkorten' },
       { value: 45, label: '45 minuten', short: '45 min' },
       { value: 60, label: '60 minuten', short: '60 min' },
       { value: 75, label: '75 minuten', short: '75 min' },
@@ -589,7 +589,7 @@ export const CHOICES = {
     advice: 0 as 0 | 45 | 60 | 75 | 90,
     help: 'forgeTijdsgrens',
     options: [
-      { value: 0, label: 'Tonen, niet inkorten', note: 'Het advies. De hele training staat er; na 75 minuten zegt een regel dat de rest bijwerk is', short: 'Niet inkorten' },
+      { value: 0, label: 'Tonen, niet inkorten', note: 'Het advies. De hele training staat er; is de kern af, dan zegt een regel na 75 minuten wat nog open staat', short: 'Niet inkorten' },
       { value: 45, label: '45 minuten', short: '45 min' },
       { value: 60, label: '60 minuten', short: '60 min' },
       { value: 75, label: '75 minuten', short: '75 min' },

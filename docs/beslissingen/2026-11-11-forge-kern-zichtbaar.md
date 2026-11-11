@@ -24,6 +24,14 @@ Status: aangenomen
 - De tekstkaart heeft een Forge-scherm (`docs/app-kaart/forge.md`, Benen A via Week).
 - De instelling heet nog Schijven bij de set tonen (bestaand woord, bevestigd door de coördinator).
 
+## Herstel na Warden (Fable)
+
+- Vaker vragen is altijd een bovenverzameling van het advies: de eerste en de laatste werkset, plus alles wat het advies vraagt, ook met Afvinken telt als het doel uit.
+- De stap zwaarder bij precies de bovenkant van het bereik (`strengthModel.ts#topReached`) eist een eigen RIR op de topset. Met Afvinken telt als het doel uit vraagt het advies daarom ook bij de eerste werkset die de bovenkant haalt, zodat die stap niet stil verdwijnt.
+- Met de standaard (Afvinken telt als het doel aan) komt die vraag niet; een bevestigde set telt dan voor de stap, maar bewust strenger dan een eigen RIR: alle werksets op de bovenkant (`allAtTop`) of de topset twee trainingen achter elkaar op hetzelfde gewicht (`topTwice`). Dat was al zo (`2026-11-08-forge-afvinken-doel.md`) en verandert niet.
+- Bij een gekozen grens staat wat wegviel als de bestaande regel "1 set weg door je tijdsgrens" met Terugzetten bij de oefening, en een hele oefening die wegviel in de regel bovenaan; niet als gedempte rijen. Bewust: de regel met Terugzetten bestaat al en werkt, gedempte rijen zouden een tweede manier zijn om hetzelfde te zeggen.
+- Ook buiten Forge heet een ladderstap met gewicht nu "kg erbij" (klaar voor je doel), en de ijkset in Instellingen "een set erbij".
+
 ## Reden
 
 De eigenaar (11 november): "niet zo erg als het uitloopt, zolang je weet wat de belangrijkste oefeningen zijn; soms extra, een keertje niet is geen probleem." Inkorten verborg wat er wegviel; tonen met de rol erbij laat de keuze bij hem. Bij Benen A bleef het RIR-bolletje van de laatste werkset grijs met een vraag, terwijl alles volgens schema ging: de vraag hoort bij een set die iets zegt.
