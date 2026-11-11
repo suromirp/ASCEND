@@ -160,6 +160,8 @@ Overig:
 
 ## Nakijken
 
+- Leg press zonder opgeslagen standen (Sherpa Forge verloop, 11 november): Forge leert de stappen uit gebruikte gewichten, laat 91,6 vallen omdat het op 202 pond lijkt, en vult het gat met 94,4, 99,4 en 104,4 kg die niet op het toestel staan. Bestaand gedrag. Nagaan met de back-up (skill naspelen) of dat toestel standen heeft; zo niet, mag Forge dan gewichten voorstellen die niet op het toestel staan?
+
 Twijfel of het af is; eerst kijken, dan schrappen of bouwen.
 - Rustdag terug: een training die je zelf oversloeg of waarvan je het inhaalvoorstel afwees, kan de rustdag tot zeven dagen tegenhouden. `trainedOn` volgt nu `dayLoads` (af), maar `catchUpFits` in `engine/restDayBack.ts` kijkt niet naar een afgewezen inhaalvoorstel.
 - Tempo bij zone 2, kleine rest: een oude `aerobicProgressCelebrated` na 14 dagen negeren; het dauwpunt per loop (`dewPoint` zit in `heatPace.ts` en het weer); de regel voor benen die niet uitgerust zijn (hoofdstuk 5 van het verslag). Niet in de code teruggevonden of bevestigd.
