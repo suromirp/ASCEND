@@ -384,3 +384,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Warden Plekken engine, reviewer, fable, 57k, 4 min, niet akkoord (1 blokkerend, 6 moet)
 - 2026-11-11, Pathfinder Rusttimer, pathfinder, sonnet, 37k, 1 min, 2 moet (tekst, door coördinator)
 - 2026-11-11, Rusttimer-geluiden, Sherpa, opus (sessie), 3 rondes, live 374625aa
+- 2026-11-11, Scout programma en fasen, sportwetenschapper, fable, rapport in docs/onderzoek
