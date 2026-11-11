@@ -1,4 +1,4 @@
-// ASCEND: de rustbel van Forge (besluit docs/beslissingen/2026-11-11-rusttimer-geluiden.md). Tien klanken,
+// ASCEND: de rustbel van Forge (besluit docs/beslissingen/2026-11-11-rusttimer-geluiden.md). Negen klanken,
 // alle gemaakt met Web Audio; een klank met een opname in REST_SOUND_FILES laadt die eerst.
 //
 // De weg van het geluid: elke klank gaat via een eigen gain (het gekozen volume) naar één vaste
@@ -222,7 +222,7 @@ function thud(ctx: AudioContext, dest: AudioNode, t: number, freq: number, peak:
   osc.stop(t + decay + 0.05);
 }
 
-// ---- de tien klanken -------------------------------------------------------------------------
+// ---- de negen klanken -------------------------------------------------------------------------
 
 interface Voice {
   // Speelt de klank op tijd t; k verschuift de toonhoogte (1 is gewoon).
@@ -242,36 +242,6 @@ const BIANZHONG_PARTIALS = [[0.5, 0.25], [1, 1], [1.19, 0.45], [2.0, 0.3], [2.92
 const TEMPLE_PARTIALS = [[0.5, 0.6], [1, 1], [1.004, 0.6], [2.03, 0.35], [2.71, 0.18], [4.1, 0.06]] as const;
 
 export const VOICES: Record<RestSound, Voice> = {
-  // Twee snelle slagen van een koebel: twee blokgolven door een bandfilter rond 2,6 kHz, hoog genoeg
-  // om door muziek en een koptelefoon te snijden.
-  cowbell: {
-    length: 0.5,
-    ring: 0.71,
-    wet: 0.12,
-    play: (ctx, dest, t, k) => {
-      for (const [at, peak] of [[0, 0.75], [0.16, 0.55]] as const) {
-        const bp = ctx.createBiquadFilter();
-        bp.type = 'bandpass';
-        bp.frequency.value = 2600 * k;
-        bp.Q.value = 1.1;
-        const g = ctx.createGain();
-        g.gain.setValueAtTime(0, t + at);
-        g.gain.linearRampToValueAtTime(peak, t + at + 0.003);
-        g.gain.exponentialRampToValueAtTime(peak * 0.35, t + at + 0.04);
-        g.gain.exponentialRampToValueAtTime(0.0008, t + at + 0.55);
-        bp.connect(g);
-        g.connect(dest);
-        for (const f of [587, 845]) {
-          const osc = ctx.createOscillator();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(f * k, t + at);
-          osc.connect(bp);
-          osc.start(t + at);
-          osc.stop(t + at + 0.6);
-        }
-      }
-    },
-  },
   // Eén droge metalen klik: een korte stoot hoge ruis en drie hoge, onharmonische boventonen.
   pickaxe: {
     length: 0.35,

@@ -2,17 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { CHOICES } from '../data/settingsChoices';
 import { DUCK_MAX_MS, listenNotice, preTickDelay, preTickStillDue, restCueDuckMs, PRE_TICK_SECONDS, readRestSound, readRestVolume, REST_SOUND_FILES, REST_SOUND_GROUPS, REST_SOUNDS, restCue, vibrateInstead } from './restSounds';
 
-describe('de tien rustgeluiden', () => {
+describe('de negen rustgeluiden', () => {
   it('elke klank staat precies één keer onder een kopje, in de volgorde van de wens', () => {
     const grouped = REST_SOUND_GROUPS.flatMap((g) => g.sounds);
     expect(grouped).toEqual([...REST_SOUNDS]);
-    expect(new Set(grouped).size).toBe(10);
+    expect(new Set(grouped).size).toBe(9);
     expect(REST_SOUND_GROUPS.map((g) => g.title)).toEqual(['Bergen', 'Rome', 'Noorden', 'Oosten', 'Overig']);
   });
 
-  it('de keuze in de instellingen heeft dezelfde tien, met Koebel als advies', () => {
+  it('de keuze in de instellingen heeft dezelfde negen, met Heldere bel als advies (Koebel eruit na luisteren)', () => {
     expect(CHOICES.rustgeluid.options.map((o) => o.value)).toEqual([...REST_SOUNDS]);
-    expect(CHOICES.rustgeluid.advice).toBe('cowbell');
+    expect(CHOICES.rustgeluid.advice).toBe('clearbell');
+    expect(CHOICES.rustgeluid.options.map((o) => o.label)).not.toContain('Koebel');
     expect(CHOICES.rustvolume.options.map((o) => o.value)).toEqual(['soft', 'normal', 'clear']);
     expect(CHOICES.rustvolume.advice).toBe('normal');
   });
@@ -34,11 +35,13 @@ describe('readRestSound: een bewaarde waarde defensief lezen', () => {
   it('een nieuwe keuze blijft', () => {
     for (const s of REST_SOUNDS) expect(readRestSound(s)).toBe(s);
   });
-  it('de zes oude keuzes gaan naar de dichtstbijzijnde nieuwe', () => {
+  it('de zes oude keuzes en Koebel gaan naar de dichtstbijzijnde nieuwe', () => {
     expect(readRestSound('chime')).toBe('clearbell');
     expect(readRestSound('bell')).toBe('clearbell');
     expect(readRestSound('gong')).toBe('templebell');
-    expect(readRestSound('boxing')).toBe('cowbell');
+    expect(readRestSound('boxing')).toBe('clearbell');
+    // Koebel zat erin tot het luisteren van 11 november.
+    expect(readRestSound('cowbell')).toBe('clearbell');
     expect(readRestSound('whistle')).toBe('clearbell');
     expect(readRestSound('beep')).toBe('clearbell');
   });

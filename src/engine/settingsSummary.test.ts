@@ -145,8 +145,8 @@ describe('rowSummary: het geluid na de rust en het trillen', () => {
   it('bij alleen trillen kies je met het geluid het ritme: de rij blijft, met een feit eronder', () => {
     const r = rowSummary('forge-geluid', withForge({ restAlert: 'vibrate', restSound: 'boxing' }));
     expect(r.hidden).toBeFalsy();
-    // Boksbel van voor 11 november leest als Koebel.
-    expect(r.value).toBe('Koebel');
+    // Boksbel van voor 11 november leest als Heldere bel.
+    expect(r.value).toBe('Heldere bel');
     expect(r.sub).toBe('Je voelt alleen het ritme');
   });
 
@@ -166,7 +166,7 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-schatting', facts()).value).toBe('Tot 20');
     expect(rowSummary('forge-rust', facts()).checked).toBe(true);
     expect(rowSummary('forge-signaal', facts()).value).toBe('Geluid en trillen');
-    expect(rowSummary('forge-geluid', facts()).value).toBe('Koebel');
+    expect(rowSummary('forge-geluid', facts()).value).toBe('Heldere bel');
     expect(rowSummary('forge-geluid', facts({ settings: { ...facts().settings, strengthModel: { restSound: 'lyre' } } })).value).toBe('Lier');
     expect(rowSummary('forge-scherm', facts()).checked).toBe(true);
     // Besluit 2026-11-11-forge-kern-zichtbaar: schijven per set standaard uit, Hoeveel over alleen als het anders ging.

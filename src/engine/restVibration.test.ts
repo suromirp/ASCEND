@@ -8,10 +8,10 @@ const pulses = (p: number[]) => p.filter((_, i) => i % 2 === 0);
 const total = (p: number[]) => p.reduce((a, b) => a + b, 0);
 
 describe('restVibrationPattern: het trilpatroon bij het gekozen geluid', () => {
-  it('Koebel twee snelle tikken, Trommel drie, Vikinghoorn en Tempelbel één lange', () => {
-    const cowbell = restVibrationPattern('cowbell');
-    expect(pulses(cowbell)).toHaveLength(2);
-    expect(Math.max(...pulses(cowbell))).toBeLessThanOrEqual(100);
+  it('Heldere bel twee korte tikken, Trommel drie, Vikinghoorn en Tempelbel één lange', () => {
+    const clear = restVibrationPattern('clearbell');
+    expect(pulses(clear)).toHaveLength(2);
+    expect(Math.max(...pulses(clear))).toBeLessThanOrEqual(100);
     expect(pulses(restVibrationPattern('drum'))).toHaveLength(3);
     for (const long of ['vikinghorn', 'templebell'] as const) {
       const p = restVibrationPattern(long);
@@ -22,15 +22,16 @@ describe('restVibrationPattern: het trilpatroon bij het gekozen geluid', () => {
 
   it('een oude keuze voelt als de nieuwe waar hij naartoe gaat (11 november)', () => {
     expect(restVibrationPattern('gong')).toEqual(restVibrationPattern('templebell'));
-    expect(restVibrationPattern('boxing')).toEqual(restVibrationPattern('cowbell'));
+    expect(restVibrationPattern('boxing')).toEqual(restVibrationPattern('clearbell'));
+    expect(restVibrationPattern('cowbell')).toEqual(restVibrationPattern('clearbell'));
     for (const old of ['chime', 'bell', 'beep', 'whistle']) expect(restVibrationPattern(old)).toEqual(restVibrationPattern('clearbell'));
   });
 
   it('bij een volgende oefening twee keer, de tik vooraf één korte stoot', () => {
-    const one = restVibrationPattern('cowbell');
-    expect(restVibrationFor('cowbell', 'set')).toEqual(one);
-    expect(pulses(restVibrationFor('cowbell', 'exercise'))).toHaveLength(2 * pulses(one).length);
-    expect(restVibrationFor('cowbell', 'pre')).toEqual([70]);
+    const one = restVibrationPattern('clearbell');
+    expect(restVibrationFor('clearbell', 'set')).toEqual(one);
+    expect(pulses(restVibrationFor('clearbell', 'exercise'))).toHaveLength(2 * pulses(one).length);
+    expect(restVibrationFor('clearbell', 'pre')).toEqual([70]);
   });
 
   it('elk geluid heeft een eigen patroon, en geen twee voelen hetzelfde', () => {

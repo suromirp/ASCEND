@@ -162,7 +162,7 @@ describe('adviceDifferences', () => {
   });
 
   it('een waarde die gelijk is aan het advies telt niet, ook als hij erbij staat', () => {
-    const s = apply(base, { ambition: 'standaard', overviews: { weekReview: true }, strengthModel: { restSound: 'cowbell', progression: 'weight_first' } });
+    const s = apply(base, { ambition: 'standaard', overviews: { weekReview: true }, strengthModel: { restSound: 'clearbell', progression: 'weight_first' } });
     expect(adviceDifferences(s)).toEqual([]);
   });
 
@@ -230,7 +230,7 @@ describe('resetPatch', () => {
     const { now } = resetPatch(s, ['forge-geluid']);
     expect(now.strengthModel).toEqual({ restAuto: false, activeProfileId: 'a', restSeconds: { squat: 120 } });
     const after = apply(s, now);
-    expect(resolveStrengthSettings(after.strengthModel).restSound).toBe('cowbell');
+    expect(resolveStrengthSettings(after.strengthModel).restSound).toBe('clearbell');
     expect(resolveStrengthSettings(after.strengthModel).restAuto).toBe(false);
   });
 

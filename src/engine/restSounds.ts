@@ -1,10 +1,9 @@
 // ASCEND: de geluiden van de rusttimer in Forge (besluit docs/beslissingen/2026-11-11-rusttimer-geluiden.md).
-// Tien keuzes in vijf groepen, het volume, de vooraankondiging en de klank bij een volgende oefening.
+// Negen keuzes in vijf groepen (Koebel viel af na luisteren, 11 november), het volume, de vooraankondiging en de klank bij een volgende oefening.
 // Hier staat alleen wat er klinkt en wanneer; het maken van het geluid doet utils/sound.ts.
 // Puur: geen React, geen browser.
 
 export type RestSound =
-  | 'cowbell'
   | 'pickaxe'
   | 'cornu'
   | 'vikinghorn'
@@ -17,15 +16,15 @@ export type RestSound =
 
 export type RestVolume = 'soft' | 'normal' | 'clear';
 
-export const REST_SOUNDS: readonly RestSound[] = ['cowbell', 'pickaxe', 'cornu', 'vikinghorn', 'drum', 'bianzhong', 'hyoshigi', 'templebell', 'clearbell', 'lyre'];
+export const REST_SOUNDS: readonly RestSound[] = ['pickaxe', 'cornu', 'vikinghorn', 'drum', 'bianzhong', 'hyoshigi', 'templebell', 'clearbell', 'lyre'];
 export const REST_VOLUMES: readonly RestVolume[] = ['soft', 'normal', 'clear'];
 
-export const DEFAULT_REST_SOUND: RestSound = 'cowbell';
+export const DEFAULT_REST_SOUND: RestSound = 'clearbell';
 export const DEFAULT_REST_VOLUME: RestVolume = 'normal';
 
 // De kopjes in het blad Geluid na de rust, in deze volgorde.
 export const REST_SOUND_GROUPS: readonly { title: string; sounds: readonly RestSound[] }[] = [
-  { title: 'Bergen', sounds: ['cowbell', 'pickaxe'] },
+  { title: 'Bergen', sounds: ['pickaxe'] },
   { title: 'Rome', sounds: ['cornu'] },
   { title: 'Noorden', sounds: ['vikinghorn', 'drum'] },
   { title: 'Oosten', sounds: ['bianzhong', 'hyoshigi', 'templebell'] },
@@ -40,14 +39,15 @@ export const REST_SOUND_FILES: Partial<Record<RestSound, string>> = {};
 // Het geluid dat altijd lukt zolang er geluid kan: gemaakt, zonder bestand.
 export const FALLBACK_REST_SOUND: RestSound = 'clearbell';
 
-// De zes keuzes van voor 11 november naar de dichtstbijzijnde nieuwe.
+// De zes keuzes van voor 11 november en Koebel (eruit na luisteren) naar de dichtstbijzijnde nieuwe.
 const LEGACY: Record<string, RestSound> = {
   chime: 'clearbell',
   bell: 'clearbell',
   beep: 'clearbell',
   whistle: 'clearbell',
   gong: 'templebell',
-  boxing: 'cowbell',
+  boxing: 'clearbell',
+  cowbell: 'clearbell',
 };
 
 // Leest een bewaarde waarde defensief: een nieuwe keuze blijft, een oude gaat naar de dichtstbijzijnde

@@ -17,8 +17,6 @@ import { readRestSound, type RestCue } from './restSounds';
 export const REST_ALARM_PATTERN: readonly number[] = [250, 120, 250, 120, 400];
 
 const PATTERNS: Record<RestSound, readonly number[]> = {
-  // Koebel: twee snelle tikken.
-  cowbell: [80, 90, 80],
   // Pickel op rots: één droge klik.
   pickaxe: [110],
   // Cornu: één lange roep.

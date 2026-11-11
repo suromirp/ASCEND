@@ -97,7 +97,7 @@ describe('volume en piekgrens', () => {
   it('één limiter per AudioContext, ook als Luister klinkt terwijl een rust loopt', async () => {
     const f = fakeContext();
     use(f);
-    await playRestBell('cowbell', { cue: 'set' });
+    await playRestBell('clearbell', { cue: 'set' });
     await playRestBell('vikinghorn', { preview: true, volume: 'clear' });
     await playRestBell('lyre', { preview: true });
     const limiters = f.of('compressor');
@@ -111,7 +111,7 @@ describe('volume en piekgrens', () => {
   it('een nieuwe Luister zet de vorige zacht uit, de bel van de rust nooit', async () => {
     const f = fakeContext();
     use(f);
-    await playRestBell('cowbell', { cue: 'set' });
+    await playRestBell('clearbell', { cue: 'set' });
     const restBus = gains(f).find((g) => g.value === 0.6)!;
     await playRestBell('vikinghorn', { preview: true });
     const firstPreview = gains(f).filter((g) => g.value === 0.6)[1];
@@ -140,14 +140,14 @@ describe('volume en piekgrens', () => {
 describe('als het niet kan: nooit stilte zonder melding', () => {
   it('geen AudioContext: blocked', async () => {
     setRestBellDeps({ context: () => null, files: {} });
-    await expect(playRestBell('cowbell')).resolves.toBe('blocked');
+    await expect(playRestBell('clearbell')).resolves.toBe('blocked');
   });
 
   it('een AudioContext die niet wil starten: blocked binnen de grens, niets gemaakt', async () => {
     vi.useFakeTimers();
     const f = fakeContext('suspended', false);
     use(f);
-    const p = playRestBell('cowbell');
+    const p = playRestBell('clearbell');
     await vi.advanceTimersByTimeAsync(1000);
     await expect(p).resolves.toBe('blocked');
     expect(f.of('osc')).toHaveLength(0);
@@ -156,7 +156,7 @@ describe('als het niet kan: nooit stilte zonder melding', () => {
   it('een AudioContext die na een tik start: gewoon spelen', async () => {
     const f = fakeContext('suspended', true);
     use(f);
-    await expect(playRestBell('cowbell')).resolves.toBe('played');
+    await expect(playRestBell('clearbell')).resolves.toBe('played');
     expect(f.ctx.resume).toHaveBeenCalled();
   });
 
@@ -195,8 +195,8 @@ describe('andere audio even zachter (Android)', () => {
     setDeviceShell({ vibrate: () => undefined, holdScreen: () => () => undefined, duckAudio: duck });
     const f = fakeContext();
     use(f);
-    await playRestBell('cowbell', { cue: 'exercise' });
-    expect(duck).toHaveBeenCalledWith(restCueDuckMs(VOICES.cowbell, 'exercise'));
+    await playRestBell('clearbell', { cue: 'exercise' });
+    expect(duck).toHaveBeenCalledWith(restCueDuckMs(VOICES.clearbell, 'exercise'));
   });
 
   it.each([...REST_SOUNDS])('%s: de muziek komt pas terug als de klank is uitgeklonken, ook twee keer', async (sound: RestSound) => {
@@ -215,6 +215,6 @@ describe('andere audio even zachter (Android)', () => {
   it('in de browser bestaat het niet en gaat er niets mis', async () => {
     const f = fakeContext();
     use(f);
-    await expect(playRestBell('cowbell')).resolves.toBe('played');
+    await expect(playRestBell('clearbell')).resolves.toBe('played');
   });
 });

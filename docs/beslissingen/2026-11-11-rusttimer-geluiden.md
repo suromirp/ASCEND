@@ -12,6 +12,22 @@ piekgrens. Erbij komen drie instellingen: Volume van de rustbel (Zacht, Normaal 
 Duidelijk), Vooraankondiging (een zachte tik 10 seconden voor het einde, standaard uit) en Andere
 klank bij volgende oefening (standaard aan). In de Android-app gaat andere audio even zachter.
 
+## Na luisteren (11 november, avond)
+
+De eigenaar luisterde naar alle tien. Oordeel: Koebel gaat eruit, ook de Koebel bij een volgende
+oefening; de andere negen zijn goed en blijven ongewijzigd.
+
+- Het nieuwe advies is Heldere bel: twee korte, hoge slagen op E6, helder genoeg om door muziek en een
+  koptelefoon te snijden, en het dichtst bij wat Koebel moest doen.
+- Een bewaarde Koebel (`cowbell`) en de oude Boksbel (`boxing`) lezen nu als Heldere bel
+  (`readRestSound`); een test importeert een oude back-up met beide.
+- Bergen houdt alleen Pickel op rots. Een groep met één keuze staat er al (Rome met Cornu) en ziet er
+  in het blad gewoon uit: kopje, één rij met Luister. Pickel blijft daarom onder Bergen, waar hij bij
+  het karakter van de app hoort, en niet onder Overig.
+- Andere klank bij volgende oefening blijft voor de negen klanken.
+- Hieronder staat Koebel nog als advies en in de lijst van klanken: zo was het besloten voor het
+  luisteren; de stand van nu is deze paragraaf.
+
 ## Reden
 
 De eigenaar wil een bel die door muziek en een koptelefoon heen komt zonder te hard te zijn, en

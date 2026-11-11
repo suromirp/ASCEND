@@ -159,14 +159,14 @@ describe('het workoutscherm', () => {
     expect(compareMoments('4_8')).toEqual([4, 8]);
     expect(compareMoments('12_26')).toEqual([12, 26]);
   });
-  it('de tien rustgeluiden blijven staan, een oude keuze leest als de nieuwe en onbekende vallen weg (11 november)', () => {
-    for (const k of ['cowbell', 'vikinghorn', 'templebell', 'lyre']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe(k);
+  it('de negen rustgeluiden blijven staan, een oude keuze leest als de nieuwe en onbekende vallen weg (11 november)', () => {
+    for (const k of ['pickaxe', 'vikinghorn', 'templebell', 'lyre']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe(k);
     expect(normalizeStrengthSettings({ restSound: 'gong' })!.restSound).toBe('templebell');
-    expect(normalizeStrengthSettings({ restSound: 'boxing' })!.restSound).toBe('cowbell');
+    for (const k of ['boxing', 'cowbell']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe('clearbell');
     for (const k of ['chime', 'bell', 'whistle', 'beep']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe('clearbell');
     expect(normalizeStrengthSettings({ restSound: 'trompet' })!.restSound).toBeUndefined();
     expect(resolveStrengthSettings({ restSound: 'gong' } as never).restSound).toBe('templebell');
-    expect(resolveStrengthSettings(undefined).restSound).toBe('cowbell');
+    expect(resolveStrengthSettings(undefined).restSound).toBe('clearbell');
   });
   it('volume, vooraankondiging en klank bij volgende oefening: advies als standaard, rommel valt weg', () => {
     const d = resolveStrengthSettings(undefined);
