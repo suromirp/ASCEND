@@ -25,6 +25,7 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - Een richting, weekbudget of golfkeuze stil toepassen: dat is een voorstel met Akkoord (`src/components/ascend/useDirectionChange.tsx`).
 
 ## Valkuilen
+- Importeer `src/data/gr5StagePaths.ts` nooit statisch, alleen via `data/gr5Tracks.ts` (dynamisch); anders komt 215 kB in de hoofdbundel. Het spoor komt uit OpenStreetMap (`docs/beslissingen/2026-11-11-gr5-uit-osm.md`).
 - Welk soort doel welke berekening krijgt staat in `goalReadinessFor`; alleen `trek_hut`, `trek_tent` of geen soort gebruikt de mijlpalen (`usesMilestoneReadiness`). Een component leest `usesMilestoneReadiness` hoogstens om een uitleg te tonen, nooit om een eigen percentage te kiezen. Een Vaardigheid is geen `TrainingGoal` en heeft geen `GoalMilestone` (anders telt hij in `mainGoal` en Je week); zijn voortgang is de trap uit `skillReadinessFor`, nooit een percentage, en een gehaalde stap blijft gehaald via `SkillStepProgress`. Het algemene doel (`SkillGoal.general`, ladder `algemeen`) volgt vijf ladders: het blijft buiten `liveSkillGoals` en krijgt nooit `SkillStepProgress` (de sleutel `goalId|stap` zou tussen ladders botsen); "hoger" telt tegen `generalBaseline`, in `generalReadinessFor`. Welke training de sleuteltraining is, kiest `src/engine/keySession.ts` per soort van het hoofddoel (`keyGoalOf`, nooit de volgorde van de lijst), nooit de langste; elke plek met dat woord gebruikt `keyFocusOf`, ook restDayBack en elke tekst die vroeger "lange training" zei. Het inhalen: twee inhalen op één dag bestaat niet, en de 48 uur kijkt over de weekgrens (`docs/beslissingen/2026-11-11-sleuteltraining.md`).
 - Eén Liever niet op TARGET-TIME geldt voor elke latere test, want het id bevat de doeltijd; pas als de doeltijd verandert komt het voorstel terug.
 - Het voorstel is de kleinste hele minuut die bij de weken past (`wholeMinutes`), hetzelfde getal als "ongeveer" op de kaart; anders zegt de kaart na Akkoord nog steeds dat het niet past.
@@ -39,6 +40,5 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - Tekstkaart (`npm run kaart:vergelijk`) als de tab of een kaart verandert.
 
 ## Lees verder
-- `docs/architectuur/doelen.md`
-- `docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md`, `docs/beslissingen/2026-10-22-gr5-voortgang-een-percentage.md`
+- `docs/architectuur/doelen.md`, `docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md`, `docs/beslissingen/2026-10-22-gr5-voortgang-een-percentage.md`
 - `docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid.md`, `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`
