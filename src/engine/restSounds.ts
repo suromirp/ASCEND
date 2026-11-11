@@ -33,7 +33,7 @@ export const REST_SOUND_GROUPS: readonly { title: string; sounds: readonly RestS
 
 // Een opname in public/sounds/ (bron en licentie in public/sounds/BRONNEN.md). Een geluid zonder
 // opname wordt gemaakt met Web Audio. Lukt laden niet, dan klinkt de heldere bel. Meld een opname hier pas
-// aan als het bestand in public/sounds/ staat (een test kijkt het na); nu zijn alle tien gemaakt.
+// aan als het bestand in public/sounds/ staat (een test kijkt het na); nu zijn alle negen gemaakt.
 export const REST_SOUND_FILES: Partial<Record<RestSound, string>> = {};
 
 // Het geluid dat altijd lukt zolang er geluid kan: gemaakt, zonder bestand.

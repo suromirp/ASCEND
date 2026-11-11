@@ -3,6 +3,8 @@
 Datum: 2026-11-11
 Status: aangenomen
 
+Let op: na luisteren is de Koebel eruit gegaan; er zijn negen klanken en Heldere bel is het advies. Zie de paragraaf "Na luisteren (11 november, avond)" onderaan.
+
 ## Besluit
 
 De rustbel van Forge krijgt tien klanken in vijf groepen (Bergen: Koebel, het advies, en Pickel op

@@ -313,7 +313,7 @@ export const CHOICES = {
   rustvolume: def({
     group: 'Forge',
     title: 'Volume van de rustbel',
-    line: 'Een vaste grens houdt elke bel onder dezelfde piek. In de Android-app gaat je muziek even zachter; in de browser kan dat niet.',
+    line: 'Zacht, Normaal of Duidelijk, onder dezelfde piek. In de Android-app gaat je muziek even zachter.',
     advice: 'normal' as RestVolume,
     options: [
       { value: 'soft', label: 'Zacht', note: 'Voor stille muziek of zonder koptelefoon', short: 'Zacht' },

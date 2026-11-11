@@ -609,9 +609,9 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
         ? { value: choiceShort('rustvolume', forge.restVolume), dim: true, sub: 'Je koos alleen trillen' }
         : { value: choiceShort('rustvolume', forge.restVolume) };
     case 'forge-vooraf':
-      return { checked: forge.restPreTick, sub: 'Een tik, 10 seconden vooraf' };
+      return { checked: forge.restPreTick, sub: forge.restAlert === 'vibrate' ? 'Een korte stoot, 10 seconden vooraf' : 'Een tik, 10 seconden vooraf' };
     case 'forge-oefening-klank':
-      return { checked: forge.restNextExercise, sub: 'Twee keer, de tweede lager' };
+      return { checked: forge.restNextExercise, sub: forge.restAlert === 'vibrate' ? 'Het ritme twee keer' : 'Twee keer, de tweede lager' };
     case 'forge-scherm':
       return { checked: forge.keepScreenOn };
     case 'forge-bijsturen':

@@ -10,7 +10,7 @@ import { Icon } from '../../icons';
 import { TextButton } from '../../TextButton';
 import { Sheet } from '../Sheet';
 
-// Het blad Geluid na de rust (besluit docs/beslissingen/2026-11-11-rusttimer-geluiden.md): de tien
+// Het blad Geluid na de rust (besluit docs/beslissingen/2026-11-11-rusttimer-geluiden.md): de negen
 // keuzes onder vijf kopjes, met bij elke keuze een knop Luister. Kiezen bewaart en laat het blad open,
 // zodat je verder kunt luisteren; Luister speelt de klank met je volume en, als trillen aan staat, het
 // ritme. Een nieuwe Luister stopt de vorige; de bel van een lopende rust klinkt gewoon door.

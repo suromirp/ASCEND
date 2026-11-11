@@ -96,7 +96,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-geluid" title="Geluid na de rust" facts={facts} onClick={() => setInner('forge-geluid')} />
           <SummaryRow id="forge-volume" title="Volume van de rustbel" facts={facts} onClick={() => setInner('forge-volume')} />
           <SummaryRow id="forge-vooraf" title="Vooraankondiging" facts={facts} onChange={(on) => save({ restPreTick: on })} />
-          <SummaryRow id="forge-oefening-klank" title="Andere klank bij volgende oefening" facts={facts} onChange={(on) => save({ restNextExercise: on })} />
+          <SummaryRow id="forge-oefening-klank" title="Klank bij nieuwe oefening" facts={facts} onChange={(on) => save({ restNextExercise: on })} />
         </BundleSheet>
       )}
       {sheet === 'bundel-weergave' && (
