@@ -173,13 +173,13 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart }: {
           <MapButton icon="inbeeld" label="Alles in beeld" onClick={() => view.current?.fitAll()} />
         </div>
         {state.kind === 'ready' && state.attribution && (
-          <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 inline-flex min-h-[44px] items-end">
+          <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 inline-flex items-end">
             <span className="rounded-tl-md bg-bg/80 px-1.5 text-xs leading-5 underline-offset-2 hover:underline" style={dim}>{state.attribution}</span>
           </a>
         )}
       </div>
       <p className="text-xs leading-snug" style={dim}>
-        {routes.length > 1 ? 'De doorgetrokken lijn is de gekozen lus; tik een gestreepte lus om hem te kiezen. ' : ''}De ring is de start. Tik op de kaart voor een ander startpunt.
+        {routes.length > 1 ? 'De doorgetrokken lijn is de gekozen lus; tik een gestreepte lus om hem te kiezen. ' : ''}De ring is de start. Tik op de kaart voor een ander startpunt; Start hier bewaart dat punt als je startpunt en zet Startpunt van je lus op Precies.
       </p>
       <div className="flex flex-wrap gap-x-5">
         {pick && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}

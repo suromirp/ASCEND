@@ -45,3 +45,9 @@ De instelling Kaartje bij de lussen uit `2026-11-10-kaartje-route-bron.md`, die 
 ## Terugdraaien
 
 Ondergrond van de kaart op Geen haalt geen tegels meer op. Helemaal weg: `RouteMap.tsx`, `routeMapView.ts`, `engine/routeMap.ts` en `integrations/mapLibre.ts` verwijderen, de regel met `<RouteMap` en de staat `mapStart` en `chosen` uit `RoutePanel.tsx` halen, `maplibre-gl` uit `package.json`, en de rij `route-kaart` en het veld `routeMapBase` uit de instellingen (een oude waarde in een back-up valt dan weg bij het opschonen). Er wordt geen route bewaard; een punt van de kaart staat als gewoon Precies-startpunt op het toestel en is te wissen in de instelling.
+
+## Na de herreview (coördinator, 11 november)
+
+- De uitleg onder de kaart en de hulptekst bij Precies zeggen nu dat Start hier het punt als je startpunt bewaart en Startpunt van je lus op Precies zet (Warden, moet).
+- De naamsvermelding op de kaart is alleen zo hoog als de tekst, zodat een tik op de onderste strook van de kaart een punt of lus kiest en niet de licentie opent. Het tikdoel van 44 px voor de licentie is de regel Licentie van OpenStreetMap onder de lussen; dit is een bewuste uitzondering.
+- Nog open (backlog): een regel tijdens het bewaren van een getikt punt, en een lopende zoektocht die het oude punt in de cache terugzet.

@@ -836,7 +836,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Waar een voorgestelde lus begint.',
     points: [
       { head: 'Ongeveer', text: 'je plaats, binnen een kilometer. De lus begint tot ongeveer 700 m van huis.' },
-      { head: 'Precies', text: 'je kiest Gebruik waar ik nu ben, bij je deur. Dat punt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt alleen op dit toestel bewaard. Wis startpunt haalt het weg.' },
+      { head: 'Precies', text: 'je kiest Gebruik waar ik nu ben, bij je deur, of je tikt een punt op de kaart bij Route voorstellen en kiest Start hier. Dat punt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt alleen op dit toestel bewaard. Wis startpunt haalt het weg.' },
       { head: 'OpenStreetMap', text: 'heuvels en paden zoekt het bij Precies om je startpunt, bij Ongeveer om je afgeronde plek. De hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Wis startpunt haalt ook de bewaarde heuvels rond dat punt weg.' },
       { head: 'Het dichtstbijzijnde pad', text: 'de routeplanner begint op het pad of de weg het dichtst bij je startpunt. Het stukje ernaartoe is een rechte lijn.' },
     ],
