@@ -12,7 +12,7 @@ Hardlopen · 50 min · Wennen, rustig tempo
 
 --- kaart 1 ---
 [label: Andere keuzes]
-[knop: Hoe je het doet]
+[knop: BriefingRoute, horloge, weer en eten]
 [knop: Je horlogeWorkout en datavelden]
 [knop: Vandaag al doen]
 [knop: Overslaan]
