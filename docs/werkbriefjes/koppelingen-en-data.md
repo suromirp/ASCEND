@@ -22,6 +22,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - Een signaal uit je data de planning zelf laten veranderen: elk signaal is instelbaar en alleen een voorstel met Akkoord mag dat.
 - Een sleutel of API-sleutel plakken, gebruiken of opslaan; een back-up van de eigenaar komt niet in de repo.
 - Weer, luchtkwaliteit, bergweer of een plek in een back-up zetten.
+- Een echte locatie, adres of spoor van de eigenaar in de repo (code, tests, docs, commits). Op het scherm en naar diensten mag je locatie wel: besluit `2026-11-11-locatie-en-kaart.md`, dat de privacygrenzen van het startpunt en het kaartje vervangt.
 - Een log omschrijven omdat een bron iets anders zegt: zie `docs/architectuur/historie-en-logs.md`.
 
 ## Valkuilen
