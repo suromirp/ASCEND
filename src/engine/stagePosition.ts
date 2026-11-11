@@ -8,7 +8,8 @@
 //   het dichtstbijzijnde stuk van die lijn gezet en de rest van de lijn wordt opgeteld.
 // - Heeft hij alleen een begin en een eind, dan is het "in een rechte lijn" tot het eind. Dat is
 //   korter dan wat je loopt, en de tekst zegt dat erbij.
-// - Zonder coordinaten (nu bij alle etappes van de bundel) zegt de engine niets: undefined.
+// - Zonder coordinaten zegt de engine niets: undefined. De etappes van de bundel hebben begin en eind
+//   uit OpenStreetMap; het spoor komt apart (data/gr5Tracks.ts, besluit 2026-11-11-gr5-uit-osm.md).
 //
 // Op een dag van twee samengevoegde etappes is "de volgende plek" het eind van de eerste etappe
 // zolang je daar nog niet voorbij bent.

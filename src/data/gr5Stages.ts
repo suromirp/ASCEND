@@ -19,6 +19,7 @@
 
 import type { BivouacAreaId } from './gr5Bivouac';
 import type { StageCoords } from '../models/geo';
+import { GR5_STAGE_ENDS } from './gr5StageEnds';
 
 export const STAGES_SOURCE = 'grande-traversee-alpes.com';
 export const STAGES_SOURCE_URL = 'https://www.grande-traversee-alpes.com/en/litineraire-par-troncons/';
@@ -75,9 +76,10 @@ export interface Gr5Stage {
   // Wat de officiële tekst bij de etappe zegt over omleidingen en varianten.
   notes: StageFact[];
   gpx: string;
-  // Begin, eind en eventueel punten langs de route, voor "waar ben je op je etappe" (engine/stagePosition.ts).
-  // Nu bij geen enkele etappe ingevuld: zonder coordinaten toont ASCEND niets. Een waarde komt pas uit de
-  // GPX van de site, nooit uit een gok.
+  // Begin en eind, voor "waar ben je op je etappe" (engine/stagePosition.ts, engine/stageAt.ts). Uit
+  // OpenStreetMap (data/gr5StageEnds.ts, © OpenStreetMap contributors, ODbL); het spoor zelf staat apart
+  // in data/gr5StagePaths.ts en komt erbij met data/gr5Tracks.ts. Een etappe zonder coordinaten blijft
+  // werken: dan zegt ASCEND er niets over. Besluit: docs/beslissingen/2026-11-11-gr5-uit-osm.md.
   coords?: StageCoords;
 }
 
@@ -98,7 +100,11 @@ const SHOP_BRIANCON: StageFact = { text: 'Briançon is een grote plaats op de ro
 type StageInput = Omit<Gr5Stage, 'overall' | 'gpx' | 'id'>;
 
 function build(inputs: StageInput[]): Gr5Stage[] {
-  return inputs.map((s, i) => ({ ...s, id: `t${s.section}e${s.number}`, overall: i + 1, gpx: GPX(s.section, s.number) }));
+  return inputs.map((s, i) => {
+    const id = `t${s.section}e${s.number}`;
+    const ends = GR5_STAGE_ENDS[id];
+    return { ...s, id, overall: i + 1, gpx: GPX(s.section, s.number), ...(ends ? { coords: { start: ends.start, end: ends.end } } : {}) };
+  });
 }
 
 export const GR5_STAGES: Gr5Stage[] = build([
