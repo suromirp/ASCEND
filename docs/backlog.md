@@ -35,7 +35,7 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
   - Vaste ijktocht elke zes tot acht weken als kompas voor de berg, inplannen via Akkoord. Planning, Fable.
   - De beenindex leert van je ochtendantwoorden (`learning.ts#indexChecks`), begrensd, veiligheidsregels nooit soepeler, met migratiestap. Fable.
   - Routes ook voor wandelen en rugzaktraining, met klimtempo. Na de twee route-bouwers. Opus, engine op Fable.
-- Info-blad, spoor 3 en 4 (spoor 1 en 2 live op 11 november): Uitleg opschonen (De stappen eruit, namen gelijk: "Meer over deze training" en de i), daarna Datavelden bekijken naar Gidsen. Plus van Warden: de rij Je horloge op Vandaag met de stand eronder zoals in Week; garmin in useWatchSheet zelf ophalen in plaats van buildWorkoutPlan in drie componenten. Opus.
+- Vervallen door de Briefing (spoor 7), alleen nog als bron: Info-blad spoor 3 en 4: Uitleg opschonen (De stappen eruit, namen gelijk: "Meer over deze training" en de i), daarna Datavelden bekijken naar Gidsen. Plus van Warden: de rij Je horloge op Vandaag met de stand eronder zoals in Week; garmin in useWatchSheet zelf ophalen in plaats van buildWorkoutPlan in drie componenten. Opus.
 
 ## Rooster voor de bouwmomenten
 
@@ -64,6 +64,14 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 - Live op 11 november: Klein en fouten deel 1 (Twee harde lopen, voorstelzin krachtblok, dode code weg, ontbrekende tests, Belasting "wordt ..., gewoonlijk ...", zin en legenda van Intensiteit, een los horlogelog telt één keer met dezelfde maatstaf als koppelen achteraf).
 - Live op 11 november: Je horloge (knop Horloge op het trainingsscherm, rij in Week en op Vandaag; workout en datavelden op één plek; besluiten `2026-11-11-info-blad-horloge.md` en `-spoor-2.md`).
 - Live op 11 november: Route voorstellen verfijnd (te korte lus bij veel punten dichtbij, melding zonder heuvels, startpunt preciezer, helling zonder hoogte telt niet mee; besluit `2026-11-11-route-verfijnen.md`).
+
+## De Briefing (eigenaar akkoord 11 november, besluit `2026-11-11-briefing.md`)
+
+Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, allemaal Opus, geen planning. Volgorde:
+- In aanbouw 11 november: spoor 1 (geen route bij Loopband of binnen), 3 (waar je traint onthouden bij de geplande training), 4 (`engine/briefing.ts`).
+- Spoor 2 (blad Route met de kaart bovenaan), na Eten onderweg (zelfde scherm).
+- Spoor 5 (scherm Briefing vanuit Week, instelling Lus zoeken), 6 (knop Briefing op Vandaag), 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
+- Het oude Info-blad spoor 3 en 4 vervallen: spoor 7 hier vervangt ze.
 
 ## Samenhang (Pathfinder)
 
