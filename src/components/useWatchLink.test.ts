@@ -12,7 +12,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 const link = {
   watchLink: { linked: true, autoTick: true, activities: true },
-  watchSource: { today: '2026-11-10', linked: true, fetchedAt: '2026-11-10T07:00:00.000Z', activitiesOn: true, morningsOn: false, activityDays: ['2026-11-09'], morningDays: [], logs: [] },
+  watchSource: { today: '2026-11-10', linked: true, fetchedAt: new Date().toISOString(), activitiesOn: true, morningsOn: false, activityDays: ['2026-11-09'], morningDays: [], logs: [] },
 };
 
 describe('de bewaarde koppeling', () => {
@@ -39,6 +39,12 @@ describe('de bewaarde koppeling', () => {
     vi.stubGlobal('localStorage', s);
     storeWatchLink(link);
     storeWatchLink(undefined);
+    expect(readStoredWatchLink([])).toBeUndefined();
+  });
+  it('een stand van een andere dag geldt niet: dan Gedaan', () => {
+    const s = fakeStorage();
+    vi.stubGlobal('localStorage', s);
+    storeWatchLink({ ...link, watchSource: { ...link.watchSource, fetchedAt: new Date(Date.now() - 3 * 86_400_000).toISOString() } });
     expect(readStoredWatchLink([])).toBeUndefined();
   });
 });

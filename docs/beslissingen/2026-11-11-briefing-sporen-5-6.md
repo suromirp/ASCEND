@@ -45,4 +45,4 @@ Week: `briefing: briefingEntry(template)` uit `SessionActionSheet.tsx` halen. Va
 - Zonder plaats wijst de Briefing de weg naar de pagina Weer (Kies je plaats).
 - Eén naam: Waarom deze training. Het rondje met drie puntjes op de missiekaart heet Meer keuzes.
 - De avond ervoor zegt "je lus staat in de briefing". De regel wordt geen tik: de kaart krijgt geen knop (besluit 2026-11-11-briefing.md).
-- De laatst gelezen koppeling staat op het toestel (localStorage), zodat een koude start niet verspringt.
+- De laatst gelezen koppeling staat op het toestel (localStorage, sleutel `ascend.briefingWatchLink`: alleen de vlaggen van de koppeling, de tijd van ophalen en de dagen, geen sleutel en geen logs), zodat een koude start niet verspringt. Alleen een stand van vandaag telt.

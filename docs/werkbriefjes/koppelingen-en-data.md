@@ -26,7 +26,8 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - Een log omschrijven omdat een bron iets anders zegt: zie `docs/architectuur/historie-en-logs.md`.
 
 ## Valkuilen
-- Een native wijziging (plugin, rechten, manifest) bouw je eerst als proefbouw door de Android-workflow (`.github/workflows/android.yml`, "ASCEND proef") voordat het op main komt. De Briefing zoekt alleen als `searchOn` waar is (een route op de kaart, niet geweigerd, bij het openen of na een tik): elke nieuwe uitgaande aanroep in `TrainingBriefing`/`useRouteSearch` hoort achter `enabled`, alleen een tik van jou mag eromheen; toets met Na een tik, Loopband, Liever niet en een dag later dan morgen. De stand van de Briefing leest alleen intervals.icu; Health Connect telt pas mee als de bronbewaking het ook dekt.
+- Briefing: hij zoekt alleen als `searchOn` waar is (een route op de kaart, niet geweigerd, bij het openen of na een tik): elke nieuwe uitgaande aanroep in `TrainingBriefing`/`useRouteSearch` hoort achter `enabled`, alleen een tik van jou mag eromheen; toets met Na een tik, Loopband, Liever niet en een dag later dan morgen. De stand van de Briefing leest alleen intervals.icu; Health Connect telt pas mee als de bronbewaking het ook dekt. De bewaarde koppeling (`ascend.briefingWatchLink` in localStorage) geldt alleen als hij van vandaag is; bij twijfel Gedaan.
+- Een native wijziging (plugin, rechten, manifest) bouw je eerst als proefbouw door de Android-workflow (`.github/workflows/android.yml`, "ASCEND proef") voordat het op main komt.
 - Staat `minNative` in `app-versie.json` hoger dan het niveau van de geïnstalleerde app, dan vraagt dat een nieuwe APK (`needs-app`). Gaat `DB_VERSION` omhoog, dan gaat `android/native-level.txt` mee; een nieuwe plugin vraagt een nieuwe APK (`src/storage/nativeLevel.test.ts`).
 - Een Capacitor-plugin is een Proxy met een `then`: geef hem nooit terug als waarde van een belofte (`src/integrations/pluginPatroon.scan.test.ts`).
 - Bij Health Connect telde bewegingstijd tegen totale tijd een tocht dubbel (review 2 november); vergelijk dezelfde tijd. Een ronde bij terugkomen hoort op app-niveau (`useResumeSync`), niet in een kaart: aan de kaart op Vandaag hangend draaide hij nooit op een ander tabblad.
@@ -35,8 +36,7 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 - Een nieuwe bron krijgt een regel in `settingsParts` (`src/components/settings/settingsFactsParts.ts`) en een eigen grens in tijd; een trage bron houdt geen andere rij tegen. Een negatief antwoord (geen gebied, geen plek) onthoud je alleen als elke bron antwoordde; een fout of time-out is nooit een nee.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/integrations src/engine/sourcePrecedence src/engine/sourceWatch src/engine/liveUpdate src/storage/macrofactor src/storage/nativeLevel`; route: `npx vitest run src/engine/route src/components/routeMapView src/engine/gpx src/integrations/routing src/integrations/fileSender src/storage/routeProposal src/storage/routeSend`
-- Nooit laten bewegen: `src/storage/planGolden.test.ts`.
+- Tijdens het werk: `npx vitest run src/integrations src/engine/sourcePrecedence src/engine/sourceWatch src/engine/liveUpdate src/storage/macrofactor src/storage/nativeLevel`; route: `npx vitest run src/engine/route src/components/routeMapView src/engine/gpx src/integrations/routing src/integrations/fileSender src/storage/routeProposal src/storage/routeSend` Nooit laten bewegen: `src/storage/planGolden.test.ts`.
 - Tekstkaart (`npm run kaart:vergelijk`) alleen als een scherm verandert; native werk controleer je op een toestel.
 
 ## Lees verder

@@ -10,7 +10,7 @@ import { useAppData } from '../state/AppDataContext';
 import { readWatchLink } from '../storage/sourceWatch';
 import { onWatchChange } from '../storage/externalActivities';
 import { withTimeout } from '../utils/withTimeout';
-import { todayISO } from '../utils/dates';
+import { toISODate, todayISO } from '../utils/dates';
 import type { BriefingInput } from '../engine/briefing';
 import type { SessionLog } from '../models/training';
 
@@ -32,6 +32,8 @@ export function readStoredWatchLink(logs: readonly SessionLog[]): Link | undefin
     if (!raw) return undefined;
     const s = JSON.parse(raw) as Stored;
     if (!s?.link || typeof s.link.linked !== 'boolean' || !s.source || !Array.isArray(s.source.activityDays) || !Array.isArray(s.source.morningDays)) return undefined;
+    // Alleen een stand die vandaag is opgehaald: een oude zou een stille koppeling niet als stil zien.
+    if (typeof s.source.fetchedAt !== 'string' || toISODate(new Date(s.source.fetchedAt)) !== todayISO()) return undefined;
     return { watchLink: s.link, watchSource: { ...s.source, logs, today: todayISO() } };
   } catch {
     return undefined;
