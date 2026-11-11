@@ -27,6 +27,14 @@ import { TextButton } from './TextButton';
 import { openMeteoErrorMessage, searchPlaces, type PlaceResult } from '../integrations/openMeteo';
 import { withTimeout } from '../utils/withTimeout';
 import type { TrekPlace } from '../engine/trek';
+import { fuelForTrekPeriod, fuelOn, trekFuelSummary } from '../engine/fuelOnTheGo';
+
+// Eten per dag op de kaart van een tocht (engine/fuelOnTheGo.ts), met de aanname van de looptijd.
+function TrekFuelLine({ period, on }: { period: LeavePeriod; on: boolean }) {
+  const fuel = on ? fuelForTrekPeriod(period) : undefined;
+  if (!fuel) return null;
+  return <p className="mt-1 pr-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{trekFuelSummary(fuel)}</p>;
+}
 
 const STALE_TEXT = 'Je planning is intussen veranderd. Bekijk het voorstel opnieuw.';
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
@@ -81,6 +89,7 @@ export function TrekGoalsCard() {
                 <p className="mt-1 pr-2 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{describePeriodDates(p, true)}</p>
                 <p className="pr-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{trekFacts(p)}</p>
                 <p className="pr-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{TREK_IMPORTANCE_LABEL[p.trek!.importance]}</p>
+                <TrekFuelLine period={p} on={fuelOn(settings)} />
                 <div className="mt-1 flex">
                   <TextButton onClick={() => setEditing(p)} className="px-3" aria-label={`${p.trek!.name} wijzigen`}>Wijzigen</TextButton>
                   <TextButton tone="dim" onClick={() => setPlan(planLeave('remove', p))} className="px-3" aria-label={`${p.trek!.name} verwijderen`}>Verwijderen</TextButton>
