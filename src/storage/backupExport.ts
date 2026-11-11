@@ -7,6 +7,7 @@ import { MISSED_MEMORY_KEY, resolveMissedMemory } from '../engine/missedTraining
 import { ProgramsRepo, SessionTemplatesRepo, PlannedSessionsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, InjuryNotesRepo, SettingsRepo, MetaRepo, PlanChangeProposalsRepo, ActivityStreamsRepo, RecoveryMetricsRepo, StrengthProgramStrategiesRepo, StrengthProgramRecommendationsRepo } from './database';
 import { serializeStreams } from '../engine/streamPack';
 import { loadSkillGoals } from './skillGoals';
+import { readPlaceStore } from './places';
 import { RoutePlanRepo, SoloPlanRepo } from './routePlan';
 import { CURRENT_BACKUP_SCHEMA_VERSION, type AscendBackupEnvelope, type AscendBackupPayloadV5 } from './backupTypes';
 
@@ -22,6 +23,10 @@ export interface BuildEnvelopeOptions {
   // Whether the mornings of the watch travel along. Left out: the setting "Ochtendgetallen in
   // back-up" decides (on unless you turned it off). The copy taken before an import passes false.
   mornings?: boolean;
+  // The copy taken before an import: it is the whole state of that moment, so "no places" is written as an
+  // empty list and putting the copy back removes the places an import brought. A normal back-up leaves an
+  // empty list out.
+  wholeState?: boolean;
 }
 
 export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): Promise<AscendBackupEnvelope> {
@@ -46,6 +51,7 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
   ]);
   const missedMemory = await MetaRepo.get<unknown>(MISSED_MEMORY_KEY);
   const skillGoals = await loadSkillGoals();
+  const placeStore = await readPlaceStore();
 
   const payload: AscendBackupPayloadV5 = {
     version: 5,
@@ -72,6 +78,10 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
     ...(missedMemory !== undefined ? { missedTraining: resolveMissedMemory(missedMemory) } : {}),
     // Het doel Vaardigheid, only when there is something (storage/skillGoals.ts).
     ...(skillGoals.goals.length > 0 || skillGoals.progress.length > 0 ? { skillGoals } : {}),
+    // Plekken en bewaarde routes, only when there are any (storage/places.ts): an empty list is left out,
+    // so a file never says "no places" and an import of it keeps what the device has.
+    ...(placeStore.places.length > 0 || (options.wholeState && placeStore.ok) ? { places: placeStore.places } : {}),
+    ...(placeStore.routes.length > 0 || (options.wholeState && placeStore.ok) ? { savedRoutes: placeStore.routes } : {}),
   };
 
   // The full series of runs and tochten, as base64. They may not be fetchable again from the

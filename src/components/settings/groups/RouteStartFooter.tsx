@@ -1,6 +1,6 @@
 // ASCEND: onder de keuze Startpunt van je lus: het eigen punt van dit toestel. Gebruik waar ik nu ben
-// vraagt één keer je plek (met een grens in tijd en een zichtbare uitkomst) en bewaart die alleen op
-// dit toestel; Wis startpunt haalt hem weg. Het punt zelf staat nooit op het scherm.
+// vraagt één keer je plek (met een grens in tijd en een zichtbare uitkomst) en bewaart die als de plek
+// Thuis (storage/places.ts), die meegaat in je back-up; Wis startpunt haalt hem weg. Het punt zelf staat nooit op het scherm.
 
 import { useEffect, useRef, useState } from 'react';
 import { startFailureReason, type RouteStartMode } from '../../../engine/routeStart';
@@ -45,7 +45,7 @@ export function RouteStartFooter({ mode }: { mode: RouteStartMode }) {
   return (
     <>
       <p className="st-hint" style={{ marginLeft: 0 }}>
-        {saved ? 'Er staat een startpunt op dit toestel. Het gaat niet mee in een back-up.' : 'Er staat nog geen startpunt op dit toestel.'}
+        {saved ? 'Er staat een startpunt op dit toestel. Het gaat mee in je back-up.' : 'Er staat nog geen startpunt op dit toestel.'}
       </p>
       <div className="st-btns">
         <button type="button" className="st-btn" disabled={busy} onClick={() => void startHere()}>Gebruik waar ik nu ben</button>

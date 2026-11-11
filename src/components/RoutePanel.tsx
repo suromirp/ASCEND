@@ -142,7 +142,7 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
       </p>
       <TextButton tone="dim" onClick={() => void model.choose('exact')}>Vast punt, je deur</TextButton>
       <p className="text-xs leading-snug" style={dim}>
-        Een punt dat je bewaart, zoals je deur. Het gaat precies naar de routeplanner, naar OpenStreetMap en naar Open-Meteo, net als hierboven, en wordt alleen op dit toestel bewaard.
+        Een punt dat je bewaart, zoals je deur. Het gaat precies naar de routeplanner, naar OpenStreetMap en naar Open-Meteo, net als hierboven, en wordt op dit toestel bewaard; het gaat mee in je back-up.
       </p>
       <TextButton tone="dim" onClick={() => void model.choose('approx')}>Ongeveer</TextButton>
       <p className="text-xs leading-snug" style={dim}>
@@ -160,7 +160,7 @@ export function RouteNeedsPoint({ model }: { model: RouteSearchModel }) {
   const dim = { color: 'var(--color-ink-dim)' };
   return (
     <div className="flex flex-col">
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(model.target)}. Sta bij je deur en kies Gebruik waar ik nu ben. Dat punt gaat als start van je lus naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt alleen op dit toestel bewaard.</p>
+      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(model.target)}. Sta bij je deur en kies Gebruik waar ik nu ben. Dat punt gaat als start van je lus naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt op dit toestel bewaard; het gaat mee in je back-up.</p>
       <div className="flex flex-wrap gap-x-5">
         <TextButton disabled={model.locating} onClick={() => void model.startHere()}>Gebruik waar ik nu ben</TextButton>
         <TextButton tone="dim" disabled={model.locating} onClick={model.declineExact}>Ongeveer</TextButton>
