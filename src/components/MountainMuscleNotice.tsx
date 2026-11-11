@@ -19,7 +19,7 @@ const SAVE_LIMIT_MS = 8000;
 // In de weekterugblik staat hij onder de rest; in Forge (`onlyFor`) alleen in de training waar de oefening bij zou
 // komen, met dezelfde engine-functie en dezelfde Akkoord.
 export function MountainMuscleNotice({ weekStart, onlyFor, className = 'mt-5' }: { weekStart: string; onlyFor?: string; className?: string }) {
-  const { sessionLogs, templates, program, trainingGoals, goalMilestones, settings, updateSettings } = useAppData();
+  const { sessionLogs, templates, program, trainingGoals, goalMilestones, settings, updateSettings, injuryNotes, leavePeriods } = useAppData();
   const [declines] = useState(readMuscleDeclines);
   const [state, setState] = useState<'open' | 'busy' | 'done' | 'declined' | 'failed'>('open');
   // Na Akkoord blijft het voorstel staan als bevestiging, ook al staat de oefening nu in de training.
@@ -51,9 +51,12 @@ export function MountainMuscleNotice({ weekStart, onlyFor, className = 'mt-5' }:
       exercisesOf: (t) => forgeSlotsFor(t, settings.strengthModel, today),
       profile: strength.profile,
       declined: declines,
+      balance: strength.mountainBalance,
+      leave: leavePeriods,
+      injuries: injuryNotes,
     });
     return found && onlyFor !== undefined && found.templateId !== onlyFor ? null : found;
-  }, [weekStart, onlyFor, sessionLogs, templates, program, trainingGoals, goalMilestones, settings.strengthModel, declines]);
+  }, [weekStart, onlyFor, sessionLogs, templates, program, trainingGoals, goalMilestones, settings.strengthModel, declines, leavePeriods, injuryNotes]);
   const proposal = accepted ?? live;
   if (!proposal || state === 'declined') return null;
   const text = muscleNoticeText(proposal);

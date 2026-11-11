@@ -13,7 +13,7 @@ export function readMuscleDeclines(): MuscleDecline[] {
     const raw: unknown = JSON.parse(localStorage.getItem(KEY) ?? '[]');
     if (!Array.isArray(raw)) return [];
     return raw.filter((d): d is MuscleDecline => !!d && typeof d === 'object'
-      && (MUSCLE_GROUPS as readonly unknown[]).includes((d as MuscleDecline).muscle)
+      && ([...MUSCLE_GROUPS, 'balance'] as readonly unknown[]).includes((d as MuscleDecline).muscle)
       && typeof (d as MuscleDecline).weekStart === 'string' && /^\d{4}-\d{2}-\d{2}$/.test((d as MuscleDecline).weekStart));
   } catch {
     return [];

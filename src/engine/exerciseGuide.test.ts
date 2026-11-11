@@ -108,7 +108,9 @@ describe('alle uitleg', () => {
   const BATCH3 = ['archer-push-up', 'dead-hang', 'decline-push-up', 'diamond-push-up', 'dumbbell-rdl', 'glute-bridge', 'incline-push-up', 'incline-push-up-high', 'knee-push-up', 'negative-chin-up', 'negative-dip', 'pause-back-squat', 'scapular-pull-up', 'single-leg-calf-raise', 'split-squat', 'step-down-pack', 'support-hold', 'tibialis-raise', 'weighted-dip', 'weighted-pull-up'];
   // Batch 4: wat verder bij de berg hoort en de gangbaarste oefeningen in een eigen programma.
   const BATCH4 = ['back-extension', 'chin-up', 'dead-bug', 'deadlift', 'dumbbell-bench-press', 'dumbbell-curl', 'dumbbell-glute-bridge', 'dumbbell-row', 'dumbbell-shoulder-press', 'face-pull', 'hip-thrust', 'inverted-row', 'leg-extension', 'lying-leg-curl', 'nordic-curl', 'seated-cable-row', 'standing-calf-raise', 'step-up-pack', 'tibialis-raise-loaded', 'walking-lunge'];
-  const NEW_BATCHES = [...BATCH3, ...BATCH4];
+  // Enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md): vier nieuwe oefeningen.
+  const BALANCE = ['single-leg-stance', 'single-leg-stance-eyes-closed', 'single-leg-stance-cushion', 'star-excursion-reach'];
+  const NEW_BATCHES = [...BATCH3, ...BATCH4, ...BALANCE];
   it('heeft de vijf proefteksten, de 23 stappen van de overige calisthenicsladders (F4f) en batch 1 tot en met 4', () => {
     const f4f = SKILL_LADDERS.filter((l) => !['push-up', 'pull-up', 'dip'].includes(l.id)).flatMap((l) => l.steps.map((s) => s.exerciseId));
     expect(f4f).toHaveLength(23);

@@ -20,11 +20,12 @@ describe('de koppeling van oefeningen aan tekeningen', () => {
     }
   });
 
-  it('telt 99 exacte, 32 varianten en 24 oefeningen zonder tekening (12 van de calisthenicsladders; de 23 stappen van F4f hebben een eigen tekening)', () => {
+  // Plus de vier oefeningen van enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md): nog zonder tekening.
+  it('telt 99 exacte, 32 varianten en 28 oefeningen zonder tekening (12 van de calisthenicsladders, 4 van enkel en evenwicht; de 23 stappen van F4f hebben een eigen tekening)', () => {
     const links = Object.values(EXERCISE_ART);
     expect(links.filter((l) => l.match === 'zeker')).toHaveLength(99);
     expect(links.filter((l) => l.match === 'variant')).toHaveLength(32);
-    expect(EXERCISES.filter((e) => !EXERCISE_ART[e.id])).toHaveLength(24);
+    expect(EXERCISES.filter((e) => !EXERCISE_ART[e.id])).toHaveLength(28);
     expect(new Set(links.map((l) => l.slug)).size).toBe(112);
   });
 

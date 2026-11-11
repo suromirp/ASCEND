@@ -211,6 +211,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'geen melding, in de weekterugblik noch in Forge, en de gewone volgorde bij Ruilen.' },
     ],
   },
+  forgeEnkel: {
+    title: 'Enkel en evenwicht',
+    lead: 'Bij bergwandelaars die vallen is de enkel de vaakst getroffen plek. Evenwichtstraining verlaagde in zeven studies het aantal verzwikkingen met ongeveer een derde, het duidelijkst bij wie al eens verzwikte.',
+    points: [
+      { head: 'De melding', text: 'deed je de laatste vier weken gemiddeld minder dan 2 sets per week op één been, dan staat dat in de weekterugblik, na de spieren, met een voorstel: op één been staan in je training met het meeste beenwerk.' },
+      { head: 'Zwaarder', text: 'in de uitleg van de oefening: eerst met je ogen dicht, dan op een kussen, of reiken op één been. Forge neemt je beste tijd van de vorige keer over.' },
+      { head: 'Telt niet mee', text: 'een rustweek, en een week met vakantie, een tocht of zonder sportschool: dan train je niet in Forge, en zo komt er na je vakantie niet meteen een melding.' },
+      { head: 'Pijn aan je enkel of voet', text: 'staat er in Lichaam een open klacht, dan geen voorstel. Een enkel na een verzwikking oefen je met een fysiotherapeut.' },
+      { head: 'Uit', text: 'alleen de drie spieren. Liever niet bij de melding laat het acht weken met rust.' },
+    ],
+  },
   forgeSpotter: {
     title: 'Zonder spotter',
     lead: 'Een stang op je borst of je schouders kan je klem zetten als je tot het uiterste gaat. Daarom schrijft Forge hier minstens 1 herhaling in reserve voor.',
