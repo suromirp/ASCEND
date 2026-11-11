@@ -423,31 +423,49 @@ describe('geen vrije dag: na een herstelwandeling of een rustige loop op dezelfd
     expect(findDescentDay(input({ plannedSessions: full(), dailyTimeBudget: budget(45) }), '2026-11-13', '2026-11-13', { tripGuard: true })).toBeUndefined();
   });
 
-  it('ook daar geldt de 48 uur: de rustige loop de dag na zware benen valt af', () => {
-    const sessions = [planned('legs', 'tpl_lower_a', '2026-11-11'), planned('easy', 'tpl_easy_run', '2026-11-12'), ...['2026-11-13', '2026-11-14', '2026-11-15', '2026-11-17', '2026-11-18'].map((d, i) => planned(`u${i}`, 'tpl_upper_a', d))];
-    expect(findDescentDay(input({ plannedSessions: sessions }), '2026-11-12', '2026-11-18', { tripGuard: true })).toBeUndefined();
+  it('de dag na een zware beendag mag, maar alleen achter een rustige training', () => {
+    const rest = ['2026-11-13', '2026-11-14', '2026-11-15', '2026-11-17', '2026-11-18'].map((d, i) => planned(`u${i}`, 'tpl_upper_a', d));
+    // Wo zware benen, do rustige loop: Trap af komt donderdag achter de loop.
+    const sessions = [planned('legs', 'tpl_lower_a', '2026-11-11'), planned('easy', 'tpl_easy_run', '2026-11-12'), ...rest];
+    expect(findDescentDay(input({ plannedSessions: sessions }), '2026-11-12', '2026-11-18', { tripGuard: true })).toMatchObject({ day: '2026-11-12', after: { id: 'tpl_easy_run' } });
+    // Dezelfde donderdag als vrije dag: nooit direct na de beendag.
+    expect(findDescentDay(input({ plannedSessions: [planned('legs', 'tpl_lower_a', '2026-11-11'), ...rest] }), '2026-11-12', '2026-11-12', { tripGuard: true })).toBeUndefined();
   });
 
-  it('de standaardweek van het demoprogramma: geen dag die past, dus de regel zonder voorstel', () => {
+  it('een tweede zware beendag binnen 48 uur erna houdt het voorstel tegen: de dag ervoor blijft dicht', () => {
+    const rest = ['2026-11-14', '2026-11-15', '2026-11-17', '2026-11-18'].map((d, i) => planned(`u${i}`, 'tpl_upper_a', d));
+    // Wo zware benen, do rustige loop, vr weer zware benen.
+    const sessions = [planned('legs', 'tpl_lower_a', '2026-11-11'), planned('easy', 'tpl_easy_run', '2026-11-12'), planned('legsB', 'tpl_lower_b', '2026-11-13'), ...rest];
+    expect(findDescentDay(input({ plannedSessions: sessions }), '2026-11-12', '2026-11-18', { tripGuard: true })).toBeUndefined();
+    expect(one({ plannedSessions: sessions })?.proposal).toBeUndefined();
+    // Ook de lange duurloop is een zware beendag: de rustige loop de dag ervoor valt af.
+    const beforeLong = [planned('easy', 'tpl_easy_run', '2026-11-12'), planned('long', 'tpl_long_run', '2026-11-13'), ...rest];
+    expect(findDescentDay(input({ plannedSessions: beforeLong }), '2026-11-12', '2026-11-12', { tripGuard: true })).toBeUndefined();
+    // En de dag na een harde loop blijft dicht, ook achter een rustige loop.
+    const afterHard = [planned('tempo', 'tpl_tempo_run', '2026-11-11'), planned('easy', 'tpl_easy_run', '2026-11-12'), planned('u9', 'tpl_upper_a', '2026-11-13'), ...rest];
+    expect(findDescentDay(input({ plannedSessions: afterHard }), '2026-11-12', '2026-11-12', { tripGuard: true })).toBeUndefined();
+  });
+
+  it('de standaardweek van het demoprogramma: donderdag, na de rustige duurloop', () => {
     // Het demoprogramma begint op vandaag: een vaste klok op maandag 9 november 2026 geeft hele weken.
     // Ma Herstel (rustdag), di kracht, wo Benen A, do rustige loop, vr kracht, za heuvelintervallen, zo lange duurloop.
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-11-09T08:00:00'));
     const demo = buildDefaultProgramData();
     vi.useRealTimers();
-    const start = '2026-11-09';
     expect(demo.plannedSessions.filter((x) => x.scheduledDate >= '2026-11-10' && x.scheduledDate <= '2026-11-16').sort((x, y) => x.scheduledDate.localeCompare(y.scheduledDate)).map((x) => x.templateId))
       .toEqual(['tpl_upper_a', 'tpl_lower_a', 'tpl_easy_run', 'tpl_upper_b', 'tpl_hill_intervals', 'tpl_long_run', 'tpl_herstel']);
-    const standard = { today: start, plannedSessions: demo.plannedSessions, templates: demo.templates, logs: [hike('2026-10-19', 150)] };
-    // Donderdag ligt binnen 48 uur na Benen A; maandag is de rustdag en de dag na de lange duurloop.
-    expect(findDescentDay(input(standard), '2026-11-10', '2026-11-16', { tripGuard: true })).toBeUndefined();
+    const standard = { today: '2026-11-09', plannedSessions: demo.plannedSessions, templates: demo.templates, logs: [hike('2026-10-19', 150)] };
+    // Donderdag is de dag na Benen A, met vrijdag kracht boven erna. Maandag blijft dicht: de rustdag.
+    expect(findDescentDay(input(standard), '2026-11-10', '2026-11-16', { tripGuard: true })).toMatchObject({ day: '2026-11-12', after: { id: 'tpl_easy_run' } });
     const a = one(standard)!;
     expect(a.ruleId).toBe(DESCENT_CLOCK_RULE);
-    expect(a.proposal).toBeUndefined();
-    expect(a.lead).toContain('De komende week is er geen dag die past.');
-    // Dezelfde week met op woensdag kracht boven in plaats van Benen A: dan past donderdag, na de rustige loop.
-    const lighter = demo.plannedSessions.map((x) => (x.templateId === 'tpl_lower_a' && x.scheduledDate === '2026-11-11' ? { ...x, templateId: 'tpl_upper_a' } : x));
-    expect(findDescentDay(input({ ...standard, plannedSessions: lighter }), '2026-11-10', '2026-11-16', { tripGuard: true })).toMatchObject({ day: '2026-11-12', after: { id: 'tpl_easy_run' } });
+    expect(a.proposal?.changes).toHaveLength(1);
+    expect(a.proposal?.changes[0]).toMatchObject({ action: 'add', newSessionDraft: { templateId: STAIRS_TEMPLATE_ID, scheduledDate: '2026-11-12' } });
+    expect(a.lead).toContain('Een korte trapsessie op do 12 november, na je rustige duurloop, houdt je benen beschermd.');
+    // Staat er vrijdag een tweede zware beendag, dan komt er geen voorstel.
+    const twoLegDays = demo.plannedSessions.map((x) => (x.templateId === 'tpl_upper_b' && x.scheduledDate === '2026-11-13' ? { ...x, templateId: 'tpl_lower_b' } : x));
+    expect(one({ ...standard, plannedSessions: twoLegDays })?.proposal).toBeUndefined();
   });
 });
 

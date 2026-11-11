@@ -181,7 +181,8 @@ export interface DescentSlot {
 // dan een dag met alleen een herstelwandeling of een rustige loop (niet hard, niet zwaar voor de benen, geen
 // sleuteltraining), waar de trapsessie als korte toevoeging achteraan komt. Voor beide geldt:
 // - niet je vaste rustdag, geen vakantie zonder training, tocht, lichte dag of ziektedag;
-// - 48 uur van een zware beendag (geen zware benen de dag ervoor of erna);
+// - 48 uur van een zware beendag: geen zware benen de dag erna, en de dag ervoor alleen bij een toevoeging
+//   achter een rustige training (nooit op een vrije dag direct na de beendag);
 // - nooit naast een harde loop, en niet in de drie dagen voor een test of de week voor een wedstrijd of tocht;
 // - niet op of naast een dag waar een ander voorstel iets neerzet.
 // Een vrije dag telt alleen als de week daarna nog een dag zonder training houdt (vanaf vandaag geteld; een rij
@@ -207,12 +208,16 @@ export function findDescentDay(input: DescentAdviceInput, from: string, until: s
   const easy = (t: SessionTemplate) => t.type === 'recovery'
     || (templateSport(t) === 'running' && !isHardRun(t) && !isLegHeavyTemplate(t) && !isTestOrRace(t) && !isKeyFor(t, input.keyFocus));
 
-  const fits = (day: string): boolean => {
+  const fits = (day: string, addOn = false): boolean => {
     if (input.restDay && isoWeekday(day) === input.restDay) return false;
     const kind = leave.get(day)?.kind;
     if (kind === 'off' || kind === 'trek' || light.has(day) || isIllnessDay(day, input.illnessEpisodes, today)) return false;
-    const around = [...templatesOn(addDays(day, -1)), ...templatesOn(addDays(day, 1))];
-    if (around.some((t) => isLegHeavyTemplate(t) || isHardRun(t))) return false;
+    const before = templatesOn(addDays(day, -1));
+    const after = templatesOn(addDays(day, 1));
+    if ([...before, ...after].some((t) => isHardRun(t)) || after.some((t) => isLegHeavyTemplate(t))) return false;
+    // De dag na een zware beendag: alleen als toevoeging achter een rustige training, nooit op een vrije dag
+    // (besluit 2026-11-11-afdaalklok.md: Trap af is matig en het programma zet op die dag zelf al een loop).
+    if (!addOn && before.some((t) => isLegHeavyTemplate(t))) return false;
     const ahead = (n: number) => Array.from({ length: n }, (_, i) => templatesOn(addDays(day, i + 1))).flat();
     if (ahead(TEST_CLEAR_DAYS).some((t) => isTestOrRace(t)) || ahead(TAPER_NEAR_DAYS).some((t) => hasRole(t, 'race'))) return false;
     if (opts.tripGuard && trips.some((t) => day <= t.date && daysBetween(day, t.date) < TAPER_NEAR_DAYS)) return false;
@@ -231,7 +236,7 @@ export function findDescentDay(input: DescentAdviceInput, from: string, until: s
   if (!stairs || input.sameDayPairingPreference === 'never') return undefined;
   for (const day of days) {
     const rows = rowsOn(day);
-    if (rows.length !== 1 || logs.some((l) => l.completedDate === day) || !fits(day)) continue;
+    if (rows.length !== 1 || logs.some((l) => l.completedDate === day) || !fits(day, true)) continue;
     const template = byId.get(rows[0].templateId);
     if (!template || !easy(template)) continue;
     const week = standing.filter((s) => mondayOfWeek(s.scheduledDate) === mondayOfWeek(day));
@@ -247,7 +252,7 @@ const daysText = (n: number) => (n === 1 ? '1 dag' : `${n} dagen`);
 // ", na je rustige duurloop": de trapsessie komt achter de rustige training van die dag.
 const afterText = (slot: DescentSlot) => (slot.after ? `, na je ${slot.after.name.charAt(0).toLowerCase()}${slot.after.name.slice(1)}` : '');
 
-const WHY = 'Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierschade van de volgende. In onderzoek was die bescherming er na drie en zes weken nog en na negen weken niet meer (Byrnes e.a. 1985). Vijf minuten bergaf was genoeg om het krachtverlies na een lange afdaling een week later te halveren (Maeo e.a. 2017). Drie weken is een veilige eigen grens. Een afdaling telt bij 100 meter dalen of meer in een wandeling of loop, of als de training zelf een afdaaltraining is. ASCEND kiest een vrije dag met 48 uur tot je zware beendagen en niet naast een harde loop. Is er geen vrije dag, dan komt de trapsessie na een herstelwandeling of een rustige loop op dezelfde dag. Zonder Akkoord verandert er niets.';
+const WHY = 'Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierschade van de volgende. In onderzoek was die bescherming er na drie en zes weken nog en na negen weken niet meer (Byrnes e.a. 1985). Vijf minuten bergaf was genoeg om het krachtverlies na een lange afdaling een week later te halveren (Maeo e.a. 2017). Drie weken is een veilige eigen grens. Een afdaling telt bij 100 meter dalen of meer in een wandeling of loop, of als de training zelf een afdaaltraining is. ASCEND kiest een vrije dag met 48 uur tot je zware beendagen en niet naast een harde loop. Is er geen vrije dag, dan komt de trapsessie na een herstelwandeling of een rustige loop op dezelfde dag; dat mag ook de dag na een zware beendag, nooit de dag ervoor. Zonder Akkoord verandert er niets.';
 const WHY_TAPER = 'Eén korte afdaling 7 tot 14 dagen voor vertrek houdt de bescherming van je bovenbenen vers voor de eerste dagen van je tocht (afgeleid uit Maeo e.a. 2017 en Byrnes e.a. 1985). In de laatste week doe je niets nieuws meer: een nieuwe prikkel geeft dan spierpijn op de tocht zelf. Bij bergwandelaars die vielen gebeurde drie kwart van de valpartijen bergaf (Faulhaber e.a. 2020). Zonder Akkoord verandert er niets.';
 
 function addProposal(title: string, day: string, template: SessionTemplate, reason: string, rule: string, why: string): PlanChangeProposal {
