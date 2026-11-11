@@ -1184,7 +1184,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   avondErvoor: {
     title: 'De avond ervoor',
-    lead: 'Vanaf 20:00 een kaart onder je missie met wat je voor morgen klaarlegt.',
+    lead: 'Vanaf de gekozen tijd (standaard 20:00) een kaart onder je missie met wat je voor morgen klaarlegt.',
     points: [
       { head: 'Wat erop staat', text: 'hoogstens vier regels: weer en kleding, een lampje, de rugzak, drinken, je horloge of de route.' },
       { head: 'Wanneer niet', text: 'op een rustdag, bij vakantie of ziek, en als er niets klaar te leggen valt.' },
