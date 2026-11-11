@@ -740,6 +740,10 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
   delete copy.carryMode;
   delete copy.carryWeights;
   delete copy.rirPrefill;
+  // De vraag Hoeveel over? en de schijvenregel raken alleen het scherm en volgende logs, nooit een getal van nu.
+  delete copy.quickRir;
+  delete copy.quickRirMode;
+  delete copy.showPlates;
   return JSON.stringify(copy);
 }
 
