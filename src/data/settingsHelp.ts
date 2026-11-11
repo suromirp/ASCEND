@@ -821,6 +821,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Wat de deur uit gaat', text: 'standaard je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Kies je bij Startpunt van je lus Precies, dan gaat alleen je startpunt precies naar de routeplanner; OpenStreetMap houdt de afgeronde plek. Geen naam, geen adres. De route wordt niet bewaard.' },
     ],
   },
+  routeKaart: {
+    title: 'Ondergrond van de kaart',
+    lead: 'De kaart in Route voorstellen toont je lussen, je startpunt en je plek. Dit kiest wat eronder ligt.',
+    points: [
+      { head: 'Donker', text: 'straten, paden en water van OpenFreeMap, in de kleuren van ASCEND. Het advies.' },
+      { head: 'Licht', text: 'dezelfde kaart in lichte kleuren.' },
+      { head: 'Geen', text: 'alleen de lussen en je plek op een effen vlak. Er worden geen kaarttegels opgehaald.' },
+      { head: 'Valt de kaart weg', text: 'dan neemt ASCEND na ongeveer zes seconden de kaart van OpenStreetMap, en anders het effen vlak. Tegels worden nooit vooraf opgehaald of bewaard.' },
+    ],
+  },
   routeStartpunt: {
     title: 'Startpunt van je lus',
     lead: 'Waar een voorgestelde lus begint.',

@@ -22,6 +22,9 @@ import type { FileSender } from '../integrations/fileSender';
 import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { withTimeout } from '../utils/withTimeout';
 import { TextButton } from './TextButton';
+import { RouteMap } from './RouteMap';
+import { resolveMapBase } from '../engine/routeMap';
+import { roundStart } from '../engine/routeTarget';
 import { Eyebrow } from './ui';
 
 const CONSENT_LIMIT_MS = 3000;
@@ -120,6 +123,10 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   // Lukte de locatie niet, dan zoekt dit paneel ongeveer, met de reden in één regel.
   const [fellBack, setFellBack] = useState<StartFailure | undefined>();
   const [declinedExact, setDeclinedExact] = useState(false);
+  // Een startpunt van de kaart (tik en Start hier, of Gebruik waar ik nu ben): alleen voor dit paneel.
+  const [mapStart, setMapStart] = useState<RoutePoint | undefined>();
+  // De lus die je op de kaart koos; zonder keuze de eerste.
+  const [chosen, setChosen] = useState<RouteStyle | undefined>();
   const mounted = useRef(true);
   const locateStop = useRef(new AbortController());
   useEffect(() => {
@@ -165,9 +172,10 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   const choice = saved === undefined ? undefined : chooseStart(mode, saved);
   // Precies zonder punt vraagt eerst om een punt, tenzij dit paneel op Ongeveer terugviel.
   const waitingForPoint = choice?.kind === 'needs-point' && !fellBack && !declinedExact;
-  const exactLat = choice?.kind === 'exact' ? choice.point.lat : undefined;
-  const exactLon = choice?.kind === 'exact' ? choice.point.lon : undefined;
-  const startReady = choice !== undefined && !waitingForPoint;
+  const exactPoint = mapStart ?? (choice?.kind === 'exact' && !waitingForPoint ? choice.point : undefined);
+  const exactLat = exactPoint?.lat;
+  const exactLon = exactPoint?.lon;
+  const startReady = (choice !== undefined && !waitingForPoint) || mapStart !== undefined;
 
   // Eén zoektocht per plek, training en poging; zolang het antwoord van deze sleutel er niet is, zoekt het paneel.
   const key = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${distanceKm}|${ascentM}`;
@@ -233,7 +241,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   }
 
   if (saved === undefined) return <p role="status" className="min-h-[20px] text-sm" style={dim} />;
-  if (waitingForPoint) {
+  if (waitingForPoint && !mapStart) {
     return (
       <div className="flex flex-col">
         <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. Sta bij je deur en kies Gebruik waar ik nu ben. Dat punt gaat als start van je lus naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt alleen op dit toestel bewaard.</p>
@@ -250,10 +258,15 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   const plans = search !== 'busy' && search.kind === 'plans' ? search.plans : undefined;
   const sources = plans ? [...new Set(order.flatMap((s) => { const o = plans[s]; return o.ok ? [SOURCE_NAME[o.proposal.source]] : []; }))] : [];
   const anyFailed = plans ? order.some((s) => !plans[s].ok) : false;
+  const okStyles = plans ? order.filter((s) => plans[s].ok) : [];
+  const picked = chosen && okStyles.includes(chosen) ? chosen : okStyles[0];
+  const mapRoutes = plans ? okStyles.flatMap((s) => { const o = plans[s]; return o.ok ? [{ style: s, points: o.proposal.points }] : []; }) : [];
+  const pickedRoute = mapRoutes.find((r) => r.style === picked);
+  const mapStartPoint = pickedRoute?.points[0] ?? exactPoint ?? roundStart({ lat, lon });
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. {fellBack ? startFailureLine(fellBack) : exactLat !== undefined ? START_LINE_EXACT : START_LINE_APPROX}</p>
+      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. {mapStart ? 'De lus begint bij het punt dat je koos.' : fellBack ? startFailureLine(fellBack) : exactLat !== undefined ? START_LINE_EXACT : START_LINE_APPROX}</p>
       <p role="status" className="text-sm leading-snug" style={dim}>
         {search === 'busy'
           ? 'Zoeken naar een lus. Dat duurt hoogstens een halve minuut.'
@@ -263,7 +276,8 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
               ? 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.'
               : searchLines(search.plans, target).join(' ')}
       </p>
-      {plans && order.map((s, i) => <RouteBlock key={s} style={s} outcome={plans[s]} primary={i === 0} date={date} target={target} sender={sender} />)}
+      <RouteMap routes={mapRoutes} chosen={picked} start={mapStartPoint} base={resolveMapBase(settings.routeMapBase)} onChoose={setChosen} onPickStart={setMapStart} />
+      {plans && order.map((s) => <RouteBlock key={s} style={s} outcome={plans[s]} primary={s === (picked ?? order[0])} date={date} target={target} sender={sender} />)}
       {plans && order.some((s) => plans[s].ok) && <WatchSteps />}
       {search !== 'busy' && (search.kind !== 'plans' || anyFailed) && (
         <div><TextButton tone="dim" onClick={() => setAttempt((n) => n + 1)}>Opnieuw zoeken</TextButton></div>
