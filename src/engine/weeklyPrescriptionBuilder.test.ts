@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  rankCandidateTemplates,
   computeBaselineCoverage,
   slotIdFor,
   dedupeDesiredSlots,
@@ -11,6 +12,7 @@ import {
   type ResolvedCapabilityDemand,
 } from './weeklyPrescriptionBuilder';
 import { keyId } from './capability';
+import { buildDefaultProgramData } from '../data/defaultProgram';
 import { inferCapabilityKeysForTemplate } from './sessionContribution';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { CapabilityKey, CapabilityGap } from '../models/capability';
@@ -472,5 +474,21 @@ describe('buildWeeklyPrescription — Test FORECAST-NO-RUNAWAY-COMPOUNDING (inva
     expect(line.targetDuration!.max.amount).toBeCloseTo(120 * multiplier * 1.1, 1);
     expect(line.targetSessionCount).toBeLessThan(10); // never anywhere near the inflated fixture's 99
     expect(line.candidateTemplateIds).not.toContain('some-other-template');
+  });
+});
+
+describe('rankCandidateTemplates: Trap af is geen kandidaat', () => {
+  it('een afdaaltraining zonder vaste dag en zonder weekopbouw komt niet in de kandidaten, Heuvelsprints en afdalen wel', () => {
+    const { templates } = buildDefaultProgramData();
+    const stairs = templates.find((t) => t.id === 'tpl_stairs_down')!;
+    // Zonder de uitsluiting zou Trap af voor elke sleutel van een wandeltraining meedoen.
+    const keys = inferCapabilityKeysForTemplate(stairs);
+    expect(keys.length).toBeGreaterThan(0);
+    for (const key of keys) {
+      const candidates = rankCandidateTemplates(key, templates, new Set(keys.map(keyId)));
+      expect(candidates.length, keyId(key)).toBeGreaterThan(0);
+      expect(candidates, keyId(key)).not.toContain('tpl_stairs_down');
+    }
+    expect(rankCandidateTemplates({ dimension: 'aerobic_engine' }, templates, new Set())).toContain('tpl_hills_descent');
   });
 });

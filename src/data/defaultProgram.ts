@@ -513,6 +513,20 @@ function buildTemplates(): SessionTemplate[] {
       cooldown: COOLDOWN_RUN,
       baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'light', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'moderate' },
     },
+    // De afdaalklok (engine/descentClock.ts): een korte afdaalprikkel als je laatste afdaling drie weken of langer
+    // geleden is, of als laatste bekende afdaling voor een tocht. Geen vaste dag: alleen een voorstel met Akkoord
+    // zet hem neer. Kort en rustig (regel A2: 5 tot 10 minuten dalen), dus matig voor de benen, niet zwaar.
+    {
+      id: 'tpl_stairs_down',
+      name: 'Trap af',
+      type: 'hiking',
+      sport: 'hiking',
+      focus: 'Korte afdaalprikkel voor je bovenbenen',
+      durationVariants: { full: 20, short: 15 },
+      notes:
+        'Vijf minuten rustig inlopen. Dan tien minuten dalen: een trappenhuis af (met de lift of rustig omhoog), een duin af of een helling af, telkens opnieuw. Kleine passen, knieën licht gebogen, niet rennen. Ongeveer 30 verdiepingen of 100 meter dalen is genoeg. De eerste keer geeft dit spierpijn in je bovenbenen; dat is de prikkel, en het wordt snel minder.',
+      baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'light', eccentricLoad: 'moderate', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'light' },
+    },
     {
       id: 'tpl_ruck_walk',
       name: 'Rugzakwandeling',

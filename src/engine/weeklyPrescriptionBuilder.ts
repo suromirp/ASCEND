@@ -41,6 +41,7 @@ import type { StrengthProgramStrategy } from '../models/strengthProgram';
 import type { GoalOverview } from './goalOverview';
 import { keyId } from './capability';
 import { inferCapabilityKeysForTemplate } from './sessionContribution';
+import { hasRole } from './templateRoles';
 import { computeSpecificityRampBand, computeSpecificityWeight } from './specificityRamp';
 import { daysBetween } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -263,9 +264,12 @@ function numericBaselineRanges(
 // (bv. een "loaded hill"-sessie) natuurlijk convergeren op hetzelfde
 // dominante sjabloon, wat dedupeDesiredSlots (invariant b) nodig heeft om
 // ze samen te vouwen.
-function rankCandidateTemplates(key: CapabilityKey, templates: SessionTemplate[], relevantKeyIds: Set<string>): string[] {
+export function rankCandidateTemplates(key: CapabilityKey, templates: SessionTemplate[], relevantKeyIds: Set<string>): string[] {
   const kId = keyId(key);
   return templates
+    // Een afdaaltraining zonder vaste dag en zonder weekopbouw (Trap af) hoort niet bij het programma: alleen een
+    // voorstel met Akkoord zet hem neer (engine/descentClock.ts), het voorschrift nooit.
+    .filter((t) => !(hasRole(t, 'descent') && !t.defaultDayOfWeek && !t.weeklyProgression?.length))
     .map((t) => ({ id: t.id, keys: inferCapabilityKeysForTemplate(t) }))
     .filter((t) => t.keys.some((k) => keyId(k) === kId))
     .sort((a, b) => {

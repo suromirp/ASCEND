@@ -4,13 +4,18 @@
 // stop or ease off during the training itself (audit 2026-10, report 6).
 // Keyed by SessionTemplate.id, like data/workoutStructure.ts.
 
-type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'tempo' | 'race' | 'test' | 'strides' | 'fartlek' | 'progression' | 'ruck' | 'vo2' | 'descent';
+type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'tempo' | 'race' | 'test' | 'strides' | 'fartlek' | 'progression' | 'ruck' | 'vo2' | 'descent' | 'stairs';
 
 export interface SessionStyle {
   styleLabel: string; // after the sport: "HARDLOPEN · BERGOP"
   purpose: string;
   stopSignals: string[];
   facts: FactKind;
+  // De uitleg van het sjabloon (`notes`) staat als "Zo doe je het" op het trainingsscherm, zin voor zin. Voor een
+  // training zonder opbouw in data/workoutStructure.ts, waar de uitleg anders nergens te lezen is.
+  notesAsHowTo?: true;
+  // Het weer doet er niet toe (binnen in een trappenhuis kan ook): geen weerregel, geen kleding, geen weerruil.
+  weather?: false;
 }
 
 export const SESSION_STYLE: Record<string, SessionStyle> = {
@@ -55,6 +60,16 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
     purpose: 'Bergop snelheid, en daarna rustig afdalen zodat je bovenbenen de dalingen van de GR5 leren verdragen.',
     stopSignals: ['je knie scherp pijn doet bij het dalen: stoppen en de rest wandelen op vlak terrein', 'je benen gaan trillen bij het afdalen: genoeg voor vandaag'],
     facts: 'descent',
+  },
+  // De korte afdaalprikkel van de afdaalklok (engine/descentClock.ts). Geen zone en geen hartslagdoel: het gaat om
+  // beheerst dalen, niet om inspanning.
+  tpl_stairs_down: {
+    styleLabel: 'afdalen',
+    purpose: 'Een korte afdaalprikkel: tien minuten beheerst dalen houdt je bovenbenen beschermd tegen de spierpijn van de volgende afdaling.',
+    stopSignals: ['je knie scherp pijn doet bij het dalen: stop en wandel vlak terug', 'je benen gaan trillen bij het afdalen: genoeg voor vandaag'],
+    facts: 'stairs',
+    notesAsHowTo: true,
+    weather: false,
   },
   tpl_fartlek: {
     styleLabel: 'fartlek',

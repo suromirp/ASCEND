@@ -102,6 +102,17 @@ describe('opening na opening: geen pingpong tussen voorschrift en planningsronde
     expect((await PlanChangeProposalsRepo.getAll()).length).toBe(logbook);
   });
 
+  it('Trap af komt nooit uit het voorschrift of de ronde: alleen een voorstel met Akkoord zet hem neer', async () => {
+    // Trap af is een wandeltraining zonder vaste dag; zonder de uitsluiting in het voorschrift zou hij als
+    // kandidaat meedoen voor wandelen en vanzelf in een week belanden (review van Warden, 11 november).
+    for (const build of ['opening-1', 'opening-2', 'opening-3']) {
+      const o = await open(build);
+      expect(JSON.stringify(o.weekly).includes('tpl_stairs_down')).toBe(false);
+    }
+    expect((await PlannedSessionsRepo.getAll()).filter((s) => s.templateId === 'tpl_stairs_down')).toEqual([]);
+    expect(JSON.stringify(await PlanChangeProposalsRepo.getAll()).includes('tpl_stairs_down')).toBe(false);
+  });
+
   it('het voorschrift houdt geen training die de fase-regel daarna omzet: een Wandeldag in een week zonder wandeldag', async () => {
     const planned = await PlannedSessionsRepo.getAll();
     // Zaterdag 6 maart 2027: een week van de opbouw, ver voor de expeditiefase van de GR5.

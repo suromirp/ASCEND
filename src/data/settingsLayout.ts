@@ -145,7 +145,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   // De seizoensstrook en de vaardigheden: wat de Ascend-tab laat zien (de pagina had al twaalf rijen).
   ...inSheet('bundel-ascend', 'seizoensstrook', 'vaardigheidsdoelen'),
-  ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
+  ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'afdaalklok', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'standen-onthouden', 'tussengewichten', 'spotterrek'),
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-kent-je', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes', 'forge-uitleg-open'),
@@ -291,7 +291,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.noGoal], 'bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   ...rule([B.goal], 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge'),
   ...rule([B.longSunday], 'lange-zondag'),
-  ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
+  ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'afdaalklok', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...rule([B.trainings], 'trainingsduur'),
   ...rule([B.forge, B.mountain], 'forge-enkel'),

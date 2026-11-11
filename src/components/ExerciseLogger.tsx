@@ -442,6 +442,21 @@ function GeneralLogger({
           </Card>
         )}
 
+        {/* Een training zonder opbouw in stappen (Trap af): de uitleg van het sjabloon, zin voor zin. */}
+        {!restChosen && !plan && brief.howTo && brief.howTo.length > 0 && (
+          <Card className="mt-4">
+            <Eyebrow>Zo doe je het</Eyebrow>
+            <ul className="mt-2 flex flex-col gap-1.5">
+              {brief.howTo.map((line, i) => (
+                <li key={`${i}-${line}`} className="flex gap-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
+                  <span aria-hidden="true" style={{ color: 'var(--color-ink-dim)' }}>·</span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
         {hasModalities && guidanceMode === 'ascend_guided' && (getModalities(template.id)?.length ?? 0) > 1 && (
           <Card className="mt-4">
             <Eyebrow>{template.type === 'recovery' ? 'Wat doe je vandaag?' : 'Waar train je?'}</Eyebrow>

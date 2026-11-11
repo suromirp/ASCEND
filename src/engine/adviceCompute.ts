@@ -25,6 +25,7 @@ import { missedAdvice, skippedKeyAdvice, restSwapAdvice, restPullAdvice, extraSe
 import { tooHardAdvice, tooLightAdvice, injuryAdvice, strengthAdvice, spacingAdvice } from './adviceLoad';
 import { restWeekSkipAdvice, repeatWeekAdvice, tentPackAdvice, targetTimeAdvice } from './adviceBlock';
 import { morningAdvice } from './adviceMorning';
+import { descentAdvice } from './descentClock';
 
 // --- Rule TEST-RETRY ---------------------------------------------------------
 // Trigger: the last test run (the last 21 days) has a fastest 5 km with more standing still than
@@ -523,7 +524,9 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const catchUpDays = new Set(fresh([...missed, ...skippedKey, ...testRoom, ...retry]).flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])])
     .flatMap((p) => p?.changes.filter((c) => c.action !== 'remove').map((c) => c.toDate ?? c.newSessionDraft?.scheduledDate) ?? []));
   const restBackLeft = restBack.filter((a) => !a.proposal?.changes.some((c) => c.toDate && catchUpDays.has(c.toDate)));
-  return [
+  // Alles behalve de afdaalklok, zoals het straks teruggaat: één lijst, zodat de afdaalklok dezelfde voorstellen ziet
+  // als de gebruiker.
+  const rest = [
     ...missed,
     ...skippedKey,
     ...testRoom,
@@ -543,7 +546,16 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...weather,
     ...morning,
     ...restBackLeft,
-  ]
-    .filter((a) => !inputs.respondedIds.has(a.id))
-    .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
+  ].filter((a) => !inputs.respondedIds.has(a.id));
+  // De afdaalklok komt als laatste en wijkt voor alles: geen trapsessie op of naast een dag waar een ander
+  // voorstel van vandaag iets neerzet (twee voorstellen die elk kloppen, maar samen botsen).
+  const takenDays = new Set(rest.flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])])
+    .flatMap((p) => p?.changes.filter((c) => c.action !== 'remove').map((c) => c.toDate ?? c.newSessionDraft?.scheduledDate) ?? []).filter((d): d is string => !!d));
+  const descent = descentAdvice({
+    today: inputs.asOf, logs: inputs.logs, plannedSessions: inputs.plannedSessions, templates: inputs.templates, context: inputs.descentClock,
+    respondedIds: inputs.respondedIds, answeredOn: inputs.answeredOn, leave: inputs.leave, illnessEpisodes: inputs.illnessEpisodes,
+    restDay: inputs.restDay ?? inputs.extraSession?.restDay, taken: takenDays, keyFocus: inputs.keyFocus,
+    program: inputs.program, dailyTimeBudget: inputs.dailyTimeBudget, sameDayPairingPreference: inputs.sameDayPairingPreference,
+  }).filter((a) => !inputs.respondedIds.has(a.id));
+  return [...rest, ...descent].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
 }

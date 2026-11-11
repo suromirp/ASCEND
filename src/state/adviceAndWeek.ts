@@ -35,6 +35,7 @@ import { raceBlocks, afterGoalWindows } from '../engine/raceBlock';
 import { needsWeather, showWeatherSwap } from '../engine/overviewSettings';
 import { mainGoal } from '../engine/mainGoal';
 import { keyFocusOf } from '../engine/keySession';
+import { answeredDays, descentClockContext } from '../engine/descentClock';
 
 export function useAdviceAndWeek(deps: {
   loading: boolean;
@@ -142,6 +143,8 @@ export function useAdviceAndWeek(deps: {
         newTestOnStops: settings.newTestOnStops !== false,
         restDay: settings.restDay ?? 1,
         restDayBack: settings.restDayBack !== false,
+        descentClock: descentClockContext(settings.descentClock, trainingGoals, goalMilestones, settings.leavePeriods, todayISO()),
+        answeredOn: answeredDays(adviceResponses),
         // Eerst koppelen, dan inhalen (engine/missedTraining.ts#linkCandidates).
         missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn },
         leave: settings.leavePeriods,
@@ -156,7 +159,7 @@ export function useAdviceAndWeek(deps: {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.missedLink, missedMemory, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction],
+    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.descentClock, settings.missedLink, missedMemory, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).

@@ -171,6 +171,8 @@ export function watchKindOf(template: Pick<SessionTemplate, 'id' | 'type' | 'rol
   if (!template) return undefined;
   const byId = Object.hasOwn(KIND_BY_TEMPLATE, template.id) ? KIND_BY_TEMPLATE[template.id] : undefined;
   if (byId) return byId;
+  // De korte trapsessie (rol `descent` zonder eigen soort) is geen tocht met rugzak: geen advies voor datavelden.
+  if (hasRole(template, 'descent')) return undefined;
   if (template.type === 'strength' || hasRole(template, 'test') || hasRole(template, 'race')) return undefined;
   if (hasRole(template, 'ruck') || template.type === 'hiking') return 'packHike';
   if (template.type !== 'cardio') return undefined;
