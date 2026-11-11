@@ -367,3 +367,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Scout Luchtfoto bronnen, sportwetenschapper, fable, 52k, 3 min, klaar
 - 2026-11-11, Warden Forge kern, reviewer, fable, 106k, 5 min, akkoord met 2 moet (RIR-vraag en stap zwaarder), terug naar bouwer
 - 2026-11-11, Warden Rusttimer herreview, reviewer, fable, 103k, 4 min, akkoord met 1 moet (late tik), terug naar bouwer
+- 2026-11-11, Forge kern en RIR, Sherpa, opus (sessie), 338k context, $10,62, 1 herstelronde (2 moet van Warden), live 10ff510
+- 2026-11-11, Warden herreview Forge kern, reviewer, sonnet, 34k, 1 min, akkoord
+- 2026-11-11, Lookout Forge kern, tester, sonnet, 87k, 17 min, groen
