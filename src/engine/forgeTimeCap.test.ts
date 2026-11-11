@@ -29,14 +29,17 @@ function template(id: string, lowerBodyLoad: 'heavy' | 'light', exercises = uppe
 }
 
 describe('de instelling Hoogstens per krachttraining', () => {
-  it('heeft 60 en 75 minuten als advies, en leest alleen de vaste keuzes', () => {
-    expect(resolveTimeCap(undefined)).toEqual({ strength: 60, legs: 75 });
+  // Besluit 2026-11-11-forge-kern-zichtbaar: het advies is tonen, niet inkorten (0); Uit en Tonen zijn één keuze.
+  it('heeft niet inkorten als advies, en leest alleen de vaste keuzes; een oude back-up met 0, 60 of zonder veld', () => {
+    expect(resolveTimeCap(undefined)).toEqual({ strength: 0, legs: 0 });
+    expect(resolveTimeCap({})).toEqual({ strength: 0, legs: 0 });
     expect(resolveTimeCap({ forgeCapStrength: 0, forgeCapLegs: 90 })).toEqual({ strength: 0, legs: 90 });
-    expect(resolveTimeCap({ forgeCapStrength: 61, forgeCapLegs: 'veel' })).toEqual({ strength: 60, legs: 75 });
+    expect(resolveTimeCap({ forgeCapStrength: 60 })).toEqual({ strength: 60, legs: 0 });
+    expect(resolveTimeCap({ forgeCapStrength: 61, forgeCapLegs: 'veel' })).toEqual({ strength: 0, legs: 0 });
   });
 
   it('herkent een beendag aan de belasting van de benen, niet aan het id', () => {
-    const setting = resolveTimeCap(undefined);
+    const setting = resolveTimeCap({ forgeCapStrength: 60, forgeCapLegs: 75 });
     expect(capForTemplate(template('tpl_eigen_benen', 'heavy'), setting)).toBe(75);
     expect(capForTemplate(template('tpl_eigen_boven', 'light'), setting)).toBe(60);
     // Een id dat vroeger een beendag was, met een lichte belasting: telt als gewone krachttraining.

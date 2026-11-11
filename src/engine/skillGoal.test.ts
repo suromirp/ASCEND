@@ -125,7 +125,7 @@ describe('skillReadinessFor: de trap, het werk en één droge regel', () => {
     const sets = [6, 6, 6].map((r) => ({ reps: r, weightKg: 2.5 }));
     const top = skillReadinessFor(goal({ targetStep: 5 }), [log('2026-11-02', { 'weighted-pull-up': sets })], TODAY, [])!;
     expect(top.line).toBe('Je werkt aan je doelstap.');
-    expect(top.work).toBe('Nu: Pull-Up With Added Weight. Toets: 3 keer 8 met 2,5 kg extra.');
+    expect(top.work).toBe('Nu: Pull-Up With Added Weight. Toets: 3 keer 8 met 2,5 kg erbij.');
   });
 
   it('een gehaalde stap blijft gehaald als de logs het later anders lezen (andere toets, andere ladder)', () => {

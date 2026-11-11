@@ -137,7 +137,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-onderbreking" title="Lange onderbreking vragen na" facts={facts} info="forgeOnderbreking" onClick={() => setInner('forge-onderbreking')} />
           <SummaryRow id="forge-vegen" title="Vegen om te verwijderen" facts={facts} info="forgeVegen" onChange={(on) => void updateSettings({ forgeSwipeDelete: on })} />
           <SummaryRow id="forge-rir-vooraf" title="RIR vooraf invullen" facts={facts} info="forgeRirVooraf" onClick={() => setInner('forge-rir-vooraf')} />
-          <SummaryRow id="forge-rir-snel" title="Hoeveel over na een set" facts={facts} info="forgeRirSnel" onChange={(on) => save({ quickRir: on })} />
+          <SummaryRow id="forge-rir-snel" title="Hoeveel over na een set" facts={facts} info="forgeRirSnel" onClick={() => setInner('forge-rir-snel')} />
           <SummaryRow id="forge-stappen" title="Stappen bij calisthenics" facts={facts} info="forgeStappen" onChange={(on) => save({ ladderRow: on })} />
           <SummaryRow id="forge-netjes" title="Ging het netjes?" facts={facts} info="forgeNetjes" onChange={(on) => save({ askClean: on })} />
           <SummaryRow id="forge-band" title="Band bij optrekken en dip" facts={facts} info="forgeBand" onChange={(on) => save({ askBand: on })} />
@@ -149,7 +149,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {sheet === 'forge-tijdsgrens' && (
-        <BundleSheet eyebrow="Forge" title="Hoogstens per krachttraining" line="Duurt een training langer, dan haalt Forge eerst sets bijwerk weg. De kern blijft." onClose={close}>
+        <BundleSheet eyebrow="Forge" title="Hoogstens per krachttraining" line="Het advies: de hele training tonen, met kern, bijwerk en extra. Met een grens gaat eerst bijwerk weg." onClose={close}>
           <SummaryRow id="forge-grens-kracht" title="Gewone krachttraining" facts={facts} onClick={() => setInner('forge-grens-kracht')} />
           <SummaryRow id="forge-grens-been" title="Beendag" facts={facts} onClick={() => setInner('forge-grens-been')} />
         </BundleSheet>
@@ -201,6 +201,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {inner === 'forge-vergelijken' && <ChoiceFromDef def={CHOICES.forgeVergelijken} value={s.compareWeeks} onPick={(v) => save({ compareWeeks: v })} onClose={closeInner} />}
       {inner === 'forge-volgorde-lijst' && <ChoiceFromDef def={CHOICES.forgeVolgorde} value={s.listSort} onPick={(v) => save({ listSort: v })} onClose={closeInner} />}
       {inner === 'forge-sets' && <ChoiceFromDef def={CHOICES.werksets} value={s.workSets} onPick={(v) => save({ workSets: v })} onClose={closeInner} />}
+      {inner === 'forge-rir-snel' && <ChoiceFromDef def={CHOICES.rirSnel} value={s.quickRirMode} onPick={(v) => save({ quickRirMode: v, quickRir: v !== 'uit' })} onClose={closeInner} />}
       {inner === 'forge-rir-vooraf' && <ChoiceFromDef def={CHOICES.rirVooraf} value={s.rirPrefill} onPick={(v) => save({ rirPrefill: v })} onClose={closeInner} />}
       {inner === 'forge-doorvoeren' && <ChoiceFromDef def={CHOICES.doorvoeren} value={s.carryMode} onPick={(v) => save({ carryMode: v })} onClose={closeInner} />}
       {inner === 'forge-vermoeidheid' && <ChoiceFromDef def={CHOICES.vermoeidheid} value={s.fatigue} onPick={(v) => save({ fatigue: v })} onClose={closeInner} />}

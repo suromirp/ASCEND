@@ -363,3 +363,8 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Briefing spoor 5 en 6 (2 rondes), Sherpa, opus (sessie), 466k context, $19,38, 1 herstelronde (1 blokkerend, 4 moet) plus hoofdletter door coördinator
 - 2026-11-11, Pathfinder herdoorloop Briefing 5 en 6, pathfinder, opus, 151k (totaal), 3 min, akkoord
 - 2026-11-11, Review Luchtfoto, Warden, sonnet (reviewer), 68k, 4 min, akkoord (1 belangrijk, 3 klein; 1, 2 en 4 verwerkt)
+- 2026-11-11, Forge plek vooraf, pathfinder, sonnet, 92k, 3 min, geen herstel
+- 2026-11-11, Pathfinder doorloop Forge kern, pathfinder, sonnet, 44k, 1 min, geen blokkerend (2 moet, tekst; coördinator deed er één)
+- 2026-11-11, Scout Luchtfoto bronnen, sportwetenschapper, fable, 52k, 3 min, klaar
+- 2026-11-11, Warden Forge kern, reviewer, fable, 106k, 5 min, akkoord met 2 moet (RIR-vraag en stap zwaarder), terug naar bouwer
+- 2026-11-11, Warden Rusttimer herreview, reviewer, fable, 103k, 4 min, akkoord met 1 moet (late tik), terug naar bouwer

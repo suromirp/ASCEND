@@ -1,8 +1,11 @@
-// ASCEND: hoogstens zo lang per krachttraining (docs/beslissingen/2026-11-03-forge-tijdsgrens.md).
+// ASCEND: hoogstens zo lang per krachttraining (docs/beslissingen/2026-11-03-forge-tijdsgrens.md), en de kern
+// zichtbaar (docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md).
 //
-// Een gewone krachttraining duurt hoogstens 60 minuten en een beendag hoogstens 75 (het advies,
-// instelling "Hoogstens per krachttraining": `AppSettings.forgeCapStrength` en `forgeCapLegs`, Uit,
-// 45, 60, 75 of 90). Forge rekent met de geleerde duur van de training per voorgeschreven werkset
+// Het advies is "Tonen, niet inkorten" (0): de hele training staat er, elke oefening toont zijn rol (`roleLabel`),
+// en pas als de actieve klok over de referentie is (60 minuten, een beendag 75) en de kern erop zit, zegt één regel
+// onder de klok dat wat nog komt bijwerk en extra is (`overTimeLine`). Wie zelf een grens kiest (instelling
+// "Hoogstens per krachttraining": `AppSettings.forgeCapStrength` en `forgeCapLegs`, 45, 60, 75 of 90) houdt het
+// inkorten. Forge rekent met de geleerde duur van de training per voorgeschreven werkset
 // (engine/durationLearning.ts) en haalt, als het langer zou duren, eerst sets bijwerk weg, zoals
 // "Minder tijd vandaag" de kern laat staan: eerst de extra oefeningen (`optional`), dan het bijwerk
 // (`accessory`), de kern (`core`) nooit. Is de training al korter, dan verandert er niets.
@@ -10,17 +13,24 @@
 // Het gaat alleen om de inhoud van één sessie in Forge: de planning, de geplande sessie en elk
 // bestaand log blijven zoals ze zijn. Puur: geen React, geen opslag.
 
-import type { ExercisePrescription, SessionTemplate } from '../models/training';
+import type { ExercisePrescription, ExercisePriority, SessionTemplate } from '../models/training';
 import { cleanExerciseName } from './exerciseMatch';
 import { MOUNTAIN_MUSCLES } from './mountainMuscles';
 import { exerciseKey } from './strengthHistory';
 import { isLegHeavyTemplate } from './scheduler';
 import { joinNL } from '../utils/joinNL';
 
+// 0 is "Tonen, niet inkorten" (het advies, ook voor een oude back-up met Uit of zonder veld).
 export const TIME_CAP_OPTIONS = [0, 45, 60, 75, 90] as const;
 export type TimeCap = (typeof TIME_CAP_OPTIONS)[number];
-const TIME_CAP_ADVICE_STRENGTH: TimeCap = 60;
-const TIME_CAP_ADVICE_LEGS: TimeCap = 75;
+const TIME_CAP_ADVICE: TimeCap = 0;
+// De referentie voor de regel onder de klok als je niet inkort: 60 minuten, een beendag 75.
+const REFERENCE_STRENGTH = 60;
+const REFERENCE_LEGS = 75;
+
+// De rol van een oefening in de training, één woord bij de oefening. De enige plek met deze namen.
+const ROLE_LABEL: Record<ExercisePriority, string> = { core: 'Kern', accessory: 'Bijwerk', optional: 'Extra' };
+export const roleLabel = (priority: ExercisePriority): string => ROLE_LABEL[priority];
 
 // Een oefening houdt minstens zoveel sets voordat hij helemaal wegvalt.
 const KEEP_SETS = 2;
@@ -28,7 +38,7 @@ const KEEP_SETS = 2;
 const pick = (raw: unknown, fallback: TimeCap): TimeCap => TIME_CAP_OPTIONS.find((m) => m === raw) ?? fallback;
 
 export function resolveTimeCap(raw: { forgeCapStrength?: unknown; forgeCapLegs?: unknown } | undefined | null): { strength: TimeCap; legs: TimeCap } {
-  return { strength: pick(raw?.forgeCapStrength, TIME_CAP_ADVICE_STRENGTH), legs: pick(raw?.forgeCapLegs, TIME_CAP_ADVICE_LEGS) };
+  return { strength: pick(raw?.forgeCapStrength, TIME_CAP_ADVICE), legs: pick(raw?.forgeCapLegs, TIME_CAP_ADVICE) };
 }
 
 // De grens voor deze training: een beendag herkend aan zijn belasting (zwaar voor de benen, zoals de
@@ -42,6 +52,39 @@ export function capForTemplate(template: SessionTemplate, setting: { strength: T
 // zelf bij, en wat er gelogd wordt telt via isWorkSet.
 export const prescribedSets = (slot: Pick<ExercisePrescription, 'sets' | 'setTargets'>): number =>
   Math.max(0, slot.setTargets && slot.setTargets.length > 0 ? slot.setTargets.length : slot.sets);
+
+// De referentie voor de regel onder de klok, in minuten: een gekozen grens, anders 60 of op een beendag 75.
+// Een training die geen krachttraining is heeft er geen (0).
+export function referenceMinutes(template: SessionTemplate, setting: { strength: TimeCap; legs: TimeCap }): number {
+  if (template.type !== 'strength') return 0;
+  const cap = capForTemplate(template, setting);
+  if (cap > 0) return cap;
+  return isLegHeavyTemplate(template) ? REFERENCE_LEGS : REFERENCE_STRENGTH;
+}
+
+// "Je zit op 64 minuten. Wat nog komt is bijwerk en extra; stoppen kan." Alleen als de actieve tijd (pauzes tellen
+// niet, forgeSession.ts#activeSeconds) over de referentie is, elke werkset van de kern is afgevinkt, en er nog een
+// open werkset van bijwerk of extra is. Het noemt alleen de rollen die nog open zijn.
+export function overTimeLine(args: {
+  activeSec: number;
+  reference: number;
+  exercises: readonly { slot: string; rows: readonly { kind: string; done: boolean }[] }[];
+  priorityOf: (slot: string) => ExercisePriority;
+}): string | undefined {
+  const { activeSec, reference } = args;
+  if (!(reference > 0) || activeSec <= reference * 60) return undefined;
+  const open = new Set<ExercisePriority>();
+  for (const ex of args.exercises) {
+    const prio = args.priorityOf(ex.slot);
+    const hasOpen = ex.rows.some((r) => r.kind === 'work' && !r.done);
+    if (!hasOpen) continue;
+    if (prio === 'core') return undefined;
+    open.add(prio);
+  }
+  if (open.size === 0) return undefined;
+  const what = open.size === 2 ? 'bijwerk en extra' : open.has('accessory') ? 'bijwerk' : 'extra';
+  return `Je zit op ${Math.floor(activeSec / 60)} minuten. Wat nog komt is ${what}; stoppen kan.`;
+}
 
 const setsOf = (list: readonly ExercisePrescription[]) => list.reduce((n, s) => n + prescribedSets(s), 0);
 
