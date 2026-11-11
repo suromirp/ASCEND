@@ -10,8 +10,8 @@
 // - de route: engine/trainingPlace.ts#placeHasRoute en engine/routeTarget.ts#routeTarget;
 // - het horloge: engine/watchSheet.ts (of er een blad is) en de stand uit engine/watchStatus.ts;
 // - weer en kleding: engine/weather.ts#weatherForTraining en engine/clothing.ts#clothingForTraining;
-// - drinken: engine/eveningBefore.ts#drinkLine. Eten onderweg komt uit engine/fuelOnTheGo.ts zodra
-//   dat op main staat (TODO hieronder); hier staat geen eigen rekenregel voor eten.
+// - eten en drinken: engine/eveningBefore.ts#drinkAmount en engine/fuelOnTheGo.ts#fuelForTraining;
+//   hier staat geen eigen rekenregel.
 //
 // Puur: geen React, geen IndexedDB, geen netwerk. Het zoekt geen lus (dat doet het scherm, en alleen
 // als `map.search` dat zegt) en het plant niets.
@@ -33,6 +33,7 @@ import { weatherForTraining } from './weather';
 import { clothingForTraining } from './clothing';
 import { drinkAmount } from './eveningBefore';
 import { litersText } from './stageWater';
+import { fuelForTraining, fuelShortText } from './fuelOnTheGo';
 import { deriveSessionStatus } from './sessionStatus';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { buildWorkoutPlan } from './workoutPlan';
@@ -61,9 +62,9 @@ export const BRIEFING_TEXT = {
   watchManual: 'Zelf nabouwen',
   watchFields: 'Datavelden',
   noWeather: 'Nog geen weer',
-  // "1,5 liter mee"; zonder weer is de hoeveelheid onbekend.
-  drinkSuffix: 'mee',
-  drinkUnknown: 'Drinken mee',
+  // "1,5 liter en 2 tot 4 gels mee"; zonder weer is de hoeveelheid drinken onbekend.
+  drink: 'drinken',
+  fuelSuffix: 'mee',
   // De stand onderaan.
   watchTicks: 'Je horloge vinkt deze training af.',
   manual: 'Zelf invullen',
@@ -145,6 +146,8 @@ export interface BriefingInput {
   clothingOn: boolean;
   clothingAdjust?: number;
   sweatEntries?: SweatEntry[];
+  // Instelling Eten onderweg (engine/fuelOnTheGo.ts#fuelOn).
+  fuelOn: boolean;
 }
 
 // De Briefing is er voor een training buiten te voet: hardlopen of wandelen, geen kracht en geen rust.
@@ -291,11 +294,17 @@ function fuelTile(input: BriefingInput, minutes: number, outdoor: boolean): Brie
   const drink = outdoor
     ? drinkAmount({ template: input.template, minutes, forecast: input.forecast, logs: input.logs, date: input.date, now: input.now, sweatEntries: input.sweatEntries })
     : undefined;
-  // TODO(eten-onderweg): de korte regel uit engine/fuelOnTheGo.ts komt hier naast drinken, zodra
-  // claude/eten-onderweg op main staat. Hier komt geen eigen rekenregel voor eten; tot dan alleen drinken.
-  if (!drink) return undefined;
-  const line = drink.liters === undefined ? BRIEFING_TEXT.drinkUnknown : `${litersText(drink.liters)} ${BRIEFING_TEXT.drinkSuffix}`;
-  return { id: 'fuel', eyebrow: BRIEFING_TEXT.fuel, line };
+  // Eten onderweg (engine/fuelOnTheGo.ts) hangt niet aan het weer: ook op de loopband.
+  const fuel = input.fuelOn ? fuelForTraining(input.template, minutes) : undefined;
+  if (!drink && !fuel) return undefined;
+  const parts: string[] = [];
+  if (drink) parts.push(drink.liters === undefined ? BRIEFING_TEXT.drink : litersText(drink.liters));
+  if (fuel) parts.push(fuelShortText(fuel));
+  return { id: 'fuel', eyebrow: BRIEFING_TEXT.fuel, line: upperFirst(`${parts.join(' en ')} ${BRIEFING_TEXT.fuelSuffix}`) };
+}
+
+function upperFirst(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function lowerFirst(s: string): string {

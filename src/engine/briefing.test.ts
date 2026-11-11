@@ -9,6 +9,7 @@ import { makeForecast } from './fixtures/weatherFixture';
 import { resolveWatchModel } from './watchFields';
 import { BRIEFING_TEXT, briefing, hasBriefing, type BriefingInput } from './briefing';
 import { drinkLine } from './eveningBefore';
+import { fuelForTraining, fuelShortText } from './fuelOnTheGo';
 import { routeTarget, targetText } from './routeTarget';
 
 const { templates } = buildDefaultProgramData();
@@ -41,6 +42,7 @@ function input(over: Partial<BriefingInput> = {}): BriefingInput {
     forecast: makeForecast(TODAY, () => ({ tempC: 9, feelsC: 8 })),
     weatherOn: true,
     clothingOn: true,
+    fuelOn: true,
     ...over,
   };
 }
@@ -168,26 +170,26 @@ describe('geen weer', () => {
 });
 
 describe('eten en drinken', () => {
-  const long = (over: Partial<BriefingInput> = {}) => input({ template: LONG, session: plan('tpl_long_run'), ...over });
-  it('geen drinkregel bij een korte loop: geen vak', () => {
+  const long = (over: Partial<BriefingInput> = {}) => input({ template: LONG, session: { ...plan('tpl_long_run'), plannedMinutes: 100 }, ...over });
+  it('geen drinkregel en geen eten bij een korte loop: geen vak', () => {
     expect(tile(briefing(input()), 'fuel')).toBeUndefined();
   });
-  it('een lange loop buiten: de drinkregel uit je zweettempo, kort, uit dezelfde regel als De avond ervoor', () => {
-    const view = briefing(long({ session: { ...plan('tpl_long_run'), plannedMinutes: 100 } }));
-    const line = tile(view, 'fuel')?.line;
-    expect(line).toMatch(/^[\d,]+ liter mee$/);
+  it('een lange loop buiten: drinken uit je zweettempo en eten onderweg, kort, uit dezelfde regels als De avond ervoor', () => {
+    const line = tile(briefing(long()), 'fuel')?.line;
+    const fuel = fuelForTraining(LONG, 100)!;
+    expect(line).toMatch(new RegExp(`^[\\d,]+ liter en ${fuelShortText(fuel)} mee$`));
     const evening = drinkLine({ template: LONG, minutes: 100, forecast: input().forecast, logs: [], date: TODAY, now: NOW });
-    expect(evening).toContain(line!.replace(' mee', ''));
+    expect(evening).toContain(line!.split(' en ')[0]);
   });
   it('zonder weer weet hij alleen dat je drinken meeneemt', () => {
-    expect(tile(briefing(long({ session: { ...plan('tpl_long_run'), plannedMinutes: 100 }, forecast: undefined })), 'fuel')?.line).toBe('Drinken mee');
+    expect(tile(briefing(long({ forecast: undefined })), 'fuel')?.line).toBe(`Drinken en ${fuelShortText(fuelForTraining(LONG, 100)!)} mee`);
   });
-  it('op de loopband geen drinkregel uit het weer van buiten', () => {
-    expect(tile(briefing(long({ session: { ...plan('tpl_long_run'), plannedMinutes: 100 }, storedPlace: 'long_run_treadmill' })), 'fuel')).toBeUndefined();
+  it('Eten onderweg uit: alleen drinken', () => {
+    expect(tile(briefing(long({ fuelOn: false })), 'fuel')?.line).toMatch(/^[\d,]+ liter mee$/);
   });
-  // Eten onderweg komt van claude/eten-onderweg (engine/fuelOnTheGo.ts); zodra dat op main staat, vult
-  // het dit vak naast drinken. Tot dan bewust overgeslagen.
-  it.skip('Eten onderweg staat in hetzelfde vak als drinken (wacht op engine/fuelOnTheGo.ts)', () => {});
+  it('op de loopband geen drinkregel uit het weer van buiten, wel eten', () => {
+    expect(tile(briefing(long({ storedPlace: 'long_run_treadmill' })), 'fuel')?.line).toBe(`${fuelShortText(fuelForTraining(LONG, 100)!).replace(/^./, (c) => c.toUpperCase())} mee`);
+  });
 });
 
 describe('een rugzaktraining', () => {
