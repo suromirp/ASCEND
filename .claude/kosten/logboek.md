@@ -314,3 +314,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Review Sleuteltraining, Warden, fable (reviewer), 126k, 11 min, niet akkoord (1 blokkerend: twee inhalen op één dag; 6 moet)
 - 2026-11-11, Nadoorloop Info-blad spoor 2, Lookout, sonnet (tester), 69k, 3 min, groen
 - 2026-11-11, Herreview Info-blad spoor 2, Warden, fable (reviewer), 129k, 7 min, akkoord
+- 2026-11-11, Herreview 2 Klein deel 1, Warden, fable (reviewer), 156k, 3 min, niet akkoord (1 regel dayLoads): coördinator herstelde zelf

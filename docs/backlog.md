@@ -41,7 +41,7 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
 
 Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het bouwmoment slaat het over. Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden), nooit twee planner-sporen tegelijk. Afgerond: uit dit rooster en uit de groepen hieronder, met een regel onder Pas live.
 
-1. In aanbouw 11 november: Klein en fouten, deel 1 (Sherpa Klein deel 1, session_01LnDpSjTi9hxdJEtwACNb4G, branch claude/klein-deel-1) ‖ Buiten: UV, licht tot, hoogte van je plek.
+1. Buiten: UV, licht tot, hoogte van je plek.
 2. Voorstel squat op één been en L-sit (planner) ‖ Uitleg bij oefeningen, batch 5 (Forge-data).
 3. Feestdagen als voorstel (planner) ‖ Forge herinrichting, de rest.
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
@@ -55,6 +55,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Klein en fouten deel 1 (Twee harde lopen, voorstelzin krachtblok, dode code weg, ontbrekende tests, Belasting "wordt ..., gewoonlijk ...", zin en legenda van Intensiteit, een los horlogelog telt één keer met dezelfde maatstaf als koppelen achteraf).
 - Live op 11 november: Je horloge (knop Horloge op het trainingsscherm, rij in Week en op Vandaag; workout en datavelden op één plek; besluiten `2026-11-11-info-blad-horloge.md` en `-spoor-2.md`).
 - Live op 11 november: Route voorstellen verfijnd (te korte lus bij veel punten dichtbij, melding zonder heuvels, startpunt preciezer, helling zonder hoogte telt niet mee; besluit `2026-11-11-route-verfijnen.md`).
 

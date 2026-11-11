@@ -41,5 +41,4 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 
 ## Lees verder
 - `docs/architectuur/week.md`
-- `docs/beslissingen/2026-10-29-gemiste-training-inhalen.md`, `docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md`
-- `docs/beslissingen/2026-10-28-slepen-in-week.md`, `docs/beslissingen/2026-10-28-waarschuwingen-in-week.md`
+- `docs/beslissingen/2026-10-29-gemiste-training-inhalen.md`, `docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md`, `docs/beslissingen/2026-10-28-slepen-in-week.md`, `docs/beslissingen/2026-10-28-waarschuwingen-in-week.md`
