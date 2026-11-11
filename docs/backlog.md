@@ -54,6 +54,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Briefing spoor 2 (blad Route: kaart, lussen als rijen, knop eronder, uitleg achter de i).
 - Live op 11 november: Afdaalklok (na 21 dagen zonder afdaling een voorstel met Akkoord voor Trap af, 20 min; instelbaar in Tochten; besluit `2026-11-11-afdaalklok.md`). Mag: plek als regel op de missiekaart staat nu in de coachzin.
 - Live op 11 november: Briefing A (route alleen bij buiten; Vandaag, het blad achter de i en De avond ervoor volgen Waar train je?, geen route bij Loopband).
 - Live op 11 november: Eten onderweg (koolhydraten per uur vanaf 90 minuten met stuks, per dag bij een tocht met de aanname erbij; kaart op het trainingsscherm onder de route, De avond ervoor, etappe en Tochten; besluit `2026-11-11-eten-onderweg.md`).
@@ -71,7 +72,7 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 
 Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, allemaal Opus, geen planning. Volgorde:
 - Live 11 november: spoor 1, 3 en 4 (Briefing A).
-- In aanbouw 11 november: spoor 2 (Sherpa, opus, branch claude/briefing-spoor-2).
+- Live 11 november: spoor 2 (het blad Route met de kaart bovenaan).
 - Spoor 5 (scherm Briefing vanuit Week, instelling Lus zoeken), 6 (knop Briefing op Vandaag), 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
 - Het oude Info-blad spoor 3 en 4 vervallen: spoor 7 hier vervangt ze.
 
@@ -81,6 +82,8 @@ Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, al
 - Een Stop-hook die een bouwer pas laat stoppen als tsc en de gerichte tests groen zijn (instellingen van Claude Code: alleen met akkoord van de eigenaar).
 
 ## Samenhang (Pathfinder)
+
+- Briefing spoor 2 (Pathfinder, moet op 360 bij 640): de hoofdknop van het blad Route valt daar net onder de vouw. Voorstel: rijen compacter (één regel per lus) of de knop als vaste onderrand van het blad. Op 412 (telefoon eigenaar) staat hij erboven.
 
 - Briefing spoor 2 (Warden, moet, later): `engine/routeSheet.ts#loopLines` herkent de korter-zin aan de tekst van proposalNotes; laat de planner de notes als {text, warn} teruggeven zodra routePlanner.ts mag bewegen (spoor 8).
 - Briefing spoor 2 (Pathfinder, moet, spoor 6): mint Gedaan op Vandaag en Gedaan, invullen op het trainingsscherm bij een Garmin-loop; Route voorstellen staat op Vandaag onder de vouw en is via Week vier tikken. Spoor 5 en 6 lossen dit op; pas dan is de klacht weg.
