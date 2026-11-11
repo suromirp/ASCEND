@@ -2,7 +2,7 @@
 // docs/beslissingen/2026-11-09-ijkset.md).
 //
 // Een schatting van hoeveel je over hebt (RIR) klopt pas als je hem af en toe tegen een echte uitkomst houdt.
-// Eens per vier weken stelt Forge daarom een extra set voor bij één hoofdoefening: zo ver als netjes gaat. Het is een
+// Eens per vier weken stelt Forge daarom een set erbij voor bij één hoofdoefening: zo ver als netjes gaat. Het is een
 // voorstel met Akkoord; zonder Akkoord verandert de training niet. Niet in een week met een tocht, een test of een
 // wedstrijd, en niet in de drie dagen ervoor, want de set maakt moe. Puur: geen React, geen opslag.
 

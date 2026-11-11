@@ -48,6 +48,7 @@ const REASON_SHORT = 100;
 
 export const ExerciseBlock = memo(function ExerciseBlock({
   ex,
+  role,
   first,
   paged = false,
   readOnly,
@@ -78,6 +79,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   act,
 }: {
   ex: WorkoutExercise;
+  // De rol in de training (Kern, Bijwerk, Extra; engine/forgeTimeCap.ts#roleLabel), vooraan in de regel onder de naam.
+  role?: string;
   first: boolean;
   // Een oefening per scherm: elke oefening is een kaart, niet alleen die aan de beurt.
   paged?: boolean;
@@ -152,6 +155,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
         <span className="min-w-0 text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{ex.name}</span>
       </span>
       <span className="mt-0.5 block font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+        {role && <span data-testid="forge-rol">{role} · </span>}
         {complete && folded ? exerciseSummary(ex) : readOnly ? `${workTotal} sets` : `${workDone} van ${workTotal} sets`}
         {!(complete && folded) && <> · rust {formatClock(ex.restSec)}</>}
         {ex.swappedFrom ? ` · voor ${ex.swappedFrom}` : ''}
@@ -293,7 +297,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                 </button>
               )}
               {/* Een houding heeft geen kg (behalve met extra gewicht) en geen RIR: de koppen blijven dan leeg. */}
-              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : added ? 'extra kg' : ex.hold ? '' : 'kg'}</span>
+              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : added ? '+ kg' : ex.hold ? '' : 'kg'}</span>
               <span role="columnheader" className="text-center">{ex.timed || ex.hold ? 'sec' : 'Herh.'}</span>
               <span role="columnheader" className="text-center">{ex.hold ? '' : 'RIR'}</span>
               {/* Alle sets afvinken staat in het blad Oefening, groep Sets (docs/beslissingen/2026-11-02-forge-herinrichting.md). */}
@@ -392,13 +396,15 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   {!readOnly && ladderLines && countsForLine(exercise, { kind: row.kind, weightKg: row.weightKg ?? row.target.weightKg, band: row.band }) && (
                     <p className="ml-9 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{countsForLine(exercise, { kind: row.kind, weightKg: row.weightKg ?? row.target.weightKg, band: row.band })}</p>
                   )}
-                  {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
+                  {/* De schijven per set alleen met de instelling aan (standaard uit); dat een gewicht niet precies past staat er
+                      altijd, zonder lege regel bij de andere sets (docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md). */}
+                  {!readOnly && row.kind === 'work' && plates && plates.some(Boolean) && (showPlates || (step !== undefined && step.shortKg > 0)) && (
                     <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
                   )}
                   {barLine && (
                     <p role="note" className="ml-9 mt-0.5 border-l-2 pl-2 font-sans text-xs leading-snug tabular-nums" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>{barLine}</p>
                   )}
-                  {!readOnly && !folded && row.id === quickRirRow && <QuickRir label={label} onPick={(n) => act.quickRir(ex.slot, row.id, n)} />}
+                  {!readOnly && !folded && row.id === quickRirRow && <QuickRir label={label} aim={row.target.rir} onPick={(n) => act.quickRir(ex.slot, row.id, n)} />}
                   {!readOnly && !folded && row.id === cleanRow && <CleanAsk label={label} onPick={(v) => act.clean(ex.slot, row.id, v)} />}
                   {!readOnly && row.id === spotterRowId && (
                     <div className="ml-9 h-5">
@@ -438,7 +444,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
         </div>
       </div>
       {!readOnly && folded && quickRirRow && (
-        <QuickRir label={rowLabel(ex, quickRirRow)} onPick={(n) => act.quickRir(ex.slot, quickRirRow, n)} />
+        <QuickRir label={rowLabel(ex, quickRirRow)} aim={ex.rows.find((r) => r.id === quickRirRow)?.target.rir} onPick={(n) => act.quickRir(ex.slot, quickRirRow, n)} />
       )}
       {!readOnly && folded && cleanRow && (
         <CleanAsk label={rowLabel(ex, cleanRow)} onPick={(v) => act.clean(ex.slot, cleanRow, v)} />
@@ -454,8 +460,10 @@ function rowLabel(ex: WorkoutExercise, rowId: string): string {
 }
 
 // "Hoeveel over?" na het afvinken: 0, 1, 2 of 3+ in één tik, in de rij en zonder blad. Kies je niets, dan
-// blijft het doel staan als aangenomen RIR (docs/beslissingen/2026-11-03-forge-na-de-eerste-vergelijking.md).
-function QuickRir({ label, onPick }: { label: string; onPick: (n: number) => void }) {
+// blijft het doel staan als aangenomen RIR (docs/beslissingen/2026-11-03-forge-na-de-eerste-vergelijking.md); dat
+// doel staat gedempt voorgekozen (docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md).
+function QuickRir({ label, aim, onPick }: { label: string; aim?: number; onPick: (n: number) => void }) {
+  const aimAt = aim === undefined ? undefined : Math.min(aim, 3);
   return (
     <div className="animate-fade-in flex flex-col gap-1 pb-1 pl-1" role="group" aria-label={`Hoeveel had je over bij set ${label}?`}>
       <div className="flex items-center gap-1.5">
@@ -465,9 +473,10 @@ function QuickRir({ label, onPick }: { label: string; onPick: (n: number) => voi
             key={n}
             type="button"
             onClick={() => onPick(n)}
-            aria-label={`${quickRirLabel(n)} over, set ${label}`}
+            aria-label={`${quickRirLabel(n)} over, set ${label}${n === aimAt ? ', het doel, staat al' : ''}`}
             className="flex h-11 w-11 items-center justify-center rounded-full border font-sans text-sm font-semibold tabular-nums"
-            style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+            style={n === aimAt ? { borderColor: 'var(--color-control-border)', background: 'var(--color-surface)', color: 'var(--color-ink-dim)' } : { borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+            data-aim={n === aimAt || undefined}
           >
             {quickRirLabel(n)}
           </button>

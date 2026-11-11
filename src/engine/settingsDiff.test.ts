@@ -35,7 +35,7 @@ const everything: AppSettings = {
   bootBreakInReminder: false,
   strengthModel: {
     enabled: false, progression: 'reps_first', workSets: 'equal', warmup: 'off', warmupScope: 'exercise', widenRange: false,
-    estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'gong', keepScreenOn: false, carryMode: 'off', showPlates: false, quickRir: false, ladderRow: false, askClean: false, askBand: false, stepProposal: false, calibration: false, knowsYou: false,
+    estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'gong', keepScreenOn: false, carryMode: 'off', showPlates: true, quickRir: false, quickRirMode: 'uit', ladderRow: false, askClean: false, askBand: false, stepProposal: false, calibration: false, knowsYou: false,
     showOneRm: false, oneRmView: 'work_weight', showMacroFactorOneRm: false, compareWeeks: '2_4', listSort: 'name', showExtras: false,
     showTrendLines: false, stackWeights: 'used_only', lighterAfterBreak: false, dumbbellLog: 'total', fatigue: 'fixed', showComparison: true,
     adjustLive: false, reckon: false, learnStands: false, assumedCounts: false, crossFatigue: false, noSpotter: false, mountainMuscles: false, mountainBalance: false, rirPrefill: 'target',
@@ -73,7 +73,7 @@ const everything: AppSettings = {
   forgeLayout: 'lijst',
   forgeLogView: 'alle',
   forgeLongBreak: 90,
-  forgeCapStrength: 0,
+  forgeCapStrength: 45,
   forgeCapLegs: 90,
   haptics: false,
   restNotice: false,
