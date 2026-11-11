@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { restAlertChannels, restVibrationFor } from '../../engine/restVibration';
-import { preTickDelay, restCue, vibrateInstead } from '../../engine/restSounds';
+import { preTickDelay, preTickStillDue, restCue, vibrateInstead } from '../../engine/restSounds';
 import type { ResolvedStrengthSettings } from '../../engine/strengthSettings';
 import { haptics } from '../../utils/haptics';
 import { playRestBell, preloadRestSound } from '../../utils/restBell';
@@ -46,9 +46,15 @@ export function useRestAlert(rest: Rest | undefined, setRest: Dispatch<SetStateA
     }, Math.max(0, end - Date.now()));
     const preDelay = preTickDelay(rest, Date.now(), restPreTick && (channels.sound || channels.vibrate));
     const pre = preDelay === null ? undefined : window.setTimeout(() => {
-      if (alerted.current === end) return;
-      if (channels.sound) void playRestBell(restSound, { volume: restVolume, cue: 'pre' });
-      else haptics.pattern(restVibrationFor(restSound, 'pre'));
+      // Een timer staat stil als de app weg is: bij het afgaan opnieuw toetsen, nooit na het einde.
+      if (alerted.current === end || !preTickStillDue(end, Date.now())) return;
+      const tick = restVibrationFor(restSound, 'pre');
+      if (channels.vibrate) haptics.pattern(tick);
+      if (channels.sound) {
+        void playRestBell(restSound, { volume: restVolume, cue: 'pre' }).then((outcome) => {
+          if (vibrateInstead(channels, outcome)) haptics.pattern(tick);
+        });
+      }
     }, preDelay);
     const drop = window.setTimeout(() => setRest((r) => (r && r.endsAt === end ? undefined : r)), Math.max(0, end + REST_DONE_LINGER_MS - Date.now()));
     return () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHOICES } from '../data/settingsChoices';
-import { listenNotice, preTickDelay, PRE_TICK_SECONDS, readRestSound, readRestVolume, REST_SOUND_FILES, REST_SOUND_GROUPS, REST_SOUNDS, restCue, vibrateInstead } from './restSounds';
+import { DUCK_MAX_MS, listenNotice, preTickDelay, preTickStillDue, restCueDuckMs, PRE_TICK_SECONDS, readRestSound, readRestVolume, REST_SOUND_FILES, REST_SOUND_GROUPS, REST_SOUNDS, restCue, vibrateInstead } from './restSounds';
 
 describe('de tien rustgeluiden', () => {
   it('elke klank staat precies één keer onder een kopje, in de volgorde van de wens', () => {
@@ -74,6 +74,31 @@ describe('preTickDelay: de zachte tik 10 seconden voor het einde', () => {
   it('al voorbij (de app was weg): niet meer; net voorbij: meteen', () => {
     expect(preTickDelay({ endsAt: now + 5_000, total: 90 }, now, true)).toBeNull();
     expect(preTickDelay({ endsAt: now + 9_500, total: 90 }, now, true)).toBe(0);
+  });
+});
+
+describe('preTickStillDue: bij het afgaan opnieuw toetsen', () => {
+  const end = 1_000_000;
+  it('op tijd of tot een seconde te laat: ja', () => {
+    expect(preTickStillDue(end, end - 10_000)).toBe(true);
+    expect(preTickStillDue(end, end - 9_000)).toBe(true);
+  });
+  it('de app was weg en komt terug na het moment, of na het einde: nooit', () => {
+    expect(preTickStillDue(end, end - 8_999)).toBe(false);
+    expect(preTickStillDue(end, end)).toBe(false);
+    expect(preTickStillDue(end, end + 60_000)).toBe(false);
+  });
+});
+
+describe('restCueDuckMs: hoe lang andere audio zachter gaat', () => {
+  const voice = { length: 2.2, ring: 5.1 };
+  it('zo lang als de klank klinkt plus 400 ms; bij een volgende oefening de herhaling erbij', () => {
+    expect(restCueDuckMs(voice, 'set')).toBe(5500);
+    expect(restCueDuckMs(voice, 'exercise')).toBe(Math.round((2.2 + 0.12 + 5.1) * 1000) + 400);
+    expect(restCueDuckMs(voice, 'pre')).toBe(600);
+  });
+  it('nooit langer dan de grens', () => {
+    expect(restCueDuckMs({ length: 9, ring: 9 }, 'exercise')).toBe(DUCK_MAX_MS);
   });
 });
 

@@ -72,15 +72,6 @@ export function useForgePager(layoutPaged: boolean, workout: WorkoutExercise[], 
 
 // De naam bij de rust en in de melding: de oefening van de set die hierna komt. Na de laatste set van een
 // oefening is dat de volgende oefening, niet nog eens dezelfde (eigenaar, 7 november).
-// Komt er na deze rust een nieuwe oefening (de oefening van `slot` is af en er staat nog iets open)?
-// Dan klinkt de rustbel anders dan voor de volgende set.
-export function restBeforeNewExercise(list: WorkoutExercise[], slot: string): boolean {
-  const done = list.find((e) => e.slot === slot);
-  if (!done || !exerciseComplete(done)) return false;
-  const next = activeRow(list);
-  return !!next && next.slot !== slot;
-}
-
 export function restNameAfter(list: WorkoutExercise[], slot: string, fallback: string): string {
   const done = list.find((e) => e.slot === slot);
   if (done && !exerciseComplete(done)) return fallback;

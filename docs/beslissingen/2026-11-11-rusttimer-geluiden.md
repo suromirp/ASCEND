@@ -34,10 +34,14 @@ keuzes met karakter in plaats van grappige geluiden (backlog, 11 november).
   doet het patroon ook twee keer. Forge geeft bij het starten van de rust door of er een nieuwe
   oefening komt (`restBeforeNewExercise`); verder verandert het Forge-scherm niet.
 - Vooraankondiging: een korte zachte tik (ruis rond 1,8 kHz en een sinus van 1,6 kHz, zonder galm).
-  Bij een rust van 15 seconden of korter niet, dan valt hij vlak na het afvinken. Met alleen trillen
-  is het één korte stoot van 70 ms.
+  Bij een rust van 15 seconden of korter niet, dan valt hij vlak na het afvinken. Met trillen aan
+  ook één korte stoot van 70 ms; laat de telefoon geen geluid toe, dan trilt hij bij Alleen geluid,
+  net als de eindbel. Bij het afgaan toetst de timer opnieuw (`preTickStillDue`): kwam de app terug
+  na het moment, dan klinkt hij niet meer, en nooit na het einde.
+- Een rust die je zelf start in het menu van een oefening klinkt altijd als volgende set: je koos zelf
+  het moment, en Forge weet dan niet wat je hierna doet.
 - Android: een klein eigen native deel (`AudioFocusPlugin.java`) vraagt audio focus met ducking
-  (`AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`, gebruik sonification) en geeft hem na de klank terug. Het
+  (`AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`, gebruik sonification) en geeft hem terug als de klank is uitgeklonken (`restCueDuckMs`: hoe lang de klank klinkt, bij een volgende oefening twee keer, plus 400 ms; hoogstens 8 s). Het
   staat niet in `native-plugins.json`: de webkant vraagt `Capacitor.isPluginAvailable` en doet in een
   oudere app niets, dus het native niveau hoeft niet omhoog. In de browser kan het niet; dat staat in
   de uitlegzin van Volume.

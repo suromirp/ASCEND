@@ -5,6 +5,7 @@
 
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { routeFromNativeShortcut } from '../engine/shortcutAction';
+import { DUCK_MAX_MS } from '../engine/restSounds';
 
 export interface DeviceShell {
   // Trillen: één duur of een patroon (trillen, pauze, ...).
@@ -129,7 +130,7 @@ function androidShell(): DeviceShell {
     duckAudio(ms) {
       if (!Capacitor.isPluginAvailable('AudioFocus')) return;
       audioFocus ??= registerPlugin<AudioFocusPlugin>('AudioFocus');
-      void audioFocus.duck({ ms: Math.max(200, Math.min(5000, Math.round(ms))) }).catch(() => undefined);
+      void audioFocus.duck({ ms: Math.max(200, Math.min(DUCK_MAX_MS, Math.round(ms))) }).catch(() => undefined);
     },
     exitApp() {
       void app.then((m) => m.App.exitApp()).catch(() => undefined);

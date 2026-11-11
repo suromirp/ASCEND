@@ -26,7 +26,8 @@ public class AudioFocusPlugin extends Plugin {
     // niet kruisen.
     @PluginMethod
     public void duck(PluginCall call) {
-        int ms = Math.max(200, Math.min(5000, call.getInt("ms", 2000)));
+        // De grens is DUCK_MAX_MS in src/engine/restSounds.ts.
+        int ms = Math.max(200, Math.min(8000, call.getInt("ms", 2000)));
         handler.post(() -> request(ms));
         call.resolve();
     }

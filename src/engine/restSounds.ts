@@ -85,13 +85,31 @@ export function preTickDelay(rest: { endsAt: number; total: number }, now: numbe
   const at = rest.endsAt - PRE_TICK_SECONDS * 1000;
   const delay = at - now;
   // Meer dan een seconde te laat (de app was weg): niet meer, het einde komt zo.
-  if (delay < -1000) return null;
+  if (delay < -PRE_TICK_LATE_MS) return null;
   return Math.max(0, delay);
 }
 
-// Hoe lang andere audio zachter gaat (Android, audio focus met ducking): de klank plus een korte
-// uitloop, zodat je muziek niet terugspringt terwijl de bel nog klinkt.
-export const REST_CUE_DUCK_MS: Record<RestCue, number> = { set: 2200, exercise: 3400, pre: 600 };
+const PRE_TICK_LATE_MS = 1000;
+
+// Bij het afgaan opnieuw toetsen: een timer staat stil als de app weg is en gaat bij terugkomst alsnog
+// af. Alleen tot een seconde na het moment van de tik; daarna niet meer, en dus nooit na het einde.
+export function preTickStillDue(endsAt: number, now: number): boolean {
+  return now <= endsAt - PRE_TICK_SECONDS * 1000 + PRE_TICK_LATE_MS;
+}
+
+// Hoe lang andere audio zachter gaat (Android, audio focus met ducking): zo lang als de klank klinkt,
+// plus een korte uitloop, zodat je muziek niet terugspringt terwijl de bel nog klinkt. `length` is de
+// tijd tot de herhaling bij een volgende oefening, `ring` hoe lang één keer klinkt (utils/restBell.ts).
+export const DUCK_TAIL_MS = 400;
+export const DUCK_PRE_MS = 600;
+export const DUCK_MAX_MS = 8000;
+export const REPEAT_GAP_S = 0.12;
+
+export function restCueDuckMs(voice: { length: number; ring: number }, cue: RestCue): number {
+  if (cue === 'pre') return DUCK_PRE_MS;
+  const seconds = cue === 'exercise' ? voice.length + REPEAT_GAP_S + voice.ring : voice.ring;
+  return Math.min(DUCK_MAX_MS, Math.round(seconds * 1000) + DUCK_TAIL_MS);
+}
 
 // Wat de bel deed: geklonken, de heldere bel in plaats van een opname, of niets omdat de telefoon nu
 // geen geluid toelaat (utils/restBell.ts).

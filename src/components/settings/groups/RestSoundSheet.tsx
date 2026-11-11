@@ -70,7 +70,7 @@ export function RestSoundSheet({
               );
             })}
           </div>
-          {notice && group.sounds.includes(notice.sound) && <p className="st-hint warn" role="status" style={{ marginLeft: 0 }}>{notice.text}</p>}
+          {notice && group.sounds.includes(notice.sound) && <p className="st-hint warn" role="status">{notice.text}</p>}
         </Fragment>
       ))}
     </Sheet>

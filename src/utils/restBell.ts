@@ -10,7 +10,7 @@
 // heldere bel ('fallback'); een AudioContext die niet wil starten geeft 'blocked', en de aanroeper laat
 // dan trillen of zegt het. Nooit stilte zonder melding.
 
-import { FALLBACK_REST_SOUND, REST_CUE_DUCK_MS, REST_SOUND_FILES, REST_VOLUME_GAIN, type RestBellOutcome, type RestCue, type RestSound, type RestVolume } from '../engine/restSounds';
+import { FALLBACK_REST_SOUND, REPEAT_GAP_S, REST_SOUND_FILES, restCueDuckMs, REST_VOLUME_GAIN, type RestBellOutcome, type RestCue, type RestSound, type RestVolume } from '../engine/restSounds';
 import { deviceShell } from '../integrations/deviceShell';
 import { createImpulseResponse, ensureRunning, getAudioContext } from './sound';
 
@@ -229,6 +229,8 @@ interface Voice {
   play: (ctx: AudioContext, dest: AudioNode, t: number, k: number) => void;
   // Hoe lang hij duurt, tot de herhaling bij een volgende oefening.
   length: number;
+  // Hoe lang één keer klinkt, met de uitklank: zo lang gaat andere audio zachter.
+  ring: number;
   // Hoeveel galm.
   wet: number;
 }
@@ -244,6 +246,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // om door muziek en een koptelefoon te snijden.
   cowbell: {
     length: 0.5,
+    ring: 0.71,
     wet: 0.12,
     play: (ctx, dest, t, k) => {
       for (const [at, peak] of [[0, 0.75], [0.16, 0.55]] as const) {
@@ -272,6 +275,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // Eén droge metalen klik: een korte stoot hoge ruis en drie hoge, onharmonische boventonen.
   pickaxe: {
     length: 0.35,
+    ring: 0.22,
     wet: 0.2,
     play: (ctx, dest, t, k) => {
       noise(ctx, dest, t, 'highpass', 2200 * k, 0.7, 0.5, 0.05);
@@ -281,6 +285,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // Een korte roep op de bronzen hoorn: een kwint omhoog, Bes3 kort, F4 aangehouden.
   cornu: {
     length: 1.3,
+    ring: 1.23,
     wet: 0.3,
     play: (ctx, dest, t, k) => {
       const o = { bright: 2600 * k, attack: 0.05, scoop: 0.05, detune: 6 };
@@ -291,6 +296,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // Eén lage, ruwe roep van ongeveer anderhalve seconde die rustig uitklinkt (A2), geen strijdstoot.
   vikinghorn: {
     length: 1.8,
+    ring: 1.6,
     wet: 0.34,
     play: (ctx, dest, t, k) => {
       horn(ctx, dest, t, 110 * k, 0.75, 1.6, { bright: 1500 * k, attack: 0.14, scoop: 0.1, detune: 14 });
@@ -299,6 +305,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // Drie trage, zware slagen.
   drum: {
     length: 1.45,
+    ring: 1.5,
     wet: 0.22,
     play: (ctx, dest, t, k) => {
       [0, 0.5, 1.0].forEach((at, i) => {
@@ -310,6 +317,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // Drie bronzen klokken in de vijftoonsladder: D5, E5, A5.
   bianzhong: {
     length: 1.2,
+    ring: 3.15,
     wet: 0.3,
     play: (ctx, dest, t, k) => {
       [587.33, 659.25, 880].forEach((f, i) => bell(ctx, dest, t + i * 0.3, f * k, i === 2 ? 0.5 : 0.42, 1.8, BIANZHONG_PARTIALS));
@@ -318,6 +326,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // Twee houten klappers (hyōshigi): een harde, korte klap rond 2 kHz, twee keer.
   hyoshigi: {
     length: 0.6,
+    ring: 0.38,
     wet: 0.25,
     play: (ctx, dest, t, k) => {
       for (const at of [0, 0.3]) {
@@ -330,6 +339,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // Eén diepe slag op een grote tempelbel (G3), met een zachte stoot van de houten balk.
   templebell: {
     length: 2.2,
+    ring: 5.1,
     wet: 0.35,
     play: (ctx, dest, t, k) => {
       noise(ctx, dest, t, 'lowpass', 500 * k, 0.7, 0.3, 0.06);
@@ -339,6 +349,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // Twee korte, hoge slagen (E6).
   clearbell: {
     length: 0.6,
+    ring: 1.18,
     wet: 0.18,
     play: (ctx, dest, t, k) => {
       bell(ctx, dest, t, 1318.5 * k, 0.5, 0.9, BELL_PARTIALS);
@@ -348,6 +359,7 @@ export const VOICES: Record<RestSound, Voice> = {
   // Eén aangeslagen snaar (G4).
   lyre: {
     length: 1.0,
+    ring: 1.8,
     wet: 0.25,
     play: (ctx, dest, t, k) => {
       pluck(ctx, dest, t, 392 * k, 0.8, 1.8);
@@ -453,9 +465,9 @@ export async function playRestBell(kind: RestSound, opts: RestBellOptions = {}):
   }
 
   // In de Android-app gaat andere audio even zachter; in de browser kan dat niet.
-  deviceShell().duckAudio?.(REST_CUE_DUCK_MS[cue]);
-
   const voice = VOICES[sound];
+  deviceShell().duckAudio?.(restCueDuckMs(buffer ? { length: buffer.duration, ring: buffer.duration } : voice, cue));
+
   const bus = busOf(ctx, volume, cue === 'pre' ? 0 : voice.wet);
   if (opts.preview) {
     const old = preview;
@@ -474,6 +486,6 @@ export async function playRestBell(kind: RestSound, opts: RestBellOptions = {}):
   }
   const once = (at: number, k: number) => (buffer ? playBuffer(ctx, bus, at, buffer, k) : voice.play(ctx, bus, at, k));
   once(t, 1);
-  if (cue === 'exercise') once(t + (buffer ? buffer.duration : voice.length) + 0.12, FOURTH_DOWN);
+  if (cue === 'exercise') once(t + (buffer ? buffer.duration : voice.length) + REPEAT_GAP_S, FOURTH_DOWN);
   return outcome;
 }

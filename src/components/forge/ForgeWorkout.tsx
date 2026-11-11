@@ -95,7 +95,8 @@ import { asksClean, ladderHint, ladderLines, withBand, withClean } from '../../e
 import { ladderStateFor } from '../../engine/skillLadder';
 import { exerciseKey } from '../../engine/strengthHistory';
 import type { SetBand } from '../../models/training';
-import { restBeforeNewExercise, restNameAfter, useForgePager, useLater } from './useForgePager';
+import { restNameAfter, useForgePager, useLater } from './useForgePager';
+import { restBeforeNewExercise } from '../../engine/forgeInput';
 import { RestBar } from './ForgeTimers';
 import { ForgeIntro } from './ForgeIntro';
 import { ForgeHeader } from './ForgeHeader';

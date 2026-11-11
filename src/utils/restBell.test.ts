@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { REST_SOUNDS, type RestSound } from '../engine/restSounds';
+import { DUCK_MAX_MS, REST_SOUNDS, restCueDuckMs, type RestSound } from '../engine/restSounds';
 import { setDeviceShell } from '../integrations/deviceShell';
-import { LIMITER, LOAD_LIMIT_MS, playRestBell, setRestBellDeps } from './restBell';
+import { LIMITER, LOAD_LIMIT_MS, playRestBell, setRestBellDeps, VOICES } from './restBell';
 
 // Een nagemaakte AudioContext: telt wat er gemaakt wordt en onthoudt elke stap van elke gain.
 type Call = [string, ...number[]];
@@ -196,7 +196,20 @@ describe('andere audio even zachter (Android)', () => {
     const f = fakeContext();
     use(f);
     await playRestBell('cowbell', { cue: 'exercise' });
-    expect(duck).toHaveBeenCalledWith(3400);
+    expect(duck).toHaveBeenCalledWith(restCueDuckMs(VOICES.cowbell, 'exercise'));
+  });
+
+  it.each([...REST_SOUNDS])('%s: de muziek komt pas terug als de klank is uitgeklonken, ook twee keer', async (sound: RestSound) => {
+    // Gemeten: het laatste moment waarop een stem nog uitsterft, vanaf de start (t = 1,01).
+    const f = fakeContext();
+    use(f);
+    await playRestBell(sound);
+    const ends = gains(f).flatMap((g) => g.calls.filter((c) => c[0] === 'exp').map((c) => c[2] - 1.01));
+    const measured = Math.max(...ends);
+    expect(VOICES[sound].ring).toBeGreaterThanOrEqual(measured - 1e-6);
+    expect(restCueDuckMs(VOICES[sound], 'set')).toBeGreaterThanOrEqual(measured * 1000);
+    expect(restCueDuckMs(VOICES[sound], 'exercise')).toBeGreaterThanOrEqual((VOICES[sound].length + 0.12 + measured) * 1000);
+    expect(restCueDuckMs(VOICES[sound], 'exercise')).toBeLessThanOrEqual(DUCK_MAX_MS);
   });
 
   it('in de browser bestaat het niet en gaat er niets mis', async () => {
