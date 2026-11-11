@@ -96,6 +96,7 @@ import { ladderStateFor } from '../../engine/skillLadder';
 import { exerciseKey } from '../../engine/strengthHistory';
 import type { SetBand } from '../../models/training';
 import { restNameAfter, useForgePager, useLater } from './useForgePager';
+import { restBeforeNewExercise } from '../../engine/forgeInput';
 import { RestBar } from './ForgeTimers';
 import { ForgeIntro } from './ForgeIntro';
 import { ForgeHeader } from './ForgeHeader';
@@ -311,7 +312,7 @@ function ForgeWorkoutInner({
     if (events.length > 0) setForgeLog((l) => appendEvents(l, events));
   }, [workout, readOnly]);
 
-  const alerted = useRestAlert(rest, setRest, strength.restAlert, strength.restSound);
+  const alerted = useRestAlert(rest, setRest, strength);
   const startRest = (next: Rest) => {
     alerted.current = null;
     setRest(next);
@@ -430,7 +431,7 @@ function ForgeWorkoutInner({
     if (result.restSec && strength.restAuto) {
       const ex = workout.find((e) => e.slot === slot);
       alerted.current = null;
-      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? '') });
+      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? ''), nextExercise: restBeforeNewExercise(result.workout, slot) });
     }
   }
 
@@ -473,7 +474,7 @@ function ForgeWorkoutInner({
     if (result.restSec && strength.restAuto) {
       const ex = workout.find((e) => e.slot === slot);
       alerted.current = null;
-      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? '') });
+      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? ''), nextExercise: restBeforeNewExercise(result.workout, slot) });
     }
   }
 

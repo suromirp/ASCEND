@@ -35,7 +35,7 @@ const everything: AppSettings = {
   bootBreakInReminder: false,
   strengthModel: {
     enabled: false, progression: 'reps_first', workSets: 'equal', warmup: 'off', warmupScope: 'exercise', widenRange: false,
-    estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'gong', keepScreenOn: false, carryMode: 'off', showPlates: true, quickRir: false, quickRirMode: 'uit', ladderRow: false, askClean: false, askBand: false, stepProposal: false, calibration: false, knowsYou: false,
+    estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'templebell', restVolume: 'clear', restPreTick: true, restNextExercise: false, keepScreenOn: false, carryMode: 'off', showPlates: true, quickRir: false, quickRirMode: 'uit', ladderRow: false, askClean: false, askBand: false, stepProposal: false, calibration: false, knowsYou: false,
     showOneRm: false, oneRmView: 'work_weight', showMacroFactorOneRm: false, compareWeeks: '2_4', listSort: 'name', showExtras: false,
     showTrendLines: false, stackWeights: 'used_only', lighterAfterBreak: false, dumbbellLog: 'total', fatigue: 'fixed', showComparison: true,
     adjustLive: false, reckon: false, learnStands: false, assumedCounts: false, crossFatigue: false, noSpotter: false, mountainMuscles: false, mountainBalance: false, rirPrefill: 'target',
@@ -153,7 +153,7 @@ describe('adviceDifferences', () => {
   });
 
   it('noemt wat je zelf anders koos, met de waarde van nu en die van het advies', () => {
-    const s = apply(base, { ambition: 'stevig', overviews: { weekReview: false }, strengthModel: { restSound: 'gong' } });
+    const s = apply(base, { ambition: 'stevig', overviews: { weekReview: false }, strengthModel: { restSound: 'templebell' } });
     const found = adviceDifferences(s);
     expect(found.map((d) => d.id)).toEqual(['ambitie', 'forge-geluid', 'weekterugblik']);
     expect(found.find((d) => d.id === 'ambitie')).toEqual({ id: 'ambitie', title: 'Ambitie', page: 'planning', value: 'Stevig', advice: 'Standaard', plan: true });
@@ -162,7 +162,7 @@ describe('adviceDifferences', () => {
   });
 
   it('een waarde die gelijk is aan het advies telt niet, ook als hij erbij staat', () => {
-    const s = apply(base, { ambition: 'standaard', overviews: { weekReview: true }, strengthModel: { restSound: 'chime', progression: 'weight_first' } });
+    const s = apply(base, { ambition: 'standaard', overviews: { weekReview: true }, strengthModel: { restSound: 'clearbell', progression: 'weight_first' } });
     expect(adviceDifferences(s)).toEqual([]);
   });
 
@@ -226,11 +226,11 @@ describe('resetPatch', () => {
   });
 
   it('laat de rest van het krachtmodel en de sportschool staan', () => {
-    const s = apply(base, { strengthModel: { restSound: 'gong', restAuto: false, activeProfileId: 'a', restSeconds: { squat: 120 } } });
+    const s = apply(base, { strengthModel: { restSound: 'templebell', restAuto: false, activeProfileId: 'a', restSeconds: { squat: 120 } } });
     const { now } = resetPatch(s, ['forge-geluid']);
     expect(now.strengthModel).toEqual({ restAuto: false, activeProfileId: 'a', restSeconds: { squat: 120 } });
     const after = apply(s, now);
-    expect(resolveStrengthSettings(after.strengthModel).restSound).toBe('chime');
+    expect(resolveStrengthSettings(after.strengthModel).restSound).toBe('clearbell');
     expect(resolveStrengthSettings(after.strengthModel).restAuto).toBe(false);
   });
 
@@ -268,7 +268,7 @@ describe('resetPatch', () => {
 
 describe('countDifferences en de groepen', () => {
   it('telt wat in een blad anders staat en kent de verschillen per groep', () => {
-    const s = apply(base, { strengthModel: { fatigue: 'fixed', widenRange: false, restSound: 'gong' } });
+    const s = apply(base, { strengthModel: { fatigue: 'fixed', widenRange: false, restSound: 'templebell' } });
     expect(countDifferences(['forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'], s)).toBe(2);
     expect(countDifferences(['forge-sets'], base)).toBe(0);
     expect(differenceIdsOnPage(s, 'forge')).toEqual(['forge-vermoeidheid', 'forge-bereik', 'forge-geluid']);

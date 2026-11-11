@@ -362,8 +362,22 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Herreview Briefing herstelronde, Warden, sonnet (reviewer), 53k, 6 min, akkoord (moet: tekstkaart, verwerkt)
 - 2026-11-11, Briefing spoor 5 en 6 (2 rondes), Sherpa, opus (sessie), 466k context, $19,38, 1 herstelronde (1 blokkerend, 4 moet) plus hoofdletter door coördinator
 - 2026-11-11, Pathfinder herdoorloop Briefing 5 en 6, pathfinder, opus, 151k (totaal), 3 min, akkoord
+- 2026-11-11, Review Rusttimer geluiden, Warden, sonnet (reviewer), 76k, 3 min, niet akkoord (1 moet: opnamepaden zonder bestand, hersteld; Java-race hersteld)
 - 2026-11-11, Forge plek vooraf, pathfinder, sonnet, 92k, 3 min, geen herstel
 - 2026-11-11, Pathfinder doorloop Forge kern, pathfinder, sonnet, 44k, 1 min, geen blokkerend (2 moet, tekst; coördinator deed er één)
 - 2026-11-11, Scout Luchtfoto bronnen, sportwetenschapper, fable, 52k, 3 min, klaar
 - 2026-11-11, Warden Forge kern, reviewer, fable, 106k, 5 min, akkoord met 2 moet (RIR-vraag en stap zwaarder), terug naar bouwer
 - 2026-11-11, Warden Rusttimer herreview, reviewer, fable, 103k, 4 min, akkoord met 1 moet (late tik), terug naar bouwer
+- 2026-11-11, Forge kern en RIR, Sherpa, opus (sessie), 338k context, $10,62, 1 herstelronde (2 moet van Warden), live 10ff510
+- 2026-11-11, Warden herreview Forge kern, reviewer, sonnet, 34k, 1 min, akkoord
+- 2026-11-11, Lookout Forge kern, tester, sonnet, 87k, 17 min, groen
+- 2026-11-11, Warden Forge verloop, reviewer, fable, 70k, 4 min, akkoord met 3 moet (logboek na afloop), terug naar bouwer
+- 2026-11-11, Lookout Forge verloop, tester, sonnet, 62k, 10 min, groen (2 kleine punten nagestuurd)
+- 2026-11-11, Pathfinder Forge verloop, pathfinder, sonnet, 55k, 1 min, 2 moet
+- 2026-11-11, Warden herreview Forge verloop, reviewer, fable, 80k, 4 min, akkoord met 1 moet
+- 2026-11-11, Warden Luchtfoto, reviewer, fable, 125k, 18 min, niet akkoord (vlak FR steekt buitenland in, gemeten met echte tegels)
+- 2026-11-11, Lookout Luchtfoto, tester, sonnet, 88k, 8 min, groen met 2 punten (42 px, terugval 9 s)
+- 2026-11-11, Pathfinder Luchtfoto, pathfinder, sonnet, 38k, 1 min, 1 moet (Ondergrond en luchtfoto één instelling)
+- 2026-11-11, Forge verloop, Sherpa, opus (sessie), 344k context, $10,49, 3 herstelrondes (Warden 3 moet, Lookout 2, herreview 1 moet), live ada4fc39
+- 2026-11-11, Plekken spoor 1 opslag, Sherpa, fable (sessie), 261k context, $7,40, 0 herstelrondes (zinnen door coördinator), live 70794807
+- 2026-11-11, Warden Plekken opslag, reviewer, fable, 65k, 3 min, akkoord met 1 moet nu (privacyzinnen)
