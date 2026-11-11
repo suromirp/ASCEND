@@ -82,6 +82,11 @@ Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, al
 
 ## Samenhang (Pathfinder)
 
+- Briefing spoor 2 (Warden, moet, later): `engine/routeSheet.ts#loopLines` herkent de korter-zin aan de tekst van proposalNotes; laat de planner de notes als {text, warn} teruggeven zodra routePlanner.ts mag bewegen (spoor 8).
+- Briefing spoor 2 (Pathfinder, moet, spoor 6): mint Gedaan op Vandaag en Gedaan, invullen op het trainingsscherm bij een Garmin-loop; Route voorstellen staat op Vandaag onder de vouw en is via Week vier tikken. Spoor 5 en 6 lossen dit op; pas dan is de klacht weg.
+- Briefing spoor 2 (Pathfinder, mag): de eerste vraag van de route is een lange tekstmuur zonder mint knop.
+- Werkwijze (coördinator): Warden en Pathfinder zetten soms de hoofdmap op een andere commit (git checkout); in hun opdracht expliciet "alleen in een eigen worktree, nooit checkout in /home/user/ascend".
+
 - Briefing A (Warden, mag): De avond ervoor laat de route-regel weg zolang de plekkeuzes nog niet gelezen zijn (nu telt dan de standaard; alleen als lezen langer dan 1 s duurt).
 - Briefing A (Warden, mag): readMap in storage/trainingPlace.ts neemt een lezing alleen over als er sinds de start geen save klaar is (versieteller).
 - Eigen gewicht (Sherpa Afdaalklok): tpl_bodyweight en tpl_hill_easy hebben geen SESSION_STYLE; Eigen gewicht toont daardoor "Zone 2, praten kan" bij een krachttraining.
