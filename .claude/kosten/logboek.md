@@ -301,3 +301,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Kansen app (brainstorm), Cartographer, opus (ontwerper), 157k, 7 min, 0 herstelrondes
 - 2026-11-11, Kansen training (brainstorm), Scout, opus (sportwetenschapper), 185k, 7 min, 0 herstelrondes
 - 2026-11-11, Review Route-verfijnen, Warden, fable (reviewer), 96k, 5 min, niet akkoord (1 blokkerend, 4 moet): terug naar dezelfde bouwer
+- 2026-11-11, Doorloop Klein deel 1 (Stand, Week, Logboek op 360, 390, 412), Lookout, sonnet (tester), 45k, 5 min, groen
+- 2026-11-11, Review Klein deel 1, Warden, fable (reviewer), 102k, 7 min, niet akkoord (4 moet): terug naar dezelfde bouwer, met de losse-trainingtelling erbij
