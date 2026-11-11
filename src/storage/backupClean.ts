@@ -345,6 +345,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeStart;
     skipped.n++;
   }
+  // Ondergrond van de kaart: Donker, Licht of Geen.
+  if ('routeMapBase' in s && s.routeMapBase !== 'dark' && s.routeMapBase !== 'light' && s.routeMapBase !== 'none') {
+    delete s.routeMapBase;
+    skipped.n++;
+  }
   // Precies hoort bij het punt op dit toestel: een import zet het nooit aan, dan ging er zonder vraag een punt de deur uit.
   if (s.routeStart === 'exact') s.routeStart = 'approx';
   if ('routeStartPoint' in s) {

@@ -124,7 +124,10 @@ export default defineConfig({
         // De tekeningen bij oefeningen (public/exercise-art, ruim 5 MB) staan bewust niet in de precache:
         // ze worden geladen als je een oefening opent en op de achtergrond vooraf voor je eigen
         // trainingen, en bewaard in een eigen cache (docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen.md).
-        globIgnores: ['share-target-sw.js', 'morning-notice-sw.js', 'exercise-art/**', 'privacypolicy.html'],
+        // De kaart bij Route voorstellen (MapLibre, ruim 1,6 MB met worker en stijl) evenmin: hij laadt pas als
+        // het paneel opengaat en is zonder netwerk zinloos, want dan is er ook geen lus. Kaarttegels komen
+        // nooit in de service worker en worden nooit vooraf opgehaald (docs/beslissingen/2026-11-11-route-kaart.md).
+        globIgnores: ['share-target-sw.js', 'morning-notice-sw.js', 'exercise-art/**', 'privacypolicy.html', 'assets/maplibre-gl-*'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.includes('/exercise-art/') && url.pathname.endsWith('.json'),
