@@ -430,17 +430,6 @@ function GeneralLogger({
           </Card>
         )}
 
-        {!restChosen && !quickComplete && fuel && (
-          <Card className="mt-4">
-            <Eyebrow>Eten onderweg</Eyebrow>
-            <div className="mt-2 flex flex-col gap-1">
-              {fuelCardLines(fuel).map((line, i) => (
-                <p key={line} className={i === 0 ? 'text-sm leading-relaxed' : 'text-xs leading-relaxed'} style={{ color: i === 0 ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{line}</p>
-              ))}
-            </div>
-          </Card>
-        )}
-
         {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length || showRoute) ? (
           <div className="mt-4 flex flex-col divide-y divide-[var(--color-card-border)] rounded-2xl border px-4" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
             {template.warmup && template.warmup.length > 0 && (
@@ -455,6 +444,17 @@ function GeneralLogger({
         ) : plannedSession && !preview ? (
           <WatchStatusRow session={plannedSession} template={template} onLeave={closeSheet} className="mt-4" />
         ) : null}
+
+        {!restChosen && !quickComplete && fuel && (
+          <Card className="mt-4">
+            <Eyebrow>Eten onderweg</Eyebrow>
+            <div className="mt-2 flex flex-col gap-1">
+              {fuelCardLines(fuel).map((line, i) => (
+                <p key={line} className={i === 0 ? 'text-sm leading-relaxed' : 'text-xs leading-relaxed'} style={{ color: i === 0 ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{line}</p>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {template.type === 'strength' && !restChosen && !quickComplete && !preview && (
           <Card className="mt-4">

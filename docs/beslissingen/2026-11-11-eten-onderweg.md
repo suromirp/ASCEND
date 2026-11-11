@@ -24,7 +24,7 @@ Vanaf 90 minuten lopen of wandelen, en per dag op een tocht of etappe, zegt ASCE
 ## Waar het staat
 
 - De avond ervoor: één regel, "Eten mee: 60 tot 90 g koolhydraten, 2 tot 4 gels of bananen." Bij een tochtdag "Eten voor de dag: 180 tot 240 g koolhydraten, bij een aanname van 6 uur lopen." Een tochtdag zonder rugzakgewicht krijgt nu een kaart met alleen het eten (eerst geen kaart: er valt nu iets klaar te leggen).
-- Het trainingsscherm (ExerciseLogger), een korte kaart Eten onderweg onder Waar train je en boven opwarmen en route: het bereik met een paar stuks en de oefenzin, ook als je het scherm alleen leest (Hoe je het doet). Niet in de uitleg van de training (TrainingGuideSheet) en niet in het blad Je horloge: volgens `docs/visie/Ontwerp Info-blad.md` wordt de uitleg korter en gaan praktische dingen naar het trainingsscherm, en Je horloge gaat over wat er op het horloge staat. Keuze van de coördinator na de review van Warden. De duur leest hetzelfde als De avond ervoor: de minuten van de geplande sessie (`plannedMinutes`), anders de volle duur van de dag (`resolveEffectiveFullDuration` via `resolveVariantDuration`); kies je op het scherm een kortere versie, dan die.
+- Het trainingsscherm (ExerciseLogger), een korte kaart Eten onderweg onder opwarmen, rekken en de route en route: het bereik met een paar stuks en de oefenzin, ook als je het scherm alleen leest (Hoe je het doet). Niet in de uitleg van de training (TrainingGuideSheet) en niet in het blad Je horloge: volgens `docs/visie/Ontwerp Info-blad.md` wordt de uitleg korter en gaan praktische dingen naar het trainingsscherm, en Je horloge gaat over wat er op het horloge staat. Keuze van de coördinator na de review van Warden. De duur leest hetzelfde als De avond ervoor: de minuten van de geplande sessie (`plannedMinutes`), anders de volle duur van de dag (`resolveEffectiveFullDuration` via `resolveVariantDuration`); kies je op het scherm een kortere versie, dan die.
 - Een GR5-etappe: een eigen blok Eten onderweg in het blad van de etappe, direct boven Water en winkel. Niet in de rij van de lijst: die heeft al dag, slaapplek, rustdag, pas en water.
 - Een tocht: één regel op de kaart Tochten (Ascend, Doelen), onder de feiten van de tocht.
 
@@ -88,3 +88,7 @@ Twee punten van `docs/beslissingen/2026-11-11-avond-ervoor.md`, als aanvulling; 
 ## Terugdraaien
 
 Instelling Eten onderweg uit. In de code: `fuelOn` weg uit `useEveningBefore.ts`, `ExerciseLogger.tsx`, `StageSheet`/`Etappes.tsx` en `TrekGoals.tsx`; de horlogeregel terug op zijn oude plek in `eveningBefore.ts`.
+
+## Na de herreview (coördinator, 11 november)
+
+De kaart staat onder de lijst met opwarmen, rekken en de route, zodat de route niet verder zakt (Warden, punt 3). De Briefing (`2026-11-11-briefing.md`) bepaalt later de volgorde; eten wordt daar een van de vier vakken.
