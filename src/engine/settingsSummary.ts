@@ -22,6 +22,7 @@ import { resolveStravaTextParts } from './activityText';
 import { resolveWatchModel, watchFieldsShown } from './watchFields';
 import { resolveRouteStyle } from './routeTarget';
 import { resolveRouteStart } from './routeStart';
+import { resolveMapBase } from './routeMap';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { countDifferences } from './settingsDiff';
@@ -940,6 +941,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('routeSoort', resolveRouteStyle(s.routeStyle)) };
     case 'route-start':
       return { value: choiceShort('routeStart', resolveRouteStart(s.routeStart)) };
+    case 'route-kaart':
+      return { value: choiceShort('routeKaart', resolveMapBase(s.routeMapBase)) };
     case 'weerruil':
       return { checked: o.weatherSwap };
     case 'beste-moment':

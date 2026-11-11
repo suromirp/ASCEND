@@ -117,6 +117,7 @@ const everything: AppSettings = {
   routeProposal: false,
   routeStyle: 'simple',
   routeStart: 'exact',
+  routeMapBase: 'none',
   keepStreams: false,
   tempoStablePieces: false,
   morningInBackup: false,

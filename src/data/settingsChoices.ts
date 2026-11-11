@@ -768,6 +768,18 @@ export const CHOICES = {
       { value: 'exact', label: 'Precies', note: 'Je eigen startpunt gaat naar de routeplanner', short: 'Precies' },
     ],
   }),
+  routeKaart: def({
+    group: 'Vandaag en meldingen',
+    title: 'Ondergrond van de kaart',
+    line: 'Wat er onder de lussen op de kaart ligt; bij Geen haalt ASCEND geen kaarttegels op.',
+    advice: 'dark' as 'dark' | 'light' | 'none',
+    help: 'routeKaart',
+    options: [
+      { value: 'dark', label: 'Donker', note: 'Straten en paden in de kleuren van ASCEND', short: 'Donker' },
+      { value: 'light', label: 'Licht', note: 'Een lichte kaart, met paden', short: 'Licht' },
+      { value: 'none', label: 'Geen', note: 'Alleen de lussen en je plek op een effen vlak', short: 'Geen' },
+    ],
+  }),
   stravaInhoud: def({
     group: 'Koppelingen',
     title: 'Wat erin staat',

@@ -281,6 +281,8 @@ const PATHS = {
   notitie: <path d="M9 3.5h6M10 3.5v5.5l-3 3.5h10l-3-3.5V3.5M12 12.5V20.5" />,
   // Het teken bij een training met een hartslag die afwijkt (Wat speelde er): een hartslaglijn.
   hartslag: <path d="M2.5 12.5h4l2.2-5 3.6 10 2.6-7 1.6 2H21.5" />,
+  // Alles in beeld op de kaart bij Route voorstellen: een lus binnen vier hoeken (geen volledig scherm).
+  inbeeld: <path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M12 7.5l4.5 4.5-4.5 4.5-4.5-4.5Z" />,
   // De greep om een doel te slepen: zes punten.
   greep: (
     <g fill="currentColor" stroke="none">
