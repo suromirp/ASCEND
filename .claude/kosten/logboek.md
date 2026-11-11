@@ -378,3 +378,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Lookout Luchtfoto, tester, sonnet, 88k, 8 min, groen met 2 punten (42 px, terugval 9 s)
 - 2026-11-11, Pathfinder Luchtfoto, pathfinder, sonnet, 38k, 1 min, 1 moet (Ondergrond en luchtfoto één instelling)
 - 2026-11-11, Forge verloop, Sherpa, opus (sessie), 344k context, $10,49, 3 herstelrondes (Warden 3 moet, Lookout 2, herreview 1 moet), live ada4fc39
+- 2026-11-11, Plekken spoor 1 opslag, Sherpa, fable (sessie), 261k context, $7,40, 0 herstelrondes (zinnen door coördinator), live 70794807
+- 2026-11-11, Warden Plekken opslag, reviewer, fable, 65k, 3 min, akkoord met 1 moet nu (privacyzinnen)
