@@ -22,14 +22,18 @@ public class AudioFocusPlugin extends Plugin {
     private AudioFocusRequest current;
     private final Runnable release = this::abandon;
 
+    // Alles op de mainthread, net als het loslaten: zo kunnen een nieuwe vraag en het loslaten elkaar
+    // niet kruisen.
     @PluginMethod
     public void duck(PluginCall call) {
         int ms = Math.max(200, Math.min(5000, call.getInt("ms", 2000)));
+        handler.post(() -> request(ms));
+        call.resolve();
+    }
+
+    private void request(int ms) {
         AudioManager audio = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
-        if (audio == null) {
-            call.resolve();
-            return;
-        }
+        if (audio == null) return;
         handler.removeCallbacks(release);
         if (current == null) {
             AudioAttributes attrs = new AudioAttributes.Builder()
@@ -43,7 +47,6 @@ public class AudioFocusPlugin extends Plugin {
             audio.requestAudioFocus(current);
         }
         handler.postDelayed(release, ms);
-        call.resolve();
     }
 
     private void abandon() {

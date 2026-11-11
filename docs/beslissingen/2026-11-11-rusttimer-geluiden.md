@@ -28,6 +28,8 @@ keuzes met karakter in plaats van grappige geluiden (backlog, 11 november).
   klinkt als de heldere bel. Laat de telefoon geen geluid toe (de AudioContext start niet binnen
   400 ms), dan trilt hij met het ritme van je geluid, ook als je Alleen geluid koos. Luister zegt
   het onder het kopje als het niet klonk zoals gekozen.
+- Luister speelt altijd het geluid, ook als je Alleen trillen koos: je vroeg erom, en je kiest met het
+  geluid het ritme. Staat trillen aan, dan voel je het ritme erbij.
 - Andere klank bij volgende oefening: de klank twee keer, de tweede een kwart lager; het trillen
   doet het patroon ook twee keer. Forge geeft bij het starten van de rust door of er een nieuwe
   oefening komt (`restBeforeNewExercise`); verder verandert het Forge-scherm niet.
@@ -63,7 +65,7 @@ Hoe elke klank gemaakt is (allemaal synthese met Web Audio, geen opname):
 
 - Opnames voor Cornu en Vikinghoorn (de wens van de eigenaar bij de hoorn). Downloaden van Wikimedia
   Commons werd in de bouwomgeving geweigerd (HTTP 429, ook de omgezette mp3's); OpenGameArt had geen
-  passende CC0-hoorn. Daarom synthese. De weg voor een opname staat klaar (`REST_SOUND_FILES`,
+  passende CC0-hoorn. Daarom synthese. De weg voor een opname staat klaar (`REST_SOUND_FILES`, nu leeg; een test eist dat elk aangemeld bestand bestaat;
   vooraf laden, grens van 1,5 s, terugval, mp3 in de precache) en twee CC0-kandidaten staan in
   `public/sounds/BRONNEN.md`.
 - Een migratiestap voor de oude waarden. Niet nodig: het veld blijft optioneel en wordt bij het

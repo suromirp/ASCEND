@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHOICES } from '../data/settingsChoices';
-import { listenNotice, preTickDelay, PRE_TICK_SECONDS, readRestSound, readRestVolume, REST_SOUND_GROUPS, REST_SOUNDS, restCue, vibrateInstead } from './restSounds';
+import { listenNotice, preTickDelay, PRE_TICK_SECONDS, readRestSound, readRestVolume, REST_SOUND_FILES, REST_SOUND_GROUPS, REST_SOUNDS, restCue, vibrateInstead } from './restSounds';
 
 describe('de tien rustgeluiden', () => {
   it('elke klank staat precies één keer onder een kopje, in de volgorde van de wens', () => {
@@ -15,6 +15,11 @@ describe('de tien rustgeluiden', () => {
     expect(CHOICES.rustgeluid.advice).toBe('cowbell');
     expect(CHOICES.rustvolume.options.map((o) => o.value)).toEqual(['soft', 'normal', 'clear']);
     expect(CHOICES.rustvolume.advice).toBe('normal');
+  });
+
+  it('elke aangemelde opname staat echt in public/sounds/ (anders klinkt hij altijd als de heldere bel)', () => {
+    const present = Object.keys(import.meta.glob('../../public/sounds/*.mp3')).map((k) => k.replace('../../public/', ''));
+    for (const path of Object.values(REST_SOUND_FILES)) expect(present, path).toContain(path);
   });
 
   it('teksten zonder gedachtestreepjes en zonder hoofdletterknoppen', () => {
