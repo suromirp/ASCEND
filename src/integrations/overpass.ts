@@ -2,8 +2,10 @@
 // sportvelden en een atletiekbaan, en vraagt de hoogte bij Open-Meteo om het hoogteverschil te
 // kennen. Zonder sleutel, zonder account, rechtstreeks vanaf de telefoon.
 //
-// Alleen een plek afgerond op twee decimalen (ongeveer een kilometer) gaat de deur uit, nooit een
-// exacte positie en nooit een naam van de gebruiker. De adapter gooit nooit: zonder netwerk, bij een
+// Standaard gaat alleen een plek afgerond op twee decimalen (ongeveer een kilometer) de deur uit.
+// Met `exact` (het eigen startpunt van een lus, besluit 2026-11-11-route-verfijnen.md) gaat het punt
+// op vier decimalen: dan liggen het zoekgebied en de hoogte waarmee heuvels vergeleken worden om
+// het startpunt zelf. Nooit een naam van de gebruiker. De adapter gooit nooit: zonder netwerk, bij een
 // fout of na de tijdgrens geeft hij `undefined` en is er gewoon geen regel.
 //   POST https://overpass-api.de/api/interpreter   (body: data=<query>)
 //   GET  https://api.open-meteo.com/v1/elevation?latitude=a,b&longitude=c,d
@@ -28,10 +30,15 @@ export interface OverpassOptions {
   fetchImpl?: typeof fetch;
   radiusM?: number;
   now?: Date;
+  // Zoek om het punt zelf (vier decimalen) in plaats van om de afgeronde plek.
+  exact?: boolean;
 }
 
-export function overpassQuery(place: WeatherPlace, radiusM = DEFAULT_RADIUS_M): string {
-  const at = `(around:${Math.round(radiusM)},${roundCoordinate(place.lat)},${roundCoordinate(place.lon)})`;
+const r4 = (v: number) => Math.round(v * 10_000) / 10_000;
+const centre = (value: number, exact?: boolean) => (exact ? r4(value) : roundCoordinate(value));
+
+export function overpassQuery(place: WeatherPlace, radiusM = DEFAULT_RADIUS_M, exact = false): string {
+  const at = `(around:${Math.round(radiusM)},${centre(place.lat, exact)},${centre(place.lon, exact)})`;
   return [
     '[out:json][timeout:15];(',
     `nwr["natural"~"^(hill|peak)$"]${at};`,
@@ -45,7 +52,6 @@ export function overpassQuery(place: WeatherPlace, radiusM = DEFAULT_RADIUS_M): 
 }
 
 const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
-const r4 = (v: number) => Math.round(v * 10_000) / 10_000;
 
 // Hemelsbreed, in meters (haversine).
 export function distanceMeters(aLat: number, aLon: number, bLat: number, bLon: number): number {
@@ -69,11 +75,11 @@ function kindOf(tags: Record<string, unknown>): TerrainKind | undefined {
 
 // Zet een Overpass-antwoord om in dingen met een afstand. Elementen zonder positie of soort
 // vallen weg; per soort blijven de dichtstbijzijnde over. Gooit bij een antwoord zonder lijst.
-export function mapOverpass(raw: unknown, place: WeatherPlace, radiusM = DEFAULT_RADIUS_M): TerrainFeature[] {
+export function mapOverpass(raw: unknown, place: WeatherPlace, radiusM = DEFAULT_RADIUS_M, exact = false): TerrainFeature[] {
   const elements = (raw as { elements?: unknown } | null)?.elements;
   if (!Array.isArray(elements)) throw new Error('response');
-  const lat0 = roundCoordinate(place.lat);
-  const lon0 = roundCoordinate(place.lon);
+  const lat0 = centre(place.lat, exact);
+  const lon0 = centre(place.lon, exact);
   const out: TerrainFeature[] = [];
   for (const el of elements as Record<string, unknown>[]) {
     const tags = (el?.tags ?? {}) as Record<string, unknown>;
@@ -124,10 +130,10 @@ async function request(url: string, init: RequestInit, timeoutMs: number, doFetc
 
 // Het hoogteverschil van de heuvels met de plek, met de hoogte-aanroep van Open-Meteo. Lukt die
 // niet, dan blijven de heuvels zonder hoogte staan.
-async function addHeights(place: WeatherPlace, features: TerrainFeature[], doFetch: typeof fetch): Promise<TerrainFeature[]> {
+async function addHeights(place: WeatherPlace, features: TerrainFeature[], doFetch: typeof fetch, exact = false): Promise<TerrainFeature[]> {
   const hills = features.filter((f) => f.kind === 'hill');
   if (hills.length === 0) return features;
-  const points = [{ lat: roundCoordinate(place.lat), lon: roundCoordinate(place.lon) }, ...hills.map((h) => ({ lat: h.lat, lon: h.lon }))];
+  const points = [{ lat: centre(place.lat, exact), lon: centre(place.lon, exact) }, ...hills.map((h) => ({ lat: h.lat, lon: h.lon }))];
   const raw = await request(elevationUrl(points), { method: 'GET', headers: { Accept: 'application/json' } }, ELEVATION_TIMEOUT_MS, doFetch);
   const heights = mapElevation(raw, points.length);
   if (!heights) return features;
@@ -143,21 +149,22 @@ async function addHeights(place: WeatherPlace, features: TerrainFeature[], doFet
 export async function fetchNearbyTerrain(place: WeatherPlace, options: OverpassOptions = {}): Promise<NearbyTerrain | undefined> {
   const doFetch = options.fetchImpl ?? fetch;
   const radiusM = options.radiusM ?? DEFAULT_RADIUS_M;
-  const rounded: WeatherPlace = { name: '', lat: roundCoordinate(place.lat), lon: roundCoordinate(place.lon) };
+  const exact = options.exact === true;
+  const rounded: WeatherPlace = { name: '', lat: centre(place.lat, exact), lon: centre(place.lon, exact) };
   const raw = await request(
     OVERPASS_URL,
-    { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encodeURIComponent(overpassQuery(rounded, radiusM))}` },
+    { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encodeURIComponent(overpassQuery(rounded, radiusM, exact))}` },
     OVERPASS_TIMEOUT_MS,
     doFetch,
   );
   if (raw === undefined) return undefined;
   let features: TerrainFeature[];
   try {
-    features = mapOverpass(raw, rounded, radiusM);
+    features = mapOverpass(raw, rounded, radiusM, exact);
   } catch {
     return undefined;
   }
-  features = await addHeights(rounded, features, doFetch);
-  // De naam van de plek wordt niet in het resultaat bewaard, alleen de afgeronde positie.
+  features = await addHeights(rounded, features, doFetch, exact);
+  // De naam van de plek wordt niet in het resultaat bewaard, alleen de positie.
   return { source: 'osm', fetchedAt: (options.now ?? new Date()).toISOString(), place: rounded, radiusM, features };
 }
