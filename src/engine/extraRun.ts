@@ -27,6 +27,7 @@
 //
 // Pure: no React, no IndexedDB.
 
+import type { KeyFocus } from './keySession';
 import { hasSignificantPain } from './pain';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -66,6 +67,8 @@ export interface ExtraRunInputs {
   restDay?: number; // 1 = Monday ... 7 = Sunday
   // Holidays and treks: no extra training on those days (engine/leave.ts).
   leave?: LeavePeriod[];
+  // Wat de sleuteltraining is (engine/keySession.ts), zoals op Ascend. Zonder: de lange duurloop of de bergtocht.
+  keyFocus?: KeyFocus;
   newId?: () => string;
 }
 
@@ -96,14 +99,14 @@ export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' |
   const firstLooked = weekStart > mondayOfWeek(today) ? mondayOfWeek(today) : weekStart;
   let done = 0, planned = 0, keyDone = 0, keyPlanned = 0, weeks = 0;
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, keyFocus: inputs.keyFocus });
     if (!review || review.planned === 0) continue;
     weeks++;
     done += review.done; planned += review.planned; keyDone += review.keyDone; keyPlanned += review.keyPlanned;
   }
   if (weeks < MIN_WEEKS) return { earned: false, reason: 'Na twee volle weken in je plan kijkt ASCEND of er een loop bij kan.' };
   if (done / planned < MIN_DONE_SHARE) return { earned: false, reason: `De laatste weken deed je ${done} van de ${planned} trainingen. Bij 80% komt er een loop bij.` };
-  if (keyPlanned > 0 && keyDone / keyPlanned < MIN_KEY_SHARE) return { earned: false, reason: 'De lange training viel de laatste weken een paar keer weg. Die gaat voor.' };
+  if (keyPlanned > 0 && keyDone / keyPlanned < MIN_KEY_SHARE) return { earned: false, reason: 'De sleuteltraining viel de laatste weken een paar keer weg. Die gaat voor.' };
   return { earned: true, reason: `De laatste ${weeks} weken deed je ${done} van de ${planned} trainingen, zonder pijn.` };
 }
 

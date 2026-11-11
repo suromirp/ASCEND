@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useKeyFocus } from './useKeyFocus';
 import { useAppData } from '../state/AppDataContext';
 import { assessOnCourse, type CourseStatus } from '../engine/onCourse';
 import { todayISO } from '../utils/dates';
@@ -16,9 +17,10 @@ const STATUS_COLOR: Record<CourseStatus, string> = {
 // Ascend: the coach's verdict on the last four weeks toward your goal.
 export function OnCourseCard({ goalName, goalDate }: { goalName: string; goalDate: string }) {
   const { program, plannedSessions, sessionLogs, templates, planChangeLog, settings } = useAppData();
+  const keyFocus = useKeyFocus();
   const course = useMemo(
-    () => assessOnCourse({ today: todayISO(), goalName, goalDate, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes }),
-    [goalName, goalDate, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes],
+    () => assessOnCourse({ today: todayISO(), goalName, goalDate, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes, keyFocus }),
+    [goalName, goalDate, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, keyFocus],
   );
   return (
     <Card className="flex flex-col gap-2">

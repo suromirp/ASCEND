@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { PRIORITY_NAME } from '../../engine/goalLabels';
-import { landingIndex, moveGoal, type MoveResult, type NextKeySession } from '../../engine/goalList';
+import { landingIndex, moveGoal, type MoveResult } from '../../engine/goalList';
+import type { NextKeySession } from '../../engine/keySession';
 import { useVerticalDrag } from '../useVerticalDrag';
 import { GoalCard } from './GoalCard';
 import type { GoalView } from './useGoalViews';

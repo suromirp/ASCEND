@@ -11,7 +11,6 @@
 // Puur: geen React, geen IndexedDB.
 
 import type { GoalPriority, TrainingGoal } from '../models/goals';
-import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, daysBetween } from '../utils/dates';
 import { effectivePriority, goalKindOf, goalRecoveryDays, goalTaperDays, PRIORITY_NAME, sortedForList } from './goalLabels';
 import { conflictsForGoals } from './goalConflicts';
@@ -298,41 +297,6 @@ export function marathonSettingsFor(was: TrainingGoal, next: TrainingGoal):
   const km = next.details?.distanceKm;
   const marathonRaceType = km !== undefined && Math.abs(km - RACE_KM.marathon) < 0.5 ? 'full' : km !== undefined && Math.abs(km - RACE_KM.half) < 0.5 ? 'half' : undefined;
   return { marathonRaceType, marathonTargetDate: next.targetDate, marathonTargetTimeMinutes: next.details?.targetMinutes };
-}
-
-// --- de volgende stap --------------------------------------------------------------------------
-
-export interface NextKeySession {
-  sessionId: string;
-  date: string;
-  name: string;
-  minutes: number;
-}
-
-// De zwaarste training van de komende twee weken die nog niet gedaan is: de stap die het meeste
-// telt. Rustige trainingen tellen niet, een overgeslagen training ook niet. `minutesOf` geeft de
-// lengte zoals de schermen die tonen; zonder valt het terug op de vaste lengte van de training.
-export function nextKeySession(
-  sessions: readonly PlannedSession[],
-  templates: readonly SessionTemplate[],
-  logs: readonly SessionLog[],
-  today: string,
-  minutesOf?: (session: PlannedSession, template: SessionTemplate) => number | undefined,
-): NextKeySession | undefined {
-  const until = addDays(today, 13);
-  const byId = new Map(templates.map((t) => [t.id, t]));
-  const done = new Set(logs.map((l) => l.plannedSessionId).filter((x): x is string => !!x));
-  let best: NextKeySession | undefined;
-  for (const s of sessions) {
-    const t = byId.get(s.templateId);
-    if (!t || t.type === 'recovery' || s.status === 'skipped' || done.has(s.id)) continue;
-    if (s.scheduledDate < today || s.scheduledDate > until) continue;
-    const minutes = s.plannedMinutes ?? minutesOf?.(s, t) ?? 0;
-    if (!best || minutes > best.minutes || (minutes === best.minutes && s.scheduledDate < best.date)) {
-      best = { sessionId: s.id, date: s.scheduledDate, name: t.name, minutes };
-    }
-  }
-  return best;
 }
 
 export { PRIORITY_NAME };

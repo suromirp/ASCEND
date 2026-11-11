@@ -209,6 +209,20 @@ describe('REST-BACK: geen rustdag terug na twee dagen rust', () => {
     expect(restDaysToBringBack({ plannedSessions: byProposal, logs, templates, today: '2026-11-01', restDay: 1 }).map((s) => s.id)).toEqual(['walk']);
   });
 
+  it('leest de sleuteltraining van je doel en houdt hard naast hard uit (Warden M2)', () => {
+    // Zaterdag een gemiste tempoloop (zelf overgeslagen), zondag gewoon getraind.
+    const sessions = restWeekend().filter((s) => s.id !== 'retest').map((s) => (s.id === 'upB' ? { ...s, status: 'planned' as const, lock: undefined } : s.id === 'legs' ? { ...s, templateId: 'tpl_tempo_run' } : s));
+    const logs = [...twoDone, done('log-upB', 'tpl_upper_b', 'strength', '2026-11-01', 'upB')];
+    const base = { plannedSessions: sessions, logs, templates, today: '2026-11-01', restDay: 1 };
+    // Zonder doel is een tempoloop geen sleuteltraining: de rustdag mag terug.
+    expect(restDaysToBringBack(base).map((s) => s.id)).toEqual(['walk']);
+    // Bij een 10 km wel, en hij past op maandag: de dag blijft vrij om in te halen.
+    expect(restDaysToBringBack({ ...base, keyFocus: { goal: 'run_race', variant: '10k' } })).toEqual([]);
+    // Met intervallen op dinsdag past hij niet (hard naast hard): dan komt de rustdag terug.
+    const withIntervals = [...sessions, planned('int', 'tpl_intervals', '2026-11-03', '2026-11-02')];
+    expect(restDaysToBringBack({ ...base, plannedSessions: withIntervals, keyFocus: { goal: 'run_race', variant: '10k' } }).map((s) => s.id)).toEqual(['walk']);
+  });
+
   it('een gemiste beendag die de 48 uur niet haalt, houdt de rustdag niet tegen', () => {
     // Een gemiste bergtocht met Benen A zwaar op di 3 november ernaast past niet op maandag, dus de rustdag mag terug.
     const sessions = [...restWeekend().filter((s) => s.id !== 'retest').map((s) => (s.id === 'upB' ? { ...s, status: 'planned' as const, lock: undefined } : s)), planned('legs2', 'tpl_lower_a', '2026-11-03', '2026-11-02')]

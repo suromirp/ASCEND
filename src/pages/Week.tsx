@@ -1,4 +1,5 @@
 import { resolveIntensityCounting } from '../engine/intensitySettings';
+import { useKeyFocus } from '../components/useKeyFocus';
 import { useMemo, useState } from 'react';
 import { WeekdayPatternLine } from '../components/WeekdayPatternLine';
 import { usePageState } from '../components/usePageState';
@@ -57,6 +58,7 @@ const MOVE_FAILED = 'Kijk in je week wat er nu staat.';
 
 export function WeekPage() {
   const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure } = useAppData();
+  const keyFocus = useKeyFocus();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
@@ -126,7 +128,7 @@ export function WeekPage() {
   const weekLogs = weekLogsOf(sessionLogs, templateById, weekStart, plannedById);
   const weekKm = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.distanceKm ?? 0), 0);
   const weekGain = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.elevationGainM ?? 0), 0);
-  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings) }) : null;
+  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
   const heading = weekHeading(position);
 
   // A completed session is still selectable — SessionActionSheet shows an

@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { useKeyFocus } from '../components/useKeyFocus';
 import { useAppData } from '../state/AppDataContext';
 import { Eyebrow } from '../components/ui';
 import { LegFatigueCard, useLegFatigueInputs } from '../components/LegFatigueCard';
@@ -56,6 +57,7 @@ import { resolveCardOrder } from '../engine/cardOrder';
 export function StandingPage() {
   const [ordering, setOrdering] = useState(false);
   const { program, plannedSessions, sessionLogs, templates, templateById, settings, planChangeLog, trainingGoals, goalMilestones } = useAppData();
+  const keyFocus = useKeyFocus();
   const inputs = useLegFatigueInputs();
   const today = inputs.today;
 
@@ -93,13 +95,13 @@ export function StandingPage() {
   // The same count as the coach on Ascend (engine/onCourse.ts#recentAdherence): the last
   // four finished weeks, what you skipped counts as not done. Deze week komt er als stipjes bij.
   const adherence = useMemo(
-    () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes }),
-    [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes],
+    () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes, keyFocus }),
+    [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, keyFocus],
   );
   const thisWeek = useMemo(() => {
     const planned = plannedSessions.filter((s) => !s.fixed);
-    return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, heartRate: settings.heartRate, intensityCounting: counting });
-  }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.heartRate, counting]);
+    return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, heartRate: settings.heartRate, intensityCounting: counting, keyFocus });
+  }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.heartRate, counting, keyFocus]);
   const streak = useMemo(
     () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate) }),
     [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes, planChangeLog, today],

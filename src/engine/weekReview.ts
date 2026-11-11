@@ -27,7 +27,7 @@ import type { PlannedById } from './logDay';
 import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
-import { idHasRole } from './templateRoles';
+import { weekKeySession, type KeyFocus } from './keySession';
 import { kgLabel } from '../utils/kg';
 import type { HeartRateSettings } from './heartRateZones';
 import type { IntensityCounting } from './intensitySettings';
@@ -43,8 +43,9 @@ export interface WeekReview {
   perSport: string[]; // "Hardlopen: 18,4 km, 320 m D+"
   missed: string[]; // template names
   missedTemplateIds: string[];
-  keyPlanned: number; // long run / mountain hike
-  keyDone: number;
+  keyPlanned: number; // 1 als de week een sleuteltraining heeft (engine/keySession.ts#weekKeySession), anders 0
+  keyDone: number; // 1 als die gedaan is
+  keyName?: string; // de naam van die sleuteltraining
   heavier: number; // trainings that felt harder than planned
   pain: string[]; // "knie 2 keer", from what you ticked after a training
   lighter: number;
@@ -78,9 +79,12 @@ interface ReviewInputs {
   heartRate?: HeartRateSettings;
   // Instelling "Intensiteit tellen" (engine/intensitySettings.ts): bij "plan" telt de hartslag niet.
   intensityCounting?: IntensityCounting;
+  // Wat de sleuteltraining is (engine/keySession.ts#keyFocusOf), dezelfde als op Ascend en bij het inhalen.
+  // Zonder: de lange duurloop of de bergtocht.
+  keyFocus?: KeyFocus;
 }
 
-// The key sessions are the templates with the role 'key' (engine/templateRoles.ts).
+// The key sessions are those of engine/keySession.ts, for the goal on top of Ascend or the direction.
 
 function weekTitle(program: Program | null | undefined, weekStart: string): string {
   const position = program ? resolveProgramWeek(program, weekStart) : null;
@@ -97,7 +101,7 @@ function plannedRpeTop(template: SessionTemplate, date: string, program: Program
 }
 
 export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
-  const { weekStart, plannedSessions, logs, templates, program, planChangeLog, asOf, illnessEpisodes, weeklyChecks } = inputs;
+  const { weekStart, plannedSessions, logs, templates, program, planChangeLog, asOf, illnessEpisodes, weeklyChecks, keyFocus } = inputs;
   const weeklyCheck = weeklyChecks?.find((c) => c.weekStart === weekStart);
   if (program && weekStart < mondayOfWeek(program.startDate)) return null;
   const byId = new Map(templates.map((t) => [t.id, t]));
@@ -167,7 +171,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
       const t = byId.get(s.templateId);
       return t ? n + resolveEffectiveFullDuration(t, s.scheduledDate, program) : n;
     }, 0);
-    const key = nextSessions.find((s) => idHasRole(s.templateId, 'key', byId));
+    const key = weekKeySession(nextSessions, byId, keyFocus, program);
     const keyT = key ? byId.get(key.templateId) : undefined;
     const keyStep = keyT && key ? progressionTarget(keyT, program, key.scheduledDate)?.step : undefined;
     const note = nextSessions.map((s) => byId.get(s.templateId)).map((t) => (t && progressionTarget(t, program, nextStart)?.step.note?.split(/, | \(/)[0])).find(Boolean);
@@ -183,7 +187,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
 
   const running = asOf <= weekEnd && asOf >= weekStart;
   const todayLeft = running ? trainings.filter((s) => s.scheduledDate === asOf && s.status !== 'skipped' && !loggedIds.has(s.id)).length : 0;
-  const keyMissedSession = missedSessions.find((s) => idHasRole(s.templateId, 'key', byId) && s.status !== 'skipped');
+  // One key session per week (engine/keySession.ts#weekKeySession), done or not: the counts below,
+  // the coach line "sleuteltraining 3 van 4" and Herhaal de week all read this one.
+  const weekKey = weekKeySession(trainings, byId, keyFocus, program);
+  const keyMissedSession = weekKey && weekKey.status !== 'skipped' && missedSessions.some((m) => m.id === weekKey.id) ? weekKey : undefined;
   const effort = effortMinutes(weekLogs, byId, inputs.heartRate, inputs.intensityCounting);
 
   // The coach: at most three lines, the most important first.
@@ -194,7 +201,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   } else if (missedSessions.length > 0) {
     // Only a key session that is still open can be caught up; a skipped one
     // was already let go.
-    const keyMissed = missedSessions.find((s) => idHasRole(s.templateId, 'key', byId) && s.status !== 'skipped');
+    const keyMissed = keyMissedSession;
     advice.push(
       // Geen namen: die staan al onder "Blijven liggen" op de terugblik.
       `${missedNames.length === 1 ? 'Eén training is' : `${missedNames.length} trainingen zijn`} blijven liggen. ` +
@@ -248,8 +255,9 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     perSport,
     missed: missedNames,
     missedTemplateIds: missedSessions.map((s) => s.templateId),
-    keyPlanned: trainings.filter((s) => idHasRole(s.templateId, 'key', byId)).length,
-    keyDone: trainings.filter((s) => idHasRole(s.templateId, 'key', byId) && loggedIds.has(s.id)).length,
+    keyPlanned: weekKey ? 1 : 0,
+    keyDone: weekKey && loggedIds.has(weekKey.id) ? 1 : 0,
+    keyName: weekKey ? byId.get(weekKey.templateId)?.name : undefined,
     heavier,
     pain,
     lighter,

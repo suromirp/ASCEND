@@ -24,9 +24,9 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
 - Weekterugblik met een losse training: "0 van 3 gedaan" klopt (een losse duurloop op een dag zonder geplande training telt niet als gedaan), maar leest tegenstrijdig naast "56 min". Voorstel: "0 van 3 gedaan, 1 los · 56 min" in WeekReview en weekHighlights (Sherpa Klein deel 1, 11 november). Opus.
 - De voorstelzin van het krachtblok noemt de knop "Blok activeren" in plaats van de vaste zin van de stemgids (regel 3); netter is de knop Akkoord in de wizard (Warden, 11 november). Klein.
 - Krachtscherm: setvinkjes 32 bij 32 px en "Toon vorige keer" 16 px hoog, onder de 44 px; op het trainingsscherm de tekstknop "Meer" 35 bij 19 px (Lookout, 11 november). Opus.
+- Kleine teksten bij de sleuteltraining (Warden): keyPhrase met dubbel "of" bij marathon, trail en triathlon ("de tempo- of intervaltraining", komma voor het laatste "of"); restDayBack kijkt zeven dagen en elke trede terug, het inhalen drie dagen en de beste trede: noemen in het besluit. Klein.
 - Wis startpunt tijdens een lopende zoektocht: de zoektocht schrijft daarna het exacte punt terug in de cache van heuvels. Vlak voor het wegschrijven opnieuw lezen (Warden, 11 november). Klein.
 - Kansen 11 november, door de eigenaar gekozen (alle met het advies; bronnen in `docs/visie/Kansen 11 november app.md` en `docs/onderzoek/Kansen 11 november training.md`):
-  - De sleuteltraining past bij je doel (`engine/goalList.ts#nextKeySession`, `engine/adviceWeek.ts`). Opus.
   - Afdaalklok: na 21 dagen zonder afdaling één regel en een voorstel met Akkoord voor een trapsessie; 7 tot 14 dagen voor een tocht om een verse afdaling vragen. Planning, Fable.
   - In aanbouw 11 november (Sherpa Enkel en evenwicht, session_01LnDpSkHjA9h33Ess9yZKBv, claude/enkel-evenwicht): Enkel en evenwicht als rij binnen Spieren voor de berg (Forge zit op zes rijen). Opus.
   - In aanbouw 11 november (Sherpa Avond ervoor, session_01LnDpSjBy6xdu1sG7hRVCAS, claude/avond-ervoor): De avond ervoor: vanaf 20:00 (instelbaar) kijkt Vandaag naar morgen, hoogstens vier regels klaarleggen; melding als instelling, advies uit. Alleen tekst. Opus.
@@ -55,6 +55,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: De sleuteltraining past bij je doel (één definitie per soort doel; bij 10 km ook tempo of intervallen inhalen, hoogstens één inhaal per keer, 48 uur over de weekgrens; besluit `2026-11-11-sleuteltraining.md`).
 - Live op 11 november: Route voorstellen met een echte kaart (MapLibre met OpenFreeMap, alle lussen, je plek, Start hier wordt je startpunt; instelling Ondergrond van de kaart; besluit `2026-11-11-route-kaart.md`).
 - Live op 11 november: Klein en fouten deel 1 (Twee harde lopen, voorstelzin krachtblok, dode code weg, ontbrekende tests, Belasting "wordt ..., gewoonlijk ...", zin en legenda van Intensiteit, een los horlogelog telt één keer met dezelfde maatstaf als koppelen achteraf).
 - Live op 11 november: Je horloge (knop Horloge op het trainingsscherm, rij in Week en op Vandaag; workout en datavelden op één plek; besluiten `2026-11-11-info-blad-horloge.md` en `-spoor-2.md`).
