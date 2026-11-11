@@ -61,7 +61,7 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
             key={o.v}
             type="button"
             aria-pressed={on}
-            onClick={() => { if (!on) onPick(o.v); }}
+            onClick={() => onPick(o.v)}
             className={`min-w-[44px] px-3 text-sm ${on ? 'font-semibold' : ''}`}
             style={on ? { background: 'var(--color-raised)', color: 'var(--color-ink)' } : { color: 'var(--color-ink-dim)' }}
           >
@@ -227,10 +227,15 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
   // en een tik op Luchtfoto probeert het opnieuw.
   const switchValue: MapPhoto = showPhoto && !photoFailed ? 'photo' : 'map';
   const pickPhoto = (v: MapPhoto) => {
-    if (v === 'photo' && picked === 'photo') {
-      view.current?.setPhoto(true);
+    if (v === picked) {
+      // Luchtfoto na een fout: opnieuw proberen, zonder de oude regel en met de schakelaar op Luchtfoto.
+      if (v === 'photo') {
+        setState((s) => (s.kind === 'ready' ? { kind: s.kind, stage: s.stage, attribution: s.attribution, ...(s.aerial ? { aerial: s.aerial } : {}) } : s));
+        view.current?.setPhoto(true);
+      }
       return;
     }
+    // Ook Kaart terwijl de schakelaar na een fout al op Kaart stond: dan wordt Kaart de bewaarde keuze.
     setPicked(v);
     onPhoto?.(v);
   };

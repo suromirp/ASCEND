@@ -362,3 +362,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Herreview Briefing herstelronde, Warden, sonnet (reviewer), 53k, 6 min, akkoord (moet: tekstkaart, verwerkt)
 - 2026-11-11, Briefing spoor 5 en 6 (2 rondes), Sherpa, opus (sessie), 466k context, $19,38, 1 herstelronde (1 blokkerend, 4 moet) plus hoofdletter door coördinator
 - 2026-11-11, Pathfinder herdoorloop Briefing 5 en 6, pathfinder, opus, 151k (totaal), 3 min, akkoord
+- 2026-11-11, Review Luchtfoto, Warden, sonnet (reviewer), 68k, 4 min, akkoord (1 belangrijk, 3 klein; 1, 2 en 4 verwerkt)
