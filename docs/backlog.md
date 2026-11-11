@@ -17,7 +17,6 @@ Leeg: alles van 11 november staat in de Bouwrij hieronder, die de coördinator d
 
 Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouwers zelf, hoogstens drie tegelijk, nooit twee aan dezelfde bestanden, model volgens skill werkverdeling "Deze week". Volgorde is de volgorde van starten zodra er plek is.
 
-- In aanbouw 11 november (Sherpa Route-kaart 2, session_01LnDpSjFAbFEgsZa58XWSk3, claude/route-kaart-2): melding eigenaar na de eerste proef: start niet bij je plek (stond op Ongeveer), tweede lus nauwelijks zichtbaar (kaart past niet op alle lussen), geen laadtoestand. Nieuwe standaard Waar je nu bent.
 - Route-kaart, vervolg: de lus bijsturen (andere kant op, langer of korter, een stuk vermijden), per stuk afstand en hoogtemeters, een knop Groter (kaart op volle hoogte met terugknop), hoogtelijnen (maplibre-contour met sleutelvrije hoogtetegels). Plus van Warden: een regel tijdens het bewaren van een getikt punt. Opus.
 - Het Info-blad van een training opnieuw (eigenaar 11 november: "dat infomenu is kut en moet een hele refactor krijgen, een hele UI en UX verandering"). Het blad achter de knop Info (`components/TrainingGuideSheet.tsx`, menu in drie groepen). De Datavelden bekijken waren daar nauwelijks te vinden. Ontwerpvoorstel klaar (`docs/visie/Ontwerp Info-blad.md`, richting A: blad Je horloge, Uitleg korter); wacht op vijf antwoorden van de eigenaar dat de hele app bekijkt en zegt waar wat logisch hoort; daarna bouwen.
 - GR5, vervolg: hutten via refuges.info bij de etappe; de grenzen ver van het spoor nakijken (Maljasset 1 km, Trébentaz, Thabor, eind in Nice 2,3 km). Opus.
@@ -56,6 +55,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Route-kaart 2 (startpunt Waar je nu bent als standaard, Vast punt, Ongeveer; tweede lus duidelijk met een regel; Lussen zoeken met stappen; geen aanroep meer na sluiten; besluit `2026-11-11-route-kaart-2.md`).
 - Live op 11 november: GR5-etappes met spoor uit OpenStreetMap (546 km, Vanoise via de GR 55), engine/stageAt.ts, de regel Op je etappe op een GR5-wandeldag; besluit `2026-11-11-gr5-uit-osm.md`.
 - Live op 11 november: Enkel en evenwicht in Spieren voor de berg (vier oefeningen, voorstel met Akkoord, schakelaar Enkel en evenwicht; besluit `2026-11-11-enkel-evenwicht.md`).
 - Live op 11 november: De avond ervoor (vanaf 20:00 een kaart onder je missie met wat je voor morgen klaarlegt; melding als keuze, standaard uit; besluit `2026-11-11-avond-ervoor.md`).
@@ -64,6 +64,11 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 - Live op 11 november: Klein en fouten deel 1 (Twee harde lopen, voorstelzin krachtblok, dode code weg, ontbrekende tests, Belasting "wordt ..., gewoonlijk ...", zin en legenda van Intensiteit, een los horlogelog telt één keer met dezelfde maatstaf als koppelen achteraf).
 - Live op 11 november: Je horloge (knop Horloge op het trainingsscherm, rij in Week en op Vandaag; workout en datavelden op één plek; besluiten `2026-11-11-info-blad-horloge.md` en `-spoor-2.md`).
 - Live op 11 november: Route voorstellen verfijnd (te korte lus bij veel punten dichtbij, melding zonder heuvels, startpunt preciezer, helling zonder hoogte telt niet mee; besluit `2026-11-11-route-verfijnen.md`).
+
+## Samenhang (Pathfinder)
+
+Wat Pathfinder vindt en niet meteen terug naar een bouwer gaat. Eerste lijst (coördinator, 11 november): de horlogestand staat twee keer in het blad van een training in Week; de route staat ook bij de loopband; geen route in het blad in Week; de avondkaart staat onder Advies, Nog open en Back-up; het trainingsscherm van een Garmin-loop heeft "Gedaan, invullen" als hoofdknop. De redesign (Cartographer, `docs/visie/Ontwerp Route en trainingsscherm.md`) neemt de eerste vier mee.
+- Twee invarianten in de tekstkaart: dezelfde zin twee keer op één scherm of in één blad is een schending; het aantal tikken van Vandaag tot de route en tot de datavelden staat in de kaart en mag niet stil groeien. Eerst de dubbele horlogeregel weg, anders faalt de vergelijking. Opus.
 
 ## Groot
 

@@ -175,10 +175,11 @@ export interface AppSettings {
   // Which loop comes first in the route proposal: one long loop past different
   // hills ('adventure', absent = adventure) or the same hill up and down ('simple').
   routeStyle?: 'simple' | 'adventure';
-  // Where a proposed loop starts (engine/routeStart.ts): about your place, rounded to a kilometre
-  // ('approx', absent = approx) or your own start point ('exact'). The point itself is never a
+  // Where a proposed loop starts (engine/routeStart.ts): where you are now, asked once per search
+  // ('here', absent = here), your own fixed point, shown as Vast punt ('exact'), or about your place,
+  // rounded to a kilometre ('approx'). The fixed point itself is never a
   // setting: it lives only on this device, outside the backup (storage/routeStart.ts).
-  routeStart?: 'approx' | 'exact';
+  routeStart?: 'here' | 'approx' | 'exact';
   // What lies under the loops on the route map (engine/routeMap.ts): a dark street map in the
   // app's colours ('dark', absent = dark), a light one ('light'), or nothing ('none': no tiles).
   routeMapBase?: 'dark' | 'light' | 'none';

@@ -77,7 +77,8 @@ export interface RouteMapView {
   destroy(): void;
 }
 
-const FIT_PADDING = 36;
+// Rechts ligt de kolom met de twee ronde knoppen (44 px en een rand): daar valt geen lus onder.
+export const FIT_PADDING = { top: 36, bottom: 36, left: 36, right: 60 };
 const FIT_MAX_ZOOM = 16;
 const POINT_ZOOM = 15;
 
