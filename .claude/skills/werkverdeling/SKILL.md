@@ -160,6 +160,17 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 - waar herstelrondes vandaan kwamen en welke eis vooraf die had voorkomen;
 - past de tabel hierboven aan als het logboek dat laat zien, met de reden in de commit.
 
+
+## Deze week: limieten opnieuw gezet (eigenaar 11 november, geldt tot en met zondag 15 november)
+
+Gaat voor "Modellen per taak" hieronder, tot en met 15 november of tot de eigenaar iets anders zegt; daarna terug naar de gewone verdeling. De eigenaar wil de reset maximaal benutten. Fable is grondiger maar trager, Opus sneller en veelzijdiger.
+
+- Fable (nieuwste die create_session aanneemt, nu claude-fable-5-2): planner en engine, opslag en migraties, reviews van Warden, onderzoek van Scout, ontwerp van Cartographer, lastige fouten.
+- Opus (claude-opus-5-5): de coördinator en snel, gevarieerd bouwwerk (schermen, instellingen, kleine fouten).
+- Sonnet of Haiku: alleen licht werk (teksten, Lookout, zoeken).
+- Bouwen buiten het bouwmoment mag deze week (eigenaar 11 november: "in principe mag je nu gaan bouwen"); hoogstens drie bouwers tegelijk, nooit twee aan dezelfde bestanden, bouwers in een eigen chat (create_session) die zich bij de coördinator meldt. Kort onderzoek of ontwerp (onder een uur, alleen docs) mag als helper binnen de coördinator-chat.
+- Wat de eigenaar in de coördinator-chat zelf zegt, gaat voor een doorgestuurd bericht van een andere chat.
+
 ## Modellen per taak (eigenaar, 10 november middag)
 
 De eigenaar: "efficiënt gebruik van de modellen per taak en agent; we hebben de keuze uit Fable, Sonnet, Haiku en Opus". Dit vervangt "Alles op Fable" van 10 november ochtend. De kolom Model in de tabel bovenaan lees je zo:
