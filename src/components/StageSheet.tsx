@@ -10,6 +10,7 @@ import { BIVOUAC_CHECK_NOTE, BIVOUAC_EVERYWHERE } from '../data/gr5Bivouac';
 import { canMergeWithNext, compareWithBest, formatStageTime, hasHighPass, regimesOf, sleepWarning, stageIndex, type DayCompareRow, type ItineraryDay } from '../engine/routePlan';
 import type { SessionLog } from '../models/training';
 import { stageWaterBasisLine, stageWaterLine, type StageWater } from '../engine/stageWater';
+import { NOT_MEDICAL, trekFuelLines, type TrekFuel } from '../engine/fuelOnTheGo';
 import { formatDateNL, formatHoursMinutesNL, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -39,6 +40,7 @@ export function StageSheet({
   logs,
   today,
   water,
+  fuel,
   ownTime,
   onChoose,
   onClose,
@@ -51,6 +53,8 @@ export function StageSheet({
   today: string;
   // Je zweet op deze etappe, als de instelling aan staat en de site een looptijd geeft.
   water?: StageWater;
+  // Eten onderweg op deze etappe, als de instelling aan staat en de site een looptijd geeft.
+  fuel?: TrekFuel;
   // De etappe op je eigen klimtempo als band (engine/climbPace.ts#stageOwnLine), of niets: dan
   // blijft de looptijd van de site de schatting.
   ownTime?: string;
@@ -223,6 +227,17 @@ export function StageSheet({
               )}
               <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{BIVOUAC_EVERYWHERE}</p>
             </Block>
+
+            {fuel && (
+              <Block heading="Eten onderweg">
+                <div className="flex flex-col gap-1">
+                  {trekFuelLines(fuel).map((line, i) => (
+                    <p key={line} className={i === 0 ? 'text-sm font-medium leading-snug' : 'text-xs leading-relaxed'} style={{ color: i === 0 ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{line}</p>
+                  ))}
+                  <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{NOT_MEDICAL}</p>
+                </div>
+              </Block>
+            )}
 
             <Block heading="Water en winkel">
               {water && (

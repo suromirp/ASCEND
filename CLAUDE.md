@@ -108,9 +108,11 @@ afspraken voor elke agent die in deze repo werkt.
   pas na groene controles. Er is geen verplichte PR of merge door de eigenaar.
 - Controles: voor elke push naar main zijn `npx tsc -p tsconfig.app.json
   --noEmit`, `npm run lint`, `npx vitest run` en `npm run build` groen.
-  Daarna nog drie poorten: review door Warden, een doorloop in Chromium op
-  360 en 390 px met vertraagde processor door Lookout, en een screenshot van
-  elk veranderd scherm dat de coördinator zelf bekijkt. Elke knop die wacht
+  Daarna nog vier poorten: review door Warden, een doorloop in Chromium op
+  360 en 390 px met vertraagde processor door Lookout, een doorloop van de dag
+  door Pathfinder (samenhang en UX, skill `pathfinder`) bij alles wat zichtbaar
+  verandert, en een screenshot van elk veranderd scherm dat de coördinator zelf
+  bekijkt. Elke knop die wacht
   heeft een grens in tijd en een zichtbare uitkomst; de app start nooit op een
   leeg scherm (`docs/beslissingen/2026-10-22-kwaliteitspoort.md`).
 - Planning van de gebruiker: alles wat zijn planning inhoudelijk verandert
@@ -141,7 +143,8 @@ afspraken voor elke agent die in deze repo werkt.
   `.claude/skills/`.
 - Helpers hebben in berichten aan de eigenaar een vaste naam in de stijl van
   ASCEND: Scout (onderzoek), Sherpa (bouwen), Warden (review), Lookout
-  (UI-controle en testen) en Cartographer (ontwerp), met het onderwerp erbij,
+  (UI-controle en testen), Cartographer (ontwerp) en Pathfinder (samenhang en
+  UX van de app als geheel), met het onderwerp erbij,
   bijvoorbeeld "Sherpa Forge".
 - Vaste afspraken met de eigenaar (uit eerdere gesprekken):
   - Berichten kort, in het Nederlands, als punten; een pushmelding als iets af of live is.

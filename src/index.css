@@ -49,6 +49,11 @@
      ijs. Geen status en geen actie. De nieuwe naam voor het oude --color-alpine;
      op de lichte lucht wordt het donker mint (.on-light). */
   --color-sage: #a7d1bd;
+  /* De lus die niet gekozen is op de kaart bij Route voorstellen: licht en gestreept op een donkere
+     rand, zodat hij niet op een weg lijkt (wegen zijn marine). Geen actie, geen status. Op de lichte
+     kaart de donkere variant. Docs: docs/beslissingen/2026-11-11-route-kaart-2.md. */
+  --color-route-other: #e3ebfa;
+  --color-route-other-on-light: #3b4f75;
 
   /* Inspanning, van rustig naar zwaar (Z1 tot Z5). Als vlak minstens 3:1 op de
      kaart; er staat altijd Z1 tot Z5 bij, kleur is nooit het enige signaal. */

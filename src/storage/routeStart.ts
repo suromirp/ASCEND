@@ -1,4 +1,4 @@
-// ASCEND: het eigen startpunt van een lus (Startpunt van je lus, Precies). Het punt staat alleen op
+// ASCEND: het eigen startpunt van een lus (Startpunt van je lus, Vast punt). Het punt staat alleen op
 // dit toestel, onder een eigen sleutel in de meta-opslag: nooit in de export, nooit in een back-up,
 // nooit in een log. Een back-up of import raakt de sleutel niet (de back-up schrijft en wist alleen
 // de sleutels die hij kent). Wissen is één tik in de instelling. Docs:
@@ -59,11 +59,14 @@ export interface UseMyPlaceDeps {
   limitMs?: number;
   // Sluit het paneel, dan wordt er niets meer bewaard.
   signal?: AbortSignal;
+  // false: alleen de plek van nu (Waar je nu bent); het vaste punt blijft zoals het is.
+  persist?: boolean;
 }
 
 const PERMISSION_LIMIT_MS = 60_000;
 
-// Gebruik waar ik nu ben: één keer de plek van het toestel, fijn, met een grens in tijd. Het venster
+// Gebruik waar ik nu ben, en Waar je nu bent bij elke zoektocht (met `persist: false`): één keer de
+// plek van het toestel, fijn, met een grens in tijd. Het venster
 // van Android heeft een eigen ruime grens; de 15 seconden gelden voor de plek zelf. Slaat het punt
 // op bij een goede plek. Een ruwe plek, of een plek zonder nauwkeurigheid, telt niet.
 export async function locateStartHere(deps: UseMyPlaceDeps = {}): Promise<StartLocation> {
@@ -76,6 +79,7 @@ export async function locateStartHere(deps: UseMyPlaceDeps = {}): Promise<StartL
     const point = validStartPoint(found);
     if (!point) return { ok: false, reason: 'unavailable' };
     if (deps.signal?.aborted) return { ok: false, reason: 'timeout' };
+    if (deps.persist === false) return { ok: true, point: roundExact(point) };
     const saved = await saveRouteStartPoint(point);
     if (!saved) return { ok: false, reason: 'unavailable' };
     return { ok: true, point: roundExact(point) };
@@ -86,8 +90,8 @@ export async function locateStartHere(deps: UseMyPlaceDeps = {}): Promise<StartL
 }
 
 // Een startpunt van de kaart bij Route voorstellen: een getikt punt (Start hier) of je plek (Gebruik
-// waar ik nu ben, met dezelfde toestemmingsvraag en grens als hierboven). Het wordt je Precies-startpunt,
-// net als in de instelling; de aanroeper zet de keuze op Precies. Docs: docs/beslissingen/2026-11-11-route-kaart.md.
+// waar ik nu ben, met dezelfde toestemmingsvraag en grens als hierboven). Het wordt je vaste punt,
+// net als in de instelling; de aanroeper zet de keuze op Vast punt. Docs: docs/beslissingen/2026-11-11-route-kaart.md.
 export async function startFromMap(from: { tap: RoutePoint } | 'here', deps: UseMyPlaceDeps = {}): Promise<StartLocation> {
   if (from === 'here') return locateStartHere(deps);
   const point = validStartPoint(from.tap);

@@ -19,7 +19,7 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
 
 - Route-kaart, vervolg: de lus bijsturen (andere kant op, langer of korter, een stuk vermijden), per stuk afstand en hoogtemeters, een knop Groter (kaart op volle hoogte met terugknop), hoogtelijnen (maplibre-contour met sleutelvrije hoogtetegels). Plus van Warden: een regel tijdens het bewaren van een getikt punt. Opus.
 - Het Info-blad van een training opnieuw (eigenaar 11 november: "dat infomenu is kut en moet een hele refactor krijgen, een hele UI en UX verandering"). Het blad achter de knop Info (`components/TrainingGuideSheet.tsx`, menu in drie groepen). De Datavelden bekijken waren daar nauwelijks te vinden. Ontwerpvoorstel klaar (`docs/visie/Ontwerp Info-blad.md`, richting A: blad Je horloge, Uitleg korter); wacht op vijf antwoorden van de eigenaar dat de hele app bekijkt en zegt waar wat logisch hoort; daarna bouwen.
-- GR5: coördinaten van de 36 etappes uit OpenStreetMap halen (eigenaar 11 november: mag zelf, geen GPX van hem nodig), met de naamsvermelding van OpenStreetMap, in `src/data/gr5Stages.ts`. Daarna de regel op je etappe en hutten via refuges.info.
+- GR5, vervolg: hutten via refuges.info bij de etappe; de grenzen ver van het spoor nakijken (Maljasset 1 km, Trébentaz, Thabor, eind in Nice 2,3 km). Opus.
 - Week: de band van een periode blijft tikbaar, ook als de periode meer dan twee weken voorbij is (eigenaar 11 november, advies gevolgd). Nagaan of dat al zo is; zo niet, de grens weghalen.
 - Weekterugblik met een losse training: "0 van 3 gedaan" klopt (een losse duurloop op een dag zonder geplande training telt niet als gedaan), maar leest tegenstrijdig naast "56 min". Voorstel: "0 van 3 gedaan, 1 los · 56 min" in WeekReview en weekHighlights (Sherpa Klein deel 1, 11 november). Opus.
 - De voorstelzin van het krachtblok noemt de knop "Blok activeren" in plaats van de vaste zin van de stemgids (regel 3); netter is de knop Akkoord in de wizard (Warden, 11 november). Klein.
@@ -29,13 +29,12 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
 - De avond ervoor, vervolg: tests voor de dag van zomer- en wintertijd en voor elke tijd uit EVENING_TIMES; een avondstand (20:30) in de tekstkaart met een invariant; nagaan of de eigenaar de kaart vindt (hij staat onder Advies, Nog open en Back-up), anders op de avond direct onder de missie. Klein.
 - Wis startpunt tijdens een lopende zoektocht: de zoektocht schrijft daarna het exacte punt terug in de cache van heuvels. Vlak voor het wegschrijven opnieuw lezen (Warden, 11 november). Klein.
 - Kansen 11 november, door de eigenaar gekozen (alle met het advies; bronnen in `docs/visie/Kansen 11 november app.md` en `docs/onderzoek/Kansen 11 november training.md`):
-  - Afdaalklok: na 21 dagen zonder afdaling één regel en een voorstel met Akkoord voor een trapsessie; 7 tot 14 dagen voor een tocht om een verse afdaling vragen. Planning, Fable.
-  - Eten onderweg: een indicatie wat je meeneemt, voor lange trainingen (lopen vanaf ongeveer anderhalf uur: gels en alternatieven) en voor tochten (per dag en per etappe). Geen dagelijkse voedingsregistratie (eigenaar 11 november: "te gecompliceerd voor nu"). Scout heeft de getallen (30 tot 60 g koolhydraten per uur, wandelen 30 tot 40). Opus, de rekenregel op Fable als hij de tochtplanning raakt.
+  - In aanbouw 11 november (Sherpa Afdaalklok, session_01LnDpSj2BVjJP3JFaXvSErk, fable, claude/afdaalklok): Afdaalklok: na 21 dagen zonder afdaling één regel en een voorstel met Akkoord voor een trapsessie; 7 tot 14 dagen voor een tocht om een verse afdaling vragen. Planning, Fable.
   - Racedag voor de 10 km: blad in de laatste week met weer bij de start, inlopen, tempo per km voor doeltijd en verwachte tijd; de dag erna een terugblik. Opus.
   - Vaste ijktocht elke zes tot acht weken als kompas voor de berg, inplannen via Akkoord. Planning, Fable.
   - De beenindex leert van je ochtendantwoorden (`learning.ts#indexChecks`), begrensd, veiligheidsregels nooit soepeler, met migratiestap. Fable.
   - Routes ook voor wandelen en rugzaktraining, met klimtempo. Na de twee route-bouwers. Opus, engine op Fable.
-- Info-blad, spoor 3 en 4 (spoor 1 en 2 live op 11 november): Uitleg opschonen (De stappen eruit, namen gelijk: "Meer over deze training" en de i), daarna Datavelden bekijken naar Gidsen. Plus van Warden: de rij Je horloge op Vandaag met de stand eronder zoals in Week; garmin in useWatchSheet zelf ophalen in plaats van buildWorkoutPlan in drie componenten. Opus.
+- Vervallen door de Briefing (spoor 7), alleen nog als bron: Info-blad spoor 3 en 4: Uitleg opschonen (De stappen eruit, namen gelijk: "Meer over deze training" en de i), daarna Datavelden bekijken naar Gidsen. Plus van Warden: de rij Je horloge op Vandaag met de stand eronder zoals in Week; garmin in useWatchSheet zelf ophalen in plaats van buildWorkoutPlan in drie componenten. Opus.
 
 ## Rooster voor de bouwmomenten
 
@@ -55,6 +54,9 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Eten onderweg (koolhydraten per uur vanaf 90 minuten met stuks, per dag bij een tocht met de aanname erbij; kaart op het trainingsscherm onder de route, De avond ervoor, etappe en Tochten; besluit `2026-11-11-eten-onderweg.md`).
+- Live op 11 november: Route-kaart 2 (startpunt Waar je nu bent als standaard, Vast punt, Ongeveer; tweede lus duidelijk met een regel; Lussen zoeken met stappen; geen aanroep meer na sluiten; besluit `2026-11-11-route-kaart-2.md`).
+- Live op 11 november: GR5-etappes met spoor uit OpenStreetMap (546 km, Vanoise via de GR 55), engine/stageAt.ts, de regel Op je etappe op een GR5-wandeldag; besluit `2026-11-11-gr5-uit-osm.md`.
 - Live op 11 november: Enkel en evenwicht in Spieren voor de berg (vier oefeningen, voorstel met Akkoord, schakelaar Enkel en evenwicht; besluit `2026-11-11-enkel-evenwicht.md`).
 - Live op 11 november: De avond ervoor (vanaf 20:00 een kaart onder je missie met wat je voor morgen klaarlegt; melding als keuze, standaard uit; besluit `2026-11-11-avond-ervoor.md`).
 - Live op 11 november: De sleuteltraining past bij je doel (één definitie per soort doel; bij 10 km ook tempo of intervallen inhalen, hoogstens één inhaal per keer, 48 uur over de weekgrens; besluit `2026-11-11-sleuteltraining.md`).
@@ -62,6 +64,24 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 - Live op 11 november: Klein en fouten deel 1 (Twee harde lopen, voorstelzin krachtblok, dode code weg, ontbrekende tests, Belasting "wordt ..., gewoonlijk ...", zin en legenda van Intensiteit, een los horlogelog telt één keer met dezelfde maatstaf als koppelen achteraf).
 - Live op 11 november: Je horloge (knop Horloge op het trainingsscherm, rij in Week en op Vandaag; workout en datavelden op één plek; besluiten `2026-11-11-info-blad-horloge.md` en `-spoor-2.md`).
 - Live op 11 november: Route voorstellen verfijnd (te korte lus bij veel punten dichtbij, melding zonder heuvels, startpunt preciezer, helling zonder hoogte telt niet mee; besluit `2026-11-11-route-verfijnen.md`).
+
+## De Briefing (eigenaar akkoord 11 november, besluit `2026-11-11-briefing.md`)
+
+Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, allemaal Opus, geen planning. Volgorde:
+- In aanbouw 11 november: spoor 1 (geen route bij Loopband of binnen), 3 (waar je traint onthouden bij de geplande training), 4 (`engine/briefing.ts`).
+- Spoor 2 (blad Route met de kaart bovenaan), na Eten onderweg (zelfde scherm).
+- Spoor 5 (scherm Briefing vanuit Week, instelling Lus zoeken), 6 (knop Briefing op Vandaag), 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
+- Het oude Info-blad spoor 3 en 4 vervallen: spoor 7 hier vervangt ze.
+
+## Werkwijze (onderzoek autonome agents, 11 november)
+
+- Proefversie per branch die de eigenaar op zijn telefoon kan openen vóór main: een debug-APK met `applicationIdSuffix` en eigen opslag, via de Android-workflow per branch. Native: eerst een proefbouw. Opus.
+- Een Stop-hook die een bouwer pas laat stoppen als tsc en de gerichte tests groen zijn (instellingen van Claude Code: alleen met akkoord van de eigenaar).
+
+## Samenhang (Pathfinder)
+
+Wat Pathfinder vindt en niet meteen terug naar een bouwer gaat. Eerste lijst (coördinator, 11 november): de horlogestand staat twee keer in het blad van een training in Week; de route staat ook bij de loopband; geen route in het blad in Week; de avondkaart staat onder Advies, Nog open en Back-up; het trainingsscherm van een Garmin-loop heeft "Gedaan, invullen" als hoofdknop. De redesign (Cartographer, `docs/visie/Ontwerp Route en trainingsscherm.md`) neemt de eerste vier mee.
+- Twee invarianten in de tekstkaart: dezelfde zin twee keer op één scherm of in één blad is een schending; het aantal tikken van Vandaag tot de route en tot de datavelden staat in de kaart en mag niet stil groeien. Eerst de dubbele horlogeregel weg, anders faalt de vergelijking. Opus.
 
 ## Groot
 

@@ -320,7 +320,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('heuvels-buurt', 'Heuvels en trappen in de buurt', 'hillsNearby'),
   flag('route-voorstel', 'Route voorstellen', 'vandaag', 'routeProposal'),
   choice('route-soort', 'Welke lus eerst', 'vandaag', 'routeStyle', 'adventure', 'routeSoort'),
-  choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'approx', 'routeStart'),
+  choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'here', 'routeStart'),
   choice('route-kaart', 'Ondergrond van de kaart', 'vandaag', 'routeMapBase', 'dark', 'routeKaart'),
   overviewFlag('maanstand', 'Maanstand bij een avondtocht', 'moonLine'),
   overviewFlag('kledingadvies', 'Kledingadvies', 'clothingAdvice'),
@@ -405,6 +405,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
   choice('strava-tekst-inhoud', 'Wat erin staat', 'koppelingen', 'stravaTextParts', 'title-line', 'stravaInhoud'),
   flag('tempo-stukken', 'Tempo uit stabiele stukken', 'lichaam', 'tempoStablePieces'),
+  flag('eten-onderweg', 'Eten onderweg', 'lichaam', 'fuelOnTheGo'),
   flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
   {
     id: 'locatie', title: 'Je locatie', page: 'gegevens',

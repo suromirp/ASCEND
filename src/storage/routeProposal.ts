@@ -4,7 +4,7 @@
 // altijd lussen, "zonder netwerk" of "te lang". Een route wordt niet bewaard.
 //
 // De eerste vraag ("mag ASCEND een route zoeken?") is een eigen sleutel op dit toestel: pas na een
-// ja gaat de afgeronde plek (of bij Precies het eigen startpunt) de deur uit.
+// ja gaat de afgeronde plek (of je plek van nu, of je vaste punt) de deur uit.
 
 import { MetaRepo } from './database';
 import { grantTerrainConsent, getNearbyTerrain, refreshNearbyTerrain } from './nearbyTerrain';
@@ -47,9 +47,15 @@ export interface RouteSearchDeps {
   terrain?: (place: { name: string; lat: number; lon: number }, exact: boolean) => Promise<NearbyTerrain | undefined>;
   offline?: () => boolean;
   limitMs?: number;
+  // Welke stap nu loopt, voor de regel tijdens het zoeken. Alleen tekst.
+  onStep?: (step: RouteSearchStep) => void;
+  // Waar heuvels en paden gezocht worden bij een precies startpunt; standaard dat punt zelf.
+  terrainAt?: RoutePoint;
 }
 
-// `exactStart` (Startpunt van je lus, Precies) is het eigen punt van de gebruiker: de lus begint en
+export type RouteSearchStep = 'terrain' | 'routes';
+
+// `exactStart` (Startpunt van je lus: Waar je nu bent of Vast punt) is een echt punt van de gebruiker: de lus begint en
 // eindigt er precies, en ook de heuvels en paden zoekt OpenStreetMap om dat punt (vier decimalen,
 // een eigen plek in de cache). Besluit 2026-11-11-route-verfijnen.md.
 export async function findRoutes(place: { lat: number; lon: number }, target: RouteTarget, deps: RouteSearchDeps = {}, exactStart?: RoutePoint): Promise<RouteSearch> {
@@ -64,7 +70,9 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
   const terrainOf = deps.terrain ?? ((p, exact) => refreshNearbyTerrain(p, { exact }).catch(() => getNearbyTerrain(p, exact)));
   const search = (async (): Promise<RouteSearch> => {
     // Zonder heuvels en paden zoekt de planner nog steeds een lus, op punten rond het startpunt.
-    const terrain = await terrainOf({ name: '', ...(exactStart ?? rounded) }, !!exactStart).catch(() => undefined);
+    deps.onStep?.('terrain');
+    const terrain = await terrainOf({ name: '', ...(exactStart ? deps.terrainAt ?? exactStart : rounded) }, !!exactStart).catch(() => undefined);
+    if (!stopped()) deps.onStep?.('routes');
     const plans = await proposeRoutes({ start, target, terrain, anchor: !!exactStart }, route);
     const reasons = [plans.simple, plans.adventure].map((o) => (o.ok ? undefined : o.reason));
     if (reasons.every((r) => r === 'offline')) return { kind: 'offline' };

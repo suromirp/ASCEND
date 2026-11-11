@@ -121,6 +121,7 @@ const everything: AppSettings = {
   routeMapBase: 'none',
   keepStreams: false,
   tempoStablePieces: false,
+  fuelOnTheGo: false,
   morningInBackup: false,
   watchSilence: false,
   illnessSigns: false,

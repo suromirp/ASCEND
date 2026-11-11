@@ -61,7 +61,12 @@ export function createGate(gapMs = ROUTE_GAP_MS): Gate {
       const skipped = skip?.();
       if (skipped !== undefined) return skipped;
       const wait = lastStart + gapMs - Date.now();
-      if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+      if (wait > 0) {
+        await new Promise((resolve) => setTimeout(resolve, wait));
+        // Tijdens de seconde ertussen kan het paneel dicht zijn gegaan: dan alsnog niet de deur uit.
+        const late = skip?.();
+        if (late !== undefined) return late;
+      }
       lastStart = Date.now();
       return job();
     });

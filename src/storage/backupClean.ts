@@ -234,7 +234,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md): een oude
   // waarde wordt stil genegeerd, het is geen fout in het bestand.
   delete s.forgeQuickButtons;
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'watchFieldsShown', 'routeProposal', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'watchFieldsShown', 'routeProposal', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces', 'fuelOnTheGo'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -341,8 +341,9 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeStyle;
     skipped.n++;
   }
-  // Startpunt van je lus: Ongeveer of Precies. Het punt zelf staat nooit in een back-up.
-  if ('routeStart' in s && s.routeStart !== 'approx' && s.routeStart !== 'exact') {
+  // Startpunt van je lus: Waar je nu bent, Vast punt ('exact') of Ongeveer. Iets anders valt weg, en
+  // dan geldt de standaard (Waar je nu bent). Het punt zelf staat nooit in een back-up.
+  if ('routeStart' in s && s.routeStart !== 'here' && s.routeStart !== 'approx' && s.routeStart !== 'exact') {
     delete s.routeStart;
     skipped.n++;
   }
@@ -351,8 +352,8 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeMapBase;
     skipped.n++;
   }
-  // Precies hoort bij het punt op dit toestel: een import zet het nooit aan, dan ging er zonder vraag een punt de deur uit.
-  if (s.routeStart === 'exact') s.routeStart = 'approx';
+  // Vast punt blijft Vast punt: het was je eigen keuze. Staat er op dit toestel geen punt, dan vraagt
+  // het paneel eerst om een punt (besluit 2026-11-11-route-kaart-2.md; je plek is geen ontwerpgrens meer).
   if ('routeStartPoint' in s) {
     delete s.routeStartPoint;
     skipped.n++;

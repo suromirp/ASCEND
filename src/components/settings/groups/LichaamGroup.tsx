@@ -40,6 +40,9 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <SummaryRow id="intensiteit" title="Intensiteit tellen" facts={facts} info="intensiteit" onClick={() => setSheet('intensiteit')} />
         <SummaryRow id="tempo-stukken" title="Tempo uit stabiele stukken" facts={facts} info="tempoStukken" onChange={(on) => void updateSettings({ tempoStablePieces: on })} />
       </SettingsSection>
+      <SettingsSection title="Onderweg">
+        <SummaryRow id="eten-onderweg" title="Eten onderweg" facts={facts} info="etenOnderweg" onChange={(on) => void updateSettings({ fuelOnTheGo: on })} />
+      </SettingsSection>
       {sheet === 'lichaamsgewicht' && <WeightSheet health={facts.healthConnect} reload={reload} onClose={close} />}
       {sheet === 'hartslag' && <HeartRateSheet onClose={close} />}
       {sheet === 'intensiteit' && <ChoiceFromDef def={CHOICES.intensiteit} value={resolveIntensityCounting(settings)} onPick={(v) => void updateSettings({ intensityCounting: v })} onClose={close} />}

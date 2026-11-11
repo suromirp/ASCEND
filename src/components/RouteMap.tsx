@@ -1,7 +1,7 @@
-// ASCEND: de kaart bij Route voorstellen. Alle voorgestelde lussen (de gekozen doorgetrokken, de
-// andere gedempt en gestreept), het startpunt als ring en je plek als ijsblauwe stip. Tik op een lus
-// kiest hem; tik op de kaart zet een ring neer en Start hier maakt dat punt je startpunt (Precies) en
-// zoekt opnieuw. Rendert alleen: de regie staat in routeMapView.ts, de stijlen en vormen in
+// ASCEND: de kaart bij Route voorstellen. Alle voorgestelde lussen (de gekozen doorgetrokken in mint,
+// de andere licht gestreept op een donkere rand), het startpunt als ring en je plek als ijsblauwe stip.
+// Tik op een lus kiest hem; tik op de kaart zet een ring neer en Start hier maakt dat punt je vaste
+// punt en zoekt opnieuw. Rendert alleen: de regie staat in routeMapView.ts, de stijlen en vormen in
 // engine/routeMap.ts, het bewaren van het punt in storage/routeStart.ts#startFromMap.
 // Docs: docs/beslissingen/2026-11-11-route-kaart.md.
 
@@ -45,7 +45,7 @@ function MapButton({ icon, label, onClick, disabled }: { icon: 'locatie' | 'inbe
   );
 }
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onStart }: {
+export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offerHere = true }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
@@ -54,6 +54,8 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart }: {
   onChoose: (style: RouteStyle) => void;
   // Start hier (een getikt punt) of Gebruik waar ik nu ben ('here'); heeft zelf een grens in tijd.
   onStart: (from: { tap: RoutePoint } | 'here') => Promise<StartAnswer>;
+  // Gebruik waar ik nu ben als vast punt; niet bij Waar je nu bent, daar is de lus al vanaf je plek.
+  offerHere?: boolean;
 }) {
   const motion = useMotionMode();
   const box = useRef<HTMLDivElement>(null);
@@ -179,11 +181,11 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart }: {
         )}
       </div>
       <p className="text-xs leading-snug" style={dim}>
-        {routes.length > 1 ? 'De doorgetrokken lijn is de gekozen lus; tik een gestreepte lus om hem te kiezen. ' : ''}De ring is de start. Tik op de kaart voor een ander startpunt; Start hier bewaart dat punt als je startpunt en zet Startpunt van je lus op Precies.
+        De ring is de start. Tik op de kaart voor een ander startpunt; Start hier bewaart dat punt als je vaste punt en zet Startpunt van je lus op Vast punt.
       </p>
       <div className="flex flex-wrap gap-x-5">
         {pick && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}
-        <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt('here')}>Gebruik waar ik nu ben</TextButton>
+        {offerHere && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt('here')}>Gebruik waar ik nu ben</TextButton>}
       </div>
       {status && <p role="status" className="text-xs leading-snug" style={dim}>{status}</p>}
     </div>

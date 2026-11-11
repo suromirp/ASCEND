@@ -28,6 +28,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Man of vrouw', text: 'het silhouet verschilt in schouders, heupen en borst. De plekken en de oefeningen blijven hetzelfde.' },
     ],
   },
+  etenOnderweg: {
+    title: 'Eten onderweg',
+    lead: 'Vanaf anderhalf uur lopen of wandelen, en per dag op een tocht, staat erbij hoeveel koolhydraten je ongeveer meeneemt, met wat dat is in gels, bananen of krentenbollen.',
+    points: [
+      { head: 'Waar', text: 'in De avond ervoor als één regel, op het trainingsscherm, bij je tochten en bij elke etappe.' },
+      { head: 'Waarop', text: 'duur, soort en zwaarte: 30 tot 60 gram per uur bij lopen, 30 tot 40 bij wandelen. Geen gewicht, geen registratie.' },
+      { head: 'Geen advies', text: 'een indicatie, geen medisch advies. Oefen het op lange trainingen.' },
+      { head: 'Uit', text: 'nergens een regel over eten. Drinken blijft staan.' },
+    ],
+  },
   tempoStukken: {
     title: 'Tempo uit stabiele stukken',
     lead: 'Tempo bij zone 2 rekent met vlakke stukken van minstens 5 minuten waarin je hartslag en tempo vast lagen.',
@@ -829,7 +839,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Simpel', text: 'dezelfde helling op en af tot de hoogtemeters er zijn. Bij een vlakke training heen en terug over hetzelfde pad.' },
       { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
       { head: 'Naar je horloge', text: 'met Naar Garmin Connect kies je de app van je horloge en sla je de lus op als koers; anders download je het GPX-bestand.' },
-      { head: 'Wat de deur uit gaat', text: 'standaard je plek, afgerond op ongeveer een kilometer, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. Kies je bij Startpunt van je lus Precies, dan gaat je startpunt precies naar de routeplanner, en zoekt OpenStreetMap heuvels en paden om dat punt; de hoogte van heuvels komt van Open-Meteo, ook om dat punt. Geen naam, geen adres. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. De route wordt niet bewaard.' },
+      { head: 'Wat de deur uit gaat', text: 'standaard je plek van nu, precies, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS), en op ongeveer 100 m naar OpenStreetMap voor heuvels en paden; de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Bij Startpunt van je lus kies je ook een vast punt, of Ongeveer: dan gaat alleen je plek, afgerond op ongeveer een kilometer, de deur uit. Geen naam, geen adres. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. De route wordt niet bewaard.' },
     ],
   },
   routeKaart: {
@@ -846,9 +856,10 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Startpunt van je lus',
     lead: 'Waar een voorgestelde lus begint.',
     points: [
+      { head: 'Waar je nu bent', text: 'het advies. Bij elke zoektocht vraagt ASCEND één keer je plek, op 50 m nauwkeurig, en die gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Hij wordt niet als startpunt bewaard. Lukt het niet, dan begint de lus bij je vaste punt als je dat hebt, en anders ongeveer; één regel zegt waarom.' },
+      { head: 'Vast punt', text: 'je kiest Gebruik waar ik nu ben, bij je deur, of je tikt een punt op de kaart bij Route voorstellen en kiest Start hier. Dat punt gaat naar de routeplanner en wordt alleen op dit toestel bewaard. Wis startpunt haalt het weg.' },
       { head: 'Ongeveer', text: 'je plaats, binnen een kilometer. De lus begint tot ongeveer 700 m van huis.' },
-      { head: 'Precies', text: 'je kiest Gebruik waar ik nu ben, bij je deur, of je tikt een punt op de kaart bij Route voorstellen en kiest Start hier. Dat punt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt alleen op dit toestel bewaard. Wis startpunt haalt het weg.' },
-      { head: 'OpenStreetMap', text: 'heuvels en paden zoekt het bij Precies om je startpunt, bij Ongeveer om je afgeronde plek. De hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Wis startpunt haalt ook de bewaarde heuvels rond dat punt weg.' },
+      { head: 'OpenStreetMap', text: 'heuvels en paden zoekt het om je plek van nu (op ongeveer 100 m), om je vaste punt, of bij Ongeveer om je afgeronde plek. De hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Wis startpunt haalt ook de bewaarde heuvels rond een precies punt weg.' },
       { head: 'Het dichtstbijzijnde pad', text: 'de routeplanner begint op het pad of de weg het dichtst bij je startpunt. Het stukje ernaartoe is een rechte lijn.' },
     ],
   },

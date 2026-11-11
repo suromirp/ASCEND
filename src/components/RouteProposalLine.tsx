@@ -23,7 +23,7 @@ function RouteSheet({ template, date, onClose }: { template: SessionTemplate; da
           <SheetGrip />
           <Card className="flex flex-col gap-4 rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow={template.name} title="Route voorstellen" onClose={requestClose} /></div>
-            <RoutePanel template={template} date={date} onDecline={requestClose} />
+            <RoutePanel template={template} date={date} onDecline={requestClose} closing={closing} />
           </Card>
         </div>
       </div>

@@ -2,7 +2,9 @@
 // met afstand, hoogtemeters en een GPX-bestand. De eerste keer vraagt het paneel of ASCEND mag
 // zoeken, met wat er de deur uit gaat. Zoeken heeft een grens in tijd; zonder netwerk staat er één
 // rustige regel. Na het zoeken zegt één regel wat er op de kaart lag (engine/routePlanner.ts#searchLines).
-// Het paneel rekent zelf niets en plant niets: een route is alleen om te lopen.
+// Het paneel rekent zelf niets en plant niets: een route is alleen om te lopen. Zolang er gezocht
+// wordt, staat RouteSearching op de plek van de kaart en de blokken; de kaart komt pas met de lussen,
+// zodat hij ze bij het openen meteen allemaal in beeld heeft (besluit 2026-11-11-route-kaart-2.md).
 
 import { useEffect, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
@@ -13,9 +15,12 @@ import { resolveRouteStyle, routeTarget, targetText } from '../engine/routeTarge
 import { MIN_ASCENT_TARGET_M, failureLine, proposalFacts, proposalNotes, proposalTitle, searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import { SEND_LABEL, WATCH_STEPS, WATCH_STEPS_TITLE, routeActionLine, type RouteSendOutcome } from '../engine/routeSend';
-import { findRoutes, grantRouteConsent, hasRouteConsent, type RouteSearch } from '../storage/routeProposal';
-import { chooseStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, startFailureLine, startFailureReason, type StartFailure } from '../engine/routeStart';
-import { getRouteStartPoint, locateStartHere, startFromMap } from '../storage/routeStart';
+import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
+import { chooseStart, hereStart, hereStartLine, resolveRouteStart, roundHere, START_LINE_APPROX, START_LINE_EXACT, START_LINE_HERE, startFailureLine, startFailureReason, type RouteStartMode, type StartFailure } from '../engine/routeStart';
+import { getRouteStartPoint, locateStartHere, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
+import { searchLimitLine, searchSteps } from '../engine/routeSearchSteps';
+import { loadMapLibre } from '../integrations/mapLibre';
+import { RouteSearching } from './RouteSearching';
 import { saveRouteGpx, type RouteFileResult } from '../storage/routeFile';
 import { routeSender, sendRouteGpx } from '../storage/routeSend';
 import type { FileSender } from '../integrations/fileSender';
@@ -23,7 +28,7 @@ import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { withTimeout } from '../utils/withTimeout';
 import { TextButton } from './TextButton';
 import { RouteMap } from './RouteMap';
-import { resolveMapBase } from '../engine/routeMap';
+import { mapLegendLine, resolveMapBase } from '../engine/routeMap';
 import { roundStart } from '../engine/routeTarget';
 import { Eyebrow } from './ui';
 
@@ -35,7 +40,8 @@ const STYLE_LINE: Record<RouteStyle, string> = {
 };
 const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
 
-function RouteBlock({ style, outcome, primary, date, target, sender }: { style: RouteStyle; outcome: PlanOutcome; primary: boolean; date: string; target: Parameters<typeof proposalNotes>[1]; sender: FileSender | null }) {
+// `onMap`: hoe de lus op de kaart staat als er meer dan één is; dezelfde woorden als de regel boven de kaart.
+function RouteBlock({ style, outcome, primary, date, target, sender, onMap, onChoose }: { style: RouteStyle; outcome: PlanOutcome; primary: boolean; date: string; target: Parameters<typeof proposalNotes>[1]; sender: FileSender | null; onMap?: 'doorgetrokken' | 'gestreept'; onChoose?: () => void }) {
   // De laatste uitkomst van een van de twee knoppen; 'busy' zolang er een loopt (beide hebben een grens in tijd).
   const [done, setDone] = useState<{ send: RouteSendOutcome } | { file: RouteFileResult } | 'busy' | undefined>();
   const mounted = useRef(true);
@@ -64,7 +70,7 @@ function RouteBlock({ style, outcome, primary, date, target, sender }: { style: 
 
   return (
     <div className="flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-      <Eyebrow tone="var(--color-ink-dim)">{STYLE_NAME[style]}</Eyebrow>
+      <Eyebrow tone="var(--color-ink-dim)">{onMap ? `${STYLE_NAME[style]} · ${onMap}` : STYLE_NAME[style]}</Eyebrow>
       {outcome.ok ? (
         <>
           <p className="text-base font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(outcome.proposal)}</p>
@@ -75,6 +81,7 @@ function RouteBlock({ style, outcome, primary, date, target, sender }: { style: 
           <div className="flex flex-wrap gap-x-5">
             {sender && <TextButton tone={primary ? 'action' : 'dim'} disabled={done === 'busy'} onClick={() => void send(outcome.proposal)}>{SEND_LABEL}</TextButton>}
             <TextButton tone={primary && !sender ? 'action' : 'dim'} disabled={done === 'busy'} onClick={() => void download(outcome.proposal)}>GPX downloaden</TextButton>
+            {onChoose && <TextButton tone="dim" onClick={onChoose}>Op de kaart kiezen</TextButton>}
           </div>
           {/* Plaats voor drie regels: een langere uitkomst duwt niets weg. */}
           <p role="status" className="min-h-[50px] text-xs leading-snug" style={{ color: line.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{line.text}</p>
@@ -104,7 +111,9 @@ function WatchSteps() {
   );
 }
 
-export function RoutePanel({ template, date, onDecline }: { template: SessionTemplate; date: string; onDecline: () => void }) {
+// `closing`: het blad gaat dicht (de animatie loopt nog). Dan stopt het zoeken meteen, niet pas als het
+// paneel weg is: na de tik op sluiten gaat er geen aanroep meer de deur uit.
+export function RoutePanel({ template, date, onDecline, closing = false }: { template: SessionTemplate; date: string; onDecline: () => void; closing?: boolean }) {
   const { settings, program, sessionLogs, updateSettings } = useAppData();
   const place = settings.homeLocation;
   const lat = place?.lat;
@@ -122,6 +131,10 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   const [mapStart, setMapStart] = useState<RoutePoint | undefined>();
   // De lus die je op de kaart koos; zonder keuze de eerste.
   const [chosen, setChosen] = useState<RouteStyle | undefined>();
+  // Waar je nu bent: de plek van deze poging (één vraag per zoektocht), of de reden dat het niet lukte.
+  const [here, setHere] = useState<{ attempt: number; found: StartLocation } | undefined>();
+  // De stap die nu loopt, voor RouteSearching; hoort bij één zoektocht (de sleutel).
+  const [step, setStep] = useState<{ key: string; step: RouteSearchStep } | undefined>();
   const mounted = useRef(true);
   const locateStop = useRef(new AbortController());
   useEffect(() => {
@@ -165,28 +178,61 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   // zou de lus stil op Ongeveer blijven en zie je Precies, vanaf je deur nooit.
   const asked = consent === true && settings.routeStart !== undefined;
   const choice = saved === undefined ? undefined : chooseStart(mode, saved);
-  // Precies zonder punt vraagt eerst om een punt, tenzij dit paneel op Ongeveer terugviel.
+  // Vast punt zonder punt vraagt eerst om een punt, tenzij dit paneel op Ongeveer terugviel.
   const waitingForPoint = choice?.kind === 'needs-point' && !fellBack && !declinedExact;
-  const exactPoint = mapStart ?? (choice?.kind === 'exact' && !waitingForPoint ? choice.point : undefined);
+  // Waar je nu bent: per poging één keer de plek, met terugval op je vaste punt en anders Ongeveer.
+  const hereMode = choice?.kind === 'here' && !mapStart;
+  const hereFound = here?.attempt === attempt ? here.found : undefined;
+  const hereChoice = hereMode && hereFound ? hereStart(hereFound, saved) : undefined;
+  const locatingHere = hereMode && !hereChoice;
+  const exactPoint = mapStart
+    ?? (hereChoice ? (hereChoice.kind === 'approx' ? undefined : hereChoice.point) : undefined)
+    ?? (choice?.kind === 'exact' && !waitingForPoint ? choice.point : undefined);
   const exactLat = exactPoint?.lat;
   const exactLon = exactPoint?.lon;
-  const startReady = (choice !== undefined && !waitingForPoint) || mapStart !== undefined;
+  // Heuvels rond je plek van nu op ongeveer 100 m; rond een vast punt op dat punt.
+  const terrainAt = hereChoice?.kind === 'here' ? roundHere(hereChoice.point) : undefined;
+  const terrainLat = terrainAt?.lat;
+  const terrainLon = terrainAt?.lon;
+  const startReady = (choice !== undefined && !waitingForPoint && !locatingHere) || mapStart !== undefined;
+  const startLine = mapStart
+    ? 'De lus begint bij het punt dat je koos.'
+    : hereMode
+      ? (hereChoice ? hereStartLine(hereChoice) : START_LINE_HERE)
+      : fellBack ? startFailureLine(fellBack) : exactLat !== undefined ? START_LINE_EXACT : START_LINE_APPROX;
+
+  useEffect(() => {
+    if (closing || !asked || !hereMode || saved === undefined || here?.attempt === attempt) return;
+    const stop = new AbortController();
+    const closed = locateStop.current.signal;
+    // Eén vraag om de plek, met dezelfde grens van 50 m als een vast punt; er wordt niets bewaard.
+    void locateStartHere({ persist: false, signal: closed }).then((result) => {
+      if (!stop.signal.aborted && !closed.aborted && mounted.current) setHere({ attempt, found: result });
+    });
+    return () => stop.abort();
+  }, [closing, asked, hereMode, saved, attempt, here?.attempt]);
 
   // Eén zoektocht per plek, training en poging; zolang het antwoord van deze sleutel er niet is, zoekt het paneel.
-  const key = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${distanceKm}|${ascentM}`;
+  const key = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${terrainLat}|${terrainLon}|${distanceKm}|${ascentM}`;
   const search: RouteSearch | 'busy' = found?.key === key ? found.result : 'busy';
 
   useEffect(() => {
-    if (!asked || !startReady || lat === undefined || lon === undefined) return;
+    if (closing || !asked || !startReady || lat === undefined || lon === undefined) return;
     const stop = new AbortController();
-    // findRoutes heeft zelf een grens in tijd en gooit nooit: de regel "Zoeken" blijft nooit staan.
-    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
+    // De kaartcode alvast laden, zodat de kaart er meteen is als de lussen er zijn. Een fout zegt de kaart zelf.
+    void loadMapLibre().catch(() => undefined);
+    const onStep = (s: RouteSearchStep) => {
+      if (!stop.signal.aborted) setStep({ key, step: s });
+    };
+    const terrainPoint = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
+    // findRoutes heeft zelf een grens in tijd en gooit nooit: "Lussen zoeken" blijft nooit staan.
+    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal, onStep, terrainAt: terrainPoint }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
       if (!stop.signal.aborted) setFound({ key, result });
     });
     // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
     return () => stop.abort();
     // De sleutel bevat het punt; de afhankelijkheden zijn dezelfde getallen.
-  }, [asked, startReady, lat, lon, exactLat, exactLon, distanceKm, ascentM, key]);
+  }, [closing, asked, startReady, lat, lon, exactLat, exactLon, terrainLat, terrainLon, distanceKm, ascentM, key]);
 
   // Gebruik waar ik nu ben: één keer, met een grens in tijd. Lukt het niet, dan zoekt het paneel ongeveer.
   async function startHere() {
@@ -217,7 +263,7 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
     return found;
   }
 
-  async function choose(next: 'approx' | 'exact') {
+  async function choose(next: RouteStartMode) {
     try {
       await withTimeout(grantRouteConsent(), CONSENT_LIMIT_MS);
       await withTimeout(updateSettings({ routeStart: next }), CONSENT_LIMIT_MS);
@@ -239,13 +285,17 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
     return (
       <div className="flex flex-col">
         <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
-        <TextButton onClick={() => void choose('exact')}>Precies, vanaf je deur</TextButton>
+        <TextButton onClick={() => void choose('here')}>Waar je nu bent</TextButton>
         <p className="text-xs leading-snug" style={dim}>
-          Je precieze startpunt gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Heuvels en paden zoekt OpenStreetMap om hetzelfde punt, en de hoogte van heuvels komt van Open-Meteo, ook om dat punt. Het punt wordt alleen op dit toestel bewaard. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap.
+          Bij elke zoektocht vraagt ASCEND één keer je plek. Die gaat precies naar de routeplanner (BRouter, anders Valhalla van FOSSGIS); heuvels en paden zoekt OpenStreetMap om je plek op ongeveer 100 m, en de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Je plek wordt niet als startpunt bewaard. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap.
+        </p>
+        <TextButton tone="dim" onClick={() => void choose('exact')}>Vast punt, je deur</TextButton>
+        <p className="text-xs leading-snug" style={dim}>
+          Een punt dat je bewaart, zoals je deur. Het gaat precies naar de routeplanner, naar OpenStreetMap en naar Open-Meteo, net als hierboven, en wordt alleen op dit toestel bewaard.
         </p>
         <TextButton tone="dim" onClick={() => void choose('approx')}>Ongeveer</TextButton>
         <p className="text-xs leading-snug" style={dim}>
-          Je plek, afgerond op ongeveer een kilometer, gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en naar OpenStreetMap. De lus begint dan tot ongeveer 700 m van je deur. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap.
+          Je plek, afgerond op ongeveer een kilometer, gaat naar de routeplanner en naar OpenStreetMap. De lus begint dan tot ongeveer 700 m van je deur.
         </p>
         <div className="flex flex-wrap gap-x-5">
           <TextButton tone="dim" onClick={onDecline}>Liever niet</TextButton>
@@ -277,21 +327,42 @@ export function RoutePanel({ template, date, onDecline }: { template: SessionTem
   const mapRoutes = plans ? okStyles.flatMap((s) => { const o = plans[s]; return o.ok ? [{ style: s, points: o.proposal.points }] : []; }) : [];
   const pickedRoute = mapRoutes.find((r) => r.style === picked);
   const mapStartPoint = pickedRoute?.points[0] ?? exactPoint ?? roundStart({ lat, lon });
+  const legend = mapLegendLine(okStyles, picked, STYLE_NAME);
+  const steps = searchSteps(hereMode);
+  const currentStep = locatingHere ? 'locate' : step?.key === key ? step.step : 'terrain';
+  const after = search === 'busy'
+    ? ''
+    : search.kind === 'offline'
+      ? 'Zonder netwerk is er geen route. Probeer het later nog eens.'
+      : search.kind === 'timeout'
+        ? 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.'
+        : searchLines(search.plans, target).join(' ');
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. {mapStart ? 'De lus begint bij het punt dat je koos.' : fellBack ? startFailureLine(fellBack) : exactLat !== undefined ? START_LINE_EXACT : START_LINE_APPROX}</p>
-      <p role="status" className="text-sm leading-snug" style={dim}>
-        {search === 'busy'
-          ? 'Zoeken naar een lus. Dat duurt hoogstens een halve minuut.'
-          : search.kind === 'offline'
-            ? 'Zonder netwerk is er geen route. Probeer het later nog eens.'
-            : search.kind === 'timeout'
-              ? 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.'
-              : searchLines(search.plans, target).join(' ')}
-      </p>
-      <RouteMap routes={mapRoutes} chosen={picked} start={mapStartPoint} base={resolveMapBase(settings.routeMapBase)} onChoose={setChosen} onStart={startOnMap} />
-      {plans && order.map((s) => <RouteBlock key={s} style={s} outcome={plans[s]} primary={s === (picked ?? order[0])} date={date} target={target} sender={sender} />)}
+      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. {startLine}</p>
+      {search === 'busy' ? (
+        <RouteSearching steps={steps} current={currentStep} limitLine={searchLimitLine(hereMode ? START_LOCATE_LIMIT_MS : undefined, PROPOSAL_LIMIT_MS)} />
+      ) : (
+        <>
+          {after && <p role="status" className="text-sm leading-snug" style={dim}>{after}</p>}
+          {legend && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{legend}</p>}
+          <RouteMap routes={mapRoutes} chosen={picked} start={mapStartPoint} base={resolveMapBase(settings.routeMapBase)} onChoose={setChosen} onStart={startOnMap} offerHere={!hereMode} />
+        </>
+      )}
+      {plans && order.map((s) => (
+        <RouteBlock
+          key={s}
+          style={s}
+          outcome={plans[s]}
+          primary={s === (picked ?? order[0])}
+          date={date}
+          target={target}
+          sender={sender}
+          onMap={legend && plans[s].ok ? (s === picked ? 'doorgetrokken' : 'gestreept') : undefined}
+          onChoose={legend && plans[s].ok && s !== picked ? () => setChosen(s) : undefined}
+        />
+      ))}
       {plans && order.some((s) => plans[s].ok) && <WatchSteps />}
       {search !== 'busy' && (search.kind !== 'plans' || anyFailed) && (
         <div><TextButton tone="dim" onClick={() => setAttempt((n) => n + 1)}>Opnieuw zoeken</TextButton></div>
