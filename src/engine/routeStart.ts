@@ -1,6 +1,6 @@
 // ASCEND: waar een voorgestelde lus begint. Drie keuzes: Waar je nu bent (bij elke zoektocht één keer
-// de plek van het toestel; de standaard), Vast punt (een eigen startpunt, de plek Thuis, dat op dit toestel
-// staat en meegaat in de back-up, zoals je deur; in de opslag heet het nog 'exact') en Ongeveer (je plaats, afgerond op twee
+// de plek van het toestel; de standaard), Thuis (een eigen startpunt, de plek Thuis, dat op dit toestel
+// staat en meegaat in de back-up, zoals je deur; in de opslag heet het nog 'exact', eerder Vast punt) en Ongeveer (je plaats, afgerond op twee
 // decimalen, ongeveer een kilometer). Bij een precies punt ligt ook de zoektocht naar heuvels en paden
 // bij OpenStreetMap om dat punt (besluit 2026-11-11-route-verfijnen.md).
 // Puur: de opslag en de locatievraag staan in storage/routeStart.ts. Docs: docs/beslissingen/2026-11-09-startpunt-lus.md,
@@ -66,10 +66,12 @@ export const startFailureLine = (reason: StartFailure): string => `${startFailur
 
 // De regel bovenaan het paneel Route voorstellen.
 export const START_LINE_HERE = 'De lus begint waar je nu bent.';
-export const START_LINE_EXACT = 'De lus begint bij je vaste punt.';
+export const START_LINE_EXACT = 'De lus begint bij Thuis.';
+export const START_LINE_TAP = 'De lus begint bij het punt dat je koos.';
+export const START_LINE_NO_HOME = 'Je hebt nog geen Thuis. De lus begint waar je nu bent.';
 export const START_LINE_APPROX = 'De lus begint bij je plek, afgerond op ongeveer een kilometer.';
 
-// Waar je nu bent, na de ene vraag om de plek: die plek, of terug op je vaste punt als dat er is, en
+// Waar je nu bent, na de ene vraag om de plek: die plek, of terug op Thuis als dat er is, en
 // anders op Ongeveer. Een terugval draagt de reden, voor één regel.
 export type HereStart =
   | { kind: 'here'; point: RoutePoint }
@@ -91,3 +93,47 @@ export function hereStartLine(start: HereStart): string {
 // Heuvels en paden rond je plek van nu: op drie decimalen (ongeveer 100 m), zodat dezelfde plek de
 // bewaarde heuvels terugvindt en niet elke zoektocht een nieuwe vraag aan OpenStreetMap is.
 export const roundHere = (p: RoutePoint): RoutePoint => ({ lat: Math.round(p.lat * 1e3) / 1e3, lon: Math.round(p.lon * 1e3) / 1e3 });
+
+// ---------- Start bij: welke chip, welk punt, welke regel ----------
+// De chips (engine/places.ts#startChoices) zeggen waar de lus begint; de regel eronder staat er alleen bij
+// een terugval of een afwijking (Pathfinder, docs/onderhoud/2026-11-11-pathfinder-route-start.md). Een tik
+// op een chip geldt voor deze training en wordt niet bewaard; een getikt punt op de kaart (Start hier) ook
+// niet. Docs: docs/beslissingen/2026-11-11-route-start.md.
+
+export type StartPick = 'here' | 'home';
+
+export type StartPlan =
+  // Waar je nu bent: de plek wordt nog bepaald.
+  | { kind: 'locate'; chip: StartPick; line: string }
+  | { kind: 'here' | 'home' | 'tap'; chip: StartPick; point: RoutePoint; line: string }
+  | { kind: 'approx'; chip: StartPick; line: string };
+
+export interface StartPlanInput {
+  mode: RouteStartMode;
+  // Thuis, als die er is (een kapotte waarde telt als geen Thuis).
+  home: unknown;
+  // Een tik op een chip, voor deze training.
+  picked?: StartPick;
+  // Start hier: een getikt punt op de kaart, voor deze zoektocht.
+  tap?: RoutePoint;
+  // De ene vraag om je plek van deze poging, als die al antwoordde.
+  found?: { ok: true; point: RoutePoint } | { ok: false; reason: StartFailure };
+}
+
+export function planStart(i: StartPlanInput): StartPlan {
+  const home = validStartPoint(i.home);
+  const chip: StartPick = i.picked === 'home' && home ? 'home' : i.picked === 'here' ? 'here' : i.mode === 'exact' && home ? 'home' : 'here';
+  const tap = i.tap ? validStartPoint(i.tap) : undefined;
+  if (tap) return { kind: 'tap', chip, point: tap, line: START_LINE_TAP };
+  if (chip === 'home' && home) return { kind: 'home', chip, point: home, line: '' };
+  // Ongeveer valt onder de chip Waar je nu bent; de regel zegt dat het afgerond is. Een tik op de chip vraagt je plek wel.
+  if (i.mode === 'approx' && i.picked === undefined) return { kind: 'approx', chip, line: START_LINE_APPROX };
+  if (!i.found) return { kind: 'locate', chip, line: '' };
+  // Thuis gekozen in de instelling, maar er is geen Thuis: dat zegt de regel, nooit stil.
+  const noHome = i.mode === 'exact' && !home && i.picked === undefined;
+  if (i.found.ok) return { kind: 'here', chip, point: i.found.point, line: noHome ? START_LINE_NO_HOME : '' };
+  const back = hereStart(i.found, home);
+  return back.kind === 'fixed'
+    ? { kind: 'home', chip, point: back.point, line: hereStartLine(back) }
+    : { kind: 'approx', chip, line: hereStartLine(back) };
+}

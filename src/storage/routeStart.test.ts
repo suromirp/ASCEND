@@ -179,9 +179,22 @@ describe('Gebruik waar ik nu ben, strenger', () => {
 });
 
 describe('een startpunt van de kaart', () => {
-  it('Start hier: het getikte punt wordt je Precies-startpunt', async () => {
+  it('Start hier: het getikte punt geldt alleen nu en bewaart niets (route-start, eis 8)', async () => {
     const r = await startFromMap({ tap: fake });
     expect(r).toEqual({ ok: true, point: { lat: 52.12346, lon: 5.65432 } });
+    expect(await getRouteStartPoint()).toBeUndefined();
+  });
+
+  it('Start hier verschuift Thuis niet', async () => {
+    expect(await saveRouteStartPoint({ lat: 51.5, lon: 4.5 })).toBe(true);
+    const r = await startFromMap({ tap: fake });
+    expect(r.ok).toBe(true);
+    expect(await getRouteStartPoint()).toEqual({ lat: 51.5, lon: 4.5 });
+  });
+
+  it('Maak dit Thuis: bewust, dan verhuist Thuis naar het getikte punt', async () => {
+    expect(await saveRouteStartPoint({ lat: 51.5, lon: 4.5 })).toBe(true);
+    expect(await saveRouteStartPoint(fake, 'map')).toBe(true);
     expect(await getRouteStartPoint()).toEqual({ lat: 52.12346, lon: 5.65432 });
   });
 

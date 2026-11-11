@@ -21,7 +21,7 @@ export const BRIEFING_MAP_HEIGHT = 'clamp(150px, 28vh, 240px)';
 export const OFFLINE_LINE = 'Zonder netwerk is er geen route. Probeer het later nog eens.';
 export const TIMEOUT_LINE = 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.';
 // Achter de i: hoe de kaart werkt (stond eerder onder de kaart).
-export const MAP_HINT = 'De ring is de start. Tik op de kaart voor een ander startpunt; Start hier bewaart dat punt als je vaste punt en zet Startpunt van je lus op Vast punt.';
+export const MAP_HINT = 'De ring is de start. Tik op de kaart voor een ander startpunt: Start hier geldt alleen voor deze zoektocht. Bewaar als plek maakt er Thuis van; je routes bij Thuis blijven.';
 export const PICK_HINT = 'De gekozen lus is doorgetrokken, de andere gestreept. Tik een lus op de kaart of in de lijst om hem te kiezen.';
 
 export const NO_PLACE_LINE = 'Kies eerst een plaats bij Instellingen, Vandaag en meldingen, Plaats. Daar begint de lus.';
@@ -33,7 +33,7 @@ export type RouteSheetStage =
   | 'reading'
   // De eerste keer: de bestaande eerste vraag, ongewijzigd.
   | 'first-question'
-  // Vast punt zonder punt: eerst een punt.
+  // Thuis gekozen zonder punt (sinds Start bij niet meer gebruikt: dan de chip Waar je nu bent met één regel).
   | 'needs-point'
   | 'searching'
   | 'offline'

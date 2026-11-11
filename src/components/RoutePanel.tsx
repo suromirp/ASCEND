@@ -27,7 +27,7 @@ import { RouteMap } from './RouteMap';
 import { NO_PLACE_LINE, OFFLINE_LINE, ROUTE_MAP_HEIGHT, TIMEOUT_LINE, loopLines, pickTransition, routeOutcomeLine, type RouteSheetPart } from '../engine/routeSheet';
 import { useMotionMode } from './motion';
 import { Icon } from './icons';
-import { Eyebrow, PrimaryButton } from './ui';
+import { Chip, Eyebrow, PrimaryButton } from './ui';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
 
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
@@ -141,9 +141,9 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
       <p className="text-xs leading-snug" style={dim}>
         Bij elke zoektocht vraagt ASCEND één keer je plek. Die gaat precies naar de routeplanner (BRouter, anders Valhalla van FOSSGIS); heuvels en paden zoekt OpenStreetMap om je plek op ongeveer 100 m, en de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Je plek wordt niet als startpunt bewaard. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. {PHOTO_SOURCES_LINE}
       </p>
-      <TextButton tone="dim" onClick={() => void model.choose('exact')}>Vast punt, je deur</TextButton>
+      <TextButton tone="dim" onClick={() => void model.choose('exact')}>Thuis</TextButton>
       <p className="text-xs leading-snug" style={dim}>
-        Een punt dat je bewaart, zoals je deur. Het gaat precies naar de routeplanner, naar OpenStreetMap en naar Open-Meteo, net als hierboven, en wordt op dit toestel bewaard; het gaat mee in je back-up.
+        Een punt dat je bewaart, zoals je deur: tik het op de kaart en kies Bewaar als plek. Het gaat precies naar de routeplanner, naar OpenStreetMap en naar Open-Meteo, net als hierboven, en wordt op dit toestel bewaard; het gaat mee in je back-up. Tot er een Thuis is, begint de lus waar je nu bent.
       </p>
       <TextButton tone="dim" onClick={() => void model.choose('approx')}>Ongeveer</TextButton>
       <p className="text-xs leading-snug" style={dim}>
@@ -156,17 +156,19 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
   );
 }
 
-// Vast punt zonder punt: eerst een punt.
-export function RouteNeedsPoint({ model }: { model: RouteSearchModel }) {
-  const dim = { color: 'var(--color-ink-dim)' };
+// Start bij: de chips boven de kaart en de zoekstand, in elke stand, met een vaste hoogte (één rij van
+// 44 px). Een tik geldt voor deze training en breekt een zoektocht die loopt af (nieuwe sleutel).
+export function StartChips({ model }: { model: RouteSearchModel }) {
   return (
-    <div className="flex flex-col">
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(model.target)}. Sta bij je deur en kies Gebruik waar ik nu ben. Dat punt gaat als start van je lus naar de routeplanner (BRouter, anders Valhalla van FOSSGIS) en wordt op dit toestel bewaard; het gaat mee in je back-up.</p>
-      <div className="flex flex-wrap gap-x-5">
-        <TextButton disabled={model.locating} onClick={() => void model.startHere()}>Gebruik waar ik nu ben</TextButton>
-        <TextButton tone="dim" disabled={model.locating} onClick={model.declineExact}>Ongeveer</TextButton>
+    <div className="flex flex-col gap-1">
+      <Eyebrow tone="var(--color-ink-dim)">Start bij</Eyebrow>
+      <div role="group" aria-label="Start bij" className="flex h-11 gap-2">
+        {model.startChips.map((c) => (
+          <span key={c.kind} className="shrink-0 whitespace-nowrap">
+            <Chip selected={c.kind === model.startChip} onClick={() => model.pickStart(c.kind === 'home' ? 'home' : 'here')}>{c.label}</Chip>
+          </span>
+        ))}
       </div>
-      <p role="status" className="min-h-[20px] text-xs leading-snug" style={dim}>{model.locating ? 'Je locatie wordt bepaald. Dat duurt hoogstens 15 seconden.' : ''}</p>
     </div>
   );
 }
@@ -190,7 +192,6 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
   }
   if (stage === 'reading') return <p role="status" className="min-h-[20px] text-sm" style={dim} />;
   if (stage === 'first-question') return <RouteFirstQuestion model={model} onDecline={onDecline} />;
-  if (stage === 'needs-point') return <RouteNeedsPoint model={model} />;
 
   const retry = <TextButton tone="dim" onClick={model.retry}>Opnieuw zoeken</TextButton>;
 
@@ -199,13 +200,13 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
   const part = (p: RouteSheetPart) => {
     switch (p) {
       case 'searching':
-        return <RouteSearching key={p} steps={model.steps} current={model.currentStep} limitLine={model.limitLine} />;
+        return <RouteSearching key={`${p}-${model.searchKey}`} steps={model.steps} current={model.currentStep} limitLine={model.limitLine} limitMs={model.limitMs} />;
       case 'failure':
         return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={model.retry} />;
       case 'map':
         return model.mapStartPoint ? (
           <div key={p} className="flex flex-col gap-1">
-            <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} offerHere={!model.hereMode} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} />
+            <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} />
           </div>
         ) : null;
       case 'chosen':
@@ -234,8 +235,10 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Waar de lus begint staat er in elke stand, ook bij zoeken, een fout of zonder kaart (Warden). */}
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}. {model.startLine}</p>
+      {/* Waar de lus begint staat er in elke stand, ook bij zoeken, een fout of zonder kaart (Warden): de
+          chips, en de regel alleen bij een terugval of afwijking. */}
+      <StartChips model={model} />
+      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}.{model.startLine ? ` ${model.startLine}` : ''}</p>
       {parts.map(part)}
     </div>
   );
