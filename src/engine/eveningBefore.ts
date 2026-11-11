@@ -217,18 +217,8 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   }
 
   // 5. Drinken bij een lange training buiten: wat je ongeveer kwijtraakt, uit je eigen zweettempo.
-  if (outside && minutes >= LONG_MINUTES) {
-    const sport = templateSport(template);
-    const activity = sport === 'running' ? 'run' : 'walk';
-    const w = input.forecast ? weatherForTraining({ forecast: input.forecast, template, logs: input.logs, date, durationMinutes: minutes, now: input.now }) : undefined;
-    if (w) {
-      const rate = sweatRateAt(input.sweatEntries, w.tempC, activity);
-      const liters = Math.max(0.5, Math.round(((rate.mlPerHour * minutes) / 60 / 1000) * 2) / 2);
-      lines.push(`Drinken mee: je zweet ongeveer ${litersText(liters)}.`);
-    } else {
-      lines.push(`Drinken mee voor ${minutes} min.`);
-    }
-  }
+  const drink = drinkLine({ template, minutes, forecast: input.forecast, logs: input.logs, date, now: input.now, sweatEntries: input.sweatEntries });
+  if (drink) lines.push(drink);
 
   // 6. De route, als Route voorstellen aan staat. Een route wordt niet bewaard: je vraagt hem op bij de training.
   if (input.routeOn && wantsRoute(template)) {
@@ -239,11 +229,42 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   return { label, lines };
 }
 
+export interface DrinkInput {
+  template: SessionTemplate;
+  minutes: number;
+  forecast?: WeatherForecast;
+  logs: SessionLog[];
+  date: string;
+  now: Date;
+  sweatEntries?: SweatEntry[];
+}
+
+// De drinkregel van een lange training buiten (vanaf LONG_MINUTES): wat je ongeveer kwijtraakt, uit je
+// eigen zweettempo bij het weer van de start; zonder weer alleen de duur. Ook de Briefing leest deze
+// regel (engine/briefing.ts), zodat er één regel voor drinken is.
+// `liters` ontbreekt zonder weer: dan is alleen bekend dat je drinken meeneemt.
+export function drinkAmount(input: DrinkInput): { liters?: number } | undefined {
+  const { template, minutes } = input;
+  if (!isWeatherSensitive(template) || minutes < LONG_MINUTES) return undefined;
+  const sport = templateSport(template);
+  const activity = sport === 'running' ? 'run' : 'walk';
+  const w = input.forecast ? weatherForTraining({ forecast: input.forecast, template, logs: input.logs, date: input.date, durationMinutes: minutes, now: input.now }) : undefined;
+  if (!w) return {};
+  const rate = sweatRateAt(input.sweatEntries, w.tempC, activity);
+  return { liters: Math.max(0.5, Math.round(((rate.mlPerHour * minutes) / 60 / 1000) * 2) / 2) };
+}
+
+export function drinkLine(input: DrinkInput): string | undefined {
+  const amount = drinkAmount(input);
+  if (!amount) return undefined;
+  return amount.liters === undefined ? `Drinken mee voor ${input.minutes} min.` : `Drinken mee: je zweet ongeveer ${litersText(amount.liters)}.`;
+}
+
 export function packLine(kg: number): string {
   return `Rugzak ${kgLabel(kg, 1)}.`;
 }
 
-function watchLine(kind: WatchStatusKind | undefined): string | undefined {
+export function watchLine(kind: WatchStatusKind | undefined): string | undefined {
   switch (kind) {
     case 'sent':
       return EVENING_TEXT.watchSent;

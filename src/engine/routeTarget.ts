@@ -11,6 +11,7 @@ import { progressionTarget } from './programLayout';
 import { recentRunPace } from './recentRunPace';
 import { templateSport } from './sports';
 import { hasRole } from './templateRoles';
+import { getModality, modalitySport } from '../data/modalities';
 
 // Zonder eigen lopen en zonder test: 6:30 per kilometer, een rustig tempo.
 export const DEFAULT_PACE_SEC_KM = 390;
@@ -23,6 +24,18 @@ export const resolveRouteStyle = (raw: unknown): RouteStyle => (raw === 'simple'
 
 // Een route is er voor elke looptraining uit je planning, niet voor kracht of een andere sport.
 export const wantsRoute = (template: SessionTemplate | undefined): boolean => !!template && template.type !== 'strength' && templateSport(template) === 'running';
+
+// Hoort er een route bij deze training op deze plek (Waar train je?)? Alleen buiten en te voet: op de
+// loopband, binnen of op de fiets is een looplus zinloos (eigenaar, 11 november). Zonder keuze, of met
+// een sleutel die deze training niet kent, telt de training zelf, zoals voorheen.
+export function wantsRouteAt(template: SessionTemplate | undefined, modalityKey: string | undefined): boolean {
+  if (!wantsRoute(template)) return false;
+  const modality = modalityKey ? getModality(template!.id, modalityKey) : undefined;
+  if (!modality) return true;
+  if (modality.environment !== 'outdoor') return false;
+  const sport = modalitySport(modality.key);
+  return sport === undefined || sport === 'running' || sport === 'hiking';
+}
 
 export interface RouteTargetInput {
   template: SessionTemplate;
