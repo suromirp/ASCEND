@@ -68,3 +68,16 @@ Als je helemaal klaar bent (of vastloopt): meld het de coördinator met de tool 
 - Vandaag zelf op main gezet: de regel bij te dicht op elkaar in Week (besluit 2026-11-10-beendagen-afstand-tekst.md).
 - Open vraag aan de eigenaar: de melding in Week nadat hij op Vandaag "Benen fris, blijft staan" koos (wegblijven, of zeggen dat hij koos). Advies: het tweede.
 - Eigenaar, 10 november middag: met de weeklimiet hoef je geen rekening te houden. De modelkeuze per taak blijft.
+
+## Wissel 11 november ochtend (woensdag)
+
+Dit deel geldt; wat hierboven staat is geschiedenis.
+
+- Er lopen geen bouwers. Alles staat op main (laatste: 2741647, bouwmoment van 10 november); de werkbranch claude/ascend-modernize-ib0a34 is gelijk aan main.
+- Modellen per taak (skill werkverdeling): Haiku, Sonnet, Opus, Fable op wat de taak raakt. De coördinator draait op Opus. Met de weeklimiet hoef je geen rekening te houden (eigenaar, 10 november); raakt een sessie een harde limiet, dan melden en verder op Opus.
+- Live sinds 10 november: de regel bij te dicht op elkaar in Week, de rij Datavelden bekijken, het weeknummer gelijk op Week en Vandaag, de uitleg in Route voorstellen, het uitlegblad in drie groepen, de melding in Week na "Benen fris, blijft staan" (met instelling). De eigenaar kijkt dit na op zijn telefoon; antwoorden daarop eerst afhandelen.
+- Vandaag, woensdag 19:43, is het vaste bouwmoment (trig_01JDroCyzgfatU8c7MiK26Ei). Het start nog in de oude lange chat Bouwmoment ASCEND (session_01LnDpSiQuT8vwstxK8ptqSt). De opdracht van die taak kan alleen vanuit die chat zelf worden gewijzigd; de eigenaar heeft een zin gekregen om daar te plakken (verse chat per bouwmoment met create_session op Opus). Een taak die zelf een verse chat opent krijgt de repo niet mee (proef van 10 november), dus dat is geen weg.
+- Voor het bouwmoment klaar: het kaartje met beide lussen (besluit 2026-11-10-kaartje-route-bron.md, eigen tekening zonder tegels), daarna startpunt zelf kiezen of huidige locatie, daarna bijsturen van de lus. Plus de oudere punten van 8 en 9 november in de Inbox.
+- Open vraag aan de eigenaar: mag het startpunt als stip op het kaartje, ook bij Precies, vanaf je deur? Advies: ja. Nog geen antwoord.
+- Les van 10 november: "start voor het bouwmoment een nieuwe chat" betekende klaarzetten, niet nu beginnen. Begin een bouwronde buiten het rooster alleen als de eigenaar dat met zoveel woorden vraagt. En 10 november was een dinsdag: reken de weekdag na voor je een bouwmoment belooft.
+- De sessie Bouwmoment ASCEND 10 november (session_01LnDpSjJpcTeC5mjFvMz3GX) is klaar; de eigenaar praatte er zelf in, dus niet archiveren zonder hem. Vorige coördinatoren: session_01LnDpSj5xhvz93hRnJrHyF8 (10 november) en session_01LnDpSmhnJLwMd9LxhwhgLB blijven open.
