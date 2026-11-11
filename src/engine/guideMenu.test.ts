@@ -7,7 +7,6 @@ const plan = {
     { step: { label: 'a' } },
     { repeat: 4, steps: [{ label: 'b' }, { label: 'c' }] },
   ] as never,
-  garmin: { sport: 'Hardlopen', lines: ['x'] },
   weeks: [
     { week: 1, minutes: 40, note: 'n', current: false },
     { week: 2, minutes: 45, note: 'n', current: true },
@@ -20,21 +19,19 @@ const alles: GuideMenuInput = {
   easeOffCount: 1,
   modalityCount: 3,
   showSpots: true,
-  watchKind: 'zone2',
   backgroundCount: 4,
   hasGear: true,
-  hasGarminNote: true,
   sourceCount: 2,
 };
-const leeg: GuideMenuInput = { easeOffCount: 0, modalityCount: 0, showSpots: false, backgroundCount: 0, hasGear: false, hasGarminNote: false, sourceCount: 0 };
+const leeg: GuideMenuInput = { easeOffCount: 0, modalityCount: 0, showSpots: false, backgroundCount: 0, hasGear: false, sourceCount: 0 };
 
 const ids = (i: GuideMenuInput) => guideMenu(i).map((g) => [g.id, g.rows.map((r) => r.id)]);
 
 describe('menu van het uitlegblad', () => {
-  it('alle rijen: twee, vier en twee in drie groepen', () => {
+  it('alle rijen: twee, twee en twee in drie groepen', () => {
     expect(ids(alles)).toEqual([
       ['doen', ['stappen', 'teZwaar']],
-      ['waar', ['varianten', 'plekken', 'garmin', 'datavelden']],
+      ['waar', ['varianten', 'plekken']],
       ['achtergrond', ['weken', 'achtergrond']],
     ]);
   });
@@ -55,21 +52,21 @@ describe('menu van het uitlegblad', () => {
     expect(rows.find((r) => r.id === 'achtergrond')?.sub).toBe('1 deel, 1 bron');
   });
 
-  it('alleen plekken en datavelden zijn pagina-rijen', () => {
+  it('alleen plekken is een pagina-rij', () => {
     const pages = guideMenu(alles).flatMap((g) => g.rows).filter((r) => r.page).map((r) => r.id);
-    expect(pages).toEqual(['plekken', 'datavelden']);
+    expect(pages).toEqual(['plekken']);
   });
 
-  it('geen modaliteiten, plekken, Garmin of datavelden: groep Waar en waarmee valt weg, ook de kop', () => {
-    const groups = guideMenu({ ...alles, modalityCount: 0, showSpots: false, watchKind: undefined, plan: { ...plan, garmin: undefined } });
+  it('geen modaliteiten of plekken: groep Waar en waarmee valt weg, ook de kop', () => {
+    const groups = guideMenu({ ...alles, modalityCount: 0, showSpots: false });
     expect(groups.map((g) => g.id)).toEqual(['doen', 'achtergrond']);
     expect(groups.some((g) => g.title === 'Waar en waarmee')).toBe(false);
   });
 
-  it('datavelden uit: de rij is weg, de rest blijft', () => {
-    const rows = guideMenu({ ...alles, watchKind: undefined }).flatMap((g) => g.rows).map((r) => r.id);
+  it('de Garmin-stappen en de datavelden staan niet meer in de uitleg maar in Je horloge (11 november)', () => {
+    const rows = guideMenu(alles).flatMap((g) => g.rows).map((r) => r.id as string);
+    expect(rows).not.toContain('garmin');
     expect(rows).not.toContain('datavelden');
-    expect(rows).toContain('plekken');
   });
 
   it('zonder plan alleen Achtergrond en bronnen', () => {

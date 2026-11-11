@@ -2,13 +2,15 @@
 //
 // Welke rijen in welke groep staan, en de ene regel onder een rij. Puur: de component krijgt de
 // groepen terug en tekent alleen. De voorwaarden zijn die van het blad voor de herindeling
-// (plan, Garmin, weken, Te zwaar, varianten, plekken, datavelden); alleen "Achtergrond en bronnen"
-// verdwijnt nu als er niets te lezen valt. Dit plant niets en verandert geen training.
+// (plan, weken, Te zwaar, varianten, plekken); alleen "Achtergrond en bronnen" verdwijnt nu als er
+// niets te lezen valt. Dit plant niets en verandert geen training.
+//
+// Sinds 11 november (docs/beslissingen/2026-11-11-info-blad-horloge.md) staan de Garmin-stappen, de
+// datavelden en de opmerking over hartslagzones in het blad Je horloge (engine/watchSheet.ts), niet hier.
 
 import type { WorkoutPlan } from './workoutPlan';
-import type { WatchKindId } from './watchFields';
 
-export type GuideRowId = 'stappen' | 'teZwaar' | 'varianten' | 'plekken' | 'garmin' | 'datavelden' | 'weken' | 'achtergrond';
+export type GuideRowId = 'stappen' | 'teZwaar' | 'varianten' | 'plekken' | 'weken' | 'achtergrond';
 export type GuideGroupId = 'doen' | 'waar' | 'achtergrond';
 
 export interface GuideRowSpec {
@@ -27,15 +29,13 @@ export interface GuideGroup {
 }
 
 export interface GuideMenuInput {
-  plan?: Pick<WorkoutPlan, 'totalMinutes' | 'items' | 'garmin' | 'weeks'>;
+  plan?: Pick<WorkoutPlan, 'totalMinutes' | 'items' | 'weeks'>;
   easeOffCount: number;
   modalityCount: number;
   showSpots: boolean;
-  watchKind?: WatchKindId;
-  // De delen, het materiaal, de Garmin-opmerking en de bronnen van "Achtergrond en bronnen".
+  // De delen, het materiaal en de bronnen van "Achtergrond en bronnen".
   backgroundCount: number;
   hasGear: boolean;
-  hasGarminNote: boolean;
   sourceCount: number;
 }
 
@@ -54,15 +54,13 @@ export function guideMenu(input: GuideMenuInput): GuideGroup[] {
   const waar: GuideRowSpec[] = [];
   if (input.modalityCount > 0) waar.push({ id: 'varianten', title: 'Waar train je het best?', sub: plural(input.modalityCount, 'optie', 'opties'), page: false });
   if (input.showSpots) waar.push({ id: 'plekken', title: 'Waar kun je dit doen?', page: true });
-  if (plan?.garmin) waar.push({ id: 'garmin', title: 'Stappen voor je Garmin', page: false });
-  if (input.watchKind) waar.push({ id: 'datavelden', title: 'Datavelden voor je horloge', page: true });
 
   const achtergrond: GuideRowSpec[] = [];
   if (plan && plan.weeks.length > 0) {
     const now = plan.weeks.find((w) => w.current);
     achtergrond.push({ id: 'weken', title: 'Deze fase, week voor week', sub: now ? `Week ${now.week} van ${plan.weeks.length}` : undefined, page: false });
   }
-  if (input.backgroundCount > 0 || input.hasGear || input.hasGarminNote || input.sourceCount > 0) {
+  if (input.backgroundCount > 0 || input.hasGear || input.sourceCount > 0) {
     const parts = [
       input.backgroundCount > 0 ? plural(input.backgroundCount, 'deel', 'delen') : '',
       input.sourceCount > 0 ? plural(input.sourceCount, 'bron', 'bronnen') : '',

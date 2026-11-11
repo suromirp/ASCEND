@@ -5,6 +5,11 @@ import { availableVariants } from '../engine/substitutions';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { todayISO } from '../utils/dates';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
+import { WatchSheet } from './WatchSheet';
+import { useWatchSheet } from './useWatchSheet';
+import { WATCH_SHEET_TEXT } from '../engine/watchSheet';
+import { buildWorkoutPlan } from '../engine/workoutPlan';
+import { useAppData } from '../state/AppDataContext';
 import { MoveSuggestions } from './MoveSuggestions';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 import { PrimaryButton, SecondaryButton, Eyebrow, ZoneBar } from './ui';
@@ -105,6 +110,12 @@ export function TodayMissionCard({
   const variants = availableVariants(template);
   const shortVariant = variants.find((v) => v === 'short');
   const guide = getTrainingGuide(template.id);
+  // Het blad Je horloge (engine/watchSheet.ts), als tweede rij in het menu (spoor 2 van het Info-blad).
+  // De missiekaart zelf verandert niet.
+  const { program } = useAppData();
+  const [showWatch, setShowWatch] = useState(false);
+  const garmin = buildWorkoutPlan(template, todayISO(), program)?.garmin;
+  const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });
   // Kracht die je in de app zelf bijhoudt begint met "Training starten";
   // al het andere is een "Gedaan" dat meteen naar het invulscherm gaat.
   const inAppStrength = template.type === 'strength';
@@ -116,7 +127,7 @@ export function TodayMissionCard({
   const testDay = isTestOrRace(template);
   const shorterTimes = shorterChoices(fullDuration);
   const showShorterRow = !!onShorter && (testDay || shorterTimes.length > 0);
-  const hasMenu = !!guide || showShort || showPlan || showShorterRow;
+  const hasMenu = !!guide || watchView.hasWatchSheet || showShort || showPlan || showShorterRow;
 
   // De minuten staan groot; wat de duurchip méér zegt dan alleen de minuten ("4 × 4 min") blijft als tekst.
   const plainMinutes = new RegExp(`^${fullDuration} min$`);
@@ -209,6 +220,18 @@ export function TodayMissionCard({
 
       <WarmupRow template={template} />
 
+      {showWatch && watchView.hasWatchSheet && (
+        <WatchSheet
+          view={watchView}
+          template={template}
+          session={session}
+          garmin={garmin}
+          dayLabel={guideDayLabel(template, todayISO())}
+          onClose={() => setShowWatch(false)}
+          // Het menu is al dicht; onder dit blad ligt geen laag meer.
+          onLeave={() => undefined}
+        />
+      )}
       {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
 
       {quickComplete ? (
@@ -248,6 +271,12 @@ export function TodayMissionCard({
                 {guide && (
                   <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => setShowGuide(true))}>
                     <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>Meer over deze training</span>
+                    <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
+                  </button>
+                )}
+                {watchView.hasWatchSheet && (
+                  <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => setShowWatch(true))}>
+                    <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>{WATCH_SHEET_TEXT.row}</span>
                     <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
                   </button>
                 )}
