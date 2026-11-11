@@ -793,6 +793,17 @@ export const CHOICES = {
       { value: 'none', label: 'Geen', note: 'Alleen de lussen en je plek op een effen vlak', short: 'Geen' },
     ],
   }),
+  routeZoeken: def({
+    group: 'Vandaag en meldingen',
+    title: 'Lus zoeken',
+    line: 'Wanneer de Briefing een lus zoekt voor een loop buiten.',
+    advice: 'open' as 'open' | 'tap',
+    help: 'routeZoeken',
+    options: [
+      { value: 'open', label: 'Bij het openen van de briefing', note: 'Voor een training van vandaag of morgen; later na een tik', short: 'Bij het openen' },
+      { value: 'tap', label: 'Na een tik', note: 'Pas als je op Zoek een lus tikt', short: 'Na een tik' },
+    ],
+  }),
   stravaInhoud: def({
     group: 'Koppelingen',
     title: 'Wat erin staat',

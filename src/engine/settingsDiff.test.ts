@@ -119,6 +119,7 @@ const everything: AppSettings = {
   routeStyle: 'simple',
   routeStart: 'exact',
   routeMapBase: 'none',
+  routeSearch: 'tap',
   keepStreams: false,
   tempoStablePieces: false,
   fuelOnTheGo: false,

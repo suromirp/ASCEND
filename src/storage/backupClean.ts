@@ -347,6 +347,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeStart;
     skipped.n++;
   }
+  // Lus zoeken: Bij het openen of Na een tik; iets anders valt weg en dan geldt het advies.
+  if ('routeSearch' in s && s.routeSearch !== 'open' && s.routeSearch !== 'tap') {
+    delete s.routeSearch;
+    skipped.n++;
+  }
   // Ondergrond van de kaart: Donker, Licht of Geen.
   if ('routeMapBase' in s && s.routeMapBase !== 'dark' && s.routeMapBase !== 'light' && s.routeMapBase !== 'none') {
     delete s.routeMapBase;

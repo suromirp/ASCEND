@@ -9,6 +9,7 @@
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { ROLE_LABEL, defaultModality, getModalities, type ModalityDefinition } from '../data/modalities';
 import { wantsRouteAt } from './routeTarget';
+import { capitalize } from '../utils/capitalize';
 
 export interface PlaceChoice {
   key: string;
@@ -28,6 +29,15 @@ export function placeChoices(templateId: string): PlaceChoice[] {
     environment: m.environment,
     locked: !!m.locked,
   }));
+}
+
+// "Hardlopen, buiten op een heuvel" -> "Buiten op een heuvel" met "Hardlopen" als sport; een naam
+// zonder komma blijft zoals hij is. De keuzes Waar train je? op het trainingsscherm en in de Briefing.
+export function splitPlaceLabel(label: string): { name: string; sport?: string } {
+  const i = label.indexOf(', ');
+  if (i < 0) return { name: label };
+  const rest = label.slice(i + 2);
+  return { name: capitalize(rest), sport: label.slice(0, i) };
 }
 
 // De standaard: de beste keuze. Op een rustdag opent het scherm alleen om een wandeling te loggen.

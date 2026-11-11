@@ -56,6 +56,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Briefing spoor 5 en 6 (met een horloge dat afvinkt is Briefing de hoofdknop op Vandaag en in Week; Zelf invullen in het menu; instelling Lus zoeken; overal Waarom deze training).
 - Live op 11 november: Briefing spoor 2 (blad Route: kaart, lussen als rijen, knop eronder, uitleg achter de i).
 - Live op 11 november: Afdaalklok (na 21 dagen zonder afdaling een voorstel met Akkoord voor Trap af, 20 min; instelbaar in Tochten; besluit `2026-11-11-afdaalklok.md`). Mag: plek als regel op de missiekaart staat nu in de coachzin.
 - Live op 11 november: Briefing A (route alleen bij buiten; Vandaag, het blad achter de i en De avond ervoor volgen Waar train je?, geen route bij Loopband).
@@ -75,7 +76,7 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, allemaal Opus, geen planning. Volgorde:
 - Live 11 november: spoor 1, 3 en 4 (Briefing A).
 - Live 11 november: spoor 2 (het blad Route met de kaart bovenaan).
-- In aanbouw 11 november: spoor 5 en 6 (Sherpa, opus, branch claude/briefing-spoor-5-6).
+- Live 11 november: spoor 5 en 6 (scherm Briefing, knop Briefing op Vandaag en in Week).
 - Daarna spoor 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
 - Het oude Info-blad spoor 3 en 4 vervallen: spoor 7 hier vervangt ze.
 
