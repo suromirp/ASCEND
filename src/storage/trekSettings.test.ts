@@ -3,6 +3,7 @@ import { SettingsRepo, wipeAllData } from './database';
 import { buildBackupEnvelope } from './backupExport';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { resolveDescentClock } from '../engine/descentClock';
+import { cleanSettings } from './backupClean';
 
 describe('de schakelaars voor tochten en de back-up', () => {
   beforeEach(async () => {
@@ -57,5 +58,16 @@ describe('de afdaalklok en de back-up', () => {
     const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
     envelope.payload.settings = { ...envelope.payload.settings, descentClock: 'soms' };
     expect(normalizeBackupToCurrentModel(envelope).settings?.descentClock).toBeUndefined();
+  });
+});
+
+describe('een beschadigde afdaalklok telt mee als overgeslagen', () => {
+  it('cleanSettings haalt de waarde weg en telt hem', () => {
+    const skipped = { n: 0 };
+    expect(cleanSettings({ descentClock: 'soms' }, skipped)?.descentClock).toBeUndefined();
+    expect(skipped.n).toBe(1);
+    const fine = { n: 0 };
+    expect(cleanSettings({ descentClock: 'uit' }, fine)?.descentClock).toBe('uit');
+    expect(fine.n).toBe(0);
   });
 });

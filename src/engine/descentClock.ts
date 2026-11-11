@@ -5,11 +5,11 @@
 // Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierschade van de volgende
 // (Maeo e.a. 2017, Byrnes e.a. 1985). De klok kijkt naar wat je echt deed, niet naar wat gepland stond:
 // - DESCENT-CLOCK: 21 dagen of meer geen afdaling in je logs: één regel en een voorstel met Akkoord voor een
-//   korte trapsessie op een vrije dag.
-// - DESCENT-TAPER: begint een bergtocht over 8 tot 14 dagen en was er sinds dag -14 geen afdaling, dan een voorstel
-//   voor één bekende afdaling tussen dag -14 en dag -7.
-// - DESCENT-LATE: begint de tocht binnen 7 dagen, dan alleen een zin. Een nieuwe prikkel geeft dan spierpijn
-//   op de tocht zelf (regel A9).
+//   korte trapsessie op een vrije dag, of anders na een herstelwandeling of een rustige loop op dezelfde dag.
+// - DESCENT-TAPER: begint een bergtocht over 7 tot 14 dagen en was er sinds dag -14 geen afdaling, dan een voorstel
+//   voor één bekende afdaling tussen dag -14 en dag -7. Op dag -7 zelf: geen voorstel meer, wel wat vandaag nog kan.
+// - DESCENT-LATE: begint de tocht over minder dan 7 dagen, dan alleen een zin. Een nieuwe prikkel geeft dan
+//   spierpijn op de tocht zelf (regel A9).
 // De planning verandert nooit stil: alleen een voorstel, en zonder dagen die passen alleen een zin.
 // Puur: geen React, geen opslag.
 
@@ -19,15 +19,18 @@ import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import { addDays, daysBetween, formatWeekdayDateNL, isoWeekday, mondayOfWeek, weekDates } from '../utils/dates';
+import type { Program } from '../models/program';
+import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
+import { addDays, daysBetween, formatWeekdayDateNL, isoWeekday, mondayOfWeek, weekDates, weekdayOf } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { goalKindOf } from './goalLabels';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { leaveDays, lightDays } from './leave';
 import { mainGoal, type Ladder } from './mainGoal';
 import { MOUNTAIN_KINDS, hasMountainGoal } from './mountainMuscles';
-import { isHardRun, isLegHeavyTemplate } from './scheduler';
-import { logSport } from './sports';
+import { isKeyFor, type KeyFocus } from './keySession';
+import { dayHasRoomFor, isHardRun, isLegHeavyTemplate } from './scheduler';
+import { logSport, templateSport } from './sports';
 import { descentOf } from './standing';
 import { hasRole, isTestOrRace } from './templateRoles';
 
@@ -43,6 +46,9 @@ export const TAPER_NEAR_DAYS = 7;
 const LOOK_AHEAD_DAYS = 7;
 // Een test vraagt frisse benen: de drie dagen ervoor geen trapsessie (regel A2: minstens 3 dagen voor kwaliteit).
 const TEST_CLEAR_DAYS = 3;
+// Na Liever niet of Begrepen blijft de klok zo lang stil, geteld vanaf de dag van je antwoord. De zin in het
+// voorstel en het id rekenen met dit ene getal.
+export const DECLINE_QUIET_DAYS = 21;
 
 export const STAIRS_TEMPLATE_ID = 'tpl_stairs_down';
 export const DESCENT_CLOCK_RULE = 'DESCENT-CLOCK';
@@ -92,7 +98,7 @@ export function descentClockContext(mode: unknown, goals: readonly TrainingGoal[
 }
 
 // Telt dit log als afdaling? 'yes': minstens 100 m dalen te voet, of de training is zelf een afdaaltraining
-// (rol `descent`: de trapsessie, Heuvelsprints en afdalen). 'unknown': een wandeling zonder hoogtemeters, dus
+// (rol `descent`: de trapsessie, Heuvelsprints en afdalen). 'unknown': een wandeling zonder hoogtemeters of met een geschatte hoogte, dus
 // ASCEND weet het niet. 'no': al het andere. Fietsen telt niet (bergaf rollen is geen excentrisch werk), een
 // loopband en een trapmachine ook niet (je klimt, je daalt niet). Een loop zonder hoogtemeters telt als vlak.
 export function countsAsDescent(log: SessionLog, templateById: ReadonlyMap<string, SessionTemplate>): 'yes' | 'unknown' | 'no' {
@@ -102,7 +108,8 @@ export function countsAsDescent(log: SessionLog, templateById: ReadonlyMap<strin
   if (sport !== 'hiking' && sport !== 'running') return 'no';
   if (descentOf(log) >= DESCENT_MIN_M) return 'yes';
   const data = log.outdoorData ?? log.cardioData;
-  const measured = data?.elevationLossM !== undefined || data?.elevationGainM !== undefined;
+  // Een geschatte hoogte is geen meting: dan weet ASCEND het net zo min als zonder getal.
+  const measured = !data?.estimatedElevation && (data?.elevationLossM !== undefined || data?.elevationGainM !== undefined);
   if (sport === 'hiking' && !measured && data?.environment !== 'treadmill') return 'unknown';
   return 'no';
 }
@@ -154,49 +161,93 @@ export interface DescentAdviceInput {
   restDay?: number;
   // Dagen waar een ander voorstel van vandaag iets neerzet: de trapsessie komt daar niet op of naast.
   taken?: ReadonlySet<string>;
+  // De dag van je antwoord per advies-id (Liever niet, Akkoord of Begrepen): de drie weken stilte tellen vanaf die dag.
+  answeredOn?: Readonly<Record<string, string>>;
+  // Wat de sleuteltraining is (engine/keySession.ts): daar komt de trapsessie niet bij op dezelfde dag.
+  keyFocus?: KeyFocus;
+  // Voor een trapsessie na een rustige training op dezelfde dag: je tijd per dag en of twee trainingen op een dag mag.
+  program?: Program | null;
+  dailyTimeBudget?: Partial<Record<Weekday, DailyTimeBudget>>;
+  sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'];
 }
 
-// De eerste vrije dag van `from` tot en met `until` waar een korte trapsessie past:
-// - niets gepland en niet je vaste rustdag, geen vakantie zonder training, tocht, lichte dag of ziektedag;
+export interface DescentSlot {
+  day: string;
+  // De rustige training van die dag waar de trapsessie achteraan komt; zonder: een vrije dag.
+  after?: SessionTemplate;
+}
+
+// De eerste dag van `from` tot en met `until` waar een korte trapsessie past. Eerst een vrije dag; is die er niet,
+// dan een dag met alleen een herstelwandeling of een rustige loop (niet hard, niet zwaar voor de benen, geen
+// sleuteltraining), waar de trapsessie als korte toevoeging achteraan komt. Voor beide geldt:
+// - niet je vaste rustdag, geen vakantie zonder training, tocht, lichte dag of ziektedag;
 // - 48 uur van een zware beendag (geen zware benen de dag ervoor of erna);
 // - nooit naast een harde loop, en niet in de drie dagen voor een test of de week voor een wedstrijd of tocht;
-// - de week houdt een dag zonder training;
 // - niet op of naast een dag waar een ander voorstel iets neerzet.
-export function findDescentDay(input: DescentAdviceInput, from: string, until: string, opts: { tripGuard: boolean }): string | undefined {
+// Een vrije dag telt alleen als de week daarna nog een dag zonder training houdt (vanaf vandaag geteld; een rij
+// Herstel is geen training). Een toevoeging op dezelfde dag vraagt ruimte in je tijd en dat twee trainingen op een dag mag.
+export function findDescentDay(input: DescentAdviceInput, from: string, until: string, opts: { tripGuard: boolean }): DescentSlot | undefined {
   const { today, plannedSessions, logs } = input;
   const byId = new Map(input.templates.map((t) => [t.id, t]));
+  const stairs = byId.get(STAIRS_TEMPLATE_ID);
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const standing = plannedSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate >= today && !logged.has(s.id));
+  const rowsOn = (day: string) => standing.filter((s) => s.scheduledDate === day);
   const templatesOn = (day: string): SessionTemplate[] => [
-    ...standing.filter((s) => s.scheduledDate === day).map((s) => byId.get(s.templateId)),
+    ...rowsOn(day).map((s) => byId.get(s.templateId)),
     ...logs.filter((l) => l.completedDate === day).map((l) => byId.get(l.templateId)),
   ].filter((t): t is SessionTemplate => !!t);
-  const busy = (day: string) => standing.some((s) => s.scheduledDate === day) || logs.some((l) => l.completedDate === day);
+  const busy = (day: string) => rowsOn(day).length > 0 || logs.some((l) => l.completedDate === day);
+  // Een dag zonder training: niets gepland of gedaan behalve Herstel.
+  const trains = (day: string) => rowsOn(day).some((s) => byId.get(s.templateId)?.type !== 'recovery') || logs.some((l) => l.completedDate === day && l.type !== 'recovery');
   const leave = leaveDays(input.leave);
   const light = lightDays(input.leave, leave);
   const trips = input.context?.trips ?? [];
+  // Een herstelwandeling of een rustige loop: niet hard, niet zwaar voor de benen, geen sleuteltraining, test of wedstrijd.
+  const easy = (t: SessionTemplate) => t.type === 'recovery'
+    || (templateSport(t) === 'running' && !isHardRun(t) && !isLegHeavyTemplate(t) && !isTestOrRace(t) && !isKeyFor(t, input.keyFocus));
 
-  for (let day = from; day <= until; day = addDays(day, 1)) {
-    if (busy(day) || (input.restDay && isoWeekday(day) === input.restDay)) continue;
+  const fits = (day: string): boolean => {
+    if (input.restDay && isoWeekday(day) === input.restDay) return false;
     const kind = leave.get(day)?.kind;
-    if (kind === 'off' || kind === 'trek' || light.has(day) || isIllnessDay(day, input.illnessEpisodes, today)) continue;
+    if (kind === 'off' || kind === 'trek' || light.has(day) || isIllnessDay(day, input.illnessEpisodes, today)) return false;
     const around = [...templatesOn(addDays(day, -1)), ...templatesOn(addDays(day, 1))];
-    if (around.some((t) => isLegHeavyTemplate(t) || isHardRun(t))) continue;
+    if (around.some((t) => isLegHeavyTemplate(t) || isHardRun(t))) return false;
     const ahead = (n: number) => Array.from({ length: n }, (_, i) => templatesOn(addDays(day, i + 1))).flat();
-    if (ahead(TEST_CLEAR_DAYS).some((t) => isTestOrRace(t)) || ahead(TAPER_NEAR_DAYS).some((t) => hasRole(t, 'race'))) continue;
-    if (opts.tripGuard && trips.some((t) => day <= t.date && daysBetween(day, t.date) < TAPER_NEAR_DAYS)) continue;
-    if ([addDays(day, -1), day, addDays(day, 1)].some((d) => input.taken?.has(d))) continue;
-    const week = weekDates(mondayOfWeek(day));
-    if (!week.some((d) => d !== day && !busy(d))) continue;
-    return day;
+    if (ahead(TEST_CLEAR_DAYS).some((t) => isTestOrRace(t)) || ahead(TAPER_NEAR_DAYS).some((t) => hasRole(t, 'race'))) return false;
+    if (opts.tripGuard && trips.some((t) => day <= t.date && daysBetween(day, t.date) < TAPER_NEAR_DAYS)) return false;
+    return ![addDays(day, -1), day, addDays(day, 1)].some((d) => input.taken?.has(d));
+  };
+  const days: string[] = [];
+  for (let day = from; day <= until; day = addDays(day, 1)) days.push(day);
+
+  // 1. Een vrije dag gaat voor.
+  for (const day of days) {
+    if (busy(day) || !fits(day)) continue;
+    if (!weekDates(mondayOfWeek(day)).some((d) => d !== day && d >= today && !trains(d))) continue;
+    return { day };
+  }
+  // 2. Anders na een herstelwandeling of een rustige loop op dezelfde dag.
+  if (!stairs || input.sameDayPairingPreference === 'never') return undefined;
+  for (const day of days) {
+    const rows = rowsOn(day);
+    if (rows.length !== 1 || logs.some((l) => l.completedDate === day) || !fits(day)) continue;
+    const template = byId.get(rows[0].templateId);
+    if (!template || !easy(template)) continue;
+    const week = standing.filter((s) => mondayOfWeek(s.scheduledDate) === mondayOfWeek(day));
+    // Met een tijdsbudget voor die dag moet het passen; zonder budget is 20 minuten na een rustige training goed.
+    if (input.dailyTimeBudget?.[weekdayOf(day)] && !dayHasRoomFor(day, stairs, week, byId, input.program, input.dailyTimeBudget, input.sameDayPairingPreference)) continue;
+    return { day, after: template };
   }
   return undefined;
 }
 
 const capital = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
 const daysText = (n: number) => (n === 1 ? '1 dag' : `${n} dagen`);
+// ", na je rustige duurloop": de trapsessie komt achter de rustige training van die dag.
+const afterText = (slot: DescentSlot) => (slot.after ? `, na je ${slot.after.name.charAt(0).toLowerCase()}${slot.after.name.slice(1)}` : '');
 
-const WHY = 'Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierschade van de volgende. In onderzoek was die bescherming er na drie en zes weken nog en na negen weken niet meer (Byrnes e.a. 1985). Vijf minuten bergaf was genoeg om het krachtverlies na een lange afdaling een week later te halveren (Maeo e.a. 2017). Drie weken is een veilige eigen grens. Een afdaling telt bij 100 meter dalen of meer in een wandeling of loop, of als de training zelf een afdaaltraining is. ASCEND kiest een vrije dag met 48 uur tot je zware beendagen en niet naast een harde loop. Zonder Akkoord verandert er niets.';
+const WHY = 'Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierschade van de volgende. In onderzoek was die bescherming er na drie en zes weken nog en na negen weken niet meer (Byrnes e.a. 1985). Vijf minuten bergaf was genoeg om het krachtverlies na een lange afdaling een week later te halveren (Maeo e.a. 2017). Drie weken is een veilige eigen grens. Een afdaling telt bij 100 meter dalen of meer in een wandeling of loop, of als de training zelf een afdaaltraining is. ASCEND kiest een vrije dag met 48 uur tot je zware beendagen en niet naast een harde loop. Is er geen vrije dag, dan komt de trapsessie na een herstelwandeling of een rustige loop op dezelfde dag. Zonder Akkoord verandert er niets.';
 const WHY_TAPER = 'Eén korte afdaling 7 tot 14 dagen voor vertrek houdt de bescherming van je bovenbenen vers voor de eerste dagen van je tocht (afgeleid uit Maeo e.a. 2017 en Byrnes e.a. 1985). In de laatste week doe je niets nieuws meer: een nieuwe prikkel geeft dan spierpijn op de tocht zelf. Bij bergwandelaars die vielen gebeurde drie kwart van de valpartijen bergaf (Faulhaber e.a. 2020). Zonder Akkoord verandert er niets.';
 
 function addProposal(title: string, day: string, template: SessionTemplate, reason: string, rule: string, why: string): PlanChangeProposal {
@@ -243,10 +294,11 @@ export function descentAdvice(input: DescentAdviceInput): Advice[] {
     const freshEnough = !!clock.last && clock.last >= farDay;
     if (freshEnough) return [];
     const toGo = daysBetween(today, trip.date);
-    if (toGo <= TAPER_NEAR_DAYS) {
-      // Te laat: geen voorstel, alleen een zin (regel A9: geen nieuwe prikkel in de laatste week).
+    // Te laat is pas na dag -7: op dag -7 zelf mag de bekende afdaling nog. Staat hij voor vandaag gepland, dan zwijgt de klok.
+    if (toGo < TAPER_NEAR_DAYS) {
+      // Geen voorstel, alleen een zin (regel A9: geen nieuwe prikkel in de laatste week).
       const id = `descent-late:${trip.date}`;
-      if (input.respondedIds.has(id)) return [];
+      if (input.respondedIds.has(id) || plannedDescent(today, today)) return [];
       const title = 'Te laat voor een afdaalprikkel';
       const lead = `${capital(trip.name)} begint over ${daysText(toGo)}. Een nieuwe afdaalprikkel geeft nu spierpijn op de tocht zelf.`;
       const effect = `${lead} ${lastText}${doubt} Begin je eerste afdaling rustig: kleine passen, knieën licht gebogen, stokken als je ze hebt.`;
@@ -255,18 +307,20 @@ export function descentAdvice(input: DescentAdviceInput): Advice[] {
     const id = `descent-taper:${trip.date}`;
     if (input.respondedIds.has(id) || plannedDescent(today, nearDay)) return [];
     const from = addDays(today, 1) > farDay ? addDays(today, 1) : farDay;
-    const day = findDescentDay(input, from, nearDay, { tripGuard: false });
+    const slot = from <= nearDay ? findDescentDay(input, from, nearDay, { tripGuard: false }) : undefined;
     const title = `Nog één bekende afdaling voor ${trip.name}`;
     const fact = `${capital(trip.name)} begint over ${daysText(toGo)}. ${lastText}${doubt}`;
-    if (!day) {
-      const lead = `${fact} Tot ${formatWeekdayDateNL(nearDay)} is er geen vrije dag die past.`;
-      const effect = `${lead} Neem voor die dag in een wandeling of loop een trap of helling mee naar beneden die je kent. Daarna niets nieuws meer voor je benen.`;
+    if (!slot) {
+      // Vandaag is dag -7: morgen is te laat, dus geen voorstel meer, alleen wat je vandaag nog kunt doen.
+      const lastDay = from > nearDay;
+      const lead = lastDay ? `${fact} Vandaag is de laatste dag voor een bekende afdaling.` : `${fact} Tot en met ${formatWeekdayDateNL(nearDay)} is er geen dag die past.`;
+      const effect = `${lead} Neem ${lastDay ? 'vandaag' : 'voor die dag'} in een wandeling of loop een trap of helling mee naar beneden die je kent. Daarna niets nieuws meer voor je benen.`;
       return [{ id, trigger: 'plan_update', ruleId: DESCENT_TAPER_RULE, title, effect, lead, brief: `Nog één afdaling voor ${trip.name}`, why: WHY_TAPER, priority: 2 }];
     }
-    const when = formatWeekdayDateNL(day);
-    const lead = `${fact} Doe op ${when} nog één afdaling die je kent.`;
+    const when = `${formatWeekdayDateNL(slot.day)}${afterText(slot)}`;
+    const lead = `${fact} Doe op ${when}${slot.after ? ',' : ''} nog één afdaling die je kent.`;
     const effect = `Met Akkoord staat ${template.name} (${minutes} minuten) op ${when}. Kies een trap of helling die je kent, en doe daarna niets nieuws meer voor je benen. Met Liever niet blijft je week zoals hij is en vraagt ASCEND er voor deze tocht niet meer naar.`;
-    const proposal = addProposal(title, day, template, 'Eén bekende afdaling voor je tocht, zodat je benen beschermd zijn.', DESCENT_TAPER_RULE, WHY_TAPER);
+    const proposal = addProposal(title, slot.day, template, 'Eén bekende afdaling voor je tocht, zodat je benen beschermd zijn.', DESCENT_TAPER_RULE, WHY_TAPER);
     return [{ id, trigger: 'plan_update', ruleId: DESCENT_TAPER_RULE, title, effect, lead, brief: `Nog één afdaling voor ${trip.name}`, why: WHY_TAPER, priority: 2, proposal }];
   }
 
@@ -276,23 +330,31 @@ export function descentAdvice(input: DescentAdviceInput): Advice[] {
   if (!start) return [];
   const days = daysBetween(start, today);
   if (days < DESCENT_CLOCK_DAYS) return [];
-  // Liever niet geldt voor dit blok van drie weken: op dag 42 vraagt de klok het opnieuw.
-  const id = `descent:${start}:${Math.floor(days / DESCENT_CLOCK_DAYS)}`;
+  // Je antwoord (Liever niet, Akkoord of Begrepen) houdt de klok drie weken stil, geteld vanaf de dag van dat antwoord.
+  // Daarna krijgt het advies een nieuw id, met de dag waarop het weer mag: dezelfde som als de zin in het voorstel.
+  const base = `descent:${start}`;
+  const mine = (key: string) => key === base || key.startsWith(`${base}:`);
+  const answered = Object.entries(input.answeredOn ?? {}).filter(([key]) => mine(key)).map(([, date]) => date).sort().at(-1);
+  if (answered && daysBetween(answered, today) < DECLINE_QUIET_DAYS) return [];
+  // Een antwoord zonder dag (alleen het id is bekend): stil, want wanneer de drie weken om zijn is niet te zeggen.
+  if (!answered && [...input.respondedIds].some(mine)) return [];
+  const id = answered ? `${base}:${addDays(answered, DECLINE_QUIET_DAYS)}` : base;
   if (input.respondedIds.has(id)) return [];
   const until = addDays(today, LOOK_AHEAD_DAYS);
   if (plannedDescent(today, until)) return [];
   const title = clock.last ? `Al ${days} dagen geen afdaling` : 'Nog geen afdaling in je logs';
   const brief = clock.last ? `${days} dagen geen afdaling` : 'Nog geen afdaling gelogd';
   const fact = clock.last ? `${lastText}${doubt}` : `ASCEND ziet in ${days} dagen geen afdaling in je logs.${doubt}`;
-  const day = findDescentDay(input, addDays(today, 1), until, { tripGuard: true });
-  if (!day) {
-    const lead = `${fact} Deze week is er geen vrije dag die past.`;
-    const effect = `${lead} Neem in je volgende wandeling of loop een trap of helling mee naar beneden: tien minuten rustig dalen is genoeg.`;
+  const again = formatWeekdayDateNL(addDays(today, DECLINE_QUIET_DAYS));
+  const slot = findDescentDay(input, addDays(today, 1), until, { tripGuard: true });
+  if (!slot) {
+    const lead = `${fact} De komende week is er geen dag die past.`;
+    const effect = `${lead} Neem in je volgende wandeling of loop een trap of helling mee naar beneden: tien minuten rustig dalen is genoeg. Na Begrepen vraagt ASCEND het op zijn vroegst op ${again} weer.`;
     return [{ id, trigger: 'plan_update', ruleId: DESCENT_CLOCK_RULE, title, effect, lead, brief, why: WHY, priority: 2 }];
   }
-  const when = formatWeekdayDateNL(day);
-  const lead = `${fact} Een korte trapsessie op ${when} houdt je benen beschermd.`;
-  const effect = `Met Akkoord staat ${template.name} (${minutes} minuten) op ${when}, een vrije dag. Met Liever niet blijft je week zoals hij is en vraagt ASCEND het pas over drie weken weer.`;
-  const proposal = addProposal(title, day, template, 'Een korte afdaalprikkel: je laatste afdaling is drie weken of langer geleden.', DESCENT_CLOCK_RULE, WHY);
+  const when = `${formatWeekdayDateNL(slot.day)}${afterText(slot)}`;
+  const lead = `${fact} Een korte trapsessie op ${when}${slot.after ? ',' : ''} houdt je benen beschermd.`;
+  const effect = `Met Akkoord staat ${template.name} (${minutes} minuten) op ${when}${slot.after ? '' : ', een vrije dag'}. Met Liever niet blijft je week zoals hij is en vraagt ASCEND het op zijn vroegst op ${again} weer.`;
+  const proposal = addProposal(title, slot.day, template, 'Een korte afdaalprikkel: je laatste afdaling is drie weken of langer geleden.', DESCENT_CLOCK_RULE, WHY);
   return [{ id, trigger: 'plan_update', ruleId: DESCENT_CLOCK_RULE, title, effect, lead, brief, why: WHY, priority: 2, proposal }];
 }

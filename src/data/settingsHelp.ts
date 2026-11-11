@@ -1401,10 +1401,10 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierpijn van de volgende.',
     points: [
       { head: 'Wat telt', text: 'een wandeling of loop met 100 meter dalen of meer, of een afdaaltraining zoals Trap af.' },
-      { head: 'Na 21 dagen', text: 'één regel op Vandaag en een voorstel voor een korte trapsessie op een vrije dag.' },
+      { head: 'Na 21 dagen', text: 'één regel op Vandaag en een voorstel voor een korte trapsessie op een vrije dag. Is die er niet, dan na een herstelwandeling of een rustige loop op dezelfde dag.' },
       { head: 'Voor een tocht', text: '7 tot 14 dagen voor vertrek vraagt ASCEND om nog één afdaling die je kent. In de laatste week niets nieuws meer.' },
       { head: 'Zonder hoogtemeters', text: 'weet ASCEND niet of je afdaalde, en dat staat er dan bij.' },
-      { head: 'Akkoord', text: 'pas dan staat de trapsessie in je week. Met Liever niet verandert er niets.' },
+      { head: 'Akkoord', text: 'pas dan staat de trapsessie in je week. Met Liever niet verandert er niets en blijft het drie weken stil.' },
     ],
   },
   rustNaTocht: {

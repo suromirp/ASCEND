@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { TrainingGoal } from '../models/goals';
 import type { IllnessEpisode } from '../models/illness';
@@ -7,7 +7,7 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import {
-  DESCENT_CLOCK_RULE, DESCENT_LATE_RULE, DESCENT_TAPER_RULE, STAIRS_TEMPLATE_ID,
+  DECLINE_QUIET_DAYS, DESCENT_CLOCK_RULE, DESCENT_LATE_RULE, DESCENT_TAPER_RULE, STAIRS_TEMPLATE_ID,
   countsAsDescent, descentAdvice, descentClock, descentClockContext, findDescentDay, resolveDescentClock,
   type DescentAdviceInput,
 } from './descentClock';
@@ -15,6 +15,8 @@ import { applyPlanChangeItems } from './proposalEngine';
 import { planPass } from './planPass';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { hasRole } from './templateRoles';
+import { freshnessCurve } from './standing';
+import { watchKindOf } from './watchFields';
 
 // Alles hier is nagemaakt. Vandaag is woensdag 11 november 2026.
 const TODAY = '2026-11-11';
@@ -149,19 +151,19 @@ describe('DESCENT-CLOCK: na 21 dagen een regel en een voorstel', () => {
     // Gedaan telt ook: zware benen die vandaag gelogd zijn houden morgen dicht.
     const done = input({ plannedSessions: [], logs: [hike('2026-10-21', 150), log('tpl_lower_a', TODAY)] });
     expect(findDescentDay(done, '2026-11-12', '2026-11-12', { tripGuard: true })).toBeUndefined();
-    expect(findDescentDay(done, '2026-11-12', '2026-11-13', { tripGuard: true })).toBe('2026-11-13');
+    expect(findDescentDay(done, '2026-11-12', '2026-11-13', { tripGuard: true })?.day).toBe('2026-11-13');
   });
 
   it('nooit naast een harde loop: dan alleen de regel, zonder voorstel', () => {
     const a = one({ plannedSessions: week('tpl_tempo_run') })!;
     expect(a.ruleId).toBe(DESCENT_CLOCK_RULE);
     expect(a.proposal).toBeUndefined();
-    expect(a.lead).toContain('Deze week is er geen vrije dag die past.');
+    expect(a.lead).toContain('De komende week is er geen dag die past.');
   });
 
   it('niet in de drie dagen voor een test', () => {
     const sessions = [planned('test', 'tpl_test_run', '2026-11-16')];
-    const found = findDescentDay(input({ plannedSessions: sessions, restDay: 7 }), '2026-11-12', '2026-11-18', { tripGuard: true });
+    const found = findDescentDay(input({ plannedSessions: sessions, restDay: 7 }), '2026-11-12', '2026-11-18', { tripGuard: true })?.day;
     // 13, 14 en 15 liggen binnen drie dagen voor de test, 12 niet.
     expect(found).toBe('2026-11-12');
     expect(findDescentDay(input({ plannedSessions: sessions, restDay: 7 }), '2026-11-13', '2026-11-15', { tripGuard: true })).toBeUndefined();
@@ -174,7 +176,7 @@ describe('DESCENT-CLOCK: na 21 dagen een regel en een voorstel', () => {
     const full = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-21', '2026-11-22'].map((d, i) => planned(`s${i}`, 'tpl_upper_a', d));
     expect(findDescentDay(input({ plannedSessions: full, restDay: undefined }), '2026-11-20', '2026-11-20', { tripGuard: true })).toBeUndefined();
     // Met een tweede lege dag in die week past hij wel.
-    expect(findDescentDay(input({ plannedSessions: full.slice(1), restDay: undefined }), '2026-11-20', '2026-11-20', { tripGuard: true })).toBe('2026-11-20');
+    expect(findDescentDay(input({ plannedSessions: full.slice(1), restDay: undefined }), '2026-11-20', '2026-11-20', { tripGuard: true })?.day).toBe('2026-11-20');
   });
 
   it('nooit twee voorstellen die samen botsen: niet op of naast een dag van een ander voorstel', () => {
@@ -187,13 +189,42 @@ describe('DESCENT-CLOCK: na 21 dagen een regel en een voorstel', () => {
     expect(one({ plannedSessions: [...week(), planned('hd', 'tpl_hills_descent', '2026-11-13')] })).toBeUndefined();
   });
 
-  it('Liever niet: stil voor dit blok van drie weken, op dag 42 vraagt de klok het opnieuw', () => {
-    const id = one()!.id;
-    expect(id).toBe('descent:2026-10-21:1');
-    expect(one({ respondedIds: new Set([id]) })).toBeUndefined();
-    // Twintig dagen later (dag 41) nog steeds stil, op dag 42 een nieuw voorstel.
-    expect(one({ today: '2026-12-01', plannedSessions: [], respondedIds: new Set([id]) })).toBeUndefined();
-    expect(one({ today: '2026-12-02', plannedSessions: [], respondedIds: new Set([id]) })?.id).toBe('descent:2026-10-21:2');
+  it('Liever niet: drie weken stil vanaf de dag van je antwoord, en de zin noemt dezelfde dag', () => {
+    const a = one()!;
+    expect(a.id).toBe('descent:2026-10-21');
+    // De zin en het id rekenen met hetzelfde getal: vandaag plus 21 dagen is woensdag 2 december.
+    expect(addDays(TODAY, DECLINE_QUIET_DAYS)).toBe('2026-12-02');
+    expect(a.effect).toContain('vraagt ASCEND het op zijn vroegst op wo 2 december weer');
+    const declined = { respondedIds: new Set([a.id]), answeredOn: { [a.id]: TODAY }, plannedSessions: [] as PlannedSession[] };
+    expect(one(declined)).toBeUndefined();
+    expect(one({ ...declined, today: '2026-12-01' })).toBeUndefined();
+    const again = one({ ...declined, today: '2026-12-02' })!;
+    expect(again.id).toBe('descent:2026-10-21:2026-12-02');
+    expect(again.title).toBe('Al 42 dagen geen afdaling');
+  });
+
+  it('Liever niet op dag 40 komt niet op dag 42 terug, maar op dag 61', () => {
+    // Dag 40 na 21 oktober is 30 november; het voorstel staat er dan nog onder het eerste id.
+    const day40 = one({ today: '2026-11-30', plannedSessions: [] })!;
+    expect(day40.id).toBe('descent:2026-10-21');
+    expect(day40.effect).toContain('op zijn vroegst op ma 21 december weer');
+    const declined = { respondedIds: new Set([day40.id]), answeredOn: { [day40.id]: '2026-11-30' }, plannedSessions: [] as PlannedSession[] };
+    for (const today of ['2026-12-02', '2026-12-10', '2026-12-20']) expect(one({ ...declined, today })).toBeUndefined();
+    expect(one({ ...declined, today: '2026-12-21' })?.id).toBe('descent:2026-10-21:2026-12-21');
+    // Ook dat tweede voorstel afgewezen: weer drie weken vanaf die dag.
+    const twice = { respondedIds: new Set([day40.id, 'descent:2026-10-21:2026-12-21']), answeredOn: { [day40.id]: '2026-11-30', 'descent:2026-10-21:2026-12-21': '2026-12-23' }, plannedSessions: [] as PlannedSession[] };
+    expect(one({ ...twice, today: '2027-01-12' })).toBeUndefined();
+    expect(one({ ...twice, today: '2027-01-13' })?.id).toBe('descent:2026-10-21:2027-01-13');
+  });
+
+  it('een antwoord zonder dag (alleen het id): stil, want wanneer de drie weken om zijn is niet te zeggen', () => {
+    expect(one({ respondedIds: new Set(['descent:2026-10-21']), today: '2026-12-30', plannedSessions: [] })).toBeUndefined();
+  });
+
+  it('Begrepen op de regel zonder voorstel belooft dezelfde termijn', () => {
+    const a = one({ plannedSessions: week('tpl_tempo_run') })!;
+    expect(a.proposal).toBeUndefined();
+    expect(a.effect).toContain('Na Begrepen vraagt ASCEND het op zijn vroegst op wo 2 december weer.');
   });
 
   it('de planningsronde laat de trapsessie na Akkoord staan, ook twee keer achter elkaar', () => {
@@ -237,7 +268,7 @@ describe('vakantie, tocht en ziek in het venster', () => {
 
   it('de dagen van een tocht en de lichte dag ervoor en erna blijven dicht', () => {
     const flat = trek('2026-11-14', '2026-11-15', 'flat_trail');
-    const found = findDescentDay(input({ plannedSessions: [], leave: [flat], restDay: undefined }), '2026-11-13', '2026-11-17', { tripGuard: true });
+    const found = findDescentDay(input({ plannedSessions: [], leave: [flat], restDay: undefined }), '2026-11-13', '2026-11-17', { tripGuard: true })?.day;
     expect(found).toBe('2026-11-17');
   });
 
@@ -263,7 +294,7 @@ describe('handlogs zonder hoogtemeters: eerlijk zeggen wat onbekend is', () => {
     expect(a.lead).toContain('ASCEND ziet in 27 dagen geen afdaling in je logs.');
     expect(a.lead).toContain('geen hoogtemeters');
     expect(a.lead).not.toContain('Je laatste afdaling');
-    expect(a.id).toBe('descent:2026-10-15:1');
+    expect(a.id).toBe('descent:2026-10-15');
   });
 
   it('zonder logs, of met minder dan 21 dagen logs, zegt de klok niets', () => {
@@ -296,7 +327,7 @@ describe('DESCENT-TAPER: één bekende afdaling voor een tocht', () => {
     const a = one({ context: trips, logs: [hike('2026-10-21', 300)], plannedSessions: week('tpl_tempo_run') })!;
     expect(a.ruleId).toBe(DESCENT_TAPER_RULE);
     expect(a.proposal).toBeUndefined();
-    expect(a.lead).toContain('Tot wo 18 november is er geen vrije dag die past.');
+    expect(a.lead).toContain('Tot en met wo 18 november is er geen dag die past.');
   });
 
   it('Liever niet: voor deze tocht niet meer, ook de 21 dagen zwijgen tot na de tocht', () => {
@@ -313,11 +344,145 @@ describe('DESCENT-TAPER: één bekende afdaling voor een tocht', () => {
     expect(one({ today: '2026-11-20', context: trips, logs: [hike('2026-11-14', 300)], plannedSessions: [] })).toBeUndefined();
   });
 
+  it('Akkoord op dag -7: op die dag zelf geen "te laat", want Trap af is dan je training', () => {
+    // Alleen woensdag 18 november (dag -7) is vrij: do t/m di staan vol met kracht boven.
+    const sessions = ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15', '2026-11-17'].map((d, i) => planned(`s${i}`, 'tpl_upper_a', d));
+    const logs = [hike('2026-10-21', 300)];
+    const a = one({ context: trips, logs, plannedSessions: sessions })!;
+    expect(a.ruleId).toBe(DESCENT_TAPER_RULE);
+    expect(a.proposal!.changes[0].newSessionDraft!.scheduledDate).toBe('2026-11-18');
+    const after = applyPlanChangeItems(a.proposal!.changes, sessions, () => 'trap').sessions;
+    // De dagen ertussen en dag -7 zelf: stil. Geen tegenzin naast de training van het eerste voorstel.
+    for (const today of ['2026-11-12', '2026-11-17', '2026-11-18']) expect(descentAdvice(input({ today, context: trips, logs, plannedSessions: after }))).toEqual([]);
+    // Gedaan op dag -7: de dag erna ook stil, de afdaling is vers.
+    expect(descentAdvice(input({ today: '2026-11-19', context: trips, logs: [...logs, log(STAIRS_TEMPLATE_ID, '2026-11-18', { plannedSessionId: 'trap' })], plannedSessions: after }))).toEqual([]);
+    // Niet gedaan: pas op dag -6 de zin dat het te laat is.
+    expect(one({ today: '2026-11-19', context: trips, logs, plannedSessions: after })?.ruleId).toBe(DESCENT_LATE_RULE);
+  });
+
+  it('dag -7 zonder geplande afdaling: geen "te laat" en geen voorstel voor morgen, wel wat vandaag nog kan', () => {
+    const a = one({ today: '2026-11-18', context: trips, logs: [hike('2026-10-21', 300)], plannedSessions: [] })!;
+    expect(a.ruleId).toBe(DESCENT_TAPER_RULE);
+    expect(a.proposal).toBeUndefined();
+    expect(a.lead).toContain('Vandaag is de laatste dag voor een bekende afdaling.');
+    // Dag -6: te laat.
+    expect(one({ today: '2026-11-19', context: trips, logs: [hike('2026-10-21', 300)], plannedSessions: [] })?.ruleId).toBe(DESCENT_LATE_RULE);
+  });
+
   it('de klok van 21 dagen zet niets in de week voor een tocht', () => {
     // Tocht over 20 dagen (1 december): nog geen afbouw. De trapsessie mag niet op 25 november of later.
     const far = { trips: [{ date: '2026-12-01', name: 'Vogezen' }] };
     expect(findDescentDay(input({ context: far, plannedSessions: [], restDay: undefined }), '2026-11-25', '2026-11-30', { tripGuard: true })).toBeUndefined();
-    expect(findDescentDay(input({ context: far, plannedSessions: [], restDay: undefined }), '2026-11-24', '2026-11-30', { tripGuard: true })).toBe('2026-11-24');
+    expect(findDescentDay(input({ context: far, plannedSessions: [], restDay: undefined }), '2026-11-24', '2026-11-30', { tripGuard: true })?.day).toBe('2026-11-24');
+  });
+});
+
+describe('geen vrije dag: na een herstelwandeling of een rustige loop op dezelfde dag', () => {
+  // Di kracht boven, wo zware benen, do rustige loop, vr kracht boven, za rustige loop, zo kracht boven; ma rust.
+  const full = (thursday = 'tpl_easy_run'): PlannedSession[] => [
+    planned('legs', 'tpl_lower_a', '2026-11-11'),
+    planned('thu', 'tpl_upper_b', '2026-11-12'),
+    planned('fri', thursday, '2026-11-13'),
+    planned('sat', 'tpl_upper_a', '2026-11-14'),
+    planned('sun', 'tpl_upper_b', '2026-11-15'),
+    planned('tue', 'tpl_upper_a', '2026-11-17'),
+    planned('wed', 'tpl_upper_b', '2026-11-18'),
+  ];
+
+  it('een dag met alleen een rustige loop: Trap af komt erachteraan, met een eerlijke zin', () => {
+    const a = one({ plannedSessions: full() })!;
+    expect(a.proposal?.changes).toHaveLength(1);
+    expect(a.proposal?.changes[0]).toMatchObject({ action: 'add', newSessionDraft: { templateId: STAIRS_TEMPLATE_ID, scheduledDate: '2026-11-13' } });
+    expect(a.lead).toContain('Een korte trapsessie op vr 13 november, na je rustige duurloop, houdt je benen beschermd.');
+    expect(a.effect).toContain('Met Akkoord staat Trap af (20 minuten) op vr 13 november, na je rustige duurloop.');
+    expect(a.effect).not.toContain('een vrije dag');
+  });
+
+  it('een herstelwandeling telt ook, een vrije dag gaat voor', () => {
+    expect(findDescentDay(input({ plannedSessions: full('tpl_herstel') }), '2026-11-12', '2026-11-18', { tripGuard: true })).toMatchObject({ day: '2026-11-13', after: { id: 'tpl_herstel' } });
+    // Zaterdag en zondag vrij: dan de vrije zaterdag, ook al komt de rustige loop eerder.
+    const withFree = full().filter((x) => x.id !== 'sat' && x.id !== 'sun');
+    expect(findDescentDay(input({ plannedSessions: withFree }), '2026-11-12', '2026-11-18', { tripGuard: true })).toEqual({ day: '2026-11-14' });
+  });
+
+  it('niet achter kracht, een harde loop, de lange duurloop of een test', () => {
+    for (const id of ['tpl_upper_a', 'tpl_tempo_run', 'tpl_long_run', 'tpl_test_run', 'tpl_ruck_walk']) {
+      expect(findDescentDay(input({ plannedSessions: full(id) }), '2026-11-13', '2026-11-13', { tripGuard: true }), id).toBeUndefined();
+    }
+  });
+
+  it('niet als twee trainingen op een dag niet mag, of als er die dag al twee staan', () => {
+    expect(findDescentDay(input({ plannedSessions: full(), sameDayPairingPreference: 'never' }), '2026-11-12', '2026-11-18', { tripGuard: true })).toBeUndefined();
+    expect(findDescentDay(input({ plannedSessions: [...full(), planned('extra', 'tpl_easy_run', '2026-11-13')] }), '2026-11-12', '2026-11-18', { tripGuard: true })).toBeUndefined();
+  });
+
+  it('met een tijdsbudget voor die dag moet de trapsessie erbij passen', () => {
+    const budget = (preferredMinutes: number) => ({ fri: { preferredMinutes, softFlexMinutes: 0 } });
+    // Rustige duurloop 40 minuten plus Trap af 20 minuten.
+    expect(findDescentDay(input({ plannedSessions: full(), dailyTimeBudget: budget(60) }), '2026-11-13', '2026-11-13', { tripGuard: true })?.day).toBe('2026-11-13');
+    expect(findDescentDay(input({ plannedSessions: full(), dailyTimeBudget: budget(45) }), '2026-11-13', '2026-11-13', { tripGuard: true })).toBeUndefined();
+  });
+
+  it('ook daar geldt de 48 uur: de rustige loop de dag na zware benen valt af', () => {
+    const sessions = [planned('legs', 'tpl_lower_a', '2026-11-11'), planned('easy', 'tpl_easy_run', '2026-11-12'), ...['2026-11-13', '2026-11-14', '2026-11-15', '2026-11-17', '2026-11-18'].map((d, i) => planned(`u${i}`, 'tpl_upper_a', d))];
+    expect(findDescentDay(input({ plannedSessions: sessions }), '2026-11-12', '2026-11-18', { tripGuard: true })).toBeUndefined();
+  });
+
+  it('de standaardweek van het demoprogramma: geen dag die past, dus de regel zonder voorstel', () => {
+    // Het demoprogramma begint op vandaag: een vaste klok op maandag 9 november 2026 geeft hele weken.
+    // Ma Herstel (rustdag), di kracht, wo Benen A, do rustige loop, vr kracht, za heuvelintervallen, zo lange duurloop.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-09T08:00:00'));
+    const demo = buildDefaultProgramData();
+    vi.useRealTimers();
+    const start = '2026-11-09';
+    expect(demo.plannedSessions.filter((x) => x.scheduledDate >= '2026-11-10' && x.scheduledDate <= '2026-11-16').sort((x, y) => x.scheduledDate.localeCompare(y.scheduledDate)).map((x) => x.templateId))
+      .toEqual(['tpl_upper_a', 'tpl_lower_a', 'tpl_easy_run', 'tpl_upper_b', 'tpl_hill_intervals', 'tpl_long_run', 'tpl_herstel']);
+    const standard = { today: start, plannedSessions: demo.plannedSessions, templates: demo.templates, logs: [hike('2026-10-19', 150)] };
+    // Donderdag ligt binnen 48 uur na Benen A; maandag is de rustdag en de dag na de lange duurloop.
+    expect(findDescentDay(input(standard), '2026-11-10', '2026-11-16', { tripGuard: true })).toBeUndefined();
+    const a = one(standard)!;
+    expect(a.ruleId).toBe(DESCENT_CLOCK_RULE);
+    expect(a.proposal).toBeUndefined();
+    expect(a.lead).toContain('De komende week is er geen dag die past.');
+    // Dezelfde week met op woensdag kracht boven in plaats van Benen A: dan past donderdag, na de rustige loop.
+    const lighter = demo.plannedSessions.map((x) => (x.templateId === 'tpl_lower_a' && x.scheduledDate === '2026-11-11' ? { ...x, templateId: 'tpl_upper_a' } : x));
+    expect(findDescentDay(input({ ...standard, plannedSessions: lighter }), '2026-11-10', '2026-11-16', { tripGuard: true })).toMatchObject({ day: '2026-11-12', after: { id: 'tpl_easy_run' } });
+  });
+});
+
+describe('de week houdt een dag zonder training', () => {
+  it('telt alleen dagen vanaf vandaag: een lege dag die al voorbij is helpt niet', () => {
+    // Vandaag is woensdag. Maandag en dinsdag waren leeg, do t/m zo staat vol behalve zaterdag.
+    const sessions = ['2026-11-11', '2026-11-12', '2026-11-13', '2026-11-15'].map((d, i) => planned(`s${i}`, 'tpl_upper_a', d));
+    expect(findDescentDay(input({ plannedSessions: sessions, restDay: undefined }), '2026-11-14', '2026-11-14', { tripGuard: true })).toBeUndefined();
+    // Is vrijdag ook leeg, dan blijft er een dag over.
+    expect(findDescentDay(input({ plannedSessions: sessions.filter((x) => x.id !== 's2'), restDay: undefined }), '2026-11-14', '2026-11-14', { tripGuard: true })?.day).toBe('2026-11-14');
+  });
+
+  it('een rij Herstel is geen training: zo\'n dag telt als de vrije dag van de week', () => {
+    const sessions = [...['2026-11-11', '2026-11-12', '2026-11-13'].map((d, i) => planned(`s${i}`, 'tpl_upper_a', d)), planned('rest', 'tpl_herstel', '2026-11-15')];
+    expect(findDescentDay(input({ plannedSessions: sessions, restDay: undefined }), '2026-11-14', '2026-11-14', { tripGuard: true })?.day).toBe('2026-11-14');
+  });
+});
+
+describe('wat Trap af elders in de app is', () => {
+  it('een geschatte hoogte is onbekend, geen nee', () => {
+    const estimated = log('tpl_ruck_walk', TODAY, { outdoorData: { durationMinutes: 90, elevationGainM: 300, estimatedElevation: true, source: 'manual' } });
+    expect(countsAsDescent(estimated, byId)).toBe('unknown');
+    // Op de loopband is het geen afdaling, ook niet onbekend.
+    expect(countsAsDescent(log('tpl_ruck_walk', TODAY, { outdoorData: { durationMinutes: 60, elevationGainM: 300, estimatedElevation: true, environment: 'treadmill', source: 'manual' } }), byId)).toBe('no');
+  });
+
+  it('geen datavelden van een tocht met rugzak; Heuvelsprints en afdalen houdt Heuvels', () => {
+    expect(watchKindOf(byId.get(STAIRS_TEMPLATE_ID))).toBeUndefined();
+    expect(watchKindOf(byId.get('tpl_hills_descent'))).toBe('hills');
+    expect(watchKindOf(byId.get('tpl_ruck_walk'))).toBe('packHike');
+  });
+
+  it('in de frisheidsgrafiek heeft de dag het merk benen', () => {
+    const curve = freshnessCurve({ today: TODAY, logs: [], plannedSessions: [planned('trap', STAIRS_TEMPLATE_ID, '2026-11-13')], templates } as never);
+    expect(curve.find((p) => p.date === '2026-11-13')?.sessions).toEqual([expect.objectContaining({ name: 'Trap af', mark: 'legs' })]);
   });
 });
 

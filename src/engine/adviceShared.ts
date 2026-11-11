@@ -117,6 +117,8 @@ export interface AdviceInputs {
   weather?: { forecast: WeatherForecast; now: Date; leave?: LeavePeriod[] };
   // De afdaalklok (engine/descentClock.ts): aan, met de tochten die nog komen. Absent = uit.
   descentClock?: DescentClockContext;
+  // De dag van je antwoord per advies-id: de afdaalklok telt haar drie weken stilte vanaf die dag.
+  answeredOn?: Readonly<Record<string, string>>;
   // Your rest day, 1 to 7 (rule REST-BACK). Absent: the rest day of the extra training, if any.
   restDay?: number;
   // "Rustdag terugzetten voorstellen" (rule REST-BACK, engine/restDayBack.ts). Absent = on.
