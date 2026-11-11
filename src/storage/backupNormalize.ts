@@ -11,7 +11,7 @@ import type { AppSettings } from './database';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
-import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSetSkill, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, migrateSkillGoals, type AscendExport } from './migrations';
+import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSetSkill, migrateLogSetRow, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, migrateSkillGoals, migratePlaces, migrateSavedRoutes, routesOfPlaces, type AscendExport } from './migrations';
 import { sanitizeRoutePlan, sanitizeSoloPlan } from '../engine/routePlan';
 import { CURRENT_BACKUP_SCHEMA_VERSION, type NormalizedBackupData } from './backupTypes';
 import { BackupMessageError } from './backupMessage';
@@ -63,7 +63,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped)?.map(cleanPlannedCatchUp).map(migratePlannedFixed).map(migratePlannedAmount);
-  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogSetAsked).map(migrateLogSetSkill).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogZone2Pieces).map(migrateLogRpeAssumed).map(migrateLogCountedSport).map(migrateLogCustomSport).map(migrateLogLinkedLater);
+  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogSetAsked).map(migrateLogSetSkill).map(migrateLogSetRow).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogZone2Pieces).map(migrateLogRpeAssumed).map(migrateLogCountedSport).map(migrateLogCustomSport).map(migrateLogLinkedLater);
   const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped)?.map(migrateInjuryNote);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;
   const settings = cleanSettings(raw.settings, skipped);
@@ -150,6 +150,26 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
     const skill = migrateSkillGoals(raw.skillGoals);
     if (skill.store) normalized.skillGoals = skill.store;
     skipped.n += skill.skipped;
+  }
+
+  // Plekken en bewaarde routes (storage/migrationsPlaces.ts): a file from before them has none and the device
+  // keeps its own; a damaged place or route is dropped and counted, never the rest. A list of which nothing
+  // could be read counts as "not in this file": damaged rows never empty the device. Only a list that was
+  // empty in the file itself (the copy taken before an import) says "no places". A route of a place that is
+  // not in the same file is dropped and counted too; a file with routes only is checked against the places of
+  // the device at the import (storage/backupPreview.ts).
+  {
+    const places = migratePlaces(raw.places);
+    const readable = (list: unknown[] | undefined, source: unknown): boolean => !!list && (list.length > 0 || (Array.isArray(source) && source.length === 0));
+    if (readable(places.list, raw.places)) normalized.places = places.list;
+    skipped.n += places.skipped;
+    const routes = migrateSavedRoutes(raw.savedRoutes);
+    skipped.n += routes.skipped;
+    if (routes.list && readable(routes.list, raw.savedRoutes)) {
+      const kept = normalized.places ? routesOfPlaces(routes.list, normalized.places) : routes.list;
+      skipped.n += routes.list.length - kept.length;
+      normalized.savedRoutes = kept;
+    }
   }
 
   // Soort, gegevens en belangrijkheid van elk doel (ronde 2a): een back-up van voor deze

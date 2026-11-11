@@ -16,6 +16,7 @@ import {
   plateClosest,
   plateShortText,
   exerciseComplete,
+  restBeforeNewExercise,
   exerciseSummary,
   nextField,
   plateChange,
@@ -126,6 +127,19 @@ describe('nextField', () => {
   it('een tijdsoefening heeft geen velden', () => {
     const t = [ex('a', [row('a1')]), ex('plank', [row('p1')], { timed: true }), ex('z', [row('z1')])];
     expect(nextField(t, { slot: 'a', rowId: 'a1', field: 'reps' })).toEqual({ slot: 'z', rowId: 'z1', field: 'weightKg' });
+  });
+});
+
+describe('restBeforeNewExercise: komt er na de rust een nieuwe oefening', () => {
+  it('na de laatste set van een oefening met nog iets open: ja', () => {
+    expect(restBeforeNewExercise([ex('a', [row('a1', { done: true })]), ex('b', [row('b1')])], 'a')).toBe(true);
+  });
+  it('midden in een oefening: nee, de volgende set', () => {
+    expect(restBeforeNewExercise([ex('a', [row('a1', { done: true }), row('a2')]), ex('b', [row('b1')])], 'a')).toBe(false);
+  });
+  it('alles af, of een onbekende plek: nee', () => {
+    expect(restBeforeNewExercise([ex('a', [row('a1', { done: true })])], 'a')).toBe(false);
+    expect(restBeforeNewExercise([ex('a', [row('a1')])], 'x')).toBe(false);
   });
 });
 

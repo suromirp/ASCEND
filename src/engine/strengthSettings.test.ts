@@ -159,10 +159,24 @@ describe('het workoutscherm', () => {
     expect(compareMoments('4_8')).toEqual([4, 8]);
     expect(compareMoments('12_26')).toEqual([12, 26]);
   });
-  it('de nieuwe rustgeluiden blijven staan en onbekende vallen weg', () => {
-    for (const k of ['boxing', 'whistle', 'gong', 'chime']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe(k);
+  it('de negen rustgeluiden blijven staan, een oude keuze leest als de nieuwe en onbekende vallen weg (11 november)', () => {
+    for (const k of ['pickaxe', 'vikinghorn', 'templebell', 'lyre']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe(k);
+    expect(normalizeStrengthSettings({ restSound: 'gong' })!.restSound).toBe('templebell');
+    for (const k of ['boxing', 'cowbell']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe('clearbell');
+    for (const k of ['chime', 'bell', 'whistle', 'beep']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe('clearbell');
     expect(normalizeStrengthSettings({ restSound: 'trompet' })!.restSound).toBeUndefined();
-    expect(resolveStrengthSettings({ restSound: 'gong' }).restSound).toBe('gong');
+    expect(resolveStrengthSettings({ restSound: 'gong' } as never).restSound).toBe('templebell');
+    expect(resolveStrengthSettings(undefined).restSound).toBe('clearbell');
+  });
+  it('volume, vooraankondiging en klank bij volgende oefening: advies als standaard, rommel valt weg', () => {
+    const d = resolveStrengthSettings(undefined);
+    expect([d.restVolume, d.restPreTick, d.restNextExercise]).toEqual(['normal', false, true]);
+    const s = resolveStrengthSettings({ restVolume: 'clear', restPreTick: true, restNextExercise: false });
+    expect([s.restVolume, s.restPreTick, s.restNextExercise]).toEqual(['clear', true, false]);
+    const junk = normalizeStrengthSettings({ restVolume: 'luid', restPreTick: 'ja', restNextExercise: 1 } as never) ?? {};
+    expect(junk).not.toHaveProperty('restVolume');
+    expect(junk).not.toHaveProperty('restPreTick');
+    expect(junk).not.toHaveProperty('restNextExercise');
   });
   it('een waarde per oefening zetten en weer wissen', () => {
     const on = withExerciseValue({ warmup: 'off' }, 'exerciseNotes', 'leg-press', 'stoel op 4');

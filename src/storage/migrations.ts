@@ -22,12 +22,18 @@
 //
 // PlanChangeItem.replacesSessionId (2026-11-09, weghaling met toevoeging) needs no step: optional and additive, only
 // on an 'add' in a proposal, never read by applyPlanChangeItems. An older proposal without it reads the same.
+//
+// Plekken en bewaarde routes (2026-11-11, docs/beslissingen/2026-11-11-plekken-opslag.md) live in two optional
+// fields, `places` and `savedRoutes`, like `skillGoals`: optional and additive, so the version stays. A file
+// without them keeps the places of the device; migratePlaces and migrateSavedRoutes drop a damaged place or
+// route (counted as skipped) and never throw. The old Vast punt (`routeStartPoint`, device only) becomes the
+// place Thuis once at boot (storage/places.ts#migrateStartPointToHome), not here: it was never in a file.
 
 export { CURRENT_SCHEMA_VERSION, migrateV1toV2, migrateExport } from './migrationsSchema';
 export type { AscendExport } from './migrationsSchema';
 export { migrateLeavePeriods, readWeekShape, migratePlanChangeProposal, migrateDirection, migrateWaveSettings } from './migrationsPlanning';
 export { migrateNightJudgments, migrateLegEaseDays, migrateSweatEntries, migrateSweatPre, migrateInjuryNote, migrateWeeklyHealthCheck, migrateMornings, migrateExternalOneRm, migrateWeightEntries, dedupeInfluencesByPlace, migrateInfluences } from './migrationsBody';
-export { migrateManualMeasured, migrateLogManualMeasured, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateTestJudgments, migrateZoneAnswers, migrateLogSetTimes, migrateLogSets, migrateLogSetAsked, migrateLogSetSkill } from './migrationsLogs';
+export { migrateManualMeasured, migrateLogManualMeasured, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateTestJudgments, migrateZoneAnswers, migrateLogSetTimes, migrateLogSets, migrateLogSetAsked, migrateLogSetSkill, migrateLogSetRow } from './migrationsLogs';
 export { cleanNavigationSettings, migrateCardsAboveMission, migrateDataSettings, migrateAutoBackupSettings, migrateHealthConnectState } from './migrationsSettings';
 export { migrateSportHandling, migrateSportCounting, migrateLogCountedSport, migratePlannedFixed, migrateKindAmount, migratePlannedAmount, migrateCustomSports, migrateLogCustomSport, migrateLogRpeAssumed } from './migrationsSports';
 export { migrateActivityDetail, migrateLogDetail, migrateLogRunDetail, migrateActivityStreams, migrateSessionTrim, migrateLogTrim, migrateSourceSync, migrateLogSourceSync, migrateLogZone2Pieces } from './migrationsLogDetail';
@@ -35,3 +41,5 @@ export { readGoalDetails, readGoalKind, readGoalPriority, priorityFromPlanRole, 
 export type { GoalKindContext } from './migrationsGoals';
 export { migrateSkillGoals, readSkillGoalStore } from './migrationsSkill';
 export type { SkillGoalsRead } from './migrationsSkill';
+export { migratePlaces, migrateSavedRoutes, routesOfPlaces, readPlaceList, readSavedRouteList } from './migrationsPlaces';
+export type { PlacesRead, SavedRoutesRead } from './migrationsPlaces';

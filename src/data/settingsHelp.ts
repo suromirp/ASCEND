@@ -457,6 +457,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Onder elkaar', text: 'alle oefeningen op een pagina, zoals eerst. Je kunt dit ook in het menu van de training zelf zetten.' },
     ],
   },
+  forgeVerloop: {
+    title: 'Verloop toont',
+    lead: 'Het blad Verloop van de training zet per set een regel: het gewicht, de herhalingen en je RIR zoals de set uiteindelijk is, met alle redenen in een zin.',
+    points: [
+      { head: 'Alleen wijzigingen', text: 'het advies. Alleen de sets waar jij of Forge iets aan veranderde, of die onder het bereik bleven.' },
+      { head: 'Alle sets', text: 'ook de sets volgens schema, met de zwaarste set per oefening. Een gedempt bolletje is een RIR die je niet zelf koos.' },
+      { head: 'In het blad', text: 'je kunt ook wisselen in het blad zelf; die keuze blijft staan.' },
+    ],
+  },
   forgeOnderbreking: {
     title: 'Lange onderbreking vragen na',
     lead: 'Een training in Forge blijft open tot je afrondt of verwijdert, ook als je de app sluit. Kom je terug na een lange stilte, dan vraagt Forge eenmaal of die tijd meetelt.',
@@ -872,7 +881,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Waar een voorgestelde lus begint.',
     points: [
       { head: 'Waar je nu bent', text: 'het advies. Bij elke zoektocht vraagt ASCEND één keer je plek, op 50 m nauwkeurig, en die gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Hij wordt niet als startpunt bewaard. Lukt het niet, dan begint de lus bij je vaste punt als je dat hebt, en anders ongeveer; één regel zegt waarom.' },
-      { head: 'Vast punt', text: 'je kiest Gebruik waar ik nu ben, bij je deur, of je tikt een punt op de kaart bij Route voorstellen en kiest Start hier. Dat punt gaat naar de routeplanner en wordt alleen op dit toestel bewaard. Wis startpunt haalt het weg.' },
+      { head: 'Vast punt', text: 'je kiest Gebruik waar ik nu ben, bij je deur, of je tikt een punt op de kaart bij Route voorstellen en kiest Start hier. Dat punt gaat naar de routeplanner en wordt op dit toestel bewaard; het gaat mee in je back-up. Wis startpunt haalt het weg.' },
       { head: 'Ongeveer', text: 'je plaats, binnen een kilometer. De lus begint tot ongeveer 700 m van huis.' },
       { head: 'OpenStreetMap', text: 'heuvels en paden zoekt het om je plek van nu (op ongeveer 100 m), om je vaste punt, of bij Ongeveer om je afgeronde plek. De hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Wis startpunt haalt ook de bewaarde heuvels rond een precies punt weg.' },
       { head: 'Het dichtstbijzijnde pad', text: 'de routeplanner begint op het pad of de weg het dichtst bij je startpunt. Het stukje ernaartoe is een rechte lijn.' },

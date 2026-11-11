@@ -96,6 +96,7 @@ import { ladderStateFor } from '../../engine/skillLadder';
 import { exerciseKey } from '../../engine/strengthHistory';
 import type { SetBand } from '../../models/training';
 import { restNameAfter, useForgePager, useLater } from './useForgePager';
+import { restBeforeNewExercise } from '../../engine/forgeInput';
 import { RestBar } from './ForgeTimers';
 import { ForgeIntro } from './ForgeIntro';
 import { ForgeHeader } from './ForgeHeader';
@@ -311,7 +312,7 @@ function ForgeWorkoutInner({
     if (events.length > 0) setForgeLog((l) => appendEvents(l, events));
   }, [workout, readOnly]);
 
-  const alerted = useRestAlert(rest, setRest, strength.restAlert, strength.restSound);
+  const alerted = useRestAlert(rest, setRest, strength);
   const startRest = (next: Rest) => {
     alerted.current = null;
     setRest(next);
@@ -363,7 +364,7 @@ function ForgeWorkoutInner({
     // Een houding heeft geen gewicht en geen reserve: Forge rekent daar niet mee.
     const reckoned = raw.workout.map((e) => (e.slot === slot && !e.hold ? reckonAfterTick(e, rowId, reckonCtx) : e));
     const result = { ...raw, workout: reckoned };
-    if (reckoned.some((e, i) => e !== raw.workout[i])) markCause({ kind: 'meegerekend' });
+    if (reckoned.some((e, i) => e !== raw.workout[i])) markCause({ kind: 'meegerekend', via: { slot, rowId } });
     setWorkout(result.workout);
     // Na het afvinken van de topset of de laatste set: één snelle vraag hoeveel je over had. Een andere tik haalt hem weg.
     const askEx = result.workout.find((e) => e.slot === slot);
@@ -430,7 +431,7 @@ function ForgeWorkoutInner({
     if (result.restSec && strength.restAuto) {
       const ex = workout.find((e) => e.slot === slot);
       alerted.current = null;
-      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? '') });
+      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? ''), nextExercise: restBeforeNewExercise(result.workout, slot) });
     }
   }
 
@@ -473,7 +474,7 @@ function ForgeWorkoutInner({
     if (result.restSec && strength.restAuto) {
       const ex = workout.find((e) => e.slot === slot);
       alerted.current = null;
-      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? '') });
+      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: restNameAfter(result.workout, slot, ex?.name ?? ''), nextExercise: restBeforeNewExercise(result.workout, slot) });
     }
   }
 
@@ -511,7 +512,7 @@ function ForgeWorkoutInner({
     haptics.tap();
     const mine = updateRow(ex, rowId, { rir });
     const after = reckonAfterTick(mine, rowId, reckonCtx);
-    markCause(after !== mine ? { kind: 'meegerekend' } : { kind: 'eigen', edited: { slot, rowId } });
+    markCause(after !== mine ? { kind: 'meegerekend', via: { slot, rowId } } : { kind: 'eigen', edited: { slot, rowId } });
     setExercise(slot, () => after);
   }
 

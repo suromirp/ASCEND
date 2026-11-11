@@ -22,6 +22,10 @@ export interface AscendExport {
   // actually contained.
   injuryNotes?: unknown;
   settings: unknown;
+  // Plekken en bewaarde routes (models/place.ts). Optional and additive, so the schema version stays 2:
+  // a file without them is read exactly as before, and a missing value is never "no places".
+  places?: unknown;
+  savedRoutes?: unknown;
 }
 
 // v1 -> v2: a pass-through. `externalId` is optional on every log, so a v1

@@ -1,35 +1,43 @@
-// ASCEND: het eigen startpunt van een lus (Startpunt van je lus, Vast punt). Het punt staat alleen op
-// dit toestel, onder een eigen sleutel in de meta-opslag: nooit in de export, nooit in een back-up,
-// nooit in een log. Een back-up of import raakt de sleutel niet (de back-up schrijft en wist alleen
-// de sleutels die hij kent). Wissen is één tik in de instelling. Docs:
-// docs/beslissingen/2026-11-09-startpunt-lus.md.
+// ASCEND: het eigen startpunt van een lus (Startpunt van je lus, Vast punt). Sinds Plekken is dat punt de
+// plek Thuis (storage/places.ts): dit bestand leest en zet Thuis, en de instelling houdt de waarde `exact`.
+// Thuis gaat mee in de back-up, als plek. De oude sleutel `routeStartPoint` wordt bij de eerste start
+// Thuis (places.ts#migrateStartPointToHome); zolang dat nog niet gelukt is, leest dit bestand hem nog,
+// zodat Vast punt blijft werken. Wissen is één tik in de instelling. Docs:
+// docs/beslissingen/2026-11-09-startpunt-lus.md, docs/beslissingen/2026-11-11-plekken-opslag.md.
 //
 // Het punt bepalen heeft een grens in tijd en geeft altijd een punt of een reden; het gooit nooit.
 
 import { MetaRepo } from './database';
 import { clearExactTerrain } from './nearbyTerrain';
+import { OLD_START_POINT_KEY, clearHome, loadPlaces, setHomePoint } from './places';
+import { homeOf, placePoint } from '../engine/places';
+import type { PlaceSource } from '../models/place';
 import { MAX_START_ACCURACY_M, roundExact, validStartPoint, type StartFailure } from '../engine/routeStart';
 import type { RoutePoint } from '../models/route';
 import { locateMe, LocateError, type Position2 } from '../utils/geolocation';
 import { withTimeout } from '../utils/withTimeout';
 import { requestFineAppLocationPermission } from '../integrations/geolocation';
 
-const KEY = 'routeStartPoint';
 export const START_LOCATE_LIMIT_MS = 15_000;
 
 export async function getRouteStartPoint(): Promise<RoutePoint | undefined> {
   try {
-    return validStartPoint(await MetaRepo.get<unknown>(KEY));
+    const home = homeOf(await loadPlaces());
+    if (home) return validStartPoint(placePoint(home));
+    // Nog niet verhuisd (de migratie loopt bij de start): het oude punt geldt tot het Thuis is.
+    return validStartPoint(await MetaRepo.get<unknown>(OLD_START_POINT_KEY));
   } catch {
     return undefined;
   }
 }
 
-export async function saveRouteStartPoint(point: RoutePoint): Promise<boolean> {
+// Zet het punt van Thuis. `source` zegt waar een nieuwe Thuis vandaan komt (je plek van nu of de kaart);
+// een bestaande Thuis verhuist alleen.
+export async function saveRouteStartPoint(point: RoutePoint, source: PlaceSource = 'here'): Promise<boolean> {
   const valid = validStartPoint(point);
   if (!valid) return false;
   try {
-    await MetaRepo.set(KEY, roundExact(valid));
+    if (!(await setHomePoint(roundExact(valid), source))) return false;
     // De heuvels rond het vorige punt horen niet te blijven staan.
     await clearExactTerrain();
     return true;
@@ -40,11 +48,8 @@ export async function saveRouteStartPoint(point: RoutePoint): Promise<boolean> {
 
 // Wissen lukt of er was niets: de uitkomst is of het punt nu weg is.
 export async function clearRouteStartPoint(): Promise<boolean> {
-  try {
-    await MetaRepo.delete(KEY);
-  } catch {
-    // Dan hieronder: staat het er nog, dan is het niet gelukt.
-  }
+  // Thuis, zijn routes en de oude sleutel in één keer; lukt het niet, dan zegt de regel hieronder dat.
+  await clearHome();
   // Ook de heuvels die rond dit punt bewaard zijn: daar staat het punt op vier decimalen in.
   await clearExactTerrain();
   return (await getRouteStartPoint()) === undefined;
@@ -97,6 +102,6 @@ export async function startFromMap(from: { tap: RoutePoint } | 'here', deps: Use
   const point = validStartPoint(from.tap);
   if (!point) return { ok: false, reason: 'unavailable' };
   if (deps.signal?.aborted) return { ok: false, reason: 'timeout' };
-  const saved = await withTimeout(saveRouteStartPoint(point), START_LOCATE_LIMIT_MS).catch(() => false);
+  const saved = await withTimeout(saveRouteStartPoint(point, 'map'), START_LOCATE_LIMIT_MS).catch(() => false);
   return saved ? { ok: true, point: roundExact(point) } : { ok: false, reason: 'unavailable' };
 }
