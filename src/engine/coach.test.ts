@@ -83,3 +83,11 @@ describe('pain after a run or a hike', () => {
     expect(coachLineForToday({ template: t('tpl_upper_a'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: sore, templateById: byId })).toBe('Gisteren pijn aan je achillespees. Voelt het nog niet goed, neem dan de korte versie of verplaats de training.');
   });
 });
+
+describe('coachLineForToday bij Trap af', () => {
+  it('zegt waar en hoe, niet de algemene praatregel', () => {
+    const l = coachLineForToday({ template: t('tpl_stairs_down'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: [], templateById: byId });
+    expect(l).toContain('trappenhuis');
+    expect(l).not.toMatch(/Rustig en gelijkmatig|hele zinnen/);
+  });
+});
