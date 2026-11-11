@@ -338,4 +338,21 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Route-kaart 2, Sherpa, opus (sessie), 270k context, $6,30, 0 herstelrondes
 - 2026-11-11, Onderzoek werkwijze autonome agents, Scout, opus (sportwetenschapper), 97k, 5 min, 0 herstelrondes
 - 2026-11-11, Herreview Eten onderweg, Warden, sonnet (reviewer), 66k, 3 min, akkoord (plek door coördinator aangepast)
+- 2026-11-11, Eten onderweg (2 rondes), Sherpa, opus (sessie), 323k context, $9,07, 1 herstelronde plus plek door coördinator
+- 2026-11-11, Pathfinder doorloop Briefing A (eerste poort), pathfinder, sonnet, 57k, 5 min, 3 moet (route-regel alleen op het trainingsscherm)
+- 2026-11-11, Review Briefing A, Warden, sonnet (reviewer), 52k, 10 min, akkoord (Pathfinder vond 3 moet)
+- 2026-11-11, Review Afdaalklok herreview, Warden, sonnet (reviewer), 224k, niet akkoord (1 blokkerend, door coördinator hersteld in dc54e13)
+- 2026-11-11, Pathfinder doorloop Afdaalklok, pathfinder, sonnet, 98k, 10 min, 1 moet (Trap af zonder eigen uitleg), 5 mag naar backlog
+- 2026-11-11, Warden herreview Briefing A, reviewer, sonnet, 33k, 4 min, akkoord (2 mag)
+- 2026-11-11, Pathfinder herdoorloop Briefing A, pathfinder, sonnet, 58k, 7 min, 3 moet opgelost
+- 2026-11-11, Warden review Afdaalklok herstel, reviewer, sonnet, 37k, 4 min, akkoord (mag-punten)
+- 2026-11-11, Pathfinder herdoorloop Afdaalklok, pathfinder, sonnet, 104k (totaal), 2 min, moet opgelost, 2 mag
+- 2026-11-11, Afdaalklok (3 rondes), Sherpa, fable (sessie), 515k context, $23,74, 2 herstelrondes plus crash en coachzin door coördinator
+- 2026-11-11, Warden review Briefing spoor 2, reviewer, sonnet, 37k, 2 min, akkoord (1 moet naar backlog)
+- 2026-11-11, Pathfinder doorloop Briefing spoor 2, pathfinder, sonnet, 101k, 8 min, 2 moet (1 herstel, 1 spoor 6), 6 mag
+- 2026-11-11, Briefing spoor 2 (2 rondes), Sherpa, opus (sessie), zie sessie, 1 herstelronde plus Garmin-uitleg door coördinator
+- 2026-11-11, Pathfinder herdoorloop Briefing spoor 2, pathfinder, sonnet, 110k (totaal), 2 min, 1 moet (360x640) naar backlog, 1 klein door coördinator
+- 2026-11-11, Pathfinder vooraf plekken en routes, pathfinder, sonnet, 31k, 1 min, plek en volgorde (2 voor 1)
+- 2026-11-11, Scout Garmin koers vooraf, sportwetenschapper (Scout), sonnet, 28k, 1 min, kan zonder sleutel: koers opslaan en syncen, geen datumkoppeling
+- 2026-11-11, Cartographer ontwerp Plekken en routes, ontwerper, opus, zie melding, 193 regels, 5 vragen
 - 2026-11-11, Review Briefing spoor 5 en 6, Warden, sonnet (reviewer), 100k, 4 min, akkoord (vijf kan-punten, vier verwerkt)
