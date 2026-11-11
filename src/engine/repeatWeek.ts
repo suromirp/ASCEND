@@ -49,7 +49,7 @@ import { phaseWaveLength } from '../models/program';
 import { activeIllness, recoveryRamp } from './illness';
 import { buildWeekReview } from './weekReview';
 import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
-import { isKeyTemplateId, weekKeySession, type KeyFocus } from './keySession';
+import { weekKeySession, type KeyFocus } from './keySession';
 import { kgLabel } from '../utils/kg';
 
 // Below this share of the planned trainings (rest sessions not counted) a
@@ -66,7 +66,7 @@ const OFFER_DAYS = 2;
 export interface WeekOutcome {
   planned: number; // trainings that counted: no rest sessions, no ill days
   done: number;
-  keyPlanned: number; // sleuteltrainingen (engine/keySession.ts)
+  keyPlanned: number; // 1 als de week een sleuteltraining had (engine/keySession.ts#weekKeySession)
   keyDone: number;
 }
 
@@ -159,7 +159,7 @@ function loadAt(template: SessionTemplate, program: Program, date: string): Load
 // the repeat: this week, and the heaviest week of the wave.
 function keyImpact(program: Program, weekStart: string, plannedSessions: PlannedSession[], templates: SessionTemplate[], focus?: KeyFocus): KeyImpact | undefined {
   const monday = mondayOfWeek(weekStart);
-  const key = weekKeySession(plannedSessions.filter((s) => s.scheduledDate >= monday && s.scheduledDate <= addDays(monday, 6) && s.status !== 'skipped'), templates, focus);
+  const key = weekKeySession(plannedSessions.filter((s) => s.scheduledDate >= monday && s.scheduledDate <= addDays(monday, 6) && s.status !== 'skipped'), templates, focus, program);
   const template = key && templates.find((t) => t.id === key.templateId);
   const position = resolveProgramWeek(program, monday);
   if (!key || !template || !position) return undefined;
@@ -239,8 +239,8 @@ export function proposeRepeatWeek(inputs: RepeatWeekInputs): RepeatWeekProposal 
   const verdict = judgeWeek(review);
   if (!verdict.fellShort) return undefined;
 
-  const names = new Map(inputs.templates.map((t) => [t.id, t.name]));
-  const missedKey = [...new Set(review.missedTemplateIds.filter((t) => isKeyTemplateId(t, inputs.templates, inputs.keyFocus)))].map((t) => names.get(t) ?? 'de sleuteltraining');
+  // The one key session of that week (engine/keySession.ts#weekKeySession), when it was not done.
+  const missedKey = verdict.keyMissed ? [review.keyName ?? 'sleuteltraining'] : [];
   return {
     id, weekStart, previousWeek, done: review.done, planned: review.planned, verdict, missedKey,
     impact: keyImpact(program, weekStart, inputs.plannedSessions, inputs.templates, inputs.keyFocus),

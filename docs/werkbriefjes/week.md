@@ -25,7 +25,7 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 - `src/storage/planGolden.test.ts` laten bewegen door iets in Week; REST-DAY met jouw slot meldt alleen onder `reportYours` (standaard uit).
 
 ## Valkuilen
-- Een gemiste training naar later is geen verplaatste rij. Het is een inhaal: een nieuwe rij met jouw slot en `catchUp`, en de oude rij wordt overgeslagen (`engine/catchUp.ts`). Week verbergt de oude rij en de nieuwe zegt "verplaatst van"; de woorden zijn Verplaatsen en Toch verplaatsen.
+- Een gemiste training naar later is geen verplaatste rij. Het is een inhaal: een nieuwe rij met jouw slot en `catchUp`, en de oude rij wordt overgeslagen (`engine/catchUp.ts`). Week verbergt de oude rij en de nieuwe zegt "verplaatst van"; de woorden zijn Verplaatsen en Toch verplaatsen. Twee inhalen op één dag bestaat niet: het inhalen haalt hoogstens één sleuteltraining in (`engine/adviceWeek.ts#missedAdvice`), nooit naast een andere harde loop (`engine/hardRunApart.ts`), en de 48 uur bij het inhalen kijkt over de weekgrens (`adviceShared.ts#findCatchUpDate`). Ook restDayBack en elke tekst met "lange training" lezen de focus van `engine/keySession.ts` (`docs/beslissingen/2026-11-11-sleuteltraining.md`).
 - De weekterugblik telt de overgeslagen oude rij van een inhaal niet mee als gemist (`buildWeekReview`, `movedOn`); anders staat dezelfde training twee keer in de lijst.
 - `useVerticalDrag` is gedeeld met de doelen op Ascend: een wijziging daar verandert beide.
 - Een mislukte ruil of verplaatsing moet een zichtbare uitkomst geven (review van 2 november); een verouderd voorstel zegt dat het veranderd is.

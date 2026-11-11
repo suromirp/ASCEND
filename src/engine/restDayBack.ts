@@ -25,6 +25,8 @@ import { makeId } from '../utils/id';
 import { isIllnessDay } from './illness';
 import { leaveDays } from './leave';
 import { hasRole } from './templateRoles';
+import { isKeyFor, type KeyFocus } from './keySession';
+import { hardRunApart } from './hardRunApart';
 import { respectsHeavySpacing } from './scheduler';
 import { caughtUpMap } from './catchUp';
 import { restDayThisWeek } from './restDayThisWeek';
@@ -42,6 +44,8 @@ export interface RestBackInput {
   anchor?: string;
   leave?: LeavePeriod[];
   illnessEpisodes?: IllnessEpisode[];
+  // Wat de sleuteltraining is (engine/keySession.ts), dezelfde als bij het inhalen. Zonder: de lange duurloop of de bergtocht.
+  keyFocus?: KeyFocus;
 }
 
 // De rijen Herstel die een voorstel liet vervallen op een vaste rustdag die nu weer leeg is.
@@ -84,9 +88,10 @@ function trainedOn(day: string, input: RestBackInput, byId: Map<string, SessionT
   return day >= input.today && input.plannedSessions.some((o) => o.scheduledDate === day && o.status !== 'skipped' && !logged.has(o.id) && !!byId.get(o.templateId) && byId.get(o.templateId)!.type !== 'recovery');
 }
 
-// Een gemiste belangrijke training (een test of de sleuteltraining van de week, via de rol) in de zeven dagen
+// Een gemiste belangrijke training (een test, of een sleuteltraining van engine/keySession.ts) in de zeven dagen
 // voor `date`, niet gelogd, niet ingehaald, niet door een voorstel of vakantie losgelaten en niet op een
-// ziektedag, die op `date` past met de 48 uur tussen zware beendagen. Gemist is voorbij zonder log, of zelf
+// ziektedag, die op `date` past met de 48 uur tussen zware beendagen en, net als bij het inhalen, zonder
+// harde loop ernaast (engine/hardRunApart.ts). Gemist is voorbij zonder log, of zelf
 // overgeslagen.
 function catchUpFits(date: string, rest: PlannedSession, input: RestBackInput, byId: Map<string, SessionTemplate>): boolean {
   const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -94,14 +99,15 @@ function catchUpFits(date: string, rest: PlannedSession, input: RestBackInput, b
   const around = input.plannedSessions.filter((o) => o.id !== rest.id && o.status !== 'skipped' && (o.scheduledDate >= input.today || logged.has(o.id)));
   return input.plannedSessions.some((m) => {
     const t = byId.get(m.templateId);
-    if (!t || !(hasRole(t, 'test') || hasRole(t, 'key') || hasRole(t, 'long'))) return false;
+    if (!t || !(hasRole(t, 'test') || isKeyFor(t, input.keyFocus))) return false;
     if (m.scheduledDate >= date || m.scheduledDate < addDays(date, -7) || logged.has(m.id) || caughtUp.has(m.id) || m.leave || m.catchUp) return false;
     if (isIllnessDay(m.scheduledDate, input.illnessEpisodes, input.today)) return false;
     const missed = m.status === 'skipped' ? m.lock?.by === 'user' : m.scheduledDate < input.today;
     if (!missed) return false;
     // Hetzelfde gedaan binnen twee dagen, zonder koppeling: niet gemist.
     if (input.logs.some((l) => !l.plannedSessionId && l.templateId === m.templateId && Math.abs(daysBetween(l.completedDate, m.scheduledDate)) <= 2)) return false;
-    return respectsHeavySpacing(date, t, around.filter((o) => o.id !== m.id), byId, input.logs, m.id);
+    if (!respectsHeavySpacing(date, t, around.filter((o) => o.id !== m.id), byId, input.logs, m.id)) return false;
+    return hasRole(t, 'test') || hardRunApart(date, m, t, { plannedSessions: around, logs: input.logs, asOf: input.today }, byId);
   });
 }
 

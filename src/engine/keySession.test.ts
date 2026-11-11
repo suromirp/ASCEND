@@ -4,7 +4,7 @@ import type { TrainingGoal } from '../models/goals';
 import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { isKeySession } from './adviceShared';
-import { DEFAULT_KEY_FOCUS, isKeyFor, keyFocusOf, keyPhrase, keyRank, nextKeySession, type KeyFocus } from './keySession';
+import { DEFAULT_KEY_FOCUS, isKeyFor, keyFocusOf, keyLabel, keyPhrase, keyRank, nextKeySession, type KeyFocus } from './keySession';
 
 // Een nagemaakte week met de ingebouwde sjablonen. Maandag 16 november is vandaag.
 const TODAY = '2026-11-16';
@@ -149,6 +149,17 @@ describe('één betekenis', () => {
       if (pick) expect(isKeySession(templates.find((t) => t.name === pick.name)!, focus)).toBe(true);
       expect(keyPhrase(focus) === undefined).toBe(pick === undefined);
     }
+  });
+
+  it('de zin noemt elke training die als sleutel telt (Warden M4)', () => {
+    for (const focus of FOCI) {
+      const phrase = keyPhrase(focus) ?? '';
+      for (const t of templates) {
+        const label = keyLabel(t, focus);
+        if (label) expect(phrase, `${t.name} bij ${JSON.stringify(focus)}`).toContain(label);
+      }
+    }
+    expect(keyPhrase(TEN_K)).toBe('de tempoloop of de intervallen, de heuvelintervallen of de lange duurloop');
   });
 
   it('zonder focus is het inhalen wat het was: de lange duurloop, de bergtocht en wandeldag 1', () => {

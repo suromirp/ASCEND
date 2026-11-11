@@ -63,10 +63,10 @@ describe('MISSED-CATCH-UP', () => {
     const planned = [ps('t', 'tpl_tempo_run', '2026-09-29')];
     const tenK = computeAdvice(inputs({ templates: [...templates, tempo], plannedSessions: planned, keyFocus: { goal: 'run_race', variant: '10k' } }))[0];
     expect(tenK.proposal?.changes[0]).toMatchObject({ action: 'move', plannedSessionId: 't' });
-    expect(tenK.why).toContain('de tempo- of intervaltraining of de lange duurloop');
+    expect(tenK.why).toContain('de tempoloop of de intervallen, de heuvelintervallen of de lange duurloop');
     const without = computeAdvice(inputs({ templates: [...templates, tempo], plannedSessions: planned }))[0];
     expect(without.proposal?.changes[0].action).toBe('remove');
-    expect(without.why).toContain('de lange duurloop of de bergtocht');
+    expect(without.why).toContain('de lange duurloop, de bergtocht of de wandeldag');
   });
 
   // Eerst koppelen, dan inhalen: een losse horlogelog die bij de gemiste training kan horen geeft het

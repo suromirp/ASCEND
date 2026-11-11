@@ -10,12 +10,14 @@ import type { DirectionId } from '../data/directions';
 import type { GoalKindId, TrainingGoal } from '../models/goals';
 import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
+import type { Program } from '../models/program';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { activeDirection } from './direction';
-import { goalDetailsOf, goalKindOf } from './goalLabels';
+import { effectivePriority, goalDetailsOf, goalKindOf } from './goalLabels';
 import { listedGoals } from './goalList';
-import type { Ladder } from './mainGoal';
+import { mainGoal, type Ladder } from './mainGoal';
 import { hasRole } from './templateRoles';
+import { resolveVariantDuration } from './substitutions';
 
 // Waar de sleuteltraining naar kijkt: de soort van het doel bovenaan Ascend, of de richting zonder doel.
 // `{ goal: undefined }` is een doel zonder soort (een oud doel): dan geldt wat altijd gold, de lange
@@ -27,96 +29,109 @@ export type KeyFocus =
 export const DEFAULT_KEY_FOCUS: KeyFocus = { goal: undefined };
 
 type Tpl = Pick<SessionTemplate, 'id' | 'name' | 'type' | 'roles' | 'sport'>;
-type Test = (t: Tpl) => boolean;
+// Een soort sleuteltraining: hoe je hem herkent, en hoe hij heet in een zin.
+interface Kind { test: (t: Tpl) => boolean; label: string }
 
 // De bouwstenen. Een rol op het sjabloon gaat voor; de naam vangt een eigen sjabloon zonder rol.
-const longRun: Test = (t) => (hasRole(t, 'long') && hasRole(t, 'easy_pace')) || /lange duurloop/i.test(t.name);
-const mountainHike: Test = (t) => (hasRole(t, 'long') && !hasRole(t, 'easy_pace')) || t.id === 'tpl_hike_day_one' || /bergtocht/i.test(t.name);
-const ruck: Test = (t) => hasRole(t, 'ruck');
-const ride: Test = (t) => t.sport === 'cycling';
+const LONG_RUN: Kind = { label: 'de lange duurloop', test: (t) => (hasRole(t, 'long') && hasRole(t, 'easy_pace')) || /lange duurloop/i.test(t.name) };
+const MOUNTAIN_HIKE: Kind = { label: 'de bergtocht', test: (t) => (hasRole(t, 'long') && !hasRole(t, 'easy_pace')) || /bergtocht/i.test(t.name) };
+const HIKE_DAY: Kind = { label: 'de wandeldag', test: (t) => t.id === 'tpl_hike_day_one' };
+const RUCK: Kind = { label: 'de rugzakwandeling', test: (t) => hasRole(t, 'ruck') };
+const RIDE: Kind = { label: 'de fietstocht', test: (t) => t.sport === 'cycling' };
 // De kwaliteitstraining: tempo of intervallen (`blocks`), en heuvelintervallen (`hills`) als kwaliteit van
 // de basis. Voor een snelle afstand gaat het specifieke werk voor de heuvels.
-const blocks: Test = (t) => hasRole(t, 'blocks');
-const hills: Test = (t) => hasRole(t, 'hills');
-const quality: Test = (t) => blocks(t) || hills(t);
-const gymStrength: Test = (t) => hasRole(t, 'strength');
-const any = (...tests: Test[]): Test => (t) => tests.some((f) => f(t));
+const BLOCKS: Kind = { label: 'de tempoloop of de intervallen', test: (t) => hasRole(t, 'blocks') };
+const HILLS: Kind = { label: 'de heuvelintervallen', test: (t) => hasRole(t, 'hills') };
+const STRENGTH: Kind = { label: 'de krachttraining', test: (t) => hasRole(t, 'strength') };
 
-// Per focus de treden: de eerste trede met een training wint, binnen een trede de langste. Een lege
-// lijst: geen sleuteltraining (Rustig aan).
-function tiersFor(focus: KeyFocus): Test[] {
+// Per focus de treden: binnen een week wint de eerste trede met een training, binnen een trede de langste.
+// Een lege lijst: geen sleuteltraining (Rustig aan).
+function tiersFor(focus: KeyFocus): Kind[][] {
   if ('direction' in focus) {
     switch (focus.direction) {
-      case 'stronger': return [gymStrength];
+      case 'stronger': return [[STRENGTH]];
       case 'easy': return [];
       case 'maintain':
-      case 'improve': return [any(longRun, mountainHike, ride)];
+      case 'improve': return [[LONG_RUN, MOUNTAIN_HIKE, HIKE_DAY, RIDE]];
     }
   }
   switch (focus.goal) {
     case 'run_race':
       // Marathon: de lange duurloop eerst. Tot en met de halve telt snelheid (de meter Snelheid,
       // data/goalKinds.ts), dus eerst de tempo- of intervaltraining, dan de heuvels, dan de lange duurloop.
-      return focus.variant === 'marathon' ? [longRun, quality] : [blocks, hills, longRun];
-    case 'trail': return [any(longRun, mountainHike), quality];
+      return focus.variant === 'marathon' ? [[LONG_RUN], [BLOCKS, HILLS]] : [[BLOCKS], [HILLS], [LONG_RUN]];
+    case 'trail': return [[LONG_RUN, MOUNTAIN_HIKE, HIKE_DAY], [BLOCKS, HILLS]];
     case 'trek_hut':
     case 'trek_tent':
     case 'day_hike':
-    case 'mountaineering': return [mountainHike, ruck, longRun];
-    case 'bike': return [ride, longRun];
-    case 'triathlon': return [any(ride, longRun), quality];
-    case 'stronger': return [gymStrength];
-    case 'fit': return [any(longRun, mountainHike, ride)];
-    case undefined: return [any(longRun, mountainHike)];
+    case 'mountaineering': return [[MOUNTAIN_HIKE, HIKE_DAY], [RUCK], [LONG_RUN]];
+    case 'bike': return [[RIDE], [LONG_RUN]];
+    case 'triathlon': return [[RIDE, LONG_RUN], [BLOCKS, HILLS]];
+    case 'stronger': return [[STRENGTH]];
+    case 'fit': return [[LONG_RUN, MOUNTAIN_HIKE, HIKE_DAY, RIDE]];
+    case undefined: return [[LONG_RUN, MOUNTAIN_HIKE, HIKE_DAY]];
   }
 }
+
+const kindOf = (template: Tpl, focus: KeyFocus): { rank: number; kind: Kind } | undefined => {
+  if (template.type === 'recovery' || hasRole(template, 'test') || hasRole(template, 'race')) return undefined;
+  const tiers = tiersFor(focus);
+  for (let rank = 0; rank < tiers.length; rank++) {
+    const kind = tiers[rank].find((k) => k.test(template));
+    if (kind) return { rank, kind };
+  }
+  return undefined;
+};
 
 // De trede van een sjabloon voor deze focus (0 is de beste), of undefined als het geen sleuteltraining is.
 // Een rustdag of herstel is het nooit, een test of wedstrijd ook niet: die hebben hun eigen naam.
 export function keyRank(template: Tpl, focus: KeyFocus = DEFAULT_KEY_FOCUS): number | undefined {
-  if (template.type === 'recovery' || hasRole(template, 'test') || hasRole(template, 'race')) return undefined;
-  const i = tiersFor(focus).findIndex((f) => f(template));
-  return i < 0 ? undefined : i;
+  return kindOf(template, focus)?.rank;
 }
 
 export function isKeyFor(template: Tpl, focus: KeyFocus = DEFAULT_KEY_FOCUS): boolean {
   return keyRank(template, focus) !== undefined;
 }
 
-// De naam voor in een regel: "de tempo- of intervaltraining of de lange duurloop".
-export function keyPhrase(focus: KeyFocus = DEFAULT_KEY_FOCUS): string | undefined {
-  if ('direction' in focus) {
-    if (focus.direction === 'stronger') return 'de krachttraining';
-    if (focus.direction === 'easy') return undefined;
-    return 'de langste duurtraining';
-  }
-  switch (focus.goal) {
-    case 'run_race': return focus.variant === 'marathon' ? 'de lange duurloop of de tempoloop' : 'de tempo- of intervaltraining of de lange duurloop';
-    case 'trail': return 'de lange duurloop of bergtocht, of de heuvelintervallen';
-    case 'trek_hut':
-    case 'trek_tent':
-    case 'day_hike':
-    case 'mountaineering': return 'de bergtocht, de rugzakwandeling of de lange duurloop';
-    case 'bike': return 'de fietstocht of de lange duurloop';
-    case 'triathlon': return 'de fietstocht of de lange duurloop';
-    case 'stronger': return 'de krachttraining';
-    case 'fit': return 'de langste duurtraining';
-    case undefined: return 'de lange duurloop of de bergtocht';
-  }
+// Hoe deze sleuteltraining heet in de zin van `keyPhrase` ("de heuvelintervallen").
+export function keyLabel(template: Tpl, focus: KeyFocus = DEFAULT_KEY_FOCUS): string | undefined {
+  return kindOf(template, focus)?.kind.label;
 }
 
-// De focus uit wat de app al weet: het doel bovenaan Ascend (dezelfde lijst als de tab), of de richting
-// zonder doel (engine/direction.ts#activeDirection).
+// Alles wat als sleuteltraining telt, in volgorde: "de tempoloop of de intervallen, de heuvelintervallen of
+// de lange duurloop". Undefined: geen sleuteltraining (Rustig aan).
+export function keyPhrase(focus: KeyFocus = DEFAULT_KEY_FOCUS): string | undefined {
+  const labels = tiersFor(focus).flat().map((k) => k.label);
+  if (labels.length === 0) return undefined;
+  return labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} of ${labels.at(-1)}`;
+}
+
+const PRIORITY_RANK: Record<string, number> = { top: 0, voortop: 1, verkenning: 2 };
+
+// Het doel waar de sleuteltraining naar kijkt: het hoofddoel dat de planning volgt (mainGoal). Zonder hoofddoel
+// het actieve doel met het hoogste label, dan de vroegste datum. Nooit de volgorde van de lijst: slepen zonder
+// Akkoord verandert dus niet wat het inhalen voorstelt. Een gepauzeerd of gearchiveerd doel telt niet.
+export function keyGoalOf(goals: readonly TrainingGoal[], ladder: Ladder): TrainingGoal | undefined {
+  const main = mainGoal(goals, ladder);
+  if (main) return main;
+  return goals
+    .filter((g) => g.status === 'active')
+    .sort((a, b) => (PRIORITY_RANK[effectivePriority(a, undefined)] ?? 9) - (PRIORITY_RANK[effectivePriority(b, undefined)] ?? 9)
+      || (a.targetDate ?? '9999').localeCompare(b.targetDate ?? '9999') || a.id.localeCompare(b.id))[0];
+}
+
+// De focus uit wat de app al weet: het doel van `keyGoalOf`, of de richting zonder doel
+// (engine/direction.ts#activeDirection).
 export function keyFocusOf(goals: readonly TrainingGoal[], ladder: Ladder, today: string, settings: { direction?: unknown }): KeyFocus {
   const ids = ladder instanceof Set ? (ladder as ReadonlySet<string>) : new Set((ladder as readonly { goalId: string }[]).map((m) => m.goalId));
   const listed = listedGoals(goals, ids, today);
   const active = activeDirection(settings, listed.map((l) => l.goal), ladder);
   if (active.kind === 'direction') return { direction: active.id };
-  const top = listed[0]?.goal;
-  if (!top) return DEFAULT_KEY_FOCUS;
-  const kind = goalKindOf(top);
+  const goal = keyGoalOf(listed.map((l) => l.goal), ids);
+  if (!goal) return DEFAULT_KEY_FOCUS;
+  const kind = goalKindOf(goal);
   if (!kind || !GOAL_KINDS[kind]) return DEFAULT_KEY_FOCUS;
-  return { goal: kind, variant: variantOf(kind, goalDetailsOf(top)) };
+  return { goal: kind, variant: variantOf(kind, goalDetailsOf(goal)) };
 }
 
 export interface NextKeySession {
@@ -128,74 +143,59 @@ export interface NextKeySession {
 
 const AWAY: ReadonlySet<LeavePeriod['kind']> = new Set(['no_training', 'trek']);
 
+type Row = Pick<PlannedSession, 'id' | 'templateId' | 'scheduledDate' | 'plannedMinutes'>;
+type Templates = Iterable<SessionTemplate> | ReadonlyMap<string, SessionTemplate>;
+const mapOf = (templates: Templates): ReadonlyMap<string, SessionTemplate> =>
+  templates instanceof Map ? templates as ReadonlyMap<string, SessionTemplate> : new Map([...(templates as Iterable<SessionTemplate>)].map((t) => [t.id, t]));
+
+// De lengte waarop een sleutel wordt vergeleken: wat de rij zegt, anders wat de schermen tonen (de volle
+// versie in deze week van je programma). Dezelfde voor `nextKeySession` en `weekKeySession`.
+function minutesOf(s: Row, t: SessionTemplate, program: Program | null | undefined): number {
+  return s.plannedMinutes ?? resolveVariantDuration(t, 'full', s.scheduledDate, program);
+}
+
+// Beter dan `best`? Eerst de trede, dan de langste, dan de vroegste, dan een vaste volgorde op id.
+const beats = (a: { rank: number; minutes: number; date: string; id: string }, b: typeof a | undefined) =>
+  !b || a.rank < b.rank || (a.rank === b.rank && (a.minutes > b.minutes
+    || (a.minutes === b.minutes && (a.date < b.date || (a.date === b.date && a.id < b.id)))));
+
+// De sleuteltraining onder deze trainingen (bijvoorbeeld die van één week).
+export function weekKeySession<S extends Row>(sessions: readonly S[], templates: Templates, focus: KeyFocus = DEFAULT_KEY_FOCUS, program?: Program | null): S | undefined {
+  const byId = mapOf(templates);
+  let best: { s: S; rank: number; minutes: number; date: string; id: string } | undefined;
+  for (const s of sessions) {
+    const t = byId.get(s.templateId);
+    const rank = t ? keyRank(t, focus) : undefined;
+    if (!t || rank === undefined) continue;
+    const c = { s, rank, minutes: minutesOf(s, t, program), date: s.scheduledDate, id: s.id };
+    if (beats(c, best)) best = c;
+  }
+  return best?.s;
+}
+
 // De volgende sleuteltraining in de komende twee weken (vandaag telt mee) die nog niet gedaan is: de
-// sleuteltraining van de eerste week waarin er nog een staat. Binnen die week eerst de beste trede, dan de
-// langste, dan de vroegste, en op dezelfde dag een vaste volgorde. Zo noemt Ascend de lange duurloop van
-// morgen, niet die van volgende week omdat die tien minuten langer is. Een overgeslagen training telt niet,
-// net als een training in een vakantie zonder training of een eigen tocht. `minutesOf` geeft de lengte zoals
-// de schermen die tonen; zonder valt het terug op 0. Undefined: niets dat past, en dan toont Ascend geen regel.
+// sleuteltraining van de eerste week waarin er nog een staat, gekozen zoals `weekKeySession`. Zo noemt
+// Ascend de lange duurloop van morgen, niet die van volgende week omdat die tien minuten langer is. Een
+// overgeslagen training telt niet, net als een training in een vakantie zonder training of een eigen tocht.
+// Undefined: niets dat past, en dan toont Ascend geen regel.
 export function nextKeySession(
   sessions: readonly PlannedSession[],
   templates: readonly SessionTemplate[],
   logs: readonly SessionLog[],
   today: string,
   focus: KeyFocus = DEFAULT_KEY_FOCUS,
-  minutesOf?: (session: PlannedSession, template: SessionTemplate) => number | undefined,
+  program?: Program | null,
   leave: readonly LeavePeriod[] = [],
 ): NextKeySession | undefined {
   const until = addDays(today, 13);
-  const byId = new Map(templates.map((t) => [t.id, t]));
+  const byId = mapOf(templates);
   const done = new Set(logs.map((l) => l.plannedSessionId).filter((x): x is string => !!x));
   const away = (d: string) => leave.some((p) => AWAY.has(p.kind) && d >= p.startDate && d <= p.endDate);
-  let best: (NextKeySession & { rank: number; week: string }) | undefined;
-  for (const s of sessions) {
-    const t = byId.get(s.templateId);
-    if (!t || s.status === 'skipped' || done.has(s.id)) continue;
-    if (s.scheduledDate < today || s.scheduledDate > until || away(s.scheduledDate)) continue;
-    const rank = keyRank(t, focus);
-    if (rank === undefined) continue;
-    const minutes = s.plannedMinutes ?? minutesOf?.(s, t) ?? 0;
-    const week = mondayOfWeek(s.scheduledDate);
-    const better = !best
-      || week < best.week
-      || (week === best.week && (rank < best.rank
-        || (rank === best.rank && (minutes > best.minutes
-          || (minutes === best.minutes && (s.scheduledDate < best.date || (s.scheduledDate === best.date && s.id < best.sessionId)))))));
-    if (better) best = { sessionId: s.id, date: s.scheduledDate, name: t.name, minutes, rank, week };
+  const open = sessions.filter((s) => s.status !== 'skipped' && !done.has(s.id) && s.scheduledDate >= today && s.scheduledDate <= until && !away(s.scheduledDate));
+  const weeks = [...new Set(open.map((s) => mondayOfWeek(s.scheduledDate)))].sort();
+  for (const week of weeks) {
+    const key = weekKeySession(open.filter((s) => mondayOfWeek(s.scheduledDate) === week), byId, focus, program);
+    if (key) return { sessionId: key.id, date: key.scheduledDate, name: byId.get(key.templateId)!.name, minutes: minutesOf(key, byId.get(key.templateId)!, program) };
   }
-  return best && { sessionId: best.sessionId, date: best.date, name: best.name, minutes: best.minutes };
-}
-
-// Voor plekken die alleen een sjabloon-id hebben (de weekterugblik, Herhaal de week). Zonder het sjabloon
-// in de lijst gelden de rollen van het id, zoals in engine/templateRoles.ts#idHasRole.
-export function isKeyTemplateId(
-  templateId: string,
-  templates: Iterable<SessionTemplate> | ReadonlyMap<string, SessionTemplate>,
-  focus: KeyFocus = DEFAULT_KEY_FOCUS,
-): boolean {
-  const t = templates instanceof Map ? templates.get(templateId) : [...(templates as Iterable<SessionTemplate>)].find((x) => x.id === templateId);
-  return isKeyFor(t ?? { id: templateId, name: '', type: 'cardio' }, focus);
-}
-
-// De sleuteltraining onder deze trainingen (bijvoorbeeld die van één week): de beste trede, dan de langste,
-// dan de vroegste, dan een vaste volgorde op id. Dezelfde volgorde als `nextKeySession` binnen een week.
-export function weekKeySession<S extends Pick<PlannedSession, 'id' | 'templateId' | 'scheduledDate' | 'plannedMinutes'>>(
-  sessions: readonly S[],
-  templates: Iterable<SessionTemplate> | ReadonlyMap<string, SessionTemplate>,
-  focus: KeyFocus = DEFAULT_KEY_FOCUS,
-): S | undefined {
-  const byId = templates instanceof Map ? templates as ReadonlyMap<string, SessionTemplate> : new Map([...(templates as Iterable<SessionTemplate>)].map((t) => [t.id, t]));
-  let best: { s: S; rank: number; minutes: number } | undefined;
-  for (const s of sessions) {
-    const t = byId.get(s.templateId);
-    const rank = t ? keyRank(t, focus) : undefined;
-    if (!t || rank === undefined) continue;
-    const minutes = s.plannedMinutes ?? t.durationVariants?.full ?? 0;
-    const better = !best
-      || rank < best.rank
-      || (rank === best.rank && (minutes > best.minutes
-        || (minutes === best.minutes && (s.scheduledDate < best.s.scheduledDate || (s.scheduledDate === best.s.scheduledDate && s.id < best.s.id)))));
-    if (better) best = { s, rank, minutes };
-  }
-  return best?.s;
+  return undefined;
 }

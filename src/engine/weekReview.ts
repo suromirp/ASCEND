@@ -27,7 +27,7 @@ import type { PlannedById } from './logDay';
 import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
-import { isKeyTemplateId, weekKeySession, type KeyFocus } from './keySession';
+import { weekKeySession, type KeyFocus } from './keySession';
 import { kgLabel } from '../utils/kg';
 import type { HeartRateSettings } from './heartRateZones';
 import type { IntensityCounting } from './intensitySettings';
@@ -43,8 +43,9 @@ export interface WeekReview {
   perSport: string[]; // "Hardlopen: 18,4 km, 320 m D+"
   missed: string[]; // template names
   missedTemplateIds: string[];
-  keyPlanned: number; // sleuteltrainingen (engine/keySession.ts)
-  keyDone: number;
+  keyPlanned: number; // 1 als de week een sleuteltraining heeft (engine/keySession.ts#weekKeySession), anders 0
+  keyDone: number; // 1 als die gedaan is
+  keyName?: string; // de naam van die sleuteltraining
   heavier: number; // trainings that felt harder than planned
   pain: string[]; // "knie 2 keer", from what you ticked after a training
   lighter: number;
@@ -170,7 +171,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
       const t = byId.get(s.templateId);
       return t ? n + resolveEffectiveFullDuration(t, s.scheduledDate, program) : n;
     }, 0);
-    const key = weekKeySession(nextSessions, byId, keyFocus);
+    const key = weekKeySession(nextSessions, byId, keyFocus, program);
     const keyT = key ? byId.get(key.templateId) : undefined;
     const keyStep = keyT && key ? progressionTarget(keyT, program, key.scheduledDate)?.step : undefined;
     const note = nextSessions.map((s) => byId.get(s.templateId)).map((t) => (t && progressionTarget(t, program, nextStart)?.step.note?.split(/, | \(/)[0])).find(Boolean);
@@ -186,7 +187,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
 
   const running = asOf <= weekEnd && asOf >= weekStart;
   const todayLeft = running ? trainings.filter((s) => s.scheduledDate === asOf && s.status !== 'skipped' && !loggedIds.has(s.id)).length : 0;
-  const keyMissedSession = weekKeySession(missedSessions.filter((s) => s.status !== 'skipped'), byId, keyFocus);
+  // One key session per week (engine/keySession.ts#weekKeySession), done or not: the counts below,
+  // the coach line "sleuteltraining 3 van 4" and Herhaal de week all read this one.
+  const weekKey = weekKeySession(trainings, byId, keyFocus, program);
+  const keyMissedSession = weekKey && weekKey.status !== 'skipped' && missedSessions.some((m) => m.id === weekKey.id) ? weekKey : undefined;
   const effort = effortMinutes(weekLogs, byId, inputs.heartRate, inputs.intensityCounting);
 
   // The coach: at most three lines, the most important first.
@@ -251,8 +255,9 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     perSport,
     missed: missedNames,
     missedTemplateIds: missedSessions.map((s) => s.templateId),
-    keyPlanned: trainings.filter((s) => isKeyTemplateId(s.templateId, byId, keyFocus)).length,
-    keyDone: trainings.filter((s) => isKeyTemplateId(s.templateId, byId, keyFocus) && loggedIds.has(s.id)).length,
+    keyPlanned: weekKey ? 1 : 0,
+    keyDone: weekKey && loggedIds.has(weekKey.id) ? 1 : 0,
+    keyName: weekKey ? byId.get(weekKey.templateId)?.name : undefined,
     heavier,
     pain,
     lighter,

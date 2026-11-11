@@ -109,7 +109,7 @@ export interface Stretch {
 // its id (data/templateRoles.ts), so old backups and old stored templates work.
 export type TemplateRole =
   | 'long' // the one long session of a week (long run, mountain hike)
-  | 'key' // the session the week review counts as the key one
+  | 'key' // kept so stored templates stay valid; no rule reads it: the key session per goal is engine/keySession.ts
   | 'test' // a test run
   | 'race' // a race
   | 'easy_pace' // run at the easy pace

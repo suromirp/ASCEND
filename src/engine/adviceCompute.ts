@@ -507,7 +507,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const restBack = restBackAdvice({
     plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, today: inputs.asOf,
     restDay: inputs.restDay ?? inputs.extraSession?.restDay, anchor: inputs.extraSession?.anchor, leave: inputs.leave,
-    illnessEpisodes: inputs.illnessEpisodes, on: inputs.restDayBack,
+    illnessEpisodes: inputs.illnessEpisodes, on: inputs.restDayBack, keyFocus: inputs.keyFocus,
   });
   // TEST-RETRY touches no session that already stands in another proposal.
   const retryUsed = new Set(usedIds);

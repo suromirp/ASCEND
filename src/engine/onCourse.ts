@@ -165,7 +165,7 @@ export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
   } else if (status !== 'on' && weeksLeft > 16) {
     lines.push(`Er zijn nog ${weeksLeft} weken. Tijd genoeg, als het ritme terugkomt.`);
   } else if (status !== 'on' && weeksLeft > 0) {
-    lines.push(`Nog ${weeksLeft} ${weeksLeft === 1 ? 'week' : 'weken'}. De lange trainingen tellen nu het zwaarst.`);
+    lines.push(`Nog ${weeksLeft} ${weeksLeft === 1 ? 'week' : 'weken'}. De sleuteltrainingen tellen nu het zwaarst.`);
   }
   if (focus && phase?.id !== 'phase_taper') lines.push(focus);
 
