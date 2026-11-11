@@ -8,6 +8,7 @@ import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { cleanSettings } from './backupClean';
 import { clearRouteStartPoint, getRouteStartPoint, saveRouteStartPoint, locateStartHere } from './routeStart';
 import { LocateError } from '../utils/geolocation';
+import { getNearbyTerrain, refreshNearbyTerrain } from './nearbyTerrain';
 
 // Nagemaakt punt, geen echte plek.
 const fake = { lat: 52.123456, lon: 5.654321 };
@@ -15,6 +16,31 @@ const noAsk = async () => undefined;
 
 beforeEach(async () => {
   await wipeAllData();
+});
+
+describe('Wis startpunt en de heuvels rond dat punt', () => {
+  const answer = { elements: [{ type: 'way', id: 2, center: { lat: 52.121, lon: 5.651 }, tags: { highway: 'steps' } }] };
+  const fetchImpl = (async () => new Response(JSON.stringify(answer), { status: 200 })) as unknown as typeof fetch;
+  // Nagemaakt punt.
+  const point = { name: '', lat: 52.1235, lon: 5.6543 };
+
+  it('wissen haalt ook de heuvels weg die rond het punt bewaard zijn', async () => {
+    await wipeAllData();
+    await saveRouteStartPoint(point);
+    await refreshNearbyTerrain(point, { fetchImpl, exact: true });
+    expect(await getNearbyTerrain(point, true)).toBeDefined();
+    expect(await clearRouteStartPoint()).toBe(true);
+    expect(await getNearbyTerrain(point, true)).toBeUndefined();
+    expect(JSON.stringify(await MetaRepo.get('nearbyTerrain'))).not.toContain('52.1235');
+  });
+
+  it('een nieuw startpunt laat de heuvels rond het oude punt niet staan', async () => {
+    await wipeAllData();
+    await saveRouteStartPoint(point);
+    await refreshNearbyTerrain(point, { fetchImpl, exact: true });
+    await saveRouteStartPoint({ lat: 52.2, lon: 5.7 });
+    expect(await getNearbyTerrain(point, true)).toBeUndefined();
+  });
 });
 
 describe('het eigen startpunt op het toestel', () => {
@@ -103,6 +129,12 @@ describe('Gebruik waar ik nu ben', () => {
     const out = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 2000 }) });
     expect(out).toEqual({ ok: false, reason: 'coarse' });
     expect(await getRouteStartPoint()).toBeUndefined();
+  });
+
+  it('een plek die een paar straten naast je deur kan liggen telt ook niet: de grens is 50 m', async () => {
+    expect(await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 51 }) })).toEqual({ ok: false, reason: 'coarse' });
+    expect(await getRouteStartPoint()).toBeUndefined();
+    expect((await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 50 }) })).ok).toBe(true);
   });
 
   it('een browser zonder locatie en een kapot antwoord geven een reden', async () => {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { wipeAllData } from './database';
+import { MetaRepo, wipeAllData } from './database';
 import { buildBackupEnvelope } from './backupExport';
-import { getNearbyTerrain, grantTerrainConsent, hasTerrainConsent, refreshNearbyTerrain, terrainKey, TERRAIN_FETCH_DAYS } from './nearbyTerrain';
+import { clearExactTerrain, getNearbyTerrain, grantTerrainConsent, hasTerrainConsent, refreshNearbyTerrain, terrainKey, TERRAIN_FETCH_DAYS } from './nearbyTerrain';
 
 // Nagemaakte plekken en antwoorden: geen netwerk.
 const place = { name: 'Ergens', lat: 52.123456, lon: 5.654321 };
@@ -32,6 +32,37 @@ describe('heuvels in de buurt in de opslag', () => {
     expect(await refreshNearbyTerrain(place, { fetchImpl: as(fail), now: new Date('2026-11-08T08:00:00.000Z') })).toBeDefined();
     const other = { name: '', lat: 48.5, lon: 7.5 };
     expect(await refreshNearbyTerrain(other, { fetchImpl: as(fail) })).toBeUndefined();
+  });
+
+  it('een eigen startpunt (exact) heeft een eigen plek in de cache, naast de afgeronde plek', async () => {
+    const f = ok();
+    const point = { name: '', lat: 52.1235, lon: 5.6543 };
+    const exact = await refreshNearbyTerrain(point, { fetchImpl: as(f), exact: true });
+    expect(exact?.place).toEqual(point);
+    expect(terrainKey(point, true)).toBe('52.1235,5.6543');
+    expect(await getNearbyTerrain(point, true)).toEqual(exact);
+    // De afgeronde plek is een andere sleutel: die is er nog niet.
+    expect(await getNearbyTerrain(point)).toBeUndefined();
+    await refreshNearbyTerrain(point, { fetchImpl: as(f), exact: true });
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+
+  it('wissen van de exacte plekken haalt het punt uit de cache en laat de afgeronde plek staan', async () => {
+    const f = ok();
+    const point = { name: '', lat: 52.1235, lon: 5.6543 };
+    await refreshNearbyTerrain(point, { fetchImpl: as(f), exact: true });
+    await refreshNearbyTerrain(place, { fetchImpl: as(f) });
+    await clearExactTerrain();
+    expect(await getNearbyTerrain(point, true)).toBeUndefined();
+    expect(await getNearbyTerrain(place)).toBeDefined();
+    expect(JSON.stringify(await MetaRepo.get('nearbyTerrain'))).not.toContain('52.1235');
+  });
+
+  it('de sleutel van een exact punt rondt zoals de plek die bewaard wordt', () => {
+    for (const v of [52.12345, 52.123449999, 1.00005, -0.00005, 8.34565]) {
+      const r = Math.round(v * 10_000) / 10_000;
+      expect(terrainKey({ name: '', lat: v, lon: v }, true)).toBe(`${r.toFixed(4)},${r.toFixed(4)}`);
+    }
   });
 
   it('bewaart hoogstens zes plekken', async () => {

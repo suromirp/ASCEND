@@ -3,7 +3,7 @@ import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFn, RoutePoint } from '../models/route';
 import { lineLength, metersBetween, offsetPoint } from './routeGeometry';
 import {
-  CLOSE_ENOUGH, MAX_ROUTE_CALLS, MAX_VIAS, SUBSTITUTE_LINE, adventureVias, searchLines, terrainFound, climbOnLine, composeOutAndBack, composeSimple, cutAt, tallestClimbLine, proposalFacts, proposalNotes, proposalTitle,
+  CLOSE_ENOUGH, SHORT_LIMIT, ascentNotice, MAX_ROUTE_CALLS, MAX_VIAS, SUBSTITUTE_LINE, adventureVias, searchLines, terrainFound, climbOnLine, composeOutAndBack, composeSimple, cutAt, tallestClimbLine, proposalFacts, proposalNotes, proposalTitle,
   proposeAdventure, proposeRoutes, proposeSimple, simpleCandidates,
 } from './routePlanner';
 
@@ -76,7 +76,7 @@ describe('Simpel: dezelfde helling op en af', () => {
     expect(metersBetween(p.points[0], p.points[p.points.length - 1])).toBeLessThan(1);
     expect(proposalTitle(p)).toBe('6 × de helling op en af');
     expect(proposalFacts(p)).toBe('8 km · 300 hoogtemeters');
-    expect(proposalNotes(p, { distanceKm: 9, ascentM: 300 })).toEqual(['De helling: 50 m omhoog over 500 m.', 'Op dezelfde helling kan je horloge naar het verkeerde stuk springen.', '1 km korter dan je training. Tot 12 procent verschil is goed genoeg.']);
+    expect(proposalNotes(p, { distanceKm: 9, ascentM: 300 })).toEqual(['De helling: 50 m omhoog over 500 m.', 'Op dezelfde helling kan je horloge naar het verkeerde stuk springen.', '8 km, korter dan de 9 km van je training.']);
   });
 
   it('een punt zonder hoogte telt nergens mee, ook niet als laag', () => {
@@ -165,7 +165,7 @@ describe('Avontuurlijk: één lus langs verschillende hellingen', () => {
   });
 
   it('dunt uit tot de lus past, en houdt hellingen langer dan paden', () => {
-    const vias = adventureVias({ start: START, target: { distanceKm: 7, ascentM: 100 }, terrain: around }, 0.5);
+    const vias = adventureVias({ start: START, target: { distanceKm: 7, ascentM: 100 }, terrain: around });
     expect(vias.length).toBeLessThan(6);
     expect(vias.filter((v) => v.hill).length).toBeGreaterThanOrEqual(vias.filter((v) => !v.hill).length);
   });
@@ -214,8 +214,9 @@ describe('Avontuurlijk: één lus langs verschillende hellingen', () => {
     const out = await proposeAdventure({ start: START, target: { distanceKm: 10, ascentM: 300 }, terrain: around }, fakeRoute());
     expect(out.ok).toBe(true);
     if (!out.ok) return;
-    expect(proposalNotes(out.proposal, { distanceKm: 10, ascentM: 300 })).toContain('Minder dan de 300 hoogtemeters van je training.');
-    expect(proposalNotes({ ...out.proposal, distanceM: 5000 }, { distanceKm: 10, ascentM: 0 })).toContain('Korter dan de 10 km van je training.');
+    // De melding hangt aan de lus (proposeRoutes zet hem erop) en staat dan tussen de regels.
+    expect(proposalNotes({ ...out.proposal, notice: ascentNotice(out.proposal, { distanceKm: 10, ascentM: 300 }) }, { distanceKm: 10, ascentM: 300 })).toContain('Deze lus stijgt 0 m; de training vraagt 300 m.');
+    expect(proposalNotes({ ...out.proposal, distanceM: 5000 }, { distanceKm: 10, ascentM: 0 })).toContain('5 km, korter dan de 10 km van je training.');
     expect(proposalNotes({ ...out.proposal, distanceM: 14000 }, { distanceKm: 10.5, ascentM: 0 })).toContain('Langer dan de 10,5 km van je training.');
   });
 });
@@ -247,7 +248,7 @@ describe('proposeRoutes', () => {
   it('gooit nooit, ook niet als de routeplanner dat doet', async () => {
     const route: RouteFn = () => Promise.reject(new Error('stuk'));
     const plans = await proposeRoutes({ start: START, target: { distanceKm: 9, ascentM: 300 }, terrain: hills }, route);
-    expect(plans).toEqual({ simple: { ok: false, reason: 'error' }, adventure: { ok: false, reason: 'error' }, found: { hills: 3, tallestM: 50 } });
+    expect(plans).toEqual({ simple: { ok: false, reason: 'error' }, adventure: { ok: false, reason: 'error' }, found: { hills: 3, unknown: 0, lower: 0, tallestM: 50, radiusM: 3000 } });
   });
 
   it('geen tekst met een gedachtestreepje', async () => {
@@ -264,29 +265,37 @@ describe('Wat er gevonden is', () => {
   const hilly = { distanceKm: 10.5, ascentM: 300 };
 
   it('telt alleen de bruikbare hellingen, met de hoogste; zonder kaart niets, ook geen nul', () => {
-    expect(terrainFound(terrain(feature('hill', 40, 1500, 24), feature('hill', 200, 900, 12), feature('hill', 300, 600, 8), feature('steps', 10, 300)))).toEqual({ hills: 2, tallestM: 24 });
-    expect(terrainFound(terrain(feature('hill', 40, 1500)))).toEqual({ hills: 1 });
-    expect(terrainFound(terrain())).toEqual({ hills: 0 });
+    expect(terrainFound(terrain(feature('hill', 40, 1500, 24), feature('hill', 200, 900, 12), feature('hill', 300, 600, 8), feature('steps', 10, 300)))).toEqual({ hills: 2, unknown: 0, lower: 1, tallestM: 24, radiusM: 3000 });
+    // Een helling zonder bekende hoogte telt niet als helling, wel apart.
+    expect(terrainFound(terrain(feature('hill', 40, 1500)))).toEqual({ hills: 0, unknown: 1, lower: 0, radiusM: 3000 });
+    expect(terrainFound(terrain())).toEqual({ hills: 0, unknown: 0, lower: 0, radiusM: 3000 });
     expect(terrainFound(undefined)).toBeUndefined();
   });
 
   it('geen hellingen gevonden: dat staat er, met waar je de hoogte anders haalt', async () => {
     const plans = await proposeRoutes({ start: START, target: hilly, terrain: terrain(feature('dirt_path', 90, 1200)) }, fakeRoute());
-    expect(plans.found).toEqual({ hills: 0 });
+    expect(plans.found).toEqual({ hills: 0, unknown: 0, lower: 0, radiusM: 3000 });
     expect(plans.simple.ok).toBe(false);
-    expect(searchLines(plans, hilly)).toEqual(['Geen helling in de buurt op de kaart.', SUBSTITUTE_LINE]);
+    // De lus zegt zelf wat er in de buurt ligt; bovenaan blijft alleen waar je de hoogte anders haalt.
+    expect(searchLines(plans, hilly)).toEqual([SUBSTITUTE_LINE]);
+    expect(plans.adventure.ok && plans.adventure.proposal.notice).toBe('Geen heuvels binnen 3 km. Deze lus stijgt 0 m; de training vraagt 300 m.');
   });
 
   it('hellingen gevonden maar geen bruikbaar voorstel: de telling, de hoogste en de vervanger', async () => {
     const plans = await proposeRoutes({ start: START, target: hilly, terrain: terrain(feature('hill', 40, 1500, 24), feature('hill', 160, 1400, 14), feature('hill', 300, 600, 8)) }, fakeRoute());
     expect(plans.simple).toEqual({ ok: false, reason: 'nothing' });
-    expect(searchLines(plans, hilly)).toEqual(['2 hellingen in de buurt op de kaart, de hoogste 24 m boven je plek.', SUBSTITUTE_LINE]);
+    expect(searchLines(plans, hilly)).toEqual([SUBSTITUTE_LINE]);
+    expect(plans.adventure.ok && plans.adventure.proposal.notice).toBe('De hoogste helling dichtbij ligt 24 m boven je plek. Deze lus stijgt 0 m; de training vraagt 300 m.');
   });
 
-  it('een lus die de hoogte haalt: alleen de telling, geen vervanger', async () => {
+  it('een lus die de hoogte haalt: geen vervanger en geen melding bij die lus', async () => {
     const plans = await proposeRoutes({ start: START, target: { distanceKm: 9, ascentM: 300 }, terrain: terrain(feature('hill', 40, 1500, 50)) }, fakeRoute({ height: 50 }));
     expect(plans.simple.ok).toBe(true);
-    expect(searchLines(plans, { distanceKm: 9, ascentM: 300 })).toEqual(['Eén helling in de buurt op de kaart, 50 m boven je plek.']);
+    expect(plans.simple.ok && plans.simple.proposal.notice).toBeUndefined();
+    expect(searchLines(plans, { distanceKm: 9, ascentM: 300 })).not.toContain(SUBSTITUTE_LINE);
+    // Zonder melding bij een lus staat de telling bovenaan.
+    const both = { ...plans, adventure: plans.simple };
+    expect(searchLines(both, { distanceKm: 9, ascentM: 300 })).toEqual(['Eén helling in de buurt op de kaart, 50 m boven je plek.']);
   });
 
   it('een vlakke training krijgt geen uitleg over hellingen', async () => {
@@ -309,14 +318,15 @@ describe('Wat er gevonden is', () => {
   });
 
   const loop = (distanceM: number) => ({ style: 'adventure' as const, source: 'brouter' as const, points: [], distanceM, ascentM: 0, repeatedShare: 0 });
-  const pct = String(Math.round(CLOSE_ENOUGH * 100));
+  const pct = String(Math.round(SHORT_LIMIT * 100));
 
   it('een lus binnen de marge korter: hoeveel korter, en dat dat goed genoeg is (het getal uit de planner)', () => {
     const notes = proposalNotes(loop(9600), { distanceKm: 10.5, ascentM: 0 });
-    expect(notes).toEqual([`0,9 km korter dan je training. Tot ${pct} procent verschil is goed genoeg.`]);
+    expect(CLOSE_ENOUGH).toBeGreaterThan(SHORT_LIMIT);
+    expect(notes).toEqual([`0,9 km korter dan je training. Tot ${pct} procent korter is goed genoeg.`]);
     // Net binnen de marge en net erbuiten.
-    expect(proposalNotes(loop(10500 * (1 - CLOSE_ENOUGH) + 1), { distanceKm: 10.5, ascentM: 0 })[0]).toContain(`Tot ${pct} procent`);
-    expect(proposalNotes(loop(10500 * (1 - CLOSE_ENOUGH) - 1), { distanceKm: 10.5, ascentM: 0 })).toEqual(['Korter dan de 10,5 km van je training.']);
+    expect(proposalNotes(loop(10500 * (1 - SHORT_LIMIT) + 1), { distanceKm: 10.5, ascentM: 0 })[0]).toContain(`Tot ${pct} procent`);
+    expect(proposalNotes(loop(10500 * (1 - SHORT_LIMIT) - 1), { distanceKm: 10.5, ascentM: 0 })).toEqual(['9,4 km, korter dan de 10,5 km van je training.']);
   });
 
   it('een lus precies even lang (ook op de getallen die je ziet) krijgt geen korter-zin', () => {

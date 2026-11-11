@@ -7,6 +7,7 @@
 // Het punt bepalen heeft een grens in tijd en geeft altijd een punt of een reden; het gooit nooit.
 
 import { MetaRepo } from './database';
+import { clearExactTerrain } from './nearbyTerrain';
 import { MAX_START_ACCURACY_M, roundExact, validStartPoint, type StartFailure } from '../engine/routeStart';
 import type { RoutePoint } from '../models/route';
 import { locateMe, LocateError, type Position2 } from '../utils/geolocation';
@@ -29,6 +30,8 @@ export async function saveRouteStartPoint(point: RoutePoint): Promise<boolean> {
   if (!valid) return false;
   try {
     await MetaRepo.set(KEY, roundExact(valid));
+    // De heuvels rond het vorige punt horen niet te blijven staan.
+    await clearExactTerrain();
     return true;
   } catch {
     return false;
@@ -42,6 +45,8 @@ export async function clearRouteStartPoint(): Promise<boolean> {
   } catch {
     // Dan hieronder: staat het er nog, dan is het niet gelukt.
   }
+  // Ook de heuvels die rond dit punt bewaard zijn: daar staat het punt op vier decimalen in.
+  await clearExactTerrain();
   return (await getRouteStartPoint()) === undefined;
 }
 

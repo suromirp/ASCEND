@@ -1,8 +1,8 @@
 // ASCEND: waar een voorgestelde lus begint. Twee keuzes: Ongeveer (je plaats, afgerond op twee
 // decimalen, ongeveer een kilometer; de standaard) en Precies (een eigen startpunt dat alleen op dit
-// toestel staat). Alleen het startpunt gaat bij Precies precies naar de routeplanner; de zoektocht
-// naar heuvels en paden bij OpenStreetMap blijft op de afgeronde plek. Puur: de opslag en de
-// locatievraag staan in storage/routeStart.ts. Docs: docs/beslissingen/2026-11-09-startpunt-lus.md.
+// toestel staat). Bij Precies gaat het startpunt precies naar de routeplanner, en ook de zoektocht
+// naar heuvels en paden bij OpenStreetMap ligt om dat punt (besluit 2026-11-11-route-verfijnen.md).
+// Puur: de opslag en de locatievraag staan in storage/routeStart.ts. Docs: docs/beslissingen/2026-11-09-startpunt-lus.md.
 
 import type { RoutePoint } from '../models/route';
 
@@ -20,9 +20,10 @@ export function validStartPoint(raw: unknown): RoutePoint | undefined {
   return { lat: p.lat, lon: p.lon };
 }
 
-// Een plek van het toestel die ruwer is dan dit telt niet als startpunt: de Android-app geeft soms
-// alleen een ruwe plek, en dan zou "precies" een grove plek zijn.
-export const MAX_START_ACCURACY_M = 250;
+// Een plek van het toestel die ruwer is dan dit telt niet als startpunt. Het was 250 m: daarmee
+// kon "precies" een paar straten naast je deur liggen. Buiten bij de deur geeft een telefoon
+// meestal 5 tot 20 m, binnen via wifi tot ongeveer 40 m (besluit 2026-11-11-route-verfijnen.md).
+export const MAX_START_ACCURACY_M = 50;
 
 // Een bewaard punt heeft vijf decimalen (ongeveer een meter): genoeg voor een deur, geen schijnprecisie.
 export const roundExact = (p: RoutePoint): RoutePoint => ({ lat: Math.round(p.lat * 1e5) / 1e5, lon: Math.round(p.lon * 1e5) / 1e5 });
