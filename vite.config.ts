@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { AERIAL_CACHE, AERIAL_HOSTS } from './src/integrations/aerialImagery.ts';
 
 // Which build this is — shown in Settings so a user can see whether they
 // run the newest version. GitHub Actions provides GITHUB_SHA; locally the
@@ -128,7 +129,8 @@ export default defineConfig({
         // trainingen, en bewaard in een eigen cache (docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen.md).
         // De kaart bij Route voorstellen (MapLibre, ruim 1,6 MB met worker en stijl) evenmin: hij laadt pas als
         // het paneel opengaat en is zonder netwerk zinloos, want dan is er ook geen lus. Kaarttegels komen
-        // nooit in de service worker en worden nooit vooraf opgehaald (docs/beslissingen/2026-11-11-route-kaart.md).
+        // nooit in de service worker en worden nooit vooraf opgehaald (docs/beslissingen/2026-11-11-route-kaart.md),
+        // behalve de luchtfoto: die tegels komen hieronder in een begrensde runtime-cache (2026-11-11-luchtfoto.md).
         globIgnores: ['share-target-sw.js', 'morning-notice-sw.js', 'exercise-art/**', 'privacypolicy.html', 'assets/maplibre-gl-*'],
         runtimeCaching: [
           {
@@ -140,6 +142,20 @@ export default defineConfig({
               cacheableResponse: { statuses: [200] },
             },
           },
+          // Luchtfoto op de kaart: alleen tegels die je zelf zag, per host een eigen begrensde cache
+          // (aantal en dagen), nooit vooraf en nooit in de precache. Een cache per host, zodat een drukke
+          // bron de andere niet wegdrukt (docs/beslissingen/2026-11-11-luchtfoto.md).
+          ...AERIAL_HOSTS.map((host) => ({
+            // Een RegExp en geen functie: workbox schrijft het patroon als tekst in de service worker, en een
+            // functie zou `host` daar kwijt zijn.
+            urlPattern: new RegExp(`^https://${host.replace(/\./g, '\\.')}/`),
+            handler: 'CacheFirst' as const,
+            options: {
+              cacheName: `luchtfoto-${host}`,
+              expiration: { maxEntries: AERIAL_CACHE.maxEntries, maxAgeSeconds: AERIAL_CACHE.maxAgeDays * 24 * 60 * 60, purgeOnQuotaError: true },
+              cacheableResponse: { statuses: [200] },
+            },
+          })),
         ],
       },
     }),

@@ -1,16 +1,19 @@
 // ASCEND: de regie van de kaart bij Route voorstellen, zonder React. Laadt MapLibre pas als het
 // paneel opengaat, begint meteen op een effen vlak (nooit een leeg vak) en neemt dan de ondergrond:
 // OpenFreeMap, valt die weg of antwoordt hij niet binnen MAP_SOURCE_LIMIT_MS dan de rastertegels van
-// OpenStreetMap, en daarna weer het effen vlak. Alleen vooruit: geen herhaalpogingen. Na `destroy`
+// OpenStreetMap, en daarna weer het effen vlak. Met Luchtfoto komt eerst de luchtfoto van één bron
+// (integrations/aerialImagery.ts); valt die weg, dan dezelfde trap van de kaart, met een regel.
+// Alleen vooruit: geen herhaalpogingen; alleen een tik op de schakelaar begint opnieuw. Na `destroy`
 // (paneel dicht) maakt dit niets meer aan en gaat er geen aanroep meer de deur uit.
 // MapLibre en de klok komen binnen als deps, zodat de tests een nep-kaart geven.
 
 import {
-  attributionFor, baseSourcesOf, boundsOf, cameraDuration, DOT_SOURCE, dotFeatures, MAP_LOAD_LIMIT_MS, MAP_SOURCE_LIMIT_MS,
+  AERIAL_LIMIT_MS, aerialStyle, attributionFor, baseSourcesOf, boundsOf, cameraDuration, DOT_SOURCE, dotFeatures, MAP_LOAD_LIMIT_MS, MAP_SOURCE_LIMIT_MS,
   nextStage, OPENFREEMAP_STYLE, paintOpenFreeMap, plainStyle, rasterStyle, ROUTE_HIT_LAYER, ROUTE_SOURCE, routeFeatures, stagesFor,
   type MapBase, type MapColors, type MapDot, type MapRoute, type MapStage, type StyleSpec,
 } from '../engine/routeMap';
 import type { RoutePoint, RouteStyle } from '../models/route';
+import { aerialSourceFor, type AerialId, type AerialSource } from '../integrations/aerialImagery';
 import { startFailureReason } from '../engine/routeStart';
 import { locateMe, LocateError, type Position2 } from '../utils/geolocation';
 import { withTimeout } from '../utils/withTimeout';
@@ -34,7 +37,9 @@ export interface MapLib {
 
 export type MapViewState =
   | { kind: 'loading' }
-  | { kind: 'ready'; stage: MapStage; attribution: string }
+  // aerial: de bron van de luchtfoto (alleen bij die stap). photoFailed: Luchtfoto stond aan maar viel weg,
+  // je ziet de kaart. Beide zijn afwezig als ze niets zeggen.
+  | { kind: 'ready'; stage: MapStage; attribution: string; aerial?: AerialId; photoFailed?: true }
   // Geen WebGL, of MapLibre kon geen kaart maken.
   | { kind: 'unsupported' }
   // Het losse stuk met MapLibre kwam niet (geen netwerk, of niet op tijd).
@@ -72,17 +77,20 @@ export interface MapViewEvents {
 
 export interface RouteMapView {
   update(data: MapViewData): void;
+  // Kaart of Luchtfoto: begint de trap opnieuw, met dezelfde camera.
+  setPhoto(on: boolean): void;
   fitAll(): void;
   goTo(point: RoutePoint): void;
   destroy(): void;
 }
 
 // Rechts ligt de kolom met de twee ronde knoppen (44 px en een rand): daar valt geen lus onder.
-export const FIT_PADDING = { top: 36, bottom: 36, left: 36, right: 60 };
+// Rechtsboven ligt ook de schakelaar Kaart of Luchtfoto: bovenaan iets meer ruimte.
+export const FIT_PADDING = { top: 60, bottom: 36, left: 36, right: 60 };
 const FIT_MAX_ZOOM = 16;
 const POINT_ZOOM = 15;
 
-export function createRouteMapView(container: HTMLElement, base: MapBase, data: MapViewData, events: MapViewEvents, deps: MapViewDeps): RouteMapView {
+export function createRouteMapView(container: HTMLElement, base: MapBase, data: MapViewData, events: MapViewEvents, deps: MapViewDeps, photo = false): RouteMapView {
   const setTimer = deps.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
   const clearTimer = deps.clearTimer ?? ((id) => clearTimeout(id as ReturnType<typeof setTimeout>));
   let destroyed = false;
@@ -95,7 +103,9 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
   let loadTimer: unknown;
   let styleStop: AbortController | undefined;
   const fetchStyle = deps.fetchStyle ?? fetchJson;
-  const stages = stagesFor(base, deps.online());
+  let stages = stagesFor(base, deps.online(), photo);
+  let aerial: AerialSource | undefined;
+  let photoFailed = false;
 
   const overlay = () => ({ routes: routeFeatures(latest.routes, latest.chosen), dots: dotFeatures(latest.dots) });
   const allPoints = () => [...latest.routes.flatMap((r) => r.points), ...Object.values(latest.dots).filter((p): p is RoutePoint => !!p)];
@@ -115,13 +125,18 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
     if (settled || !current) return;
     settled = true;
     stopTimer();
-    report({ kind: 'ready', stage: current, attribution: attributionFor(current) });
+    report({
+      kind: 'ready', stage: current, attribution: attributionFor(current, aerial),
+      ...(current === 'aerial' && aerial ? { aerial: aerial.id } : {}),
+      ...(photoFailed ? { photoFailed: true as const } : {}),
+    });
   }
 
   // De ondergrond van deze stap viel weg: door naar de volgende, nooit terug.
   function fallBack() {
     if (destroyed || settled || !current) return;
     const next = nextStage(stages, current);
+    if (current === 'aerial') photoFailed = true;
     if (next) show(next);
   }
 
@@ -138,8 +153,11 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
         settle();
         return;
       }
-      timer = setTimer(fallBack, MAP_SOURCE_LIMIT_MS);
-      if (stage === 'raster') map.setStyle(rasterStyle(c, base, overlay()), { diff: false });
+      timer = setTimer(fallBack, stage === 'aerial' ? AERIAL_LIMIT_MS : MAP_SOURCE_LIMIT_MS);
+      if (stage === 'aerial') {
+        aerial = aerialSourceFor(allPoints());
+        map.setStyle(aerialStyle(c, aerial, overlay()), { diff: false });
+      } else if (stage === 'raster') map.setStyle(rasterStyle(c, base, overlay()), { diff: false });
       else {
         // Het stijlbestand zelf ophalen (binnen dezelfde grens): een adres aan setStyle haalt de oude
         // stijl meteen weg, en dan staan de lussen en de ring even nergens.
@@ -254,6 +272,11 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
     update(next) {
       latest = next;
       if (!map || destroyed) return;
+      // Een nieuw startpunt of nieuwe lussen in een ander land: de luchtfoto van de bron die daar past.
+      if (current === 'aerial' && aerial && aerialSourceFor(allPoints()).id !== aerial.id) {
+        show('aerial');
+        return;
+      }
       const o = overlay();
       try {
         map.getSource(ROUTE_SOURCE)?.setData?.(o.routes);
@@ -261,6 +284,13 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
       } catch {
         // De stijl wisselt: de nieuwe stijl neemt de laatste lussen zelf mee.
       }
+    },
+    setPhoto(on) {
+      photoFailed = false;
+      stages = stagesFor(base, deps.online(), on);
+      // Nog aan het laden: start() neemt de nieuwe trap mee.
+      if (!map || destroyed) return;
+      show(stages[0]);
     },
     fitAll: () => fit(true),
     goTo(point) {

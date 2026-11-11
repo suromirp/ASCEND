@@ -16,7 +16,7 @@ import { Eyebrow } from '../../ui';
 import { SettingsList, SettingsSection } from '../SettingsList';
 import { resolveRouteStyle } from '../../../engine/routeTarget';
 import { resolveRouteStart } from '../../../engine/routeStart';
-import { resolveMapBase } from '../../../engine/routeMap';
+import { groundSettings, resolveMapGround } from '../../../engine/routeMap';
 import { resolveRouteSearch } from '../../../engine/routeSearchSetting';
 import { RouteStartFooter } from './RouteStartFooter';
 import { BundleSheet } from './BundleSheet';
@@ -189,7 +189,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       )}
       {inner === 'route-soort' && <ChoiceFromDef def={CHOICES.routeSoort} value={resolveRouteStyle(settings.routeStyle)} onPick={(v) => void updateSettings({ routeStyle: v })} onClose={closeInner} />}
       {inner === 'route-zoeken' && <ChoiceFromDef def={CHOICES.routeZoeken} value={resolveRouteSearch(settings.routeSearch)} onPick={(v) => void updateSettings({ routeSearch: v })} onClose={closeInner} />}
-      {inner === 'route-kaart' && <ChoiceFromDef def={CHOICES.routeKaart} value={resolveMapBase(settings.routeMapBase)} onPick={(v) => void updateSettings({ routeMapBase: v })} onClose={closeInner} />}
+      {inner === 'route-kaart' && <ChoiceFromDef def={CHOICES.routeKaart} value={resolveMapGround(settings)} onPick={(v) => void updateSettings(groundSettings(v, settings))} onClose={closeInner} />}
       {inner === 'route-start' && <ChoiceFromDef def={CHOICES.routeStart} value={resolveRouteStart(settings.routeStart)} onPick={(v) => void updateSettings({ routeStart: v })} onClose={closeInner} keepOpen footer={<RouteStartFooter mode={resolveRouteStart(settings.routeStart)} />} />}
       {sheet === 'bundel-inzicht' && (
         <BundleSheet eyebrow="Vandaag en meldingen" title="Inzicht na een training" line="Hoogstens twee regels over wat beter ging en waar je op moet letten." onClose={close}>

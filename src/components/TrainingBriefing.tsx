@@ -378,6 +378,8 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
           offerHere={false}
           onNoMap={model.markNoMap}
           height={BRIEFING_MAP_HEIGHT}
+          photo={model.photo}
+          onPhoto={model.setPhoto}
         />
       )}
       {/* De gekozen lus in twee regels, met Groter ernaast: zo staan de vier vakken op 390 px nog boven de vouw. */}

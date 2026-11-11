@@ -6,16 +6,49 @@
 // Er staat hier geen enkele kleur: elke kleur komt binnen als `MapColors`, gelezen uit `src/index.css`.
 
 import type { RoutePoint, RouteStyle } from '../models/route';
+import type { AerialSource } from '../integrations/aerialImagery';
 
 export type MapBase = 'dark' | 'light' | 'none';
 export const resolveMapBase = (raw: unknown): MapBase => (raw === 'light' || raw === 'none' ? raw : 'dark');
 
-// Een stap van de ondergrond. 'plain' haalt niets op en kan dus niet wegvallen.
-export type MapStage = 'vector' | 'raster' | 'plain';
+// Kaart of Luchtfoto (veld `routeMapPhoto`, onthouden van de schakelaar op de kaart). Afwezig is Kaart.
+export type MapPhoto = 'map' | 'photo';
+export const resolveMapPhoto = (raw: unknown): MapPhoto => (raw === 'photo' ? 'photo' : 'map');
 
-export function stagesFor(base: MapBase, online: boolean): MapStage[] {
-  if (base === 'none' || !online) return ['plain'];
-  return ['vector', 'raster', 'plain'];
+// De instelling Ondergrond, met vier standen: Donker (advies), Licht, Luchtfoto, Geen. Bewaard in twee
+// velden: `routeMapBase` (welke kaart: Donker, Licht of Geen) en `routeMapPhoto` (Luchtfoto aan), zodat de
+// schakelaar op de kaart terug kan naar de kaart die je koos. Geen wint: dan geen tegels, ook geen foto.
+// Een oude back-up met alleen `routeMapPhoto` leest zo vanzelf als Luchtfoto; geen migratie nodig.
+export type MapGround = 'dark' | 'light' | 'photo' | 'none';
+export function resolveMapGround(s: { routeMapBase?: unknown; routeMapPhoto?: unknown }): MapGround {
+  const base = resolveMapBase(s.routeMapBase);
+  if (base === 'none') return 'none';
+  return resolveMapPhoto(s.routeMapPhoto) === 'photo' ? 'photo' : base;
+}
+// Wat er bewaard wordt bij een keuze in Ondergrond. Luchtfoto vanuit Geen zet de kaart terug op het advies.
+export function groundSettings(ground: MapGround, current: { routeMapBase?: unknown }): { routeMapBase?: 'dark' | 'light' | 'none'; routeMapPhoto?: 'photo' } {
+  if (ground === 'photo') return { routeMapPhoto: 'photo', ...(resolveMapBase(current.routeMapBase) === 'none' ? { routeMapBase: undefined } : {}) };
+  return { routeMapBase: ground, routeMapPhoto: undefined };
+}
+// Bij Ondergrond Geen haalt de kaart geen tegels op, dus ook geen luchtfoto: dan staat er geen schakelaar.
+export const photoOffered = (base: MapBase): boolean => base !== 'none';
+
+// Een stap van de ondergrond. 'plain' haalt niets op en kan dus niet wegvallen.
+// 'aerial' is de luchtfoto; valt die weg, dan volgt de kaart (de stappen van Kaart erachter).
+export type MapStage = 'aerial' | 'vector' | 'raster' | 'plain';
+
+// Zonder netwerk probeert de luchtfoto het nog wel: tegels die je eerder zag staan in de runtime-cache.
+// Is die leeg, dan valt hij weg naar het effen vlak, met een regel.
+export function stagesFor(base: MapBase, online: boolean, photo: boolean = false): MapStage[] {
+  if (base === 'none') return ['plain'];
+  const map: MapStage[] = online ? ['vector', 'raster', 'plain'] : ['plain'];
+  return photo ? ['aerial', ...map] : map;
+}
+
+// De regel als de luchtfoto niet laadt en de kaart het overneemt; leeg als er niets te zeggen is.
+export function photoFallbackLine(photoFailed: boolean, online: boolean): string {
+  if (!photoFailed) return '';
+  return online ? 'De luchtfoto laadt niet. Je ziet de kaart.' : 'Zonder netwerk is er geen luchtfoto.';
 }
 
 // De volgende stap na een bron die wegviel; undefined: er is geen volgende (het effen vlak blijft).
@@ -26,6 +59,8 @@ export function nextStage(stages: MapStage[], current: MapStage): MapStage | und
 
 // Antwoordt een bron niet binnen deze tijd, dan neemt de kaart de volgende stap.
 export const MAP_SOURCE_LIMIT_MS = 6_000;
+// De luchtfoto krijgt korter: valt hij weg, dan moet de kaart nog laden, en je wacht liever niet twee keer zes seconden.
+export const AERIAL_LIMIT_MS = 4_000;
 // Het losse stuk met MapLibre: laadt het niet binnen deze tijd, dan staat er een regel in plaats van de kaart.
 export const MAP_LOAD_LIMIT_MS = 15_000;
 
@@ -35,8 +70,9 @@ export const OPENFREEMAP_STYLE: Record<'dark' | 'light', string> = {
 };
 export const OSM_RASTER_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-// De naamsvermelding per stap, zichtbaar op de kaart.
-export function attributionFor(stage: MapStage | undefined): string {
+// De naamsvermelding per stap, zichtbaar op de kaart. Bij de luchtfoto die van de gekozen bron.
+export function attributionFor(stage: MapStage | undefined, aerial?: AerialSource): string {
+  if (stage === 'aerial') return aerial?.attribution ?? '';
   if (stage === 'vector') return '© OpenMapTiles © OpenStreetMap contributors';
   if (stage === 'raster') return '© OpenStreetMap contributors';
   return '';
@@ -72,8 +108,9 @@ export function readMapColors(read: (token: string) => string): MapColors {
 }
 
 // De kleuren van de lijnen en stippen: op een lichte ondergrond de varianten voor licht.
+// Op een luchtfoto altijd de donkere rand: een mint lus met een donkere rand blijft leesbaar op bos, akker en water.
 export function overlayColors(c: MapColors, base: MapBase, stage: MapStage) {
-  const light = base === 'light' && stage !== 'plain';
+  const light = base === 'light' && stage !== 'plain' && stage !== 'aerial';
   return light
     ? { chosen: c.actionOnLight, other: c.routeOtherOnLight, otherCasing: c.lightCard, casing: c.lightCard, status: c.statusOnLight, ring: c.lightCard, pick: c.onLight }
     : { chosen: c.action, other: c.routeOther, otherCasing: c.bg, casing: c.bg, status: c.status, ring: c.bg, pick: c.ink };
@@ -208,8 +245,26 @@ export function rasterStyle(c: MapColors, base: MapBase, overlay: Overlay): Styl
   );
 }
 
+export const AERIAL_SOURCE = 'ascend-aerial';
+
+// De luchtfoto van één bron, iets gedempt zodat de lus en de knoppen erboven de aandacht houden.
+export function aerialStyle(c: MapColors, aerial: AerialSource, overlay: Overlay): StyleSpec {
+  return withOverlay(
+    {
+      version: 8,
+      sources: { [AERIAL_SOURCE]: { type: 'raster', tiles: [aerial.tiles], tileSize: 256, maxzoom: aerial.maxzoom, bounds: aerial.bounds, attribution: aerial.attribution } },
+      layers: [
+        { id: 'background', type: 'background', paint: { 'background-color': c.charcoal } },
+        { id: AERIAL_SOURCE, type: 'raster', source: AERIAL_SOURCE, paint: { 'raster-brightness-max': 0.85 } },
+      ],
+    },
+    overlay,
+    overlayColors(c, 'dark', 'aerial'),
+  );
+}
+
 // De bronnen waar de ondergrond van een stap op wacht.
-export const baseSourcesOf = (stage: MapStage): string[] => (stage === 'vector' ? ['openmaptiles'] : stage === 'raster' ? ['osm-raster'] : []);
+export const baseSourcesOf = (stage: MapStage): string[] => (stage === 'vector' ? ['openmaptiles'] : stage === 'raster' ? ['osm-raster'] : stage === 'aerial' ? [AERIAL_SOURCE] : []);
 
 // De donkere stijl van OpenFreeMap in de kleuren van ASCEND. Per laag op naam en soort; een laag die
 // er niet (meer) is, slaat dit over. Paden blijven zichtbaar, want daar loop je.
