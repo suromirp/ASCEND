@@ -3,6 +3,8 @@ import guideSheet from './TrainingGuideSheet.tsx?raw';
 import guideRow from './GuideRow.tsx?raw';
 import watchSheet from './WatchSheet.tsx?raw';
 import logger from './ExerciseLogger.tsx?raw';
+import weekSheet from './SessionActionSheet.tsx?raw';
+import missionCard from './TodayMissionCard.tsx?raw';
 
 // Het uitlegblad van een training: elk onderblad gaat door Sheet (useSheetClose, sheetRef, SheetGrip),
 // zodat de terugknop van het toestel eerst het onderblad sluit en daarna het uitlegblad. Een
@@ -80,5 +82,22 @@ describe('blad Je horloge', () => {
     expect(logger).not.toContain('>Info</SecondaryButton>');
     // Naar een pagina sluit het trainingsscherm zonder het concept weg te gooien.
     expect(logger).toContain('onLeave={closeSheet}');
+    expect(logger).not.toContain('onLeave={requestClose}');
+  });
+
+  it('de knop Horloge laat het blad uit zich groeien', () => {
+    expect(logger).toMatch(/data-sheet-from=""><SecondaryButton onClick=\{\(\) => setShowWatch\(true\)\}/);
+  });
+
+  // Spoor 2: dezelfde rij in Week en op Vandaag, die hetzelfde blad opent.
+  it('Week: de rij Je horloge in Andere keuzes, alleen voor een training die nog moet komen', () => {
+    expect(weekSheet).toContain('<WatchSheet');
+    expect(weekSheet).toContain('title={WATCH_SHEET_TEXT.row} sub={watchView.rowSub} sheetFrom');
+    expect(weekSheet).toContain('watchView.hasWatchSheet && !skipped && session.scheduledDate >= today');
+  });
+
+  it('Vandaag: de rij Je horloge in het menu, het blad pas als het menu dicht is', () => {
+    expect(missionCard).toContain('<WatchSheet');
+    expect(missionCard).toContain('pick(() => setShowWatch(true))');
   });
 });

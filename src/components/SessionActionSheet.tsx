@@ -22,6 +22,10 @@ import { availableVariants, resolveEffectiveFullDuration, resolveVariantDuration
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { ExerciseLogger } from './ExerciseLogger';
+import { WatchSheet } from './WatchSheet';
+import { useWatchSheet } from './useWatchSheet';
+import { WATCH_SHEET_TEXT } from '../engine/watchSheet';
+import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { PrimaryButton, SecondaryButton, InfoButton, SheetGrip } from './ui';
@@ -172,6 +176,11 @@ export function SessionActionSheet({
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
   const guide = getTrainingGuide(template.id);
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  // Het blad Je horloge (engine/watchSheet.ts): een rij in Andere keuzes, alleen voor een training die
+  // nog moet komen en waarvoor het blad iets heeft (docs/visie/Ontwerp Info-blad.md, spoor 2).
+  const [showWatch, setShowWatch] = useState(false);
+  const garmin = buildWorkoutPlan(template, session.scheduledDate, program)?.garmin;
+  const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });
   const navigate = useNavigate();
   const today = todayISO();
   const skipped = session.status === 'skipped';
@@ -343,6 +352,10 @@ export function SessionActionSheet({
     saveWorkout: saving ? 'Bezig…' : 'Opslaan',
   };
   const due = session.scheduledDate <= today;
+  const showWatchRow = watchView.hasWatchSheet && !skipped && session.scheduledDate >= today;
+  // De rij Je horloge staat direct na Hoe je het doet, of bovenaan als die er niet is.
+  const afterRow = actions.rows.findIndex((a) => a === 'start' || a === 'preview');
+  const watchRow = showWatchRow ? <SheetRow key="horloge" title={WATCH_SHEET_TEXT.row} sub={watchView.rowSub} sheetFrom onClick={() => setShowWatch(true)} /> : null;
   const facts = [skipped ? 'Overgeslagen' : null, sessionKindLabel(template), `${minutes} min`, note].filter(Boolean).join(' · ');
   // Short and minimum versions (when switched on): one strip that the gold
   // button and "Training starten" both follow.
@@ -351,6 +364,17 @@ export function SessionActionSheet({
   return (
     <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={template.name} scrollKey="main" head={<SheetHeader eyebrow={eyebrow} title={template.name} info={info} facts={facts} onClose={requestClose} />}>
       {guideSheet}
+      {showWatch && watchView.hasWatchSheet && (
+        <WatchSheet
+          view={watchView}
+          template={template}
+          session={session}
+          garmin={garmin}
+          dayLabel={guideDayLabel(template, session.scheduledDate)}
+          onClose={() => setShowWatch(false)}
+          onLeave={requestClose}
+        />
+      )}
       {showPreview && (
         <ExerciseLogger
           preview
@@ -408,9 +432,13 @@ export function SessionActionSheet({
             <p className="mt-2 text-center text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>{SETS_FROM_MACROFACTOR}</p>
           )}
         </div>
-        {actions.rows.length > 0 && (
+        {(actions.rows.length > 0 || watchRow) && (
           <SheetRows label="Andere keuzes">
-            {actions.rows.map((a) => <SheetRow key={a} title={label[a]} onClick={run(a)} />)}
+            {afterRow < 0 && watchRow}
+            {actions.rows.flatMap((a, i) => {
+              const row = <SheetRow key={a} title={label[a]} onClick={run(a)} />;
+              return i === afterRow && watchRow ? [row, watchRow] : [row];
+            })}
           </SheetRows>
         )}
         </>)}

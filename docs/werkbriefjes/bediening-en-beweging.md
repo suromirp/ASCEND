@@ -9,7 +9,7 @@ Hoe de app bedient wordt en beweegt: terugknop en bladen, scrollen en hervatten,
 - `src/components/ui.tsx#SheetGrip` het greepje bovenaan elk blad
 - `src/components/usePageState.ts#usePageState` toestand die een bezoek aan een andere pagina overleeft
 - `src/components/useScrollRestoration.ts#useScrollRestoration` scrollhoogte per geschiedenisstap van de meegegeven scroller (de pagina is `#app-scroll`)
-- `src/utils/sheetGrowDom.ts#installSheetOrigin` een blad groeit uit een rij met `data-sheet-from`
+- `src/utils/sheetGrowDom.ts#installSheetOrigin` een blad groeit uit een rij met `data-sheet-from`; het blad Je horloge: `src/engine/watchSheet.ts#watchSheet` zegt wat het toont, `src/components/useWatchSheet.ts#useWatchSheet` leest stand en instellingen, `src/components/WatchSheet.tsx#WatchSheet` tekent
 - `src/utils/flipDom.ts#armFlip` een verplaatste training schuift naar zijn dag
 - `src/utils/haptics.ts#haptics` de tik, achter de instelling Trillen
 - `src/components/SkyBand.tsx#SkyBand` de lucht bovenaan elke tab, `actions` voor wat rechtsboven moet
@@ -26,7 +26,7 @@ Hoe de app bedient wordt en beweegt: terugknop en bladen, scrollen en hervatten,
 
 ## Valkuilen
 - Elk blad met `animate-sheet-in` of `forge-down` heeft `ref={sheetRef}` en `<SheetGrip />`; `src/components/sheetDrag.scan.test.ts` faalt anders, behalve met reden in de uitzonderingen.
-- Een nieuwe rij die een blad opent krijgt `data-sheet-from`; Vandaag schuift nog niet.
+- Een nieuwe rij die een blad opent krijgt `data-sheet-from`; Vandaag schuift nog niet. Een rij met Pagina in een blad boven het trainingsscherm sluit eerst het blad en het scherm via `closeSheet` (niet `requestClose`, dat gooit het concept weg) en navigeert daarna.
 - Een nieuwe animatie moet in Rustig en Uit en bij `prefers-reduced-motion` op de eindstand staan (`data-motion` op `<html>`).
 - Een blad dat niet mag sluiten terwijl het bezig is geeft `canClose` door aan `useSheetClose`.
 - Een mislukte actie heeft een zichtbare uitkomst en een grens in tijd; een terugval die liegt ging rood bij een review (2 november).

@@ -94,9 +94,24 @@ describe('watchSheet', () => {
     expect(watchSheet(input({ template: hike, garmin: undefined, status: 'none', fieldsShown: false })).hasWatchSheet).toBe(false);
   });
 
-  it('de rij Hartslagzones alleen als de gids die opmerking heeft', () => {
+  it('de rij Je horloge instellen alleen als de gids die opmerking heeft', () => {
     expect(watchSheet(input()).zones).toBeUndefined();
     expect(watchSheet(input({ hasZonesNote: true })).zones).toEqual({ title: WATCH_SHEET_TEXT.zones, to: '/koppelen/garmin', section: 'horloge-instellen' });
+  });
+
+  it('een wedstrijd krijgt wel een blad: de workout gaat op je horloge, de datavelden zonder advies', () => {
+    const race = { id: 'tpl_race', type: 'cardio' as const, roles: ['race' as const] };
+    const view = watchSheet(input({ template: race, garmin: { sport: 'Hardlopen', lines: ['Hardlopen · 60:00 · doel: inspanning hard (RPE 8-9)'] } }));
+    expect(view.hasWatchSheet).toBe(true);
+    expect(view.workout.parts.map((p) => p.kind)).toEqual(['status', 'manual']);
+    expect(view.fields?.state).toBe('noAdvice');
+  });
+
+  it('de regel onder de rij Je horloge: de stand als die er is, anders Workout en datavelden', () => {
+    expect(watchSheet(input({ statusText: 'Verstuurd naar je horloge om 07:12' })).rowSub).toBe('Verstuurd naar je horloge om 07:12');
+    expect(watchSheet(input({ status: 'unlinked', statusText: 'Naar je horloge sturen?' })).rowSub).toBe(WATCH_SHEET_TEXT.rowSub);
+    expect(watchSheet(input({ showStatus: false, statusText: 'Verstuurd naar je horloge om 07:12' })).rowSub).toBe(WATCH_SHEET_TEXT.rowSub);
+    expect(watchSheet(input({ status: undefined })).rowSub).toBe(WATCH_SHEET_TEXT.rowSub);
   });
 
   it('geen gedachtestreepjes in de teksten', () => {

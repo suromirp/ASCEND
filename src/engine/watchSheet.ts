@@ -31,8 +31,10 @@ export interface WatchSheetInput {
   model: WatchModel;
   // settings.watchFieldVersions, ongelezen: een kapotte waarde telt als geen eigen versie.
   store?: unknown;
-  // De gids heeft de opmerking over hartslagzones op je horloge.
+  // De gids heeft de opmerking over je horloge instellen (zones, eigen activiteit, databeelden).
   hasZonesNote: boolean;
+  // De regel van de stand (watchStatusLine), voor de rij Je horloge in Week.
+  statusText?: string;
 }
 
 // De delen van de groep Workout, in de volgorde van het blad.
@@ -68,6 +70,8 @@ export interface WatchSheetView {
   fields?: WatchFieldsGroup;
   // Naar Garmin koppelen, bij Je horloge instellen (`section` gaat mee als state van de navigatie).
   zones?: { title: string; to: string; section: string };
+  // De regel onder de rij Je horloge (Week, Vandaag): de stand als die er is, anders wat erin staat.
+  rowSub: string;
 }
 
 export const WATCH_SHEET_TEXT = {
@@ -80,7 +84,10 @@ export const WATCH_SHEET_TEXT = {
   noAdvice: 'Voor deze training heb ik geen advies.',
   ownVersion: 'Je hebt ook een eigen versie.',
   fieldsRow: 'Bekijken en aanpassen',
-  zones: 'Hartslagzones op je horloge',
+  // Eén titel voor de vier gidsen met een Garmin-opmerking: zones, een eigen activiteit en databeelden.
+  zones: 'Je horloge instellen',
+  row: 'Je horloge',
+  rowSub: 'Workout en datavelden',
 } as const;
 
 export const GARMIN_PAGE = '/koppelen/garmin';
@@ -152,9 +159,12 @@ export function watchSheet(input: WatchSheetInput): WatchSheetView {
   const kind = watchKindOf(input.template);
   const hasAdvice = !!kind && !!watchAdvice(kind, input.model);
   // Het blad bestaat alleen voor een training die op het horloge kan: een workout of datavelden met advies.
-  // Kracht, rust en wedstrijd hebben geen van beide en dus geen knop Horloge.
+  // Kracht en rust hebben geen van beide en dus geen knop Horloge. Een wedstrijd en een testloop wel: die
+  // hebben een workout (Hardlopen) om op het horloge te zetten, alleen geen advies voor de datavelden.
   const hasWatchSheet = hasWorkout || (input.fieldsShown && hasAdvice);
   const fields = hasWatchSheet ? fieldsGroup(input, kind) : undefined;
   const zones = hasWatchSheet && input.hasZonesNote ? { title: WATCH_SHEET_TEXT.zones, to: GARMIN_PAGE, section: 'horloge-instellen' } : undefined;
-  return { hasWatchSheet, workout, fields, zones };
+  const linkedShown = input.showStatus && !!input.status && LINKED.has(input.status) && !!input.statusText;
+  const rowSub = linkedShown ? input.statusText! : WATCH_SHEET_TEXT.rowSub;
+  return { hasWatchSheet, workout, fields, zones, rowSub };
 }

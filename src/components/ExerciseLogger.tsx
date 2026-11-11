@@ -435,10 +435,10 @@ function GeneralLogger({
               <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
             )}
             {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} mode="inline" row />}
-            {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="py-2" plain />}
+            {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={closeSheet} className="py-2" plain />}
           </div>
         ) : plannedSession && !preview ? (
-          <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="mt-4" />
+          <WatchStatusRow session={plannedSession} template={template} onLeave={closeSheet} className="mt-4" />
         ) : null}
 
         {template.type === 'strength' && !restChosen && !quickComplete && !preview && (
@@ -711,7 +711,7 @@ function GeneralLogger({
         {preview ? (
           <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
             {watchView.hasWatchSheet ? (
-              <SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton>
+              <div className="flex flex-none" data-sheet-from=""><SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton></div>
             ) : guide ? (
               <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Uitleg</SecondaryButton>
             ) : null}
@@ -729,7 +729,7 @@ function GeneralLogger({
         ) : (
         <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
           {watchView.hasWatchSheet ? (
-            <SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton>
+            <div className="flex flex-none" data-sheet-from=""><SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton></div>
           ) : guide ? (
             <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Uitleg</SecondaryButton>
           ) : (

@@ -6,6 +6,8 @@ import { useAppData } from '../state/AppDataContext';
 import { resolveWatchModel, watchFieldsShown } from '../engine/watchFields';
 import { watchSheet, type WatchSheetView } from '../engine/watchSheet';
 import { useWatchStatuses } from './useWatchStatus';
+import { watchStatusLine } from '../engine/watchStatus';
+import { todayISO } from '../utils/dates';
 
 // Wat het blad toont, voor de knop Horloge en voor het blad zelf. De stand laadt zoals op het
 // trainingsscherm; zolang hij laadt telt hij als onbekend en houdt hij de rest niet tegen.
@@ -22,10 +24,12 @@ export function useWatchSheet({
 }): WatchSheetView {
   const { settings } = useAppData();
   const { statusOf, ready } = useWatchStatuses();
+  const status = session && ready ? statusOf(session, template) : undefined;
   return watchSheet({
     template,
     garmin,
-    status: session && ready ? statusOf(session, template).kind : undefined,
+    status: status?.kind,
+    statusText: status ? watchStatusLine(status, todayISO())?.text : undefined,
     showStatus: settings.showWatchStatus !== false,
     fieldsShown: watchFieldsShown(settings),
     model: resolveWatchModel(settings.watchModel),
