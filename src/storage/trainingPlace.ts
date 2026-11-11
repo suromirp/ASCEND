@@ -38,14 +38,22 @@ function cleanMap(raw: unknown): PlaceMap {
 }
 
 // Wat er het laatst gelezen of bewaard is, zodat een scherm dat later opent meteen de goede stand
-// heeft (geen route die even verschijnt en dan weggaat). Luisteraars horen een nieuwe keuze meteen:
-// Vandaag en het blad achter de i volgen een tik op het trainingsscherm.
+// heeft (geen route die even verschijnt en dan weggaat). Een tik staat er meteen bij (`pending`), tot
+// hij bewaard is; mislukt het bewaren, dan valt hij weg en geldt weer wat er op het toestel staat.
+// Luisteraars horen elke verandering: Vandaag en het blad achter de i volgen een tik op het
+// trainingsscherm. Bewaren gebeurt een voor een (`chain`), zodat twee tikken elkaar niet overschrijven.
 let cache: PlaceMap | undefined;
+const pending = new Map<string, PlaceEntry>();
 const listeners = new Set<() => void>();
+let chain: Promise<unknown> = Promise.resolve();
 
-function publish(map: PlaceMap): void {
-  cache = map;
+function notify(): void {
   for (const l of listeners) l();
+}
+
+function view(): PlaceMap | undefined {
+  if (!cache && pending.size === 0) return undefined;
+  return { ...(cache ?? {}), ...Object.fromEntries(pending) };
 }
 
 async function readStored(): Promise<PlaceMap | undefined> {
@@ -56,12 +64,10 @@ async function readStored(): Promise<PlaceMap | undefined> {
   }
 }
 
-// Lezen vult de cache, behalve terwijl er een keuze bewaard wordt: dan wint die keuze.
-let saving = 0;
 async function readMap(): Promise<PlaceMap> {
   const stored = await readStored();
-  if (stored && saving === 0) cache = stored;
-  return saving > 0 ? (cache ?? stored ?? {}) : (stored ?? cache ?? {});
+  if (stored) cache = stored;
+  return view() ?? {};
 }
 
 // Alle bewaarde keuzes, per geplande training: de sleutel, ongelezen.
@@ -71,7 +77,8 @@ export async function getTrainingPlaces(): Promise<Record<string, string>> {
 
 // Het laatst bekende, zonder te wachten; undefined als er nog niets gelezen is.
 export function peekTrainingPlaces(): Record<string, string> | undefined {
-  return cache ? keysOf(cache) : undefined;
+  const map = view();
+  return map ? keysOf(map) : undefined;
 }
 
 export function onTrainingPlaceChange(listener: () => void): () => void {
@@ -84,6 +91,7 @@ export function onTrainingPlaceChange(listener: () => void): () => void {
 // Alleen voor tests: alsof de app net start.
 export function resetTrainingPlaceCache(): void {
   cache = undefined;
+  pending.clear();
 }
 
 function keysOf(map: PlaceMap): Record<string, string> {
@@ -96,24 +104,34 @@ export async function getTrainingPlace(plannedSessionId: string): Promise<string
 }
 
 // Bewaart de keuze. Geeft terug of het lukte; mislukt is niet erg, dan geldt de standaard weer.
-export async function saveTrainingPlace(plannedSessionId: string, date: string, key: string, today: string = todayISO()): Promise<boolean> {
-  try {
-    // Meteen zichtbaar voor de andere schermen, ook als het schrijven nog loopt.
-    saving += 1;
-    publish({ ...(cache ?? {}), [plannedSessionId]: { key, date } });
-    const map = { ...((await readStored()) ?? {}), [plannedSessionId]: { key, date } };
-    const from = addDays(today, -KEEP_DAYS);
-    const kept = Object.entries(map)
-      .filter(([, e]) => e.date >= from)
-      .sort((a, b) => b[1].date.localeCompare(a[1].date))
-      .slice(0, MAX_ENTRIES);
-    const next = Object.fromEntries(kept);
-    await MetaRepo.set(TRAINING_PLACE_KEY, next);
-    saving -= 1;
-    publish(next);
-    return true;
-  } catch {
-    saving = Math.max(0, saving - 1);
-    return false;
-  }
+export function saveTrainingPlace(plannedSessionId: string, date: string, key: string, today: string = todayISO()): Promise<boolean> {
+  const entry: PlaceEntry = { key, date };
+  pending.set(plannedSessionId, entry);
+  notify();
+  const run = chain.then(async () => {
+    let ok = false;
+    try {
+      const stored = await readStored();
+      if (stored) {
+        const map = { ...stored, [plannedSessionId]: entry };
+        const from = addDays(today, -KEEP_DAYS);
+        const kept = Object.entries(map)
+          .filter(([, e]) => e.date >= from)
+          .sort((a, b) => b[1].date.localeCompare(a[1].date))
+          .slice(0, MAX_ENTRIES);
+        const next = Object.fromEntries(kept);
+        await MetaRepo.set(TRAINING_PLACE_KEY, next);
+        cache = next;
+        ok = true;
+      }
+    } catch {
+      ok = false;
+    }
+    // Een nieuwere tik op dezelfde training blijft staan tot hij zelf bewaard is.
+    if (pending.get(plannedSessionId) === entry) pending.delete(plannedSessionId);
+    notify();
+    return ok;
+  });
+  chain = run;
+  return run;
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MetaRepo, wipeAllData } from './database';
 import { buildBackupEnvelope } from './backupExport';
 import { TRAINING_PLACE_KEY, getTrainingPlace, getTrainingPlaces, onTrainingPlaceChange, peekTrainingPlaces, resetTrainingPlaceCache, saveTrainingPlace } from './trainingPlace';
@@ -48,5 +48,26 @@ describe('andere schermen volgen een nieuwe keuze', () => {
     resetTrainingPlaceCache();
     expect(await getTrainingPlaces()).toEqual({ p1: 'run_treadmill' });
     expect(peekTrainingPlaces()).toEqual({ p1: 'run_treadmill' });
+  });
+});
+
+describe('bewaren een voor een, en terug bij een mislukte schrijfactie (Warden)', () => {
+  it('twee tikken vlak na elkaar op twee trainingen: allebei bewaard', async () => {
+    await Promise.all([
+      saveTrainingPlace('p1', '2026-11-12', 'run_treadmill', '2026-11-11'),
+      saveTrainingPlace('p2', '2026-11-13', 'run_walk', '2026-11-11'),
+    ]);
+    resetTrainingPlaceCache();
+    expect(await getTrainingPlaces()).toEqual({ p1: 'run_treadmill', p2: 'run_walk' });
+  });
+  it('mislukt het schrijven, dan valt de tik weg en geldt weer wat er op het toestel staat', async () => {
+    await saveTrainingPlace('p1', '2026-11-12', 'run_outdoor', '2026-11-11');
+    const spy = vi.spyOn(MetaRepo, 'set').mockRejectedValueOnce(new Error('vol'));
+    const pending = saveTrainingPlace('p1', '2026-11-12', 'run_treadmill', '2026-11-11');
+    expect(peekTrainingPlaces()).toEqual({ p1: 'run_treadmill' });
+    expect(await pending).toBe(false);
+    spy.mockRestore();
+    expect(peekTrainingPlaces()).toEqual({ p1: 'run_outdoor' });
+    expect(await getTrainingPlace('p1')).toBe('run_outdoor');
   });
 });
