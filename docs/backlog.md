@@ -8,7 +8,7 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 
 ## Inbox
 
-- 11 november, wens van de eigenaar (brainstorm routes, drie delen, in deze volgorde). Eén: bij een training een plek voorstellen uit je eigen plekken die past bij wat de training vraagt (veel hoogtemeters: de plek met de heuvel), ook als je erheen moet rijden; alleen een voorstel, met een instelling voor hoe ver. Twee: een route bewaren bij een plek (uit een voorstel of uit een loop van je horloge), zodat hij de volgende keer wordt voorgesteld bij een training die past; nieuwe opgeslagen vorm, dus migratie, export en import. Drie: vooraf een pin zetten op een plek waar je nog heen moet reizen; de app zoekt vanaf die pin zelf de beste lus voor de training, die je bewaart en alvast naar Garmin Connect stuurt, zodat je ter plekke niets meer hoeft te zoeken. Geen vrij tekenen van een route. Een pin kan een plek worden. Eerst Pathfinder vooraf (de plek van dit alles: bij de training, bij Plekken, of beide) en Cartographer.
+- 11 november, wens van de eigenaar (brainstorm routes, drie delen, in deze volgorde). Eén: bij een training een plek voorstellen uit je eigen plekken die past bij wat de training vraagt (veel hoogtemeters: de plek met de heuvel), ook als je erheen moet rijden; alleen een voorstel, met een instelling voor hoe ver. Twee: een route bewaren bij een plek (uit een voorstel of uit een loop van je horloge), zodat hij de volgende keer wordt voorgesteld bij een training die past; nieuwe opgeslagen vorm, dus migratie, export en import. Drie: vooraf een pin zetten op een plek waar je nog heen moet reizen; de app zoekt vanaf die pin zelf de beste lus voor de training, die je bewaart en alvast naar Garmin Connect stuurt, zodat je ter plekke niets meer hoeft te zoeken. Geen vrij tekenen van een route. Een pin kan een plek worden. Eerst Pathfinder vooraf (de plek van dit alles: bij de training, bij Plekken, of beide) en Cartographer. Pathfinder vooraf gedaan (11 november, coördinator): er is nog geen lijst eigen plekken (Waar train je? is een soort, Vast punt één coördinaat, de weerplaats één plaats), dus Plekken is een nieuw ding waarin Vast punt opgaat (migratie naar "Thuis"). Volgorde: eerst Briefing 5 en 6, dan Plekken als datavorm met migratie, export en import en beheer in Instellingen; dan deel twee (route bewaren, apart besluit naast "de lus tot middernacht"); dan deel één (voorstel in de Briefing, alleen bij heuvel en lang, afstand hemelsbreed, instelling hoe ver); dan deel drie (pin is een plek zonder routes, zoeken op plaatsnaam, Nieuwe plek ook vanuit de Briefing). Scout gaat eerst na of alvast naar Garmin Connect sturen werkt. Wacht op bevestiging van de eigenaar in de coördinator-chat (het go kwam doorgegeven).
 Wat de eigenaar tussendoor meldt, voor het volgende bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`).
 Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde uit het rooster hieronder. Een opmerking over hetzelfde komt bij het bestaande punt. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox.
 
@@ -55,6 +55,9 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Briefing spoor 2 (blad Route: kaart, lussen als rijen, knop eronder, uitleg achter de i).
+- Live op 11 november: Afdaalklok (na 21 dagen zonder afdaling een voorstel met Akkoord voor Trap af, 20 min; instelbaar in Tochten; besluit `2026-11-11-afdaalklok.md`). Mag: plek als regel op de missiekaart staat nu in de coachzin.
+- Live op 11 november: Briefing A (route alleen bij buiten; Vandaag, het blad achter de i en De avond ervoor volgen Waar train je?, geen route bij Loopband).
 - Live op 11 november: Eten onderweg (koolhydraten per uur vanaf 90 minuten met stuks, per dag bij een tocht met de aanname erbij; kaart op het trainingsscherm onder de route, De avond ervoor, etappe en Tochten; besluit `2026-11-11-eten-onderweg.md`).
 - Live op 11 november: Route-kaart 2 (startpunt Waar je nu bent als standaard, Vast punt, Ongeveer; tweede lus duidelijk met een regel; Lussen zoeken met stappen; geen aanroep meer na sluiten; besluit `2026-11-11-route-kaart-2.md`).
 - Live op 11 november: GR5-etappes met spoor uit OpenStreetMap (546 km, Vanoise via de GR 55), engine/stageAt.ts, de regel Op je etappe op een GR5-wandeldag; besluit `2026-11-11-gr5-uit-osm.md`.
@@ -69,9 +72,10 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 ## De Briefing (eigenaar akkoord 11 november, besluit `2026-11-11-briefing.md`)
 
 Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, allemaal Opus, geen planning. Volgorde:
-- In aanbouw 11 november: spoor 1 (geen route bij Loopband of binnen), 3 (waar je traint onthouden bij de geplande training), 4 (`engine/briefing.ts`).
-- Spoor 2 (blad Route met de kaart bovenaan), na Eten onderweg (zelfde scherm).
-- Spoor 5 (scherm Briefing vanuit Week, instelling Lus zoeken), 6 (knop Briefing op Vandaag), 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
+- Live 11 november: spoor 1, 3 en 4 (Briefing A).
+- Live 11 november: spoor 2 (het blad Route met de kaart bovenaan).
+- In aanbouw 11 november: spoor 5 en 6 (Sherpa, opus, branch claude/briefing-spoor-5-6).
+- Daarna spoor 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
 - Het oude Info-blad spoor 3 en 4 vervallen: spoor 7 hier vervangt ze.
 
 ## Werkwijze (onderzoek autonome agents, 11 november)
@@ -80,6 +84,24 @@ Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, al
 - Een Stop-hook die een bouwer pas laat stoppen als tsc en de gerichte tests groen zijn (instellingen van Claude Code: alleen met akkoord van de eigenaar).
 
 ## Samenhang (Pathfinder)
+
+- Briefing spoor 2 (Pathfinder, moet op 360 bij 640): de hoofdknop van het blad Route valt daar net onder de vouw. Voorstel: rijen compacter (één regel per lus) of de knop als vaste onderrand van het blad. Op 412 (telefoon eigenaar) staat hij erboven.
+
+- Briefing spoor 2 (Warden, moet, later): `engine/routeSheet.ts#loopLines` herkent de korter-zin aan de tekst van proposalNotes; laat de planner de notes als {text, warn} teruggeven zodra routePlanner.ts mag bewegen (spoor 8).
+- Briefing spoor 2 (Pathfinder, moet, spoor 6): mint Gedaan op Vandaag en Gedaan, invullen op het trainingsscherm bij een Garmin-loop; Route voorstellen staat op Vandaag onder de vouw en is via Week vier tikken. Spoor 5 en 6 lossen dit op; pas dan is de klacht weg.
+- Briefing spoor 2 (Pathfinder, mag): de eerste vraag van de route is een lange tekstmuur zonder mint knop.
+- Werkwijze (coördinator): Warden en Pathfinder zetten soms de hoofdmap op een andere commit (git checkout); in hun opdracht expliciet "alleen in een eigen worktree, nooit checkout in /home/user/ascend".
+
+- Briefing A (Warden, mag): De avond ervoor laat de route-regel weg zolang de plekkeuzes nog niet gelezen zijn (nu telt dan de standaard; alleen als lezen langer dan 1 s duurt).
+- Briefing A (Warden, mag): readMap in storage/trainingPlace.ts neemt een lezing alleen over als er sinds de start geen save klaar is (versieteller).
+- Eigen gewicht (Sherpa Afdaalklok): tpl_bodyweight en tpl_hill_easy hebben geen SESSION_STYLE; Eigen gewicht toont daardoor "Zone 2, praten kan" bij een krachttraining.
+- Afdaalklok (Warden, mag): een weerruil of slepen kan Trap af uit het venster van de klok halen; de klok controleert dat niet. Test voor een ruil met Trap af als partner, en een test voor de duur bij een andere nieuwe rij in een voorstel.
+
+- Afdaalklok (Pathfinder, mag): bij 21 dagen of meer mag de afdaalregel niet wegzakken achter "nog 3" in de adviezenkaart.
+- Afdaalklok (Pathfinder, mag): na de afgevinkte duurloop wordt Trap af de missie, zoals elke tweede training op een dag.
+- Afdaalklok (Pathfinder, mag): telt het blad Gemist een vervallen Trap af mee als gemiste training? Nagaan en zo ja niet meetellen.
+- Afdaalklok (Pathfinder, mag): de naam Trap af dekt geen duin of helling; pas als de uitleg in het scherm niet genoeg is.
+- Afdaalklok (Pathfinder, mag): een korte Garmin-wandeling op een dag met duurloop en Trap af mag niet aan Trap af koppelen als de loop bedoeld is; testen met één dag.
 
 Wat Pathfinder vindt en niet meteen terug naar een bouwer gaat. Eerste lijst (coördinator, 11 november): de horlogestand staat twee keer in het blad van een training in Week; de route staat ook bij de loopband; geen route in het blad in Week; de avondkaart staat onder Advies, Nog open en Back-up; het trainingsscherm van een Garmin-loop heeft "Gedaan, invullen" als hoofdknop. De redesign (Cartographer, `docs/visie/Ontwerp Route en trainingsscherm.md`) neemt de eerste vier mee.
 - Twee invarianten in de tekstkaart: dezelfde zin twee keer op één scherm of in één blad is een schending; het aantal tikken van Vandaag tot de route en tot de datavelden staat in de kaart en mag niet stil groeien. Eerst de dubbele horlogeregel weg, anders faalt de vergelijking. Opus.
