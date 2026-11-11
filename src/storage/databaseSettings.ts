@@ -319,6 +319,9 @@ export interface AppSettings {
   // Oefeningen in een training (engine/forgeLayout.ts): 'scherm' een per scherm, opzij vegen (het advies) of 'lijst'
   // onder elkaar. Afwezig is het advies. Optional and additive; read defensively, so no migration step is needed.
   forgeLayout?: 'scherm' | 'lijst';
+  // "Verloop toont" (engine/forgeLog.ts#resolveForgeLogView): in het blad Verloop van de training alleen de sets met een
+  // wijziging (het advies) of alle sets. Afwezig is het advies. Optional and additive; read defensively, so no migration.
+  forgeLogView?: 'wijzigingen' | 'alle';
   // "Lange onderbreking vragen na" (engine/forgeSession.ts): kom je terug in een lopende training en was je laatste
   // handeling zo lang geleden terwijl de klok liep, dan vraagt Forge of die tijd meetelt. In minuten; 0 is uit.
   // Afwezig is 45 (het advies). Optional and additive; read defensively, so no migration step is needed.

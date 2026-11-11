@@ -454,6 +454,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Onder elkaar', text: 'alle oefeningen op een pagina, zoals eerst. Je kunt dit ook in het menu van de training zelf zetten.' },
     ],
   },
+  forgeVerloop: {
+    title: 'Verloop toont',
+    lead: 'Het blad Verloop van de training zet per set een regel: het gewicht, de herhalingen en je RIR zoals de set uiteindelijk is, met alle redenen in een zin.',
+    points: [
+      { head: 'Alleen wijzigingen', text: 'het advies. Alleen de sets waar jij of Forge iets aan veranderde, of die onder het bereik bleven.' },
+      { head: 'Alle sets', text: 'ook de sets volgens schema, met de zwaarste set per oefening. Een gedempt bolletje is een RIR die je niet zelf koos.' },
+      { head: 'In het blad', text: 'je kunt ook wisselen in het blad zelf; die keuze blijft staan.' },
+    ],
+  },
   forgeOnderbreking: {
     title: 'Lange onderbreking vragen na',
     lead: 'Een training in Forge blijft open tot je afrondt of verwijdert, ook als je de app sluit. Kom je terug na een lange stilte, dan vraagt Forge eenmaal of die tijd meetelt.',
