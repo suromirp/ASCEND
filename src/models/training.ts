@@ -291,6 +291,11 @@ export interface SetLog {
   band?: SetBand;
   // "Ging het netjes?": false is not clean, absent is unknown (and counts as clean for the test).
   clean?: boolean;
+  // The id of the row in Forge this set came from, so the course of the training (`SessionLog.forgeLog`) links an
+  // event to this set and not to whatever set has its number now (engine/forgeLog.ts#linesPerSet). Optional and
+  // additive since 11 November 2026: older logs have none and link by number; a damaged value is dropped on
+  // reading (migrationsLogs.ts#migrateLogSetRow). Decision: docs/beslissingen/2026-11-11-forge-verloop.md.
+  rowId?: string;
   // When the set was ticked, as an ISO time. Only on logs made after the session clock
   // (docs/beslissingen/2026-10-29-forge-als-sessie.md); absent on older logs, which read as always.
   at?: string;

@@ -351,6 +351,41 @@ export function migrateLogSetAsked(log: SessionLog): SessionLog {
   return next;
 }
 
+// --- SetLog.rowId -----------------------------------------------------------------------------------
+// De rij in Forge waar een set vandaan kwam, zodat het verloop een gebeurtenis aan de goede set koppelt
+// (docs/beslissingen/2026-11-11-forge-verloop.md). Optioneel en aanvullend: een oud bestand heeft hem niet en
+// koppelt op nummer; alleen een korte tekst blijft, een beschadigde waarde valt weg en de set blijft gelijk.
+const okRowId = (v: unknown): v is string => typeof v === 'string' && v.length > 0 && v.length <= 80;
+
+function cleanSetRow<T extends ExerciseSetLog[] | null | undefined>(data: T): T {
+  if (!Array.isArray(data)) return data;
+  let changed = false;
+  const next = data.map((e) => {
+    if (!e || !Array.isArray(e.sets)) return e;
+    const sets = e.sets.map((s) => {
+      if (!s || typeof s !== 'object' || !('rowId' in s) || okRowId(s.rowId)) return s;
+      const { rowId: _bad, ...rest } = s;
+      void _bad;
+      changed = true;
+      return rest as SetLog;
+    });
+    return sets.every((s, i) => s === e.sets[i]) ? e : { ...e, sets };
+  });
+  return (changed ? next : data) as T;
+}
+
+export function migrateLogSetRow(log: SessionLog): SessionLog {
+  let next = log;
+  const data = cleanSetRow(log.strengthData);
+  if (data !== log.strengthData) next = { ...next, strengthData: data };
+  const kept = log.manualMeasured?.strength?.strengthData;
+  const keptNext = cleanSetRow(kept);
+  if (keptNext !== kept && log.manualMeasured?.strength) {
+    next = { ...next, manualMeasured: { ...log.manualMeasured, strength: { ...log.manualMeasured.strength, strengthData: keptNext } } };
+  }
+  return next;
+}
+
 // --- SetLog.seconds, SetLog.band en SetLog.clean (calisthenics) ----------------------------------
 // De houding in seconden, de band die hielp en "Ging het netjes?" (docs/beslissingen/2026-11-09-calisthenics-ontwerp.md).
 // Optioneel en aanvullend, met dezelfde regel als `repsAsked`: een oud bestand heeft ze niet en leest gelijk;

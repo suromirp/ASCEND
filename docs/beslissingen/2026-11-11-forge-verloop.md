@@ -14,11 +14,14 @@ Bij Benen A stond set 3 er twee keer (eigen en onder) en miste set 1 de 0 RIR, o
 ## Keuzes
 
 - Het eindresultaat komt uit de rijen van de training (`workout`) of, in het logboek, uit de gelogde sets (`strengthData`). Pas als geen van beide er is, uit de laatste stand in het verloop. Zo is de RIR altijd die van de set zoals hij uiteindelijk is.
-- Een aangenomen RIR (`rirAssumed`) staat als het gedempte bolletje dat ook op het Forge-scherm een niet zelf gekozen RIR aangeeft; de schermlezer zegt "het doel, niet zelf gekozen".
-- In het logboek blijft de schakelaar: Alle sets toont daar de gelogde sets. Sets die je niet afvinkte zijn niet gelogd en staan er dan niet bij, behalve als er iets mee gebeurde (dan uit het verloop).
-- Na afloop koppelt een regel aan een gelogde set via het nummer (1, 2, W1). Liet je een eerdere set open, dan schuiven de nummers van het log; dat is een bekende grens, want het log bewaart geen rij-id.
+- Een aangenomen RIR (`rirAssumed`) staat als het gedempte bolletje dat ook op het Forge-scherm een niet zelf gekozen RIR aangeeft; de schermlezer zegt "het doel, niet zelf gekozen". Het verloop toont hem altijd gedempt, ook als het Forge-scherm hem met RIR vooraf invullen op het doel vol toont: hier gaat het om wat je zelf koos.
+- In het logboek blijft de schakelaar: Alle sets toont daar de gelogde sets. Een set die je niet afvinkte maar waar iets mee gebeurde (Forge stelde hem bij), staat er gedimd met "niet gedaan" en telt nooit als zwaarste set.
+- Tijdens de training toont Alle sets de gedane sets en de sets met een reden, geen open sets zonder reden; anders is het een kopie van het Forge-scherm.
+- Na afloop koppelt een regel aan een gelogde set via het rij-id: Afronden schrijft sinds deze wijziging `SetLog.rowId` bij elke set (optioneel en aanvullend, een kapotte waarde valt weg bij het lezen, `migrationsLogs.ts#migrateLogSetRow`; export en import nemen het mee). Een oud log zonder rij-id koppelt op nummer (1, 2, W1); bleef daar een eerdere set open, dan schuiven de nummers. De test die eerst die schuiving als grens vastlegde, is bewust meebewogen (Warden M1).
 - Weggehaald en daarna een set met hetzelfde nummer toegevoegd is een regel ("Weggehaald en weer toegevoegd."). Weggehaald zonder terugkomst is een eigen regel "Weggehaald", achteraan bij die oefening.
-- De spotterregel hoort bij elke set uit het voorschrift, maar telt niet als wijziging: hij staat bij Alle sets, niet bij Wijzigingen. Het spotterteken staat al bij de set zelf.
+- De spotterregel hoort bij elke set uit het voorschrift, maar telt niet als wijziging: hij staat bij Alle sets, niet bij Alleen wijzigingen. Zonder set erbij ("1 tot 3" met twee gelogde sets) komt er geen losse regel. Het spotterteken staat al bij de set zelf.
+- De keuzes heten Alleen wijzigingen en Alle sets (niet Wijzigingen, dat botst met Wijzigingen doorvoeren in hetzelfde blad). De lege stand: voor het eerste afvinken "Nog niets veranderd.", daarna "Geen wijzigingen, alles volgens schema."
+- In het logboek heet het blad ook Verloop van de training, met de training en de datum erboven.
 - De zwaarste set: per oefening de gedane werkset met het hoogste gewicht, bij gelijk gewicht de meeste herhalingen, alleen als er minstens twee zijn. Vet met de woorden "zwaarste set" in gedimd grijs; geen tweede mint accent.
 - De klok per gebeurtenis is weg uit het blad; de volgorde is die van de training.
 - De instelling staat in het blad Bij het invullen (onder Geavanceerd), naast Oefeningen in een training. Zo komt er onder Geavanceerd geen zevende rij bij (besluit 8 november).

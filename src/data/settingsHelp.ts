@@ -458,7 +458,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Verloop toont',
     lead: 'Het blad Verloop van de training zet per set een regel: het gewicht, de herhalingen en je RIR zoals de set uiteindelijk is, met alle redenen in een zin.',
     points: [
-      { head: 'Wijzigingen', text: 'het advies. Alleen de sets waar jij of Forge iets aan veranderde, of die onder het bereik bleven.' },
+      { head: 'Alleen wijzigingen', text: 'het advies. Alleen de sets waar jij of Forge iets aan veranderde, of die onder het bereik bleven.' },
       { head: 'Alle sets', text: 'ook de sets volgens schema, met de zwaarste set per oefening. Een gedempt bolletje is een RIR die je niet zelf koos.' },
       { head: 'In het blad', text: 'je kunt ook wisselen in het blad zelf; die keuze blijft staan.' },
     ],

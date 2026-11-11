@@ -267,6 +267,8 @@ export interface SetLine {
   removed?: boolean;
   // Er gebeurde iets met deze set (een regel in Wijzigingen).
   changed: boolean;
+  // Na afloop: deze set staat alleen in het verloop en niet in het log, dus je deed hem niet.
+  skipped?: boolean;
   // Een melding "past niet" die nog open staat (alleen tijdens de training).
   open?: boolean;
   // De zwaarste werkset van de oefening.
@@ -276,6 +278,8 @@ export interface SetLine {
 }
 
 export interface ExerciseLines {
+  // Uniek per blok, ook als dezelfde oefening twee keer in een training staat.
+  key: string;
   exerciseId: string;
   exercise: string;
   lines: SetLine[];
@@ -366,28 +370,36 @@ interface Draft {
 // Het verloop wordt nooit veranderd: dit is alleen weergave.
 export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExercise[]; logged?: ExerciseSetLog[]; view: ForgeLogView }): ExerciseLines[] {
   const sorted = [...events].sort((a, b) => a.at - b.at);
-  const groups: { exerciseId: string; exercise: string; drafts: Draft[]; tail: Draft[] }[] = [];
-  const groupOf = (exerciseId: string, name: string) => {
-    let g = groups.find((x) => x.exerciseId === exerciseId);
-    if (!g) {
-      g = { exerciseId, exercise: name, drafts: [], tail: [] };
-      groups.push(g);
-    }
+  type Group = { key: string; exerciseId: string; exercise: string; drafts: Draft[]; tail: Draft[] };
+  const groups: Group[] = [];
+  // Een blok per oefening zoals die in de training of het log staat (dezelfde oefening kan er twee keer staan).
+  const newGroup = (exerciseId: string, name: string): Group => {
+    const g = { key: `${groups.length}:${exerciseId}`, exerciseId, exercise: name, drafts: [], tail: [] };
+    groups.push(g);
     return g;
   };
-  // Waar een set staat: per oefening per rij-id (tijdens de training) en per nummer.
+  // Voor een gebeurtenis: het eerste blok van die oefening, of een nieuw blok achteraan.
+  const groupOf = (exerciseId: string, name: string) => groups.find((x) => x.exerciseId === exerciseId) ?? newGroup(exerciseId, name);
+  // Waar een set staat: per oefening per rij-id (de training, of een log met rij-id's) en per nummer. Bij dezelfde
+  // oefening twee keer telt het eerste blok.
   const byRow = new Map<string, Draft>();
   const byLabel = new Map<string, Draft>();
+  const rowKey = (exerciseId: string, rowId: string) => `${exerciseId}\u0000${rowId}`;
   const labelKey = (exerciseId: string, label: string) => `${exerciseId}\u0000${label}`;
+  const put = (m: Map<string, Draft>, k: string, d: Draft) => {
+    if (!m.has(k)) m.set(k, d);
+  };
+  // Oefeningen waarvan het log rij-id's heeft: daar koppelt een gebeurtenis alleen op rij-id, nooit op nummer.
+  const loggedWithRows = new Set<string>();
 
   if (opts.workout) {
     for (const ex of opts.workout) {
-      const g = groupOf(ex.exerciseId, ex.name);
+      const g = newGroup(ex.exerciseId, ex.name);
       for (const r of ex.rows) {
         const set = setLabel(ex, r.id);
         const d: Draft = {
           line: {
-            key: `${ex.exerciseId}:${r.id}`, set, warmup: r.kind === 'warmup',
+            key: `${g.key}:${r.id}`, set, warmup: r.kind === 'warmup',
             ...(isNumber(r.weightKg) ? { kg: r.weightKg } : {}),
             ...(isNumber(r.reps) && !ex.hold ? { reps: r.reps } : {}),
             ...(ex.hold && isNumber(r.seconds) ? { seconds: r.seconds } : {}),
@@ -398,21 +410,21 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
           events: [],
         };
         g.drafts.push(d);
-        byRow.set(`${ex.exerciseId}\u0000${r.id}`, d);
-        byLabel.set(labelKey(ex.exerciseId, set), d);
+        put(byRow, rowKey(ex.exerciseId, r.id), d);
+        put(byLabel, labelKey(ex.exerciseId, set), d);
       }
     }
   } else if (opts.logged) {
     for (const ex of opts.logged) {
       if (!ex || typeof ex.exerciseId !== 'string' || !Array.isArray(ex.sets)) continue;
-      const g = groupOf(ex.exerciseId, typeof ex.exerciseName === 'string' ? ex.exerciseName : ex.exerciseId);
+      const g = newGroup(ex.exerciseId, typeof ex.exerciseName === 'string' ? ex.exerciseName : ex.exerciseId);
       const sets = ex.sets.filter((s): s is SetLog => !!s && typeof s === 'object');
       const labels = loggedLabels(sets);
       sets.forEach((s, i) => {
         const warmup = s.kind === 'warmup';
         const d: Draft = {
           line: {
-            key: `${ex.exerciseId}:${i}`, set: labels[i], warmup,
+            key: `${g.key}:${i}`, set: labels[i], warmup,
             ...(isNumber(s.weightKg) ? { kg: s.weightKg } : {}),
             ...(isNumber(s.seconds) ? { seconds: s.seconds } : isNumber(s.reps) ? { reps: s.reps } : {}),
             ...(!warmup && isNumber(s.rir) ? { rir: s.rir } : {}),
@@ -422,7 +434,11 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
           events: [],
         };
         g.drafts.push(d);
-        byLabel.set(labelKey(ex.exerciseId, labels[i]), d);
+        if (typeof s.rowId === 'string' && s.rowId) {
+          put(byRow, rowKey(ex.exerciseId, s.rowId), d);
+          loggedWithRows.add(ex.exerciseId);
+        }
+        put(byLabel, labelKey(ex.exerciseId, labels[i]), d);
       });
     }
   }
@@ -458,6 +474,16 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
     return d;
   };
 
+  // De set van een gebeurtenis: op rij-id, en op nummer alleen waar geen rij-id's zijn (een oud log, of de
+  // tweede en volgende set van een spotterregel, die alleen het eerste rij-id draagt).
+  const targetFor = (ev: ForgeEvent, label: string, first: boolean): Draft | undefined => {
+    const hit = first ? byRow.get(rowKey(ev.exerciseId, ev.rowId)) : undefined;
+    if (hit) return hit;
+    if (opts.workout) return first ? undefined : byLabel.get(labelKey(ev.exerciseId, label));
+    if (first && loggedWithRows.has(ev.exerciseId)) return undefined;
+    return byLabel.get(labelKey(ev.exerciseId, label));
+  };
+
   for (const ev of sorted) {
     if (ev.kind === 'weggehaald') {
       if (readded.has(ev.id)) {
@@ -465,27 +491,23 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
         const back = backFor.get(ev.id)!;
         // Is de teruggezette set later zelf weer weggehaald, dan gaat de keten verder bij die weghaling.
         if (gone(back)) continue;
-        const d = opts.workout
-          ? (byRow.get(`${back.exerciseId}\u0000${back.rowId}`) ?? looseFor(back, back.set, false))
-          : (byLabel.get(labelKey(back.exerciseId, back.set)) ?? looseFor(back, back.set, false));
+        const d = targetFor(back, back.set, true) ?? looseFor(back, back.set, false);
         d.readded = true;
         d.events.push(ev);
         continue;
       }
       // Tijdens de training is een weggehaalde rij er niet meer; komt hij toch nog voor (Terugdraaien), dan geldt de rij.
-      const still = opts.workout ? byRow.get(`${ev.exerciseId}\u0000${ev.rowId}`) : undefined;
+      const still = opts.workout ? byRow.get(rowKey(ev.exerciseId, ev.rowId)) : undefined;
       (still ?? looseFor(ev, ev.set, true)).events.push(ev);
       continue;
     }
     if (ev.kind === 'toegevoegd' && backOf.has(ev.id) && gone(ev)) continue;
     const labels = ev.kind === 'spotter' ? spotterLabels(ev.set) : [ev.set];
     for (const [i, label] of labels.entries()) {
-      const d =
-        (opts.workout && i === 0 ? byRow.get(`${ev.exerciseId}\u0000${ev.rowId}`) : undefined) ??
-        (opts.workout ? undefined : byLabel.get(labelKey(ev.exerciseId, label))) ??
-        (opts.workout && i > 0 ? byLabel.get(labelKey(ev.exerciseId, label)) : undefined) ??
-        looseFor(ev, label, false);
-      d.events.push(ev);
+      const hit = targetFor(ev, label, i === 0);
+      // Een spotterregel is het voorschrift: zonder set erbij geen losse regel (geen lege "Set 3").
+      if (!hit && ev.kind === 'spotter') continue;
+      (hit ?? looseFor(ev, label, false)).events.push(ev);
     }
   }
 
@@ -495,6 +517,11 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
     for (const d of all) {
       const evs = d.events;
       if (d.loose) Object.assign(d.line, stateLine(lastState(evs)));
+      // Na afloop is een set die niet in het log staat nooit gedaan.
+      if (d.loose && opts.logged && !opts.workout && !d.line.removed) {
+        d.line.skipped = true;
+        d.line.done = false;
+      }
       // Wijzigingen: alles behalve alleen de spotterregel (dat is het voorschrift, geen wijziging).
       d.line.changed = evs.some((e) => e.kind !== 'spotter');
       const parts = evs.filter((e) => !(d.readded && (e.kind === 'weggehaald' || e.kind === 'toegevoegd'))).map(reasonPart);
@@ -510,10 +537,18 @@ export function linesPerSet(events: ForgeEvent[], opts: { workout?: WorkoutExerc
       const best = work.reduce((a, b) => ((b.line.kg! > a.line.kg! || (b.line.kg === a.line.kg && (b.line.reps ?? 0) > (a.line.reps ?? 0))) ? b : a));
       best.line.heaviest = true;
     }
-    const lines = all.map((d) => d.line).filter((l) => opts.view === 'alle' || l.changed);
-    if (lines.length > 0) out.push({ exerciseId: g.exerciseId, exercise: g.exercise, lines });
+    // Alle sets: tijdens de training de gedane sets en de sets met een reden, niet een kopie van het Forge-scherm.
+    const shown = (l: SetLine) => (opts.view === 'alle' ? !opts.workout || l.done === true || l.reason !== '' || !!l.removed : l.changed);
+    const lines = all.map((d) => d.line).filter(shown);
+    if (lines.length > 0) out.push({ key: g.key, exerciseId: g.exerciseId, exercise: g.exercise, lines });
   }
   return out;
+}
+
+// De lege stand van het blad: voor het eerste afvinken is er nog niets gebeurd; daarna ging alles volgens schema.
+export function forgeLogEmptyText(workout: WorkoutExercise[] | undefined): string {
+  const started = !workout || workout.some((ex) => ex.rows.some((r) => r.done));
+  return started ? 'Geen wijzigingen, alles volgens schema.' : 'Nog niets veranderd.';
 }
 
 function stateLine(s: ForgeSetState): Partial<SetLine> {

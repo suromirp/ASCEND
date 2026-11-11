@@ -137,14 +137,59 @@ describe('linesPerSet', () => {
     expect(g.lines.find((l) => l.key.endsWith('s3c'))).toMatchObject({ kg: 70, reason: 'Weggehaald en weer toegevoegd.' });
   });
 
-  it('in het logboek koppelt een regel op nummer: een open gelaten set laat de nummers schuiven (bekende grens)', () => {
-    // Set 2 werd niet afgevinkt, dus de gelogde set 2 is in de training set 3.
+  it('een oud log zonder rij-id koppelt op nummer; een set die niet in het log staat is niet gedaan', () => {
+    // Bewust meebewogen (11 november, Warden M1 en M3): eerst legde deze test vast dat zo'n set ongemarkeerd bleef.
     const logged: ExerciseSetLog[] = [{ exerciseId: 'leg-press', exerciseName: 'Leg Press', sets: [{ reps: 10, weightKg: 80, kind: 'work' }, { reps: 8, weightKg: 85, kind: 'work' }] }];
     const events = [ev({ kind: 'eigen', rowId: 's3', set: '3', from: { kg: 80 }, to: { kg: 85 } })];
     const [g] = linesPerSet(events, { logged, view: 'wijzigingen' });
     expect(g.lines).toHaveLength(1);
-    expect(g.lines[0]).toMatchObject({ set: '3', kg: 85 });
-    expect(g.lines[0].done).toBeUndefined();
+    expect(g.lines[0]).toMatchObject({ set: '3', kg: 85, skipped: true, done: false });
+  });
+
+  it('een log met rij-id koppelt op rij: set 1 open, set 2 aangepast, set 3 onder het bereik', () => {
+    // Nagespeeld door Warden: zonder rij-id kwam de reden bij de verkeerde set en stond "Set 3" er twee keer.
+    const logged: ExerciseSetLog[] = [{ exerciseId: 'leg-press', exerciseName: 'Leg Press', sets: [
+      { reps: 10, weightKg: 85, kind: 'work', rowId: 's2' },
+      { reps: 6, weightKg: 85, rir: 0, kind: 'work', rowId: 's3' },
+    ] }];
+    const events = [
+      ev({ kind: 'eigen', rowId: 's2', set: '2', at: T0, from: { kg: 80 }, to: { kg: 85 } }),
+      ev({ kind: 'onder', rowId: 's3', set: '3', at: T0 + 1000, to: { kg: 85, reps: 6 }, fact: 'Onder het bereik van 8 tot 10 herhalingen.' }),
+    ];
+    const [g] = linesPerSet(events, { logged, view: 'alle' });
+    expect(g.lines.map((l) => [l.set, l.reason])).toEqual([['1', 'Zelf aangepast.'], ['2', 'Onder het bereik van 8 tot 10 herhalingen.']]);
+    expect(g.lines.every((l) => !l.skipped)).toBe(true);
+  });
+
+  it('een gebeurtenis bij een set die niet gelogd is, wordt na afloop een gedimde regel "niet gedaan"', () => {
+    const logged: ExerciseSetLog[] = [{ exerciseId: 'leg-press', exerciseName: 'Leg Press', sets: [{ reps: 10, weightKg: 80, kind: 'work', rowId: 's1' }] }];
+    const events = [ev({ kind: 'meegerekend', rowId: 's2', set: '2', from: { kg: 80, reps: 10 }, to: { kg: 85, reps: 8 } })];
+    const [g] = linesPerSet(events, { logged, view: 'wijzigingen' });
+    expect(g.lines[0]).toMatchObject({ set: '2', kg: 85, skipped: true, done: false });
+    expect(g.lines[0].heaviest).toBeUndefined();
+  });
+
+  it('een spotterregel "1 tot 3" met twee gelogde sets geeft geen lege derde regel', () => {
+    const logged: ExerciseSetLog[] = [{ exerciseId: 'leg-press', exerciseName: 'Leg Press', sets: [{ reps: 5, weightKg: 100, kind: 'work', rowId: 's1' }, { reps: 5, weightKg: 100, kind: 'work', rowId: 's2' }] }];
+    const events = [ev({ kind: 'spotter', rowId: 's1', set: '1 tot 3', to: { rir: 1 } })];
+    const [g] = linesPerSet(events, { logged, view: 'alle' });
+    expect(g.lines.map((l) => l.set)).toEqual(['1', '2']);
+    expect(g.lines.every((l) => l.reason === 'Zonder spotter minstens 1 over.')).toBe(true);
+  });
+
+  it('dezelfde oefening twee keer in een log geeft twee blokken met eigen sleutels', () => {
+    const one = { exerciseId: 'leg-press', exerciseName: 'Leg Press', sets: [{ reps: 10, weightKg: 80, kind: 'work' as const }] };
+    const out = linesPerSet([], { logged: [one, one], view: 'alle' });
+    expect(out).toHaveLength(2);
+    const keys = out.flatMap((g) => [g.key, ...g.lines.map((l) => l.key)]);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('Alle sets tijdens de training: gedane sets en sets met een reden, geen open sets zonder reden', () => {
+    const ex = exercise([row('s1'), row('s2', { done: false }), row('s3', { done: false })]);
+    const events = [ev({ kind: 'meegerekend', rowId: 's3', set: '3', from: { kg: 80 }, to: { kg: 77.5 } })];
+    const [g] = linesPerSet(events, { workout: [ex], view: 'alle' });
+    expect(g.lines.map((l) => l.set)).toEqual(['1', '3']);
   });
 
   it('dezelfde reden twee keer staat er een keer', () => {

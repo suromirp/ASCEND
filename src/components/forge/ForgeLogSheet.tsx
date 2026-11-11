@@ -3,7 +3,8 @@
 // Tijdens de training komen de sets uit `workout`; in het logboek uit de gelogde sets (`logged`).
 // Besluiten: docs/beslissingen/2026-10-28-forge-logboek.md, docs/beslissingen/2026-11-11-forge-verloop.md.
 
-import { linesPerSet, resolveForgeLogView, stateText, type ExerciseLines, type ForgeEvent, type ForgeLogView, type SetLine } from '../../engine/forgeLog';
+import { forgeLogEmptyText, linesPerSet, resolveForgeLogView, stateText, type ExerciseLines, type ForgeEvent, type SetLine } from '../../engine/forgeLog';
+import { CHOICES } from '../../data/settingsChoices';
 import type { WorkoutExercise } from '../../engine/forgeWorkout';
 import type { ExerciseSetLog } from '../../models/training';
 import { useAppData } from '../../state/useAppData';
@@ -14,10 +15,8 @@ import { SheetHeader } from '../SheetHeader';
 import { Card, Segmented, SheetGrip } from '../ui';
 import { RirBubble } from './parts';
 
-const VIEWS: { value: ForgeLogView; label: string }[] = [
-  { value: 'wijzigingen', label: 'Wijzigingen' },
-  { value: 'alle', label: 'Alle sets' },
-];
+// De keuzes en hun namen komen uit de instelling Verloop toont.
+const VIEWS = CHOICES.forgeVerloop.options.map((o) => ({ value: o.value, label: o.label }));
 
 function result(l: SetLine): string {
   if (l.seconds !== undefined) return `${l.kg !== undefined && l.kg !== 0 ? `${stateText({ kg: l.kg })} × ` : ''}${formatNumberNL(l.seconds, 0)} s`;
@@ -37,7 +36,7 @@ function Line({ l }: { l: SetLine }) {
             <RirBubble rir={l.rir} hint={l.rirAssumed} label={l.rirAssumed ? `${l.rir} over, het doel, niet zelf gekozen` : `${l.rir} over`} />
           )}
           {l.heaviest && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>zwaarste set</span>}
-          {!l.removed && l.done === false && <span className="text-xs">nog niet afgevinkt</span>}
+          {!l.removed && l.done === false && <span className="text-xs">{l.skipped ? 'niet gedaan' : 'nog niet afgevinkt'}</span>}
         </p>
         {l.reason && (
           <p className="mt-1 text-xs leading-snug" style={{ color: l.open ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>
@@ -49,18 +48,14 @@ function Line({ l }: { l: SetLine }) {
   );
 }
 
-function ForgeLogList({ groups, view }: { groups: ExerciseLines[]; view: ForgeLogView }) {
+function ForgeLogList({ groups, empty }: { groups: ExerciseLines[]; empty: string }) {
   if (groups.length === 0) {
-    return (
-      <p className="mt-4 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        {view === 'wijzigingen' ? 'Geen wijzigingen. Alles ging volgens schema; Alle sets toont elke set.' : 'Nog geen sets.'}
-      </p>
-    );
+    return <p className="mt-4 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{empty}</p>;
   }
   return (
     <div className="mt-2 flex flex-col">
       {groups.map((g) => (
-        <section key={g.exerciseId} className="mt-3">
+        <section key={g.key} className="mt-3">
           <h3 className="text-sm font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{g.exercise}</h3>
           <ol className="mt-1 flex flex-col">
             {g.lines.map((l) => <Line key={l.key} l={l} />)}
@@ -94,7 +89,7 @@ export function ForgeLogSheet({ events, workout, logged, eyebrow = 'Forge', titl
             <div className="mt-3">
               <Segmented tall options={VIEWS} value={view} label="Verloop toont" onChange={(v) => void updateSettings({ forgeLogView: v })} />
             </div>
-            <ForgeLogList groups={groups} view={view} />
+            <ForgeLogList groups={groups} empty={forgeLogEmptyText(workout)} />
           </Card>
         </div>
       </div>
