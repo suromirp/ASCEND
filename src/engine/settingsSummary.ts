@@ -70,6 +70,7 @@ import { resolveProposalTidyMonths } from './proposalTidy';
 import { storageUseText, type StorageEstimate } from './storageUse';
 import { swipeDeleteOn } from './forgeRows';
 import { resolveForgeLayout } from './forgeLayout';
+import { resolveForgeLogView } from './forgeLog';
 import { resolveBreakAsk } from './forgeSession';
 import { resolveTimeCap } from './forgeTimeCap';
 import { resolveSportCounting } from './sportRole';
@@ -849,6 +850,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.weekFixProposal !== false };
     case 'volgorde-stand':
       return { value: isDefaultOrder('stand', resolveCardOrder('stand', s.cardOrder)) ? 'Standaard' : 'Eigen volgorde' };
+    case 'forge-verloop':
+      return { value: choiceShort('forgeVerloop', resolveForgeLogView(s)) };
     case 'forge-oefeningen':
       return { value: choiceShort('forgeOefeningen', resolveForgeLayout(s)) };
     case 'forge-tijdsgrens': {

@@ -363,7 +363,7 @@ function ForgeWorkoutInner({
     // Een houding heeft geen gewicht en geen reserve: Forge rekent daar niet mee.
     const reckoned = raw.workout.map((e) => (e.slot === slot && !e.hold ? reckonAfterTick(e, rowId, reckonCtx) : e));
     const result = { ...raw, workout: reckoned };
-    if (reckoned.some((e, i) => e !== raw.workout[i])) markCause({ kind: 'meegerekend' });
+    if (reckoned.some((e, i) => e !== raw.workout[i])) markCause({ kind: 'meegerekend', via: { slot, rowId } });
     setWorkout(result.workout);
     // Na het afvinken van de topset of de laatste set: één snelle vraag hoeveel je over had. Een andere tik haalt hem weg.
     const askEx = result.workout.find((e) => e.slot === slot);
@@ -511,7 +511,7 @@ function ForgeWorkoutInner({
     haptics.tap();
     const mine = updateRow(ex, rowId, { rir });
     const after = reckonAfterTick(mine, rowId, reckonCtx);
-    markCause(after !== mine ? { kind: 'meegerekend' } : { kind: 'eigen', edited: { slot, rowId } });
+    markCause(after !== mine ? { kind: 'meegerekend', via: { slot, rowId } } : { kind: 'eigen', edited: { slot, rowId } });
     setExercise(slot, () => after);
   }
 

@@ -71,6 +71,7 @@ const everything: AppSettings = {
   weekAfterChoice: 'plain',
   forgeSwipeDelete: false,
   forgeLayout: 'lijst',
+  forgeLogView: 'alle',
   forgeLongBreak: 90,
   forgeCapStrength: 45,
   forgeCapLegs: 90,
