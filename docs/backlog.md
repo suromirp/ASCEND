@@ -49,7 +49,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 
 Beantwoord op 11 november (eigenaar): APK 158, Precies, vanaf je deur en de datavelden werken; Eccentric Squat blijft de lichte vorm; de vier tekstpunten zonder screenshot vervallen.
 
-Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en fouten deel 1. "Twee harde lopen" in plaats van loopjes in de weekcheck; "loopjes" in runTrends en runInsight blijft, want dat zijn tellingen (R8); long_run in de triatlon heet "Lange lopen" (staat nergens op een scherm); openFysio weg; de voorstelzin van het krachtblok volgt de stemgids; Belasting op Stand: de telling klopte, het feit heet nu "nu 424, gewoonlijk 540"; bolletjes in de legenda van Intensiteit; de ontbrekende tests.
+Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en fouten deel 1. "Twee harde lopen" in plaats van loopjes in de weekcheck; "loopjes" in runTrends en runInsight blijft, want dat zijn tellingen (R8); openFysio weg; de voorstelzin van het krachtblok volgt de stemgids en noemt de knop Blok activeren; Intensiteit zegt niet meer "een paar keer hard" zonder harde training; een los horlogelog op de dag van een geplande training telt in Belasting één keer; Belasting op Stand: de telling klopte, het feit heet nu "wordt 424, gewoonlijk 540" (gedaan plus wat nog komt); bolletjes in de legenda van Intensiteit, elk deel ongebroken; de ontbrekende tests. De valkuil over inkorten staat nu in het werkbriefje bediening-en-beweging.
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 

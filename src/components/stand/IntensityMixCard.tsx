@@ -1,4 +1,4 @@
-import { EASY_FLOOR, EASY_TARGET, type IntensityMix } from '../../engine/standing';
+import { EASY_TARGET, intensityVerdict, type IntensityMix } from '../../engine/standing';
 import { Card, Eyebrow } from '../ui';
 import { formatWeekdayDayMonthNL } from '../../utils/dates';
 
@@ -27,7 +27,6 @@ export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
   const amounts = perTraining ? mix.sessions : mix.minutes;
   const whole = perTraining ? mix.total : mix.totalMinutes;
   const pct = (n: number) => (whole ? Math.round((n / whole) * 100) : 0);
-  const easyPct = pct(amounts.easy);
   return (
     <Card className="flex flex-col gap-3">
       <div>
@@ -47,20 +46,17 @@ export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
         </div>
         <span className="absolute -top-1 h-5 w-0.5 rounded" style={{ left: `${EASY_TARGET * 100}%`, background: 'var(--color-ink)' }} aria-hidden />
       </div>
-      <div className="flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+      {/* Elk deel blijft heel (bolletje, getal, woord en minuten); passen ze niet op één regel, dan gaat een heel deel naar de volgende. */}
+      <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {PARTS.map((p) => (
-          <span key={p.key}><span className="mr-1 inline-block h-2 w-2 rounded-full align-middle" style={{ background: 'var(--color-progress)', opacity: p.opacity }} aria-hidden /><span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{pct(amounts[p.key])}%</span> {p.label} <span className="tabular-nums">({amounts[p.key]}{perTraining ? '' : ' min'})</span></span>
+          <span key={p.key} className="whitespace-nowrap"><span className="mr-1 inline-block h-2 w-2 rounded-full align-middle" style={{ background: 'var(--color-progress)', opacity: p.opacity }} aria-hidden /><span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{pct(amounts[p.key])}%</span> {p.label} <span className="tabular-nums">({amounts[p.key]}{perTraining ? '' : ' min'})</span></span>
         ))}
       </div>
 
       {!perTraining && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{sourceLine(mix)}</p>}
 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-        {easyPct >= EASY_TARGET * 100 - 5
-          ? 'Goed verdeeld: het meeste rustig, een paar keer hard. Zo groeit je basis en blijf je fris.'
-          : easyPct >= EASY_FLOOR * 100
-            ? 'Bijna goed. Doe iets meer rustig, of houd rustige trainingen echt rustig.'
-            : 'Meer hard dan rustig. Dat gaat een tijd goed, maar je basis groeit vooral van rustige kilometers.'}
+        {intensityVerdict(amounts, whole)}
       </p>
 
       {mix.easyTooHard.length > 0 && (

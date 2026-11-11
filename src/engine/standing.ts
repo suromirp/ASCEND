@@ -109,6 +109,8 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
   const byId = new Map(inputs.templates.map((t) => [t.id, t]));
   const current = mondayOfWeek(inputs.today);
   const logged = new Set(inputs.logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const plannedIds = new Set(inputs.plannedSessions.map((s) => s.id));
+  const byDate = [...inputs.plannedSessions].sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id));
   const weeks: WeekLoad[] = [];
   for (let w = -weeksBack; w <= weeksAhead; w++) {
     const weekStart = addDays(current, 7 * w);
@@ -126,11 +128,23 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
       week.doneTotal += load;
       if (l.rpe === undefined) week.estimated += load;
     }
-    for (const s of inputs.plannedSessions) {
+    // A loose log (from the watch, not linked to a plan) on the day of an open training of the same sport stands in for it:
+    // counted once as done, not also as still planned. Each loose log covers one training. Only counting; the logs stay as they are.
+    const loose = new Map<string, number>();
+    for (const l of inputs.logs) {
+      if (l.completedDate < weekStart || l.completedDate >= weekEnd || l.type === 'recovery') continue;
+      if (l.plannedSessionId && plannedIds.has(l.plannedSessionId)) continue;
+      const key = `${l.completedDate}|${sportOfLog(l, byId.get(l.templateId))}`;
+      loose.set(key, (loose.get(key) ?? 0) + 1);
+    }
+    for (const s of byDate) {
       if (s.scheduledDate < weekStart || s.scheduledDate >= weekEnd || s.scheduledDate < inputs.today) continue;
       if (s.status === 'skipped' || logged.has(s.id)) continue;
       const t = byId.get(s.templateId);
       if (!t || t.type === 'recovery') continue;
+      const key = `${s.scheduledDate}|${sportOfTemplate(t)}`;
+      const free = loose.get(key) ?? 0;
+      if (free > 0) { loose.set(key, free - 1); continue; }
       const minutes = s.plannedMinutes ?? inputs.minutesOf?.(s, t) ?? t.durationVariants.full;
       const load = minutes * plannedEffort(t);
       week.items.push({ date: s.scheduledDate, name: t.name, sport: sportOfTemplate(t), minutes, effort: plannedEffort(t), load, planned: true, estimated: false });
@@ -259,6 +273,18 @@ export interface IntensityMix {
 // end up doing (Seiler 2010); below 70% the easy part is getting squeezed.
 export const EASY_TARGET = 0.8;
 export const EASY_FLOOR = 0.7;
+
+// Het oordeel onder de balk, uit het aandeel rustig. Zonder een harde training zegt het dat ook: geen "een paar keer hard"
+// als er niets hard was.
+export function intensityVerdict(amounts: { easy: number; middle: number; hard: number }, whole = amounts.easy + amounts.middle + amounts.hard): string {
+  const easyPct = whole ? Math.round((amounts.easy / whole) * 100) : 0;
+  if (easyPct >= EASY_TARGET * 100 - 5) {
+    if (amounts.hard > 0) return 'Goed verdeeld: het meeste rustig, een paar keer hard. Zo groeit je basis en blijf je fris.';
+    return amounts.middle > 0 ? 'Het meeste rustig, niets hard. Zo groeit je basis en blijf je fris.' : 'Alles rustig. Zo groeit je basis en blijf je fris.';
+  }
+  if (easyPct >= EASY_FLOOR * 100) return 'Bijna goed. Doe iets meer rustig, of houd rustige trainingen echt rustig.';
+  return 'Meer hard dan rustig. Dat gaat een tijd goed, maar je basis groeit vooral van rustige kilometers.';
+}
 
 // An easy run counts as too hard when clearly more than half of it was above zone 2.
 const TOO_HARD_SHARE = 0.55;

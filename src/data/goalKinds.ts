@@ -638,7 +638,7 @@ const TRIATHLON: GoalKindDefinition = {
   minimums: [
     min('swim', 'Zwemsessies', { min: 2 }, 'week', 'expert', D('6.1')),
     min('bike_long', 'Fietssessies', { min: 1, max: 3 }, 'week', 'expert', D('6.1')),
-    min('long_run', 'Lange lopen', { min: 1, max: 2 }, 'week', 'expert', D('6.1')),
+    min('long_run', 'Loopsessies', { min: 1, max: 2 }, 'week', 'expert', D('6.1')),
     min('strength', 'Krachttraining', { min: 1 }, 'week', 'sterk', D('2, gedeelde regel 6 (Schumann 2022)')),
     min('brick', 'Koppeltraining, fiets gevolgd door een korte loop', { min: 1 }, 'laatste 8 weken', 'zwak', D('6.1, het bewijs is klein: gewoonte'), 'Eens per 1 tot 2 weken in de laatste 8 weken.'),
   ],

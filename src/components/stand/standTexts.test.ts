@@ -43,8 +43,8 @@ describe('Je stand, de teksten van de onderdelen', () => {
   });
 
   it('de samenvatting: label, woord en feit per kolom', () => {
-    const out = html(createElement(StandSummary, { columns: [{ id: 'belasting', label: 'Belasting', word: 'Zwaar', fact: 'nu 475, gewoonlijk 300', target: 'stand-belasting' }] }));
-    expect(out).toContain('Belasting Zwaar nu 475, gewoonlijk 300');
+    const out = html(createElement(StandSummary, { columns: [{ id: 'belasting', label: 'Belasting', word: 'Zwaar', fact: 'wordt 475, gewoonlijk 300', target: 'stand-belasting' }] }));
+    expect(out).toContain('Belasting Zwaar wordt 475, gewoonlijk 300');
   });
 
   it('Intensiteit: elke regel van de legenda heeft een bolletje in de tint van zijn deel van de balk', () => {
@@ -54,6 +54,8 @@ describe('Je stand, de teksten van de onderdelen', () => {
     };
     const raw = renderToStaticMarkup(createElement(IntensityMixCard, { mix }));
     expect(raw.match(/rounded-full align-middle/g)).toHaveLength(3);
+    // Elk deel blijft heel: bolletje, getal, woord en minuten breken niet los van elkaar.
+    expect(raw.match(/<span class="whitespace-nowrap">/g)).toHaveLength(3);
     for (const o of ['0.4', '0.7', '1']) expect(raw).toContain(`opacity:${o}`);
     const out = html(createElement(IntensityMixCard, { mix }));
     expect(out).toContain('75% rustig (300 min)');
