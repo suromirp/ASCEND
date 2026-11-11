@@ -1,15 +1,15 @@
 // Every sound effect in the app is synthesised at runtime with the Web
-// Audio API — no audio files, so nothing to license or ship as an asset.
+// Audio API. The rest bell of Forge lives in utils/restBell.ts and shares the
+// AudioContext below.
 // Two families live here: a short percussion pattern for app open
 // (playIntroDrums), and a brighter bell/chime for completions
 // (playSessionCompleteChime / playMilestoneChime). Both share one
 // AudioContext and reverb helper below.
 
-import type { RestSound } from '../engine/strengthSettings';
 
 let sharedContext: AudioContext | null = null;
 
-function getAudioContext(): AudioContext | null {
+export function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
@@ -22,14 +22,14 @@ function getAudioContext(): AudioContext | null {
 // here is only ever invoked from a click/tap handler, so this is safe to
 // call unconditionally rather than awaited: the schedule() calls right
 // after still land correctly once the context finishes resuming.
-function ensureRunning(ctx: AudioContext) {
+export function ensureRunning(ctx: AudioContext) {
   if (ctx.state === 'suspended') void ctx.resume();
 }
 
 // A synthetic reverb impulse: exponentially-decaying white noise. Cheaper
 // and license-free compared to shipping a recorded impulse-response file,
 // and plenty convincing for a short decay tail.
-function createImpulseResponse(ctx: AudioContext, durationSec = 1.6, decay = 3.2): AudioBuffer {
+export function createImpulseResponse(ctx: AudioContext, durationSec = 1.6, decay = 3.2): AudioBuffer {
   const rate = ctx.sampleRate;
   const length = Math.floor(rate * durationSec);
   const impulse = ctx.createBuffer(2, length, rate);
@@ -318,99 +318,4 @@ export function playTimerAlarm(volume = 0.55) {
   offsets.forEach((offset, i) => {
     playAlarmPulse(ctx, master, now + offset, freq, i === offsets.length - 1 ? 0.6 : 0.5);
   });
-}
-
-// --- The end of the rest (Forge) ---------------------------------------
-// A bell: a sine with one soft inharmonic partial and a long, natural decay.
-function playBell(ctx: AudioContext, destination: AudioNode, time: number, freqHz: number, gain: number, decaySec: number) {
-  for (const [ratio, part] of [[1, 1], [2.76, 0.18], [5.4, 0.05]] as const) {
-    const osc = ctx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freqHz * ratio, time);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(gain * part, time + 0.006);
-    g.gain.exponentialRampToValueAtTime(0.0008, time + decaySec / ratio ** 0.5);
-    osc.connect(g);
-    g.connect(destination);
-    osc.start(time);
-    osc.stop(time + decaySec + 0.05);
-  }
-}
-
-// A boxing-round bell: a bright metallic strike, repeated quickly.
-function playRingBell(ctx: AudioContext, destination: AudioNode, time: number, gain: number) {
-  for (const [ratio, part] of [[1, 1], [2.4, 0.5], [3.9, 0.3]] as const) {
-    const osc = ctx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(1400 * ratio, time);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(gain * part, time + 0.003);
-    g.gain.exponentialRampToValueAtTime(0.0008, time + 0.11);
-    osc.connect(g);
-    g.connect(destination);
-    osc.start(time);
-    osc.stop(time + 0.13);
-  }
-}
-
-// A sports whistle: a high tone with a fast wobble (the pea), with a little breath.
-function playWhistle(ctx: AudioContext, destination: AudioNode, time: number, gain: number) {
-  const osc = ctx.createOscillator();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(2600, time);
-  const lfo = ctx.createOscillator();
-  lfo.frequency.setValueAtTime(34, time);
-  const depth = ctx.createGain();
-  depth.gain.setValueAtTime(170, time);
-  lfo.connect(depth);
-  depth.connect(osc.frequency);
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0, time);
-  g.gain.linearRampToValueAtTime(gain, time + 0.02);
-  g.gain.setValueAtTime(gain, time + 0.38);
-  g.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
-  osc.connect(g);
-  g.connect(destination);
-  osc.start(time);
-  lfo.start(time);
-  osc.stop(time + 0.52);
-  lfo.stop(time + 0.52);
-}
-
-// What plays when the rest is over: "chime" (three soft bells going up, D-F#-A),
-// "bell" (one deep round tone), "beep" (the old short beeps), "boxing" (a ring
-// bell struck fast, about 0.8 s), "whistle" (a short whistle with a trill, about
-// 0.5 s) or "gong" (one low gong with a long tail, about 2 s).
-export function playRestSound(kind: RestSound = 'chime', volume = 0.55) {
-  if (kind === 'beep') return playTimerAlarm(volume);
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  ensureRunning(ctx);
-  if (kind === 'boxing') {
-    const master = createMasterBus(ctx, volume, 0.1, 0.8, 2.6);
-    const now = ctx.currentTime;
-    for (let i = 0; i < 6; i++) playRingBell(ctx, master, now + i * 0.13, 0.28);
-    return;
-  }
-  if (kind === 'whistle') {
-    const master = createMasterBus(ctx, volume, 0.08, 0.6, 3);
-    playWhistle(ctx, master, ctx.currentTime, 0.3);
-    return;
-  }
-  if (kind === 'gong') {
-    const master = createMasterBus(ctx, volume, 0.3, 2.2, 2);
-    const now = ctx.currentTime;
-    playBell(ctx, master, now, 110, 0.6, 2.2);
-    playBell(ctx, master, now, 164.8, 0.2, 1.6);
-    return;
-  }
-  const master = createMasterBus(ctx, volume, 0.18, 1.6, 2.2);
-  const now = ctx.currentTime;
-  if (kind === 'bell') {
-    playBell(ctx, master, now, 196, 0.7, 2.6);
-    return;
-  }
-  [587.33, 739.99, 880].forEach((f, i) => playBell(ctx, master, now + i * 0.16, f, i === 2 ? 0.55 : 0.45, i === 2 ? 1.8 : 1.1));
 }

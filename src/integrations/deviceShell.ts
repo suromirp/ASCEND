@@ -3,8 +3,9 @@
 // statusbalk en het openingsscherm. In de browser is er voor alles een webweg of een nette
 // stilte; de rest van de app vraagt alleen deze laag, nooit het platform.
 
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { routeFromNativeShortcut } from '../engine/shortcutAction';
+import { DUCK_MAX_MS } from '../engine/restSounds';
 
 export interface DeviceShell {
   // Trillen: één duur of een patroon (trillen, pauze, ...).
@@ -16,6 +17,9 @@ export interface DeviceShell {
   exitApp?(): void;
   // Statusbalk in de kleur van de lucht bovenaan en het openingsscherm weg.
   start?(): void;
+  // Andere audio (je muziek) even zachter terwijl de rustbel klinkt: audio focus met ducking. Alleen in
+  // de Android-app; in de browser kan het niet en ontbreekt hij.
+  duckAudio?(ms: number): void;
 }
 
 // ---- de browser --------------------------------------------------------------------------
@@ -70,6 +74,13 @@ const browserShell: DeviceShell = {
 
 // ---- de Android-app ----------------------------------------------------------------------
 
+// Het eigen native deel AudioFocusPlugin.java (registerPlugin in MainActivity): vraagt audio focus met
+// ducking en geeft hem na `ms` terug. Een oudere app zonder dit deel: dan gebeurt er niets.
+interface AudioFocusPlugin {
+  duck(options: { ms: number }): Promise<void>;
+}
+let audioFocus: AudioFocusPlugin | undefined;
+
 function androidShell(): DeviceShell {
   // Modules in een belofte, nooit de plugin zelf: een plugin is een Proxy met een methode `then`
   // en een belofte die ermee vervuld wordt, blijft hangen.
@@ -115,6 +126,11 @@ function androidShell(): DeviceShell {
         gone = true;
         remove?.();
       };
+    },
+    duckAudio(ms) {
+      if (!Capacitor.isPluginAvailable('AudioFocus')) return;
+      audioFocus ??= registerPlugin<AudioFocusPlugin>('AudioFocus');
+      void audioFocus.duck({ ms: Math.max(200, Math.min(DUCK_MAX_MS, Math.round(ms))) }).catch(() => undefined);
     },
     exitApp() {
       void app.then((m) => m.App.exitApp()).catch(() => undefined);

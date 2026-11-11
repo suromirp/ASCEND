@@ -14,6 +14,7 @@ import { normalizeStrengthProgram, type StoredStrengthProgram } from './strength
 import { isRecord, isNum } from '../utils/guards';
 import { normalizeAddedExercises, type AddedExercises } from './addedExercises';
 import { normalizeStepSwaps, type StepSwaps } from './stepSwaps';
+import { DEFAULT_REST_SOUND, DEFAULT_REST_VOLUME, readRestSound, readRestVolume, type RestSound, type RestVolume } from './restSounds';
 
 type ProgressionFirst = 'weight_first' | 'reps_first';
 export type WorkSetsMode = 'descending' | 'equal';
@@ -22,8 +23,8 @@ type WarmupMode = 'smart' | 'scheme' | 'off';
 type WarmupScope = 'group' | 'exercise';
 // What happens when the rest timer of the workout screen runs out.
 export type RestAlert = 'sound_vibrate' | 'vibrate' | 'sound' | 'off';
-// The sound at the end of the rest: three soft bells, one deep bell, or the old beep.
-export type RestSound = 'chime' | 'bell' | 'beep' | 'boxing' | 'whistle' | 'gong';
+// The sound at the end of the rest and its volume: engine/restSounds.ts.
+export type { RestSound, RestVolume } from './restSounds';
 // What the cards on Forge show per exercise: the estimated 1RM (with the
 // MacroFactor one next to it) or the weight you can handle at your rep range.
 export type OneRmView = 'one_rm' | 'work_weight';
@@ -214,7 +215,13 @@ export interface StrengthSettings {
   // starts by itself after a working set and after the last warm-up set.
   restAuto?: boolean;
   restAlert?: RestAlert;
+  // An old value (chime, bell, beep, boxing, whistle, gong) reads as the nearest new one (`readRestSound`).
   restSound?: RestSound;
+  restVolume?: RestVolume;
+  // A soft tick 10 seconds before the end of the rest (off by default).
+  restPreTick?: boolean;
+  // Another sound when the next thing is a new exercise rather than the next set (on by default).
+  restNextExercise?: boolean;
   // Keep the screen on while the workout screen is open.
   keepScreenOn?: boolean;
   // Before "Wijzigingen doorvoeren": a weight you change shifts the next sets you did
@@ -338,6 +345,9 @@ export interface ResolvedStrengthSettings {
   restAuto: boolean;
   restAlert: RestAlert;
   restSound: RestSound;
+  restVolume: RestVolume;
+  restPreTick: boolean;
+  restNextExercise: boolean;
   keepScreenOn: boolean;
   carryMode: CarryMode;
   showPlates: boolean;
@@ -516,7 +526,6 @@ export const compareMoments = (c: CompareWeeks): [number, number] => {
   return [a, b];
 };
 const REST_ALERTS: RestAlert[] = ['sound_vibrate', 'vibrate', 'sound', 'off'];
-const REST_SOUNDS: RestSound[] = ['chime', 'bell', 'beep', 'boxing', 'whistle', 'gong'];
 export const REST_LIMITS = { min: 15, max: 600 };
 export const EXERCISE_NOTE_MAX = 200;
 const MAX_PER_EXERCISE_ENTRIES = 300;
@@ -618,8 +627,12 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.checkFrom === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.checkFrom)) out.checkFrom = raw.checkFrom;
   const alert = REST_ALERTS.find((a) => a === raw.restAlert);
   if (alert) out.restAlert = alert;
-  const sound = REST_SOUNDS.find((a) => a === raw.restSound);
+  const sound = readRestSound(raw.restSound);
   if (sound) out.restSound = sound;
+  const volume = readRestVolume(raw.restVolume);
+  if (volume) out.restVolume = volume;
+  if (typeof raw.restPreTick === 'boolean') out.restPreTick = raw.restPreTick;
+  if (typeof raw.restNextExercise === 'boolean') out.restNextExercise = raw.restNextExercise;
   const rest = perExercise(raw.restSeconds, restValue);
   if (rest) out.restSeconds = rest;
   const notes = perExercise(raw.exerciseNotes, noteValue);
@@ -644,7 +657,10 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     profiles: s.profiles ?? [profile],
     restAuto: s.restAuto ?? true,
     restAlert: s.restAlert ?? 'sound_vibrate',
-    restSound: s.restSound ?? 'chime',
+    restSound: s.restSound ?? DEFAULT_REST_SOUND,
+    restVolume: s.restVolume ?? DEFAULT_REST_VOLUME,
+    restPreTick: s.restPreTick ?? false,
+    restNextExercise: s.restNextExercise ?? true,
     keepScreenOn: s.keepScreenOn ?? true,
     carryMode: s.carryMode ?? (s.carryWeights === false ? 'off' : 'equal'),
     showPlates: s.showPlates ?? false,

@@ -11,6 +11,8 @@ export interface Rest {
   endsAt: number;
   total: number;
   name: string;
+  // Na de rust komt een nieuwe oefening (niet de volgende set): een andere klank (engine/restSounds.ts).
+  nextExercise?: boolean;
 }
 
 export const clock = () => Date.now();

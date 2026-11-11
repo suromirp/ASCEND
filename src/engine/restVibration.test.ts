@@ -1,32 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { REST_ALARM_PATTERN, restAlertChannels, restVibrationPattern } from './restVibration';
+import { REST_ALARM_PATTERN, restAlertChannels, restVibrationFor, restVibrationPattern } from './restVibration';
+import { REST_SOUNDS } from './restSounds';
 import type { RestSound } from './strengthSettings';
 
-const SOUNDS: RestSound[] = ['chime', 'bell', 'beep', 'boxing', 'whistle', 'gong'];
+const SOUNDS: RestSound[] = [...REST_SOUNDS];
 const pulses = (p: number[]) => p.filter((_, i) => i % 2 === 0);
 const total = (p: number[]) => p.reduce((a, b) => a + b, 0);
 
 describe('restVibrationPattern: het trilpatroon bij het gekozen geluid', () => {
-  it('Boksbel drie snelle tikken, Fluitje twee korte, Gong één lange', () => {
-    const boxing = restVibrationPattern('boxing');
-    expect(pulses(boxing)).toHaveLength(3);
-    expect(Math.max(...pulses(boxing))).toBeLessThanOrEqual(100);
-
-    const whistle = restVibrationPattern('whistle');
-    expect(pulses(whistle)).toHaveLength(2);
-    expect(Math.max(...pulses(whistle))).toBeLessThanOrEqual(200);
-
-    const gong = restVibrationPattern('gong');
-    expect(pulses(gong)).toHaveLength(1);
-    expect(gong[0]).toBeGreaterThanOrEqual(600);
+  it('Heldere bel twee korte tikken, Trommel drie, Vikinghoorn en Tempelbel één lange', () => {
+    const clear = restVibrationPattern('clearbell');
+    expect(pulses(clear)).toHaveLength(2);
+    expect(Math.max(...pulses(clear))).toBeLessThanOrEqual(100);
+    expect(pulses(restVibrationPattern('drum'))).toHaveLength(3);
+    for (const long of ['vikinghorn', 'templebell'] as const) {
+      const p = restVibrationPattern(long);
+      expect(pulses(p)).toHaveLength(1);
+      expect(p[0]).toBeGreaterThanOrEqual(600);
+    }
   });
 
-  it('de andere geluiden volgen hun ritme: klokjes drie tonen met een lange laatste, bel één, piep vier', () => {
-    const chime = restVibrationPattern('chime');
-    expect(pulses(chime)).toHaveLength(3);
-    expect(chime[chime.length - 1]).toBeGreaterThan(chime[0]);
-    expect(pulses(restVibrationPattern('bell'))).toHaveLength(1);
-    expect(pulses(restVibrationPattern('beep'))).toHaveLength(4);
+  it('een oude keuze voelt als de nieuwe waar hij naartoe gaat (11 november)', () => {
+    expect(restVibrationPattern('gong')).toEqual(restVibrationPattern('templebell'));
+    expect(restVibrationPattern('boxing')).toEqual(restVibrationPattern('clearbell'));
+    expect(restVibrationPattern('cowbell')).toEqual(restVibrationPattern('clearbell'));
+    for (const old of ['chime', 'bell', 'beep', 'whistle']) expect(restVibrationPattern(old)).toEqual(restVibrationPattern('clearbell'));
+  });
+
+  it('bij een volgende oefening twee keer, de tik vooraf één korte stoot', () => {
+    const one = restVibrationPattern('clearbell');
+    expect(restVibrationFor('clearbell', 'set')).toEqual(one);
+    expect(pulses(restVibrationFor('clearbell', 'exercise'))).toHaveLength(2 * pulses(one).length);
+    expect(restVibrationFor('clearbell', 'pre')).toEqual([70]);
   });
 
   it('elk geluid heeft een eigen patroon, en geen twee voelen hetzelfde', () => {
@@ -53,9 +58,9 @@ describe('restVibrationPattern: het trilpatroon bij het gekozen geluid', () => {
   });
 
   it('geeft telkens een nieuwe lijst: niemand kan het patroon van een ander veranderen', () => {
-    const a = restVibrationPattern('gong');
+    const a = restVibrationPattern('vikinghorn');
     a[0] = 1;
-    expect(restVibrationPattern('gong')[0]).toBe(900);
+    expect(restVibrationPattern('vikinghorn')[0]).toBe(900);
   });
 });
 
