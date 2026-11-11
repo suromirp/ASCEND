@@ -107,6 +107,19 @@ describe('randgevallen', () => {
     expect(next(week(), TEN_K, [], [free])?.name).toBe('Tempoloop');
   });
 
+  it('de sleutel van deze week gaat voor een langere van volgende week', () => {
+    const two = [at('tpl_long_run', '2026-11-29', 60), at('tpl_long_run', '2026-11-22', 50)];
+    expect(next(two, DEFAULT_KEY_FOCUS)).toMatchObject({ date: '2026-11-22', minutes: 50 });
+    // Deze week alleen nog de lange duurloop, volgende week de tempoloop: deze week telt.
+    expect(next([at('tpl_long_run', '2026-11-22', 70), at('tpl_tempo_run', '2026-11-26', 50)], TEN_K)?.name).toBe('Lange duurloop');
+  });
+
+  it('is de sleutel van deze week gedaan, dan die van volgende week', () => {
+    const s = [at('tpl_tempo_run', '2026-11-19', 50, { id: 'deze' }), at('tpl_tempo_run', '2026-11-26', 50, { id: 'volgende' })];
+    const log = { id: 'l', plannedSessionId: 'deze', completedDate: '2026-11-19' } as SessionLog;
+    expect(next(s, TEN_K, [log])?.sessionId).toBe('volgende');
+  });
+
   it('kijkt twee weken vooruit, niet verder', () => {
     expect(next([at('tpl_tempo_run', '2026-11-29', 50)], TEN_K)?.date).toBe('2026-11-29');
     expect(next([at('tpl_tempo_run', '2026-11-30', 50)], TEN_K)).toBeUndefined();

@@ -10,7 +10,7 @@ import type { DirectionId } from '../data/directions';
 import type { GoalKindId, TrainingGoal } from '../models/goals';
 import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import { addDays } from '../utils/dates';
+import { addDays, mondayOfWeek } from '../utils/dates';
 import { activeDirection } from './direction';
 import { goalDetailsOf, goalKindOf } from './goalLabels';
 import { listedGoals } from './goalList';
@@ -128,10 +128,12 @@ export interface NextKeySession {
 
 const AWAY: ReadonlySet<LeavePeriod['kind']> = new Set(['no_training', 'trek']);
 
-// De volgende sleuteltraining in de komende twee weken (vandaag telt mee) die nog niet gedaan is. Eerst
-// de beste trede, dan de langste, dan de vroegste. Een overgeslagen training telt niet, net als een
-// training in een vakantie zonder training of een eigen tocht. `minutesOf` geeft de lengte zoals de
-// schermen die tonen; zonder valt het terug op 0. Undefined: niets dat past, en dan toont Ascend geen regel.
+// De volgende sleuteltraining in de komende twee weken (vandaag telt mee) die nog niet gedaan is: de
+// sleuteltraining van de eerste week waarin er nog een staat. Binnen die week eerst de beste trede, dan de
+// langste, dan de vroegste, en op dezelfde dag een vaste volgorde. Zo noemt Ascend de lange duurloop van
+// morgen, niet die van volgende week omdat die tien minuten langer is. Een overgeslagen training telt niet,
+// net als een training in een vakantie zonder training of een eigen tocht. `minutesOf` geeft de lengte zoals
+// de schermen die tonen; zonder valt het terug op 0. Undefined: niets dat past, en dan toont Ascend geen regel.
 export function nextKeySession(
   sessions: readonly PlannedSession[],
   templates: readonly SessionTemplate[],
@@ -145,7 +147,7 @@ export function nextKeySession(
   const byId = new Map(templates.map((t) => [t.id, t]));
   const done = new Set(logs.map((l) => l.plannedSessionId).filter((x): x is string => !!x));
   const away = (d: string) => leave.some((p) => AWAY.has(p.kind) && d >= p.startDate && d <= p.endDate);
-  let best: (NextKeySession & { rank: number }) | undefined;
+  let best: (NextKeySession & { rank: number; week: string }) | undefined;
   for (const s of sessions) {
     const t = byId.get(s.templateId);
     if (!t || s.status === 'skipped' || done.has(s.id)) continue;
@@ -153,11 +155,13 @@ export function nextKeySession(
     const rank = keyRank(t, focus);
     if (rank === undefined) continue;
     const minutes = s.plannedMinutes ?? minutesOf?.(s, t) ?? 0;
+    const week = mondayOfWeek(s.scheduledDate);
     const better = !best
-      || rank < best.rank
-      || (rank === best.rank && (minutes > best.minutes
-        || (minutes === best.minutes && (s.scheduledDate < best.date || (s.scheduledDate === best.date && s.id < best.sessionId)))));
-    if (better) best = { sessionId: s.id, date: s.scheduledDate, name: t.name, minutes, rank };
+      || week < best.week
+      || (week === best.week && (rank < best.rank
+        || (rank === best.rank && (minutes > best.minutes
+          || (minutes === best.minutes && (s.scheduledDate < best.date || (s.scheduledDate === best.date && s.id < best.sessionId)))))));
+    if (better) best = { sessionId: s.id, date: s.scheduledDate, name: t.name, minutes, rank, week };
   }
   return best && { sessionId: best.sessionId, date: best.date, name: best.name, minutes: best.minutes };
 }
