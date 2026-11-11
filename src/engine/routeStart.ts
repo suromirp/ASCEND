@@ -1,6 +1,6 @@
 // ASCEND: waar een voorgestelde lus begint. Drie keuzes: Waar je nu bent (bij elke zoektocht één keer
-// de plek van het toestel; de standaard), Vast punt (een eigen startpunt dat alleen op dit toestel
-// staat, zoals je deur; in de opslag heet het nog 'exact') en Ongeveer (je plaats, afgerond op twee
+// de plek van het toestel; de standaard), Vast punt (een eigen startpunt, de plek Thuis, dat op dit toestel
+// staat en meegaat in de back-up, zoals je deur; in de opslag heet het nog 'exact') en Ongeveer (je plaats, afgerond op twee
 // decimalen, ongeveer een kilometer). Bij een precies punt ligt ook de zoektocht naar heuvels en paden
 // bij OpenStreetMap om dat punt (besluit 2026-11-11-route-verfijnen.md).
 // Puur: de opslag en de locatievraag staan in storage/routeStart.ts. Docs: docs/beslissingen/2026-11-09-startpunt-lus.md,

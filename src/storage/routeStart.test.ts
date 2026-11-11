@@ -60,12 +60,17 @@ describe('het eigen startpunt op het toestel', () => {
     expect(await getRouteStartPoint()).toBeUndefined();
   });
 
-  it('staat niet in de export en niet in een back-up', async () => {
+  // Was tot 11 november "staat niet in de export en niet in een back-up". Het vaste punt is nu de plek Thuis
+  // en die gaat mee in de back-up (docs/beslissingen/2026-11-11-plekken-en-routes.md, onder Vervangt: het
+  // niet-in-de-back-up voor Vast punt vervalt met de migratie naar Thuis). Wat blijft: de oude sleutel
+  // `routeStartPoint` staat nergens in een back-up, en het punt staat er alleen als plek in, niet in de instellingen.
+  it('gaat als de plek Thuis mee in een back-up, nooit onder de oude sleutel of in de instellingen', async () => {
     await saveRouteStartPoint(fake);
-    const backup = JSON.stringify(await buildBackupEnvelope());
+    const envelope = await buildBackupEnvelope();
+    const backup = JSON.stringify(envelope);
     expect(backup).not.toContain('routeStartPoint');
-    expect(backup).not.toContain('52.123');
-    expect(backup).not.toContain('5.654');
+    expect(JSON.stringify(envelope.payload.settings)).not.toContain('52.123');
+    expect((envelope.payload as { places?: unknown }).places).toEqual([expect.objectContaining({ name: 'Thuis', home: true, lat: 52.12346, lon: 5.65432 })]);
   });
 
   it('een import neemt geen punt mee en wist het eigen punt niet', async () => {

@@ -16,6 +16,9 @@ import { ROUTE_PLAN_KEY, SOLO_PLAN_KEY } from './routePlan';
 import { SKILL_GOALS_KEY, loadSkillGoals } from './skillGoals';
 import { mergeSkillStores } from '../engine/skillGoal';
 import type { SkillGoalStore } from '../models/skillGoals';
+import { PLACES_KEY, SAVED_ROUTES_KEY, readPlaceStore } from './places';
+import { routesOfPlaces } from './migrationsPlaces';
+import type { Place, SavedRoute } from '../models/place';
 import { CURRENT_BACKUP_SCHEMA_VERSION, ALL_CATEGORIES, type NormalizedBackupData, type BackupDataCategory, type CategoryAction, type PlanPolicy, type ImportDiffEntry, type ImportPreview } from './backupTypes';
 import { type ResolvedListCategory, type Keyed, resolveListCategory, mergeSettingsHistory, shallowEqual } from './backupMerge';
 
@@ -41,6 +44,9 @@ interface CurrentData {
   planChangeProposals: PlanChangeProposal[];
   // Het doel Vaardigheid; optional so a caller without it reads as "nothing on the device".
   skillGoals?: SkillGoalStore;
+  // Plekken en bewaarde routes; undefined when they could not be read (never the same as "no places").
+  places?: Place[];
+  savedRoutes?: SavedRoute[];
 }
 
 export async function loadCurrentData(): Promise<CurrentData> {
@@ -60,7 +66,8 @@ export async function loadCurrentData(): Promise<CurrentData> {
     PlanChangeProposalsRepo.getAll(),
   ]);
   const skillGoals = await loadSkillGoals();
-  return { program: programs[0] ?? null, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals, skillGoals };
+  const placeStore = await readPlaceStore();
+  return { ...(placeStore.ok ? { places: placeStore.places, savedRoutes: placeStore.routes } : {}), program: programs[0] ?? null, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals, skillGoals };
 }
 
 interface DiffResult {
@@ -198,6 +205,18 @@ export function computeDiff(
     if (backup.missedTraining) meta[MISSED_MEMORY_KEY] = backup.missedTraining;
     if (backup.routePlan) meta[ROUTE_PLAN_KEY] = backup.routePlan;
     if (backup.soloPlan) meta[SOLO_PLAN_KEY] = backup.soloPlan;
+    // Plekken en bewaarde routes: with the fields the import replaces the list, like the rest of a restore;
+    // without them the device keeps its own (a missing field is never "no places"). A route only stays
+    // with its place: the routes that remain are those of a place in the list afterwards.
+    // Could the places of the device not be read (current.places is undefined), then a file with routes
+    // only changes nothing: there is no list to hold them against.
+    const places = backup.places ?? current.places;
+    if ((backup.places || backup.savedRoutes) && places) {
+      const before = backup.savedRoutes ?? current.savedRoutes ?? [];
+      const routes = routesOfPlaces(before, places);
+      if (backup.places) meta[PLACES_KEY] = places;
+      if (backup.savedRoutes || routes.length !== before.length) meta[SAVED_ROUTES_KEY] = routes;
+    }
   }
   diffByCategory.push({
     category: 'app_settings',

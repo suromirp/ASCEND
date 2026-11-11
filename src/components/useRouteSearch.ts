@@ -80,7 +80,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const [consent, setConsent] = useState<boolean | undefined>();
   const [found, setFound] = useState<{ key: string; result: RouteSearch } | undefined>();
   const [attempt, setAttempt] = useState(0);
-  // Het eigen startpunt (alleen op dit toestel): undefined zolang we lezen, null als er geen is.
+  // Het eigen startpunt (de plek Thuis): undefined zolang we lezen, null als er geen is.
   const [saved, setSaved] = useState<RoutePoint | null | undefined>();
   const [locating, setLocating] = useState(false);
   // Lukte de locatie niet, dan zoekt dit paneel ongeveer, met de reden in één regel.
