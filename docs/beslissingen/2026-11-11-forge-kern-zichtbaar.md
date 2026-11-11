@@ -16,6 +16,14 @@ Status: aangenomen
 9. Extra betekent in Forge alleen nog de rol. De kolomkop "extra kg" bij een ladderstap met gewicht heet nu "+ kg", de toets op de ladder zegt "met 2,5 kg erbij", het cijferblok zegt "Gewicht erbij" en de ijkset vraagt "Nog één set bij ...".
 10. Instellingen: geen nieuwe rij onder Geavanceerd (daar staan er al zes, besluit 8 november). Hoeveel over na een set en Schijven bij de set tonen blijven in het blad Bij het invullen; Hoogstens per krachttraining blijft in zijn eigen blad. Elk staat in `settingsIndex.ts`, `settingsLayout.ts`, `settingsSummary.ts`, `settingsDiff.ts` en `ForgeGroup.tsx`.
 
+## Eigen keuzes van de bouwer
+
+- De regel onder de klok noemt alleen wat nog open is: "bijwerk", "extra" of "bijwerk en extra".
+- Twijfel in `asksReserve` houdt ook "elke werkset in de eerste drie trainingen van een oefening" (regel 2 van het verslag RIR en RPE).
+- Extra betekent in Forge alleen de rol; de woorden in punt 9 zijn daarom veranderd. De eigenaar nam "+ kg" aan (Pathfinder kijkt nog).
+- De tekstkaart heeft een Forge-scherm (`docs/app-kaart/forge.md`, Benen A via Week).
+- De instelling heet nog Schijven bij de set tonen (bestaand woord, bevestigd door de coördinator).
+
 ## Reden
 
 De eigenaar (11 november): "niet zo erg als het uitloopt, zolang je weet wat de belangrijkste oefeningen zijn; soms extra, een keertje niet is geen probleem." Inkorten verborg wat er wegviel; tonen met de rol erbij laat de keuze bij hem. Bij Benen A bleef het RIR-bolletje van de laatste werkset grijs met een vraag, terwijl alles volgens schema ging: de vraag hoort bij een set die iets zegt.
