@@ -70,6 +70,7 @@ export default defineConfig({
         start_url: BASE_PATH,
         scope: BASE_PATH,
         display: 'standalone',
+        orientation: 'portrait',
         background_color: '#0b1733',
         theme_color: '#0b1733',
         icons: [
