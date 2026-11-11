@@ -17,9 +17,10 @@ Leeg: alles van 11 november staat in de Bouwrij hieronder, die de coördinator d
 
 Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouwers zelf, hoogstens drie tegelijk, nooit twee aan dezelfde bestanden, model volgens skill werkverdeling "Deze week". Volgorde is de volgorde van starten zodra er plek is.
 
+- In aanbouw 11 november (Sherpa Route-kaart 2, session_01LnDpSjFAbFEgsZa58XWSk3, claude/route-kaart-2): melding eigenaar na de eerste proef: start niet bij je plek (stond op Ongeveer), tweede lus nauwelijks zichtbaar (kaart past niet op alle lussen), geen laadtoestand. Nieuwe standaard Waar je nu bent.
 - Route-kaart, vervolg: de lus bijsturen (andere kant op, langer of korter, een stuk vermijden), per stuk afstand en hoogtemeters, een knop Groter (kaart op volle hoogte met terugknop), hoogtelijnen (maplibre-contour met sleutelvrije hoogtetegels). Plus van Warden: een regel tijdens het bewaren van een getikt punt. Opus.
 - Het Info-blad van een training opnieuw (eigenaar 11 november: "dat infomenu is kut en moet een hele refactor krijgen, een hele UI en UX verandering"). Het blad achter de knop Info (`components/TrainingGuideSheet.tsx`, menu in drie groepen). De Datavelden bekijken waren daar nauwelijks te vinden. Ontwerpvoorstel klaar (`docs/visie/Ontwerp Info-blad.md`, richting A: blad Je horloge, Uitleg korter); wacht op vijf antwoorden van de eigenaar dat de hele app bekijkt en zegt waar wat logisch hoort; daarna bouwen.
-- GR5: coördinaten van de 36 etappes uit OpenStreetMap halen (eigenaar 11 november: mag zelf, geen GPX van hem nodig), met de naamsvermelding van OpenStreetMap, in `src/data/gr5Stages.ts`. Daarna de regel op je etappe en hutten via refuges.info.
+- GR5, vervolg: hutten via refuges.info bij de etappe; de grenzen ver van het spoor nakijken (Maljasset 1 km, Trébentaz, Thabor, eind in Nice 2,3 km). Opus.
 - Week: de band van een periode blijft tikbaar, ook als de periode meer dan twee weken voorbij is (eigenaar 11 november, advies gevolgd). Nagaan of dat al zo is; zo niet, de grens weghalen.
 - Weekterugblik met een losse training: "0 van 3 gedaan" klopt (een losse duurloop op een dag zonder geplande training telt niet als gedaan), maar leest tegenstrijdig naast "56 min". Voorstel: "0 van 3 gedaan, 1 los · 56 min" in WeekReview en weekHighlights (Sherpa Klein deel 1, 11 november). Opus.
 - De voorstelzin van het krachtblok noemt de knop "Blok activeren" in plaats van de vaste zin van de stemgids (regel 3); netter is de knop Akkoord in de wizard (Warden, 11 november). Klein.
@@ -29,8 +30,8 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
 - De avond ervoor, vervolg: tests voor de dag van zomer- en wintertijd en voor elke tijd uit EVENING_TIMES; een avondstand (20:30) in de tekstkaart met een invariant; nagaan of de eigenaar de kaart vindt (hij staat onder Advies, Nog open en Back-up), anders op de avond direct onder de missie. Klein.
 - Wis startpunt tijdens een lopende zoektocht: de zoektocht schrijft daarna het exacte punt terug in de cache van heuvels. Vlak voor het wegschrijven opnieuw lezen (Warden, 11 november). Klein.
 - Kansen 11 november, door de eigenaar gekozen (alle met het advies; bronnen in `docs/visie/Kansen 11 november app.md` en `docs/onderzoek/Kansen 11 november training.md`):
-  - Afdaalklok: na 21 dagen zonder afdaling één regel en een voorstel met Akkoord voor een trapsessie; 7 tot 14 dagen voor een tocht om een verse afdaling vragen. Planning, Fable.
-  - Eten onderweg: een indicatie wat je meeneemt, voor lange trainingen (lopen vanaf ongeveer anderhalf uur: gels en alternatieven) en voor tochten (per dag en per etappe). Geen dagelijkse voedingsregistratie (eigenaar 11 november: "te gecompliceerd voor nu"). Scout heeft de getallen (30 tot 60 g koolhydraten per uur, wandelen 30 tot 40). Opus, de rekenregel op Fable als hij de tochtplanning raakt.
+  - In aanbouw 11 november (Sherpa Afdaalklok, session_01LnDpSj2BVjJP3JFaXvSErk, fable, claude/afdaalklok): Afdaalklok: na 21 dagen zonder afdaling één regel en een voorstel met Akkoord voor een trapsessie; 7 tot 14 dagen voor een tocht om een verse afdaling vragen. Planning, Fable.
+  - In aanbouw 11 november (Sherpa Eten onderweg, session_01LnDpSkt2AFdB4BEn94AKrc, claude/eten-onderweg): Eten onderweg: een indicatie wat je meeneemt, voor lange trainingen (lopen vanaf ongeveer anderhalf uur: gels en alternatieven) en voor tochten (per dag en per etappe). Geen dagelijkse voedingsregistratie (eigenaar 11 november: "te gecompliceerd voor nu"). Scout heeft de getallen (30 tot 60 g koolhydraten per uur, wandelen 30 tot 40). Opus, de rekenregel op Fable als hij de tochtplanning raakt.
   - Racedag voor de 10 km: blad in de laatste week met weer bij de start, inlopen, tempo per km voor doeltijd en verwachte tijd; de dag erna een terugblik. Opus.
   - Vaste ijktocht elke zes tot acht weken als kompas voor de berg, inplannen via Akkoord. Planning, Fable.
   - De beenindex leert van je ochtendantwoorden (`learning.ts#indexChecks`), begrensd, veiligheidsregels nooit soepeler, met migratiestap. Fable.
@@ -55,6 +56,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: GR5-etappes met spoor uit OpenStreetMap (546 km, Vanoise via de GR 55), engine/stageAt.ts, de regel Op je etappe op een GR5-wandeldag; besluit `2026-11-11-gr5-uit-osm.md`.
 - Live op 11 november: Enkel en evenwicht in Spieren voor de berg (vier oefeningen, voorstel met Akkoord, schakelaar Enkel en evenwicht; besluit `2026-11-11-enkel-evenwicht.md`).
 - Live op 11 november: De avond ervoor (vanaf 20:00 een kaart onder je missie met wat je voor morgen klaarlegt; melding als keuze, standaard uit; besluit `2026-11-11-avond-ervoor.md`).
 - Live op 11 november: De sleuteltraining past bij je doel (één definitie per soort doel; bij 10 km ook tempo of intervallen inhalen, hoogstens één inhaal per keer, 48 uur over de weekgrens; besluit `2026-11-11-sleuteltraining.md`).
