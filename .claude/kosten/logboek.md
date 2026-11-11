@@ -310,3 +310,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Herreview Route-verfijnen, Warden, fable (reviewer), 116k, 9 min, akkoord
 - 2026-11-11, Nadoorloop Klein deel 1 (Stand), Lookout, sonnet (tester), 50k, 1 min, groen
 - 2026-11-11, Herreview Klein deel 1, Warden, fable (reviewer), 133k, 4 min, niet akkoord (los log dekt te ruim)
+- 2026-11-11, Route verfijnen (engine, 2 rondes), Sherpa, fable (sessie), 298k context, $10,06, 1 herstelronde (blokkerend: te korte lus bij volle lijst)
