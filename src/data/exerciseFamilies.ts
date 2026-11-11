@@ -26,6 +26,7 @@ const FAMILIES: Record<string, (string | [string, ...Nuance[]])[]> = {
   calf_straight: ['standing-calf-raise', 'leg-press-calf-raise', 'bodyweight-calf-raise', ['single-leg-calf-raise', 'single']],
   calf_bent: ['seated-calf-raise'],
   tibialis: ['tibialis-raise', 'tibialis-raise-loaded'],
+  balance: ['single-leg-stance', 'single-leg-stance-eyes-closed', 'single-leg-stance-cushion', 'star-excursion-reach'],
   hip_abduction: ['hip-abduction-machine', 'cable-hip-abduction', 'hip-abduction-band', ['lateral-band-walk', 'walking'], 'side-lying-hip-abduction'],
   hip_adduction: ['hip-adduction-machine', 'copenhagen-plank'],
   anti_extension: ['plank', 'dead-bug', 'ab-wheel-rollout', 'barbell-rollout'],
@@ -71,6 +72,8 @@ const FAMILIES: Record<string, (string | [string, ...Nuance[]])[]> = {
 // bij bankdrukken. Push-Up, Dips, Pull-Up en Negative Chin-Up staan er niet in en blijven waar ze waren.
 // De ladders van F4f hebben alleen eigen oefeningen, dus daar staat elke stap in.
 export const FAMILY_ONLY: ReadonlySet<string> = new Set([
+  // Enkel en evenwicht: alleen onderling te ruilen, nooit voor een kuitheffing (docs/beslissingen/2026-11-11-enkel-evenwicht.md).
+  'single-leg-stance', 'single-leg-stance-eyes-closed', 'single-leg-stance-cushion', 'star-excursion-reach',
   'incline-push-up', 'decline-push-up', 'knee-push-up', 'incline-push-up-high', 'diamond-push-up', 'archer-push-up',
   'negative-dip', 'weighted-dip', 'support-hold', 'weighted-pull-up', 'scapular-pull-up', 'dead-hang',
   // F4f: de overige ladders, elke stap een eigen oefening.

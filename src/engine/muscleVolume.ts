@@ -57,6 +57,9 @@ export function muscleVolumeByWeek(logs: SessionLog[]): WeekVolume[] {
         week.unknownSets += hard;
         continue;
       }
+      // Evenwicht (op één been staan, reiken) is geen harde set voor een spier; het telt apart voor de rij Enkel en
+      // evenwicht (engine/mountainMuscles.ts#balanceSetsByWeek).
+      if (exercise.pattern === 'balance') continue;
       for (const m of exercise.primary) week.sets[m] += hard * PRIMARY_WEIGHT;
       for (const m of exercise.secondary) week.sets[m] += hard * SECONDARY_WEIGHT;
     }

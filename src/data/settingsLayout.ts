@@ -154,6 +154,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-invullen', 'forge-oefeningen', 'forge-onderbreking', 'forge-vegen', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-soort', 'forge-doorvoeren', 'forge-schijven'),
   ...inSheet('bundel-toets', 'forge-naast', 'forge-sinds'),
   ...inSheet('forge-tijdsgrens', 'forge-grens-kracht', 'forge-grens-been'),
+  ...inSheet('forge-bergspieren', 'forge-bergspieren-aan', 'forge-enkel'),
   // Lichaam
   ...inSheet('bundel-signalen', 'vroeg-ziek', 'ochtendregel', 'weekdag-patroon', 'hitte-tempo', 'luchtkwaliteit', 'ochtend-voorstel', 'bergweer', 'wennen-warmte', 'tempocurve', 'etappetijd-eigen', 'klimtempo'),
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd'),
@@ -239,6 +240,7 @@ const B = {
   oneRm: { ok: (s) => strength(s).showOneRm, reason: 'Zichtbaar zodra Geschatte 1RM tonen aan staat', parent: 'forge-1rm' },
   inApp: { ok: (_s, c) => c.strengthInApp, reason: 'Zichtbaar zodra je sets in ASCEND bijhoudt', parent: 'kracht' },
   ladderRow: { ok: (s) => strength(s).ladderRow, reason: 'Zichtbaar zodra Stappen bij calisthenics aan staat', parent: 'forge-stappen' },
+  mountain: { ok: (s) => strength(s).mountainMuscles, reason: 'Zichtbaar zodra Spieren voor de berg aan staat', parent: 'forge-bergspieren-aan' },
   restAuto: { ok: (s) => strength(s).restAuto, reason: 'Zichtbaar zodra de rusttimer aan staat', parent: 'forge-rust' },
   restAlert: { ok: (s) => strength(s).restAlert !== 'off', reason: 'Zichtbaar zodra de rusttimer een signaal geeft', parent: 'forge-signaal' },
   mf: { ok: (_s, c) => c.macroFactorExport, reason: 'Zichtbaar zodra je een MacroFactor-export hebt ingelezen', parent: 'macrofactor' },
@@ -292,7 +294,8 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...rule([B.trainings], 'trainingsduur'),
-  ...rule([B.forge], 'forge-bergspieren', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-rekenmodel', 'forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren', 'bundel-weergave', 'forge-1rm', 'forge-kent-je', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-dumbbells'),
+  ...rule([B.forge, B.mountain], 'forge-enkel'),
+  ...rule([B.forge], 'forge-bergspieren', 'forge-bergspieren-aan', 'forge-volgorde', 'forge-opwarmen', 'forge-opwarmbereik', 'bundel-rekenmodel', 'forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren', 'bundel-weergave', 'forge-1rm', 'forge-kent-je', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-dumbbells'),
   ...rule([B.forge, B.oneRm], 'forge-weergave'),
   ...rule([B.forge, B.oneRm, B.mf], 'forge-1rm-macrofactor'),
   ...rule([B.forge, B.inApp], 'forge-bijsturen', 'forge-spotter', 'spotterrek'),

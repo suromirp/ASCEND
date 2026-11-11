@@ -25,11 +25,11 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
 - De voorstelzin van het krachtblok noemt de knop "Blok activeren" in plaats van de vaste zin van de stemgids (regel 3); netter is de knop Akkoord in de wizard (Warden, 11 november). Klein.
 - Krachtscherm: setvinkjes 32 bij 32 px en "Toon vorige keer" 16 px hoog, onder de 44 px; op het trainingsscherm de tekstknop "Meer" 35 bij 19 px (Lookout, 11 november). Opus.
 - Kleine teksten bij de sleuteltraining (Warden): keyPhrase met dubbel "of" bij marathon, trail en triathlon ("de tempo- of intervaltraining", komma voor het laatste "of"); restDayBack kijkt zeven dagen en elke trede terug, het inhalen drie dagen en de beste trede: noemen in het besluit. Klein.
+- Spieren voor de berg: vakantie-, tocht- en no_gym-weken ook voor kuiten, scheen en bilspieren niet meetellen, zoals bij evenwicht (gedragswijziging, advies ja); tekeningen voor de vier evenwichtsoefeningen; een test op de Forge-weergave van een houding met reps 4-6. Klein.
 - De avond ervoor, vervolg: tests voor de dag van zomer- en wintertijd en voor elke tijd uit EVENING_TIMES; een avondstand (20:30) in de tekstkaart met een invariant; nagaan of de eigenaar de kaart vindt (hij staat onder Advies, Nog open en Back-up), anders op de avond direct onder de missie. Klein.
 - Wis startpunt tijdens een lopende zoektocht: de zoektocht schrijft daarna het exacte punt terug in de cache van heuvels. Vlak voor het wegschrijven opnieuw lezen (Warden, 11 november). Klein.
 - Kansen 11 november, door de eigenaar gekozen (alle met het advies; bronnen in `docs/visie/Kansen 11 november app.md` en `docs/onderzoek/Kansen 11 november training.md`):
   - Afdaalklok: na 21 dagen zonder afdaling één regel en een voorstel met Akkoord voor een trapsessie; 7 tot 14 dagen voor een tocht om een verse afdaling vragen. Planning, Fable.
-  - In aanbouw 11 november (Sherpa Enkel en evenwicht, session_01LnDpSkHjA9h33Ess9yZKBv, claude/enkel-evenwicht): Enkel en evenwicht als rij binnen Spieren voor de berg (Forge zit op zes rijen). Opus.
   - Eten onderweg: een indicatie wat je meeneemt, voor lange trainingen (lopen vanaf ongeveer anderhalf uur: gels en alternatieven) en voor tochten (per dag en per etappe). Geen dagelijkse voedingsregistratie (eigenaar 11 november: "te gecompliceerd voor nu"). Scout heeft de getallen (30 tot 60 g koolhydraten per uur, wandelen 30 tot 40). Opus, de rekenregel op Fable als hij de tochtplanning raakt.
   - Racedag voor de 10 km: blad in de laatste week met weer bij de start, inlopen, tempo per km voor doeltijd en verwachte tijd; de dag erna een terugblik. Opus.
   - Vaste ijktocht elke zes tot acht weken als kompas voor de berg, inplannen via Akkoord. Planning, Fable.
@@ -55,6 +55,7 @@ Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en foute
 
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
+- Live op 11 november: Enkel en evenwicht in Spieren voor de berg (vier oefeningen, voorstel met Akkoord, schakelaar Enkel en evenwicht; besluit `2026-11-11-enkel-evenwicht.md`).
 - Live op 11 november: De avond ervoor (vanaf 20:00 een kaart onder je missie met wat je voor morgen klaarlegt; melding als keuze, standaard uit; besluit `2026-11-11-avond-ervoor.md`).
 - Live op 11 november: De sleuteltraining past bij je doel (één definitie per soort doel; bij 10 km ook tempo of intervallen inhalen, hoogstens één inhaal per keer, 48 uur over de weekgrens; besluit `2026-11-11-sleuteltraining.md`).
 - Live op 11 november: Route voorstellen met een echte kaart (MapLibre met OpenFreeMap, alle lussen, je plek, Start hier wordt je startpunt; instelling Ondergrond van de kaart; besluit `2026-11-11-route-kaart.md`).
