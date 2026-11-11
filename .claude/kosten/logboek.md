@@ -325,3 +325,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Doorloop avondkaart, Lookout, sonnet (tester), 85k, 3 min, groen
 - 2026-11-11, Review Avond ervoor, Warden, sonnet (reviewer), 37k, 4 min, akkoord (2 kleine punten door coördinator)
 - 2026-11-11, De avond ervoor, Sherpa, opus (sessie), 274k context, $6,24, 0 herstelrondes
+- 2026-11-11, Review Enkel en evenwicht, Warden, sonnet (reviewer), 51k, 5 min, akkoord (1 klein punt door coördinator)

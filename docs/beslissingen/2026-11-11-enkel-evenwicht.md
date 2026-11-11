@@ -61,3 +61,9 @@ Niets. Het breidt Spieren voor de berg uit.
 ## Terugdraaien
 
 `mountainBalance` standaard uit zetten (`strengthSettings.ts#resolveStrengthSettings`) of `input.balance` negeren in `mountainMuscleProposal`. Een toegevoegde oefening haal je weg in het blad van de oefening. De vier oefeningen kunnen blijven staan: een log dat ernaar verwijst moet leesbaar blijven.
+
+
+## Na de review (coördinator, 11 november)
+
+- Het onderzoek (`Kansen 11 november training.md`) zei dat er al evenwichtsoefeningen in de catalogus stonden; dat klopte niet, ze zijn hier nieuw.
+- Een klacht telt als enkel- of voetklacht alleen als het hele woord enkel of voet in de plek staat (een voetbalknie niet).

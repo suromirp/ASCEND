@@ -252,6 +252,9 @@ describe('enkel en evenwicht', () => {
     expect(mountainMuscleProposal(base({ injuries: [pain('Enkel links', { kind: 'stijf' })] }))?.muscle).toBe('balance');
     expect(mountainMuscleProposal(base({ injuries: [pain('Knie links')] }))?.muscle).toBe('balance');
     expect(ankleComplaintOpen(undefined, '2026-11-02')).toBe(false);
+    // Een woord dat 'voet' bevat is geen voetklacht (Warden): voetbalknie zet het evenwicht niet stil.
+    expect(mountainMuscleProposal(base({ injuries: [pain('Voetbalknie')] }))?.muscle).toBe('balance');
+    expect(mountainMuscleProposal(base({ injuries: [pain('Linker voet')] }))).toBeNull();
     // De spieren blijven gewoon: een enkelklacht zet alleen het evenwicht stil.
     expect(mountainMuscleProposal(input({ injuries: [pain('Enkel links')] }))?.muscle).toBe('calves');
   });

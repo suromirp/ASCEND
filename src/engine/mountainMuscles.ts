@@ -152,7 +152,7 @@ export function balanceShort(logs: readonly SessionLog[], lastWeekStart: string,
 // Een open pijnklacht aan een enkel of voet (spierpijn en stijf tellen niet): dan geen evenwichtswerk voorstellen.
 // Wiebelen op een pijnlijke enkel, zonder iemand erbij, laten we aan een fysiotherapeut.
 export function ankleComplaintOpen(injuries: readonly InjuryNote[] | undefined, today: string): boolean {
-  return (injuries ?? []).some((n) => !isSoreness(n) && isOpenOn(n, today) && n.date <= today && BALANCE_INJURY_PARTS.some((p) => n.bodyPart.toLowerCase().includes(p)));
+  return (injuries ?? []).some((n) => !isSoreness(n) && isOpenOn(n, today) && n.date <= today && BALANCE_INJURY_PARTS.some((p) => new RegExp(`(^|[^a-z])${p}($|[^a-z])`).test(n.bodyPart.toLowerCase())));
 }
 
 // De spieren die Ruilen in Forge voorrang geeft: alleen bij een bergdoel en met de instelling aan.
