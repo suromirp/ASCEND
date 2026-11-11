@@ -73,7 +73,8 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, allemaal Opus, geen planning. Volgorde:
 - Live 11 november: spoor 1, 3 en 4 (Briefing A).
 - Live 11 november: spoor 2 (het blad Route met de kaart bovenaan).
-- Spoor 5 (scherm Briefing vanuit Week, instelling Lus zoeken), 6 (knop Briefing op Vandaag), 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
+- In aanbouw 11 november: spoor 5 en 6 (Sherpa, opus, branch claude/briefing-spoor-5-6).
+- Daarna spoor 7 (namen gelijk, Waarom deze training, het dubbele weg), 8 (past het best), 9 (de lus onthouden tot middernacht), 10 (hoogteprofiel), 11 (wandelen en rugzak).
 - Het oude Info-blad spoor 3 en 4 vervallen: spoor 7 hier vervangt ze.
 
 ## Werkwijze (onderzoek autonome agents, 11 november)
