@@ -305,3 +305,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Review Klein deel 1, Warden, fable (reviewer), 102k, 7 min, niet akkoord (4 moet): terug naar dezelfde bouwer, met de losse-trainingtelling erbij
 - 2026-11-11, Review Route-kaart, Warden, fable (reviewer), 106k, 8 min, niet akkoord (3 moet)
 - 2026-11-11, Doorloop Info-blad 1 (360, 390, 412), Lookout, sonnet (tester), 53k, 8 min, groen
+- 2026-11-11, Doorloop Route-kaart (360, 390, 412, met en zonder tegels), Lookout, sonnet (tester), 88k, 20 min, groen
