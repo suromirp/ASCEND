@@ -33,6 +33,9 @@ import { BootReminderLine } from './reis/BootReminderLine';
 import { SweatBeforeRow } from './SweatBeforeRow';
 import { shorterChoices, TEST_NOT_SHORTER } from '../engine/shorterToday';
 import { isTestOrRace } from '../engine/templateRoles';
+import { BRIEFING_TEXT, missionButton } from '../engine/briefing';
+import { useWatchLink } from './useWatchLink';
+import { TrainingBriefing } from './TrainingBriefing';
 
 // "40 minuten" groot, de rest kleiner met zijn eenheid ernaast.
 function splitChip(text: string, tempo: boolean): { value: string; unit: string } | undefined {
@@ -112,8 +115,14 @@ export function TodayMissionCard({
   const guide = getTrainingGuide(template.id);
   // Het blad Je horloge (engine/watchSheet.ts), als tweede rij in het menu (spoor 2 van het Info-blad).
   // De missiekaart zelf verandert niet.
-  const { program } = useAppData();
+  const { program, sessionLogs } = useAppData();
   const [showWatch, setShowWatch] = useState(false);
+  // De mint knop: Briefing als je horloge deze training afvinkt (engine/briefing.ts#missionButton),
+  // anders Gedaan. Zolang de koppeling gelezen wordt: Gedaan, de veilige kant. Zelf invullen staat dan
+  // in het menu, en de routerij gaat van de kaart: de Briefing is de ingang naar de route.
+  const { watchLink, watchSource } = useWatchLink();
+  const briefingButton = !quickComplete && missionButton({ template, session, logs: sessionLogs, watchLink, watchSource }) === 'briefing';
+  const [showBriefing, setShowBriefing] = useState(false);
   const garmin = buildWorkoutPlan(template, todayISO(), program)?.garmin;
   const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });
   // Kracht die je in de app zelf bijhoudt begint met "Training starten";
@@ -127,7 +136,7 @@ export function TodayMissionCard({
   const testDay = isTestOrRace(template);
   const shorterTimes = shorterChoices(fullDuration);
   const showShorterRow = !!onShorter && (testDay || shorterTimes.length > 0);
-  const hasMenu = !!guide || watchView.hasWatchSheet || showShort || showPlan || showShorterRow;
+  const hasMenu = !!guide || watchView.hasWatchSheet || showShort || showPlan || showShorterRow || briefingButton;
 
   // De minuten staan groot; wat de duurchip méér zegt dan alleen de minuten ("4 × 4 min") blijft als tekst.
   const plainMinutes = new RegExp(`^${fullDuration} min$`);
@@ -213,7 +222,7 @@ export function TodayMissionCard({
           )}
           {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-0.5" onOpen={() => navigate('/weer')} />}
           <HillsNearbyLine template={template} date={todayISO()} className="mt-1" />
-          <RouteProposalLine template={template} date={todayISO()} />
+          {!briefingButton && <RouteProposalLine template={template} date={todayISO()} />}
           <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
           {session && <WatchStatusRow session={session} template={template} offer={false} className="mt-3" />}
         </div>
@@ -232,12 +241,28 @@ export function TodayMissionCard({
           onLeave={() => undefined}
         />
       )}
+      {showBriefing && (
+        <TrainingBriefing
+          template={template}
+          session={session}
+          date={todayISO()}
+          program={program}
+          onClose={() => setShowBriefing(false)}
+          // Zelf invullen: de Briefing dicht en het bestaande scherm met het formulier, zoals Gedaan.
+          onManual={() => { setShowBriefing(false); onLog('full'); }}
+        />
+      )}
       {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
 
       {quickComplete ? (
         <StrengthDoneElsewhere fullDuration={fullDuration} legs={isLegHeavyTemplate(template)} onDone={(feel, minutes, extra) => onStart('full', feel, minutes, extra)} />
       ) : inAppStrength ? (
         <PrimaryButton onClick={() => onStart('full')}>Training starten</PrimaryButton>
+      ) : briefingButton ? (
+        <div>
+          <PrimaryButton onClick={() => setShowBriefing(true)}>{BRIEFING_TEXT.title}</PrimaryButton>
+          <p className="mt-2 text-center text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>{BRIEFING_TEXT.missionTicks}</p>
+        </div>
       ) : (
         <PrimaryButton onClick={() => onLog('full')}>
           <span className="inline-flex items-center justify-center gap-2"><CheckGlyph size={18} />Gedaan</span>
@@ -277,6 +302,12 @@ export function TodayMissionCard({
                 {watchView.hasWatchSheet && (
                   <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => setShowWatch(true))}>
                     <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>{WATCH_SHEET_TEXT.row}</span>
+                    <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
+                  </button>
+                )}
+                {briefingButton && (
+                  <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => onLog('full'))}>
+                    <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>{BRIEFING_TEXT.manual}</span>
                     <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
                   </button>
                 )}

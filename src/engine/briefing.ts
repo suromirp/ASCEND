@@ -68,6 +68,8 @@ export const BRIEFING_TEXT = {
   fuelSuffix: 'mee',
   // De stand onderaan.
   watchTicks: 'Je horloge vinkt deze training af.',
+  // Op Vandaag onder de knop Briefing (spoor 6): waarom er geen Gedaan staat.
+  missionTicks: 'Je horloge vinkt hem af na je loop.',
   manual: 'Zelf invullen',
   testRun: 'Een testloop vul je zelf in.',
   race: 'Een wedstrijd vul je zelf in.',
