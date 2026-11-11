@@ -163,12 +163,26 @@ export const INVARIANTEN = [
       return uit;
     }),
   },
+  {
+    // De sleuteltraining past bij je doel (engine/keySession.ts, docs/beslissingen/2026-11-11-sleuteltraining.md): alleen
+    // met Sterker worden als doel of richting is het een krachttraining. Bij een race of een tocht nooit Benen A of
+    // Bovenlichaam, ook niet als die het langst is.
+    naam: 'Sleuteltraining op Ascend is geen krachttraining, behalve bij Sterker worden',
+    controleer: (k, schermen) => schermen.filter((s) => s.startsWith('ascend')).flatMap((s) => {
+      const t = k(s);
+      if (/Sterker worden/.test(t)) return [];
+      return alle(t, /^Volgende sleuteltraining · .*$/gm)
+        .filter((m) => /\b(Benen [AB]|Bovenlichaam [AB]|Eigen gewicht)\b/.test(m[0]))
+        .map((m) => `${s}: "${m[0].trim()}"`);
+    }),
+  },
 ];
 
 const SCHERMEN = [
   'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad',
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
+  'ascend-algemeen', 'ascend-vaardigheid',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {

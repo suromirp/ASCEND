@@ -1,6 +1,7 @@
 // De vormen van een advies en de hulpjes die meerdere regels delen
 // (zie adviceEngine.ts voor de uitgangspunten).
 
+import { isKeyFor, type KeyFocus } from './keySession';
 import type { MorningCheckIn } from '../models/checkIn';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
@@ -123,6 +124,9 @@ export interface AdviceInputs {
   // Rows an accepted TEST-RETRY proposal made a test (`retryTestRows` of the stored proposals). A
   // retry that was skipped or missed is spoken for by TEST-RETRY once more, not by TEST-MAKE-ROOM.
   retryRows?: ReadonlySet<string>;
+  // What the key session is (engine/keySession.ts#keyFocusOf): the same as the line on Ascend.
+  // Absent: the long run or the mountain hike.
+  keyFocus?: KeyFocus;
   // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
   noRetry?: boolean;
 }
@@ -233,16 +237,17 @@ export function catchUpMinutes(session: PlannedSession, template: SessionTemplat
   if (week === mondayOfWeek(session.scheduledDate)) return undefined;
   const ownKey = inputs.plannedSessions.some((o) => {
     const t = templateById.get(o.templateId);
-    return o.id !== session.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === week && !!t && isKeySession(t);
+    return o.id !== session.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === week && !!t && isKeySession(t, inputs.keyFocus);
   });
   if (!ownKey) return undefined;
   return template.durationVariants.short ?? Math.max(15, Math.round((template.durationVariants.full * 0.75) / 5) * 5);
 }
 
-// The long run and the mountain hike are the week's key sessions: the only
-// ones worth catching up.
-export function isKeySession(template: SessionTemplate): boolean {
-  return ['tpl_long_run', 'tpl_mountain_hike', 'tpl_hike_day_one'].includes(template.id) || /lange duurloop|bergtocht/i.test(template.name);
+// The week's key sessions, the only ones worth catching up: the one definition of
+// engine/keySession.ts, for the goal on top of Ascend or the direction. Without a
+// focus: the long run or the mountain hike, as always.
+export function isKeySession(template: SessionTemplate, focus?: KeyFocus): boolean {
+  return isKeyFor(template, focus);
 }
 
 // Moved leg strength must not leave the next hard session in the two days after it too heavy

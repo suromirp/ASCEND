@@ -1,6 +1,7 @@
 // Regels voor gemiste trainingen en rustdagen: inhalen, ruilen, terugtrekken
 // en een extra training.
 
+import { keyPhrase } from './keySession';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem } from '../models/planChange';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
@@ -32,11 +33,15 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !linkable.has(s.id),
   );
   // One advice for everything missed, not one each (production feedback:
-  // a stack of "gemist" cards). Only a key session (the long run or the
-  // mountain hike) is caught up, on a free day this week that keeps 48
+  // a stack of "gemist" cards). Only a key session (engine/keySession.ts:
+  // by default the long run or the mountain hike) is caught up, on a free day this week that keeps 48
   // hours from other heavy leg days; everything else is let go
   // (docs/onderzoek, rapport 2, rule C8: catching up is never stacking).
-  const rule = 'ASCEND haalt alleen de sleuteltraining van de week in, de lange duurloop of de bergtocht, op een vrije dag in dezelfde week en nooit binnen 48 uur van een andere zware beendag. Staat er vandaag of morgen een rustdag en deed je de dag ervoor niets, dan wordt die rustdag de inhaaldag: er is niets om van te herstellen. De rest vervalt: twee trainingen op één dag om bij te benen helpt niet.';
+  // The key session is the one of engine/keySession.ts, the same as the line on Ascend.
+  const phrase = keyPhrase(inputs.keyFocus);
+  const rule = phrase
+    ? `ASCEND haalt alleen de sleuteltraining van de week in, ${phrase}, op een vrije dag in dezelfde week en nooit binnen 48 uur van een andere zware beendag. Staat er vandaag of morgen een rustdag en deed je de dag ervoor niets, dan wordt die rustdag de inhaaldag: er is niets om van te herstellen. De rest vervalt: twee trainingen op één dag om bij te benen helpt niet.`
+    : 'Met Rustig aan heeft je week geen sleuteltraining, dus ASCEND haalt niets in. Twee trainingen op één dag om bij te benen helpt niet.';
   const missed = recentMissed
     .map((s) => ({ s, template: templateById.get(s.templateId) }))
     .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && m.template.type !== 'recovery')
@@ -48,7 +53,7 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   const dropped: string[] = [];
   let usedRest = false;
   for (const { s, template } of missed) {
-    const key = isKeySession(template);
+    const key = isKeySession(template, inputs.keyFocus);
     const plannable = key && isTemplatePlannable(template, inputs.enabledSports);
     const catchUp = plannable ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf) : undefined;
     const restDay = plannable && !catchUp && !usedRest ? findRestDayToUse(s, template, inputs, templateById) : undefined;
@@ -146,7 +151,7 @@ export function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string,
     .filter((s) => s.status === 'skipped' && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program)
       && s.scheduledDate <= inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 1)
     .map((s) => ({ s, template: templateById.get(s.templateId) }))
-    .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && isKeySession(m.template) && isTemplatePlannable(m.template, inputs.enabledSports))
+    .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && isKeySession(m.template, inputs.keyFocus) && isTemplatePlannable(m.template, inputs.enabledSports))
     .sort((a, b) => b.s.scheduledDate.localeCompare(a.s.scheduledDate));
   for (const { s, template } of skipped) {
     const rest = findRestDayToUse(s, template, inputs, templateById);

@@ -57,6 +57,18 @@ describe('MISSED-CATCH-UP', () => {
     expect(run[0].proposal?.changes[0].action).toBe('remove');
   });
 
+  // De sleuteltraining van engine/keySession.ts: bij een 10 km-doel is de tempoloop de sleutel, net als op Ascend.
+  it('met een 10 km-doel haalt het de tempoloop in, en de regel noemt die', () => {
+    const tempo: SessionTemplate = { id: 'tpl_tempo_run', name: 'Tempoloop', type: 'cardio', durationVariants: { full: 50 }, baseStressProfile: light };
+    const planned = [ps('t', 'tpl_tempo_run', '2026-09-29')];
+    const tenK = computeAdvice(inputs({ templates: [...templates, tempo], plannedSessions: planned, keyFocus: { goal: 'run_race', variant: '10k' } }))[0];
+    expect(tenK.proposal?.changes[0]).toMatchObject({ action: 'move', plannedSessionId: 't' });
+    expect(tenK.why).toContain('de tempo- of intervaltraining of de lange duurloop');
+    const without = computeAdvice(inputs({ templates: [...templates, tempo], plannedSessions: planned }))[0];
+    expect(without.proposal?.changes[0].action).toBe('remove');
+    expect(without.why).toContain('de lange duurloop of de bergtocht');
+  });
+
   // Eerst koppelen, dan inhalen: een losse horlogelog die bij de gemiste training kan horen geeft het
   // koppelvoorstel op Vandaag (engine/missedTraining.ts), geen inhaalvoorstel voor iets wat misschien al gedaan is.
   it('geen inhaalvoorstel voor een training waar een losse log bij kan horen', () => {
