@@ -94,7 +94,7 @@ export function placeNeed(template: Pick<SessionTemplate, 'id' | 'roles' | 'dura
 // Hoe ver een voorgestelde plek mag liggen, in km. `settingKm` is de instelling Hoe ver (null is Geen
 // grens). Korter dan 90 minuten of zonder duur: hoogstens 25 km, ook als de instelling ruimer is.
 export function placeReachKm(need: PlaceNeed, settingKm: number | null = PLACE_REACH_DEFAULT_KM): number {
-  const setting = settingKm === null ? Infinity : Number.isFinite(settingKm) && settingKm > 0 ? settingKm : PLACE_REACH_DEFAULT_KM;
+  const setting = settingKm === null || settingKm === Infinity ? Infinity : Number.isFinite(settingKm) && settingKm > 0 ? settingKm : PLACE_REACH_DEFAULT_KM;
   const long = need.minutes !== undefined && need.minutes >= LONG_TRAINING_MIN;
   return long ? setting : Math.min(setting, SHORT_TRAINING_REACH_KM);
 }
@@ -148,9 +148,10 @@ export function rankSavedRoutes(routes: readonly SavedRoute[], target: RouteTarg
     .map((route) => {
       const fits = routeFits(route, target);
       const runs = routeRunDates(route, logs).length;
-      return { route, score: missScore(route, target), fits, runs, line: routeLine(route, fits, runs) };
+      const raw = missScore(route, target);
+      return { route, score: Number.isFinite(raw) ? raw : Infinity, fits, runs, line: routeLine(route, fits, runs) };
     })
-    .sort((a, b) => (a.fits !== b.fits ? (a.fits ? -1 : 1) : a.score - b.score || b.runs - a.runs || byText(a.route.name, b.route.name) || byText(a.route.id, b.route.id)));
+    .sort((a, b) => (a.fits !== b.fits ? (a.fits ? -1 : 1) : (a.score - b.score || 0) || b.runs - a.runs || byText(a.route.name, b.route.name) || byText(a.route.id, b.route.id)));
 }
 
 // ---------- Bij welke plek ----------
@@ -193,6 +194,8 @@ function share(need: Extract<PlaceNeed, { kind: 'ascent' | 'long' }>, value: { a
 
 // Hoogstens één plek met zijn beste route, de afstand hemelsbreed en één zin waarom, of niets.
 // - Alleen als de training iets vraagt (placeNeed) en de plek binnen `maxKm` ligt (op de grens telt mee).
+// - Alleen een route waarvan de afstand past (routePlanner.ts#fitsDistance): 40 km voor een training
+//   van 8 km is geen voorstel, ook niet met genoeg hoogtemeters.
 // - Alleen als de beste route daar minstens SUGGEST_SHARE haalt van wat de training vraagt, en het
 //   startpunt van nu daar ruim onder blijft: onder SUGGEST_SHARE. Wat het startpunt kan is het beste van
 //   `here` en de routes van een plek binnen NEAR_PLACE_M van het startpunt. Onbekend telt als niet genoeg.
@@ -222,7 +225,7 @@ export function suggestPlace(
     if (atStart && place.id === atStart.id) continue;
     const distanceM = metersBetween(start, placePoint(place));
     if (distanceM <= NEAR_PLACE_M || distanceM > maxM) continue;
-    const own = routes.filter((r) => r.placeId === place.id && (share(need, r) ?? 0) >= SUGGEST_SHARE);
+    const own = routes.filter((r) => r.placeId === place.id && fitsDistance(r, target) && (share(need, r) ?? 0) >= SUGGEST_SHARE);
     const best = rankSavedRoutes(own, target, logs)[0];
     if (best) candidates.push({ place, route: best.route, distanceM, score: best.score });
   }
@@ -329,7 +332,7 @@ function keepMask(points: readonly RoutePoint[], tolerance: number): boolean[] {
 // punten, dan wordt de tolerantie verdubbeld tot het past. Begin en eind blijven altijd. Leeg blijft
 // leeg, één punt blijft één punt. Het spoor zelf verandert niet.
 export function simplifyTrack(points: readonly RoutePoint[], maxPoints = ROUTE_MAX_POINTS): RoutePoint[] {
-  const max = Math.max(2, Math.floor(maxPoints));
+  const max = Number.isFinite(maxPoints) ? Math.max(2, Math.floor(maxPoints)) : ROUTE_MAX_POINTS;
   const clean = points.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
   if (clean.length <= 2) return clean.map((p) => ({ ...p }));
   let tolerance = SIMPLIFY_TOLERANCE_M;

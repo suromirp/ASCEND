@@ -68,6 +68,11 @@ describe('placeReachKm', () => {
     expect(placeReachKm(long)).toBe(PLACE_REACH_DEFAULT_KM);
     expect(placeReachKm(long, null)).toBe(Infinity);
     expect(placeReachKm(long, Number.NaN)).toBe(75);
+    expect(placeReachKm(long, Infinity)).toBe(Infinity);
+  });
+  it('89 minuten is kort, 90 minuten lang', () => {
+    expect(placeReachKm({ kind: 'none', minutes: 89 }, 75)).toBe(25);
+    expect(placeReachKm({ kind: 'long', distanceKm: 14, ascentM: 0, minutes: 90 }, 75)).toBe(75);
   });
 });
 
@@ -170,7 +175,7 @@ describe('suggestPlace', () => {
   });
   it('de dichtstbijzijnde passende plek eerst, ook als een verdere beter past', () => {
     const near = place('near', 'Dichtbij', north(5));
-    const s = suggestPlace(need, [top, near], [topRoute, route('n1', 'near', 9500, 210)], START, 25);
+    const s = suggestPlace(need, [top, near], [topRoute, route('n1', 'near', 8800, 210)], START, 25);
     expect(s?.place.id).toBe('near');
   });
   it('gelijke stand tussen twee plekken op dezelfde afstand: de beste route, dan de naam', () => {
@@ -183,6 +188,11 @@ describe('suggestPlace', () => {
     expect(same?.place.id).toBe('e');
     // Volgorde van de invoer verandert niets.
     expect(suggestPlace(need, [east, west], [route('e1', 'e', 8000, 250), route('w1', 'w', 8000, 250)], START, 25)?.place.id).toBe('e');
+  });
+  it('een route waarvan de afstand niet past komt niet in een voorstel', () => {
+    expect(suggestPlace(need, [top], [route('lang', 'top', 40000, 250)], START, 25)).toBeUndefined();
+    const duin = place('d', 'Duinpad', north(9));
+    expect(suggestPlace({ kind: 'long', distanceKm: 10, ascentM: 0, minutes: 95 }, [duin], [route('d1', 'd', 30000, 0)], START, 75)).toBeUndefined();
   });
   it('een route van A naar B mag', () => {
     const ab = route('ab', 'top', 8000, 240, { points: [north(14), north(18)] });
@@ -233,6 +243,10 @@ describe('simplifyTrack en trackFacts', () => {
     expect(out[out.length - 1]).toEqual(zigzag[2999]);
     expect(simplifyTrack(zigzag)).toEqual(out);
     expect(simplifyTrack(zigzag, 100).length).toBeLessThanOrEqual(100);
+    expect(simplifyTrack(zigzag, Number.NaN).length).toBeLessThanOrEqual(800);
+    const copy = JSON.parse(JSON.stringify(zigzag));
+    simplifyTrack(zigzag);
+    expect(zigzag).toEqual(copy);
   });
   it('een rechte lijn wordt twee punten; een bocht van meer dan 5 m blijft', () => {
     const straight = Array.from({ length: 50 }, (_, i) => ({ lat: 50 + i * 0.0001, lon: 5 }));
