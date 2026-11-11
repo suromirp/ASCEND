@@ -20,8 +20,9 @@ export const TERRAIN_FETCH_DAYS = 30;
 export const TERRAIN_MAX_PLACES = 6;
 
 // `exact` (het eigen startpunt van een lus): een eigen sleutel op vier decimalen, naast de afgeronde plek.
+const r4 = (v: number) => Math.round(v * 10_000) / 10_000;
 export const terrainKey = (place: WeatherPlace, exact = false): string =>
-  exact ? `${place.lat.toFixed(4)},${place.lon.toFixed(4)}` : `${roundCoordinate(place.lat).toFixed(2)},${roundCoordinate(place.lon).toFixed(2)}`;
+  exact ? `${r4(place.lat).toFixed(4)},${r4(place.lon).toFixed(4)}` : `${roundCoordinate(place.lat).toFixed(2)},${roundCoordinate(place.lon).toFixed(2)}`;
 
 function valid(t: unknown): t is NearbyTerrain {
   const x = t as NearbyTerrain | undefined;
@@ -88,6 +89,18 @@ export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptio
   });
   inFlight.set(key, job);
   return job;
+}
+
+// Wist de plekken op vier decimalen (rond een eigen startpunt van een lus): wordt het startpunt
+// gewist of vervangen, dan blijft het niet in deze cache achter. De afgeronde plekken blijven.
+export async function clearExactTerrain(): Promise<void> {
+  try {
+    const all = await readAll();
+    const rounded = Object.entries(all).filter(([key]) => !/^-?\d+\.\d{4},-?\d+\.\d{4}$/.test(key));
+    if (rounded.length !== Object.keys(all).length) await MetaRepo.set(KEY, Object.fromEntries(rounded));
+  } catch {
+    // niets te wissen
+  }
 }
 
 // Wist de bewaarde plekken (bij uitzetten of een nieuw begin); de eerste vraag blijft.

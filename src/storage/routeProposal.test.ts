@@ -92,7 +92,7 @@ describe('findRoutes', () => {
     const route = vi.fn(straight);
     const terrain = vi.fn(async () => hills);
     const found = await findRoutes(place, { distanceKm: 10.5, ascentM: 300 }, { route, terrain, offline: () => false });
-    expect(found.kind === 'plans' && found.plans.found).toEqual({ hills: 1, unknown: 0, tallestM: 24, radiusM: 3000 });
+    expect(found.kind === 'plans' && found.plans.found).toEqual({ hills: 1, unknown: 0, lower: 1, tallestM: 24, radiusM: 3000 });
     expect(terrain).toHaveBeenCalledTimes(1);
     expect(route.mock.calls.length).toBeLessThanOrEqual(2 * MAX_ROUTE_CALLS);
     // Zonder netwerk of na de grens: geen plannen, dus ook geen telling.
