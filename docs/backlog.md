@@ -65,6 +65,11 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 - Live op 11 november: Je horloge (knop Horloge op het trainingsscherm, rij in Week en op Vandaag; workout en datavelden op één plek; besluiten `2026-11-11-info-blad-horloge.md` en `-spoor-2.md`).
 - Live op 11 november: Route voorstellen verfijnd (te korte lus bij veel punten dichtbij, melding zonder heuvels, startpunt preciezer, helling zonder hoogte telt niet mee; besluit `2026-11-11-route-verfijnen.md`).
 
+## Samenhang (Pathfinder)
+
+Wat Pathfinder vindt en niet meteen terug naar een bouwer gaat. Eerste lijst (coördinator, 11 november): de horlogestand staat twee keer in het blad van een training in Week; de route staat ook bij de loopband; geen route in het blad in Week; de avondkaart staat onder Advies, Nog open en Back-up; het trainingsscherm van een Garmin-loop heeft "Gedaan, invullen" als hoofdknop. De redesign (Cartographer, `docs/visie/Ontwerp Route en trainingsscherm.md`) neemt de eerste vier mee.
+- Twee invarianten in de tekstkaart: dezelfde zin twee keer op één scherm of in één blad is een schending; het aantal tikken van Vandaag tot de route en tot de datavelden staat in de kaart en mag niet stil groeien. Eerst de dubbele horlogeregel weg, anders faalt de vergelijking. Opus.
+
 ## Groot
 
 - Herinrichting uit de ontwerprapporten (`docs/visie/Ontwerprapport gegevens.md`, `instellingen.md`): Stand met Ritme, de weekterugblik, het Logboek, Geavanceerd als eigen pagina, één notatie voor tijden ("13.05" bij het weer tegenover "06:11" in Instellingen). Een eigen ronde van een uur of meer met Cartographer. De keuzes uit de rapporten maakt de coördinator met het advies.
