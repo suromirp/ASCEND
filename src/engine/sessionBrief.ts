@@ -38,6 +38,8 @@ export interface SessionBrief {
   levelsUsed: Intensity[];
   stopSignals: string[];
   tomorrow?: string; // the hiking day: what day 2 asks
+  // De uitleg van het sjabloon, zin voor zin, voor een training zonder opbouw (data/sessionStyle.ts#notesAsHowTo).
+  howTo?: string[];
   plan?: WorkoutPlan;
 }
 
@@ -115,6 +117,9 @@ export function buildSessionBrief(
         const work = plan?.items.find((it) => 'repeat' in it);
         return [total, { value: work && 'repeat' in work ? `${work.repeat} × 1 min` : 'Kort', label: 'hard bergop' }, { value: 'Afdalen', label: 'beheerst, kleine pasjes' }];
       }
+      // De korte trapsessie: geen zone en geen hartslag, wel wat je doet.
+      case 'stairs':
+        return [total, { value: '10 min', label: 'dalen, na 5 min inlopen' }, { value: 'Afdalen', label: 'kleine passen, niet rennen' }];
       case 'fartlek': {
         const work = plan?.items.find((it) => 'repeat' in it);
         return [total, { value: work && 'repeat' in work ? `${work.repeat} × 1 min` : 'Stukken', label: 'hard' }, { value: 'Op gevoel', label: 'niet op het horloge' }];
@@ -160,6 +165,7 @@ export function buildSessionBrief(
     levelsUsed,
     stopSignals: style?.stopSignals ?? [],
     tomorrow,
+    howTo: style?.notesAsHowTo && template.notes ? template.notes.split(/(?<=\.)\s+/).map((s) => s.trim()).filter(Boolean) : undefined,
     plan,
   };
 }

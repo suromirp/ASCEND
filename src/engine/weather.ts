@@ -10,6 +10,7 @@
 // No guessing: the same forecast and the same logs always give the same
 // answer, and every threshold below is a number on this page.
 
+import { SESSION_STYLE } from '../data/sessionStyle';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { WeatherForecast, WeatherHour } from '../models/weather';
 import { isIndoorLog, logSport, templateSport } from './sports';
@@ -317,6 +318,8 @@ export const VERDICT_RANK: Record<WeatherVerdict, number> = { prima: 0, let_op: 
 // and the rest day do not. (A run on the treadmill is the user's own choice
 // and still counts: the proposal only offers a better day, never forces one.)
 export function isWeatherSensitive(template: SessionTemplate): boolean {
+  // Een training die ook binnen kan (Trap af in een trappenhuis, data/sessionStyle.ts): het weer doet er niet toe.
+  if (SESSION_STYLE[template.id]?.weather === false) return false;
   return template.type !== 'strength' && template.type !== 'recovery' && templateSport(template) !== undefined;
 }
 

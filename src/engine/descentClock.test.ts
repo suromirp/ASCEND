@@ -8,7 +8,7 @@ import { addDays, mondayOfWeek } from '../utils/dates';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import {
   DECLINE_QUIET_DAYS, DESCENT_CLOCK_RULE, DESCENT_LATE_RULE, DESCENT_TAPER_RULE, STAIRS_TEMPLATE_ID,
-  countsAsDescent, descentAdvice, descentClock, descentClockContext, findDescentDay, resolveDescentClock,
+  countsAsDescent, descentAdvice, descentClock, descentClockContext, descentRowNotes, findDescentDay, resolveDescentClock,
   type DescentAdviceInput,
 } from './descentClock';
 import { applyPlanChangeItems } from './proposalEngine';
@@ -16,6 +16,12 @@ import { planPass } from './planPass';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { hasRole } from './templateRoles';
 import { freshnessCurve } from './standing';
+import { buildSessionBrief } from './sessionBrief';
+import { missionFacts } from './missionFacts';
+import { isWeatherSensitive } from './weather';
+import { previewProposal } from './proposalPreview';
+import { SESSION_STYLE } from '../data/sessionStyle';
+import { zoneOfTemplate } from '../components/vandaag/zone';
 import { watchKindOf } from './watchFields';
 
 // Alles hier is nagemaakt. Vandaag is woensdag 11 november 2026.
@@ -501,6 +507,74 @@ describe('wat Trap af elders in de app is', () => {
   it('in de frisheidsgrafiek heeft de dag het merk benen', () => {
     const curve = freshnessCurve({ today: TODAY, logs: [], plannedSessions: [planned('trap', STAIRS_TEMPLATE_ID, '2026-11-13')], templates } as never);
     expect(curve.find((p) => p.date === '2026-11-13')?.sessions).toEqual([expect.objectContaining({ name: 'Trap af', mark: 'legs' })]);
+  });
+});
+
+describe('Trap af op de schermen: wat je doet, zonder zone en zonder weer', () => {
+  const stairs = byId.get(STAIRS_TEMPLATE_ID)!;
+  const brief = buildSessionBrief(stairs, '2026-11-13', null, { templates });
+
+  it('heeft een eigen kop en feitenrij: duur, tien minuten dalen, kleine passen', () => {
+    expect(SESSION_STYLE[STAIRS_TEMPLATE_ID]).toBeDefined();
+    expect(brief.headline).toBe('WANDELEN · AFDALEN');
+    expect(brief.purpose).toContain('tien minuten beheerst dalen');
+    expect(brief.facts).toEqual([
+      { value: '20 min', label: 'totaal' },
+      { value: '10 min', label: 'dalen, na 5 min inlopen' },
+      { value: 'Afdalen', label: 'kleine passen, niet rennen' },
+    ]);
+    expect(brief.stopSignals.length).toBeGreaterThan(0);
+  });
+
+  it('geen zone en geen hartslag: geen zonebalk op de missiekaart en geen zones in de uitleg', () => {
+    expect(brief.facts.some((f) => /zone|hartslag|praten kan/i.test(`${f.value} ${f.label}`))).toBe(false);
+    expect(zoneOfTemplate(stairs, '2026-11-13', null, templates)).toBeUndefined();
+    expect(brief.levelsUsed).toEqual([]);
+    expect(missionFacts(STAIRS_TEMPLATE_ID, brief, undefined).chips.map((c) => c.text)).toEqual(['20 min', '10 min dalen, na 5 min inlopen', 'Afdalen']);
+    expect(missionFacts(STAIRS_TEMPLATE_ID, brief, undefined).chips.some((c) => c.kind === 'zone')).toBe(false);
+  });
+
+  it('de uitleg van het sjabloon staat zin voor zin in Zo doe je het', () => {
+    expect(brief.howTo).toEqual([
+      'Vijf minuten rustig inlopen.',
+      'Dan tien minuten dalen: een trappenhuis af (met de lift of rustig omhoog), een duin af of een helling af, telkens opnieuw.',
+      'Kleine passen, knieën licht gebogen, niet rennen.',
+      'Ongeveer 30 verdiepingen of 100 meter dalen is genoeg.',
+      'De eerste keer geeft dit spierpijn in je bovenbenen; dat is de prikkel, en het wordt snel minder.',
+    ]);
+    expect(brief.howTo!.join(' ')).toBe(stairs.notes);
+    // Andere trainingen houden hun eigen opbouw en krijgen deze lijst niet.
+    expect(buildSessionBrief(byId.get('tpl_easy_run')!, '2026-11-13', null, { templates }).howTo).toBeUndefined();
+    expect(buildSessionBrief(byId.get('tpl_hills_descent')!, '2026-11-13', null, { templates }).howTo).toBeUndefined();
+  });
+
+  it('geen weerregel, geen kleding en geen weerruil: het kan ook binnen', () => {
+    expect(isWeatherSensitive(stairs)).toBe(false);
+    expect(isWeatherSensitive(byId.get('tpl_ruck_walk')!)).toBe(true);
+    expect(isWeatherSensitive(byId.get('tpl_hills_descent')!)).toBe(true);
+  });
+
+  it('het voorstel noemt de duur van de nieuwe training', () => {
+    const data = previewProposal(one()!.proposal!.changes, week(), templates);
+    expect(data.moves).toEqual([expect.objectContaining({ name: 'Trap af', action: 'add', to: '2026-11-13', isNew: true, minutes: 20 })]);
+    // Een training met een weekopbouw krijgt geen duur: die hangt van de week af.
+    const ruck = previewProposal([{ action: 'add', newSessionDraft: { templateId: 'tpl_ruck_walk', scheduledDate: '2026-11-13', weekStartDate: '2026-11-09' }, reason: 'x', generatedBy: [] }], week(), templates);
+    expect(ruck.moves[0].minutes).toBeUndefined();
+  });
+
+  it('de rij in Week zegt waar hij staat als er die dag ook een rustige loop is', () => {
+    const sessions = [planned('easy', 'tpl_easy_run', '2026-11-12'), planned('trap', STAIRS_TEMPLATE_ID, '2026-11-12'), planned('alone', STAIRS_TEMPLATE_ID, '2026-11-14'), planned('up', 'tpl_upper_a', '2026-11-16'), planned('trap2', STAIRS_TEMPLATE_ID, '2026-11-16')];
+    expect([...descentRowNotes(sessions, templates)]).toEqual([['trap', 'na je rustige duurloop']]);
+    // Een overgeslagen loop telt niet.
+    expect(descentRowNotes([{ ...sessions[0], status: 'skipped' }, sessions[1]], templates).size).toBe(0);
+  });
+
+  it('elk sjabloon van het programma heeft een eigen kop, op twee na die bij zonder sportschool horen', () => {
+    // Zonder eigen kop valt een training terug op "Zone 2, praten kan", ook als dat er niet bij past (Pathfinder,
+    // 11 november). Een nieuw sjabloon zonder SESSION_STYLE laat deze test falen. De twee uitzonderingen stonden er
+    // al en horen bij zonder sportschool (engine/noGym.ts); ze zijn gemeld, niet hier opgelost.
+    const without = templates.filter((t) => !SESSION_STYLE[t.id]).map((t) => t.id).sort();
+    expect(without).toEqual(['tpl_bodyweight', 'tpl_hill_easy']);
   });
 });
 

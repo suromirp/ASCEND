@@ -374,3 +374,18 @@ export function answeredDays(responses: Readonly<Record<string, { at?: unknown }
   }
   return out;
 }
+
+// De korte aanwijzing in de rij van Week: staat de trapsessie op een dag met een rustige loop of een
+// herstelwandeling, dan komt hij daar achteraan ("na je rustige duurloop"). Alleen weergave.
+export function descentRowNotes(sessions: readonly PlannedSession[], templates: readonly SessionTemplate[]): Map<string, string> {
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  const live = sessions.filter((s) => s.status !== 'skipped');
+  const out = new Map<string, string>();
+  for (const s of live) {
+    if (s.templateId !== STAIRS_TEMPLATE_ID) continue;
+    const others = live.filter((o) => o.id !== s.id && o.scheduledDate === s.scheduledDate).map((o) => byId.get(o.templateId)).filter((x): x is SessionTemplate => !!x);
+    const first = others.length === 1 && (others[0].type === 'recovery' || templateSport(others[0]) === 'running') ? others[0] : undefined;
+    if (first) out.set(s.id, `na je ${first.name.charAt(0).toLowerCase()}${first.name.slice(1)}`);
+  }
+  return out;
+}
