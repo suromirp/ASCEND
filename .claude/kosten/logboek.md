@@ -332,3 +332,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-11, Review Eten onderweg, Warden, sonnet (reviewer), 46k, 5 min, niet akkoord (aanname 6 uur verborgen, eten in Uitleg tegen ontwerp)
 - 2026-11-11, Pathfinder (rol, skill, besluit), coördinator zelf, opus, geen helper
 - 2026-11-11, Review Afdaalklok, Warden, fable (reviewer), 157k, 12 min, niet akkoord (1 blokkerend: tegenzin op dag -7; voorstel kwam nooit met de standaardweek)
+- 2026-11-11, Ontwerp Route en trainingsscherm (Briefing), Cartographer, fable (ontwerper), 189k, 10 min
