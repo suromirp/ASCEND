@@ -52,6 +52,12 @@ export function monthCompare(input: { anchor: string; today: string; logs: Sessi
 }
 
 // De maandag van de week waarin een dag valt, voor het groeperen van de lijst per week.
+// De kop van een maand zonder trainingen: voor je eerste training, met alleen wegingen, of helemaal leeg.
+export function emptyMonthTitle(input: { beforeFirst: boolean; weighings: number }): string {
+  if (input.beforeFirst) return 'Hier begon je nog niet.';
+  return input.weighings > 0 ? 'Geen trainingen in deze maand.' : 'Nog niets in deze maand.';
+}
+
 export function mondayKey(iso: string): string {
   const day = (parseISODate(iso).getDay() + 6) % 7;
   return addDays(iso, -day);

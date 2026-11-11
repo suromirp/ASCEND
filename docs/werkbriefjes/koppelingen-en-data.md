@@ -41,5 +41,4 @@ Wat van buiten komt (intervals.icu, MacroFactor, Health Connect, weer, locatie),
 
 ## Lees verder
 - `docs/architectuur/koppelingen-en-data.md`
-- `docs/beslissingen/2026-11-01-android-app.md`, `docs/beslissingen/2026-11-02-locatie.md`
-- `docs/beslissingen/2026-10-31-kansen-stap-0.md`, `docs/onderzoek/Kansen met gegevens.md`, `docs/beslissingen/2026-11-09-routeplanner.md`, `docs/beslissingen/2026-11-09-startpunt-lus.md`, `docs/beslissingen/2026-11-10-route-naar-garmin-connect.md`, `docs/onderzoek/Routeplanner voor een training.md`
+- `docs/beslissingen/2026-11-01-android-app.md`, `docs/beslissingen/2026-11-02-locatie.md`, `docs/beslissingen/2026-10-31-kansen-stap-0.md`, `docs/onderzoek/Kansen met gegevens.md`, `docs/beslissingen/2026-11-09-routeplanner.md`, `docs/beslissingen/2026-11-09-startpunt-lus.md`, `docs/beslissingen/2026-11-10-route-naar-garmin-connect.md`, `docs/onderzoek/Routeplanner voor een training.md`

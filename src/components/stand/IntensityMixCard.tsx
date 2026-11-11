@@ -4,7 +4,7 @@ import { formatWeekdayDayMonthNL } from '../../utils/dates';
 
 // Je stand → intensity: how your endurance trainings of the last four weeks
 // split into easy, middle and hard, in minutes, by heart rate where the watch gave it.
-// One colour, darker is harder.
+// One colour, darker is harder; each label has a dot in the shade of its part of the bar.
 
 const PARTS: { key: keyof IntensityMix['minutes']; label: string; opacity: number }[] = [
   { key: 'easy', label: 'rustig', opacity: 0.4 },
@@ -49,7 +49,7 @@ export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
       </div>
       <div className="flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {PARTS.map((p) => (
-          <span key={p.key}><span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{pct(amounts[p.key])}%</span> {p.label} <span className="tabular-nums">({amounts[p.key]}{perTraining ? '' : ' min'})</span></span>
+          <span key={p.key}><span className="mr-1 inline-block h-2 w-2 rounded-full align-middle" style={{ background: 'var(--color-progress)', opacity: p.opacity }} aria-hidden /><span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{pct(amounts[p.key])}%</span> {p.label} <span className="tabular-nums">({amounts[p.key]}{perTraining ? '' : ' min'})</span></span>
         ))}
       </div>
 

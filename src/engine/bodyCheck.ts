@@ -348,22 +348,20 @@ export interface BodySuggestion {
   // Alleen bij pijn: wanneer naar een fysio of je huisarts, met de rode vlag van de plek apart.
   fysio: string[];
   direct?: string;
-  // Bij ernstige pijn staat de fysioregel meteen open.
-  openFysio: boolean;
 }
 
 const HELP_SORENESS = 'Spierpijn na veel dalen hoort erbij en gaat meestal binnen een week over. Rustig bewegen kan helpen, ook al is dat effect tijdelijk.';
 const HELP_STIFF = 'Stijfheid zakt vaak als je warm bent. Rustig bewegen en de rekoefeningen hieronder kunnen helpen.';
 const SOURCE_SORENESS = 'Munich consensus 2013 en Cheung e.a. 2003, bewijs: expertopinie en narratieve review.';
 
-export function suggestionFor(spot: BodySpot, kind: InjuryKind, severity?: InjurySeverity): BodySuggestion {
+export function suggestionFor(spot: BodySpot, kind: InjuryKind): BodySuggestion {
   const stretches = stretchesForSpot(spot).slice(0, 2);
   const minutes = stretchMinutes(stretches);
   if (kind === 'pijn') {
     const care = careForSpot(spot);
-    return { help: care.bijLast[0], stretches, minutes, fysio: care.fysioAll, direct: care.direct, openFysio: severity === 'ernstig' };
+    return { help: care.bijLast[0], stretches, minutes, fysio: care.fysioAll, direct: care.direct };
   }
-  return { help: kind === 'stijf' ? HELP_STIFF : HELP_SORENESS, source: SOURCE_SORENESS, stretches, minutes, fysio: [], openFysio: false };
+  return { help: kind === 'stijf' ? HELP_STIFF : HELP_SORENESS, source: SOURCE_SORENESS, stretches, minutes, fysio: [] };
 }
 
 // ---- de markering van de week ---------------------------------------------------------------

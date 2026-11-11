@@ -96,11 +96,11 @@ describe('weekConcerns', () => {
     expect(weekConcerns(input(sessions), MONDAY).find((c) => c.rule === 'REST-DAY')).toBeUndefined();
   });
 
-  it('twee harde loopjes op een dag', () => {
+  it('twee harde lopen op een dag', () => {
     const sessions = fullWeek(MONDAY, ['tpl_upper_a', 'tpl_hills_descent', 'tpl_upper_b', 'tpl_herstel', 'tpl_easy_run', 'tpl_tempo_run', 'tpl_herstel']).map((s, i) => (i === 5 ? { ...s, templateId: 'tpl_tempo_run' } : s));
     const two = [...sessions, { ...sessions[1], id: 'extra', templateId: 'tpl_tempo_run', scheduledDate: sessions[1].scheduledDate }];
     const c = weekConcerns(input(two, { restDay: 7 }), MONDAY).find((x) => x.rule === 'TWO-HARD-RUNS')!;
-    expect(c.headline).toBe('Twee harde loopjes op dinsdag 27.');
+    expect(c.headline).toBe('Twee harde lopen op dinsdag 27.');
     expect(c.fact).toBe('Tempoloop en Heuvelsprints en afdalen staan op dezelfde dag.');
     expect(c.notes).toEqual({ 'w-1': 'tweede harde loop' });
   });

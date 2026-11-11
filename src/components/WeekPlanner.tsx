@@ -3,7 +3,7 @@ import type { PlannedSession, SessionTemplate, SessionLog } from '../models/trai
 import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import { leaveLabelOn } from '../engine/leave';
-import { leaveWeek, type WeekLeaveBand } from '../engine/leaveWeek';
+import { groupDaysByBand, leaveWeek, quietWordOn } from '../engine/leaveWeek';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isLegHeavyTemplate } from '../engine/scheduler';
@@ -248,17 +248,6 @@ function LooseRow({ log, template, isToday, onTap, sign }: { log: SessionLog; te
   );
 }
 
-// De dagen van de week in stukken: elke periode met haar dagen (in één paneel), de andere dagen los.
-function groupDays(days: string[], bands: WeekLeaveBand[]): { band?: WeekLeaveBand; dates: string[] }[] {
-  const out: { band?: WeekLeaveBand; dates: string[] }[] = [];
-  for (const d of days) {
-    const band = bands.find((b) => b.dates.includes(d));
-    if (band && out.length && out[out.length - 1].band === band) out[out.length - 1].dates.push(d);
-    else out.push({ band, dates: [d] });
-  }
-  return out;
-}
-
 export function WeekPlanner({
   weekStartDate,
   sessions,
@@ -366,7 +355,7 @@ export function WeekPlanner({
   return (
     <>
     <div className="mx-stagger overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
-      {groupDays(days, periodWeek.bands).map((g) => {
+      {groupDaysByBand(days, periodWeek.bands).map((g) => {
         const nodes = g.dates.map((date) => {
         const advice = dayOrder(sessions.filter((s) => s.scheduledDate === date && !loggedIds.has(s.id)), sessions.filter((s) => s.scheduledDate === addDays(date, 1)), templateById);
         // Zonder advies houdt een dag zijn eigen volgorde (order), ook als een rij overgeslagen of ingehaald is.
@@ -385,7 +374,7 @@ export function WeekPlanner({
         // A day with a band (holiday, tocht, a light day around it) already shows its date there: no second row.
         const loose = looseLogs.filter((l) => l.completedDate === date);
         const showEmpty = rows.length === 0 && !leaveLabel && !inPeriod && loose.length === 0;
-        const quietDay = rows.length === 0 && inPeriod && loose.length === 0;
+        const quietWord = quietWordOn(periodWeek, date, rows.length + loose.length);
         // Op je vaste rustdag heet een lege dag Rustdag, met de hangmat; een andere lege dag is Vrij, net als
         // de vaste rustdag als de rust van deze week al op een andere dag staat. Is je vaste rustdag bezet, dan
         // heet de vrije dag die deze week je rust is "Rustdag deze week" (engine/restDayThisWeek.ts).
@@ -405,9 +394,9 @@ export function WeekPlanner({
                 <div className="min-w-0 flex-1"><LeaveBand label={leaveLabel} /></div>
               </div>
             )}
-            {quietDay && (
+            {quietWord && (
               <div className="flex min-h-[40px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
-                <span className="min-w-0 flex-1 pl-14 text-[13px] leading-4 tabular-nums" style={{ color: isToday ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{dayLabel(date)} · {periodWeek.quietWord.get(date) ?? 'vrij'}</span>
+                <span className="min-w-0 flex-1 pl-14 text-[13px] leading-4 tabular-nums" style={{ color: isToday ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{dayLabel(date)} · {quietWord}</span>
                 {isToday && onAddFree && (
                   <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-action)' }}>
                     <Icon name="plus" size={20} />

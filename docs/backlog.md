@@ -31,6 +31,8 @@ Per bouwmoment eerst de Inbox, daarna de volgende ronde hieronder. Een ronde hee
 
 Beantwoord op 11 november (eigenaar): APK 158, Precies, vanaf je deur en de datavelden werken; Eccentric Squat blijft de lichte vorm; de vier tekstpunten zonder screenshot vervallen.
 
+Live op 11 november (branch claude/klein-deel-1, wacht op merge): Klein en fouten deel 1. "Twee harde lopen" in plaats van loopjes in de weekcheck; "loopjes" in runTrends en runInsight blijft, want dat zijn tellingen (R8); long_run in de triatlon heet "Lange lopen" (staat nergens op een scherm); openFysio weg; de voorstelzin van het krachtblok volgt de stemgids; Belasting op Stand: de telling klopte, het feit heet nu "nu 424, gewoonlijk 540"; bolletjes in de legenda van Intensiteit; de ontbrekende tests.
+
 Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördinator haalt die weg bij de volgende opruiming.
 
 ## Groot
@@ -53,16 +55,6 @@ Het bouwmoment zet hier per keer één regel "Live op <datum>: ..."; de coördin
 - Zonder doel: de vorm van de week veranderen bij een andere richting (de kaart Je week op Je stand staat er al, `components/stand/YourWeekStandCard.tsx`).
 
 ## Klein en fouten
-
-Deel 1 (teksten en dode code):
-- "Twee harde loopjes" staat nog in `engine/weekConcerns.ts` (met test) en `engine/weekValidator.ts`; "loopjes" nog in `engine/runTrends.ts` en `runInsight.ts` (R8).
-- "Loopsessies" bij `long_run` in `src/data/goalKinds.ts` laat "lang" weg; nakijken in de triatlon-UI.
-- `openFysio` in `engine/bodyCheck.ts` is dode code.
-- De vaste voorstelzin in `engine/strengthScheduling.ts` ("Geldt vanaf over twee weken, na je Akkoord.") volgt de stemgids niet letterlijk.
-- Ontbrekende tests: de tak "Geen trainingen in deze maand", de bladen Ritme en Benen en de componentteksten van Stand, een dag met vakantie én training in het vakantiepaneel, Benen B tegenover een training met een eigen plek in `leavePlanAround.test.ts`.
-- In Stand toont de samenvatting "Belasting Zwaar, 0 van 475" bij een zware geplande week; lijkt een fout in de telling, eerst naspelen (skill `naspelen`).
-- Een regel in Intensiteit (Stand) mist een bolletje.
-- Valkuil bij inkorten: haal geen zin weg die verklaart wat een getal of regel op het scherm betekent.
 
 Deel 2 (Forge en Calisthenics):
 - Regel 4 en 5 van de afvinkregels lezen gelijk (besluit `2026-11-09-forge-review-afvinken.md`).

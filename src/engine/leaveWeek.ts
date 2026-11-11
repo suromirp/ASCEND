@@ -101,6 +101,24 @@ export function leaveWeek(weekDates: string[], periods: LeavePeriod[] | undefine
   };
 }
 
+// De dagen van de week in groepen: een periode is één paneel met al zijn dagen, een gewone dag staat alleen.
+export function groupDaysByBand(days: string[], bands: WeekLeaveBand[]): { band?: WeekLeaveBand; dates: string[] }[] {
+  const out: { band?: WeekLeaveBand; dates: string[] }[] = [];
+  for (const d of days) {
+    const band = bands.find((b) => b.dates.includes(d));
+    if (band && out.length && out[out.length - 1].band === band) out[out.length - 1].dates.push(d);
+    else out.push({ band, dates: [d] });
+  }
+  return out;
+}
+
+// Een dag in het paneel van een periode zonder training of los log staat als stille regel ("Za 14 · vakantie");
+// met een training staat alleen de trainingsrij er, in hetzelfde paneel. Buiten een periode: niets.
+export function quietWordOn(week: WeekLeave, date: string, items: number): string | undefined {
+  if (!week.inBand.has(date) || items > 0) return undefined;
+  return week.quietWord.get(date) ?? 'vrij';
+}
+
 // "14 t/m 18 nov", "28 nov t/m 2 dec", "14 nov".
 export function periodSpan(start: string, end: string): string {
   if (start === end) return formatDayMonthNL(start);

@@ -108,6 +108,8 @@ describe('computeStrengthPlacementPlan', () => {
     const removeItem = proposal.changes.find((c) => c.plannedSessionId === 'leftover');
     expect(removeItem?.action).toBe('remove');
     expect(removeItem?.reason).toMatch(/Lower B/);
+    // De vaste voorstelzin van de stemgids, na wat er verandert.
+    expect(proposal.consequences).toBe('Geldt vanaf over twee weken. Deze en volgende week blijven zoals ze zijn. Eerst een voorstel, pas na Akkoord verandert er iets.');
   });
 
   it('adds a missing on-strategy session when the week is short one', () => {
