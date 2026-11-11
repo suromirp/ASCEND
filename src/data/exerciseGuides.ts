@@ -1450,4 +1450,67 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       { fault: 'Je gaat te snel.', fix: 'Tel drie tellen per kant.' },
     ],
   },
+  // Enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md): de volgorde ogen open, ogen dicht, een
+  // zachte ondergrond, en reiken op één been.
+  'single-leg-stance': {
+    short: [
+      'Sta op één been, knie licht gebogen, heup recht.',
+      'Houd vast tot je wiebelt, dan het andere been.',
+      'Leun je op de muur? Raak hem alleen even aan.',
+    ],
+    setup: 'Sta op blote voeten of in vlakke schoenen naast een muur of een stoel. Til één voet een paar centimeter op, met je knie licht gebogen.',
+    movement: 'Houd je bekken recht en je blik op een vast punt. Je enkel stuurt steeds een beetje bij; dat is precies het werk. Houd vast tot je moet steunen en wissel dan van been. Vul het aantal seconden in van je zwakste been.',
+    tempo: 'Stil staan, rustig doorademen. Elke set één keer per been.',
+    mistakes: [
+      { fault: 'Je zakt weg in je heup.', fix: 'Houd beide heupen even hoog.' },
+      { fault: 'Je klemt je opgetilde been tegen je standbeen.', fix: 'Houd het los, een handbreedte ernaast.' },
+    ],
+    harder: 'single-leg-stance-eyes-closed',
+  },
+  'single-leg-stance-eyes-closed': {
+    short: [
+      'Sta op één been en sluit je ogen.',
+      'Je enkel moet nu alles doen, zonder hulp van je ogen.',
+      'Wiebel je meteen? Eerst langer met ogen open.',
+    ],
+    setup: 'Sta naast een muur of een stoel, zodat je hem met een hand kunt raken. Til één voet een paar centimeter op en kijk eerst naar een vast punt.',
+    movement: 'Sluit je ogen en houd je bekken recht. Zonder je ogen moet je enkel het meeste bijsturen, ook als je denkt dat je stil staat. Raak de muur even aan als het nodig is en houd daarna weer los. Wissel van been.',
+    tempo: 'Stil staan, rustig doorademen. Elke set één keer per been.',
+    mistakes: [
+      { fault: 'Je opent je ogen bij het eerste wiebelen.', fix: 'Stuur eerst bij vanuit je enkel en heup.' },
+      { fault: 'Je staat op slot in je knie.', fix: 'Houd hem licht gebogen.' },
+    ],
+    easier: 'single-leg-stance',
+    harder: 'single-leg-stance-cushion',
+  },
+  'single-leg-stance-cushion': {
+    short: [
+      'Sta op één been op een kussen of opgevouwen matje.',
+      'Knie licht gebogen, je enkel stuurt steeds bij.',
+      'Val je eraf? Eerst met ogen dicht op de vloer.',
+    ],
+    setup: 'Leg een stevig kussen, een balanskussen of een dubbelgevouwen matje naast een muur of een stoel. Ga er met één voet op staan.',
+    movement: 'Til je andere voet op en houd je bekken recht. De zachte ondergrond lijkt op los grind of een modderig pad: je enkel moet steeds kleine correcties maken. Houd vast tot je moet steunen en wissel dan van been.',
+    tempo: 'Stil staan, rustig doorademen. Elke set één keer per been.',
+    mistakes: [
+      { fault: 'Je staat op slot in je knie.', fix: 'Houd hem licht gebogen, dan vangt je been het wiebelen op.' },
+      { fault: 'Je kijkt naar je voet.', fix: 'Kijk naar een vast punt voor je.' },
+    ],
+    easier: 'single-leg-stance-eyes-closed',
+  },
+  'star-excursion-reach': {
+    short: [
+      'Sta op één been, tik voor, opzij en achter je.',
+      'Reik zo ver als je kunt, je standbeen zakt mee.',
+      'Hiel komt los? Reik minder ver.',
+    ],
+    setup: 'Sta op één been in het midden van een denkbeeldige ster op de vloer. Je handen mogen op je heupen.',
+    movement: 'Zak door je standbeen en reik met je andere voet zo ver mogelijk naar voren. Tik licht met je tenen en kom terug naar het midden. Doe hetzelfde schuin, opzij en naar achteren. Eén rondje is één herhaling; dan het andere been.',
+    tempo: 'Rustig reiken, licht tikken, rustig terug. Adem gewoon door.',
+    mistakes: [
+      { fault: 'Je leunt op je tikkende voet.', fix: 'Raak de vloer alleen even aan.' },
+      { fault: 'De hiel van je standbeen komt los.', fix: 'Reik minder ver tot hij plat blijft.' },
+    ],
+    easier: 'single-leg-stance',
+  },
 };

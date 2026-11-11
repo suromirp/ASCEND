@@ -41,6 +41,8 @@ export function normalizeAddedExercises(raw: unknown): AddedExercises | undefine
 export function addedPrescription(exercise: Exercise): Pick<ExercisePrescription, 'sets' | 'reps'> {
   if (exercise.pattern === 'shin') return { sets: 3, reps: '15-20' };
   if (exercise.pattern === 'calf') return { sets: 3, reps: '10-15' };
+  // Evenwicht: een houding telt in seconden per been (het bereik leest Forge dan niet), reiken in rondjes per been.
+  if (exercise.pattern === 'balance') return { sets: 3, reps: '4-6' };
   return { sets: 3, reps: '10-12' };
 }
 

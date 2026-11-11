@@ -54,8 +54,10 @@ const HOLD = new Set([
   'wall-plank-hold', 'pike-hold', 'wall-handstand-hold', 'free-handstand-hold',
   'tuck-l-sit', 'one-leg-l-sit', 'l-sit',
   'tuck-front-lever', 'advanced-tuck-front-lever', 'one-leg-front-lever', 'straddle-front-lever',
+  // Enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md): seconden per been.
+  'single-leg-stance', 'single-leg-stance-eyes-closed', 'single-leg-stance-cushion',
 ]);
-const PER_SIDE = new Set(['archer-push-up', 'assisted-pistol-squat', 'skater-squat', 'box-pistol-squat', 'pistol-squat']);
+const PER_SIDE = new Set(['star-excursion-reach', 'archer-push-up', 'assisted-pistol-squat', 'skater-squat', 'box-pistol-squat', 'pistol-squat']);
 // Een band helpt alleen bij Pull-Up en Dip: daar zit de sprong naar de volle stap
 // (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md). Hoe sterk de band was staat in het log (SetLog.band).
 const BAND = new Set(['pull-up', 'dip']);
@@ -250,6 +252,29 @@ export const EXERCISES: Exercise[] = [
     'Doen: zit op een bank, hang een gewicht aan je voorvoet en trek je tenen omhoog.',
     'Let op: beweeg vanuit je enkel, niet vanuit je knie.',
     'Vaak fout: te veel gewicht waardoor je het omhoog zwaait.',
+  ]),
+  // --- enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md) ----------------------
+  // Patroon 'balance': telt niet als harde set voor een spier (engine/muscleVolume.ts), maar voor de rij Enkel en
+  // evenwicht van Spieren voor de berg (engine/mountainMuscles.ts#balanceShort). Geen aandeel van het lichaamsgewicht.
+  ex('single-leg-stance', 'Single Leg Stance', ['Single Leg Balance', 'One Leg Stand', 'Single-Leg Stance', 'Op één been staan'], ['calves'], ['tibialis', 'hip_abductors', 'core'], 'bodyweight', 'balance', false, [
+    'Doen: sta op één been, knie licht gebogen, en houd je heup recht.',
+    'Let op: een vinger bij de muur mag, zolang je er niet op leunt.',
+    'Vaak fout: je opgetilde been tegen je standbeen klemmen.',
+  ]),
+  ex('single-leg-stance-eyes-closed', 'Single Leg Stance Eyes Closed', ['Single Leg Balance Eyes Closed', 'Eyes Closed Single Leg Stance', 'Op één been staan met ogen dicht'], ['calves'], ['tibialis', 'hip_abductors', 'core'], 'bodyweight', 'balance', false, [
+    'Doen: sta op één been en sluit je ogen.',
+    'Let op: sta naast een muur of een stoel.',
+    'Vaak fout: je ogen openen bij het eerste wiebelen in plaats van bij te sturen.',
+  ]),
+  ex('single-leg-stance-cushion', 'Single Leg Stance on Cushion', ['Single Leg Balance Pad', 'Balance Pad Single Leg Stance', 'Single Leg Stance on Foam', 'Op één been op een kussen'], ['calves'], ['tibialis', 'hip_abductors', 'core'], 'bodyweight', 'balance', false, [
+    'Doen: sta op één been op een kussen of opgevouwen matje.',
+    'Let op: sta naast een muur of een stoel.',
+    'Vaak fout: op slot staan in je knie.',
+  ]),
+  ex('star-excursion-reach', 'Star Excursion Reach', ['Star Excursion Balance', 'Y Balance Reach', 'Single Leg Reach', 'Reiken op één been'], ['calves'], ['quadriceps', 'glutes', 'hip_abductors', 'core'], 'bodyweight', 'balance', false, [
+    'Doen: sta op één been en tik met je andere voet ver voor, opzij en achter.',
+    'Let op: je hiel van je standbeen blijft plat.',
+    'Vaak fout: op je tikkende voet leunen.',
   ]),
   ex('hip-abduction-machine', 'Hip Abduction Machine', ['Machine Hip Abduction', 'Seated Hip Abduction', 'Hip Abduction (Machine)', 'Abductor Machine', 'Heupabductie op de machine'], ['hip_abductors'], ['glutes'], 'machine_stack', 'hip', true, [
     'Doen: zit rechtop en druk je knieën rustig naar buiten.',

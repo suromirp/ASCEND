@@ -603,7 +603,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'forge-spotter':
       return { checked: forge.noSpotter };
     case 'forge-bergspieren':
+      return forge.mountainMuscles ? { value: 'Aan', sub: forge.mountainBalance ? 'Met enkel en evenwicht' : 'Zonder enkel en evenwicht' } : { value: 'Uit', dim: true };
+    case 'forge-bergspieren-aan':
       return { checked: forge.mountainMuscles };
+    case 'forge-enkel':
+      return { checked: forge.mountainBalance };
     case 'spotterrek':
       return { checked: !!forge.profile.spotterRack };
     case 'forge-rir-vooraf':

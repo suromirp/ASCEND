@@ -89,7 +89,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
             <SummaryRow id="bundel-rekenmodel" title="Rekenmodel" facts={facts} info="bundelRekenmodel" onClick={() => setSheet('bundel-rekenmodel')} />
             <SummaryRow id="bundel-invullen" title="Bij het invullen" facts={facts} info="bundelInvullen" onClick={() => setSheet('bundel-invullen')} />
             <SummaryRow id="bundel-toets" title="Toets tegen MacroFactor" facts={facts} info="forgeNaast" onClick={() => setSheet('bundel-toets')} />
-            <SummaryRow id="forge-bergspieren" title="Spieren voor de berg" facts={facts} info="forgeBergspieren" onChange={(on) => save({ mountainMuscles: on })} />
+            <SummaryRow id="forge-bergspieren" title="Spieren voor de berg" facts={facts} info="forgeBergspieren" onClick={() => setSheet('forge-bergspieren')} />
           </>
         }>
           {null}
@@ -152,6 +152,12 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <BundleSheet eyebrow="Forge" title="Hoogstens per krachttraining" line="Duurt een training langer, dan haalt Forge eerst sets bijwerk weg. De kern blijft." onClose={close}>
           <SummaryRow id="forge-grens-kracht" title="Gewone krachttraining" facts={facts} onClick={() => setInner('forge-grens-kracht')} />
           <SummaryRow id="forge-grens-been" title="Beendag" facts={facts} onClick={() => setInner('forge-grens-been')} />
+        </BundleSheet>
+      )}
+      {sheet === 'forge-bergspieren' && (
+        <BundleSheet eyebrow="Forge" title="Spieren voor de berg" line="Bij een bergdoel. Een oefening komt er alleen bij na Akkoord." onClose={close}>
+          <SummaryRow id="forge-bergspieren-aan" title="Spieren voor de berg" facts={facts} info="forgeBergspieren" onChange={(on) => save({ mountainMuscles: on })} />
+          {rowShown('forge-enkel', facts) && <SummaryRow id="forge-enkel" title="Enkel en evenwicht" facts={facts} info="forgeEnkel" onChange={(on) => save({ mountainBalance: on })} />}
         </BundleSheet>
       )}
       {sheet === 'bundel-toets' && (

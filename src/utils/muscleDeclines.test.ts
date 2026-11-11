@@ -23,6 +23,12 @@ describe('Liever niet bij Spieren voor de berg', () => {
     expect(readMuscleDeclines()).toEqual([]);
   });
 
+  it('onthoudt ook Liever niet bij enkel en evenwicht', () => {
+    vi.stubGlobal('localStorage', fakeStorage());
+    rememberMuscleDecline({ muscle: 'balance', weekStart: '2026-11-09' });
+    expect(readMuscleDeclines()).toEqual([{ muscle: 'balance', weekStart: '2026-11-09' }]);
+  });
+
   it('negeert rommel en gaat niet stuk zonder opslag', () => {
     const s = fakeStorage();
     s.setItem('ascend.bergspieren.nee', '[{"muscle":"neus","weekStart":"2026-11-02"},{"muscle":"glutes","weekStart":"gisteren"},5]');

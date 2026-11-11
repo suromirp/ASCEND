@@ -308,6 +308,9 @@ export interface StrengthSettings {
   // de weekterugblik als kuiten, scheen of bilspieren weinig kregen, en bij Ruilen zo'n oefening voorop bij
   // gelijke keuze (default on). Plant nooit zelf iets.
   mountainMuscles?: boolean;
+  // Enkel en evenwicht binnen Spieren voor de berg (docs/beslissingen/2026-11-11-enkel-evenwicht.md): ook een
+  // voorstel voor werk op één been (default on). Optioneel en defensief gelezen; een oude back-up heeft het niet.
+  mountainBalance?: boolean;
   // Oefeningen die je na zo'n voorstel met Akkoord aan een training toevoegde (engine/addedExercises.ts).
   addedExercises?: AddedExercises;
   // Ladderstappen die je na zo'n voorstel met Akkoord in een training zette (engine/stepSwaps.ts).
@@ -364,6 +367,7 @@ export interface ResolvedStrengthSettings {
   noSpotter: boolean;
   rirPrefill: RirPrefill;
   mountainMuscles: boolean;
+  mountainBalance: boolean;
 }
 
 // The day the quiet measuring began. A choice of the owner, kept here and not in a component.
@@ -592,6 +596,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.crossFatigue === 'boolean') out.crossFatigue = raw.crossFatigue;
   if (typeof raw.noSpotter === 'boolean') out.noSpotter = raw.noSpotter;
   if (typeof raw.mountainMuscles === 'boolean') out.mountainMuscles = raw.mountainMuscles;
+  if (typeof raw.mountainBalance === 'boolean') out.mountainBalance = raw.mountainBalance;
   const added = normalizeAddedExercises(raw.addedExercises);
   if (added) out.addedExercises = added;
   const stepSwaps = normalizeStepSwaps(raw.stepSwaps);
@@ -664,6 +669,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     noSpotter: s.noSpotter ?? true,
     rirPrefill: s.rirPrefill ?? 'hint',
     mountainMuscles: s.mountainMuscles ?? true,
+    mountainBalance: s.mountainBalance ?? true,
   };
 }
 

@@ -201,7 +201,13 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-extras', facts())).toEqual({ checked: true, hidden: false });
     expect(rowSummary('forge-extras', withForge({ showExtras: false })).checked).toBe(false);
     expect(rowSummary('forge-vegen', facts()).checked).toBe(true);
-    expect(rowSummary('forge-bergspieren', facts()).checked).toBe(true);
+    expect(rowSummary('forge-bergspieren-aan', facts()).checked).toBe(true);
+    expect(rowSummary('forge-enkel', facts()).checked).toBe(true);
+    expect(rowSummary('forge-bergspieren', facts())).toMatchObject({ value: 'Aan', sub: 'Met enkel en evenwicht' });
+    expect(rowSummary('forge-bergspieren', withForge({ mountainBalance: false })).sub).toBe('Zonder enkel en evenwicht');
+    expect(rowSummary('forge-bergspieren', withForge({ mountainMuscles: false }))).toMatchObject({ value: 'Uit', dim: true });
+    // Enkel en evenwicht hoort bij Spieren voor de berg: uit, dan bestaat de rij niet.
+    expect(rowSummary('forge-enkel', withForge({ mountainMuscles: false })).hidden).toBe(true);
     expect(rowSummary('forge-vegen', facts({ settings: { ...facts().settings, forgeSwipeDelete: false } })).checked).toBe(false);
     expect(rowSummary('forge-oefeningen', facts()).value).toBe('Een per scherm');
     expect(rowSummary('forge-oefeningen', facts({ settings: { ...facts().settings, forgeLayout: 'lijst' } })).value).toBe('Onder elkaar');
