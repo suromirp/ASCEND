@@ -375,8 +375,9 @@ export function answeredDays(responses: Readonly<Record<string, { at?: unknown }
   return out;
 }
 
-// De korte aanwijzing in de rij van Week: staat de trapsessie op een dag met een rustige loop of een
-// herstelwandeling, dan komt hij daar achteraan ("na je rustige duurloop"). Alleen weergave.
+// De korte aanwijzing in de rij van Week: staat de trapsessie op een dag met alleen een rustige loop of een
+// herstelwandeling, dan zegt de rij wat je doet ("doe je na je rustige duurloop"). Een opdracht, geen bewering over
+// de plek van de rij: de volgorde op het scherm kan anders zijn (engine/dayOrder.ts). Alleen weergave.
 export function descentRowNotes(sessions: readonly PlannedSession[], templates: readonly SessionTemplate[]): Map<string, string> {
   const byId = new Map(templates.map((t) => [t.id, t]));
   const live = sessions.filter((s) => s.status !== 'skipped');
@@ -384,8 +385,9 @@ export function descentRowNotes(sessions: readonly PlannedSession[], templates: 
   for (const s of live) {
     if (s.templateId !== STAIRS_TEMPLATE_ID) continue;
     const others = live.filter((o) => o.id !== s.id && o.scheduledDate === s.scheduledDate).map((o) => byId.get(o.templateId)).filter((x): x is SessionTemplate => !!x);
-    const first = others.length === 1 && (others[0].type === 'recovery' || templateSport(others[0]) === 'running') ? others[0] : undefined;
-    if (first) out.set(s.id, `na je ${first.name.charAt(0).toLowerCase()}${first.name.slice(1)}`);
+    const t = others.length === 1 ? others[0] : undefined;
+    const easy = !!t && (t.type === 'recovery' || (templateSport(t) === 'running' && !isHardRun(t) && !isLegHeavyTemplate(t) && !isTestOrRace(t)));
+    if (t && easy) out.set(s.id, `doe je na je ${t.name.charAt(0).toLowerCase()}${t.name.slice(1)}`);
   }
   return out;
 }

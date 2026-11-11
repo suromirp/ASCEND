@@ -564,7 +564,12 @@ describe('Trap af op de schermen: wat je doet, zonder zone en zonder weer', () =
 
   it('de rij in Week zegt waar hij staat als er die dag ook een rustige loop is', () => {
     const sessions = [planned('easy', 'tpl_easy_run', '2026-11-12'), planned('trap', STAIRS_TEMPLATE_ID, '2026-11-12'), planned('alone', STAIRS_TEMPLATE_ID, '2026-11-14'), planned('up', 'tpl_upper_a', '2026-11-16'), planned('trap2', STAIRS_TEMPLATE_ID, '2026-11-16')];
-    expect([...descentRowNotes(sessions, templates)]).toEqual([['trap', 'na je rustige duurloop']]);
+    expect([...descentRowNotes(sessions, templates)]).toEqual([['trap', 'doe je na je rustige duurloop']]);
+    // Niet bij een harde loop, een test of de lange duurloop op dezelfde dag.
+    for (const id of ['tpl_tempo_run', 'tpl_test_run', 'tpl_long_run']) {
+      expect(descentRowNotes([planned('other', id, '2026-11-12'), planned('trap', STAIRS_TEMPLATE_ID, '2026-11-12')], templates).size, id).toBe(0);
+    }
+    expect([...descentRowNotes([planned('walk', 'tpl_herstel', '2026-11-12'), planned('trap', STAIRS_TEMPLATE_ID, '2026-11-12')], templates)]).toEqual([['trap', 'doe je na je herstelwandeling']]);
     // Een overgeslagen loop telt niet.
     expect(descentRowNotes([{ ...sessions[0], status: 'skipped' }, sessions[1]], templates).size).toBe(0);
   });
