@@ -837,6 +837,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Zelf kiezen', text: 'tik een veld aan en kies een ander. Het advies zelf blijft staan.' },
       { head: 'Zelf instellen', text: 'ASCEND stuurt niets naar je horloge.' },
+      { head: 'Bij een training', text: 'onder Horloge op het trainingsscherm staan ze als tekst.' },
     ],
   },
   stravaTekst: {
