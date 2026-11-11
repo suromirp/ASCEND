@@ -8,6 +8,7 @@ import { plannedByIdOf } from '../engine/logDay';
 import { morningFromHour, resolveOverviews } from '../engine/overviewSettings';
 import { notificationPort, syncTimedNotices } from '../integrations/notifications';
 import { mondayOfWeek, toISODate, todayISO } from '../utils/dates';
+import { EveningNoticeHost } from './EveningNoticeHost';
 
 // De vaste meldingen van de app: de ochtendvraag en de weekmelding op zondag. Wat er komt en wanneer
 // beslist engine/deviceNotices.ts; dit onderdeel geeft het door aan de laag
@@ -64,5 +65,6 @@ export function DeviceNoticesHost() {
 
   useEffect(() => port.onTap((link) => navigate(link.replace(/^#/, '') || '/')), [port, navigate]);
 
-  return null;
+  // De avond ervoor plant zijn eigen melding (eigen nummer), alleen in de app.
+  return port.timed ? <EveningNoticeHost port={port} /> : null;
 }

@@ -17,6 +17,7 @@ import { DayOrderCard } from '../components/DayOrderCard';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
+import { EveningBeforeCard } from '../components/EveningBeforeCard';
 import { NextTrekLine } from '../components/NextTrekLine';
 import { MountainWeatherCard } from '../components/MountainWeatherCard';
 import { StagePositionLine } from '../components/StagePositionLine';
@@ -465,6 +466,9 @@ function TodayContent() {
       {/* De snelkoppeling naar de ochtendvraag: alleen een blad, geen kaart. Onder de missie, zodat niets voor de
           missie staat wat niet in de rij hoort (docs/beslissingen/2026-11-02-vandaag-en-ongedaan.md). */}
       <MorningDeepLink />
+      {/* De avond ervoor: vanaf de gekozen tijd de training van morgen met wat je klaarlegt, onder de missie en
+          de kaarten die bij vandaag horen (docs/beslissingen/2026-11-11-avond-ervoor.md). */}
+      <EveningBeforeCard />
 
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
