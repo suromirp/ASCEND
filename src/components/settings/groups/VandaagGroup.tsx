@@ -28,6 +28,7 @@ import { ClothingSheet, NoticeInfoSheet, PlaceSheet } from './VandaagSheets';
 import { PermissionAskButton } from './PermissionSheets';
 import { notificationPort } from '../../../integrations/notifications';
 import { noticesNeed, resolveDeviceNotices } from '../../../engine/deviceNotices';
+import { resolveEveningBefore } from '../../../engine/eveningBefore';
 import type { GroupProps } from './types';
 
 
@@ -134,6 +135,8 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
               <Eyebrow>Of kies zelf</Eyebrow>
               <SettingsList>
                 <SummaryRow id="boven-missie" title="Kaarten boven de missie" facts={facts} info="bovenMissie" onClick={() => setInner('boven-missie')} />
+                <SummaryRow id="avond-ervoor" title="De avond ervoor" facts={facts} info="avondErvoor" onChange={(on) => void updateSettings({ eveningBefore: on })} />
+                <SummaryRow id="avond-ervoor-tijd" title="Avond begint om" facts={facts} onClick={() => setInner('avond-ervoor-tijd')} />
                 <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
                 <SummaryRow id="benen-na-test" title="Benen vragen na een test" facts={facts} info="benenNaTest" onChange={(on) => set({ legsAfterEffort: on })} />
                 <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
@@ -160,6 +163,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="rust-melding" title="Einde van de rust" facts={facts} info="rustMelding" onChange={(on) => void updateSettings({ restNotice: on })} />
           <SummaryRow id="weekmelding" title="Weekmelding op zondag" facts={facts} info="weekmelding" onChange={(on) => void updateSettings({ weekNotice: on })} />
           <SummaryRow id="weekmelding-tijd" title="Tijd van de weekmelding" facts={facts} onClick={() => setInner('weekmelding-tijd')} />
+          <SummaryRow id="avond-melding" title="Melding de avond ervoor" facts={facts} info="avondMelding" onChange={(on) => void updateSettings({ eveningNotice: on })} />
         </BundleSheet>
       )}
       {inner === 'weekmelding-tijd' && <ChoiceFromDef def={CHOICES.weekmeldingTijd} value={resolveDeviceNotices(settings).weekTime} onPick={(v) => void updateSettings({ weekNoticeTime: v })} onClose={closeInner} />}
@@ -249,6 +253,9 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         />
       )}
       {inner === 'lichterbenen-hoe' && <ChoiceFromDef def={CHOICES.lichterbenenHoe} value={resolveLegEaseHow(settings)} onPick={(v) => void updateSettings({ legEaseHow: v })} onClose={closeInner} />}
+      {inner === 'avond-ervoor-tijd' && (
+        <ChoiceFromDef def={CHOICES.avondVanaf} value={resolveEveningBefore(settings).time} onPick={(v) => void updateSettings({ eveningBeforeTime: v })} onClose={closeInner} />
+      )}
       {inner === 'boven-missie' && <ChoiceFromDef def={CHOICES.bovenMissie} value={resolveAboveMission(settings.cardsAboveMission)} onPick={(v) => void updateSettings({ cardsAboveMission: v })} onClose={closeInner} />}
       {inner === 'lijfvraag' && <ChoiceFromDef def={CHOICES.lijfvraag} value={resolveBodyCheck(settings)} onPick={(v) => void updateSettings({ bodyCheck: v })} onClose={closeInner} />}
       {inner === 'lucht-vanaf' && <ChoiceFromDef def={CHOICES.luchtVanaf} value={sky.nightFrom} onPick={(v) => void updateSettings({ skyNightFrom: v })} onClose={closeInner} />}

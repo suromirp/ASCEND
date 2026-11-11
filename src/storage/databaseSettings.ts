@@ -577,6 +577,12 @@ export interface AppSettings {
   restNotice?: boolean;
   weekNotice?: boolean;
   weekNoticeTime?: '18:00' | '19:00' | '20:00' | '21:00';
+  // "De avond ervoor" (engine/eveningBefore.ts, docs/beslissingen/2026-11-11-avond-ervoor.md): vanaf de
+  // tijd kijkt Vandaag naar morgen, met een melding als aparte keuze. Absent = aan vanaf 20:00, melding uit.
+  // Optional and additive, so no migration step; a backup keeps only valid values (storage/backupClean.ts).
+  eveningBefore?: boolean;
+  eveningBeforeTime?: '19:00' | '20:00' | '21:00' | '22:00';
+  eveningNotice?: boolean;
   // "Automatisch bijwerken" (engine/liveUpdate.ts): de Android-app haalt een nieuwere webversie
   // stil op voor de volgende start. Absent = aan. Optional and additive.
   autoUpdate?: boolean;

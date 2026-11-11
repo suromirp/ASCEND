@@ -835,6 +835,19 @@ export const CHOICES = {
       { value: '21:00', label: '21:00', short: 'Zondag 21:00' },
     ],
   }),
+  avondVanaf: def({
+    group: 'Vandaag en meldingen',
+    title: 'Avond begint om',
+    line: 'Vanaf deze tijd kijkt Vandaag naar je training van morgen.',
+    advice: '20:00' as '19:00' | '20:00' | '21:00' | '22:00',
+    help: 'avondErvoor',
+    options: [
+      { value: '19:00', label: '19:00', short: '19:00' },
+      { value: '20:00', label: '20:00', short: '20:00' },
+      { value: '21:00', label: '21:00', short: '21:00' },
+      { value: '22:00', label: '22:00', short: '22:00' },
+    ],
+  }),
   ochtendVanaf: def({
     group: 'Vandaag en meldingen',
     title: 'Ochtend begint om',

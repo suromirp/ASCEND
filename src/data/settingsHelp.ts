@@ -1182,6 +1182,23 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geluid en trillen', text: 'zoals je ze bij Forge onder Signaal hebt gekozen. Staat het signaal uit, dan komt er een stille melding.' },
     ],
   },
+  avondErvoor: {
+    title: 'De avond ervoor',
+    lead: 'Vanaf 20:00 een kaart onder je missie met wat je voor morgen klaarlegt.',
+    points: [
+      { head: 'Wat erop staat', text: 'hoogstens vier regels: weer en kleding, een lampje, de rugzak, drinken, je horloge of de route.' },
+      { head: 'Wanneer niet', text: 'op een rustdag, bij vakantie of ziek, en als er niets klaar te leggen valt.' },
+      { head: 'Planning', text: 'de kaart is alleen tekst en verandert niets aan je planning.' },
+    ],
+  },
+  avondMelding: {
+    title: 'Melding de avond ervoor',
+    lead: 'Op de tijd van De avond ervoor een melding met dezelfde regels.',
+    points: [
+      { head: 'Waar het vandaan komt', text: 'wat de app wist toen je hem het laatst opende, ook het weer van toen.' },
+      { head: 'Alleen in de Android-app', text: 'in de browser komt er geen melding.' },
+    ],
+  },
   weekmelding: {
     title: 'Weekmelding op zondag',
     lead: 'Op zondagavond een korte melding: wat je deed, wat er komt en één tip.',
