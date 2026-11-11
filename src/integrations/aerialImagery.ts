@@ -69,14 +69,16 @@ export const AERIAL_HOSTS = ['service.pdok.nl', 'data.geopf.fr', 'tiles.maps.eox
 export const AERIAL_CACHE = { maxEntries: 300, maxAgeDays: 30 } as const;
 
 type Ring = [number, number][];
-// Een vlak: de buitenrand en daarna de gaten (zoals de Belgische enclaves bij Baarle).
+// Een vlak: de buitenrand en daarna de gaten.
 type Area = Ring[];
 
 // De vlakken komen uit Natural Earth (1:10m, publiek domein), uitgerekend in een vlakke projectie
-// (EPSG:3035) en daarna vereenvoudigd; het script en de meting staan in het besluit.
-// Nederland: het land met een gesloten zoom van 1,5 km (Waddenzee, IJsselmeer en een strook zee: de laag
-// van 25 cm dekt water), minus 2,9 km rond België en Duitsland, vereenvoudigd binnen 400 m. Dus minstens
-// 2,5 km van elke landsgrens. Zuid-Limburg is een eigen vlak.
+// (EPSG:3035) en daarna vereenvoudigd. Opnieuw maken en nameten: scripts/meten/luchtfoto/.
+// Nederland: het land met een zoom van 1,5 km (het IJsselmeer, de oostelijke Waddenzee en een strook zee:
+// de laag van 25 cm dekt water), minus 2,9 km rond België en Duitsland, vereenvoudigd binnen 400 m. Dus
+// minstens 2,5 km van elke landsgrens. Het gat in het eerste vlak is de westelijke Waddenzee (tussen
+// ongeveer 4,9 en 5,5 oost, 52,95 en 53,4 noord), die de zoom niet sluit: daar geeft het EOX. Zuid-Limburg
+// is een eigen vlak.
 const NL: Area[] = [
   [
     [
@@ -216,11 +218,17 @@ function allInOne(points: { lat: number; lon: number }[], areas: Area[]): boolea
   return areas.some((area) => points.every((p) => inArea(p.lon, p.lat, area)));
 }
 
+// Liggen deze punten (zonder rand) allemaal in één vlak van Nederland of Frankrijk? Voor de tests.
+export const insideCountry = (country: 'pdok' | 'ign', points: { lat: number; lon: number }[]): boolean =>
+  allInOne(points, country === 'pdok' ? NL : FR);
+
 // De rand om wat in beeld komt: de hoeken van het vak, zoveel verder, moeten ook in het land liggen. Een
 // kilometer, en bij een grotere route een kwart van de langste zijde: Alles in beeld laat naast een lange
 // smalle route meer zien. Een grens: op een brede telefoon kan aan de korte kant nog meer in beeld komen.
 export const AERIAL_MARGIN_KM = 1;
 export const AERIAL_MARGIN_SHARE = 0.25;
+// Om de hoeveel kilometer de zijden van het vak getoetst worden.
+export const AERIAL_EDGE_STEP_KM = 1;
 
 function boxOf(points: { lat: number; lon: number }[]) {
   let w = Infinity, s = Infinity, e = -Infinity, n = -Infinity;
@@ -243,11 +251,22 @@ function withMargin(points: { lat: number; lon: number }[]): { lat: number; lon:
   const km = aerialMarginKm(points);
   const dLat = km / 111.32;
   const dLon = km / kmLon;
-  const corners = [
-    { lat: s - dLat, lon: w - dLon }, { lat: s - dLat, lon: e + dLon },
-    { lat: n + dLat, lon: w - dLon }, { lat: n + dLat, lon: e + dLon },
-  ];
-  return [...points, ...corners];
+  // Een vlak is niet bol: vier hoeken in het land zeggen niets over de zijden ertussen. Daarom ook elke
+  // kilometer langs de vier zijden van het vak.
+  const S = s - dLat, N = n + dLat, W = w - dLon, E = e + dLon;
+  const steps = (km: number) => Math.max(1, Math.ceil(km / AERIAL_EDGE_STEP_KM));
+  const nLon = steps((E - W) * kmLon);
+  const nLat = steps((N - S) * 111.32);
+  const edge: { lat: number; lon: number }[] = [];
+  for (let i = 0; i <= nLon; i++) {
+    const lon = W + ((E - W) * i) / nLon;
+    edge.push({ lat: S, lon }, { lat: N, lon });
+  }
+  for (let i = 1; i < nLat; i++) {
+    const lat = S + ((N - S) * i) / nLat;
+    edge.push({ lat, lon: W }, { lat, lon: E });
+  }
+  return [...points, ...edge];
 }
 
 // De bron voor deze kaart. Zonder punten (nog niets om te tonen): de wereldlaag.

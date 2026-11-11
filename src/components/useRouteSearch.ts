@@ -55,7 +55,7 @@ export interface RouteSearchModel {
   mapRoutes: MapRoute[];
   mapStartPoint: RoutePoint | undefined;
   base: MapBase;
-  // Kaart of Luchtfoto (instelling Kaart of luchtfoto); setPhoto bewaart de keuze van de schakelaar op de kaart.
+  // Kaart of Luchtfoto (de stand Luchtfoto van de instelling Ondergrond, engine/routeMap.ts#resolveMapGround); setPhoto bewaart de keuze van de schakelaar op de kaart.
   photo: MapPhoto;
   setPhoto: (v: MapPhoto) => void;
   hereMode: boolean;

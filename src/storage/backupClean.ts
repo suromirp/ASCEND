@@ -361,7 +361,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeMapBase;
     skipped.n++;
   }
-  // Kaart of luchtfoto: iets anders valt weg en dan geldt het advies (Kaart).
+  // Luchtfoto aan of uit (de stand Luchtfoto van Ondergrond): iets anders valt weg, dan geldt de kaart.
   if ('routeMapPhoto' in s && s.routeMapPhoto !== 'map' && s.routeMapPhoto !== 'photo') {
     delete s.routeMapPhoto;
     skipped.n++;

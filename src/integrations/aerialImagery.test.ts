@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AERIAL_CACHE, AERIAL_HOSTS, AERIAL_SOURCES, aerialMarginKm, aerialSourceFor, inRing } from './aerialImagery';
+import { AERIAL_CACHE, AERIAL_HOSTS, AERIAL_SOURCES, aerialMarginKm, aerialSourceFor, inRing, insideCountry } from './aerialImagery';
 
 // Nagemaakte lussen rond openbare plekken (stadscentra, toppen, grensovergangen), nooit een plek van de eigenaar.
 // Een lus van ongeveer 2 km rond een punt.
@@ -98,6 +98,29 @@ describe('waar Warden wit vond (review 11 november, gemeten met echte tegels)', 
     expect(aerialMarginKm(line([52.0, 5.12], [52.18, 5.12]))).toBeCloseTo(5, 0);
     // Door Utrecht ligt dat ruim binnen het land.
     expect(id(line([52.0, 5.12], [52.18, 5.12]))).toBe('pdok');
+  });
+});
+
+describe('een vlak is niet bol: ook de zijden van het vak tellen (herreview 11 november)', () => {
+  // De vier hoeken van het vak met de rand, zoals de bronkeuze van vóór deze herstel ze toetste.
+  const corners = (pts: { lat: number; lon: number }[]) => {
+    const km = aerialMarginKm(pts);
+    const lats = pts.map((p) => p.lat), lons = pts.map((p) => p.lon);
+    const s = Math.min(...lats), n = Math.max(...lats), w = Math.min(...lons), e = Math.max(...lons);
+    const dLat = km / 111.32, dLon = km / (111.32 * Math.cos((((s + n) / 2) * Math.PI) / 180));
+    return [...pts, { lat: s - dLat, lon: w - dLon }, { lat: s - dLat, lon: e + dLon }, { lat: n + dLat, lon: w - dLon }, { lat: n + dLat, lon: e + dLon }];
+  };
+
+  it('bij Genève: alle hoeken in Frankrijk, maar een zijde door Zwitserland, dus EOX', () => {
+    const route = line([45.95, 5.9], [46.2, 6.3], 20);
+    expect(insideCountry('ign', corners(route))).toBe(true);
+    expect(id(route)).toBe('eox');
+  });
+
+  it('bij Meersel-Dreef en Essen: alle hoeken in Nederland, maar een zijde door België, dus EOX', () => {
+    const route = line([51.5, 4.4], [51.75, 4.8], 20);
+    expect(insideCountry('pdok', corners(route))).toBe(true);
+    expect(id(route)).toBe('eox');
   });
 });
 

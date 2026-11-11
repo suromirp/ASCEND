@@ -44,3 +44,9 @@ Niets. Vult `2026-11-11-route-kaart.md` aan: daar blijven de kaarttegels buiten 
 ## Terugdraaien
 
 Haal de schakelaar uit `RouteMap.tsx` en de stap `aerial` uit `stagesFor`; `routeMapPhoto` mag in back-ups blijven staan (wordt dan genegeerd). Haal de runtime-cache voor `AERIAL_HOSTS` uit `vite.config.ts`.
+
+## Rechtgezet na review
+
+- 11 november, Warden: het enige gat in het Nederlandse vlak is de westelijke Waddenzee (ongeveer 4,9 tot 5,5 oost, 52,95 tot 53,4 noord), niet Baarle. De zinnen "De enclaves bij Baarle zijn een gat in het vlak" en "Waddenzee en IJsselmeer horen erbij" kloppen dus niet: het IJsselmeer en de oostelijke Waddenzee horen erbij, de westelijke Waddenzee niet (daar EOX). De enclaves bij Baarle vallen al weg doordat 2,9 km rond België uit het vlak gaat.
+- Het script en de meting staan in `scripts/meten/luchtfoto/` (met een README), niet in dit besluit.
+- De bronkeuze toetste alleen de vier hoeken van het vak om wat in beeld komt; een vlak is niet bol, dus een lange route kon met een zijde door een buurland lopen (Warden mat wit bij Genève en Meersel-Dreef). Nu toetst hij ook elke kilometer langs de zijden van het vak.

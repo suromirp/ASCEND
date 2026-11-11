@@ -2,7 +2,7 @@
 // de andere licht gestreept op een donkere rand), het startpunt als ring en je plek als ijsblauwe stip.
 // Tik op een lus kiest hem; tik op de kaart zet een ring neer en Start hier maakt dat punt je vaste
 // punt en zoekt opnieuw. Rechtsboven wissel je tussen Kaart en Luchtfoto (de keuze wordt onthouden in de
-// instelling Kaart of luchtfoto); laadt de luchtfoto niet, dan staat de kaart er met één regel. De uitleg daarover staat achter de i van het blad. Rendert alleen: de regie staat in routeMapView.ts, de stijlen en vormen in
+// stand Luchtfoto van de instelling Ondergrond van de kaart); laadt de luchtfoto niet, dan staat de kaart er met één regel. De uitleg daarover staat achter de i van het blad. Rendert alleen: de regie staat in routeMapView.ts, de stijlen en vormen in
 // engine/routeMap.ts, het bewaren van het punt in storage/routeStart.ts#startFromMap.
 // Docs: docs/beslissingen/2026-11-11-route-kaart.md.
 

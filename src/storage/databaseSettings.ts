@@ -183,7 +183,8 @@ export interface AppSettings {
   // What lies under the loops on the route map (engine/routeMap.ts): a dark street map in the
   // app's colours ('dark', absent = dark), a light one ('light'), or nothing ('none': no tiles).
   routeMapBase?: 'dark' | 'light' | 'none';
-  // Kaart of luchtfoto onder de lussen (engine/routeMap.ts#resolveMapPhoto): de kaart ('map', afwezig
+  // Luchtfoto aan: de stand Luchtfoto van de instelling Ondergrond, samen met routeMapBase gelezen door
+  // engine/routeMap.ts#resolveMapGround (de schakelaar op de kaart zet alleen dit veld): de kaart ('map', afwezig
   // = map, het advies) of een luchtfoto ('photo'; PDOK, IGN of EOX, integrations/aerialImagery.ts).
   // Optioneel: een oude back-up zonder dit veld leest als Kaart, dus geen migratie.
   routeMapPhoto?: 'map' | 'photo';
