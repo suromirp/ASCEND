@@ -15,6 +15,32 @@ const target = { distanceKm: 6, ascentM: 0 };
 const straight: RouteFn = async (waypoints) => ({ ok: true, line: { source: 'brouter', points: waypoints.flatMap((w, i) => (i === 0 ? [w] : [{ lat: (w.lat + waypoints[i - 1].lat) / 2, lon: (w.lon + waypoints[i - 1].lon) / 2 }, w])) } });
 
 describe('findRoutes', () => {
+  it('Waar je nu bent: de stappen in volgorde, en de heuvels om het punt op drie decimalen', async () => {
+    const here = { lat: 52.12789, lon: 5.65123 };
+    const steps: string[] = [];
+    const terrain = vi.fn(async () => undefined);
+    const found = await findRoutes(place, target, { route: straight, terrain, offline: () => false, onStep: (s) => steps.push(s), terrainAt: { lat: 52.128, lon: 5.651 } }, here);
+    expect(found.kind).toBe('plans');
+    expect(steps).toEqual(['terrain', 'routes']);
+    expect(terrain).toHaveBeenCalledWith({ name: '', lat: 52.128, lon: 5.651 }, true);
+  });
+
+  it('zonder netwerk: geen stap, meteen de regel', async () => {
+    const onStep = vi.fn();
+    expect(await findRoutes(place, target, { route: straight, terrain: async () => undefined, offline: () => true, onStep })).toEqual({ kind: 'offline' });
+    expect(onStep).not.toHaveBeenCalled();
+  });
+
+  it('het paneel sluiten tijdens het zoeken: geen volgende stap en geen aanroep meer', async () => {
+    const stop = new AbortController();
+    const route = vi.fn(straight);
+    const steps: string[] = [];
+    const terrain = async () => { stop.abort(); return undefined; };
+    await findRoutes(place, target, { route, terrain, offline: () => false, signal: stop.signal, onStep: (s) => steps.push(s) });
+    expect(steps).toEqual(['terrain']);
+    expect(route).not.toHaveBeenCalled();
+  });
+
   it('zonder netwerk: een nette stilte, zonder een enkele aanroep', async () => {
     const route = vi.fn(straight);
     const terrain = vi.fn(async () => undefined);

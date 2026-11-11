@@ -341,8 +341,9 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeStyle;
     skipped.n++;
   }
-  // Startpunt van je lus: Ongeveer of Precies. Het punt zelf staat nooit in een back-up.
-  if ('routeStart' in s && s.routeStart !== 'approx' && s.routeStart !== 'exact') {
+  // Startpunt van je lus: Waar je nu bent, Vast punt ('exact') of Ongeveer. Iets anders valt weg, en
+  // dan geldt de standaard (Waar je nu bent). Het punt zelf staat nooit in een back-up.
+  if ('routeStart' in s && s.routeStart !== 'here' && s.routeStart !== 'approx' && s.routeStart !== 'exact') {
     delete s.routeStart;
     skipped.n++;
   }
@@ -351,8 +352,8 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeMapBase;
     skipped.n++;
   }
-  // Precies hoort bij het punt op dit toestel: een import zet het nooit aan, dan ging er zonder vraag een punt de deur uit.
-  if (s.routeStart === 'exact') s.routeStart = 'approx';
+  // Vast punt blijft Vast punt: het was je eigen keuze. Staat er op dit toestel geen punt, dan vraagt
+  // het paneel eerst om een punt (besluit 2026-11-11-route-kaart-2.md; je plek is geen ontwerpgrens meer).
   if ('routeStartPoint' in s) {
     delete s.routeStartPoint;
     skipped.n++;

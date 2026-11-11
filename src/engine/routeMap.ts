@@ -60,6 +60,8 @@ export const MAP_TOKENS = {
   onLight: '--color-on-light',
   onLightDim: '--color-on-light-dim',
   lightCard: '--color-light-card',
+  routeOther: '--color-route-other',
+  routeOtherOnLight: '--color-route-other-on-light',
 } as const;
 export type MapColors = Record<keyof typeof MAP_TOKENS, string>;
 
@@ -73,8 +75,8 @@ export function readMapColors(read: (token: string) => string): MapColors {
 export function overlayColors(c: MapColors, base: MapBase, stage: MapStage) {
   const light = base === 'light' && stage !== 'plain';
   return light
-    ? { chosen: c.actionOnLight, other: c.onLightDim, casing: c.lightCard, status: c.statusOnLight, ring: c.lightCard, pick: c.onLight }
-    : { chosen: c.action, other: c.inkDim, casing: c.bg, status: c.status, ring: c.bg, pick: c.ink };
+    ? { chosen: c.actionOnLight, other: c.routeOtherOnLight, otherCasing: c.lightCard, casing: c.lightCard, status: c.statusOnLight, ring: c.lightCard, pick: c.onLight }
+    : { chosen: c.action, other: c.routeOther, otherCasing: c.bg, casing: c.bg, status: c.status, ring: c.bg, pick: c.ink };
 }
 
 // ── GeoJSON ──────────────────────────────────────────────────────────────
@@ -119,6 +121,14 @@ export function boundsOf(points: RoutePoint[]): [[number, number], [number, numb
   return [[w, s], [e, n]];
 }
 
+// Eén regel boven de kaart als er meer dan één lus is: welke doorgetrokken is en welke gestreept, in de
+// woorden van de blokken eronder. Leeg bij één of geen lus.
+export function mapLegendLine(styles: RouteStyle[], chosen: RouteStyle | undefined, names: Record<RouteStyle, string>): string {
+  if (styles.length < 2 || !chosen || !styles.includes(chosen)) return '';
+  const others = styles.filter((s) => s !== chosen).map((s) => names[s]);
+  return `${styles.length} lussen: ${names[chosen]} (doorgetrokken) en ${others.join(' en ')} (gestreept). Tik er een om te kiezen.`;
+}
+
 // Hoe lang een beweging van de camera duurt: alleen in Vol, en binnen 150 tot 400 ms.
 export const cameraDuration = (motion: 'full' | 'calm' | 'off'): number => (motion === 'full' ? 300 : 0);
 
@@ -139,12 +149,20 @@ export interface StyleSpec extends Json {
 
 type Overlay = { routes: ReturnType<typeof routeFeatures>; dots: ReturnType<typeof dotFeatures> };
 
+// De andere lus: breedte van de streepjes, van de donkere rand eronder, en hoeveel px hij naast de lijn ligt.
+export const OTHER_WIDTH = 3.5;
+export const OTHER_CASING_WIDTH = 7.5;
+export const OTHER_OFFSET = 5;
+
 // De lussen en stippen bovenop elke ondergrond, als bronnen en lagen in dezelfde stijl.
 export function overlayLayers(colors: ReturnType<typeof overlayColors>): Json[] {
   const isChosen = ['==', ['get', 'chosen'], true];
   return [
     { id: ROUTE_HIT_LAYER, type: 'line', source: ROUTE_SOURCE, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': colors.casing, 'line-width': ROUTE_HIT_WIDTH, 'line-opacity': 0 } },
-    { id: 'ascend-route-other', type: 'line', source: ROUTE_SOURCE, filter: ['!', isChosen], layout: { 'line-join': 'round' }, paint: { 'line-color': colors.other, 'line-width': 3, 'line-opacity': 0.85, 'line-dasharray': [2, 1.5] } },
+    // De andere lus: licht gestreept op een donkere rand, iets naast de lijn gelegd, zodat hij ook te zien
+    // is waar hij met de gekozen lus samenloopt (het eerste stuk vanaf de start).
+    { id: 'ascend-route-other-casing', type: 'line', source: ROUTE_SOURCE, filter: ['!', isChosen], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': colors.otherCasing, 'line-width': OTHER_CASING_WIDTH, 'line-offset': OTHER_OFFSET } },
+    { id: 'ascend-route-other', type: 'line', source: ROUTE_SOURCE, filter: ['!', isChosen], layout: { 'line-join': 'round' }, paint: { 'line-color': colors.other, 'line-width': OTHER_WIDTH, 'line-offset': OTHER_OFFSET, 'line-dasharray': [2, 1.25] } },
     { id: 'ascend-route-casing', type: 'line', source: ROUTE_SOURCE, filter: isChosen, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': colors.casing, 'line-width': 8 } },
     { id: 'ascend-route-chosen', type: 'line', source: ROUTE_SOURCE, filter: isChosen, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': colors.chosen, 'line-width': 4.5 } },
     // Startpunt en een gekozen punt: een ring. Je plek: een volle stip.

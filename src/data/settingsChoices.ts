@@ -761,11 +761,12 @@ export const CHOICES = {
     group: 'Vandaag en meldingen',
     title: 'Startpunt van je lus',
     line: 'Waar een voorgestelde lus begint.',
-    advice: 'approx' as 'approx' | 'exact',
+    advice: 'here' as 'here' | 'exact' | 'approx',
     help: 'routeStartpunt',
     options: [
+      { value: 'here', label: 'Waar je nu bent', note: 'Bij elke zoektocht één keer je plek van dat moment', short: 'Waar je nu bent' },
+      { value: 'exact', label: 'Vast punt', note: 'Een punt dat je zelf bewaart, zoals je deur', short: 'Vast punt' },
       { value: 'approx', label: 'Ongeveer', note: 'Je plaats, binnen een kilometer', short: 'Ongeveer' },
-      { value: 'exact', label: 'Precies', note: 'Je eigen startpunt gaat naar de routeplanner', short: 'Precies' },
     ],
   }),
   routeKaart: def({

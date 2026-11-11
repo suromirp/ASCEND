@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   attributionFor, boundsOf, cameraDuration, dotFeatures, MAP_TOKENS, nextStage, overlayLayers, overlayColors, paintOpenFreeMap,
-  plainStyle, rasterStyle, readMapColors, resolveMapBase, ROUTE_HIT_LAYER, ROUTE_HIT_WIDTH, routeFeatures, stagesFor, type MapColors, type StyleSpec,
+  mapLegendLine, plainStyle, rasterStyle, readMapColors, resolveMapBase, ROUTE_HIT_LAYER, ROUTE_HIT_WIDTH, routeFeatures, stagesFor, type MapColors, type StyleSpec,
 } from './routeMap';
 
 // Nagemaakte punten bij het Drielandenpunt (een openbare plek), nooit een echte plek van de eigenaar.
@@ -81,8 +81,15 @@ describe('lussen en stippen', () => {
     const layers = overlayLayers(overlayColors(colors, 'dark', 'vector')) as { id: string; paint: Record<string, unknown> }[];
     const by = (id: string) => layers.find((l) => l.id === id)!.paint;
     expect(by('ascend-route-chosen')['line-color']).toBe(MAP_TOKENS.action);
-    expect(by('ascend-route-other')['line-color']).toBe(MAP_TOKENS.inkDim);
+    // De andere lus heeft een eigen token, een donkere rand en ligt iets naast de gekozen lus.
+    expect(by('ascend-route-other')['line-color']).toBe(MAP_TOKENS.routeOther);
     expect(by('ascend-route-other')['line-dasharray']).toBeDefined();
+    expect(by('ascend-route-other')['line-width']).toBeGreaterThan(3);
+    expect(by('ascend-route-other-casing')['line-color']).toBe(MAP_TOKENS.bg);
+    expect(by('ascend-route-other-casing')['line-offset']).toBe(by('ascend-route-other')['line-offset']);
+    expect(overlayColors(colors, 'light', 'vector').other).toBe(MAP_TOKENS.routeOtherOnLight);
+    // Eén mint accent: alleen de gekozen lus is mint.
+    expect(layers.filter((l) => JSON.stringify(l.paint).includes(MAP_TOKENS.action)).map((l) => l.id)).toEqual(['ascend-route-chosen']);
     expect(JSON.stringify(by('ascend-dots'))).toContain(MAP_TOKENS.status);
   });
 
@@ -163,3 +170,16 @@ describe('beweging', () => {
     expect(cameraDuration('off')).toBe(0);
   });
 });
+
+describe('de regel boven de kaart', () => {
+  const names = { simple: 'Simpel', adventure: 'Avontuurlijk' } as const;
+  it('twee lussen: welke doorgetrokken en welke gestreept, in de woorden van de blokken', () => {
+    expect(mapLegendLine(['adventure', 'simple'], 'adventure', names)).toBe('2 lussen: Avontuurlijk (doorgetrokken) en Simpel (gestreept). Tik er een om te kiezen.');
+    expect(mapLegendLine(['adventure', 'simple'], 'simple', names)).toBe('2 lussen: Simpel (doorgetrokken) en Avontuurlijk (gestreept). Tik er een om te kiezen.');
+  });
+  it('één of geen lus: geen regel', () => {
+    expect(mapLegendLine(['simple'], 'simple', names)).toBe('');
+    expect(mapLegendLine([], undefined, names)).toBe('');
+  });
+});
+
