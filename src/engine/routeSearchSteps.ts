@@ -20,9 +20,6 @@ export function searchStepShare(steps: SearchStep[], current: SearchStep): numbe
   return (i + 0.5) / steps.length;
 }
 
-// De balk schuift alleen in Vol, binnen 150 tot 400 ms en één keer per stap; in Rustig en Uit staat hij meteen goed.
-export const searchBarTransition = (motion: 'full' | 'calm' | 'off'): string => (motion === 'full' ? 'width 300ms ease-out' : 'none');
-
 // De balk op tijd (Vol): één doorlopende, vertragende beweging van 0 naar ongeveer 90 procent in de
 // grens van de zoektocht, nooit vol voor hij klaar is en geen herhaling. Een nieuwe stap zet de vloer
 // hoger (het begin van die stap); de balk schuift daar in 300 ms ease-out naartoe en loopt dan door.
@@ -40,6 +37,8 @@ export function searchStepFloor(steps: SearchStep[], current: SearchStep): numbe
   return (SEARCH_BAR_CAP * i) / steps.length;
 }
 export const STEP_SLIDE_MS = 300;
+// Na twee keer de grens staat de balk op 1 - e^-6 van de cap: daar stopt hij, zonder nog te tekenen.
+export const BAR_STOP_FACTOR = 2;
 // Hoe ver de balk staat in Vol: de vloer van de stap die loopt (met de 300 ms ease-out van de vorige
 // vloer naar de nieuwe, `sinceStepMs` na de nieuwe stap), plus de tijd over het stuk tussen die vloer en de
 // cap. Zo loopt hij altijd door, ook na een stap, en komt hij nooit boven de cap.

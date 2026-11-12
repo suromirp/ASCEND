@@ -198,21 +198,21 @@ describe('een startpunt van de kaart', () => {
     expect(await getRouteStartPoint()).toEqual({ lat: 52.12346, lon: 5.65432 });
   });
 
-  it('Gebruik waar ik nu ben: een grove plek (800 m) telt niet en bewaart niets', async () => {
-    const r = await startFromMap('here', { askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 800 }) });
+  it('Gebruik waar ik nu ben (instelling): een grove plek (800 m) telt niet en bewaart niets', async () => {
+    const r = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 800 }) });
     expect(r).toEqual({ ok: false, reason: 'coarse' });
     expect(r.ok ? '' : startFailureReason(r.reason)).toBe('ASCEND krijgt je precieze plek niet.');
     expect(await getRouteStartPoint()).toBeUndefined();
   });
 
-  it('Gebruik waar ik nu ben: een fijne plek wordt het startpunt', async () => {
-    const r = await startFromMap('here', { askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 8 }) });
+  it('Gebruik waar ik nu ben (instelling): een fijne plek wordt het startpunt', async () => {
+    const r = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 8 }) });
     expect(r.ok).toBe(true);
     expect(await getRouteStartPoint()).toBeDefined();
   });
 
   it('fijne toestemming geweigerd in de app: geen startpunt', async () => {
-    expect(await startFromMap('here', { askPermission: async () => 'denied', locate: async () => ({ ...fake, accuracyM: 8 }) })).toEqual({ ok: false, reason: 'coarse' });
+    expect(await locateStartHere({ askPermission: async () => 'denied', locate: async () => ({ ...fake, accuracyM: 8 }) })).toEqual({ ok: false, reason: 'coarse' });
   });
 
   it('een kapot punt of een gesloten paneel bewaart niets', async () => {

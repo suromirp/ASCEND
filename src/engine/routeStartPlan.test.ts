@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, START_LINE_NO_HOME, START_LINE_TAP, startFailureLine, startFailureReason, type StartFailure } from './routeStart';
+import { locateAnswerCounts, planStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, START_LINE_HOME_UNREAD, START_LINE_NO_HOME, START_LINE_NO_HOME_NO_PLACE, START_LINE_TAP, startFailureReason, type StartFailure } from './routeStart';
 import { homeFromStartPoint, startChoices } from './places';
 
 // Start bij (docs/onderhoud/2026-11-11-pathfinder-route-start.md). Nagemaakte punten, geen echte plek.
@@ -30,16 +30,16 @@ describe('Start bij: welke chip en welk punt', () => {
 
 describe('locatie lukt niet: nooit stil terugvallen', () => {
   for (const reason of ['denied', 'coarse', 'timeout'] as const) {
-    it(`${reason}, met Thuis: de regel zegt de reden en dat hij bij Thuis begint`, () => {
+    it(`${reason}, met Thuis: de chip Thuis staat gekozen en de regel zegt de reden en dat hij bij Thuis begint`, () => {
       const p = planStart({ mode: 'here', home, found: fail(reason) });
-      expect(p).toEqual({ kind: 'home', chip: 'here', point: home, line: `${startFailureReason(reason)} ${START_LINE_EXACT}` });
+      expect(p).toEqual({ kind: 'home', chip: 'home', point: home, line: `${startFailureReason(reason)} ${START_LINE_EXACT}` });
       expect(p.line).toContain('Thuis');
       expect(p.line).not.toMatch(/vast punt/i);
     });
-    it(`${reason}, zonder Thuis: Ongeveer, met de reden`, () => {
+    it(`${reason}, zonder Thuis: Ongeveer, in één zin`, () => {
       const p = planStart({ mode: 'here', home: undefined, found: fail(reason) });
-      expect(p).toEqual({ kind: 'approx', chip: 'here', line: startFailureLine(reason) });
-      expect(p.line).toContain('ongeveer een kilometer');
+      expect(p).toEqual({ kind: 'approx', chip: 'here', line: START_LINE_NO_HOME_NO_PLACE });
+      expect(p.line).toBe('Geen Thuis en geen locatie: de lus begint bij je plek, afgerond op ongeveer een kilometer.');
     });
   }
   it('te grof (meer dan 50 m) heeft een eigen reden', () => {
@@ -54,7 +54,7 @@ describe('geen Thuis', () => {
   });
   it('instelling Thuis zonder Thuis en je plek lukt niet: de regel noemt beide', () => {
     const p = planStart({ mode: 'exact', home: undefined, found: fail('denied') });
-    expect(p).toEqual({ kind: 'approx', chip: 'here', line: `Je hebt nog geen Thuis. ${startFailureLine('denied')}` });
+    expect(p).toEqual({ kind: 'approx', chip: 'here', line: START_LINE_NO_HOME_NO_PLACE });
   });
   it('een tik op Thuis zonder Thuis kiest Waar je nu bent', () => {
     expect(planStart({ mode: 'here', home: undefined, picked: 'home' }).chip).toBe('here');
@@ -68,10 +68,42 @@ describe('Ongeveer en een getikt punt wijken af: dan wel een regel', () => {
   it('instelling Ongeveer: onder de chip Waar je nu bent, zonder vraag om je plek', () => {
     expect(planStart({ mode: 'approx', home })).toEqual({ kind: 'approx', chip: 'here', line: START_LINE_APPROX });
   });
-  it('een tik op Waar je nu bent bij Ongeveer vraagt je plek wel', () => {
-    expect(planStart({ mode: 'approx', home, picked: 'here' }).kind).toBe('locate');
+  it('bij Ongeveer blijft een tik op Waar je nu bent afgerond: de precieze plek gaat niet de deur uit', () => {
+    expect(planStart({ mode: 'approx', home, picked: 'here' })).toEqual({ kind: 'approx', chip: 'here', line: START_LINE_APPROX });
+    // Ook met een plek die er al is (Thuis en terug): nog steeds afgerond.
+    expect(planStart({ mode: 'approx', home, picked: 'here', found: { ok: true, point: here } }).kind).toBe('approx');
+  });
+  it('bij Ongeveer kiest een tik op Thuis wel Thuis', () => {
+    expect(planStart({ mode: 'approx', home, picked: 'home' }).kind).toBe('home');
   });
   it('Start hier: het getikte punt, met een regel', () => {
     expect(planStart({ mode: 'exact', home, tap })).toEqual({ kind: 'tap', chip: 'home', point: tap, line: START_LINE_TAP });
+  });
+});
+
+describe('Thuis niet gelezen (trage of kapotte opslag)', () => {
+  it('niet raden dat er geen Thuis is: een eigen regel, ook bij de instelling Thuis', () => {
+    expect(planStart({ mode: 'exact', home: null, homeUnread: true })).toEqual({ kind: 'locate', chip: 'here', line: START_LINE_HOME_UNREAD });
+    expect(planStart({ mode: 'here', home: null, homeUnread: true, found: { ok: true, point: here } })).toEqual({ kind: 'here', chip: 'here', point: here, line: START_LINE_HOME_UNREAD });
+    expect(START_LINE_HOME_UNREAD).toBe('Thuis kon niet gelezen worden. De lus begint waar je nu bent.');
+  });
+  it('en je plek lukt ook niet: afgerond, de regel noemt beide', () => {
+    const p = planStart({ mode: 'exact', home: null, homeUnread: true, found: fail('timeout') });
+    expect(p.kind).toBe('approx');
+    expect(p.line).toContain('Thuis kon niet gelezen worden.');
+    expect(p.line).toContain(startFailureReason('timeout'));
+  });
+  it('nooit "Je hebt nog geen Thuis" als Thuis niet gelezen is', () => {
+    for (const found of [undefined, { ok: true as const, point: here }, fail('denied')]) {
+      expect(planStart({ mode: 'exact', home: null, homeUnread: true, found }).line).not.toContain('nog geen Thuis');
+    }
+  });
+});
+
+describe('een antwoord op de vraag om je plek telt alleen voor de poging die hem stelde', () => {
+  it('een laat antwoord van poging 1 telt niet meer als poging 2 vroeg', () => {
+    expect(locateAnswerCounts(2, 1)).toBe(false);
+    expect(locateAnswerCounts(2, 2)).toBe(true);
+    expect(locateAnswerCounts(undefined, 0)).toBe(false);
   });
 });

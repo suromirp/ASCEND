@@ -18,7 +18,7 @@ import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { resolveRouteStyle, roundStart, routeTarget } from '../engine/routeTarget';
 import { searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
-import { planStart, resolveRouteStart, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
+import { locateAnswerCounts, planStart, resolveRouteStart, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, saveRouteStartPoint, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
 import { homeFromStartPoint, startChoices, type StartChip } from '../engine/places';
 import { todayISO } from '../utils/dates';
@@ -50,7 +50,7 @@ export interface RouteSearchModel {
   mePoint: RoutePoint | undefined;
   // Maak dit Thuis bij een getikt punt: het enige dat hier iets bewaart.
   hasHome: boolean;
-  makeHome: (point: RoutePoint) => Promise<boolean>;
+  makeHome: ((point: RoutePoint) => Promise<boolean>) | undefined;
   // Het getikte punt waar de lus nu begint (Start hier), voor Bewaar als plek.
   tapPoint: RoutePoint | undefined;
   // De eerste vraag.
@@ -96,8 +96,11 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const [consent, setConsent] = useState<boolean | undefined>();
   const [found, setFound] = useState<{ key: string; result: RouteSearch } | undefined>();
   const [attempt, setAttempt] = useState(0);
-  // Het eigen startpunt (de plek Thuis): undefined zolang we lezen, null als er geen is.
-  const [saved, setSaved] = useState<RoutePoint | null | undefined>();
+  // Het eigen startpunt (de plek Thuis): undefined zolang we lezen, null als er geen is, 'unread' als
+  // de opslag niet op tijd of met een fout antwoordde (dan nooit raden dat er geen Thuis is).
+  const [stored, setSaved] = useState<RoutePoint | null | 'unread' | undefined>();
+  const homeUnread = stored === 'unread';
+  const saved = stored === 'unread' ? null : stored;
   // Een tik op een chip Start bij: voor deze training, niet bewaard.
   const [startPicked, setStartPicked] = useState<StartPick | undefined>();
   // Start hier: een getikt punt, alleen voor deze zoektocht; niet bewaard.
@@ -145,8 +148,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     void withTimeout(getRouteStartPoint(), CONSENT_LIMIT_MS).then((p) => {
       if (alive) setSaved(p ?? null);
     }, () => {
-      // Trage opslag: dan is er voor dit paneel geen Thuis en begint de lus waar je nu bent.
-      if (alive) setSaved(null);
+      // Trage of kapotte opslag: Thuis is onbekend, niet afwezig. De regel zegt dat; Maak dit Thuis staat er dan niet.
+      if (alive) setSaved('unread');
     });
     return () => {
       alive = false;
@@ -161,9 +164,10 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const chips = startChoices(mode, homePlace ? [homePlace] : []).chips.filter((c) => c.kind === 'here' || c.kind === 'home');
   // Je plek van deze poging (één vraag per poging), of de reden dat het niet lukte.
   const hereFound = here?.attempt === attempt ? here.found : undefined;
-  const plan = saved === undefined ? undefined : planStart({ mode, home: saved, picked: startPicked, tap: mapStart, found: hereFound });
+  const plan = stored === undefined ? undefined : planStart({ mode, home: saved, homeUnread, picked: startPicked, tap: mapStart, found: hereFound });
   // Waar je nu bent: je plek komt als eerste stap in de zoekstand.
-  const hereMode = plan !== undefined && plan.chip === 'here' && plan.kind !== 'tap' && !(plan.kind === 'approx' && hereFound === undefined);
+  // Ook na een terugval op Thuis blijft je plek een (afgevinkte) stap: de stappen springen dan niet.
+  const hereMode = plan !== undefined && plan.kind !== 'tap' && (plan.kind === 'locate' || hereFound !== undefined);
   const locatingHere = plan?.kind === 'locate';
   const exactPoint = plan && 'point' in plan ? plan.point : undefined;
   const exactLat = exactPoint?.lat;
@@ -187,7 +191,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     // Eén vraag om de plek, met dezelfde grens van 50 m als Thuis; er wordt niets bewaard. Een tik op een
     // chip breekt deze vraag niet af: het antwoord blijft voor deze poging, zodat terug naar Waar je nu bent geen tweede vraag is.
     void locateStartHere({ persist: false, signal: closed }).then((result) => {
-      if (!closed.aborted && mounted.current) setHere({ attempt, found: result });
+      // Alleen voor de poging die hem stelde: een laat antwoord van een oude poging overschrijft het nieuwe nooit.
+      if (!closed.aborted && mounted.current && locateAnswerCounts(askedFor.current, attempt)) setHere({ attempt, found: result });
     });
   }, [closing, enabled, asked, locatingHere, attempt]);
 
@@ -225,6 +230,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   function pickStart(next: StartPick) {
     setMapStart(undefined);
     setStartPicked(next);
+    // Waar je nu bent na een mislukte plek: een tik is een nieuwe poging, met één nieuwe vraag om je plek.
+    if (next === 'here' && hereFound && !hereFound.ok && mode !== 'approx') setAttempt((n) => n + 1);
   }
 
   // Maak dit Thuis: bewust, bij een getikt punt. Thuis verhuist (naam en routes blijven); de instelling blijft.
@@ -251,8 +258,6 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     consent,
     asked,
     savedKnown: saved !== undefined,
-    // Geen aparte stand meer voor Thuis zonder punt: de chip Waar je nu bent en één regel (planStart).
-    waitingForPoint: false,
     search,
   });
 
@@ -277,7 +282,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     pickStart,
     mePoint: hereFound?.ok ? hereFound.point : undefined,
     hasHome: !!saved,
-    makeHome,
+    // Thuis niet gelezen: geen Bewaar als plek, want Maak dit Thuis zou een bestaand Thuis zonder zin verhuizen.
+    makeHome: homeUnread ? undefined : makeHome,
     tapPoint: mapStart,
     choose,
     order,
@@ -299,8 +305,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     currentStep: locatingHere ? 'locate' : step?.key === key ? step.step : 'terrain',
     limitLine: searchLimitLine(hereMode ? START_LOCATE_LIMIT_MS : undefined, PROPOSAL_LIMIT_MS),
     limitMs: (hereMode && hereFound === undefined ? START_LOCATE_LIMIT_MS : 0) + PROPOSAL_LIMIT_MS,
-    // Per zoektocht van jou (poging, chip, getikt punt), niet per stap: je plek vinden begint geen nieuwe balk.
-    searchKey: `${attempt}|${plan?.chip}|${mapStart?.lat}|${mapStart?.lon}`,
+    // Per zoektocht van jou (poging, getikte chip, getikt punt), niet per stap of terugval: je plek vinden begint geen nieuwe balk.
+    searchKey: `${attempt}|${startPicked}|${mapStart?.lat}|${mapStart?.lon}`,
     foundLines: plans ? searchLines(plans, target) : [],
     sources,
     parts: routeSheetParts(stage, plans ? { anyOk: okStyles.length > 0, anyFailed: order.some((s) => !plans[s].ok) } : undefined),

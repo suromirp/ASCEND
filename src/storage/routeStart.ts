@@ -96,10 +96,8 @@ export async function locateStartHere(deps: UseMyPlaceDeps = {}): Promise<StartL
 
 // Een startpunt van de kaart bij Route voorstellen: een getikt punt (Start hier) geldt alleen voor deze
 // zoektocht en wordt niet bewaard; Thuis verschuift niet en de instelling blijft (besluit
-// 2026-11-11-route-start.md). Bewust Thuis maken gaat via saveRouteStartPoint (Maak dit Thuis). Met 'here'
-// je plek van nu, met dezelfde toestemmingsvraag en grens als hierboven; dat bewaart, zoals in de instelling.
-export async function startFromMap(from: { tap: RoutePoint } | 'here', deps: UseMyPlaceDeps = {}): Promise<StartLocation> {
-  if (from === 'here') return locateStartHere(deps);
+// 2026-11-11-route-start.md). Bewust Thuis maken gaat via saveRouteStartPoint (Maak dit Thuis).
+export async function startFromMap(from: { tap: RoutePoint }, deps: Pick<UseMyPlaceDeps, 'signal'> = {}): Promise<StartLocation> {
   const point = validStartPoint(from.tap);
   if (!point) return { ok: false, reason: 'unavailable' };
   if (deps.signal?.aborted) return { ok: false, reason: 'timeout' };

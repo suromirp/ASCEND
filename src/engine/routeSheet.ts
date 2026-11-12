@@ -33,8 +33,6 @@ export type RouteSheetStage =
   | 'reading'
   // De eerste keer: de bestaande eerste vraag, ongewijzigd.
   | 'first-question'
-  // Thuis gekozen zonder punt (sinds Start bij niet meer gebruikt: dan de chip Waar je nu bent met één regel).
-  | 'needs-point'
   | 'searching'
   | 'offline'
   | 'timeout'
@@ -46,7 +44,6 @@ export interface StageInput {
   // Ja gezegd en een keuze voor het startpunt gemaakt.
   asked: boolean;
   savedKnown: boolean;
-  waitingForPoint: boolean;
   search: 'busy' | { kind: 'offline' | 'timeout' | 'plans' };
 }
 
@@ -55,7 +52,6 @@ export function routeSheetStage(i: StageInput): RouteSheetStage {
   if (i.consent === undefined) return 'reading';
   if (!i.asked) return 'first-question';
   if (!i.savedKnown) return 'reading';
-  if (i.waitingForPoint) return 'needs-point';
   if (i.search === 'busy') return 'searching';
   return i.search.kind;
 }

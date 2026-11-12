@@ -7,7 +7,7 @@
 // Docs: docs/beslissingen/2026-11-11-route-kaart-2.md, docs/beslissingen/2026-11-11-route-start.md.
 
 import { useEffect, useRef, useState } from 'react';
-import { searchBarShare, searchStepFloor, searchStepShare, searchStepText, STEP_SLIDE_MS, type SearchStep } from '../engine/routeSearchSteps';
+import { BAR_STOP_FACTOR, searchBarShare, searchStepFloor, searchStepShare, searchStepText, STEP_SLIDE_MS, type SearchStep } from '../engine/routeSearchSteps';
 import { ROUTE_MAP_HEIGHT } from '../engine/routeSheet';
 import { useMotionMode } from './motion';
 import { Icon } from './icons';
@@ -38,7 +38,8 @@ function useTimedBar(on: boolean, limitMs: number, floor: number) {
       const s = step.current;
       const share = searchBarShare(now - start.current, limitMs, { from: s.from, to: s.to, sinceStepMs: now - s.at });
       if (bar.current) bar.current.style.width = `${(share * 100).toFixed(2)}%`;
-      frame = requestAnimationFrame(tick);
+      // Na twee keer de grens staat hij vrijwel op de cap: dan stopt de lus van frames.
+      if (now - start.current < BAR_STOP_FACTOR * limitMs) frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);

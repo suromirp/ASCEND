@@ -52,6 +52,9 @@ describe('korte namen in de chips Waar train je? (route-start, punt 5)', () => {
   it('ook het eerste woord gelijk: de volle naam', () => {
     expect(shortPlaceLabels(['Wandelen, buiten', 'Wandelen met rugzak, buiten'])).toEqual(['Wandelen, buiten', 'Wandelen met rugzak, buiten']);
   });
+  it('Hardlopen en wandelen afgewisseld wordt Afwisselen, zodat drie keuzes op 360 px passen', () => {
+    expect(shortPlaceLabels(['Buiten', 'Loopband', 'Hardlopen en wandelen afgewisseld'])).toEqual(['Buiten', 'Loopband', 'Afwisselen']);
+  });
   it('een naam zonder komma blijft', () => {
     expect(shortPlaceLabels(['Volledige rust', 'Herstelwandeling'])).toEqual(['Volledige rust', 'Herstelwandeling']);
   });

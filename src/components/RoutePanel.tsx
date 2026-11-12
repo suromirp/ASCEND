@@ -165,7 +165,7 @@ export function StartChips({ model }: { model: RouteSearchModel }) {
       <div role="group" aria-label="Start bij" className="flex h-11 gap-2">
         {model.startChips.map((c) => (
           <span key={c.kind} className="shrink-0 whitespace-nowrap">
-            <Chip selected={c.kind === model.startChip} onClick={() => model.pickStart(c.kind === 'home' ? 'home' : 'here')}>{c.label}</Chip>
+            <Chip tone="quiet" selected={c.kind === model.startChip} onClick={() => model.pickStart(c.kind === 'home' ? 'home' : 'here')}>{c.label}</Chip>
           </span>
         ))}
       </div>

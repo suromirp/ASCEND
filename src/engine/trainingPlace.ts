@@ -43,8 +43,11 @@ export function splitPlaceLabel(label: string): { name: string; sport?: string }
 // Korte namen voor de chips Waar train je? in de Briefing: de naam na de komma ("Buiten"); delen twee
 // keuzes die naam, dan het eerste woord van de sport ("Hardlopen", "Wandelen"), en pas als ook dat gelijk
 // is de volle naam. De volle naam staat in de regel eronder; zo passen twee of drie keuzes op 360 px.
+// Een naam zonder komma die te lang is voor een chip krijgt hier een korte vorm.
+const SHORT_NAME: Record<string, string> = { 'Hardlopen en wandelen afgewisseld': 'Afwisselen' };
+
 export function shortPlaceLabels(labels: readonly string[]): string[] {
-  const split = labels.map(splitPlaceLabel);
+  const split = labels.map((l) => (SHORT_NAME[l] ? { name: SHORT_NAME[l] } : splitPlaceLabel(l)));
   const firstWord = (s: string) => capitalize(s.split(' ')[0]);
   return split.map((p, i) => {
     const same = split.filter((o, j) => j !== i && o.name === p.name);

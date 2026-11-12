@@ -361,7 +361,8 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
   const start = (
     <>
       <StartChips model={model} />
-      {model.startLine && <p role="status" className="text-sm leading-snug" style={dim}>{model.startLine}</p>}
+      {/* Vaste hoogte (twee regels), zodat de zoekstand niet verspringt als de regel komt of gaat. */}
+      <p role="status" className="min-h-[40px] text-sm leading-snug" style={dim}>{model.startLine}</p>
     </>
   );
   if (stage === 'reading') return <div className="flex flex-col gap-2">{start}</div>;

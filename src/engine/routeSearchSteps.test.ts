@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SEARCH_BAR_CAP, searchBarShare, searchBarTimeShare, searchBarTransition, searchLimitLine, searchStepFloor, searchStepShare, searchSteps, searchStepText } from './routeSearchSteps';
+import { SEARCH_BAR_CAP, searchBarShare, searchBarTimeShare, searchLimitLine, searchStepFloor, searchStepShare, searchSteps, searchStepText } from './routeSearchSteps';
 
 describe('Lussen zoeken: de stappen', () => {
   it('bij Waar je nu bent komt je plek eerst', () => {
@@ -14,12 +14,6 @@ describe('Lussen zoeken: de stappen', () => {
     expect(shares).toEqual([...shares].sort((a, b) => a - b));
     expect(Math.max(...shares)).toBeLessThan(1);
     expect(shares[0]).toBeGreaterThan(0);
-  });
-
-  it('beweging alleen in Vol, binnen 150 tot 400 ms; Rustig en Uit staan meteen goed', () => {
-    expect(searchBarTransition('full')).toMatch(/\b300ms\b/);
-    expect(searchBarTransition('calm')).toBe('none');
-    expect(searchBarTransition('off')).toBe('none');
   });
 
   it('de grens in tijd komt uit de constanten', () => {
@@ -56,7 +50,6 @@ describe('de balk op tijd (route-start, eis 9)', () => {
     expect(searchBarShare(9000, T, { from: 0.3, to: floor, sinceStepMs: 6000 })).toBeGreaterThan(after);
   });
   it('Rustig en Uit: geen overgang, de balk staat op het aandeel van de stap', () => {
-    expect(searchBarTransition('calm')).toBe('none');
     expect(searchStepShare(searchSteps(false), 'routes')).toBe(0.75);
   });
   it('een grens die geen getal is geeft 0, nooit NaN', () => {
