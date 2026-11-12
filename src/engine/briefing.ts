@@ -27,7 +27,7 @@ import type { PaceRange, RacePaces } from './racePaces';
 import { paceRangeText, trainingPace } from './missionFacts';
 import { watchSportOf, type WatchSport } from './watchWorkout';
 import type { WatchStatus } from './watchStatus';
-import { formatClockTime } from './watchStatus';
+import { formatClockTime, goesOnWhen } from './watchStatus';
 import { watchSheet, type WatchSheetInput } from './watchSheet';
 import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
@@ -473,7 +473,7 @@ function watchRow(input: BriefingInput, stand: BriefingStand, place: string | un
   // van de training.
   // De echte stand, ook als de instelling Horlogestatus tonen uit staat: anders zou de regel een workout verzwijgen.
   // Amber alleen als ASCEND een workout klaarzette (of gaat zetten); stel je zelf in, dan de gewone toon.
-  const other = watchPlaceState(input.template, place, status);
+  const other = watchPlaceState(input.template, place, status, toISODate(input.now));
   if (other) return { id: 'watch', label: BRIEFING_TEXT.watch, line: ticks ? `${other.line} ${ticks}.` : other.line, opens: true, ...(other.warn ? { tone: 'warn' as const } : {}) };
   const state = watchState(input, status, plan?.garmin !== undefined);
   const line = ticks ? `${state.line}. ${ticks}.` : state.line;
@@ -501,7 +501,8 @@ const WATCH_ACTIVITY: Record<Sport, string> = { running: 'Hardlopen', hiking: 'W
 export function watchPlaceState(
   template: SessionTemplate,
   place: string | undefined,
-  status: Pick<WatchStatus, 'kind' | 'wants' | 'wrote'> | undefined,
+  status: Pick<WatchStatus, 'kind' | 'wants' | 'wrote' | 'goesOn'> | undefined,
+  today?: string,
 ): { line: string; warn?: boolean } | undefined {
   const workout = watchSportOf(template);
   const chosen = place ? modalitySport(place) : undefined;
@@ -517,12 +518,14 @@ export function watchPlaceState(
   const profile = getModality(template.id, place!)?.garminProfile;
   const start = profile && !profile.includes('/') ? `Start ${profile} zonder workout.` : 'Start zonder workout.';
   const onWatch = WATCH_WHEN[status?.kind ?? ''];
+  // Nog te ver weg (meer dan 7 dagen): de dag erbij waarop hij gaat, zoals de gewone regel.
+  const later = status?.kind === 'later' && today ? `${goesOnWhen(status.goesOn, today)} ` : '';
   const wants = WATCH_SPORT[status?.wants ?? workout];
   const wrote = WATCH_SPORT[status?.wrote ?? workout];
   if (wants !== chosen) {
     // Wat er echt op staat: de workout van de training, of nog de eigen workout van net (de instelling ging uit).
     if (onWatch === 'on') return { line: `Er staat een ${WORKOUT_NAME[wrote]} op. ${start}`, warn: true };
-    if (onWatch === 'coming') return { line: `Er komt een ${WORKOUT_NAME[wants]} op je horloge. ${start}`, warn: true };
+    if (onWatch === 'coming') return { line: `Er komt ${later}een ${WORKOUT_NAME[wants]} op je horloge. ${start}`, warn: true };
     return { line: start };
   }
   const own = WORKOUT_NAME[wants];
@@ -540,7 +543,7 @@ export function watchPlaceState(
         : { line: `Versturen lukte niet. ${start}`, warn: true };
     case 'pending':
     case 'later':
-      return { line: `Er komt een ${own} op je horloge.` };
+      return { line: `Er komt ${later}een ${own} op je horloge.` };
     default:
       // Niet gekoppeld of sturen staat uit: er komt niets, dus alleen wat je start.
       return { line: start };

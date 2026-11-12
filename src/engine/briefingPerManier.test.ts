@@ -227,7 +227,7 @@ describe('het horloge bij een andere manier', () => {
   it('nog niet verstuurd (pending, later): er komt een workout op je horloge', () => {
     for (const kind of ['pending', 'later'] as const) {
       const row = view(HILLS, 'stairmaster_intervals', { watchStatus: kind === 'later' ? { kind, goesOn: '2026-11-12' } : { kind } }).rows.find((r) => r.id === 'watch')!;
-      expect(row.line).toBe('Er komt een hardloopworkout op je horloge. Start Stair Stepper zonder workout. Vinkt zelf af.');
+      expect(row.line).toBe(`Er komt ${kind === 'later' ? 'morgen ' : ''}een hardloopworkout op je horloge. Start Stair Stepper zonder workout. Vinkt zelf af.`);
       expect(row.tone).toBe('warn');
     }
   });
@@ -270,7 +270,9 @@ describe('de eigen wandelworkout op de StairMaster (besluit 2026-11-12-stairmast
   });
   it('gekozen voor het versturen, de dag zelf of de avond ervoor: hij komt eraan', () => {
     expect(row({ kind: 'pending', wants: 'Walk' }).line).toBe('Er komt een wandelworkout op je horloge.');
-    expect(row({ kind: 'later', goesOn: '2026-11-12', wants: 'Walk' }).line).toBe('Er komt een wandelworkout op je horloge.');
+    // Verder weg dan 7 dagen: de dag erbij waarop hij gaat (vandaag is 11 november).
+    expect(row({ kind: 'later', goesOn: '2026-11-12', wants: 'Walk' }).line).toBe('Er komt morgen een wandelworkout op je horloge.');
+    expect(row({ kind: 'later', goesOn: '2026-11-14', wants: 'Walk' }).line).toBe('Er komt op zaterdag 14 november een wandelworkout op je horloge.');
     expect(row({ kind: 'pending', wants: 'Walk' }).tone).toBeUndefined();
   });
   it('versturen mislukt of de koppeling verlopen: de oude blijft en de regel zegt dat', () => {

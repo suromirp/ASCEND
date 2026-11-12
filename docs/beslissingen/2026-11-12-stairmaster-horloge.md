@@ -54,6 +54,16 @@ Warden keurde één eigen keuze af; dit stuk gaat voor waar het de tekst hierbov
 - De uitleg bij de instelling zegt eerlijk dat je horloge de training als wandeling vastlegt, zonder traptelling.
 - Niet nu, naar de backlog: een ronde overslaan als er al een nieuwere wacht; het blad Je horloge noemt nog "Hard bergop".
 
+## Tweede aanvulling (12 november, na Pathfinder, voor main)
+
+- Na afloop telt de training mee. Een wandelworkout komt van het horloge binnen als wandeling, en die paste niet op een looptraining: de heuvelintervallen bleven open en er kwam een los log Herstel of Bergtocht, terwijl de rij Horloge "Vinkt zelf af." zei. Nu past een wandeling (en een activiteit van de soort `StairStepper`, als je die zonder workout startte) op een geplande looptraining waarvoor de StairMaster is gekozen. Alleen op de dag van die training en alleen met die keuze; zonder keuze verandert er niets. Dat geldt bij vanzelf afvinken, bij het voorstel op Vandaag, bij Andere training en bij koppelen achteraf (`fitsChosenWay`, `fitsChosenWayLog`).
+- Historie: dit is geen uitzondering op de regel. Er wordt geen bestaand log herschreven. Vanzelf afvinken maakt een nieuw log dat naar de geplande training wijst; koppelen achteraf vult alleen een lege verwijzing na Akkoord, via de bestaande weg (`linkLog`, terug met `unlinkLog`). Het nieuwe log zegt welke manier het was (`modality`), zoals een handlog dat doet.
+- De soortnaam `StairStepper` is die van intervals.icu voor zo'n activiteit; dat is niet met echte data gecontroleerd. Klopt de naam niet, dan gebeurt er voor die activiteit niets anders dan voorheen.
+- Het blad Je horloge toont bij de StairMaster de wandelworkout: soort Wandelen, de stapnamen van de manier en de regel "Op gevoel en hartslag, geen tempo. De stevige blokken: RPE 8-9." (`watchManualFor`).
+- Verder weg dan zeven dagen staat de dag erbij: "Er komt op zaterdag 14 november een wandelworkout op je horloge."
+- De schakelaar uitzetten en pauzeren lopen ook door de rij. Regel: een functie binnen de rij roept nooit een andere rij-functie aan, maar de variant die op Now eindigt.
+- Niet meegenomen: de teller van de weeklast (`looseStandIns`) kent de keuze nog niet. Dat speelt alleen bij een los wandellog dat nog niet gekoppeld is; na het afvinken of koppelen telt het gewoon.
+
 ## Alternatieven
 
 - `Hike`: ook wandelen, maar nergens bevestigd dat het op Garmin aankomt.

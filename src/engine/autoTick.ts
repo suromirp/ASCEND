@@ -74,11 +74,12 @@ export function autoTickMatch(
   templates: SessionTemplate[],
   logs: SessionLog[],
   today: string = todayISO(),
+  places?: Readonly<Record<string, string>>,
 ): PlannedMatch | undefined {
   if (!isImportable(activity)) return undefined;
   if (activityDate(activity) > today) return undefined;
   if (logs.some((l) => l.externalId === activity.externalId)) return undefined;
-  const candidates = candidatePlanned(activity, planned, templates, logs, { sameDayOnly: true });
+  const candidates = candidatePlanned(activity, planned, templates, logs, { sameDayOnly: true, places });
   if (candidates.length !== 1) return undefined;
   const [match] = candidates;
   if (!mayAutoTick(match.template.id) || !mayAutoTick(match.session.templateId)) return undefined;
@@ -100,13 +101,14 @@ export function planAutoTicks(
   templates: SessionTemplate[],
   logs: SessionLog[],
   today: string = todayISO(),
+  places?: Readonly<Record<string, string>>,
 ): AutoTick[] {
   const dismissed = new Set(dismissedIds);
   const known = new Set(autoLogged.map((a) => a.externalId));
   const found: AutoTick[] = [];
   for (const activity of [...activities].sort((a, b) => a.start.localeCompare(b.start))) {
     if (dismissed.has(activity.externalId) || known.has(activity.externalId)) continue;
-    const match = autoTickMatch(activity, planned, templates, logs, today);
+    const match = autoTickMatch(activity, planned, templates, logs, today, places);
     if (match) found.push({ activity, match });
   }
   // Two activities for one training (a warm-up walk and the run): which one

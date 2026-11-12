@@ -122,6 +122,12 @@ export function sentWhen(sentAt: string, today: string, todayWord = false): stri
   return `op ${formatDateNL(day)} om ${time}`;
 }
 
+// Wanneer een training die nog te ver weg is naar je horloge gaat: "morgen", "binnenkort" of "op zaterdag 21 november".
+export function goesOnWhen(goesOn: string | undefined, today: string): string {
+  const on = goesOn ?? today;
+  return on === addDays(today, 1) ? 'morgen' : on <= today ? 'binnenkort' : `op ${weekdayLongNL(on)} ${formatDateNL(on)}`;
+}
+
 type WatchStatusAction = 'send' | 'retry' | 'link';
 
 export interface WatchStatusLine {
@@ -147,9 +153,7 @@ export function watchStatusLine(status: WatchStatus, today: string): WatchStatus
     case 'pending':
       return { text: 'Nog niet op je horloge', action: 'send', actionLabel: 'Nu versturen' };
     case 'later': {
-      const on = status.goesOn ?? today;
-      const when = on === addDays(today, 1) ? 'morgen' : on <= today ? 'binnenkort' : `op ${weekdayLongNL(on)} ${formatDateNL(on)}`;
-      return { text: `Gaat ${when} naar je horloge` };
+      return { text: `Gaat ${goesOnWhen(status.goesOn, today)} naar je horloge` };
     }
     case 'failed':
       return { text: `Niet gelukt: ${status.reason ?? 'de reden is onbekend'}`, action: 'retry', actionLabel: 'Opnieuw' };

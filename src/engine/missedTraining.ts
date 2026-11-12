@@ -18,7 +18,7 @@ import { activeIllness, isIllnessDay } from './illness';
 import { isTestOrRace } from './templateRoles';
 import { lockLevel } from './weekValidator';
 import { isHandLog } from './activityImport';
-import { isLooseSourceLog, sameLinkKind, templateKind } from './looseLog';
+import { fitsChosenWayLog, isLooseSourceLog, sameLinkKind, templateKind } from './looseLog';
 import { daysBetween, formatDateNL, weekdayLongNL } from '../utils/dates';
 
 type MissedChoice = 'ask' | 'auto' | 'off';
@@ -100,6 +100,8 @@ export interface MissedInput {
   busy?: ReadonlySet<string>;
   // Wat gepland stond terwijl je ziek was, telt nooit als gemist.
   illnessEpisodes?: IllnessEpisode[];
+  // De keuze Waar train je? per geplande training (zie LinkInput).
+  places?: Readonly<Record<string, string>>;
 }
 
 export interface MissedSession {
@@ -133,6 +135,8 @@ export interface LinkInput {
   today: string;
   // Paren `<logId>|<sessionId>` waarop je Liever niet zei.
   declined?: readonly string[];
+  // De keuze Waar train je? per geplande training: een wandellog past op een looptraining met de StairMaster.
+  places?: Readonly<Record<string, string>>;
 }
 
 // Welke log van het horloge of MacroFactor bij welke voorbije training zonder log kan horen: per log de
@@ -154,7 +158,7 @@ export function linkCandidates(input: LinkInput): Map<string, SessionLog> {
   for (const log of [...loose].sort((a, b) => a.completedAt.localeCompare(b.completedAt))) {
     const logTemplate = templateById.get(log.templateId);
     const near = unlogged
-      .filter((m) => sameLinkKind(log, logTemplate, m.template))
+      .filter((m) => sameLinkKind(log, logTemplate, m.template) || fitsChosenWayLog(log, m.session, m.template, input.places))
       .map((m) => ({ m, d: Math.abs(daysBetween(log.completedDate, m.session.scheduledDate)) }))
       .filter((x) => x.d <= LINK_WINDOW_DAYS && !links.has(x.m.session.id))
       .sort((a, b) => a.d - b.d || a.m.session.scheduledDate.localeCompare(b.m.session.scheduledDate));
@@ -190,7 +194,7 @@ export function planMissed(input: MissedInput): MissedPlan {
     .sort((a, b) => a.session.scheduledDate.localeCompare(b.session.scheduledDate) || a.session.order - b.session.order || a.session.id.localeCompare(b.session.id));
 
   // Koppelen: eerst koppelen, dan vragen (en dan pas inhalen, engine/adviceEngine.ts#MISSED-CATCH-UP).
-  const links = settings.link ? linkCandidates({ plannedSessions: input.plannedSessions, logs: input.logs, templates: input.templates, today, declined: memory.declined }) : new Map<string, SessionLog>();
+  const links = settings.link ? linkCandidates({ plannedSessions: input.plannedSessions, logs: input.logs, templates: input.templates, today, declined: memory.declined, places: input.places }) : new Map<string, SessionLog>();
 
   // Met een log die erbij kan horen komt geen vraag en niets vanzelf: eerst het koppelvoorstel.
   // Wat een vakantie of tocht neerzette, verplaatste of liet gaan (`leave`) gaat via zijn eigen weg: geen vraag en niets vanzelf.

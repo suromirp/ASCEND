@@ -142,7 +142,8 @@ async function loadDesired(
 
 // One at a time: everything that writes to the agenda and to the books goes through this row. A round at start
 // or on coming back, a setting, a button and a tap in the Briefing never run next to each other, so none
-// writes back books the other just changed and nothing is sent twice.
+// writes back books the other just changed and nothing is sent twice. A function inside the row never calls
+// another function of the row (it would wait for itself): it calls the ...Now variant.
 let row: Promise<unknown> = Promise.resolve();
 function inRow<T>(work: () => Promise<T>): Promise<T> {
   const run = row.then(work, work);
@@ -339,14 +340,18 @@ async function removeWatchWorkoutsNow(options: WorkoutOptions): Promise<{ status
 // agenda (best effort: when that fails, the switch is off anyway and the
 // message says what is left). Turning it on does not send by itself; the
 // caller runs a sync.
-export async function setWatchWorkoutsEnabled(enabled: boolean, options: WorkoutOptions = {}): Promise<{ status: 'ok'; removed: number } | { status: 'error'; message: string }> {
+export function setWatchWorkoutsEnabled(enabled: boolean, options: WorkoutOptions = {}): Promise<{ status: 'ok'; removed: number } | { status: 'error'; message: string }> {
+  return inRow(() => setEnabledNow(enabled, options));
+}
+
+async function setEnabledNow(enabled: boolean, options: WorkoutOptions): Promise<{ status: 'ok'; removed: number } | { status: 'error'; message: string }> {
   try {
     if (enabled) {
       await putState({ ...(await getWatchWorkoutState()), enabled: true, lastError: undefined });
       return { status: 'ok', removed: 0 };
     }
     await putState({ ...(await getWatchWorkoutState()), enabled: false });
-    const removal = await removeWatchWorkouts(options);
+    const removal = await removeWatchWorkoutsNow(options);
     if (removal.status === 'ok') return { status: 'ok', removed: removal.removed };
     if (removal.status === 'not-connected') return { status: 'ok', removed: 0 };
     return { status: 'error', message: `${removal.message} De schakelaar staat uit, maar de al verstuurde trainingen staan nog in intervals.icu.` };
@@ -358,8 +363,10 @@ export async function setWatchWorkoutsEnabled(enabled: boolean, options: Workout
 // Unlinking: the key goes, so nothing can be sent or removed any more. The
 // switch goes off; the list of what was sent stays, so linking again does not
 // double anything (the same external ids are recognised).
-export async function pauseWatchWorkouts(): Promise<void> {
-  await putState({ ...(await getWatchWorkoutState()), enabled: false });
+export function pauseWatchWorkouts(): Promise<void> {
+  return inRow(async () => {
+    await putState({ ...(await getWatchWorkoutState()), enabled: false });
+  });
 }
 
 // "Alles verwijderen": the coming trainings leave the intervals.icu agenda

@@ -6,7 +6,8 @@ import { getModalities } from '../data/modalities';
 import { addDays } from '../utils/dates';
 import type { PlannedSession } from '../models/training';
 import { racePaces } from './racePaces';
-import { buildWatchWorkout, planWatchSync, selectWatchWorkouts, watchPlaceOf, watchSportFor, watchSportOf, type TrackedWorkout } from './watchWorkout';
+import { buildWatchWorkout, planWatchSync, selectWatchWorkouts, watchManualFor, watchPlaceOf, watchSportFor, watchSportOf, type TrackedWorkout } from './watchWorkout';
+import { buildWorkoutPlan } from './workoutPlan';
 import { watchStatusFor, type WatchStatusContext } from './watchStatus';
 
 const { templates, program } = buildDefaultProgramData();
@@ -162,5 +163,26 @@ describe('de stand per training', () => {
   });
   it('zonder keuze: de stand zoals hij altijd was, zonder soort', () => {
     expect(watchStatusFor(hills, HILLS, ctx({ items: { [hills.id]: sentRun } }))).toEqual({ kind: 'sent', sentAt: sentRun.sentAt });
+  });
+});
+
+describe('het blad Je horloge bij de StairMaster', () => {
+  const plan = buildWorkoutPlan(HILLS, today, program)!;
+  it('de stapnamen van de manier en de regel over gevoel en hartslag, geen Hard bergop of Hardlopen', () => {
+    const manual = watchManualFor(HILLS, plan, 'stairmaster_intervals')!;
+    expect(manual.sport).toBe('Wandelen');
+    expect(manual.note).toBe('Op gevoel en hartslag, geen tempo. De stevige blokken: RPE 8-9.');
+    expect(manual.lines).toEqual(['Opwarmen · 11:00', 'Herhaal 6×', '   Stevig traplopen · 1:00', '   Rustig doorstappen · 2:00', 'Uitlopen · 11:00']);
+    expect(manual.lines.join(' ')).not.toMatch(/Hard bergop|Hardlopen|Terug naar beneden/);
+    // Dezelfde namen als de workout die naar het horloge gaat.
+    const sent = buildWatchWorkout(hills, HILLS, program, PACES, { places: STAIR })!.description;
+    for (const name of ['Stevig traplopen', 'Rustig doorstappen']) expect(sent).toContain(name);
+    expect(sent).toContain(manual.note!);
+  });
+  it('zonder die keuze of met de instelling uit: het blad van de training, ongewijzigd', () => {
+    expect(watchManualFor(HILLS, plan, undefined)).toBe(plan.garmin);
+    expect(watchManualFor(HILLS, plan, 'incline_treadmill_intervals')).toBe(plan.garmin);
+    expect(watchManualFor(HILLS, plan, 'stairmaster_intervals', false)).toBe(plan.garmin);
+    expect(watchManualFor(HILLS, undefined, 'stairmaster_intervals')).toBeUndefined();
   });
 });

@@ -128,7 +128,7 @@ export interface AdviceInputs {
   // "Log op een andere dag koppelen" (engine/missedTraining.ts) and the pairs you said Liever niet to.
   // A missed training a loose watch or MacroFactor log may belong to gets the link proposal first, never
   // a catch-up (rule MISSED-CATCH-UP). Absent = on, nothing declined.
-  missedLink?: { on: boolean; declined: readonly string[]; declinedOn?: Readonly<Record<string, string>> };
+  missedLink?: { on: boolean; declined: readonly string[]; declinedOn?: Readonly<Record<string, string>>; places?: Readonly<Record<string, string>> };
   // Rows an accepted TEST-RETRY proposal made a test (`retryTestRows` of the stored proposals). A
   // retry that was skipped or missed is spoken for by TEST-RETRY once more, not by TEST-MAKE-ROOM.
   retryRows?: ReadonlySet<string>;

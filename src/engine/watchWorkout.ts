@@ -43,7 +43,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import type { Program } from '../models/program';
 import { WORKOUTS, type StepKind } from '../data/workoutStructure';
 import { addDays, formatWeekdayDayMonthNL } from '../utils/dates';
-import { buildWorkoutPlan, type PlanStep, type WorkoutPlan } from './workoutPlan';
+import { buildWorkoutPlan, formatClock, type PlanStep, type WorkoutPlan } from './workoutPlan';
 import { formatPace, type PaceRange, type RacePaces } from './racePaces';
 import { hrPercentTarget, type WatchHrPlan } from './watchHeartRate';
 import { resolvePlace } from './trainingPlace';
@@ -230,6 +230,26 @@ function walkingNote(plan: WorkoutPlan, templateId: string, place: string): stri
   const label = getModality(templateId, place)?.label ?? 'Wandelen';
   const hard = plan.timeline.some((s) => s.intensity === 4 && s.kind !== 'warmup' && s.kind !== 'cooldown');
   return hard ? `${label}. Op gevoel en hartslag, geen tempo. De stevige blokken: RPE 8-9.` : `${label}. Op gevoel en hartslag, geen tempo.`;
+}
+
+// What the sheet Je horloge shows to rebuild the workout by hand: the workout of the training, or with the
+// StairMaster chosen the walking workout, with the names of the way and the same line above the steps as the
+// workout that goes to the watch. `garmin` is what the plan of the training says (WorkoutPlan.garmin).
+export interface WatchManual {
+  sport: string;
+  lines: string[];
+  // Above the steps: how hard, in words.
+  note?: string;
+}
+export function watchManualFor(template: SessionTemplate, plan: WorkoutPlan | undefined, stored: unknown, placeWorkout?: boolean): WatchManual | undefined {
+  const place = watchPlaceOf(template, stored, placeWorkout);
+  if (!plan || !place) return plan?.garmin;
+  const named = walkingPlan(plan, template.id, place);
+  const line = (s: PlanStep, indent = '') => `${indent}${s.label} · ${formatClock(s.seconds)}`;
+  const lines = named.items.flatMap((it) => ('step' in it ? [line(it.step)] : [`Herhaal ${it.repeat}×`, ...it.steps.map((s) => line(s, '   '))]));
+  const note = walkingNote(named, template.id, place);
+  // Zonder de naam van de manier vooraan: die staat al in de Briefing.
+  return { sport: 'Wandelen', lines, note: note.slice(note.indexOf('. ') + 2) };
 }
 
 function sportOf(template: SessionTemplate): WatchSport | undefined {

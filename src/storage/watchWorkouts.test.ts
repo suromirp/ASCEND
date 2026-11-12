@@ -793,4 +793,28 @@ describe('een eigen workout bij een andere manier', () => {
     expect((await getWatchWorkoutState()).lastError).toBeUndefined();
     expect(typeOf(agenda, hills.id)).toBe('Walk');
   });
+
+  it('uitzetten en pauzeren lopen door dezelfde rij: een ronde die al liep zet de schakelaar niet terug aan', async () => {
+    const { today } = await setup();
+    await hillSession(today, 0);
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    // Tegelijk: een ronde, uitzetten, en nog een ronde.
+    const [first, off, second] = await Promise.all([
+      syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true }),
+      setWatchWorkoutsEnabled(false, { fetchImpl: agenda.fn, today }),
+      syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true }),
+    ]);
+    expect(first.status).toBe('ok');
+    expect(off.status).toBe('ok');
+    expect(second).toEqual({ status: 'off' });
+    const state = await getWatchWorkoutState();
+    expect(state.enabled).toBe(false);
+    expect(Object.values(state.items).filter((t) => t.date >= today)).toEqual([]);
+    expect(agenda.events.size).toBe(0);
+
+    await setWatchWorkoutsEnabled(true);
+    await Promise.all([syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true }), pauseWatchWorkouts()]);
+    expect((await getWatchWorkoutState()).enabled).toBe(false);
+  });
 });
