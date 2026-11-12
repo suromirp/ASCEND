@@ -101,3 +101,36 @@ export function aboveMissionOverflow(above: readonly TodayCardId[], limit: Above
   const plain = above.length - safety - never;
   return never + Math.max(0, plain - Math.max(0, limit - safety));
 }
+
+// Regel 6 van de ontwerpregels (docs/visie/Ontwerp trainingsscherm minimaal.md, besluit 2026-11-12-missiekaart.md):
+// nooit meer dan twee kaarten boven de missie. Een oude keuze Alles leest als twee; de waarde blijft bewaard zoals hij
+// was, zodat een oudere back-up gewoon importeert.
+export function capAboveMission(limit: AboveMission): 1 | 2 {
+  return limit === 1 ? 1 : 2;
+}
+
+// Wat nooit boven de missie komt, ook als het in de rij mag (regel 6):
+// - een vraag over vandaag (de ochtendkaart) staat direct onder de missie: het is een taak van vandaag;
+// - een melding die niet over vandaag gaat (de back-up) staat onder Je dag.
+const QUESTION_UNDER_MISSION: readonly TodayCardId[] = ['morning'];
+const NOTICE_UNDER_DAY: readonly TodayCardId[] = ['backup'];
+
+export interface TodayPlacement {
+  // Boven de missie: veiligheid altijd, verder hoogstens de grens (één of twee).
+  above: TodayCardId[];
+  // Direct onder de missie, voor Je dag.
+  underMission: TodayCardId[];
+  // Onder Je dag, in de vaste volgorde van de rij.
+  underDay: TodayCardId[];
+}
+
+// De plek van elke kaart rond de missie. De rangorde zelf (TODAY_CARD_RANK, arrangeToday) verandert niet; dit legt
+// alleen regel 6 eroverheen.
+export function placeTodayCards(present: Iterable<TodayCardId>, limit: AboveMission): TodayPlacement {
+  const here = [...present];
+  const held = new Set<TodayCardId>([...QUESTION_UNDER_MISSION, ...NOTICE_UNDER_DAY]);
+  const { above, below } = arrangeToday(here.filter((id) => !held.has(id)), capAboveMission(limit));
+  const underMission = QUESTION_UNDER_MISSION.filter((id) => here.includes(id));
+  const rest = new Set<TodayCardId>([...below, ...NOTICE_UNDER_DAY.filter((id) => here.includes(id))]);
+  return { above, underMission, underDay: TODAY_CARD_RANK.map((c) => c.id).filter((id) => rest.has(id)) };
+}

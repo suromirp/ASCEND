@@ -888,13 +888,12 @@ export const CHOICES = {
   bovenMissie: def({
     group: 'Vandaag en meldingen',
     title: 'Kaarten boven de missie',
-    line: 'Hoeveel kaarten er boven je missie op Vandaag mogen staan. De rest staat er direct onder.',
-    advice: 1 as 1 | 2 | 'all',
+    line: 'Hoeveel kaarten er boven je missie op Vandaag mogen staan. De rest staat onder Je dag.',
+    advice: 1 as 1 | 2,
     help: 'bovenMissie',
     options: [
       { value: 1, label: 'Eén', note: 'De belangrijkste, je missie blijft in beeld', short: 'Eén' },
       { value: 2, label: 'Twee', note: 'De twee belangrijkste', short: 'Twee' },
-      { value: 'all', label: 'Alles', note: 'Alles wat erboven mag, ook als je missie dan uit beeld schuift', short: 'Alles' },
     ],
   }),
   weekmeldingTijd: def({

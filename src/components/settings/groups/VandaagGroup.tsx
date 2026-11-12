@@ -12,7 +12,7 @@ import { resolveLegEase, resolveLegEaseHow } from '../../../engine/legEaseSettin
 import { resolveMotion } from '../../../engine/motionSettings';
 import { resolveQuoteLanguage } from '../../../engine/quoteSettings';
 import { resolveSky } from '../../../engine/skySettings';
-import { resolveAboveMission } from '../../../engine/todayCards';
+import { capAboveMission, resolveAboveMission } from '../../../engine/todayCards';
 import { type InsightTopicSwitch, type RunDetailScreenSettings, type RunFormSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
 import { matchTodayProfile, todayProfilePatch, type TodayProfileChoice } from '../../../engine/settingsProfiles';
 import { Eyebrow } from '../../ui';
@@ -265,7 +265,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {inner === 'avond-ervoor-tijd' && (
         <ChoiceFromDef def={CHOICES.avondVanaf} value={resolveEveningBefore(settings).time} onPick={(v) => void updateSettings({ eveningBeforeTime: v })} onClose={closeInner} />
       )}
-      {inner === 'boven-missie' && <ChoiceFromDef def={CHOICES.bovenMissie} value={resolveAboveMission(settings.cardsAboveMission)} onPick={(v) => void updateSettings({ cardsAboveMission: v })} onClose={closeInner} />}
+      {inner === 'boven-missie' && <ChoiceFromDef def={CHOICES.bovenMissie} value={capAboveMission(resolveAboveMission(settings.cardsAboveMission))} onPick={(v) => void updateSettings({ cardsAboveMission: v })} onClose={closeInner} />}
       {inner === 'reistaak-vandaag' && <ChoiceFromDef def={CHOICES.reistaakVandaag} value={resolveJourneyOnToday(settings.journeyOnToday)} onPick={(v) => void updateSettings({ journeyOnToday: v })} onClose={closeInner} />}
       {inner === 'lijfvraag' && <ChoiceFromDef def={CHOICES.lijfvraag} value={resolveBodyCheck(settings)} onPick={(v) => void updateSettings({ bodyCheck: v })} onClose={closeInner} />}
       {inner === 'lucht-vanaf' && <ChoiceFromDef def={CHOICES.luchtVanaf} value={sky.nightFrom} onPick={(v) => void updateSettings({ skyNightFrom: v })} onClose={closeInner} />}
