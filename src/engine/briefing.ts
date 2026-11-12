@@ -23,7 +23,9 @@ import type { Program } from '../models/program';
 import type { WeatherForecast } from '../models/weather';
 import type { SweatEntry } from '../models/sweat';
 import type { RouteTarget } from '../models/route';
-import type { PaceRange } from './racePaces';
+import type { PaceRange, RacePaces } from './racePaces';
+import { paceRangeText, trainingPace } from './missionFacts';
+import { watchSportOf, type WatchSport } from './watchWorkout';
 import type { WatchStatus } from './watchStatus';
 import { formatClockTime } from './watchStatus';
 import { watchSheet, type WatchSheetInput } from './watchSheet';
@@ -37,13 +39,15 @@ import { drinkAmount } from './eveningBefore';
 import { litersText } from './stageWater';
 import { fuelForTraining, fuelShortText } from './fuelOnTheGo';
 import { deriveSessionStatus } from './sessionStatus';
-import { buildSessionBrief, type BriefFact, type SessionBrief } from './sessionBrief';
+import { buildSessionBrief, durationLabel, placePlan, type BriefFact, type SessionBrief } from './sessionBrief';
+import type { WorkoutPlan } from './workoutPlan';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { buildWorkoutPlan } from './workoutPlan';
-import { templateSport } from './sports';
+import { templateSport, type Sport } from './sports';
 import { RACE_TEMPLATE_ID } from './raceBlock';
 import { resolveRouteSearch } from './routeSearchSetting';
 import { getModality, modalitySport } from '../data/modalities';
+import { placeBrief } from '../data/placeBrief';
 import type { Intensity } from '../data/workoutStructure';
 import { addDays, formatDateNL, toISODate, weekdayShortNL } from '../utils/dates';
 
@@ -52,6 +56,7 @@ export const BRIEFING_TEXT = {
   // Wat je loopt: de regel onder de rij Briefing in Week als er verder niets in staat, en de naam van de
   // hartkaart voor een schermlezer.
   run: 'Wat je loopt',
+  doing: 'Wat je doet',
   // De vaste woorden van de lijst (spoor 3 van docs/visie/Ontwerp trainingsscherm minimaal.md).
   watch: 'Horloge',
   weather: 'Weer',
@@ -133,11 +138,19 @@ export interface BriefingHead {
 // De hartkaart (spoor 2): de kerngetallen, en daaronder de zonebalk (één doorlopend blok) of het
 // profiel van de stappen. Zone en praattest staan alleen hier, in de zin onder de balk.
 export interface BriefingHeart {
+  // De naam van de hartkaart voor een schermlezer: Wat je loopt bij hardlopen, Wat je doet bij wandelen of traplopen.
+  // Afwezig: Wat je loopt.
+  label?: string;
   facts: BriefFact[];
   zone?: Intensity;
   steps: boolean;
   // De wandeldag voor een bergtocht: wat morgen vraagt.
   tomorrow?: string;
+  // De zin over het tempo: uit welke testloop, en de afstand die duur en tempo samen geven. Het tempo zelf staat
+  // als kerngetal in `facts` ("6:45 tot 7:40" per km). Zonder testloop alleen de afstandszin, of niets.
+  paceNote?: string;
+  // De stappen zoals de gekozen manier ze noemt (profiel en Zo doe je het); het horloge leest het plan zelf.
+  plan?: WorkoutPlan;
 }
 
 // De onderbalk heeft één knop, of is er niet (dan sluit de terugknop). `fallback`: wat de knop is
@@ -192,6 +205,10 @@ export interface BriefingInput {
   storedPlace?: unknown;
   // Instelling Route voorstellen, en het rustige tempo uit je test voor de afstand.
   routeOn: boolean;
+  // De tempo's uit je testloop (engine/testJudgment.ts#pacesFromLogs) en het echte tempo van je laatste rustige
+  // lopen (engine/recentRunPace.ts), voor het tempo in de hartkaart. Afwezig: geen tempo.
+  paces?: RacePaces;
+  recentPace?: { range: PaceRange; runs: number };
   // Instelling Lus zoeken (ongelezen); afwezig is het advies, zoeken bij het openen.
   routeSearch?: unknown;
   easyPace?: PaceRange;
@@ -269,7 +286,7 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
   const brief = buildSessionBrief(template, input.date, input.program, { modalityKey: place });
 
   const rows: BriefingRow[] = [];
-  const watch = watchRow(input, stand);
+  const watch = watchRow(input, stand, place);
   if (watch) rows.push(watch);
   if (outdoor) {
     const weather = weatherRow(input, minutes);
@@ -290,7 +307,7 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
 
   return {
     head: headOf(input, brief),
-    heart: heartOf(input, brief),
+    heart: heartOf(input, brief, place),
     stand,
     places,
     place,
@@ -312,12 +329,39 @@ function headOf(input: BriefingInput, brief: SessionBrief): BriefingHead {
 
 // Het hart: dezelfde getallen als het oude scherm. Bij één doorlopend blok zeggen de zonebalk en zijn
 // zin het al: zone en praattest dan niet nog eens als getal of pil.
-function heartOf(input: BriefingInput, brief: SessionBrief): BriefingHeart {
-  const plan = buildWorkoutPlan(input.template, input.date, input.program);
+//
+// Het totaal komt uit de tijdlijn: dat is wat je loopt en wat je horloge telt. Zo eindigt de tijdlijn altijd op het
+// getal erboven (besluit 2026-11-12-briefing-per-manier.md); engine/workoutPlan.ts laat de tijdlijn passen in de
+// geplande minuten, dus meestal zijn beide gelijk.
+// Het tempo: alleen bij een manier die hardlopen is (op de StairMaster of de fiets zegt een tempo per km niets),
+// in de plaats van het laatste losse feit, zoals eerder op de missiekaart.
+function heartOf(input: BriefingInput, brief: SessionBrief, place: string | undefined): BriefingHeart {
+  const raw = buildWorkoutPlan(input.template, input.date, input.program);
+  const plan = raw ? placePlan(raw, input.template.id, place) : undefined;
   const conditioning = plan?.timeline.filter((s) => s.kind !== 'strength') ?? [];
   const zone = conditioning.length === 1 && !conditioning[0].noTarget ? (conditioning[0].intensity as Intensity) : undefined;
-  const facts = zone ? brief.facts.filter((f) => !ZONE_FACT.test(f.value)) : brief.facts;
-  return { facts, zone, steps: conditioning.length > 1, ...(brief.tomorrow ? { tomorrow: brief.tomorrow } : {}) };
+  let facts = zone ? brief.facts.filter((f) => !ZONE_FACT.test(f.value)) : brief.facts;
+  const timelineMinutes = plan ? Math.round(plan.timeline.reduce((sum, s) => sum + s.seconds, 0) / 60) : undefined;
+  if (timelineMinutes && facts[0]?.label === 'totaal') facts = [{ value: durationLabel(timelineMinutes), label: 'totaal' }, ...facts.slice(1)];
+  const sport = (place ? modalitySport(place) : undefined) ?? templateSport(input.template);
+  const minutes = timelineMinutes ?? input.session?.plannedMinutes ?? resolveEffectiveFullDuration(input.template, input.date, input.program);
+  const pace = sport === 'running' ? trainingPace(input.template.id, input.paces, minutes, input.recentPace?.range, input.recentPace?.runs) : {};
+  if (pace.range) {
+    const fact = { value: paceRangeText(pace.range), label: 'per km' };
+    const last = facts.length - 1;
+    // Een eigen feit van de manier ("Geen afdaling") blijft staan: dan komt het tempo erbij.
+    const own = !!placeBrief(input.template.id, place)?.third;
+    facts = last >= 1 && !own && !/^[±\d]/.test(facts[last].value) ? [...facts.slice(0, last), fact] : [...facts, fact];
+  }
+  return {
+    label: sport === 'running' ? BRIEFING_TEXT.run : BRIEFING_TEXT.doing,
+    facts,
+    zone,
+    steps: conditioning.length > 1,
+    ...(brief.tomorrow ? { tomorrow: brief.tomorrow } : {}),
+    ...(pace.note ? { paceNote: pace.note } : {}),
+    ...(plan ? { plan } : {}),
+  };
 }
 
 // Een kerngetal dat zone of praattest zegt ("Zone 2", "Praten kan").
@@ -332,7 +376,28 @@ function placeLineOf(template: SessionTemplate, place: string | undefined, sport
   const modality = getModality(template.id, place);
   const choice = placeChoices(template.id).find((p) => p.key === place);
   if (!modality || !choice) return undefined;
-  return [`${choice.roleLabel}.`, modality.how, sportSwitch].filter(Boolean).join(' ');
+  return [`${choice.roleLabel}.`, howWithoutSport(modality.how, sportSwitch), sportSwitch].filter(Boolean).join(' ');
+}
+
+// De uitleg van een manier zonder de zin over de sport als de regel die zin al zegt ("Dit telt als wandelen, niet
+// als hardlopen."): geen zin dubbel in één blok (eigenaar 12 november).
+export function howWithoutSport(how: string, sportSwitch: string | undefined): string {
+  return sportSwitch ? how.replace(/\s*Telt als [^.]*\./g, '').trim() : how;
+}
+
+// ---- de rij Waar train je? -------------------------------------------------------------------
+
+// Hoogstens drie chips in één rij, zonder schuiven, zodat er op 360 px geen chip afvalt. Bij meer keuzes het patroon
+// van Start bij: de standaard, en een tweede chip die het blad met alle keuzes opent. Die draagt de naam van de
+// gekozen keuze als dat niet de standaard is (`other`), anders Andere manier.
+export const PLACE_ROW_MAX = 3;
+export const OTHER_PLACE = 'Andere manier';
+
+export function placeRow<P extends { key: string }>(places: readonly P[], chosen: string | undefined): { chips: P[]; more: boolean; other?: P } {
+  if (places.length <= PLACE_ROW_MAX) return { chips: [...places], more: false };
+  const first = places[0];
+  const other = places.find((p) => p.key === chosen && p.key !== first.key);
+  return { chips: [first], more: true, ...(other ? { other } : {}) };
 }
 
 // De regel onder de rij Briefing in Week: wat er echt in staat. "Route, horloge, weer en eten";
@@ -393,15 +458,46 @@ function mapOf(
 
 // Eén rij Horloge: wat er op je horloge staat en of het afvinkt. Eerder stond het horloge drie keer
 // (een vak, een regel onderaan en een knop in de onderbalk).
-function watchRow(input: BriefingInput, stand: BriefingStand): BriefingRow | undefined {
+function watchRow(input: BriefingInput, stand: BriefingStand, place: string | undefined): BriefingRow | undefined {
   const plan = buildWorkoutPlan(input.template, input.date, input.program);
   const status = input.watchStatus;
   const sheet = watchSheet({ ...input.watch, template: input.template, garmin: plan?.garmin, status: status?.kind });
   const ticks = stand.kind === 'watch' ? BRIEFING_TEXT.watchTicks : undefined;
   if (!sheet.hasWatchSheet) return ticks ? { id: 'watch', label: BRIEFING_TEXT.watch, line: `${ticks}.`, opens: false } : undefined;
+  // Een andere sport dan de workout op je horloge: eerlijk zeggen dat de oude erop staat, en wat je dan start.
+  // Zonder workout van ASCEND op je horloge (zelf instellen): alleen wat je start, want de workout in het blad is die
+  // van de training.
+  // De echte stand, ook als de instelling Horlogestatus tonen uit staat: anders zou de regel een workout verzwijgen.
+  // Amber alleen als ASCEND een workout klaarzette (of gaat zetten); stel je zelf in, dan de gewone toon.
+  const onWatch = WATCH_WHEN[status?.kind ?? ''];
+  const other = watchPlaceLine(input.template, place, onWatch);
+  if (other) return { id: 'watch', label: BRIEFING_TEXT.watch, line: ticks ? `${other} ${ticks}.` : other, opens: true, ...(onWatch ? { tone: 'warn' as const } : {}) };
   const state = watchState(input, status, plan?.garmin !== undefined);
   const line = ticks ? `${state.line}. ${ticks}.` : state.line;
   return { id: 'watch', label: BRIEFING_TEXT.watch, line, opens: true, ...(state.warn ? { tone: 'warn' as const } : {}) };
+}
+
+// De stand waarin ASCEND een workout op je horloge al zette (staat) of nog gaat zetten (komt).
+const WATCH_WHEN: Record<string, 'on' | 'coming' | undefined> = { sent: 'on', stale: 'on', pending: 'coming', later: 'coming' };
+
+const WATCH_SPORT: Record<WatchSport, Sport> = { Run: 'running', Walk: 'hiking', Hike: 'hiking', Ride: 'cycling' };
+const WORKOUT_NAME: Record<Sport, string> = { running: 'hardloopworkout', hiking: 'wandelworkout', cycling: 'fietsworkout' };
+
+// De workout op je horloge volgt de training, niet de gekozen manier (engine/watchWorkout.ts stuurt het plan). Is
+// de manier een andere sport, dan zegt dit wat er op je horloge staat en wat je start: "Er staat een
+// hardloopworkout op. Start Stair Stepper zonder workout.", of "Er komt een hardloopworkout op je horloge." zolang
+// hij nog verstuurd wordt. Zonder workout van ASCEND alleen wat je start. Dezelfde sport (de loopband): geen regel,
+// die workout loop je ook op de band.
+export function watchPlaceLine(template: SessionTemplate, place: string | undefined, onWatch: 'on' | 'coming' | undefined): string | undefined {
+  const workout = watchSportOf(template);
+  const chosen = place ? modalitySport(place) : undefined;
+  if (!workout || !chosen || WATCH_SPORT[workout] === chosen) return undefined;
+  const profile = getModality(template.id, place!)?.garminProfile;
+  const start = profile && !profile.includes('/') ? `Start ${profile} zonder workout.` : 'Start zonder workout.';
+  const name = WORKOUT_NAME[WATCH_SPORT[workout]];
+  if (onWatch === 'on') return `Er staat een ${name} op. ${start}`;
+  if (onWatch === 'coming') return `Er komt een ${name} op je horloge. ${start}`;
+  return start;
 }
 
 function watchState(input: BriefingInput, status: WatchStatus | undefined, garmin: boolean): { line: string; warn?: boolean } {

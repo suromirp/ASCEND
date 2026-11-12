@@ -54,38 +54,6 @@ export function looseLogsOfWeek(logs: SessionLog[], plannedSessions: Pick<Planne
     .sort((a, b) => a.completedDate.localeCompare(b.completedDate) || a.completedAt.localeCompare(b.completedAt));
 }
 
-// Wat nog open staat op het geplande aantal minuten: geen rustdag, geen
-// overgeslagen training en niets waar al een log bij hoort.
-export function weekOpenMinutes(
-  sessions: PlannedSession[],
-  logs: Pick<SessionLog, 'plannedSessionId'>[],
-  templateById: Map<string, SessionTemplate>,
-  minutesOf: (s: PlannedSession, t: SessionTemplate) => number,
-): number {
-  const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
-  let total = 0;
-  for (const s of sessions) {
-    const t = templateById.get(s.templateId);
-    if (!t || t.type === 'recovery' || s.status === 'skipped' || logged.has(s.id)) continue;
-    total += minutesOf(s, t);
-  }
-  return total;
-}
-
-// De tijd bovenaan Week: "gedaan van totaal". Het totaal is wat gedaan is plus
-// wat nog open staat, dus gedaan blijft nooit boven het totaal.
-export function weekTime(
-  sessions: PlannedSession[],
-  logs: SessionLog[],
-  templateById: Map<string, SessionTemplate>,
-  weekStart: string,
-  minutesOf: (s: PlannedSession, t: SessionTemplate) => number,
-  plannedById?: PlannedById,
-): { doneMinutes: number; totalMinutes: number } {
-  const doneMinutes = weekDoneMinutes(logs, templateById, weekStart, plannedById);
-  return { doneMinutes, totalMinutes: doneMinutes + weekOpenMinutes(sessions, logs, templateById, minutesOf) };
-}
-
 // Wat niet meetelt als training, voor `countsAsTraining`: een dag waarop je ziek
 // was, en een training die ASCEND zelf uit de planning haalde bij een
 // herindeling (een nieuw krachtblok, de weekplanning). Met `programStart` ook

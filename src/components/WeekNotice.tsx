@@ -8,11 +8,14 @@ import { Sheet } from './settings/Sheet';
 import { TextButton } from './TextButton';
 import { Card, Eyebrow, PrimaryButton } from './ui';
 
-// Wat er in de getoonde week niet klopt, in woorden (docs/visie/Waarschuwingen in Week.md).
-// Direct onder de lucht, alleen met een reden. Eén punt: de zin zelf met het feit eronder.
-// Meer punten: de telling en hoogstens drie korte regels, de rest in een onderblad.
+// Wat er in de getoonde week niet klopt, in woorden (docs/visie/Waarschuwingen in Week.md, docs/visie/Ontwerp
+// Week minimaal.md hoofdstuk 2). Het ene vak boven de dagen, alleen met een reden. Een amber stip vooraan het
+// kopje, het kopje zelf in de tabkleur (een kopje krijgt nooit amber). Eén punt: de zin zelf met het feit
+// eronder. Meer punten: de telling en hoogstens drie korte regels, de rest in een onderblad. De volle week na
+// weggevallen dagen is een punt zoals elk ander, zonder voorstel hier (dat staat op Vandaag).
 // "Bekijk voorstel" opent het voorstel in de ProposalSheet; Liever niet laat de week zoals hij is
-// en de melding blijft, rustiger, met "Toch een voorstel". Niets verandert zonder Akkoord.
+// en de melding blijft, rustiger, met "Toch een voorstel". Niets verandert zonder Akkoord. Zonder knop belooft
+// de kaart niets: geen "Nog 2 punten open", alleen wat er is.
 const SHOWN = 3;
 
 // Het voorstel wordt pas uitgerekend als je erom vraagt (een paar honderd milliseconden): het tekenen van de week
@@ -31,23 +34,14 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
   const full = current.outcome === 'ready' ? current.full : undefined;
   const { concerns, covered } = full ?? notice;
   const fixes = full?.fixes ?? {};
-  // Gewone regels (een volle week na weggevallen dagen): een feit, zonder knop.
-  const plain = notice.plain ?? [];
-  if (concerns.length === 0 && plain.length === 0) return null;
-  if (concerns.length === 0) {
-    return (
-      <Card className="flex flex-col gap-3" data-week-plain>
-        <Eyebrow tone="var(--color-ink-dim)">Let op</Eyebrow>
-        {plain.map((line) => <p key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{line}</p>)}
-      </Card>
-    );
-  }
+  if (concerns.length === 0) return null;
 
   const proposalsOn = settings.weekFixProposal !== false;
   const withFix = concerns.map((c) => fixes[c.key]).filter((a): a is NonNullable<typeof a> => !!a);
   // Zonder de berekening weten we uit het id al of je Liever niet zei.
   const idOf = (c: (typeof concerns)[number]) => fixes[c.key]?.id ?? weekFixId(c, plannedSessions);
-  const askable = concerns.filter((c) => !covered.includes(c.key));
+  // Een punt zonder voorstel hier (de volle week) vraagt niets: geen knop, en het telt niet als open.
+  const askable = concerns.filter((c) => !c.plain && !covered.includes(c.key));
   const answeredCount = askable.filter((c) => answeredAdviceIds.has(idOf(c))).length;
   const quiet = askable.length > 0 && answeredCount === askable.length;
   const openCount = askable.length - answeredCount;
@@ -85,8 +79,11 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
   const busy = current.outcome === 'busy';
 
   return (
-    <Card className="flex flex-col gap-3">
-      <Eyebrow tone={quiet || kept ? 'var(--color-ink-dim)' : 'var(--color-warning)'}>Let op</Eyebrow>
+    <Card className="flex flex-col gap-3" data-week-notice>
+      <span className="flex items-center gap-2">
+        <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />
+        <Eyebrow as="span">Let op</Eyebrow>
+      </span>
       {concerns.length === 1 ? (
         <div className="flex flex-col gap-1">
           <p className="text-base font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{concerns[0].headline}</p>
@@ -103,8 +100,7 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
           {rest > 0 && <TextButton onClick={() => setAllOpen(true)}>en nog {rest}</TextButton>}
         </div>
       )}
-      {plain.map((line) => <p key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-week-plain>{line}</p>)}
-      {stillOpen && (
+      {stillOpen && proposalsOn && !noFix && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{`Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} open.`}</p>
       )}
       {proposalsOn && !noFix && askable.length > 0 && !quiet && !kept && <PrimaryButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</PrimaryButton>}

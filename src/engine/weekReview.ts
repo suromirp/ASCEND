@@ -20,7 +20,6 @@ import { INTENSITY } from '../data/workoutStructure';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { progressionTarget } from './programLayout';
 import { logSport, SPORT_LABEL, type Sport } from './sports';
-import { weekChanges } from './changeLog';
 import { weekNameAt, weekPositionLabel } from './weekLabel';
 import { durationLabel } from './sessionBrief';
 import type { PlannedById } from './logDay';
@@ -58,7 +57,6 @@ export interface WeekReview {
   todayLeft: number;
   keyMissedName?: string; // de sleuteltraining die nog open blijft liggen
   checkAdvice?: string; // de zin uit je wekelijkse lijfvraag
-  changes: string[]; // what ASCEND adjusted in this week
   // `label`: de naam van de week ("Opbouw, week 4 van 18", "Rustweek", de golf), uit engine/weekLabel.ts#weekNameAt;
   // `rest`: volgens het programma een rustweek die je niet doortraint.
   next?: { title: string; note?: string; minutes: number; key?: string; label?: string; rest?: boolean };
@@ -167,8 +165,6 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   for (const l of weekLogs) for (const { area: a } of significantPain(l)) painCount.set(a, (painCount.get(a) ?? 0) + 1);
   const pain = [...painCount.entries()].sort((a, b) => b[1] - a[1]).map(([a, n]) => `${a.toLowerCase()}${n > 1 ? ` ${n} keer` : ''}`);
   const avgRpe = rpes.length > 0 ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10 : undefined;
-
-  const changes = weekChanges(planChangeLog, plannedSessions, templates, weekStart, asOf, 7).map((c) => c.line);
 
   // Next week: phase, what it asks, the key session.
   const nextStart = addDays(weekStart, 7);
@@ -280,7 +276,6 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     todayLeft,
     keyMissedName: keyMissedSession ? byId.get(keyMissedSession.templateId)?.name : undefined,
     checkAdvice,
-    changes,
     next,
     advice: advice.slice(0, 3),
     weeklyCheck,

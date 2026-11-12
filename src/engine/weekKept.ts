@@ -43,7 +43,7 @@ export interface KeptContext {
 
 // Zet `kept` op de beenmeldingen waar een training van vandaag in zit, als je vandaag koos dat de
 // benen fris zijn. Droog feit eerst; de oorspronkelijke melding blijft als tweede regel staan.
-export function markKept(concerns: WeekConcern[], ctx: KeptContext): WeekConcern[] {
+export function markKept<T extends WeekConcern>(concerns: T[], ctx: KeptContext): T[] {
   if (ctx.setting === 'plain' || !freshLegsToday(ctx.checkIns, ctx.today)) return concerns;
   const entry = (ctx.checkIns ?? []).find((c) => c.date === ctx.today)!;
   // Dezelfde uitkomst als de zin op Vandaag, niet het ruwe antwoord.
@@ -60,7 +60,7 @@ export function markKept(concerns: WeekConcern[], ctx: KeptContext): WeekConcern
     });
     if (!mine) return c;
     const name = ctx.templates.find((t) => t.id === mine.templateId)?.name ?? 'je training';
-    return { ...c, kept: true, headline: `Benen fris, je liet ${name} staan.`, fact: `${c.headline} ${c.fact}` };
+    return { ...c, kept: true, headline: `Benen fris, je liet ${name} staan.`, fact: `${c.headline} ${c.fact}` } as T;
   });
 }
 

@@ -27,6 +27,7 @@ import { useDeviations } from './influence/useInfluence';
 import { entryForLog, signState, type SignState } from '../engine/influence';
 import { Fragment, useMemo, type ReactNode } from 'react';
 import { dragEligibility } from '../engine/weekDrag';
+import { rowExtra } from '../engine/weekRow';
 import { catchUpEligibility, catchUpNoteFor, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { WeekDragGhost } from './WeekDragGhost';
 import { WeekDragNote } from './WeekDragNote';
@@ -49,6 +50,9 @@ const todayStyle = {
   boxShadow: 'inset 3px 0 0 var(--color-status)',
 };
 const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, transparent)' };
+// De schijf van een dagrij: 36 px, zodat een rij 52 px hoog is en de hele week op 360 bij 640 boven de vouw past.
+// Het tikdoel blijft de hele rij.
+const DISC = 36;
 
 function SessionRow({
   session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote,
@@ -66,7 +70,7 @@ function SessionRow({
   watch?: WatchStatusKind;
   // Het hartslagteken van "Wat speelde er", naast de naam van een gedane training.
   sign?: SignState;
-  // Wat de weekcontrole bij deze training vindt, kort (engine/weekConcerns.ts), in amber.
+  // Wat de weekcontrole bij deze training vindt, kort (engine/weekConcerns.ts), met een amber stip.
   concern?: string;
   // Een toegestaan paar (engine/allowedPair.ts): stil, zoals "zware benen".
   pairNote?: string;
@@ -84,17 +88,22 @@ function SessionRow({
   // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
   const duration = session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program);
   const dim = status === 'skipped' || status === 'missed';
-  // "aangepast" staat op precies de rijen met een regel in Aangepast door ASCEND, ook als hij gedaan is
-  // (engine/changeLog.ts#weekAdjustments): het getal op de rij is het aantal rijen met het woord.
-  const note = status === 'completed' ? (adjusted ? 'aangepast' : undefined) : catchNote ?? (adjusted ? 'aangepast' : wasMoved ? 'verplaatst' : undefined);
-  const zone = isRest ? undefined : zoneOfTemplate(template, session.scheduledDate, program, templates);
   const legs = !isRest && isLegHeavyTemplate(template);
+  // Na de dag en de duur hoogstens één ding (engine/weekRow.ts#rowExtra). "aangepast" staat op precies de rijen
+  // met een regel in Aangepast door ASCEND, ook als hij gedaan is (engine/changeLog.ts#weekAdjustments).
+  // Een rustdag houdt "bewust herstel"; alleen een punt uit Let op en "aangepast" komen erbij.
+  const extra = isRest ? rowExtra({ concern, adjusted }) : rowExtra({
+    concern, missed: status === 'missed' && !!handle, catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
+  });
+  const note = extra && [extra.text, extra.also].filter(Boolean).join(', ');
+  // Het streepje met de kleur van de zone alleen bij een training te voet of op de fiets, niet bij kracht.
+  const zone = isRest || template.type === 'strength' ? undefined : zoneOfTemplate(template, session.scheduledDate, program, templates);
   const doneNow = status === 'completed';
   const showToday = isToday && !doneNow && status !== 'skipped';
   const rowStyle = { borderColor: 'var(--color-card-border)', opacity: dim ? 0.55 : 1, ...(isToday ? todayStyle : isRest ? restStyle : {}) };
   const body = (
     <>
-      <SportDisc template={template} size={44} />
+      <SportDisc template={template} size={DISC} />
       <span className="min-w-0 flex-1">
         {/* De naam breekt alleen tussen woorden. Past hij met het label Vandaag niet op één regel, dan
             schuift het label onder de naam (flex-wrap; alleen op zijn regel staat het links), in plaats van de
@@ -106,10 +115,11 @@ function SessionRow({
             </span>
             {sign && <HeartSign state={sign} />}
           </span>
-          {showToday && <span className="flex shrink-0"><StatusPill tone="action">Vandaag</StatusPill></span>}
         </span>
-        <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-          <span>{dayLabel(date)}</span>
+        <span className={`mt-0.5 flex items-center gap-x-1 text-xs leading-4 tabular-nums ${extra?.warn ? 'flex-wrap' : 'flex-nowrap whitespace-nowrap'}`} style={{ color: 'var(--color-ink-dim)' }}>
+          {/* Vandaag is status: het woord in ijs, met het streepje en de gloed van de rij. Geen pil naast de naam,
+              zodat de naam niet onder de pil hoeft te breken en de rij 52 px blijft. */}
+          {showToday ? <span className="font-semibold" style={{ color: 'var(--color-status)' }}>Vandaag</span> : <span>{dayLabel(date)}</span>}
           {isRest ? (
             <span>· bewust herstel</span>
           ) : (
@@ -117,43 +127,48 @@ function SessionRow({
               <span aria-hidden="true">·</span>
               {zone && (
                 <>
-                  <span className="inline-block h-[3px] w-4 rounded-full" style={{ background: EFFORT_COLOR[zone] }} aria-hidden="true" />
+                  <span className="inline-block h-[3px] w-3 shrink-0 rounded-full" style={{ background: EFFORT_COLOR[zone] }} aria-hidden="true" />
                   <span className="sr-only">Zone {zone}</span>
                 </>
               )}
               <span>{duration} min</span>
-              {session.fixed && (
-                <span className="inline-flex items-center gap-1">
-                  <span aria-hidden="true">·</span>
-                  <Icon name="slot" size={12} />
-                  Vaste afspraak
-                </span>
-              )}
-              {legs && <span>· zware benen</span>}
-              {pairNote && <span>· {pairNote}</span>}
-              {concern && <span style={{ color: 'var(--color-warning)' }}>· {concern}</span>}
+              {/* Het horloge staat in de tweede regel, onder dezelfde instelling; mislukt houdt zijn amber. */}
+              {watch === 'sent' && <span className="flex" style={{ color: 'var(--color-ink-dim)' }}><Icon name="horloge" size={12} label="Verstuurd naar je horloge" /></span>}
+              {watch === 'failed' && <span className="flex" style={{ color: 'var(--color-warning)' }}><Icon name="horloge" size={12} label="Versturen naar je horloge is niet gelukt" /></span>}
             </>
           )}
-          {note && <span style={{ color: 'var(--color-status)' }}>· {note}</span>}
+          {extra && (
+            <span className="inline-flex min-w-0 items-center gap-1">
+              {/* Alleen een punt uit Let op is een waarschuwing: een amber stip na de punt, de tekst gedempt. Een
+                  stille tekst blijft op één regel en wordt zo nodig afgekapt; een waarschuwing mag breken. De punt
+                  en de tekst staan in één span, zodat de tekst van de rij "· aangepast" leest. */}
+              {extra.warn ? (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />
+                  <span>{' '}{extra.text}</span>
+                </>
+              ) : (
+                <span className="truncate">· {extra.text}</span>
+              )}
+              {extra.also && <span>· {extra.also}</span>}
+            </span>
+          )}
         </span>
       </span>
-      {/* Rechts: wat er te zien is van het horloge en de stand van de training. */}
+      {/* Rechts precies één ding: het vinkje, de greep, of de lege cirkel of het statusicoon. */}
       <span className="flex shrink-0 items-center gap-2">
-        {watch === 'sent' && <span className="flex" style={{ color: 'var(--color-success-text)' }}><Icon name="horloge" size={14} label="Verstuurd naar je horloge" /></span>}
-        {watch === 'failed' && <span className="flex" style={{ color: 'var(--color-warning)' }}><Icon name="horloge" size={14} label="Versturen naar je horloge is niet gelukt" /></span>}
         {doneNow ? (
           <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-progress)', color: 'var(--color-progress)' }}>
             <Icon name="vinkje" size={14} />
             <span className="sr-only">Gedaan</span>
           </span>
-        ) : showToday ? null : isRest ? (
+        ) : isRest ? (
           <StatusPill tone="status">{status === 'skipped' ? 'Overgeslagen' : 'Herstel'}</StatusPill>
-        ) : status === 'planned' || status === 'moved' ? (
-          handle || ghost ? null : (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-control-border)' }}>
-              <span className="sr-only">Gepland</span>
-            </span>
-          )
+        ) : handle || ghost ? null : status === 'planned' || status === 'moved' ? (
+          <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-control-border)' }}>
+            <span className="sr-only">Gepland</span>
+          </span>
         ) : (
           <WeekStatusIcon status={status} />
         )}
@@ -162,7 +177,7 @@ function SessionRow({
   );
   if (ghost) {
     return (
-      <div className="flex min-h-[64px] w-full items-center gap-3 px-3 py-2">
+      <div className="flex min-h-[52px] w-full items-center gap-3 px-3 py-1.5">
         {body}
         <span className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-action)' }}><Icon name="greep" size={22} /></span>
       </div>
@@ -175,14 +190,14 @@ function SessionRow({
   return (
     <div
       data-session-row={session.id}
-      className="relative flex min-h-[64px] w-full items-center gap-3 border-t px-3 first:border-t-0"
+      className="relative flex min-h-[52px] w-full items-center gap-3 border-t px-3 first:border-t-0"
       style={rowStyle}
     >
       <button
         type="button"
         onClick={onTap}
         data-sheet-from
-        className="flex min-h-[64px] min-w-0 flex-1 items-center gap-3 py-2 text-left transition-colors active:opacity-75"
+        className="flex min-h-[52px] min-w-0 flex-1 items-center gap-3 py-1.5 text-left transition-colors active:opacity-75"
         style={hidden}
         tabIndex={placeholder ? -1 : undefined}
       >
@@ -205,7 +220,7 @@ function SessionRow({
         </button>
       )}
       {placeholder && (
-        <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-11 w-11 -translate-y-1/2 rounded-full" style={{ border: '1.5px dashed var(--color-control-border)' }} />
+        <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full" style={{ border: '1.5px dashed var(--color-control-border)' }} />
       )}
     </div>
   );
@@ -221,10 +236,10 @@ function LooseRow({ log, template, isToday, onTap, sign }: { log: SessionLog; te
       type="button"
       onClick={onTap}
       data-sheet-from
-      className="flex min-h-[64px] w-full items-center gap-3 border-t px-3 py-2 text-left transition-colors active:opacity-75 first:border-t-0"
+      className="flex min-h-[52px] w-full items-center gap-3 border-t px-3 py-1.5 text-left transition-colors active:opacity-75 first:border-t-0"
       style={{ borderColor: 'var(--color-card-border)', ...(isToday ? todayStyle : {}) }}
     >
-      <LogDisc log={log} size={44} />
+      <LogDisc log={log} size={DISC} />
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
           <span className="min-w-0 break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{name}</span>
@@ -398,9 +413,9 @@ export function WeekPlanner({
             )}
             {quietWord && (
               <div className="flex min-h-[40px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
-                <span className="min-w-0 flex-1 pl-14 text-[13px] leading-4 tabular-nums" style={{ color: isToday ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{dayLabel(date)} · {quietWord}</span>
+                <span className="min-w-0 flex-1 pl-12 text-[13px] leading-4 tabular-nums" style={{ color: isToday ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{dayLabel(date)} · {quietWord}</span>
                 {isToday && onAddFree && (
-                  <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-action)' }}>
+                  <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-ink-dim)' }}>
                     <Icon name="plus" size={20} />
                   </button>
                 )}
@@ -411,26 +426,28 @@ export function WeekPlanner({
               <LooseRow key={l.id} log={l} template={templateById.get(l.templateId)} isToday={isToday} onTap={() => onSelectLog?.(l)} sign={signOf(l)} />
             ))}
             {showEmpty && (
-              <div className="flex min-h-[64px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : empty.rest ? restStyle : undefined}>
+              <div className="flex min-h-[52px] items-center gap-3 px-3 py-1.5" style={isToday ? todayStyle : empty.rest ? restStyle : undefined}>
                 {empty.rest ? (
-                  <IconDisc icon="maan" size={44} tone="status" />
+                  <IconDisc icon="maan" size={DISC} tone="status" />
                 ) : (
-                  <span aria-hidden="true" className="inline-flex h-11 w-11 shrink-0 rounded-full" style={{ border: '1.5px dashed var(--color-control-border)' }} />
+                  <span aria-hidden="true" className="inline-flex h-9 w-9 shrink-0 rounded-full" style={{ border: '1.5px dashed var(--color-control-border)' }} />
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] font-medium leading-snug" style={{ color: empty.rest ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{empty.title}</span>
                   <span className="block text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{dayLabel(date)} · {empty.line}</span>
                 </span>
                 {isToday && onAddFree && (
-                  <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-action)' }}>
+                  <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-ink-dim)' }}>
                     <Icon name="plus" size={20} />
                   </button>
                 )}
               </div>
             )}
             {advice && (
-              <p className="flex flex-wrap items-center gap-x-1.5 px-3 pb-2 pl-[68px] text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                <span style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-progress)' }}>{advice.avoid ? 'Beter niet op één dag' : advice.headline}</span>
+              <p className="flex flex-wrap items-center gap-x-1.5 px-3 pb-2 pl-[60px] text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-day-order={advice.avoid ? 'avoid' : 'order'}>
+                {/* De volgorde is een gedempte regel zonder kleur; alleen "Beter niet op één dag" is een waarschuwing. */}
+                {advice.avoid && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />}
+                <span style={advice.avoid ? { color: 'var(--color-ink)' } : undefined}>{advice.avoid ? 'Beter niet op één dag' : advice.headline}</span>
                 {advice.gapHours && <span>· liefst {advice.gapHours} uur ertussen</span>}
               </p>
             )}

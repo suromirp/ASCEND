@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { fullWeek, fullWeekAdvice, fullWeekFollowed, fullWeekId, fullWeekLine, fullWithExtra, weekLoss, weekShape, FULL_WEEK_RULE, type FullWeekAdviceInput } from './fullWeek';
+import { fullWeek, fullWeekAdvice, fullWeekConcern, fullWeekFollowed, fullWeekId, fullWeekLine, fullWithExtra, weekLoss, weekShape, FULL_WEEK_RULE, type FullWeekAdviceInput } from './fullWeek';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { proposeExtraSession } from './extraRun';
 import { applyPlanChangeItems } from './proposalEngine';
 import { validateWeeks } from './weekValidator';
+import { noticeHeadline, rowNotes, type WeekConcern } from './weekConcerns';
+import { weekFixId } from './weekFixProposal';
 import type { PlanChangeProposal } from '../models/planChange';
 import { layoutPhasesForGoal, PHASE_BASIS } from './programLayout';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -328,5 +330,35 @@ describe('de extra training kijkt mee', () => {
     expect(fullWithExtra({ today: WED, sessions: before, logs: [], templates, check: { restDay: 1, program } }, { templateId: 'tpl_strides_run', date: day(4) })).toBe(true);
     const p = extra(before);
     expect(p?.weekStart).not.toBe(MON);
+  });
+});
+
+// Week minimaal, spoor 3: de volle week is een punt in Let op, met een amber stip op de dagen met twee trainingen.
+describe('WEEK-FULL: een punt in Let op', () => {
+  const { sessions, logs } = crammed();
+  const inp = input(THU, sessions, logs, { leave: noGym });
+
+  it('alleen: de zin, het feit erachter en "volle dag" op de rijen van de dubbele dagen; geen voorstel in Week', () => {
+    const c = fullWeekConcern(inp, MON)!;
+    expect(c).toMatchObject({ rule: 'WEEK-FULL', plain: true, headline: 'Je week is vol.', fact: '6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij.' });
+    expect(Object.keys(c.notes).sort()).toEqual(['tpl_bodyweight@6', 'tpl_long_run@6', 'tpl_strides_run@4', 'tpl_upper_b@4']);
+    expect(Object.values(c.notes).every((n) => n === 'volle dag')).toBe(true);
+    expect(noticeHeadline([c])).toBe('Je week is vol.');
+    expect(weekFixId(c, sessions)).toBe(`weekfix:${c.key}`);
+  });
+
+  it('samen met een ander punt telt hij mee in de kop; op de rij gaat het punt van de weekcontrole voor', () => {
+    const c = fullWeekConcern(inp, MON)!;
+    const other: WeekConcern = { ...c, key: 'LEG-SPACING:x', rule: 'LEG-SPACING', plain: undefined, title: 't', why: 'w', finding: {} as never, headline: 'Twee zware beendagen.', fact: 'f', notes: { 'tpl_long_run@6': '1 dag na Benen A' } } as WeekConcern;
+    expect(noticeHeadline([c, other])).toBe('Deze week heeft 2 punten die niet kloppen.');
+    expect(rowNotes([c, other]).get('tpl_long_run@6')).toBe('1 dag na Benen A');
+    expect(rowNotes([c, other]).get('tpl_bodyweight@6')).toBe('volle dag');
+  });
+
+  it('dezelfde woorden als de gewone regel; na Akkoord of in een andere week niets', () => {
+    expect(fullWeekConcern(inp, MON, 'declined')!.fact).toMatch(/Je liet alles staan\.$/);
+    expect(fullWeekConcern(inp, MON, 'open')!.fact).toMatch(/Op Vandaag staat een voorstel\.$/);
+    expect(fullWeekConcern(inp, MON, 'accepted')).toBeUndefined();
+    expect(fullWeekConcern(inp, day(7))).toBeUndefined();
   });
 });

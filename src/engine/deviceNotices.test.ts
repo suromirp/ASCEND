@@ -47,7 +47,6 @@ function review(over: Partial<WeekReview> = {}): WeekReview {
     running: false,
     todayLeft: 0,
     lighter: 0,
-    changes: [],
     next: { title: 'Week 4 van 6, basisfase', minutes: 240, key: 'Lange loop: 1 uur 30 min' },
     advice: ['Eén training bleef liggen. Volgende week staat er weer een rustig blok.', 'Tweede tip'],
     ...over,

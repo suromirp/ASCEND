@@ -71,7 +71,7 @@ export interface WatchBuildOptions {
   hr?: WatchHrPlan;
 }
 
-type WatchSport = 'Run' | 'Walk' | 'Hike' | 'Ride';
+export type WatchSport = 'Run' | 'Walk' | 'Hike' | 'Ride';
 type WatchTarget = 'HR' | 'PACE';
 
 export interface WatchWorkout {
@@ -180,6 +180,12 @@ function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplate, pace
     }
   }
   return { text: blocks.join('\n\n'), target };
+}
+
+// The sport of the workout ASCEND sends for this training; the Briefing compares it with the chosen way of
+// training (engine/briefing.ts#watchPlaceLine).
+export function watchSportOf(template: SessionTemplate): WatchSport | undefined {
+  return sportOf(template);
 }
 
 function sportOf(template: SessionTemplate): WatchSport | undefined {
