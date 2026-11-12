@@ -13,6 +13,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - `src/engine/logDay.ts#logDay` op welke dag een log wordt getoond; alleen weergave
 - `src/engine/macrofactorDuration.ts#withChosenDuration` duur van een nieuw MacroFactor-log dat te lang is, bij het maken
 - `src/components/logForm/manualLog.ts#buildManualLog` het log van zelf invullen, voor het blad Hoe ging het? en het oude trainingsscherm samen; toestand en concept in `useLogForm.ts`, vergelijking in `manualLog.test.ts`
+- `src/state/logSession.ts#runLogSession` een nieuw log schrijven na Gedaan; tests in `logSession.test.ts`
 - `src/storage/milestoneClearing.ts#recordClearedMilestones` `MilestoneProgress` wordt alleen toegevoegd
 
 ## Nooit
@@ -24,7 +25,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - Load, beenindex of planning de getoonde dag van `logDay` laten lezen; die blijven `completedDate` gebruiken.
 
 ## Valkuilen
-- `logSession` kan `false` geven nadat het log al geschreven is (een stap erna faalde); een scherm dat dan opnieuw laat opslaan maakt bij een losse training een tweede log (besluit `2026-11-12-hoe-ging-het.md`).
+- `logSession` (`src/state/logSession.ts#runLogSession`) zegt ja zodra het log geschreven is, ook als een stap erna faalt; die fout gaat apart naar de melding bovenin. Nee betekent dat er niets geschreven is. Zet nooit een stap die kan falen tussen het schrijven en dat ja, anders laat een scherm opnieuw opslaan en krijgt een losse training een tweede log (besluit `2026-11-12-dubbel-log.md`).
 - Afgeleide velden (`detail`, `bestEffort`, `runDetail`, `zone2Pieces`, `forgeLog`) worden één keer toegevoegd en horen bij de totalen waarvoor ze gelezen zijn; ze veranderen nooit een gemeten getal. Een beschadigd veld laat je vallen zonder het log te verliezen.
 - Elke uitzondering heeft haar eigen terugzetfunctie; een nieuwe schrijfroute zonder die terugweg breekt de afspraak.
 - Een MacroFactor-log kan na middernacht eindigen: de dag in Week en Logboek is die van de geplande training, het log zelf blijft staan.
@@ -33,7 +34,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - Testdata is nagemaakt; een back-up van de eigenaar komt nooit in de repo.
 
 ## Testen
-- Tijdens het werk: `npx vitest run src/engine/watchAlign src/engine/trimLog src/engine/sourceCorrection src/engine/missedTraining src/storage/trim src/storage/sourceCorrection src/storage/missedTraining src/storage/backup`
+- Tijdens het werk: `npx vitest run src/engine/watchAlign src/engine/trimLog src/engine/sourceCorrection src/engine/missedTraining src/state/logSession src/storage/trim src/storage/sourceCorrection src/storage/missedTraining src/storage/backup`
 - Nooit laten bewegen: `src/storage/planGolden.test.ts`.
 - Tekstkaart (`npm run kaart:vergelijk`) alleen als een scherm verandert.
 

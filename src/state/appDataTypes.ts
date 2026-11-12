@@ -82,8 +82,11 @@ export interface AppData {
   goalOverviews: GoalOverview[];
   refresh: () => Promise<void>;
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
-  // Resolves false when nothing was stored: the save failed (storageNotice
-  // says why) or this planned session already has a log (a double tap).
+  // Resolves true when the log is in storage, also when a step after the write
+  // failed (storageNotice then says it was saved; state/logSession.ts). False
+  // when nothing was stored: the write failed (storageNotice says why) or this
+  // planned session or watch activity already has a log (a double tap). A
+  // second tap on the same loose training while the first runs gets the first's outcome.
   // `batch`: no moment after Gedaan for this one yet; it goes into the list the
   // caller owns, and the caller then calls announceSaved(batch) once, so they
   // get one summary instead of one screen each (MacroFactor "Alles opslaan").

@@ -20,8 +20,8 @@ export const HOW_TEXT = {
   // Na de grens in tijd: het opslaan loopt nog, en je ziet dat.
   slow: 'Opslaan duurt lang. Je invulling blijft staan.',
   failed: 'Opslaan lukte niet. Je invulling staat er nog; probeer het opnieuw.',
-  // Een losse training heeft geen geplande training die een tweede log tegenhoudt, en logSession kan
-  // mislukken nadat het log al geschreven is (een stap erna faalde): eerst kijken.
+  // Een losse training heeft geen geplande training die een tweede log tegenhoudt: eerst kijken. Sinds
+  // besluit 2026-11-12-dubbel-log.md zegt logSession ja zodra het log geschreven is; deze regel blijft als voorzorg.
   failedLoose: 'Opslaan lukte niet. Kijk eerst in je logboek of hij er toch staat; je invulling staat er nog.',
   already: 'Deze training staat al als gedaan. Er komt geen tweede log bij.',
 } as const;
@@ -44,7 +44,7 @@ export function footState({ alreadyDone, confirmLong }: { alreadyDone: boolean; 
 }
 
 // Eén keer opslaan, met een grens in tijd. Na `limitMs` meldt `onSlow` dat het lang duurt; de uitkomst
-// is altijd die van het opslaan zelf. Let op: logSession kan false geven nadat het log al geschreven is.
+// is altijd die van het opslaan zelf. Ja van logSession betekent: het log staat er, ook als een stap erna faalde.
 export async function saveWithLimit(save: () => Promise<boolean>, onSlow: () => void, limitMs = SAVE_LIMIT_MS): Promise<boolean> {
   const timer = setTimeout(onSlow, limitMs);
   try {
