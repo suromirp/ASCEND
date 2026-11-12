@@ -150,9 +150,8 @@ export function TodayMissionCard({
   // De minuten staan groot; wat de duurchip méér zegt dan alleen de minuten ("4 × 4 min") blijft als tekst.
   const plainMinutes = new RegExp(`^${fullDuration} min$`);
   const shownChips = missionChipsShown(chips, view);
-  // Met een Briefing: het tempo als één stille regel onder de minuten, geen groot getal (besluit 2026-11-12-missiekaart.md).
-  const quietPace = view.paceQuiet ? shownChips.find((c) => c.kind === 'tempo') : undefined;
-  const others = shownChips.filter((c) => c !== quietPace && c.kind !== 'zone' && !(c.kind === 'duur' && plainMinutes.test(c.text)));
+  // Met een Briefing staat het tempo daar, niet op de kaart (besluit 2026-11-12-briefing-per-manier.md).
+  const others = shownChips.filter((c) => c.kind !== 'zone' && !(c.kind === 'duur' && plainMinutes.test(c.text)));
   const numeric = others.flatMap((c) => {
     const s = splitChip(c.text, c.kind === 'tempo');
     return s && c.kind !== 'duur' ? [{ chip: c, ...s }] : [];
@@ -220,8 +219,7 @@ export function TodayMissionCard({
             ))}
           </ul>
         )}
-        {quietPace && <p className="mt-1 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{quietPace.text.replace(/\s*\/km$/, ' per km')}</p>}
-        {view.pace && paceNote && <p className={`${quietPace ? 'mt-0.5' : 'mt-2'} text-xs`} style={{ color: 'var(--color-ink-dim)' }}>{paceNote}</p>}
+        {view.pace && paceNote && <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{paceNote}</p>}
         <BootReminderLine template={template} className="mt-2" />
         <SweatBeforeRow template={template} className="mt-1" />
       </div>

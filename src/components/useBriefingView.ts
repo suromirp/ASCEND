@@ -13,6 +13,8 @@ import { adjustFor } from '../engine/clothingFeedback';
 import { templateSport } from '../engine/sports';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { fuelOn } from '../engine/fuelOnTheGo';
+import { recentRunPace } from '../engine/recentRunPace';
+import { toISODate } from '../utils/dates';
 import { watchFieldsShown, resolveWatchModel } from '../engine/watchFields';
 import { getTrainingGuide } from '../data/trainingGuide';
 import { useWatchStatuses } from './useWatchStatus';
@@ -31,6 +33,7 @@ export function useBriefingView({ template, session, date, program, storedPlace 
   const { watchLink, watchSource } = useWatchLink();
   const { statusOf, ready } = useWatchStatuses();
   const guide = getTrainingGuide(template.id);
+  const paces = pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces;
   return briefing({
     template,
     session,
@@ -41,7 +44,9 @@ export function useBriefingView({ template, session, date, program, storedPlace 
     storedPlace,
     routeOn: settings.routeProposal !== false,
     routeSearch: settings.routeSearch,
-    easyPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy,
+    easyPace: paces?.easy,
+    paces,
+    recentPace: recentRunPace(sessionLogs, template.id, toISODate(now)),
     watchLink,
     watchSource,
     watch: { showStatus: settings.showWatchStatus !== false, fieldsShown: watchFieldsShown(settings), model: resolveWatchModel(settings.watchModel), store: settings.watchFieldVersions, hasZonesNote: !!guide?.garminNote },

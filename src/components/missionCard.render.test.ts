@@ -166,12 +166,12 @@ describe('geen herhaling van wat de Briefing toont (regel 1)', () => {
 });
 
 describe('het tempo bij een training met een Briefing', () => {
-  it('een rustige loop met een testloop: één stille regel onder de minuten, met de zin over de testloop eronder', () => {
+  // Besluit 2026-11-12-briefing-per-manier.md: tempo en testloopzin staan in de Briefing, niet meer op de kaart
+  // (bewust meebewogen; eerder één stille regel onder de minuten).
+  it('een rustige loop met een testloop: geen tempo en geen testloopzin op de kaart', () => {
     const html = card('tpl_easy_run');
-    expect(html).toMatch(/<p class="mt-1 text-sm tabular-nums" style="color:var\(--color-ink-dim\)">\d+:\d\d tot \d+:\d\d per km<\/p>/);
-    expect(html).toContain('Tempo uit je testloop van');
-    expect(html.indexOf('per km')).toBeGreaterThan(html.indexOf('minuten'));
-    expect(html.indexOf('per km')).toBeLessThan(html.indexOf('mx-primary'));
+    expect(html).not.toMatch(/\d+:\d\d tot \d+:\d\d/);
+    expect(html).not.toContain('Tempo uit je testloop van');
   });
   it('fietsen zonder Briefing houdt het oude blok', () => {
     expect(card('tpl_bike')).not.toContain('text-sm tabular-nums" style="color:var(--color-ink-dim)">');

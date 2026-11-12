@@ -9,6 +9,7 @@ Schermen op de gewone stand (kracht): vandaag, week, stand, de schermen achter J
 Schermen op een eigen stand, met de stand in de naam:
 - horloge: `vandaag-horloge` (de ochtendkaart met slaap, rusthartslag en HRV van het horloge) en `run-in-detail` (het scherm Run in detail van een rustige duurloop van 6 km in 39 minuten).
 - vakantie (9 tot en met 13 november, zonder training): `vandaag-vakantie`, `week-vakantie` en `stand-vakantie`.
+- heuvel (de Lange duurloop van die week is Heuvelintervallen): `briefing-heuvel`, `briefing-loopband-helling` en `briefing-stairmaster`, de Briefing per manier (besluit `2026-11-12-briefing-per-manier.md`). Op de gewone stand ook `briefing-loopband`, de Lange duurloop op de loopband. Twee invarianten: het totaal bovenaan is het einde van de tijdlijn, en geen zin staat twee keer in één regel.
 - zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel`, `ascend-zonder-doel`, `stand-zonder-doel` en `stand-ritme-zonder-doel`.
 - ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek`, `week-ziek` en `stand-ziek`.
 - vaardigheid (één vaardigheid, Pull-Up, met twee stappen gehaald): `ascend-vaardigheid`.

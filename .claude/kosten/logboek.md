@@ -432,3 +432,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, coördinator 12 november: ca. $23 tot de vroege wissel om 10:40 UTC (500k context)
 - 2026-11-12, Sherpa Week aanpassingen (opus); Warden Week aanpassingen (reviewer, sonnet) 37k, 3 min, akkoord zonder blokkerende punten, 2 beter overgenomen
 - 2026-11-12, Sherpa Dubbel log (fable, ca. $3,2, 0 herstelrondes van de bouwer; twee kleine punten door de coördinator) op main ec1f56e; Warden Dubbel log (reviewer, fable) 59k, 4 min, akkoord; Warden Week (sonnet) 53k, akkoord met 1 moet; Lookout Week (tester, sonnet) 67k, 8 min, groen; Warden Missiekaart (sonnet) 62k, niet akkoord (regen en lucht weg bij prima weer)
+- 2026-11-12, Sherpa Briefing per manier (opus); Warden Briefing (reviewer, sonnet) 65k, 9 min, niet akkoord (invariant tijdlijn leeg, al hersteld), 3 belangrijk overgenomen (kop TRAP, horloge bij status uit, Geen afdaling blijft naast tempo)

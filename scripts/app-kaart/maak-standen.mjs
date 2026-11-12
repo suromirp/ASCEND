@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel, aangepast)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel, aangepast, heuvel)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -164,6 +164,13 @@ function metAanpassingen(state) {
   Object.assign(rij('planned_mvsb9yotvrxtjp6'), { lock: { by: 'proposal', proposalId: licht.id, at: licht.resolvedAt } });
 }
 
+// Heuvelintervallen vandaag (docs/beslissingen/2026-11-12-briefing-per-manier.md): de Lange duurloop van zaterdag is
+// hier een heuveltraining, zodat de Briefing per manier (heuvel, loopband op helling, StairMaster) op de kaart staat.
+function metHeuvel(state) {
+  const rij = winkel(state, 'plannedSessions').records.find((r) => r.value?.id === 'planned_mvsb9yots96v8v5').value;
+  rij.templateId = 'tpl_hill_intervals';
+}
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
@@ -174,6 +181,7 @@ export const STANDEN = {
   algemeen: metAlgemeen,
   voorstel: metVoorstel,
   aangepast: metAanpassingen,
+  heuvel: metHeuvel,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------
