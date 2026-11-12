@@ -10,15 +10,17 @@ Bijgewerkt: 12 november 2026, rond 03:40, door de coördinator van 11 op 12 nove
 ## Stand
 
 - Live vannacht: Tempo bij zone 2 (edfa8a9), Week na gemiste dagen (0e73e48, nagespeeld met de back-up), Je dag (4120e72). Pushmelding alleen voor zone 2 gestuurd; de deploys van 0e73e48 en 4120e72 nog nakijken en dan één melding: "Je dag en de vraag bij een volle week zijn live."
-- Lopend: Sherpa Andere plek, session_01LnDpSkQePdmGC29wm4CpJP, branch claude/andere-plek. Gedaan: zoeken op naam, chip Andere plek, pagina Je plekken (hernoemen, wissen met vraag). Herstel 4 en 5 klaar (melding 02:29 UTC): Andere plek vaste laatste chip buiten de schuifrij, lege strook weg (de regel staat er alleen als er tekst is; bij binnenkomende lussen schuift de inhoud 40 px). Open punt: op 360 px is een gekozen bewaarde plek maar een paar letters zichtbaar omdat Waar je nu bent 150 px breed is; overweeg een kortere naam (bijvoorbeeld Hier). Warden akkoord. Nu: Lookout (afdrukken in eigen scratchpad, zelf bekijken) en Pathfinder opnieuw, dan main. Vraag van de bouwer: de valkuil "Thuis wissen altijd via clearRouteStartPoint of removePlace, nooit alleen PLACES_KEY" in het briefje koppelingen-en-data (45 regels): ja, voeg hem samen met een bestaande regel over Plekken. Hij meldt zich bij de vorige coördinator; volg hem met get_session.
+- Live: Andere plek (1af978e, door coördinator 12 november gemerged na Pathfinder akkoord en eigen blik op de afdrukken van Lookout; Lookout zelf brak af door de limiet van vijf uur van Sonnet). Sessie gearchiveerd.
+- Lopend (melden zich bij session_01LnDpSkUxMFtEBmNMxMAKcN): Sherpa Je week tot nu (session_01LnDpSmKGD4U7U1iny68EUg, branch claude/je-week-tot-nu) en Sherpa Stand minimaal (session_01LnDpSiZoywJ93B4LymKzmy, branch claude/stand-minimaal). Na hun melding: Lookout (afdrukken in eigen scratchpad), Pathfinder, eigen blik, squash naar main.
+- Limiet: om 03:00 UTC liep Sonnet tegen de limiet van vijf uur aan; bij een afgebroken Lookout eerst kijken of zijn afdrukken er al staan.
 - Back-up van de eigenaar van 12 november 02:11: scratchpad van de vorige coördinator, niet bereikbaar voor jou. Vraag een nieuwe als je moet naspelen.
 
 ## Ontwerpen klaar, met besluit, nog te bouwen (volgorde)
 
-1. Je week tot nu (`2026-11-12-je-week-tot-nu.md`, ontwerp in docs/visie): kan nu, Je dag staat op main. Let op: de rij Wat ASCEND aanpaste vervalt hier (vervangen door Week minimaal).
-2. Stand minimaal (`2026-11-12-stand-minimaal.md`): kan nu; spoor 5 eerst Forge nakijken.
+1. Je week tot nu (`2026-11-12-je-week-tot-nu.md`, ontwerp in docs/visie): in aanbouw. Let op: de rij Wat ASCEND aanpaste vervalt hier (vervangen door Week minimaal).
+2. Stand minimaal (`2026-11-12-stand-minimaal.md`): in aanbouw.
 3. Week minimaal (`2026-11-12-week-minimaal.md`): na Je week tot nu (de ring verhuist daarheen) en na Stand (bergkam pas als Stand belasting per dag toont). Eerst een changeLog.test.ts; "toegevoegd" bij een opnieuw neergelegde training is fout.
-4. Trainingsscherm en ontwerpregels (`2026-11-12-trainingsscherm-en-ontwerpregels.md`): sporen 1 tot 4 zodra Andere plek op main staat (zelfde Briefing-bestanden), 5 en 6 daarna, spoor 10 per regel met eigen besluit. Voorwaarde bij vraag 2: eerst laten zien wat de belasting doet met een log zonder zwaarte.
+4. Trainingsscherm en ontwerpregels (`2026-11-12-trainingsscherm-en-ontwerpregels.md`): sporen 1 tot 4 kunnen nu (Andere plek staat op main); de derde bouwer (zelfde Briefing-bestanden), 5 en 6 daarna, spoor 10 per regel met eigen besluit. Voorwaarde bij vraag 2: eerst laten zien wat de belasting doet met een log zonder zwaarte.
 5. Daarna Ascend en Logboek in dezelfde lijn (nog geen ontwerp), met de vondsten uit `docs/onderhoud/2026-11-12-pathfinder-verborgen-schermen.md` (na een loop zes tot acht lagen, groep Gidsen uit het tandwiel, Forge-instellingen tijdens trainen).
 
 ## Inbox en Nakijken die vannacht bijkwamen (staan in docs/backlog.md)
