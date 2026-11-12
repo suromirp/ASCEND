@@ -17,7 +17,7 @@ describe('buildSessionBrief', () => {
     const brief = buildSessionBrief(tpl('tpl_hill_intervals'), saturday, program);
     expect(brief.headline).toBe('HARDLOPEN · BERGOP');
     expect(brief.facts.map((f) => f.value)).toEqual(['35 min', '5 × 1 min', 'RPE 8-9']);
-    expect(brief.weekLabel).toBe('Week 1 van 20, basisfase · wennen');
+    expect(brief.weekLabel).toBe('Basisfase, week 1 van 20 · wennen');
     expect(brief.stopSignals.length).toBeGreaterThan(0);
   });
 

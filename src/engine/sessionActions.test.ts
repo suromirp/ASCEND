@@ -61,7 +61,7 @@ describe('previewDayLine: de dag en week van de training zelf', () => {
     const line = previewDayLine(date, program);
     // formatDateNL zet het jaartal erbij als het niet dit jaar is: daarom toContain.
     expect(line).toContain('Donderdag 29 oktober');
-    expect(line).toContain(`Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}`);
+    expect(line).toContain(`, week ${position.weekInPhase} van ${position.phase.weekCount}`);
     // Een week later hoort een andere regel.
     expect(previewDayLine('2026-11-05', program)).not.toBe(line);
   });

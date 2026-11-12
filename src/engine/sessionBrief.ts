@@ -9,6 +9,7 @@
 //
 // Pure: no React, no IndexedDB.
 
+import { weekPositionLabel } from './weekLabel';
 import type { Program } from '../models/program';
 import type { SessionTemplate } from '../models/training';
 import { SESSION_STYLE } from '../data/sessionStyle';
@@ -73,7 +74,7 @@ export function buildSessionBrief(
     const position = resolveProgramWeek(program, dateIso);
     if (position) {
       const note = progressionTarget(template, program, dateIso)?.step.note?.split(/, | \(/)[0];
-      weekLabel = `Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}${note ? ` · ${note.toLowerCase()}` : ''}`;
+      weekLabel = `${weekPositionLabel(position)}${note ? ` · ${note.toLowerCase()}` : ''}`;
     }
   }
 
