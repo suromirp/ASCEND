@@ -107,7 +107,7 @@ export type StartPick = 'here' | 'home';
 export type StartPlan =
   // Waar je nu bent: de plek wordt nog bepaald.
   | { kind: 'locate'; chip: StartPick; line: string }
-  | { kind: 'here' | 'home' | 'tap'; chip: StartPick; point: RoutePoint; line: string }
+  | { kind: 'here' | 'home' | 'tap' | 'place'; chip: StartPick; point: RoutePoint; line: string }
   | { kind: 'approx'; chip: StartPick; line: string };
 
 export interface StartPlanInput {
@@ -118,6 +118,8 @@ export interface StartPlanInput {
   picked?: StartPick;
   // Start hier: een getikt punt op de kaart, voor deze zoektocht.
   tap?: RoutePoint;
+  // Een bewaarde of gezochte plek (een chip of Andere plek), voor deze training. De chip zelf zegt welke.
+  place?: RoutePoint;
   // Thuis kon niet gelezen worden (de opslag antwoordde niet op tijd of gaf een fout): niet raden dat er geen is.
   homeUnread?: boolean;
   // De ene vraag om je plek van deze poging, als die al antwoordde.
@@ -131,6 +133,8 @@ export function planStart(i: StartPlanInput): StartPlan {
   const picked: StartPick = i.picked === 'home' && home ? 'home' : i.picked === 'here' ? 'here' : i.mode === 'exact' && home ? 'home' : 'here';
   const tap = i.tap ? validStartPoint(i.tap) : undefined;
   if (tap) return { kind: 'tap', chip: picked, point: tap, line: START_LINE_TAP };
+  const place = i.place ? validStartPoint(i.place) : undefined;
+  if (place) return { kind: 'place', chip: picked, point: place, line: '' };
   if (picked === 'home' && home) return { kind: 'home', chip: 'home', point: home, line: '' };
   // Ongeveer valt onder de chip Waar je nu bent en blijft afgerond, ook na een tik: de precieze plek gaat dan nooit de deur uit.
   if (i.mode === 'approx') return { kind: 'approx', chip: 'here', line: START_LINE_APPROX };
@@ -146,6 +150,8 @@ export function planStart(i: StartPlanInput): StartPlan {
 function planUnread(i: StartPlanInput): StartPlan {
   const tap = i.tap ? validStartPoint(i.tap) : undefined;
   if (tap) return { kind: 'tap', chip: 'here', point: tap, line: START_LINE_TAP };
+  const place = i.place ? validStartPoint(i.place) : undefined;
+  if (place) return { kind: 'place', chip: 'here', point: place, line: '' };
   if (i.mode === 'approx') return { kind: 'approx', chip: 'here', line: START_LINE_APPROX };
   if (!i.found) return { kind: 'locate', chip: 'here', line: START_LINE_HOME_UNREAD };
   if (i.found.ok) return { kind: 'here', chip: 'here', point: i.found.point, line: START_LINE_HOME_UNREAD };

@@ -136,12 +136,17 @@ const TIMEOUT_MS = 15_000;
 
 export interface FetchOptions {
   fetchImpl?: typeof fetch;
+  // Stopt de aanroep van buitenaf (een blad dat sluit); de uitkomst is dan een netwerkfout.
+  signal?: AbortSignal;
 }
 
 export async function getJson(url: string, options: FetchOptions): Promise<unknown> {
   const doFetch = options.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const stop = () => controller.abort();
+  if (options.signal?.aborted) controller.abort();
+  options.signal?.addEventListener('abort', stop);
   // The timer runs until the body is read too: on a weak mobile connection the
   // headers can arrive and the body stall, which would leave "Bezig…" forever.
   try {
@@ -162,6 +167,7 @@ export async function getJson(url: string, options: FetchOptions): Promise<unkno
     }
   } finally {
     clearTimeout(timer);
+    options.signal?.removeEventListener('abort', stop);
   }
 }
 

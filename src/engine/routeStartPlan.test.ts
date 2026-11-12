@@ -107,3 +107,22 @@ describe('een antwoord op de vraag om je plek telt alleen voor de poging die hem
     expect(locateAnswerCounts(undefined, 0)).toBe(false);
   });
 });
+
+describe('een bewaarde of gezochte plek (Andere plek)', () => {
+  const spot = { lat: 51.5, lon: 5.9 };
+  const home = { lat: 52, lon: 5 };
+  it('begint precies daar, zonder vraag om je plek en zonder regel, ook bij Ongeveer en Thuis', () => {
+    for (const mode of ['here', 'exact', 'approx'] as const) {
+      expect(planStart({ mode, home, place: spot })).toEqual({ kind: 'place', chip: mode === 'exact' ? 'home' : 'here', point: spot, line: '' });
+    }
+  });
+  it('Thuis niet gelezen: de plek werkt gewoon', () => {
+    expect(planStart({ mode: 'here', home: null, homeUnread: true, place: spot }).kind).toBe('place');
+  });
+  it('een getikt punt gaat voor de plek', () => {
+    expect(planStart({ mode: 'here', home, place: spot, tap: home }).kind).toBe('tap');
+  });
+  it('een kapotte plek telt niet', () => {
+    expect(planStart({ mode: 'here', home, place: { lat: Number.NaN, lon: 5 } }).kind).toBe('locate');
+  });
+});
