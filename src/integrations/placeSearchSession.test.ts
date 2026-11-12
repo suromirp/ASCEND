@@ -1,8 +1,8 @@
 // Zoeken op plaatsnaam in het blad Nieuwe plek: pauze, grens in tijd, uitkomst en sluiten. Nagemaakte namen.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPlaceSearch } from './placeSearchSession';
+import { createPlaceSearch, PlaceSearchFailed, searchInTurn } from './placeSearchSession';
 import { OpenMeteoError } from './openMeteo';
-import { PLACE_SEARCH_LIMIT_MS, PLACE_SEARCH_MAX, PLACE_SEARCH_PAUSE_MS, type FoundPlace, type PlaceSearchView } from '../engine/placeSearch';
+import { PLACE_FAILED_LINE, PLACE_SEARCH_LIMIT_MS, PLACE_SEARCH_MAX, PLACE_SEARCH_PAUSE_MS, type FoundPlace, type PlaceSearchView } from '../engine/placeSearch';
 
 const hit = (name: string): FoundPlace => ({ name, lat: 52, lon: 5, region: 'Gelderland', country: 'Nederland' });
 
@@ -123,5 +123,76 @@ describe('createPlaceSearch', () => {
     await vi.advanceTimersByTimeAsync(PLACE_SEARCH_LIMIT_MS);
     expect(t.views.length).toBe(before);
     expect(t.search).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('searchInTurn: eerst Open-Meteo, dan Photon', () => {
+  const top: FoundPlace = { name: 'Verzonnen Kop', lat: 47.1, lon: 9.5, kind: 'peak', country: 'Fantasia' };
+  const live = () => new AbortController().signal;
+  it('de eerste vindt drie of meer: de tweede wordt niet gevraagd', async () => {
+    const second = vi.fn(async () => [top]);
+    const three = [hit('Plek 1'), hit('Plek 2'), hit('Plek 3')];
+    expect(await searchInTurn('Plek', live(), async () => three, second)).toEqual(three);
+    expect(second).not.toHaveBeenCalled();
+  });
+  it('een dorp van de eerste en een top met dezelfde naam van de tweede: beide, het dorp voorop', async () => {
+    const village: FoundPlace = { name: 'Verzonnen Kop', lat: 52, lon: 5, kind: 'place', country: 'Nederland' };
+    expect(await searchInTurn('Verzonnen Kop', live(), async () => [village], async () => [top])).toEqual([village, top]);
+  });
+  it('dezelfde plek uit beide bronnen staat er één keer, die van de eerste', async () => {
+    const same: FoundPlace = { name: 'Verzonnen Kop', lat: 47.1, lon: 9.5, kind: 'place' };
+    expect(await searchInTurn('Verzonnen Kop', live(), async () => [same], async () => [{ ...top, lat: 47.1015 }])).toEqual([same]);
+  });
+  it('de eerste leeg en de tweede vindt iets: de treffers van de tweede, dubbelen één keer', async () => {
+    const second = vi.fn(async () => [top, { ...top, name: 'Verzonnen Kop (punt)' }]);
+    expect(await searchInTurn('Verzonnen Kop', live(), async () => [], second)).toEqual([top]);
+    expect(second).toHaveBeenCalledWith('Verzonnen Kop', expect.anything());
+  });
+  it('beide leeg: niets', async () => {
+    expect(await searchInTurn('Xyzzy', live(), async () => [], async () => [])).toEqual([]);
+  });
+  it('de tweede faalt en de eerste vond niets: mislukt, geen nee', async () => {
+    await expect(searchInTurn('Xyzzy', live(), async () => [], async () => { throw new Error('photon: 503'); })).rejects.toBeInstanceOf(PlaceSearchFailed);
+  });
+  it('de tweede faalt en de eerste vond iets: die treffers blijven', async () => {
+    expect(await searchInTurn('Heuvelrug', live(), async () => [hit('Heuvelrug')], async () => { throw new Error('photon: 503'); })).toEqual([hit('Heuvelrug')]);
+  });
+  it('de eerste faalt: zijn fout is de uitkomst en de tweede wordt niet gevraagd', async () => {
+    const second = vi.fn(async () => [top]);
+    await expect(searchInTurn('Xyzzy', live(), async () => { throw new OpenMeteoError('server', 'x'); }, second)).rejects.toBeInstanceOf(OpenMeteoError);
+    expect(second).not.toHaveBeenCalled();
+  });
+  it('gestopt tijdens de eerste: geen aanroep meer naar de tweede', async () => {
+    const stop = new AbortController();
+    const second = vi.fn(async () => [top]);
+    await searchInTurn('Xyzzy', stop.signal, async () => { stop.abort(); return []; }, second);
+    expect(second).not.toHaveBeenCalled();
+  });
+});
+
+describe('createPlaceSearch met twee bronnen', () => {
+  const top: FoundPlace = { name: 'Verzonnen Kop', lat: 47.1, lon: 9.5, kind: 'peak', country: 'Fantasia' };
+  it('een adres met komma: alleen het deel ervoor gaat naar de dienst, het veld houdt de hele tekst', async () => {
+    const t = setup(async () => [top]);
+    t.s.type('Verzonnen Kop, Bergweg 1, 1234 AB Fopdorp');
+    await vi.advanceTimersByTimeAsync(PLACE_SEARCH_PAUSE_MS);
+    expect(t.search.mock.calls[0][0]).toBe('Verzonnen Kop');
+    expect(t.last()).toEqual({ kind: 'results', query: 'Verzonnen Kop, Bergweg 1, 1234 AB Fopdorp', results: [top] });
+  });
+  it('de tweede bron hangt: na de ene grens van 8 s Zoeken duurde te lang, en zijn vraag is gestopt', async () => {
+    let photonSignal: AbortSignal | undefined;
+    const t = setup((q, s) => searchInTurn(q, s, async () => [], (_q, s2) => { photonSignal = s2; return new Promise(() => undefined); }));
+    t.s.type('Verzonnen Kop');
+    await vi.advanceTimersByTimeAsync(PLACE_SEARCH_PAUSE_MS + PLACE_SEARCH_LIMIT_MS - 1);
+    expect(t.last()).toEqual({ kind: 'busy', query: 'Verzonnen Kop' });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(t.last()).toEqual({ kind: 'timeout' });
+    expect(photonSignal?.aborted).toBe(true);
+  });
+  it('de tweede bron geeft een fout en de eerste vond niets: Zoeken lukte niet', async () => {
+    const t = setup((q, s) => searchInTurn(q, s, async () => [], async () => { throw new TypeError('Failed to fetch'); }));
+    t.s.type('Verzonnen Kop');
+    await vi.advanceTimersByTimeAsync(PLACE_SEARCH_PAUSE_MS);
+    expect(t.last()).toEqual({ kind: 'error', message: PLACE_FAILED_LINE });
   });
 });

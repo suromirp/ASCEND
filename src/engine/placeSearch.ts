@@ -17,20 +17,35 @@ export const PLACE_SEARCH_MAX = 8;
 // Binnen deze afstand is een treffer dezelfde plek als een bewaarde.
 export const SAME_PLACE_M = 100;
 
-// Een treffer van de zoekdienst: naam, plek, en waar hij ligt.
+// Twee treffers binnen deze afstand zijn dezelfde plek: hij staat één keer in de lijst.
+export const SAME_FOUND_M = 300;
+
+// De soort van een treffer, als de zoekdienst die kent (Photon; Open-Meteo zegt het niet).
+export type PlaceKind = 'peak' | 'nature' | 'place';
+export const PLACE_KIND_LABEL: Record<PlaceKind, string> = { peak: 'Top', nature: 'Natuurgebied', place: 'Plaats' };
+
+// Een treffer van de zoekdienst: naam, plek, en waar hij ligt. `kind` wordt nooit bewaard.
 export interface FoundPlace {
   name: string;
   lat: number;
   lon: number;
+  kind?: PlaceKind;
   region?: string;
   country?: string;
 }
 
 export type PlaceQuery = 'empty' | 'short' | 'ok';
 
+// Wat er naar de zoekdienst gaat: bij een adres met komma's alleen het deel voor de eerste komma
+// ("Verzonnen Kop, Bergweg 1, 1234 AB" zoekt op Verzonnen Kop). Straat en postcode gaan de deur niet uit.
+export function searchTerm(raw: string): string {
+  const at = raw.indexOf(',');
+  return (at < 0 ? raw : raw.slice(0, at)).trim();
+}
+
 // Leeg of één letter: geen aanroep. De zoekdienst wil minstens twee letters.
 export function placeQuery(raw: string): PlaceQuery {
-  const q = raw.trim();
+  const q = searchTerm(raw);
   if (q.length === 0) return 'empty';
   return q.length < 2 ? 'short' : 'ok';
 }
@@ -46,11 +61,16 @@ export type PlaceSearchView =
   | { kind: 'error'; message: string };
 
 export const PLACE_SHORT_LINE = 'Typ minstens twee letters van de plaats.';
-export const PLACE_NONE_LINE = 'Geen plaats gevonden met die naam. Probeer een grotere plaats in de buurt.';
-export const PLACE_OFFLINE_LINE = 'Geen verbinding met Open-Meteo. Controleer je internet en probeer het later opnieuw.';
+export const PLACE_NONE_LINE = 'Geen plek gevonden met die naam. Probeer een grotere plaats in de buurt.';
+export const PLACE_OFFLINE_LINE = 'Geen verbinding. Controleer je internet en probeer het later opnieuw.';
+// De eerste dienst vond niets en de tweede antwoordde niet: dat is geen nee.
+export const PLACE_FAILED_LINE = 'Zoeken lukte niet. Probeer het zo nog eens.';
+// Geeft de eerste dienst minder treffers dan dit, dan wordt ook de tweede gevraagd: een top die net zo
+// heet als een dorp staat anders nooit in de lijst.
+export const SECOND_SOURCE_BELOW = 3;
 export const PLACE_TIMEOUT_LINE = 'Zoeken duurde te lang. Probeer het zo nog eens.';
-// De privacyzin, naar de zin bij het weer: alleen een plaatsnaam gaat naar Open-Meteo.
-export const PLACE_PRIVACY_LINE = 'Open-Meteo krijgt alleen de plaatsnaam die je typt.';
+// De privacyzin: wie je zoekwoord krijgt (integrations/placeSearchSession.ts#searchInTurn, photon.ts).
+export const PLACE_PRIVACY_LINE = 'Je zoekwoord gaat naar Open-Meteo, en zo nodig naar Photon (OpenStreetMap). Van een adres gaat alleen het deel voor de komma mee.';
 
 // De regel onder het zoekveld; leeg bij niets getypt en bij treffers.
 export function placeSearchLine(view: PlaceSearchView): string {
@@ -73,8 +93,20 @@ export function placeSearchLine(view: PlaceSearchView): string {
   }
 }
 
-// De tweede regel van een treffer: regio en land, wat er is.
-export const placeWhere = (p: Pick<FoundPlace, 'region' | 'country'>): string => [p.region, p.country].filter((x): x is string => !!x).join(', ');
+// De tweede regel van een treffer: de soort, de regio en het land, wat er is.
+export const placeWhere = (p: Pick<FoundPlace, 'kind' | 'region' | 'country'>): string =>
+  [p.kind && PLACE_KIND_LABEL[p.kind], p.region, p.country].filter((x): x is string => !!x).join(', ');
+
+// Treffers van twee bronnen als één lijst, de eerste bron voorop en ongemoeid. Een treffer van de tweede
+// bron die binnen 300 m van een eerdere ligt is dezelfde plek en valt weg, ook als de tweede bron hem zelf
+// twee keer geeft.
+export function mergeFound(first: readonly FoundPlace[], second: readonly FoundPlace[]): FoundPlace[] {
+  const out = [...first];
+  for (const f of second) {
+    if (!out.some((o) => metersBetween(o, f) <= SAME_FOUND_M)) out.push(f);
+  }
+  return out;
+}
 
 const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase('nl') === b.trim().toLocaleLowerCase('nl');
 // Een te lange naam: afgekapt op een woordgrens met een beletselteken, zodat je ziet dat er meer was
