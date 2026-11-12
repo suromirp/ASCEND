@@ -11,6 +11,7 @@ De langste loop van de week, rustig en op vermoeide benen, voor uithouding en ho
 Zo 1 november · Week 1 van 4, basisfase · wennen
 
 --- kaart 1 ---
+[label: Wat je loopt]
 50
 minuten totaal
 ±300 m

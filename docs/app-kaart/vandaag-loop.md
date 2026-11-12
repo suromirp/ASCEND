@@ -23,7 +23,7 @@ Hoe voelen je benen?
 Vandaag · hardlopen
 Wennen, rustig tempo
 [knop: Meer keuzes]
-### Lange duurloop
+[knop: Lange duurloop] (aria: Briefing: Lange duurloop)
 50
 minuten
 ±300m omhoog als het kan
