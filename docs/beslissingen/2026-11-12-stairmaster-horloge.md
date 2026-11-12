@@ -81,3 +81,9 @@ Niets. Het vult `2026-11-12-briefing-per-manier.md` aan: daar stond dat wat naar
 ## Terugdraaien
 
 De instelling uitzetten geeft het oude gedrag. In de code: `watchPlaceOf` in `src/engine/watchWorkout.ts` altijd `undefined` laten geven.
+
+## Aanvulling van de coördinator (12 november, na Warden ronde 3)
+
+- Het log van een StairMaster-training die het horloge als wandeling opnam telt als wandelen (`sport: 'hiking'`, zoals een handlog met die manier), niet als looplast.
+- Zo'n log krijgt geen omgeving (geen "Buiten"), en de stijging van de stepper telt niet als daling.
+- Bekende grens: een gewone wandeling van vergelijkbare duur op de dag van de training wordt ook afgevinkt als die training; Klopt niet haalt het log weg. Een los StairStepper-log (eigen sport) koppel je niet achteraf, alleen een wandeling.

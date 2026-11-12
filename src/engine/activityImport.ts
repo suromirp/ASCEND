@@ -24,6 +24,7 @@ import { countedSportOfTemplate } from './sportTemplate';
 import { formatNumberNL } from '../utils/number';
 import type { RunDynamics, StreamKind } from '../models/activityDetail';
 import { round } from '../utils/round';
+import { findModalityByKey } from '../data/modalities';
 import { formatHoursMinutesNL } from '../utils/dates';
 
 export type ExternalActivityKind = 'run' | 'hike' | 'ride' | 'strength' | 'other';
@@ -278,6 +279,10 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
   const startMs = new Date(activity.start).getTime();
   const completedAt = new Date(startMs + activity.durationSec * 1000).toISOString();
   const gain = activity.elevationGainM !== undefined ? round(activity.elevationGainM) : undefined;
+  // A way chosen for this training (StairMaster) says where it was done; an indoor way gets no environment,
+  // as a log made by hand (logForm/manualLog.ts). A log is never rewritten, so a wrong field stays.
+  const wayEnv = way ? findModalityByKey(way)?.environment : undefined;
+  const indoorWay = !!way && wayEnv !== 'outdoor' && wayEnv !== 'treadmill';
 
   const metric = clean({
     durationMinutes,
@@ -287,7 +292,7 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
     // A treadmill doesn't change altitude: its "climb" is flagged, like the
     // incline-treadmill estimate (models/training.ts#OutdoorMetric).
     estimatedElevation: activity.treadmill && gain !== undefined ? true : undefined,
-    environment: activity.kind === 'strength' ? undefined : activity.treadmill ? ('treadmill' as const) : ('outdoor' as const),
+    environment: activity.kind === 'strength' || indoorWay ? undefined : activity.treadmill ? ('treadmill' as const) : ('outdoor' as const),
     // The rest-day walk is logged the way the app logs it by hand.
     modality: template.type === 'recovery' && activity.kind === 'hike' ? 'recovery_walk' : way,
     avgHeartRate: activity.avgHeartRate,

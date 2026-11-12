@@ -237,6 +237,8 @@ describe('een wandeling van het horloge bij heuvelintervallen op de StairMaster'
     expect(draft.templateId).toBe('tpl_hill_intervals');
     expect(draft.sport).toBe('hiking');
     expect(draft.cardioData?.modality).toBe('stairmaster_intervals');
+    // Binnen: geen Omgeving Buiten op het log (Warden ronde 3).
+    expect(draft.cardioData?.environment).toBeUndefined();
     expect(draft.externalId).toBe('test:walk-1');
     expect(planAutoTicks([walk()], [], [], [hills], templates, [], TODAY, STAIR).map((t) => t.match.session.id)).toEqual(['h1']);
   });
