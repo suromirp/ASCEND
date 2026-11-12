@@ -26,7 +26,7 @@ export function DescentBody({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        Meters bergaf per week. Dalen geeft de meeste spierpijn op een bergtocht. Je benen wennen eraan door het te blijven doen.
+        Meters bergaf per week. Bergaf geeft de meeste spierpijn op een bergtocht. Je benen wennen eraan door het te blijven doen.
       </p>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Meters bergaf de laatste ${weeks.length} weken, samen ${formatNumberNL(weeks.reduce((n, w) => n + w.metres, 0), 0)}`}>
         {weeks.map((w, i) => {
@@ -51,7 +51,7 @@ export function DescentBody({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
         {routeDayDescent ? <> Een gewone dag van je hoofddoel gaat zo'n <span className="tabular-nums">{formatNumberNL(routeDayDescent, 0)}</span> meter omlaag.</> : null}
       </p>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        In Nederland zijn dalen schaars. De trap, de training Heuvelsprints en afdalen en elke heuvel tellen mee. Op de loopband daal je niet.
+        In Nederland is bergaf schaars. De trap, de training Heuvelsprints en afdalen en elke heuvel tellen mee. Op de loopband daal je niet.
       </p>
     </div>
   );

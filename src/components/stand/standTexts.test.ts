@@ -74,3 +74,13 @@ describe('Je stand, de teksten van de onderdelen', () => {
     expect(info).toContain('Uit je hartslag.');
   });
 });
+
+describe('Bergaf heet overal Bergaf', () => {
+  it('het blad Bergaf zegt nergens Dalen of Afdaling als woord voor het onderwerp', async () => {
+    const { DescentBody } = await import('./DescentCard');
+    const weeks = [{ weekStart: '2026-10-05', metres: 120, biggestDay: 120 }, { weekStart: '2026-10-12', metres: 0, biggestDay: 0 }];
+    for (const out of [html(createElement(DescentBody, { weeks })), html(createElement(DescentBody, { weeks: [{ weekStart: '2026-10-05', metres: 0, biggestDay: 0 }], routeDayDescent: 600 }))]) {
+      expect(out).not.toMatch(/\bDalen\b|Afdaling/);
+    }
+  });
+});

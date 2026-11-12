@@ -57,7 +57,7 @@ describe('de schermen onder /stand', () => {
     expect(html).toContain('aria-label="Wat Belasting telt"');
     const t = text(html);
     expect(t.indexOf('GRAFIEK-BELASTING')).toBeLessThan(t.indexOf('INTENSITEIT'));
-    expect(t).toContain('Verdeling Kracht, lopen en bergwerk');
+    expect(t).toContain('Soorten Kracht, lopen en bergwerk');
     expect(t).not.toContain('Klimtempo');
     expect(t).not.toContain('Bergaf');
     expect(t).not.toContain('Belasting per week');

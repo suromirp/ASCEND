@@ -20,7 +20,6 @@ zo 1 nov · 50 min · zwaarte 4 · gepland
 200
 ±: geen zwaarte ingevuld, telt met de geplande zwaarte.
 Deze week is in lijn met de vier weken ervoor. Je bouwt rustig op.
-Vul na een training de zwaarte in, dan klopt de lijn beter.
 
 --- kaart 2 ---
 Intensiteit
@@ -32,4 +31,4 @@ Intensiteit
 Goed verdeeld: het meeste rustig, een paar keer hard. Zo groeit je basis en blijf je fris.
 
 --- kaart 3 ---
-[knop: VerdelingKracht, lopen en bergwerk] (aria: Verdeling: Kracht, lopen en bergwerk)
+[knop: SoortenKracht, lopen en bergwerk] (aria: Soorten: Kracht, lopen en bergwerk)

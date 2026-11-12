@@ -61,9 +61,10 @@ export function LegFatigueCard() {
 
   return (
     <Card className="flex flex-col gap-3">
+      {/* Het woord is het oordeel en staat groot; het getal van de index klein erachter (coördinator, 12 november). */}
       <div className="flex items-baseline gap-3">
-        <span className="font-sans text-[40px] font-semibold leading-none tracking-[-0.03em] tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(now.index, 1)}</span>
-        <span className="text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{word}</span>
+        <span className="font-display text-2xl leading-tight" style={{ color: 'var(--color-ink)' }}>{word}</span>
+        <span className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>index {formatNumberNL(now.index, 1)}</span>
       </div>
 
       <div className="relative h-2" role="img" aria-label={`Beenvermoeidheid ${formatNumberNL(now.index, 1)}: ${word.toLowerCase()}`}>
@@ -86,7 +87,7 @@ export function LegFatigueCard() {
           {now.contributions.slice(0, 3).map((c) => (
             <div key={c.id} className="flex items-baseline justify-between gap-3 text-xs">
               <span className="truncate" style={{ color: 'var(--color-ink)' }}>{c.name} <span style={{ color: 'var(--color-ink-dim)' }}>· {formatWeekdayDayMonthNL(c.date)}</span></span>
-              <span className="shrink-0 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatNumberNL(c.points, 1)}</span>
+              <span className="shrink-0 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatNumberNL(c.points, 1)} {c.points === 1 ? 'punt' : 'punten'}</span>
             </div>
           ))}
         </div>

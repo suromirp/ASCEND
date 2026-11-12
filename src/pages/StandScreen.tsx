@@ -92,7 +92,7 @@ function Belasting() {
       <StandRows label="Meer over je belasting">
         {descent && <StandRow label="Bergaf" value={descent} onClick={() => setSheet('bergaf')} sheet />}
         {climbValue && <StandRow label="Klimtempo" value={climbValue} onClick={() => setSheet('klimtempo')} sheet />}
-        <StandRow label="Verdeling" value="Kracht, lopen en bergwerk" onClick={() => setSheet('verdeling')} sheet />
+        <StandRow label="Soorten" value="Kracht, lopen en bergwerk" onClick={() => setSheet('verdeling')} sheet />
       </StandRows>
       {sheet === 'bergaf' && <StandSheet eyebrow="Belasting" title="Bergaf" onClose={() => setSheet(null)}><DescentBody weeks={d.descent} routeDayDescent={d.routeDescent} /></StandSheet>}
       {sheet === 'klimtempo' && climb && <StandSheet eyebrow="Belasting" title="Klimtempo" onClose={() => setSheet(null)}><ClimbPaceBody state={climb} goalDay={d.goalDay} pack={{ packKg: d.goalPack, bodyKg: d.inputs.bodyKg }} /></StandSheet>}

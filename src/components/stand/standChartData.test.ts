@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FRESHNESS_INFO, freshnessPoints, intensityInfo, LOAD_INFO, loadPoints } from './standChartData';
+import { effortHintShown, FRESHNESS_INFO, freshnessPoints, intensityInfo, LOAD_INFO, loadPoints } from './standChartData';
 import { FATIGUE_BAND, FATIGUE_THRESHOLDS } from '../../engine/legFatigue';
 import { LOAD_JUMP, type FreshnessPoint, type IntensityMix, type WeekLoad } from '../../engine/standing';
 
@@ -75,5 +75,20 @@ describe('Intensiteit achter de i', () => {
       'De streep op de balk staat op 80% rustig: zoveel doen goede duursporters ongeveer.',
     ]);
     expect(intensityInfo({ ...mix, unit: 'sessions' })[0]).toBe('Je loop- en wandeltrainingen van de laatste vier weken, per training geteld.');
+  });
+});
+
+describe('de zwaarte ontbreekt: één keer op het scherm', () => {
+  const item = (estimated: boolean) => ({ date: '2026-10-26', name: 'Rustige duurloop', sport: 'lopen' as const, minutes: 56, effort: 4, load: 224, planned: false, estimated });
+  const est = { ...week('2026-10-26', 224, 0, true), estimated: 224, items: [item(true)] };
+  const plain = { ...week('2026-10-19', 300), items: [item(false)] };
+  it('de gekozen week toont de ±-regel: geen tweede zin', () => {
+    expect(effortHintShown([plain, est], 1)).toBe(false);
+  });
+  it('een andere week gekozen zonder ±: de zin staat er', () => {
+    expect(effortHintShown([plain, est], 0)).toBe(true);
+  });
+  it('nergens een geschatte zwaarte: geen zin', () => {
+    expect(effortHintShown([plain], 0)).toBe(false);
   });
 });

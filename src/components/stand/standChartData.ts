@@ -69,3 +69,11 @@ export function intensityInfo(mix: IntensityMix): string[] {
   ];
 }
 
+
+// De zin "Vul na een training de zwaarte in" staat er als een flink deel van een week zonder ingevulde zwaarte telde,
+// maar niet als de gekozen week al de regel met ± toont: dan zegt het scherm het één keer.
+export function effortHintShown(weeks: WeekLoad[], shown: number): boolean {
+  const anyWeek = weeks.some((w) => w.estimated > 0 && w.estimated >= w.doneTotal * 0.25);
+  const plusMinusLine = weeks[shown]?.items.some((it) => it.estimated) ?? false;
+  return anyWeek && !plusMinusLine;
+}

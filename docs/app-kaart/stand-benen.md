@@ -10,12 +10,12 @@ Je stand
 [knop: Hoe de beenindex werkt]
 
 --- kaart 1 ---
-0,1
 Fris
+index 0,1
 [label: Beenvermoeidheid 0,1: fris]
 Werkt nog door
 Rustige duurloop · ma 26 okt
-0,1
+0,1 punten
 
 --- kaart 2 ---
 Frisheid

@@ -3,7 +3,7 @@ import { formatNumberNL } from '../../utils/number';
 import { Card } from '../ui';
 import { formatDayMonthNL, formatWeekdayDayMonthNL } from '../../utils/dates';
 import { StandLineChart } from './StandLineChart';
-import { loadPoints } from './standChartData';
+import { effortHintShown, loadPoints } from './standChartData';
 import { UnderLine } from './StandParts';
 
 // Belasting, het hart van het scherm: minuten maal zwaarte per week, in de stijl van de zone 2-kaart
@@ -19,7 +19,6 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
   if (weeks.length === 0) return null;
   const points = loadPoints(weeks);
   const max = Math.max(1, ...points.map((p) => p.ahead ?? p.value), jump?.before ?? 0) * 1.1;
-  const estimatedWeeks = weeks.filter((w) => w.estimated > 0 && w.estimated >= w.doneTotal * 0.25).length;
   const name = (w: WeekLoad) => (w.isCurrent ? 'Deze week' : `Week van ${formatDayMonthNL(w.weekStart)}`);
   const amount = (w: WeekLoad) => (w.isCurrent && w.plannedTotal > 0 ? `${formatNumberNL(w.doneTotal, 0)} + ${formatNumberNL(w.plannedTotal, 0)}` : formatNumberNL(w.doneTotal + w.plannedTotal, 0));
 
@@ -40,15 +39,20 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
         ariaLabel={`Belasting per week, ${weeks.length} weken. Meer staat boven.`}
         valueText={(i) => `${name(weeks[i])}: ${formatNumberNL(weeks[i].doneTotal, 0)} gedaan${weeks[i].plannedTotal > 0 ? `, ${formatNumberNL(weeks[i].plannedTotal, 0)} gepland` : ''}`}
       >
-        {(i) => <WeekTally week={weeks[i]} average={weeks[i].isCurrent ? jump?.before : undefined} />}
+        {(i) => (
+          <>
+            <WeekTally week={weeks[i]} average={weeks[i].isCurrent ? jump?.before : undefined} />
+            {/* Eén keer dat de zwaarte ontbreekt: staat de ±-regel er al, dan geen tweede zin (coördinator, 12 november). */}
+            {effortHintShown(weeks, i) && (
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                Vul na een training de zwaarte in, dan klopt de lijn beter.
+              </p>
+            )}
+          </>
+        )}
       </StandLineChart>
 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict(weeks[currentIdx], jump)}</p>
-      {estimatedWeeks > 0 && (
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Vul na een training de zwaarte in, dan klopt de lijn beter.
-        </p>
-      )}
     </Card>
   );
 }
