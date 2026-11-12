@@ -450,3 +450,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Lookout Weer (tester, sonnet) 100k, 15 min, groen; Pathfinder Weer (sonnet) 26k, 1 moet (pagina Weer toont thuis, naar backlog); Warden Hoogtemeters ronde 2-4 (reviewer, fable) 99k, 8 min, akkoord, 1 moet (zin in besluit); Sherpa Hoogtemeters ronde 4 (fable); samen op main c03dde9
 - 2026-11-12, Sherpa Andere plek via Photon (fable, ca. $3,4, 16 min); Warden Photon (reviewer, sonnet) 32k, 4 min, akkoord; Pathfinder Photon (sonnet) 23k, 2 moet
 - 2026-11-12, Lookout Photon (tester, sonnet) 85k, 17 min, 4 van 5 groen (echte CORS niet bereikbaar in de container); herstelronde naar dezelfde bouwer
+- 2026-11-12, Sherpa StairMaster op het horloge (fable, ca. $6,2, 20 min); Warden StairMaster (reviewer, fable) 110k, 11 min, niet akkoord (lange duurloop als wandeling buiten opdracht), 2 belangrijk (soort uit antwoord, rij in sync); herstelronde naar dezelfde bouwer
