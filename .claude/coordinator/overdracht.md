@@ -21,7 +21,7 @@ Bijgewerkt: 12 november 2026, rond 03:40, door de coördinator van 11 op 12 nove
 1. Je week tot nu: live. Let op: de rij Wat ASCEND aanpaste vervalt hier (vervangen door Week minimaal).
 2. Stand minimaal: eerste stuk live; het opschoonstuk (sporen 2, 3, 4, 6 en de punten van Pathfinder) is de volgende bouwer.
 3. Week minimaal (`2026-11-12-week-minimaal.md`): kan nu (Je week tot nu en Stand staan op main), ook de kop van Week met de fase voorop en de rij Wat ASCEND aanpaste uit Je week tot nu; let op Stand (bergkam pas als Stand belasting per dag toont). Eerst een changeLog.test.ts; "toegevoegd" bij een opnieuw neergelegde training is fout.
-4. Trainingsscherm en ontwerpregels (`2026-11-12-trainingsscherm-en-ontwerpregels.md`): sporen 1 tot 4 kunnen nu (Andere plek staat op main); de derde bouwer (zelfde Briefing-bestanden), 5 en 6 daarna, spoor 10 per regel met eigen besluit. Voorwaarde bij vraag 2: eerst laten zien wat de belasting doet met een log zonder zwaarte.
+4. Trainingsscherm en ontwerpregels (`2026-11-12-trainingsscherm-en-ontwerpregels.md`): sporen 1 tot 4 live (86be2a9); spoor 5 (blad Hoe ging het?) in aanbouw; spoor 6 pas na de toets bij vraag 2; spoor 10 per regel met eigen besluit. Voorwaarde bij vraag 2: eerst laten zien wat de belasting doet met een log zonder zwaarte.
 5. Daarna Ascend en Logboek in dezelfde lijn (nog geen ontwerp), met de vondsten uit `docs/onderhoud/2026-11-12-pathfinder-verborgen-schermen.md` (na een loop zes tot acht lagen, groep Gidsen uit het tandwiel, Forge-instellingen tijdens trainen).
 
 ## Inbox en Nakijken die vannacht bijkwamen (staan in docs/backlog.md)
