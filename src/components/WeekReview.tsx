@@ -78,7 +78,7 @@ type View = 'main' | 'trainings' | 'changes' | 'answer' | 'proposal';
 function GlanceLine({ label, value, sub, warn = false }: { label: string; value: string; sub?: string; warn?: boolean }) {
   return (
     <li className="flex min-h-[44px] items-start gap-3 border-t px-4 py-2.5 first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }} aria-label={`${label}: ${value}${warn ? ', let op' : ''}`}>
-      <span className="flex w-[92px] shrink-0 items-center gap-2 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+      <span className="flex min-w-[92px] shrink-0 items-center gap-2 whitespace-nowrap text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         {warn && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />}
         {label}
       </span>
@@ -197,8 +197,8 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Eerst een voorstel, pas na Akkoord verandert er iets. Weghalen kan later in het blad van de oefening.</p>
                       {muscle.state === 'failed' && <p role="status" className="text-xs" style={{ color: 'var(--color-warning)' }}>Opslaan lukte niet op tijd. Probeer het nog eens; hij komt er hoogstens één keer in.</p>}
                       <div className="mt-1 flex gap-3">
-                        <SecondaryButton disabled={muscle.state === 'busy'} onClick={decline}>Liever niet</SecondaryButton>
-                        <PrimaryButton disabled={muscle.state === 'busy'} onClick={() => void muscle.accept()}>Akkoord</PrimaryButton>
+                        <SecondaryButton disabled={muscle.state === 'busy'} onClick={decline} className="min-h-[52px]">Liever niet</SecondaryButton>
+                        <PrimaryButton disabled={muscle.state === 'busy'} onClick={() => void muscle.accept()} fullWidth={false}>Akkoord</PrimaryButton>
                       </div>
                     </>
                   )}

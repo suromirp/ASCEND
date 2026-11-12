@@ -65,7 +65,7 @@ export function attentionLines(r: WeekReview): AttentionLine[] {
     out.push({ key: 'pain', label: 'Pijn', value: `${capital(joinNames(pain))}. Meld het bij Lichaam, dan houdt ASCEND er rekening mee.`, warn: true });
   }
   if (r.missed.length > 0) {
-    const names = capital(joinNames(r.missed.map(lower)));
+    const names = joinNames(r.missed);
     out.push({
       key: 'missed', label: 'Bleef liggen', warn: false,
       value: r.keyMissedName
