@@ -409,3 +409,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12 Cartographer Week (ontwerper, fable): 135k tokens plus aanvulling trainingsblad.
 - 2026-11-12 Cartographer Stand (ontwerper, fable): ontwerp, twee vragen.
 - 2026-11-12 Pathfinder Verborgen schermen (sonnet): 95k tokens.
+- 2026-11-12 Sherpa Week na gemiste dagen (bouwer, fable, eigen sessie): klaar, Warden fable 1 blokkerend en 7 moet hersteld; Lookout Volle week (sonnet) 77k; Pathfinder Volle week (sonnet) 33k; naspelen door coördinator.
