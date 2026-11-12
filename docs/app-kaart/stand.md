@@ -137,5 +137,4 @@ Tempo bij zone 2
 [knop: Wat tempo bij zone 2 zegt]
 Je tempo bij één vaste hartslag. Word je fitter, dan loop je daarbij sneller.
 Nog geen loopjes. Elke week met een loop wordt hier een stip.
-Telt mee: stukken van minstens 5 minuten stabiel op vlak terrein, uit elke buitenloop. Een loop boven 25 graden gevoelstemperatuur telt niet mee. Vul bij Instellingen, Lichaam je hartslag in, dan telt alleen zone 2.
 [knop: Volgorde aanpassen]

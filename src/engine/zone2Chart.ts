@@ -230,23 +230,23 @@ export function zone2WeekChart(trend: Pick<AerobicTrend, 'points' | 'statement'>
 }
 
 // Eén zin onder de grafiek: wat het getal in de kop is en wat de stippen zijn, zodat kop en
-// eindlabel elkaar niet tegenspreken. Leest dezelfde kop als de kaart (trendHeadline).
+// eindlabel elkaar niet tegenspreken. Herhaalt geen getal: de kop en het eindlabel staan er al
+// (Pathfinder 12 november). Leest dezelfde kop als de kaart (trendHeadline).
 export function zone2CardCaption(trend: Parameters<typeof trendHeadline>[0]): string | undefined {
   const head = trendHeadline(trend);
   if (!head) return undefined;
-  const pace = formatPace(head.paceSec);
-  const dots = trend.points.length === 1 ? 'De stip is het gemiddelde van die week.' : 'Elke stip is het gemiddelde van een week.';
+  const dots = trend.points.length === 1 ? 'De stip is die week.' : 'Elke stip is een week.';
+  // Zonder lijn staat bij de laatste stip het tempo van die week; wijkt dat af van de kop, dan zegt de zin wat het is.
+  const last = trend.points.at(-1);
+  const lastWeek = last && formatPace(last.paceSec) !== formatPace(head.paceSec) ? ' Het getal bij de laatste stip is je laatste week.' : '';
   const s = trend.statement;
-  // Zonder lijn staat bij de laatste stip het tempo van die week; wijkt dat af van de kop, dan noemt de zin het ook.
-  const lastPace = trend.points.at(-1) ? formatPace(trend.points.at(-1)!.paceSec) : pace;
-  const lastWeek = lastPace !== pace ? ` ${lastPace} is je laatste week.` : '';
   if (s?.kind === 'eerste-schatting') {
-    return s.runs === 1 ? `${pace} is je ene loop van de laatste ${R.lineWeeks} weken.${lastWeek} ${dots}` : `${pace} is het gemiddelde van je ${s.runs} lopen van de laatste ${R.lineWeeks} weken.${lastWeek} ${dots}`;
+    return `${s.runs === 1 ? `Het getal boven is je ene loop van de laatste ${R.lineWeeks} weken.` : `Het getal boven is het gemiddelde van je ${s.runs} lopen van de laatste ${R.lineWeeks} weken.`}${lastWeek} ${dots}`;
   }
   if (s?.kind === 'uitspraak') {
     return s.verdict === 'te-veel-verschil'
-      ? `${pace} is waar de lijn door je ${s.runs} lopen nu staat. Ze verschillen te veel om de lijn te tekenen.${lastWeek} ${dots}`
-      : `${pace} is waar de lijn door je ${s.runs} lopen nu staat. ${dots}`;
+      ? `Het getal boven is waar de lijn door je ${s.runs} lopen nu staat. Ze verschillen te veel om de lijn te tekenen.${lastWeek} ${dots}`
+      : `Het getal boven is waar de lijn door je ${s.runs} lopen nu staat. ${dots}`;
   }
-  return `${pace} is je laatste week met een loop. ${dots}`;
+  return `Het getal boven is je laatste week met een loop. ${dots}`;
 }

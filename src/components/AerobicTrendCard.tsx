@@ -55,12 +55,17 @@ export function AerobicTrendCard() {
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Nog geen loopjes. Elke week met een loop wordt hier een stip.</p>
       )}
       {verdict && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict}</p>}
-      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        {zone2Criteria(trend, pieces, hasZones).join(' ')}
-        {trend.outsideZone > 0 ? ` ${trend.outsideZone} ${trend.outsideZone === 1 ? 'loopje zat' : 'loopjes zaten'} te ver van zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.` : ''}
-        {!hasZones ? ' Vul bij Instellingen, Lichaam je hartslag in, dan telt alleen zone 2.' : ''}
-      </p>
-      {info && <Zone2InfoSheet trend={trend} pieces={pieces} zones={hasZones} today={today} onClose={() => setInfo(false)} />}
+      {/* Wat meetelt staat achter de i, niet op de kaart (Pathfinder 12 november: drie regels onder de grafiek was te veel). */}
+      {info && (
+        <Zone2InfoSheet
+          trend={trend}
+          pieces={pieces}
+          zones={hasZones}
+          today={today}
+          criteria={`${zone2Criteria(trend, pieces, hasZones).join(' ')}${trend.outsideZone > 0 ? ` ${trend.outsideZone} ${trend.outsideZone === 1 ? 'loopje zat' : 'loopjes zaten'} te ver van zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.` : ''}`}
+          onClose={() => setInfo(false)}
+        />
+      )}
     </Card>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { aerobicTrend, formatPace, trendHeadline } from './aerobicTrend';
+import { aerobicTrend, formatPace, trendHeadline, trendVerdict } from './aerobicTrend';
 import { zone2CardCaption, zone2WeekChart } from './zone2Chart';
 import type { Zone2Piece } from '../models/zone2Pieces';
 import type { SessionLog } from '../models/training';
@@ -41,7 +41,8 @@ describe('zone2WeekChart: stippen per week, een lijn pas na de drempel', () => {
     expect(chart.dots).toHaveLength(1);
     expect(chart.line).toBeUndefined();
     expect(chart.end).toEqual({ x: chart.dots[0].x, paceSec: chart.dots[0].paceSec });
-    expect(caption).toBe(`${formatPace(head!.paceSec)} is je ene loop van de laatste 8 weken. De stip is het gemiddelde van die week.`);
+    expect(caption).toBe('Het getal boven is je ene loop van de laatste 8 weken. De stip is die week.');
+    expect(caption).not.toContain(formatPace(head!.paceSec));
   });
 
   it('3 lopen die trager worden: drie stippen, geen lijn en dus geen richting; de zin legt kop en eindlabel uit', () => {
@@ -53,13 +54,20 @@ describe('zone2WeekChart: stippen per week, een lijn pas na de drempel', () => {
     const last = chart.dots.at(-1)!;
     expect(chart.end).toEqual({ x: last.x, paceSec: last.paceSec });
     expect(formatPace(chart.end!.paceSec)).not.toBe(formatPace(head!.paceSec));
-    expect(caption).toBe(`${formatPace(head!.paceSec)} is het gemiddelde van je 3 lopen van de laatste 8 weken. ${formatPace(last.paceSec)} is je laatste week. Elke stip is het gemiddelde van een week.`);
+    expect(caption).toBe('Het getal boven is het gemiddelde van je 3 lopen van de laatste 8 weken. Het getal bij de laatste stip is je laatste week. Elke stip is een week.');
+    // Geen getal herhaald: kop en eindlabel staan er al.
+    expect(caption).not.toMatch(/\d:\d\d/);
   });
 
   it('sneller staat boven: de as loopt van het snelste tempo (boven) naar het traagste', () => {
     const { chart } = build(runs(3, 7, 430, 448));
     expect(chart.fastSec).toBeLessThan(Math.min(...chart.dots.map((d) => d.paceSec)));
     expect(chart.slowSec).toBeGreaterThan(Math.max(...chart.dots.map((d) => d.paceSec)));
+  });
+
+  it('de tekst noemt de echte drempel uit zone2Rules (8 lopen, 4 weken, 3 verschillende weken)', () => {
+    const { trend } = build(runs(3, 7));
+    expect(trendVerdict(trend)).toContain('zie je na 8 lopen, verspreid over minstens 4 weken en 3 verschillende weken.');
   });
 
   it('7 lopen over ruim vier weken: nog onder de drempel, alleen stippen', () => {
@@ -82,7 +90,7 @@ describe('zone2WeekChart: stippen per week, een lijn pas na de drempel', () => {
     expect(chart.line).toBeDefined();
     expect(chart.end).toEqual({ x: chart.line!.x2, paceSec: chart.line!.sec2 });
     expect(formatPace(chart.end!.paceSec)).toBe(formatPace(head!.paceSec));
-    expect(caption).toBe(`${formatPace(head!.paceSec)} is waar de lijn door je 8 lopen nu staat. Elke stip is het gemiddelde van een week.`);
+    expect(caption).toBe('Het getal boven is waar de lijn door je 8 lopen nu staat. Elke stip is een week.');
   });
 
   it('10 lopen: een lijn, en sneller lopen is een lijn die stijgt (minder seconden aan het eind)', () => {
@@ -113,8 +121,8 @@ describe('zone2WeekChart: stippen per week, een lijn pas na de drempel', () => {
     expect(chart.state).toBe('te-veel-verschil');
     expect(chart.line).toBeUndefined();
     expect(caption).toMatch(/Ze verschillen te veel om de lijn te tekenen\./);
-    // Het getal bij de laatste stip staat ook in de zin, zodat het geen onverklaard tweede getal is.
-    expect(caption).toContain(formatPace(chart.end!.paceSec));
+    // Het getal bij de laatste stip wordt uitgelegd, zonder het te herhalen.
+    expect(caption).toContain('Het getal bij de laatste stip is je laatste week.');
   });
 
   it('geen stip valt rechts van vandaag, ook niet in de week van vandaag', () => {

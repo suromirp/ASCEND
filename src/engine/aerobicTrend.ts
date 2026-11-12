@@ -369,6 +369,9 @@ export function zone2Criteria(trend: Pick<AerobicTrend, 'runs' | 'referenceHr'>,
   ];
 }
 
+// De drempel voor een uitspraak in woorden, uit zone2Rules: zo zegt elke tekst dezelfde regel als zone2Statement.
+export const firstRulePhrase = () => `verspreid over minstens ${R.firstSpanDays / 7} weken en ${R.firstWeeks} verschillende weken`;
+
 const capital = (t: string) => `${t[0].toUpperCase()}${t.slice(1)}`;
 
 // One sentence on what the trend says, from the same statement as the chart and the figures.
@@ -376,7 +379,7 @@ export function trendVerdict(trend: Pick<AerobicTrend, 'statement' | 'referenceH
   const s = trend.statement;
   if (!s) return undefined;
   if (s.kind === 'eerste-schatting') {
-    return `Eerste schatting: rond ${formatPace(s.paceSec)} per km${trend.referenceHr > 0 ? ` bij ${trend.referenceHr} slagen` : ''}. Of het verandert, zie je na ${R.firstRuns} lopen over minstens 4 weken.`;
+    return `Eerste schatting: rond ${formatPace(s.paceSec)} per km${trend.referenceHr > 0 ? ` bij ${trend.referenceHr} slagen` : ''}. Of het verandert, zie je na ${R.firstRuns} lopen, ${firstRulePhrase()}.`;
   }
   if (s.verdict === 'te-veel-verschil') return 'Nog te veel verschil tussen je lopen om iets te zeggen. Vooruitgang gaat in weken, niet per loop.';
   const phrase = bandPhrase(s);
