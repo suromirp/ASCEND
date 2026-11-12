@@ -36,8 +36,10 @@ describe('Frisheid in de nieuwe stijl', () => {
     const text = FRESHNESS_INFO.join(' ');
     expect(text).toContain('Frisser staat boven');
     expect(text).toContain(`marge van ongeveer ${FATIGUE_BAND} punten`);
-    expect(text).toContain(`test staat op ${FATIGUE_THRESHOLDS.test.fresh}`);
-    expect(text).toContain(`hard staat op ${FATIGUE_THRESHOLDS.hard.fresh}`);
+    expect(text).toContain(`test hoort bij beenindex ${FATIGUE_THRESHOLDS.test.fresh}`);
+    expect(text).toContain(`hard hoort bij ${FATIGUE_THRESHOLDS.hard.fresh}`);
+    // Erboven is fris: de grafiek zet de lage index bovenaan (top="low").
+    expect(text).not.toMatch(/daaronder|haarlijn/);
   });
 });
 
