@@ -36,6 +36,7 @@ import { isTestOrRace } from '../engine/templateRoles';
 import { BRIEFING_TEXT, briefingEntry, missionButton } from '../engine/briefing';
 import { useWatchLink } from './useWatchLink';
 import { TrainingBriefing } from './TrainingBriefing';
+import { HowDidItGoSheet } from './HowDidItGoSheet';
 
 // "40 minuten" groot, de rest kleiner met zijn eenheid ernaast.
 function splitChip(text: string, tempo: boolean): { value: string; unit: string } | undefined {
@@ -126,6 +127,7 @@ export function TodayMissionCard({
   // een rij in Meer keuzes (besluit 2026-11-12-trainingsscherm-sporen-1-4.md). De knop blijft dan Gedaan.
   const briefingReach = !quickComplete && briefingEntry(template);
   const [showBriefing, setShowBriefing] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const garmin = buildWorkoutPlan(template, todayISO(), program)?.garmin;
   const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });
   // Kracht die je in de app zelf bijhoudt begint met "Training starten";
@@ -257,9 +259,12 @@ export function TodayMissionCard({
           date={todayISO()}
           program={program}
           onClose={() => setShowBriefing(false)}
-          // Zelf invullen: de Briefing dicht en het bestaande scherm met het formulier, zoals Gedaan.
-          onManual={() => { setShowBriefing(false); onLog('full'); }}
+          // Zelf invullen: het blad Hoe ging het? over de Briefing; na Opslaan gaan beide dicht.
+          onManual={() => setShowManual(true)}
         />
+      )}
+      {showBriefing && showManual && (
+        <HowDidItGoSheet template={template} plannedSessionId={session?.id} scheduledDate={session?.scheduledDate ?? todayISO()} program={program} onClose={() => setShowManual(false)} onSaved={() => setShowBriefing(false)} />
       )}
       {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
 

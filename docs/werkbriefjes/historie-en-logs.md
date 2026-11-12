@@ -12,6 +12,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - `src/storage/missedTraining.ts#linkLogNow` schrijft die koppeling
 - `src/engine/logDay.ts#logDay` op welke dag een log wordt getoond; alleen weergave
 - `src/engine/macrofactorDuration.ts#withChosenDuration` duur van een nieuw MacroFactor-log dat te lang is, bij het maken
+- `src/components/logForm/manualLog.ts#buildManualLog` het log van zelf invullen, voor het blad Hoe ging het? en het oude trainingsscherm samen; toestand en concept in `useLogForm.ts`, vergelijking in `manualLog.test.ts`
 - `src/storage/milestoneClearing.ts#recordClearedMilestones` `MilestoneProgress` wordt alleen toegevoegd
 
 ## Nooit
