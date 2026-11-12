@@ -46,6 +46,7 @@ Het bouwmoment slaat deze rij en het rooster over: de coördinator start de bouw
   - De beenindex leert van je ochtendantwoorden (`learning.ts#indexChecks`), begrensd, veiligheidsregels nooit soepeler, met migratiestap. Fable.
   - Routes ook voor wandelen en rugzaktraining, met klimtempo. Na de twee route-bouwers. Opus, engine op Fable.
 - Vervallen door de Briefing (spoor 7), alleen nog als bron: Info-blad spoor 3 en 4: Uitleg opschonen (De stappen eruit, namen gelijk: "Meer over deze training" en de i), daarna Datavelden bekijken naar Gidsen. Plus van Warden: de rij Je horloge op Vandaag met de stand eronder zoals in Week; garmin in useWatchSheet zelf ophalen in plaats van buildWorkoutPlan in drie componenten. Opus.
+- Back-up kleiner zonder dataverlies (eigenaar 12 november): 2,5 MB, waarvan ongeveer 0,7 MB alleen inspringing. Van de inhoud is 49 procent horlogedata per seconde (nodig voor Run in detail), 21 procent logs, 20 procent voorstellen: 186 stuks, waarvan 88 weekcontroles zonder wijziging, en de uitleg is 22 vaste teksten die bij elk voorstel opnieuw staan. Richting: vaste teksten als sleutel bewaren en bij tonen invullen, weekcontroles zonder wijziging samenvatten (naspelen gebruikt ze, dus een teller per dag behouden), inspringing van de horlogereeksen weg, rest leesbaar. Eisen: migratiestap, elke oude back-up blijft te importeren, een test die een back-up heen en terug zet en alles van de gebruiker gelijk vindt, vooraf naspelen met de back-up van de eigenaar. Fable voor opslag, Warden op fable.
 
 ## Rooster voor de bouwmomenten
 
