@@ -165,6 +165,8 @@ const SCHERMEN = {
   'week-ziek': { titel: 'Week, ziek gemeld', pad: '#/week', stand: 'ziek' },
   'ascend-vaardigheid': { titel: 'Ascend met een vaardigheid (Pull-Up)', pad: '#/ascend', stand: 'vaardigheid' },
   'ascend-algemeen': { titel: 'Ascend met Algemeen sterk met eigen gewicht', pad: '#/ascend', stand: 'algemeen' },
+  // Het voorstel voor spieren voor de berg als eigen weergave in de weekterugblik (besluit 2026-11-12-je-week-tot-nu).
+  'weekterugblik-voorstel': { titel: 'Weekterugblik, de weergave Voorstel (stand met een bergdoel)', pad: '#/week', stand: 'voorstel', actie: async (p) => { await tik(p, 'button:has-text("Weekterugblik")'); await tik(p, 'button:has-text("Voorstel")'); } },
 };
 
 // Van een regel van de kaart naar wat je op het scherm zoekt: de tekst van een knop, een kop, een kaart of gewone tekst.
