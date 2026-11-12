@@ -9,7 +9,8 @@ import { Zone2PaceChart } from './stand/Zone2PaceChart';
 
 // Achter de i bij Tempo bij zone 2: de grafiek per loop en de uitleg in gewone woorden.
 // Leest dezelfde trend als de kaart (engine/zone2Chart.ts); rekent zelf niets.
-export function Zone2InfoSheet({ trend, pieces, zones, today, onClose }: { trend: AerobicTrend; pieces: boolean; zones: boolean; today: string; onClose: () => void }) {
+// `criteria`: wat meetelt (zone2Criteria), van de kaart naar hier verhuisd (besluit 2026-11-12-zone2-kaart).
+export function Zone2InfoSheet({ trend, pieces, zones, today, criteria, onClose }: { trend: AerobicTrend; pieces: boolean; zones: boolean; today: string; criteria: string; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const chart = useMemo(() => zone2Chart(trend, today), [trend, today]);
   const text = zone2Explanation(chart, trend.statement, { pieces, zones, referenceHr: trend.referenceHr });
@@ -24,6 +25,7 @@ export function Zone2InfoSheet({ trend, pieces, zones, today, onClose }: { trend
             {text.map((p) => (
               <p key={p} className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{p}</p>
             ))}
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{criteria}</p>
           </Card>
         </div>
       </div>

@@ -234,7 +234,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md): een oude
   // waarde wordt stil genegeerd, het is geen fout in het bestand.
   delete s.forgeQuickButtons;
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'watchFieldsShown', 'routeProposal', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces', 'fuelOnTheGo'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'watchFieldsShown', 'routeProposal', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'fullWeekAsk', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces', 'fuelOnTheGo'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -316,6 +316,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Minder tijd vandaag (engine/shorterToday.ts): een van de drie keuzes, of niet daar.
   if ('shorterToday' in s && s.shorterToday !== 'kern' && s.shorterToday !== 'volume' && s.shorterToday !== 'off') {
     delete s.shorterToday;
+    skipped.n++;
+  }
+  // Reistaak op Vandaag (engine/yourDay.ts): een van de drie keuzes, of niet daar.
+  if ('journeyOnToday' in s && s.journeyOnToday !== 'last-week' && s.journeyOnToday !== 'every-week' && s.journeyOnToday !== 'never') {
+    delete s.journeyOnToday;
     skipped.n++;
   }
   if ('intensityCounting' in s && s.intensityCounting !== 'heartrate' && s.intensityCounting !== 'plan') {

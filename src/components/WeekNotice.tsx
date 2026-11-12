@@ -31,7 +31,17 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
   const full = current.outcome === 'ready' ? current.full : undefined;
   const { concerns, covered } = full ?? notice;
   const fixes = full?.fixes ?? {};
-  if (concerns.length === 0) return null;
+  // Gewone regels (een volle week na weggevallen dagen): een feit, zonder knop.
+  const plain = notice.plain ?? [];
+  if (concerns.length === 0 && plain.length === 0) return null;
+  if (concerns.length === 0) {
+    return (
+      <Card className="flex flex-col gap-3" data-week-plain>
+        <Eyebrow tone="var(--color-ink-dim)">Let op</Eyebrow>
+        {plain.map((line) => <p key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{line}</p>)}
+      </Card>
+    );
+  }
 
   const proposalsOn = settings.weekFixProposal !== false;
   const withFix = concerns.map((c) => fixes[c.key]).filter((a): a is NonNullable<typeof a> => !!a);
@@ -93,6 +103,7 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
           {rest > 0 && <TextButton onClick={() => setAllOpen(true)}>en nog {rest}</TextButton>}
         </div>
       )}
+      {plain.map((line) => <p key={line} className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-week-plain>{line}</p>)}
       {stillOpen && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{`Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} open.`}</p>
       )}

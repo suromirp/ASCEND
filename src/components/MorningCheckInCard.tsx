@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { checkInFor, recentPainSpot, shouldAskCheckIn } from '../engine/wellbeing';
+import { checkInFor, recentPainSpot } from '../engine/wellbeing';
 import { todayISO } from '../utils/dates';
-import { morningFromHour } from '../engine/overviewSettings';
+import { useCheckInRow } from './vandaag/yourDayRows';
 import { DayRow } from './vandaag/DayRow';
 import { ENERGY, legsAnswerText, SLEEP } from '../engine/morningCard';
 import { MorningCheckInSheet } from './MorningCheckInSheet';
@@ -19,19 +19,16 @@ const KEEP = 60;
 // painOnly: de ochtendcheck staat uit, maar er is een pijnplek van de laatste 14
 // dagen. Dan alleen die vraag, niet benen, energie en slaap.
 export function MorningCheckInCard({ painOnly = false, hideTodo = false }: { painOnly?: boolean; hideTodo?: boolean } = {}) {
-  const { settings, updateSettings, sessionLogs, plannedSessions, templates } = useAppData();
+  const { settings, updateSettings, sessionLogs } = useAppData();
   const today = todayISO();
   const existing = checkInFor(today, settings.morningCheckIns);
   const [open, setOpen] = useState(false);
   const spot = recentPainSpot(today, sessionLogs);
-  const ask = shouldAskCheckIn(today, settings.morningCheckIns, sessionLogs, plannedSessions, templates);
-
-  if (!ask && !existing) return null;
   // Voor het begin van de ochtend (instelbaar, standaard 5 uur) vraagt ASCEND nog niets,
-  // behalve naar een pijnplek: die vraag mag ook eerder staan.
-  if (!existing && !painOnly && new Date().getHours() < morningFromHour(settings.overviews)) return null;
-  // De ochtendkaart staat er nog: die stelt de vraag of toont het antwoord, dus deze regel niet.
-  if (hideTodo) return null;
+  // behalve naar een pijnplek: die vraag mag ook eerder staan. Staat de ochtendkaart er nog,
+  // dan stelt die de vraag of toont het antwoord, dus deze regel niet.
+  const { shown } = useCheckInRow({ painOnly, hideTodo });
+  if (!shown) return null;
 
   function allNormal() {
     const others = (settings.morningCheckIns ?? []).filter((c) => c.date !== today);

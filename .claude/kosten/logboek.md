@@ -395,3 +395,23 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Lookout Route-start, tester, sonnet, 90k, 22 min, groen met 2 kanttekeningen
 - 2026-11-12, Pathfinder Route-start, pathfinder, sonnet, 45k, 1 min, 1 moet (mint)
 - 2026-11-11, Warden Route-start, reviewer, sonnet, 66k, 2 min, 1 moet (StrictMode-signaal) en 5 klein, hersteld
+- 2026-11-12, Route-start en laadbalk, Sherpa, opus (sessie), 325k context, $9,59, 1 herstelronde (1 blokkerend), live ff186251
+- 2026-11-12, Warden herreview Route-start, reviewer, fable, 59k, 3 min, akkoord
+- 2026-11-12, Lookout Route-start nacontrole, tester, sonnet, 39k, 4 min, groen
+- 2026-11-12 Scout Avontuurlijke plekken (sportwetenschapper, fable): 25 tool-aanroepen, ongeveer 76k tokens, 3 minuten. Bronnencheck, advies bruikbaar; geen proefaanroep.
+- 2026-11-12 Scout Hoogtemeters (sportwetenschapper, fable): 79 tool-aanroepen, ongeveer 187k tokens, 9 minuten. Grondig, met proeven; advies in acht punten.
+- 2026-11-12 Cartographer Je dag (ontwerper, fable): ontwerpvoorstel, drie vragen voor de eigenaar.
+- 2026-11-12 Sherpa Andere plek (bouwer, opus, eigen sessie): klaar in één ronde, Warden sonnet 56k tokens, vier punten hersteld.
+- 2026-11-12 Pathfinder Totaalplaatje UI (sonnet): 49k tokens; Pathfinder Andere plek (sonnet): 36k, nog geen akkoord (wissen ontbreekt).
+- 2026-11-12 Cartographer Trainingsscherm (ontwerper, fable): 156k tokens, 6 minuten; ontwerp plus acht regels voor de hele app.
+- 2026-11-12 Cartographer Weekterugblik (ontwerper, fable): ontwerp en twee vragen.
+- 2026-11-12 Lookout Andere plek (tester, sonnet): 98k tokens, 10 minuten; Lookout Zone 2 (sonnet): 56k; Pathfinder Zone 2 (sonnet): 29k.
+- 2026-11-12 Cartographer Week (ontwerper, fable): 135k tokens plus aanvulling trainingsblad.
+- 2026-11-12 Cartographer Stand (ontwerper, fable): ontwerp, twee vragen.
+- 2026-11-12 Pathfinder Verborgen schermen (sonnet): 95k tokens.
+- 2026-11-12 Sherpa Week na gemiste dagen (bouwer, fable, eigen sessie): klaar, Warden fable 1 blokkerend en 7 moet hersteld; Lookout Volle week (sonnet) 77k; Pathfinder Volle week (sonnet) 33k; naspelen door coördinator.
+- 2026-11-12, Warden Je dag, reviewer, sonnet, 86k, 4 min, 1 belangrijk (besluit en ontwerp ontbraken op de branch) en 4 klein, hersteld op 1 na (blad boven blad, open)
+- 2026-11-12, Lookout Je dag, tester, sonnet, onbekend, ca. 25 min, groen op 360, 390 en 412 px; zes rijen en reisrij niet te maken in de standen
+- 2026-11-12, Warden Week na gemiste dagen (zelfreview), reviewer, fable, 129k, 7 min, 1 blokkerend (rol extra) en 7 moet, hersteld in 1 ronde
+- 2026-11-12, Warden Week na gemiste dagen (herreview), reviewer, fable, 74k, 3 min, 4 moet (Begrepen telde als Akkoord), hersteld
+- 2026-11-12 Lookout Je dag (tester, sonnet): 116k tokens, 16 minuten; Pathfinder Je dag (sonnet): 38k. Je dag, Week na gemiste dagen en zone 2 op main.

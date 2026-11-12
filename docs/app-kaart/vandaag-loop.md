@@ -67,11 +67,11 @@ Je dag
 --- kaart 7 ---
 [knop: Rekken, 6 oefeningenOchtend]
 [knop: Rekken afvinken]
-[knop: Lange duurloopTraining · 50 min]
-[knop: Een zin is genoegVraag]
-[knop: Trendgewicht bijwerkenGewicht]
-[knop: Rustdag, wandelen magMorgen]
-[knop: Benen fris · 0 van 3 gedaan · deze week is even zwaar als de 4 weken ervoor] (aria: Je stand openen)
+[knop: Gewicht bijwerkenGewicht]
+
+--- kaart 8 ---
+[knop: BenenFris] (aria: Benen: Fris)
+[knop: MorgenRustdag, wandelen mag] (aria: Morgen: Rustdag, wandelen mag)
 [knop: Losse training]
 [knop: “Look within. Within is the fountain of good, and it will ever bubble up, if thou wilt ever dig.”] (aria: Nederlandse vertaling tonen)
 [knop: Marcus Aurelius · Meditations 7.59]

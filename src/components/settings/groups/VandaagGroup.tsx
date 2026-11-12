@@ -1,4 +1,5 @@
 import { resolveShorterToday } from '../../../engine/shorterToday';
+import { resolveJourneyOnToday } from '../../../engine/yourDay';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PLACES_ROUTE } from '../../../pages/settings/placesRoute';
@@ -146,6 +147,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
                 <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
                 <SummaryRow id="lijfvraag" title="Hoe voelt je lijf?" facts={facts} info="lijfvraag" onClick={() => setInner('lijfvraag')} />
                 <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} info="weekvraag" onChange={(on) => set({ weeklyQuestion: on })} />
+                <SummaryRow id="reistaak-vandaag" title="Reistaak op Vandaag" facts={facts} info="reistaakVandaag" onClick={() => setInner('reistaak-vandaag')} />
                 <SummaryRow id="citaten" title="Citaat na een training" facts={facts} info="citaten" onChange={(on) => set({ completionMoment: on })} />
                 <SummaryRow id="dagcitaat" title="Citaat op Vandaag" facts={facts} info="dagcitaat" onClick={() => setInner('dagcitaat')} />
                 <SummaryRow id="geluid" title="Geluid" facts={facts} info="geluid" onChange={(on) => void updateSettings({ introSoundEnabled: on })} />
@@ -264,6 +266,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.avondVanaf} value={resolveEveningBefore(settings).time} onPick={(v) => void updateSettings({ eveningBeforeTime: v })} onClose={closeInner} />
       )}
       {inner === 'boven-missie' && <ChoiceFromDef def={CHOICES.bovenMissie} value={resolveAboveMission(settings.cardsAboveMission)} onPick={(v) => void updateSettings({ cardsAboveMission: v })} onClose={closeInner} />}
+      {inner === 'reistaak-vandaag' && <ChoiceFromDef def={CHOICES.reistaakVandaag} value={resolveJourneyOnToday(settings.journeyOnToday)} onPick={(v) => void updateSettings({ journeyOnToday: v })} onClose={closeInner} />}
       {inner === 'lijfvraag' && <ChoiceFromDef def={CHOICES.lijfvraag} value={resolveBodyCheck(settings)} onPick={(v) => void updateSettings({ bodyCheck: v })} onClose={closeInner} />}
       {inner === 'lucht-vanaf' && <ChoiceFromDef def={CHOICES.luchtVanaf} value={sky.nightFrom} onPick={(v) => void updateSettings({ skyNightFrom: v })} onClose={closeInner} />}
       {inner === 'dagcitaat' && <ChoiceFromDef def={CHOICES.dagcitaat} value={resolveQuoteLanguage(settings)} onPick={(v) => void updateSettings({ quoteLanguage: v })} onClose={closeInner} />}

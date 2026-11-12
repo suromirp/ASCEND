@@ -7,8 +7,10 @@ describe('resolveOverviews', () => {
   it('zonder opgeslagen waarden geldt het gedrag van altijd', () => {
     expect(resolveOverviews(undefined)).toEqual(DEFAULT_OVERVIEWS);
     expect(resolveOverviews({})).toEqual(DEFAULT_OVERVIEWS);
-    const { morningCardFrom, ...rest } = DEFAULT_OVERVIEWS;
+    const { morningCardFrom, weeklyQuestion, ...rest } = DEFAULT_OVERVIEWS;
     expect(Object.values(rest).every((v) => v === true || v === 'both')).toBe(true);
+    // De vraag van de week staat sinds 12 november standaard uit (docs/beslissingen/2026-11-12-je-dag.md).
+    expect(weeklyQuestion).toBe(false);
     // De ochtend begint standaard om 5 uur, niet meteen na middernacht.
     expect(morningCardFrom).toBe('5');
   });
@@ -50,7 +52,6 @@ describe('reviewWeekToShow', () => {
 describe('de losse schakelaars', () => {
   it('staan standaard aan en gaan uit als je dat kiest', () => {
     const fns = [
-      ['weeklyQuestion', showWeeklyQuestion],
       ['morningCheckIn', showMorningCheckIn],
       ['weatherLine', showWeatherLine],
       ['weatherSwap', showWeatherSwap],
@@ -65,6 +66,12 @@ describe('de losse schakelaars', () => {
       expect(fn({ [key]: false })).toBe(false);
       expect(fn({ [key]: true })).toBe(true);
     }
+  });
+
+  it('de vraag van de week staat standaard uit en gaat aan als je dat kiest', () => {
+    expect(showWeeklyQuestion(undefined)).toBe(false);
+    expect(showWeeklyQuestion({ weeklyQuestion: true })).toBe(true);
+    expect(showWeeklyQuestion({ weeklyQuestion: false })).toBe(false);
   });
 });
 

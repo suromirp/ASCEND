@@ -9,6 +9,7 @@
 
 import { locationSummary } from './locationSetting';
 import { resolveShorterToday } from './shorterToday';
+import { resolveJourneyOnToday } from './yourDay';
 import { isDefaultOrder, resolveCardOrder } from './cardOrder';
 import { kgLabel } from '../utils/kg';
 import { resolveTestStops } from './bestEffort';
@@ -847,6 +848,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('sportRust', resolveSportCounting(s.sportCounting).rest) };
     case 'rustdag-terug':
       return { checked: s.restDayBack !== false };
+    case 'week-vol':
+      return { checked: s.fullWeekAsk !== false };
     case 'trillen':
       return { checked: s.haptics !== false };
     case 'locatie':
@@ -935,6 +938,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('lijfvraag', resolveBodyCheck(s)) };
     case 'korter-vandaag':
       return { value: choiceShort('korterVandaag', resolveShorterToday(s.shorterToday)) };
+    case 'reistaak-vandaag':
+      return { value: choiceShort('reistaakVandaag', resolveJourneyOnToday(s.journeyOnToday)) };
     case 'zones-na-test':
       return { checked: s.zonesAfterTest !== false };
     case 'lichterbenen':
