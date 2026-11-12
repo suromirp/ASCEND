@@ -8,7 +8,7 @@ import type { ChartPoint } from './StandLineChart';
 export const FRESHNESS_INFO = [
   'Hoe fris je benen zijn, per dag van vorige week tot over twee weken. Frisser staat boven: na een zware dag zakt de lijn, daarna klimt hij weer.',
   `Het getal is de beenindex. Tot vandaag komt hij uit wat je deed. Wat nog komt is een schatting uit je plan, gestippeld, met een marge van ongeveer ${FATIGUE_BAND} punten.`,
-  `De haarlijn test staat op ${FATIGUE_THRESHOLDS.test.fresh}: daaronder ben je fris genoeg voor een testloop. De haarlijn hard staat op ${FATIGUE_THRESHOLDS.hard.fresh}: daaronder gaat een harde training goed.`,
+  `De dunne lijn test hoort bij beenindex ${FATIGUE_THRESHOLDS.test.fresh}: zit je lijn erboven, dan ben je fris genoeg voor een testloop. De dunne lijn hard hoort bij ${FATIGUE_THRESHOLDS.hard.fresh}: zit je erboven, dan gaat een harde training goed.`,
   'Onder de lijn is een ruit een test of wedstrijd en een stip een harde loop of een training voor je benen. Schuif met je vinger over de grafiek voor een andere dag.',
 ];
 
@@ -29,7 +29,7 @@ export function freshnessPoints(points: FreshnessPoint[], todayIdx: number): Cha
 export const LOAD_INFO = [
   'Belasting is minuten maal zwaarte, de 1 tot 10 die je na een training invult. 45 minuten op zwaarte 6 is 270 punten.',
   'Elke stip is een week en meer staat boven. Vol is gedaan, open is wat nog gepland staat.',
-  `Zodra er drie weken met training voor deze week zijn, staat er een haarlijn gewoonlijk: je gemiddelde van de vier weken voor deze week. Ligt je week meer dan ${Math.round((LOAD_JUMP - 1) * 100)}% hoger, dan zegt ASCEND dat eronder.`,
+  `Zodra er drie weken met training voor deze week zijn, staat er een dunne lijn gewoonlijk: je gemiddelde van de vier weken voor deze week. Ligt je week meer dan ${Math.round((LOAD_JUMP - 1) * 100)}% hoger, dan zegt ASCEND dat eronder.`,
   'Schuif met je vinger over de grafiek of tik een week voor de telling van die week.',
 ];
 
