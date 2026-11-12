@@ -252,9 +252,9 @@ describe('computeWeeklyPrescriptionPlan', () => {
 // must never take a pattern session out to put another candidate in.
 // De stem van ASCEND: het droge feit eerst, zonder vaktaal als "forecast-bereik" of "week +2".
 describe('computeWeeklyPrescriptionPlan: wat erbij staat', () => {
-  const run = (plannedSessions: PlannedSession[]) => computeWeeklyPrescriptionPlan(
+  const run = (plannedSessions: PlannedSession[], days: TrainingAvailability = availability()) => computeWeeklyPrescriptionPlan(
     [FORECAST_WEEK_1], [goal()], [overview()], new Map([[ASCENT_KEY_ID, decision({ state: 'progress' })]]),
-    plannedSessions, [tplHike, tplRest], availability(), null, [], [], undefined, undefined, ASOF,
+    plannedSessions, [tplHike, tplRest], days, null, [], [], undefined, undefined, ASOF,
   ).proposal.consequences;
   // Herstel schuift nooit opzij: een week met elke dag herstel is echt vol.
   const tplRest: SessionTemplate = { id: 'tpl_rest', name: 'Herstel', type: 'recovery', durationVariants: { full: 30 } };
@@ -267,8 +267,17 @@ describe('computeWeeklyPrescriptionPlan: wat erbij staat', () => {
   it('zegt het droog als een week vol is', () => {
     const full = Array.from({ length: 7 }, (_, i) => session(`s${i}`, 'tpl_rest', addDays(FORECAST_WEEK_1, i), FORECAST_WEEK_1));
     const text = run([session('anchor1', tplHike.id, '2026-09-16', ANCHOR_WEEK), ...full]);
-    expect(text).toContain('In 1 week is elke dag al bezet, dus niet alles past.');
+    expect(text).toContain('In 1 week past niet alles: er is geen dag waar het bij kan.');
     expect(text).not.toMatch(/forecast|week \+2|\u2013|\u2014/);
+  });
+
+  // Melding van 12 november: de zin zei "elke dag al bezet" terwijl er een dag vrij was waar het niet mocht.
+  it('zegt niet dat elke dag bezet is als er een dag vrij is waarop je niet traint', () => {
+    // Maandag tot en met zaterdag herstel; zondag is leeg, maar op zondag train je niet.
+    const sixDays = Array.from({ length: 6 }, (_, i) => session(`s${i}`, 'tpl_rest', addDays(FORECAST_WEEK_1, i), FORECAST_WEEK_1));
+    const text = run([session('anchor1', tplHike.id, '2026-09-16', ANCHOR_WEEK), ...sixDays], availability({ allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'] }));
+    expect(text).toContain('In 1 week past niet alles: er is geen dag waar het bij kan.');
+    expect(text).not.toContain('elke dag');
   });
 });
 
