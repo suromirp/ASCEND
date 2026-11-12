@@ -399,3 +399,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Warden herreview Route-start, reviewer, fable, 59k, 3 min, akkoord
 - 2026-11-12, Lookout Route-start nacontrole, tester, sonnet, 39k, 4 min, groen
 - 2026-11-12 Scout Avontuurlijke plekken (sportwetenschapper, fable): 25 tool-aanroepen, ongeveer 76k tokens, 3 minuten. Bronnencheck, advies bruikbaar; geen proefaanroep.
+- 2026-11-12 Scout Hoogtemeters (sportwetenschapper, fable): 79 tool-aanroepen, ongeveer 187k tokens, 9 minuten. Grondig, met proeven; advies in acht punten.
