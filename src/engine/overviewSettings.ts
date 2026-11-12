@@ -21,7 +21,7 @@ export interface OverviewSettings {
   // Weekterugblik op Vandaag, en op welke dag(en) hij verschijnt.
   weekReview?: boolean;
   weekReviewDay?: ReviewDay;
-  // De vraag van de week in "Je dag".
+  // De vraag van de week, als eigen regel onder "Je dag"; standaard uit.
   weeklyQuestion?: boolean;
   // De ochtendcheck in "Je dag".
   morningCheckIn?: boolean;
@@ -67,7 +67,9 @@ export type ResolvedOverviews = Required<OverviewSettings>;
 export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   weekReview: true,
   weekReviewDay: 'both',
-  weeklyQuestion: true,
+  // Standaard uit en los van de profielen (docs/beslissingen/2026-11-12-je-dag.md). Wie hem ooit
+  // zelf aan zette houdt zijn waarde; de antwoorden blijven staan.
+  weeklyQuestion: false,
   morningCheckIn: true,
   morningCard: true,
   legsAfterEffort: true,

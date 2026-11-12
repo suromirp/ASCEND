@@ -26,7 +26,7 @@ Hoe de app bedient wordt en beweegt: terugknop en bladen, scrollen en hervatten,
 
 ## Valkuilen
 - Elk blad met `animate-sheet-in` of `forge-down` heeft `ref={sheetRef}` en `<SheetGrip />`; `src/components/sheetDrag.scan.test.ts` faalt anders, behalve met reden in de uitzonderingen.
-- Een nieuwe rij die een blad opent krijgt `data-sheet-from`; Vandaag schuift nog niet. Een rij met Pagina in een blad boven het trainingsscherm sluit eerst het blad en het scherm via `closeSheet` (niet `requestClose`, dat gooit het concept weg) en navigeert daarna.
+- Een nieuwe rij die een blad opent krijgt `data-sheet-from`; Vandaag schuift nog niet. Een rij in Je dag gaat door `src/engine/yourDay.ts#arrangeYourDay` met een hook in `src/components/vandaag/yourDayRows.ts`: hoogstens vier rijen, de pijnplekvraag nooit achter Nog, de training van de grote kaart nooit dubbel. Een rij met Pagina in een blad boven het trainingsscherm sluit eerst het blad en het scherm via `closeSheet` (niet `requestClose`, dat gooit het concept weg) en navigeert daarna.
 - Een nieuwe animatie moet in Rustig en Uit en bij `prefers-reduced-motion` op de eindstand staan (`data-motion` op `<html>`).
 - Een blad dat niet mag sluiten terwijl het bezig is geeft `canClose` door aan `useSheetClose`.
 - Een mislukte actie heeft een zichtbare uitkomst en een grens in tijd; een terugval die liegt ging rood bij een review (2 november).

@@ -1,21 +1,46 @@
-import type { ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Eyebrow } from '../ui';
+import { arrangeYourDay, moreRowText, type YourDayItem } from '../../engine/yourDay';
+import { TodaySheet } from './TodaySheet';
 import type { IconName } from '../icons';
 import type { SessionTemplate } from '../../models/training';
 import { IconDisc, SportDisc } from '../SportDisc';
 import { ChevronGlyph } from './glyphs';
 
-// "Je dag" op Vandaag: een lijst op één kaart, per regel een icoon in een getinte
-// schijf, de titel, één regel eronder en een chevron. Elke regel is minstens 44 px
-// en opent een sheet of scherm.
+// "Je dag" op Vandaag: wat je vandaag naast je training zelf nog doet (docs/visie/Ontwerp Je dag.md).
+// Een lijst op één kaart, per regel een icoon in een getinte schijf, de titel, één regel eronder en
+// rechts een rondje (afvinken) of een pijltje (een blad). Elke regel is minstens 44 px.
 
 export type DayRowState = 'todo' | 'now' | 'done' | 'skipped';
 
-export function YourDay({ children }: { children: ReactNode }) {
+export type YourDayEntry = YourDayItem & { node: ReactNode };
+
+const LIST_CLASS = 'overflow-hidden rounded-2xl border';
+const LIST_STYLE = { background: 'var(--color-card)', borderColor: 'var(--color-card-border)' };
+
+// Hoogstens vier rijen (engine/yourDay.ts#arrangeYourDay); de rest achter de rij "Nog 2", die het
+// blad Je dag met de hele lijst opent. Niets te doen: geen kop en geen kaart.
+export function YourDay({ items }: { items: YourDayEntry[] }) {
+  const [open, setOpen] = useState(false);
+  if (items.length === 0) return null;
+  const { shown, more } = arrangeYourDay(items);
+  const moreText = moreRowText(more);
   return (
-    <section aria-label="Je dag">
+    <section aria-label="Je dag" data-your-day-rows={shown.length + (more.length > 0 ? 1 : 0)}>
       <div className="mb-2"><Eyebrow>Je dag</Eyebrow></div>
-      <ol className="overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>{children}</ol>
+      <ol className={LIST_CLASS} style={LIST_STYLE}>
+        {shown.map((i) => <Fragment key={i.key}>{i.node}</Fragment>)}
+        {more.length > 0 && (
+          <DayRow label={moreText.line} icon="meer" onClick={() => setOpen(true)} sheetFrom>{moreText.title}</DayRow>
+        )}
+      </ol>
+      {open && (
+        <TodaySheet eyebrow="Je dag" onClose={() => setOpen(false)}>
+          <ol className={LIST_CLASS} style={LIST_STYLE}>
+            {[...shown, ...more].map((i) => <Fragment key={i.key}>{i.node}</Fragment>)}
+          </ol>
+        </TodaySheet>
+      )}
     </section>
   );
 }

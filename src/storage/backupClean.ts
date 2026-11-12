@@ -318,6 +318,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.shorterToday;
     skipped.n++;
   }
+  // Reistaak op Vandaag (engine/yourDay.ts): een van de drie keuzes, of niet daar.
+  if ('journeyOnToday' in s && s.journeyOnToday !== 'last-week' && s.journeyOnToday !== 'every-week' && s.journeyOnToday !== 'never') {
+    delete s.journeyOnToday;
+    skipped.n++;
+  }
   if ('intensityCounting' in s && s.intensityCounting !== 'heartrate' && s.intensityCounting !== 'plan') {
     delete s.intensityCounting;
     skipped.n++;

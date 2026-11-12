@@ -371,6 +371,10 @@ export interface AppSettings {
   // absent = kern) houdt de kernsets of de kern van de loop, 'volume' doet alles met minder, 'off'
   // laat de regel weg. Optional and additive.
   shorterToday?: 'kern' | 'volume' | 'off';
+  // "Reistaak op Vandaag" (engine/yourDay.ts#journeyRowOnToday): 'last-week' (advice, absent =
+  // last-week) zet de reistaak alleen in de laatste week dat hij nog kan in Je dag, 'every-week'
+  // elke week, 'never' nooit. De reis zelf blijft op Ascend. Optional and additive.
+  journeyOnToday?: 'last-week' | 'every-week' | 'never';
   // "Zones bijwerken na een test" (engine/zoneUpdate.ts): na een test die meetelt een voorstel met
   // Akkoord voor je drempelhartslag. Absent = on. Optional and additive.
   zonesAfterTest?: boolean;

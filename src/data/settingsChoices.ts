@@ -672,6 +672,18 @@ export const CHOICES = {
       { value: 'off', label: 'Uit', note: 'Geen regel in het menu van je missie', short: 'Uit' },
     ],
   }),
+  reistaakVandaag: def({
+    group: 'Vandaag en meldingen',
+    title: 'Reistaak op Vandaag',
+    line: 'Wanneer de taak van je reis in Je dag staat. De reis zelf staat bij je doel op Ascend.',
+    advice: 'last-week' as 'last-week' | 'every-week' | 'never',
+    help: 'reistaakVandaag',
+    options: [
+      { value: 'last-week', label: 'Alleen in de laatste week', note: 'In de week dat de taak nog net kan', short: 'Laatste week' },
+      { value: 'every-week', label: 'Elke week', note: 'De taak van deze week staat elke week in Je dag', short: 'Elke week' },
+      { value: 'never', label: 'Nooit', note: 'Alleen bij je doel op Ascend', short: 'Nooit' },
+    ],
+  }),
   lichterbenen: def({
     group: 'Vandaag en meldingen',
     title: 'Lichter bij vermoeide benen',

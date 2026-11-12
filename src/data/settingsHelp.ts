@@ -104,6 +104,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Altijd', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Ongedaan maken zet het terug. Een test of wedstrijd kan niet korter.' },
     ],
   },
+  reistaakVandaag: {
+    title: 'Reistaak op Vandaag',
+    lead: 'De taken van je reis lopen over weken. Ze staan bij je doel op Ascend, met de taak van nu.',
+    points: [
+      { head: 'Alleen in de laatste week', text: 'de taak komt in Je dag in de week dat hij nog net kan. Niet nu laat hem open op Ascend.' },
+      { head: 'Elke week', text: 'de taak van deze week staat elke week in Je dag, zoals eerder.' },
+      { head: 'Nooit', text: 'Vandaag zegt niets over je reis.' },
+    ],
+  },
   zonesNaTest: {
     title: 'Zones bijwerken na een test',
     lead: 'Na een testloop die meetelt stelt ASCEND een nieuwe drempelhartslag voor, als die duidelijk anders is.',
@@ -981,7 +990,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Een profiel zet de losse schakelaars in één keer. Je training staat altijd op Vandaag.',
     points: [
       { head: 'Alles laten zien', text: 'alle kaarten, zoals het advies.' },
-      { head: 'Alleen het belangrijkste', text: 'je training, de ochtendcheck en het weer. Weekterugblik, vraag van de week, citaat, ochtendkaart en geluid gaan uit.' },
+      { head: 'Alleen het belangrijkste', text: 'je training, de ochtendcheck en het weer. Weekterugblik, citaat, ochtendkaart en geluid gaan uit.' },
       { head: 'Alleen je training', text: 'ook de ochtendcheck en het weer gaan uit. Aangepast betekent dat je schakelaars bij geen profiel passen.' },
     ],
   },
@@ -1587,6 +1596,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Vraag van de week',
     lead: 'Een korte vraag om stil te staan bij je week. Je antwoord verandert je planning niet.',
     points: [
+      { head: 'Standaard uit', text: 'aan staat de vraag als eigen regel onder Je dag tot je antwoordt. Kaarten op Vandaag zet hem niet aan of uit.' },
+      { head: 'Je antwoorden', text: 'blijven bewaard en staan in de weekterugblik van hun week.' },
       { head: 'Privé', text: 'je antwoord blijft op je telefoon.' },
     ],
   },

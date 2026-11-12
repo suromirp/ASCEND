@@ -3,6 +3,9 @@ import { Icon, type IconName } from '../icons';
 import { Eyebrow } from '../ui';
 import { useJourney } from '../reis/useJourney';
 import { usePackList } from '../reis/usePackList';
+import { journeyWeeksLeft, taskDates } from '../../engine/journey';
+import { journeyNowLine } from '../../engine/yourDay';
+import { formatDateNL, todayISO, weekdayLongNL } from '../../utils/dates';
 
 // De tochtmodule onder een doel van de soort Trektocht: Reisplanner, Paklijst, Etappes en Alleen
 // onderweg. Alleen een tocht heeft hem (isTrekGoal); de rest van de doelen niet.
@@ -14,11 +17,15 @@ interface Row {
 }
 
 function useRows(): Row[] {
-  const { progress } = useJourney();
+  const { progress, pick, goalDate } = useJourney();
+  // De taak van nu staat hier, bij je doel; de telling staat op het scherm Reisplanner zelf.
+  const weeksLeft = goalDate ? journeyWeeksLeft(todayISO(), goalDate) : 0;
+  const closesOn = pick && goalDate ? taskDates(pick.task, goalDate).closesOn : undefined;
+  const plannerLine = journeyNowLine(pick, weeksLeft, closesOn, progress, weekdayLongNL, formatDateNL);
   const { items } = usePackList();
   const packs = packProgress(items);
   return [
-    { icon: 'locatie', title: 'Reisplanner', line: `${progress.done} van ${progress.total} taken gedaan`, to: '/reis' },
+    { icon: 'locatie', title: 'Reisplanner', line: plannerLine, to: '/reis' },
     { icon: 'rugzak', title: 'Paklijst', line: `Basisgewicht ${formatKg(baseWeightGrams(items))}, ${packs.have} van ${packs.total} onderdelen in huis`, to: '/reis/paklijst' },
     { icon: 'wandelen', title: 'Etappes', line: 'De etappes, je zwaarste dagen en waar je slaapt', to: '/etappes' },
     { icon: 'info', title: 'Alleen onderweg', line: 'Alarmnummer, afspraak met thuis, vertrekbrief', to: '/onderweg' },

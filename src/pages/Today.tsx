@@ -27,6 +27,7 @@ import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
 import { WeightReminder } from '../components/WeightCard';
+import { useCheckInRow, useJourneyRow, useWeightRow } from '../components/vandaag/yourDayRows';
 import { WatchActivityCard } from '../components/WatchActivityCard';
 import { WatchAlignCard } from '../components/WatchAlignCard';
 import { MissedTrainingCard } from '../components/MissedTrainingCard';
@@ -71,11 +72,11 @@ import { MorningProposalCard } from '../components/MorningProposalCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
-import { DayRow, YourDay } from '../components/vandaag/DayRow';
+import { DayRow, YourDay, type YourDayEntry } from '../components/vandaag/DayRow';
 import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard';
 import { missionFacts } from '../engine/missionFacts';
 import { recentRunPace } from '../engine/recentRunPace';
-import { tomorrowEntry, tomorrowText, trainingRowState } from '../engine/yourDay';
+import { tomorrowEntry, tomorrowText, trainingRowState, trainingRowsForYourDay } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -101,6 +102,10 @@ function TodayContent() {
   // ever shown, matched to the current time of day.
   const isMorning = new Date().getHours() < 12;
   const morningCardVisible = useMorningCardVisible();
+  // Of de rijen van Je dag er staan, met dezelfde regels als de rijen zelf.
+  const checkInRow = useCheckInRow({ painOnly: morningCheckInMode(settings.overviews, today, sessionLogs) === 'pain_only', hideTodo: morningCardVisible });
+  const weightRow = useWeightRow();
+  const journeyRow = useJourneyRow();
   useSleepRefetch();
   const illnessSignState = useIllnessSign();
   const weatherWarnings = useWeatherWarnings();
@@ -298,12 +303,53 @@ function TodayContent() {
   }, []);
 
   const restHeader = !!restToday && !primary;
-  const trainingRows = todaySessions.filter((s) => !(restToday && s.id === restToday.id));
+  const trainingRows = trainingRowsForYourDay(
+    todaySessions.filter((s) => !(restToday && s.id === restToday.id)),
+    primary?.id,
+    (s) => deriveSessionStatus(s, sessionLogs).status,
+  );
   const stretchRow = isMorning ? (
     <DailyStretchCard label="Ochtend" title="Rekken" stretches={MORNING_ROUTINE} completed={stretchCompletion.morning === today} onToggleComplete={() => toggleStretchRoutine('morning')} />
   ) : (
     <DailyStretchCard label="Avond" title="Rekken" stretches={EVENING_ROUTINE} completed={stretchCompletion.evening === today} onToggleComplete={() => toggleStretchRoutine('evening')} />
   );
+
+  // De rijen van Je dag, elk met of hij af is; de volgorde en de grens van vier doet engine/yourDay.ts.
+  const checkInMode = morningCheckInMode(settings.overviews, today, sessionLogs);
+  const yourDayItems: YourDayEntry[] = [];
+  if (checkInMode !== 'none' && checkInRow.shown) {
+    yourDayItems.push({ key: 'checkin', kind: 'checkin', done: checkInRow.done, pain: checkInRow.pain, word: checkInRow.pain ? 'pijnplek' : 'gevoel', node: <MorningCheckInCard painOnly={checkInMode === 'pain_only'} hideTodo={morningCardVisible} /> });
+  }
+  for (const s of trainingRows) {
+    const t = templateById.get(s.templateId);
+    if (!t) continue;
+    const { status, wasMoved } = deriveSessionStatus(s, sessionLogs);
+    const rest = isRestSession(s);
+    const done = status === 'completed';
+    const skipped = status === 'skipped';
+    yourDayItems.push({
+      key: `training-${s.id}`,
+      kind: 'training',
+      done: done || skipped,
+      word: rest ? REST_DAY_COPY[restMode].title : t.name,
+      node: (
+        <DayRow
+          label={done ? 'Gedaan' : 'Training'}
+          template={t}
+          state={trainingRowState(status, false)}
+          onClick={() => setActionSheetSession(s)}
+          sheetFrom
+          trailing={rest ? REST_DAY_COPY[restMode].badge : `${resolveEffectiveFullDuration(t, s.scheduledDate, program)} min`}
+        >
+          {rest ? REST_DAY_COPY[restMode].title : t.name}
+          {skipped ? <span> · overgeslagen</span> : wasMoved && !done ? <span> · verplaatst</span> : null}
+        </DayRow>
+      ),
+    });
+  }
+  yourDayItems.push({ key: 'stretch', kind: 'stretch', done: isMorning ? stretchCompletion.morning === today : stretchCompletion.evening === today, word: 'rekken', node: stretchRow });
+  if (weightRow.shown) yourDayItems.push({ key: 'weight', kind: 'weight', done: false, word: 'gewicht', node: <WeightReminder /> });
+  if (journeyRow.shown && !(journeyRow.journey.pick?.state === 'postponed')) yourDayItems.push({ key: 'journey', kind: 'journey', done: journeyRow.done, word: 'reis', node: <JourneyWeekCard /> });
 
   const shorterSetting = resolveShorterToday(settings.shorterToday);
   function proposeShorter(session: PlannedSession, template: SessionTemplate, minutes: number) {
@@ -521,44 +567,19 @@ function TodayContent() {
 
       <BodyCheckCard />
 
-      <YourDay>
-        {isMorning && stretchRow}
-        {morningCheckInMode(settings.overviews, today, sessionLogs) !== 'none' && <MorningCheckInCard painOnly={morningCheckInMode(settings.overviews, today, sessionLogs) === 'pain_only'} hideTodo={morningCardVisible} />}
-        {trainingRows.map((s) => {
-          const t = templateById.get(s.templateId);
-          if (!t) return null;
-          const { status, wasMoved } = deriveSessionStatus(s, sessionLogs);
-          const rest = isRestSession(s);
-          const done = status === 'completed';
-          const skipped = status === 'skipped';
-          return (
-            <DayRow
-              key={s.id}
-              label={done ? 'Gedaan' : 'Training'}
-              template={t}
-              state={trainingRowState(status, s.id === primary?.id)}
-              onClick={() => setActionSheetSession(s)}
-              sheetFrom
-              trailing={rest ? REST_DAY_COPY[restMode].badge : `${resolveEffectiveFullDuration(t, s.scheduledDate, program)} min`}
-            >
-              {rest ? REST_DAY_COPY[restMode].title : t.name}
-              {skipped ? <span> · overgeslagen</span> : wasMoved && !done ? <span style={{ color: 'var(--color-status)' }}> · verplaatst</span> : null}
-            </DayRow>
-          );
-        })}
-        {!isMorning && stretchRow}
-        <JourneyWeekCard />
-        {showWeeklyQuestion(settings.overviews) && <WeeklyQuestionCard />}
-        <WeightReminder />
-        {/* De kaart erboven zegt al "Morgen: Niets gepland"; dezelfde zin als rij is dubbel. */}
-        {!(tomorrow.kind === 'none' && !(primary && primaryTemplate && mission)) && (
-          <DayRow label="Morgen" onClick={() => navigate('/week')} trailing={tomorrow.kind === 'training' ? `${tomorrow.minutes} min` : undefined}>
-            {tomorrow.kind === 'training' ? tomorrow.name : tomorrowText(tomorrow)}
-          </DayRow>
-        )}
-      </YourDay>
+      {/* Je dag: wat je vandaag naast je training zelf nog doet, hoogstens vier rijen
+          (docs/visie/Ontwerp Je dag.md). De training van de grote kaart staat er niet nog eens. */}
+      <YourDay items={yourDayItems} />
 
-      <StandSummaryCard />
+      {/* De vraag van de week hoort bij de week, niet bij Je dag: aan staat hij als eigen regel eronder. */}
+      {showWeeklyQuestion(settings.overviews) && (
+        <ol aria-label="Vraag van de week" className="overflow-hidden rounded-2xl border empty:hidden" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
+          <WeeklyQuestionCard />
+        </ol>
+      )}
+
+      {/* Stand en morgen. De grote kaart zegt al dat er morgen niets staat: dan geen regel Morgen. */}
+      <StandSummaryCard tomorrow={tomorrow.kind === 'none' && !(primary && primaryTemplate && mission) ? undefined : tomorrow} />
 
       <div className="-mt-2 flex items-center justify-center gap-5">
         <button onClick={() => setAdHocOpen(true)} className="inline-flex min-h-[44px] items-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>
