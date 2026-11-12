@@ -978,11 +978,11 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   bovenMissie: {
     title: 'Kaarten boven de missie',
-    lead: 'Je missie staat binnen twee seconden in beeld. Daarom staat er normaal hoogstens één kaart boven.',
+    lead: 'Je missie staat binnen twee seconden in beeld. Daarom staat er normaal hoogstens één kaart boven, en nooit meer dan twee.',
     points: [
       { head: 'Altijd boven', text: 'ziek gemeld, de vraag of je ziek wordt en een weerwaarschuwing.' },
-      { head: 'Altijd onder de missie', text: 'een advies over je planning en de vraag Niet gedaan?' },
-      { head: 'De rest', text: 'direct onder je missie, in vaste volgorde: ochtendkaart, weer opbouwen, Nieuw begonnen, back-up. Met Alles komt wat mag ook erboven.' },
+      { head: 'Direct onder de missie', text: 'de ochtendvraag: een vraag is een taak van vandaag.' },
+      { head: 'Onder Je dag', text: 'een advies over je planning, de vraag Niet gedaan?, de back-up en wat er boven geen plek had, in vaste volgorde.' },
     ],
   },
   kaarten: {

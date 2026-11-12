@@ -77,7 +77,9 @@ function day(iso: string): string {
 }
 
 // The status cards (ill / building back). Shown at the top of Today.
-export function IllnessStatusCard() {
+// `quiet`: Ik ben weer beter omlijnd in plaats van gevuld, op Vandaag naast de hoofdknop van de missie (regel 5: één mint per
+// scherm; besluit 2026-11-12-missiekaart.md).
+export function IllnessStatusCard({ quiet = false }: { quiet?: boolean }) {
   const { settings } = useAppData();
   const { request, sheet, busy, error } = useIllnessProposal();
   const active = activeIllness(settings.illnessEpisodes);
@@ -92,9 +94,15 @@ export function IllnessStatusCard() {
         <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>{ILLNESS_LABEL[active.kind]}</p>
         <p className="-mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sinds {day(active.startDate)}</p>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{ILLNESS_GUIDANCE[active.kind]}</p>
-        <PrimaryButton disabled={busy} onClick={() => void request({ action: 'recover' })}>
-          {busy ? 'Even bewaren…' : 'Ik ben weer beter'}
-        </PrimaryButton>
+        {quiet ? (
+          <SecondaryButton disabled={busy} onClick={() => void request({ action: 'recover' })}>
+            {busy ? 'Even bewaren…' : 'Ik ben weer beter'}
+          </SecondaryButton>
+        ) : (
+          <PrimaryButton disabled={busy} onClick={() => void request({ action: 'recover' })}>
+            {busy ? 'Even bewaren…' : 'Ik ben weer beter'}
+          </PrimaryButton>
+        )}
         {error && <p className="text-sm" role="status" style={{ color: 'var(--color-warning)' }}>{error}</p>}
         {active.kind === 'above_neck' && (
           <TextButton

@@ -27,27 +27,27 @@ Vandaag staat er niets gepland.
 Hoe voelen je benen?
 [knop: Klopt: fris]
 [knop: Anders]
+Je dag
 
 --- kaart 5 ---
+[knop: Rekken, 6 oefeningenOchtend]
+[knop: Rekken afvinken]
+
+--- kaart 6 ---
+[knop: BenenFris] (aria: Benen: Fris)
+[knop: Losse training]
+
+--- kaart 7 ---
 Advies, planning
 Doeltijd 10 km: 45:00 vraagt meer dan je test laat zien
 10 km past nu bij ongeveer 56 minuten.
 [knop: Bekijk]
 
---- kaart 6 ---
+--- kaart 8 ---
 Back-up
 Tijd voor je back-up.
 Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.
 [knop: Niet nu]
 [knop: Back-up maken]
-Je dag
-
---- kaart 7 ---
-[knop: Rekken, 6 oefeningenOchtend]
-[knop: Rekken afvinken]
-
---- kaart 8 ---
-[knop: BenenFris] (aria: Benen: Fris)
-[knop: Losse training]
 [knop: “If you want to improve, be content to be thought foolish and stupid with regard to external things.”] (aria: Nederlandse vertaling tonen)
 [knop: Epictetus · Enchiridion 13]
