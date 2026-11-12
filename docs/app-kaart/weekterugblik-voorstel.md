@@ -1,4 +1,4 @@
-# Weekterugblik, de weergave Voorstel (stand met een bergdoel)
+# Je week tot nu, de weergave Voorstel (stand met een bergdoel)
 
 Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 

@@ -21,9 +21,7 @@ export function WeekAdjustmentsRow({ adjustments, weekStart, current }: { adjust
   if (adjustments.length === 0) return null;
   return (
     <>
-      <SheetRows>
-        <SheetRow title={TITLE} sub={adjustmentsSub(adjustments.length, current)} onClick={() => setOpen(true)} sheetFrom />
-      </SheetRows>
+      <SheetRow title={TITLE} sub={adjustmentsSub(adjustments.length, current)} onClick={() => setOpen(true)} sheetFrom />
       {open && <WeekAdjustmentsSheet adjustments={adjustments} weekStart={weekStart} onClose={() => setOpen(false)} />}
     </>
   );

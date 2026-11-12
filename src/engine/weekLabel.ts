@@ -23,9 +23,11 @@ export function weekNameAt(program: Program | null | undefined, monday: string):
   return weekPositionLabel(position);
 }
 
-// De kop van Week: dezelfde woorden als Vandaag (`waveHeader(position) ?? weekPositionLabel(position)`),
-// verdeeld over een grote kop ("Week" met het getal) en een kleine regel ernaast ("van 18, basis").
-// Zonder positie blijft het "Week" en is de regel leeg. Alleen tekst, de planning merkt er niets van.
+// De kop van de pagina Week: een grote kop ("Week" met het getal) en een kleine regel eronder. Het weeknummer
+// staat al groot, dus de kleine regel noemt de fase en haar lengte ("Basisfase van 4 weken") en niet nog eens
+// "week 1" zoals Vandaag en Stand (weekPositionLabel). In een golf de tekst van de golf ("van 4 van je golf"),
+// een vaste week heet "Je vaste week". Zonder positie blijft het "Week" en is de regel leeg. Alleen tekst.
+// Besluit: docs/beslissingen/2026-11-12-week-minimaal.md (aanvulling).
 export function weekHeading(position: ResolvedProgramPosition | null | undefined): { title: string; number?: number; line: string } {
   if (!position) return { title: 'Week', line: '' };
   const wave = waveHeader(position);
@@ -33,17 +35,7 @@ export function weekHeading(position: ResolvedProgramPosition | null | undefined
     const m = /^Week (\d+) (.+)$/.exec(wave);
     return m ? { title: 'Week', number: Number(m[1]), line: m[2] } : { title: wave, line: '' };
   }
-  return { title: 'Week', number: position.weekInPhase, line: `van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}` };
-}
-
-// De kop van de pagina Week: het grote getal ("Week 1") blijft, de kleine regel noemt de fase en haar lengte
-// ("Basisfase van 4 weken"). Week wijkt hier bewust af van Vandaag en Stand (weekPositionLabel): het weeknummer
-// staat al groot, dus "week 1" nog eens in de kleine regel is dubbel. In een golf of een vaste week blijft de
-// regel van weekHeading. Besluit: docs/beslissingen/2026-11-12-week-minimaal.md (aanvulling).
-export function weekPageHeading(position: ResolvedProgramPosition | null | undefined): { title: string; number?: number; line: string } {
-  const heading = weekHeading(position);
-  if (!position || waveHeader(position)) return heading;
   const name = position.phase.name.toLowerCase();
   const weeks = position.phase.weekCount;
-  return { ...heading, line: `${name.charAt(0).toUpperCase()}${name.slice(1)} van ${weeks} ${weeks === 1 ? 'week' : 'weken'}` };
+  return { title: 'Week', number: position.weekInPhase, line: `${name.charAt(0).toUpperCase()}${name.slice(1)} van ${weeks} ${weeks === 1 ? 'week' : 'weken'}` };
 }

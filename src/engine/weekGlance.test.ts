@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attentionLines, changesSub, nextWeekLine, sportLines, weekCountLine } from './weekGlance';
+import { attentionLines, nextWeekLine, sportLines, weekCountLine } from './weekGlance';
 import { buildWeekReview, type WeekReview } from './weekReview';
 import { weekNameAt } from './weekLabel';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -179,11 +179,6 @@ describe('een week met vakantie of een tocht', () => {
 });
 
 describe('kleine woorden', () => {
-  it('het getal van de aanpassingen krijgt zijn woord', () => {
-    expect(changesSub(1)).toBe('1 aanpassing in je planning');
-    expect(changesSub(4)).toBe('4 aanpassingen in je planning');
-  });
-
   it('de verdeling per sport voor Je trainingen', () => {
     expect(sportLines({ perSport: ['Hardlopen: 18,4 km, 320 m D+'] } as WeekReview)).toEqual(['Hardlopen 18,4 km · 320 m omhoog']);
   });

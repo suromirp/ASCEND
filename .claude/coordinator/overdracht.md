@@ -1,40 +1,32 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 12 november 2026, rond 10:40 UTC, door de coördinator van 12 november (session_01LnDpSkUxMFtEBmNMxMAKcN). Vroege wissel omdat de chat lang werd (ruim 500k context). Oudere overdrachten staan in de git-geschiedenis van dit bestand.
+Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnDpSm59PuKBYsAhFgUjTr. Vroege wissel omdat de chat lang werd (ongeveer 560k context). Oudere overdrachten staan in de git-geschiedenis van dit bestand. Let op: de sessieketen staat op diepte 7 van 8; de volgende wissel kan create_session misschien niet meer: vraag dan de eigenaar een nieuwe coördinator-chat te starten met de prompt uit de skill coordinator-wissel.
 
 ## Opdracht van de eigenaar
 
 - 11 november: "werk de backlog af"; 12 november: "Je mag nu ook gewoon starten".
 - 12 november: voor alles wat we verbeteren een mooiere UI en makkelijkere UX, minimaal en vernieuwend; de coördinator kiest het scherm en legt elke keuze vast in een besluit. Hoogstens drie bouwers tegelijk, nooit twee aan dezelfde bestanden.
 - 12 november ochtend: "Wat vannacht gebeurd is mag niet nog een keer" (limiet van vijf uur, daarna alles stil). Daarvoor de Wachter en de regel Limiet van vijf uur in de skill werkverdeling.
+- 12 november middag (afdrukken): routeblok "niet mooi", "Thuis mag weg" (gedaan); StairMaster in de Briefing klopte niet (gedaan); "Wat is haarlijn?" (gedaan); vroeg naar de stand van de hoogtemeters (stap 1 klaar, wacht op naspelen).
 
 ## Stand
 
-- Live op 12 november (allemaal met Lookout, Pathfinder en waar nodig Warden, en eigen blik op de afdrukken): Andere plek (1af978e), Stand minimaal (26c0816) en Stand opgeschoond (39baf86), Je week tot nu (ab5294d), Trainingsscherm sporen 1 tot 4 (86be2a9), Weekplan natellen (53ca8c0), Hoe ging het? spoor 5 (c92df03). Pushmelding gestuurd tot en met het Trainingsscherm.
-- Eerste taak: deploy van c92df03 nakijken en één pushmelding: "ASCEND: Stand opgeschoond en Hoe ging het? na je loop zijn live. App twee keer openen."
-- Lopende bouwers (gestart 12 november 10:29 UTC door de coördinator session_01LnDpSm59PuKBYsAhFgUjTr):
-  - Week: Wat ASCEND aanpaste staat op main (2eaa81d), sessie gearchiveerd. Frisheid-uitleg (haarlijn) op main (76b1e25).
-  - Sherpa Hoogtemeters stap 1 (Fable), session_01LnDpSmaTkuQYwMVjdeQMHr, branch claude/hoogtemeters-stap-1. Warden (Fable) akkoord met 4 moet, herstel loopt. Niet naar main voor naspelen met een verse back-up van de eigenaar (gevraagd 12 november 13:10 UTC, nog niet ontvangen).
-  - Route-blok staat op main (7fa66cc), sessie gearchiveerd.
-  - Sherpa Briefing per manier (Opus), session_01LnDpSmBjXBnHNDfPtVrLKF, branch claude/briefing-per-manier (StairMaster-afdruk, tempo van de missiekaart naar de Briefing).
-  - Sherpa Week minimaal 2-4 (Opus), session_01LnDpSnL2sR6Tu48oWLAPvU, branch claude/week-minimaal-2-4 (plus dode code en weekHeading).
-  - Dubbel log staat op main (ec1f56e), sessie gearchiveerd.
-  - Missiekaart staat op main (5f5b528), sessie gearchiveerd.
-  - Daarna: Week spoor 6 (vrije dagen en rustweek als rij), Weer op de gekozen plek (Inbox), Opslaan dat mislukt (Inbox).
-- Wachter: trig_01SkSM9teBGkQ14rUvfN3Esy op session_01LnDpSm59PuKBYsAhFgUjTr. De oude trig_01RfcpL1mKyjAquMVbctRoGN staat uit (wissen werd geweigerd door de rechtencontrole). Bij de wissel: deze uitzetten of wissen en een nieuwe op je eigen sessie.
-- Back-up van de eigenaar (12 november 02:11) stond in de scratchpad van de vorige coördinator, niet bereikbaar. Vraag een nieuwe als je moet naspelen.
+- Live op 12 november middag (elk met Warden, Lookout, Pathfinder en eigen blik op afdrukken, pushmelding gestuurd): Dubbel log (ec1f56e), Frisheid zonder haarlijn (76b1e25), Week Wat ASCEND aanpaste (2eaa81d), Missiekaart (5f5b528), Route-blok (7fa66cc), Briefing per manier (540d0de), Week minimaal 2-4 (2eda701). Alle bouwersessies daarvan zijn gearchiveerd.
+- Lopende bouwer: Sherpa Hoogtemeters stap 1 (Fable), session_01LnDpSmaTkuQYwMVjdeQMHr, branch claude/hoogtemeters-stap-1 (kop 69bf612). Warden (Fable) akkoord, alle moet-punten verwerkt; de sessie wacht stil. NIET naar main voor naspelen met een verse back-up van de eigenaar (gevraagd om 13:10 en 14:25 UTC, nog niet ontvangen). Naspelen: de zes lopen (Garmin samen 132 m): eigen telling voor en na, en per vlakke kilometer de stijging tegen de grens van 5 m per km (zone 2 vlak). Blijven echte vlakke km onder 5 m: stap 1 naar main zoals hij is (eerst nog een Warden-blik op ronde 2 en 3, die heeft niemand gezien). Gaan ze erover: eerst de bouwer een teller-markering op het log (migratie, eigen besluit) en de grens 10 m per km voor nieuwe logs laten bouwen. Gladmaken over 15 s blijft tot het naspelen anders zegt.
+- Wachter: trig_01SkSM9teBGkQ14rUvfN3Esy op session_01LnDpSm59PuKBYsAhFgUjTr staat uit na de wissel; de nieuwe coördinator maakt een eigen (cron 40 * * * *, dezelfde prompt). De oude trig_01RfcpL1mKyjAquMVbctRoGN staat ook uit.
+- Open vraag aan de eigenaar (advies ja, als eigen klein spoor): moet het horloge bij StairMaster een eigen wandelworkout krijgen? Nu zegt de Briefing alleen eerlijk wat er op staat.
 
-## Volgende bouwers (in deze volgorde, hoogstens drie tegelijk)
+## Volgende bouwers (hoogstens drie tegelijk)
 
-1. Week minimaal (`2026-11-12-week-minimaal.md`): kan nu. Eerst een changeLog.test.ts ("toegevoegd" bij een opnieuw neergelegde training is fout). Neem mee uit de backlog: de kop van Week met de fase voorop ("Basisfase, week 1 van 4", nu nog "Week 1 van 4, basisfase"), de rij Wat ASCEND aanpaste uit Je week tot nu verhuist hierheen, de ring. Opus, of Fable voor de changeLog-regel.
-2. Dubbel log (Fable, opslag): logSession kan false geven nadat het log al geschreven is, waardoor een losse training een tweede log kan krijgen (backlog, Samenhang, Hoe ging het? spoor 6). Eigen klein spoor met besluit en tests.
-3. Missiekaart op Vandaag (backlog, Samenhang): de kaart herhaalt zone, praattest en tempo die nu in de Briefing staan en heeft meer mint dan de hoofdknop; spoor 10 van de ontwerpregels, eigen besluit. Ook de kaarten boven Je dag (regel 6).
-4. Trainingsscherm spoor 6 (WatchAskCard als rij in Je dag, één vorm met Hoe ging het?), pas na de toets bij vraag 2 (wat doet de belasting met een log zonder zwaarte). Pathfinder-advies in de backlog: StepOne met een modus nieuw of horloge.
-5. Daarna Ascend en Logboek in dezelfde lijn (nog geen ontwerp; eerst Cartographer), met `docs/onderhoud/2026-11-12-pathfinder-verborgen-schermen.md`.
+1. Opslaan dat mislukt (Inbox; Forge gooit het concept weg, SportAskLine bewaart de sportkeuze ook zonder log). Sonnet, klein, opslag-nabij: Warden op Fable.
+2. Weer op de gekozen plek (Inbox; `engine/places.ts#weatherAtPlace` ongebruikt). Opus, Briefing.
+3. Week spoor 6: Vrije dagen als rij met blad (Rustweek is al gedaan). Opus.
+4. Trainingsscherm spoor 6 (WatchAskCard als rij in Je dag, één vorm met Hoe ging het?), na de toets bij vraag 2. Pathfinder-advies in de backlog.
+5. Daarna Ascend en Logboek in dezelfde lijn (eerst Cartographer), met `docs/onderhoud/2026-11-12-pathfinder-verborgen-schermen.md`.
 
-## Inbox (docs/backlog.md) voor het bouwmoment van vrijdag
+## Inbox (docs/backlog.md) voor het bouwmoment van vrijdag 13 november 19:43
 
-- Verborgen schermen (Kennisbank belooft een les per week; tochtschermen zonder trekdoel), Hoogtemeters met precisie, Kleding en wind, Back-up kleiner, Efficiëntie-blad, avontuurlijke plekken. Plus de punten onder Samenhang die vandaag bijkwamen.
+- Zie `## Inbox` in de backlog: Opslaan dat mislukt, Weer op de gekozen plek, Andere plek vindt geen heuvel (Photon), Twee dagen niet kunnen, Tempo bij zone 2, Verborgen schermen, Kleding en wind, Back-up kleiner, Efficiëntie-blad, avontuurlijke plekken.
 
 ## Werkwijze, geleerd
 
@@ -46,8 +38,13 @@ Bijgewerkt: 12 november 2026, rond 10:40 UTC, door de coördinator van 12 novemb
 - Naspelen kan in een worktree van de bouwerbranch met de probe van de skill naspelen; roep dan de engine-functie zelf aan (bijvoorbeeld fullWeekAdvice) en verwijder de probe meteen.
 - Bij een squash van een bouwerbranch: conflict in het kostenlogboek oplossen door beide kanten te houden; een besluit dat al via de werkbranch op main kwam, de versie van main nemen.
 
+- Zeg in elke opdracht aan Warden, Lookout en Pathfinder: "wissel NIET de werkmap van de coördinator, maak een eigen worktree in de scratchpad". Pathfinder zette op 12 november /home/user/ascend op een andere branch.
+- De kit-standen werken op de vaste klok 31 oktober 2026 08:00 Europe/Amsterdam: zet in een eigen script `page.clock.setFixedTime(...)` voor `goto`, anders zie je geen Let op, voorstel of rustweek. Nieuwe standen: heuvel, volle-week, voorstel-wacht, rustweek.
+- Afdrukken van een bouwer staan in zijn eigen scratchpad en zijn voor de coördinator niet leesbaar; maak ze zelf met de kit (een preview op een eigen poort in een worktree van de bouwerbranch).
+- Een bouwer die een vraag in zijn eigen chat stelt staat stil; de Wachter ziet dat als status need_input. Por hem met create_trigger: zelf het advies kiezen en melden.
+
 ## Sessies en tijden
 
-- Vorige coördinatoren: session_01LnDpSkUxMFtEBmNMxMAKcN (12 november, tot 10:40 UTC), session_01LnDpSnA7KzoLikwifh3nyR (11 op 12 november), session_01LnDpSkFKoLuAUnLCXKbA1G, session_01LnDpSj5xhvz93hRnJrHyF8.
+- Vorige coördinatoren: session_01LnDpSm59PuKBYsAhFgUjTr (12 november, 10:27 tot ongeveer 16:10 UTC), session_01LnDpSkUxMFtEBmNMxMAKcN (12 november, tot 10:40 UTC), session_01LnDpSnA7KzoLikwifh3nyR (11 op 12 november), session_01LnDpSkFKoLuAUnLCXKbA1G, session_01LnDpSj5xhvz93hRnJrHyF8.
 - Bouwmoment ma, wo, vr 19:43 (trig_01JDroCyzgfatU8c7MiK26Ei). Vrijdag 13 november: de Inbox.
 - Volgende wissel: plan je zelf met send_later op 04:47 [Europe/Amsterdam] morgen.

@@ -19,8 +19,7 @@ const H = 96;
 const TOP = 20;
 const BASE = 88;
 
-// `bare`: zonder eigen kaart, om in de samenvattingskaart van Week te staan.
-export function WeekRidge({ days, previous, today, bare = false }: { days: DayLoad[]; previous: DayLoad[]; today: string; bare?: boolean }) {
+export function WeekRidge({ days, previous, today }: { days: DayLoad[]; previous: DayLoad[]; today: string }) {
   const gradientId = useId();
   const max = Math.max(1, ...days.map((d) => d.load), ...previous.map((d) => d.load));
   const x = (i: number) => ((i + 0.5) / 7) * W;
@@ -104,5 +103,5 @@ export function WeekRidge({ days, previous, today, bare = false }: { days: DayLo
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoogte: minuten maal zwaarte.{days.some((d) => d.split) ? ` ${SPLIT_NOTE}` : ''}</p>
     </>
   );
-  return bare ? <div className="flex flex-col gap-2">{body}</div> : <Card className="flex flex-col gap-2">{body}</Card>;
+  return <Card className="flex flex-col gap-2">{body}</Card>;
 }
