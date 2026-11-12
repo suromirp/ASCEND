@@ -14,12 +14,13 @@ Bijgewerkt: 12 november 2026, rond 10:40 UTC, door de coördinator van 12 novemb
 - Eerste taak: deploy van c92df03 nakijken en één pushmelding: "ASCEND: Stand opgeschoond en Hoe ging het? na je loop zijn live. App twee keer openen."
 - Lopende bouwers (gestart 12 november 10:29 UTC door de coördinator session_01LnDpSm59PuKBYsAhFgUjTr):
   - Week: Wat ASCEND aanpaste staat op main (2eaa81d), sessie gearchiveerd. Frisheid-uitleg (haarlijn) op main (76b1e25).
-  - Sherpa Hoogtemeters stap 1 (Fable), session_01LnDpSmaTkuQYwMVjdeQMHr, branch claude/hoogtemeters-stap-1. Na zijn melding: naspelen met de back-up van de eigenaar (zes lopen, Garmin 132 m) als die er is, anders vragen.
-  - Sherpa Route-blok (Opus), session_01LnDpSiduYPqLcJUoFTtued, branch claude/route-blok: afdruk van de eigenaar 12 november ("niet mooi"; Thuis-chip weg, thuisplek blijft bewaard en staat bovenaan in Andere plek).
+  - Sherpa Hoogtemeters stap 1 (Fable), session_01LnDpSmaTkuQYwMVjdeQMHr, branch claude/hoogtemeters-stap-1. Warden (Fable) akkoord met 4 moet, herstel loopt. Niet naar main voor naspelen met een verse back-up van de eigenaar (gevraagd 12 november 13:10 UTC, nog niet ontvangen).
+  - Route-blok staat op main (7fa66cc), sessie gearchiveerd.
+  - Sherpa Briefing per manier (Opus), session_01LnDpSmBjXBnHNDfPtVrLKF, branch claude/briefing-per-manier (StairMaster-afdruk, tempo van de missiekaart naar de Briefing).
+  - Sherpa Week minimaal 2-4 (Opus), session_01LnDpSnL2sR6Tu48oWLAPvU, branch claude/week-minimaal-2-4 (plus dode code en weekHeading).
   - Dubbel log staat op main (ec1f56e), sessie gearchiveerd.
   - Missiekaart staat op main (5f5b528), sessie gearchiveerd.
-  - Na Sherpa Route-blok: Briefing volgt de gekozen manier (Inbox, afdruk StairMaster, Opus).
-  - Daarna: Week minimaal sporen 2 tot 4 en 6 met de dode code (weekChanges, adjustedSessionReasons, changesSub, review.changes) en weekHeading samenvoegen.
+  - Daarna: Week spoor 6 (vrije dagen en rustweek als rij), Weer op de gekozen plek (Inbox), Opslaan dat mislukt (Inbox).
 - Wachter: trig_01SkSM9teBGkQ14rUvfN3Esy op session_01LnDpSm59PuKBYsAhFgUjTr. De oude trig_01RfcpL1mKyjAquMVbctRoGN staat uit (wissen werd geweigerd door de rechtencontrole). Bij de wissel: deze uitzetten of wissen en een nieuwe op je eigen sessie.
 - Back-up van de eigenaar (12 november 02:11) stond in de scratchpad van de vorige coördinator, niet bereikbaar. Vraag een nieuwe als je moet naspelen.
 
