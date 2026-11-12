@@ -25,6 +25,7 @@ Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5
 - `src/storage/planGolden.test.ts` laten bewegen.
 
 ## Valkuilen
+- Het merk `counter` (hoogtemeters, besluit `2026-11-12-hoogtemeters-teller-op-log.md`) staat per afgeleid veld: `detail` en `runDetail` van één log kunnen een verschillende telling hebben (na een correctie bij de bron, of na inkorten en ongedaan maken). Een regel met een grens op eigen stijging leest het merk van het veld waaruit hij telt, nooit dat van het andere (Warden, 12 november).
 - Een beste 5 km kan verouderen: een bronwijziging verandert de totalen, dan wordt `bestEffort` opnieuw gelezen; `bestEffortTried` voorkomt eindeloos ophalen van een reeks die niets gaf.
 - Een test die duidelijk trager is dan de vorige wacht op "Telt mee" of "Telt niet mee"; tot dan gelden de oude tempo's. Er is hoogstens één stille regel op Vandaag, nooit twee.
 - Tests op verschillende basis (beste 5 km tegen het hele log) vergelijk je op het hele log. Elke wijziging in `buildWorkoutPlan` verandert de vingerafdruk van de workout en stuurt hem stil opnieuw naar het horloge: vergelijk oud en nieuw over alle trainingen, ook met Rustig en Minder, en zet de getallen in het besluit.
