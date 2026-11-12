@@ -452,3 +452,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Lookout Photon (tester, sonnet) 85k, 17 min, 4 van 5 groen (echte CORS niet bereikbaar in de container); herstelronde naar dezelfde bouwer
 - 2026-11-12, Sherpa StairMaster op het horloge (fable, ca. $6,2, 20 min); Warden StairMaster (reviewer, fable) 110k, 11 min, niet akkoord (lange duurloop als wandeling buiten opdracht), 2 belangrijk (soort uit antwoord, rij in sync); herstelronde naar dezelfde bouwer
 - 2026-11-12, Warden+Lookout Photon herstel (reviewer, sonnet) 60k, 20 min, akkoord; Photon naar main
+- 2026-11-12, StairMaster ronde 2: Warden (reviewer, fable) 71k, 4 min, akkoord; Lookout (tester, sonnet) 67k, 6 min, groen; Pathfinder (sonnet) 33k, 1 blokkerend (wandeling vinkt heuvelintervallen niet af, door coördinator in code bevestigd); herstelronde 2 naar dezelfde bouwer
