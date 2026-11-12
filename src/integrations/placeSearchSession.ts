@@ -1,11 +1,13 @@
-// ASCEND: zoeken op plaatsnaam voor het blad Nieuwe plek (Andere plek bij Start bij). Gebruikt de
-// bestaande zoekdienst (openMeteo.ts#searchPlaces), geen tweede. Na een pauze in het typen gaat er één
+// ASCEND: zoeken op plaatsnaam voor het blad Nieuwe plek (Andere plek bij Start bij). Eerst de
+// bestaande zoekdienst (openMeteo.ts#searchPlaces); vindt die niets, dan Photon (photon.ts), binnen
+// dezelfde grens in tijd (besluit 2026-11-12-andere-plek-photon.md). Na een pauze in het typen gaat er één
 // vraag uit, met een grens in tijd en een zichtbare uitkomst: treffers, geen treffers, offline, te
 // traag of een fout. Een nieuw woord of sluiten stopt de vraag die liep; na sluiten gaat er niets meer
 // de deur uit. Zonder React, zodat de tests de klok zelf zetten. De regels staan in engine/placeSearch.ts.
 
 import { OpenMeteoError, openMeteoErrorMessage, searchPlaces } from './openMeteo';
-import { PLACE_SEARCH_LIMIT_MS, PLACE_SEARCH_MAX, PLACE_SEARCH_PAUSE_MS, placeQuery, type FoundPlace, type PlaceSearchView } from '../engine/placeSearch';
+import { searchPhoton } from './photon';
+import { PLACE_SEARCH_LIMIT_MS, PLACE_SEARCH_MAX, PLACE_SEARCH_PAUSE_MS, mergeFound, placeQuery, searchTerm, type FoundPlace, type PlaceSearchView } from '../engine/placeSearch';
 
 export interface PlaceSearchDeps {
   search?: (query: string, signal: AbortSignal) => Promise<FoundPlace[]>;
@@ -23,7 +25,23 @@ export interface PlaceSearchSession {
   close: () => void;
 }
 
-const defaultSearch = (query: string, signal: AbortSignal) => searchPlaces(query, { signal });
+type Source = (term: string, signal: AbortSignal) => Promise<FoundPlace[]>;
+
+// Twee bronnen na elkaar. De eerste beslist: treffers of een fout van de eerste zijn de uitkomst. Alleen
+// als hij niets vindt gaat het woord naar de tweede; faalt die of is er intussen gestopt, dan blijft het
+// bij niets gevonden. Er gaat nooit een aanroep uit na het stoppen.
+export async function searchInTurn(term: string, signal: AbortSignal, first: Source, second: Source): Promise<FoundPlace[]> {
+  const found = await first(term, signal);
+  if (found.length > 0 || signal.aborted) return found;
+  try {
+    return mergeFound([], await second(term, signal));
+  } catch {
+    return found;
+  }
+}
+
+const defaultSearch: Source = (term, signal) =>
+  searchInTurn(term, signal, (t, s) => searchPlaces(t, { signal: s }), (t, s) => searchPhoton(t, { signal: s }));
 const defaultOnline = () => typeof navigator === 'undefined' || navigator.onLine !== false;
 
 export function createPlaceSearch(onView: (view: PlaceSearchView) => void, deps: PlaceSearchDeps = {}): PlaceSearchSession {
@@ -67,7 +85,7 @@ export function createPlaceSearch(onView: (view: PlaceSearchView) => void, deps:
     }, limitMs);
     running = { stop, limit };
     show({ kind: 'busy', query });
-    search(query, stop.signal).then(
+    search(searchTerm(query), stop.signal).then(
       (found) => {
         if (stop.signal.aborted) return;
         clearTimeout(limit);
