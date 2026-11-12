@@ -403,3 +403,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12 Cartographer Je dag (ontwerper, fable): ontwerpvoorstel, drie vragen voor de eigenaar.
 - 2026-11-12 Sherpa Andere plek (bouwer, opus, eigen sessie): klaar in één ronde, Warden sonnet 56k tokens, vier punten hersteld.
 - 2026-11-12 Pathfinder Totaalplaatje UI (sonnet): 49k tokens; Pathfinder Andere plek (sonnet): 36k, nog geen akkoord (wissen ontbreekt).
+- 2026-11-12 Cartographer Trainingsscherm (ontwerper, fable): 156k tokens, 6 minuten; ontwerp plus acht regels voor de hele app.
