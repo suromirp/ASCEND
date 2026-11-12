@@ -6,7 +6,7 @@ import { useAppData } from '../state/AppDataContext';
 import { buildWeekReview, type WeekReview } from '../engine/weekReview';
 import { weekReviewCardShown } from '../engine/overviewSettings';
 import { weekHighlights } from '../engine/weekHighlights';
-import { attentionLines, changesSub, nextWeekLine, sportLines, weekCountLine } from '../engine/weekGlance';
+import { attentionLines, nextWeekLine, sportLines, weekCountLine } from '../engine/weekGlance';
 import { looseLogsOfWeek, weekLogsOf } from '../engine/weekLogs';
 import { intentionForWeek } from '../engine/weeklyQuestion';
 import { addDays, formatDateNL, formatHoursMinutesNL, formatShortDayNL, todayISO } from '../utils/dates';
@@ -72,7 +72,7 @@ export function WeekHeaderRow({ weekStart }: { weekStart: string }) {
   );
 }
 
-type View = 'main' | 'trainings' | 'changes' | 'answer' | 'proposal';
+type View = 'main' | 'trainings' | 'answer' | 'proposal';
 
 // Een regel in de vorm van het blok Stand en morgen (StandSummaryCard): links het vaste woord gedempt, rechts de
 // waarde in gewone inkt, en let op alleen als amber stip voor het vaste woord. Geen knop: alleen lezen.
@@ -99,7 +99,7 @@ function GlanceList({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-const VIEW_TITLE: Record<Exclude<View, 'main'>, string> = { trainings: 'Je trainingen', changes: 'Wat ASCEND aanpaste', answer: 'Je antwoord deze week', proposal: 'Voorstel' };
+const VIEW_TITLE: Record<Exclude<View, 'main'>, string> = { trainings: 'Je trainingen', answer: 'Je antwoord deze week', proposal: 'Voorstel' };
 
 export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
@@ -130,7 +130,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
         onBack={() => setView('main')}
         onClose={requestClose}
       />;
-  const hasRows = !!muscle.proposal || weekLogs.length > 0 || review.changes.length > 0 || !!intention?.answer;
+  const hasRows = !!muscle.proposal || weekLogs.length > 0 || !!intention?.answer;
 
   function decline() {
     muscle.decline();
@@ -169,7 +169,6 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                     <SheetRows>
                       {muscle.proposal && muscle.text && <SheetRow title={muscle.state === 'done' ? 'Toegevoegd' : 'Voorstel'} sub={muscle.text.what} onClick={() => setView('proposal')} sheetFrom />}
                       {weekLogs.length > 0 && <SheetRow title="Je trainingen" sub={`${weekLogs.length} ${weekLogs.length === 1 ? 'training' : 'trainingen'}`} onClick={() => setView('trainings')} sheetFrom />}
-                      {review.changes.length > 0 && <SheetRow title="Wat ASCEND aanpaste" sub={changesSub(review.changes.length)} onClick={() => setView('changes')} sheetFrom />}
                       {intention?.answer && <SheetRow title="Je antwoord deze week" onClick={() => setView('answer')} sheetFrom />}
                     </SheetRows>
                   </div>
@@ -224,12 +223,6 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                   ))}
                 </SheetRows>
               </div>
-            )}
-
-            {view === 'changes' && (
-              <ul className="mt-4 flex flex-col gap-2">
-                {review.changes.map((c) => <li key={c} className="text-sm" style={{ color: 'var(--color-ink)' }}>{c}</li>)}
-              </ul>
             )}
 
             {view === 'answer' && intention?.answer && (

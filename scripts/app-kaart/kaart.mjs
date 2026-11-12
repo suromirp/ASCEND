@@ -167,6 +167,10 @@ const SCHERMEN = {
   'ascend-algemeen': { titel: 'Ascend met Algemeen sterk met eigen gewicht', pad: '#/ascend', stand: 'algemeen' },
   // Het voorstel voor spieren voor de berg als eigen weergave in de weekterugblik (besluit 2026-11-12-je-week-tot-nu).
   'weekterugblik-voorstel': { titel: 'Weekterugblik, de weergave Voorstel (stand met een bergdoel)', pad: '#/week', stand: 'voorstel', actie: async (p) => { await tik(p, 'button:has-text("Weekterugblik")'); await tik(p, 'button:has-text("Voorstel")'); } },
+  // Aangepast door ASCEND (besluit 2026-11-12-week-minimaal): de rij onder de dagen en het blad erachter, met twee
+  // nagemaakte aanpassingen in deze week. De invariant leest het getal, de regels en de dagrijen met "aangepast".
+  'week-aangepast': { titel: 'Week met twee aanpassingen door ASCEND', pad: '#/week', stand: 'aangepast' },
+  'week-aangepast-blad': { titel: 'Blad Aangepast door ASCEND (Week)', pad: '#/week', stand: 'aangepast', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Aangepast door ASCEND")') },
 };
 
 // Van een regel van de kaart naar wat je op het scherm zoekt: de tekst van een knop, een kop, een kaart of gewone tekst.
