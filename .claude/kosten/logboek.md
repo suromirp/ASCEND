@@ -418,3 +418,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Sherpa Andere plek, bouwer-sessie, opus, $11,12 (347k context), ca. 1,5 uur, 2 herstelrondes na review; op main 1af978e
 - 2026-11-12, Pathfinder Andere plek (moment 2), pathfinder, sonnet, 38k, 0,5 min, akkoord, 4 punten beter (3 in backlog, 1 tekst door coördinator)
 - 2026-11-12, Lookout Andere plek, tester, sonnet, onbekend, afgebroken door de limiet van vijf uur; afdrukken waren al gemaakt en door de coördinator zelf bekeken
+- 2026-11-12, Sherpa Stand minimaal, bouwer-sessie, opus, $8,70, ca. 4,5 uur (incl. stilstand door het limiet), 0 herstelrondes; op main 26c0816
+- 2026-11-12, Pathfinder Stand (sonnet) 52k; Lookout Stand (tester, sonnet) 58k, 10 min; groen, opschoonpunten in backlog
+- 2026-11-12, Pathfinder Je week tot nu (sonnet) 38k; Pathfinder Trainingsscherm (sonnet) 47k; Warden Trainingsscherm (reviewer, sonnet) 44k, 7 min; Lookout Trainingsscherm (tester, sonnet) 94k, 15 min, 1 rood
