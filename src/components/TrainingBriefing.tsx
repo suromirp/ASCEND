@@ -426,6 +426,8 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
           tapped={model.tapPoint}
           hasHome={model.hasHome}
           onMakeHome={model.makeHome}
+          keepName={model.keepName}
+          onKeep={model.keepPlace}
           height={BRIEFING_MAP_HEIGHT}
           photo={model.photo}
           onPhoto={model.setPhoto}

@@ -29,6 +29,8 @@ import { useMotionMode } from './motion';
 import { Icon } from './icons';
 import { Chip, Eyebrow, PrimaryButton } from './ui';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
+import { NewPlaceSheet } from './NewPlaceSheet';
+import type { StartChip } from '../engine/places';
 
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
 const STYLE_LINE: Record<RouteStyle, string> = {
@@ -143,7 +145,7 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
       </p>
       <TextButton tone="dim" onClick={() => void model.choose('exact')}>Thuis</TextButton>
       <p className="text-xs leading-snug" style={dim}>
-        Een punt dat je bewaart, zoals je deur: tik het op de kaart en kies Bewaar als plek. Het gaat precies naar de routeplanner, naar OpenStreetMap en naar Open-Meteo, net als hierboven, en wordt op dit toestel bewaard; het gaat mee in je back-up. Tot er een Thuis is, begint de lus waar je nu bent.
+        Een punt dat je bewaart, zoals je deur: tik het op de kaart en kies Bewaar als plek. Het gaat precies naar de routeplanner, naar OpenStreetMap en naar Open-Meteo, net als hierboven, en wordt op dit toestel bewaard; het gaat mee in je back-up. Tot er een Thuis is, begint de lus waar je nu bent. Andere plek zoekt een plek op naam; Open-Meteo krijgt alleen de plaatsnaam die je typt.
       </p>
       <TextButton tone="dim" onClick={() => void model.choose('approx')}>Ongeveer</TextButton>
       <p className="text-xs leading-snug" style={dim}>
@@ -157,21 +159,31 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
 }
 
 // Start bij: de chips boven de kaart en de zoekstand, in elke stand, met een vaste hoogte (één rij van
-// 44 px). Een tik geldt voor deze training en breekt een zoektocht die loopt af (nieuwe sleutel).
+// 44 px, die opzij schuift als de namen niet passen). Een tik geldt voor deze training en breekt een
+// zoektocht die loopt af (nieuwe sleutel). Andere plek opent het blad Nieuwe plek; een gekozen treffer
+// staat daarna met zijn naam op die chip.
 export function StartChips({ model }: { model: RouteSearchModel }) {
+  const [searching, setSearching] = useState(false);
+  const choosePlace = model.choosePlace;
   return (
     <div className="flex flex-col gap-1">
       <Eyebrow tone="var(--color-ink-dim)">Start bij</Eyebrow>
-      <div role="group" aria-label="Start bij" className="flex h-11 gap-2">
+      <div role="group" aria-label="Start bij" data-no-sheet-drag="" className="-mx-1 flex h-11 gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-1" style={{ scrollbarWidth: 'none' }}>
         {model.startChips.map((c) => (
-          <span key={c.kind} className="shrink-0 whitespace-nowrap">
-            <Chip tone="quiet" selected={c.kind === model.startChip} onClick={() => model.pickStart(c.kind === 'home' ? 'home' : 'here')}>{c.label}</Chip>
+          <span key={chipKey(c)} className="shrink-0 whitespace-nowrap">
+            <Chip tone="quiet" selected={chipKey(c) === model.startChip} label={c.kind === 'other' && c.label !== 'Andere plek' ? `Andere plek: ${c.label}` : undefined} onClick={() => (c.kind === 'other' ? setSearching(!!choosePlace) : model.pickStart(c))}>
+              <span className="inline-block max-w-[9.5rem] truncate">{c.label}</span>
+            </Chip>
           </span>
         ))}
       </div>
+      {searching && choosePlace && <NewPlaceSheet onPick={choosePlace} onClose={() => setSearching(false)} />}
     </div>
   );
 }
+
+// Welke chip het is: een bewaarde plek op zijn id, de rest op zijn soort.
+const chipKey = (c: StartChip) => (c.kind === 'place' && c.placeId ? c.placeId : c.kind);
 
 // `closing`: het blad gaat dicht (de animatie loopt nog). Dan stopt het zoeken meteen, niet pas als het
 // paneel weg is: na de tik op sluiten gaat er geen aanroep meer de deur uit.
@@ -206,7 +218,7 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
       case 'map':
         return model.mapStartPoint ? (
           <div key={p} className="flex flex-col gap-1">
-            <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} />
+            <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} keepName={model.keepName} onKeep={model.keepPlace} />
           </div>
         ) : null;
       case 'chosen':
