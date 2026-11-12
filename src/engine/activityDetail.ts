@@ -11,9 +11,11 @@
 //   moving time and counts for nothing;
 // - a gap in the heart rate up to 5 seconds is filled, a longer one stays a
 //   gap and lowers the coverage the profile reports;
-// - the altitude is smoothed with a dead band of 5 metres (a reading only
-//   counts when it moves more than that from the line), so the barometer's
-//   noise does not become climbing;
+// - the altitude is counted with the shared counter of engine/elevation.ts
+//   (hysteresis, 2 metres for a watch): a climb counts from its real valley to
+//   its real top once it passes the threshold, so the barometer's noise does
+//   not become climbing and no threshold is lost per climb. Logs made before
+//   12 November 2026 keep the numbers of the old dead band of 5 metres;
 // - climbs and descents are found in the smoothed altitude: a rise or fall of
 //   at least 50 metres and 4 minutes, which may be interrupted by no more than
 //   10 metres against the direction;
@@ -23,15 +25,20 @@ import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, Stream
 import type { MetricSource } from '../models/training';
 import { isNum } from '../utils/guards';
 import { round } from '../utils/round';
+import { ELEVATION_COUNTER, ELEVATION_THRESHOLD_M, turningPoints, watchLine } from './elevation';
+
+export { turningPoints };
 
 export const SLICE_COUNT = 48;
 export const PAUSE_JUMP_SEC = 10;
 export const STILL_SPEED_MS = 0.4;
 export const HEART_RATE_GAP_SEC = 5;
+// The old dead band; only engine/zone2Pieces.ts still reads its slope from it.
 export const ALTITUDE_DEAD_BAND_M = 10 / 2;
 const STRETCH_REVERSAL_M = 10;
 const STRETCH_MIN_M = 50;
-const TRIM_TOLERANCE_M = 1;
+// A level piece before or after a climb: within the threshold of the counter the line is on the level.
+const TRIM_TOLERANCE_M = ELEVATION_THRESHOLD_M.watch;
 const STRETCH_MIN_SEC = 240;
 // Shorter than this there is nothing to say about.
 const MIN_MOVING_SEC = 300;
@@ -68,7 +75,10 @@ export function fillGaps(values: Series, times: number[], maxGapSec: number): (n
 }
 
 // The dead band: the line follows a reading only once it is more than `band`
-// away from it, and then stays `band` behind. Gaps are carried forward.
+// away from it, and then stays `band` behind. Gaps are carried forward. It loses
+// `band` at the foot and at the top of every climb, so it is no longer used to
+// count metres (engine/elevation.ts does that); engine/zone2Pieces.ts keeps it
+// as its slope filter.
 export function deadBand(values: (number | null)[], band: number): number[] {
   const out: number[] = new Array(values.length).fill(0);
   let y: number | undefined;
@@ -82,48 +92,6 @@ export function deadBand(values: (number | null)[], band: number): number[] {
     out[i] = y ?? 0;
   }
   return out;
-}
-
-// The turning points of a line: a leg counts only when it reverses by at
-// least `threshold` against the leg before it.
-export function turningPoints(y: number[], threshold: number): number[] {
-  if (y.length < 2) return [];
-  const turning: number[] = [];
-  let dir: 0 | 1 | -1 = 0;
-  let minI = 0;
-  let maxI = 0;
-  let ext = 0;
-  for (let k = 1; k < y.length; k++) {
-    if (dir === 0) {
-      if (y[k] < y[minI]) minI = k;
-      if (y[k] > y[maxI]) maxI = k;
-      if (y[k] - y[minI] >= threshold) {
-        dir = 1;
-        turning.push(minI);
-        ext = k;
-      } else if (y[maxI] - y[k] >= threshold) {
-        dir = -1;
-        turning.push(maxI);
-        ext = k;
-      }
-    } else if (dir === 1) {
-      if (y[k] > y[ext]) ext = k;
-      else if (y[ext] - y[k] >= threshold) {
-        turning.push(ext);
-        dir = -1;
-        ext = k;
-      }
-    } else {
-      if (y[k] < y[ext]) ext = k;
-      else if (y[k] - y[ext] >= threshold) {
-        turning.push(ext);
-        dir = 1;
-        ext = k;
-      }
-    }
-  }
-  if (dir !== 0) turning.push(ext);
-  return turning;
 }
 
 interface Moving {
@@ -171,7 +139,7 @@ export function buildActivityDetail(streams: StreamSet, opts: BuildOptions): Act
 
   const heart = fillGaps(streams.heartRate?.map((v) => (isNum(v) && v >= 30 && v <= 230 ? v : null)), t, HEART_RATE_GAP_SEC);
   const altitudeFilled = fillGaps(streams.altitudeM, t, 30);
-  const altitude = altitudeFilled && altitudeFilled.some(isNum) ? deadBand(altitudeFilled, ALTITUDE_DEAD_BAND_M) : undefined;
+  const altitude = altitudeFilled && altitudeFilled.some(isNum) ? watchLine(altitudeFilled, t) : undefined;
 
   // The moving intervals.
   const moving: Moving[] = [];
@@ -189,7 +157,7 @@ export function buildActivityDetail(streams: StreamSet, opts: BuildOptions): Act
   const movingSec = clock;
   if (movingSec < MIN_MOVING_SEC) return undefined;
 
-  // Climb and descent per interval, from the smoothed altitude.
+  // Climb and descent per interval, from the counted altitude.
   const gain = new Array<number>(moving.length).fill(0);
   const loss = new Array<number>(moving.length).fill(0);
   if (altitude) {
@@ -297,6 +265,7 @@ export function buildActivityDetail(streams: StreamSet, opts: BuildOptions): Act
 
   return {
     version: 1,
+    counter: ELEVATION_COUNTER,
     source: opts.source,
     sliceCount: SLICE_COUNT,
     slices,

@@ -432,6 +432,8 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, coördinator 12 november: ca. $23 tot de vroege wissel om 10:40 UTC (500k context)
 - 2026-11-12, Sherpa Week aanpassingen (opus); Warden Week aanpassingen (reviewer, sonnet) 37k, 3 min, akkoord zonder blokkerende punten, 2 beter overgenomen
 - 2026-11-12, Sherpa Dubbel log (fable, ca. $3,2, 0 herstelrondes van de bouwer; twee kleine punten door de coördinator) op main ec1f56e; Warden Dubbel log (reviewer, fable) 59k, 4 min, akkoord; Warden Week (sonnet) 53k, akkoord met 1 moet; Lookout Week (tester, sonnet) 67k, 8 min, groen; Warden Missiekaart (sonnet) 62k, niet akkoord (regen en lucht weg bij prima weer)
+- 2026-11-12, Sherpa Hoogtemeters stap 1 (fable) op branch claude/hoogtemeters-stap-1; Warden Hoogtemeters (reviewer, sonnet) 66k, 5 min, akkoord mits 2 punten hersteld (drempel 0, drempel van de hele lijn in composeSimple), beide hersteld
+- 2026-11-12, Sherpa Hoogtemeters stap 1, rondes 2 tot 4 (fable): meting per km, getal bij hoogtedoel, herstel na Warden op Fable, gladmaken 30 s, merk van de teller op het log en grens voor vlak per teller; geen eigen helper in deze rondes
 - 2026-11-12, Sherpa Week Wat ASCEND aanpaste (opus, ca. $8,3, 2 herstelrondes: Warden moet + Pathfinder kop) op main 2eaa81d; Pathfinder Week (sonnet) 44k
 - 2026-11-12, Lookout Missiekaart (tester, sonnet) 36k, 4 min, groen; Pathfinder Missiekaart (sonnet) 48k, 2 moet (tempo nergens anders, Weekplanning bijgewerkt te diep)
 - 2026-11-12, Lookout Route-blok (tester, sonnet) 76k, 8 min, groen; Warden Route-blok (sonnet) 48k, akkoord met 2 moet; Pathfinder Route-blok (sonnet) 35k, 4 mag

@@ -9,6 +9,7 @@
 
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFailure, RouteFn, RoutePoint, RouteProposal, RouteTarget, RoutedLine } from '../models/route';
+import { isNearlyFlat, modelThresholdM } from './elevation';
 import { ASCENT_DEAD_BAND_M, ascentOf, bearing, cumulative, lineLength, metersBetween, offsetPoint, repeatedShare } from './routeGeometry';
 import { formatNumberNL } from '../utils/number';
 
@@ -243,7 +244,9 @@ export function cutAt(points: RoutePoint[], meters: number): RoutePoint[] {
 }
 
 function proposal(style: RouteProposal['style'], line: RoutedLine, points: RoutePoint[], extra: Partial<RouteProposal> = {}): RouteProposal {
-  return { style, source: line.source, points, distanceM: lineLength(points), ascentM: ascentOf(points), repeatedShare: repeatedShare(points), ...extra };
+  // Eén drempel per lijn van de routeplanner, ook als de lus er een stuk van is.
+  const ascentM = ascentOf(points, modelThresholdM(line.points.map((p) => p.ele)));
+  return { style, source: line.source, points, distanceM: lineLength(points), ascentM, repeatedShare: repeatedShare(points), ...extra };
 }
 
 // Van een lijn naar een heuvel een lus met herhalingen: heen naar de voet, zo vaak op en af als de
@@ -254,8 +257,10 @@ export function composeSimple(line: RoutedLine, target: RouteTarget): RoutePropo
   const approach = line.points.slice(0, climb.foot + 1);
   const up = line.points.slice(climb.foot, climb.top + 1);
   const down = reversed(up);
-  const base = ascentOf(approach) + ascentOf(reversed(approach));
-  const perRepeat = Math.max(climb.heightM, ascentOf(up) + ascentOf(down));
+  // De drempel van de hele lijn, ook voor de stukken: anders telt de som van de delen anders dan het geheel.
+  const threshold = modelThresholdM(line.points.map((p) => p.ele));
+  const base = ascentOf(approach, threshold) + ascentOf(reversed(approach), threshold);
+  const perRepeat = Math.max(climb.heightM, ascentOf(up, threshold) + ascentOf(down, threshold));
   const byAscent = Math.round((target.ascentM - base) / perRepeat);
   const room = 1.5 * target.distanceKm * 1000 - 2 * lineLength(approach);
   const byDistance = Math.floor(room / (2 * climb.lengthM));
@@ -494,7 +499,9 @@ export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<R
   const noted = (o: PlanOutcome): PlanOutcome => {
     if (!o.ok) return o;
     const notice = ascentNotice(o.proposal, input.target, found);
-    return notice ? { ok: true, proposal: { ...o.proposal, notice } } : o;
+    // Vraagt de training hoogtemeters, dan weet de lus dat: zijn getal staat er dan altijd bij.
+    const asks = input.target.ascentM >= MIN_ASCENT_TARGET_M ? { targetAscentM: input.target.ascentM } : {};
+    return notice || asks.targetAscentM !== undefined ? { ok: true, proposal: { ...o.proposal, ...asks, ...(notice ? { notice } : {}) } } : o;
   };
   const adventure = await safe(proposeAdventure(input, route));
   // Geen pad bij het startpunt: Simpel vraagt hetzelfde punt en krijgt hetzelfde antwoord.
@@ -519,8 +526,10 @@ export function proposalTitle(p: RouteProposal): string {
 }
 
 export function proposalFacts(p: RouteProposal): string {
-  const climb = round10(p.ascentM);
-  return `${km(p.distanceM)} · ${climb >= MIN_ASCENT_TARGET_M ? `${formatNumberNL(climb, 0)} hoogtemeters` : 'vrijwel vlak'}`;
+  // Onder ongeveer 40 m weet niemand het op 20 m na: dan geen getal met schijnprecisie. Vraagt de
+  // training hoogtemeters, dan staat het getal er altijd: een lus heet nooit vrijwel vlak naast een doel.
+  const flat = p.targetAscentM === undefined && isNearlyFlat(p.ascentM);
+  return `${km(p.distanceM)} · ${flat ? 'vrijwel vlak' : `${formatNumberNL(round10(p.ascentM), 0)} hoogtemeters`}`;
 }
 
 // Wat je over deze lus moet weten naast de getallen: het droge feit, in korte zinnen.

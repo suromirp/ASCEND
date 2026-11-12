@@ -19,6 +19,7 @@ import type { StreamSet } from '../models/activityDetail';
 import type { RunDetail, RunKm } from '../models/runDetail';
 import type { Zone2Piece, Zone2Pieces } from '../models/zone2Pieces';
 import { deadBand, fillGaps, ALTITUDE_DEAD_BAND_M } from './activityDetail';
+import { ELEVATION_COUNTER } from './elevation';
 import { alignedPoints, minettiCost, pausePerSegment, type Pt } from './runDetail';
 import { ZONE2_RULES as R } from './zone2Rules';
 import { median } from '../utils/stats';
@@ -309,14 +310,17 @@ interface KmAt {
   flat: boolean;
 }
 
-export function kmPieces(rd: Pick<RunDetail, 'kms'>): Zone2Piece[] {
+export function kmPieces(rd: Pick<RunDetail, 'kms' | 'counter'>): Zone2Piece[] {
+  // De grens voor vlak hoort bij de telling van het log: 10 m per km met de nieuwe teller, 5 m
+  // bij een log zonder merk (de oude dode band).
+  const flatLimit = rd.counter === ELEVATION_COUNTER ? R.flatMetresPerKmCounted : R.flatMetresPerKm;
   // Begin en eind van elke km in seconden sinds de start, pauzes meegeteld.
   let t = 0;
   const kms: (KmAt | undefined)[] = rd.kms.map((km) => {
     const startSec = t;
     t += km.sec + (km.pauseSec ?? 0);
     const climb = Math.max(km.gainM ?? 0, km.lossM ?? 0);
-    const flat = (km.gainM ?? 0) < R.flatMetresPerKm && (km.lossM ?? 0) < R.flatMetresPerKm;
+    const flat = (km.gainM ?? 0) < flatLimit && (km.lossM ?? 0) < flatLimit;
     const net = Math.abs((km.gainM ?? 0) - (km.lossM ?? 0)) / km.distanceM;
     // Een km met een pauze, zonder hartslag, deels of met te veel helling doet niet mee.
     if (km.partial || km.hrAvg === undefined || (km.pauseSec ?? 0) > 0 || climb / km.distanceM > R.maxNetGrade || net > R.maxNetGrade) return undefined;

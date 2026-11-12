@@ -52,6 +52,9 @@ export interface RouteProposal {
   repeatedShare: number;
   // Hoe ver het dichtstbijzijnde pad van het startpunt ligt, als dat ver is; dat stuk is een rechte lijn.
   startGapM?: number;
+  // Wat de training aan hoogtemeters vraagt, als ze die vraagt. Dan staat het getal van de lus er
+  // altijd bij, ook onder de grens van vrijwel vlak.
+  targetAscentM?: number;
   // Een melding bij deze lus: het droge feit en wat wel kan (bijvoorbeeld geen heuvels in de buurt).
   notice?: string;
 }
