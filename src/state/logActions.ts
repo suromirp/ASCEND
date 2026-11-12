@@ -9,13 +9,10 @@ import { haptics } from '../utils/haptics';
 import { playMilestoneChime, playSessionCompleteChime } from '../utils/sound';
 import { pickCompletionQuote, pickVictoryQuote } from '../utils/quotes';
 import {
-  ProgramsRepo,
   SessionTemplatesRepo,
   PlannedSessionsRepo,
   SessionLogsRepo,
   GoalMilestoneProgressRepo,
-  SettingsRepo,
-  MetaRepo,
   type AppSettings,
 } from '../storage/database';
 import { linkLogNow, skipMissedNow } from '../storage/missedTraining';
@@ -23,7 +20,6 @@ import { askLine, autoSkipNotice, resolveMissedSettings } from '../engine/missed
 import { syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
 import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
 import { announcementFor, type SavedMoment } from '../engine/savedMoments';
-import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { applyAlignments, inTurn, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
 import { trimStoredLog, undoTrimStoredLog } from '../storage/trim';
 import { onSourceCorrected, restoreSourceUpdateStored, takeOverOfferedStored } from '../storage/sourceCorrection';
@@ -31,14 +27,11 @@ import type { StreamSet } from '../models/activityDetail';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
 import { snapshotWritten } from '../storage/undoPlanChange';
 import type { RecentPlanChange } from '../models/planChange';
-import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { excludedLogIds } from '../engine/influence';
-import { coachReaction } from '../engine/coach';
-import { aerobicTrend, celebratedChange, progressMoment, tempoPiecesOn, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { showCompletionQuote } from '../engine/overviewSettings';
 import type { LogSessionInput } from './appDataTypes';
 import { bumpPlanRevision, planSettled } from './planningSync';
+import { runLogSession } from './logSession';
 import type { Dispatch, SetStateAction, RefObject } from 'react';
 
 export function useLogActions(deps: {
@@ -80,95 +73,12 @@ export function useLogActions(deps: {
     if (announcement.debriefLogId) setDebriefLogId(announcement.debriefLogId);
   }, [settings.introSoundEnabled, settings.overviews, setCelebration, setDebriefLogId]);
 
+  const { heartRate, tempoStablePieces } = settings;
+  // Het schrijven zelf staat in state/logSession.ts (zonder React, met tests).
   const logSession = useCallback(
-    async (input: LogSessionInput, opts?: { batch?: SavedMoment[] }): Promise<boolean> => {
-      const plannedId = input.plannedSessionId;
-      if (plannedId) {
-        if (loggingInFlight.current.has(plannedId)) return false;
-        loggingInFlight.current.add(plannedId);
-      }
-      try {
-        const existing = plannedId || input.externalId ? await SessionLogsRepo.getAll() : [];
-        if (plannedId && existing.some((l) => l.plannedSessionId === plannedId)) return false;
-        // The same watch activity is never stored twice.
-        if (input.externalId && existing.some((l) => l.externalId === input.externalId)) return false;
-        const log: SessionLog = {
-          id: makeId('log'),
-          plannedSessionId: input.plannedSessionId,
-          templateId: input.templateId,
-          type: input.type,
-          sport: input.sport,
-          ...(input.countedSport ? { countedSport: input.countedSport } : {}),
-          ...(input.customSport ? { customSport: input.customSport } : {}),
-          completedDate: input.completedDate ?? todayISO(),
-          completedAt: input.completedAt ?? new Date().toISOString(),
-          variant: input.variant,
-          durationMinutes: input.durationMinutes,
-          rpe: input.rpe,
-          ...(input.rpeAssumed && input.rpe !== undefined ? { rpeAssumed: true as const } : {}),
-          notes: input.notes,
-          strengthData: input.strengthData,
-          cardioData: input.cardioData,
-          outdoorData: input.outdoorData,
-          subjectiveFeel: input.subjectiveFeel,
-          painAreas: input.painAreas && input.painAreas.length > 0 ? input.painAreas : undefined,
-          painReports: input.painReports && input.painReports.length > 0 ? input.painReports : undefined,
-          workout: input.workout,
-          strengthRir: input.strengthRir,
-          ...(input.gymProfileId ? { gymProfileId: input.gymProfileId } : {}),
-          ...(input.fileDurationMinutes ? { fileDurationMinutes: input.fileDurationMinutes } : {}),
-          ...(input.forgeLog && input.forgeLog.length > 0 ? { forgeLog: input.forgeLog } : {}),
-          legsAtStart: input.legsAtStart,
-          externalId: input.externalId,
-          sourceSync: input.sourceSync,
-          source: input.source ?? 'manual',
-        };
-        await SessionLogsRepo.put(log);
-
-        // If this log satisfies the current front-of-ladder milestone on any
-        // goal, record the historical moment it was cleared. Progress and logs
-        // are read fresh from storage: a copy from the closure would let a log
-        // ticked off right after another clear the same milestone twice.
-        const clearedTitle = await recordClearedMilestones(log);
-
-        await refresh();
-        // Ticked off by itself from the watch (engine/autoTick.ts): no moment
-        // after Gedaan, unless it cleared a milestone.
-        if (input.quiet && !clearedTitle) return true;
-        // Every completion gets a quote — a regular session a lighter one, a
-        // milestone clear (if this same log happened to satisfy one) the
-        // bigger victory-tier treatment with the milestone's title attached.
-        // The coach reacts in one line to what you filled in (engine/coach.ts).
-        const allTemplates = await SessionTemplatesRepo.getAll();
-        const currentProgram = (await ProgramsRepo.getAll())[0] ?? null;
-        const allLogs = await SessionLogsRepo.getAll();
-        let coachNote = coachReaction(log, allTemplates.find((t) => t.id === log.templateId), currentProgram, allLogs);
-        // Faster at the same heart rate over weeks: said once, right after
-        // an easy run (engine/aerobicTrend.ts#progressMoment).
-        // A training set to "Niet meetellen voor hartslag" stays out of the trend (engine/influence.ts).
-        const excluded = excludedLogIds((await SettingsRepo.get()).influences);
-        const pieces = { pieces: tempoPiecesOn({ tempoStablePieces: settings.tempoStablePieces }) };
-        const trend = aerobicTrend(allLogs, allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded, pieces);
-        const lastProgress = await MetaRepo.get<ProgressCelebrated>('aerobicProgressCelebrated');
-        const counted = trend.runs > aerobicTrend(allLogs.filter((l) => l.id !== log.id), allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded, pieces).runs;
-        const progress = counted ? progressMoment(trend, lastProgress, log.completedDate) : undefined;
-        const near = celebratedChange(trend);
-        if (progress && near !== undefined) {
-          coachNote = `${coachNote} ${progress}`;
-          await MetaRepo.set('aerobicProgressCelebrated', { date: log.completedDate, changeSec: near });
-        }
-        const moment: SavedMoment = { logId: log.id, recovery: log.type === 'recovery', clearedTitle, coachNote, auto: input.quiet };
-        if (opts?.batch) opts.batch.push(moment);
-        else announceSaved([moment]);
-        return true;
-      } catch (err) {
-        reportStorageError(err);
-        return false;
-      } finally {
-        if (plannedId) loggingInFlight.current.delete(plannedId);
-      }
-    },
-    [refresh, settings.heartRate, settings.tempoStablePieces, reportStorageError, announceSaved, loggingInFlight],
+    (input: LogSessionInput, opts?: { batch?: SavedMoment[] }): Promise<boolean> =>
+      runLogSession(input, opts, { settings: { heartRate, tempoStablePieces }, loggingInFlight, reportStorageError, refresh, announceSaved }),
+    [refresh, heartRate, tempoStablePieces, reportStorageError, announceSaved, loggingInFlight],
   );
 
   // Undoing a log also removes any milestone auto-cleared by it (matched
