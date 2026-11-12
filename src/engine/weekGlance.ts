@@ -89,8 +89,3 @@ export function nextWeekLine(next: NonNullable<WeekReview['next']>): { value: st
   const sub = next.key ? `Belangrijkste: ${lower(next.key).replace(': ', ', ')}` : undefined;
   return { value, sub };
 }
-
-// De tweede regel van de rij Wat ASCEND aanpaste: het getal met zijn woord.
-export function changesSub(n: number): string {
-  return `${n} ${n === 1 ? 'aanpassing' : 'aanpassingen'} in je planning`;
-}

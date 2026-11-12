@@ -24,7 +24,7 @@ import type { Advice, AdviceOption } from './adviceEngine';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { hasRole, idIsTestOrRace, isTestOrRace, templateRoles } from './templateRoles';
 import { templateSport } from './sports';
-import { dayName, weekConcerns, type WeekConcern } from './weekConcerns';
+import { dayName, weekConcerns, type CheckConcern, type WeekConcern } from './weekConcerns';
 import { findingKey, lockLevel, repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 import { capitalize } from '../utils/capitalize';
 
@@ -42,7 +42,9 @@ const lower = (s: string) => (s.charAt(1) && s.charAt(1) !== s.charAt(1).toLower
 
 // The id of the proposal for a concern, known without working the proposal out: Week can tell from it whether
 // you already said Liever niet, without waiting for the calculation (docs/beslissingen/2026-10-28-voorstel-eindstand.md).
+// Een punt zonder voorstel in Week (de volle week) heeft geen voorstel hier: zijn id is alleen zijn sleutel.
 export function weekFixId(concern: WeekConcern, sessions: PlannedSession[]): string {
+  if (concern.plain) return `weekfix:${concern.key}`;
   const ids = [...concern.finding.sessionIds].sort();
   const dates = ids.map((id) => sessions.find((s) => s.id === id)?.scheduledDate ?? '').join(',');
   return `weekfix:${concern.rule}:${ids.join(',')}:${dates}`;
@@ -50,7 +52,7 @@ export function weekFixId(concern: WeekConcern, sessions: PlannedSession[]): str
 
 // `avoid`: sessions an open proposal on Vandaag already changes. The swap of a full week (`viaRoom`) never takes
 // one of them to make room, so two proposals never pull the same training two ways.
-export function planWeekFix(input: CheckInput, concern: WeekConcern, weekStart: string, avoid: ReadonlySet<string> = new Set()): Advice | null {
+export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart: string, avoid: ReadonlySet<string> = new Set()): Advice | null {
   const monday = mondayOfWeek(weekStart);
   const byTemplate = new Map(input.templates.map((t) => [t.id, t]));
   const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -333,8 +335,6 @@ export interface WeekNotice {
   fixes: Record<string, Advice>;
   // Meldingen waar op Vandaag al een voorstel voor staat: hier geen tweede.
   covered: string[];
-  // Gewone regels zonder voorstel in Week: een volle week na weggevallen dagen (engine/fullWeek.ts).
-  plain?: string[];
 }
 
 // De sessies waar een open voorstel van Vandaag al over gaat: alle wijzigingen en opties, en de

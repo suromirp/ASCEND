@@ -4,7 +4,7 @@ import type { WeekReview } from './weekReview';
 
 const base: WeekReview = {
   weekStart: '2026-10-26', title: 'Week 1 van 4, basisfase', done: 2, planned: 5, minutes: 116, perSport: ['Hardlopen: 8,6 km'], missed: [], missedTemplateIds: [],
-  keyPlanned: 1, keyDone: 1, heavier: 0, pain: [], lighter: 0, effort: { easy: 80, hard: 36, uncounted: 0 }, running: false, todayLeft: 0, changes: [], advice: [],
+  keyPlanned: 1, keyDone: 1, heavier: 0, pain: [], lighter: 0, effort: { easy: 80, hard: 36, uncounted: 0 }, running: false, todayLeft: 0, advice: [],
 };
 
 describe('joinNames', () => {

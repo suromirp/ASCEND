@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { looseLogsOfWeek, weekDoneMinutes, weekLogsOf, weekOpenMinutes, weekTime } from './weekLogs';
+import { looseLogsOfWeek, weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { buildWeekReview } from './weekReview';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
@@ -14,7 +14,6 @@ let n = 0;
 const log = (templateId: string, date: string, minutes: number, extra: Partial<SessionLog> = {}): SessionLog => ({
   id: `l${n++}`, templateId, type: byId.get(templateId)!.type, completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: minutes, source: 'manual', ...extra,
 });
-const minutesOf = (_s: PlannedSession, t: { durationVariants: { full: number } }) => t.durationVariants.full;
 
 const week = [
   ps('rest', 'tpl_herstel', '2026-10-05'), ps('ua', 'tpl_upper_a', '2026-10-06'), ps('er', 'tpl_easy_run', '2026-10-08'), ps('lr', 'tpl_long_run', '2026-10-11'),
@@ -63,24 +62,11 @@ describe('looseLogsOfWeek: logs zonder geplande training op Week', () => {
 });
 
 describe('weekTime: de tijd bovenaan Week', () => {
-  it('telt een overgeslagen training en een rustdag niet, een gedane met de echte duur', () => {
-    const run = ps('r', 'tpl_easy_run', '2026-10-05');
-    const skipped = ps('s', 'tpl_upper_b', '2026-10-09', { status: 'skipped' });
-    const open = ps('o', 'tpl_long_run', '2026-10-11');
-    const rest = ps('x', 'tpl_herstel', '2026-10-08');
-    const done = log('tpl_easy_run', '2026-10-05', 33, { plannedSessionId: 'r' });
-    const open1 = tpl('tpl_long_run');
-    expect(weekOpenMinutes([run, skipped, open, rest], [done], byId, minutesOf)).toBe(open1);
-    expect(weekTime([run, skipped, open, rest], [done], byId, W, minutesOf)).toEqual({ doneMinutes: 33, totalMinutes: 33 + open1 });
-  });
-
-  it('een losse training telt mee in gedaan en in het totaal', () => {
-    const open = ps('o', 'tpl_long_run', '2026-10-11');
-    const loose = log('tpl_easy_run', '2026-10-07', 45);
-    const t = weekTime([open], [loose], byId, W, minutesOf);
-    expect(t.doneMinutes).toBe(45);
-    expect(t.totalMinutes).toBe(45 + tpl('tpl_long_run'));
-    expect(t.doneMinutes).toBeLessThanOrEqual(t.totalMinutes);
+  // Week toont sinds Week minimaal alleen nog de gedane tijd ("Je week tot nu"): het totaal met wat open staat
+  // (weekTime, weekOpenMinutes) is weg.
+  it('een gedane training telt met de echte duur, een losse training telt mee', () => {
+    expect(weekDoneMinutes([log('tpl_easy_run', '2026-10-05', 33, { plannedSessionId: 'r' })], byId, W)).toBe(33);
+    expect(weekDoneMinutes([log('tpl_easy_run', '2026-10-07', 45)], byId, W)).toBe(45);
   });
 
   it('de gedane tijd is dezelfde als in de weekterugblik, ook met een losse training', () => {
@@ -91,12 +77,7 @@ describe('weekTime: de tijd bovenaan Week', () => {
       log('tpl_herstel', '2026-10-05', 25), // een rustdag telt niet
     ];
     const review = buildWeekReview({ weekStart: W, plannedSessions: week, logs, templates, program, planChangeLog: [], asOf: '2026-10-12' })!;
-    const t = weekTime(week.filter((s) => s.scheduledDate >= W), logs, byId, W, minutesOf);
     expect(review.minutes).toBe(52 + 31 + 47);
-    expect(t.doneMinutes).toBe(review.minutes);
+    expect(weekDoneMinutes(logs, byId, W)).toBe(review.minutes);
   });
 });
-
-function tpl(id: string): number {
-  return byId.get(id)!.durationVariants.full;
-}

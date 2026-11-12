@@ -36,7 +36,7 @@ import { needsWeather, showWeatherSwap } from '../engine/overviewSettings';
 import { mainGoal } from '../engine/mainGoal';
 import { keyFocusOf } from '../engine/keySession';
 import { answeredDays, descentClockContext } from '../engine/descentClock';
-import { fullWeekFollowed, fullWeekId, fullWeekLine, resolveFullWeekAsk } from '../engine/fullWeek';
+import { fullWeekConcern, fullWeekFollowed, fullWeekId, resolveFullWeekAsk } from '../engine/fullWeek';
 
 export function useAdviceAndWeek(deps: {
   loading: boolean;
@@ -198,19 +198,19 @@ export function useAdviceAndWeek(deps: {
       },
     }),
   }), [settings, plannedSessions, templates, sessionLogs, injuryNotes, program, goalEngineConfig, answeredAdviceIds]);
-  // Een volle week na weggevallen dagen (engine/fullWeek.ts): de gewone regel in Week. Na Liever niet zegt hij
-  // dat jij alles liet staan; staat het voorstel nog open, dan verwijst hij naar Vandaag. Alleen tekst.
+  // Een volle week na weggevallen dagen (engine/fullWeek.ts): een punt in Let op, zonder voorstel in Week. Na
+  // Liever niet zegt het dat jij alles liet staan; staat het voorstel nog open, dan verwijst het naar Vandaag.
   const withFullWeek = useCallback((n: WeekNotice, weekStart: string): WeekNotice => {
     const today = todayISO();
     const id = fullWeekId(today);
     const status = adviceResponses[id]?.response === 'declined' ? 'declined' as const : fullWeekFollowed(planChangeLog, plannedSessions, today) ? 'accepted' as const : advice.some((a) => a.id === id && !!a.proposal) ? 'open' as const : undefined;
-    const line = fullWeekLine({
+    const full = fullWeekConcern({
       today, sessions: plannedSessions, logs: sessionLogs, templates, leave: settings.leavePeriods, illnessEpisodes: settings.illnessEpisodes,
       removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
       keyFocus: keyFocusOf(trainingGoals, goalMilestones, today, { direction: settings.direction }),
       check: { restDay: settings.restDay ?? 1, program, dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference },
     }, weekStart, status);
-    return line ? { ...n, plain: [line] } : n;
+    return full ? { ...n, concerns: [full, ...n.concerns] } : n;
   }, [adviceResponses, advice, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, settings.direction, settings.restDay, trainingGoals, goalMilestones, program, goalEngineConfig]);
   const weekNoticeState = useCallback((): NonNullable<typeof weekNoticeCache.current> => {
     const key = [weekCheckInput, advice, keptNotice, withFullWeek];

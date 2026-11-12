@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { Card, Eyebrow, SecondaryButton } from './ui';
 import { useHorizonChange } from './useHorizonChange';
@@ -7,6 +7,9 @@ import { repeatState, repeatWeekChange } from '../engine/repeatWeek';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { WeekLoadContext } from '../engine/weekLoadChange';
 import { mondayOfWeek, todayISO } from '../utils/dates';
+import { weekLoadRow } from '../engine/weekList';
+import { Sheet } from './settings/Sheet';
+import { SheetRow } from './SheetRows';
 
 // De kaarten Rustweek, Rustweek overgeslagen, Deze week nog een keer en Een stap
 // achter op Week. Doortrainen, terugzetten en de herhaling terugzetten gaan via
@@ -16,6 +19,33 @@ import { mondayOfWeek, todayISO } from '../utils/dates';
 // (docs/beslissingen/2026-10-24-rustweek-via-voorstel.md).
 
 const DIM = { color: 'var(--color-ink-dim)' };
+
+// De rij in de lijst onder de dagen (engine/weekList.ts#weekLoadRow). Het blad erachter toont de kaarten met de
+// uitleg en de bestaande keuze. Alleen voor deze week en later, zoals de kaarten zelf.
+export function WeekLoadRow({ weekStart }: { weekStart: string }) {
+  const { program, sessionLogs } = useAppData();
+  // Het blad onthoudt zijn titel: verandert de week na een Akkoord (de rustweek weg), dan blijft het open tot je
+  // het zelf sluit, in plaats van met de rij te verdwijnen.
+  const [open, setOpen] = useState<string | null>(null);
+  const today = todayISO();
+  const row = useMemo(() => {
+    if (!program || weekStart < mondayOfWeek(today)) return undefined;
+    const rest = restWeekState(program, weekStart, sessionLogs, today);
+    const repeat = repeatState(program, weekStart);
+    return weekLoadRow({ rest: rest.isRestWeek, restSkipped: !!rest.skipped, repeated: repeat.repeated, shifted: !!repeat.shifted });
+  }, [program, weekStart, sessionLogs, today]);
+  if (!row && !open) return null;
+  return (
+    <>
+      {row && <SheetRow title={row.title} sub={row.sub} onClick={() => setOpen(row.title)} sheetFrom />}
+      {open && (
+        <Sheet eyebrow="Week" title={open} onClose={() => setOpen(null)}>
+          <div className="flex flex-col gap-3 pb-2"><WeekLoadCards weekStart={weekStart} /></div>
+        </Sheet>
+      )}
+    </>
+  );
+}
 
 export function WeekLoadCards({ weekStart }: { weekStart: string }) {
   const { program, plannedSessions, sessionLogs, templates, planWeekLoadChange } = useAppData();
