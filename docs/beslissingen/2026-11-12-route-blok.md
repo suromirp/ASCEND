@@ -26,6 +26,8 @@ Het blok met de route in de Briefing (een loop te voet, onder de hartkaart) heef
 - Het zoekveld krijgt in het blad Andere plek alleen meteen focus als er geen bewaarde plekken zijn: anders bedekt het toetsenbord de lijst. Tijdens het typen staan de treffers op de plek van de lijst; leeg veld is weer de lijst.
 - De gekozen plek in de lijst heeft een rand in inkt en een vinkje, zoals een gekozen lus; geen mint.
 - Je eigen plek als stip alleen op de grote kaart, niet op de stille kaart: één lijn en één ring.
+- De link van de naamsvermelding (44 px in de hoek rechtsonder) ligt boven de knop naar Groter: een tik precies in die hoek opent de licentie, elders op de kaart opent Groter. De vermelding moet tikbaar blijven.
+- De knop over de kaart heeft een focusrand in inkt voor wie met een toetsenbord werkt.
 - "© OpenStreetMap" is de vorm die OpenStreetMap op een kleine kaart toestaat; de volle vorm staat op de grote kaart, één tik verder.
 - De woorden van de instellingen: Startpunt van je lus zegt nu dat je Thuis of een andere bewaarde plek onder Andere plek kiest; Ondergrond van de kaart zegt "rechtsboven op de grote kaart". De waarden van de instelling blijven gelijk; geen nieuwe instelling, er komt geen nieuwe keuze bij.
 - De eerste vraag van Route (Waar je nu bent, Thuis, Ongeveer) blijft ongewijzigd: dat is de keuze van de instelling, niet Start bij.

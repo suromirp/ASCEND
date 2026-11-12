@@ -281,7 +281,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
         <div ref={box} style={{ width: '100%', height: '100%' }} />
         {state.kind === 'loading' && <p role="status" className="absolute bottom-1 left-2 text-xs" style={dim}>De kaart wordt geladen.</p>}
         {/* De stille kaart: één knop over de hele kaart naar Groter; de pagina scrolt er gewoon overheen. */}
-        {quiet && <button type="button" aria-label="Groter: de kaart met je lus" data-sheet-from="" onClick={onOpen} className="absolute inset-0 h-full w-full" />}
+        {quiet && <button type="button" aria-label="Groter: de kaart met je lus" data-sheet-from="" onClick={onOpen} className="absolute inset-0 h-full w-full rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-ink)] focus-visible:-outline-offset-2" />}
         {!quiet && photoOffered(base) && onPhoto && (
           <div className="absolute right-[60px] top-2">
             <PhotoSwitch value={switchValue} onPick={pickPhoto} />
