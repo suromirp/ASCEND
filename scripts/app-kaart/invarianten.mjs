@@ -14,6 +14,29 @@ const alle = (t, re) => [...t.matchAll(re)];
 
 export const INVARIANTEN = [
   {
+    // Aangepast door ASCEND (besluit 2026-11-12-week-minimaal): één uitkomst. Het getal op de rij onder de dagen is het
+    // aantal dagrijen met "aangepast", en het aantal regels in het blad erachter. Geen rij is nul.
+    naam: 'Aangepast door ASCEND: getal op de rij, regels in het blad en dagrijen met het woord gelijk',
+    controleer: (k, schermen) => {
+      const uit = [];
+      const getal = (t) => { const m = t.match(/^\[knop: Aangepast door ASCEND(\d+) trainingen?\b.*\]$/m); return m ? Number(m[1]) : 0; };
+      for (const s of schermen.filter((x) => /^week(-|$)/.test(x) && !/blad$/.test(x) && x !== 'weekterugblik' && !x.startsWith('weekterugblik-'))) {
+        const t = k(s);
+        const n = getal(t);
+        const rijen = alle(t, /^\[knop: (?!Verplaats of ruil ).*· aangepast.*\]$/gm).length;
+        if (n !== rijen) uit.push(`${s}: de rij zegt ${n}, ${rijen} dagrijen met "aangepast"`);
+      }
+      const blad = k('week-aangepast-blad');
+      if (blad) {
+        const regels = alle(blad, /^\[knop: .*(?:van \w+ \d+ naar \w+ \d+|(?:erbij|weer|lichter|andere invulling|andere lengte|vervalt) op \w+ \d+)\]$/gm).length;
+        const n = getal(k('week-aangepast'));
+        if (regels !== n) uit.push(`week-aangepast zegt ${n}, het blad heeft ${regels} regels`);
+        if (n === 0) uit.push('week-aangepast toont de rij Aangepast door ASCEND niet');
+      }
+      return uit;
+    },
+  },
+  {
     naam: 'Geen NaN, undefined of null in beeld',
     controleer: (k, schermen) => schermen.flatMap((s) => alle(k(s), /^.*\b(NaN|undefined|null)\b.*$/gm).map((m) => `${s}: "${m[0].trim()}"`)),
   },
@@ -227,7 +250,7 @@ const SCHERMEN = [
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
   'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
-  'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek',
+  'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {

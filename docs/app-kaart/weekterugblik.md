@@ -20,5 +20,4 @@ Belangrijkste: lange duurloop, 60 min
 
 --- kaart 4 ---
 [knop: Je trainingen1 training]
-[knop: Wat ASCEND aanpaste3 aanpassingen in je planning]
 [knop: Instellingen]
