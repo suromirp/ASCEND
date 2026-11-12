@@ -12,6 +12,7 @@ Schermen op een eigen stand, met de stand in de naam:
 - zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel`, `ascend-zonder-doel` en `stand-zonder-doel`.
 - ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek` en `week-ziek`.
 - vaardigheid (één vaardigheid, Pull-Up, met twee stappen gehaald): `ascend-vaardigheid`.
+- voorstel (naast de wedstrijd een verzonnen huttentocht, het programma gestart op 28 september): `weekterugblik-voorstel`, de weergave Voorstel in de weekterugblik met het voorstel dat de engine zelf maakt.
 
 ## De standen
 

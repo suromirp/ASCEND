@@ -202,7 +202,7 @@ const SCHERMEN = [
   'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad',
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
-  'ascend-algemeen', 'ascend-vaardigheid',
+  'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {
