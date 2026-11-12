@@ -7,7 +7,7 @@ import type { RouteProposal, RouteTarget } from '../models/route';
 import type { BriefingView } from '../engine/briefing';
 import type { RouteSearchModel } from './useRouteSearch';
 import { MapPlace } from './TrainingBriefing';
-import { briefingRoutes, footerRoom } from '../engine/routeSheet';
+import { briefingRoutes, footerRoom, otherLoopLine } from '../engine/routeSheet';
 import { planStart, START_LINE_NO_HOME_NO_PLACE } from '../engine/routeStart';
 import { START_LOCATE_LIMIT_MS } from '../storage/routeStart';
 
@@ -59,6 +59,19 @@ describe('het blok met de route in de Briefing', () => {
     expect(briefingRoutes(routes, 'simple').map((r) => r.style)).toEqual(['simple']);
     expect(briefingRoutes(routes, undefined)).toHaveLength(2);
     expect(briefingRoutes([routes[0]], 'simple')).toHaveLength(1);
+  });
+  it('de andere lus in één regel met zijn vorm, direct onder de gekozen lus', () => {
+    expect(otherLoopLine('Simpel', s)).toBe('Simpel, heen en terug: 7 km · vrijwel vlak');
+    expect(otherLoopLine('Simpel', { ...s, repeats: 3, ascentM: 120 })).toBe('Simpel, 3 × de helling op en af: 7 km · 120 hoogtemeters');
+    expect(otherLoopLine('Simpel', { ...s, repeats: 1 })).toBe('Simpel, heen en terug: 7 km · vrijwel vlak');
+    expect(otherLoopLine('Avontuurlijk', a)).toBe('Avontuurlijk, één lus langs een helling: 7,2 km · 50 hoogtemeters');
+    const html = render(model({ picked: 'simple', pickedOutcome: { ok: true, proposal: s } }));
+    expect(html).toContain('Avontuurlijk, één lus langs een helling: 7,2 km · 50 hoogtemeters');
+    expect(html).toMatch(/class="-mt-1 flex items-center justify-between gap-3"/);
+  });
+  it('op de stille kaart opent een tik op de korte vermelding van de luchtfoto Groter, nooit de volle vermelding over de lus', async () => {
+    const src = (await import('./RouteMap.tsx?raw')).default as string;
+    expect(src).toContain('onClick={() => (quiet ? onOpen?.() : setFullCredit(true))}');
   });
   it('de pagina scrolt zo ver dat de laatste regel boven de vaste knop staat: knop plus 16 px', () => {
     expect(footerRoom(77)).toBe('93px');

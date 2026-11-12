@@ -32,6 +32,13 @@ Het blok met de route in de Briefing (een loop te voet, onder de hartkaart) heef
 - De woorden van de instellingen: Startpunt van je lus zegt nu dat je Thuis of een andere bewaarde plek onder Andere plek kiest; Ondergrond van de kaart zegt "rechtsboven op de grote kaart". De waarden van de instelling blijven gelijk; geen nieuwe instelling, er komt geen nieuwe keuze bij.
 - De eerste vraag van Route (Waar je nu bent, Thuis, Ongeveer) blijft ongewijzigd: dat is de keuze van de instelling, niet Start bij.
 
+## Na review (Warden, Lookout, Pathfinder)
+
+- Luchtfoto op de stille kaart: de korte vermelding van de luchtfoto (bijvoorbeeld EOX) opende na een tik de volle vermelding van drie regels, en die kon over de lus liggen. Op de stille kaart opent een tik op de vermelding nu Groter, waar de volle vermelding staat. Gekozen boven een grotere onderrand: die maakt de lus kleiner op elke kaart, ook zonder luchtfoto.
+- Lange namen: een gezochte plek met een lange naam werd bij het bewaren hard op 40 tekens afgeknipt ("van het rivi"); dat was geen fout in de opmaak maar in de naam zelf. `engine/placeSearch.ts#clipName` kapt nu af op een woordgrens met "…". Plekken die al bewaard zijn, houden hun naam; die zijn te hernoemen op Je plekken. Op de chip kapt de opmaak af met "…" (hoogstens 7 rem tekst).
+- De tweede chip heeft een kleine pijl (het icoon verder), zodat je ziet dat hij een blad opent. Met de pijl passen beide chips op 360 px bij een lange naam (gemeten: samen hoogstens 322 px met beide chips vet, binnen de 328 px).
+- De rij onder de gekozen lus zegt de vorm van de andere lus: "Simpel, heen en terug: 6 km · vrijwel vlak", of "Simpel, 3 × de helling op en af: ..." bij meer dan één herhaling (met één is het heen en terug) (`engine/routeSheet.ts#otherLoopLine`, uit dezelfde titel als het blad Route). Simpel gaat altijd over hetzelfde pad terug. De rij schuift 4 px op: Kies is 44 px hoog en duwde de tekst omlaag; meer (12 px) liet een regel van twee regels tegen de amber melding plakken. Gemeten op 412 px met nagemaakte hoogte: 28 px tussen de regels met een amber waarschuwing, ongeveer 21 px zonder; de 80 px van Pathfinder heb ik niet kunnen naspelen.
+
 ## Niet gedaan
 
 - Het weer op een plek ver van huis: het weer-vak van de Briefing volgt de gekozen startplek nog niet. `engine/places.ts#weatherAtPlace` bestaat, maar niets gebruikt hem. Het weer op die plek vraagt een tweede voorspelling (een nieuwe aanroep naar Open-Meteo met dat punt) en raakt het weer-vak, waar een andere bouwer werkt. Voorstel voor de backlog: het weer-vak toont bij een startplek verder dan 10 km van Thuis het weer op die plek, met de naam erbij.

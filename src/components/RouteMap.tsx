@@ -296,7 +296,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
         {state.kind === 'ready' && state.attribution && (state.aerial && !fullCredit ? (
           // De luchtfoto: eerst de korte vorm (de volle van EOX is drie regels en bedekt de lus); een tik toont
           // de volle naamsvermelding met de link. Zo werkt de vermelding van MapLibre zelf ook.
-          <button type="button" aria-label={`Naamsvermelding: ${state.attribution}`} onClick={() => setFullCredit(true)} className="absolute bottom-0 right-0 inline-flex min-h-[44px] min-w-[44px] items-end justify-end">
+          <button type="button" aria-label={`Naamsvermelding: ${state.attribution}`} onClick={() => (quiet ? onOpen?.() : setFullCredit(true))} className="absolute bottom-0 right-0 inline-flex min-h-[44px] min-w-[44px] items-end justify-end">
             <span className="rounded-tl-md bg-bg/80 px-1.5 text-xs leading-5" style={dim}>© {AERIAL_SOURCES[state.aerial].short}</span>
           </button>
         ) : (

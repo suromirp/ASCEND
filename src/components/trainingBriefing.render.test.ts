@@ -76,7 +76,7 @@ describe('de plek van de kaart in de Briefing', () => {
     const html = render(routeView(), model({ stage: 'plans', plans: { adventure: { ok: true, proposal: a }, simple: { ok: true, proposal: s } }, okStyles: ['adventure', 'simple'], picked: 'adventure', pickedOutcome: { ok: true, proposal: a } }));
     expect(html).toContain('Avontuurlijk');
     expect(html).toContain('Eén lus langs een helling · 7,2 km · 50 hoogtemeters');
-    expect(html).toContain('Simpel: 7 km · vrijwel vlak');
+    expect(html).toContain('Simpel, heen en terug: 7 km · vrijwel vlak');
     expect(html).toContain('>Kies<');
     expect(html).toContain('Groter');
   });

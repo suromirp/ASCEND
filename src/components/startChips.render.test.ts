@@ -41,6 +41,12 @@ describe('StartChips', () => {
     expect(html).toContain('truncate');
     expect(html).toMatch(/aria-pressed="false"[^>]*>Waar je nu bent</);
   });
+  it('de tweede chip heeft een kleine pijl: hij opent een blad', () => {
+    const html = renderToStaticMarkup(createElement(StartChips, { model: model({}) }));
+    const second = buttons(html)[1];
+    expect(second).toContain('aria-hidden');
+    expect(second).toContain('<svg');
+  });
   it('een oude instelling die bij Thuis start: Thuis staat gekozen op de tweede chip', () => {
     const html = renderToStaticMarkup(createElement(StartChips, { model: model({ startChip: 'home' }) }));
     expect(html).toMatch(/aria-pressed="true"[^>]*aria-label="Andere plek: Thuis"/);

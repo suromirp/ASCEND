@@ -27,7 +27,7 @@ import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { modalitySport } from '../data/modalities';
 import { failureLine, MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle } from '../engine/routePlanner';
-import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, routeOutcomeLine } from '../engine/routeSheet';
+import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, otherLoopLine, routeOutcomeLine } from '../engine/routeSheet';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import type { RouteSendOutcome } from '../engine/routeSend';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
@@ -502,8 +502,9 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
         </div>
       )}
       {other && otherOutcome?.ok && (
-        <div className="flex items-center justify-between gap-3">
-          <p className="min-w-0 text-sm tabular-nums leading-snug" style={dim}>{STYLE_NAME[other]}: {proposalFacts(otherOutcome.proposal)}</p>
+        // Direct onder de gekozen lus: Kies is 44 px hoog, de rij schuift 4 px op zodat er geen gat valt.
+        <div className="-mt-1 flex items-center justify-between gap-3">
+          <p className="min-w-0 text-sm tabular-nums leading-snug" style={dim}>{otherLoopLine(STYLE_NAME[other], otherOutcome.proposal)}</p>
           <TextButton tone="dim" onClick={() => model.setChosen(other)}>Kies</TextButton>
         </div>
       )}

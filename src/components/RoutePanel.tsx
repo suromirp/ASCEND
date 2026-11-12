@@ -174,7 +174,9 @@ export function StartChips({ model }: { model: RouteSearchModel }) {
         {here && <span className="shrink-0 whitespace-nowrap"><Chip tone="quiet" selected={pair.hereChosen} onClick={() => model.pickStart(here)}>{here.label}</Chip></span>}
         <span className="min-w-0 whitespace-nowrap">
           <Chip tone="quiet" selected={pair.other.chosen} label={pair.other.aria !== pair.other.label ? pair.other.aria : undefined} onClick={() => setOpen(true)}>
-            <span className="inline-block max-w-[8.5rem] truncate align-bottom">{pair.other.label}</span>
+            <span className="inline-block max-w-[7rem] truncate align-bottom">{pair.other.label}</span>
+            {/* Een kleine pijl: deze chip opent een blad (Pathfinder). */}
+            <span aria-hidden className="shrink-0"><Icon name="verder" size={14} /></span>
           </Chip>
         </span>
       </div>
