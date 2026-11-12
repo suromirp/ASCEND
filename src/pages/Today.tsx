@@ -7,7 +7,7 @@ import { waveHeader } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { activeIllness, isHeavySession, recoveryRamp } from '../engine/illness';
-import { QUIET_TODAY_LINES, arrangeToday, isSafetyCard, resolveAboveMission, type TodayCardId } from '../engine/todayCards';
+import { QUIET_TODAY_LINES, capAboveMission, isSafetyCard, placeTodayCards, resolveAboveMission, type TodayCardId } from '../engine/todayCards';
 import { hasRole } from '../engine/templateRoles';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
@@ -359,6 +359,11 @@ function TodayContent() {
     setShorter({ advice: shorterAdvice({ session, template, plan, now: new Date().toISOString() }), lines: plan.lines });
   }
 
+  // Regel 5: één gevulde mint knop op Vandaag. Heeft de missie hem (een training, of Gedaan op een hersteldag), dan
+  // zijn de knoppen op de andere kaarten omlijnd; een beslissing is altijd omlijnd (regel 6, besluit
+  // 2026-11-12-missiekaart.md).
+  const missionMint = !!(primary && primaryTemplate && mission) || (!!restToday && !allTodayDone && restMode === 'active');
+
   // De missie: je training van vandaag, of de rustige kaart van een dag zonder.
   const missionCard: ReactNode = primary && primaryTemplate && mission ? (
     <TodayMissionCard
@@ -438,8 +443,10 @@ function TodayContent() {
     // De rustige regels weten zelf of ze er zijn; ze staan altijd onder de missie, op hun plek in de rij.
     ...QUIET_TODAY_LINES,
   ];
-  const aboveLimit = resolveAboveMission(settings.cardsAboveMission);
-  const arrangement = arrangeToday(presentCards, aboveLimit);
+  // Hoogstens twee boven de missie; een vraag over vandaag direct eronder, een melding die niet over vandaag gaat
+  // onder Je dag (engine/todayCards.ts#placeTodayCards, regel 6).
+  const aboveLimit = capAboveMission(resolveAboveMission(settings.cardsAboveMission));
+  const placement = placeTodayCards(presentCards, aboveLimit);
   // Elke kaart in een omhulsel zonder eigen vak (`contents`), zodat de tekstkaart kan tellen wat boven de missie
   // staat (scripts/app-kaart/kaart.mjs, invariant "Hoogstens het afgesproken aantal kaarten boven de missie").
   const around = (id: TodayCardId) => (
@@ -449,8 +456,8 @@ function TodayContent() {
   );
   const aroundMission: Record<TodayCardId, ReactNode> = {
     // Ziek gemeld, of weer opbouwen: dezelfde kaart, op een andere plek in de volgorde.
-    ill: <IllnessStatusCard />,
-    ramp: <IllnessStatusCard />,
+    ill: <IllnessStatusCard quiet={missionMint} />,
+    ramp: <IllnessStatusCard quiet={missionMint} />,
     // Rusthartslag en HRV wijken een paar ochtenden samen af: een vraag, geen waarschuwing.
     illnessSign: <IllnessSignCard state={illnessSignState} />,
     // Onweer, storm, hitte of lawinegevaar bij een tocht of een lange training buiten: het feit, altijd helemaal.
@@ -460,7 +467,7 @@ function TodayContent() {
     advice: <CoachCard />,
     // Een training die niet doorging: één vraag of een koppelvoorstel, de oudste eerst (engine/missedTraining.ts).
     missed: <MissedTrainingCard state={missed} onLogNow={setActionSheetSession} />,
-    freshStart: <FreshStartCard state={freshStart} />,
+    freshStart: <FreshStartCard state={freshStart} quiet={missionMint || !!illness} />,
     // Een etappe van vandaag met coordinaten en Je locatie aan: hoeveel nog tot het eind (engine/stagePosition.ts).
     stagePosition: <StagePositionLine />,
     // Een sport van je horloge zonder gekozen rol: een rustige vraag, geen kaart (docs/visie/Sporten die meetellen.md, 2.5).
@@ -503,44 +510,25 @@ function TodayContent() {
         <WeekStrip weekStart={weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
       </SkyBand>
 
-      {/* Kaarten rond de missie in een vaste volgorde, hoogstens zoveel erboven als je koos (engine/todayCards.ts,
-          docs/beslissingen/2026-11-01-vandaag-volgorde.md). De missie staat op een vaste plek tussen twee lijsten:
-          verdwijnt er een kaart, dan verhuist de missie zelf niet. */}
-      {arrangement.above.map(around)}
+      {/* Kaarten rond de missie in een vaste volgorde, hoogstens twee erboven (engine/todayCards.ts,
+          docs/beslissingen/2026-11-01-vandaag-volgorde.md en 2026-11-12-missiekaart.md). De missie staat op een vaste
+          plek: verdwijnt er een kaart, dan verhuist de missie zelf niet. */}
+      {placement.above.map(around)}
       <div className="contents" data-today-mission="" data-above-limit={String(aboveLimit)}>{missionCard}</div>
-      {arrangement.below.map(around)}
-      {/* De snelkoppeling naar de ochtendvraag: alleen een blad, geen kaart. Onder de missie, zodat niets voor de
-          missie staat wat niet in de rij hoort (docs/beslissingen/2026-11-02-vandaag-en-ongedaan.md). */}
-      <MorningDeepLink />
-      {/* De avond ervoor: vanaf de gekozen tijd de training van morgen met wat je klaarlegt, onder de missie en
-          de kaarten die bij vandaag horen (docs/beslissingen/2026-11-11-avond-ervoor.md). */}
-      <EveningBeforeCard />
-
+      {/* Direct onder de missie: de ochtendvraag (een vraag is een taak van vandaag), dan de beslissingen en
+          waarschuwingen die over vandaag gaan. Een beslissing heeft hier een omlijnde knop (regel 6). */}
+      {placement.underMission.map(around)}
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
       {/* Twee van de drie getallen van je horloge wijken af op de ochtend van een zware training (engine/morningProposal.ts). */}
       <MorningProposalCard />
-
-      {/* Een trage test die wacht op je antwoord: een rustige regel, tot je kiest. */}
-      <TestPendingLine />
-
-      {/* Daarna: wat bevestigd moet worden. */}
-      <WatchActivityCard />
+      {/* Wat bevestigd moet worden. */}
+      <WatchActivityCard quiet />
       <WatchAlignCard />
-      {/* Komt er van je horloge niets meer binnen terwijl de koppeling werkt: één rustige zin. */}
-      <SourceSilenceLine />
-
-      <NextTrekLine onlyWhenOn />
       {/* Een tochtdag in de bergen of de sneeuw: het weer op de hoogte van je tocht (engine/mountainWeather.ts). */}
       <MountainWeatherCard />
-
-      <MacroFactorCard />
-
-      {forecastSummary && (
-        <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />
-      )}
-
-      <ScheduleAnomalyCard />
+      <MacroFactorCard primary={false} />
+      <ScheduleAnomalyCard quiet />
 
       {showRecoveryWarning && (
         <Card className="flex flex-col gap-1">
@@ -553,19 +541,6 @@ function TodayContent() {
       )}
 
       {dayOrderAdvice && <DayOrderCard advice={dayOrderAdvice} sessions={todaySessions} templateById={templateById} />}
-
-      {concurrentTrainingTip && (
-        <Card className="flex flex-col gap-1">
-          <Eyebrow>Tip voor vandaag</Eyebrow>
-          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{concurrentTrainingTip.reason}</p>
-        </Card>
-      )}
-
-      <LegEaseCard />
-
-      {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
-
-      <BodyCheckCard />
 
       {/* Je dag: wat je vandaag naast je training zelf nog doet, hoogstens vier rijen
           (docs/visie/Ontwerp Je dag.md). De training van de grote kaart staat er niet nog eens. */}
@@ -588,6 +563,38 @@ function TodayContent() {
         </button>
         {!primary && <NotFitLink plain />}
       </div>
+
+      {/* Onder Je dag: wat niet over vandaag gaat of niets vraagt (regel 6): kaarten die niet boven de missie
+          pasten, meldingen, de avond ervoor en tips, in de vaste volgorde. */}
+      {placement.underDay.map(around)}
+      {/* De snelkoppeling naar de ochtendvraag: alleen een blad, geen kaart
+          (docs/beslissingen/2026-11-02-vandaag-en-ongedaan.md). */}
+      <MorningDeepLink />
+      {/* De avond ervoor: vanaf de gekozen tijd de training van morgen met wat je klaarlegt
+          (docs/beslissingen/2026-11-11-avond-ervoor.md). */}
+      <EveningBeforeCard />
+      {/* Een trage test die wacht op je antwoord: een rustige regel, tot je kiest. */}
+      <TestPendingLine />
+      {/* Komt er van je horloge niets meer binnen terwijl de koppeling werkt: één rustige zin. */}
+      <SourceSilenceLine />
+      <NextTrekLine onlyWhenOn />
+
+      {forecastSummary && (
+        <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />
+      )}
+
+      {concurrentTrainingTip && (
+        <Card className="flex flex-col gap-1">
+          <Eyebrow>Tip voor vandaag</Eyebrow>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{concurrentTrainingTip.reason}</p>
+        </Card>
+      )}
+
+      <LegEaseCard />
+
+      {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
+
+      <BodyCheckCard />
 
       {quoteLanguage !== 'off' && <QuoteCard quote={quote} language={quoteLanguage} />}
 

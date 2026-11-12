@@ -13,6 +13,8 @@ import { useAppData } from '../state/AppDataContext';
 import { MoveSuggestions } from './MoveSuggestions';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 import { PrimaryButton, SecondaryButton, Eyebrow, ZoneBar } from './ui';
+import { TextButton } from './TextButton';
+import { missionCardView, missionChipsShown } from '../engine/missionCard';
 import { sessionKindLabel } from '../engine/sports';
 import { StrengthDoneElsewhere, type StrengthDoneExtra } from './StrengthDoneElsewhere';
 import { isLegHeavyTemplate } from '../engine/scheduler';
@@ -47,11 +49,12 @@ function splitChip(text: string, tempo: boolean): { value: string; unit: string 
   return { value: m[1], unit: m[2] };
 }
 
-// De missie van vandaag: de training, het getal dat telt (minuten groot, de rest
-// kleiner), de zone als die er is, één mint knop, en daaronder Verplaatsen en
-// "Niet fit?". Wat minder vaak nodig is (uitleg, korte versie, voorschrift)
-// staat achter het puntjesmenu. De enige kaart op het scherm met hoogtelijnen
-// (.topo-mission). Het krachtformulier (StrengthDoneElsewhere) staat er ongewijzigd in.
+// De missie van vandaag: de training, het getal dat telt (minuten groot), één mint knop, en daaronder
+// Verplaatsen en "Niet fit?" als stille tekstknoppen. Wat de kaart toont komt uit engine/missionCard.ts: voor een
+// training te voet staan zone, tempo, weer, kleding, route en horloge in de Briefing, en opent de naam (met een
+// pijltje) die Briefing (besluit 2026-11-12-missiekaart.md). Wat minder vaak nodig is (uitleg, korte versie,
+// voorschrift) staat achter het puntjesmenu. De enige kaart op het scherm met hoogtelijnen (.topo-mission). Het
+// krachtformulier (StrengthDoneElsewhere) staat er ongewijzigd in.
 export function TodayMissionCard({
   template,
   fullDuration,
@@ -126,13 +129,14 @@ export function TodayMissionCard({
   // De Briefing is voor elke training te voet bereikbaar, ook zonder koppeling: een tik op de naam en
   // een rij in Meer keuzes (besluit 2026-11-12-trainingsscherm-sporen-1-4.md). De knop blijft dan Gedaan.
   const briefingReach = !quickComplete && briefingEntry(template);
+  // Kracht die je in de app zelf bijhoudt begint met "Training starten";
+  // al het andere is een "Gedaan" dat meteen naar het invulscherm gaat.
+  const inAppStrength = template.type === 'strength';
+  const view = missionCardView({ briefingReach, briefingButton, quickComplete, inAppStrength });
   const [showBriefing, setShowBriefing] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const garmin = buildWorkoutPlan(template, todayISO(), program)?.garmin;
   const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });
-  // Kracht die je in de app zelf bijhoudt begint met "Training starten";
-  // al het andere is een "Gedaan" dat meteen naar het invulscherm gaat.
-  const inAppStrength = template.type === 'strength';
   const kind = sessionKindLabel(template).toLowerCase();
 
   const showShort = !quickComplete && !!shortVariant;
@@ -145,7 +149,7 @@ export function TodayMissionCard({
 
   // De minuten staan groot; wat de duurchip méér zegt dan alleen de minuten ("4 × 4 min") blijft als tekst.
   const plainMinutes = new RegExp(`^${fullDuration} min$`);
-  const others = chips.filter((c) => c.kind !== 'zone' && !(c.kind === 'duur' && plainMinutes.test(c.text)));
+  const others = missionChipsShown(chips, view).filter((c) => c.kind !== 'zone' && !(c.kind === 'duur' && plainMinutes.test(c.text)));
   const numeric = others.flatMap((c) => {
     const s = splitChip(c.text, c.kind === 'tempo');
     return s && c.kind !== 'duur' ? [{ chip: c, ...s }] : [];
@@ -180,8 +184,10 @@ export function TodayMissionCard({
 
       <div>
         {briefingReach ? (
-          <button type="button" onClick={() => setShowBriefing(true)} aria-label={`${BRIEFING_TEXT.title}: ${template.name}`} className="-my-1 block min-h-[44px] w-full py-1 text-left">
-            <h2 className="font-display text-[28px] leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
+          <button type="button" onClick={() => setShowBriefing(true)} aria-label={`${BRIEFING_TEXT.title}: ${template.name}`} className="-my-1 flex min-h-[44px] w-full items-center gap-1.5 py-1 text-left active:opacity-70" data-mission-name-opens="">
+            <h2 className="min-w-0 font-display text-[28px] leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
+            {/* Het zichtbare teken dat de naam de Briefing opent: het pijltje van elke rij die iets opent. */}
+            <span className="shrink-0 pt-1" style={{ color: 'var(--color-ink-dim)' }} aria-hidden><Icon name="verder" size={22} /></span>
           </button>
         ) : (
           <h2 className="font-display text-[28px] leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
@@ -211,34 +217,34 @@ export function TodayMissionCard({
             ))}
           </ul>
         )}
-        {paceNote && <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{paceNote}</p>}
+        {view.pace && paceNote && <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{paceNote}</p>}
         <BootReminderLine template={template} className="mt-2" />
         <SweatBeforeRow template={template} className="mt-1" />
       </div>
 
-      {zone && (
+      {view.zone && zone && (
         <div className="flex flex-col gap-3">
           <ZoneBar active={zone} label={`Zone ${zone}`} />
+          {/* Regel 5: geen mint woord in een zin; "Zone 2." in gewone inkt, halfvet. */}
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-            <span className="font-semibold" style={{ color: 'var(--color-progress)' }}>Zone {zone}.</span> {ZONE_SENTENCE[zone]}
+            <span className="font-semibold">Zone {zone}.</span> {ZONE_SENTENCE[zone]}
           </p>
         </div>
       )}
 
-      <div>
-          {coachLine && (
-            <p className="border-l-2 pl-3 text-[15px] leading-snug" style={{ borderColor: 'var(--color-action)', color: 'var(--color-ink)' }}>
-              {coachLine}
-            </p>
+      {/* Weer, heuvels, route, kleding en horloge; leeg (alles in de Briefing) neemt het geen ruimte. */}
+      <div className="empty:hidden">
+          {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="" onOpen={() => navigate('/weer')} onlyWarning={view.weather === 'warning'} />}
+          {view.beforehand && (
+            <>
+              <HillsNearbyLine template={template} date={todayISO()} className="mt-1" />
+              {!briefingButton && <RouteProposalLine template={template} date={todayISO()} />}
+              <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
+            </>
           )}
-          {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-0.5" onOpen={() => navigate('/weer')} />}
-          <HillsNearbyLine template={template} date={todayISO()} className="mt-1" />
-          {!briefingButton && <RouteProposalLine template={template} date={todayISO()} />}
-          <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
-          {session && <WatchStatusRow session={session} template={template} offer={false} className="mt-3" />}
+          {session && <WatchStatusRow session={session} template={template} offer={false} onlyFailed={view.watch === 'failed'} className="mt-3" />}
         </div>
 
-      <WarmupRow template={template} />
 
       {showWatch && watchView.hasWatchSheet && (
         <WatchSheet
@@ -268,11 +274,11 @@ export function TodayMissionCard({
       )}
       {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
 
-      {quickComplete ? (
+      {view.button === 'elsewhere' ? (
         <StrengthDoneElsewhere fullDuration={fullDuration} legs={isLegHeavyTemplate(template)} onDone={(feel, minutes, extra) => onStart('full', feel, minutes, extra)} />
-      ) : inAppStrength ? (
+      ) : view.button === 'start' ? (
         <PrimaryButton onClick={() => onStart('full')}>Training starten</PrimaryButton>
-      ) : briefingButton ? (
+      ) : view.button === 'briefing' ? (
         <div>
           <PrimaryButton onClick={() => setShowBriefing(true)}>{BRIEFING_TEXT.title}</PrimaryButton>
           <p className="mt-2 text-center text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>{BRIEFING_TEXT.missionTicks}</p>
@@ -283,10 +289,21 @@ export function TodayMissionCard({
         </PrimaryButton>
       )}
 
-      <div className="-mt-1 flex gap-2">
-        <SecondaryButton onClick={() => setShowMove(true)}>Verplaatsen</SecondaryButton>
-        <NotFitLink outlined />
+      {/* Regel 5: één mint per scherm, de knop hierboven. Verplaatsen en Niet fit? zijn stille tekstknoppen. */}
+      <div className="-my-2 flex items-center justify-center gap-6">
+        <TextButton tone="dim" onClick={() => setShowMove(true)}>Verplaatsen</TextButton>
+        <NotFitLink plain />
       </div>
+
+      {/* Opwarmen bij kracht opent een blad: onder de knop, zodat de knop boven de vouw staat. */}
+      <WarmupRow template={template} quiet />
+
+      {/* De coachregel is een tip (regel 6): onder de knop, zodat de missie en de knop boven de vouw staan. */}
+      {coachLine && (
+        <p className="border-l-2 pl-3 text-[15px] leading-snug" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>
+          {coachLine}
+        </p>
+      )}
 
       {showMenu && (
         <TodaySheet

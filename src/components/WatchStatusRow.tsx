@@ -39,6 +39,7 @@ export function WatchStatusRow({
   onLeave,
   offer = true,
   plain = false,
+  onlyFailed = false,
   className = '',
 }: {
   session: PlannedSession;
@@ -50,6 +51,9 @@ export function WatchStatusRow({
   offer?: boolean;
   // True in a list of rows (the training screen): no box of its own.
   plain?: boolean;
+  // True op de missiekaart van een training met een Briefing: alleen als versturen mislukte (een waarschuwing
+  // staat nooit achter een tik); de gewone stand staat in de Briefing.
+  onlyFailed?: boolean;
   className?: string;
 }) {
   const navigate = useNavigate();
@@ -62,6 +66,7 @@ export function WatchStatusRow({
   const status = statusOf(session, template);
   const line = watchStatusLine(status, todayISO());
   if (!line || (!offer && status.kind === 'unlinked')) return null;
+  if (onlyFailed && status.kind !== 'failed') return null;
 
   async function send() {
     if (busy) return;

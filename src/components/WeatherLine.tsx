@@ -34,7 +34,9 @@ import { Icon } from './icons';
 
 const TONE = { prima: 'var(--color-ink-dim)', let_op: 'var(--color-warning)', slecht: 'var(--color-danger-text)' } as const;
 
-export function WeatherLine({ template, date, minutes, className = '', onOpen }: { template: SessionTemplate; date: string; minutes?: number; className?: string; onOpen?: () => void }) {
+// `onlyWarning`: alleen de regel als het weer let op of slecht is (de missiekaart van een training met een Briefing:
+// het gewone weer staat in de Briefing, een waarschuwing nooit achter een tik).
+export function WeatherLine({ template, date, minutes, className = '', onOpen, onlyWarning = false }: { template: SessionTemplate; date: string; minutes?: number; className?: string; onOpen?: () => void; onlyWarning?: boolean }) {
   const { weather, sessionLogs, program, settings } = useAppData();
   const now = new Date();
   const durationMinutes = minutes ?? resolveEffectiveFullDuration(template, date, program);
@@ -46,7 +48,7 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen }:
   const rain = useRainSoonNote({ template, date, startHour: w?.startHour, durationMinutes, settings });
 
   // Nog geen plaats: een buitentraining wijst de weg naar de pagina Weer.
-  if (onOpen && !settings.homeLocation && isWeatherSensitive(template) && (showWeatherLine(settings.overviews) || showClothingAdvice(settings.overviews))) {
+  if (onOpen && !onlyWarning && !settings.homeLocation && isWeatherSensitive(template) && (showWeatherLine(settings.overviews) || showClothingAdvice(settings.overviews))) {
     return (
       <button
         type="button"
@@ -61,6 +63,7 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen }:
   }
 
   if (!showWeatherLine(settings.overviews) || !w || !weather.forecast) return null;
+  if (onlyWarning && w.verdict === 'prima') return null;
 
   const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
   const stale = offline || isForecastStale(weather.forecast.fetchedAt, now);
