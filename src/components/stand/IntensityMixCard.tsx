@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { EASY_TARGET, intensityVerdict, type IntensityMix } from '../../engine/standing';
-import { Card, Eyebrow } from '../ui';
+import { Card, Eyebrow, InfoButton } from '../ui';
+import { StandInfoSheet, UnderLine } from './StandParts';
+import { intensityInfo } from './standChartData';
 import { formatWeekdayDayMonthNL } from '../../utils/dates';
 
 // Je stand → intensity: how your endurance trainings of the last four weeks
 // split into easy, middle and hard, in minutes, by heart rate where the watch gave it.
-// One colour, darker is harder; each label has a dot in the shade of its part of the bar.
+// One colour, darker is harder; each label has a dot in the shade of its part of the bar. Op het scherm de balk en
+// één zin; wat er geteld is en de 80% staan achter de i (docs/visie/Ontwerp Stand minimaal.md, 2).
 
 const PARTS: { key: keyof IntensityMix['minutes']; label: string; opacity: number }[] = [
   { key: 'easy', label: 'rustig', opacity: 0.4 },
@@ -12,15 +16,8 @@ const PARTS: { key: keyof IntensityMix['minutes']; label: string; opacity: numbe
   { key: 'hard', label: 'hard', opacity: 1 },
 ];
 
-// One short honest line: what was counted from the heart rate and what by plan.
-function sourceLine(mix: IntensityMix): string {
-  const trainings = (n: number) => (n === 1 ? '1 training' : `${n} trainingen`);
-  if (mix.measuredSessions === 0) return 'Naar het plan, niet naar je hartslag.';
-  if (mix.plannedSessions === 0) return 'Uit je hartslag.';
-  return `Uit je hartslag, ${trainings(mix.plannedSessions)} naar plan.`;
-}
-
 export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
+  const [info, setInfo] = useState(false);
   const perTraining = mix.unit === 'sessions';
   if (mix.total < 3 || (!perTraining && mix.totalMinutes <= 0)) return null;
   // Naar het plan: per training geteld, zoals altijd; naar je hartslag: in minuten.
@@ -29,13 +26,9 @@ export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
   const pct = (n: number) => (whole ? Math.round((n / whole) * 100) : 0);
   return (
     <Card className="flex flex-col gap-3">
-      <div>
+      <div className="flex items-start justify-between gap-3">
         <Eyebrow>Intensiteit</Eyebrow>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          {perTraining
-            ? 'Je loop- en wandeltrainingen van de laatste vier weken.'
-            : `Je loop- en wandelminuten van de laatste vier weken${mix.measuredSessions > 0 ? ', naar je hartslag' : ''}.`} Goede duursporters doen ongeveer {Math.round(EASY_TARGET * 100)}% rustig.
-        </p>
+        <InfoButton onClick={() => setInfo(true)} label="Wat Intensiteit telt" />
       </div>
 
       <div className="relative">
@@ -53,21 +46,20 @@ export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
         ))}
       </div>
 
-      {!perTraining && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{sourceLine(mix)}</p>}
-
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
         {intensityVerdict(amounts, whole)}
       </p>
 
       {mix.easyTooHard.length > 0 && (
-        <div className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}>
+        <UnderLine>
           <p>{mix.easyTooHard.length === 1 ? 'Eén rustige training was te hard:' : `${mix.easyTooHard.length} rustige trainingen waren te hard:`}</p>
           <p style={{ color: 'var(--color-ink-dim)' }}>
             {mix.easyTooHard.slice(0, 4).map((x) => `${x.name} ${formatWeekdayDayMonthNL(x.date)} (${x.why === 'hartslag' ? 'hartslag boven zone 2' : 'zwaarte 7 of meer'})`).join(' · ')}
           </p>
           <p className="mt-1" style={{ color: 'var(--color-ink-dim)' }}>Rustig is praten in hele zinnen. Langzamer mag, ook bergop.</p>
-        </div>
+        </UnderLine>
       )}
+      {info && <StandInfoSheet eyebrow="Belasting" title="Intensiteit" lines={intensityInfo(mix)} onClose={() => setInfo(false)} />}
     </Card>
   );
 }

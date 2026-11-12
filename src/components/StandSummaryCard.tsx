@@ -27,7 +27,7 @@ export function StandSummaryCard({ tomorrow }: { tomorrow?: TomorrowEntry }) {
         <li key={line.key} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
           <button
             type="button"
-            onClick={() => navigate(line.to)}
+            onClick={() => navigate(line.to, line.to === '/week' ? undefined : { state: { from: 'vandaag' } })}
             aria-label={`${line.label}: ${line.value}${line.warn ? ', let op' : ''}`}
             data-stand-line={line.key}
             className="flex min-h-[44px] w-full items-center gap-3 px-4 py-2.5 text-left"

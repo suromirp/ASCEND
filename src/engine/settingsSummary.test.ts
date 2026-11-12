@@ -1191,3 +1191,13 @@ describe('rowSummary: Health Connect, dag en tijd', () => {
     expect(row(undefined)).toMatchObject({ sub: 'Nog niets opgehaald' });
   });
 });
+
+describe('Volgorde van Je stand (Stand minimaal: regels en rijen)', () => {
+  it('de rij in Instellingen: Standaard, Eigen volgorde, en na Terug naar standaard weer Standaard', () => {
+    const value = (cardOrder: unknown) => rowSummary('volgorde-stand', facts({ settings: { ...facts().settings, cardOrder } as never })).value;
+    expect(value(undefined)).toBe('Standaard');
+    expect(value({ stand: ['benen', 'kracht', 'belasting', 'ritme', 'lopen', 'invloed'] })).toBe('Standaard');
+    expect(value({ stand: ['ritme', 'benen', 'belasting', 'kracht', 'lopen', 'invloed'] })).toBe('Eigen volgorde');
+    expect(value({ stand: ['benen', 'belasting', 'ritme', 'invloed', 'kracht', 'lopen'] })).toBe('Eigen volgorde');
+  });
+});

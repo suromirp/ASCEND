@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { LegDay } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
-import { Card, Eyebrow } from '../ui';
+import { UnderLine } from './StandParts';
 import { formatWeekdayDayMonthNL } from '../../utils/dates';
 
-// Je stand → leg calendar: what each day's training puts into your legs,
+// Benen → het blad Beendagen (de rij onder Frisheid): what each day's training puts into your legs,
 // four weeks back and the week ahead. Amber, the colour of leg days; brighter
 // is heavier, a dashed square is still planned. Two bright squares close
 // together is what the planning tries to avoid. Tap a day. The points are leg
@@ -20,13 +20,10 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
   const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, i) => days.slice(i * 7, i * 7 + 7));
   const day = days[selected];
   return (
-    <Card className="flex flex-col gap-3">
-      <div>
-        <Eyebrow>Beenkalender</Eyebrow>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Wat je benen per dag krijgen. Fel is zwaar, gestippeld is gepland. Twee felle vakjes na elkaar zijn zwaar.
-        </p>
-      </div>
+    <div className="flex flex-col gap-3">
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+        Wat je benen per dag krijgen. Fel is zwaar, gestippeld is gepland. Twee felle vakjes na elkaar zijn zwaar.
+      </p>
 
       <div className="-mx-4 grid grid-cols-7" role="grid" aria-label="Beenbelasting per dag">
         {WEEKDAYS.map((d) => <span key={d} className="pb-1.5 text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>{d}</span>)}
@@ -46,7 +43,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
                 className="absolute inset-[3px] rounded-md"
                 style={{
                   background: 'var(--color-charcoal)',
-                  outline: i === selected ? '2px solid var(--color-action)' : isToday ? '1px solid var(--color-ink-dim)' : undefined,
+                  outline: i === selected ? '2px solid var(--color-ink)' : isToday ? '1px solid var(--color-ink-dim)' : undefined,
                   outlineOffset: 1,
                 }}
                 aria-hidden
@@ -75,14 +72,14 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
       </div>
 
       {day && (
-        <div className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }} aria-live="polite">
+        <UnderLine>
           <p>
             <span className="font-medium">{day.date === today ? 'Vandaag' : formatWeekdayDayMonthNL(day.date)}: </span>
             {day.names.length ? <>{LEVEL_WORD[day.level]}{day.planned ? ', gepland' : ''} <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>({formatNumberNL(day.points, 0)} beenpunten)</span></> : 'geen training'}
           </p>
           {day.names.length > 0 && <p style={{ color: 'var(--color-ink-dim)' }}>{day.names.join(' · ')}</p>}
-        </div>
+        </UnderLine>
       )}
-    </Card>
+    </div>
   );
 }

@@ -8,7 +8,7 @@ Basisfase, week 1 van 4
 ## Je stand
 
 --- kaart 1 ---
-[knop: BenenFrisindex 0,1] (aria: Benen: Fris, index 0,1. Open Benen.)
+[knop: BenenFris1 training werkt nog door] (aria: Benen: Fris, 1 training werkt nog door. Open Benen.)
 [knop: BelastingRustigwordt 224, gewoonlijk 540] (aria: Belasting: Rustig, wordt 224, gewoonlijk 540. Open Belasting.)
 [knop: RitmeNog nietsna twee weken] (aria: Ritme: Nog niets, na twee weken. Open Ritme.)
 

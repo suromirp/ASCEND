@@ -1133,6 +1133,17 @@ html[data-motion='off'] .topo-mission::after {
   opacity: 0.6;
 }
 
+/* Het label dat met je vinger meeloopt over een grafiek van Je stand (components/stand/StandLineChart.tsx):
+   150 ms ease-out, geen lus; in Rustig en Uit staat het er meteen. */
+.stand-chart-label {
+  transition: left 0.15s ease-out, top 0.15s ease-out;
+}
+
+html[data-motion='calm'] .stand-chart-label,
+html[data-motion='off'] .stand-chart-label {
+  transition: none;
+}
+
 html[data-motion='off'] *,
 html[data-motion='off'] *::before,
 html[data-motion='off'] *::after {

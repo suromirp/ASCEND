@@ -1,178 +1,101 @@
-import { useState } from 'react';
-import { LOAD_SPORTS, LOAD_JUMP, loadItemText, loadVersusBefore, SPLIT_NOTE, type LoadSport, type WeekLoad } from '../../engine/standing';
+import { LOAD_JUMP, loadItemText, loadVersusBefore, SPLIT_NOTE, type WeekLoad } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
-import { Card, Eyebrow } from '../ui';
-import { roundedTop } from './chartParts';
+import { Card } from '../ui';
 import { formatDayMonthNL, formatWeekdayDayMonthNL } from '../../utils/dates';
+import { StandLineChart } from './StandLineChart';
+import { effortHintShown, loadPoints } from './standChartData';
+import { UnderLine } from './StandParts';
 
-// Je stand → weekly load: minutes × effort per week, per sport. Solid is
-// done, faded is still planned. Tap a week for its numbers.
-
-const SPORT_COLOR: Record<LoadSport, string> = {
-  lopen: 'var(--color-chart-run)',
-  kracht: 'var(--color-chart-strength)',
-  wandelen: 'var(--color-chart-walk)',
-  overig: 'var(--color-chart-other)',
-};
-const SPORT_LABEL: Record<LoadSport, string> = { lopen: 'Lopen', kracht: 'Kracht', wandelen: 'Wandelen', overig: 'Fietsen en overig' };
-
-const W = 320;
-const H = 158;
-const TOP = 14;
-const BOTTOM = 38;
-const GAP = 2;
+// Belasting, het hart van het scherm: minuten maal zwaarte per week, in de stijl van de zone 2-kaart
+// (StandLineChart). Een stip per week op één lijn; deze week vol voor wat gedaan is en een open stip erboven voor
+// wat nog gepland staat; de week erna gestippeld. Meer staat boven; de haarlijn gewoonlijk is je gemiddelde van
+// de vier weken ervoor. De verdeling per sport staat in de telling van de gekozen week, waar elke training zijn
+// eigen regel heeft; de uitleg van de punten staat achter de i in de lucht. De waarschuwing bij een sprong staat
+// volledig onder de grafiek.
 
 export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
-  const currentIdx = weeks.findIndex((w) => w.isCurrent);
-  const [selected, setSelected] = useState(currentIdx);
+  const currentIdx = Math.max(0, weeks.findIndex((w) => w.isCurrent));
   const jump = loadVersusBefore(weeks);
-  const max = Math.max(1, ...weeks.map((w) => w.doneTotal + w.plannedTotal), jump?.before ?? 0);
-  const plotH = H - TOP - BOTTOM;
-  const slot = W / weeks.length;
-  const barW = Math.min(26, slot * 0.6);
-  const y = (v: number) => TOP + plotH - (v / max) * plotH;
-  const present = LOAD_SPORTS.filter((s) => weeks.some((w) => w.done[s] + w.planned[s] > 0));
-  const week = weeks[selected];
-  const estimatedWeeks = weeks.filter((w) => w.estimated > 0 && w.estimated >= w.doneTotal * 0.25).length;
+  if (weeks.length === 0) return null;
+  const points = loadPoints(weeks);
+  const max = Math.max(1, ...points.map((p) => p.ahead ?? p.value), jump?.before ?? 0) * 1.1;
+  const name = (w: WeekLoad) => (w.isCurrent ? 'Deze week' : `Week van ${formatDayMonthNL(w.weekStart)}`);
+  const amount = (w: WeekLoad) => (w.isCurrent && w.plannedTotal > 0 ? `${formatNumberNL(w.doneTotal, 0)} + ${formatNumberNL(w.plannedTotal, 0)}` : formatNumberNL(w.doneTotal + w.plannedTotal, 0));
 
   return (
     <Card className="flex flex-col gap-3">
-      <div>
-        <Eyebrow>Belasting per week</Eyebrow>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Minuten maal zwaarte, de 1 tot 10 die je invult. 45 minuten op zwaarte 6 is 270 punten. Vol is gedaan, licht is gepland. Tik op een week voor de telling.{weeks.some((w) => w.items.some((it) => it.split)) ? ` ${SPLIT_NOTE}` : ''}
-        </p>
-      </div>
-
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Weekbelasting van ${weeks.length} weken; deze week ${formatNumberNL(weeks[currentIdx]?.doneTotal ?? 0, 0)} gedaan`}>
-        {jump && (
-          <g aria-hidden>
-            <line x1={0} x2={W} y1={y(jump.before)} y2={y(jump.before)} stroke="var(--color-ink-dim)" strokeDasharray="3 4" strokeWidth={1} opacity={0.6} />
-          </g>
+      <StandLineChart
+        points={points}
+        min={0}
+        max={max}
+        top="high"
+        rest={currentIdx}
+        lines={jump ? [{ value: jump.before, label: 'gewoonlijk' }] : []}
+        axis={[
+          { at: 0, label: formatDayMonthNL(weeks[0].weekStart) },
+          { at: currentIdx / Math.max(1, weeks.length - 1), label: 'deze week', strong: true },
+        ]}
+        label={(i) => amount(weeks[i])}
+        ariaLabel={`Belasting per week, ${weeks.length} weken. Meer staat boven.`}
+        valueText={(i) => `${name(weeks[i])}: ${formatNumberNL(weeks[i].doneTotal, 0)} gedaan${weeks[i].plannedTotal > 0 ? `, ${formatNumberNL(weeks[i].plannedTotal, 0)} gepland` : ''}`}
+      >
+        {(i) => (
+          <>
+            <WeekTally week={weeks[i]} average={weeks[i].isCurrent ? jump?.before : undefined} />
+            {/* Eén keer dat de zwaarte ontbreekt: staat de ±-regel er al, dan geen tweede zin (coördinator, 12 november). */}
+            {effortHintShown(weeks, i) && (
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                Vul na een training de zwaarte in, dan klopt de lijn beter.
+              </p>
+            )}
+          </>
         )}
-        {weeks.map((w, i) => {
-          const x = i * slot + (slot - barW) / 2;
-          // Stack from the baseline: done first, then planned, sport by sport.
-          const parts: { v: number; sport: LoadSport; planned: boolean }[] = [
-            ...LOAD_SPORTS.map((s) => ({ v: w.done[s], sport: s, planned: false })),
-            ...LOAD_SPORTS.map((s) => ({ v: w.planned[s], sport: s, planned: true })),
-          ].filter((p) => p.v > 0);
-          const total = w.doneTotal + w.plannedTotal;
-          let acc = 0;
-          const clipId = `wl-clip-${i}`;
-          return (
-            <g key={w.weekStart} onClick={() => setSelected(i)} style={{ cursor: 'pointer' }}>
-              <rect x={i * slot} y={0} width={slot} height={H} fill="transparent" />
-              <clipPath id={clipId}><path d={roundedTop(x, y(total), barW, (total / max) * plotH, 4)} /></clipPath>
-              <g clipPath={`url(#${clipId})`}>
-                {parts.map((p, j) => {
-                  const y0 = y(acc + p.v);
-                  const h = (p.v / max) * plotH;
-                  acc += p.v;
-                  return <rect key={j} x={x} y={y0} width={barW} height={Math.max(0, h - (j < parts.length - 1 ? GAP : 0))} fill={SPORT_COLOR[p.sport]} opacity={p.planned ? 0.35 : 1} />;
-                })}
-              </g>
-              {total === 0 && <rect x={x} y={TOP + plotH - 1} width={barW} height={1} fill="var(--color-card-border)" />}
-              {i === selected && <rect x={x - 3} y={TOP + plotH + 3} width={barW + 6} height={2} rx={1} fill="var(--color-action)" />}
-              {(slot >= 44 || (weeks.length - 1 - i) % 2 === 0) && (
-                <text x={i * slot + slot / 2} y={H - 18} textAnchor="middle" fontSize={12} fill={w.isCurrent ? 'var(--color-ink)' : 'var(--color-ink-dim)'} fontWeight={w.isCurrent ? 600 : 400}>
-                  {w.isCurrent ? 'nu' : formatDayMonthNL(w.weekStart)}
-                </text>
-              )}
-              {w.isRestWeek && <text x={i * slot + slot / 2} y={H - 4} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">rust</text>}
-            </g>
-          );
-        })}
-        <line x1={0} x2={W} y1={TOP + plotH} y2={TOP + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
-      </svg>
-
-      {(present.length > 1 || jump) && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {present.length > 1 && present.map((s) => (
-            <span key={s} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm" style={{ background: SPORT_COLOR[s] }} aria-hidden />{SPORT_LABEL[s]}</span>
-          ))}
-          {jump && <span className="flex items-center gap-1.5"><span className="w-3 border-t border-dashed" style={{ borderColor: 'var(--color-ink-dim)' }} aria-hidden />gemiddelde vier weken ervoor</span>}
-        </div>
-      )}
-
-      {week && <WeekTally week={week} average={week.isCurrent ? jump?.before : undefined} />}
+      </StandLineChart>
 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict(weeks[currentIdx], jump)}</p>
-      {estimatedWeeks > 0 && (
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Vul na een training de zwaarte in, dan klopt de balk beter.
-        </p>
-      )}
     </Card>
   );
 }
 
-// The selected week, calm: the total big with one meter against your
-// average, then each training as a row with its points as a thin bar.
+// De gekozen week als gewone regels onder een haarlijn: de telling, dan elke training met zijn punten.
 function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
-  const total = week.doneTotal + week.plannedTotal;
-  const scale = Math.max(1, total, average ?? 0);
-  const maxItem = Math.max(1, ...week.items.map((it) => it.load));
-  const pct = (v: number) => `${(v / scale) * 100}%`;
   return (
-    <div className="flex flex-col gap-3 rounded-xl px-3.5 py-3" style={{ background: 'var(--color-charcoal)' }} aria-live="polite">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{week.isCurrent ? 'Deze week' : `Week van ${formatDayMonthNL(week.weekStart)}`}{week.isRestWeek ? ' · rustweek' : ''}</p>
-        <p className="tabular-nums">
-          <span className="font-sans tabular-nums text-xl" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(week.doneTotal, 0)}</span>
-          {week.plannedTotal > 0 && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}> + {formatNumberNL(week.plannedTotal, 0)} gepland</span>}
-        </p>
-      </div>
-
-      {total > 0 && (
-        <div>
-          <div className="relative h-2 rounded-full" style={{ background: 'var(--color-card)' }} role="img" aria-label={`${formatNumberNL(week.doneTotal, 0)} gedaan, ${formatNumberNL(week.plannedTotal, 0)} gepland${average ? `, gemiddeld ${formatNumberNL(average, 0)}` : ''}`}>
-            <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: pct(total), background: 'var(--color-progress)', opacity: 0.35 }} />
-            <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: pct(week.doneTotal), background: 'var(--color-progress)' }} />
-            {average !== undefined && <span className="absolute -inset-y-1 w-0.5 rounded" style={{ left: pct(average), background: 'var(--color-ink)' }} />}
-          </div>
-          {average !== undefined && (
-            <p className="mt-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Streepje: je gemiddelde van de vier weken ervoor, {formatNumberNL(average, 0)}.</p>
-          )}
-        </div>
-      )}
-
+    <UnderLine>
+      <p>
+        <span className="font-medium">{week.isCurrent ? 'Deze week' : `Week van ${formatDayMonthNL(week.weekStart)}`}{week.isRestWeek ? ', rustweek' : ''}: </span>
+        <span className="tabular-nums">{formatNumberNL(week.doneTotal, 0)}</span> gedaan
+        {week.plannedTotal > 0 && <>, <span className="tabular-nums">{formatNumberNL(week.plannedTotal, 0)}</span> gepland</>}
+        {average !== undefined && <span style={{ color: 'var(--color-ink-dim)' }}>. Gewoonlijk <span className="tabular-nums">{formatNumberNL(average, 0)}</span>.</span>}
+      </p>
       {week.items.length === 0 ? (
-        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen trainingen in deze week.</p>
+        <p style={{ color: 'var(--color-ink-dim)' }}>Geen trainingen in deze week.</p>
       ) : (
-        <ul className="flex flex-col gap-2.5">
+        <ul className="mt-1 flex flex-col gap-2">
           {week.items.map((it, i) => (
-            <li key={i} className="flex items-center gap-3" style={{ opacity: it.planned ? 0.6 : 1 }}>
+            <li key={i} className="flex items-baseline gap-3">
               <div className="min-w-0 flex-1">
-                <p className="break-words text-xs" style={{ color: 'var(--color-ink)' }}>{it.name}</p>
-                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {formatWeekdayDayMonthNL(it.date)} · {loadItemText(it)}
-                </p>
+                <p className="break-words">{it.name}</p>
+                <p style={{ color: 'var(--color-ink-dim)' }}>{formatWeekdayDayMonthNL(it.date)} · {loadItemText(it)}{it.planned ? ' · gepland' : ''}</p>
               </div>
-              <div className="flex w-24 shrink-0 items-center gap-2">
-                <span className="h-1.5 flex-1 rounded-full" style={{ background: 'var(--color-card)' }}>
-                  <span className="block h-full rounded-full" style={{ width: `${(it.load / maxItem) * 100}%`, background: SPORT_COLOR[it.sport] }} />
-                </span>
-                <span className="w-8 text-right text-xs tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(it.load, 0)}</span>
-              </div>
+              <span className="shrink-0 tabular-nums" style={{ color: it.planned ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{formatNumberNL(it.load, 0)}</span>
             </li>
           ))}
         </ul>
       )}
-
-      <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        Punten per training: minuten maal zwaarte.
-        {week.items.some((it) => it.split) ? ` ${SPLIT_NOTE}` : ''}
-        {week.items.some((it) => it.planned) ? ' Licht: gepland.' : ''}
-        {week.items.some((it) => it.estimated) ? ' ±: geen zwaarte ingevuld, telt met de geplande zwaarte.' : ''}
-      </p>
-    </div>
+      {(week.items.some((it) => it.estimated) || week.items.some((it) => it.split)) && (
+        <p style={{ color: 'var(--color-ink-dim)' }}>
+          {week.items.some((it) => it.estimated) ? '±: geen zwaarte ingevuld, telt met de geplande zwaarte.' : ''}
+          {week.items.some((it) => it.estimated) && week.items.some((it) => it.split) ? ' ' : ''}
+          {week.items.some((it) => it.split) ? SPLIT_NOTE : ''}
+        </p>
+      )}
+    </UnderLine>
   );
 }
 
 function verdict(week: WeekLoad | undefined, jump: ReturnType<typeof loadVersusBefore>): string {
   if (!week) return '';
-  if (week.isRestWeek) return 'Rustweek: de balk is bewust lager. Zo komt de training van de weken ervoor binnen.';
+  if (week.isRestWeek) return 'Rustweek: de week is bewust lichter. Zo komt de training van de weken ervoor binnen.';
   if (!jump) return 'Na een paar weken zie je hier of je week in lijn is.';
   const pct = Math.round((jump.ratio - 1) * 100);
   if (jump.doneRatio > LOAD_JUMP) return `Deze week ligt al ${Math.round((jump.doneRatio - 1) * 100)}% boven je gemiddelde van de vier weken ervoor. Een flinke sprong gaat vaker samen met blessures. Let extra op je benen en je ochtendgevoel.`;

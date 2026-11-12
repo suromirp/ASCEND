@@ -1,8 +1,7 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../ui';
 import { TextButton } from '../TextButton';
-import { ChevronGlyph } from '../vandaag/glyphs';
+import { StandRow as Row, StandRows } from './StandParts';
 import { WeightOverviewSheet } from './WeightOverviewSheet';
 import { useRunTrendRows } from './useRunTrendRows';
 import { usePaceCurve } from './usePaceCurve';
@@ -52,30 +51,6 @@ function useForgeEntry() {
   }, [strengthKey, sessionLogs, templates, program, bodyKg, today, injuryNotes, settings.morningCheckIns]);
 }
 
-function Row({ label, value, onClick, sheet, trailing }: { label: string; value: string; onClick?: () => void; sheet?: boolean; trailing?: ReactNode }) {
-  const inner = (
-    <>
-      <span className="w-[104px] shrink-0 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{label}</span>
-      <span className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{value}</span>
-    </>
-  );
-  return (
-    <li className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }} data-stand-row={label}>
-      {onClick ? (
-        <button type="button" onClick={onClick} data-sheet-from={sheet ? '' : undefined} aria-label={`${label}: ${value}`} className="flex min-h-[56px] w-full items-center gap-3 px-4 py-2.5 text-left">
-          {inner}
-          <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><ChevronGlyph /></span>
-        </button>
-      ) : (
-        <div className="flex min-h-[56px] w-full items-center gap-3 py-1.5 pl-4 pr-2">
-          {inner}
-          {trailing}
-        </div>
-      )}
-    </li>
-  );
-}
-
 export function StandList({ order }: { order: StandListId[] }) {
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
@@ -116,8 +91,7 @@ export function StandList({ order }: { order: StandListId[] }) {
 
   return (
     <>
-      <Card className="!p-0">
-        <ul aria-label="Meer over je stand">
+      <StandRows label="Meer over je stand">
           {rows.map((r) => (r.off ? (
             <Row
               key={r.id}
@@ -128,8 +102,7 @@ export function StandList({ order }: { order: StandListId[] }) {
           ) : (
             <Row key={r.id} label={r.label} value={r.value} onClick={open[r.id]} sheet={r.id === 'gewicht'} />
           )))}
-        </ul>
-      </Card>
+      </StandRows>
       {weightOpen && <WeightOverviewSheet onClose={() => setWeightOpen(false)} />}
     </>
   );

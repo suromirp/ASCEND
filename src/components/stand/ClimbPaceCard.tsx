@@ -1,34 +1,23 @@
-// ASCEND: Je stand, sectie Belasting: je eigen klimtempo met rugzak uit je wandelingen en
+// ASCEND: Je stand, scherm Belasting, het blad Klimtempo achter zijn rij: je eigen klimtempo met rugzak uit je wandelingen en
 // bergtochten (engine/climbPace.ts). Pas een getal na genoeg klimmen; daarvoor één regel met hoeveel
 // er al zijn, en zonder een enkele klim niets. Een gewone marine kaart, geen eigen accent.
 
-import { useMemo } from 'react';
 import { useAppData } from '../../state/AppDataContext';
-import { climbPace, climbPaceBasisLine, climbPaceWaitLine, goalDayOwnLine, NORM_DOWN_MPH, NORM_UP_MPH, stageTimeEstimate, type HikeDay, type PackOptions } from '../../engine/climbPace';
+import { type ClimbPaceState, climbPaceBasisLine, climbPaceWaitLine, goalDayOwnLine, NORM_DOWN_MPH, NORM_UP_MPH, stageTimeEstimate, type HikeDay, type PackOptions } from '../../engine/climbPace';
 import { signalOn } from '../../engine/signalSettings';
-import { todayISO } from '../../utils/dates';
 import { formatNumberNL } from '../../utils/number';
-import { Card, Eyebrow, Stat } from '../ui';
+import { Stat } from '../ui';
 
 // `goalDay`: een gewone dag van je hoofddoel, voor de band op je eigen tempo (Etappetijd op je eigen tempo).
-export function ClimbPaceCard({ goalDay, pack }: { goalDay?: HikeDay; pack?: PackOptions }) {
-  const { sessionLogs, settings } = useAppData();
-  const on = signalOn(settings, 'climbPace');
-  const state = useMemo(() => (on ? climbPace(sessionLogs, todayISO()) : undefined), [on, sessionLogs]);
-  const dayLine = state && goalDay ? goalDayOwnLine(stageTimeEstimate(state, goalDay, { ...pack, on: signalOn(settings, 'stageOwnPace') }), goalDay) : undefined;
-  if (!state) return null;
+export function ClimbPaceBody({ state, goalDay, pack }: { state: ClimbPaceState; goalDay?: HikeDay; pack?: PackOptions }) {
+  const { settings } = useAppData();
+  const dayLine = goalDay ? goalDayOwnLine(stageTimeEstimate(state, goalDay, { ...pack, on: signalOn(settings, 'stageOwnPace') }), goalDay) : undefined;
   if (state.state === 'notYet') {
-    return (
-      <Card className="flex flex-col gap-1">
-        <Eyebrow>Klimtempo</Eyebrow>
-        <p className="text-sm leading-relaxed tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{climbPaceWaitLine(state)}</p>
-      </Card>
-    );
+    return <p className="text-sm leading-relaxed tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{climbPaceWaitLine(state)}</p>;
   }
   const { pace } = state;
   return (
-    <Card className="flex flex-col gap-3">
-      <Eyebrow>Klimtempo</Eyebrow>
+    <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
         <Stat label="Omhoog" value={formatNumberNL(pace.upMph, 0)} unit="m per uur" />
         {pace.downMph !== undefined && <Stat label="Omlaag" value={formatNumberNL(pace.downMph, 0)} unit="m per uur" />}
@@ -39,6 +28,6 @@ export function ClimbPaceCard({ goalDay, pack }: { goalDay?: HikeDay; pack?: Pac
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         De wandelnorm is <span className="tabular-nums">{NORM_UP_MPH}</span> meter per uur omhoog en <span className="tabular-nums">{NORM_DOWN_MPH}</span> omlaag. Dit is bewegend, zonder pauzes.
       </p>
-    </Card>
+    </div>
   );
 }

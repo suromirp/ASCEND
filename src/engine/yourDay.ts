@@ -145,7 +145,8 @@ export interface StandLine {
   value: string;
   // Let op: een amber stip voor het vaste woord, nooit een gekleurd woord.
   warn: boolean;
-  to: '/stand' | '/week';
+  // Benen en Week openen hun eigen scherm op Je stand, niet de bovenkant (docs/visie/Ontwerp Stand minimaal.md, 3).
+  to: '/stand/benen' | '/stand/belasting' | '/week';
 }
 
 // Benen altijd; de week alleen als je al duidelijk meer deed dan de weken ervoor (een
@@ -157,9 +158,9 @@ export function standLines(input: {
   loadJump: number;
   tomorrow?: TomorrowEntry;
 }): StandLine[] {
-  const lines: StandLine[] = [{ key: 'legs', label: 'Benen', value: input.legsWord, warn: input.legsLevel >= 2, to: '/stand' }];
+  const lines: StandLine[] = [{ key: 'legs', label: 'Benen', value: input.legsWord, warn: input.legsLevel >= 2, to: '/stand/benen' }];
   if (input.load && input.load.doneRatio > input.loadJump) {
-    lines.push({ key: 'week', label: 'Week', value: `${Math.round((input.load.doneRatio - 1) * 100)}% zwaarder dan de 4 weken ervoor`, warn: true, to: '/stand' });
+    lines.push({ key: 'week', label: 'Week', value: `${Math.round((input.load.doneRatio - 1) * 100)}% zwaarder dan de 4 weken ervoor`, warn: true, to: '/stand/belasting' });
   }
   if (input.tomorrow) lines.push({ key: 'tomorrow', label: 'Morgen', value: tomorrowText(input.tomorrow), warn: false, to: '/week' });
   return lines;

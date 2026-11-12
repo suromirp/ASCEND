@@ -4,6 +4,7 @@
 
 import { LOAD_JUMP } from './standing';
 import { standLines } from './yourDay';
+import { formatNumberNL } from '../utils/number';
 
 export type StandLineId = 'benen' | 'belasting' | 'ritme';
 export type StandListId = 'kracht' | 'lopen' | 'invloed';
@@ -19,6 +20,21 @@ export function standLayout(order: string[]): { lines: StandLineId[]; list: Stan
     lines: order.filter((id) => LINE_IDS.includes(id)) as StandLineId[],
     list: order.filter((id) => LIST_IDS.includes(id)) as StandListId[],
   };
+}
+
+// De instelling Volgorde van Je stand toont twee korte lijsten: de regels en de rijen. Wat je daar kiest wordt weer
+// één bewaarde volgorde, eerst de regels en dan de rijen; standLayout leest daar precies die twee lijsten uit.
+// Zo blijft settings.cardOrder dezelfde vorm (geen migratie) en blijft een oude bewaarde volgorde gelden.
+export function standOrderFrom(layout: { lines: StandLineId[]; list: StandListId[] }): string[] {
+  return [...layout.lines, ...layout.list];
+}
+
+// Of een volgorde op Je stand hetzelfde oplevert als de standaard: alleen de regels en de rijen tellen, niet waar
+// Kracht in de oude lange lijst tussen de regels stond.
+export function isDefaultStandLayout(order: string[], standard: string[]): boolean {
+  const a = standLayout(order);
+  const b = standLayout(standard);
+  return a.lines.join() === b.lines.join() && a.list.join() === b.list.join();
 }
 
 // De amber stip voor Benen en Belasting, met precies dezelfde grenzen als het blok Stand en morgen op Vandaag
@@ -92,4 +108,53 @@ export function influenceRowShown(overviewSetting: boolean | undefined, ownReaso
 export function firstSentence(text: string): string {
   const m = /^(.+?[.!?])(\s|$)/.exec(text.trim());
   return (m ? m[1] : text.trim()).replace(/\.$/, '');
+}
+
+// Het feit onder het woord bij Benen: wat nog doorwerkt, in woorden die je zonder uitleg leest. Het getal van de
+// index staat op het scherm Benen; "index 0" bovenaan zei de gebruiker niets (Pathfinder, 12 november).
+// Telt er geen training meer maar staat de index toch boven 0 (gemelde spierpijn of pijn), dan zegt het feit dat.
+export function legsFact(stillCounting: number, index = 0): string {
+  if (stillCounting <= 0) return index > 0 ? 'wat je meldde telt mee' : 'niets werkt nog door';
+  return stillCounting === 1 ? '1 training werkt nog door' : `${stillCounting} trainingen werken nog door`;
+}
+
+// De rij Beendagen op het scherm Benen: hoeveel zware dagen (zwaar of heel zwaar) er in de kalender staan.
+export function legDaysValue(levels: number[]): string {
+  const heavy = levels.filter((l) => l >= 3).length;
+  const weeks = Math.ceil(levels.length / 7);
+  const span = weeks === 1 ? 'één week' : `${weeks} weken`;
+  if (heavy === 0) return `geen zware dag in ${span}`;
+  return `${heavy} ${heavy === 1 ? 'zware dag' : 'zware dagen'} in ${span}`;
+}
+
+// De rij Index en je benen: hoe vaak de index en je gevoel klopten. Zonder meting geen rij.
+export function indexCheckValue(checks: { agrees: boolean }[]): string | undefined {
+  if (checks.length === 0) return undefined;
+  const agree = checks.filter((c) => c.agrees).length;
+  return `${agree} van ${checks.length} keer klopte het`;
+}
+
+// De rij Bergaf op het scherm Belasting: de meters van de laatste vier weken. Zonder enige daling alleen als je
+// doel bergaf vraagt; anders geen rij (zoals de kaart Dalen eerst).
+export function descentRowValue(weeks: { metres: number }[], goalAsksDescent: boolean): string | undefined {
+  if (weeks.every((w) => w.metres <= 0)) return goalAsksDescent ? 'nog niets gemeten' : undefined;
+  const last4 = weeks.slice(-4).reduce((n, w) => n + w.metres, 0);
+  return last4 <= 0 ? 'niets in vier weken' : `${formatNumberNL(last4, 0)} m in vier weken`;
+}
+
+// De rij Klimtempo: je tempo omhoog als het er is, anders dat het nog komt. Instelling uit: geen rij.
+export function climbRowValue(state: { state: 'enough'; pace: { upMph: number } } | { state: 'notYet' } | undefined): string | undefined {
+  if (!state) return undefined;
+  if (state.state === 'notYet') return 'nog te weinig klimmen';
+  return `${formatNumberNL(state.pace.upMph, 0)} m per uur omhoog`;
+}
+
+// De ene zin onder Tempo bij zone 2 op Je stand: het oordeel, zonder te herhalen wat de kop al zegt. Bij een eerste
+// schatting zegt de kop het tempo al, dus dan de zin over wanneer je een verandering ziet. De rest staat achter de i.
+export function zone2CardSentence(verdict: string | undefined, firstEstimate: boolean): string | undefined {
+  if (!verdict) return undefined;
+  const first = firstSentence(verdict);
+  if (!firstEstimate) return `${first}.`;
+  const rest = verdict.trim().slice(verdict.trim().indexOf(first) + first.length + 1).trim();
+  return rest || `${first}.`;
 }

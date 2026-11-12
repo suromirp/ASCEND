@@ -6,6 +6,7 @@ import { todayISO } from '../utils/dates';
 import { Card, Eyebrow, InfoButton } from './ui';
 import { ZONE2_CHART_H, Zone2WeekChart } from './stand/Zone2WeekChart';
 import { zone2CardCaption, zone2WeekChart } from '../engine/zone2Chart';
+import { zone2CardSentence } from '../engine/standPage';
 import { Zone2InfoSheet } from './Zone2InfoSheet';
 
 // Je stand, het ene beeld op de pagina (moved here from Ascend): progress on easy runs, as pace at one zone 2 heart rate
@@ -25,8 +26,10 @@ export function AerobicTrendCard() {
 
   // One sentence from the same line as the chart (engine/aerobicTrend.ts#trendVerdict).
   const verdict = trendVerdict(trend);
+  const sentence = zone2CardSentence(verdict, trend.statement?.kind === 'eerste-schatting');
   const chart = useMemo(() => zone2WeekChart(trend, today), [trend, today]);
-  // Wat de kop is en wat de stippen zijn, in één zin.
+  // Wat de kop is en wat de stippen zijn: achter de i, met het hele oordeel. Op de kaart hoogstens één zin
+  // (Pathfinder 12 november): het oordeel zonder te herhalen wat de kop al zegt.
   const caption = zone2CardCaption(trend);
 
   return (
@@ -45,17 +48,14 @@ export function AerobicTrendCard() {
       </div>
       {/* Geen ondertitel: sneller en trager staan aan de grafiek, de vaste hartslag in de uitspraak en achter de i (Pathfinder 12 november). */}
       {chart.dots.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <Zone2WeekChart chart={chart} />
-          {caption && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{caption}</p>}
-        </div>
+        <Zone2WeekChart chart={chart} />
       ) : (
         // Op dezelfde hoogte als de grafiek, zodat er niets verspringt als de eerste stip er is.
         <div className="flex items-center" style={{ minHeight: ZONE2_CHART_H }} data-zone2-empty>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Nog geen loopjes. Elke week met een loop wordt hier een stip.</p>
         </div>
       )}
-      {verdict && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict}</p>}
+      {sentence && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{sentence}</p>}
       {/* Wat meetelt staat achter de i, niet op de kaart (Pathfinder 12 november: drie regels onder de grafiek was te veel). */}
       {info && (
         <Zone2InfoSheet
@@ -63,6 +63,7 @@ export function AerobicTrendCard() {
           pieces={pieces}
           zones={hasZones}
           today={today}
+          notes={[...(caption ? [caption] : []), ...(verdict ? [verdict] : [])]}
           criteria={`${zone2Criteria(trend, pieces, hasZones).join(' ')}${trend.outsideZone > 0 ? ` ${trend.outsideZone} ${trend.outsideZone === 1 ? 'loopje zat' : 'loopjes zaten'} te ver van zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.` : ''}`}
           onClose={() => setInfo(false)}
         />
