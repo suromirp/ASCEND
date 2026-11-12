@@ -50,3 +50,15 @@ Niets. Vult `2026-11-12-andere-plek.md` aan: de zin "geen tweede zoekdienst" en 
 ## Terugdraaien
 
 In `placeSearchSession.ts` de standaard terugzetten naar alleen `searchPlaces` en de privacyzin in `engine/placeSearch.ts` terug naar de oude. `photon.ts` kan dan weg.
+
+## Aanvulling na de review (12 november, avond)
+
+De tekst hierboven blijft staan; waar deze aanvulling iets anders zegt, geldt de aanvulling.
+
+- CORS: Warden kreeg met curl en een Origin-kop 200 en `Access-Control-Allow-Origin: *`. In de testcontainer van Lookout was de host niet bereikbaar, net als in de bouwcontainer. Een echte fetch in de browser is dus nog niet gezien.
+- Photon wordt ook gevraagd als Open-Meteo minder dan drie treffers geeft (`SECOND_SOURCE_BELOW`), binnen dezelfde grens van 8 seconden. Open-Meteo blijft voorop, de treffers van Photon komen erachter via `mergeFound`. Reden (Pathfinder): een top die net zo heet als een dorp werd anders nooit gevonden. Gevolg: bij een zoekwoord met weinig treffers gaat het woord naar beide diensten.
+- De zinnen noemen geen dienst meer: Geen plek gevonden met die naam. Probeer een grotere plaats in de buurt. En: Geen verbinding. Controleer je internet en probeer het later opnieuw.
+- Faalt Photon terwijl Open-Meteo niets vond, dan staat er Zoeken lukte niet. Probeer het zo nog eens. Een fout is geen nee. Vond Open-Meteo wel iets, dan blijven die treffers staan zonder melding.
+- De privacyzin is nu: Je zoekwoord gaat naar Open-Meteo, en zo nodig naar Photon (OpenStreetMap). Van een adres gaat alleen het deel voor de komma mee.
+- Treffers van Open-Meteo krijgen het label Plaats, zodat een gemengde lijst klopt. Eigen keuze van de bouwer: het label komt erbij in de sessie, niet in `mapPlaces`, want die vorm wordt ook bij het weer bewaard. Open-Meteo kent een enkele top; die heet dan ook Plaats.
+- Geen bestaande zin gevonden voor de twee nieuwe meldingen (grep); de zinnen uit de opdracht zijn genomen, in de vorm van Ophalen lukte niet. Probeer het zo nog eens.

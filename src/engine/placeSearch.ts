@@ -61,12 +61,16 @@ export type PlaceSearchView =
   | { kind: 'error'; message: string };
 
 export const PLACE_SHORT_LINE = 'Typ minstens twee letters van de plaats.';
-export const PLACE_NONE_LINE = 'Geen plaats gevonden met die naam. Probeer een grotere plaats in de buurt.';
-export const PLACE_OFFLINE_LINE = 'Geen verbinding met Open-Meteo. Controleer je internet en probeer het later opnieuw.';
+export const PLACE_NONE_LINE = 'Geen plek gevonden met die naam. Probeer een grotere plaats in de buurt.';
+export const PLACE_OFFLINE_LINE = 'Geen verbinding. Controleer je internet en probeer het later opnieuw.';
+// De eerste dienst vond niets en de tweede antwoordde niet: dat is geen nee.
+export const PLACE_FAILED_LINE = 'Zoeken lukte niet. Probeer het zo nog eens.';
+// Geeft de eerste dienst minder treffers dan dit, dan wordt ook de tweede gevraagd: een top die net zo
+// heet als een dorp staat anders nooit in de lijst.
+export const SECOND_SOURCE_BELOW = 3;
 export const PLACE_TIMEOUT_LINE = 'Zoeken duurde te lang. Probeer het zo nog eens.';
-// De privacyzin: wie je zoekwoord krijgt. Eerst Open-Meteo; vindt die niets, dan ook Photon van Komoot,
-// dat in OpenStreetMap zoekt (integrations/photon.ts). Van een adres gaat alleen het deel voor de komma mee.
-export const PLACE_PRIVACY_LINE = 'Open-Meteo krijgt je zoekwoord. Vindt die niets, dan ook Photon van Komoot, dat in OpenStreetMap zoekt.';
+// De privacyzin: wie je zoekwoord krijgt (integrations/placeSearchSession.ts#searchInTurn, photon.ts).
+export const PLACE_PRIVACY_LINE = 'Je zoekwoord gaat naar Open-Meteo, en zo nodig naar Photon (OpenStreetMap). Van een adres gaat alleen het deel voor de komma mee.';
 
 // De regel onder het zoekveld; leeg bij niets getypt en bij treffers.
 export function placeSearchLine(view: PlaceSearchView): string {

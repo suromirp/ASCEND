@@ -1,5 +1,5 @@
 // ASCEND: zoeken op plaatsnaam voor het blad Nieuwe plek (Andere plek bij Start bij). Eerst de
-// bestaande zoekdienst (openMeteo.ts#searchPlaces); vindt die niets, dan Photon (photon.ts), binnen
+// bestaande zoekdienst (openMeteo.ts#searchPlaces); vindt die minder dan drie plekken, dan ook Photon (photon.ts), binnen
 // dezelfde grens in tijd (besluit 2026-11-12-andere-plek-photon.md). Na een pauze in het typen gaat er één
 // vraag uit, met een grens in tijd en een zichtbare uitkomst: treffers, geen treffers, offline, te
 // traag of een fout. Een nieuw woord of sluiten stopt de vraag die liep; na sluiten gaat er niets meer
@@ -7,7 +7,7 @@
 
 import { OpenMeteoError, openMeteoErrorMessage, searchPlaces } from './openMeteo';
 import { searchPhoton } from './photon';
-import { PLACE_SEARCH_LIMIT_MS, PLACE_SEARCH_MAX, PLACE_SEARCH_PAUSE_MS, mergeFound, placeQuery, searchTerm, type FoundPlace, type PlaceSearchView } from '../engine/placeSearch';
+import { PLACE_SEARCH_LIMIT_MS, PLACE_SEARCH_MAX, PLACE_FAILED_LINE, PLACE_SEARCH_PAUSE_MS, SECOND_SOURCE_BELOW, mergeFound, placeQuery, searchTerm, type FoundPlace, type PlaceSearchView } from '../engine/placeSearch';
 
 export interface PlaceSearchDeps {
   search?: (query: string, signal: AbortSignal) => Promise<FoundPlace[]>;
@@ -27,21 +27,34 @@ export interface PlaceSearchSession {
 
 type Source = (term: string, signal: AbortSignal) => Promise<FoundPlace[]>;
 
-// Twee bronnen na elkaar. De eerste beslist: treffers of een fout van de eerste zijn de uitkomst. Alleen
-// als hij niets vindt gaat het woord naar de tweede; faalt die of is er intussen gestopt, dan blijft het
-// bij niets gevonden. Er gaat nooit een aanroep uit na het stoppen.
+// De eerste dienst vond niets en de tweede faalde: geen treffers, maar ook geen nee.
+export class PlaceSearchFailed extends Error {}
+
+// Twee bronnen na elkaar. Een fout van de eerste is de uitkomst. Geeft de eerste minder dan drie treffers,
+// dan gaat het woord ook naar de tweede en komen diens treffers erachter, dezelfde plek één keer. Faalt de
+// tweede, dan blijven de treffers van de eerste; had die er geen, dan is het zoeken mislukt en niet "niets
+// gevonden". Er gaat nooit een aanroep uit na het stoppen.
 export async function searchInTurn(term: string, signal: AbortSignal, first: Source, second: Source): Promise<FoundPlace[]> {
   const found = await first(term, signal);
-  if (found.length > 0 || signal.aborted) return found;
+  if (found.length >= SECOND_SOURCE_BELOW || signal.aborted) return found;
+  let more: FoundPlace[];
   try {
-    return mergeFound([], await second(term, signal));
+    more = await second(term, signal);
   } catch {
-    return found;
+    if (found.length > 0 || signal.aborted) return found;
+    throw new PlaceSearchFailed();
   }
+  return mergeFound(found, more);
 }
 
+// Open-Meteo zegt de soort niet; zijn treffers heten Plaats, zodat een gemengde lijst klopt.
 const defaultSearch: Source = (term, signal) =>
-  searchInTurn(term, signal, (t, s) => searchPlaces(t, { signal: s }), (t, s) => searchPhoton(t, { signal: s }));
+  searchInTurn(
+    term,
+    signal,
+    async (t, s) => (await searchPlaces(t, { signal: s })).map((p): FoundPlace => ({ ...p, kind: 'place' })),
+    (t, s) => searchPhoton(t, { signal: s }),
+  );
 const defaultOnline = () => typeof navigator === 'undefined' || navigator.onLine !== false;
 
 export function createPlaceSearch(onView: (view: PlaceSearchView) => void, deps: PlaceSearchDeps = {}): PlaceSearchSession {
@@ -96,7 +109,8 @@ export function createPlaceSearch(onView: (view: PlaceSearchView) => void, deps:
         if (stop.signal.aborted) return;
         clearTimeout(limit);
         running = undefined;
-        if (err instanceof OpenMeteoError && err.kind === 'network') show({ kind: 'offline' });
+        if (err instanceof PlaceSearchFailed) show({ kind: 'error', message: PLACE_FAILED_LINE });
+        else if (err instanceof OpenMeteoError && err.kind === 'network') show({ kind: 'offline' });
         else show({ kind: 'error', message: openMeteoErrorMessage(err) });
       },
     );

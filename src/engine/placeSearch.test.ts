@@ -113,9 +113,9 @@ describe('tweede bron: adres met komma, soort en dubbelen', () => {
     const b: FoundPlace = { name: 'Fopdorp-Zuid', lat: 52, lon: 5 };
     expect(mergeFound([a, b], [])).toEqual([a, b]);
   });
-  it('de privacyzin noemt beide diensten', () => {
-    expect(PLACE_PRIVACY_LINE).toContain('Open-Meteo');
-    expect(PLACE_PRIVACY_LINE).toContain('OpenStreetMap');
-    expect(PLACE_PRIVACY_LINE).toContain('Photon');
+  it('de privacyzin noemt beide diensten en het deel voor de komma; de foutzinnen noemen geen dienst', () => {
+    expect(PLACE_PRIVACY_LINE).toBe('Je zoekwoord gaat naar Open-Meteo, en zo nodig naar Photon (OpenStreetMap). Van een adres gaat alleen het deel voor de komma mee.');
+    expect(PLACE_NONE_LINE).toBe('Geen plek gevonden met die naam. Probeer een grotere plaats in de buurt.');
+    expect(PLACE_OFFLINE_LINE).toBe('Geen verbinding. Controleer je internet en probeer het later opnieuw.');
   });
 });
