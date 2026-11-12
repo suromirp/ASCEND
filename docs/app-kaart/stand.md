@@ -4,7 +4,7 @@ Adres: `#/stand`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 
 [link: ASCEND] (aria: ASCEND, naar Vandaag)
 [link: Meer: instellingen, gegevens, koppelingen en gidsen]
-Week 1 van 4, basisfase
+Basisfase, week 1 van 4
 ## Je stand
 Je benen zijn fris en je week is in lijn.
 
