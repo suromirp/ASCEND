@@ -29,13 +29,14 @@ export function SessionHeader({ brief, title, as = 'h1' }: { brief: SessionBrief
 }
 
 // "Stop of schakel terug als", the signals that count during the training.
-export function StopSignals({ signals }: { signals: string[] }) {
+// `quiet`: de punten in gedempte inkt, als de amber stip al voor het kopje staat (de Briefing).
+export function StopSignals({ signals, quiet = false }: { signals: string[]; quiet?: boolean }) {
   if (signals.length === 0) return null;
   return (
     <ul className="mt-2 flex flex-col gap-1.5">
       {signals.map((s) => (
         <li key={s} className="flex gap-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-          <span aria-hidden="true" style={{ color: 'var(--color-warning)' }}>·</span>
+          <span aria-hidden="true" style={{ color: quiet ? 'var(--color-ink-dim)' : 'var(--color-warning)' }}>·</span>
           <span>{s}</span>
         </li>
       ))}
