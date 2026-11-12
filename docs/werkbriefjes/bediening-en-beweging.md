@@ -32,7 +32,7 @@ Hoe de app bedient wordt en beweegt: terugknop en bladen, scrollen en hervatten,
 - Een mislukte actie heeft een zichtbare uitkomst en een grens in tijd; een terugval die liegt ging rood bij een review (2 november).
 - Elke instellingenbron laadt apart met eigen grens (`src/components/settings/settingsFactsParts.ts`); een trage bron mag een andere rij niet tegenhouden, en een wijziging van een bron leest alleen die bron.
 - Een tijd schrijf je met `formatClock` (`src/utils/clock.ts`), niet met de hand.
-- Bij inkorten van teksten haal je geen zin weg die verklaart wat een getal of regel op het scherm betekent.
+- Bij inkorten van teksten haal je geen zin weg die verklaart wat een getal of regel op het scherm betekent. Een component die een waarschuwing alleen bij een slechter oordeel toont (`onlyWarning`, `onlyFailed`) neemt ook de bijregels mee die los van het oordeel waarschuwen (regen, lucht, hitte); test ze met een echte bijregel.
 
 ## Testen
 - Tijdens het werk: `npx vitest run src/components/sheetDrag src/components/randOnder src/components/silentCatch src/utils src/engine/settingsSummary`

@@ -5,6 +5,8 @@ import todaySrc from './Today.tsx?raw';
 // missie (besluit 2026-11-12-missiekaart.md). Deze scan leest welke onderdelen Vandaag zelf tekent en eist voor elk
 // onderdeel met een PrimaryButton een reden: het is de missie, de knop staat alleen in een blad (een eigen laag met
 // een eigen knop), of Vandaag maakt hem stil. Een nieuwe kaart met een gevulde knop faalt hier tot hij een plek kiest.
+// Grens: de scan leest per onderdeel alleen de functie met zijn eigen naam (`export function X`). Een PrimaryButton in
+// een kindcomponent zonder eigen function-kop, of in een ander bestand dat het onderdeel gebruikt, ziet hij niet.
 // Tijdens het draaien telt de tekstkaart dezelfde knoppen op elk scherm (scripts/app-kaart/kaart.mjs, "[gevulde mint
 // knoppen: ...]").
 const sources = import.meta.glob('../components/**/*.tsx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;

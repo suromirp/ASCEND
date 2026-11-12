@@ -34,8 +34,9 @@ import { Icon } from './icons';
 
 const TONE = { prima: 'var(--color-ink-dim)', let_op: 'var(--color-warning)', slecht: 'var(--color-danger-text)' } as const;
 
-// `onlyWarning`: alleen de regel als het weer let op of slecht is (de missiekaart van een training met een Briefing:
-// het gewone weer staat in de Briefing, een waarschuwing nooit achter een tik).
+// `onlyWarning`: de missiekaart van een training met een Briefing. Bij gewoon weer verdwijnen de hoofdregel, het beste
+// moment en de maan (die staan in de Briefing of zijn geen waarschuwing); regen binnen het uur, slechte lucht en hitte
+// blijven altijd, want die waarschuwen los van het oordeel en staan niet in de Briefing (nooit achter een tik).
 export function WeatherLine({ template, date, minutes, className = '', onOpen, onlyWarning = false }: { template: SessionTemplate; date: string; minutes?: number; className?: string; onOpen?: () => void; onlyWarning?: boolean }) {
   const { weather, sessionLogs, program, settings } = useAppData();
   const now = new Date();
@@ -63,7 +64,8 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen, o
   }
 
   if (!showWeatherLine(settings.overviews) || !w || !weather.forecast) return null;
-  if (onlyWarning && w.verdict === 'prima') return null;
+  // Bij onlyWarning en gewoon weer: alleen de bijregels die zelf waarschuwen.
+  const quietMain = onlyWarning && w.verdict === 'prima';
 
   const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
   const stale = offline || isForecastStale(weather.forecast.fetchedAt, now);
@@ -73,19 +75,19 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen, o
     clothingOn: showClothingAdvice(settings.overviews),
   }) ?? w.line;
   const lead = w.verdict === 'slecht' ? 'Slecht weer: ' : w.verdict === 'let_op' ? 'Let op: ' : '';
-  const best = showBestMoment(settings.overviews)
+  const best = !quietMain && showBestMoment(settings.overviews)
     ? bestMomentForTraining({ forecast: weather.forecast, template, logs: sessionLogs, date, durationMinutes, now })
     : undefined;
   // Warm of vochtig bij een loop: loop op hartslag, met een band voor het tempo (engine/heatPace.ts).
   const heat = templateSport(template) === 'running' && signalOn(settings, 'heatPace') ? heatPace(w) : undefined;
   // Een wandeling of tocht die na zonsondergang eindigt: bij volle of nieuwe maan één regel (engine/moon.ts).
-  const moon = showMoonLine(settings.overviews) && templateSport(template) === 'hiking'
+  const moon = !quietMain && showMoonLine(settings.overviews) && templateSport(template) === 'hiking'
     ? eveningMoonNote(date, { endsAfterSunset: w.daylight?.endsAfterSunset === true, overnight: false })
     : undefined;
   const text = (
     <>
-      {lead}{line}
-      {stale && <span style={{ color: 'var(--color-ink-dim)' }}> · {updatedLabel(weather.forecast.fetchedAt)}</span>}
+      {!quietMain && <>{lead}{line}</>}
+      {!quietMain && stale && <span style={{ color: 'var(--color-ink-dim)' }}> · {updatedLabel(weather.forecast.fetchedAt)}</span>}
       {rain && <span className="mt-0.5 block" style={{ color: 'var(--color-ink)' }}>{rain}</span>}
       {best && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{best.text}</span>}
       {heat && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{heat.text}</span>}
@@ -93,6 +95,7 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen, o
       {moon && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{moon.text}</span>}
     </>
   );
+  if (quietMain && !rain && !heat && !air) return null;
   if (onOpen) {
     return (
       <button
