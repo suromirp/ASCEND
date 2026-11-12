@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { RhythmCard, RhythmSheet } from './RhythmCard';
 import { LegFatigueInfoSheet } from '../LegFatigueInfoSheet';
 import { IntensityMixCard } from './IntensityMixCard';
@@ -42,9 +43,14 @@ describe('Je stand, de teksten van de onderdelen', () => {
     expect(html(createElement(RhythmCard, { rhythm: few, mainPast: true }))).toContain('Na je hoofddoel staat er niets meer gepland.');
   });
 
-  it('de samenvatting: label, woord en feit per kolom', () => {
-    const out = html(createElement(StandSummary, { columns: [{ id: 'belasting', label: 'Belasting', word: 'Zwaar', fact: 'wordt 475, gewoonlijk 300', target: 'stand-belasting' }] }));
+  it('de drie regels: label, woord en feit per regel, de amber stip alleen bij let op', () => {
+    const line = { id: 'belasting', label: 'Belasting', word: 'Zwaar', fact: 'wordt 475, gewoonlijk 300', to: '/stand/belasting', warn: true };
+    const raw = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StandSummary, { lines: [line, { ...line, id: 'ritme', label: 'Ritme', word: 'Achter', fact: '5 van 8', to: '/stand/ritme', warn: false }] })));
+    const out = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
     expect(out).toContain('Belasting Zwaar wordt 475, gewoonlijk 300');
+    expect(out).toContain('Ritme Achter 5 van 8');
+    expect(raw.match(/--color-warning/g)).toHaveLength(1);
+    expect(raw).toContain('aria-label="Belasting: Zwaar, wordt 475, gewoonlijk 300, let op. Open Belasting."');
   });
 
   it('Intensiteit: elke regel van de legenda heeft een bolletje in de tint van zijn deel van de balk', () => {
