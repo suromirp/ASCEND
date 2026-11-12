@@ -14,7 +14,7 @@ Bijgewerkt: 12 november 2026, rond 03:40, door de coördinator van 11 op 12 nove
 - Lopend (melden zich bij session_01LnDpSkUxMFtEBmNMxMAKcN): Sherpa Je week tot nu (session_01LnDpSmKGD4U7U1iny68EUg, branch claude/je-week-tot-nu), Sherpa Weekplan in een lus (session_01LnDpSjitiPviPcAiRrij2y, fable, branch claude/weekplan-lus), Sherpa Trainingsscherm 1-4 (session_01LnDpSikvyNKh8gCEPQwkUT, branch claude/trainingsscherm-1-4). Na hun melding: Lookout (afdrukken in eigen scratchpad), Pathfinder, eigen blik, squash naar main.
 - Wachter: trig_01RfcpL1mKyjAquMVbctRoGN, elk uur op minuut 40 in deze sessie; bij de wissel verhuizen (skill werkverdeling, Limiet van vijf uur). Volgende reset van het limiet: 11:10 UTC.
 - Limiet: om 03:00 UTC liep Sonnet tegen de limiet van vijf uur aan; bij een afgebroken Lookout eerst kijken of zijn afdrukken er al staan.
-- Back-up van de eigenaar van 12 november 02:11: scratchpad van de vorige coördinator, niet bereikbaar voor jou. Vraag een nieuwe als je moet naspelen.
+- Back-up van de eigenaar van 12 november 02:11: in de scratchpad van deze coördinator (backup/eigenaar.json, chmod 600, alleen lezen met python -I). Niet bereikbaar voor bouwers; geef hun wat hij laat zien met verschoven datums.
 
 ## Ontwerpen klaar, met besluit, nog te bouwen (volgorde)
 
