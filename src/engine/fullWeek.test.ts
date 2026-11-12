@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { fullWeek, fullWeekAdvice, fullWeekId, fullWeekLine, fullWithExtra, weekLoss, weekShape, FULL_WEEK_RULE, type FullWeekAdviceInput } from './fullWeek';
+import { fullWeek, fullWeekAdvice, fullWeekFollowed, fullWeekId, fullWeekLine, fullWithExtra, weekLoss, weekShape, FULL_WEEK_RULE, type FullWeekAdviceInput } from './fullWeek';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { proposeExtraSession } from './extraRun';
 import { applyPlanChangeItems } from './proposalEngine';
+import { validateWeeks } from './weekValidator';
+import type { PlanChangeProposal } from '../models/planChange';
 import { layoutPhasesForGoal, PHASE_BASIS } from './programLayout';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays } from '../utils/dates';
@@ -92,7 +94,7 @@ describe('WEEK-FULL: de nagemaakte week', () => {
     expect(advice.lead).toBe('Je verloor deze week een dag. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij.');
     expect(advice.tip).toBe('Duurloop met versnellingen van vr 6 november vervalt: die kwam er als extra bij. Dan staan er nog 5 trainingen in 4 dagen en 1 dag met twee trainingen.');
     expect(advice.effect).toBe('Je verloor deze week een dag. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. Duurloop met versnellingen van vr 6 november vervalt: die kwam er als extra bij. Dan staan er nog 5 trainingen in 4 dagen en 1 dag met twee trainingen.');
-    expect(advice.options![1].effect).toBe('Je verloor deze week een dag. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. Rustige duurloop van do 5 november vervalt: een rustige loop kost je doel het minst. Ook dan is je week nog vol: 5 trainingen in 4 dagen en 2 dagen met twee trainingen.');
+    expect(advice.options![1].effect).toBe('Je verloor deze week een dag. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. Rustige duurloop van do 5 november vervalt: een rustige loop kost je het minst. Ook dan is je week nog vol: 5 trainingen in 4 dagen en 2 dagen met twee trainingen.');
     // Het alternatief: de rustige loop, het minst belangrijke na de extra.
     expect(advice.options!.map((o) => o.proposal.changes[0].plannedSessionId)).toEqual(['tpl_strides_run@4', 'tpl_easy_run@3']);
     expect(advice.effect).not.toMatch(/[\u2013\u2014]/);
@@ -181,7 +183,8 @@ describe('WEEK-FULL: wat verlies is en wat erbij kwam (review van 12 november)',
     const block = sessions.map((s) => (s.id === 'tpl_strides_run@4' ? { ...s, lock: undefined, blockQuiet: true as const } : s));
     const [advice] = fullWeekAdvice(input(THU, block, logs));
     expect(advice.tip).not.toContain('kwam er als extra bij');
-    expect(advice.tip!.split('. ').length).toBeLessThanOrEqual(2);
+    expect(advice.tip).toBe('Rustige duurloop van do 5 november vervalt: een rustige loop kost je het minst. Ook dan is je week nog vol: 5 trainingen in 4 dagen en 2 dagen met twee trainingen.');
+    expect(advice.why).toContain('Na Liever niet vraagt ASCEND het deze week niet meer.');
     expect(advice.proposal!.changes[0].plannedSessionId).toBe('tpl_easy_run@3');
   });
 
@@ -222,6 +225,44 @@ describe('WEEK-FULL: wat verlies is en wat erbij kwam (review van 12 november)',
     const { sessions, logs } = crammed();
     const ill = [{ id: 'i', startDate: day(3) }] as FullWeekAdviceInput['illnessEpisodes'];
     expect(fullWeekAdvice(input(THU, sessions, logs, { illnessEpisodes: ill }))).toEqual([]);
+  });
+});
+
+describe('WEEK-FULL: na je antwoord en de weekcontrole (herreview van 12 november)', () => {
+  it('Begrepen is geen Akkoord: gevolgd leid je af uit het opgeslagen voorstel, niet uit het antwoord', () => {
+    const { sessions, logs } = crammed();
+    const inp = input(THU, sessions, logs, { leave: noGym });
+    const [advice] = fullWeekAdvice(inp);
+    // Niets geaccepteerd (ook niet na Begrepen op de variant zonder voorstel): Week houdt de regel.
+    expect(fullWeekFollowed([], sessions, THU)).toBe(false);
+    expect(fullWeekLine(inp, MON)).toContain('Je week is vol');
+    const accepted: PlanChangeProposal = { ...advice.proposal!, resolution: 'accepted' };
+    expect(fullWeekFollowed([accepted], sessions, THU)).toBe(true);
+    // Ongedaan gemaakt: niet meer gevolgd. Een ander voorstel dat iets liet vervallen telt ook niet.
+    const undo = { ...advice.proposal!, id: 'undo', revertsProposalId: accepted.id, resolution: 'accepted' } as PlanChangeProposal;
+    expect(fullWeekFollowed([accepted, undo], sessions, THU)).toBe(false);
+    expect(fullWeekFollowed([{ ...accepted, resolution: 'rejected' }], sessions, THU)).toBe(false);
+    const other = { ...accepted, changes: accepted.changes.map((c) => ({ ...c, generatedBy: ['engine/adviceEngine.ts', 'TEST-RETRY'] })) };
+    expect(fullWeekFollowed([other], sessions, THU)).toBe(false);
+    // De week erna is een andere week.
+    expect(fullWeekFollowed([accepted], sessions, day(7))).toBe(false);
+  });
+
+  it('wat de weekcontrole vindt maakt de week niet vol: één dubbele dag met twee harde lopen', () => {
+    const sessions = [row('tpl_herstel', 0), row('tpl_upper_a', 1), row('tpl_lower_a', 2), row('tpl_upper_b', 3), row('tpl_tempo_run', 4), row('tpl_intervals', 4), row('tpl_easy_run', 5), row('tpl_long_run', 6)];
+    const logs = [logOf(row('tpl_lower_a', 2))];
+    const inp = input(THU, sessions, logs);
+    expect(validateWeeks({ sessions, logs, templates, today: THU, restDay: 1, program, reportYours: true }, new Set([MON])).map((f) => f.rule)).toContain('TWO-HARD-RUNS');
+    expect(weekLoss(inp)).toHaveLength(1);
+    expect(weekShape(inp)).toMatchObject({ trainings: 5, days: 4, doubles: [day(4)], full: false });
+    expect(fullWeekAdvice(inp)).toEqual([]);
+  });
+
+  it('één training over: de zin staat in het enkelvoud', () => {
+    const { sessions, logs } = crammed();
+    const mine = sessions.map((s) => (s.scheduledDate >= THU && s.scheduledDate <= day(6) ? { ...s, ...byUser } : s));
+    const [advice] = fullWeekAdvice(input(THU, mine, logs));
+    expect(advice.lead).toContain('staan er nog 6 trainingen');
   });
 });
 

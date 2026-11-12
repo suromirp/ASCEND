@@ -396,3 +396,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Pathfinder Route-start, pathfinder, sonnet, 45k, 1 min, 1 moet (mint)
 - 2026-11-11, Warden Route-start, reviewer, sonnet, 66k, 2 min, 1 moet (StrictMode-signaal) en 5 klein, hersteld
 - 2026-11-12, Warden Week na gemiste dagen (zelfreview), reviewer, fable, 129k, 7 min, 1 blokkerend (rol extra) en 7 moet, hersteld in 1 ronde
+- 2026-11-12, Warden Week na gemiste dagen (herreview), reviewer, fable, 74k, 3 min, 4 moet (Begrepen telde als Akkoord), hersteld
