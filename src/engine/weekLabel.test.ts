@@ -52,9 +52,9 @@ describe('weekPageHeading', () => {
   const START = '2026-10-26';
   const golf = (light: boolean): Program => ({ id: 'p', name: 'P', startDate: START, phases: layoutWaves(START, START, 12, START, 0, { length: 4, light }) });
 
-  it('het grote getal blijft, de kleine regel zet de fase voorop zoals Vandaag', () => {
-    expect(weekPageHeading(phased(1))).toEqual({ title: 'Week', number: 1, line: 'Basisfase, week 1 van 4' });
-    expect(weekPageHeading(phased(1)).line).toBe(weekPositionLabel(phased(1)));
+  it('het grote getal blijft, de kleine regel noemt de fase en haar lengte zonder het weeknummer nog eens', () => {
+    expect(weekPageHeading(phased(1))).toEqual({ title: 'Week', number: 1, line: 'Basisfase van 4 weken' });
+    expect(weekPageHeading({ weekInPhase: 1, weekInProgram: 1, phase: { id: 'x', name: 'NAAR DE START', weekCount: 1 } } as never).line).toBe('Naar de start van 1 week');
   });
 
   it('zonder positie, in een golf en in een vaste week verandert er niets', () => {
