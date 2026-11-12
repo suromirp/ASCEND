@@ -23,7 +23,7 @@ import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { ExerciseLogger } from './ExerciseLogger';
 import { TrainingBriefing } from './TrainingBriefing';
-import { briefingEntry, briefingRowLine, missionButton } from '../engine/briefing';
+import { briefingEntry, briefingRowLine, entryAction, missionButton } from '../engine/briefing';
 import { useBriefingView } from './useBriefingView';
 import { useWatchLink } from './useWatchLink';
 import { useTrainingPlaces } from './useTrainingPlaces';
@@ -214,7 +214,11 @@ export function SessionActionSheet({
   const briefingView = useBriefingView({ template, session, date: session.scheduledDate, program, storedPlace: places?.[session.id] });
   const { watchLink, watchSource } = useWatchLink();
   const watchTicks = missionButton({ template, session, logs: sessionLogs, watchLink, watchSource }) === 'briefing';
-  const actions = sessionSheetActions({ date: session.scheduledDate, today, skipped, canComeBack, kind, workoutWaiting: !!waiting, canSwap: !!onSwap && swapOptions.length > 0, briefing: briefingEntry(template), watchTicks });
+  const planned = sessionSheetActions({ date: session.scheduledDate, today, skipped, canComeBack, kind, workoutWaiting: !!waiting, canSwap: !!onSwap && swapOptions.length > 0, briefing: briefingEntry(template), watchTicks });
+  // Spoor 1 (docs/visie/Ontwerp trainingsscherm minimaal.md): voor een training te voet bestaat Hoe je
+  // het doet niet meer, ook niet op een dag die voorbij is; die rij opent de Briefing. De keuzes en hun
+  // volgorde blijven die van engine/sessionActions.ts.
+  const actions = { main: entryAction(planned.main, template), rows: planned.rows.map((a) => entryAction(a, template)) };
   const duration = strengthDoneDuration({ scheduledDate: doneToday ? today : session.scheduledDate }, template, fullDuration, macroFactor, sessionLogs);
 
   const info = guide ? <InfoButton onClick={() => setShowGuide(true)} label="Waarom deze training" /> : undefined;
@@ -343,7 +347,11 @@ export function SessionActionSheet({
       case 'skip': return onSkip();
       case 'backOnPlan': return onBackOnPlan?.();
       case 'doToday':
-        if (kind === 'quick') { setDoneToday(true); setStep('done'); } else onStart('full');
+        if (kind === 'quick') { setDoneToday(true); setStep('done'); }
+        // Een training te voet: meteen het invullen, zoals Gedaan, niet het oude scherm met de uitleg
+        // bovenaan (spoor 1; de uitleg vooraf staat in de Briefing).
+        else if (briefingEntry(template)) (onLog ?? onStart)('full');
+        else onStart('full');
         return;
       case 'saveWorkout':
         if (!waiting || saving) return;

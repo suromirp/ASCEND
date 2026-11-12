@@ -135,6 +135,9 @@ const SCHERMEN = {
   // starten. Elke oefening toont zijn rol (Kern, Bijwerk, Extra); de klok loopt nog niet, dus geen regel onder de klok.
   forge: { titel: 'Forge met Benen A (blad in Week, Training starten)', pad: '#/week', actie: async (p) => { await tik(p, 'button[data-sheet-from]:has-text("Benen A")'); await tik(p, 'button:has-text("Training starten")'); } },
   'training-blad': { titel: 'Blad van een geplande training (Week)', pad: '#/week', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Lange duurloop")') },
+  // De Briefing van de Lange duurloop (morgen) uit het blad in Week: het enige scherm vooraf voor een training te voet
+  // (docs/visie/Ontwerp trainingsscherm minimaal.md, sporen 1 tot 4). Zone, praattest, duur en horloge staan er één keer.
+  briefing: { titel: 'Briefing van de Lange duurloop (blad in Week)', pad: '#/week', actie: async (p) => { await tik(p, 'button[data-sheet-from]:has-text("Lange duurloop")'); await tik(p, '[role=dialog] button:has-text("Briefing")'); } },
   // De opslagrijen komen asynchroon uit de browser (storage.estimate); wacht tot ze er zijn.
   gegevens: { titel: 'Instellingen: Gegevens en back-up', pad: '#/more/gegevens', actie: (p) => p.waitForFunction(() => /die ASCEND mag gebruiken/.test(document.body.innerText) && /Ruimte van reeksen, /.test(document.body.innerText), null, { timeout: 15000 }).catch(() => {}) },
   'datavelden': { titel: 'Datavelden voor je horloge (Zone 2, advies)', pad: '#/horloge/datavelden' },

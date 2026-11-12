@@ -196,10 +196,32 @@ export const INVARIANTEN = [
       return uit;
     },
   },
+  {
+    // De Briefing is het ene scherm vooraf (docs/visie/Ontwerp trainingsscherm minimaal.md, regel 1): zone en praattest,
+    // de duur en het horloge staan er elk één keer. De stopregels tellen niet mee: die zeggen wanneer je terugschakelt.
+    naam: 'Briefing: zone, praattest, duur en horloge elk één keer',
+    controleer: (k) => {
+      const t = k('briefing');
+      if (!t) return [];
+      const zonder = t.split(/^STOP OF SCHAKEL TERUG ALS$/m)[0];
+      const uit = [];
+      const tel = (re) => alle(zonder, re).length;
+      for (const [wat, re] of [['zone', /\bZone \d\b/g], ['praattest', /\bpraten\b/gi], ['horloge', /\bhorloge\b/gi]]) {
+        const n = tel(re);
+        if (n > 1) uit.push(`briefing: ${wat} staat er ${n} keer`);
+      }
+      const duur = zonder.match(/^(\d+)\nminuten totaal$/m);
+      if (duur) {
+        const n = tel(new RegExp(`\\b${duur[1]} ?min(uten)?\\b`, 'g')) + tel(new RegExp(`^${duur[1]}$`, 'gm'));
+        if (n > 1) uit.push(`briefing: de duur (${duur[1]}) staat er ${n} keer`);
+      }
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [
-  'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad',
+  'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad', 'briefing',
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
   'ascend-algemeen', 'ascend-vaardigheid',

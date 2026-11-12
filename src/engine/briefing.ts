@@ -2,9 +2,11 @@
 // (docs/beslissingen/2026-11-11-briefing.md, docs/visie/Ontwerp Route en trainingsscherm.md, spoor 4;
 // eigen keuzes in docs/beslissingen/2026-11-11-briefing-sporen-1-3-4.md).
 //
-// Het scherm zelf (spoor 5) tekent alleen wat dit teruggeeft: de stand (je horloge vinkt af, of zelf
-// invullen), waar je traint, wat er op de plek van de kaart staat, vier vakken met elk één korte regel,
-// en de knop in de onderbalk. Het leest de bestaande regels en rekent er niets van na:
+// Het scherm zelf tekent alleen wat dit teruggeeft (sporen 1 tot 4 van docs/visie/Ontwerp trainingsscherm
+// minimaal.md): de kop, de hartkaart (kerngetallen en zonebalk of profiel), de stand (je horloge vinkt af,
+// of zelf invullen), waar je traint met de regel bij een andere keuze, wat er op de plek van de kaart
+// staat, één lijst zonder kopje met elk één korte regel, de stopregels, en de ene knop in de onderbalk
+// (of geen). Het leest de bestaande regels en rekent er niets van na:
 // - de stand: Vanzelf afvinken (engine/autoTick.ts#mayAutoTick, de schakelaar, de koppeling) en een
 //   stille koppeling (engine/sourceWatch.ts#sourceSilence);
 // - de route: engine/trainingPlace.ts#placeHasRoute en engine/routeTarget.ts#routeTarget;
@@ -35,26 +37,29 @@ import { drinkAmount } from './eveningBefore';
 import { litersText } from './stageWater';
 import { fuelForTraining, fuelShortText } from './fuelOnTheGo';
 import { deriveSessionStatus } from './sessionStatus';
+import { buildSessionBrief, type BriefFact, type SessionBrief } from './sessionBrief';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { buildWorkoutPlan } from './workoutPlan';
-import { durationLabel } from './sessionBrief';
-import { progressionTarget } from './programLayout';
 import { templateSport } from './sports';
 import { RACE_TEMPLATE_ID } from './raceBlock';
 import { resolveRouteSearch } from './routeSearchSetting';
 import { getModality, modalitySport } from '../data/modalities';
-import { INTENSITY, type Intensity } from '../data/workoutStructure';
-import { addDays, toISODate } from '../utils/dates';
-import { kgLabel } from '../utils/kg';
+import type { Intensity } from '../data/workoutStructure';
+import { addDays, formatDateNL, toISODate, weekdayShortNL } from '../utils/dates';
 
 export const BRIEFING_TEXT = {
   title: 'Briefing',
-  // De vier vakken.
-  run: 'Wat je loopt',
+  // De vaste woorden van de lijst (spoor 3 van docs/visie/Ontwerp trainingsscherm minimaal.md).
   watch: 'Horloge',
-  weather: 'Weer en kleding',
-  fuel: 'Eten en drinken',
-  // De horlogestand, kort: een vak is ongeveer 171 px breed.
+  weather: 'Weer',
+  fuel: 'Mee',
+  stretch: 'Voor en na',
+  // Het blad achter de rij Mee.
+  fuelSheet: 'Eten en drinken',
+  // Het blad achter de rij Voor en na.
+  warmup: 'Eerst opwarmen',
+  cooldown: 'Daarna rekken',
+  // De horlogestand, kort.
   watchSent: 'Staat erop',
   watchStale: 'Wijziging nog niet erop',
   watchPending: 'Nog niet erop',
@@ -63,20 +68,21 @@ export const BRIEFING_TEXT = {
   watchManual: 'Workout zelf instellen',
   watchFields: 'Datavelden',
   noWeather: 'Nog geen weer',
-  // "1,5 liter en 2 tot 4 gels mee"; zonder weer is de hoeveelheid drinken onbekend.
+  // "1,5 liter en 2 tot 4 gels"; zonder weer is de hoeveelheid drinken onbekend.
   drink: 'drinken',
-  fuelSuffix: 'mee',
-  // De stand onderaan.
-  watchTicks: 'Je horloge vinkt deze training af.',
+  // In de rij Horloge: wie afvinkt (de losse regel onder het scherm is weg, spoor 3).
+  watchTicks: 'Vinkt zelf af',
   // Op Vandaag onder de knop Briefing (spoor 6): waarom er geen Gedaan staat.
   missionTicks: 'Je horloge vinkt hem af na je loop.',
   manual: 'Zelf invullen',
   testRun: 'Een testloop vul je zelf in.',
   race: 'Een wedstrijd vul je zelf in.',
   done: 'Deze training is al gedaan.',
-  // De knop in de onderbalk.
+  // De knop in de onderbalk: één knop, of geen onderbalk (de terugknop sluit).
   sendRoute: 'Route naar Garmin Connect',
-  close: 'Sluiten',
+  doneButton: 'Gedaan',
+  // De stopregels, zonder kaart (spoor 4).
+  stop: 'Stop of schakel terug als',
 } as const;
 
 // Waarom je zelf invult: geen koppeling (of nog niet gelezen), Vanzelf afvinken uit, geen trainingen
@@ -92,26 +98,51 @@ export type BriefingMap =
   // Buiten met een route: de kaart. `search` zegt of het scherm bij het openen zoekt (vandaag en
   // morgen, besluit 11 november) of pas na een tik.
   | { kind: 'route'; target: RouteTarget; line: string; search: 'open' | 'tap' }
-  // Loopband of binnen: geen kaart en geen netwerk, wel wat je instelt.
-  | { kind: 'place'; title: string; how: string }
+  // Loopband of binnen: geen kaart en geen netwerk; wat je instelt staat in de regel onder de chips.
+  | { kind: 'place' }
   // Buiten zonder lus van de planner (wandelen, rugzak): de plekken in de buurt.
   | { kind: 'nearby' }
   // Route voorstellen uit, of de training is al gedaan: niets op die plek.
   | { kind: 'none' };
 
-export type BriefingTileId = 'run' | 'watch' | 'weather' | 'fuel';
+// De lijst zonder kopje (spoor 3): links het vaste woord, rechts de waarde, en een pijltje als de rij
+// een blad of pagina opent. Wat je loopt staat in de hartkaart, niet in de lijst.
+export type BriefingRowId = 'watch' | 'weather' | 'fuel' | 'stretch';
 
-export interface BriefingTile {
-  id: BriefingTileId;
-  eyebrow: string;
+export interface BriefingRow {
+  id: BriefingRowId;
+  label: string;
   // Eén korte regel; de lange vorm staat in het blad of de pagina erachter.
   line: string;
-  // Iets om op te letten (versturen mislukt, weer let op of slecht): amber, nooit een tweede mint.
+  // Iets om op te letten (versturen mislukt, weer let op of slecht): een amber stip, nooit een tweede mint.
   tone?: 'warn';
+  // Opent de rij iets? De rij Horloge zonder blad Je horloge opent niets.
+  opens: boolean;
 }
 
-// `fallback`: wat de knop is zolang er (nog) geen lus is, bij een knop Route.
-export type BriefingFooter = { kind: 'route' | 'manual' | 'close'; label: string; fallback?: { kind: 'manual' | 'close'; label: string } };
+// De kop (spoor 2): het kopje, één zin uitleg en de regel met de dag en de week, zoals op het oude scherm.
+export interface BriefingHead {
+  eyebrow: string;
+  purpose: string;
+  dayLine: string;
+}
+
+// De hartkaart (spoor 2): de kerngetallen, en daaronder de zonebalk (één doorlopend blok) of het
+// profiel van de stappen. Zone en praattest staan alleen hier, in de zin onder de balk.
+export interface BriefingHeart {
+  facts: BriefFact[];
+  zone?: Intensity;
+  steps: boolean;
+  // De wandeldag voor een bergtocht: wat morgen vraagt.
+  tomorrow?: string;
+}
+
+// De onderbalk heeft één knop, of is er niet (dan sluit de terugknop). `fallback`: wat de knop is
+// zolang er (nog) geen lus is, bij een knop Route.
+export type BriefingFooter =
+  | { kind: 'route'; label: string; fallback: { kind: 'manual'; label: string } | { kind: 'none' } }
+  | { kind: 'manual'; label: string }
+  | { kind: 'none' };
 
 // Instelling Lus zoeken (spoor 5): engine/routeSearchSetting.ts.
 export { resolveRouteSearch, type RouteSearchSetting } from './routeSearchSetting';
@@ -122,12 +153,19 @@ export const placeTransition = (motion: 'full' | 'calm' | 'off'): string | undef
   motion === 'full' ? 'ascend-fade-in 200ms ease-out both' : undefined;
 
 export interface BriefingView {
+  head: BriefingHead;
+  heart: BriefingHeart;
   stand: BriefingStand;
   // De keuzes Waar train je?; leeg of één keuze: geen rij, en dan geldt die ene of Buiten.
   places: PlaceChoice[];
   place: string | undefined;
+  // De regel onder de chips (spoor 4): alleen bij een andere keuze dan de standaard, met het oordeel
+  // en wat je anders doet. Bij de standaard geen regel.
+  placeLine?: string;
   map: BriefingMap;
-  tiles: BriefingTile[];
+  rows: BriefingRow[];
+  // De stopregels, volledig en zonder kaart; leeg: geen blok.
+  stopSignals: string[];
   footer: BriefingFooter;
 }
 
@@ -171,13 +209,18 @@ export function hasBriefing(template: SessionTemplate | undefined): boolean {
   return sport === 'running' || sport === 'hiking';
 }
 
-// De ingang (spoor 5 en 6): Week en Vandaag openen de Briefing voor een training waar een route bij
-// hoort op zijn standaardplek (engine/trainingPlace.ts#routeShownFor zonder bewaarde keuze). Een keuze
-// Loopband voor die ene training haalt de ingang niet weg: die keuze maak je in de Briefing zelf, en
-// daar verdwijnt dan de kaart. Wandelen en rugzak krijgen de ingang met de routes voor wandelen
-// (spoor 11); tot dan houden ze het oude scherm.
+// De ingang: elke training te voet opent de Briefing, ook wandelen, rugzak en een training die op de
+// loopband begint (spoor 1 van docs/visie/Ontwerp trainingsscherm minimaal.md). Eerder kreeg alleen
+// een training met een route op zijn standaardplek de ingang, en de rest het oude scherm.
 export function briefingEntry(template: SessionTemplate | undefined): boolean {
-  return hasBriefing(template) && routeShownFor(template, undefined);
+  return hasBriefing(template);
+}
+
+// Een keuze in het blad van een training die naar het oude scherm Hoe je het doet ging (lezen vooraf,
+// of op een dag die voorbij is), wordt de Briefing voor een training te voet. De keuzes zelf en hun
+// volgorde komen uit engine/sessionActions.ts en veranderen niet.
+export function entryAction<A extends string>(action: A, template: SessionTemplate | undefined): A | 'briefing' {
+  return briefingEntry(template) && (action === 'start' || action === 'preview') ? 'briefing' : action;
 }
 
 // De mint knop op Vandaag (spoor 6): Briefing als je horloge deze training afvinkt, anders Gedaan.
@@ -185,8 +228,12 @@ export function briefingEntry(template: SessionTemplate | undefined): boolean {
 // twijfel: Gedaan, de veilige kant. Een training die al gedaan is: ook Gedaan (de kaart is dan weg).
 export type MissionButton = 'briefing' | 'done';
 
+//
+// Deze regel beweegt niet mee met de ingang van spoor 1 (die nu ook wandelen opent): de knop op Vandaag
+// blijft Briefing alleen voor een training met een route op zijn standaardplek, zoals voorheen. Een
+// wandeling houdt op Vandaag dus Gedaan; de Briefing opent daar via Week.
 export function missionButton(input: Pick<BriefingInput, 'template' | 'session' | 'logs' | 'watchLink' | 'watchSource'>): MissionButton {
-  if (!briefingEntry(input.template)) return 'done';
+  if (!briefingEntry(input.template) || !routeShownFor(input.template, undefined)) return 'done';
   if (input.session && deriveSessionStatus(input.session, input.logs).status === 'completed') return 'done';
   return standOf(input).kind === 'watch' ? 'briefing' : 'done';
 }
@@ -204,37 +251,84 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
 
   const stand = done ? ({ kind: 'done', line: BRIEFING_TEXT.done } as const) : standOf(input);
   const map = done ? ({ kind: 'none' } as const) : mapOf(input, place, modality, outdoor, today);
+  const brief = buildSessionBrief(template, input.date, input.program, { modalityKey: place });
 
-  const tiles: BriefingTile[] = [runTile(input, minutes)];
-  const watch = watchTile(input);
-  if (watch) tiles.push(watch);
+  const rows: BriefingRow[] = [];
+  const watch = watchRow(input, stand);
+  if (watch) rows.push(watch);
   if (outdoor) {
-    const weather = weatherTile(input, minutes);
-    if (weather) tiles.push(weather);
+    const weather = weatherRow(input, minutes);
+    if (weather) rows.push(weather);
   }
-  const fuel = fuelTile(input, minutes, outdoor);
-  if (fuel) tiles.push(fuel);
+  const fuel = fuelRow(input, minutes, outdoor);
+  if (fuel) rows.push(fuel);
+  const stretch = stretchRow(template);
+  if (stretch) rows.push(stretch);
 
-  // Zelf invullen kan pas op de dag zelf (of later); vooraf is de knop Sluiten.
+  // Gedaan (zelf invullen) kan pas op de dag zelf (of later); vooraf geen onderbalk.
   const due = input.date <= today;
   // Met een lus is de route naar je horloge de hoofdknop, ook als je zelf invult (dan een tekstknop
-  // onderaan); zonder lus Zelf invullen of Sluiten.
-  const rest: { kind: 'manual' | 'close'; label: string } =
-    stand.kind === 'manual' && due ? { kind: 'manual', label: BRIEFING_TEXT.manual } : { kind: 'close', label: BRIEFING_TEXT.close };
+  // onderaan); zonder lus Gedaan, of geen onderbalk.
+  const rest: { kind: 'manual'; label: string } | { kind: 'none' } =
+    stand.kind === 'manual' && due ? { kind: 'manual', label: BRIEFING_TEXT.doneButton } : { kind: 'none' };
   const footer: BriefingFooter = map.kind === 'route' ? { kind: 'route', label: BRIEFING_TEXT.sendRoute, fallback: rest } : rest;
 
-  return { stand, places, place, map, tiles, footer };
+  return {
+    head: headOf(input, brief),
+    heart: heartOf(input, brief),
+    stand,
+    places,
+    place,
+    placeLine: placeLineOf(template, place, brief.sportSwitch),
+    map,
+    rows,
+    stopSignals: modality?.environment === 'rest' ? [] : brief.stopSignals,
+    footer,
+  };
+}
+
+// ---- de kop en de hartkaart (spoor 2) ---------------------------------------------------------
+
+function headOf(input: BriefingInput, brief: SessionBrief): BriefingHead {
+  const weekday = weekdayShortNL(input.date);
+  const day = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1).toLowerCase()} ${formatDateNL(input.date)}`;
+  return { eyebrow: brief.headline, purpose: oneSentence(brief.purpose), dayLine: [day, brief.weekLabel].filter(Boolean).join(' · ') };
+}
+
+// Het hart: dezelfde getallen als het oude scherm. Bij één doorlopend blok zeggen de zonebalk en zijn
+// zin het al: zone en praattest dan niet nog eens als getal of pil.
+function heartOf(input: BriefingInput, brief: SessionBrief): BriefingHeart {
+  const plan = buildWorkoutPlan(input.template, input.date, input.program);
+  const conditioning = plan?.timeline.filter((s) => s.kind !== 'strength') ?? [];
+  const zone = conditioning.length === 1 && !conditioning[0].noTarget ? (conditioning[0].intensity as Intensity) : undefined;
+  const facts = zone ? brief.facts.filter((f) => !ZONE_FACT.test(f.value)) : brief.facts;
+  return { facts, zone, steps: conditioning.length > 1, ...(brief.tomorrow ? { tomorrow: brief.tomorrow } : {}) };
+}
+
+// Een kerngetal dat zone of praattest zegt ("Zone 2", "Praten kan").
+export const ZONE_FACT = /^(zone \d|praten kan)/i;
+
+// ---- de regel onder de chips (spoor 4) --------------------------------------------------------
+
+// Alleen bij een andere keuze dan de standaard: het oordeel en wat je anders doet. "Ook goed. Rustig
+// tempo, route met zoveel mogelijk hoogteverschil." Telt het als een andere sport, dan die zin erbij.
+function placeLineOf(template: SessionTemplate, place: string | undefined, sportSwitch: string | undefined): string | undefined {
+  if (!place || place === resolvePlace(template, undefined)) return undefined;
+  const modality = getModality(template.id, place);
+  const choice = placeChoices(template.id).find((p) => p.key === place);
+  if (!modality || !choice) return undefined;
+  return [`${choice.roleLabel}.`, modality.how, sportSwitch].filter(Boolean).join(' ');
 }
 
 // De regel onder de rij Briefing in Week: wat er echt in staat. "Route, horloge, weer en eten";
-// zonder vak eten (een korte loop) ook zonder eten.
+// zonder rij eten (een korte loop) ook zonder eten.
 export function briefingRowLine(view: BriefingView): string {
   const parts: string[] = [];
   if (view.map.kind === 'route') parts.push('route');
   if (view.map.kind === 'place') parts.push('loopband');
-  const word: Partial<Record<BriefingTileId, string>> = { watch: 'horloge', weather: 'weer', fuel: 'eten' };
-  for (const t of view.tiles) if (word[t.id]) parts.push(word[t.id]!);
-  if (parts.length === 0) return BRIEFING_TEXT.run;
+  const word: Partial<Record<BriefingRowId, string>> = { watch: 'horloge', weather: 'weer', fuel: 'eten' };
+  for (const r of view.rows) if (word[r.id]) parts.push(word[r.id]!);
+  if (parts.length === 0) return 'Wat je loopt';
   const text = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1]}`;
   return upperFirst(text);
 }
@@ -266,7 +360,7 @@ function mapOf(
   outdoor: boolean,
   today: string,
 ): BriefingMap {
-  if (!outdoor && modality) return { kind: 'place', title: modality.label, how: modality.how };
+  if (!outdoor && modality) return { kind: 'place' };
   if (!input.routeOn) return { kind: 'none' };
   if (placeHasRoute(input.template, place)) {
     const target = routeTarget({ template: input.template, date: input.date, program: input.program, logs: input.logs, testPace: input.easyPace });
@@ -279,67 +373,63 @@ function mapOf(
   return sport === 'hiking' ? { kind: 'nearby' } : { kind: 'none' };
 }
 
-// ---- de vier vakken --------------------------------------------------------------------------
+// ---- de lijst (spoor 3) ----------------------------------------------------------------------
 
-function runTile(input: BriefingInput, minutes: number): BriefingTile {
-  const parts = [durationLabel(minutes)];
-  const plan = buildWorkoutPlan(input.template, input.date, input.program);
-  const levels = (plan?.timeline ?? []).filter((s) => s.kind !== 'strength').map((s) => s.intensity as Intensity);
-  if (levels.length > 0) {
-    const peak = Math.max(...levels) as Intensity;
-    const even = levels.every((l) => l === peak);
-    parts.push(even ? INTENSITY[peak].zone : `tot ${INTENSITY[peak].zone}`);
-  }
-  const kg = progressionTarget(input.template, input.program, input.date)?.step.backpackKg ?? input.template.outdoorTarget?.backpackWeightKg;
-  if (kg && kg > 0) parts.push(`rugzak ${kgLabel(kg, 1)}`);
-  return { id: 'run', eyebrow: BRIEFING_TEXT.run, line: parts.join(', ') };
-}
-
-function watchTile(input: BriefingInput): BriefingTile | undefined {
+// Eén rij Horloge: wat er op je horloge staat en of het afvinkt. Eerder stond het horloge drie keer
+// (een vak, een regel onderaan en een knop in de onderbalk).
+function watchRow(input: BriefingInput, stand: BriefingStand): BriefingRow | undefined {
   const plan = buildWorkoutPlan(input.template, input.date, input.program);
   const status = input.watchStatus;
   const sheet = watchSheet({ ...input.watch, template: input.template, garmin: plan?.garmin, status: status?.kind });
-  if (!sheet.hasWatchSheet) return undefined;
+  const ticks = stand.kind === 'watch' ? BRIEFING_TEXT.watchTicks : undefined;
+  if (!sheet.hasWatchSheet) return ticks ? { id: 'watch', label: BRIEFING_TEXT.watch, line: `${ticks}.`, opens: false } : undefined;
+  const state = watchState(input, status, plan?.garmin !== undefined);
+  const line = ticks ? `${state.line}. ${ticks}.` : state.line;
+  return { id: 'watch', label: BRIEFING_TEXT.watch, line, opens: true, ...(state.warn ? { tone: 'warn' as const } : {}) };
+}
+
+function watchState(input: BriefingInput, status: WatchStatus | undefined, garmin: boolean): { line: string; warn?: boolean } {
   const today = toISODate(input.now);
   const shown = input.watch.showStatus ? status?.kind : undefined;
   switch (shown) {
     case 'sent': {
       const at = status?.sentAt ? new Date(status.sentAt) : undefined;
-      const sameDay = at && !Number.isNaN(at.getTime()) && toISODate(at) === today;
-      return { id: 'watch', eyebrow: BRIEFING_TEXT.watch, line: sameDay ? `${BRIEFING_TEXT.watchSent}, ${formatClockTime(at!)}` : BRIEFING_TEXT.watchSent };
+      if (!at || Number.isNaN(at.getTime())) return { line: BRIEFING_TEXT.watchSent };
+      const day = toISODate(at);
+      return { line: day === today ? `${BRIEFING_TEXT.watchSent}, ${formatClockTime(at)}` : `${BRIEFING_TEXT.watchSent} sinds ${formatDateNL(day)}` };
     }
     case 'stale':
-      return { id: 'watch', eyebrow: BRIEFING_TEXT.watch, line: BRIEFING_TEXT.watchStale };
+      return { line: BRIEFING_TEXT.watchStale };
     case 'pending':
-      return { id: 'watch', eyebrow: BRIEFING_TEXT.watch, line: BRIEFING_TEXT.watchPending };
+      return { line: BRIEFING_TEXT.watchPending };
     case 'later':
-      return { id: 'watch', eyebrow: BRIEFING_TEXT.watch, line: BRIEFING_TEXT.watchLater };
+      return { line: BRIEFING_TEXT.watchLater };
     case 'failed':
-      return { id: 'watch', eyebrow: BRIEFING_TEXT.watch, line: BRIEFING_TEXT.watchFailed, tone: 'warn' };
+      return { line: BRIEFING_TEXT.watchFailed, warn: true };
     default:
       // Niet gekoppeld, geen stand of de stand verborgen: wat het blad je dan biedt.
-      return { id: 'watch', eyebrow: BRIEFING_TEXT.watch, line: plan?.garmin ? BRIEFING_TEXT.watchManual : BRIEFING_TEXT.watchFields };
+      return { line: garmin ? BRIEFING_TEXT.watchManual : BRIEFING_TEXT.watchFields };
   }
 }
 
-function weatherTile(input: BriefingInput, minutes: number): BriefingTile | undefined {
+function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefined {
   if (!input.weatherOn && !input.clothingOn) return undefined;
   const base = { forecast: input.forecast, template: input.template, logs: input.logs, date: input.date, durationMinutes: minutes, now: input.now };
   const w = weatherForTraining(base);
-  if (!w) return { id: 'weather', eyebrow: BRIEFING_TEXT.weather, line: BRIEFING_TEXT.noWeather };
+  if (!w) return { id: 'weather', label: BRIEFING_TEXT.weather, line: BRIEFING_TEXT.noWeather, opens: true };
   const parts: string[] = [];
   if (input.weatherOn) parts.push(`${Math.round(w.tempC)} ${Math.abs(Math.round(w.tempC)) === 1 ? 'graad' : 'graden'}`);
   if (input.clothingOn) {
     const first = clothingForTraining({ ...base, adjustC: input.clothingAdjust })?.lines[0];
-    // Alleen de eerste zin: een vak is smal; de rest staat op de weerpagina erachter.
+    // Alleen de eerste zin: de rest staat op de weerpagina erachter.
     if (first) parts.push(lowerFirst(firstSentence(first)));
   }
   if (parts.length === 0) return undefined;
   const tone = input.weatherOn && w.verdict !== 'prima' ? ('warn' as const) : undefined;
-  return { id: 'weather', eyebrow: BRIEFING_TEXT.weather, line: parts.join(', '), ...(tone ? { tone } : {}) };
+  return { id: 'weather', label: BRIEFING_TEXT.weather, line: upperFirst(parts.join(', ')), opens: true, ...(tone ? { tone } : {}) };
 }
 
-function fuelTile(input: BriefingInput, minutes: number, outdoor: boolean): BriefingTile | undefined {
+function fuelRow(input: BriefingInput, minutes: number, outdoor: boolean): BriefingRow | undefined {
   // Drinken uit je zweettempo hoort bij buiten: binnen klopt het weer van de start niet.
   const drink = outdoor
     ? drinkAmount({ template: input.template, minutes, forecast: input.forecast, logs: input.logs, date: input.date, now: input.now, sweatEntries: input.sweatEntries })
@@ -350,7 +440,23 @@ function fuelTile(input: BriefingInput, minutes: number, outdoor: boolean): Brie
   const parts: string[] = [];
   if (drink) parts.push(drink.liters === undefined ? BRIEFING_TEXT.drink : litersText(drink.liters));
   if (fuel) parts.push(fuelShortText(fuel));
-  return { id: 'fuel', eyebrow: BRIEFING_TEXT.fuel, line: upperFirst(`${parts.join(' en ')} ${BRIEFING_TEXT.fuelSuffix}`) };
+  return { id: 'fuel', label: BRIEFING_TEXT.fuel, line: upperFirst(parts.join(' en ')), opens: true };
+}
+
+// Opwarmen en rekken in één rij; het blad erachter heeft beide lijsten onder elkaar.
+function stretchRow(template: SessionTemplate): BriefingRow | undefined {
+  const warm = template.warmup?.length ?? 0;
+  const cool = template.cooldown?.length ?? 0;
+  if (warm === 0 && cool === 0) return undefined;
+  const count = (n: number) => `${n} ${n === 1 ? 'oefening' : 'oefeningen'}`;
+  const line = warm > 0 && cool > 0 ? `${warm} opwarmen, ${cool} rekken` : warm > 0 ? `${count(warm)} opwarmen` : `${count(cool)} rekken`;
+  return { id: 'stretch', label: BRIEFING_TEXT.stretch, line, opens: true };
+}
+
+// Eén zin, met de punt: de kop heeft geen Meer erachter (spoor 2).
+function oneSentence(s: string): string {
+  const end = s.search(/[.!?](\s|$)/);
+  return end < 0 ? s : s.slice(0, end + 1);
 }
 
 function upperFirst(s: string): string {

@@ -19,28 +19,26 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
-import { placeTransition, BRIEFING_TEXT, type BriefingTile, type BriefingView } from '../engine/briefing';
-import { isSportEnabled, sessionKindLabel } from '../engine/sports';
+import { placeTransition, BRIEFING_TEXT, type BriefingRow, type BriefingView } from '../engine/briefing';
+import { isSportEnabled } from '../engine/sports';
 import { fuelCardLines, fuelForTraining, fuelOn } from '../engine/fuelOnTheGo';
 import { drinkLine } from '../engine/eveningBefore';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
-import { buildSessionBrief } from '../engine/sessionBrief';
 import { modalitySport } from '../data/modalities';
 import { failureLine, MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle } from '../engine/routePlanner';
 import { BRIEFING_MAP_HEIGHT, loopLines, routeOutcomeLine } from '../engine/routeSheet';
-import { durationLabel } from '../engine/sessionBrief';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import type { RouteSendOutcome } from '../engine/routeSend';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { getTrainingPlace, peekTrainingPlaces, saveTrainingPlace } from '../storage/trainingPlace';
 import { saveRouteGpx, type RouteFileResult } from '../storage/routeFile';
 import { sendRouteGpx } from '../storage/routeSend';
-import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
+import { todayISO } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { SkyBand } from './SkyBand';
-import { Card, Chip, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, SheetGrip, ZoneBar } from './ui';
+import { Card, Chip, Eyebrow, InfoButton, PrimaryButton, SheetGrip, ZoneBar } from './ui';
 import { TextButton } from './TextButton';
 import { Icon } from './icons';
 import { SheetHeader } from './SheetHeader';
@@ -54,11 +52,12 @@ import { RouteMap } from './RouteMap';
 import { RouteSearching } from './RouteSearching';
 import { RouteFailure, RouteFirstQuestion, RoutePanelView, StartChips } from './RoutePanel';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
-import { IntervalProfile, MoreText, StepList, StretchRow } from './duur/DuurParts';
+import { IntervalProfile, KeyNumbers, StepList } from './duur/DuurParts';
+import { StretchItems } from './StretchList';
+import { ChevronGlyph, CheckGlyph } from './vandaag/glyphs';
 import { shortPlaceLabels } from '../engine/trainingPlace';
 import { StopSignals } from './SessionHeader';
 import { ZONE_SENTENCE } from './vandaag/zone';
-import type { Intensity } from '../data/workoutStructure';
 
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
 // Groter: het blad Route met de volle kaart en de lange tekst.
@@ -67,13 +66,6 @@ const SEARCH_LOOP = 'Zoek een lus';
 // Zonder plaats: geen doodlopende zin, maar de weg naar de plaatskeuze op de pagina Weer.
 export const NO_PLACE_BRIEFING = 'Een lus begint bij je plaats. Die heb je nog niet gekozen.';
 export const CHOOSE_PLACE = 'Kies je plaats';
-
-function dayWord(date: string, today: string): string {
-  if (date === today) return 'Vandaag';
-  if (date === addDays(today, 1)) return 'Morgen';
-  const d = weekdayShortNL(date);
-  return `${d.charAt(0).toUpperCase()}${d.slice(1).toLowerCase()} ${formatDateNL(date)}`;
-}
 
 export function TrainingBriefing({
   template,
@@ -125,7 +117,7 @@ export function TrainingBriefing({
   const searchOn = !!routeMap && !declined && (routeMap.search === 'open' || tapped);
   const model = useRouteSearch({ template, date, closing, enabled: searchOn });
 
-  const [sheet, setSheet] = useState<'info' | 'watch' | 'run' | 'fuel' | 'route' | undefined>();
+  const [sheet, setSheet] = useState<'info' | 'watch' | 'steps' | 'fuel' | 'stretch' | 'route' | undefined>();
   const send = useSendRoute(model, date);
 
   if (!view) return null;
@@ -142,51 +134,83 @@ export function TrainingBriefing({
     navigate(to);
   }
 
-  function openTile(tile: BriefingTile) {
-    if (tile.id === 'weather') toPage('/weer');
-    else setSheet(tile.id);
+  function openRow(row: BriefingRow) {
+    if (!row.opens) return;
+    if (row.id === 'weather') toPage('/weer');
+    else if (row.id === 'watch') { if (watchView.hasWatchSheet) setSheet('watch'); }
+    else setSheet(row.id);
   }
 
-  const kind = sessionKindLabel(template).toLowerCase();
   const due = date <= today;
   const manual = due ? onManual : undefined;
   const picked = model.picked && model.pickedOutcome?.ok ? { style: model.picked, proposal: model.pickedOutcome.proposal } : undefined;
   const routeReady = view.footer.kind === 'route' && !!picked && searchOn;
   const places = view.places.filter((p) => !p.locked && (p.key === view.place || isSportEnabled(modalitySport(p.key), settings.enabledSports)));
   const shortLabels = shortPlaceLabels(places.map((p) => p.label));
-  const brief = buildSessionBrief(template, date, program, { modalityKey: view.place });
   const minutes = session?.plannedMinutes ?? resolveEffectiveFullDuration(template, date, program);
+  // De ene knop onderaan: de route als de lus er is, anders Gedaan (zelf invullen), anders geen onderbalk.
+  const footerKind = view.footer.kind === 'route' ? (routeReady ? 'route' : view.footer.fallback.kind) : view.footer.kind;
+  const footer = footerKind === 'route' && picked
+    ? <PrimaryButton disabled={send.busy} onClick={() => void send.go(picked.style, picked.proposal)}>{model.sender ? BRIEFING_TEXT.sendRoute : 'GPX downloaden'}</PrimaryButton>
+    : footerKind === 'manual' && manual
+      ? <PrimaryButton onClick={manual}><span className="inline-flex items-center justify-center gap-2"><CheckGlyph size={18} />{BRIEFING_TEXT.doneButton}</span></PrimaryButton>
+      : null;
+  const { head, heart } = view;
 
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 overflow-y-auto ${closing ? 'animate-fade-out' : 'animate-fade-in'}`} style={{ background: 'var(--color-bg)' }}>
-        <div className="mx-auto max-w-md px-4 pb-32">
+        <div className={`mx-auto max-w-md px-4 ${footer ? 'pb-32' : 'pb-12'}`}>
           <SkyBand variant="low" gear={false}>
             <div className="flex items-start gap-2">
               <button type="button" onClick={requestClose} aria-label="Terug" className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="terug" size={24} />
               </button>
               <div className="min-w-0 flex-1 pt-1">
-                <Eyebrow>{dayWord(date, today)} · {kind}</Eyebrow>
+                <Eyebrow>{head.eyebrow}</Eyebrow>
                 <div className="flex items-start justify-between gap-2">
                   <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
                   {guide && <div className="mt-1 shrink-0" data-sheet-from=""><InfoButton label="Waarom deze training" onClick={() => setSheet('info')} /></div>}
                 </div>
+                {head.purpose && <p className="mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{head.purpose}</p>}
+                <p className="mt-1 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{head.dayLine}</p>
               </div>
             </div>
           </SkyBand>
 
           <div className="flex flex-col gap-3">
+            {/* De hartkaart: de kerngetallen en de zonebalk of het profiel. Zone en praattest staan alleen hier. */}
+            <Card className="mt-1 flex flex-col gap-5">
+              <KeyNumbers facts={heart.facts} />
+              {heart.steps && plan ? (
+                <button type="button" data-sheet-from="" onClick={() => setSheet('steps')} aria-label="De stappen van deze training" className="-m-2 rounded-xl p-2 text-left">
+                  <IntervalProfile plan={plan} />
+                </button>
+              ) : heart.zone ? (
+                <div className="flex flex-col gap-3">
+                  <ZoneBar active={heart.zone} label={`Zone ${heart.zone}`} />
+                  <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
+                    <span className="font-semibold">Zone {heart.zone}.</span> {ZONE_SENTENCE[heart.zone]}
+                  </p>
+                </div>
+              ) : null}
+              {heart.tomorrow && <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{heart.tomorrow}</p>}
+            </Card>
+
             {places.length > 1 && (
-              // Eén rij keuzes met korte namen (de volle naam staat in de regel eronder); past hij niet, dan
-              // schuift hij zijwaarts met een zachte vervaging aan de rand. Nooit twee regels hoog.
-              <PlaceRow count={places.length}>
-                {places.map((p, i) => (
-                  <span key={p.key} className="shrink-0 whitespace-nowrap">
-                    <Chip selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}>{shortLabels[i]}</Chip>
-                  </span>
-                ))}
-              </PlaceRow>
+              // Eén rij keuzes met korte namen; past hij niet, dan schuift hij zijwaarts met een zachte
+              // vervaging aan de rand. Nooit twee regels hoog. De gekozen chip houdt (nog) de mint, zoals
+              // besloten bij Start bij (src/components/routeStart.scan.test.ts); de stille chip is een later spoor.
+              <div className="flex flex-col gap-2">
+                <PlaceRow count={places.length}>
+                  {places.map((p, i) => (
+                    <span key={p.key} className="shrink-0 whitespace-nowrap">
+                      <Chip selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}>{shortLabels[i]}</Chip>
+                    </span>
+                  ))}
+                </PlaceRow>
+                {view.placeLine && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{view.placeLine}</p>}
+              </div>
             )}
 
             {/* De plek van de kaart: verschijnt of verdwijnt bij een andere keuze, in Vol met een korte overgang. */}
@@ -194,65 +218,37 @@ export function TrainingBriefing({
               <MapPlace view={view} model={model} searchOn={searchOn} declined={declined} onTap={() => { setDeclined(false); setTapped(true); }} onDecline={() => setDeclined(true)} onBigger={() => setSheet('route')} onPlace={() => toPage('/weer')} />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              {view.tiles.map((tile, i) => (
-                <button
-                  key={tile.id}
-                  type="button"
-                  data-sheet-from={tile.id === 'weather' ? undefined : ''}
-                  onClick={() => openTile(tile)}
-                  className={`text-left ${view.tiles.length % 2 === 1 && i === view.tiles.length - 1 ? 'col-span-2' : ''}`}
-                >
-                  <Card className="flex h-full min-h-[56px] flex-col justify-center gap-0.5 !px-3 !py-2.5">
-                    <Eyebrow tone={tile.tone === 'warn' ? 'var(--color-warning)' : 'var(--color-ink-dim)'}>{tile.eyebrow}</Eyebrow>
-                    <span className="text-sm leading-snug" style={{ color: tile.tone === 'warn' ? 'var(--color-warning)' : 'var(--color-ink)' }}>{tile.line}</span>
-                  </Card>
-                </button>
-              ))}
-            </div>
+            {view.rows.length > 0 && <BriefingRows rows={view.rows} onOpen={openRow} />}
 
-            {/* Onder de vouw: voor en na, wanneer je terugschakelt, en wie afvinkt. */}
-            {(template.warmup?.length || template.cooldown?.length) ? (
-              <div className="mt-2 flex flex-col divide-y divide-[var(--color-card-border)] rounded-2xl border px-4" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
-                {template.warmup && template.warmup.length > 0 && <StretchRow icon="rekken" title="Eerst opwarmen" line={`${template.warmup.length} oefeningen`} stretches={template.warmup} />}
-                {template.cooldown && template.cooldown.length > 0 && <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />}
+            {/* De stopregels: volledig op het scherm, zonder kaart; amber is alleen de stip voor het kopje. */}
+            {view.stopSignals.length > 0 && (
+              <div className="mt-2">
+                <span className="flex items-center gap-2">
+                  <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />
+                  <Eyebrow tone="var(--color-ink-dim)">{BRIEFING_TEXT.stop}</Eyebrow>
+                </span>
+                <StopSignals signals={view.stopSignals} quiet />
               </div>
-            ) : null}
-            {brief.stopSignals.length > 0 && (
-              <Card>
-                <Eyebrow tone="var(--color-warning)">Stop of schakel terug als</Eyebrow>
-                <StopSignals signals={brief.stopSignals} />
-              </Card>
             )}
             <div className="flex flex-col items-start">
-              {view.stand.kind === 'watch' && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{view.stand.line}</p>}
-              {view.stand.kind === 'watch' && manual && <TextButton tone="dim" onClick={manual}>{view.stand.manualLabel}</TextButton>}
               {view.stand.kind !== 'watch' && view.stand.line && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{view.stand.line}</p>}
-              {/* Zelf invullen zonder horloge: met een lus is de knop onderaan de route, dan staat het hier. */}
-              {view.stand.kind === 'manual' && manual && routeReady && <TextButton tone="dim" onClick={manual}>{BRIEFING_TEXT.manual}</TextButton>}
+              {/* Zelf invullen: met een horloge dat afvinkt, of zonder als de knop onderaan de route is. */}
+              {view.stand.kind === 'watch' && manual && <TextButton tone="dim" onClick={manual}>{view.stand.manualLabel}</TextButton>}
+              {view.stand.kind === 'manual' && manual && footerKind === 'route' && <TextButton tone="dim" onClick={manual}>{BRIEFING_TEXT.manual}</TextButton>}
             </div>
           </div>
         </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-10 border-t" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
-          <div className="mx-auto max-w-md px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
-            {routeReady && send.line && (
-              <p role="status" className="mb-2 text-xs leading-snug" style={{ color: send.line.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{send.line.text}</p>
-            )}
-            <div className="flex gap-3">
-              {watchView.hasWatchSheet && (
-                <div className="flex flex-none" data-sheet-from=""><SecondaryButton onClick={() => setSheet('watch')} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton></div>
+        {footer && (
+          <div className="fixed inset-x-0 bottom-0 z-10 border-t" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
+            <div className="mx-auto max-w-md px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
+              {footerKind === 'route' && send.line && (
+                <p role="status" className="mb-2 text-xs leading-snug" style={{ color: send.line.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{send.line.text}</p>
               )}
-              {routeReady && picked ? (
-                <PrimaryButton disabled={send.busy} onClick={() => void send.go(picked.style, picked.proposal)}>{model.sender ? view.footer.label : 'GPX downloaden'}</PrimaryButton>
-              ) : (view.footer.kind === 'route' ? view.footer.fallback?.kind : view.footer.kind) === 'manual' && manual ? (
-                <PrimaryButton onClick={manual}>{BRIEFING_TEXT.manual}</PrimaryButton>
-              ) : (
-                <PrimaryButton onClick={requestClose}>{BRIEFING_TEXT.close}</PrimaryButton>
-              )}
+              {footer}
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {sheet === 'info' && guide && (
@@ -261,20 +257,77 @@ export function TrainingBriefing({
       {sheet === 'watch' && watchView.hasWatchSheet && (
         <WatchSheet view={watchView} template={template} session={session} garmin={plan?.garmin} dayLabel={guideDayLabel(template, date)} onClose={() => setSheet(undefined)} onLeave={() => { onLeave?.(); requestClose(); }} />
       )}
-      {sheet === 'run' && (
-        <TodaySheet eyebrow={BRIEFING_TEXT.run} title={template.name} onClose={() => setSheet(undefined)}>
-          <RunDetail template={template} date={date} program={program} />
+      {sheet === 'steps' && plan && (
+        <TodaySheet eyebrow={template.name} title="Zo doe je het" onClose={() => setSheet(undefined)}>
+          <StepList plan={plan} />
         </TodaySheet>
       )}
       {sheet === 'fuel' && (
-        <TodaySheet eyebrow={BRIEFING_TEXT.fuel} title={template.name} onClose={() => setSheet(undefined)}>
+        <TodaySheet eyebrow={BRIEFING_TEXT.fuelSheet} title={template.name} onClose={() => setSheet(undefined)}>
           <FuelDetail template={template} date={date} minutes={minutes} outdoor={view.map.kind !== 'place'} />
+        </TodaySheet>
+      )}
+      {sheet === 'stretch' && (
+        <TodaySheet eyebrow={BRIEFING_TEXT.stretch} title={template.name} onClose={() => setSheet(undefined)}>
+          <StretchDetail template={template} />
         </TodaySheet>
       )}
       {sheet === 'route' && (
         <BigRouteSheet template={template} model={model} date={date} onClose={() => setSheet(undefined)} onDecline={() => setDeclined(true)} />
       )}
     </Portal>
+  );
+}
+
+// De lijst zonder kopje: links het vaste woord gedempt, rechts de waarde in gewone inkt, en een pijltje
+// als de rij een blad of pagina opent. Let op is een amber stip voor het vaste woord, nooit een amber
+// woord. Dezelfde vorm als het blok Stand en morgen op Vandaag.
+function BriefingRows({ rows, onOpen }: { rows: BriefingRow[]; onOpen: (row: BriefingRow) => void }) {
+  return (
+    <ul className="overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
+      {rows.map((row) => {
+        const inner = (
+          <>
+            <span className="flex w-[88px] shrink-0 items-center gap-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+              {row.tone === 'warn' && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />}
+              {row.label}
+            </span>
+            <span className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{row.line}</span>
+            {row.opens && <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><ChevronGlyph /></span>}
+          </>
+        );
+        const cls = 'flex min-h-[44px] w-full items-center gap-3 px-4 py-2.5 text-left';
+        return (
+          <li key={row.id} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }} data-briefing-row={row.id}>
+            {row.opens ? (
+              <button type="button" onClick={() => onOpen(row)} data-sheet-from={row.id === 'weather' ? undefined : ''} aria-label={`${row.label}: ${row.line}${row.tone === 'warn' ? ', let op' : ''}`} className={cls}>{inner}</button>
+            ) : (
+              <div className={cls}>{inner}</div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+// Het blad achter Voor en na: opwarmen en rekken onder elkaar.
+function StretchDetail({ template }: { template: SessionTemplate }) {
+  return (
+    <div className="flex flex-col gap-5">
+      {template.warmup && template.warmup.length > 0 && (
+        <div>
+          <Eyebrow tone="var(--color-ink-dim)">{BRIEFING_TEXT.warmup}</Eyebrow>
+          <StretchItems stretches={template.warmup} />
+        </div>
+      )}
+      {template.cooldown && template.cooldown.length > 0 && (
+        <div>
+          <Eyebrow tone="var(--color-ink-dim)">{BRIEFING_TEXT.cooldown}</Eyebrow>
+          <StretchItems stretches={template.cooldown} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -290,6 +343,11 @@ function PlaceRow({ children, count }: { children: ReactNode; count: number }) {
       const next = { left: el.scrollLeft > 2, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 };
       setMore((m) => (m.left === next.left && m.right === next.right ? m : next));
     };
+    // De gekozen keuze staat in beeld, ook als hij achteraan de rij staat (eenmalig, zonder beweging).
+    const chosen = el.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (chosen && (chosen.offsetLeft + chosen.offsetWidth > el.clientWidth || chosen.offsetLeft < el.scrollLeft)) {
+      el.scrollLeft = Math.max(0, chosen.offsetLeft - 16);
+    }
     measure();
     el.addEventListener('scroll', measure, { passive: true });
     window.addEventListener('resize', measure);
@@ -326,14 +384,7 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
 }) {
   const dim = { color: 'var(--color-ink-dim)' };
   const map = view.map;
-  if (map.kind === 'place') {
-    return (
-      <Card>
-        <Eyebrow tone="var(--color-ink-dim)">{map.title}</Eyebrow>
-        <MoreText text={map.how} className="mt-1" color="var(--color-ink)" />
-      </Card>
-    );
-  }
+  // Loopband of binnen: geen kaart; wat je instelt staat in de regel onder de chips.
   if (map.kind !== 'route') return null;
 
   // Je training in één regel: ook zonder lus weet je wat je zoekt.
@@ -477,29 +528,6 @@ function BigRouteSheet({ template, model, date, onClose, onDecline }: { template
         </div>
       </div>
     </Portal>
-  );
-}
-
-// Het blad achter Wat je loopt: het profiel of de zone, en de stappen.
-function RunDetail({ template, date, program }: { template: SessionTemplate; date: string; program: Program | null }) {
-  const plan = buildWorkoutPlan(template, date, program);
-  const steps = plan?.timeline.filter((s) => s.kind !== 'strength') ?? [];
-  const single = steps.length === 1 && !steps[0].noTarget ? (steps[0].intensity as Intensity) : undefined;
-  if (!plan) return <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{durationLabel(resolveEffectiveFullDuration(template, date, program))}</p>;
-  return (
-    <div className="flex flex-col gap-4">
-      {steps.length > 1 ? (
-        <IntervalProfile plan={plan} />
-      ) : single ? (
-        <div className="flex flex-col gap-3">
-          <ZoneBar active={single} label={`Zone ${single}`} />
-          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-            <span className="font-semibold" style={{ color: 'var(--color-progress)' }}>Zone {single}.</span> {ZONE_SENTENCE[single]}
-          </p>
-        </div>
-      ) : null}
-      <StepList plan={plan} />
-    </div>
   );
 }
 
