@@ -21,9 +21,9 @@ export interface LogSessionDeps {
   announceSaved: (batch: SavedMoment[]) => void;
 }
 
-// Een losse training of een horlogelog die nog onderweg is: een tweede tik met precies dezelfde invulling
-// wacht op de eerste en krijgt haar uitkomst, in plaats van een tweede log te schrijven. Een geplande
-// training heeft haar eigen vangst (loggingInFlight: de tweede krijgt nee).
+// Een losse training die nog onderweg is: een tweede tik met precies dezelfde invulling wacht op de eerste
+// en krijgt haar uitkomst, in plaats van een tweede log te schrijven. Een horloge-activiteit die nog onderweg
+// is en een geplande training (loggingInFlight) geven de tweede nee.
 const pending = new Map<string, Promise<boolean>>();
 
 function pendingKey(input: LogSessionInput): string | undefined {
@@ -39,7 +39,8 @@ export function runLogSession(input: LogSessionInput, opts: { batch?: SavedMomen
   const key = pendingKey(input);
   if (!key) return writeLog(input, opts, deps);
   const running = pending.get(key);
-  if (running) return running;
+  // Een horloge-activiteit die al onderweg is: nee, zoals wanneer haar log er al staat (de aanroeper doet dan niets dubbel).
+  if (running) return input.externalId ? Promise.resolve(false) : running;
   const mine = writeLog(input, opts, deps).finally(() => pending.delete(key));
   pending.set(key, mine);
   return mine;

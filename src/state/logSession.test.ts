@@ -117,7 +117,7 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
     const { deps } = makeDeps({ refresh: () => Promise.reject(new Error('kapot')) });
     const input = loose({ externalId: 'intervals.icu:i-1', source: 'garmin', quiet: true });
     const both = await Promise.all([runLogSession(input, undefined, deps), runLogSession(input, undefined, deps)]);
-    expect(both[0]).toBe(true);
+    expect(both).toEqual([true, false]);
     expect(await runLogSession(input, undefined, deps)).toBe(false);
     expect(await SessionLogsRepo.getAll()).toHaveLength(1);
   });

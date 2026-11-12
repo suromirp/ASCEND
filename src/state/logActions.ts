@@ -73,11 +73,12 @@ export function useLogActions(deps: {
     if (announcement.debriefLogId) setDebriefLogId(announcement.debriefLogId);
   }, [settings.introSoundEnabled, settings.overviews, setCelebration, setDebriefLogId]);
 
+  const { heartRate, tempoStablePieces } = settings;
   // Het schrijven zelf staat in state/logSession.ts (zonder React, met tests).
   const logSession = useCallback(
     (input: LogSessionInput, opts?: { batch?: SavedMoment[] }): Promise<boolean> =>
-      runLogSession(input, opts, { settings, loggingInFlight, reportStorageError, refresh, announceSaved }),
-    [refresh, settings, reportStorageError, announceSaved, loggingInFlight],
+      runLogSession(input, opts, { settings: { heartRate, tempoStablePieces }, loggingInFlight, reportStorageError, refresh, announceSaved }),
+    [refresh, heartRate, tempoStablePieces, reportStorageError, announceSaved, loggingInFlight],
   );
 
   // Undoing a log also removes any milestone auto-cleared by it (matched
