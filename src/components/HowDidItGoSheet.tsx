@@ -25,8 +25,8 @@ import { PrimaryButton, SecondaryButton } from './ui';
 import { useLogForm, type LogForm } from './logForm/useLogForm';
 import type { EnabledSports } from '../engine/sports';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, PlaceChoice, RpeField, VariantField } from './logForm/LogFormParts';
-import { asksDoneOn, placeLabel, showsPlace } from './logForm/formRules';
-import { alreadyLogged, footState, HOW_TEXT, saveWithLimit, type FootState } from './logForm/howDidItGo';
+import { placeLabel, SheetMode, showsPlace } from './logForm/formRules';
+import { alreadyLogged, footState, HOW_TEXT, submitLog, type FootState } from './logForm/howDidItGo';
 
 export function HowDidItGoSheet({
   template,
@@ -49,9 +49,14 @@ export function HowDidItGoSheet({
   const { logSession, settings, sessionLogs } = useAppData();
   const form = useLogForm({ template, plannedSessionId, scheduledDate, program, initialVariant, startAtForm: true });
   const savingRef = useRef(false);
-  // Elke weg dicht zonder opslaan gooit het concept weg; terwijl het opslaat blijft het blad open.
-  const { closing, requestClose, sheetRef } = useSheetClose(() => { form.clearDraft(); onClose(); }, 200, () => !savingRef.current);
-  const close = () => { if (!savingRef.current) requestClose(); };
+  // Na de grens in tijd mag het blad dicht terwijl het opslaan nog loopt; het concept blijft dan staan.
+  const slowRef = useRef(false);
+  const closedRef = useRef(false);
+  const finish = () => { if (!closedRef.current) { closedRef.current = true; onClose(); } };
+  // Elke weg dicht zonder opslaan gooit het concept weg; terwijl het opslaat blijft het blad open, tot de grens.
+  const canClose = () => !savingRef.current || slowRef.current;
+  const { closing, requestClose, sheetRef } = useSheetClose(() => { if (!savingRef.current) form.clearDraft(); finish(); }, 200, canClose);
+  const close = () => { if (canClose()) requestClose(); };
   const [step, setStep] = useState<1 | 2>(1);
   // De terugknop in stap 2: eerst terug naar stap 1.
   useBackToClose(step === 2, () => setStep(1));
@@ -75,30 +80,28 @@ export function HowDidItGoSheet({
     }
     setConfirmLong(false);
     setFailed(false);
-    savingRef.current = true;
     setSaving(true);
-    const ok = await saveWithLimit(() => logSession(input), () => setSlow(true));
-    savingRef.current = false;
+    await submitLog({
+      busy: savingRef,
+      save: () => logSession(input),
+      onSlow: () => { slowRef.current = true; setSlow(true); },
+      onSaved: () => { form.clearDraft(); onSaved?.(); finish(); },
+      // Mislukt: het blad blijft open met alles wat je invulde en het concept.
+      onFailed: () => setFailed(true),
+    });
+    slowRef.current = false;
     setSaving(false);
     setSlow(false);
-    // Mislukt: het blad blijft open met alles wat je invulde en het concept.
-    if (!ok) {
-      setFailed(true);
-      return;
-    }
-    form.clearDraft();
-    onSaved?.();
-    onClose();
   }
 
   const dayLine = values.doneOn === form.today ? 'Vandaag' : `${weekdayShortNL(values.doneOn)} ${formatDateNL(values.doneOn)}`;
-  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} rest={shape.isRest} minutes={entryMinutes(values.duration)} onClose={close} onAdjust={() => setConfirmLong(false)} onSave={(confirmed) => void save(confirmed)} />;
+  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} loose={!plannedSessionId} rest={shape.isRest} minutes={entryMinutes(values.duration)} onClose={close} onAdjust={() => { setConfirmLong(false); setStep(1); }} onSave={(confirmed) => void save(confirmed)} />;
 
   if (step === 2) {
     return (
       <SheetFrame closing={closing} sheetRef={sheetRef} onClose={close} label={`${template.name}, ${HOW_TEXT.more.toLowerCase()}`} scrollKey="more" foot={footer}
         head={<SheetHeader eyebrow={HOW_TEXT.title} title={template.name} facts={HOW_TEXT.more} onBack={() => setStep(1)} onClose={close} />}>
-        <StepTwo form={form} template={template} plannedSessionId={plannedSessionId} scheduledDate={scheduledDate} enabledSports={settings.enabledSports} otherOpen={otherOpen} onToggleOther={() => setOtherOpen((o) => !o)} />
+        <StepTwo form={form} template={template} scheduledDate={scheduledDate} enabledSports={settings.enabledSports} otherOpen={otherOpen} onToggleOther={() => setOtherOpen((o) => !o)} />
       </SheetFrame>
     );
   }
@@ -106,15 +109,18 @@ export function HowDidItGoSheet({
   return (
     <SheetFrame closing={closing} sheetRef={sheetRef} onClose={close} label={`${template.name}, ${HOW_TEXT.title.toLowerCase()}`} scrollKey="main" foot={footer}
       head={<SheetHeader eyebrow={HOW_TEXT.title} title={template.name} facts={dayLine} onClose={close} />}>
-      <StepOne form={form} template={template} onDuration={() => setConfirmLong(false)} onMore={() => setStep(2)} />
+      <StepOne form={form} template={template} plannedSessionId={plannedSessionId} scheduledDate={scheduledDate} onDuration={() => setConfirmLong(false)} onMore={() => setStep(2)} />
     </SheetFrame>
   );
 }
 
 // Stap 1: duur, Beter/Normaal/Slechter, pijn en zwaarte, en de rij naar stap 2.
-export function StepOne({ form, template, onDuration, onMore }: { form: LogForm; template: SessionTemplate; onDuration: () => void; onMore: () => void }) {
+export function StepOne({ form, template, plannedSessionId, scheduledDate, onDuration, onMore }: { form: LogForm; template: SessionTemplate; plannedSessionId?: string; scheduledDate?: string; onDuration: () => void; onMore: () => void }) {
   return (
-    <div className="mt-4 flex flex-col gap-4">
+    <SheetMode.Provider value>
+    <div className="quiet-form mt-4 flex flex-col gap-4">
+      {/* Een losse training: de dag is de eerste vraag. Een geplande van een dag die voorbij is: stap 2. */}
+      {!plannedSessionId && <DoneOnRow form={form} scheduledDate={scheduledDate} />}
       {form.shape.isRest ? (
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{HOW_TEXT.restLine}</p>
       ) : (
@@ -129,16 +135,18 @@ export function StepOne({ form, template, onDuration, onMore }: { form: LogForm;
         <SheetRow title={HOW_TEXT.more} onClick={onMore} />
       </SheetRows>
     </div>
+    </SheetMode.Provider>
   );
 }
 
-// Stap 2: de overige velden van het oude formulier.
-export function StepTwo({ form, template, plannedSessionId, scheduledDate, enabledSports, otherOpen, onToggleOther }: {
-  form: LogForm; template: SessionTemplate; plannedSessionId?: string; scheduledDate?: string; enabledSports?: Partial<EnabledSports>; otherOpen: boolean; onToggleOther: () => void;
+// Stap 2: de overige velden van het oude formulier; Gedaan op bij een geplande training van een dag die voorbij is.
+export function StepTwo({ form, template, scheduledDate, enabledSports, otherOpen, onToggleOther }: {
+  form: LogForm; template: SessionTemplate; scheduledDate?: string; enabledSports?: Partial<EnabledSports>; otherOpen: boolean; onToggleOther: () => void;
 }) {
   return (
-    <div className="mt-4 flex flex-col gap-4">
-      {asksDoneOn(form, plannedSessionId) && <DoneOnRow form={form} scheduledDate={scheduledDate} />}
+    <SheetMode.Provider value>
+    <div className="quiet-form mt-4 flex flex-col gap-4">
+      {form.plannedInPast && <DoneOnRow form={form} scheduledDate={scheduledDate} />}
       {showsPlace(form, template) && (
         <div>
           <p className="mb-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{placeLabel(template)}</p>
@@ -156,13 +164,14 @@ export function StepTwo({ form, template, plannedSessionId, scheduledDate, enabl
         </>
       )}
     </div>
+    </SheetMode.Provider>
   );
 }
 
 // Onderaan: al gedaan (alleen Sluiten), Klopt dit? bij een heel lange duur, of Annuleren en Opslaan met
 // wat het opslaan zegt (duurt lang, lukte niet).
-export function SheetFoot({ state, saving, slow, failed, rest, minutes, onClose, onAdjust, onSave }: {
-  state: FootState; saving: boolean; slow: boolean; failed: boolean; rest: boolean; minutes: number; onClose: () => void; onAdjust: () => void; onSave: (confirmed: boolean) => void;
+export function SheetFoot({ state, saving, slow, failed, loose = false, rest, minutes, onClose, onAdjust, onSave }: {
+  state: FootState; saving: boolean; slow: boolean; failed: boolean; loose?: boolean; rest: boolean; minutes: number; onClose: () => void; onAdjust: () => void; onSave: (confirmed: boolean) => void;
 }) {
   if (state === 'already') {
     return (
@@ -187,10 +196,10 @@ export function SheetFoot({ state, saving, slow, failed, rest, minutes, onClose,
   return (
     <div>
       {(slow || failed) && (
-        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? HOW_TEXT.failed : HOW_TEXT.slow}</p>
+        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : HOW_TEXT.slow}</p>
       )}
       <div className="flex gap-3">
-        <SecondaryButton onClick={onClose} disabled={saving} className="min-w-[112px] flex-none px-4">{HOW_TEXT.cancel}</SecondaryButton>
+        <SecondaryButton onClick={onClose} disabled={saving && !slow} className="min-w-[112px] flex-none px-4">{HOW_TEXT.cancel}</SecondaryButton>
         <PrimaryButton onClick={() => onSave(false)} disabled={saving}>{saving ? HOW_TEXT.saving : rest ? HOW_TEXT.rest : HOW_TEXT.save}</PrimaryButton>
       </div>
     </div>

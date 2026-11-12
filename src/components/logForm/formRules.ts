@@ -1,6 +1,7 @@
 // ASCEND: welke velden het formulier Hoe ging het? vraagt, gedeeld door het oude trainingsscherm en
 // het blad Hoe ging het? (LogFormParts.tsx). Ongewijzigd uit components/ExerciseLogger.tsx.
 
+import { createContext } from 'react';
 import type { SessionTemplate, SessionVariant } from '../../models/training';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import { getModalities } from '../../data/modalities';
@@ -26,3 +27,7 @@ export function asksDoneOn(form: Pick<LogForm, 'plannedInPast'>, plannedSessionI
 export function asksPain(template: SessionTemplate): boolean {
   return template.type === 'cardio' || template.type === 'hiking' || (template.type === 'strength' && isLegHeavyTemplate(template));
 }
+
+// In het blad Hoe ging het? (regel 5 van het ontwerp): Opslaan is het enige mint, dus een gekozen chip,
+// segment of zwaarte is stil, en elk invoerveld is 44 px hoog. Het oude scherm blijft zoals het was.
+export const SheetMode = createContext(false);

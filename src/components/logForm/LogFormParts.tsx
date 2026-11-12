@@ -18,8 +18,9 @@ import { asksLegs, type LegsAtStart } from '../../engine/learning';
 import { availableVariants } from '../../engine/substitutions';
 import { INTENSITY } from '../../data/workoutStructure';
 import { GARMIN_SUGGESTED_TYPES, GARMIN_TYPE_LABEL, COMPATIBILITY_LABEL } from '../../data/garminSuggested';
+import { useContext } from 'react';
 import type { LogForm } from './useLogForm';
-import { asksPain, placeLabel, VARIANT_LABEL } from './formRules';
+import { asksPain, placeLabel, SheetMode, VARIANT_LABEL } from './formRules';
 
 const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
 const LEGS_OPTIONS: [LegsAtStart, string][] = [['fris', 'Fris'], ['normaal', 'Normaal'], ['zwaar', 'Zwaar']];
@@ -28,11 +29,12 @@ type Part = { form: LogForm; template: SessionTemplate };
 
 // Dutch number entry (components/NumberField.tsx): "1.200" m D+ stays 1200, "12,5" km stays 12.5.
 export function Field({ label, value, onChange, decimals = 0, unit, placeholder }: { label: string; value: number | ''; onChange: (v: number | '') => void; decimals?: number; unit?: string; placeholder?: string }) {
+  const sheet = useContext(SheetMode);
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label}</span>
       <div className="w-32">
-        <NumberField value={value === '' ? undefined : value} onChange={(v) => onChange(v === undefined ? '' : v)} decimals={decimals} unit={unit} placeholder={placeholder} compact />
+        <NumberField value={value === '' ? undefined : value} onChange={(v) => onChange(v === undefined ? '' : v)} decimals={decimals} unit={unit} placeholder={placeholder} compact={!sheet} tall={sheet} />
       </div>
     </div>
   );
@@ -68,12 +70,13 @@ export function PlaceChoice({ form, template, enabledSports }: Part & { enabledS
 export function DoneOnRow({ form, scheduledDate }: { form: LogForm; scheduledDate?: string }) {
   const { today, plannedInPast } = form;
   const doneOn = form.values.doneOn;
+  const quiet = useContext(SheetMode);
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
       <span style={{ color: 'var(--color-ink-dim)' }}>Gedaan op</span>
       {plannedInPast ? (
         [scheduledDate!, today].map((d) => (
-          <Chip key={d} selected={doneOn === d} onClick={() => form.setDoneOn(d)}>
+          <Chip key={d} tone={quiet ? 'quiet' : undefined} selected={doneOn === d} onClick={() => form.setDoneOn(d)}>
             {d === today ? 'vandaag' : `${weekdayShortNL(d).toLowerCase()} ${formatDateNL(d)}`}
           </Chip>
         ))
@@ -111,6 +114,7 @@ export function DetailsField({ form, template }: Part) {
 export function RpeField({ form }: { form: LogForm }) {
   const { planRpe, peak, conditioningSteps } = form;
   const rpe = form.values.rpe;
+  const quiet = useContext(SheetMode);
   return (
     <div>
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE): hoe zwaar voelde de hele training?</p>
@@ -125,8 +129,8 @@ export function RpeField({ form }: { form: LogForm }) {
               role="radio"
               aria-checked={active}
               onClick={() => form.setRpe(active ? '' : n)}
-              className="st-chip"
-              style={{ padding: 0, borderColor: active ? undefined : inPlan ? 'var(--color-action-muted)' : undefined, color: inPlan && !active ? 'var(--color-ink)' : undefined }}
+              className={quiet ? 'st-chip quiet' : 'st-chip'}
+              style={{ padding: 0, borderColor: active ? undefined : inPlan ? (quiet ? 'var(--color-control-border)' : 'var(--color-action-muted)') : undefined, color: inPlan && !active ? 'var(--color-ink)' : undefined }}
             >
               {n}
             </button>
@@ -188,6 +192,7 @@ export function FeelField({ form, template }: Part) {
 // Afstand, helling, stijging, daling, stokken, trap, hartslag, cadans, vermogen, rugzak en terrein:
 // alleen wat de gekozen plek vraagt.
 export function ModalityFields({ form }: { form: LogForm }) {
+  const sheet = useContext(SheetMode);
   const { shape, elevation, plannedStep, values } = form;
   const { fields } = shape;
   if (!shape.hasModalities) return null;
@@ -232,7 +237,7 @@ export function ModalityFields({ form }: { form: LogForm }) {
             value={values.terrain}
             onChange={(e) => form.setTerrain(e.target.value)}
             placeholder="bijv. bos, rotsen, zand"
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+            className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm${sheet ? ' min-h-[44px]' : ''}`}
             style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
           />
         </div>
@@ -243,6 +248,7 @@ export function ModalityFields({ form }: { form: LogForm }) {
 
 // Iets anders gedaan? Het plan, het voorstel van je Garmin of een eigen training.
 export function OtherDoneField({ form, open, onToggle }: { form: LogForm; open: boolean; onToggle: () => void }) {
+  const quiet = useContext(SheetMode);
   if (!form.supportsGuidanceMode) return null;
   const { guidanceMode, garminSuggestedType } = form.values;
   const compatibility = form.compatibility;
@@ -255,7 +261,7 @@ export function OtherDoneField({ form, open, onToggle }: { form: LogForm; open: 
       {open && (
         <div className="mt-2 flex flex-col gap-2">
           {([['ascend_guided', 'Gedaan volgens dit plan'], ['garmin_suggested', 'Het voorstel van je Garmin gevolgd'], ['free', 'Een eigen training']] as const).map(([mode, label]) => (
-            <Chip key={mode} selected={guidanceMode === mode} onClick={() => form.setGuidanceMode(mode)}>
+            <Chip key={mode} tone={quiet ? 'quiet' : undefined} selected={guidanceMode === mode} onClick={() => form.setGuidanceMode(mode)}>
               {label}
             </Chip>
           ))}
@@ -264,7 +270,7 @@ export function OtherDoneField({ form, open, onToggle }: { form: LogForm; open: 
               <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat stelde je Garmin voor?</p>
               <div className="flex flex-wrap gap-2">
                 {GARMIN_SUGGESTED_TYPES.map((t) => (
-                  <Chip key={t} selected={garminSuggestedType === t} onClick={() => form.setGarminSuggestedType(t)}>
+                  <Chip key={t} tone={quiet ? 'quiet' : undefined} selected={garminSuggestedType === t} onClick={() => form.setGarminSuggestedType(t)}>
                     {GARMIN_TYPE_LABEL[t] ?? t}
                   </Chip>
                 ))}

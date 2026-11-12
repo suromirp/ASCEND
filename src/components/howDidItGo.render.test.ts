@@ -7,7 +7,7 @@ import type { SessionLog } from '../models/training';
 import { draftKey, saveDraft } from '../utils/loggerDraft';
 import { briefingEntry } from '../engine/briefing';
 import { durationNeedsCheck } from '../engine/inputLimits';
-import { alreadyLogged, footState, HOW_TEXT, SAVE_LIMIT_MS, saveWithLimit } from './logForm/howDidItGo';
+import { alreadyLogged, footState, HOW_TEXT, SAVE_LIMIT_MS, saveWithLimit, submitLog } from './logForm/howDidItGo';
 import { asksPain } from './logForm/formRules';
 import { useLogForm } from './logForm/useLogForm';
 import sheetSrc from './HowDidItGoSheet.tsx?raw';
@@ -50,14 +50,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const sheet = (id: string, date = TODAY, planned: string | undefined = 'ps1') =>
-  renderToStaticMarkup(createElement(HowDidItGoSheet, { template: tpl(id), plannedSessionId: planned, scheduledDate: date, program, onClose: () => undefined }));
+const sheet = (id: string, date = TODAY, planned: string | null = 'ps1') =>
+  renderToStaticMarkup(createElement(HowDidItGoSheet, { template: tpl(id), plannedSessionId: planned ?? undefined, scheduledDate: date, program, onClose: () => undefined }));
 
 function StepTwoOf({ id, date, planned }: { id: string; date: string; planned?: string }) {
   const form = useLogForm({ template: tpl(id), plannedSessionId: planned, scheduledDate: date, program, startAtForm: true });
-  return createElement(StepTwo, { form, template: tpl(id), plannedSessionId: planned, scheduledDate: date, otherOpen: false, onToggleOther: () => undefined });
+  return createElement(StepTwo, { form, template: tpl(id), scheduledDate: date, otherOpen: false, onToggleOther: () => undefined });
 }
-const stepTwo = (id: string, date = TODAY, planned: string | undefined = 'ps1') => renderToStaticMarkup(createElement(StepTwoOf, { id, date, planned }));
+const stepTwo = (id: string, date = TODAY, planned: string | null = 'ps1') => renderToStaticMarkup(createElement(StepTwoOf, { id, date, planned: planned ?? undefined }));
 
 describe('stap 1 van Hoe ging het?', () => {
   it('de dag zelf: duur, Beter/Normaal/Slechter, pijn, zwaarte, de rij naar stap 2 en één mint knop Opslaan', () => {
@@ -80,11 +80,29 @@ describe('stap 1 van Hoe ging het?', () => {
     const two = stepTwo('tpl_easy_run', '2026-11-10');
     expect(two).toContain('Gedaan op');
     expect(two).toContain('>vandaag<');
-    expect(two).toMatch(/aria-pressed="true"[^>]*>di 10 nov|class="[^"]*"[^>]*>di 10 nov/i);
+    expect(two).toMatch(/aria-pressed="true"[^>]*>di 10 nov/i);
+    expect(two).toMatch(/aria-pressed="false"[^>]*>vandaag</);
   });
 
   it('de dag zelf: geen Gedaan op bij een geplande training', () => {
     expect(stepTwo('tpl_easy_run')).not.toContain('Gedaan op');
+    expect(sheet('tpl_easy_run')).not.toContain('Gedaan op');
+  });
+
+  it('een losse training: Gedaan op staat in stap 1, de dag is de eerste vraag', () => {
+    const html = sheet('tpl_long_run', TODAY, null);
+    expect(html).toContain('Gedaan op');
+    expect(html).toContain('type="date"');
+    expect(stepTwo('tpl_long_run', TODAY, null)).not.toContain('Gedaan op');
+  });
+
+  it('één mint: gekozen chips en segmenten zijn stil in het blad, invoervelden 44 px', () => {
+    saveDraft(draftKey('tpl_easy_run', 'ps1', TODAY), { rpe: 4, subjectiveFeel: 'normal' });
+    const html = sheet('tpl_easy_run');
+    expect(html).toContain('quiet-form');
+    expect(html).toMatch(/class="st-chip quiet"[^>]*>4</);
+    expect(html).not.toContain('var(--color-action-muted)');
+    expect(html).toContain('min-h-[44px]');
   });
 
   it('stap 2: de overige velden van het oude formulier', () => {
@@ -141,17 +159,40 @@ describe('opslaan in het blad', () => {
     expect(html).toContain('>Ja, opslaan<');
     // Het blad vraagt het voor het opslaan, met de minuten die worden opgeslagen.
     expect(sheetSrc).toMatch(/if \(!confirmed && durationNeedsCheck\(input\.durationMinutes\)\) \{\s*setConfirmLong\(true\);\s*return;/);
+    // Aanpassen brengt je terug bij het duurveld in stap 1.
+    expect(sheetSrc).toContain('onAdjust={() => { setConfirmLong(false); setStep(1); }}');
   });
 
-  it('een fout halverwege: alles of niets, het blad blijft open met de melding en Opslaan kan weer', async () => {
-    expect(await saveWithLimit(async () => false, () => undefined)).toBe(false);
-    expect(await saveWithLimit(async () => { throw new Error('schijf vol'); }, () => undefined)).toBe(false);
+  it('een fout bij het opslaan: het blad blijft open met de melding, het concept blijft, Opslaan kan weer', async () => {
+    for (const save of [async () => false, async () => { throw new Error('schijf vol'); }]) {
+      const busy = { current: false };
+      const onSaved = vi.fn();
+      const onFailed = vi.fn();
+      expect(await submitLog({ busy, save, onSlow: () => undefined, onSaved, onFailed })).toBe('failed');
+      expect(onSaved).not.toHaveBeenCalled();
+      expect(onFailed).toHaveBeenCalledOnce();
+      expect(busy.current).toBe(false);
+    }
     const html = renderToStaticMarkup(createElement(SheetFoot, { state: 'save', saving: false, slow: false, failed: true, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
     expect(html).toContain(HOW_TEXT.failed);
     expect(html).not.toMatch(/disabled=""[^>]*>Opslaan</);
-    // Eén aanroep van logSession met het hele log; mislukt: geen clearDraft en geen onClose.
-    expect(sheetSrc.match(/logSession\(/g)).toHaveLength(1);
-    expect(sheetSrc).toMatch(/if \(!ok\) \{\s*setFailed\(true\);\s*return;\s*\}\s*form\.clearDraft\(\);/);
+    // Een losse training: eerst in je logboek kijken, want een tweede tik kan een tweede log geven.
+    const loose = renderToStaticMarkup(createElement(SheetFoot, { state: 'save', saving: false, slow: false, failed: true, loose: true, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
+    expect(loose).toContain(HOW_TEXT.failedLoose);
+  });
+
+  it('gelukt: één aanroep met het hele log, daarna concept weg en blad dicht; een tweede tik tijdens het opslaan doet niets', async () => {
+    const busy = { current: false };
+    let resolve: (ok: boolean) => void = () => undefined;
+    const save = vi.fn(() => new Promise<boolean>((r) => { resolve = r; }));
+    const onSaved = vi.fn();
+    const first = submitLog({ busy, save, onSlow: () => undefined, onSaved, onFailed: () => undefined });
+    expect(await submitLog({ busy, save, onSlow: () => undefined, onSaved, onFailed: () => undefined })).toBe('busy');
+    resolve(true);
+    expect(await first).toBe('saved');
+    expect(save).toHaveBeenCalledOnce();
+    expect(onSaved).toHaveBeenCalledOnce();
+    expect(sheetSrc).toContain('onSaved: () => { form.clearDraft(); onSaved?.(); finish(); }');
   });
 
   it('een grens in tijd: na de grens zegt het blad dat het lang duurt, de uitkomst blijft die van het opslaan', async () => {
@@ -170,11 +211,15 @@ describe('opslaan in het blad', () => {
     const html = renderToStaticMarkup(createElement(SheetFoot, { state: 'save', saving: true, slow: true, failed: false, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
     expect(html).toContain(HOW_TEXT.slow);
     expect(html).toContain('Opslaan…');
+    // Na de grens mag je weg: Annuleren staat aan, het concept blijft staan.
+    expect(html).not.toMatch(/disabled=""[^>]*>Annuleren</);
+    expect(sheetSrc).toContain('const canClose = () => !savingRef.current || slowRef.current;');
+    expect(sheetSrc).toContain('if (!savingRef.current) form.clearDraft();');
   });
 
   it('sluiten zonder opslaan gooit het concept weg, terwijl het opslaat blijft het blad open', () => {
-    expect(sheetSrc).toContain('useSheetClose(() => { form.clearDraft(); onClose(); }, 200, () => !savingRef.current)');
-    expect(sheetSrc).toContain('const close = () => { if (!savingRef.current) requestClose(); };');
+    expect(sheetSrc).toContain('useSheetClose(() => { if (!savingRef.current) form.clearDraft(); finish(); }, 200, canClose)');
+    expect(sheetSrc).toContain('const close = () => { if (canClose()) requestClose(); };');
   });
 
   it('terug sluit laag voor laag: in stap 2 eerst terug naar stap 1', () => {
@@ -210,7 +255,7 @@ describe('ontwerpregels van het blad', () => {
       expect(src, name).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba?\(/);
       expect(src, name).not.toMatch(/text-\[(?:[0-9]|1[01])px\]/);
       expect(src, name).not.toMatch(/\buppercase\b/);
-      expect(src, name).not.toMatch(/[–—]/);
+      expect(src, name).not.toMatch(/[\u2013\u2014]/);
     }
   });
   it('Rustig en Uit: alleen de gedeelde beweging van een blad, die in Uit op de eindstand staat', () => {

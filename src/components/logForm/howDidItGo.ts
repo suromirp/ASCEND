@@ -20,6 +20,9 @@ export const HOW_TEXT = {
   // Na de grens in tijd: het opslaan loopt nog, en je ziet dat.
   slow: 'Opslaan duurt lang. Je invulling blijft staan.',
   failed: 'Opslaan lukte niet. Je invulling staat er nog; probeer het opnieuw.',
+  // Een losse training heeft geen geplande training die een tweede log tegenhoudt, en logSession kan
+  // mislukken nadat het log al geschreven is (een stap erna faalde): eerst kijken.
+  failedLoose: 'Opslaan lukte niet. Kijk eerst in je logboek of hij er toch staat; je invulling staat er nog.',
   already: 'Deze training staat al als gedaan. Er komt geen tweede log bij.',
 } as const;
 
@@ -41,7 +44,7 @@ export function footState({ alreadyDone, confirmLong }: { alreadyDone: boolean; 
 }
 
 // Eén keer opslaan, met een grens in tijd. Na `limitMs` meldt `onSlow` dat het lang duurt; de uitkomst
-// is altijd die van het opslaan zelf (alles of niets: logSession schrijft één log of niets).
+// is altijd die van het opslaan zelf. Let op: logSession kan false geven nadat het log al geschreven is.
 export async function saveWithLimit(save: () => Promise<boolean>, onSlow: () => void, limitMs = SAVE_LIMIT_MS): Promise<boolean> {
   const timer = setTimeout(onSlow, limitMs);
   try {
@@ -51,4 +54,22 @@ export async function saveWithLimit(save: () => Promise<boolean>, onSlow: () => 
   } finally {
     clearTimeout(timer);
   }
+}
+
+export type SubmitResult = 'saved' | 'failed' | 'busy';
+
+// Opslaan vanuit het blad: nooit twee tegelijk, één aanroep met het hele log. Gelukt: `onSaved` (concept
+// weg, blad dicht). Mislukt of een fout: `onFailed`, het blad blijft open met alles wat je invulde.
+export async function submitLog(deps: { busy: { current: boolean }; save: () => Promise<boolean>; onSlow: () => void; onSaved: () => void; onFailed: () => void; limitMs?: number }): Promise<SubmitResult> {
+  if (deps.busy.current) return 'busy';
+  deps.busy.current = true;
+  let ok: boolean;
+  try {
+    ok = await saveWithLimit(deps.save, deps.onSlow, deps.limitMs);
+  } finally {
+    deps.busy.current = false;
+  }
+  if (ok) deps.onSaved();
+  else deps.onFailed();
+  return ok ? 'saved' : 'failed';
 }

@@ -104,6 +104,9 @@ describe('Hoe ging het? slaat op wat het oude formulier opsloeg', () => {
     ['een loop buiten', 'tpl_easy_run', runOutside, 'ps_run'],
     ['een loopband', 'tpl_easy_run', treadmill, 'ps_run'],
     ['een wandeling met rugzak', 'tpl_mountain_hike', ruck, undefined],
+    ['een intervaltraining met de herhalingen', 'tpl_intervals', { ...empty, duration: 45, rpe: 8, modalityKey: 'run_outdoor', workout: { reps: 6, repSeconds: 180 } }, 'ps_int'],
+    ['een eigen training (Iets anders gedaan)', 'tpl_long_run', { ...empty, duration: 70, guidanceMode: 'free', modalityKey: 'long_run_outdoor', distanceKm: 11.2, elevationGainM: 90 }, 'ps_long'],
+    ['het voorstel van je Garmin', 'tpl_easy_run', { ...empty, duration: 30, guidanceMode: 'garmin_suggested', garminSuggestedType: 'Run', distanceKm: 5 }, 'ps_run'],
   ];
   for (const [name, id, values, planned] of cases) {
     it(`${name}: veld voor veld gelijk`, () => {
@@ -121,6 +124,13 @@ describe('Hoe ging het? slaat op wat het oude formulier opsloeg', () => {
       durationMinutes: 42, rpe: 4, notes: 'Wind mee op de dijk', subjectiveFeel: 'better', painAreas: ['knie'], outdoorData: undefined,
       cardioData: { durationMinutes: 42, distanceKm: 7.35, elevationGainM: 40, environment: 'outdoor', modality: 'run_outdoor', guidanceMode: 'ascend_guided', avgHeartRate: 141, cadence: 168, source: 'manual' },
     });
+  });
+
+  it('de intervaltraining bewaart de herhalingen, een eigen training geen plek', () => {
+    const intervals = buildManualLog({ ...empty, duration: 45, modalityKey: 'run_outdoor', workout: { reps: 6, repSeconds: 180 } }, { template: tpl('tpl_intervals'), quickComplete: false, exercises: [] });
+    expect(intervals.workout).toMatchObject({ reps: 6, repSeconds: 180 });
+    const free = buildManualLog({ ...empty, duration: 70, guidanceMode: 'free', modalityKey: 'long_run_outdoor' }, { template: tpl('tpl_long_run'), quickComplete: false, exercises: [] });
+    expect(free.cardioData ?? free.outdoorData).toMatchObject({ modality: undefined, guidanceMode: 'free', environment: undefined });
   });
 
   it('de loopband: de hoogtemeters geschat uit afstand en helling', () => {
