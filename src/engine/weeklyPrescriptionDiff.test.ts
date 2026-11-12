@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { diffWeeklyPrescriptionPlan, realPlanChanges, changesTheRoundKeeps, changesOnAllowedDays } from './weeklyPrescriptionDiff';
+import { diffWeeklyPrescriptionPlan, realPlanChanges, changesTheRoundKeeps, changesOnAllowedDays, settleWithRound } from './weeklyPrescriptionDiff';
 import type { PlannedSession } from '../models/training';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
 import type { TrainingPrescription } from '../models/prescription';
@@ -239,5 +239,50 @@ describe('changesOnAllowedDays', () => {
     const changes = [remove('za', '2027-05-08'), addFor('tpl_tempo_run', '2027-05-08', 'za')];
     expect(changesOnAllowedDays(changes, (d) => d === '2027-05-08')).toEqual([]);
     expect(changesOnAllowedDays(changes, (d) => d >= '2027-05-09')).toEqual(changes);
+  });
+});
+
+// Melding van 12 november: twaalf keer op een dag hetzelfde aangenomen voorstel voor een Wandeldag op een zaterdag
+// zestien weken vooruit, die er daarna niet stond. Alleen nagemaakte gegevens.
+describe('settleWithRound: alleen wat de ronde zelf bevestigde', () => {
+  const addOn = (date: string): PlanChangeItem => ({ action: 'add', newSessionDraft: { templateId: 'tpl_hike_day_one', scheduledDate: date, weekStartDate: '2027-03-01' }, reason: 'nagemaakt' });
+  const content: PlanChangeItem = { action: 'replace', plannedSessionId: 's1', newPrescriptionId: 'p1', reason: 'nagemaakt' };
+  // Een ronde die per keer de eerste toevoeging weghaalt: elke training blijft alleen dankzij de vorige.
+  const peel = async (current: PlanChangeItem[]) => { const first = current.find((c) => c.action === 'add'); return current.filter((c) => c !== first); };
+
+  it('telt door tot de ronde niets meer weghaalt, ook na meer dan drie keer', async () => {
+    const adds = ['2027-03-02', '2027-03-03', '2027-03-04', '2027-03-05', '2027-03-06'].map(addOn);
+    let rounds = 0;
+    const out = await settleWithRound([...adds, content], async (c) => { rounds++; return peel(c); }, 8);
+    expect(out).toEqual([content]);
+    expect(rounds).toBe(5);
+  });
+
+  it('haalt de ronde na het laatste natellen nog iets weg, dan komt er geen rij bij en valt er niets stil: alleen wat geen rij raakt blijft, met zijn gewone melding', async () => {
+    const adds = ['2027-03-02', '2027-03-03', '2027-03-04', '2027-03-05', '2027-03-06'].map(addOn);
+    // Na drie keer staat de Wandeldag van zaterdag er nog in, maar niemand telde hem na.
+    expect(await settleWithRound([...adds, content], peel, 3)).toEqual([content]);
+  });
+
+  it('een uitkomst die de ronde laat staan komt ongewijzigd terug, en zonder rij om na te tellen rekent de ronde niet', async () => {
+    const add = addOn('2027-03-06');
+    expect(await settleWithRound([add, content], async (c) => c, 8)).toEqual([add, content]);
+    let rounds = 0;
+    expect(await settleWithRound([content], async (c) => { rounds++; return c; }, 8)).toEqual([content]);
+    expect(rounds).toBe(0);
+  });
+});
+
+describe('changesTheRoundKeeps: een weghaling die de ronde terugdraait', () => {
+  const row = (id: string, status: PlannedSession['status']): PlannedSession => ({ id, templateId: 'tpl_test_run', scheduledDate: '2027-03-06', weekStartDate: '2027-03-01', status, order: 1 });
+  const remove: PlanChangeItem = { action: 'remove', plannedSessionId: 't1', fromDate: '2027-03-06', toDate: '2027-03-06', reason: 'nagemaakt' };
+  it('valt weg als de rij na de ronde weer gepland staat, en blijft als ze overgeslagen blijft', () => {
+    expect(changesTheRoundKeeps([remove], [row('t1', 'planned')], [row('t1', 'planned')])).toEqual([]);
+    expect(changesTheRoundKeeps([remove], [row('t1', 'planned')], [row('t1', 'skipped')])).toEqual([remove]);
+  });
+  it('de toevoeging die de teruggekomen rij zou vervangen valt mee', () => {
+    const swapIn: PlanChangeItem = { action: 'add', newSessionDraft: { templateId: 'tpl_hike_day_one', scheduledDate: '2027-03-06', weekStartDate: '2027-03-01' }, reason: 'nagemaakt', replacesSessionId: 't1' };
+    const fresh: PlannedSession = { id: 'new', templateId: 'tpl_hike_day_one', scheduledDate: '2027-03-06', weekStartDate: '2027-03-01', status: 'planned', order: 2 };
+    expect(changesTheRoundKeeps([remove, swapIn], [row('t1', 'planned')], [row('t1', 'planned'), fresh])).toEqual([]);
   });
 });

@@ -181,6 +181,8 @@ Overig:
 - De periode Zonder sportschool geeft de 3 dagen na een tocht dezelfde lengteregel als de 72 uur rust.
 - Overzicht Gewicht: met precies twee wegingen in twee weken kan het eind van de lijn een paar tienden afwijken van het grote getal.
 - Nagekomen uit ronde 2b: een eigen sport telt niet in de weekcheck; "Laten staan" bij een vakantie en "laten rusten?" rond een Top-race voor vaste sporten; de waarde "Alles normaal" valt af in de rij Hoeveel per soort op 360 px; een test die alle Android-XML vooraf leest (een dubbel streepje in commentaar brak de APK-bouw).
+- Weekvoorschrift: `consecutiveKeepWeeks` telt openingen in plaats van weken (elke week neemt de opgeslagen teller van de week ervoor plus één, `engine/weeklyPrescriptionEngine.ts`). De eerste tien tot vijftien openingen na een verandering schrijft de stap daardoor elke keer voorschriften weg en leest de app een keer extra. Geen melding; de teller wordt nergens gelezen (Sherpa Weekplan, 12 november).
+- Krachtblok: `engine/strengthScheduling.ts` regel 138 zegt nog "staat er al op elke dag een training"; een week telt ook mee als er een dag vrij is waar het niet mag. De zin van het weekvoorschrift is al aangepast (Sherpa Weekplan, 12 november).
 
 ## Nakijken
 
