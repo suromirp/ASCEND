@@ -21,7 +21,7 @@ export interface OverviewSettings {
   // Weekterugblik op Vandaag, en op welke dag(en) hij verschijnt.
   weekReview?: boolean;
   weekReviewDay?: ReviewDay;
-  // De vraag van de week in "Je dag".
+  // De vraag van de week, als eigen regel onder "Je dag"; standaard uit.
   weeklyQuestion?: boolean;
   // De ochtendcheck in "Je dag".
   morningCheckIn?: boolean;

@@ -990,7 +990,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Een profiel zet de losse schakelaars in één keer. Je training staat altijd op Vandaag.',
     points: [
       { head: 'Alles laten zien', text: 'alle kaarten, zoals het advies.' },
-      { head: 'Alleen het belangrijkste', text: 'je training, de ochtendcheck en het weer. Weekterugblik, vraag van de week, citaat, ochtendkaart en geluid gaan uit.' },
+      { head: 'Alleen het belangrijkste', text: 'je training, de ochtendcheck en het weer. Weekterugblik, citaat, ochtendkaart en geluid gaan uit.' },
       { head: 'Alleen je training', text: 'ook de ochtendcheck en het weer gaan uit. Aangepast betekent dat je schakelaars bij geen profiel passen.' },
     ],
   },
