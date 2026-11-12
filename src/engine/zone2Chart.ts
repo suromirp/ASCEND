@@ -251,6 +251,12 @@ export function zone2CardCaption(trend: Parameters<typeof trendHeadline>[0]): st
   return `Het getal boven is je laatste week met een loop. ${dots}`;
 }
 
-// Aan welke kant van zijn stip de tooltip staat: rechts van het midden klapt hij naar links (zijn
-// rechterrand op de stip), anders naar rechts. Zo blijft hij binnen de kaart, ook op 360 px.
-export const tooltipFlipsLeft = (dotX: number): boolean => dotX > 0.5;
+// Waar de tooltip begint, in px vanaf de linkerrand van de grafiek: gecentreerd op zijn stip, maar
+// nooit buiten de grafiek (gemeten breedtes, dus ook op 360 px met een lange tekst). Is de tooltip
+// breder dan de grafiek, dan begint hij links.
+export function tooltipLeftPx(dotPx: number, tipW: number, boxW: number): number {
+  return Math.max(0, Math.min(dotPx - tipW / 2, boxW - tipW));
+}
+
+// Een stip in het bovenste deel van de grafiek krijgt de tooltip eronder, zodat hij de kop niet bedekt.
+export const tooltipBelow = (yFraction: number): boolean => yFraction < 0.45;

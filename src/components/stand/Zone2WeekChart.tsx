@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { tooltipFlipsLeft, type Zone2WeekChart as Chart } from '../../engine/zone2Chart';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { tooltipBelow, tooltipLeftPx, type Zone2WeekChart as Chart } from '../../engine/zone2Chart';
 import { formatPace } from '../../engine/aerobicTrend';
 import { formatDayMonthNL } from '../../utils/dates';
 
@@ -18,6 +18,20 @@ const RIGHT = 48;
 
 export function Zone2WeekChart({ chart }: { chart: Chart }) {
   const [active, setActive] = useState<number | null>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+  // De plek van de tooltip in px, gemeten na het tekenen en direct op het element gezet: binnen de
+  // grafiek, ook op 360 px. Tot dan staat hij onzichtbaar.
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    const tip = tipRef.current;
+    const dot = active !== null ? chart.dots[active] : undefined;
+    if (!box || !tip || !dot) return;
+    const boxW = box.getBoundingClientRect().width;
+    const dotPx = ((LEFT + dot.x * (W - LEFT - RIGHT)) / W) * boxW;
+    tip.style.left = `${tooltipLeftPx(dotPx, tip.getBoundingClientRect().width, boxW)}px`;
+    tip.style.visibility = 'visible';
+  }, [active, chart]);
   if (chart.dots.length === 0) return null;
   const plotW = W - LEFT - RIGHT;
   const plotH = H - TOP - BOTTOM;
@@ -47,7 +61,7 @@ export function Zone2WeekChart({ chart }: { chart: Chart }) {
         <span>sneller</span>
         <span>trager</span>
       </div>
-      <div className="relative min-w-0 flex-1 select-none">
+      <div ref={boxRef} className="relative min-w-0 flex-1 select-none">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} preserveAspectRatio="none" role="img" aria-label={summary} onClick={(e) => pick(e.clientX, e.currentTarget.getBoundingClientRect())}>
           {chart.ticks.map((t) => (
             <line key={t} x1={LEFT} x2={LEFT + plotW} y1={y(t)} y2={y(t)} stroke="var(--color-card-border)" strokeWidth={1} vectorEffect="non-scaling-stroke" aria-hidden />
@@ -75,11 +89,11 @@ export function Zone2WeekChart({ chart }: { chart: Chart }) {
           </span>
         )}
         {shown && (
-          // Klapt naar de kant met ruimte: rechts van het midden staat de rechterrand op de stip, links de linkerrand.
-          // Zo blijft hij binnen de kaart, ook op 360 px.
+          // Gecentreerd op de stip, maar nooit buiten de grafiek (tooltipLeftPx, gemeten); bij een stip bovenin eronder.
           <div
-            className={`pointer-events-none absolute z-10 -translate-y-[calc(100%+8px)] whitespace-nowrap rounded-lg border px-2 py-1 text-xs ${tooltipFlipsLeft(shown.x) ? '-translate-x-full' : ''}`}
-            style={{ left: pct(x(shown.x), W), top: pct(y(shown.paceSec), H), background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)' }}
+            ref={tipRef}
+            className={`pointer-events-none absolute z-10 whitespace-nowrap rounded-lg border px-2 py-1 text-xs ${tooltipBelow(y(shown.paceSec) / H) ? 'translate-y-3' : '-translate-y-[calc(100%+12px)]'}`}
+            style={{ left: 0, top: pct(y(shown.paceSec), H), visibility: 'hidden', background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)' }}
             data-tooltip
           >
             <span style={{ color: 'var(--color-ink-dim)' }}>{`week van ${formatDayMonthNL(shown.week)}`}</span>{' '}

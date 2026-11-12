@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Zone2WeekChart } from './Zone2WeekChart';
 import { TrendLineChart } from '../TrendLineChart';
-import { tooltipFlipsLeft, type Zone2WeekChart as Chart } from '../../engine/zone2Chart';
+import { tooltipBelow, tooltipLeftPx, type Zone2WeekChart as Chart } from '../../engine/zone2Chart';
 
 // De grafiek op de kaart Tempo bij zone 2 en het eindlabel van TrendLineChart, echt gerenderd zonder DOM.
 // Nagemaakte weken.
@@ -60,10 +60,22 @@ describe('Zone2WeekChart', () => {
     expect(html).not.toContain('24-8');
   });
 
-  it('de tooltip klapt aan de rechterkant naar links, zodat hij binnen de kaart blijft', () => {
-    expect(tooltipFlipsLeft(0.91)).toBe(true);
-    expect(tooltipFlipsLeft(0.99)).toBe(true);
-    expect(tooltipFlipsLeft(0.1)).toBe(false);
+  it('de tooltip blijft binnen de grafiek, ook rond het midden met een lange tekst op 360 px', () => {
+    // Grafiek ongeveer 240 px breed, tooltip 190 px: elke stip van links tot rechts.
+    for (let dot = 0; dot <= 240; dot += 5) {
+      const left = tooltipLeftPx(dot, 190, 240);
+      expect(left).toBeGreaterThanOrEqual(0);
+      expect(left + 190).toBeLessThanOrEqual(240);
+    }
+    // In het midden staat hij gecentreerd op zijn stip.
+    expect(tooltipLeftPx(120, 190, 240)).toBe(25);
+    // Breder dan de grafiek: hij begint links.
+    expect(tooltipLeftPx(100, 300, 240)).toBe(0);
+  });
+
+  it('een stip bovenin krijgt de tooltip eronder, zodat de kop vrij blijft', () => {
+    expect(tooltipBelow(0.1)).toBe(true);
+    expect(tooltipBelow(0.8)).toBe(false);
   });
 
   it('geen weken: niets', () => {
