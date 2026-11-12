@@ -415,3 +415,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Warden Week na gemiste dagen (zelfreview), reviewer, fable, 129k, 7 min, 1 blokkerend (rol extra) en 7 moet, hersteld in 1 ronde
 - 2026-11-12, Warden Week na gemiste dagen (herreview), reviewer, fable, 74k, 3 min, 4 moet (Begrepen telde als Akkoord), hersteld
 - 2026-11-12 Lookout Je dag (tester, sonnet): 116k tokens, 16 minuten; Pathfinder Je dag (sonnet): 38k. Je dag, Week na gemiste dagen en zone 2 op main.
+- 2026-11-12, Sherpa Andere plek, bouwer-sessie, opus, $11,12 (347k context), ca. 1,5 uur, 2 herstelrondes na review; op main 1af978e
+- 2026-11-12, Pathfinder Andere plek (moment 2), pathfinder, sonnet, 38k, 0,5 min, akkoord, 4 punten beter (3 in backlog, 1 tekst door coördinator)
+- 2026-11-12, Lookout Andere plek, tester, sonnet, onbekend, afgebroken door de limiet van vijf uur; afdrukken waren al gemaakt en door de coördinator zelf bekeken
