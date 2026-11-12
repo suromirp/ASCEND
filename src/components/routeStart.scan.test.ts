@@ -23,9 +23,11 @@ describe('Start bij in de regie en op het scherm', () => {
     expect(search).toContain("setSaved('unread')");
     expect(search).toContain('makeHome: homeUnread ? undefined : makeHome');
   });
-  it('de rij Start bij is neutraal (één mint accent), Waar train je? houdt de mint', () => {
+  // Besluit 2026-11-12-trainingsscherm-sporen-1-4.md: ook Waar train je? in de Briefing is nu stil, zodat de
+  // knop onderaan het enige mint is (eerder hield die chip de mint).
+  it('de rij Start bij is neutraal (één mint accent), en Waar train je? in de Briefing ook', () => {
     expect(panel).toContain('<Chip tone="quiet"');
-    expect(briefing).not.toContain('tone="quiet"');
+    expect(briefing).toContain('<Chip tone="quiet" selected={p.key === view.place}');
     expect(css).toMatch(/\.st-chip\.quiet\[aria-pressed="true"\] \{ border-color: var\(--color-control-border\); background: var\(--color-track\); color: var\(--color-ink\); font-weight: 600; \}/);
   });
   it('de regel onder de chips in de Briefing heeft een vaste hoogte', () => {
