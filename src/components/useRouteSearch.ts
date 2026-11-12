@@ -118,7 +118,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const [mapStart, setMapStart] = useState<RoutePoint | undefined>();
   // Een bewaarde plek (chip) of een gezochte plek (Andere plek), voor deze training; niet bewaard.
   // `key` is het id van de bewaarde plek, of `other` bij een treffer die nog niet bewaard is.
-  const [startPlace, setStartPlace] = useState<{ key: string; name: string; point: RoutePoint; found?: FoundPlace } | undefined>();
+  // `saveId` blijft bij een treffer gelijk: een tweede tik op Bewaar als plek na een trage opslag overschrijft dezelfde plek.
+  const [startPlace, setStartPlace] = useState<{ key: string; name: string; point: RoutePoint; found?: FoundPlace; saveId?: string } | undefined>();
   // Je bewaarde plekken behalve Thuis (Plekken spoor 1); leeg als de opslag niet antwoordt.
   const [places, setPlaces] = useState<Place[]>([]);
   // De lus die je op de kaart koos; zonder keuze de eerste.
@@ -250,7 +251,11 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   async function startOnMap(from: { tap: RoutePoint }): Promise<StartAnswer> {
     const found = await startFromMap(from, { signal: locateStop.current.signal });
     if (!found.ok) return { ok: false, line: startFailureReason(found.reason) };
-    if (mounted.current) setMapStart(found.point);
+    if (mounted.current) {
+      // Het getikte punt is nu de start: de chip van een gekozen plek staat dan niet meer gekozen.
+      setStartPlace(undefined);
+      setMapStart(found.point);
+    }
     return found;
   }
 
@@ -278,7 +283,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     if (known?.home) return pickStart({ kind: 'home', label: known.name, placeId: known.id });
     setMapStart(undefined);
     if (known) return setStartPlace({ key: known.id, name: known.name, point: { lat: known.lat, lon: known.lon } });
-    setStartPlace({ key: 'other', name: placeLabel(found, allPlaces), point: { lat: found.lat, lon: found.lon }, found });
+    setStartPlace({ key: 'other', name: placeLabel(found, allPlaces), point: { lat: found.lat, lon: found.lon }, found, saveId: makeId('place') });
   }
 
   // Bewaar als plek bij een gezochte plek: via de bestaande opslag (storage/places.ts#savePlace), nooit dubbel.
@@ -286,7 +291,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   async function keepPlace(): Promise<boolean> {
     const found = startPlace?.found;
     if (!found) return false;
-    const next = placeToSave({ ...found, name: startPlace.name }, allPlaces, todayISO(), makeId('place'));
+    const next = placeToSave({ ...found, name: startPlace.name }, allPlaces, todayISO(), startPlace.saveId ?? makeId('place'));
     const ok = next.kind === 'same' || (await withTimeout(savePlace(next.place), START_LOCATE_LIMIT_MS).catch(() => false));
     if (!ok || !mounted.current) return ok;
     if (next.kind === 'new') setPlaces((list) => [...list.filter((p) => p.id !== next.place.id), next.place]);

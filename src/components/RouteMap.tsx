@@ -214,6 +214,12 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
 
   // Bewaar als plek bij een gezochte plek: in één tik, met zijn naam; daarna is hij een chip bij Start bij.
   const keepFound = !pick && !tapped && keepName !== undefined && onKeep !== undefined;
+  // Een andere gezochte plek: de regel van de vorige bewaring hoort daar niet meer bij.
+  const [keptFor, setKeptFor] = useState(keepName);
+  if (keptFor !== keepName && keepName !== undefined) {
+    setKeptFor(keepName);
+    setLine('');
+  }
   async function keepPlace() {
     if (!onKeep || keepName === undefined) return;
     const name = keepName;

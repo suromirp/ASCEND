@@ -36,7 +36,8 @@ export function NewPlaceSheet({ onPick, onClose }: { onPick: (found: FoundPlace)
   }, [closing]);
 
   const line = placeSearchLine(view);
-  const results = view.kind === 'results' ? view.results : [];
+  // Alleen treffers van het woord dat nu in het veld staat: tijdens het typen geen lijst van een ander woord.
+  const results = view.kind === 'results' && view.query === text.trim() ? view.results : [];
 
   return (
     <Portal>
