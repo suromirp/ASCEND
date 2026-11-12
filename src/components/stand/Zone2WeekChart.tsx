@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import type { Zone2WeekChart as Chart } from '../../engine/zone2Chart';
+import { tooltipFlipsLeft, type Zone2WeekChart as Chart } from '../../engine/zone2Chart';
 import { formatPace } from '../../engine/aerobicTrend';
+import { formatDayMonthNL } from '../../utils/dates';
 
 // Tempo bij zone 2 op de kaart zelf: een stip per week, sneller boven. Een lijn alleen als
 // engine/zone2Chart.ts#zone2WeekChart er een geeft (de lijn van de uitspraak, eindigend op de kop).
@@ -63,7 +64,8 @@ export function Zone2WeekChart({ chart }: { chart: Chart }) {
             aria-hidden
           />
         ))}
-        {end && (
+        {/* Het eindlabel wijkt zolang een week getoond wordt: de tooltip bedekt het dan nooit half. */}
+        {end && !shown && (
           <span
             className="pointer-events-none absolute -translate-y-1/2 whitespace-nowrap pl-2 text-xs font-medium tabular-nums"
             style={{ left: pct(x(end.x), W), top: pct(y(end.paceSec), H), color: 'var(--color-ink)' }}
@@ -73,16 +75,19 @@ export function Zone2WeekChart({ chart }: { chart: Chart }) {
           </span>
         )}
         {shown && (
+          // Klapt naar de kant met ruimte: rechts van het midden staat de rechterrand op de stip, links de linkerrand.
+          // Zo blijft hij binnen de kaart, ook op 360 px.
           <div
-            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-[calc(100%+8px)] whitespace-nowrap rounded-lg border px-2 py-1 text-xs"
-            style={{ left: pct(Math.min(Math.max(x(shown.x), 60), W - 60), W), top: pct(y(shown.paceSec), H), background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)' }}
+            className={`pointer-events-none absolute z-10 -translate-y-[calc(100%+8px)] whitespace-nowrap rounded-lg border px-2 py-1 text-xs ${tooltipFlipsLeft(shown.x) ? '-translate-x-full' : ''}`}
+            style={{ left: pct(x(shown.x), W), top: pct(y(shown.paceSec), H), background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)' }}
+            data-tooltip
           >
-            <span style={{ color: 'var(--color-ink-dim)' }}>{shown.label}</span>{' '}
+            <span style={{ color: 'var(--color-ink-dim)' }}>{`week van ${formatDayMonthNL(shown.week)}`}</span>{' '}
             <span style={{ color: 'var(--color-ink)' }}>{formatPace(shown.paceSec)}, {shown.runs === 1 ? 'één loop' : `${shown.runs} lopen`}</span>
           </div>
         )}
         <div className="mt-1 flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          <span>{`week van ${Number(chart.fromWeek.slice(8, 10))}-${Number(chart.fromWeek.slice(5, 7))}`}</span>
+          <span>{formatDayMonthNL(chart.fromWeek)}</span>
           <span>deze week</span>
         </div>
       </div>

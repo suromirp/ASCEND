@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Zone2WeekChart } from './Zone2WeekChart';
 import { TrendLineChart } from '../TrendLineChart';
-import type { Zone2WeekChart as Chart } from '../../engine/zone2Chart';
+import { tooltipFlipsLeft, type Zone2WeekChart as Chart } from '../../engine/zone2Chart';
 
 // De grafiek op de kaart Tempo bij zone 2 en het eindlabel van TrendLineChart, echt gerenderd zonder DOM.
 // Nagemaakte weken.
@@ -52,6 +52,18 @@ describe('Zone2WeekChart', () => {
       const html = render(chart);
       expect(html).not.toMatch(/animate|transition|<animate/);
     }
+  });
+
+  it('de as noemt de datum zoals elders in de app ("24 aug"), niet "week van 24-8"', () => {
+    const html = render(threeWeeks);
+    expect(html).toContain('>24 aug<');
+    expect(html).not.toContain('24-8');
+  });
+
+  it('de tooltip klapt aan de rechterkant naar links, zodat hij binnen de kaart blijft', () => {
+    expect(tooltipFlipsLeft(0.91)).toBe(true);
+    expect(tooltipFlipsLeft(0.99)).toBe(true);
+    expect(tooltipFlipsLeft(0.1)).toBe(false);
   });
 
   it('geen weken: niets', () => {

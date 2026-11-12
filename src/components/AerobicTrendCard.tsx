@@ -43,9 +43,7 @@ export function AerobicTrendCard() {
           </span>
         )}
       </div>
-      <p className="-mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        {trend.referenceHr > 0 ? `Je tempo bij ${trend.referenceHr} bpm.` : 'Je tempo bij één vaste hartslag.'} Word je fitter, dan loop je daarbij sneller.
-      </p>
+      {/* Geen ondertitel: sneller en trager staan aan de grafiek, de vaste hartslag in de uitspraak en achter de i (Pathfinder 12 november). */}
       {chart.dots.length > 0 ? (
         <div className="flex flex-col gap-2">
           <Zone2WeekChart chart={chart} />

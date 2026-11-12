@@ -136,6 +136,5 @@ Een controle, geen nieuw getal. De test blijft de bron voor je tempo's.
 --- kaart 12 ---
 Tempo bij zone 2
 [knop: Wat tempo bij zone 2 zegt]
-Je tempo bij één vaste hartslag. Word je fitter, dan loop je daarbij sneller.
 Nog geen loopjes. Elke week met een loop wordt hier een stip.
 [knop: Volgorde aanpassen]
