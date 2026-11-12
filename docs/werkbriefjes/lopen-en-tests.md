@@ -14,7 +14,7 @@ Hartslag op het horloge, run in detail en de testloop met de tempo's, de beste 5
 - `src/engine/zoneUpdate.ts#zoneOffer` nieuwe drempel na de laatste test, voorstel met Akkoord
 - `src/engine/testRest.ts#resolveTestRest` 72 of 48 uur rust voor een test; regel in `scheduler.ts` (`testPairConflict`, niet geëxporteerd, en `tooCloseBeforeTest`) en in de weekcontrole (`TEST-REST`, alleen voor Week)
 - `src/engine/testEffortSplit.ts` een test met warming-up en cooling-down telt in twee delen
-- `src/engine/legFatigue.ts#PLANNED_MAX_EFFORT_RPE` (privé) een test of race is gepland op RPE 10
+- `src/engine/legFatigue.ts#PLANNED_MAX_EFFORT_RPE` (privé) een test of race is gepland op RPE 10; het tempo en de testloopzin: `src/engine/missionFacts.ts#trainingPace`, in de Briefing alleen bij een manier die hardlopen is (besluit `2026-11-12-briefing-per-manier.md`)
 
 ## Nooit
 - `tests.at(-1)` of een eigen "laatste test" lezen; alles gaat door `pacesFromLogs` en `countedTests`.

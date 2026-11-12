@@ -13,13 +13,13 @@
 // Zoeken gebeurt bij het openen (vandaag en morgen, instelling Lus zoeken) of na een tik, en stopt
 // zodra je van Buiten weggaat of het scherm sluit. Plant niets.
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
-import { footerNow, placeTransition, BRIEFING_TEXT, type BriefingRow, type BriefingView } from '../engine/briefing';
+import { footerNow, placeRow, placeTransition, BRIEFING_TEXT, type BriefingRow, type BriefingView } from '../engine/briefing';
 import { isSportEnabled } from '../engine/sports';
 import { fuelCardLines, fuelForTraining, fuelOn } from '../engine/fuelOnTheGo';
 import { drinkLine } from '../engine/eveningBefore';
@@ -106,8 +106,9 @@ export function TrainingBriefing({
   }, [session]);
 
   const guide = getTrainingGuide(template.id);
-  const plan = buildWorkoutPlan(template, date, program);
-  const watchView = useWatchSheet({ template, garmin: plan?.garmin, session, hasZonesNote: !!guide?.garminNote });
+  // Het plan zoals het naar je horloge gaat; de stappen op het scherm volgen de gekozen manier (`plan` hieronder).
+  const workout = buildWorkoutPlan(template, date, program);
+  const watchView = useWatchSheet({ template, garmin: workout?.garmin, session, hasZonesNote: !!guide?.garminNote });
   const view = useBriefingView({ template, session, date, program, storedPlace: stored });
 
   // De zoektocht: alleen bij Buiten met een route, bij het openen of na een tik; Liever niet zet hem stil.
@@ -117,7 +118,7 @@ export function TrainingBriefing({
   const searchOn = !!routeMap && !declined && (routeMap.search === 'open' || tapped);
   const model = useRouteSearch({ template, date, closing, enabled: searchOn });
 
-  const [sheet, setSheet] = useState<'info' | 'watch' | 'steps' | 'fuel' | 'stretch' | 'route' | undefined>();
+  const [sheet, setSheet] = useState<'info' | 'watch' | 'steps' | 'fuel' | 'stretch' | 'route' | 'places' | undefined>();
   const send = useSendRoute(model, date);
   const [footerRef, footerHeight] = useHeight<HTMLDivElement>();
 
@@ -147,7 +148,9 @@ export function TrainingBriefing({
   const picked = model.picked && model.pickedOutcome?.ok ? { style: model.picked, proposal: model.pickedOutcome.proposal } : undefined;
   const routeReady = view.footer.kind === 'route' && !!picked && searchOn;
   const places = view.places.filter((p) => !p.locked && (p.key === view.place || isSportEnabled(modalitySport(p.key), settings.enabledSports)));
-  const shortLabels = shortPlaceLabels(places.map((p) => p.label));
+  // Hoogstens drie chips, nooit een schuifrij; meer keuzes achter Meer (engine/briefing.ts#placeRow).
+  const row = placeRow(places, view.place);
+  const shortLabels = shortPlaceLabels(row.chips.map((p) => p.label));
   const minutes = session?.plannedMinutes ?? resolveEffectiveFullDuration(template, date, program);
   // De ene knop onderaan: de route als de lus er is, anders Gedaan (zelf invullen), anders geen onderbalk.
   const footerKind = footerNow(view.footer, routeReady, !!manual);
@@ -157,6 +160,8 @@ export function TrainingBriefing({
       ? <PrimaryButton onClick={manual}><span className="inline-flex items-center justify-center gap-2"><CheckGlyph size={18} />{BRIEFING_TEXT.doneButton}</span></PrimaryButton>
       : null;
   const { head, heart } = view;
+  // De stappen zoals de gekozen manier ze noemt; het horloge (WatchSheet) houdt het plan zelf.
+  const plan = heart.plan ?? workout;
 
   return (
     <Portal>
@@ -184,6 +189,7 @@ export function TrainingBriefing({
             {/* De hartkaart: de kerngetallen en de zonebalk of het profiel. Zone en praattest staan alleen hier. */}
             <Card className="mt-1 flex flex-col gap-5" role="group" aria-label={BRIEFING_TEXT.run}>
               <KeyNumbers facts={heart.facts} />
+              {heart.paceNote && <p className="-mt-3 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{heart.paceNote}</p>}
               {heart.steps && plan ? (
                 <button type="button" data-sheet-from="" onClick={() => setSheet('steps')} aria-label="De stappen van deze training" className="-m-2 rounded-xl p-2 text-left">
                   <IntervalProfile plan={plan} />
@@ -200,17 +206,21 @@ export function TrainingBriefing({
             </Card>
 
             {places.length > 1 && (
-              // Eén rij keuzes met korte namen; past hij niet, dan schuift hij zijwaarts met een zachte
-              // vervaging aan de rand. Nooit twee regels hoog. De gekozen chip is stil, zoals Start bij: de knop
-              // onderaan is het enige mint.
+              // Eén rij van hoogstens drie chips met korte namen, zonder schuiven: op 360 px valt er niets af (zoals
+              // Start bij). Meer keuzes staan achter Meer. De gekozen chip is stil: de knop onderaan is het enige mint.
               <div className="flex flex-col gap-2">
-                <PlaceRow count={places.length}>
-                  {places.map((p, i) => (
-                    <span key={p.key} className="shrink-0 whitespace-nowrap">
-                      <Chip tone="quiet" selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}>{shortLabels[i]}</Chip>
+                <div className="flex min-w-0 gap-2" role="group" aria-label="Waar train je?" data-place-row="">
+                  {row.chips.map((p, i) => (
+                    <span key={p.key} className="min-w-0 whitespace-nowrap">
+                      <Chip tone="quiet" selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}><span className={`inline-block ${row.more ? 'max-w-[6.5rem]' : 'max-w-[8.5rem]'} truncate align-bottom`}>{shortLabels[i]}</span></Chip>
                     </span>
                   ))}
-                </PlaceRow>
+                  {row.more && (
+                    <span className="shrink-0 whitespace-nowrap" data-sheet-from="">
+                      <Chip tone="quiet" label="Meer manieren" onClick={() => setSheet('places')}>Meer<span aria-hidden className="shrink-0"><Icon name="verder" size={14} /></span></Chip>
+                    </span>
+                  )}
+                </div>
                 {view.placeLine && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{view.placeLine}</p>}
               </div>
             )}
@@ -257,11 +267,16 @@ export function TrainingBriefing({
         <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={date} dayLabel={guideDayLabel(template, date)} onClose={() => setSheet(undefined)} />
       )}
       {sheet === 'watch' && watchView.hasWatchSheet && (
-        <WatchSheet view={watchView} template={template} session={session} garmin={plan?.garmin} dayLabel={guideDayLabel(template, date)} onClose={() => setSheet(undefined)} onLeave={() => { onLeave?.(); requestClose(); }} />
+        <WatchSheet view={watchView} template={template} session={session} garmin={workout?.garmin} dayLabel={guideDayLabel(template, date)} onClose={() => setSheet(undefined)} onLeave={() => { onLeave?.(); requestClose(); }} />
       )}
       {sheet === 'steps' && plan && (
         <TodaySheet eyebrow={template.name} title="Zo doe je het" onClose={() => setSheet(undefined)}>
           <StepList plan={plan} />
+        </TodaySheet>
+      )}
+      {sheet === 'places' && (
+        <TodaySheet eyebrow={template.name} title="Waar train je?" onClose={() => setSheet(undefined)}>
+          <PlaceList places={places} chosen={view.place} onPick={(key) => { choosePlace(key); setSheet(undefined); }} />
         </TodaySheet>
       )}
       {sheet === 'fuel' && (
@@ -333,42 +348,22 @@ function StretchDetail({ template }: { template: SessionTemplate }) {
   );
 }
 
-// De rij Waar train je?: zijwaarts schuiven, en aan de kant waar nog iets staat een zachte vervaging naar
-// de achtergrond (alleen tokens). Zonder meer keuzes buiten beeld geen vervaging.
-function PlaceRow({ children, count }: { children: ReactNode; count: number }) {
-  const row = useRef<HTMLDivElement>(null);
-  const [more, setMore] = useState({ left: false, right: false });
-  useEffect(() => {
-    const el = row.current;
-    if (!el) return;
-    const measure = () => {
-      const next = { left: el.scrollLeft > 2, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 };
-      setMore((m) => (m.left === next.left && m.right === next.right ? m : next));
-    };
-    // De gekozen keuze staat in beeld, ook als hij achteraan de rij staat (eenmalig, zonder beweging).
-    const chosen = el.querySelector<HTMLElement>('[aria-pressed="true"]');
-    if (chosen && (chosen.offsetLeft + chosen.offsetWidth > el.clientWidth || chosen.offsetLeft < el.scrollLeft)) {
-      el.scrollLeft = Math.max(0, chosen.offsetLeft - 16);
-    }
-    measure();
-    el.addEventListener('scroll', measure, { passive: true });
-    window.addEventListener('resize', measure);
-    return () => {
-      el.removeEventListener('scroll', measure);
-      window.removeEventListener('resize', measure);
-    };
-  }, [count]);
-  const fade = (side: 'left' | 'right') => (
-    <span aria-hidden className={`pointer-events-none absolute inset-y-0 w-8 ${side === 'left' ? 'left-0' : 'right-0'}`} style={{ background: `linear-gradient(to ${side}, transparent, var(--color-bg))` }} />
-  );
+// Het blad achter Meer: alle keuzes onder elkaar met hun oordeel; de gekozen keuze met een vinkje, geen mint.
+function PlaceList({ places, chosen, onPick }: { places: BriefingView['places']; chosen: string | undefined; onPick: (key: string) => void }) {
   return (
-    <div className="relative -mx-4">
-      <div ref={row} className="flex gap-2 overflow-x-auto px-4" role="group" aria-label="Waar train je?" style={{ scrollbarWidth: 'none' }}>
-        {children}
-      </div>
-      {more.left && fade('left')}
-      {more.right && fade('right')}
-    </div>
+    <ul className="flex flex-col">
+      {places.map((p) => (
+        <li key={p.key} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
+          <button type="button" onClick={() => onPick(p.key)} aria-pressed={p.key === chosen} className="flex min-h-[44px] w-full items-center gap-3 py-2.5 text-left">
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm leading-snug" style={{ color: 'var(--color-ink)', fontWeight: p.key === chosen ? 600 : undefined }}>{p.label}</span>
+              <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{p.roleLabel}</span>
+            </span>
+            {p.key === chosen && <span className="shrink-0" style={{ color: 'var(--color-ink)' }}><CheckGlyph size={18} /></span>}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 

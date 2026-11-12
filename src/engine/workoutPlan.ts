@@ -45,6 +45,8 @@ export interface WorkoutPlan {
 
 const isRepeat = (s: StructureSpec): s is RepeatSpec => 'repeatsByWeek' in s;
 const fixedSeconds = (s: StepSpec) => (s.minutes ?? 0) * 60 + (s.seconds ?? 0);
+// The shortest warm-up or cool-down when the repeats need the time.
+const EDGE_MIN_SECONDS = 5 * 60;
 const LOAD_LEVEL: Record<string, number> = { none: 0, light: 1, moderate: 2, heavy: 3 };
 
 export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | undefined, program: Program | null | undefined): WorkoutPlan | undefined {
@@ -81,10 +83,26 @@ export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | un
   // Whole minutes, split so the total is exact: an odd leftover minute goes
   // to the warm-up (audit 2026-10: "±45 min" next to a 46-minute chart).
   const extraMinutes = !hasRest && edges.length > 0 && leftover > 0 ? Math.round(leftover / 60) : 0;
+  // And the other way: when the rounded repeats run over the planned minutes, warming up and cooling down
+  // give the time back (owner, 12 November: "35 min totaal" above a timeline that ended at 38). The cool-down
+  // gives first, and neither goes under 5 minutes; only then can the steps still run over.
+  const overMinutes = !hasRest && edges.length > 0 && leftover < 0 ? Math.round(-leftover / 60) : 0;
+  const giveBack = edges.map(() => 0);
+  for (let left = overMinutes, guard = 0; left > 0 && guard < 200; guard++) {
+    let gave = false;
+    for (let i = edges.length - 1; i >= 0 && left > 0; i--) {
+      if (fixedSeconds(edges[i]) - (giveBack[i] + 1) * 60 >= EDGE_MIN_SECONDS) {
+        giveBack[i]++;
+        left--;
+        gave = true;
+      }
+    }
+    if (!gave) break;
+  }
   const edgeExtraFor = (s: StepSpec) => {
     const i = edges.indexOf(s);
     if (i < 0) return 0;
-    return (Math.floor(extraMinutes / edges.length) + (i < extraMinutes % edges.length ? 1 : 0)) * 60;
+    return (Math.floor(extraMinutes / edges.length) + (i < extraMinutes % edges.length ? 1 : 0) - giveBack[i]) * 60;
   };
   const toStep = (s: StepSpec): PlanStep => ({
     kind: s.kind,

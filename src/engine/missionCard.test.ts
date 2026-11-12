@@ -19,7 +19,7 @@ const viewFor = (id: string, { watchTicks = false, quickComplete = false } = {})
 describe('missionCardView: wat de kaart toont', () => {
   it('een loop: alles van vooraf in de Briefing; weer en horloge alleen als waarschuwing', () => {
     const v = viewFor('tpl_easy_run');
-    expect(v).toMatchObject({ nameOpensBriefing: true, zone: false, pace: true, paceQuiet: true, otherFacts: false, weather: 'warning', watch: 'failed', beforehand: false, button: 'done' });
+    expect(v).toMatchObject({ nameOpensBriefing: true, zone: false, pace: false, otherFacts: false, weather: 'warning', watch: 'failed', beforehand: false, button: 'done' });
   });
   it('met een horloge dat afvinkt: de knop is Briefing; zonder: Gedaan', () => {
     expect(viewFor('tpl_long_run', { watchTicks: true }).button).toBe('briefing');
@@ -55,8 +55,9 @@ describe('missionChipsShown: de duur blijft altijd', () => {
     { text: '5:10 tot 5:30 /km', kind: 'tempo' },
     { text: 'Praten kan', kind: 'overig' },
   ];
-  it('met de Briefing de duur en het tempo (dat nog geen thuis in de Briefing heeft)', () => {
-    expect(missionChipsShown(chips, viewFor('tpl_intervals')).map((c) => c.kind)).toEqual(['duur', 'tempo']);
+  // Besluit 2026-11-12-briefing-per-manier.md: het tempo woont nu in de Briefing (bewust meebewogen).
+  it('met de Briefing alleen de duur: het tempo staat in de Briefing', () => {
+    expect(missionChipsShown(chips, viewFor('tpl_intervals')).map((c) => c.kind)).toEqual(['duur']);
   });
   it('zonder Briefing alles', () => {
     expect(missionChipsShown(chips, viewFor('tpl_bike'))).toHaveLength(4);

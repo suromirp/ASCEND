@@ -15,6 +15,7 @@ import type { SessionTemplate } from '../models/training';
 import { SESSION_STYLE } from '../data/sessionStyle';
 import { INTENSITY, type Intensity } from '../data/workoutStructure';
 import { modalitySport } from '../data/modalities';
+import { placeBrief } from '../data/placeBrief';
 import { buildWorkoutPlan, type WorkoutPlan } from './workoutPlan';
 import { progressionTarget } from './programLayout';
 import { resolveEffectiveFullDuration } from './substitutions';
@@ -66,7 +67,7 @@ export function buildSessionBrief(
   const sport = chosen ?? planned;
   const sportLabel = sport && template.type !== 'strength' && template.type !== 'recovery' ? SPORT_LABEL[sport] : sessionKindLabel(template);
   const sportSwitch = chosen && planned && chosen !== planned ? `Dit telt als ${SPORT_LABEL[chosen].toLowerCase()}, niet als ${SPORT_LABEL[planned].toLowerCase()}.` : undefined;
-  const headline = [sportLabel, style?.styleLabel].filter(Boolean).join(' · ').toUpperCase();
+  const headline = [sportLabel, placeBrief(template.id, options.modalityKey)?.styleLabel ?? style?.styleLabel].filter(Boolean).join(' · ').toUpperCase();
 
   // The week: position in the phase and this week's note ("Zwaarste week").
   let weekLabel: string | undefined;
@@ -81,7 +82,7 @@ export function buildSessionBrief(
   const step = dateIso ? progressionTarget(template, program, dateIso)?.step : undefined;
   const levelsUsed = plan ? ([...new Set(plan.timeline.filter((s) => s.kind !== 'strength' && !s.noTarget).map((s) => s.intensity))].sort() as Intensity[]) : [];
   const total = { value: durationLabel(minutes), label: 'totaal' };
-  const facts: BriefFact[] = (() => {
+  const baseFacts: BriefFact[] = (() => {
     switch (style?.facts) {
       case 'intervals': {
         const work = plan?.items.find((it) => 'repeat' in it);
@@ -145,6 +146,14 @@ export function buildSessionBrief(
     }
   })();
 
+  // De gekozen manier (data/placeBrief.ts): "hard bergop" wordt op de StairMaster "stevig traplopen".
+  const place = placeBrief(template.id, options.modalityKey);
+  const facts = baseFacts.map((f, i) => {
+    if (i === 1 && place?.workLabel) return { ...f, label: place.workLabel };
+    if (i === 2 && place?.third) return { value: place.third.value ?? f.value, label: place.third.label };
+    return f;
+  });
+
   // The first hiking day: what tomorrow's mountain hike asks.
   let tomorrow: string | undefined;
   if (template.id === 'tpl_hike_day_one' && dateIso && options.templates) {
@@ -160,13 +169,23 @@ export function buildSessionBrief(
     sportLabel,
     headline,
     sportSwitch,
-    purpose: style?.purpose ?? plan?.summary ?? template.focus ?? '',
+    purpose: place?.purpose ?? style?.purpose ?? plan?.summary ?? template.focus ?? '',
     weekLabel,
     facts,
     levelsUsed,
-    stopSignals: style?.stopSignals ?? [],
+    stopSignals: place?.stopSignals ?? style?.stopSignals ?? [],
     tomorrow,
     howTo: style?.notesAsHowTo && template.notes ? template.notes.split(/(?<=\.)\s+/).map((s) => s.trim()).filter(Boolean) : undefined,
     plan,
   };
+}
+
+// De stappen zoals de gekozen manier ze noemt (data/placeBrief.ts), voor het profiel en het blad Zo doe je het in
+// de Briefing. Minuten en zwaarte blijven; wat naar je horloge gaat leest het plan zelf, niet dit.
+export function placePlan(plan: WorkoutPlan, templateId: string, placeKey: string | undefined): WorkoutPlan {
+  const steps = placeBrief(templateId, placeKey)?.steps;
+  if (!steps) return plan;
+  const relabel = <S extends { label: string; detail?: string }>(s: S): S => (steps[s.label] ? { ...s, ...steps[s.label] } : s);
+  const items = plan.items.map((it) => ('step' in it ? { step: relabel(it.step) } : { repeat: it.repeat, steps: it.steps.map(relabel) }));
+  return { ...plan, items, timeline: plan.timeline.map(relabel) };
 }

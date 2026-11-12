@@ -1,7 +1,7 @@
 // ASCEND: wat de missiekaart op Vandaag toont (besluit docs/beslissingen/2026-11-12-missiekaart.md).
 //
 // Regel 1 van de ontwerpregels: elk feit één keer. Voor een training te voet woont alles wat je vooraf regelt in de
-// Briefing (zone, hartslag, tempo, praattest, hoogte, weer, kleding, route, horloge); de kaart zegt dan alleen wat je
+// Briefing (zone, hartslag, tempo met de zin over je testloop, praattest, hoogte, weer, kleding, route, horloge); de kaart zegt dan alleen wat je
 // vandaag doet: de naam, de minuten en de ene knop. Een waarschuwing staat nooit achter een tik: slecht weer en een
 // mislukte verzending naar je horloge blijven op de kaart. Regel 5: één mint, de hoofdknop.
 //
@@ -28,9 +28,6 @@ export interface MissionCardView {
   // Zonebalk en zonezin; tempo en de zin over het tempo; losse feiten als "Praten kan" of de hoogte.
   zone: boolean;
   pace: boolean;
-  // Het tempo als één stille regel onder de minuten in plaats van een groot getal: de Briefing heeft nog geen tempo
-  // (engine/sessionBrief.ts), dus het blijft op de kaart tot het daar een thuis krijgt (eigen spoor in de backlog).
-  paceQuiet: boolean;
   otherFacts: boolean;
   // Weer: de hele regel, of alleen als het een waarschuwing is.
   weather: 'full' | 'warning';
@@ -48,8 +45,8 @@ export function missionCardView(input: MissionCardInput): MissionCardView {
   return {
     nameOpensBriefing: briefing,
     zone: !briefing,
-    pace: true,
-    paceQuiet: briefing,
+    // Het tempo en de zin over je testloop staan in de Briefing (besluit 2026-11-12-briefing-per-manier.md).
+    pace: !briefing,
     otherFacts: !briefing,
     weather: briefing ? 'warning' : 'full',
     watch: briefing ? 'failed' : 'full',

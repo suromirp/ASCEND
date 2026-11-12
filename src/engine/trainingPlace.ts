@@ -44,7 +44,21 @@ export function splitPlaceLabel(label: string): { name: string; sport?: string }
 // keuzes die naam, dan het eerste woord van de sport ("Hardlopen", "Wandelen"), en pas als ook dat gelijk
 // is de volle naam. De volle naam staat in de regel eronder; zo passen twee of drie keuzes op 360 px.
 // Een naam zonder komma die te lang is voor een chip krijgt hier een korte vorm.
-const SHORT_NAME: Record<string, string> = { 'Hardlopen en wandelen afgewisseld': 'Afwisselen' };
+// De heuvelintervallen: drie keuzes die samen op 360 px passen (besluit 2026-11-12-briefing-per-manier.md); wat de
+// loopband op helling vraagt staat in de regel eronder.
+const SHORT_NAME: Record<string, string> = {
+  'Hardlopen en wandelen afgewisseld': 'Afwisselen',
+  'Hardlopen, buiten op een heuvel': 'Heuvel',
+  'Hardlopen, loopband op helling': 'Loopband',
+  // Bergconditie: twee chips en Meer.
+  'Wandelen, loopband op helling': 'Loopband',
+  'Wandelen met hoogteverschil, buiten': 'Buiten',
+  'Wandelen op oneffen paden': 'Onverhard',
+  'Wandelen, heuvel op en af herhalen': 'Heuvel',
+  'Traplopen, buiten': 'Trappen',
+  // Rugzak: de rugzak staat al in de kop.
+  'Buiten met rugzak': 'Buiten',
+};
 
 export function shortPlaceLabels(labels: readonly string[]): string[] {
   const split = labels.map((l) => (SHORT_NAME[l] ? { name: SHORT_NAME[l] } : splitPlaceLabel(l)));
