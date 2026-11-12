@@ -57,6 +57,7 @@ const ForgeSessionHost = lazy(() => import('./components/forge/ForgeSessionHost'
 const ForgePage = lazy(() => import('./pages/Forge').then((m) => ({ default: m.ForgePage })));
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
 const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
+const StandScreenPage = lazy(() => import('./pages/StandScreen').then((m) => ({ default: m.StandScreenPage })));
 const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default: m.JourneyPage })));
 const PackListPage = lazy(() => import('./pages/PackList').then((m) => ({ default: m.PackListPage })));
 const EtappesPage = lazy(() => import('./pages/Etappes').then((m) => ({ default: m.EtappesPage })));
@@ -339,6 +340,8 @@ function AppShell() {
           <Routes>
             <Route path="/" element={<TodayPage />} />
             <Route path="/stand" element={<StandingPage />} />
+            {/* De schermen achter Je stand: benen, belasting, ritme, lopen en invloed (pages/StandScreen.tsx). */}
+            <Route path="/stand/:scherm" element={<StandScreenPage />} />
             <Route path="/week" element={<WeekPage />} />
             <Route path="/ascend" element={<AscendPage />} />
             <Route path="/ascend/doelen" element={<Navigate to="/ascend" replace />} />

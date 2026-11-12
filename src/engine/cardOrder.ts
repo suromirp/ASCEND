@@ -15,14 +15,16 @@ export interface CardBlock {
   settingNote?: string;
 }
 
-// De standaardvolgorde is de volgorde waarin de pagina altijd stond.
+// De standaardvolgorde is de volgorde waarin de pagina altijd stond. Sinds Stand minimaal (2026-11-12) bepaalt de
+// onderlinge volgorde van Benen, Belasting en Ritme de drie regels bovenaan, die van Kracht, Lopen en Wat speelde er
+// de rijen in de lijst (engine/standPage.ts#standLayout).
 export const STAND_BLOCKS: CardBlock[] = [
-  { id: 'benen', name: 'Benen', line: 'Beenindex, frisheid, kalender', canBeFirst: true },
-  { id: 'belasting', name: 'Belasting', line: 'Wekelijkse belasting, intensiteit, afdaling', canBeFirst: true },
-  { id: 'kracht', name: 'Kracht', line: 'Forge, krachtprogressie, trainingsverdeling', canBeFirst: true },
-  { id: 'ritme', name: 'Ritme', line: 'Je laatste weken als stipjes, en hoe je erbij zit', canBeFirst: true },
-  { id: 'lopen', name: 'Lopen', line: 'Looptrends, tempo bij zone 2', canBeFirst: true },
-  { id: 'invloed', name: 'Wat speelde er', line: 'Wat je zelf noteerde bij trainingen en dagen', canBeFirst: true },
+  { id: 'benen', name: 'Benen', line: 'Regel bovenaan', canBeFirst: true },
+  { id: 'belasting', name: 'Belasting', line: 'Regel bovenaan', canBeFirst: true },
+  { id: 'kracht', name: 'Kracht', line: 'Rij in de lijst', canBeFirst: true },
+  { id: 'ritme', name: 'Ritme', line: 'Regel bovenaan', canBeFirst: true },
+  { id: 'lopen', name: 'Lopen', line: 'Rij in de lijst', canBeFirst: true },
+  { id: 'invloed', name: 'Wat speelde er', line: 'Rij in de lijst', canBeFirst: true },
 ];
 
 const BLOCKS: Record<CardPage, CardBlock[]> = { stand: STAND_BLOCKS };
