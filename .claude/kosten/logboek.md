@@ -401,3 +401,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12 Scout Avontuurlijke plekken (sportwetenschapper, fable): 25 tool-aanroepen, ongeveer 76k tokens, 3 minuten. Bronnencheck, advies bruikbaar; geen proefaanroep.
 - 2026-11-12 Scout Hoogtemeters (sportwetenschapper, fable): 79 tool-aanroepen, ongeveer 187k tokens, 9 minuten. Grondig, met proeven; advies in acht punten.
 - 2026-11-12 Cartographer Je dag (ontwerper, fable): ontwerpvoorstel, drie vragen voor de eigenaar.
+- 2026-11-12 Sherpa Andere plek (bouwer, opus, eigen sessie): klaar in één ronde, Warden sonnet 56k tokens, vier punten hersteld.
