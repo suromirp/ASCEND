@@ -83,7 +83,7 @@ export type Zone2Statement =
 
 export interface AerobicTrend {
   referenceHr: number;
-  points: (TrendPoint & { paceSec: number; runs: number })[]; // per week, oldest first
+  points: (TrendPoint & { paceSec: number; runs: number; week: string })[]; // per week (week = its Monday), oldest first
   runs: number;
   outsideZone: number; // runs left out: no piece in zone 2 (or, without pieces, heart rate above zone 2 or far below it)
   // Every run with a measurement, oldest first; warm ones with counts: false.
@@ -100,7 +100,8 @@ export interface AerobicTrend {
   earlierSec?: number;
 }
 
-const WEEKS = 12;
+// The weeks the card shows (points); exported for the chart on the card (engine/zone2Chart.ts#zone2WeekChart).
+export const WEEKS = 12;
 const MAX_CLIMB_PER_KM = 15;
 // Met het vlakke tempo per km (run in detail) is meer helling te corrigeren (eigen aanname).
 const MAX_CLIMB_PER_KM_FLAT = 30;
@@ -289,7 +290,7 @@ export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], p
     .map(([w, acc]) => {
       const paceSec = acc.weighted / acc.w;
       // Plotted as minus seconds, so faster reads as a line going up.
-      return { label: `week van ${w.slice(8, 10).replace(/^0/, '')}-${w.slice(5, 7).replace(/^0/, '')}`, value: -paceSec, paceSec, runs: acc.runs };
+      return { label: `week van ${w.slice(8, 10).replace(/^0/, '')}-${w.slice(5, 7).replace(/^0/, '')}`, value: -paceSec, paceSec, runs: acc.runs, week: w };
     });
 
   const statement = zone2Statement(counted, today);
@@ -388,7 +389,7 @@ export function trendVerdict(trend: Pick<AerobicTrend, 'statement' | 'referenceH
 
 // The big number on the card: the line today once there is one, else the first estimate, else
 // the last week. The label says which, so the number never seems to be something else.
-export function trendHeadline(trend: Pick<AerobicTrend, 'statement' | 'recentSec' | 'points'>): { paceSec: number; label: string } | undefined {
+export function trendHeadline(trend: Pick<AerobicTrend, 'statement' | 'recentSec'> & { points: (TrendPoint & { paceSec: number; runs: number })[] }): { paceSec: number; label: string } | undefined {
   const s = trend.statement;
   if (s?.kind === 'uitspraak' && trend.recentSec !== undefined) return { paceSec: trend.recentSec, label: 'nu, op de lijn' };
   if (s?.kind === 'eerste-schatting') return { paceSec: s.paceSec, label: 'eerste schatting' };

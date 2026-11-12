@@ -2,11 +2,13 @@ import { useRef, useState } from 'react';
 import type { TrendPoint } from '../engine/readiness';
 
 const WIDTH = 320;
+// Dichter dan dit bij de bovenrand staat het eindlabel onder zijn stip.
+const END_LABEL_ROOM = 22;
 
 // A single-series inline SVG trend line — no chart library, consistent
 // with the rest of the app. One series only, so no legend (the card's
 // Eyebrow already names what's plotted): a 2px rounded line, an always-on
-// end marker + direct label (the current value stays readable without
+// end marker + direct label next to it (the current value stays readable without
 // touching anything), and a tap-to-inspect crosshair + tooltip for the
 // points in between.
 export function TrendLineChart({
@@ -83,9 +85,17 @@ export function TrendLineChart({
         )}
       </svg>
 
-      <div className="pointer-events-none absolute right-0 top-0 text-xs font-medium" style={{ color: 'var(--color-ink)' }}>
-        {formatValue(last.value)}
-      </div>
+      {/* Het eindlabel staat bij zijn stip (links ervan, erboven; vlak onder de bovenrand eronder),
+          nooit los in een hoek: los rechtsboven las het als een ander punt (backlog 11 november). */}
+      {activeIndex !== n - 1 && (
+        <div
+          className={`pointer-events-none absolute -translate-x-full whitespace-nowrap pr-2 text-xs font-medium ${y(last.value) < END_LABEL_ROOM ? 'translate-y-1' : '-translate-y-full'}`}
+          style={{ left: `${(x(n - 1) / WIDTH) * 100}%`, top: `${(y(last.value) / height) * 100}%`, color: 'var(--color-ink)' }}
+          data-end-label
+        >
+          {formatValue(last.value)}
+        </div>
+      )}
 
       {active && activeIndex !== null && (
         <div

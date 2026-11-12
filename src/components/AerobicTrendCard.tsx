@@ -4,11 +4,13 @@ import { aerobicTrend, formatPace, tempoPiecesOn, trendHeadline, trendVerdict, z
 import { useExcludedLogIds } from './influence/useExcludedLogIds';
 import { todayISO } from '../utils/dates';
 import { Card, Eyebrow, InfoButton } from './ui';
-import { TrendLineChart } from './TrendLineChart';
+import { Zone2WeekChart } from './stand/Zone2WeekChart';
+import { zone2CardCaption, zone2WeekChart } from '../engine/zone2Chart';
 import { Zone2InfoSheet } from './Zone2InfoSheet';
 
 // Je stand, sectie Lopen (moved here from Ascend): progress on easy runs, as pace at one zone 2 heart rate
-// (engine/aerobicTrend.ts). A line going up means faster at the same effort.
+// (engine/aerobicTrend.ts). Een stip per week, sneller boven; een lijn alleen bij een uitspraak
+// (engine/zone2Chart.ts#zone2WeekChart, besluit docs/beslissingen/2026-11-12-zone2-kaart.md).
 export function AerobicTrendCard() {
   const { sessionLogs, templates, program, settings } = useAppData();
   // A training set to "Niet meetellen voor hartslag" stays out (engine/influence.ts).
@@ -23,6 +25,9 @@ export function AerobicTrendCard() {
 
   // One sentence from the same line as the chart (engine/aerobicTrend.ts#trendVerdict).
   const verdict = trendVerdict(trend);
+  const chart = useMemo(() => zone2WeekChart(trend, today), [trend, today]);
+  // Wat de kop is en wat de stippen zijn, in één zin.
+  const caption = zone2CardCaption(trend);
 
   return (
     <Card className="flex flex-col gap-3">
@@ -41,12 +46,13 @@ export function AerobicTrendCard() {
       <p className="-mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         {trend.referenceHr > 0 ? `Je tempo bij ${trend.referenceHr} bpm.` : 'Je tempo bij één vaste hartslag.'} Word je fitter, dan loop je daarbij sneller.
       </p>
-      {trend.points.length >= 2 ? (
-        <TrendLineChart points={trend.points} color="var(--color-progress)" formatValue={(v) => formatPace(-v)} />
+      {chart.dots.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <Zone2WeekChart chart={chart} />
+          {caption && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{caption}</p>}
+        </div>
       ) : (
-        <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-          {trend.runs === 0 ? 'Nog geen loopjes.' : `${trend.runs === 1 ? 'Eén loopje' : `${trend.runs} loopjes`}, nog maar één week.`} Na twee weken zie je hier je lijn.
-        </p>
+        <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Nog geen loopjes. Elke week met een loop wordt hier een stip.</p>
       )}
       {verdict && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict}</p>}
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
