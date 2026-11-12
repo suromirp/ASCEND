@@ -40,6 +40,7 @@ const TREADMILL_HILLS: PlaceBrief = {
 };
 const STAIR_HILLS: PlaceBrief = {
   styleLabel: 'trap',
+  purpose: 'Klimkracht in je benen, in korte stevige blokken op de trap.',
   workLabel: 'stevig traplopen',
   third: { label: 'op de trap' },
   stopSignals: ['je stap slordig wordt of je op de handvatten gaat leunen', 'je na 2 minuten rustig doorstappen nog niet hersteld bent'],

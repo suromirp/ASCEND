@@ -52,7 +52,7 @@ const SHORT_NAME: Record<string, string> = {
   'Hardlopen, loopband op helling': 'Loopband',
   // Bergconditie: twee chips en Meer.
   'Wandelen, loopband op helling': 'Loopband',
-  'Wandelen met hoogteverschil, buiten': 'Buiten',
+  'Wandelen met hoogteverschil, buiten': 'Hoogteverschil',
   'Wandelen op oneffen paden': 'Onverhard',
   'Wandelen, heuvel op en af herhalen': 'Heuvel',
   'Traplopen, buiten': 'Trappen',

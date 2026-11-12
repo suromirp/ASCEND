@@ -9,8 +9,9 @@ import { WORKOUTS } from '../data/workoutStructure';
 import { getModalities, modalitySport } from '../data/modalities';
 import { placeBriefKeys } from '../data/placeBrief';
 import { resolveWatchModel } from './watchFields';
-import { briefing, hasBriefing, howWithoutSport, placeRow, placeTransition, watchPlaceLine, PLACE_ROW_MAX, type BriefingInput } from './briefing';
+import { briefing, hasBriefing, howWithoutSport, OTHER_PLACE, placeRow, placeTransition, watchPlaceLine, PLACE_ROW_MAX, type BriefingInput } from './briefing';
 import { buildWorkoutPlan } from './workoutPlan';
+import { setAmbition, setKindAmounts } from './substitutions';
 import { buildSessionBrief, durationLabel } from './sessionBrief';
 import { racePaces } from './racePaces';
 import { missionCardView } from './missionCard';
@@ -87,6 +88,9 @@ describe('heuvelintervallen per manier', () => {
   it('welke sport een manier telt blijft: StairMaster telt als wandelen', () => {
     expect(modalitySport('stairmaster_intervals')).toBe('hiking');
     expect(view(HILLS, 'stairmaster_intervals').head.eyebrow).toBe('WANDELEN · TRAP');
+    expect(view(HILLS, 'stairmaster_intervals').head.purpose).toBe('Klimkracht in je benen, in korte stevige blokken op de trap.');
+    expect(view(HILLS, 'stairmaster_intervals').heart.label).toBe('Wat je doet');
+    expect(view(HILLS).heart.label).toBe('Wat je loopt');
     expect(view(HILLS).head.eyebrow).toBe('HARDLOPEN · BERGOP');
   });
   it('elke eigen tekst hoort bij een manier die die training echt kent', () => {
@@ -129,10 +133,45 @@ describe('het totaal bovenaan is het einde van de tijdlijn', () => {
     expect(p.repeats).toBe(6);
     const seconds = p.timeline.reduce((s, x) => s + x.seconds, 0);
     expect(seconds).toBe(35 * 60);
-    // Opwarmen en uitlopen geven de tijd terug, uitlopen eerst; geen van beide onder de 5 minuten.
-    expect(p.timeline[0].seconds).toBe(9 * 60);
-    expect(p.timeline.at(-1)!.seconds).toBe(8 * 60);
+    // Uitlopen geeft de tijd eerst terug, tot 5 minuten; het opwarmen blijft dan 10.
+    expect(p.timeline[0].seconds).toBe(10 * 60);
+    expect(p.timeline.at(-1)!.seconds).toBe(7 * 60);
     expect(view(t).heart.facts[0]).toEqual({ value: '35 min', label: 'totaal' });
+  });
+  // Rustig (ambitie) en Minder (hoeveel per soort) maken trainingen korter; dan passen de herhalingen het vaakst niet.
+  // Data uit de vergelijking oud tegen nieuw over 400 dagen (besluit 2026-11-12-briefing-per-manier.md, punt 3).
+  const edgesOf = (p: ReturnType<typeof buildWorkoutPlan>) => p!.items.filter((i) => 'step' in i).map((i) => ('step' in i ? i.step.seconds / 60 : 0));
+  const withSetting = <T,>(setting: 'rustig' | 'minder', fn: () => T): T => {
+    if (setting === 'rustig') setAmbition('rustig');
+    else setKindAmounts({ strength: 'less', long: 'less', hard: 'less', ruck: 'less', easy: 'less', cycling: 'less' });
+    try { return fn(); } finally { setAmbition('standaard'); setKindAmounts(undefined); }
+  };
+  for (const setting of ['rustig', 'minder'] as const) {
+    it(`${setting}: heuvelintervallen 25, tempoloop 30, intervallen 40 en fartlek 35 passen; uitlopen eerst, opwarmen bij hard nooit onder 8`, () => {
+      withSetting(setting, () => {
+        const cases: [string, string, number, number[]][] = [
+          ['tpl_hill_intervals', '2026-11-30', 25, [10, 6]],
+          ['tpl_tempo_run', '2026-11-30', 30, [8, 5]],
+          ['tpl_intervals', '2026-11-30', 40, [12, 7]],
+          ['tpl_fartlek', '2026-11-16', 35, [11.5, 6]],
+        ];
+        for (const [id, date, minutes, edges] of cases) {
+          const p = buildWorkoutPlan(byId(id), date, program)!;
+          expect(p.totalMinutes, id).toBe(minutes);
+          expect(p.timeline.reduce((s, x) => s + x.seconds, 0), id).toBe(minutes * 60);
+          expect(edgesOf(p), id).toEqual(edges);
+        }
+        // Negen keer fartlek in 35 minuten past niet: uitlopen staat al op 5, opwarmen stopt op 8; 35:30 blijft over.
+        const over = buildWorkoutPlan(byId('tpl_fartlek'), '2026-11-23', program)!;
+        expect(over.repeats).toBe(9);
+        expect(edgesOf(over)).toEqual([8, 5]);
+        expect(over.timeline.reduce((s, x) => s + x.seconds, 0)).toBe(35 * 60 + 30);
+      });
+    });
+  }
+  it('standaard: fartlek 40 met zeven herhalingen eindigt op 40, niet op 40:30', () => {
+    const p = buildWorkoutPlan(byId('tpl_fartlek'), '2026-09-01', program)!;
+    expect(p.timeline.reduce((s, x) => s + x.seconds, 0)).toBe(p.totalMinutes * 60);
   });
   it('voor elke training, elke manier en een half jaar aan dagen', () => {
     for (const t of templates) {
@@ -150,12 +189,12 @@ describe('het totaal bovenaan is het einde van de tijdlijn', () => {
 });
 
 describe('de rij met manieren valt niet af', () => {
-  it('hoogstens drie chips; bij meer de standaard, de gekozen keuze en Meer', () => {
+  it('hoogstens drie chips; bij meer de standaard en een chip naar het blad, met de gekozen naam (zoals Start bij)', () => {
     const many = ['a', 'b', 'c', 'd', 'e'].map((key) => ({ key }));
     expect(placeRow(many.slice(0, 3), 'c')).toEqual({ chips: many.slice(0, 3), more: false });
-    expect(placeRow(many, 'd')).toEqual({ chips: [many[0], many[3]], more: true });
-    expect(placeRow(many, 'a')).toEqual({ chips: [many[0], many[1]], more: true });
-    expect(placeRow(many, undefined).chips).toHaveLength(2);
+    expect(placeRow(many, 'd')).toEqual({ chips: [many[0]], more: true, other: many[3] });
+    expect(placeRow(many, 'a')).toEqual({ chips: [many[0]], more: true });
+    expect(placeRow(many, undefined)).toEqual({ chips: [many[0]], more: true });
   });
   it('de heuvelintervallen: Heuvel, Loopband, StairMaster', () => {
     expect(shortPlaceLabels(placeChoices('tpl_hill_intervals').map((p) => p.label))).toEqual(['Heuvel', 'Loopband', 'StairMaster']);
@@ -166,8 +205,11 @@ describe('de rij met manieren valt niet af', () => {
       if (places.length < 2 || !hasBriefing(t)) continue;
       for (const chosen of places) {
         const row = placeRow(places, chosen.key);
-        const labels = shortPlaceLabels(row.chips.map((p) => p.label)).map((l) => Math.min(l.length * 7.5, row.more ? 104 : 136));
-        const width = labels.reduce((s, w) => s + w + 34, 0) + (row.more ? 90 : 0) + 8 * (row.chips.length - (row.more ? 0 : 1));
+        const shown = row.more ? [...row.chips, row.other ?? { label: OTHER_PLACE }] : row.chips;
+        // De korte namen zoals de rij ze toont; de chip naar het blad heeft een pijl van 20 px erbij.
+        const all = shortPlaceLabels(places.map((p) => p.label));
+        const names = shown.map((p) => ('key' in p ? all[places.indexOf(p as typeof places[number])] : p.label));
+        const width = names.reduce((s, n, i) => s + Math.min(n.length * 7.5, 136) + 34 + (row.more && i === names.length - 1 ? 20 : 0), 0) + 8 * (names.length - 1);
         expect(width, `${t.id} ${chosen.key}`).toBeLessThanOrEqual(328);
         expect(row.chips.length).toBeLessThanOrEqual(PLACE_ROW_MAX);
       }
@@ -177,14 +219,25 @@ describe('de rij met manieren valt niet af', () => {
 
 describe('het horloge bij een andere manier', () => {
   it('StairMaster: zegt eerlijk dat de hardloopworkout erop staat en wat je start', () => {
-    expect(watchPlaceLine(HILLS, 'stairmaster_intervals')).toBe('Er staat een hardloopworkout op. Start Stair Stepper zonder workout.');
+    expect(watchPlaceLine(HILLS, 'stairmaster_intervals', 'on')).toBe('Er staat een hardloopworkout op. Start Stair Stepper zonder workout.');
     const row = view(HILLS, 'stairmaster_intervals').rows.find((r) => r.id === 'watch')!;
     expect(row.line).toBe('Er staat een hardloopworkout op. Start Stair Stepper zonder workout. Vinkt zelf af.');
     expect(row.tone).toBe('warn');
   });
+  it('nog niet verstuurd (pending, later): er komt een workout op je horloge', () => {
+    for (const kind of ['pending', 'later'] as const) {
+      const row = view(HILLS, 'stairmaster_intervals', { watchStatus: kind === 'later' ? { kind, goesOn: '2026-11-12' } : { kind } }).rows.find((r) => r.id === 'watch')!;
+      expect(row.line).toBe('Er komt een hardloopworkout op je horloge. Start Stair Stepper zonder workout. Vinkt zelf af.');
+      expect(row.tone).toBe('warn');
+    }
+  });
+  it('zelf instellen: de gewone toon, geen amber', () => {
+    const row = view(HILLS, 'stairmaster_intervals', { watchStatus: { kind: 'unlinked' } }).rows.find((r) => r.id === 'watch')!;
+    expect(row.tone).toBeUndefined();
+  });
   it('de loopband is ook hardlopen: geen regel, de workout past', () => {
-    expect(watchPlaceLine(HILLS, 'incline_treadmill_intervals')).toBeUndefined();
-    expect(watchPlaceLine(EASY, 'run_treadmill')).toBeUndefined();
+    expect(watchPlaceLine(HILLS, 'incline_treadmill_intervals', 'on')).toBeUndefined();
+    expect(watchPlaceLine(EASY, 'run_treadmill', 'on')).toBeUndefined();
     expect(view(HILLS, 'incline_treadmill_intervals').rows.find((r) => r.id === 'watch')?.tone).toBeUndefined();
   });
   it('een horloge dat niet afvinkt: dezelfde regel, zonder Vinkt zelf af', () => {
@@ -199,7 +252,7 @@ describe('het horloge bij een andere manier', () => {
     const v = view(HILLS, 'stairmaster_intervals', { watchStatus: { kind: 'unlinked' }, watchLink: { linked: false, autoTick: false, activities: false } });
     const line = v.rows.find((r) => r.id === 'watch')?.line ?? '';
     expect(line).toBe('Start Stair Stepper zonder workout.');
-    expect(watchPlaceLine(HILLS, 'stairmaster_intervals', false)).toBe('Start Stair Stepper zonder workout.');
+    expect(watchPlaceLine(HILLS, 'stairmaster_intervals', undefined)).toBe('Start Stair Stepper zonder workout.');
   });
 });
 

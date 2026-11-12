@@ -56,6 +56,7 @@ export const BRIEFING_TEXT = {
   // Wat je loopt: de regel onder de rij Briefing in Week als er verder niets in staat, en de naam van de
   // hartkaart voor een schermlezer.
   run: 'Wat je loopt',
+  doing: 'Wat je doet',
   // De vaste woorden van de lijst (spoor 3 van docs/visie/Ontwerp trainingsscherm minimaal.md).
   watch: 'Horloge',
   weather: 'Weer',
@@ -137,6 +138,9 @@ export interface BriefingHead {
 // De hartkaart (spoor 2): de kerngetallen, en daaronder de zonebalk (één doorlopend blok) of het
 // profiel van de stappen. Zone en praattest staan alleen hier, in de zin onder de balk.
 export interface BriefingHeart {
+  // De naam van de hartkaart voor een schermlezer: Wat je loopt bij hardlopen, Wat je doet bij wandelen of traplopen.
+  // Afwezig: Wat je loopt.
+  label?: string;
   facts: BriefFact[];
   zone?: Intensity;
   steps: boolean;
@@ -350,6 +354,7 @@ function heartOf(input: BriefingInput, brief: SessionBrief, place: string | unde
     facts = last >= 1 && !own && !/^[±\d]/.test(facts[last].value) ? [...facts.slice(0, last), fact] : [...facts, fact];
   }
   return {
+    label: sport === 'running' ? BRIEFING_TEXT.run : BRIEFING_TEXT.doing,
     facts,
     zone,
     steps: conditioning.length > 1,
@@ -382,15 +387,17 @@ export function howWithoutSport(how: string, sportSwitch: string | undefined): s
 
 // ---- de rij Waar train je? -------------------------------------------------------------------
 
-// Hoogstens drie chips in één rij, zonder schuiven, zodat er op 360 px geen chip afvalt (zoals Start bij). Bij meer
-// keuzes: de standaard, de gekozen keuze als die anders is, en Meer, dat een blad met alle keuzes opent.
+// Hoogstens drie chips in één rij, zonder schuiven, zodat er op 360 px geen chip afvalt. Bij meer keuzes het patroon
+// van Start bij: de standaard, en een tweede chip die het blad met alle keuzes opent. Die draagt de naam van de
+// gekozen keuze als dat niet de standaard is (`other`), anders Andere manier.
 export const PLACE_ROW_MAX = 3;
+export const OTHER_PLACE = 'Andere manier';
 
-export function placeRow<P extends { key: string }>(places: readonly P[], chosen: string | undefined): { chips: P[]; more: boolean } {
+export function placeRow<P extends { key: string }>(places: readonly P[], chosen: string | undefined): { chips: P[]; more: boolean; other?: P } {
   if (places.length <= PLACE_ROW_MAX) return { chips: [...places], more: false };
   const first = places[0];
-  const picked = places.find((p) => p.key === chosen && p.key !== first.key) ?? places[1];
-  return { chips: [first, picked], more: true };
+  const other = places.find((p) => p.key === chosen && p.key !== first.key);
+  return { chips: [first], more: true, ...(other ? { other } : {}) };
 }
 
 // De regel onder de rij Briefing in Week: wat er echt in staat. "Route, horloge, weer en eten";
@@ -461,30 +468,36 @@ function watchRow(input: BriefingInput, stand: BriefingStand, place: string | un
   // Zonder workout van ASCEND op je horloge (zelf instellen): alleen wat je start, want de workout in het blad is die
   // van de training.
   // De echte stand, ook als de instelling Horlogestatus tonen uit staat: anders zou de regel een workout verzwijgen.
-  const other = watchPlaceLine(input.template, place, ON_WATCH.has(status?.kind ?? ''));
-  if (other) return { id: 'watch', label: BRIEFING_TEXT.watch, line: ticks ? `${other} ${ticks}.` : other, opens: true, tone: 'warn' };
+  // Amber alleen als ASCEND een workout klaarzette (of gaat zetten); stel je zelf in, dan de gewone toon.
+  const onWatch = WATCH_WHEN[status?.kind ?? ''];
+  const other = watchPlaceLine(input.template, place, onWatch);
+  if (other) return { id: 'watch', label: BRIEFING_TEXT.watch, line: ticks ? `${other} ${ticks}.` : other, opens: true, ...(onWatch ? { tone: 'warn' as const } : {}) };
   const state = watchState(input, status, plan?.garmin !== undefined);
   const line = ticks ? `${state.line}. ${ticks}.` : state.line;
   return { id: 'watch', label: BRIEFING_TEXT.watch, line, opens: true, ...(state.warn ? { tone: 'warn' as const } : {}) };
 }
 
-// De stand waarin ASCEND een workout op je horloge zet of al zette.
-const ON_WATCH = new Set(['sent', 'stale', 'pending', 'later']);
+// De stand waarin ASCEND een workout op je horloge al zette (staat) of nog gaat zetten (komt).
+const WATCH_WHEN: Record<string, 'on' | 'coming' | undefined> = { sent: 'on', stale: 'on', pending: 'coming', later: 'coming' };
 
 const WATCH_SPORT: Record<WatchSport, Sport> = { Run: 'running', Walk: 'hiking', Hike: 'hiking', Ride: 'cycling' };
 const WORKOUT_NAME: Record<Sport, string> = { running: 'hardloopworkout', hiking: 'wandelworkout', cycling: 'fietsworkout' };
 
 // De workout op je horloge volgt de training, niet de gekozen manier (engine/watchWorkout.ts stuurt het plan). Is
 // de manier een andere sport, dan zegt dit wat er op je horloge staat en wat je start: "Er staat een
-// hardloopworkout op. Start Stair Stepper zonder workout." Dezelfde sport (de loopband): geen regel, die workout
-// loop je ook op de band.
-export function watchPlaceLine(template: SessionTemplate, place: string | undefined, onWatch = true): string | undefined {
+// hardloopworkout op. Start Stair Stepper zonder workout.", of "Er komt een hardloopworkout op je horloge." zolang
+// hij nog verstuurd wordt. Zonder workout van ASCEND alleen wat je start. Dezelfde sport (de loopband): geen regel,
+// die workout loop je ook op de band.
+export function watchPlaceLine(template: SessionTemplate, place: string | undefined, onWatch: 'on' | 'coming' | undefined): string | undefined {
   const workout = watchSportOf(template);
   const chosen = place ? modalitySport(place) : undefined;
   if (!workout || !chosen || WATCH_SPORT[workout] === chosen) return undefined;
   const profile = getModality(template.id, place!)?.garminProfile;
   const start = profile && !profile.includes('/') ? `Start ${profile} zonder workout.` : 'Start zonder workout.';
-  return onWatch ? `Er staat een ${WORKOUT_NAME[WATCH_SPORT[workout]]} op. ${start}` : start;
+  const name = WORKOUT_NAME[WATCH_SPORT[workout]];
+  if (onWatch === 'on') return `Er staat een ${name} op. ${start}`;
+  if (onWatch === 'coming') return `Er komt een ${name} op je horloge. ${start}`;
+  return start;
 }
 
 function watchState(input: BriefingInput, status: WatchStatus | undefined, garmin: boolean): { line: string; warn?: boolean } {

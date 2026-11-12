@@ -7,11 +7,11 @@ Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 WANDELEN · TRAP
 ## Heuvelintervallen
 [knop: Waarom deze training]
-Snelheid en hoogtemeters in één training.
+Klimkracht in je benen, in korte stevige blokken op de trap.
 Zo 1 november · Basisfase, week 1 van 4 · wennen
 
 --- kaart 1 ---
-[label: Wat je loopt]
+[label: Wat je doet]
 35
 minuten totaal
 5 × 1 min
@@ -26,7 +26,7 @@ op de trap
 Als het niet anders kan. Alleen als er geen heuvel of loopband is: 1 minuut stevig traplopen, dan 2 minuten rustig doorstappen. Dit telt als wandelen, niet als hardlopen.
 
 --- kaart 2 ---
-[knop: HorlogeStart Stair Stepper zonder workout.] (aria: Horloge: Start Stair Stepper zonder workout., let op)
+[knop: HorlogeStart Stair Stepper zonder workout.] (aria: Horloge: Start Stair Stepper zonder workout.)
 [knop: Voor en na8 opwarmen, 4 rekken] (aria: Voor en na: 8 opwarmen, 4 rekken)
 Stop of schakel terug als
 je stap slordig wordt of je op de handvatten gaat leunen

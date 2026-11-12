@@ -19,7 +19,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
-import { footerNow, placeRow, placeTransition, BRIEFING_TEXT, type BriefingRow, type BriefingView } from '../engine/briefing';
+import { footerNow, placeRow, placeTransition, OTHER_PLACE, BRIEFING_TEXT, type BriefingRow, type BriefingView } from '../engine/briefing';
 import { isSportEnabled } from '../engine/sports';
 import { fuelCardLines, fuelForTraining, fuelOn } from '../engine/fuelOnTheGo';
 import { drinkLine } from '../engine/eveningBefore';
@@ -148,9 +148,11 @@ export function TrainingBriefing({
   const picked = model.picked && model.pickedOutcome?.ok ? { style: model.picked, proposal: model.pickedOutcome.proposal } : undefined;
   const routeReady = view.footer.kind === 'route' && !!picked && searchOn;
   const places = view.places.filter((p) => !p.locked && (p.key === view.place || isSportEnabled(modalitySport(p.key), settings.enabledSports)));
-  // Hoogstens drie chips, nooit een schuifrij; meer keuzes achter Meer (engine/briefing.ts#placeRow).
+  // Hoogstens drie chips, nooit een schuifrij; bij meer keuzes een chip naar het blad (engine/briefing.ts#placeRow).
   const row = placeRow(places, view.place);
   const shortLabels = shortPlaceLabels(row.chips.map((p) => p.label));
+  // De korte naam van de gekozen keuze op de tweede chip, zoals in de rij van alle keuzes.
+  const otherShort = row.other ? shortPlaceLabels(places.map((p) => p.label))[places.indexOf(row.other)] : undefined;
   const minutes = session?.plannedMinutes ?? resolveEffectiveFullDuration(template, date, program);
   // De ene knop onderaan: de route als de lus er is, anders Gedaan (zelf invullen), anders geen onderbalk.
   const footerKind = footerNow(view.footer, routeReady, !!manual);
@@ -187,7 +189,7 @@ export function TrainingBriefing({
 
           <div className="flex flex-col gap-3">
             {/* De hartkaart: de kerngetallen en de zonebalk of het profiel. Zone en praattest staan alleen hier. */}
-            <Card className="mt-1 flex flex-col gap-5" role="group" aria-label={BRIEFING_TEXT.run}>
+            <Card className="mt-1 flex flex-col gap-5" role="group" aria-label={heart.label ?? BRIEFING_TEXT.run}>
               <KeyNumbers facts={heart.facts} />
               {heart.paceNote && <p className="-mt-3 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{heart.paceNote}</p>}
               {heart.steps && plan ? (
@@ -207,17 +209,21 @@ export function TrainingBriefing({
 
             {places.length > 1 && (
               // Eén rij van hoogstens drie chips met korte namen, zonder schuiven: op 360 px valt er niets af (zoals
-              // Start bij). Meer keuzes staan achter Meer. De gekozen chip is stil: de knop onderaan is het enige mint.
+              // Start bij). Bij meer keuzes de standaard en een chip naar het blad met alle keuzes. De gekozen chip is stil: de knop onderaan is het enige mint.
               <div className="flex flex-col gap-2">
                 <div className="flex min-w-0 gap-2" role="group" aria-label="Waar train je?" data-place-row="">
                   {row.chips.map((p, i) => (
                     <span key={p.key} className="min-w-0 whitespace-nowrap">
-                      <Chip tone="quiet" selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}><span className={`inline-block ${row.more ? 'max-w-[6.5rem]' : 'max-w-[8.5rem]'} truncate align-bottom`}>{shortLabels[i]}</span></Chip>
+                      <Chip tone="quiet" selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}><span className="inline-block max-w-[8.5rem] truncate align-bottom">{shortLabels[i]}</span></Chip>
                     </span>
                   ))}
                   {row.more && (
-                    <span className="shrink-0 whitespace-nowrap" data-sheet-from="">
-                      <Chip tone="quiet" label="Meer manieren" onClick={() => setSheet('places')}>Meer<span aria-hidden className="shrink-0"><Icon name="verder" size={14} /></span></Chip>
+                    // Zoals Start bij: de gekozen keuze (of Andere manier) met een kleine pijl; opent het blad met alle keuzes.
+                    <span className="min-w-0 whitespace-nowrap" data-sheet-from="">
+                      <Chip tone="quiet" selected={!!row.other} label={row.other ? `${row.other.label}, andere manier kiezen` : OTHER_PLACE} onClick={() => setSheet('places')}>
+                        <span className="inline-block max-w-[8.5rem] truncate align-bottom">{otherShort ?? OTHER_PLACE}</span>
+                        <span aria-hidden className="shrink-0"><Icon name="verder" size={14} /></span>
+                      </Chip>
                     </span>
                   )}
                 </div>
@@ -348,7 +354,7 @@ function StretchDetail({ template }: { template: SessionTemplate }) {
   );
 }
 
-// Het blad achter Meer: alle keuzes onder elkaar met hun oordeel; de gekozen keuze met een vinkje, geen mint.
+// Het blad met alle keuzes (achter de tweede chip): onder elkaar met hun oordeel; de gekozen keuze met een vinkje, geen mint.
 function PlaceList({ places, chosen, onPick }: { places: BriefingView['places']; chosen: string | undefined; onPick: (key: string) => void }) {
   return (
     <ul className="flex flex-col">

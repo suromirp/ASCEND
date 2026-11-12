@@ -45,8 +45,10 @@ export interface WorkoutPlan {
 
 const isRepeat = (s: StructureSpec): s is RepeatSpec => 'repeatsByWeek' in s;
 const fixedSeconds = (s: StepSpec) => (s.minutes ?? 0) * 60 + (s.seconds ?? 0);
-// The shortest warm-up or cool-down when the repeats need the time.
+// The shortest warm-up or cool-down when the repeats need the time; a warm-up before a hard block (zwaarte 4)
+// keeps at least 8 minutes.
 const EDGE_MIN_SECONDS = 5 * 60;
+const WARMUP_HARD_MIN_SECONDS = 8 * 60;
 const LOAD_LEVEL: Record<string, number> = { none: 0, light: 1, moderate: 2, heavy: 3 };
 
 export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | undefined, program: Program | null | undefined): WorkoutPlan | undefined {
@@ -81,28 +83,33 @@ export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | un
   const edges = spec.structure.filter((s): s is StepSpec => !isRepeat(s) && (s.kind === 'warmup' || s.kind === 'cooldown'));
   const leftover = totalMinutes * 60 - fixed;
   // Whole minutes, split so the total is exact: an odd leftover minute goes
-  // to the warm-up (audit 2026-10: "±45 min" next to a 46-minute chart).
-  const extraMinutes = !hasRest && edges.length > 0 && leftover > 0 ? Math.round(leftover / 60) : 0;
+  // to the warm-up (audit 2026-10: "±45 min" next to a 46-minute chart). A
+  // leftover half minute (odd repeats of 90 seconds) goes to the warm-up too,
+  // so the timeline ends on the planned minutes and not half a minute short.
+  const extraSeconds = !hasRest && edges.length > 0 && leftover > 0 ? leftover : 0;
+  const extraMinutes = Math.floor(extraSeconds / 60);
   // And the other way: when the rounded repeats run over the planned minutes, warming up and cooling down
-  // give the time back (owner, 12 November: "35 min totaal" above a timeline that ended at 38). The cool-down
-  // gives first, and neither goes under 5 minutes; only then can the steps still run over.
-  const overMinutes = !hasRest && edges.length > 0 && leftover < 0 ? Math.round(-leftover / 60) : 0;
+  // give the time back (owner, 12 November: "35 min totaal" above a timeline that ended at 38). First the
+  // cool-down, down to 5 minutes; only then the warm-up, down to 5 minutes, or 8 with a hard block (zwaarte 4)
+  // in the training. Past those floors the steps still run over, and the Briefing reads the timeline.
+  const hard = spec.structure.some((s) => (isRepeat(s) ? s.steps.some((st) => st.intensity >= 4) : s.intensity >= 4));
+  const floorOf = (s: StepSpec) => (s.kind === 'warmup' && hard ? WARMUP_HARD_MIN_SECONDS : EDGE_MIN_SECONDS);
   const giveBack = edges.map(() => 0);
-  for (let left = overMinutes, guard = 0; left > 0 && guard < 200; guard++) {
-    let gave = false;
-    for (let i = edges.length - 1; i >= 0 && left > 0; i--) {
-      if (fixedSeconds(edges[i]) - (giveBack[i] + 1) * 60 >= EDGE_MIN_SECONDS) {
-        giveBack[i]++;
-        left--;
-        gave = true;
-      }
-    }
-    if (!gave) break;
+  let need = !hasRest && edges.length > 0 && leftover < 0 ? -leftover : 0;
+  for (const kind of ['cooldown', 'warmup'] as const) {
+    edges.forEach((e, i) => {
+      if (e.kind !== kind || need <= 0) return;
+      const room = Math.max(0, fixedSeconds(e) - floorOf(e));
+      giveBack[i] = Math.min(room, need);
+      need -= giveBack[i];
+    });
   }
   const edgeExtraFor = (s: StepSpec) => {
     const i = edges.indexOf(s);
     if (i < 0) return 0;
-    return (Math.floor(extraMinutes / edges.length) + (i < extraMinutes % edges.length ? 1 : 0) - giveBack[i]) * 60;
+    const minutes = Math.floor(extraMinutes / edges.length) + (i < extraMinutes % edges.length ? 1 : 0);
+    const rest = i === 0 ? extraSeconds - extraMinutes * 60 : 0;
+    return minutes * 60 + rest - giveBack[i];
   };
   const toStep = (s: StepSpec): PlanStep => ({
     kind: s.kind,
