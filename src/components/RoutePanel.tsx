@@ -168,11 +168,21 @@ export function StartChips({ model }: { model: RouteSearchModel }) {
   return (
     <div className="flex flex-col gap-1">
       <Eyebrow tone="var(--color-ink-dim)">Start bij</Eyebrow>
-      <div role="group" aria-label="Start bij" data-no-sheet-drag="" className="-mx-1 flex h-11 gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-1" style={{ scrollbarWidth: 'none' }}>
-        {model.startChips.map((c) => (
-          <span key={chipKey(c)} className="shrink-0 whitespace-nowrap">
-            <Chip tone="quiet" selected={chipKey(c) === model.startChip} label={c.kind === 'other' && c.label !== 'Andere plek' ? `Andere plek: ${c.label}` : undefined} onClick={() => (c.kind === 'other' ? setSearching(!!choosePlace) : model.pickStart(c))}>
-              <span className="inline-block max-w-[9.5rem] truncate">{c.label}</span>
+      <div role="group" aria-label="Start bij" className="flex h-11 gap-2">
+        {/* De vaste keuzes schuiven opzij als de namen niet passen; Andere plek staat er altijd heel naast. */}
+        <div data-no-sheet-drag="" className="-ml-1 flex min-w-0 flex-1 gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pl-1" style={{ scrollbarWidth: 'none' }}>
+          {model.startChips.filter((c) => c.kind !== 'other').map((c) => (
+            <span key={chipKey(c)} className="shrink-0 whitespace-nowrap">
+              <Chip tone="quiet" selected={chipKey(c) === model.startChip} onClick={() => model.pickStart(c)}>
+                <span className="inline-block max-w-[9.5rem] truncate">{c.label}</span>
+              </Chip>
+            </span>
+          ))}
+        </div>
+        {model.startChips.filter((c) => c.kind === 'other').map((c) => (
+          <span key="other" className="shrink-0 whitespace-nowrap">
+            <Chip tone="quiet" selected={model.startChip === 'other'} label={c.label !== 'Andere plek' ? `Andere plek: ${c.label}` : undefined} onClick={() => setSearching(!!choosePlace)}>
+              <span className="inline-block max-w-[8rem] truncate">{c.label}</span>
             </Chip>
           </span>
         ))}

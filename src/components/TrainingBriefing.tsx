@@ -358,11 +358,17 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
   if (declined || !searchOn) return stage === 'reading' ? <div className="min-h-[44px]" /> : searchRow;
   if (stage === 'first-question') return <RouteFirstQuestion model={model} onDecline={onDecline} />;
   // Start bij boven de kaart en de zoekstand, in elke stand; de regel alleen bij een terugval of afwijking.
+  // Tijdens lezen en zoeken houdt de regel twee regels vrij: een terugval (je plek lukte niet) komt pas
+  // tijdens het zoeken, en dan verspringt de balk niet. Bij de kaart en een fout staat de regel vast; leeg
+  // neemt hij dan geen ruimte (Pathfinder: geen lege strook tussen de chips en de kaart).
   const start = (
     <>
       <StartChips model={model} />
-      {/* Vaste hoogte (twee regels), zodat de zoekstand niet verspringt als de regel komt of gaat. */}
-      <p role="status" className="min-h-[40px] text-sm leading-snug" style={dim}>{model.startLine}</p>
+      {stage === 'reading' || stage === 'searching' ? (
+        <p role="status" className="min-h-[40px] text-sm leading-snug" style={dim}>{model.startLine}</p>
+      ) : model.startLine ? (
+        <p role="status" className="text-sm leading-snug" style={dim}>{model.startLine}</p>
+      ) : null}
     </>
   );
   if (stage === 'reading') return <div className="flex flex-col gap-2">{start}</div>;
