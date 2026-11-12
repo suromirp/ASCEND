@@ -7,7 +7,7 @@ Week van 26 oktober
 [knop: Sluiten]
 ### Je week tot nu
 Basisfase, week 1 van 4
-0 gedaan · 56 min
+0 gedaan · 1 losse training · 56 min
 
 --- kaart 2 ---
 Bleef liggen
